@@ -6,6 +6,11 @@ on:
 
 jobs:
   build:
+    # The matching build needs the original disc files, which only exist in
+    # mariopartyrd's private container image. Forks cannot pull it, so the job
+    # would fail at "Initialize containers" on every push; it is verified
+    # locally instead (ninja must end with "135 files OK").
+    if: github.repository_owner == 'mariopartyrd'
     container: ghcr.io/mariopartyrd/mp-gc-build:main
 
     runs-on: ubuntu-latest
