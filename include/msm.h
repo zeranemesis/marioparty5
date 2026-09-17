@@ -12,6 +12,7 @@
 #define MSM_SEPARAM_AUXVOLA (1 << 4)
 #define MSM_SEPARAM_AUXVOLB (1 << 5)
 #define MSM_SEPARAM_POS (1 << 6)
+#define MSM_SEPARAM_PAD (1 << 7)
 
 #define MSM_LISTENER_NONE 0
 #define MSM_LISTENER_STARTDIS (1 << 0)
@@ -147,7 +148,7 @@ typedef struct msmSe_s {
 	u8 span;
 	u8 reverb;
 	u8 chorus;
-	u8 doppler;
+	s8 doppler;
 	s8 comp;
 	u8 pad[3];
 } MSMSE;
@@ -202,7 +203,7 @@ s32 msmSeUpdataListener(Vec *pos, Vec *heading);
 void msmSeDelListener(void);
 s32 msmSeGetStatus(int seNo);
 s32 msmSeGetNumPlay(BOOL baseGrp);
-s32 msmSeGetEntryID(s16 seId, int *seNo);
+s32 msmSeGetEntryID(s32 seId, int *seNo);
 void msmSeSetMasterVolume(s32 vol);
 
 int msmMusPlay(int musId, MSM_MUSPARAM *musParam);

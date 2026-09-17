@@ -848,7 +848,7 @@ config.libs = [
             Object(Matching, "msm/msmmem.c", mw_version="GC/1.2.5"),
             Object(Matching, "msm/msmfio.c", mw_version="GC/1.2.5"),
             Object(Matching, "msm/msmmus.c", mw_version="GC/1.2.5"),
-            Object(NonMatching, "msm/msmse.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmse.c", mw_version="GC/1.2.5"),
             Object(NonMatching, "msm/msmstream.c", mw_version="GC/1.2.5"),
         ],
     },
