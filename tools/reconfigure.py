@@ -22,9 +22,14 @@ def stored_args() -> list:
     build_ninja = root / "build.ninja"
     if not build_ninja.exists():
         return []
-    for line in build_ninja.read_text(encoding="utf-8").splitlines():
+    lines = build_ninja.read_text(encoding="utf-8").splitlines()
+    for index, line in enumerate(lines):
         if line.startswith("configure_args ="):
             value = line[len("configure_args ="):].strip()
+            # a trailing "$" continues the value on the next (indented) line
+            while value.endswith("$") and not value.endswith("$$") and index + 1 < len(lines):
+                index += 1
+                value = value[:-1] + lines[index].strip()
             # ninja escapes: "$ " is a space inside one argument, "$$" is "$"
             args, current, i = [], "", 0
             while i < len(value):
