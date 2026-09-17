@@ -96,7 +96,8 @@ def build_context(out_dir: Path, src: Path) -> Path:
     cmd = [
         str(mwcc), "-EP", "-nodefaults", "-nosyspath", "-proc", "gekko", "-lang=c",
         "-DMUSY_TARGET=MUSY_TARGET_DOLPHIN", "-DVERSION=0", "-DNDEBUG=1",
-        "-i", "include", "-i", "src", "-i", f"build/{version}/include", str(ctx_src),
+        "-i", "include", "-i", "libc", "-i", "libs/dolphin/include", "-i", "libs/musyx/include",
+        "-i", "src", "-i", f"build/{version}/include", str(ctx_src),
     ]
     if sys.platform != "win32":
         cmd.insert(0, "wibo")
