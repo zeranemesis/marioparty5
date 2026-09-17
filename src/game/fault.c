@@ -23,7 +23,11 @@ static XFB_COLOR XFB_Colors[5] = {
     { 0x40, 0x80, 0x80 }
 };
 
+#ifdef TARGET_PC
+#include "port/dolassets.h"
+#else
 #include "Ascii8x8_1bpp.inc"
+#endif
 
 static XFB_GEOMETRY XFB_Geometry;
 

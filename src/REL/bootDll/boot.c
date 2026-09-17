@@ -561,14 +561,26 @@ BOOL BootTitleExec(BOOL fromTitle)
     return FALSE;
 }
 
+#ifdef TARGET_PC
+#include "port/dolassets.h"
+#include "port/endian.h"
+#else
 extern u32 nintendoData[];
+#endif
 
 void *NintendoDataDecode(void)
 {
+#ifdef TARGET_PC
+    u32 *src = GetRelIncludeData(REL_INCLUDE_BOOT_NINTENDODATA);
+    u32 size = PORT_BE32(*src++);
+    void *dst = HuMemDirectMalloc(HEAP_MODEL, size);
+    u32 type = PORT_BE32(*src++);
+#else
     u32 *src = nintendoData;
     u32 size = *src++;
     void *dst = HuMemDirectMalloc(HEAP_MODEL, size);
     u32 type = *src++;
+#endif
     if(dst) {
         HuDecodeData(src, dst, size, type);
     }

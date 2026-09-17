@@ -23,6 +23,9 @@
 #define LIGHT_TYPE_GET(lightP) ((lightP)->type & 0xFF)
 
 
+#ifdef TARGET_PC
+#include "port/dolassets.h"
+#else
 #include "refMapData0.inc"
 #include "refMapData1.inc"
 #include "refMapData2.inc"
@@ -34,6 +37,7 @@
 #include "hiliteData2.inc"
 #include "hiliteData3.inc"
 #include "hiliteData4.inc"
+#endif
 
 typedef struct FbCopyLayer_s {
     s16 layerNo;

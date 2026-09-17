@@ -6,7 +6,11 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+#ifdef TARGET_PC
+#include "port/dolassets.h"
+#else
 extern u8 ank8x8_4b[];
+#endif
 
 #define STRLINE_MAX 256
 #define STRLINE_CHARMAX 80

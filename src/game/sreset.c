@@ -19,12 +19,16 @@
 
 static s32 SR_PreRstChk[4] = {};
 
+#ifdef TARGET_PC
+#include "port/dolassets.h"
+#else
 #include "coveropen_en.inc"
 #include "fatalerror_en.inc"
 #include "loading_en.inc"
 #include "nodisc_en.inc"
 #include "retryerror_en.inc"
 #include "wrongdisc_en.inc"
+#endif
 
 static s16 SR_PushTime[4] = {};
 static s8 SR_ResetPad = -1;
@@ -225,9 +229,15 @@ static void DvdErrDispXFB(void *data);
 
 static void _HuDvdErrDispXFB(s32 error)
 {
+#ifdef TARGET_PC
+	void *bmpMes[][6] = {
+		{ loading_en, coveropen_en, nodisc_en, wrongdisc_en, retryerror_en, fatalerror_en }
+	};
+#else
 	static void *bmpMes[][6] = {
 		loading_en, coveropen_en, nodisc_en, wrongdisc_en, retryerror_en, fatalerror_en
 	};
+#endif
     s16 i;
     s32 driveStatus;
     PADStatus padStat[4];
