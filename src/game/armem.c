@@ -213,7 +213,7 @@ AMEM_PTR HuAR_DVDtoARAM(unsigned int dir) {
     block = HuARInfoGet(aMemP);
     block->dir = (dir >> 16);
     arqCnt++;
-    ARQPostRequest(&arqReq, 0x1234, 0, 0, (u32) stat->dirP, aMemP, DirDataSize, ArqCallBack);
+    ARQPostRequest(&arqReq, 0x1234, 0, 0, (uintptr_t) stat->dirP, aMemP, DirDataSize, ArqCallBack);
     OSReport("ARAM Trans %x\n", aMemP);
     while(HuARDMACheck());
     HuDataDirClose(dir);
@@ -249,7 +249,7 @@ AMEM_PTR HuAR_MRAMtoARAM2(void *dirPtr) {
     block = HuARInfoGet(aMemP);
     block->dir = status->dirId;
     arqCnt++;
-    ARQPostRequest(&arqReq, 0x1234, 0, 0, (u32)dirPtr, aMemP, size, ArqCallBack);
+    ARQPostRequest(&arqReq, 0x1234, 0, 0, (uintptr_t)dirPtr, aMemP, size, ArqCallBack);
     return aMemP;
 }
 
@@ -276,14 +276,14 @@ void *HuAR_ARAMtoMRAMNum(AMEM_PTR aMemP, s32 num) {
     ARQueBuf[arqIdx].dst = dst;
     arqCnt++;
     PPCSync();
-    ARQPostRequest(&ARQueBuf[arqIdx].req, 0x1234, 1, 0, aMemP, (u32) dst, size, ArqCallBackAM);
+    ARQPostRequest(&ARQueBuf[arqIdx].req, 0x1234, 1, 0, aMemP, (uintptr_t) dst, size, ArqCallBackAM);
     arqIdx++;
     arqIdx &= 0xF;
     return dst;
 }
 
 static void ArqCallBackAM(u32 pointerToARQRequest) {
-    ARQUEREQ *request = (ARQUEREQ *) pointerToARQRequest;
+    ARQUEREQ *request = (ARQUEREQ *)(uintptr_t) pointerToARQRequest;
 
     arqCnt--;
     HuDataDirSet(request->dst, request->dir);
@@ -338,7 +338,7 @@ void *HuAR_ARAMtoMRAMFileRead(unsigned int dataNum, u32 num, HEAPID heap) {
     DCInvalidateRange(&preLoadBuf, sizeof(preLoadBuf));
     srcAMemP = aMemP + (u32)((u32)(((u16)dataNum + 1) * 4) & 0xFFFFFFFE0);
     arqCnt++;
-    ARQPostRequest(&ARQueBuf[arqIdx].req, 0x1234, 1, 0, srcAMemP, (u32) &preLoadBuf, sizeof(preLoadBuf), ArqCallBackAMFileRead);
+    ARQPostRequest(&ARQueBuf[arqIdx].req, 0x1234, 1, 0, srcAMemP, (uintptr_t) &preLoadBuf, sizeof(preLoadBuf), ArqCallBackAMFileRead);
     arqIdx++;
     arqIdx &= 0xF;
     while(HuARDMACheck());
@@ -357,7 +357,7 @@ void *HuAR_ARAMtoMRAMFileRead(unsigned int dataNum, u32 num, HEAPID heap) {
     DCFlushRangeNoSync(dvdBuf, size);
     arqCnt++;
     PPCSync();
-    ARQPostRequest(&ARQueBuf[arqIdx].req, 0x1234, 1, 0, srcAMemP, (u32) dvdBuf, (u32) size, ArqCallBackAMFileRead);
+    ARQPostRequest(&ARQueBuf[arqIdx].req, 0x1234, 1, 0, srcAMemP, (uintptr_t) dvdBuf, (u32) size, ArqCallBackAMFileRead);
     arqIdx++;
     arqIdx &= 0xF;
     while(HuARDMACheck());

@@ -69,7 +69,12 @@ struct omObj_s {
     HU3DMODELID *mdlId;
     u16 mtncnt;
     HU3DMOTID *mtnId;
+#ifdef TARGET_PC
+    /* objects store pointers to their own state in these slots */
+    uintptr_t work[4];
+#else
     u32 work[4];
+#endif
     void *data;
 };
 

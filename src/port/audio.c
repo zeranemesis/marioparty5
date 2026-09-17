@@ -1,6 +1,6 @@
 #include "game/audio.h"
 #include "game/memory.h"
-#include "game/msm.h"
+#include "msm.h"
 #include "game/object.h"
 #include "game/wipe.h"
 #include "game/gamework_data.h"

@@ -743,7 +743,7 @@ static s16 MgNameColorGet(u32 nameMes)
     char *mesPtr;
     s16 i;
     if(nameMes > 0x80000000) {
-        mesPtr = (char *)nameMes;
+        mesPtr = MESSNUM_TO_PTR(nameMes);
     } else {
         mesPtr = HuWinMesPtrGet(nameMes);
     }

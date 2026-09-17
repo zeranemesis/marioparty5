@@ -6,6 +6,7 @@
 
 #include "humath.h"
 #include "string.h"
+#include "game/gxarray.h"
 
 #define DRAW_OBJ_MAX 512
 
@@ -545,19 +546,19 @@ static void FaceDraw(HU3DDRAWOBJ *drawObj, HSFFACE *face)
                 GXClearVtxDesc();
                 GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
                 GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-                GXSetArray(GX_VA_POS, objPtr->mesh.vertex->data, sizeof(HuVecF));
+                GXSETARRAY(GX_VA_POS, objPtr->mesh.vertex->data, objPtr->mesh.vertex->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                 GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
                 if(modelP->hsf->cenvNum == 0) {
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S8, 0);
-                    GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, 3*sizeof(s8));
+                    GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*3*sizeof(s8), 3*sizeof(s8), TRUE);
                 } else {
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
-                    GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, sizeof(HuVecF));
+                    GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                 }
                 if(vtxMode & 4) {
                     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-                    GXSetArray(GX_VA_CLR0, objPtr->mesh.color->data, sizeof(GXColor));
+                    GXSETARRAY(GX_VA_CLR0, objPtr->mesh.color->data, objPtr->mesh.color->count*sizeof(GXColor), sizeof(GXColor), TRUE);
                 }
                 GXSetZCompLoc(GX_TRUE);
             }
@@ -627,7 +628,7 @@ static void FaceDraw(HU3DDRAWOBJ *drawObj, HSFFACE *face)
                 GXClearVtxDesc();
                 GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
                 GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-                GXSetArray(GX_VA_POS, objPtr->mesh.vertex->data, sizeof(HuVecF));
+                GXSETARRAY(GX_VA_POS, objPtr->mesh.vertex->data, objPtr->mesh.vertex->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                 if(vtxMode & 2) {
                     GXSetVtxDesc(GX_VA_NBT, GX_DIRECT);
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NBT, GX_NRM_NBT, GX_S16, 8);
@@ -635,19 +636,19 @@ static void FaceDraw(HU3DDRAWOBJ *drawObj, HSFFACE *face)
                     GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
                     if(modelP->hsf->cenvNum == 0) {
                         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S8, 0);
-                        GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, sizeof(s8)*3);
+                        GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*sizeof(s8)*3, sizeof(s8)*3, TRUE);
                     } else {
                         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
-                        GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, sizeof(HuVecF));
+                        GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                     }
                 }
                 GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
                 GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-                GXSetArray(GX_VA_TEX0, objPtr->mesh.st->data, sizeof(HuVec2f));
+                GXSETARRAY(GX_VA_TEX0, objPtr->mesh.st->data, objPtr->mesh.st->count*sizeof(HuVec2f), sizeof(HuVec2f), TRUE);
                 if(vtxMode & 4) {
                     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-                    GXSetArray(GX_VA_CLR0, objPtr->mesh.color->data, sizeof(GXColor));
+                    GXSETARRAY(GX_VA_CLR0, objPtr->mesh.color->data, objPtr->mesh.color->count*sizeof(GXColor), sizeof(GXColor), TRUE);
                 }
                 GXSetZCompLoc(GX_FALSE);
             }
@@ -1819,19 +1820,19 @@ static void FaceDrawShadow(HU3DDRAWOBJ *drawObj, HSFFACE *face)
                 GXClearVtxDesc();
                 GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
                 GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-                GXSetArray(GX_VA_POS, objPtr->mesh.vertex->data, sizeof(HuVecF));
+                GXSETARRAY(GX_VA_POS, objPtr->mesh.vertex->data, objPtr->mesh.vertex->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                 GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
                 if(modelP->hsf->cenvNum == 0) {
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S8, 0);
-                    GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, 3*sizeof(s8));
+                    GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*3*sizeof(s8), 3*sizeof(s8), TRUE);
                 } else {
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
-                    GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, sizeof(HuVecF));
+                    GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                 }
                 if(vtxMode & 4) {
                     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-                    GXSetArray(GX_VA_CLR0, objPtr->mesh.color->data, sizeof(GXColor));
+                    GXSETARRAY(GX_VA_CLR0, objPtr->mesh.color->data, objPtr->mesh.color->count*sizeof(GXColor), sizeof(GXColor), TRUE);
                 }
             }
             GXSetNumTexGens(0);
@@ -1851,7 +1852,7 @@ static void FaceDrawShadow(HU3DDRAWOBJ *drawObj, HSFFACE *face)
                 GXClearVtxDesc();
                 GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
                 GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-                GXSetArray(GX_VA_POS, objPtr->mesh.vertex->data, sizeof(HuVecF));
+                GXSETARRAY(GX_VA_POS, objPtr->mesh.vertex->data, objPtr->mesh.vertex->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                 if(vtxMode & 2) {
                     GXSetVtxDesc(GX_VA_NBT, GX_DIRECT);
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NBT, GX_NRM_NBT, GX_S16, 8);
@@ -1859,19 +1860,19 @@ static void FaceDrawShadow(HU3DDRAWOBJ *drawObj, HSFFACE *face)
                     GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
                     if(modelP->hsf->cenvNum == 0) {
                         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S8, 0);
-                        GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, 3*sizeof(s8));
+                        GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*3*sizeof(s8), 3*sizeof(s8), TRUE);
                     } else {
                         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
-                        GXSetArray(GX_VA_NRM, objPtr->mesh.normal->data, sizeof(HuVecF));
+                        GXSETARRAY(GX_VA_NRM, objPtr->mesh.normal->data, objPtr->mesh.normal->count*sizeof(HuVecF), sizeof(HuVecF), TRUE);
                     }
                 }
                 GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
                 GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-                GXSetArray(GX_VA_TEX0, objPtr->mesh.st->data, sizeof(HuVec2f));
+                GXSETARRAY(GX_VA_TEX0, objPtr->mesh.st->data, objPtr->mesh.st->count*sizeof(HuVec2f), sizeof(HuVec2f), TRUE);
                 if(vtxMode & 4) {
                     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
                     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-                    GXSetArray(GX_VA_CLR0, objPtr->mesh.color->data, sizeof(GXColor));
+                    GXSETARRAY(GX_VA_CLR0, objPtr->mesh.color->data, objPtr->mesh.color->count*sizeof(GXColor), sizeof(GXColor), TRUE);
                 }
             }
             GXSetNumTexGens(0);
@@ -2615,7 +2616,7 @@ static void MDFaceDraw(HSFOBJECT *objPtr, HSFFACE *face)
     if(matP != materialBak || polyTypeBak != (face->type & 7) || (face->type & 7) == 4) {
         polyTypeBak = face->type & 7;
         materialBak = matP;
-        DrawData[drawCnt].dlOfs = (u32) DLBufP - (u32) DLBufStartP;
+    DrawData[drawCnt].dlOfs = (u32)((uintptr_t) DLBufP - (uintptr_t) DLBufStartP);
         GXBeginDisplayList(DLBufP, 0x20000);
         GXResetWriteGatherPipe();
         if(matP->attrNum == 0) {
@@ -3329,10 +3330,10 @@ HSFOBJECT *Hu3DObjDuplicate(HSFDATA *hsf, u32 mallocNo)
         if(objPtr->type != HSF_OBJ_LIGHT && objPtr->type != HSF_OBJ_CAMERA) {
             if(objPtr->type == HSF_OBJ_REPLICA) {
                 HSFOBJECT *objReplicaP = objPtr;
-                objReplicaP->mesh.replica = (HSFOBJECT*) ((u8 *) objBuf + ((u32)objReplicaP->mesh.replica - (u32)hsf->object));
+                objReplicaP->mesh.replica = (HSFOBJECT*) ((u8 *) objBuf + ((uintptr_t)objReplicaP->mesh.replica - (uintptr_t)hsf->object));
             }
             if(objPtr->mesh.parent) {
-                objPtr->mesh.parent = (HSFOBJECT*) ((u8 *)objBuf + ((u32)srcObj->mesh.parent - (u32)hsf->object));
+                objPtr->mesh.parent = (HSFOBJECT*) ((u8 *)objBuf + ((uintptr_t)srcObj->mesh.parent - (uintptr_t)hsf->object));
             }
             objPtr->mesh.child = HuMemDirectMallocNum(HEAP_MODEL, srcObj->mesh.childNum*sizeof(HSFOBJECT *), mallocNo);
             if(srcObj->constData) {
@@ -3340,7 +3341,7 @@ HSFOBJECT *Hu3DObjDuplicate(HSFDATA *hsf, u32 mallocNo)
                 memcpy(objPtr->constData, srcObj->constData, sizeof(HSFCONSTDATA));
             }
             for(j = 0; j < srcObj->mesh.childNum; j++) {
-                objPtr->mesh.child[j] = (HSFOBJECT*) ((u8 *)objBuf + ((u32)srcObj->mesh.child[j] - (u32)hsf->object));
+                objPtr->mesh.child[j] = (HSFOBJECT*) ((u8 *)objBuf + ((uintptr_t)srcObj->mesh.child[j] - (uintptr_t)hsf->object));
             }
         }
     }

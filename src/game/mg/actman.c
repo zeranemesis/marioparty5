@@ -188,7 +188,7 @@ BOOL MgActorVecChase(MGACTOR *actorP, HuVecF *pos, float velZ, float radius)
 void MgPlayerVibrateCreate(MGPLAYER *playerP)
 {
     OMOBJ *obj = omAddObj(actmanWork.objman, 3000, 0, 0, ExecVibrate);
-    obj->work[0] = (u32)playerP;
+    obj->work[0] = (uintptr_t)playerP;
 }
 
 void MgPlayerVibrateKill(MGPLAYER *playerP)

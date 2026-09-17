@@ -29,6 +29,11 @@ PORTABLE = {"Matching", "Equivalent"}
 # DOL units the port replaces instead of compiling
 PC_REPLACED_UNITS = {
     "game/jmp.c",  # setjmp/longjmp in PowerPC assembly; processes use libco on PC
+    # THP movies need the DSP and the AI audio DMA, which Aurora does not
+    # provide; src/port/thp_stub.c skips them (see its comment).
+    "game/thpmain.c",
+    "game/THPSimple.c",
+    "game/THPDraw.c",
 }
 # port sources that are not part of the dol library
 PORT_EXCLUDED = {

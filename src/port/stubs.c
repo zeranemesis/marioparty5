@@ -4,7 +4,7 @@
 #include <types.h>
 
 #include <game/dvd.h>
-#include <game/msm.h>
+#include "msm.h"
 #include <game/object.h>
 
 // Credits: Super Monkey Ball

@@ -131,7 +131,7 @@ OMDLLINFO *omDLLLink(OMDLLINFO **dllInfoP, s16 dllno, s16 prologF)
 		OSReport("objdll> %s prolog end\n", dllFile->name);
 	}
 	return dll;
-#endif
+#else
 	dll->module = HuDvdDataReadDirect(dllFile->name, HEAP_HEAP);
 	dll->bss = HuMemDirectMalloc(HEAP_HEAP, dll->module->bssSize);
 	if(OSLink(&dll->module->info, dll->bss) != TRUE) {
@@ -146,6 +146,7 @@ OMDLLINFO *omDLLLink(OMDLLINFO **dllInfoP, s16 dllno, s16 prologF)
 		OSReport("objdll> %s prolog end\n", dllFile->name);
 	}
 	return dll;
+#endif
 }
 
 void omDLLUnlink(OMDLLINFO *dllInfo, s16 epilogF)
@@ -154,8 +155,7 @@ void omDLLUnlink(OMDLLINFO *dllInfo, s16 epilogF)
 #ifdef TARGET_PC
 	PortRelClose(dllInfo->handle);
 	HuMemDirectFree(dllInfo);
-	return;
-#endif
+#else
 	if(epilogF == TRUE) {
 		OSReport("objdll>Unlink DLL epilog\n");
 		((OMDLLEPILOG)dllInfo->module->epilog)();
@@ -167,6 +167,7 @@ void omDLLUnlink(OMDLLINFO *dllInfo, s16 epilogF)
 	HuMemDirectFree(dllInfo->bss);
 	HuMemDirectFree(dllInfo->module);
 	HuMemDirectFree(dllInfo);
+#endif
 }
 
 s32 omDLLSearch(s16 dllno)

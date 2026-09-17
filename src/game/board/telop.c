@@ -7,6 +7,7 @@
 #include "game/sprite.h"
 #include "game/esprite.h"
 #include "game/wipe.h"
+#include "game/gxarray.h"
 
 typedef struct TelopObjWork_s {
     unsigned killF : 1;
@@ -65,6 +66,9 @@ static ANIMDATA *telopAnim[4];
 
 static TELOPBUBBLE *telopBubbleData;
 static HuVec2f *telopBubbleVtx;
+#ifdef TARGET_PC
+static u32 telopBubbleVtxSize;
+#endif
 static u32 telopRetrace;
 static u32 telopDlSize;
 static GXColor bubbleBlendCol;
@@ -136,6 +140,9 @@ static void TelopObjCreate(OMOBJ *obj)
     telopRetrace = VIGetRetraceCount();
     TelopBubbleCreate(telopAnim[0]);
     telopBubbleVtx = HuMemDirectMallocNum(HEAP_HEAP, work->bubbleNum*sizeof(HuVec2f)*4, HU_MEMNUM_OVL);
+#ifdef TARGET_PC
+    telopBubbleVtxSize = work->bubbleNum*sizeof(HuVec2f)*4;
+#endif
     TelopDLCreate(work->bubbleNum);
     TelopBubbleUpdate();
     DCFlushRangeNoSync(telopBubbleVtx, work->bubbleNum*sizeof(HuVec2f));
@@ -361,7 +368,7 @@ static void TelopDraw(HU3DMODEL *modelP, Mtx *mtx)
             GXClearVtxDesc();
             GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
             GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_F32, 0);
-            GXSetArray(GX_VA_POS, telopBubbleVtx, sizeof(HuVec2f));
+            GXSETARRAY(GX_VA_POS, telopBubbleVtx, telopBubbleVtxSize, sizeof(HuVec2f), TRUE);
             GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
             GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
             GXCallDisplayList(telopDlBuf, telopDlSize);

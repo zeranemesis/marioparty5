@@ -122,7 +122,7 @@ void MBGateBattanCreate(int masuId)
     MBModelPosSetV(work->modelId, &pos);
     MBModelRotSet(work->modelId, 0, work->rotY, 0);
     work->obj = MBAddObj(260, 0, 0, GateBattanObjExec);
-    work->obj->work[0] = (u32)work;
+    work->obj->work[0] = (uintptr_t)work;
     gateBattanNum++;
 }
 
@@ -393,7 +393,7 @@ void MBGateDossunCreate(int masuId)
     MBModelPosSet(work->modelId, pos.x, startPos.y, pos.z);
     MBModelRotSet(work->modelId, 0, work->rotY, 0);
     work->obj = MBAddObj(260, 0, 0, GateDossunObjExec);
-    work->obj->work[0] = (u32)work;
+    work->obj->work[0] = (uintptr_t)work;
     gateDossunNum++;
 }
 

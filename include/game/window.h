@@ -6,7 +6,19 @@
 
 #include "dolphin.h"
 
+#ifdef TARGET_PC
+/*
+ * A 64-bit pointer does not fit in the 32 bits the game keeps message numbers
+ * in, so it registers a handle above 0x80000000 instead (src/port/messnum.c).
+ * The test the game already makes, messNum > 0x80000000, keeps working.
+ */
+#include "port/messnum.h"
+#define MESSNUM_PTR(ptr) HuWinMesPtrToNum((const char *)(ptr))
+#define MESSNUM_TO_PTR(messNum) HuWinMesNumToPtr(messNum)
+#else
 #define MESSNUM_PTR(ptr) ((u32)ptr)
+#define MESSNUM_TO_PTR(messNum) ((char *)(messNum))
+#endif
 
 #define HUWIN_NONE -1
 #define HUWIN_MAX 32

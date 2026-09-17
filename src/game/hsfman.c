@@ -458,7 +458,7 @@ HU3DMODELID Hu3DModelCreate(void *data)
         return HU3D_MODELID_NONE;
     }
     modelP->hsf = LoadHSF(data);
-    modelP->mallocNo = Hu3DMallocNo = (u32)modelP->hsf;
+    modelP->mallocNo = Hu3DMallocNo = (u32)(uintptr_t)modelP->hsf;
     modelP->attr = HU3D_ATTR_NONE;
     modelP->motAttr = HU3D_MOTATTR_NONE;
     modelP->projBit = 0;
@@ -533,10 +533,10 @@ HU3DMODELID Hu3DModelLink(HU3DMODELID linkMdlId)
     }
     modelP->hsfLink = linkModelP->hsf;
     modelP->hsf = HuMemDirectMalloc(HEAP_MODEL, sizeof(HSFDATA));
-    modelP->mallocNoLink = (u32)modelP->hsf;
+    modelP->mallocNoLink = (u32)(uintptr_t)modelP->hsf;
     *modelP->hsf = *linkModelP->hsf;
     objtop = Hu3DObjDuplicate(modelP->hsf, modelP->mallocNoLink);
-    modelP->hsf->root = (HSFOBJECT *)((char *)objtop+((u32)modelP->hsf->root-(u32)modelP->hsf->object));
+    modelP->hsf->root = (HSFOBJECT *)((char *)objtop+((uintptr_t)modelP->hsf->root-(uintptr_t)modelP->hsf->object));
     modelP->hsf->object = objtop;
     Hu3DAttrDuplicate(modelP->hsf, modelP->mallocNoLink);
     Hu3DMatDuplicate(modelP->hsf, modelP->mallocNoLink);

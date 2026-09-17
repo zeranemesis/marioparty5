@@ -49,6 +49,7 @@
 #include "messnum/board_star.h"
 #include "messnum/boardope.h"
 #include "messnum/teamname.h"
+#include "game/gxarray.h"
 
 typedef void (*CAPSULE_FUNC)(void);
 
@@ -16294,13 +16295,13 @@ void MBCapsuleRayEffDraw(HU3DMODEL *modelP, Mtx *mtx)
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    GXSetArray(GX_VA_POS, work->pos, sizeof(HuVecF));
+    GXSETARRAY(GX_VA_POS, work->pos, work->max*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-    GXSetArray(GX_VA_CLR0, work->color, sizeof(GXColor));
+    GXSETARRAY(GX_VA_CLR0, work->color, work->max*sizeof(GXColor)*4, sizeof(GXColor), TRUE);
     GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-    GXSetArray(GX_VA_TEX0, stTbl, sizeof(HuVec2f));
+    GXSETARRAY(GX_VA_TEX0, stTbl, sizeof(stTbl), sizeof(HuVec2f), TRUE);
     GXCallDisplayList(work->dl, work->dlSize);
 }
 
@@ -16616,15 +16617,15 @@ void MBCapsuleHanachanRingDraw(HU3DMODEL *modelP, Mtx *mtx)
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    GXSetArray(GX_VA_POS, work->pos, sizeof(HuVecF));
+    GXSETARRAY(GX_VA_POS, work->pos, 64*sizeof(HuVecF), sizeof(HuVecF), TRUE);
     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-    GXSetArray(GX_VA_TEX0, work->st, sizeof(HuVec2f));
+    GXSETARRAY(GX_VA_TEX0, work->st, 64*sizeof(HuVec2f), sizeof(HuVec2f), TRUE);
     for(i=0; i<32; i++, effDataP++) {
         if(effDataP->flag) {
-            GXSetArray(GX_VA_CLR0, &effDataP->color, sizeof(HANANCHAN_RING_DATA));
+            GXSETARRAY(GX_VA_CLR0, &effDataP->color, (32-i)*sizeof(HANANCHAN_RING_DATA), sizeof(HANANCHAN_RING_DATA), TRUE);
             mtxRot(model, effDataP->rot.x, effDataP->rot.y, effDataP->rot.z);
             mtxScaleCat(model, effDataP->scale, effDataP->scale, effDataP->scale);
             mtxTransCat(model, effDataP->pos.x, effDataP->pos.y, effDataP->pos.z);
@@ -18624,13 +18625,13 @@ static void CapsuleEffDraw(HU3DMODEL *modelP, Mtx *mtx)
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-        GXSetArray(GX_VA_POS, effP->vertex, sizeof(HuVecF));
+        GXSETARRAY(GX_VA_POS, effP->vertex, effP->num*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-        GXSetArray(GX_VA_CLR0, &effP->data->color, sizeof(CAPSULE_EFFDATA));
+        GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(CAPSULE_EFFDATA), sizeof(CAPSULE_EFFDATA), TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-        GXSetArray(GX_VA_TEX0, effP->st, sizeof(HuVec2f));
+        GXSETARRAY(GX_VA_TEX0, effP->st, effP->num*sizeof(HuVec2f)*4, sizeof(HuVec2f), TRUE);
         GXCallDisplayList(effP->dl, effP->dlSize);
         if(shadowModelDrawF == FALSE) {
             if(!(effP->attr & CAPSULE_EFF_ATTR_COUNTER_UPDATE)) {

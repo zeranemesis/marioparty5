@@ -21,6 +21,7 @@
 #include "datanum/capsule.h"
 #include "messnum/capsule_ex99.h"
 #include "messnum/capsule_ex98.h"
+#include "game/gxarray.h"
 
 typedef struct CapsuleData_s {
     unsigned int mdlFile;
@@ -5744,13 +5745,13 @@ static void DomeEffDraw(HU3DMODEL *modelP, Mtx *mtx)
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    GXSetArray(GX_VA_POS, effP->vtx, sizeof(HuVecF));
+    GXSETARRAY(GX_VA_POS, effP->vtx, effP->vtxNum*sizeof(HuVecF), sizeof(HuVecF), TRUE);
     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-    GXSetArray(GX_VA_CLR0, &effP->data->color, sizeof(DOME_EFF_DATA));
+    GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(DOME_EFF_DATA), sizeof(DOME_EFF_DATA), TRUE);
     GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-    GXSetArray(GX_VA_TEX0, effP->st, sizeof(HuVec2f));
+    GXSETARRAY(GX_VA_TEX0, effP->st, effP->vtxNum*sizeof(HuVec2f), sizeof(HuVec2f), TRUE);
     GXCallDisplayList(effP->dl, effP->dlSize);
 }
 
@@ -6083,13 +6084,13 @@ static void RayEffDraw(HU3DMODEL *modelP, Mtx *mtx)
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    GXSetArray(GX_VA_POS, effP->vtx, sizeof(HuVecF));
+    GXSETARRAY(GX_VA_POS, effP->vtx, effP->vtxNum*sizeof(HuVecF), sizeof(HuVecF), TRUE);
     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-    GXSetArray(GX_VA_CLR0, &effP->data->color, sizeof(RAY_EFF_DATA));
+    GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(RAY_EFF_DATA), sizeof(RAY_EFF_DATA), TRUE);
     GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-    GXSetArray(GX_VA_TEX0, effP->st, sizeof(HuVec2f));
+    GXSETARRAY(GX_VA_TEX0, effP->st, effP->vtxNum*sizeof(HuVec2f), sizeof(HuVec2f), TRUE);
     GXCallDisplayList(effP->dl, effP->dlSize);
 }
 
@@ -6604,13 +6605,13 @@ static void CapsuleEffDraw(HU3DMODEL *modelP, Mtx *mtx)
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-        GXSetArray(GX_VA_POS, effP->vertex, sizeof(HuVecF));
+        GXSETARRAY(GX_VA_POS, effP->vertex, effP->num*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-        GXSetArray(GX_VA_CLR0, &effP->data->color, sizeof(CAPSULE_EFFDATA));
+        GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(CAPSULE_EFFDATA), sizeof(CAPSULE_EFFDATA), TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-        GXSetArray(GX_VA_TEX0, effP->st, sizeof(HuVec2f));
+        GXSETARRAY(GX_VA_TEX0, effP->st, effP->num*sizeof(HuVec2f)*4, sizeof(HuVec2f), TRUE);
         GXCallDisplayList(effP->dl, effP->dlSize);
         if(shadowModelDrawF == FALSE) {
             if(!(effP->attr & CAPSULE_EFF_ATTR_COUNTER_UPDATE)) {

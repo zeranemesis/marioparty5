@@ -877,7 +877,7 @@ void MBCapMachineObjCreate(int masuId)
         MBCapsuleObjRotSetV(capsule->objId, &capsule->rot);
     }
     obj = MBAddObj(260, 0, 0, CapMachineObjMain);
-    obj->work[0] = (u32)work;
+    obj->work[0] = (uintptr_t)work;
     
 }
 

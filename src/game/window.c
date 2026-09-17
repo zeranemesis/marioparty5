@@ -1385,7 +1385,7 @@ void HuWinMesSet(HUWINID winId, u32 messNum)
             OSReport("Error: No Message data\n");
         }
     } else {
-        winP->messData = (void *)messNum;
+        winP->messData = MESSNUM_TO_PTR(messNum);
     }
     _HuWinHomeClear(winP);
     if(winP->attr & HUWIN_ATTR_ALIGN_CENTER) {
@@ -1414,7 +1414,7 @@ void HuWinInsertMesSet(HUWINID winId, u32 messNum, s16 insertMesNo)
             OSReport("Error: No Message data\n");
         }
     } else {
-        winP->messDataInsert[insertMesNo] = (void *)messNum;
+        winP->messDataInsert[insertMesNo] = MESSNUM_TO_PTR(messNum);
     }
 }
 
@@ -1702,7 +1702,7 @@ static void GetMesMaxSizeSub(u32 messNum)
     
     if(messNum > 0x80000000) {
         messDataF = FALSE;
-        messData = (char *)messNum;
+        messData = MESSNUM_TO_PTR(messNum);
     } else {
         messDataF = TRUE;
         messData = messDataOrig = HuWinMesPtrGet(messNum);
@@ -1808,7 +1808,7 @@ static s32 GetMesMaxSizeSub2(HUWIN *winP, void *data)
     
     for(i=0; i<HUWIN_INSERTMES_MAX; i++) {
         if(winP->messDataInsert[i]) {
-            HuWinInsertMesSizeGet((u32)winP->messDataInsert[i], i);
+            HuWinInsertMesSizeGet(MESSNUM_PTR(winP->messDataInsert[i]), i);
         }
     }
     messData = data;
@@ -1880,7 +1880,7 @@ s16 HuWinKeyWaitNumGet(u32 messNum)
     s16 waitNum;
     char *messData;
     if(messNum > 0x80000000) {
-        messData = (char *)messNum;
+        messData = MESSNUM_TO_PTR(messNum);
     } else {
         messData = HuWinMesPtrGet(messNum);
     }

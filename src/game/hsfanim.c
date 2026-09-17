@@ -4,6 +4,7 @@
 #include "game/main.h"
 
 #include "string.h"
+#include "game/gxarray.h"
 
 HU3DTEXANIM Hu3DTexAnimData[HU3D_TEXANIM_MAX];
 HU3DTEXSCROLL Hu3DTexScrData[HU3D_TEXSCROLL_MAX];
@@ -805,13 +806,13 @@ static void particleFunc(HU3DMODEL *modelP, Mtx *mtx)
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-        GXSetArray(GX_VA_POS, particleP->vtxBuf, sizeof(HuVecF));
+        GXSETARRAY(GX_VA_POS, particleP->vtxBuf, particleP->maxCnt*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-        GXSetArray(GX_VA_CLR0, &particleP->data->color, sizeof(HU3DPARTICLEDATA));
+        GXSETARRAY(GX_VA_CLR0, &particleP->data->color, particleP->maxCnt*sizeof(HU3DPARTICLEDATA), sizeof(HU3DPARTICLEDATA), TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-        GXSetArray(GX_VA_TEX0, baseST, sizeof(HuVec2f));
+        GXSETARRAY(GX_VA_TEX0, baseST, sizeof(baseST), sizeof(HuVec2f), TRUE);
         GXCallDisplayList(particleP->dlBuf, particleP->dlSize);
         totalPolyCnt += particleP->maxCnt;
     }

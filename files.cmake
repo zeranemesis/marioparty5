@@ -42,9 +42,6 @@ set(GAME_FILES
         src/game/armem.c
         src/game/charman.c
         src/game/mapspace.c
-        src/game/THPSimple.c
-        src/game/THPDraw.c
-        src/game/thpmain.c
         src/game/mgdata.c
         src/game/objsub.c
         src/game/flag.c
@@ -113,9 +110,12 @@ set(PORT_FILES
         src/port/io.cpp
         src/port/iso_validate.cpp
         src/port/iso_validate.hpp
+        src/port/messnum.c
         src/port/portmain.cpp
+        src/port/rel_loader.c
         src/port/settings.cpp
         src/port/stubs.c
+        src/port/thp_stub.c
         src/port/ui/achievements.cpp
         src/port/ui/achievements.hpp
         src/port/ui/bool_button.cpp

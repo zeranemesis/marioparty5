@@ -6,6 +6,7 @@
 #include "game/init.h"
 
 #include "game/disp.h"
+#include "game/gxarray.h"
 
 static OMOBJ *confettiEffObj;
 static OMOBJ *fadeEffObj;
@@ -534,13 +535,13 @@ static void EffectDraw(HU3DMODEL *modelP, Mtx *mtx)
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    GXSetArray(GX_VA_POS, effP->vertex, sizeof(HuVecF));
+    GXSETARRAY(GX_VA_POS, effP->vertex, effP->num*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
     GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-    GXSetArray(GX_VA_CLR0, &effP->data->color, sizeof(MBEFFECTDATA));
+    GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(MBEFFECTDATA), sizeof(MBEFFECTDATA), TRUE);
     GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-    GXSetArray(GX_VA_TEX0, effP->st, 8);
+    GXSETARRAY(GX_VA_TEX0, effP->st, effP->num*sizeof(HuVec2f)*4, 8, TRUE);
     GXSetCullMode(GX_CULL_NONE);
     GXLoadPosMtxImm(*mtx, 0);
     if(shadowModelDrawF != 0) {

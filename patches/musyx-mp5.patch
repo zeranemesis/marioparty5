@@ -1,0 +1,11 @@
+diff --git a/include/musyx/dspvoice.h b/include/musyx/dspvoice.h
+index d2401bc..d91df12 100644
+--- a/include/musyx/dspvoice.h
++++ b/include/musyx/dspvoice.h
+@@ -121,5 +121,5 @@ typedef struct DSPstudioinfo {
+ 
+ extern DSPstudioinfo dspStudio[8];
+ extern DSPvoice* dspVoice;
+-extern bool dspCompressorOn;
++extern u32 dspCompressorOn; /* defined as u32 in hw_dspctrl.c */
+ #endif

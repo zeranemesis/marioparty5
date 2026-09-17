@@ -3,6 +3,12 @@
 #include "game/main.h"
 #include "game/pad.h"
 
+#ifdef TARGET_PC
+/* Aurora's PADStatus names these triggerLeft and triggerRight */
+#define triggerL triggerLeft
+#define triggerR triggerRight
+#endif
+
 typedef struct PadRumble_s {
     s16 maxTime;
     s16 offTime;
