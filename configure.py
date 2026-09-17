@@ -844,12 +844,12 @@ config.libs = [
         "cflags": cflags_msm,
         "host": False,
         "objects": [
-            Object(NonMatching, "msm/msmsys.c"),
-            Object(Matching, "msm/msmmem.c"),
-            Object(Matching, "msm/msmfio.c"),
-            Object(NonMatching, "msm/msmmus.c"),
-            Object(NonMatching, "msm/msmse.c"),
-            Object(NonMatching, "msm/msmstream.c"),
+            Object(NonMatching, "msm/msmsys.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmmem.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmfio.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmmus.c", mw_version="GC/1.2.5"),
+            Object(NonMatching, "msm/msmse.c", mw_version="GC/1.2.5"),
+            Object(NonMatching, "msm/msmstream.c", mw_version="GC/1.2.5"),
         ],
     },
     {
