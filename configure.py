@@ -1846,7 +1846,7 @@ config.libs = [
     Rel(
         "partyresultdll",
         objects={
-            Object(NonMatching, "REL/partyresultdll/partyresult.c"),
+            Object(Matching, "REL/partyresultdll/partyresult.c"),
             Object(NonMatching, "REL/partyresultdll/result.c"),
             Object(NonMatching, "REL/partyresultdll/stat.c"),
             Object(Matching, "REL/partyresultdll/toueidisp.c"),
