@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=MP5 Native
+GenericName=MP5 Native
+Comment=Native port of the Mario Party 5 decompilation
+Exec=mp5native
+Icon=mp5native
+Terminal=false
+Type=Application
+Categories=Graphics;3DGraphics;Game

@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+}
+
+def mp5nativeRepoDir = rootProject.projectDir.parentFile.parentFile
+def mp5nativeGeneratedAssetsDir = layout.buildDirectory.dir('generated/assets/mp5native').get().asFile
+def syncMp5NativeAssets = tasks.register('syncMp5NativeAssets', Sync) {
+    from(new File(mp5nativeRepoDir, 'res')) {
+        into 'res'
+        exclude '**/.DS_Store'
+    }
+    into mp5nativeGeneratedAssetsDir
+}
+
+android {
+    namespace 'io.github.zeranemesis.mp5native'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'io.github.zeranemesis.mp5native'
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+            assets.srcDirs = [mp5nativeGeneratedAssetsDir]
+        }
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'x86_64'
+            universalApk false
+        }
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+tasks.configureEach { task ->
+    if ((task.name.startsWith('merge') && task.name.endsWith('Assets')) ||
+        task.name.toLowerCase().contains('lint')) {
+        task.dependsOn(syncMp5NativeAssets)
+    }
+}
