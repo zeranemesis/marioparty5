@@ -1865,9 +1865,9 @@ config.libs = [
         "resultDll",
         objects={
             Object(NonMatching, "REL/resultDll/result.c"),
-            Object(NonMatching, "REL/resultDll/stage.c"),
-            Object(NonMatching, "REL/resultDll/toueidisp.c"),
-            Object(NonMatching, "REL/resultDll/stagemodel.c"),
+            Object(Matching, "REL/resultDll/stage.c"),
+            Object(Matching, "REL/resultDll/toueidisp.c"),
+            Object(Matching, "REL/resultDll/stagemodel.c"),
             Object(NonMatching, "REL/resultDll/battle.c"),
             Object(NonMatching, "REL/resultDll/team.c"),
         },
