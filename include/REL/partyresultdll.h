@@ -16,6 +16,12 @@
 
 #include "messnum/teamname.h"
 
+extern HU3DMODELID PResPlayerModelId[8];
+extern s16 PResCharNo[GW_PLAYER_MAX];
+extern s32 PResLightId;
+
+void ToueiDispInit(HU3DMODELID *mdlId);
+
 u32 PResTeamNameMesGet(s16 charNo1, s16 charNo2);
 void PResBtnAWait(void);
 void PResComInputWait(void);
