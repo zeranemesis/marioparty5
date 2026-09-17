@@ -181,7 +181,7 @@ typedef struct msmStreamParam_s {
 
 s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram);
 BOOL msmSysSetOutputMode(SND_OUTPUTMODE mode);
-void msmSysSetGroupLoadMode(s8 mode);
+void msmSysSetGroupLoadMode(s32 mode);
 
 s32 msmSysDelGroupAll(void);
 s32 msmSysLoadGroup(s32 grp, void *buf, BOOL flag);
