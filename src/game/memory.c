@@ -51,7 +51,7 @@ static void *HuMemMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)
     do {
         if(!block->flag && block->size >= blockSize) {
             if(block->size-blockSize > 32u) {
-                MEMORY_BLOCK *new_block = (MEMORY_BLOCK *)(((u32)block)+blockSize);
+                MEMORY_BLOCK *new_block = (MEMORY_BLOCK *)(((uintptr_t)block)+blockSize);
                 new_block->size = block->size-blockSize;
                 new_block->magic = 205;
                 new_block->flag = 0;

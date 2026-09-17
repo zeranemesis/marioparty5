@@ -1,8 +1,14 @@
 #ifndef _GAME_PROCESS_H
 #define _GAME_PROCESS_H
 
-#include "game/jmp.h"
 #include "dolphin/types.h"
+
+#ifdef TARGET_PC
+/* processes are coroutines on PC: jmp.c switches stacks in PowerPC assembly */
+#include "libco/libco.h"
+#else
+#include "game/jmp.h"
+#endif
 
 #define HU_PRC_STAT_PAUSE 0x1
 #define HU_PRC_STAT_UPAUSE 0x2
@@ -29,8 +35,12 @@ struct Process_s {
     u16 stat;
     u16 prio;
     s32 sleep;
+#ifdef TARGET_PC
+    cothread_t thread;
+#else
     u32 spBase;
     jmp_buf jump;
+#endif
     void (*destructor)(void);
     void *property;
 };

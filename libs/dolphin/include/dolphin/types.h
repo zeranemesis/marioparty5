@@ -1,8 +1,10 @@
 #ifndef _DOLPHIN_TYPES
 #define _DOLPHIN_TYPES
 
-#ifdef TARGET_PC
+/* uintptr_t is how the port stores a pointer in a field the game keeps as u32 */
 #include <stdint.h>
+
+#ifdef TARGET_PC
 typedef int8_t s8;
 typedef int16_t s16;
 typedef int32_t s32;

@@ -237,7 +237,11 @@ static int HuDecodeZlib(DECODE *decode)
     src += 2;
     stream.next_in = (Bytef *)src;
     stream.next_out = decode->dst;
+#ifdef TARGET_PC
+    stream.avail_out = 0xFFFFFFFF;
+#else
     stream.avail_out = (uInt)(&dummy);
+#endif
     stream.zalloc = ZlibCalloc;
     stream.zfree = ZlibFree;
     result = inflateInit(&stream);

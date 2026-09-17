@@ -2,6 +2,10 @@
 #include "game/dvd.h"
 #include "game/memory.h"
 
+#ifdef TARGET_PC
+#include "port/rel_loader.h"
+#endif
+
 typedef BOOL (*OMDLLPROLOG)(void);
 typedef void (*OMDLLEPILOG)(void);
 
@@ -31,14 +35,26 @@ s32 omDLLStart(s16 dllno, s16 reloadF)
 	dll = omDLLSearch(dllno);
 	if(dll >= 0 && !reloadF) {
 		OMDLLINFO *dllP = omDLLinfoTbl[dll];
+#ifdef TARGET_PC
+		/*
+		 * The GameCube clears the module's bss and runs its prolog again. A
+		 * shared library cannot clear its bss alone, so it is loaded again,
+		 * which also restores its initialized data.
+		 */
+		OSReport("objdll>Already Loaded %s: reloading\n", dllP->name);
+		omDLLUnlink(dllP, FALSE);
+		omDLLinfoTbl[dll] = NULL;
+		omDLLLink(&omDLLinfoTbl[dll], dllno, TRUE);
+#else
 		OSReport("objdll>Already Loaded %s(%08x %08x)\n", dllP->name, dllP->module, dllP->bss);
-		
+
 		omDLLInfoDump(&dllP->module->info);
 		omDLLHeaderDump(dllP->module);
 		memset(dllP->bss, 0, dllP->module->bssSize);
 		HuMemDCFlushAll();
 		dllP->ret = ((OMDLLPROLOG)dllP->module->prolog)();
 		OSReport("objdll> %s prolog end\n", dllP->name);
+#endif
 		return dll;
 	} else {
 		for(dll=0; dll<OMDLLINFO_MAX; dll++) {
@@ -81,7 +97,10 @@ void omDLLEnd(s16 dll, s16 reloadF)
 		OMDLLINFO *dllP = omDLLinfoTbl[dll];
 		
 		OSReport("objdll>Call Epilog\n");
+#ifndef TARGET_PC
+		/* the epilog only runs C++ destructors, which C modules do not have */
 		((OMDLLEPILOG)dllP->module->epilog)();
+#endif
 		OSReport("objdll>End DLL stayed:%s\n", omDLLinfoTbl[dll]->name);
 	}
 	OSReport("objdll>End DLL finish\n");
@@ -97,6 +116,22 @@ OMDLLINFO *omDLLLink(OMDLLINFO **dllInfoP, s16 dllno, s16 prologF)
 	dll = HuMemDirectMalloc(HEAP_HEAP, sizeof(OMDLLINFO));
 	*dllInfoP = dll;
 	dll->name = dllFile->name;
+#ifdef TARGET_PC
+	dll->module = NULL;
+	dll->bss = NULL;
+	dll->ret = FALSE;
+	dll->handle = PortRelOpen(dllFile->name);
+	if(prologF == TRUE) {
+		PortRelFunc objectSetup = PortRelSymbol(dll->handle, "ObjectSetup");
+		OSReport("objdll> %s prolog start\n", dllFile->name);
+		if(objectSetup) {
+			objectSetup();
+			dll->ret = TRUE;
+		}
+		OSReport("objdll> %s prolog end\n", dllFile->name);
+	}
+	return dll;
+#endif
 	dll->module = HuDvdDataReadDirect(dllFile->name, HEAP_HEAP);
 	dll->bss = HuMemDirectMalloc(HEAP_HEAP, dll->module->bssSize);
 	if(OSLink(&dll->module->info, dll->bss) != TRUE) {
@@ -116,6 +151,11 @@ OMDLLINFO *omDLLLink(OMDLLINFO **dllInfoP, s16 dllno, s16 prologF)
 void omDLLUnlink(OMDLLINFO *dllInfo, s16 epilogF)
 {
 	OSReport("odjdll>Unlink DLL:%s\n", dllInfo->name);
+#ifdef TARGET_PC
+	PortRelClose(dllInfo->handle);
+	HuMemDirectFree(dllInfo);
+	return;
+#endif
 	if(epilogF == TRUE) {
 		OSReport("objdll>Unlink DLL epilog\n");
 		((OMDLLEPILOG)dllInfo->module->epilog)();

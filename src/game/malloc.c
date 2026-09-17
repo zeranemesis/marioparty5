@@ -11,6 +11,10 @@ void HuMemInitAll(void)
     void *ptr;
     u32 free_size;
     for(i=0; i<4; i++) {
+#ifdef TARGET_PC
+        /* structures holding pointers are larger on a 64-bit host */
+        HeapSizeTbl[i] *= 4;
+#endif
         ptr = OSAlloc(HeapSizeTbl[i]);
         if(ptr == NULL) {
             OSReport("HuMem> Failed OSAlloc Size:%d(left:%x)\n", HeapSizeTbl[i], OSCheckHeap(currentHeapHandle));
@@ -47,49 +51,69 @@ void HuMemDCFlush(HEAPID heap)
 
 void *HuMemDirectMalloc(HEAPID heap, s32 size)
 {
+#ifdef TARGET_PC
+    u32 retaddr = 0; /* only reported in allocation errors */
+#else
     register u32 retaddr;
     asm {
         mflr retaddr
     }
+#endif
     size = OSRoundUp32B(size);
     return HuMemMemoryAlloc(HeapTbl[heap], size, retaddr);
 }
 
 void *HuMemDirectMallocNum(HEAPID heap, s32 size, u32 num)
 {
+#ifdef TARGET_PC
+    u32 retaddr = 0; /* only reported in allocation errors */
+#else
     register u32 retaddr;
     asm {
         mflr retaddr
     }
+#endif
     size = OSRoundUp32B(size);
     return HuMemMemoryAllocNum(HeapTbl[heap], size, num, retaddr);
 }
 
 void *HuMemDirectTailMalloc(HEAPID heap, s32 size)
 {
+#ifdef TARGET_PC
+    u32 retaddr = 0; /* only reported in allocation errors */
+#else
     register u32 retaddr;
     asm {
         mflr retaddr
     }
+#endif
     size = OSRoundUp32B(size);
     return HuMemTailMemoryAlloc(HeapTbl[heap], size, retaddr);
 }
 
 void HuMemDirectFree(void *ptr)
 {
+#ifdef TARGET_PC
+    u32 retaddr = 0; /* only reported in allocation errors */
+#else
     register u32 retaddr;
     asm {
         mflr retaddr
     }
+#endif
     HuMemMemoryFree(ptr, retaddr);
 }
 
 void HuMemDirectFreeNum(HEAPID heap, u32 num)
 {
+#ifdef TARGET_PC
+    u32 retaddr = 0; /* only reported in allocation errors */
+#else
     register u32 retaddr;
     asm {
         mflr retaddr
     }
+#endif
     HuMemMemoryFreeNum(HeapTbl[heap], num, retaddr);
 }
 

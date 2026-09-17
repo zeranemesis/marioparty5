@@ -5,7 +5,18 @@
 #define FAKE_RETADDR 0xA5A5A5A5
 
 
+#ifdef TARGET_PC
+/*
+ * The scheduler runs on the caller's context (processthread). A process gives
+ * control back with co_switch after setting threadret, which plays the role of
+ * the value gclongjmp passed to the scheduler: 1 = next process, 2 = the
+ * current process ended and its heap must be freed.
+ */
+static cothread_t processthread;
+static s32 threadret;
+#else
 static jmp_buf processjmpbuf;
+#endif
 static HUPROCESS *processtop;
 static HUPROCESS *processcur;
 static u16 processcnt;
@@ -59,9 +70,15 @@ HUPROCESS *HuPrcCreate(void (*func)(void), u16 prio, u32 stackSize, s32 heapSize
     if(stackSize == 0) {
         stackSize = 2048;
     }
+#ifdef TARGET_PC
+    /* the stack is owned by libco; host frames are several times larger than on PowerPC */
+    allocSize = HuMemMemoryAllocSizeGet(sizeof(HUPROCESS))
+                    +HuMemMemoryAllocSizeGet(heapSize);
+#else
     allocSize = HuMemMemoryAllocSizeGet(sizeof(HUPROCESS))
                     +HuMemMemoryAllocSizeGet(stackSize)
                     +HuMemMemoryAllocSizeGet(heapSize);
+#endif
     if(!(heap = HuMemDirectMalloc(HEAP_HEAP, allocSize))) {
         OSReport("process> malloc error size %d\n", allocSize);
         return NULL;
@@ -73,10 +90,14 @@ HUPROCESS *HuPrcCreate(void (*func)(void), u16 prio, u32 stackSize, s32 heapSize
     process->stat = 0;
     process->prio = prio;
     process->sleep = 0;
+#ifdef TARGET_PC
+    process->thread = co_create(stackSize * 8 < 0x10000 ? 0x10000 : stackSize * 8, func);
+#else
     process->spBase = ((u32)HuMemMemoryAlloc(heap, stackSize, FAKE_RETADDR))+stackSize-8;
     gcsetjmp(&process->jump);
     process->jump.lr = (u32)func;
     process->jump.sp = process->spBase;
+#endif
     process->destructor = NULL;
     process->property = NULL;
     LinkProcess(&processtop, process);
@@ -125,9 +146,14 @@ void HuPrcChildWatch()
     HUPROCESS *curr = HuPrcCurrentGet();
     if(curr->child) {
         curr->exec = HUPRC_EXEC_CHILDWATCH;
+#ifdef TARGET_PC
+        threadret = 1;
+        co_switch(processthread);
+#else
         if(!gcsetjmp(&curr->jump)) {
             gclongjmp(&processjmpbuf, 1);
         }
+#endif
     }
 }
 
@@ -177,7 +203,12 @@ static void gcTerminateProcess(HUPROCESS *process)
     }
     UnlinkProcess(&processtop, process);
     processcnt--;
+#ifdef TARGET_PC
+    threadret = 2;
+    co_switch(processthread);
+#else
     gclongjmp(&processjmpbuf, 2);
+#endif
 }
 
 void HuPrcEnd()
@@ -195,9 +226,14 @@ void HuPrcSleep(s32 time)
         process->exec = HUPRC_EXEC_SLEEP;
         process->sleep = time;
     }
+#ifdef TARGET_PC
+    threadret = 1;
+    co_switch(processthread);
+#else
     if(!gcsetjmp(&process->jump)) {
         gclongjmp(&processjmpbuf, 1);
     }
+#endif
 }
 
 void HuPrcVSleep()
@@ -226,14 +262,34 @@ void HuPrcCall(s32 tick)
     HUPROCESS *process;
     s32 ret;
     processcur = processtop;
+#ifdef TARGET_PC
+    processthread = co_active();
+    ret = 0;
+#else
     ret = gcsetjmp(&processjmpbuf);
+#endif
     while(1) {
         switch(ret) {
             case 2:
+#ifdef TARGET_PC
+            {
+                /* the process header lives in the heap being freed */
+                HUPROCESS *next = processcur->next;
+                co_delete(processcur->thread);
                 HuMemDirectFree(processcur->heap);
+                processcur = next;
+                break;
+            }
+#else
+                HuMemDirectFree(processcur->heap);
+#endif
             case 1:
                 if(((u8 *)(processcur->heap))[4] != 165) {
+#ifdef TARGET_PC
+                    printf("stack overlap error.(process pointer %p)\n", (void *)processcur);
+#else
                     printf("stack overlap error.(process pointer %x)\n", processcur);
+#endif
                     while(1);
                 } else {
                     processcur = processcur->next;
@@ -244,7 +300,9 @@ void HuPrcCall(s32 tick)
         if(!process) {
             return;
         }
+#ifndef TARGET_PC
         procfunc = process->jump.lr;
+#endif
         if((process->stat & (HU_PRC_STAT_PAUSE|HU_PRC_STAT_UPAUSE)) && process->exec != HUPRC_EXEC_KILLED) {
             ret = 1;
             continue;
@@ -271,9 +329,22 @@ void HuPrcCall(s32 tick)
                 break;
                 
             case HUPRC_EXEC_KILLED:
+#ifdef TARGET_PC
+                /* HuPrcEnd switches to processthread, which is already running */
+                HuPrcEnd();
+                ret = threadret;
+                continue;
+#else
                 process->jump.lr = (u32)HuPrcEnd;
+#endif
             case HUPRC_EXEC_NORMAL:
+#ifdef TARGET_PC
+                co_switch(process->thread);
+                ret = threadret;
+                continue;
+#else
                 gclongjmp(&process->jump, 1);
+#endif
                 break;
         }
     }

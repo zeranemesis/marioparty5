@@ -10,6 +10,9 @@ typedef struct omDllinfo_s {
 	OSModuleHeader *module;
 	void *bss;
 	s32 ret;
+#ifdef TARGET_PC
+	void *handle; /* shared library built for the REL */
+#endif
 } OMDLLINFO;
 
 void omDLLDBGOut(void);

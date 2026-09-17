@@ -126,8 +126,8 @@ static void InitMem()
     u32 *fb1;
     u32 *fb2;
     u32 i;
-    DemoFrameBuffer1 = (void *)OSRoundUp32B((u32)arenaLo);
-    DemoFrameBuffer2 = (void *)OSRoundUp32B((u32)DemoFrameBuffer1+fbSize);
+    DemoFrameBuffer1 = (void *)OSRoundUp32B((uintptr_t)arenaLo);
+    DemoFrameBuffer2 = (void *)OSRoundUp32B((uintptr_t)DemoFrameBuffer1+fbSize);
     DemoCurrentBuffer = DemoFrameBuffer2;
     fb1 = DemoFrameBuffer1;
     fb2 = DemoFrameBuffer2;
@@ -136,7 +136,7 @@ static void InitMem()
     }
     DCStoreRangeNoSync(DemoFrameBuffer1, fbSize);
     DCStoreRangeNoSync(DemoFrameBuffer2, fbSize);
-    arenaLo = (void *)OSRoundUp32B((u32)DemoFrameBuffer2+fbSize);
+    arenaLo = (void *)OSRoundUp32B((uintptr_t)DemoFrameBuffer2+fbSize);
     OSSetArenaLo(arenaLo);
     if(OSGetConsoleType() == OS_CONSOLE_DEVHW1 && OSGetPhysicalMemSize() != 0x400000 && OSGetConsoleSimulatedMemSize() < 0x1800000) {
         LoadMemInfo();
@@ -145,8 +145,8 @@ static void InitMem()
         arenaHi = OSGetArenaHi();
         arenaLo = OSInitAlloc(arenaLo, arenaHi, 1);
         OSSetArenaLo(arenaLo);
-        arenaLo = (void *)OSRoundUp32B((u32)arenaLo);
-        arenaHi = (void *)OSRoundDown32B((u32)arenaHi);
+        arenaLo = (void *)OSRoundUp32B((uintptr_t)arenaLo);
+        arenaHi = (void *)OSRoundDown32B((uintptr_t)arenaHi);
         OSSetCurrentHeap(currentHeapHandle = OSCreateHeap(arenaLo, arenaHi));
         arenaLo = arenaHi;
         OSSetArenaLo(arenaLo);
@@ -243,22 +243,22 @@ static void LoadMemInfo()
         arenaHi = OSGetArenaHi();
         arenaLo = OSInitAlloc(arenaLo, arenaHi, 1);
         OSSetArenaLo(arenaLo);
-        arenaLo = (void *)OSRoundUp32B((u32)arenaLo);
-        arenaHi = (void *)OSRoundDown32B((u32)arenaHi);
+        arenaLo = (void *)OSRoundUp32B((uintptr_t)arenaLo);
+        arenaHi = (void *)OSRoundDown32B((uintptr_t)arenaHi);
         OSSetCurrentHeap(OSCreateHeap(arenaLo, arenaHi));
         arenaLo = arenaHi;
         OSSetArenaLo(arenaLo);
     } else {
-        buf_ptr = (struct memory_info *)OSRoundUp32B((u32)buf);
+        buf_ptr = (struct memory_info *)OSRoundUp32B((uintptr_t)buf);
         alloc_max = OSGetArenaHi();
-        alloc_min = (void *)(OSGetConsoleSimulatedMemSize()+0x80000000);
-        OSSetArenaHi((void *)(OSGetPhysicalMemSize()+0x80000000));
+        alloc_min = (void *)(uintptr_t)(OSGetConsoleSimulatedMemSize()+0x80000000);
+        OSSetArenaHi((void *)(uintptr_t)(OSGetPhysicalMemSize()+0x80000000));
         arenaLo = OSGetArenaLo();
         arenaHi = OSGetArenaHi();
         arenaLo = OSInitAlloc(arenaLo, arenaHi, 1);
         OSSetArenaLo(arenaLo);
-        arenaLo = (void *)OSRoundUp32B((u32)arenaLo);
-        arenaHi = (void *)OSRoundDown32B((u32)arenaHi);
+        arenaLo = (void *)OSRoundUp32B((uintptr_t)arenaLo);
+        arenaHi = (void *)OSRoundDown32B((uintptr_t)arenaHi);
         OSSetCurrentHeap(OSCreateHeap(arenaLo, arenaHi));
         arenaLo = arenaHi;
         OSSetArenaLo(arenaLo);
@@ -275,7 +275,7 @@ static void LoadMemInfo()
             for(i=0; i<entries; i++) {
                 OSReport("start: 0x%08x, end: 0x%08x\n", buf_ptr[i].start, buf_ptr[i].end);
                 OSAllocFixed(&buf_ptr[i].start, &buf_ptr[i].end);
-                OSReport("Removed 0x%08x - 0x%08x from the current heap\n", buf_ptr[i].start, (u32)buf_ptr[i].end-1);
+                OSReport("Removed 0x%08x - 0x%08x from the current heap\n", buf_ptr[i].start, (uintptr_t)buf_ptr[i].end-1);
             }
             size -= copy_size;
             offset += copy_size;

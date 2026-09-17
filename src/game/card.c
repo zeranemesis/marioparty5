@@ -10,7 +10,11 @@ static void MountCallBack(s32 chan, s32 result);
 
 void HuCardInit(void)
 {
+#ifdef TARGET_PC
+	CARDInit("GP5E", "01");
+#else
 	CARDInit();
+#endif
 	cardWork = HuMemDirectMalloc(HEAP_HEAP, CARD_WORKAREA_SIZE);
 }
 

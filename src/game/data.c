@@ -629,7 +629,7 @@ static void *HuDataDecodeIt(void *bufP, s32 bufOfs, s32 num, HEAPID heap)
 	
 	void *dest;
 	buf =  (s32 *)((u8 *)bufP+bufOfs);
-	if((u32)buf & 0x3) {
+	if((uintptr_t)buf & 0x3) {
 		u8 *data = (u8 *)buf;
 		rawLen = *data++ << 24;
 		rawLen += *data++ << 16;

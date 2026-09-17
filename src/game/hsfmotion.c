@@ -990,7 +990,10 @@ void Hu3DSubMotionExec(HU3DMODELID modelId)
     }
 }
 
-__declspec(weak) float *GetObjTRXPtr(HSFOBJECT *objPtr, u16 channel)
+#ifdef __MWERKS__
+__declspec(weak)
+#endif
+float *GetObjTRXPtr(HSFOBJECT *objPtr, u16 channel)
 {
     HSFCONSTDATA *constData = objPtr->constData;
     if(channel <= HSF_CHANNEL_POSZ) {
@@ -1432,7 +1435,10 @@ float GetLinear(s32 keyNum, HSFLINEARKEY *key, float time)
     return key[keyNum-1][1];
 }
 
-__declspec(weak) float GetBezier(s32 keyNum, HSFTRACK *trackP, float time)
+#ifdef __MWERKS__
+__declspec(weak)
+#endif
+float GetBezier(s32 keyNum, HSFTRACK *trackP, float time)
 {
     HSFBEZIERKEY *key = trackP->data;
     HSFBEZIERKEY *keyPrev;
