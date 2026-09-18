@@ -3,6 +3,9 @@
 #include "game/init.h"
 
 #include "dolphin/mtx.h"
+#ifdef TARGET_PC
+#include "port/spranim.h"
+#endif
 
 #define HUSPR_ORDER_MAX 768
 
@@ -212,6 +215,10 @@ void HuSprPauseSet(BOOL value)
 
 ANIMDATA *HuSprAnimRead(void *data)
 {
+#ifdef TARGET_PC
+    /* an ANM file cannot hold host pointers: src/port/spranim_pc.c converts it */
+    return PortSprAnimRead(data);
+#else
     s16 i;
     ANIMBMP *bmp;
     ANIMBANK *bank;
@@ -240,6 +247,7 @@ ANIMDATA *HuSprAnimRead(void *data)
     }
     anim->useNum = 0;
     return anim;
+#endif
 }
 
 void HuSprAnimLock(ANIMDATA *anim)
@@ -398,6 +406,10 @@ void HuSprKill(HUSPRID sprId)
 void HuSprAnimKill(ANIMDATA *anim)
 {
     if(--anim->useNum <= 0) {
+#ifdef TARGET_PC
+        /* its file may be read again after this */
+        PortSprAnimForget(anim);
+#endif
         if(anim->bmpNum & ANIM_BMP_ALLOC) {
             if(anim->bmp->data) {
                 HuMemDirectFree(anim->bmp->data);

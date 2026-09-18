@@ -15,7 +15,6 @@ set(GAME_FILES
         src/game/process.c
         src/game/sprman.c
         src/game/sprput.c
-        src/game/hsfload.c
         src/game/hsfdraw.c
         src/game/hsfman.c
         src/game/hsfmotion.c
@@ -99,11 +98,11 @@ set(GAME_FILES
 set(PORT_FILES
         src/port/OS.c
         src/port/achievements.cpp
-        src/port/audio.c
         src/port/config.cpp
         src/port/dolassets.cpp
         src/port/file_select.cpp
         src/port/file_select.hpp
+        src/port/hsfload_pc.c
         src/port/imgui.cpp
         src/port/imgui/ImGuiEngine.hpp
         src/port/io.cpp
@@ -113,6 +112,7 @@ set(PORT_FILES
         src/port/portmain.cpp
         src/port/rel_loader.c
         src/port/settings.cpp
+        src/port/spranim_pc.c
         src/port/stubs.c
         src/port/thp_stub.c
         src/port/ui/achievements.cpp

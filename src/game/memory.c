@@ -111,6 +111,13 @@ static void *HuMemTailMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)
     return NULL;
 }
 
+#ifdef TARGET_PC
+u32 HuMemNumGet(void *ptr)
+{
+    return ptr ? DATA_GET_BLOCK(ptr)->num : 0;
+}
+#endif
+
 void HuMemMemoryFreeNum(void *heap, u32 num, u32 retAddr)
 {
     MEMORY_BLOCK *block = heap;

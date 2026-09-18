@@ -478,9 +478,8 @@ void msmSeStopAll(BOOL checkGrp, s32 speed)
 {
 }
 
-BOOL msmSysSetOutputMode(SND_OUTPUTMODE mode)
+void msmSysSetOutputMode(SND_OUTPUTMODE mode)
 {
-    return TRUE;
 }
 
 void OSSetSoundMode(u32 mode)

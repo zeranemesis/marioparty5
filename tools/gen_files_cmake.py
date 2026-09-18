@@ -34,6 +34,10 @@ PC_REPLACED_UNITS = {
     "game/thpmain.c",
     "game/THPSimple.c",
     "game/THPDraw.c",
+    # the HSF loader reads a model straight into the game's structures, which
+    # needs 4-byte pointers and big-endian values; src/port/hsfload_pc.c
+    # converts each record instead.
+    "game/hsfload.c",
 }
 # port sources that are not part of the dol library
 PORT_EXCLUDED = {
