@@ -851,12 +851,12 @@ config.libs = [
         "cflags": cflags_msm,
         "host": False,
         "objects": [
-            Object(NonMatching, "msm/msmsys.c"),
-            Object(NonMatching, "msm/msmmem.c"),
-            Object(NonMatching, "msm/msmfio.c"),
-            Object(NonMatching, "msm/msmmus.c"),
-            Object(NonMatching, "msm/msmse.c"),
-            Object(NonMatching, "msm/msmstream.c"),
+            Object(Equivalent, "msm/msmsys.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmmem.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmfio.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmmus.c", mw_version="GC/1.2.5"),
+            Object(Matching, "msm/msmse.c", mw_version="GC/1.2.5"),
+            Object(NonMatching, "msm/msmstream.c", mw_version="GC/1.2.5"),
         ],
     },
     {
