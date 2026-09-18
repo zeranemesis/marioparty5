@@ -100,7 +100,6 @@ set(PORT_FILES
         src/port/OS.c
         src/port/achievements.cpp
         src/port/audio.c
-        src/port/byteswap.cpp
         src/port/config.cpp
         src/port/dolassets.cpp
         src/port/file_select.cpp

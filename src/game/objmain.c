@@ -81,6 +81,29 @@ static void omWatchOverlayProc(void)
                 MgActorInit();
                 omcurdll = omDLLStart(omcurovl, FALSE);
                 OSReport("objman>ObjectSetup end\n");
+#ifdef TARGET_PC
+                /*
+                 * A module that is not decompiled yet has no shared library,
+                 * so nothing created the objects this overlay is made of.
+                 * Going back where we came from keeps the game usable instead
+                 * of watching for children that will never exist; giving up
+                 * after twice avoids bouncing between two absent overlays.
+                 */
+                if(omcurdll < 0 || omDLLinfoTbl[omcurdll]->handle == NULL) {
+                    static OMOVL missingOvl = DLL_NONE;
+                    OMOVL failedOvl = omcurovl;
+                    OSReport("objman>overlay %d is not part of this build\n", failedOvl);
+                    omcurovl = DLL_NONE;
+                    if(missingOvl == failedOvl) {
+                        OSReport("objman>no overlay left to go back to, staying here\n");
+                        missingOvl = DLL_NONE;
+                        continue;
+                    }
+                    missingOvl = failedOvl;
+                    omOvlReturnEx(1, TRUE);
+                    continue;
+                }
+#endif
                 if(omcurovl != DLL_NONE) {
                     goto watch;
                 } else {
