@@ -103,10 +103,8 @@ void M506PlayerCreate(OMOBJ *obj)
     player->padNo = GwPlayerConf[player->no].padNo;
     player->playerType = GwPlayerConf[player->no].type;
     player->comDif = GwPlayerConf[player->no].dif;
-    player->unk10 = 0;
-    player->unkC = 0;
-    player->height = 0;
-    player->newHeight = 0;
+    player->unkC = player->unk10 = 0;
+    player->newHeight = player->height = 0;
     player->motId = 0;
     player->curDir = -1;
     player->upJumpF = 0;
