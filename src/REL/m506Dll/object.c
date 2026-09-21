@@ -45,7 +45,7 @@ typedef struct M506Flow_s {
     u8 unk5D[3];                               //0x05D
     M506_BOUNCE bounce[M506_PLAYER_MAX];       //0x060
     u8 unkB0[0x20];                            //0x0B0
-    u8 stopFlag[M506_PLAYER_MAX];              //0x0D0
+    s8 stopFlag[M506_PLAYER_MAX];              //0x0D0
     u8 unkD4[8];                               //0x0D4
     s16 recordEspId;                           //0x0DC
     u8 unkDE[8];                               //0x0DE
@@ -188,7 +188,7 @@ static f32 ScrollHeight;
 static f32 ScrollAngle;
 static s32 MameShadowF;
 static s8 lbl_1_bss_28;
-static u8 RecordInitF;
+static s8 RecordInitF;
 static s32 SeedInitF;
 static f32 LookUpCurrRot;
 static s32 StartFXFlag;
@@ -369,19 +369,19 @@ BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
         flow->unk110 += 0.008333334f;
         flow->unk108 += 5.4166665f;
         LookUpCurrRot -= (LookUpRotTbl[flow->player[0]->charNo].up - LookUpRotTbl[flow->player[0]->charNo].down) / 120.0f;
-        if (flow->unk10C == 360.0f) {
+        if (flow->unk10C >= 360.0f) {
             flow->unk10C = 360.0f;
         }
-        if (flow->unk110 == 1.0f) {
+        if (flow->unk110 >= 1.0f) {
             flow->unk110 = 1.0f;
         }
-        if (flow->unk108 == 0.0f) {
+        if (flow->unk108 >= 0.0f) {
             flow->unk108 = 0.0f;
         }
-        if (LookUpCurrRot == LookUpRotTbl[flow->player[0]->charNo].down) {
+        if (LookUpCurrRot <= LookUpRotTbl[flow->player[0]->charNo].down) {
             LookUpCurrRot = LookUpRotTbl[flow->player[0]->charNo].down;
         }
-        if (flow->unk108 == -108.333374f) {
+        if (flow->unk108 >= -108.333374f) {
             M506ShadowScrollInit(flow);
         }
         if (flow->unk108 == 0.0f) {
@@ -398,7 +398,7 @@ BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
     case 3:
         M506ShadowScrollInit(flow);
         flow->timer += 1.0f;
-        if (flow->timer == 15.0f) {
+        if (flow->timer >= 15.0f) {
             M506YCameraViewSet(0, 2);
             flow->unk30 = 0;
             flow->unk118 = 1.0f;
@@ -410,18 +410,18 @@ BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
         M506FlowP1Update(flow);
         M506YCameraViewLerp(0, 2);
         M506YCamera->splitTime += 0.008333334f;
-        if (M506YCamera->splitTime == 1.0f) {
+        if (M506YCamera->splitTime >= 1.0f) {
             M506YCamera->splitTime = 1.0f;
         }
         M506YCameraProjUpdate();
         if (flow->player[0]->charNo != 8) {
             LookUpCurrRot += (LookUpRotTbl[flow->player[0]->charNo].up - LookUpRotTbl[flow->player[0]->charNo].down) / 60.0f;
-            if (LookUpCurrRot == LookUpRotTbl[flow->player[0]->charNo].up) {
+            if (LookUpCurrRot >= LookUpRotTbl[flow->player[0]->charNo].up) {
                 LookUpCurrRot = LookUpRotTbl[flow->player[0]->charNo].up;
             }
             Hu3DMotionForceSet(flow->playerObj[0]->mdlId[0], lbl_1_data_298, LookUpRotLockFlag[flow->player[0]->charNo], LookUpCurrRot);
         }
-        if (M506YCamera->splitTime == 1.0f) {
+        if (M506YCamera->splitTime >= 1.0f) {
             int i;
             for (i = 0; i < 3; i++) {
                 espDispOn(M506YCamera->splitSprId[i]);
@@ -455,9 +455,9 @@ void M506FlowModeStartSetup(M506_FLOW_WORK *flow)
     flow->unk114 = 0.0f;
     flow->unk118 = 0.0f;
     flow->unk11C = 120.0f;
-    Hu3DModelAttrReset(flow->work->seedMdlId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrReset(flow->work->seedMdlId, HU3D_ATTR_DISPOFF);
     Hu3DModelRotSet(flow->work->moundMdlId, 0.0f, 0.0f, 0.0f);
-    Hu3DModelAttrReset(flow->work->moundMdlId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrReset(flow->work->moundMdlId, HU3D_ATTR_DISPOFF);
     Hu3DModelAttrReset(flow->work->moundMdlId, HU3D_MOTATTR_LOOP);
     Hu3DMotionSpeedSet(flow->work->moundMdlId, 0.5f);
     Hu3DMotionTimeSet(flow->work->moundMdlId, 0.0f);
@@ -492,7 +492,7 @@ BOOL M506ShadowScrollInit(M506_FLOW_WORK *flow)
     switch (flow->shadowScrollState) {
     case 0:
         flow->unk118 += 0.06666667f;
-        if (flow->unk118 == 1.0f) {
+        if (flow->unk118 >= 1.0f) {
             ScrollHeight = 2.0f;
             ScrollAngle = 0.0f;
             flow->unk118 = 1.0f;
@@ -1236,7 +1236,7 @@ void M506StarfighterStart(M506_FLOW_WORK *flow)
         fo->state = 0;
         fo->doneFlag = 0;
         M506StarfighterModelUpdate(fo, flow->work->starfighterMdlId[i]);
-        Hu3DModelAttrSet(flow->work->starfighterMdlId[i], HU3D_MOTATTR_PAUSE);
+        Hu3DModelAttrSet(flow->work->starfighterMdlId[i], HU3D_ATTR_DISPOFF);
     }
 }
 
@@ -1314,7 +1314,7 @@ void M506RecordCreate(M506_FLOW_WORK *flow)
 void M506RecordSet(M506_FLOW_WORK *flow)
 {
     if (!_CheckFlag(FLAG_INST_DECA)) {
-        MgScoreValueSet(flow->recordScore, flow->work->recordVal);
+        MgScoreValueSet(flow->recordScore, flow->m506Work->recordVal);
     }
 }
 
@@ -1334,13 +1334,13 @@ void M506RecordBlink(M506_FLOW_WORK *flow)
     if (!_CheckFlag(FLAG_INST_DECA) && flow->newRecordHeight > flow->recordBase) {
         if (RecordInitF == 0) {
             recordScale725 += 0.02f;
-            if (recordScale725 == 1.2f) {
+            if (recordScale725 >= 1.2f) {
                 recordScale725 = 1.2f;
                 RecordInitF = 1;
             }
         } else if (RecordInitF == 1) {
             recordScale725 -= 0.04f;
-            if (recordScale725 == 1.0f) {
+            if (recordScale725 <= 1.0f) {
                 recordScale725 = 1.0f;
                 RecordInitF = 0;
             }
@@ -1458,29 +1458,25 @@ void fn_1_A1C4(void)
 {
 }
 
-static void M506YCameraCalc(M506_YCAMERA *cam)
-{
-    cam->target.x = cam->pos.x;
-    cam->target.y = cam->pos.y;
-    cam->target.z = cam->pos.z;
-    cam->center.x = cam->target.x + (cam->hvr.z * HuCos(cam->hvr.y) * HuCos(cam->hvr.x));
-    cam->center.y = cam->target.y + (cam->hvr.z * HuSin(cam->hvr.y));
-    cam->center.z = cam->target.z + (cam->hvr.z * HuCos(cam->hvr.y) * HuSin(cam->hvr.x));
-    PSVECSubtract((Vec *)&cam->target, (Vec *)&cam->center, (Vec *)&cam->dir);
-    PSVECNormalize((Vec *)&cam->dir, (Vec *)&cam->dir);
-    PSVECCrossProduct((Vec *)&upVecA, (Vec *)&cam->dir, (Vec *)&cam->upDir);
-    PSVECNormalize((Vec *)&cam->upDir, (Vec *)&cam->upDir);
-    PSVECCrossProduct((Vec *)&cam->dir, (Vec *)&cam->upDir, (Vec *)&cam->up);
-    PSVECNormalize((Vec *)&cam->up, (Vec *)&cam->up);
-    Hu3DCameraPosSet(cam->bit, cam->center.x, cam->center.y, cam->center.z,
-        cam->up.x, cam->up.y, cam->up.z, cam->target.x, cam->target.y, cam->target.z);
-}
-
 void M506YCameraUpdate(void)
 {
     int i;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        M506YCameraCalc(&M506YCamera->camera[i]);
+        M506_YCAMERA *cam = &M506YCamera->camera[i];
+        cam->target.x = cam->pos.x;
+        cam->target.y = cam->pos.y;
+        cam->target.z = cam->pos.z;
+        cam->center.x = cam->target.x + (cam->hvr.z * HuCos(cam->hvr.y) * HuCos(cam->hvr.x));
+        cam->center.y = cam->target.y + (cam->hvr.z * HuSin(cam->hvr.y));
+        cam->center.z = cam->target.z + (cam->hvr.z * HuCos(cam->hvr.y) * HuSin(cam->hvr.x));
+        PSVECSubtract((Vec *)&cam->target, (Vec *)&cam->center, (Vec *)&cam->dir);
+        PSVECNormalize((Vec *)&cam->dir, (Vec *)&cam->dir);
+        PSVECCrossProduct((Vec *)&upVecA, (Vec *)&cam->dir, (Vec *)&cam->upDir);
+        PSVECNormalize((Vec *)&cam->upDir, (Vec *)&cam->upDir);
+        PSVECCrossProduct((Vec *)&cam->dir, (Vec *)&cam->upDir, (Vec *)&cam->up);
+        PSVECNormalize((Vec *)&cam->up, (Vec *)&cam->up);
+        Hu3DCameraPosSet(cam->bit, cam->center.x, cam->center.y, cam->center.z,
+            cam->up.x, cam->up.y, cam->up.z, cam->target.x, cam->target.y, cam->target.z);
     }
 }
 
@@ -1609,9 +1605,7 @@ void M506YLightInit(void)
     M506YLight->center.x = 0.0f;
     M506YLight->center.y = 0.0f;
     M506YLight->center.z = 0.0f;
-    M506YLight->center.x = M506YLight->target.x;
-    M506YLight->center.y = M506YLight->target.y;
-    M506YLight->center.z = M506YLight->target.z;
+    M506YLight->pos = M506YLight->target;
     PSVECSubtract((Vec *)&M506YLight->center, (Vec *)&M506YLight->target, (Vec *)&M506YLight->dir);
     M506YLight->lightId = Hu3DGLightCreateV(&M506YLight->pos, &M506YLight->dir, &M506YLight->color);
     M506YLightUpdate();
@@ -1627,26 +1621,15 @@ void M506YLightClose(void)
 // NONMATCHING: faithful translation, not yet instruction-matched
 void M506YLightUpdate(void)
 {
-    M506YLight->center.x = M506YLight->unk10.x;
-    M506YLight->center.y = M506YLight->unk10.y;
-    M506YLight->center.z = M506YLight->unk10.z;
+    M506YLight->center = M506YLight->unk10;
     M506YLight->target.x = M506YLight->center.x + (M506YLight->hvr.z * HuCos(M506YLight->hvr.y) * HuCos(M506YLight->hvr.x));
     M506YLight->target.y = M506YLight->center.y + (M506YLight->hvr.z * HuSin(M506YLight->hvr.y));
     M506YLight->target.z = M506YLight->center.z + (M506YLight->hvr.z * HuCos(M506YLight->hvr.y) * HuSin(M506YLight->hvr.x));
-    M506YLight->pos.x = M506YLight->target.x;
-    M506YLight->pos.y = M506YLight->target.y;
-    M506YLight->pos.z = M506YLight->target.z;
+    M506YLight->pos = M506YLight->target;
     PSVECSubtract((Vec *)&M506YLight->center, (Vec *)&M506YLight->target, (Vec *)&M506YLight->dir);
     PSVECNormalize((Vec *)&M506YLight->dir, (Vec *)&M506YLight->dir);
     Hu3DGLightPosSetV(M506YLight->lightId, &M506YLight->pos, &M506YLight->dir);
     Hu3DGLightColorSet(M506YLight->lightId, M506YLight->color.r, M506YLight->color.g, M506YLight->color.b, M506YLight->color.a);
-}
-
-static void M506YShadowCalc(M506_YSHADOW *sh)
-{
-    sh->center.x = sh->hvr.x;
-    sh->center.y = sh->hvr.y;
-    sh->center.z = sh->hvr.z;
 }
 
 void M506YShadowInit(void)
@@ -1680,9 +1663,7 @@ void M506YShadowClose(void)
 
 static void M506YShadowCalcPos(M506_YSHADOW *sh)
 {
-    sh->center.x = sh->pos.x;
-    sh->center.y = sh->pos.y;
-    sh->center.z = sh->pos.z;
+    sh->center = sh->pos;
     sh->pos.x = sh->center.x + (sh->tpLvl * HuCos(sh->hvr.y) * HuCos(sh->hvr.x));
     sh->pos.y = sh->center.y + (sh->tpLvl * HuSin(sh->hvr.y));
     sh->pos.z = sh->center.z + (sh->tpLvl * HuCos(sh->hvr.y) * HuSin(sh->hvr.x));
@@ -1712,9 +1693,7 @@ void M506YShadowUpdate(void)
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         M506_YSHADOW *sh = &M506YShadow->shadow[i];
-        sh->hvr.x = M506PlayerObj[i]->trans.x;
-        sh->hvr.y = M506PlayerObj[i]->trans.y;
-        sh->hvr.z = M506PlayerObj[i]->trans.z;
+        sh->hvr = M506PlayerObj[i]->trans;
     }
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         M506YShadowCalcPos(&M506YShadow->shadow[i]);
@@ -1735,7 +1714,21 @@ void M506YCameraViewSet(s32 camNo, s32 viewNo)
     cam->pos.y = view->pos[1];
     cam->pos.z = view->pos[2];
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        M506YCameraCalc(&M506YCamera->camera[i]);
+        M506_YCAMERA *c = &M506YCamera->camera[i];
+        c->target.x = c->pos.x;
+        c->target.y = c->pos.y;
+        c->target.z = c->pos.z;
+        c->center.x = c->target.x + (c->hvr.z * HuCos(c->hvr.y) * HuCos(c->hvr.x));
+        c->center.y = c->target.y + (c->hvr.z * HuSin(c->hvr.y));
+        c->center.z = c->target.z + (c->hvr.z * HuCos(c->hvr.y) * HuSin(c->hvr.x));
+        PSVECSubtract((Vec *)&c->target, (Vec *)&c->center, (Vec *)&c->dir);
+        PSVECNormalize((Vec *)&c->dir, (Vec *)&c->dir);
+        PSVECCrossProduct((Vec *)&upVecA, (Vec *)&c->dir, (Vec *)&c->upDir);
+        PSVECNormalize((Vec *)&c->upDir, (Vec *)&c->upDir);
+        PSVECCrossProduct((Vec *)&c->dir, (Vec *)&c->upDir, (Vec *)&c->up);
+        PSVECNormalize((Vec *)&c->up, (Vec *)&c->up);
+        Hu3DCameraPosSet(c->bit, c->center.x, c->center.y, c->center.z,
+            c->up.x, c->up.y, c->up.z, c->target.x, c->target.y, c->target.z);
     }
 }
 
@@ -1755,7 +1748,21 @@ BOOL M506YCameraViewLerp(s32 camNo, s32 viewNo)
     result += M506PointLerp(&cam->pos.y, cam->pos.y, view->targetPos[1], duration);
     result += M506PointLerp(&cam->pos.z, cam->pos.z, view->targetPos[2], duration);
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        M506YCameraCalc(&M506YCamera->camera[i]);
+        M506_YCAMERA *c = &M506YCamera->camera[i];
+        c->target.x = c->pos.x;
+        c->target.y = c->pos.y;
+        c->target.z = c->pos.z;
+        c->center.x = c->target.x + (c->hvr.z * HuCos(c->hvr.y) * HuCos(c->hvr.x));
+        c->center.y = c->target.y + (c->hvr.z * HuSin(c->hvr.y));
+        c->center.z = c->target.z + (c->hvr.z * HuCos(c->hvr.y) * HuSin(c->hvr.x));
+        PSVECSubtract((Vec *)&c->target, (Vec *)&c->center, (Vec *)&c->dir);
+        PSVECNormalize((Vec *)&c->dir, (Vec *)&c->dir);
+        PSVECCrossProduct((Vec *)&upVecA, (Vec *)&c->dir, (Vec *)&c->upDir);
+        PSVECNormalize((Vec *)&c->upDir, (Vec *)&c->upDir);
+        PSVECCrossProduct((Vec *)&c->dir, (Vec *)&c->upDir, (Vec *)&c->up);
+        PSVECNormalize((Vec *)&c->up, (Vec *)&c->up);
+        Hu3DCameraPosSet(c->bit, c->center.x, c->center.y, c->center.z,
+            c->up.x, c->up.y, c->up.z, c->target.x, c->target.y, c->target.z);
     }
     return result;
 }
