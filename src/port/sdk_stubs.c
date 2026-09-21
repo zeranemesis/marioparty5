@@ -9,6 +9,9 @@
  */
 
 #include "dolphin.h"
+#include "version.h"
+
+#include <math.h>
 
 #include "dolphin/ai.h"
 #include "dolphin/ar.h"
@@ -17,8 +20,21 @@
 #include "dolphin/os.h"
 #include "dolphin/vi.h"
 
-/* Only read when progressive scan is on, which OSGetProgressiveMode denies. */
-GXRenderModeObj GXNtsc480Prog;
+u32 OSGetResetCode(void)
+{
+    return 0;
+}
+
+void OSSetProgressiveMode(u32 on)
+{
+    (void)on;
+}
+
+/* MWCC's helper name for fabsf; the compiler emits calls to it directly. */
+float fabsf2(float x)
+{
+    return fabsf(x);
+}
 
 /*
  * Aurora's ARAM emulation (extern/aurora/lib/dolphin/AR.cpp) starts handing

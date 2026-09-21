@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/thpmain.h"
 #include "game/hu3d.h"
 #include "game/init.h"
@@ -22,7 +23,7 @@ static s16 THPLoopF;
 static s16 THPStat;
 static s32 THPFrame;
 static s16 THPStart;
-HUPROCESS *THPProc;
+SHARED_SYM HUPROCESS *THPProc;
 
 HUSPRID HuTHPSprCreateVol(char *path, s16 loop, s16 prio, float volume)
 {

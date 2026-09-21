@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/wipe.h"
 #include "game/main.h"
 #include "game/object.h"
@@ -8,8 +9,8 @@
 
 typedef BOOL (*FADEFUNC)(void);
 
-WIPEWORK wipeData;
-BOOL wipeFadeInF;
+SHARED_SYM WIPEWORK wipeData;
+SHARED_SYM BOOL wipeFadeInF;
 
 static BOOL WipeNormalFade(void);
 static BOOL WipeCrossFade(void);

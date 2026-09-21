@@ -1,10 +1,11 @@
+#include "version.h"
 #include "dolphin.h"
 #include "game/memory.h"
 #include "game/card.h"
 #include "game/main.h"
 
 static void *cardWork;
-u8 UnMountCnt;
+SHARED_SYM u8 UnMountCnt;
 
 static void MountCallBack(s32 chan, s32 result);
 

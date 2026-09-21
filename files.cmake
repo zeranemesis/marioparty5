@@ -107,6 +107,7 @@ set(PORT_FILES
         src/port/dolassets.cpp
         src/port/file_select.cpp
         src/port/file_select.hpp
+        src/port/gx_render_modes.c
         src/port/hsfload_pc.c
         src/port/imgui.cpp
         src/port/imgui/ImGuiEngine.hpp

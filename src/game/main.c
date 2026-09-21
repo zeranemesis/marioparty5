@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/main.h"
 #include "game/object.h"
 #include "game/gamework.h"
@@ -34,10 +35,10 @@ void Mp5Native_RequestRestart(void)
 
 extern OVLTBL _ovltbl[];
 
-u32 GlobalCounter;
-BOOL HuDvdErrWait;
-BOOL HuSRDisableF;
-BOOL NintendoDispF;
+SHARED_SYM u32 GlobalCounter;
+SHARED_SYM BOOL HuDvdErrWait;
+SHARED_SYM BOOL HuSRDisableF;
+SHARED_SYM BOOL NintendoDispF;
 
 #ifdef TARGET_PC
 int game_main(void)

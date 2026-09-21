@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/object.h"
 #include "game/objdll.h"
 #include "game/sprite.h"
@@ -17,24 +18,24 @@
 
 #define OMOVLHIS_MAX 16
 
-OMOBJ *omDBGSysKeyObj;
+SHARED_SYM OMOBJ *omDBGSysKeyObj;
 static HUPROCESS *omwatchproc;
 static OMOVL omnextovl;
-OMOVL omcurovl;
-s32 omcurdll;
-s32 omovlhisidx;
-s32 omovlevtno;
+SHARED_SYM OMOVL omcurovl;
+SHARED_SYM s32 omcurdll;
+SHARED_SYM s32 omovlhisidx;
+SHARED_SYM s32 omovlevtno;
 static s32 omnextovlevtno;
-s32 omovlstat;
+SHARED_SYM s32 omovlstat;
 static s32 omnextovlstat;
-u8 omUPauseFlag;
-s16 omSysExitReq;
-s16 omdispinfo;
+SHARED_SYM u8 omUPauseFlag;
+SHARED_SYM s16 omSysExitReq;
+SHARED_SYM s16 omdispinfo;
 
 static OMOVLHIS omovlhis[OMOVLHIS_MAX];
 
-u8 omSysPauseEnableFlag = TRUE;
-OMOVL omprevovl = DLL_NONE;
+SHARED_SYM u8 omSysPauseEnableFlag = TRUE;
+SHARED_SYM OMOVL omprevovl = DLL_NONE;
 
 static void omWatchOverlayProc(void);
 

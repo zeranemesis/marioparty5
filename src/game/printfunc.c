@@ -1,3 +1,4 @@
+#include "version.h"
 #include "dolphin.h"
 #include "game/printfunc.h"
 #include "game/init.h"
@@ -33,10 +34,10 @@ typedef struct strline_s {
 static STRLINE strline[STRLINE_MAX];
 static char pfStrBuf[STRLINE_MAX];
 
-int fontcolor;
-u16 empstrline;
-u16 strlinecnt;
-BOOL saftyFrameF;
+SHARED_SYM int fontcolor;
+SHARED_SYM u16 empstrline;
+SHARED_SYM u16 strlinecnt;
+SHARED_SYM BOOL saftyFrameF;
 
 static void WireDraw(void);
 

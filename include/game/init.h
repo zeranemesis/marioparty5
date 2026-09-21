@@ -1,17 +1,18 @@
 #ifndef _GAME_INIT_H
 #define _GAME_INIT_H
 
+#include "version.h"
 #include "dolphin.h"
 
-extern GXRenderModeObj *RenderMode;
-extern OSHeapHandle currentHeapHandle;
+SHARED_SYM extern GXRenderModeObj *RenderMode;
+SHARED_SYM extern OSHeapHandle currentHeapHandle;
 
-extern void *DemoFrameBuffer1;
-extern void *DemoFrameBuffer2;
-extern void *DemoCurrentBuffer;
-extern u32 minimumVcount;
-extern float minimumVcountf;
-extern u32 worstVcount;
+SHARED_SYM extern void *DemoFrameBuffer1;
+SHARED_SYM extern void *DemoFrameBuffer2;
+SHARED_SYM extern void *DemoCurrentBuffer;
+SHARED_SYM extern u32 minimumVcount;
+SHARED_SYM extern float minimumVcountf;
+SHARED_SYM extern u32 worstVcount;
 
 void HuSysInit(GXRenderModeObj *mode);
 void HuSysBeforeRender();

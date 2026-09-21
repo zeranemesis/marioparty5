@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/window.h"
 #include "game/gamework.h"
 #include "game/process.h"
@@ -33,14 +34,14 @@ typedef struct winComKey_s {
 static u8 mesWInsert[HUWIN_INSERTMES_MAX];
 static WINCOMKEY winComKeyBuf[WIN_COMKEY_MAX];
 static u32 winKey[GW_PLAYER_MAX];
-HUWIN winData[HUWIN_MAX];
+SHARED_SYM HUWIN winData[HUWIN_MAX];
 
 static ANIMDATA *iconAnim;
 static ANIMDATA *cursorAnim;
 static ANIMDATA *cardAnimA;
 static ANIMDATA *cardAnimB;
 static HUPROCESS *winProc;
-void *messDataPtr;
+SHARED_SYM void *messDataPtr;
 static s32 messDataNo;
 static s16 winMaxWidth;
 static s16 winMaxHeight;

@@ -1,6 +1,7 @@
 #ifndef _GAME_SRESET_H
 #define _GAME_SRESET_H
 
+#include "version.h"
 #include "dolphin.h"
 
 BOOL HuSoftResetButtonCheck(void);
@@ -9,7 +10,7 @@ void HuRestartSystem(void);
 BOOL HuSoftResetCountCheck(void);
 BOOL HuSoftResetCheck(void);
 
-extern BOOL SR_ExecReset;
-extern BOOL SR_ExecResetMenu;
+SHARED_SYM extern BOOL SR_ExecReset;
+SHARED_SYM extern BOOL SR_ExecResetMenu;
 
 #endif

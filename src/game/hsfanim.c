@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/hu3d.h"
 #include "game/sprite.h"
 #include "game/init.h"
@@ -6,8 +7,8 @@
 #include "string.h"
 #include "game/gxarray.h"
 
-HU3DTEXANIM Hu3DTexAnimData[HU3D_TEXANIM_MAX];
-HU3DTEXSCROLL Hu3DTexScrData[HU3D_TEXSCROLL_MAX];
+SHARED_SYM HU3DTEXANIM Hu3DTexAnimData[HU3D_TEXANIM_MAX];
+SHARED_SYM HU3DTEXSCROLL Hu3DTexScrData[HU3D_TEXSCROLL_MAX];
 
 void Hu3DAnimInit(void)
 {
@@ -1286,7 +1287,7 @@ static void ParManHook(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 #include "datanum/effect.h"
 #include "game/disp.h"
 
-HU3DWATER Hu3DWaterData;
+SHARED_SYM HU3DWATER Hu3DWaterData;
 
 static float waterTexMtx[2][3] = {
     0.05f, 0, 0,

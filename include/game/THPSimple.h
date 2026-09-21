@@ -1,6 +1,7 @@
 #ifndef _GAME_THPSIMPLE_H
 #define _GAME_THPSIMPLE_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "dolphin/thp/THPFile.h"
 #include "dolphin/thp/THPInfo.h"
@@ -81,7 +82,7 @@ s32 THPSimpleGetTotalFrame(void);
 float THPSimpleGetFrameRate(void);
 s32 THPSimpleSetVolume(s32 left, s32 right);
 
-extern UnkThpStruct10 SimpleControl;
-extern s32 bufIdx;
+SHARED_SYM extern UnkThpStruct10 SimpleControl;
+SHARED_SYM extern s32 bufIdx;
 
 #endif

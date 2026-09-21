@@ -29,6 +29,7 @@
 
 #include "datanum/w01.h"
 #include "messnum/board_w01.h"
+#include "game/gxarray.h"
 
 #define MB1EV_MASU_TRAIN1 MASU_FLAG_BIT(15)
 #define MB1EV_MASU_HAKO MASU_FLAG_BIT(14)
@@ -3466,13 +3467,13 @@ static void ParticleDraw(HU3DMODEL *modelP, Mtx *mtx)
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-        GXSetArray(GX_VA_POS, effP->vertex, sizeof(HuVecF));
+        GXSETARRAY(GX_VA_POS, effP->vertex, effP->num*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-        GXSetArray(GX_VA_CLR0, &effP->data->color, sizeof(MB1_PARTICLE_DATA));
+        GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(MB1_PARTICLE_DATA), sizeof(MB1_PARTICLE_DATA), TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-        GXSetArray(GX_VA_TEX0, effP->st, sizeof(HuVec2f));
+        GXSETARRAY(GX_VA_TEX0, effP->st, effP->num*sizeof(HuVec2f)*4, sizeof(HuVec2f), TRUE);
         GXCallDisplayList(effP->dl, effP->dlSize);
         if(shadowModelDrawF == FALSE) {
             if(!(effP->attr & MB1_PARTICLE_ATTR_COUNTER_UPDATE)) {

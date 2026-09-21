@@ -1,3 +1,4 @@
+#include "version.h"
 #include "dolphin.h"
 #include "game/flag.h"
 #include "game/dvd.h"
@@ -38,8 +39,8 @@ static s16 XfbH;
 static BOOL XfbProg;
 static void *Xfb[2] = {};
 static BOOL trychkBusyWait;
-BOOL SR_ExecReset;
-BOOL SR_ExecResetMenu;
+SHARED_SYM BOOL SR_ExecReset;
+SHARED_SYM BOOL SR_ExecResetMenu;
 static BOOL SR_RestartChk;
 static BOOL H_ResetReady;
 

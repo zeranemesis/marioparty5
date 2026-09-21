@@ -1,6 +1,7 @@
 #ifndef _GAME_SAVELOAD_H
 #define _GAME_SAVELOAD_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "game/gamework.h"
 #include "game/window.h"
@@ -33,16 +34,16 @@
 #define SAVE_BUF_SIZE SAVE_ROUNDUP(SAVE_BOXBACKUP_OFS(SAVE_BOX_MAX), SAVE_SECTOR_SIZE)
 
 
-extern u8 ATTRIBUTE_ALIGN(32) saveBuf[2][SAVE_BUF_SIZE];
-extern u64 SLSerialNo[2];
-extern BOOL SaveEnableF;
-extern char SLSaveFileName[];
-extern char SLEraseStr[];
-extern HUWINID SLWinId;
-extern CARDFileInfo curFileInfo;
-extern BOOL saveExecF;
-extern u8 curBoxNo;
-extern s16 curSlotNo;
+SHARED_SYM extern u8 ATTRIBUTE_ALIGN(32) saveBuf[2][SAVE_BUF_SIZE];
+SHARED_SYM extern u64 SLSerialNo[2];
+SHARED_SYM extern BOOL SaveEnableF;
+SHARED_SYM extern char SLSaveFileName[];
+SHARED_SYM extern char SLEraseStr[];
+SHARED_SYM extern HUWINID SLWinId;
+SHARED_SYM extern CARDFileInfo curFileInfo;
+SHARED_SYM extern BOOL saveExecF;
+SHARED_SYM extern u8 curBoxNo;
+SHARED_SYM extern s16 curSlotNo;
 
 void SLCurSlotNoSet(s16 slotNo);
 s16 SLCurSlotNoGet(void);

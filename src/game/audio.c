@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/audio.h"
 #include "game/memory.h"
 #include "game/armem.h"
@@ -26,13 +27,13 @@ static BOOL auxANoBak;
 static BOOL auxBNoBak;
 static s8 HuAuxAVol;
 static s8 HuAuxBVol;
-float Snd3DBackSurDisOffset;
-float Snd3DFrontSurDisOffset;
-float Snd3DStartDisOffset;
-float Snd3DSpeedOffset;
-float Snd3DDistOffset;
-BOOL musicOffF;
-u8 fadeStat;
+SHARED_SYM float Snd3DBackSurDisOffset;
+SHARED_SYM float Snd3DFrontSurDisOffset;
+SHARED_SYM float Snd3DStartDisOffset;
+SHARED_SYM float Snd3DSpeedOffset;
+SHARED_SYM float Snd3DDistOffset;
+SHARED_SYM BOOL musicOffF;
+SHARED_SYM u8 fadeStat;
 
 void HuAudInit(void)
 {

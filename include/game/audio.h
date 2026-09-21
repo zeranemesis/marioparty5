@@ -1,6 +1,7 @@
 #ifndef _GAME_AUDIO_H
 #define _GAME_AUDIO_H
 
+#include "version.h"
 #include "msm.h"
 #include "msm_grp.h"
 #include "msm_se.h"
@@ -79,14 +80,14 @@ s32 CharFXPlayPan(s16 charNo, s16 seId, s16 pan);
 s32 CharFXPlayPos(s16 charNo, s16 seId, Vec *pos);
 void CharFXStop(s16 charNo, s16 seId);
 
-extern SNDGRPTBL sndGrpTable[];
+SHARED_SYM extern SNDGRPTBL sndGrpTable[];
 
-extern float Snd3DBackSurDisOffset;
-extern float Snd3DFrontSurDisOffset;
-extern float Snd3DStartDisOffset;
-extern float Snd3DSpeedOffset;
-extern float Snd3DDistOffset;
-extern BOOL musicOffF;
-extern u8 fadeStat;
+SHARED_SYM extern float Snd3DBackSurDisOffset;
+SHARED_SYM extern float Snd3DFrontSurDisOffset;
+SHARED_SYM extern float Snd3DStartDisOffset;
+SHARED_SYM extern float Snd3DSpeedOffset;
+SHARED_SYM extern float Snd3DDistOffset;
+SHARED_SYM extern BOOL musicOffF;
+SHARED_SYM extern u8 fadeStat;
 
 #endif

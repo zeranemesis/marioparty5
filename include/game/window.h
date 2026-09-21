@@ -1,6 +1,7 @@
 #ifndef _GAME_WINDOW_H
 #define _GAME_WINDOW_H
 
+#include "version.h"
 #include "game/animdata.h"
 #include "game/sprite.h"
 
@@ -175,8 +176,8 @@ typedef struct Win_s {
     u8 ATTRIBUTE_ALIGN(32) mesPal[HUWIN_MESCOL_MAX][3];
 } HUWIN;
 
-extern HUWIN winData[HUWIN_MAX];
-extern void *messDataPtr;
+SHARED_SYM extern HUWIN winData[HUWIN_MAX];
+SHARED_SYM extern void *messDataPtr;
 
 void HuWindowInit(void);
 void HuWinInit(s32 _messDataNo);

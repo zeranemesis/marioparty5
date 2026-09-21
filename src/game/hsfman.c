@@ -1,3 +1,4 @@
+#include "version.h"
 #include "string.h"
 #include "game/init.h"
 #include "game/disp.h"
@@ -51,40 +52,40 @@ typedef struct FbCopyLayer_s {
 } FBCOPYLAYER;
 
 static FBCOPYLAYER FbCopyLayer[HU3D_LAYER_HOOK_MAX];
-HU3DLIGHT Hu3DLocalLight[HU3D_LLIGHT_MAX];
-HU3DLIGHT Hu3DGlobalLight[HU3D_GLIGHT_MAX];
-Mtx Hu3DCameraMtxXPose;
-Mtx Hu3DCameraMtx;
-HSFSCENE FogData;
-HU3DSHADOW Hu3DShadowBuf[HU3D_CAM_MAX];
-HU3DPROJECTION Hu3DProjection[HU3D_PROJ_MAX];
-ANIMDATA *hiliteAnim[4];
-ANIMDATA *reflectAnim[5];
+SHARED_SYM HU3DLIGHT Hu3DLocalLight[HU3D_LLIGHT_MAX];
+SHARED_SYM HU3DLIGHT Hu3DGlobalLight[HU3D_GLIGHT_MAX];
+SHARED_SYM Mtx Hu3DCameraMtxXPose;
+SHARED_SYM Mtx Hu3DCameraMtx;
+SHARED_SYM HSFSCENE FogData;
+SHARED_SYM HU3DSHADOW Hu3DShadowBuf[HU3D_CAM_MAX];
+SHARED_SYM HU3DPROJECTION Hu3DProjection[HU3D_PROJ_MAX];
+SHARED_SYM ANIMDATA *hiliteAnim[4];
+SHARED_SYM ANIMDATA *reflectAnim[5];
 static HU3DLAYERHOOK layerHook[HU3D_LAYER_HOOK_MAX];
 static s16 layerNum[HU3D_LAYER_MAX];
-HU3DCAMERA Hu3DCamera[HU3D_CAM_MAX];
-HU3DMODEL Hu3DData[HU3D_MODEL_MAX];
+SHARED_SYM HU3DCAMERA Hu3DCamera[HU3D_CAM_MAX];
+SHARED_SYM HU3DMODEL Hu3DData[HU3D_MODEL_MAX];
 
-GXColor BGColor;
-s16 reflectMapNo;
-ANIMDATA *toonAnim;
-s16 shadowNum;
-s16 Hu3DShadowCamBit;
-BOOL Hu3DShadowF;
-BOOL shadowModelDrawF;
-HU3DSHADOW *Hu3DShadow;
-s16 Hu3DProjectionNum;
-s16 Hu3DCameraNo;
-s16 Hu3DCameraBit;
-u32 Hu3DMallocNo;
-s16 Hu3DPauseF;
-u16 Hu3DCameraExistF;
+SHARED_SYM GXColor BGColor;
+SHARED_SYM s16 reflectMapNo;
+SHARED_SYM ANIMDATA *toonAnim;
+SHARED_SYM s16 shadowNum;
+SHARED_SYM s16 Hu3DShadowCamBit;
+SHARED_SYM BOOL Hu3DShadowF;
+SHARED_SYM BOOL shadowModelDrawF;
+SHARED_SYM HU3DSHADOW *Hu3DShadow;
+SHARED_SYM s16 Hu3DProjectionNum;
+SHARED_SYM s16 Hu3DCameraNo;
+SHARED_SYM s16 Hu3DCameraBit;
+SHARED_SYM u32 Hu3DMallocNo;
+SHARED_SYM s16 Hu3DPauseF;
+SHARED_SYM u16 Hu3DCameraExistF;
 static u16 NoSyncF;
-HU3DMODELID Hu3DReflectModelId;
-ANIMDATA *Hu3DReflectModelAnim;
-float Hu3DAmbColR;
-float Hu3DAmbColG;
-float Hu3DAmbColB;
+SHARED_SYM HU3DMODELID Hu3DReflectModelId;
+SHARED_SYM ANIMDATA *Hu3DReflectModelAnim;
+SHARED_SYM float Hu3DAmbColR;
+SHARED_SYM float Hu3DAmbColG;
+SHARED_SYM float Hu3DAmbColB;
 static BOOL modelKillAllF;
 
 void Hu3DInit(void)

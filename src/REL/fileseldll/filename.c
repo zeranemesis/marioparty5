@@ -154,7 +154,7 @@ void NameEnterInit(void)
     HuSprColorSet(grpId, 1, 255, 255, 0);
     HuSprDispOff(grpId, 1);
     for(nameKeyboardNum = 0; keyboardTbl[nameKeyboardNum*2]; nameKeyboardNum++) {
-        animP = HuSprAnimDataRead((unsigned int)keyboardTbl[(nameKeyboardNum*2)+1]);
+        animP = HuSprAnimDataRead((unsigned int)(uintptr_t)keyboardTbl[(nameKeyboardNum*2)+1]);
         sprId = HuSprCreate(animP, 50, 0);
         HuSprGrpMemberSet(grpId, nameKeyboardNum+2, sprId);
         HuSprDispOff(grpId, nameKeyboardNum+2);

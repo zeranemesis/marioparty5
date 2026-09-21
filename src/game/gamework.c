@@ -1,20 +1,21 @@
+#include "version.h"
 #include "game/gamework.h"
 #include "game/flag.h"
 #include "game/charman.h"
 #include "game/saveload.h"
 
-GWCARDCOMMON GwCardCommon;
-GWSDBATTLE GwSdBattle;
-GWSDBACKUP GwSdBackup[GW_SD_BACKUP_MAX];
-GWDECASCORE GwMgDecaScore[GW_PLAYER_MAX];
-GWSDCOMMON GwSdCommon;
-GWCOMMON GwCommonOrig;
-GWCOMMON GwCommon;
-GWSYSTEM GwSystem;
-GWPLAYER GwPlayer[GW_PLAYER_MAX];
-GWPLAYERCONF GwPlayerConf[GW_PLAYER_MAX];
+SHARED_SYM GWCARDCOMMON GwCardCommon;
+SHARED_SYM GWSDBATTLE GwSdBattle;
+SHARED_SYM GWSDBACKUP GwSdBackup[GW_SD_BACKUP_MAX];
+SHARED_SYM GWDECASCORE GwMgDecaScore[GW_PLAYER_MAX];
+SHARED_SYM GWSDCOMMON GwSdCommon;
+SHARED_SYM GWCOMMON GwCommonOrig;
+SHARED_SYM GWCOMMON GwCommon;
+SHARED_SYM GWSYSTEM GwSystem;
+SHARED_SYM GWPLAYER GwPlayer[GW_PLAYER_MAX];
+SHARED_SYM GWPLAYERCONF GwPlayerConf[GW_PLAYER_MAX];
 
-int GwSdBackupNo;
+SHARED_SYM int GwSdBackupNo;
 
 void GWCommonInit(void);
 void GWSdCommonInit(void);

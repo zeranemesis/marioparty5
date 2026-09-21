@@ -1,3 +1,4 @@
+#include "version.h"
 #include "messnum/mpsystem.h"
 #include "messnum/sdg.h"
 #include "datanum/win.h"
@@ -40,7 +41,7 @@
 
 void SLCurBoxNoSet(s16 boxNo);
 
-u64 SLSerialNo[2] = {};
+SHARED_SYM u64 SLSerialNo[2] = {};
 static u32 boxDataOfs[SAVE_BOX_MAX*2] = {
     SAVE_BOX_OFS(0),
     SAVE_BOX_OFS(1),
@@ -55,18 +56,18 @@ static u8 commentTbl[2][CARD_COMMENT_SIZE/2] = {
     "00/00/0000"
 };
 
-BOOL SaveEnableF = TRUE;
+SHARED_SYM BOOL SaveEnableF = TRUE;
 static int SLCurWinId = HUWIN_NONE;
-char SLSaveFileName[] = "MARIPA5";
-char SLEraseStr[] = "ERASE";
-HUWINID SLWinId = HUWIN_NONE;
+SHARED_SYM char SLSaveFileName[] = "MARIPA5";
+SHARED_SYM char SLEraseStr[] = "ERASE";
+SHARED_SYM HUWINID SLWinId = HUWIN_NONE;
 
-u8 ATTRIBUTE_ALIGN(32) saveBuf[2][SAVE_BUF_SIZE];
-CARDFileInfo curFileInfo;
+SHARED_SYM u8 ATTRIBUTE_ALIGN(32) saveBuf[2][SAVE_BUF_SIZE];
+SHARED_SYM CARDFileInfo curFileInfo;
 
-BOOL saveExecF;
-u8 curBoxNo;
-s16 curSlotNo;
+SHARED_SYM BOOL saveExecF;
+SHARED_SYM u8 curBoxNo;
+SHARED_SYM s16 curSlotNo;
 
 static HUWINID SLMessWinCreate(s32 mesNum, s32 insertMesNum1, s32 insertMesNum2, s16 posY);
 static void SLMessWinKill(HUWINID winId);

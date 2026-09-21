@@ -1,6 +1,7 @@
 #ifndef _GAMEWORK_H
 #define _GAMEWORK_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "game/flag.h"
 
@@ -258,18 +259,18 @@ typedef struct GwCardCommon_s {
     s8 ztarNum[GW_PLAYER_MAX];
 } GWCARDCOMMON;
 
-extern GWCARDCOMMON GwCardCommon;
-extern GWSDBATTLE GwSdBattle;
-extern GWSDBACKUP GwSdBackup[GW_SD_BACKUP_MAX];
-extern GWDECASCORE GwMgDecaScore[GW_PLAYER_MAX];
-extern GWSDCOMMON GwSdCommon;
-extern GWCOMMON GwCommonOrig;
-extern GWCOMMON GwCommon;
-extern GWSYSTEM GwSystem;
-extern GWPLAYER GwPlayer[GW_PLAYER_MAX];
-extern GWPLAYERCONF GwPlayerConf[GW_PLAYER_MAX];
+SHARED_SYM extern GWCARDCOMMON GwCardCommon;
+SHARED_SYM extern GWSDBATTLE GwSdBattle;
+SHARED_SYM extern GWSDBACKUP GwSdBackup[GW_SD_BACKUP_MAX];
+SHARED_SYM extern GWDECASCORE GwMgDecaScore[GW_PLAYER_MAX];
+SHARED_SYM extern GWSDCOMMON GwSdCommon;
+SHARED_SYM extern GWCOMMON GwCommonOrig;
+SHARED_SYM extern GWCOMMON GwCommon;
+SHARED_SYM extern GWSYSTEM GwSystem;
+SHARED_SYM extern GWPLAYER GwPlayer[GW_PLAYER_MAX];
+SHARED_SYM extern GWPLAYERCONF GwPlayerConf[GW_PLAYER_MAX];
 
-extern int GwSdBackupNo;
+SHARED_SYM extern int GwSdBackupNo;
 
 static inline BOOL GWPartyFGet(void)
 {

@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/init.h"
 #include "game/fault.h"
 #include "dolphin/os.h"
@@ -21,16 +22,16 @@ extern u32 frand();
 static GXRenderModeObj rmodeobj;
 
 static BOOL FirstFrame = TRUE;
-GXRenderModeObj *RenderMode;
-OSHeapHandle currentHeapHandle;
+SHARED_SYM GXRenderModeObj *RenderMode;
+SHARED_SYM OSHeapHandle currentHeapHandle;
 static void *DefaultFifo;
 static GXFifoObj *DefaultFifoObj;
-void *DemoFrameBuffer1;
-void *DemoFrameBuffer2;
-void *DemoCurrentBuffer;
-u32 minimumVcount;
-float minimumVcountf;
-u32 worstVcount;
+SHARED_SYM void *DemoFrameBuffer1;
+SHARED_SYM void *DemoFrameBuffer2;
+SHARED_SYM void *DemoCurrentBuffer;
+SHARED_SYM u32 minimumVcount;
+SHARED_SYM float minimumVcountf;
+SHARED_SYM u32 worstVcount;
 static BOOL DemoStatEnable;
 
 

@@ -2007,7 +2007,7 @@ void M433PlayerTargetUpdate(OMOBJ *obj)
     M433_PLAYERWORK *work;
     M433_PLAYERWORK *other;
     int i, j;
-    int side;
+    int side;
     float dist;
     HuVecF dir;
     

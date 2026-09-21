@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/data.h"
 #include "game/dvd.h"
 
@@ -29,7 +30,7 @@ static DATADIRSTAT DataDirStat[] = {
 
 #undef DATADIR
 
-u32 DirDataSize;
+SHARED_SYM u32 DirDataSize;
 static u32 DataDirMax;
 static s32 shortAccessSleep;
 static HUDATASTAT ATTRIBUTE_ALIGN(32) ReadDataStat[DATA_MAX_READSTAT];

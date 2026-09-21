@@ -1,6 +1,7 @@
 #ifndef _GAME_MGDATA_H
 #define _GAME_MGDATA_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "game/gamework.h"
 
@@ -43,24 +44,24 @@ typedef struct MgData_s {
 	u32 instMes[2][5];
 } MGDATA;
 
-extern float sdWorkFloat[16];
-extern int sdWorkInt[16];
-extern MGDATA mgDataTbl[];
-extern GWCOMMON GwCommonBackup;
-extern u32 mgModeWork[64];
+SHARED_SYM extern float sdWorkFloat[16];
+SHARED_SYM extern int sdWorkInt[16];
+SHARED_SYM extern MGDATA mgDataTbl[];
+SHARED_SYM extern GWCOMMON GwCommonBackup;
+SHARED_SYM extern u32 mgModeWork[64];
 
-extern s16 mgMatchGameType;
-extern s16 sdHealthLoss[GW_PLAYER_MAX];
-extern s16 mgMatchMaxScore;
-extern s16 lbl_80288A30;
-extern int lbl_80288A2C;
-extern int lbl_80288A28;
-extern int mgSubMode;
-extern int m562CtrlNo;
-extern BOOL mgExitStartF;
-extern BOOL mgPauseExitF;
-extern BOOL mgInstExitF;
-extern u8 mgBoard2Force;
+SHARED_SYM extern s16 mgMatchGameType;
+SHARED_SYM extern s16 sdHealthLoss[GW_PLAYER_MAX];
+SHARED_SYM extern s16 mgMatchMaxScore;
+SHARED_SYM extern s16 lbl_80288A30;
+SHARED_SYM extern int lbl_80288A2C;
+SHARED_SYM extern int lbl_80288A28;
+SHARED_SYM extern int mgSubMode;
+SHARED_SYM extern int m562CtrlNo;
+SHARED_SYM extern BOOL mgExitStartF;
+SHARED_SYM extern BOOL mgPauseExitF;
+SHARED_SYM extern BOOL mgInstExitF;
+SHARED_SYM extern u8 mgBoard2Force;
 
 s32 MgNoGet(s16 ovlNo);
 

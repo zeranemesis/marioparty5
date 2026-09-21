@@ -1,3 +1,4 @@
+#include "version.h"
 #include "dolphin.h"
 #include "msm.h"
 #include "game/main.h"
@@ -25,20 +26,20 @@ static u32 GlobalCounterOld = -1;
 static int padStatErrOld[4];
 static RUMBLEDATA rumbleData[4];
 
-u16 HuPadBtn[4];
-u16 HuPadBtnDown[4];
-u16 HuPadBtnRep[4];
-s8 HuPadStkX[4];
-s8 HuPadStkY[4];
-s8 HuPadSubStkX[4];
-s8 HuPadSubStkY[4];
-u8 HuPadTrigL[4];
-u8 HuPadTrigR[4];
-u8 HuPadDStk[4];
-u8 HuPadDStkRep[4];
-s8 HuPadErr[4];
-u16 _PadBtn[4];
-u16 _PadBtnDown[4];
+SHARED_SYM u16 HuPadBtn[4];
+SHARED_SYM u16 HuPadBtnDown[4];
+SHARED_SYM u16 HuPadBtnRep[4];
+SHARED_SYM s8 HuPadStkX[4];
+SHARED_SYM s8 HuPadStkY[4];
+SHARED_SYM s8 HuPadSubStkX[4];
+SHARED_SYM s8 HuPadSubStkY[4];
+SHARED_SYM u8 HuPadTrigL[4];
+SHARED_SYM u8 HuPadTrigR[4];
+SHARED_SYM u8 HuPadDStk[4];
+SHARED_SYM u8 HuPadDStkRep[4];
+SHARED_SYM s8 HuPadErr[4];
+SHARED_SYM u16 _PadBtn[4];
+SHARED_SYM u16 _PadBtnDown[4];
 static u16 _PadRepCnt[4];
 static s8 _PadStkX[4];
 static s8 _PadStkY[4];
@@ -53,7 +54,7 @@ static u8 _PadDStkRepOld[4];
 static s8 _PadErr[4];
 static u32 RumbleBit;
 static s16 RumbleCounter;
-s32 VCounter;
+SHARED_SYM s32 VCounter;
 
 static u32 chanTbl[4] = { PAD_CHAN0_BIT, PAD_CHAN1_BIT, PAD_CHAN2_BIT, PAD_CHAN3_BIT };
 

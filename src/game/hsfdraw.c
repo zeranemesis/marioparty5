@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/hu3d.h"
 
 #include "game/hsfload.h"
@@ -57,8 +58,8 @@ static Mtx hiliteMtx;
 static s16 DrawObjNum[DRAW_OBJ_MAX];
 static HuVecF NBTB;
 static HuVecF NBTT;
-HuVecF PGMaxPos;
-HuVecF PGMinPos;
+SHARED_SYM HuVecF PGMaxPos;
+SHARED_SYM HuVecF PGMinPos;
 
 s16 MTXIdx;
 static HSFMATERIAL *materialBak;
@@ -81,14 +82,14 @@ static s16 projectionMapNo;
 static GXColor kColor;
 static s32 kColorIdx;
 static HU3DMODELID hookIdx;
-u32 totalPolyCnt;
-u32 totalPolyCnted;
-u32 totalMatCnt;
-u32 totalMatCnted;
-u32 totalTexCnt;
-u32 totalTexCnted;
-u32 totalTexCacheCnt;
-u32 totalTexCacheCnted;
+SHARED_SYM u32 totalPolyCnt;
+SHARED_SYM u32 totalPolyCnted;
+SHARED_SYM u32 totalMatCnt;
+SHARED_SYM u32 totalMatCnted;
+SHARED_SYM u32 totalTexCnt;
+SHARED_SYM u32 totalTexCnted;
+SHARED_SYM u32 totalTexCacheCnt;
+SHARED_SYM u32 totalTexCacheCnted;
 s16 modelMeshNum;
 s16 modelObjNum;
 static BOOL DLFirstF;

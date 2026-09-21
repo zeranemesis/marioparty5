@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/object.h"
 #include "game/gamemes.h"
 #include "humath.h"
@@ -10,23 +11,23 @@
 #define DECA_SCORE_POINT 1
 #define DECA_SCORE_NUM 11
 
-u32 mgModeWork[64];
-GWCOMMON GwCommonBackup;
-int sdWorkInt[16];
-float sdWorkFloat[16];
+SHARED_SYM u32 mgModeWork[64];
+SHARED_SYM GWCOMMON GwCommonBackup;
+SHARED_SYM int sdWorkInt[16];
+SHARED_SYM float sdWorkFloat[16];
 
-s16 mgMatchGameType;
-s16 sdHealthLoss[GW_PLAYER_MAX];
-s16 mgMatchMaxScore;
-s16 lbl_80288A30;
-int lbl_80288A2C;
-int lbl_80288A28;
-int mgSubMode;
-int m562CtrlNo;
-BOOL mgExitStartF;
-BOOL mgPauseExitF;
-BOOL mgInstExitF;
-u8 mgBoard2Force;
+SHARED_SYM s16 mgMatchGameType;
+SHARED_SYM s16 sdHealthLoss[GW_PLAYER_MAX];
+SHARED_SYM s16 mgMatchMaxScore;
+SHARED_SYM s16 lbl_80288A30;
+SHARED_SYM int lbl_80288A2C;
+SHARED_SYM int lbl_80288A28;
+SHARED_SYM int mgSubMode;
+SHARED_SYM int m562CtrlNo;
+SHARED_SYM BOOL mgExitStartF;
+SHARED_SYM BOOL mgPauseExitF;
+SHARED_SYM BOOL mgInstExitF;
+SHARED_SYM u8 mgBoard2Force;
 
 #include "mgdata.inc"
 

@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/board/main.h"
 #include "game/board/capsule.h"
 #include "game/board/status.h"
@@ -39,8 +40,8 @@ static MBLIGHTHOOK lightResetHook;
 static MBLIGHTHOOK lightSetHook;
 static MBKILLHOOK killMbHook;
 static MBCREATEHOOK createMbHook;
-HUPROCESS *mbMainProcess;
-OMOBJMAN *mbObjMan;
+SHARED_SYM HUPROCESS *mbMainProcess;
+SHARED_SYM OMOBJMAN *mbObjMan;
 
 static OMOVL gotoOvl = DLL_NONE;
 static int lbl_80288244 = 20;

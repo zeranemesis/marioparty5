@@ -42,6 +42,7 @@ PC_REPLACED_UNITS = {
 # port sources that are not part of the dol library
 PORT_EXCLUDED = {
     "src/port/entry.cpp",  # main() of the executable target
+    "src/port/rel_ctors.c",  # added to every REL target by CMakeLists.txt, not dol
 }
 
 

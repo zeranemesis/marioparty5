@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/process.h"
 #include "game/memory.h"
 #include "dolphin/os.h"
@@ -20,7 +21,7 @@ static jmp_buf processjmpbuf;
 static HUPROCESS *processtop;
 static HUPROCESS *processcur;
 static u16 processcnt;
-u32 procfunc;
+SHARED_SYM u32 procfunc;
 
 void HuPrcInit(void)
 {

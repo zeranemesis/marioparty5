@@ -1,6 +1,7 @@
 #ifndef _GAME_CHARMAN_H
 #define _GAME_CHARMAN_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "game/hu3d.h"
 #include "game/armem.h"
@@ -112,6 +113,6 @@ void CharLoseVoicePlay(s16 charNo1, s16 charNo2, s16 charNo3, s16 charNo4);
 s16 CharMotionTotalTimeGet(s16 charNo, int motNo);
 s16 CharMotionExtraTimeGet(s16 charNo, int motNo);
 
-extern unsigned int charDataDirTbl[CHARNO_MAX][6];
+SHARED_SYM extern unsigned int charDataDirTbl[CHARNO_MAX][6];
 
 #endif

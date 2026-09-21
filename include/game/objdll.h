@@ -1,6 +1,7 @@
 #ifndef _GAME_OBJDLL_H
 #define _GAME_OBJDLL_H
 
+#include "version.h"
 #include "game/object.h"
 
 #define OMDLLINFO_MAX 20
@@ -27,6 +28,6 @@ s32 omDLLSearch(s16 dllno);
 void omDLLInfoDump(OSModuleInfo *module);
 void omDLLHeaderDump(OSModuleHeader *module);
 
-extern OMDLLINFO *omDLLinfoTbl[OMDLLINFO_MAX];
+SHARED_SYM extern OMDLLINFO *omDLLinfoTbl[OMDLLINFO_MAX];
 
 #endif

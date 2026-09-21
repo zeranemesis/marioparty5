@@ -1,6 +1,7 @@
 #ifndef _GAME_THPMAIN_H
 #define _GAME_THPMAIN_H
 
+#include "version.h"
 #include "dolphin/types.h"
 #include "game/process.h"
 #include "game/hu3d.h"
@@ -22,7 +23,7 @@ BOOL HuTHPProcCheck(void);
 BOOL HuTHPStartCheck(void);
 void HuTHPMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
 
-extern HUPROCESS *THPProc;
+SHARED_SYM extern HUPROCESS *THPProc;
 
 
 #endif

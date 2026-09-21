@@ -1,6 +1,7 @@
 #ifndef _GAME_DATA_H
 #define _GAME_DATA_H
 
+#include "version.h"
 #include "game/memory.h"
 
 #include "datadir_enum.h"
@@ -62,6 +63,6 @@ void *HuDataReadNumHeapShortForce(int dataNum, s32 num, HEAPID heap);
 
 void HuDecodeData(void *src, void *dst, u32 size, s32 decode_type);
 
-extern u32 DirDataSize;
+SHARED_SYM extern u32 DirDataSize;
 
 #endif

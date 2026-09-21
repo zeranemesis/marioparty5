@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/object.h"
 #include "game/pad.h"
 #include "game/audio.h"
@@ -5,12 +6,12 @@
 #include "game/mgdata.h"
 #include "game/gamemes.h"
 
-float CZoomM[HU3D_CAM_MAX];
-HuVecF CenterM[HU3D_CAM_MAX];
-HuVecF CRotM[HU3D_CAM_MAX];
-float CZoom;
-HuVecF Center;
-HuVecF CRot;
+SHARED_SYM float CZoomM[HU3D_CAM_MAX];
+SHARED_SYM HuVecF CenterM[HU3D_CAM_MAX];
+SHARED_SYM HuVecF CRotM[HU3D_CAM_MAX];
+SHARED_SYM float CZoom;
+SHARED_SYM HuVecF Center;
+SHARED_SYM HuVecF CRot;
 
 s32 lbl_80288888;
 

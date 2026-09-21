@@ -1,6 +1,7 @@
 #ifndef _GAME_GAMEMES_H
 #define _GAME_GAMEMES_H
 
+#include "version.h"
 #include "humath.h"
 #include "game/sprite.h"
 #include "game/object.h"
@@ -110,7 +111,7 @@ typedef struct GameMes_s {
 	GXColor color;
 } GAMEMES;
 
-extern GAMEMES GameMesData[GAMEMES_MAX];
+SHARED_SYM extern GAMEMES GameMesData[GAMEMES_MAX];
 
 void GameMesInit(void);
 void *GameMesDataRead(unsigned int dataNum);
@@ -165,11 +166,11 @@ BOOL GameMesMgDrawExec(GAMEMES *mes);
 BOOL GameMesMgRecordInit(GAMEMES *mes, va_list args);
 BOOL GameMesMgRecordExec(GAMEMES *mes);
 
-extern GAMEMES GameMesData[GAMEMES_MAX];
-extern s16 GameMesTime;
-extern u8 GameMesCloseF;
-extern unsigned int GameMesVWait;
-extern int GameMesLanguageNo;
-extern OMOVL GameMesOvlPrev;
+SHARED_SYM extern GAMEMES GameMesData[GAMEMES_MAX];
+SHARED_SYM extern s16 GameMesTime;
+SHARED_SYM extern u8 GameMesCloseF;
+SHARED_SYM extern unsigned int GameMesVWait;
+SHARED_SYM extern int GameMesLanguageNo;
+SHARED_SYM extern OMOVL GameMesOvlPrev;
 
 #endif

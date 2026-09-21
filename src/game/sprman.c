@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/sprite.h"
 #include "game/memory.h"
 #include "game/init.h"
@@ -20,8 +21,8 @@ typedef struct HuSprOrder_s {
     u16 next;
 } HUSPRORDER;
 
-HUSPRITE HuSprData[HUSPR_MAX];
-HUSPRGRP HuSprGrpData[HUSPR_GRP_MAX];
+SHARED_SYM HUSPRITE HuSprData[HUSPR_MAX];
+SHARED_SYM HUSPRGRP HuSprGrpData[HUSPR_GRP_MAX];
 static HUSPRORDER HuSprOrder[HUSPR_ORDER_MAX];
 
 static s16 HuSprOrderNum;

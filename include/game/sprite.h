@@ -1,6 +1,7 @@
 #ifndef _GAME_SPRITE_H
 #define _GAME_SPRITE_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "humath.h"
 
@@ -85,8 +86,8 @@ typedef struct HuSprGrp_s {
     s16 work[4];
 } HUSPRGRP;
 
-extern HUSPRITE HuSprData[HUSPR_MAX];
-extern HUSPRGRP HuSprGrpData[HUSPR_GRP_MAX];
+SHARED_SYM extern HUSPRITE HuSprData[HUSPR_MAX];
+SHARED_SYM extern HUSPRGRP HuSprGrpData[HUSPR_GRP_MAX];
 
 void HuSprInit(void);
 void HuSprClose(void);

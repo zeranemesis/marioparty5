@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/THPSimple.h"
 #include "game/THPDraw.h"
 
@@ -7,7 +8,7 @@ static void __THPSimpleDVDCallback(s32 result, DVDFileInfo *fileInfo);
 static s32 VideoDecode(void *arg0);
 static void THPAudioMixCallback(void);
 
-UnkThpStruct10 SimpleControl;
+SHARED_SYM UnkThpStruct10 SimpleControl;
 static u8 SoundBuffer[2][0x280];
 static u8 WorkBuffer[0x40] ATTRIBUTE_ALIGN(32);
 
@@ -16,7 +17,7 @@ static void *LastAudioBuffer;
 static void *CurAudioBuffer;
 static s32 ReadResult;
 static s32 CallbackStatus;
-s32 bufIdx;
+SHARED_SYM s32 bufIdx;
 static s32 AudioSystem;
 static void (*OldAIDCallback)();
 static s32 Initialized;

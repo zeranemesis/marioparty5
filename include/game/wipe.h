@@ -1,6 +1,7 @@
 #ifndef _GAME_WIPE_H
 #define _GAME_WIPE_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "game/animdata.h"
 #include "game/process.h"
@@ -54,7 +55,7 @@ static inline void WipeWait(void)
     }
 }
 
-extern WIPEWORK wipeData;
-extern BOOL wipeFadeInF;
+SHARED_SYM extern WIPEWORK wipeData;
+SHARED_SYM extern BOOL wipeFadeInF;
 
 #endif

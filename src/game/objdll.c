@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/objdll.h"
 #include "game/dvd.h"
 #include "game/memory.h"
@@ -9,7 +10,7 @@
 typedef BOOL (*OMDLLPROLOG)(void);
 typedef void (*OMDLLEPILOG)(void);
 
-OMDLLINFO *omDLLinfoTbl[OMDLLINFO_MAX];
+SHARED_SYM OMDLLINFO *omDLLinfoTbl[OMDLLINFO_MAX];
 
 static OVLTBL *omDLLFileList;
 

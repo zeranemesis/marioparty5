@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/gamemes.h"
 #include "game/process.h"
 #include "game/data.h"
@@ -21,20 +22,20 @@ typedef struct GameMesEntry_s {
     int timeMax;
 } GAMEMES_ENTRY;
 
-GAMEMES GameMesData[GAMEMES_MAX];
-s16 GameMesTime;
-u8 GameMesCloseF;
+SHARED_SYM GAMEMES GameMesData[GAMEMES_MAX];
+SHARED_SYM s16 GameMesTime;
+SHARED_SYM u8 GameMesCloseF;
 static u8 GameMesDebugF;
-unsigned int GameMesVWait;
+SHARED_SYM unsigned int GameMesVWait;
 static ANIMDATA *scoreWinMaskAnim;
 static ANIMDATA *scoreWinAnim;
 static BOOL pauseWaitF;
 static BOOL pauseCancelF;
 static BOOL pauseEnableF;
 static HUPROCESS *pauseProc;
-int GameMesLanguageNo;
+SHARED_SYM int GameMesLanguageNo;
 
-OMOVL GameMesOvlPrev = DLL_NONE;
+SHARED_SYM OMOVL GameMesOvlPrev = DLL_NONE;
 
 GAMEMES_ENTRY GameMesTbl[] = {
     {

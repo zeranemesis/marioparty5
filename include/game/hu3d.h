@@ -1,6 +1,7 @@
 #ifndef _GAME_HSFMAN_H
 #define _GAME_HSFMAN_H
 
+#include "version.h"
 #include "game/hsfformat.h"
 #include "game/memory.h"
 #include "game/data.h"
@@ -798,57 +799,57 @@ void Hu3DWaterCameraSet(u16 cameraBit);
 void Hu3DWaterWaveCreate(HuVecF *pos, float radius, float radiusMax);
 void Hu3DTexLoad(void *buf, s16 w, s16 h, u32 format, GXTexWrapMode wrapS, GXTexWrapMode wrapT, BOOL filterF, GXTexMapID texMapId);
 
-extern HuVecF PGMaxPos;
-extern HuVecF PGMinPos;
-extern u32 totalPolyCnt;
-extern u32 totalPolyCnted;
-extern u32 totalMatCnt;
-extern u32 totalMatCnted;
-extern u32 totalTexCnt;
-extern u32 totalTexCnted;
-extern u32 totalTexCacheCnt;
-extern u32 totalTexCacheCnted;
+SHARED_SYM extern HuVecF PGMaxPos;
+SHARED_SYM extern HuVecF PGMinPos;
+SHARED_SYM extern u32 totalPolyCnt;
+SHARED_SYM extern u32 totalPolyCnted;
+SHARED_SYM extern u32 totalMatCnt;
+SHARED_SYM extern u32 totalMatCnted;
+SHARED_SYM extern u32 totalTexCnt;
+SHARED_SYM extern u32 totalTexCnted;
+SHARED_SYM extern u32 totalTexCacheCnt;
+SHARED_SYM extern u32 totalTexCacheCnted;
 
-extern HU3DLIGHT Hu3DLocalLight[HU3D_LLIGHT_MAX];
-extern HU3DLIGHT Hu3DGlobalLight[HU3D_GLIGHT_MAX];
-extern Mtx Hu3DCameraMtxXPose;
-extern Mtx Hu3DCameraMtx;
-extern HSFSCENE FogData;
-extern HU3DSHADOW Hu3DShadowBuf[HU3D_CAM_MAX];
-extern HU3DPROJECTION Hu3DProjection[HU3D_PROJ_MAX];
-extern ANIMDATA *hiliteAnim[4];
-extern ANIMDATA *reflectAnim[5];
-extern HU3DCAMERA Hu3DCamera[HU3D_CAM_MAX];
-extern HU3DMODEL Hu3DData[HU3D_MODEL_MAX];
+SHARED_SYM extern HU3DLIGHT Hu3DLocalLight[HU3D_LLIGHT_MAX];
+SHARED_SYM extern HU3DLIGHT Hu3DGlobalLight[HU3D_GLIGHT_MAX];
+SHARED_SYM extern Mtx Hu3DCameraMtxXPose;
+SHARED_SYM extern Mtx Hu3DCameraMtx;
+SHARED_SYM extern HSFSCENE FogData;
+SHARED_SYM extern HU3DSHADOW Hu3DShadowBuf[HU3D_CAM_MAX];
+SHARED_SYM extern HU3DPROJECTION Hu3DProjection[HU3D_PROJ_MAX];
+SHARED_SYM extern ANIMDATA *hiliteAnim[4];
+SHARED_SYM extern ANIMDATA *reflectAnim[5];
+SHARED_SYM extern HU3DCAMERA Hu3DCamera[HU3D_CAM_MAX];
+SHARED_SYM extern HU3DMODEL Hu3DData[HU3D_MODEL_MAX];
 
 
-extern GXColor BGColor;
-extern s16 reflectMapNo;
-extern ANIMDATA *toonAnim;
-extern s16 shadowNum;
-extern s16 Hu3DShadowCamBit;
-extern BOOL Hu3DShadowF;
-extern BOOL shadowModelDrawF;
-extern HU3DSHADOW *Hu3DShadow;
-extern s16 Hu3DProjectionNum;
-extern s16 Hu3DCameraNo;
-extern s16 Hu3DCameraBit;
-extern u32 Hu3DMallocNo;
-extern s16 Hu3DPauseF;
-extern u16 Hu3DCameraExistF;
-extern HU3DMODELID Hu3DReflectModelId;
-extern ANIMDATA *Hu3DReflectModelAnim;
-extern float Hu3DAmbColR;
-extern float Hu3DAmbColG;
-extern float Hu3DAmbColB;
-extern HuVecF PGMaxPos;
-extern HuVecF PGMinPos;
+SHARED_SYM extern GXColor BGColor;
+SHARED_SYM extern s16 reflectMapNo;
+SHARED_SYM extern ANIMDATA *toonAnim;
+SHARED_SYM extern s16 shadowNum;
+SHARED_SYM extern s16 Hu3DShadowCamBit;
+SHARED_SYM extern BOOL Hu3DShadowF;
+SHARED_SYM extern BOOL shadowModelDrawF;
+SHARED_SYM extern HU3DSHADOW *Hu3DShadow;
+SHARED_SYM extern s16 Hu3DProjectionNum;
+SHARED_SYM extern s16 Hu3DCameraNo;
+SHARED_SYM extern s16 Hu3DCameraBit;
+SHARED_SYM extern u32 Hu3DMallocNo;
+SHARED_SYM extern s16 Hu3DPauseF;
+SHARED_SYM extern u16 Hu3DCameraExistF;
+SHARED_SYM extern HU3DMODELID Hu3DReflectModelId;
+SHARED_SYM extern ANIMDATA *Hu3DReflectModelAnim;
+SHARED_SYM extern float Hu3DAmbColR;
+SHARED_SYM extern float Hu3DAmbColG;
+SHARED_SYM extern float Hu3DAmbColB;
+SHARED_SYM extern HuVecF PGMaxPos;
+SHARED_SYM extern HuVecF PGMinPos;
 
-extern HU3DMOTION Hu3DMotion[HU3D_MOTION_MAX];
+SHARED_SYM extern HU3DMOTION Hu3DMotion[HU3D_MOTION_MAX];
 
-extern HU3DTEXANIM Hu3DTexAnimData[HU3D_TEXANIM_MAX];
-extern HU3DTEXSCROLL Hu3DTexScrData[HU3D_TEXSCROLL_MAX];
+SHARED_SYM extern HU3DTEXANIM Hu3DTexAnimData[HU3D_TEXANIM_MAX];
+SHARED_SYM extern HU3DTEXSCROLL Hu3DTexScrData[HU3D_TEXSCROLL_MAX];
 
-extern HU3DWATER Hu3DWaterData;
+SHARED_SYM extern HU3DWATER Hu3DWaterData;
 
 #endif

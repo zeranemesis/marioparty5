@@ -1,3 +1,4 @@
+#include "version.h"
 #include "game/hu3d.h"
 #include "game/hsfload.h"
 #include "game/init.h"
@@ -12,7 +13,7 @@
 #define HU3D_MOTATTR_NOSHIFT_ALL (HU3D_MOTATTR_LOOP|HU3D_MOTATTR_PAUSE|HU3D_MOTATTR_REV)
 #define HU3D_MOTATTR_ALL (HU3D_MOTATTR_SHIFT_ALL|HU3D_MOTATTR_NOSHIFT_ALL)
 
-HU3DMOTION Hu3DMotion[HU3D_MOTION_MAX];
+SHARED_SYM HU3DMOTION Hu3DMotion[HU3D_MOTION_MAX];
 
 static HSFBITMAP *bitMapPtr;
 

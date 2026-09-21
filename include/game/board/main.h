@@ -1,6 +1,7 @@
 #ifndef _BOARD_MAIN_H
 #define _BOARD_MAIN_H
 
+#include "version.h"
 #include "game/object.h"
 #include "game/process.h"
 #include "game/gamework.h"
@@ -32,8 +33,8 @@ typedef void (*MBKILLHOOK)(void);
 typedef void (*MBLIGHTHOOK)(void);
 typedef void (*MBTURNHOOK)(void);
 
-extern OMOBJMAN *mbObjMan;
-extern HUPROCESS *mbMainProcess;
+SHARED_SYM extern OMOBJMAN *mbObjMan;
+SHARED_SYM extern HUPROCESS *mbMainProcess;
 
 static inline int MBBoardNoGet(void)
 {

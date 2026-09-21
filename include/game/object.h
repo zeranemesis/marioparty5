@@ -1,6 +1,7 @@
 #ifndef _GAME_OBJECT_H
 #define _GAME_OBJECT_H
 
+#include "version.h"
 #include "dolphin.h"
 #include "game/process.h"
 #include "game/hu3d.h"
@@ -156,23 +157,23 @@ BOOL omCameraViewCheck(u32 cameraBit);
 void omGameSysInit(OMOBJMAN *objman);
 void omVibrate(s16 playerNo, s16 duration, s16 off, s16 on);
 
-extern s16 omSysExitReq;
-extern OMOBJ *omDBGSysKeyObj;
-extern u8 omSysPauseEnableFlag;
-extern OMOVL omprevovl;
-extern OMOVL omcurovl;
-extern s32 omcurdll;
-extern s32 omovlhisidx;
-extern s32 omovlevtno;
-extern s32 omovlstat;
-extern u8 omUPauseFlag;
-extern s16 omdispinfo;
-extern float CZoomM[HU3D_CAM_MAX];
-extern HuVecF CenterM[HU3D_CAM_MAX];
-extern HuVecF CRotM[HU3D_CAM_MAX];
-extern float CZoom;
-extern HuVecF Center;
-extern HuVecF CRot;
+SHARED_SYM extern s16 omSysExitReq;
+SHARED_SYM extern OMOBJ *omDBGSysKeyObj;
+SHARED_SYM extern u8 omSysPauseEnableFlag;
+SHARED_SYM extern OMOVL omprevovl;
+SHARED_SYM extern OMOVL omcurovl;
+SHARED_SYM extern s32 omcurdll;
+SHARED_SYM extern s32 omovlhisidx;
+SHARED_SYM extern s32 omovlevtno;
+SHARED_SYM extern s32 omovlstat;
+SHARED_SYM extern u8 omUPauseFlag;
+SHARED_SYM extern s16 omdispinfo;
+SHARED_SYM extern float CZoomM[HU3D_CAM_MAX];
+SHARED_SYM extern HuVecF CenterM[HU3D_CAM_MAX];
+SHARED_SYM extern HuVecF CRotM[HU3D_CAM_MAX];
+SHARED_SYM extern float CZoom;
+SHARED_SYM extern HuVecF Center;
+SHARED_SYM extern HuVecF CRot;
 
 
 #endif
