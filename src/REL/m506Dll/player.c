@@ -95,7 +95,7 @@ void M506ObjShadowMapReset(int no, int from, int to);
 void M506PlayerCreate(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
-    int i;
+    s16 i;
 
     memset(player, 0, sizeof(M506_PLAYER_WORK));
     player->no = obj->work[0];
@@ -103,10 +103,10 @@ void M506PlayerCreate(OMOBJ *obj)
     player->padNo = GwPlayerConf[player->no].padNo;
     player->playerType = GwPlayerConf[player->no].type;
     player->comDif = GwPlayerConf[player->no].dif;
-    player->newHeight = 0;
+    player->unk10 = 0;
+    player->unkC = 0;
     player->height = 0;
-    player->jumpTicks = 0;
-    player->pos.y = 0.0f;
+    player->newHeight = 0;
     player->motId = 0;
     player->curDir = -1;
     player->upJumpF = 0;
