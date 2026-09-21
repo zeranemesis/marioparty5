@@ -204,6 +204,7 @@ set(REL_FILES
         src/REL/mdselDll/object.c
         src/REL/mdselDll/stage.c
         src/REL/meschkDll/meschk.c
+        src/REL/motchkDll/motchk.c
         src/REL/selmenuDll/selmenu.c
         src/REL/sequencedll/sequence.c
         src/REL/staffDll/staff.c
@@ -305,7 +306,6 @@ set(REL_FILES
 #   mgmatchDll
 #   mgtourDll
 #   mgwarsDll
-#   motchkDll
 #   partyresultdll
 #   rescardDll
 #   resultDll
