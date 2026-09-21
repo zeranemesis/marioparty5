@@ -40,12 +40,85 @@
  * MB7W_* macros below, extended incrementally.
  */
 
+#define MB7_OBJ_MAX 0xB   /* mb7_ObjFileTbl entries / model ids: mb7_Work[0..0xA] */
+#define MB7_BACKOBJ_MAX 0x18 /* mb7_BackObjFileTbl / mb7_BackObjPosTbl / mb7_BackObjRotYTbl entries */
+
+/* mb7_Work as a flat 32-bit-word scratch buffer, exactly like w03Dll's
+ * mb3_Work: word[0..0xA] hold the 11 "front" object model ids (created
+ * from mb7_ObjFileTbl), word[0xB..0x22] hold the 24 "back" object model
+ * ids (mb7_BackObjFileTbl/Pos/RotY), and u16 word[0x94/2..0x9C/2] hold 4
+ * dust effect ids - confirmed against
+ * build/GP5E01_00/w07Dll/asm/REL/w07Dll/world07.s (MB7_ObjectCreate uses
+ * `slwi r4, r31, 2` / `stw ..., 0x0(r3)` for the first two loops, i.e.
+ * word-indexed s32 stores, and `slwi r4, r31, 1` / `sth ..., 0x94(r3)`
+ * for the effect ids, i.e. halfword-indexed at byte offset 0x94). Layout
+ * of the remaining region (Koopa walk/fire/cube, Dokan, Hou state) is
+ * documented next to the functions that use it as they are decompiled. */
+static s32 mb7_Work[0xCE];
+#define MB7W_S16(off) (*(s16 *) ((off) + (u8 *) mb7_Work))
+#define MB7W_U16(off) (*(u16 *) ((off) + (u8 *) mb7_Work))
+#define MB7W_S32(off) (*(s32 *) ((off) + (u8 *) mb7_Work))
+#define MB7W_F32(off) (*(f32 *) ((off) + (u8 *) mb7_Work))
+
+static OMOBJ *mb7_MainObj;
+static u32 *mb7_SaveWorkP;
+static s16 mb7_MainMdlId;
+
+static u32 mb7_ObjFileTbl[MB7_OBJ_MAX] = {
+    0xD70004U, 0xD70006U, 0xD70007U, 0xD70008U, 0xD7000BU,
+    0xD7000CU, 0xD7000DU, 0xD7000EU, 0xD70010U, 0xD70011U, 0xD70012U,
+};
+
+static s32 mb7_BackObjFileTbl[MB7_BACKOBJ_MAX] = {
+    0xD70005, 0xD70005, 0xD70005, 0xD70005, 0xD70005, 0xD70005,
+    0xD70009, 0xD70009, 0xD70009, 0xD70009,
+    0xD7000A, 0xD7000A, 0xD7000A, 0xD7000A, 0xD7000A, 0xD7000A,
+    0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F,
+};
+
+static const HuVecF mb7_BackObjPosTbl[MB7_BACKOBJ_MAX] = {
+    { -685.0f, 685.0f, -4260.0f }, { 685.0f, 685.0f, -4260.0f },
+    { -945.0f, 400.0f, -1120.0f }, { 945.0f, 400.0f, -1120.0f },
+    { -615.0f, -315.0f, 645.0f }, { 615.0f, -315.0f, 645.0f },
+    { -715.0f, -100.0f, -1600.0f }, { 715.0f, -100.0f, -1600.0f },
+    { -715.0f, -100.0f, -2435.0f }, { 715.0f, -100.0f, -2435.0f },
+    { -2270.0f, 1465.0f, -5835.0f }, { 2270.0f, 1465.0f, -5835.0f },
+    { -3530.0f, 500.0f, -2660.0f }, { 3530.0f, 500.0f, -2660.0f },
+    { -2895.0f, 500.0f, -2030.0f }, { 2895.0f, 500.0f, -2030.0f },
+    { -615.0f, 1400.0f, -4950.0f }, { 615.0f, 1400.0f, -4950.0f },
+    { -3025.0f, 500.0f, -3175.0f }, { 3025.0f, 500.0f, -3175.0f },
+    { -2385.0f, 500.0f, -2545.0f }, { 2385.0f, 500.0f, -2545.0f },
+    { -1245.0f, -400.0f, -300.0f }, { 1245.0f, -400.0f, -300.0f },
+};
+
+static f32 mb7_BackObjRotYTbl[MB7_BACKOBJ_MAX] = {
+    -60.0f, 60.0f, -45.0f, 45.0f, 30.0f, -30.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+    -150.0f, 150.0f, -45.0f, 45.0f, -45.0f, 45.0f, 0.0f, 0.0f,
+    -45.0f, 45.0f, -45.0f, 45.0f, 45.0f, -45.0f,
+};
+
+/* MB7_Create camera constants (extracted from the original REL's .rodata,
+ * m2c could not infer these as it has no context for anonymous data). */
+static const HuVecF mb7_OpeningPos = { 0.0f, -1000.0f, -4500.0f };
+static const HuVecF mb7_OpeningRot = { -33.0f, 0.0f, 0.0f };
+static const HuVecF mb7_MapViewPos = { 0.0f, -2500.0f, -78.0f };
+static const HuVecF mb7_MapViewRot = { 0.0f, 0.0f, 0.0f };
+
 /* forward declarations - definitions land in later commits as each
  * function is decompiled, in increasing order of risk (boilerplate ->
  * leaf helpers -> effect hooks -> setup/teardown -> masu event handlers
  * -> Koopa/Dokan/Hou state machines). */
 static void MB7_Create(void);
 static void MB7_Kill(void);
+static void MB7_ObjectCreate(void);
+static void MB7_MainObjUpdate(OMOBJ *obj);
+static void MB7_LightSet(void);
+static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF);
+static void MB7Ev_MasuRedInit(void);
+static void MB7Ev_MasuRedClose(void);
+static void MB7Ev_RedResetHook(void);
+static int MB7Ev_MasuHatena(int playerNo);
+static int MB7Ev_MasuWalkPost(int playerNo);
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -124,7 +197,6 @@ static s32 MB7Ev_BitGet(s32 flag, u32 mask) {
     return result;
 }
 
-/* NONMATCHING: register allocation order differs */
 /* NONMATCHING: register allocation order differs (65.52% match) */
 static u32 MB7Ev_MasuFlagGet(s32 bits, s32 mask) {
     u32 result;
@@ -154,5 +226,146 @@ static void MB7_LightReset(void) {
 static void MB7_MasuStub(void) {
 }
 
-static void MB7Ev_MasuWalkPre(s32 playerNo) {
+static int MB7Ev_MasuWalkPre(int playerNo) {
+}
+
+/* -------------------------- setup / teardown ---------------------------- */
+
+/* NONMATCHING: instruction ordering differs around rodata-constant setup (63.52% match) */
+static void MB7_Create(void) {
+    HuAudSndGrpSetSet(0x14);
+    memset(mb7_Work, 0, sizeof(mb7_Work));
+    mb7_SaveWorkP = GwSystem.mbSaveWork;
+    MBMasuCreate(0xD70000);
+    mb7_MainMdlId = (s16) MBModelCreate(0xD70001, NULL, FALSE);
+    MBModelPosSet(mb7_MainMdlId, 0.0f, 0.0f, 0.0f);
+    MBModelAttrSet(mb7_MainMdlId, HU3D_MOTATTR_LOOP);
+    MBScrollInit(0xD70002U, 21000.0f, -2500.0f);
+    MBOpeningViewSet((HuVecF *) &mb7_OpeningRot, (HuVecF *) &mb7_OpeningPos, 20000.0f);
+    MBMapViewCameraSet((HuVecF *) &mb7_MapViewRot, (HuVecF *) &mb7_MapViewPos, 21000.0f);
+    MBLightHookSet(MB7_LightSet, MB7_LightReset);
+    MBCapsuleColCreate(0xD70003);
+    MBBranchFlagSet(0x40U);
+    MBBranchFlagSet(0x20U);
+    MBMasuPathCheckHookSet(MB7_MasuPathCheck);
+    if (GwSystem.last5Effect == 3) {
+        MBMasuTypeChange(2U, 3U);
+    }
+    MB7Ev_MasuRedInit();
+    MB7_ObjectCreate();
+    HuDataDirClose(0xD70000);
+    MBMasuWalkPreHookSet(MB7Ev_MasuWalkPre);
+    MBMasuWalkPostHookSet((MASUPLAYERHOOK) MB7Ev_MasuWalkPost);
+    MBMasuHatenaHookSet(MB7Ev_MasuHatena);
+    mb7_MainObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB7_MainObjUpdate);
+}
+
+/* NONMATCHING: instruction ordering differs around mb7_Work byte-offset
+ * address computation and the zero-Point3d local (75.84% match) */
+static void MB7_ObjectCreate(void) {
+    s32 i;
+
+    for (i = 0; i < MB7_OBJ_MAX; i++) {
+        mb7_Work[i] = -1;
+    }
+    for (i = 0; i < MB7_BACKOBJ_MAX; i++) {
+        MB7W_S32(0x2C + (i * 4)) = -1;
+    }
+    for (i = 0; i < 4; i++) {
+        MB7W_S16(0x94 + (i * 2)) = -1;
+    }
+
+    for (i = 0; i < MB7_OBJ_MAX; i++) {
+        if (mb7_ObjFileTbl[i] != 0U) {
+            s32 modelId = MBModelCreate((s32) mb7_ObjFileTbl[i], NULL, FALSE);
+            mb7_Work[i] = modelId;
+            MBModelPosSet((s16) modelId, 0.0f, 0.0f, 0.0f);
+            MBMotionSpeedSet((s16) modelId, 0.0f);
+            MBMotionShapeSpeedSet((s16) modelId, 0.0f);
+        }
+    }
+    for (i = 0; i < MB7_BACKOBJ_MAX; i++) {
+        s32 modelId = MBModelCreate(mb7_BackObjFileTbl[i], NULL, TRUE);
+        MB7W_S32(0x2C + (i * 4)) = modelId;
+        MBModelPosSetV((s16) modelId, (Point3d *) &mb7_BackObjPosTbl[i]);
+        MBModelRotSet((s16) modelId, 0.0f, mb7_BackObjRotYTbl[i], 0.0f);
+    }
+
+    if (mb7_Work[0] >= 0) {
+        MBModelAttrSet((s16) mb7_Work[0], HU3D_MOTATTR_LOOP);
+        MBModelAttrSet((s16) mb7_Work[0], 0x40000040U);
+        MBMotionSpeedSet((s16) mb7_Work[0], 0.5f);
+        MBMotionShapeSpeedSet((s16) mb7_Work[0], 0.5f);
+    }
+    if (mb7_Work[2] >= 0) {
+        MBModelPosSet((s16) mb7_Work[2], 0.0f, 1495.0f, -4645.0f);
+    }
+    for (i = 4; i <= 0xA; i++) {
+        if (mb7_Work[i] >= 0) {
+            MBModelDispSet((s16) mb7_Work[i], FALSE);
+        }
+    }
+    Hu3DModelLayerSet(MBModelIdGet((s16) mb7_Work[0xA]), 2);
+    for (i = 0x10; i <= 0x18; i++) {
+        s32 modelId = MB7W_S32(0x2C + (i * 4));
+        if (modelId >= 0) {
+            MBModelAttrSet((s16) modelId, HU3D_MOTATTR_LOOP);
+            MBMotionSpeedSet((s16) modelId, 1.0f);
+        }
+    }
+    MB7W_S32(0x8C) = (s32) HuSprAnimRead(HuDataReadNum(0xD70013, 0x10000000));
+    MB7W_S32(0x90) = (s32) HuSprAnimRead(HuDataReadNum(0xD70014, 0x10000000));
+    MB7W_S16(0x94) = (s16) MBEffCreate((void *) MB7W_S32(0x8C), 1);
+    MB7W_S16(0x96) = (s16) MBEffCreate((void *) MB7W_S32(0x90), 1);
+}
+
+/* NONMATCHING: mb7_Work byte-offset address add operand order differs
+ * (82.41% match); logic identical */
+static void MB7_Kill(void) {
+    s32 i;
+
+    if (mb7_MainMdlId >= 0) {
+        MBModelKill(mb7_MainMdlId);
+        mb7_MainMdlId = -1;
+    }
+    MB7Ev_MasuRedClose();
+    MBCameraModelViewSet(-1, NULL, NULL, -1.0f, 45.0f, 0x3F);
+    for (i = 0; i < MB7_OBJ_MAX; i++) {
+        if (mb7_Work[i] >= 0) {
+            MBModelKill((s16) mb7_Work[i]);
+        }
+        mb7_Work[i] = -1;
+    }
+    for (i = 0; i < MB7_BACKOBJ_MAX; i++) {
+        if (MB7W_S32(0x2C + (i * 4)) >= 0) {
+            MBModelKill((s16) MB7W_S32(0x2C + (i * 4)));
+        }
+        MB7W_S32(0x2C + (i * 4)) = -1;
+    }
+    for (i = 0; i < 4; i++) {
+        if (MB7W_S16(0x94 + (i * 2)) >= 0) {
+            MBEffKill(MB7W_S16(0x94 + (i * 2)));
+        }
+        MB7W_S16(0x94 + (i * 2)) = -1;
+    }
+}
+
+static void MB7_MainObjUpdate(OMOBJ *obj) {
+    MBCAMERA *cam;
+
+    if (MBKillCheck()) {
+        if (mb7_MainObj != NULL) {
+            omDelObjEx(mbObjMan, mb7_MainObj);
+        }
+        return;
+    }
+    cam = MBCameraGet();
+}
+
+static void MB7_LightSet(void) {
+    Hu3DShadowCreate(45.0f, 1000.0f, 250000.0f);
+    Hu3DShadowTPLvlSet(0.3f);
+    Hu3DBGColorSet(0U, 0U, 0U);
+    Hu3DModelLightInfoSet(MBModelIdGet(mb7_MainMdlId), 1);
+    MBPreTurnHookSet(MB7Ev_RedResetHook);
 }
