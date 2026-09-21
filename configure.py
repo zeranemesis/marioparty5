@@ -1020,8 +1020,8 @@ config.libs = [
         "m506Dll",
         objects={
             Object(Matching, "REL/m506Dll/m506.c"),
-            Object(NonMatching, "REL/m506Dll/object.c"),
-            Object(NonMatching, "REL/m506Dll/player.c"),
+            Object(Equivalent, "REL/m506Dll/object.c"),
+            Object(Equivalent, "REL/m506Dll/player.c"),
         },
     ),
     Rel(
