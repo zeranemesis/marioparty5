@@ -129,6 +129,10 @@ static void MB7Ev_KoopaMotionCreate(s32 motionIdx);
 static void MB7Ev_KoopaCreate(void);
 static void MB7Ev_KoopaDataClose(void);
 static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop);
+static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop);
+static int MB7Ev_KoopaMotionCheck(void);
+static void MB7Ev_KoopaClose(void);
+static void MB7Ev_KoopaWalkFxPlay(void);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -526,4 +530,74 @@ static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
     koopaMdlId = (s16) *(s32 *) (base + 0x34);
     MBMotionNoSet(koopaMdlId, (s16) *(s32 *) (base + 0x44 + (motionIdx * 4)), attr);
     *(s32 *) (base + 0x70) = motionIdx;
+}
+
+/* NONMATCHING: register allocation order differs */
+/* NONMATCHING: register allocation order differs (70.21% match) */
+static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    s32 attr = 0;
+    s16 koopaMdlId;
+
+    if (loop) {
+        attr = 0x40000001;
+        if (motionIdx != *(s32 *) (base + 0x70)) {
+            *(s32 *) (base + 0x74) = 0;
+        }
+    }
+    koopaMdlId = (s16) *(s32 *) (base + 0x34);
+    MBMotionShiftSet(koopaMdlId, (s16) *(s32 *) (base + 0x44 + (motionIdx * 4)), 0.0f, 8.0f, attr);
+    *(s32 *) (base + 0x70) = motionIdx;
+}
+
+static int MB7Ev_KoopaMotionCheck(void) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+
+    if (MBMotionShiftIDGet((s16) *(s32 *) (base + 0x34)) >= 0) {
+        return 0;
+    }
+    return MBMotionEndCheck((s16) *(s32 *) (base + 0x34));
+}
+
+/* NONMATCHING: register allocation order differs (69.70% match) */
+static void MB7Ev_KoopaClose(void) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (*(s32 *) (base + 0x34 + (i * 4)) >= 0) {
+            MBModelKill((s16) *(s32 *) (base + 0x34 + (i * 4)));
+        }
+        *(s32 *) (base + 0x34 + (i * 4)) = -1;
+    }
+}
+
+/* NONMATCHING: cror-fused compare not reproduced */
+static void MB7Ev_KoopaWalkFxPlay(void) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    s16 koopaMdlId;
+    f32 time;
+
+    if (*(s32 *) (base + 0x70) != 1) {
+        return;
+    }
+    koopaMdlId = (s16) *(s32 *) (base + 0x34);
+    time = MBMotionTimeGet(koopaMdlId);
+    if (*(s32 *) (base + 0x74) == 0) {
+        if (time >= 15.0f) {
+            if (time < 25.0f) {
+                HuAudFXEmiterPlay(0x2C7, (Point3d *) (base + 0x78));
+            }
+            *(s32 *) (base + 0x74) = 1;
+        }
+    } else if (*(s32 *) (base + 0x74) == 1) {
+        if (time >= 65.0f) {
+            if (time < 75.0f) {
+                HuAudFXEmiterPlay(0x2C7, (Point3d *) (base + 0x78));
+            }
+            *(s32 *) (base + 0x74) = 2;
+        }
+    } else if (time < 65.0f) {
+        *(s32 *) (base + 0x74) = 0;
+    }
 }
