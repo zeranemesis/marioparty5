@@ -137,6 +137,7 @@ static void MB7Ev_KoopaWalkFxPlay(void);
 static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static s16 MB7Ev_KoopaCubeDustCreate(Point3d *pos, s32 mode);
 static void MB7Ev_KoopaCubeDustEffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
+static void MB7Ev_KoopaFire1Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -946,6 +947,146 @@ static void MB7Ev_RedResetHook(void) {
     for (i = 1; i < mb7_Work[0xCC]; i++) {
         if (redTimer[i] != 0) {
             redTimer[i] -= 1;
+        }
+    }
+}
+
+/* ---------------------------- fire breath hook --------------------------- */
+
+/* PowerPC fast reciprocal-sqrt estimate refined by 3 Newton-Raphson
+ * iterations (not 4, unlike the system sqrt() in
+ * PowerPC_EABI_Support/Msl/MSL_C/MSL_Common/math.h) - used once per
+ * spawned fire particle in MB7Ev_KoopaFire1Hook to normalize a 2D
+ * (x,z) scatter vector. */
+static f32 MB7_FastSqrt(f32 x) {
+    f64 guess = __frsqrte((f64) x);
+    guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
+    guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
+    guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
+    return (f32) ((f64) x * guess);
+}
+
+/* NONMATCHING: extra live Point3d locals cause more callee-saved float
+ * registers than the original (65.87% objdiff fuzzy match); logic
+ * identical (uses the mb7_Work[0x4F..0x5B] fire-breath state documented
+ * above: +0x53 breath angle, +0x55 sweep magnitude, +0x56 active flag,
+ * +0x5F..0x61 the "fire_pos" bone world position as spawn origin) */
+static void MB7Ev_KoopaFire1Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
+    MBEFFECTDATA *p;
+    s32 i;
+    Point3d dir;
+    Point3d origin;
+    Point3d diff;
+    f32 sweep;
+
+    if (effP->count == 0) {
+        p = effP->data;
+        for (i = 0; i < effP->num; i++, p++) {
+            p->scale = 0.0f;
+            p->color.a = 0;
+            p->time = (s16) -(i >> 3);
+        }
+        effP->count = 1;
+    }
+
+    dir.x = (f32) sin((3.141592653589793 * (f64) MB7W_F32(0x14C)) / 180.0);
+    dir.y = -0.15f;
+    dir.z = (f32) cos((3.141592653589793 * (f64) MB7W_F32(0x14C)) / 180.0);
+    PSVECScale(&dir, &origin, 250.0f * MB7W_F32(0x154));
+    PSVECAdd(&origin, (Point3d *) ((u8 *) mb7_Work + 0x17C), &origin);
+    sweep = 0.3f + (0.7f * MB7W_F32(0x154));
+
+    p = effP->data;
+    for (i = 0; i < effP->num; i++, p++) {
+        if (p->time < 0) {
+            if (MB7W_S32(0x158) != 0) {
+                p->time += 1;
+            }
+            continue;
+        }
+        if (p->time == 0) {
+            if (MB7W_S32(0x158) != 0) {
+                f32 angle2;
+                f32 vy;
+                f32 t;
+                f32 horizMag;
+                f32 speed;
+                f32 angle3;
+                f32 spread;
+                u8 grey;
+
+                p->time += 1;
+                p->rot.z = 360.0f * MBEffRandF();
+                grey = (u8) (s32) (160.0f + (95.0f * MBEffRandF()));
+                p->color.b = grey;
+                p->color.g = grey;
+                p->color.r = grey;
+                angle2 = 360.0f * MBEffRandF();
+                p->pos.x = (f32) sin((3.141592653589793 * (f64) angle2) / 180.0);
+                p->pos.z = (f32) cos((3.141592653589793 * (f64) angle2) / 180.0);
+                vy = (f32) (1.0 - sin((3.141592653589793 * (f64) (90.0f * MBEffRandF())) / 180.0));
+                if (MBEffSRandF() < 0.0f) {
+                    vy *= -1.0f;
+                }
+                p->pos.y = vy;
+                t = 1.0f - (vy * vy);
+                if (t == 0.0f) {
+                    horizMag = 0.0f;
+                } else {
+                    horizMag = MB7_FastSqrt(1.0f + (t * t));
+                }
+                p->pos.x *= horizMag;
+                p->pos.z *= horizMag;
+                speed = sweep * (2.5f + (1.6666666f * (1.5f * MBEffRandF())));
+                p->vel.x = p->pos.x * speed;
+                p->vel.z = p->pos.z * speed;
+                p->vel.y = p->pos.y * speed;
+                p->parManId = 0x14;
+                PSVECScale(&p->pos, &p->pos, 30.000002f * sweep);
+                if (p->pos.y > 0.0f) {
+                    p->pos.y *= 1.0f + (3.0f * MBEffRandF());
+                }
+                PSVECAdd(&origin, &p->pos, &p->pos);
+                p->accel.x = 100.0f + (80.0f * MBEffRandF());
+                p->accel.y = sweep;
+                p->color.a = 0;
+                p->scale = sweep * (30.0f + (30.0f * MBEffRandF()));
+                p->animBank = (s16) ((s32) (1000.0f * MBEffRandF()) & 3);
+                angle3 = 360.0f * MBEffRandF();
+                spread = sweep * (3.3333333f + (1.6666666f * (2.0f * MBEffRandF())));
+                p->speedDecay = (f32) ((f64) p->speedDecay + ((f64) spread * sin((3.141592653589793 * (f64) angle3) / 180.0)));
+                p->scaleBase = (f32) ((f64) p->scaleBase + ((f64) spread * cos((3.141592653589793 * (f64) angle3) / 180.0)));
+            } else {
+                continue;
+            }
+        }
+
+        PSVECAdd(&p->pos, &p->vel, &p->pos);
+        p->vel.y += 0.8166668f * p->accel.y;
+        p->vel.x *= 0.95f;
+        p->vel.z *= 0.95f;
+        if (p->pos.y > (origin.y + (50.0f * p->accel.y))) {
+            PSVECSubtract(&origin, &p->pos, &diff);
+            p->vel.x += 0.7f * (0.016666668f * diff.x);
+            p->vel.z += 0.7f * (0.016666668f * diff.z);
+            if (p->pos.y > (origin.y + (90.0f * p->accel.y))) {
+                p->vel.x += 1.3f * (0.016666668f * p->speedDecay);
+                p->vel.z += 1.3f * (0.016666668f * p->scaleBase);
+            }
+        }
+        p->parManId -= 1;
+        if (p->parManId <= 0) {
+            p->time = 0;
+            p->scale = 0.0f;
+            p->color.a = 0;
+        } else if (p->parManId < 8) {
+            if (p->color.a >= 0x1EU) {
+                p->color.a -= 0x1E;
+            }
+            p->scale += 5.0f;
+        } else {
+            p->color.a = (u8) (s32) ((f32) p->color.a + (0.3f * (p->accel.x - (f32) p->color.a)));
+            p->scale += 2.0f;
         }
     }
 }
