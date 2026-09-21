@@ -54,7 +54,7 @@ static f32 MB3_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir);
 static s32 MB3Ev_BitGet(s32 flag, u32 mask);
 static u32 MB3Ev_MasuFlagGet(s32 bits, s32 mask);
 
-static int MB3Ev_MasuHatena(int playerNo);
+static void MB3Ev_MasuHatena(int playerNo);
 static void MB3_Stub(void);
 static void MB3Ev_MasuWalkPre(int playerNo);
 static int MB3Ev_MasuWalkPost(int playerNo);
@@ -351,7 +351,7 @@ static void MB3_Create(void) {
     HuDataDirClose(0xD00000);
     MBMasuWalkPreHookSet((MASUPLAYERHOOK) MB3Ev_MasuWalkPre);
     MBMasuWalkPostHookSet((MASUPLAYERHOOK) MB3Ev_MasuWalkPost);
-    MBMasuHatenaHookSet(MB3Ev_MasuHatena);
+    MBMasuHatenaHookSet((MASUPLAYERHOOK) MB3Ev_MasuHatena);
 }
 
 static void MB3_ObjectCreate(void) {
@@ -508,12 +508,12 @@ static void MB3_ImpactEffPosSet(Point3d *pos, f32 pitch, f32 yaw) {
 
 /* ---------------------------- masu hooks -------------------------------- */
 
-static int MB3Ev_MasuHatena(int playerNo) {
+static void MB3Ev_MasuHatena(int playerNo) {
     MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
-    if (masuP->flag & 0x2000) {
+    u16 flag = masuP->flag;
+    if ((u32) (flag & 0x2000) != 0) {
         MB3Ev_HatenaYYHou(playerNo);
     }
-    return 0;
 }
 
 /*
