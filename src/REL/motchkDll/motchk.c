@@ -317,7 +317,7 @@ void DebugCamUpdate(OMOBJ *obj) {
     s8 stickY;
 
     if (HuPadBtnDown[0] & 0x1000) {
-        if (&dummyProc != NULL) {
+        if ((HUPROCESS *) dummyProc != NULL) {
             HuPrcKill((HUPROCESS *) dummyProc);
         }
         omOvlReturnEx(1, TRUE);
