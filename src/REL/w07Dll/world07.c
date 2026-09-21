@@ -2184,3 +2184,279 @@ static void MB7Ev_HouPlayerUpdate(void) {
         }
     }
 }
+
+/* Hou (fire breath) cutscene: player stands in front of the koopa,
+ * gets a warning turn, then the koopa breathes fire in a sweeping arc
+ * (4 layered MBEFFECT fire hooks) while MB7Ev_HouPlayerUpdate knocks
+ * out any player standing in the breath path. See the mb7_Work+0x13C
+ * "fire-breath" comment above MB7Ev_Hou's declaration for field
+ * offsets; mb7_Work[2] is the koopa "dream" display model used for
+ * Hu3DModelObjPosGet bone lookups, mb7_Work[9] is a small ember/nozzle
+ * prop shown only while the koopa is mid-breath. koopaBase+0x28 (f32)
+ * is a decaying head-bob factor for the koopa's aiming pose. */
+/* NONMATCHING: register allocation order differs substantially across
+ * this function's many sequential loops and its 5-phase inner state
+ * machine; logic verified against the asm field-by-field */
+static void MB7Ev_Hou(s32 playerNo) {
+    u8 *koopaBase = (u8 *) mb7_Work + 0xA0;
+    u8 *fireBase = (u8 *) mb7_Work + 0x13C;
+    s16 dreamMdlId;
+    s32 seId = -1;
+    Point3d kupaPos;
+    Point3d firePos;
+    s32 i;
+
+    MB7Ev_KoopaInit((u16) MBMasuGet(0, (s32) GwPlayer[playerNo].masuId)->flag);
+    MBCameraFocusPlayerSet(-1);
+    MBCameraPlayerViewSet((s16) playerNo, NULL, NULL, 1500.0f, -1.0f, 0x1E);
+    MBPlayerMotionNoShiftSet(playerNo, 2, 0.0f, 8.0f, 0x40000001U);
+    for (i = 0; (f32) i < 30.0f; i++) {
+        Point3d rot;
+
+        MBPlayerRotGet(playerNo, &rot);
+        MBAngleMoveTo(&rot.y, 0.0f, 0.15f);
+        MBPlayerRotSetV(playerNo, &rot);
+        HuPrcVSleep();
+    }
+
+    memset((u8 *) mb7_Work + 0x1C0, 0, 0x170);
+    for (i = 0; i < 4; i++) {
+        u8 *e = (u8 *) mb7_Work + 0x1C0 + (i * 0x5C);
+        s16 masuId = GwPlayer[i].masuId;
+
+        if (MBMasuGet(0, (s32) masuId)->flag & 0x80) {
+            *(s32 *) (e + 0x0) = 1;
+            *(s32 *) (e + 0xC) = masuId;
+        }
+    }
+    MB7Ev_HouPlayerUpdate();
+
+    MB7Ev_KoopaCreate();
+    MB7Ev_KoopaMotionCreate(3);
+    MB7Ev_KoopaMotionCreate(2);
+    MB7Ev_KoopaMotionCreate(8);
+    MB7Ev_KoopaDataClose();
+    MBPlayerMotionNoSet(playerNo, 9, 0);
+    MBCameraQuakeSet(0x12, 200.0f);
+    MBAudFXPlay(0x369);
+    for (i = 0; (f32) i < 18.0f; i++) {
+        HuPrcVSleep();
+    }
+
+    MBPlayerMotIdleSet(playerNo);
+    memset(fireBase, 0, 0x84);
+    dreamMdlId = (s16) mb7_Work[2];
+    Hu3DModelObjPosGet(MBModelIdGet(dreamMdlId), "kupa_dream_all-kupa_pos", &kupaPos);
+    Hu3DModelObjPosGet(MBModelIdGet(dreamMdlId), "kupa_dream_all-fire_pos", (Point3d *) (fireBase + 0x40));
+    *(Point3d *) (fireBase + 0x64) = kupaPos;
+    MBMotionSpeedSet((s16) mb7_Work[9], 1.0f);
+    MBModelAttrSet((s16) mb7_Work[9], 0x40000001U);
+    *(Point3d *) (koopaBase + 0x78) = kupaPos;
+    MB7W_F32(0x118 + 0x8) -= 120.00001f;
+    MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x78));
+    MBModelDispSet((s16) *(s32 *) (koopaBase + 0x34), TRUE);
+    MBCameraFocusPlayerSet(-1);
+    {
+        Point3d camPos = kupaPos;
+        camPos.z += 500.0f;
+        MBCameraPosViewSet(&camPos, NULL, NULL, 3000.0f, -1.0f, 0x3C);
+    }
+    MBAudFXPlay(0x2C9);
+    MB7Ev_KoopaMotionShiftSet(3, 0);
+    while (!MBMotionEndCheck((s16) *(s32 *) (koopaBase + 0x34))) {
+        HuPrcVSleep();
+    }
+
+    MB7Ev_KoopaMotionShiftSet(0, 1);
+    MBWinCreate(2, 0x330007U, 7);
+    MBTopWinWait();
+    MBTopWinKill();
+    MB7Ev_KoopaMotionShiftSet(8, 0);
+    *(s32 *) (fireBase + 0x30) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x100);
+    MBEffHookSet((s16) *(s32 *) (fireBase + 0x30), MB7Ev_KoopaFire1Hook);
+    Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x30), 2);
+    Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x30), 0.0f, 0.0f, 0.0f);
+    *(s32 *) (fireBase + 0x34) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x40);
+    MBEffHookSet((s16) *(s32 *) (fireBase + 0x34), MB7Ev_KoopaFire2Hook);
+    Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x34), 2);
+    Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x34), 0.0f, 0.05f, 0.05f);
+    *(s32 *) (fireBase + 0x38) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x40);
+    MBEffHookSet((s16) *(s32 *) (fireBase + 0x38), MB7Ev_KoopaFire3Hook);
+    Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x38), 2);
+    Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x38), 0.0f, -0.05f, -0.05f);
+    *(s32 *) (fireBase + 0x3C) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x40);
+    MBEffHookSet((s16) *(s32 *) (fireBase + 0x3C), MB7Ev_KoopaFire4Hook);
+    Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x3C), 2);
+    Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x3C), 0.0f, 0.0f, -0.05f);
+
+    {
+    BOOL done = FALSE;
+    while (!done) {
+        switch (*(s32 *) (fireBase + 0x0)) {
+        case 0:
+            *(f32 *) (fireBase + 0x10) = 0.0f;
+            *(f32 *) (fireBase + 0x14) = 0.0f;
+            *(f32 *) (fireBase + 0x18) = 0.0f;
+            *(s32 *) (fireBase + 0x1C) = 0;
+            *(f32 *) (koopaBase + 0x28) = 1.0f;
+            *(s32 *) (fireBase + 0x0) += 1;
+            seId = HuAudFXEmiterPlay(0x61D, &kupaPos);
+            /* fallthrough */
+        case 1:
+            *(f32 *) (fireBase + 0x10) += *(f32 *) (fireBase + 0x14);
+            if (*(f32 *) (fireBase + 0x10) > -45.0f) {
+                if (*(f32 *) (fireBase + 0x14) > -1.0f) {
+                    *(f32 *) (fireBase + 0x14) += -0.02f;
+                }
+            } else if (*(f32 *) (fireBase + 0x10) < -80.0f && *(f32 *) (fireBase + 0x14) < -0.33333334f) {
+                *(f32 *) (fireBase + 0x14) += 0.02f;
+            }
+            if (*(f32 *) (fireBase + 0x10) <= -100.0f) {
+                *(s32 *) (fireBase + 0x1C) = 1;
+                *(f32 *) (fireBase + 0x10) = -100.0f;
+                *(f32 *) (fireBase + 0x14) = 0.0f;
+                *(s32 *) (fireBase + 0x0) += 1;
+                HuAudFXStop(seId);
+                seId = HuAudFXEmiterPlay(0x61F, &firePos);
+            }
+            break;
+        case 2:
+            HuAudFXEmiterUpDate(seId, &firePos);
+            *(f32 *) (fireBase + 0x18) += 0.05f * (1.0f - *(f32 *) (fireBase + 0x18));
+            *(f32 *) (fireBase + 0x10) += *(f32 *) (fireBase + 0x14);
+            if (*(f32 *) (fireBase + 0x10) < 0.0f) {
+                if (*(f32 *) (fireBase + 0x14) < 0.5f) {
+                    *(f32 *) (fireBase + 0x14) += 0.01f;
+                }
+            } else if (*(f32 *) (fireBase + 0x10) > 100.0f && *(f32 *) (fireBase + 0x14) > 0.33333334f) {
+                *(f32 *) (fireBase + 0x14) += -0.015000001f;
+            }
+            if (*(f32 *) (fireBase + 0x10) >= 115.0f) {
+                *(f32 *) (fireBase + 0x10) = 115.0f;
+                *(f32 *) (fireBase + 0x14) = 0.0f;
+                *(s32 *) (fireBase + 0x1C) = 0;
+                HuAudFXStop(seId);
+                *(s32 *) (fireBase + 0x0) += 1;
+                seId = HuAudFXEmiterPlay(0x61D, &kupaPos);
+            }
+            break;
+        case 3:
+            *(f32 *) (fireBase + 0x18) *= 0.95f;
+            *(f32 *) (fireBase + 0x10) += *(f32 *) (fireBase + 0x14);
+            if (*(f32 *) (fireBase + 0x10) > 45.0f) {
+                if (*(f32 *) (fireBase + 0x14) > -1.0f) {
+                    *(f32 *) (fireBase + 0x14) += -0.02f;
+                }
+            } else if (*(f32 *) (fireBase + 0x10) < 20.0f && *(f32 *) (fireBase + 0x14) < -0.33333334f) {
+                *(f32 *) (fireBase + 0x14) += 0.02f;
+            }
+            if (*(f32 *) (fireBase + 0x10) <= 0.0f) {
+                *(f32 *) (fireBase + 0x10) = 0.0f;
+                *(s32 *) (fireBase + 0x0) += 1;
+                HuAudFXStop(seId);
+                MBAudFXPlay(0x61E);
+                done = TRUE;
+            }
+            break;
+        default:
+            done = TRUE;
+            break;
+        }
+
+        *(f32 *) (fireBase + 0x50) = *(f32 *) (fireBase + 0x10);
+        MBModelRotSetV(dreamMdlId, (Point3d *) (fireBase + 0x4C));
+        Hu3DModelObjPosGet(MBModelIdGet(dreamMdlId), "kupa_dream_all-kupa_pos", &kupaPos);
+        Hu3DModelObjPosGet(MBModelIdGet(dreamMdlId), "kupa_dream_all-fire_pos", (Point3d *) (fireBase + 0x40));
+        *(Point3d *) (fireBase + 0x64) = kupaPos;
+        *(f32 *) (koopaBase + 0x28) *= 0.93f;
+        kupaPos.x += ((-50.0f * *(f32 *) (koopaBase + 0x28)) - 50.0f) * (f32) sin((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0);
+        kupaPos.z += ((-50.0f * *(f32 *) (koopaBase + 0x28)) - 50.0f) * (f32) cos((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0);
+        MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), &kupaPos);
+        MBModelRotSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (fireBase + 0x4C));
+
+        if (*(f32 *) (fireBase + 0x18) <= 0.0f || *(s32 *) (fireBase + 0x1C) == 0) {
+            MBModelDispSet((s16) mb7_Work[9], FALSE);
+        } else {
+            MBModelDispSet((s16) mb7_Work[9], TRUE);
+            MBModelPosSet((s16) mb7_Work[9], *(f32 *) (fireBase + 0x40), *(f32 *) (fireBase + 0x44) - 60.000004f, *(f32 *) (fireBase + 0x48));
+            MBModelRotSetV((s16) mb7_Work[9], (Point3d *) (fireBase + 0x4C));
+            MBModelScaleSet((s16) mb7_Work[9], *(f32 *) (fireBase + 0x18), *(f32 *) (fireBase + 0x18), *(f32 *) (fireBase + 0x18));
+        }
+        firePos.x = 250.0f * (*(f32 *) (fireBase + 0x18) * (f32) sin((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0));
+        firePos.z = 250.0f * (*(f32 *) (fireBase + 0x18) * (f32) cos((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0));
+        firePos.y = *(f32 *) (fireBase + 0x44);
+        MB7Ev_HouPlayerUpdate();
+
+        {
+            BOOL anyBusy = FALSE;
+
+            for (i = 0; i < 4; i++) {
+                u8 *e = (u8 *) mb7_Work + 0x1C0 + (i * 0x5C);
+
+                if (*(s32 *) (e + 0x0) != 0 && *(s32 *) (e + 0x8) < 3) {
+                    anyBusy = TRUE;
+                }
+            }
+            if (anyBusy) {
+                done = FALSE;
+            }
+        }
+        HuPrcVSleep();
+    }
+    }
+
+    MBEffKill((s16) *(s32 *) (fireBase + 0x30));
+    MBEffKill((s16) *(s32 *) (fireBase + 0x34));
+    MBEffKill((s16) *(s32 *) (fireBase + 0x38));
+    MBEffKill((s16) *(s32 *) (fireBase + 0x3C));
+    *(s32 *) (fireBase + 0x3C) = -1;
+    *(s32 *) (fireBase + 0x38) = -1;
+    *(s32 *) (fireBase + 0x34) = -1;
+    *(s32 *) (fireBase + 0x30) = -1;
+    MB7Ev_KoopaMotionShiftSet(0, 1);
+    MBAudFXPlay(0x2C9);
+    MBWinCreate(2, 0x330008U, 7);
+    MBTopWinWait();
+    MBTopWinKill();
+    MB7Ev_KoopaMotionShiftSet(2, 0);
+    {
+        Point3d pos = kupaPos;
+        pos.z -= 80.0f;
+        for (i = 0; i < 0x64; i++) {
+            kupaPos.z += 0.15f * (pos.z - kupaPos.z);
+            MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), &kupaPos);
+            if (i == 0x41) {
+                MBCameraQuakeSet(0x12, 50.0f);
+                MBAudFXPlay(0x2CC);
+            }
+            HuPrcVSleep();
+        }
+    }
+
+    MBMotionSpeedSet((s16) *(s32 *) (koopaBase + 0x34), 0.0f);
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+
+    for (i = 0; i < 4; i++) {
+        u8 *e = (u8 *) mb7_Work + 0x1C0 + (i * 0x5C);
+
+        if (*(s32 *) (e + 0x0) != 0) {
+            *(s32 *) (e + 0x8) = -1;
+        }
+    }
+    MB7Ev_HouPlayerUpdate();
+    MB7Ev_KoopaClose();
+    MBCameraFocusPlayerSet(playerNo);
+    MBCameraSkipSet(FALSE);
+    MBCameraZoomSet(2000.0f);
+    WipeCreate(1, 0x81, 0x1E);
+    while (WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    for (i = 0; (f32) i < 30.0f; i++) {
+        HuPrcVSleep();
+    }
+}
