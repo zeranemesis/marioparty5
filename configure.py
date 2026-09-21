@@ -2035,7 +2035,7 @@ config.libs = [
     Rel(
         "w07Dll",
         objects={
-            Object(NonMatching, "REL/w07Dll/world07.c"),
+            Object(Equivalent, "REL/w07Dll/world07.c"),
         },
     ),
     Rel(
