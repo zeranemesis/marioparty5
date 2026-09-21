@@ -11,7 +11,13 @@ Mario Party 5
 [Discord Badge]: https://img.shields.io/discord/994839212618690590?color=%237289DA&logo=discord&logoColor=%23FFFFFF
 [discord]: https://discord.gg/T4faGveujK
 
-A work-in-progress decompilation of Mario Party 5.
+A work-in-progress decompilation of Mario Party 5, and a native port built from it
+for Windows, Linux, macOS and Android.
+
+This fork follows [mariopartyrd/marioparty5](https://github.com/mariopartyrd/marioparty5)
+for the decompilation itself, and adds the port on top of it: the same sources build
+either the original GameCube executable, byte for byte, or a native program that runs
+on a modern machine.
 
 This repository does **not** contain any game assets or assembly whatsoever. An existing copy of the game is required.
 
@@ -87,6 +93,41 @@ Building
   ```sh
   ninja
   ```
+
+Native port
+===========
+
+The port compiles the decompiled sources for the host instead of the GameCube, and
+replaces the console around them: [Aurora](https://github.com/encounter/aurora) for
+GX, VI, PAD, DVD and CARD, SDL3 for the window and the controllers,
+[MusyX](https://github.com/AxioDL/musyx) for the sound, libco for the game's
+processes. The player's own disc image is read at run time; nothing from it is in
+this repository.
+
+It follows the decompilation: a unit enters the port once it is `Matching` or
+`Equivalent`, and a REL module once all of its units are, which
+`tools/gen_files_cmake.py` turns into `files.cmake`. Modules that are not there yet
+are simply absent at run time — the game falls back to the previous screen instead
+of loading them (see `src/game/objmain.c`).
+
+**State:** `mp5native.exe`, `dol.dll` and the 19 REL modules decompiled so far all
+compile and link on Windows (MSVC). The game does not boot to a playable state yet:
+most minigames and boards are still `NonMatching`, so their overlays are skipped.
+`docs/port_patterns.md` (French) records the rules every port change follows;
+`docs/decomp_workflow.md` (French) is the method for decompiling a module.
+
+Building the port:
+
+```sh
+git submodule update --init --recursive
+git -C extern/musyx apply ../../patches/musyx-mp5.patch
+python tools/build_port.py            # Windows (MSVC), Linux or macOS
+```
+
+`tools/build_port.py` regenerates `files.cmake`, configures the CMake preset for the
+host and builds it. The CMake presets can also be used directly, for instance
+`cmake --preset linux-default-relwithdebinfo`. Android is built in CI
+(`.github/workflows/port.yml`), which also builds the three desktop platforms.
 
 Diffing
 =======
