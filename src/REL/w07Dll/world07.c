@@ -143,6 +143,7 @@ static void MB7Ev_KoopaFire3Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaFire4Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaWalkCoinLose(void);
 static void MB7Ev_KoopaWalkDustCreate(s32 dispF);
+static void MB7Ev_KoopaAsibaUpdate(void);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -1509,4 +1510,23 @@ static void MB7Ev_KoopaWalkDustCreate(s32 dispF) {
 
     Hu3DModelPosSetV(*(s16 *) (base + 0x68), (Point3d *) (base + 0x78));
     *(s16 *) Hu3DData[*(s16 *) (base + 0x68)].hookData = (s16) (dispF + 1);
+}
+
+/* Asiba (scaffold platform prop, mb7_Work[7] - one of the 11 "front"
+ * objects hidden by default) tilt/drift update, reusing the koopa
+ * region's +0x78 pos / +0x84 rot / +0x90 velocity as a scratch Point3d
+ * triple (only ever used by this cutscene, not concurrently with the
+ * koopa's own pos/rot which live at different offsets); +0x30 (f32) is
+ * the target tilt angle. */
+static void MB7Ev_KoopaAsibaUpdate(void) {
+    s32 asibaMdlId = mb7_Work[7];
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+
+    MBModelDispSet((s16) asibaMdlId, TRUE);
+    MBAngleMoveTo((f32 *) (base + 0x88), *(f32 *) (base + 0x30), 0.15f);
+    PSVECAdd((Point3d *) (base + 0x78), (Point3d *) (base + 0x90), (Point3d *) (base + 0x78));
+    MBModelPosSetV((s16) asibaMdlId, (Point3d *) (base + 0x78));
+    MBModelRotSetV((s16) asibaMdlId, (Point3d *) (base + 0x84));
+    MBModelPosSet((s16) *(s32 *) (base + 0x34), 0.0f, 0.0f, 0.0f);
+    MBModelRotSet((s16) *(s32 *) (base + 0x34), 0.0f, 0.0f, 0.0f);
 }
