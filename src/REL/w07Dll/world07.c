@@ -1935,3 +1935,167 @@ static void MB7Ev_Dokan(s32 playerNo) {
     *(s32 *) (koopaBase + 0x68) = -1;
     MB7Ev_KoopaClose();
 }
+
+/* Dokan-in cutscene (player enters a pipe locally, koopa carries them
+ * off-screen to the target masu, then they re-emerge there) - same
+ * structure as MB7Ev_Dokan, confirmed via asm to call MB7Ev_DokanSet 4
+ * times but MB7Ev_DokanPlayerSet never (its shrink/grow logic is
+ * duplicated inline twice in the original source, not shared). */
+/* NONMATCHING: register allocation order differs substantially, same
+ * cause as MB7Ev_Dokan (more live locals than the original) */
+static void MB7Ev_DokanIn(s32 playerNo) {
+    u8 *koopaBase = (u8 *) mb7_Work + 0xA0;
+    u8 *playerEntry = (u8 *) mb7_Work + 0x1C0;
+    s16 startMasuId = GwPlayer[playerNo].masuId;
+    u16 flag = (u16) MBMasuGet(0, (s32) startMasuId)->flag;
+    u32 findFlag = 0x2000;
+    s32 targetMasuId;
+    Point3d guruPos;
+    s32 i;
+
+    MBPlayerMotIdleSet(playerNo);
+    MB7Ev_KoopaInit(flag);
+    if (flag & 0x400) {
+        findFlag = 0x800;
+    }
+    targetMasuId = MBMasuFlagFind(0, findFlag, findFlag);
+    MB7Ev_KoopaCreate();
+    MB7Ev_KoopaMotionCreate(5);
+    MB7Ev_KoopaMotionCreate(2);
+    MB7Ev_KoopaDataClose();
+    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x80);
+    MBEffHookSet((s16) *(s32 *) (koopaBase + 0x68), MB7_EffDustHook);
+    Hu3DModelLayerSet((s16) *(s32 *) (koopaBase + 0x68), 2);
+    Hu3DModelObjPosGet(MBModelIdGet(mb7_MainMdlId), "kupa_dream_all-guru_pos", &guruPos);
+    memset(playerEntry, 0, 0x170);
+    MBPlayerPosGet(playerNo, (Point3d *) (playerEntry + 0x2C));
+    MBPlayerRotGet(playerNo, (Point3d *) (playerEntry + 0x38));
+    *(s16 *) (playerEntry + 0x20) = (s16) MBPlayerMotionCreate(playerNo, 0x8C0061);
+
+    *(Point3d *) (koopaBase + 0x78) = guruPos;
+    *(f32 *) (koopaBase + 0x88) = (f32) (180.0 * (atan2((f64) (MB7W_F32(0x1EC) - guruPos.x), (f64) (MB7W_F32(0x1F4) - guruPos.z)) / 3.141592653589793));
+    MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x78));
+    MBModelRotSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x84));
+    MBModelDispSet((s16) *(s32 *) (koopaBase + 0x34), TRUE);
+    MB7Ev_KoopaMotionNoSet(2, 0);
+    MBMotionTimeSet((s16) *(s32 *) (koopaBase + 0x34), 100.0f);
+    *(f32 *) (koopaBase + 0x7C) += 1000.0f;
+    MB7W_F32(0x94) = 0.0f;
+    while (guruPos.y < *(f32 *) (koopaBase + 0x7C)) {
+        MB7W_F32(0x94) += -0.5444445f;
+        PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+        if (guruPos.y > *(f32 *) (koopaBase + 0x7C)) {
+            *(f32 *) (koopaBase + 0x7C) = guruPos.y;
+        }
+        MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x78));
+        HuPrcVSleep();
+    }
+
+    Hu3DModelPosSetV((s16) *(s32 *) (koopaBase + 0x68), (Point3d *) (koopaBase + 0x78));
+    *(s16 *) Hu3DData[*(s32 *) (koopaBase + 0x68)].hookData = 1;
+    MBPlayerMotionNoSet(playerNo, 9, 0);
+    MB7W_F32(0x1DC) = (f32) (180.0 * (atan2((f64) (MB7W_F32(0x118) - MB7W_F32(0x1EC)), (f64) (MB7W_F32(0x120) - MB7W_F32(0x1F4))) / 3.141592653589793));
+    MBCameraQuakeSet(0x12, 200.0f);
+    MBAudFXPlay(0x369);
+    while (!MBMotionEndCheck((s16) *(s32 *) (koopaBase + 0x34))) {
+        MBAngleMoveTo((f32 *) (playerEntry + 0x3C), MB7W_F32(0x1DC), 0.15f);
+        MBPlayerRotSetV(playerNo, (Point3d *) (playerEntry + 0x38));
+        HuPrcVSleep();
+    }
+
+    MBPlayerMotIdleSet(playerNo);
+    MBCameraFocusPlayerSet(-1);
+    {
+        Point3d camPos;
+
+        PSVECSubtract((Point3d *) (koopaBase + 0x78), (Point3d *) (playerEntry + 0x2C), &camPos);
+        PSVECScale(&camPos, &camPos, 0.5f);
+        PSVECAdd((Point3d *) (playerEntry + 0x2C), &camPos, &camPos);
+        camPos.y += 100.0f;
+        MBCameraPosViewSet(&camPos, NULL, NULL, 2500.0f, -1.0f, 0x1E);
+    }
+    MB7Ev_KoopaMotionNoSet(5, 0);
+    while (!MBMotionEndCheck((s16) *(s32 *) (koopaBase + 0x34))) {
+        HuPrcVSleep();
+    }
+
+    MB7Ev_KoopaMotionShiftSet(0, 1);
+    MBAudFXPlay(0x2CA);
+    MBWinCreate(2, 0x330003U, 7);
+    MBTopWinWait();
+    MBTopWinKill();
+    MB7Ev_KoopaMotionShiftSet(2, 0);
+    MB7W_F32(0x94) = 16.666666f;
+    for (i = 0; i < 0x64; i++) {
+        if (i == 0x41) {
+            MBCameraQuakeSet(0x12, 50.0f);
+            Hu3DModelPosSetV((s16) *(s32 *) (koopaBase + 0x68), (Point3d *) (koopaBase + 0x78));
+            *(s16 *) Hu3DData[*(s32 *) (koopaBase + 0x68)].hookData = 2;
+            MBAudFXPlay(0x2CC);
+        }
+        if (i > 0x46) {
+            MB7W_F32(0x94) += -0.27222225f;
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x78));
+        }
+        HuPrcVSleep();
+    }
+
+    MBMotionSpeedSet((s16) *(s32 *) (koopaBase + 0x34), 0.0f);
+    MBCameraFocusPlayerSet(-1);
+    MB7Ev_DokanSet(playerNo, startMasuId, 1);
+    MBPlayerMotionNoShiftSet(playerNo, *(s16 *) (playerEntry + 0x20), 0.0f, 8.0f, 0);
+
+    {
+        MASU *startMasuP = MBMasuGet(0, (s32) startMasuId);
+        f32 startY = startMasuP->pos.y;
+        f32 pipeY = *(f32 *) (koopaBase + 0x7C);
+
+        MBAudFXPlay(0x619);
+        for (i = 0; i < 45; i++) {
+            f32 t = 1.0f - ((f32) i * (1.0f / 45.0f));
+            f32 scale = t * t;
+
+            *(f32 *) (koopaBase + 0x7C) = startY + (t * (pipeY - startY));
+            MBPlayerPosSetV(playerNo, (Point3d *) (playerEntry + 0x2C));
+            MBPlayerScaleSet(playerNo, scale, scale, scale);
+            HuPrcVSleep();
+        }
+    }
+
+    MBModelDispSet(MBPlayerModelGet(playerNo), FALSE);
+    MBPlayerMotionKill(playerNo, *(s16 *) (playerEntry + 0x20));
+    MB7Ev_DokanSet(playerNo, startMasuId, 0);
+    MBMasuGet(0, targetMasuId);
+    GwPlayer[playerNo].masuId = (s16) targetMasuId;
+    MBPlayerPosFixPlayer(playerNo, targetMasuId, TRUE);
+    MBPlayerPosReset(playerNo);
+    MB7W_F32(0x1FC) = 0.0f;
+    MBPlayerPosGet(playerNo, (Point3d *) (playerEntry + 0x2C));
+    MBPlayerRotSetV(playerNo, (Point3d *) (playerEntry + 0x38));
+    MBPlayerMotIdleSet(playerNo);
+    MBCameraFocusMasuSet(targetMasuId);
+    MB7Ev_DokanSet(playerNo, (s16) targetMasuId, 1);
+
+    {
+        MASU *targetMasuP = MBMasuGet(0, targetMasuId);
+        f32 startY = targetMasuP->pos.y;
+        f32 pipeY = *(f32 *) (koopaBase + 0x7C);
+
+        MBModelDispSet(MBPlayerModelGet(playerNo), TRUE);
+        for (i = 0; i < 30; i++) {
+            f32 t = (f32) i * (1.0f / 30.0f);
+            f32 scale = t * t;
+
+            *(f32 *) (koopaBase + 0x7C) = startY + (t * (pipeY - startY));
+            MBPlayerPosSetV(playerNo, (Point3d *) (playerEntry + 0x2C));
+            MBPlayerScaleSet(playerNo, scale, scale, scale);
+            HuPrcVSleep();
+        }
+    }
+
+    MB7Ev_DokanSet(playerNo, (s16) targetMasuId, 0);
+    MBEffKill((s16) *(s32 *) (koopaBase + 0x68));
+    *(s32 *) (koopaBase + 0x68) = -1;
+    MB7Ev_KoopaClose();
+}
