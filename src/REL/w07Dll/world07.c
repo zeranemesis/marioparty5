@@ -97,6 +97,11 @@ static f32 mb7_BackObjRotYTbl[MB7_BACKOBJ_MAX] = {
     -45.0f, 45.0f, -45.0f, 45.0f, 45.0f, -45.0f,
 };
 
+static s32 mb7ev_KoopaMotFileTbl[9] = {
+    0x100001, 0x100002, 0x100003, 0x100004, 0x100005,
+    0x100007, 0x100006, 0x10000D, 0x100010,
+};
+
 /* MB7_Create camera constants (extracted from the original REL's .rodata,
  * m2c could not infer these as it has no context for anonymous data). */
 static const HuVecF mb7_OpeningPos = { 0.0f, -1000.0f, -4500.0f };
@@ -119,6 +124,11 @@ static void MB7Ev_MasuRedClose(void);
 static void MB7Ev_RedResetHook(void);
 static int MB7Ev_MasuHatena(int playerNo);
 static int MB7Ev_MasuWalkPost(int playerNo);
+static void MB7Ev_KoopaInit(u16 arg0);
+static void MB7Ev_KoopaMotionCreate(s32 motionIdx);
+static void MB7Ev_KoopaCreate(void);
+static void MB7Ev_KoopaDataClose(void);
+static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -433,4 +443,87 @@ static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
         count = -1;
     }
     return count;
+}
+
+/* --------------------------- Koopa walk state ---------------------------- */
+
+/* Koopa "walk out" cutscene/state region, mb7_Work + 0xA0, 0x9C bytes
+ * (byte offsets below are relative to that +0xA0 base, matching
+ * MB7Ev_KoopaInit's own addressing - confirmed 92.86% match):
+ *   +0x34/+0x38/+0x3C/+0x40 (s32) = -1 after memset (revisited once
+ *     MB7Ev_KoopaMotionCreate/MB7Ev_KoopaMotionShiftSet are decompiled -
+ *     m2c's draft calls these mb7_Work[0x2E..0x30] etc in word units)
+ *   +0x44..+0x64 (s32[9]) = -1      per-something free-slot markers
+ *   +0x6C (s32)                     MBDataDirReadAsync() handle
+ *   +0x70 (s32) = -1, +0x74 (s32) = 0   init markers
+ */
+/* NONMATCHING: redundant li r0,-1 reload before consecutive stores
+ * (92.86% match); logic identical */
+static void MB7Ev_KoopaInit(u16 arg0) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    s32 i;
+
+    memset(base, 0, 0x9C);
+    *(s32 *) (base + 0x70) = -1;
+    *(s32 *) (base + 0x74) = 0;
+    *(s32 *) (base + 0x40) = -1;
+    *(s32 *) (base + 0x3C) = -1;
+    *(s32 *) (base + 0x38) = -1;
+    *(s32 *) (base + 0x34) = -1;
+    for (i = 0; i < 9; i++) {
+        *(s32 *) (base + 0x44 + (i * 4)) = -1;
+    }
+    *(s32 *) (base + 0x6C) = MBDataDirReadAsync(0x100000);
+}
+
+/* motion index -> motion id, base+0x44..+0x64 (s32[9]); base+0x34 is the
+ * Koopa model id created by MB7Ev_KoopaCreate */
+/* NONMATCHING: register allocation order differs (64.71% match) */
+static void MB7Ev_KoopaMotionCreate(s32 motionIdx) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+
+    if (*(s32 *) (base + 0x44 + (motionIdx * 4)) < 0) {
+        s16 koopaMdlId = (s16) *(s32 *) (base + 0x34);
+        *(s32 *) (base + 0x44 + (motionIdx * 4)) = MBMotionCreate(koopaMdlId, mb7ev_KoopaMotFileTbl[motionIdx]);
+    }
+}
+
+/* NONMATCHING: compiler inlines the MB7Ev_KoopaMotionCreate(0) call here
+ * (constant arg) where the original keeps it out-of-line; extra stack
+ * slots as a result (42.86% match), logic identical */
+static void MB7Ev_KoopaCreate(void) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    s16 koopaMdlId;
+
+    MBDataAsyncWait(*(s32 *) (base + 0x6C));
+    koopaMdlId = (s16) MBModelCreate(0x100000, NULL, TRUE);
+    *(s32 *) (base + 0x34) = koopaMdlId;
+    MBModelDispSet((s16) *(s32 *) (base + 0x34), FALSE);
+    HuPrcVSleep();
+    MB7Ev_KoopaMotionCreate(0);
+    MB7Ev_KoopaMotionNoSet(0, 1);
+    HuPrcVSleep();
+}
+
+static void MB7Ev_KoopaDataClose(void) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    HuDataDirClose(*(s32 *) (base + 0x6C));
+}
+
+/* NONMATCHING: register allocation order differs */
+/* NONMATCHING: register allocation order differs (80.49% match) */
+static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    s32 attr = 0;
+    s16 koopaMdlId;
+
+    if (loop) {
+        attr = 0x40000001;
+        if (motionIdx != *(s32 *) (base + 0x70)) {
+            *(s32 *) (base + 0x74) = 0;
+        }
+    }
+    koopaMdlId = (s16) *(s32 *) (base + 0x34);
+    MBMotionNoSet(koopaMdlId, (s16) *(s32 *) (base + 0x44 + (motionIdx * 4)), attr);
+    *(s32 *) (base + 0x70) = motionIdx;
 }
