@@ -1,14 +1,14 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-17 12:54 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-21 07:32 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **22.70 %** (2 103.2 / 9 266.8 Ko) |
-| code lié depuis les sources | 18.19 % |
-| fonctions identiques | 4531 / 21231 |
-| unités complètes | 222 / 881 |
+| code identique | **22.87 %** (2 119.7 / 9 266.8 Ko) |
+| code lié depuis les sources | 18.30 % |
+| fonctions identiques | 4591 / 21231 |
+| unités complètes | 226 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
 
@@ -16,7 +16,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
-| DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 80.8 % | 326.2 Ko |
+| DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 81.8 % | 309.6 Ko |
 | Mini-jeux m5xx | 76 | 4 493.9 Ko | 2.6 % | 4 377.4 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 4.4 % | 200.9 Ko |
@@ -30,7 +30,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `main` | 1 697.5 Ko | 80.8 % | 3474/6158 | 83.5 % | 185/3/122 | en cours |
+| `main` | 1 697.5 Ko | 81.8 % | 3534/6158 | 84.6 % | 189/4/117 | en cours |
 
 ### Mini-jeux m5xx
 

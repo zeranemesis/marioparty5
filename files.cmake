@@ -93,6 +93,11 @@ set(GAME_FILES
         src/zlib/zutil.c
         src/libhu/setvf.c
         src/libhu/subvf.c
+        src/msm/msmsys.c
+        src/msm/msmmem.c
+        src/msm/msmfio.c
+        src/msm/msmmus.c
+        src/msm/msmse.c
 )
 
 set(PORT_FILES
@@ -109,8 +114,10 @@ set(PORT_FILES
         src/port/iso_validate.cpp
         src/port/iso_validate.hpp
         src/port/messnum.c
+        src/port/msmstream_stub.c
         src/port/portmain.cpp
         src/port/rel_loader.c
+        src/port/sdk_stubs.c
         src/port/settings.cpp
         src/port/spranim_pc.c
         src/port/stubs.c
@@ -204,11 +211,6 @@ set(REL_FILES
 
 # DOL units not built natively yet (NonMatching):
 #   game/code_801A7E90.c
-#   msm/msmsys.c
-#   msm/msmmem.c
-#   msm/msmfio.c
-#   msm/msmmus.c
-#   msm/msmse.c
 #   msm/msmstream.c
 # REL modules not built yet (a unit is NonMatching or missing):
 #   carddll

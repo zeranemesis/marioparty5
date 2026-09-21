@@ -121,8 +121,8 @@ static s32 msmSysLoadBaseGroup(void *buf)
             msmFioClose(&file);
             return MSM_ERR_READFAIL;
         }
-        if (!sndPushGroup((void *)(grpData->projOfs + (u32)grpData), grpInfo->gid, buf, (void *)(grpData->sdirOfs + (u32)grpData),
-                (void *)(grpData->poolOfs + (u32)grpData))) {
+        if (!sndPushGroup((void *)(grpData->projOfs + (uintptr_t)grpData), grpInfo->gid, buf, (void *)(grpData->sdirOfs + (uintptr_t)grpData),
+                (void *)(grpData->poolOfs + (uintptr_t)grpData))) {
             msmFioClose(&file);
             return MSM_ERR_GRP_FAILPUSH;
         }
@@ -210,13 +210,13 @@ static s32 msmSysGroupInit(DVDFileInfo *file)
         stack = &sys.grpStackA[i];
         stack->grpId = stack->baseGrpF = 0;
         stack->num = 0;
-        stack->buf = (void *)((u32)sys.grpBufA + sys.info->grpBufSizeA * i);
+        stack->buf = (void *)((uintptr_t)sys.grpBufA + sys.info->grpBufSizeA * i);
     }
     for (i = 0; i < sys.grpStackBMax; i++) {
         stack = &sys.grpStackB[i];
         stack->grpId = stack->baseGrpF = 0;
         stack->num = 0;
-        stack->buf = (void *)((u32)sys.grpBufB + sys.info->grpBufSizeB * i);
+        stack->buf = (void *)((uintptr_t)sys.grpBufB + sys.info->grpBufSizeB * i);
     }
     sys.sampSize = 0;
     for (i = 0; i < sys.baseGrpNum; i++) {
@@ -522,8 +522,8 @@ static inline s32 msmSysPushGroupData(void *buf, MSM_GRP_STACK *grp, MSM_GRP_INF
     MSM_GRP_HEAD *grpBuf;
 
     grpBuf = grp->buf;
-    if (!sndPushGroup((void *)(grpBuf->projOfs + (u32)grpBuf), grpInfo->gid, buf, (void *)(grpBuf->sdirOfs + (u32)grpBuf),
-            (void *)(grpBuf->poolOfs + (u32)grpBuf))) {
+    if (!sndPushGroup((void *)(grpBuf->projOfs + (uintptr_t)grpBuf), grpInfo->gid, buf, (void *)(grpBuf->sdirOfs + (uintptr_t)grpBuf),
+            (void *)(grpBuf->poolOfs + (uintptr_t)grpBuf))) {
         return MSM_ERR_GRP_FAILPUSH;
     }
     sys.aramP += grpInfo->sampSize;
@@ -818,8 +818,8 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
         if (aram->skipARInit == FALSE) {
             ARInit(aram->stackIndex, aram->numEntries);
             ARQInit();
-            aram = (MSM_ARAM *)ARAlloc(sys.info->aramSize);
-            if ((u32)aram != ARGetBaseAddress()) {
+            aram = (MSM_ARAM *)(uintptr_t)ARAlloc(sys.info->aramSize);
+            if ((uintptr_t)aram != ARGetBaseAddress()) {
                 msmFioClose(&file);
                 return MSM_ERR_OUTOFAMEM;
             }

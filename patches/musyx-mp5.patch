@@ -9,3 +9,21 @@ index d2401bc..d91df12 100644
 -extern bool dspCompressorOn;
 +extern u32 dspCompressorOn; /* defined as u32 in hw_dspctrl.c */
  #endif
+diff --git a/src/musyx/runtime/hw_aramdma.c b/src/musyx/runtime/hw_aramdma.c
+index 11e1534..2b11136 100644
+--- a/src/musyx/runtime/hw_aramdma.c
++++ b/src/musyx/runtime/hw_aramdma.c
+@@ -470,6 +470,13 @@ void* aramStoreData(void* src, unsigned long len) { return NULL;}
+ 
+ void aramRemoveData(void* aram, unsigned long len) {}
+ 
++// This PC backend has no ARAM (aramInit/aramExit above are no-ops): sample
++// data lives in main memory instead, so there is no reserved system area to
++// skip and no separate "available" pool to report.
++unsigned long aramGetFirstUserAddress() { return 0; }
++unsigned long aramGetUserBytes(unsigned long totalBytes) { return totalBytes; }
++u32 aramGetAvailableBytes(ARAMInfo* ai) { return ai ? (ai->aramTop - ai->aramWrite) : 0; }
++
+ static void InitStreamBuffers() {}
+ 
+ unsigned char aramAllocateStreamBuffer(u32 len) { return 0; }

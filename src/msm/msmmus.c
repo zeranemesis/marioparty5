@@ -340,7 +340,7 @@ int msmMusPlay(int musId, MSM_MUSPARAM *musParam)
         if (grpData == NULL) {
             return MSM_ERR_MUSGRP_NOTLOADED;
         }
-        player->arrfile = (void *)((u32)grpData + grpData->sngOfs + musData->songOfs);
+        player->arrfile = (void *)((uintptr_t)grpData + grpData->sngOfs + musData->songOfs);
     }
     player->busyF = TRUE;
     player->vol = musData->vol;
@@ -415,7 +415,7 @@ s32 msmMusInit(MSM_SYS *sys, DVDFileInfo *file)
     mus.dummyMusOfs = sys->header->dummyMusOfs;
     mus.msmEntryNum = sys->msmEntryNum;
     for (i = 0; i < mus.musChanMax; i++) {
-        mus.player[i].songBuf = (void *)((u32)mus.musBuf + sys->info->dummyMusSize * i);
+        mus.player[i].songBuf = (void *)((uintptr_t)mus.musBuf + sys->info->dummyMusSize * i);
         mus.player[i].musId = -1;
         mus.player[i].busyF = FALSE;
     }

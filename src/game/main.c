@@ -12,6 +12,26 @@
 #include "game/saveload.h"
 #include "game/frand.h"
 
+#ifdef TARGET_PC
+#include <aurora/aurora.h>
+#include <aurora/event.h>
+
+#include "port/imgui.h"
+#include "port/main.h"
+#include "port/ui.h"
+
+bool Mp5Native_IsRunning = true;
+bool Mp5Native_IsShuttingDown = false;
+bool Mp5Native_IsGameLaunched = false;
+bool Mp5Native_RestartRequested = false;
+
+void Mp5Native_RequestRestart(void)
+{
+    Mp5Native_RestartRequested = SUPPORTS_PROCESS_RESTART;
+    Mp5Native_IsRunning = false;
+}
+#endif
+
 extern OVLTBL _ovltbl[];
 
 u32 GlobalCounter;
@@ -19,7 +39,11 @@ BOOL HuDvdErrWait;
 BOOL HuSRDisableF;
 BOOL NintendoDispF;
 
+#ifdef TARGET_PC
+int game_main(void)
+#else
 void main(void)
+#endif
 {
     s16 i;
     s32 retrace;
@@ -56,7 +80,29 @@ void main(void)
     }
     OSReport("%s USA Mode\n", "Sep 25 2003");
     SLSaveFlagSet(FALSE);
+#ifdef TARGET_PC
+    while(Mp5Native_IsRunning) {
+        /* the window's events decide whether the game keeps running */
+        const AuroraEvent *event = aurora_update();
+        while(event != NULL && event->type != AURORA_NONE) {
+            if(event->type == AURORA_EXIT) {
+                Mp5Native_IsRunning = false;
+                break;
+            }
+            if(event->type == AURORA_SDL_EVENT) {
+                ui_handle_sdl_event(&event->sdl);
+            }
+            event++;
+        }
+        if(!Mp5Native_IsRunning) {
+            break;
+        }
+        if(!aurora_begin_frame()) {
+            continue;
+        }
+#else
     while(1) {
+#endif
         retrace = VIGetRetraceCount();
         if (HuSoftResetButtonCheck() || HuDvdErrWait) {
             continue;
@@ -83,7 +129,15 @@ void main(void)
         rand8();
         HuPerfEnd(2);
         GlobalCounter++;
+#ifdef TARGET_PC
+        ui_update();
+        aurora_end_frame();
+        frame_limiter();
+#endif
     }
+#ifdef TARGET_PC
+    return 0;
+#endif
 }
 
 void HuSysVWaitSet(s16 vWait)
