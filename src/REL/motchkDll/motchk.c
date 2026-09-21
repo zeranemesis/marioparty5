@@ -90,7 +90,7 @@ static OMOBJ *debugCamUpdateObj;
 s32 _prolog(void) {
     const VoidFunc *ctors = _ctors;
 
-    while (*ctors != NULL) {
+    while (*ctors) {
         (**ctors)();
         ctors++;
     }
@@ -101,13 +101,15 @@ s32 _prolog(void) {
 void _epilog(void) {
     const VoidFunc *dtors = _dtors;
 
-    while (*dtors != NULL) {
+    while (*dtors) {
         (**dtors)();
         dtors++;
     }
 }
 
 void ObjectSetup(void) {
+    HU3DLIGHTID lightId;
+
     OSReport("******* Motion Check ObjectSetup *********\n");
     objman = omInitObjMan(0x32, 0x2000);
     CRot.x = -20.0f;
@@ -123,15 +125,25 @@ void ObjectSetup(void) {
     outViewObj = omAddObjEx(objman, 0x7FDA, 0, 0, OM_GRP_NONE, omOutView);
     debugCamUpdateObj = omAddObjEx(objman, 0, 0x40, 0, OM_GRP_NONE, DebugCamUpdate);
     HuPrcChildCreate(MotChkMain, 0x64, 0x3000, 0, (HUPROCESS *) objman);
-    Hu3DGLightInfinitytSet(Hu3DGLightCreate(0.0f, 1000.0f, 1000.0f, 0.0f, -1.0f, -1.0f, 0xFF, 0xFF, 0xFF));
+    lightId = Hu3DGLightCreate(0.0f, 1000.0f, 1000.0f, 0.0f, -1.0f, -1.0f, 0xFF, 0xFF, 0xFF);
+    Hu3DGLightInfinitytSet(lightId);
 }
 
+// NONMATCHING: MWCC allocates one fewer callee-saved register (r29) than the
+// original; the loaded rodata float values and control flow are identical.
 void MotChkMain(void) {
-    HU3DMODELID modelId;
+    s16 unused;
     s16 i;
-    HuVecF shadowPos;
-    HuVecF shadowUp;
-    HuVecF shadowTarget;
+    HU3DMODELID modelId;
+    f32 sp28;
+    f32 sp24;
+    f32 sp20;
+    f32 sp1C;
+    f32 sp18;
+    f32 sp14;
+    f32 sp10;
+    f32 spC;
+    f32 sp8;
 
     WipeCreate(1, 0, 0x14);
     while (WipeCheckEnd()) {
@@ -144,21 +156,22 @@ void MotChkMain(void) {
     HuDataDirClose(0xBA0000);
     Hu3DShadowCreate(30.0f, 20.0f, 2000.0f);
 
-    shadowPos.x = 200.0f;
-    shadowPos.y = 1000.0f;
-    shadowPos.z = 200.0f;
-    shadowUp.x = 0.0f;
-    shadowUp.y = 1.0f;
-    shadowUp.z = 0.0f;
-    shadowTarget.x = 0.0f;
-    shadowTarget.y = 0.0f;
-    shadowTarget.z = 0.0f;
-    Hu3DShadowPosSet(&shadowPos, &shadowUp, &shadowTarget);
+    sp20 = 200.0f;
+    sp24 = 1000.0f;
+    sp28 = 200.0f;
+    spC = 1.0f;
+    sp10 = 0.0f;
+    sp8 = 0.0f;
+    sp1C = 0.0f;
+    sp18 = 0.0f;
+    sp14 = 0.0f;
+    Hu3DShadowPosSet((HuVecF *) &sp20, (HuVecF *) &sp8, (HuVecF *) &sp14);
     Hu3DShadowTPLvlSet(0.6f);
 
     motNo = 0;
     charNo = GwPlayerConf[0].charNo;
     lodNo = 1;
+    unused = 0;
     MotChkModelInit((s16) charNo, (s16) motNo, (s16) lodNo);
 
     for (;;) {
@@ -199,6 +212,10 @@ void MotChkMain(void) {
             MotChkModelInit((s16) charNo, (s16) motNo, (s16) lodNo);
         }
 
+        if (HuPadBtnDown[0] == 8) {
+            unused = 1;
+        }
+
         fontcolor = 0xF;
         print8(0x10, 0x18, 2.0f, "%03d:%s", motNo, motNameTbl[motNo]);
         print8(0x10, 0x28, 2.0f, "MODEL%d", lodNo);
@@ -212,17 +229,19 @@ void MotChkMain(void) {
     }
 }
 
+// NONMATCHING: MWCC re-extends the motNo parameter (extsh) before each of
+// the four dataDirTbl lookups; equivalent register scheduling otherwise.
 void MotChkModelInit(s16 charNo, s16 motNo, s16 lodNo) {
     s16 i;
 
-    motchkMdlId[0] = Hu3DModelCreateData(dataDirTbl[charNo]);
+    motchkMdlId[0] = Hu3DModelCreateData(dataDirTbl[charNo] | 0);
     motchkMdlId[1] = Hu3DModelCreateData(dataDirTbl[charNo] | 1);
     motchkMdlId[2] = Hu3DModelCreateData(dataDirTbl[charNo] | 2);
     motchkMdlId[3] = Hu3DModelCreateData(dataDirTbl[charNo] | 3);
-    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
     motchkMotIdOld[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], dataDirTbl[charNo] | 4);
     motchkMotIdOld[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], dataDirTbl[charNo] | 4);
     motchkMotIdOld[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], dataDirTbl[charNo] | 4);
@@ -246,6 +265,7 @@ void MotChkTimingHook(HU3DMODELID modelId, HU3DMOTID motId, BOOL lagF) {
     motchkLoopMode = lagF ? 1 : 2;
 }
 
+// NONMATCHING: same minor register-scheduling difference as MotChkModelInit.
 void MotChkMotionSet(s16 charNo, s16 motNo, s16 lodNo) {
     s16 i;
 

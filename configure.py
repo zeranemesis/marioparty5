@@ -1847,7 +1847,7 @@ config.libs = [
     Rel(
         "motchkDll",
         objects={
-            Object(NonMatching, "REL/motchkDll/motchk.c"),
+            Object(Equivalent, "REL/motchkDll/motchk.c"),
         },
     ),
     Rel(
