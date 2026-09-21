@@ -1,13 +1,13 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-21 15:32 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-21 18:10 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **23.15 %** (2 145.0 / 9 266.8 Ko) |
+| code identique | **23.20 %** (2 150.0 / 9 266.8 Ko) |
 | code lié depuis les sources | 18.43 % |
-| fonctions identiques | 4680 / 21231 |
+| fonctions identiques | 4703 / 21231 |
 | unités complètes | 232 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
@@ -19,8 +19,8 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 81.8 % | 309.6 Ko |
 | Mini-jeux m5xx | 76 | 4 493.9 Ko | 2.8 % | 4 370.1 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
-| Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 4.4 % | 200.9 Ko |
-| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 40.4 % | 228.3 Ko |
+| Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 6.7 % | 196.0 Ko |
+| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 40.5 % | 228.1 Ko |
 | Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
 | Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 13.5 % | 1 186.8 Ko |
 
@@ -125,9 +125,9 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 |---|---|---|---|---|---|---|
 | `w01sDll` | 58.5 Ko | 0.0 % | 0/70 | 0.0 % | 0/0/1 | à faire |
 | `w02sDll` | 41.4 Ko | 0.0 % | 0/62 | 0.0 % | 0/0/1 | à faire |
-| `w03sDll` | 11.2 Ko | 0.0 % | 0/22 | 0.0 % | 0/0/1 | à faire |
+| `w03sDll` | 11.2 Ko | 32.4 % | 13/22 | 66.2 % | 0/1/0 | fait (E) |
 | `w04sDll` | 54.8 Ko | 0.0 % | 0/59 | 0.0 % | 0/0/1 | à faire |
-| `w05sDll` | 13.3 Ko | 0.0 % | 0/19 | 0.0 % | 0/0/1 | à faire |
+| `w05sDll` | 13.3 Ko | 9.3 % | 8/19 | 66.9 % | 0/1/0 | fait (E) |
 | `w06sDll` | 9.2 Ko | 100.0 % | 23/23 | 100.0 % | 1/0/0 | fait |
 | `w07sDll` | 21.5 Ko | 0.0 % | 0/31 | 0.0 % | 0/0/1 | à faire |
 
@@ -141,7 +141,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `w04Dll` | 78.7 Ko | 0.0 % | 0/66 | 0.0 % | 0/0/1 | à faire |
 | `w05Dll` | 47.6 Ko | 100.0 % | 33/33 | 100.0 % | 1/0/0 | fait |
 | `w06Dll` | 35.2 Ko | 100.0 % | 47/47 | 100.0 % | 1/0/0 | fait |
-| `w07Dll` | 45.2 Ko | 1.9 % | 10/52 | 6.3 % | 0/0/1 | en cours |
+| `w07Dll` | 45.2 Ko | 2.2 % | 12/52 | 17.2 % | 0/0/1 | en cours |
 | `w10Dll` | 1.0 Ko | 100.0 % | 8/8 | 100.0 % | 1/0/0 | fait |
 | `w20Dll` | 1.2 Ko | 100.0 % | 8/8 | 100.0 % | 1/0/0 | fait |
 
