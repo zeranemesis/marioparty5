@@ -105,8 +105,8 @@ typedef struct GwPlayer_s {
     s32 mgScore;
     s16 star;
     s16 starMax;
-    s16 starStat[GW_STAT_LEN];
-    s16 coinStat[GW_STAT_LEN];
+    u16 starStat[GW_STAT_LEN];
+    u16 coinStat[GW_STAT_LEN];
 } GWPLAYER;
 
 typedef struct GwSystem_s {
