@@ -2017,7 +2017,7 @@ config.libs = [
     Rel(
         "w05sDll",
         objects={
-            Object(NonMatching, "REL/w05sDll/world05.c"),
+            Object(Equivalent, "REL/w05sDll/world05.c"),
         },
     ),
     Rel(

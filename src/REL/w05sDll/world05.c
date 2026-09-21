@@ -403,6 +403,7 @@ static void MB5_MainObjUpdate(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register/stack allocation differs for the light setup literals
 void MB5_LightSet(void)
 {
     HuVecF from;
@@ -430,6 +431,7 @@ void MB5_LightReset(void)
 {
 }
 
+// NONMATCHING: prologue register-save allocation (_savegpr_27) differs
 int MB5Ev_MasuHatena(int playerNo)
 {
     s16 masuId;
@@ -475,12 +477,14 @@ void MB5Ev_RocketDustCreate(HuVecF pos);
 void MB5Ev_WarpPlayerShrink(int playerNo);
 void MB5Ev_WarpPlayerGrow(int playerNo);
 
+// NONMATCHING: stack frame layout and register allocation differ in a few spots
 void MB5Ev_Warp(int playerNo)
 {
     HuVecF pos;
     HuVecF nextPos;
     HuVecF scale;
     float alpha;
+    u32 flag;
     s16 masuId;
     s16 nextMasuId;
     s16 destMasuId;
@@ -489,11 +493,12 @@ void MB5Ev_Warp(int playerNo)
     float speed;
 
     masuId = GwPlayer[playerNo].masuId;
+    flag = MBMasuGet(0, masuId)->flag;
     MBPlayerPosFixFlagSet(FALSE);
     MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_WALK, 0, 8, HU3D_MOTATTR_LOOP);
     HuPrcSleep(10);
     HuPrcSleep(10);
-    nextMasuId = MBMasuFlagMatchFindLink(0, masuId, MB5EV_MASU_WARP);
+    nextMasuId = MBMasuFlagMatchFindLink(0, masuId, MB5EV_MASU_WARP_JUMP);
     GwPlayer[playerNo].masuIdPrev = GwPlayer[playerNo].masuId;
     GwPlayer[playerNo].masuIdNext = nextMasuId;
     MBPlayerMasuWalk(playerNo, TRUE);
@@ -541,7 +546,7 @@ void MB5Ev_Warp(int playerNo)
     Hu3DParManKill(mb5ev_WarpParmanId);
     HuSprAnimKill(mb5ev_WarpParmanAnim);
     mb5ev_WarpParmanAnim = NULL;
-    destMasuId = MBMasuFlagMatchFindLink(0, nextMasuId, MB5EV_MASU_WARP);
+    destMasuId = MBMasuFlagMatchFindLink(0, nextMasuId, MB5EV_MASU_WARP_JUMP);
     MBMasuPosGet(0, destMasuId, &nextPos);
     MBPlayerPosSetV(playerNo, &nextPos);
     MBCameraPlayerViewSet(playerNo, NULL, NULL, -1, -1, 60);
@@ -611,6 +616,7 @@ void MB5Ev_Warp(int playerNo)
     MBPlayerPosFixFlagSet(TRUE);
 }
 
+// NONMATCHING: stack frame layout and register allocation differ in a few spots
 void MB5Ev_Rocket(int playerNo)
 {
     HuVecF overlapPos[GW_PLAYER_MAX];
@@ -962,6 +968,7 @@ void MB5Ev_RocketDustCreate(HuVecF pos)
     }
 }
 
+// NONMATCHING: minor register allocation differences in the fade loop
 void MB5Ev_WarpPlayerShrink(int playerNo)
 {
     HuVecF scale = { 1, 1, 1 };
@@ -989,6 +996,7 @@ void MB5Ev_WarpPlayerShrink(int playerNo)
     MBModelDispSet(playerMdlId, FALSE);
 }
 
+// NONMATCHING: minor register allocation differences in the fade loop
 void MB5Ev_WarpPlayerGrow(int playerNo)
 {
     float numAlpha = 255;
