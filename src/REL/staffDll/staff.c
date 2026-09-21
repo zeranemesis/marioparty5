@@ -17,7 +17,7 @@ typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
 
-static void ObjectSetup(void);
+void ObjectSetup(void);
 static void StaffMain(OMOBJ *obj);
 static void StaffInit(OMOBJ *obj);
 static void StaffExit(OMOBJ *obj);
@@ -461,7 +461,7 @@ static void StaffInit(OMOBJ *obj)
 
 // NONMATCHING: light constant struct locals differ slightly in stack layout
 // from the original; behavior is identical.
-static void ObjectSetup(void)
+void ObjectSetup(void)
 {
     HuVecF lightPos = { 0.0f, 5000.0f, 0.0f };
     HuVecF lightDir = { 0.0f, -1.0f, -0.5f };
