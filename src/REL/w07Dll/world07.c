@@ -158,6 +158,7 @@ static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
 static void MB7Ev_KoopaCube(s32 playerNo);
 static void MB7Ev_Hou(s32 playerNo);
+static void MB7Ev_HouPlayerUpdate(void);
 
 /* mb7_Work[0x4F..0x5B] ("fire breath" sub-state, byte 0x13C..0x16C - the
  * region MB7Ev_KoopaFire1Hook reads via mb7_Work[0x53]/[0x55]/[0x56] and
@@ -185,6 +186,11 @@ static void MB7Ev_Hou(s32 playerNo);
  *     "kupa_dream_all-fire_pos", ...), string at lbl_1_data_358) - the
  *     actual fire particle emission origin, added to each particle's
  *     spawn position in Fire1Hook via PSVECAdd.
+ *   +0x64/+0x6C (f32 x/z, byte 0x1A0/0x1A8): a target x/z position
+ *     (probably the splash/landing point in front of the koopa) that
+ *     MB7Ev_HouPlayerUpdate compares the player's position against,
+ *     via atan2 and MB7_AngleDiff against the +0x10 breath angle, to
+ *     decide whether the player is standing in the fire's path.
  * The rest of MB7Ev_Hou (the full cutscene state machine around this
  * setup) is not yet decompiled. */
 
@@ -2098,4 +2104,83 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     MBEffKill((s16) *(s32 *) (koopaBase + 0x68));
     *(s32 *) (koopaBase + 0x68) = -1;
     MB7Ev_KoopaClose();
+}
+
+/* per-player Hou state, reusing the same mb7_Work+0x1C0 array as
+ * MB7Ev_KoopaWalkPlayerUpdate/Dokan* (only one of these cutscenes runs
+ * at a time): +0x0 (s32) active gate, +0x8 (s32) state, +0xC (s32)
+ * masuId, +0x10 (s32) bounce count, +0x20 (s16) motion id, +0x2C/+0x38
+ * (Point3d) pos/rot, +0x30 (f32) last ground height, +0x44 (Point3d)
+ * fall velocity, +0x48 (f32) fall speed, +0x3C (f32) reset scratch. */
+/* NONMATCHING: register allocation order differs */
+static void MB7Ev_HouPlayerUpdate(void) {
+    u8 *fireBase = (u8 *) mb7_Work + 0x13C;
+    s32 playerNo;
+
+    for (playerNo = 0; playerNo < 4; playerNo++) {
+        u8 *e = (u8 *) mb7_Work + 0x1C0 + (playerNo * 0x5C);
+
+        if (*(s32 *) (e + 0x0) != 0) {
+            MASU *masuP = MBMasuGet(0, *(s32 *) (e + 0xC));
+
+            switch (*(s32 *) (e + 0x8)) {
+            case 0:
+                *(s16 *) (e + 0x20) = (s16) MBPlayerMotionCreate(playerNo, 0x8C0015);
+                MBPlayerPosGet(playerNo, (Point3d *) (e + 0x2C));
+                MBPlayerRotGet(playerNo, (Point3d *) (e + 0x38));
+                *(s32 *) (e + 0x4) = -1;
+                *(s32 *) (e + 0x8) += 1;
+                break;
+            case 1:
+                if (*(f32 *) (fireBase + 0x18) >= 0.8f) {
+                    f32 angle = (f32) (180.0 * (atan2((f64) (*(f32 *) (e + 0x2C) - *(f32 *) (fireBase + 0x64)), (f64) (*(f32 *) (e + 0x34) - *(f32 *) (fireBase + 0x6C))) / 3.141592653589793));
+
+                    if (fabs(MB7_AngleDiff(angle, *(f32 *) (fireBase + 0x10))) <= 10.0f) {
+                        s32 capsuleMax = MBPlayerCapsuleMaxGet();
+                        s32 i;
+
+                        for (i = 0; i < capsuleMax; i++) {
+                            MBPlayerCapsuleRemove(playerNo, 0);
+                        }
+                        omVibrate((s16) playerNo, 0xC, 4, 2);
+                        MBPlayerMotionNoShiftSet(playerNo, *(s16 *) (e + 0x20), 0.0f, 8.0f, 0x40000001U);
+                        MBPlayerWinLoseVoicePlay(playerNo, 1, 0x1F9);
+                        *(f32 *) (e + 0x48) = 32.666668f;
+                        *(s32 *) (e + 0x10) = 0;
+                        *(s32 *) (e + 0x8) += 1;
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+                /* fallthrough */
+            case 2:
+                *(f32 *) (e + 0x48) += -0.8166667f;
+                PSVECAdd((Point3d *) (e + 0x2C), (Point3d *) (e + 0x44), (Point3d *) (e + 0x2C));
+                if (*(f32 *) (e + 0x30) <= masuP->pos.y) {
+                    *(f32 *) (e + 0x30) = masuP->pos.y;
+                    *(f32 *) (e + 0x48) *= -0.7f;
+                    *(s32 *) (e + 0x10) += 1;
+                    omVibrate((s16) playerNo, 0xC, 4, 2);
+                    if (*(s32 *) (e + 0x10) >= 2) {
+                        *(f32 *) (e + 0x48) = 0.0f;
+                        *(s32 *) (e + 0x8) += 1;
+                        MBPlayerMotionNoShiftSet(playerNo, 6, 0.0f, 8.0f, 0x40000001U);
+                    }
+                }
+                break;
+            case -1:
+                MBPlayerMotionNoSet(playerNo, 1, 0x40000001U);
+                MBPlayerMotionKill(playerNo, *(s16 *) (e + 0x20));
+                *(s16 *) (e + 0x20) = -1;
+                *(f32 *) (e + 0x3C) = 0.0f;
+                break;
+            default:
+                break;
+            }
+            MBPlayerPosSetV(playerNo, (Point3d *) (e + 0x2C));
+            MBPlayerRotSetV(playerNo, (Point3d *) (e + 0x38));
+        }
+    }
 }
