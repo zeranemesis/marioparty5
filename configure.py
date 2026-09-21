@@ -1810,7 +1810,7 @@ config.libs = [
     Rel(
         "meschkDll",
         objects={
-            Object(NonMatching, "REL/meschkDll/meschk.c"),
+            Object(Equivalent, "REL/meschkDll/meschk.c"),
         },
     ),
     Rel(
