@@ -237,10 +237,10 @@ void MotChkModelInit(s16 charNo, s16 motNo, s16 lodNo) {
     motchkMdlId[1] = Hu3DModelCreateData(dataDirTbl[charNo] | 1);
     motchkMdlId[2] = Hu3DModelCreateData(dataDirTbl[charNo] | 2);
     motchkMdlId[3] = Hu3DModelCreateData(dataDirTbl[charNo] | 3);
-    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
     motchkMotIdOld[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], dataDirTbl[charNo] | 4);
     motchkMotIdOld[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], dataDirTbl[charNo] | 4);
     motchkMotIdOld[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], dataDirTbl[charNo] | 4);
@@ -274,10 +274,10 @@ void MotChkMotionSet(s16 charNo, s16 motNo, s16 lodNo) {
     for (i = 0; i < 4; i++) {
         Hu3DMotionKill((HU3DMOTID) motchkMotId[i]);
     }
-    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) ((u32) motNo + 0x870004) | dataDirTbl[charNo]);
     Hu3DMotionSet((HU3DMODELID) motchkMdlId[0], (HU3DMOTID) motchkMotId[0]);
     Hu3DMotionSet((HU3DMODELID) motchkMdlId[1], (HU3DMOTID) motchkMotId[1]);
     Hu3DMotionSet((HU3DMODELID) motchkMdlId[2], (HU3DMOTID) motchkMotId[2]);
