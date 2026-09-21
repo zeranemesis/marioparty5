@@ -1485,18 +1485,781 @@ static void MB3Ev_KubiBone(MASU *masuP, s32 idx) {
     }
 }
 
+/* Fireball catapult event: the player is launched, does a spin, crashes
+ * down on a random hatena masu and (if another player is standing there)
+ * knocks coins off them. NONMATCHING: HuPrcVSleep() wait-loops rewritten
+ * as plain for/while loops; PI literal written out; the two float
+ * arguments to MB3_ImpactEffPosSet at the crash point could not be
+ * resolved with confidence from the m2c draft (see decomp report) and are
+ * best-effort (60.0f pitch, 200.0f yaw). */
 static void MB3Ev_YYHou(s32 playerNo) {
-    /* TODO */
+    MASU *masuP = MBMasuGet(0, GwPlayer[playerNo].masuId);
+    s16 fireball;
+    s32 rescued[4] = { -1, -1, -1, -1 };
+    s16 mainMdl = (s16) mb3_Work[1];
+    Point3d pos, vel, hookPos, dir, impactPos;
+    f32 gravity = -4900.0f * 0.0002777778f;
+    f32 scale;
+    s32 i, t;
+    s32 targetMasu, rescueCount;
+    MASU *landMasu;
+    Point3d fallVel;
+    s32 frame;
+
+    MBPlayerMotIdleSet(playerNo);
+    fireball = (s16) MBModelCreate(0x8007B, NULL, FALSE);
+    MBModelLayerSet(fireball, 6U);
+    MBModelDispSet(fireball, FALSE);
+
+    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0x10], 0x20);
+    MBEffAttrSet(MB3W_S16(0x5C), 8U);
+    MBEffHookSet(MB3W_S16(0x5C), MB3_ImpactEffHook);
+    Hu3DModelLayerSet(MB3W_S16(0x5C), 3);
+
+    MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
+    MBPlayerPosGet(playerNo, &pos);
+    Hu3DModelObjPosGet(MBModelIdGet(mainMdl), "yy_hou2-thook", &hookPos);
+    hookPos.y += 200.0f;
+    VECSubtract(&hookPos, &pos, &vel);
+    vel.x /= 0.6f;
+    vel.z /= 0.6f;
+    vel.y = (vel.y / 0.6f) - (0.5f * 0.6f * -4900.0f);
+    VECScale(&vel, &vel, 0.016666668f);
+    MBPlayerRotSet(playerNo, 0.0f, (f32) (180.0 * (atan2((f64) vel.x, (f64) vel.z) / 3.141592653589793)), 0.0f);
+
+    for (i = 0; i < 3; i++) {
+        HuPrcVSleep();
+    }
+    for (i = 0; i < (s32) (0.6f * 60.0f); i++) {
+        vel.y += gravity;
+        VECAdd(&pos, &vel, &pos);
+        MBPlayerPosSetV(playerNo, &pos);
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 5, 0.0f, 0.0f, 0U);
+    scale = 1.0f;
+    for (i = 0; i < 30; i++) {
+        pos.y += -200.0f / 30.0f;
+        scale *= 0.95f;
+        MBPlayerPosSetV(playerNo, &pos);
+        MBPlayerScaleSet(playerNo, scale, scale, scale);
+        HuPrcVSleep();
+    }
+
+    MBCameraFocusSet(-1);
+    MBMotionSpeedSet(mainMdl, 1.0f);
+    MBMotionTimeSet(mainMdl, 0.0f);
+    MBAudFXPlay(0x5DF);
+    for (t = 0; (f32) t < MBMotionMaxTimeGet(mainMdl) - 10.0f; t++) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 0.0f, 0x40000001U);
+    MBPlayerPosGet(playerNo, &pos);
+    MBPlayerWinLoseVoicePlay(playerNo, 1, 0x1F9);
+    scale = 0.0f;
+    dir.x = (f32) (sin(3.6651914291880923) * cos(1.0471975511965976));
+    dir.y = (f32) sin(1.0471975511965976);
+    dir.z = (f32) (cos(3.6651914291880923) * cos(1.0471975511965976));
+    VECScale(&dir, &vel, 200.0f);
+    VECAdd(&pos, &vel, &impactPos);
+    MB3_ImpactEffPosSet(&impactPos, 60.0f, 200.0f);
+    MBAudFXPlay(0x5E0);
+    omVibrate((s16) playerNo, 0xC, 4, 2);
+    VECScale(&dir, &dir, 33.333332f);
+    MBCameraQuakeSet(0x12, 500.0f);
+    {
+        f32 spinAngle = 0.0f;
+        for (i = 0; (f32) i < 30.0f; i++) {
+            Mtx a, b;
+            Point3d outRot;
+
+            spinAngle += 18.0f;
+            MTXRotRad(a, 'Y', 0.017453292f * spinAngle);
+            MTXRotRad(b, 'X', 0.5235988f);
+            MTXConcat(b, a, a);
+            MTXRotRad(b, 'Y', 3.6651914f);
+            MTXConcat(b, a, a);
+            Hu3DMtxRotGet(a, &outRot);
+            MBPlayerRotSetV(playerNo, &outRot);
+            VECAdd(&pos, &dir, &pos);
+            MBPlayerPosSetV(playerNo, &pos);
+            scale += 0.3f * (1.0f - scale);
+            MBPlayerScaleSet(playerNo, scale, scale, scale);
+            HuPrcVSleep();
+        }
+    }
+    MBPlayerScaleSet(playerNo, 1.0f, 1.0f, 1.0f);
+    {
+        f32 r = MBEffRandF();
+        targetMasu = MBMasuFlagFind(0, MB3Ev_MasuFlagGet((s32) (3.0f * r) + 1, 0x300), 0x300U);
+    }
+    rescueCount = 0;
+    for (i = 0; i < 4; i++) {
+        if (targetMasu == GwPlayer[i].masuId) {
+            rescued[i] = i;
+            rescueCount++;
+        }
+    }
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    MBEffKill(MB3W_S16(0x5C));
+    MB3W_S16(0x5E) = -1;
+    MB3W_S16(0x5C) = -1;
+    MBPlayerPosFixWarp(playerNo, targetMasu, TRUE);
+    MBCameraFocusMasuSet(targetMasu);
+    MBCameraSkipSet(0);
+    WipeCreate(1, 0x81, 0x1E);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+
+    landMasu = MBMasuGet(0, targetMasu);
+    pos = landMasu->pos;
+    pos.y += 1000.0f;
+    fallVel.x = 0.0f;
+    fallVel.y = -5.0f;
+    fallVel.z = 0.0f;
+    MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+    MBPlayerScaleSet(playerNo, 1.0f, 1.0f, 1.0f);
+    MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 0.0f, 0U);
+    frame = 0;
+    while (pos.y > landMasu->pos.y) {
+        if (((pos.y - landMasu->pos.y) < 200.0f) && MBPlayerMotionNoGet(playerNo) != 5) {
+            MBPlayerMotionNoShiftSet(playerNo, 5, 0.0f, 0.0f, 0U);
+            frame = 0;
+            if (rescueCount != 0) {
+                MBModelDispSet(fireball, TRUE);
+                MBMotionTimeSet(fireball, 0.0f);
+            }
+        }
+        MBPlayerPosSetV(playerNo, &pos);
+        MB3_ImpactEffUpdate(fireball, frame);
+        frame++;
+        HuPrcVSleep();
+        VECAdd(&pos, &fallVel, &pos);
+        fallVel.y += gravity;
+    }
+    GwPlayer[playerNo].masuId = (s16) targetMasu;
+    do {
+        MB3_ImpactEffUpdate(fireball, frame);
+        frame++;
+        HuPrcVSleep();
+    } while (!MBPlayerMotionEndCheck(playerNo));
+    MBPlayerMotIdleSet(playerNo);
+    for (i = 0; i < 0x1E; i++) {
+        frame++;
+        MB3_ImpactEffUpdate(fireball, frame);
+        HuPrcVSleep();
+    }
+    if (rescueCount != 0) {
+        MBModelDispSet(fireball, FALSE);
+        for (i = 0; i < 4; i++) {
+            if (rescued[i] >= 0) {
+                MBPlayerMotionNoSet(i, 6, 0x40000001U);
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            if (rescued[i] >= 0) {
+                MBCoinAddDispExec(i, -5, TRUE);
+            }
+        }
+    }
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    for (i = 0; i < 4; i++) {
+        if (rescued[i] >= 0) {
+            MBPlayerMotionNoSet(i, 1, 0x40000001U);
+        }
+    }
+    MBMotionSpeedSet(mainMdl, 0.0f);
+    MBMotionTimeSet(mainMdl, 0.0f);
+    WipeCreate(1, 0x81, 0x1E);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    MBModelKill(fireball);
 }
 
+/* Boulder-riding event: finds the longest run of linked "rock track" masus,
+ * puts the boulder in motion and lets every player standing on the track
+ * ride it until it stops (or a player is thrown off by the pickaxe hazard
+ * near the end). NONMATCHING: HuPrcVSleep() loops rewritten, minor state
+ * machine restructuring. */
 static void MB3Ev_RollRock(s32 playerNo) {
-    /* TODO */
+    s32 i, j, k;
+    s32 bestMasu = 0, best = 0;
+    s32 masuNum;
+    s16 rockModel;
+    f32 savedZoom;
+    Point3d rockPos;
+    s32 state = 0;
+    s32 sndId = -1;
+    s32 timer = 0;
+    s32 allDone;
+
+    MBMasuGet(0, GwPlayer[playerNo].masuId);
+    MBPlayerMotIdleSet(playerNo);
+    memset(&mb3_Work[0x9A], 0, 0x190U);
+
+    for (i = 0; i < 4; i++) {
+        MASU *cur = MBMasuGet(0, GwPlayer[i].masuId);
+        for (j = 0; j < (s32) cur->linkNum; j++) {
+            u16 linkId = cur->linkTbl[j];
+            if (MBMasuGet(0, linkId)->flag & 0x40) {
+                MB3ROLLROCK_PLAYER *e = &MB3_PLAYERSCR[i].rollRock;
+                e->active = 1;
+                e->masuId = linkId;
+                break;
+            }
+        }
+    }
+    mb3_Work[0x1C] = 0;
+    masuNum = MBMasuNumGet(0);
+    for (i = 1; i <= masuNum; i++) {
+        s32 chainLen = 0;
+        MASU *cur = MBMasuGet(0, i);
+        while ((cur->flag & 0x40) && cur->linkNum != 0) {
+            MASU *next = NULL;
+            for (k = 0; k < (s32) cur->linkNum; k++) {
+                MASU *cand = MBMasuGet(0, cur->linkTbl[k]);
+                if (cand->flag & 0x40) {
+                    next = cand;
+                    break;
+                }
+            }
+            if (next == NULL) {
+                break;
+            }
+            cur = next;
+            chainLen++;
+        }
+        if (best < chainLen) {
+            bestMasu = i;
+            best = chainLen;
+        }
+    }
+    mb3_Work[0xA] = bestMasu;
+    MB3_RollRockPathUpdate();
+    rockModel = (s16) mb3_Work[7];
+    MBMotionSpeedSet(rockModel, 0.0f);
+    MBMotionTimeSet(rockModel, 0.0f);
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    savedZoom = MBCameraZoomGet();
+    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xF], 0x20);
+    MBEffAttrSet(MB3W_S16(0x5C), 8U);
+    MBEffHookSet(MB3W_S16(0x5C), MB3_TuruhasiEffHook);
+    Hu3DModelLayerSet(MB3W_S16(0x5C), 3);
+    MB3W_S16(0x5E) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0x10], 0x40);
+    MBEffAttrSet(MB3W_S16(0x5E), 8U);
+    MBEffHookSet(MB3W_S16(0x5E), MB3_RollRockEffHook);
+    Hu3DModelLayerSet(MB3W_S16(0x5E), 3);
+    MBCameraFocusSet(-1);
+    Hu3DModelObjPosGet(MBModelIdGet(rockModel), "trap-iwa1", &rockPos);
+    MBCameraPosTargetSetV(&rockPos);
+    MBCameraZoomSet(3000.0f);
+    MBCameraSkipSet(0);
+    MBStarDispSetAll(FALSE);
+    WipeCreate(1, 0x81, 0x1E);
+    MBCameraQuakeSet(0x3C, 50.0f);
+    while (!WipeCheckEnd()) {
+        MBCameraPosTargetSetV(&rockPos);
+        HuPrcVSleep();
+    }
+    MBMotionSpeedSet(rockModel, 1.2f);
+    do {
+        MASU *curMasu = MBMasuGet(0, mb3_Work[0xA]);
+        Point3d delta;
+
+        switch (state) {
+        case 0:
+            if (MB3Ev_BitGet((s32) curMasu->flag, 0x1018) == 2) {
+                state++;
+            }
+            break;
+        case 1:
+            WipeColorSet(0, 0, 0);
+            WipeCreate(2, 0, 0x1E);
+            state++;
+            break;
+        case 2:
+            if (!WipeCheckEnd()) {
+                MBAudFXPlay(0x5E5);
+                MBMotionSpeedSet(rockModel, 6.0f);
+                timer = 0x19;
+                state++;
+            }
+            break;
+        case 3:
+            timer -= 1;
+            if (timer < 0) {
+                MBMotionSpeedSet(rockModel, 1.2f);
+                WipeCreate(1, 0, 0x1E);
+                MB3Ev_KubiBone(MBMasuGet(0, MBMasuFlagFind(0, MB3Ev_MasuFlagGet(2, 0x8020), 0x8020U)), 2);
+                state++;
+            }
+            break;
+        }
+        Hu3DModelObjPosGet(MBModelIdGet(rockModel), "trap-iwa1", &rockPos);
+        MB3W_F32(0x64) = rockPos.x;
+        MB3W_F32(0x68) = rockPos.y;
+        MB3W_F32(0x6C) = rockPos.z;
+        MBCameraPosTargetSetV(&rockPos);
+        VECSubtract(&rockPos, &curMasu->pos, &delta);
+        delta.y = 0.1f;
+        if (VECMag(&delta) < 240.00002f) {
+            for (k = 0; k < (s32) curMasu->linkNum; k++) {
+                if (MBMasuGet(0, curMasu->linkTbl[k])->flag & 0x40) {
+                    mb3_Work[0xA] = curMasu->linkTbl[k];
+                    break;
+                }
+            }
+        }
+        if (MBMotionTimeGet(rockModel) > 10.0f && MBMotionTimeGet(rockModel) < 800.0f) {
+            MB3_RollRockEffUpdate(&MB3W_F32(0x64));
+            MB3_RollRockDustCreate(&MB3W_F32(0x64));
+        }
+        if (MBMotionTimeGet(rockModel) > 10.0f) {
+            if (MBMotionTimeGet(rockModel) < 820.0f) {
+                if (sndId < 0) {
+                    sndId = HuAudFXPlay(0x5E2);
+                }
+            } else if (sndId >= 0) {
+                HuAudFXStop(sndId);
+                sndId = -1;
+                OSReport("GOROGORO Stop!\n");
+            }
+        }
+        MB3_RollRockPathUpdate();
+        HuPrcVSleep();
+        allDone = 1;
+        for (i = 0; i < 4; i++) {
+            if (MB3_PLAYERSCR[i].rollRock.active == 1) {
+                allDone = 0;
+            }
+        }
+    } while (!allDone);
+    for (i = 0; i < 0x3C; i++) {
+        MB3_RollRockPathUpdate();
+        HuPrcVSleep();
+    }
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    MBStarDispSetAll(TRUE);
+    MBEffKill(MB3W_S16(0x5C));
+    MBEffKill(MB3W_S16(0x5E));
+    MB3W_S16(0x5E) = -1;
+    MB3W_S16(0x5C) = -1;
+    for (i = 0; i < 4; i++) {
+        MB3_PLAYERSCR[i].rollRock.state = -1;
+    }
+    MB3_RollRockPathUpdate();
+    {
+        s32 finalMasu = GwPlayer[playerNo].masuId;
+        MBPlayerPosFixCurr(finalMasu, TRUE);
+        MBMotionSpeedSet(rockModel, 0.0f);
+        MBMotionTimeSet(rockModel, 0.0f);
+        MBCameraFocusSet(-1);
+        MBCameraZoomSet(savedZoom);
+        MBCameraFocusMasuSet(finalMasu);
+    }
+    MBCameraSkipSet(0);
+    WipeCreate(1, 0x81, 0x1E);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    for (i = 0; i < 0x3C; i++) {
+        HuPrcVSleep();
+    }
 }
 
+/* Pickaxe/coin-dig event: either a cheap "lose 5 coins" animation (below
+ * 5 coins) or the full dig minigame (button-mash rhythm game, rewarding a
+ * random coin count via MB3_CoinEffCreate). NONMATCHING: HuPrcVSleep()
+ * loops rewritten, button-mash inner loop simplified from the fused
+ * fallthrough condition seen in the m2c draft. */
 static void MB3Ev_Turuhasi(s32 playerNo) {
-    /* TODO */
+    s16 turuhasiMdl = GwPlayer[playerNo].masuId;
+    MASU *destMasuP = MBMasuGet(0, turuhasiMdl);
+    MASU *startMasuP = MBMasuGet(0, mb3_Work[9]);
+    s16 hutaMdl = (s16) mb3_Work[2];
+    Point3d pos;
+    s32 i;
+
+    MBPlayerMotIdleSet(playerNo);
+
+    if (MBPlayerCoinGet(playerNo) < 5) {
+        pos = startMasuP->pos;
+        pos.y -= 100.0f;
+        MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x60), 0U);
+        MBMotionTimeSet(hutaMdl, 0.0f);
+        MBMotionSpeedSet(hutaMdl, 1.0f);
+        MBModelPosSetV(hutaMdl, &pos);
+        MBModelDispSet(hutaMdl, TRUE);
+        MBAudFXPlay(0x5E7);
+        HuPrcVSleep();
+        for (i = 0; i < 0x14; i++) {
+            f32 t = 1.0f - (0.05263158f * (f32) i);
+            MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
+            HuPrcVSleep();
+        }
+        MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x62), 0x40000001U);
+        MBWinCreate(2, 0x2F0002U, 0x13);
+        MBTopWinWait();
+        MBTopWinKill();
+        MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x60), 0U);
+        MBMotionTimeSet(hutaMdl, MBMotionMaxTimeGet(hutaMdl));
+        MBMotionSpeedSet(hutaMdl, -2.0f);
+        for (i = 0; i < 0xA; i++) {
+            f32 t = 0.11111111f * (f32) i;
+            MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
+            HuPrcVSleep();
+        }
+        MBModelDispSet(hutaMdl, FALSE);
+        return;
+    }
+
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    for (i = 0; i < 4; i++) {
+        if (i != playerNo) {
+            MBModelDispSet(MBPlayerModelGet(i), FALSE);
+        }
+    }
+    MBPlayerRotSet(playerNo, 0.0f, (f32) (180.0 * (atan2((f64) (startMasuP->pos.x - destMasuP->pos.x), (f64) (startMasuP->pos.z - destMasuP->pos.z)) / 3.141592653589793)), 0.0f);
+    MBCameraFocusMasuSet(mb3_Work[9]);
+    {
+        f32 savedZoom = MBCameraZoomGet();
+        s32 rounds = 0, mashed = 0, releasing = 1, resetDelay = 0, rhythmDown = 0;
+        s32 winCoinId = -1;
+        Point3d camRot;
+
+        MBCameraZoomSet(2000.0f);
+        MBCameraSkipSet(0);
+        WipeCreate(1, 0x81, 0x1E);
+        while (!WipeCheckEnd()) {
+            HuPrcVSleep();
+        }
+
+        pos = startMasuP->pos;
+        pos.y -= 100.0f;
+        MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x60), 0U);
+        MBMotionTimeSet(hutaMdl, 0.0f);
+        MBMotionSpeedSet(hutaMdl, 1.0f);
+        MBModelPosSetV(hutaMdl, &pos);
+        MBModelDispSet(hutaMdl, TRUE);
+        MBAudFXPlay(0x5E7);
+        HuPrcVSleep();
+        for (i = 0; i < 0x14; i++) {
+            f32 t = 1.0f - (0.05263158f * (f32) i);
+            MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
+            HuPrcVSleep();
+        }
+        MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x62), 0x40000001U);
+        MBWinCreateChoice(0, 0x2F0000U, 0x13, 0);
+        if (GwPlayer[playerNo].comF) {
+            MBComChoiceSetUp();
+        }
+        MBTopWinWait();
+        {
+            s32 giveUp = (MBWinLastChoiceGet() == 0);
+            MBTopWinKill();
+            if (giveUp) {
+                MB3_PLAYER_SCRATCH *turu0 = MB3_PLAYERSCR;
+                s8 charHook;
+
+                memset(&mb3_Work[0x9A], 0, 0x190U);
+                MBCoinAddDispExec(playerNo, -5, TRUE);
+                WipeColorSet(0, 0, 0);
+                WipeCreate(2, 0x81, 1);
+                while (!WipeCheckEnd()) {
+                    HuPrcVSleep();
+                }
+                for (i = 0; i < 4; i++) {
+                    if (i != playerNo) {
+                        MBModelDispSet(MBPlayerModelGet(i), FALSE);
+                    }
+                }
+                MBPlayerRotSet(playerNo, 0.0f, (f32) (180.0 * (atan2((f64) (startMasuP->pos.x - destMasuP->pos.x), (f64) (startMasuP->pos.z - destMasuP->pos.z)) / 3.141592653589793)), 0.0f);
+                pos.x = -826.0f;
+                pos.y = 4162.0f;
+                pos.z = -2260.0f;
+                MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x60), 0U);
+                MBMotionTimeSet(hutaMdl, 0.0f);
+                MBMotionSpeedSet(hutaMdl, 0.0f);
+                MBModelPosSetV(hutaMdl, &pos);
+                MBPlayerPosSet(playerNo, 200.0f + destMasuP->pos.x, destMasuP->pos.y, 600.0f + destMasuP->pos.z);
+                MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+                MBPlayerPosGet(playerNo, &turu0->turuhasi.pos);
+                MBPlayerRotGet(playerNo, &turu0->turuhasi.rot);
+                turu0->turuhasi.motionA = (s16) MBPlayerMotionCreate(playerNo, 0x8C0044);
+                turu0->turuhasi.motionB = (s16) MBPlayerMotionCreate(playerNo, 0x8C0045);
+                MBPlayerMotionNoShiftSet(playerNo, turu0->turuhasi.motionA, 0.0f, 0.0f, 0x40000001U);
+                MBModelRotSet((s16) mb3_Work[8], 90.0f, 0.0f, 0.0f);
+                MBModelPosSet((s16) mb3_Work[8], 0.0f, 0.0f, 10.0f);
+                MBModelDispSet((s16) mb3_Work[8], TRUE);
+                charHook = GwPlayer[playerNo].charNo;
+                MBModelHookSet(MBPlayerModelGet(playerNo), CharModelItemHookGet(charHook, 2, 0), (s16) mb3_Work[8]);
+                turu0->turuhasi.effModelId = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xF], 0x40);
+                MBEffAttrSet(turu0->turuhasi.effModelId, 8U);
+                MBEffHookSet(turu0->turuhasi.effModelId, MB3_TuruhasiEffHook);
+                Hu3DModelLayerSet(turu0->turuhasi.effModelId, 3);
+                Hu3DModelPosSetV(turu0->turuhasi.effModelId, &turu0->turuhasi.pos);
+                MB3_CoinEffInit();
+                MBCameraFocusSet(-1);
+                MBCameraPosTargetSet(150.0f + destMasuP->pos.x, destMasuP->pos.y, 500.0f + destMasuP->pos.z);
+                MBCameraZoomSet(2500.0f);
+                MBCameraRotGet(&camRot);
+                MBCameraRotSet(camRot.x, -20.0f, camRot.z);
+                MBCameraSkipSet(0);
+                WipeCreate(1, 0x81, 0x1E);
+                while (!WipeCheckEnd()) {
+                    HuPrcVSleep();
+                }
+                MBMotionSpeedSet(hutaMdl, 1.0f);
+                MBAudFXPlay(0x5E7);
+                for (i = 0; i < 0x14; i++) {
+                    f32 t = 1.0f - (0.05263158f * (f32) i);
+                    MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
+                    HuPrcVSleep();
+                }
+                winCoinId = GameMesCreate(1, 5, -1, -1);
+                MBMotionNoSet(hutaMdl, (s32) turu0->turuhasi.motionB, 0x40000001U);
+                GameMesDispSet(winCoinId, 1, 5);
+                MBWinCreate(2, 0x2F0001U, 0x13);
+                MBTopWinWait();
+                MBTopWinKill();
+                MBPlayerMotionNoSet(playerNo, turu0->turuhasi.motionB, 0U);
+                MBPlayerMotionTimeSet(playerNo, 0.0f);
+                MBPlayerMotionSpeedSet(playerNo, 0.0f);
+
+                for (i = 0; i < 0x168; i++) {
+                    u16 keys = HuPadBtnDown[(u8) GwPlayer[playerNo].padNo];
+                    if (GwPlayer[playerNo].comF && (i & 3) == 0 && MBEffRandF() < 0.6f) {
+                        keys |= 0x100;
+                    }
+                    if (i >= 0x12C) {
+                        keys = 0;
+                    }
+                    if (keys & 0x100) {
+                        mashed = 1;
+                        mb3_Work[0xA0] += 1;
+                    }
+                    if (mb3_Work[0xA0] >= 3) {
+                        mb3_Work[0xA0] = 0;
+                        rounds++;
+                        resetDelay = 1;
+                    }
+                    if (mashed) {
+                        if (releasing == 0) {
+                            MBPlayerMotionTimeSet(playerNo, 0.0f);
+                            MBPlayerMotionSpeedSet(playerNo, 2.0f);
+                            releasing = 1;
+                        } else {
+                            MBPlayerMotionTimeSet(playerNo, 5.0f);
+                            MBPlayerMotionSpeedSet(playerNo, 1.0f);
+                            mashed = 0;
+                            releasing = 0;
+                        }
+                    }
+                    if (MBPlayerMotionEndCheck(playerNo)) {
+                        MBPlayerMotionTimeSet(playerNo, 0.0f);
+                        MBPlayerMotionSpeedSet(playerNo, 0.0f);
+                        releasing = 1;
+                    }
+                    if (rhythmDown == 0) {
+                        if (MBPlayerMotionTimeGet(playerNo) == 5.0f) {
+                            rhythmDown = 1;
+                            MBAudFXPlay(0x5E1);
+                            MB3_TuruhasiEffCreate(turu0);
+                            if (resetDelay) {
+                                f32 coinPos[3];
+                                coinPos[0] = MB3W_F32(0x29C);
+                                coinPos[1] = MB3W_F32(0x2A0);
+                                coinPos[2] = MB3W_F32(0x2A4) + 100.0f;
+                                MB3_CoinEffCreate(coinPos);
+                                resetDelay = 0;
+                            }
+                        }
+                    } else if (releasing) {
+                        rhythmDown = 0;
+                    }
+                    MB3_CoinEffUpdate();
+                    if (winCoinId >= 0) {
+                        s32 remain = 0x12B - i;
+                        if (remain >= 0) {
+                            GameMesDispSet(winCoinId, 1, (s16) (remain / 60));
+                        } else {
+                            GameMesDispSet(winCoinId, 2, -1);
+                            winCoinId = -1;
+                        }
+                    }
+                    HuPrcVSleep();
+                }
+                MBCoinAddDispExec(playerNo, rounds, TRUE);
+                MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x60), 0U);
+                MBMotionTimeSet(hutaMdl, MBMotionMaxTimeGet(hutaMdl));
+                MBMotionSpeedSet(hutaMdl, -2.0f);
+                for (i = 0; i < 0xA; i++) {
+                    f32 t = 0.11111111f * (f32) i;
+                    MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
+                    HuPrcVSleep();
+                }
+                WipeColorSet(0, 0, 0);
+                WipeCreate(2, 0x81, 1);
+                while (!WipeCheckEnd()) {
+                    HuPrcVSleep();
+                }
+                MBCameraRotSetV(&camRot);
+                MBModelHookReset(MBPlayerModelGet(playerNo));
+                MBModelDispSet((s16) mb3_Work[8], FALSE);
+                MBPlayerMotionKill(playerNo, turu0->turuhasi.motionA);
+                MBPlayerMotionKill(playerNo, turu0->turuhasi.motionB);
+                MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 0.0f, 0x40000001U);
+                MB3_CoinEffClose();
+                MBEffKill(turu0->turuhasi.effModelId);
+            } else {
+                MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x60), 0U);
+                MBMotionTimeSet(hutaMdl, MBMotionMaxTimeGet(hutaMdl));
+                MBMotionSpeedSet(hutaMdl, -2.0f);
+                for (i = 0; i < 0xA; i++) {
+                    f32 t = 0.11111111f * (f32) i;
+                    MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
+                    HuPrcVSleep();
+                }
+                WipeColorSet(0, 0, 0);
+                WipeCreate(2, 0x81, 1);
+                while (!WipeCheckEnd()) {
+                    HuPrcVSleep();
+                }
+            }
+        }
+        MBModelDispSet(hutaMdl, FALSE);
+        for (i = 0; i < 4; i++) {
+            MBModelDispSet(MBPlayerModelGet(i), TRUE);
+        }
+        MBPlayerPosReset(playerNo);
+        MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+        MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 0.0f, 0x40000001U);
+        MBModelPosSetV((s16) mb3_Work[2], &startMasuP->pos);
+        MBCameraFocusMasuSet(turuhasiMdl);
+        MBCameraZoomSet(savedZoom);
+        MBCameraSkipSet(0);
+        WipeCreate(1, 0x81, 0x1E);
+        while (!WipeCheckEnd()) {
+            HuPrcVSleep();
+        }
+    }
 }
 
+/* Quicksand event: the player (and anyone else on the same masu) sinks
+ * into and gets carried through the swamp, driven each frame by
+ * MB3_AsibaPlayerUpdate. NONMATCHING: HuPrcVSleep() loops rewritten. */
 static void MB3Ev_Asiba(s32 playerNo) {
-    /* TODO */
+    s16 masuId = GwPlayer[playerNo].masuId;
+    MASU *masuP = MBMasuGet(0, masuId);
+    s32 highSide = 0;
+    s32 takiModel = mb3_Work[6];
+    s32 i, targetMasu;
+    s32 anyActive;
+
+    if (masuP->pos.y > 2000.0f) {
+        highSide = 1;
+        takiModel = mb3_Work[5];
+    }
+    MBMotionSpeedSet((s16) takiModel, 0.0f);
+    MBMotionTimeSet((s16) takiModel, 0.0f);
+    memset(&mb3_Work[0x9A], 0, 0x190U);
+
+    for (i = 0; i < 4; i++) {
+        if (masuId == GwPlayer[i].masuId) {
+            MB3ASIBA_PLAYER *e = &MB3_PLAYERSCR[i].asiba;
+            e->active = 1;
+            e->masuId = masuId;
+            if (!highSide) {
+                e->areaNo = 3;
+            }
+            MBPlayerMotionNoShiftSet(i, 9, 0.0f, 0.0f, 0U);
+        } else if (mb3_Work[0xB] == GwPlayer[i].masuId || mb3_Work[0xC] == GwPlayer[i].masuId) {
+            MBModelDispSet(MBPlayerModelGet(i), FALSE);
+        }
+    }
+    MB3_AsibaPlayerUpdate();
+    HuPrcVSleep();
+    MBPlayerPosFixFlagSet(FALSE);
+    MBMotionSpeedSet((s16) mb3_Work[5], 1.0f);
+    MBMotionSpeedSet((s16) mb3_Work[6], 1.0f);
+    MBAudFXPlay(0x5E6);
+    do {
+        Mtx mtx;
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) mb3_Work[5]), "takispl-tkhook", mtx);
+        MBMasuMtxSet(mb3_Work[0xB], mtx);
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) mb3_Work[6]), "takispl-tkhook", mtx);
+        MBMasuMtxSet(mb3_Work[0xC], mtx);
+        MB3_AsibaPlayerUpdate();
+        HuPrcVSleep();
+        anyActive = 0;
+        for (i = 0; i < 4; i++) {
+            if (MB3_PLAYERSCR[i].asiba.active == 1) {
+                anyActive = 1;
+            }
+        }
+    } while (anyActive);
+    MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+    MBMotionSpeedSet((s16) mb3_Work[5], 0.0f);
+    MBMotionTimeSet((s16) mb3_Work[5], 0.0f);
+    MBMotionSpeedSet((s16) mb3_Work[6], 0.0f);
+    MBMotionTimeSet((s16) mb3_Work[6], 0.0f);
+    for (i = 0; i < 0x3C; i++) {
+        MB3_AsibaPlayerUpdate();
+        HuPrcVSleep();
+    }
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    {
+        Mtx mtx;
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) mb3_Work[5]), "takispl-tkhook", mtx);
+        MBMasuMtxSet(mb3_Work[0xB], mtx);
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) mb3_Work[6]), "takispl-tkhook", mtx);
+        MBMasuMtxSet(mb3_Work[0xC], mtx);
+    }
+    targetMasu = MBMasuFlagFind(0, 4U, 4U);
+    for (i = 0; i < 4; i++) {
+        MBModelDispSet(MBPlayerModelGet(i), TRUE);
+        MB3_PLAYERSCR[i].asiba.state = -1;
+        if (MB3_PLAYERSCR[i].asiba.active != 0) {
+            GwPlayer[i].masuId = (s16) targetMasu;
+            MBPlayerPosReset(i);
+        }
+    }
+    MB3_AsibaPlayerUpdate();
+    MBPlayerPosFixFlagSet(TRUE);
+    MBPlayerPosFixCurr(masuId, TRUE);
+    MBCameraSkipSet(0);
+    MBCameraFocusMasuSet(masuId);
+    WipeCreate(1, 0x81, 0x1E);
+    while (!WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    for (i = 0; i < 0x3C; i++) {
+        HuPrcVSleep();
+    }
 }
