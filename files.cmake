@@ -203,8 +203,10 @@ set(REL_FILES
         src/REL/mdselDll/mdsel.c
         src/REL/mdselDll/object.c
         src/REL/mdselDll/stage.c
+        src/REL/meschkDll/meschk.c
         src/REL/selmenuDll/selmenu.c
         src/REL/sequencedll/sequence.c
+        src/REL/staffDll/staff.c
         src/REL/w01Dll/world01.c
         src/REL/w03Dll/world03.c
         src/REL/w05Dll/world05.c
@@ -299,7 +301,6 @@ set(REL_FILES
 #   mdomakeDll
 #   mdoptionDll
 #   mdstoryDll
-#   meschkDll
 #   mgfreeDll
 #   mgmatchDll
 #   mgtourDll
@@ -311,7 +312,6 @@ set(REL_FILES
 #   safDll
 #   sd00dll
 #   sdroomdll
-#   staffDll
 #   storymodedll
 #   storyresultdll
 #   systemDll

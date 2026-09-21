@@ -1931,7 +1931,7 @@ config.libs = [
     Rel(
         "staffDll",
         objects={
-            Object(NonMatching, "REL/staffDll/staff.c"),
+            Object(Equivalent, "REL/staffDll/staff.c"),
         },
     ),
     Rel(

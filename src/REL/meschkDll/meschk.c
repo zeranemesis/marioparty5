@@ -212,7 +212,7 @@ void MesChkExec(void)
     dirIdx = 0;
     prevDirLastMsgF = 0;
     while (mesDirNameTbl[dirIdx] != NULL) {
-        HuWinMesSet(numWin, (u32) mesDirNameTbl[dirIdx]);
+        HuWinMesSet(numWin, (u32)(uintptr_t) mesDirNameTbl[dirIdx]);
         messMax = HuWinMesMaxNumGet(dirIdx << 16);
 
         if (prevDirLastMsgF == 0) {
@@ -224,7 +224,7 @@ void MesChkExec(void)
 
         while (messIdx < messMax) {
             sprintf(numBuf, lbl_1_data_5E0, messIdx);
-            HuWinMesSet(dirWin, (u32) numBuf);
+            HuWinMesSet(dirWin, (u32)(uintptr_t) numBuf);
 
             messNum = (dirIdx << 16) | (u16) messIdx;
             MesChkWinSizeGet(messNum, &size);
