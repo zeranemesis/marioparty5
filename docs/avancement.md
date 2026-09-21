@@ -1,14 +1,14 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-21 07:32 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-21 07:56 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **22.87 %** (2 119.7 / 9 266.8 Ko) |
-| code lié depuis les sources | 18.30 % |
-| fonctions identiques | 4591 / 21231 |
-| unités complètes | 226 / 881 |
+| code identique | **23.00 %** (2 131.5 / 9 266.8 Ko) |
+| code lié depuis les sources | 18.43 % |
+| fonctions identiques | 4613 / 21231 |
+| unités complètes | 232 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
 
@@ -22,7 +22,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 4.4 % | 200.9 Ko |
 | Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 39.4 % | 232.1 Ko |
 | Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
-| Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 12.4 % | 1 201.0 Ko |
+| Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 13.3 % | 1 189.2 Ko |
 
 ## Par module
 
@@ -176,9 +176,9 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `instDll` | 29.2 Ko | 100.0 % | 24/24 | 100.0 % | 4/0/0 | fait |
 | `meschkdll` | 1.8 Ko | 0.0 % | 0/6 | 0.0 % | 0/0/0 | à faire |
 | `motchkDll` | 7.7 Ko | 0.0 % | 0/9 | 0.0 % | 0/0/1 | à faire |
-| `partyresultdll` | 79.8 Ko | 0.0 % | 0/52 | 0.0 % | 0/0/5 | à faire |
+| `partyresultdll` | 79.8 Ko | 10.2 % | 14/52 | 10.2 % | 3/0/2 | en cours |
 | `rescardDll` | 68.1 Ko | 0.0 % | 0/123 | 0.0 % | 0/0/3 | à faire |
-| `resultDll` | 55.3 Ko | 0.0 % | 0/42 | 0.0 % | 0/0/6 | à faire |
+| `resultDll` | 55.3 Ko | 6.5 % | 8/42 | 6.5 % | 3/0/3 | en cours |
 | `safDll` | 15.7 Ko | 0.0 % | 0/15 | 0.0 % | 0/0/3 | à faire |
 | `sd00dll` | 209.0 Ko | 0.0 % | 0/281 | 0.0 % | 0/0/10 | à faire |
 | `sdroomdll` | 160.7 Ko | 0.0 % | 0/162 | 0.0 % | 0/0/9 | à faire |
