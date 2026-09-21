@@ -61,7 +61,7 @@ static s32 mb7_Work[0xCE];
 #define MB7W_F32(off) (*(f32 *) ((off) + (u8 *) mb7_Work))
 
 static OMOBJ *mb7_MainObj;
-static u32 *mb7_SaveWorkP;
+static u8 *mb7_SaveWorkP;
 static s16 mb7_MainMdlId;
 
 static u32 mb7_ObjFileTbl[MB7_OBJ_MAX] = {
@@ -122,6 +122,7 @@ static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF);
 static void MB7Ev_MasuRedInit(void);
 static void MB7Ev_MasuRedClose(void);
 static void MB7Ev_RedResetHook(void);
+static int MB7Ev_RedResetWin(void);
 static int MB7Ev_MasuHatena(int playerNo);
 static int MB7Ev_MasuWalkPost(int playerNo);
 static void MB7Ev_KoopaInit(u16 arg0);
@@ -257,7 +258,7 @@ static int MB7Ev_MasuWalkPre(int playerNo) {
 static void MB7_Create(void) {
     HuAudSndGrpSetSet(0x14);
     memset(mb7_Work, 0, sizeof(mb7_Work));
-    mb7_SaveWorkP = GwSystem.mbSaveWork;
+    mb7_SaveWorkP = (u8 *) GwSystem.mbSaveWork;
     MBMasuCreate(0xD70000);
     mb7_MainMdlId = (s16) MBModelCreate(0xD70001, NULL, FALSE);
     MBModelPosSet(mb7_MainMdlId, 0.0f, 0.0f, 0.0f);
@@ -785,6 +786,137 @@ static void MB7Ev_KoopaCubeDustEffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx ma
                 p->color.a -= 2;
             }
             p->scale += 4.0f;
+        }
+    }
+}
+
+/* ------------------------------- red masu -------------------------------- */
+
+/* mb7_Work[0xCC] (s32, masu count + 1) and mb7_Work[0xCD] (a u8 * cast
+ * through s32, one countdown byte per masu id) sit at the very end of
+ * mb7_Work (words 0xCC/0xCD out of 0xCE total). mb7_SaveWorkP - despite
+ * being typed u32 * from GwSystem.mbSaveWork - is addressed byte-wise
+ * here (lbzx/stbx with no scale): mb7_SaveWorkP[0]/[1] hold one pending
+ * "turn a masu red for N turns" countdown per player (0/1), confirmed
+ * against build/GP5E01_00/w07Dll/asm/REL/w07Dll/world07.s. */
+
+/* NONMATCHING: register allocation order differs (77.05% match) */
+static void MB7Ev_MasuRedInit(void) {
+    s32 playerIdx;
+
+    mb7_Work[0xCC] = MBMasuNumGet(0) + 1;
+    mb7_Work[0xCD] = (s32) (uintptr_t) HuMemDirectMallocNum(HEAP_HEAP, mb7_Work[0xCC], 0x10000000U);
+    memset((void *) (uintptr_t) mb7_Work[0xCD], 0, mb7_Work[0xCC]);
+
+    for (playerIdx = 0; playerIdx < 2; playerIdx++) {
+        if (mb7_SaveWorkP[playerIdx] != 0) {
+            u8 countdown = mb7_SaveWorkP[playerIdx];
+            s32 masuId = 1;
+            MASU *masuP = NULL;
+
+            for (; masuId < mb7_Work[0xCC]; masuId++) {
+                masuP = MBMasuGet(0, masuId);
+                if (masuP->type == 4 && (masuP->flag & 0x8000)) {
+                    s32 side = (masuP->pos.x == 0.0f) ? 0 : 1;
+                    if (playerIdx == side) {
+                        break;
+                    }
+                }
+            }
+            if (masuId < mb7_Work[0xCC]) {
+                do {
+                    s32 linkIdx = 0;
+                    u16 linkMasuId = 0;
+                    MASU *linkMasuP = masuP;
+
+                    for (; linkIdx < (s32) masuP->linkNum; linkIdx++) {
+                        linkMasuId = masuP->linkTbl[linkIdx];
+                        linkMasuP = MBMasuGet(0, (s32) linkMasuId);
+                        if (linkMasuP->flag & 0x4000) {
+                            break;
+                        }
+                    }
+                    masuP = linkMasuP;
+                    if (masuP->type == 1) {
+                        MBMasuTypeSet(0, (s32) linkMasuId, 2);
+                        ((u8 *) (uintptr_t) mb7_Work[0xCD])[linkMasuId] = countdown;
+                    }
+                } while (!(masuP->flag & 0x8000));
+            }
+        }
+    }
+}
+
+static void MB7Ev_MasuRedClose(void) {
+    if ((u32) mb7_Work[0xCD] != 0U) {
+        HuMemDirectFree((void *) (uintptr_t) mb7_Work[0xCD]);
+    }
+    mb7_Work[0xCD] = 0;
+    mb7_Work[0xCC] = 0;
+    MBPreTurnHookSet(NULL);
+}
+
+/* NONMATCHING: register allocation order differs (75.00% match) */
+static void MB7Ev_MasuRedSet(s32 masuId) {
+    if ((u32) mb7_Work[0xCD] != 0U) {
+        ((u8 *) (uintptr_t) mb7_Work[0xCD])[masuId] = 2;
+    }
+}
+
+/* NONMATCHING: register allocation order differs (76.19% match) */
+static int MB7Ev_RedResetWin(void) {
+    MBWinPlayerDisable(MBWinCreate(2, 0x33000BU, -1), -1);
+    MBTopWinWait();
+    MBTopWinKill();
+    return 1;
+}
+
+/* NONMATCHING: extra local (redTimer) not cached by the original,
+ * causing repeated mb7_Work[0xCD] reloads there instead (57.52% match) */
+static void MB7Ev_RedResetHook(void) {
+    s32 anyExpired;
+    s32 playerIdx;
+    s32 i;
+    u8 *redTimer;
+
+    if ((u32) mb7_Work[0xCD] == 0U) {
+        return;
+    }
+    redTimer = (u8 *) (uintptr_t) mb7_Work[0xCD];
+    anyExpired = 0;
+    for (playerIdx = 0; playerIdx < 2; playerIdx++) {
+        if (mb7_SaveWorkP[playerIdx] != 0) {
+            mb7_SaveWorkP[playerIdx] -= 1;
+            if (mb7_SaveWorkP[playerIdx] == 0) {
+                anyExpired = 1;
+            }
+        }
+    }
+    if ((GwSystem.turnMax - GwSystem.turnNo) == 4 && (mb7_SaveWorkP[0] + mb7_SaveWorkP[1]) != 0) {
+        mb7_SaveWorkP[1] = 0;
+        mb7_SaveWorkP[0] = 0;
+        anyExpired = 1;
+        for (i = 1; i < mb7_Work[0xCC]; i++) {
+            if (redTimer[i] != 0) {
+                redTimer[i] = 1;
+            }
+        }
+    }
+    if (anyExpired != 0) {
+        for (i = 1; i < mb7_Work[0xCC]; i++) {
+            if (redTimer[i] != 0) {
+                redTimer[i] -= 1;
+                if (redTimer[i] == 0 && MBMasuTypeGet(0, i) == 2) {
+                    MBMasuTypeSet(0, i, 1);
+                }
+            }
+        }
+        MBPlayerPreTurnHookSet(0, MB7Ev_RedResetWin);
+        return;
+    }
+    for (i = 1; i < mb7_Work[0xCC]; i++) {
+        if (redTimer[i] != 0) {
+            redTimer[i] -= 1;
         }
     }
 }
