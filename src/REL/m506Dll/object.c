@@ -353,7 +353,7 @@ BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
         break;
     case 1:
         flow->timer += 1.0f;
-        if (flow->timer == 30.0f) {
+        if (flow->timer >= 30.0f) {
             M506MameShadowOn(flow);
             LookUpCurrRot = LookUpRotTbl[flow->player[0]->charNo].up;
             Hu3DModelAttrReset(flow->work->moundMdlId, HU3D_MOTATTR_PAUSE);
@@ -430,7 +430,7 @@ BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
             if (flow->player[0]->charNo != 8) {
                 Hu3DMotionNoMotReset(flow->playerObj[0]->mdlId[0], lbl_1_data_298, LookUpRotLockFlag[flow->player[0]->charNo]);
             }
-            Hu3DModelAttrSet(flow->work->seedMdlId, HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(flow->work->seedMdlId, HU3D_ATTR_DISPOFF);
             flow->mode = 5;
         }
         break;
