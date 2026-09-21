@@ -86,18 +86,17 @@ static u8 mb3_BlueMasuNoTbl[0xFF];
 #define MB3W_U16(off) (*(u16 *) ((u8 *) mb3_Work + (off)))
 #define MB3W_S32(off) (*(s32 *) ((u8 *) mb3_Work + (off)))
 
-/* MB3_Create camera constants (extracted from the original REL's .rodata,
- * m2c could not infer these as it has no context for anonymous data). */
-static const HuVecF mb3_OpeningPos = { 0.0f, 0.0f, 0.0f };
-static const HuVecF mb3_OpeningRot = { 0.0f, 0.0f, 0.0f };
-static const HuVecF mb3_MapViewPos = { 0.0f, 0.0f, 0.0f };
-static const HuVecF mb3_MapViewRot = { 0.0f, 0.0f, 0.0f };
-
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
 
 extern void ObjectSetup(void);
+
+static const Point3d mb3_OpeningPosConst = { 1070.0f, 1465.0f, 1700.0f };
+static const Point3d mb3_OpeningRotConst = { -27.5f, 10.0f, 0.0f };
+static const Point3d mb3_MapViewPosConst = { 900.0f, 0.0f, 600.0f };
+static const Point3d mb3_MapViewRotConst = { -78.0f, 0.0f, 0.0f };
+
 
 int _prolog(void) {
     const VoidFunc *ctors = _ctors;
@@ -336,6 +335,13 @@ static void MB3_ImpactEffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
 /* ------------------------- setup / teardown ----------------------------- */
 
 static void MB3_Create(void) {
+    s32 unused;
+    Point3d openingPos;
+    Point3d openingRot;
+    Point3d mapViewPos;
+    Point3d mapViewRot;
+
+    unused = GwSystem.boardNo;
     memset(mb3_Work, 0, sizeof(mb3_Work));
     HuAudSndGrpSetSet(0x10);
     MBMasuCreate(0xD00000);
@@ -343,8 +349,12 @@ static void MB3_Create(void) {
     MBModelPosSet(mb3_MainMdlId, 0.0f, 0.0f, 0.0f);
     MBModelAttrSet(mb3_MainMdlId, HU3D_MOTATTR_LOOP);
     MBScrollInit(0xD00002U, 11000.0f, 500.0f);
-    MBOpeningViewSet((HuVecF *) &mb3_OpeningRot, (HuVecF *) &mb3_OpeningPos, 7700.0f);
-    MBMapViewCameraSet((HuVecF *) &mb3_MapViewRot, (HuVecF *) &mb3_MapViewPos, 11000.0f);
+    openingPos = mb3_OpeningPosConst;
+    openingRot = mb3_OpeningRotConst;
+    mapViewPos = mb3_MapViewPosConst;
+    mapViewRot = mb3_MapViewRotConst;
+    MBOpeningViewSet(&openingRot, &openingPos, 7700.0f);
+    MBMapViewCameraSet(&mapViewRot, &mapViewPos, 11000.0f);
     MBLightHookSet(MB3_LightSet, MB3_LightReset);
     MBCapsuleColCreate(0xD00003);
     MB3_ObjectCreate();
