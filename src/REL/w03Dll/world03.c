@@ -160,7 +160,7 @@ static void MB3_CoinEffCreate(f32 *pos);
 static void MB3_CoinEffUpdate(void);
 
 static f32 MB3_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir);
-static s32 MB3Ev_BitGet(u16 flag, s32 mask);
+static s32 MB3Ev_BitGet(s32 flag, u32 mask);
 static u32 MB3Ev_MasuFlagGet(s32 bits, s32 mask);
 
 static int MB3Ev_MasuHatena(int playerNo);
@@ -277,14 +277,21 @@ static f32 MB3_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir) {
     return mag;
 }
 
-static s32 MB3Ev_BitGet(u16 flag, s32 mask) {
-    s32 result = 0;
-    s32 outBit = 1;
-    s32 inBit = 1;
+/* NONMATCHING: register allocation order differs (73% match) */
+static s32 MB3Ev_BitGet(s32 flag, u32 mask) {
+    s32 result;
+    u32 inBit;
+    u32 outBit;
     s32 i;
-    for (i = 0; i < 0x20; i++) {
+
+    flag = flag & mask;
+    result = 0;
+    inBit = 1;
+    outBit = inBit;
+    i = 0;
+    for (; i < 0x20; i++) {
         if (mask & inBit) {
-            if (flag & mask & inBit) {
+            if (flag & inBit) {
                 result |= outBit;
             }
             outBit *= 2;
@@ -294,12 +301,18 @@ static s32 MB3Ev_BitGet(u16 flag, s32 mask) {
     return result;
 }
 
+/* NONMATCHING: register allocation order differs */
 static u32 MB3Ev_MasuFlagGet(s32 bits, s32 mask) {
-    s32 inBit = 1;
-    s32 outBit = 1;
-    u32 result = 0;
+    u32 result;
+    s32 inBit;
+    s32 outBit;
     s32 i;
-    for (i = 0; i < 0x20; i++) {
+
+    inBit = 1;
+    outBit = inBit;
+    result = 0;
+    i = 0;
+    for (; i < 0x20; i++) {
         if (mask & outBit) {
             if (bits & inBit) {
                 result |= outBit;
@@ -909,17 +922,99 @@ static void MB3_AsibaPlayerEffCreate(MB3_PLAYER_SCRATCH *entry, s32 kind) {
 }
 
 static int MB3Ev_MasuHatena(int playerNo) {
-    /* TODO */
+    u32 flag = MBMasuGet(0, GwPlayer[playerNo].masuId)->flag;
+
+    if (flag & 0x800) {
+        MB3Ev_Turuhasi(playerNo);
+    }
+    if ((flag & 0x1018) != 0 && MB3Ev_BitGet((u16) flag, 0x1018) == 1) {
+        MB3Ev_RollRock(playerNo);
+    }
+    if (flag & 0x2000) {
+        MB3Ev_YYHou(playerNo);
+    }
+    if (flag & 0x4000) {
+        MB3Ev_Asiba(playerNo);
+    }
     return 0;
 }
 
 static int MB3Ev_MasuWalkPost(int playerNo) {
-    /* TODO */
+    MASU *masuP = MBMasuGet(0, GwPlayer[playerNo].masuId);
+    u32 flag = masuP->flag;
+
+    if ((flag & 0x80) != 0 && mb3_Work[0x1D] == 0) {
+        s32 modelId = mb3_Work[3];
+        if (modelId >= 0) {
+            MBMotionTimeSet((s16) modelId, 0.0f);
+            MBMotionSpeedSet((s16) modelId, 1.0f);
+        }
+        mb3_Work[0x1D] = 1;
+        MBAudFXPlay(0x5E3);
+    }
+    if (flag & 0x8020) {
+        MB3Ev_KubiBone(masuP, MB3Ev_BitGet((u16) flag, 0x8020));
+    }
     return 0;
 }
 
+/* KubiBone: the "bone platform" wobbles and spits ten debris chunks up in
+ * a cone around the masu when a player walks past it. idx selects which of
+ * the four cone-angle presets (mb3ev_KubiBoneAngleTbl) and which debris
+ * "burst" the platform this is: mb3_Work[idx].unk78 (word 0x1E+idx*6, same
+ * countdown region MB3_MainObjUpdate ticks down) gates re-triggering. */
 static void MB3Ev_KubiBone(MASU *masuP, s32 idx) {
-    /* TODO */
+    Point3d basePos;
+    f32 coneAngle;
+    s32 remaining;
+    s32 i;
+    MB3DEBRIS *d;
+
+    if (mb3_Work[0x1E + idx * 6] != 0) {
+        return;
+    }
+    mb3_Work[0x1E + idx * 6] = 0xB4;
+    basePos = masuP->pos;
+    basePos.y += 300.0f;
+    coneAngle = mb3ev_KubiBoneAngleTbl[idx];
+    remaining = 0xA;
+    d = MB3_DEBRIS;
+    for (i = 0; i < MB3_BREAKABLE_MAX; i++, d++) {
+        Mtx coneMtx, wobbleMtx;
+        Point3d rot;
+        f32 angle, speed;
+
+        if (d->count != 0) {
+            continue;
+        }
+        d->count = 0xB4;
+        angle = coneAngle + (20.0f * MBEffSRandF());
+        speed = 6.6666665f + (1.6666666f * (3.0f * MBEffRandF()));
+        d->vel.x = speed * (f32) sin((3.141592653589793 * (f64) angle) / 180.0);
+        d->vel.z = speed * (f32) cos((3.141592653589793 * (f64) angle) / 180.0);
+        d->vel.y = (1.6666666f * (-2.0f * MBEffRandF())) - 1.6666666f;
+        MTXRotRad(coneMtx, 'Y', 0.017453292f * angle);
+        MTXRotRad(wobbleMtx, 'Z', 0.017453292f * (45.0f * MBEffSRandF()));
+        MTXConcat(wobbleMtx, coneMtx, coneMtx);
+        Hu3DMtxRotGet(coneMtx, &rot);
+        MBModelDispSet(d->modelId, TRUE);
+        MBModelPosSet(d->modelId,
+            basePos.x + (30.0f * MBEffSRandF()),
+            basePos.y - (30.0f * MBEffRandF()),
+            basePos.z + (30.0f * MBEffSRandF()));
+        MBModelRotSetV(d->modelId, &rot);
+        MBMotionTimeSet(d->modelId, 6.0f * MBEffRandF());
+        d->seId1 = -1;
+        d->seId0 = -1;
+        if (i == 0) {
+            d->seId0 = HuAudFXEmiterPlay(0x5DE, &basePos);
+            d->seId1 = HuAudFXEmiterPlay(0x5E4, &basePos);
+        }
+        remaining -= 1;
+        if (remaining <= 0) {
+            break;
+        }
+    }
 }
 
 static void MB3Ev_YYHou(s32 playerNo) {
