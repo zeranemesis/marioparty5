@@ -127,7 +127,7 @@ void ObjectSetup(void) {
 static f32 MB3_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir) {
     f32 mag = VECMag(dir);
     if (mag > 0.0f) {
-        mag = ((dir->z * (a->z - b->z)) + (dir->x * (a->x - b->x)) + (dir->y * (a->y - b->y))) / mag;
+        mag = ((dir->x * (a->x - b->x)) + (dir->y * (a->y - b->y)) + (dir->z * (a->z - b->z))) / mag;
     }
     return mag;
 }
@@ -432,13 +432,15 @@ static void MB3_Kill(void) {
 }
 
 static void MB3_MainObjUpdate(OMOBJ *obj) {
+    MBCAMERA *cam;
+
     if (MBKillCheck()) {
         if (mb3_MainObj != NULL) {
             omDelObjEx(mbObjMan, mb3_MainObj);
         }
         return;
     }
-    (void) MBCameraGet();
+    cam = MBCameraGet();
 }
 
 static void MB3_ImpactEffUpdate(s16 modelId, s32 frame) {
