@@ -97,6 +97,11 @@ static f32 mb7_BackObjRotYTbl[MB7_BACKOBJ_MAX] = {
     -45.0f, 45.0f, -45.0f, 45.0f, 45.0f, -45.0f,
 };
 
+static const HuVecF mb7ev_DoorPosTbl[2] = {
+    { 4400.0f, 495.0f, -4000.0f },
+    { -4400.0f, 495.0f, -4000.0f },
+};
+
 static s32 mb7ev_KoopaMotFileTbl[9] = {
     0x100001, 0x100002, 0x100003, 0x100004, 0x100005,
     0x100007, 0x100006, 0x10000D, 0x100010,
@@ -145,6 +150,7 @@ static void MB7Ev_KoopaWalkCoinLose(void);
 static void MB7Ev_KoopaWalkDustCreate(s32 dispF);
 static void MB7Ev_KoopaAsibaUpdate(void);
 static void MB7Ev_KoopaWalkPlayerUpdate(void);
+static void MB7Ev_KoopaWalkUpdate(void);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -513,7 +519,11 @@ static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
  *     spawn position (MB7Ev_KoopaWalkDustCreate)
  */
 /* NONMATCHING: redundant li r0,-1 reload before consecutive stores
- * (92.86% match); logic identical */
+ * (92.86% match); logic identical. #pragma dont_inline: the original
+ * keeps this out-of-line at every call site (confirmed via `bl
+ * MB7Ev_KoopaInit` in both MB7Ev_KoopaWalk and MB7Ev_Hou); without the
+ * pragma MWCC's -inline auto inlines it here since arg0 is unused. */
+#pragma dont_inline on
 static void MB7Ev_KoopaInit(u16 arg0) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
     s32 i;
@@ -530,6 +540,7 @@ static void MB7Ev_KoopaInit(u16 arg0) {
     }
     *(s32 *) (base + 0x6C) = MBDataDirReadAsync(0x100000);
 }
+#pragma dont_inline reset
 
 /* motion index -> motion id, base+0x44..+0x64 (s32[9]); base+0x34 is the
  * Koopa model id created by MB7Ev_KoopaCreate */
@@ -1593,5 +1604,117 @@ static void MB7Ev_KoopaWalkPlayerUpdate(void) {
         }
         MBPlayerPosSetV(playerNo, (Point3d *) (e + 0x2C));
         MBPlayerRotSetV(playerNo, (Point3d *) (e + 0x38));
+    }
+}
+
+/* NONMATCHING: register allocation order differs across this function's
+ * 5 sequential loops (54.64% objdiff fuzzy match); calls
+ * MB7Ev_KoopaWalkUpdate which is not decompiled yet (only declared) */
+static void MB7Ev_KoopaWalk(s32 playerNo) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+    MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
+    u16 flag = (u16) masuP->flag;
+    f32 savedZoom = MBCameraZoomGet();
+    s32 side = 0;
+    s32 i;
+
+    if (masuP->pos.x < 0.0f) {
+        side = 1;
+    }
+    MB7Ev_KoopaInit(flag);
+    MBPlayerMotIdleSet(playerNo);
+    MBMotionTimeSet(mb7_Work[1], 0.0f);
+    MBMotionSpeedSet(mb7_Work[1], 1.0f);
+
+    {
+        s32 seId = -1;
+        for (i = 0; i < 0x82; i++) {
+            if (i == 0) {
+                seId = HuAudFXEmiterPlay(0x616, (Point3d *) &mb7ev_DoorPosTbl[side]);
+            } else if (i == 0x78) {
+                HuAudFXStop(seId);
+                HuAudFXEmiterPlay(0x617, (Point3d *) &mb7ev_DoorPosTbl[side]);
+            }
+            HuPrcVSleep();
+        }
+    }
+
+    MBMotionSpeedSet(mb7_Work[1], 0.0f);
+    MB7Ev_KoopaCreate();
+    MB7Ev_KoopaMotionCreate(1);
+    MB7Ev_KoopaMotionCreate(3);
+    MB7Ev_KoopaMotionCreate(6);
+    MB7Ev_KoopaMotionCreate(7);
+    MB7Ev_KoopaDataClose();
+    *(s32 *) (base + 0x68) = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x80);
+    MBEffHookSet((s16) *(s32 *) (base + 0x68), MB7_EffDustHook);
+    Hu3DModelLayerSet((s16) *(s32 *) (base + 0x68), 2);
+    *(s32 *) (base + 0x10) = -1;
+    *(s32 *) (base + 0x14) = GwPlayer[playerNo].masuId;
+    MB7Ev_KoopaWalkUpdate();
+    memset((u8 *) mb7_Work + 0x1C0, 0, 0x170);
+    MB7Ev_KoopaWalkPlayerUpdate();
+    MBAudFXPlay(0x2C9);
+    MBWinCreate(2, 0x330000U, 7);
+    MBTopWinWait();
+    MBTopWinKill();
+    MBCameraPosViewSet(NULL, NULL, NULL, 2800.0f, -1.0f, 0x1E);
+    while (*(s32 *) (base + 0xC) < 0xB) {
+        MB7Ev_KoopaWalkUpdate();
+        MB7Ev_KoopaWalkPlayerUpdate();
+        HuPrcVSleep();
+    }
+
+    MBWinCreate(2, 0x330001U, 7);
+    MBTopWinWait();
+    MBTopWinKill();
+    MBCameraFocusSet(-1);
+    while (*(s32 *) (base + 0xC) != -1) {
+        MB7Ev_KoopaWalkUpdate();
+        MB7Ev_KoopaWalkPlayerUpdate();
+        HuPrcVSleep();
+    }
+
+    MBMotionSpeedSet(mb7_Work[1], 1.0f);
+    MBMotionTimeSet(mb7_Work[1], 240.0f);
+
+    {
+        s32 seId = -1;
+        for (i = 0; i < 0x82; i++) {
+            if (i == 0) {
+                seId = HuAudFXEmiterPlay(0x616, (Point3d *) &mb7ev_DoorPosTbl[1 - side]);
+            } else if (i == 0x78) {
+                HuAudFXStop(seId);
+                HuAudFXEmiterPlay(0x617, (Point3d *) &mb7ev_DoorPosTbl[1 - side]);
+            }
+            MB7Ev_KoopaWalkPlayerUpdate();
+            HuPrcVSleep();
+        }
+    }
+
+    MBMotionTimeSet(mb7_Work[1], 0.0f);
+    MBMotionSpeedSet(mb7_Work[1], 0.0f);
+    MBEffKill((s16) *(s32 *) (base + 0x68));
+    *(s32 *) (base + 0x68) = -1;
+    WipeColorSet(0, 0, 0);
+    WipeCreate(2, 0x81, 1);
+    while (WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+
+    for (i = 0; i < 4; i++) {
+        MB7W_S32(0x1C8 + (i * 0x5C)) = -1;
+    }
+    MB7Ev_KoopaWalkPlayerUpdate();
+    MB7Ev_KoopaClose();
+    MBCameraFocusPlayerSet(playerNo);
+    MBCameraSkipSet(FALSE);
+    MBCameraZoomSet(savedZoom);
+    WipeCreate(1, 0x81, 0x1E);
+    while (WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    for (i = 0; (f32) i < 30.0f; i++) {
+        HuPrcVSleep();
     }
 }
