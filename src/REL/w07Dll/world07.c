@@ -119,6 +119,11 @@ static void MB7Ev_MasuRedClose(void);
 static void MB7Ev_RedResetHook(void);
 static int MB7Ev_MasuHatena(int playerNo);
 static int MB7Ev_MasuWalkPost(int playerNo);
+static void MB7Ev_KoopaWalk(s32 playerNo);
+static void MB7Ev_Dokan(s32 playerNo);
+static void MB7Ev_DokanIn(s32 playerNo);
+static void MB7Ev_KoopaCube(s32 playerNo);
+static void MB7Ev_Hou(s32 playerNo);
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -368,4 +373,64 @@ static void MB7_LightSet(void) {
     Hu3DBGColorSet(0U, 0U, 0U);
     Hu3DModelLightInfoSet(MBModelIdGet(mb7_MainMdlId), 1);
     MBPreTurnHookSet(MB7Ev_RedResetHook);
+}
+
+/* ---------------------------- masu event hooks --------------------------- */
+
+/* NONMATCHING: stack frame layout differs (75.44% match) */
+static int MB7Ev_MasuHatena(int playerNo) {
+    MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
+    u32 flag = masuP->flag;
+
+    if (flag & 0x8000) {
+        MB7Ev_KoopaWalk(playerNo);
+        return 0;
+    }
+    if (flag & 0x2800) {
+        MB7Ev_Dokan(playerNo);
+        return 0;
+    }
+    if (flag & 0x1400) {
+        MB7Ev_DokanIn(playerNo);
+        return 0;
+    }
+    if (flag & 0x300) {
+        MB7Ev_KoopaCube(playerNo);
+        return 0;
+    }
+    if (flag & 0x80) {
+        MB7Ev_Hou(playerNo);
+    }
+    return 0;
+}
+
+/* NONMATCHING: stack frame layout differs (69.23% match) */
+static int MB7Ev_MasuWalkPost(int playerNo) {
+    s16 masuId = GwPlayer[playerNo].masuId;
+    s32 flag = (u16) MBMasuGet(0, masuId)->flag;
+    return 0;
+}
+
+/* NONMATCHING: register allocation order differs */
+/* NONMATCHING: register allocation differs, real code uses _savegpr_27 (80.00% match) */
+static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
+    s32 num;
+    s32 i;
+    s32 count;
+
+    count = 0;
+    if (flag & 0x1400) {
+        num = MBMasuNumGet(0);
+        for (i = 1; i <= num; i++) {
+            MASU *masuP = MBMasuGet(0, i);
+            if (masuP->flag & 0x2800) {
+                linkTbl[count] = (s16) i;
+                count++;
+            }
+        }
+    }
+    if (count <= 0) {
+        count = -1;
+    }
+    return count;
 }
