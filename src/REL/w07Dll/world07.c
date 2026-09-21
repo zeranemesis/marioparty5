@@ -134,6 +134,8 @@ static int MB7Ev_KoopaMotionCheck(void);
 static void MB7Ev_KoopaClose(void);
 static void MB7Ev_KoopaWalkFxPlay(void);
 static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
+static s16 MB7Ev_KoopaCubeDustCreate(Point3d *pos, s32 mode);
+static void MB7Ev_KoopaCubeDustEffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -616,6 +618,15 @@ static const HuVecF mb7ev_DustColTbl[4] = {
     { 131.0f, 131.0f, 0.0f },
 };
 
+/* base/variation color pairs for MB7Ev_KoopaCubeDustEffHook, indexed by
+ * [effP->mode*2] (base) / [effP->mode*2+1] (variation) */
+static const HuVecF mb7ev_KoopaCubeDustColTbl[4] = {
+    { 192.0f, 64.0f, 64.0f },
+    { 0.0f, 131.0f, 131.0f },
+    { 64.0f, 64.0f, 192.0f },
+    { 131.0f, 131.0f, 0.0f },
+};
+
 /* Standard MBEFFECT/MBEFFECTDATA particle hook (same shape as w03Dll's
  * MB3_ImpactEffHook), abusing effP->mode as a "spawn N new particles with
  * this parManId-1 recipe" trigger and effP->count as a one-shot "particle
@@ -702,6 +713,78 @@ static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
                 p->color.a -= 2;
             }
             p->scale += 3.0f;
+        }
+    }
+}
+
+/* Cube-hit dust burst: creates a one-shot MBEFFECT, tags it with `mode`
+ * (0/1, selects color pair and scatter recipe) stored through
+ * Hu3DData[].hookData the same way w03Dll reads it back as MBEFFECT*. */
+/* NONMATCHING: register allocation order differs (50.00% match) */
+static s16 MB7Ev_KoopaCubeDustCreate(Point3d *pos, s32 mode) {
+    s16 modelId = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x40);
+    MBEffHookSet(modelId, MB7Ev_KoopaCubeDustEffHook);
+    Hu3DModelLayerSet(modelId, 2);
+    Hu3DModelPosSetV(modelId, pos);
+    *(s16 *) Hu3DData[modelId].hookData = (s16) mode;
+    return modelId;
+}
+
+/* NONMATCHING: stack frame/register allocation differs slightly, same
+ * shape as MB7_EffDustHook (46.14% match, 71 of 470 rows are real
+ * differences); logic identical */
+static void MB7Ev_KoopaCubeDustEffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
+    MBEFFECTDATA *p;
+    s32 i;
+
+    if (effP->count == 0) {
+        p = effP->data;
+        for (i = 0; i < effP->num; i++, p++) {
+            f32 angle;
+            Point3d dir;
+            f32 spread;
+            f32 t;
+
+            p->time = 1;
+            p->parManId = (s16) (60.0f * (0.4f + (0.3f * MBEffRandF())));
+            angle = 360.0f * MBEffSRandF();
+            dir.x = (f32) sin((3.141592653589793 * (f64) angle) / 180.0);
+            dir.z = (f32) cos((3.141592653589793 * (f64) angle) / 180.0);
+            dir.y = 0.0f;
+            spread = (f32) (1.0 + sin((3.141592653589793 * (f64) (360.0f * MBEffRandF())) / 180.0));
+            if (spread > 1.0f) {
+                spread -= 2.0f;
+            }
+            PSVECScale(&dir, &p->pos, 100.0f * (0.5f * (0.5f + (0.5f * MBEffRandF()))));
+            PSVECScale(&dir, &p->vel, 1.6666666f * (1.5f * (0.7f + (0.3f * MBEffRandF()))));
+            p->rot.z = 360.0f * MBEffRandF();
+            p->scale = 60.0f + (60.0f * MBEffRandF());
+            p->color.a = (u8) (s32) (50.0f + (80.0f * MBEffRandF()));
+            t = (0.7f * ((0.5f + (0.5f * spread)) * 0.7f)) + (0.3f * MBEffRandF());
+            p->color.r = (u8) (s32) (mb7ev_KoopaCubeDustColTbl[effP->mode * 2].x + (t * mb7ev_KoopaCubeDustColTbl[(effP->mode * 2) + 1].x));
+            p->color.g = (u8) (s32) (mb7ev_KoopaCubeDustColTbl[effP->mode * 2].y + (t * mb7ev_KoopaCubeDustColTbl[(effP->mode * 2) + 1].y));
+            p->color.b = (u8) (s32) (mb7ev_KoopaCubeDustColTbl[effP->mode * 2].z + (t * mb7ev_KoopaCubeDustColTbl[(effP->mode * 2) + 1].z));
+        }
+        effP->count = 1;
+    }
+
+    p = effP->data;
+    for (i = 0; i < effP->num; i++, p++) {
+        if (p->time != 0) {
+            VECAdd(&p->pos, &p->vel, &p->pos);
+            p->vel.y += 0.27222225f;
+            p->parManId -= 1;
+            if (p->parManId <= 0) {
+                p->time = 0;
+                p->scale = 0.0f;
+                p->color.a = 0;
+            } else if (p->parManId < 0xA && p->color.a >= 0xAU) {
+                p->color.a -= 0xA;
+            }
+            if (p->color.a >= 0xAU) {
+                p->color.a -= 2;
+            }
+            p->scale += 4.0f;
         }
     }
 }
