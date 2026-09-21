@@ -144,6 +144,7 @@ static void MB7Ev_KoopaFire4Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaWalkCoinLose(void);
 static void MB7Ev_KoopaWalkDustCreate(s32 dispF);
 static void MB7Ev_KoopaAsibaUpdate(void);
+static void MB7Ev_KoopaWalkPlayerUpdate(void);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -1529,4 +1530,68 @@ static void MB7Ev_KoopaAsibaUpdate(void) {
     MBModelRotSetV((s16) asibaMdlId, (Point3d *) (base + 0x84));
     MBModelPosSet((s16) *(s32 *) (base + 0x34), 0.0f, 0.0f, 0.0f);
     MBModelRotSet((s16) *(s32 *) (base + 0x34), 0.0f, 0.0f, 0.0f);
+}
+
+/* per-player array, mb7_Work + 0x1C0 (word 0x70), 4 entries stride
+ * 0x5C: +0x4 (s32) unused marker, +0x8 (s32) state, +0xC (s32) masuId,
+ * +0x10 (s32) sub-state, +0x20 (s16) motion-shift flag, +0x2C (Point3d)
+ * saved pos, +0x38 (Point3d) saved rot, +0x3C (f32) unused after reset. */
+/* NONMATCHING: register allocation order differs */
+static void MB7Ev_KoopaWalkPlayerUpdate(void) {
+    u8 *koopaBase = (u8 *) mb7_Work + 0xA0;
+    s32 playerNo;
+
+    for (playerNo = 0; playerNo < 4; playerNo++) {
+        u8 *e = (u8 *) mb7_Work + 0x1C0 + (playerNo * 0x5C);
+
+        switch (*(s32 *) (e + 0x8)) {
+        case 0:
+            *(s32 *) (e + 0xC) = GwPlayer[playerNo].masuId;
+            MBPlayerPosGet(playerNo, (Point3d *) (e + 0x2C));
+            MBPlayerRotGet(playerNo, (Point3d *) (e + 0x38));
+            *(s32 *) (e + 0x4) = -1;
+            *(s32 *) (e + 0x8) += 1;
+            break;
+        case 1:
+            if (*(s32 *) (koopaBase + 0x14) == *(s32 *) (e + 0xC) && *(s32 *) (koopaBase + 0x1C) != 0) {
+                *(s32 *) (e + 0x10) = 0;
+                *(s32 *) (e + 0x8) += 1;
+            }
+            break;
+        case 2:
+            if (*(s32 *) (e + 0x10) == 0) {
+                omVibrate((s16) playerNo, 0xC, 4, 2);
+                MBPlayerMotionNoSet(playerNo, 0xA, 0U);
+                *(s32 *) (e + 0x10) += 1;
+            } else if (*(s32 *) (e + 0x10) == 1 && MBPlayerMotionTimeGet(playerNo) > 30.0f) {
+                MBPlayerMotionSpeedSet(playerNo, 0.0f);
+                *(s32 *) (e + 0x8) += 1;
+                *(s32 *) (e + 0x10) = 0;
+            }
+            break;
+        case 3:
+            if (*(s32 *) (e + 0x10) == 0) {
+                Point3d diff;
+
+                PSVECSubtract((Point3d *) (koopaBase + 0x78), (Point3d *) (e + 0x2C), &diff);
+                diff.y = 0.01f;
+                if (PSVECMag(&diff) > 150.0f) {
+                    MBPlayerMotionSpeedSet(playerNo, 1.0f);
+                    HuPrcChildCreate(MB7Ev_KoopaWalkCoinLose, 0x200D, 0x4000, 0, mbMainProcess)->property = (void *) (uintptr_t) playerNo;
+                    *(s32 *) (e + 0x10) += 1;
+                }
+            } else if (*(s32 *) (e + 0x10) == 1 && MBPlayerMotionEndCheck(playerNo) != 0) {
+                *(s32 *) (e + 0x8) += 1;
+                MBPlayerMotionNoShiftSet(playerNo, 6, 0.0f, 8.0f, 0x40000001U);
+            }
+            break;
+        case -1:
+            MBPlayerMotionNoSet(playerNo, 1, 0x40000001U);
+            *(s16 *) (e + 0x20) = -1;
+            *(f32 *) (e + 0x3C) = 0.0f;
+            break;
+        }
+        MBPlayerPosSetV(playerNo, (Point3d *) (e + 0x2C));
+        MBPlayerRotSetV(playerNo, (Point3d *) (e + 0x38));
+    }
 }
