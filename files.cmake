@@ -206,6 +206,7 @@ set(REL_FILES
         src/REL/selmenuDll/selmenu.c
         src/REL/sequencedll/sequence.c
         src/REL/w01Dll/world01.c
+        src/REL/w03Dll/world03.c
         src/REL/w05Dll/world05.c
         src/REL/w06Dll/world06.c
         src/REL/w06sDll/world06.c
@@ -317,7 +318,6 @@ set(REL_FILES
 #   w01sDll
 #   w02Dll
 #   w02sDll
-#   w03Dll
 #   w03sDll
 #   w04Dll
 #   w04sDll

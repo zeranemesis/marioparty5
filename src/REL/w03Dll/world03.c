@@ -668,34 +668,34 @@ static void MB3_ObjectCreate(void) {
         }
     }
 
-    mb3_Work[0xD] = (s32) HuSprAnimRead(HuDataReadNum(0xCF0011, 0x10000000));
-    mb3_Work[0xE] = (s32) HuSprAnimRead(HuDataReadNum(0xCF0012, 0x10000000));
-    mb3_Work[0xF] = (s32) HuSprAnimRead(HuDataReadNum(0xCF0014, 0x10000000));
-    mb3_Work[0x10] = (s32) HuSprAnimRead(HuDataReadNum(0xCF0015, 0x10000000));
+    mb3_Work[0xD] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0011, 0x10000000));
+    mb3_Work[0xE] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0012, 0x10000000));
+    mb3_Work[0xF] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0014, 0x10000000));
+    mb3_Work[0x10] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0015, 0x10000000));
 
     for (i = 0; i < 4; i++) {
-        s16 id = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xD], 0x40);
+        s16 id = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xD], 0x40);
         MB3W_S16(0x44 + i * 2) = id;
         MBEffHookSet(id, MB3_TakiEffHook);
         Hu3DModelLayerSet(id, 3);
     }
     for (i = 0; i < 3; i++) {
-        s16 id1 = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xE], 0xC0);
+        s16 id1 = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xE], 0xC0);
         s16 id2;
         MB3W_S16(0x4C + i * 2) = id1;
         MBEffHookSet(id1, MB3_Splash1EffHook);
         Hu3DModelLayerSet(id1, 2);
         Hu3DModelPosSetV(id1, (HuVecF *) &mb3ev_TakiEffPosTbl[i]);
 
-        id2 = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xE], 0x30);
+        id2 = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xE], 0x30);
         MB3W_S16(0x52 + i * 2) = id2;
         MBEffHookSet(id2, MB3_Splash2EffHook);
         Hu3DModelLayerSet(id2, 2);
         Hu3DModelPosSet(id2, mb3ev_TakiEffPosTbl[i].x, mb3ev_TakiEffPosTbl[i].y, 50.0f + mb3ev_TakiEffPosTbl[i].z);
         MBAudFXEmiterSet(0x5DC, (Vec *) &mb3ev_TakiEffPosTbl[i]);
     }
-    MB3W_S16(0x58) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xF], 1);
-    MB3W_S16(0x5A) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0x10], 1);
+    MB3W_S16(0x58) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xF], 1);
+    MB3W_S16(0x5A) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0x10], 1);
 }
 
 static void MB3_Kill(void) {
@@ -1511,7 +1511,7 @@ static void MB3Ev_YYHou(s32 playerNo) {
     MBModelLayerSet(fireball, 6U);
     MBModelDispSet(fireball, FALSE);
 
-    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0x10], 0x20);
+    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0x10], 0x20);
     MBEffAttrSet(MB3W_S16(0x5C), 8U);
     MBEffHookSet(MB3W_S16(0x5C), MB3_ImpactEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x5C), 3);
@@ -1755,11 +1755,11 @@ static void MB3Ev_RollRock(s32 playerNo) {
         HuPrcVSleep();
     }
     savedZoom = MBCameraZoomGet();
-    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xF], 0x20);
+    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xF], 0x20);
     MBEffAttrSet(MB3W_S16(0x5C), 8U);
     MBEffHookSet(MB3W_S16(0x5C), MB3_TuruhasiEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x5C), 3);
-    MB3W_S16(0x5E) = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0x10], 0x40);
+    MB3W_S16(0x5E) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0x10], 0x40);
     MBEffAttrSet(MB3W_S16(0x5E), 8U);
     MBEffHookSet(MB3W_S16(0x5E), MB3_RollRockEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x5E), 3);
@@ -2015,7 +2015,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 MBModelDispSet((s16) mb3_Work[8], TRUE);
                 charHook = GwPlayer[playerNo].charNo;
                 MBModelHookSet(MBPlayerModelGet(playerNo), CharModelItemHookGet(charHook, 2, 0), (s16) mb3_Work[8]);
-                turu0->turuhasi.effModelId = (s16) MBEffCreate((ANIMDATA *) mb3_Work[0xF], 0x40);
+                turu0->turuhasi.effModelId = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xF], 0x40);
                 MBEffAttrSet(turu0->turuhasi.effModelId, 8U);
                 MBEffHookSet(turu0->turuhasi.effModelId, MB3_TuruhasiEffHook);
                 Hu3DModelLayerSet(turu0->turuhasi.effModelId, 3);
