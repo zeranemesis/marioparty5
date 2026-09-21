@@ -405,13 +405,25 @@ static void MB5_MainObjUpdate(OMOBJ *obj)
 
 void MB5_LightSet(void)
 {
-    HuVecF from = { -2700, 4700, 2300 };
-    HuVecF to = { 2700, -4700, -2300 };
-    u8 r = 0xFF, g = 0xFF, b = 0xFF;
+    HuVecF from;
+    HuVecF to;
+    u8 r, g, b;
+    s16 lightId;
+
     Hu3DShadowCreate(45, 1000, 250000);
     Hu3DShadowTPLvlSet(0.3f);
     Hu3DBGColorSet(0xFF, 0xFF, 0xFF);
-    Hu3DGLightInfinitytSet(Hu3DGLightCreate(from.x, from.y, from.z, to.x, to.y, to.z, r, g, b));
+    from.x = -2700;
+    from.y = 4700;
+    from.z = 2300;
+    to.x = 2700;
+    to.y = -4700;
+    to.z = -2300;
+    r = 0xFF;
+    g = 0xFF;
+    b = 0xFF;
+    lightId = Hu3DGLightCreate(from.x, from.y, from.z, to.x, to.y, to.z, r, g, b);
+    Hu3DGLightInfinitytSet(lightId);
 }
 
 void MB5_LightReset(void)
@@ -420,7 +432,11 @@ void MB5_LightReset(void)
 
 int MB5Ev_MasuHatena(int playerNo)
 {
-    u32 flag = MBMasuGet(0, GwPlayer[playerNo].masuId)->flag;
+    s16 masuId;
+    u32 flag;
+
+    masuId = GwPlayer[playerNo].masuId;
+    flag = MBMasuGet(0, masuId)->flag;
     if(flag & MB5EV_MASU_WARP) {
         MB5Ev_Warp(playerNo);
     }
@@ -444,9 +460,13 @@ int MB5Ev_MasuWalkPre(int playerNo)
 
 int MB5Ev_MasuWalkPost(int playerNo)
 {
-    MASU *masuP = MBMasuGet(0, GwPlayer[playerNo].masuId);
-    u32 flag = masuP->flag;
-    int type = MBMasuTypeGet(0, GwPlayer[playerNo].masuId);
+    s16 masuId;
+    u32 flag;
+    int type;
+
+    masuId = GwPlayer[playerNo].masuId;
+    flag = MBMasuGet(0, masuId)->flag;
+    type = MBMasuTypeGet(0, masuId);
     return 0;
 }
 
@@ -945,11 +965,19 @@ void MB5Ev_RocketDustCreate(HuVecF pos)
 void MB5Ev_WarpPlayerShrink(int playerNo)
 {
     HuVecF scale = { 1, 1, 1 };
-    int playerMdlId = MBPlayerModelGet(playerNo);
+    float numAlpha = 255;
+    int playerMdlId;
+    float step;
+    float decAmt;
+
+    playerMdlId = MBPlayerModelGet(playerNo);
+    step = 0.04f;
+    decAmt = numAlpha*step;
     while(1) {
-        scale.x -= 0.04f;
-        scale.y += 0.04f;
-        scale.z += 0.04f;
+        scale.x -= step;
+        scale.y += step;
+        scale.z += step;
+        numAlpha -= decAmt;
         if(scale.x < 0) {
             break;
         }
@@ -963,14 +991,23 @@ void MB5Ev_WarpPlayerShrink(int playerNo)
 
 void MB5Ev_WarpPlayerGrow(int playerNo)
 {
-    int playerMdlId = MBPlayerModelGet(playerNo);
-    HuVecF scale = mb5ev_WarpEndSize;
+    float numAlpha = 255;
+    int playerMdlId;
+    float step;
+    float decAmt;
+    HuVecF scale;
+
+    playerMdlId = MBPlayerModelGet(playerNo);
+    step = 0.04f;
+    decAmt = numAlpha*step;
+    scale = mb5ev_WarpEndSize;
     MBModelScaleSet(playerMdlId, mb5ev_WarpEndSize.x, mb5ev_WarpEndSize.y, mb5ev_WarpEndSize.z);
     MBModelDispSet(playerMdlId, TRUE);
     while(1) {
-        scale.x += 0.04f;
-        scale.y -= 0.04f;
-        scale.z -= 0.04f;
+        scale.x += step;
+        scale.y -= step;
+        scale.z -= step;
+        numAlpha += decAmt;
         if(scale.x > 1) {
             break;
         }
