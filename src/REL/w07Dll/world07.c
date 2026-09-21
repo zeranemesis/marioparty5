@@ -133,6 +133,7 @@ static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop);
 static int MB7Ev_KoopaMotionCheck(void);
 static void MB7Ev_KoopaClose(void);
 static void MB7Ev_KoopaWalkFxPlay(void);
+static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -599,5 +600,108 @@ static void MB7Ev_KoopaWalkFxPlay(void) {
         }
     } else if (time < 65.0f) {
         *(s32 *) (base + 0x74) = 0;
+    }
+}
+
+/* ------------------------------ effect hooks ----------------------------- */
+
+/* Base grey/blue/dark-blue/yellow colors for the dust and fire particle
+ * hooks below - dumped from the shipped REL's .data (offset 0x274, 0x30
+ * bytes = 4 HuVecF). Only entry [0] is used by MB7_EffDustHook; entries
+ * [1..3] are read by the not-yet-decompiled MB7Ev_KoopaFire hooks. */
+static const HuVecF mb7ev_DustColTbl[4] = {
+    { 128.0f, 128.0f, 128.0f },
+    { 64.0f, 64.0f, 64.0f },
+    { 64.0f, 64.0f, 192.0f },
+    { 131.0f, 131.0f, 0.0f },
+};
+
+/* Standard MBEFFECT/MBEFFECTDATA particle hook (same shape as w03Dll's
+ * MB3_ImpactEffHook), abusing effP->mode as a "spawn N new particles with
+ * this parManId-1 recipe" trigger and effP->count as a one-shot "particle
+ * array not yet cleared" flag - both are otherwise-unused MBEFFECT fields
+ * for this non-Hu3D-driven hook. */
+/* NONMATCHING: stack frame/register allocation differs slightly (extra
+ * callee-save float regs for the per-iteration locals) (50.15% match,
+ * only 55 of 648 rows are real differences - the rest are rodata label
+ * churn); logic instruction-for-instruction identical to the original */
+static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
+    MBEFFECTDATA *p;
+    s32 i;
+
+    if (effP->count == 0) {
+        p = effP->data;
+        for (i = 0; i < effP->num; i++, p++) {
+            p->time = 0;
+            p->scale = 0.0f;
+            p->color.a = 0;
+            p->parManId = 0;
+        }
+        effP->mode = 0;
+        effP->count = 1;
+        return;
+    }
+
+    if (effP->mode != 0) {
+        p = effP->data;
+        for (i = 0; i < effP->num; i++, p++) {
+            f32 angle;
+            Point3d dir;
+            f32 t;
+
+            p->parManId = effP->mode - 1;
+            p->time = (s16) (60.0f * (0.7f + (0.4f * MBEffRandF())));
+            angle = 360.0f * MBEffRandF();
+            dir.x = (f32) sin((3.141592653589793 * (f64) angle) / 180.0);
+            dir.z = (f32) cos((3.141592653589793 * (f64) angle) / 180.0);
+            dir.y = 0.0f;
+            if (p->parManId == 0) {
+                PSVECScale(&dir, &p->pos, 100.0f * (0.7f * (0.5f + (0.5f * MBEffRandF()))));
+                p->pos.y = 20.0f + (20.0f * MBEffRandF());
+                PSVECScale(&dir, &p->vel, 1.6666666f * (15.0f * (0.7f + (0.3f * MBEffRandF()))));
+                p->vel.y = 1.6666666f * (0.7f * (0.4f + (0.6f * MBEffRandF())));
+                p->scale = 30.0f + (20.0f * MBEffRandF());
+                p->color.a = (u8) (s32) (50.0f + (60.0f * MBEffRandF()));
+            } else if (p->parManId == 1) {
+                PSVECScale(&dir, &p->pos, 100.0f * (0.7f * (0.5f + (0.5f * MBEffRandF()))));
+                p->pos.y = 20.0f + (20.0f * MBEffRandF());
+                PSVECScale(&dir, &p->vel, 1.6666666f * (9.0f * (0.7f + (0.3f * MBEffRandF()))));
+                p->vel.y = 1.6666666f * (1.2f * (0.4f + (0.6f * MBEffRandF())));
+                p->scale = 30.0f + (20.0f * MBEffRandF());
+                p->color.a = (u8) (s32) (40.0f + (30.0f * MBEffRandF()));
+            }
+            p->rot.z = 360.0f * MBEffRandF();
+            t = 0.3f + (0.7f * MBEffRandF());
+            p->color.r = (u8) (s32) (mb7ev_DustColTbl[0].x + (mb7ev_DustColTbl[0].x * t));
+            p->color.g = (u8) (s32) (mb7ev_DustColTbl[0].y + (mb7ev_DustColTbl[0].y * t));
+            p->color.b = (u8) (s32) (mb7ev_DustColTbl[0].z + (mb7ev_DustColTbl[0].z * t));
+        }
+        effP->mode = 0;
+    }
+
+    p = effP->data;
+    for (i = 0; i < effP->num; i++, p++) {
+        if (p->time != 0) {
+            VECAdd(&p->pos, &p->vel, &p->pos);
+            if (p->parManId == 0) {
+                p->vel.x *= 0.84f;
+                p->vel.z *= 0.84f;
+            } else if (p->parManId == 1) {
+                p->vel.x *= 0.88f;
+                p->vel.z *= 0.88f;
+            }
+            p->time -= 1;
+            if (p->time <= 0) {
+                p->time = 0;
+                p->scale = 0.0f;
+                p->color.a = 0;
+            } else if (p->time < 0x10 && p->color.a >= 5U) {
+                p->color.a -= 5;
+            }
+            if (p->color.a >= 2U) {
+                p->color.a -= 2;
+            }
+            p->scale += 3.0f;
+        }
     }
 }
