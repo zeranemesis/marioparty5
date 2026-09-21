@@ -151,6 +151,8 @@ static void MB7Ev_KoopaWalkDustCreate(s32 dispF);
 static void MB7Ev_KoopaAsibaUpdate(void);
 static void MB7Ev_KoopaWalkPlayerUpdate(void);
 static void MB7Ev_KoopaWalkUpdate(void);
+static void MB7Ev_DokanSet(s32 playerNo, s32 masuId, s32 goingIn);
+static void MB7Ev_DokanPlayerSet(s32 playerNo, s32 masuId, s32 goingIn);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -1716,5 +1718,88 @@ static void MB7Ev_KoopaWalk(s32 playerNo) {
     }
     for (i = 0; (f32) i < 30.0f; i++) {
         HuPrcVSleep();
+    }
+}
+
+/* ------------------------------ dokan warp -------------------------------- */
+
+/* NONMATCHING: register allocation order differs (57.76% match) */
+static void MB7Ev_DokanSet(s32 playerNo, s32 masuId, s32 goingIn) {
+    MASU *masuP = MBMasuGet(0, masuId);
+    s32 pipeMdlId = mb7_Work[8];
+    Point3d pos;
+    f32 scaleTime = 30.0f;
+    s32 i;
+
+    MBModelDispSet((s16) pipeMdlId, TRUE);
+    pos.x = masuP->pos.x;
+    pos.y = masuP->pos.y;
+    pos.z = masuP->pos.z;
+    if (goingIn != 0) {
+        pos.y -= 100.0f;
+    }
+    if (goingIn != 0) {
+        scaleTime = 45.0f;
+    }
+    if (goingIn != 0) {
+        MBAudFXPlay(0x618);
+    }
+    for (i = 0; (f32) i < scaleTime; i++) {
+        f32 t = (0.4f * (f32) i) / scaleTime;
+        f32 yStep = 100.0f / scaleTime;
+        f32 scale;
+
+        if (goingIn != 0) {
+            pos.y += yStep;
+            scale = t + 0.8f;
+        } else {
+            pos.y -= yStep;
+            scale = 1.2f - t;
+        }
+        MBModelPosSetV((s16) pipeMdlId, &pos);
+        MBModelScaleSet((s16) pipeMdlId, scale, 1.0f, scale);
+        MB7W_F32(0x1F0) = pos.y + 100.0f;
+        MBPlayerPosSetV(playerNo, (Point3d *) ((u8 *) mb7_Work + 0x1C0 + 0x2C));
+        HuPrcVSleep();
+    }
+
+    if (goingIn == 0) {
+        MBModelDispSet((s16) pipeMdlId, FALSE);
+        MB7W_F32(0x1EC) = masuP->pos.x;
+        MB7W_F32(0x1F0) = masuP->pos.y;
+        MB7W_F32(0x1F4) = masuP->pos.z;
+        MBPlayerPosSetV(playerNo, (Point3d *) ((u8 *) mb7_Work + 0x1C0 + 0x2C));
+    }
+}
+
+/* NONMATCHING: register allocation order differs (63.79% match) */
+static void MB7Ev_DokanPlayerSet(s32 playerNo, s32 masuId, s32 goingIn) {
+    f32 startY = MBMasuGet(0, masuId)->pos.y;
+    f32 pipeY = MB7W_F32(0x1F0);
+    f32 shrinkTime = 45.0f;
+    s32 i;
+
+    if (goingIn != 0) {
+        MBModelDispSet(MBPlayerModelGet(playerNo), TRUE);
+        shrinkTime = 30.0f;
+    } else {
+        MBAudFXPlay(0x619);
+    }
+    for (i = 0; (f32) i < shrinkTime; i++) {
+        f32 t = (f32) i * (1.0f / shrinkTime);
+        f32 scale;
+
+        if (goingIn == 0) {
+            t = 1.0f - t;
+        }
+        scale = t * t;
+        MB7W_F32(0x1F0) = startY + (t * (pipeY - startY));
+        MBPlayerPosSetV(playerNo, (Point3d *) ((u8 *) mb7_Work + 0x1C0 + 0x2C));
+        MBPlayerScaleSet(playerNo, scale, scale, scale);
+        HuPrcVSleep();
+    }
+
+    if (goingIn == 0) {
+        MBModelDispSet(MBPlayerModelGet(playerNo), FALSE);
     }
 }
