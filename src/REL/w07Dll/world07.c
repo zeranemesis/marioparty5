@@ -143,6 +143,35 @@ static void MB7Ev_DokanIn(s32 playerNo);
 static void MB7Ev_KoopaCube(s32 playerNo);
 static void MB7Ev_Hou(s32 playerNo);
 
+/* mb7_Work[0x4F..0x5B] ("fire breath" sub-state, byte 0x13C..0x16C - the
+ * region MB7Ev_KoopaFire1Hook reads via mb7_Work[0x53]/[0x55]/[0x56] and
+ * via the pointer arithmetic m2c mistranslates as `&mb7_Work[0x4F] +
+ * 0x40`, which is really `(u8 *) mb7_Work + 0x13C + 0x40` = word 0x5F).
+ * Mapped by reading MB7Ev_Hou's own setup of this region (not yet fully
+ * decompiled, but confirmed instruction-for-instruction for this part):
+ *   +0x4F (word, byte 0x13C): fire-breath phase index (0,1,2,4,...) -
+ *     a small per-frame state machine cycling the koopa's fire breath;
+ *     phase 0 resets +0x53/+0x54/+0x55 to 0.0f, +0x56 to 0, plays SFX
+ *     0x61D, then advances to phase 1.
+ *   +0x53 (f32, byte 0x14C): current fire-breath angle (used with
+ *     sin/cos in MB7Ev_KoopaFire1Hook to build the particle scatter
+ *     direction around the breath axis).
+ *   +0x54 (f32, byte 0x150): angle delta/step for this phase.
+ *   +0x55 (f32, byte 0x154): breath sweep magnitude - scales the
+ *     PSVECScale radius (`250.0f * mb7_Work[0x55]`) in Fire1Hook.
+ *   +0x56 (s32, byte 0x158): active/spawned-this-frame flag - tested
+ *     `!= NULL` in Fire1Hook to gate per-particle (re)spawn.
+ *   +0x59..0x5B (Point3d, byte 0x164..0x170): "kupa_pos" bone world
+ *     position on the koopa model (Hu3DModelObjPosGet(koopaModelId,
+ *     "kupa_dream_all-kupa_pos", ...), string at lbl_1_data_340).
+ *   +0x5F..0x61 (Point3d, byte 0x17C..0x188): "fire_pos" bone world
+ *     position (Hu3DModelObjPosGet(koopaModelId,
+ *     "kupa_dream_all-fire_pos", ...), string at lbl_1_data_358) - the
+ *     actual fire particle emission origin, added to each particle's
+ *     spawn position in Fire1Hook via PSVECAdd.
+ * The rest of MB7Ev_Hou (the full cutscene state machine around this
+ * setup) is not yet decompiled. */
+
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
