@@ -97,6 +97,11 @@ static f32 mb7_BackObjRotYTbl[MB7_BACKOBJ_MAX] = {
     -45.0f, 45.0f, -45.0f, 45.0f, 45.0f, -45.0f,
 };
 
+static const HuVecF mb7ev_KoopaWalkStartPosTbl[2] = {
+    { 4580.0f, 495.0f, -4260.0f },
+    { -4580.0f, 495.0f, -4260.0f },
+};
+
 static const HuVecF mb7ev_DoorPosTbl[2] = {
     { 4400.0f, 495.0f, -4000.0f },
     { -4400.0f, 495.0f, -4000.0f },
@@ -2458,5 +2463,390 @@ static void MB7Ev_Hou(s32 playerNo) {
     }
     for (i = 0; (f32) i < 30.0f; i++) {
         HuPrcVSleep();
+    }
+}
+
+/* Per-frame Koopa path-walk state machine, called every frame from
+ * MB7Ev_KoopaWalk's loops. Koopa base (koopaBase = mb7_Work+0xA0)
+ * fields used here (word-index N in the m2c draft -> byte N*4 -> minus
+ * 0xA0 for the relative offset used below - re-derived from the asm,
+ * not trusted blindly from the draft, since m2c's word-vs-byte
+ * addressing style differs function to function):
+ *   +0x0 (s32) "arrived, waiting for next direction" flag
+ *   +0x4 (s32) next-direction flag (copied to +0x0 once consumed)
+ *   +0x8 (s32) coin-lose cutscene lock (shared with
+ *     MB7Ev_KoopaWalkCoinLose/PlayerUpdate)
+ *   +0xC (s32) step index (-1 = idle, 13 = finished)
+ *   +0x10 (s32) current path masu id
+ *   +0x14 (s32) target masu id (the player's masu)
+ *   +0x18 (s32) "snap to facing" request flag
+ *   +0x1C (s32) "just landed" flag
+ *   +0x20 (s32) per-step sub-state
+ *   +0x24 (f32) per-step timer
+ *   +0x28 (f32) per-step duration/rate
+ *   +0x2C (f32) precomputed jump gravity term
+ *   +0x30 (f32) target facing angle
+ *   +0x34 (s32) koopa model id
+ *   +0x78/+0x7C/+0x80 (pos), +0x84/+0x88/+0x8C (rot, +0x88 = facing
+ *     angle), +0x90/+0x94/+0x98 (velocity/direction scratch)
+ * mb7_Work[0xA] is the "red flag" marker model (one of the 11 front
+ * objects), shown when the koopa turns a masu red on arrival. */
+/* NONMATCHING: register allocation order differs substantially across
+ * this function's 13-step state machine; logic verified against the
+ * asm field-by-field (word-index vs koopa-relative byte offsets are
+ * easy to conflate here, so every offset below was re-derived, not
+ * copied from the m2c draft's addressing) */
+static void MB7Ev_KoopaWalkUpdate(void) {
+    u8 *koopaBase = (u8 *) mb7_Work + 0xA0;
+    MASU *curMasuP = NULL;
+    MASU *targetMasuP = NULL;
+    s16 koopaMdlId = (s16) *(s32 *) (koopaBase + 0x34);
+    s32 arrivedFlag = 0;
+    s32 landedFlag = 0;
+
+    if (*(s32 *) (koopaBase + 0x10) > 0) {
+        curMasuP = MBMasuGet(0, *(s32 *) (koopaBase + 0x10));
+    }
+    if (*(s32 *) (koopaBase + 0x14) > 0) {
+        targetMasuP = MBMasuGet(0, *(s32 *) (koopaBase + 0x14));
+    }
+    MB7Ev_KoopaWalkFxPlay();
+
+    if (*(s32 *) (koopaBase + 0x18) != 0) {
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            f32 diff;
+
+            *(f32 *) (koopaBase + 0x30) = (f32) (180.0 * (atan2((f64) (targetMasuP->pos.x - MB7W_F32(0x118)), (f64) (targetMasuP->pos.z - MB7W_F32(0x120))) / 3.141592653589793));
+            diff = (f32) fabs(MB7_AngleDiff(MB7W_F32(0x128), *(f32 *) (koopaBase + 0x30)));
+            if (diff > 20.0f) {
+                *(f32 *) (koopaBase + 0x28) = 1.0f / (0.33333334f * diff);
+                *(f32 *) (koopaBase + 0x24) = 0.0f;
+                MB7Ev_KoopaMotionShiftSet(1, 1);
+                MBMotionSpeedSet(koopaMdlId, 2.0f);
+                *(s32 *) (koopaBase + 0x20) += 1;
+            }
+        }
+        if (*(s32 *) (koopaBase + 0x20) > 0) {
+            f32 t;
+
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            t = *(f32 *) (koopaBase + 0x24) * *(f32 *) (koopaBase + 0x28);
+            if (t > 1.0f) {
+                t = 1.0f;
+            }
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f * t);
+            if (fabs(MB7_AngleDiff(MB7W_F32(0x128), *(f32 *) (koopaBase + 0x30))) < 5.0f) {
+                *(s32 *) (koopaBase + 0x18) = 0;
+                *(s32 *) (koopaBase + 0x20) = 0;
+            }
+            MBModelPosSetV(koopaMdlId, (Point3d *) (koopaBase + 0x78));
+            MBModelRotSetV(koopaMdlId, (Point3d *) (koopaBase + 0x84));
+            return;
+        }
+    }
+
+    switch (*(s32 *) (koopaBase + 0xC) + 1) {
+    case 1: {
+        s32 side = 0;
+
+        if (targetMasuP->pos.x < 0.0f) {
+            side = 1;
+        }
+        mb7_SaveWorkP[side] = 2;
+        *(Point3d *) (koopaBase + 0x78) = mb7ev_KoopaWalkStartPosTbl[side];
+        *(s32 *) (koopaBase + 0xC) = 1;
+        break;
+    }
+    case 2:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            MBModelDispSet(koopaMdlId, TRUE);
+            MB7Ev_KoopaMotionShiftSet(1, 1);
+            MBMotionSpeedSet(koopaMdlId, 2.0f);
+            PSVECSubtract(&targetMasuP->pos, (Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90));
+            *(f32 *) (koopaBase + 0x88) = (f32) (180.0 * (atan2((f64) MB7W_F32(0x130), (f64) MB7W_F32(0x138)) / 3.141592653589793));
+            *(f32 *) (koopaBase + 0x30) = *(f32 *) (koopaBase + 0x88);
+            *(f32 *) (koopaBase + 0x28) = 0.120000005f * PSVECMag((Point3d *) (koopaBase + 0x90));
+            PSVECScale((Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x90), 1.0f / *(f32 *) (koopaBase + 0x28));
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else {
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f);
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            if (*(f32 *) (koopaBase + 0x24) >= 0.68f * *(f32 *) (koopaBase + 0x28)) {
+                *(s32 *) (koopaBase + 0x4) = 1;
+                *(s32 *) (koopaBase + 0xC) = 3;
+                *(s32 *) (koopaBase + 0x20) = 0;
+            }
+        }
+        break;
+    case 3:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            MB7Ev_KoopaMotionShiftSet(1, 1);
+            MBMotionSpeedSet(koopaMdlId, 2.0f);
+            PSVECSubtract(&targetMasuP->pos, (Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90));
+            *(f32 *) (koopaBase + 0x30) = (f32) (180.0 * (atan2((f64) MB7W_F32(0x130), (f64) MB7W_F32(0x138)) / 3.141592653589793));
+            *(f32 *) (koopaBase + 0x28) = 0.15f * PSVECMag((Point3d *) (koopaBase + 0x90));
+            PSVECScale((Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x90), 1.0f / *(f32 *) (koopaBase + 0x28));
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else {
+            f32 t = 0.06666667f * *(f32 *) (koopaBase + 0x24);
+
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            if (t > 1.0f) {
+                t = 1.0f;
+            }
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f * t);
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            if ((*(f32 *) (koopaBase + 0x28) - *(f32 *) (koopaBase + 0x24)) < 15.0f) {
+                arrivedFlag = 1;
+            }
+            if (*(f32 *) (koopaBase + 0x24) >= *(f32 *) (koopaBase + 0x28)) {
+                landedFlag = 1;
+            }
+        }
+        break;
+    case 4:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            MB7Ev_KoopaMotionShiftSet(6, 0);
+            *(s32 *) (koopaBase + 0x1C) = 0;
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else if (*(s32 *) (koopaBase + 0x20) == 1) {
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            if (*(f32 *) (koopaBase + 0x24) >= 25.0f) {
+                PSVECSubtract(&targetMasuP->pos, (Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90));
+                *(f32 *) (koopaBase + 0x30) = (f32) (180.0 * (atan2((f64) MB7W_F32(0x130), (f64) MB7W_F32(0x138)) / 3.141592653589793));
+                MB7W_F32(0x130) /= 1.0f;
+                MB7W_F32(0x138) /= 1.0f;
+                MB7W_F32(0x134) = (MB7W_F32(0x134) / 1.0f) - (0.5f * 1.0f * -4900.0f);
+                PSVECScale((Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x90), 0.016666668f);
+                *(f32 *) (koopaBase + 0x28) = 60.0f * 1.0f;
+                *(f32 *) (koopaBase + 0x2C) = 0.016666668f * (0.016666668f * -4900.0f);
+                *(f32 *) (koopaBase + 0x24) = 0.0f;
+                *(s32 *) (koopaBase + 0x20) += 1;
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 2) {
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f);
+            MB7W_F32(0x134) += *(f32 *) (koopaBase + 0x2C);
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            if (*(f32 *) (koopaBase + 0x24) > 3.0f) {
+                MBMotionSpeedSet(koopaMdlId, 0.95f * MBMotionSpeedGet(koopaMdlId));
+            }
+            if (MBMotionTimeGet(koopaMdlId) > 40.0f) {
+                MBMotionSpeedSet(koopaMdlId, 0.0f);
+                *(s32 *) (koopaBase + 0x20) += 1;
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 3) {
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f);
+            MB7W_F32(0x134) += *(f32 *) (koopaBase + 0x2C);
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            if ((*(f32 *) (koopaBase + 0x28) - *(f32 *) (koopaBase + 0x24)) < 10.0f) {
+                MBMotionSpeedSet(koopaMdlId, 1.0f);
+                *(s32 *) (koopaBase + 0x1C) = 1;
+            }
+            if (MB7W_F32(0x134) < 0.0f) {
+                if ((MB7W_F32(0x11C) - targetMasuP->pos.y) < 200.0f) {
+                    *(s32 *) (koopaBase + 0x1C) = 1;
+                }
+                if (MB7W_F32(0x11C) <= targetMasuP->pos.y) {
+                    MB7W_F32(0x11C) = targetMasuP->pos.y;
+                    *(s32 *) (koopaBase + 0x20) += 1;
+                    MBCameraQuakeSet(0xC, 50.0f);
+                    MBAudFXPlay(0x369);
+                    MB7Ev_KoopaWalkDustCreate(0);
+                    arrivedFlag = 1;
+                }
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 4) {
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f);
+            if (MBMotionEndCheck(koopaMdlId) != 0) {
+                *(s32 *) (koopaBase + 0x1C) = 0;
+                landedFlag = 1;
+            }
+        }
+        break;
+    case 5:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            MB7Ev_KoopaMotionShiftSet(7, 0);
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else if (*(s32 *) (koopaBase + 0x20) == 1) {
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            if (*(f32 *) (koopaBase + 0x24) >= 10.0f) {
+                PSVECSubtract(&targetMasuP->pos, (Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90));
+                *(f32 *) (koopaBase + 0x30) = (f32) (180.0 * (atan2((f64) MB7W_F32(0x130), (f64) MB7W_F32(0x138)) / 3.141592653589793));
+                MB7W_F32(0x130) /= 0.6666667f;
+                MB7W_F32(0x138) /= 0.6666667f;
+                MB7W_F32(0x134) = (MB7W_F32(0x134) / 0.6666667f) - (0.5f * 0.6666667f * -4900.0f);
+                PSVECScale((Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x90), 0.016666668f);
+                *(f32 *) (koopaBase + 0x28) = 60.0f * 0.6666667f;
+                *(f32 *) (koopaBase + 0x2C) = 0.016666668f * (0.016666668f * -4900.0f);
+                *(f32 *) (koopaBase + 0x24) = 0.0f;
+                *(s32 *) (koopaBase + 0x20) += 1;
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 2) {
+            f32 t = 0.06666667f * *(f32 *) (koopaBase + 0x24);
+
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            if (t > 1.0f) {
+                t = 1.0f;
+            }
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f * t);
+            MB7W_F32(0x134) += *(f32 *) (koopaBase + 0x2C);
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            if (MB7W_F32(0x134) < 0.0f) {
+                if (MB7W_F32(0x11C) <= targetMasuP->pos.y) {
+                    MB7W_F32(0x11C) = targetMasuP->pos.y;
+                    *(s32 *) (koopaBase + 0x20) += 1;
+                    MBCameraQuakeSet(0xC, 30.000002f);
+                    MBAudFXPlay(0x369);
+                    MB7Ev_KoopaWalkDustCreate(1);
+                    arrivedFlag = 1;
+                }
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 3) {
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f);
+            if (MB7Ev_KoopaMotionCheck() != 0) {
+                landedFlag = 1;
+            }
+        }
+        break;
+    case 6:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            MB7Ev_KoopaMotionShiftSet(3, 0);
+            MBAudFXPlay(0x2C9);
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else if (*(s32 *) (koopaBase + 0x20) == 1 && *(s32 *) (koopaBase + 0x8) == 0 && MB7Ev_KoopaMotionCheck() != 0) {
+            landedFlag = 1;
+        }
+        break;
+    case 12:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            s32 side = 0;
+
+            MB7Ev_KoopaMotionShiftSet(1, 1);
+            MBMotionSpeedSet(koopaMdlId, 2.0f);
+            if (targetMasuP->pos.x < 0.0f) {
+                side = 1;
+            }
+            PSVECSubtract((Point3d *) &mb7ev_KoopaWalkStartPosTbl[side], (Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90));
+            *(f32 *) (koopaBase + 0x30) = (f32) (180.0 * (atan2((f64) MB7W_F32(0x130), (f64) MB7W_F32(0x138)) / 3.141592653589793));
+            *(f32 *) (koopaBase + 0x28) = 0.120000005f * PSVECMag((Point3d *) (koopaBase + 0x90));
+            PSVECScale((Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x90), 1.0f / *(f32 *) (koopaBase + 0x28));
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else if (*(s32 *) (koopaBase + 0x20) == 1) {
+            f32 t = 0.033333335f * *(f32 *) (koopaBase + 0x24);
+
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            if (t > 1.0f) {
+                t = 1.0f;
+            }
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f * t);
+            if (fabs(MB7_AngleDiff(MB7W_F32(0x128), *(f32 *) (koopaBase + 0x30))) < 20.0f) {
+                *(s32 *) (koopaBase + 0x20) += 1;
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 2) {
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f);
+            PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
+            if (*(f32 *) (koopaBase + 0x24) >= *(f32 *) (koopaBase + 0x28)) {
+                *(s32 *) (koopaBase + 0xC) += 1;
+                *(s32 *) (koopaBase + 0x20) = 0;
+            }
+        }
+        break;
+    case 13:
+        *(s32 *) (koopaBase + 0xC) = -1;
+        break;
+    default:
+        break;
+    }
+
+    if (arrivedFlag != 0 && MBMasuTypeGet(0, *(s32 *) (koopaBase + 0x14)) == 1) {
+        s16 flagMdlId = (s16) mb7_Work[0xA];
+
+        MBMasuTypeSet(0, *(s32 *) (koopaBase + 0x14), 2);
+        MB7Ev_MasuRedSet(*(s32 *) (koopaBase + 0x14));
+        MBAudFXPlay(0x34B);
+        MBModelPosSetV(flagMdlId, &targetMasuP->pos);
+        MBModelDispSet(flagMdlId, TRUE);
+        MBMotionTimeSet(flagMdlId, 0.0f);
+        MBMotionSpeedSet(flagMdlId, 1.0f);
+    }
+
+    MBModelPosSetV(koopaMdlId, (Point3d *) (koopaBase + 0x78));
+    MBModelRotSetV(koopaMdlId, (Point3d *) (koopaBase + 0x84));
+
+    if (landedFlag != 0 && targetMasuP != NULL) {
+        s32 order;
+        MASU *fromMasuP;
+
+        if (*(s32 *) (koopaBase + 0x0) != 0) {
+            *(s32 *) (koopaBase + 0xC) = 5;
+            *(s32 *) (koopaBase + 0x20) = 0;
+            *(s32 *) (koopaBase + 0x0) = 0;
+            return;
+        }
+        *(s32 *) (koopaBase + 0x0) = *(s32 *) (koopaBase + 0x4);
+        *(s32 *) (koopaBase + 0x4) = 0;
+        if (*(s32 *) (koopaBase + 0x0) == 0) {
+            MBCameraFocusMasuSet(-1);
+            MBCameraFocusSet(koopaMdlId);
+        } else {
+            MBCameraFocusSet(-1);
+            MBCameraFocusMasuSet(*(s32 *) (koopaBase + 0x14));
+        }
+        if (curMasuP != NULL && (targetMasuP->flag & 0x8000)) {
+            *(s32 *) (koopaBase + 0xC) = 0xA;
+            *(s32 *) (koopaBase + 0x20) = 0;
+            return;
+        }
+
+        *(s32 *) (koopaBase + 0x10) = *(s32 *) (koopaBase + 0x14);
+        fromMasuP = targetMasuP;
+        order = 0;
+        do {
+            s32 linkIdx;
+            MASU *scanFrom = targetMasuP;
+
+            order += 1;
+            for (linkIdx = 0; linkIdx < (s32) scanFrom->linkNum; linkIdx++) {
+                *(s32 *) (koopaBase + 0x14) = scanFrom->linkTbl[linkIdx];
+                targetMasuP = MBMasuGet(0, *(s32 *) (koopaBase + 0x14));
+                if (targetMasuP->flag & 0x4000) {
+                    break;
+                }
+            }
+        } while ((targetMasuP->flag & 0x80000) || (targetMasuP->flag & 0x40000));
+
+        {
+            s32 i;
+            for (i = 0; i < 4; i++) {
+                if (*(s32 *) (koopaBase + 0x14) == GwPlayer[i].masuId) {
+                    order = 2;
+                    *(s32 *) (koopaBase + 0x4) = 1;
+                }
+            }
+        }
+
+        if (order > 1) {
+            *(s32 *) (koopaBase + 0xC) = 3;
+            *(s32 *) (koopaBase + 0x18) = 1;
+        } else if ((fromMasuP->flag & 0x20000) && (targetMasuP->flag & 0x10000)) {
+            *(s32 *) (koopaBase + 0xC) = 4;
+            *(s32 *) (koopaBase + 0x18) = 1;
+        } else if ((fromMasuP->flag & 0x80000) && (targetMasuP->flag & 0x40000)) {
+            *(s32 *) (koopaBase + 0xC) = 3;
+            *(s32 *) (koopaBase + 0x18) = 1;
+        } else {
+            *(s32 *) (koopaBase + 0xC) = 2;
+        }
+        *(s32 *) (koopaBase + 0x20) = 0;
     }
 }
