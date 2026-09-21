@@ -1,13 +1,13 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-21 07:56 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-21 08:37 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **23.00 %** (2 131.5 / 9 266.8 Ko) |
+| code identique | **23.08 %** (2 138.7 / 9 266.8 Ko) |
 | code lié depuis les sources | 18.43 % |
-| fonctions identiques | 4613 / 21231 |
+| fonctions identiques | 4644 / 21231 |
 | unités complètes | 232 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
@@ -17,7 +17,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
 | DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 81.8 % | 309.6 Ko |
-| Mini-jeux m5xx | 76 | 4 493.9 Ko | 2.6 % | 4 377.4 Ko |
+| Mini-jeux m5xx | 76 | 4 493.9 Ko | 2.8 % | 4 370.1 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 4.4 % | 200.9 Ko |
 | Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 39.4 % | 232.1 Ko |
@@ -41,7 +41,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m503Dll` | 56.1 Ko | 0.0 % | 0/148 | 0.0 % | 0/0/8 | à faire |
 | `m504dll` | 74.4 Ko | 0.0 % | 0/116 | 0.0 % | 0/0/11 | à faire |
 | `m505Dll` | 72.4 Ko | 0.0 % | 0/19 | 0.0 % | 0/0/1 | à faire |
-| `m506Dll` | 59.0 Ko | 40.5 % | 21/96 | 40.5 % | 1/0/2 | en cours |
+| `m506Dll` | 59.0 Ko | 52.8 % | 52/96 | 87.5 % | 1/2/0 | fait (E) |
 | `m507dll` | 33.7 Ko | 100.0 % | 47/47 | 100.0 % | 2/0/0 | fait |
 | `m508Dll` | 57.4 Ko | 0.0 % | 0/245 | 0.0 % | 0/0/2 | à faire |
 | `m509Dll` | 76.1 Ko | 0.0 % | 0/284 | 0.0 % | 0/0/10 | à faire |

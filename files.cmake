@@ -190,6 +190,9 @@ set(REL_FILES
         src/REL/m433Dll/m433.c
         src/REL/m433Dll/stage.c
         src/REL/m433Dll/player.c
+        src/REL/m506Dll/m506.c
+        src/REL/m506Dll/object.c
+        src/REL/m506Dll/player.c
         src/REL/m507dll/m507.c
         src/REL/m507dll/effect.c
         src/REL/m526Dll/m526.c
@@ -221,7 +224,6 @@ set(REL_FILES
 #   m503Dll
 #   m504dll
 #   m505Dll
-#   m506Dll
 #   m508Dll
 #   m509Dll
 #   m510dll
