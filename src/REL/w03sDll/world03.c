@@ -56,7 +56,7 @@ static u32 MB3Ev_MasuFlagGet(s32 bits, s32 mask);
 
 static int MB3Ev_MasuHatena(int playerNo);
 static void MB3_Stub(void);
-static int MB3Ev_MasuWalkPre(int playerNo);
+static void MB3Ev_MasuWalkPre(int playerNo);
 static int MB3Ev_MasuWalkPost(int playerNo);
 static void MB3Ev_HatenaYYHou(s32 playerNo);
 
@@ -135,8 +135,8 @@ static f32 MB3_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir) {
 /* NONMATCHING: register allocation order differs, same as w03Dll's copy of
  * this helper (73% match there). */
 static s32 MB3Ev_BitGet(s32 flag, u32 mask) {
-    s32 result;
     u32 inBit;
+    s32 result;
     u32 outBit;
     s32 i;
 
@@ -194,8 +194,7 @@ static void MB3_LightReset(void) {
 static void MB3_Stub(void) {
 }
 
-static int MB3Ev_MasuWalkPre(int playerNo) {
-    return 0;
+static void MB3Ev_MasuWalkPre(int playerNo) {
 }
 
 static int MB3Ev_MasuWalkPost(int playerNo) {
@@ -278,11 +277,11 @@ static void MB3_Splash2EffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
             continue;
         }
         if (p->time == 0) {
+            f32 unused;
             p->time++;
             p->rot.z = 360.0f * MBEffRandF();
-            p->color.b = 0xFF;
-            p->color.g = 0xFF;
-            p->color.r = 0xFF;
+            unused = MBEffRandF();
+            p->color.r = p->color.g = p->color.b = 0xFF;
             p->vel.x = 1.6666666f * (0.8f * MBEffSRandF());
             p->vel.z = 1.6666666f + (1.6666666f * (4.0f * MBEffRandF()));
             p->vel.y = 4.1666665f + (1.6666666f * (2.5f * MBEffRandF()));
@@ -350,7 +349,7 @@ static void MB3_Create(void) {
     MBCapsuleColCreate(0xD00003);
     MB3_ObjectCreate();
     HuDataDirClose(0xD00000);
-    MBMasuWalkPreHookSet(MB3Ev_MasuWalkPre);
+    MBMasuWalkPreHookSet((MASUPLAYERHOOK) MB3Ev_MasuWalkPre);
     MBMasuWalkPostHookSet((MASUPLAYERHOOK) MB3Ev_MasuWalkPost);
     MBMasuHatenaHookSet(MB3Ev_MasuHatena);
 }
@@ -444,14 +443,11 @@ static void MB3_MainObjUpdate(OMOBJ *obj) {
 }
 
 static void MB3_ImpactEffUpdate(s16 modelId, s32 frame) {
+    Point3d ofs = { 120.0f, 0.0f, -60.0f };
     Mtx camInv;
-    Point3d ofs;
     Point3d pos;
     f32 scale;
 
-    ofs.x = 120.0f;
-    ofs.y = 0.0f;
-    ofs.z = -60.0f;
     MTXInverse(Hu3DCameraMtx, camInv);
     MTXMultVec(camInv, &ofs, &pos);
     camInv[0][3] = 0.0f;
