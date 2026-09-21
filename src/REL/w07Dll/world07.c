@@ -141,6 +141,8 @@ static void MB7Ev_KoopaFire1Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaFire2Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaFire3Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 static void MB7Ev_KoopaFire4Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
+static void MB7Ev_KoopaWalkCoinLose(void);
+static void MB7Ev_KoopaWalkDustCreate(s32 dispF);
 static void MB7Ev_KoopaWalk(s32 playerNo);
 static void MB7Ev_Dokan(s32 playerNo);
 static void MB7Ev_DokanIn(s32 playerNo);
@@ -490,13 +492,23 @@ static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
 
 /* Koopa "walk out" cutscene/state region, mb7_Work + 0xA0, 0x9C bytes
  * (byte offsets below are relative to that +0xA0 base, matching
- * MB7Ev_KoopaInit's own addressing - confirmed 92.86% match):
- *   +0x34/+0x38/+0x3C/+0x40 (s32) = -1 after memset (revisited once
- *     MB7Ev_KoopaMotionCreate/MB7Ev_KoopaMotionShiftSet are decompiled -
- *     m2c's draft calls these mb7_Work[0x2E..0x30] etc in word units)
- *   +0x44..+0x64 (s32[9]) = -1      per-something free-slot markers
+ * MB7Ev_KoopaInit's own addressing - confirmed 92.86% match). Extended
+ * as more of the region's users are decompiled:
+ *   +0x8 (s32)                      coin-lose cutscene lock (0/1),
+ *     set/cleared around MBCoinAddDispExec in MB7Ev_KoopaWalkCoinLose
+ *   +0x34/+0x38/+0x3C/+0x40 (s32[4]) = -1 after memset - up to 4 koopa
+ *     model ids (confirmed by MB7Ev_KoopaClose, which kills all 4);
+ *     only index [0] (+0x34) is read by the motion helpers so far
+ *   +0x44..+0x64 (s32[9]) = -1      motion ids, one per
+ *     mb7ev_KoopaMotFileTbl entry (MB7Ev_KoopaMotionCreate/NoSet/
+ *     ShiftSet always address index 0, i.e. the fixed +0x34 koopa)
+ *   +0x68 (s16)                     dust-puff MBEFFECT model id
+ *     (MB7Ev_KoopaWalkDustCreate), created in MB7Ev_KoopaWalk (TBD)
  *   +0x6C (s32)                     MBDataDirReadAsync() handle
- *   +0x70 (s32) = -1, +0x74 (s32) = 0   init markers
+ *   +0x70 (s32) = -1, +0x74 (s32) = 0   last motion index / step timer
+ *   +0x78 (Point3d)                 foot position, used both as the
+ *     footstep SFX emitter (MB7Ev_KoopaWalkFxPlay) and the dust-puff
+ *     spawn position (MB7Ev_KoopaWalkDustCreate)
  */
 /* NONMATCHING: redundant li r0,-1 reload before consecutive stores
  * (92.86% match); logic identical */
@@ -1471,4 +1483,30 @@ static void MB7Ev_KoopaFire4Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) 
             p->scale += 2.0f;
         }
     }
+}
+
+/* -------------------------- Koopa walk cutscene --------------------------- */
+
+/* NONMATCHING: register allocation order differs (77.78% match) */
+static void MB7Ev_KoopaWalkCoinLose(void) {
+    HUPROCESS *proc = HuPrcCurrentGet();
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+
+    *(s32 *) (base + 0x8) = 1;
+    MBCoinAddDispExec((s32) proc->property, -0xA, TRUE);
+    proc->property = NULL;
+    *(s32 *) (base + 0x8) = 0;
+    HuPrcEnd();
+}
+
+/* dust puff at the koopa's foot position (mb7_Work+0xA0+0x78, the same
+ * Point3d used as the footstep SFX emitter in MB7Ev_KoopaWalkFxPlay);
+ * mb7_Work+0xA0+0x68 (s16) is the dust MBEFFECT model id, created
+ * elsewhere (MB7Ev_KoopaWalk); its hookData mode is set to dispF+1.
+ * NONMATCHING: register allocation order differs (48.28% match) */
+static void MB7Ev_KoopaWalkDustCreate(s32 dispF) {
+    u8 *base = (u8 *) mb7_Work + 0xA0;
+
+    Hu3DModelPosSetV(*(s16 *) (base + 0x68), (Point3d *) (base + 0x78));
+    *(s16 *) Hu3DData[*(s16 *) (base + 0x68)].hookData = (s16) (dispF + 1);
 }
