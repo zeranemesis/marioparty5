@@ -315,6 +315,8 @@ static void MB7_LightReset(void) {
 static void MB7_MasuStub(void) {
 }
 
+/* the original never sets a return value here (just `blr`); the result
+ * is genuinely unused by the caller for this particular hook */
 static int MB7Ev_MasuWalkPre(int playerNo) {
 }
 
@@ -402,10 +404,10 @@ static void MB7_ObjectCreate(void) {
             MBMotionSpeedSet((s16) modelId, 1.0f);
         }
     }
-    MB7W_S32(0x8C) = (s32) HuSprAnimRead(HuDataReadNum(0xD70013, 0x10000000));
-    MB7W_S32(0x90) = (s32) HuSprAnimRead(HuDataReadNum(0xD70014, 0x10000000));
-    MB7W_S16(0x94) = (s16) MBEffCreate((void *) MB7W_S32(0x8C), 1);
-    MB7W_S16(0x96) = (s16) MBEffCreate((void *) MB7W_S32(0x90), 1);
+    MB7W_S32(0x8C) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xD70013, 0x10000000));
+    MB7W_S32(0x90) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xD70014, 0x10000000));
+    MB7W_S16(0x94) = (s16) MBEffCreate((void *)(uintptr_t) MB7W_S32(0x8C), 1);
+    MB7W_S16(0x96) = (s16) MBEffCreate((void *)(uintptr_t) MB7W_S32(0x90), 1);
 }
 
 /* NONMATCHING: mb7_Work byte-offset address add operand order differs
@@ -804,7 +806,7 @@ static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
  * Hu3DData[].hookData the same way w03Dll reads it back as MBEFFECT*. */
 /* NONMATCHING: register allocation order differs (50.00% match) */
 static s16 MB7Ev_KoopaCubeDustCreate(Point3d *pos, s32 mode) {
-    s16 modelId = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x40);
+    s16 modelId = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x40);
     MBEffHookSet(modelId, MB7Ev_KoopaCubeDustEffHook);
     Hu3DModelLayerSet(modelId, 2);
     Hu3DModelPosSetV(modelId, pos);
@@ -1010,7 +1012,16 @@ static void MB7Ev_RedResetHook(void) {
  * spawned fire particle in MB7Ev_KoopaFire1Hook to normalize a 2D
  * (x,z) scatter vector. */
 static f32 MB7_FastSqrt(f32 x) {
+#ifdef TARGET_PC
+    /* __frsqrte is a PowerPC compiler intrinsic with no host equivalent;
+     * seed the same Newton-Raphson refinement with an exact reciprocal
+     * sqrt instead of a hardware estimate. The refinement below already
+     * converges to full precision, so the seed only affects rounding in
+     * the last bit or two. */
+    f64 guess = 1.0 / sqrt((f64) x);
+#else
     f64 guess = __frsqrte((f64) x);
+#endif
     guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
     guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
     guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
@@ -1529,7 +1540,7 @@ static void MB7Ev_KoopaWalkCoinLose(void) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
 
     *(s32 *) (base + 0x8) = 1;
-    MBCoinAddDispExec((s32) proc->property, -0xA, TRUE);
+    MBCoinAddDispExec((s32)(uintptr_t) proc->property, -0xA, TRUE);
     proc->property = NULL;
     *(s32 *) (base + 0x8) = 0;
     HuPrcEnd();
@@ -1669,7 +1680,7 @@ static void MB7Ev_KoopaWalk(s32 playerNo) {
     MB7Ev_KoopaMotionCreate(6);
     MB7Ev_KoopaMotionCreate(7);
     MB7Ev_KoopaDataClose();
-    *(s32 *) (base + 0x68) = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x80);
+    *(s32 *) (base + 0x68) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x80);
     MBEffHookSet((s16) *(s32 *) (base + 0x68), MB7_EffDustHook);
     Hu3DModelLayerSet((s16) *(s32 *) (base + 0x68), 2);
     *(s32 *) (base + 0x10) = -1;
@@ -1866,7 +1877,7 @@ static void MB7Ev_Dokan(s32 playerNo) {
     MB7Ev_KoopaMotionCreate(3);
     MB7Ev_KoopaMotionCreate(2);
     MB7Ev_KoopaDataClose();
-    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x80);
+    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x80);
     MBEffHookSet((s16) *(s32 *) (koopaBase + 0x68), MB7_EffDustHook);
     Hu3DModelLayerSet((s16) *(s32 *) (koopaBase + 0x68), 2);
     MBMasuGet(0, targetMasuId);
@@ -1984,7 +1995,7 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     MB7Ev_KoopaMotionCreate(5);
     MB7Ev_KoopaMotionCreate(2);
     MB7Ev_KoopaDataClose();
-    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *) mb7_Work[0x24], 0x80);
+    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x80);
     MBEffHookSet((s16) *(s32 *) (koopaBase + 0x68), MB7_EffDustHook);
     Hu3DModelLayerSet((s16) *(s32 *) (koopaBase + 0x68), 2);
     Hu3DModelObjPosGet(MBModelIdGet(mb7_MainMdlId), "kupa_dream_all-guru_pos", &guruPos);
@@ -2287,19 +2298,19 @@ static void MB7Ev_Hou(s32 playerNo) {
     MBTopWinWait();
     MBTopWinKill();
     MB7Ev_KoopaMotionShiftSet(8, 0);
-    *(s32 *) (fireBase + 0x30) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x100);
+    *(s32 *) (fireBase + 0x30) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x100);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x30), MB7Ev_KoopaFire1Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x30), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x30), 0.0f, 0.0f, 0.0f);
-    *(s32 *) (fireBase + 0x34) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x40);
+    *(s32 *) (fireBase + 0x34) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x40);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x34), MB7Ev_KoopaFire2Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x34), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x34), 0.0f, 0.05f, 0.05f);
-    *(s32 *) (fireBase + 0x38) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x40);
+    *(s32 *) (fireBase + 0x38) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x40);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x38), MB7Ev_KoopaFire3Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x38), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x38), 0.0f, -0.05f, -0.05f);
-    *(s32 *) (fireBase + 0x3C) = MBEffCreate((ANIMDATA *) mb7_Work[0x23], 0x40);
+    *(s32 *) (fireBase + 0x3C) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x40);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x3C), MB7Ev_KoopaFire4Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x3C), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x3C), 0.0f, 0.0f, -0.05f);
