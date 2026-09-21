@@ -132,9 +132,8 @@ void ObjectSetup(void) {
 // NONMATCHING: MWCC allocates one fewer callee-saved register (r29) than the
 // original; the loaded rodata float values and control flow are identical.
 void MotChkMain(void) {
-    s16 unused;
-    s16 i;
     HU3DMODELID modelId;
+    s16 unused;
     f32 sp28;
     f32 sp24;
     f32 sp20;
@@ -192,8 +191,8 @@ void MotChkMain(void) {
             if (lodNo >= 4) {
                 lodNo = 0;
             }
-            for (i = 0; i < 4; i++) {
-                Hu3DModelAttrSet((HU3DMODELID) motchkMdlId[i], HU3D_ATTR_DISPOFF);
+            for (modelId = 0; modelId < 4; modelId++) {
+                Hu3DModelAttrSet((HU3DMODELID) motchkMdlId[modelId], HU3D_ATTR_DISPOFF);
             }
             Hu3DModelAttrReset((HU3DMODELID) motchkMdlId[lodNo], HU3D_ATTR_DISPOFF);
         } else if (HuPadBtnRep[0] & 0x400) {
@@ -238,10 +237,10 @@ void MotChkModelInit(s16 charNo, s16 motNo, s16 lodNo) {
     motchkMdlId[1] = Hu3DModelCreateData(dataDirTbl[charNo] | 1);
     motchkMdlId[2] = Hu3DModelCreateData(dataDirTbl[charNo] | 2);
     motchkMdlId[3] = Hu3DModelCreateData(dataDirTbl[charNo] | 3);
-    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
-    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) ((s32) motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
+    motchkMotId[3] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[3], (u16) (motNo + 0x870004) | dataDirTbl[charNo]);
     motchkMotIdOld[0] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[0], dataDirTbl[charNo] | 4);
     motchkMotIdOld[1] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[1], dataDirTbl[charNo] | 4);
     motchkMotIdOld[2] = Hu3DJointMotionData((HU3DMODELID) motchkMdlId[2], dataDirTbl[charNo] | 4);
