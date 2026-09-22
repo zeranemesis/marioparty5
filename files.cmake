@@ -205,9 +205,15 @@ set(REL_FILES
         src/REL/mdselDll/stage.c
         src/REL/meschkDll/meschk.c
         src/REL/motchkDll/motchk.c
+        src/REL/safDll/safanim.c
+        src/REL/safDll/saf.c
+        src/REL/safDll/safmotion.c
         src/REL/selmenuDll/selmenu.c
         src/REL/sequencedll/sequence.c
         src/REL/staffDll/staff.c
+        src/REL/storyresultdll/storyresult.c
+        src/REL/storyresultdll/rank.c
+        src/REL/storyresultdll/effect.c
         src/REL/w01Dll/world01.c
         src/REL/w03Dll/world03.c
         src/REL/w03sDll/world03.c
@@ -312,11 +318,9 @@ set(REL_FILES
 #   partyresultdll
 #   rescardDll
 #   resultDll
-#   safDll
 #   sd00dll
 #   sdroomdll
 #   storymodedll
-#   storyresultdll
 #   systemDll
 #   w01sDll
 #   w02Dll
