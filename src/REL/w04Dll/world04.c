@@ -120,3 +120,10 @@ s32 MB4_MasuStub(void) {
 s32 MB4Ev_MasuWalkPre(s32 playerNo) {
     return 0;
 }
+
+s32 MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, s32 endF) {
+    return -1;
+}
+
+void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d) {
+}
