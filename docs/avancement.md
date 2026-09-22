@@ -1,13 +1,13 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-22 12:32 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-22 12:39 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **23.33 %** (2 161.5 / 9 266.8 Ko) |
+| code identique | **23.33 %** (2 161.8 / 9 266.8 Ko) |
 | code lié depuis les sources | 18.43 % |
-| fonctions identiques | 4763 / 21231 |
+| fonctions identiques | 4764 / 21231 |
 | unités complètes | 232 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
@@ -20,7 +20,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | Mini-jeux m5xx | 76 | 4 493.9 Ko | 2.8 % | 4 370.1 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 7.3 % | 194.7 Ko |
-| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 41.2 % | 225.4 Ko |
+| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 41.2 % | 225.1 Ko |
 | Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
 | Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 14.0 % | 1 179.3 Ko |
 
@@ -129,16 +129,16 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `w04sDll` | 54.8 Ko | 0.0 % | 0/59 | 0.0 % | 0/0/1 | à faire |
 | `w05sDll` | 13.3 Ko | 9.3 % | 8/19 | 66.9 % | 0/1/0 | fait (E) |
 | `w06sDll` | 9.2 Ko | 100.0 % | 23/23 | 100.0 % | 1/0/0 | fait |
-| `w07sDll` | 21.5 Ko | 6.1 % | 15/31 | 61.9 % | 0/0/1 | en cours |
+| `w07sDll` | 21.5 Ko | 6.1 % | 15/31 | 64.6 % | 0/1/0 | fait (E) |
 
 ### Plateaux (w0X, w10, w20)
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
 | `w01Dll` | 66.2 Ko | 100.0 % | 72/72 | 100.0 % | 1/0/0 | fait |
-| `w02Dll` | 72.5 Ko | 1.0 % | 12/73 | 18.9 % | 0/0/1 | en cours |
+| `w02Dll` | 72.5 Ko | 1.0 % | 12/73 | 22.6 % | 0/0/1 | en cours |
 | `w03Dll` | 35.6 Ko | 8.2 % | 11/40 | 55.5 % | 0/1/0 | fait (E) |
-| `w04Dll` | 78.7 Ko | 2.1 % | 16/66 | 4.0 % | 0/0/1 | en cours |
+| `w04Dll` | 78.7 Ko | 2.5 % | 17/66 | 4.8 % | 0/0/1 | en cours |
 | `w05Dll` | 47.6 Ko | 100.0 % | 33/33 | 100.0 % | 1/0/0 | fait |
 | `w06Dll` | 35.2 Ko | 100.0 % | 47/47 | 100.0 % | 1/0/0 | fait |
 | `w07Dll` | 45.2 Ko | 2.9 % | 14/52 | 56.3 % | 0/1/0 | fait (E) |
