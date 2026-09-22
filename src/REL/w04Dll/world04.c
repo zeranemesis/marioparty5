@@ -454,6 +454,159 @@ static Point3d mb4ev_BubbleEmitPosTbl[13] = {
 static Point3d mb4ev_Puku2BubblePos = { -2800.0f, 300.0f, 1340.0f };
 static Point3d mb4ev_IrukaStartBubblePos = { -3320.0f, 1250.0f, -840.0f };
 
+static Point3d mb4ev_IrukaPath[0x96] = {
+    { -3260.0f, 1270.0f, -1300.0f },
+    { -3314.35596f, 1271.49194f, -1062.65002f },
+    { -3361.81396f, 1273.07104f, -823.849976f },
+    { -3388.625f, 1274.89795f, -581.98999f },
+    { -3371.47705f, 1277.198f, -340.119995f },
+    { -3256.05908f, 1280.26904f, -130.789993f },
+    { -3033.13403f, 1283.81702f, -40.7200012f },
+    { -2790.32593f, 1290.22998f, -31.25f },
+    { -2548.23389f, 1301.83203f, -53.0699997f },
+    { -2308.45801f, 1320.27295f, -90.9899979f },
+    { -2070.66602f, 1346.43396f, -136.220001f },
+    { -1834.73804f, 1382.23999f, -184.490005f },
+    { -1600.93396f, 1430.72205f, -231.970001f },
+    { -1370.95996f, 1498.83301f, -273.179993f },
+    { -1147.31396f, 1589.19995f, -304.779999f },
+    { -934.890015f, 1705.71802f, -325.480011f },
+    { -741.695984f, 1853.10803f, -334.649994f },
+    { -581.809021f, 2035.76404f, -332.869995f },
+    { -480.824005f, 2255.40894f, -322.570007f },
+    { -486.803986f, 2495.49805f, -311.0f },
+    { -598.448975f, 2709.59912f, -304.230011f },
+    { -775.072998f, 2875.73193f, -301.079987f },
+    { -992.903015f, 2982.42407f, -300.100006f },
+    { -1232.54602f, 3014.4541f, -300.0f },
+    { -1465.68298f, 2951.7041f, -300.0f },
+    { -1656.03296f, 2802.63501f, -300.0f },
+    { -1778.26904f, 2594.03809f, -300.0f },
+    { -1815.43799f, 2354.92603f, -299.859985f },
+    { -1782.31995f, 2114.521f, -294.420013f },
+    { -1709.82202f, 1883.67102f, -270.839996f },
+    { -1618.33301f, 1665.05505f, -216.880005f },
+    { -1523.15002f, 1464.39294f, -118.870003f },
+    { -1441.90906f, 1295.12195f, 34.6500015f },
+    { -1388.58398f, 1172.84204f, 237.660004f },
+    { -1349.71301f, 1087.34204f, 461.950012f },
+    { -1312.54199f, 1025.77197f, 694.47998f },
+    { -1265.66003f, 982.637024f, 929.400024f },
+    { -1201.72205f, 950.476013f, 1162.0f },
+    { -1105.72302f, 927.182983f, 1384.12f },
+    { -972.710999f, 908.887024f, 1586.59998f },
+    { -796.223022f, 896.968018f, 1753.19995f },
+    { -590.112f, 893.179016f, 1881.22998f },
+    { -360.731995f, 900.922974f, 1960.68994f },
+    { -120.084999f, 924.624023f, 1978.20996f },
+    { 113.210999f, 965.83197f, 1929.48999f },
+    { 319.14801f, 1023.98602f, 1815.43994f },
+    { 484.825989f, 1093.80505f, 1652.25f },
+    { 616.838013f, 1169.11597f, 1462.55005f },
+    { 711.023987f, 1247.89294f, 1252.81006f },
+    { 766.755981f, 1328.13696f, 1030.28003f },
+    { 769.36499f, 1407.25098f, 801.169983f },
+    { 701.752014f, 1479.53699f, 580.679993f },
+    { 544.817993f, 1532.55701f, 404.410004f },
+    { 332.466003f, 1562.61902f, 292.209991f },
+    { 96.3649979f, 1574.15405f, 238.679993f },
+    { -146.315002f, 1569.21204f, 243.779999f },
+    { -378.574005f, 1549.25403f, 309.720001f },
+    { -584.05603f, 1516.48096f, 434.100006f },
+    { -736.107971f, 1473.49805f, 618.219971f },
+    { -844.663025f, 1430.15906f, 831.179993f },
+    { -908.086975f, 1394.13794f, 1063.15002f },
+    { -939.289978f, 1369.422f, 1303.01001f },
+    { -935.546021f, 1363.927f, 1545.90002f },
+    { -895.226013f, 1386.526f, 1784.30005f },
+    { -813.15802f, 1451.02905f, 2002.51001f },
+    { -690.757019f, 1561.89099f, 2180.0f },
+    { -538.992981f, 1703.302f, 2306.19995f },
+    { -371.261993f, 1855.28699f, 2395.01001f },
+    { -189.231003f, 2007.48096f, 2448.86011f },
+    { 4.7329998f, 2151.21704f, 2478.55005f },
+    { 214.811005f, 2273.61206f, 2483.52002f },
+    { 443.549011f, 2351.7959f, 2462.75f },
+    { 680.211975f, 2366.32495f, 2412.1499f },
+    { 903.840027f, 2314.08911f, 2333.45996f },
+    { 1104.03601f, 2215.99292f, 2236.62012f },
+    { 1282.18201f, 2090.71094f, 2128.17993f },
+    { 1442.26404f, 1950.79004f, 2009.73999f },
+    { 1586.66699f, 1804.87598f, 1878.96997f },
+    { 1717.74304f, 1659.51794f, 1734.22998f },
+    { 1836.77698f, 1520.328f, 1573.87f },
+    { 1946.51697f, 1390.41895f, 1399.75f },
+    { 2047.89697f, 1271.84204f, 1212.90002f },
+    { 2138.13403f, 1164.87f, 1013.79999f },
+    { 2210.65308f, 1069.68896f, 801.960022f },
+    { 2259.0249f, 987.096985f, 578.400024f },
+    { 2265.7019f, 924.284973f, 343.839996f },
+    { 2226.3291f, 883.43103f, 107.870003f },
+    { 2123.89209f, 874.979004f, -111.650002f },
+    { 1976.25305f, 892.500977f, -303.209991f },
+    { 1799.47998f, 928.960022f, -465.929993f },
+    { 1606.77197f, 977.255981f, -606.390015f },
+    { 1405.26404f, 1032.89905f, -731.049988f },
+    { 1198.57898f, 1093.28894f, -844.599976f },
+    { 988.630981f, 1156.89099f, -950.169983f },
+    { 776.504028f, 1222.76196f, -1049.89001f },
+    { 562.848999f, 1290.297f, -1145.18994f },
+    { 347.854004f, 1359.36694f, -1236.29004f },
+    { 132.240005f, 1429.172f, -1325.33997f },
+    { -83.7539978f, 1499.43298f, -1413.09998f },
+    { -300.0f, 1570.0f, -1500.0f },
+    { -3100.0f, 0.0f, 3100.0f },
+    { -2979.59302f, 0.0f, 3150.93994f },
+    { -2857.96899f, 0.0f, 3198.87012f },
+    { -2734.0791f, 0.0f, 3240.51001f },
+    { -2607.09912f, 0.0f, 3271.30005f },
+    { -2477.20801f, 0.0f, 3284.82007f },
+    { -2347.12695f, 0.0f, 3273.98999f },
+    { -2220.46997f, 0.0f, 3241.87012f },
+    { -2096.55298f, 0.0f, 3200.19995f },
+    { -1972.03198f, 0.0f, 3160.44995f },
+    { -1843.82397f, 0.0f, 3136.07007f },
+    { -1713.65796f, 0.0f, 3141.51001f },
+    { -1586.71106f, 0.0f, 3172.18994f },
+    { -1462.31201f, 0.0f, 3212.38989f },
+    { -1336.74695f, 0.0f, 3248.62988f },
+    { -1207.46802f, 0.0f, 3266.19995f },
+    { -1077.776f, 0.0f, 3252.23999f },
+    { -951.905029f, 0.0f, 3217.07007f },
+    { -827.614014f, 0.0f, 3176.52002f },
+    { -701.098999f, 0.0f, 3144.0f },
+    { -571.112f, 0.0f, 3135.12988f },
+    { -442.428009f, 0.0f, 3156.55005f },
+    { -317.302002f, 0.0f, 3194.31006f },
+    { -192.744995f, 0.0f, 3234.01001f },
+    { -65.1809998f, 0.0f, 3262.05005f },
+    { 65.1809998f, 0.0f, 3262.05005f },
+    { 192.744995f, 0.0f, 3234.01001f },
+    { 317.300995f, 0.0f, 3194.31006f },
+    { 442.427002f, 0.0f, 3156.55005f },
+    { 571.112f, 0.0f, 3135.12988f },
+    { 701.098999f, 0.0f, 3144.0f },
+    { 827.614014f, 0.0f, 3176.52002f },
+    { 951.903992f, 0.0f, 3217.07007f },
+    { 1077.776f, 0.0f, 3252.23999f },
+    { 1207.46802f, 0.0f, 3266.19995f },
+    { 1336.74597f, 0.0f, 3248.62988f },
+    { 1462.31201f, 0.0f, 3212.38989f },
+    { 1586.71106f, 0.0f, 3172.18994f },
+    { 1713.65698f, 0.0f, 3141.51001f },
+    { 1843.823f, 0.0f, 3136.07007f },
+    { 1972.03198f, 0.0f, 3160.44995f },
+    { 2096.55298f, 0.0f, 3200.19995f },
+    { 2220.46997f, 0.0f, 3241.87012f },
+    { 2347.12598f, 0.0f, 3273.98999f },
+    { 2477.20703f, 0.0f, 3284.82007f },
+    { 2607.09912f, 0.0f, 3271.30005f },
+    { 2734.0791f, 0.0f, 3240.51001f },
+    { 2857.96899f, 0.0f, 3198.87012f },
+    { 2979.59302f, 0.0f, 3150.93994f },
+    { 3100.0f, 0.0f, 3100.0f },
+};
+
 /* Per-character head-bubble spawn offset/scale (indexed by GwPlayer[].charNo,
  * 13 characters). */
 static Point3d mb4ev_IrukaBubbleOfsTbl[13] = {
@@ -3637,5 +3790,311 @@ void MB4Ev_Kaisoo(s32 playerNo) {
     }
     if (catchModel != -1) {
         MBModelKill(catchModel);
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match (size and cinematic complexity make it impractical). "Iruka"
+ * (dolphin) board event: the player rides the dolphin model
+ * (mb4_Work[0x12]) along the fixed 0x96-point mb4ev_IrukaPath spline
+ * (using the already-matching path-speed/Hermite helpers written earlier
+ * this session) toward a nearby "raise chance" masu (falling back to the
+ * current masu). A small embedded phase state machine (var_r29 below)
+ * drives, on top of the spline ride: an initial 1-frame delay (phase 0),
+ * a jump-in arc from the player's start position onto the dolphin's back
+ * (phase 1, 24 frames), the actual ride with periodic head-bubbles
+ * (phase 2, switches to the dismount camera at 84% along the path), and
+ * a jump-out arc to the target masu (phase 3, 30 frames). After the ride,
+ * the player walks/turns to a nearby non-blocked link masu one more time
+ * (matching MB4_CoinDispUpdate/MB4Ev_Blow's masu-arrival pattern). */
+void MB4Ev_Iruka(s32 arg0) {
+    s16 masuId = GwPlayer[arg0].masuId;
+    Point3d playerStartPos;
+    s32 walkMotNo, jumpInMotNo, dismountMotNo;
+    s32 targetMasuId;
+    Point3d targetMasuPos;
+    Point3d segStart, segEnd;
+    s32 iPrev, iCur, iNext, iNextNext;
+    Point3d prevRot, curRot, nextRot;
+    f32 angleDiff;
+    Point3d segDir;
+    f32 horizDistSq, horizDist;
+    s32 phase;
+    s32 phaseTimer;
+    s32 flipFlag;
+    s32 splashSeId;
+    s32 i, j;
+    s32 stepCount;
+    f32 t;
+    Point3d ridePos;
+    Point3d rideRot;
+    Mtx rideMtx;
+    Point3d headOfs;
+    s32 backLinkMasuId;
+    MASU *masuP2;
+
+    MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    MBPlayerPosGet(arg0, &playerStartPos);
+    walkMotNo = MBPlayerMotionCreate(arg0, 0x8C003F);
+    jumpInMotNo = MBPlayerMotionCreate(arg0, 0x8C0062);
+    dismountMotNo = MBPlayerMotionCreate(arg0, 0x8C002B);
+
+    for (targetMasuId = 1; targetMasuId <= MBMasuNumGet(MASU_LAYER_DEFAULT); targetMasuId++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, targetMasuId) & MASU_FLAG_RAISECHANCE) {
+            break;
+        }
+    }
+    if (targetMasuId > MBMasuNumGet(MASU_LAYER_DEFAULT)) {
+        targetMasuId = masuId;
+    }
+    MBMasuPosGet(MASU_LAYER_DEFAULT, targetMasuId, &targetMasuPos);
+
+    MBModelAttrReset((s16) mb4_Work[0x12], 0x40000002U);
+    MBModelPosSetV((s16) mb4_Work[0x12], mb4ev_IrukaPath);
+    MBMotionNoSet((s16) mb4_Work[0x12], 1, 0x40000001U);
+    MBModelDispSet((s16) mb4_Work[0x12], TRUE);
+    MBCameraModelViewSet((s16) mb4_Work[0x12], NULL, NULL, 2000.0f, -1.0f, 0x3F);
+    HuPrcSleep(0x30);
+    MBModelAttrReset((s16) mb4_Work[8], 0x40000002U);
+    MBMotionTimeSet((s16) mb4_Work[8], 0.0f);
+    MBMotionSpeedSet((s16) mb4_Work[8], 1.0f);
+    mb4_Work[0x5A] = 0;
+    mb4_Work[0x5B] = 0x1E;
+    mb4_Work[0x5C] = -1;
+    MBCameraMotionWait();
+
+    PSVECSubtract(&mb4ev_IrukaPath[1], &mb4ev_IrukaPath[0], &segDir);
+    horizDistSq = (segDir.x * segDir.x) + (segDir.z * segDir.z);
+    horizDist = (horizDistSq > 0.0f) ? MB4_FastSqrt(horizDistSq) : horizDistSq;
+    curRot.x = (f32) ((180.0 * (atan2((f64) horizDist, (f64) segDir.y) / 3.141592653589793)) - 90.0);
+    curRot.y = (f32) (180.0 * (atan2((f64) segDir.x, (f64) segDir.z) / 3.141592653589793));
+    curRot.z = 0.0f;
+    rideRot = curRot;
+    prevRot = curRot;
+
+    flipFlag = 0;
+    phase = 0;
+    phaseTimer = 0;
+    splashSeId = -1;
+
+    for (i = 0; i < 0x63; i++) {
+        segStart = mb4ev_IrukaPath[i];
+        segEnd = mb4ev_IrukaPath[i + 1];
+        iPrev = i - 1;
+        iCur = i;
+        iNext = i + 1;
+        iNextNext = i + 2;
+        if (iPrev < 0) {
+            iPrev = i;
+        }
+        if (iNext > 0x63) {
+            iNext = 0x63;
+        }
+        if (iNextNext > 0x63) {
+            iNextNext = 0x63;
+        }
+        if (i != 0) {
+            prevRot = curRot;
+        } else {
+            prevRot = rideRot;
+        }
+
+        PSVECSubtract(&segEnd, &segStart, &segDir);
+        curRot.y = (f32) (180.0 * (atan2((f64) segDir.x, (f64) segDir.z) / 3.141592653589793));
+        horizDistSq = (segDir.x * segDir.x) + (segDir.z * segDir.z);
+        horizDist = (horizDistSq > 0.0f) ? MB4_FastSqrt(horizDistSq) : horizDistSq;
+        curRot.x = (f32) ((180.0 * (atan2((f64) horizDist, (f64) segDir.y) / 3.141592653589793)) - 90.0);
+        curRot.z = 0.0f;
+
+        if (flipFlag) {
+            curRot.y = curRot.y + 180.0f;
+            if (curRot.y > 180.0f) {
+                curRot.y -= 360.0f;
+            }
+            if (curRot.x == 0.0f) {
+                curRot.x = 180.0f;
+            } else if (curRot.x > 0.0f) {
+                curRot.x = 180.0f - curRot.x;
+            } else {
+                curRot.x = -180.0f - curRot.x;
+            }
+        }
+
+        angleDiff = (f32) fabs(MB4_AngleDiff(prevRot.y, curRot.y));
+        if (angleDiff > 90.0f) {
+            flipFlag ^= 1;
+            if (flipFlag) {
+                curRot.y = curRot.y + 180.0f;
+                if (curRot.y > 180.0f) {
+                    curRot.y -= 360.0f;
+                }
+                if (curRot.x == 0.0f) {
+                    curRot.x = 180.0f;
+                } else if (curRot.x > 0.0f) {
+                    curRot.x = 180.0f - curRot.x;
+                } else {
+                    curRot.x = -180.0f - curRot.x;
+                }
+            } else {
+                PSVECSubtract(&segEnd, &segStart, &segDir);
+                curRot.y = (f32) (180.0 * (atan2((f64) segDir.x, (f64) segDir.z) / 3.141592653589793));
+                horizDistSq = (segDir.x * segDir.x) + (segDir.z * segDir.z);
+                horizDist = (horizDistSq > 0.0f) ? MB4_FastSqrt(horizDistSq) : horizDistSq;
+                curRot.x = (f32) ((180.0 * (atan2((f64) horizDist, (f64) segDir.y) / 3.141592653589793)) - 90.0);
+                curRot.z = 0.0f;
+            }
+        }
+
+        stepCount = (s32) (MB4_PathNextTimeGet(&mb4ev_IrukaPath[iPrev], &mb4ev_IrukaPath[iCur], &mb4ev_IrukaPath[iNext], &mb4ev_IrukaPath[iNextNext]) / 30.000002f);
+        for (j = 1; j <= stepCount; j++) {
+            t = (f32) j / (f32) stepCount;
+            MB4_HermiteCalcV(&mb4ev_IrukaPath[iPrev], &mb4ev_IrukaPath[iCur], &mb4ev_IrukaPath[iNext], &mb4ev_IrukaPath[iNextNext], &ridePos, t);
+            nextRot.x = fn_1_C6D0(t, prevRot.x, curRot.x);
+            nextRot.y = fn_1_C6D0(t, prevRot.y, curRot.y);
+            nextRot.z = 0.0f;
+            rideRot.x = MB4_AngleLerp(nextRot.x, rideRot.x, 2.5f);
+            rideRot.y = MB4_AngleLerp(nextRot.y, rideRot.y, 2.5f);
+            rideRot.z = MB4_AngleLerp(nextRot.z, rideRot.z, 2.5f);
+
+            MBModelPosSetV((s16) mb4_Work[0x12], &ridePos);
+            MBModelRotSetV((s16) mb4_Work[0x12], &rideRot);
+            PSMTXIdentity(rideMtx);
+            mtxRotCat(rideMtx, rideRot.x, rideRot.y, rideRot.z);
+            headOfs.x = 0.0f;
+            headOfs.y = 30.000002f;
+            headOfs.z = 10.0f;
+            PSMTXMultVec(rideMtx, &headOfs, &headOfs);
+            PSVECAdd(&headOfs, &ridePos, &headOfs);
+
+            switch (phase) {
+            case 4:
+                break;
+            case 0:
+                if (i >= 1) {
+                    HuAudFXPlay(0x5F1);
+                    MBPlayerMotionNoShiftSet(arg0, walkMotNo, 0.0f, 8.0f, 0U);
+                    MBPlayerPosGet(arg0, &playerStartPos);
+                    phase += 1;
+                    phaseTimer = 0;
+                }
+                break;
+            case 1:
+                phaseTimer += 1;
+                t = (f32) phaseTimer / 24.0f;
+                PSVECSubtract(&headOfs, &playerStartPos, &segDir);
+                PSVECScale(&segDir, &segDir, t);
+                segDir.y = (f32) ((f64) segDir.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+                PSVECAdd(&playerStartPos, &segDir, &segDir);
+                MBPlayerPosSetV(arg0, &segDir);
+                MBPlayerRotSet(arg0, 0.0f, 360.0f * -t, 0.0f);
+                if (t == 1.0f) {
+                    splashSeId = HuAudFXPlay(0x5EA);
+                    MBPlayerPosFixEvent(arg0, targetMasuId, 0);
+                    MBPlayerMotionNoShiftSet(arg0, jumpInMotNo, 0.0f, 8.0f, 0x40000001U);
+                    MBPlayerPosSetV(arg0, &headOfs);
+                    phase += 1;
+                    phaseTimer = 0;
+                }
+                break;
+            case 2:
+                MBPlayerPosSetV(arg0, &headOfs);
+                MBPlayerRotSetV(arg0, &rideRot);
+                if (i >= 0x54) {
+                    MBCameraModelViewSet(MBPlayerModelGet(arg0), NULL, NULL, 2000.0f, -1.0f, 0x15);
+                    MBPlayerMotionNoShiftSet(arg0, dismountMotNo, 0.0f, 8.0f, 0U);
+                    MBPlayerPosGet(arg0, &playerStartPos);
+                    phase += 1;
+                    phaseTimer = 0;
+                }
+                break;
+            case 3:
+                phaseTimer += 1;
+                t = (f32) phaseTimer / 30.0f;
+                PSVECSubtract(&targetMasuPos, &playerStartPos, &segDir);
+                PSVECScale(&segDir, &segDir, t);
+                segDir.y = (f32) ((f64) segDir.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+                PSVECAdd(&playerStartPos, &segDir, &segDir);
+                MBPlayerPosSetV(arg0, &segDir);
+                MBPlayerRotSet(arg0, 360.0f * t, 0.0f, 0.0f);
+                if (t == 1.0f) {
+                    if (splashSeId != -1) {
+                        HuAudFXStop(splashSeId);
+                    }
+                    splashSeId = -1;
+                    MBPlayerMotionNoShiftSet(arg0, 6, 0.0f, 8.0f, 0x40000001U);
+                    MBPlayerPosSetV(arg0, &targetMasuPos);
+                    phase += 1;
+                    phaseTimer = 0;
+                }
+                break;
+            }
+
+            if (phase >= 1 && phase <= 3) {
+                Point3d bubbleOfs;
+                f32 bubbleZ;
+
+                for (j = 0; j < 3; j++) {
+                    bubbleOfs.x = 50.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                    bubbleOfs.y = 50.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                    bubbleZ = (0.007874016f * (f32) (frand() & 0x7F)) - 0.5f;
+                    bubbleOfs.z = 50.0f * bubbleZ;
+                    MB4Ev_IrukaBubbleCreate(arg0, &bubbleOfs, bubbleZ, 0.5f);
+                }
+            }
+            HuPrcVSleep();
+        }
+    }
+
+    MBPlayerPosSetV(arg0, &targetMasuPos);
+    MBPlayerRotSet(arg0, 0.0f, 0.0f, 0.0f);
+    GwPlayer[arg0].masuId = (s16) targetMasuId;
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    MBModelAttrSet((s16) mb4_Work[0x12], 0x40000002U);
+    MBModelDispSet((s16) mb4_Work[0x12], FALSE);
+    HuPrcSleep(0x3C);
+
+    masuP2 = MBMasuGet(MASU_LAYER_DEFAULT, targetMasuId);
+    for (i = 0; i < masuP2->linkNum; i++) {
+        if ((MBMasuFlagGet(MASU_LAYER_DEFAULT, masuP2->linkTbl[i]) & MBBranchFlagGet()) == 0) {
+            break;
+        }
+    }
+    if (i < masuP2->linkNum) {
+        backLinkMasuId = masuP2->linkTbl[i];
+        MBMasuPosGet(MASU_LAYER_DEFAULT, backLinkMasuId, &segEnd);
+        MBPlayerPosGet(arg0, &segStart);
+    } else {
+        MBPlayerPosGet(arg0, &segStart);
+        segEnd = segStart;
+    }
+    PSVECSubtract(&segEnd, &segStart, &segDir);
+    MBPlayerRotateStart(arg0, (s16) (180.0 * (atan2((f64) segDir.x, (f64) segDir.z) / 3.141592653589793)), 0xF);
+    while (!MBPlayerRotateCheck(arg0)) {
+        HuPrcVSleep();
+    }
+    MBPlayerPosFixPlayer(arg0, backLinkMasuId, 0);
+    MBPlayerMotionNoShiftSet(arg0, 3, 0.0f, 8.0f, 0U);
+    for (i = 0; i <= 30; i++) {
+        t = (f32) i / 30.0f;
+        segDir.x = segStart.x + (t * (segEnd.x - segStart.x));
+        segDir.y = segStart.y + (t * (segEnd.y - segStart.y));
+        segDir.z = segStart.z + (t * (segEnd.z - segStart.z));
+        MBPlayerPosSetV(arg0, &segDir);
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    GwPlayer[arg0].masuId = (s16) backLinkMasuId;
+    MBModelAttrSet((s16) mb4_Work[8], 0x40000002U);
+    MBMotionTimeSet((s16) mb4_Work[8], 0.0f);
+    MBMotionSpeedSet((s16) mb4_Work[8], 0.0f);
+
+    if (walkMotNo != -1) {
+        MBPlayerMotionKill(arg0, walkMotNo);
+    }
+    if (jumpInMotNo != -1) {
+        MBPlayerMotionKill(arg0, jumpInMotNo);
+    }
+    if (dismountMotNo != -1) {
+        MBPlayerMotionKill(arg0, dismountMotNo);
     }
 }
