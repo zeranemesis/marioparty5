@@ -34,7 +34,7 @@ extern s16 CapsuleMdlId;
 extern s16 CharMotId;
 extern s16 CharMdlId;
 extern s16 PResDiff;
-extern u8 LanguageNo;
+extern s8 LanguageNo;
 extern OMOBJMAN *objman;
 
 extern f32 CapsuleGlowTPLvl;

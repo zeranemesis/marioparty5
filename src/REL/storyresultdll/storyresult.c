@@ -35,16 +35,18 @@ s16 CapsuleMdlId;
 s16 CharMotId;
 s16 CharMdlId;
 s16 PResDiff;
-u8 LanguageNo;
+s8 LanguageNo;
 OMOBJMAN *objman;
 static OMOBJ *outViewObj;
 
 // NONMATCHING: register allocation differs in a couple spots (LanguageNo load, epilogue restore order)
 void ObjectSetup(void) {
+    u8 languageNo;
     OSReport("******* PRES ObjectSetup *********\n");
     objman = omInitObjMan(50, 8192);
     omSysPauseEnable(FALSE);
-    LanguageNo = GwCommon.languageNo;
+    languageNo = GwCommon.languageNo;
+    LanguageNo = languageNo;
     if (GwCommon.storyNo != -1 && GWPlayerCoinGet(0) <= 0) {
         omOvlGotoEx(DLL_storymodedll, TRUE, 0, 0);
         return;
