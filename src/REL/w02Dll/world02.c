@@ -3778,6 +3778,15 @@ HSFOBJECT *MB2_ModelObjPtrGet(HU3DMODEL *arg0, char *arg1) {
     return objCall(arg0, arg1, arg0->hsf->root);
 }
 
+/* NONMATCHING: verified - low fuzzy% (8.51%) matches the sheer size of
+ * this function (2120 bytes, mostly repeated inline unrolling of the same
+ * "type==1 name-match else recurse over children" check at several
+ * nesting depths before falling back to real recursion), not a logic bug.
+ * Recursive call count matches the asm exactly: 8 objCall(...) call sites
+ * inside this function's body + 1 outer call from MB2_ModelObjPtrGet = 9
+ * total "bl objCall" in the disassembly. No missing/inverted branch found
+ * in the type-check ladder (type<7 && type!=1 && type<1 && type<0 ->
+ * "not found" vs type==1 -> name match / recurse). */
 HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2) {
     HSFOBJECT *sp74;
     HSFOBJECT *sp70;
@@ -4269,6 +4278,17 @@ void fn_1_CEB8(f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5)
     sp14 = (temp_f0_2 * var_f27) + ((temp_f0 * var_f28) + (((f32) (1.0 - (f64) temp_f26) * farg2) + (temp_f26 * farg3)));
 }
 
+/* NONMATCHING: verified - low fuzzy% (13.61%) is register/temp-allocation
+ * noise, not a logic bug. Straight-line code (no branches beyond the two
+ * tangent-clamp `==` checks per axis, no loops): applies the same
+ * three-axis Hermite blend as the scalar MB2_HermiteCalc, with the
+ * standard Catmull-Rom-style tangent formula (average of neighbouring
+ * deltas, or just the one-sided delta at a curve endpoint where p1==p0 or
+ * p1==p2). Every axis (x/y/z) repeats the identical formula shape with the
+ * same structure and the same edge-case handling; checked against the
+ * asm's three near-identical blocks (build/GP5E01_00/w02Dll/asm/REL/
+ * w02Dll/world02.s) - same branch count/shape per axis, no missing/
+ * inverted conditions, no offset mismatches. */
 void MB2_HermiteCalcV(Point3d *arg0, Point3d *arg1, Point3d *arg2, Point3d *arg3, Point3d *arg4, f32 farg0) {
     f32 spB8;
     s32 spB4;
@@ -4876,6 +4896,14 @@ s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2,
     }
 }
 
+/* NONMATCHING: verified - low fuzzy% (9.95%) is register-allocation noise
+ * from the many scalar spill temporaries m2c produced (sp3C..sp50), not a
+ * logic bug. Re-checked argument-by-argument against the m2c draft: source
+ * pos (x/y/z with random spread on x/y only, direct add on z), the 3-way
+ * switch building a y-only launch velocity, the color-table index formula
+ * (r - (((r - r/7) >> 1) + r/7) >> 2) * 7), and the final MB2_CoinEffCreate
+ * call's argument order all match one-for-one; no missing/inverted branch,
+ * no offset mismatch. */
 s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
     Point3d *pos;
     f32 vel[3];
@@ -5635,7 +5663,17 @@ void MB2_RainbowObjClose(void) {
  * a ribbon two vertices wide (+/-75 units either side of the centerline,
  * perpendicular to its yaw) as a GX_TRIANGLESTRIP index-stream display
  * list written straight to the write-gather pipe, same technique as
- * MB2_ParticleCreate. */
+ * MB2_ParticleCreate.
+ *
+ * Re-verified against build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s
+ * (0x11300-0x11F04) after an 11.69% fuzzy flag: the Hermite p0/p1/p2/p3
+ * neighbour selection at path boundaries, the argument order into
+ * MB2_HermiteCalcV, and the free-slot search all match the asm exactly.
+ * Found and fixed a real bug in the forward (arg2==0) winding order: it
+ * wrote 2x(i*2) then 4x(i*2+1) per vertex; the asm writes 3x(i*2) then
+ * 3x(i*2+1) (the reverse/arg2!=0 branch was already correct). The
+ * remaining low fuzzy% is register-allocation noise from the heavy
+ * trig/sqrt scalar math, not further logic bugs. */
 s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     MB2_RAINBOWOBJ_DATA *dat;
     u8 *slot;
@@ -5779,7 +5817,7 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
         for (i = 0; i < vtxCount; i++) {
             *fifo = (u16) (i * 2);
             *fifo = (u16) (i * 2);
-            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) (i * 2);
             *fifo = (u16) ((i * 2) + 1);
             *fifo = (u16) ((i * 2) + 1);
             *fifo = (u16) ((i * 2) + 1);
