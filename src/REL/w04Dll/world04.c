@@ -45,6 +45,7 @@ void MB4_BubbleEffClose(void);
 void MB4_SakanaClose(void);
 s32 MB4_CoinNumGet(void);
 s32 MB4_CoinEffNumGet(void);
+void MB4_CoinEffBlendModeSet(u8 mode);
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio);
 void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ);
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z);
@@ -835,6 +836,18 @@ s32 MB4_CoinNumGet(void) {
         }
     }
     return count;
+}
+
+/* mb4_CoinEffObj->data is {s32 hu3dModelIdx; s32 count;}; that model's
+ * hookData points to a coin-sparkle particle manager whose +0x20 byte is
+ * the blend mode (see MB4_CoinEffCreate's unk20 for the same struct).
+ * NONMATCHING: register allocation differs (21%). */
+void MB4_CoinEffBlendModeSet(u8 mode) {
+    if (mb4_CoinEffObj != NULL) {
+        s32 modelIdx = *(s32 *) mb4_CoinEffObj->data;
+        u8 *mgr = (u8 *) Hu3DData[modelIdx].hookData;
+        *(mgr + 0x20) = mode;
+    }
 }
 
 s32 MB4_CoinEffNumGet(void) {
