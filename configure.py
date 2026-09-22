@@ -1911,9 +1911,9 @@ config.libs = [
     Rel(
         "safDll",
         objects={
-            Object(NonMatching, "REL/safDll/safanim.c"),
-            Object(NonMatching, "REL/safDll/saf.c"),
-            Object(NonMatching, "REL/safDll/safmotion.c"),
+            Object(Equivalent, "REL/safDll/safanim.c"),
+            Object(Equivalent, "REL/safDll/saf.c"),
+            Object(Equivalent, "REL/safDll/safmotion.c"),
         },
     ),
     Rel(
