@@ -43,6 +43,11 @@ void MB4_CoinClose(void);
 void MB4_CoinEffClose(void);
 void MB4_BubbleEffClose(void);
 void MB4_SakanaClose(void);
+s32 MB4_CoinNumGet(void);
+s32 MB4_CoinEffNumGet(void);
+void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio);
+void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ);
+void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z);
 static void MB4Ev_Kihon(s32 playerNo);
 static void MB4Ev_Iruka(s32 playerNo);
 static void MB4Ev_Blow(s32 playerNo);
@@ -811,6 +816,63 @@ void MB4_SakanaClose(void) {
         Hu3DModelKill((s16) MB4W_S32(0x7F78));
     }
     MB4W_S32(0x7F78) = -1;
+}
+
+/* NONMATCHING: register allocation differs (63% match). */
+s32 MB4_CoinNumGet(void) {
+    u8 *coinP;
+    s32 i;
+    s32 count;
+
+    count = 0;
+    if (mb4_CoinObj != NULL) {
+        coinP = (u8 *) mb4_CoinObj->data;
+        for (i = 0; i < 0x20; i++) {
+            if (*(s32 *) (coinP + 8) != 0) {
+                count++;
+            }
+            coinP += 0x88;
+        }
+    }
+    return count;
+}
+
+s32 MB4_CoinEffNumGet(void) {
+    OMOBJ *obj = mb4_CoinEffObj;
+    if (mb4_CoinEffObj == NULL) {
+        return 0;
+    }
+    return ((s32 *) obj->data)[1];
+}
+
+/* mb4_Work[0x1FDD] (byte 0x7F74): sakana model id (see MB4_SakanaClose).
+ * Hu3DData[id]+0x120 holds a pointer to the per-part array (stride 0x5C,
+ * 92 bytes) written by MB4_SakanaInit - not yet named as a struct since
+ * that function (2988 bytes) hasn't been decompiled yet. */
+static u8 *MB4_SakanaPartBase(s32 partIdx) {
+    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
+    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
+    return arrayBase + (partIdx * 0x5C);
+}
+
+/* NONMATCHING: register allocation for the part-base pointer differs
+ * across all three of these (~40-70% match). */
+void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio) {
+    *(f32 *) (MB4_SakanaPartBase(partIdx) + 0x2C) = lenRatio * 100.0f;
+}
+
+void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ) {
+    u8 *part = MB4_SakanaPartBase(partIdx);
+    *(f32 *) (part + 0x30) = offX;
+    *(f32 *) (part + 0x34) = offY - 90.0f;
+    *(f32 *) (part + 0x38) = offZ;
+}
+
+void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z) {
+    u8 *part = MB4_SakanaPartBase(partIdx);
+    *(f32 *) (part + 0x3C) = x;
+    *(f32 *) (part + 0x40) = y;
+    *(f32 *) (part + 0x44) = z;
 }
 
 /* NONMATCHING: MWCC keeps the literal args to the nested Hu3DGLightCreate()
