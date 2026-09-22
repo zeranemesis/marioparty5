@@ -59,6 +59,8 @@ void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ);
 void MB4_SakanaOffsetInit(void);
 void MB4_SakanaPosInit(void);
 s32 MB4_SakanaCreate(s16 type);
+void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3);
+void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx);
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z);
 static void MB4Ev_Kihon(s32 playerNo);
 static void MB4Ev_Iruka(s32 playerNo);
@@ -71,7 +73,6 @@ static f32 fn_1_DC9C(Point3d *pPrev, Point3d *p1, Point3d *pNext, f32 t);
 void MB4_BubbleEffInit(void);
 void MB4_BubbleEffUpdate(OMOBJ *obj);
 s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale);
-static void MB4_SakanaInit(s32 timer, s32 arg1, s32 arg2, f32 phase);
 static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
 static void MB4_MainObjUpdate(OMOBJ *obj);
 static void MB4_LightSet(void);
@@ -198,6 +199,40 @@ typedef struct MB4SakanaSpecies_s {
     s32 flag1;
     s32 flag2;
 } MB4SAKANASPECIES;
+
+/* Per-fish swim record (size 0x90 = 144 bytes), one of up to 16 per
+ * species inside mb4_Work + 0x174 + species*0x900 (see MB4_SakanaInit).
+ * Either a real linked model (modelId != -1, particleIdx == -1) or a
+ * shared MB4PARTICLE slot (modelId == -1, particleIdx = index set via
+ * MB4_SakanaPosSet/OffsetSet/LenSet). */
+typedef struct MB4SakanaFish_s {
+    s32 modelId;      /* 0x00 */
+    s32 particleIdx;  /* 0x04 */
+    f32 rand1;        /* 0x08 */
+    f32 rand2;        /* 0x0C */
+    s32 unk10;        /* 0x10 */
+    s32 unk14;        /* 0x14 */
+    s32 timer18;      /* 0x18 */
+    s32 timer1C;       /* 0x1C */
+    s32 timer20;        /* 0x20 */
+    s32 timer24;          /* 0x24 */
+    s32 pathAltFlag;        /* 0x28 */
+    s32 unk2C;                /* 0x2C, always 1 */
+    Point3d speciesPos;         /* 0x30 */
+    Point3d speciesRange;         /* 0x3C */
+    Point3d posA;                  /* 0x48, random point in swim area */
+    Point3d posB;                   /* 0x54, random point in swim area (used as current pos) */
+    Point3d dir;                      /* 0x60, random normalized direction */
+    f32 pitch;                         /* 0x6C */
+    f32 yaw;                            /* 0x70 */
+    f32 roll;                            /* 0x74 */
+    f32 prevPitch;                        /* 0x78 */
+    f32 prevYaw;                           /* 0x7C */
+    f32 prevRoll;                           /* 0x80 */
+    f32 speed;                               /* 0x84 */
+    f32 scale;                                /* 0x88 */
+    f32 unk8C;                                 /* 0x8C */
+} MB4SAKANAFISH; /* size 0x90 */
 
 static Point3d mb4ev_Puku2EmiterPos = { -2800.0f, 300.0f, 1340.0f };
 
@@ -1568,6 +1603,131 @@ s32 MB4_SakanaCreate(s16 type) {
     p->color[1] = 0xFF;
     p->color[0] = 0xFF;
     return i;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Creates the sakana particle effect (up to 128 fish parts) and,
+ * for each of the 14 species, up to `count` MB4SAKANAFISH swim records:
+ * a random 1-in-4 chance of a small real HSF model instead of the shared
+ * particle billboard, each seeded with a random point/direction inside
+ * the species' swim area (pos +/- range) and per-fish timers/speed. */
+void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3) {
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
+    MB4SAKANAFISH *fish;
+    MB4SAKANASPECIES *species;
+    s32 s, f, i;
+    s32 modelKind;
+    f32 dirMagSq, dirMag;
+
+    MB4W_S32(0x7F74) = MBEffCreate(HuSprAnimRead(HuDataReadNum(0xD10035, 0x10000000)), 0x80);
+    Hu3DModelLayerSet((s16) MB4W_S32(0x7F74), 1);
+    mgr = (MB4COINEFFMGR *) Hu3DData[MB4W_S32(0x7F74)].hookData;
+    p = mgr->particles;
+    for (i = 0; i < mgr->count; i++) {
+        p->sakanaFlags &= ~0x80;
+        p++;
+    }
+    MBEffAttrSet((s16) MB4W_S32(0x7F74), 0x10U);
+
+    memset(&mb4_Work[0x5D], 0, 0x7E00U);
+    for (s = 0; s < 14; s++) {
+        for (f = 0; f < 0x10; f++) {
+            fish = (MB4SAKANAFISH *) ((u8 *) mb4_Work + 0x174 + (s * 0x900) + (f * 0x90));
+            fish->modelId = -1;
+        }
+    }
+
+    for (s = 0; s < 14; s++) {
+        species = &mb4ev_SakanaTbl[s];
+        fish = (MB4SAKANAFISH *) ((u8 *) mb4_Work + 0x174 + (s * 0x900));
+        for (f = 0; f < species->count; f++) {
+            if (species->flag1 != 0) {
+                fish->particleIdx = MB4_SakanaCreate((s16) (frand() & 0x7FFF & 3));
+                fish->modelId = -1;
+            } else {
+                modelKind = frand() & 0x7FFF & 3;
+                switch (modelKind) {
+                case 0:
+                    fish->modelId = MBModelCreate(0xD1001A, NULL, TRUE);
+                    break;
+                case 1:
+                    fish->modelId = MBModelCreate(0xD1001B, NULL, TRUE);
+                    break;
+                case 2:
+                    fish->modelId = MBModelCreate(0xD1001C, NULL, TRUE);
+                    break;
+                default:
+                    fish->modelId = MBModelCreate(0xD1001D, NULL, TRUE);
+                    break;
+                }
+                MBModelLayerSet((s16) fish->modelId, 2U);
+                fish->particleIdx = -1;
+            }
+            fish->rand1 = (f32) frand();
+            fish->rand2 = (f32) frand();
+            fish->unk10 = 0;
+            fish->unk14 = 0;
+            fish->timer18 = (s32) (60.0f + (2.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+            fish->timer1C = (s32) (10.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            fish->timer20 = (s32) (10.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            fish->timer24 = (s32) (120.0f + (2.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+            switch (species->flag2) {
+            case 0:
+                fish->pathAltFlag = 0;
+                break;
+            case 1:
+                fish->pathAltFlag = f & 1;
+                break;
+            default:
+                fish->pathAltFlag = 1;
+                break;
+            }
+            fish->unk2C = 1;
+            fish->speciesPos = species->pos;
+            fish->speciesRange = species->range;
+            fish->posA.x = fish->speciesPos.x + (fish->speciesRange.x * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            fish->posA.y = fish->speciesPos.y + (fish->speciesRange.y * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            fish->posA.z = fish->speciesPos.z + (fish->speciesRange.z * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            fish->posB.x = fish->speciesPos.x + (fish->speciesRange.x * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            fish->posB.y = fish->speciesPos.y + (fish->speciesRange.y * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            fish->posB.z = fish->speciesPos.z + (fish->speciesRange.z * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            fish->dir.x = (0.007874016f * (f32) (frand() & 0x7F)) - 0.5f;
+            fish->dir.y = (0.007874016f * (f32) (frand() & 0x7F)) - 0.5f;
+            fish->dir.z = (0.007874016f * (f32) (frand() & 0x7F)) - 0.5f;
+            PSVECNormalize(&fish->dir, &fish->dir);
+            dirMagSq = (fish->dir.x * fish->dir.x) + (fish->dir.z * fish->dir.z);
+            if (dirMagSq > 0.0f) {
+                dirMag = MB4_FastSqrt(dirMagSq);
+            } else {
+                dirMag = dirMagSq;
+            }
+            fish->pitch = (f32) (180.0 * (atan2((f64) dirMag, (f64) fish->dir.y) / 3.141592653589793));
+            fish->yaw = (f32) (180.0 * (atan2((f64) fish->dir.x, (f64) fish->dir.z) / 3.141592653589793));
+            fish->roll = 0.0f;
+            fish->prevPitch = fish->pitch;
+            fish->prevYaw = fish->yaw;
+            fish->prevRoll = fish->roll;
+            fish->speed = 2.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+            fish->scale = 0.25f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)));
+            fish->unk8C = 0.25f + (0.25f * (0.007874016f * (f32) (frand() & 0x7F)));
+            if (fish->modelId != -1) {
+                MBModelPosSetV((s16) fish->modelId, &fish->posB);
+                MBModelRotSetV((s16) fish->modelId, (Point3d *) &fish->pitch);
+                MBModelScaleSet((s16) fish->modelId, fish->scale, fish->scale, fish->scale);
+                MBModelLayerSet((s16) fish->modelId, 2U);
+            } else {
+                MB4_SakanaPosSet(fish->particleIdx, fish->posB.x, fish->posB.y, fish->posB.z);
+                MB4_SakanaOffsetSet(fish->particleIdx, fish->pitch, fish->yaw, fish->roll);
+                MB4_SakanaLenSet(fish->particleIdx, fish->scale);
+            }
+            fish += 1;
+        }
+    }
+
+    MB4W_S32(0x7F78) = Hu3DHookFuncCreate((HU3DMODELHOOK) MB4_SakanaDraw);
+    Hu3DModelCameraSet((s16) MB4W_S32(0x7F78), 1U);
+    Hu3DModelLayerSet((s16) MB4W_S32(0x7F78), 7);
 }
 
 /* NONMATCHING: MWCC keeps the literal args to the nested Hu3DGLightCreate()
