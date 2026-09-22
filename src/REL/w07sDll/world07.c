@@ -383,10 +383,14 @@ static void MB7_LightSet(void) {
 
 /* ---------------------------- masu event hook ---------------------------- */
 
+/* NONMATCHING: cmplwi vs cmpwi on the flag-bit test, and a trailing
+ * `li r3,0` the original schedules before the MBMasuGet call instead of
+ * at the end (90% match); logic identical */
 static int MB7Ev_MasuHatena(int playerNo) {
     MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
+    u16 flag = (u16) masuP->flag;
 
-    if (masuP->flag & 0x80) {
+    if ((flag & 0x80) != 0) {
         MB7Ev_Hou(playerNo);
     }
     return 0;
@@ -431,23 +435,26 @@ static void MB7Ev_KoopaInit(u16 arg0) {
 }
 #pragma dont_inline reset
 
-/* NONMATCHING: register allocation order differs */
+/* NONMATCHING: register allocation order differs. #pragma dont_inline:
+ * the original keeps this out-of-line even at its `(0)` constant-arg
+ * call site in MB7Ev_KoopaCreate (confirmed via `bl
+ * MB7Ev_KoopaMotionCreate` there); without the pragma MWCC's -inline
+ * auto inlines it since motionIdx is a compile-time constant. */
+#pragma dont_inline on
 static void MB7Ev_KoopaMotionCreate(s32 motionIdx) {
     u8 *base = (u8 *) mb7_Work + 0x54;
 
     if (*(s32 *) (base + 0x38 + (motionIdx * 4)) < 0) {
-        s16 koopaMdlId = (s16) *(s32 *) (base + 0x28);
-        *(s32 *) (base + 0x38 + (motionIdx * 4)) = MBMotionCreate(koopaMdlId, mb7ev_KupaMotFileTbl[motionIdx]);
+        *(s32 *) (base + 0x38 + (motionIdx * 4)) = MBMotionCreate((s16) *(s32 *) (base + 0x28), mb7ev_KupaMotFileTbl[motionIdx]);
     }
 }
+#pragma dont_inline reset
 
 static void MB7Ev_KoopaCreate(void) {
     u8 *base = (u8 *) mb7_Work + 0x54;
-    s16 koopaMdlId;
 
     MBDataAsyncWait(*(s32 *) (base + 0x60));
-    koopaMdlId = (s16) MBModelCreate(0x100000, NULL, TRUE);
-    *(s32 *) (base + 0x28) = koopaMdlId;
+    *(s32 *) (base + 0x28) = (s16) MBModelCreate(0x100000, NULL, TRUE);
     MBModelDispSet((s16) *(s32 *) (base + 0x28), FALSE);
     HuPrcVSleep();
     MB7Ev_KoopaMotionCreate(0);
@@ -463,31 +470,27 @@ static void MB7Ev_KoopaDataClose(void) {
 static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
     u8 *base = (u8 *) mb7_Work + 0x54;
     s32 attr = 0;
-    s16 koopaMdlId;
 
-    if (loop == 0 || motionIdx != *(s32 *) (base + 0x64)) {
-        if (loop) {
-            attr = 0x40000001;
-        }
-        koopaMdlId = (s16) *(s32 *) (base + 0x28);
-        MBMotionNoSet(koopaMdlId, (s16) *(s32 *) (base + 0x38 + (motionIdx * 4)), attr);
-        *(s32 *) (base + 0x64) = motionIdx;
+    if (loop != 0) {
+        attr = 0x40000001;
     }
+    if (motionIdx != *(s32 *) (base + 0x64)) {
+        MBMotionNoSet((s16) *(s32 *) (base + 0x28), *(s32 *) (base + 0x38 + (motionIdx * 4)), attr);
+    }
+    *(s32 *) (base + 0x64) = motionIdx;
 }
 
 static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop) {
     u8 *base = (u8 *) mb7_Work + 0x54;
     s32 attr = 0;
-    s16 koopaMdlId;
 
-    if (loop == 0 || motionIdx != *(s32 *) (base + 0x64)) {
-        if (loop) {
-            attr = 0x40000001;
-        }
-        koopaMdlId = (s16) *(s32 *) (base + 0x28);
-        MBMotionShiftSet(koopaMdlId, (s16) *(s32 *) (base + 0x38 + (motionIdx * 4)), 0.0f, 8.0f, attr);
-        *(s32 *) (base + 0x64) = motionIdx;
+    if (loop != 0) {
+        attr = 0x40000001;
     }
+    if (motionIdx != *(s32 *) (base + 0x64)) {
+        MBMotionShiftSet((s16) *(s32 *) (base + 0x28), *(s32 *) (base + 0x38 + (motionIdx * 4)), 0.0f, 8.0f, attr);
+    }
+    *(s32 *) (base + 0x64) = motionIdx;
 }
 
 static int MB7Ev_KoopaMotionCheck(void) {
@@ -499,9 +502,11 @@ static int MB7Ev_KoopaMotionCheck(void) {
     return MBMotionEndCheck((s16) *(s32 *) (base + 0x28));
 }
 
+/* NONMATCHING: base-pointer and loop-index registers swapped (r30/r31)
+ * (69.70% match); logic identical */
 static void MB7Ev_KoopaClose(void) {
-    u8 *base = (u8 *) mb7_Work + 0x54;
     s32 i;
+    u8 *base = (u8 *) mb7_Work + 0x54;
 
     for (i = 0; i < 4; i++) {
         if (*(s32 *) (base + 0x28 + (i * 4)) >= 0) {
