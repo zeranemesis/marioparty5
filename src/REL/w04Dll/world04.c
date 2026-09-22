@@ -48,6 +48,7 @@ static void MB4Ev_Iruka(s32 playerNo);
 static void MB4Ev_Blow(s32 playerNo);
 static void MB4Ev_Kaisoo(s32 playerNo);
 static s16 PathCheck(s16 masuId, s16 depth);
+static f32 MB4_PathTimeGet(Point3d *p0, Point3d *p1, Point3d *p2, Point3d *p3, f32 t);
 
 static s16 mb4_PathValidF;
 static s16 mb4_PathLen;
@@ -273,6 +274,30 @@ static s16 PathCheck(s16 masuId, s16 depth) {
     return found ? 1 : 0;
 }
 
+/* Quadratic Bezier: B(t) = p0*(1-t)^2 + 2*p1*(1-t)*t + p2*t^2 */
+f32 MB4_BezierCalc(f32 t, f32 p0, f32 p1, f32 p2) {
+    f32 omt = (f32) (1.0 - (f64) t);
+    f32 result = (f32) ((f64) (p2 * (t * t)) + ((f64) (p0 * (omt * omt)) + (2.0 * (f64) (p1 * (omt * t)))));
+    return result;
+}
+
+/* Cubic Hermite basis weights for parameter t, one output per blend term. */
+void MB4_HermiteCalc(f32 *w0, f32 *w1, f32 *w2, f32 *w3, f32 t) {
+    f32 t2 = t * t;
+    f32 t3 = t * t2;
+    f32 h1 = (f32) (((3.0 * (f64) t2) - (f64) t3) - (f64) t3);
+    *w0 = (f32) (1.0 - (f64) h1);
+    *w1 = h1;
+    *w2 = t + ((t3 - t2) - t2);
+    *w3 = t3 - t2;
+}
+
+/* NONMATCHING: argument-reload ordering around the trailing 1.0f literal
+ * differs (37% match); this is a straight forwarding call. */
+f32 MB4_PathNextTimeGet(Point3d *p0, Point3d *p1, Point3d *p2, Point3d *p3) {
+    return MB4_PathTimeGet(p0, p1, p2, p3, 1.0f);
+}
+
 s16 MB4_PathLenGet(s16 masuId, s16 depthLimit) {
     mb4_PathMasuNo = depthLimit;
     mb4_PathLen = depthLimit;
@@ -285,4 +310,16 @@ s16 MB4_PathLenGet(s16 masuId, s16 depthLimit) {
 }
 
 void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d) {
+}
+
+/* NONMATCHING: register allocation for the Hu3DData index differs (48%). */
+void MB4_ModelMtxSet(s16 modelId, Mtx mtx) {
+    s16 hu3dModelId = (s16) MBModelIdGet(modelId);
+    PSMTXCopy(mtx, Hu3DData[hu3dModelId].mtx);
+}
+
+/* NONMATCHING: register allocation for the Hu3DData index differs (46%). */
+void MB4_PlayerMtxSet(s16 playerNo, Mtx mtx) {
+    s16 hu3dModelId = (s16) MBModelIdGet(MBPlayerModelGet(playerNo));
+    PSMTXCopy(mtx, Hu3DData[hu3dModelId].mtx);
 }
