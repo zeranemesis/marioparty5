@@ -3293,22 +3293,87 @@ s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0) {
     return i;
 }
 
+/* NOTE (asm-verified): Hu3DData[modelId].hookData here is NOT an MBEFFECT -
+ * MB2_ParticleCreate (below) allocates it as a bespoke 0x54-byte header via
+ * Hu3DHookFuncCreate(ParticleDraw)/HuMemDirectMallocNum, not MBEffCreate.
+ * Header field offsets confirmed from build/GP5E01_00/w02Dll/asm/REL/w02Dll/
+ * world02.s (MB2_CoinEffUpdate/NumGet/BlendModeSet): +0x20/+0x21/+0x22/+0x23
+ * zeroed flags, +0x26 (s16) live particle count, +0x38 source ANIMDATA*,
+ * +0x3C particle array (stride 0x58, confirmed by "addi r31,r31,0x58" in
+ * MB2_CoinEffUpdate - NOT sizeof(MBEFFECTDATA)=0x5C). mb2_CoinEffObj->data
+ * is the separate, small {modelId s32; count s32; ANIMDATA *anim;} header
+ * (offsets confirmed by MB2_CoinEffNumGet/BlendModeSet: ->data+0x4 = count). */
+typedef struct MB2CoinEffData_s {
+    s32 modelId; /* 0x00 */
+    s32 count;   /* 0x04 */
+    ANIMDATA *anim; /* 0x08 */
+} MB2_COINEFF_DATA; /* size 0xC */
+
 void MB2_CoinEffInit(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    OMOBJ *obj;
+    MB2_COINEFF_DATA *dat;
+    ANIMDATA *anim;
+    s16 modelId;
+    void *hdr;
+
+    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinEffUpdate);
+    mb2_CoinEffObj = obj;
+    dat = (MB2_COINEFF_DATA *) HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_COINEFF_DATA), 0x10000000U);
+    obj->data = dat;
+    memset(dat, 0, sizeof(MB2_COINEFF_DATA));
+    anim = HuSprAnimRead(HuDataReadNum(0xB0042, 0x10000000));
+    dat->anim = anim;
+    modelId = MB2_ParticleCreate(anim, 0x100);
+    dat->modelId = modelId;
+    Hu3DModelLayerSet(modelId, 3);
+    dat->count = 0;
+    hdr = Hu3DData[modelId].hookData;
+    *(u8 *) ((u8 *) hdr + 0x20) = 1;
+    *(u8 *) ((u8 *) hdr + 0x22) = 2;
 }
 
 void MB2_CoinEffUpdate(OMOBJ *obj) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    MB2_COINEFF_DATA *dat;
+    void *hdr;
+    u8 *p;
+    s32 i;
+
+    dat = (MB2_COINEFF_DATA *) obj->data;
+    if (MBKillCheck() || (mb2_CoinEffObj == NULL)) {
+        Hu3DModelKill((s16) dat->modelId);
+        dat->modelId = -1;
+        HuSprAnimKill(dat->anim);
+        dat->anim = NULL;
+        omDelObjEx(mbObjMan, obj);
+        mb2_CoinEffObj = NULL;
+        return;
+    }
+    if (dat->count <= 0) {
+        Hu3DModelAttrSet((s16) dat->modelId, 1U);
+        return;
+    }
+    Hu3DModelAttrReset((s16) dat->modelId, 1U);
+    hdr = Hu3DData[dat->modelId].hookData;
+    p = *(u8 **) ((u8 *) hdr + 0x3C);
+    *(u8 *) ((u8 *) hdr + 0x23) = 0;
+    for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
+        if (*(f32 *) (p + 0x34) > 0.0f) {
+            *(f32 *) (p + 0x44) += *(f32 *) (p + 0x8);
+            *(f32 *) (p + 0x48) += *(f32 *) (p + 0xC);
+            *(f32 *) (p + 0x4C) += *(f32 *) (p + 0x10);
+            if (*(f32 *) (p + 0x24) != 0.0f) {
+                *(f32 *) (p + 0xC) -= *(f32 *) (p + 0x24);
+            }
+            *(f32 *) (p + 0x34) = *(f32 *) (p + 0x14) * *(f32 *) (p + 0x18);
+            *(f32 *) (p + 0x18) -= *(f32 *) (p + 0x1C);
+            if (*(f32 *) (p + 0x18) <= 0.0f) {
+                *(u32 *) (p + 0x54) = 0;
+                *(u16 *) (p + 0x0) = 0;
+                *(f32 *) (p + 0x34) = 0.0f;
+                dat->count -= 1;
+            }
+        }
+    }
 }
 
 void MB2_CoinEffClose(void) {
@@ -3316,22 +3381,19 @@ void MB2_CoinEffClose(void) {
 }
 
 s32 MB2_CoinEffNumGet(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    if (mb2_CoinEffObj == NULL) {
+        return 0;
+    }
+    return ((MB2_COINEFF_DATA *) mb2_CoinEffObj->data)->count;
 }
 
 void MB2_CoinEffBlendModeSet(u8 arg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    void *hdr;
+
+    if (mb2_CoinEffObj != NULL) {
+        hdr = Hu3DData[((MB2_COINEFF_DATA *) mb2_CoinEffObj->data)->modelId].hookData;
+        *(u8 *) ((u8 *) hdr + 0x20) = arg0;
+    }
 }
 
 s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2) {
