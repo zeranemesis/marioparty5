@@ -62,6 +62,7 @@ static s32 MB4Ev_MasuWalkPre(s32 playerNo);
 static s32 MB4Ev_MasuWalkPost(s32 playerNo);
 static void MB4Ev_MasuHatena(s32 playerNo);
 static void MB4_MapViewHook(int enterF);
+static void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
 
 static s16 mb4_PathValidF;
 static s16 mb4_PathLen;
