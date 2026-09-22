@@ -2154,6 +2154,292 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
     }
 }
 
+/* Shared "burst a bubble at a model bone" step used by most
+ * MB4_CapsuleBubbleUpdate cases below: transform `ofs` by the named bone's
+ * world matrix on mb4_Work[0x27]'s model, and spawn a bubble there. */
+static void MB4_CapsuleBubbleBurst(char *bone, Point3d ofs, f32 speedScale) {
+    Mtx mtx;
+    Point3d pos;
+    s32 duration;
+
+    Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x27]), bone, mtx);
+    PSMTXMultVec(mtx, &ofs, &pos);
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, duration, 0.0f, speedScale);
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Two independent per-frame timers: mb4_Work[0x2A..0x2F] (the
+ * second "held item" bubble trail from MB4_CapsuleEffHook's -99 case,
+ * head-bubble bursts every 4th tick while its timer runs), and
+ * mb4_Work[0x23..0x29] (the first slot, dispatched by capsule/effect kind
+ * in mb4_Work[0x26] to burst bubbles at a specific model bone - a
+ * different bone/offset/speed per kind. All offsets/bone names below are
+ * taken directly from the original's per-case data). */
+void MB4_CapsuleBubbleUpdate(void) {
+    Mtx headMtx;
+    Point3d ofs, pos;
+    s32 duration;
+
+    if (mb4_Work[0x2D] != -1 && mb4_Work[0x2E] != -1) {
+        if (!MBModelDispGet((s16) mb4_Work[0x2E])) {
+            mb4_Work[0x2D] = -1;
+            mb4_Work[0x2E] = -1;
+            mb4_Work[0x2B] = 0;
+        }
+        mb4_Work[0x2A] -= 1;
+        if (mb4_Work[0x2A] <= 0 && mb4_Work[0x2B] > 0) {
+            mb4_Work[0x2C] += 1;
+            if ((mb4_Work[0x2C] & 3) == 0) {
+                ofs.x = 65.0f;
+                ofs.y = -20.0f;
+                ofs.z = 0.0f;
+                Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x2E]), "ske_head", headMtx);
+                PSMTXMultVec(headMtx, &ofs, &pos);
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, duration, 0.0f, 1.2f * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                mb4_Work[0x2B] -= 1;
+                if (mb4_Work[0x2B] <= 0) {
+                    if (mb4_Work[0x2F] != 0) {
+                        mb4_Work[0x2B] = (s32) (8.0f + (5.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                        mb4_Work[0x2C] = (s32) frand();
+                        mb4_Work[0x2A] = (s32) (180.0f + (3.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                    } else {
+                        mb4_Work[0x2E] = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    if (mb4_Work[0x26] == -1 || mb4_Work[0x27] == -1) {
+        return;
+    }
+
+    switch (mb4_Work[0x26]) {
+    case 4:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 350.0f;
+                ofs.z = 350.0f;
+                MB4_CapsuleBubbleBurst("jyan", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                }
+            }
+        }
+        return;
+    case 6:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 10.0f;
+                ofs.z = 30.0000019f;
+                MB4_CapsuleBubbleBurst("nose", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 10:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 0.0f;
+                ofs.z = 30.0000019f;
+                MB4_CapsuleBubbleBurst("head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 13:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 40.0f;
+                MB4_CapsuleBubbleBurst("noko_head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 15:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 40.0f;
+                MB4_CapsuleBubbleBurst("body", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 17:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 40.0f;
+                MB4_CapsuleBubbleBurst("noko_head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 20:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 50.0f;
+                MB4_CapsuleBubbleBurst("neck", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 23:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 10.0f;
+                ofs.z = 60.0000038f;
+                MB4_CapsuleBubbleBurst("neck", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 24:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 50.0f;
+                MB4_CapsuleBubbleBurst("neck", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 25:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 50.0f;
+                MB4_CapsuleBubbleBurst("j_uekuti", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 31:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 10.0f;
+                ofs.z = 50.0f;
+                MB4_CapsuleBubbleBurst("head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 37:
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
+            if ((mb4_Work[0x25] & 3) == 0) {
+                ofs.x = 70.0f;
+                ofs.y = 40.0f;
+                ofs.z = 0.0f;
+                MB4_CapsuleBubbleBurst("ske_head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    mb4_Work[0x27] = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 34:
+        /* Two-point burst (e.g. nostrils); the original's per-variant
+         * (mb4_Work[0x29]) offset tables are byte-identical, so only one
+         * is needed here. */
+        if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x23] -= 1;
+            if (mb4_Work[0x23] <= 0 && (mb4_Work[0x25] += 1, (mb4_Work[0x25] & 3) == 0)) {
+                Point3d p0, p1;
+                p0.x = 65.0f;
+                p0.y = 30.0000019f;
+                p0.z = -9.0f;
+                p1.x = 65.0f;
+                p1.y = 30.0000019f;
+                p1.z = 9.0f;
+                MB4_CapsuleBubbleBurst("ns_hed", p0, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CapsuleBubbleBurst("ns_hed", p1, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work[0x24] -= 1;
+                if (mb4_Work[0x24] <= 0) {
+                    if (mb4_Work[0x28] != 0) {
+                        mb4_Work[0x24] = (s32) (8.0f + (5.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                        mb4_Work[0x25] = (s32) frand();
+                        mb4_Work[0x23] = (s32) (180.0f + (3.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                    } else {
+                        mb4_Work[0x27] = -1;
+                    }
+                }
+            }
+        }
+        break;
+    }
+}
+
 void MB4_MapViewHook(int enterF) {
     if (enterF) {
         MBModelDispSet((s16) MB4W_S32(0x58), FALSE);
