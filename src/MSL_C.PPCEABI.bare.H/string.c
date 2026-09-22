@@ -98,22 +98,16 @@ char* strncpy(char* dst, const char* src, size_t n)
 	return dst;
 }
 
-// TODO: same implementation as strncpy?
 char* strcat(char* dst, const char* src, size_t n)
 {
-    const unsigned char* p = (const unsigned char*)src - 1;
-	unsigned char* q       = (unsigned char*)dst - 1;
+	register unsigned char* p = (unsigned char*)src - 1;
+	register unsigned char* q = (unsigned char*)dst - 1;
 
-	n++;
-	while (--n) {
-		if (!(*++q = *++p)) {
-			while (--n) {
-				*++q = 0;
-			}
-			break;
-		}
+	while (*++q) {
 	}
-
+	q--;
+	while (*++q = *++p) {
+	}
 	return dst;
 }
 
