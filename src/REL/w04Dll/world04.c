@@ -55,6 +55,9 @@ void MB4_CoinEffInit(void);
 void MB4_CoinEffUpdate(OMOBJ *obj);
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio);
 void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ);
+void MB4_SakanaOffsetInit(void);
+void MB4_SakanaPosInit(void);
+s32 MB4_SakanaCreate(s16 type);
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z);
 static void MB4Ev_Kihon(s32 playerNo);
 static void MB4Ev_Iruka(s32 playerNo);
@@ -130,6 +133,9 @@ typedef struct MB4Particle_s {
     f32 posY;       /* 0x40 */
     f32 posZ;       /* 0x44 */
     u8 color[4];    /* 0x48, coin-sparkle only */
+    s16 sakanaType; /* 0x4C, sakana only: the MB4_SakanaCreate() type arg */
+    u8 pad4E[0xA];  /* 0x4E */
+    u8 sakanaFlags; /* 0x58, sakana only: bit 7 = slot in use */
 } MB4PARTICLE; /* size 0x5C */
 
 /* Per-coin record (size 0x88 = 136 bytes), read from mb4_CoinObj->data
@@ -177,6 +183,20 @@ typedef struct MB4CoinEffObjData_s {
     s32 count;
     ANIMDATA *anim;
 } MB4COINEFFDATA;
+
+/* mb4ev_SakanaTbl: per-species swim area (pos = center, range = half-extent
+ * per axis), count = number of fish of this species, flag1/flag2 mirror
+ * each other (unused split not yet understood - kept for fidelity). Used
+ * by MB4_SakanaOffsetInit/PosInit to seed each species' per-fish target
+ * slots inside mb4_Work (14 species * 0x900 bytes, at mb4_Work+0x174,
+ * each holding up to a handful of 0x90-byte per-fish target records). */
+typedef struct MB4SakanaSpecies_s {
+    Point3d pos;
+    Point3d range;
+    s32 count;
+    s32 flag1;
+    s32 flag2;
+} MB4SAKANASPECIES;
 
 static Point3d mb4ev_Puku2EmiterPos = { -2800.0f, 300.0f, 1340.0f };
 
@@ -392,6 +412,23 @@ static Point3d mb4ev_BubbleEmitPosTbl[13] = {
 };
 static Point3d mb4ev_Puku2BubblePos = { -2800.0f, 300.0f, 1340.0f };
 static Point3d mb4ev_IrukaStartBubblePos = { -3320.0f, 1250.0f, -840.0f };
+
+static MB4SAKANASPECIES mb4ev_SakanaTbl[14] = {
+    { { 31.0f, 321.0f, -171.0f }, { 1100.0f, 100.0f, 700.0f }, 3, 1, 1 },
+    { { -1655.0f, 721.0f, 2080.0f }, { 2600.0f, 500.0f, 1000.0f }, 3, 0, 0 },
+    { { 1125.0f, 621.0f, 2080.0f }, { 2300.0f, 500.0f, 1000.0f }, 2, 0, 0 },
+    { { -4540.0f, 221.0f, 591.0f }, { 1000.0f, 300.0f, 800.0f }, 2, 1, 1 },
+    { { -4540.0f, 221.0f, -1091.0f }, { 1000.0f, 300.0f, 1000.0f }, 3, 1, 1 },
+    { { -1523.0f, 996.0f, -1799.0f }, { 1500.0f, 250.0f, 600.0f }, 4, 1, 1 },
+    { { 0.0f, 496.0f, -2027.0f }, { 1700.0f, 500.0f, 900.0f }, 6, 1, 1 },
+    { { 1300.0f, 896.0f, -3027.0f }, { 1500.0f, 500.0f, 900.0f }, 3, 1, 1 },
+    { { 4386.0f, 271.0f, -1000.0f }, { 1000.0f, 300.0f, 800.0f }, 3, 1, 1 },
+    { { 4386.0f, 271.0f, 0.0f }, { 1000.0f, 300.0f, 800.0f }, 2, 1, 1 },
+    { { -2502.0f, 996.0f, 654.0f }, { 2000.0f, 200.0f, 700.0f }, 2, 0, 0 },
+    { { 2516.0f, 1200.0f, 465.0f }, { 1900.0f, 200.0f, 700.0f }, 2, 0, 0 },
+    { { 202.0f, 1296.0f, -354.0f }, { 2000.0f, 200.0f, 700.0f }, 2, 0, 0 },
+    { { 2502.0f, 696.0f, 1254.0f }, { 1000.0f, 200.0f, 700.0f }, 1, 0, 0 },
+};
 
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
@@ -1322,6 +1359,82 @@ void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z) {
     *(f32 *) (part + 0x3C) = x;
     *(f32 *) (part + 0x40) = y;
     *(f32 *) (part + 0x44) = z;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Seeds every species' per-fish target slots (mb4_Work + 0x174,
+ * 14 species * 0x900 bytes, up to a handful of 0x90-byte per-fish records
+ * each) for species whose flag1 is 0: a fixed default target offset. */
+void MB4_SakanaOffsetInit(void) {
+    s32 species, fish;
+    u8 *base;
+
+    for (species = 0; species < 14; species++) {
+        base = (u8 *) mb4_Work + 0x174 + (species * 0x900);
+        if (mb4ev_SakanaTbl[species].flag1 == 0) {
+            for (fish = 0; fish < mb4ev_SakanaTbl[species].count; fish++) {
+                *(f32 *) (base + (fish * 0x90) + 0x34) = 500.0f;
+                *(f32 *) (base + (fish * 0x90) + 0x38) = 3600.0f;
+            }
+        }
+    }
+}
+
+/* Same layout as MB4_SakanaOffsetInit, seeding each fish's target position
+ * with its species' swim-area center. */
+void MB4_SakanaPosInit(void) {
+    s32 species, fish;
+    u8 *base;
+
+    for (species = 0; species < 14; species++) {
+        base = (u8 *) mb4_Work + 0x174 + (species * 0x900);
+        if (mb4ev_SakanaTbl[species].flag1 == 0) {
+            for (fish = 0; fish < mb4ev_SakanaTbl[species].count; fish++) {
+                *(f32 *) (base + (fish * 0x90) + 0x30) = mb4ev_SakanaTbl[species].pos.x;
+                *(f32 *) (base + (fish * 0x90) + 0x34) = mb4ev_SakanaTbl[species].pos.y;
+                *(f32 *) (base + (fish * 0x90) + 0x38) = mb4ev_SakanaTbl[species].pos.z;
+            }
+        }
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Finds a free sakana MB4PARTICLE slot (sakanaFlags bit 7 == 0) and
+ * spawns it at the origin, fully opaque, of the given species `type`. */
+s32 MB4_SakanaCreate(s16 type) {
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
+    s32 i;
+
+    if (MB4W_S32(0x7F74) == -1) {
+        return -1;
+    }
+    mgr = (MB4COINEFFMGR *) Hu3DData[MB4W_S32(0x7F74)].hookData;
+    p = mgr->particles;
+    for (i = 0; i < mgr->count; i++) {
+        if ((p->sakanaFlags >> 7) & 1) {
+            p++;
+            continue;
+        }
+        break;
+    }
+    if (i >= mgr->count) {
+        return -1;
+    }
+    p->sakanaFlags |= 0x80;
+    p->posZ = 0.0f;
+    p->posY = 0.0f;
+    p->posX = 0.0f;
+    p->offsetZAngle = 0.0f;
+    p->offsetY = 0.0f;
+    p->offsetX = 0.0f;
+    p->timer = 100.0f;
+    p->sakanaType = type;
+    p->color[3] = 0xFF;
+    p->color[2] = 0xFF;
+    p->color[1] = 0xFF;
+    p->color[0] = 0xFF;
+    return i;
 }
 
 /* NONMATCHING: MWCC keeps the literal args to the nested Hu3DGLightCreate()
