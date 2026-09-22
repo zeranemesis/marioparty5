@@ -51,6 +51,8 @@ void MB4_CoinUpdate(OMOBJ *obj);
 s32 MB4_CoinCreate(Point3d *basePos, Point3d *baseRot, s32 layer, f32 speed, f32 unused);
 s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist);
 s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam);
+void MB4_CoinEffInit(void);
+void MB4_CoinEffUpdate(OMOBJ *obj);
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio);
 void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ);
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z);
@@ -167,6 +169,13 @@ typedef struct MB4CoinEffMgr_s {
     u8 pad26[0x16];       /* 0x26 */
     MB4PARTICLE *particles; /* 0x3C */
 } MB4COINEFFMGR;
+
+/* mb4_CoinEffObj->data (0xC bytes). */
+typedef struct MB4CoinEffObjData_s {
+    s32 hu3dModelIdx;
+    s32 count;
+    ANIMDATA *anim;
+} MB4COINEFFDATA;
 
 static Point3d mb4ev_Puku2EmiterPos = { -2800.0f, 300.0f, 1340.0f };
 
@@ -1076,10 +1085,13 @@ s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 size
     MB4PARTICLE *p;
     s32 i;
 
+    MB4COINEFFDATA *ed;
+
     if (mb4_CoinEffObj == NULL) {
         return -1;
     }
-    mgr = (MB4COINEFFMGR *) Hu3DData[*(s32 *) mb4_CoinEffObj->data].hookData;
+    ed = (MB4COINEFFDATA *) mb4_CoinEffObj->data;
+    mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
     p = mgr->particles;
     for (i = 0; i < mgr->count; i++) {
         if (p->timer == 0.0f) {
@@ -1111,6 +1123,73 @@ s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 size
     p->active = 0;
     *(s32 *) ((u8 *) mb4_CoinEffObj->data + 4) += 1;
     return i;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. */
+void MB4_CoinEffInit(void) {
+    MB4COINEFFDATA *ed;
+    ANIMDATA *anim;
+    MB4COINEFFMGR *mgr;
+
+    mb4_CoinEffObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinEffUpdate);
+    mb4_CoinEffObj->data = HuMemDirectMallocNum(HEAP_HEAP, 0xC, 0x10000000U);
+    memset(mb4_CoinEffObj->data, 0, 0xCU);
+    ed = (MB4COINEFFDATA *) mb4_CoinEffObj->data;
+    anim = HuSprAnimRead(HuDataReadNum(0xB0042, 0x10000000));
+    ed->anim = anim;
+    ed->hu3dModelIdx = MBEffCreate(anim, 0x100);
+    Hu3DModelLayerSet((s16) ed->hu3dModelIdx, 3);
+    MBEffAttrReset((s16) ed->hu3dModelIdx, 8U);
+    ed->count = 0;
+    mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
+    mgr->blendMode = 1;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Per-frame update for every live coin-sparkle particle: integrate
+ * position by velocity, apply "gravity" (alphaParam) to vertical velocity,
+ * recompute the fade/scale factor (timer = speed * life), decay life by
+ * sizeParam, and free the slot once life reaches 0. */
+void MB4_CoinEffUpdate(OMOBJ *obj) {
+    MB4COINEFFDATA *ed = (MB4COINEFFDATA *) obj->data;
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
+    s32 i;
+
+    if (MBKillCheck() || mb4_CoinEffObj == NULL) {
+        MBEffKill((s16) ed->hu3dModelIdx);
+        ed->hu3dModelIdx = -1;
+        ed->anim = NULL;
+        omDelObjEx(mbObjMan, obj);
+        mb4_CoinEffObj = NULL;
+        return;
+    }
+    if (ed->count <= 0) {
+        Hu3DModelAttrSet((s16) ed->hu3dModelIdx, 1U);
+        return;
+    }
+    Hu3DModelAttrReset((s16) ed->hu3dModelIdx, 1U);
+    mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
+    p = mgr->particles;
+    for (i = 0; i < mgr->count; i++) {
+        if (p->timer != 0.0f) {
+            p->posX += p->velX;
+            p->posY += p->velY;
+            p->posZ += p->velZ;
+            if (p->alphaParam != 0.0f) {
+                p->velY -= p->alphaParam;
+            }
+            p->timer = p->speed * p->one;
+            p->one -= p->sizeParam;
+            if (p->one == 0.0f) {
+                p->active = 0;
+                p->timer = 0.0f;
+                ed->count -= 1;
+            }
+        }
+        p++;
+    }
 }
 
 /* mb4_Work[0x1FDD] (byte 0x7F74): sakana model id (see MB4_SakanaClose).
