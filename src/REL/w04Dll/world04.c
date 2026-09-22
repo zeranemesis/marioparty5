@@ -70,6 +70,7 @@ static s16 PathCheck(s16 masuId, s16 depth);
 static f32 MB4_PathTimeGet(Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused, f32 tMax);
 static f32 fn_1_DB68(f32 t, f32 pPrev, f32 p1, f32 pNext);
 static f32 fn_1_DC9C(Point3d *pPrev, Point3d *p1, Point3d *pNext, f32 t);
+static void fn_1_D3D8(f32 t, f32 pPrev, f32 p0, f32 p1, f32 pNext, f32 tangentScale);
 void MB4_BubbleEffInit(void);
 void MB4_BubbleEffUpdate(OMOBJ *obj);
 s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale);
@@ -1967,6 +1968,14 @@ f32 MB4_AngleLerp(f32 a, f32 b, f32 step) {
     return result;
 }
 
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Same as MB4_AngleLerp(a, b, step) but the step is computed from
+ * a rate: step = |MB4_AngleDiff(b, a) * rate|. */
+f32 fn_1_C6D0(f32 rate, f32 a, f32 b) {
+    f32 step = (f32) fabs((f64) (MB4_AngleDiff(b, a) * rate));
+    return MB4_AngleLerp(a, b, step);
+}
+
 void MB4_MapViewHook(int enterF) {
     if (enterF) {
         MBModelDispSet((s16) MB4W_S32(0x58), FALSE);
@@ -2080,6 +2089,37 @@ static f32 MB4_HermiteCalcAxis(f32 pPrev, f32 p0, f32 p1, f32 pNext, f32 t) {
     w0 = t + ((t3 - t2) - t2);
     w1 = t3 - t2;
     return (w1 * m1) + (w0 * m0) + (h0 * p0) + (h1 * p1);
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Same Catmull-Rom-tangent Hermite blend as MB4_HermiteCalcAxis,
+ * except its result (sp14 in the decompiled draft) is never written
+ * anywhere observable - dead code in the original too (global linkage,
+ * not called from anywhere else in this file; kept verbatim rather than
+ * "fixed", since we don't know what it was meant to write to). */
+static f32 sp14_unused;
+void fn_1_D3D8(f32 t, f32 pPrev, f32 p0, f32 p1, f32 pNext, f32 tangentScale) {
+    f32 delta = p1 - p0;
+    f32 m0, m1;
+    f32 t2, t3, h1, h0, w0, w1;
+
+    if (p0 == p1) {
+        m0 = delta;
+    } else {
+        m0 = tangentScale * (delta + (p0 - pPrev));
+    }
+    if (p0 == pNext) {
+        m1 = delta;
+    } else {
+        m1 = tangentScale * (delta + (pNext - p1));
+    }
+    t2 = t * t;
+    t3 = t * t2;
+    h1 = (f32) (((3.0 * (f64) t2) - (f64) t3) - (f64) t3);
+    h0 = (f32) (1.0 - (f64) h1);
+    w0 = t + ((t3 - t2) - t2);
+    w1 = t3 - t2;
+    sp14_unused = (w1 * m1) + (w0 * m0) + (h0 * p0) + (h1 * p1);
 }
 
 void MB4_HermiteCalcV(Point3d *pPrev, Point3d *p0, Point3d *p1, Point3d *pNext, Point3d *out, f32 t) {
