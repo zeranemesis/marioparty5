@@ -3739,14 +3739,149 @@ void MB2_CoinInit(void) {
     }
 }
 
+/* NONMATCHING: complete, asm-read translation (cror eq,gt,eq / eq,lt,eq
+ * folds read as >= / <=, matching the same pattern already confirmed in
+ * MB2Ev_Thunder/Rain), not yet instruction-matched. */
 void MB2_CoinUpdate(OMOBJ *obj) {
-    /* NONMATCHING: placeholder - real body not yet read from asm; needs
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s instruction-by-instruction
-     * (MB2_COIN_SLOT is reconstructed above - CoinInit/CoinCreate/CoinNumGet
-     * already use it for real). */
+    MB2_COIN_SLOT *slot;
+    s32 i;
+
+    slot = (MB2_COIN_SLOT *) obj->data;
     if (MBKillCheck() || (mb2_CoinObj == NULL)) {
+        for (i = 0; i < 0x20; i++, slot++) {
+            Hu3DModelKill((s16) slot->modelId);
+            slot->modelId = -1;
+        }
         omDelObjEx(mbObjMan, obj);
         mb2_CoinObj = NULL;
+        return;
+    }
+    for (i = 0; i < 0x20; i++, slot++) {
+        s32 collectedF = 0;
+        if (slot->activeF == 0) {
+            continue;
+        }
+        switch (slot->unk8) {
+        case 0: {
+            s32 step = slot->unk14 + 1;
+            Point3d p;
+            f32 t;
+            slot->unk14 = step;
+            t = (f32) step / (f32) slot->unk10;
+            p.x = slot->srcPos[0];
+            p.y = slot->srcPos[1];
+            p.z = slot->srcPos[2];
+            {
+                Point3d dst, delta;
+                dst.x = (f32) slot->unk48;
+                dst.y = (f32) slot->unk4C;
+                dst.z = (f32) slot->unk50;
+                PSVECSubtract(&dst, &p, &delta);
+                PSVECScale(&delta, &delta, t);
+                PSVECAdd(&delta, &p, &delta);
+                delta.y = (f32) ((f64) delta.y + ((f64) slot->unkC * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+                slot->pos[0] = delta.x;
+                slot->pos[1] = delta.y;
+                slot->pos[2] = delta.z;
+            }
+            slot->rot[1] = slot->rot[1] + 10.0f;
+            if (t >= 1.0f) {
+                slot->unk8 = slot->unk8 + 1;
+                slot->unk14 = 0;
+            }
+            break;
+        }
+        case 1:
+            slot->pos[0] = (f32) slot->unk48;
+            slot->pos[1] = (f32) slot->unk4C;
+            slot->pos[2] = (f32) slot->unk50;
+            slot->rot[1] = slot->rot[1] + 10.0f;
+            break;
+        }
+        if (slot->unk8 <= 2) {
+            s32 p;
+            for (p = 0; p < 4; p++) {
+                Point3d pos;
+                Point3d prevPos;
+                Point3d delta;
+                s32 collect = 0;
+
+                MBPlayerPosGet(p, &pos);
+                prevPos.x = slot->playerPos[p][0];
+                prevPos.y = slot->playerPos[p][1];
+                prevPos.z = slot->playerPos[p][2];
+                PSVECSubtract((Point3d *) slot->pos, &pos, &delta);
+                if (slot->pos[1] == prevPos.y) {
+                    if (slot->pos[1] == (pos.y + mb2_CoinMaxDist.y)) {
+                        collect = 1;
+                    }
+                } else if (slot->pos[1] == (prevPos.y + mb2_CoinMaxDist.y)) {
+                    if (slot->pos[1] == pos.y) {
+                        collect = 1;
+                    }
+                }
+                if (mb2_CoinMaxDist.z < 0.0f) {
+                    collect = 1;
+                }
+                if (collect != 0) {
+                    f32 distSq = (delta.x * delta.x) + (delta.z * delta.z);
+                    f32 dist;
+                    if (distSq > 0.0f) {
+                        f64 e0 = __frsqrte(distSq);
+                        f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
+                        f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
+                        dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
+                    } else {
+                        dist = distSq;
+                    }
+                    if (dist < mb2_CoinMaxDist.x) {
+                        MBPlayerCoinAdd(p, 1);
+                        MBAudFXPlay(7);
+                        collectedF = 1;
+                    }
+                }
+                slot->playerPos[p][0] = pos.x;
+                slot->playerPos[p][1] = pos.y;
+                slot->playerPos[p][2] = pos.z;
+            }
+        }
+        Hu3DModelPosSet((s16) slot->modelId, slot->pos[0], slot->pos[1], slot->pos[2]);
+        Hu3DModelRotSet((s16) slot->modelId, slot->rot[0], slot->rot[1], slot->rot[2]);
+        Hu3DModelScaleSet((s16) slot->modelId, slot->scale[0], slot->scale[1], slot->scale[2]);
+        if (collectedF != 0) {
+            s32 k;
+            f32 ang;
+
+            slot->activeF = 0;
+            Hu3DModelAttrSet((s16) slot->modelId, 1U);
+            ang = 0.0f;
+            for (k = 0; k < 0x20; k++) {
+                Point3d pos, vel;
+                u8 col[4];
+                f32 speed;
+                f32 tilt;
+                f32 t;
+
+                ang += 22.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+                pos.x = slot->pos[0];
+                pos.y = slot->pos[1];
+                pos.z = slot->pos[2];
+                speed = 2.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+                tilt = 45.0f - (90.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                vel.x = (f32) ((f64) speed * (sin((3.141592653589793 * (f64) ang) / 180.0) * cos((3.141592653589793 * (f64) tilt) / 180.0)));
+                vel.y = (f32) ((f64) speed * (cos((3.141592653589793 * (f64) ang) / 180.0) * cos((3.141592653589793 * (f64) tilt) / 180.0)));
+                vel.z = (f32) ((f64) speed * sin((3.141592653589793 * (f64) tilt) / 180.0));
+                t = 0.007874016f * (f32) (frand() & 0x7F);
+                col[0] = (u8) (192.0f + (63.0f * t));
+                col[1] = (u8) (192.0f + (63.0f * t));
+                col[2] = (u8) (64.0f + (63.0f * t));
+                col[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                MB2_CoinEffCreate(&pos.x, &vel.x, col,
+                    100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                    0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
+            }
+            return;
+        }
     }
 }
 
