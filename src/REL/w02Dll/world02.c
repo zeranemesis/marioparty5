@@ -4348,14 +4348,104 @@ void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0) {
         rotY, 0.8166667f);
 }
 
+/* NONMATCHING: complete, asm-read translation. Builds the bespoke particle
+ * header (see MB2_CoinEffInit's comment above) from scratch: the particle
+ * array (stride 0x58) and the 4-corner UV array (stride 0x20, same layout
+ * as MB2_ParticleCopy) get zero-initialized, then a GX_QUADS index-stream
+ * display list is baked by writing 16-bit indices straight to the write-
+ * gather pipe at 0xCC008000 (three index attributes per vertex - position,
+ * a second position-ish index, and the UV corner - times 4 corners per
+ * particle), exactly like the original: no GX SDK wrapper is used here. */
 s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    HU3DMODEL *newModel;
+    s16 newModelId;
+    u8 *hdr;
+    u8 *particles;
+    u8 *arrA;
+    u8 *arrB;
+    s32 i;
+    void *dispListTmp;
+    volatile u16 *fifo = (volatile u16 *) 0xCC008000;
+
+    newModelId = Hu3DHookFuncCreate(ParticleDraw);
+    Hu3DModelCameraSet(newModelId, 1U);
+    newModel = &Hu3DData[newModelId];
+    hdr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 0x54, newModel->mallocNo);
+    newModel->hookData = hdr;
+    *(ANIMDATA **) (hdr + 0x38) = arg0;
+    *(s16 *) (hdr + 0x26) = arg1;
+    *(s16 *) (hdr + 0x20) = 0;
+    *(s16 *) (hdr + 0x22) = 0;
+    *(s32 *) (hdr + 0x4C) = 0;
+    *(s32 *) (hdr + 0x50) = 0;
+    *(s32 *) (hdr + 0x28) = 0;
+    *(u8 *) (hdr + 0x21) = 0;
+    *(u8 *) (hdr + 0x23) = 0;
+    *(s32 *) (hdr + 0x30) = 0;
+    *(s16 *) (hdr + 0x2) = 0;
+    *(s16 *) (hdr + 0x0) = 0;
+    particles = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 0x58, newModel->mallocNo);
+    *(void **) (hdr + 0x3C) = particles;
+    memset(particles, 0, arg1 * 0x58);
+    for (i = 0; i < arg1; i++, particles += 0x58) {
+        *(f32 *) (particles + 0x34) = 0.0f;
+        *(f32 *) (particles + 0x40) = 0.0f;
+        *(f32 *) (particles + 0x3C) = 0.0f;
+        *(f32 *) (particles + 0x38) = 0.0f;
+        *(f32 *) (particles + 0x2C) = 0.0f;
+        *(f32 *) (particles + 0x30) = 1.0f;
+        *(f32 *) (particles + 0x44) = (f32) (((frand() & 0x7F) - 0x40) * 0x14);
+        *(f32 *) (particles + 0x48) = (f32) (((frand() & 0x7F) - 0x40) * 0x1E);
+        *(f32 *) (particles + 0x4C) = (f32) (((frand() & 0x7F) - 0x40) * 0x14);
+        *(u8 *) (particles + 0x53) = 0xFF;
+        *(u8 *) (particles + 0x52) = 0xFF;
+        *(u8 *) (particles + 0x51) = 0xFF;
+        *(u8 *) (particles + 0x50) = 0xFF;
+        *(s32 *) (particles + 0x54) = 0;
+    }
+    arrA = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 0xC * 4, newModel->mallocNo);
+    *(void **) (hdr + 0x40) = arrA;
+    for (i = 0; i < arg1 * 4; i++, arrA += 0xC) {
+        *(f32 *) (arrA + 0x8) = 0.0f;
+        *(f32 *) (arrA + 0x4) = 0.0f;
+        *(f32 *) (arrA + 0x0) = 0.0f;
+    }
+    arrB = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 8 * 4, newModel->mallocNo);
+    *(void **) (hdr + 0x44) = arrB;
+    for (i = 0; i < arg1; i++, arrB += 0x20) {
+        *(f32 *) (arrB + 0x0) = 0.0f;
+        *(f32 *) (arrB + 0x4) = 0.0f;
+        *(f32 *) (arrB + 0x8) = 1.0f;
+        *(f32 *) (arrB + 0xC) = 0.0f;
+        *(f32 *) (arrB + 0x10) = 1.0f;
+        *(f32 *) (arrB + 0x14) = 1.0f;
+        *(f32 *) (arrB + 0x18) = 0.0f;
+        *(f32 *) (arrB + 0x1C) = 1.0f;
+    }
+    dispListTmp = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, newModel->mallocNo);
+    DCFlushRange(dispListTmp, 0x10000U);
+    GXBeginDisplayList(dispListTmp, 0x10000U);
+    GXBegin(GX_QUADS, GX_VTXFMT0, (u16) (arg1 * 4));
+    for (i = 0; i < arg1; i++) {
+        *fifo = (u16) (i * 4);
+        *fifo = (u16) i;
+        *fifo = (u16) (i * 4);
+        *fifo = (u16) ((i * 4) + 1);
+        *fifo = (u16) i;
+        *fifo = (u16) ((i * 4) + 1);
+        *fifo = (u16) ((i * 4) + 2);
+        *fifo = (u16) i;
+        *fifo = (u16) ((i * 4) + 2);
+        *fifo = (u16) ((i * 4) + 3);
+        *fifo = (u16) i;
+        *fifo = (u16) ((i * 4) + 3);
+    }
+    *(u32 *) (hdr + 0x34) = GXEndDisplayList();
+    *(void **) (hdr + 0x48) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (hdr + 0x34), newModel->mallocNo);
+    memcpy(*(void **) (hdr + 0x48), dispListTmp, *(u32 *) (hdr + 0x34));
+    DCFlushRange(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
+    HuMemDirectFree(dispListTmp);
+    return newModelId;
 }
 
 /* NONMATCHING: complete, asm-read translation. Reuses the bespoke particle
