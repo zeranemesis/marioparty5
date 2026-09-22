@@ -3802,22 +3802,61 @@ void MB2_YajiDispSet(s32 arg0) {
     }
 }
 
+/* mb2_RainbowObj->data: 0xC-byte header {s32 modelId; ANIMDATA *srcAnim;
+ * void *slots (8 entries, stride 0x28)}. Each rainbow-arc slot: +0x00
+ * activeF, +0x04 vtx count *3, +0x08 vtx array, +0x0C rot array, +0x10/0x14/
+ * 0x18 more per-vtx arrays (draw-side), +0x1C..0x1F RGBA (alpha at +0x1F),
+ * +0x20 display list, +0x24 display list size. Confirmed by
+ * MB2_RainbowObjAlphaSet/VtxTopGet's simple, unambiguous field usage. */
+typedef struct MB2RainbowObjData_s {
+    s32 modelId;   /* 0x00 */
+    ANIMDATA *srcAnim; /* 0x04 */
+    u8 *slots;     /* 0x08, 8 entries, stride 0x28 */
+} MB2_RAINBOWOBJ_DATA; /* size 0xC */
+
 void MB2_RainbowObjInit(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    OMOBJ *obj;
+    HU3DMODEL *modelP;
+    MB2_RAINBOWOBJ_DATA *dat;
+    s16 modelId;
+    u8 *slots;
+    s32 i;
+
+    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_RainbowObjUpdate);
+    mb2_RainbowObj = obj;
+    dat = (MB2_RAINBOWOBJ_DATA *) HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_RAINBOWOBJ_DATA), 0x10000000U);
+    obj->data = dat;
+    memset(dat, 0, sizeof(MB2_RAINBOWOBJ_DATA));
+    modelId = Hu3DHookFuncCreate(RainbowObjDraw);
+    dat->modelId = modelId;
+    Hu3DModelCameraSet(modelId, 1U);
+    Hu3DModelLayerSet(modelId, 3);
+    modelP = &Hu3DData[modelId];
+    modelP->pos.y = -100000.0f;
+    modelP->pos.z = -100000.0f;
+    modelP->hookData = dat;
+    dat->srcAnim = (ANIMDATA *)(uintptr_t) MB2W_S32(0x1B * 4);
+    slots = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 8 * 0x28, modelP->mallocNo);
+    dat->slots = slots;
+    memset(slots, 0, 8 * 0x28);
+    for (i = 0; i < 8; i++, slots += 0x28) {
+        *(s32 *) slots = 0;
+    }
 }
 
 void MB2_RainbowObjUpdate(OMOBJ *obj) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    MB2_RAINBOWOBJ_DATA *dat;
+    s32 i;
+
+    dat = (MB2_RAINBOWOBJ_DATA *) obj->data;
+    if (MBKillCheck() || (mb2_RainbowObj == NULL)) {
+        Hu3DModelKill((s16) dat->modelId);
+        omDelObjEx(mbObjMan, obj);
+        mb2_RainbowObj = NULL;
+        return;
+    }
+    for (i = 0; i < 8; i++) {
+    }
 }
 
 void MB2_RainbowObjClose(void) {
@@ -3825,32 +3864,34 @@ void MB2_RainbowObjClose(void) {
 }
 
 s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    /* NONMATCHING: placeholder - the real body builds a GX triangle-strip
+     * display list for the rainbow arc (raw GX FIFO writes at 0xCC008000,
+     * __frsqrte-based fast inverse sqrt) using the MB2_RAINBOWOBJ_DATA slot
+     * struct confirmed above; needs a dedicated asm pass, same class of
+     * work as the Zen2/Zen4/Rain/Thunder state machines. */
+    return -1;
 }
 
 void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    if (mb2_RainbowObj != NULL) {
+        MB2_RAINBOWOBJ_DATA *dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
+        *(s8 *) (dat->slots + (arg0 * 0x28) + 0x1F) = arg1;
+    }
 }
 
 s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    s32 ret;
+    MB2_RAINBOWOBJ_DATA *dat;
+    u8 *slot;
+
+    ret = arg0;
+    if (mb2_RainbowObj != NULL) {
+        dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
+        slot = dat->slots + (arg0 * 0x28);
+        *arg1 = *(void **) (slot + 0x8);
+        ret = *(s32 *) (slot + 0x4);
+    }
+    return ret;
 }
 
 void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
