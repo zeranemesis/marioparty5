@@ -3714,21 +3714,64 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
 }
 
 void MB2_YajiInit(f32 *arg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    OMOBJ *obj;
+    Point3d *pos;
+    f32 ang;
+    s32 *dat;
+    s32 i;
+
+    pos = (Point3d *) arg0;
+    obj = omAddObjEx(mbObjMan, -0x8000, 3U, 0U, -1, MB2_YajiUpdate);
+    mb2_YajiObj = obj;
+    dat = (s32 *) HuMemDirectMallocNum(HEAP_HEAP, 4, 0x10000000U);
+    obj->data = dat;
+    *dat = 0;
+    for (i = 0; i < 3; i++) {
+        ang = yajiAngleTbl[i];
+        obj->mdlId[i] = Hu3DModelCreate(HuDataSelHeapReadNum(0x80000, 0x10000000, HEAP_MODEL));
+        Hu3DModelCameraSet(obj->mdlId[i], 1U);
+        Hu3DModelAttrSet(obj->mdlId[i], 1U);
+        Hu3DModelLayerSet(obj->mdlId[i], 3);
+        Hu3DModelPosSet(obj->mdlId[i],
+            (f32) ((f64) pos->x + (3.0 * (100.0 * sin((3.141592653589793 * (f64) ang) / 180.0)))),
+            100.0f + pos->y,
+            (f32) ((f64) pos->z + (3.0 * (100.0 * cos((3.141592653589793 * (f64) ang) / 180.0)))));
+        Hu3DModelRotSet(obj->mdlId[i], 0.0f, ang, 0.0f);
+    }
+    obj->work[0] = 1;
+    obj->stat |= 0x100;
 }
 
 void MB2_YajiUpdate(OMOBJ *obj) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    HU3DMODEL *modelP;
+    f32 scale;
+    s32 i;
+    s32 *dat;
+
+    dat = (s32 *) obj->data;
+    if (MBKillCheck() || (mb2_YajiObj == NULL)) {
+        omDelObjEx(mbObjMan, obj);
+        mb2_YajiObj = NULL;
+        return;
+    }
+    for (i = 0; i < 3; i++) {
+        modelP = &Hu3DData[obj->mdlId[i]];
+        scale = modelP->scale.z;
+        if ((modelP->attr & 1) == 0) {
+            if ((u32) obj->work[0] == (u32) i) {
+                *dat = *dat + 6;
+                scale = (f32) (2.0 + fabs(sin((3.141592653589793 * (f64) (*dat % 360)) / 180.0)));
+            } else {
+                if (scale > 2.0f) {
+                    scale -= 0.1f;
+                }
+                if (scale < 2.0f) {
+                    scale += 0.1f;
+                }
+            }
+            Hu3DModelScaleSet(obj->mdlId[i], scale, scale, scale);
+        }
+    }
 }
 
 void MB2_YajiClose(void) {
@@ -3736,21 +3779,27 @@ void MB2_YajiClose(void) {
 }
 
 void MB2_YajiHiliteSet(u32 arg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    if (mb2_YajiObj != NULL) {
+        mb2_YajiObj->work[0] = arg0;
+        *(s32 *) mb2_YajiObj->data = 0;
+    }
 }
 
 void MB2_YajiDispSet(s32 arg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    OMOBJ *obj;
+    s32 i;
+
+    obj = mb2_YajiObj;
+    if (mb2_YajiObj != NULL) {
+        for (i = 0; i < 3; i++) {
+            if (arg0 != 0) {
+                Hu3DModelAttrReset(obj->mdlId[i], 1U);
+            } else {
+                Hu3DModelAttrSet(obj->mdlId[i], 1U);
+            }
+        }
+        *(s32 *) obj->data = 0;
+    }
 }
 
 void MB2_RainbowObjInit(void) {
