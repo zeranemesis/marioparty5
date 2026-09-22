@@ -56,6 +56,7 @@ struct _struct_mb2_ParticleUvTbl_0x8 {
 };                                                  /* size = 0x8 */
 
 s32 HuSprTexLoad(void *, s32, s32, s32, s32, s32);              /* extern */
+void PSMTXRotRad(Mtx m, char axis, f32 rad);        /* extern */
 s8 MBPadStkXGet(s8, s32);                           /* extern */
 s8 MBPadStkYGet(s8, GWPLAYER *, GWPLAYER *);        /* extern */
 s32 MBScrollExec(s32);                                /* extern */
@@ -4530,11 +4531,220 @@ s16 MB2_ParticleCopy(s16 arg0) {
     return newModelId;
 }
 
+/* NONMATCHING: complete, asm-read translation using the particle header
+ * layout already confirmed for MB2_ParticleCreate/Copy/MB2_CoinEffInit:
+ * +0x20 blendMode, +0x21/+0x22 attr bits, +0x26 count, +0x34 display-list
+ * size, +0x38 source ANIMDATA*, +0x3C particle array (stride 0x58: +0x2C
+ * rotX, +0x34 scale/alive gate, +0x38 rotY-ish "billboard axis" flag,
+ * +0x3C/0x40 pos, +0x44 world-space center pos, +0x54 UV-tile index byte),
+ * +0x40 per-vertex world-pos output array (stride 0xC, 4 per particle),
+ * +0x44 per-vertex UV output array (stride 8, 4 per particle), +0x48
+ * display-list buffer, +0x4C optional per-model draw hook. */
 void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
-    /* NONMATCHING: placeholder - m2c mismodeled the flat per-particle
-     * struct here (raw ->unkXX offsets on a void* / ANIMDATA* loop pointer).
-     * Needs a proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s before porting for real. */
+    u8 *hdr;
+    s16 count;
+
+    hdr = (u8 *) modelP->hookData;
+    if (shadowModelDrawF == 0) {
+        HU3DMODEL *linked = (HU3DMODEL *) *(void **) (hdr + 0x50);
+        if ((linked != NULL) && (linked != modelP)) {
+            ParticleDraw(linked, mtx);
+        }
+        GXLoadPosMtxImm((f32 (*)[4]) mtx, 0U);
+        GXSetNumTevStages(1U);
+        GXSetNumTexGens(1U);
+        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3CU, 0U, 0x7DU);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+        if (shadowModelDrawF != 0) {
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ONE, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO);
+            GXSetZMode(0U, GX_LEQUAL, 0U);
+        } else {
+            ANIMDATA *srcAnim = *(ANIMDATA **) (hdr + 0x38);
+            s32 fmt = srcAnim->bmp->dataFmt & 0xF;
+            if ((fmt == 7) || (fmt == 8)) {
+                GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ONE, GX_CC_RASC, GX_CC_ZERO);
+            } else {
+                GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
+            }
+            if ((*(u8 *) (hdr + 0x22) & 1) != 0) {
+                GXSetZMode(0U, GX_LEQUAL, 0U);
+            } else if ((modelP->attr & 2) != 0) {
+                GXSetZMode(1U, GX_LEQUAL, 1U);
+            } else {
+                GXSetZMode(1U, GX_LEQUAL, 0U);
+            }
+        }
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
+        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
+        GXSetNumChans(1U);
+        GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_VTX, 0U, GX_DF_CLAMP, GX_AF_NONE);
+        HuSprTexLoad(*(ANIMDATA **) (hdr + 0x38), 0, 0, 1, 1, 1);
+        GXSetAlphaCompare(GX_GEQUAL, 1U, GX_AOP_AND, GX_GEQUAL, 1U);
+        GXSetZCompLoc(0U);
+        switch (*(u8 *) (hdr + 0x20)) {
+        case 0:
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+            break;
+        case 1:
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
+            break;
+        case 2:
+            GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+            break;
+        }
+        {
+            Mtx invMtx, rotMtx;
+            void (*hook)(HU3DMODEL *, void *, f32 (*)[3][4]);
+            u8 *particle;
+            u8 *outPos;
+            u8 *outUv;
+
+            if (HmfInverseMtxF3X3((f32 (*)[4]) mtx, invMtx) == 0) {
+                PSMTXIdentity(invMtx);
+            }
+            PSMTXReorder(invMtx, (f32 (*)[3]) rotMtx);
+            hook = *(void (**)(HU3DMODEL *, void *, f32 (*)[3][4])) (hdr + 0x4C);
+            if (hook != NULL) {
+                hook(modelP, hdr, mtx);
+            }
+            particle = *(u8 **) (hdr + 0x3C);
+            outPos = *(u8 **) (hdr + 0x40);
+            count = *(s16 *) (hdr + 0x26);
+            if ((*(u8 *) (hdr + 0x22) & 4) != 0) {
+                Point3d corner[4];
+                s32 c;
+
+                PSMTXIdentity(invMtx);
+                PSMTXIdentity(rotMtx);
+                for (c = 0; c < 4; c++) {
+                    corner[c] = mb2_ParticleVtxTbl[c];
+                }
+
+                {
+                    s32 i;
+                    for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
+                        if (*(f32 *) (particle + 0x34) == 0.0f) {
+                            memset(outPos, 0, 0x30);
+                        } else if ((*(u8 *) (hdr + 0x22) & 8) != 0) {
+                            Point3d scaled[4], world[4];
+                            s32 c;
+                            for (c = 0; c < 4; c++) {
+                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
+                            }
+                            mtxRot(invMtx, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
+                            PSMTXMultVecArray(invMtx, scaled, world, 4U);
+                            for (c = 0; c < 4; c++) {
+                                PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                            }
+                        } else if (*(f32 *) (particle + 0x40) == 0.0f) {
+                            Point3d scaled[4];
+                            s32 c;
+                            for (c = 0; c < 4; c++) {
+                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
+                                PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                            }
+                        } else {
+                            Point3d scaled[4], world[4];
+                            Mtx rotZ, concat;
+                            s32 c;
+                            for (c = 0; c < 4; c++) {
+                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
+                            }
+                            PSMTXRotRad(rotZ, 'Z', *(f32 *) (particle + 0x40));
+                            PSMTXConcat(rotMtx, rotZ, concat);
+                            PSMTXMultVecArray(concat, scaled, world, 4U);
+                            for (c = 0; c < 4; c++) {
+                                PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                            }
+                        }
+                    }
+                }
+            } else {
+                s32 i;
+                for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
+                    if (*(f32 *) (particle + 0x34) == 0.0f) {
+                        memset(outPos, 0, 0x30);
+                    } else if ((*(u8 *) (hdr + 0x22) & 8) != 0) {
+                        Point3d scaled[4], world[4];
+                        s32 c;
+                        for (c = 0; c < 4; c++) {
+                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
+                        }
+                        mtxRot(invMtx, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
+                        PSMTXMultVecArray(invMtx, scaled, world, 4U);
+                        for (c = 0; c < 4; c++) {
+                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                        }
+                    } else if (*(f32 *) (particle + 0x40) == 0.0f) {
+                        Point3d scaled[4];
+                        s32 c;
+                        for (c = 0; c < 4; c++) {
+                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
+                            PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                        }
+                    } else {
+                        Point3d scaled[4], world[4];
+                        Mtx rotZ, concat;
+                        s32 c;
+                        for (c = 0; c < 4; c++) {
+                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
+                        }
+                        PSMTXRotRad(rotZ, 'Z', *(f32 *) (particle + 0x40));
+                        PSMTXConcat(rotMtx, rotZ, concat);
+                        PSMTXMultVecArray(concat, scaled, world, 4U);
+                        for (c = 0; c < 4; c++) {
+                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                        }
+                    }
+                }
+            }
+
+            particle = *(u8 **) (hdr + 0x3C);
+            outUv = *(u8 **) (hdr + 0x44);
+            if ((*(u8 *) (hdr + 0x22) & 2) == 0) {
+                s32 i, c;
+                for (i = 0; i < count; i++, particle += 0x58) {
+                    for (c = 0; c < 4; c++, outUv += 8) {
+                        *(f32 *) (outUv + 0) = (0.25f * (f32) (s16) (*(u8 *) (particle + 0x54) & 3)) + mb2_ParticleUvTbl[c].unk0;
+                        *(f32 *) (outUv + 4) = (0.25f * (f32) (s16) ((*(u8 *) (particle + 0x54) >> 2) & 3)) + mb2_ParticleUvTbl[c].unk4;
+                    }
+                }
+            } else {
+                s32 c;
+                for (c = 0; c < 4; c++, outUv += 8) {
+                    *(f32 *) (outUv + 0) = 4.0f * mb2_ParticleUvTbl[c].unk0;
+                    *(f32 *) (outUv + 4) = 4.0f * mb2_ParticleUvTbl[c].unk4;
+                }
+            }
+        }
+        DCFlushRangeNoSync(*(void **) (hdr + 0x40), count * 0xC * 4);
+        DCFlushRangeNoSync(*(void **) (hdr + 0x44), count * 8 * 4);
+        DCFlushRangeNoSync(*(void **) (hdr + 0x3C), count * 0x58);
+        PPCSync();
+        GXClearVtxDesc();
+        GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
+        GXSetArray(GX_VA_POS, *(void **) (hdr + 0x40), 0xCU);
+        GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
+        GXSetArray(GX_VA_CLR0, *(u8 **) (hdr + 0x3C) + 0x50, 0x58U);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
+        GXSetArray(GX_VA_TEX0, *(void **) (hdr + 0x44), 8U);
+        GXCallDisplayList(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
+        if (shadowModelDrawF == 0) {
+            if ((*(u8 *) (hdr + 0x21) & 2) == 0) {
+                *(u32 *) (hdr + 0x28) = *(u32 *) (hdr + 0x28) + 1;
+            }
+            if ((*(u32 *) (hdr + 0x30) != 0) && (*(u32 *) (hdr + 0x30) <= *(u32 *) (hdr + 0x28))) {
+                if ((*(u8 *) (hdr + 0x21) & 1) != 0) {
+                    *(u32 *) (hdr + 0x28) = 0;
+                }
+                *(u32 *) (hdr + 0x28) = *(u32 *) (hdr + 0x30);
+            }
+        }
+    }
 }
 
 void MB2_YajiInit(f32 *arg0) {

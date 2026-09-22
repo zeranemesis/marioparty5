@@ -48,7 +48,7 @@ s32 MB4_CoinEffNumGet(void);
 void MB4_CoinEffBlendModeSet(u8 mode);
 void MB4_CoinInit(void);
 void MB4_CoinUpdate(OMOBJ *obj);
-s32 MB4_CoinCreate(Point3d *basePos, Point3d *baseRot, s32 layer, f32 speed, f32 unused);
+s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 layer, f32 speed, f32 unused);
 s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist);
 s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam);
 void MB4_CoinEffInit(void);
@@ -160,9 +160,9 @@ typedef struct MB4Coin_s {
     f32 basePosX;      /* 0x40 */
     f32 basePosY;      /* 0x44 */
     f32 basePosZ;      /* 0x48 */
-    s32 baseRotX;      /* 0x4C */
-    s32 baseRotY;      /* 0x50 */
-    s32 baseRotZ;      /* 0x54 */
+    f32 targetX;       /* 0x4C */
+    f32 targetY;       /* 0x50 */
+    f32 targetZ;       /* 0x54 */
     Point3d playerPos[4]; /* 0x58, one cached player position per player */
 } MB4COIN; /* size 0x88 */
 
@@ -1126,8 +1126,9 @@ void MB4_CoinInit(void) {
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
  * match. Finds a free MB4COIN slot (active == 0) and spawns it: coin model
  * at basePos (arg0, may be NULL to skip), shadow model 200 units below,
- * baseRot from arg1 (may be NULL). */
-s32 MB4_CoinCreate(Point3d *basePos, Point3d *baseRot, s32 layer, f32 speed, f32 unused) {
+ * targetPos from arg1 (may be NULL) - the flight destination used by
+ * MB4_CoinUpdate's state-0 arc animation (coin flying to a player). */
+s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 layer, f32 speed, f32 unused) {
     MB4COIN *coinP;
     s32 i;
 
@@ -1155,10 +1156,10 @@ s32 MB4_CoinCreate(Point3d *basePos, Point3d *baseRot, s32 layer, f32 speed, f32
         coinP->basePosY = basePos->y;
         coinP->basePosZ = basePos->z;
     }
-    if (baseRot != NULL) {
-        coinP->baseRotX = (s32) baseRot->x;
-        coinP->baseRotY = (s32) baseRot->y;
-        coinP->baseRotZ = (s32) baseRot->z;
+    if (targetPos != NULL) {
+        coinP->targetX = targetPos->x;
+        coinP->targetY = targetPos->y;
+        coinP->targetZ = targetPos->z;
     }
     coinP->posX = coinP->basePosX;
     coinP->posY = coinP->basePosY;
