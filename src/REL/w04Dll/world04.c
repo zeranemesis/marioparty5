@@ -85,6 +85,8 @@ static void MB4_MapViewHook(int enterF);
 static void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
 static void MB4_CapsuleBubbleUpdate(void);
 static void MB4Ev_PlayerBubbleCreate(s32 playerNo);
+static void MB4Ev_IrukaBubbleCreate(s32 playerNo, Point3d *ofs, f32 unused0, f32 unused1);
+static void MB4_CoinDispUpdate(s32 playerNo, s32 coinNum, s32 threshold);
 
 static s16 mb4_PathValidF;
 static s16 mb4_PathLen;
@@ -448,6 +450,30 @@ static Point3d mb4ev_BubbleEmitPosTbl[13] = {
 };
 static Point3d mb4ev_Puku2BubblePos = { -2800.0f, 300.0f, 1340.0f };
 static Point3d mb4ev_IrukaStartBubblePos = { -3320.0f, 1250.0f, -840.0f };
+
+/* Per-character head-bubble spawn offset/scale (indexed by GwPlayer[].charNo,
+ * 13 characters). */
+static Point3d mb4ev_IrukaBubbleOfsTbl[13] = {
+    { 0.0f, -10.0f, 40.0f },
+    { 0.0f, -15.000001f, 35.0f },
+    { 0.0f, 20.0f, 10.0f },
+    { 0.0f, 50.0f, 30.0000019f },
+    { 0.0f, 45.0f, 20.0f },
+    { 0.0f, 15.000001f, 10.0f },
+    { 0.0f, 30.0000019f, 30.0000019f },
+    { 0.0f, -10.0f, 25.0f },
+    { 0.0f, 0.0f, 50.0f },
+    { 0.0f, -20.0f, 65.0f },
+    { 0.0f, -20.0f, 65.0f },
+    { 0.0f, -20.0f, 65.0f },
+    { 0.0f, -20.0f, 65.0f },
+};
+static f32 mb4ev_IrukaTPLvlScaleTbl[13] = {
+    1.10000002f, 1.0f, 0.800000012f, 1.10000002f, 1.20000005f, 0.699999988f,
+    0.899999976f, 0.800000012f, 0.699999988f, 1.20000005f, 1.10000002f,
+    1.10000002f, 1.29999995f,
+};
+static Point3d lbl_1_data_10CC = { 0.0f, 0.0f, 0.0f };
 
 static MB4SAKANASPECIES mb4ev_SakanaTbl[14] = {
     { { 31.0f, 321.0f, -171.0f }, { 1100.0f, 100.0f, 700.0f }, 3, 1, 1 },
@@ -1728,6 +1754,96 @@ void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3) {
     MB4W_S32(0x7F78) = Hu3DHookFuncCreate((HU3DMODELHOOK) MB4_SakanaDraw);
     Hu3DModelCameraSet((s16) MB4W_S32(0x7F78), 1U);
     Hu3DModelLayerSet((s16) MB4W_S32(0x7F78), 7);
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Blocking coroutine-style coin-count cutscene: rotate the player
+ * to face the camera, show the coin-count popup and play a win/mid/lose
+ * reaction motion depending on coinNum vs threshold, wait out the motion
+ * shift, then clean up. Uses the project's HuPrcVSleep frame-wait idiom. */
+void MB4_CoinDispUpdate(s32 playerNo, s32 coinNum, s32 threshold) {
+    Point3d pos;
+    s32 dispNo;
+    s32 shiftMotNo = -1;
+
+    MBPlayerRotateStart(playerNo, 0, 0xF);
+    while (!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+
+    if (coinNum > 0) {
+        MBPlayerPosGet(playerNo, &pos);
+        pos.y += 250.0f;
+        dispNo = MBCoinDispCreateSe(&pos, coinNum);
+    } else {
+        dispNo = -1;
+    }
+
+    if (coinNum <= 0) {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xD, 0x200);
+        MBPlayerMotionNoShiftSet(playerNo, 0xD, 0.0f, 8.0f, 0U);
+    } else if (coinNum < threshold) {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
+        MBPlayerMotionNoShiftSet(playerNo, 0xC, 0.0f, 8.0f, 0U);
+    } else {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
+        shiftMotNo = MBPlayerMotionCreate(playerNo, 0x8C002D);
+        MBPlayerMotionNoShiftSet(playerNo, shiftMotNo, 0.0f, 8.0f, 0U);
+    }
+
+    do {
+        do {
+            HuPrcVSleep();
+        } while (!MBPlayerMotionEndCheck(playerNo));
+    } while (MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1);
+
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0U);
+    do {
+        HuPrcVSleep();
+    } while (MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1);
+
+    if (dispNo != -1) {
+        while (!MBCoinDispKillCheck(dispNo)) {
+            HuPrcVSleep();
+        }
+    }
+    if (shiftMotNo != -1) {
+        MBPlayerMotionKill(playerNo, shiftMotNo);
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Spawns a bubble at the player's head bone plus a per-character
+ * offset (mb4ev_IrukaBubbleOfsTbl, indexed by charNo), on top of `ofs`. */
+void MB4Ev_IrukaBubbleCreate(s32 playerNo, Point3d *ofs, f32 unused0, f32 unused1) {
+    Mtx headMtx;
+    Point3d pos;
+    s32 charNo = GwPlayer[playerNo].charNo;
+    s32 duration;
+
+    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), "ske_head", headMtx);
+    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    PSMTXMultVec(headMtx, &pos, &pos);
+    PSVECAdd(&pos, ofs, &pos);
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))));
+}
+
+/* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
+ * for the generic "player at rest" head bubble rather than the dolphin
+ * ride's moving offset. */
+void MB4Ev_PlayerBubbleCreate(s32 playerNo) {
+    Mtx headMtx;
+    Point3d pos;
+    s32 charNo = GwPlayer[playerNo].charNo;
+    s32 duration;
+
+    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), "ske_head", headMtx);
+    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    PSMTXMultVec(headMtx, &pos, &pos);
+    PSVECAdd(&pos, &lbl_1_data_10CC, &pos);
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))));
 }
 
 /* NONMATCHING: MWCC keeps the literal args to the nested Hu3DGLightCreate()
