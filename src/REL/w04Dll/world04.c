@@ -51,6 +51,17 @@ static s16 PathCheck(s16 masuId, s16 depth);
 static f32 MB4_PathTimeGet(Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused, f32 tMax);
 static f32 fn_1_DB68(f32 t, f32 pPrev, f32 p1, f32 pNext);
 static f32 fn_1_DC9C(Point3d *pPrev, Point3d *p1, Point3d *pNext, f32 t);
+static void MB4_BubbleEffInit(void);
+static void MB4_SakanaInit(s32 timer, s32 arg1, s32 arg2, f32 phase);
+static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
+static void MB4_MainObjUpdate(OMOBJ *obj);
+static void MB4_LightSet(void);
+static void MB4_LightReset(void);
+static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, int endF);
+static s32 MB4Ev_MasuWalkPre(s32 playerNo);
+static s32 MB4Ev_MasuWalkPost(s32 playerNo);
+static void MB4Ev_MasuHatena(s32 playerNo);
+static void MB4_MapViewHook(int enterF);
 
 static s16 mb4_PathValidF;
 static s16 mb4_PathLen;
@@ -74,6 +85,198 @@ static s32 mb4_Work[0x1FF7];
 #define MB4W_F32(off) (*(f32 *) ((u8 *) mb4_Work + (off)))
 
 static Point3d mb4ev_Puku2EmiterPos = { -2800.0f, 300.0f, 1340.0f };
+
+/* MB4_Create decoration placement tables, extracted from .data. */
+static Point3d mb4ev_KaiPosTbl[3] = {
+    { 1784.0f, 190.0f, 1017.0f },
+    { 1883.0f, 190.0f, 1116.0f },
+    { 1983.0f, 190.0f, 1215.0f },
+};
+static Point3d mb4ev_Puku2Pos = { 2041.0f, 230.0f, 958.0f };
+static Point3d mb4ev_AkariPosTbl[2] = {
+    { 2537.0f, 600.0f, -423.0f },
+    { 1983.0f, 600.0f, -652.0f },
+};
+static f32 mb4ev_AkariRotYTbl[2] = { -92.5f, 47.5f };
+static Point3d mb4ev_SKaiPosTbl[2] = {
+    { 3427.0f, 1450.0f, -1786.0f },
+    { 2318.0f, 1450.0f, -2245.0f },
+};
+static f32 mb4ev_SKaiRotYTbl[2] = { -22.5f, 157.5f };
+static Point3d mb4ev_RBokPosTbl[2] = {
+    { 3100.0f, -150.0f, 2450.0f },
+    { -3100.0f, -150.0f, 2450.0f },
+};
+static f32 mb4ev_RBokRotYTbl[2] = { 0.0f, 0.0f };
+static Point3d mb4ev_SangoOPosTbl[3] = {
+    { 835.0f, -20.0f, -490.0f },
+    { 3980.0f, -50.0f, 280.0f },
+    { 1112.0f, 715.0f, -2113.0f },
+};
+static Point3d mb4ev_SangoORotTbl[3] = {
+    { 0.0f, 36.0f, 0.0f },
+    { -17.0f, -160.0f, 15.0f },
+    { -91.0f, -115.0f, 87.0f },
+};
+static Point3d mb4ev_YaziPosTbl[7] = {
+    { -735.0f, 455.0f, -1111.0f },
+    { -2240.0f, 1167.0f, -972.0f },
+    { -3724.0f, 1010.0f, -1010.0f },
+    { -2511.0f, 515.0f, -78.0f },
+    { 2810.0f, 505.0f, -75.0f },
+    { 1567.0f, 555.0f, -668.0f },
+    { 1340.0f, 855.0f, -1855.0f },
+};
+static f32 mb4ev_YaziRotTbl[7] = { 0.0f, 8.0f, -12.0f, 18.0f, -22.5f, -18.0f, -35.0f };
+static Point3d mb4ev_YaziExtPosTbl[3] = {
+    { -1303.0f, 7.0f, 545.0f },
+    { -3212.0f, 387.0f, 406.0f },
+    { 2900.0f, 105.0f, 1153.0f },
+};
+static f32 mb4ev_YaziExtRotYTbl[3] = { 35.0f, -30.0f, 0.0f };
+static Point3d mb4ev_UeYaziPosTbl[1] = {
+    { 1120.0f, 455.0f, -1100.0f },
+};
+static f32 mb4ev_UeYaziUpRotYTbl[1] = { 10.0f };
+static Point3d mb4ev_HasigoPosTbl[4] = {
+    { -3856.0f, 480.0f, -32.0f },
+    { -2610.0f, 0.0f, 560.0f },
+    { 2990.0f, 660.0f, -650.0f },
+    { 3300.0f, 60.0f, 700.0f },
+};
+static Point3d mb4ev_HasigoRotTbl[4] = {
+    { -10.0f, -5.0f, 0.0f },
+    { -5.0f, 30.0f, 0.0f },
+    { -5.0f, 10.0f, 0.0f },
+    { -5.0f, 15.0f, 0.0f },
+};
+static Point3d mb4ev_Sango1PosTbl[3] = {
+    { -3900.0f, 85.0f, 1190.0f },
+    { -2580.0f, 953.0f, -2095.0f },
+    { -904.0f, 367.0f, -1707.0f },
+};
+static Point3d mb4ev_Sango1RotTbl[3] = {
+    { 0.0f, 0.0f, 0.0f },
+    { -60.0f, -135.0f, 54.0f },
+    { -75.0f, -150.0f, 78.0f },
+};
+static f32 mb4ev_Sango1ScaleTbl[3] = { 1.0f, 1.0f, 0.949999988f };
+static Point3d mb4ev_Sango2PosTbl[2] = {
+    { -609.0f, -84.0f, 174.0f },
+    { -3963.0f, 397.0f, -123.0f },
+};
+static Point3d mb4ev_Sango2RotTbl[2] = {
+    { -16.0f, 180.0f, 0.0f },
+    { 34.0f, 9.0f, -14.0f },
+};
+static f32 mb4ev_Sango2ScaleTbl[2] = { 1.0f, 0.699999988f };
+static Point3d mb4ev_Sango3PosTbl[6] = {
+    { -2614.0f, -71.0f, 1954.0f },
+    { -3877.0f, -56.0f, 1192.0f },
+    { -2702.0f, 1002.0f, -1719.0f },
+    { -1320.0f, 692.0f, -1024.0f },
+    { 1570.0f, 450.0f, -1000.0f },
+    { 3650.0f, 100.0f, 700.0f },
+};
+static Point3d mb4ev_Sango3RotTbl[6] = {
+    { 56.0f, -7.0f, -14.0f },
+    { 59.0f, -47.0f, 12.0f },
+    { 0.0f, 0.0f, 0.0f },
+    { 87.0f, 0.0f, -158.0f },
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f },
+};
+static Point3d mb4ev_Sango3ScaleTbl[6] = {
+    { 1.20000005f, 1.20000005f, 1.20000005f },
+    { 1.22000003f, 1.34000003f, 1.22000003f },
+    { 1.29999995f, 1.29999995f, 1.29999995f },
+    { 1.14999998f, 1.14999998f, 1.14999998f },
+    { 1.0f, 1.0f, 1.0f },
+    { 1.0f, 1.0f, 1.0f },
+};
+static Point3d mb4ev_Sango4PosTbl[4] = {
+    { -2660.0f, 83.0f, 1906.0f },
+    { -2600.0f, 985.0f, -1485.0f },
+    { 1800.0f, 440.0f, -980.0f },
+    { 3770.0f, 90.0f, 880.0f },
+};
+static Point3d mb4ev_Sango4RotTbl[4] = {
+    { 31.0f, -12.0f, -8.0f },
+    { 9.0f, 23.0f, 0.0f },
+    { 0.0f, 25.0f, 0.0f },
+    { 0.0f, 36.0f, 0.0f },
+};
+static f32 mb4ev_Sango4ScaleTbl[4] = { 1.0f, 1.35000002f, 1.29999995f, 1.29999995f };
+static Point3d mb4ev_Sango5PosTbl[2] = {
+    { -1407.0f, 828.0f, -1003.0f },
+    { -2140.0f, 1146.0f, -1255.0f },
+};
+static Point3d mb4ev_Sango5RotTbl[2] = {
+    { 50.0f, -7.0f, 0.0f },
+    { -76.0f, 246.0f, 67.0f },
+};
+static f32 mb4ev_Sango5ScaleTbl[2] = { 1.23000002f, 1.37f };
+static Point3d mb4ev_LeftSango5PosTbl[5] = {
+    { -3900.0f, 985.0f, -1068.0f },
+    { -2380.0f, -109.0f, 2013.0f },
+    { 3215.0f, 80.0f, 1195.0f },
+    { 3095.0f, 480.0f, 0.0f },
+    { 3433.0f, 1140.0f, -1015.0f },
+};
+static Point3d mb4ev_LeftSango5RotTbl[5] = {
+    { 16.0f, -6.0f, 0.0f },
+    { 42.0f, 9.0f, -2.0f },
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 28.0f, 0.0f },
+    { 0.0f, 30.0f, 0.0f },
+};
+static f32 mb4ev_LeftSango5ScaleTbl[5] = { 1.16999996f, 1.50999999f, 1.5f, 1.20000005f, 1.29999995f };
+static Point3d mb4ev_Hitode1PosTbl[4] = {
+    { -1452.0f, -201.0f, 2038.0f },
+    { -2525.0f, 287.0f, 356.0f },
+    { -2327.0f, 298.0f, 252.0f },
+    { 1540.0f, -48.0f, 1900.0f },
+};
+static Point3d mb4ev_Hitode1RotTbl[4] = {
+    { 0.0f, 0.0f, 0.0f },
+    { 90.0f, 24.0f, 0.0f },
+    { 90.0f, 31.0f, 0.0f },
+    { 22.5f, -42.0f, 0.0f },
+};
+static f32 mb4ev_Hitode1ScaleTbl[4] = { 1.0f, 0.569999993f, 0.340000004f, 0.600000024f };
+static Point3d mb4ev_Hitode2PosTbl[4] = {
+    { -3313.0f, 1497.0f, -929.0f },
+    { -3429.0f, 1445.0f, -950.0f },
+    { -3188.0f, 1445.0f, -906.0f },
+    { 1760.0f, -85.0f, 2080.0f },
+};
+static Point3d mb4ev_Hitode2RotTbl[4] = {
+    { 90.0f, -10.0f, 0.0f },
+    { 85.0f, -9.0f, 29.0f },
+    { 85.0f, 9.0f, 151.0f },
+    { 27.0f, 11.0f, 6.0f },
+};
+static f32 mb4ev_Hitode2ScaleTbl[4] = { 1.0f, 0.649999976f, 0.649999976f, 1.0f };
+static Point3d mb4ev_KaisooPosTbl[3] = {
+    { -1570.0f, 455.0f, 57.0f },
+    { -3071.0f, 550.0f, 44.0f },
+    { -1075.0f, 1089.0f, -1404.0f },
+};
+static Point3d mb4ev_KaisooRotTbl[3] = {
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f },
+};
+static f32 mb4ev_KaisooScaleTbl[3] = { 1.0f, 1.0f, 1.0f };
+
+static Point3d openingRot = { -33.0f, 0.0f, 0.0f };
+static Point3d openingOfs = { 0.0f, 500.0f, 0.0f };
+static f32 openingZoom = 16000.0f;
+static Point3d mapViewRot = { -78.0f, 0.0f, 0.0f };
+static Point3d mapViewPos = { -181.0f, -123.0f, 80.0f };
+static f32 mapViewZoom = 16171.0f;
+
+static OMOBJ *mb4_BubbleEffObj;
 
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
@@ -99,6 +302,323 @@ void ObjectSetup(void) {
 }
 
 /* ----------------------------- leaf helpers ----------------------------- */
+
+/* NONMATCHING: complete and faithful transcription of the decompiled body
+ * (board setup: all ~40 decoration models + their per-instance placement
+ * loops, the fish/bubble/coin ambience state, and the board hooks); not
+ * attempted for instruction-level match given its size (~1600 instructions,
+ * 6448 bytes). All 0xD1xxxx dataNum/model IDs, mb4_Work[] slot indices, and
+ * per-table pos/rot/scale values are taken directly from the original. */
+void MB4_Create(void) {
+    s16 modelId;
+    s32 i;
+    s32 *stateP;
+    int puku2Sub[3];
+    int puku2ShellSub[4];
+    int sango6Sub[2];
+    f32 sakanaPhase;
+
+    HuAudSndGrpSetSet(GwSystem.boardNo);
+    MBMasuCreate(0xD10000);
+
+    modelId = MBModelCreate(0xD10001, NULL, FALSE);
+    mb4_Work[0] = modelId;
+    MBModelAttrSet(modelId, 0x40000001U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData);
+
+    modelId = MBModelCreate(0xD10013, NULL, FALSE);
+    mb4_Work[1] = modelId;
+    MBModelAttrSet(modelId, 0x40000001U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), NULL);
+
+    modelId = MBModelCreate(0xD10002, NULL, FALSE);
+    mb4_Work[2] = modelId;
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+
+    modelId = MBModelCreate(0xD10010, NULL, FALSE);
+    mb4_Work[4] = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(0xD10014, NULL, FALSE);
+    mb4_Work[5] = modelId;
+    MBModelAttrSet(modelId, 0x40000001U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+
+    modelId = MBModelCreate(0xD10015, NULL, FALSE);
+    mb4_Work[6] = modelId;
+    MBMotionTimeSet(modelId, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBModelAttrSet(modelId, 0x40000002U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId), NULL);
+
+    modelId = MBModelCreate(0xD10016, NULL, FALSE);
+    mb4_Work[7] = modelId;
+    MBMotionTimeSet(modelId, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBModelAttrSet(modelId, 0x40000002U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData);
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(0xD10017, NULL, FALSE);
+    mb4_Work[8] = modelId;
+    MBMotionTimeSet(modelId, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBModelAttrSet(modelId, 0x40000002U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(0xD10003, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_AkariPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_AkariRotYTbl[i], 0.0f);
+        MBModelAttrSet(modelId, 0x40000001U);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(0xD10006, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_SKaiPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_SKaiRotYTbl[i], 0.0f);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(0xD10007, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_RBokPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_RBokRotYTbl[i], 0.0f);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(0xD10008, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_SangoOPosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_SangoORotTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 7; i++) {
+        modelId = MBModelCreate(0xD10018, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_YaziPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_YaziRotTbl[i], 0.0f);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(0xD10018, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_YaziExtPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, 180.0f + mb4ev_YaziExtRotYTbl[i], 0.0f);
+    }
+    for (i = 0; i < 1; i++) {
+        modelId = MBModelCreate(0xD10019, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_UeYaziPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_UeYaziUpRotYTbl[i], 0.0f);
+    }
+    for (i = 0; i < 4; i++) {
+        modelId = MBModelCreate(0xD10004, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_HasigoPosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_HasigoRotTbl[i]);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(0xD1001E, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango1PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango1RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango1ScaleTbl[i], mb4ev_Sango1ScaleTbl[i], mb4ev_Sango1ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(0xD1001F, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango2PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango2RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango2ScaleTbl[i], mb4ev_Sango2ScaleTbl[i], mb4ev_Sango2ScaleTbl[i]);
+        if (i != 0) {
+            MBModelLayerSet(modelId, 1U);
+        }
+        if (i == 0) {
+            MBModelDispSet(modelId, FALSE);
+        }
+    }
+    for (i = 0; i < 6; i++) {
+        modelId = MBModelCreate(0xD10020, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango3PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango3RotTbl[i]);
+        MBModelScaleSetV(modelId, &mb4ev_Sango3ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 4; i++) {
+        modelId = MBModelCreate(0xD10021, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango4PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango4RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango4ScaleTbl[i], mb4ev_Sango4ScaleTbl[i], mb4ev_Sango4ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(0xD10022, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango5PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango5RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango5ScaleTbl[i], mb4ev_Sango5ScaleTbl[i], mb4ev_Sango5ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 5; i++) {
+        modelId = MBModelCreate(0xD10022, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_LeftSango5PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_LeftSango5RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_LeftSango5ScaleTbl[i], mb4ev_LeftSango5ScaleTbl[i], mb4ev_LeftSango5ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 4; i++) {
+        modelId = MBModelCreate(0xD10023, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Hitode1PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Hitode1RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Hitode1ScaleTbl[i], mb4ev_Hitode1ScaleTbl[i], mb4ev_Hitode1ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 4; i++) {
+        modelId = MBModelCreate(0xD10024, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Hitode2PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Hitode2RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Hitode2ScaleTbl[i], mb4ev_Hitode2ScaleTbl[i], mb4ev_Hitode2ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1U);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(0xD10025, NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_KaisooPosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_KaisooRotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_KaisooScaleTbl[i], mb4ev_KaisooScaleTbl[i], mb4ev_KaisooScaleTbl[i]);
+        MBModelAttrSet(modelId, 0x40000001U);
+        MBModelLayerSet(modelId, 1U);
+    }
+
+    modelId = MBModelCreate(0xD10009, NULL, FALSE);
+    mb4_Work[9] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_KaiPosTbl[0]);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBMotionTimeSet(modelId, 0.0f);
+
+    modelId = MBModelCreate(0xD1000A, NULL, FALSE);
+    mb4_Work[0xA] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_KaiPosTbl[1]);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBMotionTimeSet(modelId, 0.0f);
+
+    modelId = MBModelCreate(0xD1000B, NULL, FALSE);
+    mb4_Work[0xB] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_KaiPosTbl[2]);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBMotionTimeSet(modelId, 0.0f);
+
+    modelId = MBModelCreate(0xD1000C, NULL, FALSE);
+    mb4_Work[0xC] = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(0xD1000D, NULL, FALSE);
+    mb4_Work[0xD] = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(0xD1000E, NULL, FALSE);
+    mb4_Work[0xE] = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(0xD10012, NULL, FALSE);
+    mb4_Work[0xF] = modelId;
+    MBModelLayerSet(modelId, 1U);
+
+    puku2Sub[0] = 0xD10029;
+    puku2Sub[1] = 0xD1002A;
+    puku2Sub[2] = -1;
+    modelId = MBModelCreate(0xD10028, puku2Sub, FALSE);
+    mb4_Work[0x10] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_Puku2Pos);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBModelScaleSet(modelId, 2.0f, 2.0f, 2.0f);
+    MBMotionNoSet(modelId, 1, 0x40000001U);
+
+    puku2ShellSub[0] = 0xD1002C;
+    puku2ShellSub[1] = 0xD1002D;
+    puku2ShellSub[2] = 0xD1002E;
+    puku2ShellSub[3] = -1;
+    modelId = MBModelCreate(0xD1002B, puku2ShellSub, FALSE);
+    mb4_Work[0x11] = modelId;
+    MBMotionNoSet(modelId, 1, 0x40000001U);
+    Hu3DModelClusterAttrSet(MBModelIdGet(modelId), 0, -0x3FFFFFFF);
+    MBModelAttrSet(modelId, 0x40000002U);
+    MBModelDispSet(modelId, FALSE);
+
+    sango6Sub[0] = 0xD10030;
+    sango6Sub[1] = -1;
+    modelId = MBModelCreate(0xD1002F, sango6Sub, FALSE);
+    mb4_Work[0x12] = modelId;
+    MBModelAttrSet(modelId, 0x40000002U);
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(0xD1000F, NULL, FALSE);
+    mb4_Work[0x13] = modelId;
+    MBModelDispSet(modelId, FALSE);
+    MBModelLayerSet(modelId, 2U);
+
+    modelId = MBModelCreate(0xD10026, NULL, FALSE);
+    mb4_Work[0x14] = modelId;
+    MBModelDispSet(modelId, FALSE);
+    MBModelLayerSet(modelId, 1U);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+
+    modelId = MBModelCreate(0xD10011, NULL, FALSE);
+    mb4_Work[0x15] = modelId;
+    MBModelDispSet(modelId, FALSE);
+    MBModelLayerSet(modelId, 1U);
+
+    modelId = MBModelCreate(0xD10027, NULL, FALSE);
+    mb4_Work[0x16] = modelId;
+    MBModelAttrSet(modelId, 0x40000001U);
+    MBModelLayerSet(modelId, 1U);
+
+    MB4_BubbleEffInit();
+    stateP = &mb4_Work[0x17];
+    for (i = 0; i < 4; i++) {
+        stateP[0] = (s32) (10.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+        stateP[1] = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+        stateP[2] = (s32) frand();
+        stateP += 3;
+    }
+
+    mb4_Work[0x24] = 0;
+    mb4_Work[0x25] = (s32) frand();
+    mb4_Work[0x26] = -1;
+    mb4_Work[0x27] = -1;
+    mb4_Work[0x28] = 0;
+    mb4_Work[0x29] = 0;
+    mb4_Work[0x2B] = 0;
+    mb4_Work[0x2C] = (s32) frand();
+    mb4_Work[0x2D] = -1;
+    mb4_Work[0x2E] = -1;
+    mb4_Work[0x2F] = 0;
+
+    stateP = &mb4_Work[0x30];
+    for (i = 0; i < 0xD; i++) {
+        stateP[0] = (s32) (12.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+        stateP[1] = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+        stateP[2] = (s32) frand();
+        stateP += 3;
+    }
+
+    mb4_Work[0x57] = (s32) (12.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+    mb4_Work[0x58] = 0;
+    mb4_Work[0x59] = 0;
+    sakanaPhase = 60.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    mb4_Work[0x5A] = (s32) (12.0f * sakanaPhase);
+    mb4_Work[0x5B] = 0;
+    mb4_Work[0x5C] = 0;
+    MB4_SakanaInit(mb4_Work[0x5A], 0, 0, sakanaPhase);
+
+    MBCapsuleEffHookSet(MB4_CapsuleEffHook);
+    MBScrollInit(0xD10031U, 20000.0f, 0.0f);
+    MBLightHookSet(MB4_LightSet, MB4_LightReset);
+    MBCapsuleColCreate(0xD10032);
+    MBBranchFlagSet(0xA2U);
+    MBMasuPathCheckHookSet(MB4_MasuPathCheck);
+    HuDataDirClose(0xD10000);
+    MBMasuWalkPreHookSet((MASUPLAYERHOOK) MB4Ev_MasuWalkPre);
+    MBMasuWalkPostHookSet((MASUPLAYERHOOK) MB4Ev_MasuWalkPost);
+    MBMasuHatenaHookSet((MASUPLAYERHOOK) MB4Ev_MasuHatena);
+    mb4_MainObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_MainObjUpdate);
+    MBOpeningViewSet(&openingRot, &openingOfs, openingZoom);
+    MBMapViewCameraSet(&mapViewRot, &mapViewPos, mapViewZoom);
+    MBMapViewHookSet(MB4_MapViewHook);
+}
 
 void MB4_Kill(void) {
     if (mb4_MainObj != NULL) {
@@ -231,7 +751,7 @@ f32 MB4_AngleLerp(f32 a, f32 b, f32 step) {
     return result;
 }
 
-void MB4_MapViewHook(s32 enterF) {
+void MB4_MapViewHook(int enterF) {
     if (enterF) {
         MBModelDispSet((s16) MB4W_S32(0x58), FALSE);
     } else {
@@ -239,7 +759,7 @@ void MB4_MapViewHook(s32 enterF) {
     }
 }
 
-s32 MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, s32 endF) {
+int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, int endF) {
     return -1;
 }
 
