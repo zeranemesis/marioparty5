@@ -4897,13 +4897,182 @@ void MB2_RainbowObjClose(void) {
     mb2_RainbowObj = NULL;
 }
 
+/* NONMATCHING: complete, asm-read translation. Extends the
+ * MB2_RAINBOWOBJ_DATA slot layout (already confirmed for RainbowObjDraw:
+ * +0x00 activeF, +0x10/0x14/0x18 GX pos/uv/color arrays, +0x1C..0x1F tint,
+ * +0x20/0x24 display list) with the build-time-only scratch: +0x04 vertex
+ * count ((pathLen-1)*3, one Hermite-interpolated triple per path segment),
+ * +0x08 the interpolated centerline points (stride 0xC), +0x0C a matching
+ * per-point (pitch,yaw) angle array (stride 0xC, only .x/.y used) computed
+ * from the centerline via the same __frsqrte pattern as MB2Ev_Rain. Builds
+ * a ribbon two vertices wide (+/-75 units either side of the centerline,
+ * perpendicular to its yaw) as a GX_TRIANGLESTRIP index-stream display
+ * list written straight to the write-gather pipe, same technique as
+ * MB2_ParticleCreate. */
 s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
-    /* NONMATCHING: placeholder - the real body builds a GX triangle-strip
-     * display list for the rainbow arc (raw GX FIFO writes at 0xCC008000,
-     * __frsqrte-based fast inverse sqrt) using the MB2_RAINBOWOBJ_DATA slot
-     * struct confirmed above; needs a dedicated asm pass, same class of
-     * work as the Zen2/Zen4/Rain/Thunder state machines. */
-    return -1;
+    MB2_RAINBOWOBJ_DATA *dat;
+    u8 *slot;
+    s32 slotNo;
+    Point3d *path;
+    u8 *ctrl;
+    s32 vtxCount;
+    u8 *angle;
+    u8 *posArr;
+    u8 *uvArr;
+    u8 *colArr;
+    void *dispListTmp;
+    s32 i;
+    volatile u16 *fifo = (volatile u16 *) 0xCC008000;
+
+    path = (Point3d *) arg0;
+    if (mb2_RainbowObj == NULL) {
+        return -1;
+    }
+    dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
+    slot = dat->slots;
+    for (slotNo = 0; slotNo < 8; slotNo++, slot = dat->slots + slotNo * 0x28) {
+        if (*(s32 *) slot == 0) {
+            break;
+        }
+    }
+    if (slotNo >= 8) {
+        return -1;
+    }
+    *(s32 *) slot = 1;
+
+    ctrl = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 3 * 0xC, Hu3DData[dat->modelId].mallocNo);
+    *(void **) (slot + 0x8) = ctrl;
+    memset(ctrl, 0, arg1 * 3 * 0xC);
+    for (i = 0; i < arg1 - 1; i++) {
+        Point3d *p0 = (i > 0) ? &path[i - 1] : &path[i];
+        Point3d *p1 = &path[i];
+        Point3d *p2 = &path[i + 1];
+        Point3d *p3 = (i < arg1 - 2) ? &path[i + 2] : &path[i + 1];
+        s32 k;
+        for (k = 0; k < 3; k++) {
+            MB2_HermiteCalcV(p0, p1, p2, p3, (Point3d *) ctrl, (f32) k / 3.0f);
+            ctrl += 0xC;
+        }
+    }
+
+    vtxCount = (arg1 - 1) * 3;
+    *(s32 *) (slot + 0x4) = vtxCount;
+    angle = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, vtxCount * 0xC, Hu3DData[dat->modelId].mallocNo);
+    *(void **) (slot + 0xC) = angle;
+    memset(angle, 0, vtxCount * 0xC);
+    ctrl = *(u8 **) (slot + 0x8);
+    for (i = 0; i < vtxCount; i++) {
+        Point3d delta = { 0.0f, 0.0f, 0.0f };
+        f32 distSq, dist;
+
+        if (i < vtxCount - 1) {
+            PSVECSubtract((Point3d *) (ctrl + (i + 1) * 0xC), (Point3d *) (ctrl + i * 0xC), &delta);
+        }
+        distSq = (delta.x * delta.x) + (delta.z * delta.z);
+        if (distSq > 0.0f) {
+            f64 e0 = __frsqrte(distSq);
+            f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
+            f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
+            dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
+        } else {
+            dist = distSq;
+        }
+        *(f32 *) (angle + i * 0xC + 0x0) = (f32) (180.0 * (atan2((f64) dist, (f64) delta.y) / 3.141592653589793));
+        *(f32 *) (angle + i * 0xC + 0x4) = (f32) (180.0 * (atan2((f64) delta.x, (f64) delta.z) / 3.141592653589793));
+        *(f32 *) (angle + i * 0xC + 0x8) = 0.0f;
+    }
+
+    *(u8 *) (slot + 0x1F) = 0xFF;
+    *(u8 *) (slot + 0x1E) = 0xFF;
+    *(u8 *) (slot + 0x1D) = 0xFF;
+    *(u8 *) (slot + 0x1C) = 0xFF;
+
+    posArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, vtxCount * 0xC * 2, Hu3DData[dat->modelId].mallocNo);
+    *(void **) (slot + 0x10) = posArr;
+    memset(posArr, 0, vtxCount * 0xC);
+    uvArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, (arg1 - 1) * 0x18 * 2, Hu3DData[dat->modelId].mallocNo);
+    *(void **) (slot + 0x14) = uvArr;
+    memset(uvArr, 0, (arg1 - 1) * 0x18);
+    colArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, (arg1 - 1) * 0xC * 2, Hu3DData[dat->modelId].mallocNo);
+    *(void **) (slot + 0x18) = colArr;
+    memset(colArr, 0, (arg1 - 1) * 0xC);
+
+    for (i = 0; i < vtxCount; i++) {
+        Point3d center;
+        u8 *topPos = posArr + i * 0xC;
+        u8 *topUv = uvArr + i * 8;
+        u8 *topCol = colArr + i * 4;
+        u8 *botPos = topPos + (vtxCount * 0xC);
+        u8 *botUv = topUv + ((arg1 - 1) * 0x18);
+        u8 *botCol = colArr + (arg1 - 1) * 0xC + i * 4;
+        f32 yaw = *(f32 *) (angle + i * 0xC + 0x4);
+        f32 fade;
+
+        center.x = *(f32 *) (ctrl + i * 0xC + 0x0);
+        center.y = *(f32 *) (ctrl + i * 0xC + 0x4);
+        center.z = *(f32 *) (ctrl + i * 0xC + 0x8);
+
+        if (i < 5) {
+            fade = 192.0f * ((f32) i / 5.0f);
+        } else if (i > vtxCount - 5) {
+            fade = 192.0f * ((f32) (5 - (i - (vtxCount - 5))) / 5.0f);
+        } else {
+            fade = 192.0f;
+        }
+
+        *(f32 *) (topPos + 0x0) = (f32) ((f64) center.x + (75.0 * sin((3.141592653589793 * (f64) (90.0f + yaw)) / 180.0)));
+        *(f32 *) (topPos + 0x8) = (f32) ((f64) center.z + (75.0 * cos((3.141592653589793 * (f64) (90.0f + yaw)) / 180.0)));
+        *(f32 *) (topPos + 0x4) = center.y;
+        *(f32 *) (topUv + 0x0) = 0.0f;
+        *(f32 *) (topUv + 0x4) = (1.0f / (f32) vtxCount) * (f32) i;
+        *(u8 *) (topCol + 0) = 0xC0;
+        *(u8 *) (topCol + 1) = 0xC0;
+        *(u8 *) (topCol + 2) = 0xC0;
+        *(u8 *) (topCol + 3) = (u8) fade;
+
+        *(f32 *) (botPos + 0x0) = (f32) ((f64) center.x + (75.0 * sin((3.141592653589793 * (f64) (yaw - 90.0f)) / 180.0)));
+        *(f32 *) (botPos + 0x8) = (f32) ((f64) center.z + (75.0 * cos((3.141592653589793 * (f64) (yaw - 90.0f)) / 180.0)));
+        *(f32 *) (botPos + 0x4) = center.y;
+        *(f32 *) (botUv + 0x0) = 1.0f;
+        *(f32 *) (botUv + 0x4) = (1.0f / (f32) vtxCount) * (f32) i;
+        *(u8 *) (botCol + 0) = 0xFF;
+        *(u8 *) (botCol + 1) = 0xFF;
+        *(u8 *) (botCol + 2) = 0xFF;
+        *(u8 *) (botCol + 3) = (u8) fade;
+    }
+
+    DCFlushRange(*(void **) (slot + 0x10), vtxCount * 0xC * 2);
+    DCFlushRange(*(void **) (slot + 0x14), (arg1 - 1) * 0x18 * 2);
+    DCFlushRange(*(void **) (slot + 0x18), (arg1 - 1) * 0xC * 2);
+    dispListTmp = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, Hu3DData[dat->modelId].mallocNo);
+    DCFlushRange(dispListTmp, 0x10000U);
+    GXBeginDisplayList(dispListTmp, 0x10000U);
+    GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, (u16) ((arg1 - 1) * 6));
+    if (arg2 == 0) {
+        for (i = 0; i < vtxCount; i++) {
+            *fifo = (u16) (i * 2);
+            *fifo = (u16) (i * 2);
+            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) ((i * 2) + 1);
+        }
+    } else {
+        for (i = vtxCount - 1; i >= 0; i--) {
+            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) (i * 2);
+            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) (i * 2);
+            *fifo = (u16) ((i * 2) + 1);
+            *fifo = (u16) (i * 2);
+        }
+    }
+    *(u32 *) (slot + 0x24) = GXEndDisplayList();
+    *(void **) (slot + 0x20) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (slot + 0x24), Hu3DData[dat->modelId].mallocNo);
+    memcpy(*(void **) (slot + 0x20), dispListTmp, *(u32 *) (slot + 0x24));
+    DCFlushRange(*(void **) (slot + 0x20), *(u32 *) (slot + 0x24));
+    HuMemDirectFree(dispListTmp);
+    return slotNo;
 }
 
 void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1) {
