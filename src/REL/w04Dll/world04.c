@@ -47,6 +47,7 @@ s32 MB4_CoinNumGet(void);
 s32 MB4_CoinEffNumGet(void);
 void MB4_CoinEffBlendModeSet(u8 mode);
 static f32 MB4_FastSqrt(f32 x);
+f32 MB4_AngleLerp(f32 a, f32 b, f32 step);
 void MB4_CoinInit(void);
 void MB4_CoinUpdate(OMOBJ *obj);
 s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 flightFrames, f32 arcHeight, f32 unused);
@@ -212,7 +213,8 @@ typedef struct MB4SakanaFish_s {
     s32 modelId;      /* 0x00 */
     s32 particleIdx;  /* 0x04 */
     f32 rand1;        /* 0x08 */
-    f32 rand2;        /* 0x0C */
+    s32 bobAngle;     /* 0x0C, degrees; read back via an explicit int-to-
+                       * float conversion in MB4_SakanaDraw's body-bob step */
     s32 unk10;        /* 0x10 */
     s32 unk14;        /* 0x14 */
     s32 timer18;      /* 0x18 */
@@ -1692,7 +1694,7 @@ void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3) {
                 fish->particleIdx = -1;
             }
             fish->rand1 = (f32) frand();
-            fish->rand2 = (f32) frand();
+            fish->bobAngle = (s32) frand();
             fish->unk10 = 0;
             fish->unk14 = 0;
             fish->timer18 = (s32) (60.0f + (2.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
@@ -1755,6 +1757,210 @@ void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3) {
     MB4W_S32(0x7F78) = Hu3DHookFuncCreate((HU3DMODELHOOK) MB4_SakanaDraw);
     Hu3DModelCameraSet((s16) MB4W_S32(0x7F78), 1U);
     Hu3DModelLayerSet((s16) MB4W_S32(0x7F78), 7);
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match (size and complexity make it impractical). Per-frame sakana (fish)
+ * AI and draw hook, called once per frame while unpaused, for every fish
+ * of every species: screen-space culling (offscreen fish get their
+ * onscreen flag - unk2C - cleared, hiding the real-model ones and
+ * releasing the shared-particle ones back to the pool), waypoint
+ * arrival/re-target (posA -> posB swim target inside the species' swim
+ * area, picked when close enough or a random timer expires), a smooth
+ * pitch/yaw turn toward the new heading via MB4_AngleLerp (2.5 deg/frame
+ * cap), a sinusoidal body-bob speed multiplier, and - only for
+ * pathAltFlag == 0 fish - a periodic course wobble (timer18) plus an
+ * occasional bubble puff (timer20) spawned via the mb4_BubbleEffObj
+ * particle pool directly (not through MB4_BubbleEffCreate, matching the
+ * original exactly). Finally moves the fish along dir*speed and updates
+ * either its real HSF model transform or its shared MB4PARTICLE slot. */
+void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
+    s32 s, f;
+    MB4SAKANASPECIES *species;
+    MB4SAKANAFISH *fish;
+    Point3d screenPos;
+    Point3d diff;
+    f32 bobOfs;
+    f32 horizDistSq, horizDist;
+    f32 speedMul;
+    f32 wobble;
+    Point3d move;
+    BOOL onScreen;
+
+    if (MBPauseProcCheck()) {
+        return;
+    }
+
+    for (s = 0; s < 14; s++) {
+        species = &mb4ev_SakanaTbl[s];
+        fish = (MB4SAKANAFISH *) ((u8 *) mb4_Work + 0x174 + (s * 0x900));
+        for (f = 0; f < species->count; f++) {
+            fish->unk10 += 1;
+            speedMul = fish->speed;
+            bobOfs = 0.0f;
+
+            if ((fish->unk10 & 3) == 0) {
+                Hu3D3Dto2D(&fish->posB, 1, &screenPos);
+                if ((screenPos.x < 0.0f || screenPos.x > 640.0f) && (screenPos.y < 0.0f || screenPos.y > 480.0f)) {
+                    onScreen = FALSE;
+                } else {
+                    onScreen = TRUE;
+                }
+                fish->unk2C = onScreen;
+            }
+
+            if (!fish->unk2C && fish->modelId == -1) {
+                MB4PARTICLE *p = (MB4PARTICLE *) MB4_SakanaPartBase(fish->particleIdx);
+                p->sakanaFlags &= ~0x80;
+            } else {
+                PSVECSubtract(&fish->posA, &fish->posB, &diff);
+                if (fish->pathAltFlag == 0) {
+                    fish->unk10 -= 1;
+                    if (fish->unk10 <= 0) {
+                        f32 mag = PSVECMag(&diff);
+                        fish->timer24 -= 1;
+                        if (mag >= fish->speed || fish->timer24 <= 0 ||
+                            fabsf(diff.x) > fish->speciesRange.x ||
+                            fabsf(diff.y) > fish->speciesRange.y ||
+                            fabsf(diff.z) > fish->speciesRange.z) {
+                            fish->posA.x = fish->speciesPos.x + (fish->speciesRange.x * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                            fish->posA.y = fish->speciesPos.y + (fish->speciesRange.y * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                            fish->posA.z = fish->speciesPos.z + (fish->speciesRange.z * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                            fish->unk10 = 0x3C;
+                            fish->timer24 = (s32) (120.0f + (2.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                        }
+                    }
+                    fish->timer18 -= 1;
+                    if (fish->timer18 <= 0) {
+                        bobOfs = (f32) (15.0 * sin((3.141592653589793 * (f64) fish->unk14) / 180.0));
+                        fish->unk14 += 5;
+                        if (fish->unk14 >= 0x2D0) {
+                            fish->unk14 = 0;
+                            fish->timer18 = (s32) (60.0f + (2.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                        }
+                    } else {
+                        bobOfs = 0.0f;
+                    }
+                    fish->timer20 -= 1;
+                    if (fish->timer20 <= 0) {
+                        if ((fish->timer1C & 3) == 0 && mb4_BubbleEffObj != NULL) {
+                            MB4COINEFFMGR *mgr = (MB4COINEFFMGR *) Hu3DData[*mb4_BubbleEffObj->mdlId].hookData;
+                            MB4PARTICLE *bp = mgr->particles;
+                            s32 bi;
+                            Point3d bubblePos;
+                            f32 bubbleScale;
+                            s32 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+
+                            bubbleScale = fish->scale * (0.5f + (0.007874016f * (f32) (frand() & 0x7F)));
+                            PSVECScale(&fish->dir, &bubblePos, 50.0f * fish->scale);
+                            PSVECAdd(&fish->posB, &bubblePos, &bubblePos);
+                            for (bi = 0; bi < mgr->count; bi++) {
+                                if (bp->timer == 0.0f) {
+                                    break;
+                                }
+                                bp++;
+                            }
+                            if (bi < mgr->count) {
+                                if (bubbleScale == 0.0f) {
+                                    bubbleScale = 1.0f;
+                                }
+                                bp->posX = bubblePos.x;
+                                bp->posY = bubblePos.y;
+                                bp->posZ = bubblePos.z;
+                                bp->velX = 0.5f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+                                bp->velZ = 1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+                                bp->velY = 2.0f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+                                bp->speed = 1.0f;
+                                bp->one = 1.0f / (f32) duration;
+                                bp->active = (s16) (frand() % 360);
+                                bp->timer = 20.0f * bubbleScale;
+                                bp->color[3] = 0xFF;
+                                bp->color[2] = 0xFF;
+                                bp->color[1] = 0xFF;
+                                bp->color[0] = 0xFF;
+                            }
+                        }
+                        fish->timer1C -= 1;
+                        if (fish->timer1C <= 0) {
+                            fish->timer1C = (s32) (10.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                            fish->timer20 = (s32) (300.0f + (5.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                        }
+                    }
+                    horizDistSq = (diff.x * diff.x) + (diff.z * diff.z);
+                    horizDist = (horizDistSq > 0.0f) ? MB4_FastSqrt(horizDistSq) : horizDistSq;
+                    fish->prevPitch = (f32) (180.0 * (atan2((f64) diff.y, (f64) horizDist) / 3.141592653589793));
+                    fish->prevYaw = (f32) (180.0 * (atan2((f64) diff.x, (f64) diff.z) / 3.141592653589793));
+                } else {
+                    PSVECSubtract(&fish->posA, &fish->posB, &diff);
+                    if ((fish->unk10 & 1) == 0) {
+                        fish->unk10 -= 1;
+                        if (fish->unk10 <= 0) {
+                            f32 mag = PSVECMag(&diff);
+                            fish->timer24 -= 1;
+                            if (mag == fish->speed || fish->timer24 <= 0) {
+                                fish->posA.x = fish->speciesPos.x + (fish->speciesRange.x * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                                fish->posA.y = fish->speciesPos.y + (fish->speciesRange.y * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                                fish->posA.z = fish->speciesPos.z + (fish->speciesRange.z * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                                fish->unk10 = 0x3C;
+                                fish->timer24 = (s32) (120.0f + (2.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                            }
+                        }
+                    }
+                    if ((fish->unk10 & 3) == 0) {
+                        horizDistSq = (diff.x * diff.x) + (diff.z * diff.z);
+                        horizDist = (horizDistSq > 0.0f) ? MB4_FastSqrt(horizDistSq) : horizDistSq;
+                        fish->prevPitch = (f32) (180.0 * (atan2((f64) diff.y, (f64) horizDist) / 3.141592653589793));
+                        fish->prevYaw = (f32) (180.0 * (atan2((f64) diff.x, (f64) diff.z) / 3.141592653589793));
+                    }
+                }
+
+                fish->pitch = MB4_AngleLerp(fish->prevPitch, fish->pitch, 2.5f);
+                fish->yaw = MB4_AngleLerp(fish->prevYaw, fish->yaw, 2.5f);
+                fish->roll = 0.0f;
+
+                wobble = (f32) cos((3.141592653589793 * (f64) fish->pitch) / 180.0);
+                fish->dir.y = (f32) sin((3.141592653589793 * (f64) fish->pitch) / 180.0);
+                fish->dir.x = (f32) ((f64) wobble * sin((3.141592653589793 * (f64) fish->yaw) / 180.0));
+                fish->dir.z = (f32) ((f64) wobble * cos((3.141592653589793 * (f64) fish->yaw) / 180.0));
+
+                if (PSVECMag(&diff) > 1000.0f) {
+                    speedMul *= 2.0f;
+                }
+
+                fish->bobAngle = (s32) ((f32) fish->bobAngle + (1.0f + (3.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                if (fish->bobAngle > 0x168) {
+                    fish->bobAngle -= 0x168;
+                }
+                PSVECScale(&fish->dir, &move, speedMul * (0.5f + (f32) fabs(0.5 * sin((3.141592653589793 * (f64) fish->bobAngle) / 180.0))));
+                PSVECAdd(&fish->posB, &move, &fish->posB);
+
+                if (fish->modelId != -1) {
+                    if (!fish->unk2C) {
+                        MBModelDispSet((s16) fish->modelId, FALSE);
+                    } else {
+                        MBModelDispSet((s16) fish->modelId, TRUE);
+                        MBModelPosSetV((s16) fish->modelId, &fish->posB);
+                        MBModelRotSet((s16) fish->modelId, -fish->pitch, fish->yaw + bobOfs, fish->roll);
+                    }
+                } else {
+                    MB4PARTICLE *p = (MB4PARTICLE *) MB4_SakanaPartBase(fish->particleIdx);
+                    if (!fish->unk2C) {
+                        p->sakanaFlags &= ~0x80;
+                    } else {
+                        p->sakanaFlags |= 0x80;
+                        p->posX = fish->posB.x;
+                        p->posY = fish->posB.y;
+                        p->posZ = fish->posB.z;
+                        p->offsetX = fish->pitch;
+                        p->offsetY = fish->yaw;
+                        p->offsetZAngle = fish->roll;
+                        p->offsetY -= 90.0f;
+                    }
+                }
+            }
+            fish += 1;
+        }
+    }
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
