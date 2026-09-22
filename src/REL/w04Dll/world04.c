@@ -478,6 +478,9 @@ static f32 mb4ev_IrukaTPLvlScaleTbl[13] = {
 };
 static Point3d lbl_1_data_10CC = { 0.0f, 0.0f, 0.0f };
 
+/* Capsule pool for the MB4Ev_Kaisoo "fishing" prize. */
+static int mb4ev_Puku2CapsuleTbl[9] = { 1, 11, 12, 13, 15, 17, 6, 25, 36 };
+
 static MB4SAKANASPECIES mb4ev_SakanaTbl[14] = {
     { { 31.0f, 321.0f, -171.0f }, { 1100.0f, 100.0f, 700.0f }, 3, 1, 1 },
     { { -1655.0f, 721.0f, 2080.0f }, { 2600.0f, 500.0f, 1000.0f }, 3, 0, 0 },
@@ -3205,5 +3208,434 @@ void MB4Ev_Blow(s32 playerNo) {
     }
     if (suckMotNo != -1) {
         MBPlayerMotionKill(playerNo, suckMotNo);
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match (size and cinematic/minigame complexity make it impractical).
+ * "Kaisoo" (seaweed) board event: the player dives underwater to fish for
+ * a prize among the 3 kelp patches (mb4ev_KaiPosTbl / mb4_Work[9..11]
+ * swaying kelp models). If another player is already on the same masu, a
+ * different dive-in animation plays. A joystick-driven (or COM
+ * random-walk) underwater fishing-hook sprite (esp) is steered left/right
+ * among the 3 kelp spots for up to 5 seconds; the chosen spot then reveals
+ * either a newly spawned capsule (60% chance, from mb4ev_Puku2CapsuleTbl)
+ * or a reused hidden coin/empty model (mb4_Work[0xD]/[0xE]), unless the
+ * player's capsule inventory is already full, in which case nothing is
+ * caught. Ends with a reward message and the player climbing back out. */
+void MB4Ev_Kaisoo(s32 playerNo) {
+    s16 masuId = GwPlayer[playerNo].masuId;
+    MASU *masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    Point3d playerPos;
+    MBCAMERA *cam;
+    Point3d camRot;
+    f32 camZoom;
+    s32 camDummyModel;
+    Point3d camDummyPos;
+    Point3d camRotOfs;
+    Point3d camPosOfs;
+    s32 i;
+    f32 t;
+    s16 espId;
+    Point3d espPos;
+    Point3d espTargetPos;
+    s32 kelpIdx;
+    s32 shareOtherPlayer;
+    s32 kelpModel;
+    s32 useRewardShift;
+    s16 gameMesId;
+    s32 selfPlayerId;
+    Point3d catchPos;
+    s32 catchScale;
+    s32 capsuleModel;
+    s32 catchModel;
+    s32 gotCapsule;
+    s32 coinDispId;
+
+    MBPlayerPosGet(playerNo, &playerPos);
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0U);
+
+    cam = MBCameraGet();
+    camRot = cam->rot;
+    camZoom = cam->zoom;
+
+    camDummyModel = MBModelCreate(0x80002, NULL, FALSE);
+    MBModelDispSet(camDummyModel, FALSE);
+    MBPlayerPosGet(playerNo, &camDummyPos);
+    camDummyPos.x += 500.0f;
+    camDummyPos.z -= 500.0f;
+    MBModelPosSetV(camDummyModel, &camDummyPos);
+    camRotOfs.x = camRot.x;
+    camRotOfs.y = camRot.y - 45.0f;
+    camRotOfs.z = camRot.z;
+    MBCameraModelViewSet(camDummyModel, &camRotOfs, NULL, 2000.0f, -1.0f, 0x2A);
+    MBCameraMotionWait();
+
+    MBPlayerRotateStart(playerNo, 0x87, 0xF);
+    while (!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (i != playerNo && masuId == GwPlayer[i].masuId) {
+            break;
+        }
+    }
+    shareOtherPlayer = (i < 4);
+    if (shareOtherPlayer) {
+        MBPlayerMotionNoShiftSet(playerNo, 3, 0.0f, 8.0f, 0x40000001U);
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            playerPos.x = (f32) ((f64) playerPos.x + (200.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            playerPos.z = (f32) ((f64) playerPos.z - (200.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &playerPos);
+            MBPlayerRotSet(playerNo, 0.0f, 135.0f, 0.0f);
+            HuPrcVSleep();
+        }
+    } else {
+        MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
+        for (i = 0; i <= 27; i++) {
+            t = (f32) i / 27.0f;
+            playerPos.x = playerPos.x + (200.0f * t);
+            playerPos.z = playerPos.z - (200.0f * t);
+            playerPos.y = (f32) ((f64) playerPos.y + (250.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &playerPos);
+            MBPlayerRotSet(playerNo, 0.0f, 135.0f, 0.0f);
+            HuPrcVSleep();
+        }
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+
+    MBWinCreate(2, 0x300004U, 0x15);
+    MBTopWinWait();
+    MBTopWinKill();
+
+    espId = espEntry(0x8002AU, 0x7D0, 0);
+    espDispOn(espId);
+    espDrawNoSet(espId, 0);
+    espAttrSet(espId, 1U);
+    espBankSet(espId, 0);
+    Hu3D3Dto2D(&mb4ev_KaiPosTbl[1], 1, &espPos);
+    espPosSet(espId, espPos.x, espPos.y);
+
+    kelpIdx = 1;
+    useRewardShift = 0;
+    catchModel = -1;
+    gotCapsule = 0;
+    gameMesId = GameMesCreate(1, 5, -1, -1, MBWinCreateHelp(0x300005U));
+
+    if (!GwPlayer[playerNo].comF) {
+        s32 holdOff = 0;
+        for (i = 0x12C; i >= 0; i--) {
+            s32 stickX, stickY;
+            u16 btn;
+
+            HuPrcVSleep();
+            GameMesDispSet(gameMesId, 1, (s16) ((i + 0x3A) / 60));
+            if (holdOff <= 0) {
+                stickX = MBPadStkXGet(GwPlayer[playerNo].padNo);
+                stickY = MBPadStkYGet(GwPlayer[playerNo].padNo);
+                btn = HuPadBtnDown[(u8) GwPlayer[playerNo].padNo];
+            } else {
+                btn = 0;
+                stickY = 0;
+                stickX = 0;
+                holdOff -= 1;
+            }
+            (void) stickY;
+            if (stickX < -8) {
+                kelpIdx -= 1;
+                holdOff = 0x13;
+            } else if (stickX > 8) {
+                kelpIdx += 1;
+                holdOff = 0x13;
+            }
+            if (kelpIdx < 0) {
+                kelpIdx = 0;
+            } else if (kelpIdx > 2) {
+                kelpIdx = 2;
+            }
+            Hu3D3Dto2D(&mb4ev_KaiPosTbl[kelpIdx], 1, &espTargetPos);
+            espPos.x += 0.1f * (espTargetPos.x - espPos.x);
+            espPos.y += 0.1f * (espTargetPos.y - espPos.y);
+            espPosSet(espId, espPos.x, espPos.y);
+            if (btn & 0x100) {
+                break;
+            }
+        }
+    } else {
+        s32 decided = 0;
+        s32 holdOff = (s32) (30.0f + (0.5f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+
+        for (i = 0x12C; i >= 0; i--) {
+            u16 btn = 0;
+            s32 stickX = 0;
+
+            HuPrcVSleep();
+            GameMesDispSet(gameMesId, 1, (s16) ((i + 0x3A) / 60));
+            if (decided) {
+                holdOff -= 1;
+                if (holdOff <= 0) {
+                    btn = 0x100;
+                }
+            } else {
+                holdOff -= 1;
+                if (holdOff <= 0) {
+                    f32 r = 0.007874016f * (f32) (frand() & 0x7F);
+                    if (r < 0.33f) {
+                        stickX = 0;
+                    } else if (r < 0.5f) {
+                        stickX = -0x10;
+                    } else {
+                        stickX = 0x10;
+                    }
+                    decided += 1;
+                    holdOff = (s32) (60.0f + (0.5f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                }
+            }
+            if (stickX < -8) {
+                kelpIdx -= 1;
+                holdOff = 0x13;
+            } else if (stickX > 8) {
+                kelpIdx += 1;
+                holdOff = 0x13;
+            }
+            if (kelpIdx < 0) {
+                kelpIdx = 0;
+            } else if (kelpIdx > 2) {
+                kelpIdx = 2;
+            }
+            Hu3D3Dto2D(&mb4ev_KaiPosTbl[kelpIdx], 1, &espTargetPos);
+            espPos.x += 0.1f * (espTargetPos.x - espPos.x);
+            espPos.y += 0.1f * (espTargetPos.y - espPos.y);
+            espPosSet(espId, espPos.x, espPos.y);
+            if (btn & 0x100) {
+                break;
+            }
+        }
+    }
+    GameMesDispSet(gameMesId, 2, -1);
+    espKill(espId);
+    MBTopWinKill();
+
+    if ((s32) ((frand() & 0x7FFF) % 5) < 3) {
+        capsuleModel = mb4ev_Puku2CapsuleTbl[(frand() & 0x7FFF) % 9];
+        if (((*(u8 *) &GwSystem >> 6) & 1) != 0 && capsuleModel == 0x24) {
+            capsuleModel = 1;
+        }
+        catchModel = MBModelCreate(MBCapsuleMdlGet(capsuleModel), NULL, FALSE);
+        MBModelAttrSet(catchModel, 0x40000001U);
+        catchScale = catchModel;
+    } else {
+        if (frand() & 1) {
+            catchScale = (s16) mb4_Work[0xD];
+        } else {
+            catchScale = (s16) mb4_Work[0xE];
+        }
+    }
+
+    MBModelPosSetV(catchScale, &mb4ev_KaiPosTbl[kelpIdx]);
+    MBModelRotSet(catchScale, 0.0f, -45.0f, 0.0f);
+    MBModelScaleSet(catchScale, 0.5f, 0.5f, 0.5f);
+    MBModelDispSet(catchScale, TRUE);
+    MBModelLayerSet(catchScale, 2U);
+    kelpModel = (s16) mb4_Work[9 + kelpIdx];
+    MBMotionSpeedSet((s16) kelpModel, 1.0f);
+    MBMotionTimeSet((s16) kelpModel, 0.0f);
+    HuAudFXPlay(0x5EE);
+    i = 0;
+    do {
+        Point3d bubblePos;
+        f32 bubbleAngle;
+
+        if (i < 0x1E) {
+            bubbleAngle = -45.0f + (60.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+            bubblePos.x = (f32) ((f64) mb4ev_KaiPosTbl[kelpIdx].x + (75.0 * sin((3.141592653589793 * (f64) bubbleAngle) / 180.0)));
+            bubblePos.y = mb4ev_KaiPosTbl[kelpIdx].y;
+            bubblePos.z = (f32) ((f64) mb4ev_KaiPosTbl[kelpIdx].z + (75.0 * cos((3.141592653589793 * (f64) bubbleAngle) / 180.0)));
+            MB4_BubbleEffCreate(&bubblePos, 0xB4, 0.0f, 0.5f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F))));
+        }
+        HuPrcVSleep();
+        i += 1;
+    } while (!MBMotionEndCheck((s16) kelpModel));
+
+    HuAudFXPlay(0x364);
+    for (i = 0; i <= 60; i++) {
+        t = (f32) i / 60.0f;
+        catchPos = mb4ev_KaiPosTbl[kelpIdx];
+        catchPos.y = (f32) ((f64) catchPos.y + (150.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+        MBModelPosSetV(catchScale, &catchPos);
+        MBModelRotSet(catchScale, 0.0f, -45.0f, 0.0f);
+        MBModelScaleSet(catchScale, 0.5f + (0.5f * t), 0.5f + (0.5f * t), 0.5f + (0.5f * t));
+        HuPrcVSleep();
+    }
+
+    if (MBPlayerCapsuleNumGet(playerNo) >= MBPlayerCapsuleMaxGet() && catchScale == catchModel) {
+        f32 bob;
+
+        MBWinCreate(2, 0x300006U, 0x15);
+        bob = 0.0f;
+        do {
+            if (bob >= 1.0f) {
+                bob -= 1.0f;
+            }
+            bob += 0.011111111f;
+            if (bob > 1.0f) {
+                bob = 1.0f;
+            }
+            catchPos = mb4ev_KaiPosTbl[kelpIdx];
+            catchPos.y = (f32) ((f64) catchPos.y + (150.0 + (0.20000000298023224 * (100.0 * sin((3.141592653589793 * (f64) (360.0f * bob)) / 180.0)))));
+            MBModelPosSetV(catchScale, &catchPos);
+            HuPrcVSleep();
+        } while (!MBTopWinDoneCheck() || bob < 1.0f);
+        MBTopWinKill();
+
+        for (i = 0; i <= 60; i++) {
+            t = (f32) i / 60.0f;
+            catchPos = mb4ev_KaiPosTbl[kelpIdx];
+            catchPos.y = (f32) ((f64) catchPos.y + (150.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            MBModelPosSetV(catchScale, &catchPos);
+            MBModelRotSet(catchScale, 0.0f, -45.0f, 0.0f);
+            MBModelScaleSet(catchScale, 1.0f - (0.5f * t), 1.0f - (0.5f * t), 1.0f - (0.5f * t));
+            HuPrcVSleep();
+        }
+        MBMotionSpeedSet((s16) kelpModel, -1.0f);
+        do {
+            HuPrcVSleep();
+        } while (MBMotionTimeGet((s16) kelpModel) > 0.0f);
+        useRewardShift = 1;
+    } else {
+        Point3d toPlayer;
+        f32 horizDist, horizAngle;
+
+        for (i = 0; i <= 90; i++) {
+            t = (f32) i / 90.0f;
+            catchPos = mb4ev_KaiPosTbl[kelpIdx];
+            catchPos.y = (f32) ((f64) catchPos.y + (150.0 + (0.20000000298023224 * (100.0 * sin((3.141592653589793 * (f64) (360.0f * t)) / 180.0)))));
+            MBModelPosSetV(catchScale, &catchPos);
+            HuPrcVSleep();
+        }
+        PSVECSubtract(&catchPos, &playerPos, &toPlayer);
+        toPlayer.y = 0.0f;
+        horizDist = PSVECMag(&toPlayer);
+        horizAngle = (f32) (180.0 * (atan2((f64) toPlayer.x, (f64) toPlayer.z) / 3.141592653589793));
+        HuAudFXPlay(0x31C);
+        for (i = 0; i <= 120; i++) {
+            t = (f32) i / 120.0f;
+            catchPos.x = (f32) ((f64) playerPos.x + ((f64) (horizDist * (1.0f - t)) * sin((3.141592653589793 * (f64) ((720.0f * t) + horizAngle)) / 180.0)));
+            catchPos.z = (f32) ((f64) playerPos.z + ((f64) (horizDist * (1.0f - t)) * cos((3.141592653589793 * (f64) ((720.0f * t) + horizAngle)) / 180.0)));
+            catchPos.y = ((150.0f * (1.0f - t)) + mb4ev_KaiPosTbl[kelpIdx].y) - (50.0f * t);
+            MBModelPosSetV(catchScale, &catchPos);
+            MBModelScaleSet(catchScale, 1.0f - t, 1.0f - t, 1.0f - t);
+            HuPrcVSleep();
+        }
+        MBModelDispSet(catchScale, FALSE);
+    }
+
+    MBPlayerRotateStart(playerNo, 0, 0xF);
+    while (!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    camRotOfs = camRot;
+    camPosOfs.x = 0.0f;
+    camPosOfs.z = 0.0f;
+    camPosOfs.y = 200.0f;
+    MBCameraModelViewSet(MBPlayerModelGet(playerNo), &camRotOfs, &camPosOfs, 2000.0f, -1.0f, 0x2A);
+    MBCameraMotionWait();
+
+    selfPlayerId = -1;
+    (void) selfPlayerId;
+    if (catchScale == (s32) mb4_Work[0xC]) {
+        MBCoinAddExec(playerNo, 0xA);
+        MBPlayerPosGet(playerNo, &catchPos);
+        catchPos.y += 250.0f;
+        coinDispId = MBCoinDispCreateSe(&catchPos, 0xA);
+        (void) coinDispId;
+        MBAudFXPlay(0xF);
+        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1F8);
+        MBPlayerMotionNoShiftSet(playerNo, 0xC, 0.0f, 8.0f, 0U);
+    } else if (catchScale == catchModel && useRewardShift == 0) {
+        MBPlayerCapsuleAdd(playerNo, capsuleModel);
+        gotCapsule = 1;
+        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1F8);
+        MBPlayerMotionNoShiftSet(playerNo, 0xC, 0.0f, 8.0f, 0U);
+    } else {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xD, 0x200);
+        MBPlayerMotionNoShiftSet(playerNo, 0xD, 0.0f, 8.0f, 0U);
+    }
+    do {
+        HuPrcVSleep();
+    } while (!MBPlayerMotionEndCheck(playerNo));
+    while (Hu3DMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+        HuPrcVSleep();
+    }
+
+    if (catchScale == (s32) mb4_Work[0xC]) {
+        MBWinCreate(2, 0x300007U, -1);
+    } else if (catchScale == catchModel) {
+        if (useRewardShift == 0) {
+            MBWinCreate(2, 0x300008U, -1);
+            MBTopWinInsertMesSet(MBCapsuleMesGet(capsuleModel), 0);
+        }
+    } else {
+        MBWinCreate(2, 0x300009U, -1);
+    }
+    MBTopWinWait();
+    MBTopWinKill();
+
+    if (catchScale == catchModel && gotCapsule && capsuleModel == 0x24) {
+        MB3MiracleGetExec(playerNo);
+    }
+
+    MBMotionSpeedSet((s16) kelpModel, -3.0f);
+    MBPlayerRotateStart(playerNo, -0x2D, 0xF);
+    while (!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (i != playerNo && masuId == GwPlayer[i].masuId) {
+            break;
+        }
+    }
+    if (i < 4) {
+        MBPlayerMotionNoShiftSet(playerNo, 3, 0.0f, 8.0f, 0x40000001U);
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            playerPos.x = (f32) ((f64) playerPos.x + (200.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            playerPos.z = (f32) ((f64) playerPos.z - (200.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &playerPos);
+            MBPlayerRotSet(playerNo, 0.0f, -45.0f, 0.0f);
+            HuPrcVSleep();
+        }
+    } else {
+        MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
+        for (i = 0; i <= 27; i++) {
+            t = (f32) i / 27.0f;
+            playerPos.x = playerPos.x + (200.0f * (1.0f - t));
+            playerPos.z = playerPos.z - (200.0f * (1.0f - t));
+            playerPos.y = (f32) ((f64) playerPos.y + (250.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &playerPos);
+            MBPlayerRotSet(playerNo, 0.0f, -45.0f, 0.0f);
+            HuPrcVSleep();
+        }
+    }
+
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+    MBPlayerRotateStart(playerNo, 0, 0xF);
+    while (!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    do {
+        HuPrcVSleep();
+    } while (MBMotionTimeGet((s16) kelpModel) > 0.0f);
+    MBMotionSpeedSet((s16) kelpModel, 0.0f);
+    MBMotionTimeSet((s16) kelpModel, 0.0f);
+
+    if (camDummyModel != -1) {
+        MBModelKill(camDummyModel);
+    }
+    if (catchModel != -1) {
+        MBModelKill(catchModel);
     }
 }
