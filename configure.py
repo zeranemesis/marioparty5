@@ -1975,7 +1975,7 @@ config.libs = [
     Rel(
         "w02Dll",
         objects={
-            Object(NonMatching, "REL/w02Dll/world02.c"),
+            Object(Equivalent, "REL/w02Dll/world02.c"),
         },
     ),
     Rel(
