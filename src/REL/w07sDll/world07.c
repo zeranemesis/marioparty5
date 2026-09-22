@@ -179,7 +179,12 @@ static f32 MB7_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir) {
 }
 
 /* NONMATCHING: extra callee-save float temporary (f30/f31 split) not
- * reproduced; logic is otherwise identical instruction-for-instruction */
+ * reproduced; logic is otherwise identical instruction-for-instruction.
+ * #pragma dont_inline: MWCC inlines this small function into some of
+ * its callers (e.g. MB7Ev_HouPlayerUpdate) without it; the original
+ * keeps every call site out-of-line (confirmed via `bl MB7_AngleDiff`
+ * there). */
+#pragma dont_inline on
 static f32 MB7_AngleDiff(f32 from, f32 to) {
     f32 mod = (f32) fmod((f64) (to - from), 360.0);
     f32 diff = mod;
@@ -191,6 +196,7 @@ static f32 MB7_AngleDiff(f32 from, f32 to) {
     }
     return diff;
 }
+#pragma dont_inline reset
 
 /* NONMATCHING: register allocation order differs (73% match) */
 static s32 MB7Ev_BitGet(s32 flag, u32 mask) {
@@ -1069,11 +1075,10 @@ static f32 MB7_FastSqrt(f32 x) {
 /* NONMATCHING: register allocation order differs */
 static void MB7Ev_HouPlayerUpdate(void) {
     u8 *fireBase = (u8 *) mb7_Work + 0xE0;
+    u8 *e = (u8 *) mb7_Work + 0x164;
     s32 playerNo;
 
-    for (playerNo = 0; playerNo < MB7EV_HOU_PLAYER_MAX; playerNo++) {
-        u8 *e = (u8 *) mb7_Work + 0x164 + (playerNo * MB7EV_HOU_PLAYER_STRIDE);
-
+    for (playerNo = 0; playerNo < MB7EV_HOU_PLAYER_MAX; playerNo++, e += MB7EV_HOU_PLAYER_STRIDE) {
         if (*(s32 *) (e + 0x0) != 0) {
             MASU *masuP = MBMasuGet(0, *(s32 *) (e + 0xC));
 
@@ -1157,7 +1162,8 @@ static void MB7Ev_Hou(s32 playerNo) {
     Point3d kupaPos;
     Point3d firePos;
     s32 i;
-    u32 flag = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId)->flag;
+    MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
+    u32 flag = masuP->flag;
 
     MB7Ev_KoopaInit((u16) flag);
     MBCameraFocusPlayerSet(-1);
@@ -1181,15 +1187,17 @@ static void MB7Ev_Hou(s32 playerNo) {
     }
 
     memset((u8 *) mb7_Work + 0x164, 0, MB7EV_HOU_PLAYER_MAX * MB7EV_HOU_PLAYER_STRIDE);
-    for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++) {
-        u8 *e = (u8 *) mb7_Work + 0x164 + (i * MB7EV_HOU_PLAYER_STRIDE);
+    {
+        u8 *e = (u8 *) mb7_Work + 0x164;
 
-        if (MBPlayerAliveCheck(i)) {
-            s16 masuId = GwPlayer[i].masuId;
+        for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++, e += MB7EV_HOU_PLAYER_STRIDE) {
+            if (MBPlayerAliveCheck(i)) {
+                s16 masuId = GwPlayer[i].masuId;
 
-            if (MBMasuGet(0, (s32) masuId)->flag & 0x80) {
-                *(s32 *) (e + 0x0) = 1;
-                *(s32 *) (e + 0xC) = masuId;
+                if (MBMasuGet(0, (s32) masuId)->flag & 0x80) {
+                    *(s32 *) (e + 0x0) = 1;
+                    *(s32 *) (e + 0xC) = masuId;
+                }
             }
         }
     }
@@ -1353,10 +1361,9 @@ static void MB7Ev_Hou(s32 playerNo) {
 
             {
                 BOOL anyBusy = FALSE;
+                u8 *e = (u8 *) mb7_Work + 0x164;
 
-                for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++) {
-                    u8 *e = (u8 *) mb7_Work + 0x164 + (i * MB7EV_HOU_PLAYER_STRIDE);
-
+                for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++, e += MB7EV_HOU_PLAYER_STRIDE) {
                     if (*(s32 *) (e + 0x0) != 0 && *(s32 *) (e + 0x8) < 3) {
                         anyBusy = TRUE;
                     }
@@ -1384,10 +1391,9 @@ static void MB7Ev_Hou(s32 playerNo) {
      * caught in the fire breath, with its own coin-loss window. */
     {
         s32 coinLoss[MB7EV_HOU_PLAYER_MAX];
+        u8 *e = (u8 *) mb7_Work + 0x164;
 
-        for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++) {
-            u8 *e = (u8 *) mb7_Work + 0x164 + (i * MB7EV_HOU_PLAYER_STRIDE);
-
+        for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++, e += MB7EV_HOU_PLAYER_STRIDE) {
             coinLoss[i] = 0;
             if (*(s32 *) (e + 0x0) != 0) {
                 s32 coins = MBPlayerCoinGet(i);
@@ -1424,11 +1430,13 @@ static void MB7Ev_Hou(s32 playerNo) {
         HuPrcVSleep();
     }
 
-    for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++) {
-        u8 *e = (u8 *) mb7_Work + 0x164 + (i * MB7EV_HOU_PLAYER_STRIDE);
+    {
+        u8 *e = (u8 *) mb7_Work + 0x164;
 
-        if (*(s32 *) (e + 0x0) != 0) {
-            *(s32 *) (e + 0x8) = -1;
+        for (i = 0; i < MB7EV_HOU_PLAYER_MAX; i++, e += MB7EV_HOU_PLAYER_STRIDE) {
+            if (*(s32 *) (e + 0x0) != 0) {
+                *(s32 *) (e + 0x8) = -1;
+            }
         }
     }
     MB7Ev_HouPlayerUpdate();
