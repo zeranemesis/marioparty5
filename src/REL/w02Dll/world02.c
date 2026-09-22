@@ -2001,14 +2001,33 @@ void MB2Ev_Thunder(s32 arg0) {
 
 /* Warning: Gap in callee-saved word stack region.
  * Saved: [-0xe8, -0xe4, -0xd8, -0xd4, -0xc8, -0xc4, -0xb8, -0xb4, -0xa8, -0xa4, -0x98, -0x94, -0x88, -0x84, -0x78, -0x74, -0x68, -0x64, -0x58, -0x54, -0x48, -0x44, 0xed4, 0xed8, 0xedc, 0xee0, 0xee4, 0xee8, 0xeec, 0xef0, 0xef4, 0xef8, 0xefc, 0xf00, 0xf04, 0xf08, 0xf0c, 0xf10, 0xf14, 0xf20, 0xf24, 0xf30, 0xf34, 0xf40, 0xf44, 0xf50, 0xf54, 0xf60, 0xf64, 0xf70, 0xf74, 0xf80, 0xf84, 0xf90, 0xf94, 0xfa0, 0xfa4, 0xfb0, 0xfb4], gap at: -0xe0. */
+/* MB2Ev_Rain notes (read from the m2c draft's raw offsets, NOT yet
+ * asm-verified - left here for whoever ports this function for real):
+ * two big LOCAL (stack) arrays, not heap structs - matches the
+ * "-0xe8..-0x44 / 0xed4..0xfb4" callee-saved stack gap warning m2c printed
+ * for this function (10 * 0x118 = 0xADC bytes, the "rain swim spot" array).
+ *  - MB2_RAIN_SPOT rainSpot[10], stride 0x118: +0x00 HSFOBJECT *objPtr (via
+ *    MB2_ModelObjPtrGet on mb2ev_RainObjTbl[i]), +0x68 ANIMDATA *mdl (=
+ *    mb2_Work[1] model handle), +0x74 depth-vs-1190 delta, +0x78 masuId of
+ *    the linked branch masu (flag bits 0xC00, or -1), +0x6C dist-to-mid^2,
+ *    +0x7C/0x80 swim-progress counters, +0x84 swim length
+ *    (mb2ev_RainSwimLenTbl[i]), +0x88 "is one of slots 1..3" flag, +0x8C/
+ *    0x90/0x94 world pos (from Hu3DModelObjMtxGet's translation row),
+ *    +0x98.. vector to mb2ev_RainSwimMidPos, +0xA4.. vector to
+ *    mb2ev_RainSwimRightPos, +0xB0/0xB4/0xB8 zeroed accum, +0xBC world pos
+ *    of the linked masu, +0xC8 vector to it, +0xD4 count of players
+ *    standing on this spot (<=4), +0xD8[4] their player indices, +0xE8[4]
+ *    (stride 0xC) their pos-minus-spot vectors.
+ *  - a second array at var_r29 (10 * ~0x50?) for the 4 possible swimming
+ *    players: +0x0 player index, +0x4 motion id (0x8C002B), +0x14 "is the
+ *    active player" flag, +0x1C saved pos, +0x28 saved rot, +0x40 pos as
+ *    ints, more distance-to-mid-pos sqrt math following the same
+ *    __frsqrte pattern as MB2_RainbowObjCreate.
+ * Needs a full instruction-by-instruction read of
+ * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (see
+ * docs/decomp_workflow.md) - not attempted this pass given its size (7036
+ * bytes, the second largest function in the module). */
 void MB2Ev_Rain(s32 arg0) {
-    /* NONMATCHING: placeholder - full body not yet ported from asm.
-     * The m2c draft for this event produced many unresolved stack-spill
-     * temporaries (undefined "unkspXX" locals) that need a manual,
-     * instruction-by-instruction read of
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
-     * (see docs/decomp_workflow.md). For now this keeps the player's turn
-     * from softlocking: it just clears any shift motion. */
     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
 }
 
