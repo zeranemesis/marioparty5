@@ -60,6 +60,7 @@ static s16 RankBoardNameGrpId;
 static s16 RankBarGrpId;
 static GXColor RankBackColor = { 255, 255, 255, 255 };
 
+// NONMATCHING: register allocation differs across this large setup function
 void SRankCreate(void) {
     HuVecF pos2D;
     HuVecF pos3D;
@@ -189,6 +190,7 @@ void SRankCreate(void) {
     HuSprExecLayerCameraSet(0x40, HU3D_CAM2, 1);
 }
 
+// NONMATCHING: register allocation differs across this large sequence function
 void SRankExec(void) {
     Vec a, b, c;
     s16 lastNo = SRankWork.storyNo - 1;
@@ -283,6 +285,7 @@ void SRankExec(void) {
     }
 }
 
+// NONMATCHING: minor register allocation difference in the sleep-duration expression
 static void RankObjRotExec(void) {
     f32 spd[5];
     s16 i;

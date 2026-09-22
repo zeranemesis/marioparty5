@@ -50,6 +50,7 @@ static HuVecF ToueiFbCopyPos;
 static void *RankGlowCopyBuf;
 static void *ToueiFbCopyBuf;
 
+// NONMATCHING: register allocation differs in the framebuffer-copy position computation
 void ToueiDispInit(void) {
     HuVecF pos3D;
     HuVecF pos2D;
@@ -59,7 +60,7 @@ void ToueiDispInit(void) {
     Hu3DModelObjPosGet(CharMdlId, ToueiCenterObj[charNo], &pos3D);
     pos3D.y += ToueiCenterOfsY[charNo];
     Hu3D3Dto2D(&pos3D, HU3D_CAM0, &pos2D);
-    ToueiFbCopyPos.x = (s16)((s32)(pos2D.x * (640.0f / 576.0f)) & 0xFFFE);
+    ToueiFbCopyPos.x = (s16)((s32)(1.1111111111111112 * (f64)pos2D.x) & 0xFFFE);
     ToueiFbCopyPos.y = (s16)((s32)pos2D.y & 0xFFFE);
     Hu3DModelMatHookSet(CapsuleMdlId, ToueiMatHook);
     RankGlowCopyBuf = HuMemDirectMallocNum(HEAP_MODEL, GXGetTexBufferSize(640, 480, GX_TF_RGBA8, GX_FALSE, 0), HU_MEMNUM_OVL);
@@ -76,6 +77,7 @@ static void ToueiFBCopy(s16 layerNo) {
     }
 }
 
+// NONMATCHING: register allocation and rodata color reconstruction differ
 static void RankGlowHook(s16 layerNo) {
     Mtx44 proj;
     Mtx modelview;
@@ -130,6 +132,7 @@ static void RankGlowHook(s16 layerNo) {
     }
 }
 
+// NONMATCHING: register allocation differs in the perspective/quad setup
 void DispZClear(void) {
     Mtx44 proj;
     Mtx modelview;
@@ -178,6 +181,7 @@ void DispZClear(void) {
     GXPosition3f32(-x, y, -10000.0f);
 }
 
+// NONMATCHING: register allocation differs
 static void ToueiMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXTexObj texObj;
     GXColor color = { 32, 32, 32, 128 };

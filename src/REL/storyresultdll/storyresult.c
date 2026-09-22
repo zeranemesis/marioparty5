@@ -39,6 +39,7 @@ u8 LanguageNo;
 OMOBJMAN *objman;
 static OMOBJ *outViewObj;
 
+// NONMATCHING: register allocation differs in a couple spots (LanguageNo load, epilogue restore order)
 void ObjectSetup(void) {
     OSReport("******* PRES ObjectSetup *********\n");
     objman = omInitObjMan(50, 8192);
@@ -91,11 +92,13 @@ void PResExec(void) {
     }
 }
 
+// NONMATCHING: stack frame/register allocation differs (extra locals vs original temp reuse)
 void PResCreate(void) {
     s16 charNo = GwPlayerConf->charNo;
     s16 i;
     s16 boardNo;
     s16 sumRank;
+    s16 diff;
     HU3DMODELID mdlId;
 
     if (GwCommon.storyNo == -1) {
@@ -108,62 +111,57 @@ void PResCreate(void) {
         }
     } else {
         OSReport("%d\n", GwSystem.turnNo);
-        switch (GwPlayerConf->dif) {
-        case 0:
+        if (GwPlayerConf->dif == 0) {
             if (GwSystem.turnNo <= 2) {
-                PResDiff = 3;
+                diff = 3;
             } else if (GwSystem.turnNo <= 5) {
-                PResDiff = 2;
+                diff = 2;
             } else if (GwSystem.turnNo <= 10) {
-                PResDiff = 1;
+                diff = 1;
             } else {
-                PResDiff = 0;
+                diff = 0;
             }
-            break;
-        case 1:
+        } else if (GwPlayerConf->dif == 1) {
             if (GwSystem.turnNo <= 3) {
-                PResDiff = 3;
+                diff = 3;
             } else if (GwSystem.turnNo <= 6) {
-                PResDiff = 2;
+                diff = 2;
             } else if (GwSystem.turnNo <= 12) {
-                PResDiff = 1;
+                diff = 1;
             } else {
-                PResDiff = 0;
+                diff = 0;
             }
-            break;
-        case 2:
+        } else if (GwPlayerConf->dif == 2) {
             if (GwSystem.turnNo <= 4) {
-                PResDiff = 3;
+                diff = 3;
             } else if (GwSystem.turnNo <= 8) {
-                PResDiff = 2;
+                diff = 2;
             } else if (GwSystem.turnNo <= 13) {
-                PResDiff = 1;
+                diff = 1;
             } else {
-                PResDiff = 0;
+                diff = 0;
             }
-            break;
-        case 3:
+        } else if (GwPlayerConf->dif == 3) {
             if (GwSystem.turnNo <= 5) {
-                PResDiff = 3;
+                diff = 3;
             } else if (GwSystem.turnNo <= 9) {
-                PResDiff = 2;
+                diff = 2;
             } else if (GwSystem.turnNo <= 14) {
-                PResDiff = 1;
+                diff = 1;
             } else {
-                PResDiff = 0;
+                diff = 0;
             }
-            break;
         }
+        PResDiff = diff;
 
         boardNo = GwCommon.storyBoardNo[GwCommon.storyNo];
         if (GwCommon.charStoryRank[boardNo][charNo] < PResDiff) {
             GwCommon.charStoryRank[boardNo][charNo] = (s8)PResDiff;
         }
         GwCommon.storyRank[GwCommon.storyNo] = (s8)PResDiff;
-        if (GwCommon.charStoryPlayNum[boardNo][charNo] + 1 > 999) {
+        GwCommon.charStoryPlayNum[boardNo][charNo]++;
+        if (GwCommon.charStoryPlayNum[boardNo][charNo] > 999) {
             GwCommon.charStoryPlayNum[boardNo][charNo] = 999;
-        } else {
-            GwCommon.charStoryPlayNum[boardNo][charNo]++;
         }
         GwCommon.storyNo++;
 

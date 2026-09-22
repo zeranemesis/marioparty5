@@ -1944,9 +1944,9 @@ config.libs = [
     Rel(
         "storyresultdll",
         objects={
-            Object(NonMatching, "REL/storyresultdll/storyresult.c"),
-            Object(NonMatching, "REL/storyresultdll/rank.c"),
-            Object(NonMatching, "REL/storyresultdll/effect.c"),
+            Object(Equivalent, "REL/storyresultdll/storyresult.c"),
+            Object(Equivalent, "REL/storyresultdll/rank.c"),
+            Object(Equivalent, "REL/storyresultdll/effect.c"),
         },
     ),
     Rel(
