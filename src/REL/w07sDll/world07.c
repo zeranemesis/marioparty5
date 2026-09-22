@@ -252,17 +252,35 @@ static int MB7Ev_MasuWalkPre(int playerNo) {
 
 /* -------------------------- setup / teardown ---------------------------- */
 
+/* NONMATCHING: the boardNo read below is a genuine dead store in the
+ * original (a leftover debug/assert snapshot - confirmed via
+ * build/GP5E01_00/w07sDll/asm/REL/w07sDll/world07.s: `lbz`+`clrlwi ,27`
+ * off GwSystem+0x8 masks exactly the 5-bit boardNo bitfield, stored to
+ * the stack and never read again); the original keeps it in a
+ * callee-saved register (r31, +0x10 stack frame) even though it's
+ * dead, ours doesn't - a rare case of the register allocator not
+ * matching without the dead code actually being reachable another way.
+ * 62.68% match; all remaining rodata-symbol churn is cosmetic. */
 static void MB7_Create(void) {
-    HuAudSndGrpSetSet(0x14);
+    s32 boardNo = GwSystem.boardNo;
+
     memset(mb7_Work, 0, sizeof(mb7_Work));
+    HuAudSndGrpSetSet(0x14);
     mb7_SaveWorkP = (u8 *) GwSystem.mbSaveWork;
     MBMasuCreate(0xD80000);
     mb7_MainMdlId = (s16) MBModelCreate(0xD80001, NULL, FALSE);
     MBModelPosSet(mb7_MainMdlId, 0.0f, 0.0f, 0.0f);
     MBModelAttrSet(mb7_MainMdlId, HU3D_MOTATTR_LOOP);
     MBScrollInit(0xD80002U, 10690.0f, -631.0f);
-    MBOpeningViewSet((HuVecF *) &mb7_OpeningRot, (HuVecF *) &mb7_OpeningPos, 9950.0f);
-    MBMapViewCameraSet((HuVecF *) &mb7_MapViewRot, (HuVecF *) &mb7_MapViewPos, 10690.0f);
+    {
+        Point3d openingPos = mb7_OpeningPos;
+        Point3d openingRot = mb7_OpeningRot;
+        Point3d mapViewPos = mb7_MapViewPos;
+        Point3d mapViewRot = mb7_MapViewRot;
+
+        MBOpeningViewSet((HuVecF *) &openingRot, (HuVecF *) &openingPos, 9950.0f);
+        MBMapViewCameraSet((HuVecF *) &mapViewRot, (HuVecF *) &mapViewPos, 10690.0f);
+    }
     MBLightHookSet(MB7_LightSet, MB7_LightReset);
     MBCapsuleColCreate(0xD80003);
     MB7_ObjectCreate();
