@@ -39,10 +39,10 @@ extern void ObjectSetup(void);
 
 static void MB4_Create(void);
 static void MB4_Kill(void);
-static void MB4_CoinClose(void);
-static void MB4_CoinEffClose(void);
-static void MB4_BubbleEffClose(void);
-static void MB4_SakanaClose(void);
+void MB4_CoinClose(void);
+void MB4_CoinEffClose(void);
+void MB4_BubbleEffClose(void);
+void MB4_SakanaClose(void);
 static void MB4Ev_Kihon(s32 playerNo);
 static void MB4Ev_Iruka(s32 playerNo);
 static void MB4Ev_Blow(s32 playerNo);
@@ -281,6 +281,8 @@ static Point3d mapViewPos = { -181.0f, -123.0f, 80.0f };
 static f32 mapViewZoom = 16171.0f;
 
 static OMOBJ *mb4_BubbleEffObj;
+static OMOBJ *mb4_CoinObj;
+static OMOBJ *mb4_CoinEffObj;
 
 static Point3d mb4ev_BubbleEmitPosTbl[13] = {
     { 3710.0f, 240.0f, 790.0f },
@@ -784,6 +786,31 @@ void MB4_Kill(void) {
     MB4_CoinEffClose();
     MB4_BubbleEffClose();
     MB4_SakanaClose();
+}
+
+void MB4_CoinClose(void) {
+    mb4_CoinObj = NULL;
+}
+
+void MB4_CoinEffClose(void) {
+    mb4_CoinEffObj = NULL;
+}
+
+void MB4_BubbleEffClose(void) {
+    mb4_BubbleEffObj = NULL;
+}
+
+/* mb4_Work[0x1FDD]/[0x1FDE] (byte 0x7F74/0x7F78): sakana (fish) effect id
+ * and model id, sentinel -1 = none. */
+void MB4_SakanaClose(void) {
+    if (MB4W_S32(0x7F74) != -1) {
+        MBEffKill((s16) MB4W_S32(0x7F74));
+    }
+    MB4W_S32(0x7F74) = -1;
+    if (MB4W_S32(0x7F78) != -1) {
+        Hu3DModelKill((s16) MB4W_S32(0x7F78));
+    }
+    MB4W_S32(0x7F78) = -1;
 }
 
 /* NONMATCHING: MWCC keeps the literal args to the nested Hu3DGLightCreate()
