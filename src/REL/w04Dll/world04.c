@@ -242,6 +242,11 @@ typedef struct MB4SakanaFish_s {
 static Point3d mb4ev_Puku2EmiterPos = { -2800.0f, 300.0f, 1340.0f };
 
 /* MB4_Create decoration placement tables, extracted from .data. */
+static Point3d mb4ev_MasuKihonPosTbl[2] = {
+    { 3100.0f, -100.0f, 3100.0f },
+    { -3100.0f, -100.0f, 3100.0f },
+};
+
 static Point3d mb4ev_KaiPosTbl[3] = {
     { 1784.0f, 190.0f, 1017.0f },
     { 1883.0f, 190.0f, 1116.0f },
@@ -4097,4 +4102,493 @@ void MB4Ev_Iruka(s32 arg0) {
     if (dismountMotNo != -1) {
         MBPlayerMotionKill(arg0, dismountMotNo);
     }
+}
+
+extern void MBScrollExec(int playerNo);
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match (size and cinematic complexity make it impractical). "Kihon"
+ * (basic) board event - the generic "?" masu: walks the player to a
+ * nearby crossroads masu, offers a yes/no choice (COM players auto-pick
+ * by comparing path-to-star lengths from each side), and on "yes" plays
+ * one of two mutually exclusive mini-scenes depending on which side of
+ * the crossroads has the chance-raise flag:
+ *   - choice 0: a shower of coins falls from the sky (MB4_CoinCreate
+ *     spawn loop along an arc) and the player collects them for a while;
+ *   - choice 1: the player rides the "puku2" pufferfish along a set
+ *     path, steering left/right with the stick to dodge/collect coins,
+ *     with a hand-tuned lean/velocity model (damped acceleration capped
+ *     at +-0.02, integrated into a +-1.0 steer value, gated once every
+ *     other frame past 90% of the ride by COM auto-steer toward the
+ *     nearest coin instead of stick input).
+ * Either way, ends with a coin-total popup and the player walking back
+ * through the crossroads. */
+void MB4Ev_Kihon(s32 arg0) {
+    s16 masuId = GwPlayer[arg0].masuId;
+    MASU *masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    Point3d playerPos;
+    s32 startCoinNum;
+    Point3d camOfs;
+    s32 waitMotNo;
+    s32 i;
+    f32 t;
+    s16 nextMasuId;
+    Point3d nextMasuPos;
+    MASU *nextMasuP;
+    s32 raiseSide;
+    s16 branchMasuId;
+    Point3d branchPos;
+    s32 guideModel;
+    s32 choice;
+    s32 j;
+    Point3d coinStep;
+    Point3d coinPos;
+    s32 rideMasuId1, rideMasuId2;
+    Point3d ridePos1, ridePos2;
+    Point3d rideRot;
+    s32 se1;
+    s32 steps;
+    f32 steerVel, steer;
+    Point3d chaseRot;
+    Point3d chasePos;
+    Point3d coinNearPos;
+    s32 phaseAngle;
+    s16 linkTbl[MASU_LINK_MAX];
+    s16 linkNum;
+
+    MBPlayerPosGet(arg0, &playerPos);
+    startCoinNum = MBPlayerCoinGet(arg0);
+    MB4_CoinInit();
+    MB4_CoinEffInit();
+
+    camOfs.x = 0.0f;
+    camOfs.y = 200.0f;
+    camOfs.z = 0.0f;
+    MBCameraModelViewSet(MBPlayerModelGet(arg0), NULL, &camOfs, 2000.0f, -1.0f, 0x2A);
+    MBCameraMotionWait();
+    waitMotNo = MBPlayerMotionCreate(arg0, 0x8C0062);
+
+    MBPlayerRotateStart(arg0, 0, 0xF);
+    while (!MBPlayerRotateCheck(arg0)) {
+        HuPrcVSleep();
+    }
+
+    for (i = 0; i < masuP->linkNum; i++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, masuP->linkTbl[i]) & MASU_FLAG_BIT(1)) {
+            break;
+        }
+    }
+    if (i < masuP->linkNum) {
+        nextMasuId = masuP->linkTbl[i];
+        MBMasuPosGet(MASU_LAYER_DEFAULT, nextMasuId, &nextMasuPos);
+    } else {
+        nextMasuId = masuId;
+        nextMasuPos = playerPos;
+        nextMasuPos.z = 200.0f + playerPos.z;
+    }
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    for (i = 0; i <= 30; i++) {
+        t = (f32) i / 30.0f;
+        coinPos.x = playerPos.x + (t * (nextMasuPos.x - playerPos.x));
+        coinPos.y = playerPos.y + (t * (nextMasuPos.y - playerPos.y));
+        coinPos.z = playerPos.z + (t * (nextMasuPos.z - playerPos.z));
+        coinPos.y = (f32) ((f64) coinPos.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+        MBPlayerPosSetV(arg0, &coinPos);
+        HuPrcVSleep();
+    }
+    GwPlayer[arg0].masuId = nextMasuId;
+    MBPlayerPosGet(arg0, &playerPos);
+
+    nextMasuP = MBMasuGet(MASU_LAYER_DEFAULT, nextMasuId);
+    raiseSide = -1;
+    for (i = 0; i < nextMasuP->linkNum; i++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, nextMasuP->linkTbl[i]) & MASU_FLAG_BIT(2)) {
+            raiseSide = 0;
+            break;
+        }
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, nextMasuP->linkTbl[i]) & MASU_FLAG_BIT(3)) {
+            raiseSide = 1;
+            break;
+        }
+    }
+    if (i < nextMasuP->linkNum) {
+        branchMasuId = nextMasuP->linkTbl[i];
+        MBMasuPosGet(MASU_LAYER_DEFAULT, branchMasuId, &branchPos);
+    } else {
+        branchMasuId = masuId;
+        branchPos = playerPos;
+        branchPos.z = 200.0f + playerPos.z;
+    }
+    MBPlayerMotionNoShiftSet(arg0, 3, 0.0f, 8.0f, 0U);
+    for (i = 0; i <= 30; i++) {
+        t = (f32) i / 30.0f;
+        coinPos.x = playerPos.x + (t * (branchPos.x - playerPos.x));
+        coinPos.y = playerPos.y + (t * (branchPos.y - playerPos.y));
+        coinPos.z = playerPos.z + (t * (branchPos.z - playerPos.z));
+        MBPlayerPosSetV(arg0, &coinPos);
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    GwPlayer[arg0].masuId = branchMasuId;
+    MBPlayerPosGet(arg0, &playerPos);
+
+    MBDataAsyncWait(MBDataDirReadAsync(0x240000));
+    ridePos1.x = branchPos.x;
+    ridePos1.y = branchPos.y;
+    ridePos1.z = branchPos.z;
+    if (raiseSide == 0) {
+        ridePos1.x -= 200.0f;
+    } else {
+        ridePos1.x += 200.0f;
+    }
+    ridePos1.y += 100.0f;
+    guideModel = MBGuideCreateFlag(2, &ridePos1, FALSE, TRUE, TRUE, FALSE);
+    MBModelLayerSet(guideModel, 2U);
+    HuDataDirClose(0x240000);
+    MBAudFXPlay(0x2F5);
+
+    do {
+        MBWinCreateChoice(1, 0x300000U, 2, 0);
+        MBTopWinAttrSet(0x10U);
+        if (GwPlayer[arg0].comF) {
+            s32 upMasuId, downMasuId;
+            s16 upLen, downLen;
+            s32 pathType;
+
+            for (upMasuId = 1; upMasuId <= MBMasuNumGet(MASU_LAYER_DEFAULT); upMasuId++) {
+                if (upMasuId != masuId && (MBMasuFlagGet(MASU_LAYER_DEFAULT, upMasuId) & MASU_FLAG_BIT(0))) {
+                    break;
+                }
+            }
+            downMasuId = (upMasuId <= MBMasuNumGet(MASU_LAYER_DEFAULT)) ? upMasuId : masuId;
+            pathType = (GwPlayer[arg0].dif + 1) * 10;
+            upLen = MB4_PathLenGet(masuId, (s16) pathType);
+            downLen = MB4_PathLenGet((s16) downMasuId, (s16) pathType);
+            if (upLen == -1 && downLen == -1) {
+                if (frand() & 3) {
+                    MBComChoiceSetUp();
+                } else {
+                    MBComChoiceSetDown();
+                }
+            } else if (upLen != -1 && downLen != -1) {
+                if (downLen < upLen) {
+                    MBComChoiceSetUp();
+                } else {
+                    MBComChoiceSetDown();
+                }
+            } else if (downLen != -1) {
+                MBComChoiceSetUp();
+            } else {
+                MBComChoiceSetDown();
+            }
+        }
+        MBTopWinWait();
+        choice = MBWinLastChoiceGet();
+        MBTopWinKill();
+        if (choice == 2) {
+            s16 savedMasuId = GwPlayer[arg0].masuId;
+            GwPlayer[arg0].masuId = masuId;
+            MBScrollExec(arg0);
+            MBStatusDispSetAll(TRUE);
+            GwPlayer[arg0].masuId = savedMasuId;
+        }
+    } while (choice >= 2);
+
+    if (choice == 0) {
+        MB4_SakanaOffsetInit();
+        MBModelDispSet((s16) mb4_Work[0x14], TRUE);
+        MBModelDispSet((s16) mb4_Work[4], TRUE);
+
+        PSVECSubtract(&mb4ev_MasuKihonPosTbl[1], &mb4ev_MasuKihonPosTbl[0], &coinStep);
+        for (i = 0; i < 0x14; i++) {
+            PSVECScale(&coinStep, &coinPos, 0.1f + (0.8f * ((f32) i / 20.0f)));
+            PSVECAdd(&mb4ev_MasuKihonPosTbl[0], &coinPos, &coinPos);
+            coinPos.y += (f32) i * 0.0f + 100.0f;
+            coinPos.z += 400.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+            MB4_CoinCreate(&coinPos, &coinPos, -1, 400.0f, 0.0f);
+        }
+        MBWinCreate(2, 0x300001U, 2);
+        MBTopWinWait();
+        MBTopWinKill();
+        if (guideModel != -1) {
+            MBGuideEnd(guideModel);
+            guideModel = -1;
+        }
+
+        if (raiseSide == 0) {
+            ridePos2 = mb4ev_MasuKihonPosTbl[1];
+            ridePos1 = mb4ev_MasuKihonPosTbl[0];
+        } else {
+            ridePos2 = mb4ev_MasuKihonPosTbl[0];
+            ridePos1 = mb4ev_MasuKihonPosTbl[1];
+        }
+        MBModelPosSetV((s16) mb4_Work[0x11], &ridePos2);
+        PSVECSubtract(&ridePos1, &ridePos2, &coinStep);
+        rideRot.x = 0.0f;
+        rideRot.z = 0.0f;
+        rideRot.y = (f32) (180.0 * (atan2((f64) coinStep.x, (f64) coinStep.z) / 3.141592653589793));
+        MBModelAttrReset((s16) mb4_Work[0x11], 0x40000002U);
+        MBModelRotSetV((s16) mb4_Work[0x11], &rideRot);
+        MBModelDispSet((s16) mb4_Work[0x11], TRUE);
+        MBModelPosSet((s16) mb4_Work[0x15], ridePos2.x, -200.0f, ridePos2.z);
+        MBModelRotSetV((s16) mb4_Work[0x15], &rideRot);
+        MBModelScaleSet((s16) mb4_Work[0x15], 2.0f, 2.0f, 2.0f);
+        MBModelDispSet((s16) mb4_Work[0x15], TRUE);
+        MBModelLayerSet((s16) mb4_Work[0x15], 1U);
+
+        PSVECSubtract(&ridePos2, &playerPos, &coinStep);
+        MBPlayerRotSet(arg0, 0.0f, (f32) (180.0 * (atan2((f64) coinStep.x, (f64) coinStep.z) / 3.141592653589793)), 0.0f);
+        camOfs.x = 0.0f;
+        camOfs.y = 200.0f;
+        camOfs.z = 200.0f;
+        chaseRot.x = -45.0f;
+        chaseRot.y = 0.0f;
+        chaseRot.z = 0.0f;
+        MBCameraModelViewSet(MBPlayerModelGet(arg0), &chaseRot, &camOfs, 2500.0f, -1.0f, 0x15);
+        MBCameraMotionWait();
+
+        MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+        chasePos = ridePos2;
+        chasePos.y += 30.000002f;
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            coinPos.x = playerPos.x + (t * (chasePos.x - playerPos.x));
+            coinPos.y = (f32) ((f64) (playerPos.y + (t * (chasePos.y - playerPos.y))) + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            coinPos.z = playerPos.z + (t * (chasePos.z - playerPos.z));
+            MBPlayerPosSetV(arg0, &coinPos);
+            HuPrcVSleep();
+        }
+        if (waitMotNo != -1) {
+            MBPlayerMotionNoShiftSet(arg0, waitMotNo, 0.0f, 8.0f, 0x40000001U);
+        }
+        for (i = 0; i <= 8; i++) {
+            t = (f32) i * 0.125f;
+            if (raiseSide == 0) {
+                MBPlayerRotSet(arg0, 0.0f, 90.0f * t, 0.0f);
+            } else {
+                MBPlayerRotSet(arg0, 0.0f, 90.0f * -t, 0.0f);
+            }
+            HuPrcVSleep();
+        }
+
+        steerVel = 0.0f;
+        steer = 0.0f;
+        MBWinCreateHelp(0x300002U);
+        se1 = HuAudFXPlay(0x5E9);
+        PSVECSubtract(&ridePos1, &ridePos2, &coinStep);
+        rideRot.x = 0.0f;
+        rideRot.z = 0.0f;
+        rideRot.y = (f32) (180.0 * (atan2((f64) coinStep.x, (f64) coinStep.z) / 3.141592653589793));
+        chaseRot = rideRot;
+        phaseAngle = 0;
+        steps = (s32) (PSVECMag(&coinStep) / 5.0f);
+
+        for (i = 0; i <= steps; i++) {
+            f32 frac = (f32) i / (f32) steps;
+            f32 stickX = (f32) MBPadStkXGet(GwPlayer[arg0].padNo);
+            f32 stickY = (f32) MBPadStkYGet(GwPlayer[arg0].padNo);
+
+            steerVel *= 0.98f;
+            if (frac >= 0.9f) {
+                if (!GwPlayer[arg0].comF) {
+                    if (stickY > 8.0f) {
+                        steerVel += 0.00015f * stickY;
+                    } else if (stickY < 8.0f) {
+                        steerVel += 0.00015f * stickY;
+                    }
+                } else if (MB4_CoinNearGet(&chasePos, &coinNearPos, 200.0f * (f32) (GwPlayer[arg0].dif + 2)) != -1 &&
+                           fabsf(chasePos.z - coinNearPos.z) > (20.0f * (f32) (5 - GwPlayer[arg0].dif))) {
+                    if (chasePos.z < coinNearPos.z) {
+                        steerVel += 0.0018000001f;
+                    } else if (chasePos.z > coinNearPos.z) {
+                        steerVel -= 0.0018000001f;
+                    }
+                }
+                if (steerVel > 0.02f) {
+                    steerVel = 0.02f;
+                } else if (steerVel < -0.02f) {
+                    steerVel = -0.02f;
+                }
+                steer += 0.75f * steerVel;
+                if (steer > 1.0f) {
+                    steer = 1.0f;
+                } else if (steer < -1.0f) {
+                    steer = -1.0f;
+                }
+            } else {
+                steer *= 0.98f;
+                steerVel *= 0.98f;
+            }
+            (void) stickX;
+
+            PSVECSubtract(&ridePos1, &ridePos2, &coinStep);
+            PSVECScale(&coinStep, &coinStep, frac);
+            PSVECAdd(&ridePos2, &coinStep, &chasePos);
+            chasePos.z -= 200.0f * steer;
+            chasePos.y = (f32) ((f64) chasePos.y + (0.15000000596046448 * (100.0 * sin((3.141592653589793 * (f64) phaseAngle) / 180.0))));
+            phaseAngle += 3;
+
+            if (frac < 0.9f) {
+                if (raiseSide == 0) {
+                    rideRot.y = MB4_AngleLerp(1000.0f * steerVel, rideRot.y, 0.5f);
+                } else {
+                    rideRot.y = MB4_AngleLerp(-(1000.0f * steerVel), rideRot.y, 0.5f);
+                }
+            } else {
+                rideRot.y = MB4_AngleLerp(0.0f, rideRot.y, 0.5f);
+            }
+            chaseRot.x = rideRot.x + 0.0f;
+            chaseRot.y = rideRot.y;
+            chaseRot.z = rideRot.z + 0.0f;
+
+            MBModelPosSetV((s16) mb4_Work[0x11], &chasePos);
+            MBModelRotSetV((s16) mb4_Work[0x11], &chaseRot);
+            MBModelPosSet((s16) mb4_Work[0x15], chasePos.x, -200.0f, chasePos.z);
+            MBModelRotSetV((s16) mb4_Work[0x15], &chaseRot);
+            MBPlayerPosSetV(arg0, &chasePos);
+            MBPlayerRotSetV(arg0, &chaseRot);
+            HuPrcVSleep();
+        }
+
+        MBTopWinKill();
+        if (se1 != -1) {
+            HuAudFXStop(se1);
+        }
+        se1 = -1;
+        MB4_SakanaPosInit();
+
+        chaseRot.x = -33.0f;
+        chaseRot.y = 0.0f;
+        chaseRot.z = 0.0f;
+        camOfs.x = 0.0f;
+        camOfs.y = 200.0f;
+        camOfs.z = 0.0f;
+        MBCameraModelViewSet(MBPlayerModelGet(arg0), &chaseRot, &camOfs, 2000.0f, -1.0f, 0x15);
+
+        if (raiseSide == 0) {
+            for (rideMasuId1 = 1; rideMasuId1 <= MBMasuNumGet(MASU_LAYER_DEFAULT); rideMasuId1++) {
+                if (MBMasuFlagGet(MASU_LAYER_DEFAULT, rideMasuId1) & MASU_FLAG_BIT(3)) {
+                    break;
+                }
+            }
+        } else {
+            for (rideMasuId1 = 1; rideMasuId1 <= MBMasuNumGet(MASU_LAYER_DEFAULT); rideMasuId1++) {
+                if (MBMasuFlagGet(MASU_LAYER_DEFAULT, rideMasuId1) & MASU_FLAG_BIT(2)) {
+                    break;
+                }
+            }
+        }
+        if (rideMasuId1 > MBMasuNumGet(MASU_LAYER_DEFAULT)) {
+            rideMasuId1 = masuId;
+        }
+        MBMasuPosGet(MASU_LAYER_DEFAULT, rideMasuId1, &ridePos1);
+        MBPlayerPosGet(arg0, &playerPos);
+        PSVECSubtract(&ridePos1, &playerPos, &coinStep);
+        MBPlayerRotSet(arg0, 0.0f, (f32) (180.0 * (atan2((f64) coinStep.x, (f64) coinStep.z) / 3.141592653589793)), 0.0f);
+        MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+        for (i = 0; i <= 8; i++) {
+            t = (f32) i * 0.125f;
+            if (raiseSide == 0) {
+                MBPlayerRotSet(arg0, 0.0f, 90.0f + (90.0f * t), 0.0f);
+            } else {
+                MBPlayerRotSet(arg0, 0.0f, -90.0f - (90.0f * t), 0.0f);
+            }
+            HuPrcVSleep();
+        }
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            coinPos.x = playerPos.x + (t * (ridePos1.x - playerPos.x));
+            coinPos.y = playerPos.y + (t * (ridePos1.y - playerPos.y));
+            coinPos.z = playerPos.z + (t * (ridePos1.z - playerPos.z));
+            coinPos.y = (f32) ((f64) coinPos.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(arg0, &coinPos);
+            HuPrcVSleep();
+        }
+        MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+        GwPlayer[arg0].masuId = (s16) rideMasuId1;
+        MBPlayerPosGet(arg0, &playerPos);
+        MBCameraMotionWait();
+        HuPrcSleep(0x1E);
+        MBModelDispSet((s16) mb4_Work[0x11], FALSE);
+        MBModelDispSet((s16) mb4_Work[0x15], FALSE);
+        MBModelAttrSet((s16) mb4_Work[0x11], 0x40000002U);
+    }
+
+    if (guideModel != -1) {
+        MBGuideEnd(guideModel);
+    }
+    MBModelDispSet((s16) mb4_Work[0x14], FALSE);
+    MBModelDispSet((s16) mb4_Work[4], FALSE);
+
+    masuId = GwPlayer[arg0].masuId;
+    MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    MBPlayerPosGet(arg0, &playerPos);
+
+    MBPlayerRotateStart(arg0, 0xB4, 0xF);
+    while (!MBPlayerRotateCheck(arg0)) {
+        HuPrcVSleep();
+    }
+
+    linkNum = MBMasuLinkTblGet(MASU_LAYER_DEFAULT, masuId, linkTbl);
+    for (i = 0; i < linkNum; i++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, linkTbl[i]) & MASU_FLAG_BIT(1)) {
+            break;
+        }
+    }
+    if (i < linkNum) {
+        rideMasuId1 = linkTbl[i];
+        MBMasuPosGet(MASU_LAYER_DEFAULT, rideMasuId1, &ridePos1);
+    } else {
+        rideMasuId1 = masuId;
+        ridePos1 = playerPos;
+        ridePos1.z -= 200.0f;
+    }
+    MBPlayerMotionNoShiftSet(arg0, 3, 0.0f, 8.0f, 0U);
+    for (i = 0; i <= 30; i++) {
+        t = (f32) i / 30.0f;
+        coinPos.x = playerPos.x + (t * (ridePos1.x - playerPos.x));
+        coinPos.y = playerPos.y + (t * (ridePos1.y - playerPos.y));
+        coinPos.z = playerPos.z + (t * (ridePos1.z - playerPos.z));
+        MBPlayerPosSetV(arg0, &coinPos);
+        HuPrcVSleep();
+    }
+    GwPlayer[arg0].masuId = (s16) rideMasuId1;
+    MBPlayerPosGet(arg0, &playerPos);
+
+    linkNum = MBMasuLinkTblGet(MASU_LAYER_DEFAULT, rideMasuId1, linkTbl);
+    for (i = 0; i < linkNum; i++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, linkTbl[i]) & MASU_FLAG_BIT(0)) {
+            break;
+        }
+    }
+    if (i < linkNum) {
+        rideMasuId2 = linkTbl[i];
+        MBMasuPosGet(MASU_LAYER_DEFAULT, rideMasuId2, &ridePos2);
+    } else {
+        rideMasuId2 = masuId;
+        ridePos2 = playerPos;
+        ridePos2.z -= 200.0f;
+    }
+    MBPlayerPosFixEvent(arg0, rideMasuId2, 0);
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    for (i = 0; i <= 30; i++) {
+        t = (f32) i / 30.0f;
+        coinPos.x = playerPos.x + (t * (ridePos2.x - playerPos.x));
+        coinPos.y = playerPos.y + (t * (ridePos2.y - playerPos.y));
+        coinPos.z = playerPos.z + (t * (ridePos2.z - playerPos.z));
+        coinPos.y = (f32) ((f64) coinPos.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+        MBPlayerPosSetV(arg0, &coinPos);
+        HuPrcVSleep();
+    }
+    GwPlayer[arg0].masuId = (s16) rideMasuId2;
+    MBPlayerPosGet(arg0, &playerPos);
+
+    if (choice == 0) {
+        MB4_CoinDispUpdate(arg0, MBPlayerCoinGet(arg0) - startCoinNum, 0x14);
+    }
+    if (waitMotNo != -1) {
+        MBPlayerMotionKill(arg0, waitMotNo);
+    }
+    MB4_CoinClose();
+    MB4_CoinEffClose();
 }
