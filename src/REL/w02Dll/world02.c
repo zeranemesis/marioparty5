@@ -25,6 +25,17 @@
 
 #include <math.h>
 
+#ifdef TARGET_PC
+/* __frsqrte is a PowerPC compiler intrinsic with no host equivalent; every
+ * call site below only uses it to seed the same 3-iteration Newton-Raphson
+ * refinement (see w07Dll's MB7_FastSqrt for the identical pattern), so an
+ * exact 1/sqrt(x) seed converges to the same result. */
+static double mb2_frsqrte(double x) {
+    return 1.0 / sqrt(x);
+}
+#define __frsqrte mb2_frsqrte
+#endif
+
 /*
  * w02Dll - "Rainbow Dream" board.
  *
@@ -2549,7 +2560,7 @@ void MB2Ev_Rain(s32 arg0) {
  * segment, +0x2C/+0x30/+0x34 the same at its start (copied from the
  * previous segment's end, or self for the first). */
 #define ZP_STRIDE 0x38
-#define ZPp(p, i) ((u8 *) (p) + (i) * ZP_STRIDE)
+#define ZPp(p, i) ((u8 *)(uintptr_t) (p) + (i) * ZP_STRIDE)
 
 /* NONMATCHING: complete, asm-read translation. "cror eq,lt,eq" / "eq,gt,eq"
  * folds read as <= / >=, matching the pattern confirmed in
@@ -5121,7 +5132,7 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     u8 *arrB;
     s32 i;
     void *dispListTmp;
-    volatile u16 *fifo = (volatile u16 *) 0xCC008000;
+    
 
     newModelId = Hu3DHookFuncCreate(ParticleDraw);
     Hu3DModelCameraSet(newModelId, 1U);
@@ -5183,18 +5194,18 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     GXBeginDisplayList(dispListTmp, 0x10000U);
     GXBegin(GX_QUADS, GX_VTXFMT0, (u16) (arg1 * 4));
     for (i = 0; i < arg1; i++) {
-        *fifo = (u16) (i * 4);
-        *fifo = (u16) i;
-        *fifo = (u16) (i * 4);
-        *fifo = (u16) ((i * 4) + 1);
-        *fifo = (u16) i;
-        *fifo = (u16) ((i * 4) + 1);
-        *fifo = (u16) ((i * 4) + 2);
-        *fifo = (u16) i;
-        *fifo = (u16) ((i * 4) + 2);
-        *fifo = (u16) ((i * 4) + 3);
-        *fifo = (u16) i;
-        *fifo = (u16) ((i * 4) + 3);
+        GXPosition1x16((u16) (i * 4));
+        GXColor1x16((u16) i);
+        GXTexCoord1x16((u16) (i * 4));
+        GXPosition1x16((u16) ((i * 4) + 1));
+        GXColor1x16((u16) i);
+        GXTexCoord1x16((u16) ((i * 4) + 1));
+        GXPosition1x16((u16) ((i * 4) + 2));
+        GXColor1x16((u16) i);
+        GXTexCoord1x16((u16) ((i * 4) + 2));
+        GXPosition1x16((u16) ((i * 4) + 3));
+        GXColor1x16((u16) i);
+        GXTexCoord1x16((u16) ((i * 4) + 3));
     }
     *(u32 *) (hdr + 0x34) = GXEndDisplayList();
     *(void **) (hdr + 0x48) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (hdr + 0x34), newModel->mallocNo);
@@ -5480,13 +5491,13 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSetArray(GX_VA_POS, *(void **) (hdr + 0x40), 0xCU);
+        GXSETARRAY(GX_VA_POS, *(void **) (hdr + 0x40), count * 0xC * 4U, 0xCU, TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-        GXSetArray(GX_VA_CLR0, *(u8 **) (hdr + 0x3C) + 0x50, 0x58U);
+        GXSETARRAY(GX_VA_CLR0, *(u8 **) (hdr + 0x3C) + 0x50, count * 0x58U, 0x58U, TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSetArray(GX_VA_TEX0, *(void **) (hdr + 0x44), 8U);
+        GXSETARRAY(GX_VA_TEX0, *(void **) (hdr + 0x44), count * 8U * 4U, 8U, TRUE);
         GXCallDisplayList(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
         if (shadowModelDrawF == 0) {
             if ((*(u8 *) (hdr + 0x21) & 2) == 0) {
@@ -5687,7 +5698,7 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     u8 *colArr;
     void *dispListTmp;
     s32 i;
-    volatile u16 *fifo = (volatile u16 *) 0xCC008000;
+    
 
     path = (Point3d *) arg0;
     if (mb2_RainbowObj == NULL) {
@@ -5815,23 +5826,27 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, (u16) ((arg1 - 1) * 6));
     if (arg2 == 0) {
         for (i = 0; i < vtxCount; i++) {
-            *fifo = (u16) (i * 2);
-            *fifo = (u16) (i * 2);
-            *fifo = (u16) (i * 2);
-            *fifo = (u16) ((i * 2) + 1);
-            *fifo = (u16) ((i * 2) + 1);
-            *fifo = (u16) ((i * 2) + 1);
+            GXPosition1x16((u16) (i * 2));
+            GXColor1x16((u16) (i * 2));
+            GXTexCoord1x16((u16) (i * 2));
+            GXPosition1x16((u16) ((i * 2) + 1));
+            GXColor1x16((u16) ((i * 2) + 1));
+            GXTexCoord1x16((u16) ((i * 2) + 1));
         }
     } else {
         for (i = vtxCount - 1; i >= 0; i--) {
-            *fifo = (u16) ((i * 2) + 1);
-            *fifo = (u16) (i * 2);
-            *fifo = (u16) ((i * 2) + 1);
-            *fifo = (u16) (i * 2);
-            *fifo = (u16) ((i * 2) + 1);
-            *fifo = (u16) (i * 2);
+            GXPosition1x16((u16) ((i * 2) + 1));
+            GXColor1x16((u16) (i * 2));
+            GXTexCoord1x16((u16) ((i * 2) + 1));
+            GXPosition1x16((u16) (i * 2));
+            GXColor1x16((u16) ((i * 2) + 1));
+            GXTexCoord1x16((u16) (i * 2));
         }
     }
+    /* NOTE: unlike the arg2==0 branch (pos=clr=tex per vertex), this reverse-
+     * winding branch really does interleave 1,0,1,0,1,0 across the 2
+     * vertices' 3 attributes in the original asm - not a simple per-vertex
+     * repeat. Verified against the raw *fifo writes before this port. */
     *(u32 *) (slot + 0x24) = GXEndDisplayList();
     *(void **) (slot + 0x20) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (slot + 0x24), Hu3DData[dat->modelId].mallocNo);
     memcpy(*(void **) (slot + 0x20), dispListTmp, *(u32 *) (slot + 0x24));
@@ -5903,16 +5918,19 @@ void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
         if (*(s32 *) slot == 0) {
             continue;
         }
-        GXClearVtxDesc();
-        GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSetArray(GX_VA_POS, *(void **) (slot + 0x10), 0xCU);
-        GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-        GXSetArray(GX_VA_CLR0, *(void **) (slot + 0x18), 4U);
-        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSetArray(GX_VA_TEX0, *(void **) (slot + 0x14), 8U);
+        {
+            s32 slotVtxCount = *(s32 *) (slot + 0x4);
+            GXClearVtxDesc();
+            GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
+            GXSETARRAY(GX_VA_POS, *(void **) (slot + 0x10), slotVtxCount * 0xC * 2, 0xCU, TRUE);
+            GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
+            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
+            GXSETARRAY(GX_VA_CLR0, *(void **) (slot + 0x18), slotVtxCount * 4U * 2, 4U, TRUE);
+            GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
+            GXSETARRAY(GX_VA_TEX0, *(void **) (slot + 0x14), slotVtxCount * 8U * 2, 8U, TRUE);
+        }
         tint.r = *(u8 *) (slot + 0x1C);
         tint.g = *(u8 *) (slot + 0x1D);
         tint.b = *(u8 *) (slot + 0x1E);

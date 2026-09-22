@@ -215,6 +215,7 @@ set(REL_FILES
         src/REL/storyresultdll/rank.c
         src/REL/storyresultdll/effect.c
         src/REL/w01Dll/world01.c
+        src/REL/w02Dll/world02.c
         src/REL/w03Dll/world03.c
         src/REL/w03sDll/world03.c
         src/REL/w05Dll/world05.c
@@ -324,7 +325,6 @@ set(REL_FILES
 #   storymodedll
 #   systemDll
 #   w01sDll
-#   w02Dll
 #   w02sDll
 #   w04Dll
 #   w04sDll

@@ -1,13 +1,13 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-22 12:52 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-22 17:50 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **23.33 %** (2 162.0 / 9 266.8 Ko) |
+| code identique | **23.34 %** (2 162.9 / 9 266.8 Ko) |
 | code lié depuis les sources | 18.43 % |
-| fonctions identiques | 4768 / 21231 |
+| fonctions identiques | 4771 / 21231 |
 | unités complètes | 232 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
@@ -16,11 +16,11 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
-| DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 81.8 % | 309.6 Ko |
+| DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 81.8 % | 309.2 Ko |
 | Mini-jeux m5xx | 76 | 4 493.9 Ko | 2.8 % | 4 370.1 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 7.3 % | 194.7 Ko |
-| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 41.3 % | 224.9 Ko |
+| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 41.4 % | 224.4 Ko |
 | Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
 | Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 14.0 % | 1 179.3 Ko |
 
@@ -30,7 +30,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `main` | 1 697.5 Ko | 81.8 % | 3534/6158 | 84.6 % | 189/4/117 | en cours |
+| `main` | 1 697.5 Ko | 81.8 % | 3536/6158 | 84.6 % | 189/4/117 | en cours |
 
 ### Mini-jeux m5xx
 
@@ -136,9 +136,9 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
 | `w01Dll` | 66.2 Ko | 100.0 % | 72/72 | 100.0 % | 1/0/0 | fait |
-| `w02Dll` | 72.5 Ko | 1.0 % | 12/73 | 26.8 % | 0/0/1 | en cours |
+| `w02Dll` | 72.5 Ko | 1.0 % | 12/73 | 41.0 % | 0/1/0 | fait (E) |
 | `w03Dll` | 35.6 Ko | 8.2 % | 11/40 | 55.5 % | 0/1/0 | fait (E) |
-| `w04Dll` | 78.7 Ko | 2.7 % | 21/66 | 11.0 % | 0/0/1 | en cours |
+| `w04Dll` | 78.7 Ko | 3.4 % | 22/66 | 23.9 % | 0/0/1 | en cours |
 | `w05Dll` | 47.6 Ko | 100.0 % | 33/33 | 100.0 % | 1/0/0 | fait |
 | `w06Dll` | 35.2 Ko | 100.0 % | 47/47 | 100.0 % | 1/0/0 | fait |
 | `w07Dll` | 45.2 Ko | 2.9 % | 14/52 | 56.3 % | 0/1/0 | fait (E) |
