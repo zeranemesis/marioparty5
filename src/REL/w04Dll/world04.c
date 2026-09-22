@@ -47,6 +47,11 @@ static void MB4Ev_Kihon(s32 playerNo);
 static void MB4Ev_Iruka(s32 playerNo);
 static void MB4Ev_Blow(s32 playerNo);
 static void MB4Ev_Kaisoo(s32 playerNo);
+static s16 PathCheck(s16 masuId, s16 depth);
+
+static s16 mb4_PathValidF;
+static s16 mb4_PathLen;
+static s16 mb4_PathMasuNo;
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -232,6 +237,50 @@ void MB4_MapViewHook(s32 enterF) {
 }
 
 s32 MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, s32 endF) {
+    return -1;
+}
+
+/* NONMATCHING: register allocation differs from the original's manual
+ * unroll of the first recursion levels (60% match); logic is complete and
+ * faithful (depth-limited DFS toward the nearest star masu, used to drive
+ * the "raise chance" star-distance display). */
+static s16 PathCheck(s16 masuId, s16 depth) {
+    MASU *masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    s32 i;
+    BOOL found;
+
+    if (MBMasuTypeGet(MASU_LAYER_DEFAULT, masuId) == MASU_TYPE_STAR) {
+        s16 dist = mb4_PathMasuNo - depth;
+        if (dist < mb4_PathLen) {
+            mb4_PathLen = dist;
+        }
+        mb4_PathValidF = 1;
+        return 1;
+    }
+    if (MBMasuTypeGet(MASU_LAYER_DEFAULT, masuId) != MASU_TYPE_NONE) {
+        depth -= 1;
+    }
+    found = FALSE;
+    if (depth >= 0) {
+        for (i = 0; i < masuP->linkNum; i++) {
+            if ((MBMasuFlagGet(MASU_LAYER_DEFAULT, masuP->linkTbl[i]) & (MBBranchFlagGet() | 0x06000000)) == 0) {
+                if (PathCheck((s16) masuP->linkTbl[i], depth) != 0) {
+                    found = TRUE;
+                }
+            }
+        }
+    }
+    return found ? 1 : 0;
+}
+
+s16 MB4_PathLenGet(s16 masuId, s16 depthLimit) {
+    mb4_PathMasuNo = depthLimit;
+    mb4_PathLen = depthLimit;
+    mb4_PathValidF = 0;
+    PathCheck(masuId, depthLimit);
+    if (mb4_PathValidF) {
+        return mb4_PathLen;
+    }
     return -1;
 }
 
