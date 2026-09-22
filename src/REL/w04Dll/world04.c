@@ -63,6 +63,9 @@ static s32 MB4Ev_MasuWalkPost(s32 playerNo);
 static void MB4Ev_MasuHatena(s32 playerNo);
 static void MB4_MapViewHook(int enterF);
 static void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
+static void MB4_CapsuleBubbleUpdate(void);
+static s32 MB4_BubbleEffCreate(Point3d *pos, s32 duration, f32 speed);
+static void MB4Ev_PlayerBubbleCreate(s32 playerNo);
 
 static s16 mb4_PathValidF;
 static s16 mb4_PathLen;
@@ -278,6 +281,24 @@ static Point3d mapViewPos = { -181.0f, -123.0f, 80.0f };
 static f32 mapViewZoom = 16171.0f;
 
 static OMOBJ *mb4_BubbleEffObj;
+
+static Point3d mb4ev_BubbleEmitPosTbl[13] = {
+    { 3710.0f, 240.0f, 790.0f },
+    { 2870.0f, 740.0f, -160.0f },
+    { 1620.0f, 700.0f, -930.0f },
+    { 2500.0f, 160.0f, 900.0f },
+    { 3170.0f, 300.0f, 1170.0f },
+    { 1940.0f, 120.0f, 550.0f },
+    { 2860.0f, 330.0f, 760.0f },
+    { 1120.0f, 320.0f, 60.0f },
+    { -1470.0f, 680.0f, -900.0f },
+    { -2700.0f, 100.0f, 2000.0f },
+    { -2780.0f, 660.0f, 1200.0f },
+    { -3950.0f, 190.0f, 780.0f },
+    { -2000.0f, 370.0f, 260.0f },
+};
+static Point3d mb4ev_Puku2BubblePos = { -2800.0f, 300.0f, 1340.0f };
+static Point3d mb4ev_IrukaStartBubblePos = { -3320.0f, 1250.0f, -840.0f };
 
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
@@ -619,6 +640,140 @@ void MB4_Create(void) {
     MBOpeningViewSet(&openingRot, &openingOfs, openingZoom);
     MBMapViewCameraSet(&mapViewRot, &mapViewPos, mapViewZoom);
     MBMapViewHookSet(MB4_MapViewHook);
+}
+
+/* NONMATCHING: complete and faithful transcription, not attempted for
+ * instruction-level match. Per-frame board ambience: player "get chased by
+ * bubbles" trail (mb4_Work[0x17..0x23], one 3-word slot per player),
+ * ambient background bubbles (mb4_Work[0x30..0x56], 13 slots), the
+ * pufferfish (Puku2) bubble trail (mb4_Work[0x57..0x59]) and the dolphin's
+ * starting bubble puff (mb4_Work[0x5A..0x5C]), plus the puku2/shell model
+ * swap once its open-mouth motion finishes.
+ *
+ * NOTE: the `pos.x != 0 || pos.y != 0 || pos.y != 0` gate below (checking
+ * .y twice, not .z) is reproduced exactly as decompiled - it reads the
+ * *previous* loop iteration's MBPlayerPosGet() result (a local that is not
+ * reset per iteration in the original either), which looks like a latent
+ * bug in the original source rather than something to "fix" here. */
+void MB4_MainObjUpdate(OMOBJ *obj) {
+    Point3d pos;
+    Point3d scale;
+    s32 *stateP;
+    s32 playerNo;
+    s32 i;
+    s32 timer;
+    f32 bx, by, bz;
+
+    if (MBKillCheck() || mb4_MainObj == NULL) {
+        omDelObjEx(mbObjMan, obj);
+        mb4_MainObj = NULL;
+        return;
+    }
+
+    stateP = &mb4_Work[0x17];
+    for (playerNo = 0; playerNo < 4; playerNo++) {
+        if ((pos.x != 0.0f || pos.y != 0.0f || pos.y != 0.0f) &&
+            MBPlayerMotionNoGet(playerNo) != 0xA &&
+            MBPlayerMotionNoGet(playerNo) != 6 &&
+            MBModelDispGet(MBPlayerModelGet(playerNo)) != 0) {
+            stateP[2] += 1;
+            timer = stateP[0] - 1;
+            stateP[0] = timer;
+            if (timer <= 0 && MBPlayerAliveCheck(playerNo)) {
+                MBPlayerPosGet(playerNo, &pos);
+                MBPlayerScaleGet(playerNo, &scale);
+                if ((stateP[2] & 3) == 0) {
+                    s32 burst = stateP[1] - 1;
+                    stateP[1] = burst;
+                    if (burst > 0) {
+                        MB4Ev_PlayerBubbleCreate(playerNo);
+                    } else {
+                        stateP[0] = (s32) (300.0f + (5.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                        stateP[1] = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                    }
+                }
+            }
+        }
+        stateP += 3;
+    }
+
+    MB4_CapsuleBubbleUpdate();
+
+    stateP = &mb4_Work[0x30];
+    for (i = 0; i < 0xD; i++) {
+        stateP[2] += 1;
+        timer = stateP[0] - 1;
+        stateP[0] = timer;
+        if (timer <= 0 && (stateP[2] & 7) == 0) {
+            s32 burst = stateP[1] - 1;
+            stateP[1] = burst;
+            if (burst > 0) {
+                s32 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&mb4ev_BubbleEmitPosTbl[i], duration, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+            } else {
+                stateP[0] = (s32) (300.0f + (5.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                stateP[1] = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            }
+        }
+        stateP += 3;
+    }
+
+    if (mb4_Work[0x58] > 0) {
+        s32 duration;
+        Point3d puffPos;
+        mb4_Work[0x59] += 1;
+        timer = mb4_Work[0x57] - 1;
+        mb4_Work[0x57] = timer;
+        if (timer <= 0 && (mb4_Work[0x59] & 1) == 0) {
+            s32 burst = mb4_Work[0x58] - 1;
+            mb4_Work[0x58] = burst;
+            if (burst > 0) {
+                bx = mb4ev_Puku2BubblePos.x;
+                by = mb4ev_Puku2BubblePos.y;
+                bz = mb4ev_Puku2BubblePos.z;
+                bx -= 0.5f * (100.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                by += 0.5f * (100.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                bz -= 0.25f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                puffPos.x = bx;
+                puffPos.y = by;
+                puffPos.z = bz;
+                MB4_BubbleEffCreate(&puffPos, duration, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+            }
+        }
+    }
+
+    if (mb4_Work[0x5B] > 0) {
+        s32 duration;
+        Point3d puffPos;
+        mb4_Work[0x5C] += 1;
+        timer = mb4_Work[0x5A] - 1;
+        mb4_Work[0x5A] = timer;
+        if (timer <= 0 && (mb4_Work[0x5C] & 1) == 0) {
+            s32 burst = mb4_Work[0x5B] - 1;
+            mb4_Work[0x5B] = burst;
+            if (burst > 0) {
+                bx = mb4ev_IrukaStartBubblePos.x;
+                by = mb4ev_IrukaStartBubblePos.y;
+                bz = mb4ev_IrukaStartBubblePos.z;
+                bx -= 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                by += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                bz -= 0.2f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                puffPos.x = bx;
+                puffPos.y = by;
+                puffPos.z = bz;
+                MB4_BubbleEffCreate(&puffPos, duration, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+            }
+        }
+    }
+
+    if (MBModelDispGet((s16) mb4_Work[7]) && MBMotionEndCheck((s16) mb4_Work[7])) {
+        HuAudFXEmiterPlay(0x5F0, &mb4ev_Puku2BubblePos);
+        MBModelAttrSet((s16) mb4_Work[6], 0x40000002U);
+        MBModelAttrSet((s16) mb4_Work[7], 0x40000002U);
+        MBModelDispSet((s16) mb4_Work[7], FALSE);
+    }
 }
 
 void MB4_Kill(void) {
