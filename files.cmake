@@ -218,6 +218,7 @@ set(REL_FILES
         src/REL/w02Dll/world02.c
         src/REL/w03Dll/world03.c
         src/REL/w03sDll/world03.c
+        src/REL/w04Dll/world04.c
         src/REL/w05Dll/world05.c
         src/REL/w05sDll/world05.c
         src/REL/w06Dll/world06.c
@@ -326,5 +327,4 @@ set(REL_FILES
 #   systemDll
 #   w01sDll
 #   w02sDll
-#   w04Dll
 #   w04sDll

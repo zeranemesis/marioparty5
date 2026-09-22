@@ -707,11 +707,11 @@ void MB4_Create(void) {
     modelId = MBModelCreate(0xD10013, NULL, FALSE);
     mb4_Work[1] = modelId;
     MBModelAttrSet(modelId, 0x40000001U);
-    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), NULL);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *)(uintptr_t) (MBModelIdGet(modelId) * 0x134), NULL);
 
     modelId = MBModelCreate(0xD10002, NULL, FALSE);
     mb4_Work[2] = modelId;
-    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *)(uintptr_t) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
 
     modelId = MBModelCreate(0xD10010, NULL, FALSE);
     mb4_Work[4] = modelId;
@@ -720,7 +720,7 @@ void MB4_Create(void) {
     modelId = MBModelCreate(0xD10014, NULL, FALSE);
     mb4_Work[5] = modelId;
     MBModelAttrSet(modelId, 0x40000001U);
-    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], (HU3DMODEL *)(uintptr_t) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
 
     modelId = MBModelCreate(0xD10015, NULL, FALSE);
     mb4_Work[6] = modelId;
@@ -932,7 +932,7 @@ void MB4_Create(void) {
     mb4_Work[0x14] = modelId;
     MBModelDispSet(modelId, FALSE);
     MBModelLayerSet(modelId, 1U);
-    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, (HU3DMODEL *)(uintptr_t) (MBModelIdGet(modelId) * 0x134), (HU3DMODEL *) (uintptr_t) MBModelIdGet(modelId));
 
     modelId = MBModelCreate(0xD10011, NULL, FALSE);
     mb4_Work[0x15] = modelId;

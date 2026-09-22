@@ -1,6 +1,6 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-22 17:50 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-22 22:36 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
@@ -138,7 +138,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `w01Dll` | 66.2 Ko | 100.0 % | 72/72 | 100.0 % | 1/0/0 | fait |
 | `w02Dll` | 72.5 Ko | 1.0 % | 12/73 | 41.0 % | 0/1/0 | fait (E) |
 | `w03Dll` | 35.6 Ko | 8.2 % | 11/40 | 55.5 % | 0/1/0 | fait (E) |
-| `w04Dll` | 78.7 Ko | 3.4 % | 22/66 | 23.9 % | 0/0/1 | en cours |
+| `w04Dll` | 78.7 Ko | 3.4 % | 22/66 | 31.2 % | 0/1/0 | fait (E) |
 | `w05Dll` | 47.6 Ko | 100.0 % | 33/33 | 100.0 % | 1/0/0 | fait |
 | `w06Dll` | 35.2 Ko | 100.0 % | 47/47 | 100.0 % | 1/0/0 | fait |
 | `w07Dll` | 45.2 Ko | 2.9 % | 14/52 | 56.3 % | 0/1/0 | fait (E) |
@@ -186,5 +186,5 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `sequencedll` | 2.6 Ko | 100.0 % | 9/9 | 100.0 % | 1/0/0 | fait |
 | `staffDll` | 10.2 Ko | 7.6 % | 5/8 | 33.0 % | 0/1/0 | fait (E) |
 | `storymodedll` | 41.9 Ko | 0.0 % | 0/50 | 0.0 % | 0/0/2 | à faire |
-| `storyresultdll` | 15.7 Ko | 30.9 % | 6/15 | 83.2 % | 0/3/0 | fait (E) |
+| `storyresultdll` | 15.7 Ko | 30.9 % | 6/15 | 83.3 % | 0/3/0 | fait (E) |
 | `systemDll` | 166.2 Ko | 0.0 % | 0/286 | 0.0 % | 0/0/6 | à faire |
