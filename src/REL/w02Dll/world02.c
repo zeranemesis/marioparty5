@@ -522,7 +522,7 @@ static struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC mb2ev_Zen2RainbowVtxTbl[3] = {
     },
 };
 static struct _struct_mb2ev_Zen2RainbowVtxNumTbl_0xC mb2ev_Zen2RainbowVtxNumTbl[3] = { { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 } };
-static Point3d mb2ev_Zen2DestTbl[3];
+static s32 mb2ev_Zen2DestTbl[3][3];
 static Point3d mb2ev_Zen2CoinBasePos;
 static s8 lbl_1_data_F48[7] = "sisof1";
 static s32 mb2ev_TimerGameMesId = -1;
@@ -2540,15 +2540,401 @@ void MB2Ev_Rain(s32 arg0) {
     }
 }
 
+/* mb2_Work[0x1C]: heap array of path segments for the rainbow-slide ride,
+ * stride 0x38 - offsets confirmed from usage (m2c mistyped these as
+ * ANIMBANK/ANIMPAT/ANIMBMP "bank/pat/bmp" fields since they happen to sit
+ * at the same byte offsets as a Point3d start position): +0x00 segment
+ * length, +0x04 cumulative length up to this segment, +0x08 start pos,
+ * +0x14 end pos, +0x20/+0x24/+0x28 (pitch,yaw,roll) at the end of this
+ * segment, +0x2C/+0x30/+0x34 the same at its start (copied from the
+ * previous segment's end, or self for the first). */
+#define ZP_STRIDE 0x38
+#define ZPp(p, i) ((u8 *) (p) + (i) * ZP_STRIDE)
+
+/* NONMATCHING: complete, asm-read translation. "cror eq,lt,eq" / "eq,gt,eq"
+ * folds read as <= / >=, matching the pattern confirmed in
+ * Thunder/Rain/CoinUpdate. */
 void MB2Ev_Zen2(s32 arg0) {
-    /* NONMATCHING: placeholder - full body not yet ported from asm.
-     * The m2c draft for this event produced many unresolved stack-spill
-     * temporaries (undefined "unkspXX" locals) that need a manual,
-     * instruction-by-instruction read of
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
-     * (see docs/decomp_workflow.md). For now this keeps the player's turn
-     * from softlocking: it just clears any shift motion. */
+    s16 masuId;
+    u32 flag;
+    s32 rainbowIdx;
+    s32 prevCoin;
+    s32 shiftMotion;
+    s32 upMasu, downMasu, hatenaMasu;
+    Point3d startPos, tmp, rot;
+    s32 rainbowId[3];
+    s32 i, j;
+    s32 yajiHelpWin;
+    f32 yajiWait;
+    s32 dir;
+    s32 lastDir;
+    s32 destMasuId;
+    s32 topCount;
+    void *topArr;
+    s32 pathSegCount;
+    u8 *path;
+    f32 totalLen;
+    s32 seFX;
+    f32 dist, speed;
+    s32 particleTimer;
+
+    masuId = GwPlayer[arg0].masuId;
+    flag = (u32) (u16) MBMasuGet(0, (s32) masuId)->flag;
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0U);
+    MB2_CoinInit();
+    mb2_CoinMaxDist.x = 100.0f;
+    mb2_CoinMaxDist.y = 200.0f;
+    mb2_CoinMaxDist.z = -1.0f;
+    MB2_CoinEffInit(); /* TODO(NONMATCHING): m2c mis-attributed extra args here, verify against asm */
+    rainbowIdx = (frand() & 0x7FFF) % 3;
+    prevCoin = MBPlayerCoinGet(arg0);
+    shiftMotion = MBPlayerMotionCreate(arg0, 0x8C0008);
+
+    /* Find the first "up" masu (branch flag == 2), else default to the
+     * player's own masu. */
+    for (i = 1; i < MBMasuNumGet(0); i++) {
+        MASU *m = MBMasuGet(0, i);
+        if (((m->flag & 0xF) != 0) && ((s32) (u16) m->flag == 2)) {
+            break;
+        }
+    }
+    upMasu = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
+
+    for (i = 1; i < MBMasuNumGet(0); i++) {
+        MASU *m = MBMasuGet(0, i);
+        if (((m->flag & 0x70) != 0) && ((s32) ((u16) m->flag >> 4) == 1)) {
+            break;
+        }
+    }
+    downMasu = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
+
+    for (i = 1; i < MBMasuNumGet(0); i++) {
+        MASU *m = MBMasuGet(0, i);
+        if (((m->flag & 0xF) != 0) && ((s32) (u16) m->flag == 7)) {
+            break;
+        }
+    }
+    hatenaMasu = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
+
+    MBPlayerPosGet(arg0, &startPos);
+    tmp = startPos;
+    tmp.y = 150.0f + startPos.y;
+    tmp.z = startPos.z - 300.0f;
+    MBCameraModelViewSet(MBPlayerModelGet(arg0), NULL, NULL, 3000.0f, -1.0f, 0xA);
+    MBCameraMotionWait();
+    MBPlayerRotateStart(arg0, 0xB4, 0xF);
+    while (MBPlayerRotateCheck(arg0) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    for (i = 0; (f32) i < 27.0f; i++) {
+        f32 t = (f32) i / 24.0f;
+        Point3d p;
+        PSVECSubtract(&tmp, &startPos, &p);
+        PSVECScale(&p, &p, t);
+        PSVECAdd(&startPos, &p, &p);
+        p.y = (f32) ((f64) p.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+        MBPlayerPosSetV(arg0, &p);
+        HuPrcVSleep();
+    }
     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    MB2_YajiInit(&tmp.x);
+    seFX = HuAudFXPlay(0x5D8);
+    MBMotionSpeedSet((s16) MB2W_S32(0x16 * 4), 0.25f);
+    MBMotionTimeSet((s16) MB2W_S32(0x16 * 4), 0.0f);
+    while (MBMotionTimeGet((s16) MB2W_S32(0x16 * 4)) <= 15.0f) {
+        HuPrcVSleep();
+    }
+    if (seFX != -1) {
+        HuAudFXStop(seFX);
+    }
+    HuAudFXPlay(0x5D7);
+    while (MBMotionTimeGet((s16) MB2W_S32(0x16 * 4)) <= 25.0f) {
+        HuPrcVSleep();
+    }
+    WipeColorSet(0xFFU, 0xFFU, 0xFFU);
+    WipeCreate(2, 0, 0x1E);
+    while (WipeCheckEnd() != 0) {
+        HuPrcVSleep();
+    }
+    while (MBMotionEndCheck((s16) MB2W_S32(0x16 * 4)) == 0) {
+        HuPrcVSleep();
+    }
+
+    MB2_RainbowObjInit();
+    rainbowId[0] = MB2_RainbowObjCreate(mb2ev_Zen2RainbowVtxTbl[rainbowIdx].unk0, mb2ev_Zen2RainbowVtxNumTbl[rainbowIdx].unk0, 0);
+    rainbowId[1] = MB2_RainbowObjCreate(mb2ev_Zen2RainbowVtxTbl[rainbowIdx].unk4, mb2ev_Zen2RainbowVtxNumTbl[rainbowIdx].unk4, 0);
+    rainbowId[2] = MB2_RainbowObjCreate(mb2ev_Zen2RainbowVtxTbl[rainbowIdx].unk8, mb2ev_Zen2RainbowVtxNumTbl[rainbowIdx].unk8, 0);
+
+    for (i = 0; i < 0x10; i++) {
+        Point3d pos;
+        pos = mb2ev_Zen2CoinBasePos;
+        pos.y += 100.0f;
+        MB2_CoinEffCreateColRand(&pos.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+            0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+    }
+
+    MBMasuPlayerLightSet(arg0, 0);
+    HuAudFXPlay(0x5C8);
+    WipeColorSet(0xFFU, 0xFFU, 0xFFU);
+    WipeCreate(1, 0, 0x5A);
+    do {
+        if ((frand() & 1) == 0) {
+            Point3d pos = mb2ev_Zen2CoinBasePos;
+            MB2_CoinEffCreateColRand(&pos.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 50.0f, 0.0f);
+        }
+        for (j = 0; j < 6; j++) {
+            void *vtxTop;
+            s32 vtxTopCount;
+            if (MB2_RainbowObjVtxTopGet(rainbowId[(frand() & 0x7FFF) % 3], &vtxTop) != 0) {
+                Point3d p;
+                u8 *v = (u8 *) vtxTop + (((frand() & 0x7FFF) % 15) * 0xC);
+                p.x = *(f32 *) (v + 0);
+                p.y = *(f32 *) (v + 4);
+                p.z = *(f32 *) (v + 8);
+                MB2_CoinEffCreateColRand(&p.x, 2, 100.0f * (0.1f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                    0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 50.0f, 0.0f);
+            }
+        }
+        HuPrcVSleep();
+    } while (WipeCheckEnd() != 0);
+
+    MBPlayerRotateStart(arg0, 0, 0xF);
+    while (MBPlayerRotateCheck(arg0) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 9, 0.0f, 8.0f, 0U);
+    while (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1) {
+        HuPrcVSleep();
+    }
+    while (MBMotionEndCheck(MBPlayerModelGet(arg0)) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    MBWinCreate(2, 0x2E000CU, -1);
+    MBTopWinWait();
+    MBTopWinKill();
+    yajiHelpWin = MBWinCreateHelp(0x2E000DU);
+    MBWinPosSet((s16) yajiHelpWin, 0xC9, 0x120);
+    MB2_YajiDispSet(1);
+    dir = 1;
+    lastDir = 1;
+    if (GwPlayer[arg0].comF == 0) {
+        s32 btn;
+        do {
+            f32 x, y;
+            HuPrcVSleep();
+            x = MBPadStkXGet((s8) (u8) GwPlayer[arg0].padNo, arg0);
+            y = MBPadStkYGet((s8) (u8) GwPlayer[arg0].padNo, &GwPlayer[arg0], GwPlayer);
+            btn = (s32) HuPadBtnDown[(s8) (u8) GwPlayer[arg0].padNo];
+            if ((fabs((f64) x) > 8.0) || (fabs((f64) y) > 8.0)) {
+                f32 ang = (f32) (atan2((f64) x, (f64) -y) / 3.141592653589793);
+                f32 angDeg = (f32) (180.0 * (f64) ang);
+                if (fabs(angDeg) < 45.0) {
+                    dir = 1;
+                } else if (angDeg >= 45.0f) {
+                    dir = 2;
+                } else if (angDeg <= -45.0f) {
+                    dir = 0;
+                }
+                if (dir != lastDir) {
+                    MB2_YajiHiliteSet(dir);
+                }
+                lastDir = dir;
+            }
+        } while ((btn & 0x100) == 0);
+    } else {
+        u32 r;
+        HuPrcSleep((s32) (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+        r = frand();
+        dir = (r & 0x7FFF) % 3;
+        MB2_YajiHiliteSet(dir);
+        HuPrcSleep((s32) (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+    }
+    MB2_YajiDispSet(0);
+    MBTopWinKill();
+
+    topArr = NULL;
+    topCount = MB2_RainbowObjVtxTopGet(rainbowId[dir], &topArr);
+    destMasuId = (&upMasu)[mb2ev_Zen2DestTbl[rainbowIdx][dir]];
+    MBPlayerPosFixEvent(arg0, destMasuId, 1);
+
+    path = (u8 *) HuMemDirectMallocNum(HEAP_HEAP, topCount * ZP_STRIDE, 0x10000000U);
+    MB2W_S32(0x1C * 4) = (s32) (uintptr_t) path;
+    memset(path, 0, topCount * ZP_STRIDE);
+    pathSegCount = topCount - 1;
+    totalLen = 0.0f;
+    for (i = 0; i < pathSegCount; i++, path = ZPp(MB2W_S32(0x1C * 4), i)) {
+        Point3d delta;
+        f32 distSq, mag;
+        u8 *a = (u8 *) topArr + i * 0xC;
+        u8 *b = (u8 *) topArr + (i + 1) * 0xC;
+
+        PSVECSubtract((Point3d *) b, (Point3d *) a, &delta);
+        mag = PSVECMag(&delta);
+        *(f32 *) (path + 0x0) = mag;
+        *(f32 *) (path + 0x4) = totalLen;
+        *(f32 *) (path + 0x8) = *(f32 *) (a + 0);
+        *(f32 *) (path + 0xC) = *(f32 *) (a + 4);
+        *(f32 *) (path + 0x10) = *(f32 *) (a + 8);
+        *(f32 *) (path + 0x14) = *(f32 *) (b + 0);
+        *(f32 *) (path + 0x18) = *(f32 *) (b + 4);
+        *(f32 *) (path + 0x1C) = *(f32 *) (b + 8);
+        distSq = (delta.x * delta.x) + (delta.z * delta.z);
+        if (distSq > 0.0f) {
+            f64 e0 = __frsqrte(distSq);
+            f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
+            f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
+            dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
+        } else {
+            dist = distSq;
+        }
+        *(f32 *) (path + 0x20) = (f32) -(180.0 * (atan2((f64) delta.y, (f64) dist) / 3.141592653589793));
+        *(f32 *) (path + 0x24) = (f32) (180.0 * (atan2((f64) delta.x, (f64) delta.z) / 3.141592653589793));
+        *(f32 *) (path + 0x28) = 0.0f;
+        if (i == 0) {
+            *(f32 *) (path + 0x2C) = *(f32 *) (path + 0x20);
+            *(f32 *) (path + 0x30) = *(f32 *) (path + 0x24);
+            *(f32 *) (path + 0x34) = *(f32 *) (path + 0x28);
+        } else {
+            u8 *prev = ZPp(MB2W_S32(0x1C * 4), i - 1);
+            *(f32 *) (path + 0x2C) = *(f32 *) (prev + 0x20);
+            *(f32 *) (path + 0x30) = *(f32 *) (prev + 0x24);
+            *(f32 *) (path + 0x34) = *(f32 *) (prev + 0x28);
+        }
+        totalLen += mag;
+    }
+
+    for (i = 4; i < (&mb2ev_Zen2RainbowVtxNumTbl[rainbowIdx].unk0)[dir]; i++) {
+        if ((frand() & 0xF) != 0) {
+            u8 *v = (u8 *) (&mb2ev_Zen2RainbowVtxTbl[rainbowIdx].unk0)[dir] + i * 0xC;
+            Point3d p;
+            p.x = *(f32 *) (v + 0);
+            p.y = *(f32 *) (v + 4) + 50.0f;
+            p.z = *(f32 *) (v + 8);
+            MB2_CoinCreate(&p.x, &p.x, 1, 0.0f, 0.0f);
+        }
+    }
+
+    MBPlayerMotionNoShiftSet(arg0, shiftMotion, 0.0f, 8.0f, 0U);
+    MBPlayerPosGet(arg0, &startPos);
+    tmp.x = *(f32 *) ((u8 *) topArr + 0);
+    tmp.y = *(f32 *) ((u8 *) topArr + 4);
+    tmp.z = *(f32 *) ((u8 *) topArr + 8);
+    {
+        Point3d d;
+        PSVECSubtract(&tmp, &startPos, &d);
+        PSVECMag(&d);
+    }
+    for (i = 0; (f32) i < 27.0f; i++) {
+        f32 t = (f32) i / 27.0f;
+        Point3d p, rotv;
+        PSVECSubtract(&tmp, &startPos, &p);
+        PSVECScale(&p, &p, t);
+        PSVECAdd(&startPos, &p, &p);
+        p.y = (f32) ((f64) p.y + (2.0 * (100.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0))));
+        MBPlayerPosSetV(arg0, &p);
+        PSVECSubtract(&tmp, &startPos, &p);
+        MBPlayerRotGet(arg0, &rotv);
+        rotv.y = (f32) (180.0 * (atan2((f64) p.x, (f64) p.z) / 3.141592653589793));
+        MBPlayerRotSetV(arg0, &rotv);
+        HuPrcVSleep();
+    }
+    MBPlayerPosSetV(arg0, &tmp);
+
+    particleTimer = HuAudFXPlay(0x5D9);
+    speed = 10.0f;
+    {
+        f32 dist2 = 0.0f;
+        s32 segIdx = 0;
+        do {
+            u8 *seg;
+            if (speed < 30.000002f) {
+                speed += 0.1f;
+            }
+            dist2 += speed;
+            seg = (u8 *)(uintptr_t) MB2W_S32(0x1C * 4);
+            segIdx = 0;
+            while ((segIdx < pathSegCount - 1) &&
+                   !(dist2 < (*(f32 *) (ZPp(seg, segIdx) + 0x0) + *(f32 *) (ZPp(seg, segIdx) + 0x4)))) {
+                segIdx++;
+            }
+            if (segIdx < pathSegCount - 1) {
+                u8 *s = ZPp(seg, segIdx);
+                f32 t = (dist2 - *(f32 *) (s + 0x4)) / *(f32 *) (s + 0x0);
+                Point3d a, b, p, rotv;
+                a.x = *(f32 *) (s + 0x8); a.y = *(f32 *) (s + 0xC); a.z = *(f32 *) (s + 0x10);
+                b.x = *(f32 *) (s + 0x14); b.y = *(f32 *) (s + 0x18); b.z = *(f32 *) (s + 0x1C);
+                PSVECSubtract(&b, &a, &p);
+                PSVECScale(&p, &p, t);
+                PSVECAdd(&a, &p, &p);
+                MBPlayerRotGet(arg0, &rotv);
+                rotv.x = fn_1_BF54(t, *(f32 *) (s + 0x2C), *(f32 *) (s + 0x20));
+                rotv.y = fn_1_BF54(t, *(f32 *) (s + 0x30), *(f32 *) (s + 0x24));
+                rotv.z = 0.0f;
+                MBPlayerPosSetV(arg0, &p);
+                MBPlayerRotSetV(arg0, &rotv);
+                MB2_CoinEffCreateColRand(&p.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                    0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+                HuPrcVSleep();
+            }
+        } while (dist2 < totalLen);
+    }
+    MBPlayerRotSet(arg0, 0.0f, 0.0f, 0.0f);
+    if (particleTimer != -1) {
+        HuAudFXStop(particleTimer);
+    }
+
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    MBPlayerPosGet(arg0, &startPos);
+    MBMasuPosGet(0, destMasuId, &tmp);
+    {
+        Point3d d;
+        PSVECSubtract(&tmp, &startPos, &d);
+        PSVECMag(&d);
+    }
+    for (i = 0; (f32) i < 27.0f; i++) {
+        f32 t = (f32) i / 27.0f;
+        Point3d p, rotv;
+        PSVECSubtract(&tmp, &startPos, &p);
+        PSVECScale(&p, &p, t);
+        PSVECAdd(&startPos, &p, &p);
+        p.y = (f32) ((f64) p.y + (2.0 * (100.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0))));
+        MBPlayerPosSetV(arg0, &p);
+        PSVECSubtract(&tmp, &startPos, &p);
+        MBPlayerRotGet(arg0, &rotv);
+        rotv.y = (f32) (180.0 * (atan2((f64) p.x, (f64) p.z) / 3.141592653589793));
+        MBPlayerRotSetV(arg0, &rotv);
+        HuPrcVSleep();
+    }
+    MBPlayerPosSetV(arg0, &tmp);
+    GwPlayer[arg0].masuId = (s16) destMasuId;
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    MBMasuPlayerLightSet(arg0, 1);
+    for (i = 0; (f32) i < 60.0f; i++) {
+        f32 t = 1.0f - ((f32) i / 60.0f);
+        MB2_RainbowObjAlphaSet(rainbowId[0], (s8) (255.0f * t));
+        MB2_RainbowObjAlphaSet(rainbowId[1], (s8) (255.0f * t));
+        MB2_RainbowObjAlphaSet(rainbowId[2], (s8) (255.0f * t));
+        HuPrcVSleep();
+    }
+    HuPrcSleep(0x1E);
+    MB2_CoinDispUpdate(arg0, MBPlayerCoinGet(arg0) - prevCoin, 0x64);
+    HuPrcSleep(0x1E);
+    MBMotionSpeedSet((s16) MB2W_S32(0x16 * 4), 0.0f);
+    MBMotionTimeSet((s16) MB2W_S32(0x16 * 4), 0.0f);
+    if (shiftMotion != -1) {
+        MBPlayerMotionKill(arg0, shiftMotion);
+    }
+    if (MB2W_S32(0x1C * 4) != 0) {
+        HuMemDirectFree((void *) (uintptr_t) MB2W_S32(0x1C * 4));
+    }
+    MB2W_S32(0x1C * 4) = 0;
+    MB2_RainbowObjClose();
+    MB2_YajiClose();
+    MB2_CoinClose();
+    MB2_CoinEffClose();
 }
 
 void MB2Ev_Zen4(s32 arg0) {
