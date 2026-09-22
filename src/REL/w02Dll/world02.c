@@ -1290,15 +1290,416 @@ loop_56:
     MBWalkNumDispSet(arg1, 1);
 }
 
+/* NONMATCHING: real logic (ported from the m2c draft + manual fixes below),
+ * not yet instruction-matched. Known deviations from the raw draft:
+ *  - the M2C_STRUCT_COPY(camera, 8) before the first MBCameraModelViewSet
+ *    is read directly as camera->pos.x/pos.y instead;
+ *  - "== N.0f" loop guards that m2c produced from a "cror eq,lt,eq"
+ *    (folded <=) are read as "< N.0f", matching every sibling loop in the
+ *    same function that m2c rendered correctly;
+ *  - "(bitwise f32) X" reinterpret casts on Point3d locals are read as the
+ *    relevant field (almost always .x, since it is the first word). */
 void MB2Ev_Thunder(s32 arg0) {
-    /* NONMATCHING: placeholder - full body not yet ported from asm.
-     * The m2c draft for this event produced many unresolved stack-spill
-     * temporaries (undefined "unkspXX" locals) that need a manual,
-     * instruction-by-instruction read of
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
-     * (see docs/decomp_workflow.md). For now this keeps the player's turn
-     * from softlocking: it just clears any shift motion. */
+    Point3d sp80;
+    f32 sp7C;
+    f32 sp78;
+    f32 sp74;
+    Point3d sp68;
+    f32 sp64;
+    f32 sp58;
+    f32 sp54;
+    f32 sp50;
+    f32 sp4C;
+    f32 sp48;
+    f32 sp44;
+    f32 sp40;
+    f32 sp3C;
+    f32 sp38;
+    Point3d sp2C;
+    Point3d sp20;
+    HU3DMODEL *sp1C;
+    MASU *sp18;
+    s32 sp14;
+    s32 sp10;
+    f32 spC;
+    s16 spA;
+    s16 sp8;
+    HU3DMODEL *temp_r3_5;
+    MASU *temp_r3;
+    MBCAMERA *temp_r3_2;
+    OMOBJ *temp_r3_9;
+    f32 temp_f1;
+    f32 temp_f29;
+    f32 temp_f29_2;
+    f32 temp_f31;
+    f32 temp_f31_2;
+    f32 temp_f31_3;
+    f32 temp_f31_4;
+    f32 var_f30;
+    f32 var_f31;
+    f32 var_f31_2;
+    f32 var_f31_3;
+    f64 temp_f28;
+    f64 temp_f28_2;
+    s16 temp_r3_3;
+    s16 temp_r3_4;
+    s16 temp_r3_6;
+    s16 temp_r3_7;
+    s16 temp_r3_8;
+    s16 var_r22;
+    s32 temp_r16;
+    s32 temp_r16_2;
+    s32 var_r17;
+    s32 var_r20;
+    s32 var_r24;
+    s32 var_r26;
+    s32 var_r29;
+    s32 var_r29_2;
+    s32 var_r29_3;
+    s32 var_r30;
+    s32 var_r30_2;
+    s32 var_r30_3;
+    s32 var_r30_4;
+    s32 var_r30_5;
+    s32 var_r30_6;
+    HSFOBJECT *temp_r23;
+
+    var_f30 = 0.0f;
+    spA = GwPlayer[arg0].masuId;
+    temp_r3 = MBMasuGet(0, (s32) spA);
+    sp18 = temp_r3;
+    sp14 = (s32) (u16) temp_r3->flag;
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0U);
+    MB2_CoinInit();
+    MB2_CoinEffInit();
+    temp_r3_2 = MBCameraGet();
+    sp64 = temp_r3_2->rot.z;
+    spC = temp_r3_2->zoom;
+    MBPlayerRotateStart(arg0, 0xB4, 0xF);
+    while (MBPlayerRotateCheck(arg0) == 0) {
+        HuPrcVSleep();
+    }
+    MBDataAsyncWait(MBDataDirReadAsync(0x240000));
+    MBPlayerPosGet(arg0, &sp80);
+    sp44 = sp80.x;
+    sp48 = sp80.y;
+    sp4C = sp80.z;
+    sp4C -= 400.0f;
+    sp48 += 200.0f;
+    temp_r3_3 = MBGuideCreateFlag(2, (Point3d *) &sp44, 0, 1, 1, 0);
+    MBModelLayerSet(temp_r3_3, 2U);
+    HuDataDirClose(0x240000);
+    temp_r16 = MBPlayerCapsuleMaxGet();
+    if (MBPlayerCapsuleNumGet(arg0) < temp_r16) {
+        MBAudFXPlay(0x2F5);
+        MBWinCreateChoice(1, 0x2E0004U, 2, 0);
+        MBTopWinAttrSet(0x10U);
+        if (GwPlayer[arg0].comF != 0) {
+            MBComChoiceSetUp();
+        }
+        MBTopWinWait();
+        sp8 = MBWinLastChoiceGet();
+        MBTopWinKill();
+    } else {
+        MBWinCreate(2, 0x2E0005U, 2);
+        MBTopWinWait();
+        MBTopWinKill();
+        sp8 = 1;
+    }
+    if (sp8 == 1) {
+        MB2_CoinClose();
+        MB2_CoinEffClose();
+        MBGuideEnd(temp_r3_3);
+        return;
+    }
+    MBPlayerPosGet(arg0, &sp80);
+    sp74 = mb2ev_DynamoPos.x;
+    sp78 = mb2ev_DynamoPos.y;
+    sp7C = mb2ev_DynamoPos.z;
+    MB2W_S32(0x26 * 4) = 0;
+    sp50 = temp_r3_2->pos.x;
+    sp54 = temp_r3_2->pos.y - 30.0f;
+    sp58 = sp64;
+    MBCameraModelViewSet(MBPlayerModelGet(arg0), (Point3d *) &sp50, NULL, 3000.0f, -1.0f, 0x2A);
+    MBCameraMotionWait();
+    for (var_r30 = 0; (f32) var_r30 < 60.0f; var_r30++) {
+        sp48 = (f32) ((f64) (200.0f + sp80.y) + (3.0 * (100.0 * sin((3.141592653589793 * (f64) (90.0f * ((f32) var_r30 / 60.0f))) / 180.0))));
+        MBGuideMdlPosSetV(temp_r3_3, (Point3d *) &sp44);
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    for (var_r30_2 = 0; (f32) var_r30_2 < 24.0f; var_r30_2++) {
+        temp_f31 = (f32) var_r30_2 / 24.0f;
+        PSVECSubtract((Point3d *) &sp74, &sp80, &sp68);
+        PSVECScale(&sp68, &sp68, temp_f31);
+        PSVECAdd(&sp80, &sp68, &sp68);
+        sp68.y = (f32) ((f64) sp68.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f31)) / 180.0)));
+        MBPlayerPosSetV(arg0, &sp68);
+        HuPrcVSleep();
+    }
     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    var_r24 = 1;
+    MBWinCreate(2, 0x2E0002U, 2);
+    MBTopWinWait();
+    MBTopWinKill();
+    MBWinCreateHelp(0x2E0003U);
+    temp_r3_4 = MBModelIdGet((s16) MB2W_S32(0xD * 4));
+    sp10 = (s32) temp_r3_4;
+    temp_r3_5 = &Hu3DData[temp_r3_4];
+    sp1C = temp_r3_5;
+    temp_r23 = MB2_ModelObjPtrGet(temp_r3_5, "dynamo");
+    var_r26 = -1;
+    var_r17 = 0;
+    omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB2_TimerObjUpdate);
+    mb2ev_TimerObj = 0x258;
+    mb2ev_TimerValue = 0x258;
+    var_r20 = 0;
+    while ((s32) mb2ev_TimerObj > 0) {
+        if (GwPlayer[arg0].comF != 0) {
+            var_r20 -= 1;
+            if (var_r20 <= 0) {
+                var_r20 = (s32) ((f32) (8 - (GwPlayer[arg0].dif * 2)) + (0.01f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                if (var_r20 < 2) {
+                    var_r20 = 2;
+                }
+                var_f30 += 0.02f;
+            }
+        } else if ((s32) (HuPadBtnDown[(s8) (u8) GwPlayer[arg0].padNo] & 0x100) != 0) {
+            var_f30 += 0.02f;
+        }
+        if (var_f30 > 0.0f) {
+            var_f30 -= 0.0015f;
+            if (var_f30 < 0.0f) {
+                var_f30 = 0.0f;
+            }
+        }
+        if (var_f30 > 1.0f) {
+            var_f30 = 1.0f;
+        }
+        if ((var_r26 == -1) && (var_f30 > 0.0f)) {
+            var_r26 = HuAudFXPlay(0x5CB);
+        } else if ((var_r26 != -1) && (var_f30 == 0.0f)) {
+            HuAudFXStop(var_r26);
+            var_r26 = -1;
+        } else if (var_r26 != -1) {
+            HuAudFXPitchSet(var_r26, (s16) (8191.0f * var_f30));
+        }
+        MBMotionSpeedSet((s16) MB2W_S32(0xF * 4), 0.5f + var_f30);
+        if (var_f30 > 0.0f) {
+            var_r17 -= 1;
+            if (var_r17 <= 0) {
+                var_r17 = (s32) (20.0f * (1.0f - var_f30)) + 3;
+                HuAudFXPlay(0x5CA);
+            }
+        }
+        if (var_f30 > 0.5f) {
+            var_f31 = 1.0f;
+        } else {
+            var_f31 = 2.0f * var_f30;
+        }
+        if (temp_r23 != NULL) {
+            temp_f1 = temp_r23->mesh.base.rot.x + (10.0f * var_f31);
+            temp_r23->mesh.base.rot.x = temp_f1;
+            if (temp_f1 > 360.0f) {
+                temp_r23->mesh.base.rot.x = (f32) (temp_r23->mesh.base.rot.x - 360.0f);
+            }
+        }
+        if (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) == -1) {
+            if (var_f31 == 0.0f) {
+                if (var_r24 != 1) {
+                    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 24.0f, 0x40000001U);
+                    var_r24 = 1;
+                }
+            } else if (var_f31 < 0.3f) {
+                if (var_r24 != 2) {
+                    MBPlayerMotionNoShiftSet(arg0, 2, 0.0f, 40.0f, 0x40000001U);
+                    var_r24 = 2;
+                }
+                var_f31_2 = 5.0f * var_f30;
+                if (var_f31_2 < 0.5f) {
+                    var_f31_2 = 0.5f;
+                } else if (var_f31_2 > 1.0f) {
+                    var_f31_2 = 1.0f;
+                }
+                MBPlayerMotionSpeedSet(arg0, var_f31_2);
+            } else {
+                if (var_r24 != 3) {
+                    MBPlayerMotionNoShiftSet(arg0, 3, 0.0f, 40.0f, 0x40000001U);
+                    var_r24 = 3;
+                }
+                var_f31_3 = 5.0f * (var_f30 - 0.3f);
+                if (var_f31_3 < 0.75f) {
+                    var_f31_3 = 0.75f;
+                } else if (var_f31_3 > 1.0f) {
+                    var_f31_3 = 1.0f;
+                }
+                MBPlayerMotionSpeedSet(arg0, var_f31_3);
+            }
+        }
+        MBMotionTimeSet((s16) MB2W_S32(0xE * 4), var_f30 * MBMotionMaxTimeGet((s16) MB2W_S32(0xE * 4)));
+        HuPrcVSleep();
+        if (var_f30 != 1.0f) {
+            continue;
+        }
+        break;
+    }
+    MBTopWinKill();
+    mb2ev_TimerObj = 0;
+    if (var_r26 != -1) {
+        HuAudFXStop(var_r26);
+    }
+    if (var_f30 > 0.85f) {
+        var_f30 = 1.0f;
+    }
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    temp_r16_2 = MBPlayerCapsuleMaxGet();
+    temp_r3_6 = temp_r16_2 - MBPlayerCapsuleNumGet(arg0);
+    var_r22 = (s16) (var_f30 * (f32) temp_r3_6);
+    if (var_f30 > 0.9f) {
+        var_r22 = temp_r3_6;
+    }
+    if (var_r22 > temp_r3_6) {
+        var_r22 = temp_r3_6;
+    }
+    if (var_r22 > 0) {
+        MBWinCreate(2, 0x2E0006U, 2);
+        MBTopWinWait();
+        MBTopWinKill();
+        MB2W_S32(0x26 * 4) = 1;
+        HuAudFXPlay(0x5D1);
+        MBMotionSpeedSet((s16) MB2W_S32(0xC * 4), 1.0f);
+        do {
+            HuPrcVSleep();
+        } while (MBMotionEndCheck((s16) MB2W_S32(0xC * 4)) == 0);
+        HuPrcSleep(0x1E);
+        for (var_r30_3 = 0; var_r30_3 < var_r22; var_r30_3++) {
+            MBPlayerPosGet(arg0, &sp20);
+            sp20.y += 250.0f;
+            sp38 = mb2ev_BiriQCapsulePos.x;
+            sp3C = mb2ev_BiriQCapsulePos.y;
+            sp40 = mb2ev_BiriQCapsulePos.z;
+            PSVECSubtract(&sp20, (Point3d *) &sp38, &sp2C);
+            PSVECScale(&sp2C, &sp2C, 1.2f);
+            PSVECAdd(&sp2C, (Point3d *) &sp38, &sp2C);
+            if ((u32) (frand() & 1) != 0) {
+                sp2C.x = sp2C.x + 200.0f;
+            } else {
+                sp2C.x = sp2C.x - 200.0f;
+            }
+            sp2C.y += 100.0f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+            do {
+                temp_r3_7 = MBCapsuleNextGet(-1);
+            } while ((temp_r3_7 == 0x22) || (temp_r3_7 == 0x24));
+            temp_r3_8 = MBModelCreate(MBCapsuleMdlGet((s32) temp_r3_7), NULL, 0);
+            MBModelAttrSet(temp_r3_8, 0x40000001U);
+            MBModelLayerSet(temp_r3_8, 2U);
+            HuAudFXPlay(0x364);
+            for (var_r29 = 0; (f32) var_r29 < 60.0f; var_r29++) {
+                temp_f31_2 = (f32) var_r29 / 60.0f;
+                temp_f29 = (f32) sin((3.141592653589793 * (f64) (90.0f * temp_f31_2)) / 180.0);
+                MB2_BezierCalcV(&sp38, (f32 *) &sp2C, &sp20, &sp68, temp_f31_2);
+                MBModelPosSetV(temp_r3_8, &sp68);
+                MBModelScaleSet(temp_r3_8, temp_f29, temp_f29, temp_f29);
+                HuPrcVSleep();
+            }
+            for (var_r29_2 = 0; (f32) var_r29_2 < 120.0f; var_r29_2++) {
+                sp68.y = (f32) ((f64) sp20.y + (0.20000000298023224 * (100.0 * sin((3.141592653589793 * (f64) (720.0f * ((f32) var_r29_2 / 120.0f))) / 180.0))));
+                MBModelPosSetV(temp_r3_8, &sp68);
+                HuPrcVSleep();
+            }
+            sp38 = sp20.x;
+            sp3C = sp20.y;
+            sp40 = sp20.z;
+            sp20.y -= 150.0f;
+            HuAudFXPlay(0x31C);
+            for (var_r29_3 = 0; (f32) var_r29_3 < 60.0f; var_r29_3++) {
+                temp_f31_3 = (f32) var_r29_3 / 60.0f;
+                temp_f29_2 = (f32) cos((3.141592653589793 * (f64) (90.0f * temp_f31_3)) / 180.0);
+                PSVECSubtract(&sp20, (Point3d *) &sp38, &sp68);
+                PSVECScale(&sp68, &sp68, temp_f31_3);
+                PSVECAdd(&sp68, (Point3d *) &sp38, &sp68);
+                temp_f28 = sin((3.141592653589793 * (f64) (180.0f * temp_f31_3)) / 180.0);
+                sp68.x = (f32) ((f64) sp68.x + (200.0 * (sin((3.141592653589793 * (f64) (720.0f * temp_f31_3)) / 180.0) * temp_f28)));
+                temp_f28_2 = sin((3.141592653589793 * (f64) (180.0f * temp_f31_3)) / 180.0);
+                sp68.z = (f32) ((f64) sp68.z + (200.0 * (cos((3.141592653589793 * (f64) (720.0f * temp_f31_3)) / 180.0) * temp_f28_2)));
+                MBModelPosSetV(temp_r3_8, &sp68);
+                MBModelScaleSet(temp_r3_8, temp_f29_2, temp_f29_2, temp_f29_2);
+                HuPrcVSleep();
+            }
+            MBModelDispSet(temp_r3_8, 0);
+            MBPlayerCapsuleAdd(arg0, (s32) temp_r3_7);
+            MBWinCreate(2, 0x2E0008U, -1);
+            MBTopWinInsertMesSet(MBCapsuleMesGet((s32) temp_r3_7), 0);
+            MBTopWinWait();
+            MBTopWinKill();
+            MBModelKill(temp_r3_8);
+        }
+        MBMotionSpeedSet((s16) MB2W_S32(0xC * 4), -1.0f);
+        do {
+            HuPrcVSleep();
+        } while (MBMotionTimeGet((s16) MB2W_S32(0xC * 4)) > 0.0f);
+        HuAudFXPlay(0x5D6);
+        MBPlayerRotateStart(arg0, 0, 0xF);
+        while (MBPlayerRotateCheck(arg0) == 0) {
+            HuPrcVSleep();
+        }
+        MBPlayerWinLoseVoicePlay(arg0, 0xC, 0x1F8);
+        MBPlayerMotionNoShiftSet(arg0, 0xC, 0.0f, 8.0f, 0U);
+    } else {
+        MBWinCreate(2, 0x2E0007U, 2);
+        MBTopWinWait();
+        MBTopWinKill();
+        MBPlayerRotateStart(arg0, 0, 0xF);
+        while (MBPlayerRotateCheck(arg0) == 0) {
+            HuPrcVSleep();
+        }
+        MBPlayerWinLoseVoicePlay(arg0, 0xD, 0x200);
+        MBPlayerMotionNoShiftSet(arg0, 0xD, 0.0f, 8.0f, 0U);
+    }
+    temp_r3_9 = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB2_DentyuObjFlash);
+    temp_r3_9->work[0] = 1;
+    temp_r3_9->work[1] = 0;
+    temp_r3_9->work[2] = 0;
+    temp_r3_9->trans.x = var_f30;
+    do {
+        HuPrcVSleep();
+    } while ((MBPlayerMotionEndCheck(arg0) == 0) || (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1));
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    for (var_r30_4 = 0; (f32) var_r30_4 < 30.0f; var_r30_4++) {
+        HuPrcVSleep();
+    }
+    MBMotionTimeSet((s16) MB2W_S32(0xE * 4), var_f30 * MBMotionMaxTimeGet((s16) MB2W_S32(0xE * 4)));
+    temp_r3_9->work[0] = 0;
+    MBMotionSpeedSet((s16) MB2W_S32(0xF * 4), 0.5f);
+    MBMotionSpeedSet((s16) MB2W_S32(0xC * 4), 0.0f);
+    MBMotionSpeedSet((s16) MB2W_S32(0xE * 4), 0.0f);
+    MBMotionTimeSet((s16) MB2W_S32(0xE * 4), 0.0f);
+    for (var_r30_5 = 0; (f32) var_r30_5 < 30.0f; var_r30_5++) {
+        MBMotionTimeSet((s16) MB2W_S32(0xC * 4), (1.0f - ((f32) var_r30_5 / 30.0f)) * MBMotionMaxTimeGet((s16) MB2W_S32(0xC * 4)));
+    }
+    MBMotionTimeSet((s16) MB2W_S32(0xC * 4), 0.0f);
+    MBGuideEnd(temp_r3_3);
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    for (var_r30_6 = 0; (f32) var_r30_6 < 24.0f; var_r30_6++) {
+        temp_f31_4 = (f32) var_r30_6 / 24.0f;
+        PSVECSubtract(&sp80, (Point3d *) &sp74, &sp68);
+        PSVECScale(&sp68, &sp68, temp_f31_4);
+        PSVECAdd((Point3d *) &sp74, &sp68, &sp68);
+        sp68.y = (f32) ((f64) sp68.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f31_4)) / 180.0)));
+        MBPlayerPosSetV(arg0, &sp68);
+        MBPlayerRotSet(arg0, 0.0f, 0.0f, 0.0f);
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    MB2W_S32(0x26 * 4) = 1;
+    sp50 = temp_r3_2->pos.x;
+    sp54 = temp_r3_2->pos.y;
+    sp58 = sp64;
+    MBCameraModelViewSet(MBPlayerModelGet(arg0), (Point3d *) &sp50, NULL, 3000.0f, -1.0f, 0x2A);
+    MBCameraMotionWait();
+    MB2_CoinClose();
+    MB2_CoinEffClose();
+    MB3MiracleGetExec(arg0);
 }
 
 /* Warning: Gap in callee-saved word stack region.
