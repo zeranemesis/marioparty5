@@ -1999,7 +1999,7 @@ config.libs = [
     Rel(
         "w04Dll",
         objects={
-            Object(NonMatching, "REL/w04Dll/world04.c"),
+            Object(Equivalent, "REL/w04Dll/world04.c"),
         },
     ),
     Rel(
