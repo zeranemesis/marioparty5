@@ -259,6 +259,33 @@ static s16 mb2_PathAllF;
 static s16 mb2_PathLen;
 static s16 mb2_PathMasuNo;
 static u32 *mb2_SaveWorkP;
+
+/* mb2_CoinObj->data: 0x20-entry array, stride 0x84 (coin drop slots). */
+typedef struct MB2CoinSlot_s {
+    s32 modelId;   /* 0x00 */
+    s32 activeF;   /* 0x04, 0 = free slot */
+    s32 unk8;
+    f32 unkC;
+    s32 unk10;
+    s32 unk14;
+    u8 pad18[4];
+    f32 pos[3];    /* 0x18 */
+    f32 rot[3];    /* 0x24 */
+    f32 scale[3];  /* 0x30 */
+    f32 srcPos[3]; /* 0x3C, saved starting position */
+    s32 unk48;
+    s32 unk4C;
+    s32 unk50;
+    f32 playerPos[4][3]; /* 0x54, one Point3d per player */
+} MB2_COIN_SLOT; /* size 0x84 */
+
+/* mb2_SplashEffObj->data: 2 splash-type model ids + their live-particle counts. */
+typedef struct MB2SplashEffData_s {
+    s32 modelId[2]; /* 0x00 */
+    s32 count[2];   /* 0x08 */
+    u8 pad10[4];
+} MB2_SPLASHEFF_DATA; /* size 0x14 */
+
 static u8 mb2_Work[0xC4];
 #define MB2W_S16(off) (*(s16 *) (mb2_Work + (off)))
 #define MB2W_U16(off) (*(u16 *) (mb2_Work + (off)))
@@ -2459,21 +2486,43 @@ void MB2_HermiteCalcV(Point3d *arg0, Point3d *arg1, Point3d *arg2, Point3d *arg3
 }
 
 void MB2_CoinInit(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    OMOBJ *obj;
+    MB2_COIN_SLOT *slot;
+    s32 i;
+    s32 j;
+
+    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinUpdate);
+    mb2_CoinObj = obj;
+    slot = (MB2_COIN_SLOT *) HuMemDirectMallocNum(HEAP_HEAP, 0x20 * sizeof(MB2_COIN_SLOT), 0x10000000U);
+    obj->data = slot;
+    memset(slot, 0, 0x20 * sizeof(MB2_COIN_SLOT));
+    mb2_CoinMaxDist.x = 100.0f;
+    mb2_CoinMaxDist.y = 170.0f;
+    mb2_CoinMaxDist.z = 0.0f;
+    for (i = 0; i < 0x20; i++, slot++) {
+        slot->modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x80002, 0x10000000, HEAP_MODEL));
+        Hu3DModelCameraSet((s16) slot->modelId, TRUE);
+        Hu3DModelAttrSet((s16) slot->modelId, 1U);
+        slot->activeF = 0;
+        slot->unk8 = 0;
+        slot->unkC = 0.0f;
+        slot->unk14 = 0;
+        slot->unk10 = 0;
+        for (j = 0; j < 4; j++) {
+            MBPlayerPosGet(j, (Point3d *) slot->playerPos[j]);
+        }
+    }
 }
 
 void MB2_CoinUpdate(OMOBJ *obj) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    /* NONMATCHING: placeholder - real body not yet read from asm; needs
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s instruction-by-instruction
+     * (MB2_COIN_SLOT is reconstructed above - CoinInit/CoinCreate/CoinNumGet
+     * already use it for real). */
+    if (MBKillCheck() || (mb2_CoinObj == NULL)) {
+        omDelObjEx(mbObjMan, obj);
+        mb2_CoinObj = NULL;
+    }
 }
 
 void MB2_CoinClose(void) {
@@ -2481,23 +2530,69 @@ void MB2_CoinClose(void) {
 }
 
 s32 MB2_CoinNumGet(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    MB2_COIN_SLOT *slot;
+    s32 i;
+    s32 num;
+
+    num = 0;
+    if (mb2_CoinObj == NULL) {
+        return 0;
+    }
+    slot = (MB2_COIN_SLOT *) mb2_CoinObj->data;
+    for (i = 0; i < 0x20; i++, slot++) {
+        if (slot->activeF != 0) {
+            num++;
+        }
+    }
+    return num;
 }
 
 s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    MB2_COIN_SLOT *slot;
+    s32 i;
+
+    if (mb2_CoinObj == NULL) {
+        return -1;
+    }
+    slot = (MB2_COIN_SLOT *) mb2_CoinObj->data;
+    for (i = 0; i < 0x20; i++, slot++) {
+        if (slot->activeF == 0) {
+            break;
+        }
+    }
+    if (i >= 0x20) {
+        return -1;
+    }
+    slot->activeF = 1;
+    slot->unk8 = 0;
+    slot->unkC = farg0;
+    slot->unk10 = arg2;
+    slot->unk14 = 0;
+    if (arg0 != NULL) {
+        slot->srcPos[0] = arg0[0];
+        slot->srcPos[1] = arg0[1];
+        slot->srcPos[2] = arg0[2];
+    }
+    if (arg1 != NULL) {
+        slot->unk48 = (s32) arg1[0];
+        slot->unk4C = (s32) arg1[1];
+        slot->unk50 = (s32) arg1[2];
+    }
+    slot->pos[0] = slot->srcPos[0];
+    slot->pos[1] = slot->srcPos[1];
+    slot->pos[2] = slot->srcPos[2];
+    slot->rot[0] = 0.0f;
+    slot->rot[2] = 0.0f;
+    slot->scale[2] = 1.0f;
+    slot->scale[1] = 1.0f;
+    slot->scale[0] = 1.0f;
+    slot->rot[1] = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    Hu3DModelPosSet((s16) slot->modelId, slot->pos[0], slot->pos[1], slot->pos[2]);
+    Hu3DModelRotSet((s16) slot->modelId, slot->rot[0], slot->rot[1], slot->rot[2]);
+    Hu3DModelScaleSet((s16) slot->modelId, slot->scale[0], slot->scale[1], slot->scale[2]);
+    Hu3DModelTPLvlSet((s16) slot->modelId, 1.0f);
+    Hu3DModelAttrReset((s16) slot->modelId, 1U);
+    return i;
 }
 
 void MB2_CoinEffInit(void) {
@@ -2572,21 +2667,80 @@ s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg
 }
 
 void MB2_SplashEffInit(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    OMOBJ *obj;
+    MB2_SPLASHEFF_DATA *dat;
+    ANIMDATA *anim;
+    s16 modelId;
+    s32 i;
+    MBEFFECT *eff;
+    MBEFFECTDATA *p;
+    s32 j;
+
+    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_SplashEffUpdate);
+    mb2_SplashEffObj = obj;
+    dat = (MB2_SPLASHEFF_DATA *) HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_SPLASHEFF_DATA), 0x10000000U);
+    obj->data = dat;
+    memset(dat, 0, sizeof(MB2_SPLASHEFF_DATA));
+    anim = HuSprAnimRead(HuDataReadNum(0xCD001E, 0x10000000));
+    for (i = 0; i < 2; i++) {
+        modelId = MBEffCreate(anim, 0x100);
+        dat->modelId[i] = modelId;
+        eff = (MBEFFECT *) Hu3DData[modelId].hookData;
+        p = eff->data;
+        for (j = 0; j < eff->num; j++, p++) {
+            p->dispF = 0;
+        }
+        if (j == 0) {
+            Hu3DModelLayerSet(modelId, 1);
+            eff->blendMode = 0;
+        } else {
+            Hu3DModelLayerSet(modelId, 2);
+            eff->blendMode = 1;
+        }
+        MBEffAttrSet(modelId, MB_EFFECT_ATTR_3D);
+        dat->count[i] = 0;
+    }
 }
 
 void MB2_SplashEffUpdate(OMOBJ *obj) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    MB2_SPLASHEFF_DATA *dat;
+    s32 i;
+    s32 j;
+    MBEFFECT *eff;
+    MBEFFECTDATA *p;
+    f32 t;
+
+    dat = (MB2_SPLASHEFF_DATA *) obj->data;
+    if (MBKillCheck() || (mb2_SplashEffObj == NULL)) {
+        for (i = 0; i < 2; i++) {
+            if (dat->modelId[i] != -1) {
+                MBEffKill(dat->modelId[i]);
+            }
+            dat->modelId[i] = -1;
+        }
+        omDelObjEx(mbObjMan, obj);
+        mb2_SplashEffObj = NULL;
+        return;
+    }
+    for (i = 0; i < 2; i++) {
+        eff = (MBEFFECT *) Hu3DData[dat->modelId[i]].hookData;
+        p = eff->data;
+        for (j = 0; j < eff->num; j++, p++) {
+            if (p->dispF) {
+                p->pos.x += p->vel.x;
+                p->pos.y += p->vel.y;
+                p->pos.z += p->vel.z;
+                p->rot.z -= p->scaleBase;
+                t = (f32) p->time / (f32) p->parManId;
+                p->time--;
+                p->color.a = (u8) (p->accel.z * t);
+                if (t == 0.0f) {
+                    p->dispF = 0;
+                    dat->count[i]--;
+                }
+            }
+        }
+    }
 }
 
 void MB2_SplashEffClose(void) {
@@ -2594,31 +2748,86 @@ void MB2_SplashEffClose(void) {
 }
 
 s32 MB2_SplashEffNumGet(void) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    MB2_SPLASHEFF_DATA *dat;
+
+    if (mb2_SplashEffObj == NULL) {
+        return 0;
+    }
+    dat = (MB2_SPLASHEFF_DATA *) mb2_SplashEffObj->data;
+    return dat->count[0] + dat->count[1];
 }
 
 void MB2_SplashEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, s16 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    MB2_SPLASHEFF_DATA *dat;
+    HU3DMODEL *modelP;
+    MBEFFECT *eff;
+    MBEFFECTDATA *p;
+    s32 j;
+    s32 idx;
+
+    if (mb2_SplashEffObj == NULL) {
+        return;
+    }
+    dat = (MB2_SPLASHEFF_DATA *) mb2_SplashEffObj->data;
+    modelP = &Hu3DData[dat->modelId[arg4 == 0 ? 0 : 1]];
+    eff = (MBEFFECT *) modelP->hookData;
+    p = eff->data;
+    for (j = 0; j < eff->num; j++, p++) {
+        if (!p->dispF) {
+            break;
+        }
+    }
+    if (j < eff->num) {
+        p->parManId = arg3;
+        p->time = arg3;
+        p->pos.x = arg0[0];
+        p->pos.y = arg0[1];
+        p->pos.z = arg0[2];
+        p->scale = farg0;
+        p->color.r = arg2[0];
+        p->color.g = arg2[1];
+        p->color.b = arg2[2];
+        p->color.a = arg2[3];
+        p->rot.z = farg1;
+        p->animBank = 0;
+        p->animNo = 0;
+        p->animSpeed = 0.0f;
+        p->animTime = 0.0f;
+        p->dispF = 1;
+        if (arg1 == NULL) {
+            p->vel.x = 0.0f;
+            p->vel.y = 0.0f;
+            p->vel.z = 0.0f;
+        } else {
+            p->vel.x = arg1[0];
+            p->vel.y = arg1[1];
+            p->vel.z = arg1[2];
+        }
+        p->accel.y = farg2;
+        p->accel.z = (f32) arg2[3];
+        idx = (arg4 == 0 ? 0 : 1);
+        dat->count[idx]++;
+    }
 }
 
 void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    f32 vel[3];
+    u8 col[4];
+    s16 life;
+    f32 rotY;
+
+    vel[0] = 0.0f;
+    vel[1] = 0.0f;
+    vel[2] = 5.0f * (0.8f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F))));
+    col[0] = arg1[0];
+    col[1] = arg1[1];
+    col[2] = arg1[2];
+    col[3] = arg1[3];
+    life = (s16) (60.0f * (0.25f + (0.05f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    rotY = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    MB2_SplashEffCreate(arg0, vel, col, life, arg2,
+        farg0 * (100.0f * (0.75f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F))))),
+        rotY, 0.8166667f);
 }
 
 s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
