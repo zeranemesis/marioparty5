@@ -3396,34 +3396,130 @@ void MB2_CoinEffBlendModeSet(u8 arg0) {
     }
 }
 
+/* MB2_PARTICLE fields (stride 0x58, confirmed by MB2_CoinEffUpdate's asm and
+ * cross-checked here): +0x00 s16 unk0 (0 = free slot, matches CoinEffUpdate
+ * clearing *(u16*)(p+0) on death), +0x08/0xC/0x10 vel.xyz, +0x14 life (farg0),
+ * +0x18 timeFrac (starts 1.0, decremented by +0x1C each frame), +0x1C decay
+ * rate (farg1), +0x24 gravity applied to vel.y (farg2), +0x34 scale = life *
+ * timeFrac (alive gate, > 0), +0x40 random rotY, +0x44/0x48/0x4C pos.xyz,
+ * +0x50..0x53 RGBA color. */
 s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    MB2_COINEFF_DATA *dat;
+    void *hdr;
+    u8 *p;
+    s32 i;
+
+    if (mb2_CoinEffObj == NULL) {
+        return -1;
+    }
+    dat = (MB2_COINEFF_DATA *) mb2_CoinEffObj->data;
+    hdr = Hu3DData[dat->modelId].hookData;
+    p = *(u8 **) ((u8 *) hdr + 0x3C);
+    for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
+        if (*(f32 *) (p + 0x34) == 0.0f) {
+            break;
+        }
+    }
+    if (i >= *(s16 *) ((u8 *) hdr + 0x26)) {
+        return -1;
+    }
+    *(s16 *) (p + 0x2) = 0;
+    *(s16 *) (p + 0x0) = 0;
+    *(f32 *) (p + 0x44) = arg0[0];
+    *(f32 *) (p + 0x48) = arg0[1];
+    *(f32 *) (p + 0x4C) = arg0[2];
+    *(f32 *) (p + 0x8) = arg1[0];
+    *(f32 *) (p + 0xC) = arg1[1];
+    *(f32 *) (p + 0x10) = arg1[2];
+    *(f32 *) (p + 0x14) = farg0;
+    *(f32 *) (p + 0x18) = 1.0f;
+    *(f32 *) (p + 0x1C) = farg1;
+    *(f32 *) (p + 0x24) = farg2;
+    *(f32 *) (p + 0x34) = farg0;
+    *(u8 *) (p + 0x50) = arg2[0];
+    *(u8 *) (p + 0x51) = arg2[1];
+    *(u8 *) (p + 0x52) = arg2[2];
+    *(u8 *) (p + 0x53) = arg2[3];
+    *(f32 *) (p + 0x40) = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    *(u8 *) (p + 0x54) = 0;
+    *(s16 *) (p + 0x0) = 0;
+    dat->count += 1;
+    return i;
 }
 
 s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    Point3d *pos;
+    f32 vel[3];
+    u8 col[4];
+    f32 t;
+    f32 spd;
+
+    pos = (Point3d *) arg0;
+    if (mb2_CoinEffObj == NULL) {
+        return -1;
+    }
+    switch (arg1) {
+    case 1:
+        spd = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        break;
+    case 2:
+        spd = 1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+        break;
+    default:
+        spd = 0.0f;
+        break;
+    }
+    vel[0] = 0.0f;
+    vel[1] = spd;
+    vel[2] = 0.0f;
+    t = 0.007874016f * (f32) (frand() & 0x7F);
+    col[0] = (u8) (192.0f + (63.0f * t));
+    col[1] = (u8) (192.0f + (63.0f * t));
+    col[2] = (u8) (192.0f + (63.0f * t));
+    col[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+    {
+        f32 srcPos[3];
+        srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+        srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+        srcPos[2] = pos->z + farg4;
+        return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
+    }
 }
 
 s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    Point3d *pos;
+    f32 vel[3];
+    u8 *col;
+    u32 r;
+    u32 idx;
+
+    pos = (Point3d *) arg0;
+    if (mb2_CoinEffObj == NULL) {
+        return -1;
+    }
+    switch (arg1) {
+    case 1:
+        vel[1] = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        break;
+    case 2:
+        vel[1] = 1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+        break;
+    default:
+        vel[1] = 0.0f;
+        break;
+    }
+    vel[0] = 0.0f;
+    vel[2] = 0.0f;
+    r = frand() & 0x7FFF;
+    idx = r - ((((r - (r / 7)) >> 1) + (r / 7)) >> 2) * 7;
+    col = (u8 *) &mb2ev_CoinEffColTbl[idx];
+    {
+        f32 srcPos[3];
+        srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+        srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+        srcPos[2] = pos->z + farg4;
+        return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
+    }
 }
 
 void MB2_SplashEffInit(void) {
