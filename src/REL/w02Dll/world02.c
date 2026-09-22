@@ -1,0 +1,2747 @@
+#include "game/board/main.h"
+#include "game/board/effect.h"
+#include "game/board/audio.h"
+#include "game/board/scroll.h"
+#include "game/board/model.h"
+#include "game/board/masu.h"
+#include "game/board/opening.h"
+#include "game/board/capsule.h"
+#include "game/board/branch.h"
+#include "game/board/camera.h"
+#include "game/board/player.h"
+#include "game/board/window.h"
+#include "game/board/coin.h"
+#include "game/board/star.h"
+#include "game/board/com.h"
+
+#include "game/sprite.h"
+#include "game/wipe.h"
+#include "game/gamemes.h"
+#include "game/pad.h"
+#include "game/main.h"
+#include "game/object.h"
+#include "game/charman.h"
+#include "game/hsfex.h"
+
+#include <math.h>
+
+/*
+ * w02Dll - "Rainbow Dream" board.
+ *
+ * NOTE (decomp WIP): first-draft port from tools/m2c_draft.py, mechanically
+ * cleaned up (M2C_ERROR/cror artifacts removed, unknown "?" types resolved
+ * from context). Most functions are not yet instruction-matched against the
+ * original asm (build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s) - this is
+ * being improved function by function in follow-up commits, largest/most
+ * complex event state machines (Zen2/Zen4/Rain/Thunder/Rainbow/WindGuru2)
+ * last. Rainbow/Zen2-rainbow vertex path tables (mb2ev_Rainbow*VtxTbl,
+ * mb2ev_Zen2Rainbow*VtxTbl) are declared with the right shape/size but not
+ * yet filled with the real .rodata values.
+ */
+struct _struct_mb2ev_Zen2RainbowVtxNumTbl_0xC {
+    /* 0x0 */ s32 unk0;                             /* inferred */
+    /* 0x4 */ s32 unk4;                             /* inferred */
+    /* 0x8 */ s32 unk8;                             /* inferred */
+};                                                  /* size = 0xC */
+
+struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC {
+    /* 0x0 */ void *unk0;                              /* inferred */
+    /* 0x4 */ void *unk4;                              /* inferred */
+    /* 0x8 */ void *unk8;                              /* inferred */
+};                                                  /* size = 0xC */
+
+struct _struct_mb2_ParticleUvTbl_0x8 {
+    /* 0x0 */ f32 unk0;                             /* inferred */
+    /* 0x4 */ f32 unk4;                             /* inferred */
+};                                                  /* size = 0x8 */
+
+s32 HuSprTexLoad(void *, s32, s32, s32, s32, s32);              /* extern */
+s8 MBPadStkXGet(s8, s32);                           /* extern */
+s8 MBPadStkYGet(s8, GWPLAYER *, GWPLAYER *);        /* extern */
+s32 MBScrollExec(s32);                                /* extern */
+s32 MB2_MasuLinkGet(s16 arg0, s16 *arg1, s32 arg2, s32 arg3);
+HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2);
+void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]);
+void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]);
+void ObjectSetup(void);
+void MB2_Create(void);
+void MB2_Kill(void);
+void MB2_MainObjUpdate(OMOBJ *obj);
+void MB2_LightSet(void);
+void MB2_LightReset(void);
+int MB2Ev_MasuHatena(int playerNo);
+void MB2_Stub(void);
+int MB2Ev_MasuWalkPre(int playerNo);
+int MB2Ev_MasuWalkPost(int playerNo);
+int MB2_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF);
+s32 MB2Ev_Rainbow(s32 arg0, s32 arg1);
+void MB2Ev_WindGuru2(s32 arg0, s32 arg1);
+void MB2Ev_Thunder(s32 arg0);
+void MB2Ev_Rain(s32 arg0);
+void MB2Ev_Zen2(s32 arg0);
+void MB2Ev_Zen4(s32 arg0);
+void MB2_TimerObjUpdate(OMOBJ *obj);
+void MB2_DentyuObjFlash(OMOBJ *obj);
+void MB2_WaterSplashUpdate(OMOBJ *obj);
+s16 MB2_WindGuru2MasuNoGet(s32 arg0, s32 arg1);
+s16 MB2_RainbowMasuNoEndGet(s32 arg0);
+s32 MB2_PathCheck(s32 arg0);
+s16 MB2_PathLenGet(s16 arg0, s16 arg1, s16 arg2);
+s16 PathCheck(s16 arg0, s16 arg1);
+void MB2_CoinDispUpdate(s32 arg0, s32 arg1, s32 arg2);
+f32 MB2_AngleDiff(f32 farg0, f32 farg1);
+f32 MB2_AngleLerp(f32 farg0, f32 farg1, f32 farg2);
+f32 fn_1_BF54(f32 farg0, f32 farg1, f32 farg2);
+HSFOBJECT *MB2_ModelObjPtrGet(HU3DMODEL *arg0, char *arg1);
+f32 MB2_BezierCalc(f64 farg0, f32 farg1, f32 farg2, f32 farg3);
+void MB2_BezierCalcV(f32 *arg0, f32 *arg1, Point3d *arg2, Point3d *arg3, f64 farg0);
+void MB2_HermiteCalc(f32 *arg0, f32 *arg1, f32 *arg2, f32 *arg3, f32 farg0);
+void fn_1_CEB8(f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5);
+void MB2_HermiteCalcV(Point3d *arg0, Point3d *arg1, Point3d *arg2, Point3d *arg3, Point3d *arg4, f32 farg0);
+void MB2_CoinInit(void);
+void MB2_CoinUpdate(OMOBJ *obj);
+void MB2_CoinClose(void);
+s32 MB2_CoinNumGet(void);
+s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0);
+void MB2_CoinEffInit(void);
+void MB2_CoinEffUpdate(OMOBJ *obj);
+void MB2_CoinEffClose(void);
+s32 MB2_CoinEffNumGet(void);
+void MB2_CoinEffBlendModeSet(u8 arg0);
+s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2);
+s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4);
+s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4);
+void MB2_SplashEffInit(void);
+void MB2_SplashEffUpdate(OMOBJ *obj);
+void MB2_SplashEffClose(void);
+s32 MB2_SplashEffNumGet(void);
+void MB2_SplashEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, s16 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2);
+void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0);
+s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1);
+s16 MB2_ParticleCopy(s16 arg0);
+void MB2_YajiInit(f32 *arg0);
+void MB2_YajiUpdate(OMOBJ *obj);
+void MB2_YajiClose(void);
+void MB2_YajiHiliteSet(u32 arg0);
+void MB2_YajiDispSet(s32 arg0);
+void MB2_RainbowObjInit(void);
+void MB2_RainbowObjUpdate(OMOBJ *obj);
+void MB2_RainbowObjClose(void);
+s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2);
+void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1);
+s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1);
+typedef void (*VoidFunc)(void);
+extern const VoidFunc _ctors[];
+extern const VoidFunc _dtors[];
+static Point3d mb2ev_Rainbow1VtxTbl[0xA];
+static Point3d mb2ev_Rainbow2VtxTbl[0x14];
+static Point3d mb2ev_Rainbow3VtxTbl[0x14];
+static Point3d mb2ev_Rainbow4VtxTbl[0x14];
+static Point3d mb2ev_Rainbow5VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow1VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow4VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow7VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow8VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow2VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow5VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow6VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow9VtxTbl[0x14];
+static Point3d mb2ev_Zen2Rainbow3VtxTbl[0x14];
+static Point3d mb2ev_Emiter1Pos = { 0.0f, 200.0f, 2150.0f };
+static Point3d mb2ev_Emiter2Pos = { -2925.0f, 1210.0f, -25.0f };
+static Point3d openingRot = { -33.0f, 0.0f, 0.0f };
+static Point3d openingOfs = { 0.0f, 1400.0f, 0.0f };
+static f32 openingZoom = 20000.0f;
+static Point3d mapViewRot = { -78.0f, 0.0f, 0.0f };
+static Point3d mapViewPos = { 19.0f, -3.0f, 187.0f };
+static f32 mapViewZoom = 19866.0f;
+static s8 lbl_1_data_D04[0xA] = "s_cloud00";
+static s8 lbl_1_data_D0E[7] = "sisof2";
+static s32 mb2ev_RainbowNoTbl[0xB] = { 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0 };
+static s32 mb2ev_RainbowDirTbl[0xB] = { 0, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1 };
+static void *mb2ev_RainbowVtxTbl[5] = {
+    &mb2ev_Rainbow1VtxTbl,
+    &mb2ev_Rainbow2VtxTbl,
+    &mb2ev_Rainbow3VtxTbl,
+    &mb2ev_Rainbow4VtxTbl,
+    &mb2ev_Rainbow5VtxTbl,
+};
+static s32 mb2ev_RainbowVtxNumTbl[5] = { 0xA, 0x14, 0x14, 0x14, 0x14 };
+static s32 mb2ev_RainbowRevF[5] = { 0, 0, 0, 0, 1 };
+static f32 mb2ev_WindGuru2RotTbl[5] = { 0.0f, 180.0f, 90.0f, 0.0f, -90.0f };
+static s8 lbl_1_data_DC0[7] = "hazure";
+static s8 lbl_1_data_DC7[5] = "k_f3";
+static s8 lbl_1_data_DCC[5] = "k_f2";
+static s8 lbl_1_data_DD1[5] = "k_f1";
+static s8 lbl_1_data_DD6[5] = "k_f4";
+static char *mb2ev_WindGuru2HookTbl[5] = { "hazure", "k_f3", "k_f2", "k_f1", "k_f4" };
+static Point3d mb2ev_DynamoPos;
+static Point3d mb2ev_BiriQCapsulePos;
+static s8 lbl_1_data_E08[7] = "dynamo";
+static s8 lbl_1_data_E0F[7] = "suimon";
+static s8 lbl_1_data_E16[5] = "hs_a";
+static s8 lbl_1_data_E1B[5] = "hs_b";
+static s8 lbl_1_data_E20[5] = "hs_c";
+static s8 lbl_1_data_E25[5] = "hs_d";
+static s8 lbl_1_data_E2A[5] = "hs_e";
+static s8 lbl_1_data_E2F[5] = "hs_f";
+static s8 lbl_1_data_E34[5] = "hs_g";
+static s8 lbl_1_data_E39[5] = "hs_h";
+static s8 lbl_1_data_E3E[4] = "hs_i" /* not null-terminated */;
+static char *mb2ev_RainObjTbl[0xA] = {
+    "suimon",
+    "hs_a",
+    "hs_b",
+    "hs_c",
+    "hs_d",
+    "hs_e",
+    "hs_f",
+    "hs_g",
+    "hs_h",
+    "hs_i" /* not null-terminated */,
+};
+static s8 mb2ev_RainNoTbl[0xA];
+static s32 mb2ev_RainSwimLenTbl[0xA] = { 0, 0xF0, 0x3C, 0xB4, 0, 0x5A, 0, 0, 0, 0 };
+static Point3d mb2ev_RainSwimMidPos = { -3570.0f, 1190.0f, -625.0f };
+static Point3d mb2ev_RainSwimRightPos = { -2450.0f, 1210.0f, 500.0f };
+static f32 mb2ev_RainSwimLeftPos[3] = { -3200.0f, 1620.0f, -250.0f };
+static f32 mb2ev_RainSwimDefPos = 0.0f;
+static struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC mb2ev_Zen2RainbowVtxTbl[3] = {
+    {
+        &mb2ev_Zen2Rainbow1VtxTbl,
+        &mb2ev_Zen2Rainbow2VtxTbl,
+        &mb2ev_Zen2Rainbow3VtxTbl,
+    },
+    {
+        &mb2ev_Zen2Rainbow4VtxTbl,
+        &mb2ev_Zen2Rainbow5VtxTbl,
+        &mb2ev_Zen2Rainbow6VtxTbl,
+    },
+    {
+        &mb2ev_Zen2Rainbow7VtxTbl,
+        &mb2ev_Zen2Rainbow8VtxTbl,
+        &mb2ev_Zen2Rainbow9VtxTbl,
+    },
+};
+static struct _struct_mb2ev_Zen2RainbowVtxNumTbl_0xC mb2ev_Zen2RainbowVtxNumTbl[3] = { { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 } };
+static Point3d mb2ev_Zen2DestTbl[3];
+static Point3d mb2ev_Zen2CoinBasePos;
+static s8 lbl_1_data_F48[7] = "sisof1";
+static s32 mb2ev_TimerGameMesId = -1;
+static s32 mb2ev_CoinEffColTbl[7] = {
+    0xFF7F7FFF,
+    0xFF7F40FF,
+    0xFFFF7FFF,
+    0x7FFF7FFF,
+    0x7F7FFFFF,
+    0x4040FFFF,
+    0xFF7FFFFF,
+};
+static Point3d mb2_ParticleVtxTbl[4] = {
+    { -0.5f, 0.5f, 0.0f },
+    { 0.5f, 0.5f, 0.0f },
+    { 0.5f, -0.5f, 0.0f },
+    { -0.5f, -0.5f, 0.0f },
+};
+static struct _struct_mb2_ParticleUvTbl_0x8 mb2_ParticleUvTbl[4] = { { 0.0f, 0.0f }, { 0.25f, 0.0f }, { 0.25f, 0.25f }, { 0.0f, 0.25f } };
+static f32 yajiAngleTbl[3] = { -45.0f, 0.0f, 45.0f };
+static OMOBJ *mb2_MainObj;
+static OMOBJ *mb2_CoinObj;
+static OMOBJ *mb2_CoinEffObj;
+static OMOBJ *mb2_SplashEffObj;
+static OMOBJ *mb2_YajiObj;
+static OMOBJ *mb2_RainbowObj;
+static Point3d mb2_CoinMaxDist;
+static s32 mb2ev_TimerValue;
+static s32 mb2ev_TimerObj;
+static s16 mb2_PathValidF;
+static s16 mb2_PathAllF;
+static s16 mb2_PathLen;
+static s16 mb2_PathMasuNo;
+static u32 *mb2_SaveWorkP;
+static u8 mb2_Work[0xC4];
+#define MB2W_S16(off) (*(s16 *) (mb2_Work + (off)))
+#define MB2W_U16(off) (*(u16 *) (mb2_Work + (off)))
+#define MB2W_S32(off) (*(s32 *) (mb2_Work + (off)))
+#define MB2W_U32(off) (*(u32 *) (mb2_Work + (off)))
+#define MB2W_F32(off) (*(f32 *) (mb2_Work + (off)))
+#define MB2W_U8(off)  (*(u8 *) (mb2_Work + (off)))
+
+int _prolog(void) {
+    const VoidFunc* ctors = _ctors;
+    while (*ctors != 0) {
+        (**ctors)();
+        ctors++;
+    }
+    ObjectSetup();
+    return 0;
+}
+
+void _epilog(void) {
+    const VoidFunc* dtors = _dtors;
+    while (*dtors != 0) {
+        (**dtors)();
+        dtors++;
+    }
+}
+
+void ObjectSetup(void) {
+    GWPartyFSet(TRUE);
+    MBObjectSetup(MBNO_WORLD_2, MB2_Create, MB2_Kill);
+}
+
+void MB2_Create(void) {
+    s32 sp8;
+    s16 temp_r3;
+    s16 temp_r3_10;
+    s16 temp_r3_11;
+    s16 temp_r3_12;
+    s16 temp_r3_13;
+    s16 temp_r3_14;
+    s16 temp_r3_15;
+    s16 temp_r3_16;
+    s16 temp_r3_17;
+    s16 temp_r3_18;
+    s16 temp_r3_2;
+    s16 temp_r3_3;
+    s16 temp_r3_4;
+    s16 temp_r3_5;
+    s16 temp_r3_6;
+    s16 temp_r3_7;
+    s16 temp_r3_8;
+    s16 temp_r3_9;
+
+    sp8 = MBBoardNoGet();
+    HuAudSndGrpSetSet(0xF);
+    MBMasuCreate(0xCD0000);
+    MBScrollInit(0xCD001BU, 18000.0f, -500.0f);
+    temp_r3 = MBModelCreate(0xCD0001, NULL, 0);
+    MB2W_S32(0x0) = (s32)(uintptr_t) temp_r3;
+    MBModelAttrSet(temp_r3, 0x40000001U);
+    temp_r3_2 = MBModelCreate(0xCD0007, NULL, 0);
+    MB2W_S32((1) * 4) = (s32)(uintptr_t) temp_r3_2;
+    MBModelAttrSet(temp_r3_2, 0x40000001U);
+    MBMotionSpeedSet(temp_r3_2, 0.5f);
+    temp_r3_3 = MBModelCreate(0xCD000D, NULL, 0);
+    MB2W_S32((2) * 4) = (s32)(uintptr_t) temp_r3_3;
+    MBModelAttrSet(temp_r3_3, 0x40000001U);
+    temp_r3_4 = MBModelCreate(0xCD0010, NULL, 0);
+    MB2W_S32((3) * 4) = (s32)(uintptr_t) temp_r3_4;
+    MBModelAttrSet(temp_r3_4, 0x40000001U);
+    temp_r3_5 = MBModelCreate(0xCD0013, NULL, 0);
+    MB2W_S32((4) * 4) = (s32)(uintptr_t) temp_r3_5;
+    MBMotionSpeedSet(temp_r3_5, 0.05f);
+    MBModelAttrSet(temp_r3_5, 0x40000001U);
+    MB2W_S32((5) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0014, NULL, 0);
+    MB2W_S32((6) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD000C, NULL, 0);
+    temp_r3_6 = MBModelCreate(0xCD001A, NULL, 0);
+    MB2W_S32((0xB) * 4) = (s32)(uintptr_t) temp_r3_6;
+    MBModelAttrSet(temp_r3_6, 0x40000001U);
+    MB2W_S32((7) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0015, NULL, 0);
+    MB2W_S32((8) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0016, NULL, 0);
+    MB2W_S32((9) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0017, NULL, 0);
+    MB2W_S32((0xA) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0018, NULL, 0);
+    temp_r3_7 = MBModelCreate(0xCD0002, NULL, 0);
+    MB2W_S32((0xC) * 4) = (s32)(uintptr_t) temp_r3_7;
+    MBMotionSpeedSet(temp_r3_7, 0.0f);
+    MB2W_S32((0xD) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0003, NULL, 0);
+    temp_r3_8 = MBModelCreate(0xCD0004, NULL, 0);
+    MB2W_S32((0xE) * 4) = (s32)(uintptr_t) temp_r3_8;
+    MBMotionSpeedSet(temp_r3_8, 0.0f);
+    temp_r3_9 = MBModelCreate(0xCD0005, NULL, 0);
+    MB2W_S32((0xF) * 4) = (s32)(uintptr_t) temp_r3_9;
+    MBModelAttrSet(temp_r3_9, 0x40000001U);
+    MBMotionSpeedSet(temp_r3_9, 0.5f);
+    temp_r3_10 = MBModelCreate(0xCD0006, NULL, 0);
+    MB2W_S32((0x10) * 4) = (s32)(uintptr_t) temp_r3_10;
+    MBModelAttrSet(temp_r3_10, 0x40000001U);
+    temp_r3_11 = MBModelCreate(0xCD0008, NULL, 0);
+    MB2W_S32((0x11) * 4) = (s32)(uintptr_t) temp_r3_11;
+    MBMotionSpeedSet(temp_r3_11, 0.0f);
+    MBModelPosSet(temp_r3_11, -2640.0f, 1250.0f, 900.0f);
+    MBModelLayerSet(temp_r3_11, 2U);
+    temp_r3_12 = MBModelCreate(0xCD0008, NULL, 1);
+    MB2W_S32((0x12) * 4) = (s32)(uintptr_t) temp_r3_12;
+    MBMotionSpeedSet(temp_r3_12, 0.0f);
+    MBModelPosSet(temp_r3_12, -2950.0f, 1300.0f, 800.0f);
+    MBModelLayerSet(temp_r3_12, 2U);
+    temp_r3_13 = MBModelCreate(0xCD0009, NULL, 0);
+    MB2W_S32((0x13) * 4) = (s32)(uintptr_t) temp_r3_13;
+    MBModelAttrSet(temp_r3_13, 0x40000001U);
+    MBMotionSpeedSet(temp_r3_13, 0.33f);
+    temp_r3_14 = MBModelCreate(0xCD000A, NULL, 0);
+    MB2W_S32((0x14) * 4) = (s32)(uintptr_t) temp_r3_14;
+    MBModelPosSet(temp_r3_14, -2930.0f, 1210.0f, 20.0f);
+    MBModelRotSet(temp_r3_14, 0.0f, 45.0f, 0.0f);
+    MBModelAttrSet(temp_r3_14, 0x40000001U);
+    temp_r3_15 = MBModelCreate(0xCD000B, NULL, 0);
+    MB2W_S32((0x15) * 4) = (s32)(uintptr_t) temp_r3_15;
+    MBModelPosSet(temp_r3_15, -2930.0f, 1215.0f, 20.0f);
+    MBModelAttrSet(temp_r3_15, 0x40000001U);
+    temp_r3_16 = MBModelCreate(0xCD000E, NULL, 0);
+    MB2W_S32((0x16) * 4) = (s32)(uintptr_t) temp_r3_16;
+    MBMotionSpeedSet(temp_r3_16, 0.0f);
+    MBMotionTimeSet(temp_r3_16, 0.0f);
+    MB2W_S32((0x17) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD000F, NULL, 0);
+    temp_r3_17 = MBModelCreate(0xCD0011, NULL, 0);
+    MB2W_S32((0x18) * 4) = (s32)(uintptr_t) temp_r3_17;
+    MBModelRotSet(temp_r3_17, 0.0f, -50.0f, 0.0f);
+    temp_r3_18 = MBModelCreate(0xCD0012, NULL, 0);
+    MB2W_S32((0x19) * 4) = (s32)(uintptr_t) temp_r3_18;
+    MBMotionSpeedSet(temp_r3_18, 0.0f);
+    MB2W_S32((0x1A) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0019, NULL, 0);
+    MBCapsuleColCreate(0xCD001C);
+    MB2W_S32((0x1B) * 4) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCD001D, 0x10000000));
+    MB2W_S32((0x1C) * 4) = 0;
+    MB2W_S32((0x1D) * 4) = (s32)(uintptr_t)-1U;
+    MB2W_S32((0x25) * 4) = 1.0f;
+    MB2W_S32((0x26) * 4) = (s32)(uintptr_t)1U;
+    MB2W_S32((0x27) * 4) = (s32)(uintptr_t)1U;
+    MB2W_S32((0x28) * 4) = (s32)(uintptr_t)1U;
+    MB2W_S32((0x29) * 4) = 0;
+    MB2W_S32((0x2C) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    MB2W_S32((0x2D) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    MB2W_S32((0x2E) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    MB2W_S32((0x2F) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    MB2W_S32((0x30) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    MB2W_S32((0x2B) * 4) = 0.0f;
+    mb2_SaveWorkP = GwSystem.mbSaveWork;
+    if (_CheckFlag(0x10001U) == 0) {
+        *mb2_SaveWorkP = (frand() & 0x7FFF) % 3;
+    }
+    if ((s32) *mb2_SaveWorkP == 0) {
+        *mb2_SaveWorkP = (frand() & 0x7FFF) % 3;
+    }
+    if ((s32) *mb2_SaveWorkP < 1) {
+        *mb2_SaveWorkP = 1;
+    } else if ((s32) *mb2_SaveWorkP > 3) {
+        *mb2_SaveWorkP = 3;
+    }
+    MB2_SplashEffInit();
+    HuDataDirClose(0xCD0000);
+    MBBranchFlagSet(0x4000U);
+    MBLightHookSet(MB2_LightSet, MB2_LightReset);
+    MBMasuWalkPreHookSet(MB2Ev_MasuWalkPre);
+    MBMasuWalkPostHookSet(MB2Ev_MasuWalkPost);
+    MBMasuHatenaHookSet(MB2Ev_MasuHatena);
+    MBMasuPathCheckHookSet(MB2_MasuPathCheck);
+    HuDataDirRead(0xB0000);
+    mb2_MainObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB2_MainObjUpdate);
+    MBAudFXEmiterCreate(0x5D0, &mb2ev_Emiter1Pos, 0);
+    MBAudFXEmiterCreate(0x5DA, &mb2ev_Emiter2Pos, 0);
+    MBOpeningViewSet(&openingRot, &openingOfs, openingZoom);
+    MBMapViewCameraSet(&mapViewRot, &mapViewPos, mapViewZoom);
+}
+
+void MB2_Kill(void) {
+    mb2_MainObj = NULL;
+    if (MB2W_S32((0x1B) * 4) != 0) {
+        HuSprAnimKill((ANIMDATA *)(uintptr_t) MB2W_S32((0x1B) * 4));
+    }
+    MB2W_S32((0x1B) * 4) = 0;
+    if (MB2W_S32((0x1C) * 4) != 0) {
+        HuMemDirectFree((void *)(uintptr_t) MB2W_S32((0x1C) * 4));
+    }
+    MB2W_S32((0x1C) * 4) = 0;
+    MB2_CoinClose();
+    MB2_CoinEffClose();
+    MB2_YajiClose();
+    MB2_RainbowObjClose();
+    MB2_SplashEffClose();
+}
+
+void MB2_MainObjUpdate(OMOBJ *obj) {
+    f32 sp2C;
+    f32 sp28;
+    f32 sp24;
+    f32 sp20;
+    f32 sp1C;
+    f32 sp18;
+    MBCAMERA *sp14;
+    s8 sp13;
+    s8 sp12;
+    s8 sp11;
+    s8 sp10;
+    f32 spC;
+    u8 spB;
+    u8 spA;
+    u8 sp9;
+    u8 sp8;
+    u8 *temp_r4;
+    s32 temp_r3_2;
+    f32 temp_f1;
+    f32 temp_f1_2;
+    f32 temp_f28;
+    f32 temp_f29;
+    f32 temp_f29_2;
+    f32 temp_f30;
+    f32 temp_f30_2;
+    f32 temp_f31;
+    f32 temp_f31_2;
+    f32 var_f27;
+    s32 var_r29;
+    s32 var_r31;
+    s32 var_r31_2;
+    s8 temp_r0;
+    HSFOBJECT *temp_r3;
+    f32 sp30[4][3];
+
+    if ((MBKillCheck() != 0) || ((OMOBJ *) mb2_MainObj == NULL)) {
+        omDelObjEx(mbObjMan, mb2_MainObj);
+        mb2_MainObj = NULL;
+        return;
+    }
+    sp14 = MBCameraGet();
+    var_r31 = 0;
+loop_5:
+    if (var_r31 < 4) {
+        temp_r4 = mb2_Work + (var_r31 * 4);
+        MB2W_S32(var_r31 * 4 + 0xB0) = (s32) (((frand() & 0x7FFF) % 3) + MB2W_S32(var_r31 * 4 + 0xB0) + 1);
+        temp_f30 = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32(var_r31 * 4 + 0xB0)) / 180.0)));
+        temp_f29 = (f32) (1.0 + (0.0024999999441206455 * sin((3.141592653589793 * (f64) MB2W_S32(var_r31 * 4 + 0xB0)) / 180.0)));
+        MBModelScaleSet((s16) MB2W_S32(var_r31 * 4 + 0x1C), temp_f30, temp_f29, (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32(var_r31 * 4 + 0xB0)) / 180.0))));
+        var_r31 += 1;
+        goto loop_5;
+    }
+    MB2W_S32((0x30) * 4) = ((frand() & 0x7FFF) % 3) + MB2W_S32((0x30) * 4) + 1;
+    temp_f30_2 = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32((0x30) * 4)) / 180.0)));
+    temp_f29_2 = (f32) (1.0 + (0.0024999999441206455 * sin((3.141592653589793 * (f64) MB2W_S32((0x30) * 4)) / 180.0)));
+    temp_f28 = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32((0x30) * 4)) / 180.0)));
+    temp_r3 = MB2_ModelObjPtrGet(&Hu3DData[MBModelIdGet((s16) MB2W_S32((0x1A) * 4))], "s_cloud00");
+    if (temp_r3 != NULL) {
+        temp_r3->mesh.base.scale.x = temp_f30_2;
+        temp_r3->mesh.base.scale.y = temp_f29_2;
+        temp_r3->mesh.base.scale.z = temp_f28;
+    }
+    if ((s32) MB2W_S32((0x1D) * 4) != -1) {
+        if ((s32) MB2W_S32((0x26) * 4) != 0) {
+            if (MB2W_F32((0x25) * 4) < 1.0f) {
+                temp_f1 = MB2W_F32((0x25) * 4) + 0.03f;
+                MB2W_S32((0x25) * 4) = temp_f1;
+                if (temp_f1 > 1.0f) {
+                    MB2W_S32((0x25) * 4) = 1.0f;
+                }
+            }
+        } else if (MB2W_F32((0x25) * 4) > 0.0f) {
+            temp_f1_2 = MB2W_F32((0x25) * 4) - 0.03f;
+            MB2W_S32((0x25) * 4) = temp_f1_2;
+            if (temp_f1_2 < 0.0f) {
+                MB2W_S32((0x25) * 4) = 0.0f;
+            }
+        }
+        temp_r0 = (s8) (255.0f * MB2W_F32((0x25) * 4));
+        MB2W_U8(0x93) = temp_r0;
+        MB2W_U8(0x92) = temp_r0;
+        MB2W_U8(0x91) = temp_r0;
+        MB2W_U8(0x90) = temp_r0;
+        Hu3DGLightColorSet((s16) MB2W_S32((0x1D) * 4), (u8) MB2W_U8(0x90), (u8) MB2W_U8(0x91), (u8) MB2W_U8(0x92), (u8) MB2W_U8(0x93));
+    }
+    if ((s32) MB2W_S32((0x27) * 4) != 0) {
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((0x19) * 4)), "sisof2", (f32 (*)[4]) &sp30[0]);
+        MBModelPosSet((s16) MB2W_S32((0x18) * 4), sp30[3][0], sp30[3][1], sp30[3][2]);
+    }
+    if ((s32) MB2W_S32((0x28) * 4) != 0) {
+        var_r31_2 = 0;
+loop_31:
+        if (var_r31_2 < 3) {
+            temp_f31 = 0.5f - (0.007874016f * (f32) (frand() & 0x7F));
+            sp24 = (f32) (-2925.0 + (1.5 * (100.0 * ((f64) temp_f31 * sin(-0.7853981633974483)))));
+            sp28 = 1210.0f + (0.25f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+            sp2C = (f32) (-25.0 + (1.5 * (100.0 * ((f64) temp_f31 * cos(-0.7853981633974483)))));
+            sp20 = 0.0f;
+            sp1C = 0.0f;
+            sp18 = 0.0f;
+            temp_f31_2 = 64.0f * (0.007874016f * (f32) (frand() & 0x7F));
+            sp10 = (s8) (170.0f + temp_f31_2);
+            sp11 = (s8) (170.0f + temp_f31_2);
+            sp12 = (s8) (190.0f + temp_f31_2);
+            sp13 = (s8) (64.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            if ((u32) (frand() & 1) != 0) {
+                var_f27 = 0.1f;
+            } else {
+                var_f27 = -0.1f;
+            }
+            spC = var_f27;
+            if ((var_r31_2 < 2) || (temp_r3_2 = MB2W_S32((0x29) * 4) + 1, MB2W_S32((0x29) * 4) = temp_r3_2, ((temp_r3_2 & 1) != 0))) {
+                if (var_r31_2 < 2) {
+                    var_r29 = 0;
+                } else {
+                    var_r29 = 1;
+                }
+                sp8 = (u8) sp10;
+                sp9 = (u8) sp11;
+                spA = (u8) sp12;
+                spB = (u8) sp13;
+                MB2_SplashEffCreateRandX(&sp24, &sp8, var_r29, 1.0f);
+            }
+            var_r31_2 += 1;
+            goto loop_31;
+        }
+    }
+    if ((s32) MB2W_S32((3) * 4) != -1) {
+        if (MB2W_F32((0x2B) * 4) > 10.0f) {
+            MBMotionTimeGet((s16) MB2W_S32((3) * 4));
+        }
+        MB2W_S32((0x2B) * 4) = MBMotionTimeGet((s16) MB2W_S32((3) * 4));
+    }
+    if ((MBMotionSpeedGet((s16) MB2W_S32((0x11) * 4)) > 0.0f) && (MBMotionEndCheck((s16) MB2W_S32((0x11) * 4)) != 0)) {
+        MBMotionSpeedSet((s16) MB2W_S32((0x11) * 4), 0.0f);
+        MBMotionTimeSet((s16) MB2W_S32((0x11) * 4), 0.0f);
+    }
+    if ((MBMotionSpeedGet((s16) MB2W_S32((0x12) * 4)) > 0.0f) && (MBMotionEndCheck((s16) MB2W_S32((0x12) * 4)) != 0)) {
+        MBMotionSpeedSet((s16) MB2W_S32((0x12) * 4), 0.0f);
+        MBMotionTimeSet((s16) MB2W_S32((0x12) * 4), 0.0f);
+    }
+}
+
+void MB2_LightSet(void) {
+    Hu3DShadowCreate(45.0f, 1000.0f, 250000.0f);
+    Hu3DShadowTPLvlSet(0.3f);
+    Hu3DBGColorSet(0xFFU, 0xFFU, 0xFFU);
+    MB2W_S32((0x1E) * 4) = -3700.0f;
+    MB2W_S32((0x1F) * 4) = 18100.0f;
+    MB2W_S32((0x20) * 4) = 21300.0f;
+    MB2W_S32((0x21) * 4) = 3700.0f;
+    MB2W_S32((0x22) * 4) = -18100.0f;
+    MB2W_S32((0x23) * 4) = -21300.0f;
+    MB2W_U8(0x90) = 0xFFU;
+    MB2W_U8(0x91) = 0xFFU;
+    MB2W_U8(0x92) = 0xFFU;
+    MB2W_S32((0x1D) * 4) = (s32)(uintptr_t) Hu3DGLightCreate(MB2W_F32((0x1E) * 4), MB2W_F32((0x1F) * 4), MB2W_F32((0x20) * 4), MB2W_F32((0x21) * 4), MB2W_F32((0x22) * 4), MB2W_F32((0x23) * 4), MB2W_U8(0x90), MB2W_U8(0x91), MB2W_U8(0x92));
+    Hu3DGLightInfinitytSet((s16) MB2W_S32((0x1D) * 4));
+}
+
+void MB2_LightReset(void) {
+
+}
+
+int MB2Ev_MasuHatena(int playerNo) {
+    u32 temp_r0;
+    u32 temp_r29;
+
+    temp_r0 = MBMasuGet(0, (s32) (s16) GwPlayer[playerNo].masuId)->flag;
+    if ((u32) ((u16) temp_r0 & 0x70) != 0) {
+        temp_r29 = (u32) ((u16) temp_r0 & 0x70) >> 4U;
+        switch ((s32) temp_r29) {                   /* irregular */
+        case 1:
+            MB2Ev_Thunder(playerNo);
+            break;
+        case 2:
+            MB2Ev_Rain(playerNo);
+            break;
+        case 3:
+            MB2Ev_Zen2(playerNo);
+            break;
+        case 4:
+            MB2Ev_Zen4(playerNo);
+            break;
+        }
+    }
+    if ((u32) ((u16) temp_r0 & 0x380) != 0) {
+        MB2Ev_WindGuru2((u32) ((u16) temp_r0 & 0x380) >> 7U, playerNo);
+    }
+}
+
+void MB2_Stub(void) {
+
+}
+
+int MB2Ev_MasuWalkPre(int playerNo) {
+    return 0;
+}
+
+int MB2Ev_MasuWalkPost(int playerNo) {
+    u32 temp_r0;
+
+    temp_r0 = MBMasuGet(0, (s32) (s16) GwPlayer[playerNo].masuId)->flag;
+    if ((u32) ((u16) temp_r0 & 0x1000) != 0) {
+        HuAudFXPlay(0x5CF);
+        MBMotionTimeSet((s16) MB2W_S32((0x11) * 4), 0.0f);
+        MBMotionSpeedSet((s16) MB2W_S32((0x11) * 4), 1.0f);
+    }
+    if ((u32) ((u16) temp_r0 & 0x2000) != 0) {
+        HuAudFXPlay(0x5CF);
+        MBMotionTimeSet((s16) MB2W_S32((0x12) * 4), 0.0f);
+        MBMotionSpeedSet((s16) MB2W_S32((0x12) * 4), 1.0f);
+    }
+    if ((u32) ((u16) temp_r0 & 0xF) != 0) {
+        MB2Ev_Rainbow((u16) temp_r0 & 0xF, playerNo);
+    }
+    return 0;
+}
+
+int MB2_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
+    s32 spC;
+    u32 sp8;
+    MASU *temp_r30;
+    s16 temp_r3;
+    s32 temp_r24;
+    s32 var_r29;
+    s32 var_r31;
+    s8 var_r28;
+
+    sp8 = flag;
+    spC = endF;
+    if ((u32) (sp8 & 0xF) != 0) {
+        temp_r3 = MB2_RainbowMasuNoEndGet(id);
+        if (temp_r3 == -1) {
+            return -1;
+        }
+        temp_r30 = MBMasuGet(0, (s32) id);
+        var_r29 = 0;
+        var_r31 = 0;
+loop_7:
+        if (var_r29 < (s32) temp_r30->linkNum) {
+            temp_r24 = MBBranchFlagGet() | 0x06000000;
+            if ((u32) (MBMasuFlagGet(0, (s32) temp_r30->linkTbl[var_r29]) & temp_r24) == 0) {
+                linkTbl[var_r31] = (s16) temp_r30->linkTbl[var_r29];
+                var_r31 += 1;
+            }
+            var_r29 += 1;
+            goto loop_7;
+        }
+        var_r28 = (s8) (u8) GwSystem.turnPlayerNo;
+        if (var_r28 < 0) {
+            var_r28 = 0;
+        }
+        if ((MBPlayerCoinGet((s32) var_r28) <= 5) || (spC != 0)) {
+            linkTbl[var_r31] = temp_r3;
+            var_r31 += 1;
+        }
+        return var_r31;
+    }
+    return -1;
+}
+
+s32 MB2Ev_Rainbow(s32 arg0, s32 arg1) {
+    Point3d sp5C;
+    f32 sp58;
+    f32 sp54;
+    f32 sp50;
+    Point3d sp44;
+    Point3d sp38;
+    f32 sp34;
+    f32 sp30;
+    f32 sp2C;
+    f32 sp28;
+    f32 sp24;
+    f32 sp20;
+    MASU *sp1C;
+    s32 sp18;
+    s32 sp14;
+    s32 sp10;
+    f32 *spC;
+    f32 *sp8;
+    Point3d *temp_r27;
+    f32 temp_f1;
+    f32 temp_f26;
+    f32 temp_f26_2;
+    f32 temp_f29;
+    f32 temp_f29_2;
+    f32 temp_f31;
+    f32 temp_f31_2;
+    f32 temp_f31_3;
+    f32 var_f28;
+    s16 temp_r17;
+    s16 temp_r18;
+    s16 temp_r20;
+    s16 temp_r21;
+    s16 temp_r3;
+    s32 temp_r25;
+    s32 temp_r28;
+    s32 temp_r28_2;
+    s32 temp_r28_3;
+    s32 temp_r28_4;
+    s32 temp_r28_5;
+    s32 temp_r3_2;
+    s32 var_r26;
+    s32 var_r26_2;
+    s32 var_r29;
+    s32 var_r29_2;
+    s32 var_r30;
+    s32 var_r30_2;
+    s32 var_r30_3;
+    s32 var_r30_4;
+    s32 var_r30_5;
+    s32 var_r30_6;
+    s32 var_r30_7;
+    s32 var_r30_8;
+    Point3d *temp_r3_3;
+    Point3d *temp_r4;
+    Point3d *temp_r4_2;
+
+    sp10 = 0;
+    if ((arg0 <= 0) || (arg0 > 0xA)) {
+        return 0;
+    }
+    if (arg0 == 0xA) {
+        return 0;
+    }
+    temp_r21 = GwPlayer[arg1].masuId;
+    sp1C = MBMasuGet(0, (s32) temp_r21);
+    temp_r25 = mb2ev_RainbowNoTbl[arg0];
+    temp_r3 = MB2_RainbowMasuNoEndGet(temp_r21);
+    if (temp_r3 == -1) {
+        return 0;
+    }
+    MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0U);
+    MB2_RainbowObjInit();
+    temp_r3_2 = MB2_RainbowObjCreate(mb2ev_RainbowVtxTbl[temp_r25], mb2ev_RainbowVtxNumTbl[temp_r25], mb2ev_RainbowRevF[temp_r25]);
+    MB2_RainbowObjAlphaSet(temp_r3_2, 0);
+    MB2_CoinEffInit();
+    MBWalkNumDispSet(arg1, 0);
+    MBCameraFocusPlayerSet(arg1);
+    MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0U);
+loop_8:
+    if (arg0 == 9) {
+        var_r29 = 0;
+    } else {
+        MBAudFXPlay(0x2F5);
+        MBWinCreateChoice(1, 0x2E0000U, 2, 0);
+        MBTopWinAttrSet(0x10U);
+        if (MBPlayerCoinGet(arg1) < 5) {
+            MBTopWinChoiceDisable(0);
+        }
+        if (GwPlayer[arg1].comF != 0) {
+            temp_r17 = (GwPlayer[arg1].dif + 1) * 0xA;
+            temp_r18 = MB2_PathLenGet(temp_r21, temp_r17, 1);
+            temp_r20 = MB2_PathLenGet(temp_r3, temp_r17, 1);
+            if (MBPlayerCoinGet(arg1) < 5) {
+                var_r29_2 = 1;
+            } else if ((temp_r18 == -1) && (temp_r20 == -1)) {
+                if (MB2_PathCheck(temp_r21) != 0) {
+                    var_r29_2 = 1;
+                } else if (MB2_PathCheck(temp_r3) != 0) {
+                    var_r29_2 = 0;
+                } else {
+                    temp_f31 = 0.6f + (0.4f * ((f32) GwPlayer[arg1].dif / 3.0f));
+                    if ((0.007874016f * (f32) (frand() & 0x7F)) == temp_f31) {
+                        var_r29_2 = 0;
+                    } else {
+                        var_r29_2 = 1;
+                    }
+                }
+            } else if ((temp_r18 != -1) && (temp_r20 != -1)) {
+                if (temp_r20 < temp_r18) {
+                    var_r29_2 = 0;
+                } else {
+                    var_r29_2 = 1;
+                }
+            } else if (temp_r20 != -1) {
+                var_r29_2 = 0;
+            } else {
+                var_r29_2 = 1;
+            }
+            if (MBPlayerCoinGet(arg1) >= 0xA) {
+                if (var_r29_2 == 0) {
+                    MBComChoiceSetUp();
+                } else {
+                    MBComChoiceSetDown();
+                }
+            } else {
+                MBComChoiceSetUp();
+            }
+        }
+        MBTopWinWait();
+        var_r29 = MBWinLastChoiceGet();
+        MBTopWinKill();
+        if (var_r29 != 2) {
+            if (var_r29 < 2) {
+
+            }
+        } else {
+            MBScrollExec(arg1);
+            MBStatusDispSetAll(1);
+        }
+        if (var_r29 == 2) {
+            goto loop_8;
+        }
+    }
+    if (var_r29 == 0) {
+        if (arg0 != 9) {
+            MBCoinAddExec(arg1, -5);
+        }
+        HuAudFXPlay(0x5C8);
+        var_r30 = 0;
+loop_47:
+        if ((f32) var_r30 < 30.0f) {
+            temp_f1 = (f32) var_r30;
+            MB2_RainbowObjAlphaSet(temp_r3_2, (s8) (255.0f * (temp_f1 / 30.0f)));
+            HuPrcVSleep();
+            var_r30 += 1;
+            goto loop_47;
+        }
+        MB2_RainbowObjAlphaSet(temp_r3_2, -1);
+        MBPlayerPosFixEvent(arg1, (s32) temp_r3, 0);
+        temp_r27 = mb2ev_RainbowVtxTbl[temp_r25];
+        var_r30_2 = 1;
+        var_f28 = 0.0f;
+loop_50:
+        if (var_r30_2 < (s32) mb2ev_RainbowVtxNumTbl[temp_r25]) {
+            PSVECSubtract(temp_r27 + (var_r30_2 - 1), temp_r27 + var_r30_2, &sp44);
+            var_f28 += PSVECMag(&sp44);
+            var_r30_2 += 1;
+            goto loop_50;
+        }
+        sp14 = (s32) (var_f28 / 20.0f);
+        MBPlayerMotionNoShiftSet(arg1, 3, 0.0f, 8.0f, 0x40000001U);
+        if ((s32) mb2ev_RainbowDirTbl[arg0] > 0) {
+            MBPlayerPosGet(arg1, &sp5C);
+            sp50 = temp_r27->x;
+            sp54 = temp_r27->y;
+            sp58 = temp_r27->z;
+            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            temp_r28 = (s32) (PSVECMag(&sp44) / 20.0f);
+            var_r30_3 = 0;
+loop_54:
+            if (var_r30_3 < temp_r28) {
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECScale(&sp44, &sp44, (f32) var_r30_3 / (f32) temp_r28);
+                PSVECAdd(&sp5C, &sp44, &sp44);
+                MBPlayerPosSetV(arg1, &sp44);
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                MBPlayerRotGet(arg1, &sp38);
+                sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
+                MBPlayerRotSetV(arg1, &sp38);
+                HuPrcVSleep();
+                var_r30_3 += 1;
+                goto loop_54;
+            }
+            MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+            var_r30_4 = 0;
+loop_60:
+            if (var_r30_4 < (s32) (mb2ev_RainbowVtxNumTbl[temp_r25] - 1)) {
+                sp18 = var_r30_4;
+                MBPlayerPosGet(arg1, &sp5C);
+                temp_r4 = temp_r27 + (var_r30_4 + 1);
+                sp50 = temp_r4->x;
+                sp54 = temp_r4->y;
+                sp58 = temp_r4->z;
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                temp_r28_2 = (s32) (PSVECMag(&sp44) / 20.0f);
+                MBPlayerRotGet(arg1, &sp38);
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                temp_f29 = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
+                var_r26 = 0;
+loop_58:
+                if (var_r26 < temp_r28_2) {
+                    temp_f31_2 = (f32) var_r26 / (f32) temp_r28_2;
+                    PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                    PSVECScale(&sp44, &sp44, temp_f31_2);
+                    PSVECAdd(&sp5C, &sp44, &sp44);
+                    MBPlayerPosSetV(arg1, &sp44);
+                    sp38.y = fn_1_BF54(temp_f31_2, sp38.y, temp_f29);
+                    MBPlayerRotSet(arg1, 0.0f, sp38.y, 0.0f);
+                    MBPlayerPosGet(arg1, &sp44);
+                    sp2C = sp44.x;
+                    sp30 = sp44.y;
+                    sp34 = sp44.z;
+                    spC = &sp2C;
+                    temp_f26 = 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F))));
+                    MB2_CoinEffCreateColRand(spC, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), temp_f26, 150.0f, 100.0f, 0.0f);
+                    HuPrcVSleep();
+                    var_r26 += 1;
+                    goto loop_58;
+                }
+                MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+                MBPlayerRotSet(arg1, 0.0f, temp_f29, 0.0f);
+                var_r30_4 += 1;
+                goto loop_60;
+            }
+        } else {
+            MBPlayerPosGet(arg1, &sp5C);
+            temp_r4_2 = temp_r27 + (mb2ev_RainbowVtxNumTbl[temp_r25] - 1);
+            sp50 = temp_r4_2->x;
+            sp54 = temp_r4_2->y;
+            sp58 = temp_r4_2->z;
+            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            temp_r28_3 = (s32) (PSVECMag(&sp44) / 20.0f);
+            var_r30_5 = 0;
+loop_64:
+            if (var_r30_5 < temp_r28_3) {
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECScale(&sp44, &sp44, (f32) var_r30_5 / (f32) temp_r28_3);
+                PSVECAdd(&sp5C, &sp44, &sp44);
+                MBPlayerPosSetV(arg1, &sp44);
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                MBPlayerRotGet(arg1, &sp38);
+                sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
+                MBPlayerRotSetV(arg1, &sp38);
+                HuPrcVSleep();
+                var_r30_5 += 1;
+                goto loop_64;
+            }
+            MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+            var_r30_6 = mb2ev_RainbowVtxNumTbl[temp_r25] - 1;
+loop_70:
+            if (var_r30_6 > 0) {
+                sp18 = var_r30_6;
+                MBPlayerPosGet(arg1, &sp5C);
+                temp_r3_3 = temp_r27 + (var_r30_6 - 1);
+                sp50 = temp_r3_3->x;
+                sp54 = temp_r3_3->y;
+                sp58 = temp_r3_3->z;
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                temp_r28_4 = (s32) (PSVECMag(&sp44) / 20.0f);
+                MBPlayerRotGet(arg1, &sp38);
+                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                temp_f29_2 = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
+                var_r26_2 = 0;
+loop_68:
+                if (var_r26_2 < temp_r28_4) {
+                    temp_f31_3 = (f32) var_r26_2 / (f32) temp_r28_4;
+                    PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                    PSVECScale(&sp44, &sp44, temp_f31_3);
+                    PSVECAdd(&sp5C, &sp44, &sp44);
+                    MBPlayerPosSetV(arg1, &sp44);
+                    sp38.y = fn_1_BF54(temp_f31_3, sp38.y, temp_f29_2);
+                    MBPlayerRotSet(arg1, 0.0f, sp38.y, 0.0f);
+                    MBPlayerPosGet(arg1, &sp44);
+                    sp20 = sp44.x;
+                    sp24 = sp44.y;
+                    sp28 = sp44.z;
+                    sp8 = &sp20;
+                    temp_f26_2 = 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F))));
+                    MB2_CoinEffCreateColRand(sp8, 2, 100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), temp_f26_2, 150.0f, 100.0f, 0.0f);
+                    HuPrcVSleep();
+                    var_r26_2 += 1;
+                    goto loop_68;
+                }
+                MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+                MBPlayerRotSet(arg1, 0.0f, temp_f29_2, 0.0f);
+                var_r30_6 -= 1;
+                goto loop_70;
+            }
+        }
+        MBPlayerPosGet(arg1, &sp5C);
+        MBMasuPosGet(0, (s32) temp_r3, (Point3d *) &sp50);
+        PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+        temp_r28_5 = (s32) (PSVECMag(&sp44) / 20.0f);
+        var_r30_7 = 0;
+loop_73:
+        if (var_r30_7 < temp_r28_5) {
+            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            PSVECScale(&sp44, &sp44, (f32) var_r30_7 / (f32) temp_r28_5);
+            PSVECAdd(&sp5C, &sp44, &sp44);
+            MBPlayerPosSetV(arg1, &sp44);
+            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            MBPlayerRotGet(arg1, &sp38);
+            sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
+            MBPlayerRotSetV(arg1, &sp38);
+            HuPrcVSleep();
+            var_r30_7 += 1;
+            goto loop_73;
+        }
+        MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+        MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0x40000001U);
+        GwPlayer[arg1].masuId = temp_r3;
+        var_r30_8 = 0;
+loop_76:
+        if ((f32) var_r30_8 < 60.0f) {
+            MB2_RainbowObjAlphaSet(temp_r3_2, (s8) (255.0f * (1.0f - ((f32) var_r30_8 / 60.0f))));
+            HuPrcVSleep();
+            var_r30_8 += 1;
+            goto loop_76;
+        }
+        MB2_RainbowObjAlphaSet(temp_r3_2, 0);
+        sp10 = 1;
+    }
+    MB2_RainbowObjClose();
+    MB2_CoinEffClose();
+    MBWalkNumDispSet(arg1, 1);
+    return sp10;
+}
+
+void MB2Ev_WindGuru2(s32 arg0, s32 arg1) {
+    Point3d sp2C;
+    f32 sp28;
+    f32 sp24;
+    f32 sp20;
+    Point3d sp14;
+    Point3d sp8;
+    f32 sp38[4][3];
+    MASU *temp_r26;
+    f32 temp_f1;
+    f32 temp_f25;
+    f32 temp_f27;
+    f32 temp_f28;
+    f32 temp_f29;
+    f32 temp_f30;
+    f32 temp_f30_2;
+    f32 var_f1;
+    f32 var_f31;
+    f32 var_f31_2;
+    s16 temp_r19;
+    s16 temp_r22;
+    s16 temp_r24;
+    s16 temp_r27;
+    s16 temp_r28;
+    s32 temp_r18;
+    s32 temp_r3;
+    s32 var_r23;
+    s32 var_r25;
+    s32 var_r29;
+    s32 var_r29_2;
+    s32 var_r30;
+    s32 var_r30_2;
+    s32 var_r30_3;
+    u32 temp_r20;
+
+    temp_r27 = GwPlayer[arg1].masuId;
+    temp_r26 = MBMasuGet(0, (s32) temp_r27);
+    if ((arg0 <= 0) || (arg0 > 4)) {
+        return;
+    }
+    MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0U);
+    MBWalkNumDispSet(arg1, 0);
+    MBCameraFocusPlayerSet(arg1);
+    MBPlayerRotateStart(arg1, (s16) mb2ev_WindGuru2RotTbl[arg0], 0xF);
+loop_5:
+    if (MBPlayerRotateCheck(arg1) == 0) {
+        HuPrcVSleep();
+        goto loop_5;
+    }
+loop_6:
+    var_r30 = 0;
+    var_r23 = 0;
+loop_10:
+    if (var_r30 < (s32) temp_r26->linkNum) {
+        temp_r18 = MBBranchFlagGet() | 0x06000000;
+        if ((u32) (MBMasuFlagGet(0, (s32) temp_r26->linkTbl[var_r30]) & temp_r18) == 0) {
+            var_r23 += 1;
+        }
+        var_r30 += 1;
+        goto loop_10;
+    }
+    if (var_r23 <= 0) {
+        var_r25 = 0;
+    } else {
+        MBAudFXPlay(0x2F5);
+        MBWinCreateChoice(1, 0x2E0001U, 2, 0);
+        MBTopWinAttrSet(0x10U);
+        if (GwPlayer[arg1].comF != 0) {
+            temp_r28 = MB2_WindGuru2MasuNoGet(temp_r27, -1U);
+            temp_r19 = (GwPlayer[arg1].dif + 1) * 0xA;
+            temp_r22 = MB2_PathLenGet(temp_r27, temp_r19, 1);
+            temp_r24 = MB2_PathLenGet(temp_r28, temp_r19, 1);
+            if ((temp_r22 == -1) && (temp_r24 == -1)) {
+                if (MB2_PathCheck(temp_r27) != 0) {
+                    MBComChoiceSetDown();
+                } else if (MB2_PathCheck(temp_r28) != 0) {
+                    MBComChoiceSetUp();
+                } else if ((u32) (frand() & 1) != 0) {
+                    MBComChoiceSetUp();
+                } else {
+                    MBComChoiceSetDown();
+                }
+            } else if ((temp_r22 != -1) && (temp_r24 != -1)) {
+                if (temp_r24 < temp_r22) {
+                    MBComChoiceSetUp();
+                } else {
+                    MBComChoiceSetDown();
+                }
+            } else if (temp_r24 != -1) {
+                MBComChoiceSetUp();
+            } else {
+                MBComChoiceSetDown();
+            }
+        }
+        MBTopWinWait();
+        var_r25 = MBWinLastChoiceGet();
+        MBTopWinKill();
+        if (var_r25 != 2) {
+            if (var_r25 < 2) {
+
+            }
+        } else {
+            MBScrollExec(arg1);
+            MBStatusDispSetAll(1);
+        }
+        if (var_r25 == 2) {
+            goto loop_6;
+        }
+    }
+    if (var_r25 == 0) {
+        temp_r20 = *mb2_SaveWorkP;
+        *mb2_SaveWorkP = ((frand() & 0x7FFF) % 3) + 1;
+        temp_f28 = MBMotionTimeGet((s16) MB2W_S32((4) * 4));
+        temp_f27 = temp_f28;
+        var_f1 = MBMotionMaxTimeGet((s16) MB2W_S32((4) * 4));
+        temp_f29 = 0.25f * var_f1;
+        var_r29 = 0;
+loop_40:
+        if (var_r29 < 4) {
+            var_f1 = (f32) 4503601774854144.0;
+            if (!(temp_f28 < ((f32) var_r29 * temp_f29))) {
+                var_r29 += 1;
+                goto loop_40;
+            }
+        }
+        if (var_r29 >= 4) {
+            var_r29 = 0;
+            var_f31 = 4.0f * temp_f29;
+        } else {
+            var_f1 = (f32) 4503601774854144.0;
+            var_f31 = (f32) var_r29 * temp_f29;
+        }
+loop_44:
+        HuPrcVSleep(var_f1);
+        var_f1 = MBMotionTimeGet((s16) MB2W_S32((4) * 4));
+        if (var_f1 < var_f31) {
+            if (var_f1 == temp_f27) {
+                goto loop_44;
+            }
+        }
+        var_r29_2 = arg0 - var_r29;
+        if (var_r29_2 < 1) {
+            var_r29_2 += 4;
+        }
+        MBPlayerPosGet(arg1, &sp2C);
+        MBPlayerMotionNoShiftSet(arg1, 4, 0.0f, 8.0f, 0U);
+        var_r30_2 = 0;
+loop_50:
+        if ((f32) var_r30_2 < 24.0f) {
+            temp_f30 = (f32) var_r30_2 / 24.0f;
+            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((4) * 4)), mb2ev_WindGuru2HookTbl[var_r29_2], (f32 (*)[4]) &sp38[0]);
+            sp20 = sp38[3][0];
+            sp24 = sp38[3][1];
+            sp28 = sp38[3][2];
+            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            PSVECScale(&sp14, &sp14, temp_f30);
+            PSVECAdd(&sp2C, &sp14, &sp14);
+            sp14.y = (f32) ((f64) sp14.y + (300.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f30)) / 180.0)));
+            MBPlayerPosSetV(arg1, &sp14);
+            MBPlayerRotGet(arg1, &sp8);
+            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            sp8.y = (f32) (180.0 * (atan2((f64) sp14.x, (f64) sp14.z) / 3.141592653589793));
+            MBPlayerRotSetV(arg1, &sp8);
+            HuPrcVSleep();
+            var_r30_2 += 1;
+            goto loop_50;
+        }
+        MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0x40000001U);
+        MBMotionTimeGet((s16) MB2W_S32((4) * 4));
+        temp_f25 = 0.25f * MBMotionMaxTimeGet((s16) MB2W_S32((4) * 4)) * (f32) temp_r20;
+        temp_f1 = MBMotionSpeedGet((s16) MB2W_S32((4) * 4));
+        var_f31_2 = 24.0f * temp_f1;
+loop_53:
+        if (var_f31_2 < temp_f25) {
+            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((4) * 4)), mb2ev_WindGuru2HookTbl[var_r29_2], (f32 (*)[4]) &sp38[0]);
+            sp20 = sp38[3][0];
+            sp24 = sp38[3][1];
+            sp28 = sp38[3][2];
+            MBPlayerPosSetV(arg1, (Point3d *) &sp20);
+            HuPrcVSleep();
+            var_f31_2 += temp_f1;
+            goto loop_53;
+        }
+        temp_r3 = MB2_WindGuru2MasuNoGet(temp_r27, temp_r20);
+        MBPlayerPosFixEvent(arg1, temp_r3, 0);
+        MBPlayerPosGet(arg1, &sp2C);
+        MBMasuPosGet(0, temp_r3, (Point3d *) &sp20);
+        MBPlayerMotionNoShiftSet(arg1, 4, 0.0f, 8.0f, 0U);
+        var_r30_3 = 0;
+loop_56:
+        if ((f32) var_r30_3 < 24.0f) {
+            temp_f30_2 = (f32) var_r30_3 / 24.0f;
+            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            PSVECScale(&sp14, &sp14, temp_f30_2);
+            PSVECAdd(&sp2C, &sp14, &sp14);
+            sp14.y = (f32) ((f64) sp14.y + (300.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f30_2)) / 180.0)));
+            MBPlayerPosSetV(arg1, &sp14);
+            MBPlayerRotGet(arg1, &sp8);
+            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            sp8.y = (f32) (180.0 * (atan2((f64) sp14.x, (f64) sp14.z) / 3.141592653589793));
+            MBPlayerRotSetV(arg1, &sp8);
+            HuPrcVSleep();
+            var_r30_3 += 1;
+            goto loop_56;
+        }
+        MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0x40000001U);
+        GwPlayer[arg1].masuId = (s16) temp_r3;
+    }
+    MBWalkNumDispSet(arg1, 1);
+}
+
+void MB2Ev_Thunder(s32 arg0) {
+    /* NONMATCHING: placeholder - full body not yet ported from asm.
+     * The m2c draft for this event produced many unresolved stack-spill
+     * temporaries (undefined "unkspXX" locals) that need a manual,
+     * instruction-by-instruction read of
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
+     * (see docs/decomp_workflow.md). For now this keeps the player's turn
+     * from softlocking: it just clears any shift motion. */
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+}
+
+/* Warning: Gap in callee-saved word stack region.
+ * Saved: [-0xe8, -0xe4, -0xd8, -0xd4, -0xc8, -0xc4, -0xb8, -0xb4, -0xa8, -0xa4, -0x98, -0x94, -0x88, -0x84, -0x78, -0x74, -0x68, -0x64, -0x58, -0x54, -0x48, -0x44, 0xed4, 0xed8, 0xedc, 0xee0, 0xee4, 0xee8, 0xeec, 0xef0, 0xef4, 0xef8, 0xefc, 0xf00, 0xf04, 0xf08, 0xf0c, 0xf10, 0xf14, 0xf20, 0xf24, 0xf30, 0xf34, 0xf40, 0xf44, 0xf50, 0xf54, 0xf60, 0xf64, 0xf70, 0xf74, 0xf80, 0xf84, 0xf90, 0xf94, 0xfa0, 0xfa4, 0xfb0, 0xfb4], gap at: -0xe0. */
+void MB2Ev_Rain(s32 arg0) {
+    /* NONMATCHING: placeholder - full body not yet ported from asm.
+     * The m2c draft for this event produced many unresolved stack-spill
+     * temporaries (undefined "unkspXX" locals) that need a manual,
+     * instruction-by-instruction read of
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
+     * (see docs/decomp_workflow.md). For now this keeps the player's turn
+     * from softlocking: it just clears any shift motion. */
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+}
+
+void MB2Ev_Zen2(s32 arg0) {
+    /* NONMATCHING: placeholder - full body not yet ported from asm.
+     * The m2c draft for this event produced many unresolved stack-spill
+     * temporaries (undefined "unkspXX" locals) that need a manual,
+     * instruction-by-instruction read of
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
+     * (see docs/decomp_workflow.md). For now this keeps the player's turn
+     * from softlocking: it just clears any shift motion. */
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+}
+
+void MB2Ev_Zen4(s32 arg0) {
+    /* NONMATCHING: placeholder - full body not yet ported from asm.
+     * The m2c draft for this event produced many unresolved stack-spill
+     * temporaries (undefined "unkspXX" locals) that need a manual,
+     * instruction-by-instruction read of
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s to model correctly
+     * (see docs/decomp_workflow.md). For now this keeps the player's turn
+     * from softlocking: it just clears any shift motion. */
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+}
+
+void MB2_TimerObjUpdate(OMOBJ *obj) {
+    OMOBJ *sp8;
+    s32 temp_ret;
+
+    sp8 = obj;
+    temp_ret = MBKillCheck();
+    if (temp_ret != 0) {
+        mb2ev_TimerObj = 0;
+    }
+    if ((s32) mb2ev_TimerObj > (s32) mb2ev_TimerValue) {
+        mb2ev_TimerGameMesId = -1;
+        goto block_13;
+    }
+    if ((s32) mb2ev_TimerObj == (s32) mb2ev_TimerValue) {
+        mb2ev_TimerGameMesId = (s32) GameMesCreate(1, (mb2ev_TimerObj + 0x3A) / 60, -1, -1, (f32) temp_ret);
+        goto block_13;
+    }
+    if ((s32) mb2ev_TimerObj < (s32) mb2ev_TimerValue) {
+        if ((s32) mb2ev_TimerGameMesId != -1) {
+            GameMesDispSet((s16) mb2ev_TimerGameMesId, 1, (s16) ((mb2ev_TimerObj + 0x3A) / 60));
+        }
+        if ((s32) mb2ev_TimerObj <= 0) {
+            if ((s32) mb2ev_TimerGameMesId != -1) {
+                GameMesDispSet((s16) mb2ev_TimerGameMesId, 2, -1);
+            }
+            mb2ev_TimerGameMesId = -1;
+            omDelObjEx(mbObjMan, sp8);
+            return;
+        }
+        goto block_13;
+    }
+block_13:
+    mb2ev_TimerObj -= 1;
+}
+
+void MB2_DentyuObjFlash(OMOBJ *obj) {
+    if (MBKillCheck() != 0) {
+        obj->work[0] = 0;
+    }
+    if ((u32) obj->work[0] == 0) {
+        omDelObjEx(mbObjMan, obj);
+        return;
+    }
+    obj->work[1] += 1;
+    if ((u32) (obj->work[1] & 3) == 0) {
+        obj->work[2] ^= 1;
+    }
+    if ((u32) (obj->work[2] & 1) != 0) {
+        MBMotionTimeSet((s16) MB2W_S32((0xE) * 4), obj->trans.x * MBMotionMaxTimeGet((s16) MB2W_S32((0xE) * 4)));
+        return;
+    }
+    MBMotionTimeSet((s16) MB2W_S32((0xE) * 4), 0.0f);
+}
+
+void MB2_WaterSplashUpdate(OMOBJ *obj) {
+    f32 sp18;
+    f32 sp14;
+    f32 sp10;
+    s8 spF;
+    s8 spE;
+    s8 spD;
+    s8 spC;
+    u8 spB;
+    u8 spA;
+    u8 sp9;
+    u8 sp8;
+    f32 temp_f31;
+    s32 var_r30;
+    u32 temp_r0;
+
+    temp_r0 = obj->work[0] - 1;
+    obj->work[0] = temp_r0;
+    if ((temp_r0 == 0) || (MBKillCheck() != 0)) {
+        omDelObjEx(mbObjMan, obj);
+    }
+    sp10 = obj->trans.x + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+    sp18 = obj->trans.z + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+    sp14 = obj->trans.y + (0.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+    temp_f31 = 32.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    spC = (s8) (200.0f + temp_f31);
+    spD = (s8) (200.0f + temp_f31);
+    spE = (s8) (220.0f + temp_f31);
+    spF = (s8) (32.0f + (32.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+    if ((u32) (obj->work[0] & 7) == 0) {
+        var_r30 = 1;
+    } else {
+        var_r30 = 0;
+    }
+    sp8 = (u8) spC;
+    sp9 = (u8) spD;
+    spA = (u8) spE;
+    spB = (u8) spF;
+    MB2_SplashEffCreateRandX(&sp10, &sp8, var_r30, 1.0f);
+}
+
+s16 MB2_WindGuru2MasuNoGet(s32 arg0, s32 arg1) {
+    MASU *temp_r3;
+    s32 var_r29_2;
+    s32 var_r30;
+    u32 var_r29;
+
+    if (arg1 == -1) {
+        var_r29 = *mb2_SaveWorkP;
+    } else {
+        var_r29 = (u32) arg1;
+    }
+    var_r29_2 = ((u32) (MBMasuGet(0, arg0)->flag & 0x380) >> 7U) + var_r29;
+    if (var_r29_2 >= 5) {
+        var_r29_2 -= 4;
+    }
+    var_r30 = 1;
+loop_9:
+    if (var_r30 <= MBMasuNumGet(0)) {
+        temp_r3 = MBMasuGet(0, var_r30);
+        if (((u32) (temp_r3->flag & 0x380) == 0) || ((s32) ((u32) (temp_r3->flag & 0x380) >> 7U) != var_r29_2)) {
+            var_r30 += 1;
+            goto loop_9;
+        }
+    }
+    if (var_r30 > MBMasuNumGet(0)) {
+        var_r30 = arg0;
+    }
+    return (s16) var_r30;
+}
+
+s16 MB2_RainbowMasuNoEndGet(s32 arg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+s32 MB2_PathCheck(s32 arg0) {
+    s32 sp8;
+
+    sp8 = arg0;
+    if (MB2_PathLenGet((s16) sp8, 0x19, 0) != -1) {
+        return 1;
+    }
+    return 0;
+}
+
+s16 MB2_PathLenGet(s16 arg0, s16 arg1, s16 arg2) {
+    s16 spA;
+    s16 sp8;
+
+    sp8 = arg0;
+    spA = arg2;
+    mb2_PathMasuNo = arg1;
+    mb2_PathLen = arg1;
+    mb2_PathAllF = spA;
+    mb2_PathValidF = 0;
+    PathCheck(arg0, arg1);
+    if ((s16) mb2_PathValidF != 0) {
+        return mb2_PathLen;
+    }
+    return -1;
+}
+
+s16 PathCheck(s16 arg0, s16 arg1) {
+    s16 sp8[16];
+    MASU *temp_r29;
+    MASU *temp_r30;
+    MASU *temp_r3;
+    s16 temp_r0;
+    s16 var_r23;
+    s16 var_r24;
+    s16 var_r26;
+    s16 var_r27;
+    s32 temp_r19;
+    s32 temp_r21;
+    s32 temp_r25;
+    s32 var_r31;
+    s32 var_r31_2;
+
+    var_r27 = arg1;
+    var_r24 = 0;
+    temp_r29 = MBMasuGet(0, (s32) arg0);
+    if (MBMasuTypeGet(0, (s32) arg0) == 5) {
+        temp_r0 = mb2_PathMasuNo - var_r27;
+        if (temp_r0 < (s16) mb2_PathLen) {
+            mb2_PathLen = temp_r0;
+        }
+        mb2_PathValidF = 1;
+        return 1;
+    }
+    if ((MBMasuTypeGet(0, (s32) arg0) != 0) && (MBMasuTypeGet(0, (s32) arg0) != 5)) {
+        var_r27 -= 1;
+    }
+    if (var_r27 >= 0) {
+        var_r26 = 0;
+loop_13:
+        if (var_r26 < (s32) temp_r29->linkNum) {
+            temp_r19 = MBBranchFlagGet() | 0x06000000;
+            if (((u32) (MBMasuFlagGet(0, (s32) temp_r29->linkTbl[var_r26]) & temp_r19) == 0) && (PathCheck((s16) temp_r29->linkTbl[var_r26], var_r27) != 0)) {
+                var_r24 = 1;
+            }
+            var_r26 += 1;
+            goto loop_13;
+        }
+    }
+    if (((s16) mb2_PathAllF != 0) && (var_r27 < (s32) (mb2_PathMasuNo - 1)) && ((u32) (temp_r29->flag & 0xF) != 0)) {
+        temp_r3 = MBMasuGet(0, (s32) arg0);
+        temp_r25 = temp_r3->flag & 0xF;
+        if ((temp_r25 == 2) || (temp_r25 == 4) || (temp_r25 == 6) || (temp_r25 == 8)) {
+            var_r23 = -1;
+        } else if ((u32) (temp_r3->flag & 0xF) != 0) {
+            temp_r30 = MBMasuGet(0, (s32) arg0);
+            var_r31 = 0;
+loop_26:
+            if (var_r31 < (s32) temp_r30->linkNum) {
+                if ((u32) (MBMasuFlagGet(0, (s32) temp_r30->linkTbl[var_r31]) & 0x4000) == 0) {
+                    var_r31 += 1;
+                    goto loop_26;
+                }
+            }
+            if (var_r31 < (s32) temp_r30->linkNum) {
+                temp_r21 = MB2_MasuLinkGet((s16) temp_r30->linkTbl[var_r31], sp8, 1, 1);
+                var_r31_2 = 0;
+loop_31:
+                if (var_r31_2 < temp_r21) {
+                    if (arg0 == (s16) (&sp8[0])[var_r31_2]) {
+                        var_r31_2 += 1;
+                        goto loop_31;
+                    }
+                }
+                if (var_r31_2 < temp_r21) {
+                    var_r23 = (&sp8[0])[var_r31_2];
+                } else {
+                    goto block_34;
+                }
+            } else {
+                goto block_34;
+            }
+        } else {
+block_34:
+            var_r23 = -1;
+        }
+        if ((var_r23 != -1) && (PathCheck(var_r23, var_r27) != 0)) {
+            var_r24 = 1;
+        }
+    }
+    if (var_r24 != 0) {
+        return 1;
+    }
+    return 0;
+}
+
+void MB2_CoinDispUpdate(s32 arg0, s32 arg1, s32 arg2) {
+    Point3d spC;
+    s32 sp8;
+    s16 var_r29;
+    s32 var_r30;
+
+    sp8 = arg2;
+    var_r30 = -1;
+    MBPlayerRotateStart(arg0, 0, 0xF);
+loop_2:
+    if (MBPlayerRotateCheck(arg0) == 0) {
+        HuPrcVSleep();
+        goto loop_2;
+    }
+    if (arg1 > 0) {
+        MBPlayerPosGet(arg0, &spC);
+        spC.y += 250.0f;
+        var_r29 = MBCoinDispCreateSe(&spC, arg1);
+    } else {
+        var_r29 = -1;
+    }
+    if (arg1 <= 0) {
+        MBPlayerWinLoseVoicePlay(arg0, 0xD, 0x200);
+        MBPlayerMotionNoShiftSet(arg0, 0xD, 0.0f, 8.0f, 0U);
+    } else if (arg1 < sp8) {
+        MBPlayerWinLoseVoicePlay(arg0, 0xC, 0x1FB);
+        MBPlayerMotionNoShiftSet(arg0, 0xC, 0.0f, 8.0f, 0U);
+    } else {
+        MBPlayerWinLoseVoicePlay(arg0, 0xC, 0x1FB);
+        var_r30 = MBPlayerMotionCreate(arg0, 0x8C002D);
+        MBPlayerMotionNoShiftSet(arg0, var_r30, 0.0f, 8.0f, 0U);
+    }
+    do {
+loop_11:
+        HuPrcVSleep();
+        if (MBPlayerMotionEndCheck(arg0) == 0) {
+            goto loop_11;
+        }
+    } while (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1);
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    do {
+        HuPrcVSleep();
+    } while (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1);
+    if (var_r29 != -1) {
+loop_18:
+        if (MBCoinDispKillCheck(var_r29) == 0) {
+            HuPrcVSleep();
+            goto loop_18;
+        }
+    }
+    if (var_r30 != -1) {
+        MBPlayerMotionKill(arg0, var_r30);
+    }
+}
+
+f32 MB2_AngleDiff(f32 farg0, f32 farg1) {
+    f32 var_f1;
+    f32 var_f2;
+    f32 var_f31;
+
+    var_f1 = farg0;
+    var_f2 = farg1;
+    if (var_f1 == 360.0f) {
+        var_f1 -= 360.0f;
+    } else if (var_f1 < 0.0f) {
+        var_f1 += 360.0f;
+    }
+    if (var_f2 == 360.0f) {
+        var_f2 -= 360.0f;
+    } else if (var_f2 < 0.0f) {
+        var_f2 += 360.0f;
+    }
+    var_f31 = var_f1 - var_f2;
+    if (var_f31 == -180.0f) {
+        var_f31 += 360.0f;
+    } else {
+        if (var_f31 == 180.0f) {
+            var_f31 -= 360.0f;
+        }
+    }
+    return var_f31;
+}
+
+f32 MB2_AngleLerp(f32 farg0, f32 farg1, f32 farg2) {
+    f32 var_f28;
+    f32 var_f29;
+    f32 var_f30;
+    f32 var_f31;
+    f32 var_f31_2;
+
+    var_f28 = farg0;
+    var_f29 = farg1;
+    if (var_f28 == (f32) 360.0) {
+        var_f28 = (f32) ((f64) var_f28 - 360.0);
+    } else if (var_f28 < (f32) 0.0) {
+        var_f28 = (f32) ((f64) var_f28 + 360.0);
+    }
+    if (var_f29 == (f32) 360.0) {
+        var_f29 = (f32) ((f64) var_f29 - 360.0);
+    } else if (var_f29 < (f32) 0.0) {
+        var_f29 = (f32) ((f64) var_f29 + 360.0);
+    }
+    var_f30 = (f32) (360.0 + (f64) (var_f28 - var_f29));
+    if (fabs(var_f30) == (f32) 360.0) {
+        var_f30 = (f32) fmod((f64) var_f30, 360.0);
+    }
+    if (var_f30 < (f32) 180.0) {
+        if (var_f30 == farg2) {
+            var_f31_2 = var_f30;
+        } else {
+            var_f31_2 = farg2;
+        }
+    } else {
+        if ((f32) (360.0 - (f64) var_f30) == farg2) {
+            var_f31_2 = (f32) -(360.0 - (f64) var_f30);
+        } else {
+            var_f31_2 = -farg2;
+        }
+    }
+    var_f31 = var_f31_2 + var_f29;
+    if (var_f31 == (f32) 360.0) {
+        var_f31 = (f32) ((f64) var_f31 - 360.0);
+    } else if (var_f31 < (f32) 0.0) {
+        var_f31 = (f32) ((f64) var_f31 + 360.0);
+    }
+    return var_f31;
+}
+
+f32 fn_1_BF54(f32 farg0, f32 farg1, f32 farg2) {
+    f32 sp10;
+    f32 spC;
+    f32 sp8;
+    f32 temp_f24;
+    f32 var_f25;
+    f32 var_f26;
+    f32 var_f27;
+    f32 var_f28;
+    f32 var_f29;
+    f32 var_f30;
+    f32 var_f31;
+    f32 var_f31_2;
+
+    sp8 = farg0;
+    spC = farg1;
+    sp10 = farg2;
+    var_f26 = spC;
+    var_f27 = sp10;
+    if (var_f27 == 360.0f) {
+        var_f27 -= 360.0f;
+    } else if (var_f27 < 0.0f) {
+        var_f27 += 360.0f;
+    }
+    if (var_f26 == 360.0f) {
+        var_f26 -= 360.0f;
+    } else if (var_f26 < 0.0f) {
+        var_f26 += 360.0f;
+    }
+    var_f28 = var_f27 - var_f26;
+    if (var_f28 == -180.0f) {
+        var_f28 += 360.0f;
+    } else {
+        if (var_f28 == 180.0f) {
+            var_f28 -= 360.0f;
+        }
+    }
+    temp_f24 = (f32) fabs(var_f28 * sp8);
+    var_f29 = spC;
+    var_f25 = sp10;
+    if (var_f25 == (f32) 360.0) {
+        var_f25 = (f32) ((f64) var_f25 - 360.0);
+    } else if (var_f25 < (f32) 0.0) {
+        var_f25 = (f32) ((f64) var_f25 + 360.0);
+    }
+    if (var_f29 == (f32) 360.0) {
+        var_f29 = (f32) ((f64) var_f29 - 360.0);
+    } else if (var_f29 < (f32) 0.0) {
+        var_f29 = (f32) ((f64) var_f29 + 360.0);
+    }
+    var_f30 = (f32) (360.0 + (f64) (var_f25 - var_f29));
+    if (fabs(var_f30) == (f32) 360.0) {
+        var_f30 = (f32) fmod((f64) var_f30, 360.0);
+    }
+    if (var_f30 < (f32) 180.0) {
+        if (var_f30 == temp_f24) {
+            var_f31_2 = var_f30;
+        } else {
+            var_f31_2 = temp_f24;
+        }
+    } else {
+        if ((f32) (360.0 - (f64) var_f30) == temp_f24) {
+            var_f31_2 = (f32) -(360.0 - (f64) var_f30);
+        } else {
+            var_f31_2 = -temp_f24;
+        }
+    }
+    var_f31 = var_f31_2 + var_f29;
+    if (var_f31 == (f32) 360.0) {
+        var_f31 = (f32) ((f64) var_f31 - 360.0);
+    } else if (var_f31 < (f32) 0.0) {
+        var_f31 = (f32) ((f64) var_f31 + 360.0);
+    }
+    return var_f31;
+}
+
+s32 MB2_MasuLinkGet(s16 arg0, s16 *arg1, s32 arg2, s32 arg3) {
+    s32 spC;
+    s32 sp8;
+    MASU *temp_r3;
+    s32 var_r30;
+    u16 var_r31;
+
+    sp8 = arg2;
+    spC = arg3;
+    var_r31 = 0;
+    if (sp8 != 0) {
+        temp_r3 = MBMasuGet(0, (s32) arg0);
+        var_r31 = temp_r3->linkNum;
+        var_r30 = 0;
+loop_3:
+        if (var_r30 < (s32) var_r31) {
+            arg1[var_r30] = (s16) temp_r3->linkTbl[var_r30];
+            var_r30 += 1;
+            goto loop_3;
+        }
+    }
+    if (spC != 0) {
+        var_r31 += MBMasuLinkTblGet(0, (s32) arg0, arg1 + var_r31);
+    }
+    return (s32) var_r31;
+}
+
+HSFOBJECT *MB2_ModelObjPtrGet(HU3DMODEL *arg0, char *arg1) {
+    char *sp8;
+
+    sp8 = arg1;
+    return objCall(arg0, arg1, arg0->hsf->root);
+}
+
+HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2) {
+    HSFOBJECT *sp74;
+    HSFOBJECT *sp70;
+    HSFOBJECT *sp6C;
+    HSFOBJECT *sp68;
+    HSFOBJECT *sp64;
+    HSFOBJECT *sp60;
+    HSFOBJECT *sp5C;
+    HSFOBJECT *sp58;
+    HSFOBJECT *sp54;
+    HSFOBJECT *sp50;
+    HSFOBJECT *sp4C;
+    HSFOBJECT *sp48;
+    HSFOBJECT *sp44;
+    HSFOBJECT *sp40;
+    HSFOBJECT *sp3C;
+    HSFOBJECT *sp38;
+    HSFOBJECT *sp34;
+    HSFOBJECT *sp30;
+    HSFOBJECT *sp2C;
+    HSFOBJECT *sp28;
+    HSFOBJECT *sp24;
+    HSFOBJECT *sp20;
+    HSFOBJECT *sp1C;
+    HSFOBJECT *sp18;
+    HSFOBJECT *sp14;
+    HSFOBJECT *sp10;
+    HSFOBJECT *spC;
+    HU3DMODEL *sp8;
+    u32 temp_r0;
+    u32 temp_r0_2;
+    u32 temp_r0_3;
+    u32 temp_r0_4;
+    u32 temp_r0_5;
+    u32 temp_r0_6;
+    u32 temp_r0_7;
+    u32 var_r24;
+    u32 var_r24_2;
+    u32 var_r25;
+    u32 var_r25_2;
+    u32 var_r26;
+    u32 var_r26_2;
+    u32 var_r27;
+    u32 var_r27_2;
+    u32 var_r28;
+    u32 var_r28_2;
+    u32 var_r29;
+    u32 var_r29_2;
+    u32 var_r30;
+    u32 var_r30_2;
+
+    sp8 = arg0;
+    spC = arg2;
+    temp_r0 = spC->type;
+    if ((s32) temp_r0 < 7) {
+        if ((s32) temp_r0 != 1) {
+            if (((s32) temp_r0 < 1) && ((s32) temp_r0 < 0)) {
+                goto block_160;
+            }
+            goto block_7;
+        }
+        if (strcmp(arg1, spC->name) == 0) {
+            return spC;
+        }
+        var_r30 = 0;
+loop_159:
+        if (var_r30 >= (u32) spC->mesh.childNum) {
+            goto block_160;
+        }
+        sp5C = spC->mesh.child[var_r30];
+        temp_r0_2 = sp5C->type;
+        if ((s32) temp_r0_2 < 7) {
+            if ((s32) temp_r0_2 != 1) {
+                if (((s32) temp_r0_2 < 1) && ((s32) temp_r0_2 < 0)) {
+                    goto block_155;
+                }
+                goto block_94;
+            }
+            if (strcmp(arg1, sp5C->name) == 0) {
+                sp64 = sp5C;
+            } else {
+                var_r28 = 0;
+loop_154:
+                if (var_r28 >= (u32) sp5C->mesh.childNum) {
+                    goto block_155;
+                }
+                sp10 = sp5C->mesh.child[var_r28];
+                temp_r0_3 = sp10->type;
+                if ((s32) temp_r0_3 < 7) {
+                    if ((s32) temp_r0_3 != 1) {
+                        if (((s32) temp_r0_3 < 1) && ((s32) temp_r0_3 < 0)) {
+                            goto block_150;
+                        }
+                        goto block_135;
+                    }
+                    sp18 = sp10;
+                    if (strcmp(arg1, sp18->name) == 0) {
+                        sp20 = sp18;
+                    } else {
+                        var_r24 = 0;
+loop_149:
+                        if (var_r24 >= (u32) sp18->mesh.childNum) {
+                            goto block_150;
+                        }
+                        sp1C = objCall(sp8, arg1, sp18->mesh.child[var_r24]);
+                        if (sp1C != NULL) {
+                            sp20 = sp1C;
+                        } else {
+                            var_r24 += 1;
+                            goto loop_149;
+                        }
+                    }
+                } else {
+                    if ((s32) temp_r0_3 != 9) {
+                        goto block_150;
+                    }
+block_135:
+                    sp14 = sp10;
+                    if (strcmp(arg1, sp14->name) == 0) {
+                        sp20 = sp14;
+                    } else {
+                        var_r24_2 = 0;
+loop_141:
+                        if (var_r24_2 >= (u32) sp14->mesh.childNum) {
+block_150:
+                            sp20 = NULL;
+                        } else {
+                            sp1C = objCall(sp8, arg1, sp14->mesh.child[var_r24_2]);
+                            if (sp1C != NULL) {
+                                sp20 = sp1C;
+                            } else {
+                                var_r24_2 += 1;
+                                goto loop_141;
+                            }
+                        }
+                    }
+                }
+                sp60 = sp20;
+                if (sp20 != NULL) {
+                    sp64 = sp60;
+                } else {
+                    var_r28 += 1;
+                    goto loop_154;
+                }
+            }
+        } else {
+            if ((s32) temp_r0_2 != 9) {
+                goto block_155;
+            }
+block_94:
+            if (strcmp(arg1, sp5C->name) == 0) {
+                sp64 = sp5C;
+            } else {
+                var_r28_2 = 0;
+loop_123:
+                if (var_r28_2 >= (u32) sp5C->mesh.childNum) {
+block_155:
+                    sp64 = NULL;
+                } else {
+                    sp24 = sp5C->mesh.child[var_r28_2];
+                    temp_r0_4 = sp24->type;
+                    if ((s32) temp_r0_4 < 7) {
+                        if ((s32) temp_r0_4 != 1) {
+                            if (((s32) temp_r0_4 < 1) && ((s32) temp_r0_4 < 0)) {
+                                goto block_119;
+                            }
+                            goto block_104;
+                        }
+                        sp2C = sp24;
+                        if (strcmp(arg1, sp2C->name) == 0) {
+                            sp34 = sp2C;
+                        } else {
+                            var_r25 = 0;
+loop_118:
+                            if (var_r25 >= (u32) sp2C->mesh.childNum) {
+                                goto block_119;
+                            }
+                            sp30 = objCall(sp8, arg1, sp2C->mesh.child[var_r25]);
+                            if (sp30 != NULL) {
+                                sp34 = sp30;
+                            } else {
+                                var_r25 += 1;
+                                goto loop_118;
+                            }
+                        }
+                    } else {
+                        if ((s32) temp_r0_4 != 9) {
+                            goto block_119;
+                        }
+block_104:
+                        sp28 = sp24;
+                        if (strcmp(arg1, sp28->name) == 0) {
+                            sp34 = sp28;
+                        } else {
+                            var_r25_2 = 0;
+loop_110:
+                            if (var_r25_2 >= (u32) sp28->mesh.childNum) {
+block_119:
+                                sp34 = NULL;
+                            } else {
+                                sp30 = objCall(sp8, arg1, sp28->mesh.child[var_r25_2]);
+                                if (sp30 != NULL) {
+                                    sp34 = sp30;
+                                } else {
+                                    var_r25_2 += 1;
+                                    goto loop_110;
+                                }
+                            }
+                        }
+                    }
+                    sp60 = sp34;
+                    if (sp34 != NULL) {
+                        sp64 = sp60;
+                    } else {
+                        var_r28_2 += 1;
+                        goto loop_123;
+                    }
+                }
+            }
+        }
+        sp74 = sp64;
+        if (sp64 != NULL) {
+            return sp74;
+        }
+        var_r30 += 1;
+        goto loop_159;
+    }
+    if ((s32) temp_r0 != 9) {
+        goto block_160;
+    }
+block_7:
+    if (strcmp(arg1, spC->name) == 0) {
+        return spC;
+    }
+    var_r30_2 = 0;
+loop_82:
+    if (var_r30_2 >= (u32) spC->mesh.childNum) {
+block_160:
+        return NULL;
+    }
+    sp68 = spC->mesh.child[var_r30_2];
+    temp_r0_5 = sp68->type;
+    if ((s32) temp_r0_5 < 7) {
+        if ((s32) temp_r0_5 != 1) {
+            if (((s32) temp_r0_5 < 1) && ((s32) temp_r0_5 < 0)) {
+                goto block_78;
+            }
+            goto block_17;
+        }
+        if (strcmp(arg1, sp68->name) == 0) {
+            sp70 = sp68;
+        } else {
+            var_r29 = 0;
+loop_77:
+            if (var_r29 >= (u32) sp68->mesh.childNum) {
+                goto block_78;
+            }
+            sp38 = sp68->mesh.child[var_r29];
+            temp_r0_6 = sp38->type;
+            if ((s32) temp_r0_6 < 7) {
+                if ((s32) temp_r0_6 != 1) {
+                    if (((s32) temp_r0_6 < 1) && ((s32) temp_r0_6 < 0)) {
+                        goto block_73;
+                    }
+                    goto block_58;
+                }
+                sp40 = sp38;
+                if (strcmp(arg1, sp40->name) == 0) {
+                    sp48 = sp40;
+                } else {
+                    var_r26 = 0;
+loop_72:
+                    if (var_r26 >= (u32) sp40->mesh.childNum) {
+                        goto block_73;
+                    }
+                    sp44 = objCall(sp8, arg1, sp40->mesh.child[var_r26]);
+                    if (sp44 != NULL) {
+                        sp48 = sp44;
+                    } else {
+                        var_r26 += 1;
+                        goto loop_72;
+                    }
+                }
+            } else {
+                if ((s32) temp_r0_6 != 9) {
+                    goto block_73;
+                }
+block_58:
+                sp3C = sp38;
+                if (strcmp(arg1, sp3C->name) == 0) {
+                    sp48 = sp3C;
+                } else {
+                    var_r26_2 = 0;
+loop_64:
+                    if (var_r26_2 >= (u32) sp3C->mesh.childNum) {
+block_73:
+                        sp48 = NULL;
+                    } else {
+                        sp44 = objCall(sp8, arg1, sp3C->mesh.child[var_r26_2]);
+                        if (sp44 != NULL) {
+                            sp48 = sp44;
+                        } else {
+                            var_r26_2 += 1;
+                            goto loop_64;
+                        }
+                    }
+                }
+            }
+            sp6C = sp48;
+            if (sp48 != NULL) {
+                sp70 = sp6C;
+            } else {
+                var_r29 += 1;
+                goto loop_77;
+            }
+        }
+    } else {
+        if ((s32) temp_r0_5 != 9) {
+            goto block_78;
+        }
+block_17:
+        if (strcmp(arg1, sp68->name) == 0) {
+            sp70 = sp68;
+        } else {
+            var_r29_2 = 0;
+loop_46:
+            if (var_r29_2 >= (u32) sp68->mesh.childNum) {
+block_78:
+                sp70 = NULL;
+            } else {
+                sp4C = sp68->mesh.child[var_r29_2];
+                temp_r0_7 = sp4C->type;
+                if ((s32) temp_r0_7 < 7) {
+                    if ((s32) temp_r0_7 != 1) {
+                        if (((s32) temp_r0_7 < 1) && ((s32) temp_r0_7 < 0)) {
+                            goto block_42;
+                        }
+                        goto block_27;
+                    }
+                    if (strcmp(arg1, sp4C->name) == 0) {
+                        sp58 = sp4C;
+                    } else {
+                        var_r27 = 0;
+loop_41:
+                        if (var_r27 >= (u32) sp4C->mesh.childNum) {
+                            goto block_42;
+                        }
+                        sp54 = objCall(sp8, arg1, sp4C->mesh.child[var_r27]);
+                        if (sp54 != NULL) {
+                            sp58 = sp54;
+                        } else {
+                            var_r27 += 1;
+                            goto loop_41;
+                        }
+                    }
+                } else {
+                    if ((s32) temp_r0_7 != 9) {
+                        goto block_42;
+                    }
+block_27:
+                    sp50 = sp4C;
+                    if (strcmp(arg1, sp50->name) == 0) {
+                        sp58 = sp50;
+                    } else {
+                        var_r27_2 = 0;
+loop_33:
+                        if (var_r27_2 >= (u32) sp50->mesh.childNum) {
+block_42:
+                            sp58 = NULL;
+                        } else {
+                            sp54 = objCall(sp8, arg1, sp50->mesh.child[var_r27_2]);
+                            if (sp54 != NULL) {
+                                sp58 = sp54;
+                            } else {
+                                var_r27_2 += 1;
+                                goto loop_33;
+                            }
+                        }
+                    }
+                }
+                sp6C = sp58;
+                if (sp58 != NULL) {
+                    sp70 = sp6C;
+                } else {
+                    var_r29_2 += 1;
+                    goto loop_46;
+                }
+            }
+        }
+    }
+    sp74 = sp70;
+    if (sp70 != NULL) {
+        return sp74;
+    }
+    var_r30_2 += 1;
+    goto loop_82;
+}
+
+f32 MB2_BezierCalc(f64 farg0, f32 farg1, f32 farg2, f32 farg3) {
+    f32 temp_f31;
+
+    temp_f31 = (f32) (1.0 - farg0);
+    return (f32) ((f64) (farg3 * ((f32) farg0 * (f32) farg0)) + ((f64) (farg1 * (temp_f31 * temp_f31)) + (2.0 * (f64) (farg2 * (temp_f31 * (f32) farg0)))));
+}
+
+void MB2_BezierCalcV(f32 *arg0, f32 *arg1, Point3d *arg2, Point3d *arg3, f64 farg0) {
+    Point3d *var_r5;
+    Point3d *var_r6;
+    f32 *var_r3;
+    f32 *var_r4;
+    f32 temp_f27;
+    f32 temp_f28;
+    f32 temp_f29;
+    f32 temp_f31;
+    s32 var_r31;
+
+    var_r3 = arg0;
+    var_r4 = arg1;
+    var_r5 = arg2;
+    var_r6 = arg3;
+    var_r31 = 0;
+loop_2:
+    if (var_r31 < 3) {
+        temp_f27 = var_r5->x;
+        var_r5 += 4;
+        temp_f28 = *var_r4;
+        var_r4 += 4;
+        temp_f29 = *var_r3;
+        var_r3 += 4;
+        temp_f31 = (f32) (1.0 - farg0);
+        var_r6->x = (f32) ((f64) (temp_f27 * ((f32) farg0 * (f32) farg0)) + ((f64) (temp_f29 * (temp_f31 * temp_f31)) + (2.0 * (f64) (temp_f28 * (temp_f31 * (f32) farg0)))));
+        var_r6 += 4;
+        var_r31 += 1;
+        goto loop_2;
+    }
+}
+
+void MB2_HermiteCalc(f32 *arg0, f32 *arg1, f32 *arg2, f32 *arg3, f32 farg0) {
+    f32 temp_f29;
+    f32 temp_f30;
+    f32 temp_f31;
+
+    temp_f31 = farg0 * farg0;
+    temp_f30 = farg0 * temp_f31;
+    temp_f29 = (f32) (((3.0 * (f64) temp_f31) - (f64) temp_f30) - (f64) temp_f30);
+    *arg0 = (f32) (1.0 - (f64) temp_f29);
+    *arg1 = temp_f29;
+    *arg2 = farg0 + ((temp_f30 - temp_f31) - temp_f31);
+    *arg3 = temp_f30 - temp_f31;
+}
+
+void fn_1_CEB8(f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5) {
+    f32 sp1C;
+    f32 sp18;
+    f32 sp14;
+    f32 sp10;
+    f32 spC;
+    s32 sp8;
+    f32 temp_f0;
+    f32 temp_f0_2;
+    f32 temp_f26;
+    f32 temp_f29;
+    f32 temp_f30;
+    f32 temp_f31;
+    f32 var_f27;
+    f32 var_f28;
+
+    temp_f30 = farg3 - farg2;
+    sp8 = (s32) (farg3 - farg2);
+    if (farg2 == farg3) {
+        var_f28 = temp_f30;
+    } else {
+        sp10 = farg5;
+        var_f28 = sp10 * (temp_f30 + (farg2 - farg1));
+    }
+    if (farg2 == farg4) {
+        var_f27 = temp_f30;
+    } else {
+        spC = farg5;
+        var_f27 = spC * (temp_f30 + (farg4 - farg3));
+    }
+    temp_f31 = farg0 * farg0;
+    temp_f29 = farg0 * temp_f31;
+    temp_f26 = (f32) (((3.0 * (f64) temp_f31) - (f64) temp_f29) - (f64) temp_f29);
+    temp_f0 = farg0 + ((temp_f29 - temp_f31) - temp_f31);
+    sp1C = temp_f0;
+    temp_f0_2 = temp_f29 - temp_f31;
+    sp18 = temp_f0_2;
+    sp14 = (temp_f0_2 * var_f27) + ((temp_f0 * var_f28) + (((f32) (1.0 - (f64) temp_f26) * farg2) + (temp_f26 * farg3)));
+}
+
+void MB2_HermiteCalcV(Point3d *arg0, Point3d *arg1, Point3d *arg2, Point3d *arg3, Point3d *arg4, f32 farg0) {
+    f32 spB8;
+    s32 spB4;
+    f32 spB0;
+    f32 spAC;
+    f32 spA8;
+    f32 spA4;
+    f32 spA0;
+    f32 sp9C;
+    f32 sp98;
+    f32 sp94;
+    f32 sp90;
+    f32 sp8C;
+    f32 sp88;
+    f32 sp84;
+    s32 sp80;
+    f32 sp7C;
+    f32 sp78;
+    f32 sp74;
+    f32 sp70;
+    f32 sp6C;
+    f32 sp68;
+    f32 sp64;
+    f32 sp60;
+    f32 sp5C;
+    f32 sp58;
+    f32 sp54;
+    f32 sp50;
+    s32 sp4C;
+    f32 sp48;
+    f32 sp44;
+    f32 sp40;
+    f32 sp3C;
+    f32 sp38;
+    f32 sp34;
+    f32 sp30;
+    f32 sp2C;
+    f32 sp28;
+    f32 sp24;
+    f32 sp20;
+    f32 sp1C;
+    f32 sp18;
+    f32 sp14;
+    f32 sp10;
+    f32 spC;
+    f32 sp8;
+    f32 temp_f0;
+    f32 temp_f0_10;
+    f32 temp_f0_11;
+    f32 temp_f0_12;
+    f32 temp_f0_2;
+    f32 temp_f0_3;
+    f32 temp_f0_4;
+    f32 temp_f0_5;
+    f32 temp_f0_6;
+    f32 temp_f0_7;
+    f32 temp_f0_8;
+    f32 temp_f0_9;
+    f32 temp_f19;
+    f32 temp_f20;
+    f32 temp_f21;
+    f32 temp_f22;
+    f32 temp_f23;
+    f32 temp_f24;
+    f32 temp_f25;
+    f32 temp_f26;
+    f32 temp_f27;
+    f32 temp_f28;
+    f32 temp_f29;
+    f32 temp_f30;
+
+    sp88 = arg3->x;
+    temp_f27 = arg2->x;
+    temp_f30 = arg1->x;
+    sp8C = arg0->x;
+    temp_f21 = temp_f27 - temp_f30;
+    spB4 = (s32) (temp_f27 - temp_f30);
+    if (temp_f30 == temp_f27) {
+        spAC = temp_f21;
+    } else {
+        spA4 = 0.5f;
+        spAC = spA4 * (temp_f21 + (temp_f30 - sp8C));
+    }
+    if (temp_f30 == sp88) {
+        spB0 = temp_f21;
+    } else {
+        spA8 = 0.5f;
+        spB0 = spA8 * (temp_f21 + (sp88 - temp_f27));
+    }
+    temp_f24 = farg0 * farg0;
+    temp_f0 = farg0 * temp_f24;
+    sp18 = temp_f0;
+    temp_f0_2 = (f32) (((3.0 * (f64) temp_f24) - (f64) temp_f0) - (f64) temp_f0);
+    sp1C = temp_f0_2;
+    temp_f0_3 = (f32) (1.0 - (f64) temp_f0_2);
+    sp90 = temp_f0_3;
+    sp94 = temp_f0_2;
+    sp98 = farg0 + ((temp_f0 - temp_f24) - temp_f24);
+    sp9C = temp_f0 - temp_f24;
+    temp_f0_4 = (sp9C * spB0) + ((sp98 * spAC) + ((temp_f0_3 * temp_f30) + (temp_f0_2 * temp_f27)));
+    spA0 = temp_f0_4;
+    spB8 = temp_f0_4;
+    arg4->x = temp_f0_4;
+    sp54 = arg3->y;
+    temp_f26 = arg2->y;
+    temp_f29 = arg1->y;
+    sp58 = arg0->y;
+    temp_f20 = temp_f26 - temp_f29;
+    sp80 = (s32) (temp_f26 - temp_f29);
+    if (temp_f29 == temp_f26) {
+        sp78 = temp_f20;
+    } else {
+        sp70 = 0.5f;
+        sp78 = sp70 * (temp_f20 + (temp_f29 - sp58));
+    }
+    if (temp_f29 == sp54) {
+        sp7C = temp_f20;
+    } else {
+        sp74 = 0.5f;
+        sp7C = sp74 * (temp_f20 + (sp54 - temp_f26));
+    }
+    temp_f23 = farg0 * farg0;
+    temp_f0_5 = farg0 * temp_f23;
+    sp10 = temp_f0_5;
+    temp_f0_6 = (f32) (((3.0 * (f64) temp_f23) - (f64) temp_f0_5) - (f64) temp_f0_5);
+    sp14 = temp_f0_6;
+    temp_f0_7 = (f32) (1.0 - (f64) temp_f0_6);
+    sp5C = temp_f0_7;
+    sp60 = temp_f0_6;
+    sp64 = farg0 + ((temp_f0_5 - temp_f23) - temp_f23);
+    sp68 = temp_f0_5 - temp_f23;
+    temp_f0_8 = (sp68 * sp7C) + ((sp64 * sp78) + ((temp_f0_7 * temp_f29) + (temp_f0_6 * temp_f26)));
+    sp6C = temp_f0_8;
+    sp84 = temp_f0_8;
+    arg4->y = temp_f0_8;
+    sp20 = arg3->z;
+    temp_f25 = arg2->z;
+    temp_f28 = arg1->z;
+    sp24 = arg0->z;
+    temp_f19 = temp_f25 - temp_f28;
+    sp4C = (s32) (temp_f25 - temp_f28);
+    if (temp_f28 == temp_f25) {
+        sp44 = temp_f19;
+    } else {
+        sp3C = 0.5f;
+        sp44 = sp3C * (temp_f19 + (temp_f28 - sp24));
+    }
+    if (temp_f28 == sp20) {
+        sp48 = temp_f19;
+    } else {
+        sp40 = 0.5f;
+        sp48 = sp40 * (temp_f19 + (sp20 - temp_f25));
+    }
+    temp_f22 = farg0 * farg0;
+    temp_f0_9 = farg0 * temp_f22;
+    sp8 = temp_f0_9;
+    temp_f0_10 = (f32) (((3.0 * (f64) temp_f22) - (f64) temp_f0_9) - (f64) temp_f0_9);
+    spC = temp_f0_10;
+    temp_f0_11 = (f32) (1.0 - (f64) temp_f0_10);
+    sp28 = temp_f0_11;
+    sp2C = temp_f0_10;
+    sp30 = farg0 + ((temp_f0_9 - temp_f22) - temp_f22);
+    sp34 = temp_f0_9 - temp_f22;
+    temp_f0_12 = (sp34 * sp48) + ((sp30 * sp44) + ((temp_f0_11 * temp_f28) + (temp_f0_10 * temp_f25)));
+    sp38 = temp_f0_12;
+    sp50 = temp_f0_12;
+    arg4->z = temp_f0_12;
+}
+
+void MB2_CoinInit(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_CoinUpdate(OMOBJ *obj) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_CoinClose(void) {
+    mb2_CoinObj = NULL;
+}
+
+s32 MB2_CoinNumGet(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void MB2_CoinEffInit(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_CoinEffUpdate(OMOBJ *obj) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_CoinEffClose(void) {
+    mb2_CoinEffObj = NULL;
+}
+
+s32 MB2_CoinEffNumGet(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void MB2_CoinEffBlendModeSet(u8 arg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void MB2_SplashEffInit(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_SplashEffUpdate(OMOBJ *obj) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_SplashEffClose(void) {
+    mb2_SplashEffObj = NULL;
+}
+
+s32 MB2_SplashEffNumGet(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void MB2_SplashEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, s16 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+s16 MB2_ParticleCopy(s16 arg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
+    /* NONMATCHING: placeholder - m2c mismodeled the flat per-particle
+     * struct here (raw ->unkXX offsets on a void* / ANIMDATA* loop pointer).
+     * Needs a proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s before porting for real. */
+}
+
+void MB2_YajiInit(f32 *arg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_YajiUpdate(OMOBJ *obj) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_YajiClose(void) {
+    mb2_YajiObj = NULL;
+}
+
+void MB2_YajiHiliteSet(u32 arg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_YajiDispSet(s32 arg0) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_RainbowObjInit(void) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_RainbowObjUpdate(OMOBJ *obj) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+void MB2_RainbowObjClose(void) {
+    mb2_RainbowObj = NULL;
+}
+
+s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+}
+
+s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1) {
+    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
+     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
+     * raw ->unkXX offsets), producing dozens of type errors. Needs a
+     * proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
+     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
+    return 0;
+}
+
+void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
+    /* NONMATCHING: placeholder - m2c mismodeled the flat per-particle
+     * struct here (raw ->unkXX offsets on a void* / ANIMDATA* loop pointer).
+     * Needs a proper struct reconstructed from
+     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s before porting for real. */
+}
