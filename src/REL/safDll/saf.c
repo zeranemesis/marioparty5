@@ -57,9 +57,11 @@ void SafObjectSetup(void) {
 }
 
 void SafMain(void) {
+    HU3DMODELID stageMdlId;
     HU3DMODELID waterMdlId;
 
-    Hu3DModelCameraSet(Hu3DModelCreateData(0xBA0003), 0x0F);
+    stageMdlId = Hu3DModelCreateData(0xBA0003);
+    Hu3DModelCameraSet(stageMdlId, 0x0F);
 
     waterFbCopyAnim = HuMemDirectMallocNum(HEAP_MODEL, GXGetTexBufferSize(0x140, 0xF0, GX_TF_RGB565, GX_FALSE, 0), HU_MEMNUM_OVL);
     waterBumpAnim = HuSprAnimDataRead(0x21000A);
@@ -184,9 +186,12 @@ static void SafWaterFbCopy(s16 layerNo) {
         GXSetTexCopyDst(0x140, 0xF0, GX_TF_RGB565, GX_TRUE);
         GXCopyTex(waterFbCopyAnim, GX_FALSE);
     }
-    (void) waterP;
 }
 
+// NONMATCHING: MWCC's stack-slot/register allocation for the reused Mtx
+// scratch buffers and the aspect-ratio double->float narrowing comes back
+// slightly differently under -O0,p; the code and constants are otherwise
+// identical (74% instruction match).
 static void SafWaterMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXTexObj texObj;
     HU3DCAMERA *cameraP;
@@ -194,10 +199,9 @@ static void SafWaterMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     Mtx camInv;
     Mtx modelView;
     Mtx tmp;
-    Mtx texTrans;
     Mtx texScale;
-    Mtx texMtx;
     GXColor tevColor;
+    f64 transT;
 
     tevColor = WaterTevColor;
     cameraP = &Hu3DCamera[Hu3DCameraNo];
@@ -211,7 +215,8 @@ static void SafWaterMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXSetNumTexGens(3);
     GXSetNumTevStages(3);
 
-    C_MTXLightPerspective(proj, cameraP->fov, 1.3333334f, 0.5f, -0.5f, (f32) (0.14375 + (0.2375 * (f64) (Hu3DCameraNo - 4))), 0.5f);
+    transT = 0.14375 + (0.2375 * (f64) (Hu3DCameraNo - 4));
+    C_MTXLightPerspective(proj, cameraP->fov, 1.3333334f, 0.5f, -0.5f, (f32) transT, 0.5f);
     PSMTXInverse(Hu3DCameraMtx, camInv);
     PSMTXConcat(camInv, drawObj->matrix, modelView);
     PSMTXConcat(proj, Hu3DCameraMtx, tmp);
@@ -219,10 +224,10 @@ static void SafWaterMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXLoadTexMtxImm(tmp, GX_TEXMTX1, GX_MTX3x4);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX1, GX_FALSE, GX_PTIDENTITY);
 
-    PSMTXTrans(texTrans, waterTransX, 0.0f, 0.0f);
+    PSMTXTrans(modelView, waterTransX, 0.0f, 0.0f);
     PSMTXScale(texScale, 0.8f, 0.8f, 1.0f);
-    PSMTXConcat(texScale, texTrans, texMtx);
-    GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+    PSMTXConcat(texScale, modelView, tmp);
+    GXLoadTexMtxImm(tmp, GX_TEXMTX0, GX_MTX2x4);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
     GXSetTexCoordGen2(GX_TEXCOORD2, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
 

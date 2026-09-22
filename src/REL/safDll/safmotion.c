@@ -19,6 +19,8 @@ static OMOBJ *outview;
 static OMOBJ *cameraObj;
 
 void SafMotionObjectSetup(void) {
+    HU3DLIGHTID lightId;
+
     OSReport("******* SAFObjectSetup *********\n");
     objman = omInitObjMan(0x32, 0x2000);
     CRot.x = -20.0f;
@@ -34,18 +36,25 @@ void SafMotionObjectSetup(void) {
     outview = omAddObjEx(objman, 0x7FDA, 0, 0, -1, omOutView);
     cameraObj = omAddObjEx(objman, 0, 0x40, 0, -1, SafMotionCameraUpdate);
     HuPrcChildCreate(SafMotionMain, 0x64, 0x3000, 0, objman);
-    Hu3DGLightInfinitytSet(Hu3DGLightCreate(0.0f, 1000.0f, 1000.0f, 0.0f, -1.0f, -1.0f, 0xFF, 0xFF, 0xFF));
+    lightId = Hu3DGLightCreate(0.0f, 1000.0f, 1000.0f, 0.0f, -1.0f, -1.0f, 0xFF, 0xFF, 0xFF);
+    Hu3DGLightInfinitytSet(lightId);
 }
 
 void SafMotionMain(void) {
-    Hu3DModelAttrSet(Hu3DModelCreateData(0xBA000A), HU3D_MOTATTR_LOOP);
+    HU3DMODELID mdlId;
+    f32 waterTransX;
+
+    mdlId = Hu3DModelCreateData(0xBA000A);
+    Hu3DModelAttrSet(mdlId, HU3D_MOTATTR_LOOP);
 
     WipeCreate(WIPE_MODE_IN, WIPE_TYPE_NORMAL, 0x14);
     while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
 
+    waterTransX = 0.0f;
     for (;;) {
+        waterTransX += 0.002f;
         if (HuPadBtnDown[0] & PAD_BUTTON_START) {
             break;
         }

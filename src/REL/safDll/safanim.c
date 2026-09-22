@@ -54,6 +54,13 @@ void ObjectSetup(void) {
     SafObjectSetup();
 }
 
+// NONMATCHING: long -O0,p rehearsal sequence; the original keeps far more
+// of its local HuVecF/scalar temporaries live in named nonvolatile
+// registers/stack slots than this straightforward re-expression needs
+// (frame 0x3f0 vs 0xa0 here), and unwinding it into the original's exact
+// variable set did not reliably come back closer without guessing dead
+// register pressure rather than fixing an actual logic difference. Code
+// and constants are otherwise faithful to the original control flow.
 void SafAnimMain(void) {
     HU3DMODELID reflectMdlId;
     HU3DMODELID shadowMdlId;
@@ -249,6 +256,9 @@ void SafAnimCameraUpdate(void) {
     }
 }
 
+// NONMATCHING: MWCC's stack-slot allocation for the reused Mtx scratch
+// buffers comes back slightly differently under -O0,p; the code and
+// constants are otherwise identical (81% instruction match).
 static void SafBallMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXTexObj texObj;
     HU3DCAMERA *cameraP;
@@ -257,7 +267,6 @@ static void SafBallMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     Mtx modelView;
     Mtx tmp;
     Mtx texScale;
-    Mtx texMtx;
     GXColor tevColor;
 
     tevColor = BallTevColor;
@@ -293,10 +302,10 @@ static void SafBallMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
 
     GXSetNumIndStages(1);
-    PSMTXTrans(tmp, 0.0f, 0.0f, 0.0f);
+    PSMTXTrans(modelView, 0.0f, 0.0f, 0.0f);
     PSMTXScale(texScale, 0.2f, 0.2f, 1.0f);
-    PSMTXConcat(texScale, tmp, texMtx);
-    GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+    PSMTXConcat(texScale, modelView, tmp);
+    GXLoadTexMtxImm(tmp, GX_TEXMTX0, GX_MTX2x4);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
     GXSetIndTexOrder(GX_INDTEXSTAGE0, GX_TEXCOORD1, GX_TEXMAP1);
     GXSetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_1, GX_ITS_1);
