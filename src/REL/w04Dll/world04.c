@@ -46,6 +46,11 @@ void MB4_SakanaClose(void);
 s32 MB4_CoinNumGet(void);
 s32 MB4_CoinEffNumGet(void);
 void MB4_CoinEffBlendModeSet(u8 mode);
+void MB4_CoinInit(void);
+void MB4_CoinUpdate(OMOBJ *obj);
+s32 MB4_CoinCreate(Point3d *basePos, Point3d *baseRot, s32 layer, f32 speed, f32 unused);
+s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist);
+s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam);
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio);
 void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ);
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z);
@@ -93,6 +98,75 @@ static s32 mb4_Work[0x1FF7];
 #define MB4W_U16(off) (*(u16 *) ((u8 *) mb4_Work + (off)))
 #define MB4W_S32(off) (*(s32 *) ((u8 *) mb4_Work + (off)))
 #define MB4W_F32(off) (*(f32 *) ((u8 *) mb4_Work + (off)))
+
+/* Shared "float particle" record (size 0x5C = 92 bytes), confirmed by
+ * reading MB4_CoinEffCreate and MB4_SakanaOffsetSet/PosSet/LenSet: the
+ * same struct backs both the coin-sparkle effect array
+ * (Hu3DData[coinEffModelIdx].hookData + 0x3C, count at +0x24) and the
+ * sakana (fish) per-part array (Hu3DData[sakanaModelId] + 0x120). Field
+ * meaning differs a little per user (e.g. offsetZAngle doubles as a random
+ * spin angle for coin sparkles, an offset for sakana parts), but the byte
+ * layout is identical in both. */
+typedef struct MB4Particle_s {
+    s32 active;     /* 0x00 */
+    u8 pad4[4];     /* 0x04 */
+    f32 velX;       /* 0x08 */
+    f32 velY;       /* 0x0C */
+    f32 velZ;       /* 0x10 */
+    f32 speed;      /* 0x14 */
+    f32 one;        /* 0x18, always set to 1.0f on spawn */
+    f32 sizeParam;  /* 0x1C */
+    u8 pad20[8];    /* 0x20 */
+    f32 alphaParam; /* 0x24 */
+    u8 pad28[4];    /* 0x28 */
+    f32 timer;      /* 0x2C, coin-sparkle: countdown; sakana: len*100 */
+    f32 offsetX;    /* 0x30 */
+    f32 offsetY;    /* 0x34 */
+    f32 offsetZAngle; /* 0x38 */
+    f32 posX;       /* 0x3C */
+    f32 posY;       /* 0x40 */
+    f32 posZ;       /* 0x44 */
+    u8 color[4];    /* 0x48, coin-sparkle only */
+} MB4PARTICLE; /* size 0x5C */
+
+/* Per-coin record (size 0x88 = 136 bytes), read from mb4_CoinObj->data
+ * (32 entries) in MB4_CoinCreate/CoinInit/CoinNearGet. */
+typedef struct MB4Coin_s {
+    s32 modelId;       /* 0x00 */
+    s32 shadowModelId; /* 0x04 */
+    s32 active;        /* 0x08 */
+    s32 unkC;          /* 0x0C */
+    f32 speed;         /* 0x10 */
+    s32 layer;         /* 0x14 */
+    s32 state;         /* 0x18 */
+    f32 posX;          /* 0x1C */
+    f32 posY;          /* 0x20 */
+    f32 posZ;          /* 0x24 */
+    f32 rotX;          /* 0x28 */
+    f32 rotY;          /* 0x2C */
+    f32 rotZ;          /* 0x30 */
+    f32 scaleZ;        /* 0x34 */
+    f32 scaleY;        /* 0x38 */
+    f32 scaleX;        /* 0x3C */
+    f32 basePosX;      /* 0x40 */
+    f32 basePosY;      /* 0x44 */
+    f32 basePosZ;      /* 0x48 */
+    s32 baseRotX;      /* 0x4C */
+    s32 baseRotY;      /* 0x50 */
+    s32 baseRotZ;      /* 0x54 */
+    Point3d playerPos[4]; /* 0x58, one cached player position per player */
+} MB4COIN; /* size 0x88 */
+
+/* Coin-sparkle particle manager, pointed to by
+ * Hu3DData[coinEffModelIdx].hookData (see MB4_CoinEffCreate/BlendModeSet). */
+typedef struct MB4CoinEffMgr_s {
+    u8 pad0[0x20];      /* 0x00 */
+    u8 blendMode;       /* 0x20 */
+    u8 pad21[3];        /* 0x21 */
+    s16 count;           /* 0x24 */
+    u8 pad26[0x16];       /* 0x26 */
+    MB4PARTICLE *particles; /* 0x3C */
+} MB4COINEFFMGR;
 
 static Point3d mb4ev_Puku2EmiterPos = { -2800.0f, 300.0f, 1340.0f };
 
@@ -289,6 +363,7 @@ static f32 mapViewZoom = 16171.0f;
 static OMOBJ *mb4_BubbleEffObj;
 static OMOBJ *mb4_CoinObj;
 static OMOBJ *mb4_CoinEffObj;
+static Point3d mb4_CoinMaxDist;
 
 static Point3d mb4ev_BubbleEmitPosTbl[13] = {
     { 3710.0f, 240.0f, 790.0f },
@@ -856,6 +931,186 @@ s32 MB4_CoinEffNumGet(void) {
         return 0;
     }
     return ((s32 *) obj->data)[1];
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Spawns 64 coin pairs (a coin model + a MBModelIdGet(mb4_Work[15])-
+ * linked shadow model), seeding each with the current position of all 4
+ * players (used later by MB4_CoinUpdate to fly a picked-up coin toward the
+ * scoring player). mb4_CoinMaxDist is the (unused-by-this-function)
+ * pickup-distance threshold read later by MB4_CoinUpdate/CoinNearGet. */
+void MB4_CoinInit(void) {
+    MB4COIN *coin;
+    s32 i;
+    s32 p;
+
+    mb4_CoinObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinUpdate);
+    mb4_CoinObj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x1100, 0x10000000U);
+    memset(mb4_CoinObj->data, 0, 0x1100U);
+
+    mb4_CoinMaxDist.x = 100.0f;
+    mb4_CoinMaxDist.y = 170.0f;
+    mb4_CoinMaxDist.z = 0.0f;
+
+    coin = (MB4COIN *) mb4_CoinObj->data;
+    for (i = 0; i < 0x20; i++) {
+        if (i == 0) {
+            coin->modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x80002, 0x10000000, HEAP_MODEL));
+        } else {
+            coin->modelId = Hu3DModelLink((s16) ((MB4COIN *) mb4_CoinObj->data)->modelId);
+        }
+        Hu3DModelCameraSet((s16) coin->modelId, 1U);
+        Hu3DModelAttrSet((s16) coin->modelId, 1U);
+        coin->shadowModelId = Hu3DModelLink(MBModelIdGet((s16) mb4_Work[0x15]));
+        Hu3DModelAttrSet((s16) coin->shadowModelId, 1U);
+        coin->active = 0;
+        coin->unkC = 0;
+        coin->speed = 0.0f;
+        coin->state = 0;
+        coin->layer = 0;
+        for (p = 0; p < 4; p++) {
+            MBPlayerPosGet(p, &coin->playerPos[p]);
+        }
+        coin++;
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Finds a free MB4COIN slot (active == 0) and spawns it: coin model
+ * at basePos (arg0, may be NULL to skip), shadow model 200 units below,
+ * baseRot from arg1 (may be NULL). */
+s32 MB4_CoinCreate(Point3d *basePos, Point3d *baseRot, s32 layer, f32 speed, f32 unused) {
+    MB4COIN *coinP;
+    s32 i;
+
+    if (mb4_CoinObj == NULL) {
+        return -1;
+    }
+    coinP = (MB4COIN *) mb4_CoinObj->data;
+    for (i = 0; i < 0x20; i++) {
+        if (coinP->active == 0) {
+            break;
+        }
+        coinP++;
+    }
+    if (i >= 0x20) {
+        return -1;
+    }
+
+    coinP->active = 1;
+    coinP->unkC = 0;
+    coinP->speed = speed;
+    coinP->layer = layer;
+    coinP->state = 0;
+    if (basePos != NULL) {
+        coinP->basePosX = basePos->x;
+        coinP->basePosY = basePos->y;
+        coinP->basePosZ = basePos->z;
+    }
+    if (baseRot != NULL) {
+        coinP->baseRotX = (s32) baseRot->x;
+        coinP->baseRotY = (s32) baseRot->y;
+        coinP->baseRotZ = (s32) baseRot->z;
+    }
+    coinP->posX = coinP->basePosX;
+    coinP->posY = coinP->basePosY;
+    coinP->posZ = coinP->basePosZ;
+    coinP->rotX = 0.0f;
+    coinP->rotZ = 0.0f;
+    coinP->scaleX = 1.0f;
+    coinP->scaleY = 1.0f;
+    coinP->scaleZ = 1.0f;
+    coinP->rotY = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+
+    Hu3DModelPosSet((s16) coinP->modelId, coinP->posX, coinP->posY, coinP->posZ);
+    Hu3DModelRotSet((s16) coinP->modelId, coinP->rotX, coinP->rotY, coinP->rotZ);
+    Hu3DModelScaleSet((s16) coinP->modelId, coinP->scaleZ, coinP->scaleY, coinP->scaleX);
+    Hu3DModelTPLvlSet((s16) coinP->modelId, 1.0f);
+    Hu3DModelAttrReset((s16) coinP->modelId, 1U);
+    Hu3DModelPosSet((s16) coinP->shadowModelId, coinP->posX, -200.0f, coinP->posZ);
+    Hu3DModelRotSet((s16) coinP->shadowModelId, coinP->rotX, coinP->rotY, coinP->rotZ);
+    Hu3DModelScaleSet((s16) coinP->shadowModelId, coinP->scaleZ, coinP->scaleY, coinP->scaleX);
+    Hu3DModelTPLvlSet((s16) coinP->shadowModelId, 1.0f);
+    Hu3DModelAttrReset((s16) coinP->shadowModelId, 1U);
+    return i;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Nearest active coin to `pos` within `maxDist`, if any. */
+s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist) {
+    MB4COIN *coinP;
+    s32 i;
+    s32 best = -1;
+    f32 bestDist = 10000.0f;
+    Point3d diff;
+    f32 dist;
+
+    if (mb4_CoinObj == NULL) {
+        return -1;
+    }
+    coinP = (MB4COIN *) mb4_CoinObj->data;
+    for (i = 0; i < 0x20; i++) {
+        if (coinP->active != 0) {
+            PSVECSubtract((Point3d *) &coinP->posX, pos, &diff);
+            dist = PSVECMag(&diff);
+            if (!(dist > maxDist) && dist < bestDist) {
+                best = i;
+                bestDist = dist;
+            }
+        }
+        coinP++;
+    }
+    if (best >= 0) {
+        MB4COIN *bestP = (MB4COIN *) mb4_CoinObj->data + best;
+        outPos->x = bestP->posX;
+        outPos->y = bestP->posY;
+        outPos->z = bestP->posZ;
+    }
+    return best;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Spawns a coin-sparkle MB4PARTICLE in the first free slot. */
+s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam) {
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
+    s32 i;
+
+    if (mb4_CoinEffObj == NULL) {
+        return -1;
+    }
+    mgr = (MB4COINEFFMGR *) Hu3DData[*(s32 *) mb4_CoinEffObj->data].hookData;
+    p = mgr->particles;
+    for (i = 0; i < mgr->count; i++) {
+        if (p->timer == 0.0f) {
+            break;
+        }
+        p++;
+    }
+    if (i >= mgr->count) {
+        return -1;
+    }
+
+    p->active = 0;
+    p->posX = pos->x;
+    p->posY = pos->y;
+    p->posZ = pos->z;
+    p->velX = vel->x;
+    p->velY = vel->y;
+    p->velZ = vel->z;
+    p->speed = timer;
+    p->one = 1.0f;
+    p->sizeParam = sizeParam;
+    p->alphaParam = alphaParam;
+    p->timer = timer;
+    p->color[0] = color[0];
+    p->color[1] = color[1];
+    p->color[2] = color[2];
+    p->color[3] = color[3];
+    p->offsetZAngle = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    p->active = 0;
+    *(s32 *) ((u8 *) mb4_CoinEffObj->data + 4) += 1;
+    return i;
 }
 
 /* mb4_Work[0x1FDD] (byte 0x7F74): sakana model id (see MB4_SakanaClose).
