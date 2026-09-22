@@ -349,16 +349,16 @@ static void MB7_Kill(void) {
         mb7_Work[i] = -1;
     }
     for (i = 0; i < MB7_BACKOBJ_MAX; i++) {
-        if (MB7W_S32(0x10 + (i * 4)) >= 0) {
-            MBModelKill((s16) MB7W_S32(0x10 + (i * 4)));
+        if (MB7W_S32((i * 4) + 0x10) >= 0) {
+            MBModelKill((s16) MB7W_S32((i * 4) + 0x10));
         }
-        MB7W_S32(0x10 + (i * 4)) = -1;
+        MB7W_S32((i * 4) + 0x10) = -1;
     }
     for (i = 0; i < 4; i++) {
-        if (MB7W_S16(0x48 + (i * 2)) >= 0) {
-            MBEffKill(MB7W_S16(0x48 + (i * 2)));
+        if (MB7W_S16((i * 2) + 0x48) >= 0) {
+            MBEffKill(MB7W_S16((i * 2) + 0x48));
         }
-        MB7W_S16(0x48 + (i * 2)) = -1;
+        MB7W_S16((i * 2) + 0x48) = -1;
     }
 }
 
@@ -398,7 +398,8 @@ static int MB7Ev_MasuHatena(int playerNo) {
 
 static int MB7Ev_MasuWalkPost(int playerNo) {
     s16 masuId = GwPlayer[playerNo].masuId;
-    s32 flag = (u16) MBMasuGet(0, masuId)->flag;
+    MASU *masuP = MBMasuGet(0, masuId);
+    s32 flag = (u16) masuP->flag;
     return 0;
 }
 
