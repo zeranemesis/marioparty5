@@ -2903,3 +2903,307 @@ void MB4_PlayerMtxSet(s16 playerNo, Mtx mtx) {
     s16 hu3dModelId = (s16) MBModelIdGet(MBPlayerModelGet(playerNo));
     PSMTXCopy(mtx, Hu3DData[hu3dModelId].mtx);
 }
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match (size and cinematic complexity make it impractical). "Blow" board
+ * event: a waterspout/geyser masu. Faces the player toward a nearby
+ * star-flagged link (or a fixed point behind them if none), offers a
+ * yes/no choice (COM players auto-pick based on path-to-star length via
+ * MBMasuPathTypeLenGet), and on "yes" walks the player up to the geyser,
+ * shows the mb4_Work[0x13] spout effect model growing out of the ground
+ * (positioned each frame off its "i_hook" bone), launches the player
+ * (screen shake + SE + wipe), picks a nearby non-blocked link masu as the
+ * landing spot (falling back to any masu, or the current masu if the link
+ * table is empty), arcs the player there via MB4_BezierCalcV, then plays
+ * a gentle landing bounce before restoring the normal board camera. */
+void MB4Ev_Blow(s32 playerNo) {
+    s16 masuId = GwPlayer[playerNo].masuId;
+    MASU *masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    Point3d playerPos;
+    Point3d targetPos;
+    Point3d camOfs;
+    s16 nextMasuId;
+    s32 walkMotNo, suckMotNo;
+    s32 i;
+    Point3d dir;
+    s32 choice;
+    s32 se1, se2, se3;
+    s16 linkTbl[MASU_LINK_MAX];
+    s16 linkNum;
+    s16 landMasuId;
+    Point3d landPos;
+    Point3d midPos;
+    Mtx mtx;
+    Point3d hookPos;
+    Point3d rot;
+    f32 t;
+    Point3d p0, p1, p2, p3;
+    f32 dropY;
+
+    MBPlayerPosGet(playerNo, &playerPos);
+    walkMotNo = MBPlayerMotionCreate(playerNo, 0x8C003E);
+    suckMotNo = MBPlayerMotionCreate(playerNo, 0x8C002B);
+
+    camOfs.x = 0.0f;
+    camOfs.y = 200.0f;
+    camOfs.z = 0.0f;
+    MBCameraModelViewSet(MBPlayerModelGet(playerNo), NULL, &camOfs, 2000.0f, -1.0f, 0x2A);
+    MBCameraMotionWait();
+
+    for (i = 0; i < masuP->linkNum; i++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, masuP->linkTbl[i]) & MASU_FLAG_BIT(7)) {
+            break;
+        }
+    }
+    if (i < masuP->linkNum) {
+        nextMasuId = masuP->linkTbl[i];
+        MBMasuPosGet(MASU_LAYER_DEFAULT, nextMasuId, &targetPos);
+    } else {
+        nextMasuId = masuId;
+        targetPos.x = playerPos.x - 200.0f;
+        targetPos.y = playerPos.y;
+        targetPos.z = 200.0f + playerPos.z;
+    }
+
+    PSVECSubtract(&targetPos, &playerPos, &dir);
+    MBPlayerRotateStart(playerNo, (s16) (180.0 * (atan2((f64) dir.x, (f64) dir.z) / 3.141592653589793)), 0xF);
+    while (!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+
+    MBAudFXPlay(0x2F5);
+    MBWinCreateChoice(2, 0x300003U, 2, 0);
+    MBTopWinAttrReset(0x10U);
+    if (GwPlayer[playerNo].comF) {
+        if (MBMasuPathTypeLenGet(masuId, 5) > 0xA) {
+            MBComChoiceSetLeft();
+        } else {
+            MBComChoiceSetRight();
+        }
+    }
+    MBTopWinWait();
+    choice = MBWinLastChoiceGet();
+    MBTopWinKill();
+
+    if (choice == 0) {
+        MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            playerPos.x = playerPos.x + (t * (targetPos.x - playerPos.x));
+            playerPos.z = playerPos.z + (t * (targetPos.z - playerPos.z));
+            playerPos.y = (f32) ((f64) (playerPos.y + (t * (targetPos.y - playerPos.y))) + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &playerPos);
+            HuPrcVSleep();
+        }
+
+        MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+        MBPlayerPosGet(playerNo, &playerPos);
+        camOfs.x = 0.0f;
+        camOfs.y = 200.0f;
+        camOfs.z = 0.0f;
+        MBCameraMasuViewSet(nextMasuId, NULL, &camOfs, 3000.0f, -1.0f, 0x15);
+        HuPrcSleep(0x3C);
+
+        MBPlayerMotionNoShiftSet(playerNo, walkMotNo, 0.0f, 8.0f, 0U);
+        do {
+            HuPrcVSleep();
+        } while (!MBPlayerMotionEndCheck(playerNo));
+        while (Hu3DMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+            HuPrcVSleep();
+        }
+
+        MBCameraQuakeSet(0x3C, 50.0f);
+        se1 = HuAudFXPlay(0x5EB);
+        HuPrcSleep(0x3C);
+        if (se1 != -1) {
+            HuAudFXStop(se1);
+        }
+        se2 = HuAudFXPlay(0x5EC);
+        MBPlayerMotionNoShiftSet(playerNo, suckMotNo, 0.0f, 8.0f, 0x40000001U);
+
+        for (landMasuId = 1; landMasuId <= MBMasuNumGet(MASU_LAYER_DEFAULT); landMasuId++) {
+            if (MBMasuTypeGet(MASU_LAYER_DEFAULT, landMasuId) == MASU_TYPE_STAR) {
+                break;
+            }
+        }
+        if (landMasuId > MBMasuNumGet(MASU_LAYER_DEFAULT)) {
+            landMasuId = masuId;
+        }
+
+        {
+            s16 candidate = landMasuId;
+            BOOL useAllLinks;
+
+            useAllLinks = (0.007874016f * (f32) (frand() & 0x7F)) < 0.65f;
+            for (;;) {
+                if (useAllLinks) {
+                    linkNum = MBMasuLinkTblGet(MASU_LAYER_DEFAULT, candidate, linkTbl);
+                } else {
+                    MASU *cm = MBMasuGet(MASU_LAYER_DEFAULT, candidate);
+                    linkNum = cm->linkNum;
+                    for (i = 0; i < linkNum; i++) {
+                        linkTbl[i] = cm->linkTbl[i];
+                    }
+                }
+                if (linkNum > 0) {
+                    for (i = 0; i < linkNum; i++) {
+                        if ((MBMasuFlagGet(MASU_LAYER_DEFAULT, linkTbl[i]) & MBBranchFlagGet()) == 0) {
+                            break;
+                        }
+                    }
+                    landMasuId = (i < linkNum) ? linkTbl[i] : candidate;
+                } else {
+                    landMasuId = candidate;
+                }
+                if (candidate != landMasuId && MBMasuTypeGet(MASU_LAYER_DEFAULT, landMasuId) == MASU_TYPE_NONE) {
+                    candidate = landMasuId;
+                    continue;
+                }
+                break;
+            }
+        }
+
+        MBPlayerPosFixEvent(playerNo, landMasuId, 0);
+        MBMasuPosGet(MASU_LAYER_DEFAULT, landMasuId, &landPos);
+        PSVECSubtract(&landPos, &playerPos, &dir);
+        PSVECScale(&dir, &dir, 0.5f);
+        PSVECAdd(&playerPos, &dir, &midPos);
+        if (playerPos.y > landPos.y) {
+            midPos.y = 5000.0f + playerPos.y + PSVECMag(&dir);
+        } else {
+            midPos.y = 5000.0f + landPos.y + PSVECMag(&dir);
+        }
+
+        MBPlayerPosGet(playerNo, &playerPos);
+        MBModelPosSetV((s16) mb4_Work[0x13], &playerPos);
+        MBModelDispSet((s16) mb4_Work[0x13], TRUE);
+        MBMotionTimeSet((s16) mb4_Work[0x13], 0.0f);
+        MBModelAttrSet((s16) mb4_Work[0x13], 0x40000001U);
+        MBModelAlphaSet((s16) mb4_Work[0x13], 0U);
+        MBModelScaleSet((s16) mb4_Work[0x13], 0.0f, 0.0f, 0.0f);
+        HuPrcVSleep();
+
+        MBPlayerRotGet(playerNo, &rot);
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            MBModelAlphaSet((s16) mb4_Work[0x13], (u8) (s32) (255.0f * t));
+            MBModelScaleSet((s16) mb4_Work[0x13], t, 0.5f * t, t);
+            Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x13]), "i_hook", mtx);
+            hookPos.x = mtx[0][3];
+            hookPos.y = mtx[1][3];
+            hookPos.z = mtx[2][3];
+            rot.y += 10.0f;
+            MBPlayerPosSetV(playerNo, &hookPos);
+            MBPlayerRotSet(playerNo, 0.0f, rot.y, 0.0f);
+            HuPrcVSleep();
+        }
+
+        for (i = 0; i <= 60; i++) {
+            f32 s = (f32) (0.5 + (0.05000000074505806 * sin((3.141592653589793 * (f64) (720.0f * ((f32) i / 60.0f))) / 180.0)));
+            MBModelAlphaSet((s16) mb4_Work[0x13], 0xFFU);
+            MBModelScaleSet((s16) mb4_Work[0x13], 1.0f, s, 1.0f);
+            Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x13]), "i_hook", mtx);
+            hookPos.x = mtx[0][3];
+            hookPos.y = mtx[1][3];
+            hookPos.z = mtx[2][3];
+            rot.y += 10.0f;
+            MBPlayerPosSetV(playerNo, &hookPos);
+            MBPlayerRotSet(playerNo, 0.0f, rot.y, 0.0f);
+            HuPrcVSleep();
+        }
+
+        omVibrate((s16) playerNo, 0xC, 4, 2);
+        if (se2 != -1) {
+            HuAudFXFadeOut(se2, 0x3E8);
+        }
+        se3 = HuAudFXPlay(0x5ED);
+
+        for (i = 0; i <= 21; i++) {
+            MBModelScaleSet((s16) mb4_Work[0x13], 1.0f, 0.5f + ((f32) i / 21.0f), 1.0f);
+            Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x13]), "i_hook", mtx);
+            hookPos.x = mtx[0][3];
+            hookPos.y = mtx[1][3];
+            hookPos.z = mtx[2][3];
+            rot.y += 10.0f;
+            MBPlayerPosSetV(playerNo, &hookPos);
+            MBPlayerRotSet(playerNo, 0.0f, rot.y, 0.0f);
+            HuPrcVSleep();
+        }
+
+        if (se3 != -1) {
+            HuAudFXFadeOut(se3, 0x3E8);
+        }
+
+        WipeColorSet(0xFF, 0xFF, 0xFF);
+        WipeCreate(2, 0x81, 1);
+        while (WipeCheckEnd()) {
+            HuPrcVSleep();
+        }
+
+        MBModelDispSet((s16) mb4_Work[0x13], FALSE);
+        GwPlayer[playerNo].masuId = landMasuId;
+        MBPlayerPosFixEvent(playerNo, landMasuId, 1);
+        MBPlayerMotionSpeedSet(playerNo, 0.0f);
+        MBCameraSkipSet(FALSE);
+        camOfs.x = 0.0f;
+        camOfs.y = 200.0f;
+        camOfs.z = 0.0f;
+        MBCameraMasuViewSet(landMasuId, NULL, &camOfs, -1.0f, -1.0f, 1);
+        MBCameraMotionWait();
+        MBCameraSkipSet(TRUE);
+
+        WipeCreate(1, 0x81, 0x1E);
+        p0.x = landPos.x;
+        p0.y = landPos.y + 3000.0f;
+        p0.z = landPos.z;
+        p1.x = landPos.x;
+        p1.y = landPos.y + 1500.0f;
+        p1.z = landPos.z;
+        for (i = 0; i <= 30; i++) {
+            t = (f32) i / 30.0f;
+            MB4_BezierCalcV(&p0.x, &p1.x, &landPos.x, &playerPos.x, 0.5f + (0.5f * t));
+            MB4_BezierCalcV(&p0.x, &p1.x, &landPos.x, &p2.x, (0.5f + (0.5f * t)) - 0.01f);
+            PSVECSubtract(&p2, &playerPos, &p2);
+            rot.x = 0.0f;
+            rot.y = 0.0f;
+            rot.z = 0.0f;
+            MBPlayerPosSetV(playerNo, &playerPos);
+            MBPlayerRotSetV(playerNo, &rot);
+            HuPrcVSleep();
+        }
+
+        MBPlayerMotionNoShiftSet(playerNo, 6, 0.0f, 8.0f, 0x40000001U);
+        PSMTXIdentity(mtx);
+        MB4_PlayerMtxSet((s16) playerNo, mtx);
+        playerPos = landPos;
+        rot.x = 0.0f;
+        rot.y = 0.0f;
+        rot.z = 0.0f;
+        dropY = 35.0f;
+        do {
+            HuPrcVSleep();
+            playerPos.y += dropY;
+            dropY -= 1.6333334f;
+            MBPlayerPosSetV(playerNo, &playerPos);
+            MBPlayerRotSetV(playerNo, &rot);
+        } while (playerPos.y <= landPos.y || dropY != 0.0f);
+
+        MBPlayerPosSetV(playerNo, &landPos);
+        MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+        HuPrcSleep(0x3C);
+        MBPlayerMotionSpeedSet(playerNo, 1.0f);
+        MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+        camOfs.x = 0.0f;
+        camOfs.y = 200.0f;
+        camOfs.z = 0.0f;
+        MBCameraMasuViewSet(landMasuId, NULL, &camOfs, 1500.0f, -1.0f, 0x2A);
+        MBCameraMotionWait();
+    }
+
+    if (walkMotNo != -1) {
+        MBPlayerMotionKill(playerNo, walkMotNo);
+    }
+    if (suckMotNo != -1) {
+        MBPlayerMotionKill(playerNo, suckMotNo);
+    }
+}
