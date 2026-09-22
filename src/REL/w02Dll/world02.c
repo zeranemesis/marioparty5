@@ -4928,9 +4928,62 @@ s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1) {
     return ret;
 }
 
+/* NONMATCHING: complete, asm-read translation. Confirms and extends the
+ * MB2_RAINBOWOBJ_DATA slot layout: +0x10 GX_VA_POS array (world-space
+ * strip vertices), +0x14 GX_VA_TEX0 array (UVs), +0x18 GX_VA_CLR0 array
+ * (per-vertex color), +0x1C..0x1F a single RGBA tint loaded into
+ * GX_TEVREG2, +0x20 display-list buffer, +0x24 display-list size. */
 void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
-    /* NONMATCHING: placeholder - m2c mismodeled the flat per-particle
-     * struct here (raw ->unkXX offsets on a void* / ANIMDATA* loop pointer).
-     * Needs a proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s before porting for real. */
+    MB2_RAINBOWOBJ_DATA *dat;
+    u8 *slot;
+    s32 i;
+
+    if (mb2_RainbowObj == NULL) {
+        return;
+    }
+    dat = (MB2_RAINBOWOBJ_DATA *) modelP->hookData;
+    if (shadowModelDrawF != 0) {
+        return;
+    }
+    PSMTXCopy(Hu3DCameraMtx, (f32 (*)[4]) mtx);
+    GXLoadPosMtxImm((f32 (*)[4]) mtx, 0U);
+    GXSetNumTevStages(1U);
+    GXSetNumTexGens(1U);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3CU, 0U, 0x7DU);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetZMode(1U, GX_LEQUAL, 0U);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A2, GX_CA_RASA, GX_CA_ZERO);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
+    GXSetNumChans(1U);
+    GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_VTX, 0U, GX_DF_CLAMP, GX_AF_NONE);
+    HuSprTexLoad(dat->srcAnim, 0, 0, 1, 1, 1);
+    GXSetAlphaCompare(GX_GEQUAL, 1U, GX_AOP_AND, GX_GEQUAL, 1U);
+    GXSetZCompLoc(0U);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+    slot = dat->slots;
+    for (i = 0; i < 8; i++, slot += 0x28) {
+        GXColor tint;
+        if (*(s32 *) slot == 0) {
+            continue;
+        }
+        GXClearVtxDesc();
+        GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
+        GXSetArray(GX_VA_POS, *(void **) (slot + 0x10), 0xCU);
+        GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
+        GXSetArray(GX_VA_CLR0, *(void **) (slot + 0x18), 4U);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
+        GXSetArray(GX_VA_TEX0, *(void **) (slot + 0x14), 8U);
+        tint.r = *(u8 *) (slot + 0x1C);
+        tint.g = *(u8 *) (slot + 0x1D);
+        tint.b = *(u8 *) (slot + 0x1E);
+        tint.a = *(u8 *) (slot + 0x1F);
+        GXSetTevColor(GX_TEVREG2, tint);
+        GXCallDisplayList(*(void **) (slot + 0x20), *(u32 *) (slot + 0x24));
+    }
 }
