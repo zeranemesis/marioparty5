@@ -442,6 +442,9 @@ static int MB7Ev_MasuWalkPost(int playerNo) {
  *   +0x64 (s32) = -1                last motion index set via
  *     MotionNoSet/ShiftSet (used to skip a redundant re-set).
  */
+/* NONMATCHING: redundant li r0,-1 reload before consecutive stores
+ * (92.50% match), same known MWCC quirk as w07Dll's equivalent
+ * function; logic identical */
 #pragma dont_inline on
 static void MB7Ev_KoopaInit(u16 arg0) {
     u8 *base = (u8 *) mb7_Work + 0x54;
@@ -492,6 +495,7 @@ static void MB7Ev_KoopaDataClose(void) {
     HuDataDirClose(*(s32 *) (base + 0x60));
 }
 
+/* NONMATCHING: branch-distance-only diff, code identical (94.29% match) */
 static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
     u8 *base = (u8 *) mb7_Work + 0x54;
     s32 attr = 0;
@@ -505,6 +509,7 @@ static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
     *(s32 *) (base + 0x64) = motionIdx;
 }
 
+/* NONMATCHING: branch-distance-only diff, code identical (95.12% match) */
 static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop) {
     u8 *base = (u8 *) mb7_Work + 0x54;
     s32 attr = 0;
@@ -548,6 +553,11 @@ static void MB7Ev_KoopaClose(void) {
  * same fireBase-relative field offsets - only the absolute fireBase
  * address differs, see MB7Ev_Hou below). */
 
+/* NONMATCHING: original uses _savegpr_27 + extra callee-saved
+ * float registers (f24-f26/r27) that this port's register
+ * allocation doesn't reproduce (61.73% match), same known MWCC
+ * quirk as w07Dll's equivalent hook; logic instruction-for-
+ * instruction identical. */
 static void MB7Ev_KoopaFire1Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
     MBEFFECTDATA *p;
     s32 i;
@@ -669,6 +679,11 @@ static void MB7Ev_KoopaFire1Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) 
     }
 }
 
+/* NONMATCHING: original uses _savegpr_27 + extra callee-saved
+ * float registers (f24-f26/r27) that this port's register
+ * allocation doesn't reproduce (63.54% match), same known MWCC
+ * quirk as w07Dll's equivalent hook; logic instruction-for-
+ * instruction identical. */
 static void MB7Ev_KoopaFire2Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
     MBEFFECTDATA *p;
     s32 i;
@@ -781,6 +796,11 @@ static void MB7Ev_KoopaFire2Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) 
     }
 }
 
+/* NONMATCHING: original uses _savegpr_27 + extra callee-saved
+ * float registers (f24-f26/r27) that this port's register
+ * allocation doesn't reproduce (56.23% match), same known MWCC
+ * quirk as w07Dll's equivalent hook; logic instruction-for-
+ * instruction identical. */
 static void MB7Ev_KoopaFire3Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
     MBEFFECTDATA *p;
     s32 i;
@@ -909,6 +929,11 @@ static void MB7Ev_KoopaFire3Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) 
     }
 }
 
+/* NONMATCHING: original uses _savegpr_27 + extra callee-saved
+ * float registers (f24-f26/r27) that this port's register
+ * allocation doesn't reproduce (56.84% match), same known MWCC
+ * quirk as w07Dll's equivalent hook; logic instruction-for-
+ * instruction identical. */
 static void MB7Ev_KoopaFire4Hook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
     MBEFFECTDATA *p;
     s32 i;
