@@ -46,9 +46,10 @@ void MB4_SakanaClose(void);
 s32 MB4_CoinNumGet(void);
 s32 MB4_CoinEffNumGet(void);
 void MB4_CoinEffBlendModeSet(u8 mode);
+static f32 MB4_FastSqrt(f32 x);
 void MB4_CoinInit(void);
 void MB4_CoinUpdate(OMOBJ *obj);
-s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 layer, f32 speed, f32 unused);
+s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 flightFrames, f32 arcHeight, f32 unused);
 s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist);
 s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam);
 void MB4_CoinEffInit(void);
@@ -144,10 +145,10 @@ typedef struct MB4Coin_s {
     s32 modelId;       /* 0x00 */
     s32 shadowModelId; /* 0x04 */
     s32 active;        /* 0x08 */
-    s32 unkC;          /* 0x0C */
-    f32 speed;         /* 0x10 */
-    s32 layer;         /* 0x14 */
-    s32 state;         /* 0x18 */
+    s32 phase;         /* 0x0C, 0 = flying to target, 1 = arrived/locked */
+    f32 arcHeight;     /* 0x10, extra sine-arc height while flying */
+    s32 flightFrames;  /* 0x14, duration in frames of the state-0 flight */
+    s32 flightTimer;   /* 0x18, frame counter within the state-0 flight */
     f32 posX;          /* 0x1C */
     f32 posY;          /* 0x20 */
     f32 posZ;          /* 0x24 */
@@ -1112,10 +1113,10 @@ void MB4_CoinInit(void) {
         coin->shadowModelId = Hu3DModelLink(MBModelIdGet((s16) mb4_Work[0x15]));
         Hu3DModelAttrSet((s16) coin->shadowModelId, 1U);
         coin->active = 0;
-        coin->unkC = 0;
-        coin->speed = 0.0f;
-        coin->state = 0;
-        coin->layer = 0;
+        coin->phase = 0;
+        coin->arcHeight = 0.0f;
+        coin->flightTimer = 0;
+        coin->flightFrames = 0;
         for (p = 0; p < 4; p++) {
             MBPlayerPosGet(p, &coin->playerPos[p]);
         }
@@ -1124,11 +1125,142 @@ void MB4_CoinInit(void) {
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Per-frame update for every active coin: while phase==0, arc from
+ * basePos to targetPos over flightFrames frames (sine-boosted height via
+ * arcHeight), then lock onto targetPos once arrived (phase 1). Every coin
+ * also re-checks proximity to all 4 players each frame; a player within
+ * mb4_CoinMaxDist collects it (coin credited, SE played, 32 coin-sparkle
+ * particles burst outward) and frees the slot. */
+void MB4_CoinUpdate(OMOBJ *obj) {
+    MB4COIN *coinP;
+    s32 i, p, j;
+    s32 collected;
+    f32 t;
+    Point3d target, base, cur, diff, playerPos;
+    f32 distSq, dist;
+    f32 burstAngle, spinAngle, spinCos, speedScale;
+    Point3d burstPos, burstVel;
+    u8 color[4];
+    f32 alpha;
+
+    if (MBKillCheck() || mb4_CoinObj == NULL) {
+        coinP = (MB4COIN *) obj->data;
+        for (i = 0; i < 0x20; i++) {
+            Hu3DModelKill((s16) coinP->modelId);
+            coinP->modelId = -1;
+            Hu3DModelKill((s16) coinP->shadowModelId);
+            coinP->shadowModelId = -1;
+            coinP++;
+        }
+        omDelObjEx(mbObjMan, obj);
+        mb4_CoinObj = NULL;
+        return;
+    }
+
+    coinP = (MB4COIN *) obj->data;
+    for (i = 0; i < 0x20; i++, coinP++) {
+        if (coinP->active == 0) {
+            continue;
+        }
+        collected = 0;
+        switch (coinP->phase) {
+        case 0:
+            coinP->flightTimer += 1;
+            t = (f32) coinP->flightTimer / (f32) coinP->flightFrames;
+            base.x = coinP->basePosX;
+            base.y = coinP->basePosY;
+            base.z = coinP->basePosZ;
+            target.x = coinP->targetX;
+            target.y = coinP->targetY;
+            target.z = coinP->targetZ;
+            PSVECSubtract(&target, &base, &diff);
+            PSVECScale(&diff, &diff, t);
+            PSVECAdd(&diff, &base, &diff);
+            diff.y = (f32) ((f64) diff.y + ((f64) coinP->arcHeight * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            coinP->posX = diff.x;
+            coinP->posY = diff.y;
+            coinP->posZ = diff.z;
+            coinP->rotY += 10.0f;
+            if (t == 1.0f) {
+                coinP->phase += 1;
+                coinP->flightTimer = 0;
+            }
+            break;
+        case 1:
+            coinP->posX = coinP->targetX;
+            coinP->posY = coinP->targetY;
+            coinP->posZ = coinP->targetZ;
+            coinP->rotY += 10.0f;
+            break;
+        }
+
+        if (coinP->phase <= 2) {
+            for (p = 0; p < 4; p++) {
+                MBPlayerPosGet(p, &playerPos);
+                cur.x = coinP->posX;
+                cur.y = coinP->posY;
+                cur.z = coinP->posZ;
+                PSVECSubtract(&cur, &playerPos, &diff);
+                distSq = (diff.x * diff.x) + (diff.z * diff.z);
+                if (distSq > 0.0f) {
+                    dist = MB4_FastSqrt(distSq);
+                } else {
+                    dist = distSq;
+                }
+                if (dist < mb4_CoinMaxDist.x) {
+                    MBPlayerCoinAdd(p, 1);
+                    MBAudFXPlay(7);
+                    collected = 1;
+                }
+                coinP->playerPos[p] = playerPos;
+            }
+        }
+
+        Hu3DModelPosSet((s16) coinP->modelId, coinP->posX, coinP->posY, coinP->posZ);
+        Hu3DModelRotSet((s16) coinP->modelId, coinP->rotX, coinP->rotY, coinP->rotZ);
+        Hu3DModelScaleSet((s16) coinP->modelId, coinP->scaleZ, coinP->scaleY, coinP->scaleX);
+        Hu3DModelPosSet((s16) coinP->shadowModelId, coinP->posX, -200.0f, coinP->posZ);
+        Hu3DModelRotSet((s16) coinP->shadowModelId, coinP->rotX, coinP->rotY, coinP->rotZ);
+        Hu3DModelScaleSet((s16) coinP->shadowModelId, coinP->scaleZ, coinP->scaleY, coinP->scaleX);
+
+        if (collected) {
+            coinP->active = 0;
+            Hu3DModelAttrSet((s16) coinP->modelId, 1U);
+            Hu3DModelAttrSet((s16) coinP->shadowModelId, 1U);
+
+            spinAngle = 0.0f;
+            for (j = 0; j < 0x20; j++) {
+                spinAngle += 22.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+                burstPos.x = coinP->posX;
+                burstPos.y = coinP->posY;
+                burstPos.z = coinP->posZ;
+                speedScale = 2.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+                burstAngle = 45.0f - (90.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                spinCos = (f32) cos((3.141592653589793 * (f64) burstAngle) / 180.0);
+                burstVel.x = (f32) ((f64) speedScale * (sin((3.141592653589793 * (f64) spinAngle) / 180.0) * spinCos));
+                spinCos = (f32) cos((3.141592653589793 * (f64) burstAngle) / 180.0);
+                burstVel.y = (f32) ((f64) speedScale * (cos((3.141592653589793 * (f64) spinAngle) / 180.0) * spinCos));
+                burstVel.z = (f32) ((f64) speedScale * sin((3.141592653589793 * (f64) burstAngle) / 180.0));
+                alpha = 0.007874016f * (f32) (frand() & 0x7F);
+                color[0] = (u8) (192.0f + (63.0f * alpha));
+                color[1] = (u8) (192.0f + (63.0f * alpha));
+                color[2] = (u8) (64.0f + (63.0f * alpha));
+                color[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CoinEffCreate(&burstPos, &burstVel, color,
+                    100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                    0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                    0.0f);
+            }
+        }
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
  * match. Finds a free MB4COIN slot (active == 0) and spawns it: coin model
  * at basePos (arg0, may be NULL to skip), shadow model 200 units below,
  * targetPos from arg1 (may be NULL) - the flight destination used by
  * MB4_CoinUpdate's state-0 arc animation (coin flying to a player). */
-s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 layer, f32 speed, f32 unused) {
+s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 flightFrames, f32 arcHeight, f32 unused) {
     MB4COIN *coinP;
     s32 i;
 
@@ -1147,10 +1279,10 @@ s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 layer, f32 speed, f
     }
 
     coinP->active = 1;
-    coinP->unkC = 0;
-    coinP->speed = speed;
-    coinP->layer = layer;
-    coinP->state = 0;
+    coinP->phase = 0;
+    coinP->arcHeight = arcHeight;
+    coinP->flightFrames = flightFrames;
+    coinP->flightTimer = 0;
     if (basePos != NULL) {
         coinP->basePosX = basePos->x;
         coinP->basePosY = basePos->y;
