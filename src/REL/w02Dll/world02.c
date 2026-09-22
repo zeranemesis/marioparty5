@@ -2001,34 +2001,542 @@ void MB2Ev_Thunder(s32 arg0) {
 
 /* Warning: Gap in callee-saved word stack region.
  * Saved: [-0xe8, -0xe4, -0xd8, -0xd4, -0xc8, -0xc4, -0xb8, -0xb4, -0xa8, -0xa4, -0x98, -0x94, -0x88, -0x84, -0x78, -0x74, -0x68, -0x64, -0x58, -0x54, -0x48, -0x44, 0xed4, 0xed8, 0xedc, 0xee0, 0xee4, 0xee8, 0xeec, 0xef0, 0xef4, 0xef8, 0xefc, 0xf00, 0xf04, 0xf08, 0xf0c, 0xf10, 0xf14, 0xf20, 0xf24, 0xf30, 0xf34, 0xf40, 0xf44, 0xf50, 0xf54, 0xf60, 0xf64, 0xf70, 0xf74, 0xf80, 0xf84, 0xf90, 0xf94, 0xfa0, 0xfa4, 0xfb0, 0xfb4], gap at: -0xe0. */
-/* MB2Ev_Rain notes (read from the m2c draft's raw offsets, NOT yet
- * asm-verified - left here for whoever ports this function for real):
- * two big LOCAL (stack) arrays, not heap structs - matches the
- * "-0xe8..-0x44 / 0xed4..0xfb4" callee-saved stack gap warning m2c printed
- * for this function (10 * 0x118 = 0xADC bytes, the "rain swim spot" array).
- *  - MB2_RAIN_SPOT rainSpot[10], stride 0x118: +0x00 HSFOBJECT *objPtr (via
- *    MB2_ModelObjPtrGet on mb2ev_RainObjTbl[i]), +0x68 ANIMDATA *mdl (=
- *    mb2_Work[1] model handle), +0x74 depth-vs-1190 delta, +0x78 masuId of
- *    the linked branch masu (flag bits 0xC00, or -1), +0x6C dist-to-mid^2,
- *    +0x7C/0x80 swim-progress counters, +0x84 swim length
- *    (mb2ev_RainSwimLenTbl[i]), +0x88 "is one of slots 1..3" flag, +0x8C/
- *    0x90/0x94 world pos (from Hu3DModelObjMtxGet's translation row),
- *    +0x98.. vector to mb2ev_RainSwimMidPos, +0xA4.. vector to
- *    mb2ev_RainSwimRightPos, +0xB0/0xB4/0xB8 zeroed accum, +0xBC world pos
- *    of the linked masu, +0xC8 vector to it, +0xD4 count of players
- *    standing on this spot (<=4), +0xD8[4] their player indices, +0xE8[4]
- *    (stride 0xC) their pos-minus-spot vectors.
- *  - a second array at var_r29 (10 * ~0x50?) for the 4 possible swimming
- *    players: +0x0 player index, +0x4 motion id (0x8C002B), +0x14 "is the
- *    active player" flag, +0x1C saved pos, +0x28 saved rot, +0x40 pos as
- *    ints, more distance-to-mid-pos sqrt math following the same
- *    __frsqrte pattern as MB2_RainbowObjCreate.
- * Needs a full instruction-by-instruction read of
- * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (see
- * docs/decomp_workflow.md) - not attempted this pass given its size (7036
- * bytes, the second largest function in the module). */
+/* MB2_RAIN_SPOT: 10-entry local (stack) array, stride 0x118 - confirmed
+ * against build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (MB2Ev_Rain,
+ * 0x5565-0x7443): +0x00 HSFOBJECT *objPtr (MB2_ModelObjPtrGet on
+ * mb2ev_RainObjTbl[i]), +0x04..0x67 raw snapshot of *(objPtr-1) (saved at
+ * entry, restored at exit - same struct, not individually named), +0x68
+ * ANIMDATA *mdl (mb2_Work[1] model handle), +0x6C dist-to-mid^2, +0x70
+ * easing speed accumulator, +0x74 depth delta (worldY-1190), +0x78 linked
+ * branch masuId (flag bits 0xC00) or -1, +0x7C/0x80 swim progress/duration,
+ * +0x84 swim length (mb2ev_RainSwimLenTbl[i]), +0x88 "slot 1..3" flag,
+ * +0x8C/0x90/0x94 world pos (Hu3DModelObjMtxGet's translation row), +0x98
+ * vector to mb2ev_RainSwimMidPos, +0xA4 vector to mb2ev_RainSwimRightPos,
+ * +0xB0/0xB4/0xB8 rot accumulator (0xB4 = yaw), +0xBC world pos of the
+ * linked masu, +0xC8 vector to it, +0xD4 count of players standing on this
+ * spot (<=4), +0xD8[4] their player indices, +0xE8[4] (stride 0xC)
+ * pos-minus-spot vectors for each. */
+#define RS_STRIDE 0x118
+#define RSp(p, i) ((u8 *) (p) + (i) * RS_STRIDE)
+#define RS_S32(p, off) (*(s32 *) ((u8 *) (p) + (off)))
+#define RS_F32(p, off) (*(f32 *) ((u8 *) (p) + (off)))
+#define RS_PTR(p, off) (*(void **) ((u8 *) (p) + (off)))
+
+/* MB2_RAIN_PLAYER: local (stack) array, stride 0x58, reused for two
+ * successive phases (the swim-toward-the-middle phase, up to 4 entries;
+ * and later the climb-out-on-wires phase, up to 4 entries) - same layout
+ * both times, confirmed by the whole-struct copy from one array to the
+ * other. +0x00 player index, +0x04 motion id (0x8C002B during swim / 6
+ * during climb), +0x08/0x0C progress/duration, +0x10 dist-to-mid (sqrt,
+ * write-only), +0x14 "is the event-starting player" flag, +0x18 climb-done
+ * flag, +0x1C/0x20/0x24 pos, +0x28/0x2C/0x30 rot (0x2C = yaw, the only rot
+ * component actually driven), +0x34/0x38/0x3C velocity (climb phase only),
+ * +0x44 current water-surface Y (swim phase only), +0x4C/0x50/0x54 saved
+ * original pos (climb phase). */
+#define RP_STRIDE 0x58
+#define RPp(p, i) ((u8 *) (p) + (i) * RP_STRIDE)
+#define RP_S32(p, off) (*(s32 *) ((u8 *) (p) + (off)))
+#define RP_F32(p, off) (*(f32 *) ((u8 *) (p) + (off)))
+
 void MB2Ev_Rain(s32 arg0) {
-    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    u8 rainSpot[10 * RS_STRIDE];
+    u8 swimPlayer[4 * RP_STRIDE];
+    u8 branchMasu[3 * 0x10];  /* 3 entries: s32 masuId, Point3d pos */
+    u8 escapePlayer[4 * RP_STRIDE];
+    s16 masuId;
+    MASU *masuP;
+    Point3d startPos;
+    Point3d tmp;
+    u8 *rs;
+    u8 *sp;
+    u8 *ep;
+    s32 i, j;
+    s32 spotCount;
+    s32 swimCount;
+    s32 branchMasuCount;
+    s32 escapeCount;
+    s32 escapeDoneF;
+    s32 anyMoreSwim;
+    void *modelP;
+    s32 climbMotionId;
+    s32 markerModelId;
+    s32 splashFXId;
+    s32 goalMasuId;
+    f32 waterY;
+    Point3d vec;
+    s32 done;
+
+    waterY = 1190.0f;
+    masuId = GwPlayer[arg0].masuId;
+    masuP = MBMasuGet(0, (s32) masuId);
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0U);
+    MBPlayerPosGet(arg0, &tmp);
+    startPos = tmp;
+
+    /* Build the 10 rain-spot objects and figure out how many players are
+     * standing on their linked branch masu. */
+    rs = rainSpot;
+    spotCount = 0;
+    for (i = 0; i < 0xA; i++, rs = RSp(rainSpot, i)) {
+        void *hu3dModel;
+        s16 mdlId;
+
+        RS_S32(rs, 0x68) = MB2W_S32(1 * 4);
+        mdlId = (s16) RS_S32(rs, 0x68);
+        hu3dModel = &Hu3DData[MBModelIdGet(mdlId)];
+        RS_PTR(rs, 0x0) = MB2_ModelObjPtrGet((HU3DMODEL *) hu3dModel, mb2ev_RainObjTbl[i]);
+        if (RS_PTR(rs, 0x0) != NULL) {
+            u8 *src = (u8 *) RS_PTR(rs, 0x0) - 4;
+            memcpy(rs + 4, src + 4, 0x64);
+            RS_S32(rs, 0x78) = -1;
+            if (mb2ev_RainNoTbl[i] > 0) {
+                s32 m;
+                for (m = 0; m <= MBMasuNumGet(0); m++) {
+                    if ((MBMasuFlagGet(0, m) & 0xC00) != 0) {
+                        s32 no = (u32) (MBMasuFlagGet(0, m) & 0xC00) >> 0xA;
+                        if (no == mb2ev_RainNoTbl[i]) {
+                            RS_S32(rs, 0x78) = m;
+                        }
+                    }
+                }
+            }
+            RS_S32(rs, 0x7C) = 0;
+            RS_S32(rs, 0x80) = 0;
+            Hu3DModelObjMtxGet(MBModelIdGet(mdlId), mb2ev_RainObjTbl[i], (f32 (*)[4]) &tmp);
+            RS_F32(rs, 0x8C) = tmp.x;
+            RS_F32(rs, 0x90) = tmp.y;
+            RS_F32(rs, 0x94) = tmp.z;
+            RS_F32(rs, 0xB8) = 0.0f;
+            RS_F32(rs, 0xB4) = 0.0f;
+            RS_F32(rs, 0xB0) = 0.0f;
+            PSVECSubtract(&mb2ev_RainSwimMidPos, (Point3d *) (rs + 0x8C), (Point3d *) (rs + 0x98));
+            PSVECSubtract(&mb2ev_RainSwimRightPos, (Point3d *) (rs + 0x8C), (Point3d *) (rs + 0xA4));
+            RS_F32(rs, 0x74) = RS_F32(rs, 0x90) - waterY;
+            RS_F32(rs, 0x70) = 0.0f;
+            PSVECSubtract(&mb2ev_RainSwimMidPos, (Point3d *) (rs + 0x8C), &vec);
+            {
+                f32 distSq = (vec.x * vec.x) + (vec.z * vec.z);
+                f32 dist;
+                if (distSq > 0.0f) {
+                    f64 e0 = __frsqrte(distSq);
+                    f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
+                    f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
+                    dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
+                } else {
+                    dist = distSq;
+                }
+                RS_F32(rs, 0x6C) = dist;
+                RS_S32(rs, 0x7C) = 0;
+                RS_S32(rs, 0x80) = (s32) (dist / 5.0f);
+            }
+            RS_S32(rs, 0x84) = mb2ev_RainSwimLenTbl[i];
+            RS_S32(rs, 0x88) = ((i >= 1) && (i <= 3)) ? 1 : 0;
+            if (RS_S32(rs, 0x78) != -1) {
+                MBMasuPosGet(0, RS_S32(rs, 0x78), (Point3d *) (rs + 0xBC));
+                PSVECSubtract((Point3d *) (rs + 0xBC), (Point3d *) (rs + 0x8C), (Point3d *) (rs + 0xC8));
+                RS_S32(rs, 0xD4) = 0;
+                for (j = 0; j < 4; j++) {
+                    if (RS_S32(rs, 0x78) == (s16) GwPlayer[j].masuId) {
+                        ((s32 *) (rs + 0xD8))[RS_S32(rs, 0xD4)] = j;
+                        MBPlayerPosGet(j, &tmp);
+                        PSVECSubtract(&tmp, (Point3d *) (rs + 0x8C),
+                            (Point3d *) (rs + 0xE8 + (RS_S32(rs, 0xD4) * 0xC)));
+                        RS_S32(rs, 0xD4) = RS_S32(rs, 0xD4) + 1;
+                    }
+                }
+                spotCount += RS_S32(rs, 0xD4);
+            }
+        }
+    }
+
+    /* Find up to 4 players standing on a "swim" masu (flag bit 0x8000) and
+     * set up their swim state. */
+    sp = swimPlayer;
+    swimCount = 0;
+    for (i = 0; i < 4; i++) {
+        if ((MBMasuFlagGet(0, (s32) GwPlayer[i].masuId) & 0x8000) != 0) {
+            RP_S32(sp, 0x0) = i;
+            RP_S32(sp, 0x4) = MBPlayerMotionCreate(i, 0x8C002B);
+            RP_S32(sp, 0x14) = (masuId == (s16) GwPlayer[i].masuId) ? 0 : 1;
+            MBPlayerPosGet(i, (Point3d *) (sp + 0x1C));
+            MBPlayerRotGet(i, (Point3d *) (sp + 0x28));
+            RS_S32(sp, 0x40) = (s32) RP_F32(sp, 0x1C);
+            RS_S32(sp, 0x44) = (s32) RP_F32(sp, 0x20);
+            RS_S32(sp, 0x48) = (s32) RP_F32(sp, 0x24);
+            PSVECSubtract(&mb2ev_RainSwimMidPos, (Point3d *) (sp + 0x1C), &vec);
+            {
+                f32 distSq = (vec.x * vec.x) + (vec.z * vec.z);
+                f32 dist;
+                if (distSq > 0.0f) {
+                    f64 e0 = __frsqrte(distSq);
+                    f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
+                    f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
+                    dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
+                } else {
+                    dist = distSq;
+                }
+                RP_F32(sp, 0x10) = dist;
+                RP_S32(sp, 0x8) = 0;
+                RP_S32(sp, 0xC) = (s32) (dist / 5.0f);
+            }
+            sp = RPp(swimPlayer, swimCount + 1);
+            swimCount += 1;
+        }
+    }
+
+    /* Collect up to 3 masu with the goal-marker flag (0x8000) for the
+     * splash-recede markers. */
+    branchMasuCount = 0;
+    for (i = 1; i <= MBMasuNumGet(0); i++) {
+        if (((MBMasuFlagGet(0, i) & 0x8000) != 0) && (branchMasuCount < 3)) {
+            *(s32 *) (branchMasu + branchMasuCount * 0x10) = i;
+            MBMasuPosGet(0, i, (Point3d *) (branchMasu + branchMasuCount * 0x10 + 4));
+            branchMasuCount += 1;
+        }
+    }
+
+    climbMotionId = MBPlayerMotionCreate(arg0, 0x8C0019);
+    markerModelId = MBModelCreate(0x80002, NULL, 0);
+    MBModelDispSet(markerModelId, 0);
+    MBPlayerPosGet(arg0, &tmp);
+    MBModelPosSetV(markerModelId, &tmp);
+    MBCameraModelViewSet(markerModelId, NULL, NULL, 3000.0f, -1.0f, 0xA);
+    MBCameraMotionWait();
+    MB2W_S32(0x28 * 4) = 0;
+    for (i = 0; (f32) i < 60.0f; i++) {
+        f32 t = 1.0f - ((f32) i / 60.0f);
+        MBModelScaleSet((s16) MB2W_S32(0x14 * 4), t, 1.0f, 1.0f);
+        MBModelScaleSet((s16) MB2W_S32(0x15 * 4), t, 1.0f, t);
+        HuPrcVSleep();
+    }
+    MBModelDispSet((s16) MB2W_S32(0x14 * 4), 0);
+    MBModelDispSet((s16) MB2W_S32(0x15 * 4), 0);
+    PSVECSubtract(&startPos, &tmp, &vec);
+    MBPlayerRotateStart(arg0, 0x2D, 0xF);
+    while (MBPlayerRotateCheck(arg0) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, climbMotionId, 0.0f, 8.0f, 0U);
+    HuPrcSleep(0x3C);
+    HuAudFXPlay(0x5D2);
+    for (i = 0; i < swimCount; i++) {
+        MBPlayerMotionNoSet(RP_S32(RPp(swimPlayer, i), 0x0), 9, 0U);
+        omVibrate((s16) RP_S32(RPp(swimPlayer, i), 0x0), 0xC, 6, 6);
+    }
+    splashFXId = HuAudFXPlay(0x5CC);
+
+    /* Water recedes over 60 frames; every masu marker sinks with it, and
+     * each swimming player's Y is clamped to the new surface (with a splash
+     * burst + a floating water-ring object the first time it settles). */
+    for (i = 0; (f32) i < 60.0f; i++) {
+        f32 t = (f32) i / 60.0f;
+        for (j = 0, sp = swimPlayer; j < swimCount; j++, sp = RPp(swimPlayer, j + 1)) {
+            f32 surf = waterY - (600.0f * t);
+            if (surf <= (1190.0f - 50.0f)) {
+                if (RP_F32(sp, 0x44) > (1190.0f - 50.0f)) {
+                    s32 k;
+                    MBPlayerMotionNoShiftSet(RP_S32(sp, 0x0), RP_S32(sp, 0x4), 0.0f, 8.0f, 0x40000001U);
+                    for (k = 0; k < 0x10; k++) {
+                        Point3d pos;
+                        u8 col[4];
+                        f32 t2 = (f32) (k & 1);
+                        pos.x = RP_F32(sp, 0x1C) + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+                        pos.z = RP_F32(sp, 0x24) + (1.5f * (100.0f * (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                        pos.y = 1190.0f - 50.0f;
+                        col[0] = (u8) (230.0f + t2);
+                        col[1] = (u8) (230.0f + t2);
+                        col[2] = (u8) (240.0f + t2);
+                        col[3] = (u8) (32.0f + (32.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                        MB2_SplashEffCreateRandX(&pos.x, col, (s32) t2, 1.0f);
+                    }
+                    {
+                        OMOBJ *ring = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB2_WaterSplashUpdate);
+                        ring->work[0] = 0x12;
+                        ring->trans.x = RP_F32(sp, 0x1C);
+                        ring->trans.y = 1190.0f - 50.0f;
+                        ring->trans.z = RP_F32(sp, 0x24);
+                    }
+                }
+                surf = 1190.0f - 50.0f;
+            }
+            MBPlayerPosSet(RP_S32(sp, 0x0), RP_F32(sp, 0x1C), surf, RP_F32(sp, 0x24));
+            RP_F32(sp, 0x44) = surf;
+        }
+        for (j = 0; j < branchMasuCount; j++) {
+            Mtx mtx;
+            Point3d markerPos;
+            markerPos.x = *(f32 *) (branchMasu + j * 0x10 + 4);
+            markerPos.y = *(f32 *) (branchMasu + j * 0x10 + 8) - (600.0f * t);
+            markerPos.z = *(f32 *) (branchMasu + j * 0x10 + 0xC);
+            PSMTXIdentity(mtx);
+            mtx[0][3] = markerPos.x;
+            mtx[1][3] = markerPos.y;
+            mtx[2][3] = markerPos.z;
+            MBMasuMtxSet(*(s32 *) (branchMasu + j * 0x10), mtx);
+        }
+        HuPrcVSleep();
+    }
+    if (splashFXId != -1) {
+        HuAudFXStop(splashFXId);
+    }
+    MBMasuPlayerLightSet(arg0, 0);
+    HuAudFXPlay(0x5D4);
+    HuAudFXPlay(0x5D3);
+
+    /* Main swim loop: every swim-player heads for the middle (or, for
+     * slots 1..3, via a Bezier curve through mb2ev_RainSwimLeftPos); every
+     * rain-spot advances its own swim/idle animation and, once linked to a
+     * branch masu, drags any players standing there along for the ride.
+     * Runs until every player has finished swimming (or there's nobody
+     * left to swim at all). */
+    done = 0;
+    escapeDoneF = 0;
+    do {
+        if (waterY > 1040.0f) {
+            waterY -= 0.5f;
+        } else {
+            waterY = 1040.0f;
+        }
+        MBModelPosSet((s16) MB2W_S32(0x13 * 4), 0.0f, waterY - 1190.0f, 0.0f);
+
+        for (j = 0, sp = swimPlayer; j < swimCount; j++, sp = RPp(swimPlayer, j + 1)) {
+            f32 t;
+            s32 progress = RP_S32(sp, 0x8) + 1;
+            RP_S32(sp, 0x8) = progress;
+            t = (f32) progress / (f32) RP_S32(sp, 0xC);
+            if (t > 1.0f) {
+                t = 1.0f;
+            }
+            t = (f32) sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0);
+            if (RP_S32(sp, 0x14) == 0) {
+                PSVECSubtract(&mb2ev_RainSwimMidPos, (Point3d *) (sp + 0x1C), &vec);
+                PSVECScale(&vec, &vec, t);
+                PSVECAdd((Point3d *) (sp + 0x1C), &vec, &vec);
+            } else {
+                MB2_BezierCalcV((f32 *) (sp + 0x1C), (f32 *) mb2ev_RainSwimLeftPos, &mb2ev_RainSwimMidPos, &vec, t);
+            }
+            vec.y = waterY - 50.0f;
+            if (j == 0) {
+                RP_F32(sp, 0x2C) = RP_F32(sp, 0x2C) + 2.0f;
+            } else {
+                RP_F32(sp, 0x2C) = RP_F32(sp, 0x2C) - 2.0f;
+            }
+            MBPlayerPosSetV(RP_S32(sp, 0x0), &vec);
+            MBPlayerRotSetV(RP_S32(sp, 0x0), (Point3d *) (sp + 0x28));
+        }
+
+        anyMoreSwim = 0;
+        for (j = 0, sp = swimPlayer; j < swimCount; j++, sp = RPp(swimPlayer, j + 1)) {
+            if (RP_S32(sp, 0x8) < RP_S32(sp, 0xC)) {
+                anyMoreSwim = 1;
+            }
+        }
+        if (!anyMoreSwim) {
+            escapeDoneF = 1;
+        }
+
+        for (i = 1, rs = RSp(rainSpot, 1); i < 0xA; i++, rs = RSp(rainSpot, i)) {
+            if (RS_PTR(rs, 0x0) != NULL) {
+                f32 t;
+                s32 progress = RS_S32(rs, 0x7C) + 1;
+                RS_S32(rs, 0x7C) = progress;
+                if (progress < RS_S32(rs, 0x84)) {
+                    t = 0.0f;
+                } else {
+                    t = (f32) (RS_S32(rs, 0x7C) - RS_S32(rs, 0x84)) / (f32) RS_S32(rs, 0x80);
+                }
+                if (t > 1.0f) {
+                    t = 1.0f;
+                }
+                t = (f32) sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0);
+                if (RS_S32(rs, 0x88) == 0) {
+                    PSVECScale((Point3d *) (rs + 0x98), &vec, t);
+                } else {
+                    MB2_BezierCalcV((f32 *) &mb2ev_RainSwimDefPos, (f32 *) (rs + 0xA4), (Point3d *) (rs + 0x98), &vec, t);
+                }
+                {
+                    HSFOBJECT *objP = (HSFOBJECT *) RS_PTR(rs, 0x0);
+                    f32 depth = waterY - 1190.0f;
+                    objP->mesh.base.pos.x = RS_F32(rs, 0x20) + vec.x;
+                    objP->mesh.base.pos.y = RS_F32(rs, 0x24) + depth;
+                    objP->mesh.base.pos.z = RS_F32(rs, 0x28) + vec.z;
+                    if (RS_F32(rs, 0x70) < 2.0f) {
+                        RS_F32(rs, 0x70) = RS_F32(rs, 0x70) + 0.01f;
+                    }
+                    if (i == 0) {
+                        RS_F32(rs, 0xB4) = RS_F32(rs, 0xB4) + RS_F32(rs, 0x70);
+                    } else {
+                        RS_F32(rs, 0xB4) = RS_F32(rs, 0xB4) - RS_F32(rs, 0x70);
+                    }
+                    objP->mesh.base.rot.y = RS_F32(rs, 0x2C) + RS_F32(rs, 0xB4);
+                }
+                if (RS_S32(rs, 0x78) != -1) {
+                    Mtx mtx;
+                    Point3d masuPos;
+                    s16 mdlId = (s16) RS_S32(rs, 0x68);
+
+                    Hu3DModelObjMtxGet(MBModelIdGet(mdlId), mb2ev_RainObjTbl[i], mtx);
+                    masuPos.x = RS_F32(rs, 0x8C);
+                    masuPos.y = waterY + RS_F32(rs, 0x74);
+                    masuPos.z = RS_F32(rs, 0x94);
+                    PSVECAdd(&masuPos, (Point3d *) (rs + 0xC8), &masuPos);
+                    PSMTXIdentity(mtx);
+                    mtx[0][3] = masuPos.x;
+                    mtx[1][3] = masuPos.y;
+                    mtx[2][3] = masuPos.z;
+                    MBMasuMtxSet(RS_S32(rs, 0x78), mtx);
+                    for (j = 0; j < RS_S32(rs, 0xD4); j++) {
+                        Mtx rotMtx;
+                        Point3d off, worldOff;
+
+                        Hu3DModelObjMtxGet(MBModelIdGet(mdlId), mb2ev_RainObjTbl[i], mtx);
+                        masuPos.x = RS_F32(rs, 0x8C);
+                        masuPos.y = waterY + RS_F32(rs, 0x74);
+                        masuPos.z = RS_F32(rs, 0x94);
+                        mtxRot(rotMtx, RS_F32(rs, 0xB0), RS_F32(rs, 0xB4), RS_F32(rs, 0xB8));
+                        off = *(Point3d *) (rs + 0xE8 + (j * 0xC));
+                        PSMTXMultVec(rotMtx, &off, &worldOff);
+                        PSVECAdd(&masuPos, &worldOff, &masuPos);
+                        MBPlayerPosSetV(((s32 *) (rs + 0xD8))[j], &masuPos);
+                        MBPlayerRotSetV(((s32 *) (rs + 0xD8))[j], (Point3d *) (rs + 0xB0));
+                    }
+                }
+            }
+        }
+
+        anyMoreSwim = 0;
+        for (i = 1, rs = RSp(rainSpot, 1); i < 0xA; i++, rs = RSp(rainSpot, i)) {
+            if ((f32) (RS_S32(rs, 0x7C) - RS_S32(rs, 0x84)) < (f32) RS_S32(rs, 0x80)) {
+                anyMoreSwim = 1;
+            }
+        }
+        if (!anyMoreSwim) {
+            done = 1;
+        }
+        if (spotCount <= 0) {
+            done = 1;
+        }
+        HuPrcVSleep();
+    } while (escapeDoneF == 0 || done == 0);
+
+    WipeColorSet(0xFFU, 0xFFU, 0xFFU);
+    WipeCreate(2, 0x81, 1);
+    while (WipeCheckEnd() != 0) {
+        HuPrcVSleep();
+    }
+    MBMasuPlayerLightSet(arg0, 1);
+
+    /* Gather up to 4 of the players who were swimming (their own, plus any
+     * still being carried by a rain-spot) into the escape/climb array. */
+    escapeCount = 0;
+    for (j = 0, sp = swimPlayer; j < swimCount; j++, sp = RPp(swimPlayer, j + 1)) {
+        if (escapeCount < 4) {
+            memcpy(RPp(escapePlayer, escapeCount), sp, RP_STRIDE);
+            escapeCount += 1;
+        }
+    }
+    for (i = 1, rs = RSp(rainSpot, 1); i < 0xA; i++, rs = RSp(rainSpot, i)) {
+        if (RS_S32(rs, 0x78) != -1) {
+            for (j = 0; j < RS_S32(rs, 0xD4); j++) {
+                if (escapeCount < 4) {
+                    RP_S32(RPp(escapePlayer, escapeCount), 0x0) = ((s32 *) (rs + 0xD8))[j];
+                    escapeCount += 1;
+                }
+            }
+        }
+    }
+
+    goalMasuId = MBMasuFlagPosGet(0, 0x80000000U, NULL);
+    for (j = 0, ep = escapePlayer; j < escapeCount; j++, ep = RPp(escapePlayer, j + 1)) {
+        GwPlayer[RP_S32(ep, 0x0)].masuId = (s16) goalMasuId;
+    }
+    MBPlayerPosFixEvent(arg0, goalMasuId, 1);
+    MBMasuPosGet(0, goalMasuId, &tmp);
+    MBPlayerPosSetV(arg0, &tmp);
+    for (j = 0, ep = escapePlayer; j < escapeCount; j++, ep = RPp(escapePlayer, j + 1)) {
+        MBPlayerPosGet(RP_S32(ep, 0x0), (Point3d *) (ep + 0x4C));
+        RP_F32(ep, 0x1C) = RP_F32(ep, 0x4C);
+        RP_F32(ep, 0x20) = 2000.0f + RP_F32(ep, 0x50) + (500.0f * (f32) j);
+        RP_F32(ep, 0x24) = RP_F32(ep, 0x54);
+        RP_F32(ep, 0x3C) = 0.0f;
+        RP_F32(ep, 0x38) = 0.0f;
+        RP_F32(ep, 0x34) = 0.0f;
+        MBPlayerRotSet(RP_S32(ep, 0x0), 0.0f, 0.0f, 0.0f);
+        RP_S32(ep, 0x18) = 0;
+    }
+
+    MBCameraSkipSet(0);
+    MBCameraFocusMasuSet(goalMasuId);
+    MBCameraMotionWait();
+    MBCameraSkipSet(1);
+    WipeCreate(1, 0x81, 0x1E);
+    do {
+        for (j = 0, ep = escapePlayer; j < escapeCount; j++, ep = RPp(escapePlayer, j + 1)) {
+            if (RP_S32(ep, 0x18) == 0) {
+                PSVECAdd((Point3d *) (ep + 0x1C), (Point3d *) (ep + 0x34), (Point3d *) (ep + 0x1C));
+                RP_F32(ep, 0x38) = RP_F32(ep, 0x38) - 3.266667f;
+                if (RP_F32(ep, 0x20) <= RP_F32(ep, 0x50)) {
+                    MBPlayerMotionNoShiftSet(RP_S32(ep, 0x0), 6, 0.0f, 8.0f, 0x40000001U);
+                    RP_F32(ep, 0x1C) = RP_F32(ep, 0x4C);
+                    RP_F32(ep, 0x20) = RP_F32(ep, 0x50);
+                    RP_F32(ep, 0x24) = RP_F32(ep, 0x54);
+                    RP_S32(ep, 0x18) = 1;
+                }
+                MBPlayerPosSetV(RP_S32(ep, 0x0), (Point3d *) (ep + 0x1C));
+            }
+        }
+        anyMoreSwim = 0;
+        for (j = 0, ep = escapePlayer; j < escapeCount; j++, ep = RPp(escapePlayer, j + 1)) {
+            if (RP_S32(ep, 0x18) == 0) {
+                anyMoreSwim = 1;
+            }
+        }
+        HuPrcVSleep();
+    } while (anyMoreSwim != 0);
+    while (WipeCheckEnd() != 0) {
+        HuPrcVSleep();
+    }
+    for (i = 0; (f32) i < 60.0f; i++) {
+        HuPrcVSleep();
+    }
+    for (j = 0, ep = escapePlayer; j < escapeCount; j++, ep = RPp(escapePlayer, j + 1)) {
+        MBPlayerMotionNoShiftSet(RP_S32(ep, 0x0), 1, 0.0f, 8.0f, 0x40000001U);
+    }
+    for (i = 0; (f32) i < 60.0f; i++) {
+        HuPrcVSleep();
+    }
+
+    MB2W_S32(0x28 * 4) = 1;
+    MBModelPosSet((s16) MB2W_S32(0x13 * 4), 0.0f, 0.0f, 0.0f);
+    MBModelScaleSet((s16) MB2W_S32(0x14 * 4), 1.0f, 1.0f, 1.0f);
+    MBModelDispSet((s16) MB2W_S32(0x14 * 4), 1);
+    MBModelScaleSet((s16) MB2W_S32(0x15 * 4), 1.0f, 1.0f, 1.0f);
+    MBModelDispSet((s16) MB2W_S32(0x15 * 4), 1);
+
+    /* Restore every rain-spot's original transform snapshot. */
+    for (i = 0, rs = rainSpot; i < 0xA; i++, rs = RSp(rainSpot, i)) {
+        u8 *dst = (u8 *) RS_PTR(rs, 0x0) - 4;
+        memcpy(dst + 4, rs + 4, 0x64);
+    }
+    for (j = 0; j < branchMasuCount; j++) {
+        MBMasuMtxSet(*(s32 *) (branchMasu + j * 0x10), NULL);
+    }
+    for (i = 1, rs = RSp(rainSpot, 1); i < 0xA; i++, rs = RSp(rainSpot, i)) {
+        if (RS_S32(rs, 0x78) != -1) {
+            MBMasuMtxSet(RS_S32(rs, 0x78), NULL);
+        }
+    }
+    for (j = 0, sp = swimPlayer; j < swimCount; j++, sp = RPp(swimPlayer, j + 1)) {
+        if (RP_S32(sp, 0x4) != -1) {
+            MBPlayerMotionKill(RP_S32(sp, 0x0), RP_S32(sp, 0x4));
+        }
+    }
+    if (climbMotionId != -1) {
+        MBPlayerMotionKill(arg0, climbMotionId);
+    }
+    if (markerModelId != -1) {
+        MBModelKill(markerModelId);
+    }
 }
 
 void MB2Ev_Zen2(s32 arg0) {
