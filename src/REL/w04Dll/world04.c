@@ -64,7 +64,9 @@ static s16 PathCheck(s16 masuId, s16 depth);
 static f32 MB4_PathTimeGet(Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused, f32 tMax);
 static f32 fn_1_DB68(f32 t, f32 pPrev, f32 p1, f32 pNext);
 static f32 fn_1_DC9C(Point3d *pPrev, Point3d *p1, Point3d *pNext, f32 t);
-static void MB4_BubbleEffInit(void);
+void MB4_BubbleEffInit(void);
+void MB4_BubbleEffUpdate(OMOBJ *obj);
+s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale);
 static void MB4_SakanaInit(s32 timer, s32 arg1, s32 arg2, f32 phase);
 static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
 static void MB4_MainObjUpdate(OMOBJ *obj);
@@ -77,7 +79,6 @@ static void MB4Ev_MasuHatena(s32 playerNo);
 static void MB4_MapViewHook(int enterF);
 static void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
 static void MB4_CapsuleBubbleUpdate(void);
-static s32 MB4_BubbleEffCreate(Point3d *pos, s32 duration, f32 speed);
 static void MB4Ev_PlayerBubbleCreate(s32 playerNo);
 
 static s16 mb4_PathValidF;
@@ -888,6 +889,107 @@ void MB4_CoinEffClose(void) {
 
 void MB4_BubbleEffClose(void) {
     mb4_BubbleEffObj = NULL;
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Ambient bubble particles reuse MB4PARTICLE with a different
+ * meaning per field: active (unk0, here an s16 wobble-phase angle 0-359),
+ * velX (wobble amplitude), velY (rise speed), speed (alpha 0..1), one
+ * (alpha decay rate), timer (life-active flag), color[3] (alpha byte). */
+void MB4_BubbleEffInit(void) {
+    ANIMDATA *anim;
+    HU3DMODEL *hdr;
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
+    s32 i;
+
+    mb4_BubbleEffObj = omAddObjEx(mbObjMan, -0x8000, 1U, 0U, -1, MB4_BubbleEffUpdate);
+    anim = HuSprAnimRead(HuDataReadNum(0xD10033, 0x10000000));
+    mb4_BubbleEffObj->data = anim;
+    *mb4_BubbleEffObj->mdlId = MBEffCreate(anim, 0x400);
+    Hu3DModelLayerSet(*mb4_BubbleEffObj->mdlId, 3);
+    hdr = &Hu3DData[*mb4_BubbleEffObj->mdlId];
+    mgr = (MB4COINEFFMGR *) hdr->hookData;
+    mgr->blendMode = 1;
+    p = mgr->particles;
+    for (i = 0; i < mgr->count; i++) {
+        p->timer = 0.0f;
+        p++;
+    }
+}
+
+void MB4_BubbleEffUpdate(OMOBJ *obj) {
+    MB4COINEFFMGR *mgr = (MB4COINEFFMGR *) Hu3DData[*obj->mdlId].hookData;
+    MB4PARTICLE *p = mgr->particles;
+    s32 i;
+    s16 phase;
+
+    if (MBKillCheck() || mb4_BubbleEffObj == NULL) {
+        MBEffKill(*obj->mdlId);
+        *obj->mdlId = -1;
+        obj->data = NULL;
+        omDelObjEx(mbObjMan, obj);
+        mb4_BubbleEffObj = NULL;
+        return;
+    }
+    for (i = 0; i < mgr->count; i++) {
+        if (p->timer != 0.0f) {
+            phase = (s16) p->active + 1;
+            if (phase > 0x168) {
+                phase -= 0x168;
+            }
+            p->active = phase;
+            p->posX = (f32) ((f64) p->posX + ((f64) p->velX * sin((3.141592653589793 * (f64) (2.0f * (f32) phase)) / 180.0)));
+            p->posY += p->velY;
+            p->speed -= p->one;
+            p->color[3] = (u8) (255.0f * p->speed);
+            if (p->speed < 0.0f) {
+                p->timer = 0.0f;
+            }
+        }
+        p++;
+    }
+}
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. */
+s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale) {
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
+    s32 i;
+
+    if (mb4_BubbleEffObj == NULL) {
+        return -1;
+    }
+    mgr = (MB4COINEFFMGR *) Hu3DData[*mb4_BubbleEffObj->mdlId].hookData;
+    p = mgr->particles;
+    for (i = 0; i < mgr->count; i++) {
+        if (p->timer == 0.0f) {
+            break;
+        }
+        p++;
+    }
+    if (i >= mgr->count) {
+        return -1;
+    }
+    if (speedScale == 0.0f) {
+        speedScale = 1.0f;
+    }
+    p->posX = pos->x;
+    p->posY = pos->y;
+    p->posZ = pos->z;
+    p->velX = 0.5f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+    p->velZ = 1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+    p->velY = 2.0f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+    p->speed = 1.0f;
+    p->one = 1.0f / (f32) lifeFrames;
+    p->active = (s16) (frand() % 360);
+    p->timer = 20.0f * speedScale;
+    p->color[3] = 0xFF;
+    p->color[2] = 0xFF;
+    p->color[1] = 0xFF;
+    p->color[0] = 0xFF;
+    return i;
 }
 
 /* mb4_Work[0x1FDD]/[0x1FDE] (byte 0x7F74/0x7F78): sakana (fish) effect id
