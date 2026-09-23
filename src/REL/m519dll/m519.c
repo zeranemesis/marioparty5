@@ -1472,3 +1472,309 @@ void fn_1_3658(M519_MECH *mech)
 {
     mech->mode = 1;
 }
+
+void fn_1_4D40(M519_MECH *mech)
+{
+    s16 padNo = lbl_1_bss_E8[mech->pilotNo]->padNo;
+
+    mech->stkX = HuPadStkX[padNo];
+    mech->stkY = HuPadStkY[padNo];
+    mech->trigL = HuPadTrigL[padNo];
+    mech->trigR = HuPadTrigR[padNo];
+    mech->btn = HuPadBtn[padNo];
+    mech->btnDown = HuPadBtnDown[padNo];
+}
+
+void fn_1_68E4(M519_MECH *mech)
+{
+    s16 padNo = lbl_1_bss_E8[mech->pilotNo]->padNo;
+
+    mech->stkX = HuPadStkX[padNo];
+    mech->stkY = HuPadStkY[padNo];
+    mech->trigL = HuPadTrigL[padNo];
+    mech->trigR = HuPadTrigR[padNo];
+    mech->btn = HuPadBtn[padNo];
+    mech->btnDown = HuPadBtnDown[padNo];
+}
+
+float fn_1_7EB8(M519_MECH *mech, HuVecF *pos)
+{
+    float angle = 0.0f;
+
+    if (pos->x != mech->pos.x || pos->z != mech->pos.z) {
+        angle = (180.0 + HuAtan(mech->pos.x - pos->x, mech->pos.z - pos->z)) - mech->rot.y;
+        if (angle < 0.0f) {
+            angle = 360.0f + angle;
+        }
+        if (angle >= 360.0f) {
+            angle -= 360.0f;
+        }
+        if (angle >= 180.0f) {
+            angle -= 360.0f;
+        }
+        angle = -angle;
+    }
+    return angle;
+}
+
+float fn_1_7FFC(M519_MECH *mech, HuVecF *pos)
+{
+    float dx = pos->x - mech->pos.x;
+    float dz = pos->z - mech->pos.z;
+    float dist = HuMagPoint2D(dx, dz);
+
+    return dist;
+}
+
+void fn_1_817C(M519_MECH *mech)
+{
+    mech->mode = 2;
+}
+
+void fn_1_8188(M519_MECH *mech)
+{
+    fn_1_2FA0(mech, 5, 1.0f);
+    M519_SLEEP_MODECHG(M519_MECH, 50);
+    fn_1_A828(lbl_1_bss_E8[mech->pilotNo]);
+    fn_1_F2DC(lbl_1_bss_20[mech->no]);
+    fn_1_98A0(mech);
+}
+
+void fn_1_82E4(M519_MECH *mech)
+{
+    float dx;
+    float dz;
+    s16 step;
+
+    if (mech->knockback <= 0.0f) {
+        return;
+    }
+    {
+        fn_1_FD7C(mech->pilotNo, 2, 2);
+        dx = mech->knockback * HuSin(mech->knockbackAngle);
+        dz = mech->knockback * HuCos(mech->knockbackAngle);
+        mech->pos.x += dx;
+        mech->pos.z += dz;
+        step = mech->knockback / 4.0f;
+        mech->knockback -= step;
+        if (step == 0) {
+            mech->knockback = 0.0f;
+        }
+    }
+}
+
+void fn_1_8D40(M519_MECH *mech)
+{
+    M519_MECH *target = lbl_1_bss_F8[0];
+
+    mech->turretRot = 180.0 + HuAtan(mech->pos.x - target->pos.x, mech->pos.z - target->pos.z);
+}
+
+s32 fn_1_8DD0(M519_MECH *mech)
+{
+    if (mech->chargeB > 0) {
+        if (mech->chargeB >= 90) {
+            return 2;
+        }
+        if (mech->chargeB > 40) {
+            return 1;
+        }
+    }
+    else if (mech->chargeA > 0) {
+        if (mech->chargeA >= 90) {
+            return 2;
+        }
+        if (mech->chargeA > 40) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void fn_1_95B0(M519_MECH *mech)
+{
+    int i;
+    M519_MECH *other;
+    HuVecF selfCircle;
+    HuVecF otherCircle;
+
+    selfCircle.x = mech->pos.x;
+    selfCircle.y = mech->pos.z;
+    selfCircle.z = mech->radius;
+    mech->collideF = FALSE;
+    for (i = 0; i < 4; i++) {
+        other = lbl_1_bss_F8[i];
+        if (other != mech && other->mode != 3) {
+            otherCircle.x = other->pos.x;
+            otherCircle.y = other->pos.z;
+            otherCircle.z = other->radius;
+            if (fn_1_F860(&selfCircle, &otherCircle, TRUE)) {
+                mech->rot.y = fn_1_FC78(mech->rot.y, HuAtan(selfCircle.x - mech->pos.x, selfCircle.y - mech->pos.z), 0.0009f * mech->speed);
+                mech->pos.x = selfCircle.x;
+                mech->pos.z = selfCircle.y;
+                if (mech->type == other->type) {
+                    mech->collideF = TRUE;
+                }
+            }
+        }
+    }
+}
+
+void fn_1_9700(M519_MECH *mech)
+{
+    int i;
+    M519_OBJ *obj;
+    HuVecF selfCircle;
+    HuVecF objCircle;
+    float rotY;
+
+    selfCircle.x = mech->pos.x;
+    selfCircle.y = mech->pos.z;
+    selfCircle.z = mech->radius;
+    for (i = 0; i < 12; i++) {
+        obj = lbl_1_bss_178->obj[i];
+        if (obj != NULL && (obj->mode == 3 || obj->mode == 1)) {
+            objCircle.x = obj->pos.x;
+            objCircle.y = obj->pos.z;
+            objCircle.z = obj->radius;
+            if (fn_1_F860(&selfCircle, &objCircle, TRUE)) {
+                rotY = mech->rot.y;
+                mech->rot.y = fn_1_FC78(mech->rot.y, HuAtan(selfCircle.x - mech->pos.x, selfCircle.y - mech->pos.z), 0.0009f * mech->speed);
+                mech->pos.x = selfCircle.x;
+                mech->pos.z = selfCircle.y;
+            }
+        }
+    }
+    objCircle.x = 0.0f;
+    objCircle.y = 0.0f;
+    objCircle.z = 2390.0f;
+    if (fn_1_FA6C(&selfCircle, &objCircle, TRUE)) {
+        mech->pos.x = selfCircle.x;
+        mech->pos.z = selfCircle.y;
+    }
+}
+
+void fn_1_98A0(M519_MECH *mech)
+{
+    mech->mode = 3;
+}
+
+void fn_1_98AC(M519_MECH *mech)
+{
+    static const int seTbl[2] = { 1809, 1811 };
+    int time;
+    float t;
+
+    HuAudFXPlayPan(seTbl[mech->type], lbl_1_rodata_18[mech->type]);
+    fn_1_FD7C(mech->pilotNo, 1, 90);
+    switch (mech->type) {
+        case 0:
+            Hu3DModelAttrSet(mech->modelId[1], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[2], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[3], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[4], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[6], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[7], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[8], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[5], HU3D_ATTR_DISPOFF);
+            break;
+        case 1:
+            Hu3DModelAttrSet(mech->modelId[1], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[2], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[3], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[4], HU3D_ATTR_DISPOFF);
+            break;
+    }
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_NOCULL);
+    Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+    for (time = 1; time <= 60; time++) {
+        t = (1.0f / 60.0f) * time;
+        Hu3DModelTPLvlSet(mech->modelId[0], 1.0f - t);
+        if (mech->type == 0) {
+            Hu3DModelTPLvlSet(mech->modelId[5], 1.0f - t);
+        }
+        fn_1_8450(mech);
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+    fn_1_3098(mech);
+    while (TRUE) {
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+}
+
+void fn_1_9B9C(M519_MECH *mech)
+{
+    mech->mode = 4;
+}
+
+void fn_1_9BA8(M519_MECH *mech)
+{
+    int time;
+    float t;
+    float s;
+    HuVecF pos;
+
+    pos = mech->pos;
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(mech->modelId[5], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(mech->modelId[6], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(mech->modelId[7], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_NOCULL);
+    Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+    HuAudFXPlay(1801);
+    for (time = 1; time <= 100; time++) {
+        t = 0.01f * (time + 1);
+        s = HuCos(90.0f * t);
+        Hu3DModelTPLvlSet(mech->modelId[0], t);
+        Hu3DModelTPLvlSet(mech->modelId[5], t);
+        pos.y = 1000.0f * s;
+        fn_1_3138(mech, pos);
+        fn_1_8450(mech);
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+    Hu3DModelTPLvlSet(mech->modelId[0], 1.0f);
+    Hu3DModelTPLvlSet(mech->modelId[5], 1.0f);
+    Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_NOCULL);
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+    HuAudFXPlay(1824);
+    fn_1_2FA0(mech, 6, 1.0f);
+    fn_1_FD7C(mech->pilotNo, 2, 30);
+    M519_SLEEP_MODECHG(M519_MECH, 90);
+    fn_1_2FA0(mech, 0, 1.0f);
+    fn_1_35B0(mech);
+}
+
+void fn_1_A068(M519_MECH *mech)
+{
+    int time;
+    float t;
+
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(mech->modelId[2], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_NOCULL);
+    Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+    for (time = 0; time < 90; time++) {
+        t = (1.0 / 90.0) * time;
+        Hu3DModelTPLvlSet(mech->modelId[0], t);
+        Hu3DModelTPLvlSet(mech->modelId[2], t);
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+    Hu3DModelTPLvlSet(mech->modelId[0], 1.0f);
+    Hu3DModelTPLvlSet(mech->modelId[2], 1.0f);
+    Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_NOCULL);
+    Hu3DModelAttrReset(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+    fn_1_35B0(mech);
+}
+
+BOOL fn_1_A1D4(M519_MECH *mech)
+{
+    BOOL deadF;
+
+    if (mech->hp == 0) {
+        deadF = TRUE;
+    }
+    else {
+        deadF = FALSE;
+    }
+    return deadF;
+}
