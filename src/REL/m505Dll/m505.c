@@ -212,6 +212,7 @@ void *lbl_1_bss_1158[4][4];
 float lbl_1_bss_1154;
 float lbl_1_bss_1150;
 GXTexObj lbl_1_bss_918[64];
+GXTexObj lbl_1_bss_18[72];
 GXColor lbl_1_bss_111C;
 GXColor lbl_1_bss_1118;
 s32 lbl_1_bss_8;
@@ -638,6 +639,188 @@ void fn_1_C0BC(HU3DMODEL *model, Mtx *mtx)
             GXTexCoord2f32(0.0f, 1.0f);
             GXEnd();
             GXPixModeSync();
+        }
+    }
+    GXSetZCompLoc(GX_TRUE);
+}
+
+/* Draws the splashes back to front, then the background actors. */
+void fn_1_D9E0(HU3DMODEL *model, Mtx *mtx)
+{
+    s32 i;
+    s32 j;
+    s32 head = -1;
+    s32 h0;
+    s32 h1;
+    u8 alpha;
+    HU3DCAMERA *camera;
+    s32 w0;
+    s32 w1;
+    s32 texW;
+    s32 texH;
+#ifdef TARGET_PC
+    s32 list[72][2];
+#else
+    /* only 64 links for 72 splashes: the last ones spill into the conversion scratch area */
+    s32 list[64][2];
+#endif
+    Mtx lookAt;
+    Mtx camMtx;
+    Vec corners[4] = { { -1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, -1.0f, 0.0f }, { -1.0f, -1.0f, 0.0f } };
+    Vec billboard[4];
+    float scale;
+
+    for (i = 0; i < 16; i++) {
+        if (model->cameraBit & (1 << i)) {
+            break;
+        }
+    }
+    camera = &Hu3DCamera[i];
+    C_MTXLookAt(lookAt, &camera->pos, &camera->up, &camera->target);
+    PSMTXTranspose(lookAt, camMtx);
+    PSMTXMultVecArray(camMtx, corners, billboard, 4);
+    GXLoadPosMtxImm(*mtx, GX_PNMTX0);
+    GXSetNumTevStages(1);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+    GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+    /* list[i][0] = next (farther along z), list[i][1] = previous */
+    for (i = 0; i < 72; i++) {
+        if (lbl_1_bss_977C[i].time < 0) {
+            continue;
+        }
+        for (j = head;; j = list[j][0]) {
+            if (j > -1 && lbl_1_bss_977C[i].unk8 < lbl_1_bss_977C[j].unk8) {
+                list[i][0] = j;
+                list[i][1] = list[j][1];
+                if (list[i][0] != -1) {
+                    list[list[i][0]][1] = i;
+                }
+                if (list[i][1] != -1) {
+                    list[list[i][1]][0] = i;
+                }
+                if (list[i][1] == -1) {
+                    head = i;
+                }
+                break;
+            }
+            if (head == -1 || list[j][0] == -1) {
+                list[i][0] = -1;
+                list[i][1] = j;
+                if (list[i][1] != -1) {
+                    list[list[i][1]][0] = i;
+                }
+                if (list[i][1] == -1) {
+                    head = i;
+                }
+                break;
+            }
+        }
+    }
+    j = head;
+    while (j != -1) {
+        Vec pos = { 0.0f, 0.0f, 0.0f };
+
+        i = j;
+        if (lbl_1_bss_977C[i].time >= 0) {
+            pos.x = lbl_1_bss_977C[i].unk0;
+            pos.y = (-90.0f + lbl_1_bss_977C[i].unk4) - 200.0f;
+            pos.z = lbl_1_bss_977C[i].unk8;
+            scale = (lbl_1_bss_977C[i].unkC == 0) ? 1.0 : (lbl_1_bss_977C[i].unkC == 1) ? 2.5 : 2.0;
+            pos.z += (lbl_1_bss_977C[i].unkC == 0) ? 0 : (lbl_1_bss_977C[i].unkC == 1) ? 0 : 0;
+            pos.y += (lbl_1_bss_977C[i].unkC == 0) ? 200 : (lbl_1_bss_977C[i].unkC == 1) ? 310 : 290;
+            GXInitTexObj(&lbl_1_bss_18[i], (u8 *)lbl_1_bss_11AC[1][0] + lbl_1_bss_11EC[1] * lbl_1_bss_977C[i].time, 80, 68, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP,
+                GX_FALSE);
+            GXLoadTexObj(&lbl_1_bss_18[i], GX_TEXMAP0);
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            GXPosition3f32(pos.x + scale * (40.0f * billboard[0].x * lbl_1_bss_1154), pos.y + scale * (34.0f * billboard[0].y * lbl_1_bss_1150),
+                pos.z + scale * (34.0f * billboard[0].z * lbl_1_bss_1150));
+            GXColor4u8(255, 255, 255, 255);
+            GXTexCoord2f32(0.0f, 0.0f);
+            GXPosition3f32(pos.x + scale * (40.0f * billboard[1].x * lbl_1_bss_1154), pos.y + scale * (34.0f * billboard[1].y * lbl_1_bss_1150),
+                pos.z + scale * (34.0f * billboard[1].z * lbl_1_bss_1150));
+            GXColor4u8(255, 255, 255, 255);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3f32(pos.x + scale * (40.0f * billboard[2].x * lbl_1_bss_1154), pos.y + scale * (34.0f * billboard[2].y * lbl_1_bss_1150),
+                pos.z + scale * (34.0f * billboard[2].z * lbl_1_bss_1150));
+            GXColor4u8(255, 255, 255, 0);
+            GXTexCoord2f32(1.0f, 1.0f);
+            GXPosition3f32(pos.x + scale * (40.0f * billboard[3].x * lbl_1_bss_1154), pos.y + scale * (34.0f * billboard[3].y * lbl_1_bss_1150),
+                pos.z + scale * (34.0f * billboard[3].z * lbl_1_bss_1150));
+            GXColor4u8(255, 255, 255, 0);
+            GXTexCoord2f32(0.0f, 1.0f);
+            GXEnd();
+            GXPixModeSync();
+            j = list[j][0];
+        }
+    }
+    if (lbl_1_bss_2ED2C != 1000 && lbl_1_data_119 != 1 && (lbl_1_data_119 != 0 || lbl_1_data_111[3] > 0)) {
+        GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
+        GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+        GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_AND, GX_ALWAYS, 0);
+        GXSetZCompLoc(GX_TRUE);
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASA, GX_CC_ZERO);
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+        for (i = 0; i < 96; i++) {
+            Vec pos = { 0.0f, 0.0f, 0.0f };
+            float actorScale = 1.0f;
+
+            if (lbl_1_bss_11FC[i].state >= 0 && lbl_1_bss_11FC[i].no < 0) {
+                pos.x = lbl_1_bss_11FC[i].pos.x;
+                pos.y = lbl_1_bss_11FC[i].pos.y;
+                pos.z = lbl_1_bss_11FC[i].pos.z;
+                texW = (lbl_1_bss_11FC[i].type == 0) ? 40 : 24;
+                texH = (lbl_1_bss_11FC[i].type == 0) ? 40 : 24;
+                w0 = (lbl_1_bss_11FC[i].type == 0) ? 20 : 12;
+                w1 = (lbl_1_bss_11FC[i].type == 0) ? 20 : 12;
+                h0 = (lbl_1_bss_11FC[i].type == 0) ? 20 : 12;
+                h1 = (lbl_1_bss_11FC[i].type == 0) ? 20 : 12;
+                alpha = lbl_1_bss_11FC[i].unk18;
+                GXInitTexObj(&lbl_1_bss_18[i],
+                    (u8 *)lbl_1_bss_11AC[lbl_1_bss_11FC[i].type + 2][0] + lbl_1_bss_11FC[i].frame * lbl_1_bss_11EC[lbl_1_bss_11FC[i].type + 2], texW, texH,
+                    GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+                GXLoadTexObj(&lbl_1_bss_18[i], GX_TEXMAP0);
+                GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+                GXPosition3f32(pos.x + actorScale * (lbl_1_bss_1154 * (billboard[0].x * w0)), pos.y + actorScale * (lbl_1_bss_1150 * (billboard[0].y * h0)),
+                    pos.z + actorScale * (lbl_1_bss_1150 * (billboard[0].z * h0)));
+                GXColor4u8(255, 255, 255, alpha);
+                GXTexCoord2f32(0.0f, 0.0f);
+                GXPosition3f32(pos.x + actorScale * (lbl_1_bss_1154 * (billboard[1].x * w1)), pos.y + actorScale * (lbl_1_bss_1150 * (billboard[1].y * h0)),
+                    pos.z + actorScale * (lbl_1_bss_1150 * (billboard[1].z * h0)));
+                GXColor4u8(255, 255, 255, alpha);
+                GXTexCoord2f32(1.0f, 0.0f);
+                GXPosition3f32(pos.x + actorScale * (lbl_1_bss_1154 * (billboard[2].x * w1)), pos.y + actorScale * (lbl_1_bss_1150 * (billboard[2].y * h1)),
+                    pos.z + actorScale * (lbl_1_bss_1150 * (billboard[2].z * h1)));
+                GXColor4u8(255, 255, 255, alpha);
+                GXTexCoord2f32(1.0f, 1.0f);
+                GXPosition3f32(pos.x + actorScale * (lbl_1_bss_1154 * (billboard[3].x * w0)), pos.y + actorScale * (lbl_1_bss_1150 * (billboard[3].y * h1)),
+                    pos.z + actorScale * (lbl_1_bss_1150 * (billboard[3].z * h1)));
+                GXColor4u8(255, 255, 255, alpha);
+                GXTexCoord2f32(0.0f, 1.0f);
+                GXEnd();
+                GXPixModeSync();
+            }
         }
     }
     GXSetZCompLoc(GX_TRUE);
