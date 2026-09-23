@@ -513,6 +513,298 @@ int MB1_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
     return -1;
 }
 
+typedef struct MB1Ev_TumikiPlayer_s {
+    int playerNo; //0x00
+    int masuId; //0x04
+    int fallMasuId; //0x08
+    HuVecF playerPos; //0x0C
+    HuVecF centerPos; //0x18
+    HuVecF masuPos; //0x24
+} MB1EV_TUMIKI_PLAYER;
+
+static void MB1_TumikiArmyObjUpdate(OMOBJ *obj);
+static void MB1_TumikiArmyPosFix(OMOBJ *obj);
+
+void MB1Ev_Tumiki(int playerNo)
+{
+    MB1EV_TUMIKI_PLAYER *playerP; //r31
+    s16 no; //r30
+    s16 i; //r29
+    s16 j; //r28
+    MASU *fallMasuP; //r27
+    MASU *masuP; //r26
+    s16 num; //r25
+    MBMODELID focusMdlId; //r24
+    OMOBJ *obj; //r23
+    OMOBJ *posFixObj; //r22
+    MBMODELID mdlId; //r21
+    s16 fallMasuId; //r20
+    s16 masuId; //r18
+
+    float oldZoom; //f31
+    float t; //f30
+
+    MB1EV_TUMIKI_PLAYER player[GW_PLAYER_MAX]; //sp+0x60
+    HuVecF masuPos; //sp+0x54
+    HuVecF fallMasuPos; //sp+0x48
+    HuVecF centerPos; //sp+0x3C
+    HuVecF temp; //sp+0x30
+    HuVecF dir; //sp+0x24
+    HuVecF oldRot; //sp+0x18
+    HuVecF cameraRot; //sp+0xC
+    MBCAMERA *cameraP; //sp+0x8
+
+    static HuVecF rot = { -20.5f, 0, 0 };
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    cameraP = MBCameraGet();
+    MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_LOOP);
+    MBDataAsyncWait(MBDataDirReadAsync(DATA_capsulechar0));
+    mb1_Work.coinMdlId = focusMdlId = MBModelCreate(BOARD_HSF_coin, NULL, FALSE);
+    MBModelDispSet(focusMdlId, FALSE);
+    MBCameraRotGet(&oldRot);
+    oldZoom = MBCameraZoomGet();
+    for(i=0, num=0, playerP=&player[0]; i<GW_PLAYER_MAX; i++) {
+        if(MBMasuFlagGet(MASU_LAYER_DEFAULT, GwPlayer[i].masuId) & MB1EV_MASU_TUMIKI) {
+            playerP->playerNo = i;
+            playerP->masuId = GwPlayer[playerP->playerNo].masuId;
+            fallMasuP = MBMasuGet(MASU_LAYER_DEFAULT, playerP->masuId);
+            for(j=0, playerP->fallMasuId=MASU_NULL; j<fallMasuP->linkNum; j++) {
+                if(MBMasuFlagGet(MASU_LAYER_DEFAULT, fallMasuP->linkTbl[j]) & MB1EV_MASU_TUMIKI_FALL) {
+                    playerP->fallMasuId = fallMasuP->linkTbl[j];
+                    break;
+                }
+            }
+            if(playerP->fallMasuId != MASU_NULL) {
+                MBMasuPosGet(MASU_LAYER_DEFAULT, playerP->masuId, &temp);
+                MBMasuPosGet(MASU_LAYER_DEFAULT, playerP->fallMasuId, &dir);
+                MBPlayerPosGet(playerP->playerNo, &playerP->playerPos);
+                VECSubtract(&playerP->playerPos, &temp, &temp);
+                VECAdd(&dir, &temp, &playerP->masuPos);
+                VECSubtract(&playerP->masuPos, &playerP->playerPos, &temp);
+                VECScale(&temp, &temp, 0.5f);
+                VECAdd(&playerP->playerPos, &temp, &playerP->centerPos);
+                playerP->centerPos.y = playerP->playerPos.y+1000;
+                playerP++;
+                num++;
+            }
+        }
+    }
+    for(j=0, fallMasuId=MASU_NULL; j<masuP->linkNum; j++) {
+        if(MBMasuFlagGet(MASU_LAYER_DEFAULT, masuP->linkTbl[j]) & MB1EV_MASU_TUMIKI_FALL) {
+            fallMasuId = masuP->linkTbl[j];
+            break;
+        }
+    }
+    if(fallMasuId == MASU_NULL) {
+        return;
+    }
+    MBMasuPosGet(MASU_LAYER_DEFAULT, masuId, &masuPos);
+    MBMasuPosGet(MASU_LAYER_DEFAULT, fallMasuId, &fallMasuPos);
+    MBStatusDispSetAll(FALSE);
+    posFixObj = MBAddObj(32768, 0, 0, MB1_TumikiArmyPosFix);
+    posFixObj->work[0] = 0;
+    posFixObj->work[1] = mb1_Work.tumikiMdlId;
+    temp.x = -300;
+    temp.y = 1835;
+    temp.z = -470;
+    MBModelPosSetV(focusMdlId, &temp);
+    MBCameraModelViewSet(focusMdlId, NULL, NULL, 3000, -1, 63);
+    MBCameraMotionWait();
+    for(i=0; i<60.0f; i++) {
+        HuPrcVSleep();
+    }
+    mdlId = mb1_Work.tumikiMdlId;
+    obj = MBAddObj(32768, 0, 0, MB1_TumikiArmyObjUpdate);
+    obj->work[0] = 0;
+    obj->work[1] = mdlId;
+    obj->work[2] = 0;
+    centerPos.x = masuPos.x+(0.5f*(fallMasuPos.x-masuPos.x));
+    centerPos.y = masuPos.y+1000;
+    centerPos.z = masuPos.z+(0.5f*(fallMasuPos.z-masuPos.z));
+    for(no=0, playerP=&player[0]; no<num; no++, playerP++) {
+        VECSubtract(&playerP->masuPos, &playerP->playerPos, &temp);
+        MBPlayerRotateStart(playerP->playerNo, HuAtan(temp.x, temp.z), 15);
+    }
+    for(i=0; i<120; i++) {
+        HuPrcVSleep();
+    }
+    temp.x = -804.38f;
+    temp.y = 2567.96f;
+    temp.z = -14.01f;
+    cameraRot.x = -16.600006f;
+    cameraRot.y = 20.54f;
+    cameraRot.z = 0;
+    MBModelPosSetV(focusMdlId, &temp);
+    MBCameraModelViewSet(focusMdlId, &cameraRot, NULL, 4000, -1, 21);
+    while(MBMotionTimeGet(mdlId) < 90.0f) {
+        HuPrcVSleep();
+    }
+    for(no=0, playerP=&player[0]; no<num; no++, playerP++) {
+        MBPlayerMotionNoSet(playerP->playerNo, MB_PLAYER_MOT_SHOCK, HU3D_MOTATTR_NONE);
+    }
+    for(i=0; i<30.0f; i++) {
+        t = i/30.0f;
+        for(no=0, playerP=&player[0]; no<num; no++, playerP++) {
+            MB1_BezierCalcV(t, (float *)&playerP->playerPos, (float *)&playerP->centerPos, (float *)&playerP->masuPos, (float *)&temp);
+            MBPlayerPosSetV(playerP->playerNo, &temp);
+        }
+        HuPrcVSleep();
+    }
+    for(no=0, playerP=&player[0]; no<num; no++, playerP++) {
+        MBPlayerPosSetV(playerP->playerNo, &playerP->masuPos);
+    }
+    for(no=0, playerP=&player[0]; no<num; no++, playerP++) {
+        MBPlayerMotionNoShiftSet(playerP->playerNo, MB_PLAYER_MOT_DIZZY, 0, 8, HU3D_MOTATTR_LOOP);
+    }
+    MBCameraModelViewSet(MBPlayerModelGet(playerNo), &oldRot, NULL, oldZoom, -1, 42);
+    for(i=0; i<120.0f; i++) {
+        HuPrcVSleep();
+    }
+    WipeColorSet(255, 255, 255);
+    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_CROSSCOPY, 1);
+    WipeWait();
+    for(no=0, playerP=&player[0]; no<num; no++, playerP++) {
+        playerP->masuId = playerP->fallMasuId;
+        fallMasuP = MBMasuGet(MASU_LAYER_DEFAULT, playerP->masuId);
+        for(j=0, playerP->fallMasuId=MASU_NULL; j<fallMasuP->linkNum; j++) {
+            if(!(MBMasuFlagGet(MASU_LAYER_DEFAULT, masuP->linkTbl[j]) & MBBranchFlagGet())) {
+                playerP->fallMasuId = fallMasuP->linkTbl[j];
+                break;
+            }
+        }
+        if(playerP->fallMasuId == MASU_NULL) {
+            playerP->fallMasuId = playerP->masuId;
+        }
+        MBMasuPosGet(MASU_LAYER_DEFAULT, playerP->fallMasuId, &playerP->masuPos);
+        GwPlayer[playerP->playerNo].masuId = playerP->fallMasuId;
+        MBPlayerPosFixEvent(playerP->playerNo, playerP->fallMasuId, TRUE);
+        MBPlayerMotionNoSet(playerP->playerNo, MB_PLAYER_MOT_IDLE, HU3D_MOTATTR_NONE);
+        MBPlayerRotSet(playerP->playerNo, 0, 0, 0);
+        if(playerP->playerNo == playerNo) {
+            MBMasuPosGet(MASU_LAYER_DEFAULT, playerP->fallMasuId, &temp);
+            MBPlayerPosSetV(playerP->playerNo, &temp);
+        }
+    }
+    mdlId = mb1_Work.tumikiMdlId;
+    MBMotionSpeedSet(mdlId, 0);
+    MBMotionTimeSet(mdlId, 0);
+    MBCameraModelViewSet(focusMdlId, &oldRot, NULL, oldZoom, -1, 1);
+    MBCameraMotionWait();
+    MBStatusDispSetAll(TRUE);
+    MBCameraSkipSet(FALSE);
+    MBCameraFocusMasuSet(fallMasuId);
+    MBCameraMotionWait();
+    MBCameraSkipSet(TRUE);
+    if(!MBKillCheck()) {
+        posFixObj->work[0]++;
+    }
+    WipeCreate(WIPE_MODE_IN, WIPE_TYPE_CROSSCOPY, 30);
+    WipeWait();
+    if(focusMdlId != MB_MODEL_NONE) {
+        MBModelKill(focusMdlId);
+    }
+    mb1_Work.coinMdlId = MB_MODEL_NONE;
+}
+
+void MB1Ev_BKoopa(int playerNo)
+{
+    s16 i; //r31
+    s16 playerNum; //r30
+    MBMODELID mdlId; //r29
+    s16 startMasuId; //r28
+    s16 masuId; //r27
+
+    HuVecF playerPos[GW_PLAYER_MAX]; //sp+0x90
+    HuVecF playerPosOld[GW_PLAYER_MAX]; //sp+0x60
+    HuVecF playerVel[GW_PLAYER_MAX]; //sp+0x30
+    HuVecF ofs; //sp+0x24
+    BOOL stunF[GW_PLAYER_MAX]; //sp+0x14
+    s16 playerTbl[GW_PLAYER_MAX]; //sp+0xC
+    MASU *masuP; //sp+0x8
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    for(i=0, playerNum=0; i<GW_PLAYER_MAX; i++) {
+        if(masuId == GwPlayer[i].masuId) {
+            playerTbl[playerNum] = i;
+            playerNum++;
+        }
+    }
+    mdlId = mb1_Work.bkoopaMdlId;
+    MBMotionSpeedSet(mdlId, 1);
+    MBMotionTimeSet(mdlId, 0);
+    for(i=0; i<60.0f; i++) {
+        HuPrcVSleep();
+    }
+    WipeColorSet(255, 255, 255);
+    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_CROSSCOPY, 1);
+    WipeWait();
+    mdlId = mb1_Work.bkoopaMdlId;
+    MBMotionSpeedSet(mdlId, 0);
+    MBMotionTimeSet(mdlId, 0);
+    startMasuId = MBMasuFlagPosGet(MASU_LAYER_DEFAULT, MASU_FLAG_START, NULL);
+    for(i=0; i<playerNum; i++) {
+        GwPlayer[playerTbl[i]].masuId = startMasuId;
+    }
+    MBPlayerPosFixEvent(playerNo, startMasuId, TRUE);
+    MBMasuPosGet(MASU_LAYER_DEFAULT, startMasuId, &ofs);
+    MBPlayerPosSetV(playerNo, &ofs);
+    for(i=0; i<playerNum; i++) {
+        MBPlayerRotSet(playerTbl[i], 0, 0, 0);
+    }
+    for(i=0; i<playerNum; i++) {
+        MBPlayerPosGet(playerTbl[i], &playerPosOld[i]);
+        playerPos[i].x = playerPosOld[i].x;
+        playerPos[i].y = playerPosOld[i].y+2000+(i*500.0f);
+        playerPos[i].z = playerPosOld[i].z;
+        playerVel[i].x = playerVel[i].y = playerVel[i].z = 0;
+        stunF[i] = FALSE;
+    }
+    MBCameraSkipSet(FALSE);
+    MBCameraFocusMasuSet(startMasuId);
+    MBCameraMotionWait();
+    MBCameraSkipSet(TRUE);
+    WipeCreate(WIPE_MODE_IN, WIPE_TYPE_CROSSCOPY, 30);
+    repeat:
+    for(i=0; i<playerNum; i++) {
+        if(!stunF[i]) {
+            VECAdd(&playerPos[i], &playerVel[i], &playerPos[i]);
+            playerVel[i].y -= 3.266667f;
+            if(playerPos[i].y <= playerPosOld[i].y) {
+                MBPlayerMotionNoShiftSet(playerTbl[i], MB_PLAYER_MOT_DIZZY, 0, 8, HU3D_MOTATTR_LOOP);
+                playerPos[i] = playerPosOld[i];
+                stunF[i] = TRUE;
+            }
+            MBPlayerPosSetV(playerTbl[i], &playerPos[i]);
+        }
+    }
+    for(i=0; i<playerNum; i++) {
+        if(!stunF[i]) {
+            break;
+        }
+    }
+    HuPrcVSleep();
+    if(i < playerNum) {
+        goto repeat;
+    }
+    WipeWait();
+    for(i=0; i<60.0f; i++) {
+        HuPrcVSleep();
+    }
+    WipeColorSet(255, 255, 255);
+    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_CROSSCOPY, 1);
+    WipeWait();
+    for(i=0; i<playerNum; i++) {
+        MBPlayerMotionNoShiftSet(playerTbl[i], MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_LOOP);
+    }
+    WipeCreate(WIPE_MODE_IN, WIPE_TYPE_CROSSCOPY, 30);
+    for(i=0; i<30.0f; i++) {
+        HuPrcVSleep();
+    }
+}
+
 void MB1Ev_Hako(int playerNo)
 {
     s16 j; //r31
@@ -720,8 +1012,6 @@ void MB1Ev_Hako(int playerNo)
     mb1_Work.coinMdlId = MB_MODEL_NONE;
 }
 
-static void MB1_TumikiArmyObjUpdate(OMOBJ *obj);
-static void MB1_TumikiArmyPosFix(OMOBJ *obj);
 static void MB1_TrainObjUpdate(OMOBJ *obj);
 
 static int MB1_ExplodeEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float animSpeed, GXColor color);
