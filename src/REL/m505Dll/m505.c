@@ -172,6 +172,22 @@ s32 lbl_1_data_124 = 60;
 s32 lbl_1_data_128 = 120;
 s32 lbl_1_data_12C[2] = { 0, 0 };
 
+typedef struct M505Esprite_s {
+    s16 memberNo;
+    s16 animNo;
+} M505ESPRITE;
+
+typedef struct M505EspAnim_s {
+    unsigned int dataNum;
+    u16 useCnt;
+    ANIMDATA *anim;
+} M505ESPANIM;
+
+/* esprite.c keeps these private; the minigame reads the sprite animation directly. */
+extern M505ESPRITE esprite[];
+extern M505ESPANIM espanim[];
+void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
+
 M505SeReq lbl_1_bss_2ED50[11];
 OMOBJ *lbl_1_bss_2ED4C;
 OMOBJ *lbl_1_bss_2ED48;
@@ -193,6 +209,9 @@ void *lbl_1_bss_11AC[4][4];
 void *lbl_1_bss_119C[4];
 u32 lbl_1_bss_1198;
 void *lbl_1_bss_1158[4][4];
+float lbl_1_bss_1154;
+float lbl_1_bss_1150;
+GXTexObj lbl_1_bss_918[64];
 GXColor lbl_1_bss_111C;
 GXColor lbl_1_bss_1118;
 s32 lbl_1_bss_8;
@@ -411,6 +430,217 @@ void fn_1_1284(void)
     up.x = sin((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
     up.y = cos((M_PI * rotX) / 180.0);
     up.z = cos((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
+}
+
+/* Draws the ripples, the obstacle shadows and the obstacles themselves (billboards cut from the frame buffer). */
+void fn_1_C0BC(HU3DMODEL *model, Mtx *mtx)
+{
+    Mtx lookAt;
+    Mtx camMtx;
+    Vec corners[4] = { { -1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, -1.0f, 0.0f }, { -1.0f, -1.0f, 0.0f } };
+    Vec billboard[4];
+    Mtx rippleMtx;
+    Mtx tempMtx;
+    HU3DCAMERA *camera;
+    s32 i;
+    s32 pass;
+    s32 quadNo;
+    s32 side;
+    s32 color;
+    s32 alpha;
+    s32 frame;
+
+    for (i = 0; i < 16; i++) {
+        if (model->cameraBit & (1 << i)) {
+            break;
+        }
+    }
+    camera = &Hu3DCamera[i];
+    C_MTXLookAt(lookAt, &camera->pos, &camera->up, &camera->target);
+    PSMTXTranspose(lookAt, camMtx);
+    PSMTXMultVecArray(camMtx, corners, billboard, 4);
+    GXLoadPosMtxImm(*mtx, GX_PNMTX0);
+    GXSetNumTevStages(1);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_RASC, GX_CC_TEXC, GX_CC_ZERO);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_AND, GX_GEQUAL, 0x80);
+    GXSetZCompLoc(GX_FALSE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXSetBlendMode(GX_BM_SUBTRACT, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetZMode(GX_TRUE, GX_GREATER, GX_FALSE);
+    GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASA, GX_CC_RASC);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+    for (pass = 0; pass < 2; pass++) {
+        HuSprTexLoad(espanim[esprite[lbl_1_data_0[(pass == 0) ? 0 : 1]].animNo].anim, 0, GX_TEXMAP0, GX_CLAMP, GX_CLAMP, GX_LINEAR);
+        for (i = 0; i < 640; i++) {
+            Vec quad[4][4] = {
+                { { -1.0f, 0.0f, 2.0f }, { 1.0f, 0.0f, 2.0f }, { 1.0f, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f } },
+                { { -1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, -2.0f }, { -1.0f, 0.0f, -2.0f } },
+            };
+            float uv[2][4] = { { 0.5f, 0.0f, 1.0f, 0.5f }, { 0.0f, 0.5f, 0.5f, 1.0f } };
+            float size = 20.0f;
+            float y = -3.0f;
+            Vec pos = { 0.0f, 55.0f, 0.0f };
+
+            if (lbl_1_bss_1F7C[i].time < 0) {
+                continue;
+            }
+            if (pass == 0 && lbl_1_bss_1F7C[i].unk29 >= 2) {
+                continue;
+            }
+            if (pass == 1 && lbl_1_bss_1F7C[i].unk29 < 2) {
+                continue;
+            }
+            pos.x = lbl_1_bss_1F7C[i].unk0;
+            pos.y = y;
+            pos.z = lbl_1_bss_1F7C[i].unk8;
+            size = (lbl_1_bss_1F7C[i].unk29 != 1) ? 20 : 65;
+            alpha = 255 - (lbl_1_bss_1F7C[i].time * 255) / 192;
+            color = 0;
+            side = quadNo = lbl_1_bss_1F7C[i].unk28;
+            if (lbl_1_bss_1F7C[i].unkC != 0.0f || lbl_1_bss_1F7C[i].unk29 >= 2) {
+                Vec axis = { 0.0f, 1.0f, 0.0f };
+
+                PSMTXScale(rippleMtx, lbl_1_bss_1F7C[i].unk24, 1.0f, lbl_1_bss_1F7C[i].unk20);
+                PSMTXTrans(tempMtx, -lbl_1_bss_1F7C[i].unk1C, 0.0f, -lbl_1_bss_1F7C[i].unk18);
+                PSMTXConcat(tempMtx, rippleMtx, rippleMtx);
+                PSMTXTrans(tempMtx, 0.0f, 0.0f, -lbl_1_bss_1F7C[i].unk14 * ((side * 2) - 1));
+                PSMTXConcat(tempMtx, rippleMtx, rippleMtx);
+                PSMTXRotAxisRad(tempMtx, &axis, MTXDegToRad(lbl_1_bss_1F7C[i].unkC));
+                PSMTXConcat(tempMtx, rippleMtx, rippleMtx);
+                PSMTXRotAxisRad(tempMtx, &axis, MTXDegToRad(-lbl_1_bss_1F7C[i].unk10 * ((side * 2) - 1)));
+                PSMTXConcat(tempMtx, rippleMtx, rippleMtx);
+                PSMTXMultVecArray(rippleMtx, quad[quadNo], quad[quadNo + 2], 4);
+                quadNo += 2;
+            }
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            GXPosition3f32(pos.x + size * quad[quadNo][0].x, y, pos.z - size * quad[quadNo][0].z);
+            GXColor4u8(color, color, 0, alpha);
+            GXTexCoord2f32(uv[side][0], uv[side][1]);
+            GXPosition3f32(pos.x + size * quad[quadNo][1].x, y, pos.z - size * quad[quadNo][1].z);
+            GXColor4u8(color, color, 0, alpha);
+            GXTexCoord2f32(uv[side][2], uv[side][1]);
+            GXPosition3f32(pos.x + size * quad[quadNo][2].x, y, pos.z - size * quad[quadNo][2].z);
+            GXColor4u8(color, color, 0, alpha);
+            GXTexCoord2f32(uv[side][2], uv[side][3]);
+            GXPosition3f32(pos.x + size * quad[quadNo][3].x, y, pos.z - size * quad[quadNo][3].z);
+            GXColor4u8(color, color, 0, alpha);
+            GXTexCoord2f32(uv[side][0], uv[side][3]);
+            GXEnd();
+        }
+        GXPixModeSync();
+    }
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+    GXSetZMode(GX_TRUE, GX_GREATER, GX_FALSE);
+    GXSetAlphaCompare(GX_GREATER, 1, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_RASA, GX_CA_TEXA, GX_CA_ZERO);
+    for (i = 0; i < 64; i++) {
+#ifdef TARGET_PC
+        HU3DMODEL *objModel = NULL; /* unused; the original reads past the end of the model list for i >= 13 */
+#else
+        HU3DMODEL *objModel = &Hu3DData[lbl_1_bss_2ED34->mdlId[i + 13]];
+#endif
+        float scale = 26.0f * lbl_1_bss_1154;
+        float shadowY = -3.0f;
+        s32 shadowAlpha = 127;
+        Vec pos = { 0.0f, 55.0f, 0.0f };
+
+        pos.x += lbl_1_bss_9D1C[i].pos.x;
+        pos.z += lbl_1_bss_9D1C[i].pos.z;
+        if (lbl_1_bss_9D1C[i].state >= 0 && lbl_1_bss_9D1C[i].lane < 0) {
+            frame = lbl_1_bss_9D1C[i].time / 16;
+            frame = (lbl_1_bss_9D1C[i].animNo != 2 || lbl_1_data_119 == 3)
+                ? frame
+                : ((lbl_1_data_119 == 2 && lbl_1_data_111[0] == 2) ? ((lbl_1_data_115[0] > frame) ? frame : lbl_1_data_115[0]) : 0);
+            GXInitTexObj(&lbl_1_bss_918[i], (u8 *)lbl_1_bss_1158[lbl_1_bss_9D1C[i].type][lbl_1_bss_9D1C[i].animNo] + lbl_1_bss_1198 * frame, 26,
+                22, GX_TF_I8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+            GXLoadTexObj(&lbl_1_bss_918[i], GX_TEXMAP0);
+            GXSetAlphaCompare(GX_GEQUAL, (12.5f * lbl_1_bss_9D1C[i].unk93C) / 255.0f, GX_AOP_AND, GX_ALWAYS, 0);
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            GXPosition3f32(pos.x + corners[0].x * scale, shadowY, pos.z - corners[0].y * scale);
+            GXColor4u8(60, 90, 150, shadowAlpha);
+            GXTexCoord2f32(0.0f, 0.0f);
+            GXPosition3f32(pos.x + corners[1].x * scale, shadowY, pos.z - corners[1].y * scale);
+            GXColor4u8(60, 90, 150, shadowAlpha);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3f32(pos.x + corners[2].x * scale, shadowY, pos.z - corners[2].y * scale);
+            GXColor4u8(60, 90, 150, shadowAlpha);
+            GXTexCoord2f32(1.0f, 1.0f);
+            GXPosition3f32(pos.x + corners[3].x * scale, shadowY, pos.z - corners[3].y * scale);
+            GXColor4u8(60, 90, 150, shadowAlpha);
+            GXTexCoord2f32(0.0f, 1.0f);
+            GXEnd();
+            GXPixModeSync();
+        }
+    }
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GXSetAlphaCompare(GX_GEQUAL, 0xC0, GX_AOP_AND, GX_GEQUAL, 0xC0);
+    GXSetZCompLoc(GX_FALSE);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_TEXA);
+    for (i = 0; i < 64; i++) {
+        HU3DMODEL *objModel = &Hu3DData[lbl_1_bss_2ED34->mdlId[13]];
+        Vec pos = { 0.0f, 0.0f, 0.0f };
+
+        if (lbl_1_bss_9D1C[i].state >= 0 && lbl_1_bss_9D1C[i].lane < 0 && lbl_1_bss_9D1C[i].unk93C >= 255) {
+            pos.x = lbl_1_bss_9D1C[i].pos.x;
+            pos.y = 55.0f + lbl_1_bss_9D1C[i].pos.y;
+            pos.z = lbl_1_bss_9D1C[i].pos.z;
+            GXInitTexObj(&lbl_1_bss_918[i],
+                (void *)((uintptr_t)lbl_1_bss_11AC[lbl_1_bss_9D1C[i].type][lbl_1_bss_9D1C[i].animNo]
+                    + (lbl_1_bss_9D1C[i].time / 16) * lbl_1_bss_11EC[lbl_1_bss_9D1C[i].type]),
+                56, 60, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+            GXLoadTexObj(&lbl_1_bss_918[i], GX_TEXMAP0);
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            GXPosition3f32(pos.x + 32.0f * billboard[0].x * lbl_1_bss_1154, pos.y + 28.0f * billboard[0].y * lbl_1_bss_1150,
+                pos.z + 28.0f * billboard[0].z * lbl_1_bss_1150);
+            GXColor4u8(255, 255, 255, 255);
+            GXTexCoord2f32(0.0f, 0.0f);
+            GXPosition3f32(pos.x + 24.0f * billboard[1].x * lbl_1_bss_1154, pos.y + 28.0f * billboard[1].y * lbl_1_bss_1150,
+                pos.z + 28.0f * billboard[1].z * lbl_1_bss_1150);
+            GXColor4u8(255, 255, 255, 255);
+            GXTexCoord2f32(1.0f, 0.0f);
+            GXPosition3f32(pos.x + 24.0f * billboard[2].x * lbl_1_bss_1154, pos.y + 32.0f * billboard[2].y * lbl_1_bss_1150,
+                pos.z + 32.0f * billboard[2].z * lbl_1_bss_1150);
+            GXColor4u8(255, 255, 255, 0);
+            GXTexCoord2f32(1.0f, 1.0f);
+            GXPosition3f32(pos.x + 32.0f * billboard[3].x * lbl_1_bss_1154, pos.y + 32.0f * billboard[3].y * lbl_1_bss_1150,
+                pos.z + 32.0f * billboard[3].z * lbl_1_bss_1150);
+            GXColor4u8(255, 255, 255, 0);
+            GXTexCoord2f32(0.0f, 1.0f);
+            GXEnd();
+            GXPixModeSync();
+        }
+    }
+    GXSetZCompLoc(GX_TRUE);
 }
 
 /* Copies each character from the frame buffer into its animation strip. */
