@@ -54,6 +54,50 @@ typedef struct M505Player_s {
     /* 0x64 */ s32 unk64;
 } M505Player; /* size = 0x68 */
 
+/* Wake particle left behind a moving obstacle. */
+typedef struct M505Wake_s {
+    /* 0x00 */ float unk0;
+    /* 0x04 */ float unk4;
+    /* 0x08 */ float unk8;
+    /* 0x0C */ float unkC;
+    /* 0x10 */ float unk10;
+    /* 0x14 */ u8 unk14;
+    /* 0x15 */ u8 unk15;
+    /* 0x16 */ u8 unk16;
+    /* 0x17 */ u8 unk17;
+} M505Wake; /* size = 0x18 */
+
+/* Obstacle drifting down the river (64 of them, type 0 small / 1 big). */
+typedef struct M505Obj_s {
+    /* 0x000 */ Vec pos;
+    /* 0x00C */ Vec vel;
+    /* 0x018 */ Vec prevPos;
+    /* 0x024 */ float rotY;
+    /* 0x028 */ s32 state;
+    /* 0x02C */ u8 type;
+    /* 0x02D */ u8 rnd;
+    /* 0x02E */ u8 animNo;
+    /* 0x02F */ u8 pad2F;
+    /* 0x030 */ s16 time;
+    /* 0x032 */ s16 speed;
+    /* 0x034 */ s16 time0;
+    /* 0x036 */ s8 lane;
+    /* 0x037 */ u8 unk37;
+    /* 0x038 */ u8 unk38;
+    /* 0x039 */ u8 pad39[3];
+    /* 0x03C */ M505Wake wake[96];
+    /* 0x93C */ u8 unk93C;
+    /* 0x93D */ u8 pad93D[3];
+} M505Obj; /* size = 0x940 */
+
+/* Sound requests queued by the game logic and played once per frame by fn_1_EF6C. */
+typedef struct M505SeReq_s {
+    /* 0x00 */ s32 num;
+    /* 0x04 */ float posX[3];
+    /* 0x10 */ s32 panF[3];
+    /* 0x1C */ s32 seNo;
+} M505SeReq; /* size = 0x20 */
+
 s32 lbl_1_data_0[2] = { 0, 0 };
 u32 lbl_1_data_8[13] = { DATA_mariomdl1, DATA_luigimdl1, DATA_peachmdl1, DATA_yoshimdl1, DATA_wariomdl1, DATA_daisymdl1, DATA_waluigimdl1,
     DATA_kinopiomdl1, DATA_teresamdl1, DATA_minikoopamdl1, 0, 0, 0 };
@@ -76,7 +120,7 @@ float lbl_1_data_90[4][4] = {
 s32 lbl_1_data_D0[8] = { 0 };
 s32 lbl_1_data_F0[6] = { 0, 0, 0, 0, 96, 0x3F800000 };
 
-s32 lbl_1_bss_2ED4C_pad;
+M505SeReq lbl_1_bss_2ED50[11];
 OMOBJ *lbl_1_bss_2ED4C;
 OMOBJ *lbl_1_bss_2ED48;
 OMOBJ *lbl_1_bss_2ED38[4];
@@ -88,10 +132,12 @@ s16 lbl_1_bss_2ED26;
 s16 lbl_1_bss_2ED24;
 s32 lbl_1_bss_2ED20;
 s32 lbl_1_bss_2ED1C;
+M505Obj lbl_1_bss_9D1C[64];
 void *lbl_1_bss_11AC[4][4];
 GXColor lbl_1_bss_111C;
 GXColor lbl_1_bss_1118;
 s32 lbl_1_bss_8;
+float lbl_1_bss_0;
 
 void fn_1_0(HU3DMODEL *model, Mtx *mtx)
 {
@@ -308,6 +354,149 @@ void fn_1_1284(void)
     up.z = cos((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
 }
 
+void fn_1_EF6C(OMOBJ *obj)
+{
+    M505Player *players[4];
+    s32 i;
+    s32 aliveNum;
+    s32 playerNo;
+    s32 pan;
+    s32 seNo;
+
+    for (i = 0; i < 4; i++) {
+        players[i] = lbl_1_bss_2ED38[i]->data;
+    }
+    for (i = 0; i < 11; i++) {
+        s32 seTbl[11] = { 0x660, 0x661, 0x662, 0x663, 0x664, 0x665, 0x663, 0x667, 0x668, 0x669, 0x66A };
+
+        if (lbl_1_bss_2ED50[i].num > 3) {
+            lbl_1_bss_2ED50[i].num = 3;
+        }
+        if (lbl_1_bss_2ED50[i].num > 0) {
+            if (seTbl[i] != -1) {
+                seNo = HuAudFXPlay(seTbl[i]);
+                lbl_1_bss_2ED50[i].seNo = seNo;
+                if (lbl_1_bss_2ED50[i].panF[lbl_1_bss_2ED50[i].num - 1] != 0) {
+                    pan = (s16)(0.5 + (64.0f + (32.0f * ((lbl_1_bss_2ED50[i].posX[lbl_1_bss_2ED50[i].num - 1] - CenterM[1].x) / 700.0f))));
+                    pan = (pan >= 96) ? 96 : pan;
+                    HuAudFXPanning(seNo, pan);
+                }
+                lbl_1_bss_2ED50[i].panF[lbl_1_bss_2ED50[i].num - 1] = 0;
+            }
+            lbl_1_bss_2ED50[i].num--;
+        }
+    }
+    if (omSysExitReq != 0 && WipeCheckEnd() == 0 && lbl_1_bss_8 == 0) {
+        lbl_1_bss_8 = 1;
+        HuAudFadeOut(1000);
+    }
+    switch (lbl_1_bss_2ED2C) {
+        case 1000:
+            lbl_1_bss_0 += 1.0f;
+            if (lbl_1_bss_0 == 2.0f) {
+                lbl_1_data_84 = HuAudFXPlay(0x39F);
+            }
+            if (WipeCheckEnd() == 0) {
+                lbl_1_bss_2ED2C++;
+                lbl_1_bss_0 = 0.0f;
+            }
+            break;
+        case 1001:
+            lbl_1_bss_0 += (lbl_1_bss_9D1C[0].state == -1);
+            if (lbl_1_bss_0 >= 50.0f) {
+                lbl_1_bss_2ED2C++;
+                lbl_1_bss_0 = 0.0f;
+            }
+            break;
+        case 1002:
+            lbl_1_bss_0 += 1.0f;
+            if (lbl_1_bss_0 == 5.0f && lbl_1_bss_2ED26 < 0) {
+                lbl_1_bss_2ED26 = GameMesMgStartCreate();
+            }
+            if (lbl_1_bss_0 >= 5.0f && lbl_1_data_80 == -1) {
+                lbl_1_data_80 = HuAudSStreamPlay(0x37);
+            }
+            if (lbl_1_bss_0 >= 5.0f && GameMesStatGet(lbl_1_bss_2ED26) == 0 && lbl_1_bss_2ED26 >= 0) {
+                lbl_1_bss_2ED2C++;
+                lbl_1_bss_2ED20 = 1800;
+                lbl_1_bss_2ED24 = GameMesTimerCreate(lbl_1_bss_2ED20 / 60);
+                GameMesPosSet(lbl_1_bss_2ED24, 525.0f, 64.0f);
+                lbl_1_bss_2ED26 = -1;
+                lbl_1_bss_0 = 0.0f;
+                for (i = 0; i < 4; i++) {
+                    players[i]->mode = 1;
+                }
+            }
+            break;
+        case 1003:
+            lbl_1_bss_0 += 1.0f;
+            GameMesTimerValueSet(lbl_1_bss_2ED24, (lbl_1_bss_2ED20 + 58) / 60);
+            lbl_1_bss_2ED20--;
+            aliveNum = 0;
+            for (i = 0; i < 4; i++) {
+                aliveNum += players[i]->mode != 2;
+            }
+            if (lbl_1_bss_2ED20 <= 0 || aliveNum <= 1) {
+                lbl_1_bss_2ED2C = 1004;
+                lbl_1_bss_0 = 0.0f;
+            }
+            break;
+        case 1004:
+            if (lbl_1_bss_0 == 10.0f) {
+                lbl_1_data_78 = 4;
+                for (i = 0; i < 4; i++) {
+                    lbl_1_data_78 = (players[i]->mode != 2) ? i : lbl_1_data_78;
+                    players[i]->mode = (players[i]->mode == 1) ? 3 : players[i]->mode;
+                }
+            }
+            if (lbl_1_bss_2ED26 < 0 && lbl_1_bss_0 == 0.0f) {
+                GameMesTimerEnd(lbl_1_bss_2ED24);
+                lbl_1_bss_2ED26 = GameMesMgFinishCreate();
+                if (lbl_1_data_80 != -1) {
+                    HuAudSStreamFadeOut(lbl_1_data_80, 100);
+                }
+            }
+            else if (GameMesStatGet(lbl_1_bss_2ED26) == 0 && lbl_1_bss_0 >= 90.0f) {
+                s32 winNum = 0;
+                s32 winner[4] = { -1, -1, -1, -1 };
+
+                lbl_1_bss_2ED2C++;
+                lbl_1_bss_0 = 0.0f;
+                for (i = 0; i < 4; i++) {
+                    if (players[i]->mode != 2) {
+                        winner[winNum] = players[i]->charNo;
+                        playerNo = players[i]->playerNo;
+                        if (!_CheckFlag(FLAG_MG_PRACTICE)) {
+                            GwPlayer[playerNo].mgCoinBonus = 10;
+                        }
+                        winNum++;
+                    }
+                }
+                if (winNum > 0) {
+                    lbl_1_bss_2ED26 = GameMesMgWinnerCreate(winner[0], winner[1], winner[2], winner[3]);
+                    HuAudSStreamPlay(0x79);
+                }
+                else {
+                    lbl_1_bss_2ED26 = GameMesMgDrawCreate();
+                    HuAudSStreamPlay(0x7B);
+                }
+            }
+            lbl_1_bss_0 += 1.0f;
+            break;
+        case 1005:
+            lbl_1_bss_0 += 1.0f;
+            if (210.0f < lbl_1_bss_0 && lbl_1_bss_8 == 0) {
+                lbl_1_bss_8 = 1;
+                HuAudFXFadeOut(lbl_1_data_84, 1000);
+                lbl_1_bss_2ED26 = -1;
+            }
+            break;
+        default:
+            OSReport("*** main mode error(%d)!!\n", lbl_1_bss_2ED2C);
+            break;
+    }
+}
+
 void fn_1_11650(OMOBJ *obj)
 {
     s32 order[4] = { 0, 1, 2, 3 };
@@ -370,9 +559,6 @@ void fn_1_119A0(OMOBJ *obj)
 
 void ObjectSetup(void)
 {
-    Vec shadowPos;
-    Vec shadowUp;
-    Vec shadowTarget;
     s32 i;
     OMOBJ *obj;
 
@@ -411,19 +597,25 @@ void ObjectSetup(void)
         Hu3DGLightStaticSet(lbl_1_bss_2ED1C, TRUE);
         Hu3DGLightInfinitytSet(lbl_1_bss_2ED1C);
     }
-    shadowPos.x = 345.0f;
-    shadowPos.y = 10000.0 * sin(1.5707963267948966);
-    shadowPos.z = 10000.0 * cos(1.5707963267948966);
-    shadowUp.x = 0.0f;
-    shadowUp.y = 1.0f;
-    shadowUp.z = 0.0f;
-    shadowTarget.x = 346.0f;
-    shadowTarget.y = 0.0f;
-    shadowTarget.z = 0.0f;
-    Hu3DShadowCreate(12.0f, 7000.0f, 12000.0f);
-    Hu3DShadowTPLvlSet(0.5f);
-    Hu3DShadowPosSet(&shadowPos, &shadowUp, &shadowTarget);
-    Hu3DShadowColSet(60, 90, 150);
+    {
+        Vec shadowPos;
+        Vec shadowUp;
+        Vec shadowTarget;
+
+        shadowPos.x = 345.0f;
+        shadowPos.y = 10000.0 * sin(1.5707963267948966);
+        shadowPos.z = 10000.0 * cos(1.5707963267948966);
+        shadowUp.x = 0.0f;
+        shadowUp.y = 1.0f;
+        shadowUp.z = 0.0f;
+        shadowTarget.x = 346.0f;
+        shadowTarget.y = 0.0f;
+        shadowTarget.z = 0.0f;
+        Hu3DShadowCreate(12.0f, 7000.0f, 12000.0f);
+        Hu3DShadowTPLvlSet(0.5f);
+        Hu3DShadowPosSet(&shadowPos, &shadowUp, &shadowTarget);
+        Hu3DShadowColSet(60, 90, 150);
+    }
     lbl_1_bss_2ED26 = -1;
     lbl_1_data_78 = -1;
     lbl_1_bss_2ED34 = omAddObjEx(lbl_1_bss_2ED28, 101, 26, 8, 1, fn_1_FADC);
