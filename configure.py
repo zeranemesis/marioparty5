@@ -656,7 +656,7 @@ config.libs = [
         "si",
         [
             Object(NonMatching, "dolphin/si/SIBios.c"),
-            Object(NonMatching, "dolphin/si/SISamplingRate.c"),
+            Object(Matching, "dolphin/si/SISamplingRate.c"),
         ],
     ),
     {
