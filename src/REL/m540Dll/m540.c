@@ -4,6 +4,7 @@
 #include "REL/m540Dll/lib.c"
 
 #include "messdir_enum.h"
+#include "game/gxarray.h"
 
 /* Work of the stage objects (lbl_1_bss_F8) */
 typedef struct M540StageWork_s {
@@ -476,12 +477,12 @@ static void fn_1_6920(HU3DMODEL *modelP, Mtx *mtx)
 static void fn_1_6C3C(void)
 {
     HU3DCAMERA *camera;
-    GXColor color;
-    HuVecF up;
-    HuVecF target;
-    HuVecF eye;
-    Mtx lookAt;
     Mtx44 proj;
+    Mtx lookAt;
+    HuVecF eye;
+    HuVecF target;
+    HuVecF up;
+    GXColor color;
     camera = &Hu3DCamera[0];
     if(camera->fov <= 0.0f) {
         return;
@@ -512,8 +513,8 @@ static void fn_1_6C3C(void)
     up.y = 1;
     C_MTXLookAt(lookAt, &eye, &up, &target);
     GXLoadPosMtxImm(lookAt, GX_PNMTX0);
-    eye.x = 1.2f*(80000.0*-sin(camera->fov*0.5f));
-    eye.y = 0.8333333f*(80000.0*-sin(camera->fov*0.5f));
+    eye.x = 1.2f*(80000.0*-sin(0.5f*camera->fov));
+    eye.y = 0.8333333f*(80000.0*-sin(0.5f*camera->fov));
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-eye.x, -eye.y, -23000);
     GXPosition3f32(eye.x, -eye.y, -23000);
@@ -521,3 +522,5 @@ static void fn_1_6C3C(void)
     GXPosition3f32(-eye.x, eye.y, -23000);
     GXEnd();
 }
+
+/* M540_APPEND */
