@@ -477,7 +477,7 @@ config.libs = [
             Object(Matching, "game/board/story.c"),
             Object(Matching, "game/board/telop.c"),
             Object(Matching, "game/board/mgcircuit.c"),
-            Object(NonMatching, "game/code_801A7E90.c"),
+            Object(Matching, "game/code_801A7E90.c"),
         ],
     },
     {
