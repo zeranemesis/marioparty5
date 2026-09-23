@@ -1200,7 +1200,7 @@ config.libs = [
         "m521Dll",
         objects={
             Object(NonMatching, "REL/m521Dll/clock.cpp"),
-            Object(NonMatching, "REL/m521Dll/clockhand.cpp"),
+            Object(Matching, "REL/m521Dll/clockhand.cpp"),
             Object(NonMatching, "REL/m521Dll/m521.cpp"),
             Object(NonMatching, "REL/m521Dll/debugline.cpp"),
             Object(NonMatching, "REL/m521Dll/driver.cpp"),
