@@ -477,7 +477,7 @@ config.libs = [
             Object(Matching, "game/board/story.c"),
             Object(Matching, "game/board/telop.c"),
             Object(Matching, "game/board/mgcircuit.c"),
-            Object(NonMatching, "game/code_801A7E90.c"),
+            Object(Matching, "game/code_801A7E90.c"),
         ],
     },
     {
@@ -499,7 +499,7 @@ config.libs = [
     DolphinLib(
         "base",
         [
-            Object(NonMatching, "dolphin/base/PPCArch.c"),
+            Object(Matching, "dolphin/base/PPCArch.c"),
         ],
     ),
     DolphinLib(
@@ -518,12 +518,12 @@ config.libs = [
             Object(NonMatching, "dolphin/os/OSLink.c"),
             Object(Matching, "dolphin/os/OSMessage.c"),
             Object(NonMatching, "dolphin/os/OSMemory.c"),
-            Object(NonMatching, "dolphin/os/OSMutex.c"),
+            Object(Matching, "dolphin/os/OSMutex.c"),
             Object(NonMatching, "dolphin/os/OSReboot.c"),
             Object(NonMatching, "dolphin/os/OSReset.c"),
             Object(NonMatching, "dolphin/os/OSResetSW.c"),
             Object(NonMatching, "dolphin/os/OSRtc.c"),
-            Object(NonMatching, "dolphin/os/OSSemaphore.c"),
+            Object(Matching, "dolphin/os/OSSemaphore.c"),
             Object(NonMatching, "dolphin/os/OSStopwatch.c"),
             Object(Matching, "dolphin/os/OSSync.c"),
             Object(NonMatching, "dolphin/os/OSThread.c"),
@@ -546,7 +546,7 @@ config.libs = [
             Object(Matching, "dolphin/mtx/mtx44.c"),
             Object(NonMatching, "dolphin/mtx/vec.c"),
             Object(NonMatching, "dolphin/mtx/quat.c"),
-            Object(NonMatching, "dolphin/mtx/psmtx.c"),
+            Object(Matching, "dolphin/mtx/psmtx.c"),
         ],
     ),
     DolphinLib(
@@ -656,7 +656,7 @@ config.libs = [
         "si",
         [
             Object(NonMatching, "dolphin/si/SIBios.c"),
-            Object(NonMatching, "dolphin/si/SISamplingRate.c"),
+            Object(Matching, "dolphin/si/SISamplingRate.c"),
         ],
     ),
     {
