@@ -1,0 +1,33 @@
+#include "game/hu3d.h"
+#include "string.h"
+
+typedef struct MgLight_s {
+    s32 unk0;
+    HU3DLIGHTID lightId;
+} MgLight;
+
+HuVecF lbl_1_data_400 = { 7000.0f, 7000.0f, 7000.0f };
+HuVecF lbl_1_data_40C = { -1.0f, -1.0f, -1.0f };
+GXColor lbl_1_data_418 = { 255, 255, 255, 255 };
+
+void fn_1_959C(MgLight *light, s32 arg1)
+{
+    memset(light, 0, sizeof(MgLight));
+    light->unk0 = arg1;
+    light->lightId = Hu3DGLightCreateV(&lbl_1_data_400, &lbl_1_data_40C, &lbl_1_data_418);
+    Hu3DGLightStaticSet(light->lightId, TRUE);
+    Hu3DGLightInfinitytSet(light->lightId);
+}
+
+void fn_1_9614(MgLight *light)
+{
+    if (light->lightId != 0) {
+        Hu3DGLightKill(light->lightId);
+        light->lightId = 0;
+    }
+    memset(light, 0, sizeof(MgLight));
+}
+
+void fn_1_9668(MgLight *light)
+{
+}
