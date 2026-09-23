@@ -23,7 +23,22 @@
 #define M518_GRID_SIZE 12
 
 /* Sleep for a number of frames; leave the current mode function as soon as its mode changes. */
-#define M518_WAIT(frames)                                                           {                                                                                   s32 i;                                                                          s16 mode;                                                                       s16 prevMode;                                                                   s32 time = (frames);                                                            for (i = 0; i < time; i++) {                                                        HuPrcVSleep();                                                                  mode = ((M518_OBJHEAD *)HuPrcCurrentGet()->property)->mode;                     prevMode = ((M518_OBJHEAD *)HuPrcCurrentGet()->property)->prevMode;             ((M518_OBJHEAD *)HuPrcCurrentGet()->property)->prevMode = mode;                 if (mode != prevMode) {                                                             return;                                                                     }                                                                           }                                                                           }
+#define M518_WAIT(frames)                                                        \
+    {                                                                            \
+        int i;                                                                   \
+        s16 mode;                                                                \
+        s16 prevMode;                                                            \
+        int time = (frames);                                                     \
+        for (i = 0; i < time; i++) {                                             \
+            HuPrcVSleep();                                                       \
+            mode = ((M518_OBJHEAD *)HuPrcCurrentGet()->property)->mode;          \
+            prevMode = ((M518_OBJHEAD *)HuPrcCurrentGet()->property)->prevMode;  \
+            ((M518_OBJHEAD *)HuPrcCurrentGet()->property)->prevMode = mode;      \
+            if (mode != prevMode) {                                              \
+                return;                                                          \
+            }                                                                    \
+        }                                                                        \
+    }
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -348,8 +363,8 @@ void fn_1_184(void)
 
 void fn_1_1F4(s16 mode, s16 frameNo)
 {
-    s32 i;
-    s32 num;
+    int i;
+    int num;
     s16 layout;
     s16 unused;
     s16 grp[4];
@@ -441,9 +456,9 @@ static const M518_CHARSTART lbl_1_rodata_498[4] = {
 
 void fn_1_728(s16 mode, s16 frameNo)
 {
-    s32 j;
-    s32 i;
-    s32 k;
+    int j;
+    int i;
+    int k;
     float angle;
     HuVecF pos;
     HuVecF rot;
@@ -598,8 +613,8 @@ void fn_1_728(s16 mode, s16 frameNo)
 
 void fn_1_1C3C(void)
 {
-    s32 x;
-    s32 z;
+    int x;
+    int z;
     M518_BLOCK *block;
 
     for (z = 0; z < M518_GRID_SIZE; z++) {
@@ -614,7 +629,7 @@ void fn_1_1C3C(void)
 
 void fn_1_1CD8(s16 mode, s16 frameNo)
 {
-    s32 i;
+    int i;
 
     switch (frameNo) {
         case 0:
@@ -628,7 +643,7 @@ void fn_1_1CD8(s16 mode, s16 frameNo)
 
 void fn_1_1D54(s16 mode, s16 frameNo)
 {
-    s32 i;
+    int i;
 
     switch (frameNo) {
         case 0:
@@ -670,9 +685,9 @@ void fn_1_1E28(s16 mode, s16 frameNo)
 
 void fn_1_1EFC(s16 mode, s16 frameNo)
 {
-    s32 i;
-    s32 k;
-    s32 j;
+    int i;
+    int k;
+    int j;
     float angle;
     HuVecF pos;
     HuVecF rot;
@@ -812,7 +827,7 @@ void fn_1_1EFC(s16 mode, s16 frameNo)
 
 void fn_1_2C6C(s16 mode, s16 frameNo)
 {
-    s32 i;
+    int i;
 
     switch (frameNo) {
         case 0:
@@ -884,7 +899,7 @@ static const M518_PLAYERPARAM lbl_1_rodata_68C[2] = {
 M518_PLAYER *fn_1_2D24(s16 playerNo, s16 no, s16 type)
 {
     M518_PLAYER *player;
-    s32 i;
+    int i;
 
     player = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_PLAYER), HU_MEMNUM_OVL);
     player->pos.x = 0.0f;
@@ -972,7 +987,7 @@ void fn_1_31F0(void)
 
 void fn_1_3230(M518_PLAYER *player, HuVecF pos)
 {
-    s32 i;
+    int i;
 
     for (i = 0; i < 2; i++) {
         if (player->modelId[i] != HU3D_MODELID_NONE) {
@@ -984,7 +999,7 @@ void fn_1_3230(M518_PLAYER *player, HuVecF pos)
 
 void fn_1_32C8(M518_PLAYER *player, HuVecF rot)
 {
-    s32 i;
+    int i;
     float *mtx;
     Mtx rotMtx;
 
@@ -1007,7 +1022,7 @@ void fn_1_32C8(M518_PLAYER *player, HuVecF rot)
 
 void fn_1_3440(M518_PLAYER *player, HuVecF scale)
 {
-    s32 i;
+    int i;
 
     for (i = 0; i < 2; i++) {
         if (player->modelId[i] != HU3D_MODELID_NONE) {
@@ -1019,7 +1034,7 @@ void fn_1_3440(M518_PLAYER *player, HuVecF scale)
 
 void fn_1_34D8(M518_PLAYER *player, float tpLvl)
 {
-    s32 i;
+    int i;
 
     for (i = 0; i < 2; i++) {
         if (player->modelId[i] != HU3D_MODELID_NONE) {
@@ -1068,13 +1083,13 @@ static const u8 lbl_1_rodata_6B2[5][4] = { { 1, 1, 0, 0 }, { 1, 1, 1, 0 }, { 1, 
 
 void fn_1_3904(M518_PLAYER *player)
 {
-    s32 j;
-    s32 i;
+    int j;
+    int i;
     u16 value;
     const u8 *tbl;
-    s32 speed;
+    int speed;
     float angle;
-    s32 unused;
+    int unused;
     M518_CELL cell;
 
     angle = HuAbs(player->rot.z - player->prevRot.z) + (HuAbs(player->rot.x - player->prevRot.x) + HuAbs(player->rot.y - player->prevRot.y));
@@ -1107,7 +1122,7 @@ void fn_1_3904(M518_PLAYER *player)
         case 0:
             for (i = 0; i < player->size; i++) {
                 for (j = 0; j < player->size * 2; j++) {
-                    cell.x = player->size + (player->cell.x - j) - 1;
+                    cell.x = player->size - 1 + (player->cell.x - j);
                     cell.z = player->cell.z + i;
                     if (tbl[j]) {
                         fn_1_37D0(player, cell, value);
@@ -1136,7 +1151,7 @@ void fn_1_3904(M518_PLAYER *player)
             for (i = 0; i < player->size * 2; i++) {
                 for (j = 0; j < player->size; j++) {
                     cell.x = player->cell.x + j;
-                    cell.z = player->size + (player->cell.z - i) - 1;
+                    cell.z = player->size - 1 + (player->cell.z - i);
                     if (tbl[i]) {
                         fn_1_37D0(player, cell, value);
                     }
@@ -1341,8 +1356,8 @@ static const u16 lbl_1_rodata_768[5][18 * 18] = {
 
 void fn_1_6C0C(M518_PLAYER *player)
 {
-    s32 z;
-    s32 x;
+    int x;
+    int z;
     M518_CELL cell;
 
     if (player->type == 1) {
