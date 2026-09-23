@@ -1050,7 +1050,7 @@ config.libs = [
             Object(NonMatching, "REL/m509Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m509Dll/camera.cpp"),
             Object(NonMatching, "REL/m509Dll/player.cpp"),
-            Object(NonMatching, "REL/m509Dll/random.cpp"),
+            Object(Matching, "REL/m509Dll/random.cpp"),
         },
     ),
     Rel(
