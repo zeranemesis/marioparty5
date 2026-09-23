@@ -676,7 +676,7 @@ config.libs = [
         "host": False,
         "objects": [
             Object(Matching, "Runtime.PPCEABI.H/__va_arg.c"),
-            Object(Equivalent, "Runtime.PPCEABI.H/global_destructor_chain.c"),
+            Object(Matching, "Runtime.PPCEABI.H/global_destructor_chain.c"),
             Object(Matching, "Runtime.PPCEABI.H/__mem.c"),
             Object(Matching, "Runtime.PPCEABI.H/New.cp", extra_cflags=["-Cpp_exceptions on"]),
             Object(Matching, "Runtime.PPCEABI.H/NewMore.cp", extra_cflags=["-Cpp_exceptions on", "-RTTI on"]),

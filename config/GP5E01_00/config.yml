@@ -5,6 +5,7 @@ symbols: config/GP5E01_00/symbols.txt
 splits: config/GP5E01_00/splits.txt
 quick_analysis: true
 mw_comment_version: 11
+force_active: [__register_global_object]
 
 modules:
 - object: files/dll/m565dll.rel
