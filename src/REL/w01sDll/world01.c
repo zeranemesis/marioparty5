@@ -517,6 +517,108 @@ static void MB1_TumikiArmyObjUpdate(OMOBJ *obj);
 static void MB1_TumikiArmyPosFix(OMOBJ *obj);
 static void MB1_TrainObjUpdate(OMOBJ *obj);
 
+static int MB1_ExplodeEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float animSpeed, GXColor color);
+
+static void MB1_TumikiArmyObjUpdate(OMOBJ *obj)
+{
+    Mtx rotMtx;
+    HuVecF effPos;
+    HuVecF effVel;
+    GXColor effColor;
+    int i;
+    int colorOfs;
+    int angle;
+
+    if(MBKillCheck()) {
+        obj->work[0] = 7;
+    }
+    switch(obj->work[0]) {
+        case 0:
+            MBMotionSpeedSet(obj->work[1], 1);
+            MBMotionTimeSet(obj->work[1], 0);
+            obj->work[3] = 0;
+            obj->work[0]++;
+            mb1ev_TumikiArmyTimer = 0;
+
+        case 1:
+            if(MBMotionTimeGet(obj->work[1]) >= 38) {
+                MBMotionSpeedSet(obj->work[1], 0);
+                mb1ev_TumikiArmyTimer = 0;
+                obj->work[0]++;
+            }
+            break;
+
+        case 2:
+            if(++mb1ev_TumikiArmyTimer >= 30.0f) {
+                MBMotionSpeedSet(obj->work[1], 1);
+                mb1ev_TumikiArmyTimer = 0;
+                obj->work[0]++;
+            }
+            break;
+
+        case 3:
+            if(MBMotionTimeGet(obj->work[1]) >= 68) {
+                MBMotionSpeedSet(obj->work[1], 0);
+                mb1ev_TumikiArmyTimer = 0;
+                obj->work[0]++;
+            }
+            break;
+
+        case 4:
+            if(++mb1ev_TumikiArmyTimer >= 75.0f) {
+                MBMotionSpeedSet(obj->work[1], 1);
+                mb1ev_TumikiArmyTimer = 0;
+                obj->work[0]++;
+            }
+            break;
+
+        case 5:
+            if(MBMotionTimeGet(obj->work[1]) >= 83) {
+                mtxRot(rotMtx, -10, -135, 0);
+                for(i=0; i<16; i++) {
+                    effPos.x = -600;
+                    effPos.y = 2060;
+                    effPos.z = -630;
+                    angle = 22.5f*i;
+                    effVel.x = 100.0*HuSin(angle)*0.075f*((MBCapsuleEffRandF()*0.1f)+0.9f);
+                    effVel.y = 100.0*HuCos(angle)*0.075f*((MBCapsuleEffRandF()*0.1f)+0.9f);
+                    effVel.z = 0;
+                    MTXMultVec(rotMtx, &effVel, &effVel);
+                    colorOfs = MBCapsuleEffRandF()*63.0f;
+                    effColor.r = colorOfs+192;
+                    effColor.g = colorOfs+192;
+                    effColor.b = colorOfs+192;
+                    effColor.a = (MBCapsuleEffRandF()*63.0f)+192;
+                    MB1_ExplodeEffCreate(effPos, effVel, 200, 0.1f, 0.33f, effColor);
+                }
+                mb1ev_TumikiArmyTimer = 0;
+                obj->work[0]++;
+            }
+            break;
+
+        case 6:
+            if(MBMotionTimeGet(obj->work[1]) >= 87) {
+                obj->work[3] = Hu3DModelCreateData(CAPSULECHAR0_HSF_bomhei_explode);
+                Hu3DModelCameraSet(obj->work[3], HU3D_CAM0);
+                Hu3DModelPosSet(obj->work[3], -1120, 2230, -1122);
+                Hu3DModelScaleSet(obj->work[3], 2, 2, 2);
+                HuDataDirClose(CAPSULECHAR0_HSF_bomhei_explode);
+                mb1ev_TumikiArmyTimer = 0;
+                obj->work[0]++;
+            }
+            break;
+
+        case 7:
+            if(++mb1ev_TumikiArmyTimer >= 120.0f) {
+                if(obj->work[3]) {
+                    Hu3DModelKill(obj->work[3]);
+                }
+                omDelObj(mbObjMan, obj);
+            }
+            break;
+    }
+}
+
 static void MB1_TumikiArmyPosFix(OMOBJ *obj)
 {
     HSFOBJECT *hsfObj; //r31
@@ -550,6 +652,172 @@ static void MB1_TumikiArmyPosFix(OMOBJ *obj)
             break;
     }
 
+}
+
+static void MB1_TrainObjUpdate(OMOBJ *obj)
+{
+    float time;
+    float t;
+    if(MBKillCheck()) {
+        omDelObj(mbObjMan, obj);
+        return;
+    }
+    time = MB1_TrainTimeGet();
+    if(obj->work[1]) {
+        switch(obj->work[0]) {
+            case 0:
+                MB1_TrainTimeSet(0.9f);
+                MB1_TrainSpeedSet(1);
+                MB1_TrainCoinSpeedSet(1);
+                obj->work[0]++;
+                obj->work[2] = 0;
+                break;
+            
+            case 1:
+                mb1_Work.trainMode = 0;
+                if(time >= 1 || time < 0.5f) {
+                    t = (++obj->work[2]/30.0f);
+                    MB1_TrainSpeedSet(1-t);
+                    MB1_TrainCoinSpeedSet(1-t);
+                    if(obj->work[2] >= 30.0f) {
+                        MB1_TrainSpeedSet(0);
+                        MB1_TrainCoinSpeedSet(0);
+                        obj->work[0]++;
+                        obj->work[2] = 0;
+                    }
+                }
+                break;
+            
+            case 3:
+                mb1_Work.trainMode = 2;
+                t = (++obj->work[2]/30.0f);
+                MB1_TrainSpeedSet(t);
+                MB1_TrainCoinSpeedSet(t);
+                if(obj->work[2] >= 30.0f) {
+                    MB1_TrainSpeedSet(1);
+                    MB1_TrainCoinSpeedSet(1);
+                    obj->work[0]++;
+                    obj->work[2] = 0;
+                }
+                break;
+            
+            case 4:
+                MB1_TrainSpeedSet(1);
+                MB1_TrainCoinSpeedSet(1);
+                if(time >= 0.05f && time < 0.06f) {
+                    MB1_HasiOpen(0);
+                }
+                if(time >= 0.06f && time < 0.07f) {
+                    MB1_HasiClose(0);
+                }
+                if(time > 0.1f && time < 0.45f) {
+                    obj->work[3] = 1;
+                } else {
+                    obj->work[3] = 0;
+                }
+                if(time >= 0.49f) {
+                    obj->work[0]++;
+                    obj->work[2] = 0;
+                }
+                break;
+            
+            case 5:
+                mb1_Work.trainMode = 0;
+                t = (++obj->work[2]/30.0f);
+                MB1_TrainSpeedSet(1-t);
+                MB1_TrainCoinSpeedSet(1-t);
+                if(obj->work[2] >= 30.0f) {
+                    MB1_TrainSpeedSet(0);
+                    MB1_TrainCoinSpeedSet(0);
+                    obj->work[0]++;
+                }
+                break;
+            
+            case 7:
+                mb1_Work.trainMode = 1;
+                MB1_TrainSpeedSet(1);
+                MB1_TrainCoinSpeedSet(1);
+                omDelObj(mbObjMan, obj);
+                break;
+        }
+    } else {
+        switch(obj->work[0]) {
+            case 0:
+                MB1_TrainTimeSet(0.4f);
+                MB1_TrainSpeedSet(1);
+                MB1_TrainCoinSpeedSet(1);
+                obj->work[0]++;
+                obj->work[2] = 0;
+                break;
+            
+            case 1:
+                mb1_Work.trainMode = 0;
+                if(time >= 0.5f) {
+                    t = (++obj->work[2]/30.0f);
+                    MB1_TrainSpeedSet(1-t);
+                    MB1_TrainCoinSpeedSet(1-t);
+                    if(obj->work[2] >= 30.0f) {
+                        MB1_TrainSpeedSet(0);
+                        MB1_TrainCoinSpeedSet(0);
+                        obj->work[0]++;
+                        obj->work[2] = 0;
+                    }
+                }
+                break;
+            
+            case 3:
+                mb1_Work.trainMode = 2;
+                t = (++obj->work[2]/30.0f);
+                MB1_TrainSpeedSet(t);
+                MB1_TrainCoinSpeedSet(t);
+                if(obj->work[2] >= 30.0f) {
+                    MB1_TrainSpeedSet(1);
+                    MB1_TrainCoinSpeedSet(1);
+                    obj->work[0]++;
+                    obj->work[2] = 0;
+                }
+                break;
+            
+            case 4:
+                MB1_TrainSpeedSet(1);
+                MB1_TrainCoinSpeedSet(1);
+                if(time >= 0.9f && time < 0.91f) {
+                    MB1_HasiOpen(1);
+                }
+                if(time >= 0.91f && time < 0.92f) {
+                    MB1_HasiClose(1);
+                }
+                if(time > 0.55f && time < 0.9f) {
+                    obj->work[3] = 1;
+                } else {
+                    obj->work[3] = 0;
+                }
+                if(time >= 0.99f || time < 0.1f) {
+                    obj->work[0]++;
+                    obj->work[2] = 0;
+                }
+                break;
+            
+            case 5:
+                mb1_Work.trainMode = 0;
+                t = (++obj->work[2]/30.0f);
+                MB1_TrainSpeedSet(1-t);
+                MB1_TrainCoinSpeedSet(1-t);
+                if(obj->work[2] >= 30.0f) {
+                    MB1_TrainSpeedSet(0);
+                    MB1_TrainCoinSpeedSet(0);
+                    obj->work[0]++;
+                }
+                break;
+            
+            case 7:
+                mb1_Work.trainMode = 1;
+                MB1_TrainSpeedSet(1);
+                MB1_TrainCoinSpeedSet(1);
+                omDelObj(mbObjMan, obj);
+                break;
+        }
+    }
 }
 
 float MB1_AngleDiff(float a, float b)
@@ -1001,14 +1269,10 @@ void MB1_TrainCoinUpdate(OMOBJ *obj)
         }
         if(coin->mode <= 2) {
             for(j=0; j<GW_PLAYER_MAX; j++) {
-                if(!MBPlayerAliveCheck(j)) {
-                    continue;
-                }
                 MBPlayerPosGet(j, &playerPos);
                 VECSubtract(&coin->pos, &playerPos, &pos);
                 if(coin->pos.y >= playerPos.y && coin->pos.y <= playerPos.y+150 && HuMagXZVecF(&pos) < 100.0f) {
                     MBPlayerCoinAdd(j, 1);
-                    MBAudFXPlay(MSM_SE_CMN_08);
                     coinGrabF = TRUE;
                 }
             }
@@ -1453,9 +1717,9 @@ int MB1_CoinEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float gr
     MB1_PARTICLE_DATA *particleDataP; //r31
     MB1_PARTICLE *particleP; //r30
     int i; //r29
-    MB1_COIN_EFF_WORK *work; //r26
-    OMOBJ *obj; //r25
-    HU3DMODEL *modelP; //r24
+    MB1_COIN_EFF_WORK *work; //r28
+    OMOBJ *obj; //r27
+    HU3DMODEL *modelP; //r26
     if(mb1_CoinEffObj == NULL){
         return -1;
     }
@@ -1485,7 +1749,7 @@ int MB1_CoinEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float gr
     particleDataP->gravity = gravity;
     particleDataP->scale = scale;
     particleDataP->color = color;
-    particleDataP->rot.z = MBCapsuleEffRandF()*360;
+    particleDataP->rot.z = 0;
     particleDataP->animNo = 0;
     particleDataP->time = 0;
 
