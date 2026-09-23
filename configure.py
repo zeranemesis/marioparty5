@@ -866,8 +866,8 @@ config.libs = [
         "host": False,
         "objects": [
             Object(Matching, "REL/empty.c"),  # Must be marked as matching
-            Object(NonMatching, "REL/global_destructor_chain.c"),
-            Object(NonMatching, "REL/ptmf.c"),
+            Object(Matching, "REL/global_destructor_chain.c"),
+            Object(Matching, "REL/ptmf.c"),
         ],
     },
     {
