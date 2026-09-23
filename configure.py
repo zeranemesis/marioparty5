@@ -1284,7 +1284,7 @@ config.libs = [
         objects={
             Object(NonMatching, "REL/m531Dll/m531.cpp"),
             Object(NonMatching, "REL/m531Dll/effect.cpp"),
-            Object(NonMatching, "REL/m531Dll/scorebase.cpp"),
+            Object(Matching, "REL/m531Dll/scorebase.cpp"),
             Object(NonMatching, "REL/m531Dll/flow.cpp"),
             Object(NonMatching, "REL/m531Dll/polish.cpp"),
             Object(NonMatching, "REL/m531Dll/score.cpp"),
