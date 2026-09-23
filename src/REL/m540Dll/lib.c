@@ -13,12 +13,10 @@
 do { \
     int i_; \
     int num_; \
-    int mode_; \
     num_ = (tick); \
     for(i_=0; i_<num_; i_++) { \
         HuPrcVSleep(); \
-        mode_ = M540_CUROBJ->mode; \
-        if(M540_CUROBJ->prevMode != mode_) { \
+        if(M540_CUROBJ->prevMode != M540_CUROBJ->mode) { \
             M540_CUROBJ->prevMode = M540_CUROBJ->mode; \
             return; \
         } \

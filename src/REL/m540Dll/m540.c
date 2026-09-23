@@ -275,12 +275,12 @@ static M540_OBJ *fn_1_6260(int no)
     work->no = no;
     fn_1_13698(obj);
     switch(no) {
-        case 0:
-            fn_1_13994(obj);
-            break;
         case 1:
         case 2:
             fn_1_13934(obj);
+            break;
+        case 0:
+            fn_1_13994(obj);
             break;
     }
     fn_1_13774(obj, TRUE);
