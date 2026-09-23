@@ -1190,3 +1190,285 @@ void fn_1_2900(M519_STAGE *stage)
         }
     }
 }
+
+M519_MECH *fn_1_297C(s16 type, s16 no)
+{
+    static const int modelTbl[2][9] = {
+        { M519_DATANUM(33), M519_DATANUM(52), M519_DATANUM(55), M519_DATANUM(50), M519_DATANUM(51), M519_DATANUM(63), M519_DATANUM(34), M519_DATANUM(35),
+            M519_DATANUM(64) },
+        { M519_DATANUM(43), M519_DATANUM(58), M519_DATANUM(65), M519_DATANUM(49), M519_DATANUM(66), M519_DATANUM(67), M519_DATANUM(68), -1, -1 },
+    };
+    static const int motTbl[2][7] = {
+        { M519_DATANUM(36), M519_DATANUM(37), M519_DATANUM(38), M519_DATANUM(40), M519_DATANUM(39), M519_DATANUM(41), M519_DATANUM(42) },
+        { M519_DATANUM(44), M519_DATANUM(45), M519_DATANUM(46), M519_DATANUM(45), M519_DATANUM(46), M519_DATANUM(47), M519_DATANUM(47) },
+    };
+    static const M519_MECHPARAM paramTbl[2] = {
+        { 0.17857143f, 0.029761905f, 140.0f, 80 },
+        { 0.5952381f, 0.05952381f, 80.0f, 40 },
+    };
+    M519_MECH *mech;
+    int i;
+
+    mech = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M519_MECH), HU_MEMNUM_OVL);
+    mech->type = type;
+    mech->hitId = -1;
+    mech->pilotNo = 0;
+    mech->no = no;
+    mech->shotWait = 0;
+    mech->damageNo = 0;
+    mech->speed = 0.0f;
+    mech->rotSpeed = 0.0f;
+    mech->speedTarget = 0.0f;
+    mech->rotSpeedTarget = 0.0f;
+    mech->accel = paramTbl[type].accel;
+    mech->rotAccel = paramTbl[type].rotAccel;
+    mech->motNo = 1;
+    mech->motNoPrev = 0;
+    mech->pos.x = 0.0f;
+    mech->pos.y = 0.0f;
+    mech->pos.z = 0.0f;
+    mech->rot.x = 0.0f;
+    mech->rot.y = 0.0f;
+    mech->rot.z = 0.0f;
+    mech->chargeA = 0;
+    mech->chargeB = 0;
+    mech->inputF = FALSE;
+    mech->boostF = FALSE;
+    mech->cameraF = TRUE;
+    mech->turretRot = 0.0f;
+    mech->radius = paramTbl[type].radius;
+    mech->hpMax = paramTbl[type].hp;
+    mech->hp = mech->hpMax;
+    mech->hpDisp = mech->hpMax;
+    mech->effect[0] = NULL;
+    mech->effect[1] = NULL;
+    mech->knockback = 0.0f;
+    mech->knockbackAngle = 0.0f;
+    mech->comTargetF = FALSE;
+    mech->comMode = 0;
+    mech->comAction = 0;
+    mech->comShotWait = 0;
+    mech->comChargeF = FALSE;
+    mech->seNo = -1;
+    mech->collideF = FALSE;
+    mech->mode = 0;
+    mech->prevMode = 0;
+    for (i = 0; i < 9; i++) {
+        if (modelTbl[type][i] != -1) {
+            mech->modelId[i] = Hu3DModelCreateData(modelTbl[type][i]);
+            Hu3DModelAttrSet(mech->modelId[i], HU3D_ATTR_NOCULL);
+        }
+        else {
+            mech->modelId[i] = -1;
+        }
+    }
+    switch (type) {
+        case 0:
+            Hu3DModelAttrSet(mech->modelId[6], HU3D_ATTR_ZWRITE_OFF);
+            Hu3DModelAttrSet(mech->modelId[6], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[7], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[8], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+            Hu3DModelAttrSet(mech->modelId[1], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[2], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[3], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[4], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[7], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[8], HU3D_ATTR_DISPOFF);
+            Hu3DModelLayerSet(mech->modelId[0], 2);
+            Hu3DModelLayerSet(mech->modelId[1], 2);
+            Hu3DModelLayerSet(mech->modelId[2], 2);
+            Hu3DModelLayerSet(mech->modelId[3], 2);
+            Hu3DModelLayerSet(mech->modelId[4], 2);
+            Hu3DModelLayerSet(mech->modelId[5], 2);
+            Hu3DModelLayerSet(mech->modelId[6], 2);
+            Hu3DModelLayerSet(mech->modelId[7], 2);
+            Hu3DModelLayerSet(mech->modelId[8], 2);
+            break;
+        case 1:
+            Hu3DModelAttrSet(mech->modelId[2], HU3D_MOTATTR_LOOP);
+            Hu3DModelAttrSet(mech->modelId[0], HU3D_ATTR_ZWRITE_OFF);
+            Hu3DModelAttrSet(mech->modelId[3], HU3D_ATTR_ZCMP_OFF);
+            Hu3DModelAttrSet(mech->modelId[1], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[4], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[4], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[5], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrSet(mech->modelId[6], HU3D_ATTR_DISPOFF);
+            Hu3DModelLayerSet(mech->modelId[0], 2);
+            Hu3DModelLayerSet(mech->modelId[1], 2);
+            Hu3DModelLayerSet(mech->modelId[2], 2);
+            Hu3DModelLayerSet(mech->modelId[4], 2);
+            Hu3DModelLayerSet(mech->modelId[5], 2);
+            Hu3DModelLayerSet(mech->modelId[6], 2);
+            Hu3DModelLayerSet(mech->modelId[3], 7);
+            Hu3DModelCameraSet(mech->modelId[3], lbl_1_rodata_10[no]);
+            break;
+    }
+    for (i = 0; i < 7; i++) {
+        mech->motId[i] = Hu3DJointMotionData(mech->modelId[0], motTbl[type][i]);
+    }
+    fn_1_2FA0(mech, 0, 1.0f);
+    switch (type) {
+        case 0:
+            break;
+        case 1:
+            mech->effect[0] = fn_1_CC44();
+            fn_1_CDF4(mech->effect[0]);
+            mech->effect[1] = fn_1_CC44();
+            fn_1_CDF4(mech->effect[1]);
+            break;
+    }
+    mech->process = HuPrcChildCreate(fn_1_2F54, 2048, 10240, 0, HuPrcCurrentGet());
+    mech->process->property = mech;
+    return mech;
+}
+
+void fn_1_2F54(void)
+{
+    M519_MECH *mech = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_20[mech->type][mech->mode](mech);
+    }
+}
+
+const M519_MOTPARAM lbl_1_rodata_9F8[2][7] = {
+    {
+        { 0.0f, 16.0f, HU3D_MOTATTR_LOOP },
+        { 0.0f, 16.0f, HU3D_MOTATTR_LOOP },
+        { 0.0f, 16.0f, HU3D_MOTATTR_LOOP },
+        { 0.0f, 16.0f, HU3D_MOTATTR_LOOP },
+        { 0.0f, 16.0f, HU3D_MOTATTR_LOOP },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+        { 0.0f, 0.0f, HU3D_MOTATTR_NONE },
+    },
+    {
+        { 0.0f, 16.0f, HU3D_MOTATTR_LOOP },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+        { 0.0f, 16.0f, HU3D_MOTATTR_NONE },
+    },
+};
+
+void fn_1_2FA0(M519_MECH *mech, s16 motNo, float speed)
+{
+    if (mech->motNoPrev != mech->motNo) {
+        Hu3DMotionShiftSet(mech->modelId[0], mech->motId[motNo], lbl_1_rodata_9F8[mech->type][motNo].start, lbl_1_rodata_9F8[mech->type][motNo].end,
+            lbl_1_rodata_9F8[mech->type][motNo].attr);
+        mech->motNoPrev = mech->motNo;
+        mech->stepTime = 0.0f;
+    }
+    mech->motNo = motNo;
+    Hu3DMotionSpeedSet(mech->modelId[0], speed);
+}
+
+void fn_1_3098(M519_MECH *mech)
+{
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        if (mech->modelId[i] != -1) {
+            Hu3DModelTPLvlSet(mech->modelId[i], 0.0f);
+            Hu3DModelAttrSet(mech->modelId[i], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[i], HU3D_ATTR_DISPOFF);
+        }
+    }
+}
+
+void fn_1_3138(M519_MECH *mech, HuVecF pos)
+{
+    int i;
+
+    mech->prevPos = mech->pos;
+    mech->pos = pos;
+    for (i = 0; i < 9; i++) {
+        if (mech->modelId[i] != -1) {
+            Hu3DModelPosSet(mech->modelId[i], pos.x, pos.y, pos.z);
+        }
+    }
+    switch (mech->type) {
+        case 0:
+            Hu3DModelPosSet(mech->modelId[5], pos.x, 8.0f + pos.y, pos.z);
+            break;
+        case 1:
+            Hu3DModelPosSet(mech->modelId[2], pos.x, 8.0f + pos.y, pos.z);
+            Hu3DModelPosSet(mech->modelId[3], pos.x, 180.0f + pos.y, pos.z);
+            break;
+    }
+}
+
+HuVecF fn_1_3274(M519_MECH *mech)
+{
+    return mech->pos;
+}
+
+void fn_1_3290(M519_MECH *mech, HuVecF rot)
+{
+    int i;
+    MtxPtr mtx;
+    float diff;
+
+    mech->prevRot = mech->rot;
+    mech->rot = rot;
+    for (i = 0; i < 9; i++) {
+        if ((mech->type != 1 || i != 2) && (mech->type != 0 || i != 5) && mech->modelId[i] != -1) {
+            mtx = Hu3DData[mech->modelId[i]].mtx;
+            PSMTXIdentity(mtx);
+            PSMTXRotRad(mtx, 'z', 0.017453292f * rot.z);
+            Hu3DModelRotSet(mech->modelId[i], rot.x, rot.y, 0.0f);
+        }
+    }
+    switch (mech->type) {
+        case 0:
+            break;
+        case 1:
+            mtx = Hu3DData[mech->modelId[3]].mtx;
+            PSMTXIdentity(mtx);
+            diff = HuAbs(fmod(mech->rot.y - mech->turretRot, 360.0));
+            if (diff > 180.0f) {
+                diff = 180.0f - (diff - 180.0f);
+            }
+            Hu3DModelRotSet(mech->modelId[3], -45.0f + (0.5f * diff), mech->turretRot, 0.0f);
+            break;
+    }
+}
+
+HuVecF fn_1_34FC(M519_MECH *mech)
+{
+    return mech->rot;
+}
+
+void fn_1_3518(M519_MECH *mech, M519_PILOT *pilot)
+{
+    Hu3DModelHookSet(mech->modelId[0], lbl_1_data_14[mech->type], pilot->modelId[1]);
+    mech->pilotNo = pilot->playerNo;
+    pilot->mechNo = mech->no;
+}
+
+void fn_1_3580(M519_MECH *mech)
+{
+    Hu3DModelHookReset(mech->modelId[0]);
+}
+
+void fn_1_35B0(M519_MECH *mech)
+{
+    mech->mode = 0;
+}
+
+void fn_1_35BC(M519_MECH *mech)
+{
+    while (TRUE) {
+        fn_1_95B0(mech);
+        fn_1_9700(mech);
+        fn_1_8450(mech);
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+}
+
+void fn_1_3658(M519_MECH *mech)
+{
+    mech->mode = 1;
+}
