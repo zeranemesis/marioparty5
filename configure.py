@@ -964,7 +964,7 @@ config.libs = [
             Object(NonMatching, "REL/m501Dll/particle.cpp"),
             Object(NonMatching, "REL/m501Dll/stage.cpp"),
             Object(NonMatching, "REL/m501Dll/player.cpp"),
-            Object(NonMatching, "REL/m501Dll/random.cpp"),
+            Object(Matching, "REL/m501Dll/random.cpp"),
         },
     ),
     Rel(
