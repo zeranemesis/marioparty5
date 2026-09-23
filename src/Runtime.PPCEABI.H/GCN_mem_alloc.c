@@ -1,5 +1,8 @@
 #include "dolphin/os.h"
 
+#define RoundUpPtr(p, align)   ((void*)(((u32)(p) + ((align) - 1)) & ~((align) - 1)))
+#define RoundDownPtr(p, align) ((void*)((u32)(p) & ~((align) - 1)))
+
 inline static void InitDefaultHeap(void) {
 	void* arenaLo;
 	void* arenaHi;
@@ -13,14 +16,22 @@ inline static void InitDefaultHeap(void) {
 	arenaLo = OSInitAlloc(arenaLo, arenaHi, 1);
 	OSSetArenaLo(arenaLo);
 
-	// arenaLo = OSRoundUpPtr(arenaLo, 0x20);
-	// arenaHi = OSRoundDownPtr(arenaHi, 0x20);
+	arenaLo = RoundUpPtr(arenaLo, 0x20);
+	arenaHi = RoundDownPtr(arenaHi, 0x20);
 
 	OSSetCurrentHeap(OSCreateHeap(arenaLo, arenaHi));
 	OSSetArenaLo(arenaLo = arenaHi);
 }
 
-/* 80362914-803629CC 35D254 00B8+00 0/0 1/1 0/0 .text            __sys_free */
+/* Deferred inlining emits functions in reverse order: __sys_free comes first in the binary. */
+void* __sys_alloc(u32 size) {
+    if (__OSCurrHeap == -1) {
+        InitDefaultHeap();
+    }
+
+    return OSAllocFromHeap(__OSCurrHeap, size);
+}
+
 void __sys_free(void* p) {
     if (__OSCurrHeap == -1) {
         InitDefaultHeap();

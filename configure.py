@@ -684,7 +684,7 @@ config.libs = [
             Object(NonMatching, "Runtime.PPCEABI.H/runtime.c"),
             Object(Matching, "Runtime.PPCEABI.H/__init_cpp_exceptions.cpp"),
             Object(NonMatching, "Runtime.PPCEABI.H/Gecko_ExceptionPPC.cpp", extra_cflags=["-Cpp_exceptions on", "-RTTI on"]),
-            Object(NonMatching, "Runtime.PPCEABI.H/GCN_mem_alloc.c"),
+            Object(Matching, "Runtime.PPCEABI.H/GCN_mem_alloc.c"),
         ],
     },
     {
