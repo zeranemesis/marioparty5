@@ -83,6 +83,7 @@ set(GAME_FILES
         src/game/board/story.c
         src/game/board/telop.c
         src/game/board/mgcircuit.c
+        src/game/code_801A7E90.c
         src/zlib/adler32.c
         src/zlib/inflate.c
         src/zlib/infblock.c
@@ -230,7 +231,6 @@ set(REL_FILES
 )
 
 # DOL units not built natively yet (NonMatching):
-#   game/code_801A7E90.c
 #   msm/msmstream.c
 # REL modules not built yet (a unit is NonMatching or missing):
 #   carddll
