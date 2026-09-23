@@ -1,14 +1,14 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-23 09:37 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-24 00:23 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **23.56 %** (2 183.6 / 9 266.8 Ko) |
-| code lié depuis les sources | 18.65 % |
-| fonctions identiques | 5071 / 21231 |
-| unités complètes | 315 / 881 |
+| code identique | **24.20 %** (2 242.1 / 9 266.8 Ko) |
+| code lié depuis les sources | 19.28 % |
+| fonctions identiques | 5141 / 21231 |
+| unités complètes | 316 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
 
@@ -19,7 +19,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 82.3 % | 300.3 Ko |
 | Mini-jeux m5xx | 76 | 4 493.9 Ko | 3.0 % | 4 358.3 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
-| Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 7.3 % | 194.7 Ko |
+| Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 35.2 % | 136.2 Ko |
 | Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 41.4 % | 224.4 Ko |
 | Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
 | Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 14.0 % | 1 179.3 Ko |
@@ -123,7 +123,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `w01sDll` | 58.5 Ko | 0.0 % | 0/70 | 0.0 % | 0/0/1 | à faire |
+| `w01sDll` | 58.5 Ko | 100.0 % | 70/70 | 100.0 % | 1/0/0 | fait |
 | `w02sDll` | 41.4 Ko | 0.0 % | 0/62 | 0.0 % | 0/0/1 | à faire |
 | `w03sDll` | 11.2 Ko | 32.4 % | 13/22 | 66.2 % | 0/1/0 | fait (E) |
 | `w04sDll` | 54.8 Ko | 0.0 % | 0/59 | 0.0 % | 0/0/1 | à faire |
