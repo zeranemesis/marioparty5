@@ -513,6 +513,213 @@ int MB1_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
     return -1;
 }
 
+void MB1Ev_Hako(int playerNo)
+{
+    s16 j; //r31
+    s16 i; //r30
+    s16 no; //r29
+    s16 moveMasuId; //r28
+    s16 playerNum; //r26
+    s16 testPlayer; //r25
+    s16 masuId; //r24
+    MBMODELID mdlId; //r23
+    int masuNum; //r22
+    int focusMdlId; //r21
+    int motNo; //r20
+
+    float t; //f27
+    float velY; //f26
+
+    Mtx mtx; //sp+0xD8
+    HuVecF playerPos[GW_PLAYER_MAX]; //sp+0xA8
+    HuVecF masuPos[GW_PLAYER_MAX]; //sp+0x78
+    HuVecF center[GW_PLAYER_MAX]; //sp+0x48
+    HuVecF temp; //sp+0x3C
+    HuVecF pos; //sp+0x30
+    HuVecF rot; //sp+0x24
+    s16 playerTbl[GW_PLAYER_MAX]; //sp+0x1C
+    s16 playerMasu[GW_PLAYER_MAX]; //sp+0x14
+    MASU *masuP; //sp+0x10
+    static HuVecF viewRot = { -20, 0, 0 };
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    motNo = MBPlayerMotionCreate(playerNo, CHARMOT_HSF_c000m1_325);
+    for(i=0, playerNum=0, no=0; i<GW_PLAYER_MAX; i++) {
+        if(masuId != GwPlayer[i].masuId) {
+            continue;
+        }
+        GwPlayer[i].storySkipEventF = TRUE;
+        masuNum = MBMasuNumGet(MASU_LAYER_DEFAULT);
+        playerMasu[no] = MBCapsuleEffRand(masuNum);
+        for(j=0; j<masuNum; j++) {
+            moveMasuId = playerMasu[no]+j;
+            if(moveMasuId >= masuNum) {
+                moveMasuId -= masuNum;
+            }
+            if(moveMasuId == 0) {
+                moveMasuId++;
+            }
+            if(moveMasuId != masuId) {
+                for(testPlayer=0; testPlayer<no; testPlayer++) {
+                    if(moveMasuId == playerMasu[testPlayer]) {
+                        break;
+                    }
+                }
+                if(testPlayer >= no) {
+                    if(MBMasuTypeGet(MASU_LAYER_DEFAULT, moveMasuId) == MASU_TYPE_BLUE
+                        || MBMasuTypeGet(MASU_LAYER_DEFAULT, moveMasuId) == MASU_TYPE_RED) {
+                            break;
+                        }
+                }
+            }
+        }
+        if(j < masuNum) {
+            playerMasu[no] = moveMasuId;
+        } else {
+            playerMasu[no] = masuId;
+        }
+        MBPlayerPosGet(i, &playerPos[no]);
+        MBMasuPosGet(MASU_LAYER_DEFAULT, playerMasu[no], &masuPos[no]);
+        VECSubtract(&masuPos[no], &playerPos[no], &temp);
+        VECScale(&temp, &temp, 0.5f);
+        VECAdd(&playerPos[no], &temp, &center[no]);
+        if(masuPos[no].y > playerPos[no].y) {
+            center[no].y = 5000+masuPos[no].y+VECMag(&temp);
+        } else {
+            center[no].y = 5000+playerPos[no].y+VECMag(&temp);
+        }
+        playerTbl[playerNum] = i;
+        no++;
+        playerNum++;
+    }
+    MBPlayerRotateStart(playerNo, 0, 15);
+    while(!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, motNo, 0, 8, HU3D_MOTATTR_NONE);
+    mb1_Work.coinMdlId = focusMdlId = MBModelCreate(BOARD_HSF_coin, NULL, FALSE);
+    MBModelDispSet(focusMdlId, FALSE);
+    MBPlayerPosGet(playerNo, &temp);
+    MBModelPosSetV(focusMdlId, &temp);
+    temp.x = 0;
+    temp.y = 100;
+    temp.z = 0;
+    MBCameraMasuViewSet(masuId, &viewRot, &temp, 1800, -1, 42);
+    MBCameraMotionWait();
+    for(i=0; i<60.0f; i++) {
+        HuPrcVSleep();
+    }
+    do {
+        HuPrcVSleep();
+    } while(MBPlayerMotionTimeGet(playerNo) < MBPlayerMotionMaxTimeGet(playerNo)*0.66f);
+    mdlId = mb1_Work.hakoMdlId;
+    MBMotionSpeedSet(mdlId, 1);
+    MBMotionTimeSet(mdlId, 0);
+    HuAudFXPlay(MSM_SE_BD1_04);
+    for(j=0; j<playerNum; j++) {
+        MBPlayerMotionNoShiftSet(playerTbl[j], MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_LOOP);
+        omVibrate(playerTbl[j], 12, 4, 2);
+        CharFXPlay(GwPlayer[playerTbl[j]].charNo, CHARVOICEID(9));
+    }
+    for(i=0; i<45.0f; i++) {
+        t = i/45.0f;
+        for(j=0; j<playerNum; j++) {
+            MB1_BezierCalcV(t*0.5f, (float *)&playerPos[j], (float *)&center[j], (float *)&masuPos[j], (float *)&pos);
+            MB1_BezierCalcV((t*0.5f)*0.01f, (float *)&playerPos[j], (float *)&center[j], (float *)&masuPos[j], (float *)&temp);
+            rot.x = HuAtan(HuMagXZVecF(&temp), temp.y);
+            rot.y = HuAtan(temp.x, temp.z);
+            rot.z = 0;
+            MBPlayerPosSetV(playerTbl[j], &pos);
+            MBPlayerRotSetV(playerTbl[j], &rot);
+        }
+        HuPrcVSleep();
+    }
+    WipeColorSet(255, 255, 255);
+    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_CROSSCOPY, 1);
+    WipeWait();
+    for(j=0; j<playerNum; j++) {
+        static HuVecF viewRot = { -33, 0, 0 };
+        GwPlayer[playerTbl[j]].masuId = playerMasu[j];
+        MBPlayerPosFixEvent(playerTbl[j], playerMasu[j], TRUE);
+        MBPlayerMotionSpeedSet(playerTbl[j], 0);
+        MBCameraSkipSet(FALSE);
+        temp.x = 0;
+        temp.y = 100;
+        temp.z = 0;
+        MBCameraMasuViewSet(playerMasu[j], &viewRot, &temp, -1, -1, 1);
+        MBCameraMotionWait();
+        MBCameraSkipSet(TRUE);
+        WipeCreate(WIPE_MODE_IN, WIPE_TYPE_CROSSCOPY, 30);
+        for(i=0; i<45.0f; i++) {
+            t = i/45.0f;
+            MB1_BezierCalcV((t*0.5f)+0.5f, (float *)&playerPos[j], (float *)&center[j], (float *)&masuPos[j], (float *)&pos);
+            MB1_BezierCalcV(((t*0.5f)*0.01f)+0.5f, (float *)&playerPos[j], (float *)&center[j], (float *)&masuPos[j], (float *)&temp);
+            rot.x = HuAtan(HuMagXZVecF(&temp), -temp.y);
+            rot.y = HuAtan(temp.x, temp.z);
+            rot.z = 0;
+            MTXRotDeg(mtx, 'Y', i*20.0f);
+            MBPlayerPosSetV(playerTbl[j], &pos);
+            MBPlayerRotSetV(playerTbl[j], &rot);
+            MB1_PlayerMtxSet(playerTbl[j], &mtx);
+            HuPrcVSleep();
+        }
+        CharFXPlay(GwPlayer[playerTbl[j]].charNo, CHARSEID(18));
+        MBPlayerMotionNoSet(playerTbl[j], MB_PLAYER_MOT_DIZZY, HU3D_MOTATTR_LOOP);
+        MTXIdentity(mtx);
+        MB1_PlayerMtxSet(playerTbl[j], &mtx);
+        pos.x = masuPos[j].x;
+        pos.y = masuPos[j].y;
+        pos.z = masuPos[j].z;
+        rot.x = 0;
+        rot.y = 0;
+        rot.z = 0;
+        velY = 50;
+        do {
+            pos.y += velY;
+            velY -= 5.7166667f;
+            MBPlayerPosSetV(playerTbl[j], &pos);
+            MBPlayerRotSetV(playerTbl[j], &rot);
+            HuPrcVSleep();
+        } while(pos.y > masuPos[j].y || velY >= 0);
+        MBPlayerPosSetV(playerTbl[j], &masuPos[j]);
+        MBPlayerRotSet(playerTbl[j], 0, 0, 0);
+        WipeWait();
+        for(i=0; i<60.0f; i++) {
+            HuPrcVSleep();
+        }
+        WipeColorSet(255, 255, 255);
+        WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_CROSSCOPY, 1);
+        WipeWait();
+    }
+    for(j=0; j<playerNum; j++) {
+        GwPlayer[playerTbl[j]].masuId = playerMasu[j];
+        MBPlayerPosFixEvent(playerTbl[j], playerMasu[j], TRUE);
+        rot.x = 0;
+        rot.y = 0;
+        rot.z = 0;
+        MBPlayerRotSetV(playerTbl[j], &rot);
+        MTXIdentity(mtx);
+        MB1_PlayerMtxSet(playerTbl[j], &mtx);
+        MBPlayerMotionSpeedSet(playerTbl[j], 1);
+        MBPlayerMotionNoSet(playerTbl[j], MB_PLAYER_MOT_IDLE, HU3D_MOTATTR_LOOP);
+    }
+    MBCameraSkipSet(FALSE);
+    MBCameraFocusPlayerSet(playerNo);
+    MBCameraMotionWait();
+    MBCameraSkipSet(TRUE);
+    mdlId = mb1_Work.hakoMdlId;
+    MBMotionSpeedSet(mdlId, 0);
+    MBMotionTimeSet(mdlId, 0);
+    WipeCreate(WIPE_MODE_IN, WIPE_TYPE_CROSSCOPY, 30);
+    WipeWait();
+    MBPlayerMotionKill(playerNo, motNo);
+    if(focusMdlId != MB_MODEL_NONE) {
+        MBModelKill(focusMdlId);
+    }
+    mb1_Work.coinMdlId = MB_MODEL_NONE;
+}
+
 static void MB1_TumikiArmyObjUpdate(OMOBJ *obj);
 static void MB1_TumikiArmyPosFix(OMOBJ *obj);
 static void MB1_TrainObjUpdate(OMOBJ *obj);
