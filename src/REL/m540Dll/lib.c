@@ -354,7 +354,8 @@ static M540_OBJ *fn_1_13A40(int prio, u32 stackSize, int playerNo, int motNum, u
     obj->process->property = obj;
     obj->modelId = CharModelCreate(obj->charNo, modelNo);
     for(i=0; i<motNum; i++) {
-        if(motTbl[i+(obj->charNo*13)] != HU_DATANUM_NONE) {
+        int motIdx = i+(obj->charNo*13);
+        if(motTbl[motIdx] != HU_DATANUM_NONE) {
             obj->motId[i] = CharMotionCreate(obj->charNo, motTbl[i]);
         }
     }
