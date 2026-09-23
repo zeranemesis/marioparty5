@@ -118,6 +118,14 @@ void __CARDExtHandler(s32 chan, OSContext* context);
 void __CARDUnlockedHandler(s32 chan, OSContext* context);
 s32 __CARDAccess(CARDControl* card, CARDDir* ent);
 BOOL __CARDIsWritable(CARDDir* ent);
+s32 __CARDGetControlBlock(s32 chan, CARDControl** pcard);
+s32 __CARDPutControlBlock(CARDControl* card, s32 result);
+void __CARDSyncCallback(s32 chan, s32 result);
+s32 __CARDSync(s32 chan);
+s32 __CARDFreeBlock(s32 chan, u16 nBlock, CARDCallback callback);
+s32 __CARDUpdateDir(s32 chan, CARDCallback callback);
+s32 __CARDGetFileNo(CARDControl* card, const char* fileName, s32* pfileNo);
+BOOL __CARDIsOpened(CARDControl* card, s32 fileNo);
 
 #define TRUNC(n, a) (((u32)(n)) & ~((a)-1))
 #define OFFSET(n, a) (((u32)(n)) & ((a)-1))
