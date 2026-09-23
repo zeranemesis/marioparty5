@@ -652,3 +652,541 @@ void fn_1_28C(s16 mode, s16 frameNo)
     }
     MgSeqModeNext();
 }
+
+void fn_1_9F4(s16 mode, s16 frameNo)
+{
+    int i;
+    float dist;
+    float angle;
+    float rotY;
+    HuVecF pos;
+    HuVecF rot;
+
+    switch (frameNo) {
+        case 0:
+            lbl_1_bss_10 = HuAudFXPlay(1800);
+            for (i = 0; i < 4; i++) {
+                dist = lbl_1_rodata_20[i].dist;
+                angle = lbl_1_rodata_20[i].angle;
+                rotY = lbl_1_rodata_20[i].rotY;
+                pos.x = dist * HuSin(angle);
+                pos.z = dist * HuCos(angle);
+                pos.y = 0.0f;
+                rot.x = 0.0f;
+                rot.z = 0.0f;
+                rot.y = rotY;
+                fn_1_3138(lbl_1_bss_F8[i], pos);
+                fn_1_3290(lbl_1_bss_F8[i], rot);
+                fn_1_9B9C(lbl_1_bss_F8[i]);
+            }
+            for (i = 0; i < 4; i++) {
+                lbl_1_bss_108[i].center.x = 0.0f;
+                lbl_1_bss_108[i].center.y = 0.0f;
+                lbl_1_bss_108[i].center.z = 0.0f;
+                lbl_1_bss_108[i].rot.x = -10.0f;
+                lbl_1_bss_108[i].rot.y = 0.0f;
+                lbl_1_bss_108[i].rot.z = 0.0f;
+                lbl_1_bss_108[i].zoom = 1000.0f;
+                omCameraViewSetMulti(lbl_1_rodata_10[i], &lbl_1_bss_108[i]);
+            }
+            break;
+        case 120:
+            HuAudFXStop(lbl_1_bss_10);
+            break;
+        case 180:
+            fn_1_2730(lbl_1_bss_178);
+            fn_1_D64();
+            fn_1_2790(lbl_1_bss_178);
+            MgSeqModeNext();
+            break;
+    }
+}
+
+void fn_1_D64(void)
+{
+    static const M519_CAMERASET cameraTbl[2][4] = {
+        {
+            { 50.0f, 100.0f, 24000.0f, 1.2f, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f, 0.0f, 0.0f, 640.0f, 480.0f },
+            { 50.0f, 100.0f, 24000.0f, 1.7625275f, 596.0f, 0.0f, 364.0f, 213.33f, 0.0f, 1.0f, 640.0f, 0.0f, 320.0f, 173.33f },
+            { 50.0f, 100.0f, 24000.0f, 2.1692724f, 596.0f, 153.33f, 364.0f, 153.33f, 0.0f, 1.0f, 640.0f, 173.33f, 320.0f, 133.33f },
+            { 50.0f, 100.0f, 24000.0f, 1.7625275f, 596.0f, 286.66f, 276.0f, 193.33f, 0.0f, 1.0f, 640.0f, 306.66f, 320.0f, 173.33f },
+        },
+        {
+            { 50.0f, 100.0f, 24000.0f, 0.6f, 0.0f, 0.0f, 320.0f, 480.0f, 0.0f, 1.0f, 0.0f, 0.0f, 320.0f, 480.0f },
+            { 50.0f, 100.0f, 24000.0f, 1.7625275f, 276.0f, 0.0f, 364.0f, 213.33f, 0.0f, 1.0f, 320.0f, 0.0f, 320.0f, 173.33f },
+            { 50.0f, 100.0f, 24000.0f, 1.7625275f, 276.0f, 153.33f, 364.0f, 193.33f, 0.0f, 1.0f, 320.0f, 173.33f, 320.0f, 133.33f },
+            { 50.0f, 100.0f, 24000.0f, 1.7625275f, 276.0f, 286.66f, 364.0f, 193.33f, 0.0f, 1.0f, 320.0f, 306.66f, 320.0f, 173.33f },
+        },
+    };
+    int i;
+    int time;
+    s16 cameraBit;
+    float t;
+    float h;
+    float x;
+    float y;
+    float w;
+    float near;
+    float far;
+    float fov;
+    float aspect;
+
+    for (time = 1; time <= 60; time++) {
+        for (i = 0; i < 4; i++) {
+            cameraBit = lbl_1_rodata_10[i];
+            t = HuSin(90.0f * ((1.0f / 60.0f) * time));
+            fov = cameraTbl[0][i].fov + (t * (cameraTbl[1][i].fov - cameraTbl[0][i].fov));
+            near = cameraTbl[0][i].near + (t * (cameraTbl[1][i].near - cameraTbl[0][i].near));
+            far = cameraTbl[0][i].far + (t * (cameraTbl[1][i].far - cameraTbl[0][i].far));
+            aspect = cameraTbl[0][i].aspect + (t * (cameraTbl[1][i].aspect - cameraTbl[0][i].aspect));
+            Hu3DCameraPerspectiveSet(cameraBit, fov, near, far, aspect);
+            x = cameraTbl[0][i].vpX + (t * (cameraTbl[1][i].vpX - cameraTbl[0][i].vpX));
+            y = cameraTbl[0][i].vpY + (t * (cameraTbl[1][i].vpY - cameraTbl[0][i].vpY));
+            w = cameraTbl[0][i].vpW + (t * (cameraTbl[1][i].vpW - cameraTbl[0][i].vpW));
+            h = cameraTbl[0][i].vpH + (t * (cameraTbl[1][i].vpH - cameraTbl[0][i].vpH));
+            near = cameraTbl[0][i].vpNear + (t * (cameraTbl[1][i].vpNear - cameraTbl[0][i].vpNear));
+            far = cameraTbl[0][i].vpFar + (t * (cameraTbl[1][i].vpFar - cameraTbl[0][i].vpFar));
+            Hu3DCameraViewportSet(cameraBit, x, y, w, h, near, far);
+            x = cameraTbl[0][i].scissorX + (t * (cameraTbl[1][i].scissorX - cameraTbl[0][i].scissorX));
+            y = cameraTbl[0][i].scissorY + (t * (cameraTbl[1][i].scissorY - cameraTbl[0][i].scissorY));
+            w = cameraTbl[0][i].scissorW + (t * (cameraTbl[1][i].scissorW - cameraTbl[0][i].scissorW));
+            h = cameraTbl[0][i].scissorH + (t * (cameraTbl[1][i].scissorH - cameraTbl[0][i].scissorH));
+            Hu3DCameraScissorSet(cameraBit, x, y, w, h);
+            switch (i) {
+                case 0:
+                    espPosSet(lbl_1_bss_18[0], 0.9f * w, 239.0f);
+                    break;
+                case 1:
+                    espPosSet(lbl_1_bss_18[1], 16.0f + (0.9f * (160.0f + x)), (y + h) - 1.0f);
+                    break;
+                case 2:
+                    espPosSet(lbl_1_bss_18[2], 16.0f + (0.9f * (160.0f + x)), (y + h) - 1.0f);
+                    break;
+            }
+        }
+        HuPrcVSleep();
+    }
+}
+
+void fn_1_143C(s16 mode, s16 frameNo)
+{
+    int i;
+    int j;
+
+    switch (frameNo) {
+        case 0:
+            lbl_1_bss_14 = HuAudSStreamPlay(62);
+            for (i = 0; i < 4; i++) {
+                fn_1_D7B0(lbl_1_bss_20[i]);
+                for (j = 0; j < 12; j++) {
+                    HuPrcVSleep();
+                }
+            }
+            break;
+        case 120:
+            MgSeqModeNext();
+            break;
+    }
+}
+
+void fn_1_14E8(s16 mode, s16 frameNo)
+{
+    int i;
+
+    switch (frameNo) {
+        case 0:
+            for (i = 0; i < 4; i++) {
+                fn_1_3658(lbl_1_bss_F8[i]);
+                lbl_1_bss_F8[i]->inputF = TRUE;
+            }
+            break;
+        default:
+            if (fn_1_A1D4(lbl_1_bss_F8[0])) {
+                lbl_1_bss_0 = TRUE;
+            }
+            if (fn_1_A1D4(lbl_1_bss_F8[1]) && fn_1_A1D4(lbl_1_bss_F8[2]) && fn_1_A1D4(lbl_1_bss_F8[3])) {
+                lbl_1_bss_4 = TRUE;
+            }
+            if (lbl_1_bss_0 || lbl_1_bss_4) {
+                MgSeqModeNext();
+            }
+            if ((u32)MgSeqTimerValueGet() == 0) {
+                MgSeqModeNext();
+            }
+            break;
+    }
+}
+
+void fn_1_1628(s16 mode, s16 frameNo)
+{
+    int i;
+    M519_MECH *mech;
+
+    switch (frameNo) {
+        case 0:
+            lbl_1_bss_8 = TRUE;
+            HuAudSStreamFadeOut(lbl_1_bss_14, 1000);
+            for (i = 0; i < 4; i++) {
+                mech = lbl_1_bss_F8[i];
+                mech->inputF = FALSE;
+                mech->chargeA = 0;
+                mech->chargeB = 0;
+                fn_1_8E40(mech);
+            }
+            for (i = 0; i < 4; i++) {
+                mech = lbl_1_bss_F8[i];
+                if (!fn_1_A1D4(mech)) {
+                    fn_1_F2DC(lbl_1_bss_20[mech->no]);
+                }
+            }
+            break;
+        case 30:
+            if ((!lbl_1_bss_0 && !lbl_1_bss_4) || (lbl_1_bss_0 && lbl_1_bss_4)) {
+                MgSeqDrawSet();
+            }
+            else if (lbl_1_bss_0) {
+                MgSeqWinnerSet(lbl_1_bss_E8[lbl_1_bss_F8[1]->pilotNo]->charNo, lbl_1_bss_E8[lbl_1_bss_F8[2]->pilotNo]->charNo,
+                    lbl_1_bss_E8[lbl_1_bss_F8[3]->pilotNo]->charNo, CHARNO_NONE);
+                GWMgCoinBonusSet(lbl_1_bss_E8[lbl_1_bss_F8[1]->pilotNo]->playerNo, 10);
+                GWMgCoinBonusSet(lbl_1_bss_E8[lbl_1_bss_F8[2]->pilotNo]->playerNo, 10);
+                GWMgCoinBonusSet(lbl_1_bss_E8[lbl_1_bss_F8[3]->pilotNo]->playerNo, 10);
+            }
+            else if (lbl_1_bss_4) {
+                MgSeqWinnerSet(lbl_1_bss_E8[lbl_1_bss_F8[0]->pilotNo]->charNo, CHARNO_NONE, CHARNO_NONE, CHARNO_NONE);
+                GWMgCoinBonusSet(lbl_1_bss_E8[lbl_1_bss_F8[0]->pilotNo]->playerNo, 10);
+            }
+            break;
+    }
+}
+
+void fn_1_19C4(s16 mode, s16 frameNo)
+{
+    static const float posXTbl[4] = { -320.0f, -60.0f, 130.0f, 320.0f };
+    static const s16 panTbl[4] = { 40, 56, 72, 88 };
+    int i;
+    M519_MECH *mech;
+    s16 cameraBit;
+    OMCAMERAVIEW *view;
+    HuVecF pos;
+    HuVecF rot;
+
+    switch (frameNo) {
+        case 60:
+            WipeColorSet(255, 255, 255);
+            WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 30);
+            HuAudFadeOut(30);
+            break;
+        case 90:
+            for (i = 0; i < 4; i++) {
+                fn_1_F7F0(lbl_1_bss_20[i]);
+            }
+            fn_1_2900(lbl_1_bss_178);
+            pos.x = 0.0f;
+            pos.y = -5000.0f;
+            pos.z = 0.0f;
+            for (i = 0; i < 4; i++) {
+                mech = lbl_1_bss_F8[i];
+                fn_1_A628(lbl_1_bss_E8[mech->pilotNo]);
+                fn_1_35B0(mech);
+                fn_1_3138(mech, pos);
+                mech->cameraF = FALSE;
+            }
+            for (i = 0; i < 4; i++) {
+                cameraBit = lbl_1_rodata_10[i];
+                mech = lbl_1_bss_F8[i];
+                switch (i) {
+                    case 0:
+                        Hu3DCameraPerspectiveSet(cameraBit, 50.0f, 10.0f, 24000.0f, 1.2f);
+                        Hu3DCameraViewportSet(cameraBit, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+                        Hu3DCameraScissorSet(cameraBit, 0, 0, 640, 480);
+                        view = &lbl_1_bss_108[mech->no];
+                        view->center.x = 0.0 * HuSin(0.0);
+                        view->center.z = 0.0 * HuCos(0.0);
+                        view->center.y = 150.0f;
+                        view->zoom = 600.0f;
+                        view->rot.y = 0.0f;
+                        view->rot.x = -15.0f;
+                        view->rot.z = 0.0f;
+                        omCameraViewMoveMulti(lbl_1_rodata_10[0], view, 1, 1);
+                        break;
+                    case 1:
+                    case 2:
+                    case 3:
+                        break;
+                }
+            }
+            Hu3DCameraKill(HU3D_CAM1 | HU3D_CAM2 | HU3D_CAM3);
+            lbl_1_bss_17C->work[0] = 1;
+            for (i = 0; i < 3; i++) {
+                espDispOff(lbl_1_bss_18[i]);
+            }
+            for (i = 0; i < 4; i++) {
+                mech = lbl_1_bss_F8[i];
+                pos.x = posXTbl[i];
+                pos.y = 0.0f;
+                pos.z = 0.0f;
+                fn_1_A44C(lbl_1_bss_E8[mech->pilotNo], pos);
+                rot.x = 0.0f;
+                rot.y = 0.0f;
+                rot.z = 0.0f;
+                fn_1_A4EC(lbl_1_bss_E8[mech->pilotNo], rot);
+                CharModelVoicePanSet(lbl_1_bss_E8[mech->pilotNo]->charNo, panTbl[i]);
+            }
+            break;
+        case 120:
+            WipeColorSet(255, 255, 255);
+            WipeCreate(WIPE_MODE_IN, WIPE_TYPE_NORMAL, 30);
+            mech = lbl_1_bss_F8[0];
+            view = &lbl_1_bss_108[mech->no];
+            view->center.x = 0.0 * HuSin(0.0);
+            view->center.z = 0.0 * HuCos(0.0);
+            view->center.y = 150.0f;
+            view->zoom = 1500.0f;
+            view->rot.y = 0.0f;
+            view->rot.x = -15.0f;
+            view->rot.z = 0.0f;
+            omCameraViewMoveMulti(lbl_1_rodata_10[0], view, 400, 2);
+            break;
+        case 180:
+            MgSeqModeNext();
+            break;
+    }
+}
+
+void fn_1_1FC0(s16 mode, s16 frameNo)
+{
+    int i;
+    M519_MECH *mech;
+
+    switch (frameNo) {
+        case 0:
+            if ((!lbl_1_bss_0 && !lbl_1_bss_4) || (lbl_1_bss_0 && lbl_1_bss_4)) {
+                CharLoseVoicePlay(lbl_1_bss_E8[lbl_1_bss_F8[0]->pilotNo]->charNo, lbl_1_bss_E8[lbl_1_bss_F8[1]->pilotNo]->charNo,
+                    lbl_1_bss_E8[lbl_1_bss_F8[2]->pilotNo]->charNo, lbl_1_bss_E8[lbl_1_bss_F8[3]->pilotNo]->charNo);
+                for (i = 0; i < 4; i++) {
+                    mech = lbl_1_bss_F8[i];
+                    fn_1_A770(lbl_1_bss_E8[mech->pilotNo]);
+                }
+            }
+            else if (lbl_1_bss_0) {
+                for (i = 0; i < 4; i++) {
+                    mech = lbl_1_bss_F8[i];
+                    if (i == 0) {
+                        fn_1_A770(lbl_1_bss_E8[mech->pilotNo]);
+                    }
+                    else {
+                        fn_1_A6B8(lbl_1_bss_E8[mech->pilotNo]);
+                    }
+                }
+            }
+            else if (lbl_1_bss_4) {
+                for (i = 0; i < 4; i++) {
+                    mech = lbl_1_bss_F8[i];
+                    if (i == 0) {
+                        fn_1_A6B8(lbl_1_bss_E8[mech->pilotNo]);
+                    }
+                    else {
+                        fn_1_A770(lbl_1_bss_E8[mech->pilotNo]);
+                    }
+                }
+            }
+            fn_1_27FC(lbl_1_bss_178);
+            break;
+        case 179:
+            HuAudFXStop(lbl_1_bss_10);
+            break;
+    }
+}
+
+void fn_1_2270(void)
+{
+    omOvlReturnEx(0, 1);
+}
+
+M519_STAGE *fn_1_2298(void)
+{
+    static const int modelTbl[3][7] = {
+        { M519_DATANUM(0), M519_DATANUM(3), M519_DATANUM(1), M519_DATANUM(2), M519_DATANUM(4), M519_DATANUM(5), M519_DATANUM(6) },
+        { M519_DATANUM(0), M519_DATANUM(13), M519_DATANUM(1), M519_DATANUM(2), -1, -1, -1 },
+        { M519_DATANUM(0), M519_DATANUM(23), M519_DATANUM(1), M519_DATANUM(2), M519_DATANUM(24), M519_DATANUM(25), -1 },
+    };
+    static const GXColor bgColorTbl[3] = {
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 },
+        { 100, 110, 120, 0 },
+    };
+    static const M519_OBJPOS objPosTbl[3][12] = {
+        {
+            { 0, { 800.0f, 0.0f, -800.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { 800.0f, 0.0f, 800.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -800.0f, 0.0f, -800.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -800.0f, 0.0f, 800.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { -1500.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 1500.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { -600.0f, 0.0f, -1500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { -600.0f, 0.0f, 1500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 600.0f, 0.0f, -1500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 600.0f, 0.0f, 1500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } },
+        },
+        {
+            { 0, { 0.0f, 0.0f, 1000.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { 600.0f, 0.0f, -1000.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -600.0f, 0.0f, -1000.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { -600.0f, 0.0f, 500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { -850.0f, 0.0f, 500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { -1100.0f, 0.0f, 500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 600.0f, 0.0f, 500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 850.0f, 0.0f, 500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 1100.0f, 0.0f, 500.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 0.0f, 0.0f, -1000.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } },
+        },
+        {
+            { 1, { -450.0f, 0.0f, -450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { -450.0f, 0.0f, 450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 450.0f, 0.0f, -450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 1, { 450.0f, 0.0f, 450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -1350.0f, 0.0f, -450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -1350.0f, 0.0f, 450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { 1350.0f, 0.0f, -450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { 1350.0f, 0.0f, 450.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -450.0f, 0.0f, -1350.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 0, { -450.0f, 0.0f, 1350.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 450.0f, 0.0f, -1350.0f }, { 0.0f, 0.0f, 0.0f } },
+            { 2, { 450.0f, 0.0f, 1350.0f }, { 0.0f, 0.0f, 0.0f } },
+        },
+    };
+    M519_STAGE *stage;
+    int i;
+    s16 type;
+
+    stage = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M519_STAGE), HU_MEMNUM_OVL);
+    stage->mode = 0;
+    stage->prevMode = 0;
+    for (i = 0; i < 7; i++) {
+        if (modelTbl[lbl_1_bss_30][i] != -1) {
+            stage->modelId[i] = Hu3DModelCreateData(modelTbl[lbl_1_bss_30][i]);
+            Hu3DModelAttrSet(stage->modelId[i], HU3D_ATTR_NOCULL);
+        }
+        else {
+            stage->modelId[i] = -1;
+        }
+    }
+    Hu3DModelCameraSet(stage->modelId[2], HU3D_CAM0);
+    Hu3DModelCameraSet(stage->modelId[3], HU3D_CAM0);
+    Hu3DModelAttrSet(stage->modelId[1], HU3D_MOTATTR_LOOP);
+    if (stage->modelId[4] != -1) {
+        Hu3DModelAttrSet(stage->modelId[4], HU3D_MOTATTR_LOOP);
+    }
+    if (stage->modelId[5] != -1) {
+        Hu3DModelAttrSet(stage->modelId[5], HU3D_MOTATTR_LOOP);
+    }
+    if (stage->modelId[6] != -1) {
+        Hu3DModelAttrSet(stage->modelId[6], HU3D_MOTATTR_LOOP);
+    }
+    Hu3DModelLayerSet(stage->modelId[0], 1);
+    Hu3DModelLayerSet(stage->modelId[1], 0);
+    Hu3DModelLayerSet(stage->modelId[2], 1);
+    Hu3DModelLayerSet(stage->modelId[3], 2);
+    if (stage->modelId[4] != -1) {
+        Hu3DModelLayerSet(stage->modelId[4], 0);
+    }
+    if (stage->modelId[5] != -1) {
+        Hu3DModelLayerSet(stage->modelId[5], 0);
+    }
+    if (stage->modelId[6] != -1) {
+        Hu3DModelLayerSet(stage->modelId[6], 0);
+    }
+    Hu3DBGColorSet(bgColorTbl[lbl_1_bss_30].r, bgColorTbl[lbl_1_bss_30].g, bgColorTbl[lbl_1_bss_30].b);
+    stage->process = HuPrcChildCreate(fn_1_2654, 4096, 4096, 0, HuPrcCurrentGet());
+    stage->process->property = stage;
+    for (i = 0; i < 12; i++) {
+        type = objPosTbl[lbl_1_bss_30][i].type;
+        if (type != 2) {
+            stage->obj[i] = fn_1_C058(type);
+            fn_1_C288(stage->obj[i], objPosTbl[lbl_1_bss_30][i].pos);
+            fn_1_C328(stage->obj[i], objPosTbl[lbl_1_bss_30][i].rot);
+            fn_1_C3C8(stage->obj[i]);
+        }
+        else {
+            stage->obj[i] = NULL;
+        }
+    }
+    return stage;
+}
+
+void fn_1_2654(void)
+{
+    M519_STAGE *stage = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_1C[stage->mode](stage);
+    }
+}
+
+void fn_1_2694(M519_STAGE *stage)
+{
+    stage->mode = 0;
+}
+
+void fn_1_26A0(M519_STAGE *stage)
+{
+    while (TRUE) {
+        M519_SLEEP_MODECHG(M519_STAGE, 1);
+    }
+}
+
+void fn_1_2730(M519_STAGE *stage)
+{
+    Hu3DModelAttrSet(stage->modelId[2], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(stage->modelId[3], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(stage->modelId[2], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(stage->modelId[3], HU3D_MOTATTR_PAUSE);
+}
+
+void fn_1_2790(M519_STAGE *stage)
+{
+    int i;
+
+    for (i = 0; i < 12; i++) {
+        if (stage->obj[i] != NULL) {
+            fn_1_C544(stage->obj[i]);
+        }
+    }
+}
+
+void fn_1_27FC(M519_STAGE *stage)
+{
+    Hu3DModelAttrReset(stage->modelId[2], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrReset(stage->modelId[2], HU3D_ATTR_DISPOFF);
+    Hu3DMotionStartEndSet(stage->modelId[2], 0.0f, Hu3DMotionMaxTimeGet(stage->modelId[2]));
+    Hu3DMotionTimeSet(stage->modelId[2], Hu3DMotionMaxTimeGet(stage->modelId[2]));
+    Hu3DModelAttrSet(stage->modelId[2], HU3D_MOTATTR_REV);
+    Hu3DModelAttrReset(stage->modelId[2], HU3D_MOTATTR_LOOP);
+}
+
+void fn_1_2890(M519_STAGE *stage)
+{
+    int i;
+
+    for (i = 0; i < 12; i++) {
+        if (stage->obj[i] != NULL) {
+            fn_1_C788(stage->obj[i], FALSE);
+        }
+    }
+}
+
+void fn_1_2900(M519_STAGE *stage)
+{
+    int i;
+
+    for (i = 0; i < 12; i++) {
+        if (stage->obj[i] != NULL) {
+            fn_1_C3C8(stage->obj[i]);
+            fn_1_CBEC(stage->obj[i]);
+        }
+    }
+}
