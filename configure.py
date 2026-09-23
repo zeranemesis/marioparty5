@@ -1292,7 +1292,7 @@ config.libs = [
             Object(NonMatching, "REL/m531Dll/player.cpp"),
             Object(NonMatching, "REL/m531Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m531Dll/gamemaster.cpp"),
-            Object(NonMatching, "REL/m531Dll/stage.cpp"),
+            Object(Matching, "REL/m531Dll/stage.cpp"),
             Object(NonMatching, "REL/m531Dll/playerbase.cpp"),
             Object(NonMatching, "REL/m531Dll/audio.cpp"),
             Object(NonMatching, "REL/m531Dll/cleaneff.cpp"),
