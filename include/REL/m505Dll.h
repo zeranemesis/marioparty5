@@ -10,6 +10,7 @@
 #include "game/gamework.h"
 #include "game/hsfex.h"
 #include "game/hu3d.h"
+#include "game/init.h"
 #include "game/memory.h"
 #include "game/object.h"
 #include "game/pad.h"

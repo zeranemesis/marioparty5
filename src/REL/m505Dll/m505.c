@@ -163,6 +163,14 @@ float lbl_1_data_90[4][4] = {
 };
 s32 lbl_1_data_D0[8] = { 0 };
 u8 lbl_1_data_F0[6][4] = { { 0 }, { 0 }, { 0 }, { 0 }, { 0, 0, 0, 0x60 }, { 0x3F, 0x80, 0, 0 } };
+char lbl_1_data_108[] = "ske_head";
+s8 lbl_1_data_111[4] = { 4, -1, 4, 4 };
+s8 lbl_1_data_115[4] = { 0 };
+s8 lbl_1_data_119 = 1;
+s32 lbl_1_data_11C[2] = { -1, -1 };
+s32 lbl_1_data_124 = 60;
+s32 lbl_1_data_128 = 120;
+s32 lbl_1_data_12C[2] = { 0, 0 };
 
 M505SeReq lbl_1_bss_2ED50[11];
 OMOBJ *lbl_1_bss_2ED4C;
@@ -403,6 +411,118 @@ void fn_1_1284(void)
     up.x = sin((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
     up.y = cos((M_PI * rotX) / 180.0);
     up.z = cos((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
+}
+
+/* Copies each character from the frame buffer into its animation strip. */
+void fn_1_B694(HU3DMODEL *model, Mtx *mtx)
+{
+    GXColor clearColor = { 64, 64, 64, 64 };
+    Vec pos2d;
+    Vec pos;
+    s32 i;
+    HU3DMODEL *charModel;
+    s32 x;
+    s32 y;
+    void *buf;
+    s32 texW;
+    s32 texH;
+    s32 w;
+    s32 h;
+
+    if (WipeCheckEnd() == 0) {
+        if (lbl_1_data_119 == 2) {
+            fn_1_BD58(model, mtx);
+            return;
+        }
+        GXSetCopyFilter(GX_FALSE, RenderMode->sample_pattern, GX_FALSE, RenderMode->vfilter);
+        GXPixModeSync();
+        GXSetZMode(GX_TRUE, GX_ALWAYS, GX_TRUE);
+        for (i = 0; i < ((lbl_1_data_119 == 4) ? 1 : 4); i++) {
+            if (lbl_1_data_111[i] == -1) {
+                continue;
+            }
+            if (lbl_1_data_111[i] >= ((i == 0) ? 4 : 1)) {
+                continue;
+            }
+            if (!((lbl_1_data_119 == 0) ? 1 : ((lbl_1_data_119 == 1) ? (i == 1) : 0))) {
+                continue;
+            }
+            charModel = &Hu3DData[lbl_1_bss_2ED34->mdlId[i + 13]];
+            buf = (i != 1 || lbl_1_data_119 == 1) ? (void *)((uintptr_t)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + lbl_1_data_115[i] * lbl_1_bss_11EC[i])
+                                                  : lbl_1_bss_119C[i];
+            w = (i == 0) ? 32 : (i == 1) ? 40 : (i == 2) ? 20 : 12;
+            h = (i == 0) ? 28 : (i == 1) ? 34 : (i == 2) ? 20 : 12;
+            texW = (i == 0) ? 56 : (i == 1) ? 80 : (i == 2) ? 40 : 24;
+            texH = (i == 0) ? 60 : (i == 1) ? 68 : (i == 2) ? 40 : 24;
+            pos.x = charModel->pos.x;
+            pos.y = charModel->pos.y + ((i == 0) ? 55.0f : (i == 1) ? -90.0f : 0.0f);
+            pos.z = charModel->pos.z;
+            Hu3D3Dto2D(&pos, HU3D_CAM0, &pos2d);
+            pos2d.x = 320.0f + 640.0f * ((pos2d.x - 288.0f) / 576.0f);
+            pos2d.y = 240.0f + 480.0f * ((pos2d.y - 240.0f) / 480.0f);
+            x = pos2d.x - w;
+            y = pos2d.y - h;
+            x = ((x + 1) / 2) * 2;
+            y = ((y + 1) / 2) * 2;
+            GXSetTexCopySrc(x, y, texW, texH);
+            GXSetTexCopyDst(texW, texH, GX_TF_RGB5A3, GX_FALSE);
+            GXSetCopyClear(clearColor, 0xFFFFFF);
+            GXCopyTex(buf, GX_TRUE);
+            DCFlushRange(buf, lbl_1_bss_11EC[i]);
+            GXPixModeSync();
+        }
+        GXSetCopyFilter(RenderMode->aa, RenderMode->sample_pattern, GX_TRUE, RenderMode->vfilter);
+        {
+            GXColor color = { 0, 0, 0, 0 };
+
+            GXSetCopyClear(color, 0xFFFFFF);
+        }
+    }
+}
+
+/* Copy mode 2: only grabs the head of the first character, as an intensity texture. */
+void fn_1_BD58(HU3DMODEL *model, Mtx *mtx)
+{
+    GXColor clearColor = { 64, 64, 64, 64 };
+    Vec pos2d;
+    s32 i;
+    HU3DMODEL *charModel;
+    s32 x;
+    s32 y;
+    void *buf;
+
+    GXPixModeSync();
+    for (i = 0; i < 1; i++) {
+        if (lbl_1_data_111[i] != -1 && lbl_1_data_111[i] < 4) {
+            charModel = &Hu3DData[lbl_1_bss_2ED34->mdlId[i + 13]];
+            {
+                Vec pos = { 0.0f, 55.0f, 0.0f };
+
+                buf = (void *)((uintptr_t)lbl_1_bss_1158[i][lbl_1_data_111[i]] + lbl_1_bss_1198 * lbl_1_data_115[i]);
+                pos.x += charModel->pos.x;
+                pos.y += charModel->pos.y;
+                pos.z += charModel->pos.z;
+                Hu3D3Dto2D(&pos, HU3D_CAM0, &pos2d);
+                pos2d.x = 320.0f + 640.0f * ((pos2d.x - 288.0f) / 576.0f);
+                pos2d.y = 240.0f + 480.0f * ((pos2d.y - 240.0f) / 480.0f);
+                x = pos2d.x - 26.0f;
+                y = pos2d.y - 22.0f;
+                x = ((x + 1) / 2) * 2;
+                y = ((y + 1) / 2) * 2;
+                GXSetTexCopySrc(x, y, 52, 44);
+                GXSetTexCopyDst(26, 22, GX_TF_I8, GX_TRUE);
+                GXSetCopyClear(clearColor, 0xFFFFFF);
+                GXCopyTex(buf, GX_TRUE);
+                DCFlushRange(buf, lbl_1_bss_11EC[i]);
+                GXPixModeSync();
+                }
+        }
+    }
+    {
+        GXColor color = { 0, 0, 0, 0 };
+
+        GXSetCopyClear(color, 0xFFFFFF);
+    }
 }
 
 void fn_1_EF6C(OMOBJ *obj)
