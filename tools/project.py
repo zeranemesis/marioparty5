@@ -16,6 +16,7 @@ import math
 import os
 import platform
 import sys
+import tempfile
 from pathlib import Path
 from typing import (
     Any,
@@ -34,6 +35,37 @@ from typing import (
 
 from . import ninja_syntax
 from .ninja_syntax import serialize_path
+
+
+def atomic_write(path: str, content: str) -> None:
+    """Write ``content`` to ``path`` atomically and idempotently.
+
+    The content is first written to a temporary file in the same directory,
+    then moved over the target with :func:`os.replace`.  The target is only
+    touched when its content actually changes, so concurrent writers (e.g.
+    two checkouts of this project building at once) can no longer observe a
+    half-written / truncated file, and the target's mtime only changes when
+    its content really does — which keeps ``build.ninja`` from being seen as
+    perpetually dirty.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            if f.read() == content:
+                return
+    except (FileNotFoundError, UnicodeDecodeError):
+        pass
+    directory = os.path.dirname(os.path.abspath(path))
+    fd, tmp_path = tempfile.mkstemp(dir=directory, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+            f.write(content)
+        os.replace(tmp_path, path)
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 if sys.platform == "cygwin":
     sys.exit(
@@ -1390,8 +1422,7 @@ def generate_build_ninja(
         n.default(build_config_path)
 
     # Write build.ninja
-    with open("build.ninja", "w", encoding="utf-8") as f:
-        f.write(out.getvalue())
+    atomic_write("build.ninja", out.getvalue())
     out.close()
 
 
@@ -1407,9 +1438,14 @@ def generate_objdiff_config(
     # Load existing objdiff.json
     existing_units = {}
     if Path("objdiff.json").is_file():
-        with open("objdiff.json", "r", encoding="utf-8") as r:
-            existing_config = json.load(r)
+        try:
+            with open("objdiff.json", "r", encoding="utf-8") as r:
+                existing_config = json.load(r)
             existing_units = {unit["name"]: unit for unit in existing_config["units"]}
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            # A concurrent writer left a half-written file; ignore it and
+            # rebuild the config from scratch rather than crash mid-build.
+            pass
 
     objdiff_config: Dict[str, Any] = {
         "min_version": "2.0.0-beta.5",
@@ -1602,12 +1638,10 @@ def generate_objdiff_config(
             return d
 
     # Write objdiff.json
-    with open("objdiff.json", "w", encoding="utf-8") as w:
+    def unix_path(input: Any) -> str:
+        return str(input).replace(os.sep, "/") if input else ""
 
-        def unix_path(input: Any) -> str:
-            return str(input).replace(os.sep, "/") if input else ""
-
-        json.dump(cleandict(objdiff_config), w, indent=2, default=unix_path)
+    atomic_write("objdiff.json", json.dumps(cleandict(objdiff_config), indent=2, default=unix_path))
 
 
 def generate_compile_commands(
@@ -1813,14 +1847,12 @@ def generate_compile_commands(
             add_unit(unit)
 
     # Write compile_commands.json
-    with open("compile_commands.json", "w", encoding="utf-8") as w:
+    def default_format(o):
+        if isinstance(o, Path):
+            return o.resolve().as_posix()
+        return str(o)
 
-        def default_format(o):
-            if isinstance(o, Path):
-                return o.resolve().as_posix()
-            return str(o)
-
-        json.dump(clangd_config, w, indent=2, default=default_format)
+    atomic_write("compile_commands.json", json.dumps(clangd_config, indent=2, default=default_format))
 
 
 # Print progress information from objdiff report
