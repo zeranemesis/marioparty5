@@ -26,6 +26,7 @@
 
 #include "datanum/capsule.h"
 #include "datanum/capsulechar0.h"
+#include "datanum/guide.h"
 
 #include "datanum/w01s.h"
 #include "messnum/board_w01.h"
@@ -1013,6 +1014,438 @@ void MB1Ev_Hako(int playerNo)
 }
 
 static void MB1_TrainObjUpdate(OMOBJ *obj);
+
+void MB1Ev_Train(int playerNo)
+{
+    s16 i; //r31
+    OMOBJ *obj; //r29
+    MASU *masuP; //r28
+    MBMODELID guideMdlId; //r27
+    MASU *endMasuP; //r26
+    s16 btnDelay; //r25
+    s16 masuId; //r24
+    int jumpMode; //r23
+    int jumpTimer; //r22
+    s16 endMasuId; //r21
+    s16 starLenEnd; //r20
+    s16 choice; //r19
+    MBMODELID focusMdlId; //r18
+    s16 coinDelay; //r17
+
+    float t; //f31
+    float rotY; //f30
+
+    Mtx mtx; //sp+0xF4
+    Mtx trainBMtx; //sp+0xC4
+    Mtx trainCMtx; //sp+0x94
+    int guideMotFile[8]; //sp+0x74
+    HuVecF masuPos; //sp+0x68
+    HuVecF endMasuPos; //sp+0x5C
+    HuVecF rot; //sp+0x50
+    HuVecF dir; //sp+0x44
+    HuVecF ofs; //sp+0x38
+    HuVecF coinSpawn; //sp+0x2C
+    HuVecF playerPos; //sp+0x20
+    HuVecF guidePos; //sp+0x14
+    s16 starSearchMasuEnd; //sp+0xE
+    s16 spC; //sp+0xC
+    s16 starLenStart; //sp+0xA
+    s16 starSearchLen; //sp+0x8
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    MBMasuPosGet(MASU_LAYER_DEFAULT, masuId, &masuPos);
+    MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_LOOP);
+    MBDataAsyncWait(MBDataDirReadAsync(DATA_guide));
+    MB1_TrainCoinInit();
+    MB1_CoinEffInit();
+    mb1_Work.coinMdlId = focusMdlId = MBModelCreate(BOARD_HSF_coin, NULL, FALSE);
+    MBModelDispSet(focusMdlId, FALSE);
+    guideMotFile[0] = GUIDE_HSF_terlMot1;
+    guideMotFile[1] = GUIDE_HSF_terlMot2;
+    guideMotFile[2] = GUIDE_HSF_terlMot3;
+    guideMotFile[3] = HU_DATANUM_NONE;
+    mb1_Work.guideMdlId = guideMdlId = MBModelCreate(GUIDE_HSF_terl, guideMotFile, FALSE);
+    MBModelDispSet(guideMdlId, FALSE);
+    HuDataDirClose(DATA_guide);
+    MBCameraModelViewSet(MBPlayerModelGet(playerNo), NULL, NULL, 2000, -1, 21);
+    MBPlayerRotateStart(playerNo, 180, 15);
+    if(masuP->flag & MB1EV_MASU_TRAIN1) {
+        playerPos.x = masuPos.x;
+        playerPos.y = masuPos.y+100;
+        playerPos.z = masuPos.z-400;
+    } else {
+        playerPos.x = masuPos.x;
+        playerPos.y = masuPos.y+100;
+        playerPos.z = masuPos.z-600;
+    }
+    guidePos.x = masuPos.x;
+    guidePos.y = masuPos.y+100;
+    guidePos.z = masuPos.z-200;
+    MBModelDispSet(guideMdlId, TRUE);
+    for(i=0; i<60.0f; i++) {
+        t = i/60.0f;
+        VECSubtract(&guidePos, &playerPos, &ofs);
+        VECScale(&ofs, &ofs, t);
+        VECAdd(&playerPos, &ofs, &ofs);
+        MBModelPosSetV(guideMdlId, &ofs);
+        MBModelRotSet(guideMdlId, 0, 0, 0);
+        HuPrcVSleep();
+    }
+    while(!MBPlayerRotateCheck(playerNo)) {
+        HuPrcVSleep();
+    }
+    repeatChoice:
+    MBWinCreateChoice(MBWIN_TYPE_TALKEVENT, MESS_BOARD_W06_TRAIN_CHOICE, HUWIN_SPEAKER_TERL, 0);
+    MBTopWinAttrSet(HUWIN_ATTR_NOCANCEL);
+    if(GwPlayer[playerNo].comF) {
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            for(i=1; i<=MBMasuNumGet(MASU_LAYER_DEFAULT); i++) {
+                endMasuP = MBMasuGet(MASU_LAYER_DEFAULT, i);
+                if(endMasuP->flag & MB1EV_MASU_TRAIN2) {
+                    break;
+                }
+            }
+        } else {
+            for(i=1; i<=MBMasuNumGet(MASU_LAYER_DEFAULT); i++) {
+                endMasuP = MBMasuGet(MASU_LAYER_DEFAULT, i);
+                if(endMasuP->flag & MB1EV_MASU_TRAIN1) {
+                    break;
+                }
+            }
+        }
+        if(i > MBMasuNumGet(MASU_LAYER_DEFAULT)) {
+            i = masuId;
+        }
+        starSearchMasuEnd = i;
+        starSearchLen = (GwPlayer[playerNo].dif+1)*10;
+        starLenStart = MB1_StarPathLenGet(masuId, starSearchLen);
+        starLenEnd = MB1_StarPathLenGet(starSearchMasuEnd, starSearchLen);
+        if(starLenStart == -1 && starLenEnd == -1) {
+            if(frand() & 0x1) {
+                MBComChoiceSetLeft();
+            } else {
+                MBComChoiceSetRight();
+            }
+        } else if(starLenStart != -1 && starLenEnd != -1) {
+            if(starLenEnd < starLenStart) {
+                MBComChoiceSetLeft();
+            } else {
+                MBComChoiceSetRight();
+            }
+        } else {
+            if(starLenEnd != -1) {
+                MBComChoiceSetLeft();
+            } else {
+                MBComChoiceSetRight();
+            }
+        }
+    }
+    MBTopWinWait();
+    choice = MBWinLastChoiceGet();
+    MBTopWinKill();
+    switch(choice) {
+        case 2:
+            MBScrollExec(playerNo);
+            MBStatusDispSetAll(TRUE);
+
+        case 0:
+        case 1:
+            break;
+
+        default:
+            break;
+    }
+    if(choice == 2) {
+        goto repeatChoice;
+    }
+    if(choice == 0) {
+        WipeColorSet(255, 255, 255);
+        WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_CROSSCOPY, 1);
+        WipeWait();
+        MBCameraSkipSet(FALSE);
+        obj = MBAddObj(32768, 0, 0, MB1_TrainObjUpdate);
+        obj->work[0] = 0;
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            obj->work[1] = 1;
+        } else {
+            obj->work[1] = 0;
+        }
+        obj->work[2] = 0;
+        obj->work[3] = 0;
+        MB1_TrainSpeedSet(0);
+        MB1_TrainCoinSpeedSet(0);
+        MBCameraModelViewSet(mb1_Work.trainMdlId[1], NULL, NULL, 3000, -1, 1);
+        MBCameraMotionWait();
+        MBCameraSkipSet(TRUE);
+        MB1_TrainSpeedSet(1);
+        MB1_TrainCoinSpeedSet(1);
+        WipeCreate(WIPE_MODE_IN, WIPE_TYPE_CROSSCOPY, 30);
+        WipeWait();
+        do {
+            HuPrcVSleep();
+        } while(obj->work[0] < 2);
+        rotY = 0;
+        do {
+            rotY = MB1_AngleStep(180, rotY, 10);
+            MBModelRotSet(guideMdlId, 0, rotY, 0);
+            HuPrcVSleep();
+        } while(fabs(MB1_AngleDiff(180, rotY)) < 10.0);
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            playerPos.x = masuPos.x+100;
+            playerPos.y = masuPos.y;
+            playerPos.z = masuPos.z-650;
+        } else {
+            playerPos.x = masuPos.x+50;
+            playerPos.y = masuPos.y;
+            playerPos.z = masuPos.z-650;
+        }
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            endMasuPos.x = masuPos.x;
+            endMasuPos.y = masuPos.y;
+            endMasuPos.z = masuPos.z-600;
+        } else {
+            endMasuPos.x = masuPos.x-50;
+            endMasuPos.y = masuPos.y;
+            endMasuPos.z = masuPos.z-600;
+        }
+        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_RUN, 0, 8, HU3D_MOTATTR_LOOP);
+        for(i=0; i<60.0f; i++) {
+            t = i/60.0f;
+            VECSubtract(&playerPos, &guidePos, &ofs);
+            VECScale(&ofs, &ofs, t);
+            VECAdd(&guidePos, &ofs, &ofs);
+            MBModelPosSetV(guideMdlId, &ofs);
+            MBModelRotSet(guideMdlId, 0, 180, 0);
+            VECSubtract(&endMasuPos, &masuPos, &ofs);
+            VECScale(&ofs, &ofs, t);
+            VECAdd(&masuPos, &ofs, &ofs);
+            MBPlayerPosSetV(playerNo, &ofs);
+            MBPlayerRotSet(playerNo, 0, 180, 0);
+            HuPrcVSleep();
+        }
+        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_LOOP);
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            for(i=1; i<=MBMasuNumGet(MASU_LAYER_DEFAULT); i++) {
+                endMasuP = MBMasuGet(MASU_LAYER_DEFAULT, i);
+                if(endMasuP->flag & MB1EV_MASU_TRAIN2) {
+                    break;
+                }
+            }
+        } else {
+            for(i=1; i<=MBMasuNumGet(MASU_LAYER_DEFAULT); i++) {
+                endMasuP = MBMasuGet(MASU_LAYER_DEFAULT, i);
+                if(endMasuP->flag & MB1EV_MASU_TRAIN1) {
+                    break;
+                }
+            }
+        }
+        if(i > MBMasuNumGet(MASU_LAYER_DEFAULT)) {
+            i = masuId;
+        }
+        endMasuId = i;
+        MBPlayerPosFixEvent(playerNo, endMasuId, TRUE);
+        do {
+            HuPrcVSleep();
+        } while(obj->work[0] < 2);
+        rotY = 180;
+        do {
+            rotY = MB1_AngleStep(270, rotY, 10);
+            MBModelRotSet(guideMdlId, 0, rotY, 0);
+            HuPrcVSleep();
+        } while(fabs(MB1_AngleDiff(270, rotY)) < 10.0);
+        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_JUMP, 0, 8, HU3D_MOTATTR_NONE);
+        MBPlayerPosGet(playerNo, &masuPos);
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            Hu3DModelObjMtxGet(MBModelIdGet(mb1_Work.trainMdlId[1]), "cha_l", mtx);
+        } else {
+            Hu3DModelObjMtxGet(MBModelIdGet(mb1_Work.trainMdlId[1]), "cha_r", mtx);
+        }
+        endMasuPos.x = mtx[0][3];
+        endMasuPos.y = mtx[1][3];
+        endMasuPos.z = mtx[2][3];
+        for(i=0; i<24.0f; i++) {
+            t = i/24.0f;
+            VECSubtract(&endMasuPos, &masuPos, &dir);
+            VECScale(&dir, &ofs, t);
+            VECAdd(&masuPos, &ofs, &ofs);
+            ofs.y += HuSin(t*180)*200;
+            MBPlayerPosSetV(playerNo, &ofs);
+            MBPlayerRotSet(playerNo, 0, HuAtan(dir.x, dir.z),0);
+            HuPrcVSleep();
+        }
+        MBPlayerPosSetV(playerNo, &endMasuPos);
+        MBPlayerPosGet(playerNo, &masuPos);
+        Hu3DModelObjMtxGet(MBModelIdGet(mb1_Work.trainMdlId[1]), "cha_pos", mtx);
+        endMasuPos.x = mtx[0][3];
+        endMasuPos.y = mtx[1][3];
+        endMasuPos.z = mtx[2][3];
+        for(i=0; i<24.0f; i++) {
+            t = i/24.0f;
+            VECSubtract(&endMasuPos, &masuPos, &dir);
+            VECScale(&dir, &ofs, t);
+            VECAdd(&masuPos, &ofs, &ofs);
+            ofs.y += HuSin(t*180)*200;
+            MBPlayerPosSetV(playerNo, &ofs);
+            MBPlayerRotSet(playerNo, 0, HuAtan(dir.x, dir.z),0);
+            HuPrcVSleep();
+        }
+        MBPlayerPosSetV(playerNo, &endMasuPos);
+        if(masuP->flag & MB1EV_MASU_TRAIN1) {
+            MBPlayerRotateStart(playerNo, -90, 15);
+        } else {
+            MBPlayerRotateStart(playerNo, 90, 15);
+        }
+        while(!MBPlayerRotateCheck(playerNo)) {
+            HuPrcVSleep();
+        }
+        MBWinCreate(MBWIN_TYPE_TALKEVENT, MESS_BOARD_W06_TRAIN_INST, HUWIN_SPEAKER_TERL);
+        MBTopWinWait();
+        MBTopWinKill();
+        rot.x = -30;
+        rot.y = 0;
+        rot.z = 0;
+        MBCameraModelViewSet(MBPlayerModelGet(playerNo), &rot, NULL, 3500, -1, 21);
+        if(!MBKillCheck()) {
+            obj->work[0]++;
+        }
+        spC = ((MBCapsuleEffRandF()*0.2f)+0.5f)*60;
+        coinDelay = ((MBCapsuleEffRandF()*0.2f)+0.3f)*60;
+        btnDelay = 60;
+        jumpMode = 0;
+        jumpTimer = 0;
+        do {
+            Hu3DModelObjMtxGet(MBModelIdGet(mb1_Work.trainMdlId[0]), "coin_pos", mtx);
+            Hu3DModelObjMtxGet(MBModelIdGet(mb1_Work.trainMdlId[1]), "cha_pos", trainBMtx);
+            playerPos.x = trainBMtx[0][3];
+            playerPos.y = trainBMtx[1][3];
+            playerPos.z = trainBMtx[2][3];
+            Hu3DModelObjMtxGet(MBModelIdGet(mb1_Work.trainMdlId[2]), "cha_pos1", trainCMtx);
+            guidePos.x = trainCMtx[0][3];
+            guidePos.y = trainCMtx[1][3];
+            guidePos.z = trainCMtx[2][3];
+            switch(jumpMode) {
+                case 0:
+                    if(!GwPlayer[playerNo].comF) {
+                        if(HuPadBtnDown[GwPlayer[playerNo].padNo] & PAD_BUTTON_A) {
+                            MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_JUMP, 0, 8, HU3D_MOTATTR_NONE);
+                            jumpMode = 1;
+                            jumpTimer = 0;
+                        }
+                    } else {
+                        if(btnDelay > 0) {
+                            btnDelay--;
+                        }
+                        if(obj->work[0] == 4 && btnDelay <= 0 && obj->work[3] != 0 && MB1_TrainCoinSearch(&playerPos, &ofs) > 0) {
+                            VECSubtract(&playerPos, &ofs, &ofs);
+                            t = HuMagXZVecF(&ofs);
+                            if(t < 200) {
+                                MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_JUMP, 0, 8, HU3D_MOTATTR_NONE);
+                                jumpMode = 1;
+                                jumpTimer = 0;
+                            }
+                        }
+                    }
+                    rot = mb1_Work.trainRot[1];
+                    MBPlayerPosSetV(playerNo, &playerPos);
+                    MBPlayerRotSetV(playerNo, &rot);
+                    break;
+
+                case 1:
+                    t = ++jumpTimer/24.0f;
+                    if(t >= 1) {
+                        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_LOOP);
+                        jumpMode = 0;
+                        jumpTimer = 0;
+                    }
+                    ofs = playerPos;
+                    ofs.y += HuSin(t*180)*200;
+                    rot = mb1_Work.trainRot[1];
+                    MBPlayerPosSetV(playerNo, &ofs);
+                    MBPlayerRotSetV(playerNo, &rot);
+                    break;
+            }
+            if(obj->work[0] == 4 && obj->work[3] != 0 && --coinDelay <= 0) {
+                if(btnDelay <= 0) {
+                    i = 5-GwPlayer[playerNo].dif;
+                    btnDelay = MBCapsuleEffRandF()*(i*0.15f)*60;
+                }
+                coinDelay = ((MBCapsuleEffRandF()*0.2f)+0.3f)*60;
+                ofs.x = ofs.y = ofs.z = 0;
+                coinSpawn.x = (0.5f-MBCapsuleEffRandF())*75;
+                coinSpawn.y = 50;
+                coinSpawn.z = (0.5f-MBCapsuleEffRandF())*75;
+                MB1_TrainCoinCreate(&mtx, &ofs, &trainCMtx, &coinSpawn, 200, 45);
+            }
+            HuPrcVSleep();
+        } while(obj->work[0] < 6 || jumpMode > 0);
+        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_JUMP, 0, 8, HU3D_MOTATTR_NONE);
+        MBPlayerPosGet(playerNo, &masuPos);
+        MBMasuPosGet(MASU_LAYER_DEFAULT, endMasuId, &endMasuPos);
+        endMasuPos.z = masuPos.z+200;
+        for(i=0; i<24.0f; i++) {
+            t = i/24.0f;
+            VECSubtract(&endMasuPos, &masuPos, &dir);
+            VECScale(&dir, &ofs, t);
+            VECAdd(&masuPos, &ofs, &ofs);
+            ofs.y += HuSin(t*180)*200;
+            MBPlayerPosSetV(playerNo, &ofs);
+            MBPlayerRotSet(playerNo, 0, HuAtan(dir.x, dir.z),0);
+            HuPrcVSleep();
+        }
+        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_RUN, 0, 8, HU3D_MOTATTR_LOOP);
+        MBPlayerPosGet(playerNo, &masuPos);
+        MBMasuPosGet(MASU_LAYER_DEFAULT, endMasuId, &endMasuPos);
+        for(i=0; i<90.0f; i++) {
+            t = i/90.0f;
+            t = HuSin(t*90);
+            VECSubtract(&endMasuPos, &masuPos, &dir);
+            VECScale(&dir, &ofs, t);
+            VECAdd(&masuPos, &ofs, &ofs);
+            MBPlayerPosSetV(playerNo, &ofs);
+            MBPlayerRotSet(playerNo, 0, HuAtan(dir.x, dir.z),0);
+            HuPrcVSleep();
+        }
+        MBPlayerMotionNoShiftSet(playerNo, MB_PLAYER_MOT_IDLE, 0, 8, HU3D_MOTATTR_NONE);
+        GwPlayer[playerNo].masuId = endMasuId;
+        MBPlayerRotateStart(playerNo, 0, 15);
+        while(!MBPlayerRotateCheck(playerNo)) {
+            HuPrcVSleep();
+        }
+        MBWinCreate(MBWIN_TYPE_TALKEVENT, MESS_BOARD_W06_TRAIN_END, HUWIN_SPEAKER_TERL);
+        MBTopWinWait();
+        MBTopWinKill();
+        if(!MBKillCheck()) {
+            obj->work[0]++;
+        }
+    } else {
+        rotY = 0;
+        do {
+            rotY = MB1_AngleStep(180, rotY, 10);
+            MBModelRotSet(guideMdlId, 0, rotY, 0);
+            HuPrcVSleep();
+        } while(fabs(MB1_AngleDiff(180, rotY)) < 10.0);
+        for(i=0; i<60.0f; i++) {
+            t = i/60.0f;
+            VECSubtract(&playerPos, &guidePos, &ofs);
+            VECScale(&ofs, &ofs, t);
+            VECAdd(&guidePos, &ofs, &ofs);
+            MBModelPosSetV(guideMdlId, &ofs);
+            MBModelRotSet(guideMdlId, 0, 180, 0);
+            HuPrcVSleep();
+        }
+    }
+    if(guideMdlId != MB_MODEL_NONE) {
+        MBModelKill(guideMdlId);
+    }
+    mb1_Work.guideMdlId = MB_MODEL_NONE;
+    if(focusMdlId != MB_MODEL_NONE) {
+        MBModelKill(focusMdlId);
+    }
+    mb1_Work.coinMdlId = MB_MODEL_NONE;
+    MB1_TrainCoinClose();
+    MB1_CoinEffClose();
+}
 
 static int MB1_ExplodeEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float animSpeed, GXColor color);
 
