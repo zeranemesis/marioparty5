@@ -1047,7 +1047,7 @@ config.libs = [
             Object(NonMatching, "REL/m509Dll/gamemaster.cpp"),
             Object(NonMatching, "REL/m509Dll/startspr.cpp"),
             Object(NonMatching, "REL/m509Dll/back.cpp"),
-            Object(NonMatching, "REL/m509Dll/objectsetup.cpp"),
+            Object(Matching, "REL/m509Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m509Dll/camera.cpp"),
             Object(NonMatching, "REL/m509Dll/player.cpp"),
             Object(Matching, "REL/m509Dll/random.cpp"),
