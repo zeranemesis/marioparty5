@@ -1969,7 +1969,7 @@ config.libs = [
     Rel(
         "w01sDll",
         objects={
-            Object(NonMatching, "REL/w01sDll/world01.c"),
+            Object(Matching, "REL/w01sDll/world01.c"),
         },
     ),
     Rel(

@@ -432,6 +432,29 @@ static void MB1_MainObjUpdate(OMOBJ *obj)
         mb1_MainObj = NULL;
         return;
     }
+    /*
+     * Story mode switched off w01Dll's per-frame bridge/house update: the
+     * original emits no code past the kill check, yet still saves r28-r31
+     * for the four locals above. MWCC only does that when the block is
+     * dropped after register allocation, i.e. behind a condition that folds
+     * late (`x && 0`). The block is never entered.
+     */
+    if(obj && FALSE) {
+        for(i=0; i<2; i++) {
+            for(j=0; j<2; j++) {
+                modelId = MBModelIdGet(mb1_Work.hasiMdlId[i]);
+                Hu3DModelObjMtxGet(modelId, hasiName[i][j], NULL);
+                MBMasuMtxSet(mb1_Work.hasiMasu[i][j], NULL);
+            }
+        }
+        for(i=0; i<3; i++) {
+            hhouseMdlId = mb1_Work.hhouseMdlId[i];
+            if(MBMotionEndCheck(hhouseMdlId)) {
+                MBMotionSpeedSet(hhouseMdlId, 0);
+                MBMotionTimeSet(hhouseMdlId, 0);
+            }
+        }
+    }
 }
 
 void MB1_LightSet(void)
