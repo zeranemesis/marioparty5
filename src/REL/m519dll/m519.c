@@ -1706,6 +1706,125 @@ s16 fn_1_8DD0(M519_MECH *mech)
     return 0;
 }
 
+void fn_1_8E40(M519_MECH *mech)
+{
+    HuVecF pos;
+    HuVecF rot;
+    s16 charge;
+
+    if (mech->shotWait > 0 && --mech->shotWait > 0) {
+        return;
+    }
+    switch (mech->type) {
+        case 0:
+            pos = mech->pos;
+            rot = mech->rot;
+            if ((mech->btnDown & PAD_BUTTON_A) && !(mech->btn & PAD_BUTTON_B)) {
+                Hu3DModelAttrReset(mech->modelId[1], HU3D_ATTR_DISPOFF);
+                Hu3DMotionTimeSet(mech->modelId[1], 0.0f);
+                pos.y += 170.0f;
+                fn_1_A9F0(0, pos, rot, mech->no);
+                mech->shotWait = 8;
+                mech->chargeA = 0;
+                mech->chargeB = 0;
+                fn_1_FD7C(mech->pilotNo, 0, 3);
+            }
+            else if ((mech->btn & PAD_BUTTON_A) && !(mech->btn & PAD_BUTTON_B)) {
+                mech->chargeB = 0;
+                if (mech->chargeA++ == 0) {
+                    if (mech->seNo != -1) {
+                        HuAudFXStop(mech->seNo);
+                    }
+                    mech->seNo = HuAudFXPlayPan(1805, lbl_1_rodata_18[mech->type]);
+                    Hu3DModelAttrReset(mech->modelId[3], HU3D_ATTR_DISPOFF);
+                    Hu3DMotionShapeStartEndSet(mech->modelId[3], 0.0f, 60.0f);
+                    Hu3DMotionTimeSet(mech->modelId[3], 0.0f);
+                    Hu3DModelAttrSet(mech->modelId[3], HU3D_MOTATTR_LOOP);
+                }
+                else if (mech->chargeA == 40) {
+                    Hu3DMotionShapeStartEndSet(mech->modelId[3], 40.0f, 60.0f);
+                    Hu3DMotionTimeSet(mech->modelId[3], 0.0f);
+                    Hu3DModelAttrSet(mech->modelId[3], HU3D_MOTATTR_LOOP);
+                }
+                if (mech->chargeA >= 40 && mech->chargeA % 5 == 0) {
+                    fn_1_FD7C(mech->pilotNo, 1, 3);
+                }
+            }
+            else if (mech->chargeA > 0) {
+                HuAudFXStop(mech->seNo);
+                mech->seNo = -1;
+                Hu3DModelAttrSet(mech->modelId[3], HU3D_ATTR_DISPOFF);
+                charge = mech->chargeA;
+                mech->chargeA = 0;
+                if (charge < 90) {
+                    break;
+                }
+                Hu3DModelAttrReset(mech->modelId[2], HU3D_ATTR_DISPOFF);
+                Hu3DMotionTimeSet(mech->modelId[2], 0.0f);
+                pos.y += 170.0f;
+                fn_1_A9F0(1, pos, rot, mech->no);
+                mech->shotWait = 8;
+                fn_1_FD7C(mech->pilotNo, 2, 30);
+            }
+            pos = mech->pos;
+            rot = mech->rot;
+            if ((mech->btnDown & PAD_BUTTON_B) && !(mech->btn & PAD_BUTTON_A)) {
+                fn_1_A9F0(2, pos, rot, mech->no);
+                mech->shotWait = 32;
+                mech->chargeB = 0;
+                mech->chargeA = 0;
+                fn_1_FD7C(mech->pilotNo, 0, 3);
+            }
+            else if ((mech->btn & PAD_BUTTON_B) && !(mech->btn & PAD_BUTTON_A)) {
+                mech->chargeA = 0;
+                if (mech->chargeB++ == 0) {
+                    if (mech->seNo != -1) {
+                        HuAudFXStop(mech->seNo);
+                    }
+                    mech->seNo = HuAudFXPlayPan(1805, lbl_1_rodata_18[mech->type]);
+                    Hu3DModelAttrReset(mech->modelId[4], HU3D_ATTR_DISPOFF);
+                    Hu3DMotionStartEndSet(mech->modelId[4], 0.0f, 60.0f);
+                    Hu3DMotionTimeSet(mech->modelId[4], 0.0f);
+                    Hu3DModelAttrSet(mech->modelId[4], HU3D_MOTATTR_LOOP);
+                }
+                else if (mech->chargeB == 30) {
+                    Hu3DMotionStartEndSet(mech->modelId[4], 30.0f, 60.0f);
+                    Hu3DMotionTimeSet(mech->modelId[4], 0.0f);
+                    Hu3DModelAttrSet(mech->modelId[4], HU3D_MOTATTR_LOOP);
+                }
+                if (mech->chargeB >= 30 && mech->chargeB % 5 == 0) {
+                    fn_1_FD7C(mech->pilotNo, 1, 3);
+                }
+            }
+            else if (mech->chargeB > 0) {
+                HuAudFXStop(mech->seNo);
+                mech->seNo = -1;
+                Hu3DModelAttrSet(mech->modelId[4], HU3D_ATTR_DISPOFF);
+                charge = mech->chargeB;
+                mech->chargeB = 0;
+                if (charge < 90) {
+                    break;
+                }
+                fn_1_A9F0(3, pos, rot, mech->no);
+                mech->shotWait = 8;
+                fn_1_FD7C(mech->pilotNo, 2, 30);
+            }
+            break;
+        case 1:
+            pos = mech->pos;
+            rot = mech->rot;
+            if (mech->btnDown & PAD_BUTTON_A) {
+                Hu3DModelAttrReset(mech->modelId[1], HU3D_ATTR_DISPOFF);
+                Hu3DMotionTimeSet(mech->modelId[1], 0.0f);
+                pos.y += 170.0f;
+                fn_1_A9F0(4, pos, rot, mech->no);
+                mech->shotWait = 8;
+                fn_1_FD7C(mech->pilotNo, 0, 3);
+            }
+            break;
+    }
+}
+
 void fn_1_95B0(M519_MECH *mech)
 {
     int i;
