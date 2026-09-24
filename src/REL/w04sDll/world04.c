@@ -690,12 +690,214 @@ static int MB4Ev_MasuWalkPre(int playerNo)
 
 static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
 {
-    return 0;
+    return -1;
+}
+
+float MB4_AngleDiff(float a, float b)
+{
+    float delta;
+    if(a >= 360.0f) {
+        a -= 360.0f;
+    } else if(a < 0.0f) {
+        a += 360.0f;
+    }
+    if(b >= 360.0f) {
+        b -= 360.0f;
+    } else if(b < 0.0f) {
+        b += 360.0f;
+    }
+    delta = a-b;
+    if(delta <= -180.0f) {
+        delta += 360.0f;
+    } else if(delta >= 180.0f) {
+        delta -= 360.0f;
+    }
+    return delta;
+}
+
+float MB4_AngleLerp(float a, float b, float step)
+{
+    float ret;
+    float delta;
+
+    if(a >= 360.0) {
+        a -= 360.0;
+    } else if(a < 0.0) {
+        a += 360.0;
+    }
+    if(b >= 360.0) {
+        b -= 360.0;
+    } else if(b < 0.0) {
+        b += 360.0;
+    }
+    delta = 360.0+(a-b);
+    if(fabs(delta) >= 360.0) {
+        delta = fmod(delta, 360);
+    }
+    if(delta < 180.0) {
+        if(delta <= step) {
+            ret = delta;
+        } else {
+            ret = step;
+        }
+    } else if(360.0-delta <= step) {
+        ret = -(360.0-delta);
+    } else {
+        ret = -step;
+    }
+    ret += b;
+    if(ret >= 360.0) {
+        ret -= 360.0;
+    } else if(ret < 0.0) {
+        ret += 360.0;
+    }
+    return ret;
+}
+
+float fn_1_6E74(float t, float a, float b)
+{
+    float delta = MB4_AngleDiff(b, a);
+    return MB4_AngleLerp(b, a, fabs(delta*t));
+}
+
+void MB4_ModelMtxSet(MBMODELID mdlId, Mtx *mtx)
+{
+    HU3DMODEL *modelP;
+    int id;
+    id = MBModelIdGet(mdlId);
+    modelP = &Hu3DData[id];
+    MTXCopy(*mtx, modelP->mtx);
+
+}
+
+void MB4_PlayerMtxSet(s16 playerNo, Mtx *mtx)
+{
+    MB4_ModelMtxSet(MBPlayerModelGet(playerNo), mtx);
 }
 
 void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d)
 {
 }
+
+float MB4_BezierCalc(float t, float a, float b, float c)
+{
+    float invT = 1.0-t;
+    float ret = (a*(invT*invT))+(2.0*(b*(invT*t)))+(c*(t*t));
+    return ret;
+}
+
+void MB4_BezierCalcV(float t, float *a, float *b, float *c, float *out)
+{
+    int i;
+    for(i=0; i<3;i++) {
+        *out++ = MB4_BezierCalc(t, *a++, *b++, *c++);
+    }
+}
+
+void MB4_HermiteCalc(float t, float *p0Coef, float *p1Coef, float *m0Coef, float *m1Coef)
+{
+    float t2 = t*t;
+    float t3 = t*t2;
+    float coef = ((3.0*t2)-t3)-t3;
+    *p0Coef = 1.0-coef;
+    *p1Coef = coef;
+    *m0Coef = t+((t3-t2)-t2);
+    *m1Coef = t3-t2;
+}
+
+float fn_1_7564(float t, float p0, float p1, float p2, float p3, float d)
+{
+    float pDelta;
+
+    float p0Coef;
+    float p1Coef;
+    float m0Coef;
+    float m1Coef;
+    float ret;
+    float d1;
+    float d2;
+    float m0;
+    float m1;
+    int pDeltai;
+
+    pDelta = p2-p1;
+    pDeltai = p2-p1;
+    if(p1 == p2) {
+        m0 = pDelta;
+    } else {
+        d1 = d;
+        m0 = d1*(pDelta+(p1-p0));
+    }
+    if(p1 == p3) {
+        m1 = pDelta;
+    } else {
+        d2 = d;
+        m1 = d2*(pDelta+(p3-p2));
+    }
+    MB4_HermiteCalc(t, &p0Coef, &p1Coef, &m0Coef, &m1Coef);
+    return ret = (p0Coef*p1)+(p1Coef*p2)+(m0Coef*m0)+(m1Coef*m1);
+}
+
+void MB4_HermiteCalcV(float t, HuVecF *p0, HuVecF *p1, HuVecF *p2, HuVecF *p3, HuVecF *out)
+{
+    float d = 0.5f;
+    out->x = fn_1_7564(t, p0->x, p1->x, p2->x, p3->x, d);
+    out->y = fn_1_7564(t, p0->y, p1->y, p2->y, p3->y, d);
+    out->z = fn_1_7564(t, p0->z, p1->z, p2->z, p3->z, d);
+}
+
+float MB4_HermiteSlopeCalc(float t, float p0, float p1, float p2, float p3)
+{
+    float t2 = t*t;
+    float p0Coef = (6.0f*t2)-(6.0f*t);
+    float p1Coef = (-6.0f*t2)-(6.0f*t);
+    float m0Coef = 1+((3.0f*t2)-(4.0f*t));
+    float m1Coef = (3.0f*t2)-(2.0f*t);
+    return (p0Coef*p0)+(p1Coef*p1)+(m0Coef*p2)+(m1Coef*p3);
+}
+
+float MB4_PathNextTimeGet(float t, HuVecF *a, HuVecF *b, HuVecF *c, HuVecF *d)
+{
+    return MB4_PathTimeGet(1, a, b, c, d);
+}
+
+float fn_1_7CF4(float t, float p0, float p1, float p2, float p3)
+{
+    float mid1 = 0.5f*((p2+(p1-p0))-p1);
+    float mid2 = 0.5f*((p2+(p1-p0))-p1);
+    float a = mid1+((2.0f*p1)-(2.0f*p2))+mid2;
+    float b = (((-3.0f*p1)+(3.0f*p2))-(2.0f*mid1))-mid2;
+    float c = mid1;
+    return (t*((3.0f*a)*t))+(2.0f*b*t)+c;
+}
+
+float fn_1_7E28(float t, HuVecF *p0, HuVecF *p1, HuVecF *p2, HuVecF *p3)
+{
+    float x = fn_1_7CF4(t, p0->x, p1->x, p2->x, p3->x);
+    float y = fn_1_7CF4(t, p0->y, p1->y, p2->y, p3->y);
+    float z = fn_1_7CF4(t, p0->z, p1->z, p2->z, p3->z);
+    return sqrtf((x*x)+(y*y)+(z*z));
+}
+
+float MB4_PathTimeGet(float time, HuVecF *p0, HuVecF *p1, HuVecF *p2, HuVecF *p3)
+{
+    float min = 0;
+    float max = time;
+    int numStep = 16;
+    float stepHalfW = (max-min)/numStep;
+    float stepSize = stepHalfW+stepHalfW;
+    float totalLen = fn_1_7E28(min, p0, p1, p2, p3)+fn_1_7E28(max, p0, p1, p2, p3);
+    int i;
+    float t;
+    for(i=1, t=min+stepHalfW; i<numStep; i += 2, t += stepSize) {
+        totalLen += fn_1_7E28(t, p0, p1, p2, p3)*4;
+    }
+    for(i=2, t=min+stepSize; i<numStep; i += 2, t += stepSize) {
+        totalLen += fn_1_7E28(t, p0, p1, p2, p3)*2;
+    }
+    return (stepHalfW/3)*totalLen;
+}
+
 
 void MB4_CoinClose(void)
 {
