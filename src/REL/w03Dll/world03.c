@@ -349,7 +349,6 @@ static void MB3_Stub(void) {
 }
 
 static int MB3Ev_MasuWalkPre(int playerNo) {
-    return 0;
 }
 
 /* ------------------------------ effect hooks ---------------------------- */
@@ -831,7 +830,7 @@ static void MB3_CoinEffInit(void) {
     MB3COINSPARKLE *c = MB3_COIN;
     memset(c, 0, 8 * sizeof(MB3COINSPARKLE));
     for (i = 0; i < 8; i++, c++) {
-        c->modelId = (s16) MBModelCreate(0x80002, NULL, TRUE);
+        c->modelId = MBModelCreate(0x80002, NULL, TRUE);
         MBModelDispSet(c->modelId, FALSE);
         c->scale = 1.0f;
     }

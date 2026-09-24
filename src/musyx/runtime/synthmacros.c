@@ -1,6 +1,7 @@
 #include "musyx/assert.h"
 #include "musyx/hardware.h"
 #include "musyx/macros.h"
+#include "musyx/sal.h"
 #include "musyx/seq.h"
 #include "musyx/snd.h"
 #include "musyx/synth.h"
@@ -484,6 +485,9 @@ static void mcmdStartSample(SYNTH_VOICE* svoice, MSTEP* cstep) {
                        (svoice->cFlags & 0x80000000000) == 0, svoice->itdMode);
 
   svoice->sInfo = newsmp.info;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  svoice->sampleId = smp;
+#endif
 
   if (svoice->playFrq != -1) {
     DoSetPitch(svoice);
@@ -596,7 +600,7 @@ static void DoSetPitch(SYNTH_VOICE* svoice) {
   ofrq = svoice->sInfo & 0xFFFFFF;
 
   if (ofrq == frq) {
-    svoice->curNote = svoice->sInfo >> 24;
+    svoice->curNote = (u8)(svoice->sInfo >> 24);
     svoice->curDetune = 0;
   } else if (ofrq < frq) {
     f = (frq << 12) / ofrq;
@@ -718,7 +722,6 @@ static s32 midi2TimeTab[128] = {
     150000, 155000, 160000, 165000, 170000, 175000, 180000, 0,
 };
 
-#pragma dont_inline on
 static void mcmdSetADSRFromCtrl(SYNTH_VOICE* svoice, MSTEP* cstep) {
   // Local variables
   f32 sScale;     // f31
@@ -739,24 +742,22 @@ static void mcmdSetADSRFromCtrl(SYNTH_VOICE* svoice, MSTEP* cstep) {
 }
 
 static void mcmdSetPitchADSR(SYNTH_VOICE* svoice, MSTEP* cstep) {
-  ADSR_INFO adsr;      // r1+0x8
-  ADSR_INFO* adsr_ptr; // r30
+  ADSR_INFO adsr;      // r1+0x10
+  ADSR_INFO* adsr_ptr; // r31
   u32 sl;              // r28
   s32 ascale;          // r27
   s32 dscale;          // r26
 
-  adsr_ptr = dataGetCurve((cstep->para[0] >> 8));
-
-  if (adsr_ptr == NULL) {
+  if ((adsr_ptr = dataGetCurve((cstep->para[0] >> 8))) == NULL) {
     return;
   }
 
   svoice->pitchADSRRange = ((s8)cstep->para[1] << 8);
 
   if (svoice->pitchADSRRange >= 0) {
-    svoice->pitchADSRRange += ((s8)(cstep->para[1] >> 8) << 8) / 100;
+    svoice->pitchADSRRange += ((s16)(s8)(cstep->para[1] >> 8) << 8) / 100;
   } else {
-    svoice->pitchADSRRange -= ((s8)(cstep->para[1] >> 8) << 8) / 100;
+    svoice->pitchADSRRange -= ((s16)(s8)(cstep->para[1] >> 8) << 8) / 100;
   }
 
   adsr.data.dls.atime =
@@ -786,19 +787,13 @@ static void mcmdSetPitchADSR(SYNTH_VOICE* svoice, MSTEP* cstep) {
   svoice->pitchADSR.data.dls.aMode = 0;
   svoice->pitchADSR.data.dls.aTime = adsrConvertTimeCents(adsr.data.dls.atime);
   svoice->pitchADSR.data.dls.dTime = adsrConvertTimeCents(adsr.data.dls.dtime);
-  sl = adsr.data.dls.slevel >> 2;
-  if (sl > 0x3ff) {
-    sl = 0x3ff;
-  }
+  sl = (adsr.data.dls.slevel >> 2);
 
-  svoice->pitchADSR.data.dls.sLevel = 193 - dspScale2IndexTab[sl];
+  svoice->pitchADSR.data.dls.sLevel = 193 - dspScale2IndexTab[MIN(sl, 0x3ffull)];
   svoice->pitchADSR.data.dls.rTime = adsr.data.dls.rtime;
-  ;
   adsrSetup(&svoice->pitchADSR);
   svoice->cFlags |= 0x20000000000;
 }
-
-#pragma dont_inline reset
 
 static u32 mcmdPitchSweep(SYNTH_VOICE* svoice, MSTEP* cstep, int num) {
   s32 delta; // r31
@@ -864,7 +859,7 @@ static u32 TranslateVolume(u32 volume, u16 curve) {
 
       if (vhigh < 0x7f) {
         d = vlow * (ptr[vhigh + 1] - ptr[vhigh]);
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 0)
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(1, 5, 4)
         volume = d + ((u16)ptr[vhigh] << 16);
 #else
         volume = d + (ptr[vhigh] << 16);
@@ -888,11 +883,7 @@ static void mcmdScaleVolume(SYNTH_VOICE* svoice, MSTEP* cstep) {
   } else {
     svoice->volume = (svoice->orgVolume * scale) / 0x7f;
   }
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 0)
   svoice->volume += (u8)(cstep->para[0] >> 16) << 16;
-#else
-  svoice->volume += EXTRACT_3RDNYBBLE(cstep->para[0]);
-#endif
   if (svoice->volume > 0x7f0000) {
     svoice->volume = 0x7f0000;
   }
@@ -1082,6 +1073,16 @@ static void mcmdDopplerSelect(SYNTH_VOICE* svoice, MSTEP* cstep) {
 static void mcmdTremoloSelect(SYNTH_VOICE* svoice, MSTEP* cstep) {
   SelectSource(svoice, &svoice->inpTremolo, cstep, 0x10000000, 0x1000);
 }
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+static void mcmdFilterSwitchSelect(SYNTH_VOICE* svoice, MSTEP* cstep) {
+  SelectSource(svoice, &svoice->inpFilterSwitch, cstep, 0x40, 0x2000);
+}
+
+static void mcmdFilterParameterSelect(SYNTH_VOICE* svoice, MSTEP* cstep) {
+  SelectSource(svoice, &svoice->inpFilterParameter, cstep, 0x800, 0x4000);
+}
+#endif
 
 static void mcmdAuxAFXSelect(SYNTH_VOICE* svoice, MSTEP* cstep) {
   u32 i;                                                                     // r31
@@ -1364,6 +1365,10 @@ static void macHandleActive(SYNTH_VOICE* svoice) {
     channelDefaults = inpGetChannelDefaults(svoice->midi, svoice->midiSet);
     svoice->pbLowerKeyRange = channelDefaults->pbRange;
     svoice->pbUpperKeyRange = channelDefaults->pbRange;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    svoice->lpfLowerFrqBoundary = channelDefaults->lpfLowerFrqBoundary;
+    svoice->lpfUpperFrqBoundary = channelDefaults->lpfUpperFrqBoundary;
+#endif
     svoice->revVolScale = 128;
     svoice->revVolOffset = 0;
     svoice->loop = 0;
@@ -1385,6 +1390,9 @@ static void macHandleActive(SYNTH_VOICE* svoice) {
     svoice->trapEventAny = 0;
     svoice->sInfo = -1;
     svoice->playFrq = -1;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    svoice->sampleId = 0xFFFF;
+#endif
     svoice->pbLast = 0x2000;
     svoice->curOutputVolume = 0;
     svoice->cFlags &= 8;
@@ -1623,6 +1631,21 @@ static void macHandleActive(SYNTH_VOICE* svoice) {
     case 0x5a:
       mcmdSRCModeSelect(svoice, &cstep);
       break;
+#if MUSY_VERSION == MUSY_VERSION_CHECK(2, 0, 1)
+    case 0x5e:
+      mcmdFilterSwitchSelect(svoice, &cstep);
+      break;
+    case 0x5f:
+      mcmdFilterParameterSelect(svoice, &cstep);
+      break;
+#elif MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+    case 0x5e:
+      mcmdFilterParameterSelect(svoice, &cstep);
+      break;
+    case 0x5f:
+      mcmdFilterSwitchSelect(svoice, &cstep);
+      break;
+#endif
     case 0x60:
       mcmdVarCalculation(svoice, &cstep, 0);
       break;
@@ -1664,7 +1687,8 @@ void macHandle(u32 deltaTime) {
     sv = nextSv;
   }
 
-  for (sv = macActiveMacroRoot; sv != NULL; sv = sv->nextMacActive) {
+  for (sv = macActiveMacroRoot; sv != NULL;
+       sv = ((MUSY_VERSION <= MUSY_VERSION_CHECK(2, 0, 1)) ? sv->nextMacActive : nextSv)) {
     nextSv = sv->nextMacActive;
     if (HasHWEventTrap(sv) != 0) {
       CheckHWEventTrap(sv);
@@ -1737,7 +1761,7 @@ static void TimeQueueAdd(SYNTH_VOICE* svoice) {
     }
   } else {
     svoice->nextTimeQueueMacro = sv;
-    if (svoice->prevTimeQueueMacro = sv->prevTimeQueueMacro) {
+    if ((svoice->prevTimeQueueMacro = sv->prevTimeQueueMacro)) {
       sv->prevTimeQueueMacro->nextTimeQueueMacro = svoice;
     } else {
       macTimeQueueRoot = svoice;
@@ -1776,7 +1800,7 @@ void macMakeActive(SYNTH_VOICE* sv) {
   MUSY_ASSERT(sv->addr!=NULL);
   /* clang-format on */
   UnYieldMacro(sv, 0);
-  if (sv->nextMacActive = macActiveMacroRoot) {
+  if ((sv->nextMacActive = macActiveMacroRoot)) {
     macActiveMacroRoot->prevMacActive = sv;
   }
   sv->prevMacActive = NULL;
@@ -1810,9 +1834,14 @@ void macMakeInactive(SYNTH_VOICE* svoice, MAC_STATE newState) {
   svoice->macState = newState;
 }
 
-u32 macStart(u16 macid, u8 priority, u8 maxVoices, u16 allocId, u8 key, u8 vol, u8 panning, u8 midi,
-             u8 midiSet, u8 section, u16 step, u16 trackid, u8 new_vid, u8 vGroup, u8 studio,
-             u32 itd) {
+u32 macStart(u16 macid, u8 priority, u8 maxVoices,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+             u32 allocId,
+#else
+             u16 allocId,
+#endif
+             u8 key, u8 vol, u8 panning, u8 midi, u8 midiSet, u8 section, u16 step, u16 trackid,
+             u8 new_vid, u8 vGroup, u8 studio, u32 itd) {
   u32 voice;           // r30
   u32 vid;             // r25
   MSTEP* addr;         // r28

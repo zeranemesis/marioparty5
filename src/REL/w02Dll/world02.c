@@ -577,7 +577,6 @@ typedef struct MB2CoinSlot_s {
     f32 unkC;
     s32 unk10;
     s32 unk14;
-    u8 pad18[4];
     f32 pos[3];    /* 0x18 */
     f32 rot[3];    /* 0x24 */
     f32 scale[3];  /* 0x30 */
@@ -771,11 +770,11 @@ void MB2_Create(void) {
 
 void MB2_Kill(void) {
     mb2_MainObj = NULL;
-    if (MB2W_S32((0x1B) * 4) != 0) {
+    if ((u32) MB2W_S32((0x1B) * 4) != 0) {
         HuSprAnimKill((ANIMDATA *)(uintptr_t) MB2W_S32((0x1B) * 4));
     }
     MB2W_S32((0x1B) * 4) = 0;
-    if (MB2W_S32((0x1C) * 4) != 0) {
+    if ((u32) MB2W_S32((0x1C) * 4) != 0) {
         HuMemDirectFree((void *)(uintptr_t) MB2W_S32((0x1C) * 4));
     }
     MB2W_S32((0x1C) * 4) = 0;
@@ -934,12 +933,12 @@ void MB2_LightSet(void) {
     Hu3DShadowCreate(45.0f, 1000.0f, 250000.0f);
     Hu3DShadowTPLvlSet(0.3f);
     Hu3DBGColorSet(0xFFU, 0xFFU, 0xFFU);
-    MB2W_S32((0x1E) * 4) = -3700.0f;
-    MB2W_S32((0x1F) * 4) = 18100.0f;
-    MB2W_S32((0x20) * 4) = 21300.0f;
-    MB2W_S32((0x21) * 4) = 3700.0f;
-    MB2W_S32((0x22) * 4) = -18100.0f;
-    MB2W_S32((0x23) * 4) = -21300.0f;
+    MB2W_F32((0x1E) * 4) = -3700.0f;
+    MB2W_F32((0x1F) * 4) = 18100.0f;
+    MB2W_F32((0x20) * 4) = 21300.0f;
+    MB2W_F32((0x21) * 4) = 3700.0f;
+    MB2W_F32((0x22) * 4) = -18100.0f;
+    MB2W_F32((0x23) * 4) = -21300.0f;
     MB2W_U8(0x90) = 0xFFU;
     MB2W_U8(0x91) = 0xFFU;
     MB2W_U8(0x92) = 0xFFU;
@@ -983,7 +982,6 @@ void MB2_Stub(void) {
 }
 
 int MB2Ev_MasuWalkPre(int playerNo) {
-    return 0;
 }
 
 int MB2Ev_MasuWalkPost(int playerNo) {
@@ -3436,10 +3434,7 @@ s16 MB2_RainbowMasuNoEndGet(s32 arg0) {
 }
 
 s32 MB2_PathCheck(s32 arg0) {
-    s32 sp8;
-
-    sp8 = arg0;
-    if (MB2_PathLenGet((s16) sp8, 0x19, 0) != -1) {
+    if (MB2_PathLenGet((s16) arg0, 0x19, 0) != -1) {
         return 1;
     }
     return 0;
@@ -5130,7 +5125,7 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     u8 *particles;
     u8 *arrA;
     u8 *arrB;
-    s32 i;
+    s16 i;
     void *dispListTmp;
     
 
@@ -5141,8 +5136,8 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     newModel->hookData = hdr;
     *(ANIMDATA **) (hdr + 0x38) = arg0;
     *(s16 *) (hdr + 0x26) = arg1;
-    *(s16 *) (hdr + 0x20) = 0;
-    *(s16 *) (hdr + 0x22) = 0;
+    *(u8 *) (hdr + 0x20) = 0;
+    *(u8 *) (hdr + 0x22) = 0;
     *(s32 *) (hdr + 0x4C) = 0;
     *(s32 *) (hdr + 0x50) = 0;
     *(s32 *) (hdr + 0x28) = 0;
@@ -5245,7 +5240,7 @@ s16 MB2_ParticleCopy(s16 arg0) {
     *(void **) (hdr + 0x38) = *(void **) (srcHdr + 0x38);
     *(s16 *) (hdr + 0x26) = *(s16 *) (srcHdr + 0x26);
     count = *(s16 *) (hdr + 0x26);
-    *(s16 *) (hdr + 0x20) = 0;
+    *(u8 *) (hdr + 0x20) = 0;
     *(u8 *) (hdr + 0x22) = *(u8 *) (srcHdr + 0x22);
     *(s32 *) (hdr + 0x4C) = 0;
     *(s32 *) (hdr + 0x50) = 0;

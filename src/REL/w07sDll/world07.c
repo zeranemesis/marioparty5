@@ -121,7 +121,7 @@ static void MB7_Kill(void);
 static void MB7_ObjectCreate(void);
 static void MB7_MainObjUpdate(OMOBJ *obj);
 static void MB7_LightSet(void);
-static int MB7Ev_MasuHatena(int playerNo);
+static void MB7Ev_MasuHatena(int playerNo);
 static int MB7Ev_MasuWalkPost(int playerNo);
 static void MB7Ev_KoopaInit(u16 arg0);
 static void MB7Ev_KoopaMotionCreate(s32 motionIdx);
@@ -293,7 +293,7 @@ static void MB7_Create(void) {
     HuDataDirClose(0xD80000);
     MBMasuWalkPreHookSet(MB7Ev_MasuWalkPre);
     MBMasuWalkPostHookSet((MASUPLAYERHOOK) MB7Ev_MasuWalkPost);
-    MBMasuHatenaHookSet(MB7Ev_MasuHatena);
+    MBMasuHatenaHookSet((MASUPLAYERHOOK) MB7Ev_MasuHatena);
     mb7_MainObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB7_MainObjUpdate);
 }
 
@@ -410,14 +410,13 @@ static void MB7_LightSet(void) {
 /* NONMATCHING: cmplwi vs cmpwi on the flag-bit test, and a trailing
  * `li r3,0` the original schedules before the MBMasuGet call instead of
  * at the end (90% match); logic identical */
-static int MB7Ev_MasuHatena(int playerNo) {
+static void MB7Ev_MasuHatena(int playerNo) {
     MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
-    u16 flag = (u16) masuP->flag;
+    u32 flag = (u16) masuP->flag;
 
     if ((flag & 0x80) != 0) {
         MB7Ev_Hou(playerNo);
     }
-    return 0;
 }
 
 static int MB7Ev_MasuWalkPost(int playerNo) {
@@ -452,10 +451,7 @@ static void MB7Ev_KoopaInit(u16 arg0) {
 
     memset(base, 0, 0x8C);
     *(s32 *) (base + 0x64) = -1;
-    *(s32 *) (base + 0x34) = -1;
-    *(s32 *) (base + 0x30) = -1;
-    *(s32 *) (base + 0x2C) = -1;
-    *(s32 *) (base + 0x28) = -1;
+    *(s32 *) (base + 0x28) = *(s32 *) (base + 0x2C) = *(s32 *) (base + 0x30) = *(s32 *) (base + 0x34) = -1;
     for (i = 0; i < 9; i++) {
         *(s32 *) (base + 0x38 + (i * 4)) = -1;
     }
@@ -502,10 +498,11 @@ static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
 
     if (loop != 0) {
         attr = 0x40000001;
+        if (motionIdx == *(s32 *) (base + 0x64)) {
+            return;
+        }
     }
-    if (motionIdx != *(s32 *) (base + 0x64)) {
-        MBMotionNoSet((s16) *(s32 *) (base + 0x28), *(s32 *) (base + 0x38 + (motionIdx * 4)), attr);
-    }
+    MBMotionNoSet((s16) *(s32 *) (base + 0x28), *(s32 *) (base + 0x38 + (motionIdx * 4)), attr);
     *(s32 *) (base + 0x64) = motionIdx;
 }
 
@@ -516,10 +513,11 @@ static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop) {
 
     if (loop != 0) {
         attr = 0x40000001;
+        if (motionIdx == *(s32 *) (base + 0x64)) {
+            return;
+        }
     }
-    if (motionIdx != *(s32 *) (base + 0x64)) {
-        MBMotionShiftSet((s16) *(s32 *) (base + 0x28), *(s32 *) (base + 0x38 + (motionIdx * 4)), 0.0f, 8.0f, attr);
-    }
+    MBMotionShiftSet((s16) *(s32 *) (base + 0x28), *(s32 *) (base + 0x38 + (motionIdx * 4)), 0.0f, 8.0f, attr);
     *(s32 *) (base + 0x64) = motionIdx;
 }
 

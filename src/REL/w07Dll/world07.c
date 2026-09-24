@@ -143,7 +143,7 @@ static void MB7Ev_MasuRedInit(void);
 static void MB7Ev_MasuRedClose(void);
 static void MB7Ev_RedResetHook(void);
 static int MB7Ev_RedResetWin(void);
-static int MB7Ev_MasuHatena(int playerNo);
+static void MB7Ev_MasuHatena(int playerNo);
 static int MB7Ev_MasuWalkPost(int playerNo);
 static void MB7Ev_KoopaInit(u16 arg0);
 static void MB7Ev_KoopaMotionCreate(s32 motionIdx);
@@ -287,7 +287,7 @@ static s32 MB7Ev_BitGet(s32 flag, u32 mask) {
 }
 
 /* NONMATCHING: register allocation order differs (65.52% match) */
-static u32 MB7Ev_MasuFlagGet(s32 bits, s32 mask) {
+static u32 MB7Ev_MasuFlagGet(s32 bits, u32 mask) {
     u32 result;
     s32 inBit;
     s32 outBit;
@@ -347,7 +347,7 @@ static void MB7_Create(void) {
     HuDataDirClose(0xD70000);
     MBMasuWalkPreHookSet(MB7Ev_MasuWalkPre);
     MBMasuWalkPostHookSet((MASUPLAYERHOOK) MB7Ev_MasuWalkPost);
-    MBMasuHatenaHookSet(MB7Ev_MasuHatena);
+    MBMasuHatenaHookSet((MASUPLAYERHOOK) MB7Ev_MasuHatena);
     mb7_MainObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB7_MainObjUpdate);
 }
 
@@ -464,36 +464,36 @@ static void MB7_LightSet(void) {
 /* ---------------------------- masu event hooks --------------------------- */
 
 /* NONMATCHING: stack frame layout differs (75.44% match) */
-static int MB7Ev_MasuHatena(int playerNo) {
+static void MB7Ev_MasuHatena(int playerNo) {
     MASU *masuP = MBMasuGet(0, (s32) GwPlayer[playerNo].masuId);
-    u32 flag = masuP->flag;
+    u32 flag = (u16) masuP->flag;
 
     if (flag & 0x8000) {
         MB7Ev_KoopaWalk(playerNo);
-        return 0;
+        return;
     }
     if (flag & 0x2800) {
         MB7Ev_Dokan(playerNo);
-        return 0;
+        return;
     }
     if (flag & 0x1400) {
         MB7Ev_DokanIn(playerNo);
-        return 0;
+        return;
     }
     if (flag & 0x300) {
         MB7Ev_KoopaCube(playerNo);
-        return 0;
+        return;
     }
     if (flag & 0x80) {
         MB7Ev_Hou(playerNo);
     }
-    return 0;
 }
 
 /* NONMATCHING: stack frame layout differs (69.23% match) */
 static int MB7Ev_MasuWalkPost(int playerNo) {
     s16 masuId = GwPlayer[playerNo].masuId;
-    s32 flag = (u16) MBMasuGet(0, masuId)->flag;
+    MASU *masu = MBMasuGet(0, masuId);
+    s32 flag = (u16) masu->flag;
     return 0;
 }
 
@@ -556,10 +556,7 @@ static void MB7Ev_KoopaInit(u16 arg0) {
     memset(base, 0, 0x9C);
     *(s32 *) (base + 0x70) = -1;
     *(s32 *) (base + 0x74) = 0;
-    *(s32 *) (base + 0x40) = -1;
-    *(s32 *) (base + 0x3C) = -1;
-    *(s32 *) (base + 0x38) = -1;
-    *(s32 *) (base + 0x34) = -1;
+    *(s32 *) (base + 0x34) = *(s32 *) (base + 0x38) = *(s32 *) (base + 0x3C) = *(s32 *) (base + 0x40) = -1;
     for (i = 0; i < 9; i++) {
         *(s32 *) (base + 0x44 + (i * 4)) = -1;
     }
@@ -606,16 +603,15 @@ static void MB7Ev_KoopaDataClose(void) {
 static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
     s32 attr = 0;
-    s16 koopaMdlId;
 
     if (loop) {
         attr = 0x40000001;
-        if (motionIdx != *(s32 *) (base + 0x70)) {
-            *(s32 *) (base + 0x74) = 0;
+        if (motionIdx == *(s32 *) (base + 0x70)) {
+            return;
         }
+        *(s32 *) (base + 0x74) = 0;
     }
-    koopaMdlId = (s16) *(s32 *) (base + 0x34);
-    MBMotionNoSet(koopaMdlId, (s16) *(s32 *) (base + 0x44 + (motionIdx * 4)), attr);
+    MBMotionNoSet((s16) *(s32 *) (base + 0x34), *(s32 *) (base + 0x44 + (motionIdx * 4)), attr);
     *(s32 *) (base + 0x70) = motionIdx;
 }
 
@@ -624,16 +620,15 @@ static void MB7Ev_KoopaMotionNoSet(s32 motionIdx, s32 loop) {
 static void MB7Ev_KoopaMotionShiftSet(s32 motionIdx, s32 loop) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
     s32 attr = 0;
-    s16 koopaMdlId;
 
     if (loop) {
         attr = 0x40000001;
-        if (motionIdx != *(s32 *) (base + 0x70)) {
-            *(s32 *) (base + 0x74) = 0;
+        if (motionIdx == *(s32 *) (base + 0x70)) {
+            return;
         }
+        *(s32 *) (base + 0x74) = 0;
     }
-    koopaMdlId = (s16) *(s32 *) (base + 0x34);
-    MBMotionShiftSet(koopaMdlId, (s16) *(s32 *) (base + 0x44 + (motionIdx * 4)), 0.0f, 8.0f, attr);
+    MBMotionShiftSet((s16) *(s32 *) (base + 0x34), *(s32 *) (base + 0x44 + (motionIdx * 4)), 0.0f, 8.0f, attr);
     *(s32 *) (base + 0x70) = motionIdx;
 }
 
@@ -662,14 +657,12 @@ static void MB7Ev_KoopaClose(void) {
 /* NONMATCHING: cror-fused compare not reproduced */
 static void MB7Ev_KoopaWalkFxPlay(void) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
-    s16 koopaMdlId;
     f32 time;
 
     if (*(s32 *) (base + 0x70) != 1) {
         return;
     }
-    koopaMdlId = (s16) *(s32 *) (base + 0x34);
-    time = MBMotionTimeGet(koopaMdlId);
+    time = MBMotionTimeGet((s16) *(s32 *) (base + 0x34));
     if (*(s32 *) (base + 0x74) == 0) {
         if (time >= 15.0f) {
             if (time < 25.0f) {
@@ -948,7 +941,8 @@ static void MB7Ev_MasuRedSet(s32 masuId) {
 
 /* NONMATCHING: register allocation order differs (76.19% match) */
 static int MB7Ev_RedResetWin(void) {
-    MBWinPlayerDisable(MBWinCreate(2, 0x33000BU, -1), -1);
+    int winNo = MBWinCreate(2, 0x33000BU, -1);
+    MBWinPlayerDisable(winNo, -1);
     MBTopWinWait();
     MBTopWinKill();
     return 1;

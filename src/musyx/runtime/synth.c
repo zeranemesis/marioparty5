@@ -101,7 +101,7 @@ static u32 do_voice_portamento(u8 key, u8 midi, u8 midiSet, u32 isMaster, u32* r
   legatoVoiceIsStarting = FALSE;
   vid = SND_ID_ERROR;
 
-  for (i = 0, sv = synthVoice; i < synthInfo.voiceNum; ++i, ++sv) {
+  for (i = 0, sv = synthVoice; i < synthInfo.voiceNum; ++i, sv++) {
     if (
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(1, 5, 4)
         sv->block == 0 &&
@@ -160,13 +160,23 @@ static u32 check_portamento(u8 key, u8 midi, u8 midiSet, u32 newVID, u32* vid) {
   return 1;
 }
 
-static u32 StartKeymap(u16 keymapID, s16 prio, u8 maxVoices, u16 allocId, u8 key, u8 vol,
-                       u8 panning, u8 midi, u8 midiSet, u8 section, u16 step, u16 trackid,
-                       u32 vidFlag, u8 vGroup, u8 studio, u32 itd);
+static u32 StartKeymap(u16 keymapID, s16 prio, u8 maxVoices,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+                       u32 allocId,
+#else
+                       u16 allocId,
+#endif
+                       u8 key, u8 vol, u8 panning, u8 midi, u8 midiSet, u8 section, u16 step,
+                       u16 trackid, u32 vidFlag, u8 vGroup, u8 studio, u32 itd);
 
-static u32 StartLayer(u16 layerID, s16 prio, u8 maxVoices, u16 allocId, u8 key, u8 vol, u8 panning,
-                      u8 midi, u8 midiSet, u8 section, u16 step, u16 trackid, u32 vidFlag,
-                      u8 vGroup, u8 studio, u32 itd) {
+static u32 StartLayer(u16 layerID, s16 prio, u8 maxVoices,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+                      u32 allocId,
+#else
+                      u16 allocId,
+#endif
+                      u8 key, u8 vol, u8 panning, u8 midi, u8 midiSet, u8 section, u16 step,
+                      u16 trackid, u32 vidFlag, u8 vGroup, u8 studio, u32 itd) {
   u16 n;      // r1+0x38
   u32 vid;    // r26
   u32 new_id; // r1+0x34
@@ -183,7 +193,7 @@ static u32 StartLayer(u16 layerID, s16 prio, u8 maxVoices, u16 allocId, u8 key, 
   }
 
   mKey = key & 0x7f;
-  for (; n != 0; --n, ++l) {
+  for (; n != 0; --n, l++) {
     if (l->id == 0xffff || l->keyLow > mKey || l->keyHigh < mKey) {
       continue;
     }
@@ -225,15 +235,15 @@ static u32 StartLayer(u16 layerID, s16 prio, u8 maxVoices, u16 allocId, u8 key, 
 
     switch (l->id & 0xC000) {
     case 0:
-      new_id = macStart(l->id, prio, maxVoices, allocId, k | key & 0x80, v, p, midi, midiSet,
+      new_id = macStart(l->id, prio, maxVoices, allocId, k | (key & 0x80), v, p, midi, midiSet,
                         section, step, trackid, 0, vGroup, studio, itd);
       break;
     case 0x4000:
-      new_id = StartKeymap(l->id, prio, maxVoices, allocId, k | key & 0x80, v, p, midi, midiSet,
+      new_id = StartKeymap(l->id, prio, maxVoices, allocId, k | (key & 0x80), v, p, midi, midiSet,
                            section, step, trackid, 0, vGroup, studio, itd);
       break;
     case 0x8000:
-      new_id = StartLayer(l->id, prio, maxVoices, allocId, k | key & 0x80, v, p, midi, midiSet,
+      new_id = StartLayer(l->id, prio, maxVoices, allocId, k | (key & 0x80), v, p, midi, midiSet,
                           section, step, trackid, 0, vGroup, studio, itd);
       break;
     }
@@ -267,9 +277,14 @@ end:
   return vid;
 }
 
-static u32 StartKeymap(u16 keymapID, s16 prio, u8 maxVoices, u16 allocId, u8 key, u8 vol,
-                       u8 panning, u8 midi, u8 midiSet, u8 section, u16 step, u16 trackid,
-                       u32 vidFlag, u8 vGroup, u8 studio, u32 itd) {
+static u32 StartKeymap(u16 keymapID, s16 prio, u8 maxVoices,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+                       u32 allocId,
+#else
+                       u16 allocId,
+#endif
+                       u8 key, u8 vol, u8 panning, u8 midi, u8 midiSet, u8 section, u16 step,
+                       u16 trackid, u32 vidFlag, u8 vGroup, u8 studio, u32 itd) {
   u8 o;           // r30
   KEYMAP* keymap; // r31
   s32 p;          // r26
@@ -306,11 +321,11 @@ static u32 StartKeymap(u16 keymapID, s16 prio, u8 maxVoices, u16 allocId, u8 key
         if (vid != 0xffffffff) {
           return vid;
         }
-        return macStart(keymap[o].id, prio, maxVoices, allocId, k | key & 0x80, vol, panning, midi,
+        return macStart(keymap[o].id, prio, maxVoices, allocId, k | (key & 0x80), vol, panning, midi,
                         midiSet, section, step, trackid, vidFlag, vGroup, studio, itd);
       }
 
-      return StartLayer(keymap[o].id, prio, maxVoices, allocId, k | key & 0x80, vol, panning, midi,
+      return StartLayer(keymap[o].id, prio, maxVoices, allocId, k | (key & 0x80), vol, panning, midi,
                         midiSet, section, step, trackid, vidFlag & 0xff, vGroup, studio, itd);
     }
   }
@@ -349,13 +364,25 @@ u32 synthStartSound(u16 id, u8 prio, u8 max,
     if (vid != SND_ID_ERROR) {
       return vid;
     }
-    return macStart(id, prio, max, id, key, vol, panning, midi, midiSet, section, step, trackid, 1,
-                    vGroup, studio, itd);
+    return macStart(id, prio, max,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+                    sourceID,
+#else
+                    id,
+#endif
+                    key, vol, panning, midi, midiSet, section, step, trackid, 1, vGroup, studio,
+                    itd);
   }
   case 0x4000: {
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(1, 5, 4)
-    u32 vid = StartKeymap(id, prio, max, id, key, vol, panning, midi, midiSet, section, step,
-                          trackid, 1, vGroup, studio, itd);
+    u32 vid = StartKeymap(id, prio, max,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+                          sourceID,
+#else
+                          id,
+#endif
+                          key, vol, panning, midi, midiSet, section, step, trackid, 1, vGroup,
+                          studio, itd);
     if (vid != SND_ID_ERROR) {
       unblockAllAllocatedVoices(vid);
     }
@@ -367,8 +394,14 @@ u32 synthStartSound(u16 id, u8 prio, u8 max,
   }
   case 0x8000: {
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(1, 5, 4)
-    u32 vid = StartLayer(id, prio, max, id, key, vol, panning, midi, midiSet, section, step,
-                         trackid, 1, vGroup, studio, itd);
+    u32 vid = StartLayer(id, prio, max,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+                         sourceID,
+#else
+                         id,
+#endif
+                         key, vol, panning, midi, midiSet, section, step, trackid, 1, vGroup,
+                         studio, itd);
     if (vid != SND_ID_ERROR) {
       unblockAllAllocatedVoices(vid);
     }
@@ -389,7 +422,7 @@ static u32 convert_cents(SYNTH_VOICE* svoice, u32 ccents) {
 
   cpitch = sndGetPitch(ccents / 65536, svoice->sInfo) * 65536;
   if ((curDetune = ccents & 0xffff) != 0) {
-    cpitch += curDetune * ((sndPitchUpOne(cpitch / 65536) & 0xffff) - (cpitch / 65536 & 0xffff));
+    cpitch += curDetune * ((sndPitchUpOne(cpitch / 65536) & 0xffff) - (cpitch / 65536));
   }
   return cpitch;
 }
@@ -400,7 +433,7 @@ static void UpdateTimeMIDICtrl(SYNTH_VOICE* sv) {
   }
 
   sv->timeUsedByInput = 0;
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
   sv->midiDirtyFlags = 0x7fff;
 #else
   sv->midiDirtyFlags = 0x1fff;
@@ -441,7 +474,7 @@ static void LowPrecisionHandler(u32 i) {
       sv->lfo[j].lastValue = sv->lfo[j].value;
       if (sv->lfoUsedByInput[j]) {
         sv->lfoUsedByInput[j] = 0;
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
         sv->midiDirtyFlags |= 0x7fff;
 #else
         sv->midiDirtyFlags |= 0x1fff;
@@ -460,8 +493,8 @@ static void LowPrecisionHandler(u32 i) {
     cntDelta = (lowDeltaTime << 8) >> 4;
     addFactor = (lowDeltaTime << 4) >> 4;
 #else
-    cntDelta = (lowDeltaTime & 0x00ffffff) << 4;
-    addFactor = lowDeltaTime & 0x0fffffff;
+    cntDelta = (lowDeltaTime << 8) >> 4;
+    addFactor = (lowDeltaTime << 4) >> 4;
 #endif
     for (j = 0; j < 2; ++j) {
       if (sv->sweepNum[j] == 0) {
@@ -599,11 +632,11 @@ static void ZeroOffsetHandler(u32 i) {
   s32 pan;          // r28
   f32 preVol;       // f26
   f32 postVol;      // f29
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
-  unsigned short para; // r22
-  unsigned short a0;   // r1+0xA
-  unsigned short b0;   // r1+0x8
-  unsigned long frq;   // r21
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  u16 para; // r22
+  u16 a0;   // r1+0xA
+  u16 b0;   // r1+0x8
+  u32 frq;   // r21
 #endif
 
   sv = &synthVoice[i];
@@ -651,7 +684,7 @@ static void ZeroOffsetHandler(u32 i) {
 
   if ((sv->treScale | sv->treModAddScale) != 0) {
     Modulation = inpGetModulation(sv);
-    lfo = (f32)(8192 - (8192 - ((s16)inpGetTremolo(sv) - 8192) >> 1)) * (1.f / 8192.f);
+    lfo = (f32)(8192 - ((8192 - ((s16)inpGetTremolo(sv) - 8192)) >> 1)) * (1.f / 8192.f);
     mscale = 1.f - (f32)Modulation * (4096 - sv->treModAddScale) * 1.490207e-08f /* 1/(8192^2)? */;
     scale = (f32)sv->treScale * mscale * (1.f / 4096.f);
     if (sv->treCurScale < scale) {
@@ -704,7 +737,7 @@ static void ZeroOffsetHandler(u32 i) {
     sv->curOutputVolume = (u16)(postVol * 32767.f);
     hwSetVolume(i, sv->volTable, postVol, sv->lastPan, sv->lastSPan, auxa, auxb);
   }
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
   if (sv->midiDirtyFlags & 0x6000) {
     if (inpGetFilterSwitch(sv) > 0x1FFF) {
       para = inpGetFilterParameter(sv);
@@ -869,7 +902,7 @@ static void HandleVoices() {
   HandleJobQueue(&jTab->lowPrecision, LowPrecisionHandler);
   HandleJobQueue(&jTab->event, EventHandler);
   HandleJobQueue(&jTab->zeroOffset, ZeroOffsetHandler);
-  synthJobTableIndex = synthJobTableIndex + 1 & 0x1f;
+  synthJobTableIndex = (synthJobTableIndex + 1) & 0x1f;
 }
 
 static void HandleFaderTermination(SYNTHMasterFader* smf) {
@@ -961,11 +994,20 @@ u8 synthFXGetMaxVoices(u16 fid) {
   return 0;
 }
 
-u32 synthFXStart(u16 fid, u8 vol, u8 pan, u8 studio, u32 itd) {
+u32 synthFXStart(u16 fid,
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+                 u8 key,
+#endif
+                 u8 vol, u8 pan, u8 studio, u32 itd) {
   FX_TAB* fx;
   u32 v;
   v = 0xFFFFFFFF;
   if ((fx = dataGetFX(fid)) != NULL) {
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+    if (key == 0xFF) {
+      key = fx->key;
+    }
+#endif
     if (vol == 0xFF) {
       vol = fx->volume;
     }
@@ -976,16 +1018,20 @@ u32 synthFXStart(u16 fid, u8 vol, u8 pan, u8 studio, u32 itd) {
 
     v = synthStartSound(fx->macro, fx->priority, fx->maxVoices,
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
-                        0, // TODO
+                        fid | 0x80000000,
 #endif
-                        fx->key | 0x80, vol, pan, 0xFF, 0xFF, 0, 0, 0xFF, fx->vGroup, 0, studio,
-                        itd);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+                        key | 0x80,
+#else
+                        fx->key | 0x80,
+#endif
+                        vol, pan, 0xFF, 0xFF, 0, 0, 0xFF, fx->vGroup, 0, studio, itd);
   }
 
   return v;
 }
 
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
 int synthCheckFXRealloc(unsigned short fid) {
   struct FX_TAB* fx;            // r31
   unsigned long allocId;        // r30
@@ -1092,7 +1138,7 @@ static bool synthFXVolume(u32 vid, u8 vol) {
 }
 
 bool synthSendKeyOff(u32 voiceid) {
-  u32 i;   // r30
+  u32 i;    // r30
   bool ret; // r29
 
   ret = FALSE;
@@ -1234,7 +1280,11 @@ void synthPauseVolume(u8 volume, u16 time, u8 vGroup) {
         smf->pauseTarget = (f32)volume * (1.f / 127.f);
         smf->pauseTime = 1.f;
         smf->pauseDeltaTime = 1280.f / (f32)ltime;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+        synthMasterFaderPauseActiveFlags |= 1 << i;
+#else
         synthMasterFaderActiveFlags |= 1 << i;
+#endif
       }
     }
     return;
@@ -1246,7 +1296,11 @@ void synthPauseVolume(u8 volume, u16 time, u8 vGroup) {
         smf->pauseTarget = (f32)volume * (1.f / 127.f);
         smf->pauseTime = 1.f;
         smf->pauseDeltaTime = 1280.f / (f32)ltime;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+        synthMasterFaderPauseActiveFlags |= 1 << i;
+#else
         synthMasterFaderActiveFlags |= 1 << i;
+#endif
       }
     }
     return;
@@ -1274,7 +1328,11 @@ void synthPauseVolume(u8 volume, u16 time, u8 vGroup) {
         smf->pauseTarget = (f32)volume * (1.f / 127.f);
         smf->pauseTime = 1.f;
         smf->pauseDeltaTime = 1280.f / (f32)ltime;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+        synthMasterFaderPauseActiveFlags |= 1 << i;
+#else
         synthMasterFaderActiveFlags |= 1 << i;
+#endif
       }
     }
     return;
@@ -1285,7 +1343,11 @@ void synthPauseVolume(u8 volume, u16 time, u8 vGroup) {
     smf->pauseTarget = (f32)volume * (1.f / 127.f);
     smf->pauseTime = 1.f;
     smf->pauseDeltaTime = 1280.f / (f32)ltime;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+    synthMasterFaderPauseActiveFlags |= 1 << vGroup;
+#else
     synthMasterFaderActiveFlags |= 1 << vGroup;
+#endif
     return;
   }
 }

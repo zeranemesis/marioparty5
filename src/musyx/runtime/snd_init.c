@@ -33,10 +33,11 @@
 
 
 */
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
-long DoInit(u32 mixFrq, u32 numVoices, u32 flags, u32 aramBase, u32 aramSize)
-#else
+// TODO: Platform specific audio memory handling
+#if MUSY_VERSION <= MUSY_VERSION_CHECK(2, 0, 0)
 static s32 DoInit(u32 mixFrq, u32 aramSize, u32 numVoices, u32 flags)
+#else
+long DoInit(u32 mixFrq, u32 numVoices, u32 flags, u32 aramBase, u32 aramSize)
 #endif
 {
   bool ret;
@@ -44,10 +45,12 @@ static s32 DoInit(u32 mixFrq, u32 aramSize, u32 numVoices, u32 flags)
   MUSY_DEBUG("\nMusyX software initialization...\nBuild Date: %s %s\n\n", __DATE__, __TIME__);
   ret = FALSE;
 
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
-  dataInitStack(aramBase, aramGetUserBytes(aramSize));
-#else
+#if MUSY_VERSION <= MUSY_VERSION_CHECK(2, 0, 0)
   dataInitStack();
+#elif MUSY_VERSION == MUSY_VERSION_CHECK(2, 0, 1)
+  dataInitStack(aramBase, aramSize);
+#else
+  dataInitStack(aramBase, aramGetUserBytes(aramSize));
 #endif
   dataInit(0, aramSize);
 
@@ -104,10 +107,10 @@ s32 sndInit(u8 voices, u8 music, u8 sfx, u8 studios, u32 flags, u32 aramSize) {
   synthInfo.maxSFX = sfx;
   frq = 32000;
   if ((ret = hwInit(&frq, synthInfo.voiceNum, synthInfo.studioNum, flags)) == 0) {
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
-    ret = DoInit(32000, synthInfo.voiceNum, flags, aramGetFirstUserAddress(), aramSize);
-#else
+#if MUSY_VERSION <= MUSY_VERSION_CHECK(2, 0, 0)
     ret = DoInit(32000, aramSize, synthInfo.voiceNum, flags);
+#else
+    ret = DoInit(32000, synthInfo.voiceNum, flags, aramGetFirstUserAddress(), aramSize);
 #endif
   }
 
@@ -166,7 +169,7 @@ SND_PLAYBACKINFO* sndGetPlayBackInfo() {
   return NULL;
 }
 
-#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
 void sndSetLowPassFilterDefaultRange(unsigned long lowFrq, unsigned long highFrq) {
   inpSetLPFDefaultRange(lowFrq, highFrq);
 }

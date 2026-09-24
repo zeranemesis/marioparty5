@@ -35,13 +35,12 @@ s16 CapsuleMdlId;
 s16 CharMotId;
 s16 CharMdlId;
 s16 PResDiff;
-s8 LanguageNo;
+u8 LanguageNo;
 OMOBJMAN *objman;
 static OMOBJ *outViewObj;
 
-// NONMATCHING: register allocation differs in a couple spots (LanguageNo load, epilogue restore order)
 void ObjectSetup(void) {
-    u8 languageNo;
+    int languageNo;
     OSReport("******* PRES ObjectSetup *********\n");
     objman = omInitObjMan(50, 8192);
     omSysPauseEnable(FALSE);

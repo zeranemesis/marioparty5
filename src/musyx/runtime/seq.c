@@ -89,6 +89,7 @@ static NOTE* AllocateNote(u32 endTime, u8 section) {
   NOTE* n;       // r31
   NOTE* nl;      // r30
   NOTE* last_nl; // r29
+  NOTE* t;
   if ((n = noteFree) != NULL) {
     if ((noteFree = n->next) != NULL) {
       noteFree->prev = NULL;
@@ -98,7 +99,7 @@ static NOTE* AllocateNote(u32 endTime, u8 section) {
     n->section = section;
     n->timeIndex = cseq->section[section].timeIndex;
     last_nl = NULL;
-    for (nl = cseq->noteUsed[n->timeIndex]; nl != NULL; nl = nl->next) {
+    for (nl = cseq->noteUsed[n->timeIndex]; nl != NULL; last_nl = nl, nl = nl->next) {
       if (nl->endTime > n->endTime) {
         n->next = nl;
         n->prev = last_nl;
@@ -111,8 +112,6 @@ static NOTE* AllocateNote(u32 endTime, u8 section) {
         nl->prev = n;
         return n;
       }
-
-      last_nl = nl;
     }
     n->prev = last_nl;
 
@@ -245,8 +244,7 @@ static u32 GetPublicId(u32 seqId) {
   SEQ_INSTANCE* si; // r31
 
   do {
-    pub_id = seq_next_id;
-    seq_next_id = pub_id + 1;
+    pub_id = seq_next_id++;
     seq_next_id &= ~SND_SEQ_CROSSFADE_ID;
 
     for (si = seqActiveRoot; si != NULL; si = si->next) {
@@ -271,12 +269,12 @@ u32 seqGetPrivateId(u32 seqId) {
   SEQ_INSTANCE* si; // r31
   for (si = seqActiveRoot; si != NULL; si = si->next) {
     if (si->publicId == (seqId & ~SND_SEQ_CROSSFADE_ID)) {
-      return si->index | seqId & SND_SEQ_CROSSFADE_ID;
+      return si->index | (seqId & SND_SEQ_CROSSFADE_ID);
     }
   }
   for (si = seqPausedRoot; si != NULL; si = si->next) {
     if (si->publicId == (seqId & ~SND_SEQ_CROSSFADE_ID)) {
-      return si->index | seqId & SND_SEQ_CROSSFADE_ID;
+      return si->index | (seqId & SND_SEQ_CROSSFADE_ID);
     }
   }
   return SND_ID_ERROR;
@@ -319,7 +317,7 @@ static void BuildTransTab(u8* tab, PAGE* page) {
     tab[i] = 0xff;
   }
 
-  for (i = 0; page->index != 0xFF; ++i, ++page) {
+  for (i = 0; page->index != 0xFF; ++i, page++) {
     tab[page->index] = i;
   }
 }
@@ -756,7 +754,7 @@ void seqVolume(u8 volume, u16 time, u32 seqId, u8 mode) {
       seqInstance[seqId].syncCrossInfo.vol2 = volume;
       break;
     default:
-      MUSY_FATAL("Illegal sequencere fade mode detected.");
+      MUSY_FATAL("Illegal sequencer fade mode detected.");
       break;
     }
   }
@@ -1071,7 +1069,10 @@ static void InsertGlobalEvent(SEQ_SECTION* section, SEQ_EVENT* event) {
 }
 
 static u32 GetNextEventTime(SEQ_SECTION* section) {
-  return section->globalEventRoot == NULL ? 0 : section->globalEventRoot->time;
+  if (section->globalEventRoot == NULL) {
+    return 0;
+  }
+  return section->globalEventRoot->time;
 }
 
 static SEQ_EVENT* GetGlobalEvent(SEQ_SECTION* section) {
@@ -1332,11 +1333,11 @@ void seqHandle(u32 deltaTime) {
     }
 
     if (eventsActive == 0 && notesActive == 0) {
-        #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 4)
-        for(notesActive=0; notesActive<16; notesActive++) {
-            inpSetMidiCtrl14(64, notesActive, curSeqId, 0);
-        }
-        #endif
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      for (i = 0; i < 16; ++i) {
+        inpSetMidiCtrl14(0x40, i, curSeqId, 0);
+      }
+#endif
       if (si->prev != NULL) {
         si->prev->next = nextSi;
       } else {

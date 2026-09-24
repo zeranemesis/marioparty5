@@ -69,7 +69,8 @@ typedef struct M506Flow_s {
     s32 unk154;                                //0x154
     s32 unk158;                                //0x158
     M506_FLYOBJ starfighter[M506_PLAYER_MAX];  //0x15C
-    f32 recordScrollY;                         //0x1EC
+    s16 recordScrollY;                         //0x1EC
+    u8 unk1EE[2];                              //0x1EE
     f32 shadowScrollY;                         //0x1F0
     HU3DMODELID particleMdlId;                 //0x1F4
     GAMEMESID gameMesId;                       //0x1F6
@@ -974,7 +975,7 @@ void M506MameShadowOff(M506_FLOW_WORK *flow)
     Hu3DMotionSpeedSet(flow->work->mameShadowMdlId[0], 0.5f);
     flow->shadowScrollY = 0.0f;
     flow->recordScrollY = Hu3DTexScrollCreate(flow->work->mameShadowMdlId[0], "I8m506sdw01");
-    Hu3DTexScrollPosSet((HU3DTEXSCRID)flow->recordScrollY, 0.0f, flow->shadowScrollY, 0.0f);
+    Hu3DTexScrollPosSet(flow->recordScrollY, 0.0f, flow->shadowScrollY, 0.0f);
     Hu3DModelAttrSet(flow->work->glowShadowMdlId, HU3D_ATTR_DISPOFF);
     Hu3DModelAttrSet(flow->work->glowShadowMdlId, HU3D_MOTATTR_PAUSE);
     Hu3DModelAttrReset(flow->work->glowShadowMdlId, HU3D_MOTATTR_LOOP);
@@ -1001,7 +1002,7 @@ void M506MameShadowScrollExec(M506_FLOW_WORK *flow)
     if (flow->shadowScrollY > 0.4f) {
         flow->shadowScrollY = 0.4f;
     }
-    Hu3DTexScrollPosSet((HU3DTEXSCRID)flow->recordScrollY, 0.0f, flow->shadowScrollY, 0.0f);
+    Hu3DTexScrollPosSet(flow->recordScrollY, 0.0f, flow->shadowScrollY, 0.0f);
 }
 
 // NONMATCHING: faithful translation, not yet instruction-matched

@@ -190,7 +190,7 @@ cflags_base = [
     "-i include",
     "-i libc",
     "-i libs/dolphin/include",
-    "-i libs/musyx/include",
+    "-i extern/musyx/include",
     "-i src",
     "-DMUSY_TARGET=MUSY_TARGET_DOLPHIN",
     f"-i build/{config.version}/include",
@@ -268,7 +268,7 @@ cflags_musyx = [
     "-i include",
     "-i libc",
     "-i libs/dolphin/include",
-    "-i libs/musyx/include",
+    "-i extern/musyx/include",
     "-inline auto",
     "-O4,p",
     "-fp hard",
@@ -287,7 +287,7 @@ cflags_musyx_debug = [
     "-i include",
     "-i libc",
     "-i libs/dolphin/include",
-    "-i libs/musyx/include",
+    "-i extern/musyx/include",
     "-g",
     "-sym on",
     "-D_DEBUG=1",
@@ -352,7 +352,7 @@ def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
         "objects": objects,
     }
 
-def MusyX(objects, mw_version="GC/1.3.2", debug=False, major=2, minor=0, patch=4):
+def MusyX(objects, mw_version="GC/1.3.2", debug=False, major=2, minor=0, patch=1):
     cflags = cflags_musyx if not debug else cflags_musyx_debug
     return {
         "lib": "musyx",

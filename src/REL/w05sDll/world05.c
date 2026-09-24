@@ -400,6 +400,7 @@ static void MB5_MainObjUpdate(OMOBJ *obj)
     if(MBKillCheck() || mb5_MainObj == NULL) {
         omDelObj(mbObjMan, obj);
         mb5_MainObj = NULL;
+        return;
     }
 }
 
@@ -939,7 +940,9 @@ void MB5Ev_Rocket(int playerNo)
 
 void MB5Ev_WarpParticleCreate(HuVecF pos)
 {
-    mb5ev_WarpParmanAnim = HuSprAnimRead(HuDataReadNum(EFFECT_ANM_circle, HU_MEMNUM_OVL));
+    void *data;
+    data = HuDataReadNum(EFFECT_ANM_circle, HU_MEMNUM_OVL);
+    mb5ev_WarpParmanAnim = HuSprAnimRead(data);
     HuDataDirClose(DATA_effect);
     mb5ev_WarpParmanId = Hu3DParManCreate(mb5ev_WarpParmanAnim, 256, &mb5ev_WarpEffParam);
     Hu3DParManAttrSet(mb5ev_WarpParmanId, HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDANGLE);
@@ -952,7 +955,9 @@ void MB5Ev_WarpParticleCreate(HuVecF pos)
 void MB5Ev_RocketDustCreate(HuVecF pos)
 {
     int i;
-    mb5ev_RocketDustAnim = HuSprAnimRead(HuDataReadNum(EFFECT_ANM_landDust, HU_MEMNUM_OVL));
+    void *data;
+    data = HuDataReadNum(EFFECT_ANM_landDust, HU_MEMNUM_OVL);
+    mb5ev_RocketDustAnim = HuSprAnimRead(data);
     HuDataDirClose(DATA_effect);
     mb5ev_RocketDustParmanId[0] = Hu3DParManCreate(mb5ev_RocketDustAnim, 128, &mb5ev_RocketDustEffParam);
     Hu3DParManRotSet(mb5ev_RocketDustParmanId[0], 0, 0, 0);

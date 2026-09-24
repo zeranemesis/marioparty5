@@ -18,6 +18,7 @@
 */
 
 #include "musyx/assert.h"
+#include "musyx/sal.h"
 #include "musyx/seq.h"
 #include "musyx/synth.h"
 
@@ -38,6 +39,11 @@ static u32 inpGlobalMIDIDirtyFlags[8][16];
 static CHANNEL_DEFAULTS inpChannelDefaults[8][16];
 
 static CHANNEL_DEFAULTS inpFXChannelDefaults[64];
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+static u32 lpfHighFrequencyDefault = 0;
+static u32 lpfLowFrequencyDefault = 0;
+#endif
 
 static inline bool GetGlobalFlagSet(u8 chan, u8 midiSet, s32 flag) {
   return (flag & inpGlobalMIDIDirtyFlags[midiSet][chan]) != 0;
@@ -65,8 +71,8 @@ static u32 inpResetGlobalMIDIDirtyFlag(u8 chan, u8 midiSet, u32 flag) {
   // clang-format off
   MUSY_ASSERT(midiSet!=SYNTH_FX_MIDISET);
   // clang-format on
-  ret = (flag & inpGlobalMIDIDirtyFlags[midiSet][chan]) != 0;
-  if (ret != 0) {
+  ;
+  if ((ret = (flag & inpGlobalMIDIDirtyFlags[midiSet][chan]) != 0) != 0) {
     inpGlobalMIDIDirtyFlags[midiSet][chan] &= ~flag;
   }
   return ret;
@@ -97,12 +103,65 @@ void inpSetRPNHi(u8 set, u8 channel, u8 value) {
       }
     }
     break;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  case 0x7f7d: {
+    u32 frq = (value << 9) | (inpChannelDefaults[set][channel].lpfLowerFrqBoundary & 0x1FF);
+    inpChannelDefaults[set][channel].lpfLowerFrqBoundary = frq;
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfLowerFrqBoundary = frq;
+      }
+    }
+  } break;
+
+  case 0x7f7e: {
+    u32 frq = (value << 9) | (inpChannelDefaults[set][channel].lpfUpperFrqBoundary & 0x1FF);
+    inpChannelDefaults[set][channel].lpfUpperFrqBoundary = frq;
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfUpperFrqBoundary = frq;
+      }
+    }
+  } break;
+#endif
   default:
     break;
   }
 }
 
-void inpSetRPNLo(u8 set, u8 channel, u8 value) {}
+void inpSetRPNLo(u8 set, u8 channel, u8 value) {
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  u16 rpn; // r28
+  u32 i;   // r31
+
+  rpn = (midi_ctrl[set][channel][100]) | (midi_ctrl[set][channel][101] << 8);
+  switch (rpn) {
+  case 0x7f7d: {
+    u32 frq = (value << 2) | (inpChannelDefaults[set][channel].lpfLowerFrqBoundary & (u16)(~0x1FF));
+    inpChannelDefaults[set][channel].lpfLowerFrqBoundary = frq;
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfLowerFrqBoundary = frq;
+      }
+    }
+  } break;
+
+  case 0x7f7e: {
+    u32 frq = (value << 2) | (inpChannelDefaults[set][channel].lpfUpperFrqBoundary & (u16)(~0x1FF));
+    inpChannelDefaults[set][channel].lpfUpperFrqBoundary = frq;
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfUpperFrqBoundary = frq;
+      }
+    }
+  } break;
+  }
+#endif
+}
 
 void inpSetRPNDec(u8 set, u8 channel) {
   u16 rpn;  // r28
@@ -124,6 +183,31 @@ void inpSetRPNDec(u8 set, u8 channel) {
       }
     }
     break;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  case 0x7f7d: {
+    if (inpChannelDefaults[set][channel].lpfLowerFrqBoundary != 0) {
+      --inpChannelDefaults[set][channel].lpfLowerFrqBoundary;
+    }
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfLowerFrqBoundary = inpChannelDefaults[set][channel].lpfLowerFrqBoundary;
+      }
+    }
+  } break;
+
+  case 0x7f7e: {
+    if (inpChannelDefaults[set][channel].lpfUpperFrqBoundary != 0) {
+      --inpChannelDefaults[set][channel].lpfUpperFrqBoundary;
+    }
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfUpperFrqBoundary = inpChannelDefaults[set][channel].lpfUpperFrqBoundary;
+      }
+    }
+  } break;
+#endif
   default:
     break;
   }
@@ -150,6 +234,31 @@ void inpSetRPNInc(u8 set, u8 channel) {
       }
     }
     break;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  case 0x7f7d: {
+    if (inpChannelDefaults[set][channel].lpfLowerFrqBoundary != 0x3FFF) {
+      ++inpChannelDefaults[set][channel].lpfLowerFrqBoundary;
+    }
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfLowerFrqBoundary = inpChannelDefaults[set][channel].lpfLowerFrqBoundary;
+      }
+    }
+  } break;
+
+  case 0x7f7e: {
+    if (inpChannelDefaults[set][channel].lpfUpperFrqBoundary != 0x3FFF) {
+      ++inpChannelDefaults[set][channel].lpfUpperFrqBoundary;
+    }
+
+    for (i = 0; i < synthInfo.voiceNum; ++i) {
+      if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+        synthVoice[i].lpfUpperFrqBoundary = inpChannelDefaults[set][channel].lpfUpperFrqBoundary;
+      }
+    }
+  } break;
+#endif
   default:
     break;
   }
@@ -157,6 +266,9 @@ void inpSetRPNInc(u8 set, u8 channel) {
 
 void inpSetMidiCtrl(u8 ctrl, u8 channel, u8 set, u8 value) {
   u32 i;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  bool changed;
+#endif
   if (channel == 0xFF) {
     return;
   }
@@ -165,19 +277,47 @@ void inpSetMidiCtrl(u8 ctrl, u8 channel, u8 set, u8 value) {
     switch (ctrl) {
     case 6:
       inpSetRPNHi(set, channel, value);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
     case 38:
       inpSetRPNLo(set, channel, value);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
     case 96:
       inpSetRPNDec(set, channel);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
     case 97:
       inpSetRPNInc(set, channel);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    default:
+      changed = midi_ctrl[set][channel][ctrl] != (u8)(value & 0x7f);
+      break;
+#endif
     }
 
-    midi_ctrl[set][channel][ctrl] = value & 0x7f;
+    midi_ctrl[set][channel][ctrl] = (value & 0x7f);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    if (changed) {
+      for (i = 0; i < synthInfo.voiceNum; ++i) {
+        if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+          synthVoice[i].midiDirtyFlags = 0x7fff;
+          synthKeyStateUpdate(&synthVoice[i]);
+        }
+      }
+      inpGlobalMIDIDirtyFlags[set][channel] = 0xff;
+    }
+#else
     for (i = 0; i < synthInfo.voiceNum; ++i) {
       if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
         synthVoice[i].midiDirtyFlags = 0x1fff;
@@ -185,30 +325,59 @@ void inpSetMidiCtrl(u8 ctrl, u8 channel, u8 set, u8 value) {
       }
     }
     inpGlobalMIDIDirtyFlags[set][channel] = 0xff;
+#endif
 
   } else {
     switch (ctrl) {
     case 6:
       inpSetRPNHi(set, channel, value);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
     case 38:
       inpSetRPNLo(set, channel, value);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
     case 96:
       inpSetRPNDec(set, channel);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
     case 97:
       inpSetRPNInc(set, channel);
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+      changed = TRUE;
+#endif
       break;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    default:
+      changed = fx_ctrl[channel][ctrl] != (u8)(value & 0x7f);
+      break;
+#endif
     }
 
     fx_ctrl[channel][ctrl] = value & 0x7f;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    if (changed) {
+      for (i = 0; i < synthInfo.voiceNum; ++i) {
+        if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
+          synthVoice[i].midiDirtyFlags = 0x7fff;
+          synthKeyStateUpdate(&synthVoice[i]);
+        }
+      }
+    }
+#else
     for (i = 0; i < synthInfo.voiceNum; ++i) {
       if (set == synthVoice[i].midiSet && channel == synthVoice[i].midi) {
         synthVoice[i].midiDirtyFlags = 0x1fff;
         synthKeyStateUpdate(&synthVoice[i]);
       }
     }
+#endif
   }
 }
 
@@ -261,7 +430,7 @@ void inpResetMidiCtrl(u8 ch, u8 set, u32 coldReset) {
   u8* dest;         // r29
   u32 i;            // r31
 
-  values = coldReset ? inpColdMIDIDefaults : inpWarmMIDIDefaults;
+  values = (coldReset ? inpColdMIDIDefaults : inpWarmMIDIDefaults);
   dest = set != 0xFF ? midi_ctrl[set][ch] : fx_ctrl[ch];
 
   if (coldReset) {
@@ -337,6 +506,13 @@ void inpResetChannelDefaults(u8 midi, u8 midiSet) {
   channelDefaults =
       midiSet != 0xFF ? &inpChannelDefaults[midiSet][midi] : &inpFXChannelDefaults[midi];
   channelDefaults->pbRange = 2;
+#if MUSY_VERSION == MUSY_VERSION_CHECK(2, 0, 1)
+  channelDefaults->lpfLowerFrqBoundary = 80;
+  channelDefaults->lpfUpperFrqBoundary = 16000;
+#elif MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+  channelDefaults->lpfLowerFrqBoundary = lpfLowFrequencyDefault;
+  channelDefaults->lpfUpperFrqBoundary = lpfHighFrequencyDefault;
+#endif
 }
 
 void inpAddCtrl(CTRL_DEST* dest, u8 ctrl, s32 scale, u8 comb, u32 isVar) {
@@ -394,61 +570,140 @@ u8 inpGetMidiLastNote(u8 midi, u8 midiSet) {
   return fx_lastNote[midi];
 }
 
-static u16 _GetInputValue(SYNTH_VOICE* svoice, CTRL_DEST* inp, u8 midi, u8 midiSet) {
+static u16 _GetInputValue(struct SYNTH_VOICE* svoice /* r27 */, struct CTRL_DEST* inp /* r24 */,
+                          u8 midi /* r22 */, u8 midiSet /* r23 */) {
   u32 i;     // r26
   u32 value; // r29
   u8 ctrl;   // r28
   s32 tmp;   // r31
   s32 vtmp;  // r30
-  u32 sign;  // r25
+  bool sign; // r25
 
   for (value = 0, i = 0; i < inp->numSource; ++i) {
     if (inp->source[i].combine & 0x10) {
       tmp = (svoice != NULL ? varGet(svoice, 0, inp->source[i].midiCtrl) : 0);
-    } else {
-      ctrl = inp->source[i].midiCtrl;
-      if (ctrl == 128 || ctrl == 1 || ctrl == 10 || ctrl == 160 || ctrl == 161 || ctrl == 131) {
-        switch (ctrl) {
-        case 160:
-        case 161:
-          if (svoice != NULL) {
-            tmp = svoice->lfo[ctrl - 160].value << 1;
-            svoice->lfoUsedByInput[ctrl - 160] = 1;
-          } else {
-            tmp = 0;
-          }
-          break;
-        default:
-          tmp = inpGetMidiCtrl(ctrl, midi, midiSet) - 0x2000;
-          break;
-        }
-      } else if (ctrl == 163) {
-        tmp = svoice != NULL ? svoice->orgVolume >> 9 : 0;
-      } else if (ctrl < 163) {
-        if (ctrl < 162) {
-          tmp = inpGetMidiCtrl(ctrl, midi, midiSet);
-        } else if (svoice == NULL) {
-          tmp = 0;
-        } else {
-          tmp = svoice->orgNote << 7;
-        }
-      } else if (ctrl > 164) {
+      goto block_18;
+    }
+    ctrl = inp->source[i].midiCtrl;
+    if (ctrl == 128 || ctrl == 1 || ctrl == 10 || ctrl == 160 || ctrl == 161 || ctrl == 131) {
+      switch (ctrl) {
+      case 160:
+      case 161:
         if (svoice != NULL) {
-          tmp = (synthRealTime - svoice->macStartTime) << 8;
+          tmp = svoice->lfo[ctrl - 160].value << 1;
+          svoice->lfoUsedByInput[ctrl - 160] = 1;
+        } else {
+          tmp = 0;
+        }
+        break;
+      default:
+        tmp = inpGetMidiCtrl(ctrl, midi, midiSet) - 0x2000;
+        break;
+      }
+    block_18:
+      tmp = (tmp * (inp->source[i].scale >> 1)) >> 15;
+      tmp = CLAMP_INV(tmp, -0x2000, 0x1FFF);
+      switch (inp->source[i].combine & 15) {
+      case 0:
+        value = tmp + 0x2000;
+        sign = TRUE;
+        break;
+      case 1:
+        if (sign != FALSE) {
+          vtmp = (value + tmp);
+          vtmp -= 0x2000;
+          value = CLAMP_INV(vtmp, -0x2000, 0x1FFF) + 0x2000;
+        } else {
+          vtmp = value + tmp;
+          value = CLAMP(vtmp, 0, 0x3FFF);
+        }
+        break;
+      case 2:
+        if (sign != FALSE) {
+          vtmp = (s32)((value - 0x2000) * tmp) >> 13;
+        } else {
+          vtmp = (tmp * value) >> 13;
+          sign = TRUE;
+        }
+        value = CLAMP_INV(vtmp, -0x2000, 0x1FFF) + 0x2000;
+        break;
+      case 3:
+        if (sign != FALSE) {
+          vtmp = (value - 0x2000) - tmp;
+          value = CLAMP_INV(vtmp, -0x2000, 0x1FFF) + 0x2000;
+        } else {
+          vtmp = value - tmp;
+          value = CLAMP(vtmp, 0, 0x3FFF);
+        }
+        break;
+      }
+    } else {
+      switch (ctrl) {
+      case 162:
+        if (svoice != NULL) {
+          tmp = svoice->orgNote << 7;
+        } else {
+          tmp = 0;
+        }
+        break;
+      case 163:
+        tmp = svoice != NULL ? svoice->orgVolume >> 9 : 0;
+        break;
+      case 164:
+        if (svoice != NULL) {
+          tmp = (synthRealTime - svoice->macStartTime) >> 8;
           if (tmp > 0x3fff) {
             tmp = 0x3fff;
           }
-
           svoice->timeUsedByInput = 1;
         } else {
           tmp = 0;
         }
+        break;
+      default:
+        tmp = inpGetMidiCtrl(ctrl, midi, midiSet);
+        break;
       }
-
-      tmp = (tmp * inp->source[i].scale / 2) >> 15;
+      tmp = (tmp * (inp->source[i].scale >> 1)) >> 15;
+      if (tmp > 0x3FFF) {
+        tmp = 0x3FFF;
+      }
+      switch (inp->source[i].combine & 0xF) {
+      case 0:
+        value = tmp;
+        sign = FALSE;
+        break;
+      case 1:
+        if (sign != FALSE) {
+          vtmp = (value + tmp);
+          vtmp -= 0x2000;
+          value = CLAMP_INV(vtmp, -0x2000, 0x1FFF) + 0x2000;
+        } else {
+          value += tmp;
+          value = MIN(value, 0x3FFF);
+        }
+        break;
+      case 2:
+        if (sign != FALSE) {
+          vtmp = (s32)(tmp * (value - 0x2000)) >> 14;
+          value = CLAMP_INV(vtmp, -0x2000, 0x1FFF) + 0x2000;
+        } else {
+          value = ((value * tmp) >> 0xE);
+          value = MIN(value, 0x3FFF);
+        }
+        break;
+      case 3:
+        if (sign != FALSE) {
+          vtmp = (value - 0x2000) - tmp;
+          value = CLAMP_INV(vtmp, -0x2000, 0x1FFF) + 0x2000;
+        } else {
+          vtmp = value - tmp;
+          value = CLAMP(vtmp, 0, 0x3FFF);
+        }
+        break;
+      }
     }
   }
-
   inp->oldValue = value;
   return value;
 }
@@ -504,6 +759,16 @@ u16 inpGetPostAuxB(SYNTH_VOICE* svoice) {
 u16 inpGetTremolo(SYNTH_VOICE* svoice) {
   return GetInputValue(svoice, &svoice->inpTremolo, 0x1000);
 }
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+u16 inpGetFilterSwitch(SYNTH_VOICE* svoice) {
+  return GetInputValue(svoice, &svoice->inpFilterSwitch, 0x2000);
+}
+
+u16 inpGetFilterParameter(SYNTH_VOICE* svoice) {
+  return GetInputValue(svoice, &svoice->inpFilterParameter, 0x4000);
+}
+#endif
 
 u16 inpGetAuxA(u8 studio, u8 index, u8 midi, u8 midiSet) {
   static u32 dirtyMask[4] = {0x80000001, 0x80000002, 0x80000004, 0x80000008};
@@ -567,8 +832,22 @@ void inpInit(SYNTH_VOICE* svoice) {
     svoice->inpDoppler.source[0].scale = 0x10000;
     svoice->inpDoppler.numSource = 1;
     svoice->inpTremolo.numSource = 0;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+    svoice->inpFilterSwitch.source[0].midiCtrl = 0x4f;
+    svoice->inpFilterSwitch.source[0].combine = 0;
+    svoice->inpFilterSwitch.source[0].scale = 0x10000;
+    svoice->inpFilterSwitch.numSource = 1;
+    svoice->inpFilterParameter.source[0].midiCtrl = 0x1f;
+    svoice->inpFilterParameter.source[0].combine = 0;
+    svoice->inpFilterParameter.source[0].scale = 0x10000;
+    svoice->inpFilterParameter.numSource = 1;
+#endif
 
+#if MUSY_VERSION <= MUSY_VERSION_CHECK(2, 0, 0)
     svoice->midiDirtyFlags = 0x1fff;
+#else
+    svoice->midiDirtyFlags = 0x7fff;
+#endif
     svoice->lfoUsedByInput[0] = 0;
     svoice->lfoUsedByInput[1] = 0;
     svoice->timeUsedByInput = 0;
@@ -582,7 +861,19 @@ void inpInit(SYNTH_VOICE* svoice) {
 
     inpResetGlobalMIDIDirtyFlags();
   }
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+  lpfLowFrequencyDefault = 80;
+  lpfHighFrequencyDefault = 16000;
+#endif
 }
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+void inpSetLPFDefaultRange(u32 lowFrq, u32 highFrq) {
+  lpfLowFrequencyDefault = lowFrq;
+  lpfHighFrequencyDefault = highFrq;
+}
+#endif
 
 u8 inpTranslateExCtrl(u8 ctrl) {
   switch (ctrl) {

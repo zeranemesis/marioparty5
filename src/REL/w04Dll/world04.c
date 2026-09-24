@@ -45,7 +45,7 @@ void MB4_BubbleEffClose(void);
 void MB4_SakanaClose(void);
 s32 MB4_CoinNumGet(void);
 s32 MB4_CoinEffNumGet(void);
-void MB4_CoinEffBlendModeSet(u8 mode);
+void MB4_CoinEffBlendModeSet(int mode);
 static f32 MB4_FastSqrt(f32 x);
 f32 MB4_AngleLerp(f32 a, f32 b, f32 step);
 void MB4_CoinInit(void);
@@ -74,7 +74,7 @@ static f32 fn_1_DC9C(Point3d *pPrev, Point3d *p1, Point3d *pNext, f32 t);
 static void fn_1_D3D8(f32 t, f32 pPrev, f32 p0, f32 p1, f32 pNext, f32 tangentScale);
 void MB4_BubbleEffInit(void);
 void MB4_BubbleEffUpdate(OMOBJ *obj);
-s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 unused, f32 speedScale);
+s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale, f32 unused);
 static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
 static void MB4_MainObjUpdate(OMOBJ *obj);
 static void MB4_LightSet(void);
@@ -120,15 +120,16 @@ static s32 mb4_Work[0x1FF7];
  * spin angle for coin sparkles, an offset for sakana parts), but the byte
  * layout is identical in both. */
 typedef struct MB4Particle_s {
-    s32 active;     /* 0x00 */
-    u8 pad4[4];     /* 0x04 */
+    s16 active;     /* 0x00 */
+    s16 field2;    /* 0x02 */
+    s32 field3;    /* 0x04 */
     f32 velX;       /* 0x08 */
     f32 velY;       /* 0x0C */
     f32 velZ;       /* 0x10 */
     f32 speed;      /* 0x14 */
     f32 one;        /* 0x18, always set to 1.0f on spawn */
     f32 sizeParam;  /* 0x1C */
-    u8 pad20[8];    /* 0x20 */
+    u8 pad20[4];    /* 0x20 */
     f32 alphaParam; /* 0x24 */
     u8 pad28[4];    /* 0x28 */
     f32 timer;      /* 0x2C, coin-sparkle: countdown; sakana: len*100 */
@@ -1065,7 +1066,7 @@ void MB4_MainObjUpdate(OMOBJ *obj) {
             stateP[1] = burst;
             if (burst > 0) {
                 s32 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&mb4ev_BubbleEmitPosTbl[i], duration, 0.0f, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&mb4ev_BubbleEmitPosTbl[i], duration, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             } else {
                 stateP[0] = (s32) (300.0f + (5.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
                 stateP[1] = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
@@ -1094,7 +1095,7 @@ void MB4_MainObjUpdate(OMOBJ *obj) {
                 puffPos.x = bx;
                 puffPos.y = by;
                 puffPos.z = bz;
-                MB4_BubbleEffCreate(&puffPos, duration, 0.0f, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&puffPos, duration, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
         }
     }
@@ -1119,7 +1120,7 @@ void MB4_MainObjUpdate(OMOBJ *obj) {
                 puffPos.x = bx;
                 puffPos.y = by;
                 puffPos.z = bz;
-                MB4_BubbleEffCreate(&puffPos, duration, 0.0f, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&puffPos, duration, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
         }
     }
@@ -1160,32 +1161,40 @@ void MB4_BubbleEffClose(void) {
  * velX (wobble amplitude), velY (rise speed), speed (alpha 0..1), one
  * (alpha decay rate), timer (life-active flag), color[3] (alpha byte). */
 void MB4_BubbleEffInit(void) {
-    ANIMDATA *anim;
-    HU3DMODEL *hdr;
+    OMOBJ *obj;
     MB4COINEFFMGR *mgr;
     MB4PARTICLE *p;
     s32 i;
+    HU3DMODEL *hdr;
+    ANIMDATA *anim;
 
-    mb4_BubbleEffObj = omAddObjEx(mbObjMan, -0x8000, 1U, 0U, -1, MB4_BubbleEffUpdate);
+    obj = omAddObjEx(mbObjMan, -0x8000, 1U, 0U, -1, MB4_BubbleEffUpdate);
+    mb4_BubbleEffObj = obj;
     anim = HuSprAnimRead(HuDataReadNum(0xD10033, 0x10000000));
-    mb4_BubbleEffObj->data = anim;
-    *mb4_BubbleEffObj->mdlId = MBEffCreate(anim, 0x400);
-    Hu3DModelLayerSet(*mb4_BubbleEffObj->mdlId, 3);
-    hdr = &Hu3DData[*mb4_BubbleEffObj->mdlId];
+    obj->data = anim;
+    *obj->mdlId = MBEffCreate(anim, 0x400);
+    Hu3DModelLayerSet(*obj->mdlId, 3);
+    hdr = &Hu3DData[*obj->mdlId];
     mgr = (MB4COINEFFMGR *) hdr->hookData;
-    mgr->blendMode = 1;
     p = mgr->particles;
-    for (i = 0; i < mgr->count; i++) {
+    mgr->blendMode = 1;
+    i = 0;
+    while (i < mgr->count) {
         p->timer = 0.0f;
+        i++;
         p++;
     }
 }
 
 void MB4_BubbleEffUpdate(OMOBJ *obj) {
-    MB4COINEFFMGR *mgr = (MB4COINEFFMGR *) Hu3DData[*obj->mdlId].hookData;
-    MB4PARTICLE *p = mgr->particles;
+    HU3DMODEL *hdr;
+    MB4COINEFFMGR *mgr;
+    MB4PARTICLE *p;
     s32 i;
-    s16 phase;
+
+    hdr = &Hu3DData[*obj->mdlId];
+    mgr = (MB4COINEFFMGR *) hdr->hookData;
+    p = mgr->particles;
 
     if (MBKillCheck() || mb4_BubbleEffObj == NULL) {
         MBEffKill(*obj->mdlId);
@@ -1195,14 +1204,14 @@ void MB4_BubbleEffUpdate(OMOBJ *obj) {
         mb4_BubbleEffObj = NULL;
         return;
     }
-    for (i = 0; i < mgr->count; i++) {
-        if (p->timer != 0.0f) {
-            phase = (s16) p->active + 1;
-            if (phase > 0x168) {
-                phase -= 0x168;
+    i = 0;
+    while (i < mgr->count) {
+        if (p->timer > 0.0f) {
+            p->active++;
+            if (p->active > 0x168) {
+                p->active -= 0x168;
             }
-            p->active = phase;
-            p->posX = (f32) ((f64) p->posX + ((f64) p->velX * sin((3.141592653589793 * (f64) (2.0f * (f32) phase)) / 180.0)));
+            p->posX = (f32) ((f64) p->posX + ((f64) p->velX * sin((3.141592653589793 * (f64) (2.0f * (f32) p->active)) / 180.0)));
             p->posY += p->velY;
             p->speed -= p->one;
             p->color[3] = (u8) (255.0f * p->speed);
@@ -1210,13 +1219,15 @@ void MB4_BubbleEffUpdate(OMOBJ *obj) {
                 p->timer = 0.0f;
             }
         }
+        i++;
         p++;
     }
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
  * match. */
-s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 unused, f32 speedScale) {
+s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale, f32 unused) {
+    HU3DMODEL *base;
     MB4COINEFFMGR *mgr;
     MB4PARTICLE *p;
     s32 i;
@@ -1224,23 +1235,27 @@ s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 unused, f32 speedScale
     if (mb4_BubbleEffObj == NULL) {
         return -1;
     }
-    mgr = (MB4COINEFFMGR *) Hu3DData[*mb4_BubbleEffObj->mdlId].hookData;
+    base = &Hu3DData[*mb4_BubbleEffObj->mdlId];
+    mgr = (MB4COINEFFMGR *) base->hookData;
     p = mgr->particles;
-    for (i = 0; i < mgr->count; i++) {
-        if (p->timer == 0.0f) {
+    i = 0;
+    for (;;) {
+        if (p->timer <= 0.0f) {
             break;
         }
+        i++;
         p++;
+        if (i >= mgr->count) {
+            break;
+        }
     }
     if (i >= mgr->count) {
         return -1;
     }
-    if (speedScale == 0.0f) {
+    if (speedScale <= 0.0f) {
         speedScale = 1.0f;
     }
-    p->posX = pos->x;
-    p->posY = pos->y;
-    p->posZ = pos->z;
+    *(Point3d *) &p->posX = *pos;
     p->velX = 0.5f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
     p->velZ = 1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
     p->velY = 2.0f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
@@ -1248,10 +1263,7 @@ s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 unused, f32 speedScale
     p->one = 1.0f / (f32) lifeFrames;
     p->active = (s16) (frand() % 360);
     p->timer = 20.0f * speedScale;
-    p->color[3] = 0xFF;
-    p->color[2] = 0xFF;
-    p->color[1] = 0xFF;
-    p->color[0] = 0xFF;
+    p->color[0] = p->color[1] = p->color[2] = p->color[3] = 0xFF;
     return i;
 }
 
@@ -1270,19 +1282,23 @@ void MB4_SakanaClose(void) {
 
 /* NONMATCHING: register allocation differs (63% match). */
 s32 MB4_CoinNumGet(void) {
+    OMOBJ *obj = mb4_CoinObj;
     u8 *coinP;
     s32 i;
     s32 count;
 
     count = 0;
-    if (mb4_CoinObj != NULL) {
-        coinP = (u8 *) mb4_CoinObj->data;
-        for (i = 0; i < 0x20; i++) {
-            if (*(s32 *) (coinP + 8) != 0) {
-                count++;
-            }
-            coinP += 0x88;
+    if (mb4_CoinObj == NULL) {
+        return 0;
+    }
+    coinP = (u8 *) obj->data;
+    i = 0;
+    while (i < 0x20) {
+        if (*(s32 *) (coinP + 8) != 0) {
+            count++;
         }
+        i++;
+        coinP += 0x88;
     }
     return count;
 }
@@ -1291,20 +1307,28 @@ s32 MB4_CoinNumGet(void) {
  * hookData points to a coin-sparkle particle manager whose +0x20 byte is
  * the blend mode (see MB4_CoinEffCreate's unk20 for the same struct).
  * NONMATCHING: register allocation differs (21%). */
-void MB4_CoinEffBlendModeSet(u8 mode) {
-    if (mb4_CoinEffObj != NULL) {
-        s32 modelIdx = *(s32 *) mb4_CoinEffObj->data;
-        u8 *mgr = (u8 *) Hu3DData[modelIdx].hookData;
-        *(mgr + 0x20) = mode;
+void MB4_CoinEffBlendModeSet(int mode) {
+    OMOBJ *obj = mb4_CoinEffObj;
+    s32 *data;
+    u8 *arrayBase;
+    HU3DMODEL *base;
+    if (mb4_CoinEffObj == NULL) {
+        return;
     }
+    data = (s32 *) obj->data;
+    base = &Hu3DData[*data];
+    arrayBase = (u8 *) base->hookData;
+    *(arrayBase + 0x20) = mode;
 }
 
 s32 MB4_CoinEffNumGet(void) {
     OMOBJ *obj = mb4_CoinEffObj;
+    s32 *num;
     if (mb4_CoinEffObj == NULL) {
         return 0;
     }
-    return ((s32 *) obj->data)[1];
+    num = (s32 *) obj->data;
+    return num[1];
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
@@ -1314,24 +1338,27 @@ s32 MB4_CoinEffNumGet(void) {
  * scoring player). mb4_CoinMaxDist is the (unused-by-this-function)
  * pickup-distance threshold read later by MB4_CoinUpdate/CoinNearGet. */
 void MB4_CoinInit(void) {
+    OMOBJ *obj;
+    s32 *data;
     MB4COIN *coin;
     s32 i;
     s32 p;
 
-    mb4_CoinObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinUpdate);
-    mb4_CoinObj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x1100, 0x10000000U);
-    memset(mb4_CoinObj->data, 0, 0x1100U);
+    obj = mb4_CoinObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinUpdate);
+    data = (s32 *) (obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x1100, 0x10000000U));
+    coin = (MB4COIN *) data;
+    memset(coin, 0, 0x1100U);
 
     mb4_CoinMaxDist.x = 100.0f;
     mb4_CoinMaxDist.y = 170.0f;
     mb4_CoinMaxDist.z = 0.0f;
 
-    coin = (MB4COIN *) mb4_CoinObj->data;
-    for (i = 0; i < 0x20; i++) {
+    i = 0;
+    while (i < 0x20) {
         if (i == 0) {
             coin->modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x80002, 0x10000000, HEAP_MODEL));
         } else {
-            coin->modelId = Hu3DModelLink((s16) ((MB4COIN *) mb4_CoinObj->data)->modelId);
+            coin->modelId = Hu3DModelLink((s16) ((MB4COIN *) data)->modelId);
         }
         Hu3DModelCameraSet((s16) coin->modelId, 1U);
         Hu3DModelAttrSet((s16) coin->modelId, 1U);
@@ -1340,11 +1367,13 @@ void MB4_CoinInit(void) {
         coin->active = 0;
         coin->phase = 0;
         coin->arcHeight = 0.0f;
-        coin->flightTimer = 0;
-        coin->flightFrames = 0;
-        for (p = 0; p < 4; p++) {
+        coin->flightFrames = coin->flightTimer = 0;
+        p = 0;
+        while (p < 4) {
             MBPlayerPosGet(p, &coin->playerPos[p]);
+            p++;
         }
+        i++;
         coin++;
     }
 }
@@ -1626,20 +1655,22 @@ s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 size
  * match. */
 void MB4_CoinEffInit(void) {
     MB4COINEFFDATA *ed;
-    ANIMDATA *anim;
+    OMOBJ *obj;
     MB4COINEFFMGR *mgr;
+    HU3DMODEL *base;
+    ANIMDATA *anim;
 
-    mb4_CoinEffObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinEffUpdate);
-    mb4_CoinEffObj->data = HuMemDirectMallocNum(HEAP_HEAP, 0xC, 0x10000000U);
-    memset(mb4_CoinEffObj->data, 0, 0xCU);
-    ed = (MB4COINEFFDATA *) mb4_CoinEffObj->data;
+    obj = mb4_CoinEffObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinEffUpdate);
+    ed = (MB4COINEFFDATA *) (obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0xC, 0x10000000U));
+    memset(ed, 0, 0xCU);
     anim = HuSprAnimRead(HuDataReadNum(0xB0042, 0x10000000));
     ed->anim = anim;
     ed->hu3dModelIdx = MBEffCreate(anim, 0x100);
     Hu3DModelLayerSet((s16) ed->hu3dModelIdx, 3);
     MBEffAttrReset((s16) ed->hu3dModelIdx, 8U);
     ed->count = 0;
-    mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
+    base = &Hu3DData[ed->hu3dModelIdx];
+    mgr = (MB4COINEFFMGR *) base->hookData;
     mgr->blendMode = 1;
 }
 
@@ -1649,10 +1680,11 @@ void MB4_CoinEffInit(void) {
  * recompute the fade/scale factor (timer = speed * life), decay life by
  * sizeParam, and free the slot once life reaches 0. */
 void MB4_CoinEffUpdate(OMOBJ *obj) {
-    MB4COINEFFDATA *ed = (MB4COINEFFDATA *) obj->data;
+    HU3DMODEL *base;
     MB4COINEFFMGR *mgr;
     MB4PARTICLE *p;
     s32 i;
+    MB4COINEFFDATA *ed = (MB4COINEFFDATA *) obj->data;
 
     if (MBKillCheck() || mb4_CoinEffObj == NULL) {
         MBEffKill((s16) ed->hu3dModelIdx);
@@ -1667,10 +1699,12 @@ void MB4_CoinEffUpdate(OMOBJ *obj) {
         return;
     }
     Hu3DModelAttrReset((s16) ed->hu3dModelIdx, 1U);
-    mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
+    base = &Hu3DData[ed->hu3dModelIdx];
+    mgr = (MB4COINEFFMGR *) base->hookData;
     p = mgr->particles;
-    for (i = 0; i < mgr->count; i++) {
-        if (p->timer != 0.0f) {
+    i = 0;
+    while (i < mgr->count) {
+        if (p->timer > 0.0f) {
             p->posX += p->velX;
             p->posY += p->velY;
             p->posZ += p->velZ;
@@ -1679,12 +1713,13 @@ void MB4_CoinEffUpdate(OMOBJ *obj) {
             }
             p->timer = p->speed * p->one;
             p->one -= p->sizeParam;
-            if (p->one == 0.0f) {
+            if (p->one <= 0.0f) {
                 p->active = 0;
                 p->timer = 0.0f;
                 ed->count -= 1;
             }
         }
+        i++;
         p++;
     }
 }
@@ -1696,24 +1731,33 @@ void MB4_CoinEffUpdate(OMOBJ *obj) {
 static u8 *MB4_SakanaPartBase(s32 partIdx) {
     u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
     u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
-    return arrayBase + (partIdx * 0x5C);
+    return *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
 }
 
 /* NONMATCHING: register allocation for the part-base pointer differs
  * across all three of these (~40-70% match). */
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio) {
-    *(f32 *) (MB4_SakanaPartBase(partIdx) + 0x2C) = lenRatio * 100.0f;
+    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
+    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
+    u8 *part = *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
+    *(f32 *) (part + 0x2C) = lenRatio * 100.0f;
 }
 
 void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ) {
-    u8 *part = MB4_SakanaPartBase(partIdx);
+    u8 *part;
+    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
+    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
+    part = *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
     *(f32 *) (part + 0x30) = offX;
     *(f32 *) (part + 0x34) = offY - 90.0f;
     *(f32 *) (part + 0x38) = offZ;
 }
 
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z) {
-    u8 *part = MB4_SakanaPartBase(partIdx);
+    u8 *part;
+    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
+    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
+    part = *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
     *(f32 *) (part + 0x3C) = x;
     *(f32 *) (part + 0x40) = y;
     *(f32 *) (part + 0x44) = z;
@@ -1724,15 +1768,15 @@ void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z) {
  * 14 species * 0x900 bytes, up to a handful of 0x90-byte per-fish records
  * each) for species whose flag1 is 0: a fixed default target offset. */
 void MB4_SakanaOffsetInit(void) {
-    s32 species, fish;
     u8 *base;
+    s32 species, fish;
 
     for (species = 0; species < 14; species++) {
         base = (u8 *) mb4_Work + 0x174 + (species * 0x900);
         if (mb4ev_SakanaTbl[species].flag1 == 0) {
-            for (fish = 0; fish < mb4ev_SakanaTbl[species].count; fish++) {
-                *(f32 *) (base + (fish * 0x90) + 0x34) = 500.0f;
-                *(f32 *) (base + (fish * 0x90) + 0x38) = 3600.0f;
+            for (fish = 0; fish < mb4ev_SakanaTbl[species].count; fish++, base += 0x90) {
+                *(f32 *) (base + 0x34) = 500.0f;
+                *(f32 *) (base + 0x38) = 3600.0f;
             }
         }
     }
@@ -1741,16 +1785,15 @@ void MB4_SakanaOffsetInit(void) {
 /* Same layout as MB4_SakanaOffsetInit, seeding each fish's target position
  * with its species' swim-area center. */
 void MB4_SakanaPosInit(void) {
-    s32 species, fish;
+    s32 species;
     u8 *base;
+    s32 fish;
 
     for (species = 0; species < 14; species++) {
         base = (u8 *) mb4_Work + 0x174 + (species * 0x900);
         if (mb4ev_SakanaTbl[species].flag1 == 0) {
-            for (fish = 0; fish < mb4ev_SakanaTbl[species].count; fish++) {
-                *(f32 *) (base + (fish * 0x90) + 0x30) = mb4ev_SakanaTbl[species].pos.x;
-                *(f32 *) (base + (fish * 0x90) + 0x34) = mb4ev_SakanaTbl[species].pos.y;
-                *(f32 *) (base + (fish * 0x90) + 0x38) = mb4ev_SakanaTbl[species].pos.z;
+            for (fish = 0; fish < mb4ev_SakanaTbl[species].count; fish++, base += 0x90) {
+                *(Point3d *) (base + 0x30) = mb4ev_SakanaTbl[species].pos;
             }
         }
     }
@@ -2194,7 +2237,7 @@ void MB4Ev_IrukaBubbleCreate(s32 playerNo, Point3d *ofs, f32 unused0, f32 unused
     PSMTXMultVec(headMtx, &pos, &pos);
     PSVECAdd(&pos, ofs, &pos);
     duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-    MB4_BubbleEffCreate(&pos, duration, 0.0f, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
 }
 
 /* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
@@ -2211,7 +2254,7 @@ void MB4Ev_PlayerBubbleCreate(s32 playerNo) {
     PSMTXMultVec(headMtx, &pos, &pos);
     PSVECAdd(&pos, &lbl_1_data_10CC, &pos);
     duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-    MB4_BubbleEffCreate(&pos, duration, 0.0f, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
 }
 
 /* NONMATCHING: MWCC keeps the literal args to the nested Hu3DGLightCreate()
@@ -2419,7 +2462,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.y += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                 pos.z += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
             return;
         case 6:
@@ -2429,7 +2472,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.y += 1.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 pos.z += 0.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
             return;
         }
@@ -2442,7 +2485,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.x += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                 pos.z += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
             return;
         case 6:
@@ -2456,7 +2499,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.y = ofs.y + (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 pos.z = ofs.z + (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
             return;
         }
@@ -2469,7 +2512,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.x += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                 pos.z += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
             return;
         case 6:
@@ -2479,7 +2522,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.y += 2.0f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 pos.z += 0.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             }
             return;
         }
@@ -2501,7 +2544,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
                 pos.z = (f32) ((f64) pos.z + (0.4000000059604645 * (100.0 * cos((3.141592653589793 * (f64) angle) / 180.0))));
                 pos.y += 0.2f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
                 return;
             }
             MBModelPosGet((s16) mdlId, &pos);
@@ -2510,7 +2553,7 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
             pos.z = (f32) ((f64) pos.z + (0.6000000238418579 * (100.0 * cos((3.141592653589793 * (f64) angle) / 180.0))));
             pos.y -= 0.2f * (100.0f * (0.007874016f * (f32) (frand() & 0x7F)));
             duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-            MB4_BubbleEffCreate(&pos, duration, 0.0f, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))));
+            MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             return;
         default:
             mb4_Work[0x26] = -1;
@@ -2532,7 +2575,7 @@ static void MB4_CapsuleBubbleBurst(char *bone, Point3d ofs, f32 speedScale) {
     Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x27]), bone, mtx);
     PSMTXMultVec(mtx, &ofs, &pos);
     duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-    MB4_BubbleEffCreate(&pos, duration, 0.0f, speedScale);
+    MB4_BubbleEffCreate(&pos, duration, speedScale, 0.0f);
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
@@ -2564,7 +2607,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x2E]), "ske_head", headMtx);
                 PSMTXMultVec(headMtx, &ofs, &pos);
                 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-                MB4_BubbleEffCreate(&pos, duration, 0.0f, 1.2f * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, duration, 1.2f * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
                 mb4_Work[0x2B] -= 1;
                 if (mb4_Work[0x2B] <= 0) {
                     if (mb4_Work[0x2F] != 0) {
@@ -3055,14 +3098,20 @@ void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d) {
 
 /* NONMATCHING: register allocation for the Hu3DData index differs (48%). */
 void MB4_ModelMtxSet(s16 modelId, Mtx mtx) {
+    HU3DMODEL *base;
     s16 hu3dModelId = (s16) MBModelIdGet(modelId);
-    PSMTXCopy(mtx, Hu3DData[hu3dModelId].mtx);
+    base = &Hu3DData[hu3dModelId];
+    PSMTXCopy(mtx, base->mtx);
 }
 
 /* NONMATCHING: register allocation for the Hu3DData index differs (46%). */
 void MB4_PlayerMtxSet(s16 playerNo, Mtx mtx) {
-    s16 hu3dModelId = (s16) MBModelIdGet(MBPlayerModelGet(playerNo));
-    PSMTXCopy(mtx, Hu3DData[hu3dModelId].mtx);
+    s16 hu3dModelId;
+    HU3DMODEL *base;
+    s16 modelId = MBPlayerModelGet(playerNo);
+    hu3dModelId = (s16) MBModelIdGet(modelId);
+    base = &Hu3DData[hu3dModelId];
+    PSMTXCopy(mtx, base->mtx);
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
@@ -3611,7 +3660,7 @@ void MB4Ev_Kaisoo(s32 playerNo) {
             bubblePos.x = (f32) ((f64) mb4ev_KaiPosTbl[kelpIdx].x + (75.0 * sin((3.141592653589793 * (f64) bubbleAngle) / 180.0)));
             bubblePos.y = mb4ev_KaiPosTbl[kelpIdx].y;
             bubblePos.z = (f32) ((f64) mb4ev_KaiPosTbl[kelpIdx].z + (75.0 * cos((3.141592653589793 * (f64) bubbleAngle) / 180.0)));
-            MB4_BubbleEffCreate(&bubblePos, 0xB4, 0.0f, 0.5f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F))));
+            MB4_BubbleEffCreate(&bubblePos, 0xB4, 0.5f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
         }
         HuPrcVSleep();
         i += 1;

@@ -143,15 +143,55 @@ public:
 		i    = n;
 	}
 
-	~__partial_array_destructor()
-	{
-		char* ptr;
+	~__partial_array_destructor();
+};
 
-		if (i < n && dtor) {
-			for (ptr = (char*)p + size * i; i > 0; i--) {
-				ptr -= size;
-				DTORCALL_COMPLETE(dtor, ptr);
-			}
+__partial_array_destructor::~__partial_array_destructor()
+{
+	char* ptr;
+
+	if (i < n && dtor) {
+		for (ptr = (char*)p + size * i; i > 0; i--) {
+			ptr -= size;
+			DTORCALL_COMPLETE(dtor, ptr);
 		}
 	}
-};
+}
+
+/* .text  __destroy_arr */
+extern "C" void __destroy_arr(void* block, ConstructorDestructor dtor, size_t sz, size_t n)
+{
+	char* ptr = (char*)block + sz * n;
+	while (n)
+	{
+		ptr -= sz;
+		DTORCALL_COMPLETE(dtor, ptr);
+		n--;
+	}
+}
+
+
+/* .text  __construct_array */
+extern "C" void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, size_t sz, size_t n)
+{
+	char* p = (char*)ptr;
+	size_t i = 0;
+	while (i < n)
+	{
+		CTORCALL_COMPLETE(ctor, p);
+		p += sz;
+		i++;
+	}
+	if (i >= n)
+		return;
+	if (!dtor)
+		return;
+	p = (char*)ptr + i * sz;
+	do
+	{
+		p -= sz;
+		DTORCALL_COMPLETE(dtor, p);
+		i--;
+	}
+	while (i);
+}
