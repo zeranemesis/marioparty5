@@ -156,7 +156,7 @@ void fn_1_D958(M518_BLOCK *block, M518_CELL cell);
 void fn_1_DA7C(M518_BLOCK *block, HuVecF pos);
 void fn_1_DADC(M518_BLOCK *block, HuVecF rot);
 
-M518_QUEUE *fn_1_DC14(s32 size);
+M518_QUEUE *fn_1_DC14(int size);
 BOOL fn_1_DC84(M518_QUEUE *queue, s32 value);
 BOOL fn_1_DCBC(M518_QUEUE *queue, s32 *value);
 void fn_1_DCF8(M518_QUEUE *queue);
@@ -1630,11 +1630,17 @@ typedef struct M518Dir_s {
 
 static const M518_DIR lbl_1_rodata_14F8[4] = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } };
 
+// NONMATCHING: register allocation of the spread flags and of the inlined A268 results
 inline void fn_1_A480(M518_MAP *map, M518_CELL cell, s16 dist)
 {
     int i;
     u16 value;
     M518_CELL next;
+    BOOL spread;
+    BOOL free;
+    BOOL open;
+    BOOL farther;
+    BOOL ok;
 
     value = fn_1_A268(map, cell);
     value |= 0x20;
@@ -1645,38 +1651,298 @@ inline void fn_1_A480(M518_MAP *map, M518_CELL cell, s16 dist)
             next.x = cell.x + lbl_1_rodata_14F8[i].x;
             next.z = cell.z + lbl_1_rodata_14F8[i].z;
             value = fn_1_A268(map, next);
-            {
-                BOOL spread = TRUE;
-                BOOL free = FALSE;
-                BOOL open = FALSE;
-                BOOL ok;
-
-                if (!(value & 0x80) && !(value & 0x20)) {
-                    open = TRUE;
+            spread = TRUE;
+            free = FALSE;
+            open = FALSE;
+            if (!(value & 0x80) && !(value & 0x20)) {
+                open = TRUE;
+            }
+            if (open && ((value & 0xF) > 0) == FALSE) {
+                free = TRUE;
+            }
+            if (!free) {
+                farther = FALSE;
+                if ((value & 0x20) && (value >> 8) > dist) {
+                    farther = TRUE;
                 }
-                if (open && ((value & 0xF) > 0) == FALSE) {
-                    free = TRUE;
+                if (!farther) {
+                    spread = FALSE;
                 }
-                if (!free) {
-                    BOOL farther = FALSE;
-
-                    if ((value & 0x20) && (value >> 8) > dist) {
-                        farther = TRUE;
-                    }
-                    if (!farther) {
-                        spread = FALSE;
-                    }
-                }
-                if (spread) {
-                    ok = TRUE;
-                }
-                else {
-                    ok = FALSE;
-                }
-                if (ok) {
-                    fn_1_A480(map, next, dist + 1);
-                }
+            }
+            if (spread) {
+                ok = TRUE;
+            }
+            else {
+                ok = FALSE;
+            }
+            if (ok) {
+                fn_1_A480(map, next, dist + 1);
             }
         }
     }
+}
+
+M518_QUEUE *fn_1_DC14(int size)
+{
+    M518_QUEUE *queue;
+
+    queue = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_QUEUE), HU_MEMNUM_OVL);
+    queue->data = HuMemDirectMallocNum(HEAP_HEAP, size * sizeof(s32), HU_MEMNUM_OVL);
+    queue->size = size;
+    queue->tail = 0;
+    queue->head = 0;
+    return queue;
+}
+
+BOOL fn_1_DC84(M518_QUEUE *queue, s32 value)
+{
+    if (queue->tail == queue->size) {
+        return FALSE;
+    }
+    queue->data[queue->tail++] = value;
+    return TRUE;
+}
+
+BOOL fn_1_DCBC(M518_QUEUE *queue, s32 *value)
+{
+    if (queue->tail == queue->head) {
+        return FALSE;
+    }
+    *value = queue->data[queue->head++];
+    return TRUE;
+}
+
+void fn_1_DCF8(M518_QUEUE *queue)
+{
+    queue->tail = 0;
+    queue->head = 0;
+}
+
+BOOL fn_1_DD0C(M518_QUEUE *queue)
+{
+    BOOL result;
+
+    if (queue->tail == queue->head) {
+        result = TRUE;
+    }
+    else {
+        result = FALSE;
+    }
+    return result;
+}
+
+M518_EFFECT *fn_1_DD40(void)
+{
+    M518_EFFECT *effect;
+    HU3DMODEL *model;
+    HU3DPARTICLE *particle;
+
+    effect = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_EFFECT), HU_MEMNUM_OVL);
+    effect->activeF = FALSE;
+    effect->anim = HuSprAnimRead(HuDataSelHeapReadNum(DATANUM(DATA_effect, 2), HU_MEMNUM_OVL, HEAP_MODEL));
+    effect->modelId = Hu3DParticleCreate(effect->anim, 32);
+    Hu3DParticleBlendModeSet(effect->modelId, 0);
+    Hu3DModelScaleSet(effect->modelId, 1.0f, 1.0f, 1.0f);
+    model = &Hu3DData[effect->modelId];
+    particle = model->hookData;
+    particle->work = effect;
+    Hu3DParticleHookSet(effect->modelId, fn_1_DE2C);
+    fn_1_DE8C(effect);
+    return effect;
+}
+
+typedef void (*M518_EFFECTFUNC)(M518_EFFECT *effect, HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
+
+M518_EFFECTFUNC lbl_1_data_94[2] = { fn_1_DEF0, fn_1_E2A0 };
+
+void fn_1_DE2C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+    lbl_1_data_94[particleP->dataCnt](particleP->work, modelP, particleP, mtx);
+}
+
+void fn_1_DE8C(M518_EFFECT *effect)
+{
+    HU3DPARTICLE *particle;
+    HU3DMODEL *model;
+
+    Hu3DModelAttrSet(effect->modelId, HU3D_ATTR_DISPOFF);
+    model = &Hu3DData[effect->modelId];
+    particle = model->hookData;
+    particle->dataCnt = 0;
+}
+
+void fn_1_DEF0(M518_EFFECT *effect, HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+}
+
+void fn_1_DEF4(M518_EFFECT *effect)
+{
+    HU3DMODEL *model;
+    HU3DPARTICLE *particle;
+    HU3DPARTICLEDATA *data;
+    int i;
+    float angle;
+    float radius;
+
+    Hu3DModelAttrReset(effect->modelId, HU3D_ATTR_DISPOFF);
+    Hu3DModelPosSet(effect->modelId, effect->pos.x, effect->pos.y, effect->pos.z);
+    Hu3DModelLayerSet(effect->modelId, 3);
+    Hu3DModelScaleSet(effect->modelId, 1.0f, 1.0f, 1.0f);
+    Hu3DParticleColSet(effect->modelId, 255, 255, 255);
+    Hu3DParticleScaleSet(effect->modelId, 0.0f);
+    model = &Hu3DData[effect->modelId];
+    particle = model->hookData;
+    data = particle->data;
+    particle->emitCnt = 0;
+    for (i = 0, data = particle->data; i < particle->maxCnt; i++, data++) {
+        data->accel.x = 0.0f;
+        data->scale = 0.0f;
+        angle = (360.0f / particle->maxCnt) * i;
+        radius = effect->radius + (s32)frandmod((s32)(effect->radius / 4));
+        data->pos.x = radius * HuSin(angle);
+        data->pos.z = radius * HuCos(angle);
+        data->pos.y = (s32)frandmod(25);
+        data->vel.x = 5.0 * HuSin(angle);
+        data->vel.y = 9.0f + (s32)frandmod(2);
+        data->vel.z = 5.0 * HuCos(angle);
+        data->accel.x = 30.0f;
+        data->accel.y = 15.0f;
+        data->accel.z = 17.0f;
+        data->scale = 80.0f + (s32)frandmod(20);
+        data->color.a = 200;
+    }
+    particle->dataCnt = 1;
+}
+
+void fn_1_E2A0(M518_EFFECT *effect, HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+    HU3DPARTICLEDATA *data;
+    int alpha;
+    int i;
+
+    for (i = 0, data = particleP->data; i < particleP->maxCnt; i++, data++) {
+        if (data->accel.x != 0.0f) {
+            data->pos.x += data->vel.x;
+            data->pos.y += data->vel.y;
+            data->pos.z += data->vel.z;
+            data->vel.x *= 0.95f;
+            data->vel.z *= 0.95f;
+            if (data->vel.y > 0.1f) {
+                data->vel.y -= 0.2f;
+            }
+            if (data->vel.y < 0.0f) {
+                data->vel.y = 0.0f;
+            }
+            data->scale += data->accel.y;
+            if (data->accel.y > 2.0f) {
+                data->accel.y -= 1.5f;
+            }
+            alpha = data->color.a;
+            alpha -= data->accel.z;
+            if (data->accel.z > 3.0f) {
+                data->accel.z -= 1.0f;
+            }
+            if (alpha < 0) {
+                alpha = 0;
+                data->accel.x = 0.0f;
+            }
+            data->color.a = alpha;
+            if (data->accel.x == 0.0f) {
+                data->scale = 0.0f;
+            }
+        }
+    }
+    if (particleP->emitCnt++ > 60) {
+        effect->activeF = FALSE;
+        fn_1_DE8C(effect);
+    }
+}
+
+BOOL fn_1_E508(HuVecF pos, float radius)
+{
+    int i;
+    M518_EFFECT *effect;
+
+    for (i = 0; i < 64; i++) {
+        effect = lbl_1_bss_50[i];
+        if (!effect->activeF) {
+            break;
+        }
+    }
+    if (i == 64) {
+        return FALSE;
+    }
+    effect->activeF = TRUE;
+    effect->pos = pos;
+    effect->radius = radius;
+    fn_1_DEF4(effect);
+    return TRUE;
+}
+
+float lbl_1_data_9C = 1800.0f;
+float lbl_1_data_A0 = 1200.0f;
+
+s16 fn_1_E5BC(HuVecF pos)
+{
+    float z;
+    float absZ;
+    int vol;
+    s16 result;
+
+    z = pos.z;
+    if (z < 0.0f) {
+        absZ = -z;
+    }
+    else {
+        absZ = z;
+    }
+    if (absZ < lbl_1_data_9C) {
+        vol = (s16)((15.0f / lbl_1_data_9C) * z) + 110;
+    }
+    else {
+        vol = (z > 0.0f) ? 127 : 96;
+    }
+    result = vol;
+    if (result > 127) {
+        result = 127;
+    }
+    if (result < 96) {
+        result = 96;
+    }
+    return result;
+}
+
+s16 fn_1_E6B8(HuVecF pos)
+{
+    float x;
+    float absX;
+    int pan;
+    s16 result;
+
+    x = pos.x;
+    if (x < 0.0f) {
+        absX = -x;
+    }
+    else {
+        absX = x;
+    }
+    if (absX < lbl_1_data_A0) {
+        pan = (s16)((32.0f / lbl_1_data_A0) * x) + 64;
+    }
+    else {
+        pan = (x > 0.0f) ? 96 : 32;
+    }
+    result = pan;
+    if (result > 96) {
+        result = 96;
+    }
+    if (result < 32) {
+        result = 32;
+    }
+    return result;
+}
+
+void fn_1_E7B4(int seId, HuVecF pos)
+{
+    HuAudFXPlayVolPan(seId, fn_1_E5BC(pos), fn_1_E6B8(pos));
 }
