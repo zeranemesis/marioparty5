@@ -1768,15 +1768,7 @@ void fn_1_A068(M519_MECH *mech)
 
 BOOL fn_1_A1D4(M519_MECH *mech)
 {
-    BOOL deadF;
-
-    if (mech->hp == 0) {
-        deadF = TRUE;
-    }
-    else {
-        deadF = FALSE;
-    }
-    return deadF;
+    return (mech->hp == 0) ? TRUE : FALSE;
 }
 
 M519_PILOT *fn_1_A204(s16 grp, s16 playerNo)
