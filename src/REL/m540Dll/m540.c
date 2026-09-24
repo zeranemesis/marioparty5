@@ -29,7 +29,7 @@ typedef struct M540MapWork_s {
 /* Work of the cart objects (lbl_1_bss_E0) */
 typedef struct M540CartWork_s {
     M540_OBJ *rider;          /* 0x00 */
-    void *unk4;               /* 0x04 */
+    int unk4;                 /* 0x04 */
     BOOL effectF;             /* 0x08 */
     BOOL effectDispF;         /* 0x0C */
     int unk10;                /* 0x10 */
@@ -528,14 +528,15 @@ static void fn_1_707C(M540_OBJ *obj, float x, float y, float z)
     M540_MAPWORK *work = M540_OBJWORK(M540_MAPWORK, obj);
     int i;
     M540_OBJ *cart;
-    s16 no;
     HuVecF *ofs;
+    M540_CARTWORK *cartWork;
+    s16 no;
     float scale;
     HuVecF pos;
     for(i=0; i<4; i++) {
         cart = fn_1_CB34(lbl_1_bss_CC[i]);
         if(cart != NULL) {
-            M540_CARTWORK *cartWork = M540_OBJWORK(M540_CARTWORK, cart);
+            cartWork = M540_OBJWORK(M540_CARTWORK, cart);
             fn_1_134EC(cart, &pos.x, &pos.y, &pos.z);
             no = lbl_1_bss_CC[i]->charNo+5;
             ofs = &work->mdlOfs[no];
@@ -784,7 +785,7 @@ static M540_OBJ *fn_1_7C40(int no)
     Hu3DModelAttrSet(obj->modelId, HU3D_ATTR_ZWRITE_OFF);
     work = M540_OBJWORK(M540_CARTWORK, obj);
     work->rider = NULL;
-    work->unk4 = NULL;
+    work->unk4 = 0;
     work->ofsY = lbl_1_rodata_6B8[no];
     work->no = no;
     work->speed = 0;
@@ -947,6 +948,397 @@ static void fn_1_84C8(M540_OBJ *obj)
 static void fn_1_8570(M540_OBJ *obj)
 {
     obj->mode = 1;
+}
+
+static BOOL fn_1_10E90(HuVecF pos, float scale);
+static void fn_1_8B64(M540_OBJ *obj);
+
+static void fn_1_857C(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    int time;
+    float step;
+    HuVecF startPos;
+    HuVecF pos;
+    fn_1_134EC(obj, &startPos.x, &startPos.y, &startPos.z);
+    fn_1_13874(obj, 0, 44.0f, 0.0f, HU3D_MOTATTR_NONE);
+    time = 30;
+    work->speedMin = 8.0f;
+    work->unk18 = 4.0f;
+    work->unk1C = 0.0f;
+    step = (30.0f-work->speedMin)/time;
+    for(i=0; i<time; i++) {
+        work->speed = work->speedMin+(step*i);
+        work->unk24 = 0;
+        work->unk28 = 0;
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    }
+    if(lbl_1_bss_DC != obj) {
+        work->seNo = HuAudFXPlay(lbl_1_rodata_10C[work->no]);
+    }
+    for(i=0; ; i++) {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        if(pos.x-startPos.x >= 1000.0f) {
+            break;
+        }
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    }
+    if(lbl_1_bss_DC != obj) {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        pos.y += 10.0f;
+        fn_1_10E90(pos, 100.0f);
+    }
+    fn_1_13874(obj, 1, 0, 0, HU3D_MOTATTR_LOOP);
+    fn_1_82D0(obj);
+    time = 60;
+    for(i=0; i<time; i++) {
+        work->unk24 = 4.0*HuSin((180.0f*(1.0f/time))*i);
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    }
+    work->unk24 = 0;
+    work->unk74 = 2;
+    fn_1_13964(obj);
+    if(work->rider != NULL) {
+        fn_1_13964(work->rider);
+    }
+    fn_1_8B64(obj);
+}
+
+static void fn_1_8B64(M540_OBJ *obj)
+{
+    obj->mode = 3;
+}
+
+static void fn_1_A190(M540_OBJ *obj);
+
+static void fn_1_8B70(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int timeA;
+    int timeB;
+    int timeC;
+    int dirA;
+    int dirB;
+    int rnd;
+    HuVecF pos;
+    timeA = frandmod(60)+20;
+    timeB = frandmod(60)+20;
+    timeC = frandmod(60)+20;
+    work->unk88 = 0;
+    work->unk80 = 0;
+    work->unk84 = 0;
+    if(work->rider != NULL) {
+        CharModelFxFlagSet(work->rider->charNo, FALSE);
+        fn_1_13874(work->rider, 6, 0, 0, HU3D_MOTATTR_PAUSE);
+    }
+    do {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        if(lbl_1_bss_DC == obj) {
+            work->unk74 = 2;
+        } else {
+            if(pos.x >= 3950.0f) {
+                if(lbl_1_bss_E0[lbl_1_bss_20[3]] == obj) {
+                    work->unk74 = 2;
+                    work->unk7C = 1;
+                    work->lane = 4;
+                } else {
+                    work->unk74 = 2;
+                    work->unk7C = 2;
+                    work->lane = 4;
+                }
+            } else if(pos.x < lbl_1_bss_34-900.0f) {
+                work->unk74 = 0;
+            } else if(pos.x < lbl_1_bss_34-250.0f) {
+                work->unk74 = 1;
+            } else if(pos.x > 300.0f+lbl_1_bss_34) {
+                work->unk74 = 3;
+            } else if(work->unk88++ > timeA) {
+                rnd = frandmod(20);
+                if(rnd > 10) {
+                    work->unk74 = 2;
+                } else if((rnd%2) == 0) {
+                    work->unk74 = 1;
+                } else {
+                    work->unk74 = 3;
+                }
+                timeA = frandmod(60)+20;
+                work->unk88 = 0;
+            }
+            if(lbl_1_bss_30 < 2) {
+                if(work->unk84++ > timeC) {
+                    if(frandmod(4) == 0) {
+                        if(frandmod(2) == 0) {
+                            dirA = 1;
+                        } else {
+                            dirA = -1;
+                        }
+                        work->unk7C += dirA;
+                        if(work->unk7C < 0) {
+                            work->unk7C = 0;
+                        }
+                        if(work->unk7C >= 2) {
+                            work->unk7C = 2;
+                        }
+                    }
+                    timeC = frandmod(60)+20;
+                    work->unk84 = 0;
+                }
+                if(work->unk80++ > timeB && lbl_1_bss_30 < 2) {
+                    if(frandmod(20) == 0) {
+                        if(frandmod(2) == 0) {
+                            dirB = 1;
+                        } else {
+                            dirB = -1;
+                        }
+                        work->lane += dirB;
+                        if(work->lane < 0) {
+                            work->lane = 0;
+                        }
+                        if(work->lane > 4) {
+                            work->lane = 4;
+                        }
+                    }
+                    timeB = frandmod(60)+30;
+                    work->unk80 = 0;
+                }
+            }
+        }
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    } while(!(pos.x >= 7450.0f));
+    fn_1_A190(obj);
+}
+
+static void fn_1_9008(M540_OBJ *obj, int arg1, int arg2)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    work->unk70 = arg1;
+    if(lbl_1_bss_E0[lbl_1_bss_20[3]] == obj) {
+        arg2 = 0;
+    }
+    work->unk10 = arg2;
+    if(arg2 == 1) {
+        lbl_1_bss_1C--;
+    }
+    obj->mode = 4;
+}
+
+static s16 fn_1_10F44(HuVecF pos);
+static s16 fn_1_110A8(HuVecF pos);
+static int fn_1_111B8(int seId, HuVecF pos);
+static void fn_1_A070(M540_OBJ *obj);
+static void fn_1_AA24(M540_OBJ *obj);
+
+static void fn_1_9080(M540_OBJ *obj)
+{
+    static const int lbl_1_rodata_888[CHARNO_MAX] = {
+        0x1F9, 0x1E5, 0x25D, 0x2AD, 0x285, 0x1BD, 0x299, 0x1D1, 0x271, 0x235, 0x249, 0x221, 0x20D
+    };
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    int seNo;
+    HuVecF pos;
+    if(work->unk4 == 0) {
+        fn_1_13874(obj, 2, 0, 0, HU3D_MOTATTR_NONE);
+        fn_1_83A4(obj);
+    }
+    switch(work->unk70) {
+        case 0:
+        case 1:
+            fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+            seNo = fn_1_111B8(0x802, pos);
+            work->unk74 = 3;
+            if(work->rider != NULL) {
+                omVibrate(work->rider->playerNo, 90, 6, 6);
+            }
+            for(i=0; i<90; i++) {
+                fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+                HuAudFXPanning(seNo, fn_1_110A8(pos));
+                HuAudFXVolSet(seNo, fn_1_10F44(pos));
+                if(pos.x < lbl_1_bss_34-250.0f && work->unk10 == 0) {
+                    work->unk74 = 2;
+                }
+                fn_1_AC14(obj);
+                M540_OBJ_SLEEP(1);
+            }
+            HuAudFXStop(seNo);
+            break;
+        case 2:
+            if(work->rider != NULL) {
+                omVibrate(work->rider->playerNo, 20, 4, 2);
+            }
+            break;
+        case 3:
+            if(work->rider != NULL) {
+                omVibrate(work->rider->playerNo, 20, 12, 0);
+            }
+            break;
+    }
+    if(work->rider != NULL) {
+        CharModelFxFlagSet(work->rider->charNo, FALSE);
+        fn_1_13874(work->rider, 6, 0, 0, HU3D_MOTATTR_LOOP);
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        fn_1_111B8(lbl_1_rodata_888[work->rider->charNo], pos);
+    }
+    switch(work->unk70) {
+        case 0:
+            fn_1_13874(obj, 3, 0, 0, HU3D_MOTATTR_NONE);
+            work->unk4 = 1;
+            break;
+        case 1:
+            fn_1_13874(obj, 5, 0, 0, HU3D_MOTATTR_NONE);
+            break;
+        case 2:
+            fn_1_13874(obj, 7, 0, 0, HU3D_MOTATTR_NONE);
+            break;
+        case 3:
+            fn_1_13874(obj, 9, 0, 0, HU3D_MOTATTR_NONE);
+            break;
+    }
+    switch(work->unk70) {
+        case 0:
+            if(++work->unk7C > 3) {
+                work->unk7C = 3;
+            }
+            if(work->rider != NULL) {
+                omVibrate(work->rider->playerNo, 90, 4, 2);
+            }
+            seNo = HuAudFXPlay(0x804);
+            for(i=0; i<90; i++) {
+                fn_1_A070(obj);
+                fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+                HuAudFXPanning(seNo, fn_1_110A8(pos));
+                HuAudFXVolSet(seNo, fn_1_10F44(pos));
+                M540_OBJ_SLEEP(1);
+            }
+            HuAudFXStop(seNo);
+            if(work->unk10 == 0) {
+                fn_1_13874(obj, 4, 0, 0, HU3D_MOTATTR_LOOP);
+                if(--work->unk7C < 0) {
+                    work->unk7C = 0;
+                }
+            }
+            break;
+        case 1:
+            if((work->unk7C += 2) > 3) {
+                work->unk7C = 3;
+            }
+            if(work->rider != NULL) {
+                omVibrate(work->rider->playerNo, 120, 4, 2);
+            }
+            for(i=0; i<120; i++) {
+                fn_1_A070(obj);
+                M540_OBJ_SLEEP(1);
+            }
+            if(work->unk10 == 0) {
+                fn_1_13874(obj, 6, 0, 0, HU3D_MOTATTR_NONE);
+                if((work->unk7C -= 2) < 0) {
+                    work->unk7C = 0;
+                }
+                seNo = HuAudFXPlay(0x804);
+                for(i=0; i<60; i++) {
+                    fn_1_A070(obj);
+                    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+                    HuAudFXPanning(seNo, fn_1_110A8(pos));
+                    HuAudFXVolSet(seNo, fn_1_10F44(pos));
+                    M540_OBJ_SLEEP(1);
+                }
+                HuAudFXStop(seNo);
+                fn_1_13874(obj, 2, 0, 0, HU3D_MOTATTR_LOOP);
+            }
+            break;
+        case 2:
+            work->speed = 0;
+            work->unk74 = 4;
+            for(i=0; i<90; i++) {
+                fn_1_A070(obj);
+                M540_OBJ_SLEEP(1);
+            }
+            fn_1_13874(obj, 8, 0, 0, HU3D_MOTATTR_NONE);
+            if(work->unk10 == 0) {
+                for(i=0; i<60; i++) {
+                    if(i == 20 && work->rider != NULL) {
+                        omVibrate(work->rider->playerNo, 40, 4, 2);
+                    }
+                    fn_1_A070(obj);
+                    M540_OBJ_SLEEP(1);
+                }
+                if((work->unk7C -= 2) < 0) {
+                    work->unk7C = 0;
+                }
+                fn_1_13874(obj, 2, 0, 0, HU3D_MOTATTR_LOOP);
+            }
+            break;
+        case 3:
+            work->speed *= 0.25f;
+            work->unk74 = 4;
+            for(i=0; i<90; i++) {
+                if(i == 20 && work->rider != NULL) {
+                    omVibrate(work->rider->playerNo, 70, 4, 2);
+                }
+                fn_1_A070(obj);
+                M540_OBJ_SLEEP(1);
+            }
+            if(work->unk10 == 0) {
+                fn_1_13874(obj, 8, 0, 0, HU3D_MOTATTR_NONE);
+                for(i=0; i<60; i++) {
+                    fn_1_A070(obj);
+                    M540_OBJ_SLEEP(1);
+                }
+                if((work->unk7C -= 2) < 0) {
+                    work->unk7C = 0;
+                }
+                fn_1_13874(obj, 2, 0, 0, HU3D_MOTATTR_LOOP);
+            }
+            break;
+    }
+    if(work->unk10 != 0) {
+        work->unk8C = --lbl_1_bss_18;
+        OSReport("[RANK] %d st\n", work->unk8C);
+        work->unk7C = 4;
+        work->unk74 = 3;
+        for(i=0; i<300; i++) {
+            fn_1_A070(obj);
+            M540_OBJ_SLEEP(1);
+        }
+        fn_1_136D4(obj);
+        fn_1_AA24(obj);
+    } else {
+        obj->mode = 3;
+    }
+}
+
+static void fn_1_A070(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    HuVecF pos;
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    if(work->unk10 == 0) {
+        switch(work->unk70) {
+            case 0:
+            case 1:
+                if(pos.x < lbl_1_bss_34-250.0f) {
+                    work->unk74 = 2;
+                }
+                break;
+            case 2:
+                if(pos.x < lbl_1_bss_34-750.0f) {
+                    work->speed = lbl_1_rodata_90[2];
+                    work->unk74 = 2;
+                }
+                break;
+        }
+    }
+    fn_1_AC14(obj);
+}
+
+static void fn_1_A190(M540_OBJ *obj)
+{
+    obj->mode = 2;
 }
 
 /* M540_APPEND */
