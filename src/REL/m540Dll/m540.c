@@ -33,12 +33,8 @@ typedef struct M540CartWork_s {
     BOOL effectF;             /* 0x08 */
     BOOL effectDispF;         /* 0x0C */
     int unk10;                /* 0x10 */
-    float speedMin;           /* 0x14 */
-    float unk18;              /* 0x18 */
-    float unk1C;              /* 0x1C */
-    float speed;              /* 0x20 */
-    float unk24;              /* 0x24 */
-    float unk28;              /* 0x28 */
+    HuVecF velStart;          /* 0x14 */
+    HuVecF vel;               /* 0x20 */
     int no;                   /* 0x2C */
     float ofsY;               /* 0x30 */
     HuVecF efcOfs[4];         /* 0x34 */
@@ -788,9 +784,9 @@ static M540_OBJ *fn_1_7C40(int no)
     work->unk4 = 0;
     work->ofsY = lbl_1_rodata_6B8[no];
     work->no = no;
-    work->speed = 0;
-    work->unk24 = 0;
-    work->unk28 = 0;
+    work->vel.x = 0;
+    work->vel.y = 0;
+    work->vel.z = 0;
     work->playerIdx = 0;
     work->effectF = FALSE;
     work->effectDispF = FALSE;
@@ -864,7 +860,7 @@ static void fn_1_8094(M540_OBJ *obj, float x, float y, float z)
     pos.y = mtx[1][3];
     pos.z = mtx[2][3];
     Hu3DModelPosSet(work->efcMdlId[0], pos.x+work->efcOfs[0].x, (pos.y+work->efcOfs[0].y)-work->ofsY, pos.z+work->efcOfs[0].z);
-    rotZ = 3.0f*work->speed;
+    rotZ = 3.0f*work->vel.x;
     for(i=0; i<3; i++) {
         Hu3DModelPosSet(work->efcMdlId[i+1], pos.x+work->efcOfs[i+1].x, (pos.y+work->efcOfs[i+1].y)+(i*8), (pos.z+work->efcOfs[i+1].z)-(i*4));
         Hu3DModelRotSet(work->efcMdlId[i+1], 0, 0, rotZ);
@@ -964,14 +960,14 @@ static void fn_1_857C(M540_OBJ *obj)
     fn_1_134EC(obj, &startPos.x, &startPos.y, &startPos.z);
     fn_1_13874(obj, 0, 44.0f, 0.0f, HU3D_MOTATTR_NONE);
     time = 30;
-    work->speedMin = 8.0f;
-    work->unk18 = 4.0f;
-    work->unk1C = 0.0f;
-    step = (30.0f-work->speedMin)/time;
+    work->velStart.x = 8.0f;
+    work->velStart.y = 4.0f;
+    work->velStart.z = 0.0f;
+    step = (30.0f-work->velStart.x)/time;
     for(i=0; i<time; i++) {
-        work->speed = work->speedMin+(step*i);
-        work->unk24 = 0;
-        work->unk28 = 0;
+        work->vel.x = work->velStart.x+(step*i);
+        work->vel.y = 0;
+        work->vel.z = 0;
         fn_1_AC14(obj);
         M540_OBJ_SLEEP(1);
     }
@@ -995,11 +991,11 @@ static void fn_1_857C(M540_OBJ *obj)
     fn_1_82D0(obj);
     time = 60;
     for(i=0; i<time; i++) {
-        work->unk24 = 4.0*HuSin((180.0f*(1.0f/time))*i);
+        work->vel.y = 4.0*HuSin((180.0f*(1.0f/time))*i);
         fn_1_AC14(obj);
         M540_OBJ_SLEEP(1);
     }
-    work->unk24 = 0;
+    work->vel.y = 0;
     work->unk74 = 2;
     fn_1_13964(obj);
     if(work->rider != NULL) {
@@ -1070,8 +1066,8 @@ static void fn_1_8B70(M540_OBJ *obj)
             }
             if(lbl_1_bss_30 < 2) {
                 if(work->unk84++ > timeC) {
-                    if(frandmod(4) == 0) {
-                        if(frandmod(2) == 0) {
+                    if((int)frandmod(4) == 0) {
+                        if((int)frandmod(2) == 0) {
                             dirA = 1;
                         } else {
                             dirA = -1;
@@ -1088,8 +1084,8 @@ static void fn_1_8B70(M540_OBJ *obj)
                     work->unk84 = 0;
                 }
                 if(work->unk80++ > timeB && lbl_1_bss_30 < 2) {
-                    if(frandmod(20) == 0) {
-                        if(frandmod(2) == 0) {
+                    if((int)frandmod(20) == 0) {
+                        if((int)frandmod(2) == 0) {
                             dirB = 1;
                         } else {
                             dirB = -1;
@@ -1252,7 +1248,7 @@ static void fn_1_9080(M540_OBJ *obj)
             }
             break;
         case 2:
-            work->speed = 0;
+            work->vel.x = 0;
             work->unk74 = 4;
             for(i=0; i<90; i++) {
                 fn_1_A070(obj);
@@ -1274,7 +1270,7 @@ static void fn_1_9080(M540_OBJ *obj)
             }
             break;
         case 3:
-            work->speed *= 0.25f;
+            work->vel.x *= 0.25f;
             work->unk74 = 4;
             for(i=0; i<90; i++) {
                 if(i == 20 && work->rider != NULL) {
@@ -1327,7 +1323,7 @@ static void fn_1_A070(M540_OBJ *obj)
                 break;
             case 2:
                 if(pos.x < lbl_1_bss_34-750.0f) {
-                    work->speed = lbl_1_rodata_90[2];
+                    work->vel.x = lbl_1_rodata_90[2];
                     work->unk74 = 2;
                 }
                 break;
@@ -1339,6 +1335,297 @@ static void fn_1_A070(M540_OBJ *obj)
 static void fn_1_A190(M540_OBJ *obj)
 {
     obj->mode = 2;
+}
+
+static void fn_1_A19C(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    int time;
+    float step;
+    HuVecF pos;
+    time = 84;
+    work->velStart = work->vel;
+    step = (15.0f-work->velStart.x)/time;
+    for(i=0; i<time; i++) {
+        work->vel.x = work->velStart.x+(step*i);
+        work->vel.y = 0;
+        work->vel.z = 0;
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    }
+    if(obj != lbl_1_bss_DC) {
+        fn_1_13934(obj);
+        if(work->rider != NULL) {
+            fn_1_13934(work->rider);
+        }
+    }
+    switch(work->no) {
+        case 0:
+        case 1:
+        case 3:
+        case 4:
+            fn_1_13874(obj, (work->unk4 != 0) ? 11 : 10, 0, 0, HU3D_MOTATTR_NONE);
+            break;
+    }
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    work->vel.y = -pos.y/90;
+    for(i=0; i<90; i++) {
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    }
+    if(work->seNo != -1) {
+        HuAudFXStop(work->seNo);
+        work->seNo = -1;
+    }
+    if(lbl_1_bss_DC != obj) {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        pos.y += 10.0f;
+        fn_1_10E90(pos, 150.0f);
+    }
+    if(work->rider != NULL) {
+        omVibrate(work->rider->playerNo, 20, 4, 2);
+    }
+    fn_1_8364(obj);
+    time = 60;
+    work->velStart.x = work->vel.x;
+    step = (6.0f-work->velStart.x)/time;
+    for(i=0; i<time; i++) {
+        work->vel.x = work->velStart.x+(step*i);
+        work->vel.y = 6.0*HuSin((360.0f*(1.0f/time))*i);
+        fn_1_AC14(obj);
+        if(i == time/2 && lbl_1_bss_DC != obj) {
+            lbl_1_bss_44 = 1;
+            if(work->rider != NULL) {
+                lbl_1_bss_40 = work->rider;
+            }
+        }
+        M540_OBJ_SLEEP(1);
+    }
+    work->vel.y = 0;
+    if(lbl_1_bss_DC != obj) {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        pos.y += 10.0f;
+        fn_1_10E90(pos, 200.0f);
+    }
+    if(work->rider != NULL) {
+        omVibrate(work->rider->playerNo, 60, 6, 6);
+    }
+    time = 60;
+    work->velStart.x = work->vel.x;
+    step = -work->velStart.x/time;
+    for(i=0; i<time; i++) {
+        work->vel.x = work->velStart.x+(step*i);
+        fn_1_AC14(obj);
+        M540_OBJ_SLEEP(1);
+    }
+    work->vel.x = 0;
+    fn_1_137EC(obj);
+    fn_1_8364(obj);
+    obj->mode = 0;
+}
+
+static void fn_1_AA24(M540_OBJ *obj)
+{
+    obj->mode = 5;
+}
+
+static void fn_1_AA30(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    work->vel.x = 0;
+    work->vel.z = 0;
+    work->unk74 = 4;
+    work->unk7C = 4;
+    if(work->seNo != -1) {
+        HuAudFXStop(work->seNo);
+        work->seNo = -1;
+    }
+    while(1) {
+        fn_1_A070(obj);
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static BOOL fn_1_B600(M540_OBJ *obj);
+
+static void fn_1_AC14(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    float target;
+    HuVecF pos;
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    pos.x += work->vel.x;
+    pos.y += work->vel.y;
+    pos.z += work->vel.z;
+    if(pos.y < -3000.0f) {
+        pos.y = -3000.0f;
+    }
+    if(pos.x < -12000.0f) {
+        pos.x = -12000.0f;
+    }
+    if(pos.x > 12000.0f) {
+        pos.x = 12000.0f;
+    }
+    if(pos.z < -2000.0f) {
+        pos.z = -2000.0f;
+    }
+    if(pos.z > 2000.0f) {
+        pos.z = 2000.0f;
+    }
+    fn_1_8094(obj, pos.x, pos.y, pos.z);
+    switch(obj->mode) {
+        case 3:
+        case 4:
+            if(fn_1_B600(obj)) {
+                if(work->unk94 == 0) {
+                    fn_1_111B8(0x801, pos);
+                    work->unk94 = 60;
+                }
+                if(work->vel.z > 0.0f) {
+                    work->lane++;
+                } else if(work->vel.z < 0.0f) {
+                    work->lane--;
+                } else if(work->vel.y > 0.0f) {
+                    work->unk7C--;
+                } else if(work->vel.y < 0.0f) {
+                    work->unk7C++;
+                }
+                if(work->lane < 0) {
+                    work->lane = 0;
+                }
+                if(work->lane > 4) {
+                    work->lane = 4;
+                }
+                if(work->unk7C < 0) {
+                    work->unk7C = 0;
+                }
+                if(work->unk7C > 4) {
+                    work->unk7C = 4;
+                }
+                pos.x -= work->vel.x;
+                pos.y -= work->vel.y;
+                pos.z -= work->vel.z;
+                if(lbl_1_bss_30 < 1 || lbl_1_bss_E0[lbl_1_bss_20[3]] != obj) {
+                    work->vel.x *= 0.25f;
+                    work->vel.y *= 0.25f;
+                    work->vel.z *= 0.25f;
+                }
+                fn_1_8094(obj, pos.x, pos.y, pos.z);
+            }
+            target = lbl_1_rodata_90[work->unk74];
+            if(target < work->vel.x) {
+                if((work->vel.x -= 0.2f) < target) {
+                    work->vel.x = target;
+                }
+            }
+            if(target > work->vel.x) {
+                if((work->vel.x += 0.2f) > target) {
+                    work->vel.x = target;
+                }
+            }
+            work->vel.y = 0;
+            target = lbl_1_rodata_B8[work->unk7C];
+            if(pos.y-6.0f >= target) {
+                work->vel.y = -6.0f;
+            }
+            if(pos.y+6.0f <= target) {
+                work->vel.y = 6.0f;
+            }
+            work->vel.z = 0;
+            target = lbl_1_rodata_A4[work->lane];
+            if(pos.z-4.0f >= target) {
+                work->vel.z = -4.0f;
+            }
+            if(pos.z+4.0f <= target) {
+                work->vel.z = 4.0f;
+            }
+            break;
+    }
+    if(work->unk94 > 0) {
+        work->unk94--;
+    }
+    if(work->seNo != -1) {
+        HuAudFXPanning(work->seNo, fn_1_110A8(pos));
+        HuAudFXVolSet(work->seNo, fn_1_10F44(pos));
+    }
+}
+
+static void fn_1_FCB8(M540_OBJ *obj);
+
+static BOOL fn_1_B600(M540_OBJ *obj)
+{
+    static const int lbl_1_rodata_8F0[5] = { -20, 0, 0, 0, 0 };
+    BOOL result;
+    int i;
+    M540_OBJ *other;
+    M540_CARTWORK *work;
+    M540_OBJ *item;
+    MathSphere sphereA;
+    MathSphere sphereB;
+    Mtx mtx;
+    result = FALSE;
+    if(lbl_1_bss_DC == obj) {
+        return FALSE;
+    }
+    Hu3DModelObjMtxGet(obj->modelId, fn_1_8438(obj), mtx);
+    work = M540_OBJWORK(M540_CARTWORK, obj);
+    sphereA.center.x = mtx[0][3]+lbl_1_rodata_8F0[work->no];
+    sphereA.center.y = mtx[1][3];
+    sphereA.center.z = mtx[2][3];
+    sphereA.radius = 140.0f;
+    if(!(sphereA.center.x > lbl_1_bss_34-1500.0f && sphereA.center.x < 1500.0f+lbl_1_bss_34)) {
+        return FALSE;
+    }
+    for(i=0; i<4; i++) {
+        other = fn_1_CB34(lbl_1_bss_CC[i]);
+        if(other != obj) {
+            Hu3DModelObjMtxGet(other->modelId, fn_1_8438(other), mtx);
+            work = M540_OBJWORK(M540_CARTWORK, obj);
+            sphereB.center.x = mtx[0][3]+lbl_1_rodata_8F0[work->no];
+            sphereB.center.y = mtx[1][3];
+            sphereB.center.z = mtx[2][3];
+            sphereB.radius = 140.0f;
+            if(MathSphereCheck(&sphereA, &sphereB)) {
+                if(sphereB.center.y > sphereA.center.y) {
+                    if(work->unk7C < 4) {
+                        work->unk84 = 100;
+                        work->unk7C++;
+                    }
+                } else if(sphereB.center.y < sphereA.center.y && work->unk7C > 0) {
+                    work->unk84 = 100;
+                    work->unk7C--;
+                }
+                if(obj->mode == 3) {
+                    if(lbl_1_bss_E0[lbl_1_bss_20[3]] != obj) {
+                        fn_1_9008(obj, 1, 0);
+                    } else if(lbl_1_bss_30 < 1) {
+                        fn_1_9008(obj, 0, 0);
+                    }
+                }
+                return TRUE;
+            }
+        }
+    }
+    sphereB.radius = 50.0f;
+    for(i=0; i<4; i++) {
+        item = lbl_1_bss_70[i];
+        if(item->mode == 1) {
+            fn_1_134EC(item, &sphereB.center.x, &sphereB.center.y, &sphereB.center.z);
+            if(MathSphereCheck(&sphereA, &sphereB)) {
+                if(obj->mode == 3) {
+                    if(lbl_1_bss_E0[lbl_1_bss_20[3]] == obj) {
+                        fn_1_9008(obj, 3, 0);
+                    } else {
+                        fn_1_9008(obj, 3, 1);
+                    }
+                }
+                fn_1_FCB8(item);
+                result = TRUE;
+            }
+        }
+    }
+    return result;
 }
 
 /* M540_APPEND */
