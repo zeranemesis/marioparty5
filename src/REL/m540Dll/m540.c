@@ -1368,9 +1368,10 @@ static void fn_1_A19C(M540_OBJ *obj)
             fn_1_13874(obj, (work->unk4 != 0) ? 11 : 10, 0, 0, HU3D_MOTATTR_NONE);
             break;
     }
+    time = 90;
     fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
-    work->vel.y = -pos.y/90;
-    for(i=0; i<90; i++) {
+    work->vel.y = -pos.y/time;
+    for(i=0; i<time; i++) {
         fn_1_AC14(obj);
         M540_OBJ_SLEEP(1);
     }
@@ -1452,7 +1453,9 @@ static BOOL fn_1_B600(M540_OBJ *obj);
 static void fn_1_AC14(M540_OBJ *obj)
 {
     M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
-    float target;
+    float targetX;
+    float targetY;
+    float targetZ;
     HuVecF pos;
     fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
     pos.x += work->vel.x;
@@ -1513,31 +1516,31 @@ static void fn_1_AC14(M540_OBJ *obj)
                 }
                 fn_1_8094(obj, pos.x, pos.y, pos.z);
             }
-            target = lbl_1_rodata_90[work->unk74];
-            if(target < work->vel.x) {
-                if((work->vel.x -= 0.2f) < target) {
-                    work->vel.x = target;
+            targetX = lbl_1_rodata_90[work->unk74];
+            if(targetX < work->vel.x) {
+                if((work->vel.x -= 0.2f) < targetX) {
+                    work->vel.x = targetX;
                 }
             }
-            if(target > work->vel.x) {
-                if((work->vel.x += 0.2f) > target) {
-                    work->vel.x = target;
+            if(targetX > work->vel.x) {
+                if((work->vel.x += 0.2f) > targetX) {
+                    work->vel.x = targetX;
                 }
             }
             work->vel.y = 0;
-            target = lbl_1_rodata_B8[work->unk7C];
-            if(pos.y-6.0f >= target) {
+            targetY = lbl_1_rodata_B8[work->unk7C];
+            if(pos.y-6.0f >= targetY) {
                 work->vel.y = -6.0f;
             }
-            if(pos.y+6.0f <= target) {
+            if(pos.y+6.0f <= targetY) {
                 work->vel.y = 6.0f;
             }
             work->vel.z = 0;
-            target = lbl_1_rodata_A4[work->lane];
-            if(pos.z-4.0f >= target) {
+            targetZ = lbl_1_rodata_A4[work->lane];
+            if(pos.z-4.0f >= targetZ) {
                 work->vel.z = -4.0f;
             }
-            if(pos.z+4.0f <= target) {
+            if(pos.z+4.0f <= targetZ) {
                 work->vel.z = 4.0f;
             }
             break;
