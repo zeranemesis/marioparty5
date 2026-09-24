@@ -44,7 +44,7 @@ typedef struct M505Player_s {
     /* 0x3C */ float unk3C;
     /* 0x40 */ float unk40;
     /* 0x44 */ float unk44;
-    /* 0x48 */ float unk48;
+    /* 0x48 */ s32 unk48;
     /* 0x4C */ float unk4C;
     /* 0x50 */ s32 unk50;
     /* 0x54 */ s32 unk54;
@@ -431,6 +431,575 @@ void fn_1_1284(void)
     up.x = sin((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
     up.y = cos((M_PI * rotX) / 180.0);
     up.z = cos((M_PI * rotY) / 180.0) * sin((M_PI * rotX) / 180.0);
+}
+
+/* Player update: pad / AI steering, collisions with the obstacles and the other players, falls into the river. */
+void fn_1_1828(OMOBJ *obj)
+{
+    M505Player *player = obj->data;
+    float dist = 0.0f;
+    float stickX = 0.0f;
+    float stickY = 0.0f;
+    float prevX = obj->trans.x;
+    float prevZ = obj->trans.z;
+    float prevRotY = obj->rot.y;
+    s16 motNo = -1;
+    float waterY[10] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    M505Player *other;
+    float vx;
+    float vz;
+    float dx;
+    float dz;
+    float dx2;
+    float dz2;
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 n;
+    s32 m;
+    s32 found;
+    s32 lane;
+    s32 w;
+    s32 otherLane;
+    s32 t;
+    s32 ahead;
+    s32 charIdx;
+    s32 motId;
+    float motTime;
+    float d;
+    float r;
+    float range;
+    float cx;
+    float cz;
+    float ang;
+    float ox;
+    float oz;
+    float unused;
+    Mtx rotMtx;
+
+    player->unk44 = prevX;
+    player->unk3C = player->unk34 = 0.0f;
+    if (player->mode == 1) {
+        if (lbl_1_bss_2ED2C == 1003) {
+            if (player->padNo != -1) {
+                stickX = HuPadStkX[player->padNo];
+                stickY = HuPadStkY[player->padNo];
+            }
+            else {
+                if (lbl_1_data_7C <= 1740 - player->unk5C) {
+                    found = 0;
+                    {
+                        s32 delayTbl[12] = { 40, 30, 12, 6, 6, 6, 5, 3, 120, 70, 20, 5 };
+                        float laneX[12];
+
+                        for (i = 0; i < 12; i++) {
+                            laneX[i] = 2000.0f;
+                        }
+                        for (i = 0; i < 64; i++) {
+                            if (lbl_1_bss_9D1C[i].state >= 0) {
+                                lane = (600.0f + lbl_1_bss_9D1C[i].pos.z) / 100.0f;
+                                for (j = lane + ((lbl_1_bss_9D1C[i].type == 0) ? 0 : -1); j <= lane + ((lbl_1_bss_9D1C[i].type == 0) ? 0 : 1); j++) {
+                                    w = (lbl_1_bss_9D1C[i].type == 0) ? 50 : ((j == lane) ? 150 : 50);
+                                    {
+                                        s32 lookTbl[4] = { 100, 300, 800, 2000 };
+
+                                        ahead = obj->trans.x + lookTbl[player->dif];
+                                        ahead = (ahead > 700) ? 700 : ahead;
+                                        if (j >= 0 && j < 12 && lbl_1_bss_9D1C[i].pos.x < ahead + ((lbl_1_bss_9D1C[i].type == 0) ? 50 : 150)
+                                            && lbl_1_bss_9D1C[i].pos.x >= 20.0f + (obj->trans.x - w) && lbl_1_bss_9D1C[i].pos.x - w < laneX[j]) {
+                                            laneX[j] = lbl_1_bss_9D1C[i].pos.x - w;
+                                            found = 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (i = 0; i < 4; i++) {
+                            otherLane = j = (600.0f + lbl_1_bss_2ED38[i]->trans.z) / 100.0f;
+                            if (i != player->no && lbl_1_bss_2ED38[i]->trans.x < 700.0f && lbl_1_bss_2ED38[i]->trans.x >= obj->trans.x
+                                && lbl_1_bss_2ED38[i]->trans.x < laneX[j]) {
+                                laneX[j] = lbl_1_bss_2ED38[i]->trans.x;
+                            }
+                        }
+                        j = (600.0f + obj->trans.z) / 100.0f;
+                        if (player->unk64 > 0
+                            && ((player->unk60 == 1) ? (obj->trans.z < -570.0f) : ((player->unk60 == -1) ? (obj->trans.z > 570.0f) : 0))) {
+                            player->unk64 = 0;
+                        }
+                        if (player->unk64 > 0) {
+                            stickX = 100.0f;
+                            stickY = player->unk60 * 100;
+                            player->unk64--;
+                        }
+                        else if (!found) {
+                            stickX = 0.0f;
+                            stickY = 0.0f;
+                            player->unk60 = 0;
+                            player->unk64 = 0;
+                        }
+                        else if (player->dif >= 2 && obj->trans.x >= 600.0f && 2000.0f == laneX[j]) {
+                            stickX = 0.0f;
+                            stickY = 0.0f;
+                            player->unk60 = 0;
+                            player->unk64 = 0;
+                        }
+                        else if (player->unk58 == -1 && j - 1 >= 0 && laneX[j - 1] > laneX[j] && (j + 1 >= 12 || laneX[j - 1] >= laneX[j + 1])) {
+                            stickX = 100.0f;
+                            stickY = 100.0f;
+                            player->unk60 = 1;
+                            player->unk64 = delayTbl[player->dif];
+                        }
+                        else if (j + 1 < 12 && laneX[j + 1] > laneX[j] && (j - 1 < 0 || laneX[j + 1] >= laneX[j - 1])) {
+                            stickX = 100.0f;
+                            stickY = -100.0f;
+                            player->unk60 = -1;
+                            player->unk64 = delayTbl[player->dif];
+                        }
+                        else if (j - 1 >= 0 && laneX[j - 1] > laneX[j] && (j + 1 >= 12 || laneX[j - 1] >= laneX[j + 1])) {
+                            stickX = 100.0f;
+                            stickY = 100.0f;
+                            player->unk60 = 1;
+                            player->unk64 = delayTbl[player->dif];
+                        }
+                        else if ((s32)(700.0f + obj->trans.z) % 100 < 30) {
+                            stickX = 100.0f;
+                            stickY = -100.0f;
+                            player->unk60 = -1;
+                            player->unk64 = delayTbl[player->dif + 4];
+                        }
+                        else if ((s32)(700.0f + obj->trans.z) % 100 > 70) {
+                            stickX = 100.0f;
+                            stickY = 100.0f;
+                            player->unk60 = 1;
+                            player->unk64 = delayTbl[player->dif + 4];
+                        }
+                        else {
+                            stickX = 100.0f;
+                            stickY = 0.0f;
+                            player->unk60 = 0;
+                            player->unk64 = delayTbl[player->dif + 8];
+                        }
+                    }
+                    stickX = 0.5 * player->unk50 + 0.5 * stickX;
+                    player->unk50 = stickX;
+                    stickY = 0.5 * player->unk54 + 0.5 * stickY;
+                    player->unk54 = stickY;
+                }
+                else {
+                    player->unk50 = stickX = 0.0f;
+                    player->unk54 = stickY = 0.0f;
+                }
+                if (lbl_1_data_7C % 60 == 0 && player->dif >= 2) {
+                    player->unk58 = (obj->trans.z < -400.0f)
+                        ? 1
+                        : ((obj->trans.z > 400.0f) ? -1 : ((obj->trans.z < 2.0f * obj->trans.z + 400.0f * (2.0f * (rand8() / 255.0f) - 1.0f)) ? -1 : 1));
+                }
+            }
+        }
+    }
+    else if (player->mode == 2) {
+        if (player->unk2C < 0.0f) {
+            stickX = player->unk2C / 0.25f;
+        }
+        else {
+            t = (player->unk28 < 20) ? 0 : ((player->unk28 < 60) ? ((player->unk28 - 20) * 256) / 40 : 256);
+            stickX = (t * 24) / 256;
+            stickY = (t * 6) / 256;
+        }
+    }
+    vx = 0.25 * stickX;
+    vz = 0.25 * -stickY;
+    {
+        Vec dir = { 0.0f, 0.0f, 0.0f };
+
+        dir.x = vx;
+        dir.z = vz;
+        PSMTXRotRad(rotMtx, 'y', 0.017453292f * CRotM[1].y);
+        PSMTXMultVec(rotMtx, &dir, &dir);
+        vx = dir.x;
+        vz = dir.z;
+    }
+    dist = sqrtf(vx * vx + vz * vz);
+    if (dist >= 0.5f) {
+        if (dist < 10.0f) {
+            player->unk34 = vx;
+            player->unk3C += vz;
+        }
+        else {
+            vx /= dist;
+            vz /= dist;
+            dist = 10.0f;
+            player->unk34 = vx * dist;
+            player->unk3C = vz * dist;
+        }
+        player->unk30 = dist;
+        if (player->mode == 1) {
+            obj->rot.y = 180.0 * (atan2(player->unk34, player->unk3C) / M_PI);
+        }
+        if (player->mode == 1) {
+            if (player->unk30 >= 8.0f) {
+                motNo = 2;
+            }
+            else {
+                motNo = 1;
+            }
+        }
+    }
+    else if (player->mode == 1) {
+        motNo = 0;
+    }
+    obj->trans.x += player->unk34;
+    obj->trans.z += player->unk3C;
+    for (i = 0; i < 4; i++) {
+        dx = lbl_1_bss_2ED38[i]->trans.x - obj->trans.x;
+        dz = lbl_1_bss_2ED38[i]->trans.z - obj->trans.z;
+        if (i != player->no) {
+            if (0.0f == dx && 0.0f == dz) {
+                dz = -1.0f;
+            }
+            d = sqrtf(dx * dx + dz * dz);
+            if (d < 100.0f) {
+                dx *= 100.0f / d;
+                dz *= 100.0f / d;
+                obj->trans.x = lbl_1_bss_2ED38[i]->trans.x - dx;
+                obj->trans.z = lbl_1_bss_2ED38[i]->trans.z - dz;
+            }
+        }
+    }
+    if (player->mode == 1 && obj->trans.x > 700.0f) {
+        obj->trans.x = 700.0f;
+    }
+    if (lbl_1_bss_2ED2C < 1004 || (lbl_1_bss_2ED2C == 1004 && 0.0f == lbl_1_bss_0)) {
+        for (i = 0; i < 64; i++) {
+            if (lbl_1_bss_9D1C[i].state >= 0) {
+                range = 50.0f + ((lbl_1_bss_9D1C[i].type == 0) ? 40 : 150);
+                if (fabs(lbl_1_bss_9D1C[i].pos.x - obj->trans.x) <= range && fabs(lbl_1_bss_9D1C[i].pos.z - obj->trans.z) <= range) {
+                    if (lbl_1_bss_9D1C[i].type == 0) {
+                        for (k = 0; k < 4; k++) {
+                            float radius[2] = { 38.0f, 0.0f };
+
+                            dx2 = lbl_1_bss_9D1C[i].pos.x - obj->trans.x;
+                            dz2 = lbl_1_bss_9D1C[i].pos.z - obj->trans.z;
+                            dz2 *= 1.125f;
+                            if (0.0f == dx2 && 0.0f == dz2) {
+                                dx2 = -1.0f;
+                            }
+                            d = dx2 * dx2 + dz2 * dz2;
+                            r = 50.0f + radius[lbl_1_bss_9D1C[i].type];
+                            if (d >= r * r) {
+                                break;
+                            }
+                            d = sqrtf(d);
+                            dx2 *= (50.0f + radius[lbl_1_bss_9D1C[i].type]) / d;
+                            dz2 *= (50.0f + radius[lbl_1_bss_9D1C[i].type]) / d;
+                            obj->trans.x = lbl_1_bss_9D1C[i].pos.x - dx2;
+                            if (obj->trans.x > lbl_1_bss_9D1C[i].pos.x) {
+                                obj->trans.z = lbl_1_bss_9D1C[i].pos.z - dz2 / 1.125f;
+                            }
+                        }
+                    }
+                    else {
+                        dx2 = lbl_1_bss_9D1C[i].pos.x - obj->trans.x;
+                        dz2 = lbl_1_bss_9D1C[i].pos.z - obj->trans.z;
+                        if (0.0f == dx2 && 0.0f == dz2) {
+                            dx2 = -1.0f;
+                        }
+                        d = dx2 * dx2 + dz2 * dz2;
+                        r = 198.0f;
+                        if (d < r * r) {
+                            d = sqrtf(d);
+                            dx2 *= 198.0f / d;
+                            dz2 *= 198.0f / d;
+                            obj->trans.x = lbl_1_bss_9D1C[i].pos.x - dx2;
+                            obj->trans.z = lbl_1_bss_9D1C[i].pos.z - dz2;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        dx = obj->trans.x - lbl_1_bss_2ED38[i]->trans.x;
+        dz = obj->trans.z - lbl_1_bss_2ED38[i]->trans.z;
+        if (i != player->no) {
+            if (0.0f == dx && 0.0f == dz) {
+                dz = -1.0f;
+            }
+            d = sqrtf(dx * dx + dz * dz);
+            if (d < 100.0f) {
+                dx *= 100.0f / d;
+                dz *= 100.0f / d;
+                lbl_1_bss_2ED38[i]->trans.x = obj->trans.x - dx;
+                lbl_1_bss_2ED38[i]->trans.z = obj->trans.z - dz;
+            }
+        }
+    }
+    switch (player->mode) {
+        case 1:
+            if (obj->trans.x <= -710.0f || obj->trans.z <= -610.0f || obj->trans.z >= 610.0f) {
+                player->mode = 2;
+                Hu3DModelShadowReset(obj->mdlId[0]);
+                player->unk28 = 0;
+                player->unk2C = (obj->trans.z <= -610.0f || obj->trans.z >= 610.0f)
+                    ? 0.0f
+                    : ((obj->trans.x - prevX < -0.1f) ? (obj->trans.x - prevX) : -0.1f);
+            }
+            else {
+                break;
+            }
+        case 2:
+            player->unk28++;
+            if (obj->trans.y > -194.0f + waterY[player->charNoClamp]) {
+                motNo = 3;
+                player->unk38 += -1.6333333f;
+                obj->trans.y += player->unk38;
+                if (obj->trans.y <= -194.0f + waterY[player->charNoClamp]) {
+                    for (k = 0; k < 72; k++) {
+                        if (lbl_1_bss_977C[k].time == -1) {
+                            break;
+                        }
+                    }
+                    if (k < 72) {
+                        lbl_1_bss_977C[k].time = 11;
+                        lbl_1_bss_977C[k].unk0 = obj->trans.x;
+                        lbl_1_bss_977C[k].unk8 = obj->trans.z;
+                        lbl_1_bss_977C[k].unkC = 2;
+                    }
+                    -0.5 * player->unk38;
+                    if (player->padNo != -1) {
+                        omVibrate(player->playerNo, 12, 12, 0);
+                    }
+                    player->unk2C *= 0.375f;
+                    player->unk2C = (player->unk2C < 0.0f && player->unk2C > -1.25f) ? -1.25f : player->unk2C;
+                    if (lbl_1_bss_2ED50[10].num < 3) {
+                        lbl_1_bss_2ED50[10].posX[lbl_1_bss_2ED50[10].num] = obj->trans.x;
+                        lbl_1_bss_2ED50[10].panF[lbl_1_bss_2ED50[10].num] = 1;
+                        lbl_1_bss_2ED50[10].num++;
+                    }
+                    HuAudFXPanning(CharFXPlay(player->charNo, 0x1F9), 64.0f + 32.0f * ((obj->trans.x - CenterM[1].x) / 700.0f));
+                }
+            }
+            else {
+                motNo = 4;
+                player->unk38 += -0.33333334f * ((obj->trans.y < -215.0f) ? -1 : 1);
+                player->unk38 = player->unk38 * 0.95;
+                if (obj->trans.y > -194.0f + waterY[player->charNoClamp]) {
+                    obj->trans.y = -194.0f + waterY[player->charNoClamp];
+                }
+                if (obj->trans.x < -1110.0f) {
+                    if (player->no != 0) {
+                        Hu3DModelAttrSet(obj->mdlId[0], HU3D_ATTR_DISPOFF);
+                    }
+                    obj->trans.x = 2000.0f;
+                    obj->trans.z = -1000 - player->no * 200;
+                    player->unk2C = 0.0f;
+                }
+            }
+            if (obj->trans.x > -710.0f && obj->trans.z > -610.0f && obj->trans.z < 610.0f) {
+                if (-obj->trans.x - 100.0f > fabs(obj->trans.z)) {
+                    obj->trans.x = -710.0f;
+                }
+                else {
+                    obj->trans.z = (obj->trans.z < 0.0f) ? -610 : 610;
+                }
+            }
+            cx = (obj->trans.x <= -709.0f) ? -709.0f : obj->trans.x;
+            cz = (obj->trans.z <= -609.0f) ? -609.0f : ((obj->trans.z >= 609.0f) ? 609.0f : obj->trans.z);
+            dx = obj->trans.x - cx;
+            dz = obj->trans.z - cz;
+            d = dx * dx + dz * dz;
+            r = 1.0f + ((player->unk28 >= 12) ? 100.0f : (100.0f * player->unk28) / 12.0f);
+            if (d <= r * r) {
+                d = sqrtf(d);
+                obj->trans.x = cx + r * (dx / d);
+                obj->trans.z = cz + r * (dz / d);
+            }
+            break;
+    }
+    if (lbl_1_data_78 != -1 && player->mode == 3) {
+        motNo = 0;
+        if (lbl_1_bss_2ED2C == 1005) {
+            motNo = 5;
+            obj->rot.y *= 0.8f;
+        }
+    }
+    if (player->unk20 >= 0) {
+        motNo = player->unk20;
+    }
+    if (motNo >= 0 && motNo != player->unk1C) {
+        Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[motNo], 0.0f, lbl_1_data_72[motNo], lbl_1_data_6C[motNo] ? 0 : HU3D_MOTATTR_LOOP);
+        player->unk1C = motNo;
+    }
+    if (player->charNoClamp != 8) {
+        charIdx = (player->charNoClamp < 5) ? player->charNoClamp
+                                            : ((player->charNoClamp == 5) ? 2 : ((player->charNoClamp < 9) ? player->charNoClamp - 1 : player->charNoClamp - 2));
+        {
+            float rippleTbl[8][5][9] = {
+                {
+                    { 0.0f, 10.0f, 0.125f, 0.3125f, 0.6875f, 1.0f, 5.0f, 26.0f, 0.0f },
+                    { 1.0f, 33.0f, -0.109375f, 0.21875f, 0.6875f, 1.125f, 0.0f, 0.0f, 0.0f },
+                    { 1.0f, 9.0f, 0.125f, 0.109375f, 0.6875f, 1.125f, 0.0f, 0.0f, 0.0f },
+                    { 2.0f, 29.0f, 0.0625f, 0.09375f, 0.6875f, 1.125f, 0.0f, 3.0f, -0.234375f },
+                    { 2.0f, 13.0f, 0.125f, 0.234375f, 0.6875f, 1.125f, 0.0f, 8.0f, -0.171875f },
+                },
+                {
+                    { 0.0f, 0.0f, 0.203125f, 0.25f, 0.6875f, 1.125f, 4.0f, 17.0f, -0.09375f },
+                    { 1.0f, 8.0f, 0.0f, 0.328125f, 0.6875f, 1.125f, 4.0f, 13.0f, -0.1875f },
+                    { 1.0f, 30.0f, 0.0f, 0.328125f, 0.6875f, 1.125f, 4.0f, 13.0f, -0.1875f },
+                    { 2.0f, 3.0f, 0.0f, 0.90625f, 0.6875f, 1.125f, 4.0f, 13.0f, -0.328125f },
+                    { 2.0f, 20.0f, 0.0f, 1.046875f, 0.6875f, 1.125f, 4.0f, 9.0f, -0.359375f },
+                },
+                {
+                    { 0.0f, 10.0f, 0.0f, 0.25f, 0.4375f, 0.9375f, 0.0f, 0.0f, 0.0f },
+                    { 1.0f, 32.0f, 0.0f, 0.25f, 0.4375f, 0.9375f, 0.0f, 0.0f, 0.0f },
+                    { 1.0f, 8.0f, 0.0f, 0.25f, 0.4375f, 0.9375f, 0.0f, 0.0f, 0.0f },
+                    { 2.0f, 18.0f, 0.0f, 0.359375f, 0.4375f, 0.9375f, 0.0f, 0.0f, 0.0f },
+                    { 2.0f, 3.0f, 0.0f, 0.359375f, 0.4375f, 0.9375f, 0.0f, 0.0f, 0.0f },
+                },
+                {
+                    { 0.0f, 10.0f, 0.0f, 0.390625f, 0.796875f, 1.359375f, 0.0f, 0.0f, 0.09375f },
+                    { 1.0f, 31.0f, 0.0f, 0.390625f, 0.796875f, 1.359375f, 0.0f, 0.0f, 0.09375f },
+                    { 1.0f, 8.0f, 0.0f, 0.390625f, 0.796875f, 1.359375f, 0.0f, 0.0f, 0.09375f },
+                    { 2.0f, 29.0f, 0.0f, 0.015625f, 0.796875f, 1.359375f, 0.0f, 0.0f, 0.09375f },
+                    { 2.0f, 12.0f, 0.0f, 0.015625f, 0.796875f, 1.359375f, 0.0f, 0.0f, 0.09375f },
+                },
+                {
+                    { 0.0f, 10.0f, 0.0f, 1.046875f, 0.84375f, 1.34375f, 0.0f, 23.0f, 0.453125f },
+                    { 1.0f, 36.0f, 0.0f, 1.046875f, 0.8125f, 1.34375f, 0.0f, 26.0f, 0.203125f },
+                    { 1.0f, 9.0f, 0.0f, 1.046875f, 0.8125f, 1.34375f, 0.0f, 26.0f, 0.203125f },
+                    { 2.0f, 4.0f, 0.0f, 1.25f, 0.8125f, 1.34375f, 0.0f, 26.0f, 0.140625f },
+                    { 2.0f, 22.0f, 0.0f, 1.25f, 0.8125f, 1.34375f, 0.0f, 26.0f, 0.140625f },
+                },
+                {
+                    { 0.0f, 10.0f, -0.015625f, 1.40625f, 0.46875f, 1.34375f, 0.0f, 33.0f, 0.984375f },
+                    { 1.0f, 21.0f, 0.0f, 2.796875f, 0.46875f, 1.25f, 0.0f, 22.0f, -0.46875f },
+                    { 1.0f, 1.0f, 0.0f, 2.796875f, 0.46875f, 1.25f, 0.0f, 22.0f, -0.46875f },
+                    { 2.0f, 29.0f, 0.0f, 2.3125f, 0.46875f, 1.25f, 0.0f, 32.0f, -0.84375f },
+                    { 2.0f, 13.0f, 0.0f, 2.9375f, 0.46875f, 1.25f, 0.0f, 29.0f, -0.9375f },
+                },
+                {
+                    { 0.0f, 0.0f, 0.0f, 0.359375f, 0.625f, 0.828125f, 4.0f, 19.0f, 0.109375f },
+                    { 1.0f, 19.0f, 0.0f, 0.203125f, 0.625f, 0.828125f, 0.0f, 2.0f, -0.171875f },
+                    { 1.0f, 41.0f, 0.0f, 0.203125f, 0.625f, 0.828125f, 0.0f, 2.0f, -0.171875f },
+                    { 2.0f, 15.0f, 0.0f, 0.0f, 0.625f, 0.828125f, 0.0f, 0.0f, -0.171875f },
+                    { 2.0f, 1.0f, 0.0f, 0.0f, 0.625f, 0.828125f, 0.0f, 0.0f, -0.171875f },
+                },
+                {
+                    { 0.0f, 0.0f, 0.0f, -0.734375f, 1.3125f, 1.390625f, 0.0f, 15.0f, 0.21875f },
+                    { 1.0f, 1.0f, 0.0f, -1.078125f, 1.3125f, 1.390625f, 0.0f, 0.0f, -0.328125f },
+                    { 1.0f, 22.0f, 0.0f, -1.078125f, 1.3125f, 1.390625f, 0.0f, 0.0f, -0.328125f },
+                    { 2.0f, 1.0f, 0.0f, -1.171875f, 1.3125f, 1.390625f, 0.0f, 0.0f, -0.28125f },
+                    { 2.0f, 17.0f, 0.0f, -1.171875f, 1.3125f, 1.390625f, 0.0f, 0.0f, -0.28125f },
+                },
+            };
+
+            motId = (Hu3DMotionShiftIDGet(obj->mdlId[0]) == -1) ? Hu3DMotionIDGet(obj->mdlId[0]) : Hu3DMotionShiftIDGet(obj->mdlId[0]);
+            motTime = (Hu3DMotionShiftIDGet(obj->mdlId[0]) == -1) ? Hu3DMotionTimeGet(obj->mdlId[0]) : Hu3DMotionShiftTimeGet(obj->mdlId[0]);
+            if (lbl_1_bss_2ED2C >= 1002) {
+                if (player->unk48 == obj->mtnId[0] && motId != obj->mtnId[0]) {
+                    for (n = 0; n < 2; n++) {
+                        for (m = 0; m < 640; m++) {
+                            if (lbl_1_bss_1F7C[m].time == -1) {
+                                break;
+                            }
+                        }
+                        if (m < 640) {
+                            lbl_1_bss_1F7C[m].time = 11;
+                            lbl_1_bss_1F7C[m].unk0 = obj->trans.x + ((lbl_1_bss_9D1C[n].type == 1) ? -40 : 0);
+                            lbl_1_bss_1F7C[m].unk8 = (obj->trans.z + (rand8() * 16) / 255) - 8.0f;
+                            lbl_1_bss_1F7C[m].unk18 = rippleTbl[charIdx][0][2];
+                            lbl_1_bss_1F7C[m].unk1C = rippleTbl[charIdx][0][3];
+                            lbl_1_bss_1F7C[m].unk20 = rippleTbl[charIdx][0][4];
+                            lbl_1_bss_1F7C[m].unk24 = rippleTbl[charIdx][0][5];
+                            lbl_1_bss_1F7C[m].unkC = (-obj->rot.y - 90.0f) + rippleTbl[charIdx][0][6];
+                            lbl_1_bss_1F7C[m].unk10 = rippleTbl[charIdx][0][7];
+                            lbl_1_bss_1F7C[m].unk14 = rippleTbl[charIdx][0][8] * 0.015625f;
+                            lbl_1_bss_1F7C[m].unk29 = player->charNoClamp + 2;
+                            lbl_1_bss_1F7C[m].unk28 = n;
+                        }
+                    }
+                }
+                for (n = 1; n < 5; n++) {
+                    if (motId == player->unk48 && motId == ((n < 3) ? obj->mtnId[1] : obj->mtnId[2]) && player->unk4C < rippleTbl[charIdx][n][1]
+                        && motTime >= rippleTbl[charIdx][n][1]) {
+                        for (m = 0; m < 640; m++) {
+                            if (lbl_1_bss_1F7C[m].time == -1) {
+                                break;
+                            }
+                        }
+                        if (m < 640) {
+                            lbl_1_bss_1F7C[m].time = 11;
+                            lbl_1_bss_1F7C[m].unk0 = obj->trans.x + ((lbl_1_bss_9D1C[n].type == 1) ? -40 : 0);
+                            lbl_1_bss_1F7C[m].unk8 = (obj->trans.z + (rand8() * 16) / 255) - 8.0f;
+                            lbl_1_bss_1F7C[m].unk18 = rippleTbl[charIdx][n][2];
+                            lbl_1_bss_1F7C[m].unk1C = rippleTbl[charIdx][n][3];
+                            lbl_1_bss_1F7C[m].unk20 = rippleTbl[charIdx][n][4];
+                            lbl_1_bss_1F7C[m].unk24 = rippleTbl[charIdx][n][5];
+                            lbl_1_bss_1F7C[m].unkC = (-obj->rot.y - 90.0f) + rippleTbl[charIdx][n][6];
+                            lbl_1_bss_1F7C[m].unk10 = rippleTbl[charIdx][n][7];
+                            lbl_1_bss_1F7C[m].unk14 = rippleTbl[charIdx][n][8] * 0.015625f;
+                            lbl_1_bss_1F7C[m].unk29 = player->charNoClamp + 2;
+                            lbl_1_bss_1F7C[m].unk28 = 1 - ((n - 1) % 2);
+                        }
+                    }
+                }
+            }
+            player->unk48 = motId;
+            player->unk4C = motTime;
+        }
+    }
+    {
+        s32 flipTbl[10] = { 1, 1, 0, 0, 0, 0, 0, 1, 1, 1 };
+
+        if (lbl_1_bss_2ED2C == 1001) {
+            unused = (obj->rot.y > 0.0f) ? -180 : 180;
+            ox = lbl_1_bss_9D1C[0].pos.x;
+            oz = lbl_1_bss_9D1C[0].pos.z;
+            ang = 180.0 * (atan2(obj->trans.x - ox, obj->trans.z - oz) / M_PI);
+            ang += 360.0f;
+            ang -= (ang >= 360.0f) ? 360 : 0;
+            ang = 180.0 + 0.5 * (ang - 180.0f);
+            player->unk40 = ang;
+            Hu3DMotionForceSet(obj->mdlId[0], lbl_1_data_108, flipTbl[player->charNoClamp] ? 0x100 : 0x80,
+                flipTbl[player->charNoClamp] ? 180.0f + -player->unk40 : 180.0f + player->unk40);
+        }
+        else if (lbl_1_bss_2ED2C == 1002) {
+            player->unk40 = 180.0 + 0.96875 * (player->unk40 - 180.0f);
+            player->unk40 = (player->unk40 > 179.0f && player->unk40 < 181.0f) ? 180.0f : player->unk40;
+            if (player->unk40 != 180.0f) {
+                Hu3DMotionForceSet(obj->mdlId[0], lbl_1_data_108, flipTbl[player->charNoClamp] ? 0x100 : 0x80,
+                    flipTbl[player->charNoClamp] ? 180.0f + -player->unk40 : 180.0f + player->unk40);
+            }
+            else {
+                Hu3DMotionNoMotReset(obj->mdlId[0], lbl_1_data_108, flipTbl[player->charNoClamp] ? 0x100 : 0x80);
+            }
+        }
+    }
+    if (player->unk2C < 0.0f && obj->trans.y <= -194.0f + waterY[player->charNoClamp] && 0.75f * (obj->trans.x - prevX) < player->unk2C) {
+        player->unk2C = 0.75f * (obj->trans.x - prevX);
+    }
+    else if (player->unk2C < 0.0f && obj->trans.x - prevX > player->unk2C) {
+        obj->trans.x = prevX + player->unk2C;
+    }
+    if (player->no == 3) {
+        for (i = 0; i < 4; i++) {
+            other = lbl_1_bss_2ED38[i]->data;
+            if (other->mode == 1) {
+                if (lbl_1_bss_2ED38[i]->trans.x <= -710.0f || lbl_1_bss_2ED38[i]->trans.z <= -610.0f || lbl_1_bss_2ED38[i]->trans.z >= 610.0f) {
+                    other->mode = 2;
+                    Hu3DModelShadowReset(lbl_1_bss_2ED38[i]->mdlId[0]);
+                    other->unk28 = 0;
+                    other->unk2C = (lbl_1_bss_2ED38[i]->trans.z <= -610.0f || lbl_1_bss_2ED38[i]->trans.z >= 610.0f)
+                        ? 0.0f
+                        : ((lbl_1_bss_2ED38[i]->trans.x - other->unk44 < -0.1f) ? (lbl_1_bss_2ED38[i]->trans.x - other->unk44) : -0.1f);
+                }
+                else {
+                    break;
+                }
+            }
+        }
+    }
+    CharModelVoicePanSet(player->charNo, 64.0f + 32.0f * ((obj->trans.x - CenterM[1].x) / 700.0f));
 }
 
 /* Draws the ripples, the obstacle shadows and the obstacles themselves (billboards cut from the frame buffer). */
