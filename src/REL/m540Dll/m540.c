@@ -523,4 +523,430 @@ static void fn_1_6C3C(void)
     GXEnd();
 }
 
+static void fn_1_707C(M540_OBJ *obj, float x, float y, float z)
+{
+    M540_MAPWORK *work = M540_OBJWORK(M540_MAPWORK, obj);
+    int i;
+    M540_OBJ *cart;
+    s16 no;
+    HuVecF *ofs;
+    float scale;
+    HuVecF pos;
+    for(i=0; i<4; i++) {
+        cart = fn_1_CB34(lbl_1_bss_CC[i]);
+        if(cart != NULL) {
+            M540_CARTWORK *cartWork = M540_OBJWORK(M540_CARTWORK, cart);
+            fn_1_134EC(cart, &pos.x, &pos.y, &pos.z);
+            no = lbl_1_bss_CC[i]->charNo+5;
+            ofs = &work->mdlOfs[no];
+            ofs->x = -45.0f+((905.0f*pos.x)/21700.0f);
+            ofs->y = 560.0f-(110.0f*i);
+            ofs->z = 35.0f;
+            if(cartWork->unk10) {
+                scale = 1.4f+(0.002f*pos.y);
+            } else {
+                scale = 1.4f;
+            }
+            if(scale > 1.4f) {
+                scale = 1.4f;
+            }
+            if(scale < 0.0f) {
+                scale = 0.0f;
+            }
+            Hu3DModelScaleSet(work->mdlId[no], scale, scale, 1.0f);
+        }
+    }
+    fn_1_13498(obj, x, y, z);
+    for(i=0; i<18; i++) {
+        Hu3DModelPosSet(work->mdlId[i], x+work->mdlOfs[i].x, y+work->mdlOfs[i].y, z+work->mdlOfs[i].z);
+    }
+    if(work->dispMode == 3) {
+        Hu3DModelPosSet(work->drawMdlId, x, 400.0f+y, 30.5f+z);
+    } else {
+        Hu3DModelPosSet(work->drawMdlId, x, 400.0f+y, 9000.5f+z);
+    }
+}
+
+static void fn_1_73D0(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_73DC(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_7484(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_7490(M540_OBJ *obj)
+{
+    HuVecF pos;
+    float t;
+    float y;
+    float step;
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    step = 0.008333334f;
+    t = 0;
+    while(1) {
+        y = pos.y+(10.0*HuSin(360.0f*t));
+        fn_1_707C(obj, pos.x, y, pos.z);
+        t += step;
+        if(t >= 1.0f) {
+            t = 0;
+        }
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_7660(M540_OBJ *obj)
+{
+    obj->mode = 2;
+}
+
+static void fn_1_766C(M540_OBJ *obj)
+{
+    HuVecF pos;
+    float t;
+    float baseY;
+    float y;
+    float step;
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    baseY = pos.y;
+    step = 0.008333334f;
+    t = 0;
+    while(1) {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        y = baseY+(18.0*HuSin(360.0f*t));
+        t += step;
+        if(t >= 1.0f) {
+            t = 0;
+        }
+        if(pos.x < 300.0f+lbl_1_bss_34) {
+            pos.x = 300.0f+lbl_1_bss_34;
+        }
+        fn_1_707C(obj, pos.x, y, pos.z);
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_78DC(M540_OBJ *obj, int dispMode)
+{
+    M540_MAPWORK *work = M540_OBJWORK(M540_MAPWORK, obj);
+    int i;
+    HuVecF pos;
+    for(i=0; i<18; i++) {
+        if(i != 3 && i != 4) {
+            Hu3DModelAttrSet(work->mdlId[i], HU3D_ATTR_DISPOFF);
+        }
+    }
+    Hu3DModelAttrReset(work->mdlId[2], HU3D_ATTR_DISPOFF);
+    switch(work->dispMode = dispMode) {
+        case 0:
+            break;
+        case 1:
+            Hu3DModelAttrReset(work->mdlId[0], HU3D_ATTR_DISPOFF);
+            break;
+        case 2:
+            Hu3DModelAttrReset(work->mdlId[1], HU3D_ATTR_DISPOFF);
+            for(i=0; i<4; i++) {
+                Hu3DModelAttrReset(work->mdlId[lbl_1_bss_CC[i]->charNo+5], HU3D_ATTR_DISPOFF);
+            }
+            break;
+        case 3:
+            break;
+    }
+    pos.x = obj->pos.x;
+    pos.y = obj->pos.y;
+    pos.z = obj->pos.z;
+    fn_1_707C(obj, pos.x, pos.y, pos.z);
+}
+
+static void fn_1_7A24(M540_OBJ *obj, int animType)
+{
+    M540_MAPWORK *work = M540_OBJWORK(M540_MAPWORK, obj);
+    work->animType = animType;
+    obj->mode = 3;
+}
+
+static void fn_1_7A48(M540_OBJ *obj)
+{
+    M540_MAPWORK *work = M540_OBJWORK(M540_MAPWORK, obj);
+    HU3DMODELID modelId;
+    int i;
+    switch(work->animType) {
+        case 0:
+            Hu3DModelAttrSet(work->mdlId[4], HU3D_ATTR_DISPOFF);
+            modelId = work->mdlId[3];
+            Hu3DMotionTimeSet(modelId, 0);
+            Hu3DModelAttrReset(modelId, HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+            M540_OBJ_SLEEP(30);
+            break;
+        case 1:
+            for(i=0; i<13; i++) {
+                Hu3DModelAttrSet(work->mdlId[i+5], HU3D_ATTR_DISPOFF);
+            }
+            Hu3DModelAttrSet(work->mdlId[3], HU3D_ATTR_DISPOFF);
+            modelId = work->mdlId[4];
+            Hu3DMotionTimeSet(modelId, 0);
+            Hu3DModelAttrReset(modelId, HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+            M540_OBJ_SLEEP(30);
+            break;
+    }
+    obj->mode = 0;
+}
+
+static M540_OBJFUNC lbl_1_data_B0[] = {
+    fn_1_84C8,
+    fn_1_857C,
+    fn_1_A19C,
+    fn_1_8B70,
+    fn_1_9080,
+    fn_1_AA30
+};
+
+static M540_OBJ *fn_1_7C40(int no)
+{
+    static const u32 lbl_1_rodata_690[5] = {
+        DATANUM(DATA_m540, 0x68),
+        DATANUM(DATA_m540, 0x61),
+        DATANUM(DATA_m540, 0x62),
+        DATANUM(DATA_m540, 0x69),
+        DATANUM(DATA_m540, 0x63)
+    };
+    static const u32 lbl_1_rodata_6A4[5] = {
+        DATANUM(DATA_m540, 0x16),
+        DATANUM(DATA_m540, 0x25),
+        DATANUM(DATA_m540, 0x34),
+        DATANUM(DATA_m540, 0x43),
+        DATANUM(DATA_m540, 0x52)
+    };
+    static const float lbl_1_rodata_6B8[5] = { -150, -90, -109, -10, -10 };
+    static const HuVecF lbl_1_rodata_6CC[5] = {
+        { -380, -180, 0 },
+        { -220, -100, 0 },
+        { -190, 0, 0 },
+        { -180, 0, 0 },
+        { -150, 0, 0 }
+    };
+    static const HuVecF lbl_1_rodata_708[5] = {
+        { -50, -60, 120 },
+        { -150, 60, 0 },
+        { -100, -40, 0 },
+        { 100, 0, 0 },
+        { -160, -0.0f, 0 }
+    };
+    static const u32 lbl_1_rodata_744[5][14] = {
+        {
+            DATANUM(DATA_m540, 0x17), DATANUM(DATA_m540, 0x18), DATANUM(DATA_m540, 0x19), DATANUM(DATA_m540, 0x1A),
+            DATANUM(DATA_m540, 0x1B), DATANUM(DATA_m540, 0x1C), DATANUM(DATA_m540, 0x1D), DATANUM(DATA_m540, 0x1E),
+            DATANUM(DATA_m540, 0x1F), DATANUM(DATA_m540, 0x20), DATANUM(DATA_m540, 0x21), DATANUM(DATA_m540, 0x22),
+            DATANUM(DATA_m540, 0x23), DATANUM(DATA_m540, 0x24)
+        },
+        {
+            DATANUM(DATA_m540, 0x26), DATANUM(DATA_m540, 0x27), DATANUM(DATA_m540, 0x28), DATANUM(DATA_m540, 0x29),
+            DATANUM(DATA_m540, 0x2A), DATANUM(DATA_m540, 0x2B), DATANUM(DATA_m540, 0x2C), DATANUM(DATA_m540, 0x2D),
+            DATANUM(DATA_m540, 0x2E), DATANUM(DATA_m540, 0x2F), DATANUM(DATA_m540, 0x30), DATANUM(DATA_m540, 0x31),
+            DATANUM(DATA_m540, 0x32), DATANUM(DATA_m540, 0x33)
+        },
+        {
+            DATANUM(DATA_m540, 0x35), DATANUM(DATA_m540, 0x36), DATANUM(DATA_m540, 0x37), DATANUM(DATA_m540, 0x38),
+            DATANUM(DATA_m540, 0x39), DATANUM(DATA_m540, 0x3A), DATANUM(DATA_m540, 0x3B), DATANUM(DATA_m540, 0x3C),
+            DATANUM(DATA_m540, 0x3D), DATANUM(DATA_m540, 0x3E), DATANUM(DATA_m540, 0x3F), DATANUM(DATA_m540, 0x40),
+            DATANUM(DATA_m540, 0x41), DATANUM(DATA_m540, 0x42)
+        },
+        {
+            DATANUM(DATA_m540, 0x44), DATANUM(DATA_m540, 0x45), DATANUM(DATA_m540, 0x46), DATANUM(DATA_m540, 0x47),
+            DATANUM(DATA_m540, 0x48), DATANUM(DATA_m540, 0x49), DATANUM(DATA_m540, 0x4A), DATANUM(DATA_m540, 0x4B),
+            DATANUM(DATA_m540, 0x4C), DATANUM(DATA_m540, 0x4D), DATANUM(DATA_m540, 0x4E), DATANUM(DATA_m540, 0x4F),
+            DATANUM(DATA_m540, 0x50), DATANUM(DATA_m540, 0x51)
+        },
+        {
+            DATANUM(DATA_m540, 0x53), DATANUM(DATA_m540, 0x54), DATANUM(DATA_m540, 0x55), DATANUM(DATA_m540, 0x56),
+            DATANUM(DATA_m540, 0x57), DATANUM(DATA_m540, 0x58), DATANUM(DATA_m540, 0x59), DATANUM(DATA_m540, 0x5A),
+            DATANUM(DATA_m540, 0x5B), DATANUM(DATA_m540, 0x5C), DATANUM(DATA_m540, 0x5D), DATANUM(DATA_m540, 0x5E),
+            DATANUM(DATA_m540, 0x5F), DATANUM(DATA_m540, 0x60)
+        }
+    };
+    M540_CARTWORK *work;
+    M540_OBJ *obj;
+    int i;
+    HU3DMODELID modelId;
+    obj = fn_1_13174(0x1000, 0x4000, lbl_1_rodata_6A4[no], 14, (u32 *)lbl_1_rodata_744[no], 6, lbl_1_data_B0);
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM0|HU3D_CAM2);
+    Hu3DModelAttrSet(obj->modelId, HU3D_ATTR_ZWRITE_OFF);
+    work = M540_OBJWORK(M540_CARTWORK, obj);
+    work->rider = NULL;
+    work->unk4 = NULL;
+    work->ofsY = lbl_1_rodata_6B8[no];
+    work->no = no;
+    work->speed = 0;
+    work->unk24 = 0;
+    work->unk28 = 0;
+    work->playerIdx = 0;
+    work->effectF = FALSE;
+    work->effectDispF = FALSE;
+    work->unk10 = 0;
+    work->unk8C = 0;
+    work->seNo = -1;
+    work->unk94 = 0;
+    for(i=0; i<4; i++) {
+        work->efcMdlId[i] = HU3D_MODELID_NONE;
+        work->efcOfs[i].x = 0;
+        work->efcOfs[i].y = 0;
+        work->efcOfs[i].z = 0;
+    }
+    work->efcOfs[0] = lbl_1_rodata_6CC[no];
+    for(i=0; i<3; i++) {
+        work->efcOfs[i+1] = lbl_1_rodata_708[no];
+    }
+    fn_1_13698(obj);
+    fn_1_13934(obj);
+    fn_1_13874(obj, 1, 0, 8, HU3D_MOTATTR_LOOP);
+    fn_1_13774(obj, TRUE);
+    work->efcMdlId[0] = Hu3DModelCreateData(lbl_1_rodata_690[no]);
+    Hu3DModelAttrSet(work->efcMdlId[0], HU3D_MOTATTR_LOOP);
+    Hu3DModelAttrSet(work->efcMdlId[0], HU3D_ATTR_DISPOFF);
+    for(i=0; i<3; i++) {
+        modelId = Hu3DModelCreateData(DATANUM(DATA_m540, 0x66));
+        work->efcMdlId[i+1] = modelId;
+        Hu3DModelCameraSet(modelId, HU3D_CAM0|HU3D_CAM2);
+        Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
+        Hu3DModelAttrSet(modelId, HU3D_ATTR_DISPOFF);
+        Hu3DMotionTimeSet(modelId, i*15);
+    }
+    return obj;
+}
+
+static void fn_1_8094(M540_OBJ *obj, float x, float y, float z);
+
+static void fn_1_7F9C(M540_OBJ *obj, int lane)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    work->unk7C = 1;
+    work->lane = lane;
+    fn_1_8094(obj, -11250.0f, 0.0f, lbl_1_rodata_A4[lane]);
+}
+
+static void fn_1_801C(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    fn_1_136D4(obj);
+    for(i=0; i<4; i++) {
+        Hu3DModelAttrSet(work->efcMdlId[i], HU3D_ATTR_DISPOFF);
+    }
+}
+
+static char *fn_1_8438(M540_OBJ *obj);
+
+static void fn_1_8094(M540_OBJ *obj, float x, float y, float z)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    float rotZ;
+    HuVecF pos;
+    Mtx mtx;
+    obj->pos.x = x;
+    obj->pos.y = y;
+    obj->pos.z = z;
+    Hu3DModelPosSet(obj->modelId, x, y-work->ofsY, z);
+    Hu3DModelObjMtxGet(obj->modelId, fn_1_8438(obj), mtx);
+    pos.x = mtx[0][3];
+    pos.y = mtx[1][3];
+    pos.z = mtx[2][3];
+    Hu3DModelPosSet(work->efcMdlId[0], pos.x+work->efcOfs[0].x, (pos.y+work->efcOfs[0].y)-work->ofsY, pos.z+work->efcOfs[0].z);
+    rotZ = 3.0f*work->speed;
+    for(i=0; i<3; i++) {
+        Hu3DModelPosSet(work->efcMdlId[i+1], pos.x+work->efcOfs[i+1].x, (pos.y+work->efcOfs[i+1].y)+(i*8), (pos.z+work->efcOfs[i+1].z)-(i*4));
+        Hu3DModelRotSet(work->efcMdlId[i+1], 0, 0, rotZ);
+    }
+    if(lbl_1_bss_DC == obj) {
+        lbl_1_bss_34 = x;
+    }
+}
+
+static void fn_1_82D0(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    if(lbl_1_bss_DC != obj) {
+        fn_1_104B4(work->efcMdlId[0]);
+        work->effectF = TRUE;
+        for(i=0; i<3; i++) {
+            Hu3DModelAttrSet(work->efcMdlId[i+1], HU3D_ATTR_DISPOFF);
+        }
+        work->effectDispF = FALSE;
+    }
+}
+
+static void fn_1_8364(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    fn_1_103B0(work->efcMdlId[0]);
+    work->effectF = FALSE;
+}
+
+static void fn_1_83A4(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    int i;
+    if(lbl_1_bss_DC != obj) {
+        for(i=0; i<3; i++) {
+            Hu3DModelAttrReset(work->efcMdlId[i+1], HU3D_ATTR_DISPOFF);
+        }
+        work->effectDispF = TRUE;
+        fn_1_103B0(work->efcMdlId[0]);
+        work->effectF = FALSE;
+    }
+}
+
+static char *fn_1_8438(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    return lbl_1_data_44[work->no];
+}
+
+static int fn_1_8468(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    return work->unk10;
+}
+
+static void fn_1_8484(M540_OBJ *obj, int playerIdx)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    work->playerIdx = playerIdx;
+}
+
+static int fn_1_84A0(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    return work->playerIdx;
+}
+
+static void fn_1_84BC(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_84C8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_8570(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
 /* M540_APPEND */
