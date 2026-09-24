@@ -88,9 +88,9 @@ typedef struct M518Map_s {
     /* 0x002 */ s16 prevMode;
     /* 0x004 */ s16 modelId[20];
     /* 0x02C */ u8 pad2C[0x24];
-    /* 0x050 */ u16 grid[12][12];
-    /* 0x170 */ u16 gridSave[12][12];
-    /* 0x290 */ u16 weight[12][12];
+    /* 0x050 */ u16 grid[12 * 12];
+    /* 0x170 */ u16 gridSave[12 * 12];
+    /* 0x290 */ u16 weight[12 * 12];
     /* 0x3B0 */ s16 unk3B0;
     /* 0x3B2 */ s16 maxDist;
     /* 0x3B4 */ HUPROCESS *process;

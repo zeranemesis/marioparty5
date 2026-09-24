@@ -1399,3 +1399,284 @@ void fn_1_6D84(M518_PLAYER *player)
         }
     }
 }
+
+M518_PLAYERFUNC lbl_1_data_60[1] = { (M518_PLAYERFUNC)fn_1_9ED8 };
+
+static const s32 lbl_1_rodata_1450[20] = {
+    DATANUM(DATA_m518, 0x00), DATANUM(DATA_m518, 0x02), DATANUM(DATA_m518, 0x01), DATANUM(DATA_m518, 0x01), DATANUM(DATA_m518, 0x01),
+    DATANUM(DATA_m518, 0x13), DATANUM(DATA_m518, 0x13), DATANUM(DATA_m518, 0x13), DATANUM(DATA_m518, 0x12), DATANUM(DATA_m518, 0x12),
+    DATANUM(DATA_m518, 0x12), DATANUM(DATA_m518, 0x12), DATANUM(DATA_m518, 0x12), DATANUM(DATA_m518, 0x11), DATANUM(DATA_m518, 0x11),
+    DATANUM(DATA_m518, 0x11), DATANUM(DATA_m518, 0x11), DATANUM(DATA_m518, 0x11), DATANUM(DATA_m518, 0x11), DATANUM(DATA_m518, 0x11),
+};
+
+M518_MAP *fn_1_9860(void)
+{
+    M518_MAP *map;
+    int i;
+
+    map = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_MAP), HU_MEMNUM_OVL);
+    fn_1_9E70(map);
+    for (i = 0; i < 20; i++) {
+        map->modelId[i] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_1450[i], HU_MEMNUM_OVL, HEAP_MODEL));
+        Hu3DModelAttrSet(map->modelId[i], HU3D_ATTR_NOCULL);
+    }
+    for (i = 5; i <= 19; i++) {
+        Hu3DModelAttrSet(map->modelId[i], HU3D_MOTATTR_LOOP);
+    }
+    Hu3DMotionSpeedSet(map->modelId[5], 0.03f);
+    Hu3DMotionSpeedSet(map->modelId[6], 0.035f);
+    Hu3DMotionSpeedSet(map->modelId[7], 0.04f);
+    Hu3DMotionSpeedSet(map->modelId[8], 0.02f);
+    Hu3DMotionSpeedSet(map->modelId[9], 0.024f);
+    Hu3DMotionSpeedSet(map->modelId[10], 0.028f);
+    Hu3DMotionSpeedSet(map->modelId[11], 0.03f);
+    Hu3DMotionSpeedSet(map->modelId[12], 0.032f);
+    Hu3DMotionSpeedSet(map->modelId[13], 0.01f);
+    Hu3DMotionSpeedSet(map->modelId[14], 0.012f);
+    Hu3DMotionSpeedSet(map->modelId[15], 0.014f);
+    Hu3DMotionSpeedSet(map->modelId[16], 0.016f);
+    Hu3DMotionSpeedSet(map->modelId[17], 0.018f);
+    Hu3DMotionSpeedSet(map->modelId[18], 0.02f);
+    Hu3DMotionSpeedSet(map->modelId[19], 0.022f);
+    Hu3DModelShadowMapSet(map->modelId[0]);
+    Hu3DModelShadowSet(map->modelId[1]);
+    Hu3DModelShadowSet(map->modelId[2]);
+    Hu3DModelShadowSet(map->modelId[3]);
+    Hu3DModelShadowSet(map->modelId[4]);
+    Hu3DModelAttrSet(map->modelId[1], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(map->modelId[2], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(map->modelId[3], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(map->modelId[4], HU3D_MOTATTR_PAUSE);
+    Hu3DModelRotSet(map->modelId[1], 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(map->modelId[2], 0.0f, 90.0f, 0.0f);
+    Hu3DModelRotSet(map->modelId[3], 0.0f, 180.0f, 0.0f);
+    Hu3DModelRotSet(map->modelId[4], 0.0f, 270.0f, 0.0f);
+    map->mode = 0;
+    map->prevMode = 0;
+    map->process = HuPrcChildCreate(fn_1_9BB0, 0x1000, 0x3000, 0, HuPrcCurrentGet());
+    map->process->property = map;
+    return map;
+}
+
+void fn_1_9BB0(void)
+{
+    M518_MAP *map = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_60[map->mode]((M518_PLAYER *)map);
+    }
+}
+
+void fn_1_9BF0(M518_MAP *map)
+{
+    int x;
+    int z;
+
+    for (z = 0; z < M518_GRID_SIZE; z++) {
+        for (x = 0; x < M518_GRID_SIZE; x++) {
+            map->weight[x + z * M518_GRID_SIZE] = 0;
+        }
+    }
+}
+
+void fn_1_9C4C(M518_MAP *map, M518_CELL cell, u16 value)
+{
+    if (cell.x >= 0 && cell.x < M518_GRID_SIZE && cell.z >= 0 && cell.z < M518_GRID_SIZE) {
+        map->weight[cell.x + cell.z * M518_GRID_SIZE] += value;
+    }
+}
+
+u16 fn_1_9CBC(M518_MAP *map, M518_CELL cell)
+{
+    if (cell.x >= 0 && cell.x < M518_GRID_SIZE && cell.z >= 0 && cell.z < M518_GRID_SIZE) {
+        return map->weight[cell.x + cell.z * M518_GRID_SIZE];
+    }
+    return 0xFFFF;
+}
+
+void fn_1_9D30(M518_MAP *map)
+{
+    Hu3DModelAttrReset(map->modelId[1], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrReset(map->modelId[2], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrReset(map->modelId[3], HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrReset(map->modelId[4], HU3D_MOTATTR_PAUSE);
+}
+
+void fn_1_9D98(M518_MAP *map)
+{
+    int x;
+    int z;
+
+    for (z = 0; z < M518_GRID_SIZE; z++) {
+        for (x = 0; x < M518_GRID_SIZE; x++) {
+            map->gridSave[x + z * M518_GRID_SIZE] = map->grid[x + z * M518_GRID_SIZE];
+        }
+    }
+}
+
+void fn_1_9E04(M518_MAP *map)
+{
+    int x;
+    int z;
+
+    for (z = 0; z < M518_GRID_SIZE; z++) {
+        for (x = 0; x < M518_GRID_SIZE; x++) {
+            map->grid[x + z * M518_GRID_SIZE] = map->gridSave[x + z * M518_GRID_SIZE];
+        }
+    }
+}
+
+void fn_1_9E70(M518_MAP *map)
+{
+    int x;
+    int z;
+
+    for (z = 0; z < M518_GRID_SIZE; z++) {
+        for (x = 0; x < M518_GRID_SIZE; x++) {
+            map->grid[x + z * M518_GRID_SIZE] = 0;
+        }
+    }
+}
+
+void fn_1_9ECC(M518_MAP *map)
+{
+    map->mode = 0;
+}
+
+void fn_1_9ED8(M518_MAP *map)
+{
+    int i;
+    float pos[15];
+
+    pos[0] = 1800.0f;
+    pos[1] = 0.0f;
+    pos[2] = -1800.0f;
+    pos[3] = 3000.0f;
+    pos[4] = 1500.0f;
+    pos[5] = 0.0f;
+    pos[6] = -1500.0f;
+    pos[7] = 3000.0f;
+    pos[8] = 3000.0f;
+    pos[9] = 2000.0f;
+    pos[10] = 1000.0f;
+    pos[11] = 0.0f;
+    pos[12] = -1000.0f;
+    pos[13] = -2000.0f;
+    pos[14] = -3000.0f;
+    while (TRUE) {
+        pos[0] += 2.0f;
+        pos[1] += 2.0f;
+        pos[2] += 2.0f;
+        pos[3] += 0.6f;
+        pos[4] += 0.6f;
+        pos[5] += 0.6f;
+        pos[6] += 0.6f;
+        pos[7] += 0.6f;
+        pos[8] += 0.3f;
+        pos[9] += 0.3f;
+        pos[10] += 0.3f;
+        pos[11] += 0.3f;
+        pos[12] += 0.3f;
+        pos[13] += 0.3f;
+        pos[14] += 0.3f;
+        for (i = 0; i < 15; i++) {
+            Hu3DModelPosSet(map->modelId[i + 5], pos[i], 0.0f, 0.0f);
+        }
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_A200(M518_MAP *map, M518_CELL cell, u16 value)
+{
+    if (cell.x >= 0 && cell.x < M518_GRID_SIZE && cell.z >= 0 && cell.z < M518_GRID_SIZE) {
+        map->grid[cell.x + cell.z * M518_GRID_SIZE] = value;
+    }
+}
+
+u16 fn_1_A268(M518_MAP *map, M518_CELL cell)
+{
+    if (cell.x >= 0 && cell.x < M518_GRID_SIZE && cell.z >= 0 && cell.z < M518_GRID_SIZE) {
+        return map->grid[cell.x + cell.z * M518_GRID_SIZE];
+    }
+    return 0x80;
+}
+
+void fn_1_A2D8(M518_MAP *map, M518_CELL cell, s16 maxDist)
+{
+    int x;
+    int z;
+    u16 value;
+    M518_CELL pos;
+
+    for (z = 0; z < M518_GRID_SIZE; z++) {
+        for (x = 0; x < M518_GRID_SIZE; x++) {
+            pos.x = x;
+            pos.z = z;
+            value = fn_1_A268(map, pos);
+            value &= 0xFF;
+            value &= ~0x20;
+            fn_1_A200(map, pos, value);
+        }
+    }
+    map->unk3B0 = 0;
+    map->maxDist = maxDist;
+    fn_1_A480(map, cell, 0);
+}
+
+typedef struct M518Dir_s {
+    s16 x;
+    s16 z;
+} M518_DIR;
+
+static const M518_DIR lbl_1_rodata_14F8[4] = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } };
+
+inline void fn_1_A480(M518_MAP *map, M518_CELL cell, s16 dist)
+{
+    int i;
+    u16 value;
+    M518_CELL next;
+
+    value = fn_1_A268(map, cell);
+    value |= 0x20;
+    value = (value & 0xFF) | (dist << 8);
+    fn_1_A200(map, cell, value);
+    if (dist < map->maxDist) {
+        for (i = 0; i < 4; i++) {
+            next.x = cell.x + lbl_1_rodata_14F8[i].x;
+            next.z = cell.z + lbl_1_rodata_14F8[i].z;
+            value = fn_1_A268(map, next);
+            {
+                BOOL spread = TRUE;
+                BOOL free = FALSE;
+                BOOL open = FALSE;
+                BOOL ok;
+
+                if (!(value & 0x80) && !(value & 0x20)) {
+                    open = TRUE;
+                }
+                if (open && ((value & 0xF) > 0) == FALSE) {
+                    free = TRUE;
+                }
+                if (!free) {
+                    BOOL farther = FALSE;
+
+                    if ((value & 0x20) && (value >> 8) > dist) {
+                        farther = TRUE;
+                    }
+                    if (!farther) {
+                        spread = FALSE;
+                    }
+                }
+                if (spread) {
+                    ok = TRUE;
+                }
+                else {
+                    ok = FALSE;
+                }
+                if (ok) {
+                    fn_1_A480(map, next, dist + 1);
+                }
+            }
+        }
+    }
+}
