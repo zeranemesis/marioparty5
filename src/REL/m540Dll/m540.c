@@ -1674,7 +1674,7 @@ static M540_OBJ *fn_1_BCF0(int playerNo)
     obj = fn_1_13A40(0x1001, 0x2000, playerNo, 7, (u32 *)lbl_1_rodata_120, 6, lbl_1_data_D8, 8);
     Hu3DModelCameraSet(obj->modelId, HU3D_CAM0|HU3D_CAM2);
     CharEffectLayerSet(1);
-    CharMotionUpdateSet(obj->charNo, lbl_1_rodata_120[obj->charNo][6], FALSE);
+    CharMotionUpdateSet(obj->charNo, ((u32 *)lbl_1_rodata_120)[(obj->charNo*7)+6], FALSE);
     fn_1_13698(obj);
     fn_1_13934(obj);
     fn_1_13774(obj, TRUE);
@@ -1804,14 +1804,12 @@ static void fn_1_C800(M540_OBJ *obj)
 
 static void fn_1_C8D8(M540_OBJ *obj, M540_OBJ *cart)
 {
-    M540_CARTWORK *cartWork;
-    M540_PLAYERWORK *work;
+    M540_CARTWORK *cartWork = M540_OBJWORK(M540_CARTWORK, cart);
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
     fn_1_13498(obj, 0, 0, 0);
-    work = M540_OBJWORK(M540_PLAYERWORK, obj);
     work->cart = cart;
-    cartWork = M540_OBJWORK(M540_CARTWORK, cart);
     cartWork->rider = obj;
-    CharMotionVoiceOnSet(obj->charNo, lbl_1_rodata_120[obj->charNo][6], FALSE);
+    CharMotionVoiceOnSet(obj->charNo, ((u32 *)lbl_1_rodata_120)[(obj->charNo*7)+6], FALSE);
     fn_1_13874(obj, 6, 0, 0, HU3D_MOTATTR_PAUSE);
     fn_1_139C8(cart, fn_1_8438(cart), obj);
     fn_1_1352C(obj, 0, 90.0f, 0);
@@ -1821,8 +1819,8 @@ static void fn_1_C8D8(M540_OBJ *obj, M540_OBJ *cart)
 static void fn_1_CA30(M540_OBJ *obj)
 {
     float ofsY;
-    float rotY;
     M540_OBJ *cart;
+    float rotY;
     ofsY = 0;
     rotY = 90.0f;
     if(obj->charNo == CHARNO_TERESA) {
