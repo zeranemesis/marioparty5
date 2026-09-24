@@ -489,7 +489,7 @@ void fn_1_1828(OMOBJ *obj)
                 if (lbl_1_data_7C <= 1740 - player->unk5C) {
                     found = 0;
                     {
-                        s32 delayTbl[12] = { 40, 30, 12, 6, 6, 6, 5, 3, 120, 70, 20, 5 };
+                        s32 delayTbl[3][4] = { { 40, 30, 12, 6 }, { 6, 6, 5, 3 }, { 120, 70, 20, 5 } };
                         float laneX[12];
 
                         for (i = 0; i < 12; i++) {
@@ -547,37 +547,37 @@ void fn_1_1828(OMOBJ *obj)
                             stickX = 100.0f;
                             stickY = 100.0f;
                             player->unk60 = 1;
-                            player->unk64 = delayTbl[player->dif];
+                            player->unk64 = delayTbl[0][player->dif];
                         }
                         else if (j + 1 < 12 && laneX[j + 1] > laneX[j] && (j - 1 < 0 || laneX[j + 1] >= laneX[j - 1])) {
                             stickX = 100.0f;
                             stickY = -100.0f;
                             player->unk60 = -1;
-                            player->unk64 = delayTbl[player->dif];
+                            player->unk64 = delayTbl[0][player->dif];
                         }
                         else if (j - 1 >= 0 && laneX[j - 1] > laneX[j] && (j + 1 >= 12 || laneX[j - 1] >= laneX[j + 1])) {
                             stickX = 100.0f;
                             stickY = 100.0f;
                             player->unk60 = 1;
-                            player->unk64 = delayTbl[player->dif];
+                            player->unk64 = delayTbl[0][player->dif];
                         }
                         else if ((s32)(700.0f + obj->trans.z) % 100 < 30) {
                             stickX = 100.0f;
                             stickY = -100.0f;
                             player->unk60 = -1;
-                            player->unk64 = delayTbl[player->dif + 4];
+                            player->unk64 = delayTbl[1][player->dif];
                         }
                         else if ((s32)(700.0f + obj->trans.z) % 100 > 70) {
                             stickX = 100.0f;
                             stickY = 100.0f;
                             player->unk60 = 1;
-                            player->unk64 = delayTbl[player->dif + 4];
+                            player->unk64 = delayTbl[1][player->dif];
                         }
                         else {
                             stickX = 100.0f;
                             stickY = 0.0f;
                             player->unk60 = 0;
-                            player->unk64 = delayTbl[player->dif + 8];
+                            player->unk64 = delayTbl[2][player->dif];
                         }
                     }
                     stickX = 0.5 * player->unk50 + 0.5 * stickX;
@@ -686,15 +686,17 @@ void fn_1_1828(OMOBJ *obj)
                             }
                             d = dx2 * dx2 + dz2 * dz2;
                             r = 50.0f + radius[lbl_1_bss_9D1C[i].type];
-                            if (d >= r * r) {
-                                break;
+                            if (d < r * r) {
+                                d = sqrtf(d);
+                                dx2 *= (50.0f + radius[lbl_1_bss_9D1C[i].type]) / d;
+                                dz2 *= (50.0f + radius[lbl_1_bss_9D1C[i].type]) / d;
+                                obj->trans.x = lbl_1_bss_9D1C[i].pos.x - dx2;
+                                if (obj->trans.x > lbl_1_bss_9D1C[i].pos.x) {
+                                    obj->trans.z = lbl_1_bss_9D1C[i].pos.z - dz2 / 1.125f;
+                                }
                             }
-                            d = sqrtf(d);
-                            dx2 *= (50.0f + radius[lbl_1_bss_9D1C[i].type]) / d;
-                            dz2 *= (50.0f + radius[lbl_1_bss_9D1C[i].type]) / d;
-                            obj->trans.x = lbl_1_bss_9D1C[i].pos.x - dx2;
-                            if (obj->trans.x > lbl_1_bss_9D1C[i].pos.x) {
-                                obj->trans.z = lbl_1_bss_9D1C[i].pos.z - dz2 / 1.125f;
+                            else {
+                                break;
                             }
                         }
                     }
