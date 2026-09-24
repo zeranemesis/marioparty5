@@ -146,7 +146,7 @@ void fn_1_CBE8(M518_BLOCK *block);
 void fn_1_CCC0(M518_BLOCK *block, s16 time, s16 delay);
 void fn_1_CCD4(M518_BLOCK *block);
 void fn_1_CE54(M518_BLOCK *block, float depth, s16 time, s16 delay, s16 playerNo);
-void fn_1_CE78(M518_BLOCK *block, s16 time, s16 delay, float depth);
+void fn_1_CE78(M518_BLOCK *block, float depth, s16 time, s16 delay);
 void fn_1_CEA0(M518_BLOCK *block);
 void fn_1_D204(M518_BLOCK *block, s16 time, s16 delay);
 void fn_1_D218(M518_BLOCK *block);
@@ -171,7 +171,7 @@ void fn_1_E2A0(M518_EFFECT *effect, HU3DMODEL *modelP, HU3DPARTICLE *particleP, 
 BOOL fn_1_E508(HuVecF pos, float radius);
 s16 fn_1_E5BC(HuVecF pos);
 s16 fn_1_E6B8(HuVecF pos);
-void fn_1_E7B4(int seId, HuVecF pos);
+int fn_1_E7B4(int seId, HuVecF pos);
 
 typedef struct M518LightData_s {
     HuVecF pos;
@@ -303,6 +303,8 @@ s32 lbl_1_bss_24;
 s32 lbl_1_bss_20;
 s32 lbl_1_bss_1C;
 s16 lbl_1_bss_18;
+s16 lbl_1_bss_4[10];
+BOOL lbl_1_bss_0;
 
 int _prolog(void)
 {
@@ -1942,6 +1944,509 @@ void fn_1_BBF4(M518_CHAR *chr)
     Hu3DModelAttrSet(chr->modelId, HU3D_ATTR_DISPOFF);
 }
 
+typedef void (*M518_PODIUMFUNC)(M518_PODIUM *podium);
+
+M518_PODIUMFUNC lbl_1_data_74[1] = { fn_1_BE6C };
+
+static const s32 lbl_1_rodata_16C0[3] = { DATANUM(DATA_m518, 0x0F), DATANUM(DATA_m518, 0x03), DATANUM(DATA_m518, 0x10) };
+
+M518_PODIUM *fn_1_BC28(void)
+{
+    M518_PODIUM *podium;
+    int i;
+
+    podium = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_PODIUM), HU_MEMNUM_OVL);
+    podium->pos.x = 0.0f;
+    podium->pos.y = 0.0f;
+    podium->pos.z = 0.0f;
+    for (i = 0; i < 3; i++) {
+        podium->modelId[i] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_16C0[i], HU_MEMNUM_OVL, HEAP_MODEL));
+        Hu3DModelAttrSet(podium->modelId[i], HU3D_ATTR_NOCULL);
+        Hu3DModelAttrSet(podium->modelId[i], HU3D_MOTATTR_LOOP);
+    }
+#ifdef TARGET_PC
+    Hu3DMotionTimeSet(podium->modelId[2], (s32)frandmod((u32)Hu3DMotionMaxTimeGet(podium->modelId[2])));
+#else
+    /* frandmod is called without a prototype here: the float is passed as is */
+    Hu3DMotionTimeSet(podium->modelId[2], (s32)((u32 (*)())frandmod)(Hu3DMotionMaxTimeGet(podium->modelId[2])));
+#endif
+    Hu3DModelShadowSet(podium->modelId[0]);
+    podium->mode = 0;
+    podium->prevMode = 0;
+    podium->process = HuPrcChildCreate(fn_1_BD88, 0x1300, 0x1000, 0, HuPrcCurrentGet());
+    podium->process->property = podium;
+    return podium;
+}
+
+void fn_1_BD88(void)
+{
+    M518_PODIUM *podium = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_74[podium->mode](podium);
+    }
+}
+
+void fn_1_BDC8(M518_PODIUM *podium, HuVecF pos)
+{
+    Hu3DModelPosSet(podium->modelId[0], pos.x, pos.y, pos.z);
+    Hu3DModelPosSet(podium->modelId[2], pos.x, pos.y, pos.z);
+    Hu3DModelPosSet(podium->modelId[1], pos.x, 201.0f + pos.y, pos.z);
+    podium->pos = pos;
+}
+
+void fn_1_BE60(M518_PODIUM *podium)
+{
+    podium->mode = 0;
+}
+
+void fn_1_BE6C(M518_PODIUM *podium)
+{
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_BEFC(M518_PODIUM *podium)
+{
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        Hu3DModelAttrReset(podium->modelId[i], HU3D_ATTR_DISPOFF);
+    }
+}
+
+void fn_1_BF54(M518_PODIUM *podium)
+{
+    int i;
+
+    for (i = 0; i < 3; i++) {
+        Hu3DModelAttrSet(podium->modelId[i], HU3D_ATTR_DISPOFF);
+    }
+}
+
+typedef void (*M518_CROWDFUNC)(M518_CROWD *crowd);
+
+M518_CROWDFUNC lbl_1_data_78[2] = { fn_1_C3C4, fn_1_C480 };
+
+static const s32 lbl_1_rodata_16D0[1] = { DATANUM(DATA_m518, 0x23) };
+static const s32 lbl_1_rodata_16D4[2] = { DATANUM(DATA_m518, 0x24), DATANUM(DATA_m518, 0x25) };
+
+M518_CROWD *fn_1_BFAC(s16 no, s16 type)
+{
+    M518_CROWD *crowd;
+    int i;
+
+    crowd = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_CROWD), HU_MEMNUM_OVL);
+    crowd->type = type;
+    crowd->no = no;
+    crowd->pos.x = 0.0f;
+    crowd->pos.y = 0.0f;
+    crowd->pos.z = 0.0f;
+    crowd->rot.x = 0.0f;
+    crowd->rot.y = 0.0f;
+    crowd->rot.z = 0.0f;
+    crowd->scale.x = 1.0f;
+    crowd->scale.y = 1.0f;
+    crowd->scale.z = 1.0f;
+    if (no == 0) {
+        for (i = 0; i < 1; i++) {
+            (&crowd->modelId)[i] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_16D0[i], HU_MEMNUM_OVL, HEAP_MODEL));
+            Hu3DModelAttrSet((&crowd->modelId)[i], HU3D_ATTR_NOCULL);
+        }
+    }
+    else {
+        for (i = 0; i < 1; i++) {
+            (&crowd->modelId)[i] = Hu3DModelLink((&lbl_1_bss_3AC[0]->modelId)[i]);
+            Hu3DModelAttrSet((&crowd->modelId)[i], HU3D_ATTR_NOCULL);
+        }
+    }
+    crowd->motId = Hu3DJointMotion(crowd->modelId, HuDataSelHeapReadNum(lbl_1_rodata_16D4[type], HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DMotionSet(crowd->modelId, crowd->motId);
+    Hu3DModelAttrSet(crowd->modelId, HU3D_MOTATTR_LOOP);
+#ifdef TARGET_PC
+    Hu3DMotionTimeSet(crowd->modelId, (s32)frandmod((u32)Hu3DMotionMaxTimeGet(crowd->modelId)));
+#else
+    /* frandmod is called without a prototype here: the float is passed as is */
+    Hu3DMotionTimeSet(crowd->modelId, (s32)((u32 (*)())frandmod)(Hu3DMotionMaxTimeGet(crowd->modelId)));
+#endif
+    Hu3DModelShadowSet(crowd->modelId);
+    crowd->mode = 0;
+    crowd->prevMode = 0;
+    crowd->process = HuPrcChildCreate(fn_1_C224, 0x1500, 0x1000, 0, HuPrcCurrentGet());
+    crowd->process->property = crowd;
+    return crowd;
+}
+
+void fn_1_C224(void)
+{
+    M518_CROWD *crowd = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_78[crowd->mode](crowd);
+    }
+}
+
+void fn_1_C264(M518_CROWD *crowd)
+{
+    Hu3DModelAttrSet(crowd->modelId, HU3D_ATTR_DISPOFF);
+}
+
+void fn_1_C298(M518_CROWD *crowd, HuVecF pos)
+{
+    Hu3DModelPosSet(crowd->modelId, pos.x, pos.y, pos.z);
+    crowd->pos = pos;
+}
+
+void fn_1_C2F8(M518_CROWD *crowd, HuVecF rot)
+{
+    Hu3DModelRotSet(crowd->modelId, rot.x, rot.y, rot.z);
+    crowd->rot = rot;
+}
+
+void fn_1_C358(M518_CROWD *crowd, HuVecF scale)
+{
+    Hu3DModelScaleSet(crowd->modelId, scale.x, scale.y, scale.z);
+    crowd->scale = scale;
+}
+
+void fn_1_C3B8(M518_CROWD *crowd)
+{
+    crowd->mode = 0;
+}
+
+void fn_1_C3C4(M518_CROWD *crowd)
+{
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_C454(M518_CROWD *crowd, HuVecF target, s16 time, s16 delay)
+{
+    crowd->target = target;
+    crowd->time = time;
+    crowd->delay = delay;
+    crowd->mode = 1;
+}
+
+void fn_1_C480(M518_CROWD *crowd)
+{
+    int seNo;
+    int i;
+    float t;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+    HuVecF rot;
+    HuVecF dir;
+
+    seNo = -1;
+    M518_WAIT(crowd->delay);
+    if (crowd->no == 0) {
+        seNo = fn_1_E7B4(0x707, crowd->pos);
+    }
+    start = crowd->pos;
+    end = crowd->target;
+    for (i = 0; i < crowd->time; i++) {
+        t = (1.0f / crowd->time) * (i + 1);
+        pos.x = start.x + t * (end.x - start.x);
+        pos.z = start.z + t * (end.z - start.z);
+        pos.y = start.y + t * (end.y - start.y);
+        dir.x = pos.x - crowd->pos.x;
+        dir.z = pos.z - crowd->pos.z;
+        rot.y = fn_1_ABA8(crowd->rot.y, HuAtan(dir.x, dir.z), 0.4f);
+        rot.x = 0.0f;
+        rot.z = 0.0f;
+        fn_1_C298(crowd, pos);
+        fn_1_C2F8(crowd, rot);
+        M518_WAIT(1);
+        if (seNo != -1) {
+            HuAudFXPanning(seNo, fn_1_E6B8(crowd->pos));
+        }
+        if (i % 10 == 0) {
+            switch (frandmod(2)) {
+                case 0:
+                    pos.x += 100.0f;
+                    CharEffectSmokeCreate(HU3D_CAM0, &pos);
+                    break;
+                case 1:
+                    pos.y -= 100.0f;
+                    fn_1_E508(pos, 200.0f);
+                    break;
+            }
+        }
+    }
+    crowd->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+typedef void (*M518_BLOCKFUNC)(M518_BLOCK *block);
+
+M518_BLOCKFUNC lbl_1_data_80[5] = { fn_1_CBE8, fn_1_CEA0, fn_1_D218, fn_1_D58C, fn_1_CCD4 };
+
+static const s32 lbl_1_rodata_16DC[10] = {
+    DATANUM(DATA_m518, 0x05), DATANUM(DATA_m518, 0x06), DATANUM(DATA_m518, 0x07), DATANUM(DATA_m518, 0x08), DATANUM(DATA_m518, 0x09),
+    DATANUM(DATA_m518, 0x0A), DATANUM(DATA_m518, 0x0B), DATANUM(DATA_m518, 0x0C), DATANUM(DATA_m518, 0x0D), DATANUM(DATA_m518, 0x0E),
+};
+
+M518_BLOCK *fn_1_C9F4(s16 no, s16 type)
+{
+    M518_BLOCK *block;
+    int i;
+
+    block = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_BLOCK), HU_MEMNUM_OVL);
+    block->pos.x = 0.0f;
+    block->pos.y = 0.0f;
+    block->pos.z = 0.0f;
+    block->no = no;
+    block->type = type;
+    if (!lbl_1_bss_0) {
+        for (i = 0; i < 10; i++) {
+            lbl_1_bss_4[i] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_16DC[i], HU_MEMNUM_OVL, HEAP_MODEL));
+            Hu3DModelAttrSet(lbl_1_bss_4[i], HU3D_ATTR_DISPOFF);
+        }
+        lbl_1_bss_0 = TRUE;
+    }
+    block->modelId = Hu3DModelLink(lbl_1_bss_4[type]);
+    Hu3DModelAttrReset(block->modelId, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(block->modelId, HU3D_ATTR_NOCULL);
+    Hu3DModelAttrSet(block->modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelShadowMapSet(block->modelId);
+    block->mode = 0;
+    block->prevMode = 0;
+    block->process = HuPrcChildCreate(fn_1_CB9C, 0x2000, 0x1400, 0, HuPrcCurrentGet());
+    block->process->property = block;
+    return block;
+}
+
+void fn_1_CB9C(void)
+{
+    M518_BLOCK *block = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_80[block->mode](block);
+    }
+}
+
+void fn_1_CBDC(M518_BLOCK *block)
+{
+    block->mode = 0;
+}
+
+void fn_1_CBE8(M518_BLOCK *block)
+{
+    Hu3DModelShadowMapSet(block->modelId);
+    Hu3DModelShadowReset(block->modelId);
+    Hu3DMotionStartEndSet(block->modelId, 0.0f, 1.0f);
+    Hu3DModelAttrSet(block->modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(block->modelId, 0.0f);
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_CCC0(M518_BLOCK *block, s16 time, s16 delay)
+{
+    block->time = time;
+    block->delay = delay;
+    block->mode = 4;
+}
+
+void fn_1_CCD4(M518_BLOCK *block)
+{
+    Hu3DModelShadowMapSet(block->modelId);
+    Hu3DModelShadowReset(block->modelId);
+    M518_WAIT(block->delay);
+    Hu3DMotionStartEndSet(block->modelId, 0.0f, 10.0f);
+    Hu3DModelAttrReset(block->modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(block->modelId, 0.0f);
+    M518_WAIT(block->time);
+    block->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_CE54(M518_BLOCK *block, float depth, s16 time, s16 delay, s16 playerNo)
+{
+    block->time = time;
+    block->delay = delay;
+    block->depth = depth;
+    block->playerNo = playerNo;
+    block->mode = 1;
+    block->prevMode = 2;
+}
+
+void fn_1_CE78(M518_BLOCK *block, float depth, s16 time, s16 delay)
+{
+    block->time = time;
+    block->delay = delay;
+    block->depth = depth;
+    block->playerNo = -1;
+    block->mode = 1;
+    block->prevMode = 2;
+}
+
+void fn_1_CEA0(M518_BLOCK *block)
+{
+    int i;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+
+    Hu3DModelShadowMapSet(block->modelId);
+    Hu3DModelShadowReset(block->modelId);
+    M518_WAIT(block->delay);
+    start = block->pos;
+    end = block->pos;
+    end.y = -100.0f - block->depth;
+    pos = block->pos;
+    Hu3DMotionStartEndSet(block->modelId, 0.0f, 5.0f);
+    Hu3DModelAttrReset(block->modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(block->modelId, 0.0f);
+    Hu3DMotionSpeedSet(block->modelId, 0.5f);
+    for (i = 0; i < block->time; i++) {
+        pos.y = start.y + (end.y - start.y) * ((1.0f / block->time) * (i + 1));
+        fn_1_DA7C(block, pos);
+        M518_WAIT(1);
+    }
+    while (TRUE) {
+        if (!(fn_1_A268(lbl_1_bss_4DC, block->cell) & 0x40)) {
+            fn_1_D204(block, 20, 0);
+        }
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_D204(M518_BLOCK *block, s16 time, s16 delay)
+{
+    block->time = time;
+    block->delay = delay;
+    block->mode = 2;
+}
+
+void fn_1_D218(M518_BLOCK *block)
+{
+    int i;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+
+    Hu3DModelShadowMapSet(block->modelId);
+    Hu3DModelShadowReset(block->modelId);
+    M518_WAIT(block->delay);
+    start = block->pos;
+    end = block->pos;
+    end.y = -100.0f;
+    pos = block->pos;
+    Hu3DMotionStartEndSet(block->modelId, 5.0f, 10.0f);
+    Hu3DModelAttrReset(block->modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(block->modelId, 0.0f);
+    Hu3DMotionSpeedSet(block->modelId, 0.5f);
+    switch (block->playerNo) {
+        case 1:
+            fn_1_E7B4(0x701, block->pos);
+            break;
+        case 2:
+            fn_1_E7B4(0x700, block->pos);
+            break;
+        case 3:
+            fn_1_E7B4(0x702, block->pos);
+            break;
+    }
+    for (i = 0; i < block->time; i++) {
+        pos.y = start.y + (end.y - start.y) * ((1.0f / block->time) * (i + 1));
+        fn_1_DA7C(block, pos);
+        M518_WAIT(1);
+    }
+    block->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_D578(M518_BLOCK *block, s16 time, s16 delay)
+{
+    block->time = time;
+    block->delay = delay;
+    block->mode = 3;
+}
+
+void fn_1_D58C(M518_BLOCK *block)
+{
+    int i;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+
+    Hu3DModelShadowSet(block->modelId);
+    Hu3DModelShadowMapObjReset(block->modelId);
+    M518_WAIT(block->delay);
+    if (block->delay > 5) {
+        fn_1_E7B4(0x703, block->pos);
+    }
+    start = block->pos;
+    end = block->pos;
+    end.y = -100.0f;
+    pos = block->pos;
+    Hu3DMotionStartEndSet(block->modelId, 0.0f, 5.0f);
+    Hu3DModelAttrReset(block->modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(block->modelId, 0.0f);
+    Hu3DMotionSpeedSet(block->modelId, 0.5f);
+    for (i = 0; i < block->time; i++) {
+        pos.y = start.y + (end.y - start.y) * (1.0 - HuCos(90.0f * ((1.0f / block->time) * (i + 1))));
+        fn_1_DA7C(block, pos);
+        M518_WAIT(1);
+    }
+    pos.x = block->pos.x;
+    pos.z = block->pos.z;
+    pos.y = 4.0f;
+    CharEffectDustCreate(HU3D_CAM0, 8.0f + (s32)frandmod(4), &pos);
+    HuAudFXPlay(0x704);
+    fn_1_CE78(block, 60.0f, 10, 0);
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_D958(M518_BLOCK *block, M518_CELL cell)
+{
+    HuVecF pos;
+
+    pos.x = -1100.0f + 200.0f * cell.x;
+    pos.y = -100.0f;
+    pos.z = -1100.0f + 200.0f * cell.z;
+    fn_1_DA7C(block, pos);
+    block->cell = cell;
+}
+
+void fn_1_DA7C(M518_BLOCK *block, HuVecF pos)
+{
+    Hu3DModelPosSet(block->modelId, pos.x, pos.y, pos.z);
+    block->pos = pos;
+}
+
+void fn_1_DADC(M518_BLOCK *block, HuVecF rot)
+{
+    float *mtx;
+    Mtx rotMtx;
+
+    mtx = (float *)Hu3DData[block->modelId].mtx;
+    MTXIdentity((MtxPtr)mtx);
+    MTXIdentity(rotMtx);
+    MTXRotRad(rotMtx, 'x', MTXDegToRad(rot.x));
+    MTXConcat((MtxPtr)mtx, rotMtx, (MtxPtr)mtx);
+    MTXRotRad(rotMtx, 'y', MTXDegToRad(rot.y));
+    MTXConcat((MtxPtr)mtx, rotMtx, (MtxPtr)mtx);
+    MTXRotRad(rotMtx, 'z', MTXDegToRad(rot.z));
+    MTXConcat((MtxPtr)mtx, rotMtx, (MtxPtr)mtx);
+    Hu3DModelRotSet(block->modelId, 0.0f, 0.0f, 0.0f);
+    block->rot = rot;
+}
+
 M518_QUEUE *fn_1_DC14(int size)
 {
     M518_QUEUE *queue;
@@ -2202,7 +2707,7 @@ s16 fn_1_E6B8(HuVecF pos)
     return result;
 }
 
-void fn_1_E7B4(int seId, HuVecF pos)
+int fn_1_E7B4(int seId, HuVecF pos)
 {
-    HuAudFXPlayVolPan(seId, fn_1_E5BC(pos), fn_1_E6B8(pos));
+    return HuAudFXPlayVolPan(seId, fn_1_E5BC(pos), fn_1_E6B8(pos));
 }
