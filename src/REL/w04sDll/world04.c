@@ -149,6 +149,7 @@ f32 MB4_PathTimeGet(f32 time, Point3d *p0, Point3d *p1, Point3d *p2, Point3d *p3
 void MB4_CoinInit(void);
 static void MB4_CoinUpdate(OMOBJ *obj);
 void MB4_CoinClose(void);
+int MB4_CoinEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float gravity, GXColor color);
 void MB4_CoinEffInit(void);
 static void MB4_CoinEffUpdate(OMOBJ *obj);
 void MB4_CoinEffClose(void);
@@ -613,10 +614,13 @@ static Point3d mb4ev_IrukaBubbleOfsTbl[13] = {
 static f32 mb4ev_IrukaTPLvlScaleTbl[13] = { 1.1f, 1.0f, 0.8f, 1.1f, 1.2f, 0.7f, 0.9f, 0.8f, 0.7f, 1.2f, 1.1f, 1.1f, 1.3f };
 
 
-static OMOBJ *mb4_MainObj;
-static OMOBJ *mb4_CoinObj;
-static OMOBJ *mb4_CoinEffObj;
+static MB4_WORK mb4_Work;
+static HuVecF mb4_CoinMaxDist;
+static OMOBJ *mb4_SakanaObj;
 static OMOBJ *mb4_BubbleEffObj;
+static OMOBJ *mb4_CoinEffObj;
+static OMOBJ *mb4_CoinObj;
+static OMOBJ *mb4_MainObj;
 
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
@@ -901,9 +905,241 @@ float MB4_PathTimeGet(float time, HuVecF *p0, HuVecF *p1, HuVecF *p2, HuVecF *p3
 }
 
 
+
+#define MB4_COIN_MAX 32
+
+typedef struct MB4_Coin_s {
+    int mdlId; //0x00
+    int shadowMdlId; //0x04
+    BOOL enableF; //0x08
+    int mode; //0x0C
+    float gravity; //0x10
+    int maxTime; //0x14
+    int time; //0x18
+    HuVecF pos; //0x1C
+    HuVecF rot; //0x28
+    HuVecF scale; //0x34
+    HuVecF srcPos; //0x40
+    HuVecF dstPos; //0x4C
+    HuVecF playerPos[4]; //0x58
+} MB4_COIN; // size 0x88
+
+void MB4_CoinInit(void)
+{
+    MB4_COIN *coin; //r31
+    int j; //r30
+    int i; //r29
+    MB4_COIN *coinTop; //r27
+    OMOBJ *obj; //r28
+    obj = mb4_CoinObj = MBAddObj(32768, 0, 0, MB4_CoinUpdate);
+    coinTop = obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB4_COIN)*MB4_COIN_MAX, HU_MEMNUM_OVL);
+    coin = coinTop;
+    memset(coin, 0, sizeof(MB4_COIN)*MB4_COIN_MAX);
+    mb4_CoinMaxDist.x = 100;
+    mb4_CoinMaxDist.y = 170;
+    mb4_CoinMaxDist.z = 0;
+    for(i=0; i<MB4_COIN_MAX; i++, coin++) {
+        if(i == 0) {
+            coin->mdlId = Hu3DModelCreateData(BOARD_HSF_coin);
+        } else {
+            coin->mdlId = Hu3DModelLink(coinTop->mdlId);
+        }
+        Hu3DModelCameraSet(coin->mdlId, HU3D_CAM0);
+        Hu3DModelDispOff(coin->mdlId);
+        coin->shadowMdlId = Hu3DModelLink(MBModelIdGet(mb4_Work.coinShadowMdlId));
+        Hu3DModelDispOff(coin->shadowMdlId);
+        coin->enableF = FALSE;
+        coin->mode = 0;
+        coin->gravity = 0;
+        coin->maxTime = coin->time = 0;
+        for(j=0; j<4; j++) {
+            MBPlayerPosGet(j, &coin->playerPos[j]);
+        }
+    }
+}
+
+static void MB4_CoinUpdate(OMOBJ *obj)
+{
+    MB4_COIN *coin; //r31
+    int j; //r30
+    int i; //r29
+    BOOL coinGrabF; //r28
+    BOOL coinDisableF; //r26
+
+    float angle;
+    float t;
+    float intensity;
+    float angleX;
+
+    HuVecF effectPos;
+    HuVecF srcPos;
+    HuVecF dstPos;
+    HuVecF pos;
+    HuVecF playerPos;
+    HuVecF oldPlayerPos;
+    HuVecF effectVel;
+    GXColor color;
+    int unk;
+
+    coin = obj->data;
+    if(MBKillCheck() || mb4_CoinObj == NULL) {
+        for(i=0; i<MB4_COIN_MAX; i++, coin++) {
+            Hu3DModelKill(coin->mdlId);
+            coin->mdlId = HU3D_MODELID_NONE;
+            Hu3DModelKill(coin->shadowMdlId);
+            coin->shadowMdlId = HU3D_MODELID_NONE;
+        }
+        omDelObj(mbObjMan, obj);
+        mb4_CoinObj = NULL;
+        return;
+    }
+    for(i=0; i<MB4_COIN_MAX; i++, coin++) {
+        if(!coin->enableF) {
+            continue;
+        }
+        coinDisableF = FALSE;
+        coinGrabF = FALSE;
+        switch(coin->mode) {
+            case 0:
+                t = (++coin->time/(float)coin->maxTime);
+                srcPos = coin->srcPos;
+                dstPos = coin->dstPos;
+                VECSubtract(&dstPos, &srcPos, &pos);
+                VECScale(&pos, &pos, t);
+                VECAdd(&pos, &srcPos, &pos);
+                pos.y += coin->gravity*HuSin(t*180);
+                coin->pos = pos;
+                coin->rot.y += 10;
+                if(t >= 1) {
+                    coin->mode++;
+                    coin->time = 0;
+                }
+                break;
+
+            case 1:
+                coin->pos = coin->dstPos;
+                coin->rot.y += 10;
+                break;
+        }
+        if(coin->mode <= 2) {
+            for(j=0; j<4; j++) {
+                MBPlayerPosGet(j, &playerPos);
+                oldPlayerPos = coin->playerPos[j];
+                VECSubtract(&coin->pos, &playerPos, &pos);
+                unk = 0;
+                if(HuMagXZVecF(&pos) < mb4_CoinMaxDist.x) {
+                    MBPlayerCoinAdd(j, 1);
+                    MBAudFXPlay(7);
+                    coinGrabF = TRUE;
+                }
+                coin->playerPos[j] = playerPos;
+            }
+        }
+        Hu3DModelPosSet(coin->mdlId, coin->pos.x, coin->pos.y, coin->pos.z);
+        Hu3DModelRotSet(coin->mdlId, coin->rot.x, coin->rot.y, coin->rot.z);
+        Hu3DModelScaleSet(coin->mdlId, coin->scale.x, coin->scale.y, coin->scale.z);
+        Hu3DModelPosSet(coin->shadowMdlId, coin->pos.x, -200, coin->pos.z);
+        Hu3DModelRotSet(coin->shadowMdlId, coin->rot.x, coin->rot.y, coin->rot.z);
+        Hu3DModelScaleSet(coin->shadowMdlId, coin->scale.x, coin->scale.y, coin->scale.z);
+        if(coinGrabF || coinDisableF) {
+            coin->enableF = FALSE;
+            Hu3DModelDispOff(coin->mdlId);
+            Hu3DModelDispOff(coin->shadowMdlId);
+            if(coinGrabF) {
+                for(j=0, angle=0; j<32; j++) {
+                    angle += (MBCapsuleEffRandF()+1)*22.5f;
+                    effectPos = coin->pos;
+                    t = (MBCapsuleEffRandF()+1)*2.5f;
+                    angleX = 45-(MBCapsuleEffRandF()*90);
+                    effectVel.x = t*(HuSin(angle)*HuCos(angleX));
+                    effectVel.y = t*(HuCos(angle)*HuCos(angleX));
+                    effectVel.z = t*HuSin(angleX);
+                    intensity = MBCapsuleEffRandF();
+                    color.r = 192+(intensity*63);
+                    color.g = 192+(intensity*63);
+                    color.b = 64+(intensity*63);
+                    color.a = 192+(MBCapsuleEffRandF()*63);
+                    MB4_CoinEffCreate(effectPos, effectVel,
+                        ((MBCapsuleEffRandF()*0.1f)+0.3f)*100,
+                        ((MBCapsuleEffRandF()*0.5f)+1.0f)*(1.0f/60.0f),
+                        0,
+                        color);
+                }
+                break;
+            }
+        }
+    }
+}
+
 void MB4_CoinClose(void)
 {
     mb4_CoinObj = NULL;
+}
+
+int MB4_CoinNumGet(void)
+{
+    MB4_COIN *coin;
+    int i;
+    int num;
+    OMOBJ *obj;
+    obj = mb4_CoinObj;
+    num = 0;
+    if(mb4_CoinObj == NULL) {
+        return 0;
+    }
+    for(coin=obj->data, i=0; i<MB4_COIN_MAX; i++, coin++) {
+        if(coin->enableF) {
+            num++;
+        }
+    }
+    return num;
+}
+
+int MB4_CoinCreate(HuVecF *srcPos, HuVecF *dstPos, float gravity, int maxTime)
+{
+    MB4_COIN *coin; //r31
+    int i; //r30
+    OMOBJ *obj; //r29
+    int temp;
+    obj = mb4_CoinObj;
+    temp = 0;
+    if(mb4_CoinObj == NULL) {
+        return -1;
+    }
+    for(coin=obj->data, i=0; i<MB4_COIN_MAX; i++, coin++) {
+        if(!coin->enableF) {
+            break;
+        }
+    }
+    if(i >= MB4_COIN_MAX) {
+        return -1;
+    }
+    coin->enableF = TRUE;
+    coin->mode = 0;
+    coin->gravity = gravity;
+    coin->maxTime = maxTime;
+    coin->time = 0;
+    if(srcPos != NULL) {
+        coin->srcPos = *srcPos;
+    }
+    if(dstPos != NULL) {
+        coin->dstPos = *dstPos;
+    }
+    coin->pos = coin->srcPos;
+    coin->rot.x = coin->rot.y = coin->rot.z = 0;
+    coin->scale.x = coin->scale.y = coin->scale.z = 1;
+    coin->rot.y = 360.0f*MBCapsuleEffRandF();
+    Hu3DModelPosSet(coin->mdlId, coin->pos.x, coin->pos.y, coin->pos.z);
+    Hu3DModelRotSet(coin->mdlId, coin->rot.x, coin->rot.y, coin->rot.z);
+    Hu3DModelScaleSet(coin->mdlId, coin->scale.x, coin->scale.y, coin->scale.z);
+    Hu3DModelTPLvlSet(coin->mdlId, 1);
+    Hu3DModelDispOn(coin->mdlId);
+    Hu3DModelPosSet(coin->shadowMdlId, coin->pos.x, -200, coin->pos.z);
+    Hu3DModelRotSet(coin->shadowMdlId, coin->rot.x, coin->rot.y, coin->rot.z);
+    Hu3DModelScaleSet(coin->shadowMdlId, coin->scale.x, coin->scale.y, coin->scale.z);
+    Hu3DModelTPLvlSet(coin->shadowMdlId, 1);
+    Hu3DModelDispOn(coin->shadowMdlId);
+    return i;
 }
 
 typedef struct MB4_CoinEffWork_s {
@@ -1014,7 +1250,7 @@ void MB4_CoinEffBlendModeSet(int blendMode)
     }
 }
 
-int MB4_CoinEffCreate(HuVecF *pos, HuVecF *vel, float scale, float speed, float gravity, GXColor color)
+int MB4_CoinEffCreate(HuVecF pos, HuVecF vel, float scale, float speed, float gravity, GXColor color)
 {
     MBEFFECTDATA *effDataP; //r31
     MBEFFECT *effP; //r30
@@ -1038,12 +1274,12 @@ int MB4_CoinEffCreate(HuVecF *pos, HuVecF *vel, float scale, float speed, float 
         return -1;
     }
     effDataP->time = effDataP->parManId = 0;
-    effDataP->pos.x = pos->x;
-    effDataP->pos.y = pos->y;
-    effDataP->pos.z = pos->z;
-    effDataP->vel.x = vel->x;
-    effDataP->vel.y = vel->y;
-    effDataP->vel.z = vel->z;
+    effDataP->pos.x = pos.x;
+    effDataP->pos.y = pos.y;
+    effDataP->pos.z = pos.z;
+    effDataP->vel.x = vel.x;
+    effDataP->vel.y = vel.y;
+    effDataP->vel.z = vel.z;
     effDataP->accel.x = scale;
     effDataP->accel.y = 1;
     effDataP->accel.z = speed;
