@@ -1473,6 +1473,175 @@ void fn_1_3658(M519_MECH *mech)
     mech->mode = 1;
 }
 
+void fn_1_3664(M519_MECH *mech)
+{
+    BOOL deadF = FALSE;
+    float rotStep = 0.2f;
+    float speedStep = 0.2f;
+    float stkX;
+    float stkY;
+    float speed;
+    float rotSpeed;
+    float dx;
+    float dz;
+    float angle;
+
+    while (TRUE) {
+        mech->stkX = 0;
+        mech->stkY = 0;
+        mech->trigL = 0;
+        mech->trigR = 0;
+        mech->btn = 0;
+        mech->btnDown = 0;
+        if (mech->hp > 0) {
+            if (mech->inputF) {
+                if (lbl_1_bss_E8[mech->pilotNo]->comF) {
+                    fn_1_4E18(mech);
+                }
+                else {
+                    fn_1_4D40(mech);
+                }
+            }
+        }
+        else if (!deadF) {
+            HuAudFXPlayPan(lbl_1_rodata_164[lbl_1_bss_E8[mech->pilotNo]->charNo], lbl_1_rodata_1C[mech->type]);
+            HuAudFXPlay(1822);
+            Hu3DModelAttrReset(mech->modelId[8], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrReset(mech->modelId[8], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[8], HU3D_MOTATTR_LOOP);
+            Hu3DMotionTimeSet(mech->modelId[8], 0.0f);
+            fn_1_FD7C(mech->pilotNo, 2, 60);
+            deadF = TRUE;
+        }
+        else if (mech->speed <= 0.0f) {
+            fn_1_817C(mech);
+            return;
+        }
+        if (mech->trigR >= 150 || mech->trigL >= 150) {
+            if (!mech->boostF) {
+                mech->boostF = TRUE;
+                mech->speed = 0.0f;
+                mech->rotSpeed = 0.0f;
+            }
+            speed = mech->speed;
+            stkX = mech->stkX * -mech->accel;
+            stkY = mech->stkY * mech->accel;
+            angle = HuAtan(stkX, stkY);
+            speed = HuMagPoint2D(stkX, stkY);
+            dx = speed * HuSin(angle + mech->rot.y);
+            dz = speed * HuCos(angle + mech->rot.y);
+            mech->speed = speed;
+            rotSpeed = 0.0f;
+            if (stkY > 0.0f && HuAbs(stkY) > HuAbs(stkX)) {
+                fn_1_2FA0(mech, 1, 1.0f + HuAbs(0.5f * stkY));
+            }
+            else if (stkY < 0.0f && HuAbs(stkY) > HuAbs(stkX)) {
+                fn_1_2FA0(mech, 2, 1.0f + HuAbs(0.5f * stkY));
+            }
+            else if (stkX < 0.0f) {
+                fn_1_2FA0(mech, 3, 1.0f + HuAbs(0.5f * stkX));
+            }
+            else if (stkX > 0.0f) {
+                fn_1_2FA0(mech, 4, 1.0f + HuAbs(0.5f * stkX));
+            }
+            else {
+                fn_1_2FA0(mech, 0, 1.0f);
+            }
+            if (stkY != 0.0f && HuAbs(stkY) > HuAbs(stkX)) {
+                if (mech->stepTime >= 0.0f && mech->stepTime < HuAbs(0.5f * stkY)) {
+                    HuAudFXPlayPan(1803, lbl_1_rodata_18[mech->type]);
+                }
+                mech->stepTime += 1.0f + HuAbs(0.5f * stkY);
+            }
+            else if (stkX != 0.0f) {
+                if (mech->stepTime >= 0.0f && mech->stepTime < HuAbs(0.5f * stkX)) {
+                    HuAudFXPlayPan(1803, lbl_1_rodata_18[mech->type]);
+                }
+                mech->stepTime += 1.0f + HuAbs(0.5f * stkX);
+            }
+            if (mech->stepTime >= 80.0f) {
+                mech->stepTime = 0.0f;
+            }
+        }
+        else {
+            if (mech->boostF) {
+                mech->boostF = FALSE;
+                mech->speed = 0.0f;
+            }
+            rotSpeed = mech->rotSpeed;
+            speed = mech->speed;
+            mech->rotSpeedTarget = mech->stkX * -mech->rotAccel;
+            mech->speedTarget = mech->stkY * mech->accel;
+            if (rotSpeed < mech->rotSpeedTarget) {
+                rotSpeed += rotStep;
+                if (rotSpeed > mech->rotSpeedTarget) {
+                    rotSpeed = mech->rotSpeedTarget;
+                }
+            }
+            if (rotSpeed > mech->rotSpeedTarget) {
+                rotSpeed -= rotStep;
+                if (rotSpeed < mech->rotSpeedTarget) {
+                    rotSpeed = mech->rotSpeedTarget;
+                }
+            }
+            if (speed < mech->speedTarget) {
+                speed += speedStep;
+                if (speed > mech->speedTarget) {
+                    speed = mech->speedTarget;
+                }
+            }
+            if (speed > mech->speedTarget) {
+                speed -= speedStep;
+                if (speed < mech->speedTarget) {
+                    speed = mech->speedTarget;
+                }
+            }
+            dx = speed * HuSin(mech->rot.y);
+            dz = speed * HuCos(mech->rot.y);
+            mech->rotSpeed = rotSpeed;
+            mech->speed = speed;
+            if (speed > 0.0f) {
+                fn_1_2FA0(mech, 1, 1.0f + HuAbs(0.5f * speed));
+            }
+            else if (speed < 0.0f) {
+                fn_1_2FA0(mech, 2, 1.0f + HuAbs(0.5f * speed));
+            }
+            else if (rotSpeed != 0.0f) {
+                fn_1_2FA0(mech, 1, 1.0f + HuAbs(0.5f * rotSpeed));
+            }
+            else {
+                fn_1_2FA0(mech, 0, 1.0f);
+            }
+            if (speed != 0.0f) {
+                if ((mech->stepTime >= 0.0f && mech->stepTime < HuAbs(0.5f * speed))
+                    || (mech->stepTime >= 39.0f && mech->stepTime < 39.0f + HuAbs(0.5f * speed))) {
+                    HuAudFXPlayPan(1802, lbl_1_rodata_18[mech->type]);
+                }
+                mech->stepTime += 1.0f + HuAbs(0.5f * speed);
+            }
+            if (rotSpeed != 0.0f) {
+                if ((mech->stepTime >= 0.0f && mech->stepTime < HuAbs(0.5f * rotSpeed))
+                    || (mech->stepTime >= 39.0f && mech->stepTime < 39.0f + HuAbs(0.5f * rotSpeed))) {
+                    HuAudFXPlayPan(1802, lbl_1_rodata_18[mech->type]);
+                }
+                mech->stepTime += 1.0f + HuAbs(0.5f * rotSpeed);
+            }
+            if (mech->stepTime >= 80.0f) {
+                mech->stepTime = 0.0f;
+            }
+        }
+        mech->pos.x += dx;
+        mech->pos.z += dz;
+        mech->rot.y += rotSpeed;
+        fn_1_82E4(mech);
+        fn_1_95B0(mech);
+        fn_1_9700(mech);
+        fn_1_8450(mech);
+        fn_1_8E40(mech);
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+}
+
 void fn_1_4D40(M519_MECH *mech)
 {
     s16 padNo = lbl_1_bss_E8[mech->pilotNo]->padNo;
