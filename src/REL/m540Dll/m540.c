@@ -52,6 +52,15 @@ typedef struct M540CartWork_s {
     s16 unk94;                /* 0x94 */
 } M540_CARTWORK;
 
+/* Work of the player objects (lbl_1_bss_CC) */
+typedef struct M540PlayerWork_s {
+    HuVecF target;  /* 0x00 */
+    int time;       /* 0x0C */
+    int order;      /* 0x10 */
+    HuVecF vel;     /* 0x14 */
+    M540_OBJ *cart; /* 0x20 */
+} M540_PLAYERWORK;
+
 typedef struct M540LightParam_s {
     HuVecF pos;
     HuVecF dir;
@@ -1606,7 +1615,8 @@ static BOOL fn_1_B600(M540_OBJ *obj)
                         fn_1_9008(obj, 0, 0);
                     }
                 }
-                return TRUE;
+                result = TRUE;
+                return result;
             }
         }
     }
@@ -1629,6 +1639,210 @@ static BOOL fn_1_B600(M540_OBJ *obj)
         }
     }
     return result;
+}
+
+static s16 fn_1_BCD4(M540_OBJ *obj)
+{
+    M540_CARTWORK *work = M540_OBJWORK(M540_CARTWORK, obj);
+    return work->unk8C;
+}
+
+static void fn_1_BE68(M540_OBJ *obj);
+static void fn_1_BF4C(M540_OBJ *obj);
+static void fn_1_C800(M540_OBJ *obj);
+static void fn_1_CB5C(M540_OBJ *obj);
+static void fn_1_D0A8(M540_OBJ *obj);
+static void fn_1_CA30(M540_OBJ *obj);
+static void fn_1_D2E8(M540_OBJ *obj);
+static void fn_1_D3F8(M540_OBJ *obj);
+
+static M540_OBJFUNC lbl_1_data_D8[] = {
+    fn_1_BE68,
+    fn_1_BF4C,
+    fn_1_C800,
+    fn_1_CB5C,
+    fn_1_D0A8,
+    fn_1_CA30,
+    fn_1_D2E8,
+    fn_1_D3F8
+};
+
+static M540_OBJ *fn_1_BCF0(int playerNo)
+{
+    M540_OBJ *obj;
+    M540_PLAYERWORK *work;
+    obj = fn_1_13A40(0x1001, 0x2000, playerNo, 7, (u32 *)lbl_1_rodata_120, 6, lbl_1_data_D8, 8);
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM0|HU3D_CAM2);
+    CharEffectLayerSet(1);
+    CharMotionUpdateSet(obj->charNo, lbl_1_rodata_120[obj->charNo][6], FALSE);
+    fn_1_13698(obj);
+    fn_1_13934(obj);
+    fn_1_13774(obj, TRUE);
+    work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    work->vel.x = 0;
+    work->vel.y = 0;
+    work->vel.z = 0;
+    work->cart = NULL;
+    fn_1_13874(obj, 0, 0, 0, HU3D_MOTATTR_LOOP);
+    obj->mode = 0;
+    return obj;
+}
+
+static void fn_1_BE5C(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_BE68(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_BF10(M540_OBJ *obj, HuVecF *target, int time)
+{
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    work->target = *target;
+    work->time = time;
+    obj->mode = 1;
+}
+
+static void fn_1_C2CC(M540_OBJ *obj);
+
+static void fn_1_BF4C(M540_OBJ *obj)
+{
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    HuVecF pos;
+    MathCircle circleA;
+    MathCircle circleB;
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    work->vel.x = (work->target.x-pos.x)/work->time;
+    work->vel.z = (work->target.z-pos.z)/work->time;
+    work->vel.y = 0;
+    while(1) {
+        fn_1_C2CC(obj);
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        circleA.center.x = work->target.x;
+        circleA.center.y = work->target.z;
+        circleA.radius = 10.0f;
+        circleB.center.x = pos.x;
+        circleB.center.y = pos.z;
+        circleB.radius = (work->vel.x > work->vel.z) ? work->vel.x : work->vel.z;
+        if(MathCircleCircleCheck(&circleA, &circleB)) {
+            break;
+        }
+        M540_OBJ_SLEEP(1);
+    }
+    work->vel.x = 0;
+    work->vel.y = 0;
+    work->vel.z = 0;
+    fn_1_13498(obj, work->target.x, work->target.y, work->target.z);
+    fn_1_13874(obj, 0, 0, 8.0f, HU3D_MOTATTR_LOOP);
+    if(obj->mode == 1) {
+        obj->mode = 0;
+    }
+}
+
+static void fn_1_C2CC(M540_OBJ *obj)
+{
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    int motNo;
+    float speed;
+    HuVecF pos;
+    HuVecF rot;
+    fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+    fn_1_13580(obj, &rot.x, &rot.y, &rot.z);
+    motNo = 0;
+    speed = sqrtf(HuSquare(work->vel.x)+HuSquare(work->vel.z));
+    if(speed >= 0.4f) {
+        if(speed >= 10.0f) {
+            work->vel.x /= speed;
+            work->vel.z /= speed;
+            speed = 10.0f;
+            work->vel.x *= speed;
+            work->vel.z *= speed;
+        }
+        rot.y = fn_1_15444(rot.y, HuAtan(work->vel.x, work->vel.z), 0.4f);
+        if(speed >= 8.0f) {
+            motNo = 2;
+        } else {
+            motNo = 1;
+        }
+    }
+    pos.x += work->vel.x;
+    pos.z += work->vel.z;
+    pos.y += work->vel.y;
+    fn_1_13498(obj, pos.x, pos.y, pos.z);
+    fn_1_1352C(obj, rot.x, rot.y, rot.z);
+    if(motNo != fn_1_138F0(obj)) {
+        fn_1_13874(obj, motNo, 0, 8.0f, HU3D_MOTATTR_LOOP);
+    }
+    CharModelVoicePanSet(obj->charNo, fn_1_110A8(pos));
+}
+
+static void fn_1_C7DC(M540_OBJ *obj, int order)
+{
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    work->order = order;
+    obj->mode = 2;
+}
+
+static void fn_1_C800(M540_OBJ *obj)
+{
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    work->target.x = -13550.0f+(200.0f*work->order);
+    work->target.y = 0;
+    work->target.z = 500.0f;
+    work->time = 120;
+    fn_1_BF4C(obj);
+    work->target.z = 470.0f;
+    work->time = 10;
+    fn_1_BF4C(obj);
+    obj->mode = 0;
+}
+
+static void fn_1_C8D8(M540_OBJ *obj, M540_OBJ *cart)
+{
+    M540_CARTWORK *cartWork;
+    M540_PLAYERWORK *work;
+    fn_1_13498(obj, 0, 0, 0);
+    work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    work->cart = cart;
+    cartWork = M540_OBJWORK(M540_CARTWORK, cart);
+    cartWork->rider = obj;
+    CharMotionVoiceOnSet(obj->charNo, lbl_1_rodata_120[obj->charNo][6], FALSE);
+    fn_1_13874(obj, 6, 0, 0, HU3D_MOTATTR_PAUSE);
+    fn_1_139C8(cart, fn_1_8438(cart), obj);
+    fn_1_1352C(obj, 0, 90.0f, 0);
+    obj->mode = 5;
+}
+
+static void fn_1_CA30(M540_OBJ *obj)
+{
+    float ofsY;
+    float rotY;
+    M540_OBJ *cart;
+    ofsY = 0;
+    rotY = 90.0f;
+    if(obj->charNo == CHARNO_TERESA) {
+        ofsY = 20.0f;
+    }
+    cart = fn_1_CB34(obj);
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static M540_OBJ *fn_1_CB34(M540_OBJ *obj)
+{
+    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    return work->cart;
+}
+
+static void fn_1_CB50(M540_OBJ *obj)
+{
+    obj->mode = 3;
 }
 
 /* M540_APPEND */
