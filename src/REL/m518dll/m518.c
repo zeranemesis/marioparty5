@@ -1682,6 +1682,266 @@ inline void fn_1_A480(M518_MAP *map, M518_CELL cell, s16 dist)
     }
 }
 
+typedef void (*M518_CHARFUNC)(M518_CHAR *chr);
+
+M518_CHARFUNC lbl_1_data_64[4] = { fn_1_B60C, fn_1_B6B8, fn_1_B7AC, fn_1_ACAC };
+
+#define M518_CHARMOT(charName)                                                                                                   \
+    {                                                                                                                            \
+        CHARMOT_DATANUM(CHARMOT_HSF_c000m1_300, charName), CHARMOT_DATANUM(CHARMOT_HSF_c000m1_303, charName),                    \
+            CHARMOT_DATANUM(CHARMOT_HSF_c000m1_304, charName), CHARMOT_DATANUM(CHARMOT_HSF_c000m1_358, charName),                \
+            CHARMOT_DATANUM(CHARMOT_HSF_c000m1_302, charName), CHARMOT_DATANUM(CHARMOT_HSF_c000m1_320, charName),                \
+            CHARMOT_DATANUM(CHARMOT_HSF_c000m1_319, charName),                                                                   \
+    }
+
+static const s32 lbl_1_rodata_1508[13][7] = {
+    M518_CHARMOT(mario),
+    M518_CHARMOT(luigi),
+    M518_CHARMOT(peach),
+    M518_CHARMOT(yoshi),
+    M518_CHARMOT(wario),
+    M518_CHARMOT(daisy),
+    M518_CHARMOT(waluigi),
+    M518_CHARMOT(kinopio),
+    M518_CHARMOT(teresa),
+    M518_CHARMOT(minikoopa),
+    M518_CHARMOT(minikoopa),
+    M518_CHARMOT(minikoopa),
+    M518_CHARMOT(minikoopa),
+};
+
+M518_CHAR *fn_1_A9A4(s16 playerNo)
+{
+    M518_CHAR *chr;
+    int i;
+
+    chr = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M518_CHAR), HU_MEMNUM_OVL);
+    chr->playerNo = playerNo;
+    chr->pos.x = 0.0f;
+    chr->pos.y = 0.0f;
+    chr->pos.z = 0.0f;
+    chr->comF = GwPlayerConf[playerNo].type;
+    chr->dif = GwPlayerConf[playerNo].dif;
+    chr->charNo = GwPlayerConf[playerNo].charNo;
+    chr->modelId = CharModelCreate(chr->charNo, CHAR_MODEL1);
+    for (i = 0; i < 7; i++) {
+        chr->motId[i] = CharMotionCreate(chr->charNo, lbl_1_rodata_1508[chr->charNo][i]);
+    }
+    CharMotionDataClose(chr->charNo);
+    Hu3DModelShadowSet(chr->modelId);
+    chr->mode = 0;
+    chr->prevMode = 0;
+    Hu3DMotionSet(chr->modelId, chr->motId[0]);
+    Hu3DModelAttrSet(chr->modelId, HU3D_MOTATTR_LOOP);
+    chr->process = HuPrcChildCreate(fn_1_AB3C, 0x1100, 0x1800, 0, HuPrcCurrentGet());
+    chr->process->property = chr;
+    return chr;
+}
+
+void fn_1_AB3C(void)
+{
+    M518_CHAR *chr = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_64[chr->mode](chr);
+    }
+}
+
+void fn_1_AB7C(M518_CHAR *chr, HuVecF target, s16 time, s16 delay)
+{
+    chr->target = target;
+    chr->time = time;
+    chr->delay = delay;
+    chr->mode = 3;
+}
+
+float fn_1_ABA8(float start, float end, float t)
+{
+    float diff;
+    float angle;
+
+    diff = fmod(end - start, 360.0);
+    if (diff < 0.0f) {
+        diff += 360.0f;
+    }
+    if (diff > 180.0f) {
+        diff -= 360.0f;
+    }
+    angle = fmod(start + diff * t, 360.0);
+    if (angle < 0.0f) {
+        angle += 360.0f;
+    }
+    return angle;
+}
+
+static inline float fn_1_EaseOut(float t)
+{
+    return HuSin(90.0f * t);
+}
+
+// NONMATCHING: float register allocation of the inlined angle lerp temporaries
+void fn_1_ACAC(M518_CHAR *chr)
+{
+    int i;
+    float t;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+    HuVecF rot;
+    HuVecF dir;
+
+    M518_WAIT(chr->delay);
+    Hu3DMotionSet(chr->modelId, chr->motId[4]);
+    Hu3DModelAttrSet(chr->modelId, HU3D_MOTATTR_LOOP);
+    CharModelStepFxSet(chr->charNo, 2);
+    start = chr->pos;
+    end = chr->target;
+    for (i = 0; i < chr->time - 60; i++) {
+        t = (1.0f / chr->time) * (i + 1);
+        pos.x = start.x + t * (end.x - start.x);
+        pos.z = start.z + t * (end.z - start.z);
+        pos.y = start.y + t * (end.y - start.y);
+        dir.x = pos.x - chr->pos.x;
+        dir.z = pos.z - chr->pos.z;
+        rot.y = fn_1_ABA8(chr->rot.y, HuAtan(dir.x, dir.z), 0.4f);
+        rot.x = 0.0f;
+        rot.z = 0.0f;
+        fn_1_BB00(chr, pos);
+        fn_1_BB60(chr, rot);
+        CharModelVoicePanSet(chr->charNo, fn_1_E6B8(chr->pos));
+        CharModelVoiceVolSet(chr->charNo, fn_1_E5BC(chr->pos));
+        M518_WAIT(1);
+    }
+    Hu3DMotionShiftSet(chr->modelId, chr->motId[6], 0.0f, 8.0f, HU3D_MOTATTR_NONE);
+    start = chr->pos;
+    end = chr->pos;
+    end.x -= 400.0f;
+    for (i = 0; i < 60; i++) {
+        t = fn_1_EaseOut((1.0f / 60) * (i + 1));
+        pos.x = start.x + t * (end.x - start.x);
+        pos.z = start.z + t * (end.z - start.z);
+        pos.y = start.y + t * (end.y - start.y);
+        dir.x = pos.x - chr->pos.x;
+        dir.z = pos.z - chr->pos.z;
+        rot.y = fn_1_ABA8(chr->rot.y, HuAtan(dir.x, dir.z), 0.4f);
+        rot.x = 0.0f;
+        rot.z = 0.0f;
+        fn_1_BB00(chr, pos);
+        fn_1_BB60(chr, rot);
+        if (i == 24) {
+            CharEffectDustCreate(HU3D_CAM0, 4.0f, &pos);
+        }
+        CharModelVoicePanSet(chr->charNo, fn_1_E6B8(chr->pos));
+        CharModelVoiceVolSet(chr->charNo, fn_1_E5BC(chr->pos));
+        M518_WAIT(1);
+    }
+    M518_WAIT(15);
+    Hu3DMotionShiftSet(chr->modelId, chr->motId[5], 0.0f, 8.0f, HU3D_MOTATTR_NONE);
+    Hu3DMotionShiftSpeedSet(chr->modelId, 0.3f);
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_B600(M518_CHAR *chr)
+{
+    chr->mode = 0;
+}
+
+void fn_1_B60C(M518_CHAR *chr)
+{
+    Hu3DMotionSet(chr->modelId, chr->motId[0]);
+    Hu3DModelAttrSet(chr->modelId, HU3D_MOTATTR_LOOP);
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_B6AC(M518_CHAR *chr)
+{
+    chr->mode = 1;
+}
+
+void fn_1_B6B8(M518_CHAR *chr)
+{
+    CharModelVoicePanSet(chr->charNo, fn_1_E6B8(chr->pos));
+    CharModelVoiceVolSet(chr->charNo, 127);
+    Hu3DMotionShiftSet(chr->modelId, chr->motId[3], 0.0f, 8.0f, HU3D_MOTATTR_NONE);
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_B7A0(M518_CHAR *chr)
+{
+    chr->mode = 2;
+}
+
+static const float lbl_1_rodata_1688[13] = {
+    225.0f, 225.0f, 225.0f, 225.0f, 225.0f, 225.0f, 225.0f, 225.0f, 225.0f, 250.0f, 250.0f, 250.0f, 250.0f,
+};
+
+void fn_1_B7AC(M518_CHAR *chr)
+{
+    int i;
+    float t;
+    float s;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+
+    Hu3DMotionShiftSet(chr->modelId, chr->motId[1], 0.0f, 8.0f, HU3D_MOTATTR_NONE);
+    Hu3DModelAttrReset(chr->modelId, HU3D_MOTATTR_LOOP);
+    start = chr->pos;
+    start.y = 0.0f;
+    end = chr->pos;
+    end.x += lbl_1_rodata_1688[chr->charNo];
+    end.y += 200.0f;
+    for (i = 0; i < 40; i++) {
+        t = (1.0f / 40) * (i + 1);
+        s = HuSin(180.0f * t);
+        pos.x = start.x + t * (end.x - start.x);
+        pos.y = start.y + s * (end.y - start.y);
+        pos.z = end.z;
+        if (i < 20 && pos.y < chr->pos.y) {
+            pos.y = chr->pos.y;
+        }
+        fn_1_BB00(chr, pos);
+        CharModelVoicePanSet(chr->charNo, fn_1_E6B8(chr->pos));
+        CharModelVoiceVolSet(chr->charNo, fn_1_E5BC(chr->pos));
+        M518_WAIT(1);
+        if (i == 36) {
+            Hu3DMotionShiftSet(chr->modelId, chr->motId[2], 0.0f, 8.0f, HU3D_MOTATTR_NONE);
+            Hu3DModelAttrReset(chr->modelId, HU3D_MOTATTR_LOOP);
+        }
+    }
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_BB00(M518_CHAR *chr, HuVecF pos)
+{
+    Hu3DModelPosSet(chr->modelId, pos.x, pos.y, pos.z);
+    chr->pos = pos;
+}
+
+void fn_1_BB60(M518_CHAR *chr, HuVecF rot)
+{
+    Hu3DModelRotSet(chr->modelId, rot.x, rot.y, rot.z);
+    chr->rot = rot;
+}
+
+void fn_1_BBC0(M518_CHAR *chr)
+{
+    Hu3DModelAttrReset(chr->modelId, HU3D_ATTR_DISPOFF);
+}
+
+void fn_1_BBF4(M518_CHAR *chr)
+{
+    Hu3DModelAttrSet(chr->modelId, HU3D_ATTR_DISPOFF);
+}
+
 M518_QUEUE *fn_1_DC14(int size)
 {
     M518_QUEUE *queue;
