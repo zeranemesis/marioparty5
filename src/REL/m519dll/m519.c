@@ -313,7 +313,7 @@ void fn_1_8188(M519_MECH *mech);
 void fn_1_82E4(M519_MECH *mech);
 void fn_1_8450(M519_MECH *mech);
 void fn_1_8D40(M519_MECH *mech);
-s32 fn_1_8DD0(M519_MECH *mech);
+s16 fn_1_8DD0(M519_MECH *mech);
 void fn_1_8E40(M519_MECH *mech);
 void fn_1_95B0(M519_MECH *mech);
 void fn_1_9700(M519_MECH *mech);
@@ -1570,7 +1570,7 @@ void fn_1_8D40(M519_MECH *mech)
     mech->turretRot = 180.0 + HuAtan(mech->pos.x - target->pos.x, mech->pos.z - target->pos.z);
 }
 
-s32 fn_1_8DD0(M519_MECH *mech)
+s16 fn_1_8DD0(M519_MECH *mech)
 {
     if (mech->chargeB > 0) {
         if (mech->chargeB >= 90) {
@@ -2700,4 +2700,727 @@ BOOL fn_1_CFE8(M519_PARTICLE *particle)
         }
     }
     return FALSE;
+}
+
+M519_HUD *fn_1_D0BC(s16 type, s16 mechNo)
+{
+    static const int sprTbl[4][18] = {
+        { M519_DATANUM(76), M519_DATANUM(73), M519_DATANUM(75), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74),
+            M519_DATANUM(80), M519_DATANUM(81), M519_DATANUM(82), M519_DATANUM(83), M519_DATANUM(84), M519_DATANUM(85), M519_DATANUM(86),
+            M519_DATANUM(87), M519_DATANUM(88), M519_DATANUM(89), M519_DATANUM(90) },
+        { M519_DATANUM(77), M519_DATANUM(73), M519_DATANUM(75), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74),
+            M519_DATANUM(80), M519_DATANUM(81), M519_DATANUM(82), M519_DATANUM(83), M519_DATANUM(84), M519_DATANUM(85), M519_DATANUM(86),
+            M519_DATANUM(87), M519_DATANUM(88), M519_DATANUM(91), M519_DATANUM(92) },
+        { M519_DATANUM(78), M519_DATANUM(73), M519_DATANUM(75), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74),
+            M519_DATANUM(80), M519_DATANUM(81), M519_DATANUM(82), M519_DATANUM(83), M519_DATANUM(84), M519_DATANUM(85), M519_DATANUM(86),
+            M519_DATANUM(87), M519_DATANUM(88), M519_DATANUM(91), M519_DATANUM(92) },
+        { M519_DATANUM(79), M519_DATANUM(73), M519_DATANUM(75), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74), M519_DATANUM(74),
+            M519_DATANUM(80), M519_DATANUM(81), M519_DATANUM(82), M519_DATANUM(83), M519_DATANUM(84), M519_DATANUM(85), M519_DATANUM(86),
+            M519_DATANUM(87), M519_DATANUM(88), M519_DATANUM(91), M519_DATANUM(92) },
+    };
+    static const HuVec2f ofsTbl[4][18] = {
+        {
+            { 0.0f, 0.0f }, { -84.0f, -16.0f }, { -32.0f, 0.0f }, { -84.0f, -16.0f }, { -84.0f, -16.0f }, { -84.0f, -16.0f }, { -84.0f, -16.0f },
+            { 111.0f, -3.0f }, { 111.0f, -3.0f }, { 111.0f, -3.0f }, { 129.0f, -22.0f }, { 129.0f, -22.0f }, { 129.0f, -22.0f },
+            { 148.5f, -41.5f }, { 148.5f, -41.5f }, { 148.5f, -41.5f }, { 24.0f, -28.0f }, { 24.0f, -28.0f },
+        },
+        {
+            { 0.0f, 0.0f }, { -88.0f, -40.0f }, { -14.0f, 78.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
+            { -24.0f, -15.0f }, { -24.0f, -15.0f }, { -24.0f, -15.0f }, { -4.0f, -35.0f }, { -4.0f, -35.0f }, { -4.0f, -35.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 8.0f, -31.0f }, { 8.0f, -31.0f },
+        },
+        {
+            { 0.0f, 0.0f }, { -88.0f, -40.0f }, { -14.0f, 61.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
+            { -24.0f, -33.0f }, { -24.0f, -33.0f }, { -24.0f, -33.0f }, { -4.0f, -52.0f }, { -4.0f, -52.0f }, { -4.0f, -52.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 8.0f, -48.0f }, { 8.0f, -48.0f },
+        },
+        {
+            { 0.0f, 0.0f }, { -88.0f, -40.0f }, { -14.0f, 42.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f },
+            { -24.0f, -49.5f }, { -24.0f, -49.5f }, { -24.0f, -49.5f }, { -4.0f, -69.0f }, { -4.0f, -69.0f }, { -4.0f, -69.0f },
+            { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f }, { 8.0f, -64.0f }, { 8.0f, -64.0f },
+        },
+    };
+    M519_HUD *hud;
+    int i;
+
+    hud = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M519_HUD), HU_MEMNUM_OVL);
+    hud->type = type;
+    hud->unk6 = 0;
+    hud->mechNo = mechNo;
+    hud->mode = 0;
+    hud->prevMode = 0;
+    for (i = 0; i < 18; i++) {
+        if (sprTbl[type][i] != -1) {
+            hud->sprId[i] = espEntry(sprTbl[type][i], 0, 0);
+            espDispOff(hud->sprId[i]);
+        }
+        else {
+            hud->sprId[i] = -1;
+        }
+    }
+    switch (hud->type) {
+        case 0:
+            espPriSet(hud->sprId[0], 1000);
+            espPriSet(hud->sprId[1], 900);
+            espPriSet(hud->sprId[2], 900);
+            espPriSet(hud->sprId[3], 950);
+            espPriSet(hud->sprId[4], 960);
+            espPriSet(hud->sprId[5], 970);
+            espPriSet(hud->sprId[6], 980);
+            espPriSet(hud->sprId[7], 900);
+            espPriSet(hud->sprId[8], 910);
+            espPriSet(hud->sprId[9], 920);
+            espPriSet(hud->sprId[10], 900);
+            espPriSet(hud->sprId[11], 910);
+            espPriSet(hud->sprId[12], 920);
+            espPriSet(hud->sprId[13], 900);
+            espPriSet(hud->sprId[14], 910);
+            espPriSet(hud->sprId[15], 920);
+            espPriSet(hud->sprId[16], 900);
+            espPriSet(hud->sprId[17], 900);
+            espScaleSet(hud->sprId[7], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[8], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[9], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[10], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[11], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[12], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[13], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[14], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[15], 0.6f, 0.6f);
+            break;
+        case 1:
+        case 2:
+        case 3:
+            espPriSet(hud->sprId[0], 1000);
+            espPriSet(hud->sprId[1], 900);
+            espPriSet(hud->sprId[2], 900);
+            espPriSet(hud->sprId[3], 950);
+            espPriSet(hud->sprId[4], 960);
+            espPriSet(hud->sprId[5], 970);
+            espPriSet(hud->sprId[6], 980);
+            espPriSet(hud->sprId[7], 900);
+            espPriSet(hud->sprId[8], 910);
+            espPriSet(hud->sprId[9], 920);
+            espPriSet(hud->sprId[10], 900);
+            espPriSet(hud->sprId[11], 910);
+            espPriSet(hud->sprId[12], 920);
+            espPriSet(hud->sprId[16], 900);
+            espPriSet(hud->sprId[17], 900);
+            espScaleSet(hud->sprId[7], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[8], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[9], 0.6f, 0.6f);
+            espScaleSet(hud->sprId[10], 0.35f, 0.35f);
+            espScaleSet(hud->sprId[11], 0.35f, 0.35f);
+            espScaleSet(hud->sprId[12], 0.35f, 0.35f);
+            espScaleSet(hud->sprId[16], 0.58f, 0.58f);
+            espScaleSet(hud->sprId[17], 0.68f, 0.68f);
+            break;
+    }
+    for (i = 0; i < 18; i++) {
+        hud->ofs[i] = ofsTbl[type][i];
+    }
+    hud->process = HuPrcChildCreate(fn_1_D610, 4096, 6144, 0, HuPrcCurrentGet());
+    hud->process->property = hud;
+    return hud;
+}
+
+void fn_1_D610(void)
+{
+    M519_HUD *hud = HuPrcCurrentGet()->property;
+
+    while (TRUE) {
+        lbl_1_data_7C[hud->type][hud->mode](hud);
+    }
+}
+
+void fn_1_D65C(M519_HUD *hud, HuVec2f pos)
+{
+    int i;
+
+    hud->pos = pos;
+    for (i = 0; i < 18; i++) {
+        if (hud->sprId[i] != -1) {
+            espPosSet(hud->sprId[i], pos.x + hud->ofs[i].x, pos.y + hud->ofs[i].y);
+        }
+    }
+}
+
+HuVec2f fn_1_D708(M519_HUD *hud)
+{
+    return hud->pos;
+}
+
+void fn_1_D714(M519_HUD *hud)
+{
+    hud->mode = 0;
+}
+
+void fn_1_D720(M519_HUD *hud)
+{
+    while (TRUE) {
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+}
+
+void fn_1_D7B0(M519_HUD *hud)
+{
+    hud->mode = 1;
+}
+
+void fn_1_D7BC(M519_HUD *hud)
+{
+    M519_MECH *mech;
+    int i;
+    int j;
+    float t;
+    float s;
+    HuVec2f pos;
+    HuVec2f newPos;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    pos = hud->pos;
+    espDispOn(hud->sprId[0]);
+    for (i = 1; i <= 60; i++) {
+        t = (1.0f / 60.0f) * i;
+        newPos.x = pos.x;
+        newPos.y = pos.y - (100.0 * HuSin(90.0f * t));
+        fn_1_D65C(hud, newPos);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+    pos.y -= 100.0f;
+    fn_1_D65C(hud, pos);
+    espDispOn(hud->sprId[2]);
+    espDispOn(hud->sprId[1]);
+    espDispOn(hud->sprId[3]);
+    espDispOn(hud->sprId[4]);
+    espDispOn(hud->sprId[5]);
+    espDispOn(hud->sprId[6]);
+    espDispOn(hud->sprId[7]);
+    espDispOn(hud->sprId[8]);
+    espDispOn(hud->sprId[9]);
+    espDispOn(hud->sprId[10]);
+    espDispOn(hud->sprId[11]);
+    espDispOn(hud->sprId[12]);
+    espDispOn(hud->sprId[13]);
+    espDispOn(hud->sprId[14]);
+    espDispOn(hud->sprId[15]);
+    espDispOn(hud->sprId[16]);
+    fn_1_E298(hud);
+    fn_1_E2D4(hud);
+    fn_1_E714(hud);
+    for (j = 1; j <= 100; j++) {
+        t = 0.01f * j;
+        s = HuSin(90.0f * t);
+        espScaleSet(hud->sprId[2], 108.0f * s, 0.8f);
+        espTPLvlSet(hud->sprId[2], 0.8f * s);
+        espTPLvlSet(hud->sprId[7], s);
+        espTPLvlSet(hud->sprId[8], 0.0f);
+        espTPLvlSet(hud->sprId[9], 0.0f);
+        espTPLvlSet(hud->sprId[10], s);
+        espTPLvlSet(hud->sprId[11], 0.0f);
+        espTPLvlSet(hud->sprId[12], 0.0f);
+        espTPLvlSet(hud->sprId[13], s);
+        espTPLvlSet(hud->sprId[14], 0.0f);
+        espTPLvlSet(hud->sprId[15], 0.0f);
+        espTPLvlSet(hud->sprId[16], 0.2f * s);
+        espZRotSet(hud->sprId[1], 720.0f * s);
+        espTPLvlSet(hud->sprId[1], 0.5f * s);
+        for (i = 0; i < 4; i++) {
+            espTPLvlSet(hud->sprId[i + 3], s);
+        }
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+    fn_1_E168(hud);
+}
+
+void fn_1_DD08(M519_HUD *hud)
+{
+    M519_MECH *mech;
+    int i;
+    float t;
+    float s;
+    HuVec2f pos;
+    HuVec2f newPos;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    pos = hud->pos;
+    espDispOn(hud->sprId[0]);
+    for (i = 1; i <= 60; i++) {
+        t = (1.0f / 60.0f) * i;
+        newPos.x = pos.x - (96.0 * HuSin(90.0f * t));
+        newPos.y = pos.y;
+        fn_1_D65C(hud, newPos);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+    pos.x -= 96.0f;
+    fn_1_D65C(hud, pos);
+    espDispOn(hud->sprId[7]);
+    espDispOn(hud->sprId[8]);
+    espDispOn(hud->sprId[9]);
+    espDispOn(hud->sprId[2]);
+    espDispOn(hud->sprId[16]);
+    for (i = 1; i <= 100; i++) {
+        t = 0.01f * i;
+        s = HuSin(90.0f * t);
+        espTPLvlSet(hud->sprId[7], s);
+        espTPLvlSet(hud->sprId[8], 0.0f);
+        espTPLvlSet(hud->sprId[9], 0.0f);
+        espTPLvlSet(hud->sprId[10], s);
+        espTPLvlSet(hud->sprId[11], 0.0f);
+        espTPLvlSet(hud->sprId[12], 0.0f);
+        espTPLvlSet(hud->sprId[16], 0.2f * s);
+        espZRotSet(hud->sprId[2], -90.0f);
+        espScaleSet(hud->sprId[2], 72.0f * s, 0.8f);
+        espTPLvlSet(hud->sprId[2], 0.8f * s);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+    fn_1_E168(hud);
+}
+
+void fn_1_E168(M519_HUD *hud)
+{
+    hud->mode = 2;
+}
+
+void fn_1_E174(M519_HUD *hud)
+{
+    while (TRUE) {
+        fn_1_E298(hud);
+        fn_1_E2D4(hud);
+        fn_1_E714(hud);
+        fn_1_EA10(hud);
+        fn_1_D65C(hud, hud->pos);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+}
+
+void fn_1_E298(M519_HUD *hud)
+{
+    espZRotSet(hud->sprId[1], 0.0f);
+}
+
+void fn_1_E2D4(M519_HUD *hud)
+{
+    HuVecF radarCircle;
+    HuVecF blipCircle;
+    HuVecF selfRot;
+    HuVecF otherRot;
+    HuVecF selfPos;
+    HuVecF otherPos;
+    HuVec2f blip;
+    HuVec2f dir;
+    int i;
+    s16 sprId;
+    s32 no;
+    float angle;
+    float dist;
+
+    radarCircle.x = 0.0f;
+    radarCircle.y = 0.0f;
+    radarCircle.z = 30.0f;
+    selfPos = fn_1_3274(lbl_1_bss_F8[hud->mechNo]);
+    selfRot = fn_1_34FC(lbl_1_bss_F8[hud->mechNo]);
+    for (i = 0; i < 4; i++) {
+        if (i != hud->mechNo) {
+            otherPos = fn_1_3274(lbl_1_bss_F8[i]);
+            otherRot = fn_1_34FC(lbl_1_bss_F8[i]);
+            dir.x = otherPos.x - selfPos.x;
+            dir.y = otherPos.z - selfPos.z;
+            angle = 180.0 + HuAtan(dir.x, dir.y);
+            dist = HuMagVec2F(&dir);
+            blip.x = (0.015f * dist) * HuSin(angle - selfRot.y);
+            blip.y = (0.015f * dist) * HuCos(angle - selfRot.y);
+            blipCircle.x = blip.x;
+            blipCircle.y = -blip.y;
+            blipCircle.z = 4.0f;
+            blip.x -= 84.0f;
+            blip.y -= 16.0f;
+            no = i + 3;
+            hud->ofs[no] = blip;
+            sprId = hud->sprId[no];
+            if (!fn_1_A1D4(lbl_1_bss_F8[i]) && fn_1_F860(&radarCircle, &blipCircle, FALSE)) {
+                espZRotSet(sprId, selfRot.y - otherRot.y);
+                espDispOn(sprId);
+            }
+            else {
+                espDispOff(sprId);
+            }
+        }
+    }
+}
+
+void fn_1_E714(M519_HUD *hud)
+{
+    M519_MECH *mech;
+    float speedMax;
+    s16 knockback;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    espScaleSet(hud->sprId[2], 108.0f * ((1.0f / mech->hpMax) * mech->hpDisp), 0.8f);
+    if (mech->hpDisp > mech->hp) {
+        mech->hpDisp--;
+    }
+    else if (mech->hpDisp < mech->hp) {
+        mech->hpDisp++;
+    }
+    speedMax = 56.0f * HuAbs(mech->accel);
+    espTPLvlSet(hud->sprId[14], (1.0f / speedMax) * mech->speed);
+    espTPLvlSet(hud->sprId[15], (1.0f / speedMax) * mech->speed);
+    espTPLvlSet(hud->sprId[8], 0.125f * mech->shotWait);
+    espTPLvlSet(hud->sprId[9], 0.125f * mech->shotWait);
+    knockback = (mech->knockback > 10.0f) ? 10.0f : mech->knockback;
+    espTPLvlSet(hud->sprId[11], 0.1f * knockback);
+    espTPLvlSet(hud->sprId[12], 0.1f * knockback);
+}
+
+void fn_1_EA10(M519_HUD *hud)
+{
+    M519_MECH *mech;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    espDispOff(hud->sprId[16]);
+    espDispOff(hud->sprId[17]);
+    if (mech->chargeB > 0) {
+        switch (fn_1_8DD0(mech)) {
+            case 0:
+                espDispOn(hud->sprId[17]);
+                espTPLvlSet(hud->sprId[17], 0.2f + (0.008888889f * mech->chargeB));
+                break;
+            case 1:
+                if ((mech->chargeB / 4) % 2 == 0) {
+                    espDispOn(hud->sprId[17]);
+                    espTPLvlSet(hud->sprId[17], 1.0f);
+                }
+                break;
+            case 2:
+                if ((mech->chargeB / 2) % 2 == 0) {
+                    espDispOn(hud->sprId[17]);
+                    espTPLvlSet(hud->sprId[17], 1.0f);
+                }
+                break;
+        }
+    }
+    else {
+        switch (fn_1_8DD0(mech)) {
+            case 0:
+                espDispOn(hud->sprId[16]);
+                espTPLvlSet(hud->sprId[16], 0.2f + (0.008888889f * mech->chargeA));
+                break;
+            case 1:
+                if ((mech->chargeA / 4) % 2 == 0) {
+                    espDispOn(hud->sprId[16]);
+                    espTPLvlSet(hud->sprId[16], 1.0f);
+                }
+                break;
+            case 2:
+                if ((mech->chargeA / 2) % 2 == 0) {
+                    espDispOn(hud->sprId[16]);
+                    espTPLvlSet(hud->sprId[16], 1.0f);
+                }
+                break;
+        }
+    }
+}
+
+void fn_1_ED78(M519_HUD *hud)
+{
+    while (TRUE) {
+        fn_1_EE8C(hud);
+        fn_1_F104(hud);
+        fn_1_D65C(hud, hud->pos);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+}
+
+void fn_1_EE8C(M519_HUD *hud)
+{
+    M519_MECH *mech;
+    s16 knockback;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    espZRotSet(hud->sprId[2], -90.0f);
+    espScaleSet(hud->sprId[2], 72.0f * ((1.0f / mech->hpMax) * mech->hpDisp), 0.8f);
+    if (mech->hpDisp > mech->hp) {
+        mech->hpDisp--;
+    }
+    else if (mech->hpDisp < mech->hp) {
+        mech->hpDisp++;
+    }
+    espTPLvlSet(hud->sprId[8], 0.125f * mech->shotWait);
+    espTPLvlSet(hud->sprId[9], 0.125f * mech->shotWait);
+    knockback = (mech->knockback > 10.0f) ? 10.0f : mech->knockback;
+    espTPLvlSet(hud->sprId[11], 0.1f * knockback);
+    espTPLvlSet(hud->sprId[12], 0.1f * knockback);
+}
+
+void fn_1_F104(M519_HUD *hud)
+{
+    M519_MECH *mech;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    espDispOff(hud->sprId[16]);
+    espDispOff(hud->sprId[17]);
+    switch (fn_1_8DD0(mech)) {
+        case 0:
+            espDispOn(hud->sprId[16]);
+            espTPLvlSet(hud->sprId[16], 0.2f + (0.008888889f * mech->chargeB));
+            break;
+        case 1:
+            if ((mech->chargeB / 4) % 2 == 0) {
+                espDispOn(hud->sprId[16]);
+                espTPLvlSet(hud->sprId[16], 1.0f);
+            }
+            break;
+        case 2:
+            if ((mech->chargeB / 2) % 2 == 0) {
+                espDispOn(hud->sprId[17]);
+                espTPLvlSet(hud->sprId[17], 1.0f);
+            }
+            break;
+    }
+}
+
+void fn_1_F2DC(M519_HUD *hud)
+{
+    hud->mode = 3;
+}
+
+void fn_1_F2E8(M519_HUD *hud)
+{
+    M519_MECH *mech;
+    int i;
+    float t;
+    HuVec2f pos;
+    HuVec2f newPos;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    pos = hud->pos;
+    for (i = 1; i <= 120; i++) {
+        t = (1.0f / 120.0f) * i;
+        newPos.x = pos.x;
+        newPos.y = pos.y + (100.0 * HuSin(90.0f * t));
+        fn_1_D65C(hud, newPos);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+    pos.y += 104.0f;
+    fn_1_D65C(hud, pos);
+    fn_1_D714(hud);
+}
+
+void fn_1_F568(M519_HUD *hud)
+{
+    M519_MECH *mech;
+    int i;
+    float t;
+    HuVec2f pos;
+    HuVec2f newPos;
+
+    mech = lbl_1_bss_F8[hud->mechNo];
+    pos = hud->pos;
+    espDispOn(hud->sprId[0]);
+    for (i = 1; i <= 120; i++) {
+        t = (1.0f / 120.0f) * i;
+        newPos.x = pos.x + (96.0 * HuSin(90.0f * t));
+        newPos.y = pos.y;
+        fn_1_D65C(hud, newPos);
+        M519_SLEEP_MODECHG(M519_HUD, 1);
+    }
+    pos.x += 96.0f;
+    fn_1_D65C(hud, pos);
+    fn_1_D714(hud);
+}
+
+void fn_1_F7F0(M519_HUD *hud)
+{
+    int i;
+
+    for (i = 0; i < 18; i++) {
+        if (hud->sprId[i] != -1) {
+            espDispOff(hud->sprId[i]);
+        }
+    }
+    hud->mode = 0;
+}
+
+BOOL fn_1_F860(HuVecF *a, HuVecF *b, BOOL pushF)
+{
+    float dx = a->x - b->x;
+    float dy = a->y - b->y;
+    float radius = a->z + b->z;
+    float dist = HuMagPoint2D(dx, dy);
+
+    if (dist < radius) {
+        if (dist == 0.0f) {
+            dx = 0.0f;
+            dy = -1.0f;
+        }
+        else {
+            dx /= dist;
+            dy /= dist;
+        }
+        if (pushF) {
+            a->x = b->x + (dx * radius);
+            a->y = b->y + (dy * radius);
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL fn_1_FA6C(HuVecF *a, HuVecF *b, BOOL pushF)
+{
+    float dx = a->x - b->x;
+    float dy = a->y - b->y;
+    float radius = b->z - a->z;
+    float dist = HuMagPoint2D(dx, dy);
+
+    if (dist > radius) {
+        if (dist == 0.0f) {
+            dx = 0.0f;
+            dy = -1.0f;
+        }
+        else {
+            dx /= dist;
+            dy /= dist;
+        }
+        if (pushF) {
+            a->x = b->x + (dx * radius);
+            a->y = b->y + (dy * radius);
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
+float fn_1_FC78(float start, float end, float t)
+{
+    float diff;
+    float result;
+
+    diff = fmod(end - start, 360.0);
+    if (diff < 0.0f) {
+        diff += 360.0f;
+    }
+    if (diff > 180.0f) {
+        diff -= 360.0f;
+    }
+    result = fmod(start + (diff * t), 360.0);
+    if (result < 0.0f) {
+        result += 360.0f;
+    }
+    return result;
+}
+
+void fn_1_FD7C(s16 playerNo, s16 type, s16 time)
+{
+    switch (type) {
+        case 0:
+            omVibrate(playerNo, time, 6, 6);
+            break;
+        case 1:
+            omVibrate(playerNo, time, 4, 2);
+            break;
+        case 2:
+            omVibrate(playerNo, time, 12, 0);
+            break;
+    }
+}
+
+s16 fn_1_FE20(u16 cameraBit, HuVecF pos)
+{
+    HU3DCAMERA *camera;
+    s16 vol;
+    int i;
+    OMCAMERAVIEW *view;
+    s16 camVol;
+    float angle;
+    float dx;
+    float dz;
+
+    vol = 0;
+    for (i = 0; i < 4; i++) {
+        if (cameraBit & lbl_1_rodata_10[i]) {
+            view = &lbl_1_bss_108[i];
+            camera = &Hu3DCamera[i];
+            angle = (180.0 + HuAtan(camera->pos.x - pos.x, camera->pos.z - pos.z)) - (180.0f + view->rot.y);
+            if (angle < 0.0f) {
+                angle = 360.0f + angle;
+            }
+            if (angle >= 360.0f) {
+                angle -= 360.0f;
+            }
+            if (angle >= 180.0f) {
+                angle -= 360.0f;
+            }
+            angle = -angle;
+            if (HuAbs(angle) < 30.0f) {
+                dx = HuAbs(camera->pos.x - pos.x);
+                dz = HuAbs(camera->pos.z - pos.z);
+                camVol = 127.0f - ((1.0f / 60.0f) * (4800.0f - HuMagPoint2D(dx, dz)));
+                if (vol < camVol) {
+                    vol = camVol;
+                }
+            }
+        }
+    }
+    if (vol < 0) {
+        vol = 0;
+    }
+    if (vol > 127) {
+        vol = 127;
+    }
+    return vol;
+}
+
+#define M519_ABS(x) (((x) < 0.0f) ? -(x) : (x))
+
+s16 fn_1_10244(u16 cameraBit, HuVecF pos)
+{
+    HU3DCAMERA *camera;
+    s16 pan;
+    int i;
+    int num;
+    OMCAMERAVIEW *view;
+    float angle;
+    float dx;
+    float dz;
+
+    pan = 0;
+    num = 0;
+    for (i = 0; i < 4; i++) {
+        if (cameraBit & lbl_1_rodata_10[i]) {
+            view = &lbl_1_bss_108[i];
+            camera = &Hu3DCamera[i];
+            angle = (180.0 + HuAtan(camera->pos.x - pos.x, camera->pos.z - pos.z)) - (180.0f + view->rot.y);
+            if (angle < 0.0f) {
+                angle = 360.0f + angle;
+            }
+            if (angle >= 360.0f) {
+                angle -= 360.0f;
+            }
+            if (angle >= 180.0f) {
+                angle -= 360.0f;
+            }
+            angle = -angle;
+            if (M519_ABS(angle < 30.0f)) {
+                dx = HuAbs(camera->pos.x - pos.x);
+                dz = HuAbs(camera->pos.z - pos.z);
+                if (i == 0) {
+                    pan += 32.0f + (0.53333336f * (30.0f + angle));
+                }
+                else {
+                    pan += 96.0f - (0.53333336f * (30.0f + angle));
+                }
+                num++;
+            }
+        }
+    }
+    pan = (num > 0) ? pan / num : 64;
+    if (pan < 32) {
+        pan = 32;
+    }
+    if (pan > 96) {
+        pan = 96;
+    }
+    return pan;
 }
