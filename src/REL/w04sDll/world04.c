@@ -24,6 +24,8 @@
 #include "game/hsfex.h"
 #include "game/gamework.h"
 
+#include "datanum/capsule.h"
+
 #include <math.h>
 
 /*
@@ -153,7 +155,7 @@ void MB4_CoinEffClose(void);
 void MB4_BubbleEffInit(void);
 static void MB4_BubbleEffUpdate(OMOBJ *obj);
 void MB4_BubbleEffClose(void);
-int MB4_BubbleEffCreate(Point3d *pos, int time, f32 unused, f32 scale);
+int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time);
 void MB4_SakanaInit(void);
 static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx);
 void MB4_SakanaClose(void);
@@ -904,12 +906,248 @@ void MB4_CoinClose(void)
     mb4_CoinObj = NULL;
 }
 
+typedef struct MB4_CoinEffWork_s {
+    int mdlId; //0x00
+    int num; //0x04
+    ANIMDATA *animP; //0x08
+} MB4_COIN_EFF_WORK;
+
+void MB4_CoinEffInit(void)
+{
+    MB4_COIN_EFF_WORK *work; //r31
+    OMOBJ *obj; //r30
+    MBEFFECT *effP; //r29
+    HU3DMODEL *modelP; //r28
+    ANIMDATA *animP; //r27
+    int mdlId;
+
+    obj = mb4_CoinEffObj = MBAddObj(32768, 0, 0, MB4_CoinEffUpdate);
+    work = obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB4_COIN_EFF_WORK), HU_MEMNUM_OVL);
+    memset(work, 0, sizeof(MB4_COIN_EFF_WORK));
+    work->animP = animP = HuSprAnimRead(HuDataReadNum(CAPSULE_ANM_effCoin, HU_MEMNUM_OVL));
+    work->mdlId = mdlId = MBEffCreate(animP, 256);
+    Hu3DModelLayerSet(work->mdlId, 3);
+    MBEffAttrReset(work->mdlId, MB_EFFECT_ATTR_UPAUSE);
+    work->num = 0;
+    modelP = &Hu3DData[work->mdlId];
+    effP = modelP->hookData;
+    effP->blendMode = MB_EFFECT_BLEND_ADDCOL;
+}
+
+static void MB4_CoinEffUpdate(OMOBJ *obj)
+{
+    MBEFFECTDATA *effDataP; //r31
+    MB4_COIN_EFF_WORK *work; //r30
+    MBEFFECT *effP; //r29
+    int i; //r28
+    HU3DMODEL *modelP; //r27
+    work = obj->data;
+
+    if(MBKillCheck() || mb4_CoinEffObj == NULL) {
+        MBEffKill(work->mdlId);
+        work->mdlId = HU3D_MODELID_NONE;
+        work->animP = NULL;
+        omDelObj(mbObjMan, obj);
+        mb4_CoinEffObj = NULL;
+        return;
+    }
+    if(work->num <= 0) {
+        Hu3DModelDispOff(work->mdlId);
+        return;
+    }
+    Hu3DModelDispOn(work->mdlId);
+    modelP = &Hu3DData[work->mdlId];
+    effP = modelP->hookData;
+    effDataP = effP->data;
+    for(i=0; i<effP->num; i++, effDataP++) {
+        if(effDataP->scale <= 0.0f) {
+            continue;
+        }
+        effDataP->pos.x += effDataP->vel.x;
+        effDataP->pos.y += effDataP->vel.y;
+        effDataP->pos.z += effDataP->vel.z;
+        if(effDataP->colorIdx) {
+            effDataP->vel.y -= effDataP->colorIdx;
+        }
+        effDataP->scale = effDataP->accel.x*effDataP->accel.y;
+        effDataP->accel.y -= effDataP->accel.z;
+        if(effDataP->accel.y <= 0.0f) {
+            effDataP->time = 0;
+            effDataP->scale = 0;
+            work->num--;
+        }
+    }
+}
+
 void MB4_CoinEffClose(void)
 {
     mb4_CoinEffObj = NULL;
 }
 
+int MB4_CoinEffNumGet(void)
+{
+    OMOBJ *obj;
+    MB4_COIN_EFF_WORK *work;
+    obj = mb4_CoinEffObj;
+    if(mb4_CoinEffObj == NULL) {
+        return 0;
+    } else {
+        work = obj->data;
+        return work->num;
+    }
+}
+
+void MB4_CoinEffBlendModeSet(int blendMode)
+{
+    OMOBJ *obj;
+    MB4_COIN_EFF_WORK *work;
+    MBEFFECT *effP;
+    HU3DMODEL *modelP;
+    obj = mb4_CoinEffObj;
+    if(mb4_CoinEffObj == NULL) {
+        return;
+    } else {
+        work = obj->data;
+        modelP = &Hu3DData[work->mdlId];
+        effP = modelP->hookData;
+        effP->blendMode = blendMode;
+    }
+}
+
+int MB4_CoinEffCreate(HuVecF *pos, HuVecF *vel, float scale, float speed, float gravity, GXColor color)
+{
+    MBEFFECTDATA *effDataP; //r31
+    MBEFFECT *effP; //r30
+    int i; //r29
+    MB4_COIN_EFF_WORK *work; //r26
+    OMOBJ *obj; //r25
+    HU3DMODEL *modelP; //r24
+    if(mb4_CoinEffObj == NULL){
+        return -1;
+    }
+    obj = mb4_CoinEffObj;
+    work = obj->data;
+    modelP = &Hu3DData[work->mdlId];
+    effP = modelP->hookData;
+    for(effDataP=effP->data, i=0; i<effP->num; i++, effDataP++) {
+        if(effDataP->scale <= 0.0f) {
+            break;
+        }
+    }
+    if(i >= effP->num) {
+        return -1;
+    }
+    effDataP->time = effDataP->parManId = 0;
+    effDataP->pos.x = pos->x;
+    effDataP->pos.y = pos->y;
+    effDataP->pos.z = pos->z;
+    effDataP->vel.x = vel->x;
+    effDataP->vel.y = vel->y;
+    effDataP->vel.z = vel->z;
+    effDataP->accel.x = scale;
+    effDataP->accel.y = 1;
+    effDataP->accel.z = speed;
+    effDataP->colorIdx = gravity;
+    effDataP->scale = scale;
+    effDataP->color = color;
+    effDataP->rot.z = 360.0f*MBCapsuleEffRandF();
+    effDataP->time = 0;
+    work->num++;
+    return i;
+}
+
+void MB4_BubbleEffInit(void)
+{
+    OMOBJ *obj; //r31
+    MBEFFECT *effP; //r30
+    MBEFFECTDATA *effDataP; //r29
+    int i; //r28
+    HU3DMODEL *modelP; //r27
+    ANIMDATA *animP; //r26
+
+    obj = MBAddObj(32768, 1, 0, MB4_BubbleEffUpdate);
+    mb4_BubbleEffObj = obj;
+    obj->data = animP = HuSprAnimRead(HuDataReadNum(DATANUM(DATA_w04s, 50), HU_MEMNUM_OVL));
+    obj->mdlId[0] = MBEffCreate(animP, 1024);
+    Hu3DModelLayerSet(obj->mdlId[0], 3);
+    modelP = &Hu3DData[obj->mdlId[0]];
+    effP = modelP->hookData;
+    effDataP = effP->data;
+    effP->blendMode = MB_EFFECT_BLEND_ADDCOL;
+    for(i=0; i<effP->num; i++, effDataP++) {
+        effDataP->scale = 0;
+    }
+}
+
+static void MB4_BubbleEffUpdate(OMOBJ *obj)
+{
+    MBEFFECTDATA *effDataP; //r31
+    MBEFFECT *effP; //r29
+    int i; //r28
+    HU3DMODEL *modelP; //r27
+    modelP = &Hu3DData[obj->mdlId[0]];
+    effP = modelP->hookData;
+    effDataP = effP->data;
+    if(MBKillCheck() || mb4_BubbleEffObj == NULL) {
+        MBEffKill(obj->mdlId[0]);
+        obj->mdlId[0] = HU3D_MODELID_NONE;
+        obj->data = NULL;
+        omDelObj(mbObjMan, obj);
+        mb4_BubbleEffObj = NULL;
+        return;
+    }
+    for(i=0; i<effP->num; i++, effDataP++) {
+        if(effDataP->scale <= 0.0f) {
+            continue;
+        }
+        if(++effDataP->time > 360) {
+            effDataP->time -= 360;
+        }
+        effDataP->pos.x += effDataP->vel.x*HuSin(2.0f*effDataP->time);
+        effDataP->pos.y += effDataP->vel.y;
+        effDataP->accel.x -= effDataP->accel.y;
+        effDataP->color.a = 255.0f*effDataP->accel.x;
+        if(effDataP->accel.x < 0.0f) {
+            effDataP->scale = 0;
+        }
+    }
+}
+
 void MB4_BubbleEffClose(void)
 {
     mb4_BubbleEffObj = NULL;
+}
+
+int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time)
+{
+    MBEFFECTDATA *effDataP; //r31
+    MBEFFECT *effP; //r30
+    int i; //r29
+    HU3DMODEL *modelP; //r28
+    if(mb4_BubbleEffObj == NULL) {
+        return -1;
+    }
+    modelP = &Hu3DData[mb4_BubbleEffObj->mdlId[0]];
+    effP = modelP->hookData;
+    for(effDataP=effP->data, i=0; i<effP->num; i++, effDataP++) {
+        if(effDataP->scale <= 0.0f) {
+            break;
+        }
+    }
+    if(i >= effP->num) {
+        return -1;
+    }
+    if(scale <= 0.0f) {
+        scale = 1.0f;
+    }
+    effDataP->pos = *pos;
+    effDataP->vel.x = 0.5f*(1.5f+(0.2f*MBCapsuleEffRandF()));
+    effDataP->vel.z = 1.5f+(0.2f*MBCapsuleEffRandF());
+    effDataP->vel.y = 2.0f*(1.5f+(0.2f*MBCapsuleEffRandF()));
+    effDataP->accel.x = 1.0f;
+    effDataP->accel.y = 1.0f/time;
+    effDataP->time = frand()%360;
+    effDataP->scale = 20.0f*scale;
+    effDataP->color.r = effDataP->color.g = effDataP->color.b = effDataP->color.a = 255;
+    return i;
 }
