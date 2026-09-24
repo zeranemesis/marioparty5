@@ -1485,6 +1485,148 @@ void fn_1_4D40(M519_MECH *mech)
     mech->btnDown = HuPadBtnDown[padNo];
 }
 
+void fn_1_5EDC(M519_MECH *mech)
+{
+    BOOL deadF = FALSE;
+    float rotStep = 0.18f;
+    float speedStep = 0.36f;
+    s16 padNo = lbl_1_bss_E8[mech->pilotNo]->padNo;
+    s16 playerNo = lbl_1_bss_E8[mech->pilotNo]->playerNo;
+    float rotSpeed;
+    float speed;
+    float dx;
+    float dz;
+
+    while (TRUE) {
+        rotSpeed = mech->rotSpeed;
+        speed = mech->speed;
+        mech->stkX = 0;
+        mech->stkY = 0;
+        mech->trigL = 0;
+        mech->trigR = 0;
+        mech->btn = 0;
+        mech->btnDown = 0;
+        if (mech->hp > 0) {
+            if (mech->inputF) {
+                if (lbl_1_bss_E8[mech->pilotNo]->comF) {
+                    fn_1_69BC(mech);
+                }
+                else {
+                    fn_1_68E4(mech);
+                }
+            }
+        }
+        else if (!deadF) {
+            HuAudFXPlay(lbl_1_rodata_164[lbl_1_bss_E8[mech->pilotNo]->charNo]);
+            HuAudFXPlay(1823);
+            Hu3DModelAttrReset(mech->modelId[4], HU3D_ATTR_DISPOFF);
+            Hu3DModelAttrReset(mech->modelId[4], HU3D_MOTATTR_PAUSE);
+            Hu3DModelAttrSet(mech->modelId[4], HU3D_MOTATTR_LOOP);
+            Hu3DMotionTimeSet(mech->modelId[4], 0.0f);
+            fn_1_FD7C(mech->pilotNo, 2, 60);
+            deadF = TRUE;
+        }
+        else if (mech->speed <= 0.0f) {
+            fn_1_817C(mech);
+            return;
+        }
+        mech->rotSpeedTarget = mech->stkX * -mech->rotAccel;
+        mech->speedTarget = mech->stkY * mech->accel;
+        if (mech->btn & PAD_BUTTON_B) {
+            if (mech->chargeB++ == 0) {
+                if (mech->seNo != -1) {
+                    HuAudFXStop(mech->seNo);
+                }
+                mech->seNo = HuAudFXPlay(1825);
+                Hu3DModelAttrReset(mech->modelId[5], HU3D_ATTR_DISPOFF);
+                Hu3DMotionStartEndSet(mech->modelId[5], 0.0f, 60.0f);
+                Hu3DMotionTimeSet(mech->modelId[5], 0.0f);
+                Hu3DModelAttrSet(mech->modelId[5], HU3D_MOTATTR_LOOP);
+            }
+            else if (mech->chargeB == 40) {
+                Hu3DMotionStartEndSet(mech->modelId[5], 40.0f, 60.0f);
+                Hu3DMotionTimeSet(mech->modelId[5], 0.0f);
+                Hu3DModelAttrSet(mech->modelId[5], HU3D_MOTATTR_LOOP);
+            }
+            if (mech->chargeB >= 40 && mech->chargeB % 5 == 0) {
+                fn_1_FD7C(mech->pilotNo, 1, 3);
+            }
+        }
+        else if (mech->chargeB > 0) {
+            Hu3DModelAttrSet(mech->modelId[5], HU3D_ATTR_DISPOFF);
+            if (mech->seNo != -1) {
+                HuAudFXStop(mech->seNo);
+                mech->seNo = -1;
+            }
+            if (mech->chargeB >= 90) {
+                HuAudFXPlayPan(1821, lbl_1_rodata_18[mech->type]);
+                Hu3DMotionStartEndSet(mech->modelId[6], 0.0f, 60.0f);
+                Hu3DMotionTimeSet(mech->modelId[6], 0.0f);
+                Hu3DModelAttrReset(mech->modelId[6], HU3D_ATTR_DISPOFF);
+                mech->speedTarget = 100.0f * mech->accel;
+                speed = 100.0f * mech->accel;
+            }
+            mech->chargeB = 0;
+        }
+        if (rotSpeed < mech->rotSpeedTarget) {
+            rotSpeed += rotStep;
+            if (rotSpeed > mech->rotSpeedTarget) {
+                rotSpeed = mech->rotSpeedTarget;
+            }
+        }
+        if (rotSpeed > mech->rotSpeedTarget) {
+            rotSpeed -= rotStep;
+            if (rotSpeed < mech->rotSpeedTarget) {
+                rotSpeed = mech->rotSpeedTarget;
+            }
+        }
+        if (speed < mech->speedTarget) {
+            speed += speedStep;
+            if (speed > mech->speedTarget) {
+                speed = mech->speedTarget;
+            }
+        }
+        if (speed > mech->speedTarget) {
+            speed -= speedStep;
+            if (speed < mech->speedTarget) {
+                speed = mech->speedTarget;
+            }
+        }
+        mech->rot.y += rotSpeed;
+        mech->rot.z = rotSpeed * -HuAbs(0.2f * speed);
+        dx = speed * HuSin(mech->rot.y);
+        dz = speed * HuCos(mech->rot.y);
+        mech->pos.x += dx;
+        mech->pos.z += dz;
+        mech->rotSpeed = rotSpeed;
+        mech->speed = speed;
+        if (speed > 0.0f) {
+            fn_1_2FA0(mech, 1, 1.0f);
+        }
+        else if (speed < 0.0f) {
+            fn_1_2FA0(mech, 2, 1.0f);
+        }
+        else if (rotSpeed != 0.0f) {
+            fn_1_2FA0(mech, 1, 1.0f);
+        }
+        else if (Hu3DMotionEndCheck(mech->modelId[0])) {
+            fn_1_2FA0(mech, 0, 1.0f);
+        }
+        if (HuAbs(speed) > 16.0f) {
+            fn_1_7998(mech);
+        }
+        fn_1_82E4(mech);
+        fn_1_95B0(mech);
+        fn_1_9700(mech);
+        fn_1_8450(mech);
+        fn_1_8D40(mech);
+        if (HuAbs(speed) < 72.0f) {
+            fn_1_8E40(mech);
+        }
+        M519_SLEEP_MODECHG(M519_MECH, 1);
+    }
+}
+
 void fn_1_68E4(M519_MECH *mech)
 {
     s16 padNo = lbl_1_bss_E8[mech->pilotNo]->padNo;
