@@ -1497,6 +1497,47 @@ void fn_1_68E4(M519_MECH *mech)
     mech->btnDown = HuPadBtnDown[padNo];
 }
 
+void fn_1_7998(M519_MECH *mech)
+{
+    int i;
+    float dist;
+    float t;
+    HuVecF prev;
+    HuVecF cur;
+    HuVecF pos;
+
+    dist = 80.0f - (2.0f * mech->rot.z);
+    prev.x = mech->prevPos.x + (dist * HuSin(120.0f + mech->prevRot.y));
+    prev.z = mech->prevPos.z + (dist * HuCos(120.0f + mech->prevRot.y));
+    prev.y = (100.0f + mech->prevPos.y) + mech->prevRot.z;
+    cur.x = mech->pos.x + (dist * HuSin(120.0f + mech->rot.y));
+    cur.z = mech->pos.z + (dist * HuCos(120.0f + mech->rot.y));
+    cur.y = (100.0f + mech->pos.y) + mech->rot.z;
+    for (i = 0; i < 3; i++) {
+        t = (1.0f / 3.0f) * i;
+        pos.x = prev.x + (t * (cur.x - prev.x));
+        pos.y = prev.y + (t * (cur.y - prev.y));
+        pos.z = prev.z + (t * (cur.z - prev.z));
+        fn_1_CD54(mech->effect[0], pos);
+        fn_1_CFE8(mech->effect[0]);
+    }
+    dist = 80.0f + (2.0f * mech->rot.z);
+    prev.x = mech->prevPos.x + (dist * HuSin(240.0f + mech->prevRot.y));
+    prev.z = mech->prevPos.z + (dist * HuCos(240.0f + mech->prevRot.y));
+    prev.y = (100.0f + mech->prevPos.y) - mech->prevRot.z;
+    cur.x = mech->pos.x + (dist * HuSin(240.0f + mech->rot.y));
+    cur.z = mech->pos.z + (dist * HuCos(240.0f + mech->rot.y));
+    cur.y = (100.0f + mech->pos.y) - mech->rot.z;
+    for (i = 0; i < 3; i++) {
+        t = (1.0f / 3.0f) * i;
+        pos.x = prev.x + (t * (cur.x - prev.x));
+        pos.y = prev.y + (t * (cur.y - prev.y));
+        pos.z = prev.z + (t * (cur.z - prev.z));
+        fn_1_CD54(mech->effect[1], pos);
+        fn_1_CFE8(mech->effect[1]);
+    }
+}
+
 float fn_1_7EB8(M519_MECH *mech, HuVecF *pos)
 {
     float angle = 0.0f;
@@ -1560,6 +1601,80 @@ void fn_1_82E4(M519_MECH *mech)
         if (step == 0) {
             mech->knockback = 0.0f;
         }
+    }
+}
+
+void fn_1_8450(M519_MECH *mech)
+{
+    s16 no;
+    OMCAMERAVIEW *view;
+    Mtx mtx;
+    HuVecF pos;
+
+    no = mech->no;
+    if (mech->cameraF) {
+        view = &lbl_1_bss_108[no];
+        switch (no) {
+            case 0:
+                view->center.x = mech->pos.x + (740.0 * HuSin(mech->rot.y));
+                view->center.z = mech->pos.z + (740.0 * HuCos(mech->rot.y));
+                view->center.y = 0.0f;
+                view->zoom = 1600.0f;
+                view->rot.y = 180.0f + mech->rot.y;
+                view->rot.x = -26.0f;
+                view->rot.z = 0.0f;
+                break;
+            case 1:
+            case 2:
+            case 3:
+                view->center.x = mech->pos.x + (500.0 * HuSin(mech->rot.y));
+                view->center.z = mech->pos.z + (500.0 * HuCos(mech->rot.y));
+                view->center.y = 0.0f;
+                view->zoom = 1200.0f;
+                view->rot.y = 180.0f + mech->rot.y;
+                view->rot.x = -22.5f;
+                view->rot.z = 0.0f;
+                break;
+        }
+        omCameraViewSetMulti(lbl_1_rodata_10[no], view);
+    }
+    fn_1_3290(mech, mech->rot);
+    fn_1_3138(mech, mech->pos);
+    switch (mech->type) {
+        case 0:
+            Hu3DModelObjMtxGet(mech->modelId[0], lbl_1_data_14[0], mtx);
+            pos.x = mtx[0][3];
+            pos.y = mtx[1][3];
+            pos.z = mtx[2][3];
+            Hu3DModelPosSet(mech->modelId[6], pos.x, pos.y, pos.z);
+            Hu3DModelPosSet(mech->modelId[7], pos.x, pos.y, pos.z);
+            Hu3DModelPosSet(mech->modelId[8], pos.x, pos.y, pos.z);
+            if ((mech->hpMax / 5) * (4 - mech->damageNo) > mech->hp) {
+                int seNo = HuAudFXPlayPan(1808, lbl_1_rodata_18[mech->type]);
+                Hu3DMotionStartEndSet(mech->modelId[6], 40.0f * mech->damageNo, 40.0f + (40.0f * mech->damageNo));
+                Hu3DMotionStartEndSet(mech->modelId[7], 40.0f * mech->damageNo, 40.0f + (40.0f * mech->damageNo));
+                Hu3DMotionTimeSet(mech->modelId[6], 40.0f * mech->damageNo);
+                Hu3DModelAttrReset(mech->modelId[6], HU3D_MOTATTR_LOOP);
+                Hu3DModelAttrReset(mech->modelId[6], HU3D_MOTATTR_PAUSE);
+                Hu3DMotionTimeSet(mech->modelId[7], 40.0f * mech->damageNo);
+                Hu3DModelAttrReset(mech->modelId[7], HU3D_MOTATTR_LOOP);
+                Hu3DModelAttrReset(mech->modelId[7], HU3D_MOTATTR_PAUSE);
+                mech->damageNo++;
+            }
+            break;
+        case 1:
+            Hu3DModelObjMtxGet(mech->modelId[0], lbl_1_data_14[1], mtx);
+            pos.x = mtx[0][3];
+            pos.y = mtx[1][3];
+            pos.z = mtx[2][3];
+            Hu3DModelPosSet(mech->modelId[4], pos.x, pos.y, pos.z);
+            if (mech->mode == 1) {
+                Hu3DModelAttrReset(mech->modelId[3], HU3D_ATTR_DISPOFF);
+            }
+            else {
+                Hu3DModelAttrSet(mech->modelId[3], HU3D_ATTR_DISPOFF);
+            }
+            break;
     }
 }
 
