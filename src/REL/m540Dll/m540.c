@@ -1843,4 +1843,117 @@ static void fn_1_CB50(M540_OBJ *obj)
     obj->mode = 3;
 }
 
+static void fn_1_CB5C(M540_OBJ *obj)
+{
+    M540_PLAYERWORK *work;
+    M540_OBJ *cart;
+    float t;
+    float s;
+    HuVecF pos;
+    HuVecF start;
+    HuVecF end;
+    float rotY;
+    float startRotY;
+    float endRotY;
+    Mtx mtx;
+    CharModelFxFlagSet(obj->charNo, TRUE);
+    work = M540_OBJWORK(M540_PLAYERWORK, obj);
+    cart = work->cart;
+    Hu3DModelObjMtxGet(cart->modelId, fn_1_8438(cart), mtx);
+    pos.x = mtx[0][3];
+    pos.y = mtx[1][3];
+    pos.z = mtx[2][3];
+    fn_1_13A10(cart);
+    fn_1_13498(obj, pos.x, pos.y, pos.z);
+    end.x = lbl_1_bss_38;
+    end.z = 220.0f+mtx[2][3];
+    end.y = 0;
+    endRotY = 0;
+    fn_1_13874(obj, 3, 0, 8.0f, HU3D_MOTATTR_NONE);
+    fn_1_1352C(obj, 0, 45.0f, 0);
+    t = 0;
+    start = pos;
+    startRotY = 45.0f;
+    while(1) {
+        s = HuSin(180.0f*t);
+        s = s*s;
+        pos.x = start.x+(t*(end.x-start.x));
+        pos.z = start.z+(t*(end.z-start.z));
+        pos.y = start.y+(180.0f*s);
+        rotY = startRotY+(t*(endRotY-startRotY));
+        if(t < 0.5f && pos.y < start.y) {
+            pos.y = start.y;
+        }
+        fn_1_1352C(obj, 0, rotY, 0);
+        fn_1_13498(obj, pos.x, pos.y, pos.z);
+        t += 0.04f;
+        if(t >= 1.0f) {
+            break;
+        }
+        M540_OBJ_SLEEP(1);
+    }
+    pos.y = 0;
+    fn_1_13498(obj, pos.x, pos.y, pos.z);
+    fn_1_13874(obj, 4, 0, 8.0f, HU3D_MOTATTR_NONE);
+    M540_OBJ_SLEEP(20);
+    fn_1_13874(obj, 0, 0, 8.0f, HU3D_MOTATTR_NONE);
+    obj->mode = 0;
+}
+
+static void fn_1_D09C(M540_OBJ *obj)
+{
+    obj->mode = 4;
+}
+
+static void fn_1_D0A8(M540_OBJ *obj)
+{
+    CharModelFxFlagSet(obj->charNo, TRUE);
+    fn_1_13874(obj, 5, 0, 8.0f, HU3D_MOTATTR_NONE);
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static M540_OBJ *fn_1_D1A0(void)
+{
+    static const u32 lbl_1_rodata_924[3] = {
+        DATANUM(DATA_m540, 0x0D),
+        DATANUM(DATA_m540, 0x0E),
+        DATANUM(DATA_m540, 0x0F)
+    };
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, DATANUM(DATA_m540, 0x0C), 3, (u32 *)lbl_1_rodata_924, 1, NULL);
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM2);
+    fn_1_13698(obj);
+    fn_1_13934(obj);
+    fn_1_13774(obj, TRUE);
+    fn_1_13874(obj, 0, 0, 0, HU3D_MOTATTR_LOOP);
+    return obj;
+}
+
+static void fn_1_D280(M540_OBJ *obj)
+{
+    fn_1_13874(obj, 0, 0, 8.0f, HU3D_MOTATTR_LOOP);
+    obj->mode = 0;
+}
+
+static void fn_1_D2E8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_D390(M540_OBJ *obj)
+{
+    fn_1_13874(obj, 2, 0, 8.0f, HU3D_MOTATTR_LOOP);
+    obj->mode = 1;
+}
+
+static void fn_1_D3F8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
 /* M540_APPEND */
