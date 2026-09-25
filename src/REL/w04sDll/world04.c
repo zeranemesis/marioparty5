@@ -65,7 +65,7 @@ typedef struct MB4_SakanaSpecies_s {
 typedef struct MB4_Sakana_s {
     int mdlId; //0x00
     int effNo; //0x04
-    f32 unk08; //0x08
+    int unk08; //0x08
     int bobAngle; //0x0C
     int time; //0x10
     int wobbleAngle; //0x14
@@ -1386,6 +1386,116 @@ int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time)
     effDataP->scale = 20.0f*scale;
     effDataP->color.r = effDataP->color.g = effDataP->color.b = effDataP->color.a = 255;
     return i;
+}
+
+void MB4_SakanaInit(void)
+{
+    MB4_SAKANA *sakana; //r31
+    int i; //r30
+    int j; //r29
+    MBEFFECT *effP; //r28
+    MBEFFECTDATA *effDataP; //r27
+    HU3DMODEL *modelP; //r26
+    ANIMDATA *animP; //r25
+
+    animP = HuSprAnimRead(HuDataReadNum(DATANUM(DATA_w04s, 52), HU_MEMNUM_OVL));
+    mb4_Work.sakanaEffMdlId = MBEffCreate(animP, 128);
+    Hu3DModelLayerSet(mb4_Work.sakanaEffMdlId, 1);
+    modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+    effP = modelP->hookData;
+    effDataP = effP->data;
+    for (j = 0; j < effP->num; j++, effDataP++) {
+        effDataP->dispF = FALSE;
+    }
+    MBEffAttrSet(mb4_Work.sakanaEffMdlId, 0x10);
+    memset(&mb4_Work.sakana[0][0], 0, sizeof(mb4_Work.sakana));
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        for (j = 0; j < MB4_SAKANA_MAX; j++) {
+            mb4_Work.sakana[i][j].mdlId = -1;
+        }
+    }
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        sakana = &mb4_Work.sakana[i][0];
+        for (j = 0; j < mb4ev_SakanaTbl[i].num; j++, sakana++) {
+            if (mb4ev_SakanaTbl[i].effF != 0) {
+                sakana->effNo = MB4_SakanaCreate(frand() & 0x7FFF & 3);
+                sakana->mdlId = -1;
+            }
+            else {
+                switch (frand() & 0x7FFF & 3) {
+                    case 0:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 26), NULL, TRUE);
+                        break;
+                    case 1:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 27), NULL, TRUE);
+                        break;
+                    case 2:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 28), NULL, TRUE);
+                        break;
+                    default:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 29), NULL, TRUE);
+                        break;
+                }
+                MBModelLayerSet(sakana->mdlId, 2);
+                sakana->effNo = -1;
+            }
+            sakana->unk08 = frand();
+            sakana->bobAngle = frand();
+            sakana->time = 0;
+            sakana->wobbleAngle = 0;
+            sakana->wobbleTimer = 60.0f + (2.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+            sakana->bubbleNum = 10.0f + (10.0f * (0.007874016f * (frand() & 0x7F)));
+            sakana->bubbleTimer = 10.0f * (60.0f * (0.007874016f * (frand() & 0x7F)));
+            sakana->targetTimer = 120.0f + (2.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+            switch (mb4ev_SakanaTbl[i].swimType) {
+                case 0:
+                    sakana->swimType = 0;
+                    break;
+                case 1:
+                    sakana->swimType = j & 1;
+                    break;
+                default:
+                    sakana->swimType = 1;
+                    break;
+            }
+            sakana->dispF = TRUE;
+            sakana->areaPos = mb4ev_SakanaTbl[i].pos;
+            sakana->areaRange = mb4ev_SakanaTbl[i].range;
+            sakana->target.x = sakana->areaPos.x + (sakana->areaRange.x * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->target.y = sakana->areaPos.y + (sakana->areaRange.y * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->target.z = sakana->areaPos.z + (sakana->areaRange.z * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->pos.x = sakana->areaPos.x + (sakana->areaRange.x * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->pos.y = sakana->areaPos.y + (sakana->areaRange.y * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->pos.z = sakana->areaPos.z + (sakana->areaRange.z * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->dir.x = (0.007874016f * (frand() & 0x7F)) - 0.5f;
+            sakana->dir.y = (0.007874016f * (frand() & 0x7F)) - 0.5f;
+            sakana->dir.z = (0.007874016f * (frand() & 0x7F)) - 0.5f;
+            PSVECNormalize(&sakana->dir, &sakana->dir);
+            sakana->rot.x = HuAtan(HuMagXZVecF(&sakana->dir), sakana->dir.y);
+            sakana->rot.y = HuAtan(sakana->dir.x, sakana->dir.z);
+            sakana->rot.z = 0.0f;
+            sakana->targetRot.x = sakana->rot.x;
+            sakana->targetRot.y = sakana->rot.y;
+            sakana->targetRot.z = sakana->rot.z;
+            sakana->speed = 2.5f * (1.0f + (0.007874016f * (frand() & 0x7F)));
+            sakana->scale = 0.25f + (0.5f * (0.007874016f * (frand() & 0x7F)));
+            sakana->unk8C = 0.25f + (0.25f * (0.007874016f * (frand() & 0x7F)));
+            if (sakana->mdlId != -1) {
+                MBModelPosSetV(sakana->mdlId, &sakana->pos);
+                MBModelRotSetV(sakana->mdlId, &sakana->rot);
+                MBModelScaleSet(sakana->mdlId, sakana->scale, sakana->scale, sakana->scale);
+                MBModelLayerSet(sakana->mdlId, 2);
+            }
+            else {
+                MB4_SakanaPosSet(sakana->effNo, sakana->pos.x, sakana->pos.y, sakana->pos.z);
+                MB4_SakanaOffsetSet(sakana->effNo, sakana->rot.x, sakana->rot.y, sakana->rot.z);
+                MB4_SakanaLenSet(sakana->effNo, sakana->scale);
+            }
+        }
+    }
+    mb4_Work.sakanaHookMdlId = Hu3DHookFuncCreate((HU3DMODELHOOK)MB4_SakanaDraw);
+    Hu3DModelCameraSet(mb4_Work.sakanaHookMdlId, HU3D_CAM0);
+    Hu3DModelLayerSet(mb4_Work.sakanaHookMdlId, 7);
 }
 
 void MB4_SakanaClose(void)
