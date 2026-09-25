@@ -1498,6 +1498,148 @@ void MB4_SakanaInit(void)
     Hu3DModelLayerSet(mb4_Work.sakanaHookMdlId, 7);
 }
 
+static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
+{
+    MB4_SAKANA *sakana; //r31
+    MBEFFECTDATA *effDataP; //r29
+    int i; //r26
+    int j; //r23
+    int time; //r21
+    float speed;
+    float dist;
+    float bobRot;
+    float cosRotX;
+    HuVecF ofs;
+    HuVecF diff;
+
+    if (MBPauseProcCheck()) {
+        return;
+    }
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        sakana = &mb4_Work.sakana[i][0];
+        for (j = 0; j < mb4ev_SakanaTbl[i].num; j++, sakana++) {
+            sakana->unk08++;
+            dist = 0.0f;
+            speed = sakana->speed;
+            if ((sakana->unk08 & 3) == 0) {
+                Hu3D3Dto2D(&sakana->pos, HU3D_CAM0, &ofs);
+                if ((ofs.x < 0.0f || ofs.x > 640.0f) && (ofs.y < 0.0f || ofs.y > 480.0f)) {
+                    sakana->dispF = FALSE;
+                }
+                else {
+                    sakana->dispF = TRUE;
+                }
+            }
+            if (!sakana->dispF && sakana->mdlId == -1) {
+                effDataP = &((MBEFFECT *)Hu3DData[mb4_Work.sakanaEffMdlId].hookData)->data[sakana->effNo];
+                effDataP->dispF = FALSE;
+                continue;
+            }
+            if (sakana->swimType == 0) {
+                PSVECSubtract(&sakana->target, &sakana->pos, &diff);
+                if (--sakana->time <= 0) {
+                    dist = PSVECMag(&diff);
+                    PSVECSubtract(&sakana->areaPos, &sakana->pos, &ofs);
+                    if (dist <= sakana->speed || --sakana->targetTimer <= 0 || fabs(ofs.x) > sakana->areaRange.x
+                        || fabs(ofs.y) > sakana->areaRange.y || fabs(ofs.z) > sakana->areaRange.z) {
+                        sakana->target.x = sakana->areaPos.x + (sakana->areaRange.x * (MBCapsuleEffRandF() - 0.5f));
+                        sakana->target.y = sakana->areaPos.y + (sakana->areaRange.y * (MBCapsuleEffRandF() - 0.5f));
+                        sakana->target.z = sakana->areaPos.z + (sakana->areaRange.z * (MBCapsuleEffRandF() - 0.5f));
+                        sakana->time = 60;
+                        sakana->targetTimer = 120.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
+                    }
+                }
+                if (--sakana->wobbleTimer <= 0) {
+                    bobRot = 15.0 * HuSin(sakana->wobbleAngle);
+                    sakana->wobbleAngle += 5;
+                    if (sakana->wobbleAngle >= 720) {
+                        sakana->wobbleAngle = 0;
+                        sakana->wobbleTimer = 60.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
+                    }
+                }
+                else {
+                    bobRot = 0.0f;
+                }
+                if (--sakana->bubbleTimer <= 0) {
+                    if ((sakana->bubbleNum & 3) == 0) {
+                        PSVECScale(&sakana->dir, &ofs, 50.0f * sakana->scale);
+                        PSVECAdd(&sakana->pos, &ofs, &ofs);
+                        time = 120.0f * (1.0f + (0.2f * MBCapsuleEffRandF()));
+                        MB4_BubbleEffCreate(&ofs, sakana->scale * (0.5f + MBCapsuleEffRandF()), time);
+                    }
+                    if (--sakana->bubbleNum <= 0) {
+                        sakana->bubbleNum = 10.0f + (10.0f * MBCapsuleEffRandF());
+                        sakana->bubbleTimer = 300.0f + (5.0f * (60.0f * MBCapsuleEffRandF()));
+                    }
+                }
+                sakana->targetRot.x = HuAtan(diff.y, HuMagXZVecF(&diff));
+                sakana->targetRot.y = HuAtan(diff.x, diff.z);
+            }
+            else {
+                PSVECSubtract(&sakana->target, &sakana->pos, &diff);
+                if ((sakana->unk08 & 1) == 0) {
+                    if (--sakana->time <= 0) {
+                        dist = PSVECMag(&diff);
+                        if (dist <= sakana->speed || --sakana->targetTimer <= 0) {
+                            sakana->target.x = sakana->areaPos.x + (sakana->areaRange.x * (MBCapsuleEffRandF() - 0.5f));
+                            sakana->target.y = sakana->areaPos.y + (sakana->areaRange.y * (MBCapsuleEffRandF() - 0.5f));
+                            sakana->target.z = sakana->areaPos.z + (sakana->areaRange.z * (MBCapsuleEffRandF() - 0.5f));
+                            sakana->time = 60;
+                            sakana->targetTimer = 120.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
+                        }
+                    }
+                }
+                if ((sakana->unk08 & 3) == 0) {
+                    sakana->targetRot.x = HuAtan(diff.y, HuMagXZVecF(&diff));
+                    sakana->targetRot.y = HuAtan(diff.x, diff.z);
+                }
+            }
+            sakana->rot.x = MB4_AngleLerp(sakana->targetRot.x, sakana->rot.x, 2.5f);
+            sakana->rot.y = MB4_AngleLerp(sakana->targetRot.y, sakana->rot.y, 2.5f);
+            sakana->rot.z = 0.0f;
+            cosRotX = HuCos(sakana->rot.x);
+            sakana->dir.y = HuSin(sakana->rot.x);
+            sakana->dir.x = cosRotX * HuSin(sakana->rot.y);
+            sakana->dir.z = cosRotX * HuCos(sakana->rot.y);
+            if (dist > 1000.0f) {
+                speed *= 2.0f;
+            }
+            sakana->bobAngle += 1.0f + (3.0f * MBCapsuleEffRandF());
+            if (sakana->bobAngle > 360) {
+                sakana->bobAngle -= 360;
+            }
+            PSVECScale(&sakana->dir, &ofs, speed * (0.5 + fabs(0.5 * HuSin(sakana->bobAngle))));
+            PSVECAdd(&sakana->pos, &ofs, &sakana->pos);
+            if (sakana->mdlId != -1) {
+                if (!sakana->dispF) {
+                    MBModelDispSet(sakana->mdlId, FALSE);
+                }
+                else {
+                    MBModelDispSet(sakana->mdlId, TRUE);
+                    MBModelPosSetV(sakana->mdlId, &sakana->pos);
+                    MBModelRotSet(sakana->mdlId, -sakana->rot.x, sakana->rot.y + bobRot, sakana->rot.z);
+                }
+            }
+            else {
+                effDataP = &((MBEFFECT *)Hu3DData[mb4_Work.sakanaEffMdlId].hookData)->data[sakana->effNo];
+                if (!sakana->dispF) {
+                    effDataP->dispF = FALSE;
+                }
+                else {
+                    effDataP->dispF = TRUE;
+                    effDataP->pos.x = sakana->pos.x;
+                    effDataP->pos.y = sakana->pos.y;
+                    effDataP->pos.z = sakana->pos.z;
+                    effDataP->rot.x = sakana->rot.x;
+                    effDataP->rot.y = sakana->rot.y;
+                    effDataP->rot.z = sakana->rot.z;
+                    effDataP->rot.y -= 90.0f;
+                }
+            }
+        }
+    }
+}
+
 void MB4_SakanaClose(void)
 {
     if (mb4_Work.sakanaEffMdlId != -1) {
