@@ -3133,7 +3133,7 @@ static void CapsulePosAutoSelExec(void)
     int masuMax; //sp+0x38
     int linkCount; //sp+0x34
     int validLinkNum; //sp+0x30
-    int capsuleMesPrev; //sp+0x2C
+    s16 capsuleMesPrev; //sp+0x2C
     BOOL modelDispF; //sp+0x28
     int moveNum; //sp+0x24
     MASU *masuP; //sp+0x20
