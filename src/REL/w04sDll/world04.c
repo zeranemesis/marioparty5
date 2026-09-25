@@ -1502,6 +1502,8 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
 {
     MB4_SAKANA *sakana; //r31
     MBEFFECTDATA *effDataP; //r29
+    MBEFFECT *effP; //r27
+    HU3DMODEL *effModelP; //r25
     int i; //r26
     int j; //r23
     int time; //r21
@@ -1531,7 +1533,9 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
                 }
             }
             if (!sakana->dispF && sakana->mdlId == -1) {
-                effDataP = &((MBEFFECT *)Hu3DData[mb4_Work.sakanaEffMdlId].hookData)->data[sakana->effNo];
+                effModelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+                effP = effModelP->hookData;
+                effDataP = &effP->data[sakana->effNo];
                 effDataP->dispF = FALSE;
                 continue;
             }
@@ -1551,8 +1555,7 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
                 }
                 if (--sakana->wobbleTimer <= 0) {
                     bobRot = 15.0 * HuSin(sakana->wobbleAngle);
-                    sakana->wobbleAngle += 5;
-                    if (sakana->wobbleAngle >= 720) {
+                    if ((sakana->wobbleAngle += 5) >= 720) {
                         sakana->wobbleAngle = 0;
                         sakana->wobbleTimer = 60.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
                     }
@@ -1621,7 +1624,9 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
                 }
             }
             else {
-                effDataP = &((MBEFFECT *)Hu3DData[mb4_Work.sakanaEffMdlId].hookData)->data[sakana->effNo];
+                effModelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+                effP = effModelP->hookData;
+                effDataP = &effP->data[sakana->effNo];
                 if (!sakana->dispF) {
                     effDataP->dispF = FALSE;
                 }
