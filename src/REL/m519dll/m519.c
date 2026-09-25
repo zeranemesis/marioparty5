@@ -2031,6 +2031,184 @@ void fn_1_68E4(M519_MECH *mech)
     mech->btnDown = HuPadBtnDown[padNo];
 }
 
+void fn_1_69BC(M519_MECH *mech)
+{
+    static const int farTbl[4] = { 2000, 2100, 2200, 2300 };
+    static const int chargeTbl[4] = { 40, 30, 20, 10 };
+    static const int timeTbl[4] = { 180, 170, 150, 160 };
+    static const int nearTbl[4] = { 550, 540, 530, 520 };
+    static const int aimTbl[4] = { 10, 15, 20, 25 };
+    static const s16 shotWaitTbl[4] = { 4, 3, 2, 0 };
+    M519_MECH *target;
+    s16 dif;
+    float dx;
+    float dz;
+    float dist;
+    float angle;
+    float step;
+    float diff;
+    HuVecF circle;
+    HuVecF goal;
+    HuVecF area;
+
+    dif = lbl_1_bss_E8[mech->pilotNo]->dif;
+    target = lbl_1_bss_F8[0];
+    circle.x = mech->pos.x;
+    circle.y = mech->pos.z;
+    circle.z = mech->radius;
+    switch (mech->comMode) {
+        case 0:
+            if (!mech->comTargetF) {
+                dist = M519_FRAND() % (int)(2390.0f - 2.0f * mech->radius);
+                angle = M519_FRAND() % 360;
+                mech->comTarget.x = dist * HuSin(angle);
+                mech->comTarget.z = dist * HuCos(angle);
+                mech->comTarget.y = 0.0f;
+                mech->comTimer = 0;
+                mech->comSpeed = (M519_FRAND() % 20) + 50;
+                mech->comTargetF = TRUE;
+            }
+            dx = mech->comTarget.x - mech->pos.x;
+            dz = mech->comTarget.z - mech->pos.z;
+            dist = HuMagPoint2D(dx, dz);
+            if (dist > 300.0f && dist < farTbl[dif]) {
+                mech->comMode = 1;
+                mech->comTimer = 0;
+                if (!mech->comChargeF && (M519_FRAND() % chargeTbl[dif]) == 0) {
+                    mech->comChargeF = TRUE;
+                }
+            }
+            else if (dist < 250.0f || mech->comTimer++ > timeTbl[dif]) {
+                mech->comTargetF = FALSE;
+                mech->comTimer = 0;
+            }
+            break;
+        case 1:
+            mech->comTarget.x = target->pos.x;
+            mech->comTarget.z = target->pos.z;
+            mech->comTarget.y = 0.0f;
+            dx = mech->comTarget.x - mech->pos.x;
+            dz = mech->comTarget.z - mech->pos.z;
+            dist = HuMagPoint2D(dx, dz);
+            if (dist < nearTbl[dif] || mech->knockback > 0.0f) {
+                mech->comMode = 2;
+                mech->comTargetF = FALSE;
+                mech->comTimer = 0;
+            }
+            else {
+                angle = (180.0 + HuAtan(mech->pos.x - mech->comTarget.x, mech->pos.z - mech->comTarget.z)) - mech->rot.y;
+                if (angle < 0.0f) {
+                    angle = 360.0f + angle;
+                }
+                if (angle >= 360.0f) {
+                    angle -= 360.0f;
+                }
+                if (angle >= 180.0f) {
+                    angle -= 360.0f;
+                }
+                angle = -angle;
+                mech->comSpeed = 20.0f + dist / 120.0f;
+                if (HuAbs(angle) < aimTbl[dif]) {
+                    mech->btnDown = PAD_BUTTON_A;
+                }
+            }
+            break;
+        case 2:
+            if (!mech->comTargetF) {
+                dist = 2300.0f + (M519_FRAND() % 1700);
+                angle = M519_FRAND() % 360;
+                area.x = 0.0f;
+                area.y = 0.0f;
+                area.z = 2390.0f;
+                step = 0.0f;
+                while (TRUE) {
+                    goal.x = dist * HuSin(angle + step) - mech->comTarget.x;
+                    goal.y = dist * HuCos(angle + step) - mech->comTarget.z;
+                    goal.z = mech->radius;
+                    if (fn_1_FA6C(&area, &goal, FALSE)) {
+                        diff = (180.0 + HuAtan(mech->pos.x - goal.x, mech->pos.z - goal.y)) - mech->rot.y;
+                        if (diff < 0.0f) {
+                            diff = 360.0f + diff;
+                        }
+                        if (diff >= 360.0f) {
+                            diff -= 360.0f;
+                        }
+                        if (diff >= 180.0f) {
+                            diff -= 360.0f;
+                        }
+                        diff = -diff;
+                        if (HuAbs(diff) > 30.0f) {
+                            break;
+                        }
+                    }
+                    step += 30.0f;
+                    if (step >= 360.0f) {
+                        step = 0.0f;
+                        dist -= 250.0f;
+                    }
+                }
+                mech->comTarget.x = goal.x;
+                mech->comTarget.z = goal.y;
+                mech->comTarget.y = 0.0f;
+                mech->comTargetF = TRUE;
+                mech->comTimer = 0;
+                mech->comSpeed = (M519_FRAND() % 10) + 60;
+            }
+            if (mech->chargeB >= 90) {
+                mech->comChargeF = FALSE;
+            }
+            goal.x = mech->comTarget.x;
+            goal.y = mech->comTarget.z;
+            goal.z = 300.0f;
+            if (fn_1_F860(&circle, &goal, FALSE) || mech->comTimer++ > 120) {
+                mech->comMode = 0;
+                mech->comTargetF = FALSE;
+            }
+            break;
+    }
+    if (mech->comChargeF) {
+        mech->btn |= PAD_BUTTON_B;
+    }
+    if (mech->comShotWait > 0) {
+        mech->comShotWait--;
+        if (mech->btnDown & PAD_BUTTON_A) {
+            mech->btnDown &= ~PAD_BUTTON_A;
+        }
+    }
+    else if (mech->btnDown & PAD_BUTTON_A) {
+        mech->comShotWait = shotWaitTbl[dif] + 8;
+    }
+    if (mech->collideF) {
+        mech->comTarget.x = mech->pos.x;
+        mech->comTarget.z = mech->pos.z;
+    }
+    diff = 0.0f;
+    if (mech->comTarget.x != mech->pos.x || mech->comTarget.z != mech->pos.z) {
+        diff = (180.0 + HuAtan(mech->pos.x - mech->comTarget.x, mech->pos.z - mech->comTarget.z)) - mech->rot.y;
+        if (diff < 0.0f) {
+            diff = 360.0f + diff;
+        }
+        if (diff >= 360.0f) {
+            diff -= 360.0f;
+        }
+        if (diff >= 180.0f) {
+            diff -= 360.0f;
+        }
+        diff = -diff;
+    }
+    angle = diff;
+    angle = (angle > 60.0f) ? 60.0f : angle;
+    angle = (angle < -60.0f) ? -60.0f : angle;
+    dx = angle;
+    dz = mech->comSpeed;
+    dist = sqrt(dx * dx + dz * dz);
+    angle = HuAtan(dx, dz);
+    dx = dist * HuSin(angle);
+    dz = dist * HuCos(angle);
+    mech->stkX = dx;
+    mech->stkY = dz;
+}
+
 void fn_1_7998(M519_MECH *mech)
 {
     int i;
