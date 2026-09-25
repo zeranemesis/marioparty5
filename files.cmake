@@ -196,6 +196,7 @@ set(REL_FILES
         src/REL/m506Dll/player.c
         src/REL/m507dll/m507.c
         src/REL/m507dll/effect.c
+        src/REL/m519dll/m519.c
         src/REL/m526Dll/m526.c
         src/REL/m526Dll/math.c
         src/REL/mdpartyDll/mdparty.c
@@ -252,7 +253,6 @@ set(REL_FILES
 #   m516Dll
 #   m517Dll
 #   m518dll
-#   m519dll
 #   m520Dll
 #   m521Dll
 #   m522Dll
