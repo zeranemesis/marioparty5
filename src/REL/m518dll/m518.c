@@ -1253,6 +1253,47 @@ void fn_1_4760(HuVecF *rot, HuVecF *axis)
     }
 }
 
+void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
+{
+    player->time = time;
+    player->delay = delay;
+    player->mode = 2;
+}
+
+void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
+{
+    player->time = time;
+    player->delay = delay;
+    player->mode = 4;
+}
+
+void fn_1_8E20(M518_PLAYER *player)
+{
+    player->mode = 3;
+}
+
+void fn_1_8FA8(M518_PLAYER *player)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (player->modelId[i] != -1) {
+            Hu3DModelAttrReset(player->modelId[i], 1);
+        }
+    }
+}
+
+void fn_1_9014(M518_PLAYER *player)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (player->modelId[i] != -1) {
+            Hu3DModelAttrSet(player->modelId[i], 1);
+        }
+    }
+}
+
 static const u16 lbl_1_rodata_768[5][18 * 18] = {
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
