@@ -3088,8 +3088,8 @@ static void CapsulePosSelExec(void)
         capsuleMdl = MB_MODEL_NONE;
     }
     MBCameraSkipSet(FALSE);
-    //TODO: Missing move in US Version
-    MBCameraModelViewSet(MBPlayerModelGet(work->playerNo), NULL, &cameraOfs, zoom, -1, 1);
+    capsuleMes = MBPlayerModelGet(work->playerNo);
+    MBCameraModelViewSet(capsuleMes, NULL, &cameraOfs, zoom, -1, 1);
     MBCameraMotionWait();
     MBCameraSkipSet(TRUE);
     MBMasuEffClear();
