@@ -2014,7 +2014,7 @@ void MBPlayerAmbSet(int playerNo, float ambR, float ambG, float ambB)
     MBModelAmbSet(MBPlayerModelGet(playerNo), ambR, ambG, ambB);
 }
 
-int MBPlayerModelGet(int playerNo)
+s16 MBPlayerModelGet(int playerNo)
 {
     return playerWork[playerNo].modelId;
 }

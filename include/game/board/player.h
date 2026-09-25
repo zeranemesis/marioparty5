@@ -128,7 +128,7 @@ void MBPlayerMatClone(int playerNo);
 u32 MBPlayerNameMesGet(int playerNo);
 char *MBPlayerNameGet(int playerNo);
 void MBPlayerAmbSet(int playerNo, float ambR, float ambG, float ambB);
-int MBPlayerModelGet(int playerNo);
+s16 MBPlayerModelGet(int playerNo);
 BOOL MBPlayerAllComCheck(void);
 int MBPlayerGrpFind(int playerNo);
 int MBPlayerGrpFindOther(int playerNo);
