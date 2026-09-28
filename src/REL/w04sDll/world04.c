@@ -717,6 +717,62 @@ static int MB4Ev_MasuWalkPost(int playerNo)
     }
     return 0;
 }
+/* NONMATCHING: faithful port. Handles coin display on the board:
+ * waits for the player's rotate animation to finish, then either spawns
+ * a coin-disp effect (coinNum > 0) or plays a win/lose voice and sets up
+ * a motion sequence (coinNum <= 0). Cleans up the coin disp and motion
+ * when done.
+ */
+static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
+{
+    int motionId; //r30 = -1
+    s16 coinId; //r29
+    HuVecF pos; //r1+0x0C
+
+    motionId = -1;
+    MBPlayerRotateStart(playerNo, 0, 0xF);
+    while(MBPlayerRotateCheck(playerNo) == 0) {
+        HuPrcVSleep();
+    }
+    if(coinNum > 0) {
+        MBPlayerPosGet(playerNo, &pos);
+        pos.y += 250.0f;
+        coinId = (s16)MBCoinDispCreateSe(&pos, coinNum);
+    } else {
+        coinId = -1;
+    }
+    if(coinNum <= 0) {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xD, 0x200);
+        MBPlayerMotionNoShiftSet(playerNo, 0xD, 0.0f, 8.0f, 0);
+    } else if(coinNum < threshold) {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
+        MBPlayerMotionNoShiftSet(playerNo, 0xC, 0.0f, 8.0f, 0);
+    } else {
+        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
+        motionId = MBPlayerMotionCreate(playerNo, 0x8C2D);
+        MBPlayerMotionNoShiftSet(playerNo, motionId, 0.0f, 8.0f, 0);
+    }
+    while(MBPlayerMotionEndCheck(playerNo) == 0) {
+        HuPrcVSleep();
+    }
+    if(MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+        MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0);
+    }
+    while(MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+        HuPrcVSleep();
+    }
+    if(coinId != -1) {
+        while(MBCoinDispKillCheck(coinId) == 0) {
+            HuPrcVSleep();
+        }
+    }
+    if(motionId != -1) {
+        MBPlayerMotionKill(playerNo, motionId);
+    }
+}
+
+
+
 
 static void MB4_LightReset(void)
 {
@@ -1423,6 +1479,52 @@ int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time)
     effDataP->time = frand()%360;
     effDataP->scale = 20.0f*scale;
     effDataP->color.r = effDataP->color.g = effDataP->color.b = effDataP->color.a = 255;
+    return i;
+}
+
+/* NONMATCHING: faithful port. Finds a free sakana MBEFFECTDATA slot.
+ * A slot is in use when any of bits 0-6 of the byte at slot+0x58 is set
+ * (extrwi 25,31 + clrlwi 24 == (byte & 0x7F) != 0); all clear means free.
+ * On a free slot the byte is re-stored (rlwimi r0,r4,7,24,24 with r4=1,
+ * which is a no-op), the seven f32 fields at 0x2C-0x47 are zeroed, the
+ * s16 animBank at 0x4C is set to `type`, and the four colour bytes at
+ * 0x48-0x4B are set to 0xFF. Returns the slot index, or -1 if the effect
+ * model is absent or no slot is free.
+ */
+int MB4_SakanaCreate(s16 type)
+{
+    HU3DMODEL *modelP; //r28
+    MBEFFECT *effP; //r30
+    u8 *slot; //r31
+    s32 i; //r29
+
+    if(mb4_Work.sakanaEffMdlId == -1) {
+        return -1;
+    }
+    modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+    effP = modelP->hookData;
+    slot = (u8 *) effP->data;
+    i = 0;
+    while(i < effP->num) {
+        if((slot[0x58] & 0x7F) == 0) {
+            break;
+        }
+        i++;
+        slot += sizeof(MBEFFECTDATA);
+    }
+    if(i == effP->num) {
+        return -1;
+    }
+    slot[0x58] &= 0x7F;
+    *(f32 *) (slot + 0x44) = 0.0f;
+    *(f32 *) (slot + 0x40) = 0.0f;
+    *(f32 *) (slot + 0x3C) = 0.0f;
+    *(f32 *) (slot + 0x38) = 0.0f;
+    *(f32 *) (slot + 0x34) = 0.0f;
+    *(f32 *) (slot + 0x30) = 0.0f;
+    *(f32 *) (slot + 0x2C) = 0.0f;
+    *(s16 *) (slot + 0x4C) = type;
+    slot[0x48] = slot[0x49] = slot[0x4A] = slot[0x4B] = 0xFF;
     return i;
 }
 
