@@ -164,6 +164,7 @@ int MB4_SakanaCreate(s16 type);
 void MB4_SakanaPosSet(int no, f32 x, f32 y, f32 z);
 void MB4_SakanaOffsetSet(int no, f32 x, f32 y, f32 z);
 void MB4_SakanaLenSet(int no, f32 len);
+MBEFFECT *MB4_SakanaEff(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 
 
 static Point3d mb4ev_Iruka1Path[100] = {
@@ -1386,4 +1387,78 @@ int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time)
     effDataP->scale = 20.0f*scale;
     effDataP->color.r = effDataP->color.g = effDataP->color.b = effDataP->color.a = 255;
     return i;
+}
+
+void MB4_SakanaPosSet(int no, f32 x, f32 y, f32 z)
+{
+    MBEFFECTDATA *effDataP; //r31
+    HU3DMODEL *modelP; //r30
+    MBEFFECT *effP; //r29
+    modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+    effP = modelP->hookData;
+    effDataP = effP->data + no;
+    effDataP->pos.x = x;
+    effDataP->pos.y = y;
+    effDataP->pos.z = z;
+}
+
+void MB4_SakanaOffsetSet(int no, f32 x, f32 y, f32 z)
+{
+    MBEFFECTDATA *effDataP; //r31
+    HU3DMODEL *modelP; //r30
+    MBEFFECT *effP; //r29
+    modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+    effP = modelP->hookData;
+    effDataP = effP->data + no;
+    effDataP->rot.x = x;
+    effDataP->rot.y = y - 90.0f;
+    effDataP->rot.z = z;
+}
+
+void MB4_SakanaLenSet(int no, f32 len)
+{
+    HU3DMODEL *modelP; //r31
+    MBEFFECT *effP; //r30
+    MBEFFECTDATA *effDataP; //r29
+    modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+    effP = modelP->hookData;
+    effDataP = effP->data + no;
+    effDataP->scale = 100.0f*len;
+}
+
+void MB4_SakanaOffsetInit(void)
+{
+    MB4_SAKANA *base; //r31
+    int species; //r30
+    int fish; //r29
+    for (species = 0; species < MB4_SAKANA_SPECIES_MAX; species++) {
+        base = &mb4_Work.sakana[species][0];
+        if (mb4ev_SakanaTbl[species].effF != 0)
+            continue;
+        fish = 0;
+        while (fish < mb4ev_SakanaTbl[species].num) {
+            base->areaPos.y = 500.0f;
+            base->areaPos.z = 3600.0f;
+            fish++;
+            base++;
+        }
+    }
+}
+
+void MB4_SakanaPosInit(void)
+{
+    int species; //r31
+    MB4_SAKANA *base; //r30
+    int fish; //r29
+    for (species = 0; species < MB4_SAKANA_SPECIES_MAX; species++) {
+        base = &mb4_Work.sakana[species][0];
+        if (mb4ev_SakanaTbl[species].effF != 0)
+            continue;
+        fish = 0;
+        while (fish < mb4ev_SakanaTbl[species].num) {
+            base->areaPos = mb4ev_SakanaTbl[species].pos;
+            fish++;
+            base++;
+        }
+    }
 }
