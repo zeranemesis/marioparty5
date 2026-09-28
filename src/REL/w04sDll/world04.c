@@ -1575,12 +1575,12 @@ void MB4_SakanaClose(void)
 {
     if(mb4_Work.sakanaEffMdlId != -1) {
         MBEffKill((HU3DMODELID)mb4_Work.sakanaEffMdlId);
-        mb4_Work.sakanaEffMdlId = -1;
     }
+    mb4_Work.sakanaEffMdlId = -1;
     if(mb4_Work.sakanaHookMdlId != -1) {
         Hu3DModelKill((HU3DMODELID)mb4_Work.sakanaHookMdlId);
-        mb4_Work.sakanaHookMdlId = -1;
     }
+    mb4_Work.sakanaHookMdlId = -1;
 }
 
 void MB4_SakanaPosSet(int no, f32 x, f32 y, f32 z)
