@@ -466,9 +466,11 @@ int MB5Ev_MasuWalkPost(int playerNo)
     s16 masuId;
     u32 flag;
     int type;
+    MASU *masuP;
 
     masuId = GwPlayer[playerNo].masuId;
-    flag = MBMasuGet(0, masuId)->flag;
+    masuP = MBMasuGet(0, masuId);
+    flag = (u32)(u16) masuP->flag;
     type = MBMasuTypeGet(0, masuId);
     return 0;
 }
