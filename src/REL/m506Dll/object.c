@@ -1249,8 +1249,8 @@ void M506StarfighterUpdate(void)
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         M506_FLYOBJ *fo = &flow->starfighter[i];
-        if (fo->doneFlag == 0 && flow->player[i]->height == 0x32 && flow->player[i]->curDir == 0) {
-            Hu3DModelAttrReset(flow->work->starfighterMdlId[i], HU3D_MOTATTR_PAUSE);
+        if (fo->doneFlag == 0 && flow->player[i]->newHeight == 0x32 && flow->player[i]->upJumpF == 0) {
+            Hu3DModelAttrReset(flow->work->starfighterMdlId[i], 1);
             fo->doneFlag = 1;
         }
         switch (fo->state) {
