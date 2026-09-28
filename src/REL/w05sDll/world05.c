@@ -437,9 +437,11 @@ int MB5Ev_MasuHatena(int playerNo)
 {
     s16 masuId;
     u32 flag;
+    MASU *masuP;
 
     masuId = GwPlayer[playerNo].masuId;
-    flag = MBMasuGet(0, masuId)->flag;
+    masuP = MBMasuGet(0, masuId);
+    flag = (u32)(u16) masuP->flag;
     if(flag & MB5EV_MASU_WARP) {
         MB5Ev_Warp(playerNo);
     }
@@ -448,7 +450,6 @@ int MB5Ev_MasuHatena(int playerNo)
             MB5Ev_Rocket(playerNo);
         }
     }
-    return 0;
 }
 
 int MB5_MasuStub(void)
