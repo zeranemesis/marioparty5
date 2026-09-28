@@ -139,8 +139,8 @@ static int MB4Ev_MasuWalkPost(int playerNo);
 static void MB4Ev_Iruka(int playerNo);
 static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF);
 static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold);
-static void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1);
-static void MB4Ev_PlayerBubbleCreate(int playerNo);
+void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1);
+void MB4Ev_PlayerBubbleCreate(int playerNo);
 static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
 static void MB4_CapsuleBubbleUpdate(void);
 void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
@@ -614,6 +614,49 @@ static Point3d mb4ev_IrukaBubbleOfsTbl[13] = {
 
 static f32 mb4ev_IrukaTPLvlScaleTbl[13] = { 1.1f, 1.0f, 0.8f, 1.1f, 1.2f, 0.7f, 0.9f, 0.8f, 0.7f, 1.2f, 1.1f, 1.1f, 1.3f };
 
+/* .data:0x10B4 - "ske_head\0" (12 bytes) */
+char lbl_1_data_10B4[12] = "ske_head";
+/* .data:0x10C0 - zero Point3d (12 bytes) */
+Point3d lbl_1_data_10C0 = { 0.0f, 0.0f, 0.0f };
+
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Spawns a bubble at the player's head bone plus a per-character
+ * offset (mb4ev_IrukaBubbleOfsTbl, indexed by charNo), on top of `ofs`. */
+void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1) {
+    Mtx headMtx;
+    Point3d pos;
+    int charNo = GwPlayer[playerNo].charNo;
+    f32 rnd;
+    s32 duration;
+
+    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
+    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    PSMTXMultVec(headMtx, &pos, &pos);
+    PSVECAdd(&pos, ofs, &pos);
+    rnd = frand() & 0x7F;
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
+    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))));
+}
+
+/* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
+ * for the generic "player at rest" head bubble rather than the dolphin
+ * ride's moving offset. */
+void MB4Ev_PlayerBubbleCreate(int playerNo) {
+    Mtx headMtx;
+    Point3d pos;
+    int charNo = GwPlayer[playerNo].charNo;
+    f32 rnd;
+    s32 duration;
+
+    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
+    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    PSMTXMultVec(headMtx, &pos, &pos);
+    PSVECAdd(&pos, &lbl_1_data_10C0, &pos);
+    rnd = frand() & 0x7F;
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
+    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))));
+}
+
 
 static MB4_WORK mb4_Work;
 static HuVecF mb4_CoinMaxDist;
@@ -688,7 +731,7 @@ static void MB4Ev_MasuHatena(int playerNo)
 
     masuId = GwPlayer[playerNo].masuId;
     masuP = MBMasuGet(0, masuId);
-    if((masuP->flag & 0x80000000) | 0x4) {
+    if((masuP->flag & 0x1) | 0x4) {
         MB4Ev_Iruka(playerNo);
     }
 }
