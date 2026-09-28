@@ -118,8 +118,8 @@ typedef struct MB4_Work_s {
     MB4_BUBBLE_TIMER puku2Bubble; //0x158
     MB4_BUBBLE_TIMER irukaBubble; //0x164
     MB4_SAKANA sakana[MB4_SAKANA_SPECIES_MAX][MB4_SAKANA_MAX]; //0x170
-    s16 sakanaEffMdlId; //0x7F70
-    s16 sakanaHookMdlId; //0x7F74
+    int sakanaEffMdlId; //0x7F70
+    int sakanaHookMdlId; //0x7F74
 } MB4_WORK; // size 0x7F78
 
 typedef void (*VoidFunc)(void);
@@ -1404,11 +1404,11 @@ int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time)
 void MB4_SakanaClose(void)
 {
     if(mb4_Work.sakanaEffMdlId != -1) {
-        MBEffKill(mb4_Work.sakanaEffMdlId);
+        MBEffKill((HU3DMODELID)mb4_Work.sakanaEffMdlId);
         mb4_Work.sakanaEffMdlId = -1;
     }
     if(mb4_Work.sakanaHookMdlId != -1) {
-        Hu3DModelKill(mb4_Work.sakanaHookMdlId);
+        Hu3DModelKill((HU3DMODELID)mb4_Work.sakanaHookMdlId);
         mb4_Work.sakanaHookMdlId = -1;
     }
 }
