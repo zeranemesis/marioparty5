@@ -749,20 +749,20 @@ static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
                 PSVECScale(&dir, &p->vel, 1.6666666f * (15.0f * (0.7f + (0.3f * MBEffRandF()))));
                 p->vel.y = 1.6666666f * (0.7f * (0.4f + (0.6f * MBEffRandF())));
                 p->scale = 30.0f + (20.0f * MBEffRandF());
-                p->color.a = (u8) (s32) (50.0f + (60.0f * MBEffRandF()));
+                p->color.a = (u8) (50.0f + (60.0f * MBEffRandF()));
             } else if (p->parManId == 1) {
                 PSVECScale(&dir, &p->pos, 100.0f * (0.7f * (0.5f + (0.5f * MBEffRandF()))));
                 p->pos.y = 20.0f + (20.0f * MBEffRandF());
                 PSVECScale(&dir, &p->vel, 1.6666666f * (9.0f * (0.7f + (0.3f * MBEffRandF()))));
                 p->vel.y = 1.6666666f * (1.2f * (0.4f + (0.6f * MBEffRandF())));
                 p->scale = 30.0f + (20.0f * MBEffRandF());
-                p->color.a = (u8) (s32) (40.0f + (30.0f * MBEffRandF()));
+                p->color.a = (u8) (40.0f + (30.0f * MBEffRandF()));
             }
             p->rot.z = 360.0f * MBEffRandF();
             t = 0.3f + (0.7f * MBEffRandF());
-            p->color.r = (u8) (s32) (mb7ev_DustColTbl[0].x + (mb7ev_DustColTbl[0].x * t));
-            p->color.g = (u8) (s32) (mb7ev_DustColTbl[0].y + (mb7ev_DustColTbl[0].y * t));
-            p->color.b = (u8) (s32) (mb7ev_DustColTbl[0].z + (mb7ev_DustColTbl[0].z * t));
+            p->color.r = (u8) (mb7ev_DustColTbl[0].x + (mb7ev_DustColTbl[0].x * t));
+            p->color.g = (u8) (mb7ev_DustColTbl[0].y + (mb7ev_DustColTbl[0].y * t));
+            p->color.b = (u8) (mb7ev_DustColTbl[0].z + (mb7ev_DustColTbl[0].z * t));
         }
         effP->mode = 0;
     }
