@@ -681,6 +681,18 @@ static void MB4_LightSet(void)
     Hu3DGLightInfinitytSet(gLightId);
 }
 
+static void MB4Ev_MasuHatena(int playerNo)
+{
+    MASU *masuP;
+    s16 masuId;
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(0, masuId);
+    if((masuP->flag & 0x80000000) | 0x4) {
+        MB4Ev_Iruka(playerNo);
+    }
+}
+
 static void MB4_LightReset(void)
 {
 }
