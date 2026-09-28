@@ -693,6 +693,31 @@ static void MB4Ev_MasuHatena(int playerNo)
     }
 }
 
+static int MB4Ev_MasuWalkPost(int playerNo)
+{
+    MASU *masuP;
+    s16 masuId;
+    MB4_BUBBLE_TIMER *bubbleP;
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(0, masuId);
+    if(masuP->flag & 0x00000010) {
+        MBModelAttrReset((MBMODELID)mb4_Work.pukuMdlId, 0x40000002);
+        MBMotionTimeSet((MBMODELID)mb4_Work.pukuMdlId, 0.0f);
+        MBMotionSpeedSet((MBMODELID)mb4_Work.pukuMdlId, 1.0f);
+        MBModelAttrReset((MBMODELID)mb4_Work.pukuOpenMdlId, 0x40000002);
+        MBMotionTimeSet((MBMODELID)mb4_Work.pukuOpenMdlId, 0.0f);
+        MBMotionSpeedSet((MBMODELID)mb4_Work.pukuOpenMdlId, 1.0f);
+        MBModelDispSet((MBMODELID)mb4_Work.pukuOpenMdlId, 1);
+        HuAudFXEmiterPlay(0x5ef, &mb4ev_Puku2EmiterPos);
+        bubbleP = &mb4_Work.puku2Bubble;
+        bubbleP->timer = 3;
+        bubbleP->count = 0x12;
+        bubbleP->tick = -1;
+    }
+    return 0;
+}
+
 static void MB4_LightReset(void)
 {
 }
