@@ -2717,7 +2717,7 @@ static void CapsulePosSelExec(void)
     int masuId; //r27
     s16 *tbl; //r26
     int num; //r25
-    int capsuleMes; //r24
+    s16 capsuleMes; //r24
     int linkNum; //r23
     s16 angle; //r22
     MASU *masuP; //r21
