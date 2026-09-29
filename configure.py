@@ -572,7 +572,7 @@ config.libs = [
         "demo",
         [
             Object(Matching, "dolphin/demo/DEMOInit.c"),
-            Object(NonMatching, "dolphin/demo/DEMOFont.c"),
+            Object(Matching, "dolphin/demo/DEMOFont.c"),
             Object(NonMatching, "dolphin/demo/DEMOPuts.c"),
             Object(NonMatching, "dolphin/demo/DEMOStats.c"),
         ],
@@ -711,7 +711,7 @@ config.libs = [
             Object(Matching, "MSL_C.PPCEABI.bare.H/printf.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/float.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/signal.c"),
-            Object(NonMatching, "MSL_C.PPCEABI.bare.H/string.c"),
+            Object(Matching, "MSL_C.PPCEABI.bare.H/string.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/uart_console_io.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/wchar_io.c"),
             Object(Matching, "MSL_C.PPCEABI.bare.H/e_acos.c"),
