@@ -1884,7 +1884,7 @@ config.libs = [
         objects={
             Object(NonMatching, "REL/sd00dll/sd00.c"),
             Object(NonMatching, "REL/sd00dll/machine.c"),
-            Object(Equivalent, "REL/sd00dll/hook.c"),
+            Object(Matching, "REL/sd00dll/hook.c"),
             Object(NonMatching, "REL/sd00dll/com.c"),
             Object(NonMatching, "REL/sd00dll/gun.c"),
             Object(NonMatching, "REL/sd00dll/stage.c"),
