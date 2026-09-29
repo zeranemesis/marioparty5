@@ -1119,9 +1119,9 @@ void fn_1_4FB4(OMOBJ *obj)
             proj[i].x = 320.0f + (640.0f * ((proj[i].x - 288.0f) / 576.0f));
             proj[i].y = 240.0f + (480.0f * ((proj[i].y - 240.0f) / 480.0f));
         }
-        lbl_1_bss_1154 = fabs(proj[0].x - proj[1].x) * 0.00390625;
+        lbl_1_bss_1154 = fabs(proj[0].x - proj[1].x) / 256.0;
         lbl_1_bss_1154 = 1.0f / lbl_1_bss_1154;
-        lbl_1_bss_1150 = fabs(proj[0].y - proj[1].y) * 0.00390625;
+        lbl_1_bss_1150 = fabs(proj[0].y - proj[1].y) / 256.0;
         lbl_1_bss_1150 = 1.0f / lbl_1_bss_1150;
     }
     if (WipeCheckEnd() == 0) {
@@ -1196,8 +1196,8 @@ void fn_1_4FB4(OMOBJ *obj)
         }
         if (animActive == 0 && lbl_1_data_119 == 1) {
             lbl_1_data_119 = 0;
-            lbl_1_data_111[3] = lbl_1_data_111[2] = lbl_1_data_111[1] = lbl_1_data_111[0] = -1;
-            lbl_1_data_115[3] = lbl_1_data_115[2] = lbl_1_data_115[1] = lbl_1_data_115[0] = 0;
+            lbl_1_data_111[0] = lbl_1_data_111[1] = lbl_1_data_111[2] = lbl_1_data_111[3] = -1;
+            lbl_1_data_115[0] = lbl_1_data_115[1] = lbl_1_data_115[2] = lbl_1_data_115[3] = 0;
             Hu3DModelRotSet(obj->mdlId[3], 0.0f, 0.0f, 0.0f);
             Hu3DModelAttrReset(obj->mdlId[7], HU3D_ATTR_DISPOFF);
         }
@@ -1205,9 +1205,9 @@ void fn_1_4FB4(OMOBJ *obj)
             Vec ofs[2] = { { -1.0f, 0.0f, 0.0f }, { 3.0f, 0.0f, 0.0f } };
 
             lbl_1_data_119 = 2;
-            lbl_1_data_111[3] = lbl_1_data_111[2] = lbl_1_data_111[1] = lbl_1_data_111[0] = 4;
+            lbl_1_data_111[0] = lbl_1_data_111[1] = lbl_1_data_111[2] = lbl_1_data_111[3] = 4;
             lbl_1_data_111[0] = -1;
-            lbl_1_data_115[3] = lbl_1_data_115[2] = lbl_1_data_115[1] = lbl_1_data_115[0] = 0;
+            lbl_1_data_115[0] = lbl_1_data_115[1] = lbl_1_data_115[2] = lbl_1_data_115[3] = 0;
             CRotM[0].x = -90.0f;
             Hu3DModelPosSet(obj->mdlId[3], 0.0f, 0.0f, -1.0f);
             Hu3DModelLayerSet(obj->mdlId[3], 2);
@@ -1488,7 +1488,7 @@ void fn_1_4FB4(OMOBJ *obj)
                         float mid;
 
                         gap = lbl_1_bss_9D1C[i].pos.x - (lbl_1_bss_9D1C[j].pos.x + ((i < j) ? lbl_1_bss_9D1C[j].vel.x : 0.0f));
-                        dist = ((lbl_1_bss_9D1C[j].type == 0) ? 32 : 125) + ((lbl_1_bss_9D1C[i].type == 0) ? 32 : 125);
+                        dist = ((lbl_1_bss_9D1C[i].type == 0) ? 32 : 125) + ((lbl_1_bss_9D1C[j].type == 0) ? 32 : 125);
                         if (fabs(gap) < dist) {
                             if (lbl_1_bss_9D1C[i].pos.x < lbl_1_bss_9D1C[j].pos.x) {
                                 if (lbl_1_bss_9D1C[j].type == 1 && lbl_1_bss_9D1C[i].type == 0) {
@@ -1587,7 +1587,7 @@ void fn_1_4FB4(OMOBJ *obj)
                         Hu3DMotionShiftSet(obj->mdlId[mdlNo], obj->mtnId[lbl_1_bss_9D1C[i].type + motTbl[lbl_1_bss_9D1C[i].animNo]], 40.0f,
                             15.0f, HU3D_MOTATTR_LOOP);
                         model = &Hu3DData[obj->mdlId[mdlNo]];
-                        model->motShiftWork.speed = 5.0 * (0.3 + (0.3 * rand8() * 0.00390625));
+                        model->motShiftWork.speed = 5.0 * (0.3 + ((0.3 * rand8()) / 256.0));
                     }
                 }
             }
@@ -1740,7 +1740,7 @@ void fn_1_4FB4(OMOBJ *obj)
                         lbl_1_bss_9D1C[i].state = 0;
                         lbl_1_bss_9D1C[i].rnd = rand8();
                         lbl_1_bss_9D1C[i].type = spawnType;
-                        lbl_1_bss_9D1C[i].pos.x = (spawnType * 350) + ((rand8() * 36) / 255) + 1200;
+                        lbl_1_bss_9D1C[i].pos.x = ((spawnType * 350) + 1200) + ((rand8() * 36) / 255);
                         lbl_1_bss_9D1C[i].pos.y = 0.0f;
                         lbl_1_bss_9D1C[i].pos.z = (lane * 100) - 550;
                         lbl_1_bss_9D1C[i].vel.x = (spawnType == 0) ? (-400.0 + 200.0 * ((rand8() / 255.0) - 0.75)) / 60.0
