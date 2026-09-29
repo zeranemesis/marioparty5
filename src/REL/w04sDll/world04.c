@@ -65,7 +65,7 @@ typedef struct MB4_SakanaSpecies_s {
 typedef struct MB4_Sakana_s {
     int mdlId; //0x00
     int effNo; //0x04
-    f32 unk08; //0x08
+    int unk08; //0x08
     int bobAngle; //0x0C
     int time; //0x10
     int wobbleAngle; //0x14
@@ -139,8 +139,8 @@ static int MB4Ev_MasuWalkPost(int playerNo);
 static void MB4Ev_Iruka(int playerNo);
 static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF);
 static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold);
-void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1);
-void MB4Ev_PlayerBubbleCreate(int playerNo);
+static void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1);
+static void MB4Ev_PlayerBubbleCreate(int playerNo);
 static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
 static void MB4_CapsuleBubbleUpdate(void);
 void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
@@ -160,11 +160,10 @@ int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time);
 void MB4_SakanaInit(void);
 static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx);
 void MB4_SakanaClose(void);
-int MB4_SakanaCreate(s16 type);
+int MB4_SakanaCreate(int type);
 void MB4_SakanaPosSet(int no, f32 x, f32 y, f32 z);
 void MB4_SakanaOffsetSet(int no, f32 x, f32 y, f32 z);
 void MB4_SakanaLenSet(int no, f32 len);
-MBEFFECT *MB4_SakanaEff(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix);
 
 
 static Point3d mb4ev_Iruka1Path[100] = {
@@ -614,48 +613,10 @@ static Point3d mb4ev_IrukaBubbleOfsTbl[13] = {
 
 static f32 mb4ev_IrukaTPLvlScaleTbl[13] = { 1.1f, 1.0f, 0.8f, 1.1f, 1.2f, 0.7f, 0.9f, 0.8f, 0.7f, 1.2f, 1.1f, 1.1f, 1.3f };
 
-/* .data:0x10B4 - "ske_head\0" (12 bytes) */
+/* .data:0x10B4 - "ske_head " (12 bytes) */
 char lbl_1_data_10B4[12] = "ske_head";
 /* .data:0x10C0 - zero Point3d (12 bytes) */
 Point3d lbl_1_data_10C0 = { 0.0f, 0.0f, 0.0f };
-
-/* NONMATCHING: complete and faithful, not attempted for instruction-level
- * match. Spawns a bubble at the player's head bone plus a per-character
- * offset (mb4ev_IrukaBubbleOfsTbl, indexed by charNo), on top of `ofs`. */
-void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1) {
-    Mtx headMtx;
-    Point3d pos;
-    int charNo = GwPlayer[playerNo].charNo;
-    f32 rnd;
-    s32 duration;
-
-    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
-    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
-    PSMTXMultVec(headMtx, &pos, &pos);
-    PSVECAdd(&pos, ofs, &pos);
-    rnd = frand() & 0x7F;
-    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
-    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))));
-}
-
-/* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
- * for the generic "player at rest" head bubble rather than the dolphin
- * ride's moving offset. */
-void MB4Ev_PlayerBubbleCreate(int playerNo) {
-    Mtx headMtx;
-    Point3d pos;
-    int charNo = GwPlayer[playerNo].charNo;
-    f32 rnd;
-    s32 duration;
-
-    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
-    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
-    PSMTXMultVec(headMtx, &pos, &pos);
-    PSVECAdd(&pos, &lbl_1_data_10C0, &pos);
-    rnd = frand() & 0x7F;
-    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
-    MB4_BubbleEffCreate(&pos, duration, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))));
-}
 
 
 static MB4_WORK mb4_Work;
@@ -724,6 +685,15 @@ static void MB4_LightSet(void)
     Hu3DGLightInfinitytSet(gLightId);
 }
 
+static void MB4_LightReset(void)
+{
+}
+
+int MB4_MasuStub(void)
+{
+    return 0;
+}
+
 static void MB4Ev_MasuHatena(int playerNo)
 {
     MASU *masuP;
@@ -734,6 +704,11 @@ static void MB4Ev_MasuHatena(int playerNo)
     if((masuP->flag & 0x1) | 0x4) {
         MB4Ev_Iruka(playerNo);
     }
+}
+
+static int MB4Ev_MasuWalkPre(int playerNo)
+{
+    return 0;
 }
 
 static int MB4Ev_MasuWalkPost(int playerNo)
@@ -760,12 +735,7 @@ static int MB4Ev_MasuWalkPost(int playerNo)
     }
     return 0;
 }
-/* NONMATCHING: faithful port. Handles coin display on the board:
- * waits for the player's rotate animation to finish, then either spawns
- * a coin-disp effect (coinNum > 0) or plays a win/lose voice and sets up
- * a motion sequence (coinNum <= 0). Cleans up the coin disp and motion
- * when done.
- */
+
 static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
 {
     int motionId; //r30 = -1
@@ -814,21 +784,42 @@ static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
     }
 }
 
+/* NONMATCHING: complete and faithful, not attempted for instruction-level
+ * match. Spawns a bubble at the player's head bone plus a per-character
+ * offset (mb4ev_IrukaBubbleOfsTbl, indexed by charNo), on top of `ofs`. */
+static void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1) {
+    Mtx headMtx;
+    Point3d pos;
+    int charNo = GwPlayer[playerNo].charNo;
+    f32 rnd;
+    s32 duration;
 
-
-
-static void MB4_LightReset(void)
-{
+    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
+    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    PSMTXMultVec(headMtx, &pos, &pos);
+    PSVECAdd(&pos, ofs, &pos);
+    rnd = frand() & 0x7F;
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
+    MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))), duration);
 }
 
-int MB4_MasuStub(void)
-{
-    return 0;
-}
+/* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
+ * for the generic "player at rest" head bubble rather than the dolphin
+ * ride's moving offset. */
+static void MB4Ev_PlayerBubbleCreate(int playerNo) {
+    Mtx headMtx;
+    Point3d pos;
+    int charNo = GwPlayer[playerNo].charNo;
+    f32 rnd;
+    s32 duration;
 
-static int MB4Ev_MasuWalkPre(int playerNo)
-{
-    return 0;
+    Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
+    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    PSMTXMultVec(headMtx, &pos, &pos);
+    PSVECAdd(&pos, &lbl_1_data_10C0, &pos);
+    rnd = frand() & 0x7F;
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
+    MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))), duration);
 }
 
 static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
@@ -1525,62 +1516,336 @@ int MB4_BubbleEffCreate(HuVecF *pos, float scale, int time)
     return i;
 }
 
-/* NONMATCHING: faithful port. Finds a free sakana MBEFFECTDATA slot.
- * A slot is in use when any of bits 0-6 of the byte at slot+0x58 is set
- * (extrwi 25,31 + clrlwi 24 == (byte & 0x7F) != 0); all clear means free.
- * On a free slot the byte is re-stored (rlwimi r0,r4,7,24,24 with r4=1,
- * which is a no-op), the seven f32 fields at 0x2C-0x47 are zeroed, the
- * s16 animBank at 0x4C is set to `type`, and the four colour bytes at
- * 0x48-0x4B are set to 0xFF. Returns the slot index, or -1 if the effect
- * model is absent or no slot is free.
- */
-int MB4_SakanaCreate(s16 type)
+void MB4_SakanaInit(void)
 {
-    HU3DMODEL *modelP; //r28
-    MBEFFECT *effP; //r30
-    u8 *slot; //r31
-    s32 i; //r29
+    MB4_SAKANA *sakana; //r31
+    int i; //r30
+    int j; //r29
+    MBEFFECT *effP; //r28
+    MBEFFECTDATA *effDataP; //r27
+    HU3DMODEL *modelP; //r26
+    ANIMDATA *animP; //r25
 
-    if(mb4_Work.sakanaEffMdlId == -1) {
-        return -1;
-    }
+    animP = HuSprAnimRead(HuDataReadNum(DATANUM(DATA_w04s, 52), HU_MEMNUM_OVL));
+    mb4_Work.sakanaEffMdlId = MBEffCreate(animP, 128);
+    Hu3DModelLayerSet(mb4_Work.sakanaEffMdlId, 1);
     modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
     effP = modelP->hookData;
-    slot = (u8 *) effP->data;
-    i = 0;
-    while(i < effP->num) {
-        if((slot[0x58] & 0x7F) == 0) {
-            break;
+    effDataP = effP->data;
+    for (j = 0; j < effP->num; j++, effDataP++) {
+        effDataP->dispF = FALSE;
+    }
+    MBEffAttrSet(mb4_Work.sakanaEffMdlId, 0x10);
+    memset(&mb4_Work.sakana[0][0], 0, sizeof(mb4_Work.sakana));
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        for (j = 0; j < MB4_SAKANA_MAX; j++) {
+            mb4_Work.sakana[i][j].mdlId = -1;
         }
-        i++;
-        slot += sizeof(MBEFFECTDATA);
     }
-    if(i == effP->num) {
-        return -1;
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        sakana = &mb4_Work.sakana[i][0];
+        for (j = 0; j < mb4ev_SakanaTbl[i].num; j++, sakana++) {
+            if (mb4ev_SakanaTbl[i].effF != 0) {
+                sakana->effNo = MB4_SakanaCreate(frand() & 0x7FFF & 3);
+                sakana->mdlId = -1;
+            }
+            else {
+                switch (frand() & 0x7FFF & 3) {
+                    case 0:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 26), NULL, TRUE);
+                        break;
+                    case 1:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 27), NULL, TRUE);
+                        break;
+                    case 2:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 28), NULL, TRUE);
+                        break;
+                    default:
+                        sakana->mdlId = MBModelCreate(DATANUM(DATA_w04s, 29), NULL, TRUE);
+                        break;
+                }
+                MBModelLayerSet(sakana->mdlId, 2);
+                sakana->effNo = -1;
+            }
+            sakana->unk08 = frand();
+            sakana->bobAngle = frand();
+            sakana->time = 0;
+            sakana->wobbleAngle = 0;
+            sakana->wobbleTimer = 60.0f + (2.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+            sakana->bubbleNum = 10.0f + (10.0f * (0.007874016f * (frand() & 0x7F)));
+            sakana->bubbleTimer = 10.0f * (60.0f * (0.007874016f * (frand() & 0x7F)));
+            sakana->targetTimer = 120.0f + (2.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+            switch (mb4ev_SakanaTbl[i].swimType) {
+                case 0:
+                    sakana->swimType = 0;
+                    break;
+                case 1:
+                    sakana->swimType = j & 1;
+                    break;
+                default:
+                    sakana->swimType = 1;
+                    break;
+            }
+            sakana->dispF = TRUE;
+            sakana->areaPos = mb4ev_SakanaTbl[i].pos;
+            sakana->areaRange = mb4ev_SakanaTbl[i].range;
+            sakana->target.x = sakana->areaPos.x + (sakana->areaRange.x * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->target.y = sakana->areaPos.y + (sakana->areaRange.y * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->target.z = sakana->areaPos.z + (sakana->areaRange.z * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->pos.x = sakana->areaPos.x + (sakana->areaRange.x * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->pos.y = sakana->areaPos.y + (sakana->areaRange.y * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->pos.z = sakana->areaPos.z + (sakana->areaRange.z * ((0.007874016f * (frand() & 0x7F)) - 0.5f));
+            sakana->dir.x = (0.007874016f * (frand() & 0x7F)) - 0.5f;
+            sakana->dir.y = (0.007874016f * (frand() & 0x7F)) - 0.5f;
+            sakana->dir.z = (0.007874016f * (frand() & 0x7F)) - 0.5f;
+            PSVECNormalize(&sakana->dir, &sakana->dir);
+            sakana->rot.x = HuAtan(HuMagXZVecF(&sakana->dir), sakana->dir.y);
+            sakana->rot.y = HuAtan(sakana->dir.x, sakana->dir.z);
+            sakana->rot.z = 0.0f;
+            sakana->targetRot.x = sakana->rot.x;
+            sakana->targetRot.y = sakana->rot.y;
+            sakana->targetRot.z = sakana->rot.z;
+            sakana->speed = 2.5f * (1.0f + (0.007874016f * (frand() & 0x7F)));
+            sakana->scale = 0.25f + (0.5f * (0.007874016f * (frand() & 0x7F)));
+            sakana->unk8C = 0.25f + (0.25f * (0.007874016f * (frand() & 0x7F)));
+            if (sakana->mdlId != -1) {
+                MBModelPosSetV(sakana->mdlId, &sakana->pos);
+                MBModelRotSetV(sakana->mdlId, &sakana->rot);
+                MBModelScaleSet(sakana->mdlId, sakana->scale, sakana->scale, sakana->scale);
+                MBModelLayerSet(sakana->mdlId, 2);
+            }
+            else {
+                MB4_SakanaPosSet(sakana->effNo, sakana->pos.x, sakana->pos.y, sakana->pos.z);
+                MB4_SakanaOffsetSet(sakana->effNo, sakana->rot.x, sakana->rot.y, sakana->rot.z);
+                MB4_SakanaLenSet(sakana->effNo, sakana->scale);
+            }
+        }
     }
-    slot[0x58] &= 0x7F;
-    *(f32 *) (slot + 0x44) = 0.0f;
-    *(f32 *) (slot + 0x40) = 0.0f;
-    *(f32 *) (slot + 0x3C) = 0.0f;
-    *(f32 *) (slot + 0x38) = 0.0f;
-    *(f32 *) (slot + 0x34) = 0.0f;
-    *(f32 *) (slot + 0x30) = 0.0f;
-    *(f32 *) (slot + 0x2C) = 0.0f;
-    *(s16 *) (slot + 0x4C) = type;
-    slot[0x48] = slot[0x49] = slot[0x4A] = slot[0x4B] = 0xFF;
-    return i;
+    mb4_Work.sakanaHookMdlId = Hu3DHookFuncCreate((HU3DMODELHOOK)MB4_SakanaDraw);
+    Hu3DModelCameraSet(mb4_Work.sakanaHookMdlId, HU3D_CAM0);
+    Hu3DModelLayerSet(mb4_Work.sakanaHookMdlId, 7);
+}
+
+static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
+{
+    MB4_SAKANA *sakana; //r31
+    MBEFFECTDATA *effDataP; //r29
+    MBEFFECT *effP; //r27
+    HU3DMODEL *effModelP; //r25
+    int i; //r26
+    int j; //r23
+    int time; //r21
+    float speed;
+    float dist;
+    float bobRot;
+    float cosRotX;
+    HuVecF ofs;
+    HuVecF diff;
+
+    if (MBPauseProcCheck()) {
+        return;
+    }
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        sakana = &mb4_Work.sakana[i][0];
+        for (j = 0; j < mb4ev_SakanaTbl[i].num; j++, sakana++) {
+            sakana->unk08++;
+            dist = 0.0f;
+            speed = sakana->speed;
+            if ((sakana->unk08 & 3) == 0) {
+                Hu3D3Dto2D(&sakana->pos, HU3D_CAM0, &ofs);
+                if ((ofs.x < 0.0f || ofs.x > 640.0f) && (ofs.y < 0.0f || ofs.y > 480.0f)) {
+                    sakana->dispF = FALSE;
+                }
+                else {
+                    sakana->dispF = TRUE;
+                }
+            }
+            if (!sakana->dispF && sakana->mdlId == -1) {
+                effModelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+                effP = effModelP->hookData;
+                effDataP = &effP->data[sakana->effNo];
+                effDataP->dispF = FALSE;
+                continue;
+            }
+            if (sakana->swimType == 0) {
+                PSVECSubtract(&sakana->target, &sakana->pos, &diff);
+                if (--sakana->time <= 0) {
+                    dist = PSVECMag(&diff);
+                    PSVECSubtract(&sakana->areaPos, &sakana->pos, &ofs);
+                    if (dist <= sakana->speed || --sakana->targetTimer <= 0 || fabs(ofs.x) > sakana->areaRange.x
+                        || fabs(ofs.y) > sakana->areaRange.y || fabs(ofs.z) > sakana->areaRange.z) {
+                        sakana->target.x = sakana->areaPos.x + (sakana->areaRange.x * (MBCapsuleEffRandF() - 0.5f));
+                        sakana->target.y = sakana->areaPos.y + (sakana->areaRange.y * (MBCapsuleEffRandF() - 0.5f));
+                        sakana->target.z = sakana->areaPos.z + (sakana->areaRange.z * (MBCapsuleEffRandF() - 0.5f));
+                        sakana->time = 60;
+                        sakana->targetTimer = 120.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
+                    }
+                }
+                if (--sakana->wobbleTimer <= 0) {
+                    bobRot = 15.0 * HuSin(sakana->wobbleAngle);
+                    if ((sakana->wobbleAngle += 5) >= 720) {
+                        sakana->wobbleAngle = 0;
+                        sakana->wobbleTimer = 60.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
+                    }
+                }
+                else {
+                    bobRot = 0.0f;
+                }
+                if (--sakana->bubbleTimer <= 0) {
+                    if ((sakana->bubbleNum & 3) == 0) {
+                        PSVECScale(&sakana->dir, &ofs, 50.0f * sakana->scale);
+                        PSVECAdd(&sakana->pos, &ofs, &ofs);
+                        time = 120.0f * (1.0f + (0.2f * MBCapsuleEffRandF()));
+                        MB4_BubbleEffCreate(&ofs, sakana->scale * (0.5f + MBCapsuleEffRandF()), time);
+                    }
+                    if (--sakana->bubbleNum <= 0) {
+                        sakana->bubbleNum = 10.0f + (10.0f * MBCapsuleEffRandF());
+                        sakana->bubbleTimer = 300.0f + (5.0f * (60.0f * MBCapsuleEffRandF()));
+                    }
+                }
+                sakana->targetRot.x = HuAtan(diff.y, HuMagXZVecF(&diff));
+                sakana->targetRot.y = HuAtan(diff.x, diff.z);
+            }
+            else {
+                PSVECSubtract(&sakana->target, &sakana->pos, &diff);
+                if ((sakana->unk08 & 1) == 0) {
+                    if (--sakana->time <= 0) {
+                        dist = PSVECMag(&diff);
+                        if (dist <= sakana->speed || --sakana->targetTimer <= 0) {
+                            sakana->target.x = sakana->areaPos.x + (sakana->areaRange.x * (MBCapsuleEffRandF() - 0.5f));
+                            sakana->target.y = sakana->areaPos.y + (sakana->areaRange.y * (MBCapsuleEffRandF() - 0.5f));
+                            sakana->target.z = sakana->areaPos.z + (sakana->areaRange.z * (MBCapsuleEffRandF() - 0.5f));
+                            sakana->time = 60;
+                            sakana->targetTimer = 120.0f + (2.0f * (60.0f * MBCapsuleEffRandF()));
+                        }
+                    }
+                }
+                if ((sakana->unk08 & 3) == 0) {
+                    sakana->targetRot.x = HuAtan(diff.y, HuMagXZVecF(&diff));
+                    sakana->targetRot.y = HuAtan(diff.x, diff.z);
+                }
+            }
+            sakana->rot.x = MB4_AngleLerp(sakana->targetRot.x, sakana->rot.x, 2.5f);
+            sakana->rot.y = MB4_AngleLerp(sakana->targetRot.y, sakana->rot.y, 2.5f);
+            sakana->rot.z = 0.0f;
+            cosRotX = HuCos(sakana->rot.x);
+            sakana->dir.y = HuSin(sakana->rot.x);
+            sakana->dir.x = cosRotX * HuSin(sakana->rot.y);
+            sakana->dir.z = cosRotX * HuCos(sakana->rot.y);
+            if (dist > 1000.0f) {
+                speed *= 2.0f;
+            }
+            sakana->bobAngle += 1.0f + (3.0f * MBCapsuleEffRandF());
+            if (sakana->bobAngle > 360) {
+                sakana->bobAngle -= 360;
+            }
+            PSVECScale(&sakana->dir, &ofs, speed * (0.5 + fabs(0.5 * HuSin(sakana->bobAngle))));
+            PSVECAdd(&sakana->pos, &ofs, &sakana->pos);
+            if (sakana->mdlId != -1) {
+                if (!sakana->dispF) {
+                    MBModelDispSet(sakana->mdlId, FALSE);
+                }
+                else {
+                    MBModelDispSet(sakana->mdlId, TRUE);
+                    MBModelPosSetV(sakana->mdlId, &sakana->pos);
+                    MBModelRotSet(sakana->mdlId, -sakana->rot.x, sakana->rot.y + bobRot, sakana->rot.z);
+                }
+            }
+            else {
+                effModelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+                effP = effModelP->hookData;
+                effDataP = &effP->data[sakana->effNo];
+                if (!sakana->dispF) {
+                    effDataP->dispF = FALSE;
+                }
+                else {
+                    effDataP->dispF = TRUE;
+                    effDataP->pos.x = sakana->pos.x;
+                    effDataP->pos.y = sakana->pos.y;
+                    effDataP->pos.z = sakana->pos.z;
+                    effDataP->rot.x = sakana->rot.x;
+                    effDataP->rot.y = sakana->rot.y;
+                    effDataP->rot.z = sakana->rot.z;
+                    effDataP->rot.y -= 90.0f;
+                }
+            }
+        }
+    }
 }
 
 void MB4_SakanaClose(void)
 {
-    if(mb4_Work.sakanaEffMdlId != -1) {
-        MBEffKill((HU3DMODELID)mb4_Work.sakanaEffMdlId);
+    if (mb4_Work.sakanaEffMdlId != -1) {
+        MBEffKill(mb4_Work.sakanaEffMdlId);
     }
     mb4_Work.sakanaEffMdlId = -1;
-    if(mb4_Work.sakanaHookMdlId != -1) {
-        Hu3DModelKill((HU3DMODELID)mb4_Work.sakanaHookMdlId);
+    if (mb4_Work.sakanaHookMdlId != -1) {
+        Hu3DModelKill(mb4_Work.sakanaHookMdlId);
     }
     mb4_Work.sakanaHookMdlId = -1;
+}
+
+void MB4_SakanaOffsetInit(void)
+{
+    MB4_SAKANA *sakana; //r31
+    int i; //r30
+    int j; //r29
+
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        sakana = &mb4_Work.sakana[i][0];
+        if (mb4ev_SakanaTbl[i].effF == 0) {
+            for (j = 0; j < mb4ev_SakanaTbl[i].num; j++, sakana++) {
+                sakana->areaPos.y = 500.0f;
+                sakana->areaPos.z = 3600.0f;
+            }
+        }
+    }
+}
+
+void MB4_SakanaPosInit(void)
+{
+    MB4_SAKANA *sakana; //r30
+    int i; //r31
+    int j; //r29
+
+    for (i = 0; i < MB4_SAKANA_SPECIES_MAX; i++) {
+        sakana = &mb4_Work.sakana[i][0];
+        if (mb4ev_SakanaTbl[i].effF == 0) {
+            for (j = 0; j < mb4ev_SakanaTbl[i].num; j++, sakana++) {
+                sakana->areaPos = mb4ev_SakanaTbl[i].pos;
+            }
+        }
+    }
+}
+
+int MB4_SakanaCreate(int type)
+{
+    MBEFFECTDATA *effDataP; //r31
+    MBEFFECT *effP; //r30
+    int i; //r29
+    HU3DMODEL *modelP; //r28
+
+    if (mb4_Work.sakanaEffMdlId == -1) {
+        return -1;
+    }
+    modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
+    effP = modelP->hookData;
+    effDataP = effP->data;
+    for (i = 0; i < effP->num; i++, effDataP++) {
+        if (!effDataP->dispF) {
+            break;
+        }
+    }
+    if (i >= effP->num) {
+        return -1;
+    }
+    effDataP->dispF = TRUE;
+    effDataP->pos.x = effDataP->pos.y = effDataP->pos.z = 0.0f;
+    effDataP->rot.x = effDataP->rot.y = effDataP->rot.z = 0.0f;
+    effDataP->scale = 100.0f;
+    effDataP->animBank = (s16)type;
+    effDataP->color.r = effDataP->color.g = effDataP->color.b = effDataP->color.a = 255;
+    return i;
 }
 
 void MB4_SakanaPosSet(int no, f32 x, f32 y, f32 z)
@@ -1588,9 +1853,10 @@ void MB4_SakanaPosSet(int no, f32 x, f32 y, f32 z)
     MBEFFECTDATA *effDataP; //r31
     HU3DMODEL *modelP; //r30
     MBEFFECT *effP; //r29
+
     modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
     effP = modelP->hookData;
-    effDataP = effP->data + no;
+    effDataP = &effP->data[no];
     effDataP->pos.x = x;
     effDataP->pos.y = y;
     effDataP->pos.z = z;
@@ -1601,9 +1867,10 @@ void MB4_SakanaOffsetSet(int no, f32 x, f32 y, f32 z)
     MBEFFECTDATA *effDataP; //r31
     HU3DMODEL *modelP; //r30
     MBEFFECT *effP; //r29
+
     modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
     effP = modelP->hookData;
-    effDataP = effP->data + no;
+    effDataP = &effP->data[no];
     effDataP->rot.x = x;
     effDataP->rot.y = y - 90.0f;
     effDataP->rot.z = z;
@@ -1614,45 +1881,9 @@ void MB4_SakanaLenSet(int no, f32 len)
     HU3DMODEL *modelP; //r31
     MBEFFECT *effP; //r30
     MBEFFECTDATA *effDataP; //r29
+
     modelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
     effP = modelP->hookData;
-    effDataP = effP->data + no;
-    effDataP->scale = 100.0f*len;
-}
-
-void MB4_SakanaOffsetInit(void)
-{
-    MB4_SAKANA *base; //r31
-    int species; //r30
-    int fish; //r29
-    for (species = 0; species < MB4_SAKANA_SPECIES_MAX; species++) {
-        base = &mb4_Work.sakana[species][0];
-        if (mb4ev_SakanaTbl[species].effF != 0)
-            continue;
-        fish = 0;
-        while (fish < mb4ev_SakanaTbl[species].num) {
-            base->areaPos.y = 500.0f;
-            base->areaPos.z = 3600.0f;
-            fish++;
-            base++;
-        }
-    }
-}
-
-void MB4_SakanaPosInit(void)
-{
-    int species; //r31
-    MB4_SAKANA *base; //r30
-    int fish; //r29
-    for (species = 0; species < MB4_SAKANA_SPECIES_MAX; species++) {
-        base = &mb4_Work.sakana[species][0];
-        if (mb4ev_SakanaTbl[species].effF != 0)
-            continue;
-        fish = 0;
-        while (fish < mb4ev_SakanaTbl[species].num) {
-            base->areaPos = mb4ev_SakanaTbl[species].pos;
-            fish++;
-            base++;
-        }
-    }
+    effDataP = &effP->data[no];
+    effDataP->scale = len * 100.0f;
 }
