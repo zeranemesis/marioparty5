@@ -11,5 +11,7 @@ objdiff.json
 orig/*/*
 !orig/*/.gitkeep
 /*.txt
+!/CMakeLists.txt
+!/rel_symbols.txt
 ctx.c
 compile_commands.json
