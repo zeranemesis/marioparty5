@@ -7,6 +7,7 @@
 #include "game/process.h"
 #include "game/audio.h"
 #include "game/hsfex.h"
+#include "game/esprite.h"
 
 /* ---- bss globals (carddll/player) ---- */
 static s32 lbl_1_bss_8[3];
@@ -16,6 +17,10 @@ static s32 lbl_1_bss_C48[2];
 static s32 lbl_1_bss_C44;
 static s32 lbl_1_bss_1298[3];
 static HUPROCESS *lbl_1_bss_11DC;
+static s16 lbl_1_bss_FB2[4];
+static s16 lbl_1_bss_FBA[4];
+static s16 lbl_1_bss_FC2[4];
+static f32 lbl_1_rodata_4AC = 0.017453292f;
 
 void fn_1_FB10(void);
 s32 fn_1_13728(f32 *arg0);
@@ -129,12 +134,85 @@ Mtx *fn_1_25444(f32 *arg0, HuVecF *arg1)
     Mtx rot;
 
     PSMTXIdentity(id);
-    PSMTXRotRad(rot, 'x', 0.017453292f * arg0[0]);
+    PSMTXRotRad(rot, 'x', lbl_1_rodata_4AC * arg0[0]);
     PSMTXConcat(id, rot, id);
-    PSMTXRotRad(rot, 'z', 0.017453292f * arg0[2]);
+    PSMTXRotRad(rot, 'z', lbl_1_rodata_4AC * arg0[2]);
     PSMTXConcat(id, rot, id);
-    PSMTXRotRad(rot, 'y', 0.017453292f * arg0[1]);
+    PSMTXRotRad(rot, 'y', lbl_1_rodata_4AC * arg0[1]);
     PSMTXConcat(id, rot, id);
     Hu3DMtxRotGet(id, arg1);
     return &id;
+}
+
+/* Player struct (fields used by this unit so far): curPlayerNo @ 0x170; the per-player
+   card-record index lives at 0x174 + curPlayerNo*4 (s32). */
+struct PlayerStruct
+{
+    char pad170[0x170];
+    s32 curPlayerNo;
+};
+
+/* fn_1_304D8: like fn_1_303E0 but the record array is passed in (arg1) and the
+   sprite display is turned ON. For each of the 3 opponents, take the sprite id from
+   the bank table matching the current player number, and if the record sprite index
+   is set, bank it and turn its display on. */
+void fn_1_304D8(struct PlayerStruct *arg0, s32 *arg1)
+{
+    s16 bankId;
+    s16 bankId2;
+    s16 bankId3;
+    s32 var_r31;
+
+    var_r31 = 0;
+    while (var_r31 < 3) {
+        if (var_r31 == 0) {
+            bankId = lbl_1_bss_FC2[arg0->curPlayerNo];
+        } else {
+            if (var_r31 == 1) {
+                bankId2 = lbl_1_bss_FBA[arg0->curPlayerNo];
+            } else {
+                bankId2 = lbl_1_bss_FB2[arg0->curPlayerNo];
+            }
+            bankId = bankId2;
+        }
+        bankId3 = bankId;
+        if (*(s32 *) (arg1 + var_r31) != -1) {
+            espBankSet(bankId3, *(s32 *) (arg1 + var_r31));
+            espDispOn(bankId3);
+        }
+        var_r31 += 1;
+    }
+}
+
+/* fn_1_303E0: per-player sprite-ESP bank setup. For each of the 3 opponents, take the
+   sprite id from the bank table matching the current player number, and if the record
+   sprite index (f_34) is set, bank it and turn its display off. */
+void fn_1_303E0(struct PlayerStruct *arg0)
+{
+    u8 *base;
+    s16 bankId3;
+    s16 bankId;
+    s16 bankId2;
+    s32 var_r30;
+
+    base = (u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x174 + arg0->curPlayerNo * 4) * 0x5C;
+    var_r30 = 0;
+    while (var_r30 < 3) {
+        if (var_r30 == 0) {
+            bankId = lbl_1_bss_FC2[arg0->curPlayerNo];
+        } else {
+            if (var_r30 == 1) {
+                bankId2 = lbl_1_bss_FBA[arg0->curPlayerNo];
+            } else {
+                bankId2 = lbl_1_bss_FB2[arg0->curPlayerNo];
+            }
+            bankId = bankId2;
+        }
+        bankId3 = bankId;
+        if (*(s32 *) (base + var_r30 * 4 + 0x34) != -1) {
+            espBankSet(bankId3, *(s32 *) (base + var_r30 * 4 + 0x34));
+            espDispOff(bankId3);
+        }
+        var_r30 += 1;
+    }
 }
