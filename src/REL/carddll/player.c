@@ -36,6 +36,18 @@ static s16 lbl_1_bss_1002[4];
 static s16 lbl_1_bss_100A[4][4];
 static s16 lbl_1_bss_F9E[2];
 static f32 lbl_1_rodata_4AC = 0.017453292f;
+static f32 lbl_1_rodata_250 = -50.0f;
+static f32 lbl_1_rodata_24C = 0.0f;
+
+/* lbl_1_bss_468: per-player model-id table (2 entries per player, 4 players). */
+extern s16 lbl_1_bss_468[8];
+static Vec lbl_1_rodata_504 = { 1.0f, 1.0f, 1.0f };
+void fn_1_9C74(f32 *arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);
+void fn_1_3F278(s32 arg0, s16 arg1);
+void fn_1_3F6B0(s32 arg0, s16 arg1, Vec *arg2);
+void fn_1_3F540(s32 arg0, s16 arg1, s32 arg2);
+void fn_1_3F3D8(s32 arg0, s16 arg1, Vec *arg2);
+void fn_1_5500(f32 *arg0);
 
 void fn_1_FB10(void);
 s32 fn_1_13728(f32 *arg0);
@@ -318,4 +330,93 @@ s32 fn_1_2B10C(f32 *arg0)
         var_r29 = 1;
     }
     return var_r29;
+}
+
+/* fn_1_2FBCC: card-hand animation. arg0 is the player struct (f32 *). When the
+   card state (0x1D4) is 1, for each of the 4 slots read the direction (f_04),
+   the y (f_08) and z (f_0C) fields, adjust y/z by one depending on the direction
+   (1: y-1, 2: y+1, 3: z-1, 4: z+1), compute the position with fn_1_9C74,
+   offset x by -50 (rodata_250), set the model position (bss_468 model id) and
+   reset its rotation to zero (rodata_24C = 0.0f). If the slot flag (f_50) has
+   bit 0x2 set, destroy the card (fn_1_3F278(3)) and clear the flag; if bit 0x4
+   is set, either destroy it (fn_1_3F278(4)) when this is the current player's
+   slot, or scale/spawn it (fn_1_3F6B0/fn_1_3F540/fn_1_3F3D8) otherwise.
+   After the loop, run fn_1_5500 and set the state to 0xA. Otherwise, copy the
+   direction/y/z fields down into the model fields (f_00/f_10/f_14) and set
+   f_20 = f_24 = 1 for each slot, then set the state to -1. */
+void fn_1_2FBCC(f32 *arg0)
+{
+    Vec sp2C;
+    Vec sp20;
+    Vec sp14;
+    Vec sp8;
+    Vec *pVec14;
+    Vec *pVec8;
+
+    if (*(s32 *) ((u8 *) arg0 + 0x1D4) == 1) {
+        s32 var_r30;
+
+        var_r30 = 0;
+        while (var_r30 < 4) {
+            s32 dir;
+            s32 y;
+            s32 z;
+
+            dir = *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 4);
+            y = *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 8);
+            z = *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0xC);
+            if (dir == 1) {
+                y -= 1;
+            } else if (dir == 2) {
+                y += 1;
+            } else if (dir == 3) {
+                z -= 1;
+            } else if (dir == 4) {
+                z += 1;
+            }
+            fn_1_9C74((f32 *) &sp2C, y, z, 1, 1);
+            sp2C.x += lbl_1_rodata_250;
+            Hu3DModelPosSetV(lbl_1_bss_468[var_r30 * 2], &sp2C);
+            Hu3DModelRotSet(lbl_1_bss_468[var_r30 * 2], lbl_1_rodata_24C, lbl_1_rodata_24C, lbl_1_rodata_24C);
+            if (*(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) & 2) {
+                fn_1_3F278(3, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56));
+                *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56) = -1;
+                *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) &= 0xFFFFFFFD;
+            }
+            if (*(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) & 4) {
+                if (var_r30 == *(s32 *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x170) * 4 + 0x174)) {
+                    fn_1_3F278(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56));
+                    *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56) = -1;
+                    *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) &= 0xFFFFFFFB;
+                } else {
+                    sp20 = lbl_1_rodata_504;
+                    sp14 = sp20;
+                    pVec14 = &sp14;
+                    fn_1_3F6B0(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56), pVec14);
+                    fn_1_3F540(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56), 1);
+                    sp8 = sp2C;
+                    pVec8 = &sp8;
+                    fn_1_3F3D8(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56), pVec8);
+                }
+            }
+            var_r30 += 1;
+        }
+        fn_1_5500(arg0);
+        *(s32 *) ((u8 *) arg0 + 0x1D4) = 0xA;
+        return;
+    }
+    {
+        s32 var_r30_2;
+
+        var_r30_2 = 0;
+        while (var_r30_2 < 4) {
+        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0) = *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 4);
+        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x10) = *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 8);
+        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x14) = *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0xC);
+        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x20) = 1;
+        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x24) = 1;
+        var_r30_2 += 1;
+    }
+    *(s32 *) ((u8 *) arg0 + 0x1D4) = -1;
+    }
 }
