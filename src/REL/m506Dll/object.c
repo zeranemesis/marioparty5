@@ -242,8 +242,9 @@ void M506ObjShadowMapReset(int no, int from, int to)
 {
     M506_WORK *work = M506MainObj->data;
     int i;
+    M506_WORK *work2 = work;
     for (i = from; i < to; i++) {
-        Hu3DModelShadowMapObjReset(work->mameMdlId[no][i]);
+        Hu3DModelShadowMapObjReset(work2->mameMdlId[no][i]);
     }
 }
 
