@@ -1,13 +1,13 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-25 13:35 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-09-29 08:18 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **26.53 %** (2 458.4 / 9 266.8 Ko) |
+| code identique | **26.56 %** (2 461.2 / 9 266.8 Ko) |
 | code lié depuis les sources | 19.28 % |
-| fonctions identiques | 5709 / 21231 |
+| fonctions identiques | 5722 / 21231 |
 | unités complètes | 316 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
@@ -17,12 +17,12 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
 | DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 84.9 % | 256.8 Ko |
-| Mini-jeux m5xx | 76 | 4 493.9 Ko | 6.3 % | 4 210.6 Ko |
+| Mini-jeux m5xx | 76 | 4 493.9 Ko | 6.3 % | 4 210.3 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
-| Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 45.0 % | 115.6 Ko |
+| Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 45.8 % | 113.9 Ko |
 | Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 42.4 % | 220.7 Ko |
 | Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
-| Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 14.1 % | 1 178.6 Ko |
+| Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 14.1 % | 1 177.7 Ko |
 
 ## Par module
 
@@ -41,7 +41,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m503Dll` | 56.1 Ko | 0.0 % | 0/148 | 0.0 % | 0/0/8 | à faire |
 | `m504dll` | 74.4 Ko | 0.3 % | 3/116 | 0.3 % | 1/0/10 | en cours |
 | `m505Dll` | 72.4 Ko | 35.8 % | 15/19 | 43.9 % | 0/0/1 | en cours |
-| `m506Dll` | 59.0 Ko | 53.6 % | 54/96 | 87.6 % | 1/2/0 | fait (E) |
+| `m506Dll` | 59.0 Ko | 54.0 % | 55/96 | 87.7 % | 1/2/0 | fait (E) |
 | `m507dll` | 33.7 Ko | 100.0 % | 47/47 | 100.0 % | 2/0/0 | fait |
 | `m508Dll` | 57.4 Ko | 0.0 % | 0/245 | 0.0 % | 0/0/2 | à faire |
 | `m509Dll` | 76.1 Ko | 1.3 % | 18/284 | 1.3 % | 2/0/8 | en cours |
@@ -53,8 +53,8 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m515Dll` | 57.7 Ko | 0.0 % | 0/84 | 0.0 % | 0/0/1 | à faire |
 | `m516Dll` | 35.8 Ko | 0.0 % | 0/113 | 0.0 % | 0/0/7 | à faire |
 | `m517Dll` | 112.2 Ko | 0.5 % | 11/420 | 0.5 % | 1/0/14 | en cours |
-| `m518dll` | 58.5 Ko | 58.2 % | 108/122 | 67.8 % | 0/0/1 | en cours |
-| `m519dll` | 65.5 Ko | 87.3 % | 139/142 | 92.2 % | 0/0/1 | en cours |
+| `m518dll` | 58.5 Ko | 58.2 % | 108/122 | 67.9 % | 0/0/1 | en cours |
+| `m519dll` | 65.5 Ko | 87.3 % | 139/142 | 96.7 % | 0/1/0 | fait (E) |
 | `m520Dll` | 39.7 Ko | 0.0 % | 0/29 | 0.0 % | 0/0/1 | à faire |
 | `m521Dll` | 99.2 Ko | 1.0 % | 14/365 | 1.0 % | 2/0/9 | en cours |
 | `m522Dll` | 86.2 Ko | 0.7 % | 11/398 | 0.7 % | 1/0/8 | en cours |
@@ -94,7 +94,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m559dll` | 31.8 Ko | 0.0 % | 0/80 | 0.0 % | 0/0/1 | à faire |
 | `m560dll` | 29.7 Ko | 0.0 % | 0/71 | 0.0 % | 0/0/2 | à faire |
 | `m561dll` | 38.8 Ko | 0.0 % | 0/78 | 0.0 % | 0/0/2 | à faire |
-| `m562dll` | 188.5 Ko | 0.0 % | 0/225 | 0.0 % | 0/0/22 | à faire |
+| `m562dll` | 188.5 Ko | 0.0 % | 0/225 | 0.6 % | 0/0/22 | à faire |
 | `m563dll` | 34.5 Ko | 0.0 % | 0/96 | 0.0 % | 0/0/2 | à faire |
 | `m564Dll` | 45.1 Ko | 0.0 % | 0/139 | 0.0 % | 0/0/4 | à faire |
 | `m565dll` | 63.4 Ko | 0.3 % | 3/112 | 0.3 % | 1/0/10 | en cours |
@@ -126,8 +126,8 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `w01sDll` | 58.5 Ko | 100.0 % | 70/70 | 100.0 % | 1/0/0 | fait |
 | `w02sDll` | 41.4 Ko | 1.6 % | 13/62 | 30.5 % | 0/0/1 | en cours |
 | `w03sDll` | 11.2 Ko | 32.4 % | 13/22 | 66.2 % | 0/1/0 | fait (E) |
-| `w04sDll` | 54.8 Ko | 33.7 % | 39/59 | 34.5 % | 0/0/1 | en cours |
-| `w05sDll` | 13.3 Ko | 16.0 % | 11/19 | 67.2 % | 0/1/0 | fait (E) |
+| `w04sDll` | 54.8 Ko | 36.5 % | 48/59 | 52.5 % | 0/0/1 | en cours |
+| `w05sDll` | 13.3 Ko | 16.9 % | 12/19 | 67.6 % | 0/1/0 | fait (E) |
 | `w06sDll` | 9.2 Ko | 100.0 % | 23/23 | 100.0 % | 1/0/0 | fait |
 | `w07sDll` | 21.5 Ko | 8.7 % | 19/31 | 64.7 % | 0/1/0 | fait (E) |
 
@@ -141,7 +141,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `w04Dll` | 78.7 Ko | 5.6 % | 33/66 | 32.9 % | 0/1/0 | fait (E) |
 | `w05Dll` | 47.6 Ko | 100.0 % | 33/33 | 100.0 % | 1/0/0 | fait |
 | `w06Dll` | 35.2 Ko | 100.0 % | 47/47 | 100.0 % | 1/0/0 | fait |
-| `w07Dll` | 45.2 Ko | 5.4 % | 21/52 | 57.2 % | 0/1/0 | fait (E) |
+| `w07Dll` | 45.2 Ko | 5.4 % | 21/52 | 57.5 % | 0/1/0 | fait (E) |
 | `w10Dll` | 1.0 Ko | 100.0 % | 8/8 | 100.0 % | 1/0/0 | fait |
 | `w20Dll` | 1.2 Ko | 100.0 % | 8/8 | 100.0 % | 1/0/0 | fait |
 
@@ -171,7 +171,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `carddll` | 321.2 Ko | 0.0 % | 0/178 | 0.0 % | 0/0/6 | à faire |
 | `decathlonDll` | 43.5 Ko | 100.0 % | 81/81 | 100.0 % | 3/0/0 | fait |
 | `e3bootdll` | 18.0 Ko | 100.0 % | 13/13 | 100.0 % | 1/0/0 | fait |
-| `e3setupdll` | 47.6 Ko | 0.0 % | 0/41 | 0.0 % | 0/0/4 | à faire |
+| `e3setupdll` | 47.6 Ko | 0.8 % | 1/41 | 0.8 % | 0/0/4 | en cours |
 | `fileseldll` | 44.3 Ko | 100.0 % | 45/45 | 100.0 % | 4/0/0 | fait |
 | `instDll` | 29.2 Ko | 100.0 % | 24/24 | 100.0 % | 4/0/0 | fait |
 | `meschkdll` | 1.8 Ko | 34.7 % | 5/6 | 81.8 % | 0/0/0 | en cours |
@@ -180,7 +180,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `rescardDll` | 68.1 Ko | 0.0 % | 0/123 | 0.0 % | 0/0/3 | à faire |
 | `resultDll` | 55.3 Ko | 6.5 % | 8/42 | 6.5 % | 3/0/3 | en cours |
 | `safDll` | 15.7 Ko | 16.8 % | 9/15 | 80.3 % | 0/3/0 | fait (E) |
-| `sd00dll` | 209.0 Ko | 0.0 % | 0/281 | 0.0 % | 0/0/10 | à faire |
+| `sd00dll` | 209.0 Ko | 0.2 % | 1/281 | 0.2 % | 0/1/9 | en cours |
 | `sdroomdll` | 160.7 Ko | 0.0 % | 0/162 | 0.0 % | 0/0/9 | à faire |
 | `selmenuDll` | 19.9 Ko | 100.0 % | 25/25 | 100.0 % | 1/0/0 | fait |
 | `sequencedll` | 2.6 Ko | 100.0 % | 9/9 | 100.0 % | 1/0/0 | fait |
