@@ -932,10 +932,9 @@ static void MB7Ev_MasuRedClose(void) {
     MBPreTurnHookSet(NULL);
 }
 
-/* NONMATCHING: register allocation order differs (75.00% match) */
 static void MB7Ev_MasuRedSet(s32 masuId) {
-    if ((u32) mb7_Work[0xCD] != 0U) {
-        ((u8 *) (uintptr_t) mb7_Work[0xCD])[masuId] = 2;
+    if ((u8 *) mb7_Work[0xCD] != NULL) {
+        ((u8 *) mb7_Work[0xCD])[masuId] = 2;
     }
 }
 
