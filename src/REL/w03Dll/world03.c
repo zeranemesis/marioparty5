@@ -274,7 +274,7 @@ void ObjectSetup(void) {
 static f32 MB3_DistRatioGet(Point3d *a, Point3d *b, Point3d *dir) {
     f32 mag = VECMag(dir);
     if (mag > 0.0f) {
-        mag = ((dir->z * (a->z - b->z)) + (dir->x * (a->x - b->x)) + (dir->y * (a->y - b->y))) / mag;
+        mag = (dir->x * (a->x - b->x) + dir->y * (a->y - b->y) + dir->z * (a->z - b->z)) / mag;
     }
     return mag;
 }
