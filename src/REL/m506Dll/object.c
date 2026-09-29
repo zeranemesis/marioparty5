@@ -209,7 +209,9 @@ static u8 FallStartSeNo[16];
 // NONMATCHING: faithful translation, not yet instruction-matched
 void M506MainCreate(OMOBJ *obj)
 {
-    M506Create(obj->data);
+    M506_WORK *work;
+    work = obj->data;
+    M506Create(work);
     obj->objFunc = M506MainUpdate;
 }
 
