@@ -220,7 +220,12 @@ void M506FlowEndWatch(OMOBJ *obj)
 {
     M506_WORK *work = obj->data;
 
-    if (!M506ExitCheck(obj) && M506FlowUpdate(work)) {
+    BOOL flowUpd;
+    if (M506ExitCheck(obj)) {
+        return;
+    }
+    flowUpd = M506FlowUpdate(work);
+    if (flowUpd) {
         obj->objFunc = M506FlowModeEnd;
     }
 }
