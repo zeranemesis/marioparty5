@@ -23,6 +23,18 @@ static HUPROCESS *lbl_1_bss_11DC;
 static s16 lbl_1_bss_FB2[4];
 static s16 lbl_1_bss_FBA[4];
 static s16 lbl_1_bss_FC2[4];
+static s16 lbl_1_bss_FCA[4];
+static s16 lbl_1_bss_FD2[4];
+static s16 lbl_1_bss_FDA[4];
+static s16 lbl_1_bss_FE2[4];
+static s16 lbl_1_bss_FEA[4];
+static s16 lbl_1_bss_FF2[4];
+static s16 lbl_1_bss_FFA[4];
+static s16 lbl_1_bss_FAA[4];
+static s16 lbl_1_bss_FA2[4];
+static s16 lbl_1_bss_1002[4];
+static s16 lbl_1_bss_100A[4][4];
+static s16 lbl_1_bss_F9E[2];
 static f32 lbl_1_rodata_4AC = 0.017453292f;
 
 void fn_1_FB10(void);
@@ -35,6 +47,14 @@ void PSMTXIdentity(Mtx m);
 void PSMTXRotRad(Mtx m, char axis, f32 rad);
 void PSMTXConcat(const Mtx a, const Mtx b, Mtx ab);
 void Hu3DMtxRotGet(Mtx src, HuVecF *dst);
+
+/* lbl_1_bss_8C4: per-player state table, defined in the card unit (card.o).
+   Rows are 0x28 bytes; entry flags live at offset f_10*0x28 + f_14*4. */
+extern s32 lbl_1_bss_8C4[0x190 / 4];
+s32 fn_1_2E548(f32 *arg0);
+s32 fn_1_2B280(f32 *arg0);
+s32 fn_1_3FC50(f32 *arg0);
+s32 fn_1_42EDC(f32 *arg0);
 
 /* fn_1_FA24: reset the player state globals, then spawn the player process. */
 void fn_1_FA24(void)
@@ -220,6 +240,38 @@ void fn_1_303E0(struct PlayerStruct *arg0)
     }
 }
 
+/* fn_1_30910: kill every per-player sprite ESP id. The per-player ids live in 7
+   bss tables (3 single-id tables + one 4-slot table + 4 single-id tables); for
+   each of the 4 players kill all 16, then kill the 2 global ids. */
+void fn_1_30910(void)
+{
+    s32 var_r31;
+
+    var_r31 = 0;
+    while (var_r31 < 4) {
+        espKill(lbl_1_bss_1002[var_r31]);
+        espKill(lbl_1_bss_FFA[var_r31]);
+        espKill(lbl_1_bss_FF2[var_r31]);
+        espKill(lbl_1_bss_100A[var_r31][0]);
+        espKill(lbl_1_bss_100A[var_r31][1]);
+        espKill(lbl_1_bss_100A[var_r31][2]);
+        espKill(lbl_1_bss_100A[var_r31][3]);
+        espKill(lbl_1_bss_FEA[var_r31]);
+        espKill(lbl_1_bss_FE2[var_r31]);
+        espKill(lbl_1_bss_FDA[var_r31]);
+        espKill(lbl_1_bss_FD2[var_r31]);
+        espKill(lbl_1_bss_FCA[var_r31]);
+        espKill(lbl_1_bss_FC2[var_r31]);
+        espKill(lbl_1_bss_FBA[var_r31]);
+        espKill(lbl_1_bss_FB2[var_r31]);
+        espKill(lbl_1_bss_FAA[var_r31]);
+        espKill(lbl_1_bss_FA2[var_r31]);
+        var_r31 += 1;
+    }
+    espKill(lbl_1_bss_F9E[0]);
+    espKill(lbl_1_bss_F9E[1]);
+}
+
 /* fn_1_25518: per-player "random button press" for AI players. arg0 is the player
    number. If the player is not a human (GwPlayerConf[arg0].type != 0), clear its
    button-down and stick-rep state, then increment a global counter (mod 0x15E).
@@ -237,4 +289,33 @@ void fn_1_25518(s32 arg0)
             lbl_1_bss_C48[0] = 0;
         }
     }
+}
+
+/* fn_1_2B10C: per-player state dispatch. Look up the player's state-table entry
+   (row f_10 @ +0x10, col f_14 @ +0x14 of the 0x5C-byte record) and, depending on
+   which of the four high flag bits (19..16) is set, run the matching handler;
+   return 1 if that handler reports a state change. */
+s32 fn_1_2B10C(f32 *arg0)
+{
+    s32 *rec;
+    s32 var_r29;
+
+    var_r29 = 0;
+    rec = (s32 *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x174 + *(s32 *) ((u8 *) arg0 + 0x170) * 4) * 0x5C);
+    if (*(s32 *) ((char *) &lbl_1_bss_8C4 + rec[4] * 0x28 + rec[5] * 4) & 0x1000) {
+        if (fn_1_2E548(arg0) != 0) {
+            var_r29 = 1;
+        }
+    } else if (*(s32 *) ((char *) &lbl_1_bss_8C4 + rec[4] * 0x28 + rec[5] * 4) & 0x2000) {
+        if (fn_1_2B280(arg0) != 0) {
+            var_r29 = 1;
+        }
+    } else if (*(s32 *) ((char *) &lbl_1_bss_8C4 + rec[4] * 0x28 + rec[5] * 4) & 0x4000) {
+        if (fn_1_3FC50(arg0) != 0) {
+            var_r29 = 1;
+        }
+    } else if (((*(s32 *) ((char *) &lbl_1_bss_8C4 + rec[4] * 0x28 + rec[5] * 4) & 0x8000) != 0) && (fn_1_42EDC(arg0) != 0)) {
+        var_r29 = 1;
+    }
+    return var_r29;
 }
