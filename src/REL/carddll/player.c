@@ -6,6 +6,7 @@
 #include "types.h"
 #include "game/process.h"
 #include "game/audio.h"
+#include "game/hsfex.h"
 
 /* ---- bss globals (carddll/player) ---- */
 static s32 lbl_1_bss_8[3];
@@ -22,6 +23,10 @@ s32 fn_1_FCD4(f32 *arg0);
 s32 fn_1_11C48(f32 *arg0);
 s32 fn_1_1658C(f32 *arg0);
 s32 fn_1_127F8(void);
+void PSMTXIdentity(Mtx m);
+void PSMTXRotRad(Mtx m, char axis, f32 rad);
+void PSMTXConcat(const Mtx a, const Mtx b, Mtx ab);
+void Hu3DMtxRotGet(Mtx src, HuVecF *dst);
 
 /* fn_1_FA24: reset the player state globals, then spawn the player process. */
 void fn_1_FA24(void)
@@ -114,4 +119,22 @@ void fn_1_2FEF4(struct PlayerCardRec *arg0)
         arg0[var_r31].f_50 = 0;
         var_r31 += 1;
     }
+}
+
+/* fn_1_25444: build a rotation matrix from 3 angles in degrees (x, y, z)
+   and extract the resulting rotation into arg1 (HuVecF). Returns the matrix. */
+Mtx *fn_1_25444(f32 *arg0, HuVecF *arg1)
+{
+    Mtx id;
+    Mtx rot;
+
+    PSMTXIdentity(id);
+    PSMTXRotRad(rot, 'x', 0.017453292f * arg0[0]);
+    PSMTXConcat(id, rot, id);
+    PSMTXRotRad(rot, 'z', 0.017453292f * arg0[2]);
+    PSMTXConcat(id, rot, id);
+    PSMTXRotRad(rot, 'y', 0.017453292f * arg0[1]);
+    PSMTXConcat(id, rot, id);
+    Hu3DMtxRotGet(id, arg1);
+    return &id;
 }
