@@ -1038,7 +1038,7 @@ void fn_1_4FB4(OMOBJ *obj)
                 lbl_1_bss_9D1C[i].animNo = 3;
                 lbl_1_bss_9D1C[i].time = 0;
                 lbl_1_bss_9D1C[i].speed = 256;
-                lbl_1_bss_9D1C[i].vel.z = lbl_1_bss_9D1C[i].vel.y = lbl_1_bss_9D1C[i].vel.x = 0.0f;
+                lbl_1_bss_9D1C[i].vel.x = lbl_1_bss_9D1C[i].vel.y = lbl_1_bss_9D1C[i].vel.z = 0.0f;
                 lbl_1_bss_9D1C[i].unk37 = 0;
                 if (lbl_1_bss_9D1C[i].lane >= 0) {
                     s32 mdlNo = (lbl_1_bss_9D1C[i].type == 0) ? 12 : lbl_1_bss_9D1C[i].lane + 18;
@@ -1066,16 +1066,15 @@ void fn_1_4FB4(OMOBJ *obj)
         if (lbl_1_data_119 == 0 && i == 1 && lbl_1_data_111[i] == 0) {
             for (x = 0; x < 80; x++) {
                 for (y = 0; y < 68; y++) {
-                    s32 alpha = 255;
                     u16 pix;
                     u16 base;
                     s32 r;
                     s32 g;
                     s32 b;
+                    s32 alpha = 255;
                     s32 srcR;
                     s32 srcG;
                     s32 srcB;
-                    s32 out;
 
                     pix = *(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2));
                     base = *(u16 *)((u8 *)lbl_1_bss_119C[i] + (x + y * 80) * 2);
@@ -1094,13 +1093,9 @@ void fn_1_4FB4(OMOBJ *obj)
                     g = (g >= 255) ? 255 : ((g <= 0) ? 0 : g);
                     b = b * base / 256;
                     b = (b >= 255) ? 255 : ((b <= 0) ? 0 : b);
-                    if (alpha >= 0xE0) {
-                        out = ((b & 0xF8) >> 3) | (((r & 0xF8) << 7) | ((g & 0xF8) << 2)) | 0x8000;
-                    }
-                    else {
-                        out = ((alpha & 0xE0) << 7) | (((b & 0xF0) >> 4) | (((r & 0xF0) << 4) | (g & 0xF0)));
-                    }
-                    *(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2)) = out;
+                    *(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2))
+                        = (alpha >= 0xE0) ? ((b & 0xF8) >> 3) | (((r & 0xF8) << 7) | ((g & 0xF8) << 2)) | 0x8000
+                                          : ((alpha & 0xE0) << 7) | (((b & 0xF0) >> 4) | (((r & 0xF0) << 4) | (g & 0xF0)));
                 }
             }
             DCFlushRange((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + lbl_1_data_115[i] * lbl_1_bss_11EC[i], lbl_1_bss_11EC[i]);
