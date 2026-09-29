@@ -90,8 +90,7 @@ void fn_1_FB10(void)
 {
     if (lbl_1_bss_8[1] != 0 && HuAudSStreamStatGet(lbl_1_bss_8[0]) == 0) {
         HuAudSStreamVolSet(0, 0x7F, 0x3E8);
-        lbl_1_bss_8[1] = 0;
-        lbl_1_bss_8[0] = 0;
+        lbl_1_bss_8[0] = lbl_1_bss_8[1] = 0;
     }
     HuPrcVSleep();
 }
