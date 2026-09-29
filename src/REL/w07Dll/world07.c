@@ -262,12 +262,11 @@ static f32 MB7_AngleDiff(f32 from, f32 to) {
     return diff;
 }
 
-/* NONMATCHING: register allocation order differs (73% match) */
 static s32 MB7Ev_BitGet(s32 flag, u32 mask) {
-    s32 result;
-    u32 inBit;
-    u32 outBit;
     s32 i;
+    u32 inBit;
+    s32 result;
+    u32 outBit;
 
     flag = flag & mask;
     result = 0;
