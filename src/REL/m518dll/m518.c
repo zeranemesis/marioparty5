@@ -2008,8 +2008,7 @@ M518_PODIUM *fn_1_BC28(void)
 #ifdef TARGET_PC
     Hu3DMotionTimeSet(podium->modelId[2], (s32)frandmod((u32)Hu3DMotionMaxTimeGet(podium->modelId[2])));
 #else
-    /* frandmod is called without a prototype here: the float is passed as is */
-    Hu3DMotionTimeSet(podium->modelId[2], (s32)((u32 (*)())frandmod)(Hu3DMotionMaxTimeGet(podium->modelId[2])));
+    Hu3DMotionTimeSet(podium->modelId[2], (s32)frandmod(Hu3DMotionMaxTimeGet(podium->modelId[2])));
 #endif
     Hu3DModelShadowSet(podium->modelId[0]);
     podium->mode = 0;
@@ -2108,8 +2107,7 @@ M518_CROWD *fn_1_BFAC(s16 no, s16 type)
 #ifdef TARGET_PC
     Hu3DMotionTimeSet(crowd->modelId, (s32)frandmod((u32)Hu3DMotionMaxTimeGet(crowd->modelId)));
 #else
-    /* frandmod is called without a prototype here: the float is passed as is */
-    Hu3DMotionTimeSet(crowd->modelId, (s32)((u32 (*)())frandmod)(Hu3DMotionMaxTimeGet(crowd->modelId)));
+    Hu3DMotionTimeSet(crowd->modelId, (s32)frandmod(Hu3DMotionMaxTimeGet(crowd->modelId)));
 #endif
     Hu3DModelShadowSet(crowd->modelId);
     crowd->mode = 0;
