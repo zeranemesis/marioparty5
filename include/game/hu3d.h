@@ -703,7 +703,9 @@ HU3DMOTID Hu3DMotionShiftIDGet(HU3DMODELID modelId);
 void Hu3DMotionTimeSet(HU3DMODELID modelId, float time);
 float Hu3DMotionTimeGet(HU3DMODELID modelId);
 float Hu3DMotionShiftTimeGet(HU3DMODELID modelId);
-float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+/* Hu3DMotionMaxTimeGet is intentionally NOT declared here: the original m518.c
+ * compiled its call with an implicit int return (the stale r3 is passed straight
+ * to frandmod). Units that use the float return carry their own local declaration. */
 float Hu3DMotionShiftMaxTimeGet(HU3DMODELID modelId);
 void Hu3DMotionShiftStartEndSet(HU3DMODELID modelId, float start, float end);
 float Hu3DMotionMotionMaxTimeGet(HU3DMOTID motId);

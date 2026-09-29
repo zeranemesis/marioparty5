@@ -4,6 +4,8 @@
 
 #include "game/memory.h"
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 typedef struct ModelManWork_s {
     unsigned killF : 1;
 } MODELMANWORK;

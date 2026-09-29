@@ -12,6 +12,10 @@
 #include "game/EnvelopeExec.h"
 #include "game/ShapeExec.h"
 
+/* Hu3DMotionMaxTimeGet is not declared in game/hu3d.h (the original m518.c saw
+ * an implicit int return); this unit uses the float return, so declare it here. */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 #define HOOKFUNC_MALLOCNO 10000
 #define OBJNAME_MAX_LEN 256
 

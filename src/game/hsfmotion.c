@@ -13,6 +13,11 @@
 #define HU3D_MOTATTR_NOSHIFT_ALL (HU3D_MOTATTR_LOOP|HU3D_MOTATTR_PAUSE|HU3D_MOTATTR_REV)
 #define HU3D_MOTATTR_ALL (HU3D_MOTATTR_SHIFT_ALL|HU3D_MOTATTR_NOSHIFT_ALL)
 
+/* Hu3DMotionMaxTimeGet is not declared in game/hu3d.h (the original m518.c saw
+ * an implicit int return); this unit defines it (float) and calls it earlier,
+ * so a forward declaration is required. */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 SHARED_SYM HU3DMOTION Hu3DMotion[HU3D_MOTION_MAX];
 
 static HSFBITMAP *bitMapPtr;

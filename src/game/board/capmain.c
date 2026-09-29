@@ -51,6 +51,8 @@
 #include "messnum/teamname.h"
 #include "game/gxarray.h"
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 typedef void (*CAPSULE_FUNC)(void);
 
 typedef struct CapsuleData_s {

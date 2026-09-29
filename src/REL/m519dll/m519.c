@@ -21,12 +21,17 @@
 
 #define M519_DATANUM(no) DATANUM(DATA_m519, (no))
 
+/* Hu3DMotionMaxTimeGet is not declared in game/hu3d.h (the original m518.c saw
+ * an implicit int return); this unit uses the float return, so declare it here. */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 /* This unit calls the random helpers without their prototypes: frand() is
    treated as signed and frandmod() as returning s16, and one call passes a
    float in f1 where frandmod expects an integer. The native build uses the
    real prototypes and passes the intended maximum. */
 #ifdef TARGET_PC
 #include "game/frand.h"
+
 #define M519_FRANDMOD_F(x) ((s16)frandmod((u32)(x)))
 #define M519_FRAND() ((s32)frand())
 #define M519_FRANDMOD(x) ((s16)frandmod(x))

@@ -2,6 +2,8 @@
 
 #include "math.h"
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];

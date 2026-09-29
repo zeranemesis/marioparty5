@@ -6,6 +6,8 @@
 
 #include "datanum/effect.h"
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 #define EFFECT_WARN 0
 #define EFFECT_DUST 1
 #define EFFECT_SMOKE 2

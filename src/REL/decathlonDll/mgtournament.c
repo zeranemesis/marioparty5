@@ -1,5 +1,7 @@
 #include "REL/decathlonDll.h"
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 static unsigned int playerMotList[] = {
     CHARMOT_HSF_c000m1_300,
     CHARMOT_HSF_c000m1_301,

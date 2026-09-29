@@ -694,6 +694,8 @@ void InstHelpMain(void)
 #include "REL/instDll/effect.c"
 #include "datanum/effect.h"
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 void InstToueiMain(void)
 {
     s16 i; //r31
