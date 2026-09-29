@@ -8,6 +8,9 @@
 #include "game/audio.h"
 #include "game/hsfex.h"
 #include "game/esprite.h"
+#include "game/pad.h"
+#include "game/frand.h"
+#include "game/gamework.h"
 
 /* ---- bss globals (carddll/player) ---- */
 static s32 lbl_1_bss_8[3];
@@ -214,5 +217,24 @@ void fn_1_303E0(struct PlayerStruct *arg0)
             espDispOff(bankId3);
         }
         var_r30 += 1;
+    }
+}
+
+/* fn_1_25518: per-player "random button press" for AI players. arg0 is the player
+   number. If the player is not a human (GwPlayerConf[arg0].type != 0), clear its
+   button-down and stick-rep state, then increment a global counter (mod 0x15E).
+   When the counter exceeds a random threshold (frandmod(0x12C) + 0x1F), fire a
+   press (HuPadBtnDown = 0x100) and reset the counter. */
+void fn_1_25518(s32 arg0)
+{
+    if (GwPlayerConf[arg0].type != 0) {
+        HuPadBtnDown[arg0] = 0;
+        HuPadDStkRep[arg0] = 0;
+        lbl_1_bss_C48[0] += 1;
+        lbl_1_bss_C48[0] %= 0x15E;
+        if ((u32) lbl_1_bss_C48[0] > (u32) (frandmod(0x12C) + 0x1F)) {
+            HuPadBtnDown[arg0] = 0x100;
+            lbl_1_bss_C48[0] = 0;
+        }
     }
 }
