@@ -1272,6 +1272,26 @@ void fn_1_8E20(M518_PLAYER *player)
     player->mode = 3;
 }
 
+void fn_1_8E2C(M518_PLAYER *player)
+{
+    omVibrate(player->playerNo, 0x46, 0xC, 0);
+    fn_1_E7B4(0x6F7, player->pos);
+    Hu3DModelAttrReset(player->modelId[1], 1);
+    Hu3DMotionTimeSet(player->modelId[1], 0.0f);
+    while (1) {
+        if (Hu3DMotionEndCheck(player->modelId[1])) {
+            Hu3DModelAttrSet(player->modelId[1], 1);
+            Hu3DModelAttrReset(player->modelId[0], HU3D_MOTATTR_PAUSE);
+            Hu3DMotionTimeSet(player->modelId[0], 0.0f);
+            player->mode = 0;
+            for (;;) {
+                M518_WAIT(1);
+            }
+        }
+        M518_WAIT(1);
+    }
+}
+
 void fn_1_8FA8(M518_PLAYER *player)
 {
     int i;
