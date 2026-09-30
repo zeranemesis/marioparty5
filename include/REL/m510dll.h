@@ -58,6 +58,7 @@ typedef struct M510Work_s {
     /* 0x199C */ M510_VIEW view3;
     /* 0x221C */ u8 pad221C[0x258];
     /* 0x2474 */ M510_SLIDE slide;
+    /* 0x24D8 */ u8 pad24D8[0x60];
     /* 0x2538 */ s32 fieldId;
 } M510_WORK;
 

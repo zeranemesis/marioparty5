@@ -26,24 +26,29 @@ s32 fn_1_966C(M510_WORK *work)
     M510_SLOT *slot;
     s32 result = 0;
     f32 rate;
-    s32 frame;
 
     switch (work->phase) {
     case 0:
         lbl_1_data_438 = slide->from;
         lbl_1_data_444 = slide->to;
-        slide->x = view3->offset;
-        slide->from.x = view3->offset;
-        slide->y = lbl_1_data_420.y;
-        slide->from.y = lbl_1_data_420.y;
-        slide->z = lbl_1_data_420.z;
-        slide->from.z = lbl_1_data_420.z;
-        slide->x2 = view3->offset;
-        slide->to.x = view3->offset;
-        slide->y2 = lbl_1_data_42C.y;
-        slide->to.y = lbl_1_data_42C.y;
-        slide->z2 = lbl_1_data_42C.z;
-        slide->to.z = lbl_1_data_42C.z;
+        rate = view3->offset;
+        slide->x = rate;
+        slide->from.x = rate;
+        rate = lbl_1_data_420.y;
+        slide->y = rate;
+        slide->from.y = rate;
+        rate = lbl_1_data_420.z;
+        slide->z = rate;
+        slide->from.z = rate;
+        rate = view3->offset;
+        slide->x2 = rate;
+        slide->to.x = rate;
+        rate = lbl_1_data_42C.y;
+        slide->y2 = rate;
+        slide->to.y = rate;
+        rate = lbl_1_data_42C.z;
+        slide->z2 = rate;
+        slide->to.z = rate;
         slide->fade = 0.1f;
         work->frame = 0;
         work->time = 0;
@@ -55,9 +60,7 @@ s32 fn_1_966C(M510_WORK *work)
         rate = work->frame / 90.0f;
         slide->x = view3->offset + rate * (lbl_1_data_438.x - view3->offset);
         slide->from.x = slide->x;
-        frame = work->frame;
-        work->frame = frame + 1;
-        if (frame > 0x5A) {
+        if (work->frame++ > 0x5A) {
             work->frame = 0;
             work->phase++;
         }
@@ -70,18 +73,14 @@ s32 fn_1_966C(M510_WORK *work)
         slide->to.x = slide->to.x + rate * (lbl_1_data_444.x - slide->to.x);
         slide->to.y = slide->to.y + rate * (lbl_1_data_444.y - slide->to.y);
         slide->to.z = slide->to.z + rate * (lbl_1_data_444.z - slide->to.z);
-        frame = work->frame;
-        work->frame = frame + 1;
-        if (frame > 0x1E) {
+        if (work->frame++ > 0x1E) {
             work->frame = 0;
             work->phase++;
         }
         break;
     case 3:
-        frame = work->frame;
-        work->frame = frame + 1;
-        if (frame > 5) {
-            for (i = 0; i < 4; i++) {
+        if (work->frame++ > 5) {
+            for (i = 0; i < 4; i++, slot++) {
                 slot = (M510_SLOT *)((u8 *)work + i * 0x880 + 0x134);
                 slot->state = 3;
                 slot->activeF = 1;
@@ -91,9 +90,7 @@ s32 fn_1_966C(M510_WORK *work)
         }
         break;
     case 4:
-        frame = work->frame;
-        work->frame = frame + 1;
-        if (frame > 0x64) {
+        if (work->frame++ > 0x64) {
             work->frame = 0;
             work->phase++;
         }
