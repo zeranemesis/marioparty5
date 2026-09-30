@@ -1053,9 +1053,12 @@ void fn_1_668(OMOBJ *obj)
 // instead of caching the pointers (264/266/28 references against our 26/26/2
 // before this was fixed), which is reproduced here, so `obj` lands in r30 and
 // the item loop counter in r31 as in the original. What still differs is the
-// local-slot layout: the original keeps 3 double temporaries and reuses them,
-// this build materialises ~20, so every stack offset shifts (frame 0x1b0 vs
-// 0x2e0) together with the volatile register choices.
+// local-slot layout, and it is a missing-locals problem, not an allocation
+// one: the original spends 0x8..0x1ac on 81 slots (34 float, 40 int, 7
+// double) where this build spends 0x8..0xc4 on 28, so the frame is 0x1b0
+// against 0x2e0 and every stack offset shifts. Closing it means recovering
+// the ~17 consecutive float locals at 0x58 and the ~24 consecutive int
+// locals at 0xfc that this translation collapses into fewer variables.
 /* Second half of the object update: the five item stands, the 29 collectibles
    (carried / dropped / thrown), the starfighters, the dust puffs, the shadow
    casters and the end-of-round camera. */
