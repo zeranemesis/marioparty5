@@ -1602,7 +1602,7 @@ config.libs = [
     Rel(
         "m566Dll",
         objects={
-            Object(NonMatching, "REL/m566Dll/m566.c"),
+            Object(Equivalent, "REL/m566Dll/m566.c"),
         },
     ),
     Rel(
