@@ -1055,10 +1055,13 @@ void fn_1_668(OMOBJ *obj)
 // the item loop counter in r31 as in the original. What still differs is the
 // local-slot layout, and it is a missing-locals problem, not an allocation
 // one: the original spends 0x8..0x1ac on 81 slots (34 float, 40 int, 7
-// double) where this build spends 0x8..0xc4 on 28, so the frame is 0x1b0
-// against 0x2e0 and every stack offset shifts. Closing it means recovering
-// the ~17 consecutive float locals at 0x58 and the ~24 consecutive int
-// locals at 0xfc that this translation collapses into fewer variables.
+// double) where this build spends 0x8..0xdc on 34, so the frame is 0x200
+// against 0x2e0 and every stack offset shifts. The int half is now nearly
+// closed (30 of the original's 40 int slots, the two per-character offset
+// tables included); what is left is float. The original keeps 34 f32 locals
+// where this build has 3, because it gives each computed quantity its own
+// variable instead of reusing dx/dy/dz/t/scale/len. Recovering those ~31
+// names is what stands between this and a match.
 /* Second half of the object update: the five item stands, the 29 collectibles
    (carried / dropped / thrown), the starfighters, the dust puffs, the shadow
    casters and the end-of-round camera. */
@@ -1543,7 +1546,12 @@ void fn_1_48F8(OMOBJ *obj)
         lbl_1_bss_1600[i].time++;
         if (castCount[lbl_1_bss_1600[i].owner] < 4 && lbl_1_bss_1600[i].mode == 5
             && players[lbl_1_data_138[0]]->modeTime >= 0x3C) {
-            /* One shadow caster per fighter, round-robin over the four slots. */
+            /* One shadow caster per fighter, round-robin over the four slots.
+               The two per-character offset tables are block locals in the
+               original, so each pass re-copies them out of .rodata. */
+            s32 charOffY[10] = { -10, 0, 30, -50, -10, -35, 60, -70, -55, -120 };
+            s32 charOffZ[10] = { 0, 0, 0, -15, -35, 0, -20, -5, 0, -30 };
+
             n = (lbl_1_bss_1600[i].owner * 4) + castCount[lbl_1_bss_1600[i].owner] + 0xD;
             lbl_1_bss_C++;
             lbl_1_bss_C = lbl_1_bss_C % 4;
@@ -1553,21 +1561,21 @@ void fn_1_48F8(OMOBJ *obj)
                 t = 1.0f;
             }
             dy = 80.0f + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
-                + (f32)lbl_1_rodata_2BC[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t;
+                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t;
             m = 0.0f;
             if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 7) {
                 m = 1.0f;
             }
             dz = (lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f)
-                + (f32)lbl_1_rodata_2E4[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m;
+                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m;
             t = lbl_1_bss_1600[i].pos.x - dx;
             dy = lbl_1_bss_1600[i].pos.y - dy;
             dz = lbl_1_bss_1600[i].pos.z - dz;
             Hu3DModelPosSet(lbl_1_bss_C4->mdlId[n], dx, 80.0f
                 + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
-                + (f32)lbl_1_rodata_2BC[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t,
+                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t,
                 lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f
-                + (f32)lbl_1_rodata_2E4[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m);
+                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m);
             Hu3DModelRotSet(lbl_1_bss_C4->mdlId[n],
                 (f32)(180.0 * (atan2(dy, sqrtf((t * t) + (dz * dz))) / 3.141592653589793)),
                 (f32)(180.0 + (180.0 * (atan2(t, dz) / 3.141592653589793))), 0.0f);
