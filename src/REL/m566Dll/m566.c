@@ -169,6 +169,9 @@ s32 lbl_1_data_244[5] = { 0 };
 float lbl_1_data_258 = -10000.0f;
 char lbl_1_data_25C[] = "metehook_c";
 
+/* Offset of the dust puff from the character's hand, rotated by the bone matrix. */
+static const HuVecF lbl_1_rodata_128 = { 0.0f, 30.0f, 0.0f };
+
 float lbl_1_bss_0[2];
 s32 lbl_1_bss_8;
 s32 lbl_1_bss_C;
@@ -250,6 +253,789 @@ void fn_1_518(s32 seNo, float x, float z)
     vol = 0.5 + (104.0f + (23.0f * (1.0f + (z / 550.0f))));
     vol = (vol < 0x68) ? 0x68 : ((vol > 0x7F) ? 0x7F : vol);
     HuAudFXVolSet(seNo, vol);
+}
+
+/* Signed table lookup: the tables are plain s32 rows, one row per character. */
+static const s32 PadBiasX[4] = { 20, -20, 20, -20 };
+static const s32 PadBiasY[4] = { -20, -20, 20, 20 };
+static const s32 LookTbl[10] = { 1, 1, 0, 0, 0, 0, 0, 1, 1, 1 };
+static const s32 SearchTime[8] = { 45, 30, 15, 5, 30, 30, 10, 5 };
+static const s32 UseTime[8] = { 120, 90, 60, 45, 60, 60, 60, 30 };
+static const s32 UseProb[4] = { 50, 65, 80, 90 };
+static const s32 BlinkTbl[8] = { 0, 3, 4, 3, 0, 1, 2, 1 };
+
+/* Main per-frame update of one player object: input or computer AI, movement,
+   collision against the other players and the items, item pickup and use. */
+void fn_1_668(OMOBJ *obj)
+{
+    M566Player *work = obj->data;
+    M566Player *players[4];
+    M566Item *item;
+    f32 stickX = 0.0f;
+    f32 stickY = 0.0f;
+    f32 padF = 0.0f;
+    s32 anim = -1;
+    s32 i;
+    s32 j;
+    s32 n;
+    s32 no;
+    s32 kind;
+    s32 blink;
+    s32 wrap;
+    s32 step;
+    s32 hold;
+    s32 nearNo;
+    s32 nearKind;
+    s32 mode;
+    f32 dx;
+    f32 dz;
+    f32 dist;
+    f32 len;
+    f32 want;
+    f32 t;
+    f32 angle;
+    f32 diff;
+    f32 f;
+    Vec vec;
+    Mtx mtx;
+
+    if (work->no == 0) {
+        for (i = 0; i < 29; i++) {
+            lbl_1_bss_10[i] = -1;
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        players[i] = lbl_1_bss_C8[i]->data;
+    }
+    work->velZ = 0.0f;
+    work->velX = 0.0f;
+    /* Normalise the facing angle into [-180, 180]. */
+    wrap = 0;
+    if (obj->rot.y > 180.0f) {
+        wrap = -360;
+    }
+    else if (obj->rot.y < -180.0f) {
+        wrap = 360;
+    }
+    obj->rot.y += wrap;
+
+    if (work->mode == 2) {
+        if (lbl_1_bss_BC < 1003) {
+            if (lbl_1_bss_BC == 1000) {
+                if (lbl_1_bss_0[0] <= 43.0f) {
+                    if (lbl_1_bss_0[0] <= 53.0f) {
+                        stickX = (PadBiasX[work->no] / 20) * 0xA;
+                        stickY = (PadBiasY[work->no] / 20) * 0xA;
+                    }
+                }
+            }
+            if (lbl_1_bss_BC == 1001 && work->no == 0 && lbl_1_bss_0[0] == 168.0f) {
+                padF = 1.0f;
+            }
+            if (lbl_1_bss_BC == 1002) {
+                /* Camera look-at follows the player during the intro. */
+                if (lbl_1_bss_0[0] < 110.0f) {
+                    work->unk58 = (f32)(180.0 * (atan2(lbl_1_bss_1600[lbl_1_bss_1810->no].pos.y - 50.0f,
+                        -lbl_1_bss_C8[0]->trans.z) / 3.141592653589793));
+                }
+                else {
+                    work->unk58 = (f32)(0.9f * work->unk58);
+                }
+                work->unk58 = (work->unk58 < 0.0f) ? 0.0f : ((work->unk58 > 60.0f) ? 60.0f : work->unk58);
+                if (LookTbl[work->charNoClamp] != 0) {
+                    work->unk58 = (f32)(180.0f - (45.0f * (work->unk58 / 60.0f)));
+                }
+                else {
+                    f = (work->charNoClamp != 2) ? 1.0 : 0.35;
+                    work->unk58 = (f32)(90.0 - ((f32)(45.0f * (work->unk58 / 60.0f)) * f));
+                }
+                Hu3DMotionForceSet(obj->mdlId[0], lbl_1_data_210, 0x200U, work->unk58);
+            }
+            if (lbl_1_bss_BC == 1003 && work->unk58 != 0.0f) {
+                work->unk58 = 0.0f;
+                Hu3DMotionNoMotReset(obj->mdlId[0], lbl_1_data_210, 0x200U);
+            }
+        }
+        else if (lbl_1_bss_BC < 1004) {
+            if (work->padNo != -1 || (*HuPadBtn & 0x200) != 0) {
+                stickX = (f32)(s8)(u8)HuPadStkX[work->padNo];
+                stickY = (f32)(s8)(u8)HuPadStkY[work->padNo];
+                padF = (f32)(HuPadBtnDown[work->padNo] & 0x100);
+            }
+            else {
+                switch (work->comMode) {
+                case 0:
+                    /* Look for the closest free item once the think timer expires. */
+                    for (i = 0, n = 0; i < 29; i++) {
+                        if (work->comSkip[i] == 0) {
+                            n++;
+                        }
+                    }
+                    if (n == 0) {
+                        for (i = 0; i < 29; i++) {
+                            work->comSkip[i] = (work->comSkip[i] == 2) ? 0 : work->comSkip[i];
+                        }
+                    }
+                    work->comTime++;
+                    if (work->comTimeMax == 0) {
+                        work->comTimeMax = (s32)((f32)SearchTime[work->comDif]
+                            + ((f32)SearchTime[work->comDif + 4] * ((f32)rand8() / 255.0f)));
+                    }
+                    if (work->comTime >= work->comTimeMax) {
+                        dist = 1048576.0f;
+                        work->comTarget = -1;
+                        for (i = 0; i < 29; i++) {
+                            if (work->comSkip[i] == 0 && lbl_1_bss_1810[i].kind != 0
+                                && lbl_1_bss_1810[i].state == 0) {
+                                len = sqrtf(((lbl_1_bss_1810[i].pos.x - obj->trans.x)
+                                        * (lbl_1_bss_1810[i].pos.x - obj->trans.x))
+                                    + ((lbl_1_bss_1810[i].pos.z - obj->trans.z)
+                                        * (lbl_1_bss_1810[i].pos.z - obj->trans.z)));
+                                t = (10.0f * ((f32)rand8() * 0.00390625f)) + len;
+                                if (dist > t) {
+                                    work->comTarget = i;
+                                    dist = t;
+                                }
+                            }
+                        }
+                        if (work->comTarget != -1) {
+                            work->comMode = 1;
+                            work->comTime = 0;
+                            work->comDist = 10000.0f;
+                            work->comMoveTime = 0;
+                            work->comTurnTime = 0x46;
+                            work->comTurnDir = 0;
+                        }
+                    }
+                    break;
+                case 1:
+                    /* Walk towards the target item, turning smoothly. */
+                    dx = lbl_1_bss_1810[work->comTarget].pos.x - obj->trans.x;
+                    dz = lbl_1_bss_1810[work->comTarget].pos.z - obj->trans.z;
+                    if (work->comAvoid != -1 && work->comTurnTime >= 0x14) {
+                        want = (f32)(180.0 * (atan2(dx, dz) / 3.141592653589793));
+                        angle = (f32)(180.0 * (atan2(work->avoidX - obj->trans.x,
+                            work->avoidZ - obj->trans.z) / 3.141592653589793));
+                        wrap = 0;
+                        if ((angle - want) <= -180.0f) {
+                            wrap = 0x168;
+                        }
+                        else if ((angle - want) > 180.0f) {
+                            wrap = -0x168;
+                        }
+                        angle += wrap;
+                        step = 1;
+                        if (work->comAngle != 90.0f) {
+                            if (work->comAngle != -90.0f) {
+                                step = 0;
+                            }
+                        }
+                        if (step != 0) {
+                            hold = 0;
+                        }
+                        else {
+                            hold = (angle - want) < 0.0f ? 4 : -4;
+                        }
+                        work->comAngle += hold;
+                        if (work->comTurnDir == 0) {
+                            work->comTurnDir = (hold < 0) ? -1 : ((hold > 0) ? 1 : 0);
+                        }
+                        else if ((hold * work->comTurnDir) < 0) {
+                            work->comTurnTime -= 0x14;
+                            work->comTurnDir = (hold < 0) ? -1 : ((hold > 0) ? 1 : 0);
+                        }
+                    }
+                    else {
+                        hold = ((work->comAngle < 6.0f) && (work->comAngle > -6.0f)) ? 0
+                            : ((work->comAngle < 0.0f) ? 6 : -6);
+                        work->comAngle += hold;
+                    }
+                    if (((work->comDist * work->comDist) - 100.0f) > ((dx * dx) + (dz * dz))) {
+                        work->comDist = sqrtf((dx * dx) + (dz * dz));
+                        work->comMoveTime = 0;
+                    }
+                    work->comMoveTime++;
+                    work->comTime++;
+                    work->comTurnTime += (work->comTurnTime < 0x46) ? 1 : 0;
+                    work->comAvoid = -1;
+                    vec.x = dx / 0.25f;
+                    vec.y = 0.0f;
+                    vec.z = -(-dz / 0.25f);
+                    PSMTXRotRad(mtx, 'Z', 0.017453292f * work->comAngle);
+                    PSMTXMultVec(mtx, &vec, &vec);
+                    stickX = vec.x;
+                    stickY = -vec.z;
+                    if (lbl_1_bss_1810[work->comTarget].kind == 0
+                        || lbl_1_bss_1810[work->comTarget].state != 0) {
+                        work->comMode = 0;
+                        work->comTime = 0;
+                        work->comTimeMax = 0;
+                    }
+                    else if (work->nearItem == work->comTarget) {
+                        angle = (f32)(180.0 * (atan2(lbl_1_bss_1810[work->comTarget].pos.x - obj->trans.x,
+                            lbl_1_bss_1810[work->comTarget].pos.z - obj->trans.z) / 3.141592653589793));
+                        wrap = 0;
+                        if ((angle - obj->rot.y) <= -180.0f) {
+                            wrap = 0x168;
+                        }
+                        else if ((angle - obj->rot.y) > 180.0f) {
+                            wrap = 0x168;
+                        }
+                        angle += wrap;
+                        if (fabs(angle - obj->rot.y) == 45.0f) {
+                            work->comMode = 2;
+                            work->comTime = 0;
+                            work->comTimeMax = 0;
+                        }
+                    }
+                    else if (work->comMoveTime > (work->no * 5) + 0x5A) {
+                        work->comSkip[work->comTarget] = 2;
+                        work->comMode = 0;
+                        work->comTime = 0;
+                        work->comTimeMax = 1;
+                    }
+                    break;
+                case 2:
+                    /* Use the item: decide whether it actually fires. */
+                    work->comTime++;
+                    if (work->comTimeMax == 0) {
+                        work->comTimeMax = (s32)((f32)UseTime[work->comDif]
+                            + ((f32)UseTime[work->comDif + 4] * ((f32)rand8() / 255.0f)));
+                    }
+                    if (work->comTime >= work->comTimeMax) {
+                        work->comMode = 0;
+                        work->comTime = 0;
+                        work->comTimeMax = 0;
+                        if (lbl_1_bss_1810[work->nearItem].kind == 1) {
+                            padF = 1.0f;
+                        }
+                        padF = ((f32)rand8() < (256.0f * (f32)UseProb[work->comDif]) / 100.0f)
+                            ? padF : (f32)((padF != 0.0f) == 0);
+                        work->comSkip[work->comTarget] = 1;
+                    }
+                    else if (work->nearItem != work->comTarget) {
+                        work->comMode = 1;
+                        work->comTime = 0;
+                    }
+                    break;
+                }
+            }
+        }
+        /* Rotate the stick vector by the camera and clamp its length. */
+        vec.x = 0.25f * stickX;
+        vec.y = 0.0f;
+        vec.z = 0.25f * -stickY;
+        PSMTXRotRad(mtx, 'Z', 0.017453292f * CRotM[1].y);
+        PSMTXMultVec(mtx, &vec, &vec);
+        len = sqrtf((vec.x * vec.x) + (vec.z * vec.z));
+        if (len < 0.5f) {
+            work->velX = vec.x;
+            work->velZ += vec.z;
+        }
+        else if (len < 10.0f) {
+            work->velX = (vec.x / len) * 10.0f;
+            work->velZ = (vec.z / len) * 10.0f;
+        }
+        else {
+            work->velX = (vec.x / len) * 10.0f;
+            work->velZ = (vec.z / len) * 10.0f;
+        }
+        work->speed = len;
+        if (work->mode == 2) {
+            obj->rot.y = (f32)(180.0 * (atan2(work->velX, work->velZ) / 3.141592653589793));
+        }
+        if (work->mode == 2) {
+            anim = (work->speed <= 8.0f) ? 2 : 1;
+        }
+        else {
+            anim = 0;
+        }
+    }
+    else if (work->mode == 3) {
+        /* Pick the item up: walk to it, then attach it to the model. */
+        work->itemTime = 0U;
+        if (work->modeTime < 0xA) {
+            dist = sqrtf(((lbl_1_bss_1810[work->itemNo].pos.x - obj->trans.x)
+                    * (lbl_1_bss_1810[work->itemNo].pos.x - obj->trans.x))
+                + ((lbl_1_bss_1810[work->itemNo].pos.z - obj->trans.z)
+                    * (lbl_1_bss_1810[work->itemNo].pos.z - obj->trans.z)));
+            t = (f32)work->modeTime / 9.0f;
+            angle = (f32)(180.0 * (atan2(lbl_1_bss_1810[work->itemNo].pos.x - obj->trans.x,
+                lbl_1_bss_1810[work->itemNo].pos.z - obj->trans.z) / 3.141592653589793));
+            wrap = 0;
+            if ((angle - obj->rot.y) < -180.0f) {
+                wrap = 0x168;
+            }
+            else if ((angle - obj->rot.y) > 180.0f) {
+                wrap = -0x168;
+            }
+            angle += wrap;
+            obj->rot.y = (obj->rot.y * (1.0f - t)) + (angle * t);
+            if (dist == 0.0f) {
+                dist = 0.000001f;
+            }
+            obj->trans.x = (obj->trans.x * (1.0f - t))
+                + (t * (lbl_1_bss_1810[work->itemNo].pos.x
+                    - (75.0f * ((lbl_1_bss_1810[work->itemNo].pos.x - obj->trans.x) / dist))));
+            obj->trans.z = (obj->trans.z * (1.0f - t))
+                + (t * (lbl_1_bss_1810[work->itemNo].pos.z
+                    - (75.0f * ((lbl_1_bss_1810[work->itemNo].pos.z - obj->trans.z) / dist))));
+            lbl_1_bss_1810[work->itemNo].state = 4;
+            lbl_1_data_19C[work->itemNo] = 0;
+        }
+        else if (work->modeTime == 0xA) {
+            if (lbl_1_bss_8 < 3) {
+                lbl_1_bss_600[lbl_1_bss_8].pos.x = lbl_1_bss_1810[work->itemNo].pos.x;
+                lbl_1_bss_600[lbl_1_bss_8].pos.z = lbl_1_bss_1810[work->itemNo].pos.z;
+                lbl_1_bss_8++;
+            }
+            switch (lbl_1_bss_1810[work->itemNo].kind) {
+            case 1:
+                lbl_1_bss_1810[work->itemNo].state = 1;
+                break;
+            case 2:
+                lbl_1_bss_1810[work->itemNo].state = 2;
+                break;
+            case 3:
+                lbl_1_bss_1810[work->itemNo].state = 3;
+                break;
+            }
+            lbl_1_bss_1810[work->itemNo].time = 0;
+            lbl_1_bss_1810[work->itemNo].owner = work->no;
+            {
+                char *hook = CharModelItemHookGet(obj->mdlId[0], 4, 0);
+
+                Hu3DModelHookSet(obj->mdlId[0], hook, lbl_1_bss_C4->mdlId[work->itemNo + 0x1D]);
+                Hu3DModelPosSet(lbl_1_bss_C4->mdlId[work->itemNo + 0x1D], 0.0f, 0.0f, 0.0f);
+            }
+            if (lbl_1_bss_1810[work->itemNo].kind == 2) {
+                for (i = 0; i < 4; i++) {
+                    if (lbl_1_data_124[i] != 0) {
+                        continue;
+                    }
+                }
+                if (i < 4) {
+                    lbl_1_bss_1810[work->itemNo].slot = i;
+                    lbl_1_data_124[i] = 1;
+                }
+                else {
+                    lbl_1_bss_1810[work->itemNo].slot = -1;
+                }
+            }
+        }
+        else {
+            n = (lbl_1_bss_1810[work->itemNo].kind != 2) ? 0x14 : 0x28;
+            if (work->modeTime == n) {
+                if (lbl_1_bss_1810[work->itemNo].kind != 3) {
+                    /* Puff of dust at the model's hand. */
+                    char *hook = CharModelItemHookGet(obj->mdlId[0], 4, 0);
+
+                    Hu3DModelObjMtxGet(obj->mdlId[0], hook, mtx);
+                    PSMTXMultVec(mtx, &lbl_1_rodata_128, &vec);
+                    for (i = 0, n = 0; i < 128; i++) {
+                        if (lbl_1_bss_600[i].active > 0) {
+                            continue;
+                        }
+                        lbl_1_bss_600[i].active = 1;
+                        lbl_1_bss_600[i].alpha = 0x80;
+                        lbl_1_bss_600[i].pos = vec;
+                        lbl_1_bss_600[i].vel.x = 12.0f * ((2.0f * ((f32)rand8() / 255.0f)) - 1.0f);
+                        lbl_1_bss_600[i].vel.y = 12.0f * ((2.0f * ((f32)rand8() / 255.0f)) - 1.0f);
+                        lbl_1_bss_600[i].vel.z = 12.0f * ((2.0f * ((f32)rand8() / 255.0f)) - 1.0f);
+                        n++;
+                        if (n >= 0x20) {
+                            break;
+                        }
+                    }
+                    Hu3DModelAttrSet(lbl_1_bss_C4->mdlId[work->itemNo + 0x1D], 1U);
+                }
+                else {
+                    /* Hand the item over with its orientation. */
+                    char *hook = CharModelItemHookGet(obj->mdlId[0], 4, 0);
+
+                    Hu3DModelObjMtxGet(obj->mdlId[0], hook, mtx);
+                    C_QUATMtx(&lbl_1_bss_1810[work->itemNo].quat, mtx);
+                    PSQUATInverse(&lbl_1_bss_1810[work->itemNo].quat, &lbl_1_bss_1810[work->itemNo].quat);
+                    Hu3DMtxTransGet(mtx, &lbl_1_bss_1810[work->itemNo].holdPos);
+                    Hu3DModelHookReset(obj->mdlId[0]);
+                    Hu3DModelPosSet(lbl_1_bss_C4->mdlId[work->itemNo + 0x1D],
+                        lbl_1_bss_1810[work->itemNo].holdPos.x,
+                        lbl_1_bss_1810[work->itemNo].holdPos.y,
+                        lbl_1_bss_1810[work->itemNo].holdPos.z);
+                    PSMTXQuat(mtx, &lbl_1_bss_1810[work->itemNo].quat);
+                    Hu3DMtxRotGet(mtx, &vec);
+                    Hu3DModelRotSet(lbl_1_bss_C4->mdlId[work->itemNo + 0x1D], vec.x, vec.y, vec.z);
+                }
+            }
+        }
+        anim = 5;
+        mode = lbl_1_bss_1810[work->itemNo].kind;
+        if (mode != 1) {
+            if (mode >= 1 && mode < 4) {
+                n = (mode == 3) ? 0x14 : 0x28;
+                if (work->modeTime >= n) {
+                    work->mode = 4;
+                    work->modeTime = 0;
+                    if (mode == 2) {
+                        omVibrate((s16)work->playerNo, 0xC, 0xC, 0);
+                    }
+                }
+            }
+        }
+        else {
+            if (work->modeTime >= 0x14) {
+                anim = 0;
+            }
+            n = (lbl_1_bss_BC == 1002) ? 0xA : 0x3C;
+            if (work->modeTime >= n + 0x14) {
+                if (lbl_1_bss_BC == 1003) {
+                    if (work->charNoClamp < 4) {
+                        work->effTime[work->charNoClamp] = 0x1E;
+                    }
+                    if (work->charNoClamp + lbl_1_bss_1810[work->itemNo].unk10 < 4) {
+                        work->effTime[work->charNoClamp + lbl_1_bss_1810[work->itemNo].unk10] = 0x1E;
+                    }
+                    work->charNoClamp = lbl_1_bss_1810[work->itemNo].unk10 + work->charNoClamp + 1;
+                }
+                work->mode = 2;
+                work->modeTime = 0;
+            }
+        }
+    }
+    else if (work->mode == 4) {
+        /* Play the item's animation. */
+        if (lbl_1_bss_1810[work->itemNo].kind == 3) {
+            anim = (work->modeTime <= 0x36) ? 4 : ((work->modeTime <= 0x72) ? 6 : 0);
+            if (work->modeTime == 3) {
+                CharFXPlay((s16)work->charNo, 0x1F9);
+                fn_1_518(0, obj->trans.x, obj->trans.z);
+            }
+            if (work->modeTime >= 0x78) {
+                work->mode = 2;
+            }
+            if (work->modeTime < 0x3C && (work->modeTime % 30) == 1) {
+                omVibrate((s16)work->playerNo, 0xC, 0xC, 0);
+            }
+        }
+        else {
+            if (work->modeTime == 0x28) {
+                Hu3DModelAttrSet(obj->mdlId[0], 0x40000002U);
+            }
+            anim = (work->modeTime <= 0x27) ? 3 : 6;
+            if (work->modeTime == 1) {
+                angle = (f32)(180.0 * (atan2(lbl_1_bss_1810[work->itemNo].pos.x - obj->trans.x,
+                    lbl_1_bss_1810[work->itemNo].pos.z - obj->trans.z) / 3.141592653589793));
+                wrap = 0;
+                if (angle <= -180.0f) {
+                    wrap = 360.0f + angle;
+                }
+                else if (angle > 180.0f) {
+                    wrap = angle - 360.0f;
+                }
+                else {
+                    wrap = angle;
+                }
+                obj->rot.y = angle;
+                omVibrate((s16)work->playerNo, 0xC, 0xC, 0);
+                CharFXPlay((s16)work->charNo, 0x202);
+                fn_1_518(0, obj->trans.x, obj->trans.z);
+            }
+            if (work->modeTime >= 0x69) {
+                work->mode = 2;
+            }
+            if (work->modeTime <= 0x2D) {
+                work->velX = (f32)((100.0 * -sin((3.141592653589793 * (f64)obj->rot.y) / 180.0)) / 45.0);
+                work->velZ = (f32)((100.0 * -cos((3.141592653589793 * (f64)obj->rot.y) / 180.0)) / 45.0);
+            }
+        }
+    }
+    work->modeTime++;
+    obj->trans.x += work->velX;
+    obj->trans.z += work->velZ;
+
+    if (lbl_1_bss_BC < 1005) {
+        /* Keep 100 units away from the other players. */
+        for (i = 0; i < 4; i++) {
+            dx = lbl_1_bss_C8[i]->trans.x - obj->trans.x;
+            dz = lbl_1_bss_C8[i]->trans.z - obj->trans.z;
+            if (i != work->no) {
+                if (dx == 0.0f && dz == 0.0f) {
+                    dz = -1.0f;
+                }
+                dist = sqrtf((dx * dx) + (dz * dz));
+                if (dist < 100.0f) {
+                    obj->trans.x = lbl_1_bss_C8[i]->trans.x - (dx * (100.0f / dist));
+                    obj->trans.z = lbl_1_bss_C8[i]->trans.z - (dz * (100.0f / dist));
+                    if (work->padNo == -1 && work->comMode == 1) {
+                        work->comAvoid = i;
+                        work->avoidX = lbl_1_bss_C8[i]->trans.x;
+                        work->avoidZ = lbl_1_bss_C8[i]->trans.z;
+                    }
+                }
+            }
+        }
+        /* Keep 90 (or 74) units away from the items. */
+        len = (work->mode != 3) ? 90.0f : 74.0f;
+        for (i = 0; i < 29; i++) {
+            dx = lbl_1_bss_1810[i].pos.x - obj->trans.x;
+            dz = lbl_1_bss_1810[i].pos.z - obj->trans.z;
+            if (lbl_1_bss_1810[i].kind != 0
+                && (work->no != lbl_1_bss_1810[i].owner
+                    || (lbl_1_bss_1810[i].state != 2 && lbl_1_bss_1810[i].state != 1))) {
+                if (dx == 0.0f && dz == 0.0f) {
+                    dz = -1.0f;
+                }
+                dist = sqrtf((dx * dx) + (dz * dz));
+                if (dist < len) {
+                    dx = dx * (len / dist);
+                    obj->trans.x = lbl_1_bss_1810[i].pos.x - dx;
+                    obj->trans.z = lbl_1_bss_1810[i].pos.z - (dz * (len / dist));
+                    if (work->padNo == -1 && work->comMode == 1) {
+                        work->comAvoid = i + 4;
+                        work->avoidX = lbl_1_bss_1810[i].pos.x;
+                        work->avoidZ = lbl_1_bss_1810[i].pos.z;
+                    }
+                }
+            }
+        }
+        dist = sqrtf((obj->trans.x * obj->trans.x) + (obj->trans.z * obj->trans.z));
+        if (dist > 650.0f) {
+            obj->trans.x *= 650.0f / dist;
+            obj->trans.z *= 650.0f / dist;
+        }
+    }
+
+    work->nearItem = 0;
+    Hu3DModelAttrSet(lbl_1_bss_C4->mdlId[(work->no + 9) * 2], 1U);
+    if (lbl_1_bss_BC >= 1000 && work->mode <= 2) {
+        /* The item icon above the player blinks while it is still free. */
+        nearNo = -1;
+        dist = 10000.0f;
+        for (i = 0; i < 29; i++) {
+            if (lbl_1_bss_1810[i].kind != 0 && lbl_1_bss_1810[i].state == 0) {
+                len = sqrtf(((lbl_1_bss_1810[i].pos.x - obj->trans.x)
+                        * (lbl_1_bss_1810[i].pos.x - obj->trans.x))
+                    + ((lbl_1_bss_1810[i].pos.z - obj->trans.z)
+                        * (lbl_1_bss_1810[i].pos.z - obj->trans.z)));
+                if (!(len > 120.0f)) {
+                    diff = (f32)((180.0 * (atan2(lbl_1_bss_1810[i].pos.x - obj->trans.x,
+                        lbl_1_bss_1810[i].pos.z - obj->trans.z) / 3.141592653589793)) - (f64)obj->rot.y);
+                    wrap = 0;
+                    if (diff <= -180.0f) {
+                        wrap = 0x168;
+                    }
+                    else if (diff > 180.0f) {
+                        wrap = -0x168;
+                    }
+                    diff += wrap;
+                    if (!(fabs(diff) > 100.0) && dist > len) {
+                        nearNo = i;
+                        dist = len;
+                    }
+                }
+            }
+        }
+        work->itemTime = (work->itemNo == nearNo) ? work->itemTime : 0;
+        work->itemNo = nearNo;
+        if (work->itemNo != -1) {
+            blink = 0;
+            if (lbl_1_bss_1810[work->itemNo].kind != 0) {
+                work->nearItem = work->itemNo;
+            }
+            nearKind = (lbl_1_bss_1810[work->itemNo].kind == 1) ? lbl_1_data_14C[0]
+                : ((lbl_1_bss_1810[work->itemNo].kind == 2) ? lbl_1_data_14C[1] : lbl_1_data_14C[2]);
+            switch (nearKind) {
+            case 0:
+                if ((work->itemTime % 90) < 0x3C && (work->itemTime % 12) < 6) {
+                    blink = 1;
+                }
+                break;
+            case 1:
+                if ((((work->itemTime % 90) < 0x1B
+                        || ((work->itemTime % 90) >= 0x21 && (work->itemTime % 90) < 0x3C))
+                        && (work->itemTime % 2) == 0)
+                    || (work->itemTime % 90) < 3) {
+                    blink = 1;
+                }
+                break;
+            case 2:
+                if ((((work->itemTime % 90) < 0x28 && ((work->itemTime % 90) % 20) < 0xA)
+                        || ((work->itemTime % 90) >= 0x28 && (work->itemTime % 90) < 0x50
+                            && (work->itemTime % 2) == 0))) {
+                    blink = 1;
+                }
+                break;
+            case 3:
+                if ((work->itemTime % 30) < 0x14) {
+                    blink = 1;
+                }
+                break;
+            case 4:
+                if ((work->itemTime % 30) < 6) {
+                    blink = 1;
+                }
+                break;
+            }
+            if (lbl_1_data_158 != 0) {
+                if (blink != 0) {
+                    omVibrate((s16)work->playerNo, 1, 1, 0);
+                }
+            }
+            else {
+                work->rumbleTime = (blink != 0) ? work->rumbleTime + 1 : 0;
+            }
+            work->itemTime++;
+            lbl_1_bss_1810[work->itemNo].wobble += (lbl_1_bss_1810[work->itemNo].wobble == 0) ? 8 : 0;
+            lbl_1_bss_1810[work->itemNo].unk24 = 1;
+            Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[(work->no + 9) * 2], 1U);
+            Hu3DModelPosSet(lbl_1_bss_C4->mdlId[(work->no + 9) * 2],
+                lbl_1_bss_1810[work->itemNo].pos.x,
+                lbl_1_bss_1810[work->itemNo].pos.x,
+                lbl_1_bss_1810[work->itemNo].pos.z);
+            if (padF != 0.0f && lbl_1_bss_1810[work->itemNo].state == 0
+                && lbl_1_bss_1810[work->itemNo].kind != 0 && lbl_1_data_19C[work->itemNo] == 0) {
+                lbl_1_data_19C[work->itemNo] = 1;
+                work->mode = 3;
+                work->modeTime = 0;
+                if (lbl_1_bss_1810[work->itemNo].kind == 1) {
+                    /* All five of that kind taken: steal one from a rival. */
+                    for (i = 0, n = 0; i < 29; i++) {
+                        if (i != work->itemNo) {
+                            hold = 0;
+                            if (lbl_1_bss_1810[i].state == 0 && lbl_1_bss_1810[i].kind == 1) {
+                                hold = 1;
+                            }
+                            n += hold;
+                        }
+                    }
+                    if (n == 5) {
+                        do {
+                            j = rand8() % 29;
+                        } while (lbl_1_bss_1810[j].kind != 1 || lbl_1_bss_1810[j].state != 0
+                            || j == work->itemNo);
+                        for (i = 1;; i++) {
+                            if (lbl_1_bss_1810[i].kind == 1 && lbl_1_bss_1810[i].state == 0
+                                && i != work->itemNo) {
+                                break;
+                            }
+                        }
+                        lbl_1_bss_1810[i].unk10 = 1;
+                    }
+                }
+            }
+        }
+        else {
+            work->rumbleTime = 0;
+        }
+    }
+    else {
+        work->rumbleTime = 0;
+        work->itemTime = 0U;
+    }
+
+    if (work->mode == 5) {
+        anim = 0;
+    }
+    else if (work->mode == 6) {
+        /* Blast off: launch the starfighters. */
+        anim = 9;
+        obj->rot.y *= 0.8f;
+        if (work->modeTime == 0x19) {
+            for (i = 0; i < 0xB; i++) {
+                if (work->no == lbl_1_bss_1600[i].owner && lbl_1_bss_1600[i].mode == 4) {
+                    lbl_1_bss_1600[i].mode = 6;
+                    lbl_1_bss_1600[i].time = 0;
+                }
+            }
+        }
+    }
+    else if (work->mode == 7) {
+        /* Victory: fly the starfighters out in a circle. */
+        anim = 0;
+        obj->rot.y *= 0.8f;
+        if (work->modeTime == 0x19) {
+            n = 0;
+            for (i = 0; i < 0xB; i++) {
+                if (work->no == lbl_1_bss_1600[i].owner && lbl_1_bss_1600[i].mode == 4) {
+                    lbl_1_bss_1600[i].mode = 5;
+                    lbl_1_bss_1600[i].time = 0;
+                    n++;
+                }
+            }
+            j = 0;
+            for (i = 0; i < 0xB; i++) {
+                if (work->no == lbl_1_bss_1600[i].owner && lbl_1_bss_1600[i].mode == 5) {
+                    lbl_1_bss_1600[i].unk1C = (f32)(70.0 * sin((3.141592653589793
+                        * (f64)(((180.0f / (f32)n) * 0.5f) + (90.0f + ((180.0f / (f32)n) * (f32)j)))) / 180.0));
+                    lbl_1_bss_1600[i].unk24 = (f32)((70.0 * cos((3.141592653589793
+                        * (f64)(((180.0f / (f32)n) * 0.5f) + (90.0f + ((180.0f / (f32)n) * (f32)j)))) / 180.0)) - 35.0);
+                    lbl_1_bss_1600[i].unk20 = CharModelHeightGet((s16)work->charNo) - 20.0f;
+                    j++;
+                }
+            }
+        }
+        if (work->modeTime == 0xB5) {
+            Hu3DMotionOverlaySet(obj->mdlId[0], obj->mtnId[4]);
+            Hu3DMotionOverlayTimeSet(obj->mdlId[0], 0.0f);
+            Hu3DModelAttrReset(obj->mdlId[0], 0x40000400U);
+        }
+        if (work->modeTime >= 0xB5) {
+            anim = 7;
+            obj->rot.y *= 0.8f;
+            if (Hu3DMotionOverlayTimeGet(obj->mdlId[0]) == 3.2886717319488525) {
+                Hu3DMotionOverlayTimeSet(obj->mdlId[0], 35.0f);
+                Hu3DModelAttrReset(obj->mdlId[0], 0x40000400U);
+            }
+            n = (LookTbl[work->charNoClamp] != 0)
+                ? 0xB4 - ((work->charNoClamp != 9) * 0x2D)
+                : 0x5A - (((work->charNoClamp != 2 && work->charNoClamp != 5) ? 1 : 0) * 0x2D);
+            Hu3DMotionForceSet(obj->mdlId[0], lbl_1_data_210, 0x200U, n);
+        }
+        t = 0.0f;
+        if (work->modeTime >= 0xAF) {
+            t = (work->modeTime < 0xCD)
+                ? 6.0f * ((f32)(work->modeTime - 0xAF) / 30.0f) * ((f32)work->score / 3.0f)
+                : 6.0f * ((f32)work->score / 3.0f);
+        }
+        obj->trans.y += (180.0f * (0.866f * t)) / 210.0f;
+        f = 0.0f;
+        if (work->modeTime >= 0xAF) {
+            f = (work->modeTime < 0xCD)
+                ? 6.0f * ((f32)(work->modeTime - 0xAF) / 30.0f) * ((f32)work->score / 3.0f)
+                : 6.0f * ((f32)work->score / 3.0f);
+        }
+        obj->trans.z += (180.0f * (0.5f * f)) / 210.0f;
+    }
+
+    if (work->motReq >= 0) {
+        anim = work->motReq;
+    }
+    if (anim >= 0 && anim != work->motNo) {
+        s32 attr = (u8)lbl_1_data_E8[anim] ? 0 : 0x40000001;
+
+        Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[anim], (f32)lbl_1_data_FC[anim],
+            (f32)lbl_1_data_F2[anim], attr);
+        work->motNo = anim;
+    }
+
+    /* Fade the three effect sprites in and out. */
+    for (i = 0; i < 3; i++) {
+        if (work->effTime[i] > 0) {
+            f = 1.0f - ((f64)(work->effTime[i] - 1) / 30.0);
+            no = i + 3;
+            f = (f32)((0.5 * (f64)f) + (0.5 * (f64)(1.0f - ((1.0f - f) * (1.0f - f)))));
+            f = (f32)((f < 0.75f) ? (f64)f / 0.75 : 1.0);
+            t = 1.0f - ((1.0f - f) * (1.0f - f));
+            f = 1.0f - ((1.0f - f) * (1.0f - t));
+            if (work->effTime[i] == 0x1E) {
+                espDispOn((s16)lbl_1_data_1C[work->no][no]);
+                espDispOff((s16)lbl_1_data_1C[work->no][i]);
+            }
+            espTPLvlSet((s16)lbl_1_data_1C[work->no][no], f);
+            espScaleSet((s16)lbl_1_data_1C[work->no][no], 4.0f - (3.0f * t), 4.0f - (3.0f * t));
+            work->effTime[i]--;
+        }
+    }
 }
 
 /* Main flow of the minigame: sound queue, start/end messages, winner selection. */
