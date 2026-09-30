@@ -141,3 +141,40 @@ instruction shape** and ask what C produces it, not to try source variants:
 Getting from 77% to 98% took four shape-reading passes. The last 4 rows were
 the emission order of four address computations, which no source rewrite
 recovered - that is what `Equivalent` is for.
+
+## Finding 5: a full 32-bit base defeats displacement folding
+
+`dolphin/os/OSAudioSystem` shows the other side of finding 3. The target
+keeps the complete pointer `0xCC005000` in a register and reaches every
+field with a small displacement:
+
+```
+addi r3, r3, 0x5000     ; r3 = 0xCC005000, kept live
+sth  r0, 0x12(r3)       ; cpucode
+addi r31, r3, 0xa       ; r31 = &init_vector2, kept for the rest
+lhz  r0, 0x0(r31)       ; ...
+```
+
+Written with a struct pointer and a `volatile u16 *` field pointer, MWCC
+instead collapses the base to the `lis` half and rebuilds the offset on
+every access, saving 3 callee-saved registers instead of 7:
+
+```
+lis  r3, 0xcc00
+lhz  r0, 0x500a(r3)     ; instead of lhz r0, 0x0(r31)
+sth  r0, 0x500a(r3)
+```
+
+Semantics and instruction count are identical (125 rows either way); only
+the register assignment differs. Three things that did **not** recover it:
+
+- Accessing fields through `regs->field` rather than a saved pointer: worse
+  (24% vs 27%), because every access re-derives the address.
+- Hoisting the `vec` assignment before the first struct store: no change.
+- Adding explicit locals for the three mail words: pushed the count to 126.
+
+So this is a genuine allocation difference, not a missing local: the counts
+matched while the prologue still saved 3 registers against the target's 7.
+Treat "the base is materialised once and reused" as a property to check in
+the target prologue (`stmw r25` = 7 saved) rather than something to force
+from the source.
