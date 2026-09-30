@@ -1629,6 +1629,10 @@ void fn_1_48F8(OMOBJ *obj)
 }
 
 /* Main flow of the minigame: sound queue, start/end messages, winner selection. */
+// NONMATCHING: the -O0,p home registers are off by one here (r26/r27 where
+// the original uses r27/r28) and one sound-volume literal is a different
+// rodata entry, so 274 of 1028 rows differ and 85 more only pick a
+// different label for the same literal.
 void fn_1_8F1C(OMOBJ *obj)
 {
     M566Player *players[4];
@@ -2076,6 +2080,10 @@ void fn_1_C06C(HU3DMODEL *model, Mtx *mtx)
 }
 
 /* Creates the stage models, hooks, items, sprites and the score windows. */
+// NONMATCHING: the model indices were wrong by a factor of two and are fixed
+// (hooks on mdlId[5]/[6]/[7], the linked shadow on mdlId[8], as the original
+// does). What is left is the local-slot layout and the volatile register
+// choices around the Hu3DModelCreateData loops, 611 of 1310 rows.
 void fn_1_C708(OMOBJ *obj)
 {
     M566Player *players[4];
@@ -2087,15 +2095,15 @@ void fn_1_C708(OMOBJ *obj)
     for (i = 0; i < 4; i++) {
         players[i] = lbl_1_bss_C8[i]->data;
     }
-    obj->mdlId[10] = Hu3DHookFuncCreate(fn_1_9F20);
-    Hu3DModelLayerSet(obj->mdlId[10], 4);
-    Hu3DModelCameraSet(obj->mdlId[10], HU3D_CAM1);
-    obj->mdlId[12] = Hu3DHookFuncCreate(fn_1_A654);
-    Hu3DModelLayerSet(obj->mdlId[12], 2);
-    Hu3DModelCameraSet(obj->mdlId[12], HU3D_CAM1);
-    obj->mdlId[14] = Hu3DHookFuncCreate(fn_1_C06C);
-    Hu3DModelLayerSet(obj->mdlId[14], 0);
-    Hu3DModelCameraSet(obj->mdlId[14], HU3D_CAM1);
+    obj->mdlId[5] = Hu3DHookFuncCreate(fn_1_9F20);
+    Hu3DModelLayerSet(obj->mdlId[5], 4);
+    Hu3DModelCameraSet(obj->mdlId[5], HU3D_CAM1);
+    obj->mdlId[6] = Hu3DHookFuncCreate(fn_1_A654);
+    Hu3DModelLayerSet(obj->mdlId[6], 2);
+    Hu3DModelCameraSet(obj->mdlId[6], HU3D_CAM1);
+    obj->mdlId[7] = Hu3DHookFuncCreate(fn_1_C06C);
+    Hu3DModelLayerSet(obj->mdlId[7], 0);
+    Hu3DModelCameraSet(obj->mdlId[7], HU3D_CAM1);
     for (i = 0; i < 5; i++) {
         s32 dataNum[5] = { M566_DATA(0), M566_DATA(1), M566_DATA(2), M566_DATA(3), M566_DATA(4) };
 
@@ -2173,11 +2181,11 @@ void fn_1_C708(OMOBJ *obj)
             Hu3DModelPosSet(obj->mdlId[mdlNo], 0.0f, 14000.0f, 0.0f);
         }
     }
-    obj->mdlId[16] = Hu3DModelLink(obj->mdlId[58]);
-    Hu3DModelShadowSet(obj->mdlId[16]);
-    Hu3DModelLayerSet(obj->mdlId[16], 1);
-    Hu3DModelCameraSet(obj->mdlId[16], HU3D_CAM1);
-    Hu3DModelAttrSet(obj->mdlId[16], HU3D_ATTR_DISPOFF);
+    obj->mdlId[8] = Hu3DModelLink(obj->mdlId[58]);
+    Hu3DModelShadowSet(obj->mdlId[8]);
+    Hu3DModelLayerSet(obj->mdlId[8], 1);
+    Hu3DModelCameraSet(obj->mdlId[8], HU3D_CAM1);
+    Hu3DModelAttrSet(obj->mdlId[8], HU3D_ATTR_DISPOFF);
     memset(lbl_1_bss_600, 0, sizeof(lbl_1_bss_600));
     memset(lbl_1_bss_1600, 0, sizeof(lbl_1_bss_1600));
     memset(lbl_1_bss_1810, 0, sizeof(lbl_1_bss_1810));
@@ -2278,6 +2286,8 @@ void fn_1_C708(OMOBJ *obj)
 }
 
 /* Player object creation: picks the character, pad and starting position. */
+// NONMATCHING: one if/else is emitted with the opposite branch polarity
+// (bne against beq) and a pair of home registers is swapped, 9 of 250 rows.
 void fn_1_DACC(OMOBJ *obj)
 {
     s32 order[4] = { 0, 1, 2, 3 };
@@ -2346,6 +2356,10 @@ void fn_1_DEAC(OMOBJ *obj)
     obj->objFunc = fn_1_8F1C;
 }
 
+// NONMATCHING: the prologue and the 0x50 stack frame match exactly; the
+// initialiser tables are read from rodata copies here and from the packed
+// data labels (lbl_1_data_29F and friends) in the original, so 139 rows only
+// differ by label and 53 by more than that.
 void ObjectSetup(void)
 {
     Vec lightPos = { 0.0f, 5000.0f, 0.0f };
