@@ -11,6 +11,9 @@ static Vec lbl_1_data_42C = { 0.0f, -52.0f, 400.0f };
 static Vec lbl_1_data_438 = { 0.0f, 0.0f, 0.0f };
 static Vec lbl_1_data_444 = { 0.0f, 0.0f, 0.0f };
 
+// NONMATCHING: the four M510_VIEWOBJ addresses are emitted r29,r27,r26,r25
+// instead of r27,r26,r25,r29, which also parks the loop counter i in r25 rather
+// than r28. 92.57% / 4 rows. The code below is complete and faithful.
 s32 fn_1_966C(M510_WORK *work)
 {
     M510_SLIDE *slide = &work->slide;
@@ -18,37 +21,27 @@ s32 fn_1_966C(M510_WORK *work)
     M510_VIEW *slot1 = &work->view1;
     M510_VIEW *slot2 = &work->view2;
     M510_VIEW *slot3 = &work->view3;
+    M510_VIEWOBJ *view3 = &slot3->obj;
+    s32 i;
     M510_VIEWOBJ *view0 = &slot0->obj;
     M510_VIEWOBJ *view1 = &slot1->obj;
     M510_VIEWOBJ *view2 = &slot2->obj;
-    M510_VIEWOBJ *view3 = &slot3->obj;
-    s32 i;
     M510_SLOT *slot;
-    s32 result = 0;
     f32 rate;
+    s32 result;
+
+    result = 0;
 
     switch (work->phase) {
     case 0:
         lbl_1_data_438 = slide->from;
         lbl_1_data_444 = slide->to;
-        rate = view3->offset;
-        slide->x = rate;
-        slide->from.x = rate;
-        rate = lbl_1_data_420.y;
-        slide->y = rate;
-        slide->from.y = rate;
-        rate = lbl_1_data_420.z;
-        slide->z = rate;
-        slide->from.z = rate;
-        rate = view3->offset;
-        slide->x2 = rate;
-        slide->to.x = rate;
-        rate = lbl_1_data_42C.y;
-        slide->y2 = rate;
-        slide->to.y = rate;
-        rate = lbl_1_data_42C.z;
-        slide->z2 = rate;
-        slide->to.z = rate;
+        slide->from.x = slide->x = view3->offset;
+        slide->from.y = slide->y = lbl_1_data_420.y;
+        slide->from.z = slide->z = lbl_1_data_420.z;
+        slide->to.x = slide->x2 = view3->offset;
+        slide->to.y = slide->y2 = lbl_1_data_42C.y;
+        slide->to.z = slide->z2 = lbl_1_data_42C.z;
         slide->fade = 0.1f;
         work->frame = 0;
         work->time = 0;
@@ -58,8 +51,8 @@ s32 fn_1_966C(M510_WORK *work)
             work->fieldId = fn_1_734(0x4E);
         }
         rate = work->frame / 90.0f;
-        slide->x = view3->offset + rate * (lbl_1_data_438.x - view3->offset);
-        slide->from.x = slide->x;
+        slide->from.x = slide->to.x =
+            view3->offset + rate * (lbl_1_data_438.x - view3->offset);
         if (work->frame++ > 0x5A) {
             work->frame = 0;
             work->phase++;
@@ -80,7 +73,7 @@ s32 fn_1_966C(M510_WORK *work)
         break;
     case 3:
         if (work->frame++ > 5) {
-            for (i = 0; i < 4; i++, slot++) {
+            for (i = 0; i < 4; i++) {
                 slot = (M510_SLOT *)((u8 *)work + i * 0x880 + 0x134);
                 slot->state = 3;
                 slot->activeF = 1;
@@ -102,7 +95,7 @@ s32 fn_1_966C(M510_WORK *work)
         break;
     }
 
-    if ((u16)work->phase != 0) {
+    if (work->phase != 0) {
         if (work->time == 0x14) {
             view3->showF = 1;
         } else if (work->time == 0x3C) {

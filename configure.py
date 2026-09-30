@@ -1065,7 +1065,7 @@ config.libs = [
             Object(NonMatching, "REL/m510dll/pad.c"),
             Object(NonMatching, "REL/m510dll/camera.c"),
             Object(Matching, "REL/m510dll/light.c"),
-            Object(NonMatching, "REL/m510dll/opening.c"),
+            Object(Equivalent, "REL/m510dll/opening.c"),
             Object(NonMatching, "REL/m510dll/ending.c"),
             Object(NonMatching, "REL/m510dll/ball_path.c"),
             Object(NonMatching, "REL/m510dll/score.c"),
