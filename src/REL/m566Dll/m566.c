@@ -172,6 +172,14 @@ char lbl_1_data_25C[] = "metehook_c";
 /* Offset of the dust puff from the character's hand, rotated by the bone matrix. */
 static const HuVecF lbl_1_rodata_128 = { 0.0f, 30.0f, 0.0f };
 
+/* Axis the starfighter tumbles around: straight up. */
+static const Vec lbl_1_rodata_2B0 = { 0.0f, 1.0f, 0.0f };
+
+/* Per-character starfighter placement: index is the clamped character number,
+   two rows of five (height, then depth) read through a single pointer. */
+static const s32 lbl_1_rodata_2BC[10] = { -10, 0, 30, -50, -10, -35, 60, -70, -55, -120 };
+static const s32 lbl_1_rodata_2E4[10] = { 0, 0, 0, -15, -35, 0, -20, -5, 0, -30 };
+
 float lbl_1_bss_0[2];
 s32 lbl_1_bss_8;
 s32 lbl_1_bss_C;
@@ -264,6 +272,8 @@ static const s32 UseTime[8] = { 120, 90, 60, 45, 60, 60, 60, 30 };
 static const s32 UseProb[4] = { 50, 65, 80, 90 };
 static const s32 BlinkTbl[8] = { 0, 3, 4, 3, 0, 1, 2, 1 };
 
+// NONMATCHING: faithful translation; the -O0,p home-register allocation differs,
+// which shifts every stack slot and most of the FPR pair loads.
 /* Main per-frame update of one player object: input or computer AI, movement,
    collision against the other players and the items, item pickup and use. */
 void fn_1_668(OMOBJ *obj)
@@ -1034,6 +1044,586 @@ void fn_1_668(OMOBJ *obj)
             espTPLvlSet((s16)lbl_1_data_1C[work->no][no], f);
             espScaleSet((s16)lbl_1_data_1C[work->no][no], 4.0f - (3.0f * t), 4.0f - (3.0f * t));
             work->effTime[i]--;
+        }
+    }
+}
+
+// NONMATCHING: complete, asm-read translation. The original re-derives
+// lbl_1_bss_1810[i] / lbl_1_bss_1600[no] / lbl_1_bss_600[i] at every access
+// instead of caching the pointers (264/266/28 references against our 26/26/2
+// before this was fixed), which is reproduced here, so `obj` lands in r30 and
+// the item loop counter in r31 as in the original. What still differs is the
+// local-slot layout: the original keeps 3 double temporaries and reuses them,
+// this build materialises ~20, so every stack offset shifts (frame 0x1b0 vs
+// 0x2e0) together with the volatile register choices.
+/* Second half of the object update: the five item stands, the 29 collectibles
+   (carried / dropped / thrown), the starfighters, the dust puffs, the shadow
+   casters and the end-of-round camera. */
+void fn_1_48F8(OMOBJ *obj)
+{
+    M566Player *players[4];
+    /* Per-player counter of shadow casters already placed this frame. */
+    s32 castCount[4] = { 0 };
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 n;
+    s32 m;
+    s32 no;
+    s32 owner;
+    s32 count;
+    s32 step;
+    s32 wrap;
+    s32 base;
+    s32 off;
+    f32 dx;
+    f32 dy;
+    f32 dz;
+    f32 len;
+    f32 scale;
+    f32 t;
+    Vec axis;
+    Quaternion quat;
+    Mtx mtx;
+
+    for (i = 0; i < 4; i++) {
+        players[i] = lbl_1_bss_C8[i]->data;
+    }
+
+    /* Intro wipe: blink the eight stand models while the wipe runs. */
+    if (lbl_1_bss_BC == 1000 && (lbl_1_bss_0[0] == 1.0f || lbl_1_bss_0[0] == 2.0f)) {
+        for (i = 0; i < 8; i++) {
+            if (lbl_1_bss_0[0] == 1.0f) {
+                Hu3DModelAttrReset(obj->mdlId[i + 0x50], 1);
+            }
+            else {
+                Hu3DModelAttrSet(obj->mdlId[i + 0x50], 1);
+            }
+        }
+    }
+
+    /* Item stand respawn timers; five stands, each with its own item. */
+    for (i = 0; i < 5; i++) {
+        if (lbl_1_data_230[i] == -1) {
+            lbl_1_data_230[i] = (rand8() % 128) + 20;
+        }
+        if (lbl_1_data_21C[i] == 0) {
+            lbl_1_data_230[i]--;
+            if (lbl_1_data_230[i] == 0) {
+                /* The item is about to appear: prime the spin and pick a free stand. */
+                lbl_1_data_21C[i] = 1;
+                lbl_1_data_230[i] = ((rand8() % 4) + 1) * 0x10;
+                if (lbl_1_bss_1810[lbl_1_data_244[i]].wobble <= lbl_1_data_230[i]) {
+                    lbl_1_bss_1810[lbl_1_data_244[i]].wobble =
+                        lbl_1_data_230[i] + (lbl_1_bss_1810[lbl_1_data_244[i]].wobble % 8);
+                    lbl_1_bss_1810[lbl_1_data_244[i]].unk24 = 0;
+                }
+                for (;;) {
+                    lbl_1_data_244[i] = (rand8() % 28) + 1;
+                    for (j = 0; j < 5; j++) {
+                        if (i == j || lbl_1_data_244[i] != lbl_1_data_244[j]) {
+                            continue;
+                        }
+                        break;
+                    }
+                    if (j == 5) {
+                        break;
+                    }
+                }
+            }
+        }
+        else if (lbl_1_data_21C[i] == 1) {
+            lbl_1_data_230[i]--;
+            if (lbl_1_bss_1810[lbl_1_data_244[i]].kind != 0) {
+                /* The original reads the item's state word here and drops the result. */
+            }
+            if (lbl_1_data_230[i] == 0) {
+                lbl_1_data_21C[i] = 0;
+                lbl_1_data_230[i] = (rand8() % 128) + 60;
+            }
+        }
+    }
+
+    /* Every stand item slowly spins about Y, faster once it is being grabbed. */
+    for (i = 0; i < 29; i++) {
+        n = (lbl_1_bss_1810[i].unk24 != 0) ? 6 : 4;
+        Hu3DModelRotSet(obj->mdlId[i + 0x1D], 0.0f, 0.0f,
+            (f32)((f64)n * sin((3.141592653589793
+                * (f64)(-360.0f * (f32)(lbl_1_bss_1810[i].wobble % 8) * 0.125f)) / 180.0)));
+        lbl_1_bss_1810[i].wobble -= (lbl_1_bss_1810[i].wobble > 0);
+    }
+
+    for (i = 0; i < 29; i++) {
+        owner = lbl_1_bss_1810[i].owner;
+        switch (lbl_1_bss_1810[i].state) {
+        case 0:
+        case 4:
+            break;
+        case 1:
+            /* Carried: spawn the player's escort fighters the first frame. */
+            if (lbl_1_bss_1810[i].time == 0) {
+                for (j = 0; j < lbl_1_bss_1810[i].unk10 + 1; j++) {
+                    no = (j == 0) ? lbl_1_bss_1810[i].no : 0xA;
+                    lbl_1_bss_1600[no].mode = 2;
+                    lbl_1_bss_1600[no].time = 0;
+                    lbl_1_bss_1600[no].owner = lbl_1_bss_1810[i].owner;
+                    lbl_1_bss_1600[no].slot = j;
+                    base = (lbl_1_bss_1810[i].unk10 != 0) ? ((j * 2) - 1) * 15 : 0;
+                    lbl_1_bss_1600[no].pos.x = lbl_1_bss_1810[i].pos.x + (f32)base;
+                    lbl_1_bss_1600[no].pos.y = lbl_1_bss_1810[i].pos.y;
+                    lbl_1_bss_1600[no].pos.z = lbl_1_bss_1810[i].pos.z;
+                    lbl_1_bss_1600[no].unk24 = 0.0f;
+                    lbl_1_bss_1600[no].unk1C = 0.0f;
+                    lbl_1_bss_1600[no].unk20 = 100.0f + CharModelHeightGet((s16)players[owner]->charNo);
+                    dx = lbl_1_bss_1600[no].pos.x - lbl_1_bss_C8[lbl_1_bss_1600[no].owner]->trans.x;
+                    dz = lbl_1_bss_1600[no].pos.z - lbl_1_bss_C8[lbl_1_bss_1600[no].owner]->trans.z;
+                    if (i == 0) {
+                        lbl_1_bss_1600[no].angle = 0.0f;
+                    }
+                    else {
+                        lbl_1_bss_1600[no].angle = (f32)(180.0 * (atan2(dx, dz) / 3.141592653589793));
+                    }
+                    /* Normalise the facing angle into [-180, 180]. */
+                    wrap = 0;
+                    if (lbl_1_bss_1600[no].angle < -180.0f) {
+                        wrap = 360;
+                    }
+                    else if (lbl_1_bss_1600[no].angle > 180.0f) {
+                        wrap = -360;
+                    }
+                    lbl_1_bss_1600[no].angle += (f32)wrap;
+                    lbl_1_bss_1600[no].dist = sqrtf((dx * dx) + (dz * dz));
+                    Hu3DModelPosSet(obj->mdlId[no + 0x3A], lbl_1_bss_1600[no].pos.x, lbl_1_bss_1600[no].pos.y, lbl_1_bss_1600[no].pos.z);
+                    Hu3DModelRotSet(obj->mdlId[no + 0x3A], 0.0f,
+                        180.0f + lbl_1_bss_C8[owner]->rot.y, 0.0f);
+                    Hu3DMotionTimeSet(obj->mdlId[no + 0x3A], 0.0f);
+                    Hu3DModelAttrReset(obj->mdlId[no + 0x3A], 1);
+                }
+            }
+            if (lbl_1_bss_1810[i].time == 6) {
+                /* The original compares the game state here and drops the result. */
+            }
+            if (lbl_1_bss_1810[i].time == 0xC) {
+                /* Launch: spread the live fighters of this owner over a circle. */
+                count = 0;
+                for (j = 0; j < 11; j++) {
+                    if (lbl_1_bss_1600[j].owner == owner && lbl_1_bss_1600[j].mode >= 2) {
+                        count++;
+                    }
+                }
+                k = 0;
+                for (j = 0; j < 11; j++) {
+                    if (lbl_1_bss_1600[j].owner == owner
+                        && lbl_1_bss_1600[j].mode != 0 && lbl_1_bss_1600[j].mode != 1) {
+                        lbl_1_bss_1600[j].mode = (lbl_1_bss_BC == 1002) ? 1 : 3;
+                        lbl_1_bss_1600[j].time = 0;
+                        off = (count == 2) ? -90 : ((count == 4) ? -45 : 0);
+                        lbl_1_bss_1600[j].unk1C = (f32)((f64)(count > 1) * (30.0
+                            * sin((3.141592653589793
+                                * (f64)(((f32)k * (360.0f / (f32)count)) + (f32)off)) / 180.0)));
+                        lbl_1_bss_1600[j].unk24 = (f32)((f64)(count > 1) * (30.0
+                            * cos((3.141592653589793
+                                * (f64)(((f32)k * (360.0f / (f32)count)) + (f32)off)) / 180.0)));
+                        k++;
+                    }
+                }
+                if (lbl_1_bss_E0[7].num < 3) {
+                    lbl_1_bss_E0[7].posX[lbl_1_bss_E0[7].num] = lbl_1_bss_1810[i].pos.x;
+                    lbl_1_bss_E0[7].posZ[lbl_1_bss_E0[7].num] = lbl_1_bss_1810[i].pos.z;
+                    lbl_1_bss_E0[7].num++;
+                }
+                if (lbl_1_bss_BC <= 1002) {
+                    lbl_1_data_144 = HuAudFXPlay(0x8E1);
+                }
+                else if (lbl_1_bss_E0[lbl_1_bss_1810[i].no + 9].num < 3) {
+                    lbl_1_bss_E0[lbl_1_bss_1810[i].no + 9].posX[lbl_1_bss_E0[lbl_1_bss_1810[i].no + 9].num] =
+                        lbl_1_bss_1600[lbl_1_bss_1810[i].no].pos.x;
+                    lbl_1_bss_E0[lbl_1_bss_1810[i].no + 9].posZ[lbl_1_bss_E0[lbl_1_bss_1810[i].no + 9].num] =
+                        lbl_1_bss_1600[lbl_1_bss_1810[i].no].pos.z;
+                    lbl_1_bss_E0[lbl_1_bss_1810[i].no + 9].num++;
+                }
+            }
+            if (lbl_1_bss_1810[i].time >= 10 && players[owner]->mode != 3) {
+                lbl_1_bss_1810[i].kind = 0;
+                lbl_1_bss_1810[i].state = 0;
+                lbl_1_bss_1810[i].time = 0;
+            }
+            break;
+        case 2:
+            /* Dropped on the ground: shrink in, then let a nearby player take it. */
+            if (lbl_1_bss_1810[i].time == 0) {
+                Hu3DModelPosSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], lbl_1_bss_1810[i].pos.x, lbl_1_bss_1810[i].pos.y, lbl_1_bss_1810[i].pos.z);
+                Hu3DModelRotSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], 0.0f,
+                    180.0f + lbl_1_bss_C8[owner]->rot.y, 0.0f);
+                Hu3DMotionTimeSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], 0.0f);
+                Hu3DModelAttrReset(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], 1);
+                if (lbl_1_bss_1810[i].slot != -1) {
+                    Hu3DModelHookReset(obj->mdlId[lbl_1_bss_1810[i].slot + 0x58]);
+                    Hu3DModelHookSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], lbl_1_data_25C,
+                        obj->mdlId[lbl_1_bss_1810[i].slot + 0x58]);
+                    Hu3DModelAttrReset(obj->mdlId[lbl_1_bss_1810[i].slot + 0x58], 1);
+                    Hu3DMotionTimeSet(obj->mdlId[lbl_1_bss_1810[i].slot + 0x58], 0.0f);
+                }
+                if (lbl_1_bss_E0[8].num < 3) {
+                    lbl_1_bss_E0[8].posX[lbl_1_bss_E0[8].num] = lbl_1_bss_1810[i].pos.x;
+                    lbl_1_bss_E0[8].posZ[lbl_1_bss_E0[8].num] = lbl_1_bss_1810[i].pos.z;
+                    lbl_1_bss_E0[8].num++;
+                }
+            }
+            if (lbl_1_bss_1810[i].time >= 0 && lbl_1_bss_1810[i].time <= 3) {
+                scale = (f32)(0.75 * (0.5 + (0.5 * (f64)(lbl_1_bss_1810[i].time / 3.0f))));
+                Hu3DModelScaleSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], scale, scale, scale);
+                if (lbl_1_bss_1810[i].slot != -1) {
+                    Hu3DModelScaleSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], scale, scale, scale);
+                }
+            }
+            if (lbl_1_bss_1810[i].kind != 0 && lbl_1_bss_1810[i].time >= 30 && players[owner]->mode != 3) {
+                lbl_1_bss_1810[i].kind = 0;
+                Hu3DModelAttrSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x45], 1);
+                if (lbl_1_bss_1810[i].slot != -1) {
+                    Hu3DModelAttrReset(obj->mdlId[lbl_1_bss_1810[i].slot + 0x58], 1);
+                    Hu3DModelAttrReset(obj->mdlId[lbl_1_bss_1810[i].slot + 0x5C], 1);
+                    Hu3DModelPosSet(obj->mdlId[lbl_1_bss_1810[i].slot + 0x5C],
+                        lbl_1_bss_1810[i].pos.x, lbl_1_bss_1810[i].pos.y, lbl_1_bss_1810[i].pos.z);
+                    Hu3DMotionTimeSet(obj->mdlId[lbl_1_bss_1810[i].slot + 0x5C], 0.0f);
+                }
+                if (lbl_1_bss_E0[3].num < 3) {
+                    lbl_1_bss_E0[3].posX[lbl_1_bss_E0[3].num] = lbl_1_bss_1810[i].pos.x;
+                    lbl_1_bss_E0[3].posZ[lbl_1_bss_E0[3].num] = lbl_1_bss_1810[i].pos.z;
+                    lbl_1_bss_E0[3].num++;
+                }
+            }
+            if (lbl_1_bss_1810[i].time >= 30 && lbl_1_bss_1810[i].time <= 40) {
+                for (j = 0; j < 4; j++) {
+                    dx = lbl_1_bss_1810[i].pos.x - lbl_1_bss_C8[j]->trans.x;
+                    dz = lbl_1_bss_1810[i].pos.z - lbl_1_bss_C8[j]->trans.z;
+                    if (((dx * dx) + (dz * dz)) <= 14400.0f && players[j]->mode == 2) {
+                        t = (f32)(180.0 * (atan2(dx, dz) / 3.141592653589793));
+                        /* Normalise the angle; the original keeps the magnitude too. */
+                        if (t <= -180.0f) {
+                            scale = 360.0f + t;
+                        }
+                        else if (t > 180.0f) {
+                            scale = t - 360.0f;
+                        }
+                        else {
+                            scale = t;
+                        }
+                        lbl_1_bss_C8[j]->rot.y = t;
+                        players[j]->mode = 4;
+                        players[j]->modeTime = 0;
+                        players[j]->itemNo = i;
+                    }
+                }
+            }
+            if (lbl_1_bss_1810[i].time == 0x41) {
+                if (lbl_1_bss_1810[i].slot != -1) {
+                    lbl_1_data_124[lbl_1_bss_1810[i].slot] = 0;
+                    Hu3DModelAttrSet(obj->mdlId[lbl_1_bss_1810[i].slot + 0x5C], 1);
+                }
+                lbl_1_bss_1810[i].state = 0;
+            }
+            break;
+        case 3:
+            /* Thrown: the item and its shadow arc over to the target player. */
+            if (lbl_1_bss_1810[i].time == 0) {
+                Hu3DModelPosSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x50], lbl_1_bss_1810[i].pos.x, lbl_1_bss_1810[i].pos.y, lbl_1_bss_1810[i].pos.z);
+                Hu3DModelRotSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x50], 0.0f,
+                    180.0f + lbl_1_bss_C8[owner]->rot.y, 0.0f);
+                Hu3DMotionTimeSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x50], 0.0f);
+                Hu3DModelAttrReset(obj->mdlId[lbl_1_bss_1810[i].no + 0x50], 1);
+            }
+            if (lbl_1_bss_1810[i].time == 8 && lbl_1_bss_E0[4].num < 3) {
+                lbl_1_bss_E0[4].posX[lbl_1_bss_E0[4].num] = lbl_1_bss_1810[i].pos.x;
+                lbl_1_bss_E0[4].posZ[lbl_1_bss_E0[4].num] = lbl_1_bss_1810[i].pos.z;
+                lbl_1_bss_E0[4].num++;
+            }
+            if (lbl_1_bss_1810[i].time >= 0x12 || lbl_1_bss_1810[i].time <= 0x50) {
+                Hu3DModelAttrReset(obj->mdlId[owner + 0x60], 1);
+                Hu3DModelPosSet(obj->mdlId[owner + 0x60],
+                    (f32)((0.35 * (f64)lbl_1_bss_1810[i].pos.x) + (0.65 * (f64)lbl_1_bss_C8[owner]->trans.x)),
+                    70.0f + lbl_1_bss_1810[i].pos.y,
+                    (f32)(60.0 + ((0.35 * (f64)lbl_1_bss_1810[i].pos.z)
+                        + (0.65 * (f64)lbl_1_bss_C8[owner]->trans.z))));
+                Hu3DModelScaleSet(obj->mdlId[owner + 0x60], 0.4f, 0.4f, 0.4f);
+                if (lbl_1_bss_1810[i].time == 0x12 || lbl_1_bss_1810[i].time == 0x28) {
+                    Hu3DMotionTimeSet(obj->mdlId[owner + 0x60], 0.0f);
+                }
+            }
+            else {
+                Hu3DModelAttrSet(obj->mdlId[owner + 0x60], 1);
+            }
+            if (lbl_1_bss_1810[i].time >= 10 && lbl_1_bss_1810[i].time <= 0x5A) {
+                axis = lbl_1_rodata_2B0;
+                t = (f32)(lbl_1_bss_1810[i].time - 10) / 80.0f;
+                scale = 1.0f - t;
+                C_QUATRotAxisRad(&quat, &axis, 0.0f);
+                Hu3DModelPosSet(obj->mdlId[i + 0x1D],
+                    (t * lbl_1_bss_1810[i].pos.x) + (scale * lbl_1_bss_1810[i].holdPos.x),
+                    (400.0f * (1.0f - (((2.0f * t) - 1.0f) * ((2.0f * t) - 1.0f))))
+                        + ((t * lbl_1_bss_1810[i].pos.y) + (scale * lbl_1_bss_1810[i].holdPos.y)),
+                    (t * lbl_1_bss_1810[i].pos.z) + (scale * lbl_1_bss_1810[i].holdPos.z));
+                C_QUATSlerp(&lbl_1_bss_1810[i].quat, &quat, &quat, t);
+                PSMTXQuat(mtx, &quat);
+                Hu3DMtxRotGet(mtx, &axis);
+                Hu3DModelRotSet(obj->mdlId[i + 0x1D], axis.x, axis.y, axis.z);
+            }
+            if (lbl_1_bss_1810[i].time == 0x5A) {
+                Hu3DModelAttrSet(obj->mdlId[lbl_1_bss_1810[i].no + 0x50], 1);
+                lbl_1_bss_1810[i].state = 0;
+                if (lbl_1_bss_E0[5].num < 3) {
+                    lbl_1_bss_E0[5].posX[lbl_1_bss_E0[5].num] = lbl_1_bss_1810[i].pos.x;
+                    lbl_1_bss_E0[5].posZ[lbl_1_bss_E0[5].num] = lbl_1_bss_1810[i].pos.z;
+                    lbl_1_bss_E0[5].num++;
+                }
+            }
+            break;
+        }
+        lbl_1_bss_1810[i].time++;
+    }
+
+    for (i = 0; i < 16; i++) {
+        Hu3DModelAttrSet(lbl_1_bss_C4->mdlId[i + 0xD], 1);
+    }
+    Hu3DModelAttrSet(lbl_1_bss_C4->mdlId[8], 1);
+    Hu3DModelRotSet(obj->mdlId[0x3A], 0.0f, 0.0f, 0.0f);
+
+    /* Starfighters. */
+    for (i = 0; i < 11; i++) {
+        if (lbl_1_bss_1600[i].mode <= 6) {
+            switch (lbl_1_bss_1600[i].mode) {
+            case 1:
+                /* Launching: shrink towards the vanishing point overhead. */
+                scale = 1.6f * (1.0f - (lbl_1_bss_1600[i].pos.y / 1000.0f));
+                lbl_1_bss_1600[i].pos.y += 4.0f;
+                Hu3DModelPosSet(obj->mdlId[i + 0x3A], lbl_1_bss_1600[i].pos.x, lbl_1_bss_1600[i].pos.y, lbl_1_bss_1600[i].pos.z);
+                Hu3DModelRotSet(obj->mdlId[i + 0x3A], 0.0f, 0.0f, 0.0f);
+                Hu3DModelScaleSet(obj->mdlId[8], scale, scale, scale);
+                Hu3DModelPosSet(obj->mdlId[8], lbl_1_bss_1600[i].pos.x, 1000.0f, lbl_1_bss_1600[i].pos.z);
+                Hu3DModelRotSet(obj->mdlId[8], 0.0f, 0.0f, 0.0f);
+                Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[8], 1);
+                if ((rand8() % 3) == 0) {
+                    Hu3DModelAttrReset(obj->mdlId[i + 0x3A], 1);
+                }
+                if (lbl_1_bss_1600[i].pos.y > 1000.0f) {
+                    lbl_1_bss_1600[i].mode = 0;
+                    Hu3DModelAttrSet(obj->mdlId[i + 0x3A], 1);
+                    HuAudFXStop(lbl_1_data_144);
+                }
+                break;
+            case 3:
+                /* Flying in: move along the orbit, shrinking the radius as it climbs. */
+                dx = lbl_1_bss_1600[i].pos.x;
+                dy = lbl_1_bss_1600[i].pos.y;
+                dz = lbl_1_bss_1600[i].pos.z;
+                lbl_1_bss_1600[i].pos.x = (f32)((f64)lbl_1_bss_1600[i].pos.x
+                    - ((f64)lbl_1_bss_1600[i].dist * sin((3.141592653589793 * (f64)lbl_1_bss_1600[i].angle) / 180.0)));
+                lbl_1_bss_1600[i].pos.z = (f32)((f64)lbl_1_bss_1600[i].pos.z
+                    - ((f64)lbl_1_bss_1600[i].dist * cos((3.141592653589793 * (f64)lbl_1_bss_1600[i].angle) / 180.0)));
+                n = (lbl_1_bss_1600[i].slot != 0) ? 2 : 1;
+                lbl_1_bss_1600[i].angle = (f32)((f64)lbl_1_bss_1600[i].angle
+                    + (360.0 * ((f64)(6.0f / (f32)n)
+                        / (3.141592653589793 * (f64)lbl_1_bss_1600[i].dist))));
+                wrap = 0;
+                if (lbl_1_bss_1600[i].angle < -360.0f) {
+                    wrap = 360;
+                }
+                else if (lbl_1_bss_1600[i].angle > 360.0f) {
+                    wrap = -360;
+                }
+                lbl_1_bss_1600[i].angle += (f32)wrap;
+                step = 0;
+                if (lbl_1_bss_1600[i].pos.y > (lbl_1_bss_1600[i].unk20 - 100.0f) && lbl_1_bss_1600[i].dist > 20.0f) {
+                    step = 1;
+                }
+                lbl_1_bss_1600[i].dist -= (f32)(step * 2);
+                lbl_1_bss_1600[i].pos.x = (f32)((f64)lbl_1_bss_1600[i].pos.x
+                    + ((f64)lbl_1_bss_1600[i].dist * sin((3.141592653589793 * (f64)lbl_1_bss_1600[i].angle) / 180.0)));
+                lbl_1_bss_1600[i].pos.z = (f32)((f64)lbl_1_bss_1600[i].pos.z
+                    + ((f64)lbl_1_bss_1600[i].dist * cos((3.141592653589793 * (f64)lbl_1_bss_1600[i].angle) / 180.0)));
+                lbl_1_bss_1600[i].pos.y += 4.0f;
+                dx = lbl_1_bss_1600[i].pos.x - dx;
+                dy = lbl_1_bss_1600[i].pos.y - dy;
+                dz = lbl_1_bss_1600[i].pos.z - dz;
+                Hu3DModelPosSet(obj->mdlId[i + 0x3A], lbl_1_bss_1600[i].pos.x, lbl_1_bss_1600[i].pos.y, lbl_1_bss_1600[i].pos.z);
+                if ((dx != 0.0f) || (dz != 0.0f)) {
+                    Hu3DModelRotSet(obj->mdlId[i + 0x3A], 0.0f,
+                        (f32)(180.0 * (atan2(dx, dz) / 3.141592653589793)), 0.0f);
+                }
+                if (lbl_1_bss_1600[i].pos.y > lbl_1_bss_1600[i].unk20) {
+                    lbl_1_bss_1600[i].mode = 4;
+                    lbl_1_bss_1600[i].time = 0;
+                    if (i != 0xA && lbl_1_bss_E0[i + 9].seNo != -1) {
+                        HuAudFXStop(lbl_1_bss_E0[i + 9].seNo);
+                    }
+                }
+                break;
+            case 4:
+            case 6:
+                /* Home in on the target point (owner position plus the orbit offset). */
+                dx = (lbl_1_bss_1600[i].unk1C + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.x) - lbl_1_bss_1600[i].pos.x;
+                dy = lbl_1_bss_1600[i].unk20 - lbl_1_bss_1600[i].pos.y;
+                dz = (lbl_1_bss_1600[i].unk24 + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z) - lbl_1_bss_1600[i].pos.z;
+                len = sqrtf((dz * dz) + ((dx * dx) + (dy * dy)));
+                step = (len > 1.0f) ? ((len - 1.0f) * 0.125f) : len;
+                if (step > 0.0f) {
+                    lbl_1_bss_1600[i].pos.x += step * (dx / len);
+                    lbl_1_bss_1600[i].pos.y += step * (dy / len);
+                    lbl_1_bss_1600[i].pos.z += step * (dz / len);
+                }
+                Hu3DModelPosSet(obj->mdlId[i + 0x3A], lbl_1_bss_1600[i].pos.x, lbl_1_bss_1600[i].pos.y, lbl_1_bss_1600[i].pos.z);
+                if ((dx != 0.0f) || (dz != 0.0f)) {
+                    Hu3DModelRotSet(obj->mdlId[i + 0x3A], 0.0f,
+                        (f32)(180.0 * (atan2(dx, dz) / 3.141592653589793)), 0.0f);
+                }
+                if (lbl_1_bss_1600[i].mode == 6 && lbl_1_data_138[0] != 4
+                    && lbl_1_data_138[0] != -1 && lbl_1_data_138[0] != lbl_1_bss_1600[i].owner) {
+                    /* Keep a ring around the winner so the fighters do not overlap. */
+                    t = lbl_1_bss_C8[lbl_1_data_138[0]]->trans.x;
+                    dy = 40.0f + lbl_1_bss_C8[lbl_1_data_138[0]]->trans.y;
+                    dz = lbl_1_bss_C8[lbl_1_data_138[0]]->trans.z;
+                    dx = lbl_1_bss_1600[i].pos.x - t;
+                    base = (lbl_1_bss_1600[i].pos.y - dy) * 0.5f;
+                    len = (lbl_1_bss_1600[i].pos.z - dz) / 1.5f;
+                    scale = sqrtf((len * len) + ((dx * dx) + (base * base)));
+                    if (scale < 90.0f) {
+                        if ((dx == 0.0f) && (len == 0.0f)) {
+                            dx = (f32)(((rand8() % 2) * 2) - 1);
+                            len = 0.0f;
+                        }
+                        lbl_1_bss_1600[i].pos.x = t + (90.0f * (dx / scale));
+                        lbl_1_bss_1600[i].pos.y = dy + (2.0f * (90.0f * (base / scale)));
+                        lbl_1_bss_1600[i].pos.z = dz + (1.5f * (90.0f * (len / scale)));
+                    }
+                }
+                break;
+            case 5:
+                /* Circling the winner, rising with the victory animation. */
+                scale = (players[lbl_1_data_138[0]]->modeTime < 0x53) ? 0.5f : 1.0f;
+                dx = ((scale * lbl_1_bss_1600[i].unk1C) + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.x) - lbl_1_bss_1600[i].pos.x;
+                dy = (scale * lbl_1_bss_1600[i].unk20) - lbl_1_bss_1600[i].pos.y;
+                dz = (lbl_1_bss_1600[i].unk24 + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z) - lbl_1_bss_1600[i].pos.z;
+                len = sqrtf((dz * dz) + ((dx * dx) + (dy * dy)));
+                step = (len > 32.0f) ? 4.0f : (len * 0.125f);
+                if (step > 0.0f) {
+                    lbl_1_bss_1600[i].pos.x += step * (dx / len);
+                    lbl_1_bss_1600[i].pos.y += step * (dy / len);
+                    lbl_1_bss_1600[i].pos.z += step * (dz / len);
+                }
+                if (players[lbl_1_data_138[0]]->modeTime < 0xAF) {
+                    base = 0.0f;
+                }
+                else if (players[lbl_1_data_138[0]]->modeTime < 0xD7) {
+                    base = 6.0f * ((f32)(players[lbl_1_data_138[0]]->modeTime - 0xAF) / 40.0f)
+                        * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
+                }
+                else {
+                    base = 6.0f * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
+                }
+                lbl_1_bss_1600[i].pos.y += base;
+                if (players[lbl_1_data_138[0]]->modeTime < 0xAF) {
+                    scale = 0.0f;
+                }
+                else if (players[lbl_1_data_138[0]]->modeTime < 0xD7) {
+                    scale = 6.0f * ((f32)(players[lbl_1_data_138[0]]->modeTime - 0xAF) / 40.0f)
+                        * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
+                }
+                else {
+                    scale = 6.0f * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
+                }
+                lbl_1_bss_1600[i].unk20 += scale;
+                Hu3DModelPosSet(obj->mdlId[i + 0x3A], lbl_1_bss_1600[i].pos.x, lbl_1_bss_1600[i].pos.y, lbl_1_bss_1600[i].pos.z);
+                Hu3DModelRotSet(obj->mdlId[i + 0x3A], 0.0f, 0.0f, 0.0f);
+                break;
+            }
+        }
+        lbl_1_bss_1600[i].time++;
+        if (castCount[lbl_1_bss_1600[i].owner] < 4 && lbl_1_bss_1600[i].mode == 5
+            && players[lbl_1_data_138[0]]->modeTime >= 0x3C) {
+            /* One shadow caster per fighter, round-robin over the four slots. */
+            n = (lbl_1_bss_1600[i].owner * 4) + castCount[lbl_1_bss_1600[i].owner] + 0xD;
+            lbl_1_bss_C++;
+            lbl_1_bss_C = lbl_1_bss_C % 4;
+            dx = lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.x;
+            t = 0.0f;
+            if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 6) {
+                t = 1.0f;
+            }
+            dy = 80.0f + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
+                + (f32)lbl_1_rodata_2BC[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t;
+            m = 0.0f;
+            if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 7) {
+                m = 1.0f;
+            }
+            dz = (lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f)
+                + (f32)lbl_1_rodata_2E4[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m;
+            t = lbl_1_bss_1600[i].pos.x - dx;
+            dy = lbl_1_bss_1600[i].pos.y - dy;
+            dz = lbl_1_bss_1600[i].pos.z - dz;
+            Hu3DModelPosSet(lbl_1_bss_C4->mdlId[n], dx, 80.0f
+                + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
+                + (f32)lbl_1_rodata_2BC[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t,
+                lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f
+                + (f32)lbl_1_rodata_2E4[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m);
+            Hu3DModelRotSet(lbl_1_bss_C4->mdlId[n],
+                (f32)(180.0 * (atan2(dy, sqrtf((t * t) + (dz * dz))) / 3.141592653589793)),
+                (f32)(180.0 + (180.0 * (atan2(t, dz) / 3.141592653589793))), 0.0f);
+            Hu3DModelScaleSet(lbl_1_bss_C4->mdlId[n], 1.0f, 1.0f,
+                sqrtf((dz * dz) + ((t * t) + (dy * dy))) / 150.0f);
+            Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[n], 1);
+            castCount[lbl_1_bss_1600[i].owner]++;
+        }
+    }
+
+    for (i = 0; i < 4; i++) {
+        lbl_1_data_124[i] += (lbl_1_data_124[i] > 0);
+    }
+
+    /* Dust puffs age and fade. */
+    for (i = 0; i < 128; i++) {
+        if (lbl_1_bss_600[i].active != 0) {
+            lbl_1_bss_600[i].active++;
+            lbl_1_bss_600[i].pos.x += lbl_1_bss_600[i].vel.x;
+            lbl_1_bss_600[i].pos.y += lbl_1_bss_600[i].vel.y;
+            lbl_1_bss_600[i].pos.z += lbl_1_bss_600[i].vel.z;
+            lbl_1_bss_600[i].vel.x *= 0.85f;
+            lbl_1_bss_600[i].vel.y *= 0.85f;
+            lbl_1_bss_600[i].vel.z *= 0.85f;
+            lbl_1_bss_600[i].alpha = (s32)((f32)lbl_1_bss_600[i].alpha * 0.95f);
+            if (lbl_1_bss_600[i].alpha <= 0) {
+                lbl_1_bss_600[i].active = 0;
+            }
+        }
+    }
+
+    /* Camera: pull back during the intro, then follow the winner. */
+    if (lbl_1_bss_BC == 1002 || (lbl_1_bss_BC == 1003 && CZoomM[1] != 2472.0f)) {
+        CZoomM[1] = 77.25f + (0.96875f * CZoomM[1]);
+        CRotM[1].x = (f32)((0.96875f * CRotM[1].x) - 1.01875);
+        CenterM[1].y = 2.625f + (0.96875f * CenterM[1].y);
+    }
+    else if (lbl_1_bss_BC == 1005 && lbl_1_data_138[0] != 4) {
+        if (lbl_1_data_258 == -10000.0f) {
+            lbl_1_data_258 = lbl_1_bss_C8[lbl_1_data_138[0]]->trans.z - 25.0f;
+        }
+        CZoomM[1] = 112.5f + (0.875f * CZoomM[1]);
+        CenterM[1].x = (0.875f * CenterM[1].x)
+            + (0.125f * lbl_1_bss_C8[lbl_1_data_138[0]]->trans.x);
+        CenterM[1].y = (0.875f * CenterM[1].y)
+            + (0.125f * ((866.0f * (f32)players[lbl_1_data_138[0]]->score) / 3.0f));
+        CenterM[1].z = (0.875f * CenterM[1].z)
+            + (0.125f * (lbl_1_data_258
+                + ((500.0f * (f32)players[lbl_1_data_138[0]]->score) / 3.0f)));
+        CRotM[1].x = (0.9375f * CRotM[1].x) - 3.75f;
+    }
+
+    for (i = 0; i < 29; i++) {
+        if (lbl_1_bss_1810[i].kind == 0
+            || (lbl_1_bss_1810[i].state != 0 && lbl_1_bss_1810[i].state != 4)) {
+            Hu3DModelShadowDispOff(obj->mdlId[i + 0x1D]);
+        }
+        else {
+            Hu3DModelShadowDispOn(obj->mdlId[i + 0x1D]);
         }
     }
 }
