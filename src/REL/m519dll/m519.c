@@ -37,7 +37,7 @@ float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 #define M519_FRANDMOD(x) ((s16)frandmod(x))
 #else
 extern s32 frand();
-extern s16 frandmod();
+extern s32 frandmod();
 #define M519_FRANDMOD_F(x) frandmod(x)
 #define M519_FRAND() frand()
 #define M519_FRANDMOD(x) frandmod(x)
