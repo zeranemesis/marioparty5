@@ -1287,7 +1287,7 @@ config.libs = [
             Object(Matching, "REL/m531Dll/scorebase.cpp"),
             Object(NonMatching, "REL/m531Dll/flow.cpp"),
             Object(NonMatching, "REL/m531Dll/polish.cpp"),
-            Object(NonMatching, "REL/m531Dll/score.cpp"),
+            Object(Matching, "REL/m531Dll/score.cpp"),
             Object(NonMatching, "REL/m531Dll/object.cpp"),
             Object(NonMatching, "REL/m531Dll/player.cpp"),
             Object(Matching, "REL/m531Dll/objectsetup.cpp"),
