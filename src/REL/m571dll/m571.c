@@ -186,7 +186,12 @@ u32 lbl_1_data_34[15] = {
 
 Vec lbl_1_data_70 = { 0.0f, 100.0f, -750.0f };
 
-float lbl_1_data_7C[8] = { 70.0f, 60.0f, 255.0f, 60.0f, 386.0f, 60.0f, 505.0f, 60.0f };
+typedef struct M571SpawnPt_s {
+    f32 x; //0x0
+    f32 y; //0x4
+} M571SpawnPt; //0x8
+
+M571SpawnPt lbl_1_data_7C[4] = { {70.0f, 60.0f}, {255.0f, 60.0f}, {386.0f, 60.0f}, {505.0f, 60.0f} };
 
 Vec lbl_1_data_9C[2] = { { -3456.0f, 0.0f, -280.0f }, { 3500.0f, 0.0f, -280.0f } };
 
@@ -470,10 +475,20 @@ static const f32 m571HalfTurn = 180.0f;
 
 typedef struct M571Cursor_s {
     s32 unk0; //0x0
-    s32 unk4; //0x4
+    s32 timer; //0x4
     Vec pos; //0x8
     Vec rot; //0x14
-} M571Cursor; //0x20
+    f32 unk20; //0x20
+    f32 scaleX; //0x24
+    f32 unk28; //0x28
+    f32 scaleY; //0x2C
+    f32 unk30; //0x30
+    f32 scaleZ; //0x34
+    f32 spawnX; //0x38
+    f32 spawnY; //0x3C
+    f32 riseSpeed; //0x40
+    s32 variant; //0x44 index into the spawn table
+} M571Cursor; //0x48
 
 typedef struct M571ListNode_s {
     s16 id; //0x00
@@ -1944,6 +1959,40 @@ void fn_1_8948(OMOBJ *obj)
 
     Hu3DModelAttrReset(obj->mdlId[0], 1);
     obj->objFunc = fn_1_8654;
+}
+
+// NONMATCHING: float loads for the repeated zero stores differ from the target build
+void fn_1_8A58(Vec *pos, s32 variant)
+{
+    OMOBJ *obj;
+    M571Cursor *cursor;
+
+    lbl_1_bss_360 = lbl_1_bss_360 + 1;
+
+    obj = omAddObjEx(lbl_1_bss_680, 0x66, 1, 0, OM_GRP_NONE, fn_1_8948);
+    obj->data = HuMemDirectMallocNum(0, 0x48, HU_MEMNUM_OVL);
+    cursor = (M571Cursor *)obj->data;
+
+    cursor->unk0 = 0;
+    cursor->timer = 0;
+
+    cursor->spawnX = lbl_1_data_7C[variant].x;
+    cursor->spawnY = 20.0f + lbl_1_data_7C[variant].y;
+    cursor->riseSpeed = 1500.0f;
+
+    cursor->rot.z = m571Zero;
+    cursor->rot.y = cursor->rot.z;
+    cursor->rot.x = cursor->rot.z;
+
+    cursor->pos.x = pos->x;
+    cursor->pos.y = pos->y;
+    cursor->pos.z = pos->z;
+
+    cursor->scaleZ = m571Zero;
+    cursor->scaleX = cursor->scaleZ;
+    cursor->scaleY = cursor->scaleZ;
+
+    cursor->variant = variant;
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
