@@ -485,3 +485,41 @@ target (23 instructions, correct `mr.`/vtable stores) but keeps
 drops the extra symbol and wins on every data section. Chasing per-function
 perfection first and unit-level score second would have picked the wrong one:
 `.text` says 100% for the variant that is further from matching overall.
+
+## Finding 18 -- a section can be too *small* and still score below 100%: look for `gap_` symbols
+
+`Gecko_ExceptionPPC.o` still reports `.bss` at 75%. The target's `fragmentinfo`
+occupies 12 bytes and the section is 16, so four bytes were missing and adding a
+fourth field to `ProcessInfo` did reach `0x10` -- while dropping the section to
+**37.5%**, because objdiff compares byte for byte and the two extra bytes are not
+the two the target has.
+
+The arithmetic in `__unregister_fragment` settles it:
+
+```
+mulli r4, r3, 0xc        ; stride is 12, so ProcessInfo is 3 words, not 4
+```
+
+and the symbol table then names the remaining four bytes outright:
+
+```
+target: 0000000c g  O .bss 00000004 .hidden gap_08_8025B29C_bss
+mine:   (nothing)
+```
+
+`gap_*` is finding 13's family: an artefact of the original build, not something
+the source can produce. It cannot be matched, and chasing it by adding struct
+fields actively makes things worse, because the fabricated bytes score as
+mismatches where absent bytes do not.
+
+So `.bss`/`.data`/`.rodata` have two distinct failure modes that look identical
+from the percentage alone. **Too large** is usually a real problem -- a surplus
+symbol, a mis-sized array, a duplicate pool entry -- and worth chasing. **Too
+small** with a `gap_`/`pad_` symbol sitting in the target is not: check
+`objdump -t` for those names before touching the struct. The 75% here is 12 of
+16 bytes matched, and the missing 4 are unreachable.
+
+This is the second time in this session that reading symbols beat reading code.
+The first was `__vt__Q23std9exception` being `UND` (finding 17); here it is a
+`gap_` name that says "stop". Both were one `objdump -t` away, and both cost
+several wrong source edits to find by disassembly alone.
