@@ -631,6 +631,45 @@ void fn_1_1CBC(OMOBJ *obj) {
     obj->work[2]++;
 }
 
+void fn_1_1DF8(OMOBJ *obj) {
+    M524Player *player;
+
+    player = (M524Player *)obj->data;
+    switch (obj->work[0]) {
+        case 0:
+            Hu3DMotionStartEndSet(obj->mdlId[1], 60.0f, 100.0f);
+            Hu3DMotionTimeSet(obj->mdlId[1], 60.0f);
+            Hu3DModelAttrReset(obj->mdlId[3], 1);
+            Hu3DModelAttrReset(obj->mdlId[3], 0x40000002);
+            obj->work[0] = 1;
+            obj->work[1] = 0x37;
+            break;
+        case 1:
+            if (obj->work[1] != 0) {
+                obj->work[1]--;
+                if (obj->work[1] == 0xD) {
+                    HuAudFXPlay(lbl_1_data_238[player->index]);
+                }
+                if (obj->work[1] == 0) {
+                    CharMotionShiftSet(player->charNo, obj->mtnId[5], 0.0f, 30.0f, 0);
+                    obj->work[0] = 2;
+                    obj->work[1] = 0x3C;
+                }
+            }
+            break;
+        case 2:
+            obj->work[1]--;
+            if (obj->work[1] == 0) {
+                CharMotionShiftSet(player->charNo, obj->mtnId[0], 0.0f, 20.0f, 0x40000001);
+                player->landedF = 1;
+                obj->work[1] = 0;
+                obj->work[0] = 0;
+                player->state = 6;
+            }
+            break;
+    }
+}
+
 void fn_1_1FB8(OMOBJ *obj) {
     M524Player *player;
     M524Flow *flow;
