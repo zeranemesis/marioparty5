@@ -90,6 +90,7 @@ s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 void fn_1_4EC0(OMOBJ *obj, s32 motNo);
 HU3DMODELID fn_1_3F3C(s32 playerNo);
 void fn_1_41AC(Vec *pos, Vec *up, Vec *target);
+void fn_1_4D3C(OMOBJ *obj, s32 motNo, f32 start, u32 attr);
 void fn_1_4E44(OMOBJ *obj, s32 motNo, f32 start, u32 attr);
 s32 fn_1_8E08(void);
 f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3);
@@ -1707,6 +1708,39 @@ s32 fn_1_4C78(HuVecF *pos, s32 t0, s32 t1)
     Hu3D3Dto2D(pos, 1, &scr);
 
     return (s32)((scr.y / m571ScreenYDiv) * (t1 - t0) + t0);
+}
+
+// NONMATCHING: local register form differs from the target build
+void fn_1_4D3C(OMOBJ *obj, s32 motNo, f32 start, u32 attr)
+{
+    M571Spin *spin = (M571Spin *)obj->data;
+
+    if (motNo == 8) {
+        Hu3DMotionSpeedSet(spin->curMot, 2.0f);
+    } else {
+        Hu3DMotionSpeedSet(spin->curMot, 1.0f);
+    }
+
+    if (spin->pad2C == motNo) {
+        return;
+    }
+
+    if (motNo == 2 || motNo == 0xD) {
+        HuAudFXPlay(0x2DB);
+    } else if (motNo == 0xE) {
+        HuAudFXPlay(0x2DD);
+    }
+
+    spin->pad2C = motNo;
+    Hu3DMotionShiftSet(spin->curMot, lbl_1_bss_44C[motNo], m571Zero, start, attr);
+
+    if (motNo == 0xE) {
+        HuAudJinglePlay(0x7A);
+    }
+
+    if (motNo == 0xD) {
+        HuAudJinglePlay(0x79);
+    }
 }
 
 // NONMATCHING: local register form differs from the target build
