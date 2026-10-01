@@ -4,6 +4,7 @@
 # Creates an isolated worktree for decompiling one module in parallel with
 # other work, ready to build:
 #   - git worktree on a new branch decomp/<name> (from main by default)
+#   - submodule working trees copied from the main checkout (see link_submodules)
 #   - the disc image hard-linked into orig/ (no copy, no second 900 MB file)
 #   - configure.py pointed at the tools already downloaded by this checkout
 #   - a first ninja run, which must end with every file OK
@@ -37,6 +38,40 @@ def run(cmd, cwd, check=True, capture=False):
     return result
 
 
+def link_submodules(root: Path, path: Path) -> None:
+    """Copy submodule working trees from the main checkout into the worktree.
+
+    `git submodule update --init` cannot be used here: the superproject pins
+    musyx at 39b305c7, which the remote no longer serves ("not our ref"), so
+    the clone fails while the main checkout happily sits on another commit.
+    Copying the tree and pointing the submodule back at the main checkout's
+    module store gives the same content the main checkout builds against.
+    """
+    listing = run(
+        ["git", "config", "--file", ".gitmodules", "--get-regexp", r"^submodule\..*\.path$"],
+        cwd=root,
+        capture=True,
+    )
+    modules_root = root / ".git" / "modules"
+    for line in listing.stdout.splitlines():
+        sub = line.split(None, 1)[-1].strip()
+        src = root / sub
+        if not src.is_dir():
+            print(f"SKIP submodule {sub}: not present in {root}")
+            continue
+        dst = path / sub
+        if dst.exists():
+            shutil.rmtree(dst)
+        print(f"COPY submodule {sub}")
+        shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".git"))
+        module_dir = modules_root / sub
+        if module_dir.is_dir():
+            pointer = os.path.relpath(module_dir, dst)
+            (dst / ".git").write_text(f"gitdir: {pointer}\n", encoding="utf-8")
+        else:
+            print(f"WARN submodule {sub}: no gitdir at {module_dir}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("name", help="module or task name, e.g. resultDll")
@@ -65,20 +100,32 @@ def main() -> int:
         raise SystemExit(f"{path} already exists")
     path.parent.mkdir(parents=True, exist_ok=True)
     run(["git", "worktree", "add", path, "-b", branch, args.base], cwd=root)
+    link_submodules(root, path)
 
     orig_src = root / "orig" / version
     orig_dst = path / "orig" / version
     orig_dst.mkdir(parents=True, exist_ok=True)
-    for item in orig_src.iterdir():
-        if item.name == ".gitkeep" or not item.is_file():
-            continue
-        target = orig_dst / item.name
-        try:
-            os.link(item, target)
-            print(f"LINK {target}")
-        except OSError:
-            shutil.copy2(item, target)
-            print(f"COPY {target}")
+    # Walk the tree and hard-link (or copy) every regular file, skipping
+    # directories we cannot read and entries like CVS metadata.
+    for dirpath, dirnames, filenames in os.walk(orig_src):
+        dirnames[:] = [d for d in dirnames if d not in (".gitkeep", "CVS")]
+        rel = os.path.relpath(dirpath, orig_src)
+        dest_dir = orig_dst if rel == "." else orig_dst / rel
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        for name in filenames:
+            if name == ".gitkeep":
+                continue
+            src_file = os.path.join(dirpath, name)
+            dst_file = dest_dir / name
+            try:
+                os.link(src_file, dst_file)
+                print(f"LINK {dst_file}")
+            except OSError:
+                try:
+                    shutil.copy2(src_file, dst_file)
+                    print(f"COPY {dst_file}")
+                except OSError:
+                    print(f"SKIP {dst_file}")
 
     configure = [sys.executable, "configure.py"]
     for flag, value in needed.items():
