@@ -548,3 +548,39 @@ from any use of `sqrtf`.
 Both facts were cheap to establish and together they close the question: the
 `sqrtf` pool difference is a toolchain property, not a source-shaping one, and
 units wanting it both ways are permanent. Do not spend iterations on it again.
+
+## Finding 20 -- a loop counter's *position* steers the whole register block
+
+`m510dll/REL/m510dll/opening` `fn_1_966C` sat at 92.57% with 296 instructions on
+both sides and only **four** differing, all in the prologue: the four
+`M510_VIEWOBJ *` pointers were allocated `r29, r27, r26, r25` instead of
+`r27, r26, r25, r29`. Reordering the four declarations alone never fixed it --
+all 24 permutations were tried and every one put `r22` in r28, r27 or r29
+depending on the order, none in the wanted slot.
+
+What did fix it was moving **`s32 i;`**, the loop counter, from between the
+declarations to the front of the block:
+
+```c
+    s32 i;                          /* was here, after view3 */
+    M510_VIEWOBJ *view0 = &slot0->obj;
+    M510_VIEWOBJ *view1 = &slot1->obj;
+    M510_VIEWOBJ *view2 = &slot2->obj;
+    M510_VIEWOBJ *view3 = &slot3->obj;   /* was first */
+```
+
+This refines finding 1 for REL units. The rule "locals fill r31 -> r28 in
+declaration order" is right but incomplete: it is the **whole declaration
+block** that gets filled in order, including counters, and a counter that looks
+like it belongs after the values it iterates can occupy a callee-saved slot and
+push the four pointers one register down. `i` is read only inside the `for` at
+line 76, long after the pointers are declared, so its placement is invisible in
+the source's logic and invisible in the instruction stream too -- it shows up
+solely as four shifted `addi` lines.
+
+A 120-case scan (5 positions for `i` x 24 orders) found exactly one match, and
+the ranking was otherwise uninformative: the winning case scored 93.92% and the
+runner-up 93.24%, a gap too small to trust as a signal. Judge REL register
+permutations by whether the prologue lines match exactly, not by percentage --
+the same trap as finding 17, where a small score difference hid a large
+structural one.

@@ -11,9 +11,10 @@ static Vec lbl_1_data_42C = { 0.0f, -52.0f, 400.0f };
 static Vec lbl_1_data_438 = { 0.0f, 0.0f, 0.0f };
 static Vec lbl_1_data_444 = { 0.0f, 0.0f, 0.0f };
 
-// NONMATCHING: the four M510_VIEWOBJ addresses are emitted r29,r27,r26,r25
-// instead of r27,r26,r25,r29, which also parks the loop counter i in r25 rather
-// than r28. 92.57% / 4 rows. The code below is complete and faithful.
+// The declaration order below is load-bearing. MWCC fills the whole local block
+// in order, so the loop counter has to come first: with `i` between the
+// pointers the four M510_VIEWOBJ addresses are emitted r29,r27,r26,r25 instead
+// of r27,r26,r25,r29. `.text` is a byte-for-byte match.
 s32 fn_1_966C(M510_WORK *work)
 {
     M510_SLIDE *slide = &work->slide;
@@ -21,11 +22,11 @@ s32 fn_1_966C(M510_WORK *work)
     M510_VIEW *slot1 = &work->view1;
     M510_VIEW *slot2 = &work->view2;
     M510_VIEW *slot3 = &work->view3;
-    M510_VIEWOBJ *view3 = &slot3->obj;
     s32 i;
     M510_VIEWOBJ *view0 = &slot0->obj;
     M510_VIEWOBJ *view1 = &slot1->obj;
     M510_VIEWOBJ *view2 = &slot2->obj;
+    M510_VIEWOBJ *view3 = &slot3->obj;
     M510_SLOT *slot;
     f32 rate;
     s32 result;
