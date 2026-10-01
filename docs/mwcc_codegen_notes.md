@@ -380,3 +380,70 @@ pair and always in units that inline `sqrtf` -- `resultDll/REL/resultDll/stage`,
 `mdpartyDll` among them. Inside a single module the two forms are needed at
 once: `m526Dll/math` wants the statics gone while `m526Dll/m526` wants them
 present, so the switch cannot be made per module either.
+
+## Finding 15 -- MWCC emits functions in *reverse* declaration order
+
+`.text` is not laid out in source order. `Runtime.PPCEABI.H/NMWException.o` is
+the clean example: the target orders it
+
+```
+__destroy_arr, __construct_array, __dt__26__partial_array_destructorFv, __throw_catch_compare, ...
+```
+
+while a straightforward reading of the source (`__throw_catch_compare`, then the
+class, then `__destroy_arr`, then `__construct_array`) compiles to the exact
+reverse. Moving the `__construct_array` definition to *before* `__destroy_arr`
+flipped the emission order to match and took `.text` from 93.02% to 94.60% --
+and, more importantly, `extab` from 59.26% to 98.81% and `extabindex` from
+92.86% to **100%**.
+
+The reason the gain is so lumpy is that `extabindex` is a *sorted* table of
+`(function, text offset, extab entry)` triples. One function out of order moves
+every subsequent offset, so a single misordered definition invalidates the whole
+section. Whenever a unit is close on `extab`/`extabindex` but not on `.text`,
+check the emission order before touching any code: reordering two whole
+functions is a much cheaper fix than any local expression change, and it is the
+only kind of fix that can move `extabindex` to 100%.
+
+Corollary worth remembering: `dtk elf disasm` labels functions in emission
+order, so comparing `grep '^\.fn '` output against the reference `.s` detects a
+misordering immediately, without objdiff.
+
+## Finding 16 -- `extab` is an oracle for local-object layout
+
+`__construct_array` resisted every `volatile` permutation and sat at 56.45%. The
+target's `.text` showed five consecutive words at `0x8(SP)`, and the `extab`
+entry for the function named the reason:
+
+```
+PC=00000060, Action: 000010
+  Type: DESTROYLOCAL
+  Local: 0x8(SP)
+  Dtor: "__dt__26__partial_array_destructorFv"
+```
+
+So the original does not hand-roll the cleanup: it declares a
+`__partial_array_destructor` local, runs the construct loop against `d.i`, and
+lets the compiler inline the destructor at scope exit. That single change --
+dropping all the `volatile`s and using the object -- reproduced the frame layout
+exactly (`p, size, n, dtor, i` at `0x8`..`0x18`), and required changing the
+class constructor from `i = n` to `i = 0` so the counter starts at zero and
+reaches `n` through the loop. Semantics are unchanged: on normal exit `i == n`,
+so the inlined destructor is a no-op and only the exception path uses it, which
+is exactly what the `PC=0x60` action records.
+
+The lesson generalises: when a function is stuck because values keep landing in
+the wrong registers, do not reach for `volatile` first. Dump the *data* sections
+and ask what the compiler thought the frame contained. `extab`, `extabindex` and
+`.eh_frame` encode the frame layout, the saved-GPR range, and the cleanup objects
+by name -- free structural information that the instruction-level diff never
+shows. `volatile` was a plausible-sounding guess that cost several iterations and
+produced nothing.
+
+`__construct_array` still stops at 94.60%: the target assigns `n` to `r31` and
+the walking pointer to `r30`, while MWCC picks the opposite. Sixteen
+reformulations (declaration order, `register`, per-parameter `volatile`, index
+arithmetic, do/while, for-loop, pointer-as-parameter) all reproduced the same
+94.60%, so the ordering is decided inside the allocator and is not reachable from
+the source. That is a real MWCC behaviour rather than a misguess, and it is a
+better stopping point than the `volatile` version was.
