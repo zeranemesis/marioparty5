@@ -29,7 +29,9 @@ def syms(path):
             size = int(f[4], 16)
         except ValueError:
             continue
-        table.setdefault(f[3], []).append((f[5], size, f[1]))
+        # objdump prints the ELF name plus any linker-appended alias, e.g.
+        # ".hidden gap_07_801BF637_data" -- both matter, so keep them joined.
+        table.setdefault(f[3], []).append((" ".join(f[5:]), size, f[1]))
     return table
 
 
