@@ -439,10 +439,10 @@ static M572ListHead lbl_1_bss_6D8;
 s32 _prolog(void) {
     M572VoidFn *ctors = _ctors;
 
-    do {
+    while (*ctors != NULL) {
         (*ctors)();
         ctors += 1;
-    } while (*ctors != NULL);
+    }
     ObjectSetup();
     return 0;
 }
@@ -450,10 +450,10 @@ s32 _prolog(void) {
 void _epilog(void) {
     M572VoidFn *dtors = _dtors;
 
-    do {
+    while (*dtors != NULL) {
         (*dtors)();
         dtors += 1;
-    } while (*dtors != NULL);
+    }
 }
 
 void ObjectSetup(void) {
