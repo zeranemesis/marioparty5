@@ -343,8 +343,7 @@ static void fn_1_5AF4(OMOBJ *obj)
                 dist = fabs(posY);
                 fall = dist / 1000.0;
                 groundY = 33.0f * player[(j / 3) + 1]->footY[j % 3];
-                camRate = (1.0 - ((0.875 * fall) + (0.125 * (fall * fall)))) * groundY;
-                fade = (posY - maxX) / (minX - maxX);
+                camRate = (1.0 - ((0.875 * fall) + (0.125 * (fall * fall)))) * groundY;                fade = (posY - maxX) / (minX - maxX);
                 endY = (prevHeight * (1.0f - fade)) + (prevZoom * fade);
                 if (endY > camRate) {
                     maxX = posY;
@@ -489,17 +488,17 @@ static void fn_1_5AF4(OMOBJ *obj)
         for (i = 0; i < 256; i++) {
             if (lbl_1_bss_16C[i].time >= 256) {
                 fx = &lbl_1_bss_16C[i];
-                fx->x = 900.0 * ((rand8() / 255.0f) - 0.5);
+                fx->x = 900.0 * ((rand8() / 255.0) - 0.5);
                 fx->y = 320.0f;
                 fx->z = 0.0f;
-                fx->velX = 400.0 * (((rand8() / 255.0f) - 0.5) * 0.00390625);
-                fx->velY = (-900.0f + (-100.0f * (rand8() / 255.0f))) * 0.00390625f;
+                fx->velX = 400.0 * ((rand8() / 255.0) - 0.5);
+                fx->velY = (-900.0f + (-100.0f * (rand8() / 255.0))) * 0.00390625f;
                 fx->velZ = 0.0f;
-                fx->axis.x = 4.0 * ((rand8() / 255.0f) - 0.5);
+                fx->axis.x = 4.0 * ((rand8() / 255.0) - 0.5);
                 fx->axis.y = rand8();
-                fx->axis.z = (rand8() / 255.0f) - 0.5;
-                fx->rotSpeed = 0.5 * ((rand8() / 255.0f) - 0.5);
-                fx->kind = 1.0f / (45.0f + (30.0f * (rand8() / 255.0f)));
+                fx->axis.z = (rand8() / 255.0) - 0.5;
+                fx->rotSpeed = 0.5 * ((rand8() / 255.0) - 0.5);
+                fx->kind = 1.0f / (45.0f + (30.0f * (rand8() / 255.0)));
                 if (fx->axis.x == 0.0f && fx->axis.y == 0.0f && fx->axis.z == 0.0f) {
                     fx->axis.x = 1.0f;
                 }
