@@ -82,6 +82,10 @@ void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out);
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 void fn_1_4EC0(OMOBJ *obj, s32 motNo);
 s32 fn_1_8E08(void);
+f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3);
+void fn_1_4A54(s32 fadeSpeed);
+s32 fn_1_4BB4(HuVecF *pos, s32 t0, s32 t1);
+s32 fn_1_4C78(HuVecF *pos, s32 t0, s32 t1);
 void fn_1_7670(OMOBJ *obj);
 void fn_1_7DF8(OMOBJ *obj);
 
@@ -438,6 +442,9 @@ static const f32 m571VolBias = 96.0f;
 static const f32 m571VolScale = 31.0f;
 static const f32 m571ScreenXDiv = 576.0f;
 static const f32 m571ScreenYDiv = 480.0f;
+static const f64 m571Turn = 360.0;
+static const f32 m571TurnF = 360.0f;
+static const f32 m571HalfTurn = 180.0f;
 
 typedef struct M571ListNode_s {
     s16 id; //0x00
@@ -1581,6 +1588,36 @@ s32 fn_1_4B18(s32 base, s32 range)
     return base + frandmod(range - base);
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
+f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3)
+{
+    f32 delta = (f32)fmod(arg2 - arg1, m571Turn);
+
+    if (m571Zero > delta) {
+        delta += m571TurnF;
+    }
+
+    if (delta > m571HalfTurn) {
+        delta -= m571TurnF;
+    }
+
+    return (f32)fmod(arg1 + delta * arg3, m571Turn);
+}
+
+// NONMATCHING: local register form differs from the target build
+void fn_1_4A54(s32 fadeSpeed)
+{
+    if (lbl_1_bss_584[0] >= 0) {
+        if (fadeSpeed < 0) {
+            fadeSpeed = 1000;
+        }
+
+        HuAudSeqFadeOut(lbl_1_bss_584[0], fadeSpeed);
+    }
+
+    lbl_1_bss_584[0] = -1;
+}
+
 // NONMATCHING: local index/register form differs from the target build
 void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out)
 {
@@ -1598,6 +1635,26 @@ s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3)
 {
     return (arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
         < (arg2 + arg3) * (arg2 + arg3);
+}
+
+// NONMATCHING: the inline integer-to-double conversions differ from the target build
+s32 fn_1_4BB4(HuVecF *pos, s32 t0, s32 t1)
+{
+    HuVecF scr;
+
+    Hu3D3Dto2D(pos, 1, &scr);
+
+    return (s32)((scr.x / m571ScreenXDiv) * (t1 - t0) + t0);
+}
+
+// NONMATCHING: the inline integer-to-double conversions differ from the target build
+s32 fn_1_4C78(HuVecF *pos, s32 t0, s32 t1)
+{
+    HuVecF scr;
+
+    Hu3D3Dto2D(pos, 1, &scr);
+
+    return (s32)((scr.y / m571ScreenYDiv) * (t1 - t0) + t0);
 }
 
 // NONMATCHING: register allocation differs from the target build
