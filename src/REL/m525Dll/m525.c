@@ -326,16 +326,16 @@ static void fn_1_5AF4(OMOBJ *obj)
     for (i = 0; i < 4; i++) {
         player[i] = lbl_1_bss_8C[i]->data;
     }
-    maxX = -500.0f;
-    minX = 500.0f;
+    maxX = 0.0f;
+    prevZoom = 0.0f;
+    minX = -500.0f;
     prevHeight = 0.0f;
     for (i = 0; i < 11; i++) {
-        lbl_1_data_108[i] = maxX;
+        lbl_1_data_108[i] = -500.0f;
         lbl_1_data_134[i] = 0.0f;
     }
-    i = 0;
     while (maxX < 500.0f) {
-        maxHeight = 500.0f;
+        maxX = 500.0f;
         prevZoom = 0.0f;
         for (j = 0; j < 9; j++) {
             posY = player[(j / 3) + 1]->footX[j % 3];
