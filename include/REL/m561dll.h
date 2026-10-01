@@ -21,7 +21,7 @@ extern void *lbl_1_bss_300;
 
 void fn_1_8AE8(void);
 void fn_1_8B38(void);
-void fn_1_8BCC(s16 arg0, void *arg1);
+void fn_1_8BCC(s16 arg0, Vec *arg1);
 void fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32 arg5);
 void fn_1_9200(void);
 void fn_1_9464(void);
