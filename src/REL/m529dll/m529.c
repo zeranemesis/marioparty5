@@ -1668,21 +1668,18 @@ temp_r31->unk12 = espEntry(0x960045, 0xA, 0);
 void fn_1_553C(OMOBJ *obj)
 {
     M529Score *temp_r31 = lbl_1_bss_110->data;
-    float temp_f1;
 
     MgScoreValueSet(temp_r31->unk4, lbl_1_bss_18);
     if (lbl_1_bss_DC != 0) {
         if (temp_r31->unk14 == 0) {
-            temp_f1 = temp_r31->unk18 + 0.02f;
-            temp_r31->unk18 = temp_f1;
-            if (temp_f1 >= 1.2f) {
+            temp_r31->unk18 += 0.02f;
+            if (temp_r31->unk18 >= 1.2f) {
                 temp_r31->unk18 = 1.2f;
                 temp_r31->unk14 = 1;
             }
         } else {
-            temp_f1 = temp_r31->unk18 - 0.04f;
-            temp_r31->unk18 = temp_f1;
-            if (temp_f1 <= 1.0f) {
+            temp_r31->unk18 -= 0.04f;
+            if (temp_r31->unk18 <= 1.0f) {
                 temp_r31->unk18 = 1.0f;
                 temp_r31->unk14 = 0;
             }
