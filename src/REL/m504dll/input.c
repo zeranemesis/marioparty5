@@ -122,10 +122,14 @@ void fn_1_B8D8(InputMain *main)
 
 void fn_1_BAC4(InputWork *work, InputMain *main)
 {
-    s32 playerNo;
-    s32 dif;
-    s32 i;
-    void **table;
+    register s32 i;
+    register s32 playerNo;
+    register s32 v1;
+    register s32 v2;
+    register s32 v3;
+    register void **t1;
+    register void **t2;
+    register void **t3;
 
     playerNo = main->playerConf->unk0->playerNo;
 
@@ -135,31 +139,38 @@ void fn_1_BAC4(InputWork *work, InputMain *main)
     work->type = GwPlayerConf[playerNo].type;
 
     if (GwPlayerConf[playerNo].dif == 3) {
-        dif = 0;
-    } else if (GwPlayerConf[playerNo].dif == 2) {
-        dif = 1;
-    } else if (GwPlayerConf[playerNo].dif == 1) {
-        dif = 2;
+        v1 = 0;
     } else {
-        dif = 3;
+        if (GwPlayerConf[playerNo].dif == 2) {
+            v2 = 1;
+        } else {
+            if (GwPlayerConf[playerNo].dif == 1) {
+                v3 = 2;
+            } else {
+                v3 = 3;
+            }
+            v2 = v3;
+        }
+        v1 = v2;
     }
-    work->dif = dif;
+    work->dif = v1;
 
-    switch (work->dif) {
-        case 0:
-            table = lbl_1_data_2E14;
-            break;
-        case 1:
-            table = lbl_1_data_2E38;
-            break;
-        case 2:
-            table = lbl_1_data_2E74;
-            break;
-        case 3:
-            table = lbl_1_data_2EB0;
-            break;
+    if (work->dif == 0) {
+        t1 = lbl_1_data_2E14;
+    } else {
+        if (work->dif == 1) {
+            t2 = lbl_1_data_2E38;
+        } else {
+            if (work->dif == 2) {
+                t3 = lbl_1_data_2E74;
+            } else {
+                t3 = lbl_1_data_2EB0;
+            }
+            t2 = t3;
+        }
+        t1 = t2;
     }
-    work->dataTable = table;
+    work->dataTable = t1;
 
     for (i = 0; lbl_1_data_4134[i] != NULL; i++) {
         *(u16 *)(lbl_1_data_4134[i] + 0xA) = 0;
