@@ -523,3 +523,28 @@ This is the second time in this session that reading symbols beat reading code.
 The first was `__vt__Q23std9exception` being `UND` (finding 17); here it is a
 `gap_` name that says "stop". Both were one `objdump -t` away, and both cost
 several wrong source edits to find by disassembly alone.
+
+## Finding 19 -- there is no compiler-version macro, so finding 14 cannot be worked around
+
+Finding 14 left `sqrtf`'s file-scope statics as a contradiction: MWCC 2.6 units
+want them present, MWCC 1.3.2 units want them gone, and one `libc/math.h` has to
+serve both. The obvious escape is a version guard in the header, so it is worth
+recording that MWCC does not offer one.
+
+`__MWERKS__`, `__MWVER__`, `_MWVER`, `__MWCOMPILER` and `__MRC__` are all
+undefined in both `GC/2.6` and `GC/1.3.2`. A probe file testing every one of
+them compiles to an object with an empty symbol table under both compilers, so
+`#if` cannot distinguish them. The two toolchains are also invoked by different
+drivers (`mwcceppc.exe` vs `mwasmeppc.exe`) but that is a configure.py fact, not
+something a header can observe.
+
+Nor can the problem be sidestepped per unit by trimming includes.
+`m510dll/REL/m510dll/opening.c` does not call `sqrtf` at all -- it includes
+`humath.h`, whose only uses of it are two macros it never expands -- and
+dropping that include changes nothing, because `REL/m510dll.h` includes
+`humath.h` in turn. The statics come from `math.h` being reached at all, not
+from any use of `sqrtf`.
+
+Both facts were cheap to establish and together they close the question: the
+`sqrtf` pool difference is a toolchain property, not a source-shaping one, and
+units wanting it both ways are permanent. Do not spend iterations on it again.
