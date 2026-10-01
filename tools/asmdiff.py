@@ -52,8 +52,11 @@ MEM_RE = re.compile(r"^([+-]?(?:0x[0-9a-fA-F]+|\d+))\((.+)\)$")
 # raw rotate (`rlwinm r6,r5,30,27,31`), and likewise `dcbt` vs `dcbtct`.  For
 # these mnemonics the operand text carries no meaning, so we compare the raw
 # encoding instead - which is strictly stronger than comparing the mnemonic.
+# `ori rA,rS,0x8000` and `oris rA,rS,0x8000` are one encoding (0x6063): objdump
+# picks `oris`, so the mnemonic carries no information here either.
 AMBIGUOUS = {"rlwinm", "rotlwi", "slwi", "srwi", "clrlwi", "clrrwi", "clrlslwi",
-             "clrrslwi", "extrwi", "dcbt", "dcbtst", "dcbtct"}
+             "clrrslwi", "extrwi", "dcbt", "dcbtst", "dcbtct",
+             "ori", "oris"}
 
 # objdump and doldecomp spell the same SPR differently: objdump prints the
 # decimal SPR number, doldecomp prints its name.  The keys are *strings*
@@ -146,6 +149,10 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None,
         return f"{mnemonic} {','.join(parts)}"
     if mnemonic == "lis":
         parts = [p for p in canon_operand(operand).split(",") if p]
+        # doldecomp keeps the symbol name (`lis r3, DMAErrorHandler@ha`); the
+        # candidate resolves to a plain relocation, so compare the name only
+        if parts[-1] not in ("SYM",) and not re.fullmatch(r"[+-]?\d+|r0", parts[-1]):
+            return "lis " + ",".join(parts)
         if re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", parts[-1]):
             parts[-1] = str(int(parts[-1], 0) & 0xFFFF)
         return f"lis {','.join(parts)}"

@@ -3,6 +3,7 @@
 #include "dolphin/os/OSCache.h"
 #include "dolphin/os/OSError.h"
 #include "dolphin/PPCArch.h"
+#include "dolphin/db.h"
 
 /* clang-format off */
 
@@ -389,33 +390,33 @@ void DMAErrorHandler(OSError error, OSContext* context)
 void __OSCacheInit(void)
 {
     u32 hid0;
-    u32 l2cr;
     u32 msr;
+    u32 flag;
 
     hid0 = PPCMfhid0();
-    if (!(hid0 & (1 << HID0_ICE_BIT))) {
+    if (!(hid0 & (1 << 15))) {
         ICEnable();
         DBPrintf("L1 i-caches initialized\n");
     }
 
     hid0 = PPCMfhid0();
-    if (!(hid0 & (1 << HID0_DCE_BIT))) {
+    if (!(hid0 & (1 << 14))) {
         DCEnable();
         DBPrintf("L1 d-caches initialized\n");
     }
 
-    l2cr = PPCMfl2cr();
-    if (!(l2cr & (1 << HID2_LSQE_BIT))) {
+    flag = PPCMfl2cr();
+    if (flag == 0) {
         msr = PPCMfmsr();
         SYNC();
         PPCMtmsr(0x30);
         SYNC();
         SYNC();
-        PPCMtl2cr(PPCMfl2cr() & ~0x1);
+        PPCMtl2cr(PPCMfl2cr() & 0x7fffffffu);
         SYNC();
         L2GlobalInvalidate();
         PPCMtmsr(msr);
-        PPCMtl2cr((PPCMfl2cr() | 0x80000000) & ~0x400);
+        PPCMtl2cr((PPCMfl2cr() | 0x80000000u) & (u32)(~0x200000));
         DBPrintf("L2 cache initialized\n");
     }
 
