@@ -406,6 +406,7 @@ void ObjectSetup(void)
     lbl_1_bss_8 = -1;
 }
 
+// NONMATCHING: the state table reads and float literals land in other registers
 void fn_1_5E0(OMOBJ *obj)
 {
     s32 i;
@@ -543,6 +544,7 @@ temp_r31->unk84.x = lbl_1_data_28[temp_r31->unk18].x;
     obj->objFunc = fn_1_B98;
 }
 
+// NONMATCHING: stack frame is 0xb0 instead of 0xf0
 void fn_1_B98(OMOBJ *obj)
 {
     Vec sp20;
@@ -771,6 +773,7 @@ void fn_1_1780(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: stack frame is 0x30 instead of 0x50 and r29 is never allocated
 void fn_1_187C(OMOBJ *obj)
 {
     Vec sp14;
@@ -840,6 +843,7 @@ void fn_1_187C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: the lbl_1_bss_EC index is computed in r5 instead of r4
 void fn_1_1C8C(OMOBJ *obj)
 {
     s32 i;
@@ -956,6 +960,7 @@ void fn_1_2714(OMOBJ *obj)
     obj->objFunc = fn_1_2B70;
 }
 
+// NONMATCHING: the switch dispatch compares in a different order
 void fn_1_2B70(OMOBJ *obj)
 {
     switch (obj->work[0]) {
@@ -976,6 +981,7 @@ void fn_1_2B70(OMOBJ *obj)
     fn_1_4048();
 }
 
+// NONMATCHING: stack frame is 0x30 instead of 0x70
 void fn_1_2BEC(OMOBJ *obj)
 {
     M529Player *sp1C[4];
@@ -1323,6 +1329,7 @@ s32 fn_1_4488(OMOBJ *obj)
     return 1;
 }
 
+// NONMATCHING: stack frame is 0x20 instead of 0x40
 void fn_1_44C4(OMOBJ *obj)
 {
     Vec sp8;
@@ -1558,6 +1565,7 @@ u16 fn_1_4F10(OMOBJ *obj)
     return var_r30;
 }
 
+// NONMATCHING: the state test reloads unkB8 and inverts the first branch
 u16 fn_1_500C(OMOBJ *obj)
 {
     M529Player *temp_r31 = obj->data;
@@ -1574,6 +1582,7 @@ u16 fn_1_500C(OMOBJ *obj)
     return var_r30;
 }
 
+// NONMATCHING: the state test still nests the two comparisons the other way
 u16 fn_1_5084(OMOBJ *obj)
 {
     M529Player *temp_r31 = obj->data;
@@ -1664,6 +1673,7 @@ temp_r31->unk12 = espEntry(0x960045, 0xA, 0);
     obj->objFunc = fn_1_553C;
 }
 
+// NONMATCHING: the new scale is computed in f0 instead of f1
 void fn_1_553C(OMOBJ *obj)
 {
     M529Score *temp_r31 = lbl_1_bss_110->data;
@@ -1718,6 +1728,7 @@ void fn_1_5680(s16 arg0, u32 arg1)
     MgScoreDispOn(temp_r30->unk4);
 }
 
+// NONMATCHING: the dead comparison against lbl_1_bss_D4 is missing
 void fn_1_57BC(void)
 {
     if (lbl_1_bss_8 == -1) {
@@ -1781,6 +1792,7 @@ void fn_1_5A18(void)
     fn_1_5A84(&lbl_1_data_2E8, &lbl_1_data_300);
 }
 
+// NONMATCHING: stack frame and float register allocation differ
 void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1)
 {
     float sp50;
@@ -1853,6 +1865,7 @@ void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1)
     OSReport(lbl_1_data_4F5);
 }
 
+// NONMATCHING: print8 reloads the vector address into r7 instead of reusing r6
 void fn_1_5F74(void)
 {
     GXColor sp8;
@@ -1995,6 +2008,7 @@ s16 fn_1_669C(u32 arg0)
     return Hu3DModelCreate(HuDataSelHeapReadNum(arg0, HU_MEMNUM_OVL, HEAP_MODEL));
 }
 
+// NONMATCHING: the pitch is kept in a saved float register
 void fn_1_67B0(Vec *arg0, Vec *arg1, Vec *arg2, float farg0)
 {
     float var_f30 = farg0;
@@ -2018,6 +2032,7 @@ void fn_1_690C(Vec *arg0, Vec *arg1, Vec *arg2)
     lbl_1_bss_300 = *arg2;
 }
 
+// NONMATCHING: the clamped axes land in different float registers
 s32 fn_1_6998(Vec *arg0, float farg0)
 {
     Vec sp18;
@@ -2054,6 +2069,7 @@ var_f30 = farg0;
     return 0;
 }
 
+// NONMATCHING: stack frame and float register allocation differ
 s32 fn_1_6CCC(Vec *arg0, float farg0)
 {
     Vec sp20;
@@ -2098,6 +2114,7 @@ s32 fn_1_6CCC(Vec *arg0, float farg0)
     return 0;
 }
 
+// NONMATCHING: stack frame and float register allocation differ
 float fn_1_70B0(float farg0, float farg1, float farg2)
 {
     float sp8 = farg1;
