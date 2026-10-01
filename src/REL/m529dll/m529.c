@@ -23,8 +23,7 @@
 typedef struct M529Score_s {
     s32 unk0;
     void *unk4;
-    void *unk8;
-    void *unkC;
+    void *unk8[2];
     s16 unk10;
     s16 unk12;
     s32 unk14;
@@ -1633,20 +1632,20 @@ void fn_1_5204(OMOBJ *obj)
     MgScoreWinColorSet(lbl_1_bss_34, 0xFA, 0, 0x1E);
     MgScoreWinTPLvlSet(lbl_1_bss_34, 0.7f);
     MgScoreWinPosSet(lbl_1_bss_34, 48.0f, 60.0f);
-    temp_r31->unk8 = MgScoreCreate(0x960031, -1, 1);
-    MgScoreValueSet(temp_r31->unk8, lbl_1_bss_20[0]);
-    MgScorePosSet(temp_r31->unk8, 38.0f, 60.0f);
-    MgScoreMaxDigitSet(temp_r31->unk8, 2);
-    MgScoreDispOff(temp_r31->unk8);
+    temp_r31->unk8[0] = MgScoreCreate(0x960031, -1, 1);
+    MgScoreValueSet(temp_r31->unk8[0], lbl_1_bss_20[0]);
+    MgScorePosSet(temp_r31->unk8[0], 38.0f, 60.0f);
+    MgScoreMaxDigitSet(temp_r31->unk8[0], 2);
+    MgScoreDispOff(temp_r31->unk8[0]);
     lbl_1_bss_32 = MgScoreWinCreate(0x40, 0x28);
     MgScoreWinColorSet(lbl_1_bss_32, 0, 0x32, 0xFA);
     MgScoreWinTPLvlSet(lbl_1_bss_32, 0.7f);
     MgScoreWinPosSet(lbl_1_bss_32, 528.0f, 60.0f);
-    temp_r31->unkC = MgScoreCreate(0x960031, -1, 1);
-    MgScoreValueSet(temp_r31->unkC, lbl_1_bss_20[1]);
-    MgScorePosSet(temp_r31->unkC, 518.0f, 60.0f);
-    MgScoreMaxDigitSet(temp_r31->unkC, 2);
-    MgScoreDispOff(temp_r31->unkC);
+    temp_r31->unk8[1] = MgScoreCreate(0x960031, -1, 1);
+    MgScoreValueSet(temp_r31->unk8[1], lbl_1_bss_20[1]);
+    MgScorePosSet(temp_r31->unk8[1], 518.0f, 60.0f);
+    MgScoreMaxDigitSet(temp_r31->unk8[1], 2);
+    MgScoreDispOff(temp_r31->unk8[1]);
     lbl_1_bss_30 = MgScoreWinCreate(0x48, 0x30);
     MgScoreWinTPLvlSet(lbl_1_bss_30, 0.7f);
     MgScoreWinPosSet(lbl_1_bss_30, 288.0f, 416.0f);
@@ -1687,24 +1686,22 @@ void fn_1_553C(OMOBJ *obj)
         MgScoreDigitScaleSet(temp_r31->unk4, temp_r31->unk18, temp_r31->unk18);
         espScaleSet(temp_r31->unk12, temp_r31->unk18, temp_r31->unk18);
     }
-    MgScoreValueSet(temp_r31->unk8, lbl_1_bss_20[0]);
-    MgScoreValueSet(temp_r31->unkC, lbl_1_bss_20[1]);
+    MgScoreValueSet(temp_r31->unk8[0], lbl_1_bss_20[0]);
+    MgScoreValueSet(temp_r31->unk8[1], lbl_1_bss_20[1]);
 }
 
 void fn_1_5680(s16 arg0, u32 arg1)
 {
-    s16 sp8 = arg0;
     M529Score *temp_r30 = lbl_1_bss_110->data;
     s32 i;
     s32 j;
-    void **temp_r29 = &temp_r30->unk8;
 
-    if (sp8 >= 0x3EC) {
+    if (arg0 >= 0x3EC) {
         for (i = 0; i < 2; i++) {
             MgScoreWinDispSet(lbl_1_bss_34, 1);
             MgScoreWinDispSet(lbl_1_bss_32, 1);
             for (j = 0; j < 2; j++) {
-                MgScoreDispOn(temp_r29[j]);
+                MgScoreDispOn(temp_r30->unk8[j]);
             }
         }
     } else {
@@ -1712,7 +1709,7 @@ void fn_1_5680(s16 arg0, u32 arg1)
             MgScoreWinDispSet(lbl_1_bss_34, 0);
             MgScoreWinDispSet(lbl_1_bss_32, 0);
             for (j = 0; j < 2; j++) {
-                MgScoreDispOff(temp_r29[j]);
+                MgScoreDispOff(temp_r30->unk8[j]);
             }
         }
     }
