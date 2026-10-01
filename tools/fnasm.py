@@ -16,7 +16,9 @@ import re
 import sys
 from pathlib import Path
 
-root = Path(__file__).resolve().parent.parent
+from _root import project_root
+
+root = project_root()
 
 
 def asm_path(unit: str) -> Path:

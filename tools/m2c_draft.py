@@ -24,7 +24,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-root = Path(__file__).resolve().parent.parent
+from _root import project_root
+
+root = project_root()
 version = "GP5E01_00"
 
 

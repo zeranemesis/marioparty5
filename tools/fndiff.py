@@ -21,7 +21,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-root = Path(__file__).resolve().parent.parent
+from _root import project_root
+
+root = project_root()
 
 
 def find_unit(name: str) -> dict:
