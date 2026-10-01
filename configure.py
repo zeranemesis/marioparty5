@@ -1206,7 +1206,7 @@ config.libs = [
             Object(NonMatching, "REL/m521Dll/driver.cpp"),
             Object(NonMatching, "REL/m521Dll/gamemaster.cpp"),
             Object(Matching, "REL/m521Dll/objectsetup.cpp"),
-            Object(NonMatching, "REL/m521Dll/camera.cpp"),
+            Object(Equivalent, "REL/m521Dll/camera.cpp"),
             Object(NonMatching, "REL/m521Dll/stage.cpp"),
             Object(NonMatching, "REL/m521Dll/player.cpp"),
             Object(NonMatching, "REL/m521Dll/score.cpp"),

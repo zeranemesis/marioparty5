@@ -94,8 +94,18 @@ void *lbl_1_data_5B8[6] = {
 
 extern CCamera *lbl_1_bss_A7C;
 
+// singleton.h's register/unregister pair: the derived pointer is built from the
+// subobject address and only then biased back, so the null check stays.
+static CCamera *singletonPtr(u8 *subObj)
+{
+    return (subObj != 0) ? (CCamera *)(subObj - 0x10) : 0;
+}
+
+// NONMATCHING: target keeps self in r30/r31/r28 with a 3-instruction copy chain before fn_1_5CCC; ours uses r31 only, so the vtable stores and epilogue differ.
 CCamera *fn_1_1416C(CCamera *self)
 {
+    const PTMF *nullPm = &__ptmf_null;
+
     fn_1_5CCC(&self->m_node);
     self->m_vtable = lbl_1_data_21C;
     self->m_bitFlags = 0;
@@ -103,15 +113,18 @@ CCamera *fn_1_1416C(CCamera *self)
     if (lbl_1_bss_A7C != 0) {
         fn_1_4C3C("ms_pointer == 0", "singleton.h", 0x35);
     }
-    lbl_1_bss_A7C = self;
+    lbl_1_bss_A7C = singletonPtr((u8 *)self + 0x10);
     self->m_vtable = lbl_1_data_5B8;
-    *(PTMF *)&self->m_hook = __ptmf_null;
+    ((PTMF *)&self->m_hook)->this_delta = nullPm->this_delta;
+    ((PTMF *)&self->m_hook)->v_offset = nullPm->v_offset;
+    ((PTMF *)&self->m_hook)->f_data = nullPm->f_data;
     Hu3DCameraCreate(1);
     Hu3DCameraPerspectiveSet(1, 26.0f, 100.0f, 2500.0f, 1.2f);
     Hu3DCameraViewportSet(1, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
     return self;
 }
 
+// NONMATCHING: branch polarity around the ms_pointer assert differs.
 CCamera *fn_1_142EC(CCamera *self, s16 freeIt)
 {
     if (self != 0) {
@@ -141,6 +154,7 @@ void fn_1_143D0()
 {
 }
 
+// NONMATCHING: clears the low bit with clrrwi in both, but register choice differs.
 void fn_1_143D4(CCamera *self)
 {
     if (self->m_timer >= 0xF0) {
@@ -149,6 +163,7 @@ void fn_1_143D4(CCamera *self)
     }
 }
 
+// NONMATCHING: switch arms spill the PMF to the stack differently; case 1 also clears bit 1 unconditionally.
 void fn_1_14424(CCamera *self, s32 mode)
 {
     self->m_timer = 0;
@@ -173,6 +188,7 @@ void fn_1_14424(CCamera *self, s32 mode)
     }
 }
 
+// NONMATCHING: the __ptmf_scall argument setup differs slightly.
 void fn_1_145A4(CCamera *self)
 {
     if (__ptmf_test((PTMF *)&self->m_hook) != 0) {
@@ -181,6 +197,7 @@ void fn_1_145A4(CCamera *self)
     self->m_timer++;
 }
 
+// NONMATCHING: the CameraPath temporary sits at a different stack slot, and the PMF store goes direct instead of through a stack temp.
 void fn_1_145F8(CCamera *self, s32 flip)
 {
     CameraPath path;
@@ -197,6 +214,7 @@ void fn_1_145F8(CCamera *self, s32 flip)
     self->m_timer = 0;
 }
 
+// NONMATCHING: the /150.0f division is constant-folded through a double literal in the target; ours folds it differently.
 void fn_1_14744(CCamera *self)
 {
     f32 t;
@@ -209,6 +227,7 @@ void fn_1_14744(CCamera *self)
     fn_1_5408(self->m_unk10, 1);
 }
 
+// NONMATCHING: the derived-to-base vtable teardown ordering differs.
 CCamera *fn_1_14840(CCamera *self, s16 freeIt)
 {
     if (self != 0) {
