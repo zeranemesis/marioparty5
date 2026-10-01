@@ -499,5 +499,53 @@ u32 seqPlaySong(u16 sgid, u16 sid, void* arrfile, SND_PLAYPARA* para, u8 irq_cal
 }
 
 u32 sndSeqPlayEx(u16 sgid, u16 sid, void* arrfile, SND_PLAYPARA* para, u8 studio) {
-  return seqPlaySong(sgid, sid, arrfile, para, 0, studio);
+  u32 seqId;
+  s32 i;
+  GROUP_DATA* g;
+  MIDISETUP* midiSetup;
+  PAGE* drum;
+  PAGE* norm;
+  void* prj;
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  GSTACK_INST* gsi;
+#endif
+  MUSY_ASSERT_MSG(sndActive != FALSE, "Sound system is not initialized.");
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  for (gsi = gsRoot; gsi != NULL; gsi = gsi->next) {
+#endif
+    for (i = 0; i < SP_GSI; ++i) {
+      if (GS_GSI[i].gAddr->id != sgid) {
+        continue;
+      }
+
+      if (GS_GSI[i].gAddr->type == 0) {
+        g = GS_GSI[i].gAddr;
+        prj = GS_GSI[i].prjAddr;
+        norm = (PAGE*)((size_t)prj + g->data.song.normpageOff);
+        drum = (PAGE*)((size_t)prj + g->data.song.drumpageOff);
+        midiSetup = (MIDISETUP*)((size_t)prj + g->data.song.midiSetupOff);
+        while (midiSetup->songId != 0xFFFF) {
+          if (midiSetup->songId == sid) {
+            hwDisableIrq();
+            seqId = seqStartPlay(norm, drum, midiSetup, arrfile, para, studio, sgid);
+            hwEnableIrq();
+            goto done;
+          }
+
+          ++midiSetup;
+        }
+      }
+
+      seqId = 0xffffffff;
+      goto done;
+    }
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+  }
+#endif
+
+  seqId = 0xffffffff;
+
+done:
+  return seqId;
 }
