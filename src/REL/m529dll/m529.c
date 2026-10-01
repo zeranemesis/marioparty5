@@ -959,16 +959,20 @@ void fn_1_2714(OMOBJ *obj)
 
 void fn_1_2B70(OMOBJ *obj)
 {
-    if (obj->work[0] != 1) {
-        if (obj->work[0] < 1) {
-
+    switch (obj->work[0]) {
+    case 0:
+        break;
+    case 1:
+        if (obj->work[1] > 0x3C) {
+            obj->work[0] = 2;
+            obj->work[1] = 0;
+        } else {
+            fn_1_3CE0();
+            obj->work[1] += 1;
         }
-    } else if (obj->work[1] > 0x3C) {
-        obj->work[0] = 2;
-        obj->work[1] = 0;
-    } else {
-        fn_1_3CE0();
-        obj->work[1] += 1;
+        break;
+    case 3:
+        break;
     }
     fn_1_4048();
 }
