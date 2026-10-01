@@ -323,3 +323,52 @@ marked `Matching` (for example `dolphin/os/OSArena` and `dolphin/demo/DEMOInit`)
 and cannot be produced from C: no compiler flag or source change emits it. It
 costs a few percent on the small-data sections of 181 sections across the ROM and
 should be ignored when judging whether a unit matches.
+
+## 14. `sqrtf`'s statics: a whole unit's `.sdata2` hinges on 16 bytes
+
+`main/game/board/capmain` sits at 91.4% of `.text` with about 140 functions short
+of matching, and almost every one of them is short for the same reason: a single
+`lfs`/`lfd` whose relocation points 16 bytes too low. Comparing the two
+`.sdata2` sections as sequences of 4-byte words shows the pools are *identical*
+apart from four words that the target does not have at the front, so every
+constant after them is at the wrong address and every reference to it mismatches.
+
+Those four words are the two doubles `0.5` and `3.0` that
+`libc/math.h`'s `sqrtf` holds in function-local statics:
+
+    static const double _half = .5;
+    static const double _three = 3.0;
+
+MWCC emits them at offset 0 of `.sdata2`, before everything else, and a second
+copy of the same pair survives further down the pool as two dead literals that
+no instruction references. The target has only one pair, at the position where
+the dead copies sit, and `sqrtf` reads it from there: MWCC deduplicated the
+statics against the literals that were already in the pool.
+
+Replacing the statics with plain literals in `sqrtf` reproduces that
+deduplication exactly, and the result is not marginal:
+
+| section | statics | literals |
+| --- | --- | --- |
+| `.sdata2` | 99.38% | **100%** |
+| `.text` | 91.43% | **99.29%** |
+
+It cannot be taken, though. `ninja` drops from `135 files OK` to `113 files OK`
+with 22 module checksums failing, because MWCC also emits the statics of an
+`extern inline` function that the translation unit never instantiates. In
+`w01Dll/REL/w01Dll/world01.o` those four dead words are the entire difference
+between a `.rodata` of 0x244 bytes (matching) and 0x234 (not), and the target
+has the 0x244 version. Moving the declarations to file scope or giving them
+external linkage does not help: both still drop the unused case, and both leave
+`capmain` perfect and the 22 modules broken.
+
+The two requirements are therefore mutually exclusive, and the reason is visible
+in the toolchain rather than the source -- `capmain` is built with MWCC 2.6 and
+`world01` with MWCC 1.3.2, and only one of the two deduplicates. Since a single
+`libc/math.h` has to serve every unit, the global gate wins and the statics stay.
+Worth remembering when a unit is *almost* matching: a whole section can be
+correct except for a handful of leading bytes, and the giveaway is that every
+mismatch is a relocation rather than an opcode. Dumping a section with
+`objdump -s`, stripping the address and ASCII columns, and diffing the raw hex in
+8-character chunks finds this in seconds where per-function objdiff output does
+not.
