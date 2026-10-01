@@ -80,13 +80,20 @@ struct Mgr510SubB {
     u32 unk0;
 };
 
+struct Mgr510Rec {
+    u32 unk0;
+    u32 unk4;
+    u32 unk8;
+    MGTIMER *unk10;
+};
+
 struct CGameMaster {
     u32 unk0;
     void **vtable;
     u8 pad8[0x18];
     Mgr510SubA subA;
     Mgr510SubB subB;
-    void *unk35C;
+    Mgr510Rec *unk35C;
     s32 unk360;
     u32 unk364;
     u8 unk368;
@@ -136,9 +143,6 @@ CGameMaster *__ct__Q24m51111CGameMasterFv(CGameMaster *arg0)
 
 CGameMaster *__dt__Q24m51111CGameMasterFv(CGameMaster *arg0, s16 arg1)
 {
-    s16 sp8;
-
-    sp8 = arg1;
     if (arg0 != NULL) {
         arg0->vtable = lbl_1_data_304;
         arg0->subA.unk0 = (void *)&lbl_1_data_304[6];
@@ -146,7 +150,7 @@ CGameMaster *__dt__Q24m51111CGameMasterFv(CGameMaster *arg0, s16 arg1)
         fn_1_6600(&arg0->subB, -1);
         fn_1_5D7C(&arg0->subA, 0);
         fn_1_2B64(arg0, 0);
-        if (sp8 > 0) {
+        if (arg1 > 0) {
             fn_1_527C(arg0);
         }
     }
@@ -201,7 +205,7 @@ void on_setup__Q24m51111CGameMasterFP9Process_s(CGameMaster *arg0, void *arg_sp0
     if (var_r23 != 0) {
         var_r23 = fn_1_159B4(var_r23, arg0->unk364, arg0->unk368);
     }
-    arg0->unk35C = var_r23;
+    arg0->unk35C = (Mgr510Rec *)var_r23;
     temp_r3_7 = __nw__FUl(0x10);
     if (temp_r3_7 != 0) {
         fn_1_E8BC(temp_r3_7);
@@ -255,18 +259,14 @@ void fn_1_7FE8(CGameMaster *arg0)
     fn_1_3684();
     temp_r27 = HuAudFXPlay(0x6B8);
     HuAudFXPlay(0x6B9);
-    loop_5:
-    if (fn_1_2804() == 0) {
+    while (fn_1_2804() == 0) {
         fn_1_5EC0(&arg0->subA, 0);
-        goto loop_5;
     }
     temp_r26 = HuAudBGMPlay(0x35);
     fn_1_276C(1);
     fn_1_319C();
-    loop_8:
-    if (fn_1_330C() == 0) {
+    while (fn_1_330C() == 0) {
         fn_1_5EC0(&arg0->subA, 0);
-        goto loop_8;
     }
     var_r30 = 0;
     fn_1_276C(2);
@@ -308,36 +308,31 @@ void fn_1_7FE8(CGameMaster *arg0)
         }
         fn_1_33E0();
         fn_1_10FA4();
-        loop_26:
-        if (fn_1_330C() == 0) {
+        while (fn_1_330C() == 0) {
             fn_1_5EC0(&arg0->subA, 0);
-            goto loop_26;
         }
     }
     HuAudFXFadeOut(temp_r27, 0x64);
     fn_1_36DC();
-    loop_28:
-    fn_1_5EC0(&arg0->subA, -1);
-    goto loop_28;
+    while (1) {
+        fn_1_5EC0(&arg0->subA, -1);
+    }
 }
 
 // NONMATCHING: the record bookkeeping tail differs slightly.
 void fn_1_822C(CGameMaster *arg0)
 {
-    loop_2:
-    if (fn_1_330C() == 0) {
+    fn_1_3254();
+    while (fn_1_330C() == 0) {
         fn_1_5EC0(&arg0->subA, 0);
-        goto loop_2;
     }
     if ((fn_1_83C0(arg0) != 0) && (arg0->unk368 == 0)) {
-        MgTimerRecordSet((MGTIMER *)arg0->unk35C, (int)arg0->unk364);
+        MgTimerRecordSet(arg0->unk35C->unk10, arg0->unk364);
         if (_CheckFlag(0x1000F) == 0) {
             GWMgRecordSet(2, arg0->unk364);
             fn_1_35AC(arg0->unk364);
-            loop_8:
-            if (fn_1_330C() == 0) {
+            while (fn_1_330C() == 0) {
                 fn_1_5EC0(&arg0->subA, 0);
-                goto loop_8;
             }
         }
     }
