@@ -1498,20 +1498,21 @@ void fn_1_3D94(void)
 void fn_1_3DB8(u16 arg0, s16 arg1)
 {
     M571ListNode *node;
+    M571ListNode *sentinel = (M571ListNode *)&lbl_1_bss_684[0];
     M571ListNode *old;
 
     node = HuMemDirectMallocNum(0, 0xC, 0x1000);
     node->id = arg0;
     node->pad02 = arg1;
 
-    old = (M571ListNode *)lbl_1_bss_684[2];
-    lbl_1_bss_684[2] = (s32)node;
+    old = sentinel->next;
+    sentinel->next = node;
 
     if (old != NULL) {
         old->prev = node;
     }
 
-    node->prev = (M571ListNode *)&lbl_1_bss_684[0];
+    node->prev = sentinel;
     node->next = old;
 }
 
@@ -1595,11 +1596,8 @@ void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out)
 // NONMATCHING: expression form and comparison direction differ from the target build
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3)
 {
-    f32 dx = arg1->x - arg0->x;
-    f32 dz = arg1->z - arg0->z;
-    f32 r = arg2 + arg3;
-
-    return (dx * dx + dz * dz) < (r * r);
+    return (arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
+        < (arg2 + arg3) * (arg2 + arg3);
 }
 
 // NONMATCHING: register allocation differs from the target build
