@@ -1621,12 +1621,6 @@ void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t)
     out->z = to->z + k * (from->z - to->z);
 }
 
-// NONMATCHING: register allocation and expression form differ from the target build
-s32 fn_1_4B18(s32 base, s32 range)
-{
-    return base + frandmod(range - base);
-}
-
 // NONMATCHING: struct copies expand to explicit word loads
 void fn_1_41AC(Vec *pos, Vec *up, Vec *target)
 {
@@ -1642,6 +1636,11 @@ void fn_1_41AC(Vec *pos, Vec *up, Vec *target)
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
+s32 fn_1_4B18(s32 base, s32 range)
+{
+    return base + frandmod(range - base);
+}
+
 f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3)
 {
     f32 delta = (f32)fmod(arg2 - arg1, m571Turn);
