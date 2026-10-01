@@ -20,6 +20,7 @@ f32 PSVECMag(const Vec *v);
 double atan2(double y, double x);
 double sin(double x);
 double cos(double x);
+double fmod(double x, double y);
 
 typedef struct M539Heiho_s {
     s32 curIdx;
