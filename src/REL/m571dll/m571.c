@@ -44,7 +44,11 @@ void fn_1_18B8(void);
 void fn_1_1BA0(void);
 
 // not yet written
-s32 fn_1_1D44(s32 arg0);
+void fn_1_1D44(s32 arg0);
+void fn_1_1F74(OMOBJ *obj);
+void fn_1_2088(OMOBJ *obj);
+void fn_1_2388(OMOBJ *obj);
+void fn_1_2468(OMOBJ *obj);
 s32 fn_1_2A14(OMOBJ *obj, s32 arg1);
 void fn_1_2D58(void);
 void fn_1_2E28(void);
@@ -107,6 +111,12 @@ typedef struct M571Player_s {
     s32 unk84; //0x84
     s32 unk88; //0x88
 } M571Player; //0x8C
+
+typedef struct M571Tile_s {
+    Vec pos; //0x0 board lattice cell
+    s32 state; //0xC
+    s32 timer; //0x10
+} M571Tile; //0x14
 
 u32 lbl_1_data_0[13] = {
     DATANUM(DATA_mgconst, 0x20), DATANUM(DATA_mgconst, 0x21), DATANUM(DATA_mgconst, 0x22),
@@ -322,7 +332,7 @@ s16 lbl_1_bss_156[0x35];
 OMOBJ *lbl_1_bss_1C0;
 OMOBJ *lbl_1_bss_1C4;
 OMOBJ *lbl_1_bss_1C8[49];
-s32 lbl_1_bss_28C[49];
+OMOBJ *lbl_1_bss_28C[49];
 OMOBJ **lbl_1_bss_350;
 OMOBJ **lbl_1_bss_354;
 s16 lbl_1_bss_358;
@@ -980,4 +990,163 @@ void fn_1_1BA0(void)
             }
         }
     }
+}
+
+void fn_1_1D44(s32 tileIdx)
+{
+    OMOBJ *obj;
+    M571Tile *tile;
+    HuVecF screen;
+
+    if (lbl_1_bss_F0[0] <= 0x30) {
+        lbl_1_bss_F0[0]++;
+
+        obj = omAddObjEx(lbl_1_bss_680, 0x68, 1, 0, -1, fn_1_1F74);
+        obj->work[0] = 0;
+        tile = (M571Tile *)HuMemDirectMallocNum(0, 0x14, 0x1000);
+        obj->data = tile;
+
+        tile->pos.x = lbl_1_data_26C.pos[tileIdx].x;
+        tile->pos.y = lbl_1_data_26C.pos[tileIdx].y;
+        tile->pos.z = lbl_1_data_26C.pos[tileIdx].z;
+        tile->state = 0;
+
+        Hu3D3Dto2D(&tile->pos, 1, &screen);
+
+        HuAudFXPlayVolPan(0x96B, (s16)(96.0f + (screen.y / 480.0f) * 31.0f),
+            (s16)(32.0f + (screen.x / 576.0f) * 64.0f));
+    }
+}
+
+void fn_1_1F00(OMOBJ *obj)
+{
+    Hu3DModelAttrSet(obj->mdlId[0], 1);
+    Hu3DModelKill(obj->mdlId[0]);
+
+    lbl_1_bss_F0[0]--;
+    omDelObjEx(lbl_1_bss_680, obj);
+}
+
+void fn_1_1F74(OMOBJ *obj)
+{
+    M571Tile *tile = (M571Tile *)obj->data;
+
+    obj->mdlId[0] = Hu3DModelLink(lbl_1_bss_10);
+    omSetTra(obj, tile->pos.x, tile->pos.y, tile->pos.z);
+    omSetRot(obj, 0.0f, 0.0f, 0.0f);
+    omSetSca(obj, 1.0f, 1.0f, 1.0f);
+    Hu3DModelAttrReset(obj->mdlId[0], 1);
+    Hu3DMotionTimeSet(obj->mdlId[0], 0.0f);
+    Hu3DMotionSpeedSet(obj->mdlId[0], 1.0f);
+    Hu3DModelAttrSet(obj->mdlId[0], 0);
+
+    obj->objFunc = fn_1_2088;
+}
+
+void fn_1_2088(OMOBJ *obj)
+{
+    M571Tile *tile = (M571Tile *)obj->data;
+
+    switch (tile->state) {
+    case 0:
+        if (Hu3DMotionEndCheck(obj->mdlId[0])) {
+            tile->timer = 0;
+            tile->state = 1;
+        }
+        break;
+    case 1:
+        if (tile->timer > 30) {
+            Hu3DModelAttrSet(obj->mdlId[0], 1);
+            Hu3DModelKill(obj->mdlId[0]);
+
+            lbl_1_bss_F0[0]--;
+            omDelObjEx(lbl_1_bss_680, obj);
+            return;
+        }
+
+        tile->timer++;
+
+        if (tile->timer & 1) {
+            Hu3DModelAttrSet(obj->mdlId[0], 1);
+        } else {
+            Hu3DModelAttrReset(obj->mdlId[0], 1);
+        }
+        break;
+    }
+
+    omSetTra(obj, tile->pos.x, tile->pos.y, tile->pos.z);
+    omSetRot(obj, 0.0f, 0.0f, 0.0f);
+}
+
+typedef struct M571Item_s {
+    Vec pos; //0x00
+    Vec rot; //0x0C
+    Vec sca; //0x18
+    s32 src; //0x24
+    s32 slot; //0x28 index into lbl_1_bss_28C
+    s32 state; //0x2C
+    s32 timer; //0x30
+    f32 phase; //0x34
+    s32 arg; //0x38
+} M571Item; //0x3C
+
+void fn_1_21DC(s32 src, f32 x, f32 y, f32 z, s32 slot, s32 arg)
+{
+    OMOBJ *obj;
+    M571Item *item;
+
+    if (lbl_1_bss_EC <= 0x30) {
+        lbl_1_bss_EC++;
+
+        obj = omAddObjEx(lbl_1_bss_680, 0x69, 1, 0, -1, fn_1_2388);
+        item = (M571Item *)HuMemDirectMallocNum(0, 0x3C, 0x1000);
+        obj->data = item;
+        obj->work[0] = src;
+
+        item->pos.x = x;
+        item->pos.y = y;
+        item->pos.z = z;
+        item->rot.x = 0.0f;
+        item->rot.y = 0.0f;
+        item->rot.z = 0.0f;
+        item->src = src;
+        item->sca.x = 0.1f;
+        item->sca.y = 0.1f;
+        item->sca.z = 0.1f;
+        item->state = 1;
+        item->timer = 0;
+        item->phase = 0.0f;
+        item->slot = slot;
+        item->arg = arg;
+    }
+}
+
+void fn_1_231C(OMOBJ *obj)
+{
+    void *data = obj->data;
+
+    Hu3DModelKill(obj->mdlId[0]);
+
+    lbl_1_bss_EC--;
+    omDelObjEx(lbl_1_bss_680, obj);
+}
+
+void fn_1_2388(OMOBJ *obj)
+{
+    M571Item *item = (M571Item *)obj->data;
+
+    if (obj->work[0] == 0) {
+        obj->mdlId[0] = Hu3DModelLink(lbl_1_bss_E);
+    } else {
+        obj->mdlId[0] = Hu3DModelLink(lbl_1_bss_C);
+    }
+
+    Hu3DModelShadowSet(obj->mdlId[0]);
+    omSetTra(obj, item->pos.x, item->pos.y, item->pos.z);
+    omSetRot(obj, item->rot.x, item->rot.y, item->rot.z);
+    omSetSca(obj, item->sca.x, item->sca.y, item->sca.z);
+
+    lbl_1_bss_28C[item->slot] = obj;
+
+    obj->objFunc = fn_1_2468;
 }
