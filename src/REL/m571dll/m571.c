@@ -389,6 +389,36 @@ s32 lbl_1_bss_674[3];
 OMOBJMAN *lbl_1_bss_680;
 s32 lbl_1_bss_684[3];
 
+typedef struct M571Item_s {
+    Vec pos; //0x00
+    Vec rot; //0x0C
+    Vec sca; //0x18
+    s32 src; //0x24
+    s32 slot; //0x28 index into lbl_1_bss_28C
+    s32 state; //0x2C
+    s32 timer; //0x30
+    f32 phase; //0x34
+    s32 arg; //0x38
+} M571Item; //0x3C
+
+typedef struct M571Spin_s {
+    s16 curMot; //0x00
+    s16 motId[3]; //0x02
+    u8 pad08[0x1C]; //0x08
+    s32 playerNo; //0x24
+    s32 charNo; //0x28
+    s32 pad2C; //0x2C
+    s32 score; //0x30
+} M571Spin; //0x34
+
+typedef struct M571ListNode_s {
+    s16 id; //0x00
+    s16 pad02; //0x02
+    struct M571ListNode_s *prev; //0x04
+    struct M571ListNode_s *next; //0x08
+} M571ListNode;
+
+// NONMATCHING: register allocation and expression form differ from the target build
 int _prolog(void)
 {
     const VoidFunc *ctors = _ctors;
@@ -401,6 +431,7 @@ int _prolog(void)
     return 0;
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void _epilog(void)
 {
     const VoidFunc *dtors = _dtors;
@@ -888,6 +919,7 @@ void fn_1_1760(void)
     }
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_1898(OMOBJ *obj)
 {
     MgActorExec();
@@ -1009,6 +1041,7 @@ void fn_1_1BA0(void)
     }
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_1D44(s32 tileIdx)
 {
     OMOBJ *obj;
@@ -1035,6 +1068,7 @@ void fn_1_1D44(s32 tileIdx)
     }
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_1F00(OMOBJ *obj)
 {
     Hu3DModelAttrSet(obj->mdlId[0], 1);
@@ -1044,6 +1078,7 @@ void fn_1_1F00(OMOBJ *obj)
     omDelObjEx(lbl_1_bss_680, obj);
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_1F74(OMOBJ *obj)
 {
     M571Tile *tile = (M571Tile *)obj->data;
@@ -1060,6 +1095,7 @@ void fn_1_1F74(OMOBJ *obj)
     obj->objFunc = fn_1_2088;
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_2088(OMOBJ *obj)
 {
     M571Tile *tile = (M571Tile *)obj->data;
@@ -1095,18 +1131,7 @@ void fn_1_2088(OMOBJ *obj)
     omSetRot(obj, 0.0f, 0.0f, 0.0f);
 }
 
-typedef struct M571Item_s {
-    Vec pos; //0x00
-    Vec rot; //0x0C
-    Vec sca; //0x18
-    s32 src; //0x24
-    s32 slot; //0x28 index into lbl_1_bss_28C
-    s32 state; //0x2C
-    s32 timer; //0x30
-    f32 phase; //0x34
-    s32 arg; //0x38
-} M571Item; //0x3C
-
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_21DC(s32 src, f32 x, f32 y, f32 z, s32 slot, s32 arg)
 {
     OMOBJ *obj;
@@ -1138,6 +1163,7 @@ void fn_1_21DC(s32 src, f32 x, f32 y, f32 z, s32 slot, s32 arg)
     }
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_231C(OMOBJ *obj)
 {
     void *data = obj->data;
@@ -1148,6 +1174,7 @@ void fn_1_231C(OMOBJ *obj)
     omDelObjEx(lbl_1_bss_680, obj);
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_2388(OMOBJ *obj)
 {
     M571Item *item = (M571Item *)obj->data;
@@ -1168,23 +1195,7 @@ void fn_1_2388(OMOBJ *obj)
     obj->objFunc = fn_1_2468;
 }
 
-typedef struct M571Spin_s {
-    s16 curMot; //0x00
-    s16 motId[3]; //0x02
-    u8 pad08[0x1C]; //0x08
-    s32 playerNo; //0x24
-    s32 charNo; //0x28
-    s32 pad2C; //0x2C
-    s32 score; //0x30
-} M571Spin; //0x34
-
-typedef struct M571ListNode_s {
-    s16 id; //0x00
-    s16 pad02; //0x02
-    struct M571ListNode_s *prev; //0x04
-    struct M571ListNode_s *next; //0x08
-} M571ListNode;
-
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_27E8(OMOBJ *obj, s32 motNo, f32 speed, s32 attr)
 {
     M571Spin *spin = (M571Spin *)obj->data;
@@ -1195,6 +1206,7 @@ void fn_1_27E8(OMOBJ *obj, s32 motNo, f32 speed, s32 attr)
     }
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_2870(s32 flag)
 {
     s32 i;
@@ -1208,6 +1220,7 @@ void fn_1_2870(s32 flag)
     }
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 s32 fn_1_28F4(HuVecF *pos)
 {
     s32 i;
@@ -1231,77 +1244,12 @@ s32 fn_1_28F4(HuVecF *pos)
     return -1;
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_2D54(void)
 {
 }
 
-void fn_1_83C0(s32 arg0)
-{
-    lbl_1_bss_46C = arg0;
-}
-
-void fn_1_8E5C(void)
-{
-    lbl_1_bss_35C = -1;
-}
-
-void fn_1_8478(s32 index, s32 value)
-{
-    lbl_1_bss_428[index] = value;
-}
-
-void fn_1_3D94(void)
-{
-    lbl_1_bss_684[1] = 0;
-    lbl_1_bss_684[2] = 0;
-}
-
-void fn_1_8E70(void)
-{
-    lbl_1_bss_35C = HuAudSStreamPlay(0x3D);
-}
-
-void fn_1_8EA0(void)
-{
-    HuAudSStreamFadeOut(lbl_1_bss_35C, 100);
-}
-
-void fn_1_832C(void)
-{
-    if (lbl_1_bss_46C != 0) {
-        MgActorExec();
-    }
-}
-
-s32 fn_1_9298(s32 base, s32 range)
-{
-    return base + frandmod(range - base);
-}
-
-s32 fn_1_4B18(s32 base, s32 range)
-{
-    return base + frandmod(range - base);
-}
-
-void fn_1_36B8(OMOBJ *obj)
-{
-    M571Player *p = (M571Player *)obj->data;
-
-    omSetTra(obj, p->unk18.x, p->unk18.y, p->unk18.z);
-}
-
-s32 fn_1_7A78(void)
-{
-    s32 i;
-    s32 total = 0;
-
-    for (i = 0; i < 4; i++) {
-        total += lbl_1_bss_428[i];
-    }
-
-    return total;
-}
-
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_3594(OMOBJ *obj)
 {
     M571Tile *tile = (M571Tile *)obj->data;
@@ -1318,6 +1266,22 @@ void fn_1_3594(OMOBJ *obj)
     obj->objFunc = fn_1_36B8;
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_36B8(OMOBJ *obj)
+{
+    M571Player *p = (M571Player *)obj->data;
+
+    omSetTra(obj, p->unk18.x, p->unk18.y, p->unk18.z);
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_3D94(void)
+{
+    lbl_1_bss_684[1] = 0;
+    lbl_1_bss_684[2] = 0;
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
 s32 fn_1_3E40(s16 id)
 {
     M571ListNode *node;
@@ -1345,6 +1309,7 @@ s32 fn_1_3E40(s16 id)
     return -1;
 }
 
+// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t)
 {
     f32 a;
@@ -1362,4 +1327,67 @@ void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t)
     out->x = to->x + k * (from->x - to->x);
     out->y = to->y + k * (from->y - to->y);
     out->z = to->z + k * (from->z - to->z);
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+s32 fn_1_4B18(s32 base, s32 range)
+{
+    return base + frandmod(range - base);
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+s32 fn_1_7A78(void)
+{
+    s32 i;
+    s32 total = 0;
+
+    for (i = 0; i < 4; i++) {
+        total += lbl_1_bss_428[i];
+    }
+
+    return total;
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_832C(void)
+{
+    if (lbl_1_bss_46C != 0) {
+        MgActorExec();
+    }
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_83C0(s32 arg0)
+{
+    lbl_1_bss_46C = arg0;
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_8478(s32 index, s32 value)
+{
+    lbl_1_bss_428[index] = value;
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_8E5C(void)
+{
+    lbl_1_bss_35C = -1;
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_8E70(void)
+{
+    lbl_1_bss_35C = HuAudSStreamPlay(0x3D);
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_8EA0(void)
+{
+    HuAudSStreamFadeOut(lbl_1_bss_35C, 100);
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+s32 fn_1_9298(s32 base, s32 range)
+{
+    return base + frandmod(range - base);
 }
