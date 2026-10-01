@@ -2297,8 +2297,6 @@ void fn_1_C708(OMOBJ *obj)
 }
 
 /* Player object creation: picks the character, pad and starting position. */
-// NONMATCHING: one if/else is emitted with the opposite branch polarity
-// (bne against beq) and a pair of home registers is swapped, 9 of 250 rows.
 void fn_1_DACC(OMOBJ *obj)
 {
     s32 order[4] = { 0, 1, 2, 3 };
@@ -2329,7 +2327,7 @@ void fn_1_DACC(OMOBJ *obj)
     {
         s32 rumbleMask[4] = { 0x80000000, 0x40000000, 0x20000000, 0x10000000 };
 
-        player->rumbleF = GWRumbleFGet() ? ((player->padNo == -1) ? 1 : (rumbleMask[player->padNo] & HuPadRumbleGet())) : 0;
+        player->rumbleF = (GWRumbleFGet() == 0) ? 0 : ((player->padNo == -1) ? 1 : (rumbleMask[player->padNo] & HuPadRumbleGet()));
     }
     if (player->rumbleF == 0) {
         lbl_1_data_158 = 0;
