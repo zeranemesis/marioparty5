@@ -781,3 +781,31 @@ involved.
 `mgdata`'s `.sbss` goes 91.67% -> 96.00% and its symbol table now matches the
 target exactly. The last two bytes are `gap_10_80288A3E_sbss`, the unreproducible
 linker artefact of finding 18, so 96% is the ceiling for that section.
+
+## Finding 25: a declared char array goes to .data, a string literal to .sdata
+
+Finding 22's fix does not generalise, and the boundary is the section the symbol
+lands in. `main/game/hsfdraw` is the counter-example. Its retail `.sdata` holds
+
+    0000000a l  O .sdata  0000000e lbl_8028806A
+
+-- a *named*, *local*, 14-byte symbol whose bytes are `"Error\n"` plus seven
+zeros, at exactly the offset where an inline literal sits. Hoisting the three
+`OSReport("Error\n")` call sites onto a declared
+`static char lbl_8028806A[14]` reproduces the name, the binding and the size,
+and MWCC puts it in `.data` anyway:
+
+    0000000a l  O .data  0000000e lbl_8028806A     <- mine, wrong section
+
+Leaving the literal inline keeps the section right and the size wrong (0x7 vs
+0xe). So the padded symbol and the `.sdata` placement are mutually exclusive:
+the array form is the only way to get padding, and only a literal gets
+`.sdata`. `main.dol` plus nine `.rel` binaries fail their checksums on that
+change, which is how it gets caught.
+
+The practical rule, then: **finding 22 applies when the target's padded symbol
+is in `.data`.** Check the section before hoisting a literal. `SISamplingRate`
+was `.data` and fixed; `hsfdraw` is `.sdata` and is not reachable. Note also
+that the retail `.sdata` symbols carry the same `lbl_<addr>` naming as `.data`
+ones, so the name alone tells you nothing about which form the original used --
+only the section does.
