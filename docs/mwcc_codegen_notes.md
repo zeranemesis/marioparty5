@@ -638,3 +638,86 @@ check whether the function is already the right length and count the
 callee-saved registers actually used -- `MesChkExec` has an identical
 r18-r31 usage profile to the target already, which would have said so
 immediately.
+
+## Finding 22: MWCC pads a sized `char[]` but not an inline string literal
+
+`main/dolphin/si/SISamplingRate` was at 98.33% on `.data` with a byte-identical
+`.text` and a `.data` whose bytes were identical too -- 0x93 against a target
+0x98. The only difference was six trailing zero bytes. The symbol tables tell
+the whole story:
+
+    target  00000060 g  O .data  00000038 lbl_801D1AA8
+    mine    00000060 l  O .data  00000033 @16
+
+MWCC materialises a string literal passed directly to a call as an anonymous
+`.data` object named `@<offset>`, sized to the characters plus the NUL, with no
+tail padding. The target instead has a *named global* sized 0x38 -- seven bytes
+more than the 49-character message needs. That is a `char[N]` with an explicit
+bound, where N is larger than the initialiser and the remainder is zero-filled.
+
+So the fix is to hoist the literal into a file-scope array with an explicit
+size, matching the convention already used elsewhere in the tree
+(`static char lbl_1_data_108C[7] = "chn_tl";`):
+
+    char lbl_801D1AA8[56] = "SISetSamplingRate: unknown TV format. Use default.";
+
+Dropping `static` matters as much as the size. The target symbol is `g`, not
+`l`, so a `static` array reproduces the bytes but not the binding.
+
+Two general lessons. A **named** data symbol also renames itself out of objdiff's
+way, so the unit's `Matching` claim in `configure.py` had been quietly false
+while the status line already said `Matching` -- always confirm a status change
+with a fresh `report.json`, never trust the declaration. And an inline literal
+is not the same object as a sized array: identical bytes can still be a wrong
+symbol, and a section that differs only in trailing padding is a sizing
+declaration problem, not a codegen problem.
+
+## Finding 23: the sqrtf statics are real, and removing them is a regression
+
+Finding 19 declared `sqrtf`'s statics insoluble. That conclusion was wrong, and
+the reason it was wrong is worth recording, because the evidence that settles it
+is not in the source at all -- it is in the checksum gate.
+
+The two `static const double` locals in `sqrtf` are emitted by MWCC as weak
+`.sdata2` objects named `_half$localstatic3$sqrtf__Ff` and
+`_three$localstatic4$sqrtf__Ff`, in **every** translation unit that reaches the
+header. The retail build emits them in exactly **seven** of its 881 objects:
+
+    m504dll/REL/m504dll/m504.o      m510dll/REL/m510dll/m510.o
+    m565dll/REL/m565dll/m565.o      m575dll/REL/m575dll/m575.o
+    game/board/capmain.o            partyresultdll/.../partyresult.o
+    resultDll/REL/resultDll/result.o
+
+`game/main.o` is the clean counter-example. The target's `.sdata2` is 0x8 bytes
+holding a single anonymous double; ours was 0x18, holding that same double plus
+the two sqrtf statics. Replacing the statics with the literals they stand for --
+`.5*guess*(3.0 - guess*guess*x)` -- made ours exactly 0x8, and it took the DOL
+from 113 to 135 files OK... no, the other way:
+
+    135 files OK            header with statics (current)
+    113 files OK            statics replaced by literals
+    WARNING: 22 computed checksum(s) did NOT match
+
+Twenty-two `.rel` binaries stopped matching `config/GP5E01_00/build.sha1`, and
+`m506Dll.rel` shrank by exactly 16 bytes -- the size of the two statics. Only
+one of those 22 modules, `partyresultdll`, is one of the seven that legitimately
+carries them, so this is not "the statics are needed and I removed too many". The
+16 bytes came out of the REL through some path the objdiff report does not model.
+
+The lesson is about the order of evidence. Finding 19 tried to settle a codegen
+question by reading the header and hunting preprocessor macros. The decisive
+question was not a codegen question at all: `build.sha1` already encoded the
+answer for 135 artifacts, and a five-minute experiment would have found it.
+**When a change touches a header, `ninja` and the checksum count are the
+hypothesis test; the report percentages are downstream commentary.** Run the
+gate before theorising, and revert freely -- the gate is cheap and the theory is
+not.
+
+There is still a real win buried here. Roughly 112 `.sdata2` sections sit below
+100%, and the excess statics are certainly most of the gap. The seven legitimate
+holders are the clue: MWCC emits the statics when it emits an out-of-line
+`sqrtf`, so the escape has to be a *per-TU* control over whether `sqrtf` is
+emitted out of line -- `#pragma inline off` on the header, or splitting the
+out-of-line definition into the seven units that need it. That is a real
+project, not a one-line header edit, and it is not worth starting until the
+checksum gate can be run cheaply on a single module.
