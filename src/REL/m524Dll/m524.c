@@ -630,3 +630,47 @@ void fn_1_1CBC(OMOBJ *obj) {
     }
     obj->work[2]++;
 }
+
+void fn_1_1FB8(OMOBJ *obj) {
+    M524Player *player;
+    M524Flow *flow;
+
+    player = (M524Player *)obj->data;
+    flow = (M524Flow *)lbl_1_bss_20->data;
+    if (flow->index == 6) {
+        if (obj->work[0] == 0) {
+            obj->work[0] = 1;
+            obj->work[1] = player->index * 40;
+        }
+        if (obj->work[1] == 0) {
+            obj->work[0] = 0;
+            HuAudFXPlay(lbl_1_data_240[player->index]);
+            Hu3DModelAttrReset(obj->mdlId[4], 1);
+            player->state = 7;
+        } else {
+            obj->work[1]--;
+        }
+    }
+}
+
+void fn_1_20A0(OMOBJ *obj) {
+    M524Player *player;
+
+    player = (M524Player *)obj->data;
+    if (Hu3DMotionEndCheck(obj->mdlId[4]) != 0) {
+        player->state = 8;
+        return;
+    }
+    if (Hu3DMotionTimeGet(obj->mdlId[4]) > 60.0f) {
+        return;
+    }
+    if (player->shotY <= 760.0f && player->shotVelZ == 0.0f) {
+        player->shotY = 760.0f;
+        player->shotVelY = -5.2f;
+        player->shotVelZ = 12.333333f;
+        Hu3DModelAttrReset(obj->mdlId[4], 0x40000002);
+    }
+    player->shotY += player->shotVelY;
+    player->shotZ += player->shotVelZ;
+    Hu3DModelPosSetV(obj->mdlId[4], (Vec *)&player->shotX);
+}
