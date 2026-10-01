@@ -72,6 +72,9 @@ s32 fn_1_9298(s32 base, s32 range);
 s32 fn_1_90C8(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 s16 fn_1_92D4(HuVecF *pos);
 s16 fn_1_9350(HuVecF *pos);
+void fn_1_8490(s32 type);
+
+
 void fn_1_8654(OMOBJ *obj);
 s32 fn_1_4B18(s32 base, s32 range);
 void fn_1_36B8(OMOBJ *obj);
@@ -176,7 +179,7 @@ u32 lbl_1_data_0[13] = {
 
 u32 lbl_1_data_34[15] = {
     DATANUM(DATA_m571, 8), DATANUM(DATA_m571, 9), DATANUM(DATA_m571, 10), DATANUM(DATA_m571, 13),
-    DATANUM(DATA_m571, 14), DATANUM(DATA_m571, 15), DATANUM(DATA_m571, 16), DATANUM(DATA_m571, 17),
+    DATANUM(DATA_m571, 14), DATANUM(DATA_m571, 15), DATANUM(DATA_m571, 16), DATANUM(DATA_m572, 17),
     DATANUM(DATA_m571, 18), DATANUM(DATA_m571, 19), DATANUM(DATA_m571, 20), DATANUM(DATA_m571, 21),
     DATANUM(DATA_m571, 22), DATANUM(DATA_m571, 11), DATANUM(DATA_m571, 12)
 };
@@ -532,17 +535,17 @@ void ObjectSetup(void)
 
     fn_1_2D58();
 
-    lbl_1_bss_12 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 2), DATANUM(DATA_mgfree, 0), 2));
+    lbl_1_bss_12 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 2), HU_MEMNUM_OVL, 2));
     Hu3DModelAttrSet(lbl_1_bss_12, 1);
-    lbl_1_bss_10 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 6), DATANUM(DATA_mgfree, 0), 2));
+    lbl_1_bss_10 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 6), HU_MEMNUM_OVL, 2));
     Hu3DModelAttrSet(lbl_1_bss_10, 1);
 
     for (i = 0; i < 49; i++) {
         lbl_1_bss_28C[i] = 0;
     }
 
-    lbl_1_bss_E = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 26), DATANUM(DATA_mgfree, 0), 2));
-    lbl_1_bss_C = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 29), DATANUM(DATA_mgfree, 0), 2));
+    lbl_1_bss_E = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 26), HU_MEMNUM_OVL, 2));
+    lbl_1_bss_C = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 29), HU_MEMNUM_OVL, 2));
     Hu3DModelAttrSet(lbl_1_bss_E, 1);
     Hu3DModelAttrSet(lbl_1_bss_C, 1);
 
@@ -564,7 +567,7 @@ void ObjectSetup(void)
         OMOBJ *obj = omAddObjEx(lbl_1_bss_680, 0x64, 0, 0, 0, fn_1_BF4);
 
         lbl_1_bss_354[i] = obj;
-        obj->data = HuMemDirectMallocNum(0, 0x8C, DATANUM(DATA_mgfree, 0));
+        obj->data = HuMemDirectMallocNum(0, 0x8C, 0x1000);
         obj->work[0] = i;
     }
 
@@ -572,10 +575,10 @@ void ObjectSetup(void)
     lbl_1_bss_478 = omGetGroupMemberListEx(lbl_1_bss_680, 5);
 
     lbl_1_bss_478[0] = omAddObjEx(lbl_1_bss_680, 0x6A, 0, 0, 5, fn_1_7670);
-    lbl_1_bss_478[0]->data = HuMemDirectMallocNum(0, 0xB0, DATANUM(DATA_mgfree, 0));
+    lbl_1_bss_478[0]->data = HuMemDirectMallocNum(0, 0xB0, 0x1000);
     lbl_1_bss_478[0]->work[0] = 0;
 
-    lbl_1_bss_364 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 26), DATANUM(DATA_mgfree, 0), 2));
+    lbl_1_bss_364 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 26), HU_MEMNUM_OVL, 2));
     Hu3DModelAttrSet(lbl_1_bss_364, 1);
 
     for (i = 0; i < 20; i++) {
@@ -597,11 +600,11 @@ void fn_1_68C(OMOBJ *obj)
     s32 j;
     s16 mdlId[49];
 
-    mdlId[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 0), DATANUM(DATA_mgfree, 0), 2));
-    mdlId[1] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 1), DATANUM(DATA_mgfree, 0), 2));
-    lbl_1_bss_156[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 3), DATANUM(DATA_mgfree, 0), 2));
+    mdlId[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 0), HU_MEMNUM_OVL, 2));
+    mdlId[1] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 1), HU_MEMNUM_OVL, 2));
+    lbl_1_bss_156[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 3), HU_MEMNUM_OVL, 2));
     mdlId[2] = lbl_1_bss_156[0];
-    lbl_1_bss_156[1] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 4), DATANUM(DATA_mgfree, 0), 2));
+    lbl_1_bss_156[1] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 4), HU_MEMNUM_OVL, 2));
     mdlId[3] = lbl_1_bss_156[1];
 
     for (i = 0; i < 49; i++) {
@@ -1019,7 +1022,7 @@ void fn_1_18B8(void)
             OMOBJ *obj = omAddObjEx(lbl_1_bss_680, 0x65, 1, 3, 1, fn_1_3700);
 
             lbl_1_bss_350[i] = obj;
-            obj->data = HuMemDirectMallocNum(0, 0x34, DATANUM(DATA_mgfree, 0));
+            obj->data = HuMemDirectMallocNum(0, 0x34, 0x1000);
             obj->work[0] = i;
         }
 
@@ -1317,7 +1320,7 @@ void fn_1_2D58(void)
 
     omMakeGroupEx(lbl_1_bss_680, 2, 0x31);
 
-    lbl_1_bss_14[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 5), 0x1000, 2));
+    lbl_1_bss_14[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 5), HU_MEMNUM_OVL, 2));
     Hu3DModelAttrSet(lbl_1_bss_14[0], 1);
 
     lbl_1_bss_1C8[0] = (OMOBJ *)omGetGroupMemberListEx(lbl_1_bss_680, 2);
@@ -1602,12 +1605,12 @@ HU3DMODELID fn_1_3F3C(s32 playerNo)
     for (i = 0; i < 0x20; i++) {
         if (lbl_1_bss_47C[i].val == 0) {
             lbl_1_bss_47C[i].val = playerNo;
-            lbl_1_bss_47C[i].flag = Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, 0x1000, 2));
+            lbl_1_bss_47C[i].flag = Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, HU_MEMNUM_OVL, 2));
             return Hu3DModelLink(lbl_1_bss_47C[i].flag);
         }
     }
 
-    return Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, 0x1000, 2));
+    return Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, HU_MEMNUM_OVL, 2));
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
@@ -1869,7 +1872,25 @@ void fn_1_8478(s32 index, s32 value)
     lbl_1_bss_428[index] = value;
 }
 
-// NONMATCHING: local index/register form differs from the target build
+void fn_1_8490(s32 type)
+{
+    s32 i;
+
+    if (type == 0) {
+        lbl_1_bss_364 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 26), HU_MEMNUM_OVL, 2));
+    } else if (type == 1) {
+        lbl_1_bss_364 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m572, 17), HU_MEMNUM_OVL, 2));
+    } else {
+        lbl_1_bss_364 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m573, 3), HU_MEMNUM_OVL, 2));
+    }
+
+    Hu3DModelAttrSet(lbl_1_bss_364, 1);
+
+    for (i = 0; i < 20; i++) {
+        lbl_1_bss_368[i] = 0;
+    }
+}
+
 s32 fn_1_8E08(void)
 {
     s32 i;
