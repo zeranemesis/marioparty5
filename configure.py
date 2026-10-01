@@ -1074,7 +1074,7 @@ config.libs = [
     Rel(
         "m511Dll",
         objects={
-            Object(NonMatching, "REL/m511Dll/boat.cpp"),
+            Object(Equivalent, "REL/m511Dll/boat.cpp"),
             Object(Equivalent, "REL/m511Dll/math.cpp"),
             Object(NonMatching, "REL/m511Dll/m511.cpp"),
             Object(NonMatching, "REL/m511Dll/effring.cpp"),
