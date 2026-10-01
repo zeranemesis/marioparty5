@@ -2028,7 +2028,7 @@ s32 fn_1_6998(Vec *arg0, float farg0)
     f64 temp_f26;
     f64 temp_f26_2;
 
-    var_f30 = farg0;
+var_f30 = farg0;
     if (var_f30 > 1.0f) {
         var_f30 = 1.0f;
     }
