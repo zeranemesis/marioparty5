@@ -1381,7 +1381,7 @@ config.libs = [
             Object(Equivalent, "REL/m539Dll/input.cpp"),
             Object(NonMatching, "REL/m539Dll/drum.cpp"),
             Object(NonMatching, "REL/m539Dll/game_master.cpp"),
-            Object(NonMatching, "REL/m539Dll/heiho.cpp"),
+            Object(Equivalent, "REL/m539Dll/heiho.cpp"),
             Object(Matching, "REL/m539Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m539Dll/camera.cpp"),
             Object(NonMatching, "REL/m539Dll/man_map.cpp"),
@@ -2067,3 +2067,4 @@ elif args.mode == "progress":
     calculate_progress(config)
 else:
     sys.exit("Unknown mode: " + args.mode)
+
