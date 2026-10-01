@@ -1931,7 +1931,7 @@ void fn_1_6518(u16 arg0, s16 arg1)
     temp_r30 = &lbl_1_bss_328;
     temp_r29 = temp_r30->next;
     temp_r30->next = temp_r3;
-    if ((u32) temp_r29 != 0) {
+    if ((M529ListNode *) 0 != temp_r29) {
         temp_r29->prev = temp_r3;
     }
     temp_r3->prev = temp_r30;
@@ -1945,13 +1945,13 @@ s16 fn_1_65A0(s16 arg0)
     M529ListNode *temp_r30;
     M529ListNode *var_r31 = lbl_1_bss_328.next;
 
-    while ((u32) var_r31 != 0) {
+    while ((M529ListNode *) 0 != var_r31) {
         if (arg0 == var_r31->unk0) {
             temp_r28 = var_r31->unk2;
             temp_r29 = var_r31->prev;
             temp_r30 = var_r31->next;
             temp_r29->next = temp_r30;
-            if ((u32) temp_r30 != 0) {
+            if ((M529ListNode *) 0 != temp_r30) {
                 temp_r30->prev = temp_r29;
             }
             HuMemDirectFree(var_r31);
@@ -2156,17 +2156,19 @@ s32 fn_1_72B4(Vec *arg0, Vec *arg1, float farg0, float farg1)
 s32 fn_1_7314(Vec *arg0, s32 arg1, s32 arg2)
 {
     Vec sp10;
-    s32 spC = arg2;
+    s32 spC;
 
     Hu3D3Dto2D(arg0, 1, &sp10);
-    return (f32) arg1 + (sp10.x / 576.0f) * (f32) (spC - arg1);
+    spC = (f32) arg1 + (sp10.x / 576.0f) * (f32) (arg2 - arg1);
+    return spC;
 }
 
 s32 fn_1_73D8(Vec *arg0, s32 arg1, s32 arg2)
 {
     Vec sp10;
-    s32 spC = arg2;
+    s32 spC;
 
     Hu3D3Dto2D(arg0, 1, &sp10);
-    return (f32) arg1 + (sp10.y / 480.0f) * (f32) (spC - arg1);
+    spC = (f32) arg1 + (sp10.y / 480.0f) * (f32) (arg2 - arg1);
+    return spC;
 }
