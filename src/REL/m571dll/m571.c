@@ -75,6 +75,7 @@ s32 fn_1_3E40(s16 id);
 void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t);
 void fn_1_3520(void);
 void fn_1_3700(OMOBJ *obj);
+void fn_1_38E8(OMOBJ *obj);
 void fn_1_7670(OMOBJ *obj);
 void fn_1_7DF8(OMOBJ *obj);
 
@@ -405,12 +406,25 @@ typedef struct M571Item_s {
 typedef struct M571Spin_s {
     s16 curMot; //0x00
     s16 motId[3]; //0x02
-    u8 pad08[0x1C]; //0x08
+    s16 modelId; //0x08
+    u8 pad0A[2]; //0x0A
+    Vec pos; //0x0C slot start from lbl_1_data_23C
+    Vec sca; //0x18 always zero
     s32 playerNo; //0x24
     s32 charNo; //0x28
     s32 pad2C; //0x2C
     s32 score; //0x30
 } M571Spin; //0x34
+
+static const f32 m571Zero = 0.0f;
+static const f32 m571Sca = 0.1f;
+static const f32 m571ModelY = -1000.0f;
+static const f32 m571PanBias = 32.0f;
+static const f32 m571PanScale = 64.0f;
+static const f32 m571VolBias = 96.0f;
+static const f32 m571VolScale = 31.0f;
+static const f32 m571ScreenXDiv = 576.0f;
+static const f32 m571ScreenYDiv = 480.0f;
 
 typedef struct M571ListNode_s {
     s16 id; //0x00
@@ -1288,6 +1302,103 @@ void fn_1_2E28(void)
     }
 }
 
+// NONMATCHING: local index/register form differs from the target build
+void fn_1_2F04(s32 type, f32 x, f32 y, f32 z, s32 idx)
+{
+    OMOBJ *obj;
+    M571Tile *tile;
+
+    if (lbl_1_bss_4 > 0x30) {
+        return;
+    }
+
+    obj = omAddObjEx(lbl_1_bss_680, 0x67, 1, 0, 2, fn_1_3594);
+
+    tile = HuMemDirectMallocNum(0, 0x10, 0x1000);
+    obj->data = tile;
+    obj->work[0] = type;
+
+    tile->pos.x = x;
+    tile->pos.y = y;
+    tile->pos.z = z;
+    tile->state = idx;
+
+    lbl_1_bss_4++;
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+s32 fn_1_2FE0(OMOBJ *obj, s32 arg)
+{
+    M571Tile *tile = (M571Tile *)obj->data;
+    OMOBJ *fx;
+    M571Item *item;
+    HuVecF pos;
+    HuVecF scr;
+    s32 type;
+
+    pos.x = lbl_1_data_26C.pos[tile->state].x;
+    pos.y = lbl_1_data_26C.pos[tile->state].y;
+    pos.z = lbl_1_data_26C.pos[tile->state].z;
+
+    type = lbl_1_data_704[lbl_1_bss_8][tile->state];
+
+    Hu3DModelKill(obj->mdlId[0]);
+    Hu3DModelPosSet(lbl_1_bss_156[tile->state + 2], pos.x, m571ModelY, pos.z);
+
+    if (arg != -1 && (type == 1 || type == 5)) {
+        if (lbl_1_bss_EC <= 0x30) {
+            lbl_1_bss_EC++;
+
+            fx = omAddObjEx(lbl_1_bss_680, 0x69, 1, 0, -1, fn_1_2388);
+            item = HuMemDirectMallocNum(0, 0x3C, 0x1000);
+            fx->data = item;
+            fx->work[0] = (type == 1) ? 0 : 1;
+
+            item->pos.x = pos.x;
+            item->pos.y = pos.y;
+            item->pos.z = pos.z;
+            item->rot.x = m571Zero;
+            item->rot.y = m571Zero;
+            item->rot.z = m571Zero;
+            item->sca.x = m571Sca;
+            item->sca.y = m571Sca;
+            item->sca.z = m571Sca;
+            item->src = (type == 1) ? 0 : 1;
+            item->slot = tile->state;
+            item->state = 1;
+            item->timer = 0;
+            item->phase = m571Zero;
+            item->arg = arg;
+        }
+
+        Hu3D3Dto2D(&pos, 1, &scr);
+
+        HuAudFXPlayVolPan(0x96C, (s16)(m571VolBias + m571VolScale * (scr.y / m571ScreenYDiv)),
+            (s16)(m571PanBias + m571PanScale * (scr.x / m571ScreenXDiv)));
+    }
+
+    lbl_1_bss_1C8[tile->state] = NULL;
+    lbl_1_bss_4--;
+
+    omDelObjEx(lbl_1_bss_680, obj);
+
+    return type;
+}
+
+// NONMATCHING: local index/register form differs from the target build
+void fn_1_3520(void)
+{
+    s32 i;
+
+    for (i = 0; i < 0x31; i++) {
+        if (lbl_1_bss_1C8[i] == NULL) {
+            continue;
+        }
+
+        fn_1_2FE0(lbl_1_bss_1C8[i], -1);
+    }
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_3594(OMOBJ *obj)
 {
@@ -1311,6 +1422,47 @@ void fn_1_36B8(OMOBJ *obj)
     M571Player *p = (M571Player *)obj->data;
 
     omSetTra(obj, p->unk18.x, p->unk18.y, p->unk18.z);
+}
+
+// NONMATCHING: register allocation and expression form differ from the target build
+void fn_1_3700(OMOBJ *obj)
+{
+    M571Spin *spin = (M571Spin *)obj->data;
+    HuVecF scr;
+    s32 i;
+
+    spin->playerNo = obj->work[0];
+    spin->charNo = GwPlayerConf[spin->playerNo].padNo;
+    spin->score = lbl_1_bss_428[spin->playerNo];
+
+    obj->mdlId[0] = CharModelCreate((s16)spin->charNo, 2);
+
+    for (i = 0; i < 3; i++) {
+        spin->motId[i] = CharMotionCreate((s16)spin->charNo, lbl_1_data_1A4[i]);
+    }
+
+    CharMotionSet((s16)spin->charNo, spin->motId[0]);
+
+    spin->curMot = 3;
+    spin->modelId = obj->mdlId[0];
+
+    spin->pos.x = lbl_1_data_23C[spin->playerNo].x;
+    spin->pos.y = lbl_1_data_23C[spin->playerNo].y;
+    spin->pos.z = lbl_1_data_23C[spin->playerNo].z;
+
+    spin->sca.x = m571Zero;
+    spin->sca.y = m571Zero;
+    spin->sca.z = m571Zero;
+
+    Hu3DModelAttrSet(spin->modelId, 0x40001);
+    Hu3DModelShadowSet(spin->modelId);
+
+    Hu3D3Dto2D(&spin->pos, 1, &scr);
+
+    CharModelVoicePanSet((s16)spin->charNo,
+        (s16)(m571PanBias + m571PanScale * (scr.x / m571ScreenXDiv)));
+
+    obj->objFunc = fn_1_38E8;
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
