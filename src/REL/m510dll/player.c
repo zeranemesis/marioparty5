@@ -6,7 +6,7 @@
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 // .data:0x0 (absolute 0x110) - 4 x HuVecF
-HuVecF lbl_1_data_110[4] = {
+M510_VECF lbl_1_data_110[4] = {
     { 0.0f, 0.0f, 0.0f },
     { 0.0f, 0.0f, 300.0f },
     { 0.0f, 0.0f, 600.0f },
@@ -15,7 +15,7 @@ HuVecF lbl_1_data_110[4] = {
 
 void fn_1_3A64(M510_PLAYER_WORK *work, s16 playerNo, M510_OBJ *obj)
 {
-    HuVecF pos;
+    M510_VECF pos;
     M510_OBJ *self = obj;
     M510_OPEN_CAM *cam = &self->cam;
         s16 modelId;
@@ -33,7 +33,7 @@ void fn_1_3A64(M510_PLAYER_WORK *work, s16 playerNo, M510_OBJ *obj)
     fn_1_3DC8(&work->model, playerNo, work);
     fn_1_CE04(&work->score, 0, playerNo);
 
-    pos = lbl_1_data_110[playerNo];
+pos = lbl_1_data_110[playerNo];
     pos.x -= 130.0f;
     pos.z = 1300.0f;
     work->model.camPos = pos;

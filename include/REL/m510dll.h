@@ -45,25 +45,35 @@ typedef struct M510ScoreWork_s {
 // / ball_path.c / score.c
 struct M510Obj_s;
 
+typedef struct M510VecF_s {
+    float x;
+    float y;
+    float z;
+} M510_VECF;
+
+typedef struct M510PlayerModelWork_s { //0x08, 0x110 bytes
+    u8 pad00[0xB8];
+    M510_VECF camPos;              //0xB8 (absolute 0xC0)
+    u8 padC4[0x100 - 0xC4];
+    s32 flag;                      //0x100
+    u8 pad104[0x110 - 0x104];
+} M510_PLAYER_MODEL_WORK;
+
+typedef struct M510PitchWork_s {   //0x118, 0x3C bytes
+    u8 pad00[0x10];
+    M510_VECF pos;                 //0x10 (absolute 0x128)
+    u8 pad1C[0x20 - 0x1C];
+    s16 state;                     //0x20
+    s32 unk24;                     //0x24
+    u8 pad28[0x3C - 0x28];
+} M510_PITCH_WORK;
+
 typedef struct M510PlayerWork_s {
     struct M510Obj_s *obj;         //0x00
     s16 playerNo;                  //0x04
     u8 pad06[2];                   //0x06
-    struct M510PlayerModelWork_s { //0x08, 0x110 bytes
-        u8 pad00[0xB8];
-        HuVecF camPos;             //0xB8 (absolute 0xC0)
-        u8 padC4[0x108 - 0xC4];
-        s32 flag;                  //0x108
-        u8 pad10C[0x110 - 0x10C];
-    } model;                       //0x08
-    struct M510PitchWork_s {       //0x118, 0x3C bytes
-        u8 pad00[0x10];
-        HuVecF pos;                //0x10 (absolute 0x128)
-        u8 pad1C[0x20 - 0x1C];
-        s16 state;                 //0x20
-        s32 unk24;                 //0x24
-        u8 pad28[0x3C - 0x28];
-    } pitch;                       //0x118
+    M510_PLAYER_MODEL_WORK model;  //0x08
+    M510_PITCH_WORK pitch;         //0x118
     u8 ballPathWork[0x850 - 0x154];//0x154
     M510_SCORE_WORK score;         //0x850
     s16 modelId;                   //0x878
@@ -94,7 +104,7 @@ typedef struct M510Obj_s {
     M510_PLAYER_WORK players[4];//0x1C
     u8 pad221C[0x2474 - 0x221C];
     M510_OPEN_CAM cam;       //0x2474
-    u8 pad24D4[0x2538 - 0x24D4];
+    u8 pad24D8[0x2538 - 0x24D8];
     s32 soundId;             //0x2538
 } M510_OBJ;
 
@@ -136,7 +146,7 @@ void fn_1_8BEC(void *data);
 void fn_1_8C1C(void *data);
 void fn_1_8D48(void *data);
 
-void fn_1_734(void *data);
+s32 fn_1_734(s32 dataNum);
 s32 fn_1_966C(M510_OBJ *obj);
 
 void fn_1_9B0C(void *data);
