@@ -218,7 +218,9 @@ void ObjectSetup(void)
     HuDataDirClose(mgDataTbl[MgNo].dataDir);
     lbl_1_bss_6C = 20;
     BoardNo = GwSystem.boardNo;
-    if(mgBoard2Force) {
+    // mgBoard2Force is declared a word wide in mgdata.o but loaded as a
+    // byte here, so the cast is what the retail object actually does.
+    if(*(u8 *)&mgBoard2Force) {
         BoardNo = 1;
     }
     omSysPauseEnable(FALSE);

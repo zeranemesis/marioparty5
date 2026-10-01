@@ -749,3 +749,35 @@ declared one more slot than `MGPLAYER_MOT_NUM+1` supplies and let the tail
 zero-fill. Widening the bound at the declaration (`MGPLAYER_MOT_NUM+2`) is
 preferable to bumping `MGPLAYER_MOT_NUM` itself, which is a shared enum count
 and would misreport how many motions exist.
+
+## Finding 24: one symbol can be two widths, and the header must lie about it
+
+`mgBoard2Force` is the first case here where widening a global helps and the
+obvious fix is wrong. The retail `mgdata.o` declares it four bytes wide; the
+retail `inst.o` loads it with `lbz` followed by `cmplwi`. Both are true at once,
+and the two objects are built from the same header.
+
+The sequence that gets there:
+
+1. `u8` -> `int` in `mgdata.c` **and** the header. `mgdata.o` is right and
+   `mgdata.o`'s `.sbss` symbol table becomes an exact match. But
+   `instDll.rel` immediately fails its checksum, because `inst.o` grew an `lwz`
+   where the retail object has an `lbz`.
+2. `int` in `mgdata.c` only. MWCC rejects it: `game/mgdata.h` reaches
+   `mgdata.c` transitively through `game/object.h`, so the `extern u8` is
+   already in scope and the two declarations conflict.
+3. `int` everywhere, plus `*(u8 *)&mgBoard2Force` at the one consumer.
+   `inst.o` comes back byte-identical, `instDll.rel` matches again, and
+   `mgdata.o` gets the four-byte symbol. This is the state that ships.
+
+The lesson is that a global's *storage width* and its *load width* are
+independent facts about the original build, and a decomp has to reproduce both.
+Where the retail objects disagree, the disagreement is the evidence -- do not
+reconcile it by picking one width and hoping. Check the consumer's `objdump -d`
+output before changing a shared header, because the checksum gate will tell you
+you were wrong only after you have already broken a module you did not know was
+involved.
+
+`mgdata`'s `.sbss` goes 91.67% -> 96.00% and its symbol table now matches the
+target exactly. The last two bytes are `gap_10_80288A3E_sbss`, the unreproducible
+linker artefact of finding 18, so 96% is the ceiling for that section.
