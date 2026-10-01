@@ -773,3 +773,34 @@ void fn_1_20A0(OMOBJ *obj) {
     player->shotZ += player->shotVelZ;
     Hu3DModelPosSetV(obj->mdlId[4], (Vec *)&player->shotX);
 }
+
+void fn_1_2760(OMOBJ *obj) {
+    M524Player *player;
+
+    player = (M524Player *)lbl_1_bss_1C[obj->work[0]]->data;
+    if (player->timer == 0) {
+        if (lbl_1_bss_10[player->index] == 0) {
+            obj->objFunc = fn_1_29F4;
+        } else {
+            obj->objFunc = fn_1_2630;
+        }
+    }
+}
+void fn_1_2D30(OMOBJ *obj) {
+    M524Player *player;
+    s32 i;
+
+    player = (M524Player *)obj->data;
+    if (player->timer != 0) {
+        player->timer--;
+    }
+    for (i = 0; i < 4; i++) {
+        player = (M524Player *)lbl_1_bss_1C[i]->data;
+        if (player->objNum != 0) {
+            return;
+        }
+    }
+    player = (M524Player *)obj->data;
+    player->endF = 1;
+    player->state = 10;
+}
