@@ -3255,7 +3255,9 @@ BOOL fn_1_BAC8(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
-    for (i = 0; i < 12; i++) {
+    i = i;
+    i = 0;
+    while (i < 12) {
         obj = lbl_1_bss_178->obj[i];
         if (obj != NULL && obj->mode == 3 && obj->hp > 0 && obj->hitId != shot->id) {
             objCircle.x = obj->pos.x;
@@ -3283,6 +3285,7 @@ BOOL fn_1_BAC8(M519_SHOT *shot)
                 return TRUE;
             }
         }
+        i++;
     }
     return FALSE;
 }
