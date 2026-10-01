@@ -267,6 +267,7 @@ const u32 lbl_1_rodata_B8[4] = { 0x0052000A, 0x0052000B, 0x0052000C, 0x0052000D 
 const s16 lbl_1_rodata_C8[8] = { 1, 0, 3, 2, 0, 0, 3, 2 };
 const s16 lbl_1_rodata_D8[4] = { 1, 0, 20, 10 };
 
+// NONMATCHING: ctor loop is rebuilt from m2c; the original stores and reloads the ctors pointer differently
 int _prolog(void) {
     const VoidFunc *ctors = _ctors;
     int i;
@@ -278,6 +279,7 @@ int _prolog(void) {
     return 0;
 }
 
+// NONMATCHING: dtor loop rebuilt from m2c; same divergence as _prolog
 void _epilog(void) {
     const VoidFunc *dtors = _dtors;
     int i;
@@ -287,6 +289,7 @@ void _epilog(void) {
     }
 }
 
+// NONMATCHING: parman creation and layer call order differ from the original
 s16 fn_1_A0(Vec *pos) {
     HU3DPARMANID parManId;
 
@@ -297,6 +300,7 @@ s16 fn_1_A0(Vec *pos) {
     return parManId;
 }
 
+// NONMATCHING: data block and field initialisation order still differ from the original
 void ObjectSetup(void) {
     OMOBJ *obj;
     OMOBJ *flowObj;
@@ -382,6 +386,7 @@ void fn_1_478(void) {
     Hu3DModelAttrSet(lbl_1_bss_E, 1);
 }
 
+// NONMATCHING: shuffle loops produce a different register sequence
 void fn_1_6D8(void) {
     s32 rand;
     s32 i;
@@ -405,6 +410,7 @@ void fn_1_6D8(void) {
     }
 }
 
+// NONMATCHING: player field initialisation order differs
 void fn_1_848(OMOBJ *obj) {
     M524Player *player;
     s16 charNo;
@@ -468,6 +474,7 @@ void fn_1_AD0(OMOBJ *obj) {
     Hu3DModelPosSet(mdlId, lbl_1_data_218[player->index] - 6.0f, 75.0f, 238.0f);
 }
 
+// NONMATCHING: model creation call sequence differs
 void fn_1_C24(OMOBJ *obj) {
     M524Player *player;
     HU3DMODELID mdlId;
@@ -480,6 +487,7 @@ void fn_1_C24(OMOBJ *obj) {
     Hu3DModelPosSet(mdlId, lbl_1_data_218[player->index], 0.0f, 200.0f);
 }
 
+// NONMATCHING: shot vector is kept in r28 by the original and reloaded here
 void fn_1_D08(OMOBJ *obj) {
     M524Player *player;
     HU3DMODELID mdlId;
@@ -498,6 +506,7 @@ void fn_1_D08(OMOBJ *obj) {
     Hu3DModelPosSetV(mdlId, (Vec *)&player->shotX);
 }
 
+// NONMATCHING: state dispatch differs from the original jump table
 void fn_1_E2C(OMOBJ *obj) {
     M524Player *player;
     M524Flow *flow;
@@ -553,6 +562,7 @@ void fn_1_E2C(OMOBJ *obj) {
     }
 }
 
+// NONMATCHING: float conversion sequence differs from the original
 void fn_1_F84(OMOBJ *obj) {
     M524Player *player;
     M524Flow *flow;
@@ -631,6 +641,7 @@ void fn_1_1CBC(OMOBJ *obj) {
     obj->work[2]++;
 }
 
+// NONMATCHING: one redundant li here shifts every branch target by 4 bytes
 void fn_1_1DF8(OMOBJ *obj) {
     M524Player *player;
 
@@ -670,6 +681,7 @@ void fn_1_1DF8(OMOBJ *obj) {
     }
 }
 
+// NONMATCHING: register allocation differs; the original saves r25-r31
 void fn_1_1FB8(OMOBJ *obj) {
     M524Player *player;
     M524Flow *flow;
@@ -692,6 +704,54 @@ void fn_1_1FB8(OMOBJ *obj) {
     }
 }
 
+// NONMATCHING: register copies and stack frame size differ from the original
+void fn_1_21BC(OMOBJ *obj) {
+    M524Player *player;
+    HU3DPARMANID parManId;
+    Vec pos;
+    u16 id;
+    void *spriteData;
+    ANIMDATA *anim;
+
+    player = (M524Player *)obj->data;
+    pos.x = player->shotX;
+    pos.y = player->shotY;
+    pos.z = 150.0f + player->shotZ;
+    spriteData = HuDataSelHeapReadNum(0x210002, 0x10000000, HEAP_MODEL);
+    anim = HuSprAnimRead(spriteData);
+    parManId = Hu3DParManCreate(anim, 0x64, &lbl_1_data_258);
+    Hu3DParManRotSet(parManId, 0.0f, 0.0f, 0.0f);
+    Hu3DParManPosSet(parManId, pos.x, pos.y, pos.z);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 2);
+    id = parManId;
+    player->effectId = id;
+    Hu3DParManTimeLimitSet(player->effectId, 1);
+    Hu3DModelKill(obj->mdlId[4]);
+    HuAudFXPlay(lbl_1_data_248[player->index]);
+    switch (lbl_1_bss_10[player->index]) {
+        case 0:
+            player->objNum = 1;
+            fn_1_28C8(obj, (Vec *)&player->shotX);
+            break;
+        case 1:
+            player->objNum = 1;
+            fn_1_23C8(obj, (Vec *)&player->shotX, player->objNum);
+            break;
+        case 2:
+            player->objNum = 10;
+            fn_1_23C8(obj, (Vec *)&player->shotX, player->objNum);
+            break;
+        case 3:
+            player->objNum = 20;
+            fn_1_23C8(obj, (Vec *)&player->shotX, player->objNum);
+            break;
+    }
+    CharMotionShiftSet(player->charNo, obj->mtnId[6], 0.0f, 10.0f, 0);
+    player->timer = 10;
+    player->state = 9;
+}
+
+// NONMATCHING: branch label layout differs, instruction stream is identical
 void fn_1_20A0(OMOBJ *obj) {
     M524Player *player;
 
