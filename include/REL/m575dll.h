@@ -44,7 +44,7 @@ typedef struct M575TenConf_s {
 
 typedef struct M575Main_s {
     struct M575MainConf_s *conf;
-    u16 unk4;
+    s16 unk4;
     u8 pad6[6];
     u16 unkC;
     u8 padE[0xE20 - 0xE];
@@ -73,6 +73,28 @@ typedef struct M575Ten_s {
     M575TuboEff eff;
 } M575Ten;
 
+// REL/m575dll/tubo.c: the ten objects that hold the tube model and its effect.
+typedef struct M575Tubo_s {
+    M575Main *main;
+    s16 unk4;
+    s16 unk6;
+    s16 modelId1;
+    s16 unkA;
+    void *unkC;
+    void *unk10;
+    s16 modelId2;
+    s16 motionId;
+    void *unk18;
+    void *unk1C;
+    s32 unk20;
+    s32 unk24;
+    s32 unk28;
+    M575TuboEff eff;
+    Mtx mtx;
+    s16 unk148;
+    s16 unk14A;
+} M575Tubo;
+
 void fn_1_3A7C(M575Score *self, u16 side, s32 arg2);
 void fn_1_3CD8(M575Score *self);
 void fn_1_3D28(M575Score *self);
@@ -81,5 +103,9 @@ void fn_1_3D5C(M575Score *self, s32 disp);
 void fn_1_4BCC(M575Ten *self, M575Main *main);
 void fn_1_4E98(M575Ten *self);
 void fn_1_4EF0(M575Ten *self);
+
+void fn_1_9320(M575TuboEff *eff, u16 arg1, const Vec *arg2, f32 height, f32 radius, f32 speed);
+void fn_1_96F8(M575TuboEff *eff);
+void fn_1_9728(M575TuboEff *eff);
 
 #endif

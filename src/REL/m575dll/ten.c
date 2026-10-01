@@ -10,9 +10,6 @@ extern double acos(double x);
 // math.h the same way.
 extern void fn_1_2D5C(Quaternion *q, const Vec *v0, const Vec *v1);
 extern void fn_1_530(u16 dataNum);
-extern void fn_1_9320(M575TuboEff *eff, s32 arg1, const Vec *arg2, f32 height, f32 radius, f32 speed);
-extern void fn_1_96F8(M575TuboEff *eff);
-extern void fn_1_9728(M575TuboEff *eff);
 
 static const f32 lbl_1_rodata_160[1] = { 0.0f };
 static const f32 lbl_1_rodata_164[1] = { 750.0f };
