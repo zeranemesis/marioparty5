@@ -1467,6 +1467,57 @@ void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
     player->mode = 4;
 }
 
+void fn_1_88C8(M518_PLAYER *player)
+{
+    int flag;
+    int l;
+    int i;
+    int j;
+    int k;
+    M518_BLOCK *block;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+    HuVecF cur;
+
+    M518_WAIT(player->delay);
+    start = player->pos;
+    end = player->pos;
+    end.y = 200.0f * player->size * 0.5f - 30.0f;
+    pos = player->pos;
+    flag = 0;
+    for (i = 0; i < player->time; i++) {
+        pos.y = start.y + (end.y - start.y) * (1.0 - cos(1.0f / player->time * (i + 1) * 90.0f * M_PI / 180.0));
+        cur = pos;
+        for (l = 0; l < 2; l++) {
+            if (player->modelId[l] != HU3D_MODELID_NONE) {
+                Hu3DModelPosSet(player->modelId[l], cur.x, cur.y, cur.z);
+            }
+        }
+        player->pos = cur;
+        M518_WAIT(1);
+        if (flag == 0 && pos.y >= 0.0f) {
+            for (k = 0; k < player->size; k++) {
+                for (j = 0; j < player->size; j++) {
+                    block = lbl_1_bss_150[k * M518_GRID_SIZE + player->cell.z + player->cell.x + j];
+                    fn_1_CE78(block, 30.0f, 8, 0);
+                }
+            }
+        }
+    }
+    omVibrate(player->playerNo, 0x28, 0xC, 0);
+    pos.x = player->pos.x;
+    pos.z = player->pos.z;
+    pos.y = 0.0f;
+    fn_1_E508(pos, 100.0f * player->size);
+    fn_1_E508(pos, 50.0f + 100.0f * player->size);
+    fn_1_E508(pos, 100.0f + 100.0f * player->size);
+    player->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
 void fn_1_8E20(M518_PLAYER *player)
 {
     player->mode = 3;
