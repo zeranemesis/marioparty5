@@ -20,10 +20,25 @@ typedef struct M561EffectParam_s {
    but the engine indexes Hu3DData with a 0x134 stride and these functions read
    particle state past that, so the offsets are spelled out locally. */
 
-/* Particle data record reached through the 0x48 pointer, stride 0x44. */
+/* Free-slot record inside the shared 0x20D0 block, stride 0x38. The engine
+   fills it with a flat copy of an M561EffectParam, so the two are the same
+   shape and the slot is written by whole-struct assignment. */
+typedef M561EffectParam M561EffectSlot;
+
+/* Live particle record, stride 0x44. inUse (0x2C) marks a live slot. */
 typedef struct M561ParticleData_s {
-    u8 unk00[0x2C];
-    /* 0x2C */ f32 unk2C;
+    /* 0x00 */ s16 state;
+    /* 0x02 */ s16 prev;
+    /* 0x04 */ s16 unk04;
+    /* 0x06 */ s16 modelId;
+    /* 0x08 */ u8 color[4];
+    /* 0x0C */ u8 unk0C[0x1C];
+    /* 0x28 */ f32 scale;
+    /* 0x2C */ f32 inUse;
+    /* 0x30 */ u8 unk30[4];
+    /* 0x34 */ f32 posX;
+    /* 0x38 */ f32 posY;
+    /* 0x3C */ f32 posZ;
 } M561ParticleData;
 
 typedef struct M561Hu3DParm_s M561Hu3DParm;
@@ -47,15 +62,15 @@ typedef struct M561Hu3DModel_s {
 /* Per-model particle parameter block reached through the 0x120 pointer. */
 typedef struct M561Hu3DParm_s {
     /* 0x00 */ u8 unk00[2];
-    /* 0x02 */ s16 unk02;
+    /* 0x02 */ s16 curIdx;
     /* 0x04 */ u8 unk04[0x18];
-    /* 0x1C */ u32 unk1C;
+    /* 0x1C */ M561EffectSlot *slots;
     /* 0x20 */ u8 unk20[0x10];
     /* 0x30 */ s16 dataCnt;
     /* 0x32 */ u8 unk32[2];
     /* 0x34 */ s32 unk34;
     /* 0x38 */ u8 unk38[0xC];
-    /* 0x44 */ void *unk44;
+    /* 0x44 */ ANIMDATA *anim;
     /* 0x48 */ M561ParticleData *data;
 } M561Hu3DParm;
 
@@ -65,7 +80,7 @@ extern void *lbl_1_bss_300;
 void fn_1_8AE8(void);
 void fn_1_8B38(void);
 void fn_1_8BCC(s16 arg0, Vec *arg1);
-void fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32 arg5);
+s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32 arg5);
 void fn_1_9200(void);
 void fn_1_9464(void);
 void fn_1_9688(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4]);

@@ -22,7 +22,7 @@ M561EffectParam lbl_1_data_5A0 = {
 
 void fn_1_8AE8(void)
 {
-    s32 i;
+    s16 i;
 
     for (i = 0; i < 16; i++) {
         lbl_1_bss_2E0[i] = -1;
@@ -32,7 +32,7 @@ void fn_1_8AE8(void)
 
 void fn_1_8B38(void)
 {
-    s32 i;
+    s16 i;
 
     if (lbl_1_bss_300) {
         HuMemDirectFree(lbl_1_bss_300);
@@ -100,8 +100,8 @@ void fn_1_9200(void)
 
         if (lbl_1_bss_2E0[i] != -1) {
             parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
-            if (parm->unk44 != NULL) {
-                anim = parm->unk44;
+            if (parm->anim != NULL) {
+                anim = parm->anim;
                 continue;
             }
         }
@@ -122,11 +122,132 @@ void fn_1_9200(void)
         Hu3DParticleBlendModeSet(lbl_1_bss_2E0[i], 0);
 
         parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
-        parm->unk44 = lbl_1_bss_300;
+        parm->slots = (M561EffectSlot *)lbl_1_bss_300;
         parm->unk34 = 1;
 
         for (j = 0; j < parm->dataCnt; j++) {
-            parm->data[j].unk2C = 0.0f;
+            parm->data[j].inUse = 0.0f;
         }
     }
+}
+
+// Creates the particle model for every camera that does not have one yet.
+// Mirrors fn_1_9200 except that it only fills in missing models.
+// NONMATCHING: control flow and all field offsets are recovered, but the
+// register allocation and hoisting of the HuDataSelHeapReadNum operands differ.
+void fn_1_9464(void)
+{
+    ANIMDATA *anim;
+    M561Hu3DParm *parm;
+    s16 i;
+    s16 j;
+
+    anim = NULL;
+
+    for (i = 0; i < 16; i++) {
+        if (Hu3DCamera[i].fov == -1.0f) {
+            continue;
+        }
+
+        if (lbl_1_bss_2E0[i] != -1) {
+            continue;
+        }
+
+        if (anim == NULL) {
+            anim = HuSprAnimRead(HuDataSelHeapReadNum(0x8E, 0x1000, 2));
+        }
+
+        lbl_1_bss_2E0[i] = Hu3DParticleCreate(anim, 0x96);
+        Hu3DModelLayerSet(lbl_1_bss_2E0[i], 5);
+        Hu3DParticleHookSet(lbl_1_bss_2E0[i], fn_1_9688);
+        Hu3DModelCameraSet(lbl_1_bss_2E0[i], 1 << i);
+
+        if (lbl_1_bss_300 == NULL) {
+            lbl_1_bss_300 = HuMemDirectMallocNum(HEAP_HEAP, 0x20D0, 0x1000);
+        }
+
+        Hu3DParticleBlendModeSet(lbl_1_bss_2E0[i], 0);
+
+        parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
+        parm->curIdx = 0;
+        parm->slots = (M561EffectSlot *)lbl_1_bss_300;
+        parm->unk34 = 1;
+
+        for (j = 0; j < parm->dataCnt; j++) {
+            parm->data[j].inUse = 0.0f;
+        }
+    }
+}
+
+// NONMATCHING: body is faithful and the 0x38/0x44/0x58/0x134 strides and all
+// field offsets are recovered, but the fixed-size 0x38 copy from the param
+// struct is emitted as a word loop here; register allocation also differs.
+s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32 arg5)
+{
+    s16 i;
+    s16 result;
+    s16 bit;
+    s16 idx;
+    M561Hu3DParm *parm;
+    M561ParticleData *dataP;
+    M561EffectSlot *dst;
+
+    result = -1;
+    bit = 1;
+
+    fn_1_9200();
+
+    for (i = 0; i < 16; i++, bit <<= 1) {
+        if ((bit & arg0) == 0) {
+            continue;
+        }
+
+        if (Hu3DCamera[i].fov == -1.0f) {
+            continue;
+        }
+
+        if (lbl_1_bss_2E0[i] == -1) {
+            return -1;
+        }
+
+        parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
+        idx = parm->curIdx;
+        dataP = &parm->data[idx];
+
+        while ((idx < parm->dataCnt) && (dataP->inUse != 0.0f)) {
+            idx++;
+            dataP++;
+        }
+
+        if (idx >= parm->dataCnt) {
+            dataP = parm->data;
+            idx = 0;
+
+            while ((idx < parm->dataCnt) && (dataP->inUse != 0.0f)) {
+                idx++;
+                dataP++;
+            }
+        }
+
+        if (idx != parm->dataCnt) {
+            dst = &parm->slots[idx];
+            *dst = *arg1;
+            dataP->modelId = arg0;
+            dataP->posX = arg2;
+            dataP->posY = arg3;
+            dataP->posZ = arg4;
+            dataP->color[0] = ((u8 *)arg1)[4];
+            dataP->color[1] = ((u8 *)arg1)[5];
+            dataP->color[2] = ((u8 *)arg1)[6];
+            dataP->color[3] = ((u8 *)arg1)[7];
+            dataP->scale = arg5;
+            dataP->inUse = arg5;
+            dataP->state = 0;
+            dataP->prev = -1;
+            parm->curIdx = idx;
+            result = idx;
+        }
+    }
+
+    return result;
 }
