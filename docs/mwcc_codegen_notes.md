@@ -867,3 +867,37 @@ and naming, and are mechanical. Others are **behaviour that was never
 decompiled**, and padding them in is worse than leaving the section short,
 because a short section is honest about the work that is left. Before hoisting
 anything, check whether the source actually uses the thing.
+
+## Finding 28: trailing padding is invisible to objdiff -- stop chasing section sizes
+
+`e3bootdll` and `bootDll` looked like clean finding-22 targets. Both have a
+`.data` that is genuinely shorter than the retail object's, with every named
+symbol already at the right size and the right bytes:
+
+    e3bootdll  .text 0x47fc (same)  .rodata 0x154 (same)  .bss 0xc0 (same)
+               .data target 0x80, mine 0x6e   -> 18 trailing zero bytes
+    bootDll    .data target 0xc0, mine 0xa2   -> 30 trailing zero bytes
+
+objdiff scores **both `.data` sections at 100.00%**. A delta in trailing padding
+moves no symbol, so it moves no relocation and no compared byte, and the score
+never sees it. Chasing these would have been a whole afternoon for zero gain.
+
+This is the same lesson as finding 26 from the other side. There, a symbol delta
+was cosmetic because the section already agreed. Here a *section* delta is
+cosmetic because it lives past the last symbol. The only quantity that decides
+whether there is work to do is **objdiff's own per-section score**, so:
+
+> Never reason from a section size. Read the score, then use `objdump -t` to
+> work out why it is short.
+
+`tools/datasyms.py` had been reporting exactly these non-bugs, which is why it
+listed `e3bootdll`-shaped entries as candidates. It now skips any section that
+`report.json` already scores at 100, so its output is a work list rather than a
+difference dump. It also had a latent crash -- the comprehension that collects
+the failing sections indexed `fuzzy_match_percent` directly, so it died on the
+first section `report.json` declines to score.
+
+One thing worth keeping: the retail `.data` padding is *not* a fixed rule. It is
+0x12 here and 0x1e there, neither a multiple of 8, 16 or 32; measured across the
+tree only 35 of 176 retail `.data` sections are multiples of 32. It is
+object-specific, so there is no alignment flag to find.

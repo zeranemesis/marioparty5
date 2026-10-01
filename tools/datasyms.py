@@ -57,7 +57,7 @@ def main():
             continue
         secs = {s["name"]: s for s in unit["sections"]}
         text = secs.get(".text", {}).get("fuzzy_match_percent")
-        bad = {k: v["fuzzy_match_percent"] for k, v in secs.items()
+        bad = {k: (v.get("fuzzy_match_percent") or 0) for k, v in secs.items()
                if k in DATA and (v.get("fuzzy_match_percent") or 0) < 100}
         if text != 100 or not bad:
             continue
@@ -72,6 +72,8 @@ def main():
             continue
         print(f"\n=== {name}   data {bad}")
         for sec in sorted(set(ts) | set(ms)):
+            if sec not in bad:
+                continue        # objdiff already scores this 100: nothing to win
             t = {n: (sz, b) for n, sz, b in ts.get(sec, [])}
             m = {n: (sz, b) for n, sz, b in ms.get(sec, [])}
             delta = tsize.get(sec, 0) - msize.get(sec, 0)
