@@ -106,21 +106,21 @@ void fn_1_4EF0(M575Ten *self)
     f32 clamped;
 
     fn_1_9728(eff);
-    PSMTXCopy((const f32 (*)[4])&eff->mtxRoot, self->mtx);
-    PSMTXCopy((const f32 (*)[4])&eff->mtxRoot, self->mtx2);
+    PSMTXCopy((const f32 (*)[4])&eff->mtx, self->mtx);
+    PSMTXCopy((const f32 (*)[4])&eff->mtx, self->mtx2);
     self->pos->y = lbl_1_rodata_188[0];
     self->pos2->y = lbl_1_rodata_188[0];
     tmpA = lbl_1_rodata_170;
     pA = &tmpA;
-    eff->offset = *pA;
+    eff->angVel = *pA;
     PSVECScale(&eff->pos, &eff->pos, lbl_1_rodata_18C[0]);
     PSVECScale(&eff->vel, &eff->vel, lbl_1_rodata_18C[0]);
     tmpB = lbl_1_rodata_17C;
     pB = &tmpB;
     up = *pB;
-    dir.x = eff->dir.x;
-    dir.y = eff->dir.y;
-    dir.z = eff->dir.z;
+    dir.x = eff->mtx[1][0];
+    dir.y = eff->mtx[1][1];
+    dir.z = eff->mtx[1][2];
     PSVECNormalize(&dir, &dir);
     dot = PSVECDotProduct(&dir, &up);
     rad = (f32)acos(dot);
@@ -135,9 +135,9 @@ void fn_1_4EF0(M575Ten *self)
         PSMTXRotAxisRad(mtx, &axis, lbl_1_rodata_1A4[0]);
         PSMTXMultVec(mtx, &up, &v);
         fn_1_2D5C(&q0, &dir, &v);
-        C_QUATMtx(&q1, (const f32 (*)[4])&eff->mtxRoot);
+        C_QUATMtx(&q1, (const f32 (*)[4])&eff->mtx);
         PSQUATMultiply(&q0, &q1, &q2);
-        PSMTXQuat((f32 (*)[4])&eff->mtxRoot, &q2);
+        PSMTXQuat((f32 (*)[4])&eff->mtx, &q2);
         angle = lbl_1_rodata_1A0[0];
     }
 
@@ -160,9 +160,9 @@ void fn_1_4EF0(M575Ten *self)
         PSMTXRotAxisRad(mtx, &axis, lbl_1_rodata_1B4[0] * angle);
         PSMTXMultVec(mtx, &up, &v);
         fn_1_2D5C(&q3, &dir, &v);
-        C_QUATMtx(&q4, (const f32 (*)[4])&eff->mtxRoot);
+        C_QUATMtx(&q4, (const f32 (*)[4])&eff->mtx);
         PSQUATMultiply(&q3, &q4, &q5);
-        PSMTXQuat((f32 (*)[4])&eff->mtxRoot, &q5);
+        PSMTXQuat((f32 (*)[4])&eff->mtx, &q5);
     }
     self->prevRot = self->rot;
     self->rot = angle;
