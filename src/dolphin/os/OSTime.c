@@ -10,8 +10,8 @@
    64-bit value: high word at 0x800030DC, low word at 0x800030D8. */
 #define __OSSystemTime (*(volatile OSTime*)0x800030D8)
 
-extern s32 __mod2i(s32 a, s32 b, s32 c);
-extern s32 __div2i(s32 a, s32 b, s32 c);
+extern s32 __mod2i(s32 n_hi, s32 n_lo, s32 d_hi, s32 d_lo);
+extern s32 __div2i(s32 n_hi, s32 n_lo, s32 d_hi, s32 d_lo);
 
 asm OSTime OSGetTime(void)
 {
@@ -33,13 +33,12 @@ asm OSTick OSGetTick(void)
 
 OSTime __OSGetSystemTime(OSContext* interruptContext)
 {
-    OSTime t;
     BOOL flag;
+    OSTime t;
 
     flag = OSDisableInterrupts();
 
-    t = OSGetTime();
-    t += __OSSystemTime;
+    t = __OSSystemTime + OSGetTime();
 
     OSRestoreInterrupts(flag);
 
@@ -47,107 +46,92 @@ OSTime __OSGetSystemTime(OSContext* interruptContext)
 }
 
 /* Days elapsed before the start of each month, for common and leap years. */
-static const u16 YearDays[] = {
+static const s32 YearDays[] = {
     0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
 };
 
-static const u16 LeapYearDays[] = {
+static const s32 LeapYearDays[] = {
     0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335,
 };
 
-/* Number of days in the years [0, y), i.e. 365 per year plus one extra day for
-   every leap year. The expression is the one the compiler turns into the
-   multiply/shift sequence seen in the original: the /32 and /128 terms cancel
-   the leap days of the Gregorian century rules. */
-static s32 DaysBeforeYear(s32 y)
+/* Leap days accumulated before the start of a year, by the Gregorian rule. */
+static s32 LeapDays(s32 year)
 {
-    return y * 365 + ((y + 3) / 4) - (y / 128) - ((y + 128) / 128);
-}
-
-static BOOL IsLeapYear(s32 y)
-{
-    if (y % 4 != 0) {
-        return FALSE;
+    if (year < 1) {
+        return 0;
     }
-    if (y % 100 != 0) {
-        return TRUE;
-    }
-    return y % 400 == 0;
+    return (year + 3) / 4 - (year - 1) / 100 + (year - 1) / 400;
 }
 
 static void GetDates(s32 days, OSCalendarTime* td)
 {
-    const u16* table;
     s32 year;
-    s32 dayOfYear;
     s32 base;
+    s32 ystart;
     s32 i;
+    BOOL leap;
+    const s32* table;
 
-    /* days counts from 2000-01-01, which the loop below treats as day 0 of a
-       year whose DaysBeforeYear is adjusted so the arithmetic stays positive. */
-    base = (days / 7) * 7 - days;
-    td->wday = base;
+    /* 2000-01-01, the origin of the tick counter, was a Saturday. */
+    td->wday = (days + 6) % 7;
 
-    year = (days + 6) / 7;
-    dayOfYear = year * 365;
+    /* The year is close enough to days/365 for the walk below to be short. */
+    year = days / 365;
+    base = year * 365;
 
-    /* Step forward one year at a time until the target day is inside the year. */
-    for (i = year; days < dayOfYear + DaysBeforeYear(i - year); i++) {
-        dayOfYear -= 365;
+    year--;
+    for (;;) {
+        ystart = base - LeapDays(year);
+        if (days >= ystart) {
+            break;
+        }
+        base -= 365;
         year--;
     }
 
     td->year = year;
-    td->yday = dayOfYear - days;
+    td->yday = days - ystart;
 
-    if (IsLeapYear(year)) {
-        table = LeapYearDays;
-    } else {
-        table = YearDays;
+    leap = (((year % 4) == 0) && ((year % 100) != 0)) || ((year % 400) == 0);
+    table = leap ? LeapYearDays : YearDays;
+
+    i = 12;
+    while (td->yday < table[--i]) {
     }
 
-    for (i = 11; ; i--) {
-        if (td->yday < table[i]) {
-            break;
-        }
-    }
     td->mon = i;
-    td->mday = table[i] - td->yday;
+    td->mday = td->yday - table[i] + 1;
 }
 
 void OSTicksToCalendarTime(OSTime ticks, OSCalendarTime* td)
 {
-    OSTime seconds;
-    OSTime days;
     OSTime rest;
-    s32 freq;
-    s32 weekday;
+    OSTime secs;
+    s32 days;
+    s32 sod;
 
-    freq = OS_TIME_BASE;
-
-    /* ticks counts from 2000-01-01 00:00:00. */
-    rest = ticks % freq;
+    /* Split the tick count into whole seconds and the remainder. */
+    rest = ticks % OS_TIME_BASE;
     if (rest < 0) {
-        rest += freq;
+        rest += OS_TIME_BASE;
     }
-    days = (ticks - rest) / freq;
 
-    seconds = rest / 1000;
-    td->msec = rest - seconds * 1000;
+    td->usec = OSTicksToMicroseconds(rest) % 1000;
+    td->msec = OSTicksToMilliseconds(rest) % 1000;
 
-    seconds = seconds / 1000;
-    td->usec = rest - (rest / 1000) * 1000;
+    secs = (ticks - rest) / OS_TIME_BASE;
 
-    seconds = seconds / 60;
-    td->min = seconds - (seconds / 60) * 60;
+    /* days counts from year 0, the calendar starts at 2000-01-01. */
+    days = secs / 86400 + 730485;
+    sod = secs % 86400;
+    if (sod < 0) {
+        sod += 86400;
+        days--;
+    }
 
-    seconds = seconds / 60;
-    td->hour = seconds / 24;
-    td->sec = seconds - (td->hour * 60) * 24;
+    GetDates(days, td);
 
-    /* 2000-01-01 was a Saturday, hence the +6 before the modulo. */
-    weekday = (s32)(days + 6) / 7;
-    td->wday = weekday * 7 - (s32)(days + 6);
-
-    GetDates((s32)days, td);
+    td->hour = sod / 60 / 60;
+    td->min = (sod / 60) % 60;
+    td->sec = sod % 60;
 }

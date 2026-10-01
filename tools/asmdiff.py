@@ -25,6 +25,7 @@ Use tools/fndiff.py for scoring.
 """
 
 import os
+import difflib
 import re
 import subprocess
 import sys
@@ -83,6 +84,12 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None) -> 
         return f"{mnemonic} {target}"
     # doldecomp prints `subi rX,rY,0x217d` where objdump prints the very same
     # encoding as `addi rX,rY,-8573`; `lis rX,32768` is `-32768` in objdump.
+    # `mftbu r3` (objdump) is `mftb r3,0x10d` (doldecomp), `mftb r3` == 0x10c
+    if mnemonic in ("mftb", "mftbu", "mftbl"):
+        parts = canon_operand(operand).split(",")
+        if len(parts) > 1:  # doldecomp spells out the TBR selector
+            return f"mftb {','.join(parts)}"
+        return f"mftb {parts[0]},{269 if mnemonic == 'mftbu' else 268}"
     if mnemonic in ("subi", "subis"):
         parts = [p.strip() for p in operand.split(",")]
         last = parts[-1]
@@ -97,6 +104,7 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None) -> 
         operand = ",".join(parts)
     if mnemonic == "lis":
         parts = canon_operand(operand).split(",")
+        parts = [p for p in parts if p]
         if re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", parts[-1]):
             parts[-1] = str(int(parts[-1], 0) & 0xFFFF)
         return f"lis {','.join(parts)}"
@@ -151,37 +159,32 @@ def is_branch(insn: str) -> bool:
 
 
 def diff_function(name: str, got: list[str], want: list[str], verbose: bool) -> tuple[int, int]:
+    """Align the two streams and report matching / total.
+
+    Both sides are compared with a branch-insensitive equality so that a
+    register permutation inside a branch target is not counted as a mismatch;
+    difflib keeps the alignment stable when a few instructions are merely
+    rescheduled, which is what usually happens at the start of a function.
+    """
+    def eq(a: str, b: str) -> bool:
+        if a == b:
+            return True
+        return is_branch(a) and is_branch(b) and a.split(" ", 1)[0] == b.split(" ", 1)[0]
+
+    sm = difflib.SequenceMatcher(None, got, want, autojunk=False)
     same = 0
-    i = j = 0
     problems: list[str] = []
-    while i < len(got) and j < len(want):
-        a, b = got[i], want[j]
-        if a == b or (is_branch(a) and is_branch(b) and a.split(" ", 1)[0] == b.split(" ", 1)[0]):
-            same += 1
-            i += 1
-            j += 1
-            continue
-        # resync: is the wanted instruction just a bit further down?
-        found = None
-        for k in range(i + 1, min(i + 8, len(got))):
-            if got[k] == b or (is_branch(got[k]) and is_branch(b)
-                               and got[k].split(" ", 1)[0] == b.split(" ", 1)[0]):
-                found = k
-                break
-        if found is not None:
-            problems.append(f"  +{found - i} spurious  {' ; '.join(got[i:found])}")
-            i = found
-            continue
-        problems.append(f"  @{i:<3d} got  {a:<34} want {b}")
-        i += 1
-        j += 1
-    if i < len(got):
-        problems.append("  +extra  " + " ; ".join(got[i:]))
-    if j < len(want):
-        problems.append("  -missing  " + " ; ".join(want[j:]))
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        matched = sum(1 for k in range(i2 - i1) if eq(got[i1 + k], want[j1 + k]))
+        same += matched
+        if tag != "equal" or matched != i2 - i1:
+            for k in range(i1, i2):
+                problems.append(f"  + {got[k]}")
+            for k in range(j1, j2):
+                problems.append(f"  - {want[k]}")
     if problems and verbose:
         print(f"\n--- {name} ---")
-        for p in problems[:200]:
+        for p in problems[:120]:
             print(p)
     return same, max(len(got), len(want))
 
