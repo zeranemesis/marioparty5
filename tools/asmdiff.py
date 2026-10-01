@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+
+"""
+Strict per-function diff between a target DOL disassembly and a candidate .c.
+
+The target is a doldecomp-style .s (absolute addresses, raw relocations). The
+candidate is compiled with the project's real MWCC flags by tools/mwccprobe.py.
+Both sides are reduced to a canonical instruction stream:
+
+  * numbers are normalised (the target writes 0x1b0, objdump writes 432),
+  * relocations become plain symbol names (so `bl OSGetTime` compares equal),
+  * local branch targets become `<t>` - their numeric/symbolic identity differs
+    between the two dumps, only the fact that a branch is there is comparable,
+  * `b`/`bl`/`beq`... must still be the *same kind* of branch, and a call must
+    still name the same callee.
+
+Usage:
+  python tools/asmdiff.py src/dolphin/os/OSStopwatch.c
+  python tools/asmdiff.py src/dolphin/os/OSStopwatch.c OSStopStopwatch
+  python tools/asmdiff.py -v src/dolphin/os/OSStopwatch.c OSDumpStopwatch
+
+This is a scratch/authoritative tool: it does not go through ninja or objdiff,
+so it works on any candidate file, including one that is not in the build yet.
+Use tools/fndiff.py for scoring.
+"""
+
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+FUNC_RE = re.compile(r"^([0-9a-fA-F]{8}) <([^>]+)>:$")
+INSN_RE = re.compile(r"^\s*([0-9a-f]+):\s+((?:[0-9a-fA-F]{2} )+)[ \t]*(\S+)[ \t]*(.*)$")
+RELOC_RE = re.compile(r"^\s*[0-9a-f]+:\s*R_PPC_\S+\s+(\S+)\s*$")
+TARGET_FN_RE = re.compile(r"^\.fn\s+([^,]+),")
+TARGET_INSN_RE = re.compile(r"^/\*[0-9a-fA-F ]+\*/[ \t]*(\S+)[ \t]*(.*?)\s*$")
+BRANCHES = ("b", "bc", "bcl", "bclr", "bctrl", "bcctr", "bcctrl")
+
+MEM_RE = re.compile(r"^([+-]?(?:0x[0-9a-fA-F]+|\d+))\((.+)\)$")
+
+
+def num(text: str) -> str:
+    return str(int(text, 16) if text.lower().startswith(("0x", "-0x", "+0x")) else int(text))
+
+
+def canon_operand(operand: str) -> str:
+    operand = operand.strip()
+    if not operand:
+        return ""
+    if "@" in operand:  # lis r3, lbl_801CEB58@ha
+        operand = operand.split("@")[0].strip()
+    parts = [p.strip() for p in operand.split(",")]
+    out = []
+    for part in parts:
+        m = MEM_RE.match(part)
+        if m:
+            out.append(f"{num(m.group(1))}({m.group(2)})")
+        elif re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", part):
+            out.append(num(part))
+        else:
+            out.append(part)
+    # objdump writes `4*cr1+eq`, doldecomp writes `cr1eq`
+    out = [re.sub(r"\d+\*(cr\d+)\+(\w+)", r"\1\2", p) for p in out]
+    # the target's string pool / data labels have build-specific addresses
+    out = [re.sub(r"lbl[._][\w.]*", "SYM", p) for p in out]
+    return ",".join(out)
+
+
+def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None) -> str:
+    operand = (operand or "").strip()
+    if mnemonic in BRANCHES or mnemonic.startswith("b") and mnemonic not in (
+            "bclr", "bctrl") and re.match(r"^b(c|cl|ne|eq|lt|gt|le|ge|so|ns|dnz)?$", mnemonic):
+        # branch / call: a reloc gives us the real callee, otherwise local target
+        target = reloc
+        if target is None:
+            first = operand.split(",")[-1].strip()
+            target = first if re.fullmatch(r"[A-Za-z_][\w]*", first) else "<t>"
+        if mnemonic == "bl" and target.startswith("."):
+            target = "<t>"
+        return f"{mnemonic} {target}"
+    # doldecomp prints `subi rX,rY,0x217d` where objdump prints the very same
+    # encoding as `addi rX,rY,-8573`; `lis rX,32768` is `-32768` in objdump.
+    if mnemonic in ("subi", "subis"):
+        parts = [p.strip() for p in operand.split(",")]
+        last = parts[-1]
+        if re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", last):
+            parts[-1] = str(-int(last, 0))
+        return f"{'addi' if mnemonic == 'subi' else 'addis'} {','.join(parts)}"
+    # a data reloc (lis/addi on a string pool) - the symbol is what matters
+    if reloc is not None:
+        parts = canon_operand(operand).split(",")
+        if parts and re.fullmatch(r"[+-]?\d+", parts[-1]):
+            parts[-1] = "SYM"
+        operand = ",".join(parts)
+    if mnemonic == "lis":
+        parts = canon_operand(operand).split(",")
+        if re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", parts[-1]):
+            parts[-1] = str(int(parts[-1], 0) & 0xFFFF)
+        return f"lis {','.join(parts)}"
+    return f"{mnemonic} {canon_operand(operand)}".strip()
+
+
+def parse_candidate(text: str) -> dict[str, list[str]]:
+    funcs: dict[str, list[str]] = {}
+    current = None
+    pending = None
+    for line in text.splitlines():
+        m = FUNC_RE.match(line)
+        if m:
+            current = m.group(2)
+            funcs[current] = []
+            pending = None
+            continue
+        m = RELOC_RE.match(line)
+        if m and pending is not None and current is not None:
+            funcs[current][-1] = canon_insn(*pending, reloc=m.group(1))
+            pending = None
+            continue
+        m = INSN_RE.match(line)
+        if m and current is not None:
+            funcs[current].append(canon_insn(m.group(3), m.group(4)))
+            pending = (m.group(3), m.group(4))
+    return funcs
+
+
+def parse_target(text: str) -> dict[str, list[str]]:
+    funcs: dict[str, list[str]] = {}
+    current = None
+    for raw in text.splitlines():
+        m = TARGET_FN_RE.match(raw)
+        if m:
+            current = m.group(1).strip()
+            funcs.setdefault(current, [])
+            continue
+        if raw.startswith(".endfn"):
+            current = None
+            continue
+        if current is None:
+            continue
+        m = TARGET_INSN_RE.match(raw)
+        if m:
+            funcs[current].append(canon_insn(m.group(1), m.group(2)))
+    return funcs
+
+
+def is_branch(insn: str) -> bool:
+    return insn.split(" ", 1)[0].startswith("b")
+
+
+def diff_function(name: str, got: list[str], want: list[str], verbose: bool) -> tuple[int, int]:
+    same = 0
+    i = j = 0
+    problems: list[str] = []
+    while i < len(got) and j < len(want):
+        a, b = got[i], want[j]
+        if a == b or (is_branch(a) and is_branch(b) and a.split(" ", 1)[0] == b.split(" ", 1)[0]):
+            same += 1
+            i += 1
+            j += 1
+            continue
+        # resync: is the wanted instruction just a bit further down?
+        found = None
+        for k in range(i + 1, min(i + 8, len(got))):
+            if got[k] == b or (is_branch(got[k]) and is_branch(b)
+                               and got[k].split(" ", 1)[0] == b.split(" ", 1)[0]):
+                found = k
+                break
+        if found is not None:
+            problems.append(f"  +{found - i} spurious  {' ; '.join(got[i:found])}")
+            i = found
+            continue
+        problems.append(f"  @{i:<3d} got  {a:<34} want {b}")
+        i += 1
+        j += 1
+    if i < len(got):
+        problems.append("  +extra  " + " ; ".join(got[i:]))
+    if j < len(want):
+        problems.append("  -missing  " + " ; ".join(want[j:]))
+    if problems and verbose:
+        print(f"\n--- {name} ---")
+        for p in problems[:200]:
+            print(p)
+    return same, max(len(got), len(want))
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if a not in ("-v", "--verbose")]
+    verbose = len(args) != len(sys.argv) - 1
+    if not args:
+        print(__doc__, file=sys.stderr)
+        return 2
+    src, wanted = args[0], args[1:]
+    hits = sorted((ROOT / "build/GP5E01_00/asm").rglob(Path(src).stem + ".s"))
+    if not hits:
+        print(f"no target asm for {src}", file=sys.stderr)
+        return 2
+    want = parse_target(hits[0].read_text(errors="replace"))
+    out = subprocess.run([sys.executable, str(ROOT / "tools/mwccprobe.py"), src],
+                         cwd=ROOT, capture_output=True, text=True)
+    if out.returncode != 0:
+        print(out.stdout + out.stderr, file=sys.stderr)
+        return 1
+    got = parse_candidate(out.stdout)
+    if not got:
+        print("candidate produced no code", file=sys.stderr)
+        return 1
+
+    total_same = total_all = 0
+    for name in want:
+        if wanted and name not in wanted:
+            continue
+        if name not in got:
+            print(f"MISS  {name}")
+            continue
+        same, total = diff_function(name, got[name], want[name], verbose)
+        pct = 100.0 * same / total if total else 100.0
+        print(f"{'OK  ' if same == total else 'DIFF'} {name:<22} "
+              f"{same:3d}/{total:<3d} {pct:6.2f}%  ({len(got[name])} insns)")
+        total_same += same
+        total_all += total
+    if total_all:
+        print(f"\nTOTAL {total_same}/{total_all} = {100.0 * total_same / total_all:.2f}%")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
