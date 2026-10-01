@@ -1647,18 +1647,18 @@ void fn_1_48F8(OMOBJ *obj)
 }
 
 /* Main flow of the minigame: sound queue, start/end messages, winner selection. */
-// NONMATCHING: the -O0,p home registers are off by one here (r26/r27 where
-// the original uses r27/r28) and one sound-volume literal is a different
-// rodata entry, so 274 of 1028 rows differ and 85 more only pick a
-// different label for the same literal.
+// NONMATCHING: the frame, the five scalar stack slots and the home registers
+// now line up, but MWCC still picks the opposite scratch pair (r4/r5) when
+// evaluating the two short-circuited conditions, and folds the sign-extended
+// charNo load into its destination register instead of going through r0:
+// 151 of 1025 rows differ, 101 more only pick a different label for the same
+// literal.
 void fn_1_8F1C(OMOBJ *obj)
 {
     M566Player *players[4];
     s32 i;
     s32 j;
-    s32 rnd;
     s32 seNo;
-    s32 vol;
     s32 playerNo;
 
     for (i = 0; i < 4; i++) {
@@ -1666,6 +1666,7 @@ void fn_1_8F1C(OMOBJ *obj)
     }
     for (i = 0; i < 41; i++) {
         s32 seTbl[41] = { 0x8E1, 0x8E2, 0x8E4, 0x8E6, 0x2D8, 0x8E8, 0x8E9, 0x2C4, 0x2D7 };
+        s32 vol;
 
         if (lbl_1_bss_E0[i].num > 3) {
             lbl_1_bss_E0[i].num = 3;
@@ -1688,6 +1689,8 @@ void fn_1_8F1C(OMOBJ *obj)
             CharModelVoiceVolSet(players[i]->charNo, 127);
         }
         else {
+            s32 vol;
+
             CharModelVoicePanSet(players[i]->charNo, 0.5 + (64.0f + (63.0f * (0.25f * (lbl_1_bss_C8[i]->trans.x / 650.0f)))));
             vol = 0.5 + (104.0f + (23.0f * (1.0f + (lbl_1_bss_C8[i]->trans.z / 550.0f))));
             vol = (vol < 0) ? 0 : ((vol >= 127) ? 127 : vol);
@@ -1752,8 +1755,8 @@ void fn_1_8F1C(OMOBJ *obj)
             }
             lbl_1_bss_B0--;
             i = 0;
-            rnd = rand8() % 4;
-            for (i = 0; i < 4; i++) {
+            (void)(rand8() % 4);
+            for (; i < 4; i++) {
                 if (players[i]->score >= 3) {
                     if (lbl_1_data_138[0] == -1) {
                         lbl_1_data_138[0] = i;
