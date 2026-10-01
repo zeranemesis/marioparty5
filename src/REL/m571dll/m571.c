@@ -51,6 +51,7 @@ void fn_1_2388(OMOBJ *obj);
 void fn_1_2468(OMOBJ *obj);
 s32 fn_1_2A14(OMOBJ *obj, s32 arg1);
 void fn_1_2D58(void);
+void fn_1_2F04(s32 type, f32 x, f32 y, f32 z, s32 idx);
 void fn_1_2E28(void);
 s32 fn_1_2FE0(OMOBJ *obj, s32 arg1);
 
@@ -1247,6 +1248,44 @@ s32 fn_1_28F4(HuVecF *pos)
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_2D54(void)
 {
+}
+
+// NONMATCHING: local index/register form differs from the target build
+void fn_1_2D58(void)
+{
+    s32 i;
+
+    omMakeGroupEx(lbl_1_bss_680, 2, 0x31);
+
+    lbl_1_bss_14[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 5), 0x1000, 2));
+    Hu3DModelAttrSet(lbl_1_bss_14[0], 1);
+
+    lbl_1_bss_1C8[0] = (OMOBJ *)omGetGroupMemberListEx(lbl_1_bss_680, 2);
+
+    lbl_1_bss_4 = 0;
+
+    for (i = 0; i < 0x31; i++) {
+        lbl_1_bss_1C8[i] = NULL;
+    }
+}
+
+// NONMATCHING: local index/register form differs from the target build
+void fn_1_2E28(void)
+{
+    s32 map;
+    s32 i;
+
+    map = frandmod(8);
+    lbl_1_bss_8 = map;
+
+    for (i = 0; i < 0x31; i++) {
+        if (lbl_1_data_704[map][i] == -1) {
+            continue;
+        }
+
+        fn_1_2F04(lbl_1_data_704[map][i], lbl_1_data_26C.pos[i].x, lbl_1_data_26C.pos[i].y,
+            lbl_1_data_26C.pos[i].z, i);
+    }
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
