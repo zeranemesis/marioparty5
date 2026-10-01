@@ -2052,6 +2052,8 @@ void fn_1_69BC(M519_MECH *mech)
     float angle;
     float step;
     float diff;
+    float tA;
+    float tB;
     HuVecF circle;
     HuVecF goal;
     HuVecF area;
@@ -2113,7 +2115,8 @@ void fn_1_69BC(M519_MECH *mech)
                 }
                 angle = -angle;
                 mech->comSpeed = 20.0f + dist / 120.0f;
-                if (HuAbs(angle) < aimTbl[dif]) {
+                tA = HuAbs(angle);
+                if (tA < aimTbl[dif]) {
                     mech->btnDown = PAD_BUTTON_A;
                 }
             }
@@ -2142,7 +2145,8 @@ void fn_1_69BC(M519_MECH *mech)
                             diff -= 360.0f;
                         }
                         diff = -diff;
-                        if (HuAbs(diff) > 30.0f) {
+                        tB = HuAbs(diff);
+                        if (tB > 30.0f) {
                             break;
                         }
                     }
@@ -2206,7 +2210,7 @@ void fn_1_69BC(M519_MECH *mech)
     angle = (angle < -60.0f) ? -60.0f : angle;
     dx = angle;
     dz = mech->comSpeed;
-    dist = sqrt(dx * dx + dz * dz);
+    dist = HuMagPoint2D(dx, dz);
     angle = HuAtan(dx, dz);
     dx = dist * HuSin(angle);
     dz = dist * HuCos(angle);
