@@ -274,8 +274,10 @@ void fn_1_774(void *arg0, void *arg1, void (*arg2)(Mgr510Boat *))
 
 void fn_1_7D4(void)
 {
-    fn_1_1D88(&lbl_1_bss_C);
-    __register_global_object(&lbl_1_bss_C, fn_1_82C, lbl_1_bss_0);
+    Mgr510BoatList *var_r31 = &lbl_1_bss_C;
+
+    fn_1_1D88(var_r31);
+    __register_global_object(var_r31, fn_1_82C, lbl_1_bss_0);
 }
 
 void *fn_1_82C(void *arg0, s16 arg1)
