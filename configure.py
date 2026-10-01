@@ -1079,7 +1079,7 @@ config.libs = [
             Object(NonMatching, "REL/m511Dll/m511.cpp"),
             Object(Equivalent, "REL/m511Dll/effring.cpp"),
             Object(Equivalent, "REL/m511Dll/gamemaster.cpp"),
-            Object(NonMatching, "REL/m511Dll/particle.cpp"),
+            Object(Equivalent, "REL/m511Dll/particle.cpp"),
             Object(Matching, "REL/m511Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m511Dll/camera.cpp"),
             Object(Equivalent, "REL/m511Dll/boatshadow.cpp"),
