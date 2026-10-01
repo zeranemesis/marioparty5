@@ -1526,32 +1526,35 @@ s32 fn_1_4E70(M529Player *player)
 
 u16 fn_1_4F10(OMOBJ *obj)
 {
-M529Player *temp_r31 = obj->data;
+    M529Player *temp_r31 = obj->data;
     M529Player *temp_r29 = lbl_1_bss_11C[temp_r31->unk1C]->data;
     u16 var_r30 = 0;
 
-if (temp_r31->unkB8 == 0) {
+    switch (temp_r31->unkB8) {
+    case 0:
         if (temp_r31->unk40 == 0) {
-            temp_r31->unkC4 -= 1;
-            if (temp_r31->unkC4 < 0) {
+            if ((temp_r31->unkC4 -= 1) < 0) {
                 var_r30 = 0x100;
                 temp_r31->unkC4 = frandmod(0x1E) + 0x1E;
             }
         }
-    } else if (temp_r31->unkB8 < 0) {
-        var_r30 = 0;
-    } else if (temp_r31->unkB8 >= 4) {
-        var_r30 = 0;
-    } else if (temp_r31->unk40 == 0) {
-        if (frandmod(temp_r31->unkBC)) {
-            if (temp_r29->unk64 == temp_r29->unk50) {
-                var_r30 = 0x100;
+        break;
+    case 1:
+    case 2:
+    case 3:
+        if (temp_r31->unk40 == 0) {
+            if (frandmod(temp_r31->unkBC)) {
+                if (temp_r29->unk64 == temp_r29->unk50) {
+                    var_r30 = 0x100;
+                }
+            } else {
+                var_r30 = 0;
             }
-        } else {
-            var_r30 = 0;
         }
-    } else {
+        break;
+    default:
         var_r30 = 0;
+        break;
     }
     return var_r30;
 }
