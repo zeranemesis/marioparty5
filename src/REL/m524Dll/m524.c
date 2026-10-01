@@ -583,3 +583,50 @@ void fn_1_F84(OMOBJ *obj) {
         player->state = 1;
     }
 }
+
+f32 fn_1_1568(f32 ang0, f32 ang1) {
+    f32 diff;
+
+    if (ang1 > 180.0f) {
+        ang1 -= 360.0f;
+    }
+    if (ang0 > 180.0f) {
+        ang0 -= 360.0f;
+    }
+    diff = ang1 - ang0;
+    if (diff > 180.0f) {
+        diff -= 360.0f;
+    }
+    if (diff < -180.0f) {
+        diff += 360.0f;
+    }
+    return diff;
+}
+
+void fn_1_1CBC(OMOBJ *obj) {
+    M524Player *player;
+
+    player = (M524Player *)obj->data;
+    if (obj->work[0] == 0) {
+        CharModelAttrReset(player->charNo, 0x40000002);
+        Hu3DModelAttrReset(obj->mdlId[2], 0x40000002);
+        Hu3DModelAttrReset(obj->mdlId[1], 0x40000001);
+        if (player->dir == -1) {
+            CharModelAttrSet(player->charNo, 0x40000004);
+            Hu3DModelAttrSet(obj->mdlId[2], 0x40000004);
+        }
+        obj->work[0] = 1;
+        obj->work[2] = 0;
+    }
+    if (obj->work[1] != -1 && HuAudFXStatusGet(obj->work[1]) == 0) {
+        obj->work[1] = -1;
+    }
+    if (obj->work[1] == -1) {
+        obj->work[1] = HuAudFXPlay(lbl_1_data_230[player->index]);
+    }
+    if (CharMotionEndCheck(player->charNo) != 0) {
+        obj->work[0] = 0;
+        player->state = 5;
+    }
+    obj->work[2]++;
+}
