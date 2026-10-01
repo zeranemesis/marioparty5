@@ -1252,66 +1252,6 @@ void fn_1_4760(HuVecF *rot, HuVecF *axis)
         axis->z *= -1.0f;
     }
 }
-
-void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
-{
-    player->time = time;
-    player->delay = delay;
-    player->mode = 2;
-}
-
-void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
-{
-    player->time = time;
-    player->delay = delay;
-    player->mode = 4;
-}
-
-void fn_1_8E20(M518_PLAYER *player)
-{
-    player->mode = 3;
-}
-
-void fn_1_8E2C(M518_PLAYER *player)
-{
-    omVibrate(player->playerNo, 0x46, 0xC, 0);
-    fn_1_E7B4(0x6F7, player->pos);
-    Hu3DModelAttrReset(player->modelId[1], 1);
-    Hu3DMotionTimeSet(player->modelId[1], 0.0f);
-    while (!Hu3DMotionEndCheck(player->modelId[1])) {
-        M518_WAIT(1);
-    }
-    Hu3DModelAttrSet(player->modelId[1], 1);
-    Hu3DModelAttrReset(player->modelId[0], HU3D_MOTATTR_PAUSE);
-    Hu3DMotionTimeSet(player->modelId[0], 0.0f);
-    player->mode = 0;
-    while (TRUE) {
-        M518_WAIT(1);
-    }
-}
-
-void fn_1_8FA8(M518_PLAYER *player)
-{
-    int i;
-
-    for (i = 0; i < 2; i++) {
-        if (player->modelId[i] != -1) {
-            Hu3DModelAttrReset(player->modelId[i], 1);
-        }
-    }
-}
-
-void fn_1_9014(M518_PLAYER *player)
-{
-    int i;
-
-    for (i = 0; i < 2; i++) {
-        if (player->modelId[i] != -1) {
-            Hu3DModelAttrSet(player->modelId[i], 1);
-        }
-    }
-}
-
 static const u16 lbl_1_rodata_768[5][18 * 18] = {
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1460,6 +1400,67 @@ void fn_1_6D84(M518_PLAYER *player)
         }
     }
 }
+
+
+void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
+{
+    player->time = time;
+    player->delay = delay;
+    player->mode = 2;
+}
+
+void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
+{
+    player->time = time;
+    player->delay = delay;
+    player->mode = 4;
+}
+
+void fn_1_8E20(M518_PLAYER *player)
+{
+    player->mode = 3;
+}
+
+void fn_1_8E2C(M518_PLAYER *player)
+{
+    omVibrate(player->playerNo, 0x46, 0xC, 0);
+    fn_1_E7B4(0x6F7, player->pos);
+    Hu3DModelAttrReset(player->modelId[1], 1);
+    Hu3DMotionTimeSet(player->modelId[1], 0.0f);
+    while (!Hu3DMotionEndCheck(player->modelId[1])) {
+        M518_WAIT(1);
+    }
+    Hu3DModelAttrSet(player->modelId[1], 1);
+    Hu3DModelAttrReset(player->modelId[0], HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(player->modelId[0], 0.0f);
+    player->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_8FA8(M518_PLAYER *player)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (player->modelId[i] != -1) {
+            Hu3DModelAttrReset(player->modelId[i], 1);
+        }
+    }
+}
+
+void fn_1_9014(M518_PLAYER *player)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (player->modelId[i] != -1) {
+            Hu3DModelAttrSet(player->modelId[i], 1);
+        }
+    }
+}
+
 
 M518_PLAYERFUNC lbl_1_data_60[1] = { (M518_PLAYERFUNC)fn_1_9ED8 };
 
