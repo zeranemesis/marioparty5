@@ -164,11 +164,14 @@ void MesChkMainProc(void)
     }
 }
 
-// NONMATCHING: MesChkExec needs one more value live across calls than this
-// version keeps, so MWCC hands out a different set of callee-saved registers
-// (it starts at r18 here and at r19 in the original) and every loop therefore
-// reads its indices from a different register. The instruction sequence, the
-// stack layout and the start-index temporary all match; the numbering does not.
+// NONMATCHING: MesChkExec is the right length (309 instructions) and the stack
+// layout matches, but the outer loop index and the string pointer are swapped --
+// the target keeps dirIdx in r29 and str in r31, this version the reverse. The
+// difference is not reachable by reordering the declarations (all 17 positions
+// for `str` were tried and none changes it), so unlike the single-pointer case
+// in REL/m510dll/opening the numbering here follows live range, not declaration
+// order. The 0 comparisons below are deliberate: spelled with NULL they lower to
+// li/cmplw against a register instead of the target's single cmplwi immediate.
 void MesChkExec(void)
 {
     s16 dirIdx;
@@ -189,7 +192,7 @@ void MesChkExec(void)
     s16 activeKey;
 
     dirIdx = 0;
-    while (mesDirNameTbl[dirIdx] != NULL) {
+    while (mesDirNameTbl[dirIdx] != 0) {
         str = mesDirNameTbl[dirIdx];
         while (*str != '\0') {
             if (*str == '_') {
@@ -214,7 +217,7 @@ void MesChkExec(void)
 
     dirIdx = 0;
     prevDirLastMsgF = 0;
-    while (mesDirNameTbl[dirIdx] != NULL) {
+    while (mesDirNameTbl[dirIdx] != 0) {
         HuWinMesSet(numWin, (u32)(uintptr_t) mesDirNameTbl[dirIdx]);
         messMax = HuWinMesMaxNumGet(dirIdx << 16);
 
@@ -306,7 +309,7 @@ void MesChkExec(void)
 
     nextDir:
         dirIdx++;
-        if (mesDirNameTbl[dirIdx] == NULL) {
+        if (mesDirNameTbl[dirIdx] == 0) {
             dirIdx = 0;
         }
         HuPrcVSleep();

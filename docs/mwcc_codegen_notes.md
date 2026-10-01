@@ -584,3 +584,57 @@ runner-up 93.24%, a gap too small to trust as a signal. Judge REL register
 permutations by whether the prologue lines match exactly, not by percentage --
 the same trap as finding 17, where a small score difference hid a large
 structural one.
+
+## Finding 21 -- `!= NULL` is not the same code as `!= 0`
+
+`meschkdll/REL/meschkDll/meschk` `MesChkExec` compared against NULL in three
+places. Rewriting them as `0` gained 1.76 points of `.text` (85.34% -> 87.10%,
+function 77.56% -> 80.26%) and made the function the right length for the first
+time: 309 instructions against the target's 309, where before it was 312.
+
+The mechanism is a single instruction. Spelled `!= 0`:
+
+```
+lwz   r0, 0x0(r3)
+cmplwi r0, 0x0
+```
+
+Spelled `!= NULL`:
+
+```
+lwz   r3, 0x0(r3)
+li    r0, 0x0
+cmplw r3, r0
+```
+
+MWCC does not fold NULL to an immediate. It materialises the constant into a
+register and emits a three-operand compare, so one extra `li` and a different
+`cmplw` form. Everything after the test was therefore offset by one instruction,
+which is what made the earlier diff look like a cascade of unrelated
+mismatches rather than one local problem.
+
+Two things worth carrying forward. First, **the length of a function is the
+cheapest diagnostic there is** -- 312 versus 309 said "one extra instruction
+somewhere near the top" immediately, where the aligned diff had shown 278
+differing lines. Check `len(ref)` against `len(mine)` before reading anything.
+Second, NULL in this codebase comes from the MSL headers and is a cast, not a
+literal, so it will never fold. Comparing pointers to `0` is not a style
+preference here; it is a codegen choice.
+
+## Finding 20 does not generalise: check the length before hunting declarations
+
+Finding 20 fixed `REL/m510dll/opening` by moving a loop counter to the front of
+the local block. The obvious next move was to apply the same lever to
+`MesChkExec`, whose outer loop index and string pointer are swapped in exactly
+the same way. It does not work: all 17 positions for the `char *str`
+declaration produce byte-identical output and an unchanged 87.10%.
+
+The difference between the two cases is instructive. In `opening` a single
+pointer block is competing for registers, and the counter's position in the
+declaration list is what decides the assignment. In `MesChkExec` there are
+five `s16` locals, two pointers and a struct, so the numbering follows live
+ranges and no reordering touches it. Before running a declaration permutation,
+check whether the function is already the right length and count the
+callee-saved registers actually used -- `MesChkExec` has an identical
+r18-r31 usage profile to the target already, which would have said so
+immediately.
