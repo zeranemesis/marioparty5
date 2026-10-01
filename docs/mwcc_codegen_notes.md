@@ -721,3 +721,31 @@ emitted out of line -- `#pragma inline off` on the header, or splitting the
 out-of-line definition into the seven units that need it. That is a real
 project, not a one-line header edit, and it is not worth starting until the
 checksum gate can be run cheaply on a single module.
+
+## report.json is fuzzy-only: never read it as proof that code matches
+
+`main/game/mg/actman` turned out to be the cleanest data bug in the tree --
+`defMotDataNum` was one word short of the target and nothing else in `.data`
+was wrong. objdiff reports its `.text` as **92.99611%**, while
+`report.json` lists the same section as **100%**.
+
+That is not a rounding artefact. `report.json` carries only
+`fuzzy_match_percent`; there is no `match_percent` field in it at all. Fuzzy
+scoring forgives a difference the exact comparison would not, so a unit can
+look finished in the report and still be several percent away in reality. It
+survived because the padding delta in `.data` was the only *reported* fault.
+
+Two consequences. `tools/datasyms.py` selects its candidates on
+`fuzzy_match_percent == 100`, so the units it offers are "no fault reported",
+not "code is byte-identical" -- read the section list from objdiff itself before
+claiming a unit is Matching. And when triaging a data bug, do not assume the
+code around it is correct just because the report is green; check
+`match_percent` on `.text` in the same objdiff invocation that diagnosed the
+data section.
+
+The fix itself is the finding-22 shape again: the target's `defMotDataNum` is
+0x48 against our 0x44, and the four extra bytes are a zero word. The original
+declared one more slot than `MGPLAYER_MOT_NUM+1` supplies and let the tail
+zero-fill. Widening the bound at the declaration (`MGPLAYER_MOT_NUM+2`) is
+preferable to bumping `MGPLAYER_MOT_NUM` itself, which is a shared enum count
+and would misreport how many motions exist.

@@ -733,7 +733,7 @@ void MgPlayerModeFuncSet(MGPLAYER *playerP, MGPLAYER_MODE_FUNC *funcTbl)
     }
 }
 
-static unsigned int defMotDataNum[MGPLAYER_MOT_NUM+1] = {
+static unsigned int defMotDataNum[MGPLAYER_MOT_NUM+2] = {
     CHARMOT_HSF_c000m1_300,
     CHARMOT_HSF_c000m1_301,
     CHARMOT_HSF_c000m1_302,
