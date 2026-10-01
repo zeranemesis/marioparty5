@@ -257,3 +257,20 @@ So: when a target reloads a variable around every call, `volatile` is the lever,
 and it is worth trying on parameters, not just locals — but only on the values
 the target keeps in memory. Marking `sz` and `n` volatile as well makes things
 worse (they lose their register copies), which is how the right subset was found.
+
+## 10. Correcting a struct offset in OSMemory was not a codegen problem
+
+`__OSInitMemoryProtection` looked like the displacement-folding case of finding 5,
+but the offsets were simply wrong. The target writes the block at 0xCC004000 with
+displacements 0x20, 0x10 and 0x28, while the struct in `OSMemory.c` placed those
+fields at 0x22, 0x10 and 0x2B — a two-byte shift introduced by a padding array
+that was one element too long. `MEMIntruptHandler`, which addresses the block
+with raw `MEM_BASE + 0x1E/0x20/0x22/0x24` offsets, confirmed the real layout.
+
+Lesson: when a base pointer is folded, compare the *absolute* address first.
+`(lis 0xcc00) + 0x4020` and `(lis 0xcc00; addi 0x4000) + 0x20` look like a
+codegen difference but can be a field-offset bug, and the match percentage does
+not move when only the offsets shift. Four further encodings of the constant
+(`0xCC000000 + 0x4000`, `0xCC00 << 16`, a `(u32)` cast, raw offsets instead of
+the struct) all left the function at 84.3%, so the folding itself is still
+unexplained.

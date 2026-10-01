@@ -9,14 +9,14 @@ extern OSErrorHandler __OSErrorTable[];
 /* Layout of the memory-protection register block at 0xCC004000. */
 typedef struct {
     u8 pad10[0x10];
-    u16 unk10;
-    u8 pad1E[0x0E];
-    u16 unk1E;
-    u16 unk20;
-    u16 unk22;
-    u16 unk24;
-    u8 pad28[0x03];
-    u16 unk28;
+    u16 unk10;   /* 0x10 */
+    u8 pad12[0x0C];
+    u16 unk1E;   /* 0x1E */
+    u16 unk20;   /* 0x20 */
+    u16 unk22;   /* 0x22 */
+    u16 unk24;   /* 0x24 */
+    u8 pad26[0x02];
+    u16 unk28;   /* 0x28 */
 } MEMRegs;
 
 u32 OSGetPhysicalMemSize(void)
