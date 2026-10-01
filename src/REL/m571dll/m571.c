@@ -69,6 +69,9 @@ s32 fn_1_4B18(s32 base, s32 range);
 void fn_1_36B8(OMOBJ *obj);
 s32 fn_1_7A78(void);
 s32 fn_1_28F4(HuVecF *pos);
+void fn_1_3594(OMOBJ *obj);
+s32 fn_1_3E40(s16 id);
+void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t);
 void fn_1_3520(void);
 void fn_1_3700(OMOBJ *obj);
 void fn_1_7670(OMOBJ *obj);
@@ -337,7 +340,7 @@ s16 lbl_1_bss_C;
 s16 lbl_1_bss_E;
 s16 lbl_1_bss_10;
 s16 lbl_1_bss_12;
-u8 lbl_1_bss_14[0xC8];
+s16 lbl_1_bss_14[0x64];
 MGPLAYER *lbl_1_bss_DC[4];
 s32 lbl_1_bss_EC;
 s32 lbl_1_bss_F0[25];
@@ -1175,6 +1178,13 @@ typedef struct M571Spin_s {
     s32 score; //0x30
 } M571Spin; //0x34
 
+typedef struct M571ListNode_s {
+    s16 id; //0x00
+    s16 pad02; //0x02
+    struct M571ListNode_s *prev; //0x04
+    struct M571ListNode_s *next; //0x08
+} M571ListNode;
+
 void fn_1_27E8(OMOBJ *obj, s32 motNo, f32 speed, s32 attr)
 {
     M571Spin *spin = (M571Spin *)obj->data;
@@ -1290,4 +1300,66 @@ s32 fn_1_7A78(void)
     }
 
     return total;
+}
+
+void fn_1_3594(OMOBJ *obj)
+{
+    M571Tile *tile = (M571Tile *)obj->data;
+
+    obj->mdlId[0] = Hu3DModelLink(lbl_1_bss_14[0]);
+    Hu3DModelShadowMapSet(obj->mdlId[0]);
+    omSetTra(obj, tile->pos.x, tile->pos.y, tile->pos.z);
+    omSetRot(obj, 0.0f, (float)(frand() & 0xFF) * 1.4117647f * (20000000.0 - 4503599627370496.0), 0.0f);
+    omSetSca(obj, 1.0f, 1.0f, 1.0f);
+
+    lbl_1_bss_1C8[tile->state] = obj;
+
+    Hu3DModelAttrReset(obj->mdlId[0], 1);
+    obj->objFunc = fn_1_36B8;
+}
+
+s32 fn_1_3E40(s16 id)
+{
+    M571ListNode *node;
+
+    node = (M571ListNode *)lbl_1_bss_684[2];
+
+    while (node != NULL) {
+        if (id == node->id) {
+            M571ListNode *prev = node->prev;
+            M571ListNode *next = node->next;
+
+            prev->next = next;
+
+            if (next != NULL) {
+                next->prev = prev;
+            }
+
+            HuMemDirectFree(node);
+            return node->id;
+        }
+
+        node = node->next;
+    }
+
+    return -1;
+}
+
+void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t)
+{
+    f32 a;
+    f32 b;
+    f32 k;
+
+    if (t <= 1.0f) {
+        t = 1.0f;
+    }
+
+    a = (float)sin(3.141592653589793 * (90.0f * t) / 180.0);
+    b = (float)sin(3.141592653589793 * (90.0f * t) / 180.0);
+    k = a * b;
+
+    out->x = to->x + k * (from->x - to->x);
+    out->y = to->y + k * (from->y - to->y);
+    out->z = to->z + k * (from->z - to->z);
 }
