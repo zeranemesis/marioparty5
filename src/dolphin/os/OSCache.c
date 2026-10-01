@@ -272,25 +272,23 @@ asm void LCStoreBlocks(register void* destAddr, register void* srcTag, register 
 
 u32 LCStoreData(void* destAddr, void* srcAddr, u32 nBytes)
 {
-    u32 nPages;
-    u32 nBlocks;
     u32 left;
+    u32 nPages;
 
-    nBlocks = (nBytes + 31) >> 5;
-    nPages = (nBlocks + 0x7f) >> 7;
-    left = nBlocks;
+    left = (nBytes + 31) >> 5;
+    nPages = (left + 0x7f) >> 7;
 
     /* The DMA address space covers 4KB at a time, and the locked cache is only
        reachable in 128 block (4KB) pages. */
     while (left != 0) {
-        if (left >= 0x80) {
+        if (left < 0x80) {
+            LCStoreBlocks(destAddr, srcAddr, left);
+            left = 0;
+        } else {
             LCStoreBlocks(destAddr, srcAddr, 0);
             left -= 0x80;
             destAddr = (void*)((u8*)destAddr + 0x1000);
             srcAddr = (void*)((u8*)srcAddr + 0x1000);
-        } else {
-            LCStoreBlocks(destAddr, srcAddr, left);
-            left = 0;
         }
     }
 

@@ -37,10 +37,23 @@ FUNC_RE = re.compile(r"^([0-9a-fA-F]{8}) <([^>]+)>:$")
 INSN_RE = re.compile(r"^\s*([0-9a-f]+):\s+((?:[0-9a-fA-F]{2} )+)[ \t]*(\S+)[ \t]*(.*)$")
 RELOC_RE = re.compile(r"^\s*[0-9a-f]+:\s*R_PPC_\S+\s+(\S+)\s*$")
 TARGET_FN_RE = re.compile(r"^\.fn\s+([^,]+),")
-TARGET_INSN_RE = re.compile(r"^/\*[0-9a-fA-F ]+\*/[ \t]*(\S+)[ \t]*(.*?)\s*$")
-BRANCHES = ("b", "bc", "bcl", "bclr", "bctrl", "bcctr", "bcctrl")
+# the target's comment carries the vaddr, the file offset and the raw bytes:
+#   /* 8013C3D8 001391F8  54 A6 F6 FE */\textrwi r6, r5, 5, 25
+TARGET_INSN_RE = re.compile(r"^/\*[ \t]*[0-9a-fA-F]+[ \t]+[0-9a-fA-F]+[ \t]+((?:[0-9a-fA-F]{2} )*[0-9a-fA-F]{2})[ \t]*\*/[ \t]*(\S+)[ \t]*(.*?)\s*$")
+# `bl`/`bla` must be in here: the branch arm of canon_insn is what consumes the
+# resolved relocation, so a call whose mnemonic falls through would lose its
+# callee name and be compared as raw text.
+BRANCHES = ("b", "bc", "bcl", "bclr", "bctrl", "bcctr", "bcctrl", "bl", "bla")
 
 MEM_RE = re.compile(r"^([+-]?(?:0x[0-9a-fA-F]+|\d+))\((.+)\)$")
+
+# The two disassemblers spell the same 32-bit encoding differently: doldecomp
+# prints the architectural alias (`extrwi r6,r5,5,25`) where objdump prints the
+# raw rotate (`rlwinm r6,r5,30,27,31`), and likewise `dcbt` vs `dcbtct`.  For
+# these mnemonics the operand text carries no meaning, so we compare the raw
+# encoding instead - which is strictly stronger than comparing the mnemonic.
+AMBIGUOUS = {"rlwinm", "rotlwi", "slwi", "srwi", "clrlwi", "clrlslwi", "extrwi",
+             "dcbt", "dcbtst", "dcbtct"}
 
 # objdump and doldecomp spell the same SPR differently: objdump prints the
 # decimal SPR number, doldecomp prints its name.  The keys are *strings*
@@ -82,8 +95,11 @@ def canon_operand(operand: str) -> str:
     return ",".join(out)
 
 
-def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None) -> str:
+def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None,
+               word: int | None = None) -> str:
     operand = (operand or "").strip()
+    if mnemonic in AMBIGUOUS:
+        return f"encoding {word:08x}" if word is not None else f"{mnemonic} {operand}"
     if mnemonic in BRANCHES or mnemonic.startswith("b") and mnemonic not in (
             "bclr", "bctrl") and re.match(r"^b(c|cl|ne|eq|lt|gt|le|ge|so|ns|dnz)?$", mnemonic):
         # branch / call: a reloc gives us the real callee, otherwise local target
@@ -151,7 +167,9 @@ def parse_candidate(text: str) -> dict[str, list[str]]:
             continue
         m = INSN_RE.match(line)
         if m and current is not None:
-            funcs[current].append(canon_insn(m.group(3), m.group(4)))
+            # group(2) is the raw big-endian byte string of the instruction
+            word = int.from_bytes(bytes(int(b, 16) for b in m.group(2).split()), "big")
+            funcs[current].append(canon_insn(m.group(3), m.group(4), word=word))
             pending = (m.group(3), m.group(4))
     return funcs
 
@@ -172,7 +190,8 @@ def parse_target(text: str) -> dict[str, list[str]]:
             continue
         m = TARGET_INSN_RE.match(raw)
         if m:
-            funcs[current].append(canon_insn(m.group(1), m.group(2)))
+            word = int.from_bytes(bytes(int(b, 16) for b in m.group(1).split()), "big")
+            funcs[current].append(canon_insn(m.group(2), m.group(3), word=word))
     return funcs
 
 
@@ -241,6 +260,10 @@ def main() -> int:
         if name not in got:
             print(f"MISS  {name}")
             continue
+        # a branch back to the function's own label is a loop back-edge; objdump
+        # renders it as an address, doldecomp as the function name.
+        want[name] = [f"{i.split(' ', 1)[0]} <t>" if i.split(' ', 1)[-1] == name else i
+                      for i in want[name]]
         same, total = diff_function(name, got[name], want[name], verbose)
         pct = 100.0 * same / total if total else 100.0
         print(f"{'OK  ' if same == total else 'DIFF'} {name:<22} "
