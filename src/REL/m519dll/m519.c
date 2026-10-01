@@ -3040,9 +3040,10 @@ HuVecF fn_1_AF48(M519_SHOT *shot)
 
 void fn_1_AF64(M519_SHOT *shot)
 {
-    s32 i = 0;
+    s32 i;
     HuVecF pos = { 0.0f, 0.0f, 0.0f };
 
+    i = i;
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
         Hu3DModelPosSet(shot->modelId[i], pos.x, pos.y, pos.z);
