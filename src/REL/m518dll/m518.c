@@ -86,7 +86,7 @@ void fn_1_8E2C(M518_PLAYER *player);
 void fn_1_8FA8(M518_PLAYER *player);
 void fn_1_9014(M518_PLAYER *player);
 s16 fn_1_9080(M518_PLAYER *player, M518_CELL cell);
-s16 fn_1_9258(M518_PLAYER *player, M518_QUEUE *queue, M518_CELL cell, s16 dist, s32 dir, s16 len);
+int fn_1_9258(M518_PLAYER *player, M518_QUEUE *queue, M518_CELL cell, s16 dist, s32 dir, s16 len);
 
 M518_MAP *fn_1_9860(void);
 void fn_1_9BB0(void);
@@ -1459,6 +1459,42 @@ void fn_1_9014(M518_PLAYER *player)
             Hu3DModelAttrSet(player->modelId[i], 1);
         }
     }
+}
+
+s16 fn_1_9080(M518_PLAYER *player, M518_CELL cell)
+{
+    s16 total;
+    s32 value;
+    s32 scores[4];
+    s32 best;
+    s32 i;
+    u16 prev;
+    M518_QUEUE *queue;
+    M518_CELL next;
+
+    prev = fn_1_A268(lbl_1_bss_4DC, cell);
+    for (i = 0; i < 4; i++) {
+        queue = player->pathTry[i];
+        fn_1_DCF8(queue);
+        scores[i] = fn_1_9258(player, queue, cell, prev >> 8, i, 0);
+    }
+    best = 99;
+    for (i = 0; i < 4; i++) {
+        if (best >= scores[i] && best > 0) {
+            best = scores[i];
+            queue = player->pathTry[i];
+        }
+    }
+    fn_1_DCF8(player->path);
+    total = 0;
+    while (fn_1_DCBC(queue, &value)) {
+        fn_1_DC84(player->path, value);
+        next.x = player->cell.x + lbl_1_rodata_60[value].x;
+        next.z = player->cell.z + lbl_1_rodata_60[value].z;
+        total += fn_1_9CBC(lbl_1_bss_4DC, next);
+    }
+    fn_1_DC84(player->path, 4);
+    return total;
 }
 
 
