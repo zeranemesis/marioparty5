@@ -88,6 +88,8 @@ void fn_1_3EE4(void);
 void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out);
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 void fn_1_4EC0(OMOBJ *obj, s32 motNo);
+void fn_1_41AC(Vec *pos, Vec *up, Vec *target);
+void fn_1_4E44(OMOBJ *obj, s32 motNo, f32 start, u32 attr);
 s32 fn_1_8E08(void);
 f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3);
 void fn_1_4A54(s32 fadeSpeed);
@@ -1602,6 +1604,20 @@ s32 fn_1_4B18(s32 base, s32 range)
     return base + frandmod(range - base);
 }
 
+// NONMATCHING: struct copies expand to explicit word loads
+void fn_1_41AC(Vec *pos, Vec *up, Vec *target)
+{
+    Hu3DCameraPosSetV(1, pos, up, target);
+
+    lbl_1_bss_674[0] = pos->x;
+    lbl_1_bss_674[1] = pos->y;
+    lbl_1_bss_674[2] = pos->z;
+
+    lbl_1_bss_65C[0] = target->x;
+    lbl_1_bss_65C[1] = target->y;
+    lbl_1_bss_65C[2] = target->z;
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3)
 {
@@ -1669,6 +1685,15 @@ s32 fn_1_4C78(HuVecF *pos, s32 t0, s32 t1)
     Hu3D3Dto2D(pos, 1, &scr);
 
     return (s32)((scr.y / m571ScreenYDiv) * (t1 - t0) + t0);
+}
+
+// NONMATCHING: local register form differs from the target build
+void fn_1_4E44(OMOBJ *obj, s32 motNo, f32 start, u32 attr)
+{
+    M571Spin *spin = (M571Spin *)obj->data;
+
+    spin->pad2C = motNo;
+    Hu3DMotionShiftSet(spin->curMot, lbl_1_bss_44C[motNo], m571Zero, start, attr);
 }
 
 // NONMATCHING: register allocation differs from the target build
