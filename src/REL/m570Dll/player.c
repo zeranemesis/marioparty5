@@ -165,7 +165,7 @@ static M570DUST *gDustTbl[M570_DUST_MAX];
 static OMOBJ *gItemObj;
 static M570PLAYER *gCpuPlayer[M570_CPU_MAX];
 static M570PLAYER *gPlayer;
-static M570PLAYER *gPlayerTbl[M570_PLAYER_MAX];
+M570PLAYER *lbl_1_bss_1C4[M570_PLAYER_MAX];
 
 static void fn_1_4440(M570PLAYER *player, s16 motNo);
 static void fn_1_45E4(OMOBJ *obj);
@@ -199,6 +199,7 @@ void fn_1_5F24(s32 loop);
 f32 Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 typedef s32 (*M570MAXTIMEGET)(HU3DMODELID modelId);
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_4210(void)
 {
     OMOBJ *obj;
@@ -223,7 +224,7 @@ void fn_1_4210(void)
             gCpuPlayer[cpuCount] = player;
             cpuCount++;
         }
-        gPlayerTbl[i] = player;
+        lbl_1_bss_1C4[i] = player;
         player->tra = StartPosTbl[player->idx];
         player->rot = StartRotTbl[player->idx];
         player->state = 0;
@@ -276,6 +277,7 @@ static void fn_1_457C(OMOBJ *obj)
     omSetTra(obj, player->tra.x, player->tra.y, player->tra.z);
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 static void fn_1_45E4(OMOBJ *obj)
 {
     M570PLAYER *player = obj->data;
@@ -422,6 +424,7 @@ static void fn_1_45E4(OMOBJ *obj)
     omSetTra(obj, player->tra.x, player->tra.y, player->tra.z);
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 static void fn_1_4AC8(M570PLAYER *player)
 {
     s16 i;
@@ -471,25 +474,27 @@ static void fn_1_4CC8(M570PLAYER *player)
     fn_1_16D4(&pos);
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_4D2C(void)
 {
     s16 i;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
-        if (gPlayerTbl[i]->gotItem == 0) {
-            gPlayerTbl[i]->state = M570_MOT_READY;
-            gPlayerTbl[i]->btnNo = frandmod(M570_CPU_MAX);
+        if (lbl_1_bss_1C4[i]->gotItem == 0) {
+            lbl_1_bss_1C4[i]->state = M570_MOT_READY;
+            lbl_1_bss_1C4[i]->btnNo = frandmod(M570_CPU_MAX);
         }
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_4DC4(void)
 {
     s16 i;
     M570PLAYER *player;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
-        player = gPlayerTbl[i];
+        player = lbl_1_bss_1C4[i];
         player->state = M570_MOT_APPROACH;
         player->goal = ReadyPosTbl[player->idx];
         if (player->motNo != M570_MOT_READY) {
@@ -514,13 +519,14 @@ void fn_1_4DC4(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_4EF8(void)
 {
     s16 i;
     M570PLAYER *player;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
-        player = gPlayerTbl[i];
+        player = lbl_1_bss_1C4[i];
         if (player->grp == lbl_1_bss_52) {
             player->state = M570_MOT_RETREAT;
             player->goal = TurnPosTbl[player->idx];
@@ -547,20 +553,21 @@ void fn_1_4EF8(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5048(void)
 {
     s16 i;
 
     HuAudFXPlay(0x911);
     for (i = 0; i < M570_PLAYER_MAX; i++) {
-        if (gPlayerTbl[i]->gotItem == 0) {
+        if (lbl_1_bss_1C4[i]->gotItem == 0) {
             M570PLAYER *player;
             OMOBJ *robj;
             f32 shiftStart;
 
-            gPlayerTbl[i]->state = M570_MOT_SURPRISE;
-            gPlayerTbl[i]->timer = 0;
-            player = gPlayerTbl[i];
+            lbl_1_bss_1C4[i]->state = M570_MOT_SURPRISE;
+            lbl_1_bss_1C4[i]->timer = 0;
+            player = lbl_1_bss_1C4[i];
             if (player->motNo != M570_MOT_HOLD) {
                 robj = player->obj;
                 if (player->motNo == 5 && M570_MOT_HOLD == M570_MOT_WIN) {
@@ -581,6 +588,7 @@ void fn_1_5048(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_51A8(void)
 {
     s16 i;
@@ -588,7 +596,7 @@ void fn_1_51A8(void)
 
     HuAudFXPlay(0x912);
     for (i = 0; i < M570_PLAYER_MAX; i++) {
-        player = gPlayerTbl[i];
+        player = lbl_1_bss_1C4[i];
         if (player->gotItem == 0) {
             CharModelHookDustCreate(player->charNo, CharModelItemHookGet(player->charNo, 2, 0));
             if (fn_1_4B64(player)) {
@@ -621,14 +629,15 @@ void fn_1_51A8(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5354(void)
 {
     s16 i;
     M570PLAYER *player;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
-        if (lbl_1_bss_52 == gPlayerTbl[i]->grp) {
-            player = gPlayerTbl[i];
+        if (lbl_1_bss_52 == lbl_1_bss_1C4[i]->grp) {
+            player = lbl_1_bss_1C4[i];
             if (player->motNo != M570_MOT_RETREAT) {
                 OMOBJ *robj;
                 f32 shiftStart;
@@ -649,7 +658,7 @@ void fn_1_5354(void)
                 player->motNo = M570_MOT_RETREAT;
             }
         } else {
-            player = gPlayerTbl[i];
+            player = lbl_1_bss_1C4[i];
             if (player->motNo != M570_MOT_TURN) {
                 OMOBJ *robj;
                 f32 shiftStart;
@@ -673,6 +682,7 @@ void fn_1_5354(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 s32 fn_1_5538(void)
 {
     s16 i;
@@ -712,6 +722,7 @@ static void fn_1_558C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_56A0(void)
 {
     OMOBJ *obj;
@@ -747,6 +758,7 @@ static void fn_1_5820(s16 motNo)
     Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[motNo], kZero, kTen, ((s32 *)&attr)[motNo]);
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 static void fn_1_58EC(OMOBJ *obj)
 {
     M570DUST *dust = obj->data;
@@ -787,6 +799,7 @@ static void fn_1_58EC(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5A78(void)
 {
     OMOBJ *obj;
@@ -834,6 +847,7 @@ void fn_1_5A78(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5D74(void)
 {
     s16 i;
@@ -843,6 +857,7 @@ void fn_1_5D74(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5DB8(void)
 {
     s16 i;
@@ -853,6 +868,7 @@ void fn_1_5DB8(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5E38(void)
 {
     s16 i;
@@ -867,6 +883,7 @@ void fn_1_5E38(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5F24(s32 loop)
 {
     s16 i;

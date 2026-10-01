@@ -48,6 +48,7 @@ typedef struct m570Dust_s {
 
 extern HUPROCESS *lbl_1_bss_108;
 extern s16 lbl_1_bss_52;
+extern M570PLAYER *lbl_1_bss_1C4[];
 
 /* m570.c */
 s32 fn_1_17DC(HuVecF *pos);

@@ -7,6 +7,9 @@
 #include "game/sprite.h"
 #include "game/audio.h"
 #include "game/esprite.h"
+#include "game/gamemes.h"
+#include "game/gamework.h"
+#include "game/flag.h"
 
 #include "dolphin/mtx.h"
 
@@ -191,7 +194,7 @@ static s32 lbl_1_bss_8;
 static s32 lbl_1_bss_C[8];
 static s16 lbl_1_bss_2C[5];
 static s16 lbl_1_bss_36[5];
-static s16 lbl_1_bss_40;
+static HUSPRGRPID lbl_1_bss_40;
 static s16 lbl_1_bss_42;
 static s32 lbl_1_bss_44;
 static s32 lbl_1_bss_48;
@@ -282,6 +285,47 @@ void fn_1_1038(void)
     MgTimerModeOnSet(lbl_1_bss_9C, 1);
 }
 
+void fn_1_1098(void)
+{
+    s16 winner[M570_PLAYER_MAX];
+    s32 i;
+
+    for (i = 0; i < M570_PLAYER_MAX; i++) {
+        winner[i] = -1;
+        if (lbl_1_bss_52 == lbl_1_bss_1C4[i]->grp) {
+            winner[i] = lbl_1_bss_1C4[i]->charNo;
+            if (!_CheckFlag(0x1000F)) {
+                /* The unit stores the mini-game score word at offset 0x2C of GWPLAYER. */
+*(s16 *)((s8 *)&GwPlayer[i] + 0x2C) = 10;
+            }
+        }
+    }
+    MgSeqWinnerSet(winner[0], winner[1], winner[2], winner[3]);
+}
+
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
+void fn_1_1174(void)
+{
+    HUSPRGRPID esp;
+    s32 i;
+
+    lbl_1_bss_40 = MgScoreWinCreate(0x84, 0x28);
+    MgScoreWinPosSet(lbl_1_bss_40, kShadowZ, kShadowRange);
+    MgScoreWinDispSet(lbl_1_bss_40, FALSE);
+    for (i = 0; i < 5; i++) {
+        esp = espEntry(gSeTableC[i], 0x20, 0);
+        espDrawNoSet(esp, 0);
+        espPosSet(esp, gCamTarget[i], kShadowRange);
+        espDispOff(esp);
+        lbl_1_bss_2C[i] = esp;
+        esp = espEntry(gSeTableB[i], 0x10, 0);
+        espDrawNoSet(esp, 0);
+        espPosSet(esp, gCamTarget[i], kShadowRange);
+        espDispOff(esp);
+        lbl_1_bss_36[i] = esp;
+    }
+}
+
 void fn_1_12F0(void)
 {
     s32 i;
@@ -292,9 +336,58 @@ void fn_1_12F0(void)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
+static void fn_1_1354(OMOBJ *obj)
+{
+    f32 tpLvl;
+    s32 i;
+
+    obj->work[0]++;
+    tpLvl = kOne - (f32)((f64)obj->work[0] + gTwoPowM1022 - gTwoPowM1022) * kShadowAlpha;
+    MgScoreWinTPLvlSet(lbl_1_bss_40, tpLvl);
+    for (i = 0; i < 5; i++) {
+        espTPLvlSet(lbl_1_bss_2C[i], tpLvl);
+        espTPLvlSet(lbl_1_bss_36[i], tpLvl);
+    }
+    if (obj->work[0] == 20) {
+        omDelObjEx(lbl_1_bss_108, obj);
+    }
+}
+
 void fn_1_1464(void)
 {
     omAddObjEx(lbl_1_bss_108, 0x1300, 0, 0, OM_OBJ_NONE, fn_1_1354);
+}
+
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
+static void fn_1_14A8(OMOBJ *obj)
+{
+    HUSPRGRPID espId;
+    f32 t;
+    f32 scale;
+
+    espId = (HUSPRGRPID)obj->work[0];
+    if (obj->work[1] == 0) {
+        espDispOn(espId);
+    }
+    t = (f32)sin((f64)((f32)((f64)obj->work[1] + gTwoPowM1022 - gTwoPowM1022) * k90 /
+                          kShadowNear * gPi / gD180));
+    scale = kOne + (kShadowAngle - kShadowAngle * t);
+    espScaleSet(espId, scale, scale);
+    espTPLvlSet(espId, t);
+    obj->work[1]++;
+    if (obj->work[1] > 60) {
+        omDelObjEx(lbl_1_bss_108, obj);
+    }
+}
+
+void fn_1_15FC(s32 idx)
+{
+    OMOBJ *obj;
+
+    obj = omAddObjEx(lbl_1_bss_108, 0x1300, 0, 0, OM_OBJ_NONE, fn_1_14A8);
+    obj->work[0] = lbl_1_bss_36[idx];
+    obj->work[1] = 0;
 }
 
 static void fn_1_1674(OMOBJ *obj)
@@ -340,15 +433,6 @@ void fn_1_1864(HuVecF *pos, s16 seId)
     HuAudFXPlayPan(seId, pan);
 }
 
-void fn_1_15FC(s32 idx)
-{
-    OMOBJ *obj;
-
-    obj = omAddObjEx(lbl_1_bss_108, 0x1300, 0, 0, OM_OBJ_NONE, fn_1_14A8);
-    obj->work[0] = lbl_1_bss_36[idx];
-    obj->work[1] = 0;
-}
-
 void fn_1_1910(void)
 {
     lbl_1_bss_108 = omInitObjMan(200, 0x1000);
@@ -364,6 +448,7 @@ void fn_1_1A50(M570CAM *cam)
     Hu3DCameraPosSetV(cam->camNo, &cam->pos, &cam->up, &cam->target);
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_1AA0(M570LIGHT *light)
 {
     HU3DLIGHTID lightId;
@@ -373,6 +458,7 @@ void fn_1_1AA0(M570LIGHT *light)
     Hu3DGLightInfinitytSet(lightId);
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_1F74(M570CAM *cam)
 {
     OMOBJ *obj;
@@ -392,6 +478,7 @@ void fn_1_2020(s32 *src)
     }
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 s32 fn_1_3B40(HuVecF *pos, HuVecF *goal, HuVecF *angle, f32 step, const f32 *tbl)
 {
     HuVecF dir;
@@ -415,6 +502,7 @@ s32 fn_1_3B40(HuVecF *pos, HuVecF *goal, HuVecF *angle, f32 step, const f32 *tbl
     return 0;
 }
 
+// NONMATCHING: instruction scheduling and register allocation differ from the original build
 f32 fn_1_3C64(const f32 *tbl, f32 val, f32 min, f32 max)
 {
     f32 diff;
