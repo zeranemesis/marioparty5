@@ -271,6 +271,13 @@ void fn_1_A0(void)
     }
 }
 
+// NONMATCHING: body not yet decompiled. The per-player swing/runner update is
+// 21212 bytes (0x52DC) of the 50944-byte unit -- 64% of everything still
+// missing -- and the m2c draft is 1418 lines with 23 M2C_ERROR sites. It is
+// also the only caller of sqrtf() and fabs() in the module: our object emits
+// neither symbol today (only sqrtf's _half/_three local statics), while the
+// target has real sqrtf at .text:0xC62C and fabs at .text:0xC6F8. Writing this
+// body is what will bring sqrtf/fabs in.
 static void fn_1_654(OMOBJ *obj)
 {
 }
@@ -290,6 +297,13 @@ static float fn_1_5930(float t, float a, float b, float c)
 /* Per-frame minigame logic: rebuilds the ground profile from the feet of the
    runners, drives the scripted camera moves for the current timer state, and
    spawns/advances the spark (M525Fx) particles. */
+// NONMATCHING: 16.34%. The emitted row count equals the target exactly
+// (1912 = 1912) and the instruction sequence is identical block for block, so
+// the logic is right; what is left is codegen. The target frame is 0x1a0 with
+// _savegpr_26 and the player[4] array at 0x60(r1); ours is 0x190/_savegpr_24
+// with the array at 0x30(r1). The target keeps one more spilled double and two
+// more callee-saved GPRs live than the declarations here account for, and the
+// surviving differences are that frame offset plus r0/r3/r4 temp naming.
 static void fn_1_5AF4(OMOBJ *obj)
 {
     M525Player *player[4];
@@ -1029,6 +1043,13 @@ static void fn_1_889C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: 73.37%, and the remaining 326 differing rows are 290 pure
+// register renames plus 36 stack-slot placements, not logic. The renames are
+// the r0-vs-r3/r4/r5 choice for the mdlNo*2 index and the rodata address
+// scratch; declaration order, register hints and splitting have all been tried
+// and none moved it. The 36 real ones are the local swingCopy landing at
+// 0x1c(r1) instead of 0x8(r1) (the target copies lbl_1_bss_339C into a local
+// then memsets 0x14 bytes of it before the field writes).
 static void fn_1_A690(OMOBJ *obj)
 {
     s32 mdlNo;
