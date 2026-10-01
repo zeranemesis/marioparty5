@@ -72,10 +72,10 @@ void fn_1_B898(InputMain *main)
 
 void fn_1_B8D8(InputMain *main)
 {
-    s32 absStkX;
-    s32 absStkY;
-    s32 stkXv;
-    s32 stkYv;
+    register s32 absStkX;
+    register s32 stkXv;
+    register s32 absStkY;
+    register s32 stkYv;
 
     if (main->work.type != 0) {
         fn_1_BC84(&main->work);
@@ -87,8 +87,9 @@ void fn_1_B8D8(InputMain *main)
     main->btnRep = HuPadBtnRep[main->padId];
 
     main->stkX = HuPadStkX[main->padId];
-    absStkX = main->stkX;
-    if (main->stkX < 0) {
+    if (main->stkX >= 0) {
+        absStkX = main->stkX;
+    } else {
         absStkX = -main->stkX;
     }
     if (absStkX < 10) {
@@ -99,8 +100,9 @@ void fn_1_B8D8(InputMain *main)
     main->stkX = stkXv;
 
     main->stkY = HuPadStkY[main->padId];
-    absStkY = main->stkY;
-    if (main->stkY < 0) {
+    if (main->stkY >= 0) {
+        absStkY = main->stkY;
+    } else {
         absStkY = -main->stkY;
     }
     if (absStkY < 10) {
@@ -153,7 +155,7 @@ void fn_1_BAC4(InputWork *work, InputMain *main)
         case 2:
             table = lbl_1_data_2E74;
             break;
-        default:
+        case 3:
             table = lbl_1_data_2EB0;
             break;
     }
