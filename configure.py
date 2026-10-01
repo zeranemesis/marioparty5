@@ -1202,7 +1202,7 @@ config.libs = [
             Object(NonMatching, "REL/m521Dll/clock.cpp"),
             Object(Matching, "REL/m521Dll/clockhand.cpp"),
             Object(NonMatching, "REL/m521Dll/m521.cpp"),
-            Object(NonMatching, "REL/m521Dll/debugline.cpp"),
+            Object(Matching, "REL/m521Dll/debugline.cpp"),
             Object(NonMatching, "REL/m521Dll/driver.cpp"),
             Object(NonMatching, "REL/m521Dll/gamemaster.cpp"),
             Object(Matching, "REL/m521Dll/objectsetup.cpp"),
