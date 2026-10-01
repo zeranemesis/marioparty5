@@ -88,6 +88,7 @@ void fn_1_3EE4(void);
 void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out);
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 void fn_1_4EC0(OMOBJ *obj, s32 motNo);
+HU3DMODELID fn_1_3F3C(s32 playerNo);
 void fn_1_41AC(Vec *pos, Vec *up, Vec *target);
 void fn_1_4E44(OMOBJ *obj, s32 motNo, f32 start, u32 attr);
 s32 fn_1_8E08(void);
@@ -1576,6 +1577,28 @@ void fn_1_3EE4(void)
         lbl_1_bss_47C[i].val = 0;
         lbl_1_bss_47C[i].flag = -1;
     }
+}
+
+// NONMATCHING: local index/register form differs from the target build
+HU3DMODELID fn_1_3F3C(s32 playerNo)
+{
+    s32 i;
+
+    for (i = 0; i < 0x20; i++) {
+        if (lbl_1_bss_47C[i].val == playerNo) {
+            return Hu3DModelLink(lbl_1_bss_47C[i].flag);
+        }
+    }
+
+    for (i = 0; i < 0x20; i++) {
+        if (lbl_1_bss_47C[i].val == 0) {
+            lbl_1_bss_47C[i].val = playerNo;
+            lbl_1_bss_47C[i].flag = Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, 0x1000, 2));
+            return Hu3DModelLink(lbl_1_bss_47C[i].flag);
+        }
+    }
+
+    return Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, 0x1000, 2));
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
