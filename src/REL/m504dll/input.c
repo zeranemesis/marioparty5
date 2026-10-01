@@ -4,20 +4,24 @@
 typedef struct InputWork_s {
     struct InputMain_s *main;
     s32 unk4;
-    s32 unk8;
-    void *dataTable;
-    s32 unk10;
-    s16 charNo;
-    s16 type;
+    void **dataTable;
+    s32 unkC;
+    s32 type;
+    u16 dif;
+    u8 unk18[14];
 } InputWork;
 
+typedef struct PadOwner_s {
+    struct PadOwner_s *unk0;
+    s32 playerNo;
+} PadOwner;
+
 typedef struct InputMain_s {
-    GWPLAYERCONF *playerConf;
+    PadOwner *playerConf;
     InputWork work;
-    s32 pad1[3];
     s32 padId;
-    u16 btn;
-    u16 btnDown;
+    s32 btn;
+    s32 btnDown;
     s8 stkX;
     s8 stkY;
     u16 btnRep;
@@ -27,7 +31,6 @@ typedef struct InputMain_s {
     u8 trigR;
     u8 dStk;
     u8 dStkRep;
-    s8 pad2[6];
 } InputMain;
 
 extern GWPLAYERCONF GwPlayerConf[];
@@ -43,17 +46,17 @@ extern u8 HuPadTrigR[];
 extern u8 HuPadDStk[];
 extern u8 HuPadDStkRep[];
 
-extern void *lbl_1_data_2E14;
-extern void *lbl_1_data_2E38;
-extern void *lbl_1_data_2E74;
-extern void *lbl_1_data_2EB0;
-extern void **lbl_1_data_4134;
+extern void *lbl_1_data_2E14[];
+extern void *lbl_1_data_2E38[];
+extern void *lbl_1_data_2E74[];
+extern void *lbl_1_data_2EB0[];
+extern u8 *lbl_1_data_4134[];
 
 extern void fn_1_BC54(InputWork *work);
 extern void fn_1_BC84(InputWork *work);
 void fn_1_BAC4(InputWork *work, InputMain *main);
 
-void fn_1_B828(InputMain *main, s32 padNo, GWPLAYERCONF *playerConf)
+void fn_1_B828(InputMain *main, s32 padNo, PadOwner *playerConf)
 {
     memset(main, 0, sizeof(InputMain));
     main->playerConf = playerConf;
@@ -69,104 +72,93 @@ void fn_1_B898(InputMain *main)
 
 void fn_1_B8D8(InputMain *main)
 {
-    s32 padId;
-    s8 stkX;
-    s8 stkY;
-    s8 absStkX;
-    s8 absStkY;
+    s32 absStkX;
+    s32 absStkY;
+    s32 stk;
 
-    if (main->work.unk4 != 0) {
+    if (main->work.type != 0) {
         fn_1_BC84(&main->work);
         return;
     }
 
-    padId = main->padId;
-    main->btn = HuPadBtn[padId];
-    main->btnDown = HuPadBtnDown[padId];
-    main->btnRep = HuPadBtnRep[padId];
+    main->btn = HuPadBtn[main->padId];
+    main->btnDown = HuPadBtnDown[main->padId];
+    main->btnRep = HuPadBtnRep[main->padId];
 
-    stkX = HuPadStkX[padId];
-    if (stkX < 0) {
-        absStkX = -stkX;
-    } else {
-        absStkX = stkX;
+    main->stkX = HuPadStkX[main->padId];
+    absStkX = main->stkX;
+    if (absStkX < 0) {
+        absStkX = -main->stkX;
     }
     if (absStkX >= 10) {
-        main->stkX = stkX;
+        stk = main->stkX;
     } else {
-        main->stkX = 0;
+        stk = 0;
     }
+    main->stkX = stk;
 
-    stkY = HuPadStkY[padId];
-    if (stkY < 0) {
-        absStkY = -stkY;
-    } else {
-        absStkY = stkY;
+    main->stkY = HuPadStkY[main->padId];
+    absStkY = main->stkY;
+    if (absStkY < 0) {
+        absStkY = -main->stkY;
     }
     if (absStkY >= 10) {
-        main->stkY = stkY;
+        stk = main->stkY;
     } else {
-        main->stkY = 0;
+        stk = 0;
     }
+    main->stkY = stk;
 
-    main->subStkX = HuPadSubStkX[padId];
-    main->subStkY = HuPadSubStkY[padId];
-    main->trigL = HuPadTrigL[padId];
-    main->trigR = HuPadTrigR[padId];
-    main->dStk = HuPadDStk[padId];
-    main->dStkRep = HuPadDStkRep[padId];
+    main->subStkX = HuPadSubStkX[main->padId];
+    main->subStkY = HuPadSubStkY[main->padId];
+    main->trigL = HuPadTrigL[main->padId];
+    main->trigR = HuPadTrigR[main->padId];
+    main->dStk = HuPadDStk[main->padId];
+    main->dStkRep = HuPadDStkRep[main->padId];
 }
 
 void fn_1_BAC4(InputWork *work, InputMain *main)
 {
-    GWPLAYERCONF *playerConf;
-    s32 playerIdx;
-    GWPLAYERCONF *conf;
-    s16 type;
-    s16 workType;
-    void **ptr;
-    u16 *target;
+    s32 playerNo;
+    s32 dif;
+    s32 i;
+    void **table;
+
+    playerNo = main->playerConf->unk0->playerNo;
 
     memset(work, 0, 0x24);
     work->main = main;
 
-    playerConf = main->playerConf;
-    playerIdx = playerConf->dif;
-    conf = &GwPlayerConf[playerIdx];
+    work->type = GwPlayerConf[playerNo].type;
 
-    work->charNo = conf->charNo;
-
-    type = conf->dif;
-    if (type == 3) {
-        workType = 0;
-    } else if (type == 2) {
-        workType = 1;
-    } else if (type == 1) {
-        workType = 2;
+    if (GwPlayerConf[playerNo].dif == 3) {
+        dif = 0;
+    } else if (GwPlayerConf[playerNo].dif == 2) {
+        dif = 1;
+    } else if (GwPlayerConf[playerNo].dif == 1) {
+        dif = 2;
     } else {
-        workType = 3;
+        dif = 3;
     }
-    work->type = workType;
+    work->dif = dif;
 
-    switch (workType) {
+    switch (work->dif) {
         case 0:
-            work->dataTable = &lbl_1_data_2E14;
+            table = lbl_1_data_2E14;
             break;
         case 1:
-            work->dataTable = &lbl_1_data_2E38;
+            table = lbl_1_data_2E38;
             break;
         case 2:
-            work->dataTable = &lbl_1_data_2E74;
+            table = lbl_1_data_2E74;
             break;
-        case 3:
-            work->dataTable = &lbl_1_data_2EB0;
+        default:
+            table = lbl_1_data_2EB0;
             break;
     }
+    work->dataTable = table;
 
-    ptr = lbl_1_data_4134;
-    while (*ptr != NULL) {
-        target = (u16 *)*ptr + 5;
-        *target = 0;
-        ptr++;
+    for (i = 0; lbl_1_data_4134[i] != NULL; i++) {
+        *(u16 *)(lbl_1_data_4134[i] + 0xA) = 0;
     }
 }
