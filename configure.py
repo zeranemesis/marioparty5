@@ -1378,7 +1378,7 @@ config.libs = [
         "m539Dll",
         objects={
             Object(NonMatching, "REL/m539Dll/m539.cpp"),
-            Object(NonMatching, "REL/m539Dll/input.cpp"),
+            Object(Equivalent, "REL/m539Dll/input.cpp"),
             Object(NonMatching, "REL/m539Dll/drum.cpp"),
             Object(NonMatching, "REL/m539Dll/game_master.cpp"),
             Object(NonMatching, "REL/m539Dll/heiho.cpp"),
