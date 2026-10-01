@@ -1752,8 +1752,7 @@ void fn_1_4E18(M519_MECH *mech)
                     dx = target->pos.x - mech->pos.x;
                     dz = target->pos.z - mech->pos.z;
                     tC = HuMagPoint2D(dx, dz);
-                    dist = tC;
-                    distSum += dist;
+                    distSum += tC;
                     angle = (180.0 + HuAtan(mech->pos.x - target->pos.x, mech->pos.z - target->pos.z)) - mech->rot.y;
                     if (angle < 0.0f) {
                         angle = 360.0f + angle;
