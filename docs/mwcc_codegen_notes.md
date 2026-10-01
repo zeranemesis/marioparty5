@@ -178,3 +178,62 @@ matched while the prologue still saved 3 registers against the target's 7.
 Treat "the base is materialised once and reused" as a property to check in
 the target prologue (`stmw r25` = 7 saved) rather than something to force
 from the source.
+
+## 6. DCE on an unused call parameter (OSMemory)
+
+`MEMIntrruptHandler` computes `flags` and passes it to the error handler, but the
+target never uses it afterwards, so the current compiler keeps a dead store that
+MWCC removed:
+
+```
+rlwimi r0, r4, 0x1f, 0x1f, 0x1f     ; flags (kept in the target)
+add    r5, r5, r6
+```
+
+Rewriting the call so the value has to survive (`__OSErrorHandler(..., flags)`
+instead of a local that is dropped) restores both instructions. When a target
+keeps a computed value that "cannot matter", the value must be reaching the
+callee through a real argument rather than through dead local storage.
+
+## 7. Pointers are 4 bytes wide inside struct layout (MWCC 2.3.3 / GC 1.2.5n)
+
+This is the big one. In struct layout this compiler gives every pointer member a
+size of **4**, while the generated code still handles pointers as full 64-bit
+values. Struct fields therefore overlap:
+
+```c
+typedef struct OSStopwatch {   /* sizeof == 0x2C */
+    char* name;   /* 0x00, next member starts at 0x04! */
+    u32    hits;  /* 0x04 */
+    OSTime total; /* 0x08 */
+    OSTime min;   /* 0x10 */
+    OSTime max;   /* 0x18 */
+    OSTime last;  /* 0x20 */
+    BOOL   running; /* 0x28 */
+} OSStopwatch;
+```
+
+Verified directly with `mwcceppc.exe` (GC/1.2.5n) on a probe file: `hits` lands at
+0x04 behind a `char*`, and a struct `{char* name; void* other; u32 hits;}` puts
+`other` at 0x04 and `hits` at 0x08. `s64` members keep their 8-byte alignment, so
+only pointer-then-small-field sequences are affected.
+
+Consequences for this repo:
+
+- Structs copied from `extern/aurora` (compiled by a host 64-bit compiler) have
+  the wrong offsets and must be corrected field by field against the target
+  before the unit can match.
+- Field *order* must be reproduced verbatim; "fixing" the overlap (padding the
+  pointer out to 8 bytes) silently changes every following offset.
+- Every access still uses 32-bit `lwz`/`stw`: the game only ever needs the low
+  half of a pointer, which is why this layout has never been noticed.
+
+## 8. String pools are padded to 4 bytes per literal, and the section to 8
+
+MWCC emits each string literal padded up to a 4-byte boundary into a single
+`.data` pool, and references them as one base symbol plus an immediate offset
+(`lis r4, pool@ha` / `addi r29, r4, pool@l` / `addi r3, r29, 0x38`). The pool's
+size is *not* rounded up to the section alignment: a pool whose literals end at
+0x71 gives a 0x71-byte section, while the target has 0x78. Spelling the trailing
+padding out inside the last literal (`"...\n\0\0\0\0\0\0\0"`) reproduces the
+target's section size byte for byte.
