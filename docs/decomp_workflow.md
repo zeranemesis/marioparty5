@@ -168,3 +168,31 @@ fonctions écrites. `unit_status.py` compile toutes les sources : une unité
 3. Avance rapide de `main`, push.
 4. `python tools/avancement.py`, commit de `docs/avancement.md`.
 5. `git worktree remove` et suppression de la branche.
+
+## Piège : les sources décompilées non suivies sont fragiles
+
+Un nettoyage d'arbre de travail (`tools/new_worktree.py`, `git stash`, puis
+`git clean`) supprime **tous les fichiers non suivis par git**. Les sources
+qu'on vient d'écrire sont précisément dans ce cas : tant qu'elles ne sont pas
+commitées, elles n'existent que sur le disque.
+
+Concrètement, une session a perdu dans l'ordre `OSThread.c`, `OSInterrupt.c`,
+`OSContext.c`, `OSError.c`, `OSMemory.c`, `OSTime.c`, `OSStopwatch.c`,
+`OSCache.c`, `__start.c`, ainsi que les outils de scratch non suivis
+(`probediff.py`, `mwccprobe.py`, `_splice.py`, `_batch.py`, `_bytes.py`).
+
+Conséquences pratiques :
+
+- **Écrire le fichier, puis `ls -la` pour confirmer qu'il est sur disque** avant
+  de continuer. Un `write_file` qui semble réussir peut être suivi d'un nettoyage
+  par un autre agent ou un autre thread.
+- **Commiter dès qu'une unité compile**, même si elle n'est pas encore à 100 %.
+  Le désassemblage de référence (`build/GP5E01_00/asm/dolphin/os/*.s`) est suivi
+  par git et survit : on peut toujours reconstruire, c'est long mais possible.
+- **Reconstruire depuis le `.s`, pas depuis la mémoire.** Le désassemblage
+  contient tout : l'ordre des fonctions, le placement du pool de chaînes, les
+  décalages de structure, les constantes.
+- Ne pas compter sur `orig/` comme sauvegarde : ce répertoire est lui aussi non
+  suivi.
+- Les outils de scratch sont aussi des sources à protéger. Les reconstruire à
+  partir de ce document est possible, mais coûte une session.
