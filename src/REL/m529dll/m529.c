@@ -29,7 +29,6 @@ typedef struct M529Score_s {
     s16 unk12;
     s32 unk14;
     float unk18;
-    s32 unk1C;
 } M529Score;
 
 typedef struct M529Player_s {
@@ -98,7 +97,7 @@ typedef struct M529ModelCacheEntry_s {
     s16 pad2;
 } M529ModelCacheEntry;
 
-float Hu3DMotionMaxTimeGet(HU3DMODELID modelId, s16 (*clusterMaxTimeTable)[10]);
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 void ObjectSetup(void);
 void fn_1_5E0(OMOBJ *obj);
@@ -869,7 +868,7 @@ void fn_1_1C8C(OMOBJ *obj)
     Hu3DModelShadowMapSet(lbl_1_bss_EC[0]);
     Hu3DModelPosSet(lbl_1_bss_EC[0], lbl_1_data_100.x, lbl_1_data_100.y, lbl_1_data_100.z);
     Hu3DModelRotSet(lbl_1_bss_EC[0], 0.0f, 0.0f, 0.0f);
-    lbl_1_bss_2C = Hu3DMotionMaxTimeGet(lbl_1_bss_EC[0], (s16 (*)[10]) lbl_1_bss_EC);
+    lbl_1_bss_2C = Hu3DMotionMaxTimeGet(lbl_1_bss_EC[0]);
     lbl_1_bss_E4 = 0;
     lbl_1_bss_E0 = lbl_1_bss_2C;
     lbl_1_bss_D8 = Hu3DJointMotion(lbl_1_bss_EC[0], HuDataSelHeapReadNum(0x57000B, HU_MEMNUM_OVL, HEAP_MODEL));
@@ -1429,7 +1428,7 @@ void fn_1_4780(OMOBJ *obj)
         if (temp_r31->unk68 >= 2.0f) {
             temp_r31->unk68 = 2.0f;
         }
-        temp_r31->unk70 = (1.0f + Hu3DMotionMaxTimeGet(lbl_1_bss_EC[var_r29], (s16 (*)[10]) lbl_1_bss_EC)) / temp_r31->unk68;
+        temp_r31->unk70 = (1.0f + Hu3DMotionMaxTimeGet(lbl_1_bss_EC[var_r29])) / temp_r31->unk68;
         temp_r31->unk50 = temp_r31->unk70 / 2 - 1;
         temp_r31->unk64 = 0;
         temp_r31->unk58 = 1;
