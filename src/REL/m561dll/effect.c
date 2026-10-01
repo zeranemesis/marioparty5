@@ -80,3 +80,53 @@ void fn_1_8BCC(s16 arg0, Vec *arg1)
 
     lbl_1_data_5A0.colorStart.a = 0xFF;
 }
+
+// NONMATCHING: 166/166 instruction rows, all offsets correct; differs only in
+// register allocation (r27..r31 vs r28..r32) and in cmplwi-vs-cmplw lowering of
+// the NULL tests, which MWCC emits differently for this local ordering.
+void fn_1_9200(void)
+{
+    s16 i;
+    ANIMDATA *anim;
+    M561Hu3DParm *parm;
+    s16 j;
+
+    anim = NULL;
+
+    for (i = 0; i < 16; i++) {
+        if (Hu3DCamera[i].fov == -1.0f) {
+            continue;
+        }
+
+        if (lbl_1_bss_2E0[i] != -1) {
+            parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
+            if (parm->unk44 != NULL) {
+                anim = parm->unk44;
+                continue;
+            }
+        }
+
+        if (anim == NULL) {
+            anim = HuSprAnimRead(HuDataSelHeapReadNum(0x8E, 0x1000, 2));
+        }
+
+        lbl_1_bss_2E0[i] = Hu3DParticleCreate(anim, 0x96);
+        Hu3DModelLayerSet(lbl_1_bss_2E0[i], 5);
+        Hu3DParticleHookSet(lbl_1_bss_2E0[i], fn_1_9688);
+        Hu3DModelCameraSet(lbl_1_bss_2E0[i], 1 << i);
+
+        if (lbl_1_bss_300 == NULL) {
+            lbl_1_bss_300 = HuMemDirectMallocNum(HEAP_HEAP, 0x20D0, 0x1000);
+        }
+
+        Hu3DParticleBlendModeSet(lbl_1_bss_2E0[i], 0);
+
+        parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
+        parm->unk44 = lbl_1_bss_300;
+        parm->unk34 = 1;
+
+        for (j = 0; j < parm->dataCnt; j++) {
+            parm->data[j].unk2C = 0.0f;
+        }
+    }
+}
