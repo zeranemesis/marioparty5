@@ -973,8 +973,7 @@ loop_11:
         return 1;
     }
     if ((var_r30 != (s32) temp_r29->unk14.i) && ((temp_r31 = lbl_1_bss_3A8[var_r30]->data, ((arg1 == (s32) temp_r31->unk5C.i) != 0)) || (arg1 == (s32) temp_r31->unk60.i))) {
-        M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-        if ((f32) fabs(temp_r29->unk38.i - temp_r31->unk38.i) == 150.0f) {
+        if (fabs((f32) (temp_r29->unk38.f - temp_r31->unk38.f)) > 150.0f) {
             return 0;
         }
     }
@@ -2143,12 +2142,11 @@ s32 fn_1_51AC(Point3d *arg0, f32 farg0) {
     sp10 = lbl_1_bss_6B0.y + (temp_f28 * (lbl_1_bss_6A4.y - lbl_1_bss_6B0.y));
     sp14 = lbl_1_bss_6B0.z + (temp_f28 * (lbl_1_bss_6A4.z - lbl_1_bss_6B0.z));
     Hu3DCameraPosSetV(1, (Point3d *) &sp18, sp8, (Point3d *) &spC);
-    M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-    if (farg0 == 1.0f) {
-        return 1;
+    if (1.0f <= farg0) {
+        lbl_1_bss_5D4 = 1;
+        return 0;
     }
-    lbl_1_bss_5D4 = 1;
-    return 0;
+    return 1;
 }
 
 s32 fn_1_54E0(Point3d *arg0, f32 farg0) {
@@ -2193,12 +2191,11 @@ loop_6:
         var_r31 += 1;
         goto loop_6;
     }
-    M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-    if (farg0 == 1.0f) {
-        return 1;
+    if (1.0f <= farg0) {
+        lbl_1_bss_5D4 = 1;
+        return 0;
     }
-    lbl_1_bss_5D4 = 1;
-    return 0;
+    return 1;
 }
 
 f32 fn_1_58C4(f32 farg0, f32 farg1, f32 farg2) {
@@ -3213,16 +3210,14 @@ loop_15:
                         temp_r4 = &lbl_1_bss_43C[var_r31];
                         temp_f1 = *temp_r4 + 0.2f;
                         *temp_r4 = temp_f1;
-                        M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                        if (temp_f1 == 1.8f) {
+                        if (temp_f1 < 1.8f) {
                             lbl_1_bss_43C[var_r31] = 1.8f;
                         }
                     } else {
                         temp_r4_2 = &lbl_1_bss_43C[var_r31];
                         temp_f1_2 = *temp_r4_2 - 0.1f;
                         *temp_r4_2 = temp_f1_2;
-                        M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-                        if (temp_f1_2 == 1.0f) {
+                        if (temp_f1_2 > 1.0f) {
                             lbl_1_bss_43C[var_r31] = 1.0f;
                         }
                     }
