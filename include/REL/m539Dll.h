@@ -18,6 +18,8 @@ void PSVECNormalize(Vec *v, Vec *dst);
 void PSVECScale(const Vec *src, Vec *dst, f32 scale);
 f32 PSVECMag(const Vec *v);
 double atan2(double y, double x);
+double sin(double x);
+double cos(double x);
 
 typedef struct M539Heiho_s {
     s32 curIdx;
@@ -31,7 +33,6 @@ typedef struct M539Heiho_s {
     s32 pathCount;
 } M539Heiho;
 
-s32 fn_1_4AE0(void);
 void fn_1_C8(void *ptr);
 void fn_1_558C(void *self, s32 prio);
 void fn_1_5608(void *self, s16 arg);
