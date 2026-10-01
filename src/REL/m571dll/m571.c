@@ -76,6 +76,7 @@ void fn_1_8654(OMOBJ *obj);
 s32 fn_1_4B18(s32 base, s32 range);
 void fn_1_36B8(OMOBJ *obj);
 void fn_1_4F20(OMOBJ *obj);
+void fn_1_50A8(OMOBJ *obj);
 s32 fn_1_7A78(void);
 s32 fn_1_28F4(HuVecF *pos);
 void fn_1_3594(OMOBJ *obj);
@@ -119,7 +120,10 @@ typedef struct M571Grid_s {
 } M571Grid;
 
 typedef struct M571Player_s {
-    s32 unk0; //0x0 player number (mirror of obj->work[0])
+    union {
+        s32 playerNo; //0x0 player number (mirror of obj->work[0])
+        s16 modelId; //0x0 character model read by the hook helpers
+    } unk0;
     s32 unk4; //0x4
     s32 unk8; //0x8
     s32 unkC; //0xC
@@ -145,7 +149,10 @@ typedef struct M571Player_s {
     s32 unk60; //0x60
     Vec unk64; //0x64
     s32 unk70; //0x70
-    s32 unk74; //0x74
+    union {
+        s32 padY; //0x74 stack Y handed to MgPlayerPadSet
+        f32 hookAngle; //0x74 degrees written by the hook swap
+    } unk74;
     s32 unk78; //0x78
     s32 hookCycle; //0x7C counter cycling 0..2 over the hook swap
     s32 unk80; //0x80
@@ -667,16 +674,16 @@ void fn_1_BF4(OMOBJ *obj)
     M571Player *p = (M571Player *)obj->data;
     s32 val;
 
-    p->unk0 = obj->work[0];
+    p->unk0.playerNo = obj->work[0];
 
-    p->unk4 = GwPlayerConf[p->unk0].charNo;
-    p->unk8 = GwPlayerConf[p->unk0].padNo;
+    p->unk4 = GwPlayerConf[p->unk0.playerNo].charNo;
+    p->unk8 = GwPlayerConf[p->unk0.playerNo].padNo;
     p->unkC = 0;
     p->unk30 = 0;
     p->hookCycle = 0;
     p->unk78 = 0;
 
-    p->unk5C = GwPlayerConf[p->unk0].dif;
+    p->unk5C = GwPlayerConf[p->unk0.playerNo].dif;
     p->unk60 = 0;
     p->unk80 = 0;
 
@@ -719,17 +726,17 @@ void fn_1_D58(OMOBJ *obj)
     } else {
         fn_1_2870(1);
 
-        if (GwPlayerConf[p->unk0].type != 0) {
+        if (GwPlayerConf[p->unk0.playerNo].type != 0) {
             p->unk70 = 0;
-            p->unk74 = 0;
+            p->unk74.padY = 0;
             p->unk78 = 0;
             p->hookCycle = 0;
 
             fn_1_1078(obj);
-            MgPlayerPadSet(lbl_1_bss_DC[p->unk0], p->unk70, p->unk74, p->unk78, p->hookCycle);
+            MgPlayerPadSet(lbl_1_bss_DC[p->unk0.playerNo], p->unk70, p->unk74.padY, p->unk78, p->hookCycle);
         }
 
-        mp = lbl_1_bss_DC[p->unk0];
+        mp = lbl_1_bss_DC[p->unk0.playerNo];
         p->unk10 = mp->actor->colGroundAttr;
         p->unk14 = (s16)mp->actor->colMesh;
         p->unk16 = (s16)(*(s32 *)&mp->actor->vel.z >> 16);
@@ -744,7 +751,7 @@ void fn_1_D58(OMOBJ *obj)
                 tileIdx = fn_1_2A14(obj, 0);
 
                 if (tileIdx != -1) {
-                    fn_1_2FE0(lbl_1_bss_1C8[tileIdx], p->unk0);
+                    fn_1_2FE0(lbl_1_bss_1C8[tileIdx], p->unk0.playerNo);
                     fn_1_1D44(tileIdx);
                     omVibrate((s16)p->unk8, 15, 6, 6);
                     p->unk3C = 0;
@@ -753,7 +760,7 @@ void fn_1_D58(OMOBJ *obj)
         }
     }
 
-    mp = lbl_1_bss_DC[p->unk0];
+    mp = lbl_1_bss_DC[p->unk0.playerNo];
 
     p->unk18.x = mp->actor->pos.x;
     p->unk18.y = mp->actor->pos.y;
@@ -818,7 +825,7 @@ s32 fn_1_1168(OMOBJ *obj)
     PSVECNormalize(&diff, &diff);
 
     p->unk70 = (s8)(56.0f * diff.x);
-    p->unk74 = (s8)(56.0f * -diff.z);
+    p->unk74.padY = (s8)(56.0f * -diff.z);
 
     return 0;
 }
@@ -1022,19 +1029,19 @@ void fn_1_18B8(void)
 
         q = (M571Player *)lbl_1_bss_478[0]->data;
 
-        Hu3DMotionSpeedSet(q->unk0, 1.0f);
+        Hu3DMotionSpeedSet(q->unk0.modelId, 1.0f);
 
         if (q->unk2C != 0) {
             q->unk2C = 0;
-            Hu3DMotionShiftSet(q->unk0, lbl_1_bss_44C[0], 0.0f, 0.0f, 0x4001);
+            Hu3DMotionShiftSet(q->unk0.modelId, lbl_1_bss_44C[0], 0.0f, 0.0f, 0x4001);
         }
 
-        Hu3DModelAttrReset(p->unk0, 1);
+        Hu3DModelAttrReset(p->unk0.modelId, 1);
 
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_124);
-        Hu3DModelHookObjReset(p->unk0, lbl_1_data_100);
-        Hu3DModelHookObjReset(p->unk0, lbl_1_data_10D);
+        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_100);
+        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_10D);
 
         Hu3DModelAttrSet(p->hookL, 1);
         Hu3DModelAttrSet(p->hookSwap, 1);
@@ -1768,22 +1775,45 @@ void fn_1_4F20(OMOBJ *obj)
     M571Player *p = (M571Player *)obj->data;
 
     if (p->hookCycle % 3 == 0) {
-        Hu3DModelHookObjReset(p->unk0, lbl_1_data_100);
-        Hu3DModelHookSet(p->unk0, lbl_1_data_10D, p->hookR);
+        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_100);
+        Hu3DModelHookSet(p->unk0.modelId, lbl_1_data_10D, p->hookR);
         Hu3DModelAttrReset(p->hookR, 1);
         Hu3DModelAttrSet(p->hookSwap, 1);
     } else if (p->hookCycle % 3 == 1) {
-        Hu3DModelHookObjReset(p->unk0, lbl_1_data_10D);
-        Hu3DModelHookSet(p->unk0, lbl_1_data_100, p->hookSwap);
+        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_10D);
+        Hu3DModelHookSet(p->unk0.modelId, lbl_1_data_100, p->hookSwap);
         Hu3DModelAttrReset(p->hookSwap, 1);
         Hu3DModelAttrSet(p->hookSwap, HU3D_MOTATTR_PAUSE);
         Hu3DMotionTimeSet(p->hookSwap, m571Zero);
         Hu3DModelAttrSet(p->hookR, 1);
     } else if (p->hookCycle % 3 == 2) {
-        Hu3DModelHookObjReset(p->unk0, lbl_1_data_10D);
-        Hu3DModelHookObjReset(p->unk0, lbl_1_data_100);
+        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_10D);
+        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_100);
         Hu3DModelAttrSet(p->hookR, 1);
         Hu3DModelAttrSet(p->hookSwap, 1);
+    }
+}
+
+// NONMATCHING: 0x74 is written as a float here and read as an int for MgPlayerPadSet
+void fn_1_50A8(OMOBJ *obj)
+{
+    M571Player *p = (M571Player *)obj->data;
+
+    if (p->hookCycle % 3 == 0) {
+        p->unk18.z = 90.0f;
+        Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
+        Hu3DModelHookSet(p->hookL, lbl_1_data_124, p->unk0.playerNo);
+        p->unk74.hookAngle = 180.0f;
+    } else if (p->hookCycle % 3 == 1) {
+        p->unk18.z = 270.0f;
+        Hu3DModelHookObjReset(p->hookL, lbl_1_data_124);
+        Hu3DModelHookSet(p->hookL, lbl_1_data_11A, p->unk0.playerNo);
+        p->unk74.hookAngle = 0.0f;
+    } else if (p->hookCycle % 3 == 2) {
+        p->unk18.z = 90.0f;
+        Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
+        Hu3DModelHookSet(p->hookL, lbl_1_data_124, p->unk0.playerNo);
+        p->unk74.hookAngle = 180.0f;
     }
 }
 
