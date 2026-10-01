@@ -1700,6 +1700,7 @@ void fn_1_4E18(M519_MECH *mech)
     float minAngle;
     float distSum;
     float diff;
+    float tC;
     HuVecF circle;
 
     dif = lbl_1_bss_E8[mech->pilotNo]->dif;
@@ -1721,7 +1722,8 @@ void fn_1_4E18(M519_MECH *mech)
             }
             dx = mech->comTarget.x - mech->pos.x;
             dz = mech->comTarget.z - mech->pos.z;
-            dist = HuMagPoint2D(dx, dz);
+            tC = HuMagPoint2D(dx, dz);
+            dist = tC;
             if (dist < 300.0f || mech->comTimer++ > timeTbl[dif]) {
                 mech->comSpeed = 0;
                 mech->comMode = 1;
@@ -1749,7 +1751,8 @@ void fn_1_4E18(M519_MECH *mech)
                     count++;
                     dx = target->pos.x - mech->pos.x;
                     dz = target->pos.z - mech->pos.z;
-                    dist = HuMagPoint2D(dx, dz);
+                    tC = HuMagPoint2D(dx, dz);
+                    dist = tC;
                     distSum += dist;
                     angle = (180.0 + HuAtan(mech->pos.x - target->pos.x, mech->pos.z - target->pos.z)) - mech->rot.y;
                     if (angle < 0.0f) {
