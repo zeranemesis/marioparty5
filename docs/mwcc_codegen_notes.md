@@ -372,3 +372,11 @@ mismatch is a relocation rather than an opcode. Dumping a section with
 `objdump -s`, stripping the address and ASCII columns, and diffing the raw hex in
 8-character chunks finds this in seconds where per-function objdiff output does
 not.
+
+The same four words sit at the front of `.rodata` in 77 sections across the ROM
+(`tools/sectdiff.py --all --offending` lists them), always as the `0.5`/`3.0`
+pair and always in units that inline `sqrtf` -- `resultDll/REL/resultDll/stage`,
+`partyresultdll/REL/partyresultdll/toueidisp`, `m526Dll/REL/m526Dll/math` and
+`mdpartyDll` among them. Inside a single module the two forms are needed at
+once: `m526Dll/math` wants the statics gone while `m526Dll/m526` wants them
+present, so the switch cannot be made per module either.
