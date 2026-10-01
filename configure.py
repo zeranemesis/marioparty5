@@ -1679,7 +1679,7 @@ config.libs = [
         "m575dll",
         objects={
             Object(NonMatching, "REL/m575dll/m575.c"),
-            Object(NonMatching, "REL/m575dll/score.c"),
+            Object(Equivalent, "REL/m575dll/score.c"),
             Object(NonMatching, "REL/m575dll/stage.c"),
             Object(NonMatching, "REL/m575dll/ten.c"),
             Object(NonMatching, "REL/m575dll/player.c"),
