@@ -74,7 +74,8 @@ void fn_1_B8D8(InputMain *main)
 {
     s32 absStkX;
     s32 absStkY;
-    s32 stk;
+    s32 stkXv;
+    s32 stkYv;
 
     if (main->work.type != 0) {
         fn_1_BC84(&main->work);
@@ -87,27 +88,27 @@ void fn_1_B8D8(InputMain *main)
 
     main->stkX = HuPadStkX[main->padId];
     absStkX = main->stkX;
-    if (absStkX < 0) {
+    if (main->stkX < 0) {
         absStkX = -main->stkX;
     }
-    if (absStkX >= 10) {
-        stk = main->stkX;
+    if (absStkX < 10) {
+        stkXv = 0;
     } else {
-        stk = 0;
+        stkXv = main->stkX;
     }
-    main->stkX = stk;
+    main->stkX = stkXv;
 
     main->stkY = HuPadStkY[main->padId];
     absStkY = main->stkY;
-    if (absStkY < 0) {
+    if (main->stkY < 0) {
         absStkY = -main->stkY;
     }
-    if (absStkY >= 10) {
-        stk = main->stkY;
+    if (absStkY < 10) {
+        stkYv = 0;
     } else {
-        stk = 0;
+        stkYv = main->stkY;
     }
-    main->stkY = stk;
+    main->stkY = stkYv;
 
     main->subStkX = HuPadSubStkX[main->padId];
     main->subStkY = HuPadSubStkY[main->padId];
