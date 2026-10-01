@@ -5,8 +5,13 @@ namespace std {
 class exception {
 public:
 	exception() { }
-	virtual ~exception() { }
-	virtual const char* what() const { return "exception"; }
+	// Both virtuals are declared but defined in the runtime library.  MWCC
+	// otherwise emits its own out-of-line copies here, and that is what put
+	// two functions and 0x54 extra bytes in Gecko_ExceptionPPC.o: the target
+	// references __dt__Q23std9exceptionFv, what__Q23std9exceptionCFv and
+	// __vt__Q23std9exception as undefined, so none of the three belong here.
+	virtual ~exception();
+	virtual const char* what() const;
 };
 
 class bad_exception : public exception {

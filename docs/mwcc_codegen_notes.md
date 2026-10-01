@@ -447,3 +447,41 @@ arithmetic, do/while, for-loop, pointer-as-parameter) all reproduced the same
 94.60%, so the ordering is decided inside the allocator and is not reachable from
 the source. That is a real MWCC behaviour rather than a misguess, and it is a
 better stopping point than the `volatile` version was.
+
+## Finding 17 -- an inline virtual in a header emits an out-of-line copy in every TU that sees it
+
+`Gecko_ExceptionPPC.o` reported `.text` at 100% while being 0x54 bytes too long,
+and the symbol table said why:
+
+```
+target: __dt__Q23std9exceptionFv      *UND*      what__Q23std9exceptionCFv   *UND*
+mine:   __dt__Q23std9exceptionFv      weak, .text  what__Q23std9exceptionCFv weak, .text
+target: __vt__Q23std9exception        *UND*
+mine:   __vt__Q23std9exception        weak, .data
+```
+
+`std::exception` in `include/PowerPC_EABI_Support/Runtime/exception.h` defined
+`virtual ~exception() { }` and `virtual const char* what() const { ... }` inside
+the class, so MWCC emitted an out-of-line copy of each in every translation unit
+that includes the header -- even though this unit only ever instantiates
+`bad_exception`, which overrides both. Declaring them and leaving the
+definitions to the library removed both copies, took `.text` from 0x148c to
+0x143c against a target of 0x1438, and moved `extabindex` from 87.14% to 99.29%
+and `.data` from 96.67% to **100%**.
+
+The lesson is about *which* symbol to look at. objdiff scores `.text` by byte
+coverage, so a section that is 4 bytes too long can still read 100%: every
+target byte is matched and the surplus is invisible in the percentage. Always
+compare `objdump -h` sizes next to the match percent, and when they disagree
+read the symbol table before reading any disassembly -- a symbol the target
+leaves undefined but the build defines is a header-level decision, not a
+codegen puzzle. `~bad_exception` is the tell: it grew by exactly one `bl`, the
+call to the base destructor that should have been inlined away.
+
+There is a real trade-off here, and it is not one-sided. Keeping the destructor
+inline and only declaring `what()` leaves `~bad_exception` byte-identical to the
+target (23 instructions, correct `mr.`/vtable stores) but keeps
+`__dt__Q23std9exceptionFv`, which drags `extabindex` back to 87%. Declaring both
+drops the extra symbol and wins on every data section. Chasing per-function
+perfection first and unit-level score second would have picked the wrong one:
+`.text` says 100% for the variant that is further from matching overall.
