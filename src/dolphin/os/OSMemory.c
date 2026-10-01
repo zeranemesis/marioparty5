@@ -1,0 +1,178 @@
+#include <dolphin/os.h>
+
+extern void __OSUnhandledException(u32 exception);
+extern void OSRegisterResetFunction(OSResetFunctionInfo* info);
+extern OSErrorHandler __OSErrorTable[];
+
+#define MEM_BASE 0xCC004000
+
+/* Layout of the memory-protection register block at 0xCC004000. */
+typedef struct {
+    u8 pad10[0x10];
+    u16 unk10;
+    u8 pad1E[0x0E];
+    u16 unk1E;
+    u16 unk20;
+    u16 unk22;
+    u16 unk24;
+    u8 pad28[0x03];
+    u16 unk28;
+} MEMRegs;
+
+u32 OSGetPhysicalMemSize(void)
+{
+    return *(u32*)0x80000028;
+}
+
+u32 OSGetConsoleSimulatedMemSize(void)
+{
+    return *(u32*)0x800000F0;
+}
+
+static BOOL OnReset(BOOL final)
+{
+    if (final) {
+        *(volatile u16*)(MEM_BASE + 0x10) = 0xFF;
+        __OSMaskInterrupts(0xF0000000);
+    }
+    return TRUE;
+}
+
+static void MEMIntruptHandler(s16 interrupt, OSContext* context)
+{
+    u32 flags;
+
+    flags = (*(volatile u16*)(MEM_BASE + 0x24) & 0x3FF) << 16;
+    flags |= *(volatile u16*)(MEM_BASE + 0x22);
+    *(volatile u16*)(MEM_BASE + 0x20) = 0;
+
+    if (__OSErrorTable[OS_ERROR_PROTECTION] != NULL) {
+        __OSErrorTable[OS_ERROR_PROTECTION](OS_ERROR_PROTECTION, context, *(volatile u16*)(MEM_BASE + 0x1E));
+        return;
+    }
+    __OSUnhandledException(OS_ERROR_PROTECTION);
+}
+
+static OSResetFunctionInfo ResetFunctionInfo = { OnReset, 0x7F, NULL, NULL };
+
+/* clang-format off */
+static asm void Config24MB(void)
+{
+    nofralloc
+    li      r7, 0x0
+    lis     r4, 0x0
+    addi    r4, r4, 0x2
+    lis     r3, 0x8000
+    addi    r3, r3, 0x1ff
+    lis     r6, 0x100
+    addi    r6, r6, 0x2
+    lis     r5, 0x8100
+    addi    r5, r5, 0xff
+    isync
+    mtdbatu 0, r7
+    mtdbatl 0, r4
+    mtdbatu 0, r3
+    isync
+    mtibatu 0, r7
+    mtibatl 0, r4
+    mtibatu 0, r3
+    isync
+    mtdbatu 2, r7
+    mtdbatl 2, r6
+    mtdbatu 2, r5
+    isync
+    mtibatu 2, r7
+    mtibatl 2, r6
+    mtibatu 2, r5
+    isync
+    mfmsr   r3
+    ori     r3, r3, 0x30
+    mtsrr1  r3
+    mflr    r3
+    mtsrr0  r3
+    rfi
+}
+
+static asm void Config48MB(void)
+{
+    nofralloc
+    li      r7, 0x0
+    lis     r4, 0x0
+    addi    r4, r4, 0x2
+    lis     r3, 0x8000
+    addi    r3, r3, 0x3ff
+    lis     r6, 0x200
+    addi    r6, r6, 0x2
+    lis     r5, 0x8200
+    addi    r5, r5, 0x1ff
+    isync
+    mtdbatu 0, r7
+    mtdbatl 0, r4
+    mtdbatu 0, r3
+    isync
+    mtibatu 0, r7
+    mtibatl 0, r4
+    mtibatu 0, r3
+    isync
+    mtdbatu 2, r7
+    mtdbatl 2, r6
+    mtdbatu 2, r5
+    isync
+    mtibatu 2, r7
+    mtibatl 2, r6
+    mtibatu 2, r5
+    isync
+    mfmsr   r3
+    ori     r3, r3, 0x30
+    mtsrr1  r3
+    mflr    r3
+    mtsrr0  r3
+    rfi
+}
+
+static asm void RealMode(register u32 addr)
+{
+    nofralloc
+    clrlwi  r3, r3, 2
+    mtsrr0  r3
+    mfmsr   r3
+    rlwinm  r3, r3, 0, 28, 25
+    mtsrr1  r3
+    rfi
+}
+/* clang-format on */
+
+void __OSInitMemoryProtection(void)
+{
+    u32 memSize;
+    BOOL enabled;
+    volatile MEMRegs* const regs = (volatile MEMRegs*)MEM_BASE;
+
+    memSize = *(u32*)0x800000F0;
+    enabled = OSDisableInterrupts();
+
+    regs->unk20 = 0;
+    regs->unk10 = 0xFF;
+    __OSMaskInterrupts(0xF0000000);
+
+    __OSSetInterruptHandler(OS_PROTECT_CHAN0, MEMIntruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN1, MEMIntruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN2, MEMIntruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN3, MEMIntruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN4, MEMIntruptHandler);
+    OSRegisterResetFunction(&ResetFunctionInfo);
+
+    if (*(u32*)0x800000F0 < *(u32*)0x80000028 && *(u32*)0x800000F0 == 0x01800000) {
+        DCInvalidateRange((void*)0x81800000, 0x01800000);
+        regs->unk28 = 2;
+    }
+
+    if (memSize <= 0x01800000) {
+        RealMode((u32)Config24MB);
+    } else if (memSize <= 0x03000000) {
+        RealMode((u32)Config48MB);
+    }
+
+    __OSUnmaskInterrupts(OS_INTERRUPTMASK_MEM_ADDRESS);
+    OSRestoreInterrupts(enabled);
+}
