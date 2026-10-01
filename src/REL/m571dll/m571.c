@@ -1904,6 +1904,26 @@ s32 fn_1_8E08(void)
     return 1;
 }
 
+void fn_1_8584(OMOBJ *obj)
+{
+    M571Tile *tile = (M571Tile *)obj->data;
+    s32 i;
+
+    Hu3DModelAttrSet(obj->mdlId[0], 1);
+    Hu3DModelKill(obj->mdlId[0]);
+
+    lbl_1_bss_360 = lbl_1_bss_360 - 1;
+
+    for (i = 0; i < 20; i++) {
+        if (lbl_1_bss_368[i] == (u32)obj) {
+            lbl_1_bss_368[i] = 0;
+            break;
+        }
+    }
+
+    omDelObjEx(lbl_1_bss_680, obj);
+}
+
 // NONMATCHING: local index form differs from the target build
 void fn_1_8948(OMOBJ *obj)
 {
