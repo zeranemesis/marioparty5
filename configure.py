@@ -1681,7 +1681,7 @@ config.libs = [
             Object(NonMatching, "REL/m575dll/m575.c"),
             Object(Equivalent, "REL/m575dll/score.c"),
             Object(NonMatching, "REL/m575dll/stage.c"),
-            Object(NonMatching, "REL/m575dll/ten.c"),
+            Object(Equivalent, "REL/m575dll/ten.c"),
             Object(NonMatching, "REL/m575dll/player.c"),
             Object(NonMatching, "REL/m575dll/com.c"),
             Object(NonMatching, "REL/m575dll/camera.c"),
