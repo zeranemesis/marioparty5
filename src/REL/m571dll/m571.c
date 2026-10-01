@@ -59,13 +59,20 @@ void fn_1_27E8(OMOBJ *obj, s32 motNo, f32 speed, s32 attr);
 void fn_1_2870(s32 flag);
 void fn_1_2D54(void);
 void fn_1_83C0(s32 arg0);
+void fn_1_8360(void);
+void fn_1_83D0(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4);
 void fn_1_8E5C(void);
 void fn_1_8478(s32 index, s32 value);
+void fn_1_8948(OMOBJ *obj);
 void fn_1_3D94(void);
 void fn_1_8E70(void);
 void fn_1_8EA0(void);
 void fn_1_832C(void);
 s32 fn_1_9298(s32 base, s32 range);
+s32 fn_1_90C8(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
+s16 fn_1_92D4(HuVecF *pos);
+s16 fn_1_9350(HuVecF *pos);
+void fn_1_8654(OMOBJ *obj);
 s32 fn_1_4B18(s32 base, s32 range);
 void fn_1_36B8(OMOBJ *obj);
 s32 fn_1_7A78(void);
@@ -385,7 +392,7 @@ s32 lbl_1_bss_438;
 s32 lbl_1_bss_43C[4];
 s16 lbl_1_bss_44C[16];
 s32 lbl_1_bss_46C;
-s32 lbl_1_bss_470[2];
+OMOBJ *lbl_1_bss_470[2];
 OMOBJ **lbl_1_bss_478;
 typedef struct M571Slot_s {
     s32 val; //0x0
@@ -445,6 +452,13 @@ static const f32 m571ScreenYDiv = 480.0f;
 static const f64 m571Turn = 360.0;
 static const f32 m571TurnF = 360.0f;
 static const f32 m571HalfTurn = 180.0f;
+
+typedef struct M571Cursor_s {
+    s32 unk0; //0x0
+    s32 unk4; //0x4
+    Vec pos; //0x8
+    Vec rot; //0x14
+} M571Cursor; //0x20
 
 typedef struct M571ListNode_s {
     s16 id; //0x00
@@ -1687,10 +1701,29 @@ void fn_1_832C(void)
     }
 }
 
+// NONMATCHING: register allocation differs from the target build
+void fn_1_8360(void)
+{
+    lbl_1_bss_46C = 1;
+    lbl_1_bss_470[0] = omAddObjEx(lbl_1_bss_680, 0x64, 0, 0, -1, (OMOBJFUNC)fn_1_832C);
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_83C0(s32 arg0)
 {
     lbl_1_bss_46C = arg0;
+}
+
+// NONMATCHING: register allocation differs from the target build
+void fn_1_83D0(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4)
+{
+    lbl_1_bss_43C[0] = arg0;
+    lbl_1_bss_43C[1] = arg1;
+    lbl_1_bss_43C[2] = arg2;
+    lbl_1_bss_43C[3] = arg3;
+    lbl_1_bss_438 = arg4;
+
+    omAddObjEx(lbl_1_bss_680, 0x65, 0, 0, -1, fn_1_7DF8);
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
@@ -1713,6 +1746,28 @@ s32 fn_1_8E08(void)
     return 1;
 }
 
+// NONMATCHING: local index form differs from the target build
+void fn_1_8948(OMOBJ *obj)
+{
+    M571Cursor *cursor = (M571Cursor *)obj->data;
+    s32 i;
+
+    obj->mdlId[0] = Hu3DModelLink(lbl_1_bss_364);
+    omSetTra(obj, cursor->pos.x, cursor->pos.y, cursor->pos.z);
+    omSetRot(obj, cursor->rot.x, cursor->rot.y, cursor->rot.z);
+    omSetSca(obj, 1.0f, 1.0f, 1.0f);
+
+    for (i = 0; i < 0x14; i++) {
+        if (lbl_1_bss_368[i] == 0) {
+            lbl_1_bss_368[i] = (s32)obj;
+            break;
+        }
+    }
+
+    Hu3DModelAttrReset(obj->mdlId[0], 1);
+    obj->objFunc = fn_1_8654;
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_8E5C(void)
 {
@@ -1731,8 +1786,41 @@ void fn_1_8EA0(void)
     HuAudSStreamFadeOut(lbl_1_bss_35C, 100);
 }
 
+// NONMATCHING: expression form differs from the target build
+s32 fn_1_90C8(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3)
+{
+    return (arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
+        < (arg2 + arg3) * (arg2 + arg3);
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 s32 fn_1_9298(s32 base, s32 range)
 {
     return base + frandmod(range - base);
+}
+
+// NONMATCHING: local variable form differs from the target build
+s16 fn_1_92D4(HuVecF *pos)
+{
+    HuVecF scr;
+    f32 pan;
+
+    Hu3D3Dto2D(pos, 1, &scr);
+
+    pan = m571PanBias + m571PanScale * (scr.x / m571ScreenXDiv);
+
+    return (s16)pan;
+}
+
+// NONMATCHING: local variable form differs from the target build
+s16 fn_1_9350(HuVecF *pos)
+{
+    HuVecF scr;
+    f32 vol;
+
+    Hu3D3Dto2D(pos, 1, &scr);
+
+    vol = m571VolBias + m571VolScale * (scr.y / m571ScreenYDiv);
+
+    return (s16)vol;
 }
