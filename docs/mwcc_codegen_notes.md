@@ -809,3 +809,18 @@ was `.data` and fixed; `hsfdraw` is `.sdata` and is not reachable. Note also
 that the retail `.sdata` symbols carry the same `lbl_<addr>` naming as `.data`
 ones, so the name alone tells you nothing about which form the original used --
 only the section does.
+
+`main/game/mg/colman` is the confirming case, and it is the mirror image of
+`hsfdraw`: here the retail `.data` holds two *named* globals, `lbl_801C8FB8`
+(0x58) and `lbl_801C9010` (0x50), where our build had anonymous `@1231` and
+`@2469`. Hoisting both `OSReport` literals onto sized globals reproduces the
+symbol table exactly -- section size 0xa8, both bindings global, both sizes --
+and `.data` goes to 100%.
+
+Two things to watch when doing this. The first message needed no padding at
+all: its literal is already 0x58, so only the name was wrong, and declaring it
+`[]` would have been enough. The second was 0x4c against a target 0x50 and did
+need `[0x50]`. And **do not measure a Japanese string in the source**. These
+files hold UTF-8 and MWCC rewrites them to Shift-JIS, so the literal is 115
+source bytes and 0x57 bytes in the object; predicting the object size from the
+file length is wrong by enough to pick the wrong bound.

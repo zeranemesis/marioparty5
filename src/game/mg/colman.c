@@ -2,6 +2,9 @@
 #include "game/hu3d.h"
 #include "game/frand.h"
 
+char lbl_801C8FB8[0x58] = "( colman.c : _ColCorrection ) | マップとあたってるはずなのにアトリビュートがありません\n";
+char lbl_801C9010[0x50] = "( colman.c : ColMapInit ) | テンポラリのバッファをオーバーライトしています\n";
+
 typedef struct ColBroad_s {
     float t;
     COLBODY *body1;
@@ -1411,7 +1414,7 @@ static BOOL _ColCorrection(COLBODY *bodyP)
     
     codeNo = ColCodeNoGet(colPointP->polyAttr);
     if(codeNo < 0) {
-        OSReport("( colman.c : _ColCorrection ) | マップとあたってるはずなのにアトリビュートがありません\n");
+        OSReport(lbl_801C8FB8);
         return FALSE;
     }
     attrParam = (codeNo >= 7) ? (&colWork.attrParamHi[codeNo-7]) : (&colWork.attrParam[codeNo]);
@@ -3029,7 +3032,7 @@ void ColMapInit(HU3DMODELID *mdlId, s16 mdlNum, int bodyNum)
                     }
                 }
                 if(meshNum == 256) {
-                    OSReport("( colman.c : ColMapInit ) | テンポラリのバッファをオーバーライトしています\n");
+                    OSReport(lbl_801C9010);
                 }
                 memset(&colMesh[meshNum], 0, sizeof(COLMESH));
                 colMesh[meshNum].tri = triP;
