@@ -164,14 +164,17 @@ void MesChkMainProc(void)
     }
 }
 
-// NONMATCHING: MWCC allocates dirIdx/messNum across several overlapping
-// registers between the direction/message browsing loops; this version keeps
-// one variable per role instead of reusing r29/r30 the way the original does.
+// NONMATCHING: MesChkExec needs one more value live across calls than this
+// version keeps, so MWCC hands out a different set of callee-saved registers
+// (it starts at r18 here and at r19 in the original) and every loop therefore
+// reads its indices from a different register. The instruction sequence, the
+// stack layout and the start-index temporary all match; the numbering does not.
 void MesChkExec(void)
 {
     s16 dirIdx;
     s16 messIdx;
     s16 messMax;
+    s16 startIdx;
     s16 prevDirLastMsgF;
     char *str;
     char *msgPtr;
@@ -180,10 +183,10 @@ void MesChkExec(void)
     HUWINID msgWin;
     HUWIN *win;
     u32 messNum;
+    char numBuf[8];
     HuVec2f size;
     s32 hasCtrlCode;
     s16 activeKey;
-    char numBuf[8];
 
     dirIdx = 0;
     while (mesDirNameTbl[dirIdx] != NULL) {
@@ -216,17 +219,19 @@ void MesChkExec(void)
         messMax = HuWinMesMaxNumGet(dirIdx << 16);
 
         if (prevDirLastMsgF == 0) {
-            messIdx = 0;
+            startIdx = 0;
         } else {
             prevDirLastMsgF = 0;
-            messIdx = messMax - 1;
+            startIdx = messMax - 1;
         }
+
+        messIdx = startIdx;
 
         while (messIdx < messMax) {
             sprintf(numBuf, lbl_1_data_5E0, messIdx);
             HuWinMesSet(dirWin, (u32)(uintptr_t) numBuf);
 
-            messNum = (dirIdx << 16) | (u16) messIdx;
+            messNum = (dirIdx << 16) | messIdx;
             MesChkWinSizeGet(messNum, &size);
 
             if (size.x == 255.0f) {
@@ -242,7 +247,7 @@ void MesChkExec(void)
             hasCtrlCode = 0;
             msgPtr = HuWinMesPtrGet(messNum);
             while (*msgPtr != 0) {
-                if ((u8) *msgPtr == 0xff) {
+                if (*msgPtr == 0xff) {
                     hasCtrlCode = 1;
                 }
                 msgPtr++;
