@@ -1,10 +1,12 @@
 #include "REL/m570Dll.h"
 
 #include "game/mg/seqman.h"
+#include "game/mg/timer.h"
 #include "game/hu3d.h"
 #include "game/hsfex.h"
 #include "game/sprite.h"
 #include "game/audio.h"
+#include "game/esprite.h"
 
 #include "dolphin/mtx.h"
 
@@ -34,6 +36,27 @@ typedef struct Hu3DParmanParam2_s {
     /* 0x40 */ GXColor colorEnd[4];
     /* 0x50 */ s32 unk3;
 } HU3DPARMANPARAM2;
+
+/* Camera descriptor handled by fn_1_1A50 / fn_1_2050 (0x48 bytes). */
+typedef struct m570Cam_s {
+    /* 0x00 */ s32 camNo;
+    /* 0x04 */ s32 state;
+    /* 0x08 */ s32 unk8;
+    /* 0x0C */ s32 unkC;
+    /* 0x10 */ s32 unk10;
+    /* 0x14 */ HuVecF pos;
+    /* 0x20 */ HuVecF up;
+    /* 0x2C */ HuVecF target;
+    /* 0x38 */ HuVecF rot;
+    /* 0x44 */ s32 unk44;
+} M570CAM;
+
+/* Light descriptor passed to Hu3DGLightCreateV by fn_1_1AA0. */
+typedef struct m570Light_s {
+    /* 0x00 */ HuVecF pos;
+    /* 0x0C */ HuVecF dir;
+    /* 0x18 */ GXColor color;
+} M570LIGHT;
 
 /* ---------------------------------------------------------------- rodata */
 
@@ -177,7 +200,7 @@ static s16 lbl_1_bss_4E;
 static s16 lbl_1_bss_50;
 s16 lbl_1_bss_52;
 static s32 lbl_1_bss_54[0x48 / 4];
-static s32 lbl_1_bss_9C;
+static MGTIMER *lbl_1_bss_9C;
 static s32 lbl_1_bss_A0[0x1C / 4];
 static s32 lbl_1_bss_BC[0x48 / 4];
 static s16 lbl_1_bss_104;
@@ -187,7 +210,13 @@ static s32 lbl_1_bss_10C;
 
 /* -------------------------------------------------------------- functions */
 
+static void fn_1_1354(OMOBJ *obj);
 static void fn_1_1674(OMOBJ *obj);
+static void fn_1_14A8(OMOBJ *obj);
+static void fn_1_1AFC(OMOBJ *obj);
+void fn_1_12F0(void);
+void fn_1_2020(s32 *src);
+void fn_1_2050(M570CAM *cam);
 
 void ObjectSetup(void);
 
@@ -221,6 +250,51 @@ void ObjectSetup(void)
     MgSeqCreatePrio(&gSeqParam, 2000);
     MgSeqModeHookAdd(MGSEQ_MODE_PREMAIN, fn_1_A7C);
     MgSeqModeDelaySet(MGSEQ_MODE_FADEIN, 1500);
+}
+
+void fn_1_A78(s16 mode, s16 frame)
+{
+}
+
+void fn_1_A7C(s16 mode, s16 frame)
+{
+    lbl_1_bss_50 = 9;
+    lbl_1_bss_4C = 0;
+    fn_1_12F0();
+}
+
+void fn_1_D88(s16 mode, s16 frame)
+{
+    if (frame == 0 && lbl_1_bss_48 != -1) {
+        HuAudSStreamFadeOut(lbl_1_bss_48, 100);
+    }
+    lbl_1_bss_50 = 13;
+}
+
+void fn_1_1034(s16 mode, s16 frame)
+{
+}
+
+void fn_1_1038(void)
+{
+    lbl_1_bss_9C = MgTimerCreate(0);
+    MgTimerParamSet(lbl_1_bss_9C, 180, 0, 0);
+    MgTimerModeOnSet(lbl_1_bss_9C, 1);
+}
+
+void fn_1_12F0(void)
+{
+    s32 i;
+
+    MgScoreWinDispSet(lbl_1_bss_40, TRUE);
+    for (i = 0; i < 5; i++) {
+        espDispOn(lbl_1_bss_2C[i]);
+    }
+}
+
+void fn_1_1464(void)
+{
+    omAddObjEx(lbl_1_bss_108, 0x1300, 0, 0, OM_OBJ_NONE, fn_1_1354);
 }
 
 static void fn_1_1674(OMOBJ *obj)
@@ -264,6 +338,58 @@ void fn_1_1864(HuVecF *pos, s16 seId)
     Hu3D3Dto2D(pos, (s16)lbl_1_bss_54[0], &screen);
     pan = (s32)(kPanBase + kPanScale * (screen.x / gScreenHalf[0]));
     HuAudFXPlayPan(seId, pan);
+}
+
+void fn_1_15FC(s32 idx)
+{
+    OMOBJ *obj;
+
+    obj = omAddObjEx(lbl_1_bss_108, 0x1300, 0, 0, OM_OBJ_NONE, fn_1_14A8);
+    obj->work[0] = lbl_1_bss_36[idx];
+    obj->work[1] = 0;
+}
+
+void fn_1_1910(void)
+{
+    lbl_1_bss_108 = omInitObjMan(200, 0x1000);
+    lbl_1_bss_104 = -1;
+    omGameSysInit(lbl_1_bss_108);
+}
+
+void fn_1_1A50(M570CAM *cam)
+{
+    if (cam->state == 1) {
+        fn_1_2050(cam);
+    }
+    Hu3DCameraPosSetV(cam->camNo, &cam->pos, &cam->up, &cam->target);
+}
+
+void fn_1_1AA0(M570LIGHT *light)
+{
+    HU3DLIGHTID lightId;
+
+    lightId = Hu3DGLightCreateV(&light->pos, &light->dir, &light->color);
+    Hu3DGLightStaticSet(lightId, TRUE);
+    Hu3DGLightInfinitytSet(lightId);
+}
+
+void fn_1_1F74(M570CAM *cam)
+{
+    OMOBJ *obj;
+
+    obj = omAddObjEx(lbl_1_bss_108, 0x4000, 0, 0, OM_OBJ_NONE, fn_1_1AFC);
+    obj->work[0] = (s32)cam;
+    obj->work[1] = (cam->state != 0) ? 1 : 0;
+    fn_1_2020((s32 *)cam);
+}
+
+void fn_1_2020(s32 *src)
+{
+    s32 i;
+
+    for (i = 0; i < 18; i++) {
+        lbl_1_bss_BC[i] = src[i];
+    }
 }
 
 s32 fn_1_3B40(HuVecF *pos, HuVecF *goal, HuVecF *angle, f32 step, const f32 *tbl)
