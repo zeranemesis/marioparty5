@@ -1213,8 +1213,7 @@ void fn_1_3CE0(void)
 {
     s32 i;
 
-    switch (lbl_1_bss_1C) {
-    case 0:
+if (lbl_1_bss_1C == 0) {
         for (i = 0; i < 4; i++) {
             Hu3DModelAttrReset(lbl_1_bss_CC[i], 1);
             lbl_1_bss_9C[i].x += (lbl_1_data_184[i].x - lbl_1_data_124[i].x) / 60.0f;
@@ -1223,7 +1222,8 @@ void fn_1_3CE0(void)
             Hu3DModelPosSet(lbl_1_bss_CC[i], lbl_1_bss_9C[i].x, lbl_1_bss_9C[i].y, lbl_1_bss_9C[i].z);
         }
         return;
-    case 1:
+    }
+    if (lbl_1_bss_1C == 1) {
         for (i = 0; i < 4; i++) {
             Hu3DModelAttrReset(lbl_1_bss_84[i], 1);
             lbl_1_bss_54[i].x += (lbl_1_data_1E4[i].x - lbl_1_data_154[i].x) / 60.0f;
@@ -1231,7 +1231,6 @@ void fn_1_3CE0(void)
             lbl_1_bss_54[i].z += (lbl_1_data_1E4[i].z - lbl_1_data_214[i].z) / 60.0f;
             Hu3DModelPosSet(lbl_1_bss_84[i], lbl_1_bss_54[i].x, lbl_1_bss_54[i].y, lbl_1_bss_54[i].z);
         }
-        return;
     }
 }
 
@@ -1240,21 +1239,22 @@ void fn_1_4048(void)
     s32 i;
     float temp_f31;
 
-    switch (lbl_1_bss_1C) {
-    case 0:
+if (lbl_1_bss_1C == 0) {
         for (i = 0; i < 4; i++) {
             temp_f31 = sin(3.141592653589793 * (180.0f * lbl_1_bss_8C[i]) / 180.0);
-            Hu3DModelPosSet(lbl_1_bss_CC[i], lbl_1_bss_9C[i].x, temp_f31 * temp_f31 * 25.0f + lbl_1_bss_9C[i].y, lbl_1_bss_9C[i].z);
+            temp_f31 = temp_f31 * temp_f31;
+            Hu3DModelPosSet(lbl_1_bss_CC[i], lbl_1_bss_9C[i].x, 25.0f * temp_f31 + lbl_1_bss_9C[i].y, lbl_1_bss_9C[i].z);
             lbl_1_bss_8C[i] += 0.011111111f;
         }
         return;
-    case 1:
+    }
+    if (lbl_1_bss_1C == 1) {
         for (i = 0; i < 4; i++) {
             temp_f31 = sin(3.141592653589793 * (180.0f * lbl_1_bss_44[i]) / 180.0);
-            Hu3DModelPosSet(lbl_1_bss_84[i], lbl_1_bss_54[i].x, temp_f31 * temp_f31 * 25.0f + lbl_1_bss_54[i].y, lbl_1_bss_54[i].z);
+            temp_f31 = temp_f31 * temp_f31;
+            Hu3DModelPosSet(lbl_1_bss_84[i], lbl_1_bss_54[i].x, 25.0f * temp_f31 + lbl_1_bss_54[i].y, lbl_1_bss_54[i].z);
             lbl_1_bss_44[i] += 0.011111111f;
         }
-        return;
     }
 }
 
