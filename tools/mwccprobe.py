@@ -44,9 +44,13 @@ def compile_one(src: str, out_obj: str) -> None:
 
 
 def dump(obj: str) -> str:
-    result = subprocess.run([OBJDUMP, "-d", "-r", "-j", ".text", obj],
-                            cwd=ROOT, capture_output=True, text=True)
-    return result.stdout
+    chunks = []
+    for section in (".init", ".text"):
+        result = subprocess.run([OBJDUMP, "-d", "-r", "-j", section, obj],
+                                cwd=ROOT, capture_output=True, text=True)
+        if result.stdout.strip():
+            chunks.append(f"===== {section} =====\n{result.stdout}")
+    return "\n".join(chunks)
 
 
 def main() -> int:
