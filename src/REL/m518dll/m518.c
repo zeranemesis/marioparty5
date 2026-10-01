@@ -1409,6 +1409,57 @@ void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
     player->mode = 2;
 }
 
+void fn_1_83FC(M518_PLAYER *player)
+{
+    int k;
+    int j;
+    int i;
+    int l;
+    u8 prev;
+    M518_CELL cell;
+    M518_BLOCK *block;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+    HuVecF cur;
+
+    fn_1_E7B4(0x6FF, player->pos);
+    fn_1_9E70(lbl_1_bss_4DC);
+    fn_1_3904(player);
+    for (i = 0; i < player->size * 2 + 1; i++) {
+        for (j = 0; j < player->size * 2 + 1; j++) {
+            cell.x = player->cell.x - player->size + j;
+            cell.z = player->cell.z - player->size + i;
+            prev = fn_1_A268(lbl_1_bss_4DC, cell);
+            if ((prev & 0x40) && prev >> 8 == player->no) {
+                block = lbl_1_bss_150[cell.x + cell.z * M518_GRID_SIZE];
+                fn_1_CE78(block, 200.0f * player->size - 1.0f, player->time, player->delay);
+            }
+        }
+    }
+    M518_WAIT(player->delay);
+    Hu3DModelShadowReset(player->modelId[0]);
+    start = player->pos;
+    end = player->pos;
+    end.y = 200.0f * -player->size;
+    pos = player->pos;
+    for (k = 0; k < player->time; k++) {
+        pos.y = start.y + (end.y - start.y) * (1.0 - cos(1.0f / player->time * (k + 1) * 90.0f * M_PI / 180.0));
+        cur = pos;
+        for (l = 0; l < 2; l++) {
+            if (player->modelId[l] != HU3D_MODELID_NONE) {
+                Hu3DModelPosSet(player->modelId[l], cur.x, cur.y, cur.z);
+            }
+        }
+        player->pos = cur;
+        M518_WAIT(1);
+    }
+    lbl_1_bss_28 = 1;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
 void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
 {
     player->time = time;
