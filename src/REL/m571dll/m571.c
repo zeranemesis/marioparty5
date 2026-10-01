@@ -53,8 +53,22 @@ s32 fn_1_2A14(OMOBJ *obj, s32 arg1);
 void fn_1_2D58(void);
 void fn_1_2E28(void);
 s32 fn_1_2FE0(OMOBJ *obj, s32 arg1);
-void fn_1_27E8(OMOBJ *obj, s32 arg1, float arg2, s32 arg3);
-void fn_1_2870(s32 arg0);
+
+void fn_1_27E8(OMOBJ *obj, s32 motNo, f32 speed, s32 attr);
+void fn_1_2870(s32 flag);
+void fn_1_2D54(void);
+void fn_1_83C0(s32 arg0);
+void fn_1_8E5C(void);
+void fn_1_8478(s32 index, s32 value);
+void fn_1_3D94(void);
+void fn_1_8E70(void);
+void fn_1_8EA0(void);
+void fn_1_832C(void);
+s32 fn_1_9298(s32 base, s32 range);
+s32 fn_1_4B18(s32 base, s32 range);
+void fn_1_36B8(OMOBJ *obj);
+s32 fn_1_7A78(void);
+s32 fn_1_28F4(HuVecF *pos);
 void fn_1_3520(void);
 void fn_1_3700(OMOBJ *obj);
 void fn_1_7670(OMOBJ *obj);
@@ -1149,4 +1163,131 @@ void fn_1_2388(OMOBJ *obj)
     lbl_1_bss_28C[item->slot] = obj;
 
     obj->objFunc = fn_1_2468;
+}
+
+typedef struct M571Spin_s {
+    s16 curMot; //0x00
+    s16 motId[3]; //0x02
+    u8 pad08[0x1C]; //0x08
+    s32 playerNo; //0x24
+    s32 charNo; //0x28
+    s32 pad2C; //0x2C
+    s32 score; //0x30
+} M571Spin; //0x34
+
+void fn_1_27E8(OMOBJ *obj, s32 motNo, f32 speed, s32 attr)
+{
+    M571Spin *spin = (M571Spin *)obj->data;
+
+    if (spin->curMot != motNo) {
+        spin->curMot = (s16)motNo;
+        CharMotionShiftSet((s16)spin->charNo, spin->motId[motNo], 0.0f, speed, attr);
+    }
+}
+
+void fn_1_2870(s32 flag)
+{
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (flag) {
+            MgPlayerAttrReset(lbl_1_bss_DC[i], 1);
+        } else {
+            MgPlayerAttrSet(lbl_1_bss_DC[i], 1);
+        }
+    }
+}
+
+s32 fn_1_28F4(HuVecF *pos)
+{
+    s32 i;
+
+    for (i = 0; i < 0x31; i++) {
+        f32 dx;
+        f32 dz;
+
+        if (lbl_1_bss_1C8[i] == 0) {
+            continue;
+        }
+
+        dx = pos->x - lbl_1_data_26C.pos[i].x;
+        dz = pos->z - lbl_1_data_26C.pos[i].z;
+
+        if (dx * dx + dz * dz < 8100.0f) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void fn_1_2D54(void)
+{
+}
+
+void fn_1_83C0(s32 arg0)
+{
+    lbl_1_bss_46C = arg0;
+}
+
+void fn_1_8E5C(void)
+{
+    lbl_1_bss_35C = -1;
+}
+
+void fn_1_8478(s32 index, s32 value)
+{
+    lbl_1_bss_428[index] = value;
+}
+
+void fn_1_3D94(void)
+{
+    lbl_1_bss_684[1] = 0;
+    lbl_1_bss_684[2] = 0;
+}
+
+void fn_1_8E70(void)
+{
+    lbl_1_bss_35C = HuAudSStreamPlay(0x3D);
+}
+
+void fn_1_8EA0(void)
+{
+    HuAudSStreamFadeOut(lbl_1_bss_35C, 100);
+}
+
+void fn_1_832C(void)
+{
+    if (lbl_1_bss_46C != 0) {
+        MgActorExec();
+    }
+}
+
+s32 fn_1_9298(s32 base, s32 range)
+{
+    return base + frandmod(range - base);
+}
+
+s32 fn_1_4B18(s32 base, s32 range)
+{
+    return base + frandmod(range - base);
+}
+
+void fn_1_36B8(OMOBJ *obj)
+{
+    M571Player *p = (M571Player *)obj->data;
+
+    omSetTra(obj, p->unk18.x, p->unk18.y, p->unk18.z);
+}
+
+s32 fn_1_7A78(void)
+{
+    s32 i;
+    s32 total = 0;
+
+    for (i = 0; i < 4; i++) {
+        total += lbl_1_bss_428[i];
+    }
+
+    return total;
 }
