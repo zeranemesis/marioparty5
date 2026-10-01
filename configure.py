@@ -1089,7 +1089,7 @@ config.libs = [
             Object(NonMatching, "REL/m511Dll/player.cpp"),
             Object(NonMatching, "REL/m511Dll/score.cpp"),
             Object(NonMatching, "REL/m511Dll/boatsplash.cpp"),
-            Object(NonMatching, "REL/m511Dll/kibako.cpp"),
+            Object(Equivalent, "REL/m511Dll/kibako.cpp"),
             Object(NonMatching, "REL/m511Dll/water.cpp"),
         },
     ),

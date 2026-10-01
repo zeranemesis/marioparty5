@@ -11,7 +11,7 @@ void *__nw__FUl(u32 size);
 void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
 void *fn_1_18404(void *self);
 void fn_1_187B0(void *self, s32 arg1);
-void fn_1_18804(s32 arg0, void *arg1);
+void fn_1_18804(void *arg0, Vec *arg1);
 f32 fn_1_1A150(s32 arg0, void *arg1);
 void fn_1_1D88(void *self);
 void fn_1_1D94(void *self, s32 arg1);
@@ -29,7 +29,13 @@ void fn_1_DAB8(s32 arg0, f32 *arg1, f64 arg2);
 
 struct Mgr510Kibako;
 
-Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, void *arg2, Vec *arg_sp0);
+struct Mgr510KibakoVec {
+    f32 unk0;
+    f32 unk4;
+    f32 unk8;
+};
+
+Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, Mgr510KibakoVec *arg2, Vec *arg_sp0);
 void fn_1_19364(void);
 void fn_1_19450(void);
 void fn_1_19480(Mgr510Kibako *arg0);
@@ -171,7 +177,7 @@ void fn_1_18CEC(s32 arg0)
             sp14 = (f32)((f64)sp14 + temp_f1_2);
             temp_r3 = (Mgr510Kibako *)__nw__FUl(0x38);
             if (temp_r3 != NULL) {
-                fn_1_18EFC(temp_r3, (void *)(sp8 + 0x10), &spC);
+                fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)(sp8 + 0x10), (Vec *)&spC);
             }
             printf("%d:% f\n", var_r30 + (var_r31 * 5), spC, sp14);
         }
@@ -191,7 +197,7 @@ void fn_1_18ED4(Mgr510KibakoMaster *arg0, s32 arg1)
 }
 
 // NONMATCHING: the attribute setup order differs.
-Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, void *arg2, Vec *arg_sp0)
+Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, Mgr510KibakoVec *arg2, Vec *arg_sp0)
 {
     Mgr510Kibako *var_r29;
     s16 temp_r0;
@@ -199,9 +205,9 @@ Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, void *arg2, Vec *arg_sp0)
     fn_1_1D88(arg0);
     arg0->unk8 = 1;
     fn_1_372C(&arg0->modelId, DATANUM(DATA_m511, 0x20));
-    arg0->unkC.x = (f32)arg2->unk0;
-    arg0->unkC.y = (f32)arg2->unk4;
-    arg0->unkC.z = (f32)arg2->unk8;
+    arg0->unkC.x = arg2->unk0;
+    arg0->unkC.y = arg2->unk4;
+    arg0->unkC.z = arg2->unk8;
     arg0->unk24 = 0;
     arg0->unk28 = 0;
     arg0->unk34 = NULL;
