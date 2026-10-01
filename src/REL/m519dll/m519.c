@@ -3018,6 +3018,7 @@ void fn_1_AE24(M519_SHOT *shot, HuVecF pos)
 {
     int i;
 
+    i = i;
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
         Hu3DModelPosSet(shot->modelId[i], pos.x, pos.y, pos.z);
