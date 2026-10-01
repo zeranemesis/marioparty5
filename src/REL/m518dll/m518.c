@@ -1497,6 +1497,93 @@ s16 fn_1_9080(M518_PLAYER *player, M518_CELL cell)
     return total;
 }
 
+int fn_1_9258(M518_PLAYER *player, M518_QUEUE *queue, M518_CELL cell, s16 dist, s32 dir, s16 len)
+{
+    u16 prev;
+    M518_CELL next;
+    s16 weight;
+
+    if (player->cell.x != cell.x || player->cell.z != cell.z) {
+        dist--;
+        switch (dir) {
+            case 0:
+                next.x = cell.x - 1;
+                next.z = cell.z;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                weight = fn_1_9CBC(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 0, len);
+                    fn_1_DC84(queue, 1);
+                    return len;
+                }
+                break;
+            case 1:
+                next.x = cell.x + 1;
+                next.z = cell.z;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 1, len);
+                    fn_1_DC84(queue, 0);
+                    return len;
+                }
+                break;
+            case 2:
+                next.x = cell.x;
+                next.z = cell.z - 1;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 2, len);
+                    fn_1_DC84(queue, 3);
+                    return len;
+                }
+                break;
+            case 3:
+                next.x = cell.x;
+                next.z = cell.z + 1;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 3, len);
+                    fn_1_DC84(queue, 2);
+                    return len;
+                }
+                break;
+        }
+        next.x = cell.x;
+        next.z = cell.z - 1;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 2, len);
+            fn_1_DC84(queue, 3);
+            return len + 1;
+        }
+        next.x = cell.x;
+        next.z = cell.z + 1;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 3, len);
+            fn_1_DC84(queue, 2);
+            return len + 1;
+        }
+        next.x = cell.x - 1;
+        next.z = cell.z;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 0, len);
+            fn_1_DC84(queue, 1);
+            return len + 1;
+        }
+        next.x = cell.x + 1;
+        next.z = cell.z;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 1, len);
+            fn_1_DC84(queue, 0);
+            return len + 1;
+        }
+    }
+    return len;
+}
+
 
 M518_PLAYERFUNC lbl_1_data_60[1] = { (M518_PLAYERFUNC)fn_1_9ED8 };
 
