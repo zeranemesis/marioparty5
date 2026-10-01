@@ -59,13 +59,22 @@ typedef struct M510PlayerModelWork_s { //0x08, 0x110 bytes
     u8 pad104[0x110 - 0x104];
 } M510_PLAYER_MODEL_WORK;
 
+typedef struct M510PlayerWork_s M510_PLAYER_WORK;
+
 typedef struct M510PitchWork_s {   //0x118, 0x3C bytes
-    u8 pad00[0x10];
+    M510_PLAYER_WORK *owner;          //0x00
+    u8 pad04[0x8 - 0x4];
+    s16 modelId;                   //0x08
+    s16 motionId;                  //0x0A
+    s16 modelId2;                  //0x0C
+    u8 pad0E[0x10 - 0xE];
     M510_VECF pos;                 //0x10 (absolute 0x128)
     u8 pad1C[0x20 - 0x1C];
     s16 state;                     //0x20
+    u8 pad22[0x24 - 0x22];
     s32 unk24;                     //0x24
-    u8 pad28[0x3C - 0x28];
+    u8 pad28[0x38 - 0x28];
+    s32 unk38;                     //0x38
 } M510_PITCH_WORK;
 
 typedef struct M510PlayerWork_s {
@@ -117,8 +126,8 @@ void fn_1_4284(void *data);
 void fn_1_4328(void *data);
 void fn_1_4770(void *data);
 
-void fn_1_47C4(void *data, void *obj);
-void fn_1_49A4(void *data);
+void fn_1_47C4(M510_PITCH_WORK *work, M510_PLAYER_WORK *self);
+void fn_1_49A4(M510_PITCH_WORK *work);
 void fn_1_49F4(void *data);
 
 void fn_1_509C(void *data, void *obj);
