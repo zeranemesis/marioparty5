@@ -1859,14 +1859,14 @@ void fn_1_5F74(void)
 
     sp8.r = 0;
     sp8.g = 0;
-    sp8.b = 0;
-    sp8.a = 0x90;
+    sp8.b = 0x90;
+    sp8.a = 0xC0;
     CZoom += *HuPadTrigL / 5;
     CZoom -= *HuPadTrigR / 5;
     Center.x += 10.0f * (*HuPadSubStkX / 59.0f);
     Center.z -= 10.0f * (*HuPadSubStkY / 59.0f);
-    CRot.x += 5.0f * (*HuPadSubStkY / 59.0f);
-    CRot.y -= 5.0f * (*HuPadSubStkX / 59.0f);
+    CRot.x += 5.0f * (HuPadSubStkY[1] / 59.0f);
+    CRot.y -= 5.0f * (HuPadSubStkX[1] / 59.0f);
     printWin(0x10, 0x28, 0x180, 0x24, &sp8);
     fontcolor = 0xE;
     print8(0x10, 0x28, 1.5f, "Center X:%.02f Y:%.02f Z:%.02f", &Center, Center.x, Center.y, Center.z);
