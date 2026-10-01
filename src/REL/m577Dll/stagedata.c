@@ -1,4 +1,4 @@
-#include "game/hu3d.h"
+#include "dolphin/types.h"
 
 typedef struct StageVec {
     f32 x;
@@ -2812,8 +2812,8 @@ s16 *fn_1_B430(s32 arg0, s32 arg1)
 // first and folds arg0 * 0xC in last. Rows 2-5 differ.
 s16 *fn_1_B460(s32 arg0, s32 arg1, s32 arg2)
 {
-    s32 i = (arg1 * 3) + arg2 + (arg0 * 0xC);
-    return lbl_1_data_28A18[i];
+    s32 t = arg1 * 3 + arg2;
+    return lbl_1_data_28A18[t + arg0 * 0xC];
 }
 
 void fn_1_B498(StageAnim *arg0)
