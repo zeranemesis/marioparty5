@@ -1001,7 +1001,7 @@ config.libs = [
             Object(NonMatching, "REL/m504dll/stage.c"),
             Object(NonMatching, "REL/m504dll/player.c"),
             Object(NonMatching, "REL/m504dll/wanwan.c"),
-            Object(NonMatching, "REL/m504dll/input.c"),
+            Object(Equivalent, "REL/m504dll/input.c"),
             Object(NonMatching, "REL/m504dll/com.c"),
             Object(NonMatching, "REL/m504dll/camera.c"),
             Object(Matching, "REL/m504dll/light.c"),
