@@ -3040,8 +3040,8 @@ HuVecF fn_1_AF48(M519_SHOT *shot)
 
 void fn_1_AF64(M519_SHOT *shot)
 {
+    s32 i = 0;
     HuVecF pos = { 0.0f, 0.0f, 0.0f };
-    s32 i;
 
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
