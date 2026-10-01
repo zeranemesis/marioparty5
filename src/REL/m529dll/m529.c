@@ -138,7 +138,7 @@ s16 fn_1_6334(s32 arg0);
 void fn_1_63E4(void);
 void fn_1_64F4(void);
 void fn_1_6518(u16 arg0, s16 arg1);
-s16 fn_1_65A0(u16 arg0);
+s16 fn_1_65A0(s16 arg0);
 void fn_1_6644(void);
 s16 fn_1_669C(u32 arg0);
 void fn_1_67B0(Vec *arg0, Vec *arg1, Vec *arg2, float farg0);
@@ -1922,37 +1922,36 @@ void fn_1_64F4(void)
 
 void fn_1_6518(u16 arg0, s16 arg1)
 {
-    s16 sp8 = arg0;
-    s16 spA = arg1;
     M529ListNode *temp_r3 = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M529ListNode), HU_MEMNUM_OVL);
     M529ListNode *temp_r29;
+    M529ListNode *temp_r30;
 
-    temp_r3->unk0 = sp8;
-    temp_r3->unk2 = spA;
-    temp_r29 = lbl_1_bss_328.next;
-    lbl_1_bss_328.next = temp_r3;
-    if (temp_r29 != NULL) {
+    temp_r3->unk0 = arg0;
+    temp_r3->unk2 = arg1;
+    temp_r30 = &lbl_1_bss_328;
+    temp_r29 = temp_r30->next;
+    temp_r30->next = temp_r3;
+    if ((u32) temp_r29 != 0) {
         temp_r29->prev = temp_r3;
     }
-    temp_r3->prev = &lbl_1_bss_328;
+    temp_r3->prev = temp_r30;
     temp_r3->next = temp_r29;
 }
 
-s16 fn_1_65A0(u16 arg0)
+s16 fn_1_65A0(s16 arg0)
 {
-    s16 sp8 = arg0;
     s16 temp_r28;
     M529ListNode *temp_r29;
     M529ListNode *temp_r30;
     M529ListNode *var_r31 = lbl_1_bss_328.next;
 
-    while (var_r31 != NULL) {
-        if (sp8 == var_r31->unk0) {
+    while ((u32) var_r31 != 0) {
+        if (arg0 == var_r31->unk0) {
             temp_r28 = var_r31->unk2;
             temp_r29 = var_r31->prev;
             temp_r30 = var_r31->next;
             temp_r29->next = temp_r30;
-            if (temp_r30 != NULL) {
+            if ((u32) temp_r30 != 0) {
                 temp_r30->prev = temp_r29;
             }
             HuMemDirectFree(var_r31);
@@ -2012,12 +2011,8 @@ void fn_1_67B0(Vec *arg0, Vec *arg1, Vec *arg2, float farg0)
 void fn_1_690C(Vec *arg0, Vec *arg1, Vec *arg2)
 {
     Hu3DCameraPosSetV(1, arg0, arg1, arg2);
-    lbl_1_bss_318.x = arg0->x;
-    lbl_1_bss_318.y = arg0->y;
-    lbl_1_bss_318.z = arg0->z;
-    lbl_1_bss_300.x = arg2->x;
-    lbl_1_bss_300.y = arg2->y;
-    lbl_1_bss_300.z = arg2->z;
+    lbl_1_bss_318 = *arg0;
+    lbl_1_bss_300 = *arg2;
 }
 
 s32 fn_1_6998(Vec *arg0, float farg0)
