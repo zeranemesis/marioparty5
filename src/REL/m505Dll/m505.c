@@ -451,7 +451,7 @@ void fn_1_1828(OMOBJ *obj)
     float prevZ = obj->trans.z;
     float prevRotY = obj->rot.y;
     s16 motNo = -1;
-    float waterY[10] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+    float waterY[26] = { 0.0f };
     M505Player *other;
     float vx;
     float vz;
@@ -2443,9 +2443,10 @@ void fn_1_FADC(OMOBJ *obj)
     Mtx lookAt;
     Mtx camMtx;
     Mtx scale;
-    Vec pos[2];
+    Vec pos[4];
     Vec waterMin = { -1250.0f, -200.0f, -1550.0f };
     Vec waterMax = { 1900.0f, -200.0f, 1000.0f };
+    float dummy[2];
     s32 i;
     s32 j;
     s32 mdlNo;
