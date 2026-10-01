@@ -691,8 +691,8 @@ header. The retail build emits them in exactly **seven** of its 881 objects:
 `game/main.o` is the clean counter-example. The target's `.sdata2` is 0x8 bytes
 holding a single anonymous double; ours was 0x18, holding that same double plus
 the two sqrtf statics. Replacing the statics with the literals they stand for --
-`.5*guess*(3.0 - guess*guess*x)` -- made ours exactly 0x8, and it took the DOL
-from 113 to 135 files OK... no, the other way:
+`.5*guess*(3.0 - guess*guess*x)` -- made ours exactly 0x8 and the unit's section
+match perfectly. It also broke the build:
 
     135 files OK            header with statics (current)
     113 files OK            statics replaced by literals
