@@ -42,6 +42,13 @@ BRANCHES = ("b", "bc", "bcl", "bclr", "bctrl", "bcctr", "bcctrl")
 
 MEM_RE = re.compile(r"^([+-]?(?:0x[0-9a-fA-F]+|\d+))\((.+)\)$")
 
+# objdump and doldecomp spell the same SPR differently: objdump prints the
+# decimal SPR number, doldecomp prints its name.  The keys are *strings*
+# because the operands reach this table already canonicalised as text.
+SPR_NAMES = {"1008": "HID0", "920": "HID2", "1017": "L2CR", "922": "DMA_U", "923": "DMA_L",
+             "1015": "MASR", "1014": "EAR", "1010": "TBL", "269": "TBU", "268": "TBL",
+             "19": "XER", "8": "LR", "9": "CTR"}
+
 
 def num(text: str) -> str:
     return str(int(text, 16) if text.lower().startswith(("0x", "-0x", "+0x")) else int(text))
@@ -58,13 +65,18 @@ def canon_operand(operand: str) -> str:
     for part in parts:
         m = MEM_RE.match(part)
         if m:
-            out.append(f"{num(m.group(1))}({m.group(2)})")
+            out.append(num(m.group(1)) + "(" + m.group(2) + ")")
         elif re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", part):
             out.append(num(part))
         else:
             out.append(part)
+    
     # objdump writes `4*cr1+eq`, doldecomp writes `cr1eq`
     out = [re.sub(r"\d+\*(cr\d+)\+(\w+)", r"\1\2", p) for p in out]
+    # objdump prints the branch register as `0`, doldecomp as `r0`.  The
+    # lookbehind must be case-insensitive, otherwise the trailing `0` of a
+    # SPR name (`HID0`, `L2CR`...) would be rewritten to `HIDr0`.
+    out = [re.sub(r"(?<![A-Za-z0-9_])0(?=,|$)", "r0", p) for p in out]
     # the target's string pool / data labels have build-specific addresses
     out = [re.sub(r"lbl[._][\w.]*", "SYM", p) for p in out]
     return ",".join(out)
@@ -84,6 +96,8 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None) -> 
         return f"{mnemonic} {target}"
     # doldecomp prints `subi rX,rY,0x217d` where objdump prints the very same
     # encoding as `addi rX,rY,-8573`; `lis rX,32768` is `-32768` in objdump.
+    if mnemonic == "hwsync":  # objdump's name for `sync`
+        return "sync"
     # `mftbu r3` (objdump) is `mftb r3,0x10d` (doldecomp), `mftb r3` == 0x10c
     if mnemonic in ("mftb", "mftbu", "mftbl"):
         parts = canon_operand(operand).split(",")
@@ -102,6 +116,14 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None) -> 
         if parts and re.fullmatch(r"[+-]?\d+", parts[-1]):
             parts[-1] = "SYM"
         operand = ",".join(parts)
+    # objdump prints the SPR as its decimal number, doldecomp as its name.
+    # `mfspr rA,SPR` but `mtspr SPR,rA`: the SPR is not in the same slot.
+    if mnemonic in ("mfspr", "mtspr"):
+        parts = canon_operand(operand).split(",")
+        i = 0 if mnemonic == "mtspr" else 1
+        if len(parts) == 2:
+            parts[i] = SPR_NAMES.get(parts[i], parts[i])
+        return f"{mnemonic} {','.join(parts)}"
     if mnemonic == "lis":
         parts = canon_operand(operand).split(",")
         parts = [p for p in parts if p]
@@ -175,7 +197,8 @@ def diff_function(name: str, got: list[str], want: list[str], verbose: bool) -> 
     same = 0
     problems: list[str] = []
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
-        matched = sum(1 for k in range(i2 - i1) if eq(got[i1 + k], want[j1 + k]))
+        matched = sum(1 for k in range(i2 - i1)
+                      if i1 + k < len(got) and j1 + k < len(want) and eq(got[i1 + k], want[j1 + k]))
         same += matched
         if tag != "equal" or matched != i2 - i1:
             for k in range(i1, i2):
