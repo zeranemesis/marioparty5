@@ -167,13 +167,20 @@ s32 lbl_1_data_21C[5] = { 0 };
 s32 lbl_1_data_230[5] = { -1, -1, -1, -1, -1 };
 s32 lbl_1_data_244[5] = { 0 };
 float lbl_1_data_258 = -10000.0f;
-char lbl_1_data_25C[] = "metehook_c";
+char lbl_1_data_25C[] = "itemhook_c";
+char lbl_1_data_284[] = "*** main mode error(%d)!!\n";
+char lbl_1_data_29F[] = "******* M566 ObjectSetup *********\n";
 
 /* Offset of the dust puff from the character's hand, rotated by the bone matrix. */
 static const HuVecF lbl_1_rodata_128 = { 0.0f, 30.0f, 0.0f };
 
 /* Axis the starfighter tumbles around: straight up. */
 static const Vec lbl_1_rodata_2B0 = { 0.0f, 1.0f, 0.0f };
+
+/* Key light direction, colour and the white it is tinted with. */
+static const Vec lbl_1_rodata_7E8 = { 0.0f, 5000.0f, 0.0f };
+static const Vec lbl_1_rodata_7F4 = { 0.0f, -1.0f, -0.5f };
+static const GXColor lbl_1_rodata_800 = { 255, 255, 255, 255 };
 
 /* Per-character starfighter placement: index is the clamped character number,
    two rows of five (height, then depth) read through a single pointer. */
@@ -1819,7 +1826,7 @@ void fn_1_8F1C(OMOBJ *obj)
             }
             break;
         default:
-            OSReport("*** main mode error(%d)!!\n", lbl_1_bss_BC);
+            OSReport(lbl_1_data_284, lbl_1_bss_BC);
             break;
     }
 }
@@ -2365,22 +2372,18 @@ void fn_1_DEAC(OMOBJ *obj)
     obj->objFunc = fn_1_8F1C;
 }
 
-// NONMATCHING: the prologue and the 0x50 stack frame match exactly; the
-// initialiser tables are read from rodata copies here and from the packed
-// data labels (lbl_1_data_29F and friends) in the original, so 139 rows only
-// differ by label and 53 by more than that.
 void ObjectSetup(void)
 {
-    Vec lightPos = { 0.0f, 5000.0f, 0.0f };
-    Vec lightDir = { 0.0f, -1.0f, -0.5f };
+    Vec lightPos;
+    Vec lightDir;
     Vec shadowPos;
     Vec shadowUp;
     Vec shadowTarget;
-    GXColor lightColor = { 255, 255, 255, 255 };
+    GXColor lightColor;
     s32 i;
     OMOBJ *obj;
 
-    OSReport("******* M566 ObjectSetup *********\n");
+    OSReport(lbl_1_data_29F);
     lbl_1_bss_B8 = omInitObjMan(600, 0x2000);
     omGameSysInit(lbl_1_bss_B8);
     Hu3DCameraCreate(HU3D_CAM0 | HU3D_CAM1);
@@ -2405,6 +2408,9 @@ void ObjectSetup(void)
     CRotM[1].y = 0.0f;
     CRotM[1].z = 0.0f;
     Hu3DLighInit();
+    lightPos = lbl_1_rodata_7E8;
+    lightDir = lbl_1_rodata_7F4;
+    lightColor = lbl_1_rodata_800;
     lbl_1_bss_AC = Hu3DGLightCreateV(&lightPos, &lightDir, &lightColor);
     Hu3DGLightStaticSet(lbl_1_bss_AC, TRUE);
     Hu3DGLightInfinitytSet(lbl_1_bss_AC);
