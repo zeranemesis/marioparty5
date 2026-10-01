@@ -824,3 +824,46 @@ need `[0x50]`. And **do not measure a Japanese string in the source**. These
 files hold UTF-8 and MWCC rewrites them to Shift-JIS, so the literal is 115
 source bytes and 0x57 bytes in the object; predicting the object size from the
 file length is wrong by enough to pick the wrong bound.
+
+## Finding 26: a symbol-size delta means nothing unless the section size moved
+
+`main/dolphin/os/OSStopwatch` looked like the biggest win on the board. The
+retail `.data` is one global, `lbl_801CEB58`, of 0x78 bytes; ours is six
+anonymous string literals, the first `@17` at 0x12. A symbol-level diff reads
+that as "+0x66, the target symbol is 66 bytes larger" -- by far the largest
+candidate in the tree.
+
+It is not a bug. Both `.data` sections are **0x78 bytes**, and `.text` is 0x370
+in both. The retail object simply names the whole string pool with a single
+covering symbol instead of splitting it per literal. There was nothing to fix,
+and the earlier note in `OSStopwatch.c` about "seven trailing NULs reproducing
+the target's padding" shows a previous pass had already been fooled the same way.
+
+So the rule that falls out of findings 22, 24 and 25:
+
+> A data symbol mismatch only matters if the **section** grew or shrank with it.
+> When the retail side has one symbol covering several literals, the section
+> sizes already agree and the difference is cosmetic.
+
+`tools/naming.py` is built to find candidates and is wrong without that guard --
+it reported OSStopwatch first. It must always be cross-checked against
+`tools/datasyms.py`, which compares section sizes and is the trustworthy one.
+
+## Finding 27: a wrong string can be a missing feature
+
+`m518dll`'s `.data` is 0x78 against the target's 0xa4. The delta is one symbol,
+`lbl_1_data_34`, of 0x2c bytes, holding
+
+    [ CRUSH DATA ] T:%.2f  A1:%.2f  A2:%.2f\n
+
+There is no such `OSReport` anywhere in `src/REL/m518dll/m518.c`. The retail
+build formats and prints a per-frame crush-data trace that our source simply
+does not have. Declaring the string as an unreferenced global would make the
+section size agree and objdiff happy, and would be a lie: the bytes would be
+in `.data` but nothing would reference them, and `.text` would stay wrong.
+
+This is the boundary that matters when chasing 100%. Some data gaps are sizing
+and naming, and are mechanical. Others are **behaviour that was never
+decompiled**, and padding them in is worse than leaving the section short,
+because a short section is honest about the work that is left. Before hoisting
+anything, check whether the source actually uses the thing.
