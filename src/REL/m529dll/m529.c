@@ -1530,24 +1530,28 @@ M529Player *temp_r31 = obj->data;
     M529Player *temp_r29 = lbl_1_bss_11C[temp_r31->unk1C]->data;
     u16 var_r30 = 0;
 
-    if (temp_r31->unkB8 != 0) {
-        if ((temp_r31->unkB8 >= 0) && (temp_r31->unkB8 < 4)) {
-            if ((temp_r31->unk40 == 0) && frandmod(temp_r31->unkBC)) {
-                if (temp_r29->unk64 == temp_r29->unk50) {
-                    var_r30 = 0x100;
-                }
-            } else {
-                var_r30 = 0;
+if (temp_r31->unkB8 == 0) {
+        if (temp_r31->unk40 == 0) {
+            temp_r31->unkC4 -= 1;
+            if (temp_r31->unkC4 < 0) {
+                var_r30 = 0x100;
+                temp_r31->unkC4 = frandmod(0x1E) + 0x1E;
+            }
+        }
+    } else if (temp_r31->unkB8 < 0) {
+        var_r30 = 0;
+    } else if (temp_r31->unkB8 >= 4) {
+        var_r30 = 0;
+    } else if (temp_r31->unk40 == 0) {
+        if (frandmod(temp_r31->unkBC)) {
+            if (temp_r29->unk64 == temp_r29->unk50) {
+                var_r30 = 0x100;
             }
         } else {
             var_r30 = 0;
         }
-    } else if (temp_r31->unk40 == 0) {
-        temp_r31->unkC4 -= 1;
-        if (temp_r31->unkC4 < 0) {
-            var_r30 = 0x100;
-            temp_r31->unkC4 = frandmod(0x1E) + 0x1E;
-        }
+    } else {
+        var_r30 = 0;
     }
     return var_r30;
 }
@@ -2141,9 +2145,7 @@ void fn_1_7220(s16 arg0, char *arg1, Vec *arg2)
 
 s32 fn_1_7278(s32 arg0, s32 arg1)
 {
-    s32 sp8 = arg1;
-
-    return arg0 + frandmod(sp8 - arg0);
+    return arg0 + frandmod(arg1 - arg0);
 }
 
 s32 fn_1_72B4(Vec *arg0, Vec *arg1, float farg0, float farg1)
