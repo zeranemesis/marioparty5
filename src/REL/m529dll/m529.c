@@ -1555,16 +1555,15 @@ M529Player *temp_r31 = obj->data;
 u16 fn_1_500C(OMOBJ *obj)
 {
     M529Player *temp_r31 = obj->data;
-    u16 var_r30;
+    M529Player *var_r29 = lbl_1_bss_11C[temp_r31->unk1C]->data;
+    u16 var_r30 = 0;
 
-    if (temp_r31->unkB8 != 0) {
-        if ((temp_r31->unkB8 >= 0) && (temp_r31->unkB8 < 4)) {
-            var_r30 = 0;
-        } else {
-            var_r30 = 0;
-        }
-    } else {
+    if (temp_r31->unkB8 == 0) {
         var_r30 = 0x100;
+    } else if ((temp_r31->unkB8 >= 0) && (temp_r31->unkB8 < 4)) {
+        var_r30 = 0;
+    } else {
+        var_r30 = 0;
     }
     return var_r30;
 }
