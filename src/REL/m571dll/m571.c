@@ -76,6 +76,12 @@ void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t);
 void fn_1_3520(void);
 void fn_1_3700(OMOBJ *obj);
 void fn_1_38E8(OMOBJ *obj);
+void fn_1_3DB8(u16 arg0, s16 arg1);
+void fn_1_3EE4(void);
+void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out);
+s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
+void fn_1_4EC0(OMOBJ *obj, s32 motNo);
+s32 fn_1_8E08(void);
 void fn_1_7670(OMOBJ *obj);
 void fn_1_7DF8(OMOBJ *obj);
 
@@ -377,7 +383,14 @@ s16 lbl_1_bss_44C[16];
 s32 lbl_1_bss_46C;
 s32 lbl_1_bss_470[2];
 OMOBJ **lbl_1_bss_478;
-u8 lbl_1_bss_47C[0x104];
+typedef struct M571Slot_s {
+    s32 val; //0x0
+    s16 flag; //0x4 set to -1 by fn_1_3EE4
+    u8 pad06[2]; //0x6
+} M571Slot; //0x8
+
+M571Slot lbl_1_bss_47C[0x20];
+u8 lbl_1_bss_57C[4];
 s32 lbl_1_bss_580;
 s32 lbl_1_bss_584[3];
 s32 lbl_1_bss_590[12];
@@ -409,7 +422,7 @@ typedef struct M571Spin_s {
     s16 modelId; //0x08
     u8 pad0A[2]; //0x0A
     Vec pos; //0x0C slot start from lbl_1_data_23C
-    Vec sca; //0x18 always zero
+    Vec rot; //0x18 always zero
     s32 playerNo; //0x24
     s32 charNo; //0x28
     s32 pad2C; //0x2C
@@ -1450,9 +1463,9 @@ void fn_1_3700(OMOBJ *obj)
     spin->pos.y = lbl_1_data_23C[spin->playerNo].y;
     spin->pos.z = lbl_1_data_23C[spin->playerNo].z;
 
-    spin->sca.x = m571Zero;
-    spin->sca.y = m571Zero;
-    spin->sca.z = m571Zero;
+    spin->rot.x = m571Zero;
+    spin->rot.y = m571Zero;
+    spin->rot.z = m571Zero;
 
     Hu3DModelAttrSet(spin->modelId, 0x40001);
     Hu3DModelShadowSet(spin->modelId);
@@ -1465,11 +1478,41 @@ void fn_1_3700(OMOBJ *obj)
     obj->objFunc = fn_1_38E8;
 }
 
+// NONMATCHING: register allocation differs from the target build
+void fn_1_38E8(OMOBJ *obj)
+{
+    M571Spin *spin = (M571Spin *)obj->data;
+
+    omSetTra(obj, spin->pos.x, spin->pos.y, spin->pos.z);
+    omSetRot(obj, spin->rot.x, spin->rot.y, spin->rot.z);
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_3D94(void)
 {
     lbl_1_bss_684[1] = 0;
     lbl_1_bss_684[2] = 0;
+}
+
+// NONMATCHING: register allocation differs from the target build
+void fn_1_3DB8(u16 arg0, s16 arg1)
+{
+    M571ListNode *node;
+    M571ListNode *old;
+
+    node = HuMemDirectMallocNum(0, 0xC, 0x1000);
+    node->id = arg0;
+    node->pad02 = arg1;
+
+    old = (M571ListNode *)lbl_1_bss_684[2];
+    lbl_1_bss_684[2] = (s32)node;
+
+    if (old != NULL) {
+        old->prev = node;
+    }
+
+    node->prev = (M571ListNode *)&lbl_1_bss_684[0];
+    node->next = old;
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
@@ -1500,6 +1543,17 @@ s32 fn_1_3E40(s16 id)
     return -1;
 }
 
+// NONMATCHING: local index/register form differs from the target build
+void fn_1_3EE4(void)
+{
+    s32 i;
+
+    for (i = 0; i < 0x20; i++) {
+        lbl_1_bss_47C[i].val = 0;
+        lbl_1_bss_47C[i].flag = -1;
+    }
+}
+
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t)
 {
@@ -1524,6 +1578,37 @@ void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t)
 s32 fn_1_4B18(s32 base, s32 range)
 {
     return base + frandmod(range - base);
+}
+
+// NONMATCHING: local index/register form differs from the target build
+void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out)
+{
+    Mtx mtx;
+
+    Hu3DModelObjMtxGet(modelId, (char *)arg1, mtx);
+
+    out->x = mtx[0][3];
+    out->y = mtx[1][3];
+    out->z = mtx[2][3];
+}
+
+// NONMATCHING: expression form and comparison direction differ from the target build
+s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3)
+{
+    f32 dx = arg1->x - arg0->x;
+    f32 dz = arg1->z - arg0->z;
+    f32 r = arg2 + arg3;
+
+    return (dx * dx + dz * dz) < (r * r);
+}
+
+// NONMATCHING: register allocation differs from the target build
+void fn_1_4EC0(OMOBJ *obj, s32 motNo)
+{
+    M571Spin *spin = (M571Spin *)obj->data;
+
+    spin->pad2C = motNo;
+    Hu3DMotionSet(spin->curMot, lbl_1_bss_44C[motNo]);
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
@@ -1557,6 +1642,20 @@ void fn_1_83C0(s32 arg0)
 void fn_1_8478(s32 index, s32 value)
 {
     lbl_1_bss_428[index] = value;
+}
+
+// NONMATCHING: local index/register form differs from the target build
+s32 fn_1_8E08(void)
+{
+    s32 i;
+
+    for (i = 0; i < 0x14; i++) {
+        if (lbl_1_bss_368[i] != 0) {
+            return 1;
+        }
+    }
+
+    return 1;
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
