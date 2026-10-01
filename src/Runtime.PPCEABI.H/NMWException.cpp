@@ -172,10 +172,15 @@ extern "C" void __destroy_arr(void* block, ConstructorDestructor dtor, size_t sz
 
 
 /* .text  __construct_array */
-extern "C" void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, size_t sz, size_t n)
+// ptr, dtor and the loop counter live in memory in the original build: the
+// indirect call clobbers everything and the code reloads them from the frame
+// around every CTORCALL/DTORCALL. volatile reproduces that placement, and with
+// it MWCC keeps exactly the four callee-saved registers the target uses.
+extern "C" void __construct_array(void* volatile ptr, ConstructorDestructor ctor,
+                                    ConstructorDestructor volatile dtor, size_t sz, size_t n)
 {
 	char* p = (char*)ptr;
-	size_t i = 0;
+	volatile size_t i = 0;
 	while (i < n)
 	{
 		CTORCALL_COMPLETE(ctor, p);

@@ -237,3 +237,23 @@ size is *not* rounded up to the section alignment: a pool whose literals end at
 0x71 gives a 0x71-byte section, while the target has 0x78. Spelling the trailing
 padding out inside the last literal (`"...\n\0\0\0\0\0\0\0"`) reproduces the
 target's section size byte for byte.
+
+## 9. MWCC 2.4.7 spill placement, and how to force it (NMWException)
+
+`__construct_array` keeps `ptr`, `dtor` and its loop counter in the frame and
+reloads them around every indirect `bctrl`, while promoting only four values
+(`p`, `sz`, `n`, `ctor`) into r28-r31. Written plainly, the same compiler keeps
+seven values in r25-r31 and spills nothing: it only spills when the frame is
+forced, because with enough callee-saved registers available it prefers
+promotion over spilling.
+
+The tell-tale in the target is a store immediately followed by a reload of the
+same slot (`stw r0,0x18(r1); lwz r4,0x18(r1)`) with no use in between — a
+register allocator would never emit that for a spilled-but-promoted value.
+Declaring the cold parameters and the counter `volatile` reproduces the
+placement and the register budget, taking the unit from 84.8% to 91.4%.
+
+So: when a target reloads a variable around every call, `volatile` is the lever,
+and it is worth trying on parameters, not just locals — but only on the values
+the target keeps in memory. Marking `sz` and `n` volatile as well makes things
+worse (they lose their register copies), which is how the right subset was found.
