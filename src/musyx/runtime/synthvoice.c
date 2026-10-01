@@ -693,12 +693,15 @@ void synthInitAllocationAids() {
 u32 voiceBlock(u8 prio) {
   u32 voice;
 
-  if ((voice = voiceAllocate(prio, 0xFF, 0xFFFF, 1)) != 0xFFFFFFFF) {
+  voice = voiceAllocateFind(prio, 0xFF, 0xFFFF, 1);
+  voiceAllocateDo(voice, 1);
+
+  if (voice != 0xFFFFFFFF) {
     synthVoice[voice].block = 1;
     synthVoice[voice].fxFlag = 1;
 
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(1, 5, 4)
-    synthVoice[voice].allocId = MUSY_VERSION <= MUSY_VERSION_CHECK(2, 0, 1) ? 0xFFFF : -1;
+    synthVoice[voice].allocId = -1;
 #endif
 
     vidRemoveVoiceReferences(&synthVoice[voice]);

@@ -274,3 +274,52 @@ not move when only the offsets shift. Four further encodings of the constant
 (`0xCC000000 + 0x4000`, `0xCC00 << 16`, a `(u32)` cast, raw offsets instead of
 the struct) all left the function at 84.3%, so the folding itself is still
 unexplained.
+
+## 11. An inlined wrapper loses the callee-saved copy of its result
+
+`voiceBlock` in `musyx/runtime/synthvoice.c` was the last function of its unit to
+match. Written the obvious way -- `if ((voice = voiceAllocate(...)) != -1)` --
+MWCC inlines the whole `voiceAllocate` / `voiceAllocateDo` chain and leaves the
+inlined argument in the register the call returned in (`r3`), while the
+caller's own `voice` is allocated `r31` for the second half of the function.
+The two ranges are the same value, so the allocator coalesces them and the
+result is correct, but `voice` is read out of `r3` in the first block and out of
+`r31` in the second, with no `mr r31, r3` anywhere.
+
+The target has the `mr r31, r3`: the value crosses a real (if inlined) call
+boundary and gets a callee-saved home before the argument is substituted.
+Writing the two calls out by hand reproduces it exactly:
+
+    voice = voiceAllocateFind(prio, 0xFF, 0xFFFF, 1);
+    voiceAllocateDo(voice, 1);
+    if (voice != 0xFFFFFFFF) { ... }
+
+Lesson: when only the *registers* of an otherwise identical body differ, suspect
+inlining shape rather than types or declaration order. Roughly a dozen variants
+that varied the parameter type, the return type, the local's type, the
+comparison constant, the name of the inlined parameter and the ternary form all
+produced the same split live range; only splitting the wrapper into its two real
+calls changed anything. Note also that changing the inlined parameter from `s32`
+to `u32` makes MWCC fold the callee's `if (voice != -1)` guard into the caller's
+`voice != 0xFFFFFFFF` test and delete the duplicated check, which is a quick way
+to tell whether a guard is still there.
+
+## 12. `0xFFFFFFFF` is sometimes compared as `x + 0x10000 == 0xFFFF`
+
+The same function tests its result twice: once with `cmpwi r, -1` and once, at
+the merge point, with `addis r0, r, 1; cmplwi r0, 0xffff`. The second form is
+the first one after the finding-5 fold (`0xFFFFFFFF` expressed as
+`0x10000 - 1`), and MWCC cannot see that the two are the same test, so it emits
+both. That is why the target keeps a redundant-looking guard after the inlined
+block, and why changing the inlined parameter's signedness (which changes the
+form of *its* guard) can delete it.
+
+## 13. `gap_*` symbols are a build artifact, not something to reproduce
+
+Most target objects end their `.sbss` / `.sdata2` sections with a symbol named
+`gap_10_8028xxxx_sbss`, sized to round the section up to its alignment. It
+carries a build address, is present in the linked objects of units already
+marked `Matching` (for example `dolphin/os/OSArena` and `dolphin/demo/DEMOInit`),
+and cannot be produced from C: no compiler flag or source change emits it. It
+costs a few percent on the small-data sections of 181 sections across the ROM and
+should be ignored when judging whether a unit matches.
