@@ -1571,22 +1571,25 @@ u16 fn_1_500C(OMOBJ *obj)
 u16 fn_1_5084(OMOBJ *obj)
 {
     M529Player *temp_r31 = obj->data;
+    M529Player *var_r29 = lbl_1_bss_11C[temp_r31->unk1C]->data;
     u16 var_r30 = 0;
 
-    if ((temp_r31->unkB8 >= 0) && (temp_r31->unkB8 < 4)) {
-        if (temp_r31->unkCC == -1) {
-            temp_r31->unkC4 = 0;
-        }
-        temp_r31->unkC4 -= 1;
-        if (temp_r31->unkC4 < 0) {
-            if (temp_r31->unk7C == -1) {
-                var_r30 = 0x40;
-            } else if (frandmod(temp_r31->unkC0)) {
-                var_r30 = fn_1_5170(obj);
-            } else {
-                var_r30 = 0;
+    if (temp_r31->unkB8 < 4) {
+        if (temp_r31->unkB8 >= 0) {
+            if (temp_r31->unkCC == -1) {
+                temp_r31->unkC4 = 0;
             }
-            temp_r31->unkC4 = fn_1_51B4(temp_r31->unkC8, temp_r31->unkCC);
+            temp_r31->unkC4 -= 1;
+            if (temp_r31->unkC4 < 0) {
+                if (temp_r31->unk7C == -1) {
+                    var_r30 = 0x40;
+                } else if (frandmod(temp_r31->unkC0)) {
+                    var_r30 = fn_1_5170(obj);
+                } else {
+                    var_r30 = 0;
+                }
+                temp_r31->unkC4 = fn_1_51B4(temp_r31->unkC8, temp_r31->unkCC);
+            }
         }
     }
     return var_r30;
@@ -2118,13 +2121,11 @@ float fn_1_70B0(float farg0, float farg1, float farg2)
 
 void fn_1_71B4(s32 arg0)
 {
-    s32 var_r31 = arg0;
-
     if (lbl_1_bss_228 >= 0) {
-        if (var_r31 < 0) {
-            var_r31 = 0x3E8;
+        if (arg0 < 0) {
+            arg0 = 0x3E8;
         }
-        HuAudSeqFadeOut(lbl_1_bss_228, var_r31);
+        HuAudSeqFadeOut(lbl_1_bss_228, arg0);
     }
     lbl_1_bss_228 = -1;
 }
