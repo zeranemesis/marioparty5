@@ -75,6 +75,7 @@ s16 fn_1_9350(HuVecF *pos);
 void fn_1_8654(OMOBJ *obj);
 s32 fn_1_4B18(s32 base, s32 range);
 void fn_1_36B8(OMOBJ *obj);
+void fn_1_4F20(OMOBJ *obj);
 s32 fn_1_7A78(void);
 s32 fn_1_28F4(HuVecF *pos);
 void fn_1_3594(OMOBJ *obj);
@@ -137,16 +138,16 @@ typedef struct M571Player_s {
     s32 unk48; //0x48
     s32 unk4C; //0x4C
     s32 unk50; //0x50
-    s16 unk54; //0x54
-    s16 unk56; //0x56
-    s16 unk58; //0x58
+    s16 hookL; //0x54 left hand item model
+    s16 hookR; //0x56 right hand item model
+    s16 hookSwap; //0x58 swapped hand item model
     s32 unk5C; //0x5C character type taken from GwPlayerConf
     s32 unk60; //0x60
     Vec unk64; //0x64
     s32 unk70; //0x70
     s32 unk74; //0x74
     s32 unk78; //0x78
-    s32 unk7C; //0x7C
+    s32 hookCycle; //0x7C counter cycling 0..2 over the hook swap
     s32 unk80; //0x80
     s32 unk84; //0x84
     s32 unk88; //0x88
@@ -672,7 +673,7 @@ void fn_1_BF4(OMOBJ *obj)
     p->unk8 = GwPlayerConf[p->unk0].padNo;
     p->unkC = 0;
     p->unk30 = 0;
-    p->unk7C = 0;
+    p->hookCycle = 0;
     p->unk78 = 0;
 
     p->unk5C = GwPlayerConf[p->unk0].dif;
@@ -722,10 +723,10 @@ void fn_1_D58(OMOBJ *obj)
             p->unk70 = 0;
             p->unk74 = 0;
             p->unk78 = 0;
-            p->unk7C = 0;
+            p->hookCycle = 0;
 
             fn_1_1078(obj);
-            MgPlayerPadSet(lbl_1_bss_DC[p->unk0], p->unk70, p->unk74, p->unk78, p->unk7C);
+            MgPlayerPadSet(lbl_1_bss_DC[p->unk0], p->unk70, p->unk74, p->unk78, p->hookCycle);
         }
 
         mp = lbl_1_bss_DC[p->unk0];
@@ -1030,14 +1031,14 @@ void fn_1_18B8(void)
 
         Hu3DModelAttrReset(p->unk0, 1);
 
-        Hu3DModelHookObjReset(p->unk54, lbl_1_data_11A);
-        Hu3DModelHookObjReset(p->unk54, lbl_1_data_124);
+        Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
+        Hu3DModelHookObjReset(p->hookL, lbl_1_data_124);
         Hu3DModelHookObjReset(p->unk0, lbl_1_data_100);
         Hu3DModelHookObjReset(p->unk0, lbl_1_data_10D);
 
-        Hu3DModelAttrSet(p->unk54, 1);
-        Hu3DModelAttrSet(p->unk58, 1);
-        Hu3DModelAttrSet(p->unk56, 1);
+        Hu3DModelAttrSet(p->hookL, 1);
+        Hu3DModelAttrSet(p->hookSwap, 1);
+        Hu3DModelAttrSet(p->hookR, 1);
 
         HuPrcVSleep();
 
@@ -1759,6 +1760,31 @@ void fn_1_4EC0(OMOBJ *obj, s32 motNo)
 
     spin->pad2C = motNo;
     Hu3DMotionSet(spin->curMot, lbl_1_bss_44C[motNo]);
+}
+
+// NONMATCHING: local register form and constant load differ from the target build
+void fn_1_4F20(OMOBJ *obj)
+{
+    M571Player *p = (M571Player *)obj->data;
+
+    if (p->hookCycle % 3 == 0) {
+        Hu3DModelHookObjReset(p->unk0, lbl_1_data_100);
+        Hu3DModelHookSet(p->unk0, lbl_1_data_10D, p->hookR);
+        Hu3DModelAttrReset(p->hookR, 1);
+        Hu3DModelAttrSet(p->hookSwap, 1);
+    } else if (p->hookCycle % 3 == 1) {
+        Hu3DModelHookObjReset(p->unk0, lbl_1_data_10D);
+        Hu3DModelHookSet(p->unk0, lbl_1_data_100, p->hookSwap);
+        Hu3DModelAttrReset(p->hookSwap, 1);
+        Hu3DModelAttrSet(p->hookSwap, HU3D_MOTATTR_PAUSE);
+        Hu3DMotionTimeSet(p->hookSwap, m571Zero);
+        Hu3DModelAttrSet(p->hookR, 1);
+    } else if (p->hookCycle % 3 == 2) {
+        Hu3DModelHookObjReset(p->unk0, lbl_1_data_10D);
+        Hu3DModelHookObjReset(p->unk0, lbl_1_data_100);
+        Hu3DModelAttrSet(p->hookR, 1);
+        Hu3DModelAttrSet(p->hookSwap, 1);
+    }
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
