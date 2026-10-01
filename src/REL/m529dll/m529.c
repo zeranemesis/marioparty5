@@ -1985,18 +1985,17 @@ void fn_1_6644(void)
 s16 fn_1_669C(u32 arg0)
 {
     s32 i;
-    s32 j;
 
     for (i = 0; i < 0x20; i++) {
         if (arg0 == lbl_1_bss_120[i].dataNum) {
             return Hu3DModelLink(lbl_1_bss_120[i].modelId);
         }
     }
-    for (j = 0; j < 0x20; j++) {
-        if (lbl_1_bss_120[j].dataNum == 0) {
-            lbl_1_bss_120[j].dataNum = arg0;
-            lbl_1_bss_120[j].modelId = Hu3DModelCreate(HuDataSelHeapReadNum(arg0, HU_MEMNUM_OVL, HEAP_MODEL));
-            return lbl_1_bss_120[j].modelId;
+    for (i = 0; i < 0x20; i++) {
+        if (lbl_1_bss_120[i].dataNum == 0) {
+            lbl_1_bss_120[i].dataNum = arg0;
+            lbl_1_bss_120[i].modelId = Hu3DModelCreate(HuDataSelHeapReadNum(arg0, HU_MEMNUM_OVL, HEAP_MODEL));
+            return lbl_1_bss_120[i].modelId;
         }
     }
     return Hu3DModelCreate(HuDataSelHeapReadNum(arg0, HU_MEMNUM_OVL, HEAP_MODEL));
