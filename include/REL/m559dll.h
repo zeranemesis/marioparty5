@@ -32,6 +32,13 @@ typedef struct M559Clr_s {
     u8 unk3;
 } M559CLR; // size = 0x4
 
+// a 4-byte slot the code reaches through both the integer and the float view
+typedef union M559Slot_s {
+    s32 i;
+    u32 u;
+    f32 f;
+} M559SLOT;
+
 // per-part record owned by an M559HOOKDATA (HuMemDirectMallocNum 0x40 * n)
 typedef struct M559AnimPart_s {
     s32 unk0;
@@ -94,6 +101,7 @@ typedef struct M559Hook_s {
             f32 unk2C;
             f32 unk30;
         };
+        s16 modelId;
     };                // 0x28
     M559VEC prevPos;  // 0x34
     union {
@@ -161,45 +169,78 @@ typedef struct M559Nod_s {
 typedef struct M559Head_s {
     s16 state;        // 0x00
     s16 modelId;      // 0x02
-    M559VEC pos;      // 0x04
-    f32 field10;      // 0x10
-    s16 pad12;        // 0x12
-    s16 pad14;        // 0x14
-    s32 field20;      // 0x20
-    s32 field28;      // 0x28
-    s32 field30;      // 0x30
     union {
-        s32 field38;
-        s32 unk38;
-    };                // 0x38
-    union {
-        f32 field40;
-        f32 unk40;
-    };                // 0x40
-    union {
-        s32 field44;
-        s32 unk44;
-    };                // 0x44
-    union {
-        s32 field48;
-        s32 unk48;
-    };                // 0x48
-    union {
-        s32 field4C;
-        s32 unk4C;
-    };                // 0x4C
-    union {
-        M559VEC field50;
+        M559VEC pos;
         struct {
-            f32 unk50;
-            f32 unk54;
-            f32 unk58;
+            f32 unk4;
+            f32 unk8;
+            f32 unkC;
         };
-    };                // 0x50
+    };                // 0x04
     union {
-        s32 field5C;
-        s32 unk5C;
-    };                // 0x5C
+        M559VEC start;
+        struct {
+            f32 unk10;
+            f32 unk14;
+            f32 unk18;
+        };
+    };                // 0x10
+    union {
+        M559SLOT field1C;
+        M559SLOT unk1C;
+    };               // 0x1C  // 0x1C
+    union {
+        M559SLOT field20;
+        M559SLOT unk20;
+    };               // 0x20  // 0x20
+    union {
+        M559SLOT field24;
+        M559SLOT unk24;
+    };               // 0x24  // 0x24
+    union {
+        M559SLOT field28;
+        M559SLOT unk28;
+    };               // 0x28  // 0x28
+    union {
+        M559SLOT field2C;
+        M559SLOT unk2C;
+    };               // 0x2C  // 0x2C
+    union {
+        M559SLOT field30;
+        M559SLOT unk30;
+    };               // 0x30  // 0x30
+    union {
+        M559SLOT field38;
+        M559SLOT unk38;
+    };               // 0x38  // 0x38
+    union {
+        M559SLOT field40;
+        M559SLOT unk40;
+    };               // 0x40  // 0x40
+    union {
+        M559SLOT field44;
+        M559SLOT unk44;
+    };               // 0x44  // 0x44
+    union {
+        M559SLOT field48;
+        M559SLOT unk48;
+    };               // 0x48  // 0x48
+    union {
+        M559SLOT field4C;
+        M559SLOT unk4C;
+    };               // 0x4C  // 0x4C
+    union {
+        M559SLOT field50;
+        struct {
+            f32 x;
+            f32 y;
+            f32 z;
+        };
+    };               // 0x50  // 0x50
+    union {
+        M559SLOT field5C;
+        M559SLOT unk5C;
+    };               // 0x5C  // 0x5C
 } M559HEAD; // size = 0x58
 
 // Hu3DData[].hookData of a model created by fn_1_7368 (size 0x6C)
