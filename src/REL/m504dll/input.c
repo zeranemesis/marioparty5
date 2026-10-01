@@ -1,38 +1,6 @@
 #include "REL/m504dll.h"
 #include "string.h"
 
-typedef struct InputWork_s {
-    struct InputMain_s *main;
-    s32 unk4;
-    void **dataTable;
-    s32 unkC;
-    s32 type;
-    u16 dif;
-    u8 unk18[14];
-} InputWork;
-
-typedef struct PadOwner_s {
-    struct PadOwner_s *unk0;
-    s32 playerNo;
-} PadOwner;
-
-typedef struct InputMain_s {
-    PadOwner *playerConf;
-    InputWork work;
-    s32 padId;
-    s32 btn;
-    s32 btnDown;
-    s8 stkX;
-    s8 stkY;
-    u16 btnRep;
-    s8 subStkX;
-    s8 subStkY;
-    u8 trigL;
-    u8 trigR;
-    u8 dStk;
-    u8 dStkRep;
-} InputMain;
-
 extern GWPLAYERCONF GwPlayerConf[];
 extern u16 HuPadBtn[];
 extern u16 HuPadBtnDown[];
@@ -52,25 +20,25 @@ extern void *lbl_1_data_2E74[];
 extern void *lbl_1_data_2EB0[];
 extern u8 *lbl_1_data_4134[];
 
-extern void fn_1_BC54(InputWork *work);
-extern void fn_1_BC84(InputWork *work);
-void fn_1_BAC4(InputWork *work, InputMain *main);
+extern void fn_1_BC54(INPUTWORK *work);
+extern void fn_1_BC84(INPUTWORK *work);
+void fn_1_BAC4(INPUTWORK *work, INPUTMAIN *main);
 
-void fn_1_B828(InputMain *main, s32 padNo, PadOwner *playerConf)
+void fn_1_B828(INPUTMAIN *main, s32 padNo, PADOWNER *playerConf)
 {
-    memset(main, 0, sizeof(InputMain));
+    memset(main, 0, sizeof(INPUTMAIN));
     main->playerConf = playerConf;
     main->padId = GwPlayerConf[padNo].padNo;
     fn_1_BAC4(&main->work, main);
 }
 
-void fn_1_B898(InputMain *main)
+void fn_1_B898(INPUTMAIN *main)
 {
     fn_1_BC54(&main->work);
-    memset(main, 0, sizeof(InputMain));
+    memset(main, 0, sizeof(INPUTMAIN));
 }
 
-void fn_1_B8D8(InputMain *main)
+void fn_1_B8D8(INPUTMAIN *main)
 {
     register s32 absStkX;
     register s32 stkXv;
@@ -120,7 +88,7 @@ void fn_1_B8D8(InputMain *main)
     main->dStkRep = HuPadDStkRep[main->padId];
 }
 
-void fn_1_BAC4(InputWork *work, InputMain *main)
+void fn_1_BAC4(INPUTWORK *work, INPUTMAIN *main)
 {
     register s32 i;
     register s32 playerNo;
