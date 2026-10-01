@@ -93,8 +93,9 @@ typedef struct M571Player_s {
     s32 unk48; //0x48
     s32 unk4C; //0x4C
     s32 unk50; //0x50
-    s32 unk54; //0x54
-    s32 unk58; //0x58
+    s16 unk54; //0x54
+    s16 unk56; //0x56
+    s16 unk58; //0x58
     s32 unk5C; //0x5C character type taken from GwPlayerConf
     s32 unk60; //0x60
     Vec unk64; //0x64
@@ -383,6 +384,7 @@ void _epilog(void)
     }
 }
 
+// NONMATCHING: register init order and a few Hu3D call arities differ from the target build
 void ObjectSetup(void)
 {
     s32 i;
@@ -468,6 +470,7 @@ void ObjectSetup(void)
     MgSeqCreatePrio(&lbl_1_data_D48, 1000);
 }
 
+// NONMATCHING: draft reconstruction, MGPLAYER field order not fully resolved
 void fn_1_68C(OMOBJ *obj)
 {
     MGACTOR_PARAM param;
@@ -546,6 +549,7 @@ void fn_1_68C(OMOBJ *obj)
     obj->objFunc = NULL;
 }
 
+// NONMATCHING: GwPlayerConf field picks and frandmod branches need fndiff verification
 void fn_1_BF4(OMOBJ *obj)
 {
     M571Player *p = (M571Player *)obj->data;
@@ -590,6 +594,7 @@ void fn_1_BF4(OMOBJ *obj)
     obj->objFunc = fn_1_D58;
 }
 
+// NONMATCHING: actor field offsets and the voice-pan expression are approximations
 void fn_1_D58(OMOBJ *obj)
 {
     M571Player *p = (M571Player *)obj->data;
@@ -651,6 +656,7 @@ void fn_1_D58(OMOBJ *obj)
     CharModelVoicePanSet(p->unk4, (s16)(32.0f + (screenPos.x / 576.0f) * 64.0f));
 }
 
+// NONMATCHING: draft reconstruction of the pad-state machine
 void fn_1_1078(OMOBJ *obj)
 {
     M571Player *p = (M571Player *)obj->data;
@@ -681,6 +687,7 @@ void fn_1_1078(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: draft reconstruction
 s32 fn_1_1168(OMOBJ *obj)
 {
     M571Player *p = (M571Player *)obj->data;
@@ -704,6 +711,7 @@ s32 fn_1_1168(OMOBJ *obj)
     return 0;
 }
 
+// NONMATCHING: draft reconstruction
 s32 fn_1_1264(Vec *pos, Vec *out)
 {
     f32 best = 1000000.0f;
@@ -743,6 +751,7 @@ s32 fn_1_1264(Vec *pos, Vec *out)
     return 0;
 }
 
+// NONMATCHING: draft reconstruction of the intro sequence handler
 void fn_1_1518(void)
 {
     s32 i;
@@ -767,6 +776,7 @@ void fn_1_1518(void)
     lbl_1_bss_35C = HuAudSStreamPlay(0x3D);
 }
 
+// NONMATCHING: draft reconstruction
 void fn_1_1630(void)
 {
     M571Player *p;
@@ -797,6 +807,7 @@ void fn_1_1630(void)
     MgSeqModeNext();
 }
 
+// NONMATCHING: draft reconstruction
 void fn_1_16F4(void)
 {
     M571Player *p;
@@ -816,6 +827,7 @@ void fn_1_16F4(void)
     }
 }
 
+// NONMATCHING: draft reconstruction
 void fn_1_1760(void)
 {
     s32 i;
@@ -854,6 +866,7 @@ void fn_1_1898(OMOBJ *obj)
     MgActorExec();
 }
 
+// NONMATCHING: wipe/reset sequence ordering is a draft reconstruction
 void fn_1_18B8(void)
 {
     M571Player *p;
@@ -876,7 +889,7 @@ void fn_1_18B8(void)
         for (i = 0; i < 4; i++) {
             M571Player *r = (M571Player *)lbl_1_bss_354[i]->data;
 
-            MgActorKill(lbl_1_bss_DC[i]);
+            MgActorKill((MGACTOR *)lbl_1_bss_DC[i]);
             omDelObjEx(lbl_1_bss_680, lbl_1_bss_354[i]);
         }
 
@@ -920,8 +933,8 @@ void fn_1_18B8(void)
         p->unk8 = lbl_1_data_70.y;
         p->unkC = lbl_1_data_70.z;
         p->unk24 = 0.0f;
-        p->unk20 = 0.0f;
-        p->unk1C = 0.0f;
+        p->unk18.z = 0.0f;
+        p->unk18.y = 0.0f;
 
         WipeCreate(1, 5, 30);
 
@@ -933,6 +946,7 @@ void fn_1_18B8(void)
     }
 }
 
+// NONMATCHING: draft reconstruction of the scoring pass
 void fn_1_1BA0(void)
 {
     M571Player *p;
@@ -959,10 +973,10 @@ void fn_1_1BA0(void)
                 }
             }
 
-            score = (s16)(q->unk30 + GwPlayer[q->unk24].score);
+            score = (s16)(q->unk30 + (s16)GwPlayer[q->unk24].mgScore);
 
-            if (!_CheckFlag(0x1F)) {
-                GwPlayer[q->unk24].score = (s16)score;
+            if (!_CheckFlag(0x1000F)) {
+                GwPlayer[q->unk24].mgScore = score;
             }
         }
     }
