@@ -129,8 +129,8 @@ void fn_1_553C(OMOBJ *obj);
 void fn_1_5680(s16 arg0, u32 arg1);
 void fn_1_57BC(void);
 void fn_1_595C(void);
-s16 fn_1_5960(s16 arg0);
-s32 fn_1_59BC(s16 arg0);
+s32 fn_1_5960(s32 arg0);
+s32 fn_1_59BC(s32 arg0);
 void fn_1_5A18(void);
 void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1);
 void fn_1_5F74(void);
@@ -1376,7 +1376,7 @@ void fn_1_4780(OMOBJ *obj)
     s16 var_r28;
     s16 var_r29;
     s32 temp_r0;
-M529Player *temp_r31 = obj->data;
+    M529Player *temp_r31 = obj->data;
     M529Player *temp_r30 = lbl_1_bss_11C[temp_r31->unk1C]->data;
 
     if (temp_r31->unk0 == 0xBB9) {
@@ -1741,29 +1741,29 @@ void fn_1_595C(void)
 {
 }
 
-s16 fn_1_5960(s16 arg0)
+s32 fn_1_5960(s32 arg0)
 {
-    s32 i;
-    M529Player *temp_r31;
+    M529Player *var_r31;
+    s32 var_r30 = 0;
 
-    for (i = 0; i < 4; i++) {
-        temp_r31 = lbl_1_bss_11C[i]->data;
-        if (temp_r31->unk24 == arg0) {
-            return temp_r31->unk28;
+    for (; var_r30 < 4; var_r30++) {
+        var_r31 = lbl_1_bss_11C[var_r30]->data;
+        if (var_r31->unk24 == arg0) {
+            return var_r31->unk28;
         }
     }
     return arg0;
 }
 
-s32 fn_1_59BC(s16 arg0)
+s32 fn_1_59BC(s32 arg0)
 {
-    s32 i;
-    M529Player *temp_r31;
+    M529Player *var_r31;
+    s32 var_r30 = 0;
 
-    for (i = 0; i < 4; i++) {
-        temp_r31 = lbl_1_bss_11C[i]->data;
-        if (temp_r31->unk24 == arg0) {
-            return temp_r31->unk14;
+    for (; var_r30 < 4; var_r30++) {
+        var_r31 = lbl_1_bss_11C[var_r30]->data;
+        if (var_r31->unk24 == arg0) {
+            return var_r31->unk14;
         }
     }
     return arg0;
