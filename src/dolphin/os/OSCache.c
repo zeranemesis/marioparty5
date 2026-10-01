@@ -311,22 +311,24 @@ void L2GlobalInvalidate(void)
     u32 l2cr;
 
     SYNC();
-    l2cr = PPCMfl2cr() & ~0x1;
+    l2cr = PPCMfl2cr() & 0x7fffffffu;
     PPCMtl2cr(l2cr);
     SYNC();
 
     l2cr = PPCMfl2cr() | 0x00200000;
     PPCMtl2cr(l2cr);
 
-    while (!(PPCMfl2cr() & 0x80000000)) {
+    /* Wait for the invalidate to complete (L2CR[LOAI] in progress). */
+    while (PPCMfl2cr() & 0x1) {
     }
 
-    l2cr = PPCMfl2cr() & ~0x400;
+    l2cr = PPCMfl2cr() & (u32)(~0x200000);
     PPCMtl2cr(l2cr);
 
-    do {
+    /* If the invalidate is *still* running we are in trouble. */
+    while (PPCMfl2cr() & 0x1) {
         DBPrintf(">>> L2 INVALIDATE : SHOULD NEVER HAPPEN\n");
-    } while (!(PPCMfl2cr() & 0x80000000));
+    }
 }
 
 void DMAErrorHandler(OSError error, OSContext* context)

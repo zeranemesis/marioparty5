@@ -52,8 +52,8 @@ MEM_RE = re.compile(r"^([+-]?(?:0x[0-9a-fA-F]+|\d+))\((.+)\)$")
 # raw rotate (`rlwinm r6,r5,30,27,31`), and likewise `dcbt` vs `dcbtct`.  For
 # these mnemonics the operand text carries no meaning, so we compare the raw
 # encoding instead - which is strictly stronger than comparing the mnemonic.
-AMBIGUOUS = {"rlwinm", "rotlwi", "slwi", "srwi", "clrlwi", "clrlslwi", "extrwi",
-             "dcbt", "dcbtst", "dcbtct"}
+AMBIGUOUS = {"rlwinm", "rotlwi", "slwi", "srwi", "clrlwi", "clrrwi", "clrlslwi",
+             "clrrslwi", "extrwi", "dcbt", "dcbtst", "dcbtct"}
 
 # objdump and doldecomp spell the same SPR differently: objdump prints the
 # decimal SPR number, doldecomp prints its name.  The keys are *strings*
@@ -71,6 +71,9 @@ def canon_operand(operand: str) -> str:
     operand = operand.strip()
     if not operand:
         return ""
+    # data labels come in several spellings: `lbl_801CEB58@ha`, `"@69"@ha`.
+    # Strip the quoted part first, then any `@suffix` relocation marker.
+    operand = re.sub(r'"[^"]*"', "SYM", operand)
     if "@" in operand:  # lis r3, lbl_801CEB58@ha
         operand = operand.split("@")[0].strip()
     parts = [p.strip() for p in operand.split(",")]
@@ -129,9 +132,10 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None,
     # a data reloc (lis/addi on a string pool) - the symbol is what matters
     if reloc is not None:
         parts = canon_operand(operand).split(",")
-        if parts and re.fullmatch(r"[+-]?\d+", parts[-1]):
+        # canon_operand already rewrote a literal `0` into `r0`
+        if parts and re.fullmatch(r"[+-]?\d+|r0", parts[-1]):
             parts[-1] = "SYM"
-        operand = ",".join(parts)
+        return f"{mnemonic} {','.join(parts)}"
     # objdump prints the SPR as its decimal number, doldecomp as its name.
     # `mfspr rA,SPR` but `mtspr SPR,rA`: the SPR is not in the same slot.
     if mnemonic in ("mfspr", "mtspr"):
@@ -141,8 +145,7 @@ def canon_insn(mnemonic: str, operand: str | None, reloc: str | None = None,
             parts[i] = SPR_NAMES.get(parts[i], parts[i])
         return f"{mnemonic} {','.join(parts)}"
     if mnemonic == "lis":
-        parts = canon_operand(operand).split(",")
-        parts = [p for p in parts if p]
+        parts = [p for p in canon_operand(operand).split(",") if p]
         if re.fullmatch(r"[+-]?(?:0x[0-9a-fA-F]+|\d+)", parts[-1]):
             parts[-1] = str(int(parts[-1], 0) & 0xFFFF)
         return f"lis {','.join(parts)}"
