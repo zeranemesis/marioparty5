@@ -1218,7 +1218,7 @@ config.libs = [
             Object(NonMatching, "REL/m522Dll/fire.cpp"),
             Object(NonMatching, "REL/m522Dll/bubble.cpp"),
             Object(NonMatching, "REL/m522Dll/m522.cpp"),
-            Object(NonMatching, "REL/m522Dll/gamemaster.cpp"),
+            Object(Equivalent, "REL/m522Dll/gamemaster.cpp"),
             Object(Matching, "REL/m522Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m522Dll/camera.cpp"),
             Object(NonMatching, "REL/m522Dll/sunfire.cpp"),
