@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "REL/m574Dll.h"
 #include "game/frand.h"
 #include "game/mg/seqman.h"
