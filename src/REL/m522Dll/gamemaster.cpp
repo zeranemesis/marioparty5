@@ -5,7 +5,6 @@
 static s32 lbl_1_bss_A10;
 static s32 lbl_1_bss_A14;
 static s32 lbl_1_bss_A18;
-static s32 lbl_1_bss_A1C;
 
 /* The two assert strings of singleton.h, in .data ahead of the vtable. */
 static char lbl_1_data_3C0[] = "ms_pointer != 0";
@@ -251,12 +250,23 @@ void fn_1_D0C0(void)
     fn_1_8B80();
 }
 
+#pragma noinline
 void fn_1_D0E4(void)
 {
     lbl_1_bss_A10 = 120;
     lbl_1_bss_A14 = 210;
     lbl_1_bss_A18 = 210;
 }
+
+/* The original reaches fn_1_D0E4 through .ctors, so the limits have to be set
+ * up before the first frame.  This object is what puts the call there, and it
+ * is also the last word of .bss in the original. */
+struct M522LimitsInit {
+    s32 m_unused;
+    M522LimitsInit() { fn_1_D0E4(); }
+};
+
+static M522LimitsInit lbl_1_bss_A1C;
 
 // NONMATCHING: the original is a 8 byte C++ this adjustor that tail branches,
 // subi r3 / b fn_1_CDE0.  A hand written forwarder spills the parameter and
