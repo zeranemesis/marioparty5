@@ -1734,7 +1734,7 @@ config.libs = [
         objects={
             Object(NonMatching, "REL/m580Dll/m580.c"),
             Object(NonMatching, "REL/m580Dll/player.c"),
-            Object(NonMatching, "REL/m580Dll/stage.c"),
+            Object(Equivalent, "REL/m580Dll/stage.c"),
             Object(NonMatching, "REL/m580Dll/stick.c"),
             Object(NonMatching, "REL/m580Dll/puck.c"),
             Object(NonMatching, "REL/m580Dll/effect.c"),
