@@ -11,10 +11,16 @@ typedef void (*PMF2)(void *, s32);
 extern "C" {
 
 struct GameMaster {
-    GameMaster *m_f0;   // 0x00 list head / owner
-    void *m_f4;         // 0x04 dispatch table or child pointer
-    u8 m_f8;            // 0x08
-    u8 m_pad09[0x17];
+    GameMaster *m_f0;   // 0x00 list head sentinel
+    void *m_f4;         // 0x04 list head next / dispatch table
+    union {
+        u8 m_f8;
+        void *m_f8p;
+    };                 // 0x08
+    void *m_fC;         // 0x0C second list next
+    void *m_f10;        // 0x10 third list head sentinel
+    void *m_f14;        // 0x14 third list next
+    u8 m_pad18[8];
     void *m_f20;        // 0x20 second dispatch table
     u8 m_pad24[0x20];
     void *m_f44;        // 0x44
@@ -52,12 +58,16 @@ struct SceneNode {
 };
 
 // scene / object helpers living in m568.cpp, input.cpp, octtree.cpp, tube.cpp
+void fn_1_10E9C(void *self);
+void fn_1_1290C(void *self);
 void fn_1_7F1C(GameMaster *self);
+void fn_1_837C(void *self);
+void fn_1_8380(void *self);
 GameMaster *fn_1_8090(GameMaster *self, s16 arg1);
-void fn_1_80E8(void *self, s32 arg1);
+GameMaster *fn_1_80E8(GameMaster *self, s16 arg1);
 GameMaster *fn_1_8798(GameMaster *self, s16 arg1);
 void fn_1_8824(void);
-void fn_1_8A08(void *self, s32 arg1);
+void fn_1_8A08(GameMaster *self);
 void fn_1_8DC8(void *self, s32 arg1);
 void fn_1_970C();
 void fn_1_9890(GameMaster *self);
@@ -86,10 +96,16 @@ void *fn_1_618(u32 size);
 void fn_1_F990(void *self, void *arg1);
 void fn_1_123DC(void *self, s32 arg1);
 void fn_1_140D8(void *self, void *arg1);
+void fn_1_1290C(void *self);
+void fn_1_13F08(void *self, void *arg1);
+void fn_1_2384(void);
+s32 fn_1_59B0(void *self, s32 arg1);
+void fn_1_972C(SceneNode *self, void (*func)(void *, void *));
+void fn_1_97C0(SceneNode *self, SceneNode *arg1, void (*func)(void *, void *));
 
 extern SceneNode *lbl_1_bss_9F4;
 extern SceneNode *lbl_1_bss_9F8;
-extern GameMaster *lbl_1_bss_A0C;
+extern SceneNode *lbl_1_bss_A0C;
 extern s32 lbl_1_bss_A00;
 extern s32 lbl_1_bss_A04;
 extern s32 lbl_1_bss_A08;
@@ -99,13 +115,19 @@ char lbl_1_data_2B7[] = "a_set.h";
 char lbl_1_data_2BF[] = "p_ms! rt\0" "0 =";
 
 // NONMATCHING: the four tables between the assert strings and the dispatch
-// table are still unknown.
-u32 lbl_1_data_2CC[3];
-u32 lbl_1_data_2D8[3];
-u32 lbl_1_data_2E4[3];
-u32 lbl_1_data_2F0[3];
-u32 lbl_1_data_2FC[3];
-u32 lbl_1_data_308[3];
+// table are pointer-to-member-function records; three are still unknown.
+typedef struct PTMF {
+    s32 this_delta;
+    s32 v_offset;
+    void *f_addr;
+} PTMF;
+
+PTMF lbl_1_data_2CC = { 0, -1, (void *)fn_1_10E9C };
+PTMF lbl_1_data_2D8 = { 0, -1, (void *)fn_1_1290C };
+PTMF lbl_1_data_2E4 = { 0, 0, 0 };
+PTMF lbl_1_data_2F0 = { 0, 0, 0 };
+PTMF lbl_1_data_2FC = { 0, 0, 0 };
+PTMF lbl_1_data_308 = { 0, 0, 0 };
 char lbl_1_data_314[0x10];
 char lbl_1_data_324[0xC];
 
@@ -131,7 +153,7 @@ void fn_1_7F1C(GameMaster *self)
         if (lbl_1_bss_A0C != 0) {
             fn_1_7EC(lbl_1_data_2A8, lbl_1_data_2B7, 0x1D);
         }
-        lbl_1_bss_A0C = (GameMaster *)set;
+        lbl_1_bss_A0C = (SceneNode *)set;
         fn_1_187C((char *)set + 8);
         if (lbl_1_bss_9F8 != 0) {
             fn_1_7EC(lbl_1_data_2A8, lbl_1_data_2B7, 0x1D);
@@ -160,15 +182,88 @@ GameMaster *fn_1_8090(GameMaster *self, s16 arg1)
 }
 
 #pragma noinline
-void fn_1_80E8(void *self, s32 arg1)
+GameMaster *fn_1_80E8(GameMaster *self, s16 arg1)
+{
+    SceneNode *node;
+    SceneNode *node2;
+    SceneNode *node3;
+    bool flag;
+
+    if (self) {
+        do {
+            node3 = (SceneNode *)self->m_f14;
+            if (node3) {
+                fn_1_370C((char *)node3 + 0x18, -1);
+                if (node3) {
+                    fn_1_1888(node3, 0);
+                }
+                fn_1_6E0(node3);
+            }
+            flag = (self->m_f10 == (void *)&self->m_f10) && (self->m_f10 == self->m_f14);
+        } while (!flag);
+        if (&self->m_f10) {
+            fn_1_1888(self->m_f10, 0);
+        }
+
+        do {
+            node2 = (SceneNode *)self->m_fC;
+            fn_1_123DC(node2, 1);
+            flag = (self->m_f8p == (void *)&self->m_f8p) && (self->m_f8p == self->m_fC);
+        } while (!flag);
+        if (&self->m_f8p) {
+            fn_1_1888(self->m_f8p, 0);
+        }
+
+        if (self) {
+            do {
+                node = (SceneNode *)self->m_f4;
+                if (node) {
+                    if (&node->m_f54) {
+                        fn_1_123DC(node->m_f54, 1);
+                    }
+                    if (&node->m_f50) {
+                        fn_1_370C(node->m_f50, 1);
+                    }
+                    if (&node->m_f44) {
+                        if (&node->m_f44) {
+                            if (&node->m_f44) {
+                                if (node->m_f4C) {
+                                    fn_1_8380(&node->m_f44);
+                                    fn_1_837C(&node->m_f44);
+                                    fn_1_6E0(node->m_f4C);
+                                }
+                            }
+                        }
+                    }
+                    if (&node->m_f8p) {
+                        if (node->m_f8p) {
+                            void **vtbl = *(void ***)node->m_f8p;
+                            ((PMF2)vtbl[2])(node->m_f8p, 1);
+                        }
+                    }
+                    if (node) {
+                        fn_1_1888(node, 0);
+                    }
+                    fn_1_6E0(node);
+                }
+                flag = (self->m_f0 == (GameMaster *)&self->m_f0) && (self->m_f0 == self->m_f4);
+            } while (!flag);
+            if (self) {
+                fn_1_1888(self, 0);
+            }
+        }
+        if (arg1 > 0) {
+            fn_1_6E0(self);
+        }
+    }
+    return self;
+}
+
+void fn_1_837C(void *self)
 {
 }
 
-void fn_1_837C(void)
-{
-}
-
-void fn_1_8380(void)
+void fn_1_8380(void *self)
 {
 }
 
@@ -187,7 +282,7 @@ GameMaster *fn_1_8384(GameMaster *self, s16 arg1)
                 }
                 fn_1_6E0(node);
             }
-            flag = (self->m_f0 == self) && (self->m_f0 == self->m_f4);
+            flag = (self->m_f0 == (GameMaster *)&self->m_f0) && (self->m_f0 == self->m_f4);
         } while (!flag);
 
         if (self) {
@@ -220,7 +315,7 @@ GameMaster *fn_1_84B4(GameMaster *self, s16 arg1)
         do {
             node = (SceneNode *)self->m_f4;
             fn_1_123DC(node, 1);
-            flag = (self->m_f0 == self) && (self->m_f0 == self->m_f4);
+            flag = (self->m_f0 == (GameMaster *)&self->m_f0) && (self->m_f0 == self->m_f4);
         } while (!flag);
 
         if (self) {
@@ -279,7 +374,7 @@ GameMaster *fn_1_85CC(GameMaster *self, s16 arg1)
                 }
                 fn_1_6E0(node);
             }
-            flag = (self->m_f0 == self) && (self->m_f0 == self->m_f4);
+            flag = (self->m_f0 == (GameMaster *)&self->m_f0) && (self->m_f0 == self->m_f4);
         } while (!flag);
 
         if (self) {
@@ -377,8 +472,58 @@ void fn_1_898C(void *self, void *arg1)
 }
 
 #pragma noinline
-void fn_1_8A08(void *self, s32 arg1)
+// The original dispatches these records through __ptmf_scall, which adds
+// this_delta to the object and then either tail-calls f_addr directly
+// (v_offset < 0) or indexes the object vtable. Every record used here has
+// this_delta 0 and v_offset -1, so the direct call is equivalent.
+// NONMATCHING: emits a direct call instead of bl __ptmf_scall with r12.
+static void pmf_call(const PTMF *pmf, void *obj)
 {
+    ((void (*)(void *))pmf->f_addr)(obj);
+}
+
+void fn_1_8A08(GameMaster *self)
+{
+    SceneNode *master;
+    SceneNode *listA;
+    SceneNode *listB;
+    SceneNode *node;
+    PTMF pmf1;
+    PTMF pmf2;
+
+    if (fn_1_59B0(self->m_f20, 0) < 0) {
+        return;
+    }
+    fn_1_2384();
+    if (lbl_1_bss_A0C == 0) {
+        fn_1_7EC(lbl_1_data_2BF, lbl_1_data_2B7, 0x3A);
+    }
+    master = lbl_1_bss_A0C;
+    if (lbl_1_bss_9F8 == 0) {
+        fn_1_7EC(lbl_1_data_2BF, lbl_1_data_2B7, 0x3A);
+    }
+    listA = lbl_1_bss_9F8;
+    if (lbl_1_bss_9F4 == 0) {
+        fn_1_7EC(lbl_1_data_2BF, lbl_1_data_2B7, 0x3A);
+    }
+    listB = lbl_1_bss_9F4;
+
+    pmf1 = lbl_1_data_2CC;
+    node = master->m_next;
+    while (node != master) {
+        pmf_call(&pmf1, node);
+        node = node->m_next;
+    }
+
+    fn_1_972C(listA, fn_1_13F08);
+    fn_1_97C0(listA, listB, fn_1_898C);
+
+    pmf2 = lbl_1_data_2D8;
+    node = listA->m_next;
+    while (node != listA) {
+        pmf_call(&pmf2, node);
+        node = node->m_next;
+    }
 }
 
 s32 fn_1_8C24(void)
