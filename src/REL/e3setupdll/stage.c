@@ -1,3 +1,5 @@
+#define _MATH_H
+
 #include "game/hu3d.h"
 #include "game/data.h"
 #include "game/memory.h"
@@ -15,9 +17,9 @@ typedef struct StageMdlTblEntry {
     s16 layer;
 } StageMdlTblEntry;
 
-s16 DummyMdlId;
-s16 StageMotId[0x100];
 s16 StageMdlId[0x100];
+s16 StageMotId[0x100];
+s16 DummyMdlId;
 
 StageMdlTblEntry StageMdlTbl[5] = {
     { 0x00200002, -1, 0, { 0, 0, 0 }, { 0, 0, 0 }, { 1, 2, 2 }, 1, 0 },
