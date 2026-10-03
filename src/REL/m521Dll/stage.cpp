@@ -317,19 +317,19 @@ CStage *fn_1_15120(CStage *self, s16 freeIt)
 {
     if (self != 0) {
         self->m_vtable = lbl_1_data_66C;
-        if (self->m_modelB != 0) {
+        if (&self->m_modelB != 0) {
             __dt__6CModelFv(self->m_modelB, 1);
         }
-        if (self->m_modelA != 0) {
+        if (&self->m_modelA != 0) {
             __dt__6CModelFv(self->m_modelA, 1);
         }
-        if (self->m_unk18 != 0) {
+        if (&self->m_unk18 != 0) {
             fn_1_5DC(self->m_unk18, 1);
         }
-        if (self->m_unk14 != 0) {
+        if (&self->m_unk14 != 0) {
             fn_1_5DC(self->m_unk14, 1);
         }
-        if (self->m_unk10 != 0) {
+        if (&self->m_unk10 != 0) {
             fn_1_5DC(self->m_unk10, 1);
         }
         if (&self->m_unk10 != 0) {
