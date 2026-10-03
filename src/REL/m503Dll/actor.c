@@ -129,14 +129,13 @@ void fn_1_D84C(OMOBJ *obj)
 
 BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
 {
-    ACTOR_VEC *pa;
+ACTOR_VEC *pa;
     ACTOR_VEC *pb;
+    ACTOR_VEC mid;
     f32 dx;
     f32 dy;
     f32 d;
     f32 sum;
-    f32 mx;
-    f32 my;
     f32 sc;
 
     pa = a->pos;
@@ -155,13 +154,13 @@ BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
             dx = dx / d;
             dy = dy / d;
         }
-        mx = pa->x + (pb->x - pa->x) * 0.5;
-        my = pa->y + (pb->y - pa->y) * 0.5;
+mid.x = pa->x + (pb->x - pa->x) * 0.5;
+        mid.y = pa->y + (pb->y - pa->y) * 0.5;
         sc = sum * 0.5;
-        pa->x = mx + dx * sc;
-        pa->y = my + dy * sc;
-        pb->x = mx - dx * sc;
-        pb->y = my - dy * sc;
+        pa->x = mid.x + dx * sc;
+        pa->y = mid.y + dy * sc;
+        pb->x = mid.x - dx * sc;
+        pb->y = mid.y - dy * sc;
         return 1;
     }
     return 0;
@@ -255,5 +254,6 @@ const f64 lbl_1_rodata_680 = 0.0;
 const f32 lbl_1_rodata_688 = -1.0f;
 const f64 lbl_1_rodata_690 = 360.0;
 const f64 lbl_1_rodata_698 = 3.141592653589793;
+
 
 
