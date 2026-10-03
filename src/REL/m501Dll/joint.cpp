@@ -89,22 +89,23 @@ void CJoint::lockMatrix()
     m_locked = 1;
 }
 
+// NONMATCHING: the original emits the assert block out of line (beq->assert, b->join)
 void CJoint::setSuper(CJoint *super)
 {
-    if ((CJoint *)0 == super) {
-        if ((CJoint *)0 == m_super) {
+    if (super == 0) {
+        if (m_super == 0) {
             __assert_fail("m_super != NULL", "joint.cpp", 0x4E);
         }
 
-        Mtx *mtx = m_super->getMatrix();
-        PSMTXConcat(*mtx, m_world, m_local);
+        Mtx *mtx = super->getMatrix();
+        PSMTXConcat(*mtx, m_world, m_world);
         resetSuperJoint();
     } else {
         Mtx *mtx = super->getMatrix();
         Mtx inv;
 
         PSMTXInverse(*mtx, inv);
-        PSMTXConcat(inv, m_world, m_local);
+        PSMTXConcat(inv, m_world, m_world);
         setSuperJoint(super);
     }
 }
