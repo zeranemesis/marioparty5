@@ -163,10 +163,31 @@ static void fn_1_A19C(M540_OBJ *obj);
 static void fn_1_AA30(M540_OBJ *obj);
 static void fn_1_AC14(M540_OBJ *obj);
 static M540_OBJ *fn_1_CB34(M540_OBJ *obj);
+/* Work of the camera-rig objects (lbl_1_data_F8, lbl_1_data_118, ...) */
+typedef struct M540_CameraWork_s {
+    int no;             /* 0x00 */
+    HU3DMODELID mdlIdA; /* 0x04 */
+    HU3DMODELID mdlIdB; /* 0x06 */
+} M540_CAMERAWORK;
+
+/* 3 floats packed, not HuVecF-shaped (x@0, y@4, z@8) */
+typedef struct M540_Pos3_s {
+    float x; /* 0x00 */
+    float y; /* 0x04 */
+    float z; /* 0x08 */
+} M540_POS3;
+
+static void fn_1_D09C(M540_OBJ *obj);
 static int fn_1_8468(M540_OBJ *obj);
 static void fn_1_FF14(float arg0, float arg1);
 static void fn_1_103B0(HU3DMODELID modelId);
 static void fn_1_104B4(HU3DMODELID modelId);
+static void fn_1_DED8(M540_OBJ *obj);
+static void fn_1_DF8C(M540_OBJ *obj);
+static void fn_1_EF3C(M540_OBJ *obj);
+static void fn_1_EFF0(M540_OBJ *obj);
+static void fn_1_100B8(M540_OBJ *obj);
+static void fn_1_101EC(M540_OBJ *obj);
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -251,6 +272,19 @@ static void fn_1_5588(int no)
     } else {
         work->unk10 = 1;
     }
+}
+
+static void fn_1_2C20(s16 mode, s16 frameNo)
+{
+    HuPrcSleep(0xC7);
+    MgSeqModeNext();
+}
+
+static void fn_1_618C(s16 mode, s16 frameNo)
+{
+    HuAudJinglePlay(0x79);
+    fn_1_D09C(lbl_1_bss_40);
+    MgSeqModeNext();
 }
 
 static M540_OBJ *fn_1_61C4(void)
@@ -1667,6 +1701,32 @@ static M540_OBJFUNC lbl_1_data_D8[] = {
     fn_1_D3F8
 };
 
+static const u32 lbl_1_rodata_9B0[4] = {
+    DATANUM(DATA_m540, 0x6B),
+    DATANUM(DATA_m540, 0x6C),
+    DATANUM(DATA_m540, 0x6D),
+    DATANUM(DATA_m540, 0x6E)
+};
+
+static M540_OBJFUNC lbl_1_data_F8[] = {
+    fn_1_DED8,
+    fn_1_DF8C,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+static M540_OBJFUNC lbl_1_data_134[] = {
+    fn_1_EF3C,
+    fn_1_EFF0
+};
+
+static M540_OBJFUNC lbl_1_data_150[] = {
+    fn_1_100B8,
+    fn_1_101EC
+};
+
 static M540_OBJ *fn_1_BCF0(int playerNo)
 {
     M540_OBJ *obj;
@@ -1956,4 +2016,279 @@ static void fn_1_D3F8(M540_OBJ *obj)
     }
 }
 
+static void fn_1_DECC(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_DED8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_DF80(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static M540_OBJ *fn_1_DDF8(int no)
+{
+    HU3DMODELID modelId;
+    M540_CAMERAWORK *work;
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, lbl_1_rodata_9B0[no], 0, NULL, 2, lbl_1_data_F8);
+    Hu3DModelAttrSet(obj->modelId, 0x4000);
+    Hu3DModelCameraSet(obj->modelId, 4);
+    work = M540_OBJWORK(M540_CAMERAWORK, obj);
+    work->no = no;
+    obj->dispF = TRUE;
+    Hu3DModelAttrReset(obj->modelId, 1);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, 0x40000002);
+    Hu3DModelAttrSet(modelId, 0x40000001);
+    return obj;
+}
+
+static void fn_1_E294(M540_OBJ *obj, float x, float y, float z)
+{
+    M540_CAMERAWORK *work = M540_OBJWORK(M540_CAMERAWORK, obj);
+    fn_1_13498(obj, x, y, z);
+    if(work->no == 0) {
+        Hu3DModelPosSet(work->mdlIdA, x, 90.0f+y, z);
+        Hu3DModelPosSet(work->mdlIdB, x-500.0f, 900.0f+y, z);
+    }
+}
+
+// NONMATCHING: work pointer hoisted out of the loop; target recomputes it per iteration
+// and keeps the three floats in f29/f30/f31 instead of reloading a stack struct.
+static void fn_1_E43C(M540_OBJ *obj)
+{
+    M540_CAMERAWORK *work = M540_OBJWORK(M540_CAMERAWORK, obj);
+    M540_POS3 pos;
+    while(1) {
+        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
+        pos.x += 2.0f;
+        fn_1_13498(obj, pos.x, pos.y, pos.z);
+        if(work->no == 0) {
+            Hu3DModelPosSet(work->mdlIdA, pos.x, 90.0f+pos.y, pos.z);
+            Hu3DModelPosSet(work->mdlIdB, pos.x-500.0f, 900.0f+pos.y, pos.z);
+        }
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+// NONMATCHING: target frames 0x20 and returns the result through r28/r29 copies;
+// this spelling forwards fn_1_12F80's result straight out of a 0x10 frame.
+static M540_OBJ *fn_1_EDE4(void)
+{
+    return fn_1_12F80(0x1000, 0x2000, 2, lbl_1_data_134);
+}
+
+// NONMATCHING: 2 rows differ in the register MWCC picks for the motNo=0 store;
+// the call setup and the mode=0 store are byte-identical.
+static void fn_1_F640(M540_OBJ *obj)
+{
+    obj->motNo = 0;
+    fn_1_13874(obj, 0, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
+    obj->mode = 0;
+}
+
+// NONMATCHING: same 2-row register tie-break as fn_1_F640.
+static void fn_1_F750(M540_OBJ *obj)
+{
+    obj->motNo = 1;
+    fn_1_13874(obj, 1, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
+    obj->mode = 1;
+}
+
+static M540_OBJ *fn_1_10020(void)
+{
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, DATANUM(DATA_m540, 0x67), 0, NULL, 2, lbl_1_data_150);
+    HU3DMODELID modelId;
+    Hu3DModelCameraSet(obj->modelId, 4);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, 0x40000002);
+    Hu3DModelAttrSet(modelId, 0x40000001);
+    return obj;
+}
+
+static void fn_1_10190(M540_OBJ *obj, float x, float y, float z)
+{
+    fn_1_13498(obj, x, y, z);
+    obj->mode = 1;
+}
+
+// NONMATCHING: target reloads lbl_1_bss_60[i] through a single indexed lwz and
+// stores the mode constant in r0; this spelling rebuilds the element address per iteration.
+static void fn_1_102F4(float x, float y, float z)
+{
+    int i;
+    for(i=0; i<4; i++) {
+        if(lbl_1_bss_60[i]->mode == 0) {
+            fn_1_13498(lbl_1_bss_60[i], x, y, z);
+            lbl_1_bss_60[i]->mode = 1;
+            break;
+        }
+    }
+}
+
+static void fn_1_E37C(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_E388(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_E430(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_E72C(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_E738(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_E7E0(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_EA90(M540_OBJ *obj)
+{
+    obj->mode = 2;
+}
+
+static void fn_1_EF30(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_EF3C(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_EFE4(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_F6A8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F7B8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F924(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_FCB8(M540_OBJ *obj)
+{
+    obj->mode = 2;
+}
+
+static void fn_1_100AC(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static int fn_1_103A0(void)
+{
+    return lbl_1_bss_1C;
+}
+
+static void fn_1_10878(M540_OBJ *obj)
+{
+}
+
+static float fn_1_11458(float *a, float *b)
+{
+    return a[0]*b[0] + a[1]*b[1];
+}
+
+static float fn_1_11478(float *a, float *b)
+{
+    return a[0]*b[1] - a[1]*b[0];
+}
+
 /* M540_APPEND */
+
+/*
+ * REMAINING TRIAGE -- 64 functions, 55368 of 88204 code bytes.
+ * Regenerate with: python tools\unit_status.py m540Dll
+ * Ranked by expected payoff (bytes recovered) then by tractability.
+ *
+ * BAND A -- >=1000 bytes, 16 functions, 39824 bytes (72% of what is left).
+ * These dominate the metric; nothing else can move the number as much.
+ *   fn_1_FFC   7204  missing  largest single item
+ *   fn_1_2C74  4260  missing
+ *   fn_1_9080  4080  97.42%  already written; pervasive register reallocation, DO NOT RETRY
+ *   fn_1_1D4   3624  missing  assert.cpp; ends in blr, plain external call, not inlined
+ *   fn_1_566C  2848  missing
+ *   fn_1_4334  2312  missing
+ *   fn_1_4C3C  2260  missing
+ *   fn_1_12818 1896  missing
+ *   fn_1_B600  1748  98.38%  register allocation + one extra spill, DO NOT RETRY
+ *   fn_1_11A50 1612  missing
+ *   fn_1_3D18  1564  missing
+ *   fn_1_EFF0  1356  missing
+ *   fn_1_CB5C  1344  92.81%  frame 0x140 vs target 0x160; needs 32 bytes more of named locals
+ *   fn_1_D61C  1332  missing
+ *   fn_1_C2CC  1296  99.38%  pure r30/r31 swap, 39 rows, DO NOT RETRY
+ *   fn_1_6C3C  1088  98.49%  6 rows, looks like operand evaluation-order swap -- cheap to retry
+ *
+ * BAND B -- 100..999 bytes, 43 functions, 15152 bytes. Best bytes-per-session ratio.
+ *   fn_1_1087C 940 missing   fn_1_EA9C 840 missing   fn_1_DB50 680 missing
+ *   fn_1_E7EC  676 missing   fn_1_111B8 672 missing  fn_1_12578 672 missing
+ *   fn_1_1222C 664 missing   fn_1_10C28 616 missing  fn_1_FCC4 592 missing
+ *   fn_1_FA8C  556 missing   fn_1_11618 456 missing  fn_1_E43C 444 92.87%
+ *   fn_1_DF8C  408 missing   fn_1_1209C 400 missing  fn_1_11498 384 missing
+ *   fn_1_D4A0  380 missing   fn_1_E124 368 missing   fn_1_10F44 356 missing
+ *   fn_1_C8D8  344 98.60%    fn_1_EDE4 332 92.43%    fn_1_E5F8 308 missing
+ *   fn_1_110A8 272 missing   fn_1_FF14 268 missing   fn_1_101EC 264 missing
+ *   fn_1_F53C  260 missing   fn_1_11960 240 missing  fn_1_106C8 236 missing
+ *   fn_1_100B8 216 missing   fn_1_F930 200 missing   fn_1_F860 196 missing
+ *   fn_1_10508 184 missing   fn_1_10E90 180 missing  fn_1_10614 180 missing
+ *   fn_1_124C4 180 missing   fn_1_10404 176 missing  fn_1_102F4 172 88.02%
+ *   fn_1_F9F8  148 missing   fn_1_11868 144 missing  fn_1_117E0 136 missing
+ *   fn_1_118F8 104 missing   fn_1_F640 104 92.31%   fn_1_F750 104 92.31%
+ *   fn_1_10814 100 missing
+ *
+ * BAND C -- <100 bytes, 5 functions, 392 bytes. Do these first, they are pure profit.
+ *   fn_1_107B4 96   fn_1_103B0 84   fn_1_104B4 84   fn_1_105C0 84   fn_1_2C48 44
+ *
+ * ALREADY TRIED AND REJECTED -- do not spend a session here again:
+ *   fn_1_C8D8 hoisting `char *name = fn_1_8438(cart);` to the top: 6 -> 20 differing rows.
+ *   fn_1_C8D8 declaring `work` before `cartWork`: 6 -> 10 differing rows.
+ *   fn_1_C2CC / fn_1_B600 / fn_1_9080: MWCC register-allocation tie-break, no C spelling found.
+ *   fn_1_CB5C: not a codegen problem, a stack-frame-size problem (needs 32 more bytes).
+ *
+ * CAPS CLEARED, do not re-check: no .ctors section, no "singleton.h" string in this unit.
+ * No 8-byte adjustor-thunk wall. Rebuilt .bss layout already matches the target exactly.
+ */
