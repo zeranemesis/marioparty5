@@ -82,13 +82,13 @@ void fn_1_1D4(char *msg, char *file, s32 line);
 void fn_1_2C94(HU3DMODELID *mdl, s32 dataNum);
 void fn_1_2DB4(HU3DMODELID *mdl, HU3DMODELID *src);
 void fn_1_30F4(HU3DMODELID *mdl, s16 flag);
-u32 fn_1_4AE0(void);
+s32 fn_1_4AE0(void);
 void *__register_global_object(void *object, void *destructor, void *regmem);
 
-void *fn_1_8FA4(M536Stage *self);
-void *fn_1_9044(M536Stage *self, s32 bit);
-void *fn_1_9354(M536Sky *self);
-void *fn_1_944C(M536Sky *self, s32 bit);
+void fn_1_8FA4(M536Stage *self);
+void fn_1_9044(M536Stage *self, s32 bit);
+void fn_1_9354(M536Sky *self);
+void fn_1_944C(M536Sky *self, s32 bit);
 void *fn_1_9800(M536Sky *self, s16 flag);
 void *fn_1_98D8(M536Stage *self, s16 flag);
 void fn_1_9744(s32 index);
@@ -168,7 +168,7 @@ void *fn_1_8B94(M536Stage *self)
     self->m_flag = 0;
     fn_1_1330(self, lbl_1_bss_C);
 
-    if (lbl_1_bss_A10 != NULL) {
+    if (lbl_1_bss_A10) {
         fn_1_1D4(lbl_1_data_340, lbl_1_data_350, 0x35);
     }
 
@@ -212,12 +212,12 @@ void *fn_1_8B94(M536Stage *self)
 
     for (i = 0; i < 4; i++) {
         cloud = (M536Cloud *)fn_1_0(0x10);
-        if (cloud != NULL) {
+        if (cloud) {
             cloud = fn_1_9474(cloud, &self->m_mdl[3], i * 2, angle);
         }
 
         cloud = (M536Cloud *)fn_1_0(0x10);
-        if (cloud != NULL) {
+        if (cloud) {
             cloud = fn_1_9474(cloud, &self->m_mdl[4], (i * 2) + 1, angle);
         }
 
@@ -230,8 +230,8 @@ void *fn_1_8B94(M536Stage *self)
 
 void *fn_1_8F18(M536Stage *self, s16 flag)
 {
-    if (self != NULL) {
-        if (lbl_1_bss_A10 == NULL) {
+    if (self) {
+        if (!lbl_1_bss_A10) {
             fn_1_1D4(lbl_1_data_35C, lbl_1_data_350, 0x3D);
         }
         lbl_1_bss_A10 = NULL;
@@ -242,7 +242,7 @@ void *fn_1_8F18(M536Stage *self, s16 flag)
     return self;
 }
 
-void *fn_1_8FA4(M536Stage *self)
+void fn_1_8FA4(M536Stage *self)
 {
     s32 i;
 
@@ -254,19 +254,17 @@ void *fn_1_8FA4(M536Stage *self)
             } else {
                 fn_1_9744((i * 2) + 1);
             }
-        }
+}
     }
-    return self;
 }
 
-void *fn_1_9044(M536Stage *self, s32 bit)
+void fn_1_9044(M536Stage *self, s32 bit)
 {
     self->m_flag &= ~(1 << bit);
     if (bit < 5) {
         if (bit >= 0) {
         }
     }
-    return self;
 }
 
 void *fn_1_906C(M536Sky *self)
@@ -279,7 +277,7 @@ void *fn_1_906C(M536Sky *self)
     self->m_flag = 0;
     fn_1_1330(self, lbl_1_bss_C);
 
-    if (lbl_1_bss_A0C != NULL) {
+    if (lbl_1_bss_A0C) {
         fn_1_1D4(lbl_1_data_340, lbl_1_data_350, 0x35);
     }
 
@@ -311,8 +309,8 @@ void *fn_1_906C(M536Sky *self)
 
 void *fn_1_92C8(M536Sky *self, s16 flag)
 {
-    if (self != NULL) {
-        if (lbl_1_bss_A0C == NULL) {
+    if (self) {
+        if (!lbl_1_bss_A0C) {
             fn_1_1D4(lbl_1_data_35C, lbl_1_data_350, 0x3D);
         }
         lbl_1_bss_A0C = NULL;
@@ -323,7 +321,7 @@ void *fn_1_92C8(M536Sky *self, s16 flag)
     return self;
 }
 
-void *fn_1_9354(M536Sky *self)
+void fn_1_9354(M536Sky *self)
 {
     s32 i;
     f32 limit;
@@ -336,19 +334,17 @@ void *fn_1_9354(M536Sky *self)
         if (self->m_pos[i].x > limit) {
             self->m_pos[i].x = -limit;
         }
-        Hu3DModelPosSet(mdl, self->m_pos[i].x, self->m_pos[i].y, self->m_pos[i].z);
+Hu3DModelPosSet(mdl, self->m_pos[i].x, self->m_pos[i].y, self->m_pos[i].z);
     }
-    return self;
 }
 
-void *fn_1_944C(M536Sky *self, s32 bit)
+void fn_1_944C(M536Sky *self, s32 bit)
 {
     self->m_flag &= ~(1 << bit);
     if (bit < 5) {
         if (bit >= 0) {
         }
     }
-    return self;
 }
 
 M536Cloud *fn_1_9474(M536Cloud *self, HU3DMODELID *mdl, s32 index, f32 angle)
@@ -372,7 +368,7 @@ M536Cloud *fn_1_9474(M536Cloud *self, HU3DMODELID *mdl, s32 index, f32 angle)
 
 void *fn_1_9584(M536Cloud *self, s16 flag)
 {
-    if (self != NULL) {
+    if (self) {
         fn_1_1270(self, 0);
         if (flag > 0) {
             fn_1_C8(self);
@@ -394,9 +390,9 @@ void fn_1_95DC(void)
 
         if ((empty & 0xFF) == 0) {
             node = lbl_1_bss_A74.m_prev;
-            if (node != NULL) {
+            if (node) {
                 fn_1_30F4(&node->m_mdl, -1);
-                if (node != NULL) {
+                if (node) {
                     fn_1_1270(node, 0);
                 }
                 fn_1_C8(node);
@@ -409,8 +405,13 @@ void fn_1_95DC(void)
 
 void fn_1_96E0(M536Cloud *self)
 {
-    if (Hu3DMotionEndCheck(self->m_mdl) != 0) {
-        Hu3DModelAttrSet(self->m_mdl, 1);
+    HU3DMODELID mdl;
+    HU3DMODELID mdl2;
+
+    mdl = self->m_mdl;
+    if (Hu3DMotionEndCheck(mdl) != 0) {
+        mdl2 = self->m_mdl;
+        Hu3DModelAttrSet(mdl2, 1);
     }
 }
 
@@ -437,20 +438,20 @@ void fn_1_96B0(void)
 
 void *fn_1_9800(M536Sky *self, s16 flag)
 {
-    if (self != NULL) {
+    if (self) {
         self->m_vptr = lbl_1_data_39C;
         fn_1_30F4(&self->m_mdl[0], -1);
 
-        if (&self->m_mdl[0] != NULL) {
-            if (lbl_1_bss_A0C == NULL) {
+        if (&self->m_mdl[0]) {
+            if (!lbl_1_bss_A0C) {
                 fn_1_1D4(lbl_1_data_35C, lbl_1_data_350, 0x3D);
             }
             lbl_1_bss_A0C = NULL;
         }
 
-        if (self != NULL) {
+        if (self) {
             self->m_vptr = lbl_1_data_1FC;
-            if (self != NULL) {
+            if (self) {
                 fn_1_1270(self, 0);
             }
         }
@@ -464,7 +465,7 @@ void *fn_1_9800(M536Sky *self, s16 flag)
 
 void *fn_1_98D8(M536Stage *self, s16 flag)
 {
-    if (self != NULL) {
+    if (self) {
         self->m_vptr = lbl_1_data_3B0;
         fn_1_30F4(&self->m_mdl[4], -1);
         fn_1_30F4(&self->m_mdl[3], -1);
@@ -472,16 +473,16 @@ void *fn_1_98D8(M536Stage *self, s16 flag)
         fn_1_30F4(&self->m_mdl[1], -1);
         fn_1_30F4(&self->m_mdl[0], -1);
 
-        if (&self->m_mdl[0] != NULL) {
-            if (lbl_1_bss_A10 == NULL) {
+        if (&self->m_mdl[0]) {
+            if (!lbl_1_bss_A10) {
                 fn_1_1D4(lbl_1_data_35C, lbl_1_data_350, 0x3D);
             }
             lbl_1_bss_A10 = NULL;
         }
 
-        if (self != NULL) {
+        if (self) {
             self->m_vptr = lbl_1_data_1FC;
-            if (self != NULL) {
+            if (self) {
                 fn_1_1270(self, 0);
             }
         }
@@ -508,7 +509,7 @@ void fn_1_9A40(M536Cloud *node, M536Cloud *head, void (*fn)(M536Cloud *))
 
 void fn_1_9AF8(M536Cloud *self, s16 flag)
 {
-    if (self != NULL) {
+    if (self) {
         fn_1_1270(self, 0);
         if (flag > 0) {
             fn_1_C8(self);
@@ -525,3 +526,5 @@ void fn_1_9AA0(void)
 }
 
 SECTION_CTORS void *const _ctors_stage = (void *)fn_1_9AA0;
+
+
