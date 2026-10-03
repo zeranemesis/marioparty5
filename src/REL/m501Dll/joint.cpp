@@ -63,11 +63,11 @@ Mtx *CJoint::getMatrix()
     if (m_locked) {
         m_locked = 0;
 
-        if (m_super == nullptr || m_super == this) {
+        if (m_super == 0 || m_super == this) {
             PSMTXCopy(m_world, m_local);
         } else {
-            m_super->getMatrix();
-            PSMTXConcat(m_super->m_local, m_world, m_local);
+            Mtx *mtx = m_super->getMatrix();
+            PSMTXConcat(*mtx, m_world, m_local);
         }
     }
 
@@ -79,7 +79,7 @@ void CJoint::lockMatrixChain()
     m_locked = 1;
 
     CJoint *child = m_child;
-    if ((CJoint *)0 != child) {
+    if (child != 0) {
         child->lockMatrixChain();
     }
 }
