@@ -1378,17 +1378,17 @@ config.libs = [
         "m539Dll",
         objects={
             Object(NonMatching, "REL/m539Dll/m539.cpp"),
-            Object(NonMatching, "REL/m539Dll/input.cpp"),
+            Object(Equivalent, "REL/m539Dll/input.cpp"),
             Object(NonMatching, "REL/m539Dll/drum.cpp"),
             Object(NonMatching, "REL/m539Dll/game_master.cpp"),
-            Object(NonMatching, "REL/m539Dll/heiho.cpp"),
+            Object(Equivalent, "REL/m539Dll/heiho.cpp"),
             Object(Matching, "REL/m539Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m539Dll/camera.cpp"),
-            Object(NonMatching, "REL/m539Dll/man_map.cpp"),
-            Object(NonMatching, "REL/m539Dll/effect.cpp"),
+            Object(Equivalent, "REL/m539Dll/man_map.cpp"),
+            Object(Equivalent, "REL/m539Dll/effect.cpp"),
             Object(NonMatching, "REL/m539Dll/player.cpp"),
-            Object(NonMatching, "REL/m539Dll/scorespr.cpp"),
-            Object(NonMatching, "REL/m539Dll/score.cpp"),
+            Object(Equivalent, "REL/m539Dll/scorespr.cpp"),
+            Object(Equivalent, "REL/m539Dll/score.cpp"),
         },
     ),
     Rel(
@@ -2067,3 +2067,8 @@ elif args.mode == "progress":
     calculate_progress(config)
 else:
     sys.exit("Unknown mode: " + args.mode)
+
+
+
+
+
