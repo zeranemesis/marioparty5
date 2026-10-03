@@ -2,6 +2,7 @@
 #define E3SETUPDLL_H
 
 #include "game/hu3d.h"
+#include "game/sprite.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +16,7 @@ void ObjectSetup(void *arg);
 
 /* mgname.c */
 void MgNameInit(void);
-void MgNameCreate(void *arg);
+HUSPRGRPID MgNameCreate(void *arg);
 
 /* toueidisp.c */
 void ToueiDispInit(void);
