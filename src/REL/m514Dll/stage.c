@@ -56,8 +56,12 @@ f32 lbl_1_data_4C4[3] = { -4644.0f, -1228.0f, -4732.0f };
 
 s32 lbl_1_data_4D0 = 0x42FF7A80;
 
-static OMOBJ *lbl_1_bss_210;
+/* MWCC lays .bss out in reverse declaration order, so 210 must be declared
+   first for it to land at .bss:0x0. There is no variable at .data:0x4D4 --
+   the four zero bytes the original shows there are the inter-object 8-byte
+   alignment padding dtk attributes to this unit. */
 static f32 lbl_1_bss_214;
+static OMOBJ *lbl_1_bss_210;
 
 void fn_1_510C(HUPROCESS *process)
 {
@@ -296,4 +300,3 @@ GXWGFifo.f32 = -15.0f;
 
 
 const s32 lbl_1_rodata_264[1] = { 0 };
-s32 lbl_1_data_4D4 = 0;

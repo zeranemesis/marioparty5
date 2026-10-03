@@ -1135,7 +1135,7 @@ config.libs = [
             Object(NonMatching, "REL/m514Dll/m514.c"),
             Object(NonMatching, "REL/m514Dll/player.c"),
             Object(NonMatching, "REL/m514Dll/object.c"),
-            Object(Equivalent, "REL/m514Dll/stage.c"),
+            Object(Matching, "REL/m514Dll/stage.c"),
             Object(NonMatching, "REL/m514Dll/effect.c"),
             Object(NonMatching, "REL/m514Dll/score.c"),
         },
