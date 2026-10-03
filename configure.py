@@ -1359,7 +1359,7 @@ config.libs = [
             Object(NonMatching, "REL/m537Dll/m537.cpp"),
             Object(NonMatching, "REL/m537Dll/dorrie.cpp"),
             Object(NonMatching, "REL/m537Dll/effect.cpp"),
-            Object(NonMatching, "REL/m537Dll/game_master.cpp"),
+            Object(Equivalent, "REL/m537Dll/game_master.cpp"),
             Object(Matching, "REL/m537Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m537Dll/camera.cpp"),
             Object(NonMatching, "REL/m537Dll/stage.cpp"),
