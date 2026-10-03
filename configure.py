@@ -990,7 +990,7 @@ config.libs = [
             Object(NonMatching, "REL/m503Dll/saru.c"),
             Object(NonMatching, "REL/m503Dll/stage.c"),
             Object(NonMatching, "REL/m503Dll/particle.c"),
-            Object(NonMatching, "REL/m503Dll/score.c"),
+            Object(Equivalent, "REL/m503Dll/score.c"),
             Object(NonMatching, "REL/m503Dll/actor.c"),
         },
     ),
