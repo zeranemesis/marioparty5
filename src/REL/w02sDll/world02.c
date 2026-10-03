@@ -3549,10 +3549,10 @@ void MB2_YajiInit(f32 *arg0) {
 }
 
 void MB2_YajiUpdate(OMOBJ *obj) {
-    HU3DMODEL *modelP;
-    f32 scale;
     s32 i;
     s32 *dat;
+    HU3DMODEL *modelP;
+    f32 scale;
 
     dat = (s32 *) obj->data;
     if (MBKillCheck() || (mb2_YajiObj == NULL)) {
@@ -3565,7 +3565,7 @@ void MB2_YajiUpdate(OMOBJ *obj) {
         scale = modelP->scale.z;
         if ((modelP->attr & 1) == 0) {
             if ((u32) obj->work[0] == (u32) i) {
-                *dat = *dat + 6;
+                *dat = *dat + 3;
                 scale = (f32) (2.0 + fabs(sin((3.141592653589793 * (f64) (*dat % 360)) / 180.0)));
             } else {
                 if (scale > 2.0f) {
