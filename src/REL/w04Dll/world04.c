@@ -68,7 +68,7 @@ static void MB4Ev_Iruka(s32 playerNo);
 static void MB4Ev_Blow(s32 playerNo);
 static void MB4Ev_Kaisoo(s32 playerNo);
 static s16 PathCheck(s16 masuId, s16 depth);
-static f32 MB4_PathTimeGet(Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused, f32 tMax);
+static f32 MB4_PathTimeGet(f32 tMax, Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused);
 static f32 fn_1_DB68(f32 t, f32 pPrev, f32 p1, f32 pNext);
 static f32 fn_1_DC9C(Point3d *pPrev, Point3d *p1, Point3d *pNext, f32 t);
 static void fn_1_D3D8(f32 t, f32 pPrev, f32 p0, f32 p1, f32 pNext, f32 tangentScale);
@@ -1204,8 +1204,8 @@ void MB4_BubbleEffUpdate(OMOBJ *obj) {
         mb4_BubbleEffObj = NULL;
         return;
     }
-    i = 0;
-    while (i < mgr->count) {
+i = 0;
+    for (; i < mgr->count; i++, p++) {
         if (p->timer > 0.0f) {
             p->active++;
             if (p->active > 0x168) {
@@ -1218,9 +1218,9 @@ void MB4_BubbleEffUpdate(OMOBJ *obj) {
             if (p->speed < 0.0f) {
                 p->timer = 0.0f;
             }
+        } else {
+            continue;
         }
-        i++;
-        p++;
     }
 }
 
@@ -1705,24 +1705,23 @@ void MB4_CoinEffUpdate(OMOBJ *obj) {
     mgr = (MB4COINEFFMGR *) base->hookData;
     p = mgr->particles;
     i = 0;
-    while (i < mgr->count) {
-        if (p->timer > 0.0f) {
-            p->posX += p->velX;
-            p->posY += p->velY;
-            p->posZ += p->velZ;
-            if (p->alphaParam != 0.0f) {
-                p->velY -= p->alphaParam;
-            }
-            p->timer = p->speed * p->one;
-            p->one -= p->sizeParam;
-            if (p->one <= 0.0f) {
-                p->active = 0;
-                p->timer = 0.0f;
-                ed->count -= 1;
-            }
+    for (; i < mgr->count; i++, p++) {
+        if (!(p->timer > 0.0f)) {
+            continue;
         }
-        i++;
-        p++;
+        p->posX += p->velX;
+        p->posY += p->velY;
+        p->posZ += p->velZ;
+        if (p->alphaParam != 0.0f) {
+            p->velY -= p->alphaParam;
+        }
+        p->timer = p->speed * p->one;
+        p->one -= p->sizeParam;
+        if (p->one <= 0.0f) {
+            p->active = 0;
+            p->timer = 0.0f;
+            ed->count -= 1;
+        }
     }
 }
 
@@ -3025,7 +3024,8 @@ void MB4_HermiteCalc(f32 *w0, f32 *w1, f32 *w2, f32 *w3, f32 t) {
  * - same formula reused for every sample in the original too) integrating
  * curve speed over [0, tMax] to get an arc-length-parameterized time; the
  * unused 4th Point3d argument matches the original's dead r6 parameter. */
-static f32 MB4_PathTimeGet(Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused, f32 tMax) {
+#pragma dont_inline on
+static f32 MB4_PathTimeGet(f32 tMax, Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused) {
     f32 h = tMax / 16.0f;
     f32 sum = fn_1_DC9C(pPrev, p1, pNext, 0.0f) + fn_1_DC9C(pPrev, p1, pNext, tMax);
     s32 i;
@@ -3038,9 +3038,10 @@ static f32 MB4_PathTimeGet(Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d 
     }
     return (h / 3.0f) * sum;
 }
+#pragma dont_inline reset
 
 f32 MB4_PathNextTimeGet(Point3d *p0, Point3d *p1, Point3d *p2, Point3d *p3) {
-    return MB4_PathTimeGet(p0, p1, p2, p3, 1.0f);
+    return MB4_PathTimeGet(1.0f, p0, p1, p2, p3);
 }
 
 /* Derivative of the Catmull-Rom/Hermite-tangent curve segment [p1,pNext] at
