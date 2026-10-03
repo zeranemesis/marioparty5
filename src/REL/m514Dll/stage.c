@@ -1,3 +1,4 @@
+#define GXSetFog GXSetFogByValue
 #include "game/flag.h"
 #include "game/hu3d.h"
 #include "game/memory.h"
@@ -7,17 +8,27 @@
 #include "datadir_enum.h"
 
 #include <string.h>
+#undef GXSetFog
+
+void GXSetFog(GXFogType type, f32 start, f32 end, f32 near, f32 far, GXColor *color);
+
 
 typedef struct M514Fog_s {
     f32 start;
     f32 end;
-    u8 r;
-    u8 g;
-    u8 b;
-    u8 a;
+    GXColor color;
 } M514Fog;
 
+typedef enum M514GxSrc_e {
+    M514_GX_SRC_VTX = 1
+} M514GxSrc;
+
+typedef enum M514GxAlpha_e {
+    M514_GX_AF_NONE = 2
+} M514GxAlpha;
+
 f32 fn_1_9794(void);
+
 void fn_1_8180(f32 *arg0);
 
 void fn_1_510C(HUPROCESS *process);
@@ -35,9 +46,9 @@ void fn_1_5858(OMOBJ *obj);
 void fn_1_585C(HU3DMODEL *modelP, Mtx *mtx);
 
 M514Fog lbl_1_data_4A0[3] = {
-    { 20.0f, 7700.0f, 0x00, 0xEE, 0xFF, 0xFF },
-    { 20.0f, 15000.0f, 0x00, 0xEE, 0xFF, 0xFF },
-    { 20.0f, 25000.0f, 0x00, 0xEE, 0xFF, 0xFF },
+    { 20.0f, 7700.0f, { 0x00, 0xEE, 0xFF, 0xFF } },
+    { 20.0f, 15000.0f, { 0x00, 0xEE, 0xFF, 0xFF } },
+    { 20.0f, 25000.0f, { 0x00, 0xEE, 0xFF, 0xFF } },
 };
 
 f32 lbl_1_data_4C4[3] = { -4644.0f, -1228.0f, -4732.0f };
@@ -69,6 +80,8 @@ void fn_1_51BC(void)
 void fn_1_51C0(OMOBJ *obj)
 {
     HU3DMODELID mdlId;
+    f32 *work = obj->data;
+
 
     mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m514, 0), HU_MEMNUM_OVL, HEAP_MODEL));
     obj->mdlId[0] = mdlId;
@@ -108,10 +121,10 @@ void fn_1_536C(OMOBJ *obj)
     if ((obj->work[0] & 3) == 0) {
         fn_1_8180(lbl_1_data_4C4);
     }
-    lbl_1_bss_214 = lbl_1_bss_214 - 0.013;
-    if (lbl_1_bss_214 < 1.0) {
+if ((lbl_1_bss_214 = lbl_1_bss_214 - 0.013) < 1.0) {
         lbl_1_bss_214 = 1.0f;
     }
+
     if (_CheckFlag(0x30002) == 0) {
         fn_1_5858(obj);
     }
@@ -122,79 +135,92 @@ void fn_1_5430(s32 fogType, s32 idx)
 {
     f32 fov, near, far;
     GXColor color;
+    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[idx];
 
     Hu3DCameraPerspectiveGet(1, &fov, &near, &far);
-    color.r = fog->r;
-    color.g = fog->g;
-    color.b = fog->b;
-    color.a = fog->a;
-    GXSetFog(fogType, fog->start, fog->end * lbl_1_bss_214, near, far, color);
+    color.r = fog->color.r;
+    color.g = fog->color.g;
+    color.b = fog->color.b;
+    color.a = fog->color.a;
+    cp = &color;
+    GXSetFog(fogType, fog->start, fog->end * lbl_1_bss_214, near, far, cp);
 }
 
 void fn_1_54DC(s16 layerNo)
 {
-    f32 fov, near, far;
     GXColor color;
+    f32 far, near, fov;
+    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[0];
 
     Hu3DCameraPerspectiveGet(1, &fov, &near, &far);
-    color.r = fog->r;
-    color.g = fog->g;
-    color.b = fog->b;
-    color.a = fog->a;
-    GXSetFog(GX_FOG_LIN, fog->start, fog->end * lbl_1_bss_214, near, far, color);
+    color.r = fog->color.r;
+    color.g = fog->color.g;
+    color.b = fog->color.b;
+    color.a = fog->color.a;
+    cp = &color;
+    GXSetFog(GX_FOG_LIN, fog->start, fog->end * lbl_1_bss_214, near, far, cp);
 }
 
 void fn_1_5574(s16 layerNo)
 {
-    f32 fov, near, far;
     GXColor color;
+    f32 far, near, fov;
+    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[1];
 
     Hu3DCameraPerspectiveGet(1, &fov, &near, &far);
-    color.r = fog->r;
-    color.g = fog->g;
-    color.b = fog->b;
-    color.a = fog->a;
-    GXSetFog(GX_FOG_LIN, fog->start, fog->end * lbl_1_bss_214, near, far, color);
+    color.r = fog->color.r;
+    color.g = fog->color.g;
+    color.b = fog->color.b;
+    color.a = fog->color.a;
+    cp = &color;
+    GXSetFog(GX_FOG_LIN, fog->start, fog->end * lbl_1_bss_214, near, far, cp);
 }
 
 void fn_1_5610(s16 layerNo)
 {
-    f32 fov, near, far;
     GXColor color;
+    f32 far, near, fov;
+    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[2];
 
     Hu3DCameraPerspectiveGet(1, &fov, &near, &far);
-    color.r = fog->r;
-    color.g = fog->g;
-    color.b = fog->b;
-    color.a = fog->a;
-    GXSetFog(GX_FOG_LIN, fog->start, fog->end * lbl_1_bss_214, near, far, color);
+    color.r = fog->color.r;
+    color.g = fog->color.g;
+    color.b = fog->color.b;
+    color.a = fog->color.a;
+    cp = &color;
+    GXSetFog(GX_FOG_LIN, fog->start, fog->end * lbl_1_bss_214, near, far, cp);
 }
 
 void fn_1_56AC(s16 layerNo)
 {
-    f32 fov, near, far;
     GXColor color;
+    f32 far, near, fov;
+    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[0];
 
     Hu3DCameraPerspectiveGet(1, &fov, &near, &far);
-    color.r = fog->r;
-    color.g = fog->g;
-    color.b = fog->b;
-    color.a = fog->a;
-    GXSetFog(GX_FOG_NONE, fog->start, fog->end * lbl_1_bss_214, near, far, color);
+    color.r = fog->color.r;
+    color.g = fog->color.g;
+    color.b = fog->color.b;
+    color.a = fog->color.a;
+    cp = &color;
+    GXSetFog(GX_FOG_NONE, fog->start, fog->end * lbl_1_bss_214, near, far, cp);
 }
 
 void fn_1_5744(HUPROCESS *process)
 {
+    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[0];
 
     lbl_1_bss_214 = 2.0f;
-    Hu3DBGColorSet(fog->r, fog->g, fog->b);
-    Hu3DFogSet(fog->start, fog->end, fog->r, fog->g, fog->b);
+    Hu3DBGColorSet(fog->color.r, fog->color.g, fog->color.b);
+    Hu3DFogSet(fog->start, fog->end, fog->color.r, fog->color.g, fog->color.b);
+
+
     Hu3DLayerHookSet(0, fn_1_56AC);
     Hu3DLayerHookSet(2, fn_1_5610);
     Hu3DLayerHookSet(3, fn_1_5574);
@@ -218,8 +244,10 @@ void fn_1_5858(OMOBJ *obj)
 
 void fn_1_585C(HU3DMODEL *modelP, Mtx *mtx)
 {
-    Mtx mtx2;
-    f32 *data = lbl_1_bss_210->data;
+Mtx mtx2;
+    OMOBJ *obj = lbl_1_bss_210;
+    f32 *data = obj->data;
+
 
     PSMTXIdentity(mtx2);
     PSMTXTrans(mtx2, *data, 0.0f, 0.0f);
@@ -233,7 +261,8 @@ void fn_1_585C(HU3DMODEL *modelP, Mtx *mtx)
     GXSetNumTevStages(1);
     GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_SPEC);
+GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, M514_GX_SRC_VTX, M514_GX_SRC_VTX, 0, GX_DF_NONE, M514_GX_AF_NONE);
+
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
