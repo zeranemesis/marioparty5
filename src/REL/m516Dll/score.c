@@ -25,7 +25,7 @@ void fn_1_7AC0(OMOBJ *obj);
 void fn_1_7AE8(OMOBJ *obj);
 void fn_1_7E04(OMOBJ *obj);
 s32 fn_1_1850(void);
-s32 fn_1_485C(u32 idx);
+s32 fn_1_485C(OMOBJ *obj);
 
 static f32 lbl_1_data_2C0[4][2] = {
     71.0f, 59.0f,
@@ -60,7 +60,7 @@ void fn_1_79F8(OMOBJMAN *objman)
 
     obj = omAddObjEx(objman, 0x3C, 0, 0, OM_GRP_NONE, fn_1_7A84);
     lbl_1_bss_48 = obj;
-    data = HuMemDirectMallocNum(HEAP_HEAP, 0x38, 0x1000);
+    data = HuMemDirectMallocNum(HEAP_HEAP, 0x38, HU_MEMNUM_OVL);
     obj->data = data;
     memset(data, 0, 0x38);
 }
@@ -93,8 +93,8 @@ void fn_1_7AE8(OMOBJ *obj)
     s32 j;
 
     data = obj->data;
-    animBase = HuSprAnimRead(HuDataSelHeapReadNum(DATANUM(DATA_m516, 0x12), 0x1000, HEAP_MODEL));
-    animNum = HuSprAnimRead(HuDataSelHeapReadNum(DATANUM(DATA_mgconst, 0x30), 0x1000, HEAP_MODEL));
+    animBase = HuSprAnimRead(HuDataSelHeapReadNum(DATANUM(DATA_m516, 0x12), HU_MEMNUM_OVL, HEAP_MODEL));
+    animNum = HuSprAnimRead(HuDataSelHeapReadNum(DATANUM(DATA_mgconst, 0x30), HU_MEMNUM_OVL, HEAP_MODEL));
 
     for (i = 0; i < 4; i++) {
         win = MgScoreWinCreate(0x70, 0x28);
@@ -108,7 +108,7 @@ void fn_1_7AE8(OMOBJ *obj)
         MgScorePosSet(score, lbl_1_rodata_530 + lbl_1_data_2C0[i][0], lbl_1_data_2C0[i][1]);
         MgScoreColorSet(score, 0xFF, 0xD8, 0x15);
         MgScorePriSet(score, 0xA);
-        animChar = HuSprAnimRead(HuDataSelHeapReadNum(lbl_1_data_2E0[GwPlayerConf[i].charNo], 0x1000, HEAP_MODEL));
+        animChar = HuSprAnimRead(HuDataSelHeapReadNum(lbl_1_data_2E0[GwPlayerConf[i].charNo], HU_MEMNUM_OVL, HEAP_MODEL));
         grp = HuSprGrpCreate(3);
         data->p[i].grp = grp;
         HuSprGrpPosSet(grp, lbl_1_data_2C0[i][0], lbl_1_data_2C0[i][1]);
@@ -179,22 +179,24 @@ void fn_1_7E04(OMOBJ *obj)
     }
 }
 
-void fn_1_800C(u32 player, s32 value)
+void fn_1_800C(OMOBJ *obj, s32 value)
 {
     SCOREDATA *data;
     s32 idx;
 
     data = lbl_1_bss_48->data;
-    if (player != 0U) {
-        idx = fn_1_485C(player);
+    if (obj != (OMOBJ *)0) {
+        idx = fn_1_485C(obj);
         data->p[idx].value += value;
     }
 }
 
 s32 fn_1_8088(s32 idx)
 {
+    OMOBJ *obj;
     SCOREDATA *data;
 
-    data = lbl_1_bss_48->data;
+    obj = lbl_1_bss_48;
+    data = obj->data;
     return data->p[idx].value;
 }
