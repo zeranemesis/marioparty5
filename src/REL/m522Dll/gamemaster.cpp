@@ -109,7 +109,7 @@ void *fn_1_CBEC(M522_GAMEMASTER *self)
 
 void *fn_1_CC64(M522_GAMEMASTER *self, s16 flag)
 {
-    if (self != (M522_GAMEMASTER *)0) {
+    if (self) {
         self->m_vtable = (void *)lbl_1_data_3DC;
         self->m_core.m_vtable = (void *)&lbl_1_data_3DC[6];
         fn_1_7D04(&self->m_heapSel, -1);
@@ -132,15 +132,15 @@ void fn_1_CCFC(M522_GAMEMASTER *self)
     OSGetTick();
     fn_1_B7A8();
     msg = (M522_MSG *)fn_1_689C(0x1C);
-    if (msg != (M522_MSG *)0) {
+    if (msg) {
         msg = fn_1_DEA0(msg, &self->m_heapSel);
     }
     unk48 = (M522_UNK48 *)fn_1_689C(0x48);
-    if (unk48 != (M522_UNK48 *)0) {
+    if (unk48) {
         unk48 = fn_1_E85C(unk48);
     }
     unkAC = (M522_UNKAC *)fn_1_689C(0xAC);
-    if (unkAC != (M522_UNKAC *)0) {
+    if (unkAC) {
         unkAC = fn_1_D1B4(unkAC);
     }
     fn_1_F604();
