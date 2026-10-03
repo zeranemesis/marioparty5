@@ -51,16 +51,25 @@ void fn_1_4F58(void *self, u32 val);
 void fn_1_21C(void *self);
 void fn_1_FDB0(void);
 
+/* lbl_1_bss_30 is the singleton every assert here tests; it is defined once
+ * in maze.o, so from this unit it is only a reference. The five below are
+ * the other per-object singletons and this unit owns all of them: the target
+ * object carries them as B at .bss 0x00, 0x04, 0x08, 0x0c, 0x10. */
 extern u32 lbl_1_bss_30;
-extern u32 lbl_1_bss_38;
-extern u32 lbl_1_bss_3C;
-extern u32 lbl_1_bss_40;
+u32 lbl_1_bss_38;
+u32 lbl_1_bss_3C;
+u32 lbl_1_bss_40;
+u32 lbl_1_bss_44;
+u32 lbl_1_bss_48;
 
-const char lbl_1_data_3280[] = "m509::CGameMaster::~CGameMaster()";
-const char lbl_1_data_32A2[] = "%s\n";
-const char lbl_1_data_32A6[] = "ms_pointer == 0";
-const char lbl_1_data_32B6[] = "singleton.h";
-const char lbl_1_data_32C2[] = "ms_pointer == 0";
+/* These five are in the object's .data, not .rodata: the assert call takes
+ * their addresses through R_PPC_ADDR16_HA/LO, so they must be writable
+ * section members. `const` would move them to .rodata. */
+char lbl_1_data_3280[] = "m509::CGameMaster::~CGameMaster()";
+char lbl_1_data_32A2[] = "%s\n";
+char lbl_1_data_32A6[] = "ms_pointer == 0";
+char lbl_1_data_32B6[] = "singleton.h";
+char lbl_1_data_32C2[] = "ms_pointer == 0";
 
 int printf(const char *fmt, ...);
 
