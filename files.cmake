@@ -200,6 +200,7 @@ set(REL_FILES
         src/REL/m526Dll/m526.c
         src/REL/m526Dll/math.c
         src/REL/m538Dll/m538.c
+        src/REL/m566Dll/m566.c
         src/REL/mdpartyDll/mdparty.c
         src/REL/mdpartyDll/object.c
         src/REL/mdpartyDll/stage.c
@@ -295,7 +296,6 @@ set(REL_FILES
 #   m563dll
 #   m564Dll
 #   m565dll
-#   m566Dll
 #   m567Dll
 #   m568Dll
 #   m569Dll
