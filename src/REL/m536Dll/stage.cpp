@@ -526,9 +526,15 @@ M536Cloud *fn_1_9AF8(M536Cloud *self, s16 flag)
 
 void fn_1_9AA0(void)
 {
-    fn_1_1264(&lbl_1_bss_A74);
-    __register_global_object(&lbl_1_bss_A74, (void *)fn_1_9AF8, lbl_1_bss_A68);
+    void *obj;
+    void *reg;
+
+    obj = &lbl_1_bss_A74;
+    fn_1_1264(obj);
+    reg = obj;
+    __register_global_object(reg, (void *)fn_1_9AF8, lbl_1_bss_A68);
 }
+
 
 }
 
