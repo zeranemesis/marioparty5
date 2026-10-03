@@ -169,6 +169,11 @@ void fn_1_C4E0(void *self)
     void *r22 = fn_1_104(1);
     if (r22) {
         void *ms = r22;
+        /* Opposite polarity from the other two asserts: the target branches
+         * Bne into the block, so this one fires when the singleton is
+         * non-zero. A switch cannot express "assert unless zero" with a
+         * conditional branch into an out-of-line block, so this site keeps
+         * the `if` spelling and is two rows out. */
         if (SINGLETON) {
             fn_1_0(lbl_1_data_32A6, lbl_1_data_32B6, 0x35);
         }
@@ -196,6 +201,11 @@ void fn_1_C4E0(void *self)
         s32 r0 = r25 * 0x3C;
         if (r26 < r0) {
             Vec vec = {0.0f, 0.0f, 0.0f};
+            /* The assert is a CALL to the module's shared assert function
+             * fn_1_0(msg, file, line), which lives in m509.o and returns.
+             * The original lays its argument block out of line behind a
+             * redundant b, and only `switch` makes MWCC do that: every `if`
+             * spelling inlines the block. See fn_1_C7D0. */
             switch (SINGLETON) {
             case 0:
                 fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x27);
@@ -235,10 +245,16 @@ void fn_1_C4E0(void *self)
     }
 }
 
+/* NONMATCHING: one row. The original dispatches with cmplwi, MWCC dispatches
+ * every switch with signed cmpwi; the block placement itself is exact.
+ * The whole sequence does assemble byte for byte out of an inline __asm
+ * block (MWCC accepts @ha/@l there), but an __asm block makes MWCC's
+ * register allocator move the following code from r3/r0 to r6/r7, which
+ * costs six rows instead of one, so the C spelling is the one kept. */
 void *fn_1_C7D0(void *self, s16 arg)
 {
     if (self) {
-        switch ((u32)SINGLETON) {
+        switch (SINGLETON) {
         case 0:
             fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x3D);
             break;
