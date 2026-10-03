@@ -1,4 +1,5 @@
 #include "REL/m574Dll.h"
+#include "game/frand.h"
 #include "game/mg/seqman.h"
 
 typedef struct M574PlayerWork_s {
@@ -36,6 +37,15 @@ typedef struct M574MotShift_s {
     u32 attr;
 } M574_MOT_SHIFT;
 
+typedef struct M574WalkEntry_s {
+    f32 len;
+    s32 v1;
+    s32 v2;
+    s32 v3;
+    s32 v4;
+    f32 rate;
+} M574_WALK_ENTRY;
+
 void fn_1_1068(OMOBJ *obj);
 void fn_1_1264(OMOBJ *obj);
 void fn_1_17A0(OMOBJ *obj);
@@ -48,6 +58,8 @@ void fn_1_9FC(s32 no, s32 grp, s32 charNo);
 s32 fn_1_928(s32 no);
 void fn_1_AAC(s32 no);
 f32 fn_1_CC8(f32 cur, f32 target, f32 speed);
+s32 fn_1_6D7C(s32 grp, const Vec *pos, f32 ofs, f32 speed, f32 len);
+void fn_1_70B0(s32 handle, s32 idx, Vec *out);
 void fn_1_6478(s32 grp, f32 scale);
 f32 fn_1_6568(s32 grp);
 
@@ -71,10 +83,17 @@ static const Vec M574PlayerPosTbl[4] = {
 };
 
 static const Vec M574PlayerPosTbl2[4] = {
-    { 0.0f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 0.0f }
+    { -944.0f, 50.0f, 0.0f },
+    { -288.0f, 50.0f, 0.0f },
+    { 288.0f, 50.0f, 0.0f },
+    { 944.0f, 50.0f, 0.0f }
+};
+
+static const M574_WALK_ENTRY M574WalkTbl[4] = {
+    { 397.0f, 18, 16, 9, 9, 0.7f },
+    { 350.0f, 19, 15, 8, 8, 0.75f },
+    { 320.0f, 21, 14, 7, 7, 0.8f },
+    { 300.0f, 24, 13, 6, 6, 0.85f }
 };
 
 static const f32 M574PlayerAngleTbl[4] = { 90.0f, 220.0f, 90.0f, 220.0f };
@@ -297,6 +316,65 @@ void fn_1_1938(OMOBJ *obj)
     model = obj->mdlId[0];
     Hu3DModelPosSetV(model, &player->pos);
     Hu3DModelRotSet(model, 0.0f, player->angle, 0.0f);
+}
+
+void fn_1_19AC(OMOBJ *obj)
+{
+    M574_PLAYER_WORK *player;
+    M574_WALK_ENTRY *entry;
+    s32 ret;
+    Vec *target;
+    Vec pos;
+
+    player = obj->data;
+    entry = (M574_WALK_ENTRY *) &M574WalkTbl[player->dif];
+    target = (Vec *) &M574PlayerPosTbl2[player->playerGrp];
+
+    switch (player->unk2C) {
+    case 0:
+        if (0.0000152587890625 * (f64) (s16) frand() > entry->rate) {
+            break;
+        }
+        ret = fn_1_6D7C(player->grp, target, 0.0f, 120.0f, entry->len);
+        if (ret < 0) {
+            break;
+        }
+        fn_1_70B0(ret, 0, &pos);
+        player->unk34 = (PSVECMag(&pos) > 33.33333507180214) ? 1 : 0;
+        player->unk2C++;
+        if (player->unk34) {
+            player->unk30 = entry->v3;
+        }
+        else {
+            player->unk30 = entry->v1;
+        }
+        if (0.0000152587890625 * (f64) (s16) frand() > entry->rate) {
+            break;
+        }
+        player->unk30 += (s32) (12.0 * 0.0000152587890625 * (f64) (s16) frand());
+    case 1:
+        player->unk18 = 0x100;
+        if (--player->unk30 > 0) {
+            break;
+        }
+        player->unk2C++;
+        if (player->unk34) {
+            player->unk30 = entry->v4;
+        }
+        else {
+            player->unk30 = entry->v2;
+        }
+        if (0.0000152587890625 * (f64) (s16) frand() > entry->rate) {
+            break;
+        }
+        player->unk30 += (s32) (15.0 * 0.0000152587890625 * (f64) (s16) frand());
+    case 2:
+        if (--player->unk30 > 0) {
+            break;
+        }
+        player->unk2C = 0;
+        break;
+    }
 }
 
 OMOBJ *fn_1_1CD4(OMOBJ *obj)
