@@ -1668,7 +1668,7 @@ config.libs = [
         "m574Dll",
         objects={
             Object(NonMatching, "REL/m574Dll/m574.c"),
-            Object(NonMatching, "REL/m574Dll/player.c"),
+            Object(Equivalent, "REL/m574Dll/player.c"),
             Object(NonMatching, "REL/m574Dll/stage.c"),
             Object(NonMatching, "REL/m574Dll/ball.c"),
             Object(NonMatching, "REL/m574Dll/score.c"),

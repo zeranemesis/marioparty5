@@ -101,9 +101,10 @@ static f32 M574PlayerAngleTbl[4] = { 90.0f, 270.0f, 90.0f, 270.0f };
 
 static OMOBJ *M574PlayerObjTbl[M574_PLAYER_MAX];
 
+// NONMATCHING: the original allocates grp to r29 and obj to r30, this build swaps them
 void fn_1_E98(OMOBJMAN *om)
 {
-    s32 cnt[2] = { 0, 0 };
+s32 cnt[2] = { 0, 0 };
     s32 playerIdx[2] = { 0, 2 };
     s32 grpTbl[M574_PLAYER_MAX];
     s32 i;
