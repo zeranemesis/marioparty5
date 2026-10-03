@@ -490,10 +490,15 @@ void *fn_1_98D8(M536Stage *self, s16 flag)
 void fn_1_99E0(M536Cloud *head, void (*fn)(M536Cloud *))
 {
     M536Cloud *list;
+    M536Cloud *node;
+    M536Cloud *first;
 
     list = head;
-    fn_1_9A40(head->m_next, list, fn);
+    node = head->m_next;
+    first = node;
+    fn_1_9A40(first, list, fn);
 }
+
 
 void fn_1_9A40(M536Cloud *node, M536Cloud *head, void (*fn)(M536Cloud *))
 {
