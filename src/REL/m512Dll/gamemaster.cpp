@@ -150,6 +150,12 @@ void *lbl_1_data_238[] = {
     (void *)fn_1_66FC, (void *)fn_1_635C
 };
 
+// The three CTimes and the seven spare words are the module's own globals.
+// __sinit (the .ctors entry) stores 120/210/210 into the first three and is
+// the target's fn_1_6724 byte for byte, but MWCC always emits it after every
+// other function, so it lands at 0x6C0 where the original has it at 0x6B0 --
+// the two 8-byte adjustor thunks that follow it there are compiler-generated
+// in the original.  objdiff therefore cannot pair the two.
 CTime lbl_1_bss_9F0(120);
 CTime lbl_1_bss_9F4(210);
 CTime lbl_1_bss_9F8(210);
@@ -164,9 +170,8 @@ s32 lbl_1_bss_A14;
 // ---------------------------------------------------------------- functions
 
 // MWCC inlines a definition into its callers inside the same translation
-// unit, which deletes calls the original keeps (an empty callee folds away
-// completely).  Keep every definition out of line.
-// MWCC inlines a definition into its callers inside the same translation unit; every function here is referenced through the vtable array or is a loop-call target, and all of them survive out of line without the pragma.
+// unit; every function here is referenced through the vtable array or is a
+// loop-call target, and all of them survive out of line without the pragma.
 
 extern "C" CGameMaster *__ct__Q24m51211CGameMasterFv(CGameMaster *self)
 {
@@ -196,6 +201,11 @@ extern "C" CGameMaster *__dt__Q24m51211CGameMasterFv(CGameMaster *self, s16 flag
     return self;
 }
 
+// NONMATCHING: only the register numbers differ.  The four score objects
+// land in r28..r26 where the original uses r29..r27: MWCC ranks locals by
+// live-range length, and holding the fourth one across the store to
+// self->m_f35C pushes it above the three shorter-lived ones.  Every opcode,
+// the frame and the size are the original's.
 extern "C" void fn_1_61B0(CGameMaster *self)
 {
 s32 i;
