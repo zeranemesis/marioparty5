@@ -1715,7 +1715,7 @@ config.libs = [
         objects={
             Object(NonMatching, "REL/m579Dll/m579.cpp"),
             Object(NonMatching, "REL/m579Dll/puku2.cpp"),
-            Object(NonMatching, "REL/m579Dll/game_master.cpp"),
+            Object(Equivalent, "REL/m579Dll/game_master.cpp"),
             Object(NonMatching, "REL/m579Dll/fishman.cpp"),
             Object(Matching, "REL/m579Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m579Dll/camera.cpp"),
