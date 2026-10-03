@@ -497,11 +497,15 @@ void fn_1_99E0(M536Cloud *head, void (*fn)(M536Cloud *))
 
 void fn_1_9A40(M536Cloud *node, M536Cloud *head, void (*fn)(M536Cloud *))
 {
+    M536Cloud *next;
+
     while (node != head) {
         fn(node);
-        node = node->m_next;
+        next = node->m_next;
+        node = next;
     }
 }
+
 
 M536Cloud *fn_1_9AF8(M536Cloud *self, s16 flag)
 {
