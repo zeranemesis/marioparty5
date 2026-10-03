@@ -56,18 +56,23 @@ typedef struct M537GameMaster_s {
     void *unk358;
 } M537GameMaster;
 
-static s32 lbl_1_bss_A00;
-static s32 lbl_1_bss_A04;
-static s32 lbl_1_bss_A08;
-static s32 lbl_1_bss_A0C;
-static s32 lbl_1_bss_A10;
-static s32 lbl_1_bss_A14;
+s32 lbl_1_bss_A00;
+s32 lbl_1_bss_A04;
+s32 lbl_1_bss_A08;
+s32 lbl_1_bss_A0C;
+s32 lbl_1_bss_A10;
+s32 lbl_1_bss_A14;
 
 typedef struct M537Shadow_s {
     s32 v[9];
 } M537Shadow;
 
-static const M537Shadow lbl_1_rodata_200 = {
+typedef struct M537ShadowFov_s {
+    f32 v[2];
+} M537ShadowFov;
+
+extern const M537ShadowFov lbl_1_rodata_1F8 = {{288.0f, 0.0f}};
+extern const M537Shadow lbl_1_rodata_200 = {
     {0x0, 0x45FA0000, 0x0, 0x0, 0x0, 0xBF800000, 0x0, 0x0, 0x0},
 };
 
@@ -83,7 +88,7 @@ void fn_1_888C(void);
 void fn_1_88C0(void);
 void fn_1_88C8(void);
 
-static void *lbl_1_data_320[] = {
+void *lbl_1_data_320[] = {
     0,
     0,
     fn_1_8438,
