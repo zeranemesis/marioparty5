@@ -1,3 +1,11 @@
+/* humath.h pulls in libc/math.h, whose `extern inline sqrtf` carries two
+   `static const double` locals.  MWCC emits those two constants into .rodata
+   of every translation unit that includes it even when sqrtf is never called,
+   and the original stage.o has no such pair in its .rodata (the 0.5/3.0 pair
+   in m580Dll.rel belongs to the next unit in link order).  Suppressing
+   math.h keeps this unit's literal pool to the six constants it uses. */
+#define _MATH_H
+
 #include "game/data.h"
 #include "game/hu3d.h"
 #include "game/hsfformat.h"
