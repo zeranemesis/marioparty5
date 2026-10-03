@@ -24,14 +24,14 @@ void *fn_1_14208(void *self);
 void *fn_1_148AC(void *self);
 void *fn_1_15AD8(void *self);
 void *fn_1_16F3C(void *self);
-void *fn_1_CA2C(void *self);
+void fn_1_CA2C(void);
 void *fn_1_CAD0(void *self, s32 index);
-void *fn_1_D2C0(void *self);
+void fn_1_D2C0(void);
 
 void fn_1_1C48(s32 mode);
 u32 fn_1_1CE0(void);
-u32 fn_1_1D6C(void *self);
-u32 fn_1_1DE0(void *self);
+void fn_1_1D6C(void);
+void fn_1_1DE0(void);
 void fn_1_1F40(void *self);
 void fn_1_20CC(void *self, s32 flag);
 void fn_1_2704(void);
@@ -76,7 +76,7 @@ u32 lbl_1_bss_A24;
 void *fn_1_7650(M579GameMaster *self);
 void *fn_1_76BC(M579GameMaster *self, s16 flag);
 void fn_1_7748(void);
-void fn_1_78DC(M579GameMaster *self);
+void fn_1_78DC(void *self);
 void fn_1_7914(M579GameMaster *self);
 u32 fn_1_7AB4(M579GameMaster *self);
 void fn_1_7AE0(void);
@@ -190,11 +190,11 @@ void fn_1_7748(void)
     }
 }
 
-void fn_1_78DC(M579GameMaster *self)
+void fn_1_78DC(void *self)
 {
-    fn_1_5398(&self->field_20, 0);
-    fn_1_1D6C(&self->field_20);
-    fn_1_D2C0(&self->field_20);
+    fn_1_5398((void *) ((u8 *) self + 0x20), 0);
+    fn_1_1D6C();
+    fn_1_D2C0();
 }
 
 void fn_1_7914(M579GameMaster *self)
@@ -272,8 +272,8 @@ void fn_1_7AE0(void)
 
 void fn_1_7AE4(M579GameMaster *self)
 {
-    fn_1_CA2C(self);
-    fn_1_1DE0(self);
+    fn_1_CA2C();
+    fn_1_1DE0();
 }
 
 void fn_1_7B08(void)
