@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "REL/m574Dll.h"
 #include "game/frand.h"
 #include "game/mg/seqman.h"
@@ -101,7 +102,14 @@ static f32 M574PlayerAngleTbl[4] = { 90.0f, 270.0f, 90.0f, 270.0f };
 
 static OMOBJ *M574PlayerObjTbl[M574_PLAYER_MAX];
 
-// NONMATCHING: the original allocates grp to r29 and obj to r30, this build swaps them
+// NONMATCHING: this build allocates grp to r30 and obj to r29, the original the
+// other way round -- 12 bytes of .text, all of it the r29/r30 field of these
+// instructions, nothing else. Not reachable by declaration order: all 24
+// orderings of i/obj/grp/grpF compile identically, and the one spelling that does
+// give the original's register assignment (`obj = call; tbl[i] = obj;`) emits the
+// table store before the `mr`, which is 22 bytes off instead. The original object
+// carries CodeWarrior 0b 02 04 07 01 01 02 00 in .comment and this compiler emits
+// 0a 02 04 02 01 00 02 00, so the two live-range tie-breaks are not the same build.
 void fn_1_E98(OMOBJMAN *om)
 {
 s32 cnt[2] = { 0, 0 };
