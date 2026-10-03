@@ -113,8 +113,8 @@ extern "C" void fn_1_BAFC(void *self);
 extern "C" void fn_1_BBA0(void *listA, void *listB, void (*fn)(void *, void *));
 extern "C" void fn_1_BC3C(void *listA, void *listB, void (*fn)(void *, void *));
 extern "C" void fn_1_BCD8(void *listA, void (*fn)(void *, void *));
-extern "C" void fn_1_BDA0(void *self);
-extern "C" void fn_1_BDA8(void *self, s16 value);
+extern "C" void fn_1_BDA0(void);
+extern "C" void fn_1_BDA8(void);
 }
 
 CSingleton lbl_1_data_338 = {0, -1, fn_1_111A8};
@@ -773,15 +773,21 @@ extern "C" void fn_1_BD6C(void)
 }
 
 #pragma dont_inline on
-extern "C" void fn_1_BDA0(void *self)
+extern "C" void fn_1_BDA0(void)
 {
-    fn_1_B058((char *)self - 0x20);
+    __asm {
+        subi r3, r3, 0x20
+        b      fn_1_B058
+    }
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" void fn_1_BDA8(void *self, s16 value)
+extern "C" void fn_1_BDA8(void)
 {
-    fn_1_AB90((CGameMaster *)((char *)self - 0x20), value);
+    __asm {
+        subi r3, r3, 0x20
+        b      fn_1_AB90
+    }
 }
 #pragma dont_inline reset
