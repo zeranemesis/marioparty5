@@ -16,8 +16,8 @@ typedef signed int s32;
 typedef unsigned int u32;
 typedef float f32;
 typedef double f64;
-typedef unsigned short HUSPRID;
-typedef unsigned short HUSPRGRPID;
+typedef signed short HUSPRID;
+typedef signed short HUSPRGRPID;
 
 struct ANIMDATA;
 
@@ -136,13 +136,13 @@ extern "C" {
 void fn_1_1DDC(void *self);                                     // base vtable slot
 void fn_1_D3E8(M512Score *self);
 void fn_1_D178(M512Score *self, s32 param, u8 wideF);
-void fn_1_D27C(M512Score *self, s16 flag);
-void fn_1_D308(M512Score *self, s16 flag);
+void *fn_1_D27C(M512Score *self, s16 flag);
+void *fn_1_D308(M512Score *self, s16 flag);
 void fn_1_D4C4(M512Score *self);
 void fn_1_D694(M512Score *self, s32 idx);
-void fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2);
-void fn_1_DAF0(M512ScoreList *self, s16 flag);
-void fn_1_DB7C(M512ScoreList *self, s16 flag);
+void *fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2);
+void *fn_1_DAF0(M512ScoreList *self, s16 flag);
+void *fn_1_DB7C(M512ScoreList *self, s16 flag);
 void fn_1_E23C(M512ScoreList *self);
 void fn_1_E65C(M512ScoreList *self, s32 idx);
 }
@@ -171,11 +171,16 @@ typedef struct {
 M512Vtbl lbl_1_data_4C0 = { 0, 0, (void *)fn_1_DB7C, (void *)fn_1_E65C, (void *)fn_1_E23C };
 M512Vtbl lbl_1_data_4D4 = { 0, 0, (void *)fn_1_D308, (void *)fn_1_D694, (void *)fn_1_1DDC };
 
-static const f32 lbl_1_rodata_3B0[8] = {
-    76.0f, 54.0f,
-    500.0f, 54.0f,
-    76.0f, 424.0f,
-    500.0f, 424.0f
+typedef struct {
+    f32 x;
+    f32 y;
+} M512Pos;
+
+static const M512Pos lbl_1_rodata_3B0[4] = {
+    { 76.0f, 54.0f },
+    { 500.0f, 54.0f },
+    { 76.0f, 424.0f },
+    { 500.0f, 424.0f }
 };
 
 #define MGSCORE_DIGIT_MAX 5
@@ -225,10 +230,11 @@ void fn_1_D178(M512Score *self, s32 param, u8 wideF)
     }
 }
 
-void fn_1_D27C(M512Score *self, s16 flag)
+void *fn_1_D27C(M512Score *self, s16 flag)
 {
     if (self != 0) {
-        if (lbl_1_bss_A00 == 0) {
+        if (lbl_1_bss_A00 != 0) {
+        } else {
             fn_1_1D4(lbl_1_data_474, lbl_1_data_468, 0x3D);
         }
         lbl_1_bss_A00 = 0;
@@ -236,9 +242,10 @@ void fn_1_D27C(M512Score *self, s16 flag)
             __dl__FPv(self);
         }
     }
+    return self;
 }
 
-void fn_1_D308(M512Score *self, s16 flag)
+void *fn_1_D308(M512Score *self, s16 flag)
 {
     void *singleton;
 
@@ -249,7 +256,8 @@ void fn_1_D308(M512Score *self, s16 flag)
         }
         singleton = (void *)&self->timer;
         if (singleton != 0) {
-            if (lbl_1_bss_A00 == 0) {
+            if (lbl_1_bss_A00 != 0) {
+            } else {
                 fn_1_1D4(lbl_1_data_474, lbl_1_data_468, 0x3D);
             }
             lbl_1_bss_A00 = 0;
@@ -264,6 +272,7 @@ void fn_1_D308(M512Score *self, s16 flag)
             __dl__FPv(self);
         }
     }
+    return self;
 }
 
 void fn_1_D4C4(M512Score *self)
@@ -325,16 +334,15 @@ void fn_1_D694(M512Score *self, s32 idx)
     }
 }
 
-void fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2)
+void *fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2)
 {
     ANIMDATA *digitAnim;
     ANIMDATA *unitAnim;
-    M512MGTIMER *timer;
+    void *singleton;
     HUSPRGRPID grpId;
     s32 i;
     s32 j;
 
-    timer = 0;
     fn_1_1264(self);
     self->vtable = lbl_1_data_1FC;
     self->bitmask = 0;
@@ -342,15 +350,16 @@ void fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2)
     if (lbl_1_bss_9FC != 0) {
         fn_1_1D4(lbl_1_data_458, lbl_1_data_468, 0x35);
     }
-    if (timer != 0) {
-        timer = (M512MGTIMER *)((u8 *)timer - 0x10);
+    singleton = (void *)&self->animF;
+    if (singleton != 0) {
+        singleton = (void *)((u8 *)singleton - 0x10);
     }
-    lbl_1_bss_9FC = timer;
+    lbl_1_bss_9FC = singleton;
     self->vtable = MGSCOREL_VTBL;
     self->animF = 0;
     self->recordF = recordF;
-    digitAnim = HuSprAnimRead(HuDataSelHeapReadNum(0x00460013, 0x1000, 2));
-    unitAnim = HuSprAnimRead(HuDataSelHeapReadNum(0x00460014, 0x1000, 2));
+    digitAnim = HuSprAnimRead(HuDataSelHeapReadNum(0x00460013, 0x10000000, 2));
+    unitAnim = HuSprAnimRead(HuDataSelHeapReadNum(0x00460014, 0x10000000, 2));
     for (i = 0; i < 4; i++) {
         M512ScoreItem *item = &self->item[i];
 
@@ -363,23 +372,25 @@ void fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2)
         item->sprGrpId = grpId;
         for (j = 0; j < 5; j++) {
             HuSprGrpMemberSet(grpId, j + 1, HuSprCreate(digitAnim, 0xD, 0));
-            HuSprPosSet(grpId, j + 1, -22.0f + 17.0f * (f32)j, 0.0f);
+            HuSprPosSet(grpId, j + 1, -22.0f + 17.0f * (f32)(f64)j, 0.0f);
         }
         for (j = 0; j < 5; j++) {
             HuSprGrpMemberSet(grpId, j + 6, HuSprCreate(unitAnim, 0xB, 0));
-            HuSprPosSet(grpId, j + 6, -22.0f + 17.0f * (f32)j, 0.0f);
+            HuSprPosSet(grpId, j + 6, -22.0f + 17.0f * (f32)(f64)j, 0.0f);
         }
         for (j = 0; j < 0xB; j++) {
             HuSprAttrSet(grpId, j, 1);
             HuSprAttrSet(grpId, j, 4);
         }
     }
+    return self;
 }
 
-void fn_1_DAF0(M512ScoreList *self, s16 flag)
+void *fn_1_DAF0(M512ScoreList *self, s16 flag)
 {
     if (self != 0) {
-        if (lbl_1_bss_9FC == 0) {
+        if (lbl_1_bss_9FC != 0) {
+        } else {
             fn_1_1D4(lbl_1_data_474, lbl_1_data_468, 0x3D);
         }
         lbl_1_bss_9FC = 0;
@@ -387,12 +398,13 @@ void fn_1_DAF0(M512ScoreList *self, s16 flag)
             __dl__FPv(self);
         }
     }
+    return self;
 }
 
-void fn_1_DB7C(M512ScoreList *self, s16 flag)
+void *fn_1_DB7C(M512ScoreList *self, s16 flag)
 {
     s32 i;
-    M512MGTIMER *timer;
+    void *singleton;
 
     if (self != 0) {
         self->vtable = MGSCOREL_VTBL;
@@ -404,9 +416,10 @@ void fn_1_DB7C(M512ScoreList *self, s16 flag)
             }
             HuSprGrpKill(item->sprGrpId);
         }
-        timer = 0;
-        if (timer != 0) {
-            if (lbl_1_bss_9FC == 0) {
+        singleton = (void *)&self->animF;
+        if (singleton != 0) {
+            if (lbl_1_bss_9FC != 0) {
+            } else {
                 fn_1_1D4(lbl_1_data_474, lbl_1_data_468, 0x3D);
             }
             lbl_1_bss_9FC = 0;
@@ -421,21 +434,23 @@ void fn_1_DB7C(M512ScoreList *self, s16 flag)
             __dl__FPv(self);
         }
     }
+    return self;
 }
 
 void fn_1_DC94(M512ScoreList *self, s32 idx, s32 kind)
 {
     M512ScoreItem *item = &self->item[idx];
+    ANIMDATA *anim;
     s32 j;
 
     item->idx = idx;
     item->kind = kind;
     item->digitNum = 0;
-    item->posX = lbl_1_rodata_3B0[idx * 2];
-    item->posY = lbl_1_rodata_3B0[idx * 2 + 1];
+    item->posX = lbl_1_rodata_3B0[idx].x;
+    item->posY = lbl_1_rodata_3B0[idx].y;
     MgScoreWinPosSet(item->winGrpId, item->posX, item->posY);
-    HuSprGrpMemberSet(item->sprGrpId, 0,
-                      HuSprCreate(HuSprAnimRead(HuDataSelHeapReadNum(lbl_1_data_484[kind], 0x1000, 2)), 0xC, 0));
+    anim = HuSprAnimRead(HuDataSelHeapReadNum(lbl_1_data_484[kind], 0x10000000, 2));
+    HuSprGrpMemberSet(item->sprGrpId, 0, HuSprCreate(anim, 0xC, 0));
     HuSprPosSet(item->sprGrpId, 0, -42.0f, 0.0f);
     HuSprAttrSet(item->sprGrpId, 0, 4);
     HuSprGrpPosSet(item->sprGrpId, item->posX, item->posY);
@@ -450,29 +465,28 @@ void fn_1_DDDC(M512ScoreList *self, s32 idx, s32 digitNum, s32 maxTime)
     self->item[idx].maxTime = maxTime;
 }
 
-void fn_1_DDF8(M512ScoreItem *item)
+void fn_1_DDF8(void *arg1, M512ScoreItem *item)
 {
     s32 i;
 
     for (i = 0; i < MGSCORE_DIGIT_MAX; i++) {
         if (i < item->digitNum) {
-            item->digit[i] -= 1;
-            if (item->digit[i] < 0) {
+            if ((item->digit[i] -= 1) < 0) {
                 item->digit[i] = 0;
             }
         } else {
-            item->digit[i] += 1;
-            if ((f64)item->digit[i] > 18.0) {
+            if ((f64)(item->digit[i] += 1) > 18.0) {
                 item->digit[i] = 0x12;
             }
         }
     }
 }
 
-void fn_1_DEB8(M512ScoreItem *item)
+void fn_1_DEB8(void *arg1, M512ScoreItem *item)
 {
     s32 i;
     f32 scale;
+    f32 tpLvl;
 
     MgScoreWinDispSet(item->winGrpId, 1);
     for (i = 0; i < 6; i++) {
@@ -481,9 +495,10 @@ void fn_1_DEB8(M512ScoreItem *item)
     for (i = 0; i < MGSCORE_DIGIT_MAX; i++) {
         if ((f64)item->digit[i] < 18.0) {
             HuSprAttrReset(item->sprGrpId, i + 6, 4);
-            scale = (f32)(((f64)item->digit[i] + 18.0) / 18.0);
+            scale = (f32)((f64)item->digit[i] + 18.0) / 18.0;
             HuSprScaleSet(item->sprGrpId, i + 6, scale, scale);
-            HuSprTPLvlSet(item->sprGrpId, i + 6, (f32)(((f64)(18.0 - item->digit[i]) / 18.0)));
+            tpLvl = (f32)(18.0 - (f64)item->digit[i]) / 18.0;
+            HuSprTPLvlSet(item->sprGrpId, i + 6, tpLvl);
         } else {
             HuSprAttrSet(item->sprGrpId, i + 6, 4);
         }
@@ -501,17 +516,17 @@ void fn_1_E098(M512ScoreItem *item)
             item->timer->stopF = 1;
             item->timer->mode = 1;
         }
-        MgTimerPosSet(item->timer, 20.0f + lbl_1_rodata_3B0[item->idx * 2],
-                      8.0f + lbl_1_rodata_3B0[item->idx * 2 + 1]);
+        MgTimerPosSet(item->timer, 20.0f + lbl_1_rodata_3B0[item->idx].x,
+                      8.0f + lbl_1_rodata_3B0[item->idx].y);
         MgScoreWinDispSet(item->timer->winGrpId, 0);
         item->timer->winDispF = 0;
         item->timerOnF = 1;
     }
 }
 
-void fn_1_E1CC(M512ScoreItem *item)
+void fn_1_E1CC(void *arg1, M512ScoreItem *item)
 {
-    s16 i;
+    s32 i;
 
     MgScoreWinDispSet(item->winGrpId, 1);
     for (i = 1; i < 0xB; i++) {
@@ -552,8 +567,8 @@ void fn_1_E23C(M512ScoreList *self)
                         item->timer->stopF = 1;
                         item->timer->mode = 1;
                     }
-                    MgTimerPosSet(item->timer, 20.0f + lbl_1_rodata_3B0[item->idx * 2],
-                                  8.0f + lbl_1_rodata_3B0[item->idx * 2 + 1]);
+                    MgTimerPosSet(item->timer, 20.0f + lbl_1_rodata_3B0[item->idx].x,
+                                  8.0f + lbl_1_rodata_3B0[item->idx].y);
                     MgScoreWinDispSet(item->timer->winGrpId, 0);
                     item->timer->winDispF = 0;
                     item->timerOnF = 1;
