@@ -169,7 +169,7 @@ void fn_1_C4E0(void *self)
     void *r22 = fn_1_104(1);
     if (r22) {
         void *ms = r22;
-        if (!lbl_1_bss_30) {
+        if (SINGLETON) {
             fn_1_0(lbl_1_data_32A6, lbl_1_data_32B6, 0x35);
         }
         lbl_1_bss_30 = (u32)ms;
@@ -196,8 +196,10 @@ void fn_1_C4E0(void *self)
         s32 r0 = r25 * 0x3C;
         if (r26 < r0) {
             Vec vec = {0.0f, 0.0f, 0.0f};
-            if (!lbl_1_bss_30) {
+            switch (SINGLETON) {
+            case 0:
                 fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x27);
+                break;
             }
             u32 ms = lbl_1_bss_30;
             fn_1_C224((void *)ms, irandom__7CRandomFv());
@@ -233,13 +235,13 @@ void fn_1_C4E0(void *self)
     }
 }
 
-// NONMATCHING: the singleton.h assert block is out of line in the original
-// (beq to the assert, b over it); MWCC 2.6 always inlines it (BRIEF 6).
 void *fn_1_C7D0(void *self, s16 arg)
 {
     if (self) {
-        if (SINGLETON == 0) {
+        switch ((u32)SINGLETON) {
+        case 0:
             fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x3D);
+            break;
         }
         SINGLETON = 0;
         if (arg > 0) {
