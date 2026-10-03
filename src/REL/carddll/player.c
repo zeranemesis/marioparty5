@@ -128,7 +128,18 @@ s32 fn_1_FB88(f32 *arg0)
    The per-player record is 0x5C bytes; the fields reset here live at 0x30..0x50. */
 struct PlayerCardRec
 {
-    char pad0[0x30];
+    s32 f_00;
+    s32 f_04;
+    s32 f_08;
+    s32 f_0C;
+    s32 f_10;
+    s32 f_14;
+    s32 f_18;
+    s32 f_1C;
+    s32 f_20;
+    s32 f_24;
+    s32 f_28;
+    s32 f_2C;
     s32 f_30;
     s32 f_34;
     s32 f_38;
@@ -138,7 +149,9 @@ struct PlayerCardRec
     s32 f_48;
     s32 f_4C;
     s32 f_50;
-    char pad54[0x8];
+    s16 f_54;
+    s16 f_56;
+    char pad_58[4];
 }; /* size = 0x5C */
 
 void fn_1_2FEF4(struct PlayerCardRec *arg0)
@@ -179,12 +192,17 @@ Mtx *fn_1_25444(f32 *arg0, HuVecF *arg1)
 }
 
 /* Player struct (fields used by this unit so far): curPlayerNo @ 0x170; the per-player
-   card-record index lives at 0x174 + curPlayerNo*4 (s32). */
+   card-record index lives at 0x174 + curPlayerNo*4 (s32); the slot count @ 0x194. */
 struct PlayerStruct
 {
     char pad170[0x170];
     s32 curPlayerNo;
+    s32 pad174[8];
+    s32 f_194;
 };
+
+/* lbl_1_bss_8C4 row lookup: 0x28-byte rows indexed by f_10, then by f_14. */
+#define CARD_FLAGS(r) (*(s32 *) ((char *) &lbl_1_bss_8C4 + (r)->f_10 * 0x28 + (r)->f_14 * 4))
 
 /* fn_1_304D8: like fn_1_303E0 but the record array is passed in (arg1) and the
    sprite display is turned ON. For each of the 3 opponents, take the sprite id from
@@ -417,5 +435,115 @@ void fn_1_2FBCC(f32 *arg0)
         var_r30_2 += 1;
     }
     *(s32 *) ((u8 *) arg0 + 0x1D4) = -1;
+    }
+}
+
+/* CARD_FLAGS: the per-player "card phase" walker. Repeatedly advances the 0x5C-byte
+   record's f_10/f_14 cursor and f_00 phase field until none of the five state-table
+   flag bits (20..24) apply. arg1 is the current direction, carried across iterations. */
+void fn_1_17BE8(struct PlayerStruct *arg0, s32 arg1)
+{
+    struct PlayerCardRec *rec;
+    s32 var_C;
+    s32 var_8;
+
+    var_C = 0;
+    var_8 = 0;
+    rec = (struct PlayerCardRec *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x174 + arg0->curPlayerNo * 4) * 0x5C);
+for (;;) {
+        if (!((CARD_FLAGS(rec) & 0x1000000) ||
+              (rec->f_00 == 1 && (CARD_FLAGS(rec) & 0x8000)) ||
+              (rec->f_00 == 2 && (CARD_FLAGS(rec) & 0x4000)) ||
+              (rec->f_00 == 3 && (CARD_FLAGS(rec) & 0x2000)) ||
+              (rec->f_00 == 4 && (CARD_FLAGS(rec) & 0x1000)))) {
+            break;
+        }
+        if (arg1 == 1) {
+            if (rec->f_00 == 1) {
+                if (rec->f_14 == 0) {
+                    arg1 = 4;
+                    rec->f_14 += 1;
+                } else {
+                    arg1 = 3;
+                    rec->f_14 -= 1;
+                }
+            } else if (rec->f_10 == 0) {
+                arg1 = (rec->f_00 == 3) ? 4 : 3;
+                rec->f_00 = 1;
+            } else {
+                rec->f_10 -= 1;
+            }
+        } else if (arg1 == 2) {
+            if (rec->f_00 == 2) {
+                if (rec->f_14 == 0) {
+                    arg1 = 4;
+                    rec->f_14 += 1;
+                } else {
+                    arg1 = 3;
+                    rec->f_14 -= 1;
+                }
+            } else if (rec->f_10 == arg0->f_194 - 1) {
+                arg1 = (rec->f_00 == 3) ? 4 : 3;
+                rec->f_00 = 2;
+            } else {
+                rec->f_10 += 1;
+            }
+        } else if (arg1 == 3) {
+            if (rec->f_00 == 3) {
+                if (rec->f_10 == 0) {
+                    arg1 = 2;
+                    rec->f_10 += 1;
+                } else {
+                    arg1 = 1;
+                    rec->f_10 -= 1;
+                }
+            } else if (rec->f_14 == 0) {
+                arg1 = (rec->f_00 == 1) ? 2 : 1;
+                rec->f_00 = 3;
+            } else {
+                rec->f_14 -= 1;
+            }
+        } else if (arg1 == 4) {
+            if (rec->f_00 == 4) {
+                if (rec->f_10 == 0) {
+                    arg1 = 2;
+                    rec->f_10 += 1;
+                } else {
+                    arg1 = 1;
+                    rec->f_10 -= 1;
+                }
+            } else if (rec->f_14 == arg0->f_194 - 1) {
+                arg1 = (rec->f_00 == 1) ? 2 : 1;
+                rec->f_00 = 4;
+            } else {
+                rec->f_14 += 1;
+            }
+        } else {
+            if (rec->f_00 == 1) {
+                if (rec->f_14 == 0) {
+                    rec->f_00 = 3;
+                } else {
+                    rec->f_14 -= 1;
+                }
+            } else if (rec->f_00 == 2) {
+                if (rec->f_14 == arg0->f_194 - 1) {
+                    rec->f_00 = 4;
+                } else {
+                    rec->f_14 += 1;
+                }
+            } else if (rec->f_00 == 3) {
+                if (rec->f_10 == arg0->f_194 - 1) {
+                    rec->f_00 = 2;
+                } else {
+                    rec->f_10 += 1;
+                }
+            } else if (rec->f_00 == 4) {
+                if (rec->f_10 == 0) {
+                    rec->f_00 = 1;
+                } else {
+                    rec->f_10 -= 1;
+                }
+            }
+        }
     }
 }
