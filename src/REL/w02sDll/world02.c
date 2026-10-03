@@ -2784,7 +2784,7 @@ void MB2_CoinEffUpdate(OMOBJ *obj) {
     p = *(u8 **) ((u8 *) hdr + 0x3C);
     *(u8 *) ((u8 *) hdr + 0x23) = 0;
     for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
-        if (!(*(f32 *) (p + 0x34) <= 0.0f)) {
+        if (*(f32 *) (p + 0x34) <= 0.0f) {
             *(f32 *) (p + 0x44) += *(f32 *) (p + 0x8);
             *(f32 *) (p + 0x48) += *(f32 *) (p + 0xC);
             *(f32 *) (p + 0x4C) += *(f32 *) (p + 0x10);
@@ -2843,7 +2843,7 @@ s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 
     hdr = Hu3DData[dat->modelId].hookData;
     p = *(u8 **) ((u8 *) hdr + 0x3C);
     for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
-        if (*(f32 *) (p + 0x34) == 0.0f) {
+        if (*(f32 *) (p + 0x34) <= 0.0f) {
             break;
         }
     }
@@ -2868,7 +2868,7 @@ s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 
     *(u8 *) (p + 0x52) = arg2[2];
     *(u8 *) (p + 0x53) = arg2[3];
     *(f32 *) (p + 0x40) = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
-    *(u8 *) (p + 0x54) = 0;
+    *(u32 *) (p + 0x54) = 0;
     *(s16 *) (p + 0x0) = 0;
     dat->count += 1;
     return i;
