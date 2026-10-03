@@ -1068,7 +1068,7 @@ config.libs = [
             Object(NonMatching, "REL/m510dll/opening.c"),
             Object(NonMatching, "REL/m510dll/ending.c"),
             Object(NonMatching, "REL/m510dll/ball_path.c"),
-            Object(NonMatching, "REL/m510dll/score.c"),
+            Object(Equivalent, "REL/m510dll/score.c"),
         },
     ),
     Rel(
