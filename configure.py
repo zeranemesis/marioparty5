@@ -958,7 +958,7 @@ config.libs = [
             Object(NonMatching, "REL/m501Dll/asiato.cpp"),
             Object(NonMatching, "REL/m501Dll/gamemaster.cpp"),
             Object(NonMatching, "REL/m501Dll/aisu.cpp"),
-            Object(NonMatching, "REL/m501Dll/joint.cpp"),
+            Object(Equivalent, "REL/m501Dll/joint.cpp"),
             Object(Matching, "REL/m501Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m501Dll/camera.cpp"),
             Object(NonMatching, "REL/m501Dll/particle.cpp"),
