@@ -80,21 +80,21 @@ if (lbl_1_bss_A30 != 0) {
     }
     {
         u8 *base = (u8 *) &self->model;
-        if (base != (u8 *) 0) {
+        if (base != 0) {
             base -= 0x10;
         }
         lbl_1_bss_A30 = base;
     }
     self->vtable = lbl_1_data_3A4;
-    fn_1_2C94(&self->model.field0, 0x85);
-    fn_1_2C94(&self->model.field2, 0x86);
+    fn_1_2C94(&self->model.field0, 0x850000);
+    fn_1_2C94(&self->model.field2, 0x850001);
     Hu3DModelLightInfoSet(self->model.field0, 1);
     fn_1_3244(&self->model.field0, lbl_1_data_388);
     fn_1_304C(&self->model.field0, 2);
-    fn_1_2E08(&self->model.field0, 0x4001);
-    fn_1_2E08(&self->model.field0, 0x4040);
+    fn_1_2E08(&self->model.field0, 0x40000001);
+    fn_1_2E08(&self->model.field0, 0x40000040);
     fn_1_304C(&self->model.field2, 0);
-    fn_1_2E08(&self->model.field2, 0x4001);
+    fn_1_2E08(&self->model.field2, 0x40000001);
 
     scale = 0.0 / tan((f64) 0.39269908169872414);
     if (lbl_1_bss_A88[0] == 0) {
