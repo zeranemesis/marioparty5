@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "REL/m510dll.h"
 
 // .data:0x0 (absolute 0x420)
