@@ -1706,8 +1706,8 @@ config.libs = [
         "m577Dll",
         objects={
             Object(NonMatching, "REL/m577Dll/m577.c"),
-            Object(NonMatching, "REL/m577Dll/stagedata.c"),
-            Object(NonMatching, "REL/m577Dll/effect.c"),
+            Object(Equivalent, "REL/m577Dll/stagedata.c"),
+            Object(Equivalent, "REL/m577Dll/effect.c"),
         },
     ),
     Rel(
