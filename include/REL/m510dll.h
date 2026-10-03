@@ -156,7 +156,6 @@ void fn_1_8C1C(void *data);
 void fn_1_8D48(void *data);
 
 s32 fn_1_734(s32 dataNum);
-s32 fn_1_966C(M510_OBJ *obj);
 
 void fn_1_9B0C(void *data);
 void fn_1_A454(void *data);
@@ -289,5 +288,13 @@ typedef struct M510Work_s {
 } M510_WORK;
 
 s32 fn_1_734(s32 arg0);
+
+// Declared here rather than with the other M510_OBJ prototypes because
+// REL/m510dll/opening.c takes the work structure, and M510_WORK and M510_OBJ
+// describe the same 0x253C-byte object under two names: phase at 0x0E, frame
+// at 0x14, time at 0x18, four 0x880 slots from 0x1C, slide at 0x2474, fieldId
+// at 0x2538. Declaring it against M510_OBJ left the unit uncompilable, because
+// MWCC rejects the two conflicting definitions of fn_1_966C.
+s32 fn_1_966C(M510_WORK *work);
 
 #endif
