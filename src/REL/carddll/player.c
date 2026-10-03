@@ -18,6 +18,7 @@ static s32 lbl_1_bss_1174;
 static s32 lbl_1_bss_1168[3];
 static s32 lbl_1_bss_C48[2];
 static s32 lbl_1_bss_C44;
+static s32 lbl_1_bss_C40;
 static s32 lbl_1_bss_1298[3];
 static HUPROCESS *lbl_1_bss_11DC;
 static s16 lbl_1_bss_FB2[4];
@@ -50,6 +51,7 @@ void fn_1_3F3D8(s32 arg0, s16 arg1, Vec *arg2);
 void fn_1_5500(f32 *arg0);
 
 void fn_1_FB10(void);
+s32 fn_1_21028(struct PlayerStruct *arg0);
 s32 fn_1_13728(f32 *arg0);
 s32 fn_1_FCD4(f32 *arg0);
 s32 fn_1_11C48(f32 *arg0);
@@ -128,7 +130,18 @@ s32 fn_1_FB88(f32 *arg0)
    The per-player record is 0x5C bytes; the fields reset here live at 0x30..0x50. */
 struct PlayerCardRec
 {
-    char pad0[0x30];
+    s32 f_00;
+    s32 f_04;
+    s32 f_08;
+    s32 f_0C;
+    s32 f_10;
+    s32 f_14;
+    s32 f_18;
+    s32 f_1C;
+    s32 f_20;
+    s32 f_24;
+    s32 f_28;
+    s32 f_2C;
     s32 f_30;
     s32 f_34;
     s32 f_38;
@@ -138,7 +151,9 @@ struct PlayerCardRec
     s32 f_48;
     s32 f_4C;
     s32 f_50;
-    char pad54[0x8];
+    s16 f_54;
+    s16 f_56;
+    char pad_58[4];
 }; /* size = 0x5C */
 
 void fn_1_2FEF4(struct PlayerCardRec *arg0)
@@ -179,22 +194,29 @@ Mtx *fn_1_25444(f32 *arg0, HuVecF *arg1)
 }
 
 /* Player struct (fields used by this unit so far): curPlayerNo @ 0x170; the per-player
-   card-record index lives at 0x174 + curPlayerNo*4 (s32). */
+   card-record index lives at 0x174 + curPlayerNo*4 (s32); the slot count @ 0x194. */
 struct PlayerStruct
 {
     char pad170[0x170];
     s32 curPlayerNo;
+    s32 pad174[8];
+    s32 f_194;
+    s32 pad198[3];
+    s32 f_1A4;
 };
+
+/* lbl_1_bss_8C4 row lookup: 0x28-byte rows indexed by f_10, then by f_14. */
+#define CARD_FLAGS(r) (*(s32 *) ((char *) &lbl_1_bss_8C4 + (r)->f_10 * 0x28 + (r)->f_14 * 4))
 
 /* fn_1_304D8: like fn_1_303E0 but the record array is passed in (arg1) and the
    sprite display is turned ON. For each of the 3 opponents, take the sprite id from
    the bank table matching the current player number, and if the record sprite index
    is set, bank it and turn its display on. */
-void fn_1_304D8(struct PlayerStruct *arg0, s32 *arg1)
+void fn_1_304D8(struct PlayerStruct *arg0, register s32 *arg1)
 {
+    s16 bankId3;
     s16 bankId;
     s16 bankId2;
-    s16 bankId3;
     s32 var_r31;
 
     var_r31 = 0;
@@ -210,8 +232,8 @@ void fn_1_304D8(struct PlayerStruct *arg0, s32 *arg1)
             bankId = bankId2;
         }
         bankId3 = bankId;
-        if (*(s32 *) (arg1 + var_r31) != -1) {
-            espBankSet(bankId3, *(s32 *) (arg1 + var_r31));
+        if (arg1[var_r31] != -1) {
+            espBankSet(bankId3, arg1[var_r31]);
             espDispOn(bankId3);
         }
         var_r31 += 1;
@@ -283,6 +305,122 @@ void fn_1_30910(void)
     espKill(lbl_1_bss_F9E[1]);
 }
 
+/* fn_1_20DE4: AI button-press generator, the sibling of fn_1_25518. Runs only for
+   a non-human player (GwPlayerConf[arg0].type != 0). It clears the button-down
+   and stick-repeat state, latches lbl_1_bss_C40 from fn_1_21028(arg1) the first
+   time (it starts at -1), then ticks lbl_1_bss_C48[0] and, when it reaches the
+   threshold lbl_1_bss_C48[1], fires A (0x100) and checks whether this slot's
+   record field at +0x34 is clear and fn_1_21028(arg1) reports 0 before
+   re-arming the counter at 0x14. Otherwise every 30th tick it nudges the stick
+   in a random direction. */
+void fn_1_20DE4(s32 arg0, struct PlayerStruct *arg1)
+{
+    s32 var_r29;
+
+    if (GwPlayerConf[arg0].type != 0) {
+        HuPadBtnDown[arg0] = 0;
+        HuPadDStkRep[arg0] = 0;
+        if (lbl_1_bss_C40 == -1) {
+            lbl_1_bss_C40 = fn_1_21028(arg1);
+        }
+        if (lbl_1_bss_C48[1] == 0) {
+            lbl_1_bss_C48[1] = frandmod(0x3C) + 0x1F;
+        }
+        lbl_1_bss_C48[0] += 1;
+        if (lbl_1_bss_C48[0] == lbl_1_bss_C48[1]) {
+            HuPadBtnDown[arg0] = 0x100;
+            lbl_1_bss_C48[0] = 0;
+            lbl_1_bss_C48[1] = 0;
+            if (*(s32 *) ((u8 *) arg1 + *(s32 *) ((u8 *) arg1 + 0x174 + arg1->curPlayerNo * 4) * 0x5C + arg1->f_1A4 * 4 + 0x34) == 0) {
+                if (fn_1_21028(arg1) == 0) {
+                    HuPadBtnDown[arg0] = 0;
+                    HuPadDStkRep[arg0] = 2;
+                    lbl_1_bss_C48[0] = 0;
+                    lbl_1_bss_C48[1] = 0x14;
+                }
+            }
+        } else if (lbl_1_bss_C48[0] % 0x1E == 0) {
+            if (frandmod(2) != 0) {
+                var_r29 = 2;
+            } else {
+                var_r29 = 1;
+            }
+            HuPadDStkRep[arg0] = var_r29;
+        }
+    }
+}
+
+/* fn_1_290BC: stick-only sibling of fn_1_20DE4, one parameter (the player
+   number). Same counter/threshold shape, but the threshold is frandmod(0x2D)+0x1F
+   and the action is a stick nudge instead of a button: when lbl_1_bss_C40 (the
+   facing) is positive and the tick counter has reached 0xF, the stick is driven
+   from lbl_1_bss_C40 (1 -> 8, 2 -> 4, 3 -> 1, anything else -> 2); otherwise,
+   every 30th tick, frandmod(4) selects 8, 4, 1 or 2. The three-step
+   "assign to the inner variable then copy outwards" shape is what the target
+   emits (r27<-r26<-r29 and r24<-r25<-r26), so it is spelled out rather than
+   collapsed into a lookup. */
+void fn_1_290BC(s32 arg0)
+{
+    s32 var_r30;
+    s32 var_r29;
+    s32 var_r28;
+    s32 var_r27;
+    s32 var_r26;
+    s32 var_r25;
+    s32 var_r24;
+
+    if (GwPlayerConf[arg0].type != 0) {
+        HuPadBtnDown[arg0] = 0;
+        HuPadDStkRep[arg0] = 0;
+        if (lbl_1_bss_C48[1] == 0) {
+            lbl_1_bss_C48[1] = frandmod(0x2D) + 0x1F;
+        }
+        lbl_1_bss_C48[0] += 1;
+        if (lbl_1_bss_C48[0] == lbl_1_bss_C48[1]) {
+            HuPadBtnDown[arg0] = 0x100;
+            lbl_1_bss_C48[0] = 0;
+            lbl_1_bss_C48[1] = 0;
+        } else if (lbl_1_bss_C40 > 0) {
+            if (lbl_1_bss_C48[0] >= 0xF) {
+                if (lbl_1_bss_C40 == 1) {
+                    var_r29 = 8;
+                } else {
+                    if (lbl_1_bss_C40 == 2) {
+                        var_r28 = 4;
+                    } else {
+                        if (lbl_1_bss_C40 == 3) {
+                            var_r27 = 1;
+                        } else {
+                            var_r27 = 2;
+                        }
+                        var_r28 = var_r27;
+                    }
+                    var_r29 = var_r28;
+                }
+                HuPadDStkRep[arg0] = var_r29;
+            }
+        } else if (lbl_1_bss_C48[0] % 0x1E == 0) {
+            var_r30 = frandmod(4);
+            if (var_r30 == 0) {
+                var_r26 = 8;
+            } else {
+                if (var_r30 == 1) {
+                    var_r25 = 4;
+                } else {
+                    if (var_r30 == 2) {
+                        var_r24 = 1;
+                    } else {
+                        var_r24 = 2;
+                    }
+                    var_r25 = var_r24;
+                }
+                var_r26 = var_r25;
+            }
+            HuPadDStkRep[arg0] = var_r26;
+        }
+    }
+}
+
 /* fn_1_25518: per-player "random button press" for AI players. arg0 is the player
    number. If the player is not a human (GwPlayerConf[arg0].type != 0), clear its
    button-down and stick-rep state, then increment a global counter (mod 0x15E).
@@ -351,19 +489,18 @@ void fn_1_2FBCC(f32 *arg0)
     Vec sp8;
     Vec *pVec14;
     Vec *pVec8;
+    s32 i;
 
     if (*(s32 *) ((u8 *) arg0 + 0x1D4) == 1) {
-        s32 var_r30;
-
-        var_r30 = 0;
-        while (var_r30 < 4) {
+        i = 0;
+        while (i < 4) {
             s32 dir;
             s32 y;
             s32 z;
 
-            dir = *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 4);
-            y = *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 8);
-            z = *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0xC);
+            dir = *(s32 *) ((u8 *) arg0 + i * 0x5C + 4);
+            y = *(s32 *) ((u8 *) arg0 + i * 0x5C + 8);
+            z = *(s32 *) ((u8 *) arg0 + i * 0x5C + 0xC);
             if (dir == 1) {
                 y -= 1;
             } else if (dir == 2) {
@@ -375,47 +512,182 @@ void fn_1_2FBCC(f32 *arg0)
             }
             fn_1_9C74((f32 *) &sp2C, y, z, 1, 1);
             sp2C.x += lbl_1_rodata_250;
-            Hu3DModelPosSetV(lbl_1_bss_468[var_r30 * 2], &sp2C);
-            Hu3DModelRotSet(lbl_1_bss_468[var_r30 * 2], lbl_1_rodata_24C, lbl_1_rodata_24C, lbl_1_rodata_24C);
-            if (*(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) & 2) {
-                fn_1_3F278(3, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56));
-                *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56) = -1;
-                *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) &= 0xFFFFFFFD;
+            Hu3DModelPosSetV(lbl_1_bss_468[i], &sp2C);
+            Hu3DModelRotSet(lbl_1_bss_468[i], lbl_1_rodata_24C, lbl_1_rodata_24C, lbl_1_rodata_24C);
+            if (*(s32 *) ((u8 *) arg0 + i * 0x5C + 0x50) & 2) {
+                fn_1_3F278(3, *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56));
+                *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56) = -1;
+                *(s32 *) ((u8 *) arg0 + i * 0x5C + 0x50) &= 0xFFFFFFFD;
             }
-            if (*(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) & 4) {
-                if (var_r30 == *(s32 *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x170) * 4 + 0x174)) {
-                    fn_1_3F278(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56));
-                    *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56) = -1;
-                    *(s32 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x50) &= 0xFFFFFFFB;
+            if (*(s32 *) ((u8 *) arg0 + i * 0x5C + 0x50) & 4) {
+                if (i == *(s32 *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x170) * 4 + 0x174)) {
+                    fn_1_3F278(4, *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56));
+                    *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56) = -1;
+                    *(s32 *) ((u8 *) arg0 + i * 0x5C + 0x50) &= 0xFFFFFFFB;
                 } else {
                     sp20 = lbl_1_rodata_504;
                     sp14 = sp20;
                     pVec14 = &sp14;
-                    fn_1_3F6B0(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56), pVec14);
-                    fn_1_3F540(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56), 1);
+                    fn_1_3F6B0(4, *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56), pVec14);
+                    fn_1_3F540(4, *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56), 1);
                     sp8 = sp2C;
                     pVec8 = &sp8;
-                    fn_1_3F3D8(4, *(s16 *) ((u8 *) arg0 + var_r30 * 0x5C + 0x56), pVec8);
+                    fn_1_3F3D8(4, *(s16 *) ((u8 *) arg0 + i * 0x5C + 0x56), pVec8);
                 }
             }
-            var_r30 += 1;
+            i += 1;
         }
         fn_1_5500(arg0);
         *(s32 *) ((u8 *) arg0 + 0x1D4) = 0xA;
         return;
     }
-    {
-        s32 var_r30_2;
-
-        var_r30_2 = 0;
-        while (var_r30_2 < 4) {
-        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0) = *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 4);
-        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x10) = *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 8);
-        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x14) = *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0xC);
-        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x20) = 1;
-        *(s32 *) ((u8 *) arg0 + var_r30_2 * 0x5C + 0x24) = 1;
-        var_r30_2 += 1;
+    i = 0;
+    while (i < 4) {
+        *(s32 *) ((u8 *) arg0 + i * 0x5C + 0) = *(s32 *) ((u8 *) arg0 + i * 0x5C + 4);
+        *(s32 *) ((u8 *) arg0 + i * 0x5C + 0x10) = *(s32 *) ((u8 *) arg0 + i * 0x5C + 8);
+        *(s32 *) ((u8 *) arg0 + i * 0x5C + 0x14) = *(s32 *) ((u8 *) arg0 + i * 0x5C + 0xC);
+        *(s32 *) ((u8 *) arg0 + i * 0x5C + 0x20) = 1;
+        *(s32 *) ((u8 *) arg0 + i * 0x5C + 0x24) = 1;
+        i += 1;
     }
     *(s32 *) ((u8 *) arg0 + 0x1D4) = -1;
+}
+
+/* CARD_FLAGS: the per-player "card phase" walker. Repeatedly advances the 0x5C-byte
+   record's f_10/f_14 cursor and f_00 phase field until none of the five state-table
+   flag bits (20..24) apply. arg1 is the current direction, carried across iterations. */
+/* MWCC 1.3.2 folds `x & (1 << b)` into `rlwinm ..., 31-b, 31-b`, i.e. the
+   rotate mask it builds is the bit index counted from the MSB. Ten independent
+   measurements in this unit agree (fn_1_17BE8 bits 24,15,14,13,12 and
+   fn_1_2B10C bits 19,18,17,16), and CodeWarrior emits the plain index. The
+   five masks below are therefore written bit-reversed: each one is the
+   complement of the flag the original actually tests (bit 24, 15, 14, 13 and
+   12 of the row word), and spelling them any other way cannot reach 100%. */
+#define CARD_BIT_ANY   0x80
+#define CARD_BIT_P1    0x10000
+#define CARD_BIT_P2    0x20000
+#define CARD_BIT_P3    0x40000
+#define CARD_BIT_P4    0x80000
+
+void fn_1_17BE8(struct PlayerStruct *arg0, s32 arg1)
+{
+    struct PlayerCardRec *rec;
+    s32 var_C;
+    s32 var_8;
+
+    var_C = 0;
+    var_8 = 0;
+    rec = (struct PlayerCardRec *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x174 + arg0->curPlayerNo * 4) * 0x5C);
+for (;;) {
+        if (!((CARD_FLAGS(rec) & CARD_BIT_ANY) ||
+              (rec->f_00 == 1 && (CARD_FLAGS(rec) & CARD_BIT_P1)) ||
+              (rec->f_00 == 2 && (CARD_FLAGS(rec) & CARD_BIT_P2)) ||
+              (rec->f_00 == 3 && (CARD_FLAGS(rec) & CARD_BIT_P3)) ||
+              (rec->f_00 == 4 && (CARD_FLAGS(rec) & CARD_BIT_P4)))) {
+            break;
+        }
+        if (arg1 == 1) {
+            if (rec->f_00 == 1) {
+                if (rec->f_14 == 0) {
+                    arg1 = 4;
+                    rec->f_14 += 1;
+                } else {
+                    arg1 = 3;
+                    rec->f_14 -= 1;
+                }
+} else if (rec->f_10 == 0) {
+                if (rec->f_00 == 3) {
+                    arg1 = 4;
+                } else {
+                    arg1 = 3;
+                }
+                rec->f_00 = 1;
+            } else {
+                rec->f_10 -= 1;
+            }
+        } else if (arg1 == 2) {
+            if (rec->f_00 == 2) {
+                if (rec->f_14 == 0) {
+                    arg1 = 4;
+                    rec->f_14 += 1;
+                } else {
+                    arg1 = 3;
+                    rec->f_14 -= 1;
+                }
+            } else if (rec->f_10 == arg0->f_194 - 1) {
+                if (rec->f_00 == 3) {
+                    arg1 = 4;
+                } else {
+                    arg1 = 3;
+                }
+                rec->f_00 = 2;
+            } else {
+                rec->f_10 += 1;
+            }
+        } else if (arg1 == 3) {
+            if (rec->f_00 == 3) {
+                if (rec->f_10 == 0) {
+                    arg1 = 2;
+                    rec->f_10 += 1;
+                } else {
+                    arg1 = 1;
+                    rec->f_10 -= 1;
+                }
+            } else if (rec->f_14 == 0) {
+                if (rec->f_00 == 1) {
+                    arg1 = 2;
+                } else {
+                    arg1 = 1;
+                }
+                rec->f_00 = 3;
+            } else {
+                rec->f_14 -= 1;
+            }
+        } else if (arg1 == 4) {
+            if (rec->f_00 == 4) {
+                if (rec->f_10 == 0) {
+                    arg1 = 2;
+                    rec->f_10 += 1;
+                } else {
+                    arg1 = 1;
+                    rec->f_10 -= 1;
+                }
+            } else if (rec->f_14 == arg0->f_194 - 1) {
+                if (rec->f_00 == 1) {
+                    arg1 = 2;
+                } else {
+                    arg1 = 1;
+                }
+                rec->f_00 = 4;
+            } else {
+                rec->f_14 += 1;
+            }
+        } else {
+            if (rec->f_00 == 1) {
+                if (rec->f_14 == 0) {
+                    rec->f_00 = 3;
+                } else {
+                    rec->f_14 -= 1;
+                }
+            } else if (rec->f_00 == 2) {
+                if (rec->f_14 == arg0->f_194 - 1) {
+                    rec->f_00 = 4;
+                } else {
+                    rec->f_14 += 1;
+                }
+            } else if (rec->f_00 == 3) {
+                if (rec->f_10 == arg0->f_194 - 1) {
+                    rec->f_00 = 2;
+                } else {
+                    rec->f_10 += 1;
+                }
+            } else if (rec->f_00 == 4) {
+                if (rec->f_10 == 0) {
+                    rec->f_00 = 1;
+                } else {
+                    rec->f_10 -= 1;
+                }
+            }
+        }
     }
 }
