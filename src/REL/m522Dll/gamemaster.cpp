@@ -10,12 +10,14 @@ static s32 lbl_1_bss_A1C;
 /* Declared here rather than through game/audio.h and game/wipe.h: those pull
  * in MSL math.h, whose inline std::sqrtf emits constants into .rodata, and the
  * original object has no .rodata at all. */
+extern "C" {
 int HuAudFXPlay(int seId);
 int HuAudBGMPlay(s16 streamId);
 int HuAudJinglePlay(s16 streamId);
 void HuAudSStreamFadeOut(int streamNo, s32 speed);
 u8 WipeCheck(void);
-extern "C" u32 OSGetTick(void);
+u32 OSGetTick(void);
+}
 
 extern "C" {
 /* CMinigameCore, the base of the mode controller. */
@@ -160,27 +162,27 @@ void fn_1_CDE0(M522_GAMEMASTER *self)
 
     fn_1_89E8(0);
     fn_1_998C();
-    do {
+    while (WipeCheck()) {
         fn_1_BFA0(&self->m_core, 0);
-    } while (WipeCheck());
+    }
     HuAudFXPlay(0x749);
-    do {
+    while (!fn_1_8A80()) {
         fn_1_BFA0(&self->m_core, 0);
-    } while (!fn_1_8A80());
+    }
     streamNo = HuAudBGMPlay(0x3A);
     fn_1_89E8(1);
     fn_1_F76C();
     fn_1_94A4();
-    do {
+    while (!fn_1_9614()) {
         fn_1_BFA0(&self->m_core, 0);
-    } while (!fn_1_9614());
+    }
     fn_1_89E8(2);
     fn_1_F800();
     fn_1_C73C(&self->m_queue, 0x708, 0, 0);
     fn_1_C834(&self->m_queue, 1);
-    do {
+    while (!fn_1_CF6C(self)) {
         fn_1_BFA0(&self->m_core, 0);
-    } while (fn_1_CF6C(self));
+    }
     fn_1_C928(&self->m_queue);
     fn_1_89E8(3);
     fn_1_F894();
@@ -193,9 +195,9 @@ void fn_1_CDE0(M522_GAMEMASTER *self)
     fn_1_F904();
     fn_1_96E8();
     HuAudJinglePlay(0x79);
-    do {
+    while (!fn_1_9614()) {
         fn_1_BFA0(&self->m_core, 0);
-    } while (!fn_1_9614());
+    }
     fn_1_99E4();
     for (;;) {
         fn_1_BFA0(&self->m_core, -1);
