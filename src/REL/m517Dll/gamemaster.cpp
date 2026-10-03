@@ -37,6 +37,12 @@ struct CSingleton {
     void (*m_init)(void);
 };
 
+// Head of the circular sub-object list that fn_1_A748 / fn_1_A860 walk.
+struct CSubHead {
+    struct CSubHead *m_next;   // 0x00
+    struct CSubHead *m_first;  // 0x04
+};
+
 // Declared here rather than through the game headers: those pull in MSL
 // math.h, whose inline std::sqrtf emits constants into .rodata.
 extern "C" {
@@ -48,6 +54,8 @@ void fn_1_39F8(void *self);
 void fn_1_6D20(void *self, s32 v);
 void fn_1_1F4C(void *self);
 void fn_1_2DB4(void *self, s32 flag);
+void fn_1_10F8(void *self, s32 flag);
+void fn_1_10F88(void *self, s32 flag);
 void fn_1_1415C(void *obj, s32 mode);
 void fn_1_15724(void *obj, s32 mode);
 void fn_1_7620(void *obj, s32 mode);
@@ -76,8 +84,8 @@ extern void *lbl_1_bss_0;
 extern void *lbl_1_bss_A08;
 
 extern "C" void fn_1_A168(CGameMaster *self);
-extern "C" void fn_1_A748(void *self);
-extern "C" void fn_1_A860(void *self);
+extern "C" CSubHead *fn_1_A748(CSubHead *self, s16 value);
+extern "C" CSubHead *fn_1_A860(CSubHead *self, s16 value);
 extern "C" void fn_1_A978(void *self);
 extern "C" void fn_1_B2CC(CGameMaster *self);
 extern "C" s32 fn_1_B310(CGameMaster *self);
@@ -238,8 +246,29 @@ extern "C" void fn_1_A744(void)
 {
 }
 
-extern "C" void fn_1_A748(void *self)
+extern "C" CSubHead *fn_1_A748(CSubHead *self, s16 value)
 {
+    if (self != 0) {
+        unsigned char done;
+ do {
+            CSubHead *first = self->m_first;
+            CSubHead *sub = first;
+            fn_1_10F88(sub, 1);
+            done = 0;
+            if (self->m_next == self) {
+                if (self->m_next == self->m_first) {
+                    done = 1;
+                }
+            }
+        } while (done == 0);
+        if (self != 0) {
+            fn_1_2DB4(self, 0);
+        }
+        if (value > 0) {
+            fn_1_1F4C(self);
+        }
+    }
+    return self;
 }
 
 extern "C" CGameMaster *fn_1_A808(CGameMaster *self, s16 value)
@@ -254,8 +283,29 @@ extern "C" CGameMaster *fn_1_A808(CGameMaster *self, s16 value)
     return self;
 }
 
-extern "C" void fn_1_A860(void *self)
+extern "C" CSubHead *fn_1_A860(CSubHead *self, s16 value)
 {
+    if (self != 0) {
+        unsigned char done;
+        do {
+            CSubHead *first = self->m_first;
+            CSubHead *sub = first;
+            fn_1_10F8(sub, 1);
+            done = 0;
+            if (self->m_next == self) {
+                if (self->m_next == self->m_first) {
+                    done = 1;
+                }
+            }
+        } while (done == 0);
+        if (self != 0) {
+            fn_1_2DB4(self, 0);
+        }
+        if (value > 0) {
+            fn_1_1F4C(self);
+        }
+    }
+    return self;
 }
 
 extern "C" CGameMaster *fn_1_A920(CGameMaster *self, s16 value)
