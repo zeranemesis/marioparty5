@@ -7,6 +7,10 @@ static s32 lbl_1_bss_A14;
 static s32 lbl_1_bss_A18;
 static s32 lbl_1_bss_A1C;
 
+/* The two assert strings of singleton.h, in .data ahead of the vtable. */
+static char lbl_1_data_3C0[] = "ms_pointer != 0";
+static char lbl_1_data_3D0[] = "singleton.h";
+
 /* Declared here rather than through game/audio.h and game/wipe.h: those pull
  * in MSL math.h, whose inline std::sqrtf emits constants into .rodata, and the
  * original object has no .rodata at all. */
@@ -204,15 +208,17 @@ void fn_1_CDE0(M522_GAMEMASTER *self)
     }
 }
 
+// NONMATCHING: the original emits the singleton.h assert out of line
+// (cmplwi / beq->assert / b->join), which MWCC 2.6 will not produce, and it
+// copies the singleton through two registers before fn_1_F194 and fn_1_F1F8.
 u8 fn_1_CF6C(M522_GAMEMASTER *self)
 {
     s32 mode;
     u8 ret;
-
     if (lbl_1_bss_18 == 0) {
-        fn_1_6A70("ms_pointer != 0", "singleton.h", 0x27);
+        fn_1_6A70(lbl_1_data_3C0, lbl_1_data_3D0, 0x27);
     }
-    if (!fn_1_F194(lbl_1_bss_18)) {
+    if (!fn_1_F194((s32)lbl_1_bss_18)) {
         return 0;
     }
     mode = fn_1_FA28();
@@ -225,9 +231,9 @@ u8 fn_1_CF6C(M522_GAMEMASTER *self)
     ret = 1;
     if (!fn_1_C990(&self->m_queue)) {
         if (lbl_1_bss_18 == 0) {
-            fn_1_6A70("ms_pointer != 0", "singleton.h", 0x27);
+            fn_1_6A70(lbl_1_data_3C0, lbl_1_data_3D0, 0x27);
         }
-        if (fn_1_F1F8(lbl_1_bss_18) > 0) {
+        if (fn_1_F1F8((s32)lbl_1_bss_18) > 0) {
             ret = 0;
         }
     }

@@ -42,7 +42,9 @@ typedef struct M522UnkAC_s {
     u8 m_opaque[0xAC];
 } M522_UNKAC;
 
-/* The mode controller singleton, guarded by assert(ms_pointer != 0). */
-extern s32 lbl_1_bss_18;
+/* The mode controller singleton, guarded by assert(ms_pointer != 0).  It is
+ * handed to fn_1_F194 and fn_1_F1F8 by value, which is where the copy into a
+ * second register comes from. */
+extern void *lbl_1_bss_18;
 
 #endif
