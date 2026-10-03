@@ -48,9 +48,12 @@ typedef struct M574WalkEntry_s {
 
 void fn_1_1068(OMOBJ *obj);
 void fn_1_1264(OMOBJ *obj);
+void fn_1_1588(OMOBJ *obj);
 void fn_1_17A0(OMOBJ *obj);
 void fn_1_182C(OMOBJ *obj);
+void fn_1_1830(OMOBJ *obj);
 void fn_1_1938(OMOBJ *obj);
+void fn_1_19AC(OMOBJ *obj);
 s32 fn_1_1E4C(OMOBJ *obj);
 void fn_1_1D54(OMOBJ *obj, u32 motNo);
 
@@ -200,6 +203,91 @@ void fn_1_1068(OMOBJ *obj)
     player->angle = M574PlayerAngleTbl[playerGrp];
     player->mode = 0;
     obj->objFunc = fn_1_1264;
+}
+
+void fn_1_1264(OMOBJ *obj)
+{
+    M574_PLAYER_WORK *player;
+    s32 padNo;
+    f32 f8;
+    f32 fc;
+
+    player = obj->data;
+    player->unk14 = 0;
+    player->unk18 = 0;
+    player->unk1C = 0.0f;
+    player->f20 = 0.0f;
+
+    switch (player->mode) {
+    case 0:
+        player->mode++;
+        player->unk44 = 0;
+    case 1:
+        if ((f64) (player->unk44 += 1) < 144.0) {
+            break;
+        }
+        player->mode++;
+        player->unk44 = 0;
+        player->timer = 2;
+    case 2:
+        player->unk18 = 0x100;
+        if ((f64) (player->unk44 += 1) < 12.0) {
+            break;
+        }
+        player->mode++;
+        player->unk44 = 0;
+    case 3:
+        if ((f64) (player->unk44 += 1) < 12.0) {
+            break;
+        }
+        if (--player->timer > 0) {
+            player->mode--;
+            player->unk44 = 0;
+            break;
+        }
+        player->mode++;
+    case 4:
+        if (MgSeqModeGet() != 5) {
+            break;
+        }
+        player->mode++;
+    case 5:
+        if (MgSeqModeGet() != 5) {
+            player->mode++;
+            player->timer = 0;
+            player->unk70 = 1;
+            break;
+        }
+        if (player->type != 0) {
+            fn_1_19AC(obj);
+            break;
+        }
+        padNo = GwPlayerConf[player->no].padNo;
+        f8 = 0.0f;
+        fc = 0.0f;
+        player->unk18 = HuPadBtn[padNo];
+        player->unk14 = HuPadBtnDown[padNo];
+        break;
+    case 6:
+        if (++player->timer < 10) {
+            break;
+        }
+        player->mode++;
+        fn_1_1D54(obj, 0);
+    case 7:
+        if (MgSeqModeGet() != 7) {
+            break;
+        }
+        player->mode = 0;
+        obj->objFunc = fn_1_1588;
+        break;
+    }
+
+    fn_1_1830(obj);
+    fn_1_182C(obj);
+    PSVECAdd(&player->pos, &player->rot, &player->pos);
+    fn_1_17A0(obj);
+    fn_1_1938(obj);
 }
 
 void fn_1_1588(OMOBJ *obj)
