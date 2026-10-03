@@ -78,41 +78,45 @@ static OMOBJ *M574PlayerObjTbl[M574_PLAYER_MAX];
 
 void fn_1_E98(OMOBJMAN *om)
 {
-    s32 i;
-    s32 cnt[4] = { 0, 2, 0, 0 };
-    BOOL grpF = FALSE;
+    s32 cnt[2] = { 0, 0 };
+    s32 playerIdx[2] = { 0, 2 };
     s32 grpTbl[M574_PLAYER_MAX];
+    s32 i;
+    s32 grp;
     OMOBJ *obj;
+    BOOL grpF;
 
+    grpF = FALSE;
     for (i = 0; i < M574_PLAYER_MAX; i++) {
-        grpTbl[i] = GwPlayerConf[i].grp;
-        if (grpTbl[i] >= 2) {
+        grp = GwPlayerConf[i].grp;
+        grpTbl[i] = grp;
+        if (grp >= 2) {
             grpF = TRUE;
         }
         else {
-            cnt[grpTbl[i] + 2]++;
+            cnt[grp]++;
         }
     }
 
-    if (cnt[2] != 2 || cnt[3] != 2) {
+    if (cnt[0] != 2 || cnt[1] != 2) {
         grpF = TRUE;
     }
 
     if (grpF) {
         for (i = 0; i < M574_PLAYER_MAX; i++) {
-            grpTbl[i] = i / 2;
+            grpTbl[i] = i >> 1;
         }
     }
 
     omMakeGroupEx(om, 0, M574_PLAYER_MAX);
 
     for (i = 0; i < M574_PLAYER_MAX; i++) {
-        obj = omAddObjEx(om, 0x28, 1, 5, 0, fn_1_1068);
-        M574PlayerObjTbl[i] = obj;
+        obj = (M574PlayerObjTbl[i] = omAddObjEx(om, 0x28, 1, 5, 0, fn_1_1068));
         obj->work[0] = i;
-        obj->work[1] = grpTbl[i];
-        obj->work[2] = cnt[grpTbl[i] + 2]++;
-        fn_1_9FC(i, grpTbl[i], GwPlayerConf[i].charNo);
+        grp = grpTbl[i];
+        obj->work[1] = grp;
+        obj->work[2] = playerIdx[grp]++;
+        fn_1_9FC(i, grp, GwPlayerConf[i].charNo);
     }
 }
 
