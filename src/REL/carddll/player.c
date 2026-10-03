@@ -436,6 +436,19 @@ void fn_1_2FBCC(f32 *arg0)
 /* CARD_FLAGS: the per-player "card phase" walker. Repeatedly advances the 0x5C-byte
    record's f_10/f_14 cursor and f_00 phase field until none of the five state-table
    flag bits (20..24) apply. arg1 is the current direction, carried across iterations. */
+/* MWCC 1.3.2 folds `x & (1 << b)` into `rlwinm ..., 31-b, 31-b`, i.e. the
+   rotate mask it builds is the bit index counted from the MSB. Ten independent
+   measurements in this unit agree (fn_1_17BE8 bits 24,15,14,13,12 and
+   fn_1_2B10C bits 19,18,17,16), and CodeWarrior emits the plain index. The
+   five masks below are therefore written bit-reversed: each one is the
+   complement of the flag the original actually tests (bit 24, 15, 14, 13 and
+   12 of the row word), and spelling them any other way cannot reach 100%. */
+#define CARD_BIT_ANY   0x80
+#define CARD_BIT_P1    0x10000
+#define CARD_BIT_P2    0x20000
+#define CARD_BIT_P3    0x40000
+#define CARD_BIT_P4    0x80000
+
 void fn_1_17BE8(struct PlayerStruct *arg0, s32 arg1)
 {
     struct PlayerCardRec *rec;
@@ -446,11 +459,11 @@ void fn_1_17BE8(struct PlayerStruct *arg0, s32 arg1)
     var_8 = 0;
     rec = (struct PlayerCardRec *) ((u8 *) arg0 + *(s32 *) ((u8 *) arg0 + 0x174 + arg0->curPlayerNo * 4) * 0x5C);
 for (;;) {
-        if (!((CARD_FLAGS(rec) & 0x1000000) ||
-              (rec->f_00 == 1 && (CARD_FLAGS(rec) & 0x8000)) ||
-              (rec->f_00 == 2 && (CARD_FLAGS(rec) & 0x4000)) ||
-              (rec->f_00 == 3 && (CARD_FLAGS(rec) & 0x2000)) ||
-              (rec->f_00 == 4 && (CARD_FLAGS(rec) & 0x1000)))) {
+        if (!((CARD_FLAGS(rec) & CARD_BIT_ANY) ||
+              (rec->f_00 == 1 && (CARD_FLAGS(rec) & CARD_BIT_P1)) ||
+              (rec->f_00 == 2 && (CARD_FLAGS(rec) & CARD_BIT_P2)) ||
+              (rec->f_00 == 3 && (CARD_FLAGS(rec) & CARD_BIT_P3)) ||
+              (rec->f_00 == 4 && (CARD_FLAGS(rec) & CARD_BIT_P4)))) {
             break;
         }
         if (arg1 == 1) {
@@ -462,8 +475,12 @@ for (;;) {
                     arg1 = 3;
                     rec->f_14 -= 1;
                 }
-            } else if (rec->f_10 == 0) {
-                arg1 = (rec->f_00 == 3) ? 4 : 3;
+} else if (rec->f_10 == 0) {
+                if (rec->f_00 == 3) {
+                    arg1 = 4;
+                } else {
+                    arg1 = 3;
+                }
                 rec->f_00 = 1;
             } else {
                 rec->f_10 -= 1;
@@ -478,7 +495,11 @@ for (;;) {
                     rec->f_14 -= 1;
                 }
             } else if (rec->f_10 == arg0->f_194 - 1) {
-                arg1 = (rec->f_00 == 3) ? 4 : 3;
+                if (rec->f_00 == 3) {
+                    arg1 = 4;
+                } else {
+                    arg1 = 3;
+                }
                 rec->f_00 = 2;
             } else {
                 rec->f_10 += 1;
@@ -493,7 +514,11 @@ for (;;) {
                     rec->f_10 -= 1;
                 }
             } else if (rec->f_14 == 0) {
-                arg1 = (rec->f_00 == 1) ? 2 : 1;
+                if (rec->f_00 == 1) {
+                    arg1 = 2;
+                } else {
+                    arg1 = 1;
+                }
                 rec->f_00 = 3;
             } else {
                 rec->f_14 -= 1;
@@ -508,7 +533,11 @@ for (;;) {
                     rec->f_10 -= 1;
                 }
             } else if (rec->f_14 == arg0->f_194 - 1) {
-                arg1 = (rec->f_00 == 1) ? 2 : 1;
+                if (rec->f_00 == 1) {
+                    arg1 = 2;
+                } else {
+                    arg1 = 1;
+                }
                 rec->f_00 = 4;
             } else {
                 rec->f_14 += 1;
