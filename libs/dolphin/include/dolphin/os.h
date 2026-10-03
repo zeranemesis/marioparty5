@@ -98,13 +98,6 @@ typedef struct OSStopwatch {
 	OSTime max;	// 0x18
 	OSTime last;	// 0x20
 	BOOL running;	// 0x28
-	char* name;
-	u32 hits;
-	OSTime total;
-	OSTime min;
-	OSTime max;
-	OSTime last;
-	BOOL running;
 } OSStopwatch;
 
 void OSInitStopwatch(OSStopwatch* sw, char* name);
