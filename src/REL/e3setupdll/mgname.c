@@ -8,8 +8,10 @@
 
 #include "REL/e3setupdll.h"
 
-/* Glyph animation handles, indexed by font slot (see fontFileTbl). */
-static ANIMDATA **mgNameAnim;
+/* Glyph animation handles, indexed by font slot (see fontFileTbl).  The
+   original gives this symbol 8 bytes, so it is an array of two pointers and
+   only the first entry is ever used. */
+static ANIMDATA **mgNameAnim[2];
 
 /* Glyph file ids per font slot. 0x20xxxx is DATANUM(DATA_e3setup, n);
    the list is terminated by -1, and the trailing 0 is never reached. */
@@ -32,8 +34,8 @@ static u32 fontFileTbl[200] = {
     0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A,
     0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A,
     0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A,
-    0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x200055, 0x200056, 0x20004A, 0x20004A,
-    0xFFFFFFFF, 0
+    0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x20004A,
+    0x20004A, 0x20004A, 0x20004A, 0x20004A, 0x200055, 0x200056, 0x20004A, 0x20004A, 0xFFFFFFFF, 0
 };
 
 void MgNameInit(void) {
@@ -43,15 +45,15 @@ void MgNameInit(void) {
     for (count = 0; fontFileTbl[count] != 0xFFFFFFFF; count++) {
     }
 
-    mgNameAnim = HuMemDirectMallocNum(HEAP_HEAP, count * 4, HU_MEMNUM_OVL);
+    mgNameAnim[0] = HuMemDirectMallocNum(HEAP_HEAP, count * 4, HU_MEMNUM_OVL);
 
     for (i = 0; i < count; i++) {
         if (fontFileTbl[i] == 0) {
-            mgNameAnim[i] = NULL;
+            mgNameAnim[0][i] = NULL;
         } else {
-            mgNameAnim[i] =
+            mgNameAnim[0][i] =
                 HuSprAnimRead(HuDataSelHeapReadNum(fontFileTbl[i], HU_MEMNUM_OVL, HEAP_MODEL));
-            HuSprAnimLock(mgNameAnim[i]);
+            HuSprAnimLock(mgNameAnim[0][i]);
         }
     }
 
@@ -109,7 +111,7 @@ HUSPRGRPID MgNameCreate(void *arg) {
             font = *p;
         }
 
-        animTbl[count] = mgNameAnim[font];
+        animTbl[count] = mgNameAnim[0][font];
         xTbl[count] = width;
 
         if (*p >= 0x61 && *p <= 0x7A) {
