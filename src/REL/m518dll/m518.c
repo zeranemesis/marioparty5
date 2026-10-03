@@ -86,7 +86,7 @@ void fn_1_8E2C(M518_PLAYER *player);
 void fn_1_8FA8(M518_PLAYER *player);
 void fn_1_9014(M518_PLAYER *player);
 s16 fn_1_9080(M518_PLAYER *player, M518_CELL cell);
-s16 fn_1_9258(M518_PLAYER *player, M518_QUEUE *queue, M518_CELL cell, s16 dist, s32 dir, s16 len);
+int fn_1_9258(M518_PLAYER *player, M518_QUEUE *queue, M518_CELL cell, s16 dist, s32 dir, s16 len);
 
 M518_MAP *fn_1_9860(void);
 void fn_1_9BB0(void);
@@ -1252,68 +1252,6 @@ void fn_1_4760(HuVecF *rot, HuVecF *axis)
         axis->z *= -1.0f;
     }
 }
-
-void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
-{
-    player->time = time;
-    player->delay = delay;
-    player->mode = 2;
-}
-
-void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
-{
-    player->time = time;
-    player->delay = delay;
-    player->mode = 4;
-}
-
-void fn_1_8E20(M518_PLAYER *player)
-{
-    player->mode = 3;
-}
-
-void fn_1_8E2C(M518_PLAYER *player)
-{
-    omVibrate(player->playerNo, 0x46, 0xC, 0);
-    fn_1_E7B4(0x6F7, player->pos);
-    Hu3DModelAttrReset(player->modelId[1], 1);
-    Hu3DMotionTimeSet(player->modelId[1], 0.0f);
-    while (1) {
-        if (Hu3DMotionEndCheck(player->modelId[1])) {
-            Hu3DModelAttrSet(player->modelId[1], 1);
-            Hu3DModelAttrReset(player->modelId[0], HU3D_MOTATTR_PAUSE);
-            Hu3DMotionTimeSet(player->modelId[0], 0.0f);
-            player->mode = 0;
-            for (;;) {
-                M518_WAIT(1);
-            }
-        }
-        M518_WAIT(1);
-    }
-}
-
-void fn_1_8FA8(M518_PLAYER *player)
-{
-    int i;
-
-    for (i = 0; i < 2; i++) {
-        if (player->modelId[i] != -1) {
-            Hu3DModelAttrReset(player->modelId[i], 1);
-        }
-    }
-}
-
-void fn_1_9014(M518_PLAYER *player)
-{
-    int i;
-
-    for (i = 0; i < 2; i++) {
-        if (player->modelId[i] != -1) {
-            Hu3DModelAttrSet(player->modelId[i], 1);
-        }
-    }
-}
-
 static const u16 lbl_1_rodata_768[5][18 * 18] = {
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1462,6 +1400,292 @@ void fn_1_6D84(M518_PLAYER *player)
         }
     }
 }
+
+
+void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
+{
+    player->time = time;
+    player->delay = delay;
+    player->mode = 2;
+}
+
+void fn_1_83FC(M518_PLAYER *player)
+{
+    int k;
+    int j;
+    int i;
+    int l;
+    u8 prev;
+    M518_CELL cell;
+    M518_BLOCK *block;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+    HuVecF cur;
+
+    fn_1_E7B4(0x6FF, player->pos);
+    fn_1_9E70(lbl_1_bss_4DC);
+    fn_1_3904(player);
+    for (i = 0; i < player->size * 2 + 1; i++) {
+        for (j = 0; j < player->size * 2 + 1; j++) {
+            cell.x = player->cell.x - player->size + j;
+            cell.z = player->cell.z - player->size + i;
+            prev = fn_1_A268(lbl_1_bss_4DC, cell);
+            if ((prev & 0x40) && prev >> 8 == player->no) {
+                block = lbl_1_bss_150[cell.x + cell.z * M518_GRID_SIZE];
+                fn_1_CE78(block, 200.0f * player->size - 1.0f, player->time, player->delay);
+            }
+        }
+    }
+    M518_WAIT(player->delay);
+    Hu3DModelShadowReset(player->modelId[0]);
+    start = player->pos;
+    end = player->pos;
+    end.y = 200.0f * -player->size;
+    pos = player->pos;
+    for (k = 0; k < player->time; k++) {
+        pos.y = start.y + (end.y - start.y) * (1.0 - cos(1.0f / player->time * (k + 1) * 90.0f * M_PI / 180.0));
+        cur = pos;
+        for (l = 0; l < 2; l++) {
+            if (player->modelId[l] != HU3D_MODELID_NONE) {
+                Hu3DModelPosSet(player->modelId[l], cur.x, cur.y, cur.z);
+            }
+        }
+        player->pos = cur;
+        M518_WAIT(1);
+    }
+    lbl_1_bss_28 = 1;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
+{
+    player->time = time;
+    player->delay = delay;
+    player->mode = 4;
+}
+
+void fn_1_88C8(M518_PLAYER *player)
+{
+    int flag;
+    int l;
+    int i;
+    int j;
+    int k;
+    M518_BLOCK *block;
+    HuVecF start;
+    HuVecF end;
+    HuVecF pos;
+    HuVecF cur;
+
+    M518_WAIT(player->delay);
+    start = player->pos;
+    end = player->pos;
+    end.y = 200.0f * player->size * 0.5f - 30.0f;
+    pos = player->pos;
+    flag = 0;
+    for (i = 0; i < player->time; i++) {
+        pos.y = start.y + (end.y - start.y) * (1.0 - cos(1.0f / player->time * (i + 1) * 90.0f * M_PI / 180.0));
+        cur = pos;
+        for (l = 0; l < 2; l++) {
+            if (player->modelId[l] != HU3D_MODELID_NONE) {
+                Hu3DModelPosSet(player->modelId[l], cur.x, cur.y, cur.z);
+            }
+        }
+        player->pos = cur;
+        M518_WAIT(1);
+        if (flag == 0 && pos.y >= 0.0f) {
+            for (k = 0; k < player->size; k++) {
+                for (j = 0; j < player->size; j++) {
+                    block = lbl_1_bss_150[k * M518_GRID_SIZE + player->cell.z + player->cell.x + j];
+                    fn_1_CE78(block, 30.0f, 8, 0);
+                }
+            }
+        }
+    }
+    omVibrate(player->playerNo, 0x28, 0xC, 0);
+    pos.x = player->pos.x;
+    pos.z = player->pos.z;
+    pos.y = 0.0f;
+    fn_1_E508(pos, 100.0f * player->size);
+    fn_1_E508(pos, 50.0f + 100.0f * player->size);
+    fn_1_E508(pos, 100.0f + 100.0f * player->size);
+    player->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_8E20(M518_PLAYER *player)
+{
+    player->mode = 3;
+}
+
+void fn_1_8E2C(M518_PLAYER *player)
+{
+    omVibrate(player->playerNo, 0x46, 0xC, 0);
+    fn_1_E7B4(0x6F7, player->pos);
+    Hu3DModelAttrReset(player->modelId[1], 1);
+    Hu3DMotionTimeSet(player->modelId[1], 0.0f);
+    while (!Hu3DMotionEndCheck(player->modelId[1])) {
+        M518_WAIT(1);
+    }
+    Hu3DModelAttrSet(player->modelId[1], 1);
+    Hu3DModelAttrReset(player->modelId[0], HU3D_MOTATTR_PAUSE);
+    Hu3DMotionTimeSet(player->modelId[0], 0.0f);
+    player->mode = 0;
+    while (TRUE) {
+        M518_WAIT(1);
+    }
+}
+
+void fn_1_8FA8(M518_PLAYER *player)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (player->modelId[i] != -1) {
+            Hu3DModelAttrReset(player->modelId[i], 1);
+        }
+    }
+}
+
+void fn_1_9014(M518_PLAYER *player)
+{
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (player->modelId[i] != -1) {
+            Hu3DModelAttrSet(player->modelId[i], 1);
+        }
+    }
+}
+
+s16 fn_1_9080(M518_PLAYER *player, M518_CELL cell)
+{
+    s16 total;
+    s32 value;
+    s32 scores[4];
+    s32 best;
+    s32 i;
+    u16 prev;
+    M518_QUEUE *queue;
+    M518_CELL next;
+
+    prev = fn_1_A268(lbl_1_bss_4DC, cell);
+    for (i = 0; i < 4; i++) {
+        queue = player->pathTry[i];
+        fn_1_DCF8(queue);
+        scores[i] = fn_1_9258(player, queue, cell, prev >> 8, i, 0);
+    }
+    best = 99;
+    for (i = 0; i < 4; i++) {
+        if (best >= scores[i] && best > 0) {
+            best = scores[i];
+            queue = player->pathTry[i];
+        }
+    }
+    fn_1_DCF8(player->path);
+    total = 0;
+    while (fn_1_DCBC(queue, &value)) {
+        fn_1_DC84(player->path, value);
+        next.x = player->cell.x + lbl_1_rodata_60[value].x;
+        next.z = player->cell.z + lbl_1_rodata_60[value].z;
+        total += fn_1_9CBC(lbl_1_bss_4DC, next);
+    }
+    fn_1_DC84(player->path, 4);
+    return total;
+}
+
+int fn_1_9258(M518_PLAYER *player, M518_QUEUE *queue, M518_CELL cell, s16 dist, s32 dir, s16 len)
+{
+    u16 prev;
+    M518_CELL next;
+    s16 weight;
+
+    if (player->cell.x != cell.x || player->cell.z != cell.z) {
+        dist--;
+        switch (dir) {
+            case 0:
+                next.x = cell.x - 1;
+                next.z = cell.z;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                weight = fn_1_9CBC(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 0, len);
+                    fn_1_DC84(queue, 1);
+                    return len;
+                }
+                break;
+            case 1:
+                next.x = cell.x + 1;
+                next.z = cell.z;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 1, len);
+                    fn_1_DC84(queue, 0);
+                    return len;
+                }
+                break;
+            case 2:
+                next.x = cell.x;
+                next.z = cell.z - 1;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 2, len);
+                    fn_1_DC84(queue, 3);
+                    return len;
+                }
+                break;
+            case 3:
+                next.x = cell.x;
+                next.z = cell.z + 1;
+                prev = fn_1_A268(lbl_1_bss_4DC, next);
+                if ((prev >> 8) == dist) {
+                    len = fn_1_9258(player, queue, next, dist, 3, len);
+                    fn_1_DC84(queue, 2);
+                    return len;
+                }
+                break;
+        }
+        next.x = cell.x;
+        next.z = cell.z - 1;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 2, len);
+            fn_1_DC84(queue, 3);
+            return len + 1;
+        }
+        next.x = cell.x;
+        next.z = cell.z + 1;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 3, len);
+            fn_1_DC84(queue, 2);
+            return len + 1;
+        }
+        next.x = cell.x - 1;
+        next.z = cell.z;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 0, len);
+            fn_1_DC84(queue, 1);
+            return len + 1;
+        }
+        next.x = cell.x + 1;
+        next.z = cell.z;
+        prev = fn_1_A268(lbl_1_bss_4DC, next);
+        if ((prev >> 8) == dist) {
+            len = fn_1_9258(player, queue, next, dist, 1, len);
+            fn_1_DC84(queue, 0);
+            return len + 1;
+        }
+    }
+    return len;
+}
+
 
 M518_PLAYERFUNC lbl_1_data_60[1] = { (M518_PLAYERFUNC)fn_1_9ED8 };
 
