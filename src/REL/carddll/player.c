@@ -208,11 +208,11 @@ struct PlayerStruct
    sprite display is turned ON. For each of the 3 opponents, take the sprite id from
    the bank table matching the current player number, and if the record sprite index
    is set, bank it and turn its display on. */
-void fn_1_304D8(struct PlayerStruct *arg0, s32 *arg1)
+void fn_1_304D8(struct PlayerStruct *arg0, register s32 *arg1)
 {
+    s16 bankId3;
     s16 bankId;
     s16 bankId2;
-    s16 bankId3;
     s32 var_r31;
 
     var_r31 = 0;
@@ -228,8 +228,8 @@ void fn_1_304D8(struct PlayerStruct *arg0, s32 *arg1)
             bankId = bankId2;
         }
         bankId3 = bankId;
-        if (*(s32 *) (arg1 + var_r31) != -1) {
-            espBankSet(bankId3, *(s32 *) (arg1 + var_r31));
+        if (arg1[var_r31] != -1) {
+            espBankSet(bankId3, arg1[var_r31]);
             espDispOn(bankId3);
         }
         var_r31 += 1;
