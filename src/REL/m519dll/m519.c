@@ -37,7 +37,7 @@ float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 #define M519_FRANDMOD(x) ((s16)frandmod(x))
 #else
 extern s32 frand();
-extern s16 frandmod();
+extern s32 frandmod();
 #define M519_FRANDMOD_F(x) frandmod(x)
 #define M519_FRAND() frand()
 #define M519_FRANDMOD(x) frandmod(x)
@@ -1700,6 +1700,7 @@ void fn_1_4E18(M519_MECH *mech)
     float minAngle;
     float distSum;
     float diff;
+    float tC;
     HuVecF circle;
 
     dif = lbl_1_bss_E8[mech->pilotNo]->dif;
@@ -1721,7 +1722,8 @@ void fn_1_4E18(M519_MECH *mech)
             }
             dx = mech->comTarget.x - mech->pos.x;
             dz = mech->comTarget.z - mech->pos.z;
-            dist = HuMagPoint2D(dx, dz);
+            tC = HuMagPoint2D(dx, dz);
+            dist = tC;
             if (dist < 300.0f || mech->comTimer++ > timeTbl[dif]) {
                 mech->comSpeed = 0;
                 mech->comMode = 1;
@@ -1749,8 +1751,9 @@ void fn_1_4E18(M519_MECH *mech)
                     count++;
                     dx = target->pos.x - mech->pos.x;
                     dz = target->pos.z - mech->pos.z;
-                    dist = HuMagPoint2D(dx, dz);
-                    distSum += dist;
+                    tC = HuMagPoint2D(dx, dz);
+                    dist = tC;
+                    distSum += tC;
                     angle = (180.0 + HuAtan(mech->pos.x - target->pos.x, mech->pos.z - target->pos.z)) - mech->rot.y;
                     if (angle < 0.0f) {
                         angle = 360.0f + angle;
@@ -2052,6 +2055,8 @@ void fn_1_69BC(M519_MECH *mech)
     float angle;
     float step;
     float diff;
+    float tA;
+    float tB;
     HuVecF circle;
     HuVecF goal;
     HuVecF area;
@@ -2113,7 +2118,8 @@ void fn_1_69BC(M519_MECH *mech)
                 }
                 angle = -angle;
                 mech->comSpeed = 20.0f + dist / 120.0f;
-                if (HuAbs(angle) < aimTbl[dif]) {
+                tA = HuAbs(angle);
+                if (tA < aimTbl[dif]) {
                     mech->btnDown = PAD_BUTTON_A;
                 }
             }
@@ -2142,7 +2148,8 @@ void fn_1_69BC(M519_MECH *mech)
                             diff -= 360.0f;
                         }
                         diff = -diff;
-                        if (HuAbs(diff) > 30.0f) {
+                        tB = HuAbs(diff);
+                        if (tB > 30.0f) {
                             break;
                         }
                     }
@@ -2206,7 +2213,7 @@ void fn_1_69BC(M519_MECH *mech)
     angle = (angle < -60.0f) ? -60.0f : angle;
     dx = angle;
     dz = mech->comSpeed;
-    dist = sqrt(dx * dx + dz * dz);
+    dist = HuMagPoint2D(dx, dz);
     angle = HuAtan(dx, dz);
     dx = dist * HuSin(angle);
     dz = dist * HuCos(angle);
@@ -3012,6 +3019,7 @@ void fn_1_AE24(M519_SHOT *shot, HuVecF pos)
 {
     int i;
 
+    i = i;
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
         Hu3DModelPosSet(shot->modelId[i], pos.x, pos.y, pos.z);
@@ -3040,9 +3048,10 @@ HuVecF fn_1_AF48(M519_SHOT *shot)
 
 void fn_1_AF64(M519_SHOT *shot)
 {
-    HuVecF pos = { 0.0f, 0.0f, 0.0f };
     s32 i;
+    HuVecF pos = { 0.0f, 0.0f, 0.0f };
 
+    i = i;
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
         Hu3DModelPosSet(shot->modelId[i], pos.x, pos.y, pos.z);
@@ -3170,6 +3179,7 @@ BOOL fn_1_B70C(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
+    i = i;
     for (i = 0; i < 4; i++) {
         mech = lbl_1_bss_F8[i];
         if (mech != owner && mech->mode != 3) {
@@ -3246,7 +3256,9 @@ BOOL fn_1_BAC8(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
-    for (i = 0; i < 12; i++) {
+    i = i;
+    i = 0;
+    while (i < 12) {
         obj = lbl_1_bss_178->obj[i];
         if (obj != NULL && obj->mode == 3 && obj->hp > 0 && obj->hitId != shot->id) {
             objCircle.x = obj->pos.x;
@@ -3274,6 +3286,7 @@ BOOL fn_1_BAC8(M519_SHOT *shot)
                 return TRUE;
             }
         }
+        i++;
     }
     return FALSE;
 }
@@ -3291,6 +3304,7 @@ BOOL fn_1_BECC(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
+    i = i;
     for (i = 0; i < 44; i++) {
         other = lbl_1_bss_38[i];
         if (other != NULL && shot->mode == 1 && other->activeF && other->ownerNo != shot->ownerNo && other != shot) {
