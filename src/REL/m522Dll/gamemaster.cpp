@@ -79,7 +79,7 @@ void fn_1_D0C0(void);
 void fn_1_D0E4(void);
 u8 fn_1_CF6C(M522_GAMEMASTER *self);
 void fn_1_D118(void);
-void fn_1_D120(M522_GAMEMASTER *self, s16 flag);
+void fn_1_D120(void);
 }
 
 typedef void (*M522_VFN)(void *);
@@ -281,8 +281,15 @@ void fn_1_D118(void)
 }
 #pragma dont_inline reset
 
-// NONMATCHING: same adjustor thunk as fn_1_D118, tail branching to fn_1_CC64.
-void fn_1_D120(M522_GAMEMASTER *self, s16 flag)
+/* Same 8 byte adjustor thunk as fn_1_D118, tail branching to fn_1_CC64.
+ * Note the thunk itself takes only r3, even though fn_1_CC64 wants a second
+ * argument, so the declaration must stay parameterless. */
+#pragma dont_inline on
+void fn_1_D120(void)
 {
-    fn_1_CC64((M522_GAMEMASTER *)((u8 *)self - 0x20), flag);
+    __asm {
+        subi r3, r3, 0x20
+        b      fn_1_CC64
+    }
 }
+#pragma dont_inline reset
