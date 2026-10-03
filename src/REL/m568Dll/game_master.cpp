@@ -37,7 +37,9 @@ struct SceneNode {
         u8 m_f8;        // 0x08 flag
         void *m_f8p;    // 0x08 polymorphic sub-object
     };
-    u8 m_pad[0x3B];
+    u8 m_pad[0x34];
+    s32 m_fC;         // 0x0C
+    u8 m_pad2[0x34];
     void *m_f44;        // 0x44
     u8 m_pad48[4];
     void *m_f4C;        // 0x4C
@@ -54,16 +56,16 @@ void fn_1_7F1C(GameMaster *self);
 GameMaster *fn_1_8090(GameMaster *self, s16 arg1);
 void fn_1_80E8(void *self, s32 arg1);
 GameMaster *fn_1_8798(GameMaster *self, s16 arg1);
-void fn_1_8824(void *self, s32 arg1);
+void fn_1_8824(void);
 void fn_1_8A08(void *self, s32 arg1);
 void fn_1_8DC8(void *self, s32 arg1);
-void fn_1_970C(void *self);
+void fn_1_970C();
 void fn_1_9890(GameMaster *self);
 void fn_1_9898(GameMaster *self);
 
 void fn_1_187C(void *self);
 void fn_1_1888(void *self, s32 arg1);
-void fn_1_23F8(void *self);
+void fn_1_23F8();
 void fn_1_2558(void *self);
 void fn_1_26E4(void *self, s32 arg1);
 void fn_1_289C(void *self, s32 arg1, s32 arg2);
@@ -73,6 +75,12 @@ BOOL fn_1_5634(void *self, void *arg1);
 void fn_1_58FC(void *self, s32 arg1);
 void fn_1_5880(void *self, s32 arg1);
 void fn_1_6E0(void *self);
+void fn_1_5020(u64 tick);
+u64 OSGetTick(void);
+void *fn_1_9D60(void *self);
+void *fn_1_B668(void *self);
+void *fn_1_D260(void *self);
+void *fn_1_104FC(void *self, s32 arg1);
 void fn_1_7EC(char *msg, char *file, s32 line);
 void *fn_1_618(u32 size);
 void fn_1_F990(void *self, void *arg1);
@@ -120,17 +128,17 @@ void fn_1_7F1C(GameMaster *self)
     set = fn_1_618(0x18);
     if (set != NULL) {
         fn_1_187C(set);
-        if (lbl_1_bss_A0C != NULL) {
+        if (lbl_1_bss_A0C != 0) {
             fn_1_7EC(lbl_1_data_2A8, lbl_1_data_2B7, 0x1D);
         }
         lbl_1_bss_A0C = (GameMaster *)set;
         fn_1_187C((char *)set + 8);
-        if (lbl_1_bss_9F8 != NULL) {
+        if (lbl_1_bss_9F8 != 0) {
             fn_1_7EC(lbl_1_data_2A8, lbl_1_data_2B7, 0x1D);
         }
         lbl_1_bss_9F8 = (SceneNode *)((char *)set + 8);
         fn_1_187C((char *)set + 0x10);
-        if (lbl_1_bss_9F4 != NULL) {
+        if (lbl_1_bss_9F4 != 0) {
             fn_1_7EC(lbl_1_data_2A8, lbl_1_data_2B7, 0x1D);
         }
         lbl_1_bss_9F4 = (SceneNode *)((char *)set + 0x10);
@@ -311,8 +319,53 @@ GameMaster *fn_1_8798(GameMaster *self, s16 arg1)
 }
 
 #pragma noinline
-void fn_1_8824(void *self, s32 arg1)
+void fn_1_8824(void)
 {
+    SceneNode *node;
+    SceneNode *end;
+    s32 num;
+    void *obj1;
+    void *obj2;
+    void *obj3;
+    void *obj4;
+    s32 i;
+
+    fn_1_5020(OSGetTick());
+
+    obj1 = fn_1_618(0x60);
+    if (obj1) {
+        obj1 = fn_1_D260(obj1);
+    }
+    obj2 = fn_1_618(0x8C);
+    if (obj2) {
+        obj2 = fn_1_9D60(obj2);
+    }
+    obj3 = fn_1_618(0x18);
+    if (obj3) {
+        obj3 = fn_1_B668(obj3);
+    }
+    for (i = 0; i < 4; i++) {
+        obj4 = fn_1_618(0x58);
+        if (obj4) {
+            obj4 = fn_1_104FC(obj4, i);
+        }
+    }
+
+    if (lbl_1_bss_9F8 == 0) {
+        fn_1_7EC(lbl_1_data_2BF, lbl_1_data_2B7, 0x3A);
+    }
+    end = lbl_1_bss_9F8;
+    node = end->m_next;
+    num = 1;
+    while (node != end) {
+        if (node->m_f8 != 0) {
+            node->m_fC = 0;
+        } else {
+            node->m_fC = num;
+            num++;
+        }
+        node = node->m_next;
+    }
 }
 
 void fn_1_898C(void *self, void *arg1)
@@ -334,7 +387,7 @@ s32 fn_1_8C24(void)
     SceneNode *end;
     s32 ret;
 
-    if (lbl_1_bss_9F8 == NULL) {
+    if (lbl_1_bss_9F8 == 0) {
         fn_1_7EC(lbl_1_data_2BF, lbl_1_data_2B7, 0x3A);
     }
     end = lbl_1_bss_9F8;
@@ -356,7 +409,7 @@ s32 fn_1_8D04(void)
     SceneNode *node;
     SceneNode *end;
 
-    if (lbl_1_bss_9F8 == NULL) {
+    if (lbl_1_bss_9F8 == 0) {
         fn_1_7EC(lbl_1_data_2BF, lbl_1_data_2B7, 0x3A);
     }
     end = lbl_1_bss_9F8;
@@ -375,9 +428,9 @@ void fn_1_8DC8(void *self, s32 arg1)
 {
 }
 
-void fn_1_970C(void *self)
+void fn_1_970C()
 {
-    fn_1_23F8(self);
+    fn_1_23F8();
 }
 
 void fn_1_972C(SceneNode *self, void (*func)(void *, void *))
