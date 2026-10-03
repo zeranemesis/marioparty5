@@ -136,11 +136,9 @@ void fn_1_8A74(s16 layerNo)
     f32 fov;
     f32 nearZ;
     f32 farZ;
-    GXColor color;
 
     Hu3DCameraPerspectiveGet(1, &fov, &nearZ, &farZ);
-    color = lbl_1_data_338;
-    GXSetFog(4, 2200.0f, 15000.0f, nearZ, farZ, color);
+    GXSetFog(4, 2200.0f, 15000.0f, nearZ, farZ, lbl_1_data_338);
 }
 
 void fn_1_8B04(s16 layerNo)
@@ -148,11 +146,9 @@ void fn_1_8B04(s16 layerNo)
     f32 fov;
     f32 nearZ;
     f32 farZ;
-    GXColor color;
 
     Hu3DCameraPerspectiveGet(1, &fov, &nearZ, &farZ);
-    color = lbl_1_data_33C;
-    GXSetFog(0, 2200.0f, 15000.0f, nearZ, farZ, color);
+    GXSetFog(0, 2200.0f, 15000.0f, nearZ, farZ, lbl_1_data_33C);
 }
 
 M536Cloud *fn_1_9474(M536Cloud *self, HU3DMODELID *mdl, s32 index, f32 angle);
