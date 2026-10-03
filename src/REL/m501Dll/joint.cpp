@@ -74,13 +74,27 @@ Mtx *CJoint::getMatrix()
     return &m_local;
 }
 
+// NONMATCHING: row count matches, but MWCC inlines lockMatrix() into the
+// eight rotated copies in the original (frame 0x80) and calls it in ours
+// (frame 0x90)
 void CJoint::lockMatrixChain()
 {
     m_locked = 1;
 
-    CJoint *child = m_child;
-    if (child != 0) {
-        child->lockMatrixChain();
+    CJoint *node = m_child;
+    if (node != 0) {
+        CJoint *last = node;
+
+        do {
+            node->lockMatrix();
+
+            CJoint *child = node->m_child;
+            if (child != 0) {
+                child->lockMatrixChain();
+            }
+
+            node = node->m_next;
+        } while (node != last);
     }
 }
 
