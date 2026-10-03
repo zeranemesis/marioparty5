@@ -503,6 +503,34 @@ struct CSmRecNode {
     CSingleton m_rec;           // 0x10
 };
 
+// fn_1_B730 walks the lbl_1_bss_A1C list, whose nodes hold their record at +0x70.
+struct CSmRec70 {
+    struct CSmRec70 *m_next;  // 0x00
+    char m_f4[0x6C];
+    CSingleton m_rec;         // 0x70
+};
+
+// Teardown node reached through the lbl_1_bss_A08 list (fn_1_B8A8).
+struct CNodeD0 {
+    struct CNodeD0 *m_next;   // 0x00
+    char m_f4[0xB0];
+    void *m_b4;               // 0xB4
+    void *m_b8;               // 0xB8
+    void **m_bc;              // 0xBC
+    void *m_c0;               // 0xC0
+    void *m_c4;               // 0xC4
+    void *m_c8;               // 0xC8
+    void *m_cc;               // 0xCC
+    void *m_d0;               // 0xD0
+};
+
+// Two-step indirect call target: obj->m_link->m_fn / obj->m_f0->m_fn.
+struct CInd {
+    void *m_f0;
+    void *m_f4;
+    void *(*m_fn)(void *, s32);
+};
+
 extern "C" void fn_1_1593C(void *self);
 extern "C" void fn_1_184E8(void *self, s32 flag);
 
