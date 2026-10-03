@@ -40,25 +40,21 @@ CJoint::CJoint()
     m_locked = 1;
 }
 
-// NONMATCHING: the sibling unlink reloads both link fields instead of using locals
 CJoint::~CJoint()
 {
-    if ((CJoint *)0 != this) {
-        resetSuperJoint();
+    resetSuperJoint();
 
-        CJoint *node = m_child;
-        if ((CJoint *)0 != node) {
-            CJoint *last = node;
-            CJoint *next = node;
+    CJoint *node = m_child;
+    if (node != 0) {
+        CJoint *last = node;
 
-            do {
-                next = node->m_next;
-                node->m_next = node;
-                node->m_prev = node;
-                node->m_super = (CJoint *)0;
-                node = next;
-            } while (node != last);
-        }
+        do {
+            CJoint *next = node->m_next;
+            node->m_next = node;
+            node->m_prev = node;
+            node->m_super = (CJoint *)0;
+            node = next;
+        } while (node != last);
     }
 }
 
@@ -113,16 +109,17 @@ void CJoint::setSuper(CJoint *super)
     }
 }
 
+// NONMATCHING: the original emits the assert block out of line (bne->assert, b->join)
 void CJoint::setSuperJoint(CJoint *super)
 {
-    if ((CJoint *)0 != m_super) {
+    if (m_super != 0) {
         __assert_fail("m_super == NULL", "joint.cpp", 0x5F);
     }
 
     m_super = super;
 
     CJoint *node = super->m_child;
-    if ((CJoint *)0 != node) {
+    if (node != 0) {
         m_prev = node;
         m_next = node->m_next;
         node->m_next->m_prev = this;
@@ -144,7 +141,7 @@ void CJoint::resetSuperJoint()
         m_prev = this;
     }
 
-    if ((CJoint *)0 != m_super) {
+    if (m_super != 0) {
         m_super->m_child = next;
         m_super = (CJoint *)0;
     }
