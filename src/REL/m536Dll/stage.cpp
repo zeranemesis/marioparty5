@@ -401,12 +401,13 @@ void fn_1_96E0(M536Cloud *self)
     HU3DMODELID mdl;
     HU3DMODELID mdl2;
 
-    mdl = self->m_mdl;
+    mdl = (s16)(s32)self->m_mdl;
     if (Hu3DMotionEndCheck(mdl) != 0) {
-        mdl2 = self->m_mdl;
+        mdl2 = (s16)(s32)self->m_mdl;
         Hu3DModelAttrSet(mdl2, 1);
     }
 }
+
 
 void fn_1_9744(s32 index)
 {
