@@ -52,15 +52,19 @@ void fn_1_1415C(void *obj, s32 mode);
 void fn_1_15724(void *obj, s32 mode);
 void fn_1_7620(void *obj, s32 mode);
 void fn_1_B8A8(void *self);
-void fn_1_BA58(void);
+void fn_1_BA58(void *self);
+void fn_1_10F8(void *self, s32 flag);
+void fn_1_10F88(void *self, s32 flag);
+void fn_1_BA58(void *self);
 void fn_1_BAFC(void *self);
-void fn_1_3920(void *self);
+void fn_1_3920(void);
 void fn_1_111A8(void);
 void fn_1_17614(void);
 void fn_1_16B68(void);
 void fn_1_16918(void);
 void fn_1_13D4(void);
 void fn_1_11850(void);
+unsigned char fn_1_78D0(void *self);
 void fn_1_A488(void *self, s32 mode);
 void fn_1_AB90(void *self);
 void fn_1_AC64(void *self);
@@ -75,18 +79,21 @@ extern "C" void fn_1_A168(CGameMaster *self);
 extern "C" void fn_1_A748(void *self);
 extern "C" void fn_1_A860(void *self);
 extern "C" void fn_1_A978(void *self);
-extern "C" void fn_1_B2CC(void *self);
-extern "C" void fn_1_B310(void *self);
-extern "C" void fn_1_B414(void *self);
-extern "C" void fn_1_B4C4(void *self);
-extern "C" void fn_1_B5C0(void *self);
-extern "C" void fn_1_B660(void *self);
+extern "C" void fn_1_B2CC(CGameMaster *self);
+extern "C" s32 fn_1_B310(CGameMaster *self);
+extern "C" s32 fn_1_B414(void);
+extern "C" void fn_1_B4C4(CGameMaster *self);
+extern "C" void fn_1_B5C0(void);
+extern "C" void fn_1_B660(void);
 extern "C" void fn_1_B730(void *self);
 extern "C" void fn_1_B8A8(void *self);
+void fn_1_BA58(void *self);
+void fn_1_10F8(void *self, s32 flag);
+void fn_1_10F88(void *self, s32 flag);
 extern "C" void fn_1_BAFC(void *self);
-extern "C" void fn_1_BBA0(void *self);
-extern "C" void fn_1_BC3C(void *self);
-extern "C" void fn_1_BCD8(void *self);
+extern "C" void fn_1_BBA0(void *listA, void *listB, void (*fn)(void *, void *));
+extern "C" void fn_1_BC3C(void *listA, void *listB, void (*fn)(void *, void *));
+extern "C" void fn_1_BCD8(void *listA, void (*fn)(void *, void *));
 extern "C" void fn_1_BDA0(void *self);
 extern "C" void fn_1_BDA8(void *self);
 }
@@ -295,32 +302,188 @@ extern "C" void fn_1_B058(void *self)
 {
 }
 
-extern "C" void fn_1_B2CC(void *self)
+extern "C" void fn_1_B2CC(CGameMaster *self)
 {
     fn_1_B8A8(self);
-    fn_1_BA58();
+    fn_1_BA58(self);
     fn_1_BAFC(self);
-    fn_1_3920(self);
+    fn_1_3920();
 }
 
-extern "C" void fn_1_B310(void *self)
+extern "C" s32 fn_1_B310(CGameMaster *self)
 {
+    struct CL {
+        struct CL *m_next;    // 0x00
+        char m_f4[8];
+        unsigned char m_fC;   // 0x0C
+        char m_fD[0x1F];
+        unsigned char m_2C;   // 0x2C
+    };
+
+if (lbl_1_bss_A08 == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smA08 = lbl_1_bss_A08;
+    void *smRoot = smA08;
+    CL *root = (CL *)smRoot;
+    CL *first = root->m_next;
+    CL *entry = first;
+    CL *node = entry;
+    CL *back = root;
+    CL *stop = back;
+    unsigned char ok = 1;
+
+    do {
+        if (node->m_2C == 0) {
+            if (node->m_fC != 1) {
+                ok = 0;
+            }
+        }
+        CL *next = node->m_next;
+        node = next;
+    } while (node != stop);
+
+    if (ok != 0) {
+        self->m_f368 = 1;
+        return 1;
+    }
+
+    void *sub = self->m_f35C;
+    if ((unsigned char)fn_1_78D0(sub) != 0) {
+        self->m_f368 = 0;
+        return 1;
+    }
+    return 0;
 }
 
-extern "C" void fn_1_B414(void *self)
+// Node of the circular list hanging off lbl_1_bss_A08. 0x08 is read as a word
+// by fn_1_B414 and 0x0C as a byte elsewhere, so only one of the two is ever
+// meaningful for a given list.
+struct CSmNode;
+struct CSmRecNode;
+
+struct CSmNode {
+    struct CSmNode *m_next;         // 0x00
+    char m_f4[4];          // 0x04
+    s32 m_word;           // 0x08
+    unsigned char m_fC;   // 0x0C
+    char m_fD[0x1F];      // 0x0D
+    unsigned char m_2C;   // 0x2C
+};
+
+// Same list, but carrying a singleton record inline at +0x10 (fn_1_B660).
+struct CSmRecNode {
+    struct CSmRecNode *m_next;  // 0x00
+    char m_f4[0xC];
+    CSingleton m_rec;           // 0x10
+};
+
+extern "C" void fn_1_1593C(void *self);
+extern "C" void fn_1_184E8(void *self, s32 flag);
+
+extern "C" s32 fn_1_B414(void)
 {
+    if (lbl_1_bss_A08 == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smA08 = lbl_1_bss_A08;
+    void *smRoot = smA08;
+    CSmNode *root = (CSmNode *)smRoot;
+    CSmNode *first = root->m_next;
+    CSmNode *entry = first;
+    CSmNode *node = entry;
+    CSmNode *back = root;
+    CSmNode *stop = back;
+
+    do {
+        if (node->m_word > 0) {
+            return 0;
+        }
+        CSmNode *next = node->m_next;
+        node = next;
+    } while (node != stop);
+    return 1;
 }
 
-extern "C" void fn_1_B4C4(void *self)
+extern "C" void fn_1_B4C4(CGameMaster *self)
 {
+    if (lbl_1_bss_A08 == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smA08 = lbl_1_bss_A08;
+    void *smRoot = smA08;
+    CSmNode *root = (CSmNode *)smRoot;
+    CSmNode *first = root->m_next;
+    CSmNode *entry = first;
+    CSmNode *node = entry;
+    CSmNode *back = root;
+    CSmNode *stop = back;
+
+    do {
+        if (self->m_f368 != 0) {
+            if (node->m_2C != 0) {
+                fn_1_184E8(node, 1);
+            } else {
+                fn_1_184E8(node, 0);
+            }
+        } else {
+            if (node->m_2C != 0) {
+                fn_1_184E8(node, 0);
+            } else {
+                fn_1_184E8(node, 1);
+            }
+        }
+        CSmNode *next = node->m_next;
+        node = next;
+    } while (node != stop);
 }
 
-extern "C" void fn_1_B5C0(void *self)
+extern "C" void fn_1_B5C0(void)
 {
+    if (lbl_1_bss_A08 == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smA08 = lbl_1_bss_A08;
+    void *smRoot = smA08;
+    CSmNode *root = (CSmNode *)smRoot;
+    CSmNode *first = root->m_next;
+    CSmNode *entry = first;
+    CSmNode *node = entry;
+    CSmNode *back = root;
+    CSmNode *stop = back;
+
+    do {
+        fn_1_1593C(node);
+        CSmNode *next = node->m_next;
+        node = next;
+    } while (node != stop);
 }
 
-extern "C" void fn_1_B660(void *self)
+extern "C" void fn_1_B660(void)
 {
+    if (lbl_1_bss_A08 == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smA08 = lbl_1_bss_A08;
+    void *smRoot = smA08;
+    CSmRecNode *root = (CSmRecNode *)smRoot;
+    CSmRecNode *first = root->m_next;
+    CSmRecNode *entry = first;
+    CSmRecNode *node = entry;
+    CSmRecNode *back = root;
+    CSmRecNode *stop = back;
+
+    do {
+        CSingleton rec = lbl_1_data_350;
+        node->m_rec = rec;
+        CSmRecNode *next = node->m_next;
+        node = next;
+    } while (node != stop);
 }
 
 extern "C" void fn_1_B730(void *self)
@@ -331,24 +494,129 @@ extern "C" void fn_1_B8A8(void *self)
 {
 }
 
-extern "C" void fn_1_BA58(void)
+extern "C" void fn_1_BA58(void *self)
 {
+    if (lbl_1_bss_0 == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smZero = lbl_1_bss_0;
+    void *smRoot = smZero;
+    CSmNode *root = (CSmNode *)smRoot;
+    CSmNode *first = root->m_next;
+    CSmNode *entry = first;
+    CSmNode *node = entry;
+    CSmNode *back = root;
+    CSmNode *stop = back;
+
+    do {
+        fn_1_10F8(node, 1);
+        CSmNode *next = node->m_next;
+        node = next;
+    } while (node != stop);
 }
 
 extern "C" void fn_1_BAFC(void *self)
 {
+    if (lbl_1_bss_A1C == 0) {
+        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    }
+
+    void *smA1C = lbl_1_bss_A1C;
+    void *smRoot = smA1C;
+    CSmNode *root = (CSmNode *)smRoot;
+    CSmNode *first = root->m_next;
+    CSmNode *entry = first;
+    CSmNode *node = entry;
+    CSmNode *back = root;
+    CSmNode *stop = back;
+
+    do {
+        fn_1_10F88(node, 1);
+        CSmNode *next = node->m_next;
+        node = next;
+    } while (node != stop);
 }
 
-extern "C" void fn_1_BBA0(void *self)
+// Walks every entry of the circular list at +0x00 of listA, and for each of
+// them every entry of the circular list at +0x00 of listB, calling fn.
+extern "C" void fn_1_BBA0(void *listA, void *listB, void (*fn)(void *, void *))
 {
+    void *headA = *(void **)listA;
+    void *outerStart = headA;
+    void *outer = outerStart;
+    void *outerRoot = listA;
+    void *outerStop = outerRoot;
+
+    do {
+        void *headB = *(void **)listB;
+        void *innerStart = headB;
+        void *inner = innerStart;
+        void *innerRoot = listB;
+        void *innerStop = innerRoot;
+
+        do {
+            fn(outer, inner);
+            void *nextB = *(void **)inner;
+            inner = nextB;
+        } while (inner != innerStop);
+
+        void *nextA = *(void **)outer;
+        outer = nextA;
+    } while (outer != outerStop);
 }
 
-extern "C" void fn_1_BC3C(void *self)
+// Byte-for-byte twin of fn_1_BBA0.
+extern "C" void fn_1_BC3C(void *listA, void *listB, void (*fn)(void *, void *))
 {
+    void *headA = *(void **)listA;
+    void *outerStart = headA;
+    void *outer = outerStart;
+    void *outerRoot = listA;
+    void *outerStop = outerRoot;
+
+    do {
+        void *headB = *(void **)listB;
+        void *innerStart = headB;
+        void *inner = innerStart;
+        void *innerRoot = listB;
+        void *innerStop = innerRoot;
+
+        do {
+            fn(outer, inner);
+            void *nextB = *(void **)inner;
+            inner = nextB;
+        } while (inner != innerStop);
+
+        void *nextA = *(void **)outer;
+        outer = nextA;
+    } while (outer != outerStop);
 }
 
-extern "C" void fn_1_BCD8(void *self)
+// Same as fn_1_BBA0 but the inner list ends at listA itself and the outer list
+// ends at listA->m_second.
+extern "C" void fn_1_BCD8(void *listA, void (*fn)(void *, void *))
 {
+    void *headA = *(void **)listA;
+    void *outerStart = headA;
+    void *outer = outerStart;
+    void *outerRoot = listA;
+    void *outerStop = *(void **)((char *)outerRoot + 4);
+
+    do {
+        void *innerStart = *(void **)outer;
+        void *inner = innerStart;
+        void *innerStop = listA;
+
+        do {
+            fn(outer, inner);
+            void *nextB = *(void **)inner;
+            inner = nextB;
+        } while (inner != innerStop);
+
+        void *nextA = *(void **)outer;
+        outer = nextA;
+    } while (outer != outerStop);
 }
 
 extern "C" void fn_1_BD6C(void)
