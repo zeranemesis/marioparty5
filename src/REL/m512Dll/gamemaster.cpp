@@ -33,9 +33,9 @@ struct CGameMaster {
     void *m_vtbl2;     // 0x20
     char m_f24[0x334]; // 0x24
     void *m_f358;      // 0x358
-    M512ScoreHead *m_f35C; // 0x35C
+    void *m_f35C;        // 0x35C score window
     s32 m_f360;        // 0x360 frame tick
-    s32 m_f364;        // 0x364 current record
+    u32 m_f364;        // 0x364 current record
     u8 m_f368;         // 0x368 wide-record flag
     u8 m_f369;
     char m_f36A[6];
@@ -89,7 +89,7 @@ bool fn_1_9EAC(u8 flag);
 bool fn_1_A040(u8 flag);
 void fn_1_A160(void);
 void fn_1_A1F0(void);
-s32 fn_1_A23C(void);
+u32 fn_1_A23C(void);
 
 void *fn_1_D178(void *self, s32 rec, u8 wideF);
 bool fn_1_D60C(void *self);
@@ -198,7 +198,7 @@ extern "C" CGameMaster *__dt__Q24m51211CGameMasterFv(CGameMaster *self, s16 flag
 
 extern "C" void fn_1_61B0(CGameMaster *self)
 {
-    s32 i;
+s32 i;
     void *a;
     void *b;
     void *c;
@@ -228,7 +228,7 @@ extern "C" void fn_1_61B0(CGameMaster *self)
     if (d) {
         d = fn_1_D178(d, self->m_f364, self->m_f368);
     }
-    self->m_f35C = (M512ScoreHead *)d;
+    self->m_f35C = d;
 
     fn_1_9104();
     for (i = 0; i < 4; i++) {
@@ -262,7 +262,7 @@ extern "C" void fn_1_635C(CGameMaster *self)
 {
     bool mode;
     bool flag;
-    s16 jingle;
+    s32 jingle;
     void *bgm;
 
     fn_1_1C48(0);
@@ -280,13 +280,13 @@ extern "C" void fn_1_635C(CGameMaster *self)
     fn_1_1C48(2);
     self->m_f360 = 0;
     fn_1_5BC4(&self->m_f358, 0x708, 0, 0);
-    do {
+    while (!fn_1_65E4(self)) {
         if (!mode && self->m_f360 > 0x3F48) {
             fn_1_5CBC(&self->m_f358, 1);
             mode = 1;
         }
         fn_1_5428(&self->m_vtbl2, 0);
-    } while (!fn_1_65E4(self));
+    }
     flag = fn_1_A040(self->m_f368);
     if (mode) {
         fn_1_5DB0(&self->m_f358);
@@ -330,7 +330,7 @@ extern "C" void fn_1_650C(CGameMaster *self)
     if (fn_1_66A0(self)) {
         if (self->m_f368 == 0) {
             rec = self->m_f364;
-            score = self->m_f35C;
+            score = (M512ScoreHead *)self->m_f35C;
             MgTimerRecordSet(score->timer, rec);
             if (_CheckFlag(0x1000F) == 0) {
                 GWMgRecordSet(3, self->m_f364);
@@ -366,7 +366,7 @@ extern "C" bool fn_1_65E4(CGameMaster *self)
 extern "C" bool fn_1_66A0(CGameMaster *self)
 {
     bool ret;
-    s32 rec;
+    u32 rec;
 
     ret = 0;
     rec = fn_1_A23C();
