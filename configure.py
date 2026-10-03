@@ -1097,7 +1097,7 @@ config.libs = [
         "m512Dll",
         objects={
             Object(NonMatching, "REL/m512Dll/m512.cpp"),
-            Object(NonMatching, "REL/m512Dll/gamemaster.cpp"),
+            Object(Equivalent, "REL/m512Dll/gamemaster.cpp"),
             Object(Matching, "REL/m512Dll/objectsetup.cpp"),
             Object(NonMatching, "REL/m512Dll/camera.cpp"),
             Object(NonMatching, "REL/m512Dll/dust.cpp"),
