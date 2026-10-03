@@ -76,7 +76,7 @@ static s32 mb7_BackObjFileTbl[MB7_BACKOBJ_MAX] = {
     0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F,
 };
 
-static const HuVecF mb7_BackObjPosTbl[MB7_BACKOBJ_MAX] = {
+static HuVecF mb7_BackObjPosTbl[MB7_BACKOBJ_MAX] = {
     { -685.0f, 685.0f, -4260.0f }, { 685.0f, 685.0f, -4260.0f },
     { -945.0f, 400.0f, -1120.0f }, { 945.0f, 400.0f, -1120.0f },
     { -615.0f, -315.0f, 645.0f }, { 615.0f, -315.0f, 645.0f },
@@ -97,22 +97,22 @@ static f32 mb7_BackObjRotYTbl[MB7_BACKOBJ_MAX] = {
     -45.0f, 45.0f, -45.0f, 45.0f, 45.0f, -45.0f,
 };
 
-static const HuVecF mb7ev_KoopaAsibaPosTbl[2] = {
+static HuVecF mb7ev_KoopaAsibaPosTbl[2] = {
     { -3925.0f, 1350.0f, -6085.0f },
     { 3925.0f, 1350.0f, -6085.0f },
 };
 
-static const HuVecF mb7ev_KoopaCubePosTbl[2][2] = {
+static HuVecF mb7ev_KoopaCubePosTbl[2][2] = {
     { { -3850.0f, 1150.0f, -5780.0f }, { -3635.0f, 1150.0f, -6000.0f } },
     { { 3850.0f, 1150.0f, -5780.0f }, { 3635.0f, 1150.0f, -6000.0f } },
 };
 
-static const HuVecF mb7ev_KoopaWalkStartPosTbl[2] = {
+static HuVecF mb7ev_KoopaWalkStartPosTbl[2] = {
     { 4580.0f, 495.0f, -4260.0f },
     { -4580.0f, 495.0f, -4260.0f },
 };
 
-static const HuVecF mb7ev_DoorPosTbl[2] = {
+static HuVecF mb7ev_DoorPosTbl[2] = {
     { 4400.0f, 495.0f, -4000.0f },
     { -4400.0f, 495.0f, -4000.0f },
 };
@@ -215,6 +215,18 @@ extern const VoidFunc _dtors[];
 
 extern void ObjectSetup(void);
 
+/* Every function in this unit is out of line in the original object (52
+ * text symbols, and `bl <name>` call sites for all 14 static helpers).
+ * MWCC -O0,p otherwise auto-inlines any function DEFINED IN THIS FILE at
+ * every call site, which merged each helper's body into its callers: the
+ * rebuilt .text was 7760 bytes in MB7Ev_KoopaCube alone against the
+ * target's 5428, 54480 against 46268 for the unit, and the real MB*
+ * library calls that live inside the helpers appeared as calls from the
+ * big board-event functions. One file-scope pragma restores the original
+ * shape. MB7_FastSqrt is the one exception and resets it below: the
+ * original has no such symbol and no `bl` to it, so the four Fire hooks
+ * carry its body inline. The original has no .ctors, so the __sinit this
+ * suppresses for file-scope statics costs nothing. */
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
     while (*ctors != 0) {
@@ -237,6 +249,13 @@ void ObjectSetup(void) {
     GWPartyFSet(TRUE);
     MBObjectSetup(6, MB7_Create, MB7_Kill);
 }
+
+/* The three REL entry points above must be left alone: with the pragma
+ * active MWCC pushes _prolog/_epilog out into their own .text sections,
+ * which drops ObjectSetup from 100 % to 61.90 %. Everything from here on
+ * is a static helper or a board-event function the original also keeps
+ * out of line. */
+#pragma dont_inline on
 
 /* ----------------------------- leaf helpers ----------------------------- */
 
@@ -543,11 +562,11 @@ static int MB7_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
  *     spawn position (MB7Ev_KoopaWalkDustCreate)
  */
 /* NONMATCHING: redundant li r0,-1 reload before consecutive stores
- * (92.86% match); logic identical. #pragma dont_inline: the original
- * keeps this out-of-line at every call site (confirmed via `bl
- * MB7Ev_KoopaInit` in both MB7Ev_KoopaWalk and MB7Ev_Hou); without the
- * pragma MWCC's -inline auto inlines it here since arg0 is unused. */
-#pragma dont_inline on
+ * (92.86% match); logic identical. The original keeps this out-of-line
+ * at every call site (confirmed via `bl MB7Ev_KoopaInit` in both
+ * MB7Ev_KoopaWalk and MB7Ev_Hou); the file-scope dont_inline above
+ * covers it, since arg0 is unused and -inline would otherwise fold it
+ * in. */
 static void MB7Ev_KoopaInit(u16 arg0) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
     s32 i;
@@ -561,7 +580,6 @@ static void MB7Ev_KoopaInit(u16 arg0) {
     }
     *(s32 *) (base + 0x6C) = MBDataDirReadAsync(0x100000);
 }
-#pragma dont_inline reset
 
 /* motion index -> motion id, base+0x44..+0x64 (s32[9]); base+0x34 is the
  * Koopa model id created by MB7Ev_KoopaCreate */
@@ -687,7 +705,7 @@ static void MB7Ev_KoopaWalkFxPlay(void) {
  * hooks below - dumped from the shipped REL's .data (offset 0x274, 0x30
  * bytes = 4 HuVecF). Only entry [0] is used by MB7_EffDustHook; entries
  * [1..3] are read by the not-yet-decompiled MB7Ev_KoopaFire hooks. */
-static const HuVecF mb7ev_DustColTbl[4] = {
+static HuVecF mb7ev_DustColTbl[4] = {
     { 128.0f, 128.0f, 128.0f },
     { 64.0f, 64.0f, 64.0f },
     { 64.0f, 64.0f, 192.0f },
@@ -696,7 +714,7 @@ static const HuVecF mb7ev_DustColTbl[4] = {
 
 /* base/variation color pairs for MB7Ev_KoopaCubeDustEffHook, indexed by
  * [effP->mode*2] (base) / [effP->mode*2+1] (variation) */
-static const HuVecF mb7ev_KoopaCubeDustColTbl[4] = {
+static HuVecF mb7ev_KoopaCubeDustColTbl[4] = {
     { 192.0f, 64.0f, 64.0f },
     { 0.0f, 131.0f, 131.0f },
     { 64.0f, 64.0f, 192.0f },
@@ -1003,6 +1021,10 @@ static void MB7Ev_RedResetHook(void) {
  * PowerPC_EABI_Support/Msl/MSL_C/MSL_Common/math.h) - used once per
  * spawned fire particle in MB7Ev_KoopaFire1Hook to normalize a 2D
  * (x,z) scatter vector. */
+/* NONMATCHING: not a symbol in the original - it is inlined at its four
+ * call sites in the MB7Ev_KoopaFire1..4Hook bodies, so it must stay
+ * inlinable and is exempt from the file-scope dont_inline. */
+#pragma dont_inline reset
 static f32 MB7_FastSqrt(f32 x) {
 #ifdef TARGET_PC
     /* __frsqrte is a PowerPC compiler intrinsic with no host equivalent;
