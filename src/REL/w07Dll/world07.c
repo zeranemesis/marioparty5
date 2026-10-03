@@ -76,7 +76,7 @@ static s32 mb7_BackObjFileTbl[MB7_BACKOBJ_MAX] = {
     0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F, 0xD7000F,
 };
 
-static const HuVecF mb7_BackObjPosTbl[MB7_BACKOBJ_MAX] = {
+static HuVecF mb7_BackObjPosTbl[MB7_BACKOBJ_MAX] = {
     { -685.0f, 685.0f, -4260.0f }, { 685.0f, 685.0f, -4260.0f },
     { -945.0f, 400.0f, -1120.0f }, { 945.0f, 400.0f, -1120.0f },
     { -615.0f, -315.0f, 645.0f }, { 615.0f, -315.0f, 645.0f },
@@ -97,22 +97,22 @@ static f32 mb7_BackObjRotYTbl[MB7_BACKOBJ_MAX] = {
     -45.0f, 45.0f, -45.0f, 45.0f, 45.0f, -45.0f,
 };
 
-static const HuVecF mb7ev_KoopaAsibaPosTbl[2] = {
+static HuVecF mb7ev_KoopaAsibaPosTbl[2] = {
     { -3925.0f, 1350.0f, -6085.0f },
     { 3925.0f, 1350.0f, -6085.0f },
 };
 
-static const HuVecF mb7ev_KoopaCubePosTbl[2][2] = {
+static HuVecF mb7ev_KoopaCubePosTbl[2][2] = {
     { { -3850.0f, 1150.0f, -5780.0f }, { -3635.0f, 1150.0f, -6000.0f } },
     { { 3850.0f, 1150.0f, -5780.0f }, { 3635.0f, 1150.0f, -6000.0f } },
 };
 
-static const HuVecF mb7ev_KoopaWalkStartPosTbl[2] = {
+static HuVecF mb7ev_KoopaWalkStartPosTbl[2] = {
     { 4580.0f, 495.0f, -4260.0f },
     { -4580.0f, 495.0f, -4260.0f },
 };
 
-static const HuVecF mb7ev_DoorPosTbl[2] = {
+static HuVecF mb7ev_DoorPosTbl[2] = {
     { 4400.0f, 495.0f, -4000.0f },
     { -4400.0f, 495.0f, -4000.0f },
 };
@@ -705,7 +705,7 @@ static void MB7Ev_KoopaWalkFxPlay(void) {
  * hooks below - dumped from the shipped REL's .data (offset 0x274, 0x30
  * bytes = 4 HuVecF). Only entry [0] is used by MB7_EffDustHook; entries
  * [1..3] are read by the not-yet-decompiled MB7Ev_KoopaFire hooks. */
-static const HuVecF mb7ev_DustColTbl[4] = {
+static HuVecF mb7ev_DustColTbl[4] = {
     { 128.0f, 128.0f, 128.0f },
     { 64.0f, 64.0f, 64.0f },
     { 64.0f, 64.0f, 192.0f },
@@ -714,7 +714,7 @@ static const HuVecF mb7ev_DustColTbl[4] = {
 
 /* base/variation color pairs for MB7Ev_KoopaCubeDustEffHook, indexed by
  * [effP->mode*2] (base) / [effP->mode*2+1] (variation) */
-static const HuVecF mb7ev_KoopaCubeDustColTbl[4] = {
+static HuVecF mb7ev_KoopaCubeDustColTbl[4] = {
     { 192.0f, 64.0f, 64.0f },
     { 0.0f, 131.0f, 131.0f },
     { 64.0f, 64.0f, 192.0f },
