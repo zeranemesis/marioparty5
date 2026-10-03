@@ -7,7 +7,7 @@ typedef struct M574PlayerWork_s {
     s32 charNo;
     s32 curMotNo;
     s32 unk14;
-    s32 unk18;
+    u32 unk18;
     s32 unk1C;
     f32 f20;
     s32 type;
@@ -72,7 +72,7 @@ static const Vec M574PlayerPosTbl2[4] = {
 
 static const f32 M574PlayerAngleTbl[4] = { 90.0f, 220.0f, 90.0f, 220.0f };
 
-static const s16 M574PlayerPanTbl[4] = { 0x24, 0x3C, 0x44, 0x5C };
+static const s32 M574PlayerPanTbl[4] = { 0x24, 0x3C, 0x44, 0x5C };
 
 static OMOBJ *M574PlayerObjTbl[M574_PLAYER_MAX];
 
@@ -186,20 +186,22 @@ void fn_1_182C(void)
 void fn_1_1830(OMOBJ *obj)
 {
     M574_PLAYER_WORK *player;
+    f64 rate;
 
     player = obj->data;
     if (player->unk18 & 0x100) {
-        fn_1_6478(player->grp, 1.0f);
+        fn_1_6478(player->playerGrp, 1.0f);
     }
     else if (player->f20 > 0.0) {
-        fn_1_6478(player->grp, player->f20);
+        fn_1_6478(player->playerGrp, player->f20);
     }
     else {
-        fn_1_6478(player->grp, 0.0f);
+        fn_1_6478(player->playerGrp, 0.0f);
     }
 
     if (player->curMotNo == 2 && CharMotionShiftIDGet(player->charNo) < 0) {
-        CharMotionTimeSet(player->charNo, (f32) (30.0 * (1.0 - (f64) fn_1_6568(player->grp))));
+        rate = fn_1_6568(player->playerGrp);
+        CharMotionTimeSet(player->charNo, (f32) (30.0 * (1.0 - rate)));
     }
 }
 
