@@ -157,3 +157,19 @@ void Result_SetBonusSprNum(HUSPRGRPID grpId, s16 coinNum)
         num++;
     }
 }
+
+void Result_BoardSave(void)
+{
+    s16 turnNo;
+    s16 i;
+
+    turnNo = GwSystem.turnNo;
+    for(i=0; i<4; i++) {
+        GwPlayer[i].starStat[turnNo-1] = GwPlayer[i].star;
+        GwPlayer[i].coinStat[turnNo-1] = GwPlayer[i].coin;
+    }
+    SLSaveBoardTurnExec();
+    if (SLSaveFlagGet() == 0) {
+        GwSystem.saveMode = 1;
+    }
+}
