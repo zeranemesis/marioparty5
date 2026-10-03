@@ -1103,7 +1103,7 @@ config.libs = [
             Object(NonMatching, "REL/m512Dll/dust.cpp"),
             Object(NonMatching, "REL/m512Dll/stage.cpp"),
             Object(NonMatching, "REL/m512Dll/player.cpp"),
-            Object(NonMatching, "REL/m512Dll/score.cpp"),
+            Object(Equivalent, "REL/m512Dll/score.cpp"),
             Object(NonMatching, "REL/m512Dll/zako.cpp"),
             Object(NonMatching, "REL/m512Dll/heiho.cpp"),
         },
