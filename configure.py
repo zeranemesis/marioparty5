@@ -1044,7 +1044,7 @@ config.libs = [
             Object(NonMatching, "REL/m509Dll/m509.cpp"),
             Object(NonMatching, "REL/m509Dll/mazedata.cpp"),
             Object(NonMatching, "REL/m509Dll/maze.cpp"),
-            Object(NonMatching, "REL/m509Dll/gamemaster.cpp"),
+            Object(Equivalent, "REL/m509Dll/gamemaster.cpp"),
             Object(NonMatching, "REL/m509Dll/startspr.cpp"),
             Object(NonMatching, "REL/m509Dll/back.cpp"),
             Object(Matching, "REL/m509Dll/objectsetup.cpp"),
