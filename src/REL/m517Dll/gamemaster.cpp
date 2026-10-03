@@ -686,83 +686,104 @@ extern "C" void fn_1_BAFC(void *self)
 
 // Walks every entry of the circular list at +0x00 of listA, and for each of
 // them every entry of the circular list at +0x00 of listB, calling fn.
+// NONMATCHING: MWCC homes the incoming list pointers instead of promoting
+// them to r29/r28, eight rows differ; the register assignment is exact.
 extern "C" void fn_1_BBA0(void *listA, void *listB, void (*fn)(void *, void *))
 {
-    void *headA = *(void **)listA;
-    void *outerStart = headA;
-    void *outer = outerStart;
-    void *outerRoot = listA;
-    void *outerStop = outerRoot;
+    void *outer, *inner, *rootB, *rootA, *outerStop, *innerStop;
+    void *headA, *outerStart, *outerRoot, *headB, *innerStart, *innerRoot, *nextB, *nextA;
 
-    do {
-        void *headB = *(void **)listB;
-        void *innerStart = headB;
-        void *inner = innerStart;
-        void *innerRoot = listB;
-        void *innerStop = innerRoot;
+    rootA = listA;
+    rootB = listB;
+    headA = *(void **)rootA;
+    outerStart = headA;
+    outer = outerStart;
+    outerRoot = rootA;
+    outerStop = outerRoot;
 
-        do {
+    while (outer != outerStop) {
+        headB = *(void **)rootB;
+        innerStart = headB;
+        inner = innerStart;
+        innerRoot = rootB;
+        innerStop = innerRoot;
+
+        while (inner != innerStop) {
             fn(outer, inner);
-            void *nextB = *(void **)inner;
+            nextB = *(void **)inner;
             inner = nextB;
-        } while (inner != innerStop);
+        }
 
-        void *nextA = *(void **)outer;
+        nextA = *(void **)outer;
         outer = nextA;
-    } while (outer != outerStop);
+    }
 }
 
 // Byte-for-byte twin of fn_1_BBA0.
+// NONMATCHING: MWCC homes the incoming list pointers instead of promoting
+// them to r29/r28, five rows differ.
 extern "C" void fn_1_BC3C(void *listA, void *listB, void (*fn)(void *, void *))
 {
-    void *headA = *(void **)listA;
-    void *outerStart = headA;
-    void *outer = outerStart;
-    void *outerRoot = listA;
-    void *outerStop = outerRoot;
+    void *outer, *inner, *rootB, *rootA, *outerStop, *innerStop;
+    void *headA, *outerStart, *outerRoot, *headB, *innerStart, *innerRoot, *nextB, *nextA;
 
-    do {
-        void *headB = *(void **)listB;
-        void *innerStart = headB;
-        void *inner = innerStart;
-        void *innerRoot = listB;
-        void *innerStop = innerRoot;
+    rootA = listA;
+    rootB = listB;
+    headA = *(void **)rootA;
+    outerStart = headA;
+    outer = outerStart;
+    outerRoot = rootA;
+    outerStop = outerRoot;
 
-        do {
+    while (outer != outerStop) {
+        headB = *(void **)rootB;
+        innerStart = headB;
+        inner = innerStart;
+        innerRoot = rootB;
+        innerStop = innerRoot;
+
+        while (inner != innerStop) {
             fn(outer, inner);
-            void *nextB = *(void **)inner;
+            nextB = *(void **)inner;
             inner = nextB;
-        } while (inner != innerStop);
+        }
 
-        void *nextA = *(void **)outer;
+        nextA = *(void **)outer;
         outer = nextA;
-    } while (outer != outerStop);
+    }
 }
 
 // Same as fn_1_BBA0 but the inner list ends at listA itself and the outer list
 // ends at listA->m_second.
+// NONMATCHING: MWCC homes the incoming list pointer instead of promoting it
+// to r28, five rows differ; the register assignment is exact.
 extern "C" void fn_1_BCD8(void *listA, void (*fn)(void *, void *))
 {
-    void *headA = *(void **)listA;
-    void *outerStart = headA;
-    void *outer = outerStart;
-    void *outerRoot = listA;
-    void *outerStop = *(void **)((char *)outerRoot + 4);
+    void *outer, *inner, *innerStop;
+    void *root = listA;
+    void *stop, *headA, *outerStart, *outerRoot, *outerStop, *innerStart, *nextB, *nextA;
 
-    do {
-        void *innerStart = *(void **)outer;
-        void *inner = innerStart;
-        void *innerStop = listA;
+    headA = *(void **)root;
+    outerStart = headA;
+    outer = outerStart;
+    outerRoot = root;
+    innerStop = outerRoot;
+    outerStop = *(void **)((char *)innerStop + 4);
+    stop = outerStop;
 
-        do {
+    while (outer != stop) {
+        innerStart = *(void **)outer;
+        inner = innerStart;
+
+        while (inner != innerStop) {
             fn(outer, inner);
-            void *nextB = *(void **)inner;
+            nextB = *(void **)inner;
             inner = nextB;
-        } while (inner != innerStop);
+        }
 
-        void *nextA = *(void **)outer;
+        nextA = *(void **)outer;
         outer = nextA;
-    } while (outer != outerStop);
+    }
 }
 
 extern "C" void fn_1_BD6C(void)
