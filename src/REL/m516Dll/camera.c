@@ -1,3 +1,5 @@
+#define _MATH_H
+
 #include "game/audio.h"
 #include "game/gamework.h"
 #include "game/object.h"
@@ -8,8 +10,14 @@ typedef struct {
     Vec target;
 } CAMPOS;
 
-extern CAMPOS lbl_1_data_50[3];
-static s32 lbl_1_bss_20;
+CAMPOS lbl_1_data_50[3] = {
+    { { 0, 230, 0 }, { -2, 0, 250 } },
+    { { 0, 600, 0 }, { -2.5, 0, 1950 } },
+    { { 0, 800, 0 }, { -2.5, 0, 2500 } }
+};
+
+s32 lbl_1_bss_20;
+s32 lbl_1_bss_24;
 
 void fn_1_410(OMOBJ *obj);
 void fn_1_524(OMOBJ *obj);
@@ -50,7 +58,7 @@ void fn_1_1F90(OMOBJ *obj)
         work[0x14 / 4] = 0;
         break;
     case 2:
-        t = (f32)(0.007246376811594203 * ((f32)work[0x14 / 4]));
+        t = (f32)(0.007246376811594203 * (f64)work[0x14 / 4]);
         if (t >= 1.0) {
             t = 1.0f;
         }
@@ -64,7 +72,7 @@ void fn_1_1F90(OMOBJ *obj)
     case 3:
         fn_1_524(obj);
     default:
-        break;
+        return;
     }
 }
 
@@ -76,8 +84,7 @@ OMOBJFUNC fn_1_2108(OMOBJMAN *objman, OMOBJ *obj)
 
     for (i = 0; i < 4; i++) {
         if (fn_1_8088(i) != 0) {
-            *(u32 *)((u8 *)work + i * 4 + 0x48) =
-                *(u32 *)((u8 *)work + i * 4 + 0x38);
+            *(u32 *)((u8 *)work + i * 4 + 0x48) = *(u32 *)((u8 *)work + i * 4 + 0x38);
         } else {
             *(u32 *)((u8 *)work + i * 4 + 0x48) = -1;
         }
@@ -104,7 +111,7 @@ void fn_1_21C4(OMOBJ *obj)
         work[0x20 / 4] = 2;
         break;
     case 2:
-        t = (f32)(0.05555555555555555 * ((f32)work[0x24 / 4]));
+        t = (f32)(0.05555555555555555 * (f64)work[0x24 / 4]);
         if (t >= 1.0) {
             t = 1.0f;
             work[0x20 / 4] = 3;
