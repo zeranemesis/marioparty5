@@ -1,8 +1,7 @@
 #ifndef _M522DLL_H
 #define _M522DLL_H
 
-#include "game/audio.h"
-#include "game/wipe.h"
+#include "types.h"
 
 /* The mode controller of the main board, CGameMaster.  ObjectSetup() builds it
  * in a 0x368 byte allocation, so only the members this module touches need to

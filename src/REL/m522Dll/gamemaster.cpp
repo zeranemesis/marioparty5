@@ -1,14 +1,21 @@
 #include "REL/m522Dll.h"
 
-class CTime {
-public:
-    CTime(int v) : m_time(v) {}
-    int m_time;
-};
+/* The three CTime limits of the mode controller, plus the spare word that
+ * follows them in .bss.  They are set up by fn_1_D0E4. */
+static s32 lbl_1_bss_A10;
+static s32 lbl_1_bss_A14;
+static s32 lbl_1_bss_A18;
+static s32 lbl_1_bss_A1C;
 
-static CTime lbl_1_bss_A10(120);
-static CTime lbl_1_bss_A14(210);
-static CTime lbl_1_bss_A18(210);
+/* Declared here rather than through game/audio.h and game/wipe.h: those pull
+ * in MSL math.h, whose inline std::sqrtf emits constants into .rodata, and the
+ * original object has no .rodata at all. */
+int HuAudFXPlay(int seId);
+int HuAudBGMPlay(s16 streamId);
+int HuAudJinglePlay(s16 streamId);
+void HuAudSStreamFadeOut(int streamNo, s32 speed);
+u8 WipeCheck(void);
+extern "C" u32 OSGetTick(void);
 
 extern "C" {
 /* CMinigameCore, the base of the mode controller. */
@@ -65,6 +72,7 @@ void fn_1_CCFC(M522_GAMEMASTER *self);
 void fn_1_CDA8(M522_GAMEMASTER *self);
 void fn_1_D094(M522_GAMEMASTER *self);
 void fn_1_D0C0(void);
+void fn_1_D0E4(void);
 u8 fn_1_CF6C(M522_GAMEMASTER *self);
 void fn_1_D118(M522_GAMEMASTER *self);
 void fn_1_D120(M522_GAMEMASTER *self, s16 flag);
@@ -233,6 +241,13 @@ void fn_1_D0C0(void)
 {
     fn_1_F974();
     fn_1_8B80();
+}
+
+void fn_1_D0E4(void)
+{
+    lbl_1_bss_A10 = 120;
+    lbl_1_bss_A14 = 210;
+    lbl_1_bss_A18 = 210;
 }
 
 void fn_1_D118(M522_GAMEMASTER *self)
