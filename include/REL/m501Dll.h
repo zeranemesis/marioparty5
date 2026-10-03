@@ -36,7 +36,7 @@ class CGameObject : public CLinkNode {
 public:
     static CLinkList ObjectList;
 
-    virtual void on_new_mode(s32 mode) = 0;
+    virtual void on_new_mode(int mode) = 0;
     virtual void on_update() {}
     void SetObjExecMode(s32 mode);
 
@@ -56,6 +56,8 @@ public:
     CModel(unsigned int dataNum);
     ~CModel();
     Hu3DMtx *getMatrix();
+
+    s16 getId() { return m_id; }
 
     s16 m_id;
 };

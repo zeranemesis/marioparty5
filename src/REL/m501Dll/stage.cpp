@@ -38,7 +38,7 @@ class CStage : public CGameObject, public CSingleton {
 public:
     CStage();
     virtual ~CStage();
-    virtual void on_new_mode(s32 mode);
+    virtual void on_new_mode(int mode);
     virtual void on_update();
     void setAisuMotion();
 
@@ -109,7 +109,9 @@ void CStage::setAisuMotion()
 {
     if (m_timer <= 0) {
         m_timer = 0x25;
-        Hu3DMotionShapeSet(m_aisu.m_id, Hu3DMotionShapeIDGet(m_aisu.m_id));
+        s16 modelId = m_aisu.getId();
+        s16 motId = Hu3DMotionShapeIDGet(modelId);
+        Hu3DMotionShapeSet(modelId, motId);
     }
 }
 
@@ -118,29 +120,28 @@ void CStage::on_update()
     s32 expired = 0;
 
     if (m_timer > 0) {
-        m_timer = m_timer - 1;
-        if (m_timer == 0) {
+        if ((m_timer -= 1) == 0) {
             expired = 1;
         }
     }
 
     Hu3DMtx *mtx = m_aisu.getMatrix();
     mtx->m[2][1] = (f32)(0.1 * (100.0 * cos(m_angle)));
-    m_angle = (f32)((f64)m_angle + 0.017453292519943295);
+    m_angle += 0.017453292519943295;
     if (m_angle > 3.141592653589793) {
         m_angle = (f32)((f64)m_angle - 6.283185307179586);
     }
 }
 
-void CStage::on_new_mode(s32 mode)
+void CStage::on_new_mode(int mode)
 {
-    m_execMode &= ~(1 << mode);
+    m_execMode = m_execMode & ~(1 << mode);
 
     switch (mode) {
     case 0:
         break;
     case 2:
-        Hu3DCameraMotionOff(m_camera.m_id);
+        Hu3DCameraMotionOff(m_camera.getId());
         break;
     case 5:
         break;
