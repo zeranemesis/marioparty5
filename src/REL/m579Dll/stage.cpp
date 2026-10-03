@@ -1,8 +1,19 @@
 #include "dolphin/types.h"
-#include "game/hu3d.h"
-#include <math.h>
+#include <dolphin/gx.h>
+
+#define M_PI 3.14159265358979323846
 
 extern "C" {
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+} HuVecF;
+
+double cos(double x);
+double sin(double x);
+double tan(double x);
+
 struct M579StageModel {
     s16 field0;
     s16 field2;
@@ -38,6 +49,11 @@ extern s32 lbl_1_bss_C;
 extern void *lbl_1_data_1FC[];
 
 void Hu3DModelObjDrawInit(void *obj, s32 arg1);
+s32 Hu3DModelLightInfoSet(s16 modelId, s16 staticF);
+void Hu3DShadowCreate(f32 fov, f32 near, f32 far);
+void Hu3DShadowSizeSet(u16 size);
+void Hu3DShadowTPLvlSet(f32 tpLvl);
+void Hu3DShadowPosSet(HuVecF *camPos, HuVecF *camUp, HuVecF *camTarget);
 
 f32 lbl_1_data_360[3] = { 0.0f, 0.0f, 0.0f };
 char lbl_1_data_36C[16] = { 'm','s','_','p','o','i','n','t','e','r',' ','=','=',' ','0' };
@@ -80,7 +96,7 @@ if (lbl_1_bss_A30 != 0) {
     fn_1_304C(&self->model.field2, 0);
     fn_1_2E08(&self->model.field2, 0x4001);
 
-    scale = 0.0 / tan(0.39269908169872414);
+    scale = 0.0 / tan((f64) 0.39269908169872414);
     if (lbl_1_bss_A88[0] == 0) {
         lbl_1_data_360[1] = (f32) scale;
         lbl_1_bss_A88[0] = 1;
@@ -137,11 +153,12 @@ void fn_1_B5F0(void *self, void *mtx)
 
 void fn_1_B620(void)
 {
-    f32 stagePosZ[80];
     f32 stagePosX[80];
-    s32 i;
+    f32 stagePosZ[80];
+s32 i;
     s32 idx;
     f32 ang;
+    f64 rad;
 
     idx = 0;
     i = 0;
@@ -150,8 +167,8 @@ void fn_1_B620(void)
         if (ang > 180.0f) {
             ang -= 360.0f;
         }
-        ang = 3.141592653589793 * ang / 180.0;
-        stagePosX[idx] = 100.0 * (8.5 * cos(ang));
+        rad = 3.141592653589793 * ang / 180.0;
+        stagePosX[idx] = 100.0 * (8.5 * cos(rad));
         stagePosZ[idx] = 100.0 * (8.5 * sin(ang));
         idx++;
         stagePosX[idx] = 100.0 * (4.5 * cos(ang));
@@ -161,7 +178,8 @@ void fn_1_B620(void)
     }
 
     GXSetNumTevStages(1);
-    GXSetChanCtrl(GX_COLOR0A0, 0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_SPEC);
+    GXSetChanCtrl(GX_COLOR0A0, 0, GX_SRC_VTX, GX_SRC_VTX, 0, GX_DF_NONE,
+                  GX_AF_NONE);
     GXSetNumChans(1);
     GXSetNumTexGens(0);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
@@ -173,7 +191,7 @@ void fn_1_B620(void)
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-    GXBegin(GX_TRIANGLES, GX_VTXFMT0, idx);
+    GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, idx);
 
     i = 0;
     while (i < idx) {

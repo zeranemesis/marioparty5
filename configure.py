@@ -1720,7 +1720,7 @@ config.libs = [
             Object(Matching, "REL/m579Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m579Dll/camera.cpp"),
             Object(NonMatching, "REL/m579Dll/water.cpp"),
-            Object(NonMatching, "REL/m579Dll/stage.cpp"),
+            Object(Equivalent, "REL/m579Dll/stage.cpp"),
             Object(NonMatching, "REL/m579Dll/effect.cpp"),
             Object(NonMatching, "REL/m579Dll/player.cpp"),
             Object(NonMatching, "REL/m579Dll/fishline.cpp"),
