@@ -441,18 +441,32 @@ void fn_1_96E0(M536Cloud *self)
 void fn_1_9744(s32 index)
 {
     M536Cloud *node;
+    HU3DMODELID id;
+    M536Cloud *head;
+    M536Cloud *list;
+    M536Cloud *cur;
+    s16 tmp;
+    M536Cloud *next;
 
-    node = lbl_1_bss_A74.m_next;
-    while (node != &lbl_1_bss_A74) {
+    list = lbl_1_bss_A74.m_next;
+    cur = list;
+    node = cur;
+    head = &lbl_1_bss_A74;
+
+    while (node != head) {
         if (node->m_index == index) {
-            Hu3DModelAttrReset(node->m_mdl, 0x40000002);
-            Hu3DModelAttrReset(node->m_mdl, 0x40000001);
-            Hu3DModelAttrReset(node->m_mdl, 1);
-            Hu3DMotionTimeSet(node->m_mdl, 0.0f);
+            tmp = (s16)(s32)node->m_mdl;
+            id = tmp;
+            Hu3DModelAttrReset(id, 0x40000002);
+            Hu3DModelAttrReset(id, 0x40000001);
+            Hu3DModelAttrReset(id, 1);
+            Hu3DMotionTimeSet(id, 0.0f);
         }
-        node = node->m_next;
+        next = node->m_next;
+        node = next;
     }
 }
+
 
 void fn_1_96B0(void)
 {
