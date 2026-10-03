@@ -49,9 +49,11 @@ struct M536Sky {
     M536Base *m_prev;
     void **m_vptr;
     s32 m_flag;
-    HU3DMODELID m_mdl[5];
+    HU3DMODELID m_mdl;
+    HU3DMODELID m_cloud[5];
     Vec3 m_pos[4];
 };
+
 
 void Hu3DCameraPerspectiveGet(int cameraBit, f32 *fov, f32 *nearZ, f32 *farZ);
 void GXSetFog(s32 fogType, f32 nearZ, f32 farZ, f32 nearDist, f32 farDist, GXColor color);
@@ -224,7 +226,10 @@ void *fn_1_8B94(M536Stage *self)
     return self;
 }
 
+// NONMATCHING: the singleton assert block is emitted out of line by the
+// original; MWCC 2.6 always inlines it (BRIEF.md section 6).
 void *fn_1_8F18(M536Stage *self, s16 flag)
+
 {
     if (self) {
         if (!lbl_1_bss_A10) {
@@ -283,14 +288,15 @@ void *fn_1_906C(M536Sky *self)
     lbl_1_bss_A0C = self;
     self->m_vptr = lbl_1_data_39C;
 
-    fn_1_2C94(&self->m_mdl[0], DATANUM(DATA_m536, 3));
-    self->m_mdl[1] = self->m_mdl[0];
-    self->m_mdl[2] = Hu3DModelLink(self->m_mdl[0]);
-    self->m_mdl[3] = Hu3DModelLink(self->m_mdl[0]);
-    self->m_mdl[4] = Hu3DModelLink(self->m_mdl[0]);
+    fn_1_2C94(&self->m_mdl, DATANUM(DATA_m536, 3));
+    self->m_cloud[0] = self->m_mdl;
+    self->m_cloud[1] = Hu3DModelLink(self->m_mdl);
+    self->m_cloud[2] = Hu3DModelLink(self->m_mdl);
+    self->m_cloud[3] = Hu3DModelLink(self->m_mdl);
 
     for (i = 0; i < 4; i++) {
-        mdl = self->m_mdl[i + 1];
+        mdl = self->m_cloud[i];
+
         self->m_pos[i].x = lbl_1_data_36C[i].x;
         self->m_pos[i].y = lbl_1_data_36C[i].y;
         self->m_pos[i].z = lbl_1_data_36C[i].z;
@@ -306,7 +312,10 @@ void *fn_1_906C(M536Sky *self)
     return self;
 }
 
+// NONMATCHING: the singleton assert block is emitted out of line by the
+// original; MWCC 2.6 always inlines it (BRIEF.md section 6).
 void *fn_1_92C8(M536Sky *self, s16 flag)
+
 {
     if (self) {
         if (!lbl_1_bss_A0C) {
@@ -320,15 +329,19 @@ void *fn_1_92C8(M536Sky *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: the original keeps the limit in a double FPR slot all the way
+// through the compare and the store; MWCC 2.6 narrows it (frsp) instead.
 void fn_1_9354(M536Sky *self)
 {
     s32 i;
     f32 limit;
     HU3DMODELID mdl;
 
+
     for (i = 0; i < 4; i++) {
-        mdl = self->m_mdl[i + 1];
+        mdl = self->m_cloud[i];
         limit = -(f32)(i * 200 + 1500);
+
         self->m_pos[i].x += 1.0f;
         if (self->m_pos[i].x > limit) {
             self->m_pos[i].x = -limit;
@@ -434,14 +447,18 @@ void fn_1_96B0(void)
     fn_1_99E0(&lbl_1_bss_A74, fn_1_96E0);
 }
 
+// NONMATCHING: the singleton assert block is emitted out of line by the
+// original; MWCC 2.6 always inlines it (BRIEF.md section 6).
 void *fn_1_9800(M536Sky *self, s16 flag)
 {
     if (self) {
         self->m_vptr = lbl_1_data_39C;
-        fn_1_30F4(&self->m_mdl[0], -1);
 
-        if (&self->m_mdl[0]) {
+        fn_1_30F4(&self->m_mdl, -1);
+
+        if (&self->m_mdl) {
             if (!lbl_1_bss_A0C) {
+
                 fn_1_1D4(lbl_1_data_35C, lbl_1_data_350, 0x3D);
             }
             lbl_1_bss_A0C = NULL;
@@ -462,10 +479,13 @@ void *fn_1_9800(M536Sky *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: the singleton assert block is emitted out of line by the
+// original; MWCC 2.6 always inlines it (BRIEF.md section 6).
 void *fn_1_98D8(M536Stage *self, s16 flag)
 {
     if (self) {
         self->m_vptr = lbl_1_data_3B0;
+
         fn_1_30F4(&self->m_mdl[4], -1);
         fn_1_30F4(&self->m_mdl[3], -1);
         fn_1_30F4(&self->m_mdl[2], -1);
@@ -474,6 +494,7 @@ void *fn_1_98D8(M536Stage *self, s16 flag)
 
         if (&self->m_mdl[0]) {
             if (!lbl_1_bss_A10) {
+
                 fn_1_1D4(lbl_1_data_35C, lbl_1_data_350, 0x3D);
             }
             lbl_1_bss_A10 = NULL;
