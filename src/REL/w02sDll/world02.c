@@ -2761,8 +2761,8 @@ void MB2_CoinEffInit(void) {
 
 void MB2_CoinEffUpdate(OMOBJ *obj) {
     MB2_COINEFF_DATA *dat;
-    void *hdr;
     u8 *p;
+    void *hdr;
     s32 i;
 
     dat = (MB2_COINEFF_DATA *) obj->data;
@@ -2784,7 +2784,7 @@ void MB2_CoinEffUpdate(OMOBJ *obj) {
     p = *(u8 **) ((u8 *) hdr + 0x3C);
     *(u8 *) ((u8 *) hdr + 0x23) = 0;
     for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
-        if (*(f32 *) (p + 0x34) > 0.0f) {
+        if (!(*(f32 *) (p + 0x34) <= 0.0f)) {
             *(f32 *) (p + 0x44) += *(f32 *) (p + 0x8);
             *(f32 *) (p + 0x48) += *(f32 *) (p + 0xC);
             *(f32 *) (p + 0x4C) += *(f32 *) (p + 0x10);
