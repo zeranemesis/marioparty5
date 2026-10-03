@@ -213,13 +213,11 @@ void fn_1_56AC(s16 layerNo)
 
 void fn_1_5744(HUPROCESS *process)
 {
-    GXColor *cp;
     M514Fog *fog = &lbl_1_data_4A0[0];
 
     lbl_1_bss_214 = 2.0f;
     Hu3DBGColorSet(fog->color.r, fog->color.g, fog->color.b);
     Hu3DFogSet(fog->start, fog->end, fog->color.r, fog->color.g, fog->color.b);
-
 
     Hu3DLayerHookSet(0, fn_1_56AC);
     Hu3DLayerHookSet(2, fn_1_5610);
@@ -244,10 +242,10 @@ void fn_1_5858(OMOBJ *obj)
 
 void fn_1_585C(HU3DMODEL *modelP, Mtx *mtx)
 {
-Mtx mtx2;
+    Mtx mtx2;
     OMOBJ *obj = lbl_1_bss_210;
     f32 *data = obj->data;
-
+    u32 c0, c1, c2, c3;
 
     PSMTXIdentity(mtx2);
     PSMTXTrans(mtx2, *data, 0.0f, 0.0f);
@@ -261,7 +259,7 @@ Mtx mtx2;
     GXSetNumTevStages(1);
     GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
-GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, M514_GX_SRC_VTX, M514_GX_SRC_VTX, 0, GX_DF_NONE, M514_GX_AF_NONE);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, M514_GX_SRC_VTX, M514_GX_SRC_VTX, 0, GX_DF_NONE, M514_GX_AF_NONE);
 
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
@@ -270,23 +268,28 @@ GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, M514_GX_SRC_VTX, M514_GX_SRC_VTX, 0, GX_DF_
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 
-    GXWGFifo.f32 = -15.0f;
+GXWGFifo.f32 = -15.0f;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = -240.0f;
-    GXWGFifo.u32 = lbl_1_data_4D0;
+    c0 = lbl_1_data_4D0;
+    GXWGFifo.u32 = c0;
 
     GXWGFifo.f32 = 15.0f;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = -240.0f;
-    GXWGFifo.u32 = lbl_1_data_4D0;
+    c1 = lbl_1_data_4D0;
+    GXWGFifo.u32 = c1;
 
     GXWGFifo.f32 = 15.0f;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = 230.0f;
-    GXWGFifo.u32 = lbl_1_data_4D0;
+    c2 = lbl_1_data_4D0;
+    GXWGFifo.u32 = c2;
 
     GXWGFifo.f32 = -15.0f;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = 230.0f;
-    GXWGFifo.u32 = lbl_1_data_4D0;
+    c3 = lbl_1_data_4D0;
+    GXWGFifo.u32 = c3;
 }
+
