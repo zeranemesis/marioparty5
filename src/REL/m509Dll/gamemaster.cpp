@@ -56,7 +56,16 @@ extern u32 lbl_1_bss_38;
 extern u32 lbl_1_bss_3C;
 extern u32 lbl_1_bss_40;
 
+const char lbl_1_data_3280[] = "m509::CGameMaster::~CGameMaster()";
+const char lbl_1_data_32A2[] = "%s\n";
+const char lbl_1_data_32B6[] = "singleton.h";
 const char lbl_1_data_32C2[] = "ms_pointer == 0";
+
+int printf(const char *fmt, ...);
+
+// singleton.h reaches the singleton through its address, so every access is a
+// lis/addi pair followed by a load or store at offset 0.
+#define SINGLETON (*(u32 *)&lbl_1_bss_30)
 
 typedef void (*VoidFunc)(void *self);
 
@@ -75,13 +84,13 @@ void fn_1_C8BC(void *self);
 void fn_1_C8E0(void);
 void fn_1_C914(void *self);
 void fn_1_C91C(void *self);
-void __dt__Q24m50911CGameMasterFv(void *self);
+void *__dt__Q24m50911CGameMasterFv(void *self, s16 flag);
 void *fn_1_C2D0(void *self);
 
 // Two virtual tables for m509::CGameMaster. The first covers the subobject at
 // this+0x4, the second (at +0x18) the subobject at this+0x20; its entries are
 // adjustor thunks that give back 0x20 before reaching the real implementation.
-VoidFunc lbl_1_data_32D4[12] = {
+VoidFunc lbl_1_data_32D4[13] = {
     (VoidFunc)0,
     (VoidFunc)0,
     (VoidFunc)__dt__Q24m50911CGameMasterFv,
@@ -96,11 +105,20 @@ VoidFunc lbl_1_data_32D4[12] = {
     (VoidFunc)fn_1_C4E0,
 };
 
-void __dt__Q24m50911CGameMasterFv(void *self)
+void *__dt__Q24m50911CGameMasterFv(void *self, s16 flag)
 {
-    fn_1_4E04((void *)((u32)self + 0x358), -1);
-    fn_1_9E8((void *)((u32)self + 0x20), 0);
-    fn_1_2CF4(self, 0);
+    if (self) {
+        *(VoidFunc **)((u32)self + 4) = lbl_1_data_32D4;
+        *(VoidFunc **)((u32)self + 0x20) = &lbl_1_data_32D4[6];
+        printf(lbl_1_data_32A2, lbl_1_data_3280);
+        fn_1_4E04((void *)((u32)self + 0x358), -1);
+        fn_1_9E8((void *)((u32)self + 0x20), 0);
+        fn_1_2CF4(self, 0);
+        if (flag > 0) {
+            fn_1_2944(self);
+        }
+    }
+    return self;
 }
 
 void fn_1_C3E8(void *self)
@@ -130,20 +148,30 @@ void fn_1_C4A8(void *self)
     fn_1_F7E0();
 }
 
+// NONMATCHING: temporaries land three registers lower than the original's.
+// The original uses r30/r29/r28 then jumps to r22/r21; MWCC here starts
+// at r27/r26/r25. Declaration order decides the ladder (BRIEF 6).
 void fn_1_C4E0(void *self)
 {
     void *r30 = fn_1_104(0xCC);
-    if (r30) fn_1_CED0(r30);
+    if (r30) {
+        r30 = fn_1_CED0(r30);
+    }
     void *r29 = fn_1_104(0x28);
-    if (r29) fn_1_D98C(r29);
+    if (r29) {
+        r29 = fn_1_D98C(r29);
+    }
     void *r28 = fn_1_104(0x418);
-    if (r28) fn_1_5A7C(r28);
+    if (r28) {
+        r28 = fn_1_5A7C(r28);
+    }
     void *r22 = fn_1_104(1);
     if (r22) {
+        void *ms = r22;
         if (!lbl_1_bss_30) {
-            fn_1_0("ms_pointer == 0", "singleton.h", 0x35);
+            fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x35);
         }
-        lbl_1_bss_30 = (u32)r22;
+        lbl_1_bss_30 = (u32)ms;
     }
     fn_1_3888(0);
     fn_1_381C();
@@ -203,18 +231,24 @@ void fn_1_C4E0(void *self)
     }
 }
 
-void fn_1_C7D0(void *self, s32 arg)
+// NONMATCHING: the singleton.h assert block is out of line in the original
+// (beq to the assert, b over it); MWCC 2.6 always inlines it (BRIEF 6).
+void *fn_1_C7D0(void *self, s16 arg)
 {
-    if (!self) return;
-    if (!lbl_1_bss_30) {
-        fn_1_0("ms_pointer == 0", "singleton.h", 0x3D);
+    if (self) {
+        if (SINGLETON == 0) {
+            fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x3D);
+        }
+        SINGLETON = 0;
+        if (arg > 0) {
+            fn_1_21C(self);
+        }
     }
-    lbl_1_bss_30 = 0;
-    if (arg != 0) {
-        fn_1_21C(self);
-    }
+    return self;
 }
 
+// NONMATCHING: the original keeps the first call's result in r3 and passes it
+// straight to the second; MWCC copies a twice-read local into r30 instead.
 s32 fn_1_C85C(void *self)
 {
     s32 ret = 1;
@@ -244,14 +278,17 @@ void fn_1_C8E0(void)
     lbl_1_bss_40 = 0xD2;
 }
 
+// NONMATCHING: virtual-base adjustor thunk. The original tail-branches
+// (b, not bl); MWCC -O0 never emits a tail call.
 void fn_1_C914(void *self)
 {
     fn_1_C4E0((void *)((u32)self - 0x20));
 }
 
+// NONMATCHING: virtual-base adjustor thunk, same reason as fn_1_C914.
 void fn_1_C91C(void *self)
 {
-    __dt__Q24m50911CGameMasterFv((void *)((u32)self - 0x20));
+    __dt__Q24m50911CGameMasterFv((void *)((u32)self - 0x20), 1);
 }
 
 void *fn_1_C2D0(void *self)
