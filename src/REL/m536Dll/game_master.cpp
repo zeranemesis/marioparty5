@@ -134,58 +134,58 @@ void *__dt__Q24m53611CGameMasterFv(M536GameMaster *self, s16 flag)
 void fn_1_6184(void)
 {
     s32 i;
-    void *a;
-    void *b;
-    void *c;
-    void *d;
-    void *e;
-    void *f;
-    void *g;
-    void *h;
+    void *cloud;
+    void *stage;
+    void *sky;
+    void *camera;
+    void *score;
+    void *killer;
+    void *player;
+    void *gun;
 
     OSGetTick();
     fn_1_4A08();
 
-    a = fn_1_0(0x10);
-    if (a) {
-        a = fn_1_73BC(a);
+    cloud = fn_1_0(0x10);
+    if (cloud) {
+        cloud = fn_1_73BC(cloud);
     }
 
-    b = fn_1_0(0x2C);
-    if (b) {
-        b = fn_1_8B94(b);
+    stage = fn_1_0(0x2C);
+    if (stage) {
+        stage = fn_1_8B94(stage);
     }
 
-    c = fn_1_0(0x4C);
-    if (c) {
-        c = fn_1_906C(c);
+    sky = fn_1_0(0x4C);
+    if (sky) {
+        sky = fn_1_906C(sky);
     }
 
-    d = fn_1_0(0x4C);
-    if (d) {
-        d = fn_1_6628(d);
+    camera = fn_1_0(0x4C);
+    if (camera) {
+        camera = fn_1_6628(camera);
     }
 
-    e = fn_1_0(0x94);
-    if (e) {
-        e = fn_1_D6FC(e);
+    score = fn_1_0(0x94);
+    if (score) {
+        score = fn_1_D6FC(score);
     }
 
-    f = fn_1_0(0x34);
-    if (f) {
-        f = fn_1_E24C(f);
+    killer = fn_1_0(0x34);
+    if (killer) {
+        killer = fn_1_E24C(killer);
     }
 
     for (i = 0; i < 4; i++) {
-        g = fn_1_0(0x98);
-        if (g) {
-            g = fn_1_A4A8(g, i);
+        player = fn_1_0(0x98);
+        if (player) {
+            player = fn_1_A4A8(player, i);
         }
     }
 
-    h = fn_1_0(0x58);
-    if (h) {
-        h = fn_1_F670(h);
+    gun = fn_1_0(0x58);
+    if (gun) {
+        gun = fn_1_F670(gun);
     }
 }
 
