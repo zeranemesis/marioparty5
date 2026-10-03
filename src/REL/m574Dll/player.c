@@ -415,7 +415,6 @@ void fn_1_1938(OMOBJ *obj)
     Hu3DModelRotSet(model, 0.0f, player->angle, 0.0f);
 }
 
-// NONMATCHING: the original's (f32) frand conversion keeps the s16 xoris but emits no extsh after the 16-bit mask
 void fn_1_19AC(OMOBJ *obj)
 {
     M574_PLAYER_WORK *player;
@@ -430,7 +429,7 @@ void fn_1_19AC(OMOBJ *obj)
 
     switch (player->unk2C) {
     case 0:
-        if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
+        if (0.0000152587890625 * (f32) ((s32) frand() & 0xFFFF) > entry->rate) {
             break;
         }
         ret = fn_1_6D7C(player->grp, target, 0.0f, 120.0f, entry->len);
@@ -451,8 +450,8 @@ void fn_1_19AC(OMOBJ *obj)
         else {
             player->unk30 = entry->v1;
         }
-if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
-            player->unk30 += (s32) (12.0 * (0.0000152587890625 * (f32) ((s16) (u16) frand())));
+if (0.0000152587890625 * (f32) ((s32) frand() & 0xFFFF) > entry->rate) {
+            player->unk30 += (s32) (12.0 * (0.0000152587890625 * (f32) ((s32) frand() & 0xFFFF)));
         }
     case 1:
         player->unk18 = 0x100;
@@ -466,8 +465,8 @@ if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
         else {
             player->unk30 = entry->v2;
         }
-if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
-            player->unk30 += (s32) (15.0 * (0.0000152587890625 * (f32) ((s16) (u16) frand())));
+if (0.0000152587890625 * (f32) ((s32) frand() & 0xFFFF) > entry->rate) {
+            player->unk30 += (s32) (15.0 * (0.0000152587890625 * (f32) ((s32) frand() & 0xFFFF)));
         }
     case 2:
         if (--player->unk30 > 0) {
