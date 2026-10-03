@@ -363,22 +363,34 @@ void fn_1_944C(M536Sky *self, s32 bit)
 
 M536Cloud *fn_1_9474(M536Cloud *self, HU3DMODELID *mdl, s32 index, f32 angle)
 {
-    fn_1_1264(self);
+    HU3DMODELID id;
+    HU3DMOTID mot;
+    M536Cloud *p;
+    s16 tmp;
+
+    p = self;
+    fn_1_1264(p);
     fn_1_2DB4(&self->m_mdl, mdl);
     fn_1_1330(self, &lbl_1_bss_A74);
     self->m_index = index;
 
-    Hu3DModelLayerSet(self->m_mdl, 4);
-    Hu3DModelCameraSet(self->m_mdl, 1);
-    Hu3DModelAttrReset(self->m_mdl, 1);
-    Hu3DMotionSpeedSet(self->m_mdl, 1.0f);
-    Hu3DMotionSet(self->m_mdl, Hu3DMotionIDGet(self->m_mdl));
-    Hu3DModelAttrSet(self->m_mdl, 0x40000002);
-    Hu3DModelAttrReset(self->m_mdl, 0x40000001);
-    Hu3DModelRotSet(self->m_mdl, 0.0f, angle, 0.0f);
+    tmp = (s16)(s32)self->m_mdl;
+    id = tmp;
+
+    Hu3DModelLayerSet(id, 4);
+    Hu3DModelCameraSet(id, 1);
+    Hu3DModelAttrReset(id, 1);
+    Hu3DMotionSpeedSet(id, 1.0f);
+    mot = Hu3DMotionIDGet(id);
+    Hu3DMotionSet(id, mot);
+    Hu3DModelAttrSet(id, 0x40000002);
+    Hu3DModelAttrReset(id, 0x40000001);
+    Hu3DModelRotSet(id, 0.0f, angle, 0.0f);
+
 
     return self;
 }
+
 
 void *fn_1_9584(M536Cloud *self, s16 flag)
 {
