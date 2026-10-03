@@ -129,6 +129,11 @@ void fn_1_1068(OMOBJ *obj)
 {
     M574_PLAYER_WORK *player;
     s32 i;
+    HU3DMODELID model;
+    s32 no;
+    s32 charNo;
+    s32 playerGrp;
+    HU3DMOTID mtnId;
 
     obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M574_PLAYER_WORK), HU_MEMNUM_OVL);
     player = obj->data;
@@ -136,36 +141,37 @@ void fn_1_1068(OMOBJ *obj)
 
     obj->stat |= OM_STAT_MODELPAUSE;
 
-    player->no = obj->work[0];
+    no = obj->work[0];
+    player->no = no;
     player->grp = obj->work[1];
-    player->playerGrp = obj->work[2];
-    player->charNo = GwPlayerConf[player->no].charNo;
-    player->type = GwPlayerConf[player->no].type;
-    player->dif = GwPlayerConf[player->no].dif & 3;
+    playerGrp = obj->work[2];
+    player->playerGrp = playerGrp;
+    charNo = GwPlayerConf[no].charNo;
+    player->charNo = charNo;
+    player->dif = GwPlayerConf[no].dif & 3;
+    player->type = GwPlayerConf[no].type;
     player->unk2C = 0;
 
-    obj->mdlId[0] = CharModelCreate(player->charNo, 2);
-    Hu3DModelLayerSet(obj->mdlId[0], 6);
-    Hu3DModelShadowSet(obj->mdlId[0]);
+    model = CharModelCreate(charNo, 2);
+    obj->mdlId[0] = model;
+    Hu3DModelLayerSet(model, 6);
+    Hu3DModelShadowSet(model);
     CharEffectLayerSet(6);
 
     for (i = 0; i < 5; i++) {
-        obj->mtnId[i] = CharMotionCreate(player->charNo, M574MotionDataNumTbl[i]);
+        mtnId = CharMotionCreate(charNo, M574MotionDataNumTbl[i]);
+        obj->mtnId[i] = mtnId;
     }
 
-    CharMotionDataClose(player->charNo);
+    CharMotionDataClose(charNo);
 
     player->curMotNo = -1;
     fn_1_1D54(obj, 2);
 
-    player->pos.x = M574PlayerPosTbl[player->playerGrp].x;
-    player->pos.y = M574PlayerPosTbl[player->playerGrp].y;
-    player->pos.z = M574PlayerPosTbl[player->playerGrp].z;
-    player->rot.z = 0.0f;
-    player->rot.y = 0.0f;
-    player->rot.x = 0.0f;
-    Hu3DModelScaleSet(obj->mdlId[0], 1.2f, 1.2f, 1.2f);
-    player->angle = M574PlayerAngleTbl[player->playerGrp];
+    player->pos = M574PlayerPosTbl[playerGrp];
+    player->rot.x = player->rot.y = player->rot.z = 0.0f;
+    Hu3DModelScaleSet(model, 1.2f, 1.2f, 1.2f);
+    player->angle = M574PlayerAngleTbl[playerGrp];
     player->unk38 = 0;
     obj->objFunc = fn_1_1264;
 }
