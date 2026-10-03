@@ -384,23 +384,15 @@ void fn_1_95DC(void)
     M536Cloud *node;
     s32 empty;
 
-    for (;;) {
-        empty = 0;
-        if (lbl_1_bss_A74.m_next == &lbl_1_bss_A74 && lbl_1_bss_A74.m_next == lbl_1_bss_A74.m_prev) {
-            empty = 1;
-        }
-
-        if ((empty & 0xFF) == 0) {
-            node = lbl_1_bss_A74.m_prev;
+    for (; (u8)empty == 0;
+         empty = (lbl_1_bss_A74.m_next == &lbl_1_bss_A74 && lbl_1_bss_A74.m_next == lbl_1_bss_A74.m_prev)) {
+        node = lbl_1_bss_A74.m_prev;
+        if (node) {
+            fn_1_30F4(&node->m_mdl, -1);
             if (node) {
-                fn_1_30F4(&node->m_mdl, -1);
-                if (node) {
-                    fn_1_1270(node, 0);
-                }
-                fn_1_C8(node);
+                fn_1_1270(node, 0);
             }
-        } else {
-            break;
+            fn_1_C8(node);
         }
     }
 }
