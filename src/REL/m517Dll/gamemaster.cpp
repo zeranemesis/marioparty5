@@ -140,6 +140,10 @@ s32 lbl_1_bss_A18;
 void *lbl_1_bss_A1C;
 void *lbl_1_bss_A20;
 
+// MWCC inlines a definition into its callers inside this translation unit,
+// which deletes the call the original keeps (an empty callee folds away
+// completely).  Keep every definition out of line.
+#pragma dont_inline on
 extern "C" void fn_1_A168(CGameMaster *self)
 {
     fn_1_39F8(self);
@@ -233,6 +237,7 @@ extern "C" CGameMaster *fn_1_A3D8(CGameMaster *self, s16 value)
     return self;
 }
 
+#pragma dont_inline on
 extern "C" CGameMaster *fn_1_A430(CGameMaster *self, s16 value)
 {
 
@@ -244,6 +249,7 @@ extern "C" CGameMaster *fn_1_A430(CGameMaster *self, s16 value)
     }
     return self;
 }
+#pragma dont_inline reset
 
 extern "C" void fn_1_A488(void *self, s32 mode)
 {
