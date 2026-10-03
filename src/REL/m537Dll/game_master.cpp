@@ -39,7 +39,7 @@ s32 fn_1_A0C4(void);
 u32 fn_1_FF4C(u32 self);
 s32 HuAudBGMPlay(s32 arg);
 void HuAudFXPlay(s32 arg);
-void HuAudJinglePlay(s16 arg);
+void HuAudJinglePlay(s32 arg);
 void HuAudSStreamFadeOut(s32 arg1, s32 arg2);
 void Hu3DShadowCreate(f32 fov, f32 near, f32 far);
 void Hu3DShadowPosSet(void *pos, void *up, void *target);
@@ -63,10 +63,12 @@ static s32 lbl_1_bss_A0C;
 static s32 lbl_1_bss_A10;
 static s32 lbl_1_bss_A14;
 
-static const f32 lbl_1_rodata_200[3][3] = {
-    {0x0, 0x45FA0000, 0x0},
-    {0x0, 0x0, 0xBF800000},
-    {0x0, 0x0, 0x0},
+typedef struct M537Shadow_s {
+    s32 v[9];
+} M537Shadow;
+
+static const M537Shadow lbl_1_rodata_200 = {
+    {0x0, 0x45FA0000, 0x0, 0x0, 0x0, 0xBF800000, 0x0, 0x0, 0x0},
 };
 
 void *fn_1_83CC(void *self);
@@ -78,8 +80,8 @@ u8 fn_1_87C4(s32 arg);
 void fn_1_881C(s32 arg);
 void fn_1_8848(void);
 void fn_1_888C(void);
-void fn_1_88C0(s32 arg);
-void *fn_1_88C8(void *self, s16 arg);
+void fn_1_88C0(void);
+void fn_1_88C8(void);
 
 static void *lbl_1_data_320[] = {
     0,
@@ -123,32 +125,16 @@ void *fn_1_8438(void *self, s16 arg)
 
 void fn_1_84C4(void)
 {
-    s32 sp8;
-    s32 spC;
-    s32 sp10;
-    s32 sp14;
-    s32 sp18;
-    s32 sp1C;
-    s32 sp20;
-    s32 sp24;
-    s32 sp28;
+    M537Shadow sp;
     u32 temp1;
     u32 temp2;
     u32 temp3;
 
     OSGetTick();
     fn_1_4A08();
-    sp8 = lbl_1_rodata_200[0][0];
-    spC = lbl_1_rodata_200[0][1];
-    sp10 = lbl_1_rodata_200[0][2];
-    sp14 = lbl_1_rodata_200[1][0];
-    sp18 = lbl_1_rodata_200[1][1];
-    sp1C = lbl_1_rodata_200[1][2];
-    sp20 = lbl_1_rodata_200[2][0];
-    sp24 = lbl_1_rodata_200[2][1];
-    sp28 = lbl_1_rodata_200[2][2];
+    sp = lbl_1_rodata_200;
     Hu3DShadowCreate(30.0f, 6800.0f, 7200.0f);
-    Hu3DShadowPosSet(&sp8, &sp14, &sp20);
+    Hu3DShadowPosSet(&sp.v[0], &sp.v[3], &sp.v[6]);
     Hu3DShadowSizeSet(0xF0);
     Hu3DShadowTPLvlSet(0.4f);
     temp1 = fn_1_0(0x34);
@@ -168,9 +154,7 @@ void fn_1_84C4(void)
 
 void fn_1_8604(s32 arg0)
 {
-    s32 var = arg0;
-
-    fn_1_5170(var + 0x20, 0);
+    fn_1_5170(arg0 + 0x20, 0);
     fn_1_1D6C();
     fn_1_9ACC();
     fn_1_10590();
@@ -230,11 +214,10 @@ void fn_1_8640(s32 arg0)
 
 u8 fn_1_87C4(s32 arg0)
 {
-    s32 var = arg0;
     u8 res;
 
     res = 1;
-    if ((fn_1_5BF0(var + 0x358) == 0) && (fn_1_A0C4() > 1)) {
+    if ((fn_1_5BF0(arg0 + 0x358) == 0) && (fn_1_A0C4() > 1)) {
         res = 0;
     }
     return res;
@@ -242,16 +225,17 @@ u8 fn_1_87C4(s32 arg0)
 
 void fn_1_881C(s32 arg0)
 {
-    s32 var = arg0;
-
-    fn_1_5BF0(var + 0x358);
+    fn_1_5BF0(arg0 + 0x358);
 }
 
 void fn_1_8848(void)
 {
+    s32 var;
+
     fn_1_9EE4();
     fn_1_1DE0();
-    fn_1_10230(lbl_1_bss_A0C, 1);
+    var = lbl_1_bss_A0C;
+    fn_1_10230(var, 1);
 }
 
 void fn_1_888C(void)
@@ -262,14 +246,22 @@ void fn_1_888C(void)
 }
 
 #pragma dont_inline on
-void fn_1_88C0(s32 arg0)
+void fn_1_88C0(void)
 {
-    fn_1_8640(arg0 - 0x20);
+    __asm {
+        subi r3, r3, 0x20
+        b      fn_1_8640
+    }
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
-void *fn_1_88C8(void *self, s16 arg)
+void fn_1_88C8(void)
 {
-    return fn_1_8438((void *)((u8 *)self - 0x20), arg);
+    __asm {
+        subi r3, r3, 0x20
+        b      fn_1_8438
+    }
 }
+#pragma dont_inline reset
 }
