@@ -24,7 +24,7 @@ void fn_1_7A84(OMOBJ *obj);
 void fn_1_7AC0(OMOBJ *obj);
 void fn_1_7AE8(OMOBJ *obj);
 void fn_1_7E04(OMOBJ *obj);
-s32 fn_1_1850(void);
+u32 fn_1_1850(void);
 s32 fn_1_485C(OMOBJ *obj);
 
 static f32 lbl_1_data_2C0[4][2] = {
@@ -84,8 +84,8 @@ void fn_1_7AE8(OMOBJ *obj)
 {
     SCOREDATA *data;
     ANIMDATA *animBase;
-    ANIMDATA *animNum;
     ANIMDATA *animChar;
+    ANIMDATA *animNum;
     HUSPRGRPID win;
     MGSCORE *score;
     HUSPRGRPID grp;
@@ -131,41 +131,49 @@ void fn_1_7AE8(OMOBJ *obj)
 void fn_1_7E04(OMOBJ *obj)
 {
     SCOREDATA *data;
-    HUSPRGRPID grp;
     s32 val;
-    s32 i;
+    HUSPRGRPID win;
+    MGSCORE *score;
+    HUSPRGRPID grp;
     s32 j;
+    s32 i;
 
     data = obj->data;
 
     switch (data->state) {
     case 0:
-    case 2:
         if (fn_1_1850() != 2) {
             break;
         }
         data->state++;
         data->timer = 0.0f;
         for (i = 0; i < 4; i++) {
-            MgScoreWinDispSet(data->p[i].win, 1);
-            MgScoreDispOn(data->p[i].score);
+            win = data->p[i].win;
+            MgScoreWinDispSet(win, 1);
+            score = data->p[i].score;
+            MgScoreDispOn(score);
+            grp = data->p[i].grp;
             for (j = 0; j < 3; j++) {
-                HuSprAttrReset(data->p[i].grp, j, 4);
+                HuSprAttrReset(grp, j, 4);
             }
         }
         /* fall through */
-    case 1:
-        data->timer = (f64)data->timer + lbl_1_rodata_548;
-        if (data->timer >= lbl_1_rodata_550) {
+case 1:
+        if ((data->timer = (f32)((f64)data->timer + lbl_1_rodata_548)) >= lbl_1_rodata_550) {
             data->state++;
         }
         for (i = 0; i < 4; i++) {
-            MgScoreWinTPLvlSet(data->p[i].win, lbl_1_rodata_558 * (f64)data->timer);
-            MgScoreTPLvlSet(data->p[i].score, data->timer);
+            win = data->p[i].win;
+            MgScoreWinTPLvlSet(win, lbl_1_rodata_558 * (f64)data->timer);
+            score = data->p[i].score;
+            MgScoreTPLvlSet(score, data->timer);
+            grp = data->p[i].grp;
             for (j = 0; j < 3; j++) {
-                HuSprTPLvlSet(data->p[i].grp, j, data->timer);
+                HuSprTPLvlSet(grp, j, data->timer);
             }
         }
+        break;
+    case 2:
         break;
     }
 
@@ -175,7 +183,8 @@ void fn_1_7E04(OMOBJ *obj)
         if (val > 0x63) {
             val = 0x63;
         }
-        MgScoreValueSet(data->p[i].score, val);
+        score = data->p[i].score;
+        MgScoreValueSet(score, val);
     }
 }
 
