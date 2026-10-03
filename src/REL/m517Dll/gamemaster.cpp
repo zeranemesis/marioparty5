@@ -260,18 +260,11 @@ extern "C" void fn_1_A744(void)
 extern "C" CSubHead *fn_1_A748(CSubHead *self, s16 value)
 {
     if (self != 0) {
-        unsigned char done;
- do {
+while ((self->m_next == self && self->m_next == self->m_first) == 0) {
             CSubHead *first = self->m_first;
             CSubHead *sub = first;
             fn_1_10F88(sub, 1);
-            done = 0;
-            if (self->m_next == self) {
-                if (self->m_next == self->m_first) {
-                    done = 1;
-                }
-            }
-        } while (done == 0);
+        }
         if (self != 0) {
             fn_1_2DB4(self, 0);
         }
@@ -297,18 +290,11 @@ extern "C" CGameMaster *fn_1_A808(CGameMaster *self, s16 value)
 extern "C" CSubHead *fn_1_A860(CSubHead *self, s16 value)
 {
     if (self != 0) {
-        unsigned char done;
-        do {
+        while ((self->m_next == self && self->m_next == self->m_first) == 0) {
             CSubHead *first = self->m_first;
             CSubHead *sub = first;
             fn_1_10F8(sub, 1);
-            done = 0;
-            if (self->m_next == self) {
-                if (self->m_next == self->m_first) {
-                    done = 1;
-                }
-            }
-        } while (done == 0);
+        }
         if (self != 0) {
             fn_1_2DB4(self, 0);
         }
@@ -422,9 +408,11 @@ extern "C" void fn_1_ADA8(void *self)
 {
 }
 
+#pragma dont_inline on
 extern "C" void fn_1_B058(void *self)
 {
 }
+#pragma dont_inline reset
 
 extern "C" void fn_1_B2CC(CGameMaster *self)
 {
@@ -778,12 +766,16 @@ extern "C" void fn_1_BD6C(void)
     lbl_1_bss_A18 = 0xD2;
 }
 
+#pragma dont_inline on
 extern "C" void fn_1_BDA0(void *self)
 {
     fn_1_B058((char *)self - 0x20);
 }
+#pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" void fn_1_BDA8(void *self, s16 value)
 {
     fn_1_AB90((CGameMaster *)((char *)self - 0x20), value);
 }
+#pragma dont_inline reset
