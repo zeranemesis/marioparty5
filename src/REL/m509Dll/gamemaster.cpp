@@ -21,17 +21,17 @@ void fn_1_381C(void);
 void *fn_1_F1FC(void *self, s32 idx);
 void fn_1_FF60(void);
 void *fn_1_3334(void);
-void *fn_1_34A4(void);
+u8 fn_1_34A4(void);
 u32 irandom__7CRandomFv(void);
 void fn_1_C224(void *self, u32 val);
-void *fn_1_E1A0(void *self);
+s32 fn_1_E1A0(void *self);
 void fn_1_FA3C(void);
 void fn_1_504C(void *self);
 void HuAudFXPlay(s32 id);
 u32 HuAudBGMPlay(s32 id);
 void HuAudSStreamFadeOut(s32 id, s32 time);
 void fn_1_33EC(void);
-s32 fn_1_3874(void);
+u8 fn_1_3874(void);
 void fn_1_3578(void);
 void HuAudJinglePlay(s32 id);
 void fn_1_CE8(void *self, s32 val);
@@ -58,6 +58,7 @@ extern u32 lbl_1_bss_40;
 
 const char lbl_1_data_3280[] = "m509::CGameMaster::~CGameMaster()";
 const char lbl_1_data_32A2[] = "%s\n";
+const char lbl_1_data_32A6[] = "ms_pointer == 0";
 const char lbl_1_data_32B6[] = "singleton.h";
 const char lbl_1_data_32C2[] = "ms_pointer == 0";
 
@@ -169,7 +170,7 @@ void fn_1_C4E0(void *self)
     if (r22) {
         void *ms = r22;
         if (!lbl_1_bss_30) {
-            fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x35);
+            fn_1_0(lbl_1_data_32A6, lbl_1_data_32B6, 0x35);
         }
         lbl_1_bss_30 = (u32)ms;
     }
@@ -185,28 +186,30 @@ void fn_1_C4E0(void *self)
     while (!fn_1_34A4()) {
         fn_1_CE8((void *)((u32)self + 0x20), 0);
     }
-    fn_1_4E60((void *)((u32)self + 0x35C), 0xA8C, 0, 0);
-    fn_1_4F58((void *)((u32)self + 0x35C), 1);
     s32 r23 = 0;
     s32 r25 = 0;
     s32 r26 = 0;
+    fn_1_3888(2);
+    fn_1_4E60((void *)((u32)self + 0x358), 0xA8C, 0, 0);
+    fn_1_4F58((void *)((u32)self + 0x358), 1);
     while (true) {
         s32 r0 = r25 * 0x3C;
         if (r26 < r0) {
-            Vec vec;
+            Vec vec = {0.0f, 0.0f, 0.0f};
             if (!lbl_1_bss_30) {
-                fn_1_0(lbl_1_data_32C2, "singleton.h", 0x27);
+                fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x27);
             }
-            u32 r0_2 = irandom__7CRandomFv();
-            fn_1_C224((void *)lbl_1_bss_30, r0_2);
-            fn_1_E1A0(&vec);
-            HuAudFXPlayVol(0x68F, (s32)vec.x);
+            u32 ms = lbl_1_bss_30;
+            fn_1_C224((void *)ms, irandom__7CRandomFv());
+            HuAudFXPlayVol(0x68F, fn_1_E1A0(&vec));
             fn_1_FA3C();
             r23++;
             r25 += 2;
+            r26++;
         } else {
             fn_1_CE8((void *)((u32)self + 0x20), 0);
-            if (fn_1_C85C(self)) break;
+            if (fn_1_C85C(self) == 0) continue;
+            break;
         }
     }
     fn_1_504C((void *)((u32)self + 0x35C));
@@ -218,12 +221,11 @@ void fn_1_C4E0(void *self)
     }
     fn_1_3888(4);
     fn_1_FDB0();
-    s32 r20 = fn_1_3874() ? 0x7B : 0x79;
-    HuAudJinglePlay((s16)r20);
+    s16 r20 = fn_1_3874() ? 0x7B : 0x79;
+    HuAudJinglePlay(r20);
     fn_1_3578();
-    while (true) {
-        fn_1_CE8((void *)((u32)self + 0x20), -1);
-        if (fn_1_34A4()) break;
+    while (!fn_1_34A4()) {
+        fn_1_CE8((void *)((u32)self + 0x20), 0);
     }
     fn_1_3874();
     while (true) {
