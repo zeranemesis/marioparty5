@@ -3,6 +3,8 @@
 s32 Result_FastF;
 s32 Result_BgReadEndF;
 static s32 BattleSkipF;
+static s16 BattleRank[4];
+static s16 BattlePlayerNo[4];
 
 void Result_Debug(void);
 void Result_BgRead(void);
@@ -127,5 +129,43 @@ void Result_BattleCoinMdlMain(void)
             }
         }
         HuPrcVSleep();
+    }
+}
+// NONMATCHING: rank/tmp get r28/r27 where the original keeps rank in r27
+void Result_BattleSetupPlayer(void)
+{
+    s16 val2;
+    s16 val1;
+    s16 rank;
+    s16 tmp;
+    s16 i2;
+    s16 j1;
+    s16 i1;
+
+    for(i1=0; i1<4; i1++) {
+        rank = 0;
+        for(j1=0; j1<4; j1++) {
+            if (i1 != j1) {
+                val2 = GwPlayer[j1].mgCoinBonus;
+                val1 = GwPlayer[i1].mgCoinBonus;
+                if (val1 > val2) {
+                    rank++;
+                }
+            }
+        }
+        BattleRank[i1] = rank;
+        BattlePlayerNo[i1] = i1;
+    }
+    for(i2=1; i2<4; i2++) {
+        for(i1=0; i1<4-i2; i1++) {
+            if (BattleRank[i1] > BattleRank[i1+1]) {
+                tmp = BattleRank[i1];
+                BattleRank[i1] = BattleRank[i1+1];
+                BattleRank[i1+1] = tmp;
+                tmp = BattlePlayerNo[i1];
+                BattlePlayerNo[i1] = BattlePlayerNo[i1+1];
+                BattlePlayerNo[i1+1] = tmp;
+            }
+        }
     }
 }
