@@ -1618,7 +1618,7 @@ config.libs = [
             Object(NonMatching, "REL/m568Dll/m568.cpp"),
             Object(NonMatching, "REL/m568Dll/input.cpp"),
             Object(NonMatching, "REL/m568Dll/game_master.cpp"),
-            Object(NonMatching, "REL/m568Dll/heiho.cpp"),
+            Object(Equivalent, "REL/m568Dll/heiho.cpp"),
             Object(Matching, "REL/m568Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m568Dll/camera.cpp"),
             Object(NonMatching, "REL/m568Dll/effect.cpp"),
