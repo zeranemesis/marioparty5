@@ -68,7 +68,7 @@ GameMaster *fn_1_80E8(GameMaster *self, s16 arg1);
 GameMaster *fn_1_8798(GameMaster *self, s16 arg1);
 void fn_1_8824(void);
 void fn_1_8A08(GameMaster *self);
-void fn_1_8DC8(void *self, s32 arg1);
+void fn_1_8DC8(GameMaster *self);
 void fn_1_970C();
 void fn_1_9890(GameMaster *self);
 void fn_1_9898(GameMaster *self);
@@ -96,6 +96,13 @@ void *fn_1_618(u32 size);
 void fn_1_F990(void *self, void *arg1);
 void fn_1_123DC(void *self, s32 arg1);
 void fn_1_140D8(void *self, void *arg1);
+s32 HuAudSStreamPlay(u32 id);
+void fn_1_2260(s32 phase);
+BOOL fn_1_22F8(void);
+void fn_1_2D1C(void);
+BOOL fn_1_2E8C(void);
+void fn_1_3204(void);
+void fn_1_5A40(void *self, s32 arg1);
 void fn_1_1290C(void *self);
 void fn_1_13F08(void *self, void *arg1);
 void fn_1_2384(void);
@@ -137,6 +144,8 @@ void *lbl_1_data_330[12] = {
 };
 
 const f32 lbl_1_rodata_110 = -39000.0f;
+
+// NONMATCHING: MWCC keeps the three singleton pointers in more temporaries than this.
 
 void fn_1_7F1C(GameMaster *self)
 {
@@ -182,6 +191,8 @@ GameMaster *fn_1_8090(GameMaster *self, s16 arg1)
 }
 
 #pragma noinline
+// NONMATCHING: the three list walks use different callee-saved registers here.
+
 GameMaster *fn_1_80E8(GameMaster *self, s16 arg1)
 {
     SceneNode *node;
@@ -267,6 +278,8 @@ void fn_1_8380(void *self)
 {
 }
 
+// NONMATCHING: the list-node pointer is held in r24 here, not r31.
+
 GameMaster *fn_1_8384(GameMaster *self, s16 arg1)
 {
     SceneNode *node;
@@ -306,6 +319,8 @@ GameMaster *fn_1_845C(GameMaster *self, s16 arg1)
     return self;
 }
 
+// NONMATCHING: two rows still differ in the sentinel compare.
+
 GameMaster *fn_1_84B4(GameMaster *self, s16 arg1)
 {
     SceneNode *node;
@@ -338,6 +353,8 @@ GameMaster *fn_1_8574(GameMaster *self, s16 arg1)
     }
     return self;
 }
+
+// NONMATCHING: the null-check temporaries for 0x44/0x50/0x54 are not reproduced.
 
 GameMaster *fn_1_85CC(GameMaster *self, s16 arg1)
 {
@@ -398,6 +415,8 @@ GameMaster *fn_1_8740(GameMaster *self, s16 arg1)
     return self;
 }
 
+// NONMATCHING: dispatch-table stores land in a different order.
+
 GameMaster *fn_1_8798(GameMaster *self, s16 arg1)
 {
     if (self) {
@@ -414,6 +433,8 @@ GameMaster *fn_1_8798(GameMaster *self, s16 arg1)
 }
 
 #pragma noinline
+// NONMATCHING: needs two more live locals to reach the 0x50 frame.
+
 void fn_1_8824(void)
 {
     SceneNode *node;
@@ -482,6 +503,8 @@ static void pmf_call(const PTMF *pmf, void *obj)
     ((void (*)(void *))pmf->f_addr)(obj);
 }
 
+// NONMATCHING: emits direct calls where the original uses bl __ptmf_scall with r12.
+
 void fn_1_8A08(GameMaster *self)
 {
     SceneNode *master;
@@ -526,6 +549,8 @@ void fn_1_8A08(GameMaster *self)
     }
 }
 
+// NONMATCHING: the list head is re-read through four stack slots here.
+
 s32 fn_1_8C24(void)
 {
     SceneNode *node;
@@ -549,6 +574,8 @@ s32 fn_1_8C24(void)
     return ret;
 }
 
+// NONMATCHING: register allocation only.
+
 s32 fn_1_8D04(void)
 {
     SceneNode *node;
@@ -569,14 +596,33 @@ s32 fn_1_8D04(void)
 }
 
 #pragma noinline
-void fn_1_8DC8(void *self, s32 arg1)
+// The two phase gates at the top of this routine are reconstructed; the long
+// scene update that follows them (the list walk over lbl_1_bss_9F8 and the
+// per-object updates) is not yet written.
+// NONMATCHING: the update body after the fn_1_2260(2) phase switch is missing.
+void fn_1_8DC8(GameMaster *self)
 {
+    fn_1_2260(0);
+    fn_1_3204();
+    while (!fn_1_22F8()) {
+        fn_1_5A40(self->m_f20, 0);
+    }
+
+    fn_1_2260(1);
+    fn_1_2D1C();
+    while (!fn_1_2E8C()) {
+        fn_1_5A40(self->m_f20, 0);
+    }
+
+    fn_1_2260(2);
 }
 
 void fn_1_970C()
 {
     fn_1_23F8();
 }
+
+// NONMATCHING: loop heads read the list pointers through extra stack slots.
 
 void fn_1_972C(SceneNode *self, void (*func)(void *, void *))
 {
@@ -617,10 +663,14 @@ void fn_1_985C(void)
     lbl_1_bss_A08 = 0xD2;
 }
 
+// NONMATCHING: tail call into fn_1_8DC8 is not reproduced.
+
 void fn_1_9890(GameMaster *self)
 {
-    fn_1_8DC8((char *)self - 0x20, 0);
+    fn_1_8DC8((GameMaster *)((char *)self - 0x20));
 }
+
+// NONMATCHING: tail call into fn_1_8798 is not reproduced.
 
 void fn_1_9898(GameMaster *self)
 {
