@@ -414,6 +414,7 @@ void fn_1_1938(OMOBJ *obj)
     Hu3DModelRotSet(model, 0.0f, player->angle, 0.0f);
 }
 
+// NONMATCHING: the original's (f32) frand conversion keeps the s16 xoris but emits no extsh after the 16-bit mask
 void fn_1_19AC(OMOBJ *obj)
 {
     M574_PLAYER_WORK *player;
@@ -428,7 +429,7 @@ void fn_1_19AC(OMOBJ *obj)
 
     switch (player->unk2C) {
     case 0:
-        if (0.0000152587890625 * (f64) (s16) frand() > entry->rate) {
+        if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
             break;
         }
         ret = fn_1_6D7C(player->grp, target, 0.0f, 120.0f, entry->len);
@@ -436,7 +437,12 @@ void fn_1_19AC(OMOBJ *obj)
             break;
         }
         fn_1_70B0(ret, 0, &pos);
-        player->unk34 = (PSVECMag(&pos) > 33.33333507180214) ? 1 : 0;
+        if (PSVECMag(&pos) > 33.33333507180214) {
+            player->unk34 = 1;
+        }
+        else {
+            player->unk34 = 0;
+        }
         player->unk2C++;
         if (player->unk34) {
             player->unk30 = entry->v3;
@@ -444,10 +450,9 @@ void fn_1_19AC(OMOBJ *obj)
         else {
             player->unk30 = entry->v1;
         }
-        if (0.0000152587890625 * (f64) (s16) frand() > entry->rate) {
-            break;
+if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
+            player->unk30 += (s32) (12.0 * (0.0000152587890625 * (f32) ((s16) (u16) frand())));
         }
-        player->unk30 += (s32) (12.0 * 0.0000152587890625 * (f64) (s16) frand());
     case 1:
         player->unk18 = 0x100;
         if (--player->unk30 > 0) {
@@ -460,10 +465,9 @@ void fn_1_19AC(OMOBJ *obj)
         else {
             player->unk30 = entry->v2;
         }
-        if (0.0000152587890625 * (f64) (s16) frand() > entry->rate) {
-            break;
+if (0.0000152587890625 * (f32) ((s16) (u16) frand()) > entry->rate) {
+            player->unk30 += (s32) (15.0 * (0.0000152587890625 * (f32) ((s16) (u16) frand())));
         }
-        player->unk30 += (s32) (15.0 * 0.0000152587890625 * (f64) (s16) frand());
     case 2:
         if (--player->unk30 > 0) {
             break;
