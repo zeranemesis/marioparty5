@@ -1,5 +1,7 @@
-#define _MATH_H
 #include "REL/m566Dll.h"
+
+#include "math.h"
+
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
@@ -2106,9 +2108,9 @@ void fn_1_C06C(HU3DMODEL *model, Mtx *mtx)
 void fn_1_C708(OMOBJ *obj)
 {
     M566Player *players[4];
-    register s32 i;
-    register s32 mdlNo;
-    register s32 j;
+    s32 i;
+    s32 mdlNo;
+    s32 j;
     s32 itemCnt;
 
     for (i = 0; i < 4; i++) {
@@ -2465,26 +2467,4 @@ void fn_1_E544(OMOBJ *obj)
         HuAudAllStop();
         omOvlReturnEx(lbl_1_data_148, 1);
     }
-}
-
-static const double lbl_1_rodata_50[] = { 0.5 };
-static const double lbl_1_rodata_298[] = { 3.0 };
-static const float lbl_1_rodata_17C = 0.0f;
-
-float sqrtf(float x)
-{
-    double frsqrte;
-    double temp;
-    float result;
-
-    if (x > 0.0f) {
-        frsqrte = __frsqrte(x);
-        frsqrte = lbl_1_rodata_50[0] * frsqrte * (lbl_1_rodata_298[0] - x * frsqrte * frsqrte);
-        frsqrte = lbl_1_rodata_50[0] * frsqrte * (lbl_1_rodata_298[0] - x * frsqrte * frsqrte);
-        frsqrte = lbl_1_rodata_50[0] * frsqrte * (lbl_1_rodata_298[0] - x * frsqrte * frsqrte);
-        temp = x * frsqrte;
-        result = (float)temp;
-        return result;
-    }
-    return x;
 }
