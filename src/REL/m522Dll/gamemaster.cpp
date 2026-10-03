@@ -1,7 +1,6 @@
 #include "REL/m522Dll.h"
 
-/* The three CTime limits of the mode controller, plus the spare word that
- * follows them in .bss.  They are set up by fn_1_D0E4. */
+/* The three CTime limits of the mode controller, set up by fn_1_D0E4. */
 static s32 lbl_1_bss_A10;
 static s32 lbl_1_bss_A14;
 static s32 lbl_1_bss_A18;
