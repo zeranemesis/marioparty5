@@ -1,3 +1,4 @@
+#define _MATH_H /* suppress MSL math.h's extern inline sqrtf body and its two local statics */
 #include "game/hu3d.h"
 #include "game/sprite.h"
 #include "game/frand.h"
