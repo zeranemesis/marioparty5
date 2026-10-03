@@ -37,7 +37,7 @@ struct HeihoModels {
 
 char lbl_1_data_360[] = "itemhook_L";
 char lbl_1_data_36B[] = "itemhook_R";
-char lbl_1_data_376[] = "ski-itemhook-h";
+char lbl_1_data_376[18] = "ski-itemhook-h";
 
 extern "C" {
 
@@ -61,14 +61,24 @@ void fn_1_98A0(HU3DMODELID modelId)
     Hu3DModelShadowDispOn(modelId);
 }
 
+// NONMATCHING: logic and call sequence are right, but this function is
+// register-pressure bound. The target frame is 0xE0 against 0xB0 here: it
+// gives every one of the 50 named locals its own stack home and re-loads the
+// model pointers from those homes before dereferencing them
+// (stw rX,home / lwz rY,home), while this build keeps the pointers in
+// callee-saved registers and lets several locals share a slot. The remaining
+// difference is allocation only - no instruction in the middle differs.
 HeihoModels *fn_1_98D8(HeihoModels *self)
 {
+    void *motData;
     void *mdl0;
     void *mdl1;
     void *mdl2;
     void *mdl3;
-    void *motData;
-    HU3DMOTID mot;
+    Hu3DModelId *q0;
+    Hu3DModelId *q1;
+    Hu3DModelId *q2;
+    Hu3DModelId *q3;
     Hu3DModelId *p0;
     Hu3DModelId *p1;
     Hu3DModelId *p2;
@@ -83,6 +93,9 @@ HeihoModels *fn_1_98D8(HeihoModels *self)
     Hu3DModelId *p11;
     Hu3DModelId *p12;
     Hu3DModelId *p13;
+    HU3DMOTID mot;
+    s16 id_10c;
+    s16 id_11c;
     s16 id_0a, id_0b;
     s16 id_1a, id_1b;
     s16 id_2a, id_2b;
@@ -93,8 +106,8 @@ HeihoModels *fn_1_98D8(HeihoModels *self)
     s16 id_7a, id_7b;
     s16 id_8a, id_8b;
     s16 id_9a, id_9b;
-    s16 id_10a, id_10b, id_10c;
-    s16 id_11a, id_11b, id_11c;
+    s16 id_10a, id_10b;
+    s16 id_11a, id_11b;
 
     mdl0 = fn_1_618(2);
     if (mdl0) {
@@ -132,57 +145,61 @@ HeihoModels *fn_1_98D8(HeihoModels *self)
     id_1b = id_1a;
     Hu3DMotionShapeSet(id_1b, mot);
 
-    p12 = self->m_mdl0;
-    fn_1_3420(p12, 0x400040);
+    p2 = self->m_mdl0;
+    fn_1_3420(p2, 0x400040);
 
-    p2 = self->m_mdl1;
-    id_2a = MODEL_ID(p2);
+    p3 = self->m_mdl1;
+    id_2a = MODEL_ID(p3);
     id_2b = id_2a;
-    p3 = self->m_mdl0;
-    id_3a = MODEL_ID(p3);
+    p4 = self->m_mdl0;
+    id_3a = MODEL_ID(p4);
     id_3b = id_3a;
     Hu3DModelHookSet(id_3b, lbl_1_data_360, id_2b);
 
-    p4 = self->m_mdl2;
-    id_4a = MODEL_ID(p4);
+    p5 = self->m_mdl2;
+    id_4a = MODEL_ID(p5);
     id_4b = id_4a;
-    p5 = self->m_mdl0;
-    id_5a = MODEL_ID(p5);
+    p6 = self->m_mdl0;
+    id_5a = MODEL_ID(p6);
     id_5b = id_5a;
     Hu3DModelHookSet(id_5b, lbl_1_data_36B, id_4b);
 
-    p6 = self->m_mdl3;
-    id_6a = MODEL_ID(p6);
+    p7 = self->m_mdl3;
+    id_6a = MODEL_ID(p7);
     id_6b = id_6a;
-    p7 = self->m_mdl0;
-    id_7a = MODEL_ID(p7);
+    p8 = self->m_mdl0;
+    id_7a = MODEL_ID(p8);
     id_7b = id_7a;
     Hu3DModelHookSet(id_7b, lbl_1_data_376, id_6b);
 
-    p13 = self->m_mdl3;
-    fn_1_3420(p13, 0x400001);
+    p9 = self->m_mdl3;
+    fn_1_3420(p9, 0x400001);
 
-    p8 = self->m_mdl0;
-    id_8a = MODEL_ID(p8);
+    p10 = self->m_mdl0;
+    q0 = p10;
+    id_8a = MODEL_ID(q0);
     id_8b = id_8a;
     Hu3DModelShadowSet(id_8b);
     Hu3DModelShadowDispOn(id_8b);
 
-    p9 = self->m_mdl1;
-    id_9a = MODEL_ID(p9);
+    p11 = self->m_mdl1;
+    q1 = p11;
+    id_9a = MODEL_ID(q1);
     id_9b = id_9a;
     Hu3DModelShadowSet(id_9b);
     Hu3DModelShadowDispOn(id_9b);
 
-    p10 = self->m_mdl2;
-    id_10a = MODEL_ID(p10);
+    p12 = self->m_mdl2;
+    q2 = p12;
+    id_10a = MODEL_ID(q2);
     id_10b = id_10a;
     id_10c = id_10b;
     Hu3DModelShadowSet(id_10c);
     Hu3DModelShadowDispOn(id_10c);
 
-    p11 = self->m_mdl3;
-    id_11a = MODEL_ID(p11);
+    p13 = self->m_mdl3;
+    q3 = p13;
+    id_11a = MODEL_ID(q3);
     id_11b = id_11a;
     id_11c = id_11b;
     Hu3DModelShadowSet(id_11c);
