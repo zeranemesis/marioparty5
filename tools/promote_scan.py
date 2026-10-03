@@ -165,6 +165,17 @@ def main() -> int:
                 section_size(objdump, target, ".text"),
                 section_size(objdump, base, ".text"),
             )
+            # .data and .bss matter as much as .rodata and this tool used to
+            # ignore them, which produced a false one-line diagnosis:
+            # m504dll/input looked like a pure sqrtf-trap promotion and was in
+            # fact also missing its entire 16536-byte .data block. Always
+            # measure them; a large non-zero delta here means the unit has a
+            # data-placement defect, not just the 16-byte trap.
+            for section in (".data", ".bss"):
+                row[section] = (
+                    section_size(objdump, target, section),
+                    section_size(objdump, base, section),
+                )
         rows.append(row)
 
     if args.modules:
@@ -215,24 +226,47 @@ def main() -> int:
 
     print(
         f"{'unit':<52} {'status':<12} {'trap':>4} "
-        f"{'rodata tgt/new':>15} {'d':>5} {'text tgt/new':>14} {'d':>6}"
+        f"{'rodata tgt/new':>15} {'d':>5} {'text tgt/new':>14} {'d':>6} "
+        f"{'data tgt/new':>14} {'d':>7} {'bss tgt/new':>12} {'d':>5}"
     )
+
+    def cell(pair):
+        if pair is None:
+            return "-", ""
+        tgt, new = pair
+        if tgt is None or new is None:
+            return f"{tgt}/{new}", ""
+        return f"{tgt}/{new}", f"{new - tgt:+d}"
+
     for row in rows:
         if row["trap"]:
-            tgt, new = row["rodata"]
-            ttgt, tnew = row["text"]
-            rodata = f"{tgt}/{new}"
-            rdelta = "" if tgt is None or new is None else f"{new - tgt:+d}"
-            text = f"{ttgt}/{tnew}"
-            tdelta = "" if ttgt is None or tnew is None else f"{tnew - ttgt:+d}"
+            rodata, rdelta = cell(row["rodata"])
+            text, tdelta = cell(row["text"])
+            data, ddelta = cell(row.get(".data"))
+            bss, bdelta = cell(row.get(".bss"))
         else:
-            rodata = text = rdelta = tdelta = "-"
+            rodata = text = rdelta = tdelta = data = ddelta = bss = bdelta = "-"
         print(
             f"{row['name']:<52} {str(row['status']):<12} {row['trap']:>4} "
-            f"{rodata:>15} {rdelta:>5} {text:>14} {tdelta:>6}"
+            f"{rodata:>15} {rdelta:>5} {text:>14} {tdelta:>6} "
+            f"{data:>14} {ddelta:>7} {bss:>12} {bdelta:>5}"
         )
 
-    near = [r for r in rows if r["trap"] and r["rodata"][1] - r["rodata"][0] == 16 and r["text"][0] == r["text"][1]]
+    def data_clean(row):
+        for section in (".data", ".bss"):
+            pair = row.get(section)
+            if pair and pair[0] is not None and pair[1] is not None and pair[1] != pair[0]:
+                return False
+        return True
+
+    near = [
+        r
+        for r in rows
+        if r["trap"]
+        and r["rodata"][1] - r["rodata"][0] == 16
+        and r["text"][0] == r["text"][1]
+    ]
+    clean = [r for r in near if data_clean(r)]
     print(
         f"\n{len([r for r in rows if r['trap']])} of {len(rows)} Equivalent units carry the "
         f"16-byte sqrtf pair"
@@ -241,8 +275,20 @@ def main() -> int:
         f"{len(near)} of those have .rodata exactly +16 and .text the right size: "
         "these are the near-certain promotions"
     )
-    for row in near:
+    print(
+        f"{len(clean)} of those ALSO have .data and .bss the right size: only these are "
+        "a genuine one-line `#define _MATH_H` away. A unit in the first list but not "
+        "the second has a data defect as well, and the one-liner alone will not promote it."
+    )
+    for row in clean:
         print(f"    {row['name']}")
+    if len(clean) != len(near):
+        print("\n  rodata-only, still has a .data/.bss delta:")
+        for row in near:
+            if not data_clean(row):
+                data, ddelta = cell(row.get(".data"))
+                bss, bdelta = cell(row.get(".bss"))
+                print(f"    {row['name']:<52} .data {data:>14} {ddelta:>7}   .bss {bss:>10} {bdelta:>5}")
     if missing:
         print(f"\n{missing} units skipped, target or rebuilt object not on disk:")
         for name in skipped:
