@@ -18,6 +18,7 @@ static s32 lbl_1_bss_1174;
 static s32 lbl_1_bss_1168[3];
 static s32 lbl_1_bss_C48[2];
 static s32 lbl_1_bss_C44;
+static s32 lbl_1_bss_C40;
 static s32 lbl_1_bss_1298[3];
 static HUPROCESS *lbl_1_bss_11DC;
 static s16 lbl_1_bss_FB2[4];
@@ -50,6 +51,7 @@ void fn_1_3F3D8(s32 arg0, s16 arg1, Vec *arg2);
 void fn_1_5500(f32 *arg0);
 
 void fn_1_FB10(void);
+s32 fn_1_21028(struct PlayerStruct *arg0);
 s32 fn_1_13728(f32 *arg0);
 s32 fn_1_FCD4(f32 *arg0);
 s32 fn_1_11C48(f32 *arg0);
@@ -199,6 +201,8 @@ struct PlayerStruct
     s32 curPlayerNo;
     s32 pad174[8];
     s32 f_194;
+    s32 pad198[3];
+    s32 f_1A4;
 };
 
 /* lbl_1_bss_8C4 row lookup: 0x28-byte rows indexed by f_10, then by f_14. */
@@ -299,6 +303,122 @@ void fn_1_30910(void)
     }
     espKill(lbl_1_bss_F9E[0]);
     espKill(lbl_1_bss_F9E[1]);
+}
+
+/* fn_1_20DE4: AI button-press generator, the sibling of fn_1_25518. Runs only for
+   a non-human player (GwPlayerConf[arg0].type != 0). It clears the button-down
+   and stick-repeat state, latches lbl_1_bss_C40 from fn_1_21028(arg1) the first
+   time (it starts at -1), then ticks lbl_1_bss_C48[0] and, when it reaches the
+   threshold lbl_1_bss_C48[1], fires A (0x100) and checks whether this slot's
+   record field at +0x34 is clear and fn_1_21028(arg1) reports 0 before
+   re-arming the counter at 0x14. Otherwise every 30th tick it nudges the stick
+   in a random direction. */
+void fn_1_20DE4(s32 arg0, struct PlayerStruct *arg1)
+{
+    s32 var_r29;
+
+    if (GwPlayerConf[arg0].type != 0) {
+        HuPadBtnDown[arg0] = 0;
+        HuPadDStkRep[arg0] = 0;
+        if (lbl_1_bss_C40 == -1) {
+            lbl_1_bss_C40 = fn_1_21028(arg1);
+        }
+        if (lbl_1_bss_C48[1] == 0) {
+            lbl_1_bss_C48[1] = frandmod(0x3C) + 0x1F;
+        }
+        lbl_1_bss_C48[0] += 1;
+        if (lbl_1_bss_C48[0] == lbl_1_bss_C48[1]) {
+            HuPadBtnDown[arg0] = 0x100;
+            lbl_1_bss_C48[0] = 0;
+            lbl_1_bss_C48[1] = 0;
+            if (*(s32 *) ((u8 *) arg1 + *(s32 *) ((u8 *) arg1 + 0x174 + arg1->curPlayerNo * 4) * 0x5C + arg1->f_1A4 * 4 + 0x34) == 0) {
+                if (fn_1_21028(arg1) == 0) {
+                    HuPadBtnDown[arg0] = 0;
+                    HuPadDStkRep[arg0] = 2;
+                    lbl_1_bss_C48[0] = 0;
+                    lbl_1_bss_C48[1] = 0x14;
+                }
+            }
+        } else if (lbl_1_bss_C48[0] % 0x1E == 0) {
+            if (frandmod(2) != 0) {
+                var_r29 = 2;
+            } else {
+                var_r29 = 1;
+            }
+            HuPadDStkRep[arg0] = var_r29;
+        }
+    }
+}
+
+/* fn_1_290BC: stick-only sibling of fn_1_20DE4, one parameter (the player
+   number). Same counter/threshold shape, but the threshold is frandmod(0x2D)+0x1F
+   and the action is a stick nudge instead of a button: when lbl_1_bss_C40 (the
+   facing) is positive and the tick counter has reached 0xF, the stick is driven
+   from lbl_1_bss_C40 (1 -> 8, 2 -> 4, 3 -> 1, anything else -> 2); otherwise,
+   every 30th tick, frandmod(4) selects 8, 4, 1 or 2. The three-step
+   "assign to the inner variable then copy outwards" shape is what the target
+   emits (r27<-r26<-r29 and r24<-r25<-r26), so it is spelled out rather than
+   collapsed into a lookup. */
+void fn_1_290BC(s32 arg0)
+{
+    s32 var_r30;
+    s32 var_r29;
+    s32 var_r28;
+    s32 var_r27;
+    s32 var_r26;
+    s32 var_r25;
+    s32 var_r24;
+
+    if (GwPlayerConf[arg0].type != 0) {
+        HuPadBtnDown[arg0] = 0;
+        HuPadDStkRep[arg0] = 0;
+        if (lbl_1_bss_C48[1] == 0) {
+            lbl_1_bss_C48[1] = frandmod(0x2D) + 0x1F;
+        }
+        lbl_1_bss_C48[0] += 1;
+        if (lbl_1_bss_C48[0] == lbl_1_bss_C48[1]) {
+            HuPadBtnDown[arg0] = 0x100;
+            lbl_1_bss_C48[0] = 0;
+            lbl_1_bss_C48[1] = 0;
+        } else if (lbl_1_bss_C40 > 0) {
+            if (lbl_1_bss_C48[0] >= 0xF) {
+                if (lbl_1_bss_C40 == 1) {
+                    var_r29 = 8;
+                } else {
+                    if (lbl_1_bss_C40 == 2) {
+                        var_r28 = 4;
+                    } else {
+                        if (lbl_1_bss_C40 == 3) {
+                            var_r27 = 1;
+                        } else {
+                            var_r27 = 2;
+                        }
+                        var_r28 = var_r27;
+                    }
+                    var_r29 = var_r28;
+                }
+                HuPadDStkRep[arg0] = var_r29;
+            }
+        } else if (lbl_1_bss_C48[0] % 0x1E == 0) {
+            var_r30 = frandmod(4);
+            if (var_r30 == 0) {
+                var_r26 = 8;
+            } else {
+                if (var_r30 == 1) {
+                    var_r25 = 4;
+                } else {
+                    if (var_r30 == 2) {
+                        var_r24 = 1;
+                    } else {
+                        var_r24 = 2;
+                    }
+                    var_r25 = var_r24;
+                }
+                var_r26 = var_r25;
+            }
+            HuPadDStkRep[arg0] = var_r26;
+        }
+    }
 }
 
 /* fn_1_25518: per-player "random button press" for AI players. arg0 is the player
