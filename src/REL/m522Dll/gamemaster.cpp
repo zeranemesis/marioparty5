@@ -258,11 +258,15 @@ void fn_1_D0E4(void)
     lbl_1_bss_A18 = 210;
 }
 
+// NONMATCHING: the original is a 8 byte C++ this adjustor that tail branches,
+// subi r3 / b fn_1_CDE0.  A hand written forwarder spills the parameter and
+// calls instead, because MWCC has no tail call at -O0,p.
 void fn_1_D118(M522_GAMEMASTER *self)
 {
     fn_1_CDE0((M522_GAMEMASTER *)((u8 *)self - 0x20));
 }
 
+// NONMATCHING: same adjustor thunk as fn_1_D118, tail branching to fn_1_CC64.
 void fn_1_D120(M522_GAMEMASTER *self, s16 flag)
 {
     fn_1_CC64((M522_GAMEMASTER *)((u8 *)self - 0x20), flag);
