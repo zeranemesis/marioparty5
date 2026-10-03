@@ -4,6 +4,8 @@
 
 typedef struct {
     f32 x;
+    s16 hu;
+    s16 ht;
     f32 y;
     f32 z;
 } ACTOR_VEC;
@@ -24,19 +26,6 @@ typedef struct {
     ACTOR *actor[0x28];
     ACTOR *attract[8];
 } ACTOR_TBL;
-
-typedef BOOL (*ACTOR_FN)(ACTOR *a, ACTOR *b);
-
-typedef struct {
-    ACTOR_TBL *tbl;
-    ACTOR *a;
-    ACTOR *b;
-    ACTOR *c;
-    void **p;
-    s32 i;
-    s32 j;
-    s32 k;
-} ACTOR_WORK;
 
 extern const f32 lbl_1_rodata_668;
 extern const f32 lbl_1_rodata_66C;
@@ -94,7 +83,7 @@ void fn_1_D84C(OMOBJ *obj)
         if (a == NULL) {
             continue;
         }
-        if ((a->flags & 0x80000000) == 0) {
+        if ((a->flags & 0x80000000u) == 0) {
             continue;
         }
         if (a->state != 0) {
@@ -105,7 +94,7 @@ void fn_1_D84C(OMOBJ *obj)
             if (b == NULL) {
                 continue;
             }
-            if ((b->flags & 0x80000000) == 0) {
+            if ((b->flags & 0x80000000u) == 0) {
                 continue;
             }
             if (b->state != 0) {
@@ -118,7 +107,7 @@ void fn_1_D84C(OMOBJ *obj)
             if (b == NULL) {
                 continue;
             }
-            if ((b->flags & 0x80000000) == 0) {
+            if ((b->flags & 0x80000000u) == 0) {
                 continue;
             }
             if (b->state == 0) {
@@ -145,6 +134,7 @@ BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
     f32 dx;
     f32 dy;
     f32 d;
+    f32 d2;
     f32 sum;
     f32 mx;
     f32 my;
@@ -154,7 +144,13 @@ BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
     pb = b->pos;
     dx = pa->x - pb->x;
     dy = pa->y - pb->y;
-    d = (dx * dx + dy * dy > lbl_1_rodata_668) ? sqrtf(dx * dx + dy * dy) : (dx * dx + dy * dy);
+    d2 = dx * dx + dy * dy;
+    if (d2 > lbl_1_rodata_668) {
+        d = sqrtf(dx * dx + dy * dy);
+    }
+    else {
+        d = d2;
+    }
     sum = a->rad + b->rad;
 
     if (sum > d) {
@@ -183,12 +179,19 @@ BOOL fn_1_DC6C(ACTOR *a, ACTOR *b)
     f32 dx;
     f32 dy;
     f32 d;
+    f32 d2;
     f32 sum;
     f32 ang;
 
     dx = a->pos->x - b->pos->x;
     dy = a->pos->y - b->pos->y;
-    d = (dx * dx + dy * dy > lbl_1_rodata_668) ? sqrtf(dx * dx + dy * dy) : (dx * dx + dy * dy);
+    d2 = dx * dx + dy * dy;
+    if (d2 > lbl_1_rodata_668) {
+        d = sqrtf(dx * dx + dy * dy);
+    }
+    else {
+        d = d2;
+    }
     sum = a->rad + b->rad;
 
     if (b->mode != 0 ? d > sum : d < sum) {
