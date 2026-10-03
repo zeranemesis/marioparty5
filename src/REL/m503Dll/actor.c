@@ -67,6 +67,9 @@ void fn_1_D83C(OMOBJ *obj)
     obj->objFunc = fn_1_D84C;
 }
 
+// NONMATCHING: MWCC emits one register fewer than the original (r25 instead of
+// r24) and keeps no copy of each table entry, and it picks clrrwi where the
+// original picks clrlwi for the bit-31 test
 void fn_1_D84C(OMOBJ *obj)
 {
     ACTOR_TBL *tbl;
@@ -127,6 +130,8 @@ void fn_1_D84C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: one float local too few, so d/sum land in f25/f26 instead of
+// f26/f27 and the frame is 0xa0 instead of 0x80
 BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
 {
 ACTOR_VEC *pa;
@@ -253,7 +258,10 @@ const f32 lbl_1_rodata_66C = 0.0f;
 const f64 lbl_1_rodata_680 = 0.0;
 const f32 lbl_1_rodata_688 = -1.0f;
 const f64 lbl_1_rodata_690 = 360.0;
-const f64 lbl_1_rodata_698 = 3.141592653589793;
+const f64 lbl_1_rodata_698 = M_PI;
+
+
+
 
 
 
