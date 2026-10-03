@@ -46,6 +46,11 @@ typedef struct M574WalkEntry_s {
     f32 rate;
 } M574_WALK_ENTRY;
 
+typedef struct M574WalkTbl_s {
+    M574_WALK_ENTRY ent[M574_PLAYER_MAX];
+    s32 pad;
+} M574_WALK_TBL;
+
 void fn_1_1068(OMOBJ *obj);
 void fn_1_1264(OMOBJ *obj);
 void fn_1_1588(OMOBJ *obj);
@@ -66,42 +71,33 @@ void fn_1_70B0(s32 handle, s32 idx, Vec *out);
 void fn_1_6478(s32 grp, f32 scale);
 f32 fn_1_6568(s32 grp);
 
-static const u32 M574MotionDataNumTbl[5] = {
+static u32 M574MotionDataNumTbl[5] = {
     0x8C0000, 0x8C0001, 0x8C004C, 0x8C0006, 0x8C0031
 };
 
-static const M574_MOT_SHIFT M574MotShiftTbl[5] = {
+static M574_MOT_SHIFT M574MotShiftTbl[5] = {
     { 0, 0.2f, 0x40000001 },
-    { 1, 0.1f, 0x00010000 },
-    { 2, 0.2f, 0x00020000 },
-    { 3, 0.2f, 0x00040000 },
+    { 1, 0.1f, 0x40000001 },
+    { 2, 0.2f, 0 },
+    { 3, 0.2f, 0 },
     { 4, 0.2f, 0x00000000 }
 };
 
-static const Vec M574PlayerPosTbl[4] = {
-    { -1052.0f, 0.0f, 0.0f },
+static Vec M574PlayerPosTbl[4] = {
+    { -1100.0f, 0.0f, 0.0f },
     { -220.0f, 0.0f, 0.0f },
     { 220.0f, 0.0f, 0.0f },
-    { 1099.5f, 0.0f, 0.0f }
+    { 1100.0f, 0.0f, 0.0f }
 };
 
-static const Vec M574PlayerPosTbl2[4] = {
-    { -944.0f, 50.0f, 0.0f },
-    { -288.0f, 50.0f, 0.0f },
-    { 288.0f, 50.0f, 0.0f },
-    { 944.0f, 50.0f, 0.0f }
+static Vec M574PlayerPosTbl2[4] = {
+    { -900.0f, 50.0f, 0.0f },
+    { -420.0f, 50.0f, 0.0f },
+    { 420.0f, 50.0f, 0.0f },
+    { 900.0f, 50.0f, 0.0f }
 };
 
-static const M574_WALK_ENTRY M574WalkTbl[4] = {
-    { 397.0f, 18, 16, 9, 9, 0.7f },
-    { 350.0f, 19, 15, 8, 8, 0.75f },
-    { 320.0f, 21, 14, 7, 7, 0.8f },
-    { 300.0f, 24, 13, 6, 6, 0.85f }
-};
-
-static const f32 M574PlayerAngleTbl[4] = { 90.0f, 220.0f, 90.0f, 220.0f };
-
-static const s32 M574PlayerPanTbl[4] = { 0x24, 0x3C, 0x44, 0x5C };
+static f32 M574PlayerAngleTbl[4] = { 90.0f, 270.0f, 90.0f, 270.0f };
 
 static OMOBJ *M574PlayerObjTbl[M574_PLAYER_MAX];
 
@@ -356,6 +352,18 @@ void fn_1_1588(OMOBJ *obj)
     fn_1_1938(obj);
 }
 
+static s32 M574PlayerPanTbl[4] = { 0x24, 0x3C, 0x44, 0x5C };
+
+static M574_WALK_TBL M574WalkTblData = {
+    {
+        { 400.0f, 18, 16, 9, 9, 0.7f },
+        { 350.0f, 19, 15, 8, 8, 0.75f },
+        { 320.0f, 21, 14, 7, 7, 0.8f },
+        { 300.0f, 24, 13, 6, 6, 0.85f }
+    },
+    0
+};
+
 void fn_1_17A0(OMOBJ *obj)
 {
     M574_PLAYER_WORK *player;
@@ -415,7 +423,7 @@ void fn_1_19AC(OMOBJ *obj)
     Vec pos;
 
     player = obj->data;
-    entry = (M574_WALK_ENTRY *) &M574WalkTbl[player->dif];
+    entry = (M574_WALK_ENTRY *) &M574WalkTblData.ent[player->dif];
     target = (Vec *) &M574PlayerPosTbl2[player->playerGrp];
 
     switch (player->unk2C) {
