@@ -134,7 +134,6 @@ BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
     f32 dx;
     f32 dy;
     f32 d;
-    f32 d2;
     f32 sum;
     f32 mx;
     f32 my;
@@ -144,13 +143,7 @@ BOOL fn_1_D9C4(ACTOR *a, ACTOR *b)
     pb = b->pos;
     dx = pa->x - pb->x;
     dy = pa->y - pb->y;
-    d2 = dx * dx + dy * dy;
-    if (d2 > lbl_1_rodata_668) {
-        d = sqrtf(dx * dx + dy * dy);
-    }
-    else {
-        d = d2;
-    }
+    d = sqrtf(dx * dx + dy * dy);
     sum = a->rad + b->rad;
 
     if (sum > d) {
@@ -178,26 +171,19 @@ BOOL fn_1_DC6C(ACTOR *a, ACTOR *b)
 {
     f32 dx;
     f32 dy;
-    f32 d;
-    f32 d2;
     f32 sum;
     f32 ang;
+    f32 d;
 
     dx = a->pos->x - b->pos->x;
     dy = a->pos->y - b->pos->y;
-    d2 = dx * dx + dy * dy;
-    if (d2 > lbl_1_rodata_668) {
-        d = sqrtf(dx * dx + dy * dy);
-    }
-    else {
-        d = d2;
-    }
+    d = sqrtf(dx * dx + dy * dy);
     sum = a->rad + b->rad;
 
-    if (b->mode != 0 ? d > sum : d < sum) {
-        ang = (f32)(atan2(dy, dx) / lbl_1_rodata_698 / lbl_1_rodata_690 * lbl_1_rodata_690);
-        a->pos->x = b->pos->x + sin(ang * lbl_1_rodata_698 / lbl_1_rodata_690) * sum;
-        a->pos->y = b->pos->y + cos(ang * lbl_1_rodata_698 / lbl_1_rodata_690) * sum;
+if ((b->mode && d > sum) || (!b->mode && d < sum)) {
+        ang = (f32)(atan2(dx, dy) / lbl_1_rodata_698 * lbl_1_rodata_690);
+        a->pos->x = b->pos->x + sin(lbl_1_rodata_698 * ang / lbl_1_rodata_690) * sum;
+        a->pos->y = b->pos->y + cos(lbl_1_rodata_698 * ang / lbl_1_rodata_690) * sum;
         return 1;
     }
     return 0;
@@ -269,3 +255,5 @@ const f64 lbl_1_rodata_680 = 0.0;
 const f32 lbl_1_rodata_688 = -1.0f;
 const f64 lbl_1_rodata_690 = 360.0;
 const f64 lbl_1_rodata_698 = 3.141592653589793;
+
+
