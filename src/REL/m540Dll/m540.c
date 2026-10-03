@@ -163,6 +163,7 @@ static void fn_1_A19C(M540_OBJ *obj);
 static void fn_1_AA30(M540_OBJ *obj);
 static void fn_1_AC14(M540_OBJ *obj);
 static M540_OBJ *fn_1_CB34(M540_OBJ *obj);
+static void fn_1_D09C(M540_OBJ *obj);
 static int fn_1_8468(M540_OBJ *obj);
 static void fn_1_FF14(float arg0, float arg1);
 static void fn_1_103B0(HU3DMODELID modelId);
@@ -251,6 +252,19 @@ static void fn_1_5588(int no)
     } else {
         work->unk10 = 1;
     }
+}
+
+static void fn_1_2C20(s16 mode, s16 frameNo)
+{
+    HuPrcSleep(0xC7);
+    MgSeqModeNext();
+}
+
+static void fn_1_618C(s16 mode, s16 frameNo)
+{
+    HuAudJinglePlay(0x79);
+    fn_1_D09C(lbl_1_bss_40);
+    MgSeqModeNext();
 }
 
 static M540_OBJ *fn_1_61C4(void)
@@ -1954,6 +1968,127 @@ static void fn_1_D3F8(M540_OBJ *obj)
     while(1) {
         M540_OBJ_SLEEP(1);
     }
+}
+
+static void fn_1_DECC(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_DED8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_DF80(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_E37C(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_E388(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_E430(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_E72C(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_E738(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_E7E0(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_EA90(M540_OBJ *obj)
+{
+    obj->mode = 2;
+}
+
+static void fn_1_EF30(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_EF3C(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_EFE4(M540_OBJ *obj)
+{
+    obj->mode = 1;
+}
+
+static void fn_1_F6A8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F7B8(M540_OBJ *obj)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F924(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_FCB8(M540_OBJ *obj)
+{
+    obj->mode = 2;
+}
+
+static void fn_1_100AC(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static int fn_1_103A0(void)
+{
+    return lbl_1_bss_1C;
+}
+
+static void fn_1_10878(M540_OBJ *obj)
+{
+}
+
+static float fn_1_11458(float *a, float *b)
+{
+    return a[0]*b[0] + a[1]*b[1];
+}
+
+static float fn_1_11478(float *a, float *b)
+{
+    return a[0]*b[1] - a[1]*b[0];
 }
 
 /* M540_APPEND */
