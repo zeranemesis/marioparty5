@@ -1,9 +1,10 @@
 #include "types.h"
 #include "dol2asm.h"
 
-// m536::CGameMaster is written as plain C with an explicit vtable: in C++ the
-// real class shape emits a vtable whose second group is unreachable from
-// source, and the two 8-byte thunks at the end cannot be expressed as C.
+// m536::CGameMaster is written as plain C inside extern "C" with an explicit
+// 12-word vtable, following src/REL/m536Dll/stage.cpp. The object carries two
+// vtable slots, so the last two vtable entries are this-adjusting thunks that
+// no C++ class declaration produces here; they are inline __asm blocks.
 extern "C" {
 
 struct M536GameMaster;
@@ -50,7 +51,7 @@ void fn_1_2BEC(void);
 void fn_1_2C44(void);
 void fn_1_47E4(M536GameMaster *self);
 void fn_1_4A08(void);
-void fn_1_5268(void *self, s16 flag);
+void fn_1_5268(void *self, u32 flag);
 void fn_1_52E4(void *self, s32 flag);
 void fn_1_5398(void *self, s32 flag);
 void fn_1_5428(void *self, s32 flag);
@@ -199,8 +200,10 @@ void fn_1_6308(M536GameMaster *self)
 {
     u8 fastForward;
     s32 wait;
-    s16 jingle;
+    s32 waitFrames;
+    s32 jingle;
     s32 stream;
+    u8 jingleFlag;
 
     fn_1_1C48(0);
     fn_1_2BEC();
@@ -247,8 +250,9 @@ void fn_1_6308(M536GameMaster *self)
     }
 
     fn_1_1C48(4);
+    jingleFlag = fn_1_AFF0();
 
-    if (fn_1_AFF0() != 0) {
+    if (jingleFlag != 0) {
         jingle = 0x7B;
     } else {
         jingle = 0x79;
@@ -256,7 +260,7 @@ void fn_1_6308(M536GameMaster *self)
 
     HuAudJinglePlay(jingle);
 
-    for (wait = 0; wait < lbl_1_bss_9F8; wait++) {
+    for (waitFrames = 0; waitFrames < lbl_1_bss_9F8; waitFrames++) {
         fn_1_5428(&self->m_vptr2, 0);
     }
 
@@ -271,7 +275,7 @@ u8 fn_1_64B8(M536GameMaster *self)
 {
     u8 ret;
 
-    self->m_counter = self->m_counter + 1;
+    self->m_counter += 1;
     ret = 1;
 
     if (fn_1_5E18(&self->m_obj) == 0) {
