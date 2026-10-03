@@ -920,7 +920,7 @@ config.libs = [
         "e3setupdll",
         objects={
             Object(NonMatching, "REL/e3setupdll/e3setup.c"),
-            Object(NonMatching, "REL/e3setupdll/mgname.c"),
+            Object(Equivalent, "REL/e3setupdll/mgname.c"),
             Object(NonMatching, "REL/e3setupdll/toueidisp.c"),
             Object(Matching, "REL/e3setupdll/stage.c"),
         },
