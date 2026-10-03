@@ -1,4 +1,5 @@
 #include "REL/m574Dll.h"
+#include "game/mg/seqman.h"
 
 typedef struct M574PlayerWork_s {
     s32 no;
@@ -8,15 +9,15 @@ typedef struct M574PlayerWork_s {
     s32 curMotNo;
     s32 unk14;
     u32 unk18;
-    s32 unk1C;
+    f32 unk1C;
     f32 f20;
     s32 type;
     s32 dif;
     s32 unk2C;
     s32 unk30;
     s32 unk34;
-    s32 unk38;
-    s32 unk3C;
+    u32 mode;
+    s32 timer;
     s32 counter;
     s32 unk44;
     Vec pos;
@@ -37,10 +38,16 @@ typedef struct M574MotShift_s {
 
 void fn_1_1068(OMOBJ *obj);
 void fn_1_1264(OMOBJ *obj);
+void fn_1_17A0(OMOBJ *obj);
+void fn_1_182C(OMOBJ *obj);
+void fn_1_1938(OMOBJ *obj);
 s32 fn_1_1E4C(OMOBJ *obj);
 void fn_1_1D54(OMOBJ *obj, u32 motNo);
 
 void fn_1_9FC(s32 no, s32 grp, s32 charNo);
+s32 fn_1_928(s32 no);
+void fn_1_AAC(s32 no);
+f32 fn_1_CC8(f32 cur, f32 target, f32 speed);
 void fn_1_6478(s32 grp, f32 scale);
 f32 fn_1_6568(s32 grp);
 
@@ -172,8 +179,74 @@ void fn_1_1068(OMOBJ *obj)
     player->rot.x = player->rot.y = player->rot.z = 0.0f;
     Hu3DModelScaleSet(model, 1.2f, 1.2f, 1.2f);
     player->angle = M574PlayerAngleTbl[playerGrp];
-    player->unk38 = 0;
+    player->mode = 0;
     obj->objFunc = fn_1_1264;
+}
+
+void fn_1_1588(OMOBJ *obj)
+{
+    M574_PLAYER_WORK *player;
+
+    player = obj->data;
+    player->unk14 = 0;
+    player->unk18 = 0;
+    player->unk1C = 0.0f;
+    player->f20 = 0.0f;
+    player->rot.x = player->rot.y = player->rot.z = 0.0f;
+
+    switch (player->mode) {
+    case 0:
+        player->unk70 = 0;
+        player->flag74 = 0;
+        player->mode++;
+    case 1:
+        fn_1_182C(obj);
+        if (MgSeqModeGet() == 7) {
+            break;
+        }
+        player->mode++;
+        player->timer = 0;
+        fn_1_1D54(obj, 1);
+        break;
+    case 2:
+        fn_1_182C(obj);
+        player->angle = fn_1_CC8(player->angle, 0.0f, 0.05f);
+        if (++player->timer < 20) {
+            break;
+        }
+        player->mode++;
+        player->timer = 0;
+        fn_1_1D54(obj, 0);
+        break;
+    case 3:
+        fn_1_182C(obj);
+        player->angle = fn_1_CC8(player->angle, 0.0f, 0.05f);
+        if (++player->timer < 20) {
+            break;
+        }
+        if (fn_1_928(player->no) >= 0) {
+            fn_1_1D54(obj, 3);
+        }
+        else {
+            fn_1_1D54(obj, 4);
+            fn_1_AAC(player->no);
+        }
+        player->mode++;
+        break;
+    case 4:
+        break;
+    case 5:
+        if (fn_1_1E4C(obj)) {
+            player->mode++;
+        }
+        break;
+    case 6:
+        break;
+    }
+
+    PSVECAdd(&player->pos, &player->rot, &player->pos);
+    fn_1_17A0(obj);
+    fn_1_1938(obj);
 }
 
 void fn_1_17A0(OMOBJ *obj)
@@ -189,7 +262,7 @@ void fn_1_17A0(OMOBJ *obj)
     }
 }
 
-void fn_1_182C(void)
+void fn_1_182C(OMOBJ *obj)
 {
 }
 
