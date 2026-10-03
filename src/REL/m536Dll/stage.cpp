@@ -96,7 +96,7 @@ void fn_1_96E0(M536Cloud *self);
 void fn_1_99E0(M536Cloud *head, void (*fn)(M536Cloud *));
 void fn_1_9A40(M536Cloud *node, M536Cloud *head, void (*fn)(M536Cloud *));
 
-extern void **lbl_1_data_1FC;
+extern void *lbl_1_data_1FC[];
 extern void *lbl_1_bss_C;
 extern void *lbl_1_bss_A0C;
 extern void *lbl_1_bss_A10;
@@ -381,11 +381,14 @@ void *fn_1_9584(M536Cloud *self, s16 flag)
 void fn_1_95DC(void)
 {
     M536Cloud *node;
-    s32 empty;
+    M536Cloud *prev;
+    M536Cloud *tmp;
 
-    for (; (u8)empty == 0;
-         empty = (lbl_1_bss_A74.m_next == &lbl_1_bss_A74 && lbl_1_bss_A74.m_next == lbl_1_bss_A74.m_prev)) {
-        node = lbl_1_bss_A74.m_prev;
+    while ((u8)(lbl_1_bss_A74.m_next == &lbl_1_bss_A74 &&
+                lbl_1_bss_A74.m_next == lbl_1_bss_A74.m_prev) == 0) {
+        prev = lbl_1_bss_A74.m_prev;
+        tmp = prev;
+        node = tmp;
         if (node) {
             fn_1_30F4(&node->m_mdl, -1);
             if (node) {
@@ -395,6 +398,7 @@ void fn_1_95DC(void)
         }
     }
 }
+
 
 void fn_1_96E0(M536Cloud *self)
 {
@@ -442,6 +446,7 @@ void *fn_1_9800(M536Sky *self, s16 flag)
             }
             lbl_1_bss_A0C = NULL;
         }
+
 
         if (self) {
             self->m_vptr = lbl_1_data_1FC;
