@@ -1342,7 +1342,7 @@ config.libs = [
         "m536Dll",
         objects={
             Object(NonMatching, "REL/m536Dll/m536.cpp"),
-            Object(NonMatching, "REL/m536Dll/game_master.cpp"),
+            Object(Matching, "REL/m536Dll/game_master.cpp"),
             Object(Matching, "REL/m536Dll/object_setup.cpp"),
             Object(NonMatching, "REL/m536Dll/camera.cpp"),
             Object(NonMatching, "REL/m536Dll/killereff.cpp"),
