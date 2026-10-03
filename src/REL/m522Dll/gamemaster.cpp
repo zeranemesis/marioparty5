@@ -78,7 +78,7 @@ void fn_1_D094(M522_GAMEMASTER *self);
 void fn_1_D0C0(void);
 void fn_1_D0E4(void);
 u8 fn_1_CF6C(M522_GAMEMASTER *self);
-void fn_1_D118(M522_GAMEMASTER *self);
+void fn_1_D118(void);
 void fn_1_D120(M522_GAMEMASTER *self, s16 flag);
 }
 
@@ -267,13 +267,19 @@ struct M522LimitsInit {
 
 static M522LimitsInit lbl_1_bss_A1C;
 
-// NONMATCHING: the original is a 8 byte C++ this adjustor that tail branches,
-// subi r3 / b fn_1_CDE0.  A hand written forwarder spills the parameter and
-// calls instead, because MWCC has no tail call at -O0,p.
-void fn_1_D118(M522_GAMEMASTER *self)
+/* The original is an 8 byte C++ this adjustor that tail branches, subi r3 /
+ * b fn_1_CDE0.  MWCC has no tail call at -O0,p, so the two instructions go in
+ * an inline __asm block; the body must declare no parameter or MWCC spills
+ * r3 to the stack first. */
+#pragma dont_inline on
+void fn_1_D118(void)
 {
-    fn_1_CDE0((M522_GAMEMASTER *)((u8 *)self - 0x20));
+    __asm {
+        subi r3, r3, 0x20
+        b      fn_1_CDE0
+    }
 }
+#pragma dont_inline reset
 
 // NONMATCHING: same adjustor thunk as fn_1_D118, tail branching to fn_1_CC64.
 void fn_1_D120(M522_GAMEMASTER *self, s16 flag)
