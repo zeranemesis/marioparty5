@@ -20,6 +20,8 @@ static XY XYPAL[12] = {
     { 78, 4 }, { 104, 3 }, { 104, 3 }, { 104, 3 }, { 104, 3 }, { 156, 2 },
 };
 
+char lbl_801D1AA8[56] = "SISetSamplingRate: unknown TV format. Use default.";
+
 void SISetSamplingRate(u32 msec)
 {
     XY *xy;
@@ -43,7 +45,7 @@ void SISetSamplingRate(u32 msec)
             xy = XYPAL;
             break;
         default:
-            OSReport("SISetSamplingRate: unknown TV format. Use default.");
+            OSReport(lbl_801D1AA8);
             msec = 0;
             xy = XYNTSC;
             break;

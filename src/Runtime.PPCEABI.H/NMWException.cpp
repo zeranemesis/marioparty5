@@ -140,7 +140,7 @@ public:
 		size = elementsize;
 		n    = nelements;
 		dtor = destructor;
-		i    = n;
+		i    = 0;
 	}
 
 	~__partial_array_destructor();
@@ -158,6 +158,25 @@ __partial_array_destructor::~__partial_array_destructor()
 	}
 }
 
+/* .text  __construct_array */
+// The original build keeps the array state in a __partial_array_destructor
+// local: five words at 0x8(SP) (p, size, n, dtor, i), released by the
+// inlined destructor at scope exit -- which is also what the extab entry
+// for this function records as a DESTROYLOCAL at 0x8(SP).
+extern "C" void __construct_array(void* block, ConstructorDestructor ctor,
+                                    ConstructorDestructor dtor, size_t sz, size_t n)
+{
+	__partial_array_destructor d(block, sz, n, dtor);
+	char* p = (char*)block;
+
+	while (d.i < n)
+	{
+		CTORCALL_COMPLETE(ctor, p);
+		p += sz;
+		d.i++;
+	}
+}
+
 /* .text  __destroy_arr */
 extern "C" void __destroy_arr(void* block, ConstructorDestructor dtor, size_t sz, size_t n)
 {
@@ -170,28 +189,3 @@ extern "C" void __destroy_arr(void* block, ConstructorDestructor dtor, size_t sz
 	}
 }
 
-
-/* .text  __construct_array */
-extern "C" void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, size_t sz, size_t n)
-{
-	char* p = (char*)ptr;
-	size_t i = 0;
-	while (i < n)
-	{
-		CTORCALL_COMPLETE(ctor, p);
-		p += sz;
-		i++;
-	}
-	if (i >= n)
-		return;
-	if (!dtor)
-		return;
-	p = (char*)ptr + i * sz;
-	do
-	{
-		p -= sz;
-		DTORCALL_COMPLETE(dtor, p);
-		i--;
-	}
-	while (i);
-}

@@ -27,7 +27,7 @@ SHARED_SYM int m562CtrlNo;
 SHARED_SYM BOOL mgExitStartF;
 SHARED_SYM BOOL mgPauseExitF;
 SHARED_SYM BOOL mgInstExitF;
-SHARED_SYM u8 mgBoard2Force;
+SHARED_SYM int mgBoard2Force;
 
 #include "mgdata.inc"
 

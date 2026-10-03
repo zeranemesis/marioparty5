@@ -61,7 +61,7 @@ SHARED_SYM extern int m562CtrlNo;
 SHARED_SYM extern BOOL mgExitStartF;
 SHARED_SYM extern BOOL mgPauseExitF;
 SHARED_SYM extern BOOL mgInstExitF;
-SHARED_SYM extern u8 mgBoard2Force;
+SHARED_SYM extern int mgBoard2Force;
 
 s32 MgNoGet(s16 ovlNo);
 

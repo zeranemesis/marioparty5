@@ -1,0 +1,903 @@
+# MWCC codegen notes (assembled from agent findings)
+
+Hard-won facts about how Metrowerks CodeWarrior generates code for this
+project, collected from decompilation work. These apply across units, not just
+the one that produced them. Every rule here was verified against a diff.
+
+Two flag sets matter and they behave differently:
+
+| unit kind | flags | register allocation |
+|---|---|---|
+| DOL (`game/`, `dolphin/`, `msm/`, `musyx/`) | `-O4,p` | optimised, aggressive inlining |
+| REL overlays (`src/REL/*`) | `-O0,p` `-char unsigned` | nearly literal, declaration-driven |
+
+---
+
+## Chained assignment is not the same as a shared local
+
+The single highest-value finding for `-O0,p` float code. Confirmed on
+`m510dll/opening` `fn_1_966C` (1184 bytes, 59 differing rows -> 4).
+
+When a value is written to two fields of the same object:
+
+```c
+/* WRONG: a named local pins the value into a callee-saved FPR (f31),
+   and each read is re-emitted. */
+rate = view3->offset;
+slide->x = rate;
+slide->from.x = rate;
+
+/* RIGHT: one expression, one load, two stores, volatile temporary f0. */
+slide->from.x = slide->x = view3->offset;
+```
+
+| source shape | emitted |
+|---|---|
+| shared `f32` local | `lfs f31, ...` then two `stfs f31, ...` |
+| chained assignment | `lfs f0, ...` then two `stfs f0, ...` |
+
+This is the same distinction as R4 in [mwcc_temp_allocator.md](mwcc_temp_allocator.md):
+a named local is a store into a **callee-saved** register, an expression
+temporary is **volatile**. `f0` in the original is a temporary, so the source
+cannot have used a local.
+
+**The chain order is observable.** The target stores `0x18` (the scalar) before
+`0xC` (the `Vec` member), i.e. `slide->from.x = slide->x = v`, not the reverse.
+Getting the chain backwards costs 2 rows per pair and no more.
+
+The same applies to a lerp written twice:
+
+```c
+slide->from.x = slide->to.x = view3->offset + rate * (target - view3->offset);
+```
+
+Writing it as two statements forces a `lfs` of the just-stored field.
+
+## Pointer locals: a two-step `addi` means the base is a real local
+
+`addi rX, r30, 0x1c` followed by `addi rY, rX, 0x8` is not how MWCC folds
+`&work->view.obj`. Given the struct directly it emits a **single** `addi`
+with the offset summed (`addi rX, r30, 0x24`). The two-step form only appears
+when the base is a separate named local:
+
+```c
+M510_VIEW *slot0 = &work->view0;      /* addi r22, r30, 0x1c  */
+M510_VIEWOBJ *view0 = &slot0->obj;    /* addi r27, r22, 0x8   */
+```
+
+So a two-step `addi` in the target is a *structural* fact about the original
+source: the base pointer was named. Do not try to write the offset by hand.
+
+## Getting the callee-saved allocation right
+
+Three levers, in the order worth trying.
+
+1. **Count the locals.** The prologue uses a fixed set of callee-saved
+   registers and nothing is reused: every pointer that is assigned in the
+   prologue occupies its own register. If the target uses r19..r29 that is 11
+   distinct named locals, and one too few puts the whole prologue one register
+   low. Add the missing one rather than reshuffling.
+2. **Only live locals are allocated.** A local that is declared and never read
+   spills to the stack instead of taking a register (see note 2 above). A local
+   that is assigned but never read still costs a spill. This is the lever for
+   *adding* a register consumer: read the value somewhere to make it live.
+3. **Interleaving matters, and it is not a sort.** Order is not "declaration
+   order" in any simple sense. On `fn_1_966C` the working order was
+
+   ```c
+   M510_SLIDE *slide  = &work->slide;
+   M510_VIEW  *slot0..slot3 = &work->view0..3;   /* r22,r21,r20,r19 */
+   M510_VIEWOBJ *view3 = &slot3->obj;            /* r29 */
+   s32 i;                                        /* r28 */
+   M510_VIEWOBJ *view0 = &slot0->obj;            /* r27 */
+   M510_VIEWOBJ *view1 = &slot1->obj;            /* r26 */
+   M510_VIEWOBJ *view2 = &slot2->obj;            /* r25 */
+   M510_SLOT *slot;
+   f32 rate;
+   s32 result;
+   ```
+
+   with `view3` and `i` declared *before* `view0`. The natural reading order
+   gives r28/r27/r26/r29 instead and costs 4 rows.
+
+**Do not brute-force this.** A 500-permutation search over the declaration
+orders of this function did not beat the hand-derived order above, because the
+winners were not permutations at all - they changed *which* locals exist. Fix
+the body first, then the count, then the interleaving; search last.
+
+## Postfix increment on a struct field
+
+`lwz r3, 0x14(r30); addi r0, r3, 1; stw r0, 0x14(r30); cmpwi r3, 0x5a` is
+
+```c
+if (work->frame++ > 0x5A) { ... }
+```
+
+The named-local spelling (`frame = work->frame; work->frame = frame + 1;
+if (frame > 0x5A)`) reloads into a callee-saved register and costs 4 rows per
+occurrence. There are four of these in one function; the postfix form is worth
+more than any allocation tweak.
+
+## Redundant casts on already-narrow fields
+
+`(u16)work->phase != 0` on a `u16` field emits a stray `clrlwi`. The plain
+`work->phase != 0` is the original's spelling. Same for casts to the field's
+own type generally: check the field width before adding a cast.
+
+## Method that worked, in order
+
+For each of the four findings the productive step was to read the **target's
+instruction shape** and ask what C produces it, not to try source variants:
+
+1. `tools/unit_status.py <unit>` for the function list.
+2. `python tools/m2c_draft.py <unit>` for a draft (never copy it).
+3. `python tools/fndiff.py <unit> <fn> --all` and read the **whole** `!` list,
+   not the summary. Group the rows: prologue / arithmetic / stores.
+4. For each group, identify the *shape* of the target instruction stream
+   (`stfs` pairs, two-step `addi`, postfix counters) and derive the C from it.
+5. Re-run `fndiff` after each change and keep the best version. Save a copy
+   before experimenting: several plausible-looking changes are regressions.
+
+Getting from 77% to 98% took four shape-reading passes. The last 4 rows were
+the emission order of four address computations, which no source rewrite
+recovered - that is what `Equivalent` is for.
+
+## Finding 5: a full 32-bit base defeats displacement folding
+
+`dolphin/os/OSAudioSystem` shows the other side of finding 3. The target
+keeps the complete pointer `0xCC005000` in a register and reaches every
+field with a small displacement:
+
+```
+addi r3, r3, 0x5000     ; r3 = 0xCC005000, kept live
+sth  r0, 0x12(r3)       ; cpucode
+addi r31, r3, 0xa       ; r31 = &init_vector2, kept for the rest
+lhz  r0, 0x0(r31)       ; ...
+```
+
+Written with a struct pointer and a `volatile u16 *` field pointer, MWCC
+instead collapses the base to the `lis` half and rebuilds the offset on
+every access, saving 3 callee-saved registers instead of 7:
+
+```
+lis  r3, 0xcc00
+lhz  r0, 0x500a(r3)     ; instead of lhz r0, 0x0(r31)
+sth  r0, 0x500a(r3)
+```
+
+Semantics and instruction count are identical (125 rows either way); only
+the register assignment differs. Three things that did **not** recover it:
+
+- Accessing fields through `regs->field` rather than a saved pointer: worse
+  (24% vs 27%), because every access re-derives the address.
+- Hoisting the `vec` assignment before the first struct store: no change.
+- Adding explicit locals for the three mail words: pushed the count to 126.
+
+So this is a genuine allocation difference, not a missing local: the counts
+matched while the prologue still saved 3 registers against the target's 7.
+Treat "the base is materialised once and reused" as a property to check in
+the target prologue (`stmw r25` = 7 saved) rather than something to force
+from the source.
+
+## 6. DCE on an unused call parameter (OSMemory)
+
+`MEMIntrruptHandler` computes `flags` and passes it to the error handler, but the
+target never uses it afterwards, so the current compiler keeps a dead store that
+MWCC removed:
+
+```
+rlwimi r0, r4, 0x1f, 0x1f, 0x1f     ; flags (kept in the target)
+add    r5, r5, r6
+```
+
+Rewriting the call so the value has to survive (`__OSErrorHandler(..., flags)`
+instead of a local that is dropped) restores both instructions. When a target
+keeps a computed value that "cannot matter", the value must be reaching the
+callee through a real argument rather than through dead local storage.
+
+## 7. Pointers are 4 bytes wide inside struct layout (MWCC 2.3.3 / GC 1.2.5n)
+
+This is the big one. In struct layout this compiler gives every pointer member a
+size of **4**, while the generated code still handles pointers as full 64-bit
+values. Struct fields therefore overlap:
+
+```c
+typedef struct OSStopwatch {   /* sizeof == 0x2C */
+    char* name;   /* 0x00, next member starts at 0x04! */
+    u32    hits;  /* 0x04 */
+    OSTime total; /* 0x08 */
+    OSTime min;   /* 0x10 */
+    OSTime max;   /* 0x18 */
+    OSTime last;  /* 0x20 */
+    BOOL   running; /* 0x28 */
+} OSStopwatch;
+```
+
+Verified directly with `mwcceppc.exe` (GC/1.2.5n) on a probe file: `hits` lands at
+0x04 behind a `char*`, and a struct `{char* name; void* other; u32 hits;}` puts
+`other` at 0x04 and `hits` at 0x08. `s64` members keep their 8-byte alignment, so
+only pointer-then-small-field sequences are affected.
+
+Consequences for this repo:
+
+- Structs copied from `extern/aurora` (compiled by a host 64-bit compiler) have
+  the wrong offsets and must be corrected field by field against the target
+  before the unit can match.
+- Field *order* must be reproduced verbatim; "fixing" the overlap (padding the
+  pointer out to 8 bytes) silently changes every following offset.
+- Every access still uses 32-bit `lwz`/`stw`: the game only ever needs the low
+  half of a pointer, which is why this layout has never been noticed.
+
+## 8. String pools are padded to 4 bytes per literal, and the section to 8
+
+MWCC emits each string literal padded up to a 4-byte boundary into a single
+`.data` pool, and references them as one base symbol plus an immediate offset
+(`lis r4, pool@ha` / `addi r29, r4, pool@l` / `addi r3, r29, 0x38`). The pool's
+size is *not* rounded up to the section alignment: a pool whose literals end at
+0x71 gives a 0x71-byte section, while the target has 0x78. Spelling the trailing
+padding out inside the last literal (`"...\n\0\0\0\0\0\0\0"`) reproduces the
+target's section size byte for byte.
+
+## 9. MWCC 2.4.7 spill placement, and how to force it (NMWException)
+
+`__construct_array` keeps `ptr`, `dtor` and its loop counter in the frame and
+reloads them around every indirect `bctrl`, while promoting only four values
+(`p`, `sz`, `n`, `ctor`) into r28-r31. Written plainly, the same compiler keeps
+seven values in r25-r31 and spills nothing: it only spills when the frame is
+forced, because with enough callee-saved registers available it prefers
+promotion over spilling.
+
+The tell-tale in the target is a store immediately followed by a reload of the
+same slot (`stw r0,0x18(r1); lwz r4,0x18(r1)`) with no use in between — a
+register allocator would never emit that for a spilled-but-promoted value.
+Declaring the cold parameters and the counter `volatile` reproduces the
+placement and the register budget, taking the unit from 84.8% to 91.4%.
+
+So: when a target reloads a variable around every call, `volatile` is the lever,
+and it is worth trying on parameters, not just locals — but only on the values
+the target keeps in memory. Marking `sz` and `n` volatile as well makes things
+worse (they lose their register copies), which is how the right subset was found.
+
+## 10. Correcting a struct offset in OSMemory was not a codegen problem
+
+`__OSInitMemoryProtection` looked like the displacement-folding case of finding 5,
+but the offsets were simply wrong. The target writes the block at 0xCC004000 with
+displacements 0x20, 0x10 and 0x28, while the struct in `OSMemory.c` placed those
+fields at 0x22, 0x10 and 0x2B — a two-byte shift introduced by a padding array
+that was one element too long. `MEMIntruptHandler`, which addresses the block
+with raw `MEM_BASE + 0x1E/0x20/0x22/0x24` offsets, confirmed the real layout.
+
+Lesson: when a base pointer is folded, compare the *absolute* address first.
+`(lis 0xcc00) + 0x4020` and `(lis 0xcc00; addi 0x4000) + 0x20` look like a
+codegen difference but can be a field-offset bug, and the match percentage does
+not move when only the offsets shift. Four further encodings of the constant
+(`0xCC000000 + 0x4000`, `0xCC00 << 16`, a `(u32)` cast, raw offsets instead of
+the struct) all left the function at 84.3%, so the folding itself is still
+unexplained.
+
+## 11. An inlined wrapper loses the callee-saved copy of its result
+
+`voiceBlock` in `musyx/runtime/synthvoice.c` was the last function of its unit to
+match. Written the obvious way -- `if ((voice = voiceAllocate(...)) != -1)` --
+MWCC inlines the whole `voiceAllocate` / `voiceAllocateDo` chain and leaves the
+inlined argument in the register the call returned in (`r3`), while the
+caller's own `voice` is allocated `r31` for the second half of the function.
+The two ranges are the same value, so the allocator coalesces them and the
+result is correct, but `voice` is read out of `r3` in the first block and out of
+`r31` in the second, with no `mr r31, r3` anywhere.
+
+The target has the `mr r31, r3`: the value crosses a real (if inlined) call
+boundary and gets a callee-saved home before the argument is substituted.
+Writing the two calls out by hand reproduces it exactly:
+
+    voice = voiceAllocateFind(prio, 0xFF, 0xFFFF, 1);
+    voiceAllocateDo(voice, 1);
+    if (voice != 0xFFFFFFFF) { ... }
+
+Lesson: when only the *registers* of an otherwise identical body differ, suspect
+inlining shape rather than types or declaration order. Roughly a dozen variants
+that varied the parameter type, the return type, the local's type, the
+comparison constant, the name of the inlined parameter and the ternary form all
+produced the same split live range; only splitting the wrapper into its two real
+calls changed anything. Note also that changing the inlined parameter from `s32`
+to `u32` makes MWCC fold the callee's `if (voice != -1)` guard into the caller's
+`voice != 0xFFFFFFFF` test and delete the duplicated check, which is a quick way
+to tell whether a guard is still there.
+
+## 12. `0xFFFFFFFF` is sometimes compared as `x + 0x10000 == 0xFFFF`
+
+The same function tests its result twice: once with `cmpwi r, -1` and once, at
+the merge point, with `addis r0, r, 1; cmplwi r0, 0xffff`. The second form is
+the first one after the finding-5 fold (`0xFFFFFFFF` expressed as
+`0x10000 - 1`), and MWCC cannot see that the two are the same test, so it emits
+both. That is why the target keeps a redundant-looking guard after the inlined
+block, and why changing the inlined parameter's signedness (which changes the
+form of *its* guard) can delete it.
+
+## 13. `gap_*` symbols are a build artifact, not something to reproduce
+
+Most target objects end their `.sbss` / `.sdata2` sections with a symbol named
+`gap_10_8028xxxx_sbss`, sized to round the section up to its alignment. It
+carries a build address, is present in the linked objects of units already
+marked `Matching` (for example `dolphin/os/OSArena` and `dolphin/demo/DEMOInit`),
+and cannot be produced from C: no compiler flag or source change emits it. It
+costs a few percent on the small-data sections of 181 sections across the ROM and
+should be ignored when judging whether a unit matches.
+
+## 14. `sqrtf`'s statics: a whole unit's `.sdata2` hinges on 16 bytes
+
+`main/game/board/capmain` sits at 91.4% of `.text` with about 140 functions short
+of matching, and almost every one of them is short for the same reason: a single
+`lfs`/`lfd` whose relocation points 16 bytes too low. Comparing the two
+`.sdata2` sections as sequences of 4-byte words shows the pools are *identical*
+apart from four words that the target does not have at the front, so every
+constant after them is at the wrong address and every reference to it mismatches.
+
+Those four words are the two doubles `0.5` and `3.0` that
+`libc/math.h`'s `sqrtf` holds in function-local statics:
+
+    static const double _half = .5;
+    static const double _three = 3.0;
+
+MWCC emits them at offset 0 of `.sdata2`, before everything else, and a second
+copy of the same pair survives further down the pool as two dead literals that
+no instruction references. The target has only one pair, at the position where
+the dead copies sit, and `sqrtf` reads it from there: MWCC deduplicated the
+statics against the literals that were already in the pool.
+
+Replacing the statics with plain literals in `sqrtf` reproduces that
+deduplication exactly, and the result is not marginal:
+
+| section | statics | literals |
+| --- | --- | --- |
+| `.sdata2` | 99.38% | **100%** |
+| `.text` | 91.43% | **99.29%** |
+
+It cannot be taken, though. `ninja` drops from `135 files OK` to `113 files OK`
+with 22 module checksums failing, because MWCC also emits the statics of an
+`extern inline` function that the translation unit never instantiates. In
+`w01Dll/REL/w01Dll/world01.o` those four dead words are the entire difference
+between a `.rodata` of 0x244 bytes (matching) and 0x234 (not), and the target
+has the 0x244 version. Moving the declarations to file scope or giving them
+external linkage does not help: both still drop the unused case, and both leave
+`capmain` perfect and the 22 modules broken.
+
+The two requirements are therefore mutually exclusive, and the reason is visible
+in the toolchain rather than the source -- `capmain` is built with MWCC 2.6 and
+`world01` with MWCC 1.3.2, and only one of the two deduplicates. Since a single
+`libc/math.h` has to serve every unit, the global gate wins and the statics stay.
+Worth remembering when a unit is *almost* matching: a whole section can be
+correct except for a handful of leading bytes, and the giveaway is that every
+mismatch is a relocation rather than an opcode. Dumping a section with
+`objdump -s`, stripping the address and ASCII columns, and diffing the raw hex in
+8-character chunks finds this in seconds where per-function objdiff output does
+not.
+
+The same four words sit at the front of `.rodata` in 77 sections across the ROM
+(`tools/sectdiff.py --all --offending` lists them), always as the `0.5`/`3.0`
+pair and always in units that inline `sqrtf` -- `resultDll/REL/resultDll/stage`,
+`partyresultdll/REL/partyresultdll/toueidisp`, `m526Dll/REL/m526Dll/math` and
+`mdpartyDll` among them. Inside a single module the two forms are needed at
+once: `m526Dll/math` wants the statics gone while `m526Dll/m526` wants them
+present, so the switch cannot be made per module either.
+
+## Finding 15 -- MWCC emits functions in *reverse* declaration order
+
+`.text` is not laid out in source order. `Runtime.PPCEABI.H/NMWException.o` is
+the clean example: the target orders it
+
+```
+__destroy_arr, __construct_array, __dt__26__partial_array_destructorFv, __throw_catch_compare, ...
+```
+
+while a straightforward reading of the source (`__throw_catch_compare`, then the
+class, then `__destroy_arr`, then `__construct_array`) compiles to the exact
+reverse. Moving the `__construct_array` definition to *before* `__destroy_arr`
+flipped the emission order to match and took `.text` from 93.02% to 94.60% --
+and, more importantly, `extab` from 59.26% to 98.81% and `extabindex` from
+92.86% to **100%**.
+
+The reason the gain is so lumpy is that `extabindex` is a *sorted* table of
+`(function, text offset, extab entry)` triples. One function out of order moves
+every subsequent offset, so a single misordered definition invalidates the whole
+section. Whenever a unit is close on `extab`/`extabindex` but not on `.text`,
+check the emission order before touching any code: reordering two whole
+functions is a much cheaper fix than any local expression change, and it is the
+only kind of fix that can move `extabindex` to 100%.
+
+Corollary worth remembering: `dtk elf disasm` labels functions in emission
+order, so comparing `grep '^\.fn '` output against the reference `.s` detects a
+misordering immediately, without objdiff.
+
+## Finding 16 -- `extab` is an oracle for local-object layout
+
+`__construct_array` resisted every `volatile` permutation and sat at 56.45%. The
+target's `.text` showed five consecutive words at `0x8(SP)`, and the `extab`
+entry for the function named the reason:
+
+```
+PC=00000060, Action: 000010
+  Type: DESTROYLOCAL
+  Local: 0x8(SP)
+  Dtor: "__dt__26__partial_array_destructorFv"
+```
+
+So the original does not hand-roll the cleanup: it declares a
+`__partial_array_destructor` local, runs the construct loop against `d.i`, and
+lets the compiler inline the destructor at scope exit. That single change --
+dropping all the `volatile`s and using the object -- reproduced the frame layout
+exactly (`p, size, n, dtor, i` at `0x8`..`0x18`), and required changing the
+class constructor from `i = n` to `i = 0` so the counter starts at zero and
+reaches `n` through the loop. Semantics are unchanged: on normal exit `i == n`,
+so the inlined destructor is a no-op and only the exception path uses it, which
+is exactly what the `PC=0x60` action records.
+
+The lesson generalises: when a function is stuck because values keep landing in
+the wrong registers, do not reach for `volatile` first. Dump the *data* sections
+and ask what the compiler thought the frame contained. `extab`, `extabindex` and
+`.eh_frame` encode the frame layout, the saved-GPR range, and the cleanup objects
+by name -- free structural information that the instruction-level diff never
+shows. `volatile` was a plausible-sounding guess that cost several iterations and
+produced nothing.
+
+`__construct_array` still stops at 94.60%: the target assigns `n` to `r31` and
+the walking pointer to `r30`, while MWCC picks the opposite. Sixteen
+reformulations (declaration order, `register`, per-parameter `volatile`, index
+arithmetic, do/while, for-loop, pointer-as-parameter) all reproduced the same
+94.60%, so the ordering is decided inside the allocator and is not reachable from
+the source. That is a real MWCC behaviour rather than a misguess, and it is a
+better stopping point than the `volatile` version was.
+
+## Finding 17 -- an inline virtual in a header emits an out-of-line copy in every TU that sees it
+
+`Gecko_ExceptionPPC.o` reported `.text` at 100% while being 0x54 bytes too long,
+and the symbol table said why:
+
+```
+target: __dt__Q23std9exceptionFv      *UND*      what__Q23std9exceptionCFv   *UND*
+mine:   __dt__Q23std9exceptionFv      weak, .text  what__Q23std9exceptionCFv weak, .text
+target: __vt__Q23std9exception        *UND*
+mine:   __vt__Q23std9exception        weak, .data
+```
+
+`std::exception` in `include/PowerPC_EABI_Support/Runtime/exception.h` defined
+`virtual ~exception() { }` and `virtual const char* what() const { ... }` inside
+the class, so MWCC emitted an out-of-line copy of each in every translation unit
+that includes the header -- even though this unit only ever instantiates
+`bad_exception`, which overrides both. Declaring them and leaving the
+definitions to the library removed both copies, took `.text` from 0x148c to
+0x143c against a target of 0x1438, and moved `extabindex` from 87.14% to 99.29%
+and `.data` from 96.67% to **100%**.
+
+The lesson is about *which* symbol to look at. objdiff scores `.text` by byte
+coverage, so a section that is 4 bytes too long can still read 100%: every
+target byte is matched and the surplus is invisible in the percentage. Always
+compare `objdump -h` sizes next to the match percent, and when they disagree
+read the symbol table before reading any disassembly -- a symbol the target
+leaves undefined but the build defines is a header-level decision, not a
+codegen puzzle. `~bad_exception` is the tell: it grew by exactly one `bl`, the
+call to the base destructor that should have been inlined away.
+
+There is a real trade-off here, and it is not one-sided. Keeping the destructor
+inline and only declaring `what()` leaves `~bad_exception` byte-identical to the
+target (23 instructions, correct `mr.`/vtable stores) but keeps
+`__dt__Q23std9exceptionFv`, which drags `extabindex` back to 87%. Declaring both
+drops the extra symbol and wins on every data section. Chasing per-function
+perfection first and unit-level score second would have picked the wrong one:
+`.text` says 100% for the variant that is further from matching overall.
+
+## Finding 18 -- a section can be too *small* and still score below 100%: look for `gap_` symbols
+
+`Gecko_ExceptionPPC.o` still reports `.bss` at 75%. The target's `fragmentinfo`
+occupies 12 bytes and the section is 16, so four bytes were missing and adding a
+fourth field to `ProcessInfo` did reach `0x10` -- while dropping the section to
+**37.5%**, because objdiff compares byte for byte and the two extra bytes are not
+the two the target has.
+
+The arithmetic in `__unregister_fragment` settles it:
+
+```
+mulli r4, r3, 0xc        ; stride is 12, so ProcessInfo is 3 words, not 4
+```
+
+and the symbol table then names the remaining four bytes outright:
+
+```
+target: 0000000c g  O .bss 00000004 .hidden gap_08_8025B29C_bss
+mine:   (nothing)
+```
+
+`gap_*` is finding 13's family: an artefact of the original build, not something
+the source can produce. It cannot be matched, and chasing it by adding struct
+fields actively makes things worse, because the fabricated bytes score as
+mismatches where absent bytes do not.
+
+So `.bss`/`.data`/`.rodata` have two distinct failure modes that look identical
+from the percentage alone. **Too large** is usually a real problem -- a surplus
+symbol, a mis-sized array, a duplicate pool entry -- and worth chasing. **Too
+small** with a `gap_`/`pad_` symbol sitting in the target is not: check
+`objdump -t` for those names before touching the struct. The 75% here is 12 of
+16 bytes matched, and the missing 4 are unreachable.
+
+This is the second time in this session that reading symbols beat reading code.
+The first was `__vt__Q23std9exception` being `UND` (finding 17); here it is a
+`gap_` name that says "stop". Both were one `objdump -t` away, and both cost
+several wrong source edits to find by disassembly alone.
+
+## Finding 19 -- there is no compiler-version macro, so finding 14 cannot be worked around
+
+Finding 14 left `sqrtf`'s file-scope statics as a contradiction: MWCC 2.6 units
+want them present, MWCC 1.3.2 units want them gone, and one `libc/math.h` has to
+serve both. The obvious escape is a version guard in the header, so it is worth
+recording that MWCC does not offer one.
+
+`__MWERKS__`, `__MWVER__`, `_MWVER`, `__MWCOMPILER` and `__MRC__` are all
+undefined in both `GC/2.6` and `GC/1.3.2`. A probe file testing every one of
+them compiles to an object with an empty symbol table under both compilers, so
+`#if` cannot distinguish them. The two toolchains are also invoked by different
+drivers (`mwcceppc.exe` vs `mwasmeppc.exe`) but that is a configure.py fact, not
+something a header can observe.
+
+Nor can the problem be sidestepped per unit by trimming includes.
+`m510dll/REL/m510dll/opening.c` does not call `sqrtf` at all -- it includes
+`humath.h`, whose only uses of it are two macros it never expands -- and
+dropping that include changes nothing, because `REL/m510dll.h` includes
+`humath.h` in turn. The statics come from `math.h` being reached at all, not
+from any use of `sqrtf`.
+
+Both facts were cheap to establish and together they close the question: the
+`sqrtf` pool difference is a toolchain property, not a source-shaping one, and
+units wanting it both ways are permanent. Do not spend iterations on it again.
+
+## Finding 20 -- a loop counter's *position* steers the whole register block
+
+`m510dll/REL/m510dll/opening` `fn_1_966C` sat at 92.57% with 296 instructions on
+both sides and only **four** differing, all in the prologue: the four
+`M510_VIEWOBJ *` pointers were allocated `r29, r27, r26, r25` instead of
+`r27, r26, r25, r29`. Reordering the four declarations alone never fixed it --
+all 24 permutations were tried and every one put `r22` in r28, r27 or r29
+depending on the order, none in the wanted slot.
+
+What did fix it was moving **`s32 i;`**, the loop counter, from between the
+declarations to the front of the block:
+
+```c
+    s32 i;                          /* was here, after view3 */
+    M510_VIEWOBJ *view0 = &slot0->obj;
+    M510_VIEWOBJ *view1 = &slot1->obj;
+    M510_VIEWOBJ *view2 = &slot2->obj;
+    M510_VIEWOBJ *view3 = &slot3->obj;   /* was first */
+```
+
+This refines finding 1 for REL units. The rule "locals fill r31 -> r28 in
+declaration order" is right but incomplete: it is the **whole declaration
+block** that gets filled in order, including counters, and a counter that looks
+like it belongs after the values it iterates can occupy a callee-saved slot and
+push the four pointers one register down. `i` is read only inside the `for` at
+line 76, long after the pointers are declared, so its placement is invisible in
+the source's logic and invisible in the instruction stream too -- it shows up
+solely as four shifted `addi` lines.
+
+A 120-case scan (5 positions for `i` x 24 orders) found exactly one match, and
+the ranking was otherwise uninformative: the winning case scored 93.92% and the
+runner-up 93.24%, a gap too small to trust as a signal. Judge REL register
+permutations by whether the prologue lines match exactly, not by percentage --
+the same trap as finding 17, where a small score difference hid a large
+structural one.
+
+## Finding 21 -- `!= NULL` is not the same code as `!= 0`
+
+`meschkdll/REL/meschkDll/meschk` `MesChkExec` compared against NULL in three
+places. Rewriting them as `0` gained 1.76 points of `.text` (85.34% -> 87.10%,
+function 77.56% -> 80.26%) and made the function the right length for the first
+time: 309 instructions against the target's 309, where before it was 312.
+
+The mechanism is a single instruction. Spelled `!= 0`:
+
+```
+lwz   r0, 0x0(r3)
+cmplwi r0, 0x0
+```
+
+Spelled `!= NULL`:
+
+```
+lwz   r3, 0x0(r3)
+li    r0, 0x0
+cmplw r3, r0
+```
+
+MWCC does not fold NULL to an immediate. It materialises the constant into a
+register and emits a three-operand compare, so one extra `li` and a different
+`cmplw` form. Everything after the test was therefore offset by one instruction,
+which is what made the earlier diff look like a cascade of unrelated
+mismatches rather than one local problem.
+
+Two things worth carrying forward. First, **the length of a function is the
+cheapest diagnostic there is** -- 312 versus 309 said "one extra instruction
+somewhere near the top" immediately, where the aligned diff had shown 278
+differing lines. Check `len(ref)` against `len(mine)` before reading anything.
+Second, NULL in this codebase comes from the MSL headers and is a cast, not a
+literal, so it will never fold. Comparing pointers to `0` is not a style
+preference here; it is a codegen choice.
+
+## Finding 20 does not generalise: check the length before hunting declarations
+
+Finding 20 fixed `REL/m510dll/opening` by moving a loop counter to the front of
+the local block. The obvious next move was to apply the same lever to
+`MesChkExec`, whose outer loop index and string pointer are swapped in exactly
+the same way. It does not work: all 17 positions for the `char *str`
+declaration produce byte-identical output and an unchanged 87.10%.
+
+The difference between the two cases is instructive. In `opening` a single
+pointer block is competing for registers, and the counter's position in the
+declaration list is what decides the assignment. In `MesChkExec` there are
+five `s16` locals, two pointers and a struct, so the numbering follows live
+ranges and no reordering touches it. Before running a declaration permutation,
+check whether the function is already the right length and count the
+callee-saved registers actually used -- `MesChkExec` has an identical
+r18-r31 usage profile to the target already, which would have said so
+immediately.
+
+## Finding 22: MWCC pads a sized `char[]` but not an inline string literal
+
+`main/dolphin/si/SISamplingRate` was at 98.33% on `.data` with a byte-identical
+`.text` and a `.data` whose bytes were identical too -- 0x93 against a target
+0x98. The only difference was six trailing zero bytes. The symbol tables tell
+the whole story:
+
+    target  00000060 g  O .data  00000038 lbl_801D1AA8
+    mine    00000060 l  O .data  00000033 @16
+
+MWCC materialises a string literal passed directly to a call as an anonymous
+`.data` object named `@<offset>`, sized to the characters plus the NUL, with no
+tail padding. The target instead has a *named global* sized 0x38 -- seven bytes
+more than the 49-character message needs. That is a `char[N]` with an explicit
+bound, where N is larger than the initialiser and the remainder is zero-filled.
+
+So the fix is to hoist the literal into a file-scope array with an explicit
+size, matching the convention already used elsewhere in the tree
+(`static char lbl_1_data_108C[7] = "chn_tl";`):
+
+    char lbl_801D1AA8[56] = "SISetSamplingRate: unknown TV format. Use default.";
+
+Dropping `static` matters as much as the size. The target symbol is `g`, not
+`l`, so a `static` array reproduces the bytes but not the binding.
+
+Two general lessons. A **named** data symbol also renames itself out of objdiff's
+way, so the unit's `Matching` claim in `configure.py` had been quietly false
+while the status line already said `Matching` -- always confirm a status change
+with a fresh `report.json`, never trust the declaration. And an inline literal
+is not the same object as a sized array: identical bytes can still be a wrong
+symbol, and a section that differs only in trailing padding is a sizing
+declaration problem, not a codegen problem.
+
+## Finding 23: the sqrtf statics are real, and removing them is a regression
+
+Finding 19 declared `sqrtf`'s statics insoluble. That conclusion was wrong, and
+the reason it was wrong is worth recording, because the evidence that settles it
+is not in the source at all -- it is in the checksum gate.
+
+The two `static const double` locals in `sqrtf` are emitted by MWCC as weak
+`.sdata2` objects named `_half$localstatic3$sqrtf__Ff` and
+`_three$localstatic4$sqrtf__Ff`, in **every** translation unit that reaches the
+header. The retail build emits them in exactly **seven** of its 881 objects:
+
+    m504dll/REL/m504dll/m504.o      m510dll/REL/m510dll/m510.o
+    m565dll/REL/m565dll/m565.o      m575dll/REL/m575dll/m575.o
+    game/board/capmain.o            partyresultdll/.../partyresult.o
+    resultDll/REL/resultDll/result.o
+
+`game/main.o` is the clean counter-example. The target's `.sdata2` is 0x8 bytes
+holding a single anonymous double; ours was 0x18, holding that same double plus
+the two sqrtf statics. Replacing the statics with the literals they stand for --
+`.5*guess*(3.0 - guess*guess*x)` -- made ours exactly 0x8 and the unit's section
+match perfectly. It also broke the build:
+
+    135 files OK            header with statics (current)
+    113 files OK            statics replaced by literals
+    WARNING: 22 computed checksum(s) did NOT match
+
+Twenty-two `.rel` binaries stopped matching `config/GP5E01_00/build.sha1`, and
+`m506Dll.rel` shrank by exactly 16 bytes -- the size of the two statics. Only
+one of those 22 modules, `partyresultdll`, is one of the seven that legitimately
+carries them, so this is not "the statics are needed and I removed too many". The
+16 bytes came out of the REL through some path the objdiff report does not model.
+
+The lesson is about the order of evidence. Finding 19 tried to settle a codegen
+question by reading the header and hunting preprocessor macros. The decisive
+question was not a codegen question at all: `build.sha1` already encoded the
+answer for 135 artifacts, and a five-minute experiment would have found it.
+**When a change touches a header, `ninja` and the checksum count are the
+hypothesis test; the report percentages are downstream commentary.** Run the
+gate before theorising, and revert freely -- the gate is cheap and the theory is
+not.
+
+There is still a real win buried here. Roughly 112 `.sdata2` sections sit below
+100%, and the excess statics are certainly most of the gap. The seven legitimate
+holders are the clue: MWCC emits the statics when it emits an out-of-line
+`sqrtf`, so the escape has to be a *per-TU* control over whether `sqrtf` is
+emitted out of line -- `#pragma inline off` on the header, or splitting the
+out-of-line definition into the seven units that need it. That is a real
+project, not a one-line header edit, and it is not worth starting until the
+checksum gate can be run cheaply on a single module.
+
+## report.json is fuzzy-only: never read it as proof that code matches
+
+`main/game/mg/actman` turned out to be the cleanest data bug in the tree --
+`defMotDataNum` was one word short of the target and nothing else in `.data`
+was wrong. objdiff reports its `.text` as **92.99611%**, while
+`report.json` lists the same section as **100%**.
+
+That is not a rounding artefact. `report.json` carries only
+`fuzzy_match_percent`; there is no `match_percent` field in it at all. Fuzzy
+scoring forgives a difference the exact comparison would not, so a unit can
+look finished in the report and still be several percent away in reality. It
+survived because the padding delta in `.data` was the only *reported* fault.
+
+Two consequences. `tools/datasyms.py` selects its candidates on
+`fuzzy_match_percent == 100`, so the units it offers are "no fault reported",
+not "code is byte-identical" -- read the section list from objdiff itself before
+claiming a unit is Matching. And when triaging a data bug, do not assume the
+code around it is correct just because the report is green; check
+`match_percent` on `.text` in the same objdiff invocation that diagnosed the
+data section.
+
+The fix itself is the finding-22 shape again: the target's `defMotDataNum` is
+0x48 against our 0x44, and the four extra bytes are a zero word. The original
+declared one more slot than `MGPLAYER_MOT_NUM+1` supplies and let the tail
+zero-fill. Widening the bound at the declaration (`MGPLAYER_MOT_NUM+2`) is
+preferable to bumping `MGPLAYER_MOT_NUM` itself, which is a shared enum count
+and would misreport how many motions exist.
+
+## Finding 24: one symbol can be two widths, and the header must lie about it
+
+`mgBoard2Force` is the first case here where widening a global helps and the
+obvious fix is wrong. The retail `mgdata.o` declares it four bytes wide; the
+retail `inst.o` loads it with `lbz` followed by `cmplwi`. Both are true at once,
+and the two objects are built from the same header.
+
+The sequence that gets there:
+
+1. `u8` -> `int` in `mgdata.c` **and** the header. `mgdata.o` is right and
+   `mgdata.o`'s `.sbss` symbol table becomes an exact match. But
+   `instDll.rel` immediately fails its checksum, because `inst.o` grew an `lwz`
+   where the retail object has an `lbz`.
+2. `int` in `mgdata.c` only. MWCC rejects it: `game/mgdata.h` reaches
+   `mgdata.c` transitively through `game/object.h`, so the `extern u8` is
+   already in scope and the two declarations conflict.
+3. `int` everywhere, plus `*(u8 *)&mgBoard2Force` at the one consumer.
+   `inst.o` comes back byte-identical, `instDll.rel` matches again, and
+   `mgdata.o` gets the four-byte symbol. This is the state that ships.
+
+The lesson is that a global's *storage width* and its *load width* are
+independent facts about the original build, and a decomp has to reproduce both.
+Where the retail objects disagree, the disagreement is the evidence -- do not
+reconcile it by picking one width and hoping. Check the consumer's `objdump -d`
+output before changing a shared header, because the checksum gate will tell you
+you were wrong only after you have already broken a module you did not know was
+involved.
+
+`mgdata`'s `.sbss` goes 91.67% -> 96.00% and its symbol table now matches the
+target exactly. The last two bytes are `gap_10_80288A3E_sbss`, the unreproducible
+linker artefact of finding 18, so 96% is the ceiling for that section.
+
+## Finding 25: a declared char array goes to .data, a string literal to .sdata
+
+Finding 22's fix does not generalise, and the boundary is the section the symbol
+lands in. `main/game/hsfdraw` is the counter-example. Its retail `.sdata` holds
+
+    0000000a l  O .sdata  0000000e lbl_8028806A
+
+-- a *named*, *local*, 14-byte symbol whose bytes are `"Error\n"` plus seven
+zeros, at exactly the offset where an inline literal sits. Hoisting the three
+`OSReport("Error\n")` call sites onto a declared
+`static char lbl_8028806A[14]` reproduces the name, the binding and the size,
+and MWCC puts it in `.data` anyway:
+
+    0000000a l  O .data  0000000e lbl_8028806A     <- mine, wrong section
+
+Leaving the literal inline keeps the section right and the size wrong (0x7 vs
+0xe). So the padded symbol and the `.sdata` placement are mutually exclusive:
+the array form is the only way to get padding, and only a literal gets
+`.sdata`. `main.dol` plus nine `.rel` binaries fail their checksums on that
+change, which is how it gets caught.
+
+The practical rule, then: **finding 22 applies when the target's padded symbol
+is in `.data`.** Check the section before hoisting a literal. `SISamplingRate`
+was `.data` and fixed; `hsfdraw` is `.sdata` and is not reachable. Note also
+that the retail `.sdata` symbols carry the same `lbl_<addr>` naming as `.data`
+ones, so the name alone tells you nothing about which form the original used --
+only the section does.
+
+`main/game/mg/colman` is the confirming case, and it is the mirror image of
+`hsfdraw`: here the retail `.data` holds two *named* globals, `lbl_801C8FB8`
+(0x58) and `lbl_801C9010` (0x50), where our build had anonymous `@1231` and
+`@2469`. Hoisting both `OSReport` literals onto sized globals reproduces the
+symbol table exactly -- section size 0xa8, both bindings global, both sizes --
+and `.data` goes to 100%.
+
+Two things to watch when doing this. The first message needed no padding at
+all: its literal is already 0x58, so only the name was wrong, and declaring it
+`[]` would have been enough. The second was 0x4c against a target 0x50 and did
+need `[0x50]`. And **do not measure a Japanese string in the source**. These
+files hold UTF-8 and MWCC rewrites them to Shift-JIS, so the literal is 115
+source bytes and 0x57 bytes in the object; predicting the object size from the
+file length is wrong by enough to pick the wrong bound.
+
+## Finding 26: a symbol-size delta means nothing unless the section size moved
+
+`main/dolphin/os/OSStopwatch` looked like the biggest win on the board. The
+retail `.data` is one global, `lbl_801CEB58`, of 0x78 bytes; ours is six
+anonymous string literals, the first `@17` at 0x12. A symbol-level diff reads
+that as "+0x66, the target symbol is 66 bytes larger" -- by far the largest
+candidate in the tree.
+
+It is not a bug. Both `.data` sections are **0x78 bytes**, and `.text` is 0x370
+in both. The retail object simply names the whole string pool with a single
+covering symbol instead of splitting it per literal. There was nothing to fix,
+and the earlier note in `OSStopwatch.c` about "seven trailing NULs reproducing
+the target's padding" shows a previous pass had already been fooled the same way.
+
+So the rule that falls out of findings 22, 24 and 25:
+
+> A data symbol mismatch only matters if the **section** grew or shrank with it.
+> When the retail side has one symbol covering several literals, the section
+> sizes already agree and the difference is cosmetic.
+
+`tools/naming.py` is built to find candidates and is wrong without that guard --
+it reported OSStopwatch first. It must always be cross-checked against
+`tools/datasyms.py`, which compares section sizes and is the trustworthy one.
+
+## Finding 27: a wrong string can be a missing feature
+
+`m518dll`'s `.data` is 0x78 against the target's 0xa4. The delta is one symbol,
+`lbl_1_data_34`, of 0x2c bytes, holding
+
+    [ CRUSH DATA ] T:%.2f  A1:%.2f  A2:%.2f\n
+
+There is no such `OSReport` anywhere in `src/REL/m518dll/m518.c`. The retail
+build formats and prints a per-frame crush-data trace that our source simply
+does not have. Declaring the string as an unreferenced global would make the
+section size agree and objdiff happy, and would be a lie: the bytes would be
+in `.data` but nothing would reference them, and `.text` would stay wrong.
+
+This is the boundary that matters when chasing 100%. Some data gaps are sizing
+and naming, and are mechanical. Others are **behaviour that was never
+decompiled**, and padding them in is worse than leaving the section short,
+because a short section is honest about the work that is left. Before hoisting
+anything, check whether the source actually uses the thing.
+
+## Finding 28: trailing padding is invisible to objdiff -- stop chasing section sizes
+
+`e3bootdll` and `bootDll` looked like clean finding-22 targets. Both have a
+`.data` that is genuinely shorter than the retail object's, with every named
+symbol already at the right size and the right bytes:
+
+    e3bootdll  .text 0x47fc (same)  .rodata 0x154 (same)  .bss 0xc0 (same)
+               .data target 0x80, mine 0x6e   -> 18 trailing zero bytes
+    bootDll    .data target 0xc0, mine 0xa2   -> 30 trailing zero bytes
+
+objdiff scores **both `.data` sections at 100.00%**. A delta in trailing padding
+moves no symbol, so it moves no relocation and no compared byte, and the score
+never sees it. Chasing these would have been a whole afternoon for zero gain.
+
+This is the same lesson as finding 26 from the other side. There, a symbol delta
+was cosmetic because the section already agreed. Here a *section* delta is
+cosmetic because it lives past the last symbol. The only quantity that decides
+whether there is work to do is **objdiff's own per-section score**, so:
+
+> Never reason from a section size. Read the score, then use `objdump -t` to
+> work out why it is short.
+
+`tools/datasyms.py` had been reporting exactly these non-bugs, which is why it
+listed `e3bootdll`-shaped entries as candidates. It now skips any section that
+`report.json` already scores at 100, so its output is a work list rather than a
+difference dump. It also had a latent crash -- the comprehension that collects
+the failing sections indexed `fuzzy_match_percent` directly, so it died on the
+first section `report.json` declines to score.
+
+One thing worth keeping: the retail `.data` padding is *not* a fixed rule. It is
+0x12 here and 0x1e there, neither a multiple of 8, 16 or 32; measured across the
+tree only 35 of 176 retail `.data` sections are multiples of 32. It is
+object-specific, so there is no alignment flag to find.

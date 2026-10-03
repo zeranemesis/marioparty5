@@ -1,4 +1,6 @@
 #include "game/audio.h"
+char lbl_1_data_0[0x20] = "----------------> %d\n";
+
 #include "game/charman.h"
 #include "game/data.h"
 #include "game/frand.h"
@@ -735,11 +737,11 @@ void fn_1_1EFC(s16 mode, s16 frameNo)
                     }
                 }
             }
-            OSReport("------------------------> %d\n", k);
+            OSReport(lbl_1_data_0, k);
             for (; k < 76; k++) {
                 fn_1_C264(lbl_1_bss_3AC[k]);
             }
-            OSReport("------------------------> %d\n", k);
+            OSReport(lbl_1_data_0, k);
             if (lbl_1_bss_20) {
                 GWMgCoinSet(lbl_1_bss_4E0[0]->playerNo, 10);
                 lbl_1_bss_34.center.x = 0.0f;
