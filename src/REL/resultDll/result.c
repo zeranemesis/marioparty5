@@ -28,6 +28,32 @@ void _epilog(void)
     }
 }
 
+static s16 PlayerRank[4];
+static s16 PlayerOrder[4];
+
+void Result_SetupPlayer(void)
+{
+    s16 tmp;
+    s16 i2;
+    s16 i;
+
+    for(i=0; i<4; i++) {
+        PlayerRank[i] = MBPlayerRankGet(i);
+        PlayerOrder[i] = i;
+    }
+    for(i2=1; i2<4; i2++) {
+        for(i=0; i<4-i2; i++) {
+            if (PlayerRank[i] > PlayerRank[i+1]) {
+                tmp = PlayerRank[i];
+                PlayerRank[i] = PlayerRank[i+1];
+                PlayerRank[i+1] = tmp;
+                tmp = PlayerOrder[i];
+                PlayerOrder[i] = PlayerOrder[i+1];
+                PlayerOrder[i+1] = tmp;
+            }
+        }
+    }
+}
 void Result_BgRead(void)
 {
     s32 statId;
