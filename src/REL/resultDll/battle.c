@@ -1,7 +1,7 @@
 #include "REL/resultDll.h"
 
-s32 Result_FastF;
-s32 Result_BgReadEndF;
+extern s32 Result_FastF;
+extern s32 Result_BgReadEndF;
 static s32 BattleSkipF;
 static s16 BattleRank[4];
 static s16 BattlePlayerNo[4];
