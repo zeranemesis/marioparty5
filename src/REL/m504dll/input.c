@@ -1,3 +1,5 @@
+#define _MATH_H
+
 #include "REL/m504dll.h"
 #include "string.h"
 
