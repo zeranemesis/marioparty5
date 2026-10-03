@@ -1,16 +1,23 @@
+#define _MATH_H
 #include "REL/m510dll.h"
 #include "string.h"
 
 // .data:0x0 (absolute 0x4D8) - 4 x HuVecF
 HuVecF lbl_1_data_4D8[4] = {
-    { 50.0f, 225.0f, 0.0f },
-    { 216.0f, 225.0f, 0.0f },
-    { 360.0f, 225.0f, 0.0f },
-    { 504.0f, 225.0f, 0.0f },
+    { 72.0f, 420.0f, 0.0f },
+    { 216.0f, 420.0f, 0.0f },
+    { 360.0f, 420.0f, 0.0f },
+    { 504.0f, 420.0f, 0.0f },
 };
 
-// NONMATCHING: identical instruction stream, MWCC allocates r29 where the
-// original allocates r30 for `work` and the other way round for `id`
+// NONMATCHING: 40 of the 412 code rows differ and every one of them is the
+// r29/r30 pair. The instruction stream is otherwise identical, but this
+// compiler build orders the two block locals (id, score) where the original
+// has (score, id), so `score` lands in r29 and `id` in r30 instead of the
+// reverse. Declaration order, the local names, the assignment spelling
+// (`x = f()` vs `y = x = f()`), block scope and `s16` vs `s32` were all
+// tried: none of them changes the order, and giving the second esp id its own
+// local does fix score/id but pushes `type`/`playerNo` one register down.
 void fn_1_CE04(M510_SCORE_WORK *work, u16 type, s16 playerNo)
 {
     s16 id;

@@ -289,12 +289,20 @@ typedef struct M510Work_s {
 
 s32 fn_1_734(s32 arg0);
 
-// Declared here rather than with the other M510_OBJ prototypes because
-// REL/m510dll/opening.c takes the work structure, and M510_WORK and M510_OBJ
-// describe the same 0x253C-byte object under two names: phase at 0x0E, frame
-// at 0x14, time at 0x18, four 0x880 slots from 0x1C, slide at 0x2474, fieldId
-// at 0x2538. Declaring it against M510_OBJ left the unit uncompilable, because
-// MWCC rejects the two conflicting definitions of fn_1_966C.
-s32 fn_1_966C(M510_WORK *work);
+// Declared here rather than with the other M510_OBJ prototypes only because
+// REL/m510dll/opening.c defines it. It takes an M510_OBJ, and that spelling is
+// the verified one: with it, opening.o is byte-identical to the target object
+// (.text 1184, .rodata 24, .data 48, 47 relocation records matching record for
+// record) and m510dll.rel hashes to its recorded SHA-1 with the unit linked as
+// Matching.
+//
+// An earlier integration attempt declared it against M510_WORK instead, on the
+// theory that M510_WORK and M510_OBJ describe the same 0x253C-byte object under
+// two names -- phase at 0x0E, frame at 0x14, time at 0x18, four 0x880 slots from
+// 0x1C, slide at 0x2474, fieldId at 0x2538. That theory is true and it was still
+// wrong: it cost 4 bytes of .text and the object never matched. Note also that
+// MWCC rejects two conflicting definitions of the same function, so whichever
+// spelling is chosen here must be the one opening.c uses.
+s32 fn_1_966C(M510_OBJ *obj);
 
 #endif
