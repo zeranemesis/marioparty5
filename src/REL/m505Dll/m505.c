@@ -441,6 +441,8 @@ void fn_1_1284(void)
 }
 
 /* Player update: pad / AI steering, collisions with the obstacles and the other players, falls into the river. */
+// NONMATCHING: the original lays the scalar locals out 0x48 higher in the same 0x9a0 frame
+// and emits 400 bytes of code this body does not generate.
 void fn_1_1828(OMOBJ *obj)
 {
     M505Player *player = obj->data;
@@ -1012,6 +1014,9 @@ void fn_1_1828(OMOBJ *obj)
 }
 
 /* Main game controller: camera, intro sprites, background actors, obstacle spawning and physics. */
+// NONMATCHING: the original keeps a dead copy of the discarded Hu3D3Dto2D result
+// (mr r10,r3) that this compiler does not emit; that one instruction gates 57 rows,
+// the remaining 101 are r4/r5/r6 tie-breaks.
 void fn_1_4FB4(OMOBJ *obj)
 {
     M505Player *players[4];
@@ -2438,6 +2443,8 @@ void fn_1_EF6C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: the original holds two more values in callee-saved f25/f26, so its prologue
+// saves 16 extra bytes and every frame offset below 0x1d0 shifts.
 void fn_1_FADC(OMOBJ *obj)
 {
     Mtx lookAt;
