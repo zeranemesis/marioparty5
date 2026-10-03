@@ -1,3 +1,4 @@
+#define _MATH_H
 #define GXSetFog GXSetFogByValue
 #include "game/flag.h"
 #include "game/hu3d.h"
