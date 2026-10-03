@@ -1556,7 +1556,7 @@ config.libs = [
             Object(NonMatching, "REL/m562dll/sunbomb.c"),
             Object(NonMatching, "REL/m562dll/camera.c"),
             Object(NonMatching, "REL/m562dll/light.c"),
-            Object(NonMatching, "REL/m562dll/sprite.c"),
+            Object(Equivalent, "REL/m562dll/sprite.c"),
             Object(NonMatching, "REL/m562dll/evt_opening.c"),
             Object(NonMatching, "REL/m562dll/evt_fire.c"),
             Object(NonMatching, "REL/m562dll/evt_fight.c"),
