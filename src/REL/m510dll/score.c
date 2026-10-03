@@ -9,6 +9,8 @@ HuVecF lbl_1_data_4D8[4] = {
     { 504.0f, 225.0f, 0.0f },
 };
 
+// NONMATCHING: identical instruction stream, MWCC allocates r29 where the
+// original allocates r30 for `work` and the other way round for `id`
 void fn_1_CE04(M510_SCORE_WORK *work, u16 type, s16 playerNo)
 {
     s16 id;
