@@ -16,8 +16,8 @@ CAMPOS lbl_1_data_50[3] = {
     { { 0, 800, 0 }, { -2.5, 0, 2500 } }
 };
 
-s32 lbl_1_bss_20;
 s32 lbl_1_bss_24;
+s32 lbl_1_bss_20;
 
 void fn_1_410(OMOBJ *obj);
 void fn_1_524(OMOBJ *obj);
@@ -58,7 +58,7 @@ void fn_1_1F90(OMOBJ *obj)
         work[0x14 / 4] = 0;
         break;
     case 2:
-        t = (f32)(0.007246376811594203 * (f64)work[0x14 / 4]);
+        t = (f32)(0.007246376811594203 * (f64)(f32)work[0x14 / 4]);
         if (t >= 1.0) {
             t = 1.0f;
         }
@@ -111,7 +111,7 @@ void fn_1_21C4(OMOBJ *obj)
         work[0x20 / 4] = 2;
         break;
     case 2:
-        t = (f32)(0.05555555555555555 * (f64)work[0x24 / 4]);
+        t = (f32)(0.05555555555555555 * (f64)(f32)work[0x24 / 4]);
         if (t >= 1.0) {
             t = 1.0f;
             work[0x20 / 4] = 3;

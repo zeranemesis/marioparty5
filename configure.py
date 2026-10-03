@@ -1150,7 +1150,7 @@ config.libs = [
         "m516Dll",
         objects={
             Object(NonMatching, "REL/m516Dll/m516.c"),
-            Object(Equivalent, "REL/m516Dll/camera.c"),
+            Object(Matching, "REL/m516Dll/camera.c"),
             Object(NonMatching, "REL/m516Dll/player.c"),
             Object(NonMatching, "REL/m516Dll/stage.c"),
             Object(NonMatching, "REL/m516Dll/effect.c"),
