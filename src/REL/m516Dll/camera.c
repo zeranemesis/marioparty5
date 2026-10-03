@@ -129,9 +129,12 @@ void fn_1_21C4(OMOBJ *obj)
         for (i = 0; i < 4; i++) {
             if ((s32) * (u32 *)((u8 *)work + i * 4 + 0x48) >= 0) {
                 s32 v = fn_1_8088(i);
+                s16 res;
+                s32 cur;
                 total += v;
-                *(s16 *)((u8 *)&GwPlayer[i] + 0x2A) =
-                    (s16)(*(s16 *)((u8 *)&GwPlayer[i] + 0x2A) + v);
+                cur = *(s16 *)((u8 *)&GwPlayer[i] + 0x2A);
+                res = (s16)(v + cur);
+                *(s16 *)((u8 *)&GwPlayer[i] + 0x2A) = res;
             }
         }
         if (total > 0) {
