@@ -2,7 +2,7 @@
 
 typedef struct M574PlayerWork_s {
     s32 no;
-    s32 grp;
+    u32 grp;
     s32 playerGrp;
     s32 charNo;
     s32 curMotNo;
@@ -38,7 +38,7 @@ typedef struct M574MotShift_s {
 void fn_1_1068(OMOBJ *obj);
 void fn_1_1264(OMOBJ *obj);
 s32 fn_1_1E4C(OMOBJ *obj);
-void fn_1_1D54(OMOBJ *obj, s32 motNo);
+void fn_1_1D54(OMOBJ *obj, u32 motNo);
 
 void fn_1_9FC(s32 no, s32 grp, s32 charNo);
 void fn_1_6478(s32 grp, f32 scale);
@@ -219,37 +219,40 @@ OMOBJ *fn_1_1CD4(OMOBJ *obj)
     M574_PLAYER_WORK *player;
     OMOBJ *target;
     s32 i;
+    u32 grp;
 
     player = obj->data;
+    grp = player->grp;
     for (i = 0; i < M574_PLAYER_MAX; i++) {
         target = M574PlayerObjTbl[i];
-        if (target != obj && ((M574_PLAYER_WORK *) target->data)->grp == player->grp) {
-            return target;
+        if (target != obj) {
+            player = target->data;
+            if (player->grp == grp) {
+                return target;
+            }
         }
     }
     return NULL;
 }
 
-void fn_1_1D54(OMOBJ *obj, s32 motNo)
+void fn_1_1D54(OMOBJ *obj, u32 motNo)
 {
     M574_PLAYER_WORK *player;
     f32 endF;
 
     player = obj->data;
-    if (player->curMotNo == motNo || motNo >= 5) {
-        return;
-    }
+    if (player->curMotNo != motNo && motNo < 5) {
+        if (player->curMotNo < 0) {
+            endF = 0.0f;
+        }
+        else {
+            endF = 60.0f * M574MotShiftTbl[motNo].endRateF;
+        }
 
-    if (player->curMotNo < 0) {
-        endF = 0.0f;
+        player->curMotNo = motNo;
+        CharMotionShiftSet(player->charNo, obj->mtnId[M574MotShiftTbl[motNo].motId],
+            0.0f, endF, M574MotShiftTbl[motNo].attr);
     }
-    else {
-        endF = 60.0f * M574MotShiftTbl[motNo].endRateF;
-    }
-
-    player->curMotNo = motNo;
-    CharMotionShiftSet(player->charNo, obj->mtnId[M574MotShiftTbl[motNo].motId],
-        0.0f, endF, M574MotShiftTbl[motNo].attr);
 }
 
 s32 fn_1_1E4C(OMOBJ *obj)
@@ -278,24 +281,24 @@ s32 fn_1_1ED4(OMOBJ *obj, Vec *pos, f32 *angle)
     M574_PLAYER_WORK *player;
 
     player = obj->data;
-    if ((Vec *) 0 != pos) {
-        pos->x = player->pos.x;
-        pos->y = player->pos.y;
-        pos->z = player->pos.z;
+    if (pos != NULL) {
+        *pos = player->pos;
     }
-    if ((f32 *) 0 != angle) {
+    if (angle != NULL) {
         *angle = player->angle;
     }
     return 1;
 }
 
-s32 fn_1_1F28(s32 grp)
+s32 fn_1_1F28(u32 grp)
 {
     M574_PLAYER_WORK *player;
     s32 i;
+    OMOBJ *obj;
 
     for (i = 0; i < M574_PLAYER_MAX; i++) {
-        player = M574PlayerObjTbl[i]->data;
+        obj = M574PlayerObjTbl[i];
+        player = obj->data;
         if (player->grp == grp && player->type == 0) {
             return 1;
         }
@@ -303,13 +306,15 @@ s32 fn_1_1F28(s32 grp)
     return 0;
 }
 
-void fn_1_1F9C(s32 grp)
+void fn_1_1F9C(u32 grp)
 {
     M574_PLAYER_WORK *player;
     s32 i;
+    OMOBJ *obj;
 
     for (i = 0; i < M574_PLAYER_MAX; i++) {
-        player = M574PlayerObjTbl[i]->data;
+        obj = M574PlayerObjTbl[i];
+        player = obj->data;
         if (player->grp == grp) {
             omVibrate(player->no, 15, 6, 6);
         }
