@@ -58,6 +58,8 @@ extern u32 lbl_1_bss_40;
 
 const char lbl_1_data_32C2[] = "ms_pointer == 0";
 
+typedef void (*VoidFunc)(void *self);
+
 typedef struct {
     f32 x;
     f32 y;
@@ -72,8 +74,27 @@ void fn_1_C8B8(void *self);
 void fn_1_C8BC(void *self);
 void fn_1_C8E0(void);
 void fn_1_C914(void *self);
+void fn_1_C91C(void *self);
 void __dt__Q24m50911CGameMasterFv(void *self);
 void *fn_1_C2D0(void *self);
+
+// Two virtual tables for m509::CGameMaster. The first covers the subobject at
+// this+0x4, the second (at +0x18) the subobject at this+0x20; its entries are
+// adjustor thunks that give back 0x20 before reaching the real implementation.
+VoidFunc lbl_1_data_32D4[12] = {
+    (VoidFunc)0,
+    (VoidFunc)0,
+    (VoidFunc)__dt__Q24m50911CGameMasterFv,
+    (VoidFunc)fn_1_C3E8,
+    (VoidFunc)fn_1_C4A8,
+    (VoidFunc)fn_1_C8BC,
+    (VoidFunc)0,
+    (VoidFunc)0,
+    (VoidFunc)fn_1_C91C,
+    (VoidFunc)fn_1_C914,
+    (VoidFunc)fn_1_C8B8,
+    (VoidFunc)fn_1_C4E0,
+};
 
 void __dt__Q24m50911CGameMasterFv(void *self)
 {
@@ -236,7 +257,9 @@ void fn_1_C91C(void *self)
 void *fn_1_C2D0(void *self)
 {
     fn_1_2B68(self);
-    fn_1_7C8((void *)((u32)self + 0x20), 1);
+    fn_1_7C8((void *)((u32)self + 0x20), 0x10000);
+    *(VoidFunc **)((u32)self + 4) = lbl_1_data_32D4;
+    *(VoidFunc **)((u32)self + 0x20) = &lbl_1_data_32D4[6];
     fn_1_4D3C((void *)((u32)self + 0x358), 0);
     setSeed__8CMT19937Fi((void *)((u32)self + 0x35C), 0x1571);
     return self;
