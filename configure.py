@@ -1840,7 +1840,7 @@ config.libs = [
         "mgwarsDll",
         objects={
             Object(NonMatching, "REL/mgwarsDll/mgwars.c"),
-            Object(NonMatching, "REL/mgwarsDll/score.c"),
+            Object(Equivalent, "REL/mgwarsDll/score.c"),
             Object(NonMatching, "REL/mgwarsDll/mess.c"),
         },
     ),
