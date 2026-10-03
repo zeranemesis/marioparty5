@@ -47,9 +47,9 @@ void fn_1_5858(OMOBJ *obj);
 void fn_1_585C(HU3DMODEL *modelP, Mtx *mtx);
 
 M514Fog lbl_1_data_4A0[3] = {
-    { 20.0f, 7700.0f, { 0x00, 0xEE, 0xFF, 0xFF } },
-    { 20.0f, 15000.0f, { 0x00, 0xEE, 0xFF, 0xFF } },
-    { 20.0f, 25000.0f, { 0x00, 0xEE, 0xFF, 0xFF } },
+    { 20.0f, 7700.0f, { 0xFF, 0xFF, 0xEE, 0x00 } },
+    { 20.0f, 15000.0f, { 0xFF, 0xFF, 0xEE, 0x00 } },
+    { 20.0f, 25000.0f, { 0xFF, 0xFF, 0xEE, 0x00 } },
 };
 
 f32 lbl_1_data_4C4[3] = { -4644.0f, -1228.0f, -4732.0f };
@@ -124,7 +124,7 @@ void fn_1_536C(OMOBJ *obj)
     }
 if ((lbl_1_bss_214 = lbl_1_bss_214 - 0.013) < 1.0) {
         lbl_1_bss_214 = 1.0f;
-    }
+}
 
     if (_CheckFlag(0x30002) == 0) {
         fn_1_5858(obj);
@@ -294,3 +294,6 @@ GXWGFifo.f32 = -15.0f;
     GXWGFifo.u32 = c3;
 }
 
+
+const s32 lbl_1_rodata_264[1] = { 0 };
+s32 lbl_1_data_4D4 = 0;
