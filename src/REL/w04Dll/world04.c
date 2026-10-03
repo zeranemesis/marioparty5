@@ -52,7 +52,7 @@ void MB4_CoinInit(void);
 void MB4_CoinUpdate(OMOBJ *obj);
 s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 flightFrames, f32 arcHeight, f32 unused);
 s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist);
-s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam);
+s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, f32 timer, f32 sizeParam, f32 alphaParam, u8 *color);
 void MB4_CoinEffInit(void);
 void MB4_CoinEffUpdate(OMOBJ *obj);
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio);
@@ -1500,10 +1500,10 @@ void MB4_CoinUpdate(OMOBJ *obj) {
                 color[1] = (u8) (192.0f + (63.0f * alpha));
                 color[2] = (u8) (64.0f + (63.0f * alpha));
                 color[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
-                MB4_CoinEffCreate(&burstPos, &burstVel, color,
+                MB4_CoinEffCreate(&burstPos, &burstVel,
                     100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
                     0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))),
-                    0.0f);
+                    0.0f, color);
             }
         }
     }
@@ -1574,17 +1574,21 @@ s32 MB4_CoinCreate(Point3d *basePos, Point3d *targetPos, s32 flightFrames, f32 a
  * match. Nearest active coin to `pos` within `maxDist`, if any. */
 s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist) {
     MB4COIN *coinP;
+    OMOBJ *obj;
     s32 i;
-    s32 best = -1;
-    f32 bestDist = 10000.0f;
+    s32 best;
+    f32 bestDist;
     Point3d diff;
     f32 dist;
 
+    obj = mb4_CoinObj;
     if (mb4_CoinObj == NULL) {
         return -1;
     }
-    coinP = (MB4COIN *) mb4_CoinObj->data;
-    for (i = 0; i < 0x20; i++) {
+    coinP = (MB4COIN *) obj->data;
+    best = -1;
+    bestDist = 10000.0f;
+    for (i = 0; i < 0x20; i++, coinP++) {
         if (coinP->active != 0) {
             PSVECSubtract((Point3d *) &coinP->posX, pos, &diff);
             dist = PSVECMag(&diff);
@@ -1593,42 +1597,40 @@ s32 MB4_CoinNearGet(Point3d *pos, Point3d *outPos, f32 maxDist) {
                 bestDist = dist;
             }
         }
-        coinP++;
     }
+    coinP = (MB4COIN *) obj->data;
     if (best >= 0) {
-        MB4COIN *bestP = (MB4COIN *) mb4_CoinObj->data + best;
-        outPos->x = bestP->posX;
-        outPos->y = bestP->posY;
-        outPos->z = bestP->posZ;
+        *outPos = *(Point3d *) ((u8 *) &coinP[best] + 0x1C);
     }
     return best;
 }
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
  * match. Spawns a coin-sparkle MB4PARTICLE in the first free slot. */
-s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 sizeParam, f32 alphaParam) {
-    MB4COINEFFMGR *mgr;
+s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, f32 timer, f32 sizeParam, f32 alphaParam, u8 *color) {
     MB4PARTICLE *p;
+    MB4COINEFFMGR *mgr;
     s32 i;
-
     MB4COINEFFDATA *ed;
+    OMOBJ *obj;
 
     if (mb4_CoinEffObj == NULL) {
         return -1;
     }
-    ed = (MB4COINEFFDATA *) mb4_CoinEffObj->data;
+    obj = mb4_CoinEffObj;
+    ed = (MB4COINEFFDATA *) obj->data;
     mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
     p = mgr->particles;
-    for (i = 0; i < mgr->count; i++) {
-        if (p->timer == 0.0f) {
+    for (i = 0; i < mgr->count; i++, p++) {
+        if (!(p->timer > 0.0f)) {
             break;
         }
-        p++;
     }
     if (i >= mgr->count) {
         return -1;
     }
 
+    p->field2 = 0;
     p->active = 0;
     p->posX = pos->x;
     p->posY = pos->y;
@@ -1647,7 +1649,7 @@ s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, u8 *color, f32 timer, f32 size
     p->color[3] = color[3];
     p->offsetZAngle = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
     p->active = 0;
-    *(s32 *) ((u8 *) mb4_CoinEffObj->data + 4) += 1;
+    *(s32 *) ((u8 *) ed + 4) += 1;
     return i;
 }
 
@@ -1768,8 +1770,8 @@ void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z) {
  * 14 species * 0x900 bytes, up to a handful of 0x90-byte per-fish records
  * each) for species whose flag1 is 0: a fixed default target offset. */
 void MB4_SakanaOffsetInit(void) {
-    u8 *base;
     s32 species, fish;
+    u8 *base;
 
     for (species = 0; species < 14; species++) {
         base = (u8 *) mb4_Work + 0x174 + (species * 0x900);
