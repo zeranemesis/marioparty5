@@ -60,3 +60,74 @@ s16 Result_CharMotEnd(s16 playerNo)
     }
     return 0;
 }
+void Result_SetScoreSprNum(HUSPRGRPID grpId, s16 coinNum)
+{
+    s16 num;
+    s16 i;
+
+    if (coinNum > 999) {
+        coinNum = 999;
+    }
+    i = 0;
+    HuSprBankSet(grpId, i, 10);
+    HuSprAttrReset(grpId, i, 4);
+    i++;
+    num = coinNum / 100;
+    if (num != 0) {
+        HuSprBankSet(grpId, i, num);
+        HuSprAttrReset(grpId, i, 4);
+        i++;
+    }
+    coinNum -= num * 100;
+    num = coinNum / 10;
+    if (num != 0 || i == 2) {
+        HuSprBankSet(grpId, i, num);
+        HuSprAttrReset(grpId, i, 4);
+        i++;
+    }
+    coinNum -= num * 10;
+    HuSprBankSet(grpId, i, coinNum);
+    HuSprAttrReset(grpId, i, 4);
+    i++;
+    num = i;
+    while (num < 4) {
+        HuSprAttrSet(grpId, num, 4);
+        num++;
+    }
+}
+
+void Result_SetBonusSprNum(HUSPRGRPID grpId, s16 coinNum)
+{
+    s16 num;
+    s16 i;
+
+    if (coinNum > 999) {
+        coinNum = 999;
+    }
+    i = 1;
+    HuSprBankSet(grpId, i, 10);
+    HuSprAttrReset(grpId, i, 4);
+    i++;
+    num = coinNum / 100;
+    if (num != 0) {
+        HuSprBankSet(grpId, i, num);
+        HuSprAttrReset(grpId, i, 4);
+        i++;
+    }
+    coinNum -= num * 100;
+    num = coinNum / 10;
+    if (num != 0 || i == 3) {
+        HuSprBankSet(grpId, i, num);
+        HuSprAttrReset(grpId, i, 4);
+        i++;
+    }
+    coinNum -= num * 10;
+    HuSprBankSet(grpId, i, coinNum);
+    HuSprAttrReset(grpId, i, 4);
+    i++;
+    num = i;
+    while (num < 5) {
+        HuSprAttrSet(grpId, num, 4);
+        num++;
+    }
+}
