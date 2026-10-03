@@ -260,9 +260,12 @@ void fn_1_8FA4(M536Stage *self)
 
 void fn_1_9044(M536Stage *self, s32 bit)
 {
-    self->m_flag &= ~(1 << bit);
+    self->m_flag &= ~((u32)1 << bit);
     if (bit < 5) {
-        if (bit >= 0) {
+        if (bit < 0) {
+            return;
+        } else {
+            return;
         }
     }
 }
@@ -340,9 +343,12 @@ Hu3DModelPosSet(mdl, self->m_pos[i].x, self->m_pos[i].y, self->m_pos[i].z);
 
 void fn_1_944C(M536Sky *self, s32 bit)
 {
-    self->m_flag &= ~(1 << bit);
+    self->m_flag &= ~((u32)1 << bit);
     if (bit < 5) {
-        if (bit >= 0) {
+        if (bit < 0) {
+            return;
+        } else {
+            return;
         }
     }
 }
