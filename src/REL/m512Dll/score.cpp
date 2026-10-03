@@ -505,8 +505,11 @@ void fn_1_DEB8(void *arg1, M512ScoreItem *item)
     }
 }
 
-void fn_1_E098(M512ScoreItem *item)
+void fn_1_E098(void *arg1, M512ScoreItem *item)
 {
+    f32 posX;
+    f32 posY;
+
     if (item->timerOnF == 0) {
         item->timer = MgTimerCreate(2);
         MgTimerParamSet(item->timer, item->maxTime, item->maxTime, item->maxTime);
@@ -516,8 +519,9 @@ void fn_1_E098(M512ScoreItem *item)
             item->timer->stopF = 1;
             item->timer->mode = 1;
         }
-        MgTimerPosSet(item->timer, 20.0f + lbl_1_rodata_3B0[item->idx].x,
-                      8.0f + lbl_1_rodata_3B0[item->idx].y);
+        posX = 20.0f + lbl_1_rodata_3B0[item->idx].x;
+        posY = 8.0f + lbl_1_rodata_3B0[item->idx].y;
+        MgTimerPosSet(item->timer, posX, posY);
         MgScoreWinDispSet(item->timer->winGrpId, 0);
         item->timer->winDispF = 0;
         item->timerOnF = 1;
@@ -537,6 +541,10 @@ void fn_1_E1CC(void *arg1, M512ScoreItem *item)
 
 void fn_1_E23C(M512ScoreList *self)
 {
+    f32 posX;
+    f32 posY;
+    f32 scale;
+    f32 tpLvl;
     s32 i;
     s32 j;
 
@@ -546,13 +554,11 @@ void fn_1_E23C(M512ScoreList *self)
 
             for (j = 0; j < MGSCORE_DIGIT_MAX; j++) {
                 if (j < item->digitNum) {
-                    item->digit[j] -= 1;
-                    if (item->digit[j] < 0) {
+                    if ((item->digit[j] -= 1) < 0) {
                         item->digit[j] = 0;
                     }
                 } else {
-                    item->digit[j] += 1;
-                    if ((f64)item->digit[j] > 18.0) {
+                    if ((f64)(item->digit[j] += 1) > 18.0) {
                         item->digit[j] = 0x12;
                     }
                 }
@@ -567,8 +573,9 @@ void fn_1_E23C(M512ScoreList *self)
                         item->timer->stopF = 1;
                         item->timer->mode = 1;
                     }
-                    MgTimerPosSet(item->timer, 20.0f + lbl_1_rodata_3B0[item->idx].x,
-                                  8.0f + lbl_1_rodata_3B0[item->idx].y);
+                    posX = 20.0f + lbl_1_rodata_3B0[item->idx].x;
+                    posY = 8.0f + lbl_1_rodata_3B0[item->idx].y;
+                    MgTimerPosSet(item->timer, posX, posY);
                     MgScoreWinDispSet(item->timer->winGrpId, 0);
                     item->timer->winDispF = 0;
                     item->timerOnF = 1;
@@ -586,10 +593,10 @@ void fn_1_E23C(M512ScoreList *self)
                 for (j = 0; j < MGSCORE_DIGIT_MAX; j++) {
                     if ((f64)item->digit[j] < 18.0) {
                         HuSprAttrReset(item->sprGrpId, j + 6, 4);
-                        item->posX = (f32)(((f64)item->digit[j] + 18.0) / 18.0);
-                        HuSprScaleSet(item->sprGrpId, j + 6, item->posX, item->posX);
-                        HuSprTPLvlSet(item->sprGrpId, j + 6,
-                                      (f32)(((f64)(18.0 - item->digit[j]) / 18.0)));
+                        scale = (f32)((f64)item->digit[j] + 18.0) / 18.0;
+                        HuSprScaleSet(item->sprGrpId, j + 6, scale, scale);
+                        tpLvl = (f32)(18.0 - (f64)item->digit[j]) / 18.0;
+                        HuSprTPLvlSet(item->sprGrpId, j + 6, tpLvl);
                     } else {
                         HuSprAttrSet(item->sprGrpId, j + 6, 4);
                     }
