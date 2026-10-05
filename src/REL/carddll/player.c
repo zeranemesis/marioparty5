@@ -380,7 +380,9 @@ void fn_1_290BC(s32 arg0)
             HuPadBtnDown[arg0] = 0x100;
             lbl_1_bss_C48[0] = 0;
             lbl_1_bss_C48[1] = 0;
-        } else if (lbl_1_bss_C40 > 0) {
+            return;
+        }
+        if (lbl_1_bss_C40 > 0) {
             if (lbl_1_bss_C48[0] >= 0xF) {
                 if (lbl_1_bss_C40 == 1) {
                     var_r29 = 8;
@@ -399,7 +401,9 @@ void fn_1_290BC(s32 arg0)
                 }
                 HuPadDStkRep[arg0] = var_r29;
             }
-        } else if (lbl_1_bss_C48[0] % 0x1E == 0) {
+            return;
+        }
+        if (lbl_1_bss_C48[0] % 0x1E == 0) {
             var_r30 = frandmod(4);
             if (var_r30 == 0) {
                 var_r26 = 8;

@@ -16,7 +16,10 @@ void fn_1_1D94(void *self, s32 arg1);
 void fn_1_1E54(void *self, void *arg1);
 void fn_1_CF8(char *cond, char *file, s32 line);
 void *__dl__FPv(void *self);
-void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT, s32 filter);
+/* The original calls the C-linkage symbol: the target's call target is plain
+   HuSprTexLoad, not a CodeWarrior-mangled HuSprTexLoad__FP10AnimData_ssslll.
+   Without extern "C" the C++ declaration below mangles and the branch differs. */
+extern "C" void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT, s32 filter);
 
 struct Mgr510Shadow;
 
@@ -181,14 +184,16 @@ void fn_1_C180(Mgr510Shadow *arg0, Vec *arg1, Vec *arg2)
 
 void fn_1_C1CC(Mgr510Shadow *arg0, f32 (*arg1)[4])
 {
-    f32 sp3C[4][4];
-    f32 spC[4][4];
+    /* Both locals are 0x30 bytes in the target (0xc and 0x3c), which is f32[3][4]
+       and not f32[4][4]; the wider spelling pushes the frame from 0x80 to 0xa0. */
+    Mtx sp3C;
+    Mtx spC;
 
-    PSMTXTrans(&sp3C[0], arg0->unk8, arg0->unkC, arg0->unk10);
-    PSMTXRotRad(&spC[0], 'Y', 0.017453292f * arg0->unk18);
-    PSMTXConcat(&sp3C[0], &spC[0], &sp3C[0]);
-    PSMTXConcat(arg1, &sp3C[0], &sp3C[0]);
-    GXLoadPosMtxImm(&sp3C[0], 0);
+    PSMTXTrans(sp3C, arg0->unk8, arg0->unkC, arg0->unk10);
+    PSMTXRotRad(spC, 'Y', 0.017453292f * arg0->unk18);
+    PSMTXConcat(sp3C, spC, sp3C);
+    PSMTXConcat(arg1, sp3C, sp3C);
+    GXLoadPosMtxImm(sp3C, 0);
     HuSprTexLoad(arg0->unk0, 0, 0, 1, 1, 1);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
     GXSetZCompLoc(1);
