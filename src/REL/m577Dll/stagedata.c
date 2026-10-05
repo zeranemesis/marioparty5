@@ -2807,13 +2807,14 @@ s16 *fn_1_B430(s32 arg0, s32 arg1)
     return lbl_1_data_B120[i];
 }
 
-// NONMATCHING: MWCC reassociates the index sum into ((arg1 * 3 + arg0 * 0xC) + arg2)
-// and emits the two multiplies in source order; the original evaluates (arg1 * 3 + arg2)
-// first and folds arg0 * 0xC in last. Rows 2-5 differ.
+// NONMATCHING: rows 5-7 only. The original keeps arg0 * 0xC in a volatile
+// register (r6) and sums it in last; MWCC 1.3.2 puts every named local in a
+// callee-saved register, so spelling it as a second local reproduces the whole
+// instruction sequence but adds an stw/lwz r30 pair that shifts all of it.
 s16 *fn_1_B460(s32 arg0, s32 arg1, s32 arg2)
 {
-    s32 t = arg1 * 3 + arg2;
-    return lbl_1_data_28A18[t + arg0 * 0xC];
+    s32 b = arg1 * 3 + arg2;
+    return lbl_1_data_28A18[arg0 * 0xC + b];
 }
 
 void fn_1_B498(StageAnim *arg0)

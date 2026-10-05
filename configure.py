@@ -1081,7 +1081,7 @@ Object(Matching, "REL/m510dll/opening.c"),
             Object(Equivalent, "REL/m511Dll/gamemaster.cpp"),
             Object(Equivalent, "REL/m511Dll/particle.cpp"),
             Object(Matching, "REL/m511Dll/objectsetup.cpp"),
-            Object(NonMatching, "REL/m511Dll/camera.cpp"),
+            Object(NonMatching, "REL/m511Dll/camera.cpp", source="REL/m511Dll/camera.c"),
             Object(Equivalent, "REL/m511Dll/boatshadow.cpp"),
             Object(Equivalent, "REL/m511Dll/stage.cpp"),
             Object(Equivalent, "REL/m511Dll/star.cpp"),
@@ -1267,7 +1267,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m529dll",
         objects={
-            Object(NonMatching, "REL/m529dll/m529.c"),
+            Object(Equivalent, "REL/m529dll/m529.c"),
         },
     ),
     Rel(
