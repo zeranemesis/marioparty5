@@ -6,17 +6,21 @@ extern OSErrorHandler __OSErrorTable[];
 
 #define MEM_BASE 0xCC004000
 
-/* Layout of the memory-protection register block at 0xCC004000. */
+/* Layout of the memory-protection register block at 0xCC004000. The volatile
+   belongs on the fields, not on the pointer: with `volatile MEMRegs *` MWCC
+   re-materialises the address at every access instead of keeping the whole
+   0xCC004000 in a callee-saved register, which is what the original does
+   (r28 holds 0xCC004000 and the stores use 0x20(r28), 0x10(r28), 0x28(r28)). */
 typedef struct {
     u8 pad10[0x10];
-    u16 unk10;   /* 0x10 */
+    volatile u16 unk10;   /* 0x10 */
     u8 pad12[0x0C];
-    u16 unk1E;   /* 0x1E */
-    u16 unk20;   /* 0x20 */
-    u16 unk22;   /* 0x22 */
-    u16 unk24;   /* 0x24 */
+    volatile u16 unk1E;   /* 0x1E */
+    volatile u16 unk20;   /* 0x20 */
+    volatile u16 unk22;   /* 0x22 */
+    volatile u16 unk24;   /* 0x24 */
     u8 pad26[0x02];
-    u16 unk28;   /* 0x28 */
+    volatile u16 unk28;   /* 0x28 */
 } MEMRegs;
 
 u32 OSGetPhysicalMemSize(void)
@@ -146,10 +150,11 @@ void __OSInitMemoryProtection(void)
 {
     u32 memSize;
     BOOL enabled;
-    volatile MEMRegs* const regs = (volatile MEMRegs*)MEM_BASE;
+    MEMRegs* regs;
 
     memSize = *(u32*)0x800000F0;
     enabled = OSDisableInterrupts();
+    regs = (MEMRegs*)MEM_BASE;
 
     regs->unk20 = 0;
     regs->unk10 = 0xFF;

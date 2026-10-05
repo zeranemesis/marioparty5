@@ -2,6 +2,7 @@
 #define _M501DLL_H
 
 #include "dolphin/types.h"
+#include <dolphin/gx/GXStruct.h>
 
 /* Local copies of the small support classes m501.cpp defines: CGameObject's
  * constructor has to be visible here so a derived constructor can inline it,
@@ -16,10 +17,6 @@ struct Hu3DMtx {
     f32 m[4][3];
 };
 
-struct GXColor {
-    u8 r, g, b, a;
-};
-
 class CLinkList;
 
 class CLinkNode {
@@ -28,6 +25,7 @@ public:
     CLinkNode *m_next;
 
     CLinkNode();
+    CLinkNode(CLinkNode &);
     ~CLinkNode();
     void insertBack(CLinkList *list);
 };
@@ -56,10 +54,32 @@ public:
     CModel(unsigned int dataNum);
     ~CModel();
     Hu3DMtx *getMatrix();
+    void setHookData(void *data);
 
     s16 getId() { return m_id; }
 
     s16 m_id;
+};
+
+class COMObj {
+public:
+    virtual ~COMObj() {}
+    virtual void OmObjUpdate(struct omObj_s *obj);
+    virtual void on_update(struct omObj_s *obj);
+    virtual void OmObjDelete(struct omObj_s *obj);
+
+    static void OmObjUpdateStatic(struct omObj_s *obj);
+
+    COMObj(struct omObj_s *obj);
+};
+
+class CSubThread {
+public:
+    virtual ~CSubThread() {}
+    virtual void *ThreadMain(void *arg);
+
+    CSubThread(unsigned long stackSize);
+    s32 GetStartPriority();
 };
 
 namespace m501 {
@@ -103,3 +123,4 @@ public:
 }
 
 #endif
+

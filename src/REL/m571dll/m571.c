@@ -93,7 +93,7 @@ void fn_1_3EE4(void);
 void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out);
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 void fn_1_4EC0(OMOBJ *obj, s32 motNo);
-HU3DMODELID fn_1_3F3C(s32 playerNo);
+HU3DMODELID fn_1_3F3C(u32 playerNo);
 void fn_1_41AC(Vec *pos, Vec *up, Vec *target);
 void fn_1_4D3C(OMOBJ *obj, s32 motNo, f32 start, u32 attr);
 void fn_1_4E44(OMOBJ *obj, s32 motNo, f32 start, u32 attr);
@@ -135,7 +135,10 @@ typedef struct M571Player_s {
     s16 unk16; //0x16
     Vec unk18; //0x18 mirror of the MGACTOR position
     s32 unk24; //0x24 player number again
-    s32 unk28; //0x28
+    union {
+        f32 rotY; //0x28 rotation copied from the MGACTOR, and 1300.0 on the hook reset
+        s32 raw; //0x28 read back as a sign-extended half by the voice bank pick
+    } unk28;
     s32 unk2C; //0x2C
     s32 unk30; //0x30
     s32 unk34; //0x34
@@ -397,7 +400,7 @@ s32 lbl_1_bss_35C;
 s32 lbl_1_bss_360;
 s16 lbl_1_bss_364;
 s16 lbl_1_bss_366;
-s32 lbl_1_bss_368[20];
+OMOBJ *lbl_1_bss_368[20];
 s32 lbl_1_bss_3B8[4];
 s32 lbl_1_bss_3C8[2];
 s32 lbl_1_bss_3D0[2];
@@ -415,7 +418,7 @@ s32 lbl_1_bss_46C;
 OMOBJ *lbl_1_bss_470[2];
 OMOBJ **lbl_1_bss_478;
 typedef struct M571Slot_s {
-    s32 val; //0x0
+    u32 val; //0x0
     s16 flag; //0x4 set to -1 by fn_1_3EE4
     u8 pad06[2]; //0x6
 } M571Slot; //0x8
@@ -597,7 +600,7 @@ void ObjectSetup(void)
     Hu3DModelAttrSet(lbl_1_bss_364, 1);
 
     for (i = 0; i < 20; i++) {
-        lbl_1_bss_368[i] = 0;
+        lbl_1_bss_368[i] = NULL;
     }
 
     lbl_1_bss_35C = -1;
@@ -784,7 +787,7 @@ void fn_1_D58(OMOBJ *obj)
     p->unk18.y = mp->actor->pos.y;
     p->unk18.z = mp->actor->pos.z;
     p->unk24 = 0.0f;
-    p->unk28 = mp->actor->rotY;
+    p->unk28.rotY = mp->actor->rotY;
     p->unk2C = 0.0f;
     p->unk48 = mp->actor->velY;
 
@@ -793,7 +796,6 @@ void fn_1_D58(OMOBJ *obj)
     CharModelVoicePanSet(p->unk4, (s16)(32.0f + (screenPos.x / 576.0f) * 64.0f));
 }
 
-// NONMATCHING: draft reconstruction of the pad-state machine
 void fn_1_1078(OMOBJ *obj)
 {
     M571Player *p = (M571Player *)obj->data;
@@ -809,12 +811,11 @@ void fn_1_1078(OMOBJ *obj)
     case 1:
         if (fn_1_1168(obj) != 0) {
             p->unk60 = 2;
-        } else if (p->unk10 & 0xBF80) {
+        } else if ((p->unk10 & 0xBF80U) != 0) {
             p->unk78 |= 0x200;
         }
         break;
     case 2:
-    case 3:
         p->unk80++;
         if (p->unk80 > p->unk84) {
             p->unk60 = 0;
@@ -938,7 +939,7 @@ void fn_1_1630(void)
     }
 
     p->unk38 = 0;
-    p->unk28 = 1300.0f;
+    p->unk28.rotY = 1300.0f;
     p->unk30 = 2;
 
     MgSeqModeNext();
@@ -967,6 +968,7 @@ void fn_1_16F4(void)
 // NONMATCHING: draft reconstruction
 void fn_1_1760(void)
 {
+    s32 n;
     s32 i;
     s32 found;
 
@@ -977,20 +979,18 @@ void fn_1_1760(void)
     }
 
     if (MgSeqFrameNoGet() > 300) {
-        found = 0;
-
         for (i = 0; i < 20; i++) {
-            if (lbl_1_bss_368[i] != 0) {
+            if (lbl_1_bss_368[i] != NULL) {
                 found = 1;
                 break;
             }
         }
 
         if (found != 0) {
-            for (i = 0; i < 4; i++) {
-                M571Player *p = (M571Player *)lbl_1_bss_354[i]->data;
+            for (n = 0; n < 4; n++) {
+                M571Player *p = (M571Player *)lbl_1_bss_354[n]->data;
 
-                Hu3DModelAttrReset(lbl_1_bss_DC[i]->actor->mdlId, 1);
+                Hu3DModelAttrReset(lbl_1_bss_DC[n]->actor->mdlId, 1);
             }
 
             MgSeqModeNext();
@@ -1037,7 +1037,7 @@ void fn_1_18B8(void)
             OMOBJ *obj = omAddObjEx(lbl_1_bss_680, 0x65, 1, 3, 1, fn_1_3700);
 
             lbl_1_bss_350[i] = obj;
-            obj->data = HuMemDirectMallocNum(0, 0x34, 0x1000);
+            obj->data = HuMemDirectMallocNum(0, 0x34, HU_MEMNUM_OVL);
             obj->work[0] = i;
         }
 
@@ -1051,7 +1051,7 @@ void fn_1_18B8(void)
 
         if (q->unk2C != 0) {
             q->unk2C = 0;
-            Hu3DMotionShiftSet(q->unk0.modelId, lbl_1_bss_44C[0], 0.0f, 0.0f, 0x4001);
+            Hu3DMotionShiftSet(q->unk0.modelId, lbl_1_bss_44C[0], 0.0f, 0.0f, 0x40000001);
         }
 
         Hu3DModelAttrReset(p->unk0.modelId, 1);
@@ -1107,7 +1107,7 @@ void fn_1_1BA0(void)
 
                 if (lbl_1_bss_428[0] == 0 && lbl_1_bss_428[1] == 0 && lbl_1_bss_428[2] == 0
                     && lbl_1_bss_428[3] == 0) {
-                    CharFXPlay(q->unk28, 0x200);
+                    CharFXPlay((s16)q->unk28.raw, 0x200);
                 }
             }
 
@@ -1463,7 +1463,6 @@ void fn_1_3520(void)
     }
 }
 
-// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_3594(OMOBJ *obj)
 {
     M571Tile *tile = (M571Tile *)obj->data;
@@ -1471,7 +1470,7 @@ void fn_1_3594(OMOBJ *obj)
     obj->mdlId[0] = Hu3DModelLink(lbl_1_bss_14[0]);
     Hu3DModelShadowMapSet(obj->mdlId[0]);
     omSetTra(obj, tile->pos.x, tile->pos.y, tile->pos.z);
-    omSetRot(obj, 0.0f, (float)(frand() & 0xFF) * 1.4117647f * (20000000.0 - 4503599627370496.0), 0.0f);
+    omSetRot(obj, 0.0f, (float)(frand() & 0xFF) * 1.4117647f, 0.0f);
     omSetSca(obj, 1.0f, 1.0f, 1.0f);
 
     lbl_1_bss_1C8[tile->state] = obj;
@@ -1480,12 +1479,11 @@ void fn_1_3594(OMOBJ *obj)
     obj->objFunc = fn_1_36B8;
 }
 
-// NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_36B8(OMOBJ *obj)
 {
-    M571Player *p = (M571Player *)obj->data;
+    M571Pos *pos = (M571Pos *)obj->data;
 
-    omSetTra(obj, p->unk18.x, p->unk18.y, p->unk18.z);
+    omSetTra(obj, pos->x, pos->y, pos->z);
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
@@ -1606,8 +1604,7 @@ void fn_1_3EE4(void)
     }
 }
 
-// NONMATCHING: local index/register form differs from the target build
-HU3DMODELID fn_1_3F3C(s32 playerNo)
+HU3DMODELID fn_1_3F3C(u32 playerNo)
 {
     s32 i;
 
@@ -1621,7 +1618,7 @@ HU3DMODELID fn_1_3F3C(s32 playerNo)
         if (lbl_1_bss_47C[i].val == 0) {
             lbl_1_bss_47C[i].val = playerNo;
             lbl_1_bss_47C[i].flag = Hu3DModelCreate(HuDataSelHeapReadNum(playerNo, HU_MEMNUM_OVL, 2));
-            return Hu3DModelLink(lbl_1_bss_47C[i].flag);
+            return lbl_1_bss_47C[i].flag;
         }
     }
 
@@ -1709,11 +1706,14 @@ void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out)
     out->z = mtx[2][3];
 }
 
-// NONMATCHING: expression form and comparison direction differ from the target build
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3)
 {
-    return (arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
-        < (arg2 + arg3) * (arg2 + arg3);
+    if ((arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
+        < (arg2 + arg3) * (arg2 + arg3)) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 // NONMATCHING: the inline integer-to-double conversions differ from the target build
@@ -1812,7 +1812,6 @@ void fn_1_4F20(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: 0x74 is written as a float here and read as an int for MgPlayerPadSet
 void fn_1_50A8(OMOBJ *obj)
 {
     M571Player *p = (M571Player *)obj->data;
@@ -1820,17 +1819,17 @@ void fn_1_50A8(OMOBJ *obj)
     if (p->hookCycle % 3 == 0) {
         p->unk18.z = 90.0f;
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
-        Hu3DModelHookSet(p->hookL, lbl_1_data_124, p->unk0.playerNo);
+        Hu3DModelHookSet(p->hookL, lbl_1_data_124, p->unk0.modelId);
         p->unk74.hookAngle = 180.0f;
     } else if (p->hookCycle % 3 == 1) {
         p->unk18.z = 270.0f;
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_124);
-        Hu3DModelHookSet(p->hookL, lbl_1_data_11A, p->unk0.playerNo);
+        Hu3DModelHookSet(p->hookL, lbl_1_data_11A, p->unk0.modelId);
         p->unk74.hookAngle = 0.0f;
     } else if (p->hookCycle % 3 == 2) {
         p->unk18.z = 90.0f;
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
-        Hu3DModelHookSet(p->hookL, lbl_1_data_124, p->unk0.playerNo);
+        Hu3DModelHookSet(p->hookL, lbl_1_data_124, p->unk0.modelId);
         p->unk74.hookAngle = 180.0f;
     }
 }
@@ -1902,7 +1901,7 @@ void fn_1_8490(s32 type)
     Hu3DModelAttrSet(lbl_1_bss_364, 1);
 
     for (i = 0; i < 20; i++) {
-        lbl_1_bss_368[i] = 0;
+        lbl_1_bss_368[i] = NULL;
     }
 }
 
@@ -1911,7 +1910,7 @@ s32 fn_1_8E08(void)
     s32 i;
 
     for (i = 0; i < 0x14; i++) {
-        if (lbl_1_bss_368[i] != 0) {
+        if (lbl_1_bss_368[i] != NULL) {
             return 1;
         }
     }
@@ -1930,8 +1929,8 @@ void fn_1_8584(OMOBJ *obj)
     lbl_1_bss_360 = lbl_1_bss_360 - 1;
 
     for (i = 0; i < 20; i++) {
-        if (lbl_1_bss_368[i] == (u32)obj) {
-            lbl_1_bss_368[i] = 0;
+        if (obj == lbl_1_bss_368[i]) {
+            lbl_1_bss_368[i] = NULL;
             break;
         }
     }
@@ -1951,8 +1950,8 @@ void fn_1_8948(OMOBJ *obj)
     omSetSca(obj, 1.0f, 1.0f, 1.0f);
 
     for (i = 0; i < 0x14; i++) {
-        if (lbl_1_bss_368[i] == 0) {
-            lbl_1_bss_368[i] = (s32)obj;
+        if (NULL == lbl_1_bss_368[i]) {
+            lbl_1_bss_368[i] = obj;
             break;
         }
     }
@@ -1961,7 +1960,7 @@ void fn_1_8948(OMOBJ *obj)
     obj->objFunc = fn_1_8654;
 }
 
-// NONMATCHING: float loads for the repeated zero stores differ from the target build
+// NONMATCHING: CodeWarrior hoists one rodata load for 3 identical 0.0f stores; MWCC 1.3.2 repeats it (4 rows)
 void fn_1_8A58(Vec *pos, s32 variant)
 {
     OMOBJ *obj;
@@ -2013,11 +2012,14 @@ void fn_1_8EA0(void)
     HuAudSStreamFadeOut(lbl_1_bss_35C, 100);
 }
 
-// NONMATCHING: expression form differs from the target build
 s32 fn_1_90C8(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3)
 {
-    return (arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
-        < (arg2 + arg3) * (arg2 + arg3);
+    if ((arg1->x - arg0->x) * (arg1->x - arg0->x) + (arg1->z - arg0->z) * (arg1->z - arg0->z)
+        < (arg2 + arg3) * (arg2 + arg3)) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build
@@ -2026,7 +2028,6 @@ s32 fn_1_9298(s32 base, s32 range)
     return base + frandmod(range - base);
 }
 
-// NONMATCHING: local variable form differs from the target build
 s16 fn_1_92D4(HuVecF *pos)
 {
     HuVecF scr;

@@ -843,7 +843,6 @@ void fn_1_187C(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: the lbl_1_bss_EC index is computed in r5 instead of r4
 void fn_1_1C8C(OMOBJ *obj)
 {
     s32 i;
@@ -918,7 +917,7 @@ void fn_1_1C8C(OMOBJ *obj)
     lbl_1_bss_38 = 90.0f;
     lbl_1_bss_3C = 0.0f;
     lbl_1_bss_40 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_244[0xD], HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelPosSet(lbl_1_bss_40, 0.0f, 470.0 * sin(3.141592653589793 * lbl_1_bss_38 / 180.0), 0.0f);
+    Hu3DModelPosSet(lbl_1_bss_40, 0.0f, lbl_1_bss_3C + 470.0 * sin(3.141592653589793 * lbl_1_bss_38 / 180.0), 0.0f);
     Hu3DModelRotSet(lbl_1_bss_40, 0.0f, 0.0f, 0.0f);
     Hu3DModelAttrSet(lbl_1_bss_40, 0x40000001);
     Hu3DModelShadowSet(lbl_1_bss_40);
@@ -960,7 +959,7 @@ void fn_1_2714(OMOBJ *obj)
     obj->objFunc = fn_1_2B70;
 }
 
-// NONMATCHING: the switch dispatch compares in a different order
+// NONMATCHING: the switch dispatch tests a dense [0,4] range instead of the sparse {0,1,3} tree
 void fn_1_2B70(OMOBJ *obj)
 {
     switch (obj->work[0]) {
@@ -1565,7 +1564,7 @@ u16 fn_1_4F10(OMOBJ *obj)
     return var_r30;
 }
 
-// NONMATCHING: the state test reloads unkB8 and inverts the first branch
+// NONMATCHING: the target reuses one lwz of unkB8 across all three compares; MWCC 1.3.2 reloads it
 u16 fn_1_500C(OMOBJ *obj)
 {
     M529Player *temp_r31 = obj->data;
@@ -1582,30 +1581,33 @@ u16 fn_1_500C(OMOBJ *obj)
     return var_r30;
 }
 
-// NONMATCHING: the state test still nests the two comparisons the other way
 u16 fn_1_5084(OMOBJ *obj)
 {
     M529Player *temp_r31 = obj->data;
     M529Player *var_r29 = lbl_1_bss_11C[temp_r31->unk1C]->data;
     u16 var_r30 = 0;
 
-    if (temp_r31->unkB8 < 4) {
-        if (temp_r31->unkB8 >= 0) {
-            if (temp_r31->unkCC == -1) {
-                temp_r31->unkC4 = 0;
-            }
-            temp_r31->unkC4 -= 1;
-            if (temp_r31->unkC4 < 0) {
-                if (temp_r31->unk7C == -1) {
-                    var_r30 = 0x40;
-                } else if (frandmod(temp_r31->unkC0)) {
-                    var_r30 = fn_1_5170(obj);
-                } else {
-                    var_r30 = 0;
-                }
-                temp_r31->unkC4 = fn_1_51B4(temp_r31->unkC8, temp_r31->unkCC);
-            }
+    switch (temp_r31->unkB8) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+        if (temp_r31->unkCC == -1) {
+            temp_r31->unkC4 = 0;
         }
+        if ((temp_r31->unkC4 -= 1) < 0) {
+            if (temp_r31->unk7C == -1) {
+                var_r30 = 0x40;
+            } else if (frandmod(temp_r31->unkC0)) {
+                var_r30 = fn_1_5170(obj);
+            } else {
+                var_r30 = 0;
+            }
+            temp_r31->unkC4 = fn_1_51B4(temp_r31->unkC8, temp_r31->unkCC);
+        }
+        break;
+    default:
+        break;
     }
     return var_r30;
 }
@@ -1673,7 +1675,6 @@ temp_r31->unk12 = espEntry(0x960045, 0xA, 0);
     obj->objFunc = fn_1_553C;
 }
 
-// NONMATCHING: the new scale is computed in f0 instead of f1
 void fn_1_553C(OMOBJ *obj)
 {
     M529Score *temp_r31 = lbl_1_bss_110->data;
@@ -1681,14 +1682,12 @@ void fn_1_553C(OMOBJ *obj)
     MgScoreValueSet(temp_r31->unk4, lbl_1_bss_18);
     if (lbl_1_bss_DC != 0) {
         if (temp_r31->unk14 == 0) {
-            temp_r31->unk18 += 0.02f;
-            if (temp_r31->unk18 >= 1.2f) {
+            if ((temp_r31->unk18 += 0.02f) >= 1.2f) {
                 temp_r31->unk18 = 1.2f;
                 temp_r31->unk14 = 1;
             }
         } else {
-            temp_r31->unk18 -= 0.04f;
-            if (temp_r31->unk18 <= 1.0f) {
+            if ((temp_r31->unk18 -= 0.04f) <= 1.0f) {
                 temp_r31->unk18 = 1.0f;
                 temp_r31->unk14 = 0;
             }
@@ -1865,7 +1864,7 @@ void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1)
     OSReport(lbl_1_data_4F5);
 }
 
-// NONMATCHING: print8 reloads the vector address into r7 instead of reusing r6
+// NONMATCHING: print8 vararg address temps land in r6/r7/r7 instead of reusing r6
 void fn_1_5F74(void)
 {
     GXColor sp8;
@@ -2008,18 +2007,17 @@ s16 fn_1_669C(u32 arg0)
     return Hu3DModelCreate(HuDataSelHeapReadNum(arg0, HU_MEMNUM_OVL, HEAP_MODEL));
 }
 
-// NONMATCHING: the pitch is kept in a saved float register
+// NONMATCHING: the fmul operand order and the f30 homing point are toolchain tie-breaks
 void fn_1_67B0(Vec *arg0, Vec *arg1, Vec *arg2, float farg0)
 {
-    float var_f30 = farg0;
     float temp_f31;
     f64 temp_f29;
 
-    if (var_f30 > 1.0f) {
-        var_f30 = 1.0f;
+    if (1.0f < farg0) {
+        farg0 = 1.0f;
     }
-    temp_f29 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0);
-    temp_f31 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0) * temp_f29;
+    temp_f29 = sin(3.141592653589793 * (90.0f * farg0) / 180.0);
+    temp_f31 = sin(3.141592653589793 * (90.0f * farg0) / 180.0) * temp_f29;
     arg2->x = arg0->x + temp_f31 * (arg1->x - arg0->x);
     arg2->y = arg0->y + temp_f31 * (arg1->y - arg0->y);
     arg2->z = arg0->z + temp_f31 * (arg1->z - arg0->z);
@@ -2037,30 +2035,30 @@ s32 fn_1_6998(Vec *arg0, float farg0)
 {
     Vec sp18;
     Vec sp10;
-    float var_f30;
-    float temp_f28;
-    float temp_f29;
-    f64 temp_f26;
-    f64 temp_f26_2;
+    float clamp1;
+    float clamp2;
+    float prod1;
+    float prod2;
+    f64 sinr;
 
-var_f30 = farg0;
-    if (var_f30 > 1.0f) {
-        var_f30 = 1.0f;
+    clamp1 = farg0;
+    if (1.0f < clamp1) {
+        clamp1 = 1.0f;
     }
-    temp_f26 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0);
-    temp_f29 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0) * temp_f26;
-    sp18.x = lbl_1_bss_318.x + temp_f29 * (lbl_1_bss_30C.x - lbl_1_bss_318.x);
-    sp18.y = lbl_1_bss_318.y + temp_f29 * (lbl_1_bss_30C.y - lbl_1_bss_318.y);
-    sp18.z = lbl_1_bss_318.z + temp_f29 * (lbl_1_bss_30C.z - lbl_1_bss_318.z);
-    var_f30 = farg0;
-    if (var_f30 > 1.0f) {
-        var_f30 = 1.0f;
+    sinr = sin(3.141592653589793 * (90.0f * clamp1) / 180.0);
+    prod1 = sin(3.141592653589793 * (90.0f * clamp1) / 180.0) * sinr;
+    sp18.x = lbl_1_bss_318.x + prod1 * (lbl_1_bss_30C.x - lbl_1_bss_318.x);
+    sp18.y = lbl_1_bss_318.y + prod1 * (lbl_1_bss_30C.y - lbl_1_bss_318.y);
+    sp18.z = lbl_1_bss_318.z + prod1 * (lbl_1_bss_30C.z - lbl_1_bss_318.z);
+    clamp2 = farg0;
+    if (1.0f < clamp2) {
+        clamp2 = 1.0f;
     }
-    temp_f26_2 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0);
-    temp_f28 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0) * temp_f26_2;
-    sp10.x = lbl_1_bss_300.x + temp_f28 * (lbl_1_bss_2F4.x - lbl_1_bss_300.x);
-    sp10.y = lbl_1_bss_300.y + temp_f28 * (lbl_1_bss_2F4.y - lbl_1_bss_300.y);
-    sp10.z = lbl_1_bss_300.z + temp_f28 * (lbl_1_bss_2F4.z - lbl_1_bss_300.z);
+    sinr = sin(3.141592653589793 * (90.0f * clamp2) / 180.0);
+    prod2 = sin(3.141592653589793 * (90.0f * clamp2) / 180.0) * sinr;
+    sp10.x = lbl_1_bss_300.x + prod2 * (lbl_1_bss_2F4.x - lbl_1_bss_300.x);
+    sp10.y = lbl_1_bss_300.y + prod2 * (lbl_1_bss_2F4.y - lbl_1_bss_300.y);
+    sp10.z = lbl_1_bss_300.z + prod2 * (lbl_1_bss_2F4.z - lbl_1_bss_300.z);
     Hu3DCameraPosSetV(1, &sp18, arg0, &sp10);
     if (1.0f <= farg0) {
         return 1;
@@ -2069,42 +2067,37 @@ var_f30 = farg0;
     return 0;
 }
 
-// NONMATCHING: stack frame and float register allocation differ
+// NONMATCHING: the farg0 homing lands in f26 instead of f27, plus the fmul operand tie-break
 s32 fn_1_6CCC(Vec *arg0, float farg0)
 {
-    Vec sp20;
     Vec sp18;
-    Vec sp10;
     Vec spC;
-    float var_f30;
-    float var_f31;
-    float temp_f28;
-    float temp_f29;
-    f64 temp_f26;
-    f64 temp_f26_2;
+    float clamp1;
+    float clamp2;
+    float prod1;
+    float prod2;
+    f64 sinr;
     s32 i;
 
     for (i = 0; i < 4; i++) {
-        var_f31 = farg0;
-        if (var_f31 > 1.0f) {
-            var_f31 = 1.0f;
+        clamp1 = farg0;
+        if (1.0f < clamp1) {
+            clamp1 = 1.0f;
         }
-        temp_f26 = sin(3.141592653589793 * (90.0f * var_f31) / 180.0);
-        temp_f29 = sin(3.141592653589793 * (90.0f * var_f31) / 180.0) * temp_f26;
-        sp18.x = lbl_1_bss_2C4[i].x + temp_f29 * (lbl_1_bss_294[i].x - lbl_1_bss_2C4[i].x);
-        sp18.y = lbl_1_bss_2C4[i].y + temp_f29 * (lbl_1_bss_294[i].y - lbl_1_bss_2C4[i].y);
-        sp18.z = lbl_1_bss_2C4[i].z + temp_f29 * (lbl_1_bss_294[i].z - lbl_1_bss_2C4[i].z);
-        var_f30 = farg0;
-        if (var_f30 > 1.0f) {
-            var_f30 = 1.0f;
+        sinr = sin(3.141592653589793 * (90.0f * clamp1) / 180.0);
+        prod1 = sin(3.141592653589793 * (90.0f * clamp1) / 180.0) * sinr;
+        sp18.x = lbl_1_bss_2C4[i].x + prod1 * (lbl_1_bss_294[i].x - lbl_1_bss_2C4[i].x);
+        sp18.y = lbl_1_bss_2C4[i].y + prod1 * (lbl_1_bss_294[i].y - lbl_1_bss_2C4[i].y);
+        sp18.z = lbl_1_bss_2C4[i].z + prod1 * (lbl_1_bss_294[i].z - lbl_1_bss_2C4[i].z);
+        clamp2 = farg0;
+        if (1.0f < clamp2) {
+            clamp2 = 1.0f;
         }
-        temp_f26_2 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0);
-        temp_f28 = sin(3.141592653589793 * (90.0f * var_f30) / 180.0) * temp_f26_2;
-        spC.x = lbl_1_bss_264[i].x + temp_f28 * (lbl_1_bss_234[i].x - lbl_1_bss_264[i].x);
-        sp10.y = lbl_1_bss_264[i].y + temp_f28 * (lbl_1_bss_234[i].y - lbl_1_bss_264[i].y);
-        sp10.z = lbl_1_bss_264[i].z + temp_f28 * (lbl_1_bss_234[i].z - lbl_1_bss_264[i].z);
-        spC.y = sp10.y;
-        spC.z = sp10.z;
+        sinr = sin(3.141592653589793 * (90.0f * clamp2) / 180.0);
+        prod2 = sin(3.141592653589793 * (90.0f * clamp2) / 180.0) * sinr;
+        spC.x = lbl_1_bss_264[i].x + prod2 * (lbl_1_bss_234[i].x - lbl_1_bss_264[i].x);
+        spC.y = lbl_1_bss_264[i].y + prod2 * (lbl_1_bss_234[i].y - lbl_1_bss_264[i].y);
+        spC.z = lbl_1_bss_264[i].z + prod2 * (lbl_1_bss_234[i].z - lbl_1_bss_264[i].z);
         Hu3DCameraPosSetV(1 << i, &sp18, arg0, &spC);
     }
     if (1.0f <= farg0) {

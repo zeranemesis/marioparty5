@@ -103,8 +103,7 @@ typedef s32 (*M538_ANIMFUNC)(M538_ANIM *anim);
 
 struct M538Anim_s {
     float scale;         /* 0x00 */
-    s16 flag;            /* 0x04 */
-    s16 pad06;           /* 0x06 */
+    s32 flag;            /* 0x04 */
     M538_ANIMFUNC func;  /* 0x08 */
     s16 state;           /* 0x0C */
     s16 counter;         /* 0x0E */
@@ -139,7 +138,7 @@ struct M538Player_s {
     float accX;    /* 0x24 */
     float accY;    /* 0x28 */
     float accZ;    /* 0x2C */
-    float hookX;   /* 0x30 */
+    float hookX;   /* 0x30 raw word in the original; keep float, fn_1_7FAC needs lfs */
     float hookY;   /* 0x34 */
     float hookZ;   /* 0x38 */
     float hookRotX;/* 0x3C */
@@ -207,7 +206,10 @@ typedef struct M538Fall_s {
     s16 model;  /* 0x04 */
     s16 state;  /* 0x06 */
     s16 timer;  /* 0x08 */
-} M538_FALL;
+    s16 pad0A;  /* 0x0A */
+    s16 pad0C;  /* 0x0C */
+    s16 pad0E;  /* 0x0E */
+} M538_FALL; /* 0x10 */
 
 struct M538_s {
     M538_PLAYER *player[4];   /* 0x000 */

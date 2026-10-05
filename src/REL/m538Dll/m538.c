@@ -1,5 +1,22 @@
+/* The REL signature of Hu3DCameraPosSet takes nine floats after the camera
+ * index, i.e. one more than include/game/hu3d.h declares: the ninth
+ * (targetZ) does not fit in f1..f8 and rides the outgoing-argument slot at
+ * 8(sp), which is where the `stfs ...,0x8(r1)` in fn_1_1488 and fn_1_16BC
+ * comes from -- it is a real argument, not a dead local.  Rename the header
+ * declaration away and declare the REL signature so the trailing load is
+ * emitted.  (A cast on the designator drops it but makes MWCC emit an
+ * indirect call, and warn_aliasing does not cover a redeclaration.) */
+#define Hu3DCameraPosSet Hu3DCameraPosSet_hu3d
 #include "REL/m538Dll.h"
+#undef Hu3DCameraPosSet
+void Hu3DCameraPosSet(int cameraBit, f32 posX, f32 posY, f32 posZ, f32 upX, f32 upY, f32 upZ, f32 targetX, f32 targetY, f32 targetZ);
 
+
+/* fn_1_69C4 only ever touches one s16 field of its argument, at 0x48. */
+struct m538_s16_48_s {
+    u8 pad[0x48];
+    s16 model;
+};
 
 void     ObjectSetup(void);                           /* static */
 void     fn_1_1FC(s16 mode, s16 frameNo);             /* static */
@@ -9,7 +26,7 @@ void     fn_1_4F8(s16 mode, s16 frameNo);             /* static */
 void     fn_1_614(s16 mode, s16 frameNo);             /* static */
 void     fn_1_848(s16 mode, s16 frameNo);             /* static */
 void     fn_1_BB4(s16 mode, s16 frameNo);             /* static */
-void     fn_1_CC0(s16 mode, s16 frameNo);             /* static */
+static void     fn_1_CC0(s16 mode, s16 frameNo);             /* static */
 void     fn_1_CFC(s16 mode, s16 frameNo);             /* static */
 void     fn_1_D1C(OMOBJ *obj);                        /* static */
 void     fn_1_FD0(OMOBJ *obj);                        /* static */
@@ -51,7 +68,7 @@ s32      fn_1_6400(M538_ANIM *arg0);                   /* static */
 s32      fn_1_6558(M538_ANIM *arg0);                   /* static */
 s32      fn_1_66A4(M538_ANIM *arg0);                   /* static */
 s32      fn_1_6918(void *arg0);                        /* static */
-void     fn_1_69C4(M538_PLAYER *arg0);                /* static */
+void     fn_1_69C4(struct m538_s16_48_s *arg0);        /* static */
 void     fn_1_6AE4(M538_PLAYER *arg0);                /* static */
 void     fn_1_6C24(M538_PLAYER *arg0);                /* static */
 void     fn_1_6CD4(M538 *arg0);                       /* static */
@@ -85,7 +102,7 @@ void     fn_1_A2A4(M538 *arg0);                       /* static */
 void     fn_1_A368(M538 *arg0);                       /* static */
 s32      fn_1_A424(M538_DOLLY *arg0);                  /* static */
 void     fn_1_A6F8(M538 *arg0);                       /* static */
-void     fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0);     /* static */
+void     fn_1_A8A0(M538_CTRL *arg0);                   /* static */
 s32      fn_1_AB54(M538_NODE0 *arg0);                  /* static */
 s32      fn_1_B0D0(M538_NODE0 *arg0);                  /* static */
 
@@ -199,9 +216,12 @@ static const f32 lbl_1_rodata_EC[4] = {26244.0, 24964.0, 23716.0, 22500.0};
 static const f32 lbl_1_rodata_FC[4] = {7.006492321624085e-44, 9.80908925027372e-44, 1.2611686178923354e-43, 1.401298464324817e-43};
 static const f32 lbl_1_rodata_158[4] = {-100.0, -100.0, 100.0, 100.0};
 static const f32 lbl_1_rodata_168[4] = {0.0, 150.0, 150.0, 0.0};
-static const s16 lbl_1_rodata_190[4] = { 0x1, 0x4, 0x7, 0x0 };
+static const u16 lbl_1_rodata_190[4] = { 0x1, 0x4, 0x7, 0x0 };
 static M538_ANIMFUNC lbl_1_rodata_1A0[3] = { fn_1_62B4, fn_1_6400, fn_1_6558 };
-static const f32 lbl_1_rodata_1CC[4] = {-400.0, -200.0, 200.0, 400.0};
+/* a four-float table that the original also reads as raw 32-bit words */
+union m538_f4 { struct { s32 a, b, c, d; } w; f32 f[4]; s32 i[4]; };
+struct m538_xy { f32 x, y; };
+static const union m538_f4 lbl_1_rodata_1CC = {{-400.0, -200.0, 200.0, 400.0}};
 static const u8 lbl_1_rodata_1EC[24] = {0xD9, 0x99, 0x52, 0xB3, 0xCC, 0x0, 0xE0, 0x99, 0x52, 0xE6, 0x66, 0x33, 0x99, 0x66, 0x99, 0xBF, 0x33, 0x99, 0xFF, 0xB3, 0xCC, 0xE6, 0x7F, 0x99};
 static const u8 lbl_1_rodata_21C[48] = {0xFF, 0xB3, 0x0, 0xE5, 0xFF, 0x66, 0xFF, 0xE5, 0x4D, 0xCC, 0xB3, 0x0, 0xCC, 0x66, 0x33, 0xFF, 0xE5, 0x4D, 0xFF, 0xA6, 0x4D, 0x7F, 0x33, 0x0, 0xB3, 0x4D, 0xB3, 0xE5, 0xB3, 0xE5, 0xCC, 0x7F, 0xE5, 0x7F, 0x33, 0x7F, 0xCC, 0x66, 0x7F, 0xFF, 0xBF, 0xCC, 0xFF, 0x7F, 0x99, 0xA6, 0x4D, 0x7F};
 static const u8 lbl_1_rodata_258[48] = {0xFF, 0xB3, 0x0, 0xE5, 0xFF, 0x66, 0xFF, 0xE5, 0x4D, 0xCC, 0xB3, 0x0, 0xCC, 0x66, 0x33, 0xFF, 0xE5, 0x4D, 0xFF, 0xA6, 0x4D, 0x7F, 0x33, 0x0, 0xB3, 0x4D, 0xB3, 0xE5, 0xB3, 0xE5, 0xCC, 0x7F, 0xE5, 0x7F, 0x33, 0x7F, 0xCC, 0x66, 0x7F, 0xFF, 0xBF, 0xCC, 0xFF, 0x7F, 0x99, 0xA6, 0x4D, 0x7F};
@@ -210,7 +230,7 @@ static const s16 lbl_1_rodata_2A4[4] = { 0x1A, 0x1A, 0x19, 0x1B };
 s32 _prolog(void) {
     void (**ctor)(void) = (void (**)(void)) &_ctors;
 
-    while (*ctor != NULL) {
+    while (*ctor != 0) {
         (*ctor)();
         ctor++;
     }
@@ -221,7 +241,7 @@ s32 _prolog(void) {
 void _epilog(void) {
     void (**dtor)(void) = (void (**)(void)) &_dtors;
 
-    while (*dtor != NULL) {
+    while (*dtor != 0) {
         (*dtor)();
         dtor++;
     }
@@ -229,29 +249,26 @@ void _epilog(void) {
 
 void ObjectSetup(void) {
     OMOBJ *temp_r31;
-    OMOBJ *temp_r3;
-    s32 var_r29;
     M538 *temp_r30;
+    s32 var_r29;
 
     lbl_1_bss_10 = omInitObjMan(0xA, 0x2000);
     omGameSysInit(lbl_1_bss_10);
-    temp_r3 = omAddObjEx(lbl_1_bss_10, 0x65, 0U, 0U, -1, fn_1_1198);
-    lbl_1_bss_C = temp_r3;
-    temp_r3->data = HuMemDirectMallocNum(HEAP_HEAP, 0x1920, HU_MEMNUM_OVL);
-    temp_r30 = temp_r3->data;
+    temp_r31 = omAddObjEx(lbl_1_bss_10, 0x65, 0U, 0U, -1, fn_1_1198);
+    lbl_1_bss_C = temp_r31;
+    temp_r31->data = HuMemDirectMallocNum(HEAP_HEAP, 0x1920, HU_MEMNUM_OVL);
+    temp_r30 = temp_r31->data;
     temp_r30->activeF = 0;
     fn_1_1488(temp_r30);
     fn_1_13D8(temp_r30);
     fn_1_1574(temp_r30);
     var_r29 = 0;
-loop_2:
-    if (var_r29 < 4) {
+    while (var_r29 < 4) {
         temp_r31 = omAddObjEx(lbl_1_bss_10, 0x64, 1U, 0xBU, 0, fn_1_D1C);
         temp_r31->data = HuMemDirectMallocNum(HEAP_HEAP, 0x104, HU_MEMNUM_OVL);
         temp_r31->work[0] = (u32) var_r29;
         temp_r30->player[var_r29] = temp_r31->data;
         var_r29 += 1;
-        goto loop_2;
     }
     fn_1_137C(temp_r30);
     Hu3DBGColorSet(0U, 0U, 0U);
@@ -273,75 +290,71 @@ void fn_1_1FC(s16 mode, s16 frameNo) {
 }
 
 void fn_1_264(s16 mode, s16 frameNo) {
-    s16 temp_r0;
     M538 *temp_r31;
 
     temp_r31 = lbl_1_bss_C->data;
-    temp_r0 = temp_r31->state;
-    if ((u32) temp_r0 <= 6U) {
-        switch (temp_r0) {
-        case 0:
-            MgSeqModeChangeOff();
+    switch (temp_r31->state) {
+    case 0:
+        MgSeqModeChangeOff();
+        temp_r31->timer = 0;
+        temp_r31->state += 1;
+        /* fallthrough */
+    case 1:
+        temp_r31->timer += 1;
+        if (temp_r31->timer == 0x3C) {
             temp_r31->timer = 0;
-            temp_r31->state = (s16) (temp_r31->state + 1);
-            /* fallthrough */
-        case 1:
-            temp_r31->timer = (s16) (temp_r31->timer + 1);
-            if ((s16) temp_r31->timer == 0x3C) {
-                temp_r31->timer = 0;
-                temp_r31->state = (s16) (temp_r31->state + 1);
-            }
-            break;
-        case 2:
-            HuAudFXPlay(0x7DD);
-            temp_r31->swing.state = 0;
-            temp_r31->state = (s16) (temp_r31->state + 1);
-            /* fallthrough */
-        case 3:
-            temp_r31->timer = (s16) (temp_r31->timer + 1);
-            fn_1_765C(&temp_r31->swing);
-            if ((s16) temp_r31->timer == 0xB4) {
-                temp_r31->timer = 0;
-                temp_r31->state = (s16) (temp_r31->state + 1);
-            }
-            break;
-        case 4:
-            temp_r31->anim[0].func = fn_1_61F8;
-            temp_r31->anim[0].state = 0;
-            temp_r31->anim[1].func = fn_1_61F8;
-            temp_r31->anim[1].state = 0;
-            temp_r31->anim[2].func = fn_1_61F8;
-            temp_r31->anim[2].state = 0;
-            temp_r31->dolly.state = 0;
-            temp_r31->dollyHook = (M538_WORKFUNC) fn_1_A424;
-            temp_r31->cam.state = 0;
-            HuAudFXPlay(0x7DE);
-            lbl_1_bss_4 = HuAudFXPlay(0x7DF);
-            lbl_1_bss_0 = HuAudFXPlay(0x7E1);
-            temp_r31->state = (s16) (temp_r31->state + 1);
-            /* fallthrough */
-        case 5:
-            fn_1_765C(&temp_r31->swing);
-            if (fn_1_788C(&temp_r31->cam) != 0) {
-                Hu3DModelAttrSet(temp_r31->models[13], 1U);
-                Hu3DModelAttrSet(temp_r31->models[14], 1U);
-                Hu3DModelAttrSet(temp_r31->models[15], 1U);
-                temp_r31->cam.state = 0;
-                temp_r31->state = (s16) (temp_r31->state + 1);
-            }
-            break;
-        case 6:
-            fn_1_765C(&temp_r31->swing);
-            lbl_1_bss_8 = HuAudBGMPlay(0x37);
-            temp_r31->timer = 0;
-            temp_r31->state = 0;
-            MgSeqModeNext(&lbl_1_bss_8);
-            break;
+            temp_r31->state += 1;
         }
+        break;
+    case 2:
+        HuAudFXPlay(0x7DD);
+        temp_r31->swing.state = 0;
+        temp_r31->state += 1;
+        /* fallthrough */
+    case 3:
+        temp_r31->timer += 1;
+        fn_1_765C(&temp_r31->swing);
+        if (temp_r31->timer == 0xB4) {
+            temp_r31->timer = 0;
+            temp_r31->state += 1;
+        }
+        break;
+    case 4:
+        temp_r31->anim[0].func = fn_1_61F8;
+        temp_r31->anim[0].state = 0;
+        temp_r31->anim[1].func = fn_1_61F8;
+        temp_r31->anim[1].state = 0;
+        temp_r31->anim[2].func = fn_1_61F8;
+        temp_r31->anim[2].state = 0;
+        temp_r31->dolly.state = 0;
+        temp_r31->dollyHook = (M538_WORKFUNC) fn_1_A424;
+        temp_r31->cam.state = 0;
+        HuAudFXPlay(0x7DE);
+        lbl_1_bss_4 = HuAudFXPlay(0x7DF);
+        lbl_1_bss_0 = HuAudFXPlay(0x7E1);
+        temp_r31->state += 1;
+        /* fallthrough */
+    case 5:
+        fn_1_765C(&temp_r31->swing);
+        if (fn_1_788C(&temp_r31->cam) != 0) {
+            Hu3DModelAttrSet(temp_r31->models[13], 1U);
+            Hu3DModelAttrSet(temp_r31->models[14], 1U);
+            Hu3DModelAttrSet(temp_r31->models[15], 1U);
+            temp_r31->cam.state = 0;
+            temp_r31->state += 1;
+        }
+        break;
+    case 6:
+        fn_1_765C(&temp_r31->swing);
+        lbl_1_bss_8 = HuAudBGMPlay(0x37);
+        temp_r31->timer = 0;
+        temp_r31->state = 0;
+        MgSeqModeNext();
+        break;
     }
     fn_1_6918(&temp_r31->anim[0]);
-    if (((temp_r31->dollyHook) != NULL) && (temp_r31->dollyHook(&temp_r31->dolly) != 0)) {
-        temp_r31->dollyHook = NULL;
+    if ((temp_r31->dollyHook != 0) && (temp_r31->dollyHook(&temp_r31->dolly) != 0)) {
+        temp_r31->dollyHook = 0;
     }
 }
 
@@ -356,28 +369,26 @@ void fn_1_4A4(s16 mode, s16 frameNo) {
 }
 
 void fn_1_4F8(s16 mode, s16 frameNo) {
-    s16 temp_r0;
     M538 *temp_r31;
 
     temp_r31 = lbl_1_bss_C->data;
-    temp_r0 = temp_r31->state2;
-    switch (temp_r0) {                              /* irregular */
+    switch (temp_r31->state2) {                              /* irregular */
     case 1:
         break;
     case 0:
         temp_r31->activeF = 1;
-        temp_r31->state2 = (s16) (temp_r31->state2 + 1);
+        temp_r31->state2 += 1;
         temp_r31->state = 0;
         if ((u32) temp_r31->dollyHook != 0U) {
             temp_r31->dollyHook = 0U;
         }
-        temp_r31->anim[0].state = (s16) (temp_r31->anim[0].state + 1);
-        temp_r31->anim[1].state = (s16) (temp_r31->anim[1].state + 1);
-        temp_r31->anim[2].state = (s16) (temp_r31->anim[2].state + 1);
+        temp_r31->anim[0].state += 1;
+        temp_r31->anim[1].state += 1;
+        temp_r31->anim[2].state += 1;
         break;
     }
     fn_1_7AA0(&temp_r31->cam);
-    if ((s16) temp_r31->fireCount >= 3) {
+    if (temp_r31->fireCount >= 3) {
         MgSeqModeNext();
         temp_r31->activeF = 0;
         temp_r31->anim[0].flag = 0;
@@ -390,86 +401,93 @@ void fn_1_4F8(s16 mode, s16 frameNo) {
         temp_r31->anim[1].flag = 0;
         temp_r31->anim[2].flag = 0;
     }
-    fn_1_A8A0(&temp_r31->ctrl, 0);
+    fn_1_A8A0(&temp_r31->ctrl);
 }
 
 void fn_1_614(s16 mode, s16 frameNo) {
     s16 sp8[4];
-    s16 temp_r0;
-    s16 temp_r24;
-    s16 temp_r25;
-    s16 temp_r26;
-    s16 var_r27;
-    s16 var_r28;
-    s16 var_r28_2;
-    s32 var_r30;
-    s32 var_r30_2;
-    s32 var_r30_3;
-    s32 var_r30_4;
-    M538_PLAYER *temp_r29;
     M538 *temp_r31;
+    s32 var_r30;
+    M538_PLAYER *temp_r29;
+    s16 var_r28;
+    s16 var_r27;
+    s16 temp_r26;
+    s32 temp_r25;
+    s16 temp_r24;
 
     temp_r31 = lbl_1_bss_C->data;
-    temp_r0 = temp_r31->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (temp_r31->state) {                      /* irregular */
     case 1:
         break;
     case 0:
         var_r28 = 0;
         var_r30 = 0;
-loop_6:
+        goto loop_6_t;
+    loop_6:
+        temp_r29 = temp_r31->player[var_r30];
+        var_r28 += temp_r29->place;
+        var_r30 += 1;
+    loop_6_t:
         if (var_r30 < 4) {
-            var_r28 += temp_r31->player[var_r30]->place;
-            var_r30 += 1;
             goto loop_6;
         }
-        if (var_r28 == 0) {
-            var_r30_2 = 0;
-loop_10:
-            if (var_r30_2 < 4) {
-                sp8[var_r30_2] = 3;
-                var_r30_2 += 1;
+        if ((s16) var_r28 == 0) {
+            var_r30 = 0;
+            goto loop_10_t;
+    loop_10:
+            temp_r29 = temp_r31->player[var_r30];
+            sp8[var_r30] = 3;
+            var_r30 += 1;
+        loop_10_t:
+            if (var_r30 < 4) {
                 goto loop_10;
             }
             temp_r31->loseF = 1;
         } else {
             var_r27 = 0;
-            var_r28_2 = 3;
-loop_19:
+            var_r28 = 3;
+            goto loop_19_t;
+    loop_19:
+            temp_r26 = var_r27;
+            var_r30 = 0;
+            goto loop_17_t;
+    loop_17:
+            temp_r29 = temp_r31->player[var_r30];
+            if ((s16) temp_r29->place == (s16) var_r28) {
+                sp8[var_r30] = temp_r26;
+                var_r27 += 1;
+            }
+            var_r30 += 1;
+        loop_17_t:
+            if (var_r30 < 4) {
+                goto loop_17;
+            }
+            var_r28 -= 1;
+        loop_19_t:
             if (var_r27 < 4) {
-                temp_r26 = var_r27;
-                var_r30_3 = 0;
-loop_17:
-                if (var_r30_3 < 4) {
-                    if ((s16) temp_r31->player[var_r30_3]->place == var_r28_2) {
-                        sp8[var_r30_3] = temp_r26;
-                        var_r27 += 1;
-                    }
-                    var_r30_3 += 1;
-                    goto loop_17;
-                }
-                var_r28_2 -= 1;
                 goto loop_19;
             }
             temp_r31->loseF = 0;
         }
-        var_r30_4 = 0;
-loop_27:
-        if (var_r30_4 < 4) {
-            temp_r29 = temp_r31->player[var_r30_4];
-            temp_r24 = sp8[var_r30_4];
-            temp_r25 = temp_r29->playerNo;
-            if (_CheckFlag(0x1000FU) == 0) {
-                GwPlayer[temp_r25].mgCoinBonus = temp_r24;
-            }
-            if ((s16) temp_r29->active != 0) {
-                temp_r29->func = fn_1_7FAC;
-                temp_r29->state = 0;
-            }
-            var_r30_4 += 1;
+        var_r30 = 0;
+        goto loop_27_t;
+    loop_27:
+        temp_r29 = temp_r31->player[var_r30];
+        temp_r24 = sp8[var_r30];
+        temp_r25 = temp_r29->playerNo;
+        if (_CheckFlag(0x1000FU) == 0) {
+            GwPlayer[temp_r25].mgCoinBonus = temp_r24;
+        }
+        if (temp_r29->active != 0) {
+            temp_r29->func = fn_1_7FAC;
+            temp_r29->state = 0;
+        }
+        var_r30 += 1;
+    loop_27_t:
+        if (var_r30 < 4) {
             goto loop_27;
         }
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         temp_r31->state2 = 0;
         temp_r31->anim[0].func = fn_1_66A4;
         temp_r31->anim[0].state = 0;
@@ -602,44 +620,45 @@ loop_35:
 }
 
 void fn_1_BB4(s16 mode, s16 frameNo) {
-    s16 temp_r0;
     s32 var_r29;
     M538_PLAYER *temp_r30;
     M538 *temp_r31;
 
     temp_r31 = lbl_1_bss_C->data;
-    temp_r0 = temp_r31->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (temp_r31->state) {                              /* irregular */
     case 0:
         temp_r31->roundEndF = 1;
         var_r29 = 0;
+        goto loop_9;
 loop_8:
+        temp_r30 = temp_r31->player[var_r29];
+        if (temp_r30->active != 0) {
+            temp_r30->state = temp_r30->state + 1;
+        }
+        CharModelVoicePanSet(temp_r30->charNo, 0x40);
+        CharModelVoiceVolSet(temp_r30->charNo, 0x73);
+        var_r29 += 1;
+loop_9:
         if (var_r29 < 4) {
-            temp_r30 = temp_r31->player[var_r29];
-            if ((s16) temp_r30->active != 0) {
-                temp_r30->state = (s32) (temp_r30->state + 1);
-            }
-            CharModelVoicePanSet(temp_r30->charNo, 0x40);
-            CharModelVoiceVolSet(temp_r30->charNo, 0x73);
-            var_r29 += 1;
             goto loop_8;
         }
-        if ((s16) temp_r31->loseF != 0) {
+        if (temp_r31->loseF != 0) {
             HuAudJinglePlay(0x7B);
             CharLoseVoicePlay(temp_r31->player[0]->charNo, temp_r31->player[1]->charNo, temp_r31->player[2]->charNo, temp_r31->player[3]->charNo);
         } else {
             HuAudJinglePlay(0x79);
         }
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 1:
         fn_1_A368(temp_r31);
-        return;
     }
 }
 
 void fn_1_CC0(s16 mode, s16 frameNo) {
-    fn_1_A368(lbl_1_bss_C->data);
+    void *temp_r31 = lbl_1_bss_C->data;
+
+    fn_1_A368(temp_r31);
 }
 
 void fn_1_CFC(s16 mode, s16 frameNo) {
@@ -649,20 +668,18 @@ void fn_1_CFC(s16 mode, s16 frameNo) {
 }
 
 void fn_1_D1C(OMOBJ *obj) {
-    s16 temp_r0;
-    s32 var_r29;
-    void *temp_r28;
     M538_PLAYER *temp_r31;
+    void *temp_r28;
+    s32 var_r29;
 
     temp_r31 = obj->data;
     temp_r28 = lbl_1_bss_C->data;
     temp_r31->playerNo = (s16) obj->work[0];
-    temp_r31->charNo = (s16) GwPlayerConf[temp_r31->playerNo].charNo;
-    temp_r31->grp = (s16) GwPlayerConf[temp_r31->playerNo].grp;
-    temp_r31->padNo = (s16) GwPlayerConf[temp_r31->playerNo].padNo;
-    temp_r31->type = (s16) GwPlayerConf[temp_r31->playerNo].type;
-    temp_r0 = temp_r31->playerNo;
-    temp_r31->dif = (s16) GwPlayerConf[temp_r0].dif;
+    temp_r31->charNo = GwPlayerConf[temp_r31->playerNo].charNo;
+    temp_r31->grp = GwPlayerConf[temp_r31->playerNo].grp;
+    temp_r31->padNo = GwPlayerConf[temp_r31->playerNo].padNo;
+    temp_r31->type = GwPlayerConf[temp_r31->playerNo].type;
+    temp_r31->dif = GwPlayerConf[temp_r31->playerNo].dif;
     temp_r31->obj = obj;
     ((M538 *) temp_r28)->player[temp_r31->playerNo] = temp_r31;
     temp_r31->accX = 0.0f;
@@ -676,16 +693,18 @@ void fn_1_D1C(OMOBJ *obj) {
     temp_r31->active = 1;
     temp_r31->rotSpeed = 30.0f;
     *obj->mdlId = CharModelCreate(temp_r31->charNo, 8);
-    temp_r31->modelId = (s16) *obj->mdlId;
+    temp_r31->modelId = *obj->mdlId;
     temp_r31->voiceHook = 0;
-    temp_r31->fwModel = (s16) temp_r31->modelId;
+    temp_r31->fwModel = temp_r31->modelId;
     temp_r31->pad7E = 0;
     temp_r31->place = 3;
     var_r29 = 0;
+    goto loop_2_t;
 loop_2:
+    obj->mtnId[var_r29] = CharMotionCreate(temp_r31->charNo, m538_charMotion[temp_r31->charNo][var_r29]);
+    var_r29 += 1;
+loop_2_t:
     if (var_r29 < 0xB) {
-        obj->mtnId[var_r29] = CharMotionCreate(temp_r31->charNo, m538_charMotion[temp_r31->charNo][var_r29]);
-        var_r29 += 1;
         goto loop_2;
     }
     CharMotionSet(temp_r31->charNo, *obj->mtnId);
@@ -708,36 +727,40 @@ loop_2:
 
 void fn_1_FD0(OMOBJ *obj) {
     f32 temp_f31;
+    f32 temp_f30;
+    f32 temp_f29;
     M538 *temp_r30;
     M538_PLAYER *temp_r31;
 
     temp_r30 = lbl_1_bss_C->data;
     temp_r31 = obj->data;
     temp_f31 = temp_r30->anim[1].scale;
-    if ((s16) temp_r30->roundEndF == 0) {
-        temp_r31->voicePan = (s16) (64.0f + (32.0f * (temp_r31->x / temp_f31)));
-        temp_r31->voiceVol = (s16) (115.5f + (11.5f * (temp_r31->z / temp_f31)));
-        if ((s16) temp_r31->voicePan < 0x20) {
+    if (temp_r30->roundEndF == 0) {
+        temp_f30 = 64.0f + (32.0f * (temp_r31->x / temp_f31));
+        temp_f29 = 115.5f + (11.5f * (temp_r31->z / temp_f31));
+        temp_r31->voicePan = (s16) temp_f30;
+        temp_r31->voiceVol = (s16) temp_f29;
+        if (temp_r31->voicePan < 0x20) {
             temp_r31->voicePan = 0x20;
         }
-        if ((s16) temp_r31->voicePan > 0x60) {
+        if (temp_r31->voicePan > 0x60) {
             temp_r31->voicePan = 0x60;
         }
-        if ((s16) temp_r31->voiceVol < 0x68) {
+        if (temp_r31->voiceVol < 0x68) {
             temp_r31->voiceVol = 0x68;
         }
-        if ((s16) temp_r31->voiceVol > 0x7F) {
+        if (temp_r31->voiceVol > 0x7F) {
             temp_r31->voiceVol = 0x7F;
         }
         CharModelVoicePanSet(temp_r31->charNo, temp_r31->voicePan);
         CharModelVoiceVolSet(temp_r31->charNo, temp_r31->voiceVol);
     }
     fn_1_4534(temp_r31);
-    if (((temp_r31->func) != NULL) && (temp_r31->func(temp_r31) != 0)) {
-        temp_r31->func = NULL;
+    if (((temp_r31->func) != 0) && (temp_r31->func(temp_r31) != 0)) {
+        temp_r31->func = 0;
     }
-    if (((temp_r31->voiceHook) != NULL) && (temp_r31->voiceHook(&temp_r31->fwModel) != 0)) {
-        temp_r31->voiceHook = NULL;
+    if (((temp_r31->voiceHook) != 0) && (temp_r31->voiceHook(&temp_r31->fwModel) != 0)) {
+        temp_r31->voiceHook = 0;
     }
 }
 
@@ -797,22 +820,13 @@ void fn_1_1378(void *arg0) {
 }
 
 void fn_1_137C(M538 *arg0) {
-    s32 var_r31;
-    s32 var_r31_2;
+    s32 i;
 
-    var_r31 = 0;
-loop_2:
-    if (var_r31 < 0x1D) {
-        arg0->models[var_r31] = -1;
-        var_r31 += 1;
-        goto loop_2;
+    for (i = 0; i < 0x1D; i++) {
+        arg0->models[i] = -1;
     }
-    var_r31_2 = 0;
-loop_5:
-    if (var_r31_2 < 3) {
-        arg0->camModels[var_r31_2] = -1;
-        var_r31_2 += 1;
-        goto loop_5;
+    for (i = 0; i < 3; i++) {
+        arg0->camModels[i] = -1;
     }
 }
 
@@ -826,34 +840,22 @@ void fn_1_13D8(M538 *arg0) {
 }
 
 void fn_1_1488(void *arg0) {
-    f32 sp8;
-
     Hu3DCameraCreate((s32) lbl_1_rodata_10[0]);
     Hu3DCameraPerspectiveSet((s32) lbl_1_rodata_10[0], 15.0f, 20.0f, 20000.0f, 1.2f);
-    sp8 = 0.0f;
-    Hu3DCameraPosSet((s32) lbl_1_rodata_10[0], 0.0f, 300.0f, 1000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 150.0f, M2C_ERROR(/* Read from unset register $f9 */));
+    /* nine floats: the ninth (targetZ) rides the outgoing-argument slot at
+     * 8(sp), which is why the original stores a constant there. */
+    Hu3DCameraPosSet((s32) lbl_1_rodata_10[0], 0.0f, 300.0f, 1000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 150.0f, 0.0f);
 }
 
 void fn_1_1574(void *arg0) {
-    s32 sp28;
-    s32 sp24;
-    s32 sp20;
-    s32 sp1C;
-    s32 sp18;
-    s32 sp14;
-    s32 sp10;
-    s32 spC;
-    s32 sp8;
+    struct m538_raw3_s { s32 a; s32 b; s32 c; };
+    struct m538_raw3_s sp20;
+    struct m538_raw3_s sp14;
+    struct m538_raw3_s sp8;
 
-    sp20 = lbl_1_rodata_60[0];
-    sp24 = lbl_1_rodata_60[1];
-    sp28 = lbl_1_rodata_60[2];
-    sp14 = lbl_1_rodata_6C[0];
-    sp18 = lbl_1_rodata_6C[1];
-    sp1C = lbl_1_rodata_6C[2];
-    sp8 = lbl_1_rodata_78[0];
-    spC = lbl_1_rodata_78[1];
-    sp10 = lbl_1_rodata_78[2];
+    sp20 = *(struct m538_raw3_s *) &lbl_1_rodata_60[0];
+    sp14 = *(struct m538_raw3_s *) &lbl_1_rodata_6C[0];
+    sp8 = *(struct m538_raw3_s *) &lbl_1_rodata_78[0];
     Hu3DShadowCreate(15.0f, 20.0f, 20000.0f);
     Hu3DShadowTPLvlSet(0.4f);
     Hu3DShadowPosSet((Point3d *) &sp14, (Point3d *) &sp20, (Point3d *) &sp8);
@@ -872,40 +874,46 @@ void fn_1_1650(M538_CAMWORK *arg0) {
 }
 
 void fn_1_16BC(M538_CAMWORK *arg0) {
-    f32 sp8;
-    f32 temp_f29;
-    f32 temp_f30;
     f32 temp_f31;
+    f32 temp_f30;
+    f32 temp_f29;
     f64 temp_f28;
-    f64 temp_f28_2;
 
-loop_2:
-    if (arg0->theta > 360.0f) {
-        arg0->theta = (f32) (arg0->theta - 360.0f);
-        goto loop_2;
+    /* The original's four wrap loops are ROTATED while-loops: the prologue
+     * branches over the body to a latch at the bottom.  A guarded `while` is
+     * the faithful form and emits exactly that rotation.
+     *
+     * The two `+= 360` bodies load the struct field into f1 before the float
+     * literal, which is the order a `= a + b` assignment does NOT give: MWCC
+     * evaluates a commutative fadd's literal operand first and hoists the
+     * rodata lis/addi above both loads.  Writing the same update as a compound
+     * assignment (`x += 360.0f`) makes MWCC evaluate left-to-right and matches
+     * the original byte for byte.  The subtraction loops already do so.
+     *
+     * NONMATCHING: 13 rows, all a float-register rename.  The original keeps
+     * the f64 temporary in f28 and the three f32 results in f31/f30/f29;
+     * MWCC always hands f31 to an f64 local when three f32 locals share the
+     * frame.  Five formulations tried, all 13: f64 declared first, f64 declared
+     * last, `register f64`, `register volatile f64` (28), f64 in an inner block,
+     * and the f64 passed through an inlined helper (51). */
+    while (arg0->theta > 360.0f) {
+        arg0->theta = arg0->theta - 360.0f;
     }
-loop_5:
-    if (arg0->theta < 0.0f) {
-        arg0->theta = (f32) (arg0->theta + 360.0f);
-        goto loop_5;
+    while (arg0->theta < 0.0f) {
+        arg0->theta += 360.0f;
     }
-loop_8:
-    if (arg0->phi > 360.0f) {
-        arg0->phi = (f32) (arg0->phi - 360.0f);
-        goto loop_8;
+    while (arg0->phi > 360.0f) {
+        arg0->phi = arg0->phi - 360.0f;
     }
-loop_11:
-    if (arg0->phi < 0.0f) {
-        arg0->phi = (f32) (arg0->phi + 360.0f);
-        goto loop_11;
+    while (arg0->phi < 0.0f) {
+        arg0->phi += 360.0f;
     }
     temp_f28 = cos((3.141592653589793 * (f64) arg0->theta) / 180.0);
     temp_f31 = (f32) ((f64) arg0->x + ((f64) arg0->radius * cos((3.141592653589793 * (f64) arg0->phi) / 180.0) * temp_f28));
     temp_f30 = (f32) ((f64) arg0->y + ((f64) arg0->radius * sin((3.141592653589793 * (f64) arg0->phi) / 180.0)));
-    temp_f28_2 = sin((3.141592653589793 * (f64) arg0->theta) / 180.0);
-    temp_f29 = (f32) ((f64) arg0->z + ((f64) arg0->radius * cos((3.141592653589793 * (f64) arg0->phi) / 180.0) * temp_f28_2));
-    sp8 = arg0->z;
-    Hu3DCameraPosSet((s32) lbl_1_rodata_10[0], temp_f31, temp_f30, temp_f29, 0.0f, 1.0f, 0.0f, arg0->x, arg0->y, M2C_ERROR(/* Read from unset register $f9 */));
+    temp_f28 = sin((3.141592653589793 * (f64) arg0->theta) / 180.0);
+    temp_f29 = (f32) ((f64) arg0->z + ((f64) arg0->radius * cos((3.141592653589793 * (f64) arg0->phi) / 180.0) * temp_f28));
+    Hu3DCameraPosSet((s32) lbl_1_rodata_10[0], temp_f31, temp_f30, temp_f29, 0.0f, 1.0f, 0.0f, arg0->x, arg0->y, arg0->z);
 }
 
 void fn_1_1958(M538 *arg0) {
@@ -928,8 +936,7 @@ loop_7:
         temp_f28 = -temp_r31->z;
         temp_f29 = -temp_r31->x;
         if (temp_f28 == 0.0f) {
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if (temp_f29 == 0.0f) {
+            if (temp_f29 >= 0.0f) {
                 var_f31 = 1.5707964f;
             } else {
                 var_f31 = -1.5707964f;
@@ -950,19 +957,23 @@ loop_7:
 }
 
 s32 fn_1_1B94(M538_PLAYER *arg0) {
-    f32 temp_f30;
     f32 temp_f31;
-    f32 var_f27;
-    f32 var_f28;
+    f32 temp_f30;
     f32 var_f29;
+    f32 var_f28;
+    f32 var_f27;
+    f32 temp_f26;
+    f32 temp_f25;
     s32 var_r30;
+    M538 *var_r29;
 
     var_r30 = 0;
-    if ((s16) ((M538 *) lbl_1_bss_C->data)->activeF == 0) {
+    var_r29 = lbl_1_bss_C->data;
+    if (var_r29->activeF == 0) {
         return 0;
     }
-    temp_f31 = (f32) (s8) (u8) HuPadStkX[arg0->padNo];
-    temp_f30 = (f32) -(s8) (u8) HuPadStkY[arg0->padNo];
+    temp_f31 = (f32) (s8) HuPadStkX[arg0->padNo];
+    temp_f30 = (f32) -(s8) HuPadStkY[arg0->padNo];
     if (temp_f30 < 0.0f) {
         var_f28 = -temp_f30;
     } else {
@@ -973,18 +984,19 @@ s32 fn_1_1B94(M538_PLAYER *arg0) {
     } else {
         var_f27 = temp_f31;
     }
-    if ((var_f27 + var_f28) > 32.0f) {
+    temp_f26 = var_f27 + var_f28;
+    if (temp_f26 > 32.0f) {
         if (temp_f30 == 0.0f) {
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if (temp_f31 == 0.0f) {
+            if (temp_f31 >= 0.0f) {
                 var_f29 = 1.5707964f;
             } else {
                 var_f29 = -1.5707964f;
             }
         } else {
-            var_f29 = (f32) atan2((f64) temp_f31, (f64) temp_f30);
+            temp_f25 = (f32) atan2((f64) temp_f31, (f64) temp_f30);
+            var_f29 = temp_f25;
         }
-        arg0->targetRot = (f32) ((f64) (180.0f * var_f29) / 3.141592653589793);
+        arg0->targetRot = (f32) ((180.0f * var_f29) / 3.141592653589793);
         var_r30 = 1;
     }
     return var_r30;
@@ -1082,7 +1094,7 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
     case 0:
         arg0->aiTarget = NULL;
         temp_r31->aiFlag = 0;
-        temp_r31->y = (s16) (temp_r31->y + 1);
+        temp_r31->y += 1;
         /* fallthrough */
     case 1:
         temp_f31 = (arg0->x * arg0->x) + (arg0->z * arg0->z);
@@ -1278,27 +1290,27 @@ block_76:
         }
         break;
     case 2:
-        temp_r31->aiTimer = (s16) (temp_r31->aiTimer + 1);
+        temp_r31->aiTimer += 1;
         if ((s16) temp_r31->aiTimer == (s16) temp_r31->z) {
             temp_r31->y = 0;
         }
         var_r26 = 1;
         break;
     case 3:
-        temp_r31->aiTimer = (s16) (temp_r31->aiTimer + 1);
+        temp_r31->aiTimer += 1;
         if (((s16) temp_r31->aiTimer == (s16) temp_r31->z) || ((s16) temp_r31->aiFlag == 0)) {
             temp_r31->y = 0;
         }
         var_r26 = 1;
         break;
     case 4:
-        temp_r31->aiTimer = (s16) (temp_r31->aiTimer + 1);
+        temp_r31->aiTimer += 1;
         if ((s16) temp_r31->aiTimer == (s16) temp_r31->z) {
             temp_r31->y = 0;
         }
         break;
     case 5:
-        temp_r31->aiTimer = (s16) (temp_r31->aiTimer + 1);
+        temp_r31->aiTimer += 1;
         if (((s16) temp_r31->aiTimer == (s16) temp_r31->z) || (((arg0->x * arg0->x) + (arg0->z * arg0->z)) < 40000.0f)) {
             temp_r31->y = 0;
         }
@@ -1310,9 +1322,11 @@ block_76:
 
 s32 fn_1_2988(M538_PLAYER *arg0) {
     s32 var_r31;
+    M538 *temp_r30;
 
     var_r31 = 0;
-    if ((s16) ((M538 *) lbl_1_bss_C->data)->activeF == 0) {
+    temp_r30 = (M538 *) lbl_1_bss_C->data;
+    if (temp_r30->activeF == 0) {
         return 0;
     }
     if ((s32) (HuPadBtnDown[arg0->padNo] & 0x100) != 0) {
@@ -1427,7 +1441,7 @@ s32 fn_1_2CB8(M538_PLAYER *arg0) {
     case 0:
         arg0->flag = 0;
         CharMotionShiftSet(arg0->charNo, *arg0->obj->mtnId, 0.0f, 5.0f, 0x40000001U);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         if ((s16) arg0->type != 0) {
@@ -1596,7 +1610,7 @@ s32 fn_1_32C4(M538_PLAYER *arg0) {
     case 0:
         arg0->flag = 0;
         CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[3], 0.0f, 5.0f, 0x40000001U);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         if ((s16) arg0->type != 0) {
@@ -1734,27 +1748,24 @@ loop_21:
 }
 
 s32 fn_1_39DC(M538_PLAYER *arg0) {
-    s32 temp_r0;
-
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->flag = 0;
-        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[4], 0.0f, 5.0f, 0U);
+        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[2], 0.0f, 5.0f, 0U);
         HuAudFXPlayVolPan(0x7E2, arg0->voiceVol, arg0->voicePan);
         arg0->timer = 0;
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
-        if ((s16) arg0->obj->mtnId[4] == Hu3DMotionIDGet(arg0->modelId)) {
+        if (arg0->obj->mtnId[2] == Hu3DMotionIDGet(arg0->modelId)) {
             CharMotionSpeedSet(arg0->charNo, 1.2f);
-            arg0->state = (s32) (arg0->state + 1);
+            arg0->state += 1;
         }
         break;
     case 2:
-        arg0->timer = (s16) (arg0->timer + 1);
-        if (((s16) arg0->timer >= 9) && ((s16) arg0->counter <= 5)) {
-            arg0->counter = (s16) (arg0->counter + 1);
+        arg0->timer += 1;
+        if ((arg0->timer >= 9) && (arg0->counter <= 5)) {
+            arg0->counter += 1;
         }
         if (Hu3DMotionEndCheck(arg0->modelId) != 0) {
             arg0->func = fn_1_2CB8;
@@ -1768,32 +1779,30 @@ s32 fn_1_39DC(M538_PLAYER *arg0) {
 
 s32 fn_1_3B2C(M538_PLAYER *arg0) {
     M538_NODE *temp_r3;
-    s32 temp_r0;
 
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->aiState = 0;
         arg0->counter = 0;
         arg0->flag = 1;
-        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[5], 0.0f, 5.0f, 0U);
+        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[3], 0.0f, 5.0f, 0U);
         temp_r3 = fn_1_8858(arg0->pool2, (M538_NODEFUNC) fn_1_8F58);
-        if (temp_r3 != NULL) {
-            temp_r3->rotY = (s32) arg0->x;
-            temp_r3->rotZ = (s32) arg0->y;
-            temp_r3->x = (s32) arg0->z;
-            temp_r3->rotX = 0;
+        if (temp_r3 != 0) {
+            temp_r3->rotY = (f32) *(s32 *) &arg0->x;
+            temp_r3->rotZ = (f32) *(s32 *) &arg0->y;
+            temp_r3->x = (f32) *(s32 *) &arg0->z;
+            temp_r3->timer = 0;
         }
         HuAudFXPlayVolPan(0x7E3, arg0->voiceVol, arg0->voicePan);
         HuAudFXPlayVolPan(lbl_1_data_3C8[arg0->charNo], arg0->voiceVol, arg0->voicePan);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         arg0->velX = (f32) arg0->accX;
         arg0->velZ = (f32) arg0->accZ;
-        if ((s16) arg0->obj->mtnId[5] == Hu3DMotionIDGet(arg0->modelId)) {
+        if ((s16) arg0->obj->mtnId[3] == Hu3DMotionIDGet(arg0->modelId)) {
             CharMotionSpeedSet(arg0->charNo, 2.0f);
-            arg0->state = (s32) (arg0->state + 1);
+            arg0->state += 1;
         }
         break;
     case 2:
@@ -1809,33 +1818,30 @@ s32 fn_1_3B2C(M538_PLAYER *arg0) {
 }
 
 s32 fn_1_3CD4(M538_PLAYER *arg0) {
+    struct m538_raw3_s { s32 a; s32 b; s32 c; };
     M538_NODE *temp_r3;
-    s32 temp_r0;
 
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->aiState = 0;
         arg0->counter = 0;
         arg0->flag = 1;
-        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[6], 0.0f, 5.0f, 0U);
+        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[4], 0.0f, 5.0f, 0U);
         temp_r3 = fn_1_8858(arg0->pool2, (M538_NODEFUNC) fn_1_8F58);
-        if (temp_r3 != NULL) {
-            temp_r3->rotY = (s32) arg0->x;
-            temp_r3->rotZ = (s32) arg0->y;
-            temp_r3->x = (s32) arg0->z;
-            temp_r3->rotX = 0;
+        if (temp_r3 != 0) {
+            *(struct m538_raw3_s *) &temp_r3->x = *(struct m538_raw3_s *) &arg0->x;
+            temp_r3->timer = 0;
         }
         HuAudFXPlayVolPan(0x7E3, arg0->voiceVol, arg0->voicePan);
         HuAudFXPlayVolPan(lbl_1_data_3C8[arg0->charNo], arg0->voiceVol, arg0->voicePan);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         arg0->velX = (f32) arg0->accX;
         arg0->velZ = (f32) arg0->accZ;
-        if ((s16) arg0->obj->mtnId[6] == Hu3DMotionIDGet(arg0->modelId)) {
+        if (arg0->obj->mtnId[4] == Hu3DMotionIDGet(arg0->modelId)) {
             CharMotionSpeedSet(arg0->charNo, 2.0f);
-            arg0->state = (s32) (arg0->state + 1);
+            arg0->state += 1;
         }
         break;
     case 2:
@@ -1851,22 +1857,19 @@ s32 fn_1_3CD4(M538_PLAYER *arg0) {
 }
 
 s32 fn_1_3E7C(M538_PLAYER *arg0) {
-    M538_NODE *temp_r3;
-    s32 temp_r0;
+    struct m538_raw3_s { s32 a; s32 b; s32 c; };
+    M538_NODE *temp_r30;
 
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->aiState = 0;
         CharMotionSet(arg0->charNo, arg0->obj->mtnId[5]);
-        temp_r3 = fn_1_8858(arg0->pool1, (M538_NODEFUNC) fn_1_8CD8);
-        if (temp_r3 != NULL) {
-            temp_r3->rotY = (s32) arg0->x;
-            temp_r3->rotZ = (s32) arg0->y;
-            temp_r3->x = (s32) arg0->z;
-            temp_r3->rotX = 0;
+        temp_r30 = fn_1_8858(arg0->pool1, (M538_NODEFUNC) fn_1_8CD8);
+        if (temp_r30 != 0) {
+            *(struct m538_raw3_s *) &temp_r30->x = *(struct m538_raw3_s *) &arg0->x;
+            temp_r30->timer = 0;
         }
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state++;
         /* fallthrough */
     case 1:
         if (Hu3DMotionEndCheck(arg0->modelId) != 0) {
@@ -1938,7 +1941,7 @@ s32 fn_1_3F60(M538_PLAYER *arg0) {
         arg0->counter2 = 0;
         omVibrate(arg0->playerNo, 0x1E, 0xC, 0);
         arg0->sfxId = HuAudFXPlay(lbl_1_data_394[arg0->charNo]);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         HuAudFXPanning(arg0->sfxId, arg0->voicePan);
@@ -1962,7 +1965,7 @@ loop_20:
             arg0->rotY = (f32) (arg0->rotY - 360.0f);
             goto loop_20;
         }
-        arg0->counter2 = (s16) (arg0->counter2 + 1);
+        arg0->counter2 += 1;
         if ((s16) arg0->counter2 == 0xB4) {
             arg0->func = fn_1_4428;
             arg0->state = 0;
@@ -1973,17 +1976,14 @@ loop_20:
 }
 
 s32 fn_1_4428(M538_PLAYER *arg0) {
-    s32 temp_r0;
-
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {                          /* irregular */
     case 1:
         break;
     case 0:
-        CharMotionSet(arg0->charNo, arg0->obj->mtnId[9]);
+        CharMotionSet(arg0->charNo, arg0->obj->mtnId[10]);
         CharModelAttrSet(arg0->charNo, 1U);
         CharModelAttrSet(arg0->charNo, 0x40000002U);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         break;
     }
     return 0;
@@ -1993,12 +1993,12 @@ s32 fn_1_44AC(M538_DOLLY *arg0) {
     s32 var_r30;
 
     var_r30 = 0;
-    arg0->counter = (s16) (arg0->counter + 1);
-    if ((s16) arg0->counter == 0x3C) {
+    arg0->counter++;
+    if (arg0->counter == 0x3C) {
         arg0->counter = 0;
         var_r30 = 1;
     }
-    if ((s32) (arg0->counter & 1) != 0) {
+    if ((arg0->counter & 1) != 0) {
         Hu3DModelAttrSet(arg0->state, 1U);
     } else {
         Hu3DModelAttrReset(arg0->state, 1U);
@@ -2116,50 +2116,57 @@ loop_13:
 }
 
 void fn_1_4C38(M538 *arg0) {
-    f32 temp_f29;
-    f32 temp_f30;
     f32 temp_f31;
+    f32 temp_f30;
+    f32 temp_f29;
     f32 var_f28;
+    f32 temp_f27;
+    f32 temp_f26;
     s32 var_r28;
     s32 var_r29;
-    M538_PLAYER *temp_r30;
     M538_PLAYER *temp_r31;
+    M538_PLAYER *temp_r30;
 
     var_r29 = 0;
+    goto loop_18_test;
 loop_18:
-    if (var_r29 < 3) {
-        temp_r31 = arg0->player[var_r29];
-        if (((void *) temp_r31->func != fn_1_3F60) && ((void *) temp_r31->func != fn_1_4428) && ((s16) temp_r31->active != 0)) {
-            var_r28 = var_r29 + 1;
-loop_16:
-            if (var_r28 < 4) {
-                temp_r30 = arg0->player[var_r28];
-                if (((void *) temp_r30->func != fn_1_3F60) && ((void *) temp_r30->func != fn_1_4428) && ((s16) temp_r30->active != 0)) {
-                    temp_f31 = temp_r31->x - temp_r30->x;
-                    temp_f30 = temp_r31->z - temp_r30->z;
-                    if (((temp_f31 * temp_f31) + (temp_f30 * temp_f30)) < 12100.0f) {
-                        if (temp_f30 == 0.0f) {
-                            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                            if (temp_f31 == 0.0f) {
-                                var_f28 = 1.5707964f;
-                            } else {
-                                var_f28 = -1.5707964f;
-                            }
-                        } else {
-                            var_f28 = (f32) atan2((f64) temp_f31, (f64) temp_f30);
-                        }
-                        temp_f29 = (f32) ((f64) (180.0f * var_f28) / 3.141592653589793);
-                        temp_r31->velX = (f32) ((f64) (0.5f * temp_r31->velX) + (3.75 * sin((3.141592653589793 * (f64) temp_f29) / 180.0)));
-                        temp_r31->velZ = (f32) ((f64) (0.5f * temp_r31->velZ) + (3.75 * cos((3.141592653589793 * (f64) temp_f29) / 180.0)));
-                        temp_r30->velX = (f32) ((f64) (0.5f * temp_r30->velX) - (3.75 * sin((3.141592653589793 * (f64) temp_f29) / 180.0)));
-                        temp_r30->velZ = (f32) ((f64) (0.5f * temp_r30->velZ) - (3.75 * cos((3.141592653589793 * (f64) temp_f29) / 180.0)));
+    temp_r31 = arg0->player[var_r29];
+    if (((void *) temp_r31->func != fn_1_3F60) && ((void *) temp_r31->func != fn_1_4428) && (temp_r31->active != 0)) {
+        var_r28 = var_r29 + 1;
+        goto loop_16_test;
+    loop_16:
+        temp_r30 = arg0->player[var_r28];
+        if (((void *) temp_r30->func != fn_1_3F60) && ((void *) temp_r30->func != fn_1_4428) && (temp_r30->active != 0)) {
+            temp_f31 = temp_r31->x - temp_r30->x;
+            temp_f30 = temp_r31->z - temp_r30->z;
+            temp_f27 = (temp_f31 * temp_f31) + (temp_f30 * temp_f30);
+            if (temp_f27 < 12100.0f) {
+                if (temp_f30 == 0.0f) {
+                    if (temp_f31 >= 0.0f) {
+                        var_f28 = 1.5707964f;
+                    } else {
+                        var_f28 = -1.5707964f;
                     }
+                } else {
+                    temp_f26 = (f32) atan2((f64) temp_f31, (f64) temp_f30);
+                    var_f28 = temp_f26;
                 }
-                var_r28 += 1;
-                goto loop_16;
+                temp_f29 = (f32) ((180.0f * var_f28) / 3.141592653589793);
+                temp_r31->velX = (f32) ((0.5f * temp_r31->velX) + (3.75 * sin((3.141592653589793 * (f64) temp_f29) / 180.0)));
+                temp_r31->velZ = (f32) ((0.5f * temp_r31->velZ) + (3.75 * cos((3.141592653589793 * (f64) temp_f29) / 180.0)));
+                temp_r30->velX = (f32) ((0.5f * temp_r30->velX) - (3.75 * sin((3.141592653589793 * (f64) temp_f29) / 180.0)));
+                temp_r30->velZ = (f32) ((0.5f * temp_r30->velZ) - (3.75 * cos((3.141592653589793 * (f64) temp_f29) / 180.0)));
             }
         }
-        var_r29 += 1;
+        var_r28 += 1;
+    loop_16_test:
+        if (var_r28 < 4) {
+            goto loop_16;
+        }
+    }
+    var_r29 += 1;
+loop_18_test:
+    if (var_r29 < 3) {
         goto loop_18;
     }
 }
@@ -2294,31 +2301,17 @@ loop_46:
 
 s32 fn_1_55C8(M538_PLAYER *arg0, f32 *arg1, f32 *arg2) {
     s32 var_r31;
-    u32 temp_r0;
-    u32 temp_r0_2;
-    u32 temp_r6;
-    u32 temp_r6_2;
-    u32 temp_r6_3;
-    u32 temp_r6_4;
+    f32 temp_f31;
 
-    var_r31 = 0;
-loop_4:
-    if (var_r31 >= 4) {
-        return 1;
+    for (var_r31 = 0; var_r31 < 4; var_r31++) {
+        temp_f31 = ((arg0->x - arg1[var_r31]) * (arg2[(var_r31 + 1) % 4] - arg2[var_r31])) -
+                   ((arg0->z - arg2[var_r31]) * (arg1[(var_r31 + 1) % 4] - arg1[var_r31]));
+        if (temp_f31 < 0.0f) {
+            return 0;
+        }
     }
-    temp_r6 = var_r31 + 1;
-    temp_r6_2 = temp_r6 >> 0x1FU;
-    temp_r0 = (temp_r6 << 0x1E) - temp_r6_2;
-    temp_r6_3 = var_r31 + 1;
-    temp_r6_4 = temp_r6_3 >> 0x1FU;
-    temp_r0_2 = (temp_r6_3 << 0x1E) - temp_r6_4;
-    if ((((arg0->x - *(arg1 + (var_r31 * 4))) * (*(arg2 + ((((temp_r0 << 2) | (temp_r0 >> 0x1EU)) + temp_r6_2) * 4)) - *(arg2 + (var_r31 * 4)))) - ((arg0->z - *(arg2 + (var_r31 * 4))) * (*(arg1 + ((((temp_r0_2 << 2) | (temp_r0_2 >> 0x1EU)) + temp_r6_4) * 4)) - *(arg1 + (var_r31 * 4))))) < 0.0f) {
-        return 0;
-    }
-    var_r31 += 1;
-    goto loop_4;
+    return 1;
 }
-
 void fn_1_56A4(M538 *arg0) {
     f32 temp_f30;
     f32 temp_f31;
@@ -2486,16 +2479,19 @@ loop_32:
 }
 
 void fn_1_5FC4(M538_ANIM *arg0, s16 arg1) {
-    u16 sp8[4];
+    s16 sp8[4];
     f32 var_f31;
-    s16 temp_r3;
+    M538 *temp_r28;
     s16 var_r30;
     s32 var_r29;
-    M538 *temp_r28;
+    /* 7 rows differ, all in this init: the original loads the three u16 offsets
+     * with one lhz/sth pair each and no narrowing (lbl_1_rodata_190 read
+     * unsigned, sp8 read back signed with lhax). MWCC 1.3.2 always narrows a
+     * 16-bit array store -- extsh for an s16 destination, clrlwi for a u16 one --
+     * and recomputes the rodata base per statement. */
     sp8[0] = lbl_1_rodata_190[0];
-    sp8[1] = lbl_1_rodata_190[0];
-    sp8[2] = lbl_1_rodata_190[1];
-    sp8[3] = 0;
+    sp8[1] = lbl_1_rodata_190[1];
+    sp8[2] = lbl_1_rodata_190[2];
 
     if (arg1 == 1) {
         var_f31 = 50.0f;
@@ -2504,26 +2500,26 @@ void fn_1_5FC4(M538_ANIM *arg0, s16 arg1) {
     }
     temp_r28 = (M538 *) lbl_1_bss_C->data;
     var_r29 = 0;
+    goto loop_11_t;
 loop_11:
+    if (temp_r28->models[var_r29 + sp8[arg1]] < 0) {
+        var_r30 = temp_r28->models[var_r29 + sp8[arg1]] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[var_r29 + sp8[arg1]], 0x10000000, HEAP_MODEL));
+    } else {
+        var_r30 = Hu3DModelLink(temp_r28->models[var_r29 + sp8[arg1]]);
+    }
+    arg0->model[var_r29] = var_r30;
+    Hu3DModelAttrSet(var_r30, 1U);
+    Hu3DModelAttrSet(var_r30, 0x40000002U);
+    if (arg1 == 1) {
+        Hu3DModelLayerSet(var_r30, 7);
+    } else {
+        Hu3DModelLayerSet(var_r30, 6);
+    }
+    Hu3DModelPosSet(var_r30, 0.0f, var_f31, 0.0f);
+    Hu3DModelRotSet(var_r30, 0.0f, 0.0f, 0.0f);
+    var_r29 += 1;
+loop_11_t:
     if (var_r29 < 3) {
-        if ((s16) temp_r28->models[var_r29 + sp8[arg1]] < 0) {
-            temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[var_r29 + sp8[arg1]], 0x10000000, HEAP_MODEL));
-            temp_r28->models[var_r29 + sp8[arg1]] = temp_r3;
-            var_r30 = temp_r3;
-        } else {
-            var_r30 = Hu3DModelLink(temp_r28->models[var_r29 + sp8[arg1]]);
-        }
-        arg0->model[var_r29] = var_r30;
-        Hu3DModelAttrSet(var_r30, 1U);
-        Hu3DModelAttrSet(var_r30, 0x40000002U);
-        if (arg1 == 1) {
-            Hu3DModelLayerSet(var_r30, 7);
-        } else {
-            Hu3DModelLayerSet(var_r30, 6);
-        }
-        Hu3DModelPosSet(var_r30, 0.0f, var_f31, 0.0f);
-        Hu3DModelRotSet(var_r30, 0.0f, 0.0f, 0.0f);
-        var_r29 += 1;
         goto loop_11;
     }
     arg0->scale = 750.0f;
@@ -2536,17 +2532,15 @@ loop_11:
 
 s32 fn_1_61F8(M538_ANIM *arg0) {
     M538_ANIMFUNC next[3];
-    s16 temp_r0;
 
     next[0] = lbl_1_rodata_1A0[0];
     next[1] = lbl_1_rodata_1A0[1];
     next[2] = lbl_1_rodata_1A0[2];
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {                          /* irregular */
     case 0:
         Hu3DModelAttrReset(arg0->model[0], 1U);
         Hu3DModelAttrReset(arg0->model[0], 0x40000002U);
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state++;
         /* fallthrough */
     case 1:
         if (Hu3DMotionEndCheck(arg0->model[0]) != 0) {
@@ -2559,12 +2553,11 @@ s32 fn_1_61F8(M538_ANIM *arg0) {
 }
 
 s32 fn_1_62B4(M538_ANIM *arg0) {
-    s16 temp_r0;
+    f32 temp_f31;
     s32 var_r30;
 
     var_r30 = 0;
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 1:
         break;
     case 0:
@@ -2572,15 +2565,16 @@ s32 fn_1_62B4(M538_ANIM *arg0) {
         Hu3DModelAttrReset(arg0->model[1], 0x40000002U);
         Hu3DModelAttrSet(arg0->model[1], 0x40000001U);
         Hu3DModelAttrSet(arg0->model[0], 1U);
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         break;
     case 2:
-        arg0->counter = (s16) (arg0->counter + 1);
-        if ((s16) arg0->counter == 0x708) {
-            arg0->state = (s16) (arg0->state + 1);
+        arg0->counter += 1;
+        if (arg0->counter == 0x708) {
+            arg0->state += 1;
             var_r30 = 1;
         }
-        Hu3DModelPosSet(arg0->model[1], 0.0f, (630.0f * (f32) arg0->counter) / 1800.0f, 0.0f);
+        temp_f31 = (630.0f * (f32) arg0->counter) / 1800.0f;
+        Hu3DModelPosSet(arg0->model[1], 0.0f, temp_f31, 0.0f);
         break;
     }
     return var_r30;
@@ -2588,12 +2582,10 @@ s32 fn_1_62B4(M538_ANIM *arg0) {
 
 s32 fn_1_6400(M538_ANIM *arg0) {
     f32 temp_f31;
-    s16 temp_r0;
     s32 var_r30;
 
     var_r30 = 0;
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {                              /* irregular */
     case 1:
         break;
     case 0:
@@ -2601,16 +2593,16 @@ s32 fn_1_6400(M538_ANIM *arg0) {
         Hu3DModelAttrReset(arg0->model[1], 0x40000002U);
         Hu3DModelAttrSet(arg0->model[1], 0x40000001U);
         Hu3DModelAttrSet(arg0->model[0], 1U);
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state++;
         break;
     case 2:
-        arg0->counter = (s16) (arg0->counter + 1);
-        if ((s16) arg0->counter == 0x708) {
-            arg0->state = (s16) (arg0->state + 1);
+        arg0->counter++;
+        if (arg0->counter == 0x708) {
+            arg0->state++;
             var_r30 = 1;
         }
         temp_f31 = 1.0f - ((f32) arg0->counter / 1800.0f);
-        arg0->scale = (f32) (750.0f * temp_f31);
+        arg0->scale = 750.0f * temp_f31;
         Hu3DModelScaleSet(arg0->model[1], temp_f31, 1.0f, temp_f31);
         break;
     }
@@ -2618,12 +2610,11 @@ s32 fn_1_6400(M538_ANIM *arg0) {
 }
 
 s32 fn_1_6558(M538_ANIM *arg0) {
-    s16 temp_r0;
     s32 var_r30;
+    f32 temp_f31;
 
     var_r30 = 0;
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {                              /* irregular */
     case 1:
         break;
     case 0:
@@ -2631,50 +2622,52 @@ s32 fn_1_6558(M538_ANIM *arg0) {
         Hu3DModelAttrReset(arg0->model[1], 0x40000002U);
         Hu3DModelAttrSet(arg0->model[1], 0x40000001U);
         Hu3DModelAttrSet(arg0->model[0], 1U);
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state++;
         break;
     case 2:
-        arg0->counter = (s16) (arg0->counter + 1);
-        if ((s16) arg0->counter == 0x708) {
-            arg0->state = (s16) (arg0->state + 1);
+        arg0->counter++;
+        if (arg0->counter == 0x708) {
+            arg0->state++;
             var_r30 = 1;
         }
-        Hu3DModelPosSet(arg0->model[1], 0.0f, (270.0f * (f32) arg0->counter) / 1800.0f, 0.0f);
+        temp_f31 = (270.0f * (f32) arg0->counter) / 1800.0f;
+        Hu3DModelPosSet(arg0->model[1], 0.0f, temp_f31, 0.0f);
         break;
     }
     return var_r30;
 }
 
 s32 fn_1_66A4(M538_ANIM *arg0) {
+    f32 temp_f31;
     f32 temp_f30;
-    s16 temp_r0;
 
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         Hu3DModelAttrReset(arg0->model[1], 0x40000001U);
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         if (Hu3DMotionEndCheck(arg0->model[1]) != 0) {
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state += 1;
         }
         break;
     case 2:
         Hu3DModelAttrReset(arg0->model[2], 1U);
         Hu3DModelAttrReset(arg0->model[2], 0x40000002U);
         Hu3DModelAttrSet(arg0->model[1], 1U);
-        if ((s16) arg0->mode == 0) {
-            Hu3DModelPosSet(arg0->model[2], 0.0f, (630.0f * (f32) arg0->counter) / 1800.0f, 0.0f);
+        if (arg0->mode == 0) {
+            temp_f31 = (630.0f * (f32) arg0->counter) / 1800.0f;
+            Hu3DModelPosSet(arg0->model[2], 0.0f, temp_f31, 0.0f);
         }
-        if ((s16) arg0->mode == 1) {
+        if (arg0->mode == 1) {
             temp_f30 = 1.0f - ((f32) arg0->counter / 1800.0f);
             Hu3DModelScaleSet(arg0->model[2], temp_f30, 1.0f, temp_f30);
         }
-        if ((s16) arg0->mode == 2) {
-            Hu3DModelPosSet(arg0->model[2], 0.0f, (270.0f * (f32) arg0->counter) / 1800.0f, 0.0f);
+        if (arg0->mode == 2) {
+            temp_f31 = (270.0f * (f32) arg0->counter) / 1800.0f;
+            Hu3DModelPosSet(arg0->model[2], 0.0f, temp_f31, 0.0f);
         }
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 3:
         if (Hu3DMotionEndCheck(arg0->model[2]) != 0) {
@@ -2693,97 +2686,88 @@ s32 fn_1_6918(void *arg0) {
 
     var_r30 = 0;
     temp_r31 = lbl_1_bss_C->data;
-    if (temp_r31->anim[0].func != NULL) {
+    if (temp_r31->anim[0].func != 0) {
         temp_r31->anim[0].func(&temp_r31->anim[0]);
     }
-    if ((temp_r31->anim[1].func) != NULL) {
+    if ((temp_r31->anim[1].func) != 0) {
         var_r30 = temp_r31->anim[1].func(&temp_r31->anim[1]);
     }
-    if (temp_r31->anim[2].func != NULL) {
+    if (temp_r31->anim[2].func != 0) {
         temp_r31->anim[2].func(&temp_r31->anim[2]);
         fn_1_A2A4(temp_r31);
     }
-    return var_r30 & temp_r31->anim[1].flag;
+    var_r30 = var_r30 & temp_r31->anim[1].flag;
+    return var_r30;
 }
 
-void fn_1_69C4(M538_PLAYER *arg0) {
-    s16 temp_r3;
-    s16 var_r31;
-    M538 *temp_r30;
+void fn_1_69C4(struct m538_s16_48_s *arg0) {
+    s16 linkedModel;
+    M538 *m538;
 
-    temp_r30 = lbl_1_bss_C->data;
-    if ((s16) temp_r30->models[0] < 0) {
-        temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(*lbl_1_data_264, 0x10000000, HEAP_MODEL));
-        temp_r30->models[0] = temp_r3;
-        var_r31 = temp_r3;
+    m538 = lbl_1_bss_C->data;
+    if (m538->models[0] < 0) {
+        linkedModel = m538->models[0] = Hu3DModelCreate(HuDataSelHeapReadNum(*lbl_1_data_264, 0x10000000, HEAP_MODEL));
     } else {
-        var_r31 = Hu3DModelLink(temp_r30->models[0]);
+        linkedModel = Hu3DModelLink(m538->models[0]);
     }
-    arg0->fw.model = var_r31;
-    Hu3DModelAttrSet(var_r31, 1U);
-    Hu3DModelAttrSet(var_r31, 0x40000002U);
-    Hu3DModelLayerSet(var_r31, 2);
-    Hu3DModelPosSet(var_r31, 0.0f, 0.0f, 0.0f);
-    Hu3DModelRotSet(var_r31, 0.0f, 0.0f, 0.0f);
-    Hu3DModelShadowSet(var_r31);
-    Hu3DModelAttrReset(var_r31, 1U);
+    arg0->model = linkedModel;
+    Hu3DModelAttrSet(linkedModel, 1U);
+    Hu3DModelAttrSet(linkedModel, 0x40000002U);
+    Hu3DModelLayerSet(linkedModel, 2);
+    Hu3DModelPosSet(linkedModel, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(linkedModel, 0.0f, 0.0f, 0.0f);
+    Hu3DModelShadowSet(linkedModel);
+    Hu3DModelAttrReset(linkedModel, 1U);
 }
 
 void fn_1_6AE4(M538_PLAYER *arg0) {
-    s16 temp_r3;
-    s16 var_r31;
-    M538 *temp_r29;
+    s16 linkedModel;
+    M538 *m538;
 
-    temp_r29 = lbl_1_bss_C->data;
-    if ((s16) temp_r29->models[0] < 0) {
-        temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(*lbl_1_data_264, 0x10000000, HEAP_MODEL));
-        temp_r29->models[0] = temp_r3;
-        var_r31 = temp_r3;
+    m538 = lbl_1_bss_C->data;
+    if (m538->models[0] < 0) {
+        linkedModel = m538->models[0] = Hu3DModelCreate(HuDataSelHeapReadNum(*lbl_1_data_264, 0x10000000, HEAP_MODEL));
     } else {
-        var_r31 = Hu3DModelLink(temp_r29->models[0]);
+        linkedModel = Hu3DModelLink(m538->models[0]);
     }
-    arg0->itemModel = var_r31;
-    Hu3DModelAttrSet(var_r31, 1U);
-    Hu3DModelAttrSet(var_r31, 0x40000002U);
-    Hu3DModelLayerSet(var_r31, 2);
-    Hu3DModelPosSet(var_r31, 0.0f, 0.0f, 0.0f);
-    Hu3DModelRotSet(var_r31, 0.0f, 0.0f, 0.0f);
-    Hu3DModelShadowSet(var_r31);
-    Hu3DModelAttrReset(var_r31, 1U);
+    arg0->itemModel = linkedModel;
+    Hu3DModelAttrSet(linkedModel, 1U);
+    Hu3DModelAttrSet(linkedModel, 0x40000002U);
+    Hu3DModelLayerSet(linkedModel, 2);
+    Hu3DModelPosSet(linkedModel, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(linkedModel, 0.0f, 0.0f, 0.0f);
+    Hu3DModelShadowSet(linkedModel);
+    Hu3DModelAttrReset(linkedModel, 1U);
     Hu3DModelHookSet(arg0->modelId, CharModelItemHookGet(arg0->charNo, 8, 0), arg0->itemModel);
 }
 
 void fn_1_6C24(M538_PLAYER *arg0) {
-    f32 (*sp20)[4];
-    Point3d sp14;
-    Point3d sp8;
+    struct m538_pair_s { s32 a; s32 b; };
+    Mtx sp20;
+    s32 sp14[3];
+    s32 sp8[3];
 
     Hu3DModelObjMtxGet(arg0->modelId, CharModelItemHookGet(arg0->charNo, 8, 0), sp20);
-    Hu3DMtxTransGet(sp20, &sp14);
-    Hu3DMtxRotGet(sp20, &sp8);
+    Hu3DMtxTransGet(sp20, (HuVecF *)sp14);
+    Hu3DMtxRotGet(sp20, (HuVecF *)sp8);
     Hu3DModelHookReset(arg0->modelId);
-    arg0->hookX = sp14.x;
-    arg0->hookY = sp14.y;
-    arg0->hookZ = sp14.z;
-    arg0->hookRotX = sp8.x;
-    arg0->hookRotY = sp8.y;
-    arg0->hookRotZ = sp8.z;
-    Hu3DModelPosSetV(arg0->itemModel, &sp14);
-    Hu3DModelRotSetV(arg0->itemModel, &sp8);
+    /* the hook slots are raw 32 bit words in the original, not floats */
+    *(struct m538_pair_s *) &arg0->hookX = *(struct m538_pair_s *) &sp14[0];
+    *(s32 *) &arg0->hookZ = sp14[2];
+    *(struct m538_pair_s *) &arg0->hookRotX = *(struct m538_pair_s *) &sp8[0];
+    *(s32 *) &arg0->hookRotZ = sp8[2];
+    Hu3DModelPosSetV(arg0->itemModel, (HuVecF *)sp14);
+    Hu3DModelRotSetV(arg0->itemModel, (HuVecF *)sp8);
 }
 
 void fn_1_6CD4(M538 *arg0) {
     s32 var_r31;
 
-    var_r31 = 0;
-loop_2:
-    if (var_r31 < 0x1F) {
+    for (var_r31 = 0; var_r31 < 0x1F; var_r31++) {
         arg0->node0[var_r31].prev = 0;
         arg0->node0[var_r31].next = &arg0->node0[var_r31 + 1];
         arg0->node0[var_r31].func = 0;
         arg0->node0[var_r31].work = 0;
-        var_r31 += 1;
-        goto loop_2;
     }
     arg0->node0[var_r31].prev = 0;
     arg0->node0[var_r31].next = 0;
@@ -2797,12 +2781,12 @@ M538_NODE0 *fn_1_6D98(M538 *arg0, M538_NODE0FUNC arg1, void *arg2) {
     M538_NODE0 *temp_r31;
 
     temp_r31 = arg0->node0Free;
-    if (temp_r31 != NULL) {
+    if (temp_r31 != 0) {
         arg0->node0Free = temp_r31->next;
         temp_r31->func = arg1;
         temp_r31->work = arg2;
         temp_r31->next = arg0->node0Head;
-        if (temp_r31->next != NULL) {
+        if (temp_r31->next != 0) {
             temp_r31->next->prev = temp_r31;
         }
         arg0->node0Head = temp_r31;
@@ -2811,13 +2795,13 @@ M538_NODE0 *fn_1_6D98(M538 *arg0, M538_NODE0FUNC arg1, void *arg2) {
 }
 
 void fn_1_6DEC(M538 *arg0, M538_NODE0 *arg1) {
-    if (arg1 != NULL) {
-        if (arg1->prev != NULL) {
+    if (arg1 != 0) {
+        if (arg1->prev != 0) {
             arg1->prev->next = arg1->next;
         } else {
             arg0->node0Head = arg1->next;
         }
-        if (arg1->next != NULL) {
+        if (arg1->next != 0) {
             arg1->next->prev = arg1->prev;
         }
         arg1->prev = NULL;
@@ -2832,16 +2816,15 @@ void fn_1_6E50(M538 *arg0) {
     M538_NODE0 *var_r31;
 
     var_r31 = arg0->node0Head;
-loop_11:
-    if (var_r31 != NULL) {
+    while (var_r31 != 0) {
         temp_r29 = var_r31->next;
-        if ((var_r31->func != NULL) && (var_r31->func(var_r31) != 0) && (var_r31 != NULL)) {
-            if (var_r31->prev != NULL) {
+        if ((var_r31->func != 0) && (var_r31->func(var_r31) != 0) && (var_r31 != 0)) {
+            if (var_r31->prev != 0) {
                 var_r31->prev->next = var_r31->next;
             } else {
                 arg0->node0Head = var_r31->next;
             }
-            if (var_r31->next != NULL) {
+            if (var_r31->next != 0) {
                 var_r31->next->prev = var_r31->prev;
             }
             var_r31->prev = NULL;
@@ -2850,7 +2833,6 @@ loop_11:
             arg0->node0Free = var_r31;
         }
         var_r31 = temp_r29;
-        goto loop_11;
     }
 }
 
@@ -2898,10 +2880,10 @@ s32 fn_1_6F24(M538_NODE0 *arg0) {
         }
         temp_r31->dist = var_f26;
         temp_r31->timer = 0;
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 1:
-        temp_r31->timer = (s16) (temp_r31->timer + 1);
+        temp_r31->timer += 1;
         if ((s16) temp_r31->timer == 0xF0) {
             Hu3DModelAttrSet(temp_r31->model, 1U);
             var_r30 = 1;
@@ -2999,10 +2981,7 @@ void fn_1_72CC(M538_CAMSWING *arg0) {
 }
 
 void fn_1_765C(M538_CAMSWING *arg0) {
-    s16 temp_r0;
-
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->counter = 0;
         arg0->radius = 30.0f;
@@ -3013,34 +2992,32 @@ void fn_1_765C(M538_CAMSWING *arg0) {
         Hu3DModelAttrReset(arg0->model[3], 0x40000002U);
         Hu3DMotionSpeedSet(arg0->model[3], 0.6f);
         Hu3DModelHookSet(arg0->model[1], lbl_1_data_418, arg0->model[0]);
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
         if (Hu3DMotionEndCheck(arg0->model[1]) != 0) {
             Hu3DModelHookReset(arg0->model[1]);
             Hu3DModelAttrSet(arg0->model[0], 1U);
             Hu3DModelAttrSet(arg0->model[1], 1U);
-            arg0->state = (s16) (arg0->state + 1);
-            return;
+            arg0->state += 1;
         }
-        return;
+        break;
     case 2:
         if (Hu3DMotionEndCheck(arg0->model[3]) != 0) {
             Hu3DModelAttrSet(arg0->model[3], 1U);
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state += 1;
         }
+        break;
+    case 3:
         break;
     }
 }
 
 void fn_1_77A4(M538_CAMSWING *arg0) {
-    s16 temp_r0;
-
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->counter = 0;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state++;
         arg0->radius = 30.0f;
         Hu3DModelAttrReset(arg0->model[0], 1U);
         Hu3DModelAttrReset(arg0->model[2], 1U);
@@ -3052,28 +3029,30 @@ void fn_1_77A4(M538_CAMSWING *arg0) {
             Hu3DModelHookReset(arg0->model[2]);
             Hu3DModelAttrSet(arg0->model[0], 1U);
             Hu3DModelAttrSet(arg0->model[2], 1U);
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state++;
         }
-        return;
+        break;
+    default:
+        break;
     }
 }
 
+/* CodeWarrior emits a dead "cmpwi r0,3 / b end" upper bound in this switch
+ * tree; MWCC roots the same search at 1 and drops the bound. */
 s32 fn_1_788C(M538_CAMWORK *arg0) {
     f32 temp_f30;
     f32 temp_f31;
-    s16 temp_r0;
     s32 var_r30;
 
     var_r30 = 0;
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {                              /* irregular */
     case 0:
         arg0->counter = 0;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state++;
         /* fallthrough */
     case 1:
-        arg0->counter = (s16) (arg0->counter + 1);
-        if ((s16) arg0->counter == 0xB4) {
+        arg0->counter++;
+        if (arg0->counter == 0xB4) {
             var_r30 = 1;
         }
         temp_f31 = (f32) sin((3.141592653589793 * (f64) ((90.0f * (f32) arg0->counter) / 180.0f)) / 180.0);
@@ -3090,19 +3069,19 @@ s32 fn_1_788C(M538_CAMWORK *arg0) {
 }
 
 s32 fn_1_7AA0(M538_CAMWORK *arg0) {
+    s32 var_r30;
     f32 temp_f30;
     f32 temp_f31;
-    s16 temp_r0;
 
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    var_r30 = 0;
+    switch (arg0->state) {                              /* irregular */
     case 0:
         arg0->counter = 0;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state++;
         /* fallthrough */
     case 1:
-        if ((s16) arg0->counter < 0x708) {
-            arg0->counter = (s16) (arg0->counter + 1);
+        if (arg0->counter < 0x708) {
+            arg0->counter++;
         }
         temp_f31 = (f32) sin((3.141592653589793 * (f64) ((90.0f * (f32) arg0->counter) / 1800.0f)) / 180.0);
         temp_f30 = 1.0f - temp_f31;
@@ -3114,17 +3093,15 @@ s32 fn_1_7AA0(M538_CAMWORK *arg0) {
         arg0->z = (f32) ((lbl_1_data_2E4[8] * temp_f30) + (lbl_1_data_2E4[14] * temp_f31));
         break;
     }
-    return 0;
+    return var_r30;
 }
 
 s32 fn_1_7CB0(M538_CAMWORK *arg0) {
     f32 temp_f31;
-    s16 temp_r0;
     s32 var_r30;
 
     var_r30 = 0;
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         arg0->counter = 0;
         arg0->from[3] = (f32) arg0->theta;
@@ -3133,11 +3110,11 @@ s32 fn_1_7CB0(M538_CAMWORK *arg0) {
         arg0->from[0] = (f32) arg0->x;
         arg0->from[1] = (f32) arg0->y;
         arg0->from[2] = (f32) arg0->z;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
-        arg0->counter = (s16) (arg0->counter + 1);
-        if ((s16) arg0->counter == 0x96) {
+        arg0->counter += 1;
+        if (arg0->counter == 0x96) {
             var_r30 = 1;
         }
         temp_f31 = (f32) sin((3.141592653589793 * (f64) ((90.0f * (f32) arg0->counter) / 150.0f)) / 180.0);
@@ -3153,19 +3130,21 @@ s32 fn_1_7CB0(M538_CAMWORK *arg0) {
 }
 
 s32 fn_1_7F04(M538_PLAYER *arg0) {
-    s32 temp_r0;
+    s32 var_r30;
 
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    var_r30 = 0;
+    switch (arg0->state) {                          /* irregular */
     case 0:
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         break;
     case 2:
         CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[8], 0.0f, 5.0f, 0U);
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
+        break;
+    case 4: /* MWCC keeps a redundant beq to the empty case 4 body here */
         break;
     }
-    return 0;
+    return var_r30;
 }
 
 s32 fn_1_7FAC(M538_PLAYER *arg0) {
@@ -3209,7 +3188,7 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
         }
         break;
     case 2:
-        CharMotionSet(arg0->charNo, arg0->obj->mtnId[1]);
+        CharMotionSet(arg0->charNo, arg0->obj->mtnId[2]);
         arg0->state = (u32) (arg0->state + 1);
         /* fallthrough */
     case 3:
@@ -3296,62 +3275,53 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
 }
 
 s32 fn_1_8554(M538_PLAYER *arg0) {
-    s32 sp14;
-    s32 sp10;
-    s32 spC;
-    f32 sp8;
     M538_NODE *temp_r3;
-    s32 temp_r0;
+    s32 var_r29 = 0;
+    union m538_f4 sp;
 
-    sp8 = lbl_1_rodata_1CC[0];
-    spC = lbl_1_rodata_1CC[1];
-    sp10 = lbl_1_rodata_1CC[2];
-    sp14 = lbl_1_rodata_1CC[3];
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    sp.w = lbl_1_rodata_1CC.w;
+    switch (arg0->state) {                           /* irregular */
     case 0:
         Hu3DModelShadowReset(*arg0->obj->mdlId);
         arg0->counter2 = 0;
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
-        arg0->counter2 = (s16) (arg0->counter2 + 1);
-        if ((s16) arg0->counter2 == (s16) arg0->counter3) {
+        arg0->counter2 += 1;
+        if ((s16) arg0->counter2 == arg0->counter3) {
             arg0->counter2 = 0;
             arg0->counter3 = 0;
-            arg0->state = (s32) (arg0->state + 1);
+            arg0->state += 1;
         }
         break;
     case 2:
         CharModelAttrReset(arg0->charNo, 1U);
-        CharMotionSet(arg0->charNo, arg0->obj->mtnId[10]);
+        CharMotionSet(arg0->charNo, arg0->obj->mtnId[9]);
         CharModelAttrSet(arg0->charNo, 0x40000001U);
         CharModelAttrReset(arg0->charNo, 0x40000002U);
-        arg0->x = (f32) (&sp8)[arg0->playerNo];
+        arg0->x = sp.f[arg0->playerNo];
         arg0->y = 800.0f;
         arg0->z = 0.0f;
-        arg0->state = (s32) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 3:
         if (arg0->y < 600.0f) {
             Hu3DModelShadowSet(*arg0->obj->mdlId);
-            arg0->state = (s32) (arg0->state + 1);
+            arg0->state += 1;
         }
         /* fallthrough */
     case 4:
-        arg0->counter2 = (s16) (arg0->counter2 + 1);
+        arg0->counter2 += 1;
         arg0->y = (f32) (arg0->y - (1.3f * (f32) arg0->counter2));
-        M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-        if (arg0->y == 10.0f) {
+        if (arg0->y <= 10.0f) {
             temp_r3 = fn_1_8858(arg0->pool1, (M538_NODEFUNC) fn_1_8CD8);
-            if (temp_r3 != NULL) {
-                temp_r3->rotY = (f32) arg0->x;
-                temp_r3->rotZ = (f32) arg0->y;
-                temp_r3->x = (f32) arg0->z;
-                temp_r3->rotX = 0;
+            if (temp_r3 != 0) {
+                *(struct m538_xy *) &temp_r3->x = *(struct m538_xy *) &arg0->x;
+                *(s32 *) &temp_r3->z = *(s32 *) &arg0->z;
+                temp_r3->timer = 0;
             }
             arg0->y = 0.0f;
-            arg0->state = (s32) (arg0->state + 1);
+            arg0->state += 1;
         }
         break;
     case 5:
@@ -3359,42 +3329,38 @@ s32 fn_1_8554(M538_PLAYER *arg0) {
         arg0->state = 0;
         break;
     }
-    return 0;
+    return var_r29;
 }
 
 void fn_1_87E4(M538_POOL *arg0, M538_NODE *arg1, s32 arg2) {
-    s32 var_r31;
-    M538_NODE *var_r4;
+    s32 i;
 
-    var_r4 = arg1;
     arg0->head = NULL;
-    arg0->free = var_r4;
-    var_r31 = 0;
-loop_2:
-    if (var_r31 < (s32) (arg2 - 1)) {
-        var_r4->prev = NULL;
-        var_r4->next = (M538_NODE *) ((u8 *) var_r4 + sizeof(M538_NODE));
-        var_r4->func = NULL;
-        var_r4->pool = arg0;
-        var_r31 += 1;
-        var_r4 = (M538_NODE *) ((u8 *) var_r4 + sizeof(M538_NODE));
-        goto loop_2;
+    arg0->free = arg1;
+    i = 0;
+    while (i < arg2 - 1) {
+        arg1->prev = NULL;
+        arg1->next = (M538_NODE *) ((u8 *) arg1 + sizeof(M538_NODE));
+        arg1->func = NULL;
+        arg1->pool = arg0;
+        i++;
+        arg1 = (M538_NODE *) ((u8 *) arg1 + sizeof(M538_NODE));
     }
-    var_r4->prev = NULL;
-    var_r4->next = NULL;
-    var_r4->func = NULL;
-    var_r4->pool = arg0;
+    arg1->prev = NULL;
+    arg1->next = NULL;
+    arg1->func = NULL;
+    arg1->pool = arg0;
 }
 
 M538_NODE *fn_1_8858(M538_POOL *arg0, M538_NODEFUNC arg1) {
     M538_NODE *temp_r31;
 
     temp_r31 = arg0->free;
-    if (temp_r31 != NULL) {
+    if (temp_r31 != 0) {
         arg0->free = temp_r31->next;
         temp_r31->func = arg1;
         temp_r31->next = arg0->head;
-        if (temp_r31->next != NULL) {
+        if (temp_r31->next != 0) {
             temp_r31->next->prev = temp_r31;
         }
         arg0->head = temp_r31;
@@ -3405,14 +3371,14 @@ M538_NODE *fn_1_8858(M538_POOL *arg0, M538_NODEFUNC arg1) {
 void fn_1_88A8(M538_NODE *arg0) {
     M538_POOL *temp_r31;
 
-    if (arg0 != NULL) {
+    if (arg0 != 0) {
         temp_r31 = arg0->pool;
-        if (arg0->prev != NULL) {
+        if (arg0->prev != 0) {
             arg0->prev->next = arg0->next;
         } else {
             temp_r31->head = arg0->next;
         }
-        if (arg0->next != NULL) {
+        if (arg0->next != 0) {
             arg0->next->prev = arg0->prev;
         }
         arg0->prev = NULL;
@@ -3423,22 +3389,21 @@ void fn_1_88A8(M538_NODE *arg0) {
 }
 
 void fn_1_8920(M538_POOL *arg0) {
-    M538_NODE *temp_r29;
     M538_NODE *var_r31;
     M538_POOL *temp_r30;
+    M538_NODE *temp_r29;
 
     var_r31 = arg0->head;
-loop_11:
-    if (var_r31 != NULL) {
+    while (var_r31 != 0) {
         temp_r29 = var_r31->next;
-        if ((var_r31->func != NULL) && (var_r31->func(var_r31) != 0) && (var_r31 != NULL)) {
+        if ((var_r31->func != 0) && (var_r31->func(var_r31) != 0) && (var_r31 != 0)) {
             temp_r30 = var_r31->pool;
-            if (var_r31->prev != NULL) {
+            if (var_r31->prev != 0) {
                 var_r31->prev->next = var_r31->next;
             } else {
                 temp_r30->head = var_r31->next;
             }
-            if (var_r31->next != NULL) {
+            if (var_r31->next != 0) {
                 var_r31->next->prev = var_r31->prev;
             }
             var_r31->prev = NULL;
@@ -3447,78 +3412,69 @@ loop_11:
             temp_r30->free = var_r31;
         }
         var_r31 = temp_r29;
-        goto loop_11;
     }
 }
 
 void fn_1_8A00(M538 *arg0) {
-    s16 temp_r3;
-    s16 temp_r3_2;
     s16 var_r28;
     s16 var_r30;
     s32 var_r29;
 
     var_r29 = 0;
+    goto loop_9;
 loop_8:
+    if (arg0->models[21] < 0) {
+        var_r30 = arg0->models[21] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[0x15], 0x10000000, HEAP_MODEL));
+    } else {
+        var_r30 = Hu3DModelLink(arg0->models[21]);
+    }
+    if (arg0->models[31] < 0) {
+        var_r28 = arg0->models[31] = Hu3DJointMotion(var_r30, HuDataSelHeapReadNum(lbl_1_data_2D8[2], 0x10000000, HEAP_MODEL));
+    } else {
+        var_r28 = arg0->models[31];
+    }
+    Hu3DMotionSet(var_r30, var_r28);
+    arg0->node1[var_r29].model = var_r30;
+    Hu3DModelAttrSet(var_r30, 1U);
+    Hu3DModelAttrSet(var_r30, 0x40000002U);
+    Hu3DModelLayerSet(var_r30, 4);
+    Hu3DModelPosSet(var_r30, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(var_r30, 0.0f, 0.0f, 0.0f);
+    var_r29 += 1;
+loop_9:
     if (var_r29 < 0x10) {
-        if ((s16) arg0->models[21] < 0) {
-            temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[0x15], 0x10000000, HEAP_MODEL));
-            arg0->models[21] = temp_r3;
-            var_r30 = temp_r3;
-        } else {
-            var_r30 = Hu3DModelLink(arg0->models[21]);
-        }
-        if ((s16) arg0->models[31] < 0) {
-            temp_r3_2 = Hu3DJointMotion(var_r30, HuDataSelHeapReadNum(lbl_1_data_2D8[2], 0x10000000, HEAP_MODEL));
-            arg0->models[31] = temp_r3_2;
-            var_r28 = temp_r3_2;
-        } else {
-            var_r28 = arg0->models[31];
-        }
-        Hu3DMotionSet(var_r30, var_r28);
-        arg0->node1[var_r29].model = var_r30;
-        Hu3DModelAttrSet(var_r30, 1U);
-        Hu3DModelAttrSet(var_r30, 0x40000002U);
-        Hu3DModelLayerSet(var_r30, 4);
-        Hu3DModelPosSet(var_r30, 0.0f, 0.0f, 0.0f);
-        Hu3DModelRotSet(var_r30, 0.0f, 0.0f, 0.0f);
-        var_r29 += 1;
         goto loop_8;
     }
 }
 
 void fn_1_8B6C(M538 *arg0) {
-    s16 temp_r3;
-    s16 temp_r3_2;
     s16 var_r28;
     s16 var_r30;
     s32 var_r29;
 
     var_r29 = 0;
+    goto loop_9;
 loop_8:
+    if (arg0->models[18] < 0) {
+        var_r30 = arg0->models[18] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[0x12], 0x10000000, HEAP_MODEL));
+    } else {
+        var_r30 = Hu3DModelLink(arg0->models[18]);
+    }
+    if (arg0->models[30] < 0) {
+        var_r28 = arg0->models[30] = Hu3DJointMotion(var_r30, HuDataSelHeapReadNum(lbl_1_data_2D8[1], 0x10000000, HEAP_MODEL));
+    } else {
+        var_r28 = arg0->models[30];
+    }
+    Hu3DMotionSet(var_r30, var_r28);
+    arg0->node2[var_r29].model = var_r30;
+    Hu3DModelAttrSet(var_r30, 1U);
+    Hu3DModelAttrSet(var_r30, 0x40000002U);
+    Hu3DModelLayerSet(var_r30, 4);
+    Hu3DModelPosSet(var_r30, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(var_r30, 0.0f, 0.0f, 0.0f);
+    var_r29 += 1;
+loop_9:
     if (var_r29 < 0x10) {
-        if ((s16) arg0->models[18] < 0) {
-            temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[0x12], 0x10000000, HEAP_MODEL));
-            arg0->models[18] = temp_r3;
-            var_r30 = temp_r3;
-        } else {
-            var_r30 = Hu3DModelLink(arg0->models[18]);
-        }
-        if ((s16) arg0->models[30] < 0) {
-            temp_r3_2 = Hu3DJointMotion(var_r30, HuDataSelHeapReadNum(lbl_1_data_2D8[1], 0x10000000, HEAP_MODEL));
-            arg0->models[30] = temp_r3_2;
-            var_r28 = temp_r3_2;
-        } else {
-            var_r28 = arg0->models[30];
-        }
-        Hu3DMotionSet(var_r30, var_r28);
-        arg0->node2[var_r29].model = var_r30;
-        Hu3DModelAttrSet(var_r30, 1U);
-        Hu3DModelAttrSet(var_r30, 0x40000002U);
-        Hu3DModelLayerSet(var_r30, 4);
-        Hu3DModelPosSet(var_r30, 0.0f, 0.0f, 0.0f);
-        Hu3DModelRotSet(var_r30, 0.0f, 0.0f, 0.0f);
-        var_r29 += 1;
         goto loop_8;
     }
 }
@@ -3604,7 +3560,7 @@ s32 fn_1_8CD8(M538_NODE *arg0) {
         temp_r31_3->color[0] = *(&sp8 + (temp_r29_2 * 3));
         temp_r31_3->color[1] = *(&sp8 + ((temp_r29_2 * 3) + 1));
         temp_r31_3->color[2] = *(&sp8 + ((temp_r29_2 * 3) + 2));
-        arg0->timer = (s16) (arg0->timer + 1);
+        arg0->timer += 1;
         /* fallthrough */
     case 1:
         if (Hu3DMotionEndCheck(arg0->model) != 0) {
@@ -3618,18 +3574,16 @@ s32 fn_1_8CD8(M538_NODE *arg0) {
 }
 
 s32 fn_1_8F58(M538_NODE *arg0) {
-    s16 temp_r0;
     s32 var_r30;
 
     var_r30 = 0;
-    temp_r0 = arg0->timer;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->timer) {
     case 0:
         Hu3DModelAttrReset(arg0->model, 1U);
         Hu3DModelAttrReset(arg0->model, 0x40000002U);
         Hu3DModelPosSetV(arg0->model, (HuVecF *) &arg0->x);
         Hu3DMotionTimeSet(arg0->model, 0.0f);
-        arg0->timer = (s16) (arg0->timer + 1);
+        arg0->timer++;
         /* fallthrough */
     case 1:
         if (Hu3DMotionEndCheck(arg0->model) != 0) {
@@ -3645,32 +3599,30 @@ s32 fn_1_8F58(M538_NODE *arg0) {
 s32 fn_1_9024(M538_NODE0 *arg0) {
     M538_FW *temp_r31;
     f32 temp_f31;
-    s16 temp_r0;
     s32 var_r30;
 
     var_r30 = 0;
     temp_r31 = (M538_FW *) arg0->work;
-    temp_r0 = temp_r31->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (temp_r31->state) {
     case 0:
         temp_r31->timer = 0;
-        temp_r31->dist = temp_r31->radius2;
+        temp_r31->radius = temp_r31->radius2;
         temp_r31->angle = temp_r31->radius3;
-        temp_r31->dist = 0.0f;
+        temp_r31->rotX = 0.0f;
         temp_r31->radius2 = 0.0f;
         temp_r31->radius3 = 0.0f;
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 1:
-        temp_r31->dist = (f32) (temp_r31->dist - 40.0f);
+        temp_r31->rotX = (f32) (temp_r31->rotX - 40.0f);
         temp_r31->y += 3.0f;
         temp_r31->z -= 6.0f;
-        temp_r31->timer = (s16) (temp_r31->timer + 1);
-        if ((s16) temp_r31->timer == 0x3C) {
+        temp_r31->timer += 1;
+        if (temp_r31->timer == 0x3C) {
             var_r30 = 1;
         }
         temp_f31 = 1.0f - ((f32) temp_r31->timer / 60.0f);
-        temp_r31->radius2 = (f32) (temp_r31->dist * temp_f31);
+        temp_r31->radius2 = (f32) (temp_r31->radius * temp_f31);
         temp_r31->radius3 = (f32) (temp_r31->angle * temp_f31);
         Hu3DModelScaleSet(temp_r31->model, temp_f31, temp_f31, temp_f31);
         Hu3DModelPosSetV(temp_r31->model, (HuVecF *) temp_r31);
@@ -3681,13 +3633,17 @@ s32 fn_1_9024(M538_NODE0 *arg0) {
 }
 
 s32 fn_1_91D8(f32 *arg0, s32 arg1) {
-    f32 temp_f25;
-    f32 temp_f27;
-    f32 temp_f28;
-    f32 temp_f30;
     f32 var_f31;
+    f32 temp_f30;
+    f32 temp_f29;
+    f32 temp_f28;
+    f32 temp_f27;
+    f32 temp_f26;
+    f32 temp_f25;
+    f32 temp_f24;
     s32 var_r30;
 
+    var_r30 = -1;
     temp_f30 = (arg0[0] * arg0[0]) + (arg0[2] * arg0[2]);
     if (temp_f30 < 62500.0f) {
         var_r30 = 0;
@@ -3695,18 +3651,19 @@ s32 fn_1_91D8(f32 *arg0, s32 arg1) {
         temp_f27 = arg0[2];
         temp_f28 = arg0[0];
         if (temp_f27 == 0.0f) {
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if (temp_f28 == 0.0f) {
+            if (temp_f28 >= 0.0f) {
                 var_f31 = 1.5707964f;
             } else {
                 var_f31 = -1.5707964f;
             }
         } else {
-            var_f31 = (f32) atan2((f64) temp_f28, (f64) temp_f27);
+            temp_f24 = (f32) atan2((f64) temp_f28, (f64) temp_f27);
+            var_f31 = temp_f24;
         }
-        temp_f25 = (f32) fabs((f32) ((f64) (180.0f * var_f31) / 3.141592653589793));
-        M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-        if ((temp_f25 == 45.0f) && (temp_f25 < 135.0f)) {
+        temp_f26 = (f32) ((180.0f * var_f31) / 3.141592653589793);
+        temp_f25 = (f32) fabs(temp_f26);
+        temp_f29 = temp_f25;
+        if ((temp_f29 >= 45.0f) && (temp_f29 < 135.0f)) {
             var_r30 = 2;
         } else {
             var_r30 = 1;
@@ -3718,27 +3675,26 @@ s32 fn_1_91D8(f32 *arg0, s32 arg1) {
 }
 
 void fn_1_93C4(M538 *arg0) {
-    s16 temp_r3;
-    s16 var_r31;
-    s32 var_r29;
+    s16 linkedModel;
+    s32 i;
 
-    var_r29 = 0;
+    i = 0;
+    goto cond_5;
 loop_5:
-    if (var_r29 < 0x40) {
-        if ((s16) arg0->models[22] < 0) {
-            temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[0x16], 0x10000000, HEAP_MODEL));
-            arg0->models[22] = temp_r3;
-            var_r31 = temp_r3;
-        } else {
-            var_r31 = Hu3DModelLink(arg0->models[22]);
-        }
-        arg0->node3[var_r29].model = var_r31;
-        Hu3DModelAttrSet(var_r31, 1U);
-        Hu3DModelAttrSet(var_r31, 0x40000002U);
-        Hu3DModelLayerSet(var_r31, 4);
-        Hu3DModelPosSet(var_r31, 0.0f, 0.0f, 0.0f);
-        Hu3DModelRotSet(var_r31, 0.0f, 0.0f, 0.0f);
-        var_r29 += 1;
+    if (arg0->models[22] < 0) {
+        linkedModel = arg0->models[22] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[0x16], 0x10000000, HEAP_MODEL));
+    } else {
+        linkedModel = Hu3DModelLink(arg0->models[22]);
+    }
+    arg0->node3[i].model = linkedModel;
+    Hu3DModelAttrSet(linkedModel, 1U);
+    Hu3DModelAttrSet(linkedModel, 0x40000002U);
+    Hu3DModelLayerSet(linkedModel, 4);
+    Hu3DModelPosSet(linkedModel, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(linkedModel, 0.0f, 0.0f, 0.0f);
+    i += 1;
+cond_5:
+    if (i < 0x40) {
         goto loop_5;
     }
 }
@@ -3905,10 +3861,10 @@ loop_19:
             goto loop_19;
         }
         arg0->pad32 = 0;
-        arg0->timer = (s16) (arg0->timer + 1);
+        arg0->timer += 1;
         /* fallthrough */
     case 1:
-        arg0->pad32 = (s16) (arg0->pad32 + 1);
+        arg0->pad32 += 1;
         if ((s16) arg0->pad32 == 0xB4) {
             Hu3DModelAttrSet(arg0->model, 1U);
             var_r26 = 1;
@@ -4072,7 +4028,7 @@ loop_11:
             goto loop_11;
         }
         arg0->pad32 = 0;
-        arg0->timer = (s16) (arg0->timer + 1);
+        arg0->timer += 1;
         /* fallthrough */
     case 1:
         arg0->unk2C = (f32) (arg0->unk2C + 15.0f);
@@ -4096,70 +4052,75 @@ loop_11:
 
 void fn_1_A2A4(M538 *arg0) {
     M538_NODE *temp_r31;
+    M538_NODE *temp_r30;
+    M538_NODE *temp_r29;
 
-    arg0->tick = (s16) (arg0->tick + 1);
+    arg0->tick++;
     arg0->tick = (s16) (arg0->tick % 6);
-    if ((s16) arg0->tick == 0) {
+    if (arg0->tick == 0) {
         temp_r31 = arg0->pool3.free;
-        if (temp_r31 != NULL) {
+        if (temp_r31 != 0) {
             arg0->pool3.free = temp_r31->next;
             temp_r31->func = fn_1_94DC;
             temp_r31->next = arg0->pool3.head;
-            if (temp_r31->next != NULL) {
+            if (temp_r31->next != 0) {
                 temp_r31->next->prev = temp_r31;
             }
             arg0->pool3.head = temp_r31;
         }
-        if (temp_r31 != NULL) {
-            temp_r31->angle = (f32) arg0->lightRadius;
-            temp_r31->timer = 0;
+        temp_r29 = temp_r31;
+        temp_r30 = temp_r29;
+        if (temp_r30 != 0) {
+            temp_r30->angle = (f32) arg0->lightRadius;
+            temp_r30->timer = 0;
         }
     }
 }
 
 void fn_1_A368(M538 *arg0) {
     M538_NODE *temp_r31;
+    M538_NODE *temp_r30;
+    M538_NODE *temp_r29;
 
-    arg0->tick = (s16) (arg0->tick + 1);
+    arg0->tick++;
     arg0->tick = (s16) (arg0->tick % 3);
-    if ((s16) arg0->tick == 0) {
+    if (arg0->tick == 0) {
         temp_r31 = arg0->pool3.free;
-        if (temp_r31 != NULL) {
+        if (temp_r31 != 0) {
             arg0->pool3.free = temp_r31->next;
             temp_r31->func = fn_1_9C04;
             temp_r31->next = arg0->pool3.head;
-            if (temp_r31->next != NULL) {
+            if (temp_r31->next != 0) {
                 temp_r31->next->prev = temp_r31;
             }
             arg0->pool3.head = temp_r31;
         }
-        if (temp_r31 != NULL) {
-            temp_r31->timer = 0;
+        temp_r29 = temp_r31;
+        temp_r30 = temp_r29;
+        if (temp_r30 != 0) {
+            temp_r30->timer = 0;
         }
     }
 }
 
 s32 fn_1_A424(M538_DOLLY *arg0) {
     f32 temp_f31;
-    f32 temp_f31_2;
-    s16 temp_r0;
     s32 var_r28;
     s32 var_r29;
-    s32 var_r29_2;
-    s32 var_r29_3;
     M538 *temp_r31;
 
     var_r28 = 0;
     temp_r31 = lbl_1_bss_C->data;
-    temp_r0 = arg0->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (arg0->state) {
     case 0:
         var_r29 = 0;
-loop_9:
+        goto loop_9_test;
+    loop_9:
+        Hu3DModelAttrReset((s16) (temp_r31->models[17] + var_r29), 0x40000002U);
+        Hu3DModelAttrSet((s16) (temp_r31->models[17] + var_r29), 0x40000001U);
+        var_r29 += 1;
+    loop_9_test:
         if (var_r29 < 0x18) {
-            Hu3DModelAttrReset((s16) (temp_r31->models[17] + var_r29), 0x40000002U);
-            Hu3DModelAttrSet((s16) (temp_r31->models[17] + var_r29), 0x40000001U);
-            var_r29 += 1;
             goto loop_9;
         }
         Hu3DModelAttrReset(temp_r31->models[11], 0x40000002U);
@@ -4169,43 +4130,47 @@ loop_9:
         Hu3DModelAttrReset(temp_r31->models[24], 0x40000002U);
         Hu3DModelAttrSet(temp_r31->models[24], 0x40000001U);
         arg0->counter = 0;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 1:
-        arg0->counter = (s16) (arg0->counter + 1);
+        arg0->counter += 1;
         temp_f31 = (1.5f * (f32) arg0->counter) / 120.0f;
-        var_r29_2 = 0;
-loop_13:
-        if (var_r29_2 < 0x18) {
-            Hu3DMotionSpeedSet((s16) (temp_r31->models[17] + var_r29_2), temp_f31);
-            var_r29_2 += 1;
+        var_r29 = 0;
+        goto loop_13_test;
+    loop_13:
+        Hu3DMotionSpeedSet((s16) (temp_r31->models[17] + var_r29), temp_f31);
+        var_r29 += 1;
+    loop_13_test:
+        if (var_r29 < 0x18) {
             goto loop_13;
         }
         Hu3DMotionSpeedSet(temp_r31->models[11], temp_f31);
         Hu3DMotionSpeedSet(temp_r31->models[12], temp_f31);
         Hu3DMotionSpeedSet(temp_r31->models[24], temp_f31);
-        if ((s16) arg0->counter == 0x78) {
+        if (arg0->counter == 0x78) {
             var_r28 = 1;
         }
         break;
     case 2:
         arg0->counter = 0;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
     case 3:
-        arg0->counter = (s16) (arg0->counter + 1);
-        temp_f31_2 = 1.5f * (1.0f - ((f32) arg0->counter / 180.0f));
-        var_r29_3 = 0;
-loop_19:
-        if (var_r29_3 < 0x18) {
-            Hu3DMotionSpeedSet((s16) (temp_r31->models[17] + var_r29_3), temp_f31_2);
-            var_r29_3 += 1;
+        arg0->counter += 1;
+temp_f31 = 1.5f * (1.0f - ((f32) arg0->counter / 180.0f));
+        var_r29 = 0;
+        goto loop_19_test;
+    loop_19:
+        Hu3DMotionSpeedSet((s16) (temp_r31->models[17] + var_r29), temp_f31);
+        var_r29 += 1;
+    loop_19_test:
+        if (var_r29 < 0x18) {
             goto loop_19;
         }
-        Hu3DMotionSpeedSet(temp_r31->models[11], temp_f31_2);
-        Hu3DMotionSpeedSet(temp_r31->models[12], temp_f31_2);
-        Hu3DMotionSpeedSet(temp_r31->models[24], temp_f31_2);
-        if ((s16) arg0->counter == 0xB4) {
+        Hu3DMotionSpeedSet(temp_r31->models[11], temp_f31);
+        Hu3DMotionSpeedSet(temp_r31->models[12], temp_f31);
+        Hu3DMotionSpeedSet(temp_r31->models[24], temp_f31);
+        if (arg0->counter == 0xB4) {
             var_r28 = 1;
         }
         break;
@@ -4213,40 +4178,43 @@ loop_19:
     return var_r28;
 }
 
+struct m538_idx4_s {
+    s32 v0;
+    s32 v1;
+    s32 v2;
+    s32 v3;
+};
+
 void fn_1_A6F8(M538 *arg0) {
     s32 sp8[4];
-    s16 temp_r3;
     s16 var_r29;
     s32 var_r30;
-    sp8[0] = lbl_1_rodata_2A4[0];
-    sp8[1] = lbl_1_rodata_2A4[1];
-    sp8[2] = lbl_1_rodata_2A4[2];
-    sp8[3] = lbl_1_rodata_2A4[3];
 
+    *(struct m538_idx4_s *) &sp8[0] = *(struct m538_idx4_s *) &lbl_1_rodata_2A4[0];
     arg0->ctrl.state = 0;
     var_r30 = 0;
+    goto loop_6;
 loop_5:
+    if (arg0->models[sp8[var_r30]] < 0) {
+        var_r29 = arg0->models[sp8[var_r30]] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[sp8[var_r30]], 0x10000000, HEAP_MODEL));
+    } else {
+        var_r29 = Hu3DModelLink(arg0->models[sp8[var_r30]]);
+    }
+    Hu3DModelAttrSet(var_r29, 1U);
+    Hu3DModelAttrSet(var_r29, 0x40000002U);
+    Hu3DModelLayerSet(var_r29, 2);
+    Hu3DModelPosSet(var_r29, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(var_r29, 0.0f, 0.0f, 0.0f);
+    arg0->ctrl.work[var_r30].model = var_r29;
+    arg0->ctrl.work[var_r30].state = 0;
+    var_r30 += 1;
+loop_6:
     if (var_r30 < 4) {
-        if ((s16) arg0->models[sp8[var_r30]] < 0) {
-            temp_r3 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_264[sp8[var_r30]], 0x10000000, HEAP_MODEL));
-            arg0->models[sp8[var_r30]] = temp_r3;
-            var_r29 = temp_r3;
-        } else {
-            var_r29 = Hu3DModelLink(arg0->models[sp8[var_r30]]);
-        }
-        Hu3DModelAttrSet(var_r29, 1U);
-        Hu3DModelAttrSet(var_r29, 0x40000002U);
-        Hu3DModelLayerSet(var_r29, 2);
-        Hu3DModelPosSet(var_r29, 0.0f, 0.0f, 0.0f);
-        Hu3DModelRotSet(var_r29, 0.0f, 0.0f, 0.0f);
-        arg0->ctrl.work[var_r30].model = var_r29;
-        arg0->ctrl.work[var_r30].state = 0;
-        var_r30 += 1;
         goto loop_5;
     }
 }
 
-void fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0) {
+void fn_1_A8A0(M538_CTRL *arg0) {
     M538_NODE0 *node;
     M538_FW *work;
     s16 temp_r0;
@@ -4257,10 +4225,10 @@ void fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0) {
     switch (temp_r0) {                              /* irregular */
     case 0:
         arg0->timer = 0;
-        arg0->state = (s16) (arg0->state + 1);
+        arg0->state += 1;
         /* fallthrough */
         case 1:
-            arg0->timer = (s16) (arg0->timer + 1);
+            arg0->timer += 1;
             if ((s16) arg0->timer == 0x168) {
                 work = &arg0->work[0];
             node = ((M538 *) lbl_1_bss_C->data)->node0Free;
@@ -4278,11 +4246,11 @@ void fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0) {
                 work->radius = ((M538 *) lbl_1_bss_C->data)->lightRadius;
                 work->state = 0;
             }
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state += 1;
             }
             break;
         case 2:
-            arg0->timer = (s16) (arg0->timer + 1);
+            arg0->timer += 1;
             if ((s16) arg0->timer == 0x2D0) {
                 work = &arg0->work[1];
             node = ((M538 *) lbl_1_bss_C->data)->node0Free;
@@ -4300,11 +4268,11 @@ void fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0) {
                 work->radius = ((M538 *) lbl_1_bss_C->data)->lightRadius;
                 work->state = 0;
             }
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state += 1;
             }
             break;
         case 3:
-            arg0->timer = (s16) (arg0->timer + 1);
+            arg0->timer += 1;
             if ((s16) arg0->timer == 0x438) {
                 work = &arg0->work[2];
             node = ((M538 *) lbl_1_bss_C->data)->node0Free;
@@ -4322,11 +4290,11 @@ void fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0) {
                 work->radius = ((M538 *) lbl_1_bss_C->data)->lightRadius;
                 work->state = 0;
             }
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state += 1;
             }
             break;
         case 4:
-            arg0->timer = (s16) (arg0->timer + 1);
+            arg0->timer += 1;
             if ((s16) arg0->timer == 0x5A0) {
                 work = &arg0->work[3];
             node = ((M538 *) lbl_1_bss_C->data)->node0Free;
@@ -4344,7 +4312,7 @@ void fn_1_A8A0(M538_CTRL *arg0, s16 arg_sp0) {
                 work->radius = 250.0f + ((M538 *) lbl_1_bss_C->data)->lightRadius;
                 work->state = 0;
             }
-            arg0->state = (s16) (arg0->state + 1);
+            arg0->state += 1;
             }
             break;
     }
@@ -4371,12 +4339,12 @@ s32 fn_1_AB54(M538_NODE0 *arg0) {
         temp_r31->x = (f32) ((f64) temp_r31->dist * sin((3.141592653589793 * (f64) temp_r31->angle) / 180.0));
         temp_r31->y = 300.0f;
         temp_r31->z = (f32) ((f64) temp_r31->dist * cos((3.141592653589793 * (f64) temp_r31->angle) / 180.0));
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 1:
-        temp_r31->timer = (s16) (temp_r31->timer + 1);
+        temp_r31->timer += 1;
         if ((s16) temp_r31->timer == 0x3C) {
-            temp_r31->state = (s16) (temp_r31->state + 1);
+            temp_r31->state += 1;
         }
         temp_r31->angle = (f32) (temp_r31->angle - 4.9f);
         temp_r31->dist = (f32) (temp_r31->dist + 5.0f);
@@ -4390,12 +4358,12 @@ s32 fn_1_AB54(M538_NODE0 *arg0) {
         break;
     case 2:
         temp_r31->timer = 0;
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 3:
-        temp_r31->timer = (s16) (temp_r31->timer + 1);
+        temp_r31->timer += 1;
         if ((s16) temp_r31->timer == 0x3C) {
-            temp_r31->state = (s16) (temp_r31->state + 1);
+            temp_r31->state += 1;
         }
         temp_r31->angle = (f32) (temp_r31->angle - 4.9f);
         temp_r31->dist = (f32) (temp_r31->dist + 5.0f);
@@ -4409,7 +4377,7 @@ s32 fn_1_AB54(M538_NODE0 *arg0) {
         temp_r31->angle = (f32) (temp_r31->angle - 90.0f);
         temp_r31->dist = (f32) ((3.141592653589793 * (f64) (2.0f * temp_r31->dist)) / 72.0);
         temp_r31->timer = 0;
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 5:
         temp_r31->x = (f32) ((f64) temp_r31->x + ((f64) temp_r31->dist * sin((3.141592653589793 * (f64) temp_r31->angle) / 180.0)));
@@ -4418,7 +4386,7 @@ s32 fn_1_AB54(M538_NODE0 *arg0) {
         temp_r31->radius2 = (f32) (temp_r31->radius2 + 5.0f);
         Hu3DModelPosSetV(temp_r31->model, (HuVecF *) temp_r31);
         Hu3DModelRotSetV(temp_r31->model, (HuVecF *) &temp_r31->rotX);
-        temp_r31->timer = (s16) (temp_r31->timer + 1);
+        temp_r31->timer += 1;
         if ((s16) temp_r31->timer == 0x3C) {
             Hu3DModelAttrSet(temp_r31->model, 1U);
             var_r30 = 1;
@@ -4430,21 +4398,19 @@ s32 fn_1_AB54(M538_NODE0 *arg0) {
 
 s32 fn_1_B0D0(M538_NODE0 *arg0) {
     f32 temp_f31;
-    s16 temp_r0;
     s32 var_r30;
     M538_FALL *temp_r31;
 
     var_r30 = 0;
     temp_r31 = arg0->work;
-    temp_r0 = temp_r31->state;
-    switch (temp_r0) {                              /* irregular */
+    switch (temp_r31->state) {                        /* irregular */
     case 0:
         temp_r31->timer = 0;
-        temp_r31->state = (s16) (temp_r31->state + 1);
+        temp_r31->state += 1;
         /* fallthrough */
     case 1:
-        temp_r31->timer = (s16) (temp_r31->timer + 1);
-        if ((s16) temp_r31->timer == 0x3C) {
+        temp_r31->timer += 1;
+        if (temp_r31->timer == 0x3C) {
             var_r30 = 1;
         }
         temp_f31 = 1.0f + ((3.0f * (f32) temp_r31->timer) / 60.0f);

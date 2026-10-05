@@ -196,17 +196,15 @@ void fn_1_5F24(s32 loop);
 /* Hu3DMotionMaxTimeGet is not declared in hu3d.h: the unit calls it both with a
  * float return (fn_1_58EC reads f1) and with an implicit int return that goes
  * straight into frandmod(). */
-f32 Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
-typedef s32 (*M570MAXTIMEGET)(HU3DMODELID modelId);
+s32 Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_4210(void)
 {
     OMOBJ *obj;
     M570PLAYER *player;
-    s16 cpuCount = 0;
-    s16 i;
-    s16 j;
+    s32 cpuCount = 0;
+    s32 i;
+    s32 j;
     s16 modelId;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
@@ -221,8 +219,7 @@ void fn_1_4210(void)
             gPlayer = player;
         } else {
             player->idx = cpuCount + 1;
-            gCpuPlayer[cpuCount] = player;
-            cpuCount++;
+            gCpuPlayer[cpuCount++] = player;
         }
         lbl_1_bss_1C4[i] = player;
         player->tra = StartPosTbl[player->idx];
@@ -249,8 +246,7 @@ static void fn_1_4440(M570PLAYER *player, s16 motNo)
 {
     OMOBJ *obj;
     f32 shiftStart;
-
-    if (player->motNo != motNo) {
+if (player->motNo != motNo) {
         obj = player->obj;
         if (player->motNo == 5 && motNo == M570_MOT_WIN) {
             shiftStart = kBlendLong;
@@ -277,7 +273,9 @@ static void fn_1_457C(OMOBJ *obj)
     omSetTra(obj, player->tra.x, player->tra.y, player->tra.z);
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: argument passing to fn_1_3B40/fn_1_3C64 differs (the original passes
+// two rodata constants in f2/f3 and no address argument), plus three copies of the
+// CodeWarrior no-op ne +4 shift-start branch.
 static void fn_1_45E4(OMOBJ *obj)
 {
     M570PLAYER *player = obj->data;
@@ -288,15 +286,13 @@ static void fn_1_45E4(OMOBJ *obj)
         {
             HuVecF angle;
             OMOBJ *robj;
-            f32 shiftStart;
-
-            if (fn_1_3B40(&player->tra, &player->goal, &angle, kStep, &kStep) != 0) {
+if (fn_1_3B40(&player->tra, &player->goal, &angle, kStep, &kStep) != 0) {
                 player->state = 0;
                 if (player->motNo != M570_MOT_IDLE) {
+                    f32 shiftStart;
+
                     robj = player->obj;
-                    if (player->motNo == 5 && M570_MOT_IDLE == M570_MOT_WIN) {
-                        shiftStart = kBlendLong;
-                    } else {
+                    if (player->motNo != 5) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_IDLE], shiftStart,
@@ -319,15 +315,13 @@ static void fn_1_45E4(OMOBJ *obj)
     case M570_MOT_TURN:
         {
             OMOBJ *robj;
-            f32 shiftStart;
-
-            player->rot.y = fn_1_3C64(&kTen, player->rot.y, kZero, kTen);
+player->rot.y = fn_1_3C64(&kTen, player->rot.y, kZero, kTen);
             if (player->rot.y <= kArrive) {
                 if (player->motNo != M570_MOT_IDLE) {
+                    f32 shiftStart;
+
                     robj = player->obj;
-                    if (player->motNo == 5 && M570_MOT_IDLE == M570_MOT_WIN) {
-                        shiftStart = kBlendLong;
-                    } else {
+                    if (player->motNo != 5) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_IDLE], shiftStart,
@@ -358,15 +352,13 @@ static void fn_1_45E4(OMOBJ *obj)
     case M570_MOT_WIN:
         {
             OMOBJ *robj;
-            f32 shiftStart;
-
-            player->timer++;
+player->timer++;
             if (player->timer == 20) {
                 if (player->motNo != M570_MOT_WIN) {
+                    f32 shiftStart;
+
                     robj = player->obj;
-                    if (player->motNo == 5 && M570_MOT_WIN == M570_MOT_WIN) {
-                        shiftStart = kBlendLong;
-                    } else {
+                    if (player->motNo != 5) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_WIN], shiftStart,
@@ -386,9 +378,7 @@ static void fn_1_45E4(OMOBJ *obj)
     case M570_MOT_HOLD:
         {
             OMOBJ *robj;
-            f32 shiftStart;
-
-            if (player->timer == 0) {
+if (player->timer == 0) {
                 omVibrate(player->objId, 30, 12, 0);
                 fn_1_1864(&player->tra, 0x913);
             }
@@ -400,10 +390,10 @@ static void fn_1_45E4(OMOBJ *obj)
             if (player->timer++ == 35) {
                 player->gotItem = 1;
                 if (player->motNo != M570_MOT_APPROACH) {
+                    f32 shiftStart;
+
                     robj = player->obj;
-                    if (player->motNo == 5 && M570_MOT_APPROACH == M570_MOT_WIN) {
-                        shiftStart = kBlendLong;
-                    } else {
+                    if (player->motNo != 5) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_APPROACH], shiftStart,
@@ -424,10 +414,9 @@ static void fn_1_45E4(OMOBJ *obj)
     omSetTra(obj, player->tra.x, player->tra.y, player->tra.z);
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 static void fn_1_4AC8(M570PLAYER *player)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < M570_CPU_MAX; i++) {
         if (HuPadBtnDown[player->padNo] & PadMaskTbl[i]) {
@@ -474,10 +463,9 @@ static void fn_1_4CC8(M570PLAYER *player)
     fn_1_16D4(&pos);
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_4D2C(void)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
         if (lbl_1_bss_1C4[i]->gotItem == 0) {
@@ -487,11 +475,13 @@ void fn_1_4D2C(void)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: the original branches into the shift-start block with a no-op
+// ne +4; MWCC 1.3.2 merges the two successors and emits eq over it.
 void fn_1_4DC4(void)
 {
-    s16 i;
+    s32 i;
     M570PLAYER *player;
+    f32 shiftStart;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
         player = lbl_1_bss_1C4[i];
@@ -499,12 +489,9 @@ void fn_1_4DC4(void)
         player->goal = ReadyPosTbl[player->idx];
         if (player->motNo != M570_MOT_READY) {
             OMOBJ *robj;
-            f32 shiftStart;
 
             robj = player->obj;
-            if (player->motNo == 5 && M570_MOT_READY == M570_MOT_WIN) {
-                shiftStart = kBlendLong;
-            } else {
+            if (player->motNo != 5) {
                 shiftStart = kZero;
             }
             CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_READY], shiftStart,
@@ -519,11 +506,13 @@ void fn_1_4DC4(void)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: the original branches into the shift-start block with a no-op
+// ne +4; MWCC 1.3.2 merges the two successors and emits eq over it.
 void fn_1_4EF8(void)
 {
-    s16 i;
+    s32 i;
     M570PLAYER *player;
+    f32 shiftStart;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
         player = lbl_1_bss_1C4[i];
@@ -532,12 +521,8 @@ void fn_1_4EF8(void)
             player->goal = TurnPosTbl[player->idx];
             if (player->motNo != M570_MOT_SURPRISE) {
                 OMOBJ *robj;
-                f32 shiftStart;
-
-                robj = player->obj;
-                if (player->motNo == 5 && M570_MOT_SURPRISE == M570_MOT_WIN) {
-                    shiftStart = kBlendLong;
-                } else {
+robj = player->obj;
+                if (player->motNo != 5) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_SURPRISE], shiftStart,
@@ -553,26 +538,24 @@ void fn_1_4EF8(void)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: the original branches into the shift-start block with a no-op
+// ne +4; MWCC 1.3.2 merges the two successors and emits eq over it.
 void fn_1_5048(void)
 {
-    s16 i;
+    s32 i;
+    f32 shiftStart;
 
     HuAudFXPlay(0x911);
     for (i = 0; i < M570_PLAYER_MAX; i++) {
         if (lbl_1_bss_1C4[i]->gotItem == 0) {
             M570PLAYER *player;
             OMOBJ *robj;
-            f32 shiftStart;
-
-            lbl_1_bss_1C4[i]->state = M570_MOT_SURPRISE;
+lbl_1_bss_1C4[i]->state = M570_MOT_SURPRISE;
             lbl_1_bss_1C4[i]->timer = 0;
             player = lbl_1_bss_1C4[i];
             if (player->motNo != M570_MOT_HOLD) {
                 robj = player->obj;
-                if (player->motNo == 5 && M570_MOT_HOLD == M570_MOT_WIN) {
-                    shiftStart = kBlendLong;
-                } else {
+                if (player->motNo != 5) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_HOLD], shiftStart,
@@ -588,11 +571,13 @@ void fn_1_5048(void)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: the original branches into the shift-start block with a no-op
+// ne +4; MWCC 1.3.2 merges the two successors and emits eq over it.
 void fn_1_51A8(void)
 {
-    s16 i;
+    s32 i;
     M570PLAYER *player;
+    f32 shiftStart;
 
     HuAudFXPlay(0x912);
     for (i = 0; i < M570_PLAYER_MAX; i++) {
@@ -601,15 +586,11 @@ void fn_1_51A8(void)
             CharModelHookDustCreate(player->charNo, CharModelItemHookGet(player->charNo, 2, 0));
             if (fn_1_4B64(player)) {
                 OMOBJ *robj;
-                f32 shiftStart;
-
-                player->gotItem = 1;
+player->gotItem = 1;
                 player->state = M570_MOT_HOLD;
                 if (player->motNo != M570_MOT_DUST) {
                     robj = player->obj;
-                    if (player->motNo == 5 && M570_MOT_DUST == M570_MOT_WIN) {
-                        shiftStart = kBlendLong;
-                    } else {
+                    if (player->motNo != 5) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_DUST], shiftStart,
@@ -629,23 +610,24 @@ void fn_1_51A8(void)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: the original branches into the shift-start block with a no-op
+// ne +4; MWCC 1.3.2 merges the two successors and emits eq over it.
 void fn_1_5354(void)
 {
-    s16 i;
+    s32 i;
     M570PLAYER *player;
+    M570PLAYER *cpu;
+    OMOBJ *robj;
+    OMOBJ *cobj;
 
     for (i = 0; i < M570_PLAYER_MAX; i++) {
         if (lbl_1_bss_52 == lbl_1_bss_1C4[i]->grp) {
             player = lbl_1_bss_1C4[i];
             if (player->motNo != M570_MOT_RETREAT) {
-                OMOBJ *robj;
                 f32 shiftStart;
 
                 robj = player->obj;
-                if (player->motNo == 5 && M570_MOT_RETREAT == M570_MOT_WIN) {
-                    shiftStart = kBlendLong;
-                } else {
+                if (player->motNo != 5) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_RETREAT], shiftStart,
@@ -658,34 +640,30 @@ void fn_1_5354(void)
                 player->motNo = M570_MOT_RETREAT;
             }
         } else {
-            player = lbl_1_bss_1C4[i];
-            if (player->motNo != M570_MOT_TURN) {
-                OMOBJ *robj;
+            cpu = lbl_1_bss_1C4[i];
+            if (cpu->motNo != M570_MOT_TURN) {
                 f32 shiftStart;
 
-                robj = player->obj;
-                if (player->motNo == 5 && M570_MOT_TURN == M570_MOT_WIN) {
-                    shiftStart = kBlendLong;
-                } else {
+                cobj = cpu->obj;
+                if (cpu->motNo != 5) {
                     shiftStart = kZero;
                 }
-                CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_TURN], shiftStart,
+                CharMotionShiftSet(cpu->charNo, cobj->mtnId[M570_MOT_TURN], shiftStart,
                                   MotParamTbl[M570_MOT_TURN].endTime, MotParamTbl[M570_MOT_TURN].attr);
                 if (MotParamTbl[M570_MOT_TURN].loop != 0) {
-                    Hu3DMotionAttrSet(robj->mtnId[M570_MOT_TURN], 1);
+                    Hu3DMotionAttrSet(cobj->mtnId[M570_MOT_TURN], 1);
                 } else {
-                    Hu3DMotionAttrReset(robj->mtnId[M570_MOT_TURN], 1);
+                    Hu3DMotionAttrReset(cobj->mtnId[M570_MOT_TURN], 1);
                 }
-                player->motNo = M570_MOT_TURN;
+                cpu->motNo = M570_MOT_TURN;
             }
         }
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 s32 fn_1_5538(void)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < M570_CPU_MAX; i++) {
         if (gCpuPlayer[i]->gotItem == 0) {
@@ -722,18 +700,19 @@ static void fn_1_558C(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_56A0(void)
 {
     OMOBJ *obj;
     s16 modelId;
-    s16 i;
+    s16 mtnId;
+    s32 i;
 
     obj = omAddObjEx(lbl_1_bss_108, 0x1100, 2, 4, OM_OBJ_NONE, fn_1_558C);
     modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x7D000E, HU_MEMNUM_OVL, HEAP_MODEL));
     obj->mdlId[0] = modelId;
     for (i = 0; i < M570_ITEM_MDL_MAX; i++) {
-        obj->mtnId[i] = Hu3DJointMotion(modelId, HuDataSelHeapReadNum(ItemMotDataTbl[i], HU_MEMNUM_OVL, HEAP_MODEL));
+        mtnId = Hu3DJointMotion(modelId, HuDataSelHeapReadNum(ItemMotDataTbl[i], HU_MEMNUM_OVL, HEAP_MODEL));
+        obj->mtnId[i] = mtnId;
     }
     Hu3DModelShadowSet(modelId);
     Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
@@ -758,7 +737,9 @@ static void fn_1_5820(s16 motNo)
     Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[motNo], kZero, kTen, ((s32 *)&attr)[motNo]);
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
+// NONMATCHING: the unit calls Hu3DMotionMaxTimeGet both as f32 and as s32. Declaring it
+// s32 makes fn_1_5E38/fn_1_5A78 match, so fn_1_58EC keeps a 9-instruction
+// int-to-float widen, and its cmpu operands are swapped against the original.
 static void fn_1_58EC(OMOBJ *obj)
 {
     M570DUST *dust = obj->data;
@@ -766,6 +747,8 @@ static void fn_1_58EC(OMOBJ *obj)
     f32 endTime;
 
     switch (dust->state) {
+    case 0:
+        break;
     case 1:
         dust->wait--;
         if (dust->wait <= 0) {
@@ -774,8 +757,8 @@ static void fn_1_58EC(OMOBJ *obj)
         }
         break;
     case 2:
-        endTime = Hu3DMotionMaxTimeGet(modelId) - kOne;
-        if (Hu3DMotionTimeGet(modelId) == endTime) {
+        endTime = (f32)Hu3DMotionMaxTimeGet(modelId) - kOne;
+        if (endTime == Hu3DMotionTimeGet(modelId)) {
             dust->loop--;
             if (dust->loop == 0) {
                 Hu3DMotionSet(modelId, obj->mtnId[0]);
@@ -799,16 +782,16 @@ static void fn_1_58EC(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5A78(void)
 {
     OMOBJ *obj;
-    M570DUST *dust;
     s16 modelId;
-    s16 i;
-    s16 j;
+    M570DUST *dust;
+    s32 i;
+    s32 j;
     HSFDATA *hsf;
     HSFMATERIAL *mat;
+    s16 mtnId;
 
     for (i = 0; i < M570_DUST_MAX; i++) {
         obj = omAddObjEx(lbl_1_bss_108, i + 0x1200, 1, 2, OM_OBJ_NONE, fn_1_58EC);
@@ -822,12 +805,12 @@ void fn_1_5A78(void)
         modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x7D0014, HU_MEMNUM_OVL, HEAP_MODEL));
         obj->mdlId[0] = modelId;
         for (j = 0; j < 2; j++) {
-            obj->mtnId[j] =
-                Hu3DJointMotion(modelId, HuDataSelHeapReadNum(DustMotDataTbl[j], HU_MEMNUM_OVL, HEAP_MODEL));
+            mtnId = Hu3DJointMotion(modelId, HuDataSelHeapReadNum(DustMotDataTbl[j], HU_MEMNUM_OVL, HEAP_MODEL));
+            obj->mtnId[j] = mtnId;
         }
         Hu3DMotionSet(modelId, obj->mtnId[1]);
         Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
-        Hu3DMotionTimeSet(modelId, (s32)frandmod(((M570MAXTIMEGET)Hu3DMotionMaxTimeGet)(modelId)));
+        Hu3DMotionTimeSet(modelId, (s32)frandmod(Hu3DMotionMaxTimeGet(modelId)));
         omSetTra(obj, DustPosTbl[i].x, DustPosTbl[i].y, DustPosTbl[i].z);
         if (DustPosTbl[i].x < kMinX) {
             omSetRot(obj, kZero, kSideRot, kZero);
@@ -837,30 +820,26 @@ void fn_1_5A78(void)
             omSetRot(obj, kZero, kZero, kZero);
         }
         hsf = Hu3DData[modelId].hsf;
-        mat = hsf->material;
-        for (j = 0; j < hsf->materialNum; j++) {
+        for (j = 0, mat = hsf->material; j < hsf->materialNum; j++, mat++) {
             mat->color[0] = 0xB2;
             mat->color[1] = 0xB2;
             mat->color[2] = 0xB2;
-            mat++;
         }
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5D74(void)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < M570_DUST_MAX; i++) {
         gDustTbl[i]->state = 3;
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5DB8(void)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < M570_DUST_MAX; i++) {
         Hu3DModelAttrReset(gDustTbl[i]->obj->mdlId[0], HU3D_MOTATTR_LOOP);
@@ -868,10 +847,9 @@ void fn_1_5DB8(void)
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5E38(void)
 {
-    s16 i;
+    s32 i;
     s16 modelId;
 
     for (i = 0; i < M570_DUST_MAX; i++) {
@@ -879,14 +857,13 @@ void fn_1_5E38(void)
         modelId = gDustTbl[i]->obj->mdlId[0];
         Hu3DMotionSet(modelId, gDustTbl[i]->obj->mtnId[0]);
         Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
-        Hu3DMotionTimeSet(modelId, (s32)frandmod(((M570MAXTIMEGET)Hu3DMotionMaxTimeGet)(modelId)));
+        Hu3DMotionTimeSet(modelId, (s32)frandmod(Hu3DMotionMaxTimeGet(modelId)));
     }
 }
 
-// NONMATCHING: instruction scheduling and register allocation differ from the original build
 void fn_1_5F24(s32 loop)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < M570_DUST_MAX; i++) {
         gDustTbl[i]->state = 1;

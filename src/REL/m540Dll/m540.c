@@ -71,6 +71,7 @@ typedef struct M540LightParam_s {
 } M540_LIGHTPARAM;
 
 static const float lbl_1_rodata_90[5] = { 40, 30, 20, 10, 0 };
+static const float lbl_1_rodata_2A4 = 0.5f;
 static const float lbl_1_rodata_A4[5] = { -675, -225, 225, 675, 0 };
 static const float lbl_1_rodata_B8[5] = { 450, 200, -50, -300, -1000 };
 static const M540_LIGHTPARAM lbl_1_rodata_CC = {
@@ -144,6 +145,10 @@ static void fn_1_1D4(s16 mode, s16 frameNo);
 static void fn_1_FFC(s16 mode, s16 frameNo);
 static void fn_1_2C20(s16 mode, s16 frameNo);
 static void fn_1_2C48(s16 mode, s16 frameNo);
+static void fn_1_2C74(void);
+static void fn_1_3D18(M540_OBJ *obj);
+static void fn_1_4334(void);
+static void fn_1_4C3C(void);
 static void fn_1_566C(s16 mode, s16 frameNo);
 static void fn_1_618C(s16 mode, s16 frameNo);
 static void fn_1_636C(M540_OBJ *obj);
@@ -163,31 +168,27 @@ static void fn_1_A19C(M540_OBJ *obj);
 static void fn_1_AA30(M540_OBJ *obj);
 static void fn_1_AC14(M540_OBJ *obj);
 static M540_OBJ *fn_1_CB34(M540_OBJ *obj);
-/* Work of the camera-rig objects (lbl_1_data_F8, lbl_1_data_118, ...) */
-typedef struct M540_CameraWork_s {
-    int no;             /* 0x00 */
-    HU3DMODELID mdlIdA; /* 0x04 */
-    HU3DMODELID mdlIdB; /* 0x06 */
-} M540_CAMERAWORK;
-
-/* 3 floats packed, not HuVecF-shaped (x@0, y@4, z@8) */
-typedef struct M540_Pos3_s {
-    float x; /* 0x00 */
-    float y; /* 0x04 */
-    float z; /* 0x08 */
-} M540_POS3;
-
 static void fn_1_D09C(M540_OBJ *obj);
 static int fn_1_8468(M540_OBJ *obj);
 static void fn_1_FF14(float arg0, float arg1);
 static void fn_1_103B0(HU3DMODELID modelId);
 static void fn_1_104B4(HU3DMODELID modelId);
-static void fn_1_DED8(M540_OBJ *obj);
+static void fn_1_105C0(HU3DMODELID modelId);
+static void fn_1_F750(M540_OBJ *obj);
+static void fn_1_707C(M540_OBJ *obj, float x, float y, float z);
+static void fn_1_7660(M540_OBJ *obj);
+static void fn_1_78DC(M540_OBJ *obj, int dispMode);
+static void fn_1_7F9C(M540_OBJ *obj, int lane);
+static void fn_1_801C(M540_OBJ *obj);
+static void fn_1_84BC(M540_OBJ *obj);
+static void fn_1_8570(M540_OBJ *obj);
+static void fn_1_C8D8(M540_OBJ *obj, M540_OBJ *cart);
+static void fn_1_E7E0(M540_OBJ *obj);
+static void fn_1_EFE4(M540_OBJ *obj);
 static void fn_1_DF8C(M540_OBJ *obj);
-static void fn_1_EF3C(M540_OBJ *obj);
-static void fn_1_EFF0(M540_OBJ *obj);
-static void fn_1_100B8(M540_OBJ *obj);
-static void fn_1_101EC(M540_OBJ *obj);
+static void fn_1_E43C(M540_OBJ *obj);
+static void fn_1_E7EC(M540_OBJ *obj);
+static void fn_1_EA9C(M540_OBJ *obj);
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -236,6 +237,270 @@ void ObjectSetup(void)
     MgSeqCreate(&seqParam);
 }
 
+static void fn_1_2C20(s16 mode, s16 frameNo)
+{
+    HuPrcSleep(199);
+    MgSeqModeNext();
+}
+
+static void fn_1_2C48(s16 mode, s16 frameNo)
+{
+    fn_1_2C74();
+    fn_1_4334();
+    fn_1_4C3C();
+    MgSeqModeNext();
+}
+
+static void fn_1_3D18(M540_OBJ *obj)
+{
+    static const int lbl_1_rodata_430[4][2] = {
+        { 10, 20 },
+        { 30, 20 },
+        { 60, 20 },
+        { 90, 10 }
+    };
+    int laneFlag[5];
+    int charNo;
+    int playerNo;
+    int rateMin;
+    int rateMax;
+    int rate;
+    BOOL selF;
+    BOOL decF;
+    BOOL incF;
+    BOOL btnF;
+    MGTIMER *timer;
+    s16 *espId = M540_OBJWORK(s16, lbl_1_bss_C4);
+    s16 ehdId;
+    s16 espId2;
+    int padNo;
+    int dif;
+    int curLane;
+    int tgtLane;
+    int i;
+    int j;
+    padNo = obj->padNo;
+    playerNo = obj->playerNo;
+    charNo = obj->charNo;
+    ehdId = M540_OBJWORK(s16, lbl_1_bss_C4)[charNo+6];
+    espId2 = espId[5];
+    for(i=0; i<5; i++) {
+        laneFlag[i] = TRUE;
+    }
+    for(i=0; i<4; i++) {
+        curLane = lbl_1_bss_48[i];
+        if(curLane != -1) {
+            laneFlag[curLane] = FALSE;
+        }
+    }
+    for(i=0; i<5; i++) {
+        if(laneFlag[i] != FALSE) {
+            curLane = i;
+            break;
+        }
+    }
+    if(obj->comF != FALSE) {
+        OSReport("[COM]\n");
+        dif = obj->dif;
+        rateMin = lbl_1_rodata_430[dif][0];
+        rateMax = lbl_1_rodata_430[dif][1];
+        rate = frandmod(100);
+        if(rate < rateMin+rateMax) {
+            tgtLane = -1;
+            for(j=0; j<4; j++) {
+                for(i=0; i<5; i++) {
+                    if(fn_1_84A0(lbl_1_bss_E0[i]) == j && laneFlag[i] != FALSE) {
+                        tgtLane = i;
+                        break;
+                    }
+                }
+                if(tgtLane != -1) {
+                    break;
+                }
+            }
+            OSReport("<SELECT> %d\n", tgtLane);
+        }
+        else {
+            tgtLane = frandmod(5);
+            while(1) {
+                if(laneFlag[tgtLane] != FALSE) {
+                    break;
+                }
+                tgtLane = (tgtLane+1)%5;
+            }
+            OSReport("<RANDOM>\n %d\n", tgtLane);
+        }
+    }
+    timer = MgTimerCreate(MGTIMER_TYPE_NORMAL);
+    MgTimerPosSet(timer, 528.0f, 64.0f);
+    MgTimerParamSet(timer, 300, 0, 0);
+    MgTimerModeOnSet(timer, MGTIMER_OFFTYPE_FADEOUT);
+    espDispOn(espId2);
+    espPosSet(espId2, 160.0f, 88.0f+52.0f*curLane);
+    while(1) {
+        if(obj->comF != FALSE) {
+            HuPrcSleep(19);
+            decF = FALSE;
+            if(tgtLane > curLane) {
+                incF = TRUE;
+            }
+            else {
+                incF = FALSE;
+            }
+            if(tgtLane == curLane) {
+                selF = TRUE;
+            }
+            else {
+                selF = FALSE;
+            }
+        }
+        else {
+            decF = HuPadDStkRep[padNo] & 0x8;
+            incF = HuPadDStkRep[padNo] & 0x4;
+            selF = HuPadBtnDown[padNo] & 0x100;
+        }
+        if(decF) {
+            HuAudFXPlay(0);
+            do {
+                curLane--;
+                if(curLane < 0) {
+                    curLane = 4;
+                }
+            } while(laneFlag[curLane] == FALSE);
+        }
+        if(incF) {
+            HuAudFXPlay(0);
+            do {
+                curLane++;
+                if(curLane >= 5) {
+                    curLane = 0;
+                }
+            } while(laneFlag[curLane] == FALSE);
+        }
+        espPosSet(espId2, 160.0f, 91.0f+52.0f*curLane);
+        if(MgTimerDoneCheck(timer) || selF) {
+            HuAudFXPlay(2);
+            espDispOff(espId2);
+            fn_1_105C0(ehdId);
+            espDrawNoSet(ehdId, 0x40);
+            espScaleSet(ehdId, 1.0f, 1.0f);
+            espPosSet(ehdId, 100.0f, 91.0f+52.0f*curLane);
+            lbl_1_bss_48[playerNo] = curLane;
+            break;
+        }
+        HuPrcSleep(0);
+    }
+    for(i=0; i<10; i++) {
+        fn_1_F750(lbl_1_bss_108[i]);
+    }
+    if(!MgTimerDoneCheck(timer)) {
+        MgTimerModeOffSet(timer);
+    }
+    HuPrcSleep(9);
+    if(timer->stopF == FALSE) {
+        timer->stopF = TRUE;
+        timer->mode = MGTIMER_MODE_ON;
+    }
+    while(MgTimerModeGet(timer) != MGTIMER_MODE_OFF) {
+        HuPrcSleep(0);
+    }
+    MgTimerKill(timer);
+}
+
+typedef struct M540ViewParam_s {
+    HuVecF center;
+    HuVecF rot;
+    float zoom;
+} M540_VIEWPARAM;
+
+static void fn_1_4334(void)
+{
+    static const M540_VIEWPARAM lbl_1_rodata_468 = {
+        { -10650.0f, 244.8f, 175.8f },
+        { -9.125f, 0.0f, 0.0f },
+        2380.0f
+    };
+    static const HuVecF lbl_1_rodata_484[3] = {
+        { -10650.0f, 3002.0f, 3002.0f },
+        { 0.0f, 1.0f, 0.0f },
+        { -10650.0f, 0.0f, -2001.0f }
+    };
+    M540_CAMERA *cam;
+    M540_CAMERAVIEW *view;
+    M540_OBJ *cart;
+    M540_OBJ *obj;
+    int i;
+    lbl_1_bss_1C = 4;
+    for(i=0; i<4; i++) {
+        fn_1_C8D8(lbl_1_bss_CC[i], lbl_1_bss_E0[lbl_1_bss_48[lbl_1_bss_CC[i]->playerNo]]);
+    }
+    for(i=0; i<4; i++) {
+        cart = fn_1_CB34(lbl_1_bss_CC[i]);
+        fn_1_7F9C(cart, i);
+        fn_1_84BC(cart);
+    }
+    fn_1_7F9C(lbl_1_bss_DC, 4);
+    fn_1_84BC(lbl_1_bss_DC);
+    fn_1_801C(lbl_1_bss_DC);
+    fn_1_707C(lbl_1_bss_F4, -5250.0f, 250.0f, -1200.0f);
+    obj = lbl_1_bss_5C;
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -9750.0f, obj->pos.y = 300.0f, obj->pos.z = 0.0f);
+    obj = lbl_1_bss_5C;
+    Hu3DModelRotSet(obj->modelId, obj->rot.x = 0.0f, obj->rot.y = -90.0f, obj->rot.z = 0.0f);
+    obj = lbl_1_bss_A4[0];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -8650.0f, obj->pos.y = 500.0f, obj->pos.z = -1500.0f);
+    obj = lbl_1_bss_A4[1];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -10450.0f, obj->pos.y = 500.0f, obj->pos.z = -1900.0f);
+    obj = lbl_1_bss_A4[2];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -9650.0f, obj->pos.y = 400.0f, obj->pos.z = -2600.0f);
+    obj = lbl_1_bss_A4[3];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -12250.0f, obj->pos.y = 250.0f, obj->pos.z = -2500.0f);
+    obj = lbl_1_bss_A4[4];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -3650.0f, obj->pos.y = 500.0f, obj->pos.z = -1500.0f);
+    obj = lbl_1_bss_A4[5];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -6850.0f, obj->pos.y = 400.0f, obj->pos.z = -1900.0f);
+    obj = lbl_1_bss_A4[6];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -1750.0f, obj->pos.y = 550.0f, obj->pos.z = -3500.0f);
+    obj = lbl_1_bss_A4[7];
+    Hu3DModelPosSet(obj->modelId, obj->pos.x = -1000.0f, obj->pos.y = 500.0f, obj->pos.z = -4000.0f);
+    cam = lbl_1_bss_138;
+    cam->view[1] = cam->view[0];
+    cam->view[2] = cam->view[0];
+    cam->view[2].center = lbl_1_rodata_468.center;
+    cam->view[2].rot = lbl_1_rodata_468.rot;
+    cam->view[2].zoom = lbl_1_rodata_468.zoom;
+    for(i=0; i<3; i++) {
+        view = &cam->view[i];
+        view->pos.x = view->center.x + view->zoom*(sin(3.141592653589793*view->rot.y/180.0)*cos(3.141592653589793*view->rot.x/180.0));
+        view->pos.y = view->center.y - view->zoom*sin(3.141592653589793*view->rot.y/180.0);
+        view->pos.z = view->center.z + view->zoom*(cos(3.141592653589793*view->rot.y/180.0)*cos(3.141592653589793*view->rot.x/180.0));
+        view->up.x = sin(3.141592653589793*view->rot.y/180.0)*sin(3.141592653589793*view->rot.x/180.0);
+        view->up.y = cos(3.141592653589793*view->rot.x/180.0);
+        view->up.z = cos(3.141592653589793*view->rot.y/180.0)*sin(3.141592653589793*view->rot.x/180.0);
+    }
+    cam->time = 1;
+    cam->mode = 1;
+    HuPrcSleep(9);
+    Hu3DShadowMultiPosSet((HuVecF *)&lbl_1_rodata_484[0], (HuVecF *)&lbl_1_rodata_484[1], (HuVecF *)&lbl_1_rodata_484[2], 4);
+    WipeColorSet(255, 255, 255);
+    WipeCreate(1, 5, 40);
+    while(WipeCheckEnd() & 0xFF000000) {
+        HuPrcVSleep();
+    }
+    fn_1_EFE4(lbl_1_bss_3C);
+    fn_1_78DC(lbl_1_bss_F4, 2);
+    fn_1_7660(lbl_1_bss_F4);
+    fn_1_E7E0(lbl_1_bss_5C);
+    HuPrcSleep(89);
+    lbl_1_bss_14 = HuAudSStreamPlay(75);
+    for(i=0; i<4; i++) {
+        cart = fn_1_CB34(lbl_1_bss_CC[i]);
+        fn_1_8570(cart);
+    }
+    fn_1_8570(lbl_1_bss_DC);
+    HuPrcSleep(89);
+}
+
 static void fn_1_15C(void)
 {
     while(!omSysExitReq) {
@@ -272,19 +537,6 @@ static void fn_1_5588(int no)
     } else {
         work->unk10 = 1;
     }
-}
-
-static void fn_1_2C20(s16 mode, s16 frameNo)
-{
-    HuPrcSleep(0xC7);
-    MgSeqModeNext();
-}
-
-static void fn_1_618C(s16 mode, s16 frameNo)
-{
-    HuAudJinglePlay(0x79);
-    fn_1_D09C(lbl_1_bss_40);
-    MgSeqModeNext();
 }
 
 static M540_OBJ *fn_1_61C4(void)
@@ -552,8 +804,8 @@ static void fn_1_6C3C(void)
     up.y = 1;
     C_MTXLookAt(lookAt, &eye, &up, &target);
     GXLoadPosMtxImm(lookAt, GX_PNMTX0);
-    eye.x = 1.2f*(80000.0*-sin(0.5f*camera->fov));
-    eye.y = 0.8333333f*(80000.0*-sin(0.5f*camera->fov));
+    eye.x = 1.2f*(80000.0*-sin(camera->fov*lbl_1_rodata_2A4));
+    eye.y = 0.8333333f*(80000.0*-sin(camera->fov*lbl_1_rodata_2A4));
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-eye.x, -eye.y, -23000);
     GXPosition3f32(eye.x, -eye.y, -23000);
@@ -1701,32 +1953,6 @@ static M540_OBJFUNC lbl_1_data_D8[] = {
     fn_1_D3F8
 };
 
-static const u32 lbl_1_rodata_9B0[4] = {
-    DATANUM(DATA_m540, 0x6B),
-    DATANUM(DATA_m540, 0x6C),
-    DATANUM(DATA_m540, 0x6D),
-    DATANUM(DATA_m540, 0x6E)
-};
-
-static M540_OBJFUNC lbl_1_data_F8[] = {
-    fn_1_DED8,
-    fn_1_DF8C,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-static M540_OBJFUNC lbl_1_data_134[] = {
-    fn_1_EF3C,
-    fn_1_EFF0
-};
-
-static M540_OBJFUNC lbl_1_data_150[] = {
-    fn_1_100B8,
-    fn_1_101EC
-};
-
 static M540_OBJ *fn_1_BCF0(int playerNo)
 {
     M540_OBJ *obj;
@@ -1806,11 +2032,12 @@ static void fn_1_BF4C(M540_OBJ *obj)
 
 static void fn_1_C2CC(M540_OBJ *obj)
 {
-    M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
     int motNo;
     float speed;
     HuVecF pos;
     HuVecF rot;
+    M540_PLAYERWORK *work;
+    work = M540_OBJWORK(M540_PLAYERWORK, obj);
     fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
     fn_1_13580(obj, &rot.x, &rot.y, &rot.z);
     motNo = 0;
@@ -1864,6 +2091,7 @@ static void fn_1_C800(M540_OBJ *obj)
 
 static void fn_1_C8D8(M540_OBJ *obj, M540_OBJ *cart)
 {
+    char *name;
     M540_CARTWORK *cartWork = M540_OBJWORK(M540_CARTWORK, cart);
     M540_PLAYERWORK *work = M540_OBJWORK(M540_PLAYERWORK, obj);
     fn_1_13498(obj, 0, 0, 0);
@@ -1871,7 +2099,8 @@ static void fn_1_C8D8(M540_OBJ *obj, M540_OBJ *cart)
     cartWork->rider = obj;
     CharMotionVoiceOnSet(obj->charNo, ((u32 *)lbl_1_rodata_120)[(obj->charNo*7)+6], FALSE);
     fn_1_13874(obj, 6, 0, 0, HU3D_MOTATTR_PAUSE);
-    fn_1_139C8(cart, fn_1_8438(cart), obj);
+    name = fn_1_8438(cart);
+    fn_1_139C8(cart, name, obj);
     fn_1_1352C(obj, 0, 90.0f, 0);
     obj->mode = 5;
 }
@@ -1960,6 +2189,13 @@ static void fn_1_CB5C(M540_OBJ *obj)
     obj->mode = 0;
 }
 
+static void fn_1_618C(s16 mode, s16 frameNo)
+{
+    HuAudJinglePlay(121);
+    fn_1_D09C(lbl_1_bss_40);
+    MgSeqModeNext();
+}
+
 static void fn_1_D09C(M540_OBJ *obj)
 {
     obj->mode = 4;
@@ -2016,16 +2252,11 @@ static void fn_1_D3F8(M540_OBJ *obj)
     }
 }
 
+/* M540_APPEND */
+
 static void fn_1_DECC(M540_OBJ *obj)
 {
     obj->mode = 0;
-}
-
-static void fn_1_DED8(M540_OBJ *obj)
-{
-    while(1) {
-        M540_OBJ_SLEEP(1);
-    }
 }
 
 static void fn_1_DF80(M540_OBJ *obj)
@@ -2033,116 +2264,9 @@ static void fn_1_DF80(M540_OBJ *obj)
     obj->mode = 1;
 }
 
-static M540_OBJ *fn_1_DDF8(int no)
-{
-    HU3DMODELID modelId;
-    M540_CAMERAWORK *work;
-    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, lbl_1_rodata_9B0[no], 0, NULL, 2, lbl_1_data_F8);
-    Hu3DModelAttrSet(obj->modelId, 0x4000);
-    Hu3DModelCameraSet(obj->modelId, 4);
-    work = M540_OBJWORK(M540_CAMERAWORK, obj);
-    work->no = no;
-    obj->dispF = TRUE;
-    Hu3DModelAttrReset(obj->modelId, 1);
-    modelId = obj->modelId;
-    Hu3DModelAttrReset(modelId, 0x40000002);
-    Hu3DModelAttrSet(modelId, 0x40000001);
-    return obj;
-}
-
-static void fn_1_E294(M540_OBJ *obj, float x, float y, float z)
-{
-    M540_CAMERAWORK *work = M540_OBJWORK(M540_CAMERAWORK, obj);
-    fn_1_13498(obj, x, y, z);
-    if(work->no == 0) {
-        Hu3DModelPosSet(work->mdlIdA, x, 90.0f+y, z);
-        Hu3DModelPosSet(work->mdlIdB, x-500.0f, 900.0f+y, z);
-    }
-}
-
-// NONMATCHING: work pointer hoisted out of the loop; target recomputes it per iteration
-// and keeps the three floats in f29/f30/f31 instead of reloading a stack struct.
-static void fn_1_E43C(M540_OBJ *obj)
-{
-    M540_CAMERAWORK *work = M540_OBJWORK(M540_CAMERAWORK, obj);
-    M540_POS3 pos;
-    while(1) {
-        fn_1_134EC(obj, &pos.x, &pos.y, &pos.z);
-        pos.x += 2.0f;
-        fn_1_13498(obj, pos.x, pos.y, pos.z);
-        if(work->no == 0) {
-            Hu3DModelPosSet(work->mdlIdA, pos.x, 90.0f+pos.y, pos.z);
-            Hu3DModelPosSet(work->mdlIdB, pos.x-500.0f, 900.0f+pos.y, pos.z);
-        }
-        M540_OBJ_SLEEP(1);
-    }
-}
-
-// NONMATCHING: target frames 0x20 and returns the result through r28/r29 copies;
-// this spelling forwards fn_1_12F80's result straight out of a 0x10 frame.
-static M540_OBJ *fn_1_EDE4(void)
-{
-    return fn_1_12F80(0x1000, 0x2000, 2, lbl_1_data_134);
-}
-
-// NONMATCHING: 2 rows differ in the register MWCC picks for the motNo=0 store;
-// the call setup and the mode=0 store are byte-identical.
-static void fn_1_F640(M540_OBJ *obj)
-{
-    obj->motNo = 0;
-    fn_1_13874(obj, 0, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
-    obj->mode = 0;
-}
-
-// NONMATCHING: same 2-row register tie-break as fn_1_F640.
-static void fn_1_F750(M540_OBJ *obj)
-{
-    obj->motNo = 1;
-    fn_1_13874(obj, 1, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
-    obj->mode = 1;
-}
-
-static M540_OBJ *fn_1_10020(void)
-{
-    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, DATANUM(DATA_m540, 0x67), 0, NULL, 2, lbl_1_data_150);
-    HU3DMODELID modelId;
-    Hu3DModelCameraSet(obj->modelId, 4);
-    modelId = obj->modelId;
-    Hu3DModelAttrReset(modelId, 0x40000002);
-    Hu3DModelAttrSet(modelId, 0x40000001);
-    return obj;
-}
-
-static void fn_1_10190(M540_OBJ *obj, float x, float y, float z)
-{
-    fn_1_13498(obj, x, y, z);
-    obj->mode = 1;
-}
-
-// NONMATCHING: target reloads lbl_1_bss_60[i] through a single indexed lwz and
-// stores the mode constant in r0; this spelling rebuilds the element address per iteration.
-static void fn_1_102F4(float x, float y, float z)
-{
-    int i;
-    for(i=0; i<4; i++) {
-        if(lbl_1_bss_60[i]->mode == 0) {
-            fn_1_13498(lbl_1_bss_60[i], x, y, z);
-            lbl_1_bss_60[i]->mode = 1;
-            break;
-        }
-    }
-}
-
 static void fn_1_E37C(M540_OBJ *obj)
 {
     obj->mode = 0;
-}
-
-static void fn_1_E388(M540_OBJ *obj)
-{
-    while(1) {
-        M540_OBJ_SLEEP(1);
-    }
 }
 
 static void fn_1_E430(M540_OBJ *obj)
@@ -2153,13 +2277,6 @@ static void fn_1_E430(M540_OBJ *obj)
 static void fn_1_E72C(M540_OBJ *obj)
 {
     obj->mode = 0;
-}
-
-static void fn_1_E738(M540_OBJ *obj)
-{
-    while(1) {
-        M540_OBJ_SLEEP(1);
-    }
 }
 
 static void fn_1_E7E0(M540_OBJ *obj)
@@ -2177,33 +2294,17 @@ static void fn_1_EF30(M540_OBJ *obj)
     obj->mode = 0;
 }
 
-static void fn_1_EF3C(M540_OBJ *obj)
-{
-    while(1) {
-        M540_OBJ_SLEEP(1);
-    }
-}
-
 static void fn_1_EFE4(M540_OBJ *obj)
 {
     obj->mode = 1;
 }
 
-static void fn_1_F6A8(M540_OBJ *obj)
-{
-    while(1) {
-        M540_OBJ_SLEEP(1);
-    }
-}
-
-static void fn_1_F7B8(M540_OBJ *obj)
-{
-    while(1) {
-        M540_OBJ_SLEEP(1);
-    }
-}
-
 static void fn_1_F924(M540_OBJ *obj)
+{
+    obj->mode = 0;
+}
+
+static void fn_1_100AC(M540_OBJ *obj)
 {
     obj->mode = 0;
 }
@@ -2213,82 +2314,504 @@ static void fn_1_FCB8(M540_OBJ *obj)
     obj->mode = 2;
 }
 
-static void fn_1_100AC(M540_OBJ *obj)
-{
-    obj->mode = 0;
-}
-
 static int fn_1_103A0(void)
 {
     return lbl_1_bss_1C;
 }
 
-static void fn_1_10878(M540_OBJ *obj)
+static void fn_1_10878(void)
 {
 }
 
-static float fn_1_11458(float *a, float *b)
+static void fn_1_DED8(void)
 {
-    return a[0]*b[0] + a[1]*b[1];
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
 }
 
-static float fn_1_11478(float *a, float *b)
+static void fn_1_E388(void)
 {
-    return a[0]*b[1] - a[1]*b[0];
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
 }
 
-/* M540_APPEND */
+static void fn_1_E738(void)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
 
-/*
- * REMAINING TRIAGE -- 64 functions, 55368 of 88204 code bytes.
- * Regenerate with: python tools\unit_status.py m540Dll
- * Ranked by expected payoff (bytes recovered) then by tractability.
- *
- * BAND A -- >=1000 bytes, 16 functions, 39824 bytes (72% of what is left).
- * These dominate the metric; nothing else can move the number as much.
- *   fn_1_FFC   7204  missing  largest single item
- *   fn_1_2C74  4260  missing
- *   fn_1_9080  4080  97.42%  already written; pervasive register reallocation, DO NOT RETRY
- *   fn_1_1D4   3624  missing  assert.cpp; ends in blr, plain external call, not inlined
- *   fn_1_566C  2848  missing
- *   fn_1_4334  2312  missing
- *   fn_1_4C3C  2260  missing
- *   fn_1_12818 1896  missing
- *   fn_1_B600  1748  98.38%  register allocation + one extra spill, DO NOT RETRY
- *   fn_1_11A50 1612  missing
- *   fn_1_3D18  1564  missing
- *   fn_1_EFF0  1356  missing
- *   fn_1_CB5C  1344  92.81%  frame 0x140 vs target 0x160; needs 32 bytes more of named locals
- *   fn_1_D61C  1332  missing
- *   fn_1_C2CC  1296  99.38%  pure r30/r31 swap, 39 rows, DO NOT RETRY
- *   fn_1_6C3C  1088  98.49%  6 rows, looks like operand evaluation-order swap -- cheap to retry
- *
- * BAND B -- 100..999 bytes, 43 functions, 15152 bytes. Best bytes-per-session ratio.
- *   fn_1_1087C 940 missing   fn_1_EA9C 840 missing   fn_1_DB50 680 missing
- *   fn_1_E7EC  676 missing   fn_1_111B8 672 missing  fn_1_12578 672 missing
- *   fn_1_1222C 664 missing   fn_1_10C28 616 missing  fn_1_FCC4 592 missing
- *   fn_1_FA8C  556 missing   fn_1_11618 456 missing  fn_1_E43C 444 92.87%
- *   fn_1_DF8C  408 missing   fn_1_1209C 400 missing  fn_1_11498 384 missing
- *   fn_1_D4A0  380 missing   fn_1_E124 368 missing   fn_1_10F44 356 missing
- *   fn_1_C8D8  344 98.60%    fn_1_EDE4 332 92.43%    fn_1_E5F8 308 missing
- *   fn_1_110A8 272 missing   fn_1_FF14 268 missing   fn_1_101EC 264 missing
- *   fn_1_F53C  260 missing   fn_1_11960 240 missing  fn_1_106C8 236 missing
- *   fn_1_100B8 216 missing   fn_1_F930 200 missing   fn_1_F860 196 missing
- *   fn_1_10508 184 missing   fn_1_10E90 180 missing  fn_1_10614 180 missing
- *   fn_1_124C4 180 missing   fn_1_10404 176 missing  fn_1_102F4 172 88.02%
- *   fn_1_F9F8  148 missing   fn_1_11868 144 missing  fn_1_117E0 136 missing
- *   fn_1_118F8 104 missing   fn_1_F640 104 92.31%   fn_1_F750 104 92.31%
- *   fn_1_10814 100 missing
- *
- * BAND C -- <100 bytes, 5 functions, 392 bytes. Do these first, they are pure profit.
- *   fn_1_107B4 96   fn_1_103B0 84   fn_1_104B4 84   fn_1_105C0 84   fn_1_2C48 44
- *
- * ALREADY TRIED AND REJECTED -- do not spend a session here again:
- *   fn_1_C8D8 hoisting `char *name = fn_1_8438(cart);` to the top: 6 -> 20 differing rows.
- *   fn_1_C8D8 declaring `work` before `cartWork`: 6 -> 10 differing rows.
- *   fn_1_C2CC / fn_1_B600 / fn_1_9080: MWCC register-allocation tie-break, no C spelling found.
- *   fn_1_CB5C: not a codegen problem, a stack-frame-size problem (needs 32 more bytes).
- *
- * CAPS CLEARED, do not re-check: no .ctors section, no "singleton.h" string in this unit.
- * No 8-byte adjustor-thunk wall. Rebuilt .bss layout already matches the target exactly.
- */
+static void fn_1_EF3C(void)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F6A8(void)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F7B8(void)
+{
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_F640(M540_OBJ *obj)
+{
+    fn_1_13874(obj, 0, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
+    obj->mode = 0;
+}
+
+static void fn_1_F750(M540_OBJ *obj)
+{
+    fn_1_13874(obj, 1, 0.0f, 8.0f, HU3D_MOTATTR_LOOP);
+    obj->mode = 1;
+}
+
+static void fn_1_F9F8(M540_OBJ *obj, float x, float y, float z)
+{
+    fn_1_13498(obj, x, y, z);
+    fn_1_1352C(obj, 0.0f, 0.0f, 0.0f);
+    obj->mode = 1;
+}
+
+static void fn_1_10190(M540_OBJ *obj, float x, float y, float z)
+{
+    fn_1_13498(obj, x, y, z);
+    obj->mode = 1;
+}
+
+static void fn_1_F930(M540_OBJ *obj)
+{
+    obj->dispF = FALSE;
+    Hu3DModelAttrSet(obj->modelId, 1);
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_100B8(M540_OBJ *obj)
+{
+    obj->dispF = FALSE;
+    Hu3DModelAttrSet(obj->modelId, 1);
+    Hu3DModelAttrSet(obj->modelId, HU3D_MOTATTR_PAUSE);
+    while(1) {
+        M540_OBJ_SLEEP(1);
+    }
+}
+
+static void fn_1_101EC(M540_OBJ *obj)
+{
+    int i;
+    HU3DMODELID modelId;
+    Hu3DMotionTimeSet(obj->modelId, 0.0f);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
+    obj->dispF = TRUE;
+    Hu3DModelAttrReset(obj->modelId, 1);
+    for(i = 0; i < 60; i++) {
+        M540_OBJ_SLEEP(1);
+    }
+    obj->mode = 0;
+}
+
+static void fn_1_102F4(float x, float y, float z)
+{
+    int i;
+    M540_OBJ *obj;
+    for(i = 0; i < 4; i++) {
+        if(lbl_1_bss_60[i]->mode == 0) {
+            obj = lbl_1_bss_60[i];
+            fn_1_13498(obj, x, y, z);
+            obj->mode = 1;
+            break;
+        }
+    }
+}
+
+static void fn_1_10404(void);
+static void fn_1_10508(void);
+static void fn_1_10614(void);
+
+static void fn_1_103B0(HU3DMODELID modelId)
+{
+    HUPROCESS *prc;
+    prc = HuPrcChildCreate(fn_1_10404, 0xFF0, 0x1000, 0, HuPrcCurrentGet());
+    prc->property = (void *)(s32)modelId;
+}
+
+static void fn_1_104B4(HU3DMODELID modelId)
+{
+    HUPROCESS *prc;
+    prc = HuPrcChildCreate(fn_1_10508, 0xFF0, 0x1000, 0, HuPrcCurrentGet());
+    prc->property = (void *)(s32)modelId;
+}
+
+static void fn_1_105C0(HU3DMODELID modelId)
+{
+    HUPROCESS *prc;
+    prc = HuPrcChildCreate(fn_1_10614, 0xFF0, 0x1000, 0, HuPrcCurrentGet());
+    prc->property = (void *)(s32)modelId;
+}
+
+static void fn_1_10404(void)
+{
+    float t;
+    float step;
+    HU3DMODELID modelId;
+    t = 0.0f;
+    step = 0.011f;
+    modelId = (HU3DMODELID)(s32)HuPrcCurrentGet()->property;
+    while(1) {
+        Hu3DModelTPLvlSet(modelId, 1.0f-t);
+        HuPrcVSleep();
+        t += step;
+        if(t >= 1.0f) {
+            break;
+        }
+    }
+    Hu3DModelAttrSet(modelId, 1);
+    HuPrcEnd();
+}
+
+static void fn_1_10508(void)
+{
+    float t;
+    float step;
+    HU3DMODELID modelId;
+    t = 0.0f;
+    step = 0.016667f;
+    modelId = (HU3DMODELID)(s32)HuPrcCurrentGet()->property;
+    Hu3DModelAttrReset(modelId, 1);
+    while(1) {
+        Hu3DModelTPLvlSet(modelId, t);
+        HuPrcVSleep();
+        t += step;
+        if(t >= 1.0f) {
+            break;
+        }
+    }
+    Hu3DModelTPLvlSet(modelId, 1.0f);
+    HuPrcEnd();
+}
+
+static void fn_1_10614(void)
+{
+    float t;
+    float step;
+    s16 espId;
+    t = 0.0f;
+    step = 0.016667f;
+    espId = (s16)(s32)HuPrcCurrentGet()->property;
+    espDispOn(espId);
+    while(1) {
+        espTPLvlSet(espId, t);
+        HuPrcVSleep();
+        t += step;
+        if(t >= 1.0f) {
+            break;
+        }
+    }
+    espTPLvlSet(espId, 1.0f);
+    HuPrcEnd();
+}
+
+static float fn_1_11498(HuVec2f *a)
+{
+    return sqrt(HuSquare(a->x)+HuSquare(a->y));
+}
+
+static void fn_1_11618(HuVec2f *a, HuVec2f *b)
+{
+    float scale = 1/fn_1_11498(b);
+    a->x = b->x*scale;
+    a->y = b->y*scale;
+}
+
+static float fn_1_11458(HuVec2f *a, HuVec2f *b)
+{
+    return (a->x*b->x)+(a->y*b->y);
+}
+
+static float fn_1_11478(HuVec2f *a, HuVec2f *b)
+{
+    return (a->x*b->y)-(a->y*b->x);
+}
+
+static BOOL fn_1_117E0(HuVecF *a, HuVecF *b)
+{
+    float dx = a->x-b->x;
+    float dy = a->y-b->y;
+    float r = b->z;
+    return ((dx*dx)+(dy*dy) > (r*r)) ? FALSE : TRUE;
+}
+
+static BOOL fn_1_11868(HuVecF *a, HuVecF *b)
+{
+    float dx = a->x-b->x;
+    float dy = a->y-b->y;
+    float r = a->z+b->z;
+    return ((dx*dx)+(dy*dy) < (r*r)) ? TRUE : FALSE;
+}
+
+static BOOL fn_1_118F8(float *a, float *b)
+{
+    if(a[0] > b[2]) {
+        return FALSE;
+    }
+    if(a[2] < b[0]) {
+        return FALSE;
+    }
+    if(a[1] > b[3]) {
+        return FALSE;
+    }
+    if(a[3] < b[1]) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL fn_1_124C4(float *a, float *b)
+{
+    float dx = a[0]-b[0];
+    float dy = a[1]-b[1];
+    float dz = a[2]-b[2];
+    float r = a[3]+b[3];
+    return ((dz*dz)+((dx*dx)+(dy*dy)) < (r*r)) ? TRUE : FALSE;
+}
+
+static M540_OBJ *fn_1_D4A0(int arg0)
+{
+    static const u32 lbl_1_rodata_930[19] = {
+        DATANUM(DATA_m540, 0x75),
+        DATANUM(DATA_m540, 0x76),
+        DATANUM(DATA_m540, 0x77),
+        DATANUM(DATA_m540, 0x78),
+        DATANUM(DATA_m540, 0x79),
+        DATANUM(DATA_m540, 0x74),
+        DATANUM(DATA_mgconst, 0x0E),
+        DATANUM(DATA_mgconst, 0x0F),
+        DATANUM(DATA_mgconst, 0x10),
+        DATANUM(DATA_mgconst, 0x11),
+        DATANUM(DATA_mgconst, 0x12),
+        DATANUM(DATA_mgconst, 0x14),
+        DATANUM(DATA_mgconst, 0x15),
+        DATANUM(DATA_mgconst, 0x16),
+        DATANUM(DATA_mgconst, 0x17),
+        DATANUM(DATA_mgconst, 0x18),
+        DATANUM(DATA_mgconst, 0x19),
+        DATANUM(DATA_mgconst, 0x1A),
+        DATANUM(DATA_mgconst, 0x1B)
+    };
+    M540_OBJ *obj = fn_1_12F80(0x1000, 0x2000, 1, NULL);
+    s16 *espId = M540_OBJWORK(s16, obj);
+    int i;
+    for(i=0; i<19; i++) {
+        espId[i] = espEntry(lbl_1_rodata_930[i], 0, 0);
+        espDispOff(espId[i]);
+        espDrawNoSet(espId[i], 0x40);
+    }
+    return obj;
+}
+
+static M540_OBJFUNC lbl_1_data_F8[] = {
+    (M540_OBJFUNC)fn_1_DED8,
+    fn_1_DF8C,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+static M540_OBJ *fn_1_DDF8(int no)
+{
+    static const u32 lbl_1_rodata_9B0[4] = {
+        DATANUM(DATA_m540, 0x6B),
+        DATANUM(DATA_m540, 0x6C),
+        DATANUM(DATA_m540, 0x6D),
+        DATANUM(DATA_m540, 0x6E)
+    };
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, lbl_1_rodata_9B0[no], 0, NULL, 2, lbl_1_data_F8);
+    HU3DMODELID modelId;
+    Hu3DModelAttrSet(obj->modelId, HU3D_ATTR_NOCULL);
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM2);
+    M540_OBJWORK(int, obj)[0] = no;
+    obj->dispF = TRUE;
+    Hu3DModelAttrReset(obj->modelId, HU3D_ATTR_DISPOFF);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
+    return obj;
+}
+
+static M540_OBJFUNC lbl_1_data_110[] = {
+    (M540_OBJFUNC)fn_1_E388,
+    fn_1_E43C
+};
+
+typedef struct M540_E124Work_s {
+    int no;
+    HU3DMODELID mdlId[2];
+} M540_E124WORK;
+
+static M540_OBJ *fn_1_E124(int no)
+{
+    static const u32 lbl_1_rodata_9C0[2] = {
+        DATANUM(DATA_m540, 0x6F),
+        DATANUM(DATA_m540, 0x70)
+    };
+    static const u32 lbl_1_rodata_9C8[2] = {
+        DATANUM(DATA_m540, 0x64),
+        DATANUM(DATA_m540, 0x65)
+    };
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, lbl_1_rodata_9C0[no], 0, NULL, 2, lbl_1_data_110);
+    HU3DMODELID modelId;
+    M540_E124WORK *work = M540_OBJWORK(M540_E124WORK, obj);
+    int i;
+    work->no = no;
+    obj->dispF = TRUE;
+    Hu3DModelAttrSet(obj->modelId, HU3D_ATTR_ZWRITE_OFF);
+    Hu3DModelAttrSet(obj->modelId, HU3D_ATTR_NOCULL);
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM2);
+    Hu3DModelAttrReset(obj->modelId, HU3D_ATTR_DISPOFF);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
+    if(no == 0) {
+        for(i=0; i<2; i++) {
+            work->mdlId[i] = Hu3DModelCreateData(lbl_1_rodata_9C8[i]);
+            Hu3DModelCameraSet(work->mdlId[i], HU3D_CAM2);
+            Hu3DModelAttrSet(work->mdlId[i], HU3D_ATTR_NOCULL);
+            Hu3DModelAttrSet(work->mdlId[i], HU3D_MOTATTR_LOOP);
+        }
+        Hu3DMotionSpeedSet(work->mdlId[0], 0.2f);
+    }
+    return obj;
+}
+
+static M540_OBJFUNC lbl_1_data_118[] = {
+    (M540_OBJFUNC)fn_1_E738,
+    fn_1_E7EC,
+    fn_1_EA9C
+};
+
+static M540_OBJ *fn_1_E5F8(void)
+{
+    static const u32 lbl_1_rodata_9D4[1] = {
+        DATANUM(DATA_m540, 0x72)
+    };
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, DATANUM(DATA_m540, 0x71), 1, (u32 *)lbl_1_rodata_9D4, 3, lbl_1_data_118);
+    HU3DMODELID modelId;
+    HU3DMODELID *mdlId = M540_OBJWORK(HU3DMODELID, obj);
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM2);
+    Hu3DModelAttrSet(obj->modelId, HU3D_ATTR_NOCULL);
+    obj->dispF = TRUE;
+    Hu3DModelAttrReset(obj->modelId, HU3D_ATTR_DISPOFF);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
+    Hu3DModelShadowSet(obj->modelId);
+    obj->motNo = 0;
+    Hu3DMotionShiftSet(obj->modelId, obj->motId[0], 0.0f, 0.0f, HU3D_MOTATTR_LOOP);
+    mdlId[0] = Hu3DModelCreateData(DATANUM(DATA_m540, 0x73));
+    Hu3DModelShadowSet(mdlId[0]);
+    Hu3DModelHookSet(obj->modelId, "itemhook_A", mdlId[0]);
+    return obj;
+}
+
+typedef struct M540_E294Work_s {
+    int type;
+    HU3DMODELID mdlId[2];
+} M540_E294WORK;
+
+static void fn_1_E294(M540_OBJ *obj, float x, float y, float z)
+{
+    M540_E294WORK *work = M540_OBJWORK(M540_E294WORK, obj);
+    fn_1_13498(obj, x, y, z);
+    if(work->type == 0) {
+        Hu3DModelPosSet(work->mdlId[0], x, 90.0f+y, z);
+        Hu3DModelPosSet(work->mdlId[1], x-500.0f, 900.0f+y, z);
+    }
+}
+
+static void fn_1_DF8C(M540_OBJ *obj)
+{
+    HuVecF pos;
+    int i;
+    int loop = 1;
+    Hu3DMotionTimeSet(obj->modelId, frandmod(0x50));
+    pos.x = obj->pos.x;
+    pos.y = obj->pos.y;
+    pos.z = obj->pos.z;
+    pos.x += 1.0f;
+    fn_1_13498(obj, pos.x, pos.y, pos.z);
+    for(i=0; i<loop; i++) {
+        HuPrcVSleep();
+        if(M540_CUROBJ->mode != M540_CUROBJ->prevMode) {
+            return;
+        }
+        M540_CUROBJ->prevMode = M540_CUROBJ->mode;
+    }
+    Hu3DMotionTimeSet(obj->modelId, frandmod(0x50));
+    pos.x = obj->pos.x;
+    pos.y = obj->pos.y;
+    pos.z = obj->pos.z;
+    pos.x += 1.0f;
+    fn_1_13498(obj, pos.x, pos.y, pos.z);
+}
+
+static void fn_1_FF14(float x, float z)
+{
+    float y = 2000.0f+lbl_1_bss_38;
+    int i;
+    for(i=0; i<4; i++) {
+        if(lbl_1_bss_70[i]->mode == 0) {
+            M540_OBJ *obj = lbl_1_bss_70[i];
+            fn_1_13498(obj, y, x, z);
+            fn_1_1352C(obj, 0.0f, -90.0f, 0.0f);
+            obj->mode = 1;
+            return;
+        }
+    }
+}
+
+static M540_OBJFUNC lbl_1_data_150[] = {
+    fn_1_100B8,
+    fn_1_101EC
+};
+
+static M540_OBJ *fn_1_10020(void)
+{
+    M540_OBJ *obj = fn_1_13174(0x1000, 0x2000, DATANUM(DATA_m540, 0x67), 0, NULL, 2, lbl_1_data_150);
+    HU3DMODELID modelId;
+    Hu3DModelCameraSet(obj->modelId, HU3D_CAM2);
+    modelId = obj->modelId;
+    Hu3DModelAttrReset(modelId, HU3D_MOTATTR_PAUSE);
+    Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
+    return obj;
+}
+
+typedef struct M540_MdlMirror_s {
+    u8 pad[0x120];
+    void *hookObj;
+} M540_MDLMIRROR;
+
+static void fn_1_10814(HU3DMODELID *argId)
+{
+    Hu3DModelAttrSet(argId[2], 1);
+    {
+        M540_MDLMIRROR *mdlP = (M540_MDLMIRROR *)(((u8 *)Hu3DData) + argId[2]*0x134);
+        *(s16 *)mdlP->hookObj = 0;
+    }
+}
+

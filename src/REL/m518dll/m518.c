@@ -1356,6 +1356,13 @@ static const u16 lbl_1_rodata_768[5][18 * 18] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     },
 };
+static const s16 lbl_1_rodata_1410[4] = { 8, 8, 9, 10 };
+static const s16 lbl_1_rodata_1418[4] = { 90, 120, 30, 60 };
+static const s32 lbl_1_rodata_1420[4] = { 30, 20, 10, 5 };
+static const s16 lbl_1_rodata_1430[4] = { 40, 30, 99, 70 };
+static const s16 lbl_1_rodata_1438[4] = { 20, 30, 10, 20 };
+static const s16 lbl_1_rodata_1440[4] = { 10, 10, 20, 30 };
+static const s16 lbl_1_rodata_1448[4] = { 1, 1, 1, 1 };
 
 void fn_1_6C0C(M518_PLAYER *player)
 {
@@ -1400,6 +1407,425 @@ void fn_1_6D84(M518_PLAYER *player)
                 fn_1_7908(player);
                 break;
         }
+    }
+}
+
+void fn_1_7908(M518_PLAYER *player)
+{
+    M518_PLAYER *first;
+    M518_PLAYER *other;
+    s8 maxX;
+    s8 maxZ;
+    s8 minX;
+    s8 minZ;
+    s16 axis;
+    s16 span;
+    s16 tries;
+    s16 clash;
+    s16 pick;
+    int i;
+    int j;
+    int k;
+    s32 dx;
+    s32 dz;
+
+    first = lbl_1_bss_4E0[0];
+
+    if (player->comWait == 0) {
+        switch (player->dif) {
+            case 0:
+            case 1:
+                if (frandmod(100) <= 100 - lbl_1_rodata_1440[player->dif]) {
+                    if (frandmod(100) <= 100 - lbl_1_rodata_1438[player->dif]) {
+                        player->comTarget.x = (s8)(2 * (first->cell.x / 2));
+                        player->comTarget.z = (s8)(2 * (first->cell.z / 2));
+                        player->comAxis = (s16)frandmod(2);
+                        player->comWait = (s16)(frandmod(4) + 1);
+                    } else {
+                        player->comTarget.x = (s8)(2 * (player->cell.x / 2 + frandmod(5) - 2));
+                        player->comTarget.z = (s8)(2 * (player->cell.z / 2 + frandmod(5) - 2));
+                        player->comAxis = (s16)frandmod(2);
+                        player->comWait = (s16)(frandmod(4) + 1);
+                    }
+                } else {
+                    player->comTarget.x = player->cell.x;
+                    player->comTarget.z = player->cell.z;
+                    player->comWait = (s16)frandmod(lbl_1_rodata_1420[player->dif]);
+                }
+                break;
+            case 2:
+            case 3:
+                if (frandmod(100) <= 100 - lbl_1_rodata_1440[player->dif]) {
+                    maxX = 12;
+                    maxZ = 12;
+                    minX = 0;
+                    minZ = 0;
+                    for (i = 1; i < 4; i++) {
+                        other = lbl_1_bss_4E0[i];
+                        if (maxX < other->cell.x) {
+                            maxX = other->cell.x;
+                        }
+                        if (maxZ < other->cell.z) {
+                            maxZ = other->cell.z;
+                        }
+                        if (minX < other->cell.x + 1) {
+                            minX = other->cell.x + 1;
+                        }
+                        if (minZ < other->cell.z + 1) {
+                            minZ = other->cell.z + 1;
+                        }
+                    }
+                    if (first->cell.x >= maxX && first->cell.z >= maxZ && first->cell.x < minX
+                        && first->cell.z < minZ) {
+                        player->comTarget.x = (s8)(2 * (first->cell.x / 2));
+                        player->comTarget.z = (s8)(2 * (first->cell.z / 2));
+                        player->comAxis = (s16)frandmod(2);
+                        player->comWait = 2;
+                    } else if (frandmod(100) <= 100 - lbl_1_rodata_1438[player->dif]) {
+                        if (frandmod(2) == 0) {
+                            player->comTarget.x = (s8)(2 * (first->cell.x / 2));
+                            player->comTarget.z = (s8)(2 * (first->cell.z / 2));
+                            player->comAxis = (s16)frandmod(2);
+                            player->comWait = 1;
+                        } else {
+                            span = 1;
+                            for (tries = 0; tries < 100; tries++) {
+                                player->comTarget.x
+                                    = (s8)(2 * (first->cell.x / 2 - span + frandmod(span * 2 + 1)));
+                                if (player->comTarget.x < 0) {
+                                    player->comTarget.x = 0;
+                                }
+                                if (player->comTarget.x > 10) {
+                                    player->comTarget.x = 10;
+                                }
+                                player->comTarget.z
+                                    = (s8)(2 * (first->cell.z / 2 - span + frandmod(span * 2 + 1)));
+                                if (player->comTarget.z < 0) {
+                                    player->comTarget.z = 0;
+                                }
+                                if (player->comTarget.z > 10) {
+                                    player->comTarget.z = 10;
+                                }
+                                player->comAxis = (s16)frandmod(3);
+                                player->comWait = (s16)(frandmod(3) + 1);
+                                clash = 0;
+                                for (i = 1; i < 4; i++) {
+                                    other = lbl_1_bss_4E0[i];
+                                    if (other != player && other->comWait > 0
+                                        && (other->comTarget.x == player->comTarget.x
+                                            || other->comTarget.z == player->comTarget.z)) {
+                                        clash = 1;
+                                    }
+                                }
+                                if (clash == 0) {
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        player->comTarget.x = (s8)(2 * (player->cell.x / 2 + frandmod(5) - 2));
+                        player->comTarget.z = (s8)(2 * (player->cell.z / 2 + frandmod(5) - 2));
+                        player->comAxis = (s16)frandmod(2);
+                        player->comWait = 2;
+                    }
+                } else {
+                    player->comTarget.x = player->cell.x;
+                    player->comTarget.z = player->cell.z;
+                    player->comWait = (s16)frandmod(lbl_1_rodata_1420[player->dif]);
+                }
+                break;
+        }
+    }
+
+    if (frandmod(100) <= 100 - lbl_1_rodata_1430[player->dif]) {
+        clash = 0;
+        for (j = 0; j < 4 && clash == 0; j++) {
+            for (k = 0; k < lbl_1_rodata_1448[player->dif]; k++) {
+                if (first->cell.x / 2 == (player->cell.x + lbl_1_rodata_60[j].x * k) / 2
+                    && first->cell.z / 2 == (player->cell.z + lbl_1_rodata_60[j].z * k) / 2) {
+                    player->comTarget.x = (s8)(first->cell.x + 2 * lbl_1_rodata_60[j].x);
+                    player->comTarget.z = (s8)(first->cell.z + 2 * lbl_1_rodata_60[j].z);
+                    player->comWait = 0;
+                    clash = 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    pick = 4;
+    if (player->cell.x == player->comTarget.x && player->cell.z == player->comTarget.z) {
+        player->comWait = 0;
+    } else {
+        dx = player->cell.x - 2 * (player->comTarget.x / 2);
+        dz = player->cell.z - 2 * (player->comTarget.z / 2);
+        switch (player->comAxis) {
+            case 0:
+                if (dz < 0) {
+                    dz = -dz;
+                }
+                if (dx < 0) {
+                    dx = -dx;
+                }
+                axis = (dx > dz) ? 1 : 0;
+                break;
+            case 1:
+                if (dz < 0) {
+                    dz = -dz;
+                }
+                if (dx < 0) {
+                    dx = -dx;
+                }
+                axis = (dx < dz) ? 1 : 0;
+                break;
+            case 2:
+                axis = (frandmod(2) == 0) ? 1 : 0;
+                break;
+            default:
+                axis = 4;
+                break;
+        }
+        if (axis != 0) {
+            if (dx < 0) {
+                pick = 0;
+            } else if (dx > 0) {
+                pick = 1;
+            }
+        } else {
+            if (dz < 0) {
+                pick = 2;
+            } else if (dz > 0) {
+                pick = 3;
+            }
+        }
+    }
+
+    if (player->comWait > 0) {
+        player->comWait--;
+    }
+    if (pick < 4) {
+        player->stkX = (s16)(lbl_1_rodata_60[pick].x * 20);
+        player->stkY = (s16)(-lbl_1_rodata_60[pick].z * 20);
+    }
+}
+
+void fn_1_6E08(M518_PLAYER *player)
+{
+    s8 maxZ;
+    s8 maxX;
+    s8 minZ;
+    s8 minX;
+    M518_CELL target;
+    M518_CELL c1;
+    M518_CELL c2;
+    M518_CELL c3;
+    M518_CELL c4;
+    M518_CELL c5;
+    M518_CELL c6;
+    M518_CELL c7;
+    M518_CELL c8;
+    M518_CELL cell;
+    s8 cz;
+    s8 cx;
+    s16 cnt[5];
+    s16 score[5];
+    int i;
+    M518_PLAYER *other;
+    s16 found;
+    int j;
+    int k;
+    int l;
+    int dir;
+    s16 best;
+    u16 bestVal;
+    u16 value;
+    s32 total;
+    s32 pick;
+
+    fn_1_9BF0(lbl_1_bss_4DC);
+
+    for (i = 1; i < 4; i++) {
+        other = lbl_1_bss_4E0[i];
+        if (other->type == 1) {
+            for (j = 0; j < 18; j++) {
+                for (k = 0; k < 18; k++) {
+                    cx = other->cell.x - 8 + k;
+                    cz = other->cell.z - 8 + j;
+                    cell.x = cx;
+                    cell.z = cz;
+                    fn_1_9C4C(lbl_1_bss_4DC, cell, lbl_1_rodata_768[other->dir][k + j * 18]);
+                }
+            }
+        }
+    }
+
+    if (fn_1_DD0C(player->path)) {
+        c1.x = player->cell.x;
+        c1.z = player->cell.z;
+        fn_1_A2D8(lbl_1_bss_4DC, c1, 10);
+
+        c2.x = player->cell.x;
+        c2.z = player->cell.z;
+        value = fn_1_9CBC(lbl_1_bss_4DC, c2);
+
+        found = 0;
+        maxX = 12;
+        maxZ = 12;
+        minX = 0;
+        minZ = 0;
+
+        for (i = 1; i < 4; i++) {
+            other = lbl_1_bss_4E0[i];
+            if (maxX < other->cell.x) {
+                maxX = other->cell.x;
+            }
+            if (maxZ < other->cell.z) {
+                maxZ = other->cell.z;
+            }
+            if (minX < other->cell.x + 1) {
+                minX = other->cell.x + 1;
+            }
+            if (minZ < other->cell.z + 1) {
+                minZ = other->cell.z + 1;
+            }
+        }
+
+        if (value == 0) {
+            if (frandmod(lbl_1_rodata_1418[player->dif]) == 0) {
+                for (i = 0; i < 60; i++) {
+                    target.x = (s8)(frandmod(7) + player->cell.x - 3);
+                    target.z = (s8)(frandmod(7) + player->cell.z - 3);
+                    c3.x = target.x;
+                    c3.z = target.z;
+                    if (fn_1_9CBC(lbl_1_bss_4DC, c3) == 0) {
+                        found = 1;
+                    }
+                }
+            }
+        } else {
+            for (i = 0; i < 4; i++) {
+                total = 0;
+                score[i] = -1;
+                cnt[i] = 0;
+                if (player->comDir != lbl_1_rodata_50[i] && player->dif != 1 && player->dif != 2
+                    && player->dif != 3) {
+                    for (k = 1; k < lbl_1_rodata_1410[player->dif]; k++) {
+                        c4.x = (s8)(player->cell.x + k * lbl_1_rodata_60[i].x);
+                        c4.z = (s8)(player->cell.z + k * lbl_1_rodata_60[i].z);
+                        value = fn_1_9CBC(lbl_1_bss_4DC, c4);
+                        if (value < 0x500) {
+                            total += value;
+                        } else {
+                            if (value >= 0xFFF && value < 0xFFFF) {
+                                total += 0x200;
+                            }
+                            break;
+                        }
+                    }
+                    score[i] = (s16)total;
+                    cnt[i] = (s16)(k - 1);
+                }
+            }
+
+            if (player->dif >= 2 && player->dif < 4) {
+                if (maxZ - 2 < player->cell.z && minZ + 2 >= player->cell.z) {
+                    if (maxX >= 2 && player->cell.x >= 2 && maxX > player->cell.x) {
+                        cnt[2] = 0;
+                        cnt[3] = 0;
+                        cnt[2] /= 2;
+                    }
+                    if (minX < 10 && player->cell.x < 10 && minX < player->cell.x) {
+                        cnt[2] = 0;
+                        cnt[3] = 0;
+                        cnt[0] /= 2;
+                    }
+                }
+            }
+
+            dir = frandmod(4);
+            for (i = 0; i < 4; i++) {
+                best = 4;
+                bestVal = 0;
+                for (k = 0; k < 4; k++) {
+                    l = (dir + k) % 4;
+                    if (bestVal < (u16)cnt[l]) {
+                        bestVal = cnt[l];
+                        best = l;
+                    }
+                }
+                if (best < 4 && score[best] < 0xFFF) {
+                    found = 1;
+                    break;
+                }
+                score[best] = -1;
+                cnt[best] = 0;
+            }
+
+            if (found) {
+                target.x = (s8)(player->cell.x + bestVal * lbl_1_rodata_60[best].x);
+                target.z = (s8)(player->cell.z + bestVal * lbl_1_rodata_60[best].z);
+            } else {
+                c5.x = player->cell.x;
+                c5.z = player->cell.z;
+                value = fn_1_9CBC(lbl_1_bss_4DC, c5);
+                for (i = 0; i < 4; i++) {
+                    l = (dir + i) % 4;
+                    score[i] = -1;
+                    score[i] = 0;
+                    for (k = 1; k < 3; k++) {
+                        target.x = (s8)(player->cell.x + k * lbl_1_rodata_60[l].x);
+                        target.z = (s8)(player->cell.z + k * lbl_1_rodata_60[l].z);
+                        c6.x = target.x;
+                        c6.z = target.z;
+                        score[i] += fn_1_9CBC(lbl_1_bss_4DC, c6);
+                    }
+                }
+
+                bestVal = 0xFFFF;
+                best = 4;
+                for (i = 0; i < 4; i++) {
+                    l = (dir + i) % 4;
+                    if (score[l] < (s16)bestVal) {
+                        bestVal = score[l];
+                        best = l;
+                    }
+                }
+                if (best < 4) {
+                    target.x = (s8)(player->cell.x + lbl_1_rodata_60[best].x);
+                    target.z = (s8)(player->cell.z + lbl_1_rodata_60[best].z);
+                    found = 1;
+                }
+            }
+        }
+
+        if (found) {
+            c7.x = target.x;
+            c7.z = target.z;
+            fn_1_9080(player, c7);
+            player->comWait = 4;
+        }
+    } else {
+        if (player->comWait == 0) {
+            c8.x = player->cell.x;
+            c8.z = player->cell.z;
+            if (fn_1_9CBC(lbl_1_bss_4DC, c8) >= 0xE0) {
+                fn_1_DCF8(player->path);
+            }
+        }
+    }
+
+    if (player->comWait > 0) {
+        player->comWait--;
+    }
+
+    pick = 4;
+    fn_1_DCBC(player->path, &pick);
+    if (pick != 4) {
+        player->comDir = (s16)pick;
+    }
+    if (pick < 4) {
+        player->stkX = (s16)(lbl_1_rodata_60[pick].x * 20);
+        player->stkY = (s16)(-lbl_1_rodata_60[pick].z * 20);
     }
 }
 

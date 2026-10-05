@@ -155,7 +155,7 @@ void fn_1_8BEC(void *data);
 void fn_1_8C1C(void *data);
 void fn_1_8D48(void *data);
 
-s32 fn_1_734(s32 dataNum);
+s32 fn_1_734(s32 arg0);
 
 void fn_1_9B0C(void *data);
 void fn_1_A454(void *data);
@@ -164,7 +164,7 @@ void fn_1_B350(void *data);
 void fn_1_B4A4(void *data);
 void fn_1_B8F4(void *data);
 void fn_1_B958(void *data);
-void fn_1_BE48(void *data);
+void fn_1_BE48(void *data, s32 *src);
 void fn_1_BEC4(void *data);
 
 void fn_1_C590(void *data);
@@ -191,12 +191,12 @@ void fn_1_30C(void);
 void fn_1_404(void);
 void fn_1_494(void);
 void fn_1_568(void);
-void fn_1_5B4(void);
-void fn_1_5DC(void);
+s32 fn_1_5B4(s32 seId);
+void fn_1_5DC(s32 seNo);
 void fn_1_604(void);
 void fn_1_634(void);
 void fn_1_664(void);
-void fn_1_6BC(void);
+void fn_1_6BC(s32 seNo);
 void fn_1_6E4(void);
 void fn_1_714(void);
 void fn_1_784(void);
@@ -306,3 +306,6 @@ s32 fn_1_734(s32 arg0);
 s32 fn_1_966C(M510_OBJ *obj);
 
 #endif
+
+
+
