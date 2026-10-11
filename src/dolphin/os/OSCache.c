@@ -307,6 +307,7 @@ _queue:
     blr
 }
 
+#pragma dont_inline on
 void L2GlobalInvalidate(void)
 {
     u32 l2cr;
@@ -331,6 +332,8 @@ void L2GlobalInvalidate(void)
         DBPrintf(">>> L2 INVALIDATE : SHOULD NEVER HAPPEN\n");
     }
 }
+
+#pragma dont_inline reset
 
 void DMAErrorHandler(OSError error, OSContext* context, ...)
 {
@@ -385,7 +388,7 @@ void __OSCacheInit(void)
     }
 
     flag = PPCMfl2cr();
-    if (flag == 0) {
+    if ((flag & 0x80000000) == 0) {
         msr = PPCMfmsr();
         SYNC();
         PPCMtmsr(0x30);

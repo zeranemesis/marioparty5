@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 
 ###
 # Generates build files for the project.
@@ -510,7 +510,7 @@ config.libs = [
             Object(NonMatching, "dolphin/os/OSAlloc.c"),
             Object(Matching, "dolphin/os/OSArena.c"),
             Object(Equivalent, "dolphin/os/OSAudioSystem.c"),
-            Object(NonMatching, "dolphin/os/OSCache.c"),
+            Object(Matching, "dolphin/os/OSCache.c"),
             Object(NonMatching, "dolphin/os/OSContext.c"),
             Object(NonMatching, "dolphin/os/OSError.c"),
             Object(Matching, "dolphin/os/OSFont.c"),
