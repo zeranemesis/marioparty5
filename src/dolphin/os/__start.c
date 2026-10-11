@@ -28,60 +28,66 @@ __declspec(section ".init") static u8 __get_debug_bba(void)
 
 __declspec(weak) __declspec(section ".init") void __start(void)
 {
-    u32* arena;
-    u32* bssEnd;
-    u32* bssStart;
     u32 debugflag;
     u32 bootinfo;
-    u32 mode;
+    u32 count;
+    u8* arenaHi;
 
     __init_registers();
     __init_hardware();
+
+    asm {
+        li r0, -1
+        stwu r1, -8(r1)
+        stw r0, 4(r1)
+        stw r0, 0(r1)
+    }
 
     __init_data();
 
     *(volatile u32*)EXCEPTIONMASK_ADDR = 0;
 
-    /* MetroTRK is started for debug modes 2 and 3, and installs itself by
-       patching the boot info rather than being linked in. */
     bootinfo = *(volatile u32*)BOOTINFO2_ADDR;
-    debugflag = (bootinfo != 0) ? *(volatile u32*)(bootinfo + OS_BI2_DEBUGFLAG_OFFSET)
-                                : *(volatile u32*)DEBUGFLAG_ADDR;
+    if (bootinfo != 0) {
+        debugflag = *(volatile u32*)(bootinfo + OS_BI2_DEBUGFLAG_OFFSET);
 
-    mode = 0;
-    if (debugflag == 2) {
-        mode = 0;
-        InitMetroTRK();
-    } else if (debugflag == 3) {
-        mode = 1;
-        InitMetroTRK();
-    } else if (debugflag == 4) {
-        mode = 2;
-        __set_debug_bba();
-    } else {
-        mode = 1;
+        if (debugflag == 2) {
+            InitMetroTRK();
+        } else if (debugflag == 3) {
+            InitMetroTRK();
+        } else if (debugflag == 4) {
+            __set_debug_bba();
+        }
+    } else if (*(volatile u32*)ARENAHI_ADDR != 0) {
+        debugflag = *(volatile u32*)DEBUGFLAG_ADDR;
+
+        if (debugflag == 2) {
+            InitMetroTRK();
+        } else if (debugflag == 3) {
+            InitMetroTRK();
+        } else if (debugflag == 4) {
+            __set_debug_bba();
+        }
     }
 
-    /* Relocate the .bss end symbols using the linker table, when present. */
     bootinfo = *(volatile u32*)BOOTINFO2_ADDR;
     if (bootinfo != 0 && *(volatile u32*)(bootinfo + 8) != 0) {
         u32* table = (u32*)(bootinfo + *(volatile u32*)(bootinfo + 8));
-        u32 count = table[0];
-        u32* end = table + 1;
-
+        count = *table;
         if (count != 0) {
-            do {
+            arenaHi = (u8*)(table + 1);
+            for (; count != 0; count--) {
                 table++;
-                *table = *table + (u32)bootinfo;
-            } while (--count != 0);
-            *(u32*)ARENAHI_ADDR = (u32)end & ~0x1F;
+                *table += (u32)bootinfo;
+            }
+            *(u32*)ARENAHI_ADDR = (u32)arenaHi & ~0x1F;
         } else {
-            bssEnd = NULL;
-            bssStart = NULL;
+            count = 0;
+            arenaHi = NULL;
         }
     } else {
-        bssEnd = NULL;
-        bssStart = NULL;
+        count = 0;
+        arenaHi = NULL;
     }
 
     DBInit();
@@ -98,7 +104,7 @@ __declspec(weak) __declspec(section ".init") void __start(void)
 
     __init_user();
 
-    main((int)bssEnd, (char**)bssStart);
+    main((int)count, (char**)arenaHi);
     exit(0);
 }
 
