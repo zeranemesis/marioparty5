@@ -60,21 +60,24 @@ static const CameraPath s_cameraPath = {
     395.9320374f, 1367.4566650f, 292.0061035f, -0.3923721f, 0.0f, -0.0f, 0.9198066f
 };
 
+/* lbl_1_data_5A0 in the original: {0, -1, 0}, the empty pointer-to-member the
+ * target copies into m_hook in both switch arms. Naming CCamera::step instead
+ * produced an undefined symbol step__7CCameraFv and broke the REL link. */
+static const PTMF s_nullPmf = {0, -1, {0}};
+
 class CCamera {
 public:
-    CListNode m_node;
-    void **m_vtable;
-    s32 m_bitFlags;
+    CListNode m_node;      /* 0x00 */
+    void **m_vtable;       /* 0x08 */
+    s32 m_bitFlags;        /* 0x0C */
     u8 m_unk10[0x34 - 0x10];
-    CameraPath m_pathFrom;
-    CameraPath m_pathTo;
-    s32 m_timer;
-    void (CCamera::*m_hook)();
-    s16 m_camModelId;
-
-    void step();
-    void exec();
-    void noop();
+    /* The target stores 0x34..0x6B as two consecutive 28-byte CameraPaths, so
+       the path pair starts at 0x34 and the timer / PMF sit after it. */
+    CameraPath m_pathFrom; /* 0x34 */
+    CameraPath m_pathTo;   /* 0x50 */
+    s32 m_timer;           /* 0x6C */
+    PTMF m_hook;           /* 0x70 */
+    s16 m_camModelId;      /* 0x7C */
 };
 
 CCamera *fn_1_1416C(CCamera *self);
@@ -169,13 +172,15 @@ void fn_1_14424(CCamera *self, s32 mode)
     self->m_timer = 0;
     switch (mode) {
     case 0:
-        self->m_hook = &CCamera::step;
+        self->m_pathTo = s_cameraPath;
+        self->m_hook = s_nullPmf;
         self->m_camModelId =
             Hu3DModelCameraCreate(Hu3DMotionCreate(HuDataSelHeapReadNum(0x4F000E, 0x10000000, 2)), 1);
         Hu3DCameraMotionStart(self->m_camModelId, 1);
         break;
     case 1:
-        self->m_hook = &CCamera::noop;
+        self->m_pathTo = s_cameraPath;
+        self->m_hook = s_nullPmf;
         Hu3DModelKill(self->m_camModelId);
         self->m_bitFlags &= ~(1 << mode);
         break;
@@ -210,7 +215,7 @@ void fn_1_145F8(CCamera *self, s32 flip)
     self->m_pathTo = path;
     self->m_pathFrom.v[1] += 50.0f;
     self->m_pathFrom.v[2] += 200.0f;
-    self->m_hook = &CCamera::exec;
+    self->m_hook = s_nullPmf;
     self->m_timer = 0;
 }
 

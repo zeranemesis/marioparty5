@@ -218,7 +218,7 @@ static void fn_1_1674(OMOBJ *obj);
 static void fn_1_14A8(OMOBJ *obj);
 static void fn_1_1AFC(OMOBJ *obj);
 void fn_1_12F0(void);
-void fn_1_2020(s32 *src);
+void fn_1_2020(M570CAM *src);
 void fn_1_2050(M570CAM *cam);
 
 void ObjectSetup(void);
@@ -466,16 +466,14 @@ void fn_1_1F74(M570CAM *cam)
     obj = omAddObjEx(lbl_1_bss_108, 0x4000, 0, 0, OM_OBJ_NONE, fn_1_1AFC);
     obj->work[0] = (s32)cam;
     obj->work[1] = (cam->state != 0) ? 1 : 0;
-    fn_1_2020((s32 *)cam);
+    fn_1_2020(cam);
 }
 
-void fn_1_2020(s32 *src)
+void fn_1_2020(M570CAM *src)
 {
-    s32 i;
+    M570CAM *dst = (M570CAM *)lbl_1_bss_BC;
 
-    for (i = 0; i < 18; i++) {
-        lbl_1_bss_BC[i] = src[i];
-    }
+    *dst = *src;
 }
 
 // NONMATCHING: instruction scheduling and register allocation differ from the original build
@@ -527,4 +525,64 @@ f32 fn_1_3C64(const f32 *tbl, f32 val, f32 min, f32 max)
         ret += k360;
     }
     return ret;
+}
+
+/* 0x00 src, 0x04 from, 0x4C to, 0x94 progress, 0x98 accum, 0x9C flags. */
+typedef struct m570Move_s {
+    /* 0x00 */ M570CAM *src;
+    /* 0x04 */ M570CAM from_cam;
+    /* 0x4C */ M570CAM to;
+    /* 0x94 */ f32 progress;
+    /* 0x98 */ f32 accum;
+    /* 0x9C */ u32 flags;
+} M570MOVE;
+
+void fn_1_36D0(void)
+{
+}
+
+// Delete a queued camera-move object by its work pointer.
+void fn_1_2E64(OMOBJ *obj)
+{
+    omDelObjEx(lbl_1_bss_108, obj);
+}
+
+// True when a camera move has run to completion (bit 1 of its flags word).
+BOOL fn_1_2E30(OMOBJ *obj)
+{
+    M570MOVE *mv = (M570MOVE *)obj->data;
+
+    return (mv->flags & 2) ? 1 : 0;
+}
+
+/* 0x00 src, 0x04 from, 0x4C to, 0x94 progress, 0x98 accum, 0x9C flags. */
+void fn_1_2B18(OMOBJ *obj);
+
+// QUEUE a camera move between two descriptors. Refuses when the two sides name
+// different cameras, otherwise allocates the move object, seeds both endpoints
+// and pre-transforms them when the source camera is already live.
+OMOBJ *MgCameraMoveEntry(M570CAM *from, M570CAM *to, f32 arg2)
+{
+    OMOBJ *obj;
+    M570MOVE *mv;
+
+    if (from->camNo != to->camNo) {
+        OSReport(gStrCamDiff);
+        goto done;
+    }
+    obj = omAddObjEx(lbl_1_bss_108, 0x2000, 0, 0, -1, fn_1_2B18);
+    obj->data = HuMemDirectMallocNum(0, 0xA0, HU_MEMNUM_OVL);
+    mv = (M570MOVE *)obj->data;
+    mv->progress = arg2;
+    mv->accum = kZero;
+    mv->src = from;
+    mv->from_cam = *from;
+    mv->to = *to;
+    mv->flags = 3;
+    if (from->state == 1) {
+        fn_1_2050(&mv->from_cam);
+        fn_1_2050(&mv->to);
+    }
+done:
+    return obj;
 }

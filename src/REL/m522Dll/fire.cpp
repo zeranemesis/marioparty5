@@ -9,9 +9,9 @@ void fn_1_4A4(void *model);
 void fn_1_510(void *model);
 void fn_1_9CDC(void *model, const void *rot);
 void DCFlushRangeNoSync(void *addr, u32 size);
-f32 sin(f32);
-f32 cos(f32);
 }
+
+extern "C" {
 
 typedef struct FireParticle_s {
     f32 m_accum;   // 0x0
@@ -29,6 +29,7 @@ void fn_1_460(FireParticle *particle)
 
 void fn_1_614(FireParticle *particle)
 {
+    // NONMATCHING: MWCC assigns the fadds result to f0; the original keeps it in f1.
     particle->m_accum += particle->m_delta;
 }
 
@@ -39,10 +40,8 @@ void fn_1_4934(void)
 
 void fn_1_C2C(FireParticle *dst, const FireParticle *src)
 {
-    dst->m_accum = src->m_accum;
-    dst->m_delta = src->m_delta;
-    dst->m_field8 = src->m_field8;
-    dst->m_fieldC = src->m_fieldC;
+    // NONMATCHING: the original copies 4 words with lwz/stw; MWCC -O0 emits lfs/stfs here.
+    *dst = *src;
 }
 
 void fn_1_474(void *model)
@@ -54,4 +53,6 @@ void fn_1_428(void *model)
 {
     fn_1_4A4(model);
     fn_1_510(model);
+}
+
 }

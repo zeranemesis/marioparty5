@@ -211,3 +211,109 @@ void fn_1_28C8(void)
         HuPrcVSleep();
     }
 }
+
+void MdClose(void);
+
+static void LoadProc(void);
+extern void fn_1_A30(void);
+extern void fn_1_2554(void);
+extern void fn_1_19AC(void);
+extern void fn_1_15AC(void);
+extern void fn_1_28C8(void);
+extern void fn_1_290C(void);
+extern void fn_1_2968(void);
+
+void MdInit(void)
+{
+    MdSpriteCreate(*(void **)((u8 *)sys + 0xb8));
+    HuPrcVSleep();
+    MdModelCreate(*(void **)((u8 *)sys + 0xbc), *(void **)((u8 *)sys + 0xb0));
+    HuPrcVSleep();
+    HuDataDirClose(0x8e0000);
+    HuPrcVSleep();
+    MdToueiMdlInit();
+    *(void **)((u8 *)sys + 0x68) = HuPrcChildCreate(fn_1_A30, 0x6a, 0x3000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(void **)((u8 *)sys + 0x6c) = HuPrcChildCreate(fn_1_2554, 0x6b, 0x3000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(void **)((u8 *)sys + 0x70) = HuPrcChildCreate(fn_1_19AC, 0x6c, 0x3000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(void **)((u8 *)sys + 0x74) = HuPrcChildCreate(fn_1_15AC, 0x6d, 0x3000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(void **)((u8 *)sys + 0x78) = HuPrcChildCreate(fn_1_28C8, 0x6e, 0x1000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(void **)((u8 *)sys + 0x7c) = HuPrcChildCreate(fn_1_290C, 0x6f, 0x1000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(void **)((u8 *)sys + 0x80) = HuPrcChildCreate(fn_1_2968, 0x70, 0x1000, 0, *(void **)((u8 *)sys + 0x5c));
+    *(s16 *)((u8 *)sys + 0x9c) = 0;
+    *(s16 *)((u8 *)sys + 0x9e) = 0;
+    *(s16 *)((u8 *)sys + 0xa4) = 0;
+    *(u32 *)((u8 *)sys + 0xa0) = 0x910000;
+    *(void **)((u8 *)sys + 0x64) = HuPrcChildCreate(LoadProc, 0x69, 0x3000, 0, *(void **)((u8 *)sys + 0x5c));
+    HuPrcVSleep();
+}
+void MdClose(void);
+
+static void (*MdFlowTbl[])(void) = {
+    0,
+};
+
+void MdMain(void)
+{
+    // NONMATCHING: MWCC reloads sys per access and computes the 36000 wrap constant
+    // as lis+subi; the original keeps sys in r4 and uses an immediate compare.
+    MdInit();
+
+    while (omSysExitReq == 0 && *(s8 *)((u8 *)sys + 0x18) == 0) {
+        MdFlowTbl[*(s32 *)((u8 *)sys + 0xc)]();
+        *(u32 *)((u8 *)sys + 0x8) = *(s32 *)((u8 *)sys + 0x8) + 1;
+        if (*(s32 *)((u8 *)sys + 0x8) > 36000) {
+            *(u32 *)((u8 *)sys + 0x8) = 0;
+        }
+        HuPrcVSleep();
+    }
+    MdClose();
+}
+
+void fn_1_2968(void)
+{
+    MDMESS *mess;
+
+    mess = *(MDMESS **)((u8 *)sys + 0x2a4);
+    while (1) {
+        mess = *(MDMESS **)((u8 *)sys + 0x2a4);
+        MdMessMain(mess, 2);
+        HuPrcVSleep();
+    }
+}
+
+void fn_1_290C(void)
+{
+    MDMESS *mess;
+
+    mess = *(MDMESS **)((u8 *)sys + 0x2a4);
+    while (1) {
+        mess = *(MDMESS **)((u8 *)sys + 0x2a4);
+        MdMessMain(mess, 1);
+        MdMessMain(mess, 3);
+        MdMessMain(mess, 4);
+        HuPrcVSleep();
+    }
+}
+
+void MdClose(void)
+{
+    if (*(s8 *)((u8 *)sys + 0x19) == 0) {
+        WipeCreate(2, 0, 0x3c);
+        while ((u8)WipeCheckEnd() != 0) {
+            HuPrcVSleep();
+        }
+    }
+    HuAudAllStop();
+    MdMessKill(*(MDMESS **)((u8 *)sys + 0x2a4));
+    if (*(s32 *)((u8 *)sys + 0x10) == 0) {
+        omOvlGotoEx(*(OMOVL *)((u8 *)sys + 0x14), 1, 0, 0);
+    } else if (*(s32 *)((u8 *)sys + 0x10) == 1) {
+        omOvlCallEx(*(OMOVL *)((u8 *)sys + 0x14), 1, 0, 0);
+    } else if (*(s32 *)((u8 *)sys + 0x10) == 2) {
+        omOvlReturnEx(1, 1);
+    }
+    HuPrcEnd();
+    while (1) {
+        HuPrcVSleep();
+    }
+}

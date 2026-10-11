@@ -55,6 +55,15 @@ extern inline double sqrt(double x)
 
 #pragma cplusplus reset
 
+/* Plain C in the original: the DOL defines sin, cos, atan2 and friends
+ * unmangled, and every REL object references them that way. These declarations
+ * sit after `#pragma cplusplus reset`, so without the guard a .cpp emits
+ * cos__Fd / sin__Fd / atan2__Fdd, which nothing defines, and the REL link fails
+ * with "Failed to find symbol cos__Fd in any module". */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 double atan(double x);
 double copysign(double x, double y);
 double cos(double x);
@@ -104,5 +113,9 @@ _MATH_INLINE float fmodf(float x, float m) { return (float)fmod((double)x, (doub
 _MATH_INLINE float floorf(float x) { return floor(x); }
 
 _MATH_INLINE float powf(float __x, float __y) { return pow(__x, __y); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -26,7 +26,7 @@ void fn_1_7D08(float var_f30, Vec *arg0, Vec *arg1, Vec *arg2)
 void fn_1_7E64(Vec *arg0, Vec *arg1, Vec *arg2)
 {
     Hu3DCameraPosSetV(1, arg0, arg1, arg2);
-    lbl_1_bss_79C = *arg0;
+    lbl_1_bss_79C.v = *arg0;
     lbl_1_bss_784 = *arg2;
 }
 
@@ -44,9 +44,9 @@ s32 fn_1_7EF0(float var_f27, Vec *arg0)
         var_f31 = 1.0f;
     }
     var_f29 = HuSin(90.0f * var_f31) * HuSin(90.0f * var_f31);
-    sp18.x = lbl_1_bss_79C.x + (var_f29 * (lbl_1_bss_790.x - lbl_1_bss_79C.x));
-    sp18.y = lbl_1_bss_79C.y + (var_f29 * (lbl_1_bss_790.y - lbl_1_bss_79C.y));
-    sp18.z = lbl_1_bss_79C.z + (var_f29 * (lbl_1_bss_790.z - lbl_1_bss_79C.z));
+    sp18.x = lbl_1_bss_79C.v.x + (var_f29 * (lbl_1_bss_790.x - lbl_1_bss_79C.v.x));
+    sp18.y = lbl_1_bss_79C.v.y + (var_f29 * (lbl_1_bss_790.y - lbl_1_bss_79C.v.y));
+    sp18.z = lbl_1_bss_79C.v.z + (var_f29 * (lbl_1_bss_790.z - lbl_1_bss_79C.v.z));
     var_f30 = var_f27;
     if (1.0f < var_f30) {
         var_f30 = 1.0f;

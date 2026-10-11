@@ -61,6 +61,13 @@ int MgTimerModeGet(MGTIMER* timer);
 void MgTimerParamSet(MGTIMER* timer, int maxTime, int endTime, int recordTime);
 int MgTimerValueGet(MGTIMER* timer);
 void MgTimerPosSet(MGTIMER* timer, float posX, float posY);
+/* Plain C in the original: the DOL defines MgTimerRecordSet unmangled, so a .cpp
+ * including this header needs the guard or it emits MgTimerRecordSet__FP9MgTimer_si
+ * and the REL link cannot resolve it. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void MgTimerPosGet(MGTIMER* timer, float *posX, float *posY);
 void MgTimerModeOnSet(MGTIMER* timer, int offType);
 void MgTimerModeOffSet(MGTIMER* timer);
@@ -73,5 +80,8 @@ void MgTimerDispOff(MGTIMER* timer);
 void MgTimerRecordDispOn(MGTIMER* timer);
 void MgTimerRecordDispOff(MGTIMER* timer);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

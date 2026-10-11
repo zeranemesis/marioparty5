@@ -13,19 +13,23 @@ typedef struct {
     f32 z;
 } M511_VECF;
 
-void *__dl__FPv(void *self);
-void *__nw__FUl(u32 size);
-void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__dl__FPv(void *self);
+extern "C" void *__nw__FUl(u32 size);
+extern "C" void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
 f32 fn_1_1A150(u32 self, void *arg1);
-void fn_1_1D88(void *self);
-void fn_1_1D94(void *self, s32 arg1);
-void fn_1_1E54(void *self, void **arg1);
-void fn_1_372C(void *self, s32 arg1);
+extern "C" void fn_1_1D88(void *self);
+extern "C" void fn_1_1D94(void *self, s32 arg1);
+extern "C" void fn_1_1E54(void *self, void **arg1);
+extern "C" void fn_1_372C(void *self, s32 arg1);
 void fn_1_384C(void *self, void *arg1);
-void fn_1_398C(void *self, void *arg1);
-void fn_1_39D4(void *self, void *arg1, f32 arg2);
-void fn_1_3B8C(void *self, s32 arg1);
-void fn_1_CF8(char *cond, char *file, s32 line);
+extern "C" void fn_1_398C(void *self, void *arg1);
+extern "C" void fn_1_39D4(void *self, void *arg1, f32 arg2);
+extern "C" void fn_1_3B8C(void *self, s32 arg1);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 
 struct Mgr511Stage;
 struct Mgr511StageNode;
@@ -76,9 +80,9 @@ extern u32 lbl_1_bss_1C;
 extern void *lbl_1_bss_2C;
 
 extern void *lbl_1_data_40[6];
+extern void *lbl_1_data_464[6];
 extern GXColor lbl_1_data_430;
 extern GXColor lbl_1_data_434;
-extern void *lbl_1_data_464[6];
 
 extern Mgr511StageList lbl_1_bss_A84;
 extern Mgr511StageNode *lbl_1_bss_A78;
@@ -379,3 +383,16 @@ void *fn_1_D2C0(void *arg0, s16 arg1)
 }
 
 }
+
+/* The vtables this object defines: their entries are
+   functions defined above, so the definitions sit here. */
+
+/* lbl_1_data_464 is a vtable stage.o itself defines (6 words at .data+0x2c), and this unit is linked from source, so it has to be a definition rather than an extern declaration: with only the declaration the REL link reported "Failed to find symbol lbl_1_data_464 in any module". 2 leading words are zero and the rest are ADDR32 relocations to functions in this object. The definition is at the end of the unit because its entries are functions defined further down. */
+extern "C" void *lbl_1_data_464[6] = {
+    0,
+    0,
+    (void *) fn_1_CCC8,
+    (void *) fn_1_CE0C,
+    (void *) fn_1_CDEC,
+};
+

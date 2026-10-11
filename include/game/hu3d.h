@@ -523,6 +523,15 @@ typedef struct Hu3DWater_s {
     float maxTime;
 } HU3DWATER;
 
+/* Every Hu3D entry point is plain C in the original: the DOL defines
+   Hu3DModelScaleSet, Hu3DModelPosSet and friends unmangled, and every REL
+   object references them unmangled. Without this guard a .cpp that includes
+   this header emits Hu3DModelScaleSet__Fsfff, which nothing defines, and the
+   REL link fails with "Failed to find symbol Hu3DModelScaleSet__Fsfff". */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Hu3DDrawPreInit(void);
 void Hu3DDraw(HU3DMODEL *model, Mtx matrix, HuVecF *scale);
 BOOL ObjCullCheck(HSFDATA *hsf, HSFOBJECT *object, Mtx mtx);
@@ -853,5 +862,9 @@ SHARED_SYM extern HU3DTEXANIM Hu3DTexAnimData[HU3D_TEXANIM_MAX];
 SHARED_SYM extern HU3DTEXSCROLL Hu3DTexScrData[HU3D_TEXSCROLL_MAX];
 
 SHARED_SYM extern HU3DWATER Hu3DWaterData;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

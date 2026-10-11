@@ -265,7 +265,9 @@ struct M522LimitsInit {
     M522LimitsInit() { fn_1_D0E4(); }
 };
 
-static M522LimitsInit lbl_1_bss_A1C;
+/* gamemaster.o owns this in the original (camera.o and stage.o reference it as
+   UND), so it must not be static. */
+M522LimitsInit lbl_1_bss_A1C;
 
 /* The original is an 8 byte C++ this adjustor that tail branches, subi r3 /
  * b fn_1_CDE0.  MWCC has no tail call at -O0,p, so the two instructions go in

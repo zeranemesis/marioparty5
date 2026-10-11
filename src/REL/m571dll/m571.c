@@ -43,7 +43,6 @@ void fn_1_1898(OMOBJ *obj);
 void fn_1_18B8(void);
 void fn_1_1BA0(void);
 
-// not yet written
 void fn_1_1D44(s32 arg0);
 void fn_1_1F74(OMOBJ *obj);
 void fn_1_2088(OMOBJ *obj);
@@ -1120,30 +1119,31 @@ void fn_1_1BA0(void)
     }
 }
 
-// NONMATCHING: register allocation and expression form differ from the target build
+// NONMATCHING: target uses a larger stack frame and separately retains converted audio values in GPRs
 void fn_1_1D44(s32 tileIdx)
 {
     OMOBJ *obj;
     M571Tile *tile;
-    HuVecF screen;
+    HuVecF screenY;
+    HuVecF screenX;
+    s32 vol;
+    s32 pan;
 
     if (lbl_1_bss_F0[0] <= 0x30) {
         lbl_1_bss_F0[0]++;
-
         obj = omAddObjEx(lbl_1_bss_680, 0x68, 1, 0, -1, fn_1_1F74);
         obj->work[0] = 0;
         tile = (M571Tile *)HuMemDirectMallocNum(0, 0x14, 0x1000);
         obj->data = tile;
-
         tile->pos.x = lbl_1_data_26C.pos[tileIdx].x;
         tile->pos.y = lbl_1_data_26C.pos[tileIdx].y;
         tile->pos.z = lbl_1_data_26C.pos[tileIdx].z;
         tile->state = 0;
-
-        Hu3D3Dto2D(&tile->pos, 1, &screen);
-
-        HuAudFXPlayVolPan(0x96B, (s16)(96.0f + (screen.y / 480.0f) * 31.0f),
-            (s16)(32.0f + (screen.x / 576.0f) * 64.0f));
+        Hu3D3Dto2D(&tile->pos, 1, &screenY);
+        vol = 96.0f + (screenY.y / 480.0f) * 31.0f;
+        Hu3D3Dto2D(&tile->pos, 1, &screenX);
+        pan = 32.0f + (screenX.x / 576.0f) * 64.0f;
+        HuAudFXPlayVolPan(0x96B, vol, pan);
     }
 }
 
@@ -1321,6 +1321,48 @@ s32 fn_1_28F4(HuVecF *pos)
     }
 
     return -1;
+}
+
+// NONMATCHING: geometry is reconstructed; local/register layout and stack frame differ from target
+s32 fn_1_2A14(OMOBJ *obj, s32 useAltOffset)
+{
+    M571Player *player = (M571Player *)obj->data;
+    Vec pos;
+    Vec cellPos;
+    s32 i;
+    s32 result;
+
+    if (useAltOffset == 0) {
+        pos.x = (f32)(player->unk34 * sin(3.141592653589793 * player->unk28.rotY / 180.0) * 3.5);
+        pos.y = 0.0f;
+        pos.z = (f32)(player->unk34 * cos(3.141592653589793 * player->unk28.rotY / 180.0) * 3.5);
+    } else {
+        pos.x = (f32)(player->unk38 * sin(3.141592653589793 * player->unk28.rotY / 180.0) * 3.5);
+        pos.y = 0.0f;
+        pos.z = (f32)(player->unk38 * cos(3.141592653589793 * player->unk28.rotY / 180.0) * 3.5);
+    }
+
+    pos.x += player->unk18.x;
+    pos.z += player->unk18.z;
+
+    for (i = 0; i < 0x31; i++) {
+        if (lbl_1_bss_1C8[i] == NULL) {
+            continue;
+        }
+
+        cellPos.x = lbl_1_data_26C.pos[i].x;
+        cellPos.y = lbl_1_data_26C.pos[i].y;
+        cellPos.z = lbl_1_data_26C.pos[i].z;
+
+        if ((pos.x - cellPos.x) * (pos.x - cellPos.x) + (pos.z - cellPos.z) * (pos.z - cellPos.z) < 8100.0f) {
+            result = i;
+            goto found;
+        }
+    }
+
+    result = -1;
+found:
+    return result;
 }
 
 // NONMATCHING: register allocation and expression form differ from the target build

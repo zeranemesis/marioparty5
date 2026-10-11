@@ -59,9 +59,20 @@ enum {
     FLAG_INST_NOHISCHG = FLAGNUM(FLAG_GROUP_SYSTEM, 3),
 };
 
+/* Plain C in the original: _CheckFlag and friends are unmangled in the DOL, so
+ * a .cpp including this header needs the guard or it emits _CheckFlag__FUl and
+ * the REL link cannot resolve it. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 s32 _CheckFlag(u32 flag);
 void _SetFlag(u32 flag);
 void _ClearFlag(u32 flag);
 void _InitFlag(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

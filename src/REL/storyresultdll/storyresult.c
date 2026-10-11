@@ -93,15 +93,14 @@ void PResExec(void) {
     }
 }
 
-// NONMATCHING: stack frame/register allocation differs (extra locals vs original temp reuse)
 void PResCreate(void) {
-    s16 charNo = GwPlayerConf->charNo;
     s16 i;
-    s16 boardNo;
-    s16 sumRank;
     s16 diff;
+    s16 charNo;
     HU3DMODELID mdlId;
+    s16 boardNo;
 
+    charNo = GwPlayerConf->charNo;
     if (GwCommon.storyNo == -1) {
         SRankWork.dif = 0;
         SRankWork.rank = 4;
@@ -159,7 +158,7 @@ void PResCreate(void) {
         if (GwCommon.charStoryRank[boardNo][charNo] < PResDiff) {
             GwCommon.charStoryRank[boardNo][charNo] = (s8)PResDiff;
         }
-        GwCommon.storyRank[GwCommon.storyNo] = (s8)PResDiff;
+        GwCommon.storyRank[GwCommon.storyNo] = (s8)diff;
         GwCommon.charStoryPlayNum[boardNo][charNo]++;
         if (GwCommon.charStoryPlayNum[boardNo][charNo] > 999) {
             GwCommon.charStoryPlayNum[boardNo][charNo] = 999;
@@ -171,19 +170,18 @@ void PResCreate(void) {
         for (i = 0; i < 5; i++) {
             SRankWork.mapRank[i] = 0;
         }
-        sumRank = 0;
-        for (i = 0; i < GwCommon.storyNo; i++) {
+        for (i = diff = 0; i < GwCommon.storyNo; i++) {
             SRankWork.mapRank[i] = GwCommon.storyRank[i];
-            sumRank += GwCommon.storyRank[i];
-            OSReport("Rank %d\n", sumRank, GwCommon.storyRank[i]);
+            diff += GwCommon.storyRank[i];
+            OSReport("Rank %d\n", diff);
         }
-        if (sumRank <= 4) {
+        if (diff <= 4) {
             SRankWork.rank = 0;
-        } else if (sumRank <= 9) {
+        } else if (diff <= 9) {
             SRankWork.rank = 1;
-        } else if (sumRank <= 12) {
+        } else if (diff <= 12) {
             SRankWork.rank = 2;
-        } else if (sumRank <= 14) {
+        } else if (diff <= 14) {
             SRankWork.rank = 3;
         } else {
             SRankWork.rank = 4;
@@ -194,13 +192,12 @@ void PResCreate(void) {
         OSReport("Total Rank %d\n", SRankWork.rank);
     }
 
-    CharMdlId = CharModelCreate(charNo, 2);
+    CharMdlId = mdlId = CharModelCreate(charNo, 2);
     CharMotId = CharMotionCreate(charNo, 0x8C0000);
     CharMotionSet(charNo, CharMotId);
-    Hu3DModelAttrSet(CharMdlId, 0x40000001U);
-    Hu3DModelCameraSet(CharMdlId, HU3D_CAM0);
-    mdlId = Hu3DModelCreateData(0xC2000F);
-    CapsuleMdlId = mdlId;
+    Hu3DModelAttrSet(mdlId, 0x40000001U);
+    Hu3DModelCameraSet(mdlId, HU3D_CAM0);
+    CapsuleMdlId = mdlId = Hu3DModelCreateData(0xC2000F);
     Hu3DModelCameraSet(mdlId, HU3D_CAM2);
     Hu3DModelScaleSet(mdlId, 0.6f, 0.6f, 0.2f);
     mdlId = Hu3DModelCreateData(0xC20010);

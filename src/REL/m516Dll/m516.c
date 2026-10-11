@@ -237,27 +237,21 @@ void fn_1_1898(s32 value)
 // NONMATCHING: MWCC spills the data pointer to r31 for the indexed load.
 s32 fn_1_18B0(s32 index)
 {
-    u32 *work = (u32 *)lbl_1_bss_18->data;
-    return work[0x48 / 4 + index];
+    u32 *work = *(u32 **)((u8 *)lbl_1_bss_18 + 0x5c);
+    return ((u32 *)((u8 *)work + index * 4 + 0x48))[0];
 }
 
-// NONMATCHING: MWCC keeps the nested state pointer and mask in callee-saved registers.
 void fn_1_18E0(s32 index)
 {
-    u8 *state = (u8 *)*(u32 *)((u8 *)lbl_1_bss_18->data + 0x5C);
-    u32 mask = 1 << ((index & 3) * 4);
-    *(u32 *)(state + 0x5C) |= mask;
+    *(u32 *)((u8 *)lbl_1_bss_18->data + 0x5C) |= 1 << ((index & 3) * 4);
 }
 
-// NONMATCHING: MWCC keeps the nested state pointer and mask in callee-saved registers.
 void fn_1_1910(s32 index)
 {
-    u8 *state = (u8 *)*(u32 *)((u8 *)lbl_1_bss_18->data + 0x5C);
-    u32 mask = 1 << ((index & 3) * 4);
-    *(u32 *)(state + 0x60) |= mask;
+    *(u32 *)((u8 *)lbl_1_bss_18->data + 0x60) |= 1 << ((index & 3) * 4);
 }
 
-// NONMATCHING: The timer division uses the compiler's signed magic-number sequence.
+// NONMATCHING: the compare uses cmplw against a register while MWCC emits cmplwi.
 s32 fn_1_1978(void)
 {
     if (lbl_1_bss_0 == 0) {
@@ -269,7 +263,7 @@ s32 fn_1_1978(void)
 // NONMATCHING: MWCC preserves the constructor-adjusted field pointers through r30/r31.
 void fn_1_19E0(s32 player, s32 value1, s32 value2)
 {
-    u8 *work = (u8 *)lbl_1_bss_18->data;
+    u8 *work = *(u8 **)((u8 *)lbl_1_bss_18 + 0x5c);
     player &= 3;
     *(s32 *)(work + 0x28 + player * 4) = value1;
     *(s32 *)(work + 0x38 + player * 4) = value2;

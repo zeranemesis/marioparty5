@@ -11,11 +11,15 @@ typedef u8 bool8;
 #define GX_N3 1
 #endif
 
-void *fn_1_1D88(void *self);
-void fn_1_1D94(void *self, s32 arg1);
-void fn_1_1E54(void *self, void *arg1);
-void fn_1_CF8(char *cond, char *file, s32 line);
-void *__dl__FPv(void *self);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *fn_1_1D88(void *self);
+extern "C" void fn_1_1D94(void *self, s32 arg1);
+extern "C" void fn_1_1E54(void *self, void *arg1);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
+extern "C" void *__dl__FPv(void *self);
 /* The original calls the C-linkage symbol: the target's call target is plain
    HuSprTexLoad, not a CodeWarrior-mangled HuSprTexLoad__FP10AnimData_ssslll.
    Without extern "C" the C++ declaration below mangles and the branch differs. */
@@ -49,10 +53,14 @@ struct Mgr510Shadow {
 
 extern "C" {
 
-void *lbl_1_bss_2C[2];
+/* lbl_1_bss_2C is defined by m511.o, which references it as UND here. Defining it too makes
+   the linker report it multiply-defined. */
+extern "C" void *lbl_1_bss_2C[2];
 
 extern void *lbl_1_data_41C[5];
-extern u8 lbl_1_data_40[8];
+/* lbl_1_data_40 is boat.o's, and the original boatshadow.o references it UND:
+   defining it here too makes the linker report it multiply-defined. */
+extern "C" u8 lbl_1_data_40[8];
 
 void fn_1_C1CC(Mgr510Shadow *arg0, f32 (*arg1)[4]);
 void fn_1_C038(HU3DMODEL *arg0, Mtx *arg1);
@@ -244,7 +252,5 @@ void *lbl_1_data_41C[5] = {
     (void *)fn_1_C01C,
     (void *)fn_1_C034,
 };
-
-u8 lbl_1_data_40[8] = {0x95, 0xAC, 0xE2, 0x00, 0xFF, 0xFF, 0xFF, 0x00};
 
 }

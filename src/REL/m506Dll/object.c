@@ -206,21 +206,19 @@ static u8 CharFallSeNo[16];
 static u8 FallEndSeNo[16];
 static u8 FallStartSeNo[16];
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506MainCreate(OMOBJ *obj)
 {
-    M506_WORK *work;
-    work = obj->data;
+    M506_WORK *work = obj->data;
+
     M506Create(work);
     obj->objFunc = M506MainUpdate;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506FlowEndWatch(OMOBJ *obj)
 {
     M506_WORK *work = obj->data;
-
     BOOL flowUpd;
+
     if (M506ExitCheck(obj)) {
         return;
     }

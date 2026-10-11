@@ -8,13 +8,17 @@
 
 extern "C" void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
-void *__dl__FPv(void *self);
-void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
-void fn_1_1D88(void *self);
-void fn_1_1D94(void *self, s32 arg1);
-void fn_1_1E54(void *self, void **arg1);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__dl__FPv(void *self);
+extern "C" void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
+extern "C" void fn_1_1D88(void *self);
+extern "C" void fn_1_1D94(void *self, s32 arg1);
+extern "C" void fn_1_1E54(void *self, void **arg1);
 f32 fn_1_884(s32 arg0, f32 arg1, f32 arg2);
-void fn_1_CF8(char *cond, char *file, s32 line);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 void fn_1_DAB8(s32 arg0, f32 *arg1);
 
 struct Mgr511StarYaji;
@@ -458,3 +462,16 @@ void *fn_1_FA74(void *arg0, s16 arg1)
 }
 
 }
+
+/* The vtables this object defines: their entries are
+   functions defined above, so the definitions sit here. */
+
+/* lbl_1_data_4E4 is a vtable staryaji.o itself defines (6 words at .data+0x2c), and this unit is linked from source, so it has to be a definition rather than an extern declaration: with only the declaration the REL link reported "Failed to find symbol lbl_1_data_4E4 in any module". 2 leading words are zero and the rest are ADDR32 relocations to functions in this object. The definition is at the end of the unit because its entries are functions defined further down. */
+extern "C" void *lbl_1_data_4E4[6] = {
+    0,
+    0,
+    (void *) fn_1_EA18,
+    (void *) fn_1_EAE8,
+    (void *) fn_1_EB00,
+};
+

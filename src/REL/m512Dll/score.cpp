@@ -30,12 +30,15 @@ void fn_1_1330(void *self, void *arg);                           // base member 
 void fn_1_1D4(char *msg, char *file, int line);                 // __assert_fail
 
 // base class vtable, lives in the module's .rodata (another object)
-void *lbl_1_data_1FC[4];
+// All four are UND in the original score.o: m512.o defines the vtable and
+// lbl_1_bss_C, gamemaster.o defines the two singletons. Defining them here
+// too makes the REL link fail with multiply-defined.
+extern void *lbl_1_data_1FC[4];
 
 // singletons and the shared base-class pointer, all in the module's .bss
-void *lbl_1_bss_C;
-void *lbl_1_bss_9FC;
-void *lbl_1_bss_A00;
+extern void *lbl_1_bss_C;
+extern void *lbl_1_bss_9FC;
+extern void *lbl_1_bss_A00;
 
 void __dl__FPv(void *obj);
 

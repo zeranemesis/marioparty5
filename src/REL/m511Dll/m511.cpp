@@ -4,8 +4,8 @@
 
 extern "C" {
 
-extern void *lbl_1_data_22C[4];
 extern void fn_1_530C(void);
+extern void *lbl_1_data_22C[];
 
 void fn_1_36DC(void)
 {

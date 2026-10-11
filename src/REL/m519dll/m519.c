@@ -1702,12 +1702,16 @@ void fn_1_4E18(M519_MECH *mech)
     float diff;
     float tC;
     HuVecF circle;
+    int pilotIdx;
+    int targetIdx;
 
-    dif = lbl_1_bss_E8[mech->pilotNo]->dif;
+    pilotIdx = mech->pilotNo;
+    dif = lbl_1_bss_E8[pilotIdx]->dif;
     circle.x = mech->pos.x;
     circle.y = mech->pos.z;
     circle.z = mech->radius;
-    target = lbl_1_bss_F8[mech->comTargetNo];
+    targetIdx = mech->comTargetNo;
+    target = lbl_1_bss_F8[targetIdx];
     switch (mech->comMode) {
         case 0:
             if (!mech->comTargetF) {

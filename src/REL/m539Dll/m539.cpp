@@ -17,6 +17,24 @@ void fn_1_2C44(void)
     omSysExitReq = 1;
 }
 
+void HuMemDirectFree(void *ptr);
+
+// Release an optional owned block; a NULL owner is a no-op.
+void fn_1_C8(void *ptr)
+{
+    if (ptr != 0) {
+        HuMemDirectFree(ptr);
+    }
+}
+
+// Second owner type, same lifetime rule.
+void fn_1_100(void *ptr)
+{
+    if (ptr != 0) {
+        HuMemDirectFree(ptr);
+    }
+}
+
 // NONMATCHING: register allocation - uses r31/stack frame instead of r0
 void fn_1_30BC(void *arg0, void *arg1)
 {

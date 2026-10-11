@@ -1,14 +1,14 @@
 # Avancement de la décompilation
 
-Généré le 2026-09-29 08:18 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-10-05 15:52 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **26.56 %** (2 461.2 / 9 266.8 Ko) |
-| code lié depuis les sources | 19.28 % |
-| fonctions identiques | 5722 / 21231 |
-| unités complètes | 316 / 881 |
+| code identique | **29.38 %** (2 720.4 / 9 259.3 Ko) |
+| code lié depuis les sources | 20.66 % |
+| fonctions identiques | 7296 / 21157 |
+| unités complètes | 346 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
 
@@ -16,13 +16,13 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
-| DOL (moteur et bibliothèques) | 1 | 1 697.5 Ko | 84.9 % | 256.8 Ko |
-| Mini-jeux m5xx | 76 | 4 493.9 Ko | 6.3 % | 4 210.3 Ko |
+| DOL (moteur et bibliothèques) | 1 | 1 690.0 Ko | 85.4 % | 246.0 Ko |
+| Mini-jeux m5xx | 76 | 4 493.9 Ko | 11.4 % | 3 981.8 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 45.8 % | 113.9 Ko |
-| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 42.4 % | 220.7 Ko |
-| Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.1 % | 826.1 Ko |
-| Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 14.1 % | 1 177.7 Ko |
+| Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 42.5 % | 220.3 Ko |
+| Modes (md*, mg*) | 12 | 1 033.6 Ko | 20.9 % | 817.8 Ko |
+| Système, menus, résultats, histoire, Super Duel, E3 | 22 | 1 371.5 Ko | 15.5 % | 1 159.1 Ko |
 
 ## Par module
 
@@ -30,88 +30,88 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `main` | 1 697.5 Ko | 84.9 % | 3721/6158 | 86.5 % | 220/4/86 | en cours |
+| `main` | 1 690.0 Ko | 85.4 % | 3705/6084 | 87.7 % | 235/6/69 | en cours |
 
 ### Mini-jeux m5xx
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `m501Dll` | 65.1 Ko | 1.3 % | 16/319 | 1.3 % | 2/0/9 | en cours |
-| `m502dll` | 55.7 Ko | 0.0 % | 0/123 | 0.0 % | 0/0/9 | à faire |
-| `m503Dll` | 56.1 Ko | 0.0 % | 0/148 | 0.0 % | 0/0/8 | à faire |
-| `m504dll` | 74.4 Ko | 0.3 % | 3/116 | 0.3 % | 1/0/10 | en cours |
-| `m505Dll` | 72.4 Ko | 35.8 % | 15/19 | 43.9 % | 0/0/1 | en cours |
-| `m506Dll` | 59.0 Ko | 54.0 % | 55/96 | 87.7 % | 1/2/0 | fait (E) |
+| `m501Dll` | 65.1 Ko | 4.8 % | 38/319 | 7.7 % | 2/2/7 | en cours |
+| `m502dll` | 55.7 Ko | 1.5 % | 10/123 | 1.5 % | 0/0/9 | en cours |
+| `m503Dll` | 56.1 Ko | 4.0 % | 27/148 | 7.9 % | 0/2/6 | en cours |
+| `m504dll` | 74.4 Ko | 8.0 % | 28/116 | 13.3 % | 2/1/8 | en cours |
+| `m505Dll` | 72.4 Ko | 35.8 % | 16/19 | 97.5 % | 0/1/0 | fait (E) |
+| `m506Dll` | 59.0 Ko | 54.5 % | 58/96 | 94.5 % | 1/2/0 | fait (E) |
 | `m507dll` | 33.7 Ko | 100.0 % | 47/47 | 100.0 % | 2/0/0 | fait |
-| `m508Dll` | 57.4 Ko | 0.0 % | 0/245 | 0.0 % | 0/0/2 | à faire |
-| `m509Dll` | 76.1 Ko | 1.3 % | 18/284 | 1.3 % | 2/0/8 | en cours |
-| `m510dll` | 53.1 Ko | 0.4 % | 3/106 | 0.4 % | 1/0/12 | en cours |
-| `m511Dll` | 116.4 Ko | 0.5 % | 11/439 | 0.5 % | 1/0/16 | en cours |
-| `m512Dll` | 68.3 Ko | 0.9 % | 11/310 | 0.9 % | 1/0/9 | en cours |
-| `m513Dll` | 83.4 Ko | 0.7 % | 11/368 | 0.7 % | 1/0/15 | en cours |
-| `m514Dll` | 38.3 Ko | 0.0 % | 0/127 | 0.0 % | 0/0/6 | à faire |
-| `m515Dll` | 57.7 Ko | 0.0 % | 0/84 | 0.0 % | 0/0/1 | à faire |
-| `m516Dll` | 35.8 Ko | 0.0 % | 0/113 | 0.0 % | 0/0/7 | à faire |
-| `m517Dll` | 112.2 Ko | 0.5 % | 11/420 | 0.5 % | 1/0/14 | en cours |
-| `m518dll` | 58.5 Ko | 58.2 % | 108/122 | 67.9 % | 0/0/1 | en cours |
-| `m519dll` | 65.5 Ko | 87.3 % | 139/142 | 96.7 % | 0/1/0 | fait (E) |
-| `m520Dll` | 39.7 Ko | 0.0 % | 0/29 | 0.0 % | 0/0/1 | à faire |
-| `m521Dll` | 99.2 Ko | 1.0 % | 14/365 | 1.0 % | 2/0/9 | en cours |
-| `m522Dll` | 86.2 Ko | 0.7 % | 11/398 | 0.7 % | 1/0/8 | en cours |
-| `m523Dll` | 38.5 Ko | 0.0 % | 0/111 | 0.0 % | 0/0/2 | à faire |
-| `m524Dll` | 23.9 Ko | 0.0 % | 0/76 | 0.0 % | 0/0/1 | à faire |
-| `m525Dll` | 49.8 Ko | 0.0 % | 0/18 | 0.0 % | 0/0/1 | à faire |
+| `m508Dll` | 57.4 Ko | 0.3 % | 6/245 | 0.3 % | 0/0/2 | en cours |
+| `m509Dll` | 76.1 Ko | 2.7 % | 35/284 | 4.1 % | 2/1/7 | en cours |
+| `m510dll` | 53.1 Ko | 7.3 % | 18/106 | 10.1 % | 2/1/10 | en cours |
+| `m511Dll` | 116.4 Ko | 2.1 % | 46/439 | 17.8 % | 1/11/5 | en cours |
+| `m512Dll` | 68.3 Ko | 6.4 % | 48/310 | 12.0 % | 1/2/7 | en cours |
+| `m513Dll` | 83.4 Ko | 1.5 % | 24/368 | 6.3 % | 1/0/15 | en cours |
+| `m514Dll` | 38.3 Ko | 8.0 % | 20/127 | 8.7 % | 1/0/5 | en cours |
+| `m515Dll` | 57.7 Ko | 2.8 % | 21/84 | 3.2 % | 0/0/1 | en cours |
+| `m516Dll` | 35.8 Ko | 31.6 % | 45/113 | 43.8 % | 1/0/6 | en cours |
+| `m517Dll` | 112.2 Ko | 2.6 % | 45/420 | 5.0 % | 1/0/14 | en cours |
+| `m518dll` | 58.5 Ko | 63.9 % | 113/122 | 83.0 % | 0/0/1 | en cours |
+| `m519dll` | 65.5 Ko | 87.6 % | 140/142 | 99.8 % | 0/1/0 | fait (E) |
+| `m520Dll` | 39.7 Ko | 0.8 % | 4/29 | 1.3 % | 0/0/1 | en cours |
+| `m521Dll` | 99.2 Ko | 3.3 % | 41/365 | 6.7 % | 3/2/6 | en cours |
+| `m522Dll` | 86.2 Ko | 2.1 % | 27/398 | 2.8 % | 1/1/7 | en cours |
+| `m523Dll` | 38.5 Ko | 1.4 % | 7/111 | 1.4 % | 0/0/2 | en cours |
+| `m524Dll` | 23.9 Ko | 8.4 % | 8/76 | 25.8 % | 0/0/1 | en cours |
+| `m525Dll` | 49.8 Ko | 34.7 % | 13/18 | 54.3 % | 0/0/1 | en cours |
 | `m526Dll` | 58.9 Ko | 100.0 % | 184/184 | 100.0 % | 2/0/0 | fait |
-| `m527Dll` | 52.7 Ko | 0.0 % | 0/16 | 0.0 % | 0/0/1 | à faire |
-| `m528Dll` | 51.4 Ko | 0.0 % | 0/103 | 0.0 % | 0/0/1 | à faire |
-| `m529dll` | 29.2 Ko | 0.0 % | 0/54 | 0.0 % | 0/0/1 | à faire |
-| `m530Dll` | 38.2 Ko | 0.0 % | 0/133 | 0.0 % | 0/0/4 | à faire |
-| `m531Dll` | 69.9 Ko | 2.3 % | 20/276 | 2.3 % | 3/0/11 | en cours |
-| `m532Dll` | 78.2 Ko | 0.8 % | 11/414 | 0.8 % | 1/0/10 | en cours |
-| `m533dll` | 32.8 Ko | 0.0 % | 0/72 | 0.0 % | 0/0/2 | à faire |
-| `m534Dll` | 29.3 Ko | 0.0 % | 0/94 | 0.0 % | 0/0/6 | à faire |
-| `m535Dll` | 47.7 Ko | 0.0 % | 0/19 | 0.0 % | 0/0/1 | à faire |
-| `m536Dll` | 65.5 Ko | 0.9 % | 11/328 | 0.9 % | 1/0/9 | en cours |
-| `m537Dll` | 93.2 Ko | 0.6 % | 11/382 | 0.6 % | 1/0/9 | en cours |
-| `m538Dll` | 44.5 Ko | 0.0 % | 0/89 | 0.0 % | 0/0/1 | à faire |
-| `m539Dll` | 68.5 Ko | 0.9 % | 11/333 | 0.9 % | 1/0/11 | en cours |
-| `m540Dll` | 86.1 Ko | 35.0 % | 134/226 | 43.8 % | 0/0/1 | en cours |
-| `m541Dll` | 105.7 Ko | 0.0 % | 0/92 | 0.0 % | 0/0/3 | à faire |
-| `m542dll` | 37.2 Ko | 0.0 % | 0/58 | 0.0 % | 0/0/3 | à faire |
-| `m543Dll` | 65.7 Ko | 0.0 % | 0/91 | 0.0 % | 0/0/3 | à faire |
-| `m544Dll` | 53.0 Ko | 0.0 % | 0/93 | 0.0 % | 0/0/3 | à faire |
-| `m545Dll` | 42.3 Ko | 0.0 % | 0/72 | 0.0 % | 0/0/3 | à faire |
-| `m546Dll` | 57.0 Ko | 0.0 % | 0/95 | 0.0 % | 0/0/3 | à faire |
-| `m547dll` | 45.4 Ko | 0.0 % | 0/60 | 0.0 % | 0/0/3 | à faire |
-| `m548dll` | 36.3 Ko | 0.0 % | 0/56 | 0.0 % | 0/0/3 | à faire |
-| `m549Dll` | 82.5 Ko | 0.0 % | 0/109 | 0.0 % | 0/0/4 | à faire |
-| `m550dll` | 33.0 Ko | 0.0 % | 0/67 | 0.0 % | 0/0/3 | à faire |
-| `m551Dll` | 93.6 Ko | 0.0 % | 0/108 | 0.0 % | 0/0/3 | à faire |
-| `m552dll` | 49.2 Ko | 0.0 % | 0/86 | 0.0 % | 0/0/5 | à faire |
-| `m553Dll` | 66.0 Ko | 0.0 % | 0/94 | 0.0 % | 0/0/3 | à faire |
-| `m554dll` | 34.1 Ko | 0.0 % | 0/60 | 0.0 % | 0/0/3 | à faire |
-| `m555Dll` | 110.1 Ko | 0.0 % | 0/102 | 0.0 % | 0/0/3 | à faire |
-| `m559dll` | 31.8 Ko | 0.0 % | 0/80 | 0.0 % | 0/0/1 | à faire |
-| `m560dll` | 29.7 Ko | 0.0 % | 0/71 | 0.0 % | 0/0/2 | à faire |
-| `m561dll` | 38.8 Ko | 0.0 % | 0/78 | 0.0 % | 0/0/2 | à faire |
-| `m562dll` | 188.5 Ko | 0.0 % | 0/225 | 0.6 % | 0/0/22 | à faire |
-| `m563dll` | 34.5 Ko | 0.0 % | 0/96 | 0.0 % | 0/0/2 | à faire |
-| `m564Dll` | 45.1 Ko | 0.0 % | 0/139 | 0.0 % | 0/0/4 | à faire |
-| `m565dll` | 63.4 Ko | 0.3 % | 3/112 | 0.3 % | 1/0/10 | en cours |
-| `m566Dll` | 57.7 Ko | 0.0 % | 0/17 | 0.0 % | 0/0/1 | à faire |
-| `m567Dll` | 38.9 Ko | 0.0 % | 0/55 | 0.0 % | 0/0/1 | à faire |
-| `m568Dll` | 81.6 Ko | 0.7 % | 11/358 | 0.7 % | 1/0/12 | en cours |
-| `m569Dll` | 39.5 Ko | 0.0 % | 0/115 | 0.0 % | 0/0/5 | à faire |
-| `m570Dll` | 23.9 Ko | 0.0 % | 0/89 | 0.0 % | 0/0/2 | à faire |
-| `m571dll` | 36.9 Ko | 0.0 % | 0/87 | 0.0 % | 0/0/1 | à faire |
-| `m572dll` | 40.8 Ko | 0.0 % | 0/88 | 0.0 % | 0/0/1 | à faire |
-| `m573dll` | 34.3 Ko | 0.0 % | 0/77 | 0.0 % | 0/0/1 | à faire |
-| `m574Dll` | 37.0 Ko | 0.0 % | 0/120 | 0.0 % | 0/0/6 | à faire |
-| `m575dll` | 60.7 Ko | 0.3 % | 3/118 | 0.3 % | 1/0/13 | en cours |
-| `m576Dll` | 59.8 Ko | 0.0 % | 0/84 | 0.0 % | 0/0/3 | à faire |
-| `m577Dll` | 46.4 Ko | 0.0 % | 0/74 | 0.0 % | 0/0/3 | à faire |
-| `m579Dll` | 96.9 Ko | 0.6 % | 11/408 | 0.6 % | 1/0/13 | en cours |
-| `m580Dll` | 73.8 Ko | 0.0 % | 0/179 | 0.0 % | 0/0/8 | à faire |
+| `m527Dll` | 52.7 Ko | 1.4 % | 6/16 | 1.4 % | 0/0/1 | en cours |
+| `m528Dll` | 51.4 Ko | 2.2 % | 17/103 | 2.2 % | 0/0/1 | en cours |
+| `m529dll` | 29.2 Ko | 46.7 % | 40/54 | 93.0 % | 0/1/0 | fait (E) |
+| `m530Dll` | 38.2 Ko | 2.6 % | 15/133 | 2.6 % | 0/0/4 | en cours |
+| `m531Dll` | 69.9 Ko | 7.8 % | 69/276 | 8.2 % | 6/0/8 | en cours |
+| `m532Dll` | 78.2 Ko | 1.0 % | 17/414 | 1.1 % | 1/0/10 | en cours |
+| `m533dll` | 32.8 Ko | 0.5 % | 3/72 | 1.1 % | 0/0/2 | en cours |
+| `m534Dll` | 29.3 Ko | 1.2 % | 5/94 | 1.4 % | 0/0/6 | en cours |
+| `m535Dll` | 47.7 Ko | 1.3 % | 6/19 | 2.2 % | 0/0/1 | en cours |
+| `m536Dll` | 65.5 Ko | 6.3 % | 45/328 | 9.7 % | 2/1/7 | en cours |
+| `m537Dll` | 93.2 Ko | 2.7 % | 37/382 | 2.8 % | 1/1/8 | en cours |
+| `m538Dll` | 44.5 Ko | 40.0 % | 63/89 | 84.1 % | 0/1/0 | fait (E) |
+| `m539Dll` | 68.5 Ko | 3.3 % | 41/333 | 16.8 % | 1/6/5 | en cours |
+| `m540Dll` | 86.1 Ko | 41.6 % | 183/226 | 57.7 % | 0/0/1 | en cours |
+| `m541Dll` | 105.7 Ko | 0.2 % | 6/92 | 0.2 % | 0/0/3 | en cours |
+| `m542dll` | 37.2 Ko | 2.2 % | 11/58 | 2.2 % | 0/0/3 | en cours |
+| `m543Dll` | 65.7 Ko | 1.0 % | 13/91 | 1.0 % | 0/0/3 | en cours |
+| `m544Dll` | 53.0 Ko | 2.2 % | 16/93 | 2.2 % | 0/0/3 | en cours |
+| `m545Dll` | 42.3 Ko | 3.8 % | 16/72 | 3.8 % | 0/0/3 | en cours |
+| `m546Dll` | 57.0 Ko | 2.2 % | 15/95 | 2.2 % | 0/0/3 | en cours |
+| `m547dll` | 45.4 Ko | 35.4 % | 23/60 | 35.4 % | 0/0/3 | en cours |
+| `m548dll` | 36.3 Ko | 3.9 % | 10/56 | 3.9 % | 0/0/3 | en cours |
+| `m549Dll` | 82.5 Ko | 0.8 % | 14/109 | 0.9 % | 0/0/4 | en cours |
+| `m550dll` | 33.0 Ko | 1.8 % | 5/67 | 1.8 % | 0/0/3 | en cours |
+| `m551Dll` | 93.6 Ko | 0.3 % | 7/108 | 0.3 % | 0/0/3 | en cours |
+| `m552dll` | 49.2 Ko | 3.3 % | 14/86 | 3.3 % | 0/0/5 | en cours |
+| `m553Dll` | 66.0 Ko | 0.8 % | 11/94 | 1.0 % | 0/0/3 | en cours |
+| `m554dll` | 34.1 Ko | 1.8 % | 9/60 | 2.0 % | 0/0/3 | en cours |
+| `m555Dll` | 110.1 Ko | 3.4 % | 17/102 | 3.4 % | 0/0/3 | en cours |
+| `m559dll` | 31.8 Ko | 4.3 % | 11/80 | 75.0 % | 0/0/1 | en cours |
+| `m560dll` | 29.7 Ko | 0.7 % | 5/71 | 0.7 % | 0/0/2 | en cours |
+| `m561dll` | 38.8 Ko | 4.0 % | 9/78 | 10.8 % | 0/0/2 | en cours |
+| `m562dll` | 188.5 Ko | 2.4 % | 27/225 | 3.7 % | 1/0/21 | en cours |
+| `m563dll` | 34.5 Ko | 45.9 % | 72/96 | 94.6 % | 0/1/1 | en cours |
+| `m564Dll` | 45.1 Ko | 2.2 % | 12/139 | 2.2 % | 0/0/4 | en cours |
+| `m565dll` | 63.4 Ko | 2.3 % | 13/112 | 2.3 % | 1/0/10 | en cours |
+| `m566Dll` | 57.7 Ko | 24.9 % | 12/17 | 81.2 % | 0/1/0 | fait (E) |
+| `m567Dll` | 38.9 Ko | 0.6 % | 6/55 | 0.6 % | 0/0/1 | en cours |
+| `m568Dll` | 81.6 Ko | 2.1 % | 33/358 | 6.6 % | 1/1/11 | en cours |
+| `m569Dll` | 39.5 Ko | 0.3 % | 3/115 | 0.5 % | 0/0/5 | en cours |
+| `m570Dll` | 23.9 Ko | 21.5 % | 31/89 | 45.0 % | 0/0/2 | en cours |
+| `m571dll` | 36.9 Ko | 16.9 % | 46/87 | 38.2 % | 0/0/1 | en cours |
+| `m572dll` | 40.8 Ko | 3.3 % | 13/88 | 73.9 % | 0/0/1 | en cours |
+| `m573dll` | 34.3 Ko | 0.1 % | 2/77 | 0.1 % | 0/0/1 | en cours |
+| `m574Dll` | 37.0 Ko | 34.5 % | 47/120 | 41.8 % | 0/1/5 | en cours |
+| `m575dll` | 60.7 Ko | 6.7 % | 18/118 | 9.9 % | 1/2/11 | en cours |
+| `m576Dll` | 59.8 Ko | 0.2 % | 4/84 | 0.5 % | 0/0/3 | en cours |
+| `m577Dll` | 46.4 Ko | 3.6 % | 12/74 | 3.7 % | 1/1/1 | en cours |
+| `m579Dll` | 96.9 Ko | 2.1 % | 35/408 | 4.4 % | 1/2/11 | en cours |
+| `m580Dll` | 73.8 Ko | 4.0 % | 24/179 | 4.1 % | 1/0/7 | en cours |
 
 ### Mini-jeux repris de MP4 (m4xx)
 
@@ -124,24 +124,24 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
 | `w01sDll` | 58.5 Ko | 100.0 % | 70/70 | 100.0 % | 1/0/0 | fait |
-| `w02sDll` | 41.4 Ko | 1.6 % | 13/62 | 30.5 % | 0/0/1 | en cours |
-| `w03sDll` | 11.2 Ko | 32.4 % | 13/22 | 66.2 % | 0/1/0 | fait (E) |
-| `w04sDll` | 54.8 Ko | 36.5 % | 48/59 | 52.5 % | 0/0/1 | en cours |
-| `w05sDll` | 13.3 Ko | 16.9 % | 12/19 | 67.6 % | 0/1/0 | fait (E) |
+| `w02sDll` | 41.4 Ko | 1.6 % | 14/62 | 54.1 % | 0/0/1 | en cours |
+| `w03sDll` | 11.2 Ko | 32.4 % | 13/22 | 75.2 % | 0/1/0 | fait (E) |
+| `w04sDll` | 54.8 Ko | 36.5 % | 48/59 | 54.9 % | 0/0/1 | en cours |
+| `w05sDll` | 13.3 Ko | 16.9 % | 12/19 | 92.2 % | 0/1/0 | fait (E) |
 | `w06sDll` | 9.2 Ko | 100.0 % | 23/23 | 100.0 % | 1/0/0 | fait |
-| `w07sDll` | 21.5 Ko | 8.7 % | 19/31 | 64.7 % | 0/1/0 | fait (E) |
+| `w07sDll` | 21.5 Ko | 8.7 % | 19/31 | 86.6 % | 0/1/0 | fait (E) |
 
 ### Plateaux (w0X, w10, w20)
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
 | `w01Dll` | 66.2 Ko | 100.0 % | 72/72 | 100.0 % | 1/0/0 | fait |
-| `w02Dll` | 72.5 Ko | 1.9 % | 16/73 | 41.4 % | 0/1/0 | fait (E) |
-| `w03Dll` | 35.6 Ko | 8.6 % | 13/40 | 55.5 % | 0/1/0 | fait (E) |
-| `w04Dll` | 78.7 Ko | 5.6 % | 33/66 | 32.9 % | 0/1/0 | fait (E) |
+| `w02Dll` | 72.5 Ko | 1.9 % | 16/73 | 74.6 % | 0/1/0 | fait (E) |
+| `w03Dll` | 35.6 Ko | 9.2 % | 14/40 | 62.2 % | 0/1/0 | fait (E) |
+| `w04Dll` | 78.7 Ko | 5.7 % | 34/66 | 51.0 % | 0/1/0 | fait (E) |
 | `w05Dll` | 47.6 Ko | 100.0 % | 33/33 | 100.0 % | 1/0/0 | fait |
 | `w06Dll` | 35.2 Ko | 100.0 % | 47/47 | 100.0 % | 1/0/0 | fait |
-| `w07Dll` | 45.2 Ko | 5.4 % | 21/52 | 57.5 % | 0/1/0 | fait (E) |
+| `w07Dll` | 45.2 Ko | 5.8 % | 23/52 | 84.7 % | 0/1/0 | fait (E) |
 | `w10Dll` | 1.0 Ko | 100.0 % | 8/8 | 100.0 % | 1/0/0 | fait |
 | `w20Dll` | 1.2 Ko | 100.0 % | 8/8 | 100.0 % | 1/0/0 | fait |
 
@@ -149,18 +149,18 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `mdbeachDll` | 114.3 Ko | 0.0 % | 0/124 | 0.0 % | 0/0/3 | à faire |
-| `mdcardDll` | 74.8 Ko | 0.0 % | 0/126 | 0.0 % | 0/0/3 | à faire |
-| `mdminiDll` | 132.9 Ko | 0.0 % | 0/157 | 0.0 % | 0/0/3 | à faire |
-| `mdomakeDll` | 47.7 Ko | 0.0 % | 0/98 | 0.0 % | 0/0/3 | à faire |
-| `mdoptionDll` | 109.3 Ko | 0.0 % | 0/175 | 0.0 % | 0/0/4 | à faire |
+| `mdbeachDll` | 114.3 Ko | 0.2 % | 9/124 | 0.2 % | 0/0/3 | en cours |
+| `mdcardDll` | 74.8 Ko | 1.2 % | 6/126 | 1.2 % | 0/0/3 | en cours |
+| `mdminiDll` | 132.9 Ko | 2.3 % | 27/157 | 3.7 % | 0/0/3 | en cours |
+| `mdomakeDll` | 47.7 Ko | 0.9 % | 10/98 | 1.1 % | 0/0/3 | en cours |
+| `mdoptionDll` | 109.3 Ko | 1.0 % | 15/175 | 1.1 % | 0/0/4 | en cours |
 | `mdpartyDll` | 157.8 Ko | 100.0 % | 163/163 | 100.0 % | 3/0/0 | fait |
 | `mdselDll` | 49.7 Ko | 100.0 % | 103/103 | 100.0 % | 3/0/0 | fait |
-| `mdstoryDll` | 73.9 Ko | 0.0 % | 0/136 | 0.0 % | 0/0/3 | à faire |
-| `mgfreeDll` | 54.7 Ko | 0.0 % | 0/71 | 0.0 % | 0/0/2 | à faire |
-| `mgmatchDll` | 91.7 Ko | 0.0 % | 0/125 | 0.0 % | 0/0/3 | à faire |
-| `mgtourDll` | 64.8 Ko | 0.0 % | 0/112 | 0.0 % | 0/0/3 | à faire |
-| `mgwarsDll` | 62.2 Ko | 0.0 % | 0/121 | 0.0 % | 0/0/3 | à faire |
+| `mdstoryDll` | 73.9 Ko | 1.0 % | 15/136 | 1.3 % | 0/0/3 | en cours |
+| `mgfreeDll` | 54.7 Ko | 0.0 % | 1/71 | 0.3 % | 0/0/2 | en cours |
+| `mgmatchDll` | 91.7 Ko | 0.1 % | 3/125 | 0.7 % | 0/0/3 | en cours |
+| `mgtourDll` | 64.8 Ko | 0.5 % | 5/112 | 0.7 % | 0/0/3 | en cours |
+| `mgwarsDll` | 62.2 Ko | 2.2 % | 30/121 | 4.7 % | 0/1/2 | en cours |
 
 ### Système, menus, résultats, histoire, Super Duel, E3
 
@@ -168,23 +168,23 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 |---|---|---|---|---|---|---|
 | `actmanDLL` | 2.4 Ko | 100.0 % | 13/13 | 100.0 % | 1/0/0 | fait |
 | `bootDll` | 10.6 Ko | 100.0 % | 11/11 | 100.0 % | 1/0/0 | fait |
-| `carddll` | 321.2 Ko | 0.0 % | 0/178 | 0.0 % | 0/0/6 | à faire |
+| `carddll` | 321.2 Ko | 1.4 % | 24/178 | 2.1 % | 0/0/6 | en cours |
 | `decathlonDll` | 43.5 Ko | 100.0 % | 81/81 | 100.0 % | 3/0/0 | fait |
 | `e3bootdll` | 18.0 Ko | 100.0 % | 13/13 | 100.0 % | 1/0/0 | fait |
-| `e3setupdll` | 47.6 Ko | 0.8 % | 1/41 | 0.8 % | 0/0/4 | en cours |
+| `e3setupdll` | 47.6 Ko | 3.7 % | 4/41 | 4.4 % | 2/0/2 | en cours |
 | `fileseldll` | 44.3 Ko | 100.0 % | 45/45 | 100.0 % | 4/0/0 | fait |
 | `instDll` | 29.2 Ko | 100.0 % | 24/24 | 100.0 % | 4/0/0 | fait |
-| `meschkdll` | 1.8 Ko | 34.7 % | 5/6 | 81.8 % | 0/0/0 | en cours |
-| `motchkDll` | 7.7 Ko | 13.3 % | 5/9 | 90.1 % | 0/1/0 | fait (E) |
-| `partyresultdll` | 79.8 Ko | 10.2 % | 14/52 | 10.2 % | 3/0/2 | en cours |
-| `rescardDll` | 68.1 Ko | 0.0 % | 0/123 | 0.0 % | 0/0/3 | à faire |
-| `resultDll` | 55.3 Ko | 6.5 % | 8/42 | 6.5 % | 3/0/3 | en cours |
-| `safDll` | 15.7 Ko | 16.8 % | 9/15 | 80.3 % | 0/3/0 | fait (E) |
-| `sd00dll` | 209.0 Ko | 0.2 % | 1/281 | 0.2 % | 0/1/9 | en cours |
-| `sdroomdll` | 160.7 Ko | 0.0 % | 0/162 | 0.0 % | 0/0/9 | à faire |
+| `meschkdll` | 1.8 Ko | 34.7 % | 5/6 | 98.4 % | 0/0/0 | en cours |
+| `motchkDll` | 7.7 Ko | 13.3 % | 5/9 | 97.4 % | 0/1/0 | fait (E) |
+| `partyresultdll` | 79.8 Ko | 11.1 % | 19/52 | 11.6 % | 3/0/2 | en cours |
+| `rescardDll` | 68.1 Ko | 0.9 % | 8/123 | 1.2 % | 0/0/3 | en cours |
+| `resultDll` | 55.3 Ko | 11.8 % | 19/42 | 12.8 % | 3/0/3 | en cours |
+| `safDll` | 15.7 Ko | 16.8 % | 9/15 | 94.4 % | 0/3/0 | fait (E) |
+| `sd00dll` | 209.0 Ko | 1.7 % | 21/281 | 2.5 % | 1/0/9 | en cours |
+| `sdroomdll` | 160.7 Ko | 2.9 % | 29/162 | 3.7 % | 0/0/9 | en cours |
 | `selmenuDll` | 19.9 Ko | 100.0 % | 25/25 | 100.0 % | 1/0/0 | fait |
 | `sequencedll` | 2.6 Ko | 100.0 % | 9/9 | 100.0 % | 1/0/0 | fait |
-| `staffDll` | 10.2 Ko | 7.6 % | 5/8 | 33.0 % | 0/1/0 | fait (E) |
+| `staffDll` | 10.2 Ko | 7.6 % | 5/8 | 78.4 % | 0/1/0 | fait (E) |
 | `storymodedll` | 41.9 Ko | 0.0 % | 0/50 | 0.0 % | 0/0/2 | à faire |
-| `storyresultdll` | 15.7 Ko | 35.8 % | 7/15 | 83.3 % | 0/3/0 | fait (E) |
-| `systemDll` | 166.2 Ko | 0.0 % | 0/286 | 0.0 % | 0/0/6 | à faire |
+| `storyresultdll` | 15.7 Ko | 35.8 % | 7/15 | 91.4 % | 0/3/0 | fait (E) |
+| `systemDll` | 166.2 Ko | 0.3 % | 9/286 | 0.4 % | 0/0/6 | en cours |

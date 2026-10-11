@@ -11,6 +11,14 @@
 #undef Hu3DCameraPosSet
 void Hu3DCameraPosSet(int cameraBit, f32 posX, f32 posY, f32 posZ, f32 upX, f32 upY, f32 upZ, f32 targetX, f32 targetY, f32 targetZ);
 
+/* The 17 M2C_ERROR sites below stand for `cror eq,gt,eq` after an fcmpo, which
+ * m2c could not translate. Without this header M2C_ERROR is an undeclared
+ * identifier, CodeWarrior emits a call to a symbol named M2C_ERROR, and the REL
+ * link fails with "Failed to find symbol M2C_ERROR in any module". m2c_macros.h
+ * defines it as the no-op the decompiler expects. These functions stay
+ * NONMATCHING either way -- the cror is not reproduced. */
+#include "m2c_macros.h"
+
 
 /* fn_1_69C4 only ever touches one s16 field of its argument, at 0x48. */
 struct m538_s16_48_s {

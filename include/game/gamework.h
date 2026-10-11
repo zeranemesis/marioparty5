@@ -449,6 +449,13 @@ static inline int GWSubGameNoGet()
 #define GWMgCoinBonusAdd(player, value) GWMgCoinBonusSet((player), GWMgCoinBonusGet((player))+(value))
 #define GWMgCoinAdd(player, value) GWMgCoinSet((player), GWMgCoinGet((player))+(value))
 
+/* Plain C in the original: the DOL defines GWInit, GWMgRecordGet and the rest
+ * unmangled, so a .cpp including this header needs the guard or it emits
+ * GWMgRecordGet__Fl and the REL link cannot resolve it. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void GWInit(void);
 void GWCommonInit(void);
 s32 GWComKeyDelayGet(void);
@@ -481,5 +488,9 @@ void GWTotalStarAdd(s16 totalStar);
 u16 GWTotalStarGet(void);
 void GWSdCommonInit(void);
 void GWSaveCompleteSet(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

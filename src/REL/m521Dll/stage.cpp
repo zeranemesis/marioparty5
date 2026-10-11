@@ -110,9 +110,11 @@ extern CModel *lbl_1_bss_A40;
 extern void *lbl_1_bss_A50;
 extern void *lbl_1_bss_A54;
 extern void *lbl_1_bss_A58;
-extern s32 lbl_1_bss_A98;
-extern s32 lbl_1_bss_A9C;
-extern s32 lbl_1_bss_AA0[2];
+/* stage.o owns these three in the original, so they are definitions here, not
+   extern: fn_1_15264 is the only writer and no other object declares them. */
+s32 lbl_1_bss_A98;
+s32 lbl_1_bss_A9C;
+s32 lbl_1_bss_AA0[2];
 
 // singleton.h's register/unregister pair: the derived pointer is built from the
 // subobject address and only then biased back, so the null check survives.

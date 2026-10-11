@@ -16,20 +16,31 @@ typedef struct M563ListNode_s {
     struct M563ListNode_s *next;
 } M563ListNode;
 
-extern Vec lbl_1_data_358[2][30];
+/* NOTE: util.o owns every one of these in the original, so util.c defines them
+ * and this header must not redeclare them extern (a conflicting `extern` makes
+ * CodeWarrior reject the definition and the REL link then fails to resolve). */
+/* The 79C definition above replaces the former `extern Vec lbl_1_bss_79C`;
+ * math.c reaches it as lbl_1_bss_79C.v.x, which the diff below shows. */
+extern Vec lbl_1_bss_784;
+extern Vec lbl_1_bss_778;
+extern Vec lbl_1_bss_790;
 
-extern s32 lbl_1_bss_3C0[4][30];
-extern M563ModelSlot lbl_1_bss_5A4[0x20];
-extern s32 lbl_1_bss_6A8;
-extern s32 lbl_1_bss_6AC;
+/* lbl_1_bss_79C is 0x10 bytes in the original: a Vec plus one word of trailing
+ * padding. It needs a named type because math.c and util.c must agree on it. */
+typedef struct M563VecPad_s {
+    Vec v;
+    u32 pad;
+} M563VecPad;
+extern M563VecPad lbl_1_bss_79C;
 extern Vec lbl_1_bss_6B8[4];
 extern Vec lbl_1_bss_6E8[4];
 extern Vec lbl_1_bss_718[4];
 extern Vec lbl_1_bss_748[4];
-extern Vec lbl_1_bss_778;
-extern Vec lbl_1_bss_784;
-extern Vec lbl_1_bss_790;
-extern Vec lbl_1_bss_79C;
+extern s32 lbl_1_bss_6A8;
+extern s32 lbl_1_bss_6AC;
+extern s32 lbl_1_bss_3C0[4][30];
+extern M563ModelSlot lbl_1_bss_5A4[0x20];
+extern Vec lbl_1_data_358[2][30];
 extern M563ListNode lbl_1_bss_7AC;
 
 s32 fn_1_767C(f32 *arg0, f32 *arg1, f32 *arg2, s32 arg3, u32 *arg4);

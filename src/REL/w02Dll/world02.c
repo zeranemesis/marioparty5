@@ -36,6 +36,13 @@ static double mb2_frsqrte(double x) {
 #define __frsqrte mb2_frsqrte
 #endif
 
+/* GXSETARRAY is an Aurora-port helper: on GameCube the hardware reads the
+ * vertices straight from main memory, so the original calls the three-argument
+ * GXSetArray(attr, data, stride) in the DOL. Without game/gxarray.h the macro
+ * is undefined and the call sites below emit a reference to a symbol named
+ * GXSETARRAY, which the REL link cannot resolve. */
+#include "game/gxarray.h"
+
 /*
  * w02Dll - "Rainbow Dream" board.
  *

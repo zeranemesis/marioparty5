@@ -10,7 +10,11 @@ typedef u8 bool8;
 
 struct CGameMaster;
 
-void *__nw__FUl(u32 size);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__nw__FUl(u32 size);
 void fn_1_0(void *self);
 void fn_1_10828(void);
 bool8 fn_1_10DB4(u8 arg0);
@@ -55,7 +59,7 @@ bool8 fn_1_68B0(void *self);
 void fn_1_97C8(void *self);
 void fn_1_BD18(void *self);
 void fn_1_C67C(void *self);
-void fn_1_CF8(char *cond, char *file, s32 line);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 void fn_1_D318(void *self);
 void fn_1_E8BC(void *self);
 void fn_1_F010(void);
@@ -126,7 +130,9 @@ s32 lbl_1_bss_A20;
 s32 lbl_1_bss_A24;
 s32 lbl_1_bss_A28;
 s32 lbl_1_bss_A2C;
-u32 lbl_1_bss_A30;
+/* lbl_1_bss_A30 is defined by m511.o, which references it as UND here. Defining it too makes
+   the linker report it multiply-defined. */
+extern "C" u32 lbl_1_bss_A30;
 s32 lbl_1_bss_A34;
 
 CGameMaster *__ct__Q24m51111CGameMasterFv(CGameMaster *arg0)

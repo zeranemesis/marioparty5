@@ -235,11 +235,7 @@ void fn_1_5F2C(HU3DMODELID modelId, HuVecF *pos, HuVecF *rot, s16 layerNo, u16 c
     Hu3DModelRotSet(modelId, rot->x, rot->y, rot->z);
 }
 
-// 00007768, 172 bytes. Shows every model ID of row `r` whose ID is non-negative.
-// The index has to be written as a byte expression: MWCC then emits
-// `mulli r,0x32` / `slwi i,1` / `add` / `addi 0x5ea` and folds nothing. The same
-// index written as a plain s16 subscript gives `mulli r,0x19` / `add` /
-// `addi 0x2f5` / `slwi 1` instead -- same address, four different rows.
+// 00007768, 172 bytes. Iterate through one row of the model-ID matrix.
 void fn_1_7768(s16 *ids, s32 r)
 {
     s32 i;

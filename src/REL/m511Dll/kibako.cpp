@@ -6,25 +6,29 @@
 #include "datadir_enum.h"
 #include "game/hu3d.h"
 
-void *__dl__FPv(void *self);
-void *__nw__FUl(u32 size);
-void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__dl__FPv(void *self);
+extern "C" void *__nw__FUl(u32 size);
+extern "C" void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
 void *fn_1_18404(void *self);
 void fn_1_187B0(void *self, s32 arg1);
 void fn_1_18804(void *arg0, Vec *arg1);
 f32 fn_1_1A150(s32 arg0, void *arg1);
-void fn_1_1D88(void *self);
-void fn_1_1D94(void *self, s32 arg1);
-void fn_1_1E54(void *self, void **arg1);
-void fn_1_372C(void *self, s32 arg1);
+extern "C" void fn_1_1D88(void *self);
+extern "C" void fn_1_1D94(void *self, s32 arg1);
+extern "C" void fn_1_1E54(void *self, void **arg1);
+extern "C" void fn_1_372C(void *self, s32 arg1);
 void fn_1_38A0(void *self, s32 arg1);
 void fn_1_38D8(void *self, s32 arg1);
-void fn_1_398C(void *self, void *arg1);
-void fn_1_39D4(void *self, void *arg1);
-void fn_1_3B8C(void *self, s32 arg1);
+extern "C" void fn_1_398C(void *self, void *arg1);
+extern "C" void fn_1_39D4(void *self, void *arg1);
+extern "C" void fn_1_3B8C(void *self, s32 arg1);
 f32 fn_1_57B4(void);
 void fn_1_B864(void *self, s32 arg1, s32 arg2);
-void fn_1_CF8(char *cond, char *file, s32 line);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 void fn_1_DAB8(s32 arg0, f32 *arg1, f64 arg2);
 
 struct Mgr510Kibako;

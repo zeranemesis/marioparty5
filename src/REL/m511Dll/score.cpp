@@ -14,11 +14,15 @@ struct MGTIMER {
     s32 mode;
 };
 
-void *__dl__FPv(void *self);
-void fn_1_1D88(void *self);
-void fn_1_1D94(void *self, s32 arg1);
-void fn_1_1E54(void *self, void **arg1);
-void fn_1_CF8(char *cond, char *file, s32 line);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__dl__FPv(void *self);
+extern "C" void fn_1_1D88(void *self);
+extern "C" void fn_1_1D94(void *self, s32 arg1);
+extern "C" void fn_1_1E54(void *self, void **arg1);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 
 /* game/mg/score.h pulls in humath.h, so the Mg* API is declared here instead
    to keep the translation unit's rodata clean. */
@@ -96,6 +100,7 @@ extern void *lbl_1_bss_2C;
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_62C[6];
 extern void *lbl_1_data_640[6];
+extern "C" void fn_1_710(void);
 
 extern Mgr511Score *lbl_1_bss_A24;
 extern Mgr511ScoreRoot *lbl_1_bss_A28;
@@ -523,3 +528,26 @@ void fn_1_16DE4(Mgr511ScoreRoot *arg0, s32 arg1)
 }
 
 }
+
+/* The vtables this object defines: their entries are
+   functions defined above, so the definitions sit here. */
+
+/* lbl_1_data_62C is a vtable score.o itself defines (6 words at .data+0x2c), and this unit is linked from source, so it has to be a definition rather than an extern declaration: with only the declaration the REL link reported "Failed to find symbol lbl_1_data_62C in any module". 2 leading words are zero and the rest are ADDR32 relocations to functions in this object. The definition is at the end of the unit because its entries are functions defined further down. */
+extern "C" void *lbl_1_data_62C[6] = {
+    0,
+    0,
+    (void *) fn_1_16414,
+    (void *) fn_1_16DE4,
+    (void *) fn_1_16B74,
+};
+
+/* lbl_1_data_640 is a vtable score.o itself defines (6 words at .data+0x40), and this unit is linked from source, so it has to be a definition rather than an extern declaration: with only the declaration the REL link reported "Failed to find symbol lbl_1_data_640 in any module". 3 leading words are zero and the rest are ADDR32 relocations to functions in this object. The definition is at the end of the unit because its entries are functions defined further down. */
+extern "C" void *lbl_1_data_640[6] = {
+    0,
+    0,
+    (void *) fn_1_15B44,
+    (void *) fn_1_15ED0,
+    (void *) fn_1_710,
+    0,
+};
+

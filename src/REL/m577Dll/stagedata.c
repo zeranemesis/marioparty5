@@ -2813,8 +2813,8 @@ s16 *fn_1_B430(s32 arg0, s32 arg1)
 // instruction sequence but adds an stw/lwz r30 pair that shifts all of it.
 s16 *fn_1_B460(s32 arg0, s32 arg1, s32 arg2)
 {
-    s32 b = arg1 * 3 + arg2;
-    return lbl_1_data_28A18[arg0 * 0xC + b];
+    s32 i = (arg1 * 3 + arg2) + (arg0 * 0xC);
+    return lbl_1_data_28A18[i];
 }
 
 void fn_1_B498(StageAnim *arg0)

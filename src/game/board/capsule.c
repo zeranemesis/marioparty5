@@ -2782,13 +2782,13 @@ static void CapsulePosSelExec(void)
     } else {
         tbl[masuId] = 0x8000;
     }
-    work->cursorSprId = espEntry(cursorSprFile, 2000, 0);
+    work->cursorSprId = (s16)espEntry(cursorSprFile, 2000, 0);
     espDispOn(work->cursorSprId);
     espDrawNoSet(work->cursorSprId, 0);
     espAttrSet(work->cursorSprId, HUSPR_ATTR_NOANIM);
     espPosSet(work->cursorSprId, 0, 0);
     espBankSet(work->cursorSprId, 0);
-    work->batsuSprId = espEntry(CAPSULE_ANM_batsu, 1900, 0);
+    work->batsuSprId = (s16)espEntry(CAPSULE_ANM_batsu, 1900, 0);
     espDispOff(work->batsuSprId);
     espDrawNoSet(work->batsuSprId, 0);
     espAttrSet(work->batsuSprId, HUSPR_ATTR_NOANIM);
@@ -3206,10 +3206,10 @@ static void CapsulePosAutoSelExec(void)
     espDispOff(work->batsuSprId);
     espDrawNoSet(work->batsuSprId, 0);
     espAttrSet(work->batsuSprId, HUSPR_ATTR_NOANIM);
-    espPosSet(work->batsuSprId, 0, 0);
+espPosSet(work->batsuSprId, 0, 0);
     espBankSet(work->batsuSprId, 0);
-    work->capsuleMdlId1 = capsuleMdl = MBModelCreate(MBCapsuleMdlGet(work->capsuleNo), NULL, TRUE);
-    MBModelDispSet(work->capsuleMdlId1, TRUE);
+    work->capsuleMdlId1 = capsuleMdl = (s16)MBModelCreate(MBCapsuleMdlGet(work->capsuleNo), NULL, TRUE);
+    MBModelDispSet(work->capsuleMdlId1, FALSE);
     MBPlayerPosGet(work->playerNo, &playerPos);
     MBModelPosSet(work->capsuleMdlId1, playerPos.x, playerPos.y+250, playerPos.z);
     MBModelScaleSet(work->capsuleMdlId1, 1.2f, 1.2f, 1.2f);

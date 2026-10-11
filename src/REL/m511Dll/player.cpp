@@ -6,7 +6,11 @@ extern "C" {
 void fn_1_11ECC(struct PlayerWork *work);
 void fn_1_15334(struct PlayerWork *work, s32 arg1);
 void fn_1_17CC8(s32 arg0, s32 arg1);
-void *__dl__FPv(void *self);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__dl__FPv(void *self);
 void CharFXPlay(s16 arg0, s16 arg1);
 }
 

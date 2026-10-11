@@ -91,6 +91,20 @@ def main() -> int:
     parser.add_argument("symbol", help="function name")
     parser.add_argument("--all", action="store_true", help="print every row")
     parser.add_argument("--context", type=int, default=3, help="rows kept around a difference")
+    parser.add_argument(
+        "--max-diff",
+        type=int,
+        default=0,
+        help="cap how many differing/label rows are used as anchors (0 = no cap). "
+        "Large functions produce hundreds of anchors and blow the context budget; "
+        "page through them with --rows instead.",
+    )
+    parser.add_argument(
+        "--rows",
+        metavar="START:END",
+        default="",
+        help="print an explicit row slice instead of anchoring on differences",
+    )
     args = parser.parse_args()
 
     unit = find_unit(args.unit)
@@ -101,7 +115,17 @@ def main() -> int:
     if build.returncode != 0:
         return build.returncode
 
-    exe = root / "build" / "tools" / ("objdiff-cli.exe" if sys.platform == "win32" else "objdiff-cli")
+    # This tool passes `-o`, which objdiff-cli 3.x removed, so a 3.x build
+    # answers "Unrecognized argument: -o" and prints no diff at all. Prefer a
+    # 2.7.1 build sitting next to it under a distinct name; fall back to the
+    # configured one so a worktree that only has 2.7.1 as objdiff-cli.exe still
+    # works. Do not overwrite objdiff-cli.exe itself: configure.py needs the 3.x
+    # build to generate report.json.
+    suffix = ".exe" if sys.platform == "win32" else ""
+    tools_dir = root / "build" / "tools"
+    exe = tools_dir / f"objdiff-cli-2.7.1{suffix}"
+    if not exe.exists():
+        exe = tools_dir / f"objdiff-cli{suffix}"
     if not exe.exists():
         # worktrees point configure.py at the main checkout's tools
         sys.path.insert(0, str(root / "tools"))
@@ -146,10 +170,22 @@ def main() -> int:
     if not differing and not labels and not args.all:
         return 0
 
-    shown = differing + labels
-    keep = set(range(count)) if args.all else {
-        j for i in shown for j in range(max(0, i - args.context), min(count, i + args.context + 1))
-    }
+    if args.rows:
+        lo_text, _, hi_text = args.rows.partition(":")
+        lo = int(lo_text) if lo_text else 0
+        hi = int(hi_text) if hi_text else count
+        keep = set(range(max(0, lo), min(count, hi)))
+    else:
+        shown = differing + labels
+        if args.max_diff and len(shown) > args.max_diff:
+            shown = shown[: args.max_diff]
+            print(
+                f"NOTE: capped to the first {args.max_diff} of "
+                f"{len(differing) + len(labels)} anchors; page the rest with --rows START:END"
+            )
+        keep = set(range(count)) if args.all else {
+            j for i in shown for j in range(max(0, i - args.context), min(count, i + args.context + 1))
+        }
     previous = -1
     print(f"         {'target (original)':<44} | {'base (src)':<44} line")
     for i in range(count):

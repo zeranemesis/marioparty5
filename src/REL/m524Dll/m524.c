@@ -594,6 +594,56 @@ void fn_1_F84(OMOBJ *obj) {
     }
 }
 
+void fn_1_11D4(OMOBJ *obj) {
+    M524Player *player;
+    M524Flow *flow;
+    OMOBJ *flowObj;
+    s32 index;
+    s16 padNo;
+    s16 padNo2;
+    f32 len;
+    f32 mag;
+    f32 aim;
+    f32 root;
+    f32 ang;
+
+    player = (M524Player *)obj->data;
+    index = player->index;
+    flowObj = lbl_1_bss_20;
+    flow = (M524Flow *)flowObj->data;
+    if (MgTimerDoneCheck(flow->timer)) {
+        player->state = 4;
+        return;
+    }
+    if (player->type != 0) {
+        if (obj->work[0] == 0) {
+            obj->work[0] = 1;
+            obj->work[1] = frandmod(20) * 5;
+        }
+        if (obj->work[1] == 0) {
+            player->aimAng = 0.0f;
+            obj->work[0] = 0;
+            player->state = 3;
+        }
+        obj->work[1]--;
+        return;
+    }
+    padNo = player->padNo;
+    len = (f32)(HuPadStkX[padNo] * HuPadStkX[padNo] + HuPadStkY[padNo] * HuPadStkY[padNo]);
+    mag = len;
+    root = sqrtf(mag);
+    if (root >= 50.0f) {
+        padNo2 = player->padNo;
+        ang = (f32)(180.0 * (atan2((f32)HuPadStkY[padNo2], (f32)HuPadStkX[padNo2]) / M_PI) - 90.0);
+        if (ang < 0.0f) {
+            ang += 360.0f;
+        }
+        aim = ang;
+        player->aimAng = aim;
+        player->state = 3;
+    }
+}
+
 f32 fn_1_1568(f32 ang0, f32 ang1) {
     f32 diff;
 
@@ -611,6 +661,106 @@ f32 fn_1_1568(f32 ang0, f32 ang1) {
         diff += 360.0f;
     }
     return diff;
+}
+
+void fn_1_161C(OMOBJ *obj) {
+    M524Player *player;
+    M524Flow *flow;
+    OMOBJ *flowObj;
+    s32 index;
+    s16 padNo;
+    f32 len;
+    f32 diff;
+    f32 padAngL;
+    f32 mag;
+    f32 ang;
+    f32 diffA;
+    f32 aimAngT;
+    f32 padAngT;
+    f32 mag2;
+    f32 root;
+    f32 diffB;
+    f32 maxTime;
+
+    player = (M524Player *)obj->data;
+    index = player->index;
+    padNo = player->padNo;
+    flowObj = lbl_1_bss_20;
+    flow = (M524Flow *)flowObj->data;
+    if (MgTimerDoneCheck(flow->timer)) {
+        player->state = 4;
+        return;
+    }
+    if (player->type != 0) {
+        mag = 20.0f;
+        player->padAng = player->aimAng + (s32)frandmod(150) / 10.0f;
+    } else {
+        len = (f32)(HuPadStkX[padNo] * HuPadStkX[padNo] + HuPadStkY[padNo] * HuPadStkY[padNo]);
+        mag2 = len;
+        root = sqrtf(mag2);
+        mag = root;
+        ang = (f32)(180.0 * (atan2((f32)HuPadStkY[padNo], (f32)HuPadStkX[padNo]) / M_PI) - 90.0);
+        if (ang < 0.0f) {
+            ang += 360.0f;
+        }
+        padAngL = ang;
+        player->padAng = padAngL;
+    }
+    if (mag < 10.0f) {
+        player->state = 2;
+        return;
+    }
+    padAngT = player->padAng;
+    aimAngT = player->aimAng;
+    if (padAngT > 180.0f) {
+        padAngT -= 360.0f;
+    }
+    if (aimAngT > 180.0f) {
+        aimAngT -= 360.0f;
+    }
+    diff = padAngT - aimAngT;
+    if (diff > 180.0f) {
+        diff -= 360.0f;
+    }
+    if (diff < -180.0f) {
+        diff += 360.0f;
+    }
+    diffA = diff;
+    diffB = diffA;
+    player->aimAng = player->padAng;
+    if (player->dir == 0) {
+        if (fabs(diffB) < 10.0) {
+            return;
+        }
+        if (diffB < 0.0f) {
+            player->dir = -1;
+            player->motTime = CharMotionMaxTimeGet(player->charNo);
+        } else {
+            player->dir = 1;
+        }
+    } else if (player->dir * diffB <= 0.0f) {
+        return;
+    }
+    if (fabs(diffB) >= 50.0) {
+        return;
+    }
+    maxTime = CharMotionMaxTimeGet(player->charNo);
+    player->motTime = player->motTime + diffB / (360.0f / maxTime);
+    if (obj->work[1] == -1) {
+        obj->work[1] = HuAudFXPlay(lbl_1_data_230[player->index]);
+    } else if (HuAudFXStatusGet(obj->work[1]) == 0) {
+        obj->work[1] = -1;
+    }
+    if ((player->dir == 1 && player->motTime >= maxTime) || (player->dir == -1 && player->motTime <= 0.0f)) {
+        player->motTime = 0.0f;
+        CharMotionTimeSet(player->charNo, maxTime);
+        Hu3DMotionTimeSet(obj->mdlId[2], 60.0f);
+        Hu3DModelAttrReset(obj->mdlId[1], 0x40000001);
+        player->state = 5;
+    } else {
+        CharMotionTimeSet(player->charNo, player->motTime);
+        Hu3DMotionTimeSet(obj->mdlId[2], player->motTime);
+    }
 }
 
 void fn_1_1CBC(OMOBJ *obj) {
@@ -774,6 +924,63 @@ void fn_1_20A0(OMOBJ *obj) {
     Hu3DModelPosSetV(obj->mdlId[4], (Vec *)&player->shotX);
 }
 
+void fn_1_23C8(OMOBJ *obj, Vec *pos, s32 num) {
+    M524Player *player;
+    HU3DMODELID mdlId;
+    s32 i;
+    OMOBJ *newObj;
+    M524Fall *fall;
+
+    player = (M524Player *)obj->data;
+    for (i = 0; i < num; i++) {
+        newObj = omAddObjEx(lbl_1_bss_80, 0x2000, 1, 0, -1, fn_1_2760);
+        newObj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524Fall), HU_MEMNUM_OVL);
+        newObj->work[0] = player->index;
+        newObj->work[1] = i;
+        newObj->work[2] = i * 3;
+        fall = (M524Fall *)newObj->data;
+        mdlId = Hu3DModelLink(lbl_1_bss_E);
+        newObj->mdlId[0] = mdlId;
+        fall->posX = pos->x + (s32)frandmod(80) - 40.0f;
+        fall->posY = pos->y + (s32)frandmod(200) - 100.0f;
+        fall->posZ = pos->z + (s32)frandmod(100) - 50.0f;
+        fall->vel0 = 0.0f;
+        fall->velY = 0.0f;
+        fall->velZ = 0.0f;
+        omSetTra(newObj, fall->posX, fall->posY, fall->posZ);
+        omSetSca(newObj, 1.0f, 1.0f, 1.0f);
+        Hu3DMotionTimeSet(mdlId, (s32)frandmod(58));
+        Hu3DModelAttrSet(mdlId, 0x40000001);
+        Hu3DModelAttrReset(mdlId, 1);
+        Hu3DModelShadowSet(mdlId);
+    }
+}
+
+void fn_1_2630(OMOBJ *obj) {
+    M524Fall *fall;
+    M524Player *player;
+    Vec pos;
+
+    fall = (M524Fall *)obj->data;
+    if (obj->work[2] != 0) {
+        obj->work[2]--;
+    } else {
+        player = (M524Player *)lbl_1_bss_1C[obj->work[0]]->data;
+        fall->velY += 1.96f;
+        fall->posY -= fall->velY;
+        omSetTra(obj, fall->posX, fall->posY, fall->posZ);
+        if (fall->posY <= CharModelHeightGet(player->charNo)) {
+            pos.x = player->traX;
+            pos.y = fall->posY;
+            pos.z = player->traZ;
+            HuAudFXPlayPan(7, lbl_1_data_228[player->index]);
+            CharEffectCoinGlowCreate(lbl_1_data_108.camNo, &pos);
+            player->objNum--;
+            obj->objFunc = fn_1_27D8;
+        }
+    }
+}
+
 void fn_1_2760(OMOBJ *obj) {
     M524Player *player;
 
@@ -784,6 +991,96 @@ void fn_1_2760(OMOBJ *obj) {
         } else {
             obj->objFunc = fn_1_2630;
         }
+    }
+}
+
+void fn_1_27D8(OMOBJ *obj) {
+    M524Player *player;
+
+    player = (M524Player *)lbl_1_bss_1C[obj->work[0]]->data;
+    if (lbl_1_bss_10[player->index] != 0) {
+        Hu3DModelKill(obj->mdlId[0]);
+        omDelObjEx(lbl_1_bss_80, obj);
+    } else if (obj->work[1] != 0) {
+        obj->work[1]--;
+        if (obj->work[1] == 0) {
+            Hu3DMotionTimeSet(obj->mdlId[0], (s32)frandmod(150) + 50);
+        }
+    }
+}
+
+void fn_1_28C8(OMOBJ *obj, Vec *pos) {
+    M524Player *player;
+    HU3DMODELID mdlId;
+    OMOBJ *newObj;
+    M524Fall *fall;
+
+    player = (M524Player *)obj->data;
+    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(0x52000F, 0x10000000, HEAP_MODEL));
+    newObj = omAddObjEx(lbl_1_bss_80, 0x2000, 1, 0, -1, fn_1_2760);
+    newObj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524Fall), HU_MEMNUM_OVL);
+    newObj->work[0] = player->index;
+    fall = (M524Fall *)newObj->data;
+    newObj->mdlId[0] = mdlId;
+    Hu3DModelAttrSet(mdlId, 0x40000002);
+    Hu3DModelShadowSet(mdlId);
+    fall->posX = pos->x;
+    fall->posY = pos->y - 100.0f;
+    fall->posZ = pos->z;
+    fall->vel0 = 0.0f;
+    fall->velY = 0.0f;
+    fall->velZ = 0.0f;
+    omSetTra(newObj, fall->posX, fall->posY, fall->posZ);
+}
+
+void fn_1_29F4(OMOBJ *obj) {
+    M524Fall *fall;
+    s16 index;
+    OMOBJ *playerObj;
+    M524Player *player;
+    M524Camera *cam;
+    OMOBJ *newObj2;
+    M524Camera *cam2;
+
+    fall = (M524Fall *)obj->data;
+    index = obj->work[0];
+    playerObj = lbl_1_bss_1C[index];
+    player = (M524Player *)lbl_1_bss_1C[index]->data;
+    fall->velY += 1.96f;
+    fall->posY -= fall->velY;
+    omSetTra(obj, fall->posX, fall->posY, fall->posZ);
+    if (fall->posY < CharModelHeightGet(player->charNo) && player->doneF == 0) {
+        CharModelAttrReset(player->charNo, 0x40000002);
+        CharMotionShiftSet(player->charNo, playerObj->mtnId[7], 0.0f, 5.0f, 0);
+        Hu3DMotionShiftStartEndSet(playerObj->mdlId[0], 0.0f, 30.0f);
+        Hu3DModelAttrReset(playerObj->mdlId[1], 0x40000002);
+        Hu3DModelAttrReset(playerObj->mdlId[1], 0x40000001);
+        Hu3DMotionStartEndSet(playerObj->mdlId[1], 101.0f, 105.0f);
+        Hu3DMotionTimeSet(playerObj->mdlId[1], 101.0f);
+        player->doneF = 1;
+    }
+    omSetTra(obj, fall->posX, fall->posY, fall->posZ);
+    if (fall->posY <= 0.0f) {
+        fall->posY = 0.0f;
+        omSetTra(obj, fall->posX, fall->posY, fall->posZ);
+        player->objNum--;
+        Hu3DModelAttrReset(obj->mdlId[0], 0x40000002);
+        Hu3DModelAttrSet(obj->mdlId[0], 0x40000001);
+        fall->posZ += 150.0f;
+        CharEffectSmokeCreate(lbl_1_data_108.camNo, (Vec *)&fall->posX);
+        cam = lbl_1_bss_18;
+        newObj2 = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_4C18);
+        newObj2->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524Camera), HU_MEMNUM_OVL);
+        cam2 = (M524Camera *)newObj2->data;
+        newObj2->work[0] = 0xF;
+        newObj2->work[1] = 5;
+        *cam2 = *cam;
+        newObj2->work[2] = (u32)cam;
+        omVibrate(player->index, 15, 12, 0);
+        HuAudFXPlayPan(0x2C1, lbl_1_data_228[player->index]);
+        HuAudFXPlay(lbl_1_data_250[player->index]);
+        obj->work[1] = 0x32;
+        obj->objFunc = fn_1_27D8;
     }
 }
 void fn_1_2D30(OMOBJ *obj) {
@@ -803,4 +1100,207 @@ void fn_1_2D30(OMOBJ *obj) {
     player = (M524Player *)obj->data;
     player->endF = 1;
     player->state = 10;
+}
+
+void fn_1_2DB4(OMOBJ *obj) {
+    M524Player *player;
+
+    player = (M524Player *)obj->data;
+    if (lbl_1_bss_10[player->index] != 0) {
+        if (obj->work[0] == 0) {
+            obj->work[0] = 1;
+            CharModelAttrReset(player->charNo, 0x40000002);
+            CharMotionShiftSet(player->charNo, obj->mtnId[3], 1.0f, 20.0f, 0);
+            Hu3DMotionShiftStartEndSet(obj->mdlId[0], 1.0f, 60.0f);
+        } else {
+            player->rotY -= 3.0f;
+            omSetRot(obj, player->rotX, player->rotY, player->rotZ);
+            if (CharMotionShiftIDGet(player->charNo) == -1 && CharMotionEndCheck(player->charNo)) {
+                obj->work[0] = 0;
+                player->state = 0xB;
+            }
+        }
+    } else {
+        player->state = 0xB;
+    }
+}
+
+void fn_1_2EEC(OMOBJ *obj) {
+    M524Player *player;
+    OMOBJ *flowObj;
+    void *flowData;
+    s32 indexIsEight;
+    M524Flow *flow;
+    s32 flowIndex;
+    s32 flowIndexCopy;
+
+    player = (M524Player *)obj->data;
+    flowObj = lbl_1_bss_20;
+    flowData = flowObj->data;
+    flow = (M524Flow *)flowObj->data;
+    flowIndex = flow->index;
+    flowIndexCopy = flowIndex;
+    if (flowIndexCopy == 8) {
+        indexIsEight = 1;
+    } else {
+        indexIsEight = 0;
+    }
+    if (indexIsEight != 0) {
+        if (lbl_1_bss_10[player->index] != 0) {
+            CharMotionShiftSet(player->charNo, obj->mtnId[8], 0.0f, 20.0f, 0);
+        }
+        player->state = 0xC;
+    }
+}
+
+void fn_1_2FB0(OMOBJ *obj, void *flowArg) {
+    M524Flow *flow;
+
+    if (lbl_1_bss_0 == 0) {
+        Hu3DCameraMotionStart(lbl_1_bss_24[0], (u16)lbl_1_data_108.camNo);
+        Hu3DModelAttrReset(lbl_1_bss_24[0], 0x40000002);
+        lbl_1_bss_7C = HuAudSStreamPlay(18);
+        HuAudFXPlay(0x753);
+        lbl_1_bss_0 = 1;
+    }
+    if (Hu3DMotionEndCheck(lbl_1_bss_24[0])) {
+        Hu3DModelKill(lbl_1_bss_24[0]);
+        flow = (M524Flow *)obj->data;
+        if (flow->index == flow->funcNum - 1) {
+            OSReport(lbl_1_data_CC);
+        } else {
+            flow->index++;
+        }
+    }
+}
+
+void fn_1_30BC(OMOBJ *obj, void *flowArg) {
+    M524Player *player;
+    M524Flow *flow;
+    M524Flow *flow2;
+    s32 i;
+
+    if (lbl_1_bss_4 == 0) {
+        for (i = 0; i < 4; i++) {
+            player = (M524Player *)lbl_1_bss_1C[i]->data;
+            if (player->state < 5) {
+                break;
+            }
+        }
+        if (i == 4) {
+            flow = (M524Flow *)obj->data;
+            if (flow->timer->stopF == 0) {
+                flow->timer->stopF = 1;
+                flow->timer->mode = 1;
+            }
+            lbl_1_bss_4 = 1;
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        player = (M524Player *)lbl_1_bss_1C[i]->data;
+        if (player->landedF == 0) {
+            return;
+        }
+    }
+    flow2 = (M524Flow *)obj->data;
+    if (flow2->index == flow2->funcNum - 1) {
+        OSReport(lbl_1_data_CC);
+    } else {
+        flow2->index++;
+    }
+}
+
+void fn_1_31EC(OMOBJ *obj, void *flowArg) {
+    M524Flow *flow;
+    OMOBJ *cameraObj;
+    M524CamMove *move;
+    s32 moveActive;
+    OMOBJ *cameraObjDelete;
+
+    if (lbl_1_bss_8 == NULL) {
+        lbl_1_bss_8 = MgCameraMoveEntry(lbl_1_bss_18, &lbl_1_data_150, 30.0f);
+    }
+    cameraObj = lbl_1_bss_8;
+    move = (M524CamMove *)cameraObj->data;
+    if ((move->moveF & 2) != 0) {
+        moveActive = 1;
+    } else {
+        moveActive = 0;
+    }
+    if (moveActive == 0) {
+        cameraObjDelete = lbl_1_bss_8;
+        omDelObjEx(lbl_1_bss_80, cameraObjDelete);
+        flow = (M524Flow *)obj->data;
+        if (flow->index == flow->funcNum - 1) {
+            OSReport(lbl_1_data_CC);
+        } else {
+            flow->index++;
+        }
+    }
+}
+
+void fn_1_32F0(OMOBJ *obj, void *flowArg) {
+    M524Player *player;
+    M524Flow *flow;
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        player = (M524Player *)lbl_1_bss_1C[i]->data;
+        if (player->endF == 0) {
+            return;
+        }
+    }
+    HuAudSStreamFadeOut(lbl_1_bss_7C, 100);
+    flow = (M524Flow *)obj->data;
+    if (flow->index == flow->funcNum - 1) {
+        OSReport(lbl_1_data_CC);
+    } else {
+        flow->index++;
+    }
+}
+
+void fn_1_33B4(OMOBJ *obj, void *flowArg) {
+    M524Flow *flow;
+
+    if (obj->work[0] == 0) {
+        obj->work[0] = 1;
+        obj->work[1] = 0xD2;
+        lbl_1_bss_C = HuAudJinglePlay(0x79);
+    }
+    obj->work[1]--;
+    if (obj->work[1] != 0) {
+        return;
+    }
+    WipeCreate(2, 6, 0x3C);
+    lbl_1_bss_18->mode = 0;
+    lbl_1_data_198 = *lbl_1_bss_18;
+    fn_1_3DD0(&lbl_1_data_198);
+    lbl_1_data_198.pos.z += 1000.0f;
+    lbl_1_data_198.target.y += 400.0f;
+    lbl_1_data_198.pos.y -= 200.0f;
+    MgCameraMoveEntry(lbl_1_bss_18, &lbl_1_data_198, 120.0f);
+    flow = (M524Flow *)obj->data;
+    if (flow->index == flow->funcNum - 1) {
+        OSReport(lbl_1_data_CC);
+    } else {
+        flow->index++;
+    }
+}
+
+void fn_1_3554(void) {
+    lbl_1_bss_80 = omInitObjMan(0xC8, 0x1000);
+    lbl_1_bss_7C = -1;
+    omGameSysInit(lbl_1_bss_80);
+}
+
+M524Camera *fn_1_35A8(M524Camera *param) {
+    M524Camera *cam;
+
+    cam = HuMemDirectMallocNum(HEAP_HEAP, 0x48, HU_MEMNUM_OVL);
+    *cam = *param;
+    Hu3DCameraCreate(param->camNo);
+    Hu3DCameraViewportSet(param->camNo, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraPerspectiveSet(param->camNo, param->nearZ, param->fov, param->farZ, 1.2f);
+    fn_1_3694(param);
+    return cam;
 }

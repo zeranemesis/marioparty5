@@ -11,11 +11,15 @@
 
 extern "C" void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
-void *__dl__FPv(void *self);
-void fn_1_1D88(void *self);
-void fn_1_1D94(void *self, s32 arg1);
-void fn_1_1E54(void *self, void **arg1);
-void fn_1_CF8(char *cond, char *file, s32 line);
+/* These are plain C in the original: m511.o defines them unmangled
+   (m511.cpp is NonMatching, so the module links the original object).
+   Left as C++ they mangle and the REL link fails with
+   "Failed to find symbol fn_1_1D88__FPv in any module". */
+extern "C" void *__dl__FPv(void *self);
+extern "C" void fn_1_1D88(void *self);
+extern "C" void fn_1_1D94(void *self, s32 arg1);
+extern "C" void fn_1_1E54(void *self, void **arg1);
+extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 
 struct Mgr511Effring;
 
@@ -338,3 +342,16 @@ void fn_1_7C74(void)
 }
 
 }
+
+/* The vtables this object defines: their entries are
+   functions defined above, so the definitions sit here. */
+
+/* lbl_1_data_284 is a vtable effring.o itself defines (6 words at .data+0x2c), and this unit is linked from source, so it has to be a definition rather than an extern declaration: with only the declaration the REL link reported "Failed to find symbol lbl_1_data_284 in any module". 2 leading words are zero and the rest are ADDR32 relocations to functions in this object. The definition is at the end of the unit because its entries are functions defined further down. */
+extern "C" void *lbl_1_data_284[6] = {
+    0,
+    0,
+    (void *) fn_1_6D50,
+    (void *) fn_1_6E48,
+    (void *) fn_1_7C74,
+};
+

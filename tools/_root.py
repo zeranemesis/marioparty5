@@ -37,3 +37,19 @@ def project_root() -> Path:
                 return candidate
 
     return Path(__file__).resolve().parent.parent
+
+
+def pool_path() -> Path:
+    """Return the agent pool registry POOL.md.
+
+    The pool directory is a sibling of the checkout, and it moves: this tree
+    lived under D:\\decomp and now lives under G:\\decomp, which silently broke
+    every tool that hardcoded the old absolute path. Search upward instead.
+    """
+    root = project_root()
+    for candidate in (root, *root.parents):
+        for rel in ("mp5-wt/POOL.md", "POOL.md"):
+            p = candidate / rel
+            if p.is_file():
+                return p
+    return root.parent / "mp5-wt" / "POOL.md"

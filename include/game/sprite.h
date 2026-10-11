@@ -92,6 +92,13 @@ SHARED_SYM extern HUSPRGRP HuSprGrpData[HUSPR_GRP_MAX];
 void HuSprInit(void);
 void HuSprClose(void);
 void HuSprExec(s16 drawNo);
+/* Plain C in the original: HuSprAnimRead and friends are unmangled symbols in
+ * the DOL, so a .cpp including this header needs the guard or it emits
+ * HuSprAnimRead__FPv and the REL link cannot resolve it. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void HuSprBegin(void);
 HUSPRITE *HuSprCall(void);
 void HuSprFinish(void);
@@ -138,5 +145,9 @@ void HuSprDisp(HUSPRITE *sp);
 void HuSprExecLayerInit(void);
 void HuSprExecLayerCameraSet(s16 drawNo, s16 camera, s16 layer);
 void HuSprExecLayerSet(s16 drawNo, s16 layer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

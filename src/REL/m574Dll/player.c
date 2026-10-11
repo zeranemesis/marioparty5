@@ -112,7 +112,7 @@ static OMOBJ *M574PlayerObjTbl[M574_PLAYER_MAX];
 // 0a 02 04 02 01 00 02 00, so the two live-range tie-breaks are not the same build.
 void fn_1_E98(OMOBJMAN *om)
 {
-s32 cnt[2] = { 0, 0 };
+    s32 cnt[2] = { 0, 0 };
     s32 playerIdx[2] = { 0, 2 };
     s32 grpTbl[M574_PLAYER_MAX];
     s32 i;

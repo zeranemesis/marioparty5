@@ -32,44 +32,117 @@ typedef struct MdFuki_s {
 typedef struct Sys_s {
     u8 pad[0x19C];
     MdRing *ring;
-    u8 pad2[0x4];
     MdFuki *fuki;
 } Sys;
 
+extern s16 Hu3DCameraNo;
+extern void Hu3DZClear(void);
 extern Sys *sysP;
+extern u8 sysWork[];
+extern void TexBufFBCopy(void *arg0, s32 arg1);
+extern void ToueiZClear(void);
 
-void MdRingModeSet(int no, int mode)
+void MdRingModeSet(Sys *arg0, int no, int mode)
 {
-    MdRing *ring = &sysP->ring[no];
-    ring->mode = mode;
+    MdRing *r = arg0->ring + no;
+
+    r->mode = mode;
 }
 
-void MdRingMdlSet(int no, int mdlNo)
+void MdRingMdlSet(Sys *arg0, int no, int mdlNo)
 {
-    MdRing *ring = &sysP->ring[no];
-    ring->baseMdlNo = mdlNo;
+    MdRing *r = arg0->ring + no;
+
+    r->baseMdlNo = mdlNo;
 }
 
-void MdFukiModeSet(int no, int mode)
+void MdFukiModeSet(Sys *arg0, int no, int mode)
 {
-    MdFuki *fuki = &sysP->fuki[no];
-    fuki->mode = mode;
+    MdFuki *r = arg0->fuki + no;
+
+    r->mode = mode;
 }
 
-void MdFukiGrpSet(int no, int grp)
+void MdFukiGrpSet(Sys *arg0, int no, int grp)
 {
-    MdFuki *fuki = &sysP->fuki[no];
-    fuki->grp = grp;
+    MdFuki *r = arg0->fuki + no;
+
+    r->grp = grp;
 }
 
-void MdFukiMemberNoSet(int no, int memberNo)
+void MdFukiMemberNoSet(Sys *arg0, int no, int memberNo)
 {
-    MdFuki *fuki = &sysP->fuki[no];
-    fuki->memberNo = memberNo;
+    MdFuki *r = arg0->fuki + no;
+
+    r->memberNo = memberNo;
 }
 
-void MdFukiHookSet(int no, void *hook)
+void MdFukiHookSet(Sys *arg0, int no, void *hook)
 {
-    MdFuki *fuki = &sysP->fuki[no];
-    fuki->hook = hook;
+    MdFuki *r = arg0->fuki + no;
+
+    r->hook = hook;
+}
+
+int MdFukiModeGet(Sys *arg0, int no)
+{
+    MdFuki *r = arg0->fuki + no;
+
+    return r->mode;
+}
+
+void MdRingOfsSet(Sys *arg0, int no, float x, float y, float z)
+{
+    MdRing *r = arg0->ring + no;
+
+    r->baseOfs.x = x;
+    r->baseOfs.y = y;
+    r->baseOfs.z = z;
+}
+
+void MdRingScaleSet(Sys *arg0, int no, float scale)
+{
+    MdRing *r = arg0->ring + no;
+
+    r->scaleP[0]->x = scale;
+    r->scaleP[0]->y = scale;
+    r->scaleP[0]->z = scale;
+}
+
+void MdLayer1Hook(void)
+{
+    if (Hu3DCameraNo == 2) {
+        Hu3DZClear();
+    }
+}
+
+void MdCopyWarpFilter(void)
+{
+    u8 *work = sysWork;
+
+    if (Hu3DCameraNo == 0) {
+        TexBufFBCopy(work, 0xa);
+        ToueiZClear();
+    }
+}
+
+void MdLayer2Hook(void)
+{
+    u8 *work = sysWork;
+
+    if (Hu3DCameraNo == 0) {
+        TexBufFBCopy(work, 0xa);
+        ToueiZClear();
+    }
+}
+
+void MdRingColorReset(Sys *arg0, int no)
+{
+    MdRing *r = arg0->ring + no;
+
+    r->unk10 = 0;
+    r->time = 0;
+    r->ofsTime = 0;
+    r->t = 0;
+    r->ofsT = 0;
 }

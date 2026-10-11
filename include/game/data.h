@@ -49,12 +49,23 @@ void HuDataDirCancel(s16 statId);
 void HuDataDirCancelAsync(s16 statId);
 BOOL HuDataGetAsyncStat(s32 statId);
 void *HuDataRead(int dataNum);
+/* Plain C in the original: the DOL defines HuDataSelHeapReadNum unmangled and
+ * every REL object references it that way. Without this guard a .cpp emits
+ * HuDataSelHeapReadNum__Fil8HeapID_s and the REL link cannot resolve it. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void *HuDataReadNum(int dataNum, s32 num);
 void *HuDataSelHeapRead(int dataNum, HEAPID heap);
 void *HuDataSelHeapReadNum(int dataNum, s32 num, HEAPID heap);
 void **HuDataReadMulti(int *dataNum);
 s32 HuDataGetSize(int dataNum);
 void HuDataClose(void *ptr);
+
+#ifdef __cplusplus
+}
+#endif
 void HuDataCloseMulti(void **ptrTbl);
 void HuDataDirClose(int dataNum);
 void HuDataDirCloseNum(s32 num);
