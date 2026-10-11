@@ -332,37 +332,16 @@ void L2GlobalInvalidate(void)
     }
 }
 
-void DMAErrorHandler(OSError error, OSContext* context)
+void DMAErrorHandler(OSError error, OSContext* context, ...)
 {
     u32 hid2;
-
-    asm {
-        stw r3, 0x8(r1)
-        stw r4, 0xc(r1)
-        stw r5, 0x10(r1)
-        stw r6, 0x14(r1)
-        stw r7, 0x18(r1)
-        stw r8, 0x1c(r1)
-        stw r9, 0x20(r1)
-        stw r10, 0x24(r1)
-        bne cr1, _nofpr
-        stfd f1, 0x28(r1)
-        stfd f2, 0x30(r1)
-        stfd f3, 0x38(r1)
-        stfd f4, 0x40(r1)
-        stfd f5, 0x48(r1)
-        stfd f6, 0x50(r1)
-        stfd f7, 0x58(r1)
-        stfd f8, 0x60(r1)
-    _nofpr:
-    }
 
     hid2 = PPCMfhid2();
 
     OSReport("Machine check received\n");
     OSReport("HID2 = 0x%x   SRR1 = 0x%x\n", hid2, context->srr1);
 
-    if ((hid2 & 0xf00) == 0 || (context->srr1 & 0x400) == 0) {
+    if ((hid2 & 0xf00000) == 0 || (context->srr1 & 0x200000) == 0) {
         OSReport("Machine check was not DMA/locked cache related\n");
         OSDumpContext(context);
         PPCHalt();
@@ -371,16 +350,16 @@ void DMAErrorHandler(OSError error, OSContext* context)
     OSReport("DMAErrorHandler(): An error occurred while processing DMA.\n");
     OSReport("The following errors have been detected and cleared :\n");
 
-    if (hid2 & (1 << HID2_DCHERR_BIT)) {
+    if (hid2 & HID2_DCHERR) {
         OSReport("\t- Requested a locked cache tag that was already in the cache\n");
     }
-    if (hid2 & (1 << HID2_DNCERR_BIT)) {
+    if (hid2 & HID2_DNCERR) {
         OSReport("\t- DMA attempted to access normal cache\n");
     }
-    if (hid2 & (1 << HID2_DCMERR_BIT)) {
+    if (hid2 & HID2_DCMERR) {
         OSReport("\t- DMA missed in data cache\n");
     }
-    if (hid2 & (1 << HID2_DQOERR_BIT)) {
+    if (hid2 & HID2_DQOERR) {
         OSReport("\t- DMA queue overflowed\n");
     }
 
