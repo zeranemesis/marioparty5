@@ -42,16 +42,16 @@ static BOOL OnReset(BOOL final)
     return TRUE;
 }
 
-static void MEMIntruptHandler(s16 interrupt, OSContext* context)
+static void MEMIntrruptHandler(s16 interrupt, OSContext* context)
 {
     u32 flags;
 
-    flags = (*(volatile u16*)(MEM_BASE + 0x24) & 0x3FF) << 16;
-    flags |= *(volatile u16*)(MEM_BASE + 0x22);
+    flags = *(volatile u16*)(MEM_BASE + 0x22);
+    flags |= *(volatile u16*)(MEM_BASE + 0x24) << 16;
     *(volatile u16*)(MEM_BASE + 0x20) = 0;
 
     if (__OSErrorTable[OS_ERROR_PROTECTION] != NULL) {
-        __OSErrorTable[OS_ERROR_PROTECTION](OS_ERROR_PROTECTION, context, *(volatile u16*)(MEM_BASE + 0x1E));
+        __OSErrorTable[OS_ERROR_PROTECTION](OS_ERROR_PROTECTION, context, *(volatile u16*)(MEM_BASE + 0x1E), flags);
         return;
     }
     __OSUnhandledException(OS_ERROR_PROTECTION);
@@ -160,11 +160,11 @@ void __OSInitMemoryProtection(void)
     regs->unk10 = 0xFF;
     __OSMaskInterrupts(0xF0000000);
 
-    __OSSetInterruptHandler(OS_PROTECT_CHAN0, MEMIntruptHandler);
-    __OSSetInterruptHandler(OS_PROTECT_CHAN1, MEMIntruptHandler);
-    __OSSetInterruptHandler(OS_PROTECT_CHAN2, MEMIntruptHandler);
-    __OSSetInterruptHandler(OS_PROTECT_CHAN3, MEMIntruptHandler);
-    __OSSetInterruptHandler(OS_PROTECT_CHAN4, MEMIntruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN0, MEMIntrruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN1, MEMIntrruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN2, MEMIntrruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN3, MEMIntrruptHandler);
+    __OSSetInterruptHandler(OS_PROTECT_CHAN4, MEMIntrruptHandler);
     OSRegisterResetFunction(&ResetFunctionInfo);
 
     if (*(u32*)0x800000F0 < *(u32*)0x80000028 && *(u32*)0x800000F0 == 0x01800000) {
