@@ -101,6 +101,7 @@ typedef struct {
     s32 unk_178;
 } G555_OBJ;
 
+extern s16 lbl_1_bss_B88[];
 extern G555_OBJ *lbl_1_bss_3030;
 
 typedef struct {
@@ -550,6 +551,29 @@ void fn_1_12CAC(s16 arg0)
         *(G555_VEC *)((u8 *)&lbl_1_bss_3030->unk_58[(s16)(arg0 + 0xA9)] + 4) = *(G555_VEC *)((u8 *)&lbl_1_bss_3030->unk_58[(s16)(arg0 + 0x21)] + 4);
         break;
     }
+}
+
+s32 fn_1_1A6F4(s32 arg0)
+{
+    s32 result;
+    s32 i;
+
+    result = 0;
+    for (i = 0; i < 0x32; i++) {
+        G555_VEC v = *(G555_VEC *)((u8 *)&lbl_1_bss_3030->unk_58[(s16)i + 0x23] + 4);
+
+        if (((s16 (*)[16])lbl_1_bss_B88)[i][0] != 0
+         && v.z < *(volatile f32 *)&lbl_1_rodata_84
+         && v.z > *(volatile f32 *)&lbl_1_rodata_454
+         && v.x <= *(volatile f32 *)&lbl_1_rodata_378
+         && v.x >= *(volatile f32 *)&lbl_1_rodata_37C
+         && *(volatile f32 *)&lbl_1_rodata_88 + v.y <= *(volatile f32 *)&lbl_1_rodata_388) {
+            *(G555_VEC *)((u8 *)&lbl_1_bss_120C[arg0] + 0x308) = v;
+            result = 1;
+            break;
+        }
+    }
+    return result;
 }
 
 s32 fn_1_1A880(s32 arg0, s32 arg1)
