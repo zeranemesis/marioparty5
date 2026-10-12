@@ -103,6 +103,12 @@ typedef struct {
 
 extern G555_OBJ *lbl_1_bss_3030;
 
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+} G555_VEC;
+
 const f32 lbl_1_rodata_68 = 0.0f;
 const f32 lbl_1_rodata_6C = 1.0f;
 const f32 lbl_1_rodata_70 = -200.0f;
@@ -530,6 +536,20 @@ s32 fn_1_8F4C(s16 arg0) {
         }
     }
     return result;
+}
+
+void fn_1_12CAC(s16 arg0)
+{
+    switch (*(s16 *)((u8 *)lbl_1_bss_1894 + 0x160)) {
+    case 0:
+        *(s16 *)((u8 *)lbl_1_bss_1894 + 0x160) = *(s16 *)((u8 *)lbl_1_bss_1894 + 0x160) + 1;
+    case 1:
+        *(f32 *)((u8 *)lbl_1_bss_1894 + 0x164) = *(f32 *)((u8 *)lbl_1_bss_1894 + 0x164) + *(volatile f32 *)&lbl_1_rodata_D8;
+        *(f32 *)((u8 *)lbl_1_bss_3030->unk_58 + ((s16)(arg0 + 0x21)) * 0x1C + 8) =
+            (f32)((f64)((f32 *)lbl_1_bss_1894)[0x56] + *(volatile f64 *)&lbl_1_rodata_E0 * sin(*(volatile f64 *)&lbl_1_rodata_E8 * ((f32 *)lbl_1_bss_1894)[0x59] / *(volatile f64 *)&lbl_1_rodata_F0));
+        *(G555_VEC *)((u8 *)&lbl_1_bss_3030->unk_58[(s16)(arg0 + 0xA9)] + 4) = *(G555_VEC *)((u8 *)&lbl_1_bss_3030->unk_58[(s16)(arg0 + 0x21)] + 4);
+        break;
+    }
 }
 
 s32 fn_1_1A880(s32 arg0, s32 arg1)
