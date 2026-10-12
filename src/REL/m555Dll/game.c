@@ -17,6 +17,7 @@ void fn_1_103D8(s16 arg);
 void fn_1_12CAC(s16 arg);
 void fn_1_11DFC(s16 arg);
 void fn_1_155DC(s16 arg);
+
 s32 fn_1_FB2C(void);
 s32 fn_1_8F4C(s16 arg);
 void Hu3DFogSet(f32 near, f32 far, u8 r, u8 g, u8 b);
@@ -104,16 +105,160 @@ extern G555_OBJ *lbl_1_bss_3030;
 
 const f32 lbl_1_rodata_68 = 0.0f;
 const f32 lbl_1_rodata_6C = 1.0f;
+const f32 lbl_1_rodata_70 = -200.0f;
+const f32 lbl_1_rodata_74 = 400.0f;
+const f32 lbl_1_rodata_78 = -100.0f;
+const f32 lbl_1_rodata_7C = 180.0f;
+const f32 lbl_1_rodata_80 = 0.5;
+const f32 lbl_1_rodata_84 = -10000.0f;
+const f32 lbl_1_rodata_88 = 30.0f;
+const f32 lbl_1_rodata_8C = -568.0f;
+const f32 lbl_1_rodata_90 = 568.0f;
+const f32 lbl_1_rodata_94 = -520.0f;
+const f32 lbl_1_rodata_98 = 520.0f;
+const f32 lbl_1_rodata_9C = -364.0f;
+const f32 lbl_1_rodata_A0 = 10000.0f;
+const f32 lbl_1_rodata_A4 = 23000.0f;
+const f64 lbl_1_rodata_A8 = 4503601774854144.0;
 const f32 lbl_1_rodata_B0 = 38.0f;
 const f32 lbl_1_rodata_B4 = 10.0f;
-const f32 lbl_1_rodata_100 = 0.05818182f;
+const f32 lbl_1_rodata_B8 = 0.005;
+const f32 lbl_1_rodata_BC = 15.0f;
+const f32 lbl_1_rodata_C0 = 20.0f;
+const f32 lbl_1_rodata_C4 = 6.0f;
+const f32 lbl_1_rodata_C8 = 56.0f;
+const f32 lbl_1_rodata_CC = 90.0f;
+const f32 lbl_1_rodata_D0 = -90.0f;
+const f32 lbl_1_rodata_D4 = -1.0f;
+const f32 lbl_1_rodata_D8 = 2.5;
+const f32 lbl_1_rodata_DC = -2.5;
+const f64 lbl_1_rodata_E0 = 10.0;
+const f64 lbl_1_rodata_E8 = 3.141592653589793;
+const f64 lbl_1_rodata_F0 = 180.0;
+const f64 lbl_1_rodata_F8 = 30.0;
+const f32 lbl_1_rodata_100 = 0.05818182;
 const f32 lbl_1_rodata_104 = 64.0f;
-const f32 lbl_1_rodata_D8 = 2.5f;
+const f32 lbl_1_rodata_108 = 14.9;
+const s16 lbl_1_rodata_10C[6] = {0x0003, 0x0003, 0x0003, 0x0003, 0x0003, 0x0003};
+const s32 lbl_1_rodata_118[24] = {0xC4098000, 0xC3590000, 0xC3A80000, 0xC1A00000, 0xC4098000, 0xC3590000, 0x41A00000, 0x43A80000, 0xC3310000, 0x43310000, 0xC3A80000, 0xC1A00000, 0xC3310000, 0x43310000, 0x41A00000, 0x43A80000, 0x43590000, 0x44098000, 0xC3A80000, 0xC1A00000, 0x43590000, 0x44098000, 0x41A00000, 0x43A80000};
+const f32 lbl_1_rodata_178 = 200.0f;
+const f32 lbl_1_rodata_17C = -37000.0f;
+const f32 lbl_1_rodata_180 = 0.05;
+const f32 lbl_1_rodata_184 = 1500.0f;
+const f32 lbl_1_rodata_188 = 100.0f;
+const f32 lbl_1_rodata_18C = 0.3;
+const f64 lbl_1_rodata_190 = 4503599627370496.0;
+const f32 lbl_1_rodata_198 = 4.0f;
+const f32 lbl_1_rodata_19C = 300.0f;
+const f32 lbl_1_rodata_1A0 = -36000.0f;
+const f32 lbl_1_rodata_1A4 = 12000.0f;
+const f32 lbl_1_rodata_1A8 = 50.0f;
+const f32 lbl_1_rodata_1AC = 1.5;
+const f32 lbl_1_rodata_1B0 = 96.0f;
+const f32 lbl_1_rodata_1B4 = 5000.0f;
+const f32 lbl_1_rodata_1B8 = 37000.0f;
+const f32 lbl_1_rodata_1BC = 49.0f;
+const f32 lbl_1_rodata_1C0 = 97.0f;
+const f32 lbl_1_rodata_1C4 = 2.0f;
+const f32 lbl_1_rodata_1C8 = 0.7;
+const f32 lbl_1_rodata_1CC = 98.0f;
+const f32 lbl_1_rodata_1D0 = 8.0f;
+const f32 lbl_1_rodata_1D4 = 12.5;
+const f32 lbl_1_rodata_1D8 = 130.0f;
+const f64 lbl_1_rodata_1E0 = 80.0;
+const f32 lbl_1_rodata_1E8 = 94.0f;
+const f32 lbl_1_rodata_1EC = 0.035;
+const f32 lbl_1_rodata_1F0 = 148.0f;
+const s16 lbl_1_rodata_1F4[6] = {0x0002, 0x0000, 0x0006, 0x0004, 0x000A, 0x0008};
+const s16 lbl_1_rodata_200[16] = {0x0BB8, 0x03E8, 0x07D0, 0xFC18, 0x0BB8, 0xF060, 0x07D0, 0xFC18, 0x03E8, 0xFE0C, 0x01F4, 0x03E8, 0x03E8, 0xFE0C, 0x0064, 0xF830};
+const f32 lbl_1_rodata_220 = 66.666664;
+const f32 lbl_1_rodata_224 = 25.0f;
+const f32 lbl_1_rodata_228 = 45.0f;
+const f32 lbl_1_rodata_22C = 0.01;
+const f32 lbl_1_rodata_230 = 750.0f;
+const f32 lbl_1_rodata_234 = 9000.0f;
+const f32 lbl_1_rodata_238 = 4000.0f;
+const f32 lbl_1_rodata_23C = 16000.0f;
+const f32 lbl_1_rodata_240 = 1000.0f;
+const f32 lbl_1_rodata_244 = -30000.0f;
+const f32 lbl_1_rodata_248 = 19.0f;
+const f32 lbl_1_rodata_24C = 150.0f;
+const f32 lbl_1_rodata_250 = 36000.0f;
+const f32 lbl_1_rodata_254 = 600.0f;
+const f32 lbl_1_rodata_258 = 700.0f;
+const f32 lbl_1_rodata_25C = 500.0f;
+const f32 lbl_1_rodata_260 = 225.0f;
+const f32 lbl_1_rodata_264 = 135.0f;
 const f32 lbl_1_rodata_268 = 3.0f;
+const f64 lbl_1_rodata_270 = 50.0;
+const f32 lbl_1_rodata_278 = 50000.0f;
 const f32 lbl_1_rodata_27C = -4.0f;
-const f32 lbl_1_rodata_280 = -0.15f;
-const f32 lbl_1_rodata_284 = 0.1f;
+const f32 lbl_1_rodata_280 = -0.15;
+const f32 lbl_1_rodata_284 = 0.1;
 const f32 lbl_1_rodata_288 = -1000.0f;
+const f64 lbl_1_rodata_290 = 20.0;
+const f32 lbl_1_rodata_298 = 1400.0f;
+const s32 lbl_1_rodata_29C[16] = {0x40000000, 0x00000000, 0x40000000, 0x00000000, 0xC0000000, 0x00000000, 0xC0000000, 0x00000000, 0x00000000, 0x40000000, 0x00000000, 0x40000000, 0x00000000, 0xC0000000, 0x00000000, 0xC0000000};
+const f32 lbl_1_rodata_2DC = -0.012;
+const f32 lbl_1_rodata_2E0 = 0.015;
+const f32 lbl_1_rodata_2E4 = -0.08;
+const f32 lbl_1_rodata_2E8 = 0.08;
+const f32 lbl_1_rodata_2EC = -6000.0f;
+const f32 lbl_1_rodata_2F0 = 20.5;
+const f32 lbl_1_rodata_2F4 = 112.0f;
+const f32 lbl_1_rodata_2F8 = 5.0f;
+const f64 lbl_1_rodata_300 = 0.0;
+const f64 lbl_1_rodata_308 = 0.5;
+const f64 lbl_1_rodata_310 = 3.0;
+const f32 lbl_1_rodata_318 = -0.07;
+const f32 lbl_1_rodata_31C = 60.0f;
+const f32 lbl_1_rodata_320 = -900.0f;
+const f32 lbl_1_rodata_324 = -400.0f;
+const f32 lbl_1_rodata_328 = -750.0f;
+const f32 lbl_1_rodata_32C = 800.0f;
+const f32 lbl_1_rodata_330 = -2.0f;
+const f32 lbl_1_rodata_334 = 900.0f;
+const f32 lbl_1_rodata_338 = -150.0f;
+const f32 lbl_1_rodata_33C = -0.5;
+const f32 lbl_1_rodata_340 = 240.0f;
+const f32 lbl_1_rodata_344 = -868.0f;
+const f32 lbl_1_rodata_348 = 868.0f;
+const f32 lbl_1_rodata_34C = -820.0f;
+const f32 lbl_1_rodata_350 = 820.0f;
+const f32 lbl_1_rodata_354 = 120.0f;
+const f32 lbl_1_rodata_358 = 40.0f;
+const f32 lbl_1_rodata_35C = -15.0f;
+const f32 lbl_1_rodata_360 = 80.0f;
+const f32 lbl_1_rodata_364 = 360.0f;
+const f64 lbl_1_rodata_368 = -1.0;
+const f32 lbl_1_rodata_370 = -121.0f;
+const f32 lbl_1_rodata_374 = 121.0f;
+const f32 lbl_1_rodata_378 = 530.0f;
+const f32 lbl_1_rodata_37C = -530.0f;
+const f32 lbl_1_rodata_380 = 316.0f;
+const f32 lbl_1_rodata_384 = 286.0f;
+const f32 lbl_1_rodata_388 = -316.0f;
+const f32 lbl_1_rodata_38C = -346.0f;
+const s32 lbl_1_rodata_390[4] = {0x41200000, 0x41C80000, 0x42200000, 0x42600000};
+const s32 lbl_1_rodata_3A0[4] = {0x00000000, 0x41A00000, 0x42200000, 0x42600000};
+const s32 lbl_1_rodata_3B0[4] = {0xC6EA6000, 0xC6EA6000, 0xC6EA6000, 0xC6EA6000};
+const s32 lbl_1_rodata_3C0[4] = {0x41C80000, 0x41C80000, 0x40000000, 0x3F800000};
+const s32 lbl_1_rodata_3D0[4] = {0x41F00000, 0x41A00000, 0x00000000, 0x00000000};
+const s32 lbl_1_rodata_3E0[4] = {0x41F00000, 0x40A00000, 0x00000000, 0x00000000};
+const f32 lbl_1_rodata_3F0 = 230.0f;
+const s32 lbl_1_rodata_3F4[12] = {0x3F800000, 0x00000000, 0xC404C000, 0x3F800000, 0x00000000, 0x4404C000, 0x00000000, 0x3F800000, 0xC39E8000, 0x00000000, 0x3F800000, 0x439E8000};
+const f32 lbl_1_rodata_424 = 2000.0f;
+const f32 lbl_1_rodata_428 = -13000.0f;
+const f32 lbl_1_rodata_42C = 270.0f;
+const f64 lbl_1_rodata_430 = 200.0;
+const f32 lbl_1_rodata_438 = 0.984;
+const f32 lbl_1_rodata_43C = -0.984;
+const f32 lbl_1_rodata_440 = -531.0f;
+const f32 lbl_1_rodata_444 = 531.0f;
+const f32 lbl_1_rodata_448 = -317.0f;
+const f32 lbl_1_rodata_44C = 317.0f;
+const f32 lbl_1_rodata_450 = -12000.0f;
+const f32 lbl_1_rodata_454 = -16000.0f;
 
 #define BSS1894_BYTE(n) (((u8 *)lbl_1_bss_1894)[n])
 
@@ -387,6 +532,25 @@ s32 fn_1_8F4C(s16 arg0) {
     return result;
 }
 
+s32 fn_1_1A880(s32 arg0, s32 arg1)
+{
+    s32 result;
+    s16 idx;
+
+    result = 0;
+    idx = (s16)(arg0 + 0xA9);
+    if ((s16)arg1 == 0) {
+        if (lbl_1_bss_3030->unk_58[idx].v[1] <= *(volatile f32 *)&lbl_1_rodata_188
+         && lbl_1_bss_3030->unk_58[idx].v[1] >= *(volatile f32 *)&lbl_1_rodata_78
+         && lbl_1_bss_3030->unk_58[idx].v[2] <= *(volatile f32 *)&lbl_1_rodata_188
+         && lbl_1_bss_3030->unk_58[idx].v[2] >= *(volatile f32 *)&lbl_1_rodata_338) {
+            result = 1;
+        }
+    } else {
+        result = 1;
+    }
+    return result;
+}
 s32 fn_1_FB2C(void) {
     f32 *p = (f32 *)((u8 *)lbl_1_bss_3030->unk_58 + 0xA68);
     s32 result = 0;
