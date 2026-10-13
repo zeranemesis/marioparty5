@@ -90,7 +90,7 @@ void _epilog(void)
 
 void ObjectSetup(void)
 {
-    GwSystem.bankCoin = 0;
+    GwSystem.subGameNo = 0;
     _SetFlag(0xb);
     HuPrcChildCreate(fn_1_BC0, 0xc8, 0x3000, 0, HuPrcCurrentGet());
 }

@@ -575,15 +575,15 @@ void fn_1_9E4(OMOBJ *arg0) {
 
     temp_r31 = arg0->data;
     if ((MgSeqModeGet() == 5) && (MgSeqFrameNoGet() >= 0x190U) && (MgSeqFrameNoGet() <= 0x258U)) {
-        temp_r31->unk4.f = (f32) (temp_r31->unk4.f + temp_r31->unk10.f);
-        temp_r31->unk8.f = (f32) (temp_r31->unk8.f + temp_r31->unk14.f);
-        temp_r31->unkC.f = (f32) (temp_r31->unkC.f + temp_r31->unk18.f);
-        temp_r31->unk1C.f = (f32) (temp_r31->unk1C.f + temp_r31->unk28.f);
-        temp_r31->unk20.f = (f32) (temp_r31->unk20.f + temp_r31->unk2C.f);
-        temp_r31->unk24.f = (f32) (temp_r31->unk24.f + temp_r31->unk30.f);
+        temp_r31->unk4.f += temp_r31->unk10.f;
+        temp_r31->unk8.f += temp_r31->unk14.f;
+        temp_r31->unkC.f += temp_r31->unk18.f;
+        temp_r31->unk1C.f += temp_r31->unk28.f;
+        temp_r31->unk20.f += temp_r31->unk2C.f;
+        temp_r31->unk24.f += temp_r31->unk30.f;
     }
-    omSetTra(arg0, temp_r31->unk4.i, temp_r31->unk8.i, temp_r31->unkC.i);
-    omSetRot(arg0, temp_r31->unk1C.i, temp_r31->unk20.i, temp_r31->unk24.i);
+    omSetTra(arg0, temp_r31->unk4.f, temp_r31->unk8.f, temp_r31->unkC.f);
+    omSetRot(arg0, temp_r31->unk1C.f, temp_r31->unk20.f, temp_r31->unk24.f);
 }
 
 void fn_1_AC4(OMOBJ *arg0) {
@@ -2041,20 +2041,17 @@ loop_6:
     var_r31 = (M572ObjData *)var_r31->unk8.i;
     goto loop_6;
 }
-
-void fn_1_4E58(void) {
+void fn_1_4E58(void)
+{
     s32 var_r31;
 
     var_r31 = 0;
-loop_2:
-    if (var_r31 < 0x20) {
+    while (var_r31 < 0x20) {
         lbl_1_bss_4D0[var_r31].unk0 = 0U;
         lbl_1_bss_4D0[var_r31].unk4 = -1;
         var_r31 += 1;
-        goto loop_2;
     }
 }
-
 s16 fn_1_4EB0(u32 arg0) {
     s32 var_r31;
     s32 var_r31_2;
@@ -2254,7 +2251,7 @@ s32 fn_1_5A8C(s32 arg0, s32 arg1) {
 }
 
 s32 fn_1_5AC8(M572ObjData *arg0, M572ObjData *arg1, f32 farg0, f32 farg1) {
-    if ((((arg1->unk0.f - arg0->unk0.i) * (arg1->unk0.f - arg0->unk0.i)) + ((arg1->unk8.f - arg0->unk8.i) * (arg1->unk8.f - arg0->unk8.i))) < ((farg0 + farg1) * (farg0 + farg1))) {
+    if ((((arg1->unk0.f - arg0->unk0.f) * (arg1->unk0.f - arg0->unk0.f)) + ((arg1->unk8.f - arg0->unk8.f) * (arg1->unk8.f - arg0->unk8.f))) < ((farg0 + farg1) * (farg0 + farg1))) {
         return 1;
     }
     return 0;
@@ -3566,7 +3563,7 @@ s32 fn_1_9E44(M572ObjData *arg0, M572ObjData *arg1, f32 farg0, f32 farg1) {
 }
 
 s32 fn_1_A03C(M572ObjData *arg0, M572ObjData *arg1, f32 farg0, f32 farg1) {
-    if ((((arg1->unk0.f - arg0->unk0.i) * (arg1->unk0.f - arg0->unk0.i)) + ((arg1->unk8.f - arg0->unk8.i) * (arg1->unk8.f - arg0->unk8.i))) < ((farg0 + farg1) * (farg0 + farg1))) {
+    if ((((arg1->unk0.f - arg0->unk0.f) * (arg1->unk0.f - arg0->unk0.f)) + ((arg1->unk8.f - arg0->unk8.f) * (arg1->unk8.f - arg0->unk8.f))) < ((farg0 + farg1) * (farg0 + farg1))) {
         return 1;
     }
     return 0;

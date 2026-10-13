@@ -1655,7 +1655,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m572dll",
         objects={
-            Object(NonMatching, "REL/m572dll/m572.c"),
+            Object(Equivalent, "REL/m572dll/m572.c"),
         },
     ),
     Rel(

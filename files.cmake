@@ -191,6 +191,7 @@ set(REL_FILES
         src/REL/m433Dll/m433.c
         src/REL/m433Dll/stage.c
         src/REL/m433Dll/player.c
+        src/REL/m505Dll/m505.c
         src/REL/m506Dll/m506.c
         src/REL/m506Dll/object.c
         src/REL/m506Dll/player.c
@@ -199,8 +200,10 @@ set(REL_FILES
         src/REL/m519dll/m519.c
         src/REL/m526Dll/m526.c
         src/REL/m526Dll/math.c
+        src/REL/m529dll/m529.c
         src/REL/m538Dll/m538.c
         src/REL/m566Dll/m566.c
+        src/REL/m572dll/m572.c
         src/REL/mdpartyDll/mdparty.c
         src/REL/mdpartyDll/object.c
         src/REL/mdpartyDll/stage.c
@@ -243,7 +246,6 @@ set(REL_FILES
 #   m502dll
 #   m503Dll
 #   m504dll
-#   m505Dll
 #   m508Dll
 #   m509Dll
 #   m510dll
@@ -263,7 +265,6 @@ set(REL_FILES
 #   m525Dll
 #   m527Dll
 #   m528Dll
-#   m529dll
 #   m530Dll
 #   m531Dll
 #   m532Dll
@@ -301,7 +302,6 @@ set(REL_FILES
 #   m569Dll
 #   m570Dll
 #   m571dll
-#   m572dll
 #   m573dll
 #   m574Dll
 #   m575dll
