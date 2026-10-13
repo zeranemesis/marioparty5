@@ -1814,3 +1814,112 @@ OMOBJ *MgCameraMoveEntry(M524Camera *start, M524Camera *end, f32 time)
     }
     return obj;
 }
+
+void fn_1_3740(OMOBJ *obj)
+{
+    M524Camera *cam = (M524Camera *)obj->work[0];
+
+    if ((*HuPadBtn & 0x800) != 0) {
+        print8(0x10, 0x30, 1.5f, lbl_1_data_0, cam->pos.x, cam->pos.y, cam->pos.z);
+        print8(0x10, 0x40, 1.5f, lbl_1_data_1B, cam->target.x, cam->target.y, cam->target.z);
+        print8(0x10, 0x50, 1.5f, lbl_1_data_36, cam->up.x, cam->up.y, cam->up.z);
+        print8(0x10, 0x60, 1.5f, lbl_1_data_51, cam->angX, cam->angY);
+        print8(0x10, 0x70, 1.5f, lbl_1_data_61, cam->dist);
+        if (obj->work[1] == 0) {
+            print8(0x10, 0x80, 1.5f, lbl_1_data_6C);
+        } else {
+            print8(0x10, 0x80, 1.5f, lbl_1_data_76);
+        }
+        if ((*HuPadBtnDown & 0x1000) != 0) {
+            lbl_1_bss_34 = *cam;
+        }
+        if ((*HuPadBtnDown & 0x200) != 0) {
+            obj->work[1] += 1;
+            if (obj->work[1] == 2) {
+                obj->work[1] = 0;
+            }
+        }
+        switch (obj->work[1]) {
+        case 0:
+            cam->pos.z = cam->pos.z + (0.1f * (f32) *HuPadTrigL);
+            cam->pos.x = cam->pos.x + (0.1f * (f32) (s8) *HuPadStkX);
+            cam->pos.y = cam->pos.y + (0.1f * (f32) (s8) *HuPadStkY);
+            fn_1_4494(cam);
+            break;
+
+        case 1:
+            cam->angX = cam->angX - (0.1f * (f32) (s8) *HuPadStkY);
+            cam->angY = cam->angY + (0.1f * (f32) (s8) *HuPadStkX);
+            cam->dist = cam->dist - (0.1f * (f32) *HuPadTrigL);
+            cam->dist = cam->dist + (0.1f * (f32) *HuPadTrigR);
+            fn_1_3DD0(cam);
+            break;
+        }
+        if ((*HuPadBtn & 0x400) != 0) {
+            cam->target.z = cam->target.z - (0.1f * (f32) (s8) *HuPadSubStkY);
+        } else {
+            cam->target.x = cam->target.x + (0.1f * (f32) (s8) *HuPadSubStkX);
+            cam->target.y = cam->target.y + (0.1f * (f32) (s8) *HuPadSubStkY);
+        }
+        Hu3DCameraPosSetV(cam->camNo, &cam->pos, &cam->up, &cam->target);
+    }
+}
+
+void fn_1_3DD0(M524Camera *cam)
+{
+    Vec sp8;
+    f32 temp_f26;
+    f32 temp_f27;
+    f32 temp_f28;
+    f32 temp_f29;
+    f32 temp_f30;
+    f32 temp_f31;
+    f64 temp_f25;
+    f64 temp_f25_2;
+    f64 temp_f25_3;
+    f64 temp_f25_4;
+    f64 temp_f24;
+    f64 temp_f24_2;
+    f64 temp_f24_3;
+    f64 temp_f24_4;
+    f64 temp_f24_5;
+    f64 temp_f24_6;
+    f64 temp_f24_7;
+    f64 temp_f24_8;
+    f64 temp_f24_9;
+    f64 temp_f24_10;
+    f64 temp_f24_11;
+    f64 temp_f24_12;
+
+    temp_f30 = cam->angX;
+    temp_f29 = cam->angY;
+    temp_f31 = cam->angZ;
+    temp_f24 = cos((3.141592653589793 * (f64) temp_f30) / 180.0);
+    cam->pos.x = (f32) ((f64) cam->target.x + ((f64) cam->dist * (sin((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24)));
+    cam->pos.y = (f32) ((f64) cam->target.y + ((f64) cam->dist * -sin((3.141592653589793 * (f64) temp_f30) / 180.0)));
+    temp_f24_2 = cos((3.141592653589793 * (f64) temp_f30) / 180.0);
+    cam->pos.z = (f32) ((f64) cam->target.z + ((f64) cam->dist * (cos((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24_2)));
+    PSVECSubtract(&cam->pos, &cam->target, &sp8);
+    PSVECNormalize(&sp8, &sp8);
+    temp_f24_3 = sin((3.141592653589793 * (f64) temp_f30) / 180.0);
+    temp_f28 = (f32) (sin((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24_3);
+    temp_f27 = (f32) cos((3.141592653589793 * (f64) temp_f30) / 180.0);
+    temp_f24_4 = sin((3.141592653589793 * (f64) temp_f30) / 180.0);
+    temp_f26 = (f32) (cos((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24_4);
+    temp_f24_5 = (f64) sp8.y * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
+    temp_f25 = (f64) temp_f26 * (((f64) (sp8.x * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) + temp_f24_5);
+    temp_f24_6 = (f64) sp8.z * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
+    temp_f24_7 = (f64) temp_f27 * (((f64) (sp8.x * sp8.y) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) - temp_f24_6);
+    cam->up.x = (f32) (((f64) temp_f28 * ((f64) (sp8.x * sp8.x) + ((f64) (1.0f - (sp8.x * sp8.x)) * cos((3.141592653589793 * (f64) temp_f31) / 180.0)))) + temp_f24_7 + temp_f25);
+    temp_f24_8 = (f64) sp8.x * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
+    temp_f25_2 = (f64) temp_f26 * (((f64) (sp8.y * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) - temp_f24_8);
+    temp_f24_9 = (f64) sp8.z * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
+    temp_f24_10 = (f64) temp_f28 * (((f64) (sp8.x * sp8.y) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) + temp_f24_9);
+    temp_f24_11 = (f64) sp8.x * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
+    temp_f24_12 = (f64) temp_f27 * (((f64) (sp8.y * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) + temp_f24_11);
+    cam->up.y = (f32) (((f64) temp_f27 * ((f64) (sp8.y * sp8.y) + ((f64) (1.0f - (sp8.y * sp8.y)) * cos((3.141592653589793 * (f64) temp_f31) / 180.0)))) + temp_f24_10 + temp_f25_2);
+    temp_f25_3 = (f64) sp8.y * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
+    temp_f25_4 = ((f64) temp_f28 * (((f64) (sp8.x * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) - temp_f25_3)) + temp_f24_12;
+    cam->up.z = (f32) (((f64) temp_f26 * ((f64) (sp8.z * sp8.z) + ((f64) (1.0f - (sp8.z * sp8.z)) * cos((3.141592653589793 * (f64) temp_f31) / 180.0)))) + temp_f25_4);
+    PSVECNormalize(&cam->up, &cam->up);
+}
