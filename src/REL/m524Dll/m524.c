@@ -162,13 +162,13 @@ f32 fn_1_4FA0(s16 padNo);
 void fn_1_50B0(OMOBJ *obj);
 void fn_1_5160(OMOBJ *obj);
 OMOBJ *fn_1_5198(M524FlowFunc *funcTbl);
-void MgFlowSet(M524Flow *flow, s32 index);
-void MgFlowNext(M524Flow *flow);
-s32 fn_1_5338(M524Flow *flow);
-s32 fn_1_5354(M524Flow *flow, s32 index);
-void fn_1_53A0(M524Flow *flow, s32 type, s32 maxTime, s32 endTime, s32 recordTime);
-BOOL fn_1_53D4(M524Flow *flow);
-void fn_1_5410(M524Flow *flow);
+void MgFlowSet(OMOBJ *obj, s32 index);
+void MgFlowNext(OMOBJ *obj);
+s32 fn_1_5338(OMOBJ *obj);
+s32 fn_1_5354(OMOBJ *obj, s32 index);
+void fn_1_53A0(OMOBJ *obj, s32 type, s32 maxTime, s32 endTime, s32 recordTime);
+BOOL fn_1_53D4(OMOBJ *obj);
+void fn_1_5410(OMOBJ *obj);
 void fn_1_5450(void);
 void fn_1_5454(OMOBJ *obj, void *flow);
 void fn_1_54CC(OMOBJ *obj, void *flow);
@@ -1303,4 +1303,374 @@ M524Camera *fn_1_35A8(M524Camera *param) {
     Hu3DCameraPerspectiveSet(param->camNo, param->nearZ, param->fov, param->farZ, 1.2f);
     fn_1_3694(param);
     return cam;
+}
+
+
+void fn_1_3694(M524Camera *cam)
+{
+    if (cam->mode == 1) {
+        fn_1_3DD0(cam);
+    }
+    Hu3DCameraPosSetV(cam->camNo, &cam->pos, &cam->up, &cam->target);
+}
+
+s16 fn_1_36E4(M524Light *light)
+{
+    HU3DLIGHTID lightId;
+
+    lightId = Hu3DGLightCreateV(&light->pos, &light->target, &light->color);
+    Hu3DGLightStaticSet(lightId, 1);
+    Hu3DGLightInfinitytSet(lightId);
+    return lightId;
+}
+
+s32 fn_1_4BB0(OMOBJ *obj)
+{
+    M524CamMove *move = (M524CamMove *)obj->data;
+
+    if (move->moveF & 0x40000000) {
+        return 1;
+    }
+    return 0;
+}
+
+void fn_1_4BE4(OMOBJ *obj)
+{
+    omDelObjEx(lbl_1_bss_80, obj);
+}
+
+void fn_1_5160(OMOBJ *obj)
+{
+    if (!WipeCheckEnd()) {
+        omOvlReturnEx(1, 1);
+    }
+}
+
+void MgFlowSet(OMOBJ *obj, s32 index)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    if (index >= flow->funcNum) {
+        OSReport(lbl_1_data_AD);
+    } else {
+        flow->index = index;
+    }
+}
+
+void MgFlowNext(OMOBJ *obj)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    if (flow->index == flow->funcNum - 1) {
+        OSReport(lbl_1_data_CC);
+    } else {
+        flow->index++;
+    }
+}
+
+s32 fn_1_5338(OMOBJ *obj)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    return flow->index;
+}
+
+s32 fn_1_5354(OMOBJ *obj, s32 index)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    if (flow->index == index) {
+        return 1;
+    }
+    return 0;
+}
+
+void fn_1_53A0(OMOBJ *obj, s32 type, s32 maxTime, s32 endTime, s32 recordTime)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    flow->timerType = type;
+    flow->maxTime = maxTime * 60;
+    flow->endTime = endTime * 60;
+    flow->recordTime = recordTime * 60;
+}
+
+BOOL fn_1_53D4(OMOBJ *obj)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    return MgTimerDoneCheck(flow->timer);
+}
+
+void fn_1_5410(OMOBJ *obj)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    if (flow->timer->stopF == 0) {
+        flow->timer->stopF = 1;
+        flow->timer->mode = 1;
+    }
+}
+
+void fn_1_5450(void)
+{
+}
+
+f32 fn_1_5E04(Vec *a, Vec *b, Vec *c)
+{
+    Vec vec;
+
+    PSVECSubtract(c, b, &vec);
+    return PSVECDotProduct(a, &vec);
+}
+
+void fn_1_3DA0(M524Camera *cam)
+{
+    lbl_1_bss_34 = *cam;
+}
+
+void fn_1_54CC(OMOBJ *obj, void *flow)
+{
+    if (lbl_1_bss_7C != -1) {
+        HuAudFadeOut(0x3e8);
+        lbl_1_bss_7C = -1;
+    }
+    if (!WipeCheckEnd()) {
+        omOvlReturnEx(1, 1);
+    }
+}
+
+void fn_1_5D8C(Vec *pos, Vec *target, Vec *cur, Vec *out)
+{
+    Vec sp10;
+    Vec sp1C;
+
+    PSVECSubtract(cur, target, &sp1C);
+    PSVECSubtract(target, pos, &sp10);
+    PSVECCrossProduct(&sp1C, &sp10, out);
+    PSVECNormalize(out, out);
+}
+
+void fn_1_5454(OMOBJ *obj, void *flow)
+{
+    if (!WipeCheckEnd()) {
+        M524Flow *flowP = (M524Flow *)obj->data;
+
+        if (flowP->index == flowP->funcNum - 1) {
+            OSReport(lbl_1_data_CC);
+        } else {
+            flowP->index++;
+        }
+    }
+}
+
+void fn_1_55EC(OMOBJ *obj, void *flow)
+{
+    M524Flow *flowP = (M524Flow *)obj->data;
+
+    if (flowP->gameMesId == -1) {
+        flowP->gameMesId = GameMesCreate(2, 0);
+    } else if (!GameMesStatGet(flowP->gameMesId)) {
+        flowP->gameMesId = -1;
+        if (flowP->index == flowP->funcNum - 1) {
+            OSReport(lbl_1_data_CC);
+        } else {
+            flowP->index++;
+        }
+    }
+}
+
+void fn_1_56A0(OMOBJ *obj, void *flow)
+{
+    M524Flow *flowP = (M524Flow *)obj->data;
+
+    if (flowP->gameMesId == -1) {
+        flowP->gameMesId = GameMesCreate(2, 1);
+    } else if (!GameMesStatGet(flowP->gameMesId)) {
+        flowP->gameMesId = -1;
+        if (flowP->index == flowP->funcNum - 1) {
+            OSReport(lbl_1_data_CC);
+        } else {
+            flowP->index++;
+        }
+    }
+}
+
+void fn_1_5754(OMOBJ *obj, void *flow)
+{
+    M524Flow *flowP = (M524Flow *)obj->data;
+
+    flowP->timer = MgTimerCreate(flowP->timerType);
+    MgTimerParamSet(flowP->timer, flowP->maxTime, flowP->endTime, flowP->recordTime);
+    MgTimerModeOnSet(flowP->timer, 1);
+    if (flowP->index == flowP->funcNum - 1) {
+        OSReport(lbl_1_data_CC);
+    } else {
+        flowP->index++;
+    }
+}
+
+void fn_1_5530(OMOBJ *obj, void *flow, s16 mesNo, s16 mesArg)
+{
+    M524Flow *flowP = (M524Flow *)obj->data;
+
+    if (flowP->gameMesId == -1) {
+        flowP->gameMesId = GameMesCreate(mesNo, mesArg);
+    } else if (!GameMesStatGet(flowP->gameMesId)) {
+        flowP->gameMesId = -1;
+        if (flowP->index == flowP->funcNum - 1) {
+            OSReport(lbl_1_data_CC);
+        } else {
+            flowP->index++;
+        }
+    }
+}
+
+f32 fn_1_4E1C(s16 padNo)
+{
+    s32 sum;
+    f32 mag;
+
+    sum = (s32)HuPadStkX[padNo] * (s32)HuPadStkX[padNo] + (s32)HuPadStkY[padNo] * (s32)HuPadStkY[padNo];
+    mag = (f32) sum;
+    if (mag > 0.0f) {
+        mag = sqrtf(mag);
+    }
+    return mag;
+}
+
+f32 fn_1_4FA0(s16 padNo)
+{
+    f32 angle;
+
+    angle = (f32) (180.0 * (atan2((f64) (s8) HuPadStkY[padNo], (f64) (s8) HuPadStkX[padNo]) / 3.141592653589793) - 90.0);
+    if (angle < 0.0f) {
+        angle += 360.0f;
+    }
+    return angle;
+}
+
+void fn_1_57F4(M524Player *player, s16 index)
+{
+    player->index = index;
+    player->charNo = GwPlayerConf[index].charNo;
+    player->padNo = GwPlayerConf[index].padNo;
+    player->grp = GwPlayerConf[index].grp;
+    player->type = GwPlayerConf[index].type;
+    player->dif = GwPlayerConf[index].dif;
+    player->state = 0;
+    player->traX = 0.0f;
+    player->traY = 0.0f;
+    player->traZ = 0.0f;
+    player->rotX = 0.0f;
+    player->rotY = 0.0f;
+    player->rotZ = 0.0f;
+}
+
+f32 fn_1_59E4(f32 ang0, f32 ang1, f32 max)
+{
+    f32 result;
+    f32 diff;
+
+    diff = (f32) fmod((f64) (ang1 - ang0), 360.0);
+    if (diff < 0.0f) {
+        diff += 360.0f;
+    }
+    if (diff > 180.0f) {
+        diff -= 360.0f;
+    }
+    if (fabs(diff) > max) {
+        if (diff < 0.0f) {
+            diff = -max;
+        } else {
+            diff = max;
+        }
+    }
+    result = (f32) fmod((f64) (ang0 + diff), 360.0);
+    if (result < 0.0f) {
+        result += 360.0f;
+    }
+    return result;
+}
+
+s32 fn_1_58C0(Vec *pos, Vec *target, Vec *angle, f32 dist)
+{
+    Vec vec;
+    f32 mag;
+
+    PSVECSubtract(target, pos, &vec);
+    mag = PSVECMag(&vec);
+    if (mag == 0.0f) {
+        return 1;
+    }
+    PSVECNormalize(&vec, &vec);
+    PSVECScale(&vec, &vec, dist);
+    if (PSVECMag(&vec) >= mag) {
+        *pos = *target;
+        return 1;
+    }
+    PSVECAdd(pos, &vec, pos);
+    angle->y = (f32) (180.0 * (atan2((f64) vec.x, (f64) vec.z) / 3.141592653589793));
+    return 0;
+}
+
+s32 fn_1_5B54(Vec *pos, Vec *target, Vec *cur, f32 dist)
+{
+    Vec sp20;
+    Vec sp14;
+    Vec sp8;
+    f32 temp_f1;
+    f32 temp_f30;
+    f32 temp_f31;
+
+    sp8 = *target;
+    while (TRUE) {
+        PSVECSubtract(target, pos, &sp20);
+        if (PSVECMag(&sp20) == 0.0f) {
+            return 0;
+        }
+        PSVECSubtract(target, cur, &sp14);
+        temp_f1 = PSVECMag(&sp14);
+        if (temp_f1 >= dist) {
+            return 0;
+        }
+        if (temp_f1 == 0.0f) {
+            *target = *pos;
+        } else {
+            PSVECNormalize(&sp14, &sp14);
+            PSVECScale(&sp14, &sp14, dist);
+            PSVECAdd(cur, &sp14, target);
+        }
+        PSVECSubtract(target, pos, &sp14);
+        if (PSVECMag(&sp14) >= 0.001f) {
+            return 1;
+        }
+        temp_f31 = PSVECMag(&sp20);
+        temp_f30 = (f32) (180.0 * (atan2((f64) sp14.z, (f64) sp14.x) / 3.141592653589793));
+        temp_f30 += 30.0f;
+        sp20.x = (f32) ((f64) temp_f31 * sin((3.141592653589793 * (f64) temp_f30) / 180.0));
+        sp20.z = (f32) ((f64) temp_f31 * cos((3.141592653589793 * (f64) temp_f30) / 180.0));
+        PSVECAdd(pos, &sp20, target);
+    }
+}
+
+s32 fn_1_5E48(Vec *dir, Vec *pos, Vec *target, Vec *out, Vec *result)
+{
+    Vec sp28;
+    Vec sp1C;
+    Vec sp10;
+    f32 temp_f1;
+    f32 temp_f30;
+
+    PSVECSubtract(out, target, &sp28);
+    PSVECSubtract(target, pos, &sp1C);
+    temp_f30 = PSVECDotProduct(dir, &sp1C);
+    PSVECSubtract(target, out, &sp10);
+    temp_f1 = PSVECDotProduct(dir, &sp10);
+    if (temp_f1 == 0.0f) {
+        return 0;
+    }
+    PSVECScale(&sp28, &sp28, temp_f30 / temp_f1);
+    PSVECAdd(target, &sp28, result);
+    return 1;
 }
