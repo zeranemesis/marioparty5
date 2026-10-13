@@ -1328,7 +1328,7 @@ s32 fn_1_4BB0(OMOBJ *obj)
 {
     M524CamMove *move = (M524CamMove *)obj->data;
 
-    if (move->moveF & 0x40000000) {
+    if (move->moveF & 2) {
         return 1;
     }
     return 0;
@@ -1673,4 +1673,144 @@ s32 fn_1_5E48(Vec *dir, Vec *pos, Vec *target, Vec *out, Vec *result)
     PSVECScale(&sp28, &sp28, temp_f30 / temp_f1);
     PSVECAdd(target, &sp28, result);
     return 1;
+}
+
+void fn_1_3CF4(M524Camera *cam)
+{
+    OMOBJ *obj;
+
+    obj = omAddObjEx(lbl_1_bss_80, 0x4000, 0, 0, -1, fn_1_3740);
+    obj->work[0] = (s32) cam;
+    if (cam->mode == 0) {
+        obj->work[1] = 0;
+    } else {
+        obj->work[1] = 1;
+    }
+    lbl_1_bss_34 = *cam;
+}
+
+void fn_1_4C18(OMOBJ *obj)
+{
+    M524Camera *cam = (M524Camera *)obj->data;
+    M524Camera *src = (M524Camera *)obj->work[2];
+    s32 range = obj->work[1];
+
+    if (obj->work[0] == 0) {
+        fn_1_3694(src);
+        omDelObjEx(lbl_1_bss_80, obj);
+        return;
+    }
+    cam->target.x = src->target.x + (f32) frandmod(range * 2) - (f32) range;
+    cam->target.y = src->target.y + (f32) frandmod(range * 2) - (f32) range;
+    fn_1_3694(cam);
+    obj->work[0] -= 1;
+}
+
+void fn_1_4D60(M524Camera *cam, s32 count, s32 range)
+{
+    OMOBJ *obj;
+
+    obj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_4C18);
+    obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x48, 0x10000000);
+    *(M524Camera *)obj->data = *cam;
+    obj->work[0] = count;
+    obj->work[1] = range;
+    obj->work[2] = (s32) cam;
+}
+
+void fn_1_50B0(OMOBJ *obj)
+{
+    M524Flow *flow = (M524Flow *)obj->data;
+
+    if (omSysExitReq != 0) {
+        if (lbl_1_bss_7C != -1) {
+            HuAudFadeOut(0x3E8);
+            lbl_1_bss_7C = -1;
+        }
+        obj->objFunc = (OMOBJFUNC)fn_1_5160;
+        WipeCreate(2, 6, 0x3C);
+    } else {
+        flow->funcTbl[flow->index](obj, flow->funcTbl);
+    }
+}
+
+OMOBJ *fn_1_5198(M524FlowFunc *funcTbl)
+{
+    OMOBJ *obj;
+    M524Flow *flow;
+    s32 i;
+    s32 j;
+
+    i = 0;
+    while (funcTbl[i] != NULL) {
+        i++;
+    }
+    obj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_50B0);
+    flow = HuMemDirectMallocNum(HEAP_HEAP, 0x68, 0x10000000);
+    obj->data = flow;
+    flow->funcNum = i;
+    flow->funcTbl = funcTbl;
+    flow->index = 0;
+    flow->gameMesId = -1;
+    for (j = 0; j < 0x10; j++) {
+        flow->work[j] = 0;
+    }
+    return obj;
+}
+
+void fn_1_4898(OMOBJ *obj)
+{
+    M524CamMove *move = (M524CamMove *)obj->data;
+    M524Camera *start = (M524Camera *)(move + 4);
+    M524Camera *end = (M524Camera *)(move + 0x4C);
+    M524Camera *cam = move->cam;
+    f32 ratio;
+
+    if ((move->moveF & 2) == 0) {
+        return;
+    }
+    move->time += 1.0f;
+    ratio = move->time / move->totalTime;
+    if (cam->mode == 0) {
+        cam->pos.x = start->pos.x + (ratio * (end->pos.x - start->pos.x));
+        cam->pos.y = start->pos.y + (ratio * (end->pos.y - start->pos.y));
+        cam->pos.z = start->pos.z + (ratio * (end->pos.z - start->pos.z));
+    } else {
+        cam->dist = start->dist + (ratio * (end->dist - start->dist));
+        cam->angX = start->angX + (ratio * (end->angX - start->angX));
+        cam->angY = start->angY + (ratio * (end->angY - start->angY));
+    }
+    cam->target.x = start->target.x + (ratio * (end->target.x - start->target.x));
+    cam->target.y = start->target.y + (ratio * (end->target.y - start->target.y));
+    cam->target.z = start->target.z + (ratio * (end->target.z - start->target.z));
+    if (move->time >= move->totalTime) {
+        *cam = *end;
+        move->moveF = move->moveF & ~2;
+    }
+    fn_1_3694(cam);
+}
+
+OMOBJ *MgCameraMoveEntry(M524Camera *start, M524Camera *end, f32 time)
+{
+    OMOBJ *obj;
+    M524CamMove *move;
+
+    if (start->camNo != end->camNo) {
+        OSReport(lbl_1_data_80);
+        return;
+    }
+    obj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_4898);
+    move = HuMemDirectMallocNum(HEAP_HEAP, 0xA0, 0x10000000);
+    obj->data = move;
+    move->totalTime = time;
+    move->time = 0.0f;
+    move->cam = start;
+    move->start = *start;
+    move->end = *end;
+    move->moveF = 3;
+    if (start->mode == 1) {
+        fn_1_3DD0(&move->start);
+        fn_1_3DD0(&move->end);
+    }
+    return obj;
 }
