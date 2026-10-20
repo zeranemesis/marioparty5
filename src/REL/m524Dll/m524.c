@@ -18,7 +18,10 @@ typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
 
-extern s16 omSysExitReq;
+/* Declared in game/object.h, but a local redeclaration must keep SHARED_SYM or
+ * the port compiles a plain (non-dllimport) reference to it and the REL link
+ * fails with LNK2001. */
+SHARED_SYM extern s16 omSysExitReq;
 
 typedef struct M524Player_s {
     s16 index; //0x00
@@ -1075,7 +1078,7 @@ void fn_1_29F4(OMOBJ *obj) {
         newObj2->work[0] = 0xF;
         newObj2->work[1] = 5;
         *cam2 = *cam;
-        newObj2->work[2] = (u32)cam;
+        newObj2->work[2] = (u32) (uintptr_t) cam;
         omVibrate(player->index, 15, 12, 0);
         HuAudFXPlayPan(0x2C1, lbl_1_data_228[player->index]);
         HuAudFXPlay(lbl_1_data_250[player->index]);
@@ -1442,8 +1445,8 @@ void fn_1_54CC(OMOBJ *obj, void *flow)
 
 void fn_1_5D8C(Vec *pos, Vec *target, Vec *cur, Vec *out)
 {
-    Vec sp10;
     Vec sp1C;
+    Vec sp10;
 
     PSVECSubtract(cur, target, &sp1C);
     PSVECSubtract(target, pos, &sp10);
@@ -1680,7 +1683,7 @@ void fn_1_3CF4(M524Camera *cam)
     OMOBJ *obj;
 
     obj = omAddObjEx(lbl_1_bss_80, 0x4000, 0, 0, -1, fn_1_3740);
-    obj->work[0] = (s32) cam;
+    obj->work[0] = (s32) (uintptr_t) cam;
     if (cam->mode == 0) {
         obj->work[1] = 0;
     } else {
@@ -1715,7 +1718,7 @@ void fn_1_4D60(M524Camera *cam, s32 count, s32 range)
     *(M524Camera *)obj->data = *cam;
     obj->work[0] = count;
     obj->work[1] = range;
-    obj->work[2] = (s32) cam;
+    obj->work[2] = (s32) (uintptr_t) cam;
 }
 
 void fn_1_50B0(OMOBJ *obj)
@@ -1756,6 +1759,65 @@ OMOBJ *fn_1_5198(M524FlowFunc *funcTbl)
         flow->work[j] = 0;
     }
     return obj;
+}
+
+/*
+ * Derive the spherical camera parameters (dist, angX, angY, angZ) from the
+ * cartesian pos/target pair. The distance goes through sqrtf's inlined
+ * Newton refinement; the two angles come from atan2 in degrees, and the
+ * second one is taken after rotating the offset into the camera's own frame.
+ */
+void fn_1_4494(M524Camera *cam)
+{
+    f32 mtx[4][4];
+    f32 dx = cam->pos.x - cam->target.x;
+    f32 dy = cam->pos.y - cam->target.y;
+    f32 dz = cam->pos.z - cam->target.z;
+    f32 len2 = (dz * dz) + ((dx * dx) + (dy * dy));
+    f32 dist;
+    f32 angY;
+    f32 a;
+    f32 c;
+    f32 s;
+    f32 ry;
+    f32 rx;
+    f32 rz;
+    int i;
+    int j;
+
+    if (len2 > 0.0f) {
+        double r = __frsqrte(len2);
+
+        r = 0.5 * r * (3.0 - (len2 * r * r));
+        r = 0.5 * r * (3.0 - (len2 * r * r));
+        r = 0.5 * r * (3.0 - (len2 * r * r));
+        r = 0.5 * r * (3.0 - (len2 * r * r));
+        dist = (f32) (len2 * r);
+    } else {
+        dist = len2;
+    }
+    cam->dist = dist;
+    angY = (f32) (180.0 * (atan2(dz, dx) / M_PI));
+    cam->angY = -(angY - 90.0f);
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            mtx[i][j] = 0.0f;
+        }
+    }
+    a = (f32) ((M_PI * -angY) / 180.0);
+    c = (f32) cos(a);
+    s = (f32) sin(a);
+    mtx[0][0] = c;
+    mtx[0][2] = s;
+    mtx[1][1] = 1.0f;
+    mtx[2][0] = -s;
+    mtx[2][2] = c;
+    mtx[3][3] = 1.0f;
+    ry = (dz * mtx[2][0]) + ((dx * mtx[0][0]) + (dy * mtx[0][1]));
+    rx = (dz * mtx[2][2]) + ((dx * mtx[1][2]) + (dy * mtx[1][1]));
+    rz = (dz * mtx[2][3]) + ((dx * mtx[1][3]) + (dy * mtx[1][2]));
+    cam->angX = -(f32) (180.0 * (atan2(rx, ry) / M_PI));
+    cam->angZ = 0.0f;
 }
 
 void fn_1_4898(OMOBJ *obj)

@@ -13,8 +13,11 @@ typedef struct espanim_s {
     /* 0x08 */ ANIMDATA *anim;
 } ESPANIM;
 
-ESPRITE esprite[HUSPR_MAX];
-ESPANIM espanim[HUSPR_MAX];
+/* The sprite pool is DOL state that minigames read directly (m505Dll, m566Dll,
+ * m525Dll each re-declare it with their own view of the layout), so it has to
+ * cross the dol/REL boundary on the port like any other shared game data. */
+SHARED_SYM ESPRITE esprite[HUSPR_MAX];
+SHARED_SYM ESPANIM espanim[HUSPR_MAX];
 
 static HUSPRGRPID gid;
 

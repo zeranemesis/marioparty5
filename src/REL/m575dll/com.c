@@ -7,6 +7,7 @@
 #include "REL/m575dll.h"
 #include "game/frand.h"
 #include "string.h"
+#include "humath.h"
 
 typedef s16 HU3DMODELID;
 typedef s16 HU3DMOTID;
@@ -40,12 +41,15 @@ typedef struct comPlayer_s {
     u8 pad7C[0x88 - 0x7C];
     Vec unk88;
     f32 unk94;
-    s32 unk98;
-    u8 pad9C[0xCC - 0x9C];
+    u32 unk98;
+    u8 pad9C[4];
+    s32 unkA0;
+    u8 padA4[0xCC - 0xA4];
 } COM_PLAYER;
 
 typedef struct comSystem_s {
-    u8 pad00[8];
+    void *unk00;
+    u8 pad04[4];
     COM_PLAYER players[2];
 } COM_SYSTEM;
 
@@ -53,6 +57,8 @@ typedef struct comSystem_s {
 typedef struct comAi_s {
     u8 pad0[0x20];
     f32 unk20;
+    u8 pad24[0x2C - 0x24];
+    void *unk2C;
 } COM_AI;
 
 // The board state block the game system carries at +0xe90.
@@ -73,7 +79,9 @@ static const f32 lbl_1_rodata_27C[1] = { 0.0f };
 static const f32 lbl_1_rodata_284[1] = { 1.0f };
 static const f32 lbl_1_rodata_2B4[1] = { 0.2f };
 static const Vec lbl_1_rodata_2E8 = { 0.0f, 0.0f, 0.0f };
+static const Vec lbl_1_rodata_2F4 = { 0.0f, 1.0f, 0.0f };
 static const f32 lbl_1_rodata_300[1] = { 10.0f };
+static const f32 lbl_1_rodata_288[1] = { 0.5f };
 static const f32 lbl_1_rodata_310[1] = { 100.0f };
 static const f32 lbl_1_rodata_314[1] = { 60.0f };
 static const f32 lbl_1_rodata_318[1] = { 30.0f };
@@ -105,11 +113,12 @@ typedef struct com_s {
 void fn_1_6630(COM *self, COM_PLAYER *work);
 void fn_1_675C(COM *self);
 void fn_1_678C(COM *self);
-void fn_1_7A80(COM *self);
-void fn_1_6BE4(COM *self);
-void fn_1_734C(COM *self);
+s32 fn_1_7A80(COM *self);
+s32 fn_1_6BE4(COM *self);
+s32 fn_1_734C(COM *self);
 s32 fn_1_8180(COM *self);
 s32 fn_1_79A0(COM *self);
+f64 fn_1_30CC(f32 arg0, f32 arg1, f32 arg2);
 
 // Initialises the control block: links it to the player work record, copies the
 // player's difficulty over, maps the pad number onto a skill tier and seeds the
@@ -152,6 +161,81 @@ void fn_1_6630(COM *self, COM_PLAYER *work)
 void fn_1_675C(COM *self)
 {
     memset(self, 0, sizeof(COM));
+}
+
+// Per-frame COM state machine. Clears the four flag words, then - once the
+// control block has been linked to a player - picks a stance ("mode") out of
+// 0..3 and lets that stance's update run. The stance timer is refreshed every
+// 30..59 frames, or reset to 0 whenever a stance reports that it has finished
+// something.
+void fn_1_678C(COM *self)
+{
+    COM_PLAYER *work = self->work;
+    COM_SYSTEM *sys = work->system;
+    COM_AI *ai = COM_AI_OF(sys);
+    COM_PLAYER *other = (work == &sys->players[0]) ? &sys->players[1] : &sys->players[0];
+
+    self->unk3C = 0;
+    self->unk40 = 0;
+    self->unk44 = 0;
+    self->unk48 = 0;
+
+    if (self->unkC != 0) {
+        if (self->timer <= 0) {
+            self->mode = 0;
+            self->timer = (s16)(frand() % 30 + 30);
+
+            if (work->unk94 < lbl_1_rodata_258[0] && other->unk94 > lbl_1_rodata_258[0] && other->unkA0 > 120) {
+                self->mode = 3;
+                self->timer = (s16)(frand() % 30 + 30);
+            }
+            else if ((self->unk10 == 0 && ai->unk20 > lbl_1_rodata_25C[0])
+                  || (self->unk10 == 1 && ai->unk20 > lbl_1_rodata_260[0] && frand() % 10000 < 9500)
+                  || (self->unk10 == 2 && ai->unk20 > lbl_1_rodata_264[0] && frand() % 10000 < 8500)
+                  || (self->unk10 == 3 && ai->unk20 > lbl_1_rodata_268[0] && frand() % 10000 < 7500)) {
+                self->mode = 1;
+                self->timer = (s16)(frand() % 30 + 30);
+            }
+            else if (self->unk10 == 0
+                  || (self->unk10 == 1 && frand() % 10000 < 9000)
+                  || (self->unk10 == 2 && frand() % 10000 < 8000)
+                  || (self->unk10 == 3 && frand() % 10000 < 3000)) {
+                if (work->unk98 != 0 && work->unk94 > lbl_1_rodata_258[0]) {
+                    self->mode = 2;
+                    self->timer = (s16)(frand() % 30 + 30);
+                }
+                else if (other->unk94 > lbl_1_rodata_258[0] && other->unkA0 > 120) {
+                    self->mode = 3;
+                    self->timer = (s16)(frand() % 30 + 30);
+                }
+            }
+        }
+        switch (self->mode) {
+        case 0:
+            if (fn_1_7A80(self) != 0) {
+                self->timer = 0;
+            }
+            break;
+        case 1:
+            if (fn_1_6BE4(self) != 0) {
+                self->timer = 0;
+            }
+            break;
+        case 2:
+            if (fn_1_734C(self) != 0) {
+                self->timer = 0;
+            }
+            break;
+        case 3:
+            if (fn_1_79A0(self) != 0) {
+                self->timer = 0;
+            }
+            break;
+        }
+        if (self->timer != 0) {
+            self->timer--;
+        }
+    }
 }
 
 // Per-frame aim update. Works out how far the COM has drifted from the player's
@@ -236,6 +320,113 @@ s32 fn_1_8180(COM *self)
     return 0;
 }
 
+// Stance 0: swing the COM's aim point around the player. The heading is taken
+// from the saved aim point, blended with the heading of the player's own board
+// position, and rebuilt as a unit vector scaled by the aim point's length.
+// Both headings run through the same ((-180,180]) wrap; every arm re-evaluates
+// HuAtan rather than keeping the raw angle in a temporary.
+s32 fn_1_7A80(COM *self)
+{
+    COM_PLAYER *work = self->work;
+    COM_SYSTEM *sys = work->system;
+    void *a = sys->unk00;
+    COM_AI *ai = COM_AI_OF(sys);
+    void *b = &ai->unk2C;
+    Vec up;
+    Vec *upP;
+    Vec up2;
+    Vec playerPos;
+    Vec v;
+    f64 ang;
+    f64 tmp;
+    f64 mix;
+    f32 dist;
+    f32 aimA;
+    f32 aimB;
+
+    up = lbl_1_rodata_2F4;
+    upP = &up;
+    up2 = *upP;
+    playerPos = work->unk88;
+
+    PSVECSubtract(&self->unk20, &playerPos, &v);
+    v.y = 0.0f;
+    dist = PSVECMag(&v);
+    if (dist < lbl_1_rodata_300[0]) {
+        f32 r = (f32)(frand() % 360);
+        f32 scale;
+        f32 hi;
+        f32 lo;
+
+        v.x = (f32)HuSin(r);
+        v.y = 0.0f;
+        v.z = (f32)HuCos(r);
+        scale = (f32)(frand() % 10000) / 10000.0f;
+        if (scale > 1.0f) {
+            hi = 1.0f;
+        }
+        else {
+            if (scale < 0.5f) {
+                lo = 0.5f;
+            }
+            else {
+                lo = scale;
+            }
+            hi = lo;
+        }
+        scale = hi;
+        PSVECScale(&v, &v, 320.0f * scale);
+        self->unk20 = v;
+    }
+
+    v = self->unk20;
+    if (v.x != lbl_1_rodata_27C[0] || v.z != lbl_1_rodata_27C[0]) {
+        PSVECNormalize(&v, &v);
+    }
+    if (HuAtan(v.x, v.z) > 180.0) {
+        ang = HuAtan(v.x, v.z) - 360.0;
+    }
+    else {
+        if (HuAtan(v.x, v.z) > -180.0) {
+            tmp = HuAtan(v.x, v.z);
+        }
+        else {
+            tmp = 360.0 + HuAtan(v.x, v.z);
+        }
+        ang = tmp;
+    }
+    aimA = (f32)ang;
+
+    v = work->unk88;
+    v.y = 0.0f;
+    if (v.x != lbl_1_rodata_27C[0] || v.z != lbl_1_rodata_27C[0]) {
+        PSVECNormalize(&v, &v);
+    }
+    if (HuAtan(v.x, v.z) > 180.0) {
+        ang = HuAtan(v.x, v.z) - 360.0;
+    }
+    else {
+        if (HuAtan(v.x, v.z) > -180.0) {
+            tmp = HuAtan(v.x, v.z);
+        }
+        else {
+            tmp = 360.0 + HuAtan(v.x, v.z);
+        }
+        ang = tmp;
+    }
+    aimB = (f32)ang;
+
+    mix = fn_1_30CC(aimB, aimA, lbl_1_rodata_288[0]);
+    v.x = (f32)HuSin(mix);
+    v.y = 0.0f;
+    v.z = (f32)HuCos(mix);
+    dist = PSVECMag(&self->unk20);
+    PSVECScale(&v, &v, dist);
+    self->unk14 = v;
+    fn_1_8180(self);
+    return 0;
+}
+
 // Runs when the COM holds ball kind 4: if it has gone too far past the player
 // and the player is not in the recovery window, snap the aim point back to the
 // origin and re-run the aim update. Otherwise, while the board is idle, latch
@@ -246,22 +437,17 @@ s32 fn_1_79A0(COM *self)
     COM_SYSTEM *sys = work->system;
     COM_AI *ai = COM_AI_OF(sys);
     COM_BOARD *board = COM_BOARD_OF(sys);
-    Vec *src;
-    Vec *dst;
-    Vec tmp;
-    s32 keep;
-    s32 keep2;
 
-    keep = 0;
-    keep2 = 0;
     if (work->unk94 > lbl_1_rodata_258[0] && work->unk8->unk28 != 1) {
-        src = (Vec *)&lbl_1_rodata_2E8;
-        dst = (Vec *)((u8 *)self + 0x14);
-        tmp = *src;
-        *dst = tmp;
+        Vec tmp;
+        Vec *p;
+        tmp = lbl_1_rodata_2E8;
+        p = &tmp;
+        self->unk14 = *p;
         fn_1_8180(self);
         return 1;
-    }    if (board->mode == 0) {
+    }
+    if (board->mode == 0) {
         self->unk3C |= 0x100;
         self->unk48 |= 0x100;
     }

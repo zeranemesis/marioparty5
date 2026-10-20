@@ -1,5 +1,5 @@
 import json, re, subprocess, sys
-CWD = r"C:\Users\BEACALCADM\marioparty5-jean"
+CWD = r\"G:\\decomp\\MP5\"
 UNIT = "w04sDll/REL/w04sDll/world04"
 def run_diff(fn):
     out = f"tools/diff_{fn}.json"

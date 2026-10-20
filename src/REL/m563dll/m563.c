@@ -1,4 +1,6 @@
-#include "REL/m563dll/math.c"
+/* math.c is included by util.c, which owns its functions (and the .bss they
+ * read). m563.c calls none of them, so including it here too gave the port two
+ * copies of every symbol; m563dll.h declares what is needed. */
 
 #include "game/data.h"
 #include "game/frand.h"
@@ -695,7 +697,7 @@ void fn_1_16FC(OMOBJ *obj)
         lbl_1_bss_60[0]++;
         if (lbl_1_bss_60[0] >= lbl_1_bss_6C) {
             lbl_1_bss_60[0] = 0;
-            fn_1_3AC4((s32)(void *)lbl_1_bss_60);
+            fn_1_3AC4((s32) (uintptr_t) lbl_1_bss_60);
         }
     }
 }
@@ -1123,7 +1125,7 @@ void fn_1_2F34(s16 mode, s16 frameNo)
     }
     if (MgSeqFrameNoGet() > 0x12C) {
         for (i = 0; i < 4; i++) {
-            prev = (s32)lbl_1_bss_124[i]->data;
+            prev = (s32) (uintptr_t) lbl_1_bss_124[i]->data;
             Hu3DModelAttrReset(lbl_1_bss_14[i]->actor->mdlId, HU3D_ATTR_DISPOFF);
         }
         MgSeqModeNext();
@@ -2108,12 +2110,12 @@ void fn_1_66F8(u16 arg0, s16 arg1)
     node->unk0 = arg0;
     node->unk2 = arg1;
     list = &lbl_1_bss_3B4[0];
-    prev = (M563ListNode2 *)list[2];
-    list[2] = (s32)node;
-    if ((M563ListNode2 *)0 != prev) {
-        prev->unk4 = (s32)node;
+    prev = (M563ListNode2 *) (uintptr_t) list[2];
+    list[2] = (s32) (uintptr_t) node;
+    if ((M563ListNode2 *) 0 != prev) {
+        prev->unk4 = (s32) (uintptr_t) node;
     }
-    node->unk4 = (s32)list;
+    node->unk4 = (s32) (uintptr_t) list;
     node->next = prev;
 }
 
@@ -2124,15 +2126,15 @@ s16 fn_1_6780(s16 arg0)
     M563ListNode2 *next;
     s16 value;
 
-    node = (M563ListNode2 *)lbl_1_bss_3B4[2];
-    while ((M563ListNode2 *)0 != node) {
+    node = (M563ListNode2 *) (uintptr_t) lbl_1_bss_3B4[2];
+    while ((M563ListNode2 *) 0 != node) {
         if (arg0 == node->unk0) {
             value = node->unk2;
-            prev = (M563ListNode2 *)node->unk4;
+            prev = (M563ListNode2 *) (uintptr_t) node->unk4;
             next = node->next;
             prev->next = next;
-            if ((M563ListNode2 *)0 != next) {
-                next->unk4 = (s32)prev;
+            if ((M563ListNode2 *) 0 != next) {
+                next->unk4 = (s32) (uintptr_t) prev;
             }
             HuMemDirectFree(node);
             return value;
@@ -2174,13 +2176,11 @@ s16 fn_1_687C(u32 arg0)
 void fn_1_6990(f32 arg3, Vec *arg0, Vec *arg1, Vec *arg2)
 {
     f32 t;
-    f64 dbl;
 
     if (1.0f < arg3) {
         arg3 = 1.0f;
     }
-    dbl = sin((M_PI * (90.0f * arg3)) / 180.0);
-    t = sin((M_PI * (90.0f * arg3)) / 180.0) * dbl;
+    t = sin((M_PI * (90.0f * arg3)) / 180.0) * sin((M_PI * (90.0f * arg3)) / 180.0);
     arg2->x = arg0->x + (t * (arg1->x - arg0->x));
     arg2->y = arg0->y + (t * (arg1->y - arg0->y));
     arg2->z = arg0->z + (t * (arg1->z - arg0->z));

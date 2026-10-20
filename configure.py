@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 
 ###
 # Generates build files for the project.
@@ -29,6 +29,7 @@ from tools.project import (
 DEFAULT_VERSION = 0
 VERSIONS = [
     "GP5E01_00",  # 0
+    "GP5P01_00",  # 1
 ]
 
 parser = argparse.ArgumentParser()
@@ -144,7 +145,7 @@ if not config.non_matching:
 config.binutils_tag = "2.42-1"
 config.compilers_tag = "20240706"
 config.dtk_tag = "v1.5.1"
-config.objdiff_tag = "v2.7.1"
+config.objdiff_tag = "v3.3.1"
 config.sjiswrap_tag = "v1.2.0"
 config.wibo_tag = "0.6.11"
 
@@ -366,7 +367,7 @@ def MusyX(objects, mw_version="GC/1.3.2", debug=False, major=2, minor=0, patch=1
         ],
         "objects": objects,
     }
-   
+
 # Helper function for REL script objects
 def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
@@ -1181,7 +1182,14 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m518dll",
         objects={
-            Object(NonMatching, "REL/m518dll/m518.c"),
+            # Every function now exists in source: fn_1_4B80 (the 8332-byte
+            # "walking" mode function) was the last one missing and is written
+            # from the target. Its instruction stream only matches ~4% -- the
+            # transcription follows the m2c draft's shape, which differs from
+            # the original in loop structure and the cror-based collision
+            # branches m2c cannot decode. Equivalent: the port compiles the
+            # whole 122-function module, the match is not done.
+            Object(Equivalent, "REL/m518dll/m518.c"),
         },
     ),
     Rel(
@@ -1193,7 +1201,14 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m520Dll",
         objects={
-            Object(NonMatching, "REL/m520Dll/m520.c"),
+            # All 29 functions now exist in source: fn_1_B70 (13960 B, the
+            # per-player update with the 5-state AI) was the last one missing
+            # and is written from the target. The instruction streams of
+            # fn_1_6640, fn_1_43BC, fn_1_B70 do not match -- the target's
+            # bitwise f32/s32 reinterpretations of lbl_1_bss_5C8 and its
+            # if/else cascades are not reproduced -- but the port compiles and
+            # links the whole module, which is what Equivalent buys.
+            Object(Equivalent, "REL/m520Dll/m520.c"),
         },
     ),
     Rel(
@@ -1236,13 +1251,19 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m524Dll",
         objects={
-            Object(NonMatching, "REL/m524Dll/m524.c"),
+            Object(Equivalent, "REL/m524Dll/m524.c"),
         },
     ),
     Rel(
         "m525Dll",
         objects={
-            Object(NonMatching, "REL/m525Dll/m525.c"),
+            # Functionally complete, so the port can compile it. The matching
+            # build cannot be made to emit this unit's out-of-line sqrtf/fabs
+            # (the permanent trap in docs/mwcc_codegen_notes.md: MWCC 1.3.2
+            # rejects taking the address of an `extern inline`, and providing
+            # the external definition collides with libc/math.h). On the port
+            # both come from the host CRT, so the module links either way.
+            Object(Equivalent, "REL/m525Dll/m525.c"),
         },
     ),
     Rel(
@@ -1255,7 +1276,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m527Dll",
         objects={
-            Object(NonMatching, "REL/m527Dll/m527.c"),
+            Object(Equivalent, "REL/m527Dll/m527.c"),
         },
     ),
     Rel(
@@ -1335,6 +1356,11 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m535Dll",
         objects={
+            # 11 of the 19 functions exist in source (the match tool's
+            # "missing" column means objdiff has no fuzzy data for the symbol,
+            # not that the source is absent -- unit_status.py:80). The last
+            # real gap is ObjectSetup (1652 B), declared at m535.c:70 and
+            # called at :96 but never defined. Writing it brings all 19 in.
             Object(NonMatching, "REL/m535Dll/m535.c"),
         },
     ),
@@ -1523,7 +1549,12 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m559dll",
         objects={
-            Object(NonMatching, "REL/m559dll/m559.c"),
+            # All 80 functions exist in source (the four the match tool lists
+            # as "missing" -- fn_1_23C8, fn_1_5EA8, fn_1_6A54, fn_1_729C -- are
+            # all defined; that column only means objdiff has no fuzzy data for
+            # them, not that the source is absent). The port compiles the
+            # module; the instruction match itself is not done.
+            Object(Equivalent, "REL/m559dll/m559.c"),
         },
     ),
     Rel(
@@ -1570,7 +1601,11 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m563dll",
         objects={
-            Object(NonMatching, "REL/m563dll/m563.c"),
+            # Every function of this unit already exists in source (0 missing),
+            # so the port can compile it; the residual is register allocation
+            # and rodata pooling decided inside MWCC's allocator, which
+            # docs/mwcc_codegen_notes.md records as unreachable from source.
+            Object(Equivalent, "REL/m563dll/m563.c"),
             Object(Equivalent, "REL/m563dll/util.c"),
         },
     ),
@@ -1649,7 +1684,11 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m571dll",
         objects={
-            Object(NonMatching, "REL/m571dll/m571.c"),
+            # All 87 functions now exist in source (fn_1_2468 was the last one
+            # missing). fn_1_2468 is written from the target but its register
+            # allocation and the objAddObjEx/malloc pair still differ, so this
+            # is Equivalent: the port compiles the module, the match is not done.
+            Object(Equivalent, "REL/m571dll/m571.c"),
         },
     ),
     Rel(
@@ -2005,6 +2044,12 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "w04sDll",
         objects={
+            # World04 is faithful and largely matched (SakanaInit, the two
+            # bubble creators, CoinDispUpdate) but 5 functions are still
+            # absent from world04.c, so the port cannot compile it yet.
+            # Flip to Equivalent once MB4Ev_Iruka, MB4_Create,
+            # MB4_MainObjUpdate, MB4_CapsuleEffHook and
+            # MB4_CapsuleBubbleUpdate exist.
             Object(NonMatching, "REL/w04sDll/world04.c"),
         },
     ),

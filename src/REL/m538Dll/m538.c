@@ -387,8 +387,8 @@ void fn_1_4F8(s16 mode, s16 frameNo) {
         temp_r31->activeF = 1;
         temp_r31->state2 += 1;
         temp_r31->state = 0;
-        if ((u32) temp_r31->dollyHook != 0U) {
-            temp_r31->dollyHook = 0U;
+        if (temp_r31->dollyHook != NULL) {
+            temp_r31->dollyHook = NULL;
         }
         temp_r31->anim[0].state += 1;
         temp_r31->anim[1].state += 1;
@@ -608,7 +608,7 @@ loop_29:
         var_r29_3 = 0;
 loop_35:
         if (var_r29_3 < 4) {
-            if ((u32) temp_r31->player[var_r29_3]->func == 0U) {
+            if (temp_r31->player[var_r29_3]->func == NULL) {
                 var_r28 += 1;
             }
             var_r29_3 += 1;

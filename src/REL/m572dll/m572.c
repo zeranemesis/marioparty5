@@ -1856,7 +1856,7 @@ s32 fn_1_42DC(M572ObjData *arg0, s32 arg1) {
     M572ObjData *temp_r31;
 
     sp8 = arg1;
-    temp_r29 = (M572ObjData *)arg0->unk5C.i;
+    temp_r29 = (M572ObjData *) (uintptr_t) arg0->unk5C.i;
     var_r30 = 0;
 loop_21:
     if (var_r30 >= 0xE1) {
@@ -2005,13 +2005,13 @@ void fn_1_4D2C(u16 arg0, s16 arg1) {
     temp_r3 = HuMemDirectMallocNum(HEAP_HEAP, 0xC, 0x10000000U);
     temp_r3->unk0.i = sp8;
     temp_r3->unk0.h1 = spA;
-    temp_r29 = (M572ObjData *)lbl_1_bss_6D8.unk8;
-    lbl_1_bss_6D8.unk8 = (M572ListNode *)temp_r3;
+    temp_r29 = (M572ObjData *) (uintptr_t) lbl_1_bss_6D8.unk8;
+    lbl_1_bss_6D8.unk8 = (M572ListNode *) temp_r3;
     if (temp_r29 != NULL) {
-        temp_r29->unk4.i = (s32)temp_r3;
+        temp_r29->unk4.i = (s32) (uintptr_t) temp_r3;
     }
-    temp_r3->unk4.i = (s32)&lbl_1_bss_6D8;
-    temp_r3->unk8.i = (s32)temp_r29;
+    temp_r3->unk4.i = (s32) (uintptr_t) &lbl_1_bss_6D8;
+    temp_r3->unk8.i = (s32) (uintptr_t) temp_r29;
 }
 
 s16 fn_1_4DB4(s16 arg0) {
@@ -2029,16 +2029,16 @@ loop_6:
     }
     if (sp8 == (s32) var_r31->unk0.i) {
         temp_r28 = var_r31->unk0.h1;
-        temp_r29 = (M572ObjData *)var_r31->unk4.i;
-        temp_r30 = (M572ObjData *)var_r31->unk8.i;
-        temp_r29->unk8.i = (s32)temp_r30;
+        temp_r29 = (M572ObjData *) (uintptr_t) var_r31->unk4.i;
+        temp_r30 = (M572ObjData *) (uintptr_t) var_r31->unk8.i;
+        temp_r29->unk8.i = (s32) (uintptr_t) temp_r30;
         if (temp_r30 != NULL) {
-            temp_r30->unk4.i = (s32)temp_r29;
+            temp_r30->unk4.i = (s32) (uintptr_t) temp_r29;
         }
         HuMemDirectFree(var_r31);
         return temp_r28;
     }
-    var_r31 = (M572ObjData *)var_r31->unk8.i;
+    var_r31 = (M572ObjData *) (uintptr_t) var_r31->unk8.i;
     goto loop_6;
 }
 void fn_1_4E58(void)
@@ -2286,7 +2286,7 @@ void fn_1_5CB0(M572ObjData *arg0, s32 arg1, u32 arg2, f32 farg0) {
 
     sp8 = farg0;
     spC = arg2;
-    temp_r31 = (M572ObjData *)arg0->unk5C.i;
+    temp_r31 = (M572ObjData *) (uintptr_t) arg0->unk5C.i;
     if (arg1 == 8) {
         Hu3DMotionSpeedSet(temp_r31->unk0.i, 2.0f);
     } else {
@@ -2320,7 +2320,7 @@ void fn_1_5DB8(M572ObjData *arg0, s32 arg1, u32 arg2, f32 farg0) {
 
     sp8 = farg0;
     spC = arg2;
-    temp_r31 = (M572ObjData *)arg0->unk5C.i;
+    temp_r31 = (M572ObjData *) (uintptr_t) arg0->unk5C.i;
     temp_r31->unk2C.i = arg1;
     Hu3DMotionShiftSet(temp_r31->unk0.i, lbl_1_bss_4A0[arg1], 0.0f, sp8, arg2);
 }
@@ -2328,7 +2328,7 @@ void fn_1_5DB8(M572ObjData *arg0, s32 arg1, u32 arg2, f32 farg0) {
 void fn_1_5E34(M572ObjData *arg0, s32 arg1) {
     M572ObjData *temp_r31;
 
-    temp_r31 = (M572ObjData *)arg0->unk5C.i;
+    temp_r31 = (M572ObjData *) (uintptr_t) arg0->unk5C.i;
     temp_r31->unk2C.i = arg1;
     Hu3DMotionSet(temp_r31->unk0.i, lbl_1_bss_4A0[arg1]);
 }
@@ -2336,7 +2336,7 @@ void fn_1_5E34(M572ObjData *arg0, s32 arg1) {
 void fn_1_5E94(M572ObjData *arg0) {
     M572ObjData *temp_r31;
 
-    temp_r31 = (M572ObjData *)arg0->unk5C.i;
+    temp_r31 = (M572ObjData *) (uintptr_t) arg0->unk5C.i;
     if ((s32) (temp_r31->unk7C.i % 3) == 0) {
         Hu3DModelHookObjReset(temp_r31->unk0.i, "a-itemhook-l");
         Hu3DModelHookSet(temp_r31->unk0.i, "a-itemhook-r", temp_r31->unk54.h1);
@@ -2364,7 +2364,7 @@ void fn_1_5E94(M572ObjData *arg0) {
 void fn_1_601C(M572ObjData *arg0) {
     M572ObjData *temp_r31;
 
-    temp_r31 = (M572ObjData *)arg0->unk5C.i;
+    temp_r31 = (M572ObjData *) (uintptr_t) arg0->unk5C.i;
     if ((s32) (temp_r31->unk7C.i % 3) == 0) {
         temp_r31->unk20.f = 90.0f;
         Hu3DModelHookObjReset(temp_r31->unk54.i, "itemhook1");

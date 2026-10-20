@@ -37,6 +37,18 @@ float fabsf2(float x)
 }
 
 /*
+ * MWCC's helper name for the PowerPC reciprocal-sqrt-estimate instruction.
+ * Every call site uses it only to seed the 3-iteration Newton-Raphson
+ * refinement printed next to it, which converges to full precision whatever
+ * the seed, so an exact 1/sqrt(x) gives the same result. w02Dll, w02sDll,
+ * w04Dll, w07Dll and w07sDll carry the identical shim locally.
+ */
+double __frsqrte(double x)
+{
+    return 1.0 / sqrt(x);
+}
+
+/*
  * Aurora's ARAM emulation (extern/aurora/lib/dolphin/AR.cpp) starts handing
  * out offsets at ARAM_STACK_START (0x4000), the same value real hardware
  * reserves for the system before the first usable byte. MusyX and msmSysInit

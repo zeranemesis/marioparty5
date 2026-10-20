@@ -2,6 +2,10 @@
 #include "game/charman.h"
 #include "game/animdata.h"
 #include "game/esprite.h"
+/* Without this the port link fails: M2C_ERROR is a real (if no-op) call and
+ * has to be declared. Same trap m538Dll/m538.c documents at its line 14. It
+ * must come after the Dolphin types, which m2c_macros.h itself uses. */
+#include "m2c_macros.h"
 #include "game/hu3d.h"
 #include "game/mg/seqman.h"
 #include "game/board/player.h"
@@ -750,7 +754,7 @@ static void fn_1_1B1C(M559HOOK *hook, OMOBJ *obj) {
     }
     hook->unk4C = var_f27;
     if (hook->unk4C > 0.0f) {
-        M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
+                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
         if (hook->unk4C == 10.0f) {
             hook->unk50 = (f32) (hook->unk50 / hook->unk4C);
             hook->unk58 = (f32) (hook->unk58 / hook->unk4C);
@@ -771,7 +775,7 @@ static void fn_1_1B1C(M559HOOK *hook, OMOBJ *obj) {
             var_f28 += 360.0f;
         }
         hook->unk44 = var_f28;
-        M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
+                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
         if (hook->unk4C == 7.0f) {
             var_r30 = 5;
         } else {
@@ -1048,7 +1052,7 @@ loop_8:
                 spC = 0.0f;
                 PSVECSubtract((Point3d *) &sp14, (Point3d *) &sp8, &sp2C);
                 temp_f1_2 = PSVECMag(&sp2C);
-                M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
+                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
                 if (temp_f1_2 != 99.5f) {
                     PSVECSubtract((Vec *) &temp_r30->pos, (Vec *) &temp_r30->prevPos, &sp2C);
                     temp_f28 = PSVECMag(&sp2C);
@@ -2066,12 +2070,10 @@ static void fn_1_5820(void) {
     s32 var_r31;
 
     var_r31 = 0;
-loop_2:
-    if (var_r31 < 0x20) {
+    while (var_r31 < 0x20) {
         lbl_1_bss_9B0[var_r31].unk0 = 0U;
         lbl_1_bss_9B0[var_r31].unk4 = -1;
         var_r31 += 1;
-        goto loop_2;
     }
 }
 static s16 fn_1_5878(u32 dataNum) {
@@ -2158,7 +2160,7 @@ static s32 fn_1_5B74(HuVecF *pos, f32 range) {
     sp10 = lbl_1_bss_B90.y + (temp_f28 * (lbl_1_bss_B84.y - lbl_1_bss_B90.y));
     sp14 = lbl_1_bss_B90.z + (temp_f28 * (lbl_1_bss_B84.z - lbl_1_bss_B90.z));
     Hu3DCameraPosSetV(1, (Vec *) &sp18, sp8, (Vec *) &spC);
-    M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
+                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
     if (range == 1.0f) {
         return 1;
     }
@@ -2207,7 +2209,7 @@ loop_6:
         var_r31 += 1;
         goto loop_6;
     }
-    M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
+                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
     if (range == 1.0f) {
         return 1;
     }
@@ -2487,13 +2489,13 @@ void fn_1_6B54(HU3DMODEL *model, f32 (*mtx)[4]) {
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSetArray(GX_VA_POS, temp_r31->unk14, 0xCU);
+        GXSETARRAY(GX_VA_POS, temp_r31->unk14, (u32) (temp_r31->arg64 * 4), 0xC, TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-        GXSetArray(GX_VA_CLR0, temp_r31->unk20, 4U);
+        GXSETARRAY(GX_VA_CLR0, temp_r31->unk20, (u32) (temp_r31->arg64 * 4), 4, TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSetArray(GX_VA_TEX0, temp_r31->unk18, 8U);
+        GXSETARRAY(GX_VA_TEX0, temp_r31->unk18, (u32) (temp_r31->arg64 * 4), 8, TRUE);
         sp130[0] = mtx[0][0];
         sp130[3] = mtx[0][1];
         sp130[6] = mtx[0][2];
@@ -2782,18 +2784,18 @@ loop_18:
     var_r30_5 = 0;
 loop_21:
     if (var_r30_5 < partCount) {
-        *(u16 *)0xCC008000 = (u16) (var_r30_5 * 4);
-        *(u16 *)0xCC008000 = (u16) var_r30_5;
-        *(u16 *)0xCC008000 = (u16) (var_r30_5 * 4);
-        *(u16 *)0xCC008000 = (u16) ((var_r30_5 * 4) + 1);
-        *(u16 *)0xCC008000 = (u16) var_r30_5;
-        *(u16 *)0xCC008000 = (u16) ((var_r30_5 * 4) + 1);
-        *(u16 *)0xCC008000 = (u16) ((var_r30_5 * 4) + 2);
-        *(u16 *)0xCC008000 = (u16) var_r30_5;
-        *(u16 *)0xCC008000 = (u16) ((var_r30_5 * 4) + 2);
-        *(u16 *)0xCC008000 = (u16) ((var_r30_5 * 4) + 3);
-        *(u16 *)0xCC008000 = (u16) var_r30_5;
-        *(u16 *)0xCC008000 = (u16) ((var_r30_5 * 4) + 3);
+        GXPosition1x16((u16) (var_r30_5 * 4));
+        GXPosition1x16((u16) var_r30_5);
+        GXPosition1x16((u16) (var_r30_5 * 4));
+        GXPosition1x16((u16) ((var_r30_5 * 4) + 1));
+        GXPosition1x16((u16) var_r30_5);
+        GXPosition1x16((u16) ((var_r30_5 * 4) + 1));
+        GXPosition1x16((u16) ((var_r30_5 * 4) + 2));
+        GXPosition1x16((u16) var_r30_5);
+        GXPosition1x16((u16) ((var_r30_5 * 4) + 2));
+        GXPosition1x16((u16) ((var_r30_5 * 4) + 3));
+        GXPosition1x16((u16) var_r30_5);
+        GXPosition1x16((u16) ((var_r30_5 * 4) + 3));
         var_r30_5 += 1;
         goto loop_21;
     }
@@ -2957,8 +2959,8 @@ static s16 fn_1_7E88(s32 a, s32 b, s16 c) {
     M559VEC *sp8;
     s16 temp_r3;
 
-    sp8 = (M559VEC *) a;
-    spC = (f32 *) b;
+    sp8 = (M559VEC *) (uintptr_t) a;
+    spC = (f32 *) (uintptr_t) b;
     sp10 = c;
     temp_r3 = fn_1_7368(lbl_1_bss_0, sp8, spC, sp10, 0x40, 0x40, 40.0f);
     ((M559HOOKDATA *) Hu3DData[temp_r3].hookData)->unk0 = (M559PARTCALLBACK) fn_1_6678;

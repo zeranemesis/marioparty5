@@ -950,8 +950,8 @@ static void MB7Ev_MasuRedClose(void) {
 }
 
 static void MB7Ev_MasuRedSet(s32 masuId) {
-    if ((u8 *) mb7_Work[0xCD] != NULL) {
-        ((u8 *) mb7_Work[0xCD])[masuId] = 2;
+    if ((u8 *) (uintptr_t) mb7_Work[0xCD] != NULL) {
+        ((u8 *) (uintptr_t) mb7_Work[0xCD])[masuId] = 2;
     }
 }
 

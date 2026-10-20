@@ -29,19 +29,19 @@ static const f32 lbl_1_rodata_1B0[1] = { 90.0f };
 static const f32 lbl_1_rodata_1B4[1] = { 0.017453292f };
 static const f32 lbl_1_rodata_1B8[2] = { 25.0f, 0.0f };
 
-// NONMATCHING: register allocation - the original keeps the main pointer in r27
-// with a copy in r28 and `&copy->tenConf` in r29, then reuses the model id's
-// r30 slot for the second model. With that shape here the allocator swaps r30
-// and r31 between `self` and `modelId` instead.
+// NONMATCHING: 97.68% fuzzy. All instructions match except r30/r31 are swapped
+// between `self` and `modelId` throughout. With mainCopy in r28 and tenConf in
+// r29, MWCC assigns self→r30 and modelId→r31, but the target has self→r31 and
+// modelId→r30. No declaration order or statement reordering found that flips
+// this allocation while keeping mainCopy→r28 and tenConf→r29.
 void fn_1_4BCC(M575Ten *self, M575Main *main)
 {
-    M575TenConf *conf = &main->tenConf;
+    M575Main *mainCopy = main;
+    M575TenConf *tenConf = &mainCopy->tenConf;
     HU3DMODELID modelId;
-    HU3DMODELID modelId2;
 
     memset(self, 0, sizeof(M575Ten));
-    self->main = main;
-    if (main->unk4 == 0) {
+    if (mainCopy->unk4 == 0) {
         modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x820007, HU_MEMNUM_OVL, HEAP_MODEL));
         self->modelId = modelId;
         self->motionId = Hu3DJointMotion(modelId, HuDataSelHeapReadNum(0x820016, HU_MEMNUM_OVL, HEAP_MODEL));
@@ -51,9 +51,10 @@ void fn_1_4BCC(M575Ten *self, M575Main *main)
         self->modelId = modelId;
         self->motionId = Hu3DJointMotion(modelId, HuDataSelHeapReadNum(0x820015, HU_MEMNUM_OVL, HEAP_MODEL));
     }
+    self->main = main;
     Hu3DModelPosSet(modelId, lbl_1_rodata_160[0], lbl_1_rodata_160[0], lbl_1_rodata_160[0]);
     Hu3DModelRotSet(modelId, lbl_1_rodata_160[0], lbl_1_rodata_160[0], lbl_1_rodata_160[0]);
-    Hu3DModelCameraSet(modelId, conf->camBit);
+    Hu3DModelCameraSet(modelId, tenConf->camBit);
     Hu3DModelLayerSet(modelId, 0);
     Hu3DModelAttrReset(modelId, 1);
     Hu3DModelShadowMapSet(modelId);
@@ -61,15 +62,15 @@ void fn_1_4BCC(M575Ten *self, M575Main *main)
     self->mtx = (MtxPtr)&Hu3DData[modelId].mtx;
     Hu3DMotionSet(modelId, self->motionId);
     Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
-    modelId2 = Hu3DModelCreate(HuDataSelHeapReadNum(0x82000E, HU_MEMNUM_OVL, HEAP_MODEL));
-    self->modelId2 = modelId2;
-    Hu3DModelPosSet(modelId2, lbl_1_rodata_160[0], lbl_1_rodata_160[0], lbl_1_rodata_160[0]);
-    Hu3DModelRotSet(modelId2, lbl_1_rodata_160[0], lbl_1_rodata_160[0], lbl_1_rodata_160[0]);
-    Hu3DModelCameraSet(modelId2, conf->camBit);
-    Hu3DModelLayerSet(modelId2, 0);
-    Hu3DModelAttrSet(modelId2, 1);
-    self->pos2 = &Hu3DData[modelId2].pos;
-    self->mtx2 = (MtxPtr)&Hu3DData[modelId2].mtx;
+    modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x82000E, HU_MEMNUM_OVL, HEAP_MODEL));
+    self->modelId2 = modelId;
+    Hu3DModelPosSet(modelId, lbl_1_rodata_160[0], lbl_1_rodata_160[0], lbl_1_rodata_160[0]);
+    Hu3DModelRotSet(modelId, lbl_1_rodata_160[0], lbl_1_rodata_160[0], lbl_1_rodata_160[0]);
+    Hu3DModelCameraSet(modelId, tenConf->camBit);
+    Hu3DModelLayerSet(modelId, 0);
+    Hu3DModelAttrSet(modelId, 1);
+    self->pos2 = &Hu3DData[modelId].pos;
+    self->mtx2 = (MtxPtr)&Hu3DData[modelId].mtx;
     fn_1_9320(&self->eff, 0, (const Vec *)&lbl_1_rodata_170, lbl_1_rodata_164[0], lbl_1_rodata_168[0], lbl_1_rodata_16C[0]);
 }
 

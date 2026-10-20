@@ -197,12 +197,21 @@ set(REL_FILES
         src/REL/m506Dll/player.c
         src/REL/m507dll/m507.c
         src/REL/m507dll/effect.c
+        src/REL/m518dll/m518.c
         src/REL/m519dll/m519.c
+        src/REL/m520Dll/m520.c
+        src/REL/m524Dll/m524.c
+        src/REL/m525Dll/m525.c
         src/REL/m526Dll/m526.c
         src/REL/m526Dll/math.c
+        src/REL/m527Dll/m527.c
         src/REL/m529dll/m529.c
         src/REL/m538Dll/m538.c
+        src/REL/m559dll/m559.c
+        src/REL/m563dll/m563.c
+        src/REL/m563dll/util.c
         src/REL/m566Dll/m566.c
+        src/REL/m571dll/m571.c
         src/REL/m572dll/m572.c
         src/REL/mdpartyDll/mdparty.c
         src/REL/mdpartyDll/object.c
@@ -256,14 +265,9 @@ set(REL_FILES
 #   m515Dll
 #   m516Dll
 #   m517Dll
-#   m518dll
-#   m520Dll
 #   m521Dll
 #   m522Dll
 #   m523Dll
-#   m524Dll
-#   m525Dll
-#   m527Dll
 #   m528Dll
 #   m530Dll
 #   m531Dll
@@ -290,18 +294,15 @@ set(REL_FILES
 #   m553Dll
 #   m554dll
 #   m555Dll
-#   m559dll
 #   m560dll
 #   m561dll
 #   m562dll
-#   m563dll
 #   m564Dll
 #   m565dll
 #   m567Dll
 #   m568Dll
 #   m569Dll
 #   m570Dll
-#   m571dll
 #   m573dll
 #   m574Dll
 #   m575dll

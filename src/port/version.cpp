@@ -29,6 +29,8 @@ void init() {
 
     if (game == "GP5E"sv && diskId.gameVersion == 0) {
         gameVersion = GameVersion::UsaRev0;
+    } else if (game == "GP5P"sv && diskId.gameVersion == 0) {
+        gameVersion = GameVersion::EurRev0;
     } else {
         // The decompilation only matches GP5E01 revision 0.
         Mp5NativeVersionLog.fatal("Unsupported game in disc: {}{} revision {}", game, company, diskId.gameVersion);
@@ -42,7 +44,7 @@ bool isRegionJpn() {
 }
 
 bool isRegionPal() {
-    return false;
+    return getGameVersion() == GameVersion::EurRev0;
 }
 
 bool isRegionUsa() {

@@ -35,8 +35,8 @@ typedef struct M539Heiho_s {
 } M539Heiho;
 
 void fn_1_C8(void *ptr);
-void fn_1_558C(void *self, s32 prio);
-void fn_1_5608(void *self, s16 arg);
+void *fn_1_558C(void *self, s32 prio);
+void *fn_1_5608(void *self, s16 arg);
 void fn_1_56BC(void *self, s32 arg);
 void fn_1_574C(void *self, s32 arg);
 

@@ -144,9 +144,12 @@ endfunction()
 
 add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
 add_subdirectory(extern/musyx EXCLUDE_FROM_ALL)
-# Mario Party 5 links MusyX 2.0.4 (configure.py). Every target that includes a
-# MusyX header must see the same version as the library itself.
-target_compile_definitions(musyx PUBLIC MUSY_VERSION_MAJOR=2 MUSY_VERSION_MINOR=0 MUSY_VERSION_PATCH=4)
+# Mario Party 5 links MusyX 2.0.1 (configure.py: MusyX() with no version
+# arguments, so its default patch level). Every target that includes a MusyX
+# header must see the same version as the library itself: the matching build
+# compiles src/msm against 2.0.1 struct layouts, so declaring anything else
+# here would silently desynchronise those layouts from the port.
+target_compile_definitions(musyx PUBLIC MUSY_VERSION_MAJOR=2 MUSY_VERSION_MINOR=0 MUSY_VERSION_PATCH=1)
 if (MSVC)
     target_compile_definitions(musyx PRIVATE _USE_MATH_DEFINES)
 endif ()

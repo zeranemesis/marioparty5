@@ -901,3 +901,76 @@ One thing worth keeping: the retail `.data` padding is *not* a fixed rule. It is
 0x12 here and 0x1e there, neither a multiple of 8, 16 or 32; measured across the
 tree only 35 of 176 retail `.data` sections are multiples of 32. It is
 object-specific, so there is no alignment flag to find.
+
+## Finding 29: the float parameter goes first -- the integer and float register files are separate
+
+`m571dll/REL/m571dll/m571` `fn_1_4050` sat at 90.49% with **two** differing rows:
+`fmr f30, f1` (the save of the float parameter) was emitted *after* the three
+`mr r31, r3 / mr r29, r4 / mr r30, r5` saves of the pointer parameters, while the
+target had it first. Nothing about the body was wrong -- 88 of 90 rows matched.
+
+The lever is the **parameter declaration order**. The EABI fills the integer
+register file (r3..) and the float register file (f1..) independently, so a
+signature may be written either way and still receive the same registers:
+
+```c
+void fn_1_4050(f32 t, HuVecF *to, HuVecF *from, HuVecF *out);
+void fn_1_4050(HuVecF *to, HuVecF *from, HuVecF *out, f32 t);   /* same ABI */
+```
+
+Both put `t` in `f1` and the pointers in `r3/r4/r5`. With the float declared
+*first* MWCC emits the FP parameter save before the GPR saves, which is what the
+target does. Reordering the signature is free of call-site consequences as long
+as no caller's *source* argument order has to change: the registers are identical,
+and the prototypes live in the unit that defines the function.
+
+This fixed the last two rows of `fn_1_4050`, `fn_1_4238` and `fn_1_456C` in one
+edit -- three functions that had each been sitting at "two differing rows in the
+prologue". Before reaching for a permutation of *locals*, check whether the
+differing row is a parameter save and try moving the float parameter first.
+
+## Finding 30: three shapes that copy data, and how to tell them apart
+
+`m571dll/REL/m571dll/m571` had three functions whose bodies were already correct
+but whose copies differed. Each target shape means something different about the
+source, and all three are one edit away once recognised.
+
+**Word block copy = a struct assignment.** `fn_1_41AC` copies a `Vec` into a bss
+`Vec`, and the target loads two words, stores two, then one more, all off a
+single base kept in `r4`. That is `lbl_1_bss_674 = *pos;` -- struct assignment.
+Spelling it out member by member costs 31 rows: MWCC then reloads the symbol
+address per statement and uses `lfs`/`stfs`.
+
+**Per-member `lfs`/`stfs` with the base recomputed per statement = member
+assignments.** `fn_1_28F4` shows `mulli`/`lis`/`addi` before *each* of `tmp.x`,
+`tmp.y`, `tmp.z`: the original wrote the three members, so write them too (a
+`tmp = grid->pos[i];` struct assignment emits `lwz`/`stw` instead, even though
+both structs hold only floats).
+
+**Loads hoisted into callee-saved registers = named locals, declared in reverse
+assignment order.** `fn_1_1518` stages four `s32` values in a local and copies
+them out. The target reads the local in *descending* index order into `r27`,
+`r28`, `r29` (plus one scratch), and saves five registers with `_savegpr_27`,
+while the naive member-by-member spelling interleaves each load with its store
+and saves two registers. The source that produces it declares three locals in
+ascending index order and *assigns them in descending order*, so the first
+declared takes the highest register:
+
+```c
+    s32 v1, v2, v3;      /* r29, r28, r27 */
+
+    v3 = work.v[3];      /* the load order in the target is 3, 2, 1 */
+    v2 = work.v[2];
+    v1 = work.v[1];
+
+    lbl_1_bss_43C[0] = work.v[0];
+    lbl_1_bss_43C[1] = v1;
+    lbl_1_bss_43C[2] = v2;
+    lbl_1_bss_43C[3] = v3;
+```
+
+The same file also shows the tell for an unsigned test: `WipeCheckEnd()` returns
+`u8`, so `if (WipeCheckEnd() == 0)` compiles to `clrlwi r0, r3, 24` + `cmplwi r0, 0`.
+Both `& 0xFF` and `(u32)` around such a call add a second mask and flip the
+comparison to signed `cmpwi` -- an unsigned `cmplwi` on an 8-bit value is the
+signature of a plain `== 0`, not of a mask.

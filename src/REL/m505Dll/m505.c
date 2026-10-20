@@ -187,8 +187,8 @@ typedef struct M505EspAnim_s {
 } M505ESPANIM;
 
 /* esprite.c keeps these private; the minigame reads the sprite animation directly. */
-extern M505ESPRITE esprite[];
-extern M505ESPANIM espanim[];
+SHARED_SYM extern M505ESPRITE esprite[];
+SHARED_SYM extern M505ESPANIM espanim[];
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
 M505SeReq lbl_1_bss_2ED50[11];

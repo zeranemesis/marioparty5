@@ -1,0 +1,812 @@
+object_base: orig/GP5P01_00
+object: sys/main.dol
+hash: 4b29cacf01878db0ce6c69eaac5ea7ea2eced3d4
+symbols: config/GP5P01_00/symbols.txt
+splits: config/GP5P01_00/splits.txt
+quick_analysis: true
+mw_comment_version: 11
+force_active: [__register_global_object]
+
+modules:
+- object: files/dll/m565dll.rel
+  hash: 1e3f8fb4be6d57c2941539520b2c83cb25ee7210
+  symbols: config/GP5P01_00/rels/m565dll/symbols.txt
+  splits: config/GP5P01_00/rels/m565dll/splits.txt
+  links: []
+
+- object: files/dll/m563dll.rel
+  hash: e88653663740597275ec9e416cdfdf64b1e3f79a
+  symbols: config/GP5P01_00/rels/m563dll/symbols.txt
+  splits: config/GP5P01_00/rels/m563dll/splits.txt
+  links: []
+
+- object: files/dll/m520Dll.rel
+  hash: db303156cf9cf1df67db33929ce7afed8ef94c23
+  symbols: config/GP5P01_00/rels/m520Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m520Dll/splits.txt
+  links: []
+
+- object: files/dll/staffDll.rel
+  hash: 11269c634441fcd8433efadd30bb87e4ee14352e
+  symbols: config/GP5P01_00/rels/staffDll/symbols.txt
+  splits: config/GP5P01_00/rels/staffDll/splits.txt
+  links: []
+
+- object: files/dll/w20Dll.rel
+  hash: 481d3c07716e3de6b4b7c2c7216c07fbb1dc4b02
+  symbols: config/GP5P01_00/rels/w20Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w20Dll/splits.txt
+  links: []
+
+- object: files/dll/m501Dll.rel
+  hash: c2842871ab2399c980feba0680aedc083cc16d40
+  symbols: config/GP5P01_00/rels/m501Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m501Dll/splits.txt
+  links: []
+
+- object: files/dll/m438Dll.rel
+  hash: eac730492e9a45be2fa75832d89097a65a1f4be6
+  symbols: config/GP5P01_00/rels/m438Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m438Dll/splits.txt
+  links: []
+
+- object: files/dll/m580Dll.rel
+  hash: 33494f6a57d6718e4c3369425bb95cc3f0b62812
+  symbols: config/GP5P01_00/rels/m580Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m580Dll/splits.txt
+  links: []
+
+- object: files/dll/m535Dll.rel
+  hash: 308755b355c8fccb12f00478adbb96f4bde1042e
+  symbols: config/GP5P01_00/rels/m535Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m535Dll/splits.txt
+  links: []
+
+- object: files/dll/meschkdll.rel
+  hash: 0389dcf4a35f07d5214a175643de28d92ba231eb
+  symbols: config/GP5P01_00/rels/meschkdll/symbols.txt
+  splits: config/GP5P01_00/rels/meschkdll/splits.txt
+  links: []
+
+- object: files/dll/actmanDLL.rel
+  hash: a44ed8fd18bc4cea5bbbd756d6d2cd0a3a489de1
+  symbols: config/GP5P01_00/rels/actmanDLL/symbols.txt
+  splits: config/GP5P01_00/rels/actmanDLL/splits.txt
+  links: []
+
+- object: files/dll/mdstoryDll.rel
+  hash: 88695f05b87a50380ca9d16d8430db4b4ed9c7e9
+  symbols: config/GP5P01_00/rels/mdstoryDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdstoryDll/splits.txt
+  links: []
+
+- object: files/dll/m561dll.rel
+  hash: a1d56959e33a6c17bf3a15d24bac0e002335677e
+  symbols: config/GP5P01_00/rels/m561dll/symbols.txt
+  splits: config/GP5P01_00/rels/m561dll/splits.txt
+  links: []
+
+- object: files/dll/m554dll.rel
+  hash: aa8d9a69f884de674bda4d3f678585c4698938db
+  symbols: config/GP5P01_00/rels/m554dll/symbols.txt
+  splits: config/GP5P01_00/rels/m554dll/splits.txt
+  links: []
+
+- object: files/dll/m569Dll.rel
+  hash: 5e085b80761b5a41bb8d1299808b6539067df4ba
+  symbols: config/GP5P01_00/rels/m569Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m569Dll/splits.txt
+  links: []
+
+- object: files/dll/resultDll.rel
+  hash: 9ffb44f024963fb0dc6ea09d43c7fc20a8e3210f
+  symbols: config/GP5P01_00/rels/resultDll/symbols.txt
+  splits: config/GP5P01_00/rels/resultDll/splits.txt
+  links: []
+
+- object: files/dll/w06sDll.rel
+  hash: 718d7eba916777db0d2b8be08e13405cae3cb0d1
+  symbols: config/GP5P01_00/rels/w06sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w06sDll/splits.txt
+  links: []
+
+- object: files/dll/m510dll.rel
+  hash: 2c6d5054490924b1a9b1cad2c70652d04b0dab48
+  symbols: config/GP5P01_00/rels/m510dll/symbols.txt
+  splits: config/GP5P01_00/rels/m510dll/splits.txt
+  links: []
+
+- object: files/dll/w01Dll.rel
+  hash: 8105c1309824715d51400da65f019c2827eed4d3
+  symbols: config/GP5P01_00/rels/w01Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w01Dll/splits.txt
+  links: []
+
+- object: files/dll/mdbeachDll.rel
+  hash: 5eadb2a05bfdc0c479e05a4dbf4b0170ca8ed9ab
+  symbols: config/GP5P01_00/rels/mdbeachDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdbeachDll/splits.txt
+  links: []
+
+- object: files/dll/m517Dll.rel
+  hash: 7f62f079185a4023d43d3bb74f9a938c0a73d46f
+  symbols: config/GP5P01_00/rels/m517Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m517Dll/splits.txt
+  links: []
+
+- object: files/dll/m560dll.rel
+  hash: 1403ee2d5ad987f8a2a650d1cfd197360c1ee3fc
+  symbols: config/GP5P01_00/rels/m560dll/symbols.txt
+  splits: config/GP5P01_00/rels/m560dll/splits.txt
+  links: []
+
+- object: files/dll/m540Dll.rel
+  hash: 0ce92b1160bf7cb2988a15d4c2b018ab98871696
+  symbols: config/GP5P01_00/rels/m540Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m540Dll/splits.txt
+  links: []
+
+- object: files/dll/m536Dll.rel
+  hash: f44d94ef5e5a0595960a482b9f865eb27dd72a66
+  symbols: config/GP5P01_00/rels/m536Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m536Dll/splits.txt
+  links: []
+
+- object: files/dll/e3bootdll.rel
+  hash: c4365b45be74b0577217c0772db97de0ea23b5fa
+  symbols: config/GP5P01_00/rels/e3bootdll/symbols.txt
+  splits: config/GP5P01_00/rels/e3bootdll/splits.txt
+  links: []
+
+- object: files/dll/m505Dll.rel
+  hash: 6bb7e717386cc089216a8f0b27d4e1d1e5418096
+  symbols: config/GP5P01_00/rels/m505Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m505Dll/splits.txt
+  links: []
+
+- object: files/dll/m547dll.rel
+  hash: e0eae3089a9fd2b698740f9ae687328c1ee344e4
+  symbols: config/GP5P01_00/rels/m547dll/symbols.txt
+  splits: config/GP5P01_00/rels/m547dll/splits.txt
+  links: []
+
+- object: files/dll/w03Dll.rel
+  hash: 8379d706f6838c2b2d4b82179db5a72b2773f7c1
+  symbols: config/GP5P01_00/rels/w03Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w03Dll/splits.txt
+  links: []
+
+- object: files/dll/m570Dll.rel
+  hash: 52c0f6bb1a89a97d93b369bea3bc325c980ee3ae
+  symbols: config/GP5P01_00/rels/m570Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m570Dll/splits.txt
+  links: []
+
+- object: files/dll/w04Dll.rel
+  hash: 4fdc64e0413ec874879e1c50dd1bfb7a0133fbdd
+  symbols: config/GP5P01_00/rels/w04Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w04Dll/splits.txt
+  links: []
+
+- object: files/dll/w10Dll.rel
+  hash: 75b36174208646b2fc5dc2d4637e366457db8499
+  symbols: config/GP5P01_00/rels/w10Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w10Dll/splits.txt
+  links: []
+
+- object: files/dll/m504dll.rel
+  hash: 1a9149fb9e5ba0a6c10b05d6306c349796c76a74
+  symbols: config/GP5P01_00/rels/m504dll/symbols.txt
+  splits: config/GP5P01_00/rels/m504dll/splits.txt
+  links: []
+
+- object: files/dll/m518dll.rel
+  hash: 258c5fdd8936b37585a8e4b6416cc295202486e5
+  symbols: config/GP5P01_00/rels/m518dll/symbols.txt
+  splits: config/GP5P01_00/rels/m518dll/splits.txt
+  links: []
+
+- object: files/dll/mgtourDll.rel
+  hash: c25bc1c54e85115420065ad774d01e913c97de0a
+  symbols: config/GP5P01_00/rels/mgtourDll/symbols.txt
+  splits: config/GP5P01_00/rels/mgtourDll/splits.txt
+  links: []
+
+- object: files/dll/m538Dll.rel
+  hash: 457fadd57f4e4fc921169e2851b19a3553e002cc
+  symbols: config/GP5P01_00/rels/m538Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m538Dll/splits.txt
+  links: []
+
+- object: files/dll/m515Dll.rel
+  hash: 66e2d158dbd8e277333b6a6b635afe4b1399486d
+  symbols: config/GP5P01_00/rels/m515Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m515Dll/splits.txt
+  links: []
+
+- object: files/dll/m530Dll.rel
+  hash: b4fb6f34448d998ad2ba96f008b5aca28208e515
+  symbols: config/GP5P01_00/rels/m530Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m530Dll/splits.txt
+  links: []
+
+- object: files/dll/mdomakeDll.rel
+  hash: 97fc7cf9079f2e5e95ef4781d550b6609b465a63
+  symbols: config/GP5P01_00/rels/mdomakeDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdomakeDll/splits.txt
+  links: []
+
+- object: files/dll/m523Dll.rel
+  hash: b3de55eb873259553a7ca913b5a6da008b51aaba
+  symbols: config/GP5P01_00/rels/m523Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m523Dll/splits.txt
+  links: []
+
+- object: files/dll/m508Dll.rel
+  hash: 7d5ed9a3552a4e2b22a3e6ffac2da41c85bfdf36
+  symbols: config/GP5P01_00/rels/m508Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m508Dll/splits.txt
+  links: []
+
+- object: files/dll/m552dll.rel
+  hash: 81de1ab38e74ea99fa3d893f6b1b416103da53fe
+  symbols: config/GP5P01_00/rels/m552dll/symbols.txt
+  splits: config/GP5P01_00/rels/m552dll/splits.txt
+  links: []
+
+- object: files/dll/m401Dll.rel
+  hash: eac730492e9a45be2fa75832d89097a65a1f4be6
+  symbols: config/GP5P01_00/rels/m401Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m401Dll/splits.txt
+  links: []
+
+- object: files/dll/m553Dll.rel
+  hash: 095b6e06b43603b71cdd6987cc0b55b8b15bf39f
+  symbols: config/GP5P01_00/rels/m553Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m553Dll/splits.txt
+  links: []
+
+- object: files/dll/sampledll.rel
+  hash: 5cfc2eea783c156bebacfc44cda01f494b72d315
+  symbols: config/GP5P01_00/rels/sampledll/symbols.txt
+  splits: config/GP5P01_00/rels/sampledll/splits.txt
+  links: []
+
+- object: files/dll/w04sDll.rel
+  hash: c5a3414b5eed87cabac2163fc32ff7d5f4dda03b
+  symbols: config/GP5P01_00/rels/w04sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w04sDll/splits.txt
+  links: []
+
+- object: files/dll/m444dll.rel
+  hash: eac730492e9a45be2fa75832d89097a65a1f4be6
+  symbols: config/GP5P01_00/rels/m444dll/symbols.txt
+  splits: config/GP5P01_00/rels/m444dll/splits.txt
+  links: []
+
+- object: files/dll/m533dll.rel
+  hash: de15857d7916600ac7bc2842d718d735e94903d1
+  symbols: config/GP5P01_00/rels/m533dll/symbols.txt
+  splits: config/GP5P01_00/rels/m533dll/splits.txt
+  links: []
+
+- object: files/dll/m551Dll.rel
+  hash: 3f838ce19fa0364a409202bf6377cd243bfebb81
+  symbols: config/GP5P01_00/rels/m551Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m551Dll/splits.txt
+  links: []
+
+- object: files/dll/m433Dll.rel
+  hash: 8cec4b338442a76beb607b3bc3a671abc15f6826
+  symbols: config/GP5P01_00/rels/m433Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m433Dll/splits.txt
+  links: []
+
+- object: files/dll/fileseldll.rel
+  hash: 26e166cf23696fdf12c5da100befc26905a55a13
+  symbols: config/GP5P01_00/rels/fileseldll/symbols.txt
+  splits: config/GP5P01_00/rels/fileseldll/splits.txt
+  links: []
+
+- object: files/dll/sequencedll.rel
+  hash: 42fcedbaf2a00e667a9b5828231af86b14744406
+  symbols: config/GP5P01_00/rels/sequencedll/symbols.txt
+  splits: config/GP5P01_00/rels/sequencedll/splits.txt
+  links: []
+
+- object: files/dll/m534Dll.rel
+  hash: 374c57e8ff6f3d70a90065f5a3212321133bf6fa
+  symbols: config/GP5P01_00/rels/m534Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m534Dll/splits.txt
+  links: []
+
+- object: files/dll/w05Dll.rel
+  hash: ecddf5d6fc3dfe2c14204722115e2d9018713252
+  symbols: config/GP5P01_00/rels/w05Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w05Dll/splits.txt
+  links: []
+
+- object: files/dll/motchkDll.rel
+  hash: 29c055159ab1f457db35ead661174653d36498a8
+  symbols: config/GP5P01_00/rels/motchkDll/symbols.txt
+  splits: config/GP5P01_00/rels/motchkDll/splits.txt
+  links: []
+
+- object: files/dll/m544Dll.rel
+  hash: ae8baf6ede272e60d71e097fd9d392805f086c49
+  symbols: config/GP5P01_00/rels/m544Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m544Dll/splits.txt
+  links: []
+
+- object: files/dll/w03sDll.rel
+  hash: 32109889888113486a5e2616104ce64b3b69aab6
+  symbols: config/GP5P01_00/rels/w03sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w03sDll/splits.txt
+  links: []
+
+- object: files/dll/m550dll.rel
+  hash: 36567ad46cb0f8964dde277fc0b03ec469441e7f
+  symbols: config/GP5P01_00/rels/m550dll/symbols.txt
+  splits: config/GP5P01_00/rels/m550dll/splits.txt
+  links: []
+
+- object: files/dll/m522Dll.rel
+  hash: 4589344f7a0d608f8c9062752799796b1fb3d528
+  symbols: config/GP5P01_00/rels/m522Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m522Dll/splits.txt
+  links: []
+
+- object: files/dll/sdroomdll.rel
+  hash: 5994b37e1d2a17955eb923e87ab9980eab372064
+  symbols: config/GP5P01_00/rels/sdroomdll/symbols.txt
+  splits: config/GP5P01_00/rels/sdroomdll/splits.txt
+  links: []
+
+- object: files/dll/m541Dll.rel
+  hash: bcc209758181131bda4ccba5dffd059ec0773d16
+  symbols: config/GP5P01_00/rels/m541Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m541Dll/splits.txt
+  links: []
+
+- object: files/dll/mdselDll.rel
+  hash: 9e1cd5057d27d3a97e3f244516cb590e983f69e2
+  symbols: config/GP5P01_00/rels/mdselDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdselDll/splits.txt
+  links: []
+
+- object: files/dll/partyresultdll.rel
+  hash: 68ca1760ac75fa89b315d1c8e65e2a1902fcfecc
+  symbols: config/GP5P01_00/rels/partyresultdll/symbols.txt
+  splits: config/GP5P01_00/rels/partyresultdll/splits.txt
+  links: []
+
+- object: files/dll/m513Dll.rel
+  hash: 8287838467c875d7fb759ae05d375bf68e0a4c97
+  symbols: config/GP5P01_00/rels/m513Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m513Dll/splits.txt
+  links: []
+
+- object: files/dll/m564Dll.rel
+  hash: 1ddc1b1fb1b52c5479f82d0b2e6130f1a70c510d
+  symbols: config/GP5P01_00/rels/m564Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m564Dll/splits.txt
+  links: []
+
+- object: files/dll/m525Dll.rel
+  hash: c780180758b43fb1f0f9e52b9ad0f777f88371b3
+  symbols: config/GP5P01_00/rels/m525Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m525Dll/splits.txt
+  links: []
+
+- object: files/dll/m526Dll.rel
+  hash: e75fad9b73a50bc9467fe50674b5c74ff69184e4
+  symbols: config/GP5P01_00/rels/m526Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m526Dll/splits.txt
+  links: []
+
+- object: files/dll/m435Dll.rel
+  hash: eac730492e9a45be2fa75832d89097a65a1f4be6
+  symbols: config/GP5P01_00/rels/m435Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m435Dll/splits.txt
+  links: []
+
+- object: files/dll/m548dll.rel
+  hash: b18a9c89439ad7df8b92b3f2ba24624654e59ef5
+  symbols: config/GP5P01_00/rels/m548dll/symbols.txt
+  splits: config/GP5P01_00/rels/m548dll/splits.txt
+  links: []
+
+- object: files/dll/m577Dll.rel
+  hash: 54b52bf246dd3622e27ce473df128aa43af548fd
+  symbols: config/GP5P01_00/rels/m577Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m577Dll/splits.txt
+  links: []
+
+- object: files/dll/mgmatchDll.rel
+  hash: 50fd953c7bc72d81354764302d98f824bce24d91
+  symbols: config/GP5P01_00/rels/mgmatchDll/symbols.txt
+  splits: config/GP5P01_00/rels/mgmatchDll/splits.txt
+  links: []
+
+- object: files/dll/m579Dll.rel
+  hash: 40042627638c95ef85eb0b95e4a87784e6d945ee
+  symbols: config/GP5P01_00/rels/m579Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m579Dll/splits.txt
+  links: []
+
+- object: files/dll/w01sDll.rel
+  hash: 88a74d5657d11af4a48ad056c2d6612db9861d61
+  symbols: config/GP5P01_00/rels/w01sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w01sDll/splits.txt
+  links: []
+
+- object: files/dll/bootDll.rel
+  hash: 694ab9da53fc73b5ef02107502950fdf43a4d31f
+  symbols: config/GP5P01_00/rels/bootDll/symbols.txt
+  splits: config/GP5P01_00/rels/bootDll/splits.txt
+  links: []
+- object: files/dll/m516Dll.rel
+  hash: b3385f085b2bd7a7cc26c93b4ab8d0af69fca4cd
+  symbols: config/GP5P01_00/rels/m516Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m516Dll/splits.txt
+  links: []
+
+- object: files/dll/m503Dll.rel
+  hash: 766cc2a046b8199450d62be202774fcea68d0190
+  symbols: config/GP5P01_00/rels/m503Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m503Dll/splits.txt
+  links: []
+
+- object: files/dll/m514Dll.rel
+  hash: 7581cb308a0e44ca2ddc1c775546db3cbfde5b43
+  symbols: config/GP5P01_00/rels/m514Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m514Dll/splits.txt
+  links: []
+
+- object: files/dll/m509Dll.rel
+  hash: aa5fa0d1e192916faa4df2dbee8cfde1488cfdd2
+  symbols: config/GP5P01_00/rels/m509Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m509Dll/splits.txt
+  links: []
+
+- object: files/dll/m529dll.rel
+  hash: 4128d13b5f3eb5d6e0de47e8b5657dd866deee39
+  symbols: config/GP5P01_00/rels/m529dll/symbols.txt
+  splits: config/GP5P01_00/rels/m529dll/splits.txt
+  links: []
+
+- object: files/dll/m573dll.rel
+  hash: 71ddb6722fb907cf2396efb65ee338de4c6adaaf
+  symbols: config/GP5P01_00/rels/m573dll/symbols.txt
+  splits: config/GP5P01_00/rels/m573dll/splits.txt
+  links: []
+
+- object: files/dll/m542dll.rel
+  hash: 8f3a62e4a486326da7bc43810787b514a2132f7c
+  symbols: config/GP5P01_00/rels/m542dll/symbols.txt
+  splits: config/GP5P01_00/rels/m542dll/splits.txt
+  links: []
+
+- object: files/dll/w06Dll.rel
+  hash: ae84ba48424f13c98e464494574ba7c700f72ddb
+  symbols: config/GP5P01_00/rels/w06Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w06Dll/splits.txt
+  links: []
+
+- object: files/dll/m425Dll.rel
+  hash: eac730492e9a45be2fa75832d89097a65a1f4be6
+  symbols: config/GP5P01_00/rels/m425Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m425Dll/splits.txt
+  links: []
+
+- object: files/dll/sd00dll.rel
+  hash: 2a092362c68b01c6aebd5ba67ffdfecaa6b2fd60
+  symbols: config/GP5P01_00/rels/sd00dll/symbols.txt
+  splits: config/GP5P01_00/rels/sd00dll/splits.txt
+  links: []
+
+- object: files/dll/m537Dll.rel
+  hash: daa9d5c7cbeb5bf6ceca9d80238b611ed8513111
+  symbols: config/GP5P01_00/rels/m537Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m537Dll/splits.txt
+  links: []
+
+- object: files/dll/m519dll.rel
+  hash: bca3164c2a49f63ff1bfd6a14d4149e308b79797
+  symbols: config/GP5P01_00/rels/m519dll/symbols.txt
+  splits: config/GP5P01_00/rels/m519dll/splits.txt
+  links: []
+
+- object: files/dll/safDll.rel
+  hash: 32a2302e4392c411e005550bf8da71ecf6575fcb
+  symbols: config/GP5P01_00/rels/safDll/symbols.txt
+  splits: config/GP5P01_00/rels/safDll/splits.txt
+  links: []
+
+- object: files/dll/mdminiDll.rel
+  hash: 1f8406333e8a0728c6c0458462264174dc9bb26d
+  symbols: config/GP5P01_00/rels/mdminiDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdminiDll/splits.txt
+  links: []
+
+- object: files/dll/m521Dll.rel
+  hash: 4de8f9172e1544a64c0abd10f0144f4cd639331e
+  symbols: config/GP5P01_00/rels/m521Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m521Dll/splits.txt
+  links: []
+
+- object: files/dll/m543Dll.rel
+  hash: 6b62a5579a8038c663fd2466e626544bbd35ead8
+  symbols: config/GP5P01_00/rels/m543Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m543Dll/splits.txt
+  links: []
+
+- object: files/dll/e3setupdll.rel
+  hash: 7c152b9fd20642634bc4e697975b8909a0a80b5e
+  symbols: config/GP5P01_00/rels/e3setupdll/symbols.txt
+  splits: config/GP5P01_00/rels/e3setupdll/splits.txt
+  links: []
+
+- object: files/dll/m568Dll.rel
+  hash: 7b0c5072a27870c61a8d42ab4c958489285e83a1
+  symbols: config/GP5P01_00/rels/m568Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m568Dll/splits.txt
+  links: []
+
+- object: files/dll/selmenuDll.rel
+  hash: ab906923c75a5d4fe2ed1c212c038aeae418836d
+  symbols: config/GP5P01_00/rels/selmenuDll/symbols.txt
+  splits: config/GP5P01_00/rels/selmenuDll/splits.txt
+  links: []
+
+- object: files/dll/m571dll.rel
+  hash: 3707a69c22db41b3eab49becb4ee57bb155860de
+  symbols: config/GP5P01_00/rels/m571dll/symbols.txt
+  splits: config/GP5P01_00/rels/m571dll/splits.txt
+  links: []
+
+- object: files/dll/m566Dll.rel
+  hash: f081faf320266d42cb5f428958c9bddf346fccc3
+  symbols: config/GP5P01_00/rels/m566Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m566Dll/splits.txt
+  links: []
+
+- object: files/dll/m539Dll.rel
+  hash: a5b72a57f7ec695a6d35dd8851fcfae06fa89ba1
+  symbols: config/GP5P01_00/rels/m539Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m539Dll/splits.txt
+  links: []
+
+- object: files/dll/m575dll.rel
+  hash: 24d103f2c6043e672dfd0cbe6e81391a3cedc07f
+  symbols: config/GP5P01_00/rels/m575dll/symbols.txt
+  splits: config/GP5P01_00/rels/m575dll/splits.txt
+  links: []
+
+- object: files/dll/mgfreeDll.rel
+  hash: 30ac4f0e011152a5e05acdaeb076073d0333fd7b
+  symbols: config/GP5P01_00/rels/mgfreeDll/symbols.txt
+  splits: config/GP5P01_00/rels/mgfreeDll/splits.txt
+  links: []
+
+- object: files/dll/w02Dll.rel
+  hash: 708c97f70611c4025db4ad022154644b598ab5b2
+  symbols: config/GP5P01_00/rels/w02Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w02Dll/splits.txt
+  links: []
+
+- object: files/dll/mdcardDll.rel
+  hash: 2f7e7543713012d04b9d75d72146b1bec0536839
+  symbols: config/GP5P01_00/rels/mdcardDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdcardDll/splits.txt
+  links: []
+
+- object: files/dll/decathlonDll.rel
+  hash: fbf0abceec3372e62ff61845b56a40107e6e1d76
+  symbols: config/GP5P01_00/rels/decathlonDll/symbols.txt
+  splits: config/GP5P01_00/rels/decathlonDll/splits.txt
+  links: []
+
+- object: files/dll/carddll.rel
+  hash: b37a6555886f4321739650998b18cffe16d1772d
+  symbols: config/GP5P01_00/rels/carddll/symbols.txt
+  splits: config/GP5P01_00/rels/carddll/splits.txt
+  links: []
+
+- object: files/dll/mdpartyDll.rel
+  hash: 7d094ffddaad2ab8e29f5c8bb2aade4d72e7b416
+  symbols: config/GP5P01_00/rels/mdpartyDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdpartyDll/splits.txt
+  links: []
+
+- object: files/dll/w07sDll.rel
+  hash: c960285f3b752f4a8088ebbaf72904be314789e6
+  symbols: config/GP5P01_00/rels/w07sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w07sDll/splits.txt
+  links: []
+
+- object: files/dll/m546Dll.rel
+  hash: d8009953e3f8d1ccc95617f17619c9101a3ca6d4
+  symbols: config/GP5P01_00/rels/m546Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m546Dll/splits.txt
+  links: []
+
+- object: files/dll/storyresultdll.rel
+  hash: 59dfac3ed69742a47b33ace4a55d38b4cf743562
+  symbols: config/GP5P01_00/rels/storyresultdll/symbols.txt
+  splits: config/GP5P01_00/rels/storyresultdll/splits.txt
+  links: []
+
+- object: files/dll/m559dll.rel
+  hash: 4a006ce496540a7984bf5ab01256343752e43e23
+  symbols: config/GP5P01_00/rels/m559dll/symbols.txt
+  splits: config/GP5P01_00/rels/m559dll/splits.txt
+  links: []
+
+- object: files/dll/mdoptionDll.rel
+  hash: c7b5fffd043bed7936c7afff25fcff11c539ed2f
+  symbols: config/GP5P01_00/rels/mdoptionDll/symbols.txt
+  splits: config/GP5P01_00/rels/mdoptionDll/splits.txt
+  links: []
+
+- object: files/dll/m532Dll.rel
+  hash: b4989880ff329317106e837fe1e4e9826494db84
+  symbols: config/GP5P01_00/rels/m532Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m532Dll/splits.txt
+  links: []
+
+- object: files/dll/m531Dll.rel
+  hash: 7d6d8e491946574f5a04086fa32793f280f7f20d
+  symbols: config/GP5P01_00/rels/m531Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m531Dll/splits.txt
+  links: []
+
+- object: files/dll/m549Dll.rel
+  hash: 0e5212db4d95d5eba83b6df614b93492063162cf
+  symbols: config/GP5P01_00/rels/m549Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m549Dll/splits.txt
+  links: []
+
+- object: files/dll/m527Dll.rel
+  hash: 31208b5856102d11d31e755ea5b4b434d2920b3c
+  symbols: config/GP5P01_00/rels/m527Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m527Dll/splits.txt
+  links: []
+
+- object: files/dll/m524Dll.rel
+  hash: 848f45e151b27580d55a29ea1000559434c939e0
+  symbols: config/GP5P01_00/rels/m524Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m524Dll/splits.txt
+  links: []
+
+- object: files/dll/m416Dll.rel
+  hash: eac730492e9a45be2fa75832d89097a65a1f4be6
+  symbols: config/GP5P01_00/rels/m416Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m416Dll/splits.txt
+  links: []
+
+- object: files/dll/systemDll.rel
+  hash: e247478afd59beef04eafeed57a86da6adc3bae2
+  symbols: config/GP5P01_00/rels/systemDll/symbols.txt
+  splits: config/GP5P01_00/rels/systemDll/splits.txt
+  links: []
+
+- object: files/dll/storymodedll.rel
+  hash: 8dec79d5c5e6df57c19ab1b2058369eedc1f5194
+  symbols: config/GP5P01_00/rels/storymodedll/symbols.txt
+  splits: config/GP5P01_00/rels/storymodedll/splits.txt
+  links: []
+
+- object: files/dll/w02sDll.rel
+  hash: b6a474b3017f42a510d233509990db83d8d1c1de
+  symbols: config/GP5P01_00/rels/w02sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w02sDll/splits.txt
+  links: []
+
+- object: files/dll/w07Dll.rel
+  hash: fa361eddc5b14517d23e298d8e273b75cf48dbff
+  symbols: config/GP5P01_00/rels/w07Dll/symbols.txt
+  splits: config/GP5P01_00/rels/w07Dll/splits.txt
+  links: []
+
+- object: files/dll/m528Dll.rel
+  hash: 485f02d4a6edf31304eaa660993ce5cfea002500
+  symbols: config/GP5P01_00/rels/m528Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m528Dll/splits.txt
+  links: []
+
+- object: files/dll/m572dll.rel
+  hash: e0888d4fb41e22aaf99de4a1ea3b28915d906a41
+  symbols: config/GP5P01_00/rels/m572dll/symbols.txt
+  splits: config/GP5P01_00/rels/m572dll/splits.txt
+  links: []
+
+- object: files/dll/rescardDll.rel
+  hash: 389088468f32f194228b24990e63fb236de79411
+  symbols: config/GP5P01_00/rels/rescardDll/symbols.txt
+  splits: config/GP5P01_00/rels/rescardDll/splits.txt
+  links: []
+
+- object: files/dll/w05sDll.rel
+  hash: 323da52fe4a23a1e3313e0f1e1f0b81ea9cc59bc
+  symbols: config/GP5P01_00/rels/w05sDll/symbols.txt
+  splits: config/GP5P01_00/rels/w05sDll/splits.txt
+  links: []
+
+- object: files/dll/m574Dll.rel
+  hash: 90bd72cd2853fcd903b6cdf521ecd995de98bfd3
+  symbols: config/GP5P01_00/rels/m574Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m574Dll/splits.txt
+  links: []
+
+- object: files/dll/mgwarsDll.rel
+  hash: eb60b457f75b8e513693f5e9482ffa78e2e39e34
+  symbols: config/GP5P01_00/rels/mgwarsDll/symbols.txt
+  splits: config/GP5P01_00/rels/mgwarsDll/splits.txt
+  links: []
+
+- object: files/dll/m545Dll.rel
+  hash: a503d055962b2a23c4ef93a7ea0ca873e2bb3586
+  symbols: config/GP5P01_00/rels/m545Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m545Dll/splits.txt
+  links: []
+
+- object: files/dll/instDll.rel
+  hash: eaaffa3a617e1f3e2b890d56e11d7a96107d9052
+  symbols: config/GP5P01_00/rels/instDll/symbols.txt
+  splits: config/GP5P01_00/rels/instDll/splits.txt
+  links: []
+
+- object: files/dll/m576Dll.rel
+  hash: e1def8a81a94b3b1469cfccb0ff45bcd99218d0c
+  symbols: config/GP5P01_00/rels/m576Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m576Dll/splits.txt
+  links: []
+
+- object: files/dll/m555Dll.rel
+  hash: 16cf96300d5844c8a224737b20c7e8f74a621b86
+  symbols: config/GP5P01_00/rels/m555Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m555Dll/splits.txt
+  links: []
+
+- object: files/dll/m502dll.rel
+  hash: b31931c791dd7c318d68ad2a69013a17736968c1
+  symbols: config/GP5P01_00/rels/m502dll/symbols.txt
+  splits: config/GP5P01_00/rels/m502dll/splits.txt
+  links: []
+
+- object: files/dll/m507dll.rel
+  hash: 67be7378b9cd1105956382cab21875ec9997e5aa
+  symbols: config/GP5P01_00/rels/m507dll/symbols.txt
+  splits: config/GP5P01_00/rels/m507dll/splits.txt
+  links: []
+
+- object: files/dll/m506Dll.rel
+  hash: 48d62211ee2ea3fa58101785de5b4f7831523e1b
+  symbols: config/GP5P01_00/rels/m506Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m506Dll/splits.txt
+  links: []
+
+- object: files/dll/m562dll.rel
+  hash: 9238ee04f33c062f11effba36ef47a96fd9eb84a
+  symbols: config/GP5P01_00/rels/m562dll/symbols.txt
+  splits: config/GP5P01_00/rels/m562dll/splits.txt
+  links: []
+
+- object: files/dll/m512Dll.rel
+  hash: 1e8670118f28b5758b5fd9356dfe2881d7523769
+  symbols: config/GP5P01_00/rels/m512Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m512Dll/splits.txt
+  links: []
+
+- object: files/dll/m511Dll.rel
+  hash: e0d5ce3c0536c4ecb2638578ae77c1fdccac2bf0
+  symbols: config/GP5P01_00/rels/m511Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m511Dll/splits.txt
+  links: []
+
+- object: files/dll/m567Dll.rel
+  hash: 8db332b0b7d68960d706fb483c3d94ff5ad383d3
+  symbols: config/GP5P01_00/rels/m567Dll/symbols.txt
+  splits: config/GP5P01_00/rels/m567Dll/splits.txt
+  links: []

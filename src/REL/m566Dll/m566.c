@@ -22,8 +22,8 @@ typedef struct M566EspAnim_s {
 } M566ESPANIM;
 
 /* esprite.c keeps these private; the minigame reads the sprite animation directly. */
-extern M566ESPRITE esprite[];
-extern M566ESPANIM espanim[];
+SHARED_SYM extern M566ESPRITE esprite[];
+SHARED_SYM extern M566ESPANIM espanim[];
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
 /* Player work (obj->data of the 4 player objects), size = 0x108. */

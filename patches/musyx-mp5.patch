@@ -1,29 +1,108 @@
-diff --git a/include/musyx/dspvoice.h b/include/musyx/dspvoice.h
-index d2401bc..d91df12 100644
---- a/include/musyx/dspvoice.h
-+++ b/include/musyx/dspvoice.h
-@@ -121,5 +121,5 @@ typedef struct DSPstudioinfo {
- 
- extern DSPstudioinfo dspStudio[8];
- extern DSPvoice* dspVoice;
--extern bool dspCompressorOn;
-+extern u32 dspCompressorOn; /* defined as u32 in hw_dspctrl.c */
- #endif
+diff --git a/src/musyx/runtime/hardware.c b/src/musyx/runtime/hardware.c
+index 1c7a95a..861d1be 100644
+--- a/src/musyx/runtime/hardware.c
++++ b/src/musyx/runtime/hardware.c
+@@ -612,7 +612,7 @@ void hwSaveSample(void *header, void *data
+   const SAMPLE_HEADER *info = *(const SAMPLE_HEADER **)header;
+   u8 type = info->length >> 24;
+   u32 bytes = convert_length(info->length & 0xffffff, type);
+-  void *copy = aramStoreData(*(void **)data, bytes);
++  void *copy = aramStoreData(*(void **)data, bytes, aramInfo);
+   if (copy && type == 2) {
+     /* GC static PCM16 is BE on disk; stream PCM16 remains native order. */
+     u8 *source = copy;
 diff --git a/src/musyx/runtime/hw_aramdma.c b/src/musyx/runtime/hw_aramdma.c
-index 11e1534..2b11136 100644
+index 127d35a..41ad844 100644
 --- a/src/musyx/runtime/hw_aramdma.c
 +++ b/src/musyx/runtime/hw_aramdma.c
-@@ -470,6 +470,13 @@ void* aramStoreData(void* src, unsigned long len) { return NULL;}
- 
- void aramRemoveData(void* aram, unsigned long len) {}
- 
-+// This PC backend has no ARAM (aramInit/aramExit above are no-ops): sample
-+// data lives in main memory instead, so there is no reserved system area to
-+// skip and no separate "available" pool to report.
-+unsigned long aramGetFirstUserAddress() { return 0; }
+@@ -450,11 +450,18 @@ void aramExit(void) {
+     aramFreeStreamBuffer(i);
+ }
+ unsigned long aramGetZeroBuffer(void) { return 0; }
++#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
++/* Samples come from the host allocator on PC, so there is no ARAM base to
++ * reserve: mirror aramGetZeroBuffer and sit at 0. */
++unsigned long aramGetFirstUserAddress(void) { return 0; }
 +unsigned long aramGetUserBytes(unsigned long totalBytes) { return totalBytes; }
-+u32 aramGetAvailableBytes(ARAMInfo* ai) { return ai ? (ai->aramTop - ai->aramWrite) : 0; }
-+
- static void InitStreamBuffers() {}
- 
- unsigned char aramAllocateStreamBuffer(u32 len) { return 0; }
++#endif
+ void aramSetUploadCallback(ARAMUploadCallback callback, unsigned long chunkSize) {
+   pcUploadCallback = callback;
+   pcUploadChunk = chunkSize && chunkSize <= UINT32_MAX - 31 ? (chunkSize + 31) & ~31u : 4096;
+ }
+-void* aramStoreData(void* source, unsigned long length) {
++void* aramStoreData(void* source, unsigned long length, ARAMInfo* ai) {
++  (void)ai; /* the PC sample allocator hands out host memory, not ARAM extents */
+   if (length > SIZE_MAX - sizeof(PCSampleAllocation) || length > UINT32_MAX)
+     return NULL;
+   PCSampleAllocation* result = salMalloc(sizeof(*result) + length);
+diff --git a/src/musyx/runtime/hw_dspctrl.c b/src/musyx/runtime/hw_dspctrl.c
+index 41191b4..3e53f45 100644
+--- a/src/musyx/runtime/hw_dspctrl.c
++++ b/src/musyx/runtime/hw_dspctrl.c
+@@ -349,7 +349,7 @@ u16 dspCmdFirstSize = 0;
+ u16 *dspCmdList = NULL;
+
+ #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1) // MUSYXTODO
+-u32 dspCompressorOn = 0;
++bool dspCompressorOn = false;
+ #endif
+
+ u32 dspHRTFOn = FALSE;
+diff --git a/src/musyx/runtime/hw_pc_samples.c b/src/musyx/runtime/hw_pc_samples.c
+index f280381..b78235a 100644
+--- a/src/musyx/runtime/hw_pc_samples.c
++++ b/src/musyx/runtime/hw_pc_samples.c
+@@ -81,7 +81,7 @@ bool dataRemoveSDir(SDIR_DATA *sdir) {
+   return false;
+ }
+
+-bool dataAddSampleReference(u16 id) {
++bool dataAddSampleReference(u16 id, ARAMInfo* aramInfo) {
+   SDIR_DATA *entry = activeSample(id, NULL);
+   if (entry) {
+     if (entry->ref_cnt == UINT16_MAX)
+@@ -94,19 +94,19 @@ bool dataAddSampleReference(u16 id) {
+   /* A NULL sample base denotes the SDK's file-offset upload callback path. */
+   entry->addr = (void *)((uintptr_t)uploading->base + entry->offset);
+   SAMPLE_HEADER *header = &entry->header;
+-  hwSaveSample(&header, &entry->addr);
++  hwSaveSample(&header, &entry->addr, aramInfo);
+   if (!entry->addr)
+     return false;
+   entry->ref_cnt = 1;
+   return true;
+ }
+
+-bool dataRemoveSampleReference(u16 id) {
++bool dataRemoveSampleReference(u16 id, ARAMInfo* aramInfo) {
+   SDIR_DATA *entry = activeSample(id, NULL);
+   if (!entry)
+     return false;
+   if (--entry->ref_cnt == 0) {
+-    hwRemoveSample(&entry->header, entry->addr);
++    hwRemoveSample(&entry->header, entry->addr, aramInfo);
+     entry->addr = NULL;
+   }
+   return true;
+diff --git a/src/musyx/runtime/s_data.c b/src/musyx/runtime/s_data.c
+index 847c51c..c6e9479 100644
+--- a/src/musyx/runtime/s_data.c
++++ b/src/musyx/runtime/s_data.c
+@@ -371,7 +371,7 @@ static void pcRemoveRecord(const PCRegistration* record) {
+     dataRemoveMacro(record->id);
+     break;
+   case 1:
+-    dataRemoveSampleReference(record->id);
++    dataRemoveSampleReference(record->id, dataARAMGetInfo());
+     break;
+   case 2:
+     dataRemoveKeymap(record->id);
+@@ -437,7 +437,7 @@ bool sndPushGroup(void* prj_data, u16 gid, void* samples, void* sdir, void* pool
+     PCRegistration* record = &prepared.records[inserted];
+     switch (record->type) {
+     case 1:
+-      if (!dataAddSampleReference(record->id)) {
++      if (!dataAddSampleReference(record->id, dataARAMGetInfo())) {
+         while (inserted)
+           pcRemoveRecord(&prepared.records[--inserted]);
+         dataRemoveSDir(prepared.assets.directory);

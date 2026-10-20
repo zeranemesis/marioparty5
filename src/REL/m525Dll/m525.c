@@ -125,8 +125,8 @@ typedef struct M525EspAnim_s {
 } M525ESPANIM;
 
 /* esprite.c keeps these private; the minigame reads the sprite animation directly. */
-extern M525ESPRITE esprite[];
-extern M525ESPANIM espanim[];
+SHARED_SYM extern M525ESPRITE esprite[];
+SHARED_SYM extern M525ESPANIM espanim[];
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
 static float fn_1_5930(float t, float a, float b, float c);

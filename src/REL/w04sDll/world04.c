@@ -613,7 +613,7 @@ static Point3d mb4ev_IrukaBubbleOfsTbl[13] = {
 
 static f32 mb4ev_IrukaTPLvlScaleTbl[13] = { 1.1f, 1.0f, 0.8f, 1.1f, 1.2f, 0.7f, 0.9f, 0.8f, 0.7f, 1.2f, 1.1f, 1.1f, 1.3f };
 
-/* .data:0x10B4 - "ske_head " (12 bytes) */
+/* .data:0x10B4 - "ske_head\0" (12 bytes) */
 char lbl_1_data_10B4[12] = "ske_head";
 /* .data:0x10C0 - zero Point3d (12 bytes) */
 Point3d lbl_1_data_10C0 = { 0.0f, 0.0f, 0.0f };
@@ -739,7 +739,7 @@ static int MB4Ev_MasuWalkPost(int playerNo)
 static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
 {
     int motionId; //r30 = -1
-    s16 coinId; //r29
+    int coinId; //r29
     HuVecF pos; //r1+0x0C
 
     motionId = -1;
@@ -750,30 +750,32 @@ static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
     if(coinNum > 0) {
         MBPlayerPosGet(playerNo, &pos);
         pos.y += 250.0f;
-        coinId = (s16)MBCoinDispCreateSe(&pos, coinNum);
+        coinId = MBCoinDispCreateSe(&pos, coinNum);
     } else {
         coinId = -1;
     }
-    if(coinNum <= 0) {
+    if(coinNum > 0) {
+        if(coinNum < threshold) {
+            MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
+            MBPlayerMotionNoShiftSet(playerNo, 0xC, 0.0f, 8.0f, 0);
+        } else {
+            MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
+            motionId = MBPlayerMotionCreate(playerNo, 0x8C002D);
+            MBPlayerMotionNoShiftSet(playerNo, motionId, 0.0f, 8.0f, 0);
+        }
+    } else {
         MBPlayerWinLoseVoicePlay(playerNo, 0xD, 0x200);
         MBPlayerMotionNoShiftSet(playerNo, 0xD, 0.0f, 8.0f, 0);
-    } else if(coinNum < threshold) {
-        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
-        MBPlayerMotionNoShiftSet(playerNo, 0xC, 0.0f, 8.0f, 0);
-    } else {
-        MBPlayerWinLoseVoicePlay(playerNo, 0xC, 0x1FB);
-        motionId = MBPlayerMotionCreate(playerNo, 0x8C2D);
-        MBPlayerMotionNoShiftSet(playerNo, motionId, 0.0f, 8.0f, 0);
     }
-    while(MBPlayerMotionEndCheck(playerNo) == 0) {
+    do {
         HuPrcVSleep();
-    }
-    if(MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+    } while(MBPlayerMotionEndCheck(playerNo) == 0);
+    if(MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) == -1) {
         MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0);
     }
-    while(MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+    do {
         HuPrcVSleep();
-    }
+    } while(MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1);
     if(coinId != -1) {
         while(MBCoinDispKillCheck(coinId) == 0) {
             HuPrcVSleep();
@@ -784,23 +786,31 @@ static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
     }
 }
 
-/* NONMATCHING: complete and faithful, not attempted for instruction-level
- * match. Spawns a bubble at the player's head bone plus a per-character
- * offset (mb4ev_IrukaBubbleOfsTbl, indexed by charNo), on top of `ofs`. */
+/* NONMATCHING: functionally complete and faithful. The residual is a single
+ * allocator-decided r29/r30 swap (playerNo vs duration); every source
+ * reformulation tried reproduced it, so it is Equivalent, not Matching.
+ * Spawns a bubble at the player's head bone plus a per-character offset
+ * (mb4ev_IrukaBubbleOfsTbl, indexed by charNo), on top of `ofs`. Note the
+ * table is read as z, y, x into pos.x, pos.y, pos.z - that is the original's
+ * own field order, not a swap of ours, so it must be kept as-is. */
 static void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32 unused1) {
     Mtx headMtx;
     Point3d pos;
     int charNo = GwPlayer[playerNo].charNo;
-    f32 rnd;
     s32 duration;
 
     Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
-    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    /* The original reads the table entry as z, y, x into pos.x, pos.y, pos.z.
+     * The three lfs/stfs pairs are per-field, not a struct copy, so the field
+     * order here is load-bearing for where the bubble ends up relative to the
+     * head bone. */
+    pos.x = mb4ev_IrukaBubbleOfsTbl[charNo].z;
+    pos.y = mb4ev_IrukaBubbleOfsTbl[charNo].y;
+    pos.z = mb4ev_IrukaBubbleOfsTbl[charNo].x;
     PSMTXMultVec(headMtx, &pos, &pos);
     PSVECAdd(&pos, ofs, &pos);
-    rnd = frand() & 0x7F;
-    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
-    MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))), duration);
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (frand() & 0x7F)))), duration);
 }
 
 /* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
@@ -810,16 +820,17 @@ static void MB4Ev_PlayerBubbleCreate(int playerNo) {
     Mtx headMtx;
     Point3d pos;
     int charNo = GwPlayer[playerNo].charNo;
-    f32 rnd;
     s32 duration;
 
     Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), lbl_1_data_10B4, headMtx);
-    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    /* Same per-field z, y, x read into pos.x, pos.y, pos.z as MB4Ev_IrukaBubbleCreate. */
+    pos.x = mb4ev_IrukaBubbleOfsTbl[charNo].z;
+    pos.y = mb4ev_IrukaBubbleOfsTbl[charNo].y;
+    pos.z = mb4ev_IrukaBubbleOfsTbl[charNo].x;
     PSMTXMultVec(headMtx, &pos, &pos);
     PSVECAdd(&pos, &lbl_1_data_10C0, &pos);
-    rnd = frand() & 0x7F;
-    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * rnd))));
-    MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * rnd))), duration);
+    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (frand() & 0x7F)))));
+    MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (frand() & 0x7F)))), duration);
 }
 
 static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
@@ -1602,9 +1613,7 @@ void MB4_SakanaInit(void)
             sakana->rot.x = HuAtan(HuMagXZVecF(&sakana->dir), sakana->dir.y);
             sakana->rot.y = HuAtan(sakana->dir.x, sakana->dir.z);
             sakana->rot.z = 0.0f;
-            sakana->targetRot.x = sakana->rot.x;
-            sakana->targetRot.y = sakana->rot.y;
-            sakana->targetRot.z = sakana->rot.z;
+            sakana->targetRot = sakana->rot;
             sakana->speed = 2.5f * (1.0f + (0.007874016f * (frand() & 0x7F)));
             sakana->scale = 0.25f + (0.5f * (0.007874016f * (frand() & 0x7F)));
             sakana->unk8C = 0.25f + (0.25f * (0.007874016f * (frand() & 0x7F)));
@@ -1631,7 +1640,6 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
     MB4_SAKANA *sakana; //r31
     MBEFFECTDATA *effDataP; //r29
     MBEFFECT *effP; //r27
-    HU3DMODEL *effModelP; //r25
     int i; //r26
     int j; //r23
     int time; //r21
@@ -1661,8 +1669,7 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
                 }
             }
             if (!sakana->dispF && sakana->mdlId == -1) {
-                effModelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
-                effP = effModelP->hookData;
+                effP = Hu3DData[mb4_Work.sakanaEffMdlId].hookData;
                 effDataP = &effP->data[sakana->effNo];
                 effDataP->dispF = FALSE;
                 continue;
@@ -1752,10 +1759,9 @@ static void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx)
                 }
             }
             else {
-                effModelP = &Hu3DData[mb4_Work.sakanaEffMdlId];
-                effP = effModelP->hookData;
-                effDataP = &effP->data[sakana->effNo];
-                if (!sakana->dispF) {
+                    effP = Hu3DData[mb4_Work.sakanaEffMdlId].hookData;
+                    effDataP = &effP->data[sakana->effNo];
+                    if (!sakana->dispF) {
                     effDataP->dispF = FALSE;
                 }
                 else {

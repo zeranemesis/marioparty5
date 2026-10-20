@@ -1702,11 +1702,9 @@ void fn_1_4E18(M519_MECH *mech)
     float diff;
     float tC;
     HuVecF circle;
-    int pilotIdx;
     int targetIdx;
 
-    pilotIdx = mech->pilotNo;
-    dif = lbl_1_bss_E8[pilotIdx]->dif;
+    dif = lbl_1_bss_E8[mech->pilotNo]->dif;
     circle.x = mech->pos.x;
     circle.y = mech->pos.z;
     circle.z = mech->radius;

@@ -952,28 +952,10 @@ void MB2_LightReset(void) {
 
 int MB2Ev_MasuHatena(int playerNo) {
     u32 temp_r0;
-    u32 temp_r29;
 
     temp_r0 = MBMasuGet(0, (s32) (s16) GwPlayer[playerNo].masuId)->flag;
-    if ((u32) ((u16) temp_r0 & 0x70) != 0) {
-        temp_r29 = (u32) ((u16) temp_r0 & 0x70) >> 4U;
-        switch ((s32) temp_r29) {                   /* irregular */
-        case 1:
-            MB2Ev_Thunder(playerNo);
-            break;
-        case 2:
-            MB2Ev_Rain(playerNo);
-            break;
-        case 3:
-            MB2Ev_Zen2(playerNo);
-            break;
-        case 4:
-            MB2Ev_Zen4(playerNo);
-            break;
-        }
-    }
-    if ((u32) ((u16) temp_r0 & 0x380) != 0) {
-        MB2Ev_WindGuru2((u32) ((u16) temp_r0 & 0x380) >> 7U, playerNo);
+    if ((u32) ((u16) temp_r0 & 0x1) != 0) {
+        MB2Ev_HatenaTaiyo(playerNo);
     }
 }
 
@@ -988,18 +970,8 @@ int MB2Ev_MasuWalkPost(int playerNo) {
     u32 temp_r0;
 
     temp_r0 = MBMasuGet(0, (s32) (s16) GwPlayer[playerNo].masuId)->flag;
-    if ((u32) ((u16) temp_r0 & 0x1000) != 0) {
-        HuAudFXPlay(0x5CF);
-        MBMotionTimeSet((s16) MB2W_S32((0x11) * 4), 0.0f);
-        MBMotionSpeedSet((s16) MB2W_S32((0x11) * 4), 1.0f);
-    }
-    if ((u32) ((u16) temp_r0 & 0x2000) != 0) {
-        HuAudFXPlay(0x5CF);
-        MBMotionTimeSet((s16) MB2W_S32((0x12) * 4), 0.0f);
-        MBMotionSpeedSet((s16) MB2W_S32((0x12) * 4), 1.0f);
-    }
-    if ((u32) ((u16) temp_r0 & 0xF) != 0) {
-        MB2Ev_Rainbow((u16) temp_r0 & 0xF, playerNo);
+    if ((u32) ((u16) temp_r0 & 0x2) != 0) {
+        MB2Ev_Rainbow(9, playerNo);
     }
     return 0;
 }
@@ -3138,7 +3110,7 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     u8 *arrB;
     s32 i;
     void *dispListTmp;
-    
+
 
     newModelId = Hu3DHookFuncCreate(ParticleDraw);
     Hu3DModelCameraSet(newModelId, 1U);
@@ -3704,7 +3676,7 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     u8 *colArr;
     void *dispListTmp;
     s32 i;
-    
+
 
     path = (Point3d *) arg0;
     if (mb2_RainbowObj == NULL) {

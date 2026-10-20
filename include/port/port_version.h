@@ -14,6 +14,7 @@
 namespace mp5native::version {
 enum class GameVersion : u8 {
     UsaRev0 = VERSION_NO_ENG0, // GP5E01_00, the only version decompiled
+    EurRev0 = 1,               // GP5P01_00, PAL revision 0
 };
 
 bool isRegionPal();

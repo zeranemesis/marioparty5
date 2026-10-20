@@ -25,6 +25,17 @@ Supported versions:
 
 - `GP5E01_00`: Rev 0 (USA)
 
+`GP5P01_00` (Europe) has experimental configuration metadata. Its 135 original
+file hashes were checked locally, but a matching PAL rebuild has not been
+validated. The verified matching-build target remains `GP5E01_00`.
+
+Verified on 2026-10-20: the USA DOL and all 134 RELs rebuild with their original
+SHA-1 hashes (`135 files OK`). Across the full executable and modules, **30.00%
+of code matches** (2,844,800 / 9,481,492 bytes), while **20.67% is linked from
+compiled sources** (346 / 881 units). Unfinished units still use extracted
+objects. See [the publication audit](docs/publication-2026-10-20.md) and
+[the generated progress report](docs/avancement.md).
+
 Dependencies
 ============
 
@@ -73,7 +84,7 @@ Building
 - Clone the repository:
 
   ```sh
-  git clone https://github.com/mariopartyrd/marioparty5.git
+  git clone https://github.com/zeranemesis/marioparty5.git
   ```
 
 - Copy your game's disc image to `orig/GP5E01_00`.
@@ -107,10 +118,10 @@ this repository.
 It follows the decompilation: a unit enters the port once it is `Matching` or
 `Equivalent`, and a REL module once all of its units are, which
 `tools/gen_files_cmake.py` turns into `files.cmake`. Modules that are not there yet
-are simply absent at run time — the game falls back to the previous screen instead
+are simply absent at run time â€” the game falls back to the previous screen instead
 of loading them (see `src/game/objmain.c`).
 
-**State:** `mp5native.exe`, `dol.dll` and the 19 REL modules decompiled so far all
+**State:** `mp5native.exe`, `dol.dll` and the 47 enabled REL modules all
 compile and link on Windows (MSVC). The game does not boot to a playable state yet:
 most minigames and boards are still `NonMatching`, so their overlays are skipped.
 `docs/port_patterns.md` (French) records the rules every port change follows;

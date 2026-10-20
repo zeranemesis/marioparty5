@@ -111,13 +111,13 @@ typedef struct M547Motion_s {
     s16 field02;
     u8 pad_04[2];
     s16 field06;
-    u8 pad_08[2];
+    s16 field08;
     s16 fieldA;
 } M547Motion;
 
 /* 0xC stride slot at +0xC0 of M547GameState */
 typedef struct M547Slot_s {
-    u8 pad_00[4];
+    f32 f0;
     f32 f1;
     f32 f2;
 } M547Slot;
@@ -205,6 +205,7 @@ s16 lbl_1_data_330[2];
 s32 lbl_1_data_334[2];
 s32 lbl_1_data_2AC[4];
 s32 lbl_1_data_2A4[2] = {-1, -1};
+f32 lbl_1_data_2BC[26];
 
 extern s16 lbl_1_bss_480;
 extern s16 lbl_1_bss_2;
@@ -544,6 +545,89 @@ void fn_1_5894(void)
         lbl_1_bss_488.fieldAC = 3;
         HuAudFXPlay(0x839);
         lbl_1_data_324 = HuAudBGMPlay(0x4b);
+    }
+}
+
+void fn_1_5DC4(void)
+{
+    s32 i;
+
+    if (lbl_1_bss_2 < 100) {
+        lbl_1_bss_2++;
+    }
+
+    if (lbl_1_bss_488.counterA4 != 2) {
+        if (lbl_1_bss_488.counterA4 >= 3) {
+        } else if (lbl_1_bss_488.counterA4 == 0) {
+            if (lbl_1_bss_2 == 10) {
+                for (i = 0; i < 2; i++) {
+                    Hu3DModelCameraSet(lbl_1_bss_488.models[i + 13].id, 2);
+                    Hu3DModelAttrReset(lbl_1_bss_488.models[i + 13].id, 1);
+                    lbl_1_bss_488.slots[i].f0 = (float)(i * 240 - 120);
+                    lbl_1_bss_488.slots[i].f1 = 80.0f;
+                    lbl_1_bss_488.slots[i].f2 = -400.0f;
+                }
+            }
+            lbl_1_bss_488.counterA4++;
+        } else {
+            lbl_1_bss_488.counters[3]++;
+            if (lbl_1_bss_488.counters[3] % 4 == 0) {
+                for (i = 0; i < 2; i++) {
+                    lbl_1_bss_488.counters[i + 1]--;
+                    if (lbl_1_bss_488.counters[i + 1] < 0) {
+                        lbl_1_bss_488.fieldAC -= (i + 1);
+                        lbl_1_bss_488.counterA4++;
+                        lbl_1_data_2A4[1] = i;
+                        Hu3DMotionShiftSet(lbl_1_bss_488.models[i + 13].id,
+                                           lbl_1_bss_488.motion[i]->field08,
+                                           0.0f, 10.0f, 0x40000001);
+                    }
+                }
+            }
+        }
+    } else {
+        lbl_1_bss_488.counters[3]++;
+        if (lbl_1_bss_488.counters[3] % 4 == 0) {
+            for (i = 0; i < 2; i++) {
+                if (lbl_1_bss_488.counters[i + 1] >= 0) {
+                    lbl_1_bss_488.counters[i + 1]--;
+                }
+                if (lbl_1_bss_488.counters[i + 1] <= 0) {
+                    lbl_1_bss_488.fieldAC -= (i + 1);
+                    lbl_1_data_2A4[0] = i;
+                    Hu3DTexScrollPosSet(*(s16 *)((u8 *)&lbl_1_bss_480 + 2),
+                                        lbl_1_data_2BC[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6) * 2],
+                                        lbl_1_data_2BC[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6) * 2 + 1],
+                                        0.0f);
+                    lbl_1_bss_488.fieldA8 = 1;
+                    lbl_1_bss_488.counterA4++;
+                    ((s32 *)&lbl_1_bss_24)[3] = 1;
+                }
+            }
+        }
+    }
+
+    if (lbl_1_bss_488.fieldA8 == 0) {
+        f32 f31 = 0.5f - (0.5f * (float)(lbl_1_bss_488.counters[3] % 25)) / 25.0f;
+        Hu3DTexScrollPosSet(lbl_1_bss_480, 0.0f, f31, 0.0f);
+    }
+
+    for (i = 0; i < 2; i++) {
+        if (i != lbl_1_data_2A4[1] && lbl_1_bss_488.slots[i + 2].f1 < 23000.0f) {
+            lbl_1_bss_488.slots[i + 2].f1 += 80.0f;
+        }
+    }
+
+    if (lbl_1_bss_488.counterA4 < 3 && lbl_1_bss_464[1] < 23000.0f) {
+        lbl_1_bss_464[1] += 80.0f;
+    }
+
+    if (lbl_1_bss_488.fieldAC & 0x7FFFFFFF) {
+        lbl_1_bss_488.slots[0].f1 = (float)(80.0 + 15.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 80) * 360) / 80) / 180.0));
+        lbl_1_bss_488.slots[0].f2 = (float)(-400.0 + 35.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 160) * 360) / 160) / 180.0));
+    }
+    if (lbl_1_bss_488.fieldAC & 0x40000000) {
+        lbl_1_bss_488.slots[1].f2 = (float)(-400.0 - 35.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 160) * 360) / 160) / 180.0));
     }
 }
 

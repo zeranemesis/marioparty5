@@ -164,10 +164,10 @@ void fn_1_5138(s32 idx)
 // and drop the hook object.
 void fn_1_49DC(OMOBJ *obj)
 {
-    u8 *work = *(u8 **)((u8 *)lbl_1_bss_F8[obj->idx] + 0x5C);
     s32 motion;
     s32 time;
     s32 pan;
+    u8 *work = *(u8 **)((u8 *)lbl_1_bss_F8[obj->idx] + 0x5C);
 
     switch (*(s32 *)(work + 0x30)) {
     case 4:
@@ -195,11 +195,9 @@ void fn_1_49DC(OMOBJ *obj)
 // Park a player at the idle slot: copy the idle position for its state, clear// the velocity, arm the idle state, then re-issue the idle motion.
 void fn_1_52F8(s32 idx)
 {
-    OMOBJ *obj = lbl_1_bss_F8[idx];
-    u8 *work = obj->data;
+    u8 *work = lbl_1_bss_F8[idx]->data;
 
     *(Vec3 *)(work + 0x50) = lbl_1_data_204[*(s32 *)(work + 0x2C)];
-    *(f32 *)(work + 0x54) = 0.0f;
     *(f32 *)(work + 0x5C) = 0.0f;
     *(f32 *)(work + 0x60) = 0.0f;
     *(f32 *)(work + 0x64) = 0.0f;
