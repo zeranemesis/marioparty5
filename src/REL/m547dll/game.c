@@ -54,7 +54,7 @@ typedef struct M547Vec2_s {
     f32 y;
 } M547Vec2;
 
-f64 M547_RATE = 1.05;
+#define M547_RATE 1.05
 
 extern u8 lbl_1_bss_38[];
 
@@ -146,7 +146,7 @@ typedef struct M547GameState_s {
 
 extern M547GameState lbl_1_bss_488;
 extern f32 lbl_1_bss_458[4];
-extern s32 lbl_1_bss_6A0;
+
 extern f32 lbl_1_bss_464[4];
 extern s32 lbl_1_bss_78;
 
@@ -185,27 +185,36 @@ typedef struct M547Fx4_s {
     f32 w;
 } M547Fx4;
 
-s32 lbl_1_bss_6D4[4];
+/* Unit-owned BSS, in reverse declaration order to preserve original offsets. */
+s32 lbl_1_bss_6D4[5];
 s32 lbl_1_bss_6C4[4];
 s16 lbl_1_bss_6BC[4];
 f32 lbl_1_bss_6AC[4];
 s32 lbl_1_bss_6A8;
-s16 lbl_1_bss_6A4[2];
+s16 lbl_1_bss_6A4[1];
+s32 lbl_1_bss_6A0;
 f32 lbl_1_bss_69C;
 f32 lbl_1_bss_698;
+
+/* Unit-owned .data, in original address order (0x280..0x350). */
 f32 lbl_1_data_280[3] = {0.0f, 200.0f, 200.0f};
 f32 lbl_1_data_28C[3] = {0.0f, 1.0f, 0.0f};
 f32 lbl_1_data_298[3] = {0.0f, 200.0f, 0.0f};
-f32 lbl_1_data_344[3] = {0.0f, 0.0f, 0.0f};
-s32 lbl_1_data_340 = -1;
-f32 lbl_1_data_33C = 5.0f;
-s32 lbl_1_data_324 = -1;
-s32 lbl_1_data_328[2];
-s16 lbl_1_data_330[2];
-s32 lbl_1_data_334[2];
-s32 lbl_1_data_2AC[4];
 s32 lbl_1_data_2A4[2] = {-1, -1};
-f32 lbl_1_data_2BC[26];
+s32 lbl_1_data_2AC[4] = {0, 0, 0, 0};
+f32 lbl_1_data_2BC[26] = {
+    0.0f, 0.0f, 0.25f, 0.0f, 0.5f, 0.0f, 0.75f, 0.0f,
+    0.0f, 0.25f, 0.25f, 0.25f, 0.5f, 0.25f, 0.75f, 0.25f,
+    0.0f, 0.5f, 0.25f, 0.5f, 0.25f, 0.5f, 0.25f, 0.5f,
+    0.25f, 0.5f,
+};
+s32 lbl_1_data_324 = -1;
+s32 lbl_1_data_328[2] = {0, 0};
+s16 lbl_1_data_330[2] = {0, 0};
+s32 lbl_1_data_334[2] = {0, 0};
+f32 lbl_1_data_33C = 5.0f;
+s32 lbl_1_data_340 = -1;
+f32 lbl_1_data_344[3] = {0.0f, 0.0f, 0.0f};
 
 extern s16 lbl_1_bss_480;
 extern s16 lbl_1_bss_2;
@@ -548,6 +557,9 @@ void fn_1_5894(void)
     }
 }
 
+void fn_1_670C(s32 i);
+void fn_1_6A88(s32 i);
+
 void fn_1_5DC4(void)
 {
     s32 i;
@@ -556,59 +568,65 @@ void fn_1_5DC4(void)
         lbl_1_bss_2++;
     }
 
-    if (lbl_1_bss_488.counterA4 != 2) {
-        if (lbl_1_bss_488.counterA4 >= 3) {
-        } else if (lbl_1_bss_488.counterA4 == 0) {
-            if (lbl_1_bss_2 == 10) {
-                for (i = 0; i < 2; i++) {
-                    Hu3DModelCameraSet(lbl_1_bss_488.models[i + 13].id, 2);
-                    Hu3DModelAttrReset(lbl_1_bss_488.models[i + 13].id, 1);
-                    lbl_1_bss_488.slots[i].f0 = (float)(i * 240 - 120);
-                    lbl_1_bss_488.slots[i].f1 = 80.0f;
-                    lbl_1_bss_488.slots[i].f2 = -400.0f;
-                }
+    switch (lbl_1_bss_488.counterA4) {
+    case 0:
+        if (lbl_1_bss_2 == 10) {
+            for (i = 0; i < 2; i++) {
+                Hu3DModelCameraSet(*(s16 *)((u8 *)lbl_1_bss_488.models + i * 0x1c + 0x16c), 2);
+                Hu3DModelAttrReset(*(s16 *)((u8 *)lbl_1_bss_488.models + i * 0x1c + 0x16c), 1);
+                lbl_1_bss_488.slots[i].f0 = (float)(i * 240 - 120);
+                lbl_1_bss_488.slots[i].f1 = 80.0f;
+                lbl_1_bss_488.slots[i].f2 = -400.0f;
             }
             lbl_1_bss_488.counterA4++;
-        } else {
-            lbl_1_bss_488.counters[3]++;
-            if (lbl_1_bss_488.counters[3] % 4 == 0) {
-                for (i = 0; i < 2; i++) {
-                    lbl_1_bss_488.counters[i + 1]--;
-                    if (lbl_1_bss_488.counters[i + 1] < 0) {
-                        lbl_1_bss_488.fieldAC -= (i + 1);
-                        lbl_1_bss_488.counterA4++;
-                        lbl_1_data_2A4[1] = i;
-                        Hu3DMotionShiftSet(lbl_1_bss_488.models[i + 13].id,
-                                           lbl_1_bss_488.motion[i]->field08,
-                                           0.0f, 10.0f, 0x40000001);
-                    }
+        }
+        break;
+    case 1:
+        lbl_1_bss_488.counters[3]++;
+        if (lbl_1_bss_488.counters[3] % 4 == 0) {
+            for (i = 0; i < 2; i++) {
+                lbl_1_bss_488.counters[i + 1]--;
+                if (lbl_1_bss_488.counters[i + 1] < 0) {
+                    lbl_1_bss_488.fieldAC -= (i + 1);
+                    lbl_1_bss_488.counterA4++;
+                    lbl_1_data_2A4[1] = i;
+                    Hu3DMotionShiftSet(*(s16 *)((u8 *)lbl_1_bss_488.models + i * 0x1c + 0x16c),
+                                       lbl_1_bss_488.motion[i]->field08,
+                                       0.0f, 10.0f, 0x40000001);
                 }
             }
         }
-    } else {
+        break;
+    case 2:
         lbl_1_bss_488.counters[3]++;
         if (lbl_1_bss_488.counters[3] % 4 == 0) {
             for (i = 0; i < 2; i++) {
                 if (lbl_1_bss_488.counters[i + 1] >= 0) {
                     lbl_1_bss_488.counters[i + 1]--;
-                }
-                if (lbl_1_bss_488.counters[i + 1] <= 0) {
-                    lbl_1_bss_488.fieldAC -= (i + 1);
+                    if (lbl_1_bss_488.counters[i + 1] <= 0) {
+                        lbl_1_bss_488.fieldAC -= (i + 1);
                     lbl_1_data_2A4[0] = i;
                     Hu3DTexScrollPosSet(*(s16 *)((u8 *)&lbl_1_bss_480 + 2),
-                                        lbl_1_data_2BC[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6) * 2],
-                                        lbl_1_data_2BC[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6) * 2 + 1],
+                                        ((M547Vec2 *)lbl_1_data_2BC)[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6)].x,
+                                        ((M547Vec2 *)lbl_1_data_2BC)[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6)].y,
                                         0.0f);
                     lbl_1_bss_488.fieldA8 = 1;
                     lbl_1_bss_488.counterA4++;
                     ((s32 *)&lbl_1_bss_24)[3] = 1;
+                    }
                 }
             }
         }
+        break;
+    case 3:
+        break;
+    default:
+        break;
     }
 
     if (lbl_1_bss_488.fieldA8 == 0) {
-        f32 f31 = 0.5f - (0.5f * (float)(lbl_1_bss_488.counters[3] % 25)) / 25.0f;
+        f32 f31 = (float)(lbl_1_bss_488.counters[3] % 25);
+        f31 = 0.5f - (0.5f * f31) / 25.0f;
         Hu3DTexScrollPosSet(lbl_1_bss_480, 0.0f, f31, 0.0f);
     }
 
@@ -622,12 +640,23 @@ void fn_1_5DC4(void)
         lbl_1_bss_464[1] += 80.0f;
     }
 
-    if (lbl_1_bss_488.fieldAC & 0x7FFFFFFF) {
+    if (lbl_1_bss_488.fieldAC & 1) {
         lbl_1_bss_488.slots[0].f1 = (float)(80.0 + 15.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 80) * 360) / 80) / 180.0));
         lbl_1_bss_488.slots[0].f2 = (float)(-400.0 + 35.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 160) * 360) / 160) / 180.0));
     }
-    if (lbl_1_bss_488.fieldAC & 0x40000000) {
+    if (lbl_1_bss_488.fieldAC & 2) {
+        lbl_1_bss_488.slots[1].f1 = (float)(80.0 - 15.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 80) * 360) / 80) / 180.0));
         lbl_1_bss_488.slots[1].f2 = (float)(-400.0 - 35.0 * sin(3.141592653589793 * (double)(((lbl_1_bss_488.counters[3] % 160) * 360) / 160) / 180.0));
+    }
+
+    for (i = 0; i < 2; i++) {
+        if (lbl_1_data_2A4[i] >= 0) {
+            if (i != 0) {
+                fn_1_670C(lbl_1_data_2A4[1]);
+            } else {
+                fn_1_6A88(lbl_1_data_2A4[0]);
+            }
+        }
     }
 }
 
@@ -639,7 +668,7 @@ void fn_1_670C(s32 i)
     switch (lbl_1_bss_6D4[0]) {
     case 0:
         lbl_1_bss_488.slots[i].f1 -= lbl_1_data_33C;
-        lbl_1_data_33C = lbl_1_data_33C * M547_RATE;
+        lbl_1_data_33C *= M547_RATE;
         if (lbl_1_bss_488.slots[i].f1 < -250.0f) {
             lbl_1_bss_6D4[0]++;
             t = (lbl_1_bss_488.slots[i + 2].f1 - 11040.0f) / 12000.0f;

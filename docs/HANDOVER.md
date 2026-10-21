@@ -1,4 +1,7 @@
-# MP5 decomp â€” HANDOVER
+# MP5 decomp - HANDOVER
+
+> Current verified state: [GPT-6 Luna batch, 2026-10-21](decomp-luna-2026-10-21.md).
+> The entries below describe historical sessions.
 
 Read this first in a new session. Everything below is verified state, not plans.
 Written 2026-10-04. Repo `G:\decomp\MP5`, branch `decomp/m524Dll`, HEAD `1cc89b2`. Local only, nothing pushed.

@@ -1475,7 +1475,7 @@ Object(Matching, "REL/m510dll/opening.c"),
         "m547dll",
         objects={
             Object(NonMatching, "REL/m547dll/m547.c"),
-            Object(NonMatching, "REL/m547dll/game.c"),
+            Object(Matching, "REL/m547dll/game.c"),
             Object(NonMatching, "REL/m547dll/stage.c"),
         },
     ),

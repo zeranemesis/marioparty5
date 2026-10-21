@@ -29,11 +29,12 @@ Supported versions:
 file hashes were checked locally, but a matching PAL rebuild has not been
 validated. The verified matching-build target remains `GP5E01_00`.
 
-Verified on 2026-10-20: the USA DOL and all 134 RELs rebuild with their original
-SHA-1 hashes (`135 files OK`). Across the full executable and modules, **30.00%
-of code matches** (2,844,800 / 9,481,492 bytes), while **20.67% is linked from
-compiled sources** (346 / 881 units). Unfinished units still use extracted
-objects. See [the publication audit](docs/publication-2026-10-20.md) and
+Verified on 2026-10-21: the USA DOL and all 134 RELs rebuild with their original
+SHA-1 hashes (`135 files OK`). Across the full executable and modules, **30.03%
+of code matches** (2,847,268 / 9,481,492 bytes), while **20.85% is linked from
+compiled sources** (347 / 881 units). Unfinished units still use extracted
+objects. See [the GPT-6 Luna batch](docs/decomp-luna-2026-10-21.md),
+[the publication audit](docs/publication-2026-10-20.md), and
 [the generated progress report](docs/avancement.md).
 
 Dependencies

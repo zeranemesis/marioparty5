@@ -622,7 +622,7 @@ u16 SLCheckSumGet(u32 ofs, u32 size)
 
 void SLCheckSumBoxSet(void)
 {
-    u32 boxOfs = boxDataOfs[curBoxNo];
+    s32 boxOfs = boxDataOfs[curBoxNo];
     u16 checkSum = SLCheckSumGet(boxOfs, SAVE_BOX_SIZE-2);
     saveBuf[curSlotNo][boxOfs+SAVE_BOX_SIZE-2] = (checkSum >> 8) & 0xFF;
     saveBuf[curSlotNo][boxOfs+SAVE_BOX_SIZE-1] = checkSum & 0xFF;

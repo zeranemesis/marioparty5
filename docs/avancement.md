@@ -1,14 +1,14 @@
 # Avancement de la décompilation
 
-Généré le 2026-10-20 14:43 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-10-21 13:30 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **30.00 %** (2 778.1 / 9 259.3 Ko) |
-| code lié depuis les sources | 20.67 % |
-| fonctions identiques | 7854 / 21157 |
-| unités complètes | 346 / 881 |
+| code identique | **30.03 %** (2 780.5 / 9 259.3 Ko) |
+| code lié depuis les sources | 20.85 % |
+| fonctions identiques | 7856 / 21157 |
+| unités complètes | 347 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
 
@@ -16,8 +16,8 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
-| DOL (moteur et bibliothèques) | 1 | 1 690.0 Ko | 85.5 % | 245.0 Ko |
-| Mini-jeux m5xx | 76 | 4 493.9 Ko | 12.4 % | 3 937.0 Ko |
+| DOL (moteur et bibliothèques) | 1 | 1 690.0 Ko | 85.5 % | 244.9 Ko |
+| Mini-jeux m5xx | 76 | 4 493.9 Ko | 12.4 % | 3 934.7 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 47.2 % | 111.0 Ko |
 | Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 42.5 % | 220.3 Ko |
@@ -30,7 +30,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `main` | 1 690.0 Ko | 85.5 % | 3716/6084 | 87.8 % | 236/6/68 | en cours |
+| `main` | 1 690.0 Ko | 85.5 % | 3717/6084 | 87.8 % | 236/6/68 | en cours |
 
 ### Mini-jeux m5xx
 
@@ -82,7 +82,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m544Dll` | 53.0 Ko | 2.2 % | 16/93 | 2.2 % | 0/0/3 | en cours |
 | `m545Dll` | 42.3 Ko | 3.8 % | 16/72 | 3.8 % | 0/0/3 | en cours |
 | `m546Dll` | 57.0 Ko | 2.2 % | 15/95 | 2.2 % | 0/0/3 | en cours |
-| `m547dll` | 45.4 Ko | 35.4 % | 23/60 | 39.5 % | 0/0/3 | en cours |
+| `m547dll` | 45.4 Ko | 40.5 % | 24/60 | 40.5 % | 1/0/2 | en cours |
 | `m548dll` | 36.3 Ko | 4.5 % | 16/56 | 4.5 % | 0/0/3 | en cours |
 | `m549Dll` | 82.5 Ko | 1.0 % | 15/109 | 2.7 % | 0/0/4 | en cours |
 | `m550dll` | 33.0 Ko | 2.6 % | 10/67 | 2.6 % | 0/0/3 | en cours |
