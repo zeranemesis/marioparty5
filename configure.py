@@ -545,7 +545,7 @@ config.libs = [
             Object(NonMatching, "dolphin/mtx/mtx.c"),
             Object(Matching, "dolphin/mtx/mtxvec.c"),
             Object(Matching, "dolphin/mtx/mtx44.c"),
-            Object(NonMatching, "dolphin/mtx/vec.c"),
+            Object(Matching, "dolphin/mtx/vec.c"),
             Object(NonMatching, "dolphin/mtx/quat.c"),
             Object(Matching, "dolphin/mtx/psmtx.c"),
         ],
@@ -815,7 +815,7 @@ config.libs = [
         "cflags": cflags_odemuexi,
         "host": False,
         "objects": [
-            Object(NonMatching, "OdemuExi2/DebuggerDriver.c"),
+            Object(Matching, "OdemuExi2/DebuggerDriver.c"),
         ],
     },
     {

@@ -1,7 +1,8 @@
 #include <dolphin/types.h>
-#include <math.h>
 
 typedef f32 PSVECFloat;
+/* Keep zero first in .sdata2; HalfAngle must load it without constant folding. */
+const f32 vec_zero = 0.0f;
 
 /* 12 bytes: C_VECHalfAngle and C_VECReflect keep their three temporaries at
    0x14, 0x20 and 0x2c, which is only true for a three-float struct. The psq_l /
@@ -10,6 +11,7 @@ typedef f32 PSVECFloat;
 typedef struct {
     f32 x, y, z;
 } PSVECVec;
+typedef struct { u32 x, y; } PSVECWordPair;
 
 #define VECTOR PSVECVec
 
@@ -74,6 +76,7 @@ asm void PSVECNormalize(register VECTOR *v, register VECTOR *out) /* out = v / |
     psq_st f2, 0(out), 0, 0
     ps_muls0 f3, f3, f5
     psq_st f3, 8(out), 1, 0
+    blr
 }
 
 asm PSVECFloat PSVECSquareMag(register VECTOR *v) /* |v|^2 */ {
@@ -159,13 +162,11 @@ void C_VECHalfAngle(register VECTOR *a, register VECTOR *b, register VECTOR *out
     PSVECNormalize(&v2, &v2);
     PSVECAdd(&v1, &v2, &v3);
 
-    if (PSVECDotProduct(&v3, &v3) <= 0.0f) {
-        out->x = v3.x;
-        out->y = v3.y;
-        out->z = v3.z;
-    }
-    else {
+    if (PSVECDotProduct(&v3, &v3) > *(volatile f32 *)&vec_zero) {
         PSVECNormalize(&v3, out);
+    } else {
+        *(PSVECWordPair *)out = *(PSVECWordPair *)&v3;
+        ((u32 *)out)[2] = ((u32 *)&v3)[2];
     }
 }
 
@@ -174,6 +175,7 @@ void C_VECReflect(register VECTOR *in, register VECTOR *normal, register VECTOR 
     VECTOR v1;
     VECTOR v2;
     PSVECFloat dot;
+    PSVECFloat temp;
 
     v1.x = -in->x;
     v1.y = -in->y;
@@ -181,9 +183,15 @@ void C_VECReflect(register VECTOR *in, register VECTOR *normal, register VECTOR 
     PSVECNormalize(&v1, &v1);
     PSVECNormalize(normal, &v2);
     dot = PSVECDotProduct(&v1, &v2);
-    out->x = 2.0f * v2.x * dot - v1.x;
-    out->y = 2.0f * v2.y * dot - v1.y;
-    out->z = 2.0f * v2.z * dot - v1.z;
+    temp = 2.0f * v2.x;
+    temp = temp * dot;
+    out->x = temp - v1.x;
+    temp = 2.0f * v2.y;
+    temp = temp * dot;
+    out->y = temp - v1.y;
+    temp = 2.0f * v2.z;
+    dot = temp * dot;
+    out->z = dot - v1.z;
     PSVECNormalize(out, out);
 }
 

@@ -437,13 +437,12 @@ s32 msmSysDelGroupAll(void)
     return 0;
 }
 
-// NONMATCHING: the loop counter and the stack pointer of the first branch swap registers (r25/r26)
 s32 msmSysDelGroupBase(s32 grpNum)
 {
     s32 j;
     s32 i;
-    MSM_GRP_STACK *grp;
     s32 grpId;
+    MSM_GRP_STACK *grp;
 
     if (sys.grpStackAOfs + sys.grpStackBOfs == 0) {
         return 0;
@@ -460,7 +459,7 @@ s32 msmSysDelGroupBase(s32 grpNum)
             grpId = sys.grpPushId[sys.grpPushNum - 1];
             if (sys.grpInfo[grpId].stackNo == 0) {
                 for (j = 0; j < sys.grpStackAMax; j++) {
-                    grp = &sys.grpStackA[j];
+                    MSM_GRP_STACK *grp = &sys.grpStackA[j];
                     if (grp->num != 0 && grp->grpId == grpId) {
                         sndPopGroup();
                         sys.aramP -= sys.grpInfo[grp->grpId].sampSize;
@@ -474,7 +473,7 @@ s32 msmSysDelGroupBase(s32 grpNum)
                 }
             } else {
                 for (j = 0; j < sys.grpStackBMax; j++) {
-                    grp = &sys.grpStackB[j];
+                    MSM_GRP_STACK *grp = &sys.grpStackB[j];
                     if (grp->num != 0 && grp->grpId == grpId) {
                         sndPopGroup();
                         sys.aramP -= sys.grpInfo[grp->grpId].sampSize;

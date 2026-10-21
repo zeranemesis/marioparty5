@@ -7,12 +7,12 @@ the subset of objects with compiled source or per-function comparison scores.
 
 | Measure | Whole-game basis | Verified result |
 |---|---|---|
-| Matched code | 2,847,268 / 9,481,492 bytes | 30.03% |
-| Code linked from source | 1,977,336 / 9,481,492 bytes | 20.85% |
-| Complete units | 347 / 881 | 347 |
-| Matched functions | 7,856 / 21,157 | 7,856 |
+| Matched code | 2,848,524 / 9,481,492 bytes | 30.04% |
+| Code linked from source | 1,980,928 / 9,481,492 bytes | 20.89% |
+| Complete units | 349 / 881 | 349 |
+| Matched functions | 7,860 / 21,157 | 7,860 |
 
-The DOL has 85.51% matched code; REL modules have 17.64%. These are separate
+The DOL has 85.58% matched code; REL modules have 17.64%. These are separate
 subsets, not competing whole-game percentages. The full reconstruction passes
 all 135 original SHA-1 checks because unfinished units use extracted objects.
 
