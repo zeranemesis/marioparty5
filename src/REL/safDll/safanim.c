@@ -256,17 +256,14 @@ void SafAnimCameraUpdate(void) {
     }
 }
 
-// NONMATCHING: MWCC's stack-slot allocation for the reused Mtx scratch
-// buffers comes back slightly differently under -O0,p; the code and
-// constants are otherwise identical (81% instruction match).
 static void SafBallMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material) {
     GXTexObj texObj;
     HU3DCAMERA *cameraP;
+    Mtx modelView;
+    Mtx texScale;
+    Mtx tmp;
     Mtx proj;
     Mtx camInv;
-    Mtx modelView;
-    Mtx tmp;
-    Mtx texScale;
     GXColor tevColor;
 
     tevColor = BallTevColor;

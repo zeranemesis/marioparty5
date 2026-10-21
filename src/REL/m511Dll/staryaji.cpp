@@ -344,7 +344,7 @@ void fn_1_F148(Mgr511StarYaji *arg0)
 
 void fn_1_F2C8(Mgr511StarYaji *arg0)
 {
-    f32 identMat[4][4];
+    Mtx identMat;
 
     HuSprTexLoad((ANIMDATA *)arg0->anim, (s16)0, (s16)0, (GXTexWrapMode)1, (GXTexWrapMode)1, (GXTexFilter)1);
     PSMTXIdentity((f32 (*)[4])identMat);

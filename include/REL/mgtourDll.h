@@ -63,7 +63,7 @@ typedef struct MGTFlow_s {
     u8 padC4[0x18];        //0x0C4
     Vec shakePos;          //0x0DC
     HU3DMODELID mdlPaper;  //0x0E8 same value as mdlReflect
-    s16 padEA[5];          //0x0EA
+    s16 padEA[7];          //0x0EA
     s32 unkF8;             //0x0F8
     u8 padFC[0x14];        //0x0FC
     OMOBJMAN *objman;      //0x110
@@ -102,9 +102,9 @@ typedef struct MGTFlow_s {
 /* mgModeWork as this module sees it. */
 typedef struct MGTModeWork_s {
     s8 cur;                //0x00 current entry index
-    s8 order[0x0F];        //0x01 shuffled order of mgTbl entries
-    s16 unk6;              //0x06
-    s16 unk8;              //0x08
+    s8 order[0x0B];        //0x01 shuffled order of mgTbl entries
+    s16 unk6;              //0x0C
+    s16 unk8;              //0x0E
     u8 flag;               //0x10
     s8 mgNum;              //0x11
     s8 playerNo[4];        //0x12
