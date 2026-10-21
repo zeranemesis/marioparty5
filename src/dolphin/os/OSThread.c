@@ -174,8 +174,8 @@ OSPriority __OSGetEffectivePriority(OSThread* thread)
 
     priority = thread->base;
     for (mutex = thread->queueMutex.head; mutex; mutex = mutex->link.next) {
-        if (mutex->thread && mutex->thread->priority < priority) {
-            priority = mutex->thread->priority;
+        if (mutex->queue.head && mutex->queue.head->priority < priority) {
+            priority = mutex->queue.head->priority;
         }
     }
     return priority;
@@ -433,18 +433,18 @@ void OSExitThread(void* val)
     thread = OSGetCurrentThread();
     OSClearContext(&thread->context);
 
-    if (!(thread->attr & OS_THREAD_ATTR_DETACH)) {
-        prev = thread->linkActive.prev;
-        next = thread->linkActive.next;
+    if (thread->attr & OS_THREAD_ATTR_DETACH) {
+        prev = thread->linkActive.next;
+        next = thread->linkActive.prev;
         if (prev == NULL) {
             OS_ACTIVE_THREAD_QUEUE.tail = next;
         } else {
-            prev->linkActive.next = next;
+            prev->linkActive.prev = next;
         }
         if (next == NULL) {
             OS_ACTIVE_THREAD_QUEUE.head = prev;
         } else {
-            next->linkActive.prev = prev;
+            next->linkActive.next = prev;
         }
         thread->state = 0;
     } else {
@@ -807,10 +807,10 @@ static BOOL CheckThreadQueue(OSThreadQueue* queue)
     }
 
     for (thread = queue->head; thread; thread = thread->link.next) {
-        if (thread->link.next && (OSThread*)thread->link.next->link.prev != thread) {
+        if (thread->link.next && thread != (OSThread*)thread->link.next->link.prev) {
             return FALSE;
         }
-        if (thread->link.prev && (OSThread*)thread->link.prev->link.next != thread) {
+        if (thread->link.prev && thread != (OSThread*)thread->link.prev->link.next) {
             return FALSE;
         }
     }

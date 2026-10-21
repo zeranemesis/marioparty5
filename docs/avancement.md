@@ -1,14 +1,14 @@
 # Avancement de la décompilation
 
-Généré le 2026-10-21 16:21 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
+Généré le 2026-10-21 16:29 par `tools/avancement.py` depuis `build/GP5E01_00/report.json`.
 Ne pas éditer à la main : relancer `ninja` puis le script.
 
 | mesure | valeur |
 |---|---|
-| code identique | **30.04 %** (2 781.8 / 9 259.3 Ko) |
-| code lié depuis les sources | 20.89 % |
-| fonctions identiques | 7860 / 21157 |
-| unités complètes | 349 / 881 |
+| code identique | **30.06 %** (2 783.7 / 9 259.3 Ko) |
+| code lié depuis les sources | 20.92 % |
+| fonctions identiques | 7873 / 21157 |
+| unités complètes | 351 / 881 |
 
 Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), **E** `Equivalent` (complète, pas identique : entre dans le port), **N** `NonMatching` (incomplète ou absente : hors du port).
 
@@ -16,8 +16,8 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | famille | modules | code | identique | reste |
 |---|---|---|---|---|
-| DOL (moteur et bibliothèques) | 1 | 1 690.0 Ko | 85.6 % | 243.7 Ko |
-| Mini-jeux m5xx | 76 | 4 493.9 Ko | 12.4 % | 3 934.7 Ko |
+| DOL (moteur et bibliothèques) | 1 | 1 690.0 Ko | 85.6 % | 243.5 Ko |
+| Mini-jeux m5xx | 76 | 4 493.9 Ko | 12.5 % | 3 932.9 Ko |
 | Mini-jeux repris de MP4 (m4xx) | 1 | 77.0 Ko | 100.0 % | 0.0 Ko |
 | Plateaux du mode Histoire (w0Xs) | 7 | 210.1 Ko | 47.2 % | 111.0 Ko |
 | Plateaux (w0X, w10, w20) | 9 | 383.2 Ko | 42.5 % | 220.3 Ko |
@@ -30,7 +30,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 
 | module | code | identique | fonctions | fuzzy | unités M/E/N | état |
 |---|---|---|---|---|---|---|
-| `main` | 1 690.0 Ko | 85.6 % | 3721/6084 | 87.9 % | 238/6/66 | en cours |
+| `main` | 1 690.0 Ko | 85.6 % | 3723/6084 | 87.9 % | 238/6/66 | en cours |
 
 ### Mini-jeux m5xx
 
@@ -39,14 +39,14 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m501Dll` | 65.1 Ko | 4.8 % | 38/319 | 7.7 % | 2/2/7 | en cours |
 | `m502dll` | 55.7 Ko | 2.6 % | 16/123 | 3.0 % | 0/0/9 | en cours |
 | `m503Dll` | 56.1 Ko | 5.1 % | 30/148 | 11.6 % | 0/2/6 | en cours |
-| `m504dll` | 74.4 Ko | 6.0 % | 21/116 | 14.3 % | 1/2/8 | en cours |
+| `m504dll` | 74.4 Ko | 8.0 % | 28/116 | 14.6 % | 2/1/8 | en cours |
 | `m505Dll` | 72.4 Ko | 35.8 % | 16/19 | 97.5 % | 0/1/0 | fait (E) |
 | `m506Dll` | 59.0 Ko | 54.5 % | 58/96 | 94.5 % | 1/2/0 | fait (E) |
 | `m507dll` | 33.7 Ko | 100.0 % | 47/47 | 100.0 % | 2/0/0 | fait |
 | `m508Dll` | 57.4 Ko | 3.2 % | 57/245 | 9.1 % | 0/0/2 | en cours |
 | `m509Dll` | 76.1 Ko | 2.7 % | 35/284 | 4.1 % | 2/1/7 | en cours |
 | `m510dll` | 53.1 Ko | 7.3 % | 18/106 | 12.6 % | 2/1/10 | en cours |
-| `m511Dll` | 116.4 Ko | 3.2 % | 53/439 | 18.7 % | 1/11/5 | en cours |
+| `m511Dll` | 116.4 Ko | 3.4 % | 57/439 | 18.7 % | 1/11/5 | en cours |
 | `m512Dll` | 68.3 Ko | 6.4 % | 48/310 | 12.0 % | 1/2/7 | en cours |
 | `m513Dll` | 83.4 Ko | 2.2 % | 38/368 | 7.1 % | 1/0/15 | en cours |
 | `m514Dll` | 38.3 Ko | 8.2 % | 25/127 | 8.9 % | 1/0/5 | en cours |
@@ -72,7 +72,7 @@ Statuts des unités dans `configure.py` : **M** `Matching` (identique, liée), *
 | `m534Dll` | 29.3 Ko | 1.2 % | 5/94 | 1.4 % | 0/0/6 | en cours |
 | `m535Dll` | 47.7 Ko | 1.3 % | 6/19 | 38.2 % | 0/0/1 | en cours |
 | `m536Dll` | 65.5 Ko | 9.0 % | 80/328 | 12.4 % | 2/1/7 | en cours |
-| `m537Dll` | 93.2 Ko | 2.7 % | 37/382 | 2.8 % | 1/1/8 | en cours |
+| `m537Dll` | 93.2 Ko | 2.7 % | 37/382 | 2.8 % | 2/0/8 | en cours |
 | `m538Dll` | 44.5 Ko | 39.4 % | 62/89 | 84.2 % | 0/1/0 | fait (E) |
 | `m539Dll` | 68.5 Ko | 7.7 % | 89/333 | 23.9 % | 1/6/5 | en cours |
 | `m540Dll` | 86.1 Ko | 41.6 % | 183/226 | 57.7 % | 0/0/1 | en cours |

@@ -58,6 +58,7 @@ struct Mgr511Score {
     void *unk0;
     void **vtable;
     s32 unkC;
+    s32 padC; /* 0x0C */
     MGTIMER *timer;
     s32 param;
     u8 hasTimer;
@@ -550,4 +551,3 @@ extern "C" void *lbl_1_data_640[6] = {
     (void *) fn_1_710,
     0,
 };
-

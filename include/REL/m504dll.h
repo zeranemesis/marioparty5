@@ -42,12 +42,10 @@ typedef struct InputWork_s {
     s32 timer;
     s32 type;
     u16 dif;
-    u8 unk18[14];
-    /* 0x26 / 0x2A: the two floats fn_1_BEF0 smooths into stkX/stkY. */
-    f32 smoothX;
-    u32 pad2A;
-    f32 smoothY;
-    u32 pad2E;
+    u8 pad16[2];
+    f32 smoothX; /* 0x18 */
+    u32 pad1C;
+    f32 smoothY; /* 0x20 */
 } INPUTWORK;
 
 typedef struct InputMain_s {

@@ -156,10 +156,10 @@ s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
         PSVECNormalize((const Vec *) &sp36, &sp24);
         sp24.x = sp24.x * f31;
         sp24.z = sp24.z * f31;
-        main->stkX = 0.8f * main->stkX + 0.2f * sp24.x;
-        main->stkY = 0.8f * main->stkY + 0.2f * sp24.z;
-        ctrl->stkX = (u8) (56.0f * main->stkX);
-        ctrl->stkY = (u8) (-56.0f * main->stkY);
+        work->smoothX = 0.8f * work->smoothX + 0.2f * sp24.x;
+        work->smoothY = 0.8f * work->smoothY + 0.2f * sp24.z;
+        main->stkX = (s8) (56.0f * work->smoothX);
+        main->stkY = (s8) (-56.0f * work->smoothY);
     }
     return ret;
 }

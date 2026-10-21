@@ -30,10 +30,10 @@ file hashes were checked locally, but a matching PAL rebuild has not been
 validated. The verified matching-build target remains `GP5E01_00`.
 
 Verified on 2026-10-21: the USA DOL and all 134 RELs rebuild with their original
-SHA-1 hashes (`135 files OK`). Across the full executable and modules, **30.04%
-of code matches** (2,848,524 / 9,481,492 bytes), while **20.89% is linked from
-compiled sources** (349 / 881 units). Unfinished units still use extracted
-objects. See [the latest GPT-6 Luna batch](docs/decomp-luna-2026-10-21-lot2.md),
+SHA-1 hashes (`135 files OK`). Across the full executable and modules, **30.06%
+of code matches** (2,850,500 / 9,481,492 bytes), while **20.92% is linked from
+compiled sources** (351 / 881 units). Unfinished units still use extracted
+objects. See [the latest GPT-6 Luna batch](docs/decomp-luna-2026-10-21-lot3.md),
 [the publication audit](docs/publication-2026-10-20.md), and
 [the generated progress report](docs/avancement.md).
 

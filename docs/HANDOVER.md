@@ -1,6 +1,6 @@
 # MP5 decomp - HANDOVER
 
-> Current verified state: [GPT-6 Luna batch 2, 2026-10-21](decomp-luna-2026-10-21-lot2.md).
+> Current verified state: [GPT-6 Luna batch 3, 2026-10-21](decomp-luna-2026-10-21-lot3.md).
 > The entries below describe historical sessions.
 
 Read this first in a new session. Everything below is verified state, not plans.

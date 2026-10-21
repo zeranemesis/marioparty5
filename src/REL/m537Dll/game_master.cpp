@@ -76,6 +76,11 @@ extern const M537Shadow lbl_1_rodata_200 = {
     {0x0, 0x45FA0000, 0x0, 0x0, 0x0, 0xBF800000, 0x0, 0x0, 0x0},
 };
 
+/* Preserve the original constant pool and load order instead of folding literals. */
+extern const f32 lbl_1_rodata_224 = 30.0f;
+extern const f32 lbl_1_rodata_228 = 6800.0f;
+extern const f32 lbl_1_rodata_22C = 7200.0f;
+extern const f32 lbl_1_rodata_230[2] = {0.4f, 0.0f};
 void *fn_1_83CC(void *self);
 void *fn_1_8438(void *self, s16 arg);
 void fn_1_84C4(void);
@@ -138,10 +143,10 @@ void fn_1_84C4(void)
     OSGetTick();
     fn_1_4A08();
     sp = lbl_1_rodata_200;
-    Hu3DShadowCreate(30.0f, 6800.0f, 7200.0f);
+    Hu3DShadowCreate(*(volatile const f32 *)&lbl_1_rodata_224, *(volatile const f32 *)&lbl_1_rodata_228, *(volatile const f32 *)&lbl_1_rodata_22C);
     Hu3DShadowPosSet(&sp.v[0], &sp.v[3], &sp.v[6]);
     Hu3DShadowSizeSet(0xF0);
-    Hu3DShadowTPLvlSet(0.4f);
+    Hu3DShadowTPLvlSet(*(volatile const f32 *)&lbl_1_rodata_230);
     temp1 = fn_1_0(0x34);
     if (temp1 != 0) {
         temp1 = fn_1_9290(temp1);
@@ -270,3 +275,6 @@ void fn_1_88C8(void)
 }
 #pragma dont_inline reset
 }
+
+__declspec(section ".ctors")
+static void (*const gameMasterInit)(void) = fn_1_888C;
