@@ -1,16 +1,15 @@
 #include "REL/mgtourDll.h"
-<<<<<<< HEAD
 #include <math.h>
-=======
-#include "math.h"
 extern void fn_1_C76C(void);
+#define lbl_1_data_7C (&lbl_1_data_28[7])
+extern Vec lbl_1_data_28[12];
+extern u32 lbl_1_data_248[10][4];
 
 MGT_PAPER lbl_1_bss_0[MGTOUR_PAPER_MAX];
-MGT_KAMIWORK *lbl_1_bss_16760;
+MGT_KAMIWORK lbl_1_bss_16760;
 MGT_FLOW *lbl_1_bss_16818;
 MGT_MODEWORK *lbl_1_bss_1681C;
 MGT_FLOW lbl_1_bss_16820;
->>>>>>> decomp/s55-mgtourDll-C
 
 HUWINID fn_1_660(void)
 {
@@ -475,13 +474,6 @@ void fn_1_2CE8(void)
     fn_1_CFEC(0);
 }
 
-Vec lbl_1_data_7C[5] = {
-    { 0.0f, 100.0f, 0.0f },
-    { -320.0f, 100.0f, 140.0f },
-    { -420.0f, 100.0f, 140.0f },
-    { -380.0f, 100.0f, 140.0f },
-    { 20.0f, 100.0f, 140.0f },
-};
 u8 lbl_1_data_120[16] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xA0, 0xA0, 0xFF, 0x00, 0x80, 0xC0, 0xFF, 0x00 };
 HU3DPARMANPARAM lbl_1_data_130 = {
     0x3C, 0, 1.0f, 10.0f, 5.0f, { 0.0f, -0.4f, 0.0f }, 15.0f, 1.0f, 70.0f, 0.95f, 2,
@@ -741,31 +733,6 @@ void fn_1_3D2C(void)
     lbl_1_bss_16818->stat |= 0x4000;
     HuPrcChildCreate(fn_1_3BF0, 0x64, 0x1000, 0, HuPrcCurrentGet());
     HuPrcVSleep();
-}
-
-static inline BOOL MgtAngleSub(float *angle, float end, float speed)
-{
-    float diff = *angle - end;
-    float change = fmodf(diff, 180);
-    float wrap = fmodf(diff, 360);
-    if (fabsf(wrap) > 180.0f) {
-        if (change > 0) {
-            change = -(180.0f - fabsf(change));
-        } else {
-            change = 180.0f - fabsf(change);
-        }
-    }
-    if (fabsf(change) < speed) {
-        *angle = end;
-        return TRUE;
-    }
-    if (change > 0) {
-        change -= speed;
-    } else {
-        change += speed;
-    }
-    *angle = end + change;
-    return FALSE;
 }
 
 void fn_1_3DE4(void)
@@ -1112,10 +1079,6 @@ void fn_1_5540(void)
     memset(lbl_1_bss_1681C, 0, sizeof(MGT_MODEWORK));
 }
 
-float lbl_1_data_1B4[13] = {
-    0.0f, 0.0f, 1000.0f, 0.0f, -3000.0f, 1000.0f, 0.0f, 0.0f, -8000.0f, -3000.0f, -3000.0f, -3000.0f, -3000.0f
-};
-
 extern void fn_1_C7BC(s32 *playerNo, s32 *charNo);
 extern void fn_1_C804(void);
 extern void fn_1_D820(s32 arg, MGT_FLOW *flow);
@@ -1353,21 +1316,7 @@ void fn_1_56C0(void)
 
 SHARED_SYM extern MGDATA mgDataTbl[];
 
-static Vec lbl_1_data_28[6] = {
-    { -160.0f, 0.0f, 160.0f }, { 0.0f, 0.0f, 160.0f }, { 160.0f, 0.0f, 160.0f },
-    { 320.0f, 0.0f, 160.0f }, { -180.0f, 31.0f, 420.0f }, { 167.0f, 31.0f, 420.0f }
-};
-
-static Vec lbl_1_data_7C[5] = {
-    { 0.0f, 100.0f, 0.0f }, { -320.0f, 100.0f, 140.0f }, { -420.0f, 100.0f, 140.0f },
-    { -380.0f, 100.0f, 140.0f }, { 20.0f, 100.0f, 140.0f }
-};
-
-static f32 lbl_1_data_1B4[13] = {
-    0.0f, 0.0f, 1000.0f, 0.0f, -3000.0f, 1000.0f, 0.0f, 0.0f, -8000.0f, -3000.0f, -3000.0f, -3000.0f, -3000.0f
-};
-
-static u32 lbl_1_data_248[10][4] = {
+u32 lbl_1_data_248[10][4] = {
     { 0x1F8, 0x200, 0x1FA, 0x1FF }, { 0x1E4, 0x1EC, 0x1E6, 0x1EB }, { 0x25C, 0x264, 0x25E, 0x263 },
     { 0x2AC, 0x2B4, 0x2AE, 0x2B3 }, { 0x284, 0x28C, 0x286, 0x28B }, { 0x1BC, 0x1C4, 0x1BE, 0x1C3 },
     { 0x298, 0x2A0, 0x29A, 0x29F }, { 0x1D0, 0x1D8, 0x1D2, 0x1D7 }, { 0x270, 0x278, 0x272, 0x277 },
@@ -1953,11 +1902,7 @@ Vec lbl_1_data_38C[4] = {
     { 1.0f, 1.0f, 1.0f },
 };
 
-extern Vec lbl_1_data_28[];
-extern f32 lbl_1_data_180[];
-extern f32 lbl_1_data_1B4[];
-extern s32 lbl_1_data_248[][4];
-extern Vec lbl_1_data_7C[];
+f32 lbl_1_data_180[13] = { -35.0f, -35.0f, -35.0f, -45.0f, -50.0f, -35.0f, -40.0f, -35.0f, -60.0f, -80.0f, -80.0f, -80.0f, -80.0f };
 
 void fn_1_A6BC(Vec *pos);
 void fn_1_A910(void);
