@@ -76,9 +76,9 @@ typedef struct M505ParMan_s {
     Vec offset;            //0x10
     Vec scale;             //0x1C
     s16 playerNo;          //0x28
-    s16 pad2;              //0x2A
     HU3DMOTID motA;        //0x2A
     HU3DMOTID motB;        //0x2C
+    s16 pad2;              //0x2E
 } M505_PARMAN;            //0x30
 
 /* The module work structure (lbl_1_bss_8). */
