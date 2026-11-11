@@ -2515,9 +2515,10 @@ void MdOptionRecordCursorPosSet(int no)
 
 void MdOptionStoryRankUpdate(void)
 {
-    MDOPT_MODEL_WORK *model;
+    SYS *sysWk;
     int i;
     int j;
+    MDOPT_MODEL_WORK *model;
     float angle;
     HuVecF vec;
     HuVecF axis0;
@@ -2525,41 +2526,42 @@ void MdOptionStoryRankUpdate(void)
     Mtx mtx;
     Mtx rot;
     angle = 0.0f;
+    sysWk = sysP;
     model = sysP->model;
-    switch (sysP->rankPhase) {
+    switch (sysWk->rankPhase) {
         case 0:
             angle = 0.0f;
-            sysP->rankFrame++;
-            if (sysP->rankFrame >= 180) {
-                sysP->rankFrame = 0;
-                sysP->rankPhase++;
+            sysWk->rankFrame++;
+            if (sysWk->rankFrame >= 180) {
+                sysWk->rankFrame = 0;
+                sysWk->rankPhase++;
             }
             break;
         case 1:
-            sysP->rankFrame++;
-            angle = -(2.0f * (float)sysP->rankFrame);
+            sysWk->rankFrame++;
+            angle = -(2.0f * (float)sysWk->rankFrame);
             if (angle < -20.0f) {
                 angle = -20.0f;
-                sysP->rankFrame = 0;
-                sysP->rankPhase++;
+                sysWk->rankFrame = 0;
+                sysWk->rankPhase++;
             }
             break;
         case 2:
-            sysP->rankFrame++;
-            angle = -20.0f + (10.0f * (float)sysP->rankFrame);
+            sysWk->rankFrame++;
+            angle = -20.0f + (10.0f * (float)sysWk->rankFrame);
             if (angle > 380.0f) {
                 angle = 380.0f;
-                sysP->rankFrame = 0;
-                sysP->rankPhase++;
+                sysWk->rankFrame = 0;
+                sysWk->rankPhase++;
             }
             break;
         case 3:
-            sysP->rankFrame++;
-            angle = 380.0f - (float)sysP->rankFrame;
+            sysWk->rankFrame++;
+            angle = 380.0f - (float)sysWk->rankFrame;
             if (angle < 360.0f) {
                 angle = 0.0f;
-                sysP->rankPhase = 0;
-                sysP->rankFrame = 0;
+                sysWk->rankPhase = 0;
+                sysWk->rankFrame = 0;
             }
             break;
     }
@@ -2584,9 +2586,10 @@ void MdOptionStoryRankUpdate(void)
 
 void MdOptionStoryRankStarUpdate(void)
 {
-    MDOPT_MODEL_WORK *model;
+    SYS *sysWk;
     int i;
     int j;
+    MDOPT_MODEL_WORK *model;
     float angle;
     float wobble;
     HuVecF vec;
@@ -2598,44 +2601,45 @@ void MdOptionStoryRankStarUpdate(void)
     Mtx rot;
     angle = 0.0f;
     wobble = 0.0f;
+    sysWk = sysP;
     model = sysP->model;
-    switch (sysP->starPhase) {
+    switch (sysWk->starPhase) {
         case 0:
             angle = 0.0f;
-            sysP->starFrame++;
-            if (sysP->starFrame >= 180) {
-                sysP->starFrame = 0;
-                sysP->starPhase++;
+            sysWk->starFrame++;
+            if (sysWk->starFrame >= 180) {
+                sysWk->starFrame = 0;
+                sysWk->starPhase++;
             }
-            wobble = 5.0 * sin(3.141592653589793 * (double)((2160.0f * (float)sysP->starFrame) / 180.0f) / 180.0);
+            wobble = 5.0 * sin(3.141592653589793 * (double)((2160.0f * (float)sysWk->starFrame) / 180.0f) / 180.0);
             break;
         case 1:
-            sysP->starFrame++;
-            angle = -(4.0f * (float)sysP->starFrame);
+            sysWk->starFrame++;
+            angle = -(4.0f * (float)sysWk->starFrame);
             if (angle < -40.0f) {
                 angle = -40.0f;
-                sysP->starFrame = 0;
-                sysP->starPhase++;
+                sysWk->starFrame = 0;
+                sysWk->starPhase++;
             }
             break;
         case 2:
-            sysP->starFrame++;
-            angle = -40.0f + (11.0f * (float)sysP->starFrame);
+            sysWk->starFrame++;
+            angle = -40.0f + (11.0f * (float)sysWk->starFrame);
             if (angle > 400.0f) {
                 angle = 400.0f;
-                sysP->starFrame = 0;
-                sysP->starPhase++;
+                sysWk->starFrame = 0;
+                sysWk->starPhase++;
             }
             break;
         case 3:
-            sysP->starFrame++;
-            angle = 400.0f - (2.0f * (float)sysP->starFrame);
+            sysWk->starFrame++;
+            angle = 400.0f - (2.0f * (float)sysWk->starFrame);
             if (angle < 360.0f) {
                 angle = 0.0f;
-                sysP->rankPhase = 0;
-                sysP->rankFrame = 0;
-                sysP->starPhase = 0;
-                sysP->starFrame = 0;
+                sysWk->rankPhase = 0;
+                sysWk->rankFrame = 0;
+                sysWk->starPhase = 0;
+                sysWk->starFrame = 0;
             }
             break;
     }
