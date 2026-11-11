@@ -229,6 +229,8 @@ void fn_1_DA4(void (*arg)(void))
     HuPrcVSleep();
 }
 
+extern Vec lbl_1_data_114;
+
 void fn_1_DE4(s16 layerNo)
 {
 }
@@ -239,18 +241,83 @@ void fn_1_13D4(void)
 
 void fn_1_1880(void)
 {
+    CamMotionExPath(HU3D_CAM4, lbl_1_bss_16818->camPath, lbl_1_bss_16818->camPathNum);
+    lbl_1_bss_16818->stat |= 0x40;
+    HuPrcEnd();
 }
 
 void fn_1_18E0(void)
 {
+    lbl_1_bss_16818->stat &= ~0x40;
+    HuPrcChildCreate(fn_1_1880, 100, 4096, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
 }
 
 void fn_1_1938(void)
 {
+    s8 arr[MGTOUR_MGTBL_MAX];
+    s32 cur;
+    s32 cnt;
+    s32 i;
+    cur = -1;
+#ifdef TARGET_PC
+    cnt = 0;
+#endif
+    i = lbl_1_bss_16818->mgTblNum;
+    while (i--) {
+        arr[i] = i;
+    }
+    fn_1_140(arr, lbl_1_bss_16818->mgTblNum);
+    while (lbl_1_bss_16818->stat & 0x200) {
+        if (lbl_1_bss_16818->stat & 0x80) {
+            lbl_1_bss_16818->stat &= ~0x80;
+            if (lbl_1_bss_16818->mgTblNum >= 10) {
+                cur = frandmod(lbl_1_bss_16818->mgTblNum) + 30;
+            } else if (lbl_1_bss_16818->mgTblNum >= 7) {
+                cur = frandmod(lbl_1_bss_16818->mgTblNum) + 20;
+            } else if (lbl_1_bss_16818->mgTblNum >= 4) {
+                cur = frandmod(lbl_1_bss_16818->mgTblNum) + 15;
+            } else {
+                cur = frandmod(lbl_1_bss_16818->mgTblNum) + 10;
+            }
+            cnt = 0;
+        }
+        if (cur >= 0) {
+            cnt++;
+            if (cnt >= 3) {
+                if (cur == 0) {
+                    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[5], 1);
+                    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[6], 1);
+                    HuAudFXPlay(0x4A7);
+                    lbl_1_bss_16818->stat |= 0x100;
+                } else {
+                    HuAudFXPlay(0x4A6);
+                    if (lbl_1_bss_16818->animId >= 0) {
+                        Hu3DAnimKill(lbl_1_bss_16818->animId);
+                    }
+                    lbl_1_bss_16818->animId = Hu3DAnimCreate(lbl_1_bss_16818->thpAnim[arr[cur % lbl_1_bss_16818->mgTblNum]], lbl_1_bss_16818->mdl[6], "ukiwa_naka");
+                    cnt = 0;
+                }
+                cur--;
+            }
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
 }
 
 void fn_1_1C68(void)
 {
+    if (!(lbl_1_bss_16818->stat & 0x200)) {
+        Hu3DModelAttrSet(lbl_1_bss_16818->mdl[5], 1);
+        Hu3DModelScaleSet(lbl_1_bss_16818->mdl[5], 3.8f, 3.8f, 1.0f);
+        Hu3DModelPosSet(lbl_1_bss_16818->mdl[5], lbl_1_data_114.x, lbl_1_data_114.y, lbl_1_data_114.z);
+        Hu3DModelAttrSet(lbl_1_bss_16818->mdl[6], 1);
+        Hu3DModelScaleSet(lbl_1_bss_16818->mdl[6], 3.8f, 3.8f, 1.0f);
+        Hu3DModelPosSet(lbl_1_bss_16818->mdl[6], lbl_1_data_114.x, lbl_1_data_114.y, lbl_1_data_114.z);
+        lbl_1_bss_16818->stat |= 0x200;
+        HuPrcChildCreate(fn_1_1938, 100, 4096, 0, HuPrcCurrentGet());
+    }
 }
 
 void fn_1_D29C(s32);
