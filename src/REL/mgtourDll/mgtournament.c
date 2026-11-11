@@ -632,8 +632,260 @@ void fn_1_7450(void)
     }
 }
 
+void fn_1_FC90(void);
+void fn_1_FD3C(void);
+void fn_1_FDE8(void);
+void fn_1_FE94(void);
+void fn_1_FF40(void);
+void fn_1_FF9C(void);
+void fn_1_10018(void);
+void fn_1_D418(s32 arg);
+void fn_1_C76C(void);
+
 void fn_1_7CB8(void)
 {
+    s32 i;
+    s32 j;
+    s32 r;
+    OMOVLHIS *his;
+    s8 *order;
+    s32 mes;
+    u8 last;
+    s32 t;
+    s32 n;
+    s8 mgIdx;
+    s8 tmp[0x100];
+
+    if (lbl_1_bss_1681C->cur == lbl_1_bss_16818->mgTblNum) {
+#ifdef TARGET_PC
+        last = lbl_1_bss_1681C->order[(lbl_1_bss_16818->mgTblNum > 0x0B ? 0x0B : lbl_1_bss_16818->mgTblNum) - 1];
+#else
+        last = *(lbl_1_bss_16818->mgTblNum + (u8 *)lbl_1_bss_1681C);
+#endif
+        lbl_1_bss_1681C->cur = 0;
+        n = lbl_1_bss_16818->mgTblNum;
+#ifdef TARGET_PC
+        if (n > 0x0B) {
+            n = 0x0B;
+        }
+#endif
+        order = lbl_1_bss_1681C->order;
+        i = n;
+        while (i--) {
+            tmp[i] = order[i];
+        }
+        i = n;
+        while (i--) {
+            if (i != 0) {
+                r = frandmod(i + 1);
+            } else {
+                r = 0;
+            }
+            order[i] = tmp[r];
+            for (j = 0; j <= i; j++) {
+                if (j != r && j > r) {
+                    tmp[j - 1] = tmp[j];
+                }
+            }
+        }
+        if (lbl_1_bss_1681C->order[0] == (s8)last) {
+            lbl_1_bss_1681C->order[0] = lbl_1_bss_1681C->order[lbl_1_bss_16818->mgTblNum / 2];
+            lbl_1_bss_1681C->order[lbl_1_bss_16818->mgTblNum / 2] = last;
+        }
+    }
+    mes = *(s16 *)&lbl_1_bss_16818->mgTbl[lbl_1_bss_1681C->order[lbl_1_bss_1681C->cur]].mes2;
+    mgIdx = lbl_1_bss_16818->mgTbl[lbl_1_bss_1681C->order[lbl_1_bss_1681C->cur]].mgIdx;
+    switch (lbl_1_bss_1681C->mgNum) {
+    case 0:
+        lbl_1_bss_16818->player1No = lbl_1_bss_1681C->playerNo[0];
+        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[1];
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[0]].grp = 0;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[1]].grp = 1;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[2]].grp = 2;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[3]].grp = 2;
+        if (!(lbl_1_bss_16818->stat & 8)) {
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player1No].padNo, 15, 4, 2);
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player2No].padNo, 15, 4, 2);
+            HuPrcChildCreate(fn_1_FC90, 0x64, 0x1000, 0, HuPrcCurrentGet());
+            HuPrcVSleep();
+            if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+                lbl_1_bss_16818->keyMask = 4;
+                HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+            }
+            while (!(lbl_1_bss_16818->flag & 4)) {
+                HuPrcVSleep();
+            }
+        }
+        break;
+    case 1:
+        lbl_1_bss_16818->player1No = lbl_1_bss_1681C->playerNo[2];
+        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[3];
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[0]].grp = 2;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[1]].grp = 2;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[2]].grp = 0;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[3]].grp = 1;
+        if (!(lbl_1_bss_16818->stat & 8)) {
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player1No].padNo, 15, 4, 2);
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player2No].padNo, 15, 4, 2);
+            HuPrcChildCreate(fn_1_FD3C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+            HuPrcVSleep();
+            if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+                lbl_1_bss_16818->keyMask = 8;
+                HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+            }
+            while (!(lbl_1_bss_16818->flag & 8)) {
+                HuPrcVSleep();
+            }
+        }
+        break;
+    case 2:
+        lbl_1_bss_16818->player1No = lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur2 == 0];
+        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[2 + (lbl_1_bss_1681C->cur3 == 0)];
+        GwPlayerConf[lbl_1_bss_16818->player1No].grp = 0;
+        GwPlayerConf[lbl_1_bss_16818->player2No].grp = 1;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur2]].grp = 2;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[2 + lbl_1_bss_1681C->cur3]].grp = 2;
+        if (!(lbl_1_bss_16818->stat & 8)) {
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player1No].padNo, 15, 4, 2);
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player2No].padNo, 15, 4, 2);
+            HuPrcChildCreate(fn_1_FDE8, 0x64, 0x1000, 0, HuPrcCurrentGet());
+            HuPrcVSleep();
+            if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+                lbl_1_bss_16818->keyMask = 0x10;
+                HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+            }
+            while (!(lbl_1_bss_16818->flag & 0x10)) {
+                HuPrcVSleep();
+            }
+        }
+        break;
+    case 3:
+        lbl_1_bss_16818->player1No = lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur2];
+        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[2 + lbl_1_bss_1681C->cur3];
+        GwPlayerConf[lbl_1_bss_16818->player1No].grp = 0;
+        GwPlayerConf[lbl_1_bss_16818->player2No].grp = 1;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur2 == 0]].grp = 2;
+        GwPlayerConf[lbl_1_bss_1681C->playerNo[2 + (lbl_1_bss_1681C->cur3 == 0)]].grp = 2;
+        if (!(lbl_1_bss_16818->stat & 8)) {
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player1No].padNo, 15, 4, 2);
+            omVibrate(GwPlayerConf[lbl_1_bss_16818->player2No].padNo, 15, 4, 2);
+            HuPrcChildCreate(fn_1_FE94, 0x64, 0x1000, 0, HuPrcCurrentGet());
+            HuPrcVSleep();
+            if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+                lbl_1_bss_16818->keyMask = 0x20;
+                HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+            }
+            while (!(lbl_1_bss_16818->flag & 0x20)) {
+                HuPrcVSleep();
+            }
+        }
+        break;
+    }
+    if (!(lbl_1_bss_16818->stat & 8)) {
+        lbl_1_bss_1681C->cur -= 1;
+        fn_1_D61C(6);
+        while (!fn_1_D630()) {
+            HuPrcVSleep();
+        }
+        lbl_1_bss_1681C->cur += 1;
+        t = 60;
+        while (t--) {
+            HuPrcVSleep();
+        }
+    }
+    HuPrcChildCreate(fn_1_FF40, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+        lbl_1_bss_16818->keyMask = 0x40;
+        HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    }
+    while (!(lbl_1_bss_16818->flag & 0x40)) {
+        HuPrcVSleep();
+    }
+    if (lbl_1_bss_16818->stat & 0x20) {
+        lbl_1_bss_16818->stat &= ~0x20;
+        HuWinExClose(lbl_1_bss_16818->winId);
+        HuWinHomeClear(lbl_1_bss_16818->winId);
+    }
+    lbl_1_bss_16818->stat |= 0x80;
+    lbl_1_bss_16818->stat &= ~0x100;
+    fn_1_D418(0);
+    fn_1_D61C(4);
+    while (!fn_1_D630()) {
+        HuPrcVSleep();
+    }
+    while (!(lbl_1_bss_16818->stat & 0x100)) {
+        HuPrcVSleep();
+    }
+    HuPrcChildCreate(fn_1_FF9C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+        lbl_1_bss_16818->keyMask = 0x80;
+        HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    }
+    while (!(lbl_1_bss_16818->flag & 0x80)) {
+        HuPrcVSleep();
+    }
+    HuPrcChildCreate(fn_1_10018, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+        lbl_1_bss_16818->keyMask = 0x100;
+        HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    }
+    while (!(lbl_1_bss_16818->flag & 0x100)) {
+        HuPrcVSleep();
+    }
+    if (lbl_1_bss_16818->stat & 2) {
+        if (lbl_1_bss_16818->stat & 0x20) {
+            lbl_1_bss_16818->stat &= ~0x20;
+            HuWinExClose(lbl_1_bss_16818->winId);
+            HuWinHomeClear(lbl_1_bss_16818->winId);
+        }
+        his = omOvlHisGet(0);
+        omOvlHisChg(0, his->ovl, 3, his->stat);
+        return;
+    }
+    lbl_1_bss_16818->mgNo = mgIdx;
+    HuDataDirClose(0x9A0000);
+    HuDataDirClose(0x270000);
+    CharModelDataClose(-1);
+    if (!(lbl_1_bss_16818->stat & 4)) {
+        HuPrcChildCreate(fn_1_4F0, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    } else {
+        lbl_1_bss_16818->loadState = 1;
+    }
+    if (lbl_1_bss_16818->bgmId >= 0) {
+        HuAudSStreamFadeOut(lbl_1_bss_16818->bgmId, 1000);
+        lbl_1_bss_16818->bgmId = -1;
+    }
+    if (lbl_1_bss_16818->seId >= 0) {
+        HuAudFXStop(lbl_1_bss_16818->seId);
+        lbl_1_bss_16818->seId = -1;
+    }
+    WipeCreate(2, 6, 60);
+    WipeWait();
+    lbl_1_bss_1681C->cur += 1;
+    HuTHPClose();
+    HuPrcVSleep();
+    while (lbl_1_bss_16818->loadState == 0) {
+        HuPrcVSleep();
+    }
+    while (HuTHPProcCheck()) {
+        HuPrcVSleep();
+    }
+    GwSystem.mgNo = mes - 0x1F5;
+    GWMgUnlockSet(mes);
+    GwSystem.mgNo = mes - 0x1F5;
+    if (lbl_1_bss_16818->stat & 4) {
+        GwSystem.mgInstF = 1;
+    } else {
+        GwSystem.mgInstF = 0;
+    }
+    fn_1_C76C();
+    omOvlCallEx(DLL_instdll, 1, 0, 0);
+    while (1) {
+        HuPrcVSleep();
+    }
 }
 
 void fn_1_9094(void)
