@@ -512,6 +512,11 @@ void fn_1_2E68(void)
     f32 ts;
     s16 id;
 
+#ifdef TARGET_PC
+    timer = 0;
+    vy = 0.0f;
+    anim = NULL;
+#endif
     angle = 0.0f;
     state = 0;
     running = 1;
@@ -674,14 +679,38 @@ void fn_1_2E68(void)
 
 void fn_1_3B98(void)
 {
+    lbl_1_bss_16818->stat &= ~0x800;
+    HuPrcChildCreate(fn_1_2E68, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
 }
 
 void fn_1_3BF0(void)
 {
+    Vec target;
+    f32 s;
+    f32 angle = 0.0f;
+
+    while (lbl_1_bss_16818->stat & 0x4000) {
+        s = sin(3.141592653589793 * angle / 180.0);
+        target = lbl_1_bss_16818->camUp;
+        target.y += 5.0f * s;
+        Hu3DCameraPosSetV(0x10, &lbl_1_bss_16818->camPos, &lbl_1_bss_1681C->camUp, &target);
+        angle += 2.3f;
+        if (angle >= 360.0f) {
+            angle -= 360.0f;
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
 }
 
 void fn_1_3D2C(void)
 {
+    lbl_1_bss_16818->camPos = lbl_1_bss_1681C->camPos;
+    lbl_1_bss_16818->camUp = lbl_1_bss_1681C->camTarget;
+    lbl_1_bss_16818->stat |= 0x4000;
+    HuPrcChildCreate(fn_1_3BF0, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
 }
 
 void fn_1_3DE4(void)
