@@ -910,6 +910,9 @@ static BOOL FusenObjColCheck(void)
         obj1 = fusenObj[i];
         VECAdd(&obj1->trans, &outVec[i], &obj1->trans);
     }
+#ifdef TARGET_PC
+    return TRUE; // GC r3 = &obj->trans from the last VECAdd (always nonzero), so the caller always runs all 50 iterations
+#endif
 }
 
 static void CreateHikosenObj(HuVecF *pos)
