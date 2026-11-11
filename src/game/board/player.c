@@ -2508,6 +2508,9 @@ static s8 *PlayerCapsulePtrGet(int playerNo, int index)
             return  &GwPlayer[j].capsule[index-(memberNo*3)];
         }
     }
+#ifdef TARGET_PC
+    return &GwPlayer[playerNo].capsule[index]; // fn is inlined by MWCC (no standalone asm); team member not found never happens, return a non-null slot rather than deref garbage
+#endif
 }
 
 int MBPlayerCapsuleAdd(int playerNo, int capsuleNo)
