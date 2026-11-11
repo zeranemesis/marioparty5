@@ -129,7 +129,7 @@ typedef struct MdCamera_s {
 typedef struct MdCameraWork_s {
     BOOL createF; //0x00
     MDDEBUGFONT_WORK *debugFont; //0x04
-    MDCAMERA camera[MDCAMERA_MAX]; //0x08
+    MDCAMERA camera[2]; //0x08 (this overlay only has two cameras: size 0x11C)
     int selCamera;
 } MDCAMERA_WORK;
 
@@ -165,9 +165,44 @@ typedef struct MdMess_s {
     MDMESS_WIN win[MDMESS_WIN_MAX];
 } MDMESS_WORK;
 
+/* Model slots of the option overlay (sys->model). mdlId/posP/rotP/scaleP
+ * share one index space; the tail array holds a per-slot highlight state. */
+#define MDOPT_MODEL_MAX 133
+
+typedef struct MdOptModelWork_s {
+    HU3DMODELID mdlId[MDOPT_MODEL_MAX]; //0x00
+    HU3DMOTID motId[3]; //0x10A
+    HuVecF *posP[MDOPT_MODEL_MAX]; //0x110
+    HuVecF *rotP[MDOPT_MODEL_MAX]; //0x324
+    HuVecF *scaleP[MDOPT_MODEL_MAX]; //0x538
+    s32 selState[MDOPT_MODEL_MAX]; //0x74C per-slot highlight state (1 = hover, 2 = chosen)
+    void *unk960[MDOPT_MODEL_MAX]; //0x960
+    float ambScale; //0xB74
+    HU3DMODELID ambId[16]; //0xB78
+} MDOPT_MODEL_WORK;
+
+#define MDSPR_ANIM_MAX 40
+#define MDSPR_MAX 247
+#define MDSPR_GRP_MAX 8
+
+typedef struct MdSpriteWork_s {
+    ANIMDATA *animP[MDSPR_ANIM_MAX]; //0x00
+    HUSPRID sprId[MDSPR_MAX]; //0xA0
+    HUSPRGRPID grpId[MDSPR_GRP_MAX]; //0x28E
+    float fadeAlpha; //0x2A0
+} MDSPRITE_WORK;
+
 /* Offsets recovered from the original object's sys-> accesses. */
 typedef struct Sys_s {
-    s32 pad00[10];             //0x00
+    s32 step;                  //0x00 sub-state of the current flow function
+    s32 menu;                  //0x04
+    s32 item;                  //0x08
+    s32 sub;                   //0x0C
+    s32 sel;                   //0x10
+    s32 sel2;                  //0x14
+    s32 list;                  //0x18
+    s32 unk1C;                 //0x1C
+    s32 pad20[2];              //0x20
     s32 flowMode;              //0x28 MdFlowTbl index
     s8 exitF;                  //0x2C
     s8 skipWipeF;              //0x2D
@@ -178,7 +213,9 @@ typedef struct Sys_s {
     s8 cursorSelF[4];          //0x32
     s8 cursorSel[4];           //0x36
     s8 cursorSelPrev[4];       //0x3A
-    s8 pad3E[0x4C - 0x3E];     //0x3E
+    s8 pad3E[0x47 - 0x3E];     //0x3E
+    s8 unk47[4];               //0x47
+    s8 pad4B;                  //0x4B
     s16 loadState;             //0x4C
     s16 loadAsyncStat;         //0x4E
     s32 pad50;                 //0x50
@@ -187,18 +224,42 @@ typedef struct Sys_s {
     void *unk5C[3];            //0x5C
     HUPROCESS *loadProc;       //0x68
     OMOBJ *obj[6];             //0x6C debugfont, pad, camera, light, shadow, mess
-    void *debugFont;           //0x84
-    void *padWork;             //0x88
-    void *camera;              //0x8C
-    void *light;               //0x90
+    MDDEBUGFONT_WORK *debugFont; //0x84
+    MDPAD_WORK *padWork;       //0x88
+    MDCAMERA_WORK *camera;     //0x8C
+    MDLIGHT_WORK *light;       //0x90
     void *shadow;              //0x94
-    void *mess;                //0x98
-    void *sprite;              //0x9C
-    void *model;               //0xA0
-    u8 padA4[0x398 - 0xA4];    //0xA4
+    MDMESS_WORK *mess;         //0x98
+    MDSPRITE_WORK *sprite;     //0x9C
+    MDOPT_MODEL_WORK *model;   //0xA0
+    s16 unkA4;                 //0xA4
+    u8 padA6[0x398 - 0xA6];    //0xA6
     s32 unk398;                //0x398
     s32 unk39C;                //0x39C
-    u8 pad3A0[0x510 - 0x3A0];  //0x3A0
+    u8 pad3A0[0x3D8 - 0x3A0];  //0x3A0
+    s32 unk3D8;                //0x3D8
+    s32 unk3DC;                //0x3DC
+    float modelScale;          //0x3E0
+    s32 camInitF;              //0x3E4
+    s32 unk3E8;                //0x3E8
+    s32 rumbleTime;            //0x3EC
+    u8 pad3F0[0x3F8 - 0x3F0];  //0x3F0
+    float camTime[4];          //0x3F8
+    float camT[4];             //0x408
+    s32 orbitInitF;            //0x418
+    s32 unk41C;                //0x41C
+    float orbitTime[6];        //0x420
+    float orbitT[6];           //0x438
+    s32 sprInitF;              //0x450
+    float sprTime[2];          //0x454
+    float sprT[2];             //0x45C
+    u8 pad464[0x48C - 0x464];  //0x464
+    s32 unk48C;                //0x48C
+    u8 pad490[0x4D0 - 0x490];  //0x490
+    s32 unk4D0;                //0x4D0
+    u8 pad4D4[0x4DC - 0x4D4];  //0x4D4
+    HuVecF orbitPos[4];        //0x4DC
+    s32 unk50C;                //0x50C
 } SYS;
 
 extern SYS *sys;
