@@ -13,6 +13,7 @@
 #include "stdarg.h"
 #include "string.h"
 #include "game/window.h"
+#include "game/sprite.h"
 
 extern NEL_SYS sysWork;
 
@@ -60,6 +61,12 @@ typedef struct SysLight_s {
     /* 0x44 */ HuVecF lightDir;
     /* 0x50 */ GXColor rgb;
 } SYSLIGHT;
+
+typedef struct SysSprite_s {
+    /* 0x00 */ ANIMDATA *animP[31];
+    /* 0x7C */ s16 sprId[48];
+    /* 0xDC */ s16 grpId[10];
+} SYSSPRITE;
 
 typedef struct SysMessWin_s {
     /* 0x00 */ s16 winId;
@@ -109,7 +116,7 @@ void MdMessWinMesSet(s32 winNo, s32 mesNo);
 void MdMessWinKill(s32 winNo);
 void MdMessWinPosSet(s32 winNo, float x, float y);
 void MdMessWinSpeedSet(s32 winNo, s16 speed);
-void MdMessDlgSprUpdate(SYSMESS *mess);
+void MdMessDlgSprUpdate(SYSMESS *volatile mess);
 void MdMessKill(void);
 
 HuVec2f *MdSpritePosGet(int grpNo, int memberNo);

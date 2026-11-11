@@ -202,7 +202,6 @@ static void MdMessDlgWinCreateInsert(s32 mesNo)
     NEL_SYS *sys = &sysWork;
     SYSMESS *mess = (SYSMESS *)sys->mess;
     SYSMESSINSERT *insert = &mess->insert;
-    s32 *num = &insert->num;
     HuVec2f size;
     s32 i;
 
@@ -233,7 +232,8 @@ static void MdMessDlgWinCreateInsert(s32 mesNo)
 
 static void MdMessDlgWinKill(void)
 {
-    SYSMESS *mess = (SYSMESS *)sysWork.mess;
+    NEL_SYS *sys = &sysWork;
+    SYSMESS *mess = (SYSMESS *)sys->mess;
 
     if (mess->dlgWinId != -1) {
         HuWinHomeClear(mess->dlgWinId);
@@ -243,9 +243,11 @@ static void MdMessDlgWinKill(void)
     }
 }
 
-void MdMessWinMesSet(s32 winNo, s32 mesNo)
+void MdMessWinMesSet(volatile s32 winNo, s32 mesNo)
 {
-    SYSMESSWIN *win = &((SYSMESS *)sysWork.mess)->win[winNo];
+    NEL_SYS *sys = &sysWork;
+    SYSMESS *mess = (SYSMESS *)sys->mess;
+    SYSMESSWIN *win = &mess->win[winNo];
     HuVec2f size;
 
     if (win->winId == -1) {
@@ -263,12 +265,11 @@ void MdMessWinMesSet(s32 winNo, s32 mesNo)
     }
 }
 
-void MdMessWinKill(s32 winNo)
+void MdMessWinKill(volatile s32 winNo)
 {
     NEL_SYS *sys = &sysWork;
     SYSMESS *mess = (SYSMESS *)sys->mess;
-    s32 no = winNo;
-    SYSMESSWIN *win = &mess->win[no];
+    SYSMESSWIN *win = &mess->win[winNo];
 
     if (win->winId != -1) {
         HuWinHomeClear(win->winId);
@@ -278,27 +279,22 @@ void MdMessWinKill(s32 winNo)
     }
 }
 
-void MdMessWinPosSet(s32 winNo, float x, float y)
+void MdMessWinPosSet(volatile s32 winNo, volatile float x, volatile float y)
 {
     NEL_SYS *sys = &sysWork;
     SYSMESS *mess = (SYSMESS *)sys->mess;
-    s32 no = winNo;
-    float px = x;
-    float py = y;
-    SYSMESSWIN *win = &mess->win[no];
+    SYSMESSWIN *win = &mess->win[winNo];
 
-    HuWinPosSet(win->winId, px, py);
+    HuWinPosSet(win->winId, x, y);
 }
 
-void MdMessWinSpeedSet(s32 winNo, s16 speed)
+void MdMessWinSpeedSet(volatile s32 winNo, volatile s16 speed)
 {
     NEL_SYS *sys = &sysWork;
     SYSMESS *mess = (SYSMESS *)sys->mess;
-    s32 no = winNo;
-    s16 spd = speed;
-    SYSMESSWIN *win = &mess->win[no];
+    SYSMESSWIN *win = &mess->win[winNo];
 
-    HuWinMesSpeedSet(win->winId, spd);
+    HuWinMesSpeedSet(win->winId, speed);
 }
 
 void fn_1_28F74(s32 winNo)
@@ -315,10 +311,12 @@ void fn_1_28FAC(s32 winNo)
     SYSMESSWIN *win = &mess->win[winNo];
 }
 
-void MdMessDlgSprUpdate(SYSMESS *mess)
+void MdMessDlgSprUpdate(SYSMESS *volatile mess)
 {
+    NEL_SYS *sys = &sysWork;
     SYSMESSSPR *spr = &mess->spr;
-    s16 grpId = *(s16 *)((u8 *)sysWork.sprite + 0xDC);
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    s16 grpId = sprite->grpId[0];
     HuVec2f *pos1 = MdSpritePosGet(0, 1);
     HuVec2f *pos2 = MdSpritePosGet(0, 2);
     HuVec2f *pos0 = MdSpritePosGet(0, 0);
@@ -326,7 +324,10 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
     HuVec2f *scale2 = MdSpriteScaleGet(0, 2);
     HuVec2f *scale0 = MdSpriteScaleGet(0, 0);
 
-    switch (mess->spr.mode) {
+    switch (spr->mode) {
+        case 0:
+        case 9:
+            break;
         case 1:
         case 2:
         case 3:
@@ -340,14 +341,14 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
             spr->pos1 = pos1->y;
             spr->pos2 = pos2->y;
             spr->scale = scale0->y;
-            if (mess->spr.mode == 1) {
-                mess->spr.mode = 5;
-            } else if (mess->spr.mode == 2) {
-                mess->spr.mode = 6;
-            } else if (mess->spr.mode == 3) {
-                mess->spr.mode = 7;
-            } else if (mess->spr.mode == 4) {
-                mess->spr.mode = 8;
+            if (spr->mode == 1) {
+                spr->mode = 5;
+            } else if (spr->mode == 2) {
+                spr->mode = 6;
+            } else if (spr->mode == 3) {
+                spr->mode = 7;
+            } else if (spr->mode == 4) {
+                spr->mode = 8;
             }
             break;
         case 5:
@@ -356,7 +357,7 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
             MdMathLerp(&pos2->y, 32, 2, spr->t);
             MdMathLerp(&scale0->y, 8, 0, spr->t);
             if (spr->time >= 1) {
-                mess->spr.mode = 0;
+                spr->mode = 0;
             }
             break;
         case 6:
@@ -365,7 +366,7 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
             MdMathLerp(&pos2->y, spr->pos2, 2, spr->t);
             MdMathLerp(&scale0->y, spr->scale, 0, spr->t);
             if (spr->time >= 1) {
-                mess->spr.mode = 9;
+                spr->mode = 9;
             }
             break;
         case 7:
@@ -374,7 +375,7 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
             MdMathLerp(&pos2->y, spr->pos2, 32, spr->t);
             MdMathLerp(&scale0->y, spr->scale, 8, spr->t);
             if (spr->time >= 1) {
-                mess->spr.mode = 0;
+                spr->mode = 0;
             }
             break;
         case 8:
@@ -404,7 +405,7 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
                 MdMathLerp(&pos2->y, 2, 32, spr->t);
                 MdMathLerp(&scale0->y, 0, 8, spr->t);
                 if (spr->time >= 1) {
-                    mess->spr.mode = 0;
+                    spr->mode = 0;
                 }
             }
             break;
@@ -413,8 +414,8 @@ void MdMessDlgSprUpdate(SYSMESS *mess)
 
 static void MdMessDebug(SYSMESS *mess)
 {
+    volatile s16 stat;
     HuVec2f size;
-    s16 stat;
     s32 tbl[4] = { 0x440000, 0x440001, 0x440002, 0x440003 };
 
     switch (mess->mode) {
@@ -458,7 +459,7 @@ static void MdMessDebug(SYSMESS *mess)
             }
             break;
     }
-    if (HuPadBtnDown[0] & PAD_BUTTON_Y) {
+    if (HuPadBtnDown[0] & PAD_BUTTON_UP) {
         mess->dbgColor = ++mess->dbgColor % 10;
     }
     MdDebugFontPrint("mess(%d / %d)", mess->dbgSel, mess->dbgColor);
