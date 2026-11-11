@@ -16,9 +16,9 @@ void MdMessProc(void)
     while (sys->unk234 == -1) {
         HuPrcVSleep();
     }
-    mess = (SYSMESS *)sys->mess;
-    ctrl = &sys->blendDbg.stat;
     while (1) {
+        mess = (SYSMESS *)sys->mess;
+        ctrl = &sys->blendDbg.stat;
         if (sys->unk234 == 0) {
             MdMessMain(mess);
         } else if (sys->unk234 == 1 && *ctrl == 2) {
