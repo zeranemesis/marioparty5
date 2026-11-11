@@ -472,7 +472,7 @@ void fn_1_C76C(void)
     }
 }
 
-void fn_1_C7BC(s32 *param)
+void fn_1_C7BC(s32 *param, s32 *unused)
 {
     s32 i;
 

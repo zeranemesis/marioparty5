@@ -263,7 +263,7 @@ int fn_1_99C(void)
 
 s8 fn_1_9B4(s32 arg)
 {
-    return (s8)*(s16 *)((u8 *)lbl_1_bss_16818 + arg * 0x30 + 0x14);
+    return (s8)lbl_1_bss_16818->player[arg].playerNo;
 }
 
 int fn_1_9D4(int no)
