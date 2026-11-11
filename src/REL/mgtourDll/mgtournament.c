@@ -231,8 +231,64 @@ void fn_1_DA4(void (*arg)(void))
 
 extern Vec lbl_1_data_114;
 
+void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
+
 void fn_1_DE4(s16 layerNo)
 {
+    GXColor color = { 255, 255, 255, 255 };
+    Mtx44 proj;
+    Mtx mtx;
+    if (Hu3DCameraBit == 4) {
+        C_MTXOrtho(proj, 0, 480, 0, 640, 0, 10);
+        GXSetProjection(proj, GX_ORTHOGRAPHIC);
+        PSMTXIdentity(mtx);
+        GXLoadPosMtxImm(mtx, GX_PNMTX0);
+        GXSetCurrentMtx(GX_PNMTX0);
+        GXSetViewport(0, 0, 640, 480, 0, 1);
+        GXSetScissor(0, 0, 640, 480);
+        GXSetCullMode(GX_CULL_NONE);
+        GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+        GXSetAlphaUpdate(GX_FALSE);
+        GXSetColorUpdate(GX_TRUE);
+        GXSetAlphaCompare(GX_GEQUAL, 1, GX_AOP_AND, GX_GEQUAL, 1);
+        GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_SPEC);
+        GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_SPEC);
+        GXSetCullMode(GX_CULL_NONE);
+        HuSprTexLoad(lbl_1_bss_16818->texId, 0, GX_TEXMAP0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
+        GXClearVtxDesc();
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_U16, 0);
+        GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        GXSetNumTexGens(1);
+        GXSetNumTevStages(1);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0);
+        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
+        GXSetTevColor(GX_TEVREG0, color);
+        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_C0, GX_CC_TEXC, GX_CC_ZERO);
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_A0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+        GXPosition2s16(0, 0);
+        GXTexCoord2f32(lbl_1_bss_16818->scrollX, lbl_1_bss_16818->scrollY);
+        GXPosition2s16(640, 0);
+        GXTexCoord2f32(5.0f + lbl_1_bss_16818->scrollX, lbl_1_bss_16818->scrollY);
+        GXPosition2s16(640, 480);
+        GXTexCoord2f32(5.0f + lbl_1_bss_16818->scrollX, 5.0f + lbl_1_bss_16818->scrollY);
+        GXPosition2s16(0, 480);
+        GXTexCoord2f32(lbl_1_bss_16818->scrollX, 5.0f + lbl_1_bss_16818->scrollY);
+        lbl_1_bss_16818->scrollX += 0.005;
+        if (lbl_1_bss_16818->scrollX >= 1.0) {
+            lbl_1_bss_16818->scrollX = 0.0f;
+        }
+        lbl_1_bss_16818->scrollY += 0.005;
+        if (lbl_1_bss_16818->scrollY >= 1.0) {
+            lbl_1_bss_16818->scrollY = 0.0f;
+        }
+    }
 }
 
 void fn_1_13D4(void)
