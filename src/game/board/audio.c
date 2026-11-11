@@ -644,7 +644,11 @@ void MBAudFXStop(int seNo)
 int MBAudFXPosPlay(s16 seNo, Vec *pos)
 {
     int pan = MBAudFXPosPanGet(pos);
+#ifdef TARGET_PC
+    return HuAudFXPlayPan(seNo, pan); // GC returned r3 = result of HuAudFXPlayPan
+#else
     HuAudFXPlayPan(seNo, pan);
+#endif
 }
 
 u8 MBAudFXPosPanGet(Vec *pos)
