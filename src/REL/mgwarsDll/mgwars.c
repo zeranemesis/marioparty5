@@ -2372,6 +2372,7 @@ void fn_1_9BC8(void)
 	s32 emptyList[19];
 	s32 changed[4];
 	u8 player;
+	s8 pl;
 	s32 i;
 	s32 j;
 	s32 cnt PC_INIT(0);
@@ -2394,11 +2395,12 @@ void fn_1_9BC8(void)
 	OMOVLHIS *his;
 
 	player = lbl_1_bss_0->unk8;
-	lbl_1_bss_0->unk352 = lbl_1_bss_0->models[(s8)player + 0x34];
+	pl = player;
+	lbl_1_bss_0->unk352 = lbl_1_bss_0->models[pl + 0x34];
 	Hu3DModelAttrReset(lbl_1_bss_0->unk352, 1);
 	Hu3DModelAttrReset(MDL(0x248), 1);
 	fn_1_AD8(lbl_1_bss_0->unk352, 0.0f, 240.0f);
-	switch ((s8)player) {
+	switch (pl) {
 	case 0:
 		fn_1_AD8(MDL(0x248), 0.0f, 60.0f);
 		break;
@@ -2427,7 +2429,7 @@ void fn_1_9BC8(void)
 	if (lbl_1_bss_0->unk10 & 0x10) {
 		i = 0x13;
 		while (i--) {
-			if ((s8)player != lbl_1_data_2D8[i].owner) {
+			if (pl != lbl_1_data_2D8[i].owner) {
 				lbl_1_data_2D8[i].reach = 1;
 			}
 		}
@@ -2440,7 +2442,7 @@ void fn_1_9BC8(void)
 		i = 0x13;
 		while (i--) {
 			if (lbl_1_data_2D8[i].reach != 0) {
-				counts[cnt] = fn_1_3458(i, (s8)player);
+				counts[cnt] = fn_1_3458(i, pl);
 				hexes[cnt] = i;
 				if (counts[cnt] == 0) {
 					emptyList[nz] = i;
@@ -2466,13 +2468,13 @@ void fn_1_9BC8(void)
 			Hu3DModelAttrReset(lbl_1_bss_0->models[i + 0x19], 1);
 		}
 	}
-	if (GwPlayerConf[(s8)player].type != 0) {
+	if (GwPlayerConf[pl].type != 0) {
 		if (lbl_1_bss_0->unk10 & 0x10) {
 			cnt = 0;
 			i = 0x13;
 			while (i--) {
 				if (lbl_1_data_2D8[i].reach != 0) {
-					counts[cnt] = fn_1_3458(i, (s8)player);
+					counts[cnt] = fn_1_3458(i, pl);
 					hexes[cnt] = i;
 					cnt++;
 				}
@@ -2491,7 +2493,7 @@ void fn_1_9BC8(void)
 		fn_1_4170(cur);
 	} else {
 		cur = 9;
-		pad = GwPlayerConf[(s8)player].padNo;
+		pad = GwPlayerConf[pl].padNo;
 		hex = &lbl_1_data_2D8[9];
 		model = MDL(0x248);
 		blink = 0;
@@ -2561,7 +2563,7 @@ void fn_1_9BC8(void)
 	while (i--) {
 		Hu3DModelAttrSet(lbl_1_bss_0->models[i + 0x19], 1);
 	}
-	fn_1_3458(cur, (s8)player);
+	fn_1_3458(cur, pl);
 	i = 4;
 	while (i--) {
 		changed[i] = 0;
@@ -2612,7 +2614,7 @@ void fn_1_9BC8(void)
 	i = 4;
 	while (i--) {
 		p = &lbl_1_bss_0->player[i];
-		if ((s8)player == i) {
+		if (pl == i) {
 			omVibrate(p->padNo, 0xC, 4, 2);
 			fn_1_1778(p, 3);
 			if (p->state != 1) {
@@ -2631,7 +2633,7 @@ void fn_1_9BC8(void)
 	if (timer < 0x96) {
 		timer = 0x96;
 	}
-	if (GwPlayerConf[(s8)player].type != 0) {
+	if (GwPlayerConf[pl].type != 0) {
 		fn_1_8D9C(0x80000);
 	}
 	fn_1_7FC(fn_1_EA84);
@@ -2664,7 +2666,7 @@ void fn_1_9BC8(void)
 		omOvlHisChg(0, his->ovl, 2, his->stat);
 		lbl_1_bss_4->unk3 |= 4;
 	}
-	Hu3DModelAttrReset(lbl_1_bss_0->models[(s8)player + 0x2C], 0x40000001);
+	Hu3DModelAttrReset(lbl_1_bss_0->models[pl + 0x2C], 0x40000001);
 	fn_1_F884();
 }
 
