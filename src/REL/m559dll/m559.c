@@ -555,6 +555,9 @@ static s32 fn_1_1210(M559VEC *target) {
     target->x = sp14;
     target->y = 0.0f;
     target->z = sp1C;
+#ifdef TARGET_PC
+    return 1; // GC r3 = last frandmod(0x514) result (random, nearly always nonzero); callers test != 0 as success
+#endif
 }
 static s32 fn_1_1394(M559VEC *pos, M559HOOK *hook, f32 range) {
     f32 sp20;
@@ -625,6 +628,9 @@ block_15:
     hook->unk0 = sp18;
     hook->unk4 = 0.0f;
     hook->unk8 = sp20;
+#ifdef TARGET_PC
+    return 1; // GC r3 = last frandmod(0x514) result (random, nearly always nonzero); callers test != 0 as success
+#endif
 }
 static s32 fn_1_1668(M559VEC *target, M559HOOK *hook, f32 range) {
     f32 sp1C;
@@ -681,6 +687,9 @@ block_11:
     hook->unk0 = sp14;
     hook->unk4 = 0.0f;
     hook->unk8 = sp1C;
+#ifdef TARGET_PC
+    return 1; // GC r3 = last frandmod(0x514) result (random, nearly always nonzero); callers test != 0 as success
+#endif
 }
 s32 fn_1_1894(OMOBJ *arg0) {
     Point3d sp14;
