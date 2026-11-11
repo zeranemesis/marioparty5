@@ -982,6 +982,9 @@ int MB2Ev_MasuHatena(int playerNo) {
     if ((u32) ((u16) temp_r0 & 0x380) != 0) {
         MB2Ev_WindGuru2((u32) ((u16) temp_r0 & 0x380) >> 7U, playerNo);
     }
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = last call result; MASUPLAYERHOOK result is ignored by MasuHatenaMain
+#endif
 }
 
 void MB2_Stub(void) {
@@ -989,6 +992,9 @@ void MB2_Stub(void) {
 }
 
 int MB2Ev_MasuWalkPre(int playerNo) {
+#ifdef TARGET_PC
+    return playerNo; // GC returned r3 = playerNo (empty body, arg untouched); caller ignores it
+#endif
 }
 
 int MB2Ev_MasuWalkPost(int playerNo) {
