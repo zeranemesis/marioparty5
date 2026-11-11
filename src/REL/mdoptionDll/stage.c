@@ -386,8 +386,7 @@ void MdSpriteCreate(MDSPRITE_WORK *sprite)
 
 void MdSpriteFadeDispSet(BOOL dispF)
 {
-    BOOL f = dispF;
-    if (f == FALSE) {
+    if (dispF == FALSE) {
         HuSprAttrSet(sysP->sprite->grpId[1], 0, HUSPR_ATTR_DISPOFF);
         return;
     }
@@ -505,8 +504,7 @@ void MdOptionSprGrpCreate(MDSPRITE_WORK *sprite, int grpNo)
 
 void MdOptionSprGrpKill(MDSPRITE_WORK *sprite, int grpNo)
 {
-    int no = grpNo;
-    HuSprGrpKill(sprite->grpId[no]);
+    HuSprGrpKill(sprite->grpId[grpNo]);
 }
 
 void MdOptionTitlePosSet(MDSPRITE_WORK *sprite, HuVecF *pos)
@@ -1414,12 +1412,10 @@ int MdOptionTextListNameGet(int cat, int sub, int no)
 
 void MdOptionTextListUpdate(u32 type, int msg, u32 value)
 {
-    u32 typeNo = type;
-    int msgNo = msg;
     char *buf;
     int i;
-    buf = HuWinMesPtrGet(msgNo);
-    switch (typeNo) {
+    buf = HuWinMesPtrGet(msg);
+    switch (type) {
         case 0:
             for (i = 0; i < 7; i++) {
                 if (i < 6) {
@@ -1431,79 +1427,57 @@ void MdOptionTextListUpdate(u32 type, int msg, u32 value)
             return;
         case 1:
             for (i = 0; i < 7; i++) {
-                switch (i) {
-                    default:
-                        buf[i] = ' ';
-                        break;
-                    case 5:
-                        buf[i] = ((value % 100) / 10) + '0';
-                        break;
-                    case 6:
-                        buf[i] = (value % 10) + '0';
-                        break;
+                if (i < 5) {
+                    buf[i] = ' ';
+                } else if (i == 5) {
+                    buf[i] = ((value % 100) / 10) + '0';
+                } else {
+                    buf[i] = (value % 10) + '0';
                 }
             }
             return;
         case 2:
             for (i = 0; i < 7; i++) {
-                switch (i) {
-                    default:
-                        buf[i] = ' ';
-                        break;
-                    case 4:
-                        buf[i] = ((value % 1000) / 100) + '0';
-                        break;
-                    case 5:
-                        buf[i] = ((value % 100) / 10) + '0';
-                        break;
-                    case 6:
-                        buf[i] = (value % 10) + '0';
-                        break;
+                if (i < 4) {
+                    buf[i] = ' ';
+                } else if (i == 4) {
+                    buf[i] = ((value % 1000) / 100) + '0';
+                } else if (i == 5) {
+                    buf[i] = ((value % 100) / 10) + '0';
+                } else {
+                    buf[i] = (value % 10) + '0';
                 }
             }
             return;
         case 3:
             for (i = 0; i < 7; i++) {
-                switch (i) {
-                    default:
-                        buf[i] = ' ';
-                        break;
-                    case 3:
-                        buf[i] = ((value % 10000) / 1000) + '0';
-                        break;
-                    case 4:
-                        buf[i] = ((value % 1000) / 100) + '0';
-                        break;
-                    case 5:
-                        buf[i] = ((value % 100) / 10) + '0';
-                        break;
-                    case 6:
-                        buf[i] = (value % 10) + '0';
-                        break;
+                if (i < 3) {
+                    buf[i] = ' ';
+                } else if (i == 3) {
+                    buf[i] = ((value % 10000) / 1000) + '0';
+                } else if (i == 4) {
+                    buf[i] = ((value % 1000) / 100) + '0';
+                } else if (i == 5) {
+                    buf[i] = ((value % 100) / 10) + '0';
+                } else {
+                    buf[i] = (value % 10) + '0';
                 }
             }
             return;
         case 4:
             for (i = 0; i < 7; i++) {
-                switch (i) {
-                    default:
-                        buf[i] = ' ';
-                        break;
-                    case 2:
-                        buf[i] = ((value % 100000) / 10000) + '0';
-                        break;
-                    case 3:
-                        buf[i] = ((value % 10000) / 1000) + '0';
-                        break;
-                    case 4:
-                        buf[i] = ((value % 1000) / 100) + '0';
-                        break;
-                    case 5:
-                        buf[i] = ((value % 100) / 10) + '0';
-                        break;
-                    case 6:
-                        buf[i] = (value % 10) + '0';
-                        break;
+                if (i < 2) {
+                    buf[i] = ' ';
+                } else if (i == 2) {
+                    buf[i] = ((value % 100000) / 10000) + '0';
+                } else if (i == 3) {
+                    buf[i] = ((value % 10000) / 1000) + '0';
+                } else if (i == 4) {
+                    buf[i] = ((value % 1000) / 100) + '0';
+                } else if (i == 5) {
+                    buf[i] = ((value % 100) / 10) + '0';
+                } else {
+                    buf[i] = (value % 10) + '0';
                 }
             }
             return;
@@ -1561,8 +1535,7 @@ void MdOptionTextListUpdate(u32 type, int msg, u32 value)
                 }
             }
             return;
-        case 7: {
-            float frame = 1.6666666f * (float)((value % 3600) % 60);
+        case 7:
             for (i = 0; i < 7; i++) {
                 switch (i) {
                     case 0:
@@ -1581,36 +1554,28 @@ void MdOptionTextListUpdate(u32 type, int msg, u32 value)
                         buf[i] = 0x5B;
                         break;
                     case 5:
-                        buf[i] = (((int)frame % 100) / 10) + '0';
+                        buf[i] = (((int)(1.6666666f * (float)((value % 3600) % 60)) % 100) / 10) + '0';
                         break;
                     default:
-                        buf[i] = ((int)frame % 10) + '0';
+                        buf[i] = ((int)(1.6666666f * (float)((value % 3600) % 60)) % 10) + '0';
                         break;
                 }
             }
             return;
-        }
         case 8:
             for (i = 0; i < 7; i++) {
-                switch (i) {
-                    default:
-                        buf[i] = ' ';
-                        break;
-                    case 2:
-                        buf[i] = ((value % 10000) / 1000) + '0';
-                        break;
-                    case 3:
-                        buf[i] = ((value % 1000) / 100) + '0';
-                        break;
-                    case 4:
-                        buf[i] = 0x85;
-                        break;
-                    case 5:
-                        buf[i] = ((value % 100) / 10) + '0';
-                        break;
-                    case 6:
-                        buf[i] = (value % 10) + '0';
-                        break;
+                if (i < 2) {
+                    buf[i] = ' ';
+                } else if (i == 2) {
+                    buf[i] = ((value % 10000) / 1000) + '0';
+                } else if (i == 3) {
+                    buf[i] = ((value % 1000) / 100) + '0';
+                } else if (i == 4) {
+                    buf[i] = 0x85;
+                } else if (i == 5) {
+                    buf[i] = ((value % 100) / 10) + '0';
+                } else {
+                    buf[i] = (value % 10) + '0';
                 }
             }
             return;
@@ -1701,10 +1666,9 @@ void MdOptionTextListUpdate(u32 type, int msg, u32 value)
 
 void MdOptionMgCopyName(int msg, char *name)
 {
-    int msgNo = msg;
     char *buf;
     int i;
-    buf = HuWinMesPtrGet(msgNo);
+    buf = HuWinMesPtrGet(msg);
     for (i = 0; i < 7; i++) {
         switch (i) {
             case 0:
