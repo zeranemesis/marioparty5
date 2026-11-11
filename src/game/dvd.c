@@ -4,6 +4,10 @@
 #include "dolphin/dvd.h"
 #include "dolphin/os.h"
 
+#ifdef TARGET_PC
+#include <stddef.h>
+#endif
+
 
 static DVDDiskID correctDiskID = {
     { 'M', 'P', 'G', 'C' }, //gameName
@@ -61,6 +65,11 @@ static void *HuDvdDataReadWait(DVDFileInfo *file, int mode, int param, BOOL asyn
         if(len > HU_DVD_BLOCKSIZE) {
             len = HU_DVD_BLOCKSIZE;
         }
+#ifdef TARGET_PC
+        // Aurora runs the read callback inside DVDReadAsyncPrio, before HuDataDirReadAsync stores dirP,
+        // and the callback reads the next blocks into dirP: store it first (file is always a HUDATASTAT's dvdFile here)
+        ((HUDATASTAT *)((u8 *)file - offsetof(HUDATASTAT, dvdFile)))->dirP = buf;
+#endif
         DVDReadAsyncPrio(file, buf, OSRoundUp32B(len), 0, HuDataDirReadAsyncCallBack, 3);
     } else {
         u32 readSize;

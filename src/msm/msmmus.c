@@ -2,6 +2,10 @@
 #include "msm/msmfio.h"
 #include "msm/msmmem.h"
 
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
+
 #define MUS_VOLUME(player) ((player)->baseVol * (player)->vol * (player)->fadeVol * (player)->pauseOnVol / (127 * 127 * 127))
 
 typedef struct MusPlayer_s {
@@ -402,6 +406,13 @@ s32 msmMusInit(MSM_SYS *sys, DVDFileInfo *file)
     if (msmFioRead(file, mus.musData, sys->header->musSize, sys->header->musOfs) < 0) {
         return MSM_ERR_READFAIL;
     }
+#ifdef TARGET_PC
+    for (i = 0; i < size / (s32)sizeof(MSM_MUS); i++) {
+        PORT_BE16_INPLACE(&mus.musData[i].sgid);
+        PORT_BE16_INPLACE(&mus.musData[i].sid);
+        PORT_BE32_INPLACE(&mus.musData[i].songOfs, 2);
+    }
+#endif
     size = sys->info->dummyMusSize;
     if (size != 0) {
         if ((mus.musBuf = msmMemAlloc(size * sys->info->musChanMax)) == NULL) {

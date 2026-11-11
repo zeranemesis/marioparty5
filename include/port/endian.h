@@ -35,4 +35,19 @@ static inline float PORT_BEF32(uint32_t raw)
     return value;
 }
 
+/* swap `count` consecutive big-endian 32-bit words (s32/u32/f32) in place */
+static inline void PORT_BE32_INPLACE(void *p, uint32_t count)
+{
+    uint32_t *w = (uint32_t *)p;
+    for (; count != 0; count--, w++) {
+        *w = PORT_BSWAP32(*w);
+    }
+}
+
+/* swap one big-endian 16-bit field in place */
+static inline void PORT_BE16_INPLACE(void *p)
+{
+    *(uint16_t *)p = PORT_BSWAP16(*(uint16_t *)p);
+}
+
 #endif

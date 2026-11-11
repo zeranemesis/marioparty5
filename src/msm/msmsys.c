@@ -5,6 +5,10 @@
 #include "msm/msmse.h"
 #include "msm/msmstream.h"
 
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
+
 static MSM_SYS sys;
 
 static void msmSysServer(void)
@@ -117,6 +121,10 @@ static s32 msmSysLoadBaseGroup(void *buf)
             msmFioClose(&file);
             return MSM_ERR_READFAIL;
         }
+#ifdef TARGET_PC
+        // only the MSM head is swapped here, MusyX converts the group data it points to
+        PORT_BE32_INPLACE(grpData, sizeof(MSM_GRP_HEAD) / 4);
+#endif
         if (msmFioRead(&file, buf, grpInfo->sampSize, grpInfo->sampOfs + sys.header->sampOfs) < 0) {
             msmFioClose(&file);
             return MSM_ERR_READFAIL;
@@ -190,6 +198,12 @@ static s32 msmSysGroupInit(DVDFileInfo *file)
     if (msmFioRead(file, sys.grpInfo, sys.header->grpInfoSize, sys.header->grpInfoOfs) < 0) {
         return MSM_ERR_READFAIL;
     }
+#ifdef TARGET_PC
+    for (i = 0; i < sys.header->grpInfoSize / (s32)sizeof(MSM_GRP_INFO); i++) {
+        PORT_BE16_INPLACE(&sys.grpInfo[i].gid);
+        PORT_BE32_INPLACE(&sys.grpInfo[i].dataOfs, 4);
+    }
+#endif
     if ((sys.grpBufA = msmMemAlloc(sys.info->grpBufSizeA * sys.grpStackAMax)) == NULL) {
         return MSM_ERR_OUTOFMEM;
     }
@@ -539,6 +553,9 @@ static inline s32 msmSysPushGroup(DVDFileInfo *file, void *buf, MSM_GRP_STACK *g
     if (msmFioRead(file, grp->buf, grpInfo->dataSize, grpInfo->dataOfs + sys.header->grpDataOfs) < 0) {
         return MSM_ERR_READFAIL;
     }
+#ifdef TARGET_PC
+    PORT_BE32_INPLACE(grp->buf, sizeof(MSM_GRP_HEAD) / 4);
+#endif
     if (msmFioRead(file, buf, grpInfo->sampSize, grpInfo->sampOfs + sys.header->sampOfs) < 0) {
         return MSM_ERR_READFAIL;
     }
@@ -801,6 +818,9 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
         msmFioClose(&file);
         return MSM_ERR_READFAIL;
     }
+#ifdef TARGET_PC
+    PORT_BE32_INPLACE(sys.header, sizeof(MSM_HEADER) / 4);
+#endif
     if (sys.header->version != MSM_FILE_VERSION) {
         msmFioClose(&file);
         return MSM_ERR_INVALIDFILE;
@@ -813,6 +833,11 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
         msmFioClose(&file);
         return MSM_ERR_READFAIL;
     }
+#ifdef TARGET_PC
+    PORT_BE16_INPLACE(&sys.info->musMax);
+    PORT_BE16_INPLACE(&sys.info->seMax);
+    PORT_BE32_INPLACE(&sys.info->minMem, 6);
+#endif
     if (aram != NULL) {
         if (aram->skipARInit == FALSE) {
             ARInit(aram->stackIndex, aram->numEntries);
@@ -867,6 +892,15 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
         msmFioClose(&file);
         return result;
     }
+#ifdef TARGET_PC
+    {
+        u32 i;
+        // every aux effect parameter after the type byte is a 32-bit word
+        for (i = 0; i < sys.header->auxParamSize / sizeof(MSM_AUXPARAM); i++) {
+            PORT_BE32_INPLACE(&sys.auxParam[i].revHi, (sizeof(MSM_AUXPARAM) - 4) / 4);
+        }
+    }
+#endif
     msmFioClose(&file);
     result = msmStreamInit(init->pdtPath);
     if (result < 0) {
@@ -874,7 +908,12 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
     }
     AIInit(NULL);
     result = (sys.info->surroundF == 2) ? SND_FLAGS_DEFAULT_STUDIO_DPL2 : SND_FLAGS_DEFAULT;
+#ifdef TARGET_PC
+    // MusyX PC copies decoded groups and samples into host memory (ARAM on GC), too big for the MSM heap: leave it on malloc
+    (void)sndHooks;
+#else
     sndSetHooks(&sndHooks);
+#endif
     if (sndInit(sys.info->voices, sys.info->music, sys.info->sfx, 1, result, sys.info->aramSize) != 0) {
         return MSM_ERR_INITFAIL;
     }

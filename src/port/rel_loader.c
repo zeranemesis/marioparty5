@@ -51,12 +51,34 @@ static void module_base_name(const char *discPath, char *out, size_t outSize)
     out[len] = '\0';
 }
 
+/*
+ * omOvlCall unlinks the running overlay from inside one of its own processes,
+ * which keeps executing that module's code until it reaches HuPrcEnd. The
+ * GameCube leaves the freed REL in memory, so the module is only really
+ * unloaded once the next one is loaded.
+ */
+static void *sPendingClose;
+
+static void close_now(void *handle)
+{
+#ifdef _WIN32
+    FreeLibrary((HMODULE)handle);
+#else
+    dlclose(handle);
+#endif
+}
+
 void *PortRelOpen(const char *discPath)
 {
     char base[64];
     char fileName[96];
     void *handle;
 
+    /* free the previous module first, so reopening it gives fresh data */
+    if (sPendingClose != NULL) {
+        close_now(sPendingClose);
+        sPendingClose = NULL;
+    }
     module_base_name(discPath, base, sizeof(base));
     snprintf(fileName, sizeof(fileName), "%s%s", base, kSuffix);
 #ifdef _WIN32
@@ -103,9 +125,8 @@ void PortRelClose(void *handle)
     if (handle == NULL) {
         return;
     }
-#ifdef _WIN32
-    FreeLibrary((HMODULE)handle);
-#else
-    dlclose(handle);
-#endif
+    if (sPendingClose != NULL) {
+        close_now(sPendingClose);
+    }
+    sPendingClose = handle;
 }

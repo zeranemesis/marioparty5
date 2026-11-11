@@ -110,9 +110,10 @@ static char *NameAt(u32 rawOffset)
     return StringTable + offset;
 }
 
+/* hsfmotion.c passes track fields MotionLoad already converted to host order, so no swap here (like hsfload.c's GetString) */
 char *SetName(u32 *strOfs)
 {
-    return NameAt(*strOfs);
+    return StringTable + *strOfs;
 }
 
 static u32 SymbolAt(u32 index)
@@ -271,6 +272,7 @@ static void MaterialLoad(void)
         u32 attrSymbol = PORT_BE32(file[i].attr);
 
         material[i].name = NameAt(file[i].name);
+        memcpy(material[i].unk4, file[i].unk4, sizeof(file[i].unk4));
         material[i].pass = PORT_BE16(file[i].pass);
         material[i].vtxMode = file[i].vtxMode;
         material[i].litColor[0] = file[i].litColor[0];
@@ -321,6 +323,13 @@ static void AttributeLoad(void)
     for (i = 0; i < sFileHead.attribute.num; i++) {
         attribute[i].name = NameAt(file[i].name);
         attribute[i].animWorkP = NULL;
+        /* byte fields hsfdraw.c reads as bytes (unk8[2] picks the layer blend), so no swap */
+        memcpy(attribute[i].unk8, file[i].unk8, sizeof(file[i].unk8));
+        memcpy(attribute[i].unk10, file[i].unk10, sizeof(file[i].unk10));
+        memcpy(attribute[i].unk18, file[i].unk18, sizeof(file[i].unk18));
+        memcpy(attribute[i].unk24, file[i].unk24, sizeof(file[i].unk24));
+        memcpy(attribute[i].unk38, file[i].unk38, sizeof(file[i].unk38));
+        memcpy(attribute[i].unk6C, file[i].unk6C, sizeof(file[i].unk6C));
         attribute[i].kColor = ReadFloat(file[i].kColor);
         attribute[i].nbtTpLvl = ReadFloat(file[i].nbtTpLvl);
         attribute[i].unk20 = ReadFloat(file[i].unk20);
@@ -1135,7 +1144,9 @@ static void MatrixLoad(void)
     matrix = Alloc(sizeof(HSFMATRIX));
     matrix->base_idx = PORT_BE32(file->base_idx);
     matrix->count = count;
-    matrix->data = Alloc(sizeof(Mtx) * (count ? count : 1));
+    /* EnvelopeExec.c indexes [base_idx mesh mtx][count obj mtx][count * base_idx], well past count:
+       on GC those writes land in the file buffer, so reserve the whole table */
+    matrix->data = Alloc(sizeof(Mtx) * (matrix->base_idx + count * (matrix->base_idx + 1) + 1));
     /* the matrices follow the single record they belong to */
     ConvertFloats(matrix->data, (const u8 *)file + sizeof(HSFFILEMATRIX), count * 12);
     sModel->matrix = matrix;

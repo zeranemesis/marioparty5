@@ -1,4 +1,8 @@
 #include "version.h"
+
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
 #include "game/window.h"
 #include "game/gamework.h"
 #include "game/process.h"
@@ -436,19 +440,33 @@ char *HuWinMesPtrGet(u32 messNum)
 u32 HuWinMesMaxDirGet(void)
 {
     u32 *dirNum = messDataPtr;
+#ifdef TARGET_PC
+    // message files are big-endian on the disc
+    return PORT_BE32(*dirNum);
+#else
     return *dirNum;
+#endif
 }
 
 u32 HuWinMesMaxNumGet(u32 dirNum)
 {
     u32 dir = dirNum >> 16;
     u32 *messData = messDataPtr;
+#ifdef TARGET_PC
+    if(dir >= PORT_BE32(*messData)) {
+        OSReport("Error: Message Dir Over\n");
+    }
+    messData++;
+    messData += PORT_BE32(messData[dir])/sizeof(u32);
+    return PORT_BE32(*messData);
+#else
     if(dir >= *messData) {
         OSReport("Error: Message Dir Over\n");
     }
     messData++;
     messData += messData[dir]/sizeof(u32);
     return *messData;
+#endif
 }
 
 void *HuWinMesDataPtrGet(void *data, u32 messNum)
@@ -456,6 +474,18 @@ void *HuWinMesDataPtrGet(void *data, u32 messNum)
     u32 dir = messNum >> 16;
     u32 num = messNum & 0xFFFF;
     u32 *messData = data;
+#ifdef TARGET_PC
+    if(dir >= PORT_BE32(*messData)) {
+        OSReport("Error: Message Dir Over\n");
+    }
+    messData++;
+    messData += PORT_BE32(messData[dir])/sizeof(u32);
+    if(num >= PORT_BE32(*messData)) {
+        OSReport("Error: Message Number Over\n");
+    }
+    messData++;
+    messData += PORT_BE32(messData[num])/sizeof(u32);
+#else
     if(dir >= *messData) {
         OSReport("Error: Message Dir Over\n");
     }
@@ -466,6 +496,7 @@ void *HuWinMesDataPtrGet(void *data, u32 messNum)
     }
     messData++;
     messData += messData[num]/sizeof(u32);
+#endif
     messData++;
     return messData;
 }

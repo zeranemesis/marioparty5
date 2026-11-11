@@ -77,7 +77,12 @@ static void *HuMemMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)
 
 void *HuMemTailMemoryAlloc(void *heap, s32 size, u32 retAddr)
 {
+#ifdef TARGET_PC
+    // the GC code returns this only because the result is still in r3
+    return HuMemTailMemoryAlloc2(heap, size, -256, retAddr);
+#else
     HuMemTailMemoryAlloc2(heap, size, -256, retAddr);
+#endif
 }
 
 static void *HuMemTailMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)

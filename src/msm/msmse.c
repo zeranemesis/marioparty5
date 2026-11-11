@@ -4,6 +4,10 @@
 
 #include "string.h"
 
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
+
 #define SE_PLAYER_EMIT (1 << 0)
 
 /* SE_PLAYER status, returned as is by msmSeGetStatus */
@@ -672,6 +676,13 @@ s32 msmSeInit(MSM_SYS *sys, DVDFileInfo *file)
     if (msmFioRead(file, se.seData, sys->header->seSize, sys->header->seOfs) < 0) {
         return MSM_ERR_READFAIL;
     }
+#ifdef TARGET_PC
+    for (playerSize = 0; playerSize < sys->header->seSize / (s32)sizeof(MSMSE); playerSize++) {
+        PORT_BE16_INPLACE(&se.seData[playerSize].groupId);
+        PORT_BE16_INPLACE(&se.seData[playerSize].fxId);
+        PORT_BE16_INPLACE(&se.seData[playerSize].pitchBend);
+    }
+#endif
     playerSize = sys->info->sfx * sizeof(SE_PLAYER);
     if ((se.player = msmMemAlloc(playerSize)) == NULL) {
         return MSM_ERR_OUTOFMEM;

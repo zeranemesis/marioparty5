@@ -94,8 +94,10 @@ struct KnownDisc {
 };
 
 const auto KNOWN_DISCS = std::to_array<KnownDisc>({
-    {"GMPE01", Platform::GameCube, Region::NorthAmerica, {"5eda4b612c9d04d16f95b2643ae9faa2", "0f45c2365f5812d970188b7df0b1e2ff"}},
-    {"GMPP01", Platform::GameCube, Region::Europe, {"7c8d20f1032f0025b4a681d23b421078", "ce3f0e8150d6c49093db11875e827023"}},
+    // shortcut: no XXH128 of a clean GP5E01 rev 0 dump yet, so the prelaunch hash check reports a mismatch; add it here once measured.
+    {"GP5E01", Platform::GameCube, Region::NorthAmerica, std::vector<std::string_view>{}},
+    // the decompilation only matches GP5E01 (see version.cpp)
+    {"GP5P01", Platform::GameCube, Region::Europe},
 });
 
 constexpr const KnownDisc* find_disc(std::string_view id) {

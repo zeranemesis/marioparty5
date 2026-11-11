@@ -5,6 +5,9 @@
 #include "game/armem.h"
 #include "game/process.h"
 #include "dolphin/dvd.h"
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
 
 #define STAT_ID_ARAM 0x10000
 
@@ -329,10 +332,18 @@ static void GetFileInfo(HUDATASTAT *readStat, s32 fileNum)
 {
     u32 *ptr;
     ptr = (u32 *)PTR_OFFSET(readStat->dirP, (fileNum * 4))+1;
+#ifdef TARGET_PC
+    // the archive header is big-endian on the disc
+    readStat->fileDataP = PTR_OFFSET(readStat->dirP, PORT_BE32(*ptr));
+    ptr = readStat->fileDataP;
+    readStat->rawLen = PORT_BE32(*ptr); ptr++;
+    readStat->decodeType = PORT_BE32(*ptr); ptr++;
+#else
     readStat->fileDataP = PTR_OFFSET(readStat->dirP, *ptr);
     ptr = readStat->fileDataP;
     readStat->rawLen = *ptr++;
     readStat->decodeType = *ptr++;
+#endif
     readStat->fileDataP = ptr;
 }
 
