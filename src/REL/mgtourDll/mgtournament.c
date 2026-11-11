@@ -224,6 +224,9 @@ void fn_1_1C68(void)
 }
 
 void fn_1_D29C(s32);
+void fn_1_C804(void);
+void fn_1_D820(s32, MGT_FLOW *);
+void fn_1_CFEC(s32);
 
 void fn_1_1DE8(void)
 {
@@ -396,6 +399,29 @@ void fn_1_263C(int camBit)
 
 void fn_1_28C0(void)
 {
+    Vec pos;
+    Vec up;
+    Vec target;
+
+    lbl_1_bss_16818->stat |= 0x400;
+    Hu3DCameraKill(0x10);
+    pos.x = pos.y = 0.0f;
+    pos.z = lbl_1_bss_1681C->camPos.z;
+    up.x = up.z = 0.0f;
+    up.y = 1.0f;
+    target.x = target.y = target.z = 0.0f;
+    Hu3DCameraCreate(2);
+    Hu3DCameraViewportSet(4, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraScissorSet(4, 0, 0, 640, 480);
+    Hu3DCameraPosSetV(4, &pos, &up, &target);
+    Hu3DCameraPerspectiveSet(4, lbl_1_bss_1681C->aspect, 20.0f, 13000.0f, 1.2f);
+    fn_1_263C(4);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[5], 1);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[6], 1);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[4], 1);
+    fn_1_C804();
+    fn_1_D820(1, lbl_1_bss_16818);
+    fn_1_CFEC(1);
 }
 
 void fn_1_2CE8(void)
