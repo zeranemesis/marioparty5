@@ -592,7 +592,11 @@ void MBCoinDispKill(s16 no)
 BOOL MBCoinDispKillCheck(s16 no)
 {
     if(no <= 0 || no > GW_PLAYER_MAX) {
+#ifdef TARGET_PC
+        return TRUE; // GC r3 = invalid 'no' (garbage); invalid id means no disp object exists
+#else
         return;
+#endif
     }
     if(coinDispObj[no-1]) {
         COINDISPWORK *work = omObjGetWork(coinDispObj[no-1], COINDISPWORK);
