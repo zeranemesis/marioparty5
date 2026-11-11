@@ -4,6 +4,9 @@
 #include "game/wipe.h"
 #include "game/main.h"
 #include "game/sreset.h"
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
 
 #include "messnum/mpsystem.h"
 #include "datanum/win.h"
@@ -115,7 +118,12 @@ s32 FileBoxInit(HUWINID srcWinId)
                 slotStat[i] = 0;
             }
             checksum = (u16 *)&saveBuf[curSlotNo][SAVE_ICONBANNER_CHECKSUM_OFS];
+#ifdef TARGET_PC
+            /* stored big-endian, byte by byte (SLSaveDataSlotMake) */
+            if(PORT_BE16(*checksum) != SLCheckSumGet(0, SAVE_ICONBANNER_SIZE)) {
+#else
             if(*checksum != SLCheckSumGet(0, SAVE_ICONBANNER_SIZE)) {
+#endif
                 OSReport("IconBanner Area Broken!\n");
                 time = OSGetTime();
                 SLSaveDataMake(FALSE, &time);

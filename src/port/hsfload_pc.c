@@ -362,6 +362,29 @@ static u32 BufferRegionSize(const HSFFILEBUFFER *file, u32 num, u32 elemSize)
     return size;
 }
 
+/*
+ * vtxtop and normtop point at a pristine copy of the data, past the buffers the
+ * envelope writes into and so past BufferRegionSize: the region runs up to the
+ * next section.
+ */
+static u32 SectionRegionSize(const HSFFILESECTION *sec, u32 tableEntrySize, u32 size)
+{
+    const u32 *head = (const u32 *)&sFileHead;
+    u32 start = sec->ofs + sec->num * tableEntrySize;
+    u32 next = 0xFFFFFFFFu;
+    u32 i;
+
+    for (i = 2; i < sizeof(HSFFILEHEADER) / 4; i += 2) {
+        if (head[i] > sec->ofs && head[i] < next) {
+            next = head[i];
+        }
+    }
+    if (next != 0xFFFFFFFFu && next - start > size) {
+        size = next - start;
+    }
+    return size;
+}
+
 static void ConvertFloats(void *dst, const void *src, u32 count)
 {
     const u32 *in = src;
@@ -385,6 +408,7 @@ static void VertexLoad(void)
     file = FilePtr(sFileHead.vertex.ofs);
     sVertexRegion = (const u8 *)&file[sFileHead.vertex.num];
     regionSize = BufferRegionSize(file, sFileHead.vertex.num, sizeof(HuVecF));
+    regionSize = SectionRegionSize(&sFileHead.vertex, sizeof(HSFFILEBUFFER), regionSize);
     sVertexData = Alloc(regionSize);
     ConvertFloats(sVertexData, sVertexRegion, regionSize / 4);
 
@@ -415,6 +439,7 @@ static void NormalLoad(void)
     file = FilePtr(sFileHead.normal.ofs);
     sNormalRegion = (const u8 *)&file[sFileHead.normal.num];
     regionSize = BufferRegionSize(file, sFileHead.normal.num, sNormalElemSize);
+    regionSize = SectionRegionSize(&sFileHead.normal, sizeof(HSFFILEBUFFER), regionSize);
     sNormalData = Alloc(regionSize);
     if (sNormalElemSize == 3) {
         memcpy(sNormalData, sNormalRegion, regionSize);

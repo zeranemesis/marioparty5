@@ -166,6 +166,13 @@ ANIMDATA *PortSprAnimRead(void *file)
         anim->useNum++;
         return anim;
     }
+    /* an animation that was already read, passed in again (Hu3DAnimCreate does): the GameCube loader returns it as is */
+    for (i = 0; i < SPRANIM_CACHE_MAX; i++) {
+        if (sCache[i].anim != NULL && sCache[i].anim == file) {
+            sCache[i].anim->useNum++;
+            return sCache[i].anim;
+        }
+    }
 
     bankNum = PORT_BE16(fileAnim->bankNum);
     patNum = PORT_BE16(fileAnim->patNum);

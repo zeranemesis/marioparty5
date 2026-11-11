@@ -8,6 +8,11 @@
 #include "port/spranim.h"
 #endif
 
+#ifdef TARGET_PC
+/* no prototype in the original: an implicit declaration passes the floats as doubles */
+void mtxTransCat(Mtx mtx, float x, float y, float z);
+#endif
+
 #define HUSPR_ORDER_MAX 768
 
 #define SPRITE_DIRTY_ATTR 0x1

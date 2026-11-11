@@ -12,6 +12,9 @@
 #include "game/card.h"
 #include "game/main.h"
 #include "game/memory.h"
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
 #include "game/sprite.h"
 
 #define SAVE_BOX_COMMON_OFS 0
@@ -587,7 +590,12 @@ BOOL SLCheckSumBoxSlotCheck(s16 slotNo, s16 boxNo)
     u32 boxOfs = boxDataOfs[boxNo];
     u16 *checkSumBuf = (u16 *)&saveBuf[slotNo][boxOfs+SAVE_BOX_SIZE-2];
     u16 checkSum = SLCheckSumSlotGet(slotNo, boxOfs, SAVE_BOX_SIZE-2);
+#ifdef TARGET_PC
+    /* the checksum is stored big-endian, byte by byte (SLCheckSumBoxSet) */
+    if(PORT_BE16(*checkSumBuf) == checkSum) {
+#else
     if(*checkSumBuf == checkSum) {
+#endif
         return TRUE;
     } else {
         return FALSE;
