@@ -20,42 +20,45 @@
  *************************************************************/
 
 //MDSTORY_DATA_BEGIN
-typedef struct MdStoryPosTbl_s {
-    HuVecF from;
-    HuVecF to;
-} MDSTORY_POSTBL;
 
-static MDSTORY_POSTBL lbl_1_data_180[7] = {
-    { { -250, 0, 0 }, { -250, 0, 0 } },
-    { { -125, 0, 0 }, { -125, 0, 0 } },
-    { { 0, 0, 0 }, { 0, 0, 0 } },
-    { { 125, 0, 0 }, { 139, 17.5f, -500 } },
-    { { 275, 9, -300 }, { 266, 2, -200 } },
-    { { -250, -250, 0 }, { -250, -250, 0 } },
-    { { -125, -250, 0 }, { -140.5f, -270, -400 } },
-};
+static void fn_1_2204(void);
+static void fn_1_24FC(void);
+static void fn_1_2D88(void);
+static void fn_1_3438(void);
+static void fn_1_3C2C(void);
+static BOOL fn_1_46E4(int param);
+static BOOL fn_1_48EC(int param);
+static BOOL fn_1_4A98(int param);
+static BOOL fn_1_53D4(int param);
+static BOOL fn_1_5B08(int param);
+static BOOL fn_1_709C(int param);
+static BOOL fn_1_766C(int param);
+static BOOL fn_1_7FB4(int param);
+static void fn_1_81F8(int param);
+static BOOL fn_1_8388(int param);
 
-static MDSTORY_POSTBL lbl_1_data_228[7] = {
-    { { 0, 0, 0 }, { 0, 0, 0 } },
-    { { 0, 0, 0 }, { 0, 0, 0 } },
-    { { 0, 0, 0 }, { 0, 0, 0 } },
-    { { 10, -2, 0 }, { 10, -4, 0 } },
-    { { 0, -3, 0 }, { 0, -6, 0 } },
-    { { 0, 0, 0 }, { 0, 0, 0 } },
-    { { 0, 0, 0 }, { 0, 0, 0 } },
-};
+SYS sysWork;
+SYS *sys;
+SYS *sysP;
 
-static unsigned int lbl_1_data_30C[7] = {
-    DATA_w01s,
-    DATA_w02s,
-    DATA_w03s,
-    DATA_w04s,
-    DATA_w05s,
-    DATA_w06s,
-    DATA_w07s
-};
 
-static float lbl_1_data_47C[8] = { 0, 16, 64, 32, -65, 220, 292, 1000 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static float lbl_1_bss_D0;
 static float lbl_1_bss_D4;
@@ -65,6 +68,40 @@ static float lbl_1_bss_E0;
 static float lbl_1_bss_E4;
 static HuVecF lbl_1_bss_E8[2];
 static HuVecF lbl_1_bss_100[2];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static HuVecF lbl_1_bss_58[2];
+static HuVecF lbl_1_bss_70[2];
+static MDDOT_WORK *lbl_1_bss_88[2];
+static float lbl_1_bss_90;
+static float lbl_1_bss_94;
+static float lbl_1_bss_98;
+static int lbl_1_bss_9C;
+static HuVecF lbl_1_bss_A0[4];
+
+
+
+
+
+
+
+static int lbl_1_bss_20;
+static int lbl_1_bss_24;
+static HuVecF lbl_1_bss_28[2];
+static HuVecF lbl_1_bss_40[2];
+
 static HU3DPARMANPARAM param1 = {
     0x1E,
     0,
@@ -90,6 +127,7 @@ static HU3DPARMANPARAM param1 = {
         { 0, 0, 0, 0 },
     },
 };
+
 static HU3DPARMANPARAM param2 = {
     0x28,
     0,
@@ -105,6 +143,7 @@ static HU3DPARMANPARAM param2 = {
     { { 0xFF, 0xFF, 0xFF, 0xFF }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
     { { 0xFF, 0x80, 0x80, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
 };
+
 static HU3DPARMANPARAM param3 = {
     0x1E,
     0,
@@ -120,6 +159,7 @@ static HU3DPARMANPARAM param3 = {
     { { 0xFF, 0xFF, 0xFF, 0x20 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
     { { 0x40, 0x20, 0x20, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
 };
+
 static HU3DPARMANPARAM glowParam = {
     0x32,
     0,
@@ -145,6 +185,80 @@ static HU3DPARMANPARAM glowParam = {
         { 0, 0, 0, 0 },
     },
 };
+
+static char lbl_1_data_140[3] = "26";
+
+static char *lbl_1_data_144 = lbl_1_data_140;
+
+static int lbl_1_data_148[7] = { 119, 121, 123, 125, 127, 129, 131 };
+
+static unsigned int lbl_1_data_164[7] = {
+    DATA_w01s,
+    DATA_w02s,
+    DATA_w03s,
+    DATA_w04s,
+    DATA_w05s,
+    DATA_w06s,
+    DATA_w07s
+};
+
+typedef struct MdStoryPosTbl_s {
+    HuVecF from;
+    HuVecF to;
+} MDSTORY_POSTBL;
+
+static MDSTORY_POSTBL lbl_1_data_180[7] = {
+    { { -250, 0, 0 }, { -250, 0, 0 } },
+    { { -125, 0, 0 }, { -125, 0, 0 } },
+    { { 0, 0, 0 }, { 0, 0, 0 } },
+    { { 125, 0, 0 }, { 139, 17.5f, -500 } },
+    { { 275, 9, -300 }, { 266, 2, -200 } },
+    { { -250, -250, 0 }, { -250, -250, 0 } },
+    { { -125, -250, 0 }, { -140.5f, -270, -400 } },
+};
+
+static MDSTORY_POSTBL lbl_1_data_228[7] = {
+    { { 0, 0, 0 }, { 0, 0, 0 } },
+    { { 0, 0, 0 }, { 0, 0, 0 } },
+    { { 0, 0, 0 }, { 0, 0, 0 } },
+    { { 10, -2, 0 }, { 10, -4, 0 } },
+    { { 0, -3, 0 }, { 0, -6, 0 } },
+    { { 0, 0, 0 }, { 0, 0, 0 } },
+    { { 0, 0, 0 }, { 0, 0, 0 } },
+};
+
+MD_FUNC MdFlowTbl[MDSTORY_FLOW_MAX] = {
+    fn_1_2204,
+    fn_1_24FC,
+    fn_1_2D88,
+    fn_1_3438,
+    fn_1_3C2C
+};
+
+MD_PROC MdProcTbl[MDSTORY_PROC_MAX] = {
+    fn_1_46E4,
+    fn_1_48EC,
+    fn_1_4A98,
+    fn_1_53D4,
+    fn_1_5B08,
+    fn_1_709C,
+    fn_1_766C,
+    fn_1_7FB4,
+    (MD_PROC)fn_1_81F8,
+    fn_1_8388
+};
+
+static unsigned int lbl_1_data_30C[7] = {
+    DATA_w01s,
+    DATA_w02s,
+    DATA_w03s,
+    DATA_w04s,
+    DATA_w05s,
+    DATA_w06s,
+    DATA_w07s
+};
+
+static float lbl_1_data_47C[8] = { 0, 16, 64, 32, -65, 220, 292, 1000 };
 
 typedef struct MdStoryCamLerp_s {
     HuVecF hvrFrom; //0x00
@@ -185,15 +299,6 @@ static HuVecF lbl_1_data_5DC[4] = {
     { 120, -160, 750 },
 };
 
-static HuVecF lbl_1_bss_58[2];
-static HuVecF lbl_1_bss_70[2];
-static MDDOT_WORK *lbl_1_bss_88[2];
-static float lbl_1_bss_90;
-static float lbl_1_bss_94;
-static float lbl_1_bss_98;
-static int lbl_1_bss_9C;
-static HuVecF lbl_1_bss_A0[4];
-
 static HuVecF lbl_1_data_60C[2] = {
     { 288, -128, 0 },
     { 288, 64, 0 },
@@ -208,10 +313,6 @@ static s8 lbl_1_data_624[4][7] = {
 
 static int lbl_1_data_640[7] = { 513, 493, 613, 693, 653, 453, 673 };
 
-static int lbl_1_bss_20;
-static int lbl_1_bss_24;
-static HuVecF lbl_1_bss_28[2];
-static HuVecF lbl_1_bss_40[2];
 //MDSTORY_DATA_END
 
 typedef void (*VoidFunc)(void);
@@ -1783,6 +1884,84 @@ static BOOL fn_1_53D4(int param)
     return FALSE;
 }
 
+static MDDOT_WORK *ParticleDotCreate(ANIMDATA *anim, s16 layerNo, u16 cameraBit)
+{
+    MDDOT_WORK *dotWork;
+    HU3DPARMANID parManId;
+    float rotZ;
+    dotWork = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDDOT_WORK), HU_MEMNUM_OVL);
+    parManId = Hu3DParManCreate(anim, 100, &param1);
+    dotWork->man[0] = parManId;
+    Hu3DParManAttrSet(parManId, 0x65);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
+    Hu3DParManRotSet(parManId, 90, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layerNo);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    parManId = Hu3DParManCreate(anim, 100, &param2);
+    dotWork->man[1] = parManId;
+    Hu3DParManAttrSet(parManId, 0x163);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
+    rotZ = frandmod(80)-40;
+    Hu3DParManRotSet(parManId, frandmod(40)+70, 0, rotZ);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layerNo);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    parManId = Hu3DParManCreate(anim, 100, &param3);
+    dotWork->man[2] = parManId;
+    Hu3DParManAttrSet(parManId, 0x21);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
+    Hu3DParManRotSet(parManId, 0, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layerNo);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    return dotWork;
+}
+
+static void ParticleDotPosSet(MDDOT_WORK *dotWork, HuVecF *pos)
+{
+    Hu3DParManPosSet(dotWork->man[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(dotWork->man[0], 2);
+    Hu3DParManAttrReset(dotWork->man[0], 1);
+    Hu3DParManPosSet(dotWork->man[1], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(dotWork->man[1], 2);
+    Hu3DParManAttrReset(dotWork->man[1], 1);
+    Hu3DParManPosSet(dotWork->man[2], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(dotWork->man[2], 5);
+    Hu3DParManAttrReset(dotWork->man[2], 1);
+}
+
+static void ParticleDotKill(MDDOT_WORK *dotWork)
+{
+    Hu3DParManKill(dotWork->man[0]);
+    Hu3DParManKill(dotWork->man[1]);
+    Hu3DParManKill(dotWork->man[2]);
+}
+
+static MDDOT_WORK *ParticleGlowCreate(ANIMDATA *anim, s16 layerNo, s16 cameraBit)
+{
+    MDDOT_WORK *glowWork;
+    HU3DPARMANID parManId;
+    glowWork = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDDOT_WORK), HU_MEMNUM_OVL);
+    parManId = Hu3DParManCreate(anim, 100, &glowParam);
+    glowWork->man[0] = parManId;
+    Hu3DParManAttrSet(parManId, 0x65);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
+    Hu3DParManRotSet(parManId, 90, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layerNo);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    return glowWork;
+}
+
+static void ParticleGlowPosSet(MDDOT_WORK *glowWork, HuVecF *pos)
+{
+    Hu3DParManPosSet(glowWork->man[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(glowWork->man[0], 2);
+    Hu3DParManAttrReset(glowWork->man[0], 1);
+}
+
+static void ParticleGlowKill(MDDOT_WORK *glowWork)
+{
+    Hu3DParManKill(glowWork->man[0]);
+}
+
 /* proc 4 - character / selection effect */
 static BOOL fn_1_5B08(int param)
 {
@@ -1798,16 +1977,18 @@ static BOOL fn_1_5B08(int param)
     MDDOT_WORK *effect;
     s16 cameraBit;
     HuVecF *pos;
+    HuVecF *rot;
     HuVecF *scale;
     HuVecF *dstPos;
     int i;
     int randVal;
     if(sys->procInitF[0] == FALSE) {
-        switch(param) {
-            case 0:
+        if(param == 0) {
                 for(i=0; i<MDSTORY_CHR_MAX; i++) {
+                    pos = model->posP[i+MDMODEL_CAP_CHR_00];
+                    rot = model->rotP[i+MDMODEL_CAP_CHR_00];
                     scale = model->scaleP[i+MDMODEL_CAP_CHR_00];
-                    *model->posP[i+MDMODEL_CAP_CHR_00] = lbl_1_data_57C;
+                    *pos = lbl_1_data_57C;
                     scale->x = 0;
                     scale->y = 0;
                     scale->z = 0;
@@ -1817,67 +1998,22 @@ static BOOL fn_1_5B08(int param)
                 Hu3DModelAttrReset(model->mdlId[MDMODEL_STAGE_CHR], HU3D_ATTR_DISPOFF);
                 Hu3DLayerHookSet(1+HU3D_LAYER_HOOK_POST, MdToueiLayerHook);
                 fn_1_9384(6);
-                break;
-
-            case 2:
+        } else if(param == 2) {
                 star->mode = 7;
                 fn_1_9384(6);
-                break;
-
-            case 3:
+        } else if(param == 3) {
                 star->mode = 10;
                 fn_1_9384(6);
-                break;
-
-            case 4:
+        } else if(param == 4) {
                 cameraBit = cameraWork->camera[MDCAMERA_MAIN].bit;
-                dotAnim = sprite->animP[7];
-                dotWork = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDDOT_WORK), HU_MEMNUM_OVL);
-                parManId = Hu3DParManCreate(dotAnim, 100, &param1);
-                dotWork->man[0] = parManId;
-                Hu3DParManAttrSet(parManId, 0x65);
-                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
-                Hu3DParManRotSet(parManId, 90, 0, 0);
-                Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 4);
-                Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-                parManId = Hu3DParManCreate(dotAnim, 100, &param2);
-                dotWork->man[1] = parManId;
-                Hu3DParManAttrSet(parManId, 0x163);
-                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
-                randVal = frandmod(80)-40;
-                Hu3DParManRotSet(parManId, frandmod(40)+70, 0, randVal);
-                Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 4);
-                Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-                parManId = Hu3DParManCreate(dotAnim, 100, &param3);
-                dotWork->man[2] = parManId;
-                Hu3DParManAttrSet(parManId, 0x21);
-                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
-                Hu3DParManRotSet(parManId, 0, 0, 0);
-                Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 4);
-                Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+                dotWork = ParticleDotCreate(sprite->animP[7], 4, cameraBit);
                 lbl_1_bss_88[0] = dotWork;
                 cameraBit = cameraWork->camera[MDCAMERA_MAIN].bit;
-                glowAnim = sprite->animP[8];
-                glowWork = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDDOT_WORK), HU_MEMNUM_OVL);
-                parManId = Hu3DParManCreate(glowAnim, 100, &glowParam);
-                glowWork->man[0] = parManId;
-                Hu3DParManAttrSet(parManId, 0x65);
-                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
-                Hu3DParManRotSet(parManId, 90, 0, 0);
-                Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 4);
-                Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+                glowWork = ParticleGlowCreate(sprite->animP[8], 4, cameraBit);
                 lbl_1_bss_88[1] = glowWork;
                 pos = model->posP[sys->selNo[0]+MDMODEL_CAP_CHR_00];
                 effect = lbl_1_bss_88[0];
-                Hu3DParManPosSet(effect->man[0], pos->x, pos->y, pos->z);
-                Hu3DParManTimeLimitSet(effect->man[0], 2);
-                Hu3DParManAttrReset(effect->man[0], 1);
-                Hu3DParManPosSet(effect->man[1], pos->x, pos->y, pos->z);
-                Hu3DParManTimeLimitSet(effect->man[1], 2);
-                Hu3DParManAttrReset(effect->man[1], 1);
-                Hu3DParManPosSet(effect->man[2], pos->x, pos->y, pos->z);
-                Hu3DParManTimeLimitSet(effect->man[2], 5);
-                Hu3DParManAttrReset(effect->man[2], 1);
+                ParticleDotPosSet(effect, pos);
                 for(i=0; i<MDSTORY_CHR_MAX; i++) {
                     Hu3DModelAttrSet(model->mdlId[i+MDMODEL_CAP_CHR_00], HU3D_ATTR_DISPOFF);
                     Hu3DModelAttrSet(model->mdlId[i+MDMODEL_MARIO], HU3D_ATTR_DISPOFF);
@@ -1907,7 +2043,6 @@ static BOOL fn_1_5B08(int param)
                 Hu3DModelAttrReset(model->mdlId[sys->selNo[0]+MDMODEL_MARIO], HU3D_MOTATTR_LOOP);
                 Hu3DModelAttrReset(model->mdlId[sys->selNo[0]+MDMODEL_MARIO], HU3D_MOTATTR_PAUSE);
                 fn_1_9384(5);
-                break;
         }
         sys->procInitF[0] = TRUE;
     }
@@ -1916,6 +2051,7 @@ static BOOL fn_1_5B08(int param)
             MdMathOscillate(MDMATH_OSC_90, &sys->oscTime[0], &sys->oscT[0], 30);
             for(i=0; i<MDSTORY_CHR_MAX; i++) {
                 pos = model->posP[i+MDMODEL_CAP_CHR_00];
+                rot = model->rotP[i+MDMODEL_CAP_CHR_00];
                 scale = model->scaleP[i+MDMODEL_CAP_CHR_00];
                 MdMathLerp(&pos->x, lbl_1_data_57C.x, lbl_1_data_588[i].x, sys->oscT[0]);
                 MdMathLerp(&pos->y, lbl_1_data_57C.y, lbl_1_data_588[i].y, sys->oscT[0]);
@@ -1929,6 +2065,8 @@ static BOOL fn_1_5B08(int param)
         case 1:
             MdMathOscillate(MDMATH_OSC_90_REV, &sys->oscTime[0], &sys->oscT[0], 15);
             for(i=0; i<MDSTORY_CHR_MAX; i++) {
+                pos = model->posP[i+MDMODEL_CAP_CHR_00];
+                rot = model->rotP[i+MDMODEL_CAP_CHR_00];
                 scale = model->scaleP[i+MDMODEL_CAP_CHR_00];
                 MdMathLerp(&scale->x, 1, 0, sys->oscT[0]);
                 MdMathLerp(&scale->y, 1, 0, sys->oscT[0]);
@@ -1941,11 +2079,15 @@ static BOOL fn_1_5B08(int param)
             MdMathOscillate(MDMATH_OSC_180, &sys->oscTime[1], &sys->oscT[1], 30);
             for(i=0; i<1; i++) {
                 pos = model->posP[sys->selNo[i]+MDMODEL_CAP_CHR_00];
+                rot = model->rotP[sys->selNo[i]+MDMODEL_CAP_CHR_00];
+                scale = model->scaleP[sys->selNo[i]+MDMODEL_CAP_CHR_00];
                 MdMathLerp(&pos->x, lbl_1_data_588[sys->selNo[i]].x, lbl_1_data_5DC[i].x, sys->oscT[0]);
                 MdMathLerp(&pos->y, lbl_1_data_588[sys->selNo[i]].y, lbl_1_data_5DC[i].y, sys->oscT[0]);
                 MdMathLerp(&pos->z, lbl_1_data_588[sys->selNo[i]].z, lbl_1_data_5DC[i].z, sys->oscT[1]);
             }
             for(i=0; i<MDSTORY_CHR_MAX; i++) {
+                pos = model->posP[i+MDMODEL_CAP_CHR_00];
+                rot = model->rotP[i+MDMODEL_CAP_CHR_00];
                 scale = model->scaleP[i+MDMODEL_CAP_CHR_00];
                 if(i != sys->selNo[0]) {
                     MdMathLerp(&scale->x, 1, 0, sys->oscT[0]);
@@ -1961,11 +2103,15 @@ static BOOL fn_1_5B08(int param)
             MdMathOscillate(MDMATH_OSC_180, &sys->oscTime[1], &sys->oscT[1], 30);
             for(i=0; i<1; i++) {
                 pos = model->posP[sys->selNo[i]+MDMODEL_CAP_CHR_00];
+                rot = model->rotP[sys->selNo[i]+MDMODEL_CAP_CHR_00];
+                scale = model->scaleP[sys->selNo[i]+MDMODEL_CAP_CHR_00];
                 MdMathLerp(&pos->x, lbl_1_data_5DC[i].x, lbl_1_data_588[sys->selNo[i]].x, sys->oscT[0]);
                 MdMathLerp(&pos->y, lbl_1_data_5DC[i].y, lbl_1_data_588[sys->selNo[i]].y, sys->oscT[0]);
                 MdMathLerp(&pos->z, lbl_1_data_588[sys->selNo[i]].z, lbl_1_data_5DC[i].z, sys->oscT[1]);
             }
             for(i=0; i<MDSTORY_CHR_MAX; i++) {
+                pos = model->posP[i+MDMODEL_CAP_CHR_00];
+                rot = model->rotP[i+MDMODEL_CAP_CHR_00];
                 scale = model->scaleP[i+MDMODEL_CAP_CHR_00];
                 if(i != sys->selNo[0]) {
                     MdMathLerp(&scale->x, 0, 1, sys->oscT[0]);
@@ -1978,6 +2124,8 @@ static BOOL fn_1_5B08(int param)
 
         case 4:
             dstPos = model->posP[sys->selNo[0]+MDMODEL_MARIO];
+            rot = model->rotP[sys->selNo[0]+MDMODEL_MARIO];
+            scale = model->scaleP[sys->selNo[0]+MDMODEL_MARIO];
             MdMathOscillate(MDMATH_OSC_90_REV, &sys->oscTime[0], &sys->oscT[0], 60);
             MdMathOscillate(MDMATH_OSC_180, &sys->oscTime[1], &sys->oscT[1], 60);
             MdMathOscillate(MDMATH_OSC_180, &sys->oscTime[2], &sys->oscT[2], 60);
@@ -1986,9 +2134,7 @@ static BOOL fn_1_5B08(int param)
             MdMathLerpOfs(&dstPos->z, lbl_1_bss_58[0].z, lbl_1_bss_58[1].z, sys->oscT[0], 0.2f*sys->oscT[1]);
             pos = model->posP[sys->selNo[0]+MDMODEL_MARIO];
             glowWork = lbl_1_bss_88[1];
-            Hu3DParManPosSet(glowWork->man[0], pos->x, pos->y, pos->z);
-            Hu3DParManTimeLimitSet(glowWork->man[0], 2);
-            Hu3DParManAttrReset(glowWork->man[0], 1);
+            ParticleGlowPosSet(glowWork, pos);
             MdProcCall(3, 1);
             break;
     }
@@ -2549,4 +2695,298 @@ static s16 fn_1_9524(int mdlNo, int cameraNo)
     Hu3D3Dto2D(pos3D, camera->bit, &pos2D);
     result = MSM_PAN_LEFT+((MSM_PAN_WIDTH/HU_DISP_WIDTH)*pos2D.x);
     return result;
+}
+
+void MdPosAdjustMode(void)
+{
+    HuVecF *pos; //r31
+    HuVecF *rot; //r30
+    HuVecF *scale; //r29
+    MDDEBUGFONT_WORK *debugFont; //r28
+    MDMODEL_WORK *model; //r27
+    HUSPRGRPID grpId; //r26
+    int i; //r25
+    u32 attr; //r24
+    MDSPRITE_WORK *sprite; //r23
+    MDCAMERA_WORK *camera; //r22
+    
+    HuVecF pos2D; //sp+0x8
+    
+    static MDMODEL_DEBUG_INFO mdlInfo[MDMODEL_MAX] = {
+        { "STAR", MDCAMERA_FG },
+        { "STAGE", MDCAMERA_MAIN },
+        { "STAGE_CHR", MDCAMERA_BG },
+        { "MARIO", MDCAMERA_BG },
+        { "LUIGI", MDCAMERA_BG },
+        { "PEACH", MDCAMERA_BG },
+        { "YOSHI", MDCAMERA_BG },
+        { "WARIO", MDCAMERA_BG },
+        { "DAISY", MDCAMERA_BG },
+        { "WALUIGI", MDCAMERA_BG },
+        { "CAP_CHR_00", MDCAMERA_MAIN },
+        { "CAP_CHR_01", MDCAMERA_MAIN },
+        { "CAP_CHR_02", MDCAMERA_MAIN },
+        { "CAP_CHR_03", MDCAMERA_MAIN },
+        { "CAP_CHR_04", MDCAMERA_MAIN },
+        { "CAP_CHR_05", MDCAMERA_MAIN },
+        { "CAP_CHR_06", MDCAMERA_MAIN },
+        { "CAP_PACK_00", MDCAMERA_MAIN },
+        { "CAP_PACK_01", MDCAMERA_MAIN },
+        { "CAP_PACK_02", MDCAMERA_MAIN },
+        { "CAP_PACK_03", MDCAMERA_MAIN },
+        { "CAP_PACK_04", MDCAMERA_MAIN },
+        { "CAP_LV", MDCAMERA_MAIN },
+        { "FINGER_1P", MDCAMERA_MAIN },
+        { "RING_1P", MDCAMERA_MAIN },
+        { "FONTBGFILTER", MDCAMERA_FG },
+    };
+    
+    static MDMODEL_DEBUG_INFO *mdlInfoP;
+    static HuVec2f sprPos;
+    static float sprRot;
+    static int menuSel;
+    static int mdlSel;
+    static int dispTimer;
+    static BOOL showF;
+    
+    debugFont = sys->debugFont;
+    camera = sys->camera;
+    sprite = sys->sprite;
+    model = sys->model;
+    grpId = sprite->grpId[1];
+    if(debugFont->ctrl == MD_DEBUGFONT_CTRL_MODEL) {
+        if(showF == FALSE) {
+            if(HuPadBtn[0] & PAD_BUTTON_X) {
+                if(++dispTimer >= 60) {
+                    MdSpriteDispSet(sprite, 1, TRUE);
+                    dispTimer = 0;
+                    showF = TRUE;
+                }
+            } else {
+                dispTimer = 0;
+            }
+        } else if(showF == TRUE) {
+            while(1) {
+                if(HuPadBtn[0] & PAD_BUTTON_X) {
+                    if(++dispTimer >= 60) {
+                        MdSpriteDispSet(sprite, 1, FALSE);
+                        dispTimer = 0;
+                        showF = FALSE;
+                        break;
+                    }
+                } else {
+                    dispTimer = 0;
+                }
+                if(debugFont->ctrl == MD_DEBUGFONT_CTRL_MODEL) {
+                    if(sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) {
+                        for(i=0; i<MDMODEL_MAX; i++) {
+                            if(--mdlSel == -1) {
+                                mdlSel = MDMODEL_MAX-1;
+                            }
+                            attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+                            if(!(attr & HU3D_ATTR_DISPOFF)) {
+                                break;
+                            }
+                        }
+                    } else if(sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT) {
+                        for(i=0; i<MDMODEL_MAX; i++) {
+                            mdlSel = ++mdlSel % MDMODEL_MAX;
+                            attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+                            if(!(attr & HU3D_ATTR_DISPOFF)) {
+                                break;
+                            }
+                        }
+                    }
+                    if(HuPadBtnDown[0] & PAD_BUTTON_DOWN) {
+                        menuSel = ++menuSel % 3;
+                    }
+                    mdlInfoP = &mdlInfo[mdlSel];
+                    pos = model->posP[mdlSel];
+                    rot = model->rotP[mdlSel];
+                    scale = model->scaleP[mdlSel];
+                    attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+                    if(menuSel == 0) {
+                        if(HuPadTrigL[0] <= 75) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                pos->x -= 5;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                pos->x += 5;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                pos->y -= 5;
+                            } else if(HuPadStkY[0] >= 36) {
+                                pos->y += 5;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                pos->z += 5;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                pos->z -= 5;
+                            }
+                        } else if(HuPadBtn[0] & PAD_TRIGGER_L) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                pos->x -= 0.5f;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                pos->x += 0.5f;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                pos->y -= 0.5f;
+                            } else if(HuPadStkY[0] >= 36) {
+                                pos->y += 0.5f;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                pos->z += 0.5f;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                pos->z -= 0.5f;
+                            }
+                        } else {
+                            if(HuPadSubStkX[0] <= -29) {
+                                pos->x -= 1.0f;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                pos->x += 1.0f;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                pos->y -= 1.0f;
+                            } else if(HuPadStkY[0] >= 36) {
+                                pos->y += 1.0f;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                pos->z += 1.0f;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                pos->z -= 1.0f;
+                            }
+                        }
+                    } else if(menuSel == 1) {
+                        if(HuPadTrigL[0] <= 75) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                rot->x -= 10;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                rot->x += 10;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                rot->y -= 10;
+                            } else if(HuPadStkY[0] >= 36) {
+                                rot->y += 10;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                rot->z += 10;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                rot->z -= 10;
+                            }
+                        } else if(HuPadBtn[0] & PAD_TRIGGER_L) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                rot->x -= 1;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                rot->x += 1;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                rot->y -= 1;
+                            } else if(HuPadStkY[0] >= 36) {
+                                rot->y += 1;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                rot->z += 1;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                rot->z -= 1;
+                            }
+                        } else {
+                            if(HuPadSubStkX[0] <= -29) {
+                                rot->x -= 5;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                rot->x += 5;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                rot->y -= 5;
+                            } else if(HuPadStkY[0] >= 36) {
+                                rot->y += 5;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                rot->z += 5;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                rot->z -= 5;
+                            }
+                        }
+                    } else if(menuSel == 2) {
+                        if(HuPadTrigL[0] <= 75) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                scale->x -= 0.05f;
+                                scale->y -= 0.05f;
+                                scale->z -= 0.05f;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                scale->x += 0.05f;
+                                scale->y += 0.05f;
+                                scale->z += 0.05f;
+                            }
+                        } else if(HuPadBtn[0] & PAD_TRIGGER_L) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                scale->x -= 0.01f;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                scale->x += 0.01f;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                scale->y -= 0.01f;
+                            } else if(HuPadStkY[0] >= 36) {
+                                scale->y += 0.01f;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                scale->z += 0.01f;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                scale->z -= 0.01f;
+                            }
+                        } else {
+                            if(HuPadSubStkX[0] <= -29) {
+                                scale->x -= 0.1f;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                scale->x += 0.1f;
+                            }
+                            if(HuPadStkY[0] <= -36) {
+                                scale->y -= 0.1f;
+                            } else if(HuPadStkY[0] >= 36) {
+                                scale->y += 0.1f;
+                            }
+                            if(HuPadSubStkY[0] <= -29) {
+                                scale->z += 0.1f;
+                            } else if(HuPadSubStkY[0] >= 29) {
+                                scale->z -= 0.1f;
+                            }
+                        }
+                    }
+                }
+                HuSprPosSet(grpId, 0, 32, 0);
+                HuSprPosSet(grpId, 1, -32, 0);
+                sprRot += 2;
+                MdMathAngleClamp(&sprRot);
+                HuSprGrpZRotSet(grpId, sprRot);
+                Hu3D3Dto2D(pos, camera->camera[mdlInfoP->cameraNo].bit, &pos2D);
+                HuSprGrpPosSet(grpId, pos2D.x, pos2D.y);
+                if(attr & HU3D_ATTR_DISPOFF) {
+                    HuSprAttrSet(grpId, 0, HUSPR_ATTR_ADDCOL);
+                    HuSprAttrSet(grpId, 1, HUSPR_ATTR_ADDCOL);
+                    HuSprGrpTPLvlSet(grpId, 0.4f);
+                } else {
+                    HuSprAttrReset(grpId, 0, HUSPR_ATTR_ADDCOL);
+                    HuSprAttrReset(grpId, 1, HUSPR_ATTR_ADDCOL);
+                    HuSprGrpTPLvlSet(grpId, 1.0f);
+                }
+                MdDebugFontPrint(debugFont, "POS-ADJUST-MODE(%2d / %2d) -> %s", mdlSel, MDMODEL_MAX, mdlInfoP->name);
+                if(debugFont->ctrl == MD_DEBUGFONT_CTRL_MODEL) {
+                    if(menuSel == 0) {
+                        MdDebugFontPrint(debugFont, "*  POS(%.1f / %.1f / %.1f)", pos->x, pos->y, pos->z);
+                    } else {
+                        MdDebugFontPrint(debugFont, "   POS(%.1f / %.1f / %.1f)", pos->x, pos->y, pos->z);
+                    }
+                    if(menuSel == 1) {
+                        MdDebugFontPrint(debugFont, "*  ROT(%.1f / %.1f / %.1f)", rot->x, rot->y, rot->z);
+                    } else {
+                        MdDebugFontPrint(debugFont, "   ROT(%.1f / %.1f / %.1f)", rot->x, rot->y, rot->z);
+                    }
+                    if(menuSel == 2) {
+                        MdDebugFontPrint(debugFont, "*SCALE(%.2f / %.2f / %.2f)", scale->x, scale->y, scale->z);
+                    } else {
+                        MdDebugFontPrint(debugFont, " SCALE(%.2f / %.2f / %.2f)", scale->x, scale->y, scale->z);
+                    }
+                }
+                HuPrcVSleep();
+            }
+        }
+    }
 }
