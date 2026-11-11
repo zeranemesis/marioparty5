@@ -151,8 +151,7 @@ typedef struct MGTKamiWork_s {
     s16 stopF;             //0x02
     s16 curIdx;            //0x04
     s16 mdlType;           //0x06
-    Vec pos;               //0x08
-    Vec pos2;              //0x14
+    Vec pos[2];            //0x08
     f32 time;              //0x20
     s16 timer;             //0x24
     s16 timerMax;          //0x26
@@ -168,7 +167,7 @@ typedef void (*MGTProc)(void);
 
 extern MGT_FLOW *lbl_1_bss_16818;
 extern MGT_MODEWORK *lbl_1_bss_1681C;
-extern MGT_KAMIWORK *lbl_1_bss_16760;
+extern MGT_KAMIWORK lbl_1_bss_16760;
 extern MGT_PAPER lbl_1_bss_0[MGTOUR_PAPER_MAX];
 
 extern const MGTProc _ctors[];
