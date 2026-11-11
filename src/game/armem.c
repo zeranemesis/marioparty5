@@ -268,7 +268,11 @@ void *HuAR_ARAMtoMRAMNum(AMEM_PTR aMemP, s32 num) {
 
     block = HuARInfoGet(aMemP);
     if(HuDataReadChk(block->dir << 16) >= 0) {
+#ifdef TARGET_PC
+        return NULL; // GC r3 stale; both callers ignore the result
+#else
         return;
+#endif
     }
     size = HuARSizeGet(aMemP);
     dst = HuMemDirectMallocNum(HEAP_DVD, size, num);

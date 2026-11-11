@@ -263,6 +263,9 @@ int MB6Ev_MasuHatena(int playerNo)
     if(flag & MB6EV_CAKEMOVE_FLAG) {
         MB6Ev_CakeMove(playerNo, GwPlayer[playerNo].masuId);
     }
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = last call result; MASUPLAYERHOOK result is ignored by MasuHatenaMain
+#endif
 }
 
 int MB6_MasuStub()

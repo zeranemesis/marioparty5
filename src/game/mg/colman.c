@@ -3080,7 +3080,11 @@ u32 ColMapMaskGet(int mdlNo)
     COLMESH *meshP;
     int no;
     if(!ColMapInitCheck()) {
+#ifdef TARGET_PC
+        return 0; // GC r3 = ColMapInitCheck() result, i.e. 0
+#else
         return;
+#endif
     }
     for(meshP=colMesh, no=colMeshCount; no--; meshP++) {
         if(meshP->mdlNo == mdlNo) {

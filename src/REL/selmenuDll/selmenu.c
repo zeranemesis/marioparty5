@@ -553,7 +553,11 @@ static s16 SMCharNoAdd(s16 playerNo, s16 num)
         smCharOnF[smPlayerConf[i].charNo] = TRUE;
     }
     if (!num) {
+#ifdef TARGET_PC
+        return 0; // GC r3 stale; callers with num == 0 ignore the result
+#else
         return;
+#endif
     }
     charNo = smPlayerConf[playerNo].charNo;
     do {

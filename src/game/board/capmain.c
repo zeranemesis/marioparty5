@@ -1434,7 +1434,11 @@ int MBCapsuleStarCreate(void)
     CAPSULE_WORK *work = capsuleWork;
     int no;
     if(capsuleWork == NULL) {
+#ifdef TARGET_PC
+        return MB_MODEL_NONE; // GC r3 = stale first arg here; use the failure value
+#else
         return;
+#endif
     }
     for(no=0; no<CAPSULE_WORK_MAX; no++) {
         if(work->star[no].mdlId == MB_MODEL_NONE) {
@@ -1612,7 +1616,11 @@ int MBCapsuleModelCreate(int fileNum, int *motTbl, BOOL linkF, int delay, BOOL c
     int no;
     int i;
     if(capsuleWork == NULL) {
+#ifdef TARGET_PC
+        return MB_MODEL_NONE; // GC r3 = stale first arg here; use the failure value
+#else
         return;
+#endif
     }
     for(no=0; no<CAPSULE_WORK_MAX; no++) {
         if(work->mdlId[no] == MB_MODEL_NONE) {
@@ -1665,7 +1673,11 @@ s16 MBCapsuleSprCreate(unsigned int dataNum, s16 prio, s16 bank)
     CAPSULE_WORK *work =  capsuleWork;
     int no;
     if(capsuleWork == NULL) {
+#ifdef TARGET_PC
+        return -1; // GC r3 = stale first arg here; use the failure value
+#else
         return;
+#endif
     }
     for(no=0; no<CAPSULE_WORK_MAX; no++) {
         if(work->sprId[no] == -1) {
@@ -1702,7 +1714,11 @@ void *MBCapsuleMalloc(int size)
     CAPSULE_WORK *work =  capsuleWork;
     int no;
     if(capsuleWork == NULL) {
+#ifdef TARGET_PC
+        return NULL; // GC r3 = stale first arg here; use the failure value
+#else
         return;
+#endif
     }
     for(no=0; no<CAPSULE_WORK_MAX; no++) {
         if(work->mem[no] == NULL) {
@@ -16528,7 +16544,11 @@ int MBCapsuleHanachanRingAdd(HuVecF *pos, HuVecF *scaleVel, int inTime, int hold
     
     obj = hanachanRingObj;
     if(obj == NULL) {
+#ifdef TARGET_PC
+        return -1; // GC r3 stale; only caller ignores the result
+#else
         return;
+#endif
     }
     work = obj->data;
     for(effDataP=work->data, i=0; i<32; i++, effDataP++) {
@@ -16874,6 +16894,9 @@ int MBCapsuleCoinEffMinYSet(int id, float minY)
         work += id;
         work->minY = minY;
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; all callers ignore the result
+#endif
 }
 
 #define COIN_TRADE_WORKMAX 64
@@ -17330,6 +17353,9 @@ int MBCapsuleLoseEffAdd(HuVecF *pos, HuVecF *vel, float scale, int maxTime, int 
     Hu3DModelPosSet(work->mdlId, pos->x, pos->y, pos->z);
     Hu3DModelScaleSet(work->mdlId, scale, scale, scale);
     Hu3DModelLayerSet(work->mdlId, 2);
+#ifdef TARGET_PC
+    return i; // GC r3 = last call result (stale); all callers ignore it, return slot index
+#endif
 }
 
 void MBCapsuleLoseEffAddMulti(int playerNo, int max, float radius)
@@ -18770,7 +18796,11 @@ void MBCapsulePlayerIdleWait(void)
 
 int MBCapsulePlayerSquishSet(int *playerNo, int masuId)
 {
+#ifdef TARGET_PC
+    return MBCapsulePlayerSquishVoiceSet(playerNo, masuId, FALSE); // GC returned r3 = callee result
+#else
     MBCapsulePlayerSquishVoiceSet(playerNo, masuId, FALSE);
+#endif
 }
 
 int MBCapsulePlayerSquishVoiceSet(int *playerNo, int masuId, BOOL voiceF)
@@ -19117,7 +19147,11 @@ s16 MBCapsuleMasuNextRegularGet(s16 masuId, HuVecF *pos)
 
 int MBCapsulePlayerRandGet(int playerNo, int type)
 {
+#ifdef TARGET_PC
+    return MBCapsulePlayerSameRandGet(playerNo, type, FALSE); // GC returned r3 = callee result
+#else
     MBCapsulePlayerSameRandGet(playerNo, type, FALSE);
+#endif
 }
 
 int MBCapsulePlayerSameRandGet(int playerNo, int type, BOOL sameF)

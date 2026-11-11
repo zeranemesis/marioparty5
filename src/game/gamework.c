@@ -272,6 +272,9 @@ void GWMgUnlockSet(s32 mgNo)
 BOOL GWMgCustomGet(s32 mgNo)
 {
     
+#ifdef TARGET_PC
+    return FALSE; // GC body is empty (r3 = mgNo untouched); no callers
+#endif
 }
 
 void GWMgCustomSet(s32 mgNo)

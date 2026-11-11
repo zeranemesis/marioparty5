@@ -1447,7 +1447,11 @@ s16 MBMasuDonkeySet(s16 no)
 {
     s16 masuId;
     if(no < 0) {
+#ifdef TARGET_PC
+        return no; // GC r3 = untouched arg 'no' (negative)
+#else
         return;
+#endif
     }
     masuId = masuDonkeyTbl[no];
     MBMasuTypeSet(MASU_LAYER_DEFAULT, masuId, MASU_TYPE_DONKEY);

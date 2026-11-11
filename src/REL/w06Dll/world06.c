@@ -413,6 +413,9 @@ int MB6Ev_MasuHatena(int playerNo)
     } else if(flag & MB6EV_KANE_FLAG) {
         MB6Ev_Kane(playerNo);
     }
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = last call result; MASUPLAYERHOOK result is ignored by MasuHatenaMain
+#endif
 }
 
 int MB6_MasuStub()

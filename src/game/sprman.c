@@ -457,7 +457,11 @@ u16 HuSprAttrGet(HUSPRGRPID grpId, s16 memberNo)
     HUSPRGRP *gp = &HuSprGrpData[grpId];
     HUSPRITE *sp;
     if(gp->sprNum == 0 || gp->sprNum <= memberNo || gp->sprId[memberNo] == HUSPR_NONE) {
+#ifdef TARGET_PC
+        return 0; // GC r3 = grpId (untouched arg); no callers
+#else
         return;
+#endif
     }
     sp = &HuSprData[gp->sprId[memberNo]];
     return sp->attr;

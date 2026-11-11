@@ -545,6 +545,9 @@ int MB1Ev_MasuHatena(int playerNo)
     }
     HuDataDirClose(DATA_guide);
     HuDataDirClose(DATA_capsulechar0);
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = last call result; MASUPLAYERHOOK result is ignored by MasuHatenaMain
+#endif
 }
 
 void MB1_MasuGet(void)
@@ -557,6 +560,9 @@ void MB1_MasuGet(void)
 int MB1Ev_MasuWalkPre(int playerNo)
 {
     
+#ifdef TARGET_PC
+    return playerNo; // GC returned r3 = playerNo (empty body, arg untouched); caller ignores it
+#endif
 }
 
 int MB1Ev_MasuWalkPost(int playerNo)

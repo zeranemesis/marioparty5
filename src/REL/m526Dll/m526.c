@@ -1361,6 +1361,10 @@ void M526CameraPosSet(M526_CAMERA *camera)
 HuVecF M526CameraPosGet(M526_CAMERA *camera)
 {
     
+#ifdef TARGET_PC
+    HuVecF pos = {0}; // GC body is empty (sret buffer left unwritten); no callers
+    return pos;
+#endif
 }
 
 HuVecF M526CameraCenterGet(M526_CAMERA *camera)
