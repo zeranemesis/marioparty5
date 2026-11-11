@@ -15,7 +15,7 @@
 
 #define RES_DATA(n) (0xB10000 + (n))
 
-extern s16 Hu3DCameraNo;
+SHARED_SYM extern s16 Hu3DCameraNo;
 s16 PResResultOrderGet(s16 (*orderP)[4], s16 (*tieP)[4], s16 (*rankP)[4]);
 s16 PResResultTeamOrderGet(s16 *order);
 

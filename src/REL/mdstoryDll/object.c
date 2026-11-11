@@ -1104,6 +1104,9 @@ s16 MdMessWinChoiceNowGet(MDMESS *mess, int winNo)
         HUWIN *w = &winData[win->winId];
         win->choice = w->choice;
     }
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = mess pointer (untouched arg); no callers
+#endif
 }
 
 void MdMessWinChoiceSet(MDMESS *mess, int winNo, s16 choice)
@@ -1119,7 +1122,11 @@ int MdMessWinChoiceGet(MDMESS *mess, int winNo)
 {
     MDMESS_WIN *win = &mess->win[winNo];
     if(win->winId == HUWIN_NONE) {
+#ifdef TARGET_PC
+        return -1; // GC returned r3 = mess pointer here (garbage); -1 = no choice
+#else
         return;
+#endif
     }
     return win->choice;
 }
@@ -1129,7 +1136,11 @@ s16 MdMessWinStatGet(MDMESS *mess, int winNo)
     MDMESS_WIN *win = &mess->win[winNo];
     s16 stat;
     if(win->winId == HUWIN_NONE) {
+#ifdef TARGET_PC
+        return 0; // GC returned r3 = mess pointer here (garbage)
+#else
         return;
+#endif
     }
     stat = HuWinStatGet(win->winId);
     return stat;

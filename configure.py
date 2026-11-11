@@ -1816,10 +1816,10 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "mdoptionDll",
         objects={
-            Object(NonMatching, "REL/mdoptionDll/mdoption.c"),
-            Object(NonMatching, "REL/mdoptionDll/object.c"),
-            Object(NonMatching, "REL/mdoptionDll/stage.c"),
-            Object(NonMatching, "REL/mdoptionDll/record.c"),
+            Object(Equivalent, "REL/mdoptionDll/mdoption.c"),
+            Object(Equivalent, "REL/mdoptionDll/object.c"),
+            Object(Equivalent, "REL/mdoptionDll/stage.c"),
+            Object(Equivalent, "REL/mdoptionDll/record.c"),
         },
     ),
     Rel(
@@ -1841,9 +1841,9 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "mdstoryDll",
         objects={
-            Object(NonMatching, "REL/mdstoryDll/mdstory.c"),
-            Object(NonMatching, "REL/mdstoryDll/object.c"),
-            Object(NonMatching, "REL/mdstoryDll/stage.c"),
+            Object(Equivalent, "REL/mdstoryDll/mdstory.c"),
+            Object(Equivalent, "REL/mdstoryDll/object.c"),
+            Object(Equivalent, "REL/mdstoryDll/stage.c"),
         },
     ),
     Rel(
@@ -1855,8 +1855,8 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "mgfreeDll",
         objects={
-            Object(NonMatching, "REL/mgfreeDll/mgfree.c"),
-            Object(NonMatching, "REL/mgfreeDll/decide.c"),
+            Object(Equivalent, "REL/mgfreeDll/mgfree.c"),
+            Object(Equivalent, "REL/mgfreeDll/decide.c"),
         },
     ),
     Rel(
@@ -1893,8 +1893,8 @@ Object(Matching, "REL/m510dll/opening.c"),
         "partyresultdll",
         objects={
             Object(Matching, "REL/partyresultdll/partyresult.c"),
-            Object(NonMatching, "REL/partyresultdll/result.c"),
-            Object(NonMatching, "REL/partyresultdll/stat.c"),
+            Object(Equivalent, "REL/partyresultdll/result.c"),
+            Object(Equivalent, "REL/partyresultdll/stat.c"),
             Object(Matching, "REL/partyresultdll/toueidisp.c"),
             Object(Matching, "REL/partyresultdll/util.c"),
         },
@@ -1910,12 +1910,12 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "resultDll",
         objects={
-            Object(NonMatching, "REL/resultDll/result.c"),
+            Object(Equivalent, "REL/resultDll/result.c"),
             Object(Matching, "REL/resultDll/stage.c"),
             Object(Matching, "REL/resultDll/toueidisp.c"),
             Object(Matching, "REL/resultDll/stagemodel.c"),
-            Object(NonMatching, "REL/resultDll/battle.c"),
-            Object(NonMatching, "REL/resultDll/team.c"),
+            Object(Equivalent, "REL/resultDll/battle.c"),
+            Object(Equivalent, "REL/resultDll/team.c"),
         },
     ),
     Rel(
