@@ -254,6 +254,9 @@ static void MB7_MasuStub(void) {
 /* the original never sets a return value here (just `blr`); the result
  * is genuinely unused by the caller for this particular hook */
 static int MB7Ev_MasuWalkPre(int playerNo) {
+#ifdef TARGET_PC
+    return playerNo; // GC returned r3 = playerNo (empty body, arg untouched); caller ignores it
+#endif
 }
 
 /* -------------------------- setup / teardown ---------------------------- */
