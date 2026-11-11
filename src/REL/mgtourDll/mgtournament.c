@@ -353,7 +353,7 @@ void fn_1_6538(void)
     s8 winner;
 #endif
     f32 spacing;
-    s16 mdl;
+    s32 mdl;
     s8 *pno;
 
     switch (lbl_1_bss_1681C->mgNum) {
@@ -518,8 +518,118 @@ void fn_1_6538(void)
     WipeWait();
 }
 
+void fn_1_10178(void);
+
 void fn_1_7450(void)
 {
+    Vec camTarget;
+    Vec camUp;
+    Vec camPos;
+    MGT_PLAYER *pl;
+    s32 mdl;
+    s32 k;
+    OMOVLHIS *his;
+    s32 i;
+    s32 t;
+    s32 pan;
+    f32 spacing;
+
+    HuAudJinglePlay(0x86);
+    HuPrcChildCreate(fn_1_10178, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    if (GwPlayerConf[lbl_1_bss_16818->player1No].type != 0 && GwPlayerConf[lbl_1_bss_16818->player2No].type != 0) {
+        lbl_1_bss_16818->keyMask = 0x400;
+        HuPrcChildCreate(fn_1_A7C, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    }
+    while (!(lbl_1_bss_16818->flag & 0x400)) {
+        HuPrcVSleep();
+    }
+    pl = &lbl_1_bss_16818->player[(&lbl_1_bss_16818->player1No)[lbl_1_bss_16818->turnNo]];
+    pan = (s32)(32.0f * (pl->pos.x / 200.0f)) + 0x40;
+    HuAudFXPlayPan(lbl_1_data_248[pl->charNo][0], pan);
+    if (pl->state != 2) {
+        CharMotionShiftSet(pl->charNo, pl->motId[2], 0.0f, 5.0f, 0);
+        pl->state = 2;
+    }
+    lbl_1_bss_16818->stat &= ~0x800;
+    HuPrcChildCreate(fn_1_2E68, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    t = 120;
+    while (t--) {
+        HuPrcVSleep();
+    }
+    if (lbl_1_bss_16818->stat & 0x20) {
+        lbl_1_bss_16818->stat &= ~0x20;
+        HuWinExClose(lbl_1_bss_16818->winId);
+        HuWinHomeClear(lbl_1_bss_16818->winId);
+    }
+    while (!(lbl_1_bss_16818->stat & 0x800)) {
+        HuPrcVSleep();
+    }
+    lbl_1_bss_16818->bgmId = HuAudBGMPlay(0x23);
+    i = 4;
+    while (i--) {
+        pl = &lbl_1_bss_16818->player[i];
+        if (pl->state != 0) {
+            CharMotionShiftSet(pl->charNo, pl->motId[0], 0.0f, 5.0f, 0x40000001);
+            pl->state = 0;
+        }
+    }
+    WipeCreate(2, 6, 60);
+    WipeWait();
+    lbl_1_bss_16818->stat |= 0x400;
+    Hu3DCameraKill(0x10);
+    camPos.x = camPos.y = 0.0f;
+    camPos.z = lbl_1_bss_1681C->camPos.z;
+    camUp.x = camUp.z = 0.0f;
+    camUp.y = 1.0f;
+    camTarget.x = camTarget.y = camTarget.z = 0.0f;
+    Hu3DCameraCreate(2);
+    Hu3DCameraViewportSet(4, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraScissorSet(4, 0, 0, 640, 480);
+    Hu3DCameraPosSetV(4, &camPos, &camUp, &camTarget);
+    Hu3DCameraPerspectiveSet(4, lbl_1_bss_1681C->aspect, 20.0f, 13000.0f, 1.2f);
+    spacing = 200.0f;
+    k = 4;
+    while (k--) {
+        mdl = lbl_1_bss_16818->mdl[k + 7];
+        Hu3DModelPosSet(mdl, -(1.5f * spacing) + (f32)k * spacing, 0.0f, lbl_1_data_1B4[lbl_1_bss_16818->player[k].charNo]);
+        Hu3DModelAttrReset(mdl, 1);
+        Hu3DModelCameraSet(mdl, 2);
+        Hu3DModelLayerSet(mdl, 0);
+        mdl = lbl_1_bss_16818->mdl[k + 12];
+        Hu3DModelAttrReset(mdl, 1);
+        Hu3DModelLayerSet(mdl, 4);
+        Hu3DModelCameraSet(mdl, 4);
+    }
+    Hu3DCameraCreate(2);
+    Hu3DCameraPerspectiveSet(2, 1.2f, 15000.0f, 40000.0f, 1.2f);
+    Hu3DCameraViewportSet(2, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraScissorSet(2, 0, 0, 640, 480);
+    Hu3DCameraPosSet(2, 0.0f, 100.0f, 30000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[5], 1);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[6], 1);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[4], 1);
+    fn_1_C804();
+    fn_1_D820(1, lbl_1_bss_16818);
+    fn_1_CFEC(1);
+    WipeCreate(1, 5, 60);
+    WipeWait();
+    fn_1_D61C(10);
+    while (!fn_1_D630()) {
+        HuPrcVSleep();
+    }
+    (&lbl_1_bss_1681C->cur2)[lbl_1_bss_1681C->mgNum] = lbl_1_bss_16818->turnNo;
+    lbl_1_bss_1681C->mgNum += 1;
+    if (lbl_1_bss_1681C->mgNum == 4) {
+        fn_1_D61C(8);
+        while (!fn_1_D630()) {
+            HuPrcVSleep();
+        }
+        lbl_1_bss_1681C->flag |= 1;
+        his = omOvlHisGet(0);
+        omOvlHisChg(0, his->ovl, 2, his->stat);
+    }
 }
 
 void fn_1_7CB8(void)
