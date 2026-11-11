@@ -1,7 +1,4 @@
-#include "game/object.h"
-#include "game/process.h"
-#include "game/data.h"
-#include "game/wipe.h"
+#include "REL/mdoptionDll/mdoption.h"
 
 /*************************************************************
  * mdoption.c
@@ -23,44 +20,7 @@
  * the offsets stay pinned to the original.
  *************************************************************/
 
-/* Offsets recovered from the original object's sys-> accesses. */
-typedef struct Sys_s {
-    s32 pad00[10];             //0x00
-    s32 flowMode;              //0x28 MdFlowTbl index
-    s8 exitF;                  //0x2C
-    s8 skipWipeF;              //0x2D
-    s8 pad2E;                  //0x2E
-    s8 cursorSelNoPrev;        //0x2F
-    s8 pad30;                  //0x30
-    s8 cursorSelNo;            //0x31 write cursor into cursorSel[]
-    s8 cursorSelF[4];          //0x32
-    s8 cursorSel[4];           //0x36
-    s8 cursorSelPrev[4];       //0x3A
-    s8 pad3E[0x4C - 0x3E];     //0x3E
-    s16 loadState;             //0x4C
-    s16 loadAsyncStat;         //0x4E
-    s32 pad50;                 //0x50
-    OMOBJMAN *objman;          //0x54
-    HUPROCESS *mainProc;       //0x58
-    void *unk5C[3];            //0x5C
-    HUPROCESS *loadProc;       //0x68
-    OMOBJ *obj[6];             //0x6C debugfont, pad, camera, light, shadow, mess
-    void *debugFont;           //0x84
-    void *padWork;             //0x88
-    void *camera;              //0x8C
-    void *light;               //0x90
-    void *shadow;              //0x94
-    void *mess;                //0x98
-    void *sprite;              //0x9C
-    void *model;               //0xA0
-    u8 padA4[0x398 - 0xA4];    //0xA4
-    s32 unk398;                //0x398
-    s32 unk39C;                //0x39C
-    u8 pad3A0[0x510 - 0x3A0];  //0x3A0
-} SYS;
 
-extern SYS *sys;
-extern SYS *sysP;
 
 /* sys->loadState states. The names are this decomp's; only the
  * ordering (0=none 1=read 2=done 3=idle) is fixed by the original's
