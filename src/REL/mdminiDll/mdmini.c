@@ -8,13 +8,15 @@
 #include "game/wipe.h"
 #include "game/saveload.h"
 #include "game/mgdata.h"
-#include "game/board/main.h"
 
 #include "messnum/partymode_sys.h"
 #include "messnum/mapname.h"
 #include "messnum/teamname.h"
 #include "messnum/syshelp.h"
 #include "messnum/mgmode_sys.h"
+
+/* not game/board/main.h: it pulls in game/frand.h */
+extern void MBPartySaveInit(int boardNo);
 
 /* frandmod is deliberately left undeclared (no game/frand.h): the original
  * called it with an implicit int return, which is what makes MWCC emit the
@@ -81,6 +83,179 @@ extern void fn_1_81E0(void);
 #define MDMINI_CHR_SELECT_WAIT 3
 #define MDMINI_CHR_SELECT_MOVE 4
 #define MDMINI_CHR_SELECT_MOVE_WAIT 5
+
+/* ------------------------------------------------------------
+ * Particle effects (particle "dot" triple + single "glow").
+ * Shared shape with mdpartyDll/effect.c; mdmini uses its own
+ * HU3DPARMANPARAM tables for the last two entries.
+ * ---------------------------------------------------------- */
+
+typedef struct MdMiniEffect_s {
+    int parManId[3];
+} MDMINI_EFFECT;
+
+static MDMINI_EFFECT *ParticleDotCreate(ANIMDATA *animP, s16 layer, s16 cameraBit)
+{
+    static HU3DPARMANPARAM param1 = {
+        30,
+        0,
+        50,
+        10,
+        180,
+        { 0, -0.05f, 0 },
+        20,
+        0.8f,
+        10,
+        1,
+        2,
+        {
+            { 0xFF, 0xFF, 0xFF, 0xFF },
+            { 0xFF, 0xFF, 0x40, 0xFF },
+        },
+        {
+            { 0xFF, 0x80, 0x80, 0x00 },
+            { 0xFF, 0x40, 0x20, 0x00 },
+        }
+    };
+    static HU3DPARMANPARAM param2 = {
+        40,
+        0,
+        50,
+        0,
+        90,
+        { 0, -0.05f, 0 },
+        35,
+        0.88f,
+        25,
+        0.99f,
+        1,
+        {
+            { 0xFF, 0xFF, 0xFF, 0xFF },
+        },
+        {
+            { 0xFF, 0x80, 0x80, 0x00 },
+        }
+    };
+    static HU3DPARMANPARAM param3 = {
+        30,
+        0,
+        30,
+        60,
+        180,
+        { 0, 0, 0 },
+        0.2f,
+        1.0f,
+        100,
+        1.0f,
+        2,
+        {
+            { 0xFF, 0x20, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
+            { 0x40, 0x20, 0x00, 0x00 },
+        },
+        {
+            { 0x20, 0x00, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
+        }
+    };
+    HU3DPARMANID parManId;
+    MDMINI_EFFECT *effectP;
+    effectP = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDMINI_EFFECT), HU_MEMNUM_OVL);
+
+    effectP->parManId[0] = parManId = Hu3DParManCreate(animP, 100, &param1);
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED70|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, 90, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    effectP->parManId[1] = parManId = Hu3DParManCreate(animP, 100, &param2);
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDANGLE|HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED90|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, frandmod(40)+70, 0, frandmod(80)-40);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    effectP->parManId[2] = parManId = Hu3DParManCreate(animP, 100, &param3);
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, 0, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    return effectP;
+}
+
+static void ParticleDotPosSet(MDMINI_EFFECT *effectP, HuVecF *pos)
+{
+    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
+    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParManPosSet(effectP->parManId[1], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[1], 2);
+    Hu3DParManAttrReset(effectP->parManId[1], HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParManPosSet(effectP->parManId[2], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[2], 5);
+    Hu3DParManAttrReset(effectP->parManId[2], HU3D_PARMAN_ATTR_TIMEUP);
+}
+
+static void ParticleDotKill(MDMINI_EFFECT *effectP)
+{
+    Hu3DParManKill(effectP->parManId[0]);
+    Hu3DParManKill(effectP->parManId[1]);
+    Hu3DParManKill(effectP->parManId[2]);
+}
+
+static MDMINI_EFFECT *ParticleGlowCreate(ANIMDATA *animP, s16 layer, s16 cameraBit)
+{
+    static HU3DPARMANPARAM param = {
+        50,
+        0,
+        2,
+        30,
+        180,
+        { 0, -0.2f, 0 },
+        1,
+        0.8f,
+        30,
+        0.95f,
+        3,
+        {
+            { 0xFF, 0xFF, 0xFF, 0xFF },
+            { 0x40, 0xFF, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
+            { 0x00, 0x00, 0xFF, 0x80 },
+        },
+        {
+            { 0x80, 0xFF, 0x00, 0x00 },
+            { 0x00, 0x00, 0x80, 0xC0 },
+            { 0xFF, 0x00, 0xFF, 0x40 },
+            { 0x20, 0x00, 0x80, 0x10 },
+        }
+    };
+    HU3DPARMANID parManId;
+    MDMINI_EFFECT *effectP;
+    effectP = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDMINI_EFFECT), HU_MEMNUM_OVL);
+    effectP->parManId[0] = parManId = Hu3DParManCreate(animP, 100, &param);
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED70|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, 90, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    return effectP;
+}
+
+static void ParticleGlowPosSet(MDMINI_EFFECT *effectP, HuVecF *pos)
+{
+    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
+    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
+}
+
+static void ParticleGlowKill(MDMINI_EFFECT *effectP)
+{
+    Hu3DParManKill(effectP->parManId[0]);
+}
 
 char *lbl_1_data_144 = "26";
 
@@ -4125,6 +4300,337 @@ BOOL fn_1_113D8(int param)
     }
 }
 
+BOOL fn_1_11658(int param)
+{
+    int i;
+    MDMODEL_WORK *model;
+    HuVecF *posP;
+    HuVecF *rotP;
+    HuVecF *scaleP;
+    MDSPRITE_WORK *sprite;
+    MDCAMERA_WORK *camera;
+    MDMINI_STAR *star;
+    MDMESS *mess;
+
+    static int mode;
+    static MDMINI_EFFECT *effectP[4][2];
+    static HuVecF effectPos[4][2];
+    static HuVecF effectRot[4][2];
+    static int enterTime;
+    static float vsTime;
+    static float vsT;
+
+    camera = sys->camera;
+    model = sys->model;
+    sprite = sys->sprite;
+    star = sys->star;
+    mess = sys->mess;
+    if(!sys->dirtyF) {
+        if(param == 0 || param == 1) {
+        }
+        vsTime = 0;
+        vsT = 0;
+        mode = 0;
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0 || param == 1) {
+        switch(mode) {
+            case 0:
+                for(i=0; i<4; i++) {
+                    HuSprDispOff(sprite->grpId[MDSPR_GRP_PLAYERNO], i);
+                    HuSprDispOff(sprite->grpId[MDSPR_GRP_COMDIF], i);
+                }
+                for(i=0; i<4; i++) {
+                    MdRingModeSet(i, MDMINI_RING_MODE_ERASE);
+                }
+                for(i=0; i<4; i++) {
+                    Hu3DModelDispOff(model->mdlId[sys->chrSel[i]+MDMODEL_CAP_CHR_00]);
+                }
+                Hu3DModelDispOff(model->mdlId[MDMODEL_STAGE_CHR]);
+                for(i=0; i<4; i++) {
+                    Hu3DModelLayerSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], 3);
+                    Hu3DModelCameraSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], camera->camera[MDCAMERA_MAIN].bit);
+                    *model->posP[sys->chrSel[i]+MDMODEL_CHR_00] = *model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                    model->posP[sys->chrSel[i]+MDMODEL_CHR_00]->z = 0;
+                }
+                for(i=0; i<4; i++) {
+                    effectP[i][0] = ParticleDotCreate(sprite->animP[MDMINI_ANIM_9], 4, camera->camera[MDCAMERA_MAIN].bit);
+                    ParticleDotPosSet(effectP[i][0], model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00]);
+                    effectP[i][1] = ParticleGlowCreate(sprite->animP[MDMINI_ANIM_10], 4, camera->camera[MDCAMERA_MAIN].bit);
+                    ParticleGlowPosSet(effectP[i][1], model->posP[sys->chrSel[i]+MDMODEL_CHR_00]);
+                }
+                if(param == 0) {
+                    if(sys->gameType == 0) {
+                        for(i=0; i<4; i++) {
+                            effectPos[i][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            effectRot[i][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        }
+                    } else if(sys->gameType == 2) {
+                        for(i=0; i<4; i++) {
+                            effectPos[sys->teamOrder[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            effectRot[sys->teamOrder[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        }
+                    } else if(sys->gameType == 1) {
+                        for(i=0; i<4; i++) {
+                            effectPos[sys->mdlE[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            effectRot[sys->mdlE[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        }
+                    }
+                } else if(param == 1) {
+                    for(i=0; i<4; i++) {
+                        effectPos[i][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        effectRot[i][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                    }
+                }
+                effectPos[0][1].x = -300;
+                effectPos[0][1].y = 50+effectPos[0][0].y;
+                effectPos[0][1].z = 200+effectPos[0][0].z;
+                effectPos[1][1].x = -100;
+                effectPos[1][1].y = 50+effectPos[1][0].y;
+                effectPos[1][1].z = 200+effectPos[1][0].z;
+                effectPos[2][1].x = 100;
+                effectPos[2][1].y = 50+effectPos[2][0].y;
+                effectPos[2][1].z = 200+effectPos[2][0].z;
+                effectPos[3][1].x = 300;
+                effectPos[3][1].y = 50+effectPos[3][0].y;
+                effectPos[3][1].z = 200+effectPos[3][0].z;
+
+                effectRot[0][1].x = 0;
+                effectRot[0][1].y = 540;
+                effectRot[0][1].z = 0;
+                effectRot[1][1].x = 0;
+                effectRot[1][1].y = 540;
+                effectRot[1][1].z = 0;
+                effectRot[2][1].x = 0;
+                effectRot[2][1].y = -540;
+                effectRot[2][1].z = 0;
+                effectRot[3][1].x = 0;
+                effectRot[3][1].y = -540;
+                effectRot[3][1].z = 0;
+                fn_1_17008(MDMINI_AUD_SE_BOARD_START);
+                mode++;
+                break;
+
+            case 1:
+                MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 45);
+                MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 45);
+                if(param == 0 && sys->gameType != 0) {
+                    MdMathOscillate(MDMATH_OSC_90, &vsTime, &vsT, 15);
+                    MdMathLerpScale(model->scaleP[MDMODEL_VS], 1, 0, vsT);
+                }
+                if(param == 0) {
+                    if(sys->gameType == 0) {
+                        float ofsTbl[4] = { 4, 2, 1.5f, 3 };
+                        for(i=0; i<4; i++) {
+                            posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathLerpOfs(&posP->x, effectPos[i][0].x, effectPos[i][1].x, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[i]));
+                            MdMathLerpOfs(&posP->y, effectPos[i][0].y, effectPos[i][1].y, sys->procT, 0.1f*(sys->procOfsT*ofsTbl[i]));
+                            MdMathLerpOfs(&posP->z, effectPos[i][0].z, effectPos[i][1].z, sys->procT, 0.5f*(sys->procOfsT*ofsTbl[i]));
+                            MdMathLerp(&rotP->y, effectRot[i][0].y, effectRot[i][1].y, sys->procT);
+                            ParticleGlowPosSet(effectP[i][1], posP);
+                        }
+                    } else if(sys->gameType == 2) {
+                        float ofsTbl[4] = { 4, 2, 1.5f, 3 };
+                        for(i=0; i<4; i++) {
+                            posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathLerpOfs(&posP->x, effectPos[sys->teamOrder[i]][0].x, effectPos[sys->teamOrder[i]][1].x, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->teamOrder[i]]));
+                            MdMathLerpOfs(&posP->y, effectPos[sys->teamOrder[i]][0].y, effectPos[sys->teamOrder[i]][1].y, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->teamOrder[i]]));
+                            MdMathLerpOfs(&posP->z, effectPos[sys->teamOrder[i]][0].z, effectPos[sys->teamOrder[i]][1].z, sys->procT, 0.5f*(sys->procOfsT*ofsTbl[sys->teamOrder[i]]));
+                            MdMathLerp(&rotP->y, effectRot[sys->teamOrder[i]][0].y, effectRot[sys->teamOrder[i]][1].y, sys->procT);
+                            ParticleGlowPosSet(effectP[i][1], posP);
+                        }
+                    } else if(sys->gameType == 1) {
+                        float ofsTbl[4] = { 4, 2, 1.5f, 3 };
+                        for(i=0; i<4; i++) {
+                            posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathLerpOfs(&posP->x, effectPos[sys->mdlE[i]][0].x, effectPos[sys->mdlE[i]][1].x, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->mdlE[i]]));
+                            MdMathLerpOfs(&posP->y, effectPos[sys->mdlE[i]][0].y, effectPos[sys->mdlE[i]][1].y, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->mdlE[i]]));
+                            MdMathLerpOfs(&posP->z, effectPos[sys->mdlE[i]][0].z, effectPos[sys->mdlE[i]][1].z, sys->procT, 0.5f*(sys->procOfsT*ofsTbl[sys->mdlE[i]]));
+                            MdMathLerp(&rotP->y, effectRot[sys->mdlE[i]][0].y, effectRot[sys->mdlE[i]][1].y, sys->procT);
+                            ParticleGlowPosSet(effectP[i][1], posP);
+                        }
+                    }
+                } else if(param == 1) {
+                    float ofsTbl[4] = { 8, 4, 3, 6 };
+                    for(i=0; i<4; i++) {
+                        posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        MdMathLerpOfs(&posP->x, effectPos[i][0].x, effectPos[i][1].x, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[i]));
+                        MdMathLerpOfs(&posP->y, effectPos[i][0].y, effectPos[i][1].y, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[i]));
+                        MdMathLerpOfs(&posP->z, effectPos[i][0].z, effectPos[i][1].z, sys->procT, 0.5f*(sys->procOfsT*ofsTbl[i]));
+                        MdMathLerp(&rotP->y, effectRot[i][0].y, effectRot[i][1].y, sys->procT);
+                        ParticleGlowPosSet(effectP[i][1], posP);
+                    }
+                }
+                if(sys->procTime >= 1) {
+                    sys->procTime = 0;
+                    sys->procOfsTime = 0;
+                    sys->procT = 0;
+                    sys->procOfsT = 0;
+                    if(param == 0) {
+                        if(sys->gameType == 0) {
+                            for(i=0; i<4; i++) {
+                                effectPos[i][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->x);
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->y);
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->z);
+                                effectRot[i][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            }
+                        } else if(sys->gameType == 2) {
+                            for(i=0; i<4; i++) {
+                                effectPos[sys->teamOrder[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->x);
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->y);
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->z);
+                                effectRot[sys->teamOrder[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            }
+                        } else if(sys->gameType == 1) {
+                            for(i=0; i<4; i++) {
+                                effectPos[sys->mdlE[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->x);
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->y);
+                                MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->z);
+                                effectRot[sys->mdlE[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            }
+                        }
+                    } else if(param == 1) {
+                        for(i=0; i<4; i++) {
+                            effectPos[i][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->x);
+                            MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->y);
+                            MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->z);
+                            effectRot[i][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        }
+                    }
+                    effectPos[0][1].x = -200;
+                    effectPos[0][1].y = 250;
+                    effectPos[0][1].z = -1000;
+                    effectPos[1][1].x = -75;
+                    effectPos[1][1].y = 250;
+                    effectPos[1][1].z = -1000;
+                    effectPos[2][1].x = 75;
+                    effectPos[2][1].y = 250;
+                    effectPos[2][1].z = -1000;
+                    effectPos[3][1].x = 200;
+                    effectPos[3][1].y = 250;
+                    effectPos[3][1].z = -1000;
+
+                    effectRot[0][1].x = 90;
+                    effectRot[0][1].y = 160;
+                    effectRot[0][1].z = -10;
+                    effectRot[1][1].x = 90;
+                    effectRot[1][1].y = 175;
+                    effectRot[1][1].z = -10;
+                    effectRot[2][1].x = 90;
+                    effectRot[2][1].y = -175;
+                    effectRot[2][1].z = 10;
+                    effectRot[3][1].x = 90;
+                    effectRot[3][1].y = -160;
+                    effectRot[3][1].z = 10;
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    star->motNext = MDMINI_STAR_MOT_IDLE;
+                    enterTime = 0;
+                    mode++;
+                }
+                break;
+
+            case 2:
+                if(++enterTime >= 0) {
+                    fn_1_17008(MDMINI_AUD_SE_BOARD_ENTER1);
+                    mode++;
+                }
+                break;
+
+            case 3:
+                MdProcCall(MDMINI_PROC_CAMERA, 0);
+                MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 60);
+                if(param == 0) {
+                    if(sys->gameType == 0) {
+                        for(i=0; i<4; i++) {
+                            posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathLerp(&posP->x, effectPos[i][0].x, effectPos[i][1].x, sys->procT);
+                            MdMathLerp(&posP->y, effectPos[i][0].y, effectPos[i][1].y, sys->procT);
+                            MdMathLerp(&posP->z, effectPos[i][0].z, effectPos[i][1].z, sys->procT);
+                            MdMathLerp(&rotP->x, effectRot[i][0].x, effectRot[i][1].x, sys->procT);
+                            MdMathLerp(&rotP->y, effectRot[i][0].y, effectRot[i][1].y, sys->procT);
+                            MdMathLerp(&rotP->z, effectRot[i][0].z, effectRot[i][1].z, sys->procT);
+                            ParticleGlowPosSet(effectP[i][1], posP);
+                        }
+                    } else if(sys->gameType == 2) {
+                        for(i=0; i<4; i++) {
+                            posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathLerp(&posP->x, effectPos[sys->teamOrder[i]][0].x, effectPos[sys->teamOrder[i]][1].x, sys->procT);
+                            MdMathLerp(&posP->y, effectPos[sys->teamOrder[i]][0].y, effectPos[sys->teamOrder[i]][1].y, sys->procT);
+                            MdMathLerp(&posP->z, effectPos[sys->teamOrder[i]][0].z, effectPos[sys->teamOrder[i]][1].z, sys->procT);
+                            MdMathLerp(&rotP->x, effectRot[sys->teamOrder[i]][0].x, effectRot[sys->teamOrder[i]][1].x, sys->procT);
+                            MdMathLerp(&rotP->y, effectRot[sys->teamOrder[i]][0].y, effectRot[sys->teamOrder[i]][1].y, sys->procT);
+                            MdMathLerp(&rotP->z, effectRot[sys->teamOrder[i]][0].z, effectRot[sys->teamOrder[i]][1].z, sys->procT);
+                            ParticleGlowPosSet(effectP[i][1], posP);
+                        }
+                    } else if(sys->gameType == 1) {
+                        for(i=0; i<4; i++) {
+                            posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            MdMathLerp(&posP->x, effectPos[sys->mdlE[i]][0].x, effectPos[sys->mdlE[i]][1].x, sys->procT);
+                            MdMathLerp(&posP->y, effectPos[sys->mdlE[i]][0].y, effectPos[sys->mdlE[i]][1].y, sys->procT);
+                            MdMathLerp(&posP->z, effectPos[sys->mdlE[i]][0].z, effectPos[sys->mdlE[i]][1].z, sys->procT);
+                            MdMathLerp(&rotP->x, effectRot[sys->mdlE[i]][0].x, effectRot[sys->mdlE[i]][1].x, sys->procT);
+                            MdMathLerp(&rotP->y, effectRot[sys->mdlE[i]][0].y, effectRot[sys->mdlE[i]][1].y, sys->procT);
+                            MdMathLerp(&rotP->z, effectRot[sys->mdlE[i]][0].z, effectRot[sys->mdlE[i]][1].z, sys->procT);
+                            ParticleGlowPosSet(effectP[i][1], posP);
+                        }
+                    }
+                } else if(param == 1) {
+                    for(i=0; i<4; i++) {
+                        posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
+                        MdMathLerp(&posP->x, effectPos[i][0].x, effectPos[i][1].x, sys->procT);
+                        MdMathLerp(&posP->y, effectPos[i][0].y, effectPos[i][1].y, sys->procT);
+                        MdMathLerp(&posP->z, effectPos[i][0].z, effectPos[i][1].z, sys->procT);
+                        MdMathLerp(&rotP->x, effectRot[i][0].x, effectRot[i][1].x, sys->procT);
+                        MdMathLerp(&rotP->y, effectRot[i][0].y, effectRot[i][1].y, sys->procT);
+                        MdMathLerp(&rotP->z, effectRot[i][0].z, effectRot[i][1].z, sys->procT);
+                        ParticleGlowPosSet(effectP[i][1], posP);
+                    }
+                }
+                if(sys->procTime >= 1) {
+                    sys->procTime = 0;
+                    sys->procOfsTime = 0;
+                    sys->procT = 0;
+                    sys->procOfsT = 0;
+                    mode++;
+                }
+                break;
+        }
+        if(mode >= 2) {
+            MdProcCall(MDMINI_PROC_WIN, 1);
+        }
+    }
+    if(param == 0 || param == 1) {
+        if(mode == 3) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+#ifdef TARGET_PC
+    return FALSE;
+#endif
+}
+
 BOOL fn_1_149A4(int param)
 {
     HuVec2f *sprPos; //r31
@@ -5250,179 +5756,6 @@ void MdPosAdjustMode(void)
             }
         }
     }
-}
-
-/* ------------------------------------------------------------
- * Particle effects (particle "dot" triple + single "glow").
- * Shared shape with mdpartyDll/effect.c; mdmini uses its own
- * HU3DPARMANPARAM tables for the last two entries.
- * ---------------------------------------------------------- */
-
-typedef struct MdMiniEffect_s {
-    int parManId[3];
-} MDMINI_EFFECT;
-
-static MDMINI_EFFECT *ParticleDotCreate(ANIMDATA *animP, s16 layer, s16 cameraBit)
-{
-    static HU3DPARMANPARAM param1 = {
-        30,
-        0,
-        50,
-        10,
-        180,
-        { 0, -0.05f, 0 },
-        20,
-        0.8f,
-        10,
-        1,
-        2,
-        {
-            { 0xFF, 0xFF, 0xFF, 0xFF },
-            { 0xFF, 0xFF, 0x40, 0xFF },
-        },
-        {
-            { 0xFF, 0x80, 0x80, 0x00 },
-            { 0xFF, 0x40, 0x20, 0x00 },
-        }
-    };
-    static HU3DPARMANPARAM param2 = {
-        40,
-        0,
-        50,
-        0,
-        90,
-        { 0, -0.05f, 0 },
-        35,
-        0.88f,
-        25,
-        0.99f,
-        1,
-        {
-            { 0xFF, 0xFF, 0xFF, 0xFF },
-        },
-        {
-            { 0xFF, 0x80, 0x80, 0x00 },
-        }
-    };
-    static HU3DPARMANPARAM param3 = {
-        30,
-        0,
-        30,
-        60,
-        180,
-        { 0, 0, 0 },
-        0.2f,
-        1.0f,
-        100,
-        1.0f,
-        2,
-        {
-            { 0xFF, 0x20, 0x00, 0x00 },
-            { 0x00, 0x00, 0x00, 0x00 },
-            { 0x00, 0x00, 0x00, 0x00 },
-            { 0x40, 0x20, 0x00, 0x00 },
-        },
-        {
-            { 0x20, 0x00, 0x00, 0x00 },
-            { 0x00, 0x00, 0x00, 0x00 },
-            { 0x00, 0x00, 0x00, 0x00 },
-            { 0x00, 0x00, 0x00, 0x00 },
-        }
-    };
-    HU3DPARMANID parManId;
-    MDMINI_EFFECT *effectP;
-    effectP = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDMINI_EFFECT), HU_MEMNUM_OVL);
-
-    effectP->parManId[0] = parManId = Hu3DParManCreate(animP, 100, &param1);
-    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED70|HU3D_PARMAN_ATTR_TIMEUP);
-    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
-    Hu3DParManRotSet(parManId, 90, 0, 0);
-    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
-    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-    effectP->parManId[1] = parManId = Hu3DParManCreate(animP, 100, &param2);
-    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDANGLE|HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED90|HU3D_PARMAN_ATTR_TIMEUP);
-    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
-    Hu3DParManRotSet(parManId, frandmod(40)+70, 0, frandmod(80)-40);
-    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
-    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-    effectP->parManId[2] = parManId = Hu3DParManCreate(animP, 100, &param3);
-    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_TIMEUP);
-    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
-    Hu3DParManRotSet(parManId, 0, 0, 0);
-    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
-    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-    return effectP;
-}
-
-static void ParticleDotPosSet(MDMINI_EFFECT *effectP, HuVecF *pos)
-{
-    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
-    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
-    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
-    Hu3DParManPosSet(effectP->parManId[1], pos->x, pos->y, pos->z);
-    Hu3DParManTimeLimitSet(effectP->parManId[1], 2);
-    Hu3DParManAttrReset(effectP->parManId[1], HU3D_PARMAN_ATTR_TIMEUP);
-    Hu3DParManPosSet(effectP->parManId[2], pos->x, pos->y, pos->z);
-    Hu3DParManTimeLimitSet(effectP->parManId[2], 5);
-    Hu3DParManAttrReset(effectP->parManId[2], HU3D_PARMAN_ATTR_TIMEUP);
-}
-
-static void ParticleDotKill(MDMINI_EFFECT *effectP)
-{
-    Hu3DParManKill(effectP->parManId[0]);
-    Hu3DParManKill(effectP->parManId[1]);
-    Hu3DParManKill(effectP->parManId[2]);
-}
-
-static MDMINI_EFFECT *ParticleGlowCreate(ANIMDATA *animP, s16 layer, s16 cameraBit)
-{
-    static HU3DPARMANPARAM param = {
-        50,
-        0,
-        2,
-        30,
-        180,
-        { 0, -0.2f, 0 },
-        1,
-        0.8f,
-        30,
-        0.95f,
-        3,
-        {
-            { 0xFF, 0xFF, 0xFF, 0xFF },
-            { 0x40, 0xFF, 0x00, 0x00 },
-            { 0x00, 0x00, 0x00, 0x00 },
-            { 0x00, 0x00, 0xFF, 0x80 },
-        },
-        {
-            { 0x80, 0xFF, 0x00, 0x00 },
-            { 0x00, 0x00, 0x80, 0xC0 },
-            { 0xFF, 0x00, 0xFF, 0x40 },
-            { 0x20, 0x00, 0x80, 0x10 },
-        }
-    };
-    HU3DPARMANID parManId;
-    MDMINI_EFFECT *effectP;
-    effectP = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDMINI_EFFECT), HU_MEMNUM_OVL);
-    effectP->parManId[0] = parManId = Hu3DParManCreate(animP, 100, &param);
-    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED70|HU3D_PARMAN_ATTR_TIMEUP);
-    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
-    Hu3DParManRotSet(parManId, 90, 0, 0);
-    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
-    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-    return effectP;
-}
-
-static void ParticleGlowPosSet(MDMINI_EFFECT *effectP, HuVecF *pos)
-{
-    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
-    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
-    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
-}
-
-static void ParticleGlowKill(MDMINI_EFFECT *effectP)
-{
-    Hu3DParManKill(effectP->parManId[0]);
 }
 
 s8 capPlayerInitF;
