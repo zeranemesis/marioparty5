@@ -81,6 +81,26 @@ extern void fn_1_81E0(void);
 #define MDMINI_CHR_SELECT_MOVE 4
 #define MDMINI_CHR_SELECT_MOVE_WAIT 5
 
+char *lbl_1_data_144 = "26";
+
+static OMOVL NextDllTbl[6] = {
+    DLL_mgfreedll,
+    DLL_mgmatchdll,
+    DLL_w20dll,
+    DLL_decathlondll,
+    DLL_mgwarsdll,
+    DLL_mgtourdll,
+};
+
+static unsigned int LoadDirTbl[6] = {
+    DATA_mgfree,
+    DATA_mgmatch,
+    DATA_w20,
+    DATA_decathlon,
+    DATA_mgwars,
+    DATA_mgtour,
+};
+
 static HuVecF CharPos[10][2] = {
 	{ { -250, 0, 0 }, { -250, 0, 0 } },
 	{ { -125, 0, 0 }, { -125, 0, 0 } },
@@ -157,6 +177,7 @@ void fn_1_20A0(void);
 void fn_1_22C8(void);
 void fn_1_23D8(void);
 void fn_1_6FB8(void);
+void fn_1_7638(void);
 BOOL fn_1_9714(int param);
 BOOL fn_1_991C(int param);
 BOOL fn_1_AF34(int param);
@@ -187,7 +208,6 @@ int fn_1_171B4(int mdlNo, int cameraNo);
 void fn_1_27F8(void);
 void fn_1_35A0(void);
 void fn_1_5558(void);
-void fn_1_7638(void);
 void fn_1_81E0(void);
 BOOL fn_1_9AC8(int param);
 BOOL fn_1_C8B4(int param);
@@ -1087,6 +1107,213 @@ void fn_1_6FB8(void)
                 MdProcCall(MDMINI_PROC_RESET, 0);
                 sys->mode = 0;
                 sys->flowMode = MDMINI_FLOW_BONUS_SEL;
+            }
+            break;
+    }
+}
+
+void fn_1_7638(void)
+{
+    MDMESS *mess;
+    MDMINI_STAR *star;
+    MDMODEL_WORK *model;
+    MDMINI_PLAYERSPR *playerSpr;
+    MDMINI_CHR *chr;
+    int i;
+    BOOL ret;
+
+    model = sys->model;
+    mess = sys->mess;
+    star = sys->star;
+    playerSpr = &sys->playerSpr[0];
+    chr = &sys->chr[0];
+
+    switch(sys->mode) {
+        case 0:
+            MdProcCall(MDMINI_PROC_RESET, 0);
+            sys->gameType = 0;
+            Hu3DAnmNoSet(model->animId[MDMODEL_ANIM_CAP_BONUS], sys->gameType);
+            sys->mode = 1;
+            break;
+
+        case 1:
+            if((ret = MdProcCall(MDMINI_PROC_CAP_GENRE, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 2;
+            }
+            break;
+
+        case 2:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 16)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                star->motNext = MDMINI_STAR_MOT_TALK;
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_GENRE_SEL, MDMESS_LIST_END);
+                MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_MENU_SEL, MDMESS_LIST_END);
+                sys->mode = 3;
+            }
+            break;
+
+        case 3:
+            if((sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) || (sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT)) {
+                if(sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) {
+                    if(--sys->gameType == -1) {
+                        sys->gameType = 2;
+                    }
+                    sys->cursorDir = 0;
+                } else if(sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT) {
+                    sys->gameType = ++sys->gameType%3;
+                    sys->cursorDir = 1;
+                }
+                Hu3DAnmNoSet(model->animId[MDMODEL_ANIM_CAP_BONUS], sys->gameType);
+                fn_1_17008(MDMINI_AUD_SE_CMN_MOVE);
+                sys->mode = 4;
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_B) {
+                star->motNext = MDMINI_STAR_MOT_IDLE;
+                MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                sys->mode = 5;
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_A) {
+                fn_1_17008(MDMINI_AUD_SE_CMN_CONFIRM);
+                MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                star->motNext = MDMINI_STAR_MOT_TALK;
+                MdProcWait(MDMINI_PROC_CURSOR, 17);
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                MdProcWait(MDMINI_PROC_CAP_GENRE, 3);
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 0;
+                sys->flowMode = MDMINI_FLOW_HANDICAP;
+            }
+            break;
+
+        case 4:
+            if((ret = MdProcCall(MDMINI_PROC_CAP_GENRE, 1)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 3;
+            }
+            break;
+
+        case 5:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 17)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 6;
+            }
+            break;
+
+        case 6:
+            if((ret = MdProcCall(MDMINI_PROC_CAP_GENRE, 2)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 7;
+            }
+            break;
+
+        case 7:
+            if((ret = MdProcCall(MDMINI_PROC_CAP_WIN, 4)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 2;
+                sys->flowMode = MDMINI_FLOW_TURN_SEL;
+            }
+            break;
+
+        case 8:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 17)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 9;
+            }
+            break;
+
+        case 9:
+            if((ret = MdProcCall(MDMINI_PROC_CAP_GENRE, 3)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                star->motNext = MDMINI_STAR_MOT_TALK;
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, TRUE, MESS_MGMODE_SYS_CONFIRM, MDMESS_LIST_END);
+                fn_1_17008(MDMINI_AUD_SE_STAR_CONFIRM);
+                sys->mode = 10;
+            }
+            break;
+
+        case 10:
+            if(MdMessWinCheck(mess, MDMESS_WIN_MAIN) == TRUE) {
+                switch(MdMessWinChoiceGet(mess, MDMESS_WIN_MAIN)) {
+                    case -1:
+                    case 1:
+                        MdMessWinMesSet(mess, MDMESS_WIN_MAIN, TRUE, MESS_MGMODE_SYS_RESET, MDMESS_LIST_END);
+                        sys->mode = 11;
+                        break;
+
+                    case 0:
+                        sys->loadState = MD_LOAD_STATE_LOAD;
+                        sys->loadDir = LoadDirTbl[sys->selNoNow];
+                        fn_1_16978();
+                        MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_MG_START, MDMESS_LIST_END);
+                        while(!MdMessWinCheck(mess, MDMESS_WIN_MAIN)) {
+                            HuPrcVSleep();
+                        }
+                        MdProcWait(MDMINI_PROC_13, 0);
+                        WipeColorSet(255, 255, 255);
+                        WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 55);
+                        fn_1_17008(MDMINI_AUD_MUS_STOP);
+                        fn_1_17008(10);
+                        HuPrcVSleep();
+                        while(WipeCheckEnd()) {
+                            MdProcCall(MDMINI_PROC_13, 0);
+                            HuPrcVSleep();
+                        }
+                        while(sys->loadState != MD_LOAD_STATE_DONE) {
+                            HuPrcVSleep();
+                        }
+                        omOvlHisChg(0, sys->ovlHis->ovl, 1, sys->ovlHis->stat);
+                        sys->ovlCallMode = MD_OVLCALL_CALL;
+                        sys->nextDll = NextDllTbl[sys->selNoNow];
+                        sys->skipWipeF = TRUE;
+                        sys->exitF = TRUE;
+                        break;
+                }
+            }
+            break;
+
+        case 11:
+            if(MdMessWinCheck(mess, MDMESS_WIN_MAIN) == TRUE) {
+                switch(MdMessWinChoiceGet(mess, MDMESS_WIN_MAIN)) {
+                    case -1:
+                    case 1:
+                        MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                        star->motNext = MDMINI_STAR_MOT_IDLE;
+                        sys->mode = 13;
+                        break;
+
+                    case 0:
+                        MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                        star->mode = MDMINI_STAR_CENTER_START;
+                        star->motNext = MDMINI_STAR_MOT_TALK;
+                        for(i=0; i<4; i++) {
+                            sys->padNoEnable[i] = 0;
+                            playerSpr[i].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                            Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+3], 0, 16, HU3D_MOTATTR_LOOP);
+                            chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT_WAIT;
+                            MdRingModeSet(i, MDMINI_RING_MODE_ERASE);
+                        }
+                        sys->mode = 12;
+                        break;
+                }
+            }
+            break;
+
+        case 12:
+            if((ret = MdProcCall(MDMINI_PROC_10, 1)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                fn_1_14C2C();
+                sys->prevPlayerNum = sys->playerNum;
+                sys->mode = 6;
+                sys->flowMode = MDMINI_FLOW_PLAYER_NUM_SEL;
+            }
+            break;
+
+        case 13:
+            if((ret = MdProcCall(MDMINI_PROC_CAP_GENRE, 4)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 2;
             }
             break;
     }
