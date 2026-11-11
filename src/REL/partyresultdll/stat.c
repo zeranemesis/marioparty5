@@ -11,8 +11,8 @@ typedef struct {
 #define STAT_DATA(n) (0xB10000 + (n))
 
 extern void HuSprAnimNoSetPause(HUSPRGRPID grpId, s16 memberNo, s16 animNo);
-extern void PResResultOrderGet(s16 (*)[4], s16 (*)[4], s16 (*)[4]);
-extern void PResResultTeamOrderGet(s16 *);
+extern s16 PResResultOrderGet(s16 (*)[4], s16 (*)[4], s16 (*)[4]);
+extern s16 PResResultTeamOrderGet(s16 *);
 
 static void StatBackDraw(s16 layerNo);
 static void StatModelUpdate(void);
