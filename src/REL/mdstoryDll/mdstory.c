@@ -34,7 +34,11 @@ static BOOL fn_1_5B08(int param);
 static BOOL fn_1_709C(int param);
 static BOOL fn_1_766C(int param);
 static BOOL fn_1_7FB4(int param);
+#ifdef TARGET_PC
+static BOOL fn_1_81F8(int param);
+#else
 static void fn_1_81F8(int param);
+#endif
 static BOOL fn_1_8388(int param);
 
 SYS sysWork;
@@ -2366,7 +2370,11 @@ static BOOL fn_1_7FB4(int param)
 }
 
 /* proc 8 - finger model */
+#ifdef TARGET_PC
+static BOOL fn_1_81F8(int param)
+#else
 static void fn_1_81F8(int param)
+#endif
 {
     MDCAMERA_WORK *cameraWork = sys->camera;
     MDMODEL_WORK *model = sys->model;
@@ -2391,6 +2399,13 @@ static void fn_1_81F8(int param)
         if(sys->oscTime[0] >= 1) {
         }
     }
+#ifdef TARGET_PC
+    /* the original returns whatever is left in r3; report "finished" like the other procs */
+    if(sys->oscTime[0] >= 1) {
+        return TRUE;
+    }
+    return FALSE;
+#endif
 }
 
 /* proc 9 - cursor sprite */
