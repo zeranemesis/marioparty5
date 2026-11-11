@@ -173,20 +173,19 @@ extern const M505Proc _ctors[];
 extern const M505Proc _dtors[];
 
 /* score.c */
-s32 fn_1_12404(s8 gameType, s8 maxScore, M505_PLAYER *player, s8 *score,
-               HU3DMODELID *mdl, M505_FLOW *flow);
+void fn_1_12404(s8 gameType, s8 maxScore, M505_PLAYER *player, s8 *score, HU3DMODELID *mdl);
 void fn_1_12934(void);
-void fn_1_12AE4(s32 no);
+void fn_1_12AE4(s8 no);
 s32 fn_1_12B08(void);
-s32 fn_1_12B4C(void);
-void fn_1_138B8(Vec *pos, Vec *scale, s8 winTeam, s8 playerNo, s8 gameType,
-               Vec *standPos, f32 yOffset, f32 zOffset);
-void fn_1_13C1C(s8 winTeam, s8 gameType, s8 maxScore, u8 *order, s32 *rank);
+s8 fn_1_12B4C(void);
+void fn_1_138B8(Vec *dst, Vec *scale, s32 row, s32 col, s32 gameType, f32 div, f32 z);
+void fn_1_13C1C(s16 team, s32 gameType, s32 maxScore, s32 *order, s32 *rank);
+void fn_1_15690(s32 type, s32 *order, s32 *rank);
 
 /* mess.c */
 void fn_1_15BC8(void);
 void fn_1_15C74(M505_PLAYER *player);
-void fn_1_15DB8(M505_PLAYER *player, void *msg, s32 size);
+void fn_1_15DB8(M505_PLAYER *player, Vec *pos);
 void fn_1_15F24(void);
 void fn_1_15F88(void);
 void fn_1_16018(void);
