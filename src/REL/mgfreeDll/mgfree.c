@@ -725,6 +725,9 @@ void fn_1_21AC(void)
     HuVecF lightDir;
     OMOVLHIS *his;
     HU3DLIGHTID light;
+    s32 model12;
+    s32 model3;
+    s32 model2;
     s32 model;
     s32 i;
     s32 j;
@@ -772,7 +775,52 @@ void fn_1_21AC(void)
         lbl_1_bss_4->sel[1] = 0;
         lbl_1_bss_4->sel[2] = 0;
     }
-    fn_1_1B84();
+    {
+        MgFreeModelData *data;
+        s32 i = 13;
+
+        while (i--) {
+            data = &lbl_1_data_18[i];
+            model = Hu3DModelCreate(HuDataSelHeapReadNum(data->dataNum, HU_MEMNUM_OVL, HEAP_MODEL));
+            lbl_1_bss_0->models[i] = model;
+            Hu3DModelCameraSet(model, data->camBit);
+            Hu3DModelLayerSet(model, data->layer);
+            if (data->attr1 != 0) {
+                Hu3DModelAttrSet(model, data->attr1);
+            }
+            if (data->attr2 != 0) {
+                Hu3DModelAttrSet(model, data->attr2);
+            }
+        }
+    }
+    Hu3DModelPosSetV(lbl_1_bss_0->models[1], &lbl_1_data_1C0[0]);
+    model12 = lbl_1_bss_0->models[12];
+    Hu3DMotionStartEndSet(model12, 0.0f, 300.0f);
+    Hu3DMotionTimeSet(model12, 0.0f);
+    Hu3DMotionShapeTimeSet(model12, 0.0f);
+    Hu3DModelPosSet(lbl_1_bss_0->models[3], 20.0f, 0.0f, 400.0f);
+    Hu3DModelPosSet(lbl_1_bss_0->models[2], -20.0f, 0.0f, 400.0f);
+    Hu3DModelScaleSet(lbl_1_bss_0->models[3], 0.8f, 0.8f, 0.8f);
+    Hu3DModelScaleSet(lbl_1_bss_0->models[2], 0.8f, 0.8f, 0.8f);
+    model3 = lbl_1_bss_0->models[3];
+    Hu3DMotionStartEndSet(model3, 0.0f, 120.0f);
+    Hu3DMotionTimeSet(model3, 0.0f);
+    Hu3DMotionShapeTimeSet(model3, 0.0f);
+    model2 = lbl_1_bss_0->models[2];
+    Hu3DMotionStartEndSet(model2, 0.0f, 120.0f);
+    Hu3DMotionTimeSet(model2, 0.0f);
+    Hu3DMotionShapeTimeSet(model2, 0.0f);
+    {
+        s32 camData[1] = { 0x970039 };
+        s32 j = 1;
+
+        while (j--) {
+            model = Hu3DModelCameraCreate(Hu3DMotionCreate(HuDataSelHeapReadNum(camData[j], HU_MEMNUM_OVL, HEAP_MODEL)), MGFREE_CAM);
+            lbl_1_bss_0->models[j + 13] = model;
+            Hu3DModelAttrSet(model, 0x40000002);
+            Hu3DCameraMotionOff(model);
+        }
+    }
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x180000, HU_MEMNUM_OVL, HEAP_MODEL));
     lbl_1_bss_0->model = model;
     lbl_1_bss_0->pos = lbl_1_data_0[0];
@@ -983,8 +1031,6 @@ void fn_1_37A4(void)
 
 void fn_1_3C8C(void)
 {
-    s32 list4[4];
-    s32 list3[3];
     u32 state;
     s32 mgNo;
     OMOVLHIS *his;
@@ -1111,10 +1157,8 @@ void fn_1_3C8C(void)
                 break;
             case 4:
                 if (HuPadBtnDown[0] & PAD_BUTTON_A) {
-                    list4[0] = 0;
-                    list4[1] = 1;
-                    list4[2] = 2;
-                    list4[3] = 3;
+                    s32 list4[4] = { 0, 1, 2, 3 };
+
                     GwPlayerConf[0].dif = list4[(s8)fn_1_4D4C()];
                     GwSystem.subGameNo = -1;
                     state = 7;
@@ -1142,10 +1186,9 @@ void fn_1_3C8C(void)
                     fn_1_4D20(16);
                 }
                 break;
-            case 6:
-                list3[0] = 0;
-                list3[1] = 1;
-                list3[2] = 2;
+            case 6: {
+                s32 list3[3] = { 0, 1, 2 };
+
                 if (HuPadBtnDown[0] & PAD_BUTTON_A) {
                     mgSubMode = list3[(s8)fn_1_4D4C()];
                     state = 7;
@@ -1159,6 +1202,7 @@ void fn_1_3C8C(void)
                     fn_1_4D20(18);
                 }
                 break;
+            }
             case 7:
                 if (fn_1_A4DC() >= 0) {
                     HuAudFXPlay(2);
