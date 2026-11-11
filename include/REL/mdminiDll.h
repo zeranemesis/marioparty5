@@ -569,9 +569,9 @@ typedef struct Sys_s {
     MDMESS *mess; //0x3C4
     MDRING_WORK *ring; //0x3C8
     BOOL dirtyF; //0x3CC
-    BOOL teamInitF; //0x3D0
+    BOOL cursorInitF; //0x3D0
     BOOL winInitF; //0x3D4
-    BOOL cursorInitF; //0x3D8
+    BOOL vsInitF; //0x3D8
     BOOL nameInitF; //0x3DC
     BOOL unk3E0;
     int cursorDir; //0x3E4

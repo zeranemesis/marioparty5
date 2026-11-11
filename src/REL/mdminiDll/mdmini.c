@@ -2537,9 +2537,9 @@ void fn_1_81E0(void)
 BOOL fn_1_9714(int param)
 {
     sys->dirtyF = FALSE;
-    sys->teamInitF = FALSE;
-    sys->winInitF = FALSE;
     sys->cursorInitF = FALSE;
+    sys->winInitF = FALSE;
+    sys->vsInitF = FALSE;
     sys->nameInitF = FALSE;
     sys->unk3E0 = FALSE;
     sys->procTime = 0.0f;
@@ -2597,6 +2597,244 @@ BOOL fn_1_991C(int param)
     MdMathLerp(&camera->center.y, lerpP->centerA.y, lerpP->centerB.y, sys->cameraT);
     MdMathLerp(&camera->center.z, lerpP->centerA.z, lerpP->centerB.z, sys->cameraT);
     if(sys->procTime >= 1.0f) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+#define MDMINI_CURSOR_ISIN(p) ((p) == 0 || (p) == 4 || (p) == 8 || (p) == 12 || (p) == 16 || (p) == 20)
+#define MDMINI_CURSOR_ISOUT(p) ((p) == 1 || (p) == 5 || (p) == 9 || (p) == 13 || (p) == 17 || (p) == 21)
+#define MDMINI_CURSOR_ISLEFT(p) ((p) == 2 || (p) == 6 || (p) == 10 || (p) == 14 || (p) == 18 || (p) == 22)
+#define MDMINI_CURSOR_ISRIGHT(p) ((p) == 3 || (p) == 7 || (p) == 11 || (p) == 15 || (p) == 19 || (p) == 23)
+
+BOOL fn_1_9AC8(int param)
+{
+    HuVec2f *sprPos;
+    HuVec2f *sprScale;
+    HUSPRGRPID grpId;
+    MDSPRITE_WORK *sprite;
+    MDCAMERA_WORK *camera;
+    MDMODEL_WORK *model;
+
+    static HuVecF pos[4];
+
+    HuVecF pos2D;
+    HuVecF pos3D;
+
+    camera = sys->camera;
+    model = sys->model;
+    sprite = sys->sprite;
+    grpId = sprite->grpId[MDSPR_GRP_CURSOR_UDLR];
+    if(!sys->cursorInitF) {
+        if(param >= 0 && param <= 3) {
+            pos3D.x = 0;
+            pos3D.y = 176.8f;
+            pos3D.z = -580;
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos[0].x = -64;
+            pos[0].y = pos2D.y;
+            pos[0].z = 0;
+            pos[1].x = pos2D.x-192;
+            pos[1].y = pos2D.y;
+            pos[1].z = 0;
+            pos[2].x = 640;
+            pos[2].y = pos2D.y;
+            pos[2].z = 0;
+            pos[3].x = 192+pos2D.x;
+            pos[3].y = pos2D.y;
+            pos[3].z = 0;
+        } else if(param >= 4 && param <= 7) {
+            pos3D = *model->posP[sys->chrSel[sys->comPlayerNo[sys->selComNo]]+MDMODEL_CAP_CHR_00];
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos2D.y -= 44;
+            pos[0].x = -64;
+            pos[0].y = pos2D.y;
+            pos[0].z = 0;
+            pos[1].x = pos2D.x-46;
+            pos[1].y = pos2D.y;
+            pos[1].z = 0;
+            pos[2].x = 640;
+            pos[2].y = pos2D.y;
+            pos[2].z = 0;
+            pos[3].x = (46+pos2D.x)-3;
+            pos[3].y = pos2D.y;
+            pos[3].z = 0;
+        } else if(param >= 8 && param <= 11) {
+            pos3D.x = 0;
+            pos3D.y = 180;
+            pos3D.z = -200;
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos[0].x = -64;
+            pos[0].y = pos2D.y;
+            pos[0].z = 0;
+            pos[1].x = pos2D.x-96;
+            pos[1].y = pos2D.y;
+            pos[1].z = 0;
+            pos[2].x = 640;
+            pos[2].y = pos2D.y;
+            pos[2].z = 0;
+            pos[3].x = 96+pos2D.x;
+            pos[3].y = pos2D.y;
+            pos[3].z = 0;
+        } else if(param >= 12 && param <= 15) {
+            pos3D = *model->posP[MDMODEL_CAP_WIN];
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos[0].x = -64;
+            pos[0].y = pos2D.y;
+            pos[0].z = 0;
+            pos[1].x = pos2D.x-80;
+            pos[1].y = pos2D.y;
+            pos[1].z = 0;
+            pos[2].x = 640;
+            pos[2].y = pos2D.y;
+            pos[2].z = 0;
+            pos[3].x = 80+pos2D.x;
+            pos[3].y = pos2D.y;
+            pos[3].z = 0;
+        } else if(param >= 16 && param <= 19) {
+            pos3D = *model->posP[MDMODEL_CAP_GENRE];
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos[0].x = -64;
+            pos[0].y = pos2D.y;
+            pos[0].z = 0;
+            pos[1].x = pos2D.x-80;
+            pos[1].y = pos2D.y;
+            pos[1].z = 0;
+            pos[2].x = 640;
+            pos[2].y = pos2D.y;
+            pos[2].z = 0;
+            pos[3].x = 80+pos2D.x;
+            pos[3].y = pos2D.y;
+            pos[3].z = 0;
+        } else if(param >= 20 && param <= 23) {
+            pos3D.x = -460;
+            pos3D.y = 120;
+            pos3D.z = -600;
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos[0].x = -64;
+            pos[0].y = pos2D.y;
+            pos[0].z = 0;
+            pos[1].x = pos2D.x-64;
+            pos[1].y = pos2D.y;
+            pos[1].z = 0;
+            pos3D.x = 460;
+            pos3D.y = 120;
+            pos3D.z = -600;
+            Hu3D3Dto2D(&pos3D, camera->camera[MDCAMERA_MAIN].bit, &pos2D);
+            pos[2].x = 640;
+            pos[2].y = pos2D.y;
+            pos[2].z = 0;
+            pos[3].x = 64+pos2D.x;
+            pos[3].y = pos2D.y;
+            pos[3].z = 0;
+        }
+        if(MDMINI_CURSOR_ISIN(param)) {
+        HuSprGrpPosSet(grpId, 0, 0);
+        sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+        sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+        sprPos->x = pos[0].x;
+        sprPos->y = pos[0].y;
+        if(param == 4) {
+            sprScale->x = sprScale->y = 0.7f;
+        } else {
+            sprScale->x = sprScale->y = 1;
+        }
+        HuSprDispOn(grpId, 0);
+        sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+        sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+        sprPos->x = pos[2].x;
+        sprPos->y = pos[2].y;
+        if(param == 4) {
+            sprScale->x = sprScale->y = 0.7f;
+        } else {
+            sprScale->x = sprScale->y = 1;
+        }
+        HuSprDispOn(grpId, 1);
+        } else if(MDMINI_CURSOR_ISLEFT(param)) {
+        sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+        sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+        sprPos->x = pos[1].x;
+        sprPos->y = pos[1].y;
+        if(param == 6) {
+            sprScale->x = sprScale->y = 0.7f;
+        } else {
+            sprScale->x = sprScale->y = 1;
+        }
+        HuSprTPLvlSet(grpId, 4, 0);
+        HuSprDispOn(grpId, 4);
+        } else if(MDMINI_CURSOR_ISRIGHT(param)) {
+        sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+        sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+        sprPos->x = pos[3].x;
+        sprPos->y = pos[3].y;
+        if(param == 7) {
+            sprScale->x = sprScale->y = 0.7f;
+        } else {
+            sprScale->x = sprScale->y = 1;
+        }
+        HuSprTPLvlSet(grpId, 5, 0);
+        HuSprDispOn(grpId, 5);
+        }
+        sys->cursorInitF = TRUE;
+    }
+    if(MDMINI_CURSOR_ISIN(param)) {
+    MdMathOscillate(MDMATH_OSC_90, &sys->sprTime, &sys->sprT, 15);
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+    MdMathLerp(&sprPos->x, pos[0].x, pos[1].x, sys->sprT);
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+    MdMathLerp(&sprPos->x, pos[2].x, pos[3].x, sys->sprT);
+    } else if(MDMINI_CURSOR_ISOUT(param)) {
+    MdMathOscillate(MDMATH_OSC_90, &sys->sprTime, &sys->sprT, 15);
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+    MdMathLerp(&sprPos->x, pos[1].x, pos[0].x, sys->sprT);
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+    MdMathLerp(&sprPos->x, pos[3].x, pos[2].x, sys->sprT);
+    } else if(MDMINI_CURSOR_ISLEFT(param)) {
+    MdMathOscillate(MDMATH_OSC_180, &sys->sprTime, &sys->sprT, 15);
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+    sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+    MdMathLerp(&sprPos->x, pos[1].x, pos[1].x-24, sys->sprT);
+    if(param == 6) {
+        MdMathLerp(&sprScale->x, 0.7f, 1, sys->sprT);
+        MdMathLerp(&sprScale->y, 0.7f, 1, sys->sprT);
+    } else {
+        MdMathLerp(&sprScale->x, 1, 1.5f, sys->sprT);
+        MdMathLerp(&sprScale->y, 1, 1.5f, sys->sprT);
+    }
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+    sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+    MdMathLerp(&sprPos->x, pos[1].x, pos[1].x-24, sys->sprT);
+    MdMathLerp(&sprScale->x, 1, 1.5f, sys->sprT);
+    MdMathLerp(&sprScale->y, 1, 1.5f, sys->sprT);
+    HuSprTPLvlSet(grpId, 4, sys->sprT);
+    } else if(MDMINI_CURSOR_ISRIGHT(param)) {
+    MdMathOscillate(MDMATH_OSC_180, &sys->sprTime, &sys->sprT, 15);
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+    sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+    MdMathLerp(&sprPos->x, pos[3].x, 24+pos[3].x, sys->sprT);
+    if(param == 7) {
+        MdMathLerp(&sprScale->x, 0.7f, 1, sys->sprT);
+        MdMathLerp(&sprScale->y, 0.7f, 1, sys->sprT);
+    } else {
+        MdMathLerp(&sprScale->x, 1, 1.5f, sys->sprT);
+        MdMathLerp(&sprScale->y, 1, 1.5f, sys->sprT);
+    }
+    sprPos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+    sprScale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+    MdMathLerp(&sprPos->x, pos[3].x, 24+pos[3].x, sys->sprT);
+    MdMathLerp(&sprScale->x, 1, 1.5f, sys->sprT);
+    MdMathLerp(&sprScale->y, 1, 1.5f, sys->sprT);
+    HuSprTPLvlSet(grpId, 5, sys->sprT);
+    }
+    if(sys->sprTime >= 1) {
+        if(MDMINI_CURSOR_ISOUT(param)) {
+        MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_UDLR, FALSE);
+        } else if(MDMINI_CURSOR_ISLEFT(param)) {
+        HuSprDispOff(grpId, 4);
+        } else if(MDMINI_CURSOR_ISRIGHT(param)) {
+        HuSprDispOff(grpId, 5);
+        }
         return TRUE;
     } else {
         return FALSE;
@@ -3036,7 +3274,7 @@ BOOL fn_1_10264(int param)
     posP = model->posP[MDMODEL_VS];
     rotP = model->rotP[MDMODEL_VS];
     scaleP = model->scaleP[MDMODEL_VS];
-    if(!sys->cursorInitF) {
+    if(!sys->vsInitF) {
         if(param == 0) {
             *posP = mdlPos[0];
             if(sys->gameType == 2) {
@@ -3052,7 +3290,7 @@ BOOL fn_1_10264(int param)
         } else {
             param == 1;
         }
-        sys->cursorInitF = TRUE;
+        sys->vsInitF = TRUE;
     }
     if(param == 0) {
         MdMathOscillate(MDMATH_OSC_90, &sys->unk400, &sys->unk41C, 30);
