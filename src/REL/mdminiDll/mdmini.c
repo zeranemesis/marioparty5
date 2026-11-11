@@ -148,10 +148,13 @@ void fn_1_2018(void);
 void fn_1_205C(void);
 void fn_1_20A0(void);
 void fn_1_22C8(void);
+void fn_1_23D8(void);
 BOOL fn_1_9714(int param);
 BOOL fn_1_991C(int param);
 BOOL fn_1_AF34(int param);
 BOOL fn_1_B668(int param);
+BOOL fn_1_F6C4(int param);
+BOOL fn_1_FC94(int param);
 BOOL fn_1_113D8(int param);
 BOOL fn_1_149A4(int param);
 void fn_1_14C2C(void);
@@ -167,7 +170,6 @@ void fn_1_16168(void);
 void fn_1_16308(void);
 void fn_1_17008(int cmd);
 int fn_1_171B4(int mdlNo, int cameraNo);
-void fn_1_23D8(void);
 void fn_1_27F8(void);
 void fn_1_35A0(void);
 void fn_1_5558(void);
@@ -177,8 +179,6 @@ void fn_1_81E0(void);
 BOOL fn_1_9AC8(int param);
 BOOL fn_1_C8B4(int param);
 BOOL fn_1_E44C(int param);
-BOOL fn_1_F6C4(int param);
-BOOL fn_1_FC94(int param);
 BOOL fn_1_10264(int param);
 BOOL fn_1_106D4(int param);
 BOOL fn_1_10B0C(int param);
@@ -890,6 +890,83 @@ HuPrcEnd();
     }
 }
 
+void fn_1_23D8(void)
+{
+    MDCAMERA_WORK *camera;
+    MDMESS *mess;
+    MDMINI_CHR *chr;
+    MDMODEL_WORK *model;
+    MDSPRITE_WORK *sprite;
+    int i;
+
+    camera = sys->camera;
+    sprite = sys->sprite;
+    model = sys->model;
+    mess = sys->mess;
+    chr = &sys->chr[0];
+    MdSpriteDispSet(sprite, MDSPR_GRP_WIN, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_LR, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_UDLR, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_PLAYERNO, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_COMDIF, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_NAME, FALSE);
+    Hu3DModelDispOn(model->mdlId[MDMODEL_STAR]);
+    Hu3DModelDispOn(model->mdlId[MDMODEL_STAGE]);
+    Hu3DModelDispOff(model->mdlId[MDMODEL_STAGE_CHR]);
+    for(i=0; i<10; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_CHR_00]);
+    }
+    for(i=0; i<4; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_CAP_MAN_1P]);
+    }
+    for(i=0; i<4; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_CAP_COM_1P]);
+    }
+    for(i=0; i<10; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_CAP_CHR_00]);
+    }
+    for(i=0; i<6; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_CAP_MODE_00]);
+    }
+    Hu3DModelDispOff(model->mdlId[MDMODEL_CAP_WIN]);
+    Hu3DModelDispOff(model->mdlId[MDMODEL_CAP_GENRE]);
+    Hu3DModelDispOff(model->mdlId[MDMODEL_VS]);
+    for(i=0; i<4; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_FINGER_1P]);
+    }
+    for(i=0; i<4; i++) {
+        Hu3DModelDispOff(model->mdlId[i+MDMODEL_RING_1P]);
+    }
+    Hu3DModelDispOn(model->mdlId[MDMODEL_FONTBGFILTER]);
+    CharMotionVoiceOnSet(0, 47, 0);
+    CharMotionVoiceOnSet(1, 6, 0);
+    CharMotionVoiceOnSet(2, 6, 0);
+    CharMotionVoiceOnSet(3, 6, 0);
+    CharMotionVoiceOnSet(4, 6, 0);
+    CharMotionVoiceOnSet(5, 6, 0);
+    CharMotionVoiceOnSet(6, 6, 0);
+    CharMotionVoiceOnSet(7, 6, 0);
+    CharMotionVoiceOnSet(8, 6, 0);
+    CharMotionVoiceOnSet(9, 6, 0);
+    for(i=0; i<4; i++) {
+        MdRingDispSet(i, FALSE);
+    }
+    sys->ringProc = HuPrcChildCreate(fn_1_2000, 104, 12288, 0, sys->objman);
+    for(i=0; i<10; i++) {
+        chr[i].mode = MDMINI_CHR_INIT;
+    }
+    HuPrcSleep(2);
+    MdProcCall(MDMINI_PROC_RESET, 0);
+    HuPrcVSleep();
+    if(sys->evtNo == 0) {
+        sys->mode = 0;
+        sys->flowMode = 1;
+    } else if(sys->evtNo == 1) {
+        sys->mode = 50;
+        sys->flowMode = 3;
+    }
+}
+
 BOOL fn_1_9714(int param)
 {
     sys->dirtyF = FALSE;
@@ -1213,6 +1290,152 @@ BOOL fn_1_B668(int param)
                 }
             }
         }
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+BOOL fn_1_F6C4(int param)
+{
+    HuVecF *posP;
+    MDMODEL_WORK *model;
+    HuVecF *scaleP;
+
+    MDCAMERA_WORK *camera;
+    HuVecF *rotP;
+
+    static HuVecF posTbl[2];
+
+    camera = sys->camera;
+    model = sys->model;
+    posP = model->posP[MDMODEL_CAP_WIN];
+    rotP = model->rotP[MDMODEL_CAP_WIN];
+    scaleP = model->scaleP[MDMODEL_CAP_WIN];
+
+    if(!sys->dirtyF) {
+        if(param == 0) {
+            posP->x = 0;
+            posP->y = 145;
+            posP->z = 400;
+
+            scaleP->x = 0;
+            scaleP->y = 0;
+            scaleP->z = 0;
+            Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_WIN]);
+        } else if(param != 1) {
+            if(param == 2) {
+            } else if(param == 3) {
+                posTbl[0] = *posP;
+                posTbl[1].x = -525;
+                posTbl[1].y = 365;
+                posTbl[1].z = -50;
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 4) {
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            }
+        }
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15.0f);
+        MdMathLerpScale(scaleP, 0, 1, sys->procT);
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15.0f);
+        MdProcCall(MDMINI_PROC_CURSOR, sys->cursorDir+14);
+    } else if(param == 2) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 15.0f);
+        MdMathLerpScale(scaleP, 1, 0, sys->procT);
+    } else if(param == 3) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15.0f);
+        MdMathLerp(&posP->x, posTbl[0].x, posTbl[1].x, sys->procT);
+        MdMathLerp(&posP->y, posTbl[0].y, posTbl[1].y, sys->procT);
+        MdMathLerpOfs(&posP->z, posTbl[0].z, posTbl[1].z, sys->procT, -1.0f*sys->procOfsT);
+        MdMathLerpScale(scaleP, 1, 0.8f, sys->procT);
+    } else if(param == 4) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 15.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15.0f);
+        MdMathLerp(&posP->x, posTbl[1].x, posTbl[0].x, sys->procT);
+        MdMathLerp(&posP->y, posTbl[1].y, posTbl[0].y, sys->procT);
+        MdMathLerpOfs(&posP->z, posTbl[1].z, posTbl[0].z, sys->procT, sys->procOfsT);
+        MdMathLerpScale(scaleP, 0.8f, 1, sys->procT);
+    }
+    fn_1_15CF8(MDMODEL_CAP_WIN, MDCAMERA_MAIN);
+    if(sys->procTime >= 1) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+BOOL fn_1_FC94(int param)
+{
+    HuVecF *posP;
+    MDMODEL_WORK *model;
+    HuVecF *scaleP;
+
+    MDCAMERA_WORK *camera;
+    HuVecF *rotP;
+
+    static HuVecF posTbl[2];
+
+    camera = sys->camera;
+    model = sys->model;
+    posP = model->posP[MDMODEL_CAP_GENRE];
+    rotP = model->rotP[MDMODEL_CAP_GENRE];
+    scaleP = model->scaleP[MDMODEL_CAP_GENRE];
+
+    if(!sys->dirtyF) {
+        if(param == 0) {
+            posP->x = 0;
+            posP->y = 145;
+            posP->z = 400;
+
+            scaleP->x = 0;
+            scaleP->y = 0;
+            scaleP->z = 0;
+            Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_GENRE]);
+        } else if(param != 1) {
+            if(param == 2) {
+            } else if(param == 3) {
+                posTbl[0] = *posP;
+                posTbl[1].x = 525;
+                posTbl[1].y = 365;
+                posTbl[1].z = -50;
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 4) {
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            }
+        }
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15.0f);
+        MdMathLerpScale(scaleP, 0, 1, sys->procT);
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15.0f);
+        MdProcCall(MDMINI_PROC_CURSOR, sys->cursorDir+18);
+    } else if(param == 2) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 15.0f);
+        MdMathLerpScale(scaleP, 1, 0, sys->procT);
+    } else if(param == 3) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15.0f);
+        MdMathLerp(&posP->x, posTbl[0].x, posTbl[1].x, sys->procT);
+        MdMathLerp(&posP->y, posTbl[0].y, posTbl[1].y, sys->procT);
+        MdMathLerpOfs(&posP->z, posTbl[0].z, posTbl[1].z, sys->procT, -1.0f*sys->procOfsT);
+        MdMathLerpScale(scaleP, 1, 0.8f, sys->procT);
+    } else if(param == 4) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 15.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15.0f);
+        MdMathLerp(&posP->x, posTbl[1].x, posTbl[0].x, sys->procT);
+        MdMathLerp(&posP->y, posTbl[1].y, posTbl[0].y, sys->procT);
+        MdMathLerpOfs(&posP->z, posTbl[1].z, posTbl[0].z, sys->procT, sys->procOfsT);
+        MdMathLerpScale(scaleP, 0.8f, 1, sys->procT);
+    }
+    fn_1_15CF8(MDMODEL_CAP_GENRE, MDCAMERA_MAIN);
+    if(sys->procTime >= 1) {
         return TRUE;
     } else {
         return FALSE;
