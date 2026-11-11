@@ -74,7 +74,7 @@ extern void MdMathPolarCoord(HuVecF *out, HuVecF *center, float radX, float radZ
 extern void MdSpriteCreate(void *sprite);
 extern HuVecF *MdSpriteGrpPosGet(void *sprite, int grpNo);
 extern HuVecF *MdSpriteGrpScaleGet(void *sprite, int grpNo);
-extern void MdSpriteFadeDispSet(int dispF, int mode);
+extern void MdSpriteFadeDispSet(int dispF);
 extern void MdModelCreate(void *model, void *camera);
 extern void MdModelSoundTypeSet(u8 mode);
 extern void MdModelRumbleSet(int no);
@@ -102,7 +102,7 @@ extern void MdOptionStoryRankStarUpdate(void);
 extern void MdOptionWaveEffectSet(int type, int mode);
 extern void MdOptionWaveEffectUpdate(void);
 extern void MdOptionCapsuleOrbitHideSet(void);
-extern void MdOptionCapsuleOrbitOutSet(int modelNo, int mode);
+extern void MdOptionCapsuleOrbitOutSet(int modelNo);
 extern void MdOptionCapsuleOrbitUpdate(void);
 extern void MdOptionCapsuleOrbitOutUpdate(void);
 extern void MdOptionSpriteTitleUpdate(void);
@@ -153,13 +153,14 @@ s32 (*MdProcTbl[5])(s32) = {
     fn_1_4768, fn_1_4A88, fn_1_5320, fn_1_6328, fn_1_9FD8
 };
 
-static HuVecF lbl_1_bss_4[2];
-static HuVecF lbl_1_bss_1C[20];
-static HuVecF lbl_1_bss_10C[4];
-SYS *sysP;
-SYS *sys;
-static SYS sysWork;
+/* MWCC emits .bss in reverse order of declaration. */
 static s16 lbl_1_bss_654;
+static SYS sysWork;
+SYS *sys;
+SYS *sysP;
+static HuVecF lbl_1_bss_10C[4];
+static HuVecF lbl_1_bss_1C[20];
+static HuVecF lbl_1_bss_4[2];
 
 /* 0x0 - module entry: run the static ctors, then bring the
  * overlay's objects up. Returns 0 to the loader. */
@@ -857,7 +858,7 @@ void fn_1_2160(void)
                 sys->step = 6;
             } else if(ret == 3) {
                 if(sys->item == 0) {
-                    MdOptionCapsuleOrbitOutSet(GwCommon.soundOutputMode + 17, GwCommon.soundOutputMode);
+                    MdOptionCapsuleOrbitOutSet(GwCommon.soundOutputMode + 17);
                     MdMessWinHomeClear(mess, 0);
                 } else {
                     fn_1_1A278();
@@ -1580,6 +1581,1095 @@ s32 fn_1_4768(s32 mode)
     return 0;
 }
 
+/* 0x4A88 - proc 1: intro. Lerps the camera and drops the star and the
+ * four capsule models around it into place. */
+s32 fn_1_4A88(s32 mode)
+{
+    HuVecF pos3D;
+    HuVecF center0;
+    HuVecF center1;
+    HuVecF center2;
+    HuVecF center3;
+    HuVecF *centerP0;
+    HuVecF *centerP1;
+    HuVecF *centerP2;
+    HuVecF *centerP3;
+    float scale;
+    float angle;
+    MDCAMERA_WORK *camWork = sys->camera;
+    MDCAMERA *camera = camWork->camera;
+    MDOPT_MODEL_WORK *model = sysP->model;
+    float modelScale = sys->modelScale;
+    float cosV;
+    float sinV;
+    int i;
+
+    if(sys->camInitF == 0) {
+        lbl_1_bss_10C[0] = camera->center;
+        lbl_1_bss_10C[1].x = camera->hvr.x;
+        lbl_1_bss_10C[1].y = camera->hvr.y;
+        lbl_1_bss_10C[1].z = 3375.0f;
+        lbl_1_bss_10C[2].x = 0.0f;
+        lbl_1_bss_10C[2].y = -50.0f;
+        lbl_1_bss_10C[2].z = 0.0f;
+        lbl_1_bss_10C[3].x = 90.0f;
+        lbl_1_bss_10C[3].y = 25.0f;
+        lbl_1_bss_10C[3].z = 2550.0f;
+        sys->camInitF = 1;
+    }
+    MdMathOscillate(MDMATH_OSC_90, &sys->camTime[0], &sys->camT[0], 120.0f);
+    MdMathLerp(&camera->center.x, lbl_1_bss_10C[0].x, lbl_1_bss_10C[2].x, sys->camT[0]);
+    MdMathLerp(&camera->center.y, lbl_1_bss_10C[0].y, lbl_1_bss_10C[2].y, sys->camT[0]);
+    MdMathLerp(&camera->center.z, lbl_1_bss_10C[0].z, lbl_1_bss_10C[2].z, sys->camT[0]);
+    MdMathLerp(&camera->hvr.x, lbl_1_bss_10C[1].x, lbl_1_bss_10C[3].x, sys->camT[0]);
+    MdMathLerp(&camera->hvr.y, lbl_1_bss_10C[1].y, lbl_1_bss_10C[3].y, sys->camT[0]);
+    MdMathLerp(&camera->hvr.z, lbl_1_bss_10C[1].z, lbl_1_bss_10C[3].z, sys->camT[0]);
+    MdMathLerp(&scale, 0.0f, 1.0f, sys->camT[0]);
+    Hu3DModelScaleSet(model->mdlId[1], modelScale, modelScale, modelScale);
+    Hu3DModelScaleSet(model->mdlId[2], scale * modelScale, scale * modelScale, scale * modelScale);
+    MdMathLerp(&angle, 135.0f, 135.0f, sys->camT[0]);
+    center0 = *model->posP[2];
+    centerP0 = &center0;
+    MdMathPolarCoord(&pos3D, centerP0, 700.0f, 700.0f, scale * modelScale, angle);
+    Hu3DModelScaleSet(model->mdlId[3], scale, scale, scale);
+    Hu3DModelPosSetV(model->mdlId[3], &pos3D);
+    MdMathLerp(&angle, 110.0f, 110.0f, sys->camT[0]);
+    center1 = *model->posP[2];
+    centerP1 = &center1;
+    MdMathPolarCoord(&pos3D, centerP1, 250.0f, 250.0f, scale * modelScale, angle);
+    Hu3DModelScaleSet(model->mdlId[4], scale, scale, scale);
+    Hu3DModelPosSetV(model->mdlId[4], &pos3D);
+    MdMathLerp(&angle, 310.0f, 310.0f, sys->camT[0]);
+    center2 = *model->posP[2];
+    centerP2 = &center2;
+    MdMathPolarCoord(&pos3D, centerP2, 400.0f, 400.0f, scale * modelScale, angle);
+    Hu3DModelScaleSet(model->mdlId[5], scale, scale, scale);
+    Hu3DModelPosSetV(model->mdlId[5], &pos3D);
+    MdMathLerp(&angle, 260.0f, 260.0f, sys->camT[0]);
+    center3 = *model->posP[2];
+    centerP3 = &center3;
+    MdMathPolarCoord(&pos3D, centerP3, 550.0f, 550.0f, scale * modelScale, angle);
+    Hu3DModelScaleSet(model->mdlId[6], scale, scale, scale);
+    Hu3DModelPosSetV(model->mdlId[6], &pos3D);
+    MdMathOscillate(MDMATH_OSC_180, &sys->camTime[1], &sys->camT[1], 120.0f);
+    cosV = cos(3.141592653589793 * (360.0f * sys->camT[0]) / 180.0);
+    sinV = sin(3.141592653589793 * (360.0f * sys->camT[0]) / 180.0);
+    {
+        HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+
+        pos2D.x = 288.0f - 232.0f * sys->camT[0] * cosV;
+        pos2D.y = (230.0f - 100.0f * sys->camT[1]) + 170.0f * sys->camT[0] + 232.0f * sys->camT[0] * sinV;
+        pos3D = pos2D;
+    }
+    Hu3D2Dto3D(&pos3D, camWork->camera[1].bit, &pos3D);
+    Hu3DModelPosSetV(model->mdlId[0], &pos3D);
+    Hu3DModelScaleSet(model->mdlId[0], sys->camT[0], sys->camT[0], sys->camT[0]);
+    if(sys->camTime[0] >= 1.0f) {
+        sys->unk3D8 = 1;
+        sys->unk398 = 1;
+        for(i = 0; i < 4; i++) {
+            sys->orbitPos[i] = *model->posP[i + 3];
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/* 0x5320 - proc 2: move the focus marker (and its scale) onto the
+ * currently selected menu entry; modes 0..6 / 0x32..0x38 / 0xA / 0xB /
+ * 0x3C / 0x3D pick the entry, 0x64/0x65 shrink it away. */
+s32 fn_1_5320(s32 mode)
+{
+    HuVecF in;
+    HuVecF out;
+    MDCAMERA_WORK *camWork = sys->camera;
+    MDOPT_MODEL_WORK *model = sys->model;
+    HuVecF *focusP = model->posP[131];
+    HuVecF *rotP = model->rotP[131];
+    HuVecF *scaleP = model->scaleP[131];
+
+    if(sys->camInitF == 0) {
+        if(mode < 50) {
+            if(mode == 0) {
+                    *focusP = *model->posP[sys->menu + 3];
+            } else if(mode == 1) {
+                    *focusP = *model->posP[sys->item + 8];
+            } else if(mode == 2) {
+                    *focusP = *model->posP[sys->item + 13];
+            } else if(mode == 3) {
+                    *focusP = *model->posP[sys->item + 15];
+            } else if(mode == 4) {
+                    *focusP = *model->posP[sys->item + 20];
+            } else if(mode == 5) {
+                    *focusP = *model->posP[sys->sub + 17];
+            } else if(mode == 6) {
+                    *focusP = *model->posP[sys->sub + 24];
+            }
+            if(mode == 0) {
+                if(sys->menu == 0) {
+                    focusP->x += 100.0f;
+                } else {
+                    focusP->x -= 100.0f;
+                }
+                focusP->y += 100.0f;
+            } else {
+                focusP->x -= 50.0f;
+                focusP->y += 50.0f;
+            }
+            rotP->x = 0.0f;
+            rotP->y = 0.0f;
+            rotP->z = 0.0f;
+            scaleP->x = 0.0f;
+            scaleP->y = 0.0f;
+            scaleP->z = 0.0f;
+            Hu3DModelAttrReset(model->mdlId[131], HU3D_ATTR_DISPOFF);
+        }
+        sys->camInitF = 1;
+    }
+    if(mode >= 100) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->camTime[0], &sys->camT[0], 15.0f);
+        if(mode == 101) {
+            if(sys->menu == 0) {
+                MdMathLerp(&scaleP->x, -1.0f, 0.0f, sys->camT[0]);
+                MdMathLerp(&scaleP->y, 1.0f, 0.0f, sys->camT[0]);
+                MdMathLerp(&scaleP->z, 1.0f, 0.0f, sys->camT[0]);
+            } else {
+                MdMathLerpScale(scaleP, 1.0f, 0.0f, sys->camT[0]);
+            }
+        } else {
+            MdMathLerpScale(scaleP, 0.4f, 0.0f, sys->camT[0]);
+        }
+    } else if(mode >= 50) {
+        if(mode == 50) {
+                *focusP = *model->posP[sys->menu + 3];
+                if(sys->menu == 0) {
+                    scaleP->x = -1.0f;
+                    scaleP->y = 1.0f;
+                    scaleP->z = 1.0f;
+                } else {
+                    scaleP->x = 1.0f;
+                    scaleP->y = 1.0f;
+                    scaleP->z = 1.0f;
+                }
+        } else if(mode == 51) {
+                *focusP = *model->posP[sys->item + 8];
+        } else if(mode == 52) {
+                *focusP = *model->posP[sys->item + 13];
+        } else if(mode == 53) {
+                *focusP = *model->posP[sys->item + 15];
+        } else if(mode == 54) {
+                *focusP = *model->posP[sys->item + 20];
+        } else if(mode == 55) {
+                *focusP = *model->posP[sys->sub + 17];
+        } else if(mode == 56) {
+                *focusP = *model->posP[sys->sub + 24];
+        } else if(mode == 60) {
+                {
+                    HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+
+                    pos2D.x = 64.0f + 96.0f * (float)(sys->sub % 5);
+                    pos2D.y = 128.0f + 126.0f * (float)(sys->sub / 5);
+                    in = pos2D;
+                }
+                Hu3D2Dto3D(&in, camWork->camera[0].bit, &out);
+                *focusP = out;
+        } else if(mode == 61) {
+                {
+                    HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+
+                    pos2D.x = 108.0f + 96.0f * (float)(sys->sel % 4) + 48.0f * (float)(sys->sel / 4);
+                    pos2D.y = 144.0f + 126.0f * (float)(sys->sel / 4);
+                    in = pos2D;
+                }
+                Hu3D2Dto3D(&in, camWork->camera[0].bit, &out);
+                *focusP = out;
+        }
+        if(mode == 50) {
+            if(sys->menu == 0) {
+                focusP->x += 100.0f;
+            } else {
+                focusP->x -= 100.0f;
+            }
+            focusP->y += 100.0f;
+        } else if(mode <= 56) {
+            focusP->x -= 50.0f;
+            focusP->y += 50.0f;
+        }
+    } else {
+        if(mode == 10) {
+            HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+
+            pos2D.x = 64.0f + 96.0f * (float)(sys->sub % 5);
+            pos2D.y = 128.0f + 126.0f * (float)(sys->sub / 5);
+            in = pos2D;
+            Hu3D2Dto3D(&in, camWork->camera[0].bit, &out);
+            *focusP = out;
+        } else if(mode == 11) {
+            HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+
+            pos2D.x = 108.0f + 96.0f * (float)(sys->sel % 4) + 48.0f * (float)(sys->sel / 4);
+            pos2D.y = 144.0f + 126.0f * (float)(sys->sel / 4);
+            in = pos2D;
+            Hu3D2Dto3D(&in, camWork->camera[0].bit, &out);
+            *focusP = out;
+        }
+        MdMathOscillate(MDMATH_OSC_90, &sys->camTime[0], &sys->camT[0], 15.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->camTime[1], &sys->camT[1], 15.0f);
+        if(mode == 0) {
+            if(sys->menu != 0) {
+                MdMathLerpScaleOfs(scaleP, 0.0f, 1.0f, sys->camT[0], 2.0f * sys->camT[1]);
+            } else {
+                MdMathLerpOfs(&scaleP->x, 0.0f, -1.0f, sys->camT[0], 2.0f * sys->camT[1]);
+                MdMathLerpOfs(&scaleP->y, 0.0f, 1.0f, sys->camT[0], 2.0f * sys->camT[1]);
+                MdMathLerpOfs(&scaleP->z, 0.0f, 1.0f, sys->camT[0], 2.0f * sys->camT[1]);
+            }
+        } else {
+            MdMathLerpScaleOfs(scaleP, 0.0f, 0.4f, sys->camT[0], 2.0f * sys->camT[1]);
+        }
+    }
+    if(sys->camTime[0] >= 1.0f) {
+        if(mode >= 100) {
+            Hu3DModelAttrSet(model->mdlId[131], HU3D_ATTR_DISPOFF);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/* 0x6328 - proc 3: capsule orbit transition. Modes 0..3 / 8..11 bring
+ * the main capsule in and out, 4..7 / 12..13 hold, 14..31 fly the
+ * capsules of each sub menu around the focus; returns 1 when the
+ * transition is finished. */
+s32 fn_1_6328(s32 mode)
+{
+    HuVecF out;
+    HuVecF dir;
+    HuVecF center0;
+    HuVecF center1;
+    HuVecF center2;
+    HuVecF center3;
+    HuVecF center4;
+    HuVecF center5;
+    HuVecF center6;
+    HuVecF center7;
+    HuVecF center8;
+    HuVecF center9;
+    HuVecF center10;
+    HuVecF center11;
+    HuVecF center12;
+    HuVecF center13;
+    HuVecF center14;
+    HuVecF center15;
+    HuVecF center16;
+    HuVecF center17;
+    HuVecF center18;
+    MDCAMERA_WORK *camera;
+    HuVecF *rotP;
+    HuVecF *scaleP;
+    float angle;
+    float scale;
+    HuVecF *centerP0;
+    HuVecF *centerP1;
+    HuVecF *centerP2;
+    HuVecF *centerP3;
+    HuVecF *centerP4;
+    HuVecF *centerP5;
+    HuVecF *centerP6;
+    HuVecF *centerP7;
+    HuVecF *centerP8;
+    HuVecF *centerP9;
+    HuVecF *centerP10;
+    HuVecF *centerP11;
+    HuVecF *centerP12;
+    HuVecF *centerP13;
+    HuVecF *centerP14;
+    HuVecF *centerP15;
+    HuVecF *centerP16;
+    HuVecF *centerP17;
+    HuVecF *centerP18;
+    int i;
+    MDOPT_MODEL_WORK *model;
+    HuVecF *posP;
+    int idx;
+    int result;
+    int procRet;
+    float yMul;
+    float zMul;
+    float zTimeMul;
+    float yTimeMul;
+
+    result = 0;
+    procRet = 0;
+    camera = sys->camera;
+    model = sys->model;
+    posP = model->posP[sys->menu + 3];
+    rotP = model->rotP[sys->menu + 3];
+    scaleP = model->scaleP[sys->menu + 3];
+    if(sys->orbitInitF == 0) {
+        switch(mode) {
+            case 0:
+            case 4:
+                sys->unk3DC = 1;
+                MdSpriteFadeDispSet(1);
+                for(i = 0; i < 5; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 8], HU3D_ATTR_DISPOFF);
+                    Hu3DModelPosSetV(model->mdlId[i + 8], posP);
+                    Hu3DModelScaleSet(model->mdlId[i + 8], 0.5f, 0.5f, 0.5f);
+                }
+                break;
+
+            case 1:
+                MdOptionCapsuleOrbitOutSet(sys->item + 13);
+                sys->unk3DC = 2;
+                MdSpriteFadeDispSet(1);
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 13], HU3D_ATTR_DISPOFF);
+                    Hu3DModelPosSetV(model->mdlId[i + 13], posP);
+                    Hu3DModelScaleSet(model->mdlId[i + 13], 0.5f, 0.5f, 0.5f);
+                }
+                break;
+
+            case 2:
+            case 5:
+                sys->unk3DC = 3;
+                MdSpriteFadeDispSet(1);
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 15], HU3D_ATTR_DISPOFF);
+                    Hu3DModelPosSetV(model->mdlId[i + 15], posP);
+                    Hu3DModelScaleSet(model->mdlId[i + 15], 0.5f, 0.5f, 0.5f);
+                }
+                break;
+
+            case 3:
+            case 6:
+                sys->unk3DC = 4;
+                MdSpriteFadeDispSet(1);
+                for(i = 0; i < 4; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 20], HU3D_ATTR_DISPOFF);
+                    Hu3DModelPosSetV(model->mdlId[i + 20], posP);
+                    Hu3DModelScaleSet(model->mdlId[i + 20], 0.5f, 0.5f, 0.5f);
+                }
+                break;
+
+            case 7:
+                MdSpriteFadeDispSet(1);
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 24], HU3D_ATTR_DISPOFF);
+                    Hu3DModelPosSetV(model->mdlId[i + 24], posP);
+                    Hu3DModelScaleSet(model->mdlId[i + 24], 0.5f, 0.5f, 0.5f);
+                }
+                break;
+
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+                idx = mode - 14;
+                lbl_1_bss_1C[0] = *model->posP[idx + 8];
+                PSVECSubtract(model->posP[3], model->posP[idx + 8], &lbl_1_bss_1C[1]);
+                fn_1_A930(10);
+                break;
+
+            case 19:
+            case 20:
+                idx = mode - 19;
+                lbl_1_bss_1C[0] = *model->posP[idx + 13];
+                PSVECSubtract(model->posP[4], model->posP[idx + 13], &lbl_1_bss_1C[1]);
+                fn_1_A930(10);
+                break;
+
+            case 21:
+            case 22:
+                idx = mode - 21;
+                lbl_1_bss_1C[0] = *model->posP[idx + 15];
+                PSVECSubtract(model->posP[5], model->posP[idx + 15], &lbl_1_bss_1C[1]);
+                fn_1_A930(10);
+                break;
+
+            case 27:
+            case 28:
+            case 29:
+                idx = mode - 27;
+                lbl_1_bss_1C[0] = *model->posP[idx + 17];
+                PSVECSubtract(model->posP[5], model->posP[idx + 17], &lbl_1_bss_1C[1]);
+                fn_1_A930(10);
+                break;
+
+            case 23:
+            case 24:
+            case 25:
+            case 26:
+                idx = mode - 23;
+                lbl_1_bss_1C[0] = *model->posP[idx + 20];
+                PSVECSubtract(model->posP[6], model->posP[idx + 20], &lbl_1_bss_1C[1]);
+                fn_1_A930(10);
+                break;
+
+            case 30:
+            case 31:
+                idx = mode - 30;
+                lbl_1_bss_1C[0] = *model->posP[idx + 24];
+                PSVECSubtract(model->posP[6], model->posP[idx + 24], &lbl_1_bss_1C[1]);
+                fn_1_A930(10);
+                break;
+
+            case 12:
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 15], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 13:
+                for(i = 0; i < 4; i++) {
+                    Hu3DModelAttrReset(model->mdlId[i + 20], HU3D_ATTR_DISPOFF);
+                }
+                break;
+        }
+        sys->orbitInitF = 1;
+    }
+    if(mode >= 0 && mode <= 3) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        PSVECSubtract(&Hu3DCamera->target, &Hu3DCamera->pos, &dir);
+        PSVECNormalize(&dir, &dir);
+        PSVECScale(&dir, &dir, 1000.0f);
+        PSVECAdd(&dir, &Hu3DCamera->pos, &dir);
+        dir.y += 50.0f;
+        MdMathLerp(&posP->x, sys->orbitPos[mode].x, dir.x, sys->orbitT[0]);
+        MdMathLerp(&posP->y, sys->orbitPos[mode].y, dir.y, sys->orbitT[0]);
+        MdMathLerp(&posP->z, sys->orbitPos[mode].z, dir.z, sys->orbitT[0]);
+    } else if(mode == 4 || mode == 5 || mode == 6 || mode == 7 || mode == 12 || mode == 13) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+    } else if(mode >= 8 && mode <= 11) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        idx = mode - 8;
+        PSVECSubtract(&Hu3DCamera->target, &Hu3DCamera->pos, &dir);
+        PSVECNormalize(&dir, &dir);
+        PSVECScale(&dir, &dir, 1000.0f);
+        dir.y += 50.0f;
+        PSVECAdd(&dir, &Hu3DCamera->pos, &dir);
+        MdMathLerp(&posP->x, dir.x, sys->orbitPos[idx].x, sys->orbitT[0]);
+        MdMathLerp(&posP->y, dir.y, sys->orbitPos[idx].y, sys->orbitT[0]);
+        MdMathLerp(&posP->z, dir.z, sys->orbitPos[idx].z, sys->orbitT[0]);
+    } else if(mode >= 14 && mode <= 18) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->orbitTime[1], &sys->orbitT[1], 40.0f);
+        MdMathOscillate(MDMATH_OSC_360, &sys->orbitTime[2], &sys->orbitT[2], 40.0f);
+        idx = mode - 14;
+        for(i = 0; i < 5; i++) {
+            if(i == idx) {
+                switch(i) {
+                    case 0:
+                    case 4:
+                        yMul = 200.0f;
+                        zMul = 600.0f;
+                        zTimeMul = 0.0f;
+                        break;
+
+                    case 1:
+                    case 3:
+                        yMul = 250.0f;
+                        zMul = 450.0f;
+                        zTimeMul = -400.0f;
+                        break;
+
+                    default:
+                        yMul = 300.0f;
+                        zMul = 400.0f;
+                        zTimeMul = -500.0f;
+                        break;
+                }
+                model->posP[i + 8]->x = lbl_1_bss_1C[0].x + lbl_1_bss_1C[1].x * sys->orbitT[1];
+                model->posP[i + 8]->y = lbl_1_bss_1C[0].y + yMul * sys->orbitT[2];
+                model->posP[i + 8]->z = lbl_1_bss_1C[0].z + zMul * sys->orbitT[2] + zTimeMul * sys->orbitTime[0];
+                if(sys->orbitTime[0] > 0.5f && sys->waveActiveF == 0) {
+                    if(i == 0 || i == 4) {
+                        MdOptionWaveEffectSet(1, 0);
+                    }
+                    if(i == 1 || i == 3) {
+                        MdOptionWaveEffectSet(1, 1);
+                    } else {
+                        MdOptionWaveEffectSet(1, 2);
+                    }
+                }
+                if(sys->orbitTime[0] > 0.7f) {
+                    Hu3DModelAttrSet(model->mdlId[i + 8], HU3D_ATTR_DISPOFF);
+                    procRet = MdProcTbl[4](0);
+                    if(sys->list == 0) {
+                        MdOptionMgListUpdate(sys->sprite);
+                    }
+                    MdOptionMgListWinUpdate(sys->sprite, sys->item, 0, 0);
+                }
+            } else {
+                if(i < idx) {
+                    MdMathLerp(&angle, 90.0f + 45.0f * (float)i, 0.0f, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 90.0f + 45.0f * (float)i, 360.0f, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 8], scale, scale, scale);
+                MdMathLerp(&scale, 1.0f, 0.8f, sys->orbitTime[0]);
+                center0.x = posP->x;
+                center0.y = posP->y;
+                center0.z = posP->z;
+                centerP0 = &center0;
+                MdMathPolarCoord(&out, centerP0, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 8], &out);
+            }
+        }
+    } else if(mode >= 19 && mode <= 20) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->orbitTime[1], &sys->orbitT[1], 40.0f);
+        MdMathOscillate(MDMATH_OSC_360, &sys->orbitTime[2], &sys->orbitT[2], 40.0f);
+        idx = mode - 19;
+        model->posP[idx + 13]->x = lbl_1_bss_1C[0].x + lbl_1_bss_1C[1].x * sys->orbitT[1];
+        model->posP[idx + 13]->y = lbl_1_bss_1C[0].y + 200.0f * sys->orbitT[2];
+        model->posP[idx + 13]->z = lbl_1_bss_1C[0].z + 600.0f * sys->orbitT[2];
+        if(sys->orbitTime[0] > 0.5f && sys->waveActiveF == 0) {
+            MdModelRumbleSet(idx);
+            MdOptionCapsuleOrbitOutSet(idx + 13);
+            if(idx == 0) {
+                Hu3DModelAttrReset(model->mdlId[4], HU3D_MOTATTR_PAUSE);
+            } else {
+                Hu3DModelAttrSet(model->mdlId[4], HU3D_MOTATTR_PAUSE);
+            }
+            MdOptionWaveEffectSet(2, 0);
+        }
+    } else if(mode >= 21 && mode <= 22) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->orbitTime[1], &sys->orbitT[1], 40.0f);
+        MdMathOscillate(MDMATH_OSC_360, &sys->orbitTime[2], &sys->orbitT[2], 40.0f);
+        idx = mode - 21;
+        for(i = 0; i < 2; i++) {
+            model->posP[idx + 15]->x = lbl_1_bss_1C[0].x + lbl_1_bss_1C[1].x * sys->orbitT[1];
+            model->posP[idx + 15]->y = lbl_1_bss_1C[0].y + 200.0f * sys->orbitT[2];
+            model->posP[idx + 15]->z = lbl_1_bss_1C[0].z + 600.0f * sys->orbitT[2];
+            if(i == idx) {
+                if(sys->orbitTime[0] > 0.5f && sys->waveActiveF == 0) {
+                    MdOptionWaveEffectSet(3, 0);
+                }
+                if(sys->orbitTime[0] > 0.7f) {
+                    Hu3DModelAttrSet(model->mdlId[i + 15], HU3D_ATTR_DISPOFF);
+                    if(mode == 22) {
+                        procRet = MdProcTbl[4](0);
+                        if(idx == 1 && sys->list == 0) {
+                            MdOptionMgListUpdate(sys->sprite);
+                        }
+                        MdOptionMgListWinUpdate(sys->sprite, 0, 0, 0);
+                    }
+                }
+            } else {
+                if(i < idx) {
+                    MdMathLerp(&angle, 90.0f + 180.0f * (float)i, 0.0f, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 90.0f + 180.0f * (float)i, 360.0f, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 1.0f, 0.8f, sys->orbitTime[0]);
+                center1.x = posP->x;
+                center1.y = posP->y;
+                center1.z = posP->z;
+                centerP1 = &center1;
+                MdMathPolarCoord(&out, centerP1, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 15], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 15], scale, scale, scale);
+            }
+        }
+        if(mode == 21 && sys->orbitTime[0] > 0.5f) {
+            MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[3], &sys->orbitT[3], 40.0f);
+            for(i = 0; i < 3; i++) {
+                MdMathLerp(&angle, 0.0f, 90.0f + 90.0f * (float)i, sys->orbitT[3]);
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[3]);
+                center2.x = posP->x;
+                center2.y = posP->y;
+                center2.z = posP->z;
+                centerP2 = &center2;
+                MdMathPolarCoord(&out, centerP2, 180.0f, 180.0f, scale, angle);
+                Hu3DModelAttrReset(model->mdlId[i + 17], HU3D_ATTR_DISPOFF);
+                Hu3DModelPosSetV(model->mdlId[i + 17], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[3]);
+                Hu3DModelScaleSet(model->mdlId[i + 17], scale, scale, scale);
+            }
+        }
+    } else if(mode >= 27 && mode <= 29) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->orbitTime[1], &sys->orbitT[1], 40.0f);
+        MdMathOscillate(MDMATH_OSC_360, &sys->orbitTime[2], &sys->orbitT[2], 40.0f);
+        idx = mode - 27;
+        if(idx != 1) {
+            yMul = 200.0f;
+            zMul = 600.0f;
+            zTimeMul = 0.0f;
+            yTimeMul = 0.0f;
+        } else {
+            yMul = 320.0f;
+            zMul = 280.0f;
+            zTimeMul = -370.0f;
+            yTimeMul = -160.0f;
+        }
+        if(sys->waveActiveF == 0) {
+            if(sys->orbitTime[0] > 0.5f && idx != 1) {
+                GwCommon.soundOutputMode = sys->sub;
+                MdModelSoundTypeSet(GwCommon.soundOutputMode);
+                msmSysSetOutputMode(GwCommon.soundOutputMode);
+                if(GwCommon.soundOutputMode == 0) {
+                    OSSetSoundMode(0);
+                } else {
+                    OSSetSoundMode(1);
+                }
+                MdOptionCapsuleOrbitOutSet(idx + 17);
+                MdOptionWaveEffectSet(3, 0);
+            } else if(sys->orbitTime[0] > 0.4f && idx == 1) {
+                GwCommon.soundOutputMode = sys->sub;
+                MdModelSoundTypeSet(GwCommon.soundOutputMode);
+                msmSysSetOutputMode(GwCommon.soundOutputMode);
+                if(GwCommon.soundOutputMode == 0) {
+                    OSSetSoundMode(0);
+                } else {
+                    OSSetSoundMode(1);
+                }
+                MdOptionCapsuleOrbitOutSet(idx + 17);
+                MdOptionWaveEffectSet(3, 1);
+            }
+        }
+        model->posP[idx + 17]->x = lbl_1_bss_1C[0].x + lbl_1_bss_1C[1].x * sys->orbitT[1];
+        model->posP[idx + 17]->y = lbl_1_bss_1C[0].y + yMul * sys->orbitT[2] + yTimeMul * sys->orbitT[1];
+        model->posP[idx + 17]->z = lbl_1_bss_1C[0].z + zMul * sys->orbitT[2] + zTimeMul * sys->orbitT[1];
+        if(mode == 27) {
+            model->posP[18]->x = 100.0f * sys->orbitT[1];
+        }
+        if(mode == 29) {
+            model->posP[18]->x = -100.0f * sys->orbitT[1];
+        }
+    } else if(mode >= 23 && mode <= 26) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->orbitTime[1], &sys->orbitT[1], 40.0f);
+        MdMathOscillate(MDMATH_OSC_360, &sys->orbitTime[2], &sys->orbitT[2], 40.0f);
+        idx = mode - 23;
+        for(i = 0; i < 4; i++) {
+            if(i == idx) {
+                if(i == 0 || i == 3) {
+                    yMul = 200.0f;
+                    zMul = 600.0f;
+                    zTimeMul = 0.0f;
+                } else {
+                    yMul = 250.0f;
+                    zMul = 450.0f;
+                    zTimeMul = -400.0f;
+                }
+                model->posP[i + 20]->x = lbl_1_bss_1C[0].x + lbl_1_bss_1C[1].x * sys->orbitT[1];
+                model->posP[i + 20]->y = lbl_1_bss_1C[0].y + yMul * sys->orbitT[2];
+                model->posP[i + 20]->z = lbl_1_bss_1C[0].z + zTimeMul * sys->orbitTime[0] + zMul * sys->orbitT[2];
+                if(sys->orbitTime[0] > 0.5f && sys->waveActiveF == 0) {
+                    if(i == 0 || i == 3) {
+                        MdOptionWaveEffectSet(4, 0);
+                    } else {
+                        MdOptionWaveEffectSet(4, 1);
+                    }
+                }
+                if(sys->orbitTime[0] > 0.7f) {
+                    if(idx != 1) {
+                        procRet = MdProcTbl[4](0);
+                        if(idx == 0) {
+                            if(sys->list == 0) {
+                                MdOptionMgListUpdate(sys->sprite);
+                            }
+                            MdOptionMgListWinUpdate(sys->sprite, 0, 0, 0);
+                        }
+                        if(idx == 2) {
+                            MdOptionDecaRecordUpdate(sys->sprite);
+                        }
+                        if(idx == 3) {
+                            MdOptionSdRecordUpdate(sys->sprite);
+                        }
+                    }
+                    Hu3DModelAttrSet(model->mdlId[i + 20], HU3D_ATTR_DISPOFF);
+                }
+            } else {
+                if(i < idx) {
+                    MdMathLerp(&angle, 90.0f + 60.0f * (float)i, 0.0f, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 90.0f + 60.0f * (float)i, 360.0f, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 1.0f, 0.8f, sys->orbitTime[0]);
+                center3.x = posP->x;
+                center3.y = posP->y;
+                center3.z = posP->z;
+                centerP3 = &center3;
+                MdMathPolarCoord(&out, centerP3, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 20], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 20], scale, scale, scale);
+            }
+        }
+        if(mode == 24) {
+            if(sys->orbitTime[0] > 0.5f && sys->waveActiveF == 0) {
+                MdOptionWaveEffectSet(4, 0);
+            }
+            if(sys->orbitTime[0] > 0.7f) {
+                MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[3], &sys->orbitT[3], 40.0f);
+                for(i = 0; i < 2; i++) {
+                    MdMathLerp(&angle, 0.0f, 90.0f + 180.0f * (float)i, sys->orbitT[3]);
+                    MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[3]);
+                    center4.x = posP->x;
+                    center4.y = posP->y;
+                    center4.z = posP->z;
+                    centerP4 = &center4;
+                    MdMathPolarCoord(&out, centerP4, 180.0f, 180.0f, scale, angle);
+                    Hu3DModelAttrReset(model->mdlId[i + 24], HU3D_ATTR_DISPOFF);
+                    Hu3DModelPosSetV(model->mdlId[i + 24], &out);
+                    MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[3]);
+                    Hu3DModelScaleSet(model->mdlId[i + 24], scale, scale, scale);
+                }
+            }
+        }
+    } else if(mode >= 30 && mode <= 31) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->orbitTime[0], &sys->orbitT[0], 40.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->orbitTime[1], &sys->orbitT[1], 40.0f);
+        MdMathOscillate(MDMATH_OSC_360, &sys->orbitTime[2], &sys->orbitT[2], 40.0f);
+        idx = mode - 30;
+        for(i = 0; i < 2; i++) {
+            if(i == idx) {
+                model->posP[idx + 24]->x = lbl_1_bss_1C[0].x + lbl_1_bss_1C[1].x * sys->orbitT[1];
+                model->posP[idx + 24]->y = lbl_1_bss_1C[0].y + 200.0f * sys->orbitT[2];
+                model->posP[idx + 24]->z = lbl_1_bss_1C[0].z + 600.0f * sys->orbitT[2];
+            } else {
+                if(i < idx) {
+                    MdMathLerp(&angle, 90.0f + 180.0f * (float)i, 0.0f, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 90.0f + 180.0f * (float)i, 360.0f, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 1.0f, 0.8f, sys->orbitTime[0]);
+                center5.x = posP->x;
+                center5.y = posP->y;
+                center5.z = posP->z;
+                centerP5 = &center5;
+                MdMathPolarCoord(&out, centerP5, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 24], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 24], scale, scale, scale);
+            }
+        }
+        if(sys->orbitTime[0] > 0.5f && sys->waveActiveF == 0) {
+            MdOptionWaveEffectSet(4, 0);
+        }
+        if(sys->orbitTime[0] > 0.7f) {
+            Hu3DModelAttrSet(model->mdlId[idx + 24], HU3D_ATTR_DISPOFF);
+            procRet = MdProcTbl[4](0);
+            if(idx == 0) {
+                MdOptionBoardRecordUpdate(sys->sprite, 0);
+            }
+            if(idx == 1) {
+                MdOptionStoryRecordUpdate(sys->sprite);
+            }
+        }
+    }
+    switch(mode) {
+        case 0:
+        case 4:
+            for(i = 0; i < 5; i++) {
+                if(mode == 0) {
+                    MdMathLerp(&angle, 12.5f, 90.0f + 45.0f * (float)i, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 360.0f, 90.0f + 45.0f * (float)i, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center6.x = posP->x;
+                center6.y = posP->y;
+                center6.z = posP->z;
+                centerP6 = &center6;
+                MdMathPolarCoord(&out, centerP6, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 8], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 8], scale, scale, scale);
+            }
+            break;
+
+        case 1:
+            for(i = 0; i < 2; i++) {
+                MdMathLerp(&angle, 5.0f, 90.0f + 180.0f * (float)i, sys->orbitT[0]);
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center7.x = posP->x;
+                center7.y = posP->y;
+                center7.z = posP->z;
+                centerP7 = &center7;
+                MdMathPolarCoord(&out, centerP7, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 13], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 13], scale, scale, scale);
+            }
+            break;
+
+        case 2:
+        case 5:
+            for(i = 0; i < 2; i++) {
+                if(mode == 2) {
+                    MdMathLerp(&angle, -5.0f, 90.0f + 180.0f * (float)i, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 360.0f, 90.0f + 180.0f * (float)i, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center8.x = posP->x;
+                center8.y = posP->y;
+                center8.z = posP->z;
+                centerP8 = &center8;
+                MdMathPolarCoord(&out, centerP8, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 15], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 15], scale, scale, scale);
+            }
+            break;
+
+        case 3:
+        case 6:
+            for(i = 0; i < 4; i++) {
+                if(mode == 3) {
+                    MdMathLerp(&angle, -20.0f, 90.0f + 60.0f * (float)i, sys->orbitT[0]);
+                } else {
+                    MdMathLerp(&angle, 360.0f, 90.0f + 60.0f * (float)i, sys->orbitT[0]);
+                }
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center9.x = posP->x;
+                center9.y = posP->y;
+                center9.z = posP->z;
+                centerP9 = &center9;
+                MdMathPolarCoord(&out, centerP9, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 20], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 20], scale, scale, scale);
+            }
+            break;
+
+        case 7:
+            for(i = 0; i < 2; i++) {
+                MdMathLerp(&angle, 360.0f, 90.0f + 180.0f * (float)i, sys->orbitT[0]);
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center10.x = posP->x;
+                center10.y = posP->y;
+                center10.z = posP->z;
+                centerP10 = &center10;
+                MdMathPolarCoord(&out, centerP10, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 24], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 24], scale, scale, scale);
+            }
+            break;
+
+        case 8:
+            for(i = 0; i < 5; i++) {
+                MdMathLerp(&angle, 90.0f + 45.0f * (float)i, 12.5f, sys->orbitT[0]);
+                MdMathLerp(&scale, 1.0f, 0.6f, sys->orbitTime[0]);
+                center11.x = posP->x;
+                center11.y = posP->y;
+                center11.z = posP->z;
+                centerP11 = &center11;
+                MdMathPolarCoord(&out, centerP11, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 8], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 8], scale, scale, scale);
+            }
+            break;
+
+        case 9:
+            for(i = 0; i < 2; i++) {
+                MdMathLerp(&angle, 90.0f + 180.0f * (float)i, 5.0f, sys->orbitT[0]);
+                MdMathLerp(&scale, 1.0f, 0.6f, sys->orbitTime[0]);
+                center12.x = posP->x;
+                center12.y = posP->y;
+                center12.z = posP->z;
+                centerP12 = &center12;
+                MdMathPolarCoord(&out, centerP12, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 13], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 13], scale, scale, scale);
+            }
+            break;
+
+        case 10:
+            for(i = 0; i < 2; i++) {
+                MdMathLerp(&angle, 90.0f + 180.0f * (float)i, -5.0f, sys->orbitT[0]);
+                MdMathLerp(&scale, 1.0f, 0.6f, sys->orbitTime[0]);
+                center13.x = posP->x;
+                center13.y = posP->y;
+                center13.z = posP->z;
+                centerP13 = &center13;
+                MdMathPolarCoord(&out, centerP13, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 15], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 15], scale, scale, scale);
+            }
+            break;
+
+        case 11:
+            for(i = 0; i < 4; i++) {
+                MdMathLerp(&angle, 90.0f + 60.0f * (float)i, -10.0f, sys->orbitT[0]);
+                MdMathLerp(&scale, 1.0f, 0.6f, sys->orbitTime[0]);
+                center14.x = posP->x;
+                center14.y = posP->y;
+                center14.z = posP->z;
+                centerP14 = &center14;
+                MdMathPolarCoord(&out, centerP14, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 20], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 20], scale, scale, scale);
+            }
+            break;
+
+        case 12:
+            for(i = 0; i < 3; i++) {
+                MdMathLerp(&angle, 90.0f + 90.0f * (float)i, 0.0f, sys->orbitT[0]);
+                MdMathLerp(&scale, 1.0f, 0.8f, sys->orbitTime[0]);
+                center15.x = posP->x;
+                center15.y = posP->y;
+                center15.z = posP->z;
+                centerP15 = &center15;
+                MdMathPolarCoord(&out, centerP15, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 17], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 17], scale, scale, scale);
+            }
+            for(i = 0; i < 2; i++) {
+                MdMathLerp(&angle, 360.0f, 90.0f + 180.0f * (float)i, sys->orbitT[0]);
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center16.x = posP->x;
+                center16.y = posP->y;
+                center16.z = posP->z;
+                centerP16 = &center16;
+                MdMathPolarCoord(&out, centerP16, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 15], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 15], scale, scale, scale);
+            }
+            break;
+
+        case 13:
+            for(i = 0; i < 2; i++) {
+                MdMathLerp(&angle, 90.0f + 180.0f * (float)i, 0.0f, sys->orbitT[0]);
+                MdMathLerp(&scale, 1.0f, 0.8f, sys->orbitTime[0]);
+                center17.x = posP->x;
+                center17.y = posP->y;
+                center17.z = posP->z;
+                centerP17 = &center17;
+                MdMathPolarCoord(&out, centerP17, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 24], &out);
+                MdMathLerp(&scale, 0.5f, 0.32f, sys->orbitTime[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 24], scale, scale, scale);
+            }
+            for(i = 0; i < 4; i++) {
+                MdMathLerp(&angle, 360.0f, 90.0f + 60.0f * (float)i, sys->orbitT[0]);
+                MdMathLerp(&scale, 0.8f, 1.0f, sys->orbitT[0]);
+                center18.x = posP->x;
+                center18.y = posP->y;
+                center18.z = posP->z;
+                centerP18 = &center18;
+                MdMathPolarCoord(&out, centerP18, 180.0f, 180.0f, scale, angle);
+                Hu3DModelPosSetV(model->mdlId[i + 20], &out);
+                MdMathLerp(&scale, 0.32f, 0.5f, sys->orbitT[0]);
+                Hu3DModelScaleSet(model->mdlId[i + 20], scale, scale, scale);
+            }
+            break;
+    }
+    if(sys->orbitTime[0] >= 1.0f) {
+        if((mode >= 14 && mode <= 18) || mode == 22 || mode == 30 || mode == 31 || mode == 23 || mode == 25 || mode == 26) {
+            if(procRet != 0) {
+                if(mode == 22) {
+                    HuAudSStreamAllFadeOut(100);
+                }
+                result = 1;
+                sys->unk50C = 1;
+            }
+        } else if((mode >= 21 && mode <= 22) || mode == 24) {
+            if(sys->orbitTime[3] >= 1.0f) {
+                result = 1;
+            }
+        } else {
+            result = 1;
+        }
+        switch(mode) {
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+                for(i = 0; i < 5; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 8], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 21:
+            case 22:
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 15], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 23:
+            case 24:
+            case 25:
+            case 26:
+                for(i = 0; i < 4; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 20], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 30:
+            case 31:
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 24], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 8:
+                sys->unk3DC = 0;
+                MdSpriteFadeDispSet(0);
+                for(i = 0; i < 5; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 8], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 9:
+                sys->unk3DC = 0;
+                MdSpriteFadeDispSet(0);
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 13], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 10:
+                sys->unk3DC = 0;
+                MdSpriteFadeDispSet(0);
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 15], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 11:
+                sys->unk3DC = 0;
+                MdSpriteFadeDispSet(0);
+                for(i = 0; i < 4; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 20], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 12:
+                for(i = 0; i < 3; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 17], HU3D_ATTR_DISPOFF);
+                }
+                break;
+
+            case 13:
+                for(i = 0; i < 2; i++) {
+                    Hu3DModelAttrSet(model->mdlId[i + 24], HU3D_ATTR_DISPOFF);
+                }
+                break;
+        }
+        if(result == 1) {
+            sys->waveActiveF = 0;
+        }
+    }
+    return result;
+}
+
 /*@@M2@@*/
 
 /* 0x9FD8 - proc 4: slide the mode title sprite in (mode 0) or out. */
@@ -1626,15 +2716,16 @@ s32 fn_1_9FD8(s32 mode)
     return 0;
 }
 
+/* 2D anchors of the star model (screen position + depth). */
+HuVecF lbl_1_data_3E0[2] = {
+    { 56.0f, 400.0f, 1280.0f },
+    { 64.0f, -128.0f, 1280.0f }
+};
+
 /* 0xA324 - helper process: keeps the star model parked at its 2D
  * anchor, faces it to the camera and plays the requested motion. */
 void fn_1_A324(void)
-{
-    static HuVecF pos2D[2] = {
-        { 56.0f, 400.0f, 1280.0f },
-        { 64.0f, -128.0f, 1280.0f }
-    };
-    MDOPT_MODEL_WORK *model = sys->model;
+{    MDOPT_MODEL_WORK *model = sys->model;
     MDCAMERA_WORK *camera = sys->camera;
     MDMESS_WORK *mess = sys->mess;
     s32 *stat = &sys->unk398;
@@ -1656,7 +2747,7 @@ void fn_1_A324(void)
                 break;
 
             case 1:
-                Hu3D2Dto3D(&pos2D[0], camera->camera[1].bit, &lbl_1_bss_4[0]);
+                Hu3D2Dto3D(&lbl_1_data_3E0[0], camera->camera[1].bit, &lbl_1_bss_4[0]);
                 *posP = lbl_1_bss_4[0];
                 break;
         }
@@ -1780,53 +2871,29 @@ s32 fn_1_A7F8(void)
 /* 0xA930 - menu sound effects / BGM control. */
 void fn_1_A930(s32 cmd)
 {
-    switch(cmd) {
-        case 0:
-            lbl_1_bss_654 = HuAudBGMPlay(4);
-            break;
-
-        case 1:
-            HuAudSStreamFadeOut(lbl_1_bss_654, 1000);
-            break;
-
-        case 2:
-            HuAudFXPlay(0);
-            break;
-
-        case 3:
-            HuAudFXPlay(2);
-            break;
-
-        case 4:
-            HuAudFXPlay(3);
-            break;
-
-        case 5:
-            HuAudFXPlay(4);
-            break;
-
-        case 6:
-            HuAudFXPlay(0x5A5);
-            break;
-
-        case 7:
-            HuAudFXPlay(0x5A8);
-            break;
-
-        case 8:
-            HuAudFXPlay(0x5A6);
-            break;
-
-        case 9:
-            HuAudFXPlay(0x5A7);
-            break;
-
-        case 10:
-            HuAudFXPlay(0x5A9);
-            break;
-
-        case 11:
-            HuAudAllStop();
-            break;
+    if(cmd == 0) {
+        lbl_1_bss_654 = HuAudBGMPlay(4);
+    } else if(cmd == 1) {
+        HuAudSStreamFadeOut(lbl_1_bss_654, 1000);
+    } else if(cmd == 2) {
+        HuAudFXPlay(0);
+    } else if(cmd == 3) {
+        HuAudFXPlay(2);
+    } else if(cmd == 4) {
+        HuAudFXPlay(3);
+    } else if(cmd == 5) {
+        HuAudFXPlay(4);
+    } else if(cmd == 6) {
+        HuAudFXPlay(0x5A5);
+    } else if(cmd == 7) {
+        HuAudFXPlay(0x5A8);
+    } else if(cmd == 8) {
+        HuAudFXPlay(0x5A6);
+    } else if(cmd == 9) {
+        HuAudFXPlay(0x5A7);
+    } else if(cmd == 10) {
+        HuAudFXPlay(0x5A9);
+    } else if(cmd == 11) {
+        HuAudAllStop();
     }
 }
