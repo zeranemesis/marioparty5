@@ -2006,3 +2006,437 @@ void fn_1_4114(void)
     } while (state != 0x2710);
     HuPrcEnd();
 }
+
+void fn_1_6504(void)
+{
+    Vec a;
+    Vec b;
+    Vec c;
+    f32 dx;
+    f32 dy;
+    f32 k;
+    HU3DMODELID m;
+    s32 i;
+
+    Hu3DModelAttrReset(lbl_1_bss_0->mdl[37], 1);
+    i = 9;
+    while (i-- != 0) {
+        Hu3DModelAttrReset(lbl_1_bss_0->mdl[i + 0x26], 1);
+    }
+    while ((lbl_1_bss_0->flag2 & 0x8000) != 0) {
+        Hu3D3Dto2D((Vec *)lbl_1_data_1C4, 0x10, &a);
+        b.x = a.x;
+        b.y = a.y;
+        b.z = a.z;
+        b.z = lbl_1_bss_4->camPos.z;
+        Hu3D2Dto3D(&b, 0x10, &b);
+        Hu3DModelPosSetV(lbl_1_bss_0->mdl[37], &b);
+        dx = 288.0f - a.x;
+        dy = 240.0f - a.y;
+        i = 9;
+        while (i-- != 0) {
+            c.x = a.x;
+            c.y = a.y;
+            c.z = a.z;
+            c.x += 2.0f * (dx * lbl_1_data_1D0[i]);
+            c.y = c.y + (2.0f * (dy * lbl_1_data_1D0[i]));
+            c.z = lbl_1_bss_4->camPos.z - lbl_1_data_1D0[i];
+            Hu3D2Dto3D(&c, 0x10, &c);
+            m = lbl_1_bss_0->mdl[i + 0x26];
+            Hu3DModelPosSetV(m, &c);
+            k = lbl_1_data_1F4[i];
+            c.z = k;
+            c.y = k;
+            c.x = k;
+            Hu3DModelScaleSetV(m, &c);
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
+}
+
+void fn_1_67C0(void)
+{
+    HU3DMODELID m;
+    s32 timer;
+    s32 n;
+    s32 i;
+
+    timer = 0;
+    n = 0xF;
+    while (n-- != 0) {
+        HuPrcVSleep();
+    }
+    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x100000;
+    HuPrcVSleep();
+    i = 7;
+    while (i-- != 0) {
+        Hu3DModelAttrReset(lbl_1_bss_0->parMan[i].id, 1);
+        lbl_1_bss_0->parMan[i].offset.x = lbl_1_data_320[3];
+        lbl_1_bss_0->parMan[i].offset.y = lbl_1_data_320[4];
+        lbl_1_bss_0->parMan[i].offset.z = lbl_1_data_320[5];
+        PSVECAdd(&lbl_1_bss_0->parMan[i].offset, (Vec *)&lbl_1_data_278[(i + 7) * 3], &lbl_1_bss_0->parMan[i].offset);
+        lbl_1_bss_0->parMan[i].pos = lbl_1_bss_0->parMan[i].offset;
+        Hu3DModelPosSet(lbl_1_bss_0->parMan[i].id, lbl_1_bss_0->parMan[i].pos.x, lbl_1_bss_0->parMan[i].pos.y,
+            lbl_1_bss_0->parMan[i].pos.z);
+    }
+    while ((lbl_1_bss_0->flag2 & 0x40000) == 0) {
+        i = 7;
+        while (i-- != 0) {
+            m = lbl_1_bss_0->parMan[i].id;
+            PSVECAdd(&lbl_1_bss_0->parMan[i].pos, (Vec *)&lbl_1_data_338[3], &lbl_1_bss_0->parMan[i].pos);
+            Hu3DModelPosSet(m, lbl_1_bss_0->parMan[i].pos.x, lbl_1_bss_0->parMan[i].pos.y, lbl_1_bss_0->parMan[i].pos.z);
+        }
+        timer += 1;
+        if ((f32)timer >= 1200.0f) {
+            timer = 0;
+            i = 7;
+            while (i-- != 0) {
+                lbl_1_bss_0->parMan[i].pos = lbl_1_bss_0->parMan[i].offset;
+            }
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
+}
+
+void fn_1_6BE8(void)
+{
+    f32 wob[7];
+    f32 *in[3];
+    f32 *out[3];
+    f32 tt[4];
+    f32 kv[4];
+    Vec v;
+    Vec prev;
+    Vec dir;
+    f32 *key;
+    f32 yaw;
+    f32 t;
+    f32 w;
+    HU3DMODELID m;
+    s16 wait;
+    s16 k;
+    s16 ax;
+    s16 i;
+    s32 n;
+
+    wait = frandmod(0x4B0);
+    while (wait-- != 0) {
+        HuPrcVSleep();
+    }
+    i = 7;
+    while (i-- != 0) {
+        wob[i] = (f32)frandmod(0x168);
+    }
+    while (TRUE) {
+        prev.x = 0.0f;
+        prev.y = 0.0f;
+        prev.z = 0.0f;
+        out[0] = &v.x;
+        out[1] = &v.y;
+        out[2] = &v.z;
+        i = 7;
+        while (i-- != 0) {
+            Hu3DModelAttrReset(lbl_1_bss_0->parMan[i].id, 1);
+        }
+        t = 0.0f;
+        while (t <= 1200.0f) {
+            if ((lbl_1_bss_0->flag2 & 0x100000) == 0) {
+                break;
+            }
+            key = lbl_1_data_350;
+            k = 0;
+            while (k < 4) {
+#ifdef TARGET_PC
+                if (k < 3 && key[3] <= t && t < key[7]) {
+                    break;
+                }
+#else
+                if (key[3] <= t && t < key[7]) {
+                    break;
+                }
+#endif
+                k += 1;
+                key += 0x10 / sizeof(f32);
+            }
+            if (k == 4) {
+                break;
+            }
+            in[0] = &key[0];
+            in[1] = &key[1];
+            in[2] = &key[2];
+            if (k == 0) {
+                tt[0] = -1.0f;
+            } else {
+                tt[0] = key[-1];
+            }
+            tt[1] = key[3];
+            if (k >= 3) {
+                tt[2] = 1.0f + tt[1];
+            } else {
+                tt[2] = key[7];
+            }
+            if (k >= 2) {
+                tt[3] = 1.0f + tt[2];
+            } else {
+                tt[3] = key[0xB];
+            }
+            ax = 3;
+            while (ax-- != 0) {
+                if (k == 0) {
+                    kv[0] = in[ax][0];
+                } else {
+                    kv[0] = in[ax][-4];
+                }
+                kv[1] = in[ax][0];
+                if (k >= 3) {
+                    kv[2] = kv[1];
+                } else {
+                    kv[2] = in[ax][4];
+                }
+                if (k >= 2) {
+                    kv[3] = kv[2];
+                } else {
+                    kv[3] = in[ax][8];
+                }
+                *out[ax] = InterpolateBMLine(kv, tt, t);
+            }
+            PSVECSubtract(&v, &prev, &dir);
+            PSVECNormalize(&dir, &dir);
+            prev.x = v.x;
+            prev.y = v.y;
+            prev.z = v.z;
+            if (dir.z > 1.0f) {
+                dir.z = 1.0f;
+            } else if (dir.z < -1.0f) {
+                dir.z = -1.0f;
+            }
+            yaw = (f32)acos((f64)dir.z);
+            if (dir.x < 0.0f) {
+                yaw = -yaw;
+            }
+            i = 7;
+            while (i-- != 0) {
+                m = lbl_1_bss_0->parMan[i].id;
+                w = (f32)(50.0 * sin((3.141592653589793 * (f64)wob[i]) / 180.0));
+                PSVECAdd(&v, (Vec *)&lbl_1_data_278[i * 3], &lbl_1_bss_0->parMan[i].pos);
+                Hu3DModelPosSet(m, lbl_1_bss_0->parMan[i].pos.x, lbl_1_bss_0->parMan[i].pos.y + w,
+                    lbl_1_bss_0->parMan[i].pos.z);
+                Hu3DModelRotSet(m, 0.0f, (f32)((f64)(180.0f * yaw) / 3.141592653589793), 0.0f);
+                wob[i] += 3.0f;
+                wob[i] = (f32)fmod((f64)wob[i], 360.0);
+            }
+            HuPrcVSleep();
+            t += 1.0f;
+        }
+        i = 7;
+        while (i-- != 0) {
+            Hu3DModelAttrSet(lbl_1_bss_0->parMan[i].id, 1);
+        }
+        if ((lbl_1_bss_0->flag2 & 0x100000) != 0) {
+            n = 0x4B0;
+            while (n-- != 0) {
+                HuPrcVSleep();
+            }
+            continue;
+        }
+        HuPrcEnd();
+        break;
+    }
+}
+
+void fn_1_72E8(void)
+{
+    s32 i;
+
+    if ((lbl_1_bss_0->flag2 & 0x100000) == 0) {
+        i = 7;
+        while (i-- != 0) {
+            Hu3DModelAttrReset(lbl_1_bss_0->parMan[i].id, 1);
+            lbl_1_bss_0->parMan[i].offset.x = lbl_1_data_320[0];
+            lbl_1_bss_0->parMan[i].offset.y = lbl_1_data_320[1];
+            lbl_1_bss_0->parMan[i].offset.z = lbl_1_data_320[2];
+            PSVECAdd(&lbl_1_bss_0->parMan[i].offset, (Vec *)&lbl_1_data_278[i * 3], &lbl_1_bss_0->parMan[i].offset);
+            lbl_1_bss_0->parMan[i].pos = lbl_1_bss_0->parMan[i].offset;
+            Hu3DModelPosSet(lbl_1_bss_0->parMan[i].id, lbl_1_bss_0->parMan[i].pos.x, lbl_1_bss_0->parMan[i].pos.y,
+                lbl_1_bss_0->parMan[i].pos.z);
+            Hu3DModelLayerSet(lbl_1_bss_0->parMan[i].id, 0);
+            Hu3DModelCameraSet(lbl_1_bss_0->parMan[i].id, 0x10);
+        }
+        lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 | 0x100000;
+        HuPrcChildCreate(fn_1_6BE8, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    }
+}
+
+void fn_1_74FC(M505_PLAYER *player, Vec *target)
+{
+    f32 knot[4][4];
+    f32 tt[4];
+    f32 kv[4];
+    f32 *in[3];
+    f32 *out[3];
+    Vec v;
+    Vec prev;
+    Vec dir;
+    f32 *key;
+    f32 yaw;
+    f32 t;
+    s16 k;
+    s16 ax;
+    s16 i;
+
+    target->y = 0.0f;
+    knot[0][0] = player->pos.x;
+    knot[0][1] = player->pos.y;
+    knot[0][2] = player->pos.z;
+    knot[1][0] = player->pos.x;
+    knot[1][1] = player->pos.y;
+    knot[1][2] = player->pos.z;
+    knot[1][2] += 30.0f;
+    knot[2][0] = target->x;
+    knot[2][1] = target->y;
+    knot[2][2] = target->z;
+    knot[2][2] -= 30.0f;
+    knot[3][0] = target->x;
+    knot[3][1] = target->y;
+    knot[3][2] = target->z;
+    knot[3][2] += 30.0f;
+    knot[0][3] = 0.0f;
+    i = 1;
+    while (i < 4) {
+        PSVECSubtract((Vec *)knot[i], (Vec *)knot[i - 1], &v);
+        knot[i][3] = knot[i - 1][3] + (PSVECMag(&v) / 6.0f);
+        i += 1;
+    }
+    if (player->motion != 2) {
+        CharMotionShiftSet(player->charNo, player->mot2, 0.0f, 15.0f, 0x40000001);
+        player->motion = 2;
+    }
+    prev.x = player->pos.x;
+    prev.y = player->pos.y;
+    prev.z = player->pos.z;
+    prev.z -= 10.0f;
+    out[0] = &v.x;
+    out[1] = &v.y;
+    out[2] = &v.z;
+    t = 0.0f;
+    while (TRUE) {
+        key = &knot[0][0];
+        k = 0;
+        while (k < 4) {
+#ifdef TARGET_PC
+            if (k < 3 && key[3] <= t && t < key[7]) {
+                break;
+            }
+#else
+            if (key[3] <= t && t < key[7]) {
+                break;
+            }
+#endif
+            k += 1;
+            key += 0x10 / sizeof(f32);
+        }
+        if (k == 4) {
+            break;
+        }
+        in[0] = &key[0];
+        in[1] = &key[1];
+        in[2] = &key[2];
+        if (k == 0) {
+            tt[0] = -1.0f;
+        } else {
+            tt[0] = key[-1];
+        }
+        tt[1] = key[3];
+        if (k >= 3) {
+            tt[2] = 1.0f + tt[1];
+        } else {
+            tt[2] = key[7];
+        }
+        if (k >= 2) {
+            tt[3] = 1.0f + tt[2];
+        } else {
+            tt[3] = key[0xB];
+        }
+        ax = 3;
+        while (ax-- != 0) {
+            if (k == 0) {
+                kv[0] = in[ax][0];
+            } else {
+                kv[0] = in[ax][-4];
+            }
+            kv[1] = in[ax][0];
+            if (k >= 3) {
+                kv[2] = kv[1];
+            } else {
+                kv[2] = in[ax][4];
+            }
+            if (k >= 2) {
+                kv[3] = kv[2];
+            } else {
+                kv[3] = in[ax][8];
+            }
+            *out[ax] = InterpolateBMLine(kv, tt, t);
+        }
+        PSVECSubtract(&v, &prev, &dir);
+        PSVECNormalize(&dir, &dir);
+        prev.x = v.x;
+        prev.y = v.y;
+        prev.z = v.z;
+        if (dir.z > 1.0f) {
+            dir.z = 1.0f;
+        } else if (dir.z < -1.0f) {
+            dir.z = -1.0f;
+        }
+        yaw = (f32)acos((f64)dir.z);
+        if (dir.x < 0.0f) {
+            yaw = -yaw;
+        }
+        player->pos.x = v.x;
+        player->pos.y = v.y;
+        player->pos.z = v.z;
+        Hu3DModelPosSet(player->modelId, player->pos.x, player->pos.y, player->pos.z);
+        Hu3DModelRotSet(player->modelId, 0.0f, (f32)((f64)(180.0f * yaw) / 3.141592653589793), 0.0f);
+        HuPrcVSleep();
+        t += 1.0f;
+    }
+    player->pos.x = knot[3][0];
+    player->pos.y = knot[3][1];
+    player->pos.z = knot[3][2];
+    Hu3DModelPosSet(player->modelId, player->pos.x, player->pos.y, player->pos.z);
+    Hu3DModelRotSet(player->modelId, 0.0f, 0.0f, 0.0f);
+    if (player->motion != 0) {
+        CharMotionShiftSet(player->charNo, player->mot0, 0.0f, 15.0f, 0x40000001);
+        player->motion = 0;
+    }
+}
+
+s32 fn_1_7B6C(f32 *cur, f32 target, f32 step)
+{
+    f32 diff;
+    f32 absd;
+    f32 d;
+
+    diff = *cur - target;
+    d = (f32)fmod((f64)diff, 180.0);
+    if ((f32)fabs((f32)fmod((f64)diff, 360.0)) > 180.0f) {
+        if (d > 0.0f) {
+            d = -(180.0f - (f32)fabs(d));
+        } else {
+            d = 180.0f - (f32)fabs(d);
+        }
+    }
+    absd = (f32)fabs(d);
+    if (absd < step) {
+        *cur = target;
+        return 1;
+    }
+    if (d > 0.0f) {
+        d = d - step;
+    } else {
+        d = d + step;
+    }
+    *cur = target + d;
+    return 0;
+}
