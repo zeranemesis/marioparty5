@@ -40,7 +40,9 @@ char *MdToueiHookNameTbl[10] = {
 
 void MdObjDebugFontCreate(OMOBJ *obj)
 {
-    MdDebugFontCreate(obj->data);
+    SYSDEBUGFONT *font = obj->data;
+
+    MdDebugFontCreate(font);
     obj->objFunc = MdObjDebugFontMain;
 }
 
@@ -145,7 +147,9 @@ void MdObjPadMain(void)
 
 void MdObjCameraCreate(OMOBJ *obj)
 {
-    MdCameraCreate(obj->data);
+    SYSCAMERA_WORK *camera = obj->data;
+
+    MdCameraCreate(camera);
     obj->objFunc = MdObjCameraMain;
 }
 
@@ -163,7 +167,9 @@ void MdObjCameraMain(OMOBJ *obj)
 
 void MdObjLightCreate(OMOBJ *obj)
 {
-    MdLightCreate(obj->data);
+    SYSLIGHT *light = obj->data;
+
+    MdLightCreate(light);
     obj->objFunc = MdObjLightMain;
 }
 

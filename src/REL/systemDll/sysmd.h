@@ -12,6 +12,7 @@
 #include "game/pad.h"
 #include "stdarg.h"
 #include "string.h"
+#include "game/window.h"
 
 extern NEL_SYS sysWork;
 
@@ -59,6 +60,62 @@ typedef struct SysLight_s {
     /* 0x44 */ HuVecF lightDir;
     /* 0x50 */ GXColor rgb;
 } SYSLIGHT;
+
+typedef struct SysMessWin_s {
+    /* 0x00 */ s16 winId;
+    /* 0x04 */ float unk4;
+    /* 0x08 */ float unk8;
+    /* 0x0C */ float unkC;
+} SYSMESSWIN;
+
+typedef struct SysMessSpr_s {
+    /* 0x00 */ s32 mode;
+    /* 0x04 */ s32 step;
+    /* 0x08 */ float time;
+    /* 0x0C */ float ofsTime;
+    /* 0x10 */ float t;
+    /* 0x14 */ float unk14;
+    /* 0x18 */ float pos1;
+    /* 0x1C */ float pos2;
+    /* 0x20 */ float scale;
+} SYSMESSSPR;
+
+typedef struct SysMessInsert_s {
+    /* 0x00 */ s32 num;
+    /* 0x04 */ s32 mes[16];
+    /* 0x44 */ s16 no[16];
+} SYSMESSINSERT;
+
+typedef struct SysMess_s {
+    /* 0x00 */ s32 createF;
+    /* 0x04 */ s32 mode;
+    /* 0x08 */ s16 dlgWinId;
+    /* 0x0A */ s16 exWinId;
+    /* 0x0C */ s16 dlgType;
+    /* 0x0E */ s16 choice;
+    /* 0x10 */ s32 dlgMesNo;
+    /* 0x14 */ SYSMESSINSERT insert;
+    /* 0x78 */ SYSMESSWIN win[3];
+    /* 0xA8 */ SYSMESSSPR spr;
+    /* 0xCC */ s16 dbgSel;
+    /* 0xCE */ u8 dbgColor;
+} SYSMESS;
+
+void MdMessProc(void);
+void MdMessDlgMesSet(int type, s32 mesNo);
+void MdMessDlgInsertMesReset(void);
+void MdMessDlgInsertMesAdd(s32 mesNo, s16 insertNo);
+void MdMessWinMesSet(s32 winNo, s32 mesNo);
+void MdMessWinKill(s32 winNo);
+void MdMessWinPosSet(s32 winNo, float x, float y);
+void MdMessWinSpeedSet(s32 winNo, s16 speed);
+void MdMessDlgSprUpdate(SYSMESS *mess);
+void MdMessKill(void);
+
+HuVec2f *MdSpritePosGet(int grpNo, int memberNo);
+HuVec2f *MdSpriteScaleGet(int grpNo, int memberNo);
+void MdMathLerp(float *out, float a, float b, float t);
+void MdMathOscillate(int type, float *in, float *out, float t);
 
 void MdDebugFontCreate(SYSDEBUGFONT *font);
 void MdDebugFontUpdate(SYSDEBUGFONT *font);
