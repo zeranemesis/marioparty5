@@ -254,7 +254,11 @@ int MBSaiExec(int playerNo, int saiType, s8 *valueTbl, int tutorialVal, BOOL pad
     if(tutorialVal < 0) {
         SaiExecDirect(playerNo, saiType, valueTbl, NULL, padWinF, waitF, pos, color);
         if(!waitF) {
+#ifdef TARGET_PC
+            return 0; // GC r3 stale (last call result); callers with waitF == FALSE ignore the result
+#else
             return;
+#endif
         }
         return MBSaiResultGet(playerNo);
     }
@@ -263,7 +267,11 @@ int MBSaiExec(int playerNo, int saiType, s8 *valueTbl, int tutorialVal, BOOL pad
     tutorialValData[2] = -1;
     SaiExecDirect(playerNo, saiType, valueTbl, tutorialValData, padWinF, waitF, pos, color);
     if(!waitF) {
+#ifdef TARGET_PC
+        return 0; // GC r3 stale (last call result); callers with waitF == FALSE ignore the result
+#else
         return;
+#endif
     }
     return MBSaiResultGet(playerNo);
 }
