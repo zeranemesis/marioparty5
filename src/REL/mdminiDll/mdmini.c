@@ -7,6 +7,7 @@
 #include "game/gamework.h"
 #include "game/wipe.h"
 #include "game/saveload.h"
+#include "game/mgdata.h"
 
 #include "messnum/partymode_sys.h"
 #include "messnum/mapname.h"
@@ -176,7 +177,9 @@ void fn_1_15BF4(void);
 void fn_1_15CF8(int mdlNo, int cameraNo);
 void fn_1_15DE8(void);
 void fn_1_16168(void);
+void fn_1_161B8(void);
 void fn_1_16308(void);
+void fn_1_16358(void);
 void fn_1_17008(int cmd);
 int fn_1_171B4(int mdlNo, int cameraNo);
 void fn_1_27F8(void);
@@ -2188,6 +2191,42 @@ void fn_1_16168(void)
     }
 }
 
+void fn_1_161B8(void)
+{
+    int i;
+    int comNum;
+
+    static s8 teamPlayer[4][4] = {
+        { 0, 1, 2, 3 },
+        { 1, 0, 2, 3 },
+        { 2, 0, 1, 3 },
+        { 3, 0, 1, 2 },
+    };
+    static s8 teamOrder[4][4] = {
+        { 0, 1, 2, 3 },
+        { 1, 0, 2, 3 },
+        { 1, 2, 0, 3 },
+        { 1, 2, 3, 0 },
+    };
+
+    comNum = 0;
+    for(i=0; i<4; i++) {
+        sys->mdlE[i] = teamOrder[sys->subMode2][i];
+    }
+    for(i=0; i<3; i++) {
+        sys->mdlG[i] = -1;
+    }
+    for(i=0; i<4; i++) {
+        if(!sys->padEnable[teamPlayer[sys->subMode2][i]]) {
+            sys->mdlG[comNum] = teamPlayer[sys->subMode2][i];
+            comNum++;
+            if(comNum >= 3) {
+                break;
+            }
+        }
+    }
+}
+
 /* 0x16308 - same latch for the four computer slots */
 void fn_1_16308(void)
 {
@@ -2195,6 +2234,115 @@ void fn_1_16308(void)
 
     for(i = 0; i < 4; i++) {
         sys->mdlF[i] = sys->mdlE[i];
+    }
+}
+
+void fn_1_16358(void)
+{
+    int i;
+    int j;
+    MDMODEL_WORK *model;
+    MGDATA *mgData;
+    BOOL unlockF;
+
+    model = sys->model;
+    for(i=0; i<6; i++) {
+        sys->mgTypeF[i] = 0;
+    }
+    sys->mgTypeF[0] = 1;
+    {
+        s8 type3[3] = { 0, 0, 0 };
+    j = 0;
+    mgData = &mgDataTbl[j];
+    do {
+        if(type3[0] == 0 && mgData->type == MG_TYPE_4P && (mgData->flag & MG_FLAG_NOSTORY) == 0) {
+            if((unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+                type3[0] = 1;
+            }
+        } else if(type3[1] == 0 && mgData->type == MG_TYPE_1VS3 && (mgData->flag & MG_FLAG_NOSTORY) == 0) {
+            if((unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+                type3[1] = 1;
+            }
+        } else if(type3[2] == 0 && mgData->type == MG_TYPE_2VS2 && (mgData->flag & MG_FLAG_NOSTORY) == 0 && (unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+            type3[2] = 1;
+        }
+        j++;
+        mgData++;
+    } while(mgData->ovl != 0xFFFF);
+    if(type3[0] == 1 && type3[1] == 1 && type3[2] == 1) {
+        sys->mgTypeF[1] = 1;
+    }
+    }
+    {
+        s8 type5[5] = { 0, 0, 0, 0, 0 };
+    j = 0;
+    mgData = &mgDataTbl[j];
+    do {
+        if(type5[0] == 0 && mgData->type == MG_TYPE_4P && (mgData->flag & MG_FLAG_NOSTORY) == 0) {
+            if((unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+                type5[0] = 1;
+            }
+        } else if(type5[1] == 0 && mgData->type == MG_TYPE_1VS3 && (mgData->flag & MG_FLAG_NOSTORY) == 0) {
+            if((unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+                type5[1] = 1;
+            }
+        } else if(type5[2] == 0 && mgData->type == MG_TYPE_2VS2 && (mgData->flag & MG_FLAG_NOSTORY) == 0) {
+            if((unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+                type5[2] = 1;
+            }
+        } else if(type5[3] == 0 && mgData->type == MG_TYPE_KUPA) {
+            if((unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+                type5[3] = 1;
+            }
+        } else if(type5[4] == 0 && mgData->type == MG_TYPE_KETTOU && (unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+            type5[4] = 1;
+        }
+        j++;
+        mgData++;
+    } while(mgData->ovl != 0xFFFF);
+    if(type5[0] == 1 && type5[1] == 1 && type5[2] == 1 && type5[3] == 1 && type5[4] == 1) {
+        sys->mgTypeF[2] = 1;
+    }
+    }
+    {
+        s16 unlockTbl[11] = { 502, 504, 506, 507, 510, 511, 512, 513, 514, 563, -1 };
+    j = 0;
+    while(1) {
+        if((unlockF = GWMgUnlockGet(unlockTbl[j])) == 0) {
+            sys->mgTypeF[3] = 0;
+            break;
+        }
+        j++;
+        if(unlockTbl[j] == -1) {
+            sys->mgTypeF[3] = 1;
+            break;
+        }
+    }
+    }
+    j = 0;
+    mgData = &mgDataTbl[j];
+    do {
+        if(mgData->type == MG_TYPE_4P && (mgData->flag & MG_FLAG_NOSTORY) == 0 && (unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+            sys->mgTypeF[4] = 1;
+            break;
+        }
+        j++;
+        mgData++;
+    } while(mgData->ovl != 0xFFFF);
+    j = 0;
+    mgData = &mgDataTbl[j];
+    do {
+        if(mgData->type == MG_TYPE_KETTOU && (unlockF = GWMgUnlockGet(j+0x1F5)) == 1) {
+            sys->mgTypeF[5] = 1;
+            break;
+        }
+        j++;
+        mgData++;
+    } while(mgData->ovl != 0xFFFF);
+    for(i=0; i<6; i++) {
+        if(sys->mgTypeF[i] == 0) {
+            Hu3DModelTPLvlSet(model->mdlId[i+MDMODEL_CAP_MODE_00], 0.2f);
+        }
     }
 }
 
