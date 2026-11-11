@@ -166,6 +166,19 @@ typedef struct SysParticleWork_s {
     /* 0xA848 */ SYSPARTICLE_PARAM param;
 } SYSPARTICLE_WORK;
 
+typedef void (*SYSFUKI_HOOK)(NEL_SYS *sys, s32 no);
+
+typedef struct SysFuki_s {
+    /* 0x00 */ s32 mode;
+    /* 0x04 */ s32 grp;
+    /* 0x08 */ s32 memberNo;
+    /* 0x0C */ float time;
+    /* 0x10 */ float ofsTime;
+    /* 0x14 */ float t;
+    /* 0x18 */ float ofsT;
+    /* 0x1C */ SYSFUKI_HOOK hook;
+} SYSFUKI;
+
 typedef struct SysMessWin_s {
     /* 0x00 */ s16 winId;
     /* 0x04 */ float unk4;
@@ -220,6 +233,9 @@ void MdMessKill(void);
 HuVec2f *MdSpritePosGet(int grpNo, int memberNo);
 HuVec2f *MdSpriteScaleGet(int grpNo, int memberNo);
 void MdMathLerp(float *out, float a, float b, float t);
+void MdMathLerpScale(HuVecF *out, float a, float b, float t);
+void MathLerpColor(u8 *out, float a, float b, float t);
+void MdMathLerpOfs(float *out, float a, float b, float t, float ofs);
 void MdMathOscillate(int type, float *in, float *out, float t);
 
 void MdDebugFontCreate(SYSDEBUGFONT *font);

@@ -1644,3 +1644,434 @@ void MdParticleDebug(NEL_SYS *sys)
     MdDebugFontPrint("pdebug->green  (%d)", param->color.g);
     MdDebugFontPrint("pdebug->blue   (%d)", param->color.b);
 }
+
+static void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo);
+static void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z);
+static void MdRingColorReset(NEL_SYS *sys, s32 no);
+static void MdRingDispSet(NEL_SYS *sys, volatile s32 no, s32 dispF);
+static void MdRingScaleSet(NEL_SYS *sys, s32 no, float scale);
+
+void MdRingCreate(NEL_SYS *sys)
+{
+    SYSRING *ring;
+    s32 i;
+    SYSRING_WORK *ringWork;
+    SYSMODEL *model;
+
+    ringWork = (SYSRING_WORK *)sys->ring;
+    model = (SYSMODEL *)sys->model;
+    ring = &ringWork->ring[0];
+    for (i = 0; i < 11; i++, ring++) {
+        ring->disp = 0;
+        ring->mode = 0;
+        ring->mdlNo = i + 0x27;
+        ring->posP = &model->mdlPos[ring->mdlNo];
+        ring->rotP = &model->mdlRot[ring->mdlNo];
+        ring->scaleP = &model->mdlScale[ring->mdlNo];
+        MdRingMdlSet(sys, i, -1);
+        MdRingOfsSet(sys, i, 0.0f, 0.0f, 0.0f);
+        if (i <= 3) {
+            ring->color = RingColorTbl[i];
+        } else if (i <= 6) {
+            ring->color = RingColorTbl[4];
+        } else {
+            ring->color = RingColorTbl[5];
+        }
+        MdRingColorReset(sys, i);
+    }
+    ringWork->scale = 0.5f;
+}
+
+void MdRingMain(NEL_SYS *sys)
+{
+    SYSRING *ring;
+    s32 i;
+    HuVecF *posP;
+    HuVecF *basePosP;
+    s32 colorIdx;
+    SYSRING_WORK *ringWork;
+    SYSMODEL *model;
+    SYSCAMERA_WORK *cameraWork;
+    HuVecF *rotP;
+    HuVecF *scaleP;
+    SYSCAMERA *camera;
+
+    ringWork = (SYSRING_WORK *)sys->ring;
+    model = (SYSMODEL *)sys->model;
+    cameraWork = (SYSCAMERA_WORK *)sys->camera;
+    camera = &cameraWork->camera[2];
+    ring = &ringWork->ring[0];
+    for (i = 0; i < 11; i++, ring++) {
+        posP = *ring->posP;
+        rotP = *ring->rotP;
+        scaleP = *ring->scaleP;
+        if (ring->baseMdlNo != -1) {
+            basePosP = model->mdlPos[ring->baseMdlNo];
+            *posP = *basePosP;
+            posP->x = basePosP->x + ring->baseOfs.x;
+            posP->y = basePosP->y + ring->baseOfs.y;
+            posP->z = basePosP->z + ring->baseOfs.z;
+        }
+        switch (ring->mode) {
+            case 1:
+                ring->baseOfs.x = 0.0f;
+                ring->baseOfs.y = 0.0f;
+                ring->baseOfs.z = 0.0f;
+                MdRingDispSet(sys, i, 1);
+                MdRingColorReset(sys, i);
+                ring->color.a = 0;
+                ring->mode = 2;
+                break;
+            case 2:
+                MdMathOscillate(2, &ring->time, &ring->t, 16.0f);
+                MathLerpColor(&ring->color.a, 0.0f, 192.0f, ring->t);
+                if (ring->time >= 1.0f) {
+                    MdRingColorReset(sys, i);
+                    ring->mode = 3;
+                }
+                break;
+            case 3:
+                MdMathOscillate(3, &ring->time, &ring->t, 32.0f);
+                MathLerpColor(&ring->color.a, 192.0f, 144.0f, ring->t);
+                if (ring->time >= 1.0f) {
+                    MdRingColorReset(sys, i);
+                }
+                break;
+            case 4:
+                MdRingColorReset(sys, i);
+                ring->endColor = ring->color;
+                ring->mode = 5;
+                break;
+            case 5:
+                MdMathOscillate(1, &ring->time, &ring->t, 8.0f);
+                MathLerpColor(&ring->color.a, ring->endColor.a, 0.0f, ring->t);
+                if (ring->time >= 1.0f) {
+                    MdRingDispSet(sys, i, 0);
+                    MdRingColorReset(sys, i);
+                    ring->color.a = 0;
+                    ring->mode = 0;
+                }
+                break;
+            case 6:
+                MdRingDispSet(sys, i, 1);
+                MdRingColorReset(sys, i);
+                ring->color.a = 0;
+                MdRingScaleSet(sys, i, ringWork->scale);
+                ring->mode = 7;
+                break;
+            case 7:
+                MdMathOscillate(1, &ring->time, &ring->t, 4.0f);
+                MdMathOscillate(1, &ring->ofsTime, &ring->ofsT, 36.0f);
+                MathLerpColor(&ring->color.a, 0.0f, 128.0f, ring->t);
+                MdMathLerpScale(*ring->scaleP, 0.8f, 1.8f, ring->ofsT);
+                if (ring->time >= 1.0f) {
+                    ring->time = 0.0f;
+                    ring->t = 0.0f;
+                    ring->mode = 8;
+                }
+                break;
+            case 8:
+                MdMathOscillate(1, &ring->time, &ring->t, 32.0f);
+                MdMathOscillate(1, &ring->ofsTime, &ring->ofsT, 36.0f);
+                MathLerpColor(&ring->color.a, 128.0f, 0.0f, ring->t);
+                MdMathLerpScale(*ring->scaleP, 0.8f, 1.8f, ring->ofsT);
+                if (ring->time >= 1.0f) {
+                    MdRingDispSet(sys, i, 0);
+                    MdRingColorReset(sys, i);
+                    ring->color.a = 0;
+                    ring->mode = 0;
+                }
+                break;
+            case 9:
+                MdRingColorReset(sys, i);
+                ring->endColor = ring->color;
+                ring->mode = 10;
+                break;
+            case 10:
+                MdMathOscillate(1, &ring->time, &ring->t, 8.0f);
+                MathLerpColor(&ring->color.r, ring->endColor.r, RingColorTbl[6].r, ring->t);
+                MathLerpColor(&ring->color.g, ring->endColor.g, RingColorTbl[6].g, ring->t);
+                MathLerpColor(&ring->color.b, ring->endColor.b, RingColorTbl[6].b, ring->t);
+                MathLerpColor(&ring->color.a, ring->endColor.a, 192.0f, ring->t);
+                if (ring->time >= 1.0f) {
+                    MdRingColorReset(sys, i);
+                    ring->mode = 3;
+                }
+                break;
+            case 11:
+                MdRingColorReset(sys, i);
+                ring->endColor = ring->color;
+                ring->mode = 12;
+                break;
+            case 12:
+                MdMathOscillate(1, &ring->time, &ring->t, 8.0f);
+                MathLerpColor(&ring->color.r, ring->endColor.r, RingColorTbl[7].r, ring->t);
+                MathLerpColor(&ring->color.g, ring->endColor.g, RingColorTbl[7].g, ring->t);
+                MathLerpColor(&ring->color.b, ring->endColor.b, RingColorTbl[7].b, ring->t);
+                MathLerpColor(&ring->color.a, ring->endColor.a, 192.0f, ring->t);
+                if (ring->time >= 1.0f) {
+                    MdRingColorReset(sys, i);
+                    ring->mode = 3;
+                }
+                break;
+            case 13:
+                MdRingColorReset(sys, i);
+                ring->endColor = ring->color;
+                ring->mode = 14;
+                break;
+            case 14:
+                colorIdx = 0;
+                if (i <= 3) {
+                    colorIdx = i;
+                } else if (i <= 6) {
+                    colorIdx = 4;
+                } else {
+                    colorIdx = 5;
+                }
+                MdMathOscillate(1, &ring->time, &ring->t, 15.0f);
+                MathLerpColor(&ring->color.r, ring->endColor.r, RingColorTbl[colorIdx].r, ring->t);
+                MathLerpColor(&ring->color.g, ring->endColor.g, RingColorTbl[colorIdx].g, ring->t);
+                MathLerpColor(&ring->color.b, ring->endColor.b, RingColorTbl[colorIdx].b, ring->t);
+                MathLerpColor(&ring->color.a, ring->endColor.a, 192.0f, ring->t);
+                if (ring->time >= 1.0f) {
+                    MdRingColorReset(sys, i);
+                    ring->mode = 3;
+                }
+                break;
+            case 15:
+                if (i <= 3) {
+                    ring->color = RingColorTbl[i];
+                } else if (i <= 6) {
+                    ring->color = RingColorTbl[4];
+                }
+                ring->mode = 0;
+                break;
+        }
+    }
+}
+
+void MdRingModeSet(NEL_SYS *sys, s32 no, s32 mode)
+{
+    SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
+
+    ring->mode = mode;
+}
+
+static void MdRingDispSet(NEL_SYS *sys, volatile s32 no, s32 dispF)
+{
+    SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    ring->disp = dispF;
+    if (dispF == 0) {
+        Hu3DModelAttrSet(model->mdlId[ring->mdlNo], 1);
+    } else if (dispF == 1) {
+        Hu3DModelAttrReset(model->mdlId[ring->mdlNo], 1);
+    }
+}
+
+static void MdRingScaleSet(NEL_SYS *sys, s32 no, float scale)
+{
+    SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
+
+    (*ring->scaleP)->x = scale;
+    (*ring->scaleP)->y = scale;
+    (*ring->scaleP)->z = scale;
+}
+
+static void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo)
+{
+    SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
+
+    ring->baseMdlNo = mdlNo;
+}
+
+static void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z)
+{
+    SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
+
+    ring->baseOfs.x = x;
+    ring->baseOfs.y = y;
+    ring->baseOfs.z = z;
+}
+
+static void MdRingColorReset(NEL_SYS *sys, s32 no)
+{
+    SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
+
+    ring->unk10 = 0;
+    ring->time = 0.0f;
+    ring->ofsTime = 0.0f;
+    ring->t = 0.0f;
+    ring->ofsT = 0.0f;
+}
+
+static void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp);
+static void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo);
+static void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode);
+
+void MdFukiInit(NEL_SYS *sys)
+{
+    SYSFUKI *fuki;
+    s32 i;
+    SYSFUKI *fukiWork;
+
+    fukiWork = (SYSFUKI *)sys->fuki;
+    fuki = fukiWork;
+    for (i = 0; i < 4; i++, fuki++) {
+        fuki->mode = 0;
+        fuki->time = 0.0f;
+        fuki->ofsTime = 0.0f;
+        fuki->t = 0.0f;
+        fuki->ofsT = 0.0f;
+        MdFukiGrpSet(sys, i, 3);
+        MdFukiMemberNoSet(sys, i, i);
+        MdFukiModeSet(sys, i, 0);
+        fuki->hook = 0;
+    }
+}
+
+void MdFukiMain(NEL_SYS *sys)
+{
+    SYSFUKI *fuki;
+    HuVec2f *scale;
+    s32 i;
+    s16 grpId;
+    SYSSPRITE *sprite;
+    SYSFUKI *fukiWork;
+
+    fukiWork = (SYSFUKI *)sys->fuki;
+    sprite = (SYSSPRITE *)sys->sprite;
+    fuki = fukiWork;
+    for (i = 0; i < 4; i++, fuki++) {
+        grpId = sprite->grpId[fuki->grp];
+        scale = MdSpriteScaleGet(fuki->grp, fuki->memberNo);
+        switch (fuki->mode) {
+            case 0:
+            case 3:
+                break;
+            case 1:
+                HuSprAttrReset(grpId, fuki->memberNo, 4);
+                scale->x = 0.0f;
+                scale->y = 0.0f;
+                fuki->time = 0.0f;
+                fuki->ofsTime = 0.0f;
+                fuki->t = 0.0f;
+                fuki->ofsT = 0.0f;
+                fuki->mode = 2;
+                break;
+            case 2:
+                MdMathOscillate(1, &fuki->time, &fuki->t, 15.0f);
+                MdMathOscillate(3, &fuki->ofsTime, &fuki->ofsT, 15.0f);
+                MdMathLerpOfs(&scale->x, 0.0f, 1.0f, fuki->t, 0.5f * fuki->ofsT);
+                scale->y = scale->x;
+                if (fuki->time >= 1.0f) {
+                    if (fuki->hook != 0) {
+                        fuki->hook(sys, i);
+                    }
+                    fuki->mode = 3;
+                }
+                break;
+            case 4:
+                fuki->time = 0.0f;
+                fuki->ofsTime = 0.0f;
+                fuki->t = 0.0f;
+                fuki->ofsT = 0.0f;
+                fuki->mode = 5;
+                break;
+            case 5:
+                MdMathOscillate(1, &fuki->time, &fuki->t, 15.0f);
+                MdMathLerp(&scale->x, 1.0f, 0.0f, fuki->t);
+                scale->y = scale->x;
+                if (fuki->time >= 1.0f) {
+                    HuSprAttrSet(grpId, fuki->memberNo, 4);
+                    if (fuki->hook != 0) {
+                        fuki->hook(sys, i);
+                    }
+                    fuki->mode = 0;
+                }
+                break;
+        }
+    }
+}
+
+static void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp)
+{
+    SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
+
+    fuki->grp = grp;
+}
+
+static void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo)
+{
+    SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
+
+    fuki->memberNo = memberNo;
+}
+
+static void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode)
+{
+    SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
+
+    fuki->mode = mode;
+}
+
+void MdFukiHookSet(NEL_SYS *sys, s32 no, SYSFUKI_HOOK hook)
+{
+    SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
+
+    fuki->hook = hook;
+}
+
+s32 MdFukiModeGet(NEL_SYS *sys, s32 no)
+{
+    SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
+
+    return fuki->mode;
+}
+
+static void ToueiZClear(void)
+{
+    HU3DCAMERA *cameraP;
+    Mtx44 proj;
+    Mtx modelview;
+    HuVecF pos;
+    HuVecF target;
+    HuVecF up;
+    GXColor color;
+
+    cameraP = &Hu3DCamera[Hu3DCameraNo];
+    MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
+    GXSetProjection(proj, 0);
+    GXSetViewport(0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    GXSetScissor(0, 0, 640, 480);
+    GXClearVtxDesc();
+    GXSetVtxDesc(9, 1);
+    GXSetVtxAttrFmt(0, 9, 1, 4, 0);
+    color.r = color.g = color.b = 0;
+    GXSetTevColor(1, color);
+    GXSetTevOrder(0, 0xFF, 0xFF, 4);
+    GXSetTevColorIn(0, 0xF, 0xF, 0xF, 2);
+    GXSetTevColorOp(0, 0, 0, 0, 1, 0);
+    GXSetTevAlphaIn(0, 7, 7, 7, 6);
+    GXSetTevAlphaOp(0, 0, 0, 0, 1, 0);
+    GXSetNumTexGens(0);
+    GXSetNumTevStages(1);
+    GXSetCullMode(0);
+    GXSetAlphaCompare(6, 0, 0, 6, 0);
+    GXSetZMode(1, 7, 1);
+    pos.x = pos.y = pos.z = 0.0f;
+    target.x = target.y = 0.0f;
+    target.z = -100.0f;
+    up.x = up.z = 0.0f;
+    up.y = 1.0f;
+    MTXLookAt(modelview, &pos, &up, &target);
+    GXLoadPosMtxImm(modelview, 0);
+    pos.x = 1.2000000476837158 * (10000.0 * -sin(cameraP->fov * 0.5f));
+    pos.y = 0.8333333134651184 * (10000.0 * -sin(cameraP->fov * 0.5f));
+    GXBegin(0x80, 0, 4);
+    GXPosition3f32(-pos.x, -pos.y, -10000.0f);
+    GXPosition3f32(pos.x, -pos.y, -10000.0f);
+    GXPosition3f32(pos.x, pos.y, -10000.0f);
+    GXPosition3f32(-pos.x, pos.y, -10000.0f);
+}
