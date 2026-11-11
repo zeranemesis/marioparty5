@@ -66,7 +66,53 @@ typedef struct SysSprite_s {
     /* 0x00 */ ANIMDATA *animP[31];
     /* 0x7C */ s16 sprId[48];
     /* 0xDC */ s16 grpId[10];
+    /* 0xF0 */ float tpLvl;
 } SYSSPRITE;
+
+typedef struct SysModel_s {
+    /* 0x000 */ s16 mdlId[0x4D];
+    /* 0x09A */ s16 motId[0x1D];
+    /* 0x0D4 */ HuVecF *mdlPos[0x4D];
+    /* 0x208 */ HuVecF *mdlRot[0x4D];
+    /* 0x33C */ HuVecF *mdlScale[0x4D];
+} SYSMODEL;
+
+typedef struct SysTexBufUnit_s {
+    /* 0x00 */ void *addr;
+    /* 0x04 */ GXTexObj texObj;
+    /* 0x24 */ s16 x;
+    /* 0x26 */ s16 y;
+    /* 0x28 */ u16 w;
+    /* 0x2A */ u16 h;
+    /* 0x2C */ s32 fmt;
+} SYSTEXBUFUNIT;
+
+typedef struct SysTexBuf_s {
+    /* 0x000 */ SYSTEXBUFUNIT unit[11];
+} SYSTEXBUF;
+
+typedef struct SysRing_s {
+    /* 0x00 */ s32 disp;
+    /* 0x04 */ s32 mode;
+    /* 0x08 */ GXColor color;
+    /* 0x0C */ GXColor endColor;
+    /* 0x10 */ s32 unk10;
+    /* 0x14 */ float time;
+    /* 0x18 */ float ofsTime;
+    /* 0x1C */ float t;
+    /* 0x20 */ float ofsT;
+    /* 0x24 */ s32 mdlNo;
+    /* 0x28 */ HuVecF **posP;
+    /* 0x2C */ HuVecF **rotP;
+    /* 0x30 */ HuVecF **scaleP;
+    /* 0x34 */ s32 baseMdlNo;
+    /* 0x38 */ HuVecF baseOfs;
+} SYSRING;
+
+typedef struct SysRingWork_s {
+    /* 0x000 */ SYSRING ring[11];
+    /* 0x2EC */ float scale;
+} SYSRING_WORK;
 
 typedef struct SysMessWin_s {
     /* 0x00 */ s16 winId;
