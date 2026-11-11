@@ -1298,6 +1298,9 @@ BOOL MdSelProcStarUpdate(int param)
             return FALSE;
         }
     }
+#ifdef TARGET_PC
+    return FALSE; // only reached for param > 4 (never used); GC r3 stale
+#endif
 }
 
 BOOL MdSelProcSprUpdate(int param)
