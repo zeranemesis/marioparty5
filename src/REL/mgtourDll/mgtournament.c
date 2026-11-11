@@ -100,48 +100,67 @@ void fn_1_750(void)
 {
 }
 
-void fn_1_7AC(void)
+void fn_1_7AC(u32 mask)
 {
+    lbl_1_bss_16818->stat |= mask;
 }
 
-void fn_1_7C8(void)
+void fn_1_7C8(u32 mask)
 {
+    lbl_1_bss_16818->stat &= ~mask;
 }
 
-void fn_1_7FC(void)
+// NONMATCHING: 45.45%. Target keeps the global pointer in r4 across the or/clrlwi; MWCC reloads it (lis/addi/lwz) before the stb. Register allocation not controllable from C.
+void fn_1_7FC(u8 mask)
 {
+    lbl_1_bss_1681C->flag = (u8)(lbl_1_bss_1681C->flag | mask);
 }
 
-void fn_1_81C(void)
+// NONMATCHING: 45.45%. Target keeps the global pointer in r4 across the andc/clrlwi; MWCC reloads it before the stb. Register allocation not controllable from C.
+void fn_1_81C(u8 mask)
 {
+    lbl_1_bss_1681C->flag = (u8)(lbl_1_bss_1681C->flag & ~mask);
 }
 
-void fn_1_854(void)
+void fn_1_854(u32 mask)
 {
+    lbl_1_bss_16818->flag |= mask;
 }
 
-void fn_1_870(void)
+void fn_1_870(u32 mask)
 {
+    lbl_1_bss_16818->flag &= ~mask;
 }
 
 void fn_1_8A4(void)
 {
 }
 
-void fn_1_904(void)
+// NONMATCHING: 18.75%. Target reloads the global twice (r4 and r5) and uses lbzx/lhax; MWCC collapses to one register and reorders. Not controllable from C.
+s16 fn_1_904(s32 arg)
 {
+    MGT_FLOW *f = lbl_1_bss_16818;
+    s8 idx = (s8)*((u8 *)f + arg + 0x22A);
+    return *(s16 *)((u8 *)f + idx * 0x30 + 0x16);
 }
 
-void fn_1_938(void)
+// NONMATCHING: 18.75%. Same register reallocation as fn_1_904 (target uses r4/r5, MWCC collapses).
+s16 fn_1_938(s32 arg)
 {
+    MGT_FLOW *f = lbl_1_bss_16818;
+    s8 idx = (s8)*((u8 *)f + arg + 0x22A);
+    return *(s16 *)((u8 *)f + idx * 0x30 + 0x14);
 }
 
-void fn_1_99C(void)
+// NONMATCHING: 33.33%. Target emits extsb after the lbz; MWCC omits it (char-return codegen). Not controllable from C.
+s8 fn_1_99C(void)
 {
+    return lbl_1_bss_1681C->mgNum;
 }
 
-void fn_1_9B4(void)
+s8 fn_1_9B4(s32 arg)
 {
+    return (s8)*(s16 *)((u8 *)lbl_1_bss_16818 + arg * 0x30 + 0x14);
 }
 
 void fn_1_9D4(void)
@@ -172,8 +191,12 @@ void fn_1_D5C(void)
 {
 }
 
-void fn_1_DA4(void)
+// NONMATCHING: 52.63%. Target keeps the current-process pointer in r7 (5th arg) with no frame; MWCC spills it to r31 + a frame. Register allocation not controllable from C.
+void fn_1_DA4(void (*arg)(void))
 {
+    HUPROCESS *parent = HuPrcCurrentGet();
+    HuPrcChildCreate(arg, 0x64, 0x1000, 0, parent);
+    HuPrcVSleep();
 }
 
 void fn_1_DE4(void)
