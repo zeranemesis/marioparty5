@@ -1172,7 +1172,11 @@ void Result_AddBonusCoin(void)
     s16 cnt;
     s16 k;
     s16 tmp;
+#ifdef TARGET_PC
+    s16 randPlayer = -1; // uninitialised on GC when no player won the random bonus
+#else
     s16 randPlayer;
+#endif
     s16 val2;
     s16 val1;
     s16 teamIdx[2] = { -1, -1 };
