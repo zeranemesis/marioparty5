@@ -367,11 +367,11 @@ void fn_1_6538(void)
         break;
     case 2:
         lbl_1_bss_16818->player1No = lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur2 == 0];
-        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur3 == 0];
+        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[2 + (lbl_1_bss_1681C->cur3 == 0)];
         break;
     case 3:
         lbl_1_bss_16818->player1No = lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur2];
-        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[lbl_1_bss_1681C->cur3];
+        lbl_1_bss_16818->player2No = lbl_1_bss_1681C->playerNo[2 + lbl_1_bss_1681C->cur3];
         break;
     }
     for (i = 0; i < 2; i++) {
