@@ -105,6 +105,13 @@ void fn_1_19C(s32 dirNum)
     lbl_1_bss_0 = dirNum;
 }
 
+#ifdef TARGET_PC
+// the original indexes storyBoardNo with storyNo even when it is -1
+#define STORY_BOARD(i) GwCommon.storyBoardNo[((i) < 0) ? 0 : (i)]
+#else
+#define STORY_BOARD(i) GwCommon.storyBoardNo[i]
+#endif
+
 #define STORY_OVL_SELECT(ovl, board)                                                                              (ovl) = ((board) == 0)   ? DLL_w01sdll                                                                                 : ((board) == 1) ? DLL_w02sdll                                                                                 : ((board) == 2) ? DLL_w03sdll                                                                                 : ((board) == 3) ? DLL_w04sdll                                                                                 : ((board) == 4) ? DLL_w05sdll                                                                                 : ((board) == 5) ? DLL_w06sdll                                                                                                  : DLL_w07sdll
 
 void ObjectSetup(void)
@@ -142,7 +149,7 @@ void ObjectSetup(void)
     if (_CheckFlag(0x10000)) {
         if (GwCommon.storyNo < 5) {
             omOvlHisChg(0, DLL_storyresultdll, 0, 0);
-            STORY_OVL_SELECT(ovl, GwCommon.storyBoardNo[GwCommon.storyNo]);
+            STORY_OVL_SELECT(ovl, STORY_BOARD(GwCommon.storyNo));
         }
         omOvlCallEx(ovl, 1, 0, 0);
         return;
@@ -201,7 +208,7 @@ static void fn_1_894(OMOBJ *obj)
         if (GwCommon.storyNo < -1) {
             boardSel = GwCommon.storyBoardNo[0];
         } else {
-            boardSel = GwCommon.storyBoardNo[GwCommon.storyNo];
+            boardSel = STORY_BOARD(GwCommon.storyNo);
         }
         board = boardSel;
     } else {
@@ -337,10 +344,10 @@ static void fn_1_E90(OMOBJ *obj)
     }
     storyNo = board;
     if (storyNo < 5) {
-        MBPartySaveInit(GwCommon.storyBoardNo[storyNo]);
+        MBPartySaveInit(STORY_BOARD(storyNo));
         MBStorySaveInit(GwSystem.mgPack, 0);
         omOvlHisChg(0, DLL_storyresultdll, 0, 0);
-        STORY_OVL_SELECT(ovl, GwCommon.storyBoardNo[storyNo]);
+        STORY_OVL_SELECT(ovl, STORY_BOARD(storyNo));
         if (GwCommon.storyNo != -2 && GwCommon.storyNo < 5) {
             while (lbl_1_bss_6 != 2) {
                 HuPrcVSleep();

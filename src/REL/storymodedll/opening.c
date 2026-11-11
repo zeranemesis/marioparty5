@@ -166,6 +166,13 @@ static s32 *fn_1_A61C(ANIMDATA *anim, s16 layer, s16 camera);
 static void fn_1_A6F8(s32 *ids, HuVecF *pos);
 static void fn_1_A764(s32 *ids);
 
+#ifdef TARGET_PC
+// the original indexes storyBoardNo with storyNo even when it is -1
+#define STORY_BOARD(i) GwCommon.storyBoardNo[((i) < 0) ? 0 : (i)]
+#else
+#define STORY_BOARD(i) GwCommon.storyBoardNo[i]
+#endif
+
 #ifdef __MWERKS__
 #define STORY_BOARD_PREV(n) GwCommon.storyBoardNo[(n)-1]
 #else
@@ -2119,12 +2126,12 @@ static s32 fn_1_9EE8(s32 msgIdx)
         if (GwCommon.storyNo == -3) {
             GwCommon.storyNo = 0;
         }
-        dir = (GwCommon.storyBoardNo[GwCommon.storyNo] == 0)   ? 0xCC0000
-              : (GwCommon.storyBoardNo[GwCommon.storyNo] == 1) ? 0xCE0000
-              : (GwCommon.storyBoardNo[GwCommon.storyNo] == 2) ? 0xD00000
-              : (GwCommon.storyBoardNo[GwCommon.storyNo] == 3) ? 0xD20000
-              : (GwCommon.storyBoardNo[GwCommon.storyNo] == 4) ? 0xD40000
-              : (GwCommon.storyBoardNo[GwCommon.storyNo] == 5) ? 0xD60000
+        dir = (STORY_BOARD(GwCommon.storyNo) == 0)   ? 0xCC0000
+              : (STORY_BOARD(GwCommon.storyNo) == 1) ? 0xCE0000
+              : (STORY_BOARD(GwCommon.storyNo) == 2) ? 0xD00000
+              : (STORY_BOARD(GwCommon.storyNo) == 3) ? 0xD20000
+              : (STORY_BOARD(GwCommon.storyNo) == 4) ? 0xD40000
+              : (STORY_BOARD(GwCommon.storyNo) == 5) ? 0xD60000
                                                                : 0xD80000;
         fn_1_19C(dir);
     }
