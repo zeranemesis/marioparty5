@@ -2214,16 +2214,17 @@ void MdModelSoundTypeSet(int type)
 void MdModelRumbleSet(int type)
 {
     MDOPT_MODEL_WORK *model = sysP->model;
+    SYS *sysWk = sysP;
     if (type == 0) {
-        if (sysP->rumbleState != 0) {
-            sysP->rumbleState = 3;
+        if (sysWk->rumbleState != 0) {
+            sysWk->rumbleState = 3;
         }
     } else if (type == 1) {
-        if (sysP->rumbleState == 0) {
-            sysP->rumbleState = 1;
+        if (sysWk->rumbleState == 0) {
+            sysWk->rumbleState = 1;
         }
     } else {
-        sysP->rumbleState = 2;
+        sysWk->rumbleState = 2;
     }
 }
 
@@ -2365,10 +2366,14 @@ void fn_1_17C54(void)
 void MdOptionCursorReset(void)
 {
     HUSPRGRPID grpId;
-    grpId = sysP->sprite->grpId[MDOPT_GRP_BASE];
-    sysP->cursorState = 0;
-    sysP->cursorOut = 0.0f;
-    sysP->cursorT = 0.0f;
+    SYS *sysWk;
+    MDSPRITE_WORK *spriteWk;
+    sysWk = sysP;
+    spriteWk = sysWk->sprite;
+    grpId = spriteWk->grpId[MDOPT_GRP_BASE];
+    sysWk->cursorState = 0;
+    sysWk->cursorOut = 0.0f;
+    sysWk->cursorT = 0.0f;
     HuSprScaleSet(grpId, 5, 1.0f, 1.0f);
     HuSprScaleSet(grpId, 7, 1.0f, 1.0f);
     HuSprScaleSet(grpId, 6, 1.0f, 1.0f);
@@ -2692,14 +2697,15 @@ void MdOptionStoryRankStarUpdate(void)
 
 void MdOptionTrigSprReset(void)
 {
-    HUSPRGRPID grpId;
     SYS *sysWk;
+    MDSPRITE_WORK *spriteWk;
+    HUSPRGRPID grpId;
     sysWk = sysP;
-    grpId = sysWk->sprite->grpId[MDOPT_GRP_BASE];
+    spriteWk = sysWk->sprite;
+    grpId = spriteWk->grpId[MDOPT_GRP_BASE];
     HuSprBankSet(grpId, 3, 0);
     HuSprBankSet(grpId, 4, 2);
-    sysWk->trigSprFrame = 0;
-    sysWk->trigSprState = 0;
+    sysWk->trigSprState = sysWk->trigSprFrame = 0;
 }
 
 void MdOptionTrigSprSet(int no)
@@ -2715,10 +2721,12 @@ void MdOptionTrigSprSet(int no)
 
 void MdOptionTrigSprUpdate(void)
 {
-    HUSPRGRPID grpId;
     SYS *sysWk;
+    HUSPRGRPID grpId;
+    MDSPRITE_WORK *spriteWk;
     sysWk = sysP;
-    grpId = sysP->sprite->grpId[MDOPT_GRP_BASE];
+    spriteWk = sysWk->sprite;
+    grpId = spriteWk->grpId[MDOPT_GRP_BASE];
     if (sysWk->trigSprState != 0) {
         sysWk->trigSprFrame++;
         if (sysWk->trigSprFrame < 10) {
@@ -2731,19 +2739,19 @@ void MdOptionTrigSprUpdate(void)
         }
         HuSprBankSet(grpId, 3, 0);
         HuSprBankSet(grpId, 4, 2);
-        sysWk->trigSprFrame = 0;
-        sysWk->trigSprState = 0;
+        sysWk->trigSprState = sysWk->trigSprFrame = 0;
     }
 }
 
 
 void MdOptionWaveEffectSet(int no, int type)
 {
-    if (sysP->waveActiveF == 0) {
-        sysP->waveActiveF = 1;
-        sysP->waveNo = no;
-        sysP->waveType = type;
-        sysP->waveTimer = 90;
+    SYS *sysWk = sysP;
+    if (sysWk->waveActiveF == 0) {
+        sysWk->waveActiveF = 1;
+        sysWk->waveNo = no;
+        sysWk->waveType = type;
+        sysWk->waveTimer = 90;
     }
 }
 
@@ -2848,20 +2856,18 @@ static void WaveEffectHook(s16 layerNo)
 
 void MdOptionWaveEffectIndTexMtxSet(HuVecF *a, HuVecF *b)
 {
-    sysP->waveIndMtx[0][0] = a->x;
-    sysP->waveIndMtx[0][1] = a->y;
-    sysP->waveIndMtx[0][2] = a->z;
-    sysP->waveIndMtx[1][0] = b->x;
-    sysP->waveIndMtx[1][1] = b->y;
-    sysP->waveIndMtx[1][2] = b->z;
+    SYS *sysWk = sysP;
+    sysWk->waveIndMtx[0][0] = a->x;
+    sysWk->waveIndMtx[0][1] = a->y;
+    sysWk->waveIndMtx[0][2] = a->z;
+    sysWk->waveIndMtx[1][0] = b->x;
+    sysWk->waveIndMtx[1][1] = b->y;
+    sysWk->waveIndMtx[1][2] = b->z;
 }
 
 void MdOptionWaveEffectColorSet(GXColor *color)
 {
-    sysP->waveColor.r = color->r;
-    sysP->waveColor.g = color->g;
-    sysP->waveColor.b = color->b;
-    sysP->waveColor.a = color->a;
+    sysP->waveColor = *color;
 }
 
 void MdOptionWaveEffectSpeedSet(float speed)
@@ -3011,6 +3017,8 @@ void MdOptionSpriteTitleUpdate(void)
     SYS *sysWk;
     MDSPRITE_WORK *sprite;
     HuVecF pos;
+    HuVecF arg0;
+    HuVecF arg1;
     sysWk = sysP;
     sprite = sysWk->sprite;
     if (sysWk->unk4D0 == 0) {
@@ -3022,7 +3030,8 @@ void MdOptionSpriteTitleUpdate(void)
         MdMathOscillate(MDMATH_OSC_90, &sysWk->titleT, &sysWk->titleOut, 15.0f);
         pos.x = 288.0f;
         pos.y = -128.0f + (192.0f * sysWk->titleOut);
-        MdOptionTitlePosSet(sprite, &pos);
+        arg0 = pos;
+        MdOptionTitlePosSet(sprite, &arg0);
         if (sysWk->titleT >= 1.0f) {
             sysWk->unk4D0 = 0;
             sysWk->titleOut = 0.0f;
@@ -3032,7 +3041,8 @@ void MdOptionSpriteTitleUpdate(void)
         MdMathOscillate(MDMATH_OSC_90_REV, &sysWk->titleT, &sysWk->titleOut, 15.0f);
         pos.x = 288.0f;
         pos.y = 64.0f - (192.0f * sysWk->titleOut);
-        MdOptionTitlePosSet(sprite, &pos);
+        arg1 = pos;
+        MdOptionTitlePosSet(sprite, &arg1);
         if (sysWk->titleT >= 1.0f) {
             sysWk->unk4D0 = 0;
             sysWk->titleOut = 0.0f;
