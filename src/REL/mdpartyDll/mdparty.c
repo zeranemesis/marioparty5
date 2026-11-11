@@ -5128,6 +5128,9 @@ BOOL MdPartyProcFinger(int param)
             return FALSE;
         }
     }
+#ifdef TARGET_PC
+    return FALSE; // param != 0 falls through; GC r3 stale, MdProcCall(idx,1) results are ignored (only param 0 is polled)
+#endif
 }
 
 BOOL MdPartyProcMapEnter(int param)
