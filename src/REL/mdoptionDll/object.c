@@ -1056,6 +1056,9 @@ void MdMessCreate(MDMESS_WORK *mess)
         };
         for(i=2; i<MDMESS_WIN_NUM; i++) {
             int idx = i-2;
+#ifdef TARGET_PC
+            if(idx >= 9) idx = 8; // GC reads past pos[9] (stack garbage); clamp to the last 48 entry
+#endif
             if(i < 4) {
                 if(i == 2) {
                     MdMessHelpWinCreate(mess, i, 0, 138, pos[idx].y, 300, 28, 0, 0);
