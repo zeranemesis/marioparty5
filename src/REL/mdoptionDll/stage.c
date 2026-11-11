@@ -63,7 +63,7 @@ extern void MdMessWinInsertMesSet(MDMESS_WORK *mess, int winNo, int msg, int ins
 extern void MdMessWinInsertMultiMesSet(MDMESS_WORK *mess, int winNo, int msg, int *list);
 extern void MdMathOscillate(int type, float *in, float *out, float t);
 extern void MdMath3Dto2D(HuVecF *src, s16 cameraBit, HuVecF *dst);
-extern void MdMathMtxRotCalc(HuVecF *dir, HuVecF *up, Mtx out, float angle);
+extern void MdMathMtxRotCalc(HuVecF *dir, HuVecF *up, float angle, Mtx out);
 extern void MdMathMtxRotGet(Mtx mtx, HuVecF *rot);
 extern void fn_1_A930(int no);
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
@@ -2568,7 +2568,7 @@ void MdOptionStoryRankUpdate(void)
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 7; j++) {
             PSVECSubtract(&Hu3DCamera[1].pos, model->posP[i * 7 + j + 0x1D], &vec);
-            MdMathMtxRotCalc(&vec, &Hu3DCamera[1].up, mtx, 0.0f);
+            MdMathMtxRotCalc(&vec, &Hu3DCamera[1].up, 0.0f, mtx);
             axis0.x = 0.0f;
             axis0.y = 0.0f;
             axis0.z = 0.0f;
@@ -2646,7 +2646,7 @@ void MdOptionStoryRankStarUpdate(void)
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 0x23; j++) {
             PSVECSubtract(&Hu3DCamera[0].pos, model->posP[i * 0x23 + j + 0x39], &vec);
-            MdMathMtxRotCalc(&vec, &Hu3DCamera[0].up, mtx, 0.0f);
+            MdMathMtxRotCalc(&vec, &Hu3DCamera[0].up, 0.0f, mtx);
             axis0.x = 0.0f;
             axis0.y = 0.0f;
             axis0.z = 0.0f;
@@ -2980,7 +2980,7 @@ void MdOptionCapsuleOrbitOutUpdate(void)
     }
     PSVECSubtract(&Hu3DCamera[0].pos, model->posP[sysWk->orbitOutNo], &vec);
     PSVECNormalize(&vec, &vec);
-    MdMathMtxRotCalc(&vec, &Hu3DCamera[0].up, mtx, 0.0f);
+    MdMathMtxRotCalc(&vec, &Hu3DCamera[0].up, 0.0f, mtx);
     MdMathMtxRotGet(mtx, &vec);
     Hu3DModelRotSetV(model->mdlId[130], &vec);
     Hu3DModelScaleSet(model->mdlId[130], model->scaleP[sysWk->orbitOutNo]->x, model->scaleP[sysWk->orbitOutNo]->y, model->scaleP[sysWk->orbitOutNo]->z);

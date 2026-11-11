@@ -49,13 +49,6 @@ enum {
     MDOPTION_OBJ_MAX //6
 };
 
-typedef struct MdShadowWork_s {
-    BOOL createF; //0x00
-    int unk4;
-    MDDEBUGFONT_WORK *debugFont; //0x08
-    u8 pad0C[0x68 - 0xC];
-} MDSHADOW_WORK;
-
 /* Routines that live in the other units of this overlay (object.c,
  * stage.c, record.c). */
 extern void MdObjDebugFontCreate(OMOBJ *obj);

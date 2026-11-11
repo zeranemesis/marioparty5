@@ -37,8 +37,9 @@ enum {
     MD_DEBUGFONT_CTRL_NOP, //0
     MD_DEBUGFONT_CTRL_CAMERA, //1
     MD_DEBUGFONT_CTRL_LIGHT, //2
-    MD_DEBUGFONT_CTRL_MODEL, //3
-    MD_DEBUGFONT_CTRL_MAX //4
+    MD_DEBUGFONT_CTRL_SHADOW, //3
+    MD_DEBUGFONT_CTRL_MODEL, //4
+    MD_DEBUGFONT_CTRL_MAX //5
 };
 
 enum {
@@ -152,17 +153,63 @@ typedef struct MdLightWork_s {
     MDDEBUGFONT_WORK *debugFont; //0x08
     MDLIGHT light[MDLIGHT_MAX]; //0x0C
 } MDLIGHT_WORK;
+typedef struct MdShadow_s {
+    int bit; //0x00
+    float tpLvl; //0x04
+    HuVecF hvr; //0x08
+    HuVecF center; //0x14
+    HuVecF pos; //0x20
+    HuVecF target; //0x2C
+    HuVecF cross; //0x38
+    HuVecF up; //0x44
+    HuVecF dir; //0x50
+} MDSHADOW;
+
+typedef struct MdShadowWork_s {
+    BOOL createF; //0x00
+    int shadowSel; //0x04
+    MDDEBUGFONT_WORK *debugFont; //0x08
+    MDSHADOW shadow[1]; //0x0C
+} MDSHADOW_WORK;
+
+#define MDMESS_INSERT_MAX 16
+#define MDMESS_WIN_NUM 18
+
 typedef struct MdMessWin_s {
-    s16 mode;
-    HUWINID winId; //0x02
-    s16 choice; //0x04
-    s16 unk6;
-    s16 type; //0x08
-    s16 unkA;
+    HUWINID winId; //0x00
+    float unk4; //0x04
+    float unk8; //0x08
+    float unkC; //0x0C
 } MDMESS_WIN;
 
+typedef struct MdMessInsert_s {
+    int num; //0x00
+    u32 mesNo[MDMESS_INSERT_MAX]; //0x04
+    s16 insertNo[MDMESS_INSERT_MAX]; //0x44
+} MDMESS_INSERT;
+
+typedef struct MdMessMisc_s {
+    int state; //0x00
+    float unk4; //0x04
+    float unk8; //0x08
+    float unkC; //0x0C
+    float unk10; //0x10
+    float unk14; //0x14
+    float unk18; //0x18
+    float unk1C; //0x1C
+    float unk20; //0x20
+} MDMESS_MISC;
+
 typedef struct MdMess_s {
-    MDMESS_WIN win[MDMESS_WIN_MAX];
+    BOOL createF; //0x00
+    u32 mode; //0x04
+    HUWINID dlgWinId; //0x08
+    s16 dlgType; //0x0A
+    s16 dlgChoice; //0x0C
+    u32 dlgMesNo; //0x10
+    MDMESS_INSERT insert; //0x14
+    MDMESS_WIN win[MDMESS_WIN_NUM]; //0x78
+    MDMESS_MISC misc; //0x198
 } MDMESS_WORK;
 
 /* Model slots of the option overlay (sys->model). mdlId/posP/rotP/scaleP
@@ -176,7 +223,7 @@ typedef struct MdOptModelWork_s {
     HuVecF *rotP[MDOPT_MODEL_MAX]; //0x324
     HuVecF *scaleP[MDOPT_MODEL_MAX]; //0x538
     s32 selState[MDOPT_MODEL_MAX]; //0x74C per-slot highlight state (1 = hover, 2 = chosen)
-    void *unk960[MDOPT_MODEL_MAX]; //0x960
+    float selT[MDOPT_MODEL_MAX]; //0x960 highlight blend 0..1
     float ambScale; //0xB74
     HU3DMODELID ambId[16]; //0xB78
 } MDOPT_MODEL_WORK;
@@ -228,7 +275,7 @@ typedef struct Sys_s {
     MDPAD_WORK *padWork;       //0x88
     MDCAMERA_WORK *camera;     //0x8C
     MDLIGHT_WORK *light;       //0x90
-    void *shadow;              //0x94
+    MDSHADOW_WORK *shadow;     //0x94
     MDMESS_WORK *mess;         //0x98
     MDSPRITE_WORK *sprite;     //0x9C
     MDOPT_MODEL_WORK *model;   //0xA0
