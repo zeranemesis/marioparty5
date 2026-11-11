@@ -1061,6 +1061,9 @@ int MB5Ev_MasuHatena(int playerNo)
     } else if(flag & MB5EV_MASU_ROCKET_JET) {
         MB5Ev_RocketJet(playerNo);
     }
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = last call result; MASUPLAYERHOOK result is ignored by MasuHatenaMain
+#endif
 }
 
 int MB5_MasuStub()
@@ -3152,6 +3155,9 @@ int MB5Ev_ReelValueGet(s16 no)
     if(value >= 8) {
         value -= 8;
     }
+#ifdef TARGET_PC
+    return value; // GC r3 was the reel model id (stale); no callers, so return the computed value
+#endif
 }
 
 int MB5_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
