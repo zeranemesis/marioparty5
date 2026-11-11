@@ -2,6 +2,8 @@
 #define _REL_MGFREEDLL_H
 
 #include "dolphin/types.h"
+#include "humath.h"
+#include "game/process.h"
 
 /* One slot of the "decide" screen's selection table. */
 typedef struct MgFreeDecideSlot_s {
@@ -11,17 +13,21 @@ typedef struct MgFreeDecideSlot_s {
 } MgFreeDecideSlot;
 
 typedef struct MgFreeDecide_s {
-    s16 unk_00;
-    s16 unk_02;
-    u8 pad_04[0x80];
-    MgFreeDecideSlot entry[0x3E];
-    s16 selIdx;
-    u8 pad_102[0x2];
-    s16 unk_104;
-    s8 unk_106;
-    u8 unk_107;
-    u8 pad_108[0x41];
-    s8 unk_149[0x100];
+    s16 state; /* 0x00 */
+    s16 timer; /* 0x02 */
+    s32 id[0x20]; /* 0x04: window / sprite group ids */
+    MgFreeDecideSlot entry[30]; /* 0x84 */
+    s32 count; /* 0xFC */
+    s16 idx; /* 0x100 */
+    s16 unk102;
+    s16 scroll; /* 0x104 */
+    s8 col; /* 0x106 */
+    u8 sel; /* 0x107 */
+    s32 unk108[4];
+    HUPROCESS *proc[4]; /* 0x118 */
+    HuVec2f dstPos[4]; /* 0x128 */
+    s8 unk148;
+    s8 list[7]; /* 0x149 */
 } MgFreeDecide;
 
 extern MgFreeDecide *lbl_1_bss_974;
