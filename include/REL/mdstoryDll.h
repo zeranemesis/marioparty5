@@ -472,7 +472,7 @@ void MdLightUpdateData(MDLIGHT *light);
 void MdLightDebug(MDLIGHT_WORK *lightWork);
 void MdLightPrint(MDLIGHT_WORK *lightWork);
 
-void MdMathMatrixDir(Mtx *matrix, HuVecF *dir);
+Mtx *MdMathMatrixDir(HuVecF *start, HuVecF *end);
 void MdMathMatrixRot(Mtx *matrix, HuVecF *rot);
 void MdMathClamp(float *val, float min, float max);
 void MdMathAngleClamp(float *angle);
@@ -494,7 +494,7 @@ void MdMessKill(MDMESS *mess);
 void MdMessMain(MDMESS *mess, int winNo);
 void MdMessWinOpen(MDMESS *mess, int winNo, s16 type, s16 frame, s16 drawNo, s16 pri, float posX, float posY, s16 w, s16 h, float bgTPLvl);
 void MdMessWinClose(MDMESS *mess, int winNo);
-void MdMessWinKill(MDMESS *mess, int winNo);
+void MdMessWinKill2(MDMESS *mess, int winNo);
 void MdMessWinPosSet(MDMESS *mess, int winNo, float posX, float posY);
 void MdMessWinScaleSet(MDMESS *mess, int winNo, float scaleX, float scaleY);
 void MdMessWinCenterPosSet(MDMESS *mess, int winNo, float posX, float posY);
