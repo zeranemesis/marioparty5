@@ -163,6 +163,7 @@ BOOL fn_1_F6C4(int param);
 BOOL fn_1_FC94(int param);
 BOOL fn_1_10264(int param);
 BOOL fn_1_106D4(int param);
+BOOL fn_1_10B0C(int param);
 BOOL fn_1_113D8(int param);
 BOOL fn_1_149A4(int param);
 void fn_1_14C2C(void);
@@ -187,7 +188,6 @@ void fn_1_81E0(void);
 BOOL fn_1_9AC8(int param);
 BOOL fn_1_C8B4(int param);
 BOOL fn_1_E44C(int param);
-BOOL fn_1_10B0C(int param);
 BOOL fn_1_11658(int param);
 /* @end */
 
@@ -1554,6 +1554,117 @@ BOOL fn_1_106D4(int param)
         if(sys->gameType != 0) {
             MdMathLerpScale(model->scaleP[MDMODEL_VS], 1, 0, sys->procT);
         }
+    }
+    if(sys->procTime >= 1) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+BOOL fn_1_10B0C(int param)
+{
+    MDCAMERA_WORK *camera;
+    MDSPRITE_WORK *sprite;
+    MDMODEL_WORK *model;
+    HuVecF *posP;
+    HuVecF *scaleP;
+    int i;
+
+    static int frame;
+    static s8 capDispF[2];
+    static float lerpT[2];
+    static float ofsTime[2];
+    static float time[2];
+
+    camera = sys->camera;
+    sprite = sys->sprite;
+    model = sys->model;
+    if(!sys->dirtyF) {
+        if(param == 0 || param == 1) {
+            for(i=0; i<2; i++) {
+                time[i] = 0;
+                ofsTime[i] = 0;
+                capDispF[i] = FALSE;
+            }
+            frame = 0;
+        }
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 30);
+        if(sys->gameType == 0) {
+            for(i=0; i<4; i++) {
+                MdMathLerp(&model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00]->y, -160, 120, sys->procT);
+            }
+            fn_1_153D0();
+        }
+        frame++;
+        if(frame >= 4) {
+            capDispF[0] = TRUE;
+        }
+        if(frame >= 6) {
+            capDispF[1] = TRUE;
+        }
+        if(capDispF[0]) {
+            MdMathOscillate(MDMATH_OSC_90, &time[0], &lerpT[0], 20);
+            MdMathOscillate(MDMATH_OSC_180, &ofsTime[0], &lerpT[1], 20);
+            posP = model->posP[MDMODEL_CAP_WIN];
+            scaleP = model->scaleP[MDMODEL_CAP_WIN];
+            MdMathLerp(&posP->x, -525, -380, lerpT[0]);
+            MdMathLerp(&posP->y, 365, 340, lerpT[0]);
+            MdMathLerpOfs(&posP->z, -50, 0, lerpT[0], 2.0f*lerpT[1]);
+            MdMathLerpScale(scaleP, 0.8f, 1, lerpT[0]);
+        }
+        if(capDispF[1]) {
+            MdMathOscillate(MDMATH_OSC_90, &time[1], &lerpT[0], 20);
+            MdMathOscillate(MDMATH_OSC_180, &ofsTime[1], &lerpT[1], 20);
+            posP = model->posP[MDMODEL_CAP_GENRE];
+            scaleP = model->scaleP[MDMODEL_CAP_GENRE];
+            MdMathLerp(&posP->x, 525, 380, lerpT[0]);
+            MdMathLerp(&posP->y, 365, 340, lerpT[0]);
+            MdMathLerpOfs(&posP->z, -50, 0, lerpT[0], 2.0f*lerpT[1]);
+            MdMathLerpScale(scaleP, 0.8f, 1, lerpT[0]);
+        }
+        fn_1_15CF8(MDMODEL_CAP_WIN, MDCAMERA_MAIN);
+        fn_1_15CF8(MDMODEL_CAP_GENRE, MDCAMERA_MAIN);
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 30);
+        if(sys->gameType == 0) {
+            for(i=0; i<4; i++) {
+                MdMathLerp(&model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00]->y, 120, -160, sys->procT);
+            }
+            fn_1_153D0();
+        }
+        frame++;
+        if(frame >= 6) {
+            capDispF[0] = TRUE;
+        }
+        if(frame >= 4) {
+            capDispF[1] = TRUE;
+        }
+        if(capDispF[0]) {
+            MdMathOscillate(MDMATH_OSC_90, &time[0], &lerpT[0], 20);
+            MdMathOscillate(MDMATH_OSC_180, &ofsTime[0], &lerpT[1], 20);
+            posP = model->posP[MDMODEL_CAP_WIN];
+            scaleP = model->scaleP[MDMODEL_CAP_WIN];
+            MdMathLerp(&posP->x, -380, -525, lerpT[0]);
+            MdMathLerp(&posP->y, 340, 365, lerpT[0]);
+            MdMathLerpOfs(&posP->z, 0, -50, lerpT[0], 2.0f*lerpT[1]);
+            MdMathLerpScale(scaleP, 1, 0.8f, lerpT[0]);
+        }
+        if(capDispF[1]) {
+            MdMathOscillate(MDMATH_OSC_90, &time[1], &lerpT[0], 20);
+            MdMathOscillate(MDMATH_OSC_180, &ofsTime[1], &lerpT[1], 20);
+            posP = model->posP[MDMODEL_CAP_GENRE];
+            scaleP = model->scaleP[MDMODEL_CAP_GENRE];
+            MdMathLerp(&posP->x, 380, 525, lerpT[0]);
+            MdMathLerp(&posP->y, 340, 365, lerpT[0]);
+            MdMathLerpOfs(&posP->z, 0, -50, lerpT[0], 2.0f*lerpT[1]);
+            MdMathLerpScale(scaleP, 1, 0.8f, lerpT[0]);
+        }
+        fn_1_15CF8(MDMODEL_CAP_WIN, MDCAMERA_MAIN);
+        fn_1_15CF8(MDMODEL_CAP_GENRE, MDCAMERA_MAIN);
     }
     if(sys->procTime >= 1) {
         return TRUE;
