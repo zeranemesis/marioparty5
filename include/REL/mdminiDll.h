@@ -700,7 +700,10 @@ void MdRingCreate(void);
 void MdRingMain(void);
 void MdRingModeSet(int no, int mode);
 void MdRingDispSet(int no, BOOL dispF);
+#ifdef TARGET_PC
+/* the original mdmini.c had no prototype here (implicit int, double arg) */
 void MdRingScaleSet(int no, float scale);
+#endif
 void MdRingMdlSet(int no, int mdlNo);
 void MdRingOfsSet(int no, float x, float y, float z);
 void MdRingColorReset(int no);

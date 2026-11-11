@@ -1234,6 +1234,335 @@ void fn_1_27F8(void)
     }
 }
 
+void fn_1_35A0(void)
+{
+    int i;
+    MDMODEL_WORK *model;
+    MDMINI_PLAYERSPR *playerSpr;
+    MDMESS *mess;
+    MDMINI_STAR *star;
+    MDMINI_CHR *chr;
+    MDSPRITE_WORK *sprite;
+    int difMax;
+    BOOL result;
+
+    model = sys->model;
+    sprite = sys->sprite;
+    mess = sys->mess;
+    star = sys->star;
+    playerSpr = &sys->playerSpr[0];
+    chr = &sys->chr[0];
+
+    switch(sys->mode) {
+        case 0:
+            MdProcCall(MDMINI_PROC_RESET, 0);
+            for(i=0; i<4; i++) {
+                if(sys->padEnable[i] == FALSE) {
+                    sys->chrSel[i] = 0;
+                } else {
+                    sys->chrSel[i] = i;
+                }
+                sys->chrSelEnd[i] = FALSE;
+                sys->comDif[i] = 1;
+                HuSprBankSet(sprite->grpId[MDSPR_GRP_COMDIF], (int)i, sys->comDif[i]);
+            }
+            sys->mode = 1;
+            break;
+
+        case 1:
+            if((result = MdProcCall(MDMINI_PROC_CHR, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                star->motNext = MDMINI_STAR_MOT_TALK;
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_CHR_SEL_MAN, MDMESS_LIST_END);
+                MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_MENU_SEL, MDMESS_LIST_END);
+                sys->mode = 2;
+            }
+            break;
+
+        case 2:
+            if((result = MdProcCall(MDMINI_PROC_FINGER, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 3;
+            }
+            break;
+
+        case 3:
+            if(sys->chrSelEnd[0] == FALSE &&
+                (playerSpr[0].mode == MDMINI_PLAYERSPR_NONE || playerSpr[0].mode == MDMINI_PLAYERSPR_SHRINK_END) &&
+                (HuPadBtnDown[0] & PAD_BUTTON_B)) {
+                fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                star->motNext = MDMINI_STAR_MOT_IDLE;
+                MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                for(i=0; i<4; i++) {
+                    Hu3DModelDispOff(model->mdlId[i+MDMODEL_FINGER_1P]);
+                }
+                for(i=0; i<4; i++) {
+                    playerSpr[i].mode = MDMINI_PLAYERSPR_NONE;
+                }
+                MdSpriteDispSet(sprite, MDSPR_GRP_PLAYERNO, FALSE);
+                MdSpriteDispSet(sprite, MDSPR_GRP_COMDIF, FALSE);
+                for(i=0; i<4; i++) {
+                    if(sys->chrSelEnd[i] == TRUE) {
+                        Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                        chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT_WAIT;
+                    }
+                }
+                for(i=0; i<4; i++) {
+                    MdRingDispSet(i, FALSE);
+                }
+                sys->mode = 4;
+            } else {
+                for(i=0; i<4; i++) {
+                    if(sys->padEnable[i] != FALSE && (playerSpr[i].mode == MDMINI_PLAYERSPR_NONE ||
+                        playerSpr[i].mode == MDMINI_PLAYERSPR_GROW_END ||
+                        playerSpr[i].mode == MDMINI_PLAYERSPR_SHRINK_END)) {
+                        result = fn_1_15590(i, FALSE);
+                        if(result == TRUE) {
+                            fn_1_17008(MDMINI_AUD_SE_CMN_MOVE);
+                            fn_1_153D0();
+                        } else if((HuPadBtnDown[i] & PAD_BUTTON_B) && sys->chrSelEnd[i] == TRUE) {
+                            sys->chrSelEnd[i] = FALSE;
+                            Hu3DModelDispOn(model->mdlId[i+MDMODEL_FINGER_1P]);
+                            playerSpr[i].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                            Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                            chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT_WAIT;
+                            fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                            MdRingModeSet(i, MDMINI_RING_MODE_ERASE);
+                        } else if((HuPadBtnDown[i] & PAD_BUTTON_A) && sys->chrSelEnd[i] == FALSE) {
+                            sys->chrSelEnd[i] = TRUE;
+                            Hu3DModelDispOff(model->mdlId[i+MDMODEL_FINGER_1P]);
+                            playerSpr[i].mode = MDMINI_PLAYERSPR_GROW_START;
+                            Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_WIN], 0, 8, HU3D_MOTATTR_NONE);
+                            chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT;
+                            fn_1_17008(MDMINI_AUD_SE_CMN_CHRSEL);
+                            fn_1_17008(sys->chrSel[i]+MDMINI_AUD_SE_CHR_MARIO);
+                            MdRingModeSet(i, MDMINI_RING_MODE_SET);
+                            MdRingOfsSet(i, 0, 0, 0);
+                            MdRingMdlSet(i, sys->chrSel[i]+MDMODEL_CAP_CHR_00);
+                            MdRingScaleSet(i, 1.0);
+                        }
+                    }
+                }
+                if(((sys->chrSelEnd[0] == TRUE && playerSpr[0].mode == MDMINI_PLAYERSPR_GROW_END) || sys->padEnable[0] == FALSE) &&
+                    ((sys->chrSelEnd[1] == TRUE && playerSpr[1].mode == MDMINI_PLAYERSPR_GROW_END) || sys->padEnable[1] == FALSE) &&
+                    ((sys->chrSelEnd[2] == TRUE && playerSpr[2].mode == MDMINI_PLAYERSPR_GROW_END) || sys->padEnable[2] == FALSE) &&
+                    ((sys->chrSelEnd[3] == TRUE && playerSpr[3].mode == MDMINI_PLAYERSPR_GROW_END) || sys->padEnable[3] == FALSE)) {
+                    if(sys->playerNum == 3) {
+                        star->motNext = MDMINI_STAR_MOT_IDLE;
+                        MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                        MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                        sys->mode = 14;
+                    } else {
+                        sys->selComNo = 0;
+                        fn_1_15BF4();
+                        fn_1_153D0();
+                        Hu3DModelDispOn(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                        model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->x = 4;
+                        model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->y = 4;
+                        model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->z = 4;
+                        MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE,
+                            MESS_MGMODE_SYS_CHR_SEL_COM,
+                            (MESS_MGMODE_SYS_PLAYER_NUM_1+2)-sys->playerNum+sys->selComNo,
+                            MDMESS_LIST_END);
+                        sys->mode = 6;
+                    }
+                }
+            }
+            break;
+
+        case 4:
+            for(i=0; i<4; i++) {
+                Hu3DModelDispOff(model->mdlId[i+MDMODEL_FINGER_1P]);
+            }
+            MdSpriteDispSet(sprite, MDSPR_GRP_PLAYERNO, FALSE);
+            sys->mode = 5;
+            break;
+
+        case 5:
+            if((result = MdProcCall(MDMINI_PROC_CHR, 1)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                fn_1_14C2C();
+                sys->prevPlayerNum = sys->playerNum;
+                sys->mode = 6;
+                sys->flowMode = MDMINI_FLOW_PLAYER_NUM_SEL;
+            }
+            break;
+
+        case 6:
+            if(sys->selComNo == 0 && (HuPadBtnDown[0] & PAD_BUTTON_B)) {
+                for(i=0; i<4; i++) {
+                    if(sys->chrSelEnd[i] == TRUE) {
+                        Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                        chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT_WAIT;
+                        MdRingModeSet(i, MDMINI_RING_MODE_ERASE);
+                        playerSpr[i].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                        sys->chrSelEnd[i] = FALSE;
+                    }
+                }
+                Hu3DModelDispOff(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_CHR_SEL_MAN, MDMESS_LIST_END);
+                fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                sys->mode = 7;
+            } else {
+                result = fn_1_15590(sys->comPlayerNo[sys->selComNo], TRUE);
+                if(result == TRUE) {
+                    fn_1_17008(MDMINI_AUD_SE_CMN_MOVE);
+                    fn_1_153D0();
+                } else if((HuPadBtnDown[0] & PAD_BUTTON_B) && sys->selComNo > 0) {
+                    Hu3DModelDispOff(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                    sys->selComNo--;
+                    Hu3DMotionShiftSet(model->mdlId[sys->chrSel[sys->comPlayerNo[sys->selComNo]]+MDMODEL_CHR_00], model->motId[(sys->chrSel[sys->comPlayerNo[sys->selComNo]]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                    chr[sys->chrSel[sys->comPlayerNo[sys->selComNo]]].mode = MDMINI_CHR_SELECT_WAIT;
+                    fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                    MdRingModeSet(sys->comPlayerNo[sys->selComNo], MDMINI_RING_MODE_ERASE);
+                    playerSpr[sys->comPlayerNo[sys->selComNo]].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE,
+                        MESS_MGMODE_SYS_CHR_SEL_COM,
+                        (MESS_MGMODE_SYS_PLAYER_NUM_1+2)-sys->playerNum-sys->selComNo,
+                        MDMESS_LIST_END);
+                    sys->mode = 15;
+                } else if(HuPadBtnDown[0] & PAD_BUTTON_A) {
+                    playerSpr[sys->comPlayerNo[sys->selComNo]].mode = MDMINI_PLAYERSPR_GROW_START;
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_DIF_SEL, MDMESS_LIST_END);
+                    Hu3DModelDispOff(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                    Hu3DMotionShiftSet(model->mdlId[sys->chrSel[sys->comPlayerNo[sys->selComNo]]+MDMODEL_CHR_00], model->motId[(sys->chrSel[sys->comPlayerNo[sys->selComNo]]*2)+MDMODEL_MOT_MARIO_WIN], 0, 8, HU3D_MOTATTR_NONE);
+                    chr[sys->chrSel[sys->comPlayerNo[sys->selComNo]]].mode = MDMINI_CHR_SELECT;
+                    MdRingModeSet(sys->comPlayerNo[sys->selComNo], MDMINI_RING_MODE_SET);
+                    MdRingOfsSet(sys->comPlayerNo[sys->selComNo], 0, 0, 0);
+                    MdRingMdlSet(sys->comPlayerNo[sys->selComNo], sys->chrSel[sys->comPlayerNo[sys->selComNo]]+MDMODEL_CAP_CHR_00);
+                    MdRingScaleSet(sys->comPlayerNo[sys->selComNo], 1.0);
+                    fn_1_17008(MDMINI_AUD_SE_CMN_CHRSEL);
+                    fn_1_17008(sys->chrSel[sys->comPlayerNo[sys->selComNo]]+MDMINI_AUD_SE_CHR_MARIO);
+                    sys->mode = 8;
+                }
+            }
+            break;
+
+        case 7:
+            if(playerSpr[0].mode == MDMINI_PLAYERSPR_SHRINK_END) {
+                sys->mode = 2;
+            }
+            break;
+
+        case 8:
+            if(playerSpr[sys->comPlayerNo[sys->selComNo]].mode == MDMINI_PLAYERSPR_GROW_END) {
+                sys->mode = 9;
+            }
+            break;
+
+        case 9:
+            if((result = MdProcCall(MDMINI_PROC_CURSOR, 4)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                HuSprDispOff(sprite->grpId[MDSPR_GRP_PLAYERNO], (int)sys->comPlayerNo[sys->selComNo]);
+                HuSprDispOn(sprite->grpId[MDSPR_GRP_COMDIF], (int)sys->comPlayerNo[sys->selComNo]);
+                fn_1_153D0();
+                sys->mode = 10;
+            }
+            break;
+
+        case 10:
+            if(GwCommon.veryHardUnlock == TRUE) {
+                difMax = 4;
+            } else {
+                difMax = 3;
+            }
+            if((sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) || (sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT)) {
+                if(sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) {
+                    if(--sys->comDif[sys->comPlayerNo[sys->selComNo]] == -1) {
+                        sys->comDif[sys->comPlayerNo[sys->selComNo]] = difMax-1;
+                    }
+                    sys->cursorDir = 0;
+                } else if(sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT) {
+                    sys->comDif[sys->comPlayerNo[sys->selComNo]] = ++sys->comDif[sys->comPlayerNo[sys->selComNo]]%difMax;
+                    sys->cursorDir = 1;
+                }
+                fn_1_17008(MDMINI_AUD_SE_CMN_MOVE);
+                fn_1_153D0();
+                HuSprBankSet(sprite->grpId[MDSPR_GRP_COMDIF], (int)sys->comPlayerNo[sys->selComNo], sys->comDif[sys->comPlayerNo[sys->selComNo]]);
+                sys->mode = 11;
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_B) {
+                playerSpr[sys->comPlayerNo[sys->selComNo]].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                Hu3DModelDispOn(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                Hu3DMotionShiftSet(model->mdlId[sys->chrSel[sys->comPlayerNo[sys->selComNo]]+MDMODEL_CHR_00], model->motId[(sys->chrSel[sys->comPlayerNo[sys->selComNo]]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                chr[sys->chrSel[sys->comPlayerNo[sys->selComNo]]].mode = MDMINI_CHR_SELECT_WAIT;
+                MdRingModeSet(sys->comPlayerNo[sys->selComNo], MDMINI_RING_MODE_ERASE);
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE,
+                    MESS_MGMODE_SYS_CHR_SEL_COM,
+                    (MESS_MGMODE_SYS_PLAYER_NUM_1+2)-sys->playerNum-sys->selComNo,
+                    MDMESS_LIST_END);
+                fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                sys->mode = 12;
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_A) {
+                sys->chrSelEnd[sys->comPlayerNo[sys->selComNo]] = TRUE;
+                if(sys->selComNo+1 < 3-sys->playerNum) {
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE,
+                        MESS_MGMODE_SYS_CHR_SEL_COM,
+                        (MESS_MGMODE_SYS_PLAYER_NUM_1+1)-sys->playerNum-sys->selComNo,
+                        MDMESS_LIST_END);
+                    fn_1_17008(MDMINI_AUD_SE_CMN_CHRSEL);
+                } else {
+                    fn_1_17008(MDMINI_AUD_SE_CMN_CONFIRM);
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                    star->motNext = MDMINI_STAR_MOT_IDLE;
+                }
+                sys->mode = 13;
+            }
+            break;
+
+        case 11:
+            if((result = MdProcCall(MDMINI_PROC_CURSOR, sys->cursorDir+6)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 10;
+            }
+            break;
+
+        case 12:
+            if((result = MdProcCall(MDMINI_PROC_CURSOR, 5)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                Hu3DModelDispOn(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                sys->mode = 6;
+            }
+            break;
+
+        case 13:
+            if((result = MdProcCall(MDMINI_PROC_CURSOR, 5)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->selComNo++;
+                if(sys->selComNo < 3-sys->playerNum) {
+                    fn_1_15BF4();
+                    fn_1_153D0();
+                    Hu3DModelDispOn(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                    model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->x = 4;
+                    model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->y = 4;
+                    model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->z = 4;
+                    sys->mode = 6;
+                } else if(sys->selComNo >= 3-sys->playerNum) {
+                    sys->mode = 14;
+                }
+            }
+            break;
+
+        case 14:
+            if((result = MdProcCall(MDMINI_PROC_CHR, 2)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 0;
+                sys->flowMode = MDMINI_FLOW_MAP_SEL;
+            }
+            break;
+
+        case 15:
+            if(playerSpr[sys->comPlayerNo[sys->selComNo]].mode == MDMINI_PLAYERSPR_SHRINK_END) {
+                Hu3DModelDispOn(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                sys->chrSelEnd[sys->comPlayerNo[sys->selComNo]] = FALSE;
+                fn_1_153D0();
+                sys->mode = 6;
+            }
+            break;
+    }
+}
+
 void fn_1_6FB8(void)
 {
     MDMINI_STAR *star;
