@@ -62,7 +62,7 @@ void fn_1_8B38(void)
     lbl_1_bss_300 = NULL;
 }
 
-// NONMATCHING: 218 of 232 instruction rows match. The 14 remaining rows are the
+// Remaining diff: 218 of 232 instruction rows match. The 14 remaining rows are the
 // two n_1_8F5C call sites (7 each): CodeWarrior evaluates the pointer argument
 // &lbl_1_data_5A0 last, so it borrows r4 as the scratch register for the 50.0f /
 // 30.0f literal and only then materialises the address; MWCC evaluates arguments
@@ -103,7 +103,7 @@ void fn_1_9200(void)
 {
     s16 i;
     ANIMDATA *anim;
-    M561Hu3DParm *parm;
+    HU3DPARTICLE *parm;
     s16 j;
     M561Cell *cell;
     void *dataTmp;
@@ -116,7 +116,7 @@ void fn_1_9200(void)
         }
 
         if (lbl_1_bss_2E0[i] != -1) {
-            parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
+            parm = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_2E0[i]].hookData;
             if (parm->anim) {
                 anim = parm->anim;
             }
@@ -140,13 +140,13 @@ void fn_1_9200(void)
 
         Hu3DParticleBlendModeSet(lbl_1_bss_2E0[i], 0);
 
-        parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
-        parm->curIdx = 0;
-        parm->slots = (M561EffectSlot *)lbl_1_bss_300;
-        parm->unk34 = 1;
+        parm = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_2E0[i]].hookData;
+        parm->emitCnt = 0;
+        parm->work = lbl_1_bss_300;
+        parm->count = 1;
         cell = (M561Cell *)parm->data;
 
-        for (j = 0; j < parm->dataCnt; j++, cell++) {
+        for (j = 0; j < parm->maxCnt; j++, cell++) {
             cell->inUse = 0.0f;
         }
     }
@@ -157,7 +157,7 @@ void fn_1_9200(void)
 void fn_1_9464(void)
 {
     ANIMDATA *anim;
-    M561Hu3DParm *parm;
+    HU3DPARTICLE *parm;
     s16 i;
     s16 j;
     M561Cell *cell;
@@ -190,34 +190,34 @@ void fn_1_9464(void)
 
         Hu3DParticleBlendModeSet(lbl_1_bss_2E0[i], 0);
 
-        parm = ((M561Hu3DModel *)&Hu3DData[lbl_1_bss_2E0[i]])->parm;
-        parm->curIdx = 0;
-        parm->slots = (M561EffectSlot *)lbl_1_bss_300;
-        parm->unk34 = 1;
+        parm = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_2E0[i]].hookData;
+        parm->emitCnt = 0;
+        parm->work = lbl_1_bss_300;
+        parm->count = 1;
         cell = (M561Cell *)parm->data;
 
-        for (j = 0; j < parm->dataCnt; j++, cell++) {
+        for (j = 0; j < parm->maxCnt; j++, cell++) {
             cell->inUse = 0.0f;
         }
     }
 }
 
-// NONMATCHING: 124 of 174 instruction rows match. The residue is register
+// Remaining diff: 124 of 174 instruction rows match. The residue is register
 // allocation - arg1 lands in r28 and the loop counter in r27 where the
 // original has them the other way round, which also relocates the two `while`
 // bodies - plus the `mr r27, r4` parameter copy, which CodeWarrior emits
 // after the incoming float spills and MWCC emits before them.
 s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32 arg5)
 {
-    s16 i;
     s16 result;
     s16 bit;
     s16 idx;
-    M561Hu3DParm *parm;
+    HU3DPARTICLE *parm;
     M561Cell *dataP;
-    M561Hu3DModel *model;
+    HU3DMODEL *model;
     M561EffectSlot *slots;
     s16 id;
+    s16 i;
 
     fn_1_9200();
 
@@ -238,28 +238,28 @@ s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32
             return -1;
         }
 
-        model = (M561Hu3DModel *)&Hu3DData[id];
-        parm = model->parm;
-        slots = parm->slots;
-        dataP = (M561Cell *)&parm->data[parm->curIdx];
-        idx = parm->curIdx;
+        model = &Hu3DData[id];
+        parm = (HU3DPARTICLE *)model->hookData;
+        slots = (M561EffectSlot *)parm->work;
+        dataP = (M561Cell *)&((M561ParticleData *)parm->data)[parm->emitCnt];
+        idx = parm->emitCnt;
 
-        while ((dataP->inUse != 0.0f) && (idx < parm->dataCnt)) {
+        while ((dataP->inUse != 0.0f) && (idx < parm->maxCnt)) {
             idx++;
             dataP++;
         }
 
-        if (idx >= parm->dataCnt) {
+        if (idx >= parm->maxCnt) {
             dataP = (M561Cell *)parm->data;
             idx = 0;
 
-            while ((dataP->inUse != 0.0f) && (idx < parm->dataCnt)) {
+            while ((dataP->inUse != 0.0f) && (idx < parm->maxCnt)) {
                 idx++;
                 dataP++;
             }
         }
 
-        if (idx != parm->dataCnt) {
+        if (idx != parm->maxCnt) {
             *(M561EffectSlot *)&slots[idx] = *arg1;
             dataP->modelId = arg0;
             dataP->pos.x = arg2;
@@ -274,7 +274,7 @@ s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32
             dataP->inUse = arg5;
             dataP->state = 0;
             dataP->prev = -1;
-            parm->curIdx = idx;
+            parm->emitCnt = idx;
             result = idx;
         }
     }
@@ -285,14 +285,10 @@ s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32
 /* The hook's second argument has the M561Hu3DParm shape (0x1C slots, 0x30
    dataCnt, 0x34 unk34, 0x48 data); the declared HU3DPARTICLE is re-interpreted
    through this alias so no extra local is introduced. */
-#define M561PARM ((M561Hu3DParm *)particleP)
+#define M561PARM ((HU3DPARTICLE *)particleP)
 
 // Per-frame particle update installed by fn_1_9200 / fn_1_9464.
 // modelP and mtx are unused; the engine calls the hook with them anyway.
-// NONMATCHING: 300 of 306 instruction rows match exactly. The remaining six are
-// the two `cell->inUse == 0.0f` guards: MWCC materialises the 0.0f literal into
-// f1 before the field load while the original loads the field into f1 first.
-// Swapping the comparison operands was tried and changes nothing.
 void fn_1_9688(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4])
 {
     M561Cell *cell;
@@ -301,20 +297,20 @@ void fn_1_9688(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4])
     s32 t;
     f64 f;
 
-    row = M561PARM->slots;
+    row = (M561EffectSlot *)M561PARM->work;
 
-    if ((u32)M561PARM->unk34 == 0) {
+    if ((u32)M561PARM->count == 0) {
         cell = (M561Cell *)M561PARM->data;
 
-        for (i = 0; i < M561PARM->dataCnt; i++, cell++) {
+        for (i = 0; i < M561PARM->maxCnt; i++, cell++) {
             cell->inUse = 0.0f;
         }
     }
 
     cell = (M561Cell *)M561PARM->data;
 
-    for (i = 0; i < M561PARM->dataCnt; i++, cell++) {
-        if (cell->inUse == 0.0f) {
+    for (i = 0; i < M561PARM->maxCnt; i++, cell++) {
+        if (!cell->inUse) {
             continue;
         }
 
@@ -365,7 +361,7 @@ void fn_1_9688(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4])
 
         cell->color[3] = (u8)t;
 
-        if (cell->inUse != 0.0f) {
+        if (cell->inUse) {
             if ((u32)row[i].flags & 1) {
                 if ((cell->state + i) & 1) {
                     f = 1.0;
@@ -388,5 +384,5 @@ void fn_1_9688(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4])
         cell->state++;
     }
 
-    DCStoreRangeNoSync(M561PARM->data, M561PARM->dataCnt * 0x44);
+    DCStoreRangeNoSync(M561PARM->data, M561PARM->maxCnt * 0x44);
 }

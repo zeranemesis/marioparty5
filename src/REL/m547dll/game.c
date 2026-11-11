@@ -38,8 +38,13 @@ void GWMgRecordSet(s32 a, s32 b);
 s32 _CheckFlag(s32 flag);
 void Hu3DModelCameraSet(HU3DMODELID modelId, s32 a1);
 void Hu3DModelLayerSet(HU3DMODELID modelId, s32 a1);
+#ifdef TARGET_PC
+// Aurora maps PSVEC* to its own functions through macros in dolphin/mtx.h
+#include "dolphin/mtx.h"
+#else
 void PSVECSubtract(void *dst, void *a, void *b);
 void PSVECNormalize(void *v, void *w);
+#endif
 void HuAudFXListnerSet(void *a, void *b, f32 c, f32 d);
 s32 HuAudFXEmiterPlay(s32 fxNo, void *slot);
 void HuAudFXEmiterUpDate(s32 handle, void *slot);
@@ -124,16 +129,19 @@ typedef struct M547Slot_s {
 
 /* M547GameState is defined in the parent object (lbl_1_bss_488 is undefined here) */
 typedef struct M547GameState_s {
-    u8 pad_00[6];
+    void *objman;
+    u8 pad_04[2];
     s16 fxId0;
     u8 pad_08[0x1A];
     s16 fxId1;
     u8 pad_24[0x18];
     M547ModelEntry *models;
-    u8 pad_40[8];
+    u32 *motionData[2];
     M547Motion *motion[2];
     M547FxSlot fxSlots[2];
-    u8 pad_98[8];
+    s32 *dataNums;
+    s16 field9C;
+    u8 pad_9E[2];
     s32 counterA0;
     s32 counterA4;
     s32 fieldA8;
@@ -165,7 +173,12 @@ typedef struct M547GwPlayer_s {
     u8 pad_2E[0xDA];
 } M547GwPlayer;
 
+#ifdef TARGET_PC
+// the real GWPLAYER layout differs on 64-bit, and the DOL exports it
+#include "game/gamework.h"
+#else
 extern M547GwPlayer GwPlayer[];
+#endif
 extern s32 lbl_1_bss_430[4];
 
 /* 0xC-stride entry of lbl_1_bss_440 */
@@ -221,6 +234,9 @@ extern s16 lbl_1_bss_2;
 extern s32 lbl_1_bss_24[2];
 extern s32 lbl_1_bss_34[1];
 extern void *lbl_1_bss_484;
+#ifdef TARGET_PC
+void M547ObjWork0Set(s32 value);
+#endif
 
 void fn_1_4094(void)
 {
@@ -461,7 +477,11 @@ void fn_1_4A94(void)
         } else {
             HuAudFXPlay(0x836);
             lbl_1_bss_24[0] = 1;
+#ifdef TARGET_PC
+            M547ObjWork0Set(0);
+#else
             *(s32 *)((u8 *)lbl_1_bss_484 + 0x4C) = 0;
+#endif
             Hu3DCameraPosGet(1, &lbl_1_bss_38[0], &lbl_1_bss_38[0xC], &lbl_1_bss_38[0x18]);
             for (i = 0; i < 4; i++) {
                 lbl_1_bss_6BC[i] = 0;
@@ -879,7 +899,11 @@ void fn_1_7A08(void)
         lbl_1_bss_488.counters[0] = 0;
         idx = ((M547IdxEntry *)&lbl_1_bss_488)[lbl_1_data_2A4[0]].a;
         if (_CheckFlag(0x1000F) == 0) {
+#ifdef TARGET_PC
+            GwPlayer[idx].mgCoinBonus = 10;
+#else
             GwPlayer[idx].field2C = 10;
+#endif
         }
     } else {
         if ((GameMesStatGet(lbl_1_bss_6A4[0]) & 0xFF) == 0) {

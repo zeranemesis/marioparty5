@@ -17,7 +17,10 @@
 #include "game/charman.h"
 #include "game/gamemes.h"
 #include "game/hu3d.h"
+#include "game/init.h"
 #include "game/object.h"
+#include "game/flag.h"
+#include "game/gamework.h"
 #include "game/pad.h"
 #include "game/wipe.h"
 
@@ -58,12 +61,11 @@ typedef struct m535Esanm_s {
     ANIMDATA *anim; /* 0x08 */
 } M535ESPANIM;
 
-extern M535ESPRITE esprite[];
-extern M535ESPANIM espanim[];
-extern s32 lbl_1_bss_81DC[13];
-extern s32 lbl_1_bss_81D8;
-extern u8 lbl_1_bss_8284[12 * 0x14];
-extern GXRenderModeObj *RenderMode;
+SHARED_SYM extern M535ESPRITE esprite[];
+SHARED_SYM extern M535ESPANIM espanim[];
+s32 lbl_1_bss_81DC[13];
+s32 lbl_1_bss_81D8;
+u8 lbl_1_bss_8284[12 * 0x14];
 
 static const M535INDMTX lbl_1_rodata_8A8 = {
     {
@@ -101,8 +103,8 @@ static const f32 lbl_1_rodata_148 = 255.0f;
 static const f32 lbl_1_rodata_14C = 30.0f;
 
 static const f32 lbl_1_rodata_150 = 150.0f;
-extern s32 lbl_1_bss_1C;
-extern s32 lbl_1_bss_8254;
+s32 lbl_1_bss_1C;
+s32 lbl_1_bss_8254;
 
 /* a float view of a work-record slot this function widens with the shared
  * int->double bias so the C matches the target's (f32) widening */
@@ -160,16 +162,16 @@ void fn_1_A0(void);
 void fn_1_69C(OMOBJ *obj);
 f32 fn_1_2D68(f32 x, f32 a, f32 b, f32 w);
 void fn_1_2F2C(s32 arg0, s32 arg1);
-void fn_1_39A8(void);
+void fn_1_39A8(OMOBJ *obj);
 void fn_1_53F8(OMOBJ *obj);
 void fn_1_88F0(void);
-extern Mtx lbl_1_bss_100;
-extern Mtx44 lbl_1_bss_D0;
-extern GXTexObj lbl_1_bss_90[2];
-extern s32 lbl_1_bss_4;
-extern s32 lbl_1_bss_14;
-extern s32 lbl_1_bss_24;
-extern f32 lbl_1_bss_28;
+Mtx lbl_1_bss_100;
+Mtx44 lbl_1_bss_D0;
+GXTexObj lbl_1_bss_90[2];
+s32 lbl_1_bss_4;
+s32 lbl_1_bss_14;
+s32 lbl_1_bss_24;
+f32 lbl_1_bss_28;
 void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_97AC(OMOBJ *obj, Mtx *mtx);
 void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx);
@@ -194,12 +196,13 @@ typedef struct m535Work_s {
     /* 0x024 */ s32 unk24; /* per-frame update counter fn_1_69C increments */
     /* 0x028 */ f32 unk28; /* capsule spawn x-offset, set by fn_1_A3C4 */
     /* 0x02C */ f32 unk2C; /* capsule spawn z-offset, set by fn_1_A3C4 */
-    /* 0x030 */ u8 pad30[8];
+    /* 0x030 */ f32 unk30;
+    /* 0x034 */ f32 unk34;
     /* 0x038 */ s32 unk38;
     /* 0x03C */ s32 unk3C;
     /* 0x040 */ s32 unk40;
-    /* 0x044 */ s32 unk44;
-    /* 0x048 */ s32 unk48;
+    /* 0x044 */ f32 unk44;
+    /* 0x048 */ f32 unk48;
     /* 0x04C */ s32 unk4C;
     /* 0x050 */ s32 unk50;
     /* 0x054 */ M535F32 unk54; /* scheduled move delay / target cell index */
@@ -340,11 +343,11 @@ f32 fn_1_2D68(f32 x, f32 a, f32 b, f32 w)
     f32 hi;
 
     if (x < a) {
-        res = (((lbl_1_rodata_178 + x) * lbl_1_rodata_218) * x) / a / den;
+        res = (((x + lbl_1_rodata_178) * lbl_1_rodata_218) * x) / a / den;
     }
     else {
         if (x < (a + b)) {
-            mid = ((((lbl_1_rodata_178 + a) * lbl_1_rodata_218) * a) / a) / den + ((x - a) / den);
+            mid = ((((a + lbl_1_rodata_178) * lbl_1_rodata_218) * a) / a) / den + ((x - a) / den);
         }
         else {
             if (x < ((w + (a + b)) - lbl_1_rodata_178)) {
@@ -564,19 +567,19 @@ void fn_1_9F2C(void)
 }
 /* Overlay state shared across the m535 translation units; these slots are
  * owned elsewhere in the overlay and only referenced here. */
-extern OMOBJMAN *lbl_1_bss_825C;
-extern s32 lbl_1_bss_8250;
-extern OMOBJ *lbl_1_bss_8264;
-extern OMOBJ *lbl_1_bss_827C;
-extern OMOBJ *lbl_1_bss_8280;
-extern s32 lbl_1_data_5C;
-extern void *lbl_1_bss_81D0;
-extern u32 lbl_1_bss_81D4;
-extern void *lbl_1_bss_8210[13];
+OMOBJMAN *lbl_1_bss_825C;
+s32 lbl_1_bss_8250;
+OMOBJ *lbl_1_bss_8264;
+OMOBJ *lbl_1_bss_827C;
+OMOBJ *lbl_1_bss_8280;
+s32 lbl_1_data_5C = -1;
+void *lbl_1_bss_81D0;
+u32 lbl_1_bss_81D4;
+void *lbl_1_bss_8210[13];
 extern s32 lbl_1_bss_81DC[13];
 extern s32 lbl_1_bss_81D8;
 extern u8 lbl_1_bss_8284[12 * 0x14];
-extern u8 lbl_1_bss_8374[0xBD0];
+u8 lbl_1_bss_8374[0xBD0];
 
 extern void OSReport(const char *msg, ...);
 extern u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, u8 mipmap, u8 maxLod);
@@ -1450,6 +1453,23 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
 }
 
 
+extern f32 lbl_1_bss_0;
+
+typedef struct {
+    f32 v[20];
+} M535F20TBL;
+
+/* per-seat landing offsets blended in at the end of fn_1_69C: x, then z */
+static const M535F20TBL lbl_1_rodata_9C = {
+    {10.0f, 10.0f, 15.0f, 0.0f, 0.0f, 15.0f, 0.0f, 8.0f, 0.0f, 0.0f,
+     0.0f, 0.0f, 5.0f, -3.0f, 0.0f, 5.0f, 0.0f, 22.0f, 0.0f, 9.0f}
+};
+
+static const M535F20TBL lbl_1_rodata_EC = {
+    {0.0f, 0.0f, 0.0f, 0.0f, 15.0f, 0.0f, 15.0f, 10.0f, 0.0f, 10.0f,
+     0.0f, 0.0f, 5.0f, -3.0f, 0.0f, 5.0f, 0.0f, -8.0f, 0.0f, 9.0f}
+};
+
 void fn_1_69C(OMOBJ *obj)
 {
     M535WORK *work = (M535WORK *) obj->data;
@@ -1462,15 +1482,27 @@ void fn_1_69C(OMOBJ *obj)
     f32 spA8 = work->unk2C;
     s32 r26;
     s32 r27;
+    s32 r24;
+    s32 r25;
     s32 i;
+    s32 j;
+    s32 moved;
+    s32 row;
+    f32 dist;
+    f32 dx;
+    f32 dz;
+    f32 cx;
+    f32 cz;
+    f32 rad;
+    f32 blend;
+    f32 tmpA;
+    f32 tmpB;
+    f32 tmpC;
+    Vec wob;
+    Mtx rotMtx;
+    HU3DMODEL *model;
 
     (void) sp8;
-    (void) spB0;
-    (void) spAC;
-    (void) spA8;
-    (void) f30;
-    (void) f31;
-
     for (i = 0; i < 4; i++) {
         capWork[i] = (M535WORK *) lbl_1_bss_826C[i]->data;
     }
@@ -1483,156 +1515,1279 @@ void fn_1_69C(OMOBJ *obj)
                 f30 = (f32) (s8) HuPadStkX[work->unk10];
                 f31 = (f32) (s8) HuPadStkY[work->unk10];
                 spB0 = (f32) ((HuPadBtnDown[work->unk10] & 0x100) != 0);
-                return; /* TODO .L_0000171C - per-frame body */
             }
-            /* CPU capsule: tally the human players still in play */
-            r26 = 0;
-            r27 = 0;
-            for (i = 0; i < 4; i++) {
-                if (capWork[i]->unk10 != -1 && capWork[i]->unk20 != 4) {
-                    r26 += 1;
-                }
-                if (capWork[i]->unk10 != -1) {
-                    r27 += 1;
-                }
-            }
-            r27 = (r27 == 0 || r26 > 0);
-        }
-        if (lbl_1_bss_8260 == 0x3ef && lbl_1_bss_8254 == 0x258) {
-            /* SECTION B - board ready: schedule this capsule's next move */
-            M535F8TBL sp164 = lbl_1_rodata_40;
-            M535F4TBL sp124 = lbl_1_rodata_60;
-            s32 v0;
-            s32 v1;
-            s32 v2;
-
-            v0 = rand8();
-            work->unk54.f = lbl_1_rodata_140 - M535WIDEN(r27) * (lbl_1_rodata_144
-                * (sp164.v[work->unk14] + ((sp164.v[work->unk14 + 4] * (f32) v0) / lbl_1_rodata_148)));
-            v1 = rand8();
-            work->unk5C = lbl_1_bss_81B8[v1 % (3 - lbl_1_bss_1C)];
-                if (lbl_1_bss_8254 >= work->unk54.i) {
-                    /* .L_0000103C: cell accepted. Re-roll the timing, then either
-                     * keep the near cell or jump to a far one depending on the
-                     * cell's own x extent and on this capsule's spawn offset. */
-                    work->unk64 = 1;
-                    v2 = rand8();
-                    work->unk68 = (s32) (lbl_1_rodata_14C + (lbl_1_rodata_150 * ((f32) v2) / lbl_1_rodata_148));
-                    if (work->unk64 != 0) {
-                        do {
-                            v0 = rand8();
-                            work->unk5C = v0 % 54;
-                        } while (M535_SLOT_S32(work->unk5C, 0x28) == 0);
+            else {
+                /* CPU capsule: tally the human players still in play */
+                r27 = 0;
+                r26 = 0;
+                for (i = 0; i < 4; i++) {
+                    if (capWork[i]->unk10 != -1 && capWork[i]->unk20 != 4) {
+                        r26 += 1;
                     }
-                    /* .L_00001100: reject the cell if it, or this capsule's spawn
-                     * offset, reaches past the 37.5-unit shove distance, or if the
-                     * product of the two is not negative */
-                    if (fabs((f64) M535_SLOT_F32(work->unk5C, 0x00)) >= 37.5
-                        || fabs((f64) work->unk28) >= 37.5
-                        || (work->unk28 * M535_SLOT_F32(work->unk5C, 0x00)) >= 0.0f) {
-                        /* .L_000011C4 - rejected: park the capsule */
-                        work->unk58 = 3;
+                    if (capWork[i]->unk10 != -1) {
+                        r27 += 1;
+                    }
+                }
+                r24 = 1;
+                if (r27 != 0 && r26 <= 0) {
+                    r24 = 0;
+                }
+                if (lbl_1_bss_8260 == 0x3ef && lbl_1_bss_8254 == 0x258) {
+                    M535F8TBL rateA = lbl_1_rodata_40;
+                    M535F4TBL rateB = lbl_1_rodata_60;
+                    f32 delay;
+
+                    delay = 60.0f * (rateA.v[work->unk14]
+                                     + ((rateA.v[work->unk14 + 4] * (f32) rand8()) / 255.0f));
+                    work->unk54.i = (s32) (600.0f - ((f32) (u32) (r24 > 0) * delay));
+                    work->unk5C = lbl_1_bss_81B8[rand8() % (3 - lbl_1_bss_1C)];
+                    if (lbl_1_bss_8254 >= work->unk54.i) {
+                        work->unk64 = 1;
+                        work->unk68 = (s32) (30.0f + (150.0f * ((f32) rand8() / 255.0f)));
                     }
                     else {
-                        /* .L_000011B8 - accepted: start the approach */
+                        work->unk64 = 0;
+                    }
+                    if (work->unk64 != 0) {
+                        do {
+                            work->unk5C = rand8() % 54;
+                        } while (M535_SLOT_S32(work->unk5C, 0x28) == 0);
+                    }
+                    work->unk58 = 0;
+                }
+                if (lbl_1_bss_8254 < work->unk54.i && work->unk64 != 0) {
+                    work->unk64 = 2;
+                }
+                if ((capWork[(work->unk00 + 1) % 4]->unk20 == 5
+                     && (work->unk5C == capWork[(work->unk00 + 1) % 4]->unk38))
+                    || (capWork[(work->unk00 + 2) % 4]->unk20 == 5
+                        && (work->unk5C == capWork[(work->unk00 + 2) % 4]->unk38))
+                    || (capWork[(work->unk00 + 3) % 4]->unk20 == 5
+                        && (work->unk5C == capWork[(work->unk00 + 3) % 4]->unk38))
+                    || work->unk64 == 2) {
+                    M535F8TBL rateC = lbl_1_rodata_70;
+
+                    if (lbl_1_bss_8254 < work->unk54.i) {
+                        if (work->unk64 != 2) {
+                            work->unk54.i = (s32) ((f32) lbl_1_bss_8254
+                                - ((f32) (u32) (r24 > 0) * (60.0f * (rateC.v[work->unk14]
+                                    + ((rateC.v[work->unk14 + 4] * (f32) rand8()) / 255.0f)))));
+                        }
+                        for (j = 0; j < 0x20; j++) {
+                            work->unk5C = lbl_1_bss_81B8[rand8() % (3 - lbl_1_bss_1C)];
+                            if (!((capWork[(work->unk00 + 1) % 4]->unk20 == 5
+                                   && (work->unk5C == capWork[(work->unk00 + 1) % 4]->unk38))
+                                  || (capWork[(work->unk00 + 2) % 4]->unk20 == 5
+                                      && (work->unk5C == capWork[(work->unk00 + 2) % 4]->unk38))
+                                  || (capWork[(work->unk00 + 3) % 4]->unk20 == 5
+                                      && (work->unk5C == capWork[(work->unk00 + 3) % 4]->unk38)))) {
+                                break;
+                            }
+                        }
+                        if (j == 0x20) {
+                            work->unk54.i = -1;
+                        }
+                        work->unk64 = 0;
+                    }
+                    else {
+                        work->unk64 = 1;
+                        work->unk68 = (s32) (30.0f + (30.0f * ((f32) rand8() / 255.0f)));
+                        if (work->unk64 != 0) {
+                            do {
+                                work->unk5C = rand8() % 54;
+                            } while (M535_SLOT_S32(work->unk5C, 0x28) == 0);
+                        }
+                    }
+                    /* a cell at the edge that this capsule cannot reach straight on
+                     * restarts the approach at state 0, otherwise it goes direct */
+                    if (fabs((f64) M535_SLOT_F32(work->unk5C, 0x00)) >= 37.5
+                        && (fabs((f64) work->unk28) < 37.5
+                            || (work->unk28 * M535_SLOT_F32(work->unk5C, 0x00)) <= 0.0f)) {
                         work->unk58 = 0;
                     }
-                }
-                else {
-                    work->unk64 = 0;
-                }
-
-                /* .L_000011CC: make the scheduled delay positive, then either hold
-                 * while it counts down or fall through to the approach state */
-                work->unk68 = abs(work->unk68);
-                if (work->unk64 == 1 && work->unk68 == 0) {
-                    /* .L_00001218: the approach runs through unk58 as its own state */
-                    if (work->unk58 == 0 || work->unk58 == 1) {
-                        work->unk58 = work->unk58 + 1;
+                    else {
+                        work->unk58 = 3;
                     }
-                    if (work->unk58 == 2) {
+                }
+                work->unk68 = work->unk68 - (work->unk68 > 0);
+                if ((work->unk64 == 1 && work->unk68 == 0) || lbl_1_bss_8254 < work->unk54.i) {
+                    switch (work->unk58) {
+                    case 0:
+                        work->unk58 = work->unk58 + 1;
+                        /* fall through */
+                    case 1:
+                        if (work->unk2C < -10.0f) {
+                            f31 = -70.0f;
+                            break;
+                        }
+                        work->unk58 = work->unk58 + 1;
+                        /* fall through */
+                    case 2:
                         if (work->unk2C < -10.0f) {
                             f31 = -70.0f;
                         }
-                        /* .L_000012A8: the cell and the spawn offset must both stay
-                         * inside 37.5 units and point opposite ways for the shove to
-                         * be allowed.  A capsule sitting at the top of the board
-                         * instead picks a fixed +/-70 x-offset, otherwise it steers
-                         * straight at the cell it is aiming for. */
-                        else if (fabs((f64) M535_SLOT_F32(work->unk5C, 0x00)) >= 37.5
-                            || fabs((f64) work->unk28) >= 37.5
-                            || (work->unk28 * M535_SLOT_F32(work->unk5C, 0x00)) >= 0.0f) {
-                            /* .L_00001360: steer to the fixed offset */
-                            f30 = (M535_SLOT_F32(work->unk5C, 0x00) < 0.0f) ? -70.0f : 70.0f;
-                        }
-                        else if (fabs((f64) M535_SLOT_F32(work->unk5C, 0x00)) >= 37.5
-                            || fabs((f64) work->unk28) >= 37.5
-                            || (work->unk28 * M535_SLOT_F32(work->unk5C, 0x00)) >= 0.0f) {
-                            /* .L_000013C0: rejected, park the capsule */
-                            work->unk58 = work->unk58 + 1;
-                        }
-                        else {
-                            /* .L_000013CC: steer at the chosen cell */
-                            f30 = M535_SLOT_F32(work->unk5C, 0x00) - work->unk28;
-                            f31 = -M535_SLOT_F32(work->unk5C, 0x04) - work->unk2C;
-                        }
-                    }
-                    if (work->unk58 == 3 || work->unk58 == 4) {
-                        /* .L_0000151C: normalise the steering vector and measure how
-                         * close the capsule is to the point it is steering for */
-                        {
-                            f64 d2 = (f64) (f30 * f30) + (f64) (f31 * f31);
-                            f32 sp88;
-                            f32 sp84;
-
-                            if (d2 <= 0.0) {
-                                sp88 = d2;
+                        if (fabs((f64) M535_SLOT_F32(work->unk5C, 0x00)) >= 37.5
+                            && (fabs((f64) work->unk28) < 37.5
+                                || (work->unk28 * M535_SLOT_F32(work->unk5C, 0x00)) <= 0.0f)) {
+                            if (M535_SLOT_F32(work->unk5C, 0x00) < 0.0f) {
+                                r25 = -0x46;
                             }
                             else {
-                                /* four Newton-Raphson steps on frsqrte, exactly the
-                                 * sequence MWCC emits for 1/sqrt(d2) */
-                                f64 t = (sp84 = (f32) (0.5 * (f32) __frsqrte(d2)));
-                                sp84 = d2;
+                                r25 = 0x46;
+                            }
+                            f30 = (f32) r25;
+                            break;
+                        }
+                        work->unk58 = work->unk58 + 1;
+                        /* fall through */
+                    case 3:
+                        f30 = M535_SLOT_F32(work->unk5C, 0x00) - work->unk28;
+                        f31 = -(M535_SLOT_F32(work->unk5C, 0x04) - work->unk2C);
+                        dist = sqrtf((f30 * f30) + (f31 * f31));
+                        if (dist < (f32) (work->unk14 + 5)) {
+                            if (work->unk64 != 0) {
+                                work->unk64 = work->unk64 + (work->unk64 == 1);
+                                if (work->unk14 < 1) {
+                                    spB0 = (f32) ((rand8() % 4) == 0);
+                                }
+                            }
+                            else {
+                                spB0 = 1.0f;
+                            }
+                        }
+                        break;
+                    }
+                }
+                /* wobble the steering by a small random yaw */
+                wob.x = 0.0f;
+                wob.y = 0.0f;
+                wob.z = 0.0f;
+                wob.x = f30;
+                wob.z = -f31;
+                PSMTXRotRad(rotMtx, 'y', (f32) (0.017453292f * (45.0 * sin((3.141592653589793
+                    * (f64) (((work->unk60 * 3) % 360) + (((rand8() % 2) * 2) - 1))) / 180.0))));
+                PSMTXMultVec(rotMtx, &wob, &wob);
+                f30 = wob.x * 4.0f;
+                f31 = -wob.z * 4.0f;
+            }
+        }
+        f30 /= 20.0f;
+        f31 /= 20.0f;
+        dist = sqrtf((f30 * f30) + (f31 * f31));
+        tmpA = dist;
+        if (tmpA > 1.0f) {
+            f30 *= 1.0f / tmpA;
+            f31 *= 1.0f / tmpA;
+        }
+        work->unk28 = (f32) ((f64) work->unk28 + (1.25 * (f64) f30));
+        work->unk2C = (f32) ((f64) work->unk2C - (1.25 * (f64) f31));
+    }
+    else if (work->unk20 == 5) {
+        dx = work->unk28 - M535_SLOT_F32(work->unk38, 0x00);
+        dz = work->unk2C - M535_SLOT_F32(work->unk38, 0x04);
+        dist = sqrtf((dx * dx) + (dz * dz));
+        tmpA = dist;
+        if (dist > 0.0f) {
+            tmpB = (tmpA < 1.0f) ? 0.0f : tmpA - 1.0f;
+            tmpC = (tmpA < 1.0f) ? 0.0f : tmpA - 1.0f;
+            work->unk28 = ((dx / tmpA) * tmpB) + M535_SLOT_F32(work->unk38, 0x00);
+            work->unk2C = ((dz / tmpA) * tmpC) + M535_SLOT_F32(work->unk38, 0x04);
+        }
+        work->unk30 = work->unk30 - 0.2f;
+        work->unk30 = (work->unk30 < 0.0f) ? 0.0f : work->unk30;
+        Hu3DModelPosSet(lbl_1_bss_8268->mdlId[work->unk00 + 0xD], work->unk28, 61.0f + work->unk30, work->unk2C);
+    }
+    else if (work->unk20 == 3) {
+        work->unk38 = -1;
+        if (work->unk24 >= 0x2D) {
+            work->unk20 = 2;
+            work->unk24 = 0;
+        }
+    }
+    if (work->unk20 == 2 || work->unk20 == 3) {
+        /* push apart from the other capsules */
+        r25 = 0;
+        for (i = 0; i < 4; i++) {
+            if (work->unk00 != i && capWork[i]->unk20 != 4) {
+                dx = capWork[i]->unk28 - work->unk28;
+                dz = capWork[i]->unk2C - work->unk2C;
+                dist = sqrtf((dx * dx) + (dz * dz));
+                tmpA = dist;
+                if (tmpA < 15.0f) {
+                    work->unk28 = capWork[i]->unk28 - (15.0f * (dx / tmpA));
+                    work->unk2C = capWork[i]->unk2C - (15.0f * (dz / tmpA));
+                    r25 += 1;
+                }
+            }
+        }
+        if (r25 != 0) {
+            row = work->unk60 + 1;
+        }
+        else {
+            row = 0;
+        }
+        work->unk60 = row;
+        work->unk28 = (work->unk28 < -105.0f) ? -105.0f : ((work->unk28 > 105.0f) ? 105.0f : work->unk28);
+        work->unk2C = (work->unk2C < -80.0f) ? -80.0f : ((work->unk2C > 80.0f) ? 80.0f : work->unk2C);
+        /* keep out of the three obstacles on the board */
+        for (j = 0; j < 3; j++) {
+            if (j == 0) {
+                cx = 0.0f;
+                cz = -60.0f;
+                rad = 22.5f;
+            }
+            else {
+                cx = work->unk28;
+                cz = work->unk2C;
+                if (j == 1) {
+                    row = 0xA;
+                }
+                else {
+                    row = 2;
+                }
+                rad = (f32) row;
+                if (j == 1) {
+                    cx = (cx < -20.0f) ? -20.0f : ((cx > 20.0f) ? 20.0f : cx);
+                    cz = (cz < -100.0f) ? -100.0f : ((cz > -57.0f) ? -57.0f : cz);
+                }
+                else {
+                    cx = (cx < -37.0f) ? -37.0f : ((cx > 37.0f) ? 37.0f : cx);
+                    cz = (cz < -100.0f) ? -100.0f : ((cz > -63.0f) ? -63.0f : cz);
+                }
+            }
+            dx = cx - work->unk28;
+            dz = cz - work->unk2C;
+            dist = sqrtf((dx * dx) + (dz * dz));
+            tmpA = dist;
+            if (tmpA < (7.5f + rad) && tmpA != 0.0f) {
+                work->unk28 = cx - ((7.5f + rad) * (dx / tmpA));
+                work->unk2C = cz - ((7.5f + rad) * (dz / tmpA));
+            }
+        }
+        if (lbl_1_bss_8260 >= 0x3EE || (lbl_1_bss_8260 == 0x3ED && lbl_1_bss_0 >= 60.0f)) {
+            work->unk30 = work->unk30 + 0.2f;
+        }
+        work->unk30 = (work->unk30 > 3.0f) ? 3.0f : work->unk30;
+        Hu3DModelPosSet(lbl_1_bss_8268->mdlId[work->unk00 + 0xD], work->unk28, 61.0f + work->unk30, work->unk2C);
+        if (work->unk20 == 2 && spB0 != 0.0f) {
+            /* find the capsule slot this capsule is standing over */
+            for (j = 0; j < 0x36; j++) {
+                if ((M535_SLOT_F32(j, 0x00) - 12.5f) <= work->unk28
+                    && work->unk28 <= (12.5f + M535_SLOT_F32(j, 0x00))
+                    && (M535_SLOT_F32(j, 0x04) - 12.5f) <= work->unk2C
+                    && work->unk2C <= (12.5f + M535_SLOT_F32(j, 0x04))) {
+                    break;
+                }
+            }
+            work->unk38 = j;
+            work->unk50 = 0;
+        }
+    }
+    if (work->unk50 >= 0) {
+        if (work->unk50 == 0) {
+            Hu3DModelAttrReset(lbl_1_bss_8268->mdlId[work->unk00 + 0x11], 1);
+            Hu3DMotionTimeSet(lbl_1_bss_8268->mdlId[work->unk00 + 0x11], 0.0f);
+        }
+        Hu3DModelPosSet(lbl_1_bss_8268->mdlId[work->unk00 + 0x11], work->unk28, 61.0f, work->unk2C);
+        if (work->unk50 >= 0x1E) {
+            work->unk50 = -1;
+            Hu3DModelAttrSet(lbl_1_bss_8268->mdlId[work->unk00 + 0x11], 1);
+        }
+        else {
+            work->unk50 = work->unk50 + 1;
+        }
+    }
+    moved = (work->unk20 == 2 && f30 != 0.0f && f31 != 0.0f && spAC != work->unk28 && spA8 != work->unk2C);
+    work->unk33C = work->unk33C - moved;
+    if (work->unk33C <= 0) {
+        /* spawn a dust puff in the first free slot */
+        for (j = 0; j < 0x1E; j++) {
+            if (work->unk2C4[j] < 0) {
+                work->unk2C4[j] = 0;
+                work->unk6C[j] = (work->unk28 + (6.0f * ((f32) rand8() / 255.0f))) - 3.0f;
+                work->unkE4[j] = 5.0f + (61.0f + (2.0f * ((f32) rand8() / 255.0f)));
+                work->unk15C[j] = (work->unk2C + (6.0f * ((f32) rand8() / 255.0f))) - 3.0f;
+                work->unk24C[j] = 0xFF;
+                break;
+            }
+        }
+        work->unk33C = (rand8() % 5) + 2;
+    }
+    for (j = 0; j < 0x1E; j++) {
+        if (work->unk2C4[j] >= 0) {
+            if (work->unk2C4[j] >= 0x28) {
+                work->unk2C4[j] = -1;
+            }
+            else {
+                work->unk2C4[j] = work->unk2C4[j] + 1;
+            }
+            work->unkE4[j] = work->unkE4[j] - 0.125f;
+            if (work->unkE4[j] < 3.0f) {
+                tmpA = 192.0f * (work->unkE4[j] / 3.0f);
+            }
+            else {
+                tmpA = 192.0f;
+            }
+            work->unk24C[j] = (s32) tmpA;
+            if (work->unk2C4[j] < 0x14) {
+                tmpB = 1.0f;
+            }
+            else {
+                tmpB = (f32) (0x28 - work->unk2C4[j]) / 20.0f;
+            }
+            work->unk1D4[j] = (f32) ((f64) tmpB * (3.5 * (0.25 + (0.75 * (f64) ((f32) rand8() / 255.0f)))));
+        }
+    }
+    {
+        M535F20TBL offX = lbl_1_rodata_9C;
+        M535F20TBL offZ = lbl_1_rodata_EC;
+        s32 side;
+        s32 sgn;
+
+        model = &Hu3DData[obj->mdlId[0]];
+        if (model->motIdShift != -1) {
+            blend = model->motOvlWork.start / model->motOvlWork.end;
+            if (model->motId == obj->mtnId[1]) {
+                blend = 1.0f - blend;
+            }
+            if (model->motId != obj->mtnId[1] && model->motIdShift != obj->mtnId[1]) {
+                blend = 0.0f;
+            }
+        }
+        else {
+            s32 same;
+
+            if (model->motId == obj->mtnId[1]) {
+                same = 1;
+            }
+            else {
+                same = 0;
+            }
+            blend = (f32) same;
+        }
+        if ((work->unk00 / 2) == 1) {
+            side = 1;
+        }
+        else {
+            side = 0;
+        }
+        if ((work->unk00 % 2) == 1) {
+            sgn = -1;
+        }
+        else {
+            sgn = 1;
+        }
+        obj->trans.x = lbl_1_data_74[work->unk00][0]
+            + ((f32) sgn * (blend * offX.v[side * 10 + work->unk08]));
+        if ((work->unk00 / 2) == 1) {
+            side = 1;
+        }
+        else {
+            side = 0;
+        }
+        obj->trans.z = lbl_1_data_74[work->unk00][2] + (blend * offZ.v[side * 10 + work->unk08]);
+    }
+}
+
+/* ---- ripple surface / camera director (fn_1_39A8) ---- */
+s32 lbl_1_data_70 = -1;
+s32 lbl_1_data_68 = -1;
+s32 lbl_1_data_C0C8 = -1;
+s32 lbl_1_data_C8[3][64][64];
+s32 lbl_1_data_C0CC[6][6];
+s32 lbl_1_bss_10;
+s32 lbl_1_bss_18;
+f32 lbl_1_bss_81C4;
+f32 lbl_1_bss_81C8;
+f32 lbl_1_bss_81CC;
+s32 lbl_1_bss_170[0x1000];
+s32 lbl_1_bss_4170[0x1000];
+
+/* sound-effect bookkeeping block */
+#define M535_SE_S32(off) (*(s32 *) ((u8 *) lbl_1_bss_8284 + (off)))
+#define M535_SE_F32(off) (*(f32 *) ((u8 *) lbl_1_bss_8284 + (off)))
+/* clamp a ripple height into 1..0xFFFF */
+#define M535_RIPCLAMP(v) (((v) < 1) ? 1 : (((v) > 0xFFFF) ? 0xFFFF : (v)))
+
+extern f32 Hu3DMotionMaxTimeGet(HU3DMODELID id);
+
+void fn_1_39A8(OMOBJ *obj)
+{
+    M535WORK *capWork[4];
+    u32 sum;
+    s32 total;
+    s32 i;
+    s32 x;
+    s32 y;
+    s32 k;
+    s32 prev;
+    s32 prev2;
+    s32 cx;
+    s32 cy;
+    s32 v;
+    s32 limit;
+    s32 flag;
+    s32 pick;
+    s32 pickB;
+    s32 idx;
+    s32 j;
+    f32 maxTime;
+    f32 fx;
+    f32 fy;
+    f32 power;
+    f32 span;
+    f32 dist;
+    f32 weight;
+    f32 inv;
+    f64 gain;
+    f64 gainB;
+    f32 sizeTbl[3];
+    f32 zoomTbl[3];
+    f32 centerTbl[3];
+    f32 rotTbl[3];
+    s32 pairTbl[3][2];
+    s32 timeTbl[3][3];
+    f32 dx;
+    f32 dy;
+    f32 a;
+    f32 b;
+    f32 c;
+
+    for (i = 0; i < 4; i++) {
+        capWork[i] = (M535WORK *) lbl_1_bss_826C[i]->data;
+    }
+    maxTime = Hu3DMotionMaxTimeGet(lbl_1_bss_8268->mdlId[7]);
+    if (Hu3DMotionTimeGet(lbl_1_bss_8268->mdlId[7]) >= maxTime) {
+        Hu3DModelAttrSet(lbl_1_bss_8268->mdlId[7], 1);
+        Hu3DModelAttrSet(lbl_1_bss_8268->mdlId[4], 0x40000002);
+        Hu3DMotionTimeSet(lbl_1_bss_8268->mdlId[7], 0.0f);
+    }
+    if (lbl_1_data_70 == 1 || lbl_1_data_70 == -1) {
+        sum = 0;
+        if (lbl_1_data_70 == -1) {
+            lbl_1_data_70 = 0;
+        }
+        if (lbl_1_data_C0C8 == -1) {
+            /* first run: clear the borders, build the bump kernel and the
+             * texel -> swizzled-cell lookup tables */
+            for (k = 0; k < 3; k++) {
+                for (y = 0; y < 64; y++) {
+                    for (x = 0; x < 64; x++) {
+                        v = (x == 0 || y == 0 || x == 63 || y == 63) ? 0 : 1;
+                        lbl_1_data_C8[k][y][x] = v;
+                    }
+                }
+            }
+            for (y = 0; y < 6; y++) {
+                for (x = 0; x < 6; x++) {
+                    dx = (f32) x - 2.5f;
+                    dy = (f32) y - 2.5f;
+                    dist = sqrtf(dx * dx + dy * dy);
+                    if (dist < 2.5f) {
+                        gain = 256.0 * (64.0 * ((1.0 + cos(3.141592653589793 * (f64) (180.0f * (dist / 2.5f)) / 180.0)) * 0.5));
+                    }
+                    else {
+                        gain = 0.0;
+                    }
+                    lbl_1_data_C0CC[y][x] = (s32) gain;
+                }
+            }
+            for (i = 0; i < 0x1000; i++) {
+                lbl_1_bss_4170[i] = (i % 4) + (((i / 16) * 4) % 64);
+                lbl_1_bss_170[i] = ((i / 4) % 4) + (((i / 16) * 4) / 64) * 4;
+            }
+        }
+        lbl_1_data_C0C8 += 1;
+        lbl_1_data_C0C8 %= 3;
+        prev = (lbl_1_data_C0C8 + 2) % 3;
+        prev2 = (lbl_1_data_C0C8 + 1) % 3;
+        for (y = 1; y < 63; y++) {
+            for (x = 1; x < 63; x++) {
+                if (lbl_1_data_C8[lbl_1_data_C0C8][y][x] > 0) {
+                    v = ((lbl_1_data_C8[prev][y - 1][x]
+                          + (lbl_1_data_C8[prev][y][x - 1] + lbl_1_data_C8[prev][y][x + 1]
+                             + lbl_1_data_C8[prev][y + 1][x])) / 2)
+                        - lbl_1_data_C8[prev2][y][x];
+                    lbl_1_data_C8[lbl_1_data_C0C8][y][x] = M535_RIPCLAMP(v);
+                }
+                sum += lbl_1_data_C8[lbl_1_data_C0C8][y][x] >> 8;
+            }
+        }
+        /* drops: the scripted one (k == -1) plus random ones during play */
+        for (k = -lbl_1_bss_18;; k++) {
+            flag = 0;
+            if (lbl_1_bss_8260 == 0x3EF && lbl_1_bss_8254 == 0x258) {
+                flag = 1;
+            }
+            limit = flag ? 15 : ((lbl_1_bss_8260 == 0x3EF) ? 1 : 0);
+            if (!(k < limit)) {
+                break;
+            }
+            fx = (k == -1) ? 64.0f * lbl_1_bss_81CC : (f32) (rand8() % 64);
+            cx = (s32) fx;
+            fy = (k == -1) ? 64.0f * lbl_1_bss_81C8 : (f32) (rand8() % 64);
+            cy = (s32) fy;
+            sizeTbl[0] = 4.0f;
+            sizeTbl[1] = 5.0f;
+            sizeTbl[2] = 6.0f;
+            span = (600.0f * sizeTbl[lbl_1_bss_1C]) / 10.0f;
+            if (k == -1) {
+                power = lbl_1_bss_81C4;
+            }
+            else {
+                if ((f32) lbl_1_bss_8254 > (600.0f - span)) {
+                    a = (3.0f * ((f32) lbl_1_bss_8254 - (600.0f - span))) / span;
+                }
+                else {
+                    a = 0.0f;
+                }
+                power = a;
+            }
+            if (power > 2.5) {
+                gain = 3.0;
+            }
+            else {
+                if (power > 1.75) {
+                    gainB = 1.0 + (2.0 * (((f64) power - 1.75) / 0.75));
+                }
+                else {
+                    gainB = (f64) power / 1.75;
+                }
+                gain = gainB;
+            }
+            for (y = 0; y < 6; y++) {
+                for (x = 0; x < 6; x++) {
+                    i = x + (cx - 3);
+                    j = y + (cy - 3);
+                    if (i > 0 && i < 63 && j > 0 && j < 63 && lbl_1_data_C8[lbl_1_data_C0C8][j][i] > 0) {
+                        v = (s32) ((f32) lbl_1_data_C8[lbl_1_data_C0C8][j][i]
+                                   + ((f32) gain * (f32) lbl_1_data_C0CC[y][x]));
+                        lbl_1_data_C8[lbl_1_data_C0C8][j][i] = M535_RIPCLAMP(v);
+                    }
+                }
+            }
+        }
+        if (lbl_1_bss_8260 >= 0x3EF) {
+            lbl_1_bss_14 = (lbl_1_bss_14 < 4) ? 0 : lbl_1_bss_14 - 4;
+        }
+        total = sum;
+        lbl_1_bss_28 = (f32) sum * 0.015625f * 0.015625f;
+        sum = sum / 3 / 64 / 64 - 3;
+        for (i = 0; i < 0x1000; i++) {
+            ((u8 *) lbl_1_bss_81D0)[i * 2] =
+                0x80 - (lbl_1_data_C8[lbl_1_data_C0C8][lbl_1_bss_170[i]][lbl_1_bss_4170[i]] >> 8 >> 2);
+            ((u8 *) lbl_1_bss_81D0)[i * 2 + 1] =
+                0x80 - ((u32) (lbl_1_data_C8[lbl_1_data_C0C8][lbl_1_bss_170[i]][lbl_1_bss_4170[i]] >> 8 >> 2) >> 2);
+        }
+    }
+    if (M535_SE_S32(0xB0) != -1) {
+        limit = (lbl_1_bss_8260 == 0x3EF) ? 0x12C0 : 0x1770;
+        if (total < limit || lbl_1_data_70 != 1) {
+            if (M535_SE_S32(0xB0) != -1) {
+                HuAudFXStop(M535_SE_S32(0xB0));
+                M535_SE_S32(0xB0) = -1;
+            }
+            if (M535_SE_S32(0xB4) < 3) {
+                M535_SE_F32(0xB8 + M535_SE_S32(0xB4) * 4) = 0.0f;
+                M535_SE_S32(0xB4) += 1;
+            }
+        }
+    }
+    if (lbl_1_data_70 != 0) {
+        Hu3DModelAttrSet(lbl_1_bss_826C[2]->mdlId[0], 1);
+        Hu3DModelAttrSet(lbl_1_bss_826C[3]->mdlId[0], 1);
+    }
+    else {
+        Hu3DModelAttrReset(lbl_1_bss_826C[2]->mdlId[0], 1);
+        Hu3DModelAttrReset(lbl_1_bss_826C[3]->mdlId[0], 1);
+    }
+    pick = rand8() % 2;
+    pickB = rand8() % 2;
+    for (i = 0; i < 4; i++) {
+        idx = pickB + (pick * 2);
+        pick = ((i % 2) == 1) ? 1 - pick : pick;
+        pickB = 1 - pickB;
+        if (capWork[idx]->unk38 != -1 && capWork[idx]->unk20 == 2) {
+            for (j = 1; j < 4; j++) {
+                if (capWork[idx]->unk38 == capWork[(idx + j) % 4]->unk38
+                    && (capWork[(idx + j) % 4]->unk20 == 2) == 0) {
+                    break;
+                }
+            }
+            Hu3DModelAttrReset(obj->mdlId[idx + 0xD], 0x40000002);
+            if (j < 4 || capWork[idx]->unk38 == 0x36 || M535_SLOT_S32(capWork[idx]->unk38, 0x28) != 0) {
+                capWork[idx]->unk20 = 3;
+                Hu3DMotionSet(obj->mdlId[idx + 0xD], obj->mtnId[1]);
+                omVibrate((s16) capWork[idx]->unk04, 0xC, 4, 2);
+                if (M535_SE_S32(0x64) < 3) {
+                    M535_SE_F32(0x68 + M535_SE_S32(0x64) * 4) = capWork[idx]->unk28 / 110.0f;
+                    M535_SE_S32(0x64) += 1;
+                }
+            }
+            else {
+                capWork[idx]->unk20 = 5;
+                Hu3DMotionSet(obj->mdlId[idx + 0xD], obj->mtnId[0]);
+                omVibrate((s16) capWork[idx]->unk04, 0xC, 6, 6);
+                if (M535_SE_S32(0x50) < 3) {
+                    M535_SE_F32(0x54 + M535_SE_S32(0x50) * 4) = capWork[idx]->unk28 / 110.0f;
+                    M535_SE_S32(0x50) += 1;
+                }
+            }
+            capWork[idx]->unk24 = 0;
+        }
+    }
+    lbl_1_bss_18 = 0;
+    if (lbl_1_data_68 != -1) {
+        lbl_1_bss_10 += 1;
+        zoomTbl[0] = 500.0f;
+        zoomTbl[1] = 1100.0f;
+        zoomTbl[2] = 210.0f;
+        centerTbl[0] = 70.0f;
+        centerTbl[1] = 115.0f;
+        centerTbl[2] = 140.0f;
+        rotTbl[0] = -66.0f;
+        rotTbl[1] = -11.5f;
+        rotTbl[2] = -50.0f;
+        pairTbl[0][0] = 1;
+        pairTbl[0][1] = 2;
+        pairTbl[1][0] = 2;
+        pairTbl[1][1] = 0;
+        pairTbl[2][0] = 0;
+        pairTbl[2][1] = 1;
+        timeTbl[0][0] = 35;
+        timeTbl[0][1] = 35;
+        timeTbl[0][2] = 50;
+        timeTbl[1][0] = 15;
+        timeTbl[1][1] = 2;
+        timeTbl[1][2] = 40;
+        timeTbl[2][0] = 10;
+        timeTbl[2][1] = 30;
+        timeTbl[2][2] = 50;
+        c = (f32) timeTbl[lbl_1_data_68][2];
+        b = (f32) timeTbl[lbl_1_data_68][1];
+        a = (f32) timeTbl[lbl_1_data_68][0];
+        weight = fn_1_2D68((f32) lbl_1_bss_10, a, b, c);
+        inv = 1.0f - weight;
+        for (i = 0; i < 2; i++) {
+            CZoomM[i] = inv * zoomTbl[pairTbl[lbl_1_data_68][0]] + weight * zoomTbl[pairTbl[lbl_1_data_68][1]];
+            CenterM[i].y = inv * centerTbl[pairTbl[lbl_1_data_68][0]] + weight * centerTbl[pairTbl[lbl_1_data_68][1]];
+            CRotM[i].x = inv * rotTbl[pairTbl[lbl_1_data_68][0]] + weight * rotTbl[pairTbl[lbl_1_data_68][1]];
+        }
+        if (lbl_1_bss_10 >= timeTbl[lbl_1_data_68][0] + (timeTbl[lbl_1_data_68][1] + timeTbl[lbl_1_data_68][2])) {
+            lbl_1_data_68 = -1;
+            lbl_1_bss_10 = 0;
+        }
+    }
+    DCFlushRange(lbl_1_bss_81D0, lbl_1_bss_81D4);
+}
+
+/* ---- main sequencer (fn_1_53F8) ---- */
+f32 lbl_1_bss_0;
+s32 lbl_1_bss_20;
+s16 lbl_1_bss_8258;
+s32 lbl_1_data_60 = -1;
+u8 lbl_1_data_44[4] = {0, 1, 1, 1};
+u8 lbl_1_data_48[4] = {0x14, 0x26, 8, 8};
+s32 lbl_1_data_4C[4];
+s32 lbl_1_data_C15C[4];
+char lbl_1_data_C16C[] = "*** main mode error(%d)!\n";
+
+#define M535_MDL(n) (lbl_1_bss_8268->mdlId[(n)])
+
+void fn_1_53F8(OMOBJ *obj)
+{
+    M535WORK *capWork[4];
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 cnt;
+    s32 rank;
+    s32 idx;
+    s32 maxT;
+    s32 curT;
+    s32 mt;
+    s32 flag;
+    u32 attr;
+    f32 t;
+    f32 u;
+    f32 scl;
+    f32 y;
+    f32 vy;
+    f32 dist;
+    f32 rem;
+    f32 nx;
+    f32 nz;
+    f32 cur;
+    f32 h;
+    f32 p;
+    f32 q;
+    f64 s1;
+    f64 s2;
+    f32 d2;
+    s32 rankTbl[4];
+    f32 landTbl[8];
+
+    lbl_1_bss_4 += 1;
+    for (i = 0; i < 4; i++) {
+        capWork[i] = (M535WORK *) lbl_1_bss_826C[i]->data;
+    }
+    for (i = 0; i < 12; i++) {
+        s32 seIds[12] = {0x7C3, 0x7C4, 0x7C5, 0x7C6, 0x7C7, 0x7C8, 0x7C9, 0x7CA, 0x7CB, 0x7CC, 0x7CD, 0x7CE};
+
+        if (M535_SE_S32(i * 0x14) > 3) {
+            M535_SE_S32(i * 0x14) = 3;
+        }
+        if (M535_SE_S32(i * 0x14) > 0 && seIds[i] != -1) {
+            s32 h2 = HuAudFXPlay(seIds[i]);
+
+            M535_SE_S32(i * 0x14 + 0x10) = h2;
+            HuAudFXPanning(h2, (s16) (0.5 + (f64) (64.0f + (32.0f * M535_SE_F32(i * 0x14 + (M535_SE_S32(i * 0x14) - 1) * 4 + 4)))));
+            M535_SE_S32(i * 0x14) -= 1;
+        }
+    }
+    if (omSysExitReq != 0 && WipeCheckEnd() == 0 && lbl_1_bss_C == 0) {
+        HuAudFadeOut(1000);
+        lbl_1_data_64 = 1;
+        lbl_1_bss_C = 1;
+    }
+    switch (lbl_1_bss_8260) {
+    case 0x3E8:
+        lbl_1_bss_0 += 1.0f;
+        if (WipeCheckEnd() == 0) {
+            lbl_1_bss_8260 += 1;
+            lbl_1_bss_0 = 0.0f;
+            return;
+        }
+        return;
+    case 0x3E9:
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_0 == 20.0f) {
+            for (i = 0; i < 4; i++) {
+                if (lbl_1_data_44[1] != 0) {
+                    attr = 0;
+                }
+                else {
+                    attr = 0x40000001;
+                }
+                Hu3DMotionShiftSet(lbl_1_bss_826C[i]->mdlId[0], lbl_1_bss_826C[i]->mtnId[1],
+                                   (f32) lbl_1_data_4C[1], (f32) lbl_1_data_48[1], attr);
+            }
+            lbl_1_data_68 = 0;
+        }
+        if (lbl_1_bss_0 >= 70.0f) {
+            lbl_1_bss_8260 += 1;
+            lbl_1_bss_0 = 0.0f;
+            return;
+        }
+        break;
+    case 0x3EA:
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_0 == 1.0f) {
+            Hu3DModelAttrReset(M535_MDL(4), 1);
+            Hu3DModelAttrReset(M535_MDL(4), 0x40000002);
+            Hu3DModelAttrReset(M535_MDL(5), 0x40000002);
+            if (M535_SE_S32(0) < 3) {
+                M535_SE_F32(4 + M535_SE_S32(0) * 4) = 0.0f;
+                M535_SE_S32(0) += 1;
+            }
+            if (M535_SE_S32(0xC8) < 3) {
+                M535_SE_F32(0xCC + M535_SE_S32(0xC8) * 4) = 0.0f;
+                M535_SE_S32(0xC8) += 1;
+            }
+            for (i = 0; i < 0x36; i++) {
+                M535_SLOT_F32(i, 0x10) = 70.0f;
+            }
+        }
+        if (lbl_1_bss_0 >= 106.0f) {
+            lbl_1_bss_8260 += 1;
+            lbl_1_bss_0 = 0.0f;
+            lbl_1_data_70 = 1;
+            return;
+        }
+        break;
+    case 0x3EB:
+        if (lbl_1_bss_0 == 15.0f) {
+            lbl_1_data_68 = 1;
+            for (i = 0; i < 4; i++) {
+                if (lbl_1_data_44[0] != 0) {
+                    attr = 0;
+                }
+                else {
+                    attr = 0x40000001;
+                }
+                Hu3DMotionShiftSet(lbl_1_bss_826C[i]->mdlId[0], lbl_1_bss_826C[i]->mtnId[0],
+                                   (f32) lbl_1_data_4C[0], (f32) lbl_1_data_48[0], attr);
+            }
+        }
+        cnt = 0;
+        if ((s32) lbl_1_bss_0 < 0x36) {
+            k = 0x35 - (s32) lbl_1_bss_0;
+            if (k == 0x35 && M535_SE_S32(0x14) < 3) {
+                M535_SE_F32(0x18 + M535_SE_S32(0x14) * 4) = 0.0f;
+                M535_SE_S32(0x14) += 1;
+            }
+            Hu3DModelAttrReset(M535_MDL(k + 0x15), 1);
+            Hu3DModelShadowMapObjReset(M535_MDL(k + 0x15));
+            Hu3DModelShadowDispOn(M535_MDL(k + 0x15));
+            M535_SLOT_S32(k, 0x2C) = 1;
+            y = M535_SLOT_F32(k, 0x10);
+            vy = 10.0f;
+            M535_SLOT_F32(k, 0x14) = 10.0f;
+            M535_SLOT_S32(k, 0x18) = 0;
+            while (y > 61.0f || vy > 0.0f) {
+                y += vy;
+                vy -= 0.5f;
+                M535_SLOT_S32(k, 0x18) += 1;
+            }
+            lbl_1_bss_18 = 1;
+            lbl_1_bss_81C4 = 0.6f;
+            lbl_1_bss_81CC = (f32) (0.5 + (0.125 * (f64) ((2.0f * ((f32) rand8() / 255.0f)) - 1.0f)));
+            lbl_1_bss_81C8 = (f32) (0.5 + (0.125 * (f64) ((2.0f * ((f32) rand8() / 255.0f)) - 1.0f)));
+            M535_SLOT_F32(k, 8) = (f32) (18.0 * (((f64) lbl_1_bss_81CC - 0.5) / 0.5));
+            M535_SLOT_F32(k, 0xC) = (f32) (-60.0 + (18.0 * (((f64) lbl_1_bss_81C8 - 0.5) / 0.5)));
+        }
+        lbl_1_bss_0 += 1.0f;
+        for (k = 0; k < 0x36; k++) {
+            if (M535_SLOT_S32(k, 0x2C) > 0) {
+                t = (f32) M535_SLOT_S32(k, 0x2C) / (f32) M535_SLOT_S32(k, 0x18);
+                u = 1.0f - t;
+                if (t <= 1.0f) {
+                    M535_SLOT_F32(k, 0x10) += M535_SLOT_F32(k, 0x14);
+                    if (t == 1.0f) {
+                        M535_SLOT_F32(k, 0x10) = 61.0f;
+                        Hu3DModelShadowDispOff(M535_MDL(k + 0x15));
+                        Hu3DModelShadowMapSet(M535_MDL(k + 0x15));
+                        if (k == 0x35 && M535_SE_S32(0x28) < 3) {
+                            M535_SE_F32(0x2C + M535_SE_S32(0x28) * 4) = 0.0f;
+                            M535_SE_S32(0x28) += 1;
+                        }
+                        if (k == 0 && M535_SE_S32(0xD8) != -1) {
+                            HuAudFXStop(M535_SE_S32(0xD8));
+                            M535_SE_S32(0xD8) = -1;
+                        }
+                    }
+                    M535_SLOT_F32(k, 0x14) -= 0.5f;
+                    Hu3DModelPosSet(M535_MDL(k + 0x15), (t * M535_SLOT_F32(k, 0)) + (u * M535_SLOT_F32(k, 8)),
+                                    M535_SLOT_F32(k, 0x10),
+                                    (t * M535_SLOT_F32(k, 4)) + (u * M535_SLOT_F32(k, 0xC)));
+                    scl = (f32) (0.25 + (0.75 * (f64) t));
+                    Hu3DModelScaleSet(M535_MDL(k + 0x15), scl, scl, scl);
+                    M535_SLOT_S32(k, 0x2C) += 1;
+                    cnt += 1;
+                }
+            }
+        }
+        if (cnt == 0) {
+            lbl_1_bss_8260 += 1;
+            lbl_1_bss_0 = 0.0f;
+            for (i = 0; i < 4; i++) {
+                capWork[i]->unk20 = 2;
+            }
+            return;
+        }
+        break;
+    case 0x3EC:
+        cnt = 0;
+        if (((s32) lbl_1_bss_0 % 10) == 2 && ((s32) lbl_1_bss_0 / 10) < 4) {
+            do {
+                k = rand8() % 4;
+            } while (lbl_1_data_C15C[k] == 1);
+            lbl_1_data_C15C[k] = 1;
+            capWork[k]->unk40 = 1;
+            y = capWork[k]->unk44;
+            vy = 14.4f;
+            capWork[k]->unk48 = 14.4f;
+            capWork[k]->unk4C = 0;
+            while (y > 61.0f || vy >= 0.0f) {
+                y += vy;
+                vy -= 0.9f;
+                capWork[k]->unk4C += 1;
+            }
+            Hu3DModelAttrReset(M535_MDL(k + 0xD), 1);
+            lbl_1_bss_18 = 1;
+            lbl_1_bss_81C4 = 1.75f;
+            lbl_1_bss_81CC = 0.5f;
+            lbl_1_bss_81C8 = 0.5f;
+        }
+        lbl_1_bss_0 += 1.0f;
+        for (i = 0; i < 4; i++) {
+            if (capWork[i]->unk40 > 0) {
+                t = (f32) capWork[i]->unk40 / (f32) capWork[i]->unk4C;
+                u = 1.0f - t;
+                if (t <= 1.0f) {
+                    if (t < 0.45f) {
+                        scl = t / 0.45f;
+                    }
+                    else {
+                        scl = 1.0f;
+                    }
+                    capWork[i]->unk44 += capWork[i]->unk48;
+                    if (capWork[i]->unk40 == 3
+                        && (lbl_1_data_C15C[0] + (lbl_1_data_C15C[1] + lbl_1_data_C15C[2] + lbl_1_data_C15C[3])) == 1
+                        && M535_SE_S32(0x3C) < 3) {
+                        M535_SE_F32(0x40 + M535_SE_S32(0x3C) * 4) = 0.0f;
+                        M535_SE_S32(0x3C) += 1;
+                    }
+                    if (capWork[i]->unk40 == capWork[i]->unk4C - 1 && M535_SE_S32(0xDC) < 3) {
+                        M535_SE_F32(0xE0 + M535_SE_S32(0xDC) * 4) = 0.0f;
+                        M535_SE_S32(0xDC) += 1;
+                    }
+                    if (t == 1.0f) {
+                        capWork[i]->unk44 = 61.0f;
+                        omVibrate((s16) capWork[i]->unk04, 0xC, 6, 6);
+                    }
+                    capWork[i]->unk48 -= 0.9f;
+                    nz = (f32) ((f64) ((-68.0f * u) + (t * capWork[i]->unk2C))
+                                - ((f64) scl * (10.0 * sin((3.141592653589793 * (f64) (-600.0f * u)) / 180.0))));
+                    Hu3DModelPosSet(M535_MDL(i + 0xD), t * capWork[i]->unk28,
+                                    (f32) ((f64) (10.0f * scl)
+                                           + ((f64) capWork[i]->unk44
+                                              - ((f64) scl * (10.0 * cos((3.141592653589793 * (f64) (-600.0f * u)) / 180.0))))),
+                                    nz);
+                    Hu3DModelRotSet(M535_MDL(i + 0xD), -600.0f * u, 0.0f, 0.0f);
+                    Hu3DModelScaleSet(M535_MDL(i + 0xD), scl, scl, scl);
+                    capWork[i]->unk40 += 1;
+                    cnt += 1;
+                }
+            }
+        }
+        if (cnt == 0 && ((s32) lbl_1_bss_0 / 10) >= 4) {
+            lbl_1_bss_8260 += 1;
+            lbl_1_bss_0 = 0.0f;
+            return;
+        }
+        break;
+    case 0x3ED:
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_0 == 5.0f && lbl_1_bss_825A < 0) {
+            lbl_1_bss_825A = GameMesCreate(2, 0);
+        }
+        if (lbl_1_bss_0 >= 5.0f && lbl_1_data_60 == -1) {
+            lbl_1_data_60 = HuAudSStreamPlay(0x34);
+        }
+        if (lbl_1_bss_0 >= 30.0f) {
+            if (lbl_1_bss_0 <= 90.0f) {
+                lbl_1_bss_14 = (s32) (255.0f * ((lbl_1_bss_0 - 30.0f) / 60.0f));
+            }
+        }
+        if (lbl_1_bss_0 >= 5.0f && GameMesStatGet(lbl_1_bss_825A) == 0 && lbl_1_bss_825A >= 0) {
+            lbl_1_bss_8260 += 1;
+            lbl_1_bss_8254 = 0;
+            lbl_1_bss_825A = -1;
+            lbl_1_bss_0 = 0.0f;
+            Hu3DModelAttrSet(M535_MDL(4), 1);
+            return;
+        }
+        break;
+    case 0x3EE:
+        lbl_1_bss_0 += 1.0f;
+        lbl_1_bss_8260 += 1;
+        lbl_1_bss_8254 = 0x258;
+        lbl_1_bss_0 = 0.0f;
+        lbl_1_bss_8258 = GameMesCreate(1, lbl_1_bss_8254 / 60, -1, -1);
+        GameMesPosSet(lbl_1_bss_8258, 288.0f, 64.0f);
+        lbl_1_bss_24 = lbl_1_data_6C;
+        Hu3DModelAttrReset(M535_MDL(7), 0x40000002);
+        Hu3DModelAttrReset(M535_MDL(7), 1);
+        Hu3DMotionTimeSet(M535_MDL(7), 0.0f);
+        if (M535_SE_S32(0xA0) < 3) {
+            M535_SE_F32(0xA4 + M535_SE_S32(0xA0) * 4) = 0.0f;
+            M535_SE_S32(0xA0) += 1;
+            return;
+        }
+        break;
+    case 0x3EF:
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_8258 != -1) {
+            GameMesDispSet(lbl_1_bss_8258, 1, (s16) ((lbl_1_bss_8254 + 0x3A) / 60));
+        }
+        lbl_1_bss_8254 -= lbl_1_bss_8254 > 0;
+        cnt = (capWork[0]->unk20 == 5)
+            + ((capWork[1]->unk20 == 5) + (capWork[2]->unk20 == 5) + (capWork[3]->unk20 == 5));
+        if (lbl_1_bss_8254 <= 0 || cnt >= (3 - lbl_1_bss_1C)) {
+            lbl_1_bss_8260 = 0x3F0;
+            lbl_1_bss_0 = 0.0f;
+            return;
+        }
+        break;
+    case 0x3F0:
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_0 == 1.0f) {
+            GameMesDispSet(lbl_1_bss_8258, 2, -1);
+            for (i = 0; i < 4; i++) {
+                if (capWork[i]->unk20 != 5 && capWork[i]->unk3C == 0) {
+                    capWork[i]->unk3C = 3 - lbl_1_bss_1C;
+                }
+            }
+            cnt = (capWork[0]->unk20 == 5)
+                + ((capWork[1]->unk20 == 5) + (capWork[2]->unk20 == 5) + (capWork[3]->unk20 == 5));
+            if (cnt <= 1) {
+                lbl_1_bss_825A = GameMesCreate(2, 1);
+                if (lbl_1_data_60 != -1) {
+                    HuAudSStreamFadeOut(lbl_1_data_60, 0x64);
+                }
+                lbl_1_data_5C = 4;
+                for (i = 0; i < 4; i++) {
+                    if (capWork[i]->unk20 == 5) {
+                        lbl_1_data_5C = i;
+                        break;
+                    }
+                }
+            }
+            else {
+                lbl_1_bss_1C = 4 - cnt;
+                lbl_1_bss_20 += 1;
+            }
+        }
+        if (lbl_1_bss_0 >= 30.0f) {
+            if (lbl_1_bss_0 <= 150.0f) {
+                cnt = 0;
+                for (i = 0; i < 4; i++) {
+                    if (capWork[i]->unk20 != 5 && capWork[i]->unk20 != 4) {
+                        d2 = (capWork[i]->unk28 * capWork[i]->unk28)
+                            + ((-60.0f - capWork[i]->unk2C) * (-60.0f - capWork[i]->unk2C));
+                        dist = sqrtf(d2);
+                        nx = capWork[i]->unk28 / dist;
+                        nz = (-60.0f - capWork[i]->unk2C) / dist;
+                        rem = dist - (300.0f * ((lbl_1_bss_0 - 30.0f) / 120.0f));
+                        if (lbl_1_bss_0 == 30.0f) {
+                            omVibrate((s16) capWork[i]->unk04, 0x14, 1, 0);
+                            if (M535_SE_S32(0x78) < 3) {
+                                M535_SE_F32(0x7C + M535_SE_S32(0x78) * 4) = capWork[i]->unk28 / 110.0f;
+                                M535_SE_S32(0x78) += 1;
+                            }
+                        }
+                        if (rem >= 0.0f) {
+                            cur = (rem < 0.0f) ? 0.0f : rem;
+                            p = 1.0f - (cur / dist);
+                            q = 1.0f - p;
+                            if (p < 0.5f) {
+                                s1 = sin((3.141592653589793 * (90.0 * ((f64) p / 0.5))) / 180.0);
+                            }
+                            else {
+                                s1 = 1.0;
+                            }
+                            Hu3DModelPosSet(M535_MDL(i + 0xD), q * capWork[i]->unk28, (f32) (61.0 + (30.0 * s1)),
+                                            (-60.0f * p) + (q * capWork[i]->unk2C));
+                            if (p < 0.5f) {
+                                s2 = sin((3.141592653589793 * (90.0 * ((f64) p / 0.5))) / 180.0);
+                            }
+                            else {
+                                s2 = 1.0;
+                            }
+                            Hu3DModelRotSet(M535_MDL(i + 0xD), (f32) (10.0 + (10.0 * s2)),
+                                            (f32) -(180.0 * (atan2((f64) nx, (f64) nz) / 3.141592653589793)), 0.0f);
+                            Hu3DModelScaleSet(M535_MDL(i + 0xD), 1.0f, 1.0f, 1.0f);
+                            capWork[i]->unk34 = 0.0f;
+                        }
+                        else {
+                            capWork[i]->unk34 += 1.0f;
+                            if (capWork[i]->unk34 == 20.0f) {
+                                lbl_1_bss_18 = 1;
+                                lbl_1_bss_81C8 = 0.5f;
+                                lbl_1_bss_81CC = 0.5f;
+                                lbl_1_bss_81C4 = 1.5f;
+                            }
+                            if (capWork[i]->unk34 < 25.0f) {
+                                p = capWork[i]->unk34 / 25.0f;
+                                q = 1.0f - p;
+                                Hu3DModelPosSet(M535_MDL(i + 0xD), 0.0f, 91.0f + (-30.0f * p), -60.0f);
+                                Hu3DModelScaleSet(M535_MDL(i + 0xD), q, q, q);
+                                Hu3DModelRotSet(M535_MDL(i + 0xD), 20.0f,
+                                                (f32) ((f64) (380.0f * p)
+                                                       + -(180.0 * (atan2((f64) nx, (f64) nz) / 3.141592653589793))),
+                                                0.0f);
+                            }
+                            else {
+                                Hu3DModelAttrSet(M535_MDL(i + 0xD), 1);
+                                cnt += 1;
                             }
                         }
                     }
+                    else {
+                        cnt += 1;
+                    }
                 }
-            if (lbl_1_bss_8254 < work->unk54.i && work->unk64 != 0) {
-                work->unk64 = 2;
-            }
-            if (capWork[(work->unk00 + 1) % 4]->unk20 == 5
-                && work->unk5C == capWork[(work->unk00 + 1) % 4]->unk38) {
-                goto conflict;
-            }
-            if (capWork[(work->unk00 + 2) % 4]->unk20 == 5
-                && work->unk5C == capWork[(work->unk00 + 2) % 4]->unk38) {
-                goto conflict;
-            }
-            if (capWork[(work->unk00 + 3) % 4]->unk20 == 5
-                && work->unk5C == capWork[(work->unk00 + 3) % 4]->unk38) {
-                goto conflict;
-            }
-            if (work->unk64 == 2) {
-                goto conflict;
-            }
-            return; /* TODO .L_000011CC - capsule holds this frame */
-
-        conflict:;
-            {
-                M535F8TBL sp144 = lbl_1_rodata_70;
-
-                if (lbl_1_bss_8254 >= work->unk54.i) {
-                    return; /* TODO .L_0000103C */
+                if (cnt >= 4) {
+                    lbl_1_bss_0 = 150.0f;
                 }
-                if (work->unk64 != 2) {
-                    v0 = rand8();
-                    work->unk54.f = (f32) lbl_1_bss_8254 - M535WIDEN(r27) * (lbl_1_rodata_144
-                        * (sp144.v[work->unk14] + ((sp144.v[work->unk14 + 4] * (f32) v0) / lbl_1_rodata_148)));
-                }
-                return; /* TODO .L_00000E90 - per-frame loop */
             }
         }
-        return; /* TODO .L_0000171C - per-frame body */
+        if (lbl_1_data_5C == -1 || GameMesStatGet(lbl_1_bss_825A) == 0) {
+            flag = (lbl_1_data_5C == -1) ? 0xF : 0;
+            if (lbl_1_bss_0 > (f32) (flag + 0x96)) {
+                if (lbl_1_data_5C == -1) {
+                    lbl_1_bss_8260 += 1;
+                    lbl_1_bss_0 = 0.0f;
+                }
+                else {
+                    lbl_1_bss_8260 = 0x3F2;
+                    lbl_1_bss_0 = 0.0f;
+                    lbl_1_data_68 = 2;
+                    rank = 0;
+                    rankTbl[0] = 0;
+                    rankTbl[1] = 0;
+                    rankTbl[2] = 0;
+                    rankTbl[3] = 0;
+                    for (i = 0; i < 4; i++) {
+                        flag = 0;
+                        for (j = 0; j < 4; j++) {
+                            if (i == capWork[j]->unk3C) {
+                                rankTbl[j] = rank;
+                                flag = 1;
+                            }
+                        }
+                        rank += flag;
+                    }
+                    for (i = 0; i < 4; i++) {
+                        if (rankTbl[0] == rankTbl[1] && rankTbl[0] == rankTbl[2] && rankTbl[0] == rankTbl[3]) {
+                            GWMgCoinBonusSet(capWork[i]->unk04, 3);
+                        }
+                        else {
+                            GWMgCoinBonusSet(capWork[i]->unk04, (s16) rankTbl[i]);
+                        }
+                    }
+                }
+            }
+        }
+        if (lbl_1_data_5C == -1 && lbl_1_bss_0 > 150.0f) {
+            if (lbl_1_bss_0 <= 165.0f) {
+                for (i = 0; i < 4; i++) {
+                    if (capWork[i]->unk20 == 5) {
+                        Hu3DModelAttrSet(M535_MDL(i + 0xD), 0x40000002);
+                        Hu3DMotionTimeSet(M535_MDL(i + 0xD), 15.0f - ((lbl_1_bss_0 - 30.0f) - 120.0f));
+                    }
+                }
+                return;
+            }
+        }
+        break;
+    case 0x3F1: {
+        f32 landPos[8] = {-25.0f, -38.0f, -10.0f, -27.0f, 10.0f, -27.0f, 25.0f, -38.0f};
+
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_0 == 1.0f) {
+            fn_1_2F2C(lbl_1_bss_1C, lbl_1_bss_20);
+            if (M535_SE_S32(0x8C) < 3) {
+                M535_SE_F32(0x90 + M535_SE_S32(0x8C) * 4) = 0.0f;
+                M535_SE_S32(0x8C) += 1;
+            }
+        }
+        maxT = (s32) Hu3DMotionMaxTimeGet(M535_MDL(i + 0x15));
+        flag = 0;
+        if (lbl_1_bss_0 >= 0.0f) {
+            if (lbl_1_bss_0 <= (f32) maxT) {
+                flag = 1;
+            }
+        }
+        if (flag != 0) {
+            cur = lbl_1_bss_0;
+        }
+        else {
+            cur = (f32) maxT;
+        }
+        curT = (s32) cur;
+        for (j = 0; j < 4; j++) {
+            if (capWork[j]->unk20 == 5) {
+                t = (f32) curT / (f32) maxT;
+                u = 1.0f - t;
+                h = 1.0f - ((((t - 0.5f) * (t - 0.5f)) / 0.5f) / 0.5f);
+                Hu3DModelPosSet(M535_MDL(j + 0xD), (u * capWork[j]->unk28) + (t * landPos[j * 2]), 61.0f + (70.0f * h),
+                                (u * capWork[j]->unk2C) + (t * landPos[j * 2 + 1]));
+            }
+        }
+        lbl_1_bss_14 = (s32) ((255.0f * lbl_1_bss_0) / (f32) maxT);
+        lbl_1_bss_14 = (lbl_1_bss_14 < 0) ? 0 : ((lbl_1_bss_14 > 0xFF) ? 0xFF : lbl_1_bss_14);
+        if ((lbl_1_bss_20 % 2) == 0) {
+            mt = maxT - curT;
+        }
+        else {
+            mt = curT;
+        }
+        for (k = 0; k < 0x36; k++) {
+            Hu3DMotionTimeSet(M535_MDL(k + 0x15), (f32) mt);
+            if (lbl_1_bss_0 == 1.0f) {
+                Hu3DModelShadowMapObjReset(M535_MDL(k + 0x15));
+                Hu3DModelShadowDispOn(M535_MDL(k + 0x15));
+            }
+            else if (lbl_1_bss_0 == (f32) (maxT - 1)) {
+                Hu3DModelShadowDispOff(M535_MDL(k + 0x15));
+                Hu3DModelShadowMapSet(M535_MDL(k + 0x15));
+            }
+        }
+        if (lbl_1_bss_0 == (f32) (maxT + 0x1E)) {
+            lbl_1_bss_8260 = 0x3EE;
+            lbl_1_bss_8254 = 0;
+            lbl_1_bss_825A = -1;
+            lbl_1_bss_0 = 0.0f;
+            for (i = 0; i < 4; i++) {
+                if (capWork[i]->unk20 == 5) {
+                    capWork[i]->unk20 = 2;
+                    capWork[i]->unk28 = landPos[i * 2];
+                    capWork[i]->unk2C = landPos[i * 2 + 1];
+                }
+                else {
+                    capWork[i]->unk20 = 4;
+                }
+                capWork[i]->unk24 = 0;
+            }
+            return;
+        }
+        break;
     }
-    return; /* TODO .L_000018DC - per-frame body (state != 2) */
+    case 0x3F2:
+        lbl_1_bss_0 += 1.0f;
+        if (lbl_1_bss_0 == 5.0f) {
+            lbl_1_data_70 = 0;
+        }
+        if (lbl_1_bss_0 == 76.0f) {
+            for (i = 0; i < 4; i++) {
+                idx = (lbl_1_data_5C == i) ? 2 : 3;
+                if (lbl_1_data_44[idx] != 0) {
+                    attr = 0;
+                }
+                else {
+                    attr = 0x40000001;
+                }
+                Hu3DMotionShiftSet(lbl_1_bss_826C[i]->mdlId[0], lbl_1_bss_826C[i]->mtnId[idx],
+                                   (f32) lbl_1_data_4C[idx], (f32) lbl_1_data_48[idx], attr);
+                if (lbl_1_data_5C == 4) {
+                    CharFXPlay((s16) capWork[i]->charNo, 0x200);
+                }
+            }
+            if (lbl_1_data_5C != 4) {
+                HuAudSStreamPlay(0x79);
+            }
+            else {
+                HuAudSStreamPlay(0x7B);
+            }
+        }
+        if (lbl_1_bss_0 >= 76.0f) {
+            for (i = 0; i < 4; i++) {
+                if (lbl_1_data_5C == i || capWork[i]->unk08 != 6 || capWork[i]->unk00 < 2) {
+                    lbl_1_bss_826C[i]->rot.y *= 0.8f;
+                }
+            }
+        }
+        for (i = 0; i < 4; i++) {
+            if (lbl_1_data_5C == 4 || lbl_1_data_5C == i / 2) {
+                if (capWork[i]->unk20 == 7) {
+                    k = 9;
+                }
+                else {
+                    k = capWork[i]->unk20;
+                }
+                capWork[i]->unk20 = k;
+            }
+        }
+        if (lbl_1_bss_0 > 286.0f && lbl_1_bss_C == 0) {
+            lbl_1_bss_825A = -1;
+            lbl_1_bss_C = 1;
+            return;
+        }
+        break;
+    default:
+        OSReport(lbl_1_data_C16C, lbl_1_bss_8260);
+        break;
+    }
 }

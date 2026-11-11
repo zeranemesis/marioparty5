@@ -20,36 +20,36 @@ void fn_1_11EC(OMOBJ *obj);
 void fn_1_14B0(OMOBJ *obj);
 OMOBJFUNC fn_1_1F04(OMOBJMAN *objman);
 OMOBJFUNC fn_1_2108(OMOBJMAN *objman, OMOBJ *obj);
-extern OMOBJMAN *lbl_1_bss_1C;
-extern s32 lbl_1_bss_8;
-extern MGTIMER *lbl_1_bss_0;
-extern s16 lbl_1_bss_4;
-extern s16 lbl_1_bss_6;
-extern s16 lbl_1_bss_C;
-extern s32 lbl_1_bss_10;
-extern OMOBJ *lbl_1_bss_18;
-extern OMOBJ *lbl_1_bss_14;
-extern Vec lbl_1_rodata_10;
-extern Vec lbl_1_rodata_1C;
-extern f32 lbl_1_rodata_2C;
-extern f32 lbl_1_rodata_30;
-extern f32 lbl_1_rodata_34;
-extern f32 lbl_1_rodata_38;
+extern const Vec lbl_1_rodata_10;
+extern const Vec lbl_1_rodata_1C;
+extern const f32 lbl_1_rodata_28;
+extern const f32 lbl_1_rodata_2C;
+extern const f32 lbl_1_rodata_30;
+extern const f32 lbl_1_rodata_34;
+extern const f32 lbl_1_rodata_38;
+extern const f32 lbl_1_rodata_3C;
+extern const f32 lbl_1_rodata_40;
+extern const double lbl_1_rodata_48;
+extern const f32 lbl_1_rodata_50;
+extern const f32 lbl_1_rodata_54;
 extern Vec lbl_1_data_0;
 extern Vec lbl_1_data_C;
 extern Vec lbl_1_data_18;
 extern GXColor lbl_1_data_24;
+extern MGTIMER *lbl_1_bss_0;
+extern s16 lbl_1_bss_4;
+extern s16 lbl_1_bss_6;
+extern s32 lbl_1_bss_8;
+extern s16 lbl_1_bss_C;
+extern s32 lbl_1_bss_10;
+extern OMOBJ *lbl_1_bss_14;
+extern OMOBJ *lbl_1_bss_18;
+extern OMOBJMAN *lbl_1_bss_1C;
 void fn_1_79F8(OMOBJMAN *objman);
 void fn_1_80C0(OMOBJMAN *objman);
 void fn_1_6F24(OMOBJMAN *objman);
 void fn_1_48CC(OMOBJMAN *objman);
 void fn_1_254C(OMOBJMAN *objman);
-extern f32 lbl_1_rodata_3C;
-extern f32 lbl_1_rodata_40;
-extern f32 lbl_1_rodata_28;
-extern double lbl_1_rodata_48;
-extern f32 lbl_1_rodata_50;
-extern f32 lbl_1_rodata_54;
 f32 fn_1_1D34(f32 start, f32 end, f32 t);
 f32 fn_1_1E50(f32 start, f32 end);
 typedef void (*VoidFunc)(void);
@@ -234,10 +234,9 @@ void fn_1_1898(s32 value)
     *(u32 *)((u8 *)lbl_1_bss_18->data + 0x58) = value;
 }
 
-// NONMATCHING: MWCC spills the data pointer to r31 for the indexed load.
 s32 fn_1_18B0(s32 index)
 {
-    u32 *work = *(u32 **)((u8 *)lbl_1_bss_18 + 0x5c);
+    u32 *work = (u32 *)lbl_1_bss_18->data;
     return ((u32 *)((u8 *)work + index * 4 + 0x48))[0];
 }
 
@@ -251,19 +250,17 @@ void fn_1_1910(s32 index)
     *(u32 *)((u8 *)lbl_1_bss_18->data + 0x60) |= 1 << ((index & 3) * 4);
 }
 
-// NONMATCHING: the compare uses cmplw against a register while MWCC emits cmplwi.
 s32 fn_1_1978(void)
 {
-    if (lbl_1_bss_0 == 0) {
+    if (lbl_1_bss_0 == NULL) {
         return 30;
     }
     return MgTimerValueGet(lbl_1_bss_0) / 60;
 }
 
-// NONMATCHING: MWCC preserves the constructor-adjusted field pointers through r30/r31.
 void fn_1_19E0(s32 player, s32 value1, s32 value2)
 {
-    u8 *work = *(u8 **)((u8 *)lbl_1_bss_18 + 0x5c);
+    u8 *work = (u8 *)lbl_1_bss_18->data;
     player &= 3;
     *(s32 *)(work + 0x28 + player * 4) = value1;
     *(s32 *)(work + 0x38 + player * 4) = value2;
@@ -290,33 +287,45 @@ s32 fn_1_1AF8(Vec *pos)
     return fn_1_1A9C(screen.x);
 }
 
-// NONMATCHING: MWCC's repeated integer aliases and sound ID check differ from this cleanup.
-s32 fn_1_1B8C(s32 soundId, Vec *pos)
+static inline s32 PanFromX(f32 value)
+{
+    s32 result;
+    value *= lbl_1_rodata_3C;
+    result = (s32)(lbl_1_rodata_40 + value);
+    if (result < 32) {
+        result = 32;
+    }
+    if (result > 96) {
+        result = 96;
+    }
+    return result;
+}
+
+static inline s32 PanFromPos(Vec *pos)
 {
     HuVecF screen;
-    s32 pan;
-
     Hu3D3Dto2D(pos, TRUE, &screen);
-    pan = fn_1_1A9C(screen.x);
+    return PanFromX(screen.x);
+}
+
+s32 fn_1_1B8C(s32 soundId, Vec *pos)
+{
+    s32 pan = PanFromPos(pos);
     if (pan == -1) {
         return -1;
     }
-    return HuAudFXPlayPan((s32)(s16)soundId, (s16)pan);
+    return HuAudFXPlayPan(soundId, (s16)pan);
 }
 
-// NONMATCHING: The intermediate register copies used for the voice ID stay visible in MWCC.
 void fn_1_1C60(s32 voiceId, Vec *pos)
 {
-    HuVecF screen;
     s32 pan;
 
-    if (voiceId == -1 || HuAudFXStatusGet(voiceId) != 2) {
-        return;
-    }
-    Hu3D3Dto2D(pos, TRUE, &screen);
-    pan = fn_1_1A9C(screen.x);
-    if (pan != -1) {
-        HuAudFXPanning(voiceId, (s16)pan);
+    if (voiceId != -1 && HuAudFXStatusGet(voiceId) == 2) {
+        pan = PanFromPos(pos);
+        if (pan != -1) {
+            HuAudFXPanning(voiceId, (s16)pan);
+        }
     }
 }
 
@@ -406,8 +415,8 @@ void fn_1_524(OMOBJ *obj)
 void fn_1_654(OMOBJ *obj)
 {
     u32 *work = (u32 *)obj->data;
-    u32 *workB;
     u32 *workC;
+    u32 *workB;
 
     work[0x04 / 4]++;
     work[0x14 / 4]++;
@@ -428,77 +437,77 @@ void fn_1_654(OMOBJ *obj)
 
         HuAudFadeOut(0x3E8);
 
-        work = (u32 *)obj->data;
+        workB = (u32 *)obj->data;
 
-        if (work[0x08 / 4] == 0) {
-            switch (work[0x00 / 4]) {
+        if ((s32)workB[0x08 / 4] == 0) {
+            switch (workB[0x00 / 4]) {
             case 0:
                 WipeCreate(1, 5, 60);
-                work[0x00 / 4] = 1;
-                work[0x14 / 4] = 0;
+                workB[0x00 / 4] = 1;
+                workB[0x14 / 4] = 0;
                 obj->objFunc = (OMOBJFUNC)fn_1_1F04(lbl_1_bss_1C);
                 break;
             case 1:
-                work[0x00 / 4] = 2;
-                work[0x1C / 4] = 0;
+                workB[0x00 / 4] = 2;
+                workB[0x1C / 4] = 0;
                 obj->objFunc = fn_1_EF8;
                 break;
             case 2:
-                work[0x00 / 4] = 3;
-                work[0x24 / 4] = 0;
+                workB[0x00 / 4] = 3;
+                workB[0x24 / 4] = 0;
                 obj->objFunc = (OMOBJFUNC)fn_1_2108(lbl_1_bss_1C, obj);
                 break;
             case 3:
             case 4:
-                work[0x08 / 4] = 1;
-                work[0x00 / 4] = 5;
+                workB[0x08 / 4] = 1;
+                workB[0x00 / 4] = 5;
                 obj->objFunc = fn_1_970;
                 break;
             case 5:
             default:
-                work[0x00 / 4] = 5;
+                workB[0x00 / 4] = 5;
                 obj->objFunc = fn_1_CA8;
                 break;
             }
 
-            work[0x04 / 4] = 0;
+            workB[0x04 / 4] = 0;
         }
     }
 
-    work = (u32 *)obj->data;
+    workC = (u32 *)obj->data;
 
-    if (work[0x08 / 4] == 0) {
-        switch (work[0x00 / 4]) {
+    if ((s32)workC[0x08 / 4] == 0) {
+        switch (workC[0x00 / 4]) {
         case 0:
             WipeCreate(1, 5, 60);
-            work[0x00 / 4] = 1;
-            work[0x14 / 4] = 0;
+            workC[0x00 / 4] = 1;
+            workC[0x14 / 4] = 0;
             obj->objFunc = (OMOBJFUNC)fn_1_1F04(lbl_1_bss_1C);
             break;
         case 1:
-            work[0x00 / 4] = 2;
-            work[0x1C / 4] = 0;
+            workC[0x00 / 4] = 2;
+            workC[0x1C / 4] = 0;
             obj->objFunc = fn_1_EF8;
             break;
         case 2:
-            work[0x00 / 4] = 3;
-            work[0x24 / 4] = 0;
+            workC[0x00 / 4] = 3;
+            workC[0x24 / 4] = 0;
             obj->objFunc = (OMOBJFUNC)fn_1_2108(lbl_1_bss_1C, obj);
             break;
         case 3:
         case 4:
-            work[0x08 / 4] = 1;
-            work[0x00 / 4] = 5;
+            workC[0x08 / 4] = 1;
+            workC[0x00 / 4] = 5;
             obj->objFunc = fn_1_970;
             break;
         case 5:
         default:
-            work[0x00 / 4] = 5;
+            workC[0x00 / 4] = 5;
             obj->objFunc = fn_1_CA8;
             break;
         }
 
-        work[0x04 / 4] = 0;
+        workC[0x04 / 4] = 0;
     }
 }
 
@@ -986,3 +995,41 @@ s32 fn_1_1940(void)
 {
     return GameMesStatGet(lbl_1_bss_4) == 0;
 }
+
+/* Definitions follow the code so the compiler keeps referencing the symbols by name. */
+/* .rodata (constants referenced by name by the original object) */
+#ifdef __MWERKS__
+#define M516_RODATA __declspec(section ".rodata")
+#else
+#define M516_RODATA
+#endif
+M516_RODATA const Vec lbl_1_rodata_10 = { 0.0f, 0.0f, 0.0f };
+M516_RODATA const Vec lbl_1_rodata_1C = { 0.0f, 0.0f, -1.0f };
+M516_RODATA const f32 lbl_1_rodata_28 = 0.0f;
+M516_RODATA const f32 lbl_1_rodata_2C = 45.0f;
+M516_RODATA const f32 lbl_1_rodata_30 = 10.0f;
+M516_RODATA const f32 lbl_1_rodata_34 = 30000.0f;
+M516_RODATA const f32 lbl_1_rodata_38 = 1.2f;
+M516_RODATA const f32 lbl_1_rodata_3C = 0.11111111f;
+M516_RODATA const f32 lbl_1_rodata_40 = 32.0f;
+M516_RODATA const double lbl_1_rodata_48 = 360.0;
+M516_RODATA const f32 lbl_1_rodata_50 = 360.0f;
+M516_RODATA const f32 lbl_1_rodata_54 = 180.0f;
+
+/* .data */
+Vec lbl_1_data_0 = { 100.0f, 800.0f, -100.0f };
+Vec lbl_1_data_C = { 0.3f, -0.8f, 0.3f };
+Vec lbl_1_data_18 = { 20.0f, 45.0f, 1000.0f };
+GXColor lbl_1_data_24 = { 0xFF, 0xFF, 0xFF, 0xFF };
+f32 lbl_1_data_28[9] = { 200.0f, 3000.0f, 100.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+
+/* .bss */
+OMOBJMAN *lbl_1_bss_1C;
+OMOBJ *lbl_1_bss_18;
+OMOBJ *lbl_1_bss_14;
+s32 lbl_1_bss_10;
+s16 lbl_1_bss_C;
+s32 lbl_1_bss_8;
+s16 lbl_1_bss_6;
+s16 lbl_1_bss_4;
+MGTIMER *lbl_1_bss_0;

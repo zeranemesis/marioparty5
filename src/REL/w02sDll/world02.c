@@ -9,6 +9,7 @@
 #include "game/board/branch.h"
 #include "game/board/camera.h"
 #include "game/board/player.h"
+#include "game/board/pad.h"
 #include "game/board/window.h"
 #include "game/board/coin.h"
 #include "game/board/star.h"
@@ -24,6 +25,7 @@
 #include "game/hsfex.h"
 
 #include <math.h>
+#include "game/gxarray.h"
 
 #ifdef TARGET_PC
 /* __frsqrte is a PowerPC compiler intrinsic with no host equivalent; every
@@ -36,43 +38,10 @@ static double mb2_frsqrte(double x) {
 #define __frsqrte mb2_frsqrte
 #endif
 
-/*
- * w02Dll - "Rainbow Dream" board.
- *
- * NOTE (decomp WIP): first-draft port from tools/m2c_draft.py, mechanically
- * cleaned up (M2C_ERROR/cror artifacts removed, unknown "?" types resolved
- * from context). Most functions are not yet instruction-matched against the
- * original asm (build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s) - this is
- * being improved function by function in follow-up commits, largest/most
- * complex event state machines (Zen2/Zen4/Rain/Thunder/Rainbow/WindGuru2)
- * last. Rainbow/Zen2-rainbow vertex path tables (mb2ev_Rainbow*VtxTbl,
- * mb2ev_Zen2Rainbow*VtxTbl) are declared with the right shape/size but not
- * yet filled with the real .rodata values.
- */
-struct _struct_mb2ev_Zen2RainbowVtxNumTbl_0xC {
-    /* 0x0 */ s32 unk0;                             /* inferred */
-    /* 0x4 */ s32 unk4;                             /* inferred */
-    /* 0x8 */ s32 unk8;                             /* inferred */
-};                                                  /* size = 0xC */
+/* w02sDll - Rainbow Dream board (secondary module). */
 
-struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC {
-    /* 0x0 */ void *unk0;                              /* inferred */
-    /* 0x4 */ void *unk4;                              /* inferred */
-    /* 0x8 */ void *unk8;                              /* inferred */
-};                                                  /* size = 0xC */
-
-struct _struct_mb2_ParticleUvTbl_0x8 {
-    /* 0x0 */ f32 unk0;                             /* inferred */
-    /* 0x4 */ f32 unk4;                             /* inferred */
-};                                                  /* size = 0x8 */
-
-s32 HuSprTexLoad(void *, s32, s32, s32, s32, s32);              /* extern */
-void PSMTXRotRad(Mtx m, char axis, f32 rad);        /* extern */
-s8 MBPadStkXGet(s8, s32);                           /* extern */
-s8 MBPadStkYGet(s8, GWPLAYER *, GWPLAYER *);        /* extern */
-s32 MBScrollExec(s32);                                /* extern */
 s32 MB2_MasuLinkGet(s16 arg0, s16 *arg1, s32 arg2, s32 arg3);
-HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2);
+static HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2);
 void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]);
 void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]);
 void ObjectSetup(void);
@@ -87,39 +56,28 @@ int MB2Ev_MasuWalkPre(int playerNo);
 int MB2Ev_MasuWalkPost(int playerNo);
 int MB2_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF);
 s32 MB2Ev_Rainbow(s32 arg0, s32 arg1);
-void MB2Ev_WindGuru2(s32 arg0, s32 arg1);
-void MB2Ev_Thunder(s32 arg0);
-void MB2Ev_Rain(s32 arg0);
-void MB2Ev_Zen2(s32 arg0);
-void MB2Ev_Zen4(s32 arg0);
-void MB2_TimerObjUpdate(OMOBJ *obj);
-void MB2_DentyuObjFlash(OMOBJ *obj);
-void MB2_WaterSplashUpdate(OMOBJ *obj);
-s16 MB2_WindGuru2MasuNoGet(s32 arg0, s32 arg1);
+void MB2Ev_HatenaTaiyo(s32 playerNo);
 s16 MB2_RainbowMasuNoEndGet(s32 arg0);
-s32 MB2_PathCheck(s32 arg0);
-s16 MB2_PathLenGet(s16 arg0, s16 arg1, s16 arg2);
-s16 PathCheck(s16 arg0, s16 arg1);
 void MB2_CoinDispUpdate(s32 arg0, s32 arg1, s32 arg2);
 f32 MB2_AngleDiff(f32 farg0, f32 farg1);
 f32 MB2_AngleLerp(f32 farg0, f32 farg1, f32 farg2);
 f32 fn_1_42FC(f32 farg0, f32 farg1, f32 farg2);
 HSFOBJECT *MB2_ModelObjPtrGet(HU3DMODEL *arg0, char *arg1);
-f32 MB2_BezierCalc(f64 farg0, f32 farg1, f32 farg2, f32 farg3);
-void MB2_BezierCalcV(f32 *arg0, f32 *arg1, Point3d *arg2, Point3d *arg3, f64 farg0);
+f32 MB2_BezierCalc(f32 t, f32 p0, f32 p1, f32 p2);
+void MB2_BezierCalcV(f32 *arg0, f32 *arg1, f32 *arg2, f32 *arg3, f32 t);
 void MB2_HermiteCalc(f32 *arg0, f32 *arg1, f32 *arg2, f32 *arg3, f32 farg0);
-void fn_1_5260(f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5);
+f32 fn_1_5260(f32 t, f32 p0, f32 p1, f32 p2, f32 p3, f32 tension);
 void MB2_HermiteCalcV(Point3d *arg0, Point3d *arg1, Point3d *arg2, Point3d *arg3, Point3d *arg4, f32 farg0);
 void MB2_CoinInit(void);
 void MB2_CoinExec(OMOBJ *obj);
 void MB2_CoinClose(void);
 s32 MB2_CoinNumGet(void);
-s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0);
+s32 MB2_CoinCreate(Point3d *arg0, Point3d *arg1, s32 arg2, f32 farg0);
 void MB2_CoinEffInit(void);
 void MB2_CoinEffUpdate(OMOBJ *obj);
 void MB2_CoinEffClose(void);
 s32 MB2_CoinEffNumGet(void);
-void MB2_CoinEffBlendModeSet(u8 arg0);
+void MB2_CoinEffBlendModeSet(s32 arg0);
 s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2);
 s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4);
 s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4);
@@ -127,11 +85,11 @@ void MB2_SplashEffInit(void);
 void MB2_SplashEffUpdate(OMOBJ *obj);
 void MB2_SplashEffClose(void);
 s32 MB2_SplashEffNumGet(void);
-void MB2_SplashEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, s16 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2);
-void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0);
+void MB2_SplashEffCreate(HuVecF *arg0, HuVecF *arg1, u8 *arg2, s32 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2);
+void MB2_SplashEffCreateRandX(HuVecF *arg0, u8 *arg1, s32 arg2, f32 farg0);
 s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1);
 s16 MB2_ParticleCopy(s16 arg0);
-void MB2_YajiInit(f32 *arg0);
+void MB2_YajiInit(Point3d *pos);
 void MB2_YajiUpdate(OMOBJ *obj);
 void MB2_YajiClose(void);
 void MB2_YajiHiliteSet(u32 arg0);
@@ -139,435 +97,242 @@ void MB2_YajiDispSet(s32 arg0);
 void MB2_RainbowObjInit(void);
 void MB2_RainbowObjUpdate(OMOBJ *obj);
 void MB2_RainbowObjClose(void);
-s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2);
+s32 MB2_RainbowObjCreate(Point3d *arg0, s32 arg1, s32 arg2);
 void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1);
 s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1);
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
 static Point3d mb2ev_Rainbow1VtxTbl[0xA] = {
-    { 1250.0f, 300.0f, 3100.0f },
-    { 1199.5679931640625f, 326.6610107421875f, 3026.669921875f },
-    { 1148.406982421875f, 349.0799865722656f, 2952.469970703125f },
-    { 1096.113037109375f, 362.7200012207031f, 2876.97998046875f },
-    { 1043.0260009765625f, 361.4169921875f, 2800.93994140625f },
-    { 990.7659912109375f, 342.3370056152344f, 2726.77001953125f },
-    { 940.614013671875f, 308.9200134277344f, 2656.169921875f },
-    { 892.531005859375f, 266.6449890136719f, 2588.889892578125f },
-    { 845.905029296875f, 219.41900634765625f, 2523.8798828125f },
-    { 800.0f, 170.0f, 2460.0f },
+    { 1200.0f, 1318.0f, 4600.0f },
+    { 1139.5439453125f, 1360.8270263671875f, 4500.419921875f },
+    { 1077.9530029296875f, 1400.10302734375f, 4400.10009765625f },
+    { 1014.083984375f, 1431.4510498046875f, 4298.4599609375f },
+    { 946.9959716796875f, 1448.8499755859375f, 4195.669921875f },
+    { 876.7360229492188f, 1444.4830322265625f, 4093.81005859375f },
+    { 805.4639892578125f, 1414.5699462890625f, 3996.989990234375f },
+    { 735.5139770507812f, 1365.81103515625f, 3906.93994140625f },
+    { 667.239013671875f, 1306.3809814453125f, 3822.080078125f },
+    { 600.0f, 1242.0f, 3740.0f },
+};
+static Point3d mb2ev_TaiyoRainbow1VtxTbl[0x14] = {
+    { -200.0f, 2490.23804f, 2385.0f },
+    { -279.208008f, 2511.43896f, 2455.77002f },
+    { -358.641998f, 2531.49805f, 2526.62012f },
+    { -438.518005f, 2549.18799f, 2597.6001f },
+    { -519.031006f, 2562.94604f, 2668.72998f },
+    { -600.27002f, 2570.94409f, 2739.87988f },
+    { -682.120972f, 2570.85498f, 2810.72998f },
+    { -764.052002f, 2559.8501f, 2880.51001f },
+    { -844.828979f, 2534.80493f, 2947.83008f },
+    { -922.260986f, 2492.97998f, 3010.52002f },
+    { -993.385986f, 2433.29102f, 3065.87988f },
+    { -1056.13599f, 2358.41406f, 3112.41992f },
+    { -1112.06494f, 2274.70703f, 3152.13989f },
+    { -1162.33606f, 2185.14697f, 3186.3501f },
+    { -1208.15002f, 2091.7251f, 3216.30005f },
+    { -1250.56897f, 1995.74097f, 3243.04004f },
+    { -1290.479f, 1898.05798f, 3267.43994f },
+    { -1328.61597f, 1799.26904f, 3290.17993f },
+    { -1365.60498f, 1699.80298f, 3311.86011f },
+    { -1402.0f, 1600.0f, 3333.0f },
+};
+static Point3d mb2ev_TaiyoRainbow2VtxTbl[0x14] = {
+    { -0.0f, 2490.23804f, 2385.0f },
+    { -0.0f, 2519.45996f, 2516.8501f },
+    { -0.0f, 2547.39111f, 2648.98999f },
+    { -0.0f, 2572.72998f, 2781.6499f },
+    { -0.0f, 2593.91797f, 2915.02002f },
+    { -0.0f, 2608.95508f, 3049.21997f },
+    { -0.0f, 2615.1731f, 3184.09009f },
+    { -0.0f, 2608.24707f, 3318.88989f },
+    { -0.0f, 2581.50293f, 3451.02002f },
+    { -0.0f, 2530.42798f, 3575.48999f },
+    { -0.0f, 2452.4751f, 3685.08008f },
+    { -0.0f, 2351.5979f, 3774.37988f },
+    { -0.0f, 2236.58691f, 3844.92993f },
+    { -0.0f, 2114.448f, 3902.34009f },
+    { -0.0f, 1988.12305f, 3949.94995f },
+    { -0.0f, 1859.30701f, 3990.42993f },
+    { -0.0f, 1728.98596f, 4025.84009f },
+    { -0.0f, 1597.75806f, 4057.75f },
+    { -0.0f, 1466.005f, 4087.43994f },
+    { 0.0f, 1334.0f, 4116.0f },
+};
+static Point3d mb2ev_TaiyoRainbow3VtxTbl[0x14] = {
+    { 200.0f, 2490.23804f, 2385.0f },
+    { 277.376007f, 2510.95288f, 2454.1499f },
+    { 354.923004f, 2530.59302f, 2523.41992f },
+    { 432.791992f, 2548.03491f, 2592.90991f },
+    { 511.100006f, 2561.9751f, 2662.69995f },
+    { 589.892029f, 2570.77197f, 2732.78003f },
+    { 669.044006f, 2571.66309f, 2802.95996f },
+    { 747.955017f, 2561.97412f, 2872.63989f },
+    { 825.297974f, 2538.33594f, 2940.55005f },
+    { 898.677979f, 2497.60889f, 3004.47998f },
+    { 964.953003f, 2438.59399f, 3061.61011f },
+    { 1021.66101f, 2363.58691f, 3109.82007f },
+    { 1070.11902f, 2278.85205f, 3150.45996f },
+    { 1112.203f, 2188.29492f, 3185.28003f },
+    { 1149.34998f, 2094.01489f, 3215.62988f },
+    { 1182.79199f, 1997.33997f, 3242.62988f },
+    { 1213.53003f, 1899.11597f, 3267.18994f },
+    { 1242.37402f, 1799.90405f, 3290.04004f },
+    { 1270.0f, 1700.09802f, 3311.80005f },
+    { 1297.0f, 1600.0f, 3333.0f },
 };
 
-static Point3d mb2ev_Rainbow2VtxTbl[0x14] = {
-    { -1200.0f, 700.0f, 1300.0f },
-    { -1291.9639892578125f, 743.9420166015625f, 1346.6800537109375f },
-    { -1382.0140380859375f, 788.447998046875f, 1396.4300537109375f },
-    { -1466.9210205078125f, 834.1309814453125f, 1453.47998046875f },
-    { -1539.02001953125f, 881.2780151367188f, 1524.699951171875f },
-    { -1580.467041015625f, 928.2130126953125f, 1616.6400146484375f },
-    { -1563.531005859375f, 969.4229736328125f, 1716.97998046875f },
-    { -1474.89697265625f, 992.177001953125f, 1776.5999755859375f },
-    { -1364.5810546875f, 1002.9609985351562f, 1777.1300048828125f },
-    { -1270.675048828125f, 1015.8350219726562f, 1720.7900390625f },
-    { -1224.386962890625f, 1036.946044921875f, 1622.1600341796875f },
-    { -1216.906005859375f, 1066.8050537109375f, 1514.739990234375f },
-    { -1235.4439697265625f, 1106.81005859375f, 1412.06005859375f },
-    { -1276.333984375f, 1159.135986328125f, 1322.22998046875f },
-    { -1335.7490234375f, 1221.6719970703125f, 1251.0400390625f },
-    { -1407.5140380859375f, 1287.39404296875f, 1195.6500244140625f },
-    { -1489.2530517578125f, 1350.8590087890625f, 1152.8399658203125f },
-    { -1582.2440185546875f, 1404.2550048828125f, 1121.02001953125f },
-    { -1688.22802734375f, 1434.386962890625f, 1103.300048828125f },
-    { -1799.9990234375f, 1440.0f, 1100.0f },
-};
 
-static Point3d mb2ev_Rainbow3VtxTbl[0x14] = {
-    { -1800.0f, 1540.0f, -500.0f },
-    { -1880.7259521484375f, 1563.051025390625f, -541.4600219726562f },
-    { -1955.0050048828125f, 1599.1090087890625f, -585.3300170898438f },
-    { -2018.178955078125f, 1650.9310302734375f, -630.780029296875f },
-    { -2068.714111328125f, 1715.0379638671875f, -676.4400024414062f },
-    { -2105.919921875f, 1788.0050048828125f, -721.5999755859375f },
-    { -2127.280029296875f, 1867.93701171875f, -765.2100219726562f },
-    { -2132.72998046875f, 1951.81005859375f, -806.1799926757812f },
-    { -2123.8291015625f, 2036.927978515625f, -844.0f },
-    { -2104.256103515625f, 2121.4169921875f, -879.280029296875f },
-    { -2075.77294921875f, 2204.18603515625f, -912.5399780273438f },
-    { -2039.81298828125f, 2284.551025390625f, -944.3800048828125f },
-    { -1996.262939453125f, 2361.490966796875f, -975.1400146484375f },
-    { -1943.885009765625f, 2433.05908203125f, -1004.989990234375f },
-    { -1881.31494140625f, 2496.490966796875f, -1033.5f },
-    { -1807.31396484375f, 2547.403076171875f, -1059.3599853515625f },
-    { -1722.490966796875f, 2580.05908203125f, -1080.52001953125f },
-    { -1630.5f, 2587.10498046875f, -1094.0f },
-    { -1538.822998046875f, 2569.64794921875f, -1099.2099609375f },
-    { -1450.0009765625f, 2540.0f, -1100.0f },
-};
 
-static Point3d mb2ev_Rainbow4VtxTbl[0x14] = {
-    { 1500.0f, 2550.0f, -1190.0f },
-    { 1571.9959716796875f, 2561.10107421875f, -1206.56005859375f },
-    { 1645.197021484375f, 2559.717041015625f, -1220.6099853515625f },
-    { 1716.81494140625f, 2541.5869140625f, -1230.6500244140625f },
-    { 1784.241943359375f, 2510.155029296875f, -1236.8599853515625f },
-    { 1847.6600341796875f, 2470.81396484375f, -1239.9599609375f },
-    { 1907.4169921875f, 2425.962890625f, -1239.97998046875f },
-    { 1962.906982421875f, 2376.072998046875f, -1236.22998046875f },
-    { 2013.626953125f, 2321.839111328125f, -1228.31005859375f },
-    { 2058.136962890625f, 2263.344970703125f, -1215.22998046875f },
-    { 2094.26611328125f, 2200.93603515625f, -1195.8299560546875f },
-    { 2121.514892578125f, 2136.194091796875f, -1170.469970703125f },
-    { 2140.56201171875f, 2070.69189453125f, -1140.0899658203125f },
-    { 2151.712890625f, 2005.66796875f, -1105.0899658203125f },
-    { 2154.991943359375f, 1942.428955078125f, -1065.5f },
-    { 2148.906005859375f, 1883.279052734375f, -1020.3699951171875f },
-    { 2132.14697265625f, 1831.0159912109375f, -969.8499755859375f },
-    { 2104.56396484375f, 1788.4580078125f, -915.1199951171875f },
-    { 2069.678955078125f, 1755.22900390625f, -858.0700073242188f },
-    { 2030.0f, 1730.0f, -800.0f },
-};
 
-static Point3d mb2ev_Rainbow5VtxTbl[0x14] = {
-    { 1800.0f, 1420.0f, 1100.0f },
-    { 1679.698974609375f, 1414.27001953125f, 1100.7900390625f },
-    { 1559.8709716796875f, 1403.6319580078125f, 1105.8499755859375f },
-    { 1442.406982421875f, 1382.1309814453125f, 1120.3800048828125f },
-    { 1331.8050537109375f, 1344.7569580078125f, 1148.8800048828125f },
-    { 1235.1070556640625f, 1289.613037109375f, 1194.1600341796875f },
-    { 1153.509033203125f, 1224.3900146484375f, 1253.719970703125f },
-    { 1088.862060546875f, 1155.698974609375f, 1328.2099609375f },
-    { 1045.925048828125f, 1091.5660400390625f, 1420.06005859375f },
-    { 1037.0589599609375f, 1044.7130126953125f, 1529.8299560546875f },
-    { 1068.3079833984375f, 1018.2650146484375f, 1642.27001953125f },
-    { 1140.7769775390625f, 1006.3660278320312f, 1736.2900390625f },
-    { 1250.25f, 999.7059936523438f, 1782.18994140625f },
-    { 1366.8160400390625f, 987.1420288085938f, 1763.93994140625f },
-    { 1449.7340087890625f, 957.97998046875f, 1684.68994140625f },
-    { 1480.699951171875f, 914.25f, 1578.050048828125f },
-    { 1460.0460205078125f, 859.905029296875f, 1473.97998046875f },
-    { 1389.9620361328125f, 800.8820190429688f, 1397.0699462890625f },
-    { 1298.2349853515625f, 744.4019775390625f, 1343.530029296875f },
-    { 1200.0009765625f, 690.0009765625f, 1300.0f },
-};
 
-static Point3d mb2ev_Zen2Rainbow1VtxTbl[0x14] = {
-    { -200.0f, 3900.0f, -1850.0f },
-    { -383.6910095214844f, 3957.387939453125f, -1632.800048828125f },
-    { -569.9429931640625f, 3999.34912109375f, -1414.3699951171875f },
-    { -759.8930053710938f, 4006.4130859375f, -1195.550048828125f },
-    { -950.2000122070312f, 3960.654052734375f, -982.1599731445312f },
-    { -1133.7760009765625f, 3852.118896484375f, -786.1699829101562f },
-    { -1313.343994140625f, 3704.0458984375f, -613.260009765625f },
-    { -1496.56396484375f, 3535.799072265625f, -464.04998779296875f },
-    { -1692.2259521484375f, 3361.214111328125f, -340.0899963378906f },
-    { -1907.2340087890625f, 3192.806884765625f, -242.57000732421875f },
-    { -2136.77490234375f, 3033.593994140625f, -164.1699981689453f },
-    { -2369.884033203125f, 2878.006103515625f, -88.91999816894531f },
-    { -2591.051025390625f, 2717.304931640625f, 7.429999828338623f },
-    { -2759.300048828125f, 2543.466064453125f, 164.07000732421875f },
-    { -2814.60400390625f, 2361.217041015625f, 379.6000061035156f },
-    { -2747.10693359375f, 2177.240966796875f, 590.4099731445312f },
-    { -2581.490966796875f, 1995.2220458984375f, 741.25f },
-    { -2367.962890625f, 1822.9110107421875f, 834.6500244140625f },
-    { -2136.93701171875f, 1659.3819580078125f, 898.3099975585938f },
-    { -1900.001953125f, 1500.001953125f, 949.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow4VtxTbl[0x14] = {
-    { -200.0f, 3900.0f, -1850.0f },
-    { -429.93701171875f, 3970.302978515625f, -1578.2900390625f },
-    { -664.6409912109375f, 4008.681884765625f, -1304.6400146484375f },
-    { -903.1240234375f, 3977.5419921875f, -1034.3299560546875f },
-    { -1131.64697265625f, 3852.676025390625f, -783.260009765625f },
-    { -1334.946044921875f, 3668.717041015625f, -546.0499877929688f },
-    { -1504.574951171875f, 3467.39501953125f, -296.8399963378906f },
-    { -1619.343017578125f, 3292.860107421875f, -2.009999990463257f },
-    { -1641.0589599609375f, 3162.092041015625f, 334.30999755859375f },
-    { -1575.68798828125f, 3022.238037109375f, 661.6900024414062f },
-    { -1456.3919677734375f, 2836.73095703125f, 949.0900268554688f },
-    { -1311.8909912109375f, 2613.39404296875f, 1195.3900146484375f },
-    { -1155.2359619140625f, 2365.52587890625f, 1408.739990234375f },
-    { -992.2860107421875f, 2098.527099609375f, 1592.3699951171875f },
-    { -826.8209838867188f, 1815.883056640625f, 1748.3399658203125f },
-    { -660.9249877929688f, 1521.9520263671875f, 1881.4100341796875f },
-    { -495.239013671875f, 1221.114990234375f, 1998.3699951171875f },
-    { -329.90301513671875f, 916.0880126953125f, 2104.52001953125f },
-    { -164.86599731445312f, 608.6279907226562f, 2203.93994140625f },
-    { -0.0020000000949949026f, 300.0039978027344f, 2299.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow7VtxTbl[0x14] = {
-    { -200.0f, 3900.0f, -1850.0f },
-    { -428.1709899902344f, 3969.885986328125f, -1580.3599853515625f },
-    { -661.0230102539062f, 4008.64990234375f, -1308.800048828125f },
-    { -897.739990234375f, 3979.47412109375f, -1040.300048828125f },
-    { -1124.032958984375f, 3855.992919921875f, -790.6799926757812f },
-    { -1314.3480224609375f, 3658.507080078125f, -558.5700073242188f },
-    { -1441.3330078125f, 3413.333984375f, -329.05999755859375f },
-    { -1464.6219482421875f, 3145.969970703125f, -92.27999877929688f },
-    { -1351.6009521484375f, 2892.572021484375f, 132.39999389648438f },
-    { -1103.06396484375f, 2695.02392578125f, 293.8500061035156f },
-    { -766.2639770507812f, 2590.652099609375f, 349.1700134277344f },
-    { -409.1029968261719f, 2555.593017578125f, 327.45001220703125f },
-    { -52.10499954223633f, 2540.375f, 282.92999267578125f },
-    { 305.0889892578125f, 2513.97509765625f, 247.58999633789062f },
-    { 658.5139770507812f, 2449.89306640625f, 248.88999938964844f },
-    { 987.8259887695312f, 2324.06689453125f, 314.6199951171875f },
-    { 1275.0660400390625f, 2146.721923828125f, 438.1199951171875f },
-    { 1525.6829833984375f, 1941.64501953125f, 595.1500244140625f },
-    { 1753.35498046875f, 1723.5179443359375f, 768.969970703125f },
-    { 1969.9969482421875f, 1500.0030517578125f, 949.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow8VtxTbl[0x14] = {
-    { -0.0f, 3900.0f, -1850.0f },
-    { 1.7239999771118164f, 3958.552978515625f, -1556.6700439453125f },
-    { 13.029000282287598f, 4004.35791015625f, -1261.4000244140625f },
-    { 43.935001373291016f, 4023.52490234375f, -964.780029296875f },
-    { 106.25399780273438f, 3998.35302734375f, -673.97998046875f },
-    { 202.6479949951172f, 3920.419921875f, -402.5299987792969f },
-    { 313.2049865722656f, 3799.7509765625f, -152.50999450683594f },
-    { 410.82598876953125f, 3645.382080078125f, 84.0f },
-    { 453.02099609375f, 3458.8798828125f, 312.2699890136719f },
-    { 362.9779968261719f, 3263.239013671875f, 511.80999755859375f },
-    { 149.85499572753906f, 3102.214111328125f, 642.030029296875f },
-    { -106.45600128173828f, 2968.212890625f, 716.780029296875f },
-    { -374.0530090332031f, 2841.097900390625f, 756.97998046875f },
-    { -639.68701171875f, 2704.464111328125f, 769.0499877929688f },
-    { -894.6259765625f, 2548.587890625f, 758.760009765625f },
-    { -1135.125f, 2372.010009765625f, 739.0700073242188f },
-    { -1358.7340087890625f, 2173.845947265625f, 732.3499755859375f },
-    { -1560.6240234375f, 1956.7440185546875f, 768.1500244140625f },
-    { -1737.8790283203125f, 1729.6739501953125f, 847.8900146484375f },
-    { -1899.9990234375f, 1500.001953125f, 949.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow2VtxTbl[0x14] = {
-    { -0.0f, 3900.0f, -1850.0f },
-    { 2.515000104904175f, 3963.64892578125f, -1516.3199462890625f },
-    { 19.070999145507812f, 3996.487060546875f, -1179.0f },
-    { 64.9800033569336f, 3962.60791015625f, -845.2000122070312f },
-    { 148.35800170898438f, 3837.864013671875f, -542.239990234375f },
-    { 253.1750030517578f, 3643.806884765625f, -284.67999267578125f },
-    { 352.8559875488281f, 3413.18798828125f, -56.349998474121094f },
-    { 428.06298828125f, 3160.465087890625f, 157.4499969482422f },
-    { 455.2049865722656f, 2894.712890625f, 366.2799987792969f },
-    { 396.2770080566406f, 2633.6640625f, 572.969970703125f },
-    { 237.76199340820312f, 2403.402099609375f, 764.5399780273438f },
-    { 31.742000579833984f, 2195.48388671875f, 936.6599731445312f },
-    { -183.5189971923828f, 1987.0689697265625f, 1096.75f },
-    { -369.07000732421875f, 1750.1829833984375f, 1253.0899658203125f },
-    { -489.3890075683594f, 1474.0389404296875f, 1408.27001953125f },
-    { -540.7210083007812f, 1176.3480224609375f, 1562.239990234375f },
-    { -527.6380004882812f, 876.3809814453125f, 1719.969970703125f },
-    { -437.5469970703125f, 601.85400390625f, 1895.8199462890625f },
-    { -249.6790008544922f, 407.54901123046875f, 2097.090087890625f },
-    { -0.0010000000474974513f, 300.0f, 2299.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow5VtxTbl[0x14] = {
-    { -0.0f, 3900.0f, -1850.0f },
-    { 1.1330000162124634f, 3952.10009765625f, -1586.8800048828125f },
-    { 9.213000297546387f, 3989.06591796875f, -1321.43994140625f },
-    { 31.84600067138672f, 3993.611083984375f, -1054.5699462890625f },
-    { 75.90299987792969f, 3948.549072265625f, -794.6599731445312f },
-    { 143.14300537109375f, 3846.867919921875f, -556.72998046875f },
-    { 228.09100341796875f, 3701.3701171875f, -348.4100036621094f },
-    { 325.9330139160156f, 3531.735107421875f, -165.27000427246094f },
-    { 433.89898681640625f, 3352.2041015625f, 2.069999933242798f },
-    { 553.5059814453125f, 3169.027099609375f, 157.19000244140625f },
-    { 691.426025390625f, 2990.49609375f, 302.1000061035156f },
-    { 863.0590209960938f, 2836.39501953125f, 437.3699951171875f },
-    { 1092.4969482421875f, 2755.26806640625f, 543.010009765625f },
-    { 1356.8299560546875f, 2764.89501953125f, 576.3400268554688f },
-    { 1609.9449462890625f, 2700.366943359375f, 558.6099853515625f },
-    { 1759.1820068359375f, 2483.77392578125f, 585.6900024414062f },
-    { 1836.3280029296875f, 2238.4970703125f, 660.5800170898438f },
-    { 1888.7449951171875f, 1991.947998046875f, 752.1400146484375f },
-    { 1931.345947265625f, 1745.822021484375f, 849.8599853515625f },
-    { 1970.0f, 1500.0030517578125f, 949.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow6VtxTbl[0x14] = {
-    { 200.0f, 3900.0f, -1850.0f },
-    { 312.8280029296875f, 4037.487060546875f, -1588.199951171875f },
-    { 436.9230041503906f, 4114.09521484375f, -1308.739990234375f },
-    { 568.4650268554688f, 4077.718994140625f, -1025.3800048828125f },
-    { 682.5079956054688f, 3949.339111328125f, -760.1900024414062f },
-    { 756.822998046875f, 3779.56201171875f, -504.0299987792969f },
-    { 780.3060302734375f, 3592.3701171875f, -250.36000061035156f },
-    { 748.0150146484375f, 3403.60400390625f, 1.0700000524520874f },
-    { 663.7360229492188f, 3220.930908203125f, 245.02999877929688f },
-    { 535.2570190429688f, 3044.242919921875f, 473.6600036621094f },
-    { 363.22900390625f, 2873.8310546875f, 676.780029296875f },
-    { 143.0240020751953f, 2713.27099609375f, 835.9199829101562f },
-    { -127.677001953125f, 2574.29296875f, 916.4500122070312f },
-    { -424.6910095214844f, 2467.968017578125f, 903.02001953125f },
-    { -721.35302734375f, 2379.6201171875f, 837.3499755859375f },
-    { -1013.0809936523438f, 2288.385986328125f, 754.8300170898438f },
-    { -1296.6280517578125f, 2161.14990234375f, 699.8300170898438f },
-    { -1545.6629638671875f, 1970.64794921875f, 725.010009765625f },
-    { -1739.8399658203125f, 1740.97802734375f, 821.5399780273438f },
-    { -1899.9990234375f, 1500.001953125f, 949.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow9VtxTbl[0x14] = {
-    { 200.0f, 3900.0f, -1850.0f },
-    { 321.0570068359375f, 4046.075927734375f, -1569.27001953125f },
-    { 455.36700439453125f, 4117.30419921875f, -1268.1400146484375f },
-    { 595.5750122070312f, 4055.7880859375f, -968.1400146484375f },
-    { 721.197998046875f, 3910.239013671875f, -689.47998046875f },
-    { 824.594970703125f, 3735.3330078125f, -418.2699890136719f },
-    { 900.7559814453125f, 3554.676025390625f, -141.8800048828125f },
-    { 944.2379760742188f, 3381.77001953125f, 146.19000244140625f },
-    { 952.7030029296875f, 3212.512939453125f, 439.6000061035156f },
-    { 927.0230102539062f, 3036.135009765625f, 727.7100219726562f },
-    { 867.7570190429688f, 2842.8359375f, 999.469970703125f },
-    { 778.9500122070312f, 2626.906982421875f, 1244.8299560546875f },
-    { 670.2529907226562f, 2388.7080078125f, 1459.8499755859375f },
-    { 553.6170043945312f, 2131.4150390625f, 1646.9300537109375f },
-    { 438.2080078125f, 1855.85400390625f, 1806.8499755859375f },
-    { 332.7120056152344f, 1562.4320068359375f, 1939.510009765625f },
-    { 238.9949951171875f, 1255.8349609375f, 2049.3798828125f },
-    { 154.32000732421875f, 941.0330200195312f, 2142.219970703125f },
-    { 75.65299987792969f, 621.573974609375f, 2223.889892578125f },
-    { 0.0010000000474974513f, 300.0039978027344f, 2299.989990234375f },
-};
 
-static Point3d mb2ev_Zen2Rainbow3VtxTbl[0x14] = {
-    { 200.0f, 3900.0f, -1850.0f },
-    { 293.58599853515625f, 4017.404052734375f, -1632.469970703125f },
-    { 394.4289855957031f, 4099.8828125f, -1403.0699462890625f },
-    { 503.4639892578125f, 4110.8662109375f, -1163.9300537109375f },
-    { 613.2260131835938f, 4042.236083984375f, -934.3200073242188f },
-    { 725.5609741210938f, 3929.75390625f, -723.3200073242188f },
-    { 849.8380126953125f, 3801.236083984375f, -528.739990234375f },
-    { 1000.2559814453125f, 3674.095947265625f, -353.0f },
-    { 1200.5589599609375f, 3576.967041015625f, -212.99000549316406f },
-    { 1440.85205078125f, 3519.787109375f, -119.87999725341797f },
-    { 1683.2469482421875f, 3457.7041015625f, -35.650001525878906f },
-    { 1882.6300048828125f, 3337.98095703125f, 86.4000015258789f },
-    { 2018.6710205078125f, 3164.9150390625f, 230.82000732421875f },
-    { 2098.8369140625f, 2957.39697265625f, 372.4599914550781f },
-    { 2130.55810546875f, 2727.509033203125f, 498.1700134277344f },
-    { 2127.35302734375f, 2486.4189453125f, 606.010009765625f },
-    { 2102.257080078125f, 2241.093994140625f, 701.02001953125f },
-    { 2064.2109375f, 1994.3740234375f, 787.9400024414062f },
-    { 2018.8289794921875f, 1747.238037109375f, 870.1099853515625f },
-    { 1970.0009765625f, 1500.0030517578125f, 949.989990234375f },
-};
-static Point3d mb2ev_Emiter1Pos = { 0.0f, 200.0f, 2150.0f };
-static Point3d mb2ev_Emiter2Pos = { -2925.0f, 1210.0f, -25.0f };
 static Point3d openingRot = { -33.0f, 0.0f, 0.0f };
-static Point3d openingOfs = { 0.0f, 1400.0f, 0.0f };
-static f32 openingZoom = 20000.0f;
+static Point3d openingOfs = { 266.0f, 2095.0f, 4317.0f };
+static f32 openingZoom = 7500.0f;
 static Point3d mapViewRot = { -78.0f, 0.0f, 0.0f };
-static Point3d mapViewPos = { 19.0f, -3.0f, 187.0f };
-static f32 mapViewZoom = 19866.0f;
-static s8 lbl_1_data_D04[0xA] = "s_cloud00";
-static s8 lbl_1_data_D0E[7] = "sisof2";
-static s32 mb2ev_RainbowNoTbl[0xB] = { 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0 };
+static Point3d mapViewPos = { 0.0f, -664.0f, 2625.0f };
+static char lbl_1_data_37C[0xA] = "s_cloud00";
+static s32 mb2ev_RainbowNoTbl[0xB] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 static s32 mb2ev_RainbowDirTbl[0xB] = { 0, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1 };
 static void *mb2ev_RainbowVtxTbl[5] = {
     &mb2ev_Rainbow1VtxTbl,
-    &mb2ev_Rainbow2VtxTbl,
-    &mb2ev_Rainbow3VtxTbl,
-    &mb2ev_Rainbow4VtxTbl,
-    &mb2ev_Rainbow5VtxTbl,
+    &mb2ev_Rainbow1VtxTbl,
+    &mb2ev_Rainbow1VtxTbl,
+    &mb2ev_Rainbow1VtxTbl,
+    &mb2ev_Rainbow1VtxTbl,
 };
-static s32 mb2ev_RainbowVtxNumTbl[5] = { 0xA, 0x14, 0x14, 0x14, 0x14 };
+static s32 mb2ev_RainbowVtxNumTbl[5] = { 0xA, 0xA, 0xA, 0xA, 0xA };
 static s32 mb2ev_RainbowRevF[5] = { 0, 0, 0, 0, 1 };
-static f32 mb2ev_WindGuru2RotTbl[5] = { 0.0f, 180.0f, 90.0f, 0.0f, -90.0f };
-static s8 lbl_1_data_DC0[7] = "hazure";
-static s8 lbl_1_data_DC7[5] = "k_f3";
-static s8 lbl_1_data_DCC[5] = "k_f2";
-static s8 lbl_1_data_DD1[5] = "k_f1";
-static s8 lbl_1_data_DD6[5] = "k_f4";
-static char *mb2ev_WindGuru2HookTbl[5] = { "hazure", "k_f3", "k_f2", "k_f1", "k_f4" };
-static Point3d mb2ev_DynamoPos;
-static Point3d mb2ev_BiriQCapsulePos;
-static s8 lbl_1_data_E08[7] = "dynamo";
-static s8 lbl_1_data_E0F[7] = "suimon";
-static s8 lbl_1_data_E16[5] = "hs_a";
-static s8 lbl_1_data_E1B[5] = "hs_b";
-static s8 lbl_1_data_E20[5] = "hs_c";
-static s8 lbl_1_data_E25[5] = "hs_d";
-static s8 lbl_1_data_E2A[5] = "hs_e";
-static s8 lbl_1_data_E2F[5] = "hs_f";
-static s8 lbl_1_data_E34[5] = "hs_g";
-static s8 lbl_1_data_E39[5] = "hs_h";
-static s8 lbl_1_data_E3E[4] = "hs_i" /* not null-terminated */;
-static char *mb2ev_RainObjTbl[0xA] = {
-    "suimon",
-    "hs_a",
-    "hs_b",
-    "hs_c",
-    "hs_d",
-    "hs_e",
-    "hs_f",
-    "hs_g",
-    "hs_h",
-    "hs_i" /* not null-terminated */,
+static void *mb2ev_TaiyoRainbowVtxTbl[3][3] = {
+    { &mb2ev_TaiyoRainbow1VtxTbl, &mb2ev_TaiyoRainbow2VtxTbl, &mb2ev_TaiyoRainbow3VtxTbl },
+    { &mb2ev_TaiyoRainbow1VtxTbl, &mb2ev_TaiyoRainbow2VtxTbl, &mb2ev_TaiyoRainbow3VtxTbl },
+    { &mb2ev_TaiyoRainbow1VtxTbl, &mb2ev_TaiyoRainbow2VtxTbl, &mb2ev_TaiyoRainbow3VtxTbl },
 };
-static s8 mb2ev_RainNoTbl[0xA];
-static s32 mb2ev_RainSwimLenTbl[0xA] = { 0, 0xF0, 0x3C, 0xB4, 0, 0x5A, 0, 0, 0, 0 };
-static Point3d mb2ev_RainSwimMidPos = { -3570.0f, 1190.0f, -625.0f };
-static Point3d mb2ev_RainSwimRightPos = { -2450.0f, 1210.0f, 500.0f };
-static f32 mb2ev_RainSwimLeftPos[3] = { -3200.0f, 1620.0f, -250.0f };
-static f32 mb2ev_RainSwimDefPos = 0.0f;
-static struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC mb2ev_Zen2RainbowVtxTbl[3] = {
-    {
-        &mb2ev_Zen2Rainbow1VtxTbl,
-        &mb2ev_Zen2Rainbow2VtxTbl,
-        &mb2ev_Zen2Rainbow3VtxTbl,
-    },
-    {
-        &mb2ev_Zen2Rainbow4VtxTbl,
-        &mb2ev_Zen2Rainbow5VtxTbl,
-        &mb2ev_Zen2Rainbow6VtxTbl,
-    },
-    {
-        &mb2ev_Zen2Rainbow7VtxTbl,
-        &mb2ev_Zen2Rainbow8VtxTbl,
-        &mb2ev_Zen2Rainbow9VtxTbl,
-    },
+static s32 mb2ev_TaiyoRainbowVtxNumTbl[3][3] = { { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 } };
+static s32 mb2ev_TaiyoDestTbl[3][3] = { { 0, 1, 2 }, { 0, 1, 2 }, { 0, 1, 2 } };
+static Point3d mb2ev_TaiyoCoinBasePos = { 0.0f, 2940.0f, -860.0f };
+static u8 mb2ev_CoinEffColTbl[7][4] = {
+    { 0xFF, 0x7F, 0x7F, 0xFF },
+    { 0xFF, 0x7F, 0x40, 0xFF },
+    { 0xFF, 0xFF, 0x7F, 0xFF },
+    { 0x7F, 0xFF, 0x7F, 0xFF },
+    { 0x7F, 0x7F, 0xFF, 0xFF },
+    { 0x40, 0x40, 0xFF, 0xFF },
+    { 0xFF, 0x7F, 0xFF, 0xFF },
 };
-static struct _struct_mb2ev_Zen2RainbowVtxNumTbl_0xC mb2ev_Zen2RainbowVtxNumTbl[3] = { { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 } };
-static s32 mb2ev_Zen2DestTbl[3][3];
-static Point3d mb2ev_Zen2CoinBasePos;
-static s8 lbl_1_data_F48[7] = "sisof1";
-static s32 mb2ev_TimerGameMesId = -1;
-static s32 mb2ev_CoinEffColTbl[7] = {
-    0xFF7F7FFF,
-    0xFF7F40FF,
-    0xFFFF7FFF,
-    0x7FFF7FFF,
-    0x7F7FFFFF,
-    0x4040FFFF,
-    0xFF7FFFFF,
-};
-static Point3d mb2_ParticleVtxTbl[4] = {
-    { -0.5f, 0.5f, 0.0f },
-    { 0.5f, 0.5f, 0.0f },
-    { 0.5f, -0.5f, 0.0f },
-    { -0.5f, -0.5f, 0.0f },
-};
-static struct _struct_mb2_ParticleUvTbl_0x8 mb2_ParticleUvTbl[4] = { { 0.0f, 0.0f }, { 0.25f, 0.0f }, { 0.25f, 0.25f }, { 0.0f, 0.25f } };
-static f32 yajiAngleTbl[3] = { -45.0f, 0.0f, 45.0f };
-static OMOBJ *mb2_MainObj;
-static OMOBJ *mb2_CoinObj;
-static OMOBJ *mb2_CoinEffObj;
-static OMOBJ *mb2_SplashEffObj;
-static OMOBJ *mb2_YajiObj;
-static OMOBJ *mb2_RainbowObj;
-static Point3d mb2_CoinMaxDist;
-static s32 mb2_TimerValue;
-static s32 mb2_TimerObj;
-static s16 mb2_PathValidF;
-static s16 mb2_PathAllF;
-static s16 mb2_PathLen;
-static s16 mb2_PathMasuNo;
+typedef struct MB2Work_s {
+    s32 unk00;          /* 0x00 */
+    s32 unk04;          /* 0x04 */
+    s32 mdlMain;        /* 0x08 */
+    s32 unk0C;          /* 0x0C */
+    s32 unk10;          /* 0x10 */
+    s32 mdl5;           /* 0x14 */
+    s32 mdl6;           /* 0x18 */
+    s32 mdlArr[4];      /* 0x1C */
+    s32 mdlB;           /* 0x2C */
+    s32 unk30[10];      /* 0x30 */
+    s32 mdlRainbow;     /* 0x58 */
+    s32 mdl17;          /* 0x5C */
+    s32 unk60;          /* 0x60 */
+    s32 unk64;          /* 0x64 */
+    s32 mdlCloud;       /* 0x68 */
+    ANIMDATA *anim;     /* 0x6C */
+    struct MB2TaiyoSeg_s *seg; /* 0x70 */
+    s32 lightId;        /* 0x74 */
+    f32 lightPos0;      /* 0x78 */
+    f32 lightPos1;      /* 0x7C */
+    f32 lightPos2;      /* 0x80 */
+    f32 lightPos3;      /* 0x84 */
+    f32 lightPos4;      /* 0x88 */
+    f32 lightPos5;      /* 0x8C */
+    u8 color[4];        /* 0x90 */
+    f32 lightRate;      /* 0x94 */
+    s32 lightOnF;       /* 0x98 */
+    s32 unk9C;          /* 0x9C */
+    s32 unkA0;          /* 0xA0 */
+    s32 unkA4;          /* 0xA4 */
+    s32 angle[5];       /* 0xA8 */
+} MB2_WORK;
+
+static MB2_WORK mb2_Work;
 static u32 *mb2_SaveWorkP;
+static s32 mb2_TimerObj;
+static s32 mb2_TimerValue;
+static Point3d mb2_CoinMaxDist;
+static OMOBJ *mb2_RainbowObj;
+static OMOBJ *mb2_YajiObj;
+static OMOBJ *mb2_SplashEffObj;
+static OMOBJ *mb2_CoinEffObj;
+static OMOBJ *mb2_CoinObj;
+static OMOBJ *mb2_MainObj;
+
+#define MB2_PARTICLE_ATTR_NONE 0
+#define MB2_PARTICLE_ATTR_COUNTER_RESET (1 << 0)
+#define MB2_PARTICLE_ATTR_COUNTER_UPDATE (1 << 1)
+
+#define MB2_PARTICLE_DISPATTR_NONE 0
+#define MB2_PARTICLE_DISPATTR_ZBUF_OFF (1 << 0)
+#define MB2_PARTICLE_DISPATTR_NOANIM (1 << 1)
+#define MB2_PARTICLE_DISPATTR_CAMERA_ROT (1 << 2)
+#define MB2_PARTICLE_DISPATTR_ROT3D (1 << 3)
+#define MB2_PARTICLE_DISPATTR_ALL 15
+
+typedef struct MB1Particle_s MB2_PARTICLE;
+typedef void (*MB2_PARTICLE_HOOK)(HU3DMODEL *modelP, MB2_PARTICLE *particleP, Mtx *matrix);
+
+typedef struct MB1ParticleData_s {
+    s16 time; //0x00
+    s16 work; //0x02
+    s16 mode; //0x04
+    s16 cameraBit; //0x06
+    HuVecF vel; //0x08
+    float baseScale; //0x14
+    float scaleFactor; //0x18
+    float speed; //0x1C
+    float unk20; //0x20
+    float gravity; //0x24
+    float unk28; //0x28
+    float animTime; //0x2C
+    float animSpeed; //0x30
+    float scale; //0x34
+    HuVecF rot; //0x38
+    HuVecF pos; //0x44
+    GXColor color; //0x50
+    int animNo; //0x54
+} MB2_PARTICLE_DATA;
+
+struct MB1Particle_s {
+    s16 mode; //0x00
+    s16 time; //0x02
+    HuVecF vel; //0x04
+    s16 work[8]; //0x10
+    u8 blendMode; //0x20
+    u8 attr; //0x21
+    u8 dispAttr; //0x22
+    u8 unk23;
+    HU3DMODELID modelId; //0x24
+    s16 num; //0x26
+    u32 count; //0x28
+    u32 prevCounter; //0x2C
+    u32 prevCount; //0x30
+    u32 dlSize; //0x34
+    ANIMDATA *anim; //0x38
+    MB2_PARTICLE_DATA *data; //0x3C
+    HuVecF *vertex; //0x40
+    HuVec2f *st; //0x44
+    void *dl; //0x48
+    MB2_PARTICLE_HOOK hook; //0x4C
+    HU3DMODEL *hookMdlP; //0x50
+};
+
 
 /* mb2_CoinObj->data: 0x20-entry array, stride 0x84 (coin drop slots). */
 typedef struct MB2CoinSlot_s {
@@ -577,30 +342,22 @@ typedef struct MB2CoinSlot_s {
     f32 unkC;
     s32 unk10;
     s32 unk14;
-    f32 pos[3];    /* 0x18 */
-    f32 rot[3];    /* 0x24 */
-    f32 scale[3];  /* 0x30 */
-    f32 srcPos[3]; /* 0x3C, saved starting position */
-    s32 unk48;
-    s32 unk4C;
-    s32 unk50;
-    f32 playerPos[4][3]; /* 0x54, one Point3d per player */
+    Point3d pos;    /* 0x18 */
+    Point3d rot;    /* 0x24 */
+    Point3d scale;  /* 0x30 */
+    Point3d srcPos; /* 0x3C, saved starting position */
+    Point3d dstPos; /* 0x48 */
+    Point3d playerPos[4]; /* 0x54, one per player */
 } MB2_COIN_SLOT; /* size 0x84 */
 
 /* mb2_SplashEffObj->data: 2 splash-type model ids + their live-particle counts. */
 typedef struct MB2SplashEffData_s {
     s32 modelId[2]; /* 0x00 */
     s32 count[2];   /* 0x08 */
-    u8 pad10[4];
+    ANIMDATA *anim; /* 0x10 */
 } MB2_SPLASHEFF_DATA; /* size 0x14 */
 
-static u8 mb2_Work[0xC4];
-#define MB2W_S16(off) (*(s16 *) (mb2_Work + (off)))
-#define MB2W_U16(off) (*(u16 *) (mb2_Work + (off)))
-#define MB2W_S32(off) (*(s32 *) (mb2_Work + (off)))
-#define MB2W_U32(off) (*(u32 *) (mb2_Work + (off)))
-#define MB2W_F32(off) (*(f32 *) (mb2_Work + (off)))
-#define MB2W_U8(off)  (*(u8 *) (mb2_Work + (off)))
+
 
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
@@ -628,118 +385,48 @@ void ObjectSetup(void) {
 void MB2_Create(void) {
     s32 sp8;
     s16 temp_r3;
-    s16 temp_r3_10;
-    s16 temp_r3_11;
-    s16 temp_r3_12;
-    s16 temp_r3_13;
-    s16 temp_r3_14;
-    s16 temp_r3_15;
-    s16 temp_r3_16;
-    s16 temp_r3_17;
-    s16 temp_r3_18;
     s16 temp_r3_2;
     s16 temp_r3_3;
-    s16 temp_r3_4;
-    s16 temp_r3_5;
-    s16 temp_r3_6;
-    s16 temp_r3_7;
-    s16 temp_r3_8;
-    s16 temp_r3_9;
 
     sp8 = MBBoardNoGet();
     HuAudSndGrpSetSet(0xF);
-    MBMasuCreate(0xCD0000);
-    MBScrollInit(0xCD001BU, 18000.0f, -500.0f);
-    temp_r3 = MBModelCreate(0xCD0001, NULL, 0);
-    MB2W_S32(0x0) = (s32)(uintptr_t) temp_r3;
+    MBMasuCreate(0xCE0000);
+    MBScrollInit(0xCE0015U, 18000.0f, -500.0f);
+    temp_r3 = MBModelCreate(0xCE0007, NULL, 0);
+    mb2_Work.mdlMain = temp_r3;
     MBModelAttrSet(temp_r3, 0x40000001U);
-    temp_r3_2 = MBModelCreate(0xCD0007, NULL, 0);
-    MB2W_S32((1) * 4) = (s32)(uintptr_t) temp_r3_2;
+    mb2_Work.mdl5 = MBModelCreate(0xCE000E, NULL, 0);
+    mb2_Work.mdl6 = MBModelCreate(0xCE0006, NULL, 0);
+    temp_r3_2 = MBModelCreate(0xCE0014, NULL, 0);
+    mb2_Work.mdlB = temp_r3_2;
     MBModelAttrSet(temp_r3_2, 0x40000001U);
-    MBMotionSpeedSet(temp_r3_2, 0.5f);
-    temp_r3_3 = MBModelCreate(0xCD000D, NULL, 0);
-    MB2W_S32((2) * 4) = (s32)(uintptr_t) temp_r3_3;
-    MBModelAttrSet(temp_r3_3, 0x40000001U);
-    temp_r3_4 = MBModelCreate(0xCD0010, NULL, 0);
-    MB2W_S32((3) * 4) = (s32)(uintptr_t) temp_r3_4;
-    MBModelAttrSet(temp_r3_4, 0x40000001U);
-    temp_r3_5 = MBModelCreate(0xCD0013, NULL, 0);
-    MB2W_S32((4) * 4) = (s32)(uintptr_t) temp_r3_5;
-    MBMotionSpeedSet(temp_r3_5, 0.05f);
-    MBModelAttrSet(temp_r3_5, 0x40000001U);
-    MB2W_S32((5) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0014, NULL, 0);
-    MB2W_S32((6) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD000C, NULL, 0);
-    temp_r3_6 = MBModelCreate(0xCD001A, NULL, 0);
-    MB2W_S32((0xB) * 4) = (s32)(uintptr_t) temp_r3_6;
-    MBModelAttrSet(temp_r3_6, 0x40000001U);
-    MB2W_S32((7) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0015, NULL, 0);
-    MB2W_S32((8) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0016, NULL, 0);
-    MB2W_S32((9) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0017, NULL, 0);
-    MB2W_S32((0xA) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0018, NULL, 0);
-    temp_r3_7 = MBModelCreate(0xCD0002, NULL, 0);
-    MB2W_S32((0xC) * 4) = (s32)(uintptr_t) temp_r3_7;
-    MBMotionSpeedSet(temp_r3_7, 0.0f);
-    MB2W_S32((0xD) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0003, NULL, 0);
-    temp_r3_8 = MBModelCreate(0xCD0004, NULL, 0);
-    MB2W_S32((0xE) * 4) = (s32)(uintptr_t) temp_r3_8;
-    MBMotionSpeedSet(temp_r3_8, 0.0f);
-    temp_r3_9 = MBModelCreate(0xCD0005, NULL, 0);
-    MB2W_S32((0xF) * 4) = (s32)(uintptr_t) temp_r3_9;
-    MBModelAttrSet(temp_r3_9, 0x40000001U);
-    MBMotionSpeedSet(temp_r3_9, 0.5f);
-    temp_r3_10 = MBModelCreate(0xCD0006, NULL, 0);
-    MB2W_S32((0x10) * 4) = (s32)(uintptr_t) temp_r3_10;
-    MBModelAttrSet(temp_r3_10, 0x40000001U);
-    temp_r3_11 = MBModelCreate(0xCD0008, NULL, 0);
-    MB2W_S32((0x11) * 4) = (s32)(uintptr_t) temp_r3_11;
-    MBMotionSpeedSet(temp_r3_11, 0.0f);
-    MBModelPosSet(temp_r3_11, -2640.0f, 1250.0f, 900.0f);
-    MBModelLayerSet(temp_r3_11, 2U);
-    temp_r3_12 = MBModelCreate(0xCD0008, NULL, 1);
-    MB2W_S32((0x12) * 4) = (s32)(uintptr_t) temp_r3_12;
-    MBMotionSpeedSet(temp_r3_12, 0.0f);
-    MBModelPosSet(temp_r3_12, -2950.0f, 1300.0f, 800.0f);
-    MBModelLayerSet(temp_r3_12, 2U);
-    temp_r3_13 = MBModelCreate(0xCD0009, NULL, 0);
-    MB2W_S32((0x13) * 4) = (s32)(uintptr_t) temp_r3_13;
-    MBModelAttrSet(temp_r3_13, 0x40000001U);
-    MBMotionSpeedSet(temp_r3_13, 0.33f);
-    temp_r3_14 = MBModelCreate(0xCD000A, NULL, 0);
-    MB2W_S32((0x14) * 4) = (s32)(uintptr_t) temp_r3_14;
-    MBModelPosSet(temp_r3_14, -2930.0f, 1210.0f, 20.0f);
-    MBModelRotSet(temp_r3_14, 0.0f, 45.0f, 0.0f);
-    MBModelAttrSet(temp_r3_14, 0x40000001U);
-    temp_r3_15 = MBModelCreate(0xCD000B, NULL, 0);
-    MB2W_S32((0x15) * 4) = (s32)(uintptr_t) temp_r3_15;
-    MBModelPosSet(temp_r3_15, -2930.0f, 1215.0f, 20.0f);
-    MBModelAttrSet(temp_r3_15, 0x40000001U);
-    temp_r3_16 = MBModelCreate(0xCD000E, NULL, 0);
-    MB2W_S32((0x16) * 4) = (s32)(uintptr_t) temp_r3_16;
-    MBMotionSpeedSet(temp_r3_16, 0.0f);
-    MBMotionTimeSet(temp_r3_16, 0.0f);
-    MB2W_S32((0x17) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD000F, NULL, 0);
-    temp_r3_17 = MBModelCreate(0xCD0011, NULL, 0);
-    MB2W_S32((0x18) * 4) = (s32)(uintptr_t) temp_r3_17;
-    MBModelRotSet(temp_r3_17, 0.0f, -50.0f, 0.0f);
-    temp_r3_18 = MBModelCreate(0xCD0012, NULL, 0);
-    MB2W_S32((0x19) * 4) = (s32)(uintptr_t) temp_r3_18;
-    MBMotionSpeedSet(temp_r3_18, 0.0f);
-    MB2W_S32((0x1A) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0019, NULL, 0);
-    MBCapsuleColCreate(0xCD001C);
-    MB2W_S32((0x1B) * 4) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCD001D, 0x10000000));
-    MB2W_S32((0x1C) * 4) = 0;
-    MB2W_S32((0x1D) * 4) = (s32)(uintptr_t)-1U;
-    MB2W_S32((0x25) * 4) = 1.0f;
-    MB2W_S32((0x26) * 4) = (s32)(uintptr_t)1U;
-    MB2W_S32((0x27) * 4) = (s32)(uintptr_t)1U;
-    MB2W_S32((0x28) * 4) = (s32)(uintptr_t)1U;
-    MB2W_S32((0x29) * 4) = 0;
-    MB2W_S32((0x2C) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-    MB2W_S32((0x2D) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-    MB2W_S32((0x2E) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-    MB2W_S32((0x2F) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-    MB2W_S32((0x30) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-    MB2W_S32((0x2B) * 4) = 0.0f;
+    mb2_Work.mdlArr[0] = MBModelCreate(0xCE000F, NULL, 0);
+    mb2_Work.mdlArr[1] = MBModelCreate(0xCE0010, NULL, 0);
+    mb2_Work.mdlArr[2] = MBModelCreate(0xCE0011, NULL, 0);
+    mb2_Work.mdlArr[3] = MBModelCreate(0xCE0012, NULL, 0);
+    MBModelDispSet((s16) mb2_Work.mdlArr[0], 0);
+    MBModelDispSet((s16) mb2_Work.mdlArr[1], 0);
+    MBModelDispSet((s16) mb2_Work.mdlArr[3], 0);
+    temp_r3_3 = MBModelCreate(0xCE0008, NULL, 0);
+    mb2_Work.mdlRainbow = temp_r3_3;
+    MBMotionSpeedSet(temp_r3_3, 0.0f);
+    MBMotionTimeSet(temp_r3_3, 0.0f);
+    mb2_Work.mdl17 = MBModelCreate(0xCE0009, NULL, 0);
+    mb2_Work.mdlCloud = MBModelCreate(0xCE0013, NULL, 0);
+    MBCapsuleColCreate(0xCE0016);
+    mb2_Work.anim = HuSprAnimRead(HuDataReadNum(0xCE0017, 0x10000000));
+    mb2_Work.seg = NULL;
+    mb2_Work.lightId = -1;
+    mb2_Work.lightRate = 1.0f;
+    mb2_Work.lightOnF = 1;
+    mb2_Work.unk9C = 1;
+    mb2_Work.unkA0 = 1;
+    mb2_Work.unkA4 = 0;
+    mb2_Work.angle[0] = (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    mb2_Work.angle[1] = (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    mb2_Work.angle[2] = (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    mb2_Work.angle[3] = (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+    mb2_Work.angle[4] = (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
     mb2_SaveWorkP = GwSystem.mbSaveWork;
     if (_CheckFlag(0x10001U) == 0) {
         *mb2_SaveWorkP = (frand() & 0x7FFF) % 3;
@@ -753,8 +440,8 @@ void MB2_Create(void) {
         *mb2_SaveWorkP = 3;
     }
     MB2_SplashEffInit();
-    HuDataDirClose(0xCD0000);
-    MBBranchFlagSet(0x4000U);
+    HuDataDirClose(0xCE0000);
+    MBBranchFlagSet(0x40U);
     MBLightHookSet(MB2_LightSet, MB2_LightReset);
     MBMasuWalkPreHookSet(MB2Ev_MasuWalkPre);
     MBMasuWalkPostHookSet(MB2Ev_MasuWalkPost);
@@ -762,22 +449,20 @@ void MB2_Create(void) {
     MBMasuPathCheckHookSet(MB2_MasuPathCheck);
     HuDataDirRead(0xB0000);
     mb2_MainObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB2_MainObjUpdate);
-    MBAudFXEmiterCreate(0x5D0, &mb2ev_Emiter1Pos, 0);
-    MBAudFXEmiterCreate(0x5DA, &mb2ev_Emiter2Pos, 0);
     MBOpeningViewSet(&openingRot, &openingOfs, openingZoom);
-    MBMapViewCameraSet(&mapViewRot, &mapViewPos, mapViewZoom);
+    MBMapViewCameraSet(&mapViewRot, &mapViewPos, 12202.0f);
 }
 
 void MB2_Kill(void) {
     mb2_MainObj = NULL;
-    if ((u32) MB2W_S32((0x1B) * 4) != 0) {
-        HuSprAnimKill((ANIMDATA *)(uintptr_t) MB2W_S32((0x1B) * 4));
+    if (mb2_Work.anim != 0) {
+        HuSprAnimKill(mb2_Work.anim);
     }
-    MB2W_S32((0x1B) * 4) = 0;
-    if ((u32) MB2W_S32((0x1C) * 4) != 0) {
-        HuMemDirectFree((void *)(uintptr_t) MB2W_S32((0x1C) * 4));
+    mb2_Work.anim = NULL;
+    if (mb2_Work.seg != 0) {
+        HuMemDirectFree(mb2_Work.seg);
     }
-    MB2W_S32((0x1C) * 4) = 0;
+    mb2_Work.seg = NULL;
     MB2_CoinClose();
     MB2_CoinEffClose();
     MB2_YajiClose();
@@ -786,146 +471,56 @@ void MB2_Kill(void) {
 }
 
 void MB2_MainObjUpdate(OMOBJ *obj) {
-    f32 sp2C;
-    f32 sp28;
-    f32 sp24;
-    f32 sp20;
-    f32 sp1C;
-    f32 sp18;
-    MBCAMERA *sp14;
-    s8 sp13;
-    s8 sp12;
-    s8 sp11;
-    s8 sp10;
-    f32 spC;
-    u8 spB;
-    u8 spA;
-    u8 sp9;
-    u8 sp8;
-    u8 *temp_r4;
-    s32 temp_r3_2;
-    f32 temp_f1;
-    f32 temp_f1_2;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f29_2;
-    f32 temp_f30;
-    f32 temp_f30_2;
-    f32 temp_f31;
-    f32 temp_f31_2;
-    f32 var_f27;
-    s32 var_r29;
-    s32 var_r31;
-    s32 var_r31_2;
-    s8 temp_r0;
-    HSFOBJECT *temp_r3;
-    f32 sp30[4][3];
+    MBCAMERA *camP;
+    s32 i;
+    HSFOBJECT *hsfObj;
+    HU3DMODEL *modelP;
+    s16 mdlId;
+    f32 scaleX;
+    f32 scaleY;
+    f32 scaleZ;
 
-    if ((MBKillCheck() != 0) || ((OMOBJ *) mb2_MainObj == NULL)) {
+    if ((MBKillCheck() != 0) || (mb2_MainObj == NULL)) {
         omDelObjEx(mbObjMan, mb2_MainObj);
         mb2_MainObj = NULL;
         return;
     }
-    sp14 = MBCameraGet();
-    var_r31 = 0;
-loop_5:
-    if (var_r31 < 4) {
-        temp_r4 = mb2_Work + (var_r31 * 4);
-        MB2W_S32(var_r31 * 4 + 0xB0) = (s32) (((frand() & 0x7FFF) % 3) + MB2W_S32(var_r31 * 4 + 0xB0) + 1);
-        temp_f30 = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32(var_r31 * 4 + 0xB0)) / 180.0)));
-        temp_f29 = (f32) (1.0 + (0.0024999999441206455 * sin((3.141592653589793 * (f64) MB2W_S32(var_r31 * 4 + 0xB0)) / 180.0)));
-        MBModelScaleSet((s16) MB2W_S32(var_r31 * 4 + 0x1C), temp_f30, temp_f29, (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32(var_r31 * 4 + 0xB0)) / 180.0))));
-        var_r31 += 1;
-        goto loop_5;
+    camP = MBCameraGet();
+    for (i = 0; i < 4; i++) {
+        mb2_Work.angle[i] += ((frand() & 0x7FFF) % 3) + 1;
+        scaleX = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) mb2_Work.angle[i]) / 180.0)));
+        scaleY = (f32) (1.0 + (0.0024999999441206455 * sin((3.141592653589793 * (f64) mb2_Work.angle[i]) / 180.0)));
+        scaleZ = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) mb2_Work.angle[i]) / 180.0)));
+        MBModelScaleSet((s16) mb2_Work.mdlArr[i], scaleX, scaleY, scaleZ);
     }
-    MB2W_S32((0x30) * 4) = ((frand() & 0x7FFF) % 3) + MB2W_S32((0x30) * 4) + 1;
-    temp_f30_2 = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32((0x30) * 4)) / 180.0)));
-    temp_f29_2 = (f32) (1.0 + (0.0024999999441206455 * sin((3.141592653589793 * (f64) MB2W_S32((0x30) * 4)) / 180.0)));
-    temp_f28 = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) MB2W_S32((0x30) * 4)) / 180.0)));
-    temp_r3 = MB2_ModelObjPtrGet(&Hu3DData[MBModelIdGet((s16) MB2W_S32((0x1A) * 4))], "s_cloud00");
-    if (temp_r3 != NULL) {
-        temp_r3->mesh.base.scale.x = temp_f30_2;
-        temp_r3->mesh.base.scale.y = temp_f29_2;
-        temp_r3->mesh.base.scale.z = temp_f28;
+    mb2_Work.angle[4] += ((frand() & 0x7FFF) % 3) + 1;
+    scaleX = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) mb2_Work.angle[4]) / 180.0)));
+    scaleY = (f32) (1.0 + (0.0024999999441206455 * sin((3.141592653589793 * (f64) mb2_Work.angle[4]) / 180.0)));
+    scaleZ = (f32) (1.0 + (0.009999999776482582 * sin((3.141592653589793 * (f64) mb2_Work.angle[4]) / 180.0)));
+    mdlId = (s16) MBModelIdGet((s16) mb2_Work.mdlCloud);
+    modelP = &Hu3DData[mdlId];
+    hsfObj = MB2_ModelObjPtrGet(modelP, lbl_1_data_37C);
+    if (hsfObj) {
+        hsfObj->mesh.base.scale.x = scaleX;
+        hsfObj->mesh.base.scale.y = scaleY;
+        hsfObj->mesh.base.scale.z = scaleZ;
     }
-    if ((s32) MB2W_S32((0x1D) * 4) != -1) {
-        if ((s32) MB2W_S32((0x26) * 4) != 0) {
-            if (MB2W_F32((0x25) * 4) < 1.0f) {
-                temp_f1 = MB2W_F32((0x25) * 4) + 0.03f;
-                MB2W_S32((0x25) * 4) = temp_f1;
-                if (temp_f1 > 1.0f) {
-                    MB2W_S32((0x25) * 4) = 1.0f;
+    if (mb2_Work.lightId != -1) {
+        if (mb2_Work.lightOnF != 0) {
+            if (mb2_Work.lightRate < 1.0f) {
+                mb2_Work.lightRate += 0.03f;
+                if (mb2_Work.lightRate > 1.0f) {
+                    mb2_Work.lightRate = 1.0f;
                 }
             }
-        } else if (MB2W_F32((0x25) * 4) > 0.0f) {
-            temp_f1_2 = MB2W_F32((0x25) * 4) - 0.03f;
-            MB2W_S32((0x25) * 4) = temp_f1_2;
-            if (temp_f1_2 < 0.0f) {
-                MB2W_S32((0x25) * 4) = 0.0f;
+        } else if (mb2_Work.lightRate > 0.0f) {
+            mb2_Work.lightRate -= 0.03f;
+            if (mb2_Work.lightRate < 0.0f) {
+                mb2_Work.lightRate = 0.0f;
             }
         }
-        temp_r0 = (s8) (255.0f * MB2W_F32((0x25) * 4));
-        MB2W_U8(0x93) = temp_r0;
-        MB2W_U8(0x92) = temp_r0;
-        MB2W_U8(0x91) = temp_r0;
-        MB2W_U8(0x90) = temp_r0;
-        Hu3DGLightColorSet((s16) MB2W_S32((0x1D) * 4), (u8) MB2W_U8(0x90), (u8) MB2W_U8(0x91), (u8) MB2W_U8(0x92), (u8) MB2W_U8(0x93));
-    }
-    if ((s32) MB2W_S32((0x27) * 4) != 0) {
-        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((0x19) * 4)), "sisof2", (f32 (*)[4]) &sp30[0]);
-        MBModelPosSet((s16) MB2W_S32((0x18) * 4), sp30[3][0], sp30[3][1], sp30[3][2]);
-    }
-    if ((s32) MB2W_S32((0x28) * 4) != 0) {
-        var_r31_2 = 0;
-loop_31:
-        if (var_r31_2 < 3) {
-            temp_f31 = 0.5f - (0.007874016f * (f32) (frand() & 0x7F));
-            sp24 = (f32) (-2925.0 + (1.5 * (100.0 * ((f64) temp_f31 * sin(-0.7853981633974483)))));
-            sp28 = 1210.0f + (0.25f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
-            sp2C = (f32) (-25.0 + (1.5 * (100.0 * ((f64) temp_f31 * cos(-0.7853981633974483)))));
-            sp20 = 0.0f;
-            sp1C = 0.0f;
-            sp18 = 0.0f;
-            temp_f31_2 = 64.0f * (0.007874016f * (f32) (frand() & 0x7F));
-            sp10 = (s8) (170.0f + temp_f31_2);
-            sp11 = (s8) (170.0f + temp_f31_2);
-            sp12 = (s8) (190.0f + temp_f31_2);
-            sp13 = (s8) (64.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
-            if ((u32) (frand() & 1) != 0) {
-                var_f27 = 0.1f;
-            } else {
-                var_f27 = -0.1f;
-            }
-            spC = var_f27;
-            if ((var_r31_2 < 2) || (temp_r3_2 = MB2W_S32((0x29) * 4) + 1, MB2W_S32((0x29) * 4) = temp_r3_2, ((temp_r3_2 & 1) != 0))) {
-                if (var_r31_2 < 2) {
-                    var_r29 = 0;
-                } else {
-                    var_r29 = 1;
-                }
-                sp8 = (u8) sp10;
-                sp9 = (u8) sp11;
-                spA = (u8) sp12;
-                spB = (u8) sp13;
-                MB2_SplashEffCreateRandX(&sp24, &sp8, var_r29, 1.0f);
-            }
-            var_r31_2 += 1;
-            goto loop_31;
-        }
-    }
-    if ((s32) MB2W_S32((3) * 4) != -1) {
-        if (MB2W_F32((0x2B) * 4) > 10.0f) {
-            MBMotionTimeGet((s16) MB2W_S32((3) * 4));
-        }
-        MB2W_S32((0x2B) * 4) = MBMotionTimeGet((s16) MB2W_S32((3) * 4));
-    }
-    if ((MBMotionSpeedGet((s16) MB2W_S32((0x11) * 4)) > 0.0f) && (MBMotionEndCheck((s16) MB2W_S32((0x11) * 4)) != 0)) {
-        MBMotionSpeedSet((s16) MB2W_S32((0x11) * 4), 0.0f);
-        MBMotionTimeSet((s16) MB2W_S32((0x11) * 4), 0.0f);
-    }
-    if ((MBMotionSpeedGet((s16) MB2W_S32((0x12) * 4)) > 0.0f) && (MBMotionEndCheck((s16) MB2W_S32((0x12) * 4)) != 0)) {
-        MBMotionSpeedSet((s16) MB2W_S32((0x12) * 4), 0.0f);
-        MBMotionTimeSet((s16) MB2W_S32((0x12) * 4), 0.0f);
+        mb2_Work.color[0] = mb2_Work.color[1] = mb2_Work.color[2] = mb2_Work.color[3] = (255.0f * mb2_Work.lightRate);
+        Hu3DGLightColorSet((s16) mb2_Work.lightId, mb2_Work.color[0], mb2_Work.color[1], mb2_Work.color[2], mb2_Work.color[3]);
     }
 }
 
@@ -933,17 +528,17 @@ void MB2_LightSet(void) {
     Hu3DShadowCreate(45.0f, 1000.0f, 250000.0f);
     Hu3DShadowTPLvlSet(0.3f);
     Hu3DBGColorSet(0xFFU, 0xFFU, 0xFFU);
-    MB2W_S32((0x1E) * 4) = -3700.0f;
-    MB2W_S32((0x1F) * 4) = 18100.0f;
-    MB2W_S32((0x20) * 4) = 21300.0f;
-    MB2W_S32((0x21) * 4) = 3700.0f;
-    MB2W_S32((0x22) * 4) = -18100.0f;
-    MB2W_S32((0x23) * 4) = -21300.0f;
-    MB2W_U8(0x90) = 0xFFU;
-    MB2W_U8(0x91) = 0xFFU;
-    MB2W_U8(0x92) = 0xFFU;
-    MB2W_S32((0x1D) * 4) = (s32)(uintptr_t) Hu3DGLightCreate(MB2W_F32((0x1E) * 4), MB2W_F32((0x1F) * 4), MB2W_F32((0x20) * 4), MB2W_F32((0x21) * 4), MB2W_F32((0x22) * 4), MB2W_F32((0x23) * 4), MB2W_U8(0x90), MB2W_U8(0x91), MB2W_U8(0x92));
-    Hu3DGLightInfinitytSet((s16) MB2W_S32((0x1D) * 4));
+    mb2_Work.lightPos0 = -3700.0f;
+    mb2_Work.lightPos1 = 18100.0f;
+    mb2_Work.lightPos2 = 21300.0f;
+    mb2_Work.lightPos3 = 3700.0f;
+    mb2_Work.lightPos4 = -18100.0f;
+    mb2_Work.lightPos5 = -21300.0f;
+    mb2_Work.color[0] = 0xFFU;
+    mb2_Work.color[1] = 0xFFU;
+    mb2_Work.color[2] = 0xFFU;
+    mb2_Work.lightId = Hu3DGLightCreate(mb2_Work.lightPos0, mb2_Work.lightPos1, mb2_Work.lightPos2, mb2_Work.lightPos3, mb2_Work.lightPos4, mb2_Work.lightPos5, mb2_Work.color[0], mb2_Work.color[1], mb2_Work.color[2]);
+    Hu3DGLightInfinitytSet((s16) mb2_Work.lightId);
 }
 
 void MB2_LightReset(void) {
@@ -951,12 +546,19 @@ void MB2_LightReset(void) {
 }
 
 int MB2Ev_MasuHatena(int playerNo) {
-    u32 temp_r0;
+    MASU *masu;
+    s16 masuId;
+    u16 flag;
 
-    temp_r0 = MBMasuGet(0, (s32) (s16) GwPlayer[playerNo].masuId)->flag;
-    if ((u32) ((u16) temp_r0 & 0x1) != 0) {
+    masuId = GwPlayer[playerNo].masuId;
+    masu = MBMasuGet(0, masuId);
+    flag = masu->flag;
+    if ((u32) (flag & 0x1) != 0) {
         MB2Ev_HatenaTaiyo(playerNo);
     }
+#ifdef TARGET_PC
+    return 0; /* the original returns whatever is left in r3 */
+#endif
 }
 
 void MB2_Stub(void) {
@@ -964,14 +566,23 @@ void MB2_Stub(void) {
 }
 
 int MB2Ev_MasuWalkPre(int playerNo) {
+#ifdef TARGET_PC
+    return 0; /* the original returns playerNo (untouched r3) */
+#endif
 }
 
 int MB2Ev_MasuWalkPost(int playerNo) {
-    u32 temp_r0;
+    MASU *masu;
+    s16 masuId;
+    u16 flag;
+    s32 evNo;
 
-    temp_r0 = MBMasuGet(0, (s32) (s16) GwPlayer[playerNo].masuId)->flag;
-    if ((u32) ((u16) temp_r0 & 0x2) != 0) {
-        MB2Ev_Rainbow(9, playerNo);
+    masuId = GwPlayer[playerNo].masuId;
+    masu = MBMasuGet(0, masuId);
+    flag = masu->flag;
+    if ((u32) (flag & 0x2) != 0) {
+        evNo = 9;
+        MB2Ev_Rainbow(evNo, playerNo);
     }
     return 0;
 }
@@ -981,579 +592,605 @@ int MB2_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF) {
 }
 
 s32 MB2Ev_Rainbow(s32 arg0, s32 arg1) {
-    Point3d sp5C;
-    f32 sp58;
-    f32 sp54;
-    f32 sp50;
+    Point3d sp50;
     Point3d sp44;
     Point3d sp38;
-    f32 sp34;
-    f32 sp30;
-    f32 sp2C;
-    f32 sp28;
-    f32 sp24;
-    f32 sp20;
-    MASU *sp1C;
-    s32 sp18;
-    s32 sp14;
-    s32 sp10;
-    f32 *spC;
-    f32 *sp8;
-    Point3d *temp_r27;
-    f32 temp_f1;
-    f32 temp_f26;
-    f32 temp_f26_2;
-    f32 temp_f29;
-    f32 temp_f29_2;
-    f32 temp_f31;
-    f32 temp_f31_2;
-    f32 temp_f31_3;
-    f32 var_f28;
-    s16 temp_r17;
-    s16 temp_r18;
-    s16 temp_r20;
-    s16 temp_r21;
-    s16 temp_r3;
-    s32 temp_r25;
-    s32 temp_r28;
-    s32 temp_r28_2;
-    s32 temp_r28_3;
-    s32 temp_r28_4;
-    s32 temp_r28_5;
-    s32 temp_r3_2;
-    s32 var_r26;
-    s32 var_r26_2;
-    s32 var_r29;
-    s32 var_r29_2;
-    s32 var_r30;
-    s32 var_r30_2;
-    s32 var_r30_3;
-    s32 var_r30_4;
-    s32 var_r30_5;
-    s32 var_r30_6;
-    s32 var_r30_7;
-    s32 var_r30_8;
-    Point3d *temp_r3_3;
-    Point3d *temp_r4;
-    Point3d *temp_r4_2;
+    Point3d sp2C;
+    Point3d sp20;
+    Point3d *vtx;
+    MASU *sp10;
+    s32 spC;
+    s32 sp8;
+    s32 ret;
+    s32 masuNo;
+    s32 rbNo;
+    f32 t;
+    s32 rbId;
+    s32 choice;
+    s32 i;
+    s32 j;
+    s32 steps;
+    s32 steps2;
+    f32 rate;
+    f32 yaw;
+    f32 totalLen;
+    s16 masuId;
 
-    sp10 = 0;
+    ret = 0;
     if ((arg0 <= 0) || (arg0 > 0xA)) {
         return 0;
     }
     if (arg0 == 0xA) {
         return 0;
     }
-    temp_r21 = GwPlayer[arg1].masuId;
-    sp1C = MBMasuGet(0, (s32) temp_r21);
-    temp_r25 = mb2ev_RainbowNoTbl[arg0];
-    temp_r3 = MB2_RainbowMasuNoEndGet(temp_r21);
-    if (temp_r3 == -1) {
+    masuId = GwPlayer[arg1].masuId;
+    sp10 = MBMasuGet(0, masuId);
+    rbNo = mb2ev_RainbowNoTbl[arg0];
+    masuNo = MB2_RainbowMasuNoEndGet(masuId);
+    if (masuNo == -1) {
         return 0;
     }
     MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0U);
     MB2_RainbowObjInit();
-    temp_r3_2 = MB2_RainbowObjCreate(mb2ev_RainbowVtxTbl[temp_r25], mb2ev_RainbowVtxNumTbl[temp_r25], mb2ev_RainbowRevF[temp_r25]);
-    MB2_RainbowObjAlphaSet(temp_r3_2, 0);
+    rbId = MB2_RainbowObjCreate(mb2ev_RainbowVtxTbl[rbNo], mb2ev_RainbowVtxNumTbl[rbNo], mb2ev_RainbowRevF[rbNo]);
+    MB2_RainbowObjAlphaSet(rbId, 0);
     MB2_CoinEffInit();
     MBWalkNumDispSet(arg1, 0);
     MBCameraFocusPlayerSet(arg1);
     MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0U);
-loop_8:
-    if (arg0 == 9) {
-        var_r29 = 0;
-    } else {
-        MBAudFXPlay(0x2F5);
-        MBWinCreateChoice(1, 0x2E0000U, 2, 0);
-        MBTopWinAttrSet(0x10U);
-        if (MBPlayerCoinGet(arg1) < 5) {
-            MBTopWinChoiceDisable(0);
-        }
-        if (GwPlayer[arg1].comF != 0) {
-            temp_r17 = (GwPlayer[arg1].dif + 1) * 0xA;
-            temp_r18 = MB2_PathLenGet(temp_r21, temp_r17, 1);
-            temp_r20 = MB2_PathLenGet(temp_r3, temp_r17, 1);
-            if (MBPlayerCoinGet(arg1) < 5) {
-                var_r29_2 = 1;
-            } else if ((temp_r18 == -1) && (temp_r20 == -1)) {
-                if (MB2_PathCheck(temp_r21) != 0) {
-                    var_r29_2 = 1;
-                } else if (MB2_PathCheck(temp_r3) != 0) {
-                    var_r29_2 = 0;
-                } else {
-                    temp_f31 = 0.6f + (0.4f * ((f32) GwPlayer[arg1].dif / 3.0f));
-                    if ((0.007874016f * (f32) (frand() & 0x7F)) == temp_f31) {
-                        var_r29_2 = 0;
-                    } else {
-                        var_r29_2 = 1;
-                    }
-                }
-            } else if ((temp_r18 != -1) && (temp_r20 != -1)) {
-                if (temp_r20 < temp_r18) {
-                    var_r29_2 = 0;
-                } else {
-                    var_r29_2 = 1;
-                }
-            } else if (temp_r20 != -1) {
-                var_r29_2 = 0;
-            } else {
-                var_r29_2 = 1;
+    do {
+        if (arg0 == 9) {
+            choice = 0;
+        } else {
+            MBWinCreateChoice(1, 0x2E0000U, 0, 0);
+            MBTopWinAttrSet(0x10U);
+            if (MBPlayerCoinGet(arg1) < 0xA) {
+                MBTopWinChoiceDisable(0);
             }
-            if (MBPlayerCoinGet(arg1) >= 0xA) {
-                if (var_r29_2 == 0) {
-                    MBComChoiceSetUp();
-                } else {
-                    MBComChoiceSetDown();
-                }
-            } else {
+            if (GwPlayer[arg1].comF != 0) {
                 MBComChoiceSetUp();
             }
-        }
-        MBTopWinWait();
-        var_r29 = MBWinLastChoiceGet();
-        MBTopWinKill();
-        if (var_r29 != 2) {
-            if (var_r29 < 2) {
-
+            MBTopWinWait();
+            choice = MBWinLastChoiceGet();
+            MBTopWinKill();
+            switch (choice) {
+            case 2:
+                MBScrollExec(arg1);
+                MBStatusDispSetAll(1);
+                break;
             }
-        } else {
-            MBScrollExec(arg1);
-            MBStatusDispSetAll(1);
         }
-        if (var_r29 == 2) {
-            goto loop_8;
-        }
-    }
-    if (var_r29 == 0) {
+    } while (choice == 2);
+    if (choice == 0) {
         if (arg0 != 9) {
-            MBCoinAddExec(arg1, -5);
+            MBCoinAddExec(arg1, -0xA);
         }
         HuAudFXPlay(0x5C8);
-        var_r30 = 0;
-loop_47:
-        if ((f32) var_r30 < 30.0f) {
-            temp_f1 = (f32) var_r30;
-            MB2_RainbowObjAlphaSet(temp_r3_2, (s8) (255.0f * (temp_f1 / 30.0f)));
+        for (i = 0; (f32) i < 30.0f; i++) {
+            MB2_RainbowObjAlphaSet(rbId, (s8) (255.0f * ((f32) i / 30.0f)));
             HuPrcVSleep();
-            var_r30 += 1;
-            goto loop_47;
         }
-        MB2_RainbowObjAlphaSet(temp_r3_2, -1);
-        MBPlayerPosFixEvent(arg1, (s32) temp_r3, 0);
-        temp_r27 = mb2ev_RainbowVtxTbl[temp_r25];
-        var_r30_2 = 1;
-        var_f28 = 0.0f;
-loop_50:
-        if (var_r30_2 < (s32) mb2ev_RainbowVtxNumTbl[temp_r25]) {
-            PSVECSubtract(temp_r27 + (var_r30_2 - 1), temp_r27 + var_r30_2, &sp44);
-            var_f28 += PSVECMag(&sp44);
-            var_r30_2 += 1;
-            goto loop_50;
+        MB2_RainbowObjAlphaSet(rbId, 0xFF);
+        MBPlayerPosFixEvent(arg1, masuNo, 0);
+        vtx = (Point3d *) mb2ev_RainbowVtxTbl[rbNo];
+        totalLen = 0.0f;
+        for (i = 1; i < mb2ev_RainbowVtxNumTbl[rbNo]; i++) {
+            PSVECSubtract(&vtx[i - 1], &vtx[i], &sp38);
+            totalLen += PSVECMag(&sp38);
         }
-        sp14 = (s32) (var_f28 / 20.0f);
+        spC = (s32) (totalLen / 20.0f);
         MBPlayerMotionNoShiftSet(arg1, 3, 0.0f, 8.0f, 0x40000001U);
-        if ((s32) mb2ev_RainbowDirTbl[arg0] > 0) {
-            MBPlayerPosGet(arg1, &sp5C);
-            sp50 = temp_r27->x;
-            sp54 = temp_r27->y;
-            sp58 = temp_r27->z;
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-            temp_r28 = (s32) (PSVECMag(&sp44) / 20.0f);
-            var_r30_3 = 0;
-loop_54:
-            if (var_r30_3 < temp_r28) {
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                PSVECScale(&sp44, &sp44, (f32) var_r30_3 / (f32) temp_r28);
-                PSVECAdd(&sp5C, &sp44, &sp44);
-                MBPlayerPosSetV(arg1, &sp44);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                MBPlayerRotGet(arg1, &sp38);
-                sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
-                MBPlayerRotSetV(arg1, &sp38);
+        if (mb2ev_RainbowDirTbl[arg0] > 0) {
+            MBPlayerPosGet(arg1, &sp50);
+            sp44 = vtx[0];
+            PSVECSubtract(&sp44, &sp50, &sp38);
+            steps = (s32) (PSVECMag(&sp38) / 20.0f);
+            for (i = 0; i < steps; i++) {
+                t = (f32) i / (f32) steps;
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                PSVECScale(&sp38, &sp38, t);
+                PSVECAdd(&sp50, &sp38, &sp38);
+                MBPlayerPosSetV(arg1, &sp38);
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                MBPlayerRotGet(arg1, &sp2C);
+                sp2C.y = (f32) (180.0 * (atan2((f64) sp38.x, (f64) sp38.z) / 3.141592653589793));
+                MBPlayerRotSetV(arg1, &sp2C);
                 HuPrcVSleep();
-                var_r30_3 += 1;
-                goto loop_54;
             }
-            MBPlayerPosSetV(arg1, (Point3d *) &sp50);
-            var_r30_4 = 0;
-loop_60:
-            if (var_r30_4 < (s32) (mb2ev_RainbowVtxNumTbl[temp_r25] - 1)) {
-                sp18 = var_r30_4;
-                MBPlayerPosGet(arg1, &sp5C);
-                temp_r4 = temp_r27 + (var_r30_4 + 1);
-                sp50 = temp_r4->x;
-                sp54 = temp_r4->y;
-                sp58 = temp_r4->z;
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                temp_r28_2 = (s32) (PSVECMag(&sp44) / 20.0f);
-                MBPlayerRotGet(arg1, &sp38);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                temp_f29 = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
-                var_r26 = 0;
-loop_58:
-                if (var_r26 < temp_r28_2) {
-                    temp_f31_2 = (f32) var_r26 / (f32) temp_r28_2;
-                    PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                    PSVECScale(&sp44, &sp44, temp_f31_2);
-                    PSVECAdd(&sp5C, &sp44, &sp44);
-                    MBPlayerPosSetV(arg1, &sp44);
-                    sp38.y = fn_1_42FC(temp_f31_2, sp38.y, temp_f29);
-                    MBPlayerRotSet(arg1, 0.0f, sp38.y, 0.0f);
-                    MBPlayerPosGet(arg1, &sp44);
-                    sp2C = sp44.x;
-                    sp30 = sp44.y;
-                    sp34 = sp44.z;
-                    spC = &sp2C;
-                    temp_f26 = 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F))));
-                    MB2_CoinEffCreateColRand(spC, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), temp_f26, 150.0f, 100.0f, 0.0f);
+            MBPlayerPosSetV(arg1, &sp44);
+            for (i = 0; i < mb2ev_RainbowVtxNumTbl[rbNo] - 1; i++) {
+                MBPlayerPosGet(arg1, &sp50);
+                sp44 = vtx[i + 1];
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                steps2 = (s32) (PSVECMag(&sp38) / 20.0f);
+                MBPlayerRotGet(arg1, &sp2C);
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                yaw = (f32) (180.0 * (atan2((f64) sp38.x, (f64) sp38.z) / 3.141592653589793));
+                for (j = 0; j < steps2; j++) {
+                    rate = (f32) j / (f32) steps2;
+                    PSVECSubtract(&sp44, &sp50, &sp38);
+                    PSVECScale(&sp38, &sp38, rate);
+                    PSVECAdd(&sp50, &sp38, &sp38);
+                    MBPlayerPosSetV(arg1, &sp38);
+                    sp2C.y = fn_1_42FC(rate, sp2C.y, yaw);
+                    MBPlayerRotSet(arg1, 0.0f, sp2C.y, 0.0f);
+                    MBPlayerPosGet(arg1, &sp38);
+                    sp20 = sp38;
+                    MB2_CoinEffCreateColRand(&sp20.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
                     HuPrcVSleep();
-                    var_r26 += 1;
-                    goto loop_58;
                 }
-                MBPlayerPosSetV(arg1, (Point3d *) &sp50);
-                MBPlayerRotSet(arg1, 0.0f, temp_f29, 0.0f);
-                var_r30_4 += 1;
-                goto loop_60;
+                MBPlayerPosSetV(arg1, &sp44);
+                MBPlayerRotSet(arg1, 0.0f, yaw, 0.0f);
             }
         } else {
-            MBPlayerPosGet(arg1, &sp5C);
-            temp_r4_2 = temp_r27 + (mb2ev_RainbowVtxNumTbl[temp_r25] - 1);
-            sp50 = temp_r4_2->x;
-            sp54 = temp_r4_2->y;
-            sp58 = temp_r4_2->z;
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-            temp_r28_3 = (s32) (PSVECMag(&sp44) / 20.0f);
-            var_r30_5 = 0;
-loop_64:
-            if (var_r30_5 < temp_r28_3) {
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                PSVECScale(&sp44, &sp44, (f32) var_r30_5 / (f32) temp_r28_3);
-                PSVECAdd(&sp5C, &sp44, &sp44);
-                MBPlayerPosSetV(arg1, &sp44);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                MBPlayerRotGet(arg1, &sp38);
-                sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
-                MBPlayerRotSetV(arg1, &sp38);
+            MBPlayerPosGet(arg1, &sp50);
+            sp44 = vtx[mb2ev_RainbowVtxNumTbl[rbNo] - 1];
+            PSVECSubtract(&sp44, &sp50, &sp38);
+            steps = (s32) (PSVECMag(&sp38) / 20.0f);
+            for (i = 0; i < steps; i++) {
+                t = (f32) i / (f32) steps;
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                PSVECScale(&sp38, &sp38, t);
+                PSVECAdd(&sp50, &sp38, &sp38);
+                MBPlayerPosSetV(arg1, &sp38);
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                MBPlayerRotGet(arg1, &sp2C);
+                sp2C.y = (f32) (180.0 * (atan2((f64) sp38.x, (f64) sp38.z) / 3.141592653589793));
+                MBPlayerRotSetV(arg1, &sp2C);
                 HuPrcVSleep();
-                var_r30_5 += 1;
-                goto loop_64;
             }
-            MBPlayerPosSetV(arg1, (Point3d *) &sp50);
-            var_r30_6 = mb2ev_RainbowVtxNumTbl[temp_r25] - 1;
-loop_70:
-            if (var_r30_6 > 0) {
-                sp18 = var_r30_6;
-                MBPlayerPosGet(arg1, &sp5C);
-                temp_r3_3 = temp_r27 + (var_r30_6 - 1);
-                sp50 = temp_r3_3->x;
-                sp54 = temp_r3_3->y;
-                sp58 = temp_r3_3->z;
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                temp_r28_4 = (s32) (PSVECMag(&sp44) / 20.0f);
-                MBPlayerRotGet(arg1, &sp38);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                temp_f29_2 = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
-                var_r26_2 = 0;
-loop_68:
-                if (var_r26_2 < temp_r28_4) {
-                    temp_f31_3 = (f32) var_r26_2 / (f32) temp_r28_4;
-                    PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-                    PSVECScale(&sp44, &sp44, temp_f31_3);
-                    PSVECAdd(&sp5C, &sp44, &sp44);
-                    MBPlayerPosSetV(arg1, &sp44);
-                    sp38.y = fn_1_42FC(temp_f31_3, sp38.y, temp_f29_2);
-                    MBPlayerRotSet(arg1, 0.0f, sp38.y, 0.0f);
-                    MBPlayerPosGet(arg1, &sp44);
-                    sp20 = sp44.x;
-                    sp24 = sp44.y;
-                    sp28 = sp44.z;
-                    sp8 = &sp20;
-                    temp_f26_2 = 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F))));
-                    MB2_CoinEffCreateColRand(sp8, 2, 100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), temp_f26_2, 150.0f, 100.0f, 0.0f);
-                    HuPrcVSleep();
-                    var_r26_2 += 1;
-                    goto loop_68;
-                }
-                MBPlayerPosSetV(arg1, (Point3d *) &sp50);
-                MBPlayerRotSet(arg1, 0.0f, temp_f29_2, 0.0f);
-                var_r30_6 -= 1;
-                goto loop_70;
-            }
-        }
-        MBPlayerPosGet(arg1, &sp5C);
-        MBMasuPosGet(0, (s32) temp_r3, (Point3d *) &sp50);
-        PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-        temp_r28_5 = (s32) (PSVECMag(&sp44) / 20.0f);
-        var_r30_7 = 0;
-loop_73:
-        if (var_r30_7 < temp_r28_5) {
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-            PSVECScale(&sp44, &sp44, (f32) var_r30_7 / (f32) temp_r28_5);
-            PSVECAdd(&sp5C, &sp44, &sp44);
             MBPlayerPosSetV(arg1, &sp44);
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
-            MBPlayerRotGet(arg1, &sp38);
-            sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
-            MBPlayerRotSetV(arg1, &sp38);
-            HuPrcVSleep();
-            var_r30_7 += 1;
-            goto loop_73;
+            for (i = mb2ev_RainbowVtxNumTbl[rbNo] - 1; i > 0; i--) {
+                MBPlayerPosGet(arg1, &sp50);
+                sp44 = vtx[i - 1];
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                steps2 = (s32) (PSVECMag(&sp38) / 20.0f);
+                MBPlayerRotGet(arg1, &sp2C);
+                PSVECSubtract(&sp44, &sp50, &sp38);
+                yaw = (f32) (180.0 * (atan2((f64) sp38.x, (f64) sp38.z) / 3.141592653589793));
+                for (j = 0; j < steps2; j++) {
+                    rate = (f32) j / (f32) steps2;
+                    PSVECSubtract(&sp44, &sp50, &sp38);
+                    PSVECScale(&sp38, &sp38, rate);
+                    PSVECAdd(&sp50, &sp38, &sp38);
+                    MBPlayerPosSetV(arg1, &sp38);
+                    sp2C.y = fn_1_42FC(rate, sp2C.y, yaw);
+                    MBPlayerRotSet(arg1, 0.0f, sp2C.y, 0.0f);
+                    MBPlayerPosGet(arg1, &sp38);
+                    sp20 = sp38;
+                    MB2_CoinEffCreateColRand(&sp20.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+                    HuPrcVSleep();
+                }
+                MBPlayerPosSetV(arg1, &sp44);
+                MBPlayerRotSet(arg1, 0.0f, yaw, 0.0f);
+            }
         }
-        MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+        MBPlayerPosGet(arg1, &sp50);
+        MBMasuPosGet(0, masuNo, &sp44);
+        PSVECSubtract(&sp44, &sp50, &sp38);
+        steps = (s32) (PSVECMag(&sp38) / 20.0f);
+        for (i = 0; i < steps; i++) {
+            t = (f32) i / (f32) steps;
+            PSVECSubtract(&sp44, &sp50, &sp38);
+            PSVECScale(&sp38, &sp38, t);
+            PSVECAdd(&sp50, &sp38, &sp38);
+            MBPlayerPosSetV(arg1, &sp38);
+            PSVECSubtract(&sp44, &sp50, &sp38);
+            MBPlayerRotGet(arg1, &sp2C);
+            sp2C.y = (f32) (180.0 * (atan2((f64) sp38.x, (f64) sp38.z) / 3.141592653589793));
+            MBPlayerRotSetV(arg1, &sp2C);
+            HuPrcVSleep();
+        }
+        MBPlayerPosSetV(arg1, &sp44);
         MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0x40000001U);
-        GwPlayer[arg1].masuId = temp_r3;
-        var_r30_8 = 0;
-loop_76:
-        if ((f32) var_r30_8 < 60.0f) {
-            MB2_RainbowObjAlphaSet(temp_r3_2, (s8) (255.0f * (1.0f - ((f32) var_r30_8 / 60.0f))));
+        GwPlayer[arg1].masuId = (s16) masuNo;
+        for (i = 0; (f32) i < 60.0f; i++) {
+            MB2_RainbowObjAlphaSet(rbId, (s8) (255.0f * (1.0f - ((f32) i / 60.0f))));
             HuPrcVSleep();
-            var_r30_8 += 1;
-            goto loop_76;
         }
-        MB2_RainbowObjAlphaSet(temp_r3_2, 0);
-        sp10 = 1;
+        MB2_RainbowObjAlphaSet(rbId, 0);
+        ret = 1;
     }
     MB2_RainbowObjClose();
     MB2_CoinEffClose();
     MBWalkNumDispSet(arg1, 1);
-    return sp10;
+    return ret;
 }
 
 
-/* NONMATCHING: real logic (ported from the m2c draft + manual fixes below),
- * not yet instruction-matched. Known deviations from the raw draft:
- *  - the M2C_STRUCT_COPY(camera, 8) before the first MBCameraModelViewSet
- *    is read directly as camera->pos.x/pos.y instead;
- *  - "== N.0f" loop guards that m2c produced from a "cror eq,lt,eq"
- *    (folded <=) are read as "< N.0f", matching every sibling loop in the
- *    same function that m2c rendered correctly;
- *  - "(bitwise f32) X" reinterpret casts on Point3d locals are read as the
- *    relevant field (almost always .x, since it is the first word). */
 
 /* Warning: Gap in callee-saved word stack region.
  * Saved: [-0xe8, -0xe4, -0xd8, -0xd4, -0xc8, -0xc4, -0xb8, -0xb4, -0xa8, -0xa4, -0x98, -0x94, -0x88, -0x84, -0x78, -0x74, -0x68, -0x64, -0x58, -0x54, -0x48, -0x44, 0xed4, 0xed8, 0xedc, 0xee0, 0xee4, 0xee8, 0xeec, 0xef0, 0xef4, 0xef8, 0xefc, 0xf00, 0xf04, 0xf08, 0xf0c, 0xf10, 0xf14, 0xf20, 0xf24, 0xf30, 0xf34, 0xf40, 0xf44, 0xf50, 0xf54, 0xf60, 0xf64, 0xf70, 0xf74, 0xf80, 0xf84, 0xf90, 0xf94, 0xfa0, 0xfa4, 0xfb0, 0xfb4], gap at: -0xe0. */
-/* MB2_RAIN_SPOT: 10-entry local (stack) array, stride 0x118 - confirmed
- * against build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (MB2Ev_Rain,
- * 0x5565-0x7443): +0x00 HSFOBJECT *objPtr (MB2_ModelObjPtrGet on
- * mb2ev_RainObjTbl[i]), +0x04..0x67 raw snapshot of *(objPtr-1) (saved at
- * entry, restored at exit - same struct, not individually named), +0x68
- * ANIMDATA *mdl (mb2_Work[1] model handle), +0x6C dist-to-mid^2, +0x70
- * easing speed accumulator, +0x74 depth delta (worldY-1190), +0x78 linked
- * branch masuId (flag bits 0xC00) or -1, +0x7C/0x80 swim progress/duration,
- * +0x84 swim length (mb2ev_RainSwimLenTbl[i]), +0x88 "slot 1..3" flag,
- * +0x8C/0x90/0x94 world pos (Hu3DModelObjMtxGet's translation row), +0x98
- * vector to mb2ev_RainSwimMidPos, +0xA4 vector to mb2ev_RainSwimRightPos,
- * +0xB0/0xB4/0xB8 rot accumulator (0xB4 = yaw), +0xBC world pos of the
- * linked masu, +0xC8 vector to it, +0xD4 count of players standing on this
- * spot (<=4), +0xD8[4] their player indices, +0xE8[4] (stride 0xC)
- * pos-minus-spot vectors for each. */
-#define RS_STRIDE 0x118
-#define RSp(p, i) ((u8 *) (p) + (i) * RS_STRIDE)
-#define RS_S32(p, off) (*(s32 *) ((u8 *) (p) + (off)))
-#define RS_F32(p, off) (*(f32 *) ((u8 *) (p) + (off)))
-#define RS_PTR(p, off) (*(void **) ((u8 *) (p) + (off)))
+/* mb2_Work[0x1C]: array of path segments (one per vertex pair) of the chosen rainbow. */
+typedef struct MB2TaiyoSeg_s {
+    f32 len;         /* 0x00 */
+    f32 start;       /* 0x04, distance from the path start */
+    Point3d from;    /* 0x08 */
+    Point3d to;      /* 0x14 */
+    Point3d rot;     /* 0x20 */
+    Point3d prevRot; /* 0x2C */
+} MB2_TAIYO_SEG;     /* size 0x38 */
 
-/* MB2_RAIN_PLAYER: local (stack) array, stride 0x58, reused for two
- * successive phases (the swim-toward-the-middle phase, up to 4 entries;
- * and later the climb-out-on-wires phase, up to 4 entries) - same layout
- * both times, confirmed by the whole-struct copy from one array to the
- * other. +0x00 player index, +0x04 motion id (0x8C002B during swim / 6
- * during climb), +0x08/0x0C progress/duration, +0x10 dist-to-mid (sqrt,
- * write-only), +0x14 "is the event-starting player" flag, +0x18 climb-done
- * flag, +0x1C/0x20/0x24 pos, +0x28/0x2C/0x30 rot (0x2C = yaw, the only rot
- * component actually driven), +0x34/0x38/0x3C velocity (climb phase only),
- * +0x44 current water-surface Y (swim phase only), +0x4C/0x50/0x54 saved
- * original pos (climb phase). */
-#define RP_STRIDE 0x58
-#define RPp(p, i) ((u8 *) (p) + (i) * RP_STRIDE)
-#define RP_S32(p, off) (*(s32 *) ((u8 *) (p) + (off)))
-#define RP_F32(p, off) (*(f32 *) ((u8 *) (p) + (off)))
+#define MB2_RND() (0.007874016f * (f32) (frand() & 0x7F))
 
+/* complete; stack frame is 0x20 smaller than the original (temp layout), shifting offsets. */
+void MB2Ev_HatenaTaiyo(s32 playerNo) {
+    Point3d curPos;
+    Point3d dstPos;
+    Point3d tmp;
+    Point3d rot;
+    Point3d effPos;
+    Point3d *vtx;
+    MB2_TAIYO_SEG *seg;
+    s32 rbId[3];
+    s32 masuTgt[3];
+    f32 pathLen;
+    f32 dist;
+    f32 speed;
+    f32 rate;
+    Point3d prevRot;
+    f32 ang;
+    s32 vtxNum;
+    s32 sndId;
+    s32 sndId2;
+    s32 motId;
+    s32 rbIdx;
+    s32 choice;
+    s32 prevChoice;
+    s32 tgtMasu;
+    s32 i;
+    s32 j;
+    s32 coin;
+    s32 btn;
+    s16 masuId;
+    s16 helpWin;
+    s32 flag;
+    s8 stkX;
+    s8 stkY;
 
-/* mb2_Work[0x1C]: heap array of path segments for the rainbow-slide ride,
- * stride 0x38 - offsets confirmed from usage (m2c mistyped these as
- * ANIMBANK/ANIMPAT/ANIMBMP "bank/pat/bmp" fields since they happen to sit
- * at the same byte offsets as a Point3d start position): +0x00 segment
- * length, +0x04 cumulative length up to this segment, +0x08 start pos,
- * +0x14 end pos, +0x20/+0x24/+0x28 (pitch,yaw,roll) at the end of this
- * segment, +0x2C/+0x30/+0x34 the same at its start (copied from the
- * previous segment's end, or self for the first). */
-#define ZP_STRIDE 0x38
-#define ZPp(p, i) ((u8 *)(uintptr_t) (p) + (i) * ZP_STRIDE)
-
-/* NONMATCHING: complete, asm-read translation. "cror eq,lt,eq" / "eq,gt,eq"
- * folds read as <= / >=, matching the pattern confirmed in
- * Thunder/Rain/CoinUpdate. */
-
-/* Shared "spring stretch" helper used throughout MB2Ev_Zen4's bungee-jump
- * minigame: result = 150 + 75*(sqrt(1 + 8*(k/150)) - 1), computed with the
- * same __frsqrte fast-inverse-sqrt Newton iteration used everywhere else
- * in this module (MB2Ev_Rain/MB2_RainbowObjCreate/MB2Ev_Zen2). The
- * original inlines this same expression at every call site (m2c shows it
- * duplicated verbatim, with only the numerator - 25000 normally, 4000 for
- * the manual quick-drop input - changing), so factoring it out here is a
- * source-level simplification, not a functional change. */
-
-/* NONMATCHING: complete, asm-read translation of the bungee-jump minigame.
- * "cror eq,lt,eq"/"eq,gt,eq" folds read as <=/>= (established pattern);
- * "(bitwise fXX) Y" reinterpret-cast artifacts on scratch scalars are
- * dropped (they come from m2c losing track of a register's type across an
- * unrelated HuPrcVSleep(f32) argument that the original never actually
- * uses meaningfully - same false-dependency shape already seen and
- * resolved in MB2_MainObjUpdate/ParticleDraw). */
-
-
-
-
-
-s16 MB2_RainbowMasuNoEndGet(s32 arg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
-}
-
-s32 MB2_PathCheck(s32 arg0) {
-    if (MB2_PathLenGet((s16) arg0, 0x19, 0) != -1) {
-        return 1;
+    masuId = GwPlayer[playerNo].masuId;
+    flag = (u16) MBMasuGet(0, masuId)->flag;
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0U);
+    MB2_CoinInit();
+    mb2_CoinMaxDist.x = 100.0f;
+    mb2_CoinMaxDist.y = 200.0f;
+    mb2_CoinMaxDist.z = -1.0f;
+    MB2_CoinEffInit();
+    rbIdx = (frand() & 0x7FFF) % 3;
+    coin = MBPlayerCoinGet(playerNo);
+    motId = MBPlayerMotionCreate(playerNo, 0x8C0008);
+    for (i = 1; i < MBMasuNumGet(0); i++) {
+        if ((u32) (MBMasuGet(0, i)->flag & 0x10) != 0) {
+            break;
+        }
     }
-    return 0;
+    masuTgt[0] = (i >= MBMasuNumGet(0)) ? masuId : i;
+    for (i = 1; i < MBMasuNumGet(0); i++) {
+        if ((u32) (MBMasuGet(0, i)->flag & 0x8) != 0) {
+            break;
+        }
+    }
+    masuTgt[1] = (i >= MBMasuNumGet(0)) ? masuId : i;
+    for (i = 1; i < MBMasuNumGet(0); i++) {
+        if ((u32) (MBMasuGet(0, i)->flag & 0x20) != 0) {
+            break;
+        }
+    }
+    masuTgt[2] = (i >= MBMasuNumGet(0)) ? masuId : i;
+    MBPlayerPosGet(playerNo, &curPos);
+    dstPos.x = curPos.x;
+    dstPos.y = 150.0f + curPos.y;
+    dstPos.z = curPos.z - 300.0f;
+    MBCameraModelViewSet(MBPlayerModelGet(playerNo), NULL, NULL, 3000.0f, -1.0f, 0xA);
+    MBCameraMotionWait();
+    MBPlayerRotateStart(playerNo, 0xB4, 0xF);
+    while (MBPlayerRotateCheck(playerNo) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
+    for (i = 0; (f32) i < 27.0f; i++) {
+        rate = (f32) i / 24.0f;
+        PSVECSubtract(&dstPos, &curPos, &tmp);
+        PSVECScale(&tmp, &tmp, rate);
+        PSVECAdd(&curPos, &tmp, &tmp);
+        tmp.y = (f32) ((f64) tmp.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * rate)) / 180.0)));
+        MBPlayerPosSetV(playerNo, &tmp);
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+    MB2_YajiInit(&dstPos);
+    sndId = HuAudFXPlay(0x5D8);
+    MBMotionSpeedSet((s16) mb2_Work.mdlRainbow, 0.25f);
+    MBMotionTimeSet((s16) mb2_Work.mdlRainbow, 0.0f);
+    while (MBMotionTimeGet((s16) mb2_Work.mdlRainbow) <= 15.0f) {
+        HuPrcVSleep();
+    }
+    if (sndId != -1) {
+        HuAudFXStop(sndId);
+    }
+    HuAudFXPlay(0x5D7);
+    while (MBMotionTimeGet((s16) mb2_Work.mdlRainbow) <= 25.0f) {
+        HuPrcVSleep();
+    }
+    WipeColorSet(0xFFU, 0xFFU, 0xFFU);
+    WipeCreate(2, 0, 0x1E);
+    while (WipeCheckEnd() != 0) {
+        HuPrcVSleep();
+    }
+    while (MBMotionEndCheck((s16) mb2_Work.mdlRainbow) == 0) {
+        HuPrcVSleep();
+    }
+    MB2_RainbowObjInit();
+    rbId[0] = MB2_RainbowObjCreate(mb2ev_TaiyoRainbowVtxTbl[rbIdx][0], mb2ev_TaiyoRainbowVtxNumTbl[rbIdx][0], 0);
+    rbId[1] = MB2_RainbowObjCreate(mb2ev_TaiyoRainbowVtxTbl[rbIdx][1], mb2ev_TaiyoRainbowVtxNumTbl[rbIdx][1], 0);
+    rbId[2] = MB2_RainbowObjCreate(mb2ev_TaiyoRainbowVtxTbl[rbIdx][2], mb2ev_TaiyoRainbowVtxNumTbl[rbIdx][2], 0);
+    for (i = 0; i < 0x10; i++) {
+        tmp = mb2ev_TaiyoCoinBasePos;
+        tmp.y += 100.0f;
+        effPos = tmp;
+        effPos.z = mb2ev_TaiyoCoinBasePos.z;
+        MB2_CoinEffCreateColRand(&effPos.x, 2, 100.0f * (0.2f + (0.1f * MB2_RND())), 0.016666668f * (0.5f + (0.3f * MB2_RND())), 150.0f, 100.0f, 0.0f);
+    }
+    MBMasuPlayerLightSet(playerNo, 0);
+    HuAudFXPlay(0x5C8);
+    WipeColorSet(0xFFU, 0xFFU, 0xFFU);
+    WipeCreate(1, 0, 0x5A);
+    do {
+        if ((u32) (frand() & 1) == 0) {
+            effPos = mb2ev_TaiyoCoinBasePos;
+            MB2_CoinEffCreateColRand(&effPos.x, 2, 100.0f * (0.2f + (0.1f * MB2_RND())), 0.016666668f * (0.5f + (0.3f * MB2_RND())), 150.0f, 50.0f, 0.0f);
+        }
+        for (i = 0; i < 6; i++) {
+            j = (frand() & 0x7FFF) % 3;
+            if (MB2_RainbowObjVtxTopGet(rbId[j], (void **) &vtx) != 0) {
+                effPos = vtx[(frand() & 0x7FFF) % 18];
+                MB2_CoinEffCreateColRand(&effPos.x, 2, 100.0f * (0.1f + (0.1f * MB2_RND())), 0.016666668f * (0.5f + (0.3f * MB2_RND())), 150.0f, 50.0f, 0.0f);
+            }
+        }
+        HuPrcVSleep();
+    } while (WipeCheckEnd() != 0);
+    MBPlayerRotateStart(playerNo, 0, 0xF);
+    while (MBPlayerRotateCheck(playerNo) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 9, 0.0f, 8.0f, 0U);
+    while (MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
+        HuPrcVSleep();
+    }
+    while (MBMotionEndCheck(MBPlayerModelGet(playerNo)) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+    MBWinCreate(2, 0x2E000CU, -1);
+    MBTopWinWait();
+    MBTopWinKill();
+    helpWin = MBWinCreateHelp(0x2E000DU);
+    MBWinPosSet(helpWin, 0xC9, 0x120);
+    MB2_YajiDispSet(1);
+    choice = 1;
+    prevChoice = 1;
+    if (GwPlayer[playerNo].comF == 0) {
+        do {
+            HuPrcVSleep();
+            stkX = MBPadStkXGet(GwPlayer[playerNo].padNo);
+            stkY = MBPadStkYGet(GwPlayer[playerNo].padNo);
+            btn = (s32) HuPadBtnDown[GwPlayer[playerNo].padNo];
+            if ((fabs((f64) stkX) > 8.0) || (fabs((f64) stkY) > 8.0)) {
+                ang = (f32) (180.0 * (atan2((f64) stkX, (f64) -stkY) / 3.141592653589793));
+                if (fabs(ang) < 45.0) {
+                    choice = 1;
+                } else if (ang >= 45.0f) {
+                    choice = 2;
+                } else if (ang <= -45.0f) {
+                    choice = 0;
+                }
+                if (choice != prevChoice) {
+                    MB2_YajiHiliteSet(choice);
+                }
+                prevChoice = choice;
+            }
+        } while ((btn & 0x100) == 0);
+    } else {
+        HuPrcSleep((s32) (60.0f * MB2_RND()));
+        choice = (frand() & 0x7FFF) % 3;
+        MB2_YajiHiliteSet(choice);
+        HuPrcSleep((s32) (60.0f * MB2_RND()));
+    }
+    MB2_YajiDispSet(0);
+    MBTopWinKill();
+    vtxNum = MB2_RainbowObjVtxTopGet(rbId[choice], (void **) &vtx);
+    tgtMasu = masuTgt[mb2ev_TaiyoDestTbl[rbIdx][choice]];
+    MBPlayerPosFixEvent(playerNo, tgtMasu, 1);
+    seg = HuMemDirectMallocNum(HEAP_HEAP, vtxNum * sizeof(MB2_TAIYO_SEG), 0x10000000U);
+    mb2_Work.seg = seg;
+    memset(seg, 0, vtxNum * sizeof(MB2_TAIYO_SEG));
+    pathLen = 0.0f;
+    for (i = 0; i < vtxNum - 1; i++, seg++) {
+        f32 sq;
+        f32 horiz;
+
+        PSVECSubtract(&vtx[i + 1], &vtx[i], &tmp);
+        seg->len = PSVECMag(&tmp);
+        seg->start = pathLen;
+        seg->from = vtx[i];
+        seg->to = vtx[i + 1];
+        sq = (tmp.x * tmp.x) + (tmp.z * tmp.z);
+        if (sq > 0.0f) {
+            f64 r0 = __frsqrte(sq);
+            f64 r1 = 0.5 * r0 * (3.0 - ((f64) sq * (r0 * r0)));
+            f64 r2 = 0.5 * r1 * (3.0 - ((f64) sq * (r1 * r1)));
+            horiz = (f32) ((f64) sq * (0.5 * r2 * (3.0 - ((f64) sq * (r2 * r2)))));
+        } else {
+            horiz = sq;
+        }
+        seg->rot.x = (f32) -(180.0 * (atan2((f64) tmp.y, (f64) horiz) / 3.141592653589793));
+        seg->rot.y = (f32) (180.0 * (atan2((f64) tmp.x, (f64) tmp.z) / 3.141592653589793));
+        seg->rot.z = 0.0f;
+        if (i == 0) {
+            seg->prevRot = seg->rot;
+        } else {
+            seg->prevRot = prevRot;
+        }
+        prevRot = seg->rot;
+        pathLen += seg->len;
+    }
+    MBPlayerMotionNoShiftSet(playerNo, motId, 0.0f, 8.0f, 0U);
+    MBPlayerPosGet(playerNo, &curPos);
+    dstPos = vtx[0];
+    PSVECSubtract(&dstPos, &curPos, &tmp);
+    PSVECMag(&tmp);
+    for (i = 0; (f32) i < 27.0f; i++) {
+        rate = (f32) i / 27.0f;
+        PSVECSubtract(&dstPos, &curPos, &tmp);
+        PSVECScale(&tmp, &tmp, rate);
+        PSVECAdd(&curPos, &tmp, &tmp);
+        tmp.y = (f32) ((f64) tmp.y + (2.0 * (100.0 * sin((3.141592653589793 * (f64) (180.0f * rate)) / 180.0))));
+        MBPlayerPosSetV(playerNo, &tmp);
+        PSVECSubtract(&dstPos, &curPos, &tmp);
+        MBPlayerRotGet(playerNo, &rot);
+        rot.y = (f32) (180.0 * (atan2((f64) tmp.x, (f64) tmp.z) / 3.141592653589793));
+        MBPlayerRotSetV(playerNo, &rot);
+        HuPrcVSleep();
+    }
+    MBPlayerPosSetV(playerNo, &dstPos);
+    sndId2 = HuAudFXPlay(0x5D9);
+    dist = 0.0f;
+    speed = 10.0f;
+    do {
+        if (speed < 30.000002f) {
+            speed += 0.1f;
+        }
+        dist += speed;
+        seg = mb2_Work.seg;
+        for (i = 0; i < vtxNum - 1; i++, seg++) {
+            if (dist < (seg->len + seg->start)) {
+                break;
+            }
+        }
+        if (i >= vtxNum - 1) {
+            break;
+        }
+        rate = (dist - seg->start) / seg->len;
+        PSVECSubtract(&seg->to, &seg->from, &tmp);
+        PSVECScale(&tmp, &tmp, rate);
+        PSVECAdd(&seg->from, &tmp, &tmp);
+        MBPlayerRotGet(playerNo, &rot);
+        rot.x = fn_1_42FC(rate, seg->prevRot.x, seg->rot.x);
+        rot.y = fn_1_42FC(rate, seg->prevRot.y, seg->rot.y);
+        rot.z = 0.0f;
+        MBPlayerPosSetV(playerNo, &tmp);
+        MBPlayerRotSetV(playerNo, &rot);
+        effPos = tmp;
+        MB2_CoinEffCreateColRand(&effPos.x, 2, 100.0f * (0.2f + (0.1f * MB2_RND())), 0.016666668f * (0.5f + (0.3f * MB2_RND())), 150.0f, 100.0f, 0.0f);
+        HuPrcVSleep();
+    } while (dist < pathLen);
+    MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+    if (sndId2 != -1) {
+        HuAudFXStop(sndId2);
+    }
+    MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
+    MBPlayerPosGet(playerNo, &curPos);
+    MBMasuPosGet(0, tgtMasu, &dstPos);
+    PSVECSubtract(&dstPos, &curPos, &tmp);
+    PSVECMag(&tmp);
+    for (i = 0; (f32) i < 27.0f; i++) {
+        rate = (f32) i / 27.0f;
+        PSVECSubtract(&dstPos, &curPos, &tmp);
+        PSVECScale(&tmp, &tmp, rate);
+        PSVECAdd(&curPos, &tmp, &tmp);
+        tmp.y = (f32) ((f64) tmp.y + (2.0 * (100.0 * sin((3.141592653589793 * (f64) (180.0f * rate)) / 180.0))));
+        MBPlayerPosSetV(playerNo, &tmp);
+        PSVECSubtract(&dstPos, &curPos, &tmp);
+        MBPlayerRotGet(playerNo, &rot);
+        rot.y = (f32) (180.0 * (atan2((f64) tmp.x, (f64) tmp.z) / 3.141592653589793));
+        MBPlayerRotSetV(playerNo, &rot);
+        HuPrcVSleep();
+    }
+    MBPlayerPosSetV(playerNo, &dstPos);
+    GwPlayer[playerNo].masuId = (s16) tgtMasu;
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001U);
+    MBMasuPlayerLightSet(playerNo, 1);
+    for (i = 0; (f32) i < 60.0f; i++) {
+        rate = 1.0f - ((f32) i / 60.0f);
+        MB2_RainbowObjAlphaSet(rbId[0], (s8) (255.0f * rate));
+        MB2_RainbowObjAlphaSet(rbId[1], (s8) (255.0f * rate));
+        MB2_RainbowObjAlphaSet(rbId[2], (s8) (255.0f * rate));
+        HuPrcVSleep();
+    }
+    HuPrcSleep(0x1E);
+    MBMotionSpeedSet((s16) mb2_Work.mdlRainbow, 0.0f);
+    MBMotionTimeSet((s16) mb2_Work.mdlRainbow, 0.0f);
+    if (motId != -1) {
+        MBPlayerMotionKill(playerNo, motId);
+    }
+    if (mb2_Work.seg != NULL) {
+        HuMemDirectFree(mb2_Work.seg);
+    }
+    mb2_Work.seg = NULL;
+    MB2_RainbowObjClose();
+    MB2_YajiClose();
+    MB2_CoinClose();
+    MB2_CoinEffClose();
 }
 
-s16 MB2_PathLenGet(s16 arg0, s16 arg1, s16 arg2) {
-    s16 spA;
-    s16 sp8;
+s16 MB2_RainbowMasuNoEndGet(s32 masuId) {
+    s16 linkTbl[16];
+    s32 i;
+    MASU *masu;
+    s32 mode;
+    s32 linkNum;
 
-    sp8 = arg0;
-    spA = arg2;
-    mb2_PathMasuNo = arg1;
-    mb2_PathLen = arg1;
-    mb2_PathAllF = spA;
-    mb2_PathValidF = 0;
-    PathCheck(arg0, arg1);
-    if ((s16) mb2_PathValidF != 0) {
-        return mb2_PathLen;
+    masu = MBMasuGet(0, masuId);
+    mode = 9;
+    if (mode == 2 || mode == 4 || mode == 6 || mode == 8) {
+        return -1;
+    }
+    if ((masu->flag & 0x3E) != 0) {
+        u16 linkId;
+
+        masu = MBMasuGet(0, masuId);
+        for (i = 0; i < masu->linkNum; i++) {
+            if ((MBMasuFlagGet(0, masu->linkTbl[i]) & 0x40) != 0) {
+                break;
+            }
+        }
+        if (i < masu->linkNum) {
+            linkId = masu->linkTbl[i];
+            linkNum = MB2_MasuLinkGet(linkId, linkTbl, 1, 1);
+            for (i = 0; i < linkNum; i++) {
+                if (masuId != linkTbl[i]) {
+                    break;
+                }
+            }
+            if (i < linkNum) {
+                return linkTbl[i];
+            }
+        }
     }
     return -1;
 }
 
-s16 PathCheck(s16 arg0, s16 arg1) {
-    s16 sp8[16];
-    MASU *temp_r29;
-    MASU *temp_r30;
-    MASU *temp_r3;
-    s16 temp_r0;
-    s16 var_r23;
-    s16 var_r24;
-    s16 var_r26;
-    s16 var_r27;
-    s32 temp_r19;
-    s32 temp_r21;
-    s32 temp_r25;
-    s32 var_r31;
-    s32 var_r31_2;
-
-    var_r27 = arg1;
-    var_r24 = 0;
-    temp_r29 = MBMasuGet(0, (s32) arg0);
-    if (MBMasuTypeGet(0, (s32) arg0) == 5) {
-        temp_r0 = mb2_PathMasuNo - var_r27;
-        if (temp_r0 < (s16) mb2_PathLen) {
-            mb2_PathLen = temp_r0;
-        }
-        mb2_PathValidF = 1;
-        return 1;
-    }
-    if ((MBMasuTypeGet(0, (s32) arg0) != 0) && (MBMasuTypeGet(0, (s32) arg0) != 5)) {
-        var_r27 -= 1;
-    }
-    if (var_r27 >= 0) {
-        var_r26 = 0;
-loop_13:
-        if (var_r26 < (s32) temp_r29->linkNum) {
-            temp_r19 = MBBranchFlagGet() | 0x06000000;
-            if (((u32) (MBMasuFlagGet(0, (s32) temp_r29->linkTbl[var_r26]) & temp_r19) == 0) && (PathCheck((s16) temp_r29->linkTbl[var_r26], var_r27) != 0)) {
-                var_r24 = 1;
-            }
-            var_r26 += 1;
-            goto loop_13;
-        }
-    }
-    if (((s16) mb2_PathAllF != 0) && (var_r27 < (s32) (mb2_PathMasuNo - 1)) && ((u32) (temp_r29->flag & 0xF) != 0)) {
-        temp_r3 = MBMasuGet(0, (s32) arg0);
-        temp_r25 = temp_r3->flag & 0xF;
-        if ((temp_r25 == 2) || (temp_r25 == 4) || (temp_r25 == 6) || (temp_r25 == 8)) {
-            var_r23 = -1;
-        } else if ((u32) (temp_r3->flag & 0xF) != 0) {
-            temp_r30 = MBMasuGet(0, (s32) arg0);
-            var_r31 = 0;
-loop_26:
-            if (var_r31 < (s32) temp_r30->linkNum) {
-                if ((u32) (MBMasuFlagGet(0, (s32) temp_r30->linkTbl[var_r31]) & 0x4000) == 0) {
-                    var_r31 += 1;
-                    goto loop_26;
-                }
-            }
-            if (var_r31 < (s32) temp_r30->linkNum) {
-                temp_r21 = MB2_MasuLinkGet((s16) temp_r30->linkTbl[var_r31], sp8, 1, 1);
-                var_r31_2 = 0;
-loop_31:
-                if (var_r31_2 < temp_r21) {
-                    if (arg0 == (s16) (&sp8[0])[var_r31_2]) {
-                        var_r31_2 += 1;
-                        goto loop_31;
-                    }
-                }
-                if (var_r31_2 < temp_r21) {
-                    var_r23 = (&sp8[0])[var_r31_2];
-                } else {
-                    goto block_34;
-                }
-            } else {
-                goto block_34;
-            }
-        } else {
-block_34:
-            var_r23 = -1;
-        }
-        if ((var_r23 != -1) && (PathCheck(var_r23, var_r27) != 0)) {
-            var_r24 = 1;
-        }
-    }
-    if (var_r24 != 0) {
-        return 1;
-    }
-    return 0;
-}
-
 void MB2_CoinDispUpdate(s32 arg0, s32 arg1, s32 arg2) {
     Point3d spC;
-    s32 sp8;
-    s16 var_r29;
+    s32 var_r29;
     s32 var_r30;
 
-    sp8 = arg2;
     var_r30 = -1;
     MBPlayerRotateStart(arg0, 0, 0xF);
-loop_2:
-    if (MBPlayerRotateCheck(arg0) == 0) {
+    while (MBPlayerRotateCheck(arg0) == 0) {
         HuPrcVSleep();
-        goto loop_2;
     }
     if (arg1 > 0) {
         MBPlayerPosGet(arg0, &spC);
         spC.y += 250.0f;
-        var_r29 = MBCoinDispCreateSe(&spC, arg1);
+        var_r29 = (s16) MBCoinDispCreateSe(&spC, arg1);
     } else {
         var_r29 = -1;
     }
     if (arg1 <= 0) {
         MBPlayerWinLoseVoicePlay(arg0, 0xD, 0x200);
         MBPlayerMotionNoShiftSet(arg0, 0xD, 0.0f, 8.0f, 0U);
-    } else if (arg1 < sp8) {
+    } else if (arg1 < arg2) {
         MBPlayerWinLoseVoicePlay(arg0, 0xC, 0x1FB);
         MBPlayerMotionNoShiftSet(arg0, 0xC, 0.0f, 8.0f, 0U);
     } else {
@@ -1568,15 +1205,13 @@ loop_11:
             goto loop_11;
         }
     } while (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1);
-    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
+    MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0U);
     do {
         HuPrcVSleep();
     } while (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1);
     if (var_r29 != -1) {
-loop_18:
-        if (MBCoinDispKillCheck(var_r29) == 0) {
+        while (MBCoinDispKillCheck(var_r29) == 0) {
             HuPrcVSleep();
-            goto loop_18;
         }
     }
     if (var_r30 != -1) {
@@ -1585,631 +1220,165 @@ loop_18:
 }
 
 f32 MB2_AngleDiff(f32 farg0, f32 farg1) {
-    f32 var_f1;
-    f32 var_f2;
-    f32 var_f31;
+    f32 diff;
 
-    var_f1 = farg0;
-    var_f2 = farg1;
-    if (var_f1 == 360.0f) {
-        var_f1 -= 360.0f;
-    } else if (var_f1 < 0.0f) {
-        var_f1 += 360.0f;
+    if (farg0 >= 360.0f) {
+        farg0 -= 360.0f;
+    } else if (farg0 < 0.0f) {
+        farg0 += 360.0f;
     }
-    if (var_f2 == 360.0f) {
-        var_f2 -= 360.0f;
-    } else if (var_f2 < 0.0f) {
-        var_f2 += 360.0f;
+    if (farg1 >= 360.0f) {
+        farg1 -= 360.0f;
+    } else if (farg1 < 0.0f) {
+        farg1 += 360.0f;
     }
-    var_f31 = var_f1 - var_f2;
-    if (var_f31 == -180.0f) {
-        var_f31 += 360.0f;
-    } else {
-        if (var_f31 == 180.0f) {
-            var_f31 -= 360.0f;
-        }
+    diff = farg0 - farg1;
+    if (diff <= -180.0f) {
+        diff += 360.0f;
+    } else if (diff >= 180.0f) {
+        diff -= 360.0f;
     }
-    return var_f31;
+    return diff;
 }
 
 f32 MB2_AngleLerp(f32 farg0, f32 farg1, f32 farg2) {
-    f32 var_f28;
-    f32 var_f29;
-    f32 var_f30;
-    f32 var_f31;
-    f32 var_f31_2;
+    f32 diff;
+    f32 res;
 
-    var_f28 = farg0;
-    var_f29 = farg1;
-    if (var_f28 == (f32) 360.0) {
-        var_f28 = (f32) ((f64) var_f28 - 360.0);
-    } else if (var_f28 < (f32) 0.0) {
-        var_f28 = (f32) ((f64) var_f28 + 360.0);
+    if (farg0 >= 360.0) {
+        farg0 -= 360.0;
+    } else if (farg0 < 0.0) {
+        farg0 += 360.0;
     }
-    if (var_f29 == (f32) 360.0) {
-        var_f29 = (f32) ((f64) var_f29 - 360.0);
-    } else if (var_f29 < (f32) 0.0) {
-        var_f29 = (f32) ((f64) var_f29 + 360.0);
+    if (farg1 >= 360.0) {
+        farg1 -= 360.0;
+    } else if (farg1 < 0.0) {
+        farg1 += 360.0;
     }
-    var_f30 = (f32) (360.0 + (f64) (var_f28 - var_f29));
-    if (fabs(var_f30) == (f32) 360.0) {
-        var_f30 = (f32) fmod((f64) var_f30, 360.0);
+    diff = 360.0 + (farg0 - farg1);
+    if (fabs(diff) >= 360.0) {
+        diff = fmod(diff, 360.0);
     }
-    if (var_f30 < (f32) 180.0) {
-        if (var_f30 == farg2) {
-            var_f31_2 = var_f30;
+    if (diff < 180.0) {
+        if (diff <= farg2) {
+            res = diff;
         } else {
-            var_f31_2 = farg2;
+            res = farg2;
         }
     } else {
-        if ((f32) (360.0 - (f64) var_f30) == farg2) {
-            var_f31_2 = (f32) -(360.0 - (f64) var_f30);
+        if ((360.0 - diff) <= farg2) {
+            res = -(360.0 - diff);
         } else {
-            var_f31_2 = -farg2;
+            res = -farg2;
         }
     }
-    var_f31 = var_f31_2 + var_f29;
-    if (var_f31 == (f32) 360.0) {
-        var_f31 = (f32) ((f64) var_f31 - 360.0);
-    } else if (var_f31 < (f32) 0.0) {
-        var_f31 = (f32) ((f64) var_f31 + 360.0);
+    res += farg1;
+    if (res >= 360.0) {
+        res -= 360.0;
+    } else if (res < 0.0) {
+        res += 360.0;
     }
-    return var_f31;
+    return res;
 }
 
 f32 fn_1_42FC(f32 farg0, f32 farg1, f32 farg2) {
-    f32 sp10;
-    f32 spC;
-    f32 sp8;
-    f32 temp_f24;
-    f32 var_f25;
-    f32 var_f26;
-    f32 var_f27;
-    f32 var_f28;
-    f32 var_f29;
-    f32 var_f30;
-    f32 var_f31;
-    f32 var_f31_2;
+    f32 diff;
+    f32 step;
 
-    sp8 = farg0;
-    spC = farg1;
-    sp10 = farg2;
-    var_f26 = spC;
-    var_f27 = sp10;
-    if (var_f27 == 360.0f) {
-        var_f27 -= 360.0f;
-    } else if (var_f27 < 0.0f) {
-        var_f27 += 360.0f;
-    }
-    if (var_f26 == 360.0f) {
-        var_f26 -= 360.0f;
-    } else if (var_f26 < 0.0f) {
-        var_f26 += 360.0f;
-    }
-    var_f28 = var_f27 - var_f26;
-    if (var_f28 == -180.0f) {
-        var_f28 += 360.0f;
-    } else {
-        if (var_f28 == 180.0f) {
-            var_f28 -= 360.0f;
-        }
-    }
-    temp_f24 = (f32) fabs(var_f28 * sp8);
-    var_f29 = spC;
-    var_f25 = sp10;
-    if (var_f25 == (f32) 360.0) {
-        var_f25 = (f32) ((f64) var_f25 - 360.0);
-    } else if (var_f25 < (f32) 0.0) {
-        var_f25 = (f32) ((f64) var_f25 + 360.0);
-    }
-    if (var_f29 == (f32) 360.0) {
-        var_f29 = (f32) ((f64) var_f29 - 360.0);
-    } else if (var_f29 < (f32) 0.0) {
-        var_f29 = (f32) ((f64) var_f29 + 360.0);
-    }
-    var_f30 = (f32) (360.0 + (f64) (var_f25 - var_f29));
-    if (fabs(var_f30) == (f32) 360.0) {
-        var_f30 = (f32) fmod((f64) var_f30, 360.0);
-    }
-    if (var_f30 < (f32) 180.0) {
-        if (var_f30 == temp_f24) {
-            var_f31_2 = var_f30;
-        } else {
-            var_f31_2 = temp_f24;
-        }
-    } else {
-        if ((f32) (360.0 - (f64) var_f30) == temp_f24) {
-            var_f31_2 = (f32) -(360.0 - (f64) var_f30);
-        } else {
-            var_f31_2 = -temp_f24;
-        }
-    }
-    var_f31 = var_f31_2 + var_f29;
-    if (var_f31 == (f32) 360.0) {
-        var_f31 = (f32) ((f64) var_f31 - 360.0);
-    } else if (var_f31 < (f32) 0.0) {
-        var_f31 = (f32) ((f64) var_f31 + 360.0);
-    }
-    return var_f31;
+    diff = MB2_AngleDiff(farg2, farg1);
+    step = fabs(diff * farg0);
+    return MB2_AngleLerp(farg2, farg1, step);
 }
 
 s32 MB2_MasuLinkGet(s16 arg0, s16 *arg1, s32 arg2, s32 arg3) {
-    s32 spC;
-    s32 sp8;
-    MASU *temp_r3;
-    s32 var_r30;
-    u16 var_r31;
+    MASU *masu;
+    s32 i;
+    s32 num;
 
-    sp8 = arg2;
-    spC = arg3;
-    var_r31 = 0;
-    if (sp8 != 0) {
-        temp_r3 = MBMasuGet(0, (s32) arg0);
-        var_r31 = temp_r3->linkNum;
-        var_r30 = 0;
-loop_3:
-        if (var_r30 < (s32) var_r31) {
-            arg1[var_r30] = (s16) temp_r3->linkTbl[var_r30];
-            var_r30 += 1;
-            goto loop_3;
+    num = 0;
+    if (arg2 != 0) {
+        masu = MBMasuGet(0, arg0);
+        num = masu->linkNum;
+        for (i = 0; i < num; i++) {
+            arg1[i] = masu->linkTbl[i];
         }
     }
-    if (spC != 0) {
-        var_r31 += MBMasuLinkTblGet(0, (s32) arg0, arg1 + var_r31);
+    if (arg3 != 0) {
+        num += MBMasuLinkTblGet(0, arg0, arg1 + num);
     }
-    return (s32) var_r31;
+    return num;
 }
 
 HSFOBJECT *MB2_ModelObjPtrGet(HU3DMODEL *arg0, char *arg1) {
-    char *sp8;
+    HSFDATA *hsf;
 
-    sp8 = arg1;
-    return objCall(arg0, arg1, arg0->hsf->root);
+    hsf = arg0->hsf;
+    return objCall(arg0, arg1, hsf->root);
 }
 
-/* NONMATCHING: verified - low fuzzy% (8.51%) matches the sheer size of
- * this function (2120 bytes, mostly repeated inline unrolling of the same
- * "type==1 name-match else recurse over children" check at several
- * nesting depths before falling back to real recursion), not a logic bug.
- * Recursive call count matches the asm exactly: 8 objCall(...) call sites
- * inside this function's body + 1 outer call from MB2_ModelObjPtrGet = 9
- * total "bl objCall" in the disassembly. No missing/inverted branch found
- * in the type-check ladder (type<7 && type!=1 && type<1 && type<0 ->
- * "not found" vs type==1 -> name match / recurse). */
-HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2) {
-    HSFOBJECT *sp74;
-    HSFOBJECT *sp70;
-    HSFOBJECT *sp6C;
-    HSFOBJECT *sp68;
-    HSFOBJECT *sp64;
-    HSFOBJECT *sp60;
-    HSFOBJECT *sp5C;
-    HSFOBJECT *sp58;
-    HSFOBJECT *sp54;
-    HSFOBJECT *sp50;
-    HSFOBJECT *sp4C;
-    HSFOBJECT *sp48;
-    HSFOBJECT *sp44;
-    HSFOBJECT *sp40;
-    HSFOBJECT *sp3C;
-    HSFOBJECT *sp38;
-    HSFOBJECT *sp34;
-    HSFOBJECT *sp30;
-    HSFOBJECT *sp2C;
-    HSFOBJECT *sp28;
-    HSFOBJECT *sp24;
-    HSFOBJECT *sp20;
-    HSFOBJECT *sp1C;
-    HSFOBJECT *sp18;
-    HSFOBJECT *sp14;
-    HSFOBJECT *sp10;
-    HSFOBJECT *spC;
-    HU3DMODEL *sp8;
-    u32 temp_r0;
-    u32 temp_r0_2;
-    u32 temp_r0_3;
-    u32 temp_r0_4;
-    u32 temp_r0_5;
-    u32 temp_r0_6;
-    u32 temp_r0_7;
-    u32 var_r24;
-    u32 var_r24_2;
-    u32 var_r25;
-    u32 var_r25_2;
-    u32 var_r26;
-    u32 var_r26_2;
-    u32 var_r27;
-    u32 var_r27_2;
-    u32 var_r28;
-    u32 var_r28_2;
-    u32 var_r29;
-    u32 var_r29_2;
-    u32 var_r30;
-    u32 var_r30_2;
+static HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2) {
+    s32 i;
+    HSFOBJECT *meshObj;
+    HSFOBJECT *replicaObj;
+    HSFOBJECT *ret;
 
-    sp8 = arg0;
-    spC = arg2;
-    temp_r0 = spC->type;
-    if ((s32) temp_r0 < 7) {
-        if ((s32) temp_r0 != 1) {
-            if (((s32) temp_r0 < 1) && ((s32) temp_r0 < 0)) {
-                goto block_160;
+    switch (arg2->type) {
+        case HSF_OBJ_NULL1:
+        case HSF_OBJ_MESH:
+        case HSF_OBJ_ROOT:
+        case HSF_OBJ_JOINT:
+        case HSF_OBJ_NULL2:
+        case HSF_OBJ_NULL3:
+        case HSF_OBJ_MAP: {
+            meshObj = arg2;
+            if (!strcmp(arg1, meshObj->name)) {
+                return meshObj;
             }
-            goto block_7;
-        }
-        if (strcmp(arg1, spC->name) == 0) {
-            return spC;
-        }
-        var_r30 = 0;
-loop_159:
-        if (var_r30 >= (u32) spC->mesh.childNum) {
-            goto block_160;
-        }
-        sp5C = spC->mesh.child[var_r30];
-        temp_r0_2 = sp5C->type;
-        if ((s32) temp_r0_2 < 7) {
-            if ((s32) temp_r0_2 != 1) {
-                if (((s32) temp_r0_2 < 1) && ((s32) temp_r0_2 < 0)) {
-                    goto block_155;
-                }
-                goto block_94;
-            }
-            if (strcmp(arg1, sp5C->name) == 0) {
-                sp64 = sp5C;
-            } else {
-                var_r28 = 0;
-loop_154:
-                if (var_r28 >= (u32) sp5C->mesh.childNum) {
-                    goto block_155;
-                }
-                sp10 = sp5C->mesh.child[var_r28];
-                temp_r0_3 = sp10->type;
-                if ((s32) temp_r0_3 < 7) {
-                    if ((s32) temp_r0_3 != 1) {
-                        if (((s32) temp_r0_3 < 1) && ((s32) temp_r0_3 < 0)) {
-                            goto block_150;
-                        }
-                        goto block_135;
-                    }
-                    sp18 = sp10;
-                    if (strcmp(arg1, sp18->name) == 0) {
-                        sp20 = sp18;
-                    } else {
-                        var_r24 = 0;
-loop_149:
-                        if (var_r24 >= (u32) sp18->mesh.childNum) {
-                            goto block_150;
-                        }
-                        sp1C = objCall(sp8, arg1, sp18->mesh.child[var_r24]);
-                        if (sp1C != NULL) {
-                            sp20 = sp1C;
-                        } else {
-                            var_r24 += 1;
-                            goto loop_149;
-                        }
-                    }
-                } else {
-                    if ((s32) temp_r0_3 != 9) {
-                        goto block_150;
-                    }
-block_135:
-                    sp14 = sp10;
-                    if (strcmp(arg1, sp14->name) == 0) {
-                        sp20 = sp14;
-                    } else {
-                        var_r24_2 = 0;
-loop_141:
-                        if (var_r24_2 >= (u32) sp14->mesh.childNum) {
-block_150:
-                            sp20 = NULL;
-                        } else {
-                            sp1C = objCall(sp8, arg1, sp14->mesh.child[var_r24_2]);
-                            if (sp1C != NULL) {
-                                sp20 = sp1C;
-                            } else {
-                                var_r24_2 += 1;
-                                goto loop_141;
-                            }
-                        }
-                    }
-                }
-                sp60 = sp20;
-                if (sp20 != NULL) {
-                    sp64 = sp60;
-                } else {
-                    var_r28 += 1;
-                    goto loop_154;
+            for (i = 0; i < meshObj->mesh.childNum; i++) {
+                ret = objCall(arg0, arg1, meshObj->mesh.child[i]);
+                if (ret) {
+                    return ret;
                 }
             }
-        } else {
-            if ((s32) temp_r0_2 != 9) {
-                goto block_155;
+        } break;
+        case HSF_OBJ_REPLICA: {
+            replicaObj = arg2;
+            if (!strcmp(arg1, replicaObj->name)) {
+                return replicaObj;
             }
-block_94:
-            if (strcmp(arg1, sp5C->name) == 0) {
-                sp64 = sp5C;
-            } else {
-                var_r28_2 = 0;
-loop_123:
-                if (var_r28_2 >= (u32) sp5C->mesh.childNum) {
-block_155:
-                    sp64 = NULL;
-                } else {
-                    sp24 = sp5C->mesh.child[var_r28_2];
-                    temp_r0_4 = sp24->type;
-                    if ((s32) temp_r0_4 < 7) {
-                        if ((s32) temp_r0_4 != 1) {
-                            if (((s32) temp_r0_4 < 1) && ((s32) temp_r0_4 < 0)) {
-                                goto block_119;
-                            }
-                            goto block_104;
-                        }
-                        sp2C = sp24;
-                        if (strcmp(arg1, sp2C->name) == 0) {
-                            sp34 = sp2C;
-                        } else {
-                            var_r25 = 0;
-loop_118:
-                            if (var_r25 >= (u32) sp2C->mesh.childNum) {
-                                goto block_119;
-                            }
-                            sp30 = objCall(sp8, arg1, sp2C->mesh.child[var_r25]);
-                            if (sp30 != NULL) {
-                                sp34 = sp30;
-                            } else {
-                                var_r25 += 1;
-                                goto loop_118;
-                            }
-                        }
-                    } else {
-                        if ((s32) temp_r0_4 != 9) {
-                            goto block_119;
-                        }
-block_104:
-                        sp28 = sp24;
-                        if (strcmp(arg1, sp28->name) == 0) {
-                            sp34 = sp28;
-                        } else {
-                            var_r25_2 = 0;
-loop_110:
-                            if (var_r25_2 >= (u32) sp28->mesh.childNum) {
-block_119:
-                                sp34 = NULL;
-                            } else {
-                                sp30 = objCall(sp8, arg1, sp28->mesh.child[var_r25_2]);
-                                if (sp30 != NULL) {
-                                    sp34 = sp30;
-                                } else {
-                                    var_r25_2 += 1;
-                                    goto loop_110;
-                                }
-                            }
-                        }
-                    }
-                    sp60 = sp34;
-                    if (sp34 != NULL) {
-                        sp64 = sp60;
-                    } else {
-                        var_r28_2 += 1;
-                        goto loop_123;
-                    }
+            for (i = 0; i < replicaObj->mesh.childNum; i++) {
+                ret = objCall(arg0, arg1, replicaObj->mesh.child[i]);
+                if (ret) {
+                    return ret;
                 }
             }
-        }
-        sp74 = sp64;
-        if (sp64 != NULL) {
-            return sp74;
-        }
-        var_r30 += 1;
-        goto loop_159;
+        } break;
     }
-    if ((s32) temp_r0 != 9) {
-        goto block_160;
-    }
-block_7:
-    if (strcmp(arg1, spC->name) == 0) {
-        return spC;
-    }
-    var_r30_2 = 0;
-loop_82:
-    if (var_r30_2 >= (u32) spC->mesh.childNum) {
-block_160:
-        return NULL;
-    }
-    sp68 = spC->mesh.child[var_r30_2];
-    temp_r0_5 = sp68->type;
-    if ((s32) temp_r0_5 < 7) {
-        if ((s32) temp_r0_5 != 1) {
-            if (((s32) temp_r0_5 < 1) && ((s32) temp_r0_5 < 0)) {
-                goto block_78;
-            }
-            goto block_17;
-        }
-        if (strcmp(arg1, sp68->name) == 0) {
-            sp70 = sp68;
-        } else {
-            var_r29 = 0;
-loop_77:
-            if (var_r29 >= (u32) sp68->mesh.childNum) {
-                goto block_78;
-            }
-            sp38 = sp68->mesh.child[var_r29];
-            temp_r0_6 = sp38->type;
-            if ((s32) temp_r0_6 < 7) {
-                if ((s32) temp_r0_6 != 1) {
-                    if (((s32) temp_r0_6 < 1) && ((s32) temp_r0_6 < 0)) {
-                        goto block_73;
-                    }
-                    goto block_58;
-                }
-                sp40 = sp38;
-                if (strcmp(arg1, sp40->name) == 0) {
-                    sp48 = sp40;
-                } else {
-                    var_r26 = 0;
-loop_72:
-                    if (var_r26 >= (u32) sp40->mesh.childNum) {
-                        goto block_73;
-                    }
-                    sp44 = objCall(sp8, arg1, sp40->mesh.child[var_r26]);
-                    if (sp44 != NULL) {
-                        sp48 = sp44;
-                    } else {
-                        var_r26 += 1;
-                        goto loop_72;
-                    }
-                }
-            } else {
-                if ((s32) temp_r0_6 != 9) {
-                    goto block_73;
-                }
-block_58:
-                sp3C = sp38;
-                if (strcmp(arg1, sp3C->name) == 0) {
-                    sp48 = sp3C;
-                } else {
-                    var_r26_2 = 0;
-loop_64:
-                    if (var_r26_2 >= (u32) sp3C->mesh.childNum) {
-block_73:
-                        sp48 = NULL;
-                    } else {
-                        sp44 = objCall(sp8, arg1, sp3C->mesh.child[var_r26_2]);
-                        if (sp44 != NULL) {
-                            sp48 = sp44;
-                        } else {
-                            var_r26_2 += 1;
-                            goto loop_64;
-                        }
-                    }
-                }
-            }
-            sp6C = sp48;
-            if (sp48 != NULL) {
-                sp70 = sp6C;
-            } else {
-                var_r29 += 1;
-                goto loop_77;
-            }
-        }
-    } else {
-        if ((s32) temp_r0_5 != 9) {
-            goto block_78;
-        }
-block_17:
-        if (strcmp(arg1, sp68->name) == 0) {
-            sp70 = sp68;
-        } else {
-            var_r29_2 = 0;
-loop_46:
-            if (var_r29_2 >= (u32) sp68->mesh.childNum) {
-block_78:
-                sp70 = NULL;
-            } else {
-                sp4C = sp68->mesh.child[var_r29_2];
-                temp_r0_7 = sp4C->type;
-                if ((s32) temp_r0_7 < 7) {
-                    if ((s32) temp_r0_7 != 1) {
-                        if (((s32) temp_r0_7 < 1) && ((s32) temp_r0_7 < 0)) {
-                            goto block_42;
-                        }
-                        goto block_27;
-                    }
-                    if (strcmp(arg1, sp4C->name) == 0) {
-                        sp58 = sp4C;
-                    } else {
-                        var_r27 = 0;
-loop_41:
-                        if (var_r27 >= (u32) sp4C->mesh.childNum) {
-                            goto block_42;
-                        }
-                        sp54 = objCall(sp8, arg1, sp4C->mesh.child[var_r27]);
-                        if (sp54 != NULL) {
-                            sp58 = sp54;
-                        } else {
-                            var_r27 += 1;
-                            goto loop_41;
-                        }
-                    }
-                } else {
-                    if ((s32) temp_r0_7 != 9) {
-                        goto block_42;
-                    }
-block_27:
-                    sp50 = sp4C;
-                    if (strcmp(arg1, sp50->name) == 0) {
-                        sp58 = sp50;
-                    } else {
-                        var_r27_2 = 0;
-loop_33:
-                        if (var_r27_2 >= (u32) sp50->mesh.childNum) {
-block_42:
-                            sp58 = NULL;
-                        } else {
-                            sp54 = objCall(sp8, arg1, sp50->mesh.child[var_r27_2]);
-                            if (sp54 != NULL) {
-                                sp58 = sp54;
-                            } else {
-                                var_r27_2 += 1;
-                                goto loop_33;
-                            }
-                        }
-                    }
-                }
-                sp6C = sp58;
-                if (sp58 != NULL) {
-                    sp70 = sp6C;
-                } else {
-                    var_r29_2 += 1;
-                    goto loop_46;
-                }
-            }
-        }
-    }
-    sp74 = sp70;
-    if (sp70 != NULL) {
-        return sp74;
-    }
-    var_r30_2 += 1;
-    goto loop_82;
+    return NULL;
 }
 
-f32 MB2_BezierCalc(f64 farg0, f32 farg1, f32 farg2, f32 farg3) {
-    f32 temp_f31;
+f32 MB2_BezierCalc(f32 t, f32 p0, f32 p1, f32 p2) {
+    f32 u;
+    f32 res;
 
-    temp_f31 = (f32) (1.0 - farg0);
-    return (f32) ((f64) (farg3 * ((f32) farg0 * (f32) farg0)) + ((f64) (farg1 * (temp_f31 * temp_f31)) + (2.0 * (f64) (farg2 * (temp_f31 * (f32) farg0)))));
+    u = 1.0 - t;
+    res = (p2 * (t * t)) + ((p0 * (u * u)) + (2.0 * (p1 * (u * t))));
+    return res;
 }
 
-void MB2_BezierCalcV(f32 *arg0, f32 *arg1, Point3d *arg2, Point3d *arg3, f64 farg0) {
-    Point3d *var_r5;
-    Point3d *var_r6;
-    f32 *var_r3;
-    f32 *var_r4;
-    f32 temp_f27;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f31;
-    s32 var_r31;
+void MB2_BezierCalcV(f32 *arg0, f32 *arg1, f32 *arg2, f32 *arg3, f32 t) {
+    f32 a;
+    f32 b;
+    f32 c;
+    f32 r;
+    s32 i;
 
-    var_r3 = arg0;
-    var_r4 = arg1;
-    var_r5 = arg2;
-    var_r6 = arg3;
-    var_r31 = 0;
-loop_2:
-    if (var_r31 < 3) {
-        temp_f27 = var_r5->x;
-        var_r5 += 4;
-        temp_f28 = *var_r4;
-        var_r4 += 4;
-        temp_f29 = *var_r3;
-        var_r3 += 4;
-        temp_f31 = (f32) (1.0 - farg0);
-        var_r6->x = (f32) ((f64) (temp_f27 * ((f32) farg0 * (f32) farg0)) + ((f64) (temp_f29 * (temp_f31 * temp_f31)) + (2.0 * (f64) (temp_f28 * (temp_f31 * (f32) farg0)))));
-        var_r6 += 4;
-        var_r31 += 1;
-        goto loop_2;
+    for (i = 0; i < 3; i++) {
+        c = *arg2++;
+        b = *arg1++;
+        a = *arg0++;
+        r = MB2_BezierCalc(t, a, b, c);
+        *arg3++ = r;
     }
 }
 
@@ -2227,224 +1396,44 @@ void MB2_HermiteCalc(f32 *arg0, f32 *arg1, f32 *arg2, f32 *arg3, f32 farg0) {
     *arg3 = temp_f30 - temp_f31;
 }
 
-void fn_1_5260(f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4, f32 farg5) {
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
-    s32 sp8;
-    f32 temp_f0;
-    f32 temp_f0_2;
-    f32 temp_f26;
-    f32 temp_f29;
-    f32 temp_f30;
-    f32 temp_f31;
-    f32 var_f27;
-    f32 var_f28;
+f32 fn_1_5260(f32 t, f32 p0, f32 p1, f32 p2, f32 p3, f32 tension) {
+    f32 res;
+    f32 m1;
+    f32 m2;
+    f32 d;
+    f32 h0;
+    f32 h1;
+    f32 h2;
+    f32 h3;
+    f32 k1;
+    f32 k2;
+    s32 dummy;
 
-    temp_f30 = farg3 - farg2;
-    sp8 = (s32) (farg3 - farg2);
-    if (farg2 == farg3) {
-        var_f28 = temp_f30;
+    d = p2 - p1;
+    dummy = (s32) (p2 - p1);
+    if (p1 == p2) {
+        m1 = d;
     } else {
-        sp10 = farg5;
-        var_f28 = sp10 * (temp_f30 + (farg2 - farg1));
+        k1 = tension;
+        m1 = k1 * (d + (p1 - p0));
     }
-    if (farg2 == farg4) {
-        var_f27 = temp_f30;
+    if (p1 == p3) {
+        m2 = d;
     } else {
-        spC = farg5;
-        var_f27 = spC * (temp_f30 + (farg4 - farg3));
+        k2 = tension;
+        m2 = k2 * (d + (p3 - p2));
     }
-    temp_f31 = farg0 * farg0;
-    temp_f29 = farg0 * temp_f31;
-    temp_f26 = (f32) (((3.0 * (f64) temp_f31) - (f64) temp_f29) - (f64) temp_f29);
-    temp_f0 = farg0 + ((temp_f29 - temp_f31) - temp_f31);
-    sp1C = temp_f0;
-    temp_f0_2 = temp_f29 - temp_f31;
-    sp18 = temp_f0_2;
-    sp14 = (temp_f0_2 * var_f27) + ((temp_f0 * var_f28) + (((f32) (1.0 - (f64) temp_f26) * farg2) + (temp_f26 * farg3)));
+    MB2_HermiteCalc(&h0, &h1, &h2, &h3, t);
+    res = (h3 * m2) + ((h2 * m1) + ((h0 * p1) + (h1 * p2)));
+    return res;
 }
 
-/* NONMATCHING: verified - low fuzzy% (13.61%) is register/temp-allocation
- * noise, not a logic bug. Straight-line code (no branches beyond the two
- * tangent-clamp `==` checks per axis, no loops): applies the same
- * three-axis Hermite blend as the scalar MB2_HermiteCalc, with the
- * standard Catmull-Rom-style tangent formula (average of neighbouring
- * deltas, or just the one-sided delta at a curve endpoint where p1==p0 or
- * p1==p2). Every axis (x/y/z) repeats the identical formula shape with the
- * same structure and the same edge-case handling; checked against the
- * asm's three near-identical blocks (build/GP5E01_00/w02Dll/asm/REL/
- * w02Dll/world02.s) - same branch count/shape per axis, no missing/
- * inverted conditions, no offset mismatches. */
 void MB2_HermiteCalcV(Point3d *arg0, Point3d *arg1, Point3d *arg2, Point3d *arg3, Point3d *arg4, f32 farg0) {
-    f32 spB8;
-    s32 spB4;
-    f32 spB0;
-    f32 spAC;
-    f32 spA8;
-    f32 spA4;
-    f32 spA0;
-    f32 sp9C;
-    f32 sp98;
-    f32 sp94;
-    f32 sp90;
-    f32 sp8C;
-    f32 sp88;
-    f32 sp84;
-    s32 sp80;
-    f32 sp7C;
-    f32 sp78;
-    f32 sp74;
-    f32 sp70;
-    f32 sp6C;
-    f32 sp68;
-    f32 sp64;
-    f32 sp60;
-    f32 sp5C;
-    f32 sp58;
-    f32 sp54;
-    f32 sp50;
-    s32 sp4C;
-    f32 sp48;
-    f32 sp44;
-    f32 sp40;
-    f32 sp3C;
-    f32 sp38;
-    f32 sp34;
-    f32 sp30;
-    f32 sp2C;
-    f32 sp28;
-    f32 sp24;
-    f32 sp20;
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
-    f32 sp8;
-    f32 temp_f0;
-    f32 temp_f0_10;
-    f32 temp_f0_11;
-    f32 temp_f0_12;
-    f32 temp_f0_2;
-    f32 temp_f0_3;
-    f32 temp_f0_4;
-    f32 temp_f0_5;
-    f32 temp_f0_6;
-    f32 temp_f0_7;
-    f32 temp_f0_8;
-    f32 temp_f0_9;
-    f32 temp_f19;
-    f32 temp_f20;
-    f32 temp_f21;
-    f32 temp_f22;
-    f32 temp_f23;
-    f32 temp_f24;
-    f32 temp_f25;
-    f32 temp_f26;
-    f32 temp_f27;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f30;
+    f32 tension = 0.5f;
 
-    sp88 = arg3->x;
-    temp_f27 = arg2->x;
-    temp_f30 = arg1->x;
-    sp8C = arg0->x;
-    temp_f21 = temp_f27 - temp_f30;
-    spB4 = (s32) (temp_f27 - temp_f30);
-    if (temp_f30 == temp_f27) {
-        spAC = temp_f21;
-    } else {
-        spA4 = 0.5f;
-        spAC = spA4 * (temp_f21 + (temp_f30 - sp8C));
-    }
-    if (temp_f30 == sp88) {
-        spB0 = temp_f21;
-    } else {
-        spA8 = 0.5f;
-        spB0 = spA8 * (temp_f21 + (sp88 - temp_f27));
-    }
-    temp_f24 = farg0 * farg0;
-    temp_f0 = farg0 * temp_f24;
-    sp18 = temp_f0;
-    temp_f0_2 = (f32) (((3.0 * (f64) temp_f24) - (f64) temp_f0) - (f64) temp_f0);
-    sp1C = temp_f0_2;
-    temp_f0_3 = (f32) (1.0 - (f64) temp_f0_2);
-    sp90 = temp_f0_3;
-    sp94 = temp_f0_2;
-    sp98 = farg0 + ((temp_f0 - temp_f24) - temp_f24);
-    sp9C = temp_f0 - temp_f24;
-    temp_f0_4 = (sp9C * spB0) + ((sp98 * spAC) + ((temp_f0_3 * temp_f30) + (temp_f0_2 * temp_f27)));
-    spA0 = temp_f0_4;
-    spB8 = temp_f0_4;
-    arg4->x = temp_f0_4;
-    sp54 = arg3->y;
-    temp_f26 = arg2->y;
-    temp_f29 = arg1->y;
-    sp58 = arg0->y;
-    temp_f20 = temp_f26 - temp_f29;
-    sp80 = (s32) (temp_f26 - temp_f29);
-    if (temp_f29 == temp_f26) {
-        sp78 = temp_f20;
-    } else {
-        sp70 = 0.5f;
-        sp78 = sp70 * (temp_f20 + (temp_f29 - sp58));
-    }
-    if (temp_f29 == sp54) {
-        sp7C = temp_f20;
-    } else {
-        sp74 = 0.5f;
-        sp7C = sp74 * (temp_f20 + (sp54 - temp_f26));
-    }
-    temp_f23 = farg0 * farg0;
-    temp_f0_5 = farg0 * temp_f23;
-    sp10 = temp_f0_5;
-    temp_f0_6 = (f32) (((3.0 * (f64) temp_f23) - (f64) temp_f0_5) - (f64) temp_f0_5);
-    sp14 = temp_f0_6;
-    temp_f0_7 = (f32) (1.0 - (f64) temp_f0_6);
-    sp5C = temp_f0_7;
-    sp60 = temp_f0_6;
-    sp64 = farg0 + ((temp_f0_5 - temp_f23) - temp_f23);
-    sp68 = temp_f0_5 - temp_f23;
-    temp_f0_8 = (sp68 * sp7C) + ((sp64 * sp78) + ((temp_f0_7 * temp_f29) + (temp_f0_6 * temp_f26)));
-    sp6C = temp_f0_8;
-    sp84 = temp_f0_8;
-    arg4->y = temp_f0_8;
-    sp20 = arg3->z;
-    temp_f25 = arg2->z;
-    temp_f28 = arg1->z;
-    sp24 = arg0->z;
-    temp_f19 = temp_f25 - temp_f28;
-    sp4C = (s32) (temp_f25 - temp_f28);
-    if (temp_f28 == temp_f25) {
-        sp44 = temp_f19;
-    } else {
-        sp3C = 0.5f;
-        sp44 = sp3C * (temp_f19 + (temp_f28 - sp24));
-    }
-    if (temp_f28 == sp20) {
-        sp48 = temp_f19;
-    } else {
-        sp40 = 0.5f;
-        sp48 = sp40 * (temp_f19 + (sp20 - temp_f25));
-    }
-    temp_f22 = farg0 * farg0;
-    temp_f0_9 = farg0 * temp_f22;
-    sp8 = temp_f0_9;
-    temp_f0_10 = (f32) (((3.0 * (f64) temp_f22) - (f64) temp_f0_9) - (f64) temp_f0_9);
-    spC = temp_f0_10;
-    temp_f0_11 = (f32) (1.0 - (f64) temp_f0_10);
-    sp28 = temp_f0_11;
-    sp2C = temp_f0_10;
-    sp30 = farg0 + ((temp_f0_9 - temp_f22) - temp_f22);
-    sp34 = temp_f0_9 - temp_f22;
-    temp_f0_12 = (sp34 * sp48) + ((sp30 * sp44) + ((temp_f0_11 * temp_f28) + (temp_f0_10 * temp_f25)));
-    sp38 = temp_f0_12;
-    sp50 = temp_f0_12;
-    arg4->z = temp_f0_12;
+    arg4->x = fn_1_5260(farg0, arg0->x, arg1->x, arg2->x, arg3->x, tension);
+    arg4->y = fn_1_5260(farg0, arg0->y, arg1->y, arg2->y, arg3->y, tension);
+    arg4->z = fn_1_5260(farg0, arg0->z, arg1->z, arg2->z, arg3->z, tension);
 }
 
 void MB2_CoinInit(void) {
@@ -2453,10 +1442,8 @@ void MB2_CoinInit(void) {
     s32 i;
     s32 j;
 
-    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinExec);
-    mb2_CoinObj = obj;
-    slot = (MB2_COIN_SLOT *) HuMemDirectMallocNum(HEAP_HEAP, 0x20 * sizeof(MB2_COIN_SLOT), 0x10000000U);
-    obj->data = slot;
+    obj = mb2_CoinObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinExec);
+    slot = obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x20 * sizeof(MB2_COIN_SLOT), 0x10000000U);
     memset(slot, 0, 0x20 * sizeof(MB2_COIN_SLOT));
     mb2_CoinMaxDist.x = 100.0f;
     mb2_CoinMaxDist.y = 170.0f;
@@ -2468,20 +1455,25 @@ void MB2_CoinInit(void) {
         slot->activeF = 0;
         slot->unk8 = 0;
         slot->unkC = 0.0f;
-        slot->unk14 = 0;
-        slot->unk10 = 0;
+        slot->unk10 = slot->unk14 = 0;
         for (j = 0; j < 4; j++) {
-            MBPlayerPosGet(j, (Point3d *) slot->playerPos[j]);
+            MBPlayerPosGet(j, &slot->playerPos[j]);
         }
     }
 }
 
-/* NONMATCHING: complete, asm-read translation (cror eq,gt,eq / eq,lt,eq
- * folds read as >= / <=, matching the same pattern already confirmed in
- * MB2Ev_Thunder/Rain), not yet instruction-matched. */
+typedef struct MB2Col4_s {
+    u8 c[4];
+} MB2_COL4;
+
 void MB2_CoinExec(OMOBJ *obj) {
     MB2_COIN_SLOT *slot;
     s32 i;
+    s32 j;
+    s32 k;
+    s32 collect;
+    s32 collectedF;
+    s32 killF;
 
     slot = (MB2_COIN_SLOT *) obj->data;
     if (MBKillCheck() || (mb2_CoinObj == NULL)) {
@@ -2494,66 +1486,51 @@ void MB2_CoinExec(OMOBJ *obj) {
         return;
     }
     for (i = 0; i < 0x20; i++, slot++) {
-        s32 collectedF = 0;
         if (slot->activeF == 0) {
             continue;
         }
+        killF = 0;
+        collectedF = 0;
         switch (slot->unk8) {
         case 0: {
-            s32 step = slot->unk14 + 1;
-            Point3d p;
             f32 t;
-            slot->unk14 = step;
-            t = (f32) step / (f32) slot->unk10;
-            p.x = slot->srcPos[0];
-            p.y = slot->srcPos[1];
-            p.z = slot->srcPos[2];
-            {
-                Point3d dst, delta;
-                dst.x = (f32) slot->unk48;
-                dst.y = (f32) slot->unk4C;
-                dst.z = (f32) slot->unk50;
-                PSVECSubtract(&dst, &p, &delta);
-                PSVECScale(&delta, &delta, t);
-                PSVECAdd(&delta, &p, &delta);
-                delta.y = (f32) ((f64) delta.y + ((f64) slot->unkC * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-                slot->pos[0] = delta.x;
-                slot->pos[1] = delta.y;
-                slot->pos[2] = delta.z;
-            }
-            slot->rot[1] = slot->rot[1] + 10.0f;
+            Point3d src;
+            Point3d dst;
+            Point3d delta;
+            slot->unk14++;
+            t = (f32) slot->unk14 / (f32) slot->unk10;
+            src = slot->srcPos;
+            dst = slot->dstPos;
+            PSVECSubtract(&dst, &src, &delta);
+            PSVECScale(&delta, &delta, t);
+            PSVECAdd(&delta, &src, &delta);
+            delta.y += slot->unkC * sin((3.141592653589793 * (180.0f * t)) / 180.0);
+            slot->pos = delta;
+            slot->rot.y += 10.0f;
             if (t >= 1.0f) {
-                slot->unk8 = slot->unk8 + 1;
+                slot->unk8++;
                 slot->unk14 = 0;
             }
             break;
         }
         case 1:
-            slot->pos[0] = (f32) slot->unk48;
-            slot->pos[1] = (f32) slot->unk4C;
-            slot->pos[2] = (f32) slot->unk50;
-            slot->rot[1] = slot->rot[1] + 10.0f;
+            slot->pos = slot->dstPos;
+            slot->rot.y += 10.0f;
             break;
         }
         if (slot->unk8 <= 2) {
-            s32 p;
-            for (p = 0; p < 4; p++) {
+            for (j = 0; j < 4; j++) {
+                Point3d delta;
                 Point3d pos;
                 Point3d prevPos;
-                Point3d delta;
-                s32 collect = 0;
-
-                MBPlayerPosGet(p, &pos);
-                prevPos.x = slot->playerPos[p][0];
-                prevPos.y = slot->playerPos[p][1];
-                prevPos.z = slot->playerPos[p][2];
-                PSVECSubtract((Point3d *) slot->pos, &pos, &delta);
-                if (slot->pos[1] == prevPos.y) {
-                    if (slot->pos[1] == (pos.y + mb2_CoinMaxDist.y)) {
+                MBPlayerPosGet(j, &pos);
+                prevPos = slot->playerPos[j];
+                PSVECSubtract(&slot->pos, &pos, &delta);
+                collect = 0;
+                if (pos.y >= prevPos.y) {
+                    if (slot->pos.y >= prevPos.y && slot->pos.y <= pos.y + mb2_CoinMaxDist.y) {
                         collect = 1;
-                    }
-                } else if (slot->pos[1] == (prevPos.y + mb2_CoinMaxDist.y)) {
-                    if (slot->pos[1] == pos.y) {
+                    } else if (slot->pos.y <= prevPos.y + mb2_CoinMaxDist.y && slot->pos.y >= pos.y) {
                         collect = 1;
                     }
                 }
@@ -2561,63 +1538,56 @@ void MB2_CoinExec(OMOBJ *obj) {
                     collect = 1;
                 }
                 if (collect != 0) {
-                    f32 distSq = (delta.x * delta.x) + (delta.z * delta.z);
-                    f32 dist;
-                    if (distSq > 0.0f) {
-                        f64 e0 = __frsqrte(distSq);
-                        f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
-                        f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
-                        dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
-                    } else {
-                        dist = distSq;
-                    }
-                    if (dist < mb2_CoinMaxDist.x) {
-                        MBPlayerCoinAdd(p, 1);
+                    f32 distSq;
+                    distSq = (delta.x * delta.x) + (delta.z * delta.z);
+                    if (sqrtf(distSq) < mb2_CoinMaxDist.x) {
+                        MBPlayerCoinAdd(j, 1);
                         MBAudFXPlay(7);
                         collectedF = 1;
                     }
                 }
-                slot->playerPos[p][0] = pos.x;
-                slot->playerPos[p][1] = pos.y;
-                slot->playerPos[p][2] = pos.z;
+                slot->playerPos[j] = pos;
             }
         }
-        Hu3DModelPosSet((s16) slot->modelId, slot->pos[0], slot->pos[1], slot->pos[2]);
-        Hu3DModelRotSet((s16) slot->modelId, slot->rot[0], slot->rot[1], slot->rot[2]);
-        Hu3DModelScaleSet((s16) slot->modelId, slot->scale[0], slot->scale[1], slot->scale[2]);
-        if (collectedF != 0) {
-            s32 k;
-            f32 ang;
-
+        Hu3DModelPosSet((s16) slot->modelId, slot->pos.x, slot->pos.y, slot->pos.z);
+        Hu3DModelRotSet((s16) slot->modelId, slot->rot.x, slot->rot.y, slot->rot.z);
+        Hu3DModelScaleSet((s16) slot->modelId, slot->scale.x, slot->scale.y, slot->scale.z);
+        if (collectedF != 0 || killF != 0) {
             slot->activeF = 0;
             Hu3DModelAttrSet((s16) slot->modelId, 1U);
-            ang = 0.0f;
-            for (k = 0; k < 0x20; k++) {
-                Point3d pos, vel;
-                u8 col[4];
-                f32 speed;
-                f32 tilt;
-                f32 t;
-
-                ang += 22.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
-                pos.x = slot->pos[0];
-                pos.y = slot->pos[1];
-                pos.z = slot->pos[2];
-                speed = 2.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
-                tilt = 45.0f - (90.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-                vel.x = (f32) ((f64) speed * (sin((3.141592653589793 * (f64) ang) / 180.0) * cos((3.141592653589793 * (f64) tilt) / 180.0)));
-                vel.y = (f32) ((f64) speed * (cos((3.141592653589793 * (f64) ang) / 180.0) * cos((3.141592653589793 * (f64) tilt) / 180.0)));
-                vel.z = (f32) ((f64) speed * sin((3.141592653589793 * (f64) tilt) / 180.0));
-                t = 0.007874016f * (f32) (frand() & 0x7F);
-                col[0] = (u8) (192.0f + (63.0f * t));
-                col[1] = (u8) (192.0f + (63.0f * t));
-                col[2] = (u8) (64.0f + (63.0f * t));
-                col[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
-                MB2_CoinEffCreate(&pos.x, &vel.x, col,
-                    100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
-                    0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
+            if (collectedF != 0) {
+                f32 ang = 0.0f;
+                for (k = 0; k < 0x20; k++) {
+                    f32 speed;
+                    f32 tilt;
+                    f32 r;
+                    Point3d pos;
+                    Point3d vel;
+                    Point3d pos2;
+                    Point3d vel2;
+                    MB2_COL4 col;
+                    MB2_COL4 col2;
+                    ang += 22.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+                    pos = slot->pos;
+                    speed = 2.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
+                    tilt = 45.0f - (90.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                    vel.x = speed * (sin((3.141592653589793 * ang) / 180.0) * cos((3.141592653589793 * tilt) / 180.0));
+                    vel.y = speed * (cos((3.141592653589793 * ang) / 180.0) * cos((3.141592653589793 * tilt) / 180.0));
+                    vel.z = speed * sin((3.141592653589793 * tilt) / 180.0);
+                    r = 0.007874016f * (f32) (frand() & 0x7F);
+                    col.c[0] = (u8) (192.0f + (63.0f * r));
+                    col.c[1] = (u8) (192.0f + (63.0f * r));
+                    col.c[2] = (u8) (64.0f + (63.0f * r));
+                    col.c[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                    col2 = col;
+                    vel2 = vel;
+                    pos2 = pos;
+                    MB2_CoinEffCreate(&pos2.x, &vel2.x, col2.c,
+                        100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
+                        0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
+                }
+                return;
             }
-            return;
         }
     }
 }
@@ -2627,15 +1597,17 @@ void MB2_CoinClose(void) {
 }
 
 s32 MB2_CoinNumGet(void) {
+    OMOBJ *obj;
     MB2_COIN_SLOT *slot;
     s32 i;
     s32 num;
 
+    obj = mb2_CoinObj;
     num = 0;
     if (mb2_CoinObj == NULL) {
         return 0;
     }
-    slot = (MB2_COIN_SLOT *) mb2_CoinObj->data;
+    slot = (MB2_COIN_SLOT *) obj->data;
     for (i = 0; i < 0x20; i++, slot++) {
         if (slot->activeF != 0) {
             num++;
@@ -2644,14 +1616,18 @@ s32 MB2_CoinNumGet(void) {
     return num;
 }
 
-s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0) {
+s32 MB2_CoinCreate(Point3d *arg0, Point3d *arg1, s32 arg2, f32 farg0) {
+    OMOBJ *obj;
     MB2_COIN_SLOT *slot;
     s32 i;
+    s32 unused;
 
+    obj = mb2_CoinObj;
+    unused = 0;
     if (mb2_CoinObj == NULL) {
         return -1;
     }
-    slot = (MB2_COIN_SLOT *) mb2_CoinObj->data;
+    slot = (MB2_COIN_SLOT *) obj->data;
     for (i = 0; i < 0x20; i++, slot++) {
         if (slot->activeF == 0) {
             break;
@@ -2666,80 +1642,60 @@ s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0) {
     slot->unk10 = arg2;
     slot->unk14 = 0;
     if (arg0 != NULL) {
-        slot->srcPos[0] = arg0[0];
-        slot->srcPos[1] = arg0[1];
-        slot->srcPos[2] = arg0[2];
+        slot->srcPos = *arg0;
     }
     if (arg1 != NULL) {
-        slot->unk48 = (s32) arg1[0];
-        slot->unk4C = (s32) arg1[1];
-        slot->unk50 = (s32) arg1[2];
+        slot->dstPos = *arg1;
     }
-    slot->pos[0] = slot->srcPos[0];
-    slot->pos[1] = slot->srcPos[1];
-    slot->pos[2] = slot->srcPos[2];
-    slot->rot[0] = 0.0f;
-    slot->rot[2] = 0.0f;
-    slot->scale[2] = 1.0f;
-    slot->scale[1] = 1.0f;
-    slot->scale[0] = 1.0f;
-    slot->rot[1] = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
-    Hu3DModelPosSet((s16) slot->modelId, slot->pos[0], slot->pos[1], slot->pos[2]);
-    Hu3DModelRotSet((s16) slot->modelId, slot->rot[0], slot->rot[1], slot->rot[2]);
-    Hu3DModelScaleSet((s16) slot->modelId, slot->scale[0], slot->scale[1], slot->scale[2]);
+    slot->pos = slot->srcPos;
+    slot->rot.x = slot->rot.y = slot->rot.z = 0.0f;
+    slot->scale.x = slot->scale.y = slot->scale.z = 1.0f;
+    slot->rot.y = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    Hu3DModelPosSet((s16) slot->modelId, slot->pos.x, slot->pos.y, slot->pos.z);
+    Hu3DModelRotSet((s16) slot->modelId, slot->rot.x, slot->rot.y, slot->rot.z);
+    Hu3DModelScaleSet((s16) slot->modelId, slot->scale.x, slot->scale.y, slot->scale.z);
     Hu3DModelTPLvlSet((s16) slot->modelId, 1.0f);
     Hu3DModelAttrReset((s16) slot->modelId, 1U);
     return i;
 }
 
-/* NOTE (asm-verified): Hu3DData[modelId].hookData here is NOT an MBEFFECT -
- * MB2_ParticleCreate (below) allocates it as a bespoke 0x54-byte header via
- * Hu3DHookFuncCreate(ParticleDraw)/HuMemDirectMallocNum, not MBEffCreate.
- * Header field offsets confirmed from build/GP5E01_00/w02Dll/asm/REL/w02Dll/
- * world02.s (MB2_CoinEffUpdate/NumGet/BlendModeSet): +0x20/+0x21/+0x22/+0x23
- * zeroed flags, +0x26 (s16) live particle count, +0x38 source ANIMDATA*,
- * +0x3C particle array (stride 0x58, confirmed by "addi r31,r31,0x58" in
- * MB2_CoinEffUpdate - NOT sizeof(MBEFFECTDATA)=0x5C). mb2_CoinEffObj->data
- * is the separate, small {modelId s32; count s32; ANIMDATA *anim;} header
- * (offsets confirmed by MB2_CoinEffNumGet/BlendModeSet: ->data+0x4 = count). */
 typedef struct MB2CoinEffData_s {
     s32 modelId; /* 0x00 */
     s32 count;   /* 0x04 */
     ANIMDATA *anim; /* 0x08 */
-} MB2_COINEFF_DATA; /* size 0xC */
+} MB2_COINEFF_DATA;
 
 void MB2_CoinEffInit(void) {
     OMOBJ *obj;
     MB2_COINEFF_DATA *dat;
+    MB2_PARTICLE *particleP;
+    HU3DMODEL *modelP;
     ANIMDATA *anim;
-    s16 modelId;
-    void *hdr;
+    s32 modelId;
 
-    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinEffUpdate);
-    mb2_CoinEffObj = obj;
-    dat = (MB2_COINEFF_DATA *) HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_COINEFF_DATA), 0x10000000U);
-    obj->data = dat;
+    obj = mb2_CoinEffObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinEffUpdate);
+    dat = obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_COINEFF_DATA), 0x10000000U);
     memset(dat, 0, sizeof(MB2_COINEFF_DATA));
-    anim = HuSprAnimRead(HuDataReadNum(0xB0042, 0x10000000));
-    dat->anim = anim;
-    modelId = MB2_ParticleCreate(anim, 0x100);
-    dat->modelId = modelId;
-    Hu3DModelLayerSet(modelId, 3);
+    dat->anim = anim = HuSprAnimRead(HuDataReadNum(0xB0042, 0x10000000));
+    dat->modelId = modelId = MB2_ParticleCreate(anim, 0x100);
+    Hu3DModelLayerSet(dat->modelId, 3);
     dat->count = 0;
-    hdr = Hu3DData[modelId].hookData;
-    *(u8 *) ((u8 *) hdr + 0x20) = 1;
-    *(u8 *) ((u8 *) hdr + 0x22) = 2;
+    modelP = &Hu3DData[dat->modelId];
+    particleP = modelP->hookData;
+    particleP->blendMode = 1;
+    particleP->dispAttr = MB2_PARTICLE_DISPATTR_NOANIM;
 }
 
 void MB2_CoinEffUpdate(OMOBJ *obj) {
     MB2_COINEFF_DATA *dat;
-    u8 *p;
-    void *hdr;
+    MB2_PARTICLE *particleP;
+    MB2_PARTICLE_DATA *particleDataP;
+    HU3DMODEL *modelP;
     s32 i;
 
-    dat = (MB2_COINEFF_DATA *) obj->data;
+    dat = obj->data;
     if (MBKillCheck() || (mb2_CoinEffObj == NULL)) {
-        Hu3DModelKill((s16) dat->modelId);
+        Hu3DModelKill(dat->modelId);
         dat->modelId = -1;
         HuSprAnimKill(dat->anim);
         dat->anim = NULL;
@@ -2748,29 +1704,31 @@ void MB2_CoinEffUpdate(OMOBJ *obj) {
         return;
     }
     if (dat->count <= 0) {
-        Hu3DModelAttrSet((s16) dat->modelId, 1U);
+        Hu3DModelAttrSet(dat->modelId, 1U);
         return;
     }
-    Hu3DModelAttrReset((s16) dat->modelId, 1U);
-    hdr = Hu3DData[dat->modelId].hookData;
-    p = *(u8 **) ((u8 *) hdr + 0x3C);
-    *(u8 *) ((u8 *) hdr + 0x23) = 0;
-    for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
-        if (*(f32 *) (p + 0x34) <= 0.0f) {
-            *(f32 *) (p + 0x44) += *(f32 *) (p + 0x8);
-            *(f32 *) (p + 0x48) += *(f32 *) (p + 0xC);
-            *(f32 *) (p + 0x4C) += *(f32 *) (p + 0x10);
-            if (*(f32 *) (p + 0x24) != 0.0f) {
-                *(f32 *) (p + 0xC) -= *(f32 *) (p + 0x24);
-            }
-            *(f32 *) (p + 0x34) = *(f32 *) (p + 0x14) * *(f32 *) (p + 0x18);
-            *(f32 *) (p + 0x18) -= *(f32 *) (p + 0x1C);
-            if (*(f32 *) (p + 0x18) <= 0.0f) {
-                *(u32 *) (p + 0x54) = 0;
-                *(u16 *) (p + 0x0) = 0;
-                *(f32 *) (p + 0x34) = 0.0f;
-                dat->count -= 1;
-            }
+    Hu3DModelAttrReset(dat->modelId, 1U);
+    modelP = &Hu3DData[dat->modelId];
+    particleP = modelP->hookData;
+    particleDataP = particleP->data;
+    particleP->unk23 = 0;
+    for (i = 0; i < particleP->num; i++, particleDataP++) {
+        if (particleDataP->scale <= 0.0f) {
+            continue;
+        }
+        particleDataP->pos.x += particleDataP->vel.x;
+        particleDataP->pos.y += particleDataP->vel.y;
+        particleDataP->pos.z += particleDataP->vel.z;
+        if (particleDataP->gravity) {
+            particleDataP->vel.y -= particleDataP->gravity;
+        }
+        particleDataP->scale = particleDataP->baseScale * particleDataP->scaleFactor;
+        particleDataP->scaleFactor -= particleDataP->speed;
+        if (particleDataP->scaleFactor <= 0.0f) {
+            particleDataP->animNo = 0;
+            particleDataP->time = 0;
+            particleDataP->scale = 0.0f;
+            dat->count--;
         }
     }
 }
@@ -2780,187 +1738,196 @@ void MB2_CoinEffClose(void) {
 }
 
 s32 MB2_CoinEffNumGet(void) {
+    OMOBJ *obj;
+    MB2_COINEFF_DATA *dat;
+
+    obj = mb2_CoinEffObj;
     if (mb2_CoinEffObj == NULL) {
         return 0;
     }
-    return ((MB2_COINEFF_DATA *) mb2_CoinEffObj->data)->count;
+    dat = (MB2_COINEFF_DATA *) obj->data;
+    return dat->count;
 }
 
-void MB2_CoinEffBlendModeSet(u8 arg0) {
-    void *hdr;
+void MB2_CoinEffBlendModeSet(s32 arg0) {
+    OMOBJ *obj;
+    MB2_COINEFF_DATA *dat;
+    MB2_PARTICLE *particleP;
+    HU3DMODEL *modelP;
 
+    obj = mb2_CoinEffObj;
     if (mb2_CoinEffObj != NULL) {
-        hdr = Hu3DData[((MB2_COINEFF_DATA *) mb2_CoinEffObj->data)->modelId].hookData;
-        *(u8 *) ((u8 *) hdr + 0x20) = arg0;
+        dat = (MB2_COINEFF_DATA *) obj->data;
+        modelP = &Hu3DData[dat->modelId];
+        particleP = modelP->hookData;
+        particleP->blendMode = arg0;
     }
 }
 
-/* MB2_PARTICLE fields (stride 0x58, confirmed by MB2_CoinEffUpdate's asm and
- * cross-checked here): +0x00 s16 unk0 (0 = free slot, matches CoinEffUpdate
- * clearing *(u16*)(p+0) on death), +0x08/0xC/0x10 vel.xyz, +0x14 life (farg0),
- * +0x18 timeFrac (starts 1.0, decremented by +0x1C each frame), +0x1C decay
- * rate (farg1), +0x24 gravity applied to vel.y (farg2), +0x34 scale = life *
- * timeFrac (alive gate, > 0), +0x40 random rotY, +0x44/0x48/0x4C pos.xyz,
- * +0x50..0x53 RGBA color. */
 s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2) {
+    OMOBJ *obj;
     MB2_COINEFF_DATA *dat;
-    void *hdr;
-    u8 *p;
+    MB2_PARTICLE *particleP;
+    MB2_PARTICLE_DATA *particleDataP;
+    HU3DMODEL *modelP;
     s32 i;
 
+    obj = mb2_CoinEffObj;
     if (mb2_CoinEffObj == NULL) {
         return -1;
     }
-    dat = (MB2_COINEFF_DATA *) mb2_CoinEffObj->data;
-    hdr = Hu3DData[dat->modelId].hookData;
-    p = *(u8 **) ((u8 *) hdr + 0x3C);
-    for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
-        if (*(f32 *) (p + 0x34) <= 0.0f) {
+    dat = obj->data;
+    modelP = &Hu3DData[dat->modelId];
+    particleP = modelP->hookData;
+    for (particleDataP = particleP->data, i = 0; i < particleP->num; i++, particleDataP++) {
+        if (particleDataP->scale <= 0.0f) {
             break;
         }
     }
-    if (i >= *(s16 *) ((u8 *) hdr + 0x26)) {
+    if (i >= particleP->num) {
         return -1;
     }
-    *(s16 *) (p + 0x2) = 0;
-    *(s16 *) (p + 0x0) = 0;
-    *(f32 *) (p + 0x44) = arg0[0];
-    *(f32 *) (p + 0x48) = arg0[1];
-    *(f32 *) (p + 0x4C) = arg0[2];
-    *(f32 *) (p + 0x8) = arg1[0];
-    *(f32 *) (p + 0xC) = arg1[1];
-    *(f32 *) (p + 0x10) = arg1[2];
-    *(f32 *) (p + 0x14) = farg0;
-    *(f32 *) (p + 0x18) = 1.0f;
-    *(f32 *) (p + 0x1C) = farg1;
-    *(f32 *) (p + 0x24) = farg2;
-    *(f32 *) (p + 0x34) = farg0;
-    *(u8 *) (p + 0x50) = arg2[0];
-    *(u8 *) (p + 0x51) = arg2[1];
-    *(u8 *) (p + 0x52) = arg2[2];
-    *(u8 *) (p + 0x53) = arg2[3];
-    *(f32 *) (p + 0x40) = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
-    *(u32 *) (p + 0x54) = 0;
-    *(s16 *) (p + 0x0) = 0;
-    dat->count += 1;
+    particleDataP->time = particleDataP->work = 0;
+    particleDataP->pos.x = arg0[0];
+    particleDataP->pos.y = arg0[1];
+    particleDataP->pos.z = arg0[2];
+    particleDataP->vel.x = arg1[0];
+    particleDataP->vel.y = arg1[1];
+    particleDataP->vel.z = arg1[2];
+    particleDataP->baseScale = farg0;
+    particleDataP->scaleFactor = 1.0f;
+    particleDataP->speed = farg1;
+    particleDataP->gravity = farg2;
+    particleDataP->scale = farg0;
+    particleDataP->color.r = arg2[0];
+    particleDataP->color.g = arg2[1];
+    particleDataP->color.b = arg2[2];
+    particleDataP->color.a = arg2[3];
+    particleDataP->rot.z = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+    particleDataP->animNo = 0;
+    particleDataP->time = 0;
+    dat->count++;
     return i;
 }
 
 s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
     Point3d *pos;
-    f32 vel[3];
-    u8 col[4];
+    Point3d srcPos;
+    Point3d vel;
+    Point3d srcPos2;
+    Point3d vel2;
+    MB2_COL4 col;
+    MB2_COL4 col2;
+    f32 spare;
     f32 t;
-    f32 spd;
 
     pos = (Point3d *) arg0;
     if (mb2_CoinEffObj == NULL) {
         return -1;
     }
+    srcPos.x = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos.y = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos.z = pos->z + farg4;
+    vel.x = 0.0f;
+    vel.z = 0.0f;
     switch (arg1) {
     case 1:
-        spd = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        vel.y = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        spare = 0.0f;
         break;
     case 2:
-        spd = 1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+        vel.y = 1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+        spare = 0.1f;
         break;
     default:
-        spd = 0.0f;
+        vel.y = 0.0f;
+        spare = 0.0f;
         break;
     }
-    vel[0] = 0.0f;
-    vel[1] = spd;
-    vel[2] = 0.0f;
     t = 0.007874016f * (f32) (frand() & 0x7F);
-    col[0] = (u8) (192.0f + (63.0f * t));
-    col[1] = (u8) (192.0f + (63.0f * t));
-    col[2] = (u8) (192.0f + (63.0f * t));
-    col[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
-    {
-        f32 srcPos[3];
-        srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[2] = pos->z + farg4;
-        return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
-    }
+    col.c[0] = (u8) (192.0f + (63.0f * t));
+    col.c[1] = (u8) (192.0f + (63.0f * t));
+    col.c[2] = (u8) (192.0f + (63.0f * t));
+    col.c[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+    col2 = col;
+    vel2 = vel;
+    srcPos2 = srcPos;
+    return MB2_CoinEffCreate(&srcPos2.x, &vel2.x, col2.c, farg0, farg1, 0.0f);
 }
 
-/* NONMATCHING: verified - low fuzzy% (9.95%) is register-allocation noise
- * from the many scalar spill temporaries m2c produced (sp3C..sp50), not a
- * logic bug. Re-checked argument-by-argument against the m2c draft: source
- * pos (x/y/z with random spread on x/y only, direct add on z), the 3-way
- * switch building a y-only launch velocity, the color-table index formula
- * (r - (((r - r/7) >> 1) + r/7) >> 2) * 7), and the final MB2_CoinEffCreate
- * call's argument order all match one-for-one; no missing/inverted branch,
- * no offset mismatch. */
 s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
     Point3d *pos;
-    f32 vel[3];
-    u8 *col;
-    u32 r;
+    Point3d srcPos;
+    Point3d vel;
+    Point3d srcPos2;
+    Point3d vel2;
+    MB2_COL4 col;
+    MB2_COL4 col2;
+    f32 spare;
     u32 idx;
 
     pos = (Point3d *) arg0;
     if (mb2_CoinEffObj == NULL) {
         return -1;
     }
+    srcPos.x = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos.y = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos.z = pos->z + farg4;
+    vel.x = 0.0f;
+    vel.z = 0.0f;
     switch (arg1) {
     case 1:
-        vel[1] = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        vel.y = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        spare = 0.0f;
         break;
     case 2:
-        vel[1] = 1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+        vel.y = 1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+        spare = 0.1f;
         break;
     default:
-        vel[1] = 0.0f;
+        vel.y = 0.0f;
+        spare = 0.0f;
         break;
     }
-    vel[0] = 0.0f;
-    vel[2] = 0.0f;
-    r = frand() & 0x7FFF;
-    idx = r - ((((r - (r / 7)) >> 1) + (r / 7)) >> 2) * 7;
-    col = (u8 *) &mb2ev_CoinEffColTbl[idx];
-    {
-        f32 srcPos[3];
-        srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[2] = pos->z + farg4;
-        return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
-    }
+    idx = (frand() & 0x7FFF) % 7;
+    col = *(MB2_COL4 *) mb2ev_CoinEffColTbl[idx];
+    col2 = col;
+    vel2 = vel;
+    srcPos2 = srcPos;
+    return MB2_CoinEffCreate(&srcPos2.x, &vel2.x, col2.c, farg0, farg1, 0.0f);
 }
 
 void MB2_SplashEffInit(void) {
     OMOBJ *obj;
     MB2_SPLASHEFF_DATA *dat;
     ANIMDATA *anim;
-    s16 modelId;
+    s32 modelId;
     s32 i;
     MBEFFECT *eff;
     MBEFFECTDATA *p;
     s32 j;
+    HU3DMODEL *modelP;
 
-    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_SplashEffUpdate);
-    mb2_SplashEffObj = obj;
-    dat = (MB2_SPLASHEFF_DATA *) HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_SPLASHEFF_DATA), 0x10000000U);
-    obj->data = dat;
+    obj = mb2_SplashEffObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_SplashEffUpdate);
+    dat = obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_SPLASHEFF_DATA), 0x10000000U);
     memset(dat, 0, sizeof(MB2_SPLASHEFF_DATA));
-    anim = HuSprAnimRead(HuDataReadNum(0xCD001E, 0x10000000));
+    dat->anim = anim = HuSprAnimRead(HuDataReadNum(0xCE0018, 0x10000000));
     for (i = 0; i < 2; i++) {
-        modelId = MBEffCreate(anim, 0x100);
-        dat->modelId[i] = modelId;
-        eff = (MBEFFECT *) Hu3DData[modelId].hookData;
+        dat->modelId[i] = modelId = MBEffCreate(anim, 0x100);
+        modelP = &Hu3DData[dat->modelId[i]];
+        eff = (MBEFFECT *) modelP->hookData;
         p = eff->data;
         for (j = 0; j < eff->num; j++, p++) {
             p->dispF = 0;
         }
         if (j == 0) {
-            Hu3DModelLayerSet(modelId, 1);
+            Hu3DModelLayerSet(dat->modelId[i], 1);
             eff->blendMode = 0;
         } else {
-            Hu3DModelLayerSet(modelId, 2);
+            Hu3DModelLayerSet(dat->modelId[i], 2);
             eff->blendMode = 1;
         }
-        MBEffAttrSet(modelId, MB_EFFECT_ATTR_3D);
+        MBEffAttrSet(dat->modelId[i], 2);
         dat->count[i] = 0;
     }
 }
@@ -2971,6 +1938,7 @@ void MB2_SplashEffUpdate(OMOBJ *obj) {
     s32 j;
     MBEFFECT *eff;
     MBEFFECTDATA *p;
+    HU3DMODEL *modelP;
     f32 t;
 
     dat = (MB2_SPLASHEFF_DATA *) obj->data;
@@ -2986,18 +1954,17 @@ void MB2_SplashEffUpdate(OMOBJ *obj) {
         return;
     }
     for (i = 0; i < 2; i++) {
-        eff = (MBEFFECT *) Hu3DData[dat->modelId[i]].hookData;
+        modelP = &Hu3DData[dat->modelId[i]];
+        eff = (MBEFFECT *) modelP->hookData;
         p = eff->data;
         for (j = 0; j < eff->num; j++, p++) {
             if (p->dispF) {
-                p->pos.x += p->vel.x;
-                p->pos.y += p->vel.y;
-                p->pos.z += p->vel.z;
-                p->rot.z -= p->scaleBase;
+                PSVECAdd((Point3d *) &p->pos, (Point3d *) &p->vel, (Point3d *) &p->pos);
+                p->vel.y -= p->accel.y;
                 t = (f32) p->time / (f32) p->parManId;
                 p->time--;
                 p->color.a = (u8) (p->accel.z * t);
-                if (t == 0.0f) {
+                if (t <= 0.0f) {
                     p->dispF = 0;
                     dat->count[i]--;
                 }
@@ -3011,16 +1978,19 @@ void MB2_SplashEffClose(void) {
 }
 
 s32 MB2_SplashEffNumGet(void) {
+    OMOBJ *obj;
     MB2_SPLASHEFF_DATA *dat;
 
+    obj = mb2_SplashEffObj;
     if (mb2_SplashEffObj == NULL) {
         return 0;
     }
-    dat = (MB2_SPLASHEFF_DATA *) mb2_SplashEffObj->data;
+    dat = (MB2_SPLASHEFF_DATA *) obj->data;
     return dat->count[0] + dat->count[1];
 }
 
-void MB2_SplashEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, s16 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2) {
+void MB2_SplashEffCreate(HuVecF *arg0, HuVecF *arg1, u8 *arg2, s32 arg3, s32 arg4, f32 farg0, f32 farg1, f32 farg2) {
+    OMOBJ *obj;
     MB2_SPLASHEFF_DATA *dat;
     HU3DMODEL *modelP;
     MBEFFECT *eff;
@@ -3028,481 +1998,444 @@ void MB2_SplashEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, s16 arg3, s32 arg4, f32
     s32 j;
     s32 idx;
 
-    if (mb2_SplashEffObj == NULL) {
-        return;
-    }
-    dat = (MB2_SPLASHEFF_DATA *) mb2_SplashEffObj->data;
-    modelP = &Hu3DData[dat->modelId[arg4 == 0 ? 0 : 1]];
-    eff = (MBEFFECT *) modelP->hookData;
-    p = eff->data;
-    for (j = 0; j < eff->num; j++, p++) {
-        if (!p->dispF) {
-            break;
-        }
-    }
-    if (j < eff->num) {
-        p->parManId = arg3;
-        p->time = arg3;
-        p->pos.x = arg0[0];
-        p->pos.y = arg0[1];
-        p->pos.z = arg0[2];
-        p->scale = farg0;
-        p->color.r = arg2[0];
-        p->color.g = arg2[1];
-        p->color.b = arg2[2];
-        p->color.a = arg2[3];
-        p->rot.z = farg1;
-        p->animBank = 0;
-        p->animNo = 0;
-        p->animSpeed = 0.0f;
-        p->animTime = 0.0f;
-        p->dispF = 1;
-        if (arg1 == NULL) {
-            p->vel.x = 0.0f;
-            p->vel.y = 0.0f;
-            p->vel.z = 0.0f;
+    obj = mb2_SplashEffObj;
+#ifdef __MWERKS__
+    dat = obj->data;
+#endif
+    if (mb2_SplashEffObj != NULL) {
+#ifndef __MWERKS__
+        dat = obj->data;
+#endif
+        if (arg4 == 0) {
+            modelP = &Hu3DData[dat->modelId[0]];
         } else {
-            p->vel.x = arg1[0];
-            p->vel.y = arg1[1];
-            p->vel.z = arg1[2];
+            modelP = &Hu3DData[dat->modelId[1]];
         }
-        p->accel.y = farg2;
-        p->accel.z = (f32) arg2[3];
-        idx = (arg4 == 0 ? 0 : 1);
-        dat->count[idx]++;
+        eff = (MBEFFECT *) modelP->hookData;
+        p = eff->data;
+        for (j = 0; j < eff->num; j++, p++) {
+            if (!p->dispF) {
+                break;
+            }
+        }
+        if (j < eff->num) {
+            p->time = p->parManId = arg3;
+            p->pos = *arg0;
+            p->scale = farg0;
+            p->color.r = arg2[0];
+            p->color.g = arg2[1];
+            p->color.b = arg2[2];
+            p->color.a = arg2[3];
+            p->rot.z = farg1;
+            p->animBank = 0;
+            p->animNo = 0;
+            p->animSpeed = 0.0f;
+            p->animTime = 0.0f;
+            p->dispF = 1;
+            if (arg1 == NULL) {
+                p->vel.x = p->vel.y = p->vel.z = 0.0f;
+            } else {
+                p->vel = *arg1;
+            }
+            p->accel.y = farg2;
+            p->accel.z = (f32) arg2[3];
+            if (arg4 == 0) {
+                idx = 0;
+            } else {
+                idx = 1;
+            }
+            dat->count[idx]++;
+        }
     }
 }
 
-void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0) {
-    f32 vel[3];
+void MB2_SplashEffCreateRandX(HuVecF *arg0, u8 *arg1, s32 arg2, f32 farg0) {
+    HuVecF vel;
     u8 col[4];
-    s16 life;
+    s32 life;
     f32 rotY;
 
-    vel[0] = 0.0f;
-    vel[1] = 0.0f;
-    vel[2] = 5.0f * (0.8f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F))));
+    vel.x = 0.0f;
+    vel.z = 0.0f;
+    vel.y = 5.0f * (0.8f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F))));
     col[0] = arg1[0];
     col[1] = arg1[1];
     col[2] = arg1[2];
     col[3] = arg1[3];
-    life = (s16) (60.0f * (0.25f + (0.05f * (0.007874016f * (f32) (frand() & 0x7F)))));
+    life = 60.0f * (0.25f + (0.05f * (0.007874016f * (f32) (frand() & 0x7F))));
     rotY = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
-    MB2_SplashEffCreate(arg0, vel, col, life, arg2,
+    MB2_SplashEffCreate(arg0, &vel, col, life, arg2,
         farg0 * (100.0f * (0.75f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F))))),
         rotY, 0.8166667f);
 }
 
-/* NONMATCHING: complete, asm-read translation. Builds the bespoke particle
- * header (see MB2_CoinEffInit's comment above) from scratch: the particle
- * array (stride 0x58) and the 4-corner UV array (stride 0x20, same layout
- * as MB2_ParticleCopy) get zero-initialized, then a GX_QUADS index-stream
- * display list is baked by writing 16-bit indices straight to the write-
- * gather pipe at 0xCC008000 (three index attributes per vertex - position,
- * a second position-ish index, and the UV corner - times 4 corners per
- * particle), exactly like the original: no GX SDK wrapper is used here. */
-s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
-    HU3DMODEL *newModel;
-    s16 newModelId;
-    u8 *hdr;
-    u8 *particles;
-    u8 *arrA;
-    u8 *arrB;
-    s32 i;
-    void *dispListTmp;
+s16 MB2_ParticleCreate(ANIMDATA *animP, s16 num)
+{
+    MB2_PARTICLE *effP;
+    MB2_PARTICLE_DATA *effDataP;
+    s16 i;
+    HuVec2f *st;
+    HU3DMODEL *modelP;
+    HuVecF *vtx;
+    HU3DMODELID modelId;
+    void *dlBuf;
+    void *dlBegin;
+    modelId = Hu3DHookFuncCreate(ParticleDraw);
+    Hu3DModelCameraSet(modelId, HU3D_CAM0);
+    modelP = &Hu3DData[modelId];
+    modelP->hookData = effP = HuMemDirectMallocNum(HEAP_MODEL, sizeof(MB2_PARTICLE), modelP->mallocNo);
+    effP->anim = animP;
+    effP->num = num;
+    effP->blendMode = HU3D_PARTICLE_BLEND_NORMAL;
+    effP->dispAttr = MB2_PARTICLE_DISPATTR_NONE;
+    effP->hook = NULL;
+    effP->hookMdlP = NULL;
+    effP->count = 0;
+    effP->attr = MB2_PARTICLE_ATTR_NONE;
+    effP->unk23 = 0;
+    effP->prevCount = 0;
+    effP->mode = effP->time = 0;
+    effP->data = effDataP = HuMemDirectMallocNum(HEAP_MODEL, num*sizeof(MB2_PARTICLE_DATA), modelP->mallocNo);
+    memset(effDataP, 0, num*sizeof(MB2_PARTICLE_DATA));
+    for(i=0; i<num; i++, effDataP++) {
+        effDataP->scale = 0;
+        effDataP->rot.x = effDataP->rot.y = effDataP->rot.z = 0;
+        effDataP->animTime = 0;
+        effDataP->animSpeed = 1;
+        effDataP->pos.x = ((frand() & 0x7F)-64)*20;
+        effDataP->pos.y = ((frand() & 0x7F)-64)*30;
+        effDataP->pos.z = ((frand() & 0x7F)-64)*20;
+        effDataP->color.r = effDataP->color.g = effDataP->color.b = effDataP->color.a = 255;
+        effDataP->animNo = 0;
+    }
+    effP->vertex = vtx = HuMemDirectMallocNum(HEAP_MODEL, num*sizeof(HuVecF)*4, modelP->mallocNo);
+    for(i=0; i<num*4; i++, vtx++) {
+        vtx->x = vtx->y = vtx->z = 0;
+    }
+    effP->st = st = HuMemDirectMallocNum(HEAP_MODEL, num*sizeof(HuVec2f)*4, modelP->mallocNo);
+    for(i=0; i<num; i++) {
+        st->x = 0;
+        st->y = 0;
+        st++;
 
+        st->x = 1;
+        st->y = 0;
+        st++;
 
-    newModelId = Hu3DHookFuncCreate(ParticleDraw);
-    Hu3DModelCameraSet(newModelId, 1U);
-    newModel = &Hu3DData[newModelId];
-    hdr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 0x54, newModel->mallocNo);
-    newModel->hookData = hdr;
-    *(ANIMDATA **) (hdr + 0x38) = arg0;
-    *(s16 *) (hdr + 0x26) = arg1;
-    *(s16 *) (hdr + 0x20) = 0;
-    *(s16 *) (hdr + 0x22) = 0;
-    *(s32 *) (hdr + 0x4C) = 0;
-    *(s32 *) (hdr + 0x50) = 0;
-    *(s32 *) (hdr + 0x28) = 0;
-    *(u8 *) (hdr + 0x21) = 0;
-    *(u8 *) (hdr + 0x23) = 0;
-    *(s32 *) (hdr + 0x30) = 0;
-    *(s16 *) (hdr + 0x2) = 0;
-    *(s16 *) (hdr + 0x0) = 0;
-    particles = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 0x58, newModel->mallocNo);
-    *(void **) (hdr + 0x3C) = particles;
-    memset(particles, 0, arg1 * 0x58);
-    for (i = 0; i < arg1; i++, particles += 0x58) {
-        *(f32 *) (particles + 0x34) = 0.0f;
-        *(f32 *) (particles + 0x40) = 0.0f;
-        *(f32 *) (particles + 0x3C) = 0.0f;
-        *(f32 *) (particles + 0x38) = 0.0f;
-        *(f32 *) (particles + 0x2C) = 0.0f;
-        *(f32 *) (particles + 0x30) = 1.0f;
-        *(f32 *) (particles + 0x44) = (f32) (((frand() & 0x7F) - 0x40) * 0x14);
-        *(f32 *) (particles + 0x48) = (f32) (((frand() & 0x7F) - 0x40) * 0x1E);
-        *(f32 *) (particles + 0x4C) = (f32) (((frand() & 0x7F) - 0x40) * 0x14);
-        *(u8 *) (particles + 0x53) = 0xFF;
-        *(u8 *) (particles + 0x52) = 0xFF;
-        *(u8 *) (particles + 0x51) = 0xFF;
-        *(u8 *) (particles + 0x50) = 0xFF;
-        *(s32 *) (particles + 0x54) = 0;
+        st->x = 1;
+        st->y = 1;
+        st++;
+
+        st->x = 0;
+        st->y = 1;
+        st++;
     }
-    arrA = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 0xC * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x40) = arrA;
-    for (i = 0; i < arg1 * 4; i++, arrA += 0xC) {
-        *(f32 *) (arrA + 0x8) = 0.0f;
-        *(f32 *) (arrA + 0x4) = 0.0f;
-        *(f32 *) (arrA + 0x0) = 0.0f;
+    dlBegin = dlBuf = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, modelP->mallocNo);
+    DCFlushRange(dlBuf, 0x10000);
+    GXBeginDisplayList(dlBegin, 0x10000);
+    GXBegin(GX_QUADS, GX_VTXFMT0, num*4);
+    for(i=0; i<num; i++) {
+        GXPosition1x16(i*4);
+        GXColor1x16(i);
+        GXTexCoord1x16(i*4);
+
+        GXPosition1x16((i*4)+1);
+        GXColor1x16(i);
+        GXTexCoord1x16((i*4)+1);
+
+        GXPosition1x16((i*4)+2);
+        GXColor1x16(i);
+        GXTexCoord1x16((i*4)+2);
+
+        GXPosition1x16((i*4)+3);
+        GXColor1x16(i);
+        GXTexCoord1x16((i*4)+3);
     }
-    arrB = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 8 * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x44) = arrB;
-    for (i = 0; i < arg1; i++, arrB += 0x20) {
-        *(f32 *) (arrB + 0x0) = 0.0f;
-        *(f32 *) (arrB + 0x4) = 0.0f;
-        *(f32 *) (arrB + 0x8) = 1.0f;
-        *(f32 *) (arrB + 0xC) = 0.0f;
-        *(f32 *) (arrB + 0x10) = 1.0f;
-        *(f32 *) (arrB + 0x14) = 1.0f;
-        *(f32 *) (arrB + 0x18) = 0.0f;
-        *(f32 *) (arrB + 0x1C) = 1.0f;
-    }
-    dispListTmp = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, newModel->mallocNo);
-    DCFlushRange(dispListTmp, 0x10000U);
-    GXBeginDisplayList(dispListTmp, 0x10000U);
-    GXBegin(GX_QUADS, GX_VTXFMT0, (u16) (arg1 * 4));
-    for (i = 0; i < arg1; i++) {
-        GXPosition1x16((u16) (i * 4));
-        GXColor1x16((u16) i);
-        GXTexCoord1x16((u16) (i * 4));
-        GXPosition1x16((u16) ((i * 4) + 1));
-        GXColor1x16((u16) i);
-        GXTexCoord1x16((u16) ((i * 4) + 1));
-        GXPosition1x16((u16) ((i * 4) + 2));
-        GXColor1x16((u16) i);
-        GXTexCoord1x16((u16) ((i * 4) + 2));
-        GXPosition1x16((u16) ((i * 4) + 3));
-        GXColor1x16((u16) i);
-        GXTexCoord1x16((u16) ((i * 4) + 3));
-    }
-    *(u32 *) (hdr + 0x34) = GXEndDisplayList();
-    *(void **) (hdr + 0x48) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (hdr + 0x34), newModel->mallocNo);
-    memcpy(*(void **) (hdr + 0x48), dispListTmp, *(u32 *) (hdr + 0x34));
-    DCFlushRange(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
-    HuMemDirectFree(dispListTmp);
-    return newModelId;
+    GXEnd();
+    effP->dlSize = GXEndDisplayList();
+    effP->dl = HuMemDirectMallocNum(HEAP_MODEL, effP->dlSize, modelP->mallocNo);
+    memcpy(effP->dl, dlBuf, effP->dlSize);
+    DCFlushRange(effP->dl, effP->dlSize);
+    HuMemDirectFree(dlBuf);
+    return modelId;
 }
 
-/* NONMATCHING: complete, asm-read translation. Reuses the bespoke particle
- * header/particle-array layout confirmed for MB2_CoinEff{Init,Update} and
- * MB2_ParticleCreate (below): header +0x00/0x02 zeroed, +0x20 blendMode
- * (reset, not copied), +0x21 zeroed, +0x22 attr (copied from source),
- * +0x26 count (copied), +0x28/0x2C/0x30 zeroed, +0x34 display-list size
- * (shared with source, not regenerated), +0x38 source ANIMDATA* (shared),
- * +0x3C new particle array, +0x40/0x44 new per-particle scratch arrays,
- * +0x48 display-list buffer (shared with source), +0x4C/0x50 zeroed. */
-s16 MB2_ParticleCopy(s16 arg0) {
-    HU3DMODEL *srcModel;
-    u8 *srcHdr;
-    HU3DMODEL *newModel;
-    s16 newModelId;
-    u8 *hdr;
-    s16 count;
-    u8 *particles;
-    u8 *arrA;
-    u8 *arrB;
-    s32 i;
+s16 MB2_ParticleCopy(s16 oldMdlId)
+{
+    MB2_PARTICLE *newParticleP; //r31
+    MB2_PARTICLE_DATA *particleDataP; //r30
+    HuVec2f *st; //r29
+    s16 i; //r28
+    HU3DMODEL *newModelP; //r27
+    MB2_PARTICLE *oldParticleP; //r26
+    HuVecF *pos; //r25
+    int num; //r24
+    HU3DMODEL *oldModelP; //r23
+    HU3DMODELID newMdlId; //r22
 
-    srcModel = &Hu3DData[arg0];
-    srcHdr = (u8 *) srcModel->hookData;
-    newModelId = Hu3DHookFuncCreate(srcModel->hookFunc);
-    Hu3DModelCameraSet(newModelId, 1U);
-    newModel = &Hu3DData[newModelId];
-    hdr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 0x54, newModel->mallocNo);
-    newModel->hookData = hdr;
-    *(void **) (hdr + 0x38) = *(void **) (srcHdr + 0x38);
-    *(s16 *) (hdr + 0x26) = *(s16 *) (srcHdr + 0x26);
-    count = *(s16 *) (hdr + 0x26);
-    *(s16 *) (hdr + 0x20) = 0;
-    *(u8 *) (hdr + 0x22) = *(u8 *) (srcHdr + 0x22);
-    *(s32 *) (hdr + 0x4C) = 0;
-    *(s32 *) (hdr + 0x50) = 0;
-    *(s32 *) (hdr + 0x28) = 0;
-    *(u8 *) (hdr + 0x21) = 0;
-    *(s32 *) (hdr + 0x30) = 0;
-    *(s16 *) (hdr + 0x2) = 0;
-    *(s16 *) (hdr + 0x0) = 0;
-    particles = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, count * 0x58, newModel->mallocNo);
-    *(void **) (hdr + 0x3C) = particles;
-    for (i = 0; i < count; i++, particles += 0x58) {
-        *(f32 *) (particles + 0x34) = 0.0f;
-        *(f32 *) (particles + 0x40) = 0.0f;
-        *(f32 *) (particles + 0x3C) = 0.0f;
-        *(f32 *) (particles + 0x38) = 0.0f;
-        *(f32 *) (particles + 0x2C) = 0.0f;
-        *(f32 *) (particles + 0x30) = 1.0f;
-        *(f32 *) (particles + 0x44) = (f32) (((frand() & 0x7F) - 0x40) * 0x14);
-        *(f32 *) (particles + 0x48) = (f32) (((frand() & 0x7F) - 0x40) * 0x1E);
-        *(f32 *) (particles + 0x4C) = (f32) (((frand() & 0x7F) - 0x40) * 0x14);
-        *(u8 *) (particles + 0x53) = 0xFF;
-        *(u8 *) (particles + 0x52) = 0xFF;
-        *(u8 *) (particles + 0x51) = 0xFF;
-        *(u8 *) (particles + 0x50) = 0xFF;
-        *(s32 *) (particles + 0x54) = 0;
+    oldModelP = &Hu3DData[oldMdlId];
+    oldParticleP = oldModelP->hookData;
+    newMdlId = Hu3DHookFuncCreate(oldModelP->hookFunc);
+    Hu3DModelCameraSet(newMdlId, HU3D_CAM0);
+    newModelP = &Hu3DData[newMdlId];
+    newModelP->hookData = newParticleP = HuMemDirectMallocNum(HEAP_MODEL, sizeof(MB2_PARTICLE), newModelP->mallocNo);
+    newParticleP->anim = oldParticleP->anim;
+    newParticleP->num = oldParticleP->num;
+    num = newParticleP->num;
+    newParticleP->blendMode = HU3D_PARTICLE_BLEND_NORMAL;
+    newParticleP->dispAttr = oldParticleP->dispAttr;
+    newParticleP->hook = NULL;
+    newParticleP->hookMdlP = NULL;
+    newParticleP->count = 0;
+    newParticleP->attr = MB2_PARTICLE_ATTR_NONE;
+    newParticleP->prevCount = 0;
+    newParticleP->mode = newParticleP->time = 0;
+    newParticleP->data = particleDataP = HuMemDirectMallocNum(HEAP_MODEL, sizeof(MB2_PARTICLE_DATA)*num, newModelP->mallocNo);
+    for(i=0; i<num; i++, particleDataP++) {
+        particleDataP->scale = 0;
+        particleDataP->rot.x = particleDataP->rot.y = particleDataP->rot.z = 0;
+        particleDataP->animTime = 0;
+        particleDataP->animSpeed = 1;
+        particleDataP->pos.x = ((frand()&0x7F)-64)*20;
+        particleDataP->pos.y = ((frand()&0x7F)-64)*30;
+        particleDataP->pos.z = ((frand()&0x7F)-64)*20;
+        particleDataP->color.r = particleDataP->color.g = particleDataP->color.b = particleDataP->color.a = 255;
+        particleDataP->animNo = 0;
     }
-    arrA = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, count * 0xC * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x40) = arrA;
-    for (i = 0; i < count * 4; i++, arrA += 0xC) {
-        *(f32 *) (arrA + 0x8) = 0.0f;
-        *(f32 *) (arrA + 0x4) = 0.0f;
-        *(f32 *) (arrA + 0x0) = 0.0f;
+    newParticleP->vertex = pos = HuMemDirectMallocNum(HEAP_MODEL, sizeof(HuVecF)*num*4, newModelP->mallocNo);
+    for(i=0; i<num*4; i++, pos++) {
+        pos->x = pos->y = pos->z = 0;
     }
-    arrB = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, count * 8 * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x44) = arrB;
-    for (i = 0; i < count; i++) {
-        *(f32 *) (arrB + 0x0) = 0.0f;
-        *(f32 *) (arrB + 0x4) = 0.0f;
-        *(f32 *) (arrB + 0x8) = 1.0f;
-        *(f32 *) (arrB + 0xC) = 0.0f;
-        *(f32 *) (arrB + 0x10) = 1.0f;
-        *(f32 *) (arrB + 0x14) = 1.0f;
-        *(f32 *) (arrB + 0x18) = 0.0f;
-        *(f32 *) (arrB + 0x1C) = 1.0f;
-        arrB += 0x20;
+    newParticleP->st = st = HuMemDirectMallocNum(HEAP_MODEL, sizeof(HuVec2f)*num*4, newModelP->mallocNo);
+    for(i=0; i<num; i++) {
+        st->x = 0;
+        st->y = 0;
+        st++;
+        st->x = 1;
+        st->y = 0;
+        st++;
+        st->x = 1;
+        st->y = 1;
+        st++;
+        st->x = 0;
+        st->y = 1;
+        st++;
     }
-    *(s32 *) (hdr + 0x34) = *(s32 *) (srcHdr + 0x34);
-    *(void **) (hdr + 0x48) = *(void **) (srcHdr + 0x48);
-    return newModelId;
+    newParticleP->dlSize = oldParticleP->dlSize;
+    newParticleP->dl = oldParticleP->dl;
+    return newMdlId;
 }
 
-/* NONMATCHING: complete, asm-read translation using the particle header
- * layout already confirmed for MB2_ParticleCreate/Copy/MB2_CoinEffInit:
- * +0x20 blendMode, +0x21/+0x22 attr bits, +0x26 count, +0x34 display-list
- * size, +0x38 source ANIMDATA*, +0x3C particle array (stride 0x58: +0x2C
- * rotX, +0x34 scale/alive gate, +0x38 rotY-ish "billboard axis" flag,
- * +0x3C/0x40 pos, +0x44 world-space center pos, +0x54 UV-tile index byte),
- * +0x40 per-vertex world-pos output array (stride 0xC, 4 per particle),
- * +0x44 per-vertex UV output array (stride 8, 4 per particle), +0x48
- * display-list buffer, +0x4C optional per-model draw hook. */
-void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
-    u8 *hdr;
-    s16 count;
+void ParticleDraw(HU3DMODEL *modelP, Mtx *mtx)
+{
+    MB2_PARTICLE *effP;
+    MB2_PARTICLE_DATA *effDataP;
+    HuVecF *vtx;
+    HuVec2f *st;
+    HuVecF *scaleVtxP;
+    s16 i;
+    s16 j;
+    HuVecF *initVtxP;
+    s16 bmpFmt;
+    s16 row;
+    s16 col;
+    MB2_PARTICLE_HOOK hook;
 
-    hdr = (u8 *) modelP->hookData;
-    if (shadowModelDrawF == 0) {
-        HU3DMODEL *linked = (HU3DMODEL *) *(void **) (hdr + 0x50);
-        if ((linked != NULL) && (linked != modelP)) {
-            ParticleDraw(linked, mtx);
+    Mtx mtxInv;
+    Mtx mtxPos;
+    Mtx mtxRotZ;
+    HuVecF scaleVtx[4];
+    HuVecF finalVtx[4];
+    HuVecF initVtx[4];
+    ROMtx basePosMtx;
+
+    static HuVecF vtxTbl[] = {
+        { -0.5f,  0.5f, 0.0f },
+        {  0.5f,  0.5f, 0.0f },
+        {  0.5f, -0.5f, 0.0f },
+        { -0.5f, -0.5f, 0.0f }
+    };
+
+    static HuVec2f uvTbl[] = {
+        { 0.0f, 0.0f },
+        { 0.25f, 0.0f },
+        { 0.25f, 0.25f },
+        { 0.0f, 0.25f },
+    };
+
+    effP = modelP->hookData;
+    if(!shadowModelDrawF) {
+        if(effP->hookMdlP && effP->hookMdlP != modelP){
+            ParticleDraw(effP->hookMdlP, mtx);
         }
-        GXLoadPosMtxImm((f32 (*)[4]) mtx, 0U);
-        GXSetNumTevStages(1U);
-        GXSetNumTexGens(1U);
-        GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3CU, 0U, 0x7DU);
+        GXLoadPosMtxImm(*mtx, GX_PNMTX0);
+        GXSetNumTevStages(1);
+        GXSetNumTexGens(1);
+        GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        if (shadowModelDrawF != 0) {
+        if(shadowModelDrawF) {
             GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ONE, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO);
-            GXSetZMode(0U, GX_LEQUAL, 0U);
+            GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
         } else {
-            ANIMDATA *srcAnim = *(ANIMDATA **) (hdr + 0x38);
-            s32 fmt = srcAnim->bmp->dataFmt & 0xF;
-            if ((fmt == 7) || (fmt == 8)) {
+            bmpFmt = (effP->anim->bmp->dataFmt & 0xF);
+            if(bmpFmt == ANIM_BMP_I8 || bmpFmt == ANIM_BMP_I4) {
                 GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ONE, GX_CC_RASC, GX_CC_ZERO);
             } else {
                 GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
             }
-            if ((*(u8 *) (hdr + 0x22) & 1) != 0) {
-                GXSetZMode(0U, GX_LEQUAL, 0U);
-            } else if ((modelP->attr & 2) != 0) {
-                GXSetZMode(1U, GX_LEQUAL, 1U);
+            if(effP->dispAttr & MB2_PARTICLE_DISPATTR_ZBUF_OFF) {
+                GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
+            } else if(modelP->attr & HU3D_ATTR_ZWRITE_OFF) {
+                GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
             } else {
-                GXSetZMode(1U, GX_LEQUAL, 0U);
+                GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
             }
         }
-        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
+        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_RASA, GX_CA_ZERO);
-        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
-        GXSetNumChans(1U);
-        GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_VTX, 0U, GX_DF_CLAMP, GX_AF_NONE);
-        HuSprTexLoad(*(ANIMDATA **) (hdr + 0x38), 0, 0, 1, 1, 1);
-        GXSetAlphaCompare(GX_GEQUAL, 1U, GX_AOP_AND, GX_GEQUAL, 1U);
-        GXSetZCompLoc(0U);
-        switch (*(u8 *) (hdr + 0x20)) {
-        case 0:
-            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
-            break;
-        case 1:
-            GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
-            break;
-        case 2:
-            GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_INVSRCALPHA, GX_LO_NOOP);
-            break;
+        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
+        HuSprTexLoad(effP->anim, 0, GX_TEXMAP0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
+        GXSetAlphaCompare(GX_GEQUAL, 1, GX_AOP_AND, GX_GEQUAL, 1);
+        GXSetZCompLoc(GX_FALSE);
+        switch (effP->blendMode) {
+            case HU3D_PARTICLE_BLEND_NORMAL:
+                GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+                break;
+            case HU3D_PARTICLE_BLEND_ADDCOL:
+                GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
+                break;
+            case HU3D_PARTICLE_BLEND_INVCOL:
+                GXSetBlendMode(GX_BM_BLEND, GX_BL_ZERO, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+                break;
         }
-        {
-            Mtx invMtx, rotMtx;
-            void (*hook)(HU3DMODEL *, void *, f32 (*)[3][4]);
-            u8 *particle;
-            u8 *outPos;
-            u8 *outUv;
-
-            if (HmfInverseMtxF3X3((f32 (*)[4]) mtx, invMtx) == 0) {
-                PSMTXIdentity(invMtx);
-            }
-            PSMTXReorder(invMtx, (f32 (*)[3]) rotMtx);
-            hook = *(void (**)(HU3DMODEL *, void *, f32 (*)[3][4])) (hdr + 0x4C);
-            if (hook != NULL) {
-                hook(modelP, hdr, mtx);
-            }
-            particle = *(u8 **) (hdr + 0x3C);
-            outPos = *(u8 **) (hdr + 0x40);
-            count = *(s16 *) (hdr + 0x26);
-            if ((*(u8 *) (hdr + 0x22) & 4) != 0) {
-                Point3d corner[4];
-                s32 c;
-
-                PSMTXIdentity(invMtx);
-                PSMTXIdentity(rotMtx);
-                for (c = 0; c < 4; c++) {
-                    corner[c] = mb2_ParticleVtxTbl[c];
-                }
-
-                {
-                    s32 i;
-                    for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
-                        if (*(f32 *) (particle + 0x34) == 0.0f) {
-                            memset(outPos, 0, 0x30);
-                        } else if ((*(u8 *) (hdr + 0x22) & 8) != 0) {
-                            Point3d scaled[4], world[4];
-                            s32 c;
-                            for (c = 0; c < 4; c++) {
-                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                            }
-                            mtxRot(invMtx, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
-                            PSMTXMultVecArray(invMtx, scaled, world, 4U);
-                            for (c = 0; c < 4; c++) {
-                                PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                            }
-                        } else if (*(f32 *) (particle + 0x40) == 0.0f) {
-                            Point3d scaled[4];
-                            s32 c;
-                            for (c = 0; c < 4; c++) {
-                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                                PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                            }
-                        } else {
-                            Point3d scaled[4], world[4];
-                            Mtx rotZ, concat;
-                            s32 c;
-                            for (c = 0; c < 4; c++) {
-                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                            }
-                            PSMTXRotRad(rotZ, 'Z', *(f32 *) (particle + 0x40));
-                            PSMTXConcat(rotMtx, rotZ, concat);
-                            PSMTXMultVecArray(concat, scaled, world, 4U);
-                            for (c = 0; c < 4; c++) {
-                                PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                            }
-                        }
-                    }
-                }
+        if(HmfInverseMtxF3X3(*mtx, mtxInv) == FALSE) {
+            PSMTXIdentity(mtxInv);
+        }
+        PSMTXReorder(mtxInv, basePosMtx);
+        if(effP->hook) {
+            hook = effP->hook;
+            hook(modelP, effP, mtx);
+        }
+        effDataP = effP->data;
+        vtx = effP->vertex;
+        st = effP->st;
+        if(effP->dispAttr & MB2_PARTICLE_DISPATTR_CAMERA_ROT) {
+            MTXIdentity(mtxInv);
+            MTXIdentity(*(Mtx *)(&basePosMtx));
+            initVtx[0] = vtxTbl[0];
+            initVtx[1] = vtxTbl[1];
+            initVtx[2] = vtxTbl[2];
+            initVtx[3] = vtxTbl[3];
+        } else {
+            PSMTXROMultVecArray(basePosMtx, &vtxTbl[0], initVtx, 4);
+        }
+        for(i=0; i<effP->num; i++, effDataP++) {
+            if(!effDataP->scale) {
+                vtx->x = vtx->y = vtx->z = 0;
+                vtx++;
+                vtx->x = vtx->y = vtx->z = 0;
+                vtx++;
+                vtx->x = vtx->y = vtx->z = 0;
+                vtx++;
+                vtx->x = vtx->y = vtx->z = 0;
+                vtx++;
+            } else if(effP->dispAttr & MB2_PARTICLE_DISPATTR_ROT3D) {
+                VECScale(&vtxTbl[0], &scaleVtx[0], effDataP->scale);
+                VECScale(&vtxTbl[1], &scaleVtx[1], effDataP->scale);
+                VECScale(&vtxTbl[2], &scaleVtx[2], effDataP->scale);
+                VECScale(&vtxTbl[3], &scaleVtx[3], effDataP->scale);
+                mtxRot(mtxPos, effDataP->rot.x, effDataP->rot.y, effDataP->rot.z);
+                PSMTXMultVecArray(mtxPos, scaleVtx, finalVtx, 4);
+                VECAdd(&finalVtx[0], &effDataP->pos, vtx++);
+                VECAdd(&finalVtx[1], &effDataP->pos, vtx++);
+                VECAdd(&finalVtx[2], &effDataP->pos, vtx++);
+                VECAdd(&finalVtx[3], &effDataP->pos, vtx++);
+            } else if(!effDataP->rot.z) {
+                scaleVtxP = scaleVtx;
+                initVtxP = initVtx;
+                VECScale(initVtxP++, scaleVtxP, effDataP->scale);
+                VECAdd(scaleVtxP++, &effDataP->pos, vtx++);
+                VECScale(initVtxP++, scaleVtxP, effDataP->scale);
+                VECAdd(scaleVtxP++, &effDataP->pos, vtx++);
+                VECScale(initVtxP++, scaleVtxP, effDataP->scale);
+                VECAdd(scaleVtxP++, &effDataP->pos, vtx++);
+                VECScale(initVtxP++, scaleVtxP, effDataP->scale);
+                VECAdd(scaleVtxP++, &effDataP->pos, vtx++);
             } else {
-                s32 i;
-                for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
-                    if (*(f32 *) (particle + 0x34) == 0.0f) {
-                        memset(outPos, 0, 0x30);
-                    } else if ((*(u8 *) (hdr + 0x22) & 8) != 0) {
-                        Point3d scaled[4], world[4];
-                        s32 c;
-                        for (c = 0; c < 4; c++) {
-                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                        }
-                        mtxRot(invMtx, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
-                        PSMTXMultVecArray(invMtx, scaled, world, 4U);
-                        for (c = 0; c < 4; c++) {
-                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                        }
-                    } else if (*(f32 *) (particle + 0x40) == 0.0f) {
-                        Point3d scaled[4];
-                        s32 c;
-                        for (c = 0; c < 4; c++) {
-                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                            PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                        }
-                    } else {
-                        Point3d scaled[4], world[4];
-                        Mtx rotZ, concat;
-                        s32 c;
-                        for (c = 0; c < 4; c++) {
-                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                        }
-                        PSMTXRotRad(rotZ, 'Z', *(f32 *) (particle + 0x40));
-                        PSMTXConcat(rotMtx, rotZ, concat);
-                        PSMTXMultVecArray(concat, scaled, world, 4U);
-                        for (c = 0; c < 4; c++) {
-                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                        }
-                    }
+                VECScale(&vtxTbl[0], &scaleVtx[0], effDataP->scale);
+                VECScale(&vtxTbl[1], &scaleVtx[1], effDataP->scale);
+                VECScale(&vtxTbl[2], &scaleVtx[2], effDataP->scale);
+                VECScale(&vtxTbl[3], &scaleVtx[3], effDataP->scale);
+                MTXRotRad(mtxRotZ, 'Z', effDataP->rot.z);
+                PSMTXConcat(mtxInv, mtxRotZ, mtxPos);
+                PSMTXMultVecArray(mtxPos, scaleVtx, finalVtx, 4);
+                VECAdd(&finalVtx[0], &effDataP->pos, vtx++);
+                VECAdd(&finalVtx[1], &effDataP->pos, vtx++);
+                VECAdd(&finalVtx[2], &effDataP->pos, vtx++);
+                VECAdd(&finalVtx[3], &effDataP->pos, vtx++);
+
+            }
+        }
+        effDataP = effP->data;
+        st = effP->st;
+        if(!(effP->dispAttr & MB2_PARTICLE_DISPATTR_NOANIM)) {
+            for(i=0; i<effP->num; i++, effDataP++) {
+                row = effDataP->animNo & 0x3;
+                col = (effDataP->animNo >> 2) & 0x3;
+                for(j=0; j<4; j++, st++) {
+                    st->x = (0.25f*row)+uvTbl[j].x;
+                    st->y = (0.25f*col)+uvTbl[j].y;
                 }
             }
-
-            particle = *(u8 **) (hdr + 0x3C);
-            outUv = *(u8 **) (hdr + 0x44);
-            if ((*(u8 *) (hdr + 0x22) & 2) == 0) {
-                s32 i, c;
-                for (i = 0; i < count; i++, particle += 0x58) {
-                    for (c = 0; c < 4; c++, outUv += 8) {
-                        *(f32 *) (outUv + 0) = (0.25f * (f32) (s16) (*(u8 *) (particle + 0x54) & 3)) + mb2_ParticleUvTbl[c].unk0;
-                        *(f32 *) (outUv + 4) = (0.25f * (f32) (s16) ((*(u8 *) (particle + 0x54) >> 2) & 3)) + mb2_ParticleUvTbl[c].unk4;
-                    }
-                }
-            } else {
-                s32 c;
-                for (c = 0; c < 4; c++, outUv += 8) {
-                    *(f32 *) (outUv + 0) = 4.0f * mb2_ParticleUvTbl[c].unk0;
-                    *(f32 *) (outUv + 4) = 4.0f * mb2_ParticleUvTbl[c].unk4;
+        } else {
+            for(i=0; i<effP->num; i++, effDataP++) {
+                for(j=0; j<4; j++, st++) {
+                    st->x = 4*uvTbl[j].x;
+                    st->y = 4*uvTbl[j].y;
                 }
             }
         }
-        DCFlushRangeNoSync(*(void **) (hdr + 0x40), count * 0xC * 4);
-        DCFlushRangeNoSync(*(void **) (hdr + 0x44), count * 8 * 4);
-        DCFlushRangeNoSync(*(void **) (hdr + 0x3C), count * 0x58);
+        DCFlushRangeNoSync(effP->vertex, effP->num*sizeof(HuVecF)*4);
+        DCFlushRangeNoSync(effP->st, effP->num*sizeof(HuVec2f)*4);
+        DCFlushRangeNoSync(effP->data, effP->num*sizeof(MB2_PARTICLE_DATA));
         PPCSync();
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSETARRAY(GX_VA_POS, *(void **) (hdr + 0x40), count * 0xC * 4U, 0xCU, TRUE);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+        GXSETARRAY(GX_VA_POS, effP->vertex, effP->num*sizeof(HuVecF)*4, sizeof(HuVecF), TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-        GXSETARRAY(GX_VA_CLR0, *(u8 **) (hdr + 0x3C) + 0x50, count * 0x58U, 0x58U, TRUE);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+        GXSETARRAY(GX_VA_CLR0, &effP->data->color, effP->num*sizeof(MB2_PARTICLE_DATA), sizeof(MB2_PARTICLE_DATA), TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
-        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSETARRAY(GX_VA_TEX0, *(void **) (hdr + 0x44), count * 8U * 4U, 8U, TRUE);
-        GXCallDisplayList(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
-        if (shadowModelDrawF == 0) {
-            if ((*(u8 *) (hdr + 0x21) & 2) == 0) {
-                *(u32 *) (hdr + 0x28) = *(u32 *) (hdr + 0x28) + 1;
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        GXSETARRAY(GX_VA_TEX0, effP->st, effP->num*sizeof(HuVec2f)*4, sizeof(HuVec2f), TRUE);
+        GXCallDisplayList(effP->dl, effP->dlSize);
+        if(shadowModelDrawF == FALSE) {
+            if(!(effP->attr & MB2_PARTICLE_ATTR_COUNTER_UPDATE)) {
+                effP->count++;
             }
-            if ((*(u32 *) (hdr + 0x30) != 0) && (*(u32 *) (hdr + 0x30) <= *(u32 *) (hdr + 0x28))) {
-                if ((*(u8 *) (hdr + 0x21) & 1) != 0) {
-                    *(u32 *) (hdr + 0x28) = 0;
+            if(effP->prevCount != 0 && effP->prevCount <= effP->count) {
+                if(effP->attr & MB2_PARTICLE_ATTR_COUNTER_RESET) {
+                    effP->count = 0;
                 }
-                *(u32 *) (hdr + 0x28) = *(u32 *) (hdr + 0x30);
+                effP->count = effP->prevCount;
             }
         }
     }
 }
 
-void MB2_YajiInit(f32 *arg0) {
+static f32 yajiAngleTbl[3] = { -45.0f, 0.0f, 45.0f };
+
+void MB2_YajiInit(Point3d *pos) {
     OMOBJ *obj;
-    Point3d *pos;
     f32 ang;
     s32 *dat;
     s32 i;
 
-    pos = (Point3d *) arg0;
-    obj = omAddObjEx(mbObjMan, -0x8000, 3U, 0U, -1, MB2_YajiUpdate);
-    mb2_YajiObj = obj;
-    dat = (s32 *) HuMemDirectMallocNum(HEAP_HEAP, 4, 0x10000000U);
-    obj->data = dat;
+    obj = mb2_YajiObj = omAddObjEx(mbObjMan, -0x8000, 3U, 0U, -1, MB2_YajiUpdate);
+    dat = obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(s32), 0x10000000U);
     *dat = 0;
     for (i = 0; i < 3; i++) {
         ang = yajiAngleTbl[i];
@@ -3557,17 +2490,24 @@ void MB2_YajiClose(void) {
 }
 
 void MB2_YajiHiliteSet(u32 arg0) {
+    OMOBJ *obj;
+    s32 *dat;
+
+    obj = mb2_YajiObj;
+    dat = (s32 *) obj->data;
     if (mb2_YajiObj != NULL) {
-        mb2_YajiObj->work[0] = arg0;
-        *(s32 *) mb2_YajiObj->data = 0;
+        obj->work[0] = arg0;
+        *dat = 0;
     }
 }
 
 void MB2_YajiDispSet(s32 arg0) {
     OMOBJ *obj;
     s32 i;
+    s32 *dat;
 
     obj = mb2_YajiObj;
+    dat = (s32 *) obj->data;
     if (mb2_YajiObj != NULL) {
         for (i = 0; i < 3; i++) {
             if (arg0 != 0) {
@@ -3576,7 +2516,7 @@ void MB2_YajiDispSet(s32 arg0) {
                 Hu3DModelAttrSet(obj->mdlId[i], 1U);
             }
         }
-        *(s32 *) obj->data = 0;
+        *dat = 0;
     }
 }
 
@@ -3586,44 +2526,58 @@ void MB2_YajiDispSet(s32 arg0) {
  * 0x18 more per-vtx arrays (draw-side), +0x1C..0x1F RGBA (alpha at +0x1F),
  * +0x20 display list, +0x24 display list size. Confirmed by
  * MB2_RainbowObjAlphaSet/VtxTopGet's simple, unambiguous field usage. */
+typedef struct MB2RainbowSlot_s {
+    s32 activeF;   /* 0x00 */
+    s32 vtxNum;    /* 0x04 */
+    Point3d *vtx;  /* 0x08 */
+    Point3d *ang;  /* 0x0C */
+    Point3d *posArr; /* 0x10, 2 vertices per arc point */
+    f32 *uvArr;    /* 0x14, 2 floats per vertex */
+    u8 *colArr;    /* 0x18, RGBA per vertex */
+    u8 color[3];   /* 0x1C */
+    union {
+        u8 u;
+        s8 s;
+    } alpha;       /* 0x1F */
+    void *dl;      /* 0x20 */
+    u32 dlSize;    /* 0x24 */
+} MB2_RAINBOW_SLOT; /* 0x28 on GC */
+
 typedef struct MB2RainbowObjData_s {
     s32 modelId;   /* 0x00 */
     ANIMDATA *srcAnim; /* 0x04 */
-    u8 *slots;     /* 0x08, 8 entries, stride 0x28 */
-} MB2_RAINBOWOBJ_DATA; /* size 0xC */
+    MB2_RAINBOW_SLOT *slots; /* 0x08, 8 entries */
+} MB2_RAINBOWOBJ_DATA;
 
 void MB2_RainbowObjInit(void) {
     OMOBJ *obj;
     HU3DMODEL *modelP;
     MB2_RAINBOWOBJ_DATA *dat;
-    s16 modelId;
-    u8 *slots;
+    MB2_RAINBOW_SLOT *slots;
     s32 i;
 
-    obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_RainbowObjUpdate);
-    mb2_RainbowObj = obj;
-    dat = (MB2_RAINBOWOBJ_DATA *) HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_RAINBOWOBJ_DATA), 0x10000000U);
-    obj->data = dat;
+    obj = mb2_RainbowObj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_RainbowObjUpdate);
+    dat = obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MB2_RAINBOWOBJ_DATA), 0x10000000U);
     memset(dat, 0, sizeof(MB2_RAINBOWOBJ_DATA));
-    modelId = Hu3DHookFuncCreate(RainbowObjDraw);
-    dat->modelId = modelId;
-    Hu3DModelCameraSet(modelId, 1U);
-    Hu3DModelLayerSet(modelId, 3);
-    modelP = &Hu3DData[modelId];
+    dat->modelId = Hu3DHookFuncCreate(RainbowObjDraw);
+    Hu3DModelCameraSet((s16) dat->modelId, 1U);
+    Hu3DModelLayerSet((s16) dat->modelId, 3);
+    modelP = &Hu3DData[dat->modelId];
     modelP->pos.y = -100000.0f;
     modelP->pos.z = -100000.0f;
     modelP->hookData = dat;
-    dat->srcAnim = (ANIMDATA *)(uintptr_t) MB2W_S32(0x1B * 4);
-    slots = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 8 * 0x28, modelP->mallocNo);
+    dat->srcAnim = mb2_Work.anim;
+    slots = (MB2_RAINBOW_SLOT *) HuMemDirectMallocNum(HEAP_MODEL, 8 * sizeof(MB2_RAINBOW_SLOT), modelP->mallocNo);
     dat->slots = slots;
-    memset(slots, 0, 8 * 0x28);
-    for (i = 0; i < 8; i++, slots += 0x28) {
-        *(s32 *) slots = 0;
+    memset(slots, 0, 8 * sizeof(MB2_RAINBOW_SLOT));
+    for (i = 0; i < 8; i++, slots++) {
+        slots->activeF = 0;
     }
 }
 
 void MB2_RainbowObjUpdate(OMOBJ *obj) {
     MB2_RAINBOWOBJ_DATA *dat;
+    MB2_RAINBOW_SLOT *slot;
     s32 i;
 
     dat = (MB2_RAINBOWOBJ_DATA *) obj->data;
@@ -3633,7 +2587,8 @@ void MB2_RainbowObjUpdate(OMOBJ *obj) {
         mb2_RainbowObj = NULL;
         return;
     }
-    for (i = 0; i < 8; i++) {
+    slot = dat->slots;
+    for (i = 0; i < 8; i++, slot++) {
     }
 }
 
@@ -3641,169 +2596,143 @@ void MB2_RainbowObjClose(void) {
     mb2_RainbowObj = NULL;
 }
 
-/* NONMATCHING: complete, asm-read translation. Extends the
- * MB2_RAINBOWOBJ_DATA slot layout (already confirmed for RainbowObjDraw:
- * +0x00 activeF, +0x10/0x14/0x18 GX pos/uv/color arrays, +0x1C..0x1F tint,
- * +0x20/0x24 display list) with the build-time-only scratch: +0x04 vertex
- * count ((pathLen-1)*3, one Hermite-interpolated triple per path segment),
- * +0x08 the interpolated centerline points (stride 0xC), +0x0C a matching
- * per-point (pitch,yaw) angle array (stride 0xC, only .x/.y used) computed
- * from the centerline via the same __frsqrte pattern as MB2Ev_Rain. Builds
- * a ribbon two vertices wide (+/-75 units either side of the centerline,
- * perpendicular to its yaw) as a GX_TRIANGLESTRIP index-stream display
- * list written straight to the write-gather pipe, same technique as
- * MB2_ParticleCreate.
- *
- * Re-verified against build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s
- * (0x11300-0x11F04) after an 11.69% fuzzy flag: the Hermite p0/p1/p2/p3
- * neighbour selection at path boundaries, the argument order into
- * MB2_HermiteCalcV, and the free-slot search all match the asm exactly.
- * Found and fixed a real bug in the forward (arg2==0) winding order: it
- * wrote 2x(i*2) then 4x(i*2+1) per vertex; the asm writes 3x(i*2) then
- * 3x(i*2+1) (the reverse/arg2!=0 branch was already correct). The
- * remaining low fuzzy% is register-allocation noise from the heavy
- * trig/sqrt scalar math, not further logic bugs. */
-s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
+s32 MB2_RainbowObjCreate(Point3d *arg0, s32 arg1, s32 arg2) {
+    OMOBJ *obj;
     MB2_RAINBOWOBJ_DATA *dat;
-    u8 *slot;
+    HU3DMODEL *modelP;
+    MB2_RAINBOW_SLOT *slot;
     s32 slotNo;
-    Point3d *path;
-    u8 *ctrl;
-    s32 vtxCount;
-    u8 *angle;
-    u8 *posArr;
-    u8 *uvArr;
-    u8 *colArr;
+    Point3d *out;
+    f32 *uvOut;
+    u8 *colOut;
     void *dispListTmp;
+    Point3d p0;
+    Point3d p1;
+    Point3d p2;
+    Point3d p3;
+    Point3d delta; /* not reset per iteration: the last vertex keeps the previous delta */
+    f32 distSq;
+    f32 dist;
     s32 i;
+    s32 k;
 
-
-    path = (Point3d *) arg0;
+    obj = mb2_RainbowObj;
     if (mb2_RainbowObj == NULL) {
         return -1;
     }
-    dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
+    dat = (MB2_RAINBOWOBJ_DATA *) obj->data;
     slot = dat->slots;
-    for (slotNo = 0; slotNo < 8; slotNo++, slot = dat->slots + slotNo * 0x28) {
-        if (*(s32 *) slot == 0) {
+    modelP = &Hu3DData[dat->modelId];
+    for (slotNo = 0; slotNo < 8; slotNo++, slot++) {
+        if (slot->activeF == 0) {
             break;
         }
     }
     if (slotNo >= 8) {
         return -1;
     }
-    *(s32 *) slot = 1;
+    slot->activeF = 1;
 
-    ctrl = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 3 * 0xC, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x8) = ctrl;
-    memset(ctrl, 0, arg1 * 3 * 0xC);
+    slot->vtx = (Point3d *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 3 * sizeof(Point3d), modelP->mallocNo);
+    out = slot->vtx;
+    memset(slot->vtx, 0, arg1 * 3 * sizeof(Point3d));
     for (i = 0; i < arg1 - 1; i++) {
-        Point3d *p0 = (i > 0) ? &path[i - 1] : &path[i];
-        Point3d *p1 = &path[i];
-        Point3d *p2 = &path[i + 1];
-        Point3d *p3 = (i < arg1 - 2) ? &path[i + 2] : &path[i + 1];
-        s32 k;
+        if (i > 0) {
+            p0 = arg0[i - 1];
+        } else {
+            p0 = arg0[i];
+        }
+        p1 = arg0[i];
+        p2 = arg0[i + 1];
+        if (i < arg1 - 2) {
+            p3 = arg0[i + 2];
+        } else {
+            p3 = arg0[i + 1];
+        }
         for (k = 0; k < 3; k++) {
-            MB2_HermiteCalcV(p0, p1, p2, p3, (Point3d *) ctrl, (f32) k / 3.0f);
-            ctrl += 0xC;
+            MB2_HermiteCalcV(&p0, &p1, &p2, &p3, out, (f32) k / 3.0f);
+            out++;
         }
     }
 
-    vtxCount = (arg1 - 1) * 3;
-    *(s32 *) (slot + 0x4) = vtxCount;
-    angle = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, vtxCount * 0xC, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0xC) = angle;
-    memset(angle, 0, vtxCount * 0xC);
-    ctrl = *(u8 **) (slot + 0x8);
-    for (i = 0; i < vtxCount; i++) {
-        Point3d delta = { 0.0f, 0.0f, 0.0f };
-        f32 distSq, dist;
-
-        if (i < vtxCount - 1) {
-            PSVECSubtract((Point3d *) (ctrl + (i + 1) * 0xC), (Point3d *) (ctrl + i * 0xC), &delta);
+    arg1 = (arg1 - 1) * 3;
+    slot->vtxNum = arg1;
+    slot->ang = (Point3d *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * sizeof(Point3d), modelP->mallocNo);
+    memset(slot->ang, 0, arg1 * sizeof(Point3d));
+    for (i = 0; i < arg1; i++) {
+        if (i < arg1 - 1) {
+            PSVECSubtract(&slot->vtx[i + 1], &slot->vtx[i], &delta);
         }
         distSq = (delta.x * delta.x) + (delta.z * delta.z);
-        if (distSq > 0.0f) {
-            f64 e0 = __frsqrte(distSq);
-            f64 e1 = 0.5 * e0 * (3.0 - ((f64) distSq * (e0 * e0)));
-            f64 e2 = 0.5 * e1 * (3.0 - ((f64) distSq * (e1 * e1)));
-            dist = (f32) ((f64) distSq * (0.5 * e2 * (3.0 - ((f64) distSq * (e2 * e2)))));
-        } else {
-            dist = distSq;
-        }
-        *(f32 *) (angle + i * 0xC + 0x0) = (f32) (180.0 * (atan2((f64) dist, (f64) delta.y) / 3.141592653589793));
-        *(f32 *) (angle + i * 0xC + 0x4) = (f32) (180.0 * (atan2((f64) delta.x, (f64) delta.z) / 3.141592653589793));
-        *(f32 *) (angle + i * 0xC + 0x8) = 0.0f;
+        dist = sqrtf(distSq);
+        slot->ang[i].x = 180.0 * (atan2(dist, delta.y) / 3.141592653589793);
+        slot->ang[i].y = 180.0 * (atan2(delta.x, delta.z) / 3.141592653589793);
+        slot->ang[i].z = 0.0f;
     }
 
-    *(u8 *) (slot + 0x1F) = 0xFF;
-    *(u8 *) (slot + 0x1E) = 0xFF;
-    *(u8 *) (slot + 0x1D) = 0xFF;
-    *(u8 *) (slot + 0x1C) = 0xFF;
+    slot->alpha.u = 0xFF;
+    slot->color[2] = 0xFF;
+    slot->color[1] = 0xFF;
+    slot->color[0] = 0xFF;
 
-    posArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, vtxCount * 0xC * 2, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x10) = posArr;
-    memset(posArr, 0, vtxCount * 0xC);
-    uvArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, (arg1 - 1) * 0x18 * 2, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x14) = uvArr;
-    memset(uvArr, 0, (arg1 - 1) * 0x18);
-    colArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, (arg1 - 1) * 0xC * 2, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x18) = colArr;
-    memset(colArr, 0, (arg1 - 1) * 0xC);
+    slot->posArr = (Point3d *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * sizeof(Point3d) * 2, modelP->mallocNo);
+    out = slot->posArr;
+    memset(slot->posArr, 0, arg1 * sizeof(Point3d));
+    slot->uvArr = (f32 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 8 * 2, modelP->mallocNo);
+    uvOut = slot->uvArr;
+    memset(slot->uvArr, 0, arg1 * 8);
+    slot->colArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 4 * 2, modelP->mallocNo);
+    colOut = slot->colArr;
+    memset(slot->colArr, 0, arg1 * 4);
 
-    for (i = 0; i < vtxCount; i++) {
-        Point3d center;
-        u8 *topPos = posArr + i * 0xC;
-        u8 *topUv = uvArr + i * 8;
-        u8 *topCol = colArr + i * 4;
-        u8 *botPos = topPos + (vtxCount * 0xC);
-        u8 *botUv = topUv + ((arg1 - 1) * 0x18);
-        u8 *botCol = colArr + (arg1 - 1) * 0xC + i * 4;
-        f32 yaw = *(f32 *) (angle + i * 0xC + 0x4);
-        f32 fade;
-
-        center.x = *(f32 *) (ctrl + i * 0xC + 0x0);
-        center.y = *(f32 *) (ctrl + i * 0xC + 0x4);
-        center.z = *(f32 *) (ctrl + i * 0xC + 0x8);
-
+    for (i = 0; i < arg1; i++) {
+        out->x = slot->vtx[i].x + 75.0 * sin((3.141592653589793 * (90.0f + slot->ang[i].y)) / 180.0);
+        out->z = slot->vtx[i].z + 75.0 * cos((3.141592653589793 * (90.0f + slot->ang[i].y)) / 180.0);
+        out->y = slot->vtx[i].y;
+        uvOut[0] = 0.0f;
+        uvOut[1] = (1.0f / (f32) arg1) * (f32) i;
+        colOut[2] = 0xC0;
+        colOut[1] = 0xC0;
+        colOut[0] = 0xC0;
         if (i < 5) {
-            fade = 192.0f * ((f32) i / 5.0f);
-        } else if (i > vtxCount - 5) {
-            fade = 192.0f * ((f32) (5 - (i - (vtxCount - 5))) / 5.0f);
+            colOut[3] = (u8) (192.0f * ((f32) i / 5.0f));
+        } else if (i > arg1 - 5) {
+            colOut[3] = (u8) (192.0f * ((f32) (5 - (i - (arg1 - 5))) / 5.0f));
         } else {
-            fade = 192.0f;
+            colOut[3] = 0xC0;
         }
-
-        *(f32 *) (topPos + 0x0) = (f32) ((f64) center.x + (75.0 * sin((3.141592653589793 * (f64) (90.0f + yaw)) / 180.0)));
-        *(f32 *) (topPos + 0x8) = (f32) ((f64) center.z + (75.0 * cos((3.141592653589793 * (f64) (90.0f + yaw)) / 180.0)));
-        *(f32 *) (topPos + 0x4) = center.y;
-        *(f32 *) (topUv + 0x0) = 0.0f;
-        *(f32 *) (topUv + 0x4) = (1.0f / (f32) vtxCount) * (f32) i;
-        *(u8 *) (topCol + 0) = 0xC0;
-        *(u8 *) (topCol + 1) = 0xC0;
-        *(u8 *) (topCol + 2) = 0xC0;
-        *(u8 *) (topCol + 3) = (u8) fade;
-
-        *(f32 *) (botPos + 0x0) = (f32) ((f64) center.x + (75.0 * sin((3.141592653589793 * (f64) (yaw - 90.0f)) / 180.0)));
-        *(f32 *) (botPos + 0x8) = (f32) ((f64) center.z + (75.0 * cos((3.141592653589793 * (f64) (yaw - 90.0f)) / 180.0)));
-        *(f32 *) (botPos + 0x4) = center.y;
-        *(f32 *) (botUv + 0x0) = 1.0f;
-        *(f32 *) (botUv + 0x4) = (1.0f / (f32) vtxCount) * (f32) i;
-        *(u8 *) (botCol + 0) = 0xFF;
-        *(u8 *) (botCol + 1) = 0xFF;
-        *(u8 *) (botCol + 2) = 0xFF;
-        *(u8 *) (botCol + 3) = (u8) fade;
+        out++;
+        uvOut += 2;
+        colOut += 4;
+        out->x = slot->vtx[i].x + 75.0 * sin((3.141592653589793 * (slot->ang[i].y - 90.0f)) / 180.0);
+        out->z = slot->vtx[i].z + 75.0 * cos((3.141592653589793 * (slot->ang[i].y - 90.0f)) / 180.0);
+        out->y = slot->vtx[i].y;
+        uvOut[0] = 1.0f;
+        uvOut[1] = (1.0f / (f32) arg1) * (f32) i;
+        colOut[2] = 0xFF;
+        colOut[1] = 0xFF;
+        colOut[0] = 0xFF;
+        if (i < 5) {
+            colOut[3] = (u8) (192.0f * ((f32) i / 5.0f));
+        } else if (i > arg1 - 5) {
+            colOut[3] = (u8) (192.0f * ((f32) (5 - (i - (arg1 - 5))) / 5.0f));
+        } else {
+            colOut[3] = 0xC0;
+        }
+        out++;
+        uvOut += 2;
+        colOut += 4;
     }
 
-    DCFlushRange(*(void **) (slot + 0x10), vtxCount * 0xC * 2);
-    DCFlushRange(*(void **) (slot + 0x14), (arg1 - 1) * 0x18 * 2);
-    DCFlushRange(*(void **) (slot + 0x18), (arg1 - 1) * 0xC * 2);
-    dispListTmp = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, Hu3DData[dat->modelId].mallocNo);
+    DCFlushRange(slot->posArr, arg1 * sizeof(Point3d) * 2);
+    DCFlushRange(slot->uvArr, arg1 * 8 * 2);
+    DCFlushRange(slot->colArr, arg1 * 4 * 2);
+    dispListTmp = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, modelP->mallocNo);
     DCFlushRange(dispListTmp, 0x10000U);
     GXBeginDisplayList(dispListTmp, 0x10000U);
-    GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, (u16) ((arg1 - 1) * 6));
+    GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, (u16) (arg1 * 2));
     if (arg2 == 0) {
-        for (i = 0; i < vtxCount; i++) {
+        for (i = 0; i < arg1; i++) {
             GXPosition1x16((u16) (i * 2));
             GXColor1x16((u16) (i * 2));
             GXTexCoord1x16((u16) (i * 2));
@@ -3812,7 +2741,7 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
             GXTexCoord1x16((u16) ((i * 2) + 1));
         }
     } else {
-        for (i = vtxCount - 1; i >= 0; i--) {
+        for (i = arg1 - 1; i >= 0; i--) {
             GXPosition1x16((u16) ((i * 2) + 1));
             GXColor1x16((u16) (i * 2));
             GXTexCoord1x16((u16) ((i * 2) + 1));
@@ -3821,54 +2750,53 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
             GXTexCoord1x16((u16) (i * 2));
         }
     }
-    /* NOTE: unlike the arg2==0 branch (pos=clr=tex per vertex), this reverse-
-     * winding branch really does interleave 1,0,1,0,1,0 across the 2
-     * vertices' 3 attributes in the original asm - not a simple per-vertex
-     * repeat. Verified against the raw *fifo writes before this port. */
-    *(u32 *) (slot + 0x24) = GXEndDisplayList();
-    *(void **) (slot + 0x20) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (slot + 0x24), Hu3DData[dat->modelId].mallocNo);
-    memcpy(*(void **) (slot + 0x20), dispListTmp, *(u32 *) (slot + 0x24));
-    DCFlushRange(*(void **) (slot + 0x20), *(u32 *) (slot + 0x24));
+    slot->dlSize = GXEndDisplayList();
+    slot->dl = HuMemDirectMallocNum(HEAP_MODEL, slot->dlSize, modelP->mallocNo);
+    memcpy(slot->dl, dispListTmp, slot->dlSize);
+    DCFlushRange(slot->dl, slot->dlSize);
     HuMemDirectFree(dispListTmp);
     return slotNo;
 }
 
 void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1) {
+    MB2_RAINBOWOBJ_DATA *dat;
+    MB2_RAINBOW_SLOT *slot;
+    OMOBJ *obj;
+
+    obj = mb2_RainbowObj;
     if (mb2_RainbowObj != NULL) {
-        MB2_RAINBOWOBJ_DATA *dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
-        *(s8 *) (dat->slots + (arg0 * 0x28) + 0x1F) = arg1;
+        dat = (MB2_RAINBOWOBJ_DATA *) obj->data;
+        slot = dat->slots + arg0;
+        slot->alpha.s = arg1;
     }
 }
 
 s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1) {
-    s32 ret;
     MB2_RAINBOWOBJ_DATA *dat;
-    u8 *slot;
+    MB2_RAINBOW_SLOT *slot;
+    OMOBJ *obj;
 
-    ret = arg0;
+    obj = mb2_RainbowObj;
     if (mb2_RainbowObj != NULL) {
-        dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
-        slot = dat->slots + (arg0 * 0x28);
-        *arg1 = *(void **) (slot + 0x8);
-        ret = *(s32 *) (slot + 0x4);
+        dat = (MB2_RAINBOWOBJ_DATA *) obj->data;
+        slot = dat->slots + arg0;
+        *arg1 = slot->vtx;
+        arg0 = slot->vtxNum;
     }
-    return ret;
+    return arg0;
 }
 
-/* NONMATCHING: complete, asm-read translation. Confirms and extends the
- * MB2_RAINBOWOBJ_DATA slot layout: +0x10 GX_VA_POS array (world-space
- * strip vertices), +0x14 GX_VA_TEX0 array (UVs), +0x18 GX_VA_CLR0 array
- * (per-vertex color), +0x1C..0x1F a single RGBA tint loaded into
- * GX_TEVREG2, +0x20 display-list buffer, +0x24 display-list size. */
 void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
     MB2_RAINBOWOBJ_DATA *dat;
-    u8 *slot;
+    MB2_RAINBOW_SLOT *slot;
+    GXColor tint;
     s32 i;
 
     if (mb2_RainbowObj == NULL) {
         return;
     }
     dat = (MB2_RAINBOWOBJ_DATA *) modelP->hookData;
+    slot = dat->slots;
     if (shadowModelDrawF != 0) {
         return;
     }
@@ -3891,29 +2819,25 @@ void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
     GXSetCullMode(GX_CULL_NONE);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
     slot = dat->slots;
-    for (i = 0; i < 8; i++, slot += 0x28) {
-        GXColor tint;
-        if (*(s32 *) slot == 0) {
+    for (i = 0; i < 8; i++, slot++) {
+        if (slot->activeF == 0) {
             continue;
         }
-        {
-            s32 slotVtxCount = *(s32 *) (slot + 0x4);
-            GXClearVtxDesc();
-            GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
-            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-            GXSETARRAY(GX_VA_POS, *(void **) (slot + 0x10), slotVtxCount * 0xC * 2, 0xCU, TRUE);
-            GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
-            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-            GXSETARRAY(GX_VA_CLR0, *(void **) (slot + 0x18), slotVtxCount * 4U * 2, 4U, TRUE);
-            GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
-            GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-            GXSETARRAY(GX_VA_TEX0, *(void **) (slot + 0x14), slotVtxCount * 8U * 2, 8U, TRUE);
-        }
-        tint.r = *(u8 *) (slot + 0x1C);
-        tint.g = *(u8 *) (slot + 0x1D);
-        tint.b = *(u8 *) (slot + 0x1E);
-        tint.a = *(u8 *) (slot + 0x1F);
+        GXClearVtxDesc();
+        GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
+        GXSETARRAY(GX_VA_POS, slot->posArr, slot->vtxNum * 0xC * 2, 0xCU, TRUE);
+        GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
+        GXSETARRAY(GX_VA_CLR0, slot->colArr, slot->vtxNum * 4U * 2, 4U, TRUE);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
+        GXSETARRAY(GX_VA_TEX0, slot->uvArr, slot->vtxNum * 8U * 2, 8U, TRUE);
+        tint.r = slot->color[0];
+        tint.g = slot->color[1];
+        tint.b = slot->color[2];
+        tint.a = slot->alpha.u;
         GXSetTevColor(GX_TEVREG2, tint);
-        GXCallDisplayList(*(void **) (slot + 0x20), *(u32 *) (slot + 0x24));
+        GXCallDisplayList(slot->dl, slot->dlSize);
     }
 }

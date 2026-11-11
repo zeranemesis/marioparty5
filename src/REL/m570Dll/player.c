@@ -9,7 +9,18 @@
 
 #include "humath.h"
 
+/* The shared header has stale signatures for these three; the originals take no table
+ * argument and fn_1_17DC returns s16. Rename the header declarations away. */
+#define fn_1_3B40 hdr_fn_1_3B40
+#define fn_1_3C64 hdr_fn_1_3C64
+#define fn_1_17DC hdr_fn_1_17DC
 #include "REL/m570Dll.h"
+#undef fn_1_3B40
+#undef fn_1_3C64
+#undef fn_1_17DC
+s32 fn_1_3B40(HuVecF *pos, HuVecF *goal, HuVecF *angle, f32 step);
+f32 fn_1_3C64(f32 val, f32 min, f32 max);
+s16 fn_1_17DC(HuVecF *pos);
 
 /* motion numbers handled by the player state machine */
 #define M570_MOT_IDLE 0
@@ -163,17 +174,17 @@ static const f32 kSideRotNeg = -90.0f;
 
 static M570DUST *gDustTbl[M570_DUST_MAX];
 static OMOBJ *gItemObj;
-static M570PLAYER *gCpuPlayer[M570_CPU_MAX];
-static M570PLAYER *gPlayer;
+M570PLAYER *lbl_1_bss_1B4[M570_CPU_MAX];
+M570PLAYER *lbl_1_bss_1C0;
 M570PLAYER *lbl_1_bss_1C4[M570_PLAYER_MAX];
 
-static void fn_1_4440(M570PLAYER *player, s16 motNo);
+void fn_1_4440(M570PLAYER *player, s16 motNo);
 static void fn_1_45E4(OMOBJ *obj);
 static void fn_1_457C(OMOBJ *obj);
 static void fn_1_4AC8(M570PLAYER *player);
 static void fn_1_4BB0(M570PLAYER *player);
 static void fn_1_4CC8(M570PLAYER *player);
-static void fn_1_5820(s16 motNo);
+void fn_1_5820(s16 motNo);
 static void fn_1_58EC(OMOBJ *obj);
 static void fn_1_558C(OMOBJ *obj);
 
@@ -216,10 +227,10 @@ void fn_1_4210(void)
         fn_1_3A74(player, i);
         if (player->grp == 0) {
             player->idx = 0;
-            gPlayer = player;
+            lbl_1_bss_1C0 = player;
         } else {
             player->idx = cpuCount + 1;
-            gCpuPlayer[cpuCount++] = player;
+            lbl_1_bss_1B4[cpuCount++] = player;
         }
         lbl_1_bss_1C4[i] = player;
         player->tra = StartPosTbl[player->idx];
@@ -242,7 +253,7 @@ void fn_1_4210(void)
     CharEffectLayerSet(3);
 }
 
-static void fn_1_4440(M570PLAYER *player, s16 motNo)
+void fn_1_4440(M570PLAYER *player, s16 motNo)
 {
     OMOBJ *obj;
     f32 shiftStart;
@@ -286,7 +297,7 @@ static void fn_1_45E4(OMOBJ *obj)
         {
             HuVecF angle;
             OMOBJ *robj;
-if (fn_1_3B40(&player->tra, &player->goal, &angle, kStep, &kStep) != 0) {
+if (fn_1_3B40(&player->tra, &player->goal, &angle, kStep) != 0) {
                 player->state = 0;
                 if (player->motNo != M570_MOT_IDLE) {
                     f32 shiftStart;
@@ -308,14 +319,14 @@ if (fn_1_3B40(&player->tra, &player->goal, &angle, kStep, &kStep) != 0) {
         }
         break;
     case M570_MOT_RETREAT:
-        if (fn_1_3B40(&player->tra, &player->goal, &player->rot, kTen, &kTen) != 0) {
+        if (fn_1_3B40(&player->tra, &player->goal, &player->rot, kTen) != 0) {
             player->state = M570_MOT_TURN;
         }
         break;
     case M570_MOT_TURN:
         {
             OMOBJ *robj;
-player->rot.y = fn_1_3C64(&kTen, player->rot.y, kZero, kTen);
+player->rot.y = fn_1_3C64(player->rot.y, kZero, kTen);
             if (player->rot.y <= kArrive) {
                 if (player->motNo != M570_MOT_IDLE) {
                     f32 shiftStart;
@@ -358,7 +369,9 @@ player->timer++;
                     f32 shiftStart;
 
                     robj = player->obj;
-                    if (player->motNo != 5) {
+                    if (player->motNo == 5) {
+                        shiftStart = kBlendLong;
+                    } else {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_WIN], shiftStart,
@@ -429,10 +442,10 @@ static void fn_1_4AC8(M570PLAYER *player)
 
 s32 fn_1_4B64(M570PLAYER *player)
 {
-    if (gPlayer == player) {
+    if (lbl_1_bss_1C0 == player) {
         return 0;
     }
-    if (gPlayer->btnNo == player->btnNo) {
+    if (lbl_1_bss_1C0->btnNo == player->btnNo) {
         return 1;
     }
     return 0;
@@ -666,7 +679,7 @@ s32 fn_1_5538(void)
     s32 i;
 
     for (i = 0; i < M570_CPU_MAX; i++) {
-        if (gCpuPlayer[i]->gotItem == 0) {
+        if (lbl_1_bss_1B4[i]->gotItem == 0) {
             return 0;
         }
     }
@@ -725,7 +738,7 @@ void fn_1_56A0(void)
     gItemObj = obj;
 }
 
-static void fn_1_5820(s16 motNo)
+void fn_1_5820(s16 motNo)
 {
     OMOBJ *obj;
     M570ITEMATTR attr = ItemShiftAttr;
@@ -737,14 +750,13 @@ static void fn_1_5820(s16 motNo)
     Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[motNo], kZero, kTen, ((s32 *)&attr)[motNo]);
 }
 
-// NONMATCHING: the unit calls Hu3DMotionMaxTimeGet both as f32 and as s32. Declaring it
-// s32 makes fn_1_5E38/fn_1_5A78 match, so fn_1_58EC keeps a 9-instruction
-// int-to-float widen, and its cmpu operands are swapped against the original.
+// NONMATCHING: only the fcmpu operand order differs.
 static void fn_1_58EC(OMOBJ *obj)
 {
     M570DUST *dust = obj->data;
     s16 modelId = obj->mdlId[0];
     f32 endTime;
+    extern f32 Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
     switch (dust->state) {
     case 0:
@@ -757,8 +769,8 @@ static void fn_1_58EC(OMOBJ *obj)
         }
         break;
     case 2:
-        endTime = (f32)Hu3DMotionMaxTimeGet(modelId) - kOne;
-        if (endTime == Hu3DMotionTimeGet(modelId)) {
+        endTime = Hu3DMotionMaxTimeGet(modelId) - kOne;
+        if (Hu3DMotionTimeGet(modelId) == endTime) {
             dust->loop--;
             if (dust->loop == 0) {
                 Hu3DMotionSet(modelId, obj->mtnId[0]);

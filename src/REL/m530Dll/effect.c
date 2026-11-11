@@ -1,95 +1,362 @@
-#include "types.h"
+#include "game/charman.h"
+#include "game/data.h"
+#include "game/hu3d.h"
+#include "game/memory.h"
+#include "game/object.h"
+#include "game/pad.h"
+#include "math.h"
 
-typedef struct m530effectcell_s {
-    u8 pad00[2];
-    s16 f_02; //0x02
-    u8 pad04[0x24];
-    s32 f_28; //0x28
-    u8 pad2C[8];
-    void *f_34; //0x34
-    s32 f_38; //0x38
-    s32 f_3C; //0x3C
-    s32 f_40; //0x40
-    s32 f_44; //0x44
-    u8 pad48[8];
-} M530_EFFECT_CELL;
+#include "game/mg/seqman.h"
 
-typedef struct m530effectmodel_s {
-    s16 f_00; //0x00
-} M530_EFFECT_MODEL;
+#include "REL/m530Dll.h"
 
-struct m530effect_s;
+s32 lbl_1_data_390[3] = { 3, 4, 5 };
 
-typedef void (*M530_EFFECT_FN)(struct m530effect_s *self, M530_EFFECT_CELL *cell);
+void fn_1_88FC(OMOBJ *obj);
+void fn_1_8C30(OMOBJ *obj);
+s32 fn_1_8E2C(M530_PLAYER_WORK *work, Vec *pos);
+s32 fn_1_8ED8(Vec *vec);
+void fn_1_8F64(OMOBJ *obj);
+void fn_1_916C(OMOBJ *obj);
+void fn_1_91F8(OMOBJ *obj);
+void fn_1_92E8(OMOBJ *obj);
+void fn_1_9384(void);
+void fn_1_9388(OMOBJ *obj);
+void fn_1_9460(OMOBJ *obj);
+void fn_1_95B0(OMOBJ *obj);
+void fn_1_96B0(OMOBJ *obj);
+s32 fn_1_96F8(OMOBJ *obj);
 
-typedef struct m530effect_s {
-    u8 pad00[0x14];
-    M530_EFFECT_FN f_14; //0x14
-    u8 pad18[0x28];
-    M530_EFFECT_MODEL *f_40; //0x40
-    u8 pad44[0x18];
-    M530_EFFECT_CELL *f_5C; //0x5C
-} M530_EFFECT;
+void fn_1_8848(void) {
+    HU3DMODELID modelId;
+    OMOBJ *obj;
 
-typedef struct m530effectvec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-} M530_EFFECT_VEC;
+    modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x580007, HU_MEMNUM_OVL, HEAP_MODEL));
+    obj = omAddObjEx(lbl_1_bss_B8, 0x3000, 1, 0, -1, fn_1_88FC);
+    obj->mdlId[0] = modelId;
+    Hu3DModelLayerSet(modelId, 1);
+    omSetTra(obj, 0.0f, 100.0f, lbl_1_data_348[0].z);
+}
 
-extern M530_EFFECT_CELL lbl_1_bss_DC[];
-extern void *lbl_1_bss_B8;
-
-s32 lbl_1_data_390[3] = {3, 4, 5};
-
-s32 Hu3DMotionEndCheck(s16 motion);
-void Hu3DModelKill(s16 motion);
-void omDelObjEx(void *obj, void *actor);
-void CharModelHookDustCreate(s16 id, void *cell);
-void fn_1_10E8(M530_EFFECT *self, s32 arg1);
-void fn_1_91F8(M530_EFFECT *self, M530_EFFECT_CELL *cell);
-f32 PSVECMag(M530_EFFECT_VEC *v);
-void PSVECNormalize(M530_EFFECT_VEC *a, M530_EFFECT_VEC *b);
-void PSVECScale(M530_EFFECT_VEC *a, M530_EFFECT_VEC *b, f32 scale);
-
-void fn_1_88FC(M530_EFFECT *self) {
-    if (Hu3DMotionEndCheck(self->f_40->f_00) != 0) {
-        Hu3DModelKill(self->f_40->f_00);
-        omDelObjEx(lbl_1_bss_B8, self);
+void fn_1_88FC(OMOBJ *obj) {
+    if (Hu3DMotionEndCheck(obj->mdlId[0]) != 0) {
+        Hu3DModelKill(obj->mdlId[0]);
+        omDelObjEx(lbl_1_bss_B8, obj);
     }
 }
 
-s32 fn_1_8ED8(M530_EFFECT_VEC *v) {
-    f32 mag = PSVECMag(v);
+void fn_1_8958(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+    s16 vol;
+    s16 pan;
+
+    fn_1_1A50(&work->pos.x, &vol, &pan);
+    CharModelVoicePanSet(work->charNo, pan);
+    CharModelVoiceVolSet(work->charNo, vol);
+    if (MgSeqModeGet() == 6) {
+        CharModelAttrReset(work->charNo, 1);
+        work->timer = 0;
+        work->state = 3;
+        obj->objFunc = fn_1_916C;
+        return;
+    }
+    if (MgSeqModeGet() == 5) {
+        switch (work->state) {
+            case 1:
+                if (work->timer == 0) {
+                    omVibrate(work->playerNo, 12, 12, 0);
+                    fn_1_10E8(obj, 8);
+                }
+                work->timer++;
+                if (CharMotionEndCheck(work->charNo) != 0) {
+                    work->timer = 0;
+                    fn_1_10E8(obj, 3);
+                    work->state = 0;
+                }
+                break;
+            case 2:
+                if (work->timer == 0) {
+                    fn_1_10E8(obj, 3);
+                }
+                work->timer++;
+                if (work->timer % 2 != 0) {
+                    CharModelAttrSet(work->charNo, 1);
+                } else {
+                    CharModelAttrReset(work->charNo, 1);
+                }
+                if (work->timer == 30) {
+                    work->timer = 0;
+                    work->state = 0;
+                }
+                break;
+        }
+        work->vel.x = 0.0f;
+        work->vel.y = 0.0f;
+        work->vel.z = 0.0f;
+        if (work->flag != 0) {
+            fn_1_9388(obj);
+        } else if (fn_1_342C(work->padNo) >= 10.0f) {
+            work->vel.x = 0.26785713f * HuPadStkX[work->padNo];
+            work->vel.z = 0.26785713f * -HuPadStkY[work->padNo];
+        }
+        fn_1_8C30(obj);
+        omSetRot(obj, work->rot.x, work->rot.y, work->rot.z);
+        omSetTra(obj, work->pos.x, work->pos.y, work->pos.z);
+    }
+}
+
+void fn_1_8C30(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+    s32 anim;
+    Vec sp8;
+
+    if (work->state != 1) {
+        if (fabs(work->vel.x) > 7.5 || fabs(work->vel.z) > 7.5) {
+            anim = 2;
+        } else if (PSVECMag(&work->vel) == 0.0f) {
+            anim = 0;
+        } else {
+            anim = 1;
+        }
+        if (anim != work->unk74) {
+            fn_1_10E8(obj, lbl_1_data_390[anim]);
+        }
+        if (PSVECMag(&work->vel) != 0.0f) {
+            work->unk84 = 180.0 * (atan2(work->vel.x, work->vel.z) / 3.141592653589793);
+            PSVECAdd(&work->pos, &work->vel, &sp8);
+            fn_1_8E2C(work, &sp8);
+            fn_1_8ED8(&sp8);
+            work->pos = sp8;
+        }
+        if (work->state != 2) {
+            fn_1_8F64(obj);
+        }
+        work->rot.y = fn_1_3FF4(work->rot.y, work->unk84, 30.0f);
+    }
+}
+
+s32 fn_1_8E2C(M530_PLAYER_WORK *work, Vec *pos) {
+    s32 i;
+    M530_PLAYER_WORK *other;
+
+    for (i = 0; i < 4; i++) {
+        other = lbl_1_bss_40[i]->data;
+        if (work != other && other->slot != 0 && fn_1_4164(&work->pos, pos, &other->pos, 120.0f) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+s32 fn_1_8ED8(Vec *vec) {
+    f32 mag = PSVECMag(vec);
     if (mag <= 550.0f) {
         return 0;
     }
-    PSVECNormalize(v, v);
-    PSVECScale(v, v, 550.0f);
+    PSVECNormalize(vec, vec);
+    PSVECScale(vec, vec, 550.0f);
     return 1;
 }
 
-void fn_1_916C(M530_EFFECT *self) {
-    M530_EFFECT_CELL *cell = self->f_5C;
-    if (cell->f_38 == 0) {
-        CharModelHookDustCreate(cell->f_02, cell->f_34);
-        fn_1_10E8(self, 0);
+void fn_1_8F64(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+    Vec sp8;
+    s32 cell;
+
+    cell = fn_1_65D4(&work->pos, 100.0f);
+    if (cell != -1 && lbl_1_bss_DC[cell].state == 5) {
+        if (lbl_1_bss_DC[cell].kind == 4) {
+            if (lbl_1_bss_DC[cell].variant == 0) {
+                fn_1_1B78(&work->pos.x, 0x79D);
+                lbl_1_bss_4C[work->side].score += 1;
+            } else {
+                fn_1_1B78(&work->pos.x, 0x79E);
+                lbl_1_bss_4C[work->side].score += 3;
+            }
+            omVibrate(work->playerNo, 12, 6, 6);
+            Hu3DModelObjPosGet(obj->mdlId[0], work->itemHook, &sp8);
+            CharEffectCoinGlowCreate((s16)lbl_1_data_6C.camNo, &sp8);
+            fn_1_1648(work->side);
+            fn_1_694C(cell);
+            return;
+        }
+        if (lbl_1_bss_DC[cell].kind == 6) {
+            fn_1_1B78(&work->pos.x, 0x79F);
+            work->state = 1;
+            work->timer = 0;
+            fn_1_694C(cell);
+            return;
+        }
     }
-    cell->f_38 += 1;
-    if (cell->f_38 == 0x3C) {
-        cell->f_38 = 0;
-        cell->f_28 = 4;
-        self->f_14 = fn_1_91F8;
+    cell = fn_1_645C(&work->pos, 60.0f);
+    if (cell != -1 && lbl_1_bss_DC[cell].state == 7) {
+        fn_1_1B78(&work->pos.x, 0x79F);
+        work->state = 1;
+        work->timer = 0;
+        fn_1_6980(cell);
+        return;
+    }
+}
+
+void fn_1_916C(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+
+    if (work->timer == 0) {
+        CharModelHookDustCreate(work->charNo, work->itemHook);
+        fn_1_10E8(obj, 0);
+    }
+    work->timer++;
+    if (work->timer == 60) {
+        work->timer = 0;
+        work->state = 4;
+        obj->objFunc = fn_1_91F8;
+    }
+}
+
+void fn_1_91F8(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+
+    if (work->timer++ == 0) {
+        fn_1_10E8(obj, 2);
+        work->unk88 = 1;
+        work->goal = lbl_1_data_360[work->side];
+        work->goalSpeed = 7.5f;
+        return;
+    }
+    if (fn_1_96F8(obj) != 0) {
+        work->timer = 0;
+        work->state = 5;
+        obj->objFunc = fn_1_92E8;
+    }
+    omSetRot(obj, work->rot.x, work->rot.y, work->rot.z);
+    omSetTra(obj, work->pos.x, work->pos.y, work->pos.z);
+}
+
+void fn_1_92E8(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+
+    work->rot.y = fn_1_3FF4(work->rot.y, 0.0f, 30.0f);
+    omSetRot(obj, work->rot.x, work->rot.y, work->rot.z);
+    if ((s32)work->rot.y == 0) {
+        fn_1_10E8(obj, 0);
+        obj->objFunc = (OMOBJFUNC)fn_1_9384;
     }
 }
 
 void fn_1_9384(void) {
 }
 
-void fn_1_96B0(M530_EFFECT *self) {
-    M530_EFFECT_CELL *cell = self->f_5C;
-    if (lbl_1_bss_DC[cell->f_44].f_3C == 0) {
-        cell->f_44 = -1;
-        cell->f_3C = 0;
+void fn_1_9388(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+
+    if (work->targetNo != -1) {
+        if (lbl_1_bss_DC[work->targetNo].state < 2) {
+            work->mode = 0;
+        }
+        if (lbl_1_bss_DC[work->targetNo].state >= 6) {
+            work->mode = 0;
+        }
     }
+    switch (work->mode) {
+        case 0:
+            fn_1_9460(obj);
+            break;
+        case 1:
+            fn_1_95B0(obj);
+            break;
+        case 2:
+            fn_1_96B0(obj);
+            break;
+    }
+}
+
+void fn_1_9460(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+    s32 cell;
+    M530_PLAYER_WORK *other;
+    s32 idx;
+    Vec sp18;
+    s32 sp8[4] = { 120, 60, 40, 30 };
+
+    if (work->timer2++ > sp8[work->varNo]) {
+        idx = lbl_1_bss_4C[work->side ^ 1].member[1];
+        other = lbl_1_bss_40[idx]->data;
+        cell = fn_1_6C50(work->varNo, other->targetNo);
+        if (cell != -1) {
+            work->timer2 = 0;
+            work->targetNo = cell;
+            work->target = lbl_1_bss_DC[cell].start;
+            work->target.y = 0.0f;
+            PSVECSubtract(&work->target, &work->pos, &sp18);
+            if ((s32)PSVECMag(&sp18) == 0) {
+                work->mode = 2;
+            } else {
+                work->mode = 1;
+            }
+        }
+    }
+}
+
+void fn_1_95B0(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+    Vec sp8;
+    f32 mag;
+
+    PSVECSubtract(&work->target, &work->pos, &sp8);
+    mag = PSVECMag(&sp8);
+    if ((s32)mag == 0) {
+        work->mode = 2;
+        return;
+    }
+    PSVECNormalize(&sp8, &sp8);
+    PSVECScale(&sp8, &sp8, 15.0f);
+    if (PSVECMag(&sp8) > mag) {
+        work->vel.x = 0.0f;
+        work->vel.y = 0.0f;
+        work->vel.z = 0.0f;
+        return;
+    }
+    work->vel = sp8;
+}
+
+void fn_1_96B0(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+
+    if (lbl_1_bss_DC[work->targetNo].state == 0) {
+        work->targetNo = -1;
+        work->mode = 0;
+    }
+}
+
+s32 fn_1_96F8(OMOBJ *obj) {
+    M530_PLAYER_WORK *work = obj->data;
+    M530_PLAYER_WORK *other;
+    Vec sp14;
+    Vec sp8;
+    f32 mag;
+    s32 i;
+
+    PSVECSubtract(&work->goal, &work->pos, &sp8);
+    mag = PSVECMag(&sp8);
+    if (mag == 0.0f) {
+        return 1;
+    }
+    PSVECNormalize(&sp8, &sp8);
+    PSVECScale(&sp8, &sp8, work->goalSpeed);
+    if (PSVECMag(&sp8) > mag) {
+        work->pos = work->goal;
+        work->unk88 = 0;
+        return 1;
+    }
+    PSVECAdd(&work->pos, &sp8, &sp14);
+    for (i = 0; i < 4; i++) {
+        other = lbl_1_bss_40[i]->data;
+        if (work == other || other->slot == 0 || fn_1_4164(&work->pos, &sp14, &other->pos, 120.0f) == 0) {
+            continue;
+        }
+        break;
+    }
+    work->pos = sp14;
+    work->rot.y = 180.0 * (atan2(sp8.x, sp8.z) / 3.141592653589793);
+    return 0;
 }

@@ -18,38 +18,6 @@ int HuAudFXPlay(int seId);
 
 
 
-typedef struct m530playerwork_s {
-    s16 playerNo; //0x00
-    s16 charNo; //0x02
-    s16 padNo; //0x04
-    s16 side; //0x06
-    s16 varNo; //0x08
-    s16 padA; //0x0A
-    s32 flag; //0x0C
-    Vec pos; //0x10
-    Vec rot; //0x1C
-    s32 state; //0x28
-    s32 unk2C; //0x2C
-    s32 unk30; //0x30
-    void *itemHook; //0x34
-    s32 timer; //0x38
-    s32 mode; //0x3C
-    s32 timer2; //0x40
-    s32 targetNo; //0x44
-    Vec target; //0x48
-    s16 espId; //0x54
-    s16 pad56; //0x56
-    Vec screen; //0x58
-    Vec world; //0x64
-    void *item; //0x70
-    s32 unk74; //0x74
-    f32 unk78; //0x78
-    f32 unk7C; //0x7C
-    f32 unk80; //0x80
-    f32 unk84; //0x84
-    s32 unk88; //0x88
-} M530_PLAYER_WORK;
-
 typedef struct m530item_s {
     s16 playerNo; //0x00
     s16 pad2; //0x02
@@ -64,18 +32,6 @@ typedef struct m530item_s {
     s16 mdlId; //0x34
     s16 pad36; //0x36
 } M530_ITEM;
-
-typedef struct m530cell_s {
-    s32 unk0; //0x00
-    s32 unk4; //0x04
-    s32 unk8; //0x08
-    s32 unkC; //0x0C
-    Vec pos; //0x10
-    u8 pad1C[0x20];
-    s32 unk3C; //0x3C
-    s32 unk40; //0x40
-    u8 pad44[0xC];
-} M530_CELL;
 
 void fn_1_6F90(OMOBJ *obj);
 void fn_1_6FFC(OMOBJ *obj);
@@ -99,44 +55,44 @@ void fn_1_85D4(OMOBJ *obj);
 void fn_1_86DC(OMOBJ *obj);
 void fn_1_87FC(OMOBJ *obj);
 
-static Vec lbl_1_data_2E8[2] = {
+Vec lbl_1_data_2E8[2] = {
     { -450.0f, 0.0f, 550.0f },
     { 450.0f, 0.0f, 550.0f }
 };
 
-static Vec lbl_1_data_300 = { 0.0f, 570.0f, -100.0f };
+Vec lbl_1_data_300 = { 0.0f, 570.0f, -100.0f };
 
-static u32 lbl_1_data_30C[2] = { 0x58000D, 0x58000E };
+u32 lbl_1_data_30C[2] = { 0x58000D, 0x58000E };
 
-static Vec lbl_1_data_314[2] = {
+Vec lbl_1_data_314[2] = {
     { 243.0f, 143.0f, 0.0f },
     { 333.0f, 143.0f, 0.0f }
 };
 
-static u32 lbl_1_data_32C[2] = { 0x58000A, 0x58000B };
+u32 lbl_1_data_32C[2] = { 0x58000A, 0x58000B };
 
-static char lbl_1_data_334[12] = "itemhook_b";
+char lbl_1_data_334[12] = "itemhook_b";
 
-static u32 lbl_1_data_340[2] = { 0x580008, 0x580009 };
+u32 lbl_1_data_340[2] = { 0x580008, 0x580009 };
 
-static Vec lbl_1_data_348[2] = {
+Vec lbl_1_data_348[2] = {
     { -1700.0f, 0.0f, 245.0f },
     { 1700.0f, 0.0f, 245.0f }
 };
 
-static Vec lbl_1_data_360[2] = {
+Vec lbl_1_data_360[2] = {
     { -200.0f, 0.0f, 245.0f },
     { 200.0f, 0.0f, 245.0f }
 };
 
-static Vec lbl_1_data_378[2] = {
+Vec lbl_1_data_378[2] = {
     { 0.0f, 90.0f, 0.0f },
     { 0.0f, -90.0f, 0.0f }
 };
 
-static s32 lbl_1_bss_D0[3];
+M530_CELL lbl_1_bss_DC[21];
 
-static M530_CELL lbl_1_bss_DC[21];
+Vec lbl_1_bss_D0;
 
 static const f32 lbl_1_rodata_184 = 110.0f;
 
@@ -323,7 +279,7 @@ void fn_1_7674(OMOBJ *obj) {
     work = obj->data;
     if (work->timer == 0) {
         Hu3DModelObjPosGet(obj->mdlId[0], work->itemHook, &sp8);
-        CharEffectSmokeCreate((s16)lbl_1_data_6C[0], &sp8);
+        CharEffectSmokeCreate((s16)lbl_1_data_6C.camNo, &sp8);
         Hu3DModelAttrSet(obj->mdlId[2], 1);
         Hu3DSubMotionReset(obj->mdlId[0]);
         CharMotionSpeedSet(work->charNo, 1.0f);
@@ -376,10 +332,10 @@ void fn_1_7900(OMOBJ *obj) {
 
     work = obj->data;
     if (work->targetNo != -1) {
-        if (lbl_1_bss_DC[work->targetNo].unk40 != 4) {
+        if (lbl_1_bss_DC[work->targetNo].kind != 4) {
             work->mode = 0;
         }
-        if (lbl_1_bss_DC[work->targetNo].unk3C != 2) {
+        if (lbl_1_bss_DC[work->targetNo].state != 2) {
             work->mode = 0;
         }
     }
@@ -522,13 +478,13 @@ s32 fn_1_80C4(Vec *arg0, Vec *arg1) {
     Vec sp14;
     Vec sp8;
 
-    if (fn_1_4458(&lbl_1_bss_D0[0], &lbl_1_bss_DC[0].unk4, &arg0->x, &arg1->x, &sp14.x) == 0) {
+    if (fn_1_4458(&lbl_1_bss_D0, &lbl_1_bss_DC[0].start, arg0, arg1, &sp14) == 0) {
         return 0;
     }
-    if (fn_1_4414(&lbl_1_bss_D0[0], &lbl_1_bss_DC[0].unk4, &arg0->x) < 0.0f) {
+    if (fn_1_4414(&lbl_1_bss_D0, &lbl_1_bss_DC[0].start, arg0) < 0.0f) {
         return 0;
     }
-    if (fn_1_4414(&lbl_1_bss_D0[0], &lbl_1_bss_DC[0].unk4, &arg1->x) > 0.0f) {
+    if (fn_1_4414(&lbl_1_bss_D0, &lbl_1_bss_DC[0].start, arg1) > 0.0f) {
         return 0;
     }
     PSVECSubtract(&sp14, &lbl_1_data_300, &sp8);
@@ -576,8 +532,8 @@ void fn_1_8398(Vec *arg0, Vec *arg1) {
 
     sp18 = *arg0;
     sp18.z = 3000.0f;
-    Hu3D2Dto3D(&sp18, (s16)lbl_1_data_6C[0], &spC);
-    fn_1_4458(&lbl_1_bss_D0[0], &lbl_1_bss_DC[0].unk4, (f32 *)&lbl_1_data_6C[5], &spC.x, &arg1->x);
+    Hu3D2Dto3D(&sp18, (s16)lbl_1_data_6C.camNo, &spC);
+    fn_1_4458(&lbl_1_bss_D0, &lbl_1_bss_DC[0].start, &lbl_1_data_6C.pos, &spC, arg1);
 }
 
 void fn_1_8434(OMOBJ *obj) {

@@ -132,9 +132,9 @@ void fn_1_21C4(OMOBJ *obj)
                 s16 res;
                 s32 cur;
                 total += v;
-                cur = *(s16 *)((u8 *)&GwPlayer[i] + 0x2A);
+                cur = GwPlayer[i].mgCoin;
                 res = (s16)(v + cur);
-                *(s16 *)((u8 *)&GwPlayer[i] + 0x2A) = res;
+                GwPlayer[i].mgCoin = res;
             }
         }
         if (total > 0) {

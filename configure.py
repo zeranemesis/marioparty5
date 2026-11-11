@@ -1150,13 +1150,13 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m516Dll",
         objects={
-            Object(NonMatching, "REL/m516Dll/m516.c"),
+            Object(Equivalent, "REL/m516Dll/m516.c"),
             Object(Matching, "REL/m516Dll/camera.c"),
-            Object(NonMatching, "REL/m516Dll/player.c"),
-            Object(NonMatching, "REL/m516Dll/stage.c"),
-            Object(NonMatching, "REL/m516Dll/effect.c"),
-            Object(NonMatching, "REL/m516Dll/score.c"),
-            Object(NonMatching, "REL/m516Dll/actor.c"),
+            Object(Equivalent, "REL/m516Dll/player.c"),
+            Object(Equivalent, "REL/m516Dll/stage.c"),
+            Object(Equivalent, "REL/m516Dll/effect.c"),
+            Object(Equivalent, "REL/m516Dll/score.c"),
+            Object(Equivalent, "REL/m516Dll/actor.c"),
         },
     ),
     Rel(
@@ -1294,10 +1294,10 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m530Dll",
         objects={
-            Object(NonMatching, "REL/m530Dll/m530.c"),
-            Object(NonMatching, "REL/m530Dll/kinomi.c"),
-            Object(NonMatching, "REL/m530Dll/player.c"),
-            Object(NonMatching, "REL/m530Dll/effect.c"),
+            Object(Equivalent, "REL/m530Dll/m530.c"),
+            Object(Equivalent, "REL/m530Dll/kinomi.c"),
+            Object(Equivalent, "REL/m530Dll/player.c"),
+            Object(Equivalent, "REL/m530Dll/effect.c"),
         },
     ),
     Rel(
@@ -1338,8 +1338,8 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m533dll",
         objects={
-            Object(NonMatching, "REL/m533dll/m533.c"),
-            Object(NonMatching, "REL/m533dll/pillar.c"),
+            Object(Equivalent, "REL/m533dll/m533.c"),
+            Object(Equivalent, "REL/m533dll/pillar.c"),
         },
     ),
     Rel(
@@ -1361,7 +1361,7 @@ Object(Matching, "REL/m510dll/opening.c"),
             # not that the source is absent -- unit_status.py:80). The last
             # real gap is ObjectSetup (1652 B), declared at m535.c:70 and
             # called at :96 but never defined. Writing it brings all 19 in.
-            Object(NonMatching, "REL/m535Dll/m535.c"),
+            Object(Equivalent, "REL/m535Dll/m535.c"),
         },
     ),
     Rel(
@@ -1420,7 +1420,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m540Dll",
         objects={
-            Object(NonMatching, "REL/m540Dll/m540.c"),
+            Object(Equivalent, "REL/m540Dll/m540.c"),
         },
     ),
     Rel(
@@ -1474,9 +1474,9 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m547dll",
         objects={
-            Object(NonMatching, "REL/m547dll/m547.c"),
+            Object(Equivalent, "REL/m547dll/m547.c"),
             Object(Matching, "REL/m547dll/game.c"),
-            Object(NonMatching, "REL/m547dll/stage.c"),
+            Object(Equivalent, "REL/m547dll/stage.c"),
         },
     ),
     Rel(
@@ -1560,15 +1560,15 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m560dll",
         objects={
-            Object(NonMatching, "REL/m560dll/m560.c"),
-            Object(NonMatching, "REL/m560dll/effect.c"),
+            Object(Equivalent, "REL/m560dll/m560.c"),
+            Object(Equivalent, "REL/m560dll/effect.c"),
         },
     ),
     Rel(
         "m561dll",
         objects={
-            Object(NonMatching, "REL/m561dll/m561.c"),
-            Object(NonMatching, "REL/m561dll/effect.c"),
+            Object(Equivalent, "REL/m561dll/m561.c"),
+            Object(Equivalent, "REL/m561dll/effect.c"),
         },
     ),
     Rel(
@@ -1643,7 +1643,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m567Dll",
         objects={
-            Object(NonMatching, "REL/m567Dll/m567.c"),
+            Object(Equivalent, "REL/m567Dll/m567.c"),
         },
     ),
     Rel(
@@ -1677,8 +1677,8 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m570Dll",
         objects={
-            Object(NonMatching, "REL/m570Dll/m570.c"),
-            Object(NonMatching, "REL/m570Dll/player.c"),
+            Object(Equivalent, "REL/m570Dll/m570.c"),
+            Object(Equivalent, "REL/m570Dll/player.c"),
         },
     ),
     Rel(
@@ -1700,7 +1700,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "m573dll",
         objects={
-            Object(NonMatching, "REL/m573dll/m573.c"),
+            Object(Equivalent, "REL/m573dll/m573.c"),
         },
     ),
     Rel(
@@ -2020,7 +2020,7 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "w02sDll",
         objects={
-            Object(NonMatching, "REL/w02sDll/world02.c"),
+            Object(Equivalent, "REL/w02sDll/world02.c"),
         },
     ),
     Rel(
