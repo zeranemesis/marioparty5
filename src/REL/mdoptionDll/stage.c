@@ -1,8 +1,17 @@
+#ifdef __MWERKS__
+#define _MATH_H
+#endif
 #include "REL/mdoptionDll/mdoption.h"
 #include "game/frand.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
 #include "game/mgdata.h"
+
+#ifdef __MWERKS__
+extern double sin(double x);
+#else
+#include <math.h>
+#endif
 
 #define MDOPT_MES(no) (0x001F0000 | (no))
 
@@ -56,7 +65,6 @@ extern void MdMathOscillate(int type, float *in, float *out, float t);
 extern void MdMath3Dto2D(HuVecF *src, s16 cameraBit, HuVecF *dst);
 extern void MdMathMtxRotCalc(HuVecF *dir, HuVecF *up, Mtx out, float angle);
 extern void MdMathMtxRotGet(Mtx mtx, HuVecF *rot);
-extern double sin(double x);
 extern void fn_1_A930(int no);
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
