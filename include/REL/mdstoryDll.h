@@ -118,11 +118,9 @@ enum {
     MDSTORY_OBJ_MAX //4
 };
 
-enum {
-    MDSPR_GRP_FINGER = 38,
-    MDSPR_GRP_RING = 39,
-    MDSPR_GRP_MAX = 40
-};
+#define MDSPR_ANIM_MAX 10
+#define MDSPR_MAX 15
+#define MDSPR_GRP_MAX 5
 
 enum {
     MDSTORY_STAR_NONE, //0
@@ -277,7 +275,9 @@ typedef struct MdLightWork_s {
 } MDLIGHT_WORK;
 
 typedef struct MdSpriteWork_s {
-    HUSPRGRPID grpId[MDSPR_GRP_MAX]; //0x00
+    ANIMDATA *animP[MDSPR_ANIM_MAX]; //0x00
+    HUSPRID sprId[MDSPR_MAX]; //0x28
+    HUSPRGRPID grpId[MDSPR_GRP_MAX]; //0x46
 } MDSPRITE_WORK;
 
 typedef struct MdModelDebugInfo_s {
@@ -287,7 +287,8 @@ typedef struct MdModelDebugInfo_s {
 
 typedef struct MdModelWork_s {
     HU3DMODELID mdlId[MDMODEL_MAX]; //0x00
-    HU3DANIMID animId[MDMODEL_MAX]; //0x34
+    HU3DANIMID animId[24]; //0x34
+    HU3DANIMID toueiAnimId[2]; //0x64
     HuVecF *posP[MDMODEL_MAX]; //0x68
     HuVecF *rotP[MDMODEL_MAX]; //0xD0
     HuVecF *scaleP[MDMODEL_MAX]; //0x138
