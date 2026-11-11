@@ -536,10 +536,10 @@ typedef struct Sys_s {
     s8 teamOrderBackup[GW_PLAYER_MAX]; //0x50
     s8 teamNo[2]; //0x54
     s8 teamComPlayerNo[3]; //0x56
-    s8 subMode2; //0x59
-    s8 mdlE[GW_PLAYER_MAX]; //0x5A
-    s8 mdlF[GW_PLAYER_MAX]; //0x5E
-    s8 mdlG[3]; //0x62
+    s8 handicapNo; //0x59
+    s8 handicapOrder[GW_PLAYER_MAX]; //0x5A
+    s8 handicapOrderBackup[GW_PLAYER_MAX]; //0x5E
+    s8 handicapComPlayerNo[3]; //0x62
     u8 pad65[3]; //0x65
     OMOBJMAN *objman; //0x68
     HUPROCESS *mainProc; //0x6C
@@ -591,7 +591,7 @@ typedef struct Sys_s {
     float unk41C;
     float nameT; //0x420
     float curveTime[8]; //0x424
-    float curveSlope[25]; //0x444
+    float curveSlope[24]; //0x444
 } SYS;
 
 enum {

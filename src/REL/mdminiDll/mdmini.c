@@ -2475,13 +2475,13 @@ void fn_1_81E0(void)
                 MdProcCall(MDMINI_PROC_RESET, 0);
                 sys->mode = 1;
             } else if(sys->gameType == 1) {
-                sys->subMode2 = 0;
+                sys->handicapNo = 0;
                 fn_1_161B8();
                 fn_1_16308();
                 star->motNext = MDMINI_STAR_MOT_TALK;
                 MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_TEAM_SEL, MDMESS_LIST_END);
                 for(i=0; i<4; i++) {
-                    if(sys->mdlE[i] < 1) {
+                    if(sys->handicapOrder[i] < 1) {
                         MdRingModeSet(i, 9);
                     } else {
                         MdRingModeSet(i, 11);
@@ -2557,19 +2557,19 @@ void fn_1_81E0(void)
         case 2:
             if((sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) || (sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT)) {
                 if(sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) {
-                    if(--sys->subMode2 == -1) {
-                        sys->subMode2 = 3;
+                    if(--sys->handicapNo == -1) {
+                        sys->handicapNo = 3;
                     }
                     sys->cursorDir = 0;
                 } else if(sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT) {
-                    sys->subMode2 = (++sys->subMode2)%4;
+                    sys->handicapNo = (++sys->handicapNo)%4;
                     sys->cursorDir = 1;
                 }
                 fn_1_17008(MDMINI_AUD_SE_CMN_MOVE);
                 fn_1_16308();
                 fn_1_161B8();
                 for(i=0; i<4; i++) {
-                    if(sys->mdlE[i] < 1) {
+                    if(sys->handicapOrder[i] < 1) {
                         MdRingModeSet(i, 9);
                     } else {
                         MdRingModeSet(i, 11);
@@ -3524,9 +3524,9 @@ BOOL fn_1_C8B4(int param)
             posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
             rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
             scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
-            MdMathLerp(&posP->x, handicapPos[sys->mdlE[i]].x, playerPos[i].x, sys->procT);
-            MdMathLerp(&posP->y, handicapPos[sys->mdlE[i]].y, playerPos[i].y, sys->procT);
-            MdMathLerp(&posP->z, handicapPos[sys->mdlE[i]].z, playerPos[i].z, sys->procOfsT);
+            MdMathLerp(&posP->x, handicapPos[sys->handicapOrder[i]].x, playerPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, handicapPos[sys->handicapOrder[i]].y, playerPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, handicapPos[sys->handicapOrder[i]].z, playerPos[i].z, sys->procOfsT);
         }
         MdProcCall(MDMINI_PROC_9, 1);
         fn_1_153D0();
@@ -3534,12 +3534,12 @@ BOOL fn_1_C8B4(int param)
         MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15);
         MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15);
         for(i=0; i<4; i++) {
-            if(sys->mdlE[i] != sys->mdlF[i]) {
+            if(sys->handicapOrder[i] != sys->handicapOrderBackup[i]) {
                 posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
                 scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
-                MdMathLerp(&posP->x, handicapPos[sys->mdlF[i]].x, handicapPos[sys->mdlE[i]].x, sys->procT);
-                MdMathLerp(&posP->y, handicapPos[sys->mdlF[i]].y, cursorTeamPos[sys->mdlE[i]].x, sys->procOfsT);
-                MdMathLerp(&posP->z, -600, cursorTeamPos[sys->mdlE[i]].y, sys->procOfsT);
+                MdMathLerp(&posP->x, handicapPos[sys->handicapOrderBackup[i]].x, handicapPos[sys->handicapOrder[i]].x, sys->procT);
+                MdMathLerp(&posP->y, handicapPos[sys->handicapOrderBackup[i]].y, cursorTeamPos[sys->handicapOrder[i]].x, sys->procOfsT);
+                MdMathLerp(&posP->z, -600, cursorTeamPos[sys->handicapOrder[i]].y, sys->procOfsT);
             }
         }
         fn_1_153D0();
@@ -3577,10 +3577,10 @@ BOOL fn_1_E44C(int param)
     static float angleTbl[6] = { 90, 30, -30, 270, 210, 150 };
     static float speedTbl[6] = { 45, 40, 45, 60, 55, 50 };
 
-    static HuVecF selPos[2];
-    static HuVecF centerPos[2];
-    static HuVecF center;
     static MDMINI_MODEANIM modeAnim[6];
+    static HuVecF center;
+    static HuVecF centerPos[2];
+    static HuVecF selPos[2];
 
     camera = sys->camera;
     model = sys->model;
@@ -4372,8 +4372,8 @@ BOOL fn_1_11658(int param)
                         }
                     } else if(sys->gameType == 1) {
                         for(i=0; i<4; i++) {
-                            effectPos[sys->mdlE[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
-                            effectRot[sys->mdlE[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            effectPos[sys->handicapOrder[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                            effectRot[sys->handicapOrder[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
                         }
                     }
                 } else if(param == 1) {
@@ -4449,10 +4449,10 @@ BOOL fn_1_11658(int param)
                             posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
                             rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
                             scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
-                            MdMathLerpOfs(&posP->x, effectPos[sys->mdlE[i]][0].x, effectPos[sys->mdlE[i]][1].x, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->mdlE[i]]));
-                            MdMathLerpOfs(&posP->y, effectPos[sys->mdlE[i]][0].y, effectPos[sys->mdlE[i]][1].y, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->mdlE[i]]));
-                            MdMathLerpOfs(&posP->z, effectPos[sys->mdlE[i]][0].z, effectPos[sys->mdlE[i]][1].z, sys->procT, 0.5f*(sys->procOfsT*ofsTbl[sys->mdlE[i]]));
-                            MdMathLerp(&rotP->y, effectRot[sys->mdlE[i]][0].y, effectRot[sys->mdlE[i]][1].y, sys->procT);
+                            MdMathLerpOfs(&posP->x, effectPos[sys->handicapOrder[i]][0].x, effectPos[sys->handicapOrder[i]][1].x, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->handicapOrder[i]]));
+                            MdMathLerpOfs(&posP->y, effectPos[sys->handicapOrder[i]][0].y, effectPos[sys->handicapOrder[i]][1].y, sys->procT, 0.2f*(sys->procOfsT*ofsTbl[sys->handicapOrder[i]]));
+                            MdMathLerpOfs(&posP->z, effectPos[sys->handicapOrder[i]][0].z, effectPos[sys->handicapOrder[i]][1].z, sys->procT, 0.5f*(sys->procOfsT*ofsTbl[sys->handicapOrder[i]]));
+                            MdMathLerp(&rotP->y, effectRot[sys->handicapOrder[i]][0].y, effectRot[sys->handicapOrder[i]][1].y, sys->procT);
                             ParticleGlowPosSet(effectP[i][1], posP);
                         }
                     }
@@ -4493,11 +4493,11 @@ BOOL fn_1_11658(int param)
                             }
                         } else if(sys->gameType == 1) {
                             for(i=0; i<4; i++) {
-                                effectPos[sys->mdlE[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
+                                effectPos[sys->handicapOrder[i]][0] = *model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
                                 MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->x);
                                 MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->y);
                                 MdMathAngleClamp(&model->rotP[sys->chrSel[i]+MDMODEL_CHR_00]->z);
-                                effectRot[sys->mdlE[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
+                                effectRot[sys->handicapOrder[i]][0] = *model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
                             }
                         }
                     } else if(param == 1) {
@@ -4583,12 +4583,12 @@ BOOL fn_1_11658(int param)
                             posP = model->posP[sys->chrSel[i]+MDMODEL_CHR_00];
                             rotP = model->rotP[sys->chrSel[i]+MDMODEL_CHR_00];
                             scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CHR_00];
-                            MdMathLerp(&posP->x, effectPos[sys->mdlE[i]][0].x, effectPos[sys->mdlE[i]][1].x, sys->procT);
-                            MdMathLerp(&posP->y, effectPos[sys->mdlE[i]][0].y, effectPos[sys->mdlE[i]][1].y, sys->procT);
-                            MdMathLerp(&posP->z, effectPos[sys->mdlE[i]][0].z, effectPos[sys->mdlE[i]][1].z, sys->procT);
-                            MdMathLerp(&rotP->x, effectRot[sys->mdlE[i]][0].x, effectRot[sys->mdlE[i]][1].x, sys->procT);
-                            MdMathLerp(&rotP->y, effectRot[sys->mdlE[i]][0].y, effectRot[sys->mdlE[i]][1].y, sys->procT);
-                            MdMathLerp(&rotP->z, effectRot[sys->mdlE[i]][0].z, effectRot[sys->mdlE[i]][1].z, sys->procT);
+                            MdMathLerp(&posP->x, effectPos[sys->handicapOrder[i]][0].x, effectPos[sys->handicapOrder[i]][1].x, sys->procT);
+                            MdMathLerp(&posP->y, effectPos[sys->handicapOrder[i]][0].y, effectPos[sys->handicapOrder[i]][1].y, sys->procT);
+                            MdMathLerp(&posP->z, effectPos[sys->handicapOrder[i]][0].z, effectPos[sys->handicapOrder[i]][1].z, sys->procT);
+                            MdMathLerp(&rotP->x, effectRot[sys->handicapOrder[i]][0].x, effectRot[sys->handicapOrder[i]][1].x, sys->procT);
+                            MdMathLerp(&rotP->y, effectRot[sys->handicapOrder[i]][0].y, effectRot[sys->handicapOrder[i]][1].y, sys->procT);
+                            MdMathLerp(&rotP->z, effectRot[sys->handicapOrder[i]][0].z, effectRot[sys->handicapOrder[i]][1].z, sys->procT);
                             ParticleGlowPosSet(effectP[i][1], posP);
                         }
                     }
@@ -5118,14 +5118,14 @@ void fn_1_161B8(void)
 
     comNum = 0;
     for(i=0; i<4; i++) {
-        sys->mdlE[i] = teamOrder[sys->subMode2][i];
+        sys->handicapOrder[i] = teamOrder[sys->handicapNo][i];
     }
     for(i=0; i<3; i++) {
-        sys->mdlG[i] = -1;
+        sys->handicapComPlayerNo[i] = -1;
     }
     for(i=0; i<4; i++) {
-        if(!sys->padEnable[teamPlayer[sys->subMode2][i]]) {
-            sys->mdlG[comNum] = teamPlayer[sys->subMode2][i];
+        if(!sys->padEnable[teamPlayer[sys->handicapNo][i]]) {
+            sys->handicapComPlayerNo[comNum] = teamPlayer[sys->handicapNo][i];
             comNum++;
             if(comNum >= 3) {
                 break;
@@ -5140,7 +5140,7 @@ void fn_1_16308(void)
     int i;
 
     for(i = 0; i < 4; i++) {
-        sys->mdlF[i] = sys->mdlE[i];
+        sys->handicapOrderBackup[i] = sys->handicapOrder[i];
     }
 }
 
@@ -5287,7 +5287,7 @@ void fn_1_16978(void)
             GwPlayer[2].grp = 1;
             GwPlayer[3].grp = 1;
             for(i=0; i<4; i++) {
-                if(sys->mdlE[i] < 1) {
+                if(sys->handicapOrder[i] < 1) {
                     GwPlayer[i].grp = 0;
                 } else {
                     GwPlayer[i].grp = 1;
