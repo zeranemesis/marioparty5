@@ -48,6 +48,13 @@ enum {
 
 #define MDMESS_WIN_MAX 2
 
+#define MDMODEL_ANIM_MAX 6
+
+#define MDMINI_TEXBUF_MIRROR 0
+#define MDMINI_TEXBUF_MAX 10
+#define MDMINI_TEXBUF_W 64
+#define MDMINI_TEXBUF_H 64
+
 enum {
     MD_DEBUGFONT_CTRL_NOP, //0
     MD_DEBUGFONT_CTRL_CAMERA, //1
@@ -102,124 +109,107 @@ enum {
 };
 
 enum {
-    MDMINI_ANIM_WIN_FRAME_TOP, //0
+    MDMINI_ANIM_WIN_FRAME, //0
     MDMINI_ANIM_WIN_BG, //1
     MDMINI_ANIM_CURSOR, //2
     MDMINI_ANIM_CURSOR_GLOW, //3
-    MDMINI_ANIM_EFF_GLOW, //4
-    MDMINI_ANIM_MDMINI, //5
-    MDMINI_ANIM_PARTICLE_0, //6
-    MDMINI_ANIM_PARTICLE_1, //7
-    MDMINI_ANIM_PARTICLE_2, //8
-    MDMINI_ANIM_PARTICLE_DOT, //9
-    MDMINI_ANIM_PARTICLE_GLOW, //10
-    MDMINI_ANIM_MAX //11
+    MDMINI_ANIM_GRP3, //4
+    MDMINI_ANIM_GRP4, //5
+    MDMINI_ANIM_6, //6
+    MDMINI_ANIM_7, //7
+    MDMINI_ANIM_8, //8
+    MDMINI_ANIM_9, //9
+    MDMINI_ANIM_10, //10
+    MDMINI_ANIM_GRP5, //11
+    MDMINI_ANIM_MAX //12
 };
 
 enum {
     MDSPR_WIN_FRAME_TOP, //0
-    MDSPR_WIN_BG, //1
-    MDSPR_CURSOR_LR_R, //2
-    MDSPR_CURSOR_LR_L, //3
-    MDSPR_CURSOR_UDLR_R, //4
-    MDSPR_CURSOR_UDLR_L, //5
-    MDSPR_CURSOR_UDLR_U, //6
-    MDSPR_CURSOR_UDLR_D, //7
-    MDSPR_CURSOR_GLOW_UDLR_R, //8
-    MDSPR_CURSOR_GLOW_UDLR_L, //9
-    MDSPR_CURSOR_GLOW_UDLR_U, //10
-    MDSPR_CURSOR_GLOW_UDLR_D, //11
-    MDSPR_MDMINI, //12
-    MDSPR_PARTICLE_0, //13
-    MDSPR_PARTICLE_1, //14
-    MDSPR_PARTICLE_2, //15
-    MDSPR_PARTICLE_DOT, //16
-    MDSPR_PARTICLE_GLOW, //17
-    MDSPR_PARTICLE_0_2, //18
-    MDSPR_PARTICLE_1_2, //19
-    MDSPR_PARTICLE_2_2, //20
-    MDSPR_PARTICLE_DOT_2, //21
-    MDSPR_PARTICLE_GLOW_2, //22
-    MDSPR_MAX //23
+    MDSPR_WIN_FRAME_BOTTOM, //1
+    MDSPR_WIN_BG, //2
+    MDSPR_CURSOR_LR_R, //3
+    MDSPR_CURSOR_LR_L, //4
+    MDSPR_CURSOR_UDLR_R, //5
+    MDSPR_CURSOR_UDLR_L, //6
+    MDSPR_CURSOR_UDLR_U, //7
+    MDSPR_CURSOR_UDLR_D, //8
+    MDSPR_CURSOR_GLOW_UDLR_R, //9
+    MDSPR_CURSOR_GLOW_UDLR_L, //10
+    MDSPR_CURSOR_GLOW_UDLR_U, //11
+    MDSPR_CURSOR_GLOW_UDLR_D, //12
+    MDSPR_GRP3_1P, //13
+    MDSPR_GRP3_2P, //14
+    MDSPR_GRP3_3P, //15
+    MDSPR_GRP3_4P, //16
+    MDSPR_GRP4_1P, //17
+    MDSPR_GRP4_2P, //18
+    MDSPR_GRP4_3P, //19
+    MDSPR_GRP4_4P, //20
+    MDSPR_GRP5, //21
+    MDSPR_MAX //22
 };
 
 enum {
     MDSPR_GRP_WIN, //0
     MDSPR_GRP_CURSOR_LR, //1
     MDSPR_GRP_CURSOR_UDLR, //2
-    MDSPR_GRP_MODE, //3
-    MDSPR_GRP_MEMBER, //4
-    MDSPR_GRP_MEMBER2, //5
+    MDSPR_GRP_3, //3
+    MDSPR_GRP_4, //4
+    MDSPR_GRP_5, //5
     MDSPR_GRP_MAX //6
 };
 
 enum {
-    MDMODEL_STAGE, //0
-
-    MDMODEL_CAP_START,
-    MDMODEL_CAP_PARTICLE = MDMODEL_CAP_START, //1
-    MDMODEL_CAP_CHORU, //2
-    MDMODEL_CAP_NERU, //3
-    MDMODEL_CAP_NIRU, //4
-    MDMODEL_CAP_HARU, //5
-    MDMODEL_CAP_MARU, //6
-    MDMODEL_CAP_DARU, //7
-    MDMODEL_CAP_END,
-    MDMODEL_CAP_NUM = MDMODEL_CAP_END-MDMODEL_CAP_START,
-
-    MDMODEL_MODE_START = MDMODEL_CAP_END,
-    MDMODEL_MODE_00 = MDMODEL_MODE_START, //8
-    MDMODEL_MODE_01, //9
-    MDMODEL_MODE_02, //10
-    MDMODEL_MODE_03, //11
-    MDMODEL_MODE_04, //12
-    MDMODEL_MODE_05, //13
-    MDMODEL_MODE_06, //14
-    MDMODEL_MODE_07, //15
-    MDMODEL_MODE_08, //16
-    MDMODEL_MODE_09, //17
-    MDMODEL_MODE_END,
-    MDMODEL_MODE_NUM = MDMODEL_MODE_END-MDMODEL_MODE_START,
-
-    MDMODEL_CHAR_START = MDMODEL_MODE_END,
-    MDMODEL_CHAR_00 = MDMODEL_CHAR_START, //18
-    MDMODEL_CHAR_01, //19
-    MDMODEL_CHAR_02, //20
-    MDMODEL_CHAR_03, //21
-    MDMODEL_CHAR_04, //22
-    MDMODEL_CHAR_05, //23
-    MDMODEL_CHAR_06, //24
-    MDMODEL_CHAR_07, //25
-    MDMODEL_CHAR_08, //26
-    MDMODEL_CHAR_09, //27
-    MDMODEL_CHAR_END,
-    MDMODEL_CHAR_NUM = MDMODEL_CHAR_END-MDMODEL_CHAR_START,
-
-    MDMODEL_CHARGE_START = MDMODEL_CHAR_END,
-    MDMODEL_CHARGE_00 = MDMODEL_CHARGE_START, //28
-    MDMODEL_CHARGE_01, //29
-    MDMODEL_CHARGE_02, //30
-    MDMODEL_CHARGE_03, //31
-    MDMODEL_CHARGE_04, //32
-    MDMODEL_CHARGE_05, //33
-    MDMODEL_CHARGE_END,
-    MDMODEL_CHARGE_NUM = MDMODEL_CHARGE_END-MDMODEL_CHARGE_START,
-
-    MDMODEL_TOU1 = MDMODEL_CHARGE_END, //34
-    MDMODEL_TOU2, //35
-    MDMODEL_TOU3, //36
-    MDMODEL_TOU4, //37
-    MDMODEL_TOU5, //38
-    MDMODEL_TOU6, //39
-    MDMODEL_TOU7, //40
-    MDMODEL_TOU8, //41
-    MDMODEL_TOU9, //42
-    MDMODEL_TOU10, //43
-    MDMODEL_STAR, //44
-    MDMODEL_WIN, //45
-    MDMODEL_PARTICLE, //46
-    MDMODEL_FONTBG, //47
-    MDMODEL_FONTBG_FILTER, //48
+    MDMODEL_STAR, //0
+    MDMODEL_STAGE, //1
+    MDMODEL_STAGE_CHR, //2
+    MDMODEL_CHR_00, //3
+    MDMODEL_CHR_01, //4
+    MDMODEL_CHR_02, //5
+    MDMODEL_CHR_03, //6
+    MDMODEL_CHR_04, //7
+    MDMODEL_CHR_05, //8
+    MDMODEL_CHR_06, //9
+    MDMODEL_CHR_07, //10
+    MDMODEL_CHR_08, //11
+    MDMODEL_CHR_09, //12
+    MDMODEL_CAP_MAN_1P, //13
+    MDMODEL_CAP_MAN_2P, //14
+    MDMODEL_CAP_MAN_3P, //15
+    MDMODEL_CAP_MAN_4P, //16
+    MDMODEL_CAP_COM_1P, //17
+    MDMODEL_CAP_COM_2P, //18
+    MDMODEL_CAP_COM_3P, //19
+    MDMODEL_CAP_COM_4P, //20
+    MDMODEL_CAP_CHR_00, //21
+    MDMODEL_CAP_CHR_01, //22
+    MDMODEL_CAP_CHR_02, //23
+    MDMODEL_CAP_CHR_03, //24
+    MDMODEL_CAP_CHR_04, //25
+    MDMODEL_CAP_CHR_05, //26
+    MDMODEL_CAP_CHR_06, //27
+    MDMODEL_CAP_CHR_07, //28
+    MDMODEL_CAP_CHR_08, //29
+    MDMODEL_CAP_CHR_09, //30
+    MDMODEL_CAP_MODE_0, //31
+    MDMODEL_CAP_MODE_1, //32
+    MDMODEL_CAP_MODE_2, //33
+    MDMODEL_CAP_MODE_3, //34
+    MDMODEL_CAP_MODE_4, //35
+    MDMODEL_CAP_MODE_5, //36
+    MDMODEL_AUX_0, //37
+    MDMODEL_AUX_1, //38
+    MDMODEL_FINGER_1P, //39
+    MDMODEL_FINGER_2P, //40
+    MDMODEL_FINGER_3P, //41
+    MDMODEL_FINGER_4P, //42
+    MDMODEL_RING_1P, //43
+    MDMODEL_RING_2P, //44
+    MDMODEL_RING_3P, //45
+    MDMODEL_RING_4P, //46
+    MDMODEL_AUX_2, //47
+    MDMODEL_FONTBGFILTER, //48
     MDMODEL_MAX //49
 };
 
@@ -317,17 +307,33 @@ typedef struct MdLightWork_s {
 
 typedef struct MdSpriteWork_s {
     ANIMDATA *animP[MDMINI_ANIM_MAX]; //0x00
-    HUSPRID sprId[MDSPR_MAX]; //0x2C
+    HUSPRID sprId[MDSPR_MAX]; //0x30
     HUSPRGRPID grpId[MDSPR_GRP_MAX]; //0x5C
 } MDSPRITE_WORK;
 
 typedef struct MdModelWork_s {
     HU3DMODELID mdlId[MDMODEL_MAX]; //0x00
-    HU3DMOTID motId[29]; //0x60
+    HU3DMOTID motId[23]; //0x62
+    HU3DANIMID animId[6]; //0x90
     HuVecF *posP[MDMODEL_MAX]; //0x9C
     HuVecF *rotP[MDMODEL_MAX]; //0x160
     HuVecF *scaleP[MDMODEL_MAX]; //0x224
 } MDMODEL_WORK;
+
+typedef struct MdSprInfo_s {
+    s16 animNo; //0x00
+    s16 pri; //0x02
+    HuVec2f pos; //0x04
+    HuVec2f scale; //0x0C
+    float tpLvl; //0x14
+} MDSPR_INFO;
+
+typedef struct MdSprGrpInfo_s {
+    s16 start; //0x00
+    s16 end; //0x02
+    float posX; //0x04
+    float posY; //0x08
+} MDSPR_GRP_INFO;
 
 typedef struct MdMessWin_s {
     s16 mode;
@@ -342,12 +348,42 @@ typedef struct MdMess_s {
     MDMESS_WIN win[MDMESS_WIN_MAX];
 } MDMESS;
 
+typedef struct MdTexBufUnit_s {
+    void *addr; //0x00
+    GXTexObj texObj; //0x04
+    s16 posX; //0x24
+    s16 posY; //0x26
+    u16 w; //0x28
+    u16 h; //0x2A
+    GXTexFmt texFmt; //0x2C
+} MDTEXBUF_UNIT;
+
 typedef struct MdTexBufWork_s {
-    u8 pad[0x1E4];
+    MDTEXBUF_UNIT unit[MDMINI_TEXBUF_MAX]; //0x00
+    int unk1E0;
 } MDTEXBUF_WORK;
 
+typedef struct MdRing_s {
+    BOOL disp; //0x00
+    int mode; //0x04
+    GXColor color; //0x08
+    GXColor endColor; //0x0C
+    int unk10;
+    float time; //0x14
+    float ofsTime; //0x18
+    float t; //0x1C
+    float ofsT; //0x20
+    int mdlNo; //0x24
+    HuVecF **posP; //0x28
+    HuVecF **rotP; //0x2C
+    HuVecF **scaleP; //0x30
+    int baseMdlNo; //0x34
+    HuVecF baseOfs; //0x38
+} MDRING;
+
 typedef struct MdRingWork_s {
-    u8 pad[0x114];
+    MDRING ring[4]; //0x00
+    float scale; //0x110
 } MDRING_WORK;
 
 typedef struct MdMiniStar_s {
@@ -525,49 +561,34 @@ int MdMessWinChoiceGet(MDMESS *mess, int winNo);
 void MdMessWinHomeClear(MDMESS *mess, int winNo);
 s16 MdMessWinStatGet(MDMESS *mess, int winNo);
 
+void MdSpriteCreate(MDSPRITE_WORK *sprite);
+void MdSpriteDispSet(MDSPRITE_WORK *sprite, int grpNo, BOOL dispF);
+HuVec2f *MdSpriteGrpPosGet(MDSPRITE_WORK *sprite, int grpNo);
+HuVec2f *MdSpriteGrpScaleGet(MDSPRITE_WORK *sprite, int grpNo);
+HuVec2f *MdSpritePosGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
+HuVec2f *MdSpriteScaleGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
+float *MdSpriteAlphaGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
+
+void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
+void MdToueiLayerHook(s16 layerNo);
+void MdToueiMdlInit(void);
+void MdToueiTexBufInit(void);
+void MdTexBufObjPosSet(MDTEXBUF_UNIT *unit, HU3DMODELID modelId, char *objName, u16 cameraBit, HuVecF *ofsP);
+void MdTexBufPosSet(MDTEXBUF_UNIT *unit, HuVecF *posP, u16 cameraBit);
+
+void MdRingCreate(void);
+void MdRingMain(void);
+void MdRingModeSet(int no, int mode);
+void MdRingDispSet(int no, BOOL dispF);
+void MdRingScaleSet(int no, float scale);
+void MdRingMdlSet(int no, int mdlNo);
+void MdRingOfsSet(int no, float x, float y, float z);
+void MdRingColorReset(int no);
+
 /* --- mdmini.c ------------------------------------------------------------ */
 
 void ObjectSetup(void);
 void MdMain(void);
 void MdPosAdjustMode(void);
-
-/* --- stage.c ------------------------------------------------------------- */
-
-void FontBGFilter(void);
-void LayerPostHook(void);
-void Layer2Hook(void);
-void Layer1Hook(void);
-void MdToueiLayerHook(s16 layerNo);
-void TexBufSet(void);
-void Touei1MatHook(void);
-void Touei2MatHook(void);
-void Touei3MatHook(void);
-void Touei4MatHook(void);
-void Touei5MatHook(void);
-void Touei6MatHook(void);
-void Touei7MatHook(void);
-void Touei8MatHook(void);
-void Touei9MatHook(void);
-void Touei10MatHook(void);
-void MdToueiMdlInit(void);
-void MdToueiTexBufInit(void);
-void TexBufFBCopy(void);
-void MdTexBufObjPosSet(void);
-void MdTexBufPosSet(void);
-void ToueiZBufClear(void);
-
-void MdRingCreate(void);
-void MdRingMain(void);
-void MdRingModeSet(s32 ringNo, s16 mode);
-void MdRingDispSet(s32 ringNo, BOOL dispF);
-void MdRingScaleSet(s32 ringNo, double scale);
-void MdRingMdlSet(s32 ringNo, HU3DMODELID mdlId);
-void MdRingOfsSet(s32 ringNo, float x, float y, float z);
-void MdRingColorReset(s32 ringNo);
-void RingDraw(void);
-void Ring1MatHook(void);
-void Ring2MatHook(void);
-void Ring3MatHook(void);
-void Ring4MatHook(void);
 
 #endif
