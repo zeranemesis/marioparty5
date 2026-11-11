@@ -426,6 +426,22 @@ void fn_1_28C0(void)
 
 void fn_1_2CE8(void)
 {
+    int i;
+    int mdl;
+
+    lbl_1_bss_16818->stat &= ~0x400;
+    for (i = 4; i--;) {
+        mdl = lbl_1_bss_16818->mdl[i + 7];
+        Hu3DModelCameraSet(mdl, 0x10);
+        Hu3DModelLayerSet(mdl, 4);
+    }
+    Hu3DCameraCreate(0x10);
+    Hu3DCameraKill(6);
+    Hu3DCameraViewportSet(0x10, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraScissorSet(0x10, 0, 0, 640, 480);
+    Hu3DCameraPosSetV(0x10, &lbl_1_bss_1681C->camPos, &lbl_1_bss_1681C->camUp, &lbl_1_bss_1681C->camTarget);
+    Hu3DCameraPerspectiveSet(0x10, lbl_1_bss_1681C->aspect, 20.0f, 60000.0f, 1.2f);
+    fn_1_CFEC(0);
 }
 
 void fn_1_2E68(void)
