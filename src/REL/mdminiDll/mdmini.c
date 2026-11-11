@@ -8,6 +8,7 @@
 #include "game/wipe.h"
 #include "game/saveload.h"
 #include "game/mgdata.h"
+#include "game/board/main.h"
 
 #include "messnum/partymode_sys.h"
 #include "messnum/mapname.h"
@@ -1558,6 +1559,377 @@ void fn_1_35A0(void)
                 sys->chrSelEnd[sys->comPlayerNo[sys->selComNo]] = FALSE;
                 fn_1_153D0();
                 sys->mode = 6;
+            }
+            break;
+    }
+}
+
+void fn_1_5558(void)
+{
+    int i;
+    MDMESS *mess;
+    MDMODEL_WORK *model;
+    BOOL ret;
+    MDMINI_STAR *star;
+    MDSPRITE_WORK *sprite;
+    HuVec2f *scaleP;
+    MDMINI_PLAYERSPR *playerSpr;
+    MDMINI_CHR *chr;
+    float maxTime;
+
+    model = sys->model;
+    sprite = sys->sprite;
+    mess = sys->mess;
+    star = sys->star;
+    playerSpr = &sys->playerSpr[0];
+    chr = &sys->chr[0];
+
+    switch(sys->mode) {
+        case 0:
+            MdProcCall(MDMINI_PROC_RESET, 0);
+            sys->selNoNow = 0;
+            fn_1_16358();
+            sys->mode = 1;
+            break;
+
+        case 1:
+            if((ret = MdProcCall(MDMINI_PROC_6, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 2;
+            }
+            break;
+
+        case 2:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 8)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                star->motNext = MDMINI_STAR_MOT_TALK;
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_MGFREE+sys->selNoNow, MDMESS_LIST_END);
+                MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_OPTION_ENTER, MDMESS_LIST_END);
+                sys->mode = 3;
+            }
+            break;
+
+        case 3:
+            if((sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) || (sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT)) {
+                sys->selNoPrev = sys->selNoNow;
+                if(sys->pad->DStkDown[0] & PAD_BUTTON_RIGHT) {
+                    sys->selNoNow = ++sys->selNoNow%6;
+                    sys->cursorDir = 0;
+                } else if(sys->pad->DStkDown[0] & PAD_BUTTON_LEFT) {
+                    if(--sys->selNoNow == -1) {
+                        sys->selNoNow = 5;
+                    }
+                    sys->cursorDir = 1;
+                }
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_MGFREE+sys->selNoNow, MDMESS_LIST_END);
+                fn_1_17008(MDMINI_AUD_SE_CMN_MOVE);
+                sys->mode = 4;
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_B) {
+                star->motNext = MDMINI_STAR_MOT_IDLE;
+                MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                sys->mode = 5;
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_A) {
+                if(sys->mgTypeF[sys->selNoNow] == TRUE) {
+                    star->motNext = MDMINI_STAR_MOT_IDLE;
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                    fn_1_17008(MDMINI_AUD_SE_CMN_CONFIRM);
+                    sys->mode = 8;
+                } else {
+                    fn_1_17008(MDMINI_AUD_SE_CMN_SELECT);
+                }
+            } else if(HuPadBtnDown[0] & PAD_BUTTON_X) {
+                fn_1_17008(MDMINI_AUD_SE_CMN_CANCEL);
+                MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, TRUE, MESS_MGMODE_SYS_QUIT, MDMESS_LIST_END);
+                while(!MdMessWinCheck(mess, MDMESS_WIN_MAIN)) {
+                    HuPrcVSleep();
+                }
+                ret = MdMessWinChoiceGet(mess, MDMESS_WIN_MAIN);
+                if(ret == -1 || ret == 1) {
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_MGFREE+sys->selNoNow, MDMESS_LIST_END);
+                    MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_OPTION_ENTER, MDMESS_LIST_END);
+                } else if(ret == 0) {
+                    star->motNext = MDMINI_STAR_MOT_IDLE;
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    MdMessWinHomeClear(mess, MDMESS_WIN_HELP);
+                    MdProcWait(MDMINI_PROC_CURSOR, 9);
+                    MdProcCall(MDMINI_PROC_RESET, 0);
+                    while(MdProcCall(MDMINI_PROC_WIN, 1) == FALSE) {
+                        HuPrcVSleep();
+                    }
+                    MdProcCall(MDMINI_PROC_RESET, 0);
+                    sys->loadState = MD_LOAD_STATE_SEL_LOAD;
+                    sys->loadDir = DATA_mdsel;
+                    WipeColorSet(255, 255, 255);
+                    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 30);
+                    fn_1_17008(MDMINI_AUD_MUS_STOP);
+                    while(WipeCheckEnd()) {
+                        HuPrcVSleep();
+                    }
+                    while(sys->loadState != MD_LOAD_STATE_DONE) {
+                        HuPrcVSleep();
+                    }
+                    omOvlHisChg(0, sys->ovlHis->ovl, 0, sys->ovlHis->stat);
+                    sys->ovlCallMode = MD_OVLCALL_RETURN;
+                    sys->nextDll = DLL_mdseldll;
+                    sys->skipWipeF = TRUE;
+                    sys->exitF = TRUE;
+                }
+            }
+            break;
+
+        case 4:
+            if((ret = MdProcCall(MDMINI_PROC_6, 1)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 3;
+            }
+            break;
+
+        case 5:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 9)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 6;
+            }
+            break;
+
+        case 6:
+            if((ret = MdProcCall(MDMINI_PROC_6, 2)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 7;
+            }
+            break;
+
+        case 7:
+            if((ret = MdProcCall(MDMINI_PROC_CHR, 3)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                if(sys->playerNum == 3) {
+                    sys->selComNo = 0;
+                    for(i=0; i<4; i++) {
+                        sys->chrSelEnd[i] = FALSE;
+                        playerSpr[i].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                        Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                        chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT_WAIT;
+                        MdRingModeSet(i, MDMINI_RING_MODE_ERASE);
+                    }
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_CHR_SEL_MAN, MDMESS_LIST_END);
+                    MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_MENU_SEL, MDMESS_LIST_END);
+                    sys->mode = 2;
+                    sys->flowMode = MDMINI_FLOW_CHR_SEL;
+                } else {
+                    sys->selComNo = 0;
+                    for(i=0; i<3; i++) {
+                        if(sys->comPlayerNo[i] != -1) {
+                            sys->chrSelEnd[sys->comPlayerNo[i]] = FALSE;
+                            playerSpr[sys->comPlayerNo[i]].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                            Hu3DMotionShiftSet(model->mdlId[sys->chrSel[sys->comPlayerNo[i]]+MDMODEL_CHR_00], model->motId[(sys->chrSel[sys->comPlayerNo[i]]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                            chr[sys->chrSel[sys->comPlayerNo[i]]].mode = MDMINI_CHR_SELECT_WAIT;
+                            MdRingModeSet(sys->comPlayerNo[i], MDMINI_RING_MODE_ERASE);
+                        }
+                    }
+                    fn_1_15BF4();
+                    fn_1_153D0();
+                    Hu3DModelDispOn(model->mdlId[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]);
+                    model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->x = 4;
+                    model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->y = 4;
+                    model->scaleP[sys->comPlayerNo[sys->selComNo]+MDMODEL_FINGER_1P]->z = 4;
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_CHR_SEL_COM, (MESS_MGMODE_SYS_PLAYER_NUM_1+2)-sys->playerNum+sys->selComNo, MDMESS_LIST_END);
+                    MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_MENU_SEL, MDMESS_LIST_END);
+                    sys->mode = 6;
+                    sys->flowMode = MDMINI_FLOW_CHR_SEL;
+                }
+            }
+            break;
+
+        case 8:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 9)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 9;
+            }
+            break;
+
+        case 9:
+            if((ret = MdProcCall(MDMINI_PROC_6, 3)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                if(sys->selNoNow == 1) {
+                    sys->mode = 0;
+                    sys->flowMode = MDMINI_FLOW_TURN_SEL;
+                } else {
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, TRUE, MESS_MGMODE_SYS_CONFIRM, MDMESS_LIST_END);
+                    fn_1_17008(MDMINI_AUD_SE_STAR_CONFIRM);
+                    sys->mode = 10;
+                }
+            }
+            break;
+
+        case 10:
+            if(MdMessWinCheck(mess, MDMESS_WIN_MAIN) == TRUE) {
+                ret = MdMessWinChoiceGet(mess, MDMESS_WIN_MAIN);
+                if(ret == -1 || ret == 1) {
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, TRUE, MESS_MGMODE_SYS_RESET, MDMESS_LIST_END);
+                    sys->mode = 11;
+                } else if(ret == 0) {
+                    MdProcCall(MDMINI_PROC_RESET, 0);
+                    fn_1_16978();
+                    if(sys->selNoNow == 2) {
+                        _SetFlag(FLAG_MG_CIRCUIT);
+                        MBPartySaveInit(8);
+                    }
+                    if(sys->selNoNow == 2) {
+                        sys->loadState = MD_LOAD_STATE_BOARD_LOAD;
+                    } else {
+                        sys->loadState = MD_LOAD_STATE_LOAD;
+                        sys->loadDir = LoadDirTbl[sys->selNoNow];
+                    }
+                    MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_MG_START, MDMESS_LIST_END);
+                    while(!MdMessWinCheck(mess, MDMESS_WIN_MAIN)) {
+                        HuPrcVSleep();
+                    }
+                    MdProcWait(MDMINI_PROC_13, 1);
+                    WipeColorSet(255, 255, 255);
+                    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 55);
+                    fn_1_17008(MDMINI_AUD_MUS_STOP);
+                    fn_1_17008(10);
+                    while(WipeCheckEnd()) {
+                        MdProcCall(MDMINI_PROC_13, 1);
+                        HuPrcVSleep();
+                    }
+                    while(sys->loadState != MD_LOAD_STATE_DONE) {
+                        HuPrcVSleep();
+                    }
+                    omOvlHisChg(0, sys->ovlHis->ovl, 1, sys->ovlHis->stat);
+                    sys->ovlCallMode = MD_OVLCALL_CALL;
+                    sys->nextDll = NextDllTbl[sys->selNoNow];
+                    sys->skipWipeF = TRUE;
+                    sys->exitF = TRUE;
+                }
+            }
+            break;
+
+        case 11:
+            if(MdMessWinCheck(mess, MDMESS_WIN_MAIN) == TRUE) {
+                ret = MdMessWinChoiceGet(mess, MDMESS_WIN_MAIN);
+                if(ret == -1 || ret == 1) {
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    star->motNext = MDMINI_STAR_MOT_IDLE;
+                    sys->mode = 12;
+                } else if(ret == 0) {
+                    MdMessWinHomeClear(mess, MDMESS_WIN_MAIN);
+                    star->mode = MDMINI_STAR_CENTER_START;
+                    star->motNext = MDMINI_STAR_MOT_IDLE;
+                    for(i=0; i<4; i++) {
+                        sys->chrSelEnd[i] = FALSE;
+                        playerSpr[i].mode = MDMINI_PLAYERSPR_SHRINK_START;
+                        Hu3DMotionShiftSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_IDLE], 0, 16, HU3D_MOTATTR_LOOP);
+                        chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT_WAIT;
+                        MdRingModeSet(i, MDMINI_RING_MODE_ERASE);
+                    }
+                    sys->mode = 13;
+                }
+            }
+            break;
+
+        case 12:
+            if((ret = MdProcCall(MDMINI_PROC_6, 4)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 2;
+            }
+            break;
+
+        case 13:
+            if((ret = MdProcCall(MDMINI_PROC_10, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                fn_1_14C2C();
+                sys->prevPlayerNum = sys->playerNum;
+                sys->mode = 6;
+                sys->flowMode = MDMINI_FLOW_PLAYER_NUM_SEL;
+            }
+            break;
+
+        case 50:
+            MdProcCall(MDMINI_PROC_RESET, 0);
+            fn_1_14E24();
+            fn_1_14FD0();
+            fn_1_152D4();
+            MdProcCall(MDMINI_PROC_CHR, 4);
+            MdProcCall(MDMINI_PROC_RESET, 0);
+            for(i=0; i<4; i++) {
+                maxTime = Hu3DMotionMotionMaxTimeGet(model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_WIN]);
+                Hu3DModelAttrReset(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], HU3D_MOTATTR_LOOP);
+                Hu3DModelAttrSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], HU3D_MOTATTR_PAUSE);
+                Hu3DMotionSpeedSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], 1);
+                Hu3DMotionSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], model->motId[(sys->chrSel[i]*2)+MDMODEL_MOT_MARIO_WIN]);
+                Hu3DMotionTimeSet(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00], maxTime);
+                chr[sys->chrSel[i]].mode = MDMINI_CHR_SELECT;
+            }
+            for(i=0; i<4; i++) {
+                MdRingModeSet(i, MDMINI_RING_MODE_SET);
+                MdRingOfsSet(i, 0, 0, 0);
+                MdRingMdlSet(i, sys->chrSel[i]+MDMODEL_CAP_CHR_00);
+                MdRingScaleSet(i, 1.0);
+            }
+            for(i=0; i<4; i++) {
+                playerSpr[i].mode = MDMINI_PLAYERSPR_GROW_END;
+                HuSprDispOn(sprite->grpId[MDSPR_GRP_PLAYERNO], (s16)i);
+                scaleP = MdSpriteScaleGet(sprite, MDSPR_GRP_PLAYERNO, i);
+                scaleP->x = scaleP->y = 1;
+            }
+            for(i=0; i<3; i++) {
+                if(sys->comPlayerNo[i] != -1) {
+                    HuSprDispOff(sprite->grpId[MDSPR_GRP_PLAYERNO], (int)sys->comPlayerNo[i]);
+                    HuSprDispOn(sprite->grpId[MDSPR_GRP_COMDIF], (int)sys->comPlayerNo[i]);
+                    scaleP = MdSpriteScaleGet(sprite, MDSPR_GRP_COMDIF, sys->comPlayerNo[i]);
+                    scaleP->x = scaleP->y = 1;
+                    HuSprBankSet(sprite->grpId[MDSPR_GRP_COMDIF], (int)sys->comPlayerNo[i], sys->comDif[sys->comPlayerNo[i]]);
+                }
+            }
+            fn_1_153D0();
+            star->mode = MDMINI_STAR_SNAP_LEFT;
+            star->motNext = MDMINI_STAR_MOT_RESET;
+            fn_1_17008(MDMINI_AUD_MUS_START);
+            WipeColorSet(255, 255, 255);
+            WipeCreate(WIPE_MODE_IN, WIPE_TYPE_NORMAL, 30);
+            sys->mode = 51;
+            break;
+
+        case 51:
+            if((ret = WipeCheckEnd()) == FALSE) {
+                sys->mode = 52;
+            }
+            break;
+
+        case 52:
+            if((ret = MdProcCall(MDMINI_PROC_WIN, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                MdMessWinOpen(mess, MDMESS_WIN_MAIN, MDMESS_WIN_NOSPEAKER, 0, 0, 0, 32, 372, 512, 64, 0);
+                MdMessWinOpen(mess, MDMESS_WIN_HELP, MDMESS_WIN_NOSPEAKER, 0, 0, 1, 32, 340, 512, 32, 0);
+                MdMessWinSpeedSet(mess, MDMESS_WIN_HELP, 0);
+                MdMessWinAttrSet(mess, MDMESS_WIN_MAIN, 0x800);
+                MdMessWinAttrSet(mess, MDMESS_WIN_HELP, 0x800);
+                MdMessWinPad1Set(mess, MDMESS_WIN_MAIN);
+                sys->selNoNow = 0;
+                fn_1_16358();
+                sys->mode = 53;
+            }
+            break;
+
+        case 53:
+            if((ret = MdProcCall(MDMINI_PROC_6, 0)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                sys->mode = 54;
+            }
+            break;
+
+        case 54:
+            if((ret = MdProcCall(MDMINI_PROC_CURSOR, 8)) == TRUE) {
+                MdProcCall(MDMINI_PROC_RESET, 0);
+                MdMessWinMesSet(mess, MDMESS_WIN_MAIN, FALSE, MESS_MGMODE_SYS_MGFREE+sys->selNoNow, MDMESS_LIST_END);
+                MdMessWinMesSet(mess, MDMESS_WIN_HELP, FALSE, MESS_SYSHELP_OPTION_ENTER, MDMESS_LIST_END);
+                star->motNext = MDMINI_STAR_MOT_TALK;
+                sys->mode = 3;
             }
             break;
     }
