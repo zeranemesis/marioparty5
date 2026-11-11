@@ -237,6 +237,59 @@ void fn_1_DE4(s16 layerNo)
 
 void fn_1_13D4(void)
 {
+
+    int mdlId;
+    s32 i;
+    lbl_1_bss_16818->mdl[0] = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0000 + 2, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdl[2] = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0000 + 4, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdl[3] = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0000 + 5, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdl[1] = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0000 + 3, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdl[5] = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0000 + 6, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdl[6] = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0000 + 6, 0x10000000, HEAP_MODEL));
+    Hu3DModelLayerSet(lbl_1_bss_16818->mdl[0], 2);
+    Hu3DModelLayerSet(lbl_1_bss_16818->mdl[2], 2);
+    Hu3DModelLayerSet(lbl_1_bss_16818->mdl[3], 2);
+    Hu3DModelLayerSet(lbl_1_bss_16818->mdl[1], 2);
+    Hu3DModelLayerSet(lbl_1_bss_16818->mdl[5], 2);
+    Hu3DModelLayerSet(lbl_1_bss_16818->mdl[6], 2);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[0], 0x40000082);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[2], 0x40000002);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[3], 0x40000002);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[1], 0x40000001);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[5], 1);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[6], 1);
+    Hu3DModelCameraSet(lbl_1_bss_16818->mdl[0], HU3D_CAM4);
+    Hu3DModelCameraSet(lbl_1_bss_16818->mdl[2], HU3D_CAM4);
+    Hu3DModelCameraSet(lbl_1_bss_16818->mdl[3], HU3D_CAM4);
+    Hu3DModelCameraSet(lbl_1_bss_16818->mdl[1], HU3D_CAM4);
+    Hu3DModelCameraSet(lbl_1_bss_16818->mdl[5], 4);
+    Hu3DModelCameraSet(lbl_1_bss_16818->mdl[6], 4);
+    Hu3DMotionSpeedSet(lbl_1_bss_16818->mdl[1], Hu3DMotionMotionMaxTimeGet(lbl_1_bss_16818->mdl[1]) / 6000.0f);
+    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0007, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdlPaper = mdlId;
+    lbl_1_bss_16818->mdl[4] = mdlId;
+    Hu3DModelLayerSet(mdlId, 3);
+    Hu3DModelAttrSet(mdlId, 1);
+    Hu3DModelAttrSet(mdlId, 0x40000003);
+    Hu3DReflectNoSet(1);
+    Hu3DModelReflectTypeSet(mdlId, -1);
+    Hu3DModelCameraSet(mdlId, 4);
+    i = 4;
+    while (i--) {
+        mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0008, 0x10000000, HEAP_MODEL));
+        lbl_1_bss_16818->mdl[i + 12] = mdlId;
+        Hu3DModelAttrSet(mdlId, 1);
+        Hu3DModelAttrSet(mdlId, 0x40000003);
+        Hu3DModelLayerSet(mdlId, 4);
+        Hu3DModelCameraSet(mdlId, 4);
+    }
+    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(0x9A0009, 0x10000000, HEAP_MODEL));
+    lbl_1_bss_16818->mdl[11] = mdlId;
+    Hu3DModelAttrSet(mdlId, 0x40000003);
+    Hu3DModelLayerSet(mdlId, 0);
+    Hu3DModelCameraSet(mdlId, 2);
+    Hu3DModelPosSetV(mdlId, &lbl_1_data_28[6]);
+    Hu3DModelScaleSet(mdlId, 10.0f, 10.0f, 10.0f);
 }
 
 void fn_1_1880(void)
