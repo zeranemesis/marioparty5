@@ -1,3 +1,7 @@
+#ifdef __MWERKS__
+#define _MATH_H
+#endif
+
 #include "game/gamework.h"
 #include "game/process.h"
 #include "game/window.h"

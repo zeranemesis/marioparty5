@@ -211,9 +211,9 @@ typedef struct MgWarsCom_s {
 	s8 owner[19];
 } MGWARSCOM;
 
-MGWARSWORK *lbl_1_bss_0;
-MGWARSCOM *lbl_1_bss_4;
 MGWARSWORK lbl_1_bss_8;
+MGWARSCOM *lbl_1_bss_4;
+MGWARSWORK *lbl_1_bss_0;
 
 MGWARSDATAENT lbl_1_data_0[26] = {
 	{ 0x000F, 0x01F5, 0 }, { 0x0010, 0x01F6, 0 }, { 0x0011, 0x01F7, 0 }, { 0x0012, 0x01F8, 0 },
@@ -2029,10 +2029,8 @@ void fn_1_728C(void)
 
 void fn_1_796C(void)
 {
-	s8 tmp[0x100];
 	s8 prev;
 	s32 i;
-	s32 j;
 	s32 k;
 	s32 n;
 	s8 *list;
@@ -2368,7 +2366,7 @@ void fn_1_8DF0(void)
 void fn_1_9BC8(void)
 {
 	s32 counts[19];
-	s32 hexes[19];
+	s32 hexes[19] PC_INIT({ 0 });
 	s32 emptyList[19];
 	s32 changed[4];
 	u8 player;
@@ -2489,7 +2487,11 @@ void fn_1_9BC8(void)
 		while (i--) {
 			lbl_1_data_2D8[i].mark = lbl_1_data_2D8[i].owner;
 		}
+#ifdef TARGET_PC
+		cur = hexes[cnt > 0 ? cnt - 1 : 0];
+#else
 		cur = hexes[cnt - 1];
+#endif
 		fn_1_4170(cur);
 	} else {
 		cur = 9;
