@@ -17,6 +17,12 @@
 #include "string.h"
 #include "math.h"
 
+#ifdef TARGET_PC
+#define PC_INIT(v) = v
+#else
+#define PC_INIT(v)
+#endif
+
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
@@ -57,7 +63,11 @@ void fn_1_7CC8(void);
 void fn_1_1A80(void);
 void fn_1_57C0(s16, HuVecF *);
 void fn_1_F068(void);
-void fn_1_F848(s32, s32);
+void fn_1_F848(int, int);
+void fn_1_F808(int);
+void fn_1_F828(int);
+void fn_1_F860(void);
+void fn_1_F884(void);
 
 typedef struct FbNode_s {
 	u8 pad0[0x10];
@@ -77,6 +87,14 @@ typedef struct MgWarsDataEnt_s {
 	s8 mgIdx;
 	u8 pad;
 } MGWARSDATAENT;
+
+typedef struct MgWarsHex_s {
+	s8 nb[6];
+	s8 owner;
+	s8 mark;
+	s8 reach;
+	s8 visited;
+} MGWARSHEX;
 
 typedef struct MgWarsPlayer_s {
 	s16 modelId;
@@ -109,7 +127,14 @@ typedef struct MgWarsWork_s {
 	s32 unk124;
 	MGWARSPLAYER player[4];
 	s16 unk198;
-	u8 pad19A[0x3E];
+	u8 pad19A[2];
+	HuVecF unk19C;
+	HuVecF unk1A8;
+	s32 unk1B4;
+	s32 unk1B8;
+	HuVecF unk1BC;
+	HuVecF unk1C8;
+	s32 unk1D4;
 	s16 models[75];
 	s16 hexModel[19][5];
 	s16 hexState[19];
@@ -147,6 +172,8 @@ typedef struct MgWarsWork_s {
 typedef struct MgWarsCom_s {
 	u8 pad0[0x3];
 	u8 unk3;
+	u8 pad4[0x1A];
+	s8 owner[19];
 } MGWARSCOM;
 
 typedef struct MgWarsObj1778_s {
@@ -230,26 +257,26 @@ HuVecF lbl_1_data_1E8[19] = {
 
 HuVecF lbl_1_data_2CC = { 0.0f, 300.0f, -530.0f };
 
-s8 lbl_1_data_2D8[19][10] = {
-	{ -1, 1, 4, 3, -1, -1, -1, -1, 0, 0 },
-	{ -1, 2, 5, 4, 0, -1, -1, -1, 0, 0 },
-	{ -1, -1, 6, 5, 1, -1, -1, -1, 0, 0 },
-	{ 0, 4, 8, 7, -1, -1, -1, -1, 0, 0 },
-	{ 1, 5, 9, 8, 3, 0, -1, -1, 0, 0 },
-	{ 2, 6, 10, 9, 4, 1, -1, -1, 0, 0 },
-	{ -1, -1, 11, 10, 5, 2, -1, -1, 0, 0 },
-	{ 3, 8, 12, -1, -1, -1, -1, -1, 0, 0 },
-	{ 4, 9, 13, 12, 7, 3, -1, -1, 0, 0 },
-	{ 5, 10, 14, 13, 8, 4, -1, -1, 0, 0 },
-	{ 6, 11, 15, 14, 9, 5, -1, -1, 0, 0 },
-	{ -1, -1, -1, 15, 10, 6, -1, -1, 0, 0 },
-	{ 8, 13, 16, -1, -1, 7, -1, -1, 0, 0 },
-	{ 9, 14, 17, 16, 12, 8, -1, -1, 0, 0 },
-	{ 10, 15, 18, 17, 13, 9, -1, -1, 0, 0 },
-	{ 11, -1, -1, 18, 14, 10, -1, -1, 0, 0 },
-	{ 13, 17, -1, -1, -1, 12, -1, -1, 0, 0 },
-	{ 14, 18, -1, -1, 16, 13, -1, -1, 0, 0 },
-	{ 15, -1, -1, -1, 17, 14, -1, -1, 0, 0 },
+MGWARSHEX lbl_1_data_2D8[19] = {
+	{ { -1, 1, 4, 3, -1, -1 }, -1, -1, 0, 0 },
+	{ { -1, 2, 5, 4, 0, -1 }, -1, -1, 0, 0 },
+	{ { -1, -1, 6, 5, 1, -1 }, -1, -1, 0, 0 },
+	{ { 0, 4, 8, 7, -1, -1 }, -1, -1, 0, 0 },
+	{ { 1, 5, 9, 8, 3, 0 }, -1, -1, 0, 0 },
+	{ { 2, 6, 10, 9, 4, 1 }, -1, -1, 0, 0 },
+	{ { -1, -1, 11, 10, 5, 2 }, -1, -1, 0, 0 },
+	{ { 3, 8, 12, -1, -1, -1 }, -1, -1, 0, 0 },
+	{ { 4, 9, 13, 12, 7, 3 }, -1, -1, 0, 0 },
+	{ { 5, 10, 14, 13, 8, 4 }, -1, -1, 0, 0 },
+	{ { 6, 11, 15, 14, 9, 5 }, -1, -1, 0, 0 },
+	{ { -1, -1, -1, 15, 10, 6 }, -1, -1, 0, 0 },
+	{ { 8, 13, 16, -1, -1, 7 }, -1, -1, 0, 0 },
+	{ { 9, 14, 17, 16, 12, 8 }, -1, -1, 0, 0 },
+	{ { 10, 15, 18, 17, 13, 9 }, -1, -1, 0, 0 },
+	{ { 11, -1, -1, 18, 14, 10 }, -1, -1, 0, 0 },
+	{ { 13, 17, -1, -1, -1, 12 }, -1, -1, 0, 0 },
+	{ { 14, 18, -1, -1, 16, 13 }, -1, -1, 0, 0 },
+	{ { 15, -1, -1, -1, 17, 14 }, -1, -1, 0, 0 },
 };
 
 HuVecF lbl_1_data_398[4] = {
@@ -1038,4 +1065,435 @@ void fn_1_1A80(void)
 			Hu3DModelCameraSet(lbl_1_bss_0->models[i], 2);
 		}
 	}
+}
+
+s32 fn_1_2F28(s32 hex, s32 target, s32 dir)
+{
+	s32 next;
+	s32 ret;
+
+	if (hex < 0) {
+		return 0;
+	}
+	if (lbl_1_data_2D8[hex].owner < 0) {
+		return 0;
+	}
+	if (target == lbl_1_data_2D8[hex].owner) {
+		return 1;
+	}
+	next = lbl_1_data_2D8[hex].nb[dir];
+	ret = fn_1_2F28(next, target, dir);
+	if (ret != 0) {
+		lbl_1_data_2D8[hex].mark = target;
+		return ret + 1;
+	}
+	return 0;
+}
+
+s32 fn_1_3458(s32 hex, s32 target)
+{
+	s32 total;
+	s32 i;
+	s32 ret;
+
+	lbl_1_data_2D8[hex].mark = (s8)target;
+	total = 0;
+	i = 6;
+	while (i--) {
+		ret = fn_1_2F28(lbl_1_data_2D8[hex].nb[i], target, i);
+		if (ret != 0) {
+			total += ret - 1;
+		}
+	}
+	return total;
+}
+
+s32 fn_1_34FC(s32 hex)
+{
+	if (hex < 0) {
+		return 0;
+	}
+	if (lbl_1_data_2D8[hex].owner >= 0) {
+		return 1;
+	}
+	lbl_1_data_2D8[hex].reach = 1;
+	return 0;
+}
+
+void fn_1_3554(s32 hex)
+{
+	s32 n0;
+	s32 n1;
+	s32 n2;
+	s32 n3;
+	s32 n4;
+	s32 n5;
+
+	if (hex < 0 || lbl_1_data_2D8[hex].visited != 0) {
+		return;
+	}
+	lbl_1_data_2D8[hex].visited = 1;
+	n0 = lbl_1_data_2D8[hex].nb[0];
+	if (n0 >= 0 && lbl_1_data_2D8[n0].owner < 0) {
+		lbl_1_data_2D8[n0].reach = 1;
+	}
+	n1 = lbl_1_data_2D8[hex].nb[1];
+	if (n1 >= 0 && lbl_1_data_2D8[n1].owner < 0) {
+		lbl_1_data_2D8[n1].reach = 1;
+	}
+	n2 = lbl_1_data_2D8[hex].nb[2];
+	if (n2 >= 0 && lbl_1_data_2D8[n2].owner < 0) {
+		lbl_1_data_2D8[n2].reach = 1;
+	}
+	n3 = lbl_1_data_2D8[hex].nb[3];
+	if (n3 >= 0 && lbl_1_data_2D8[n3].owner < 0) {
+		lbl_1_data_2D8[n3].reach = 1;
+	}
+	n4 = lbl_1_data_2D8[hex].nb[4];
+	if (n4 >= 0 && lbl_1_data_2D8[n4].owner < 0) {
+		lbl_1_data_2D8[n4].reach = 1;
+	}
+	n5 = lbl_1_data_2D8[hex].nb[5];
+	if (n5 >= 0 && lbl_1_data_2D8[n5].owner < 0) {
+		lbl_1_data_2D8[n5].reach = 1;
+	}
+}
+
+void fn_1_37D4(void)
+{
+	s32 i;
+
+	i = 0x13;
+	while (i--) {
+		lbl_1_data_2D8[i].visited = 0;
+		lbl_1_data_2D8[i].reach = 0;
+	}
+	if (lbl_1_data_2D8[9].owner < 0) {
+		lbl_1_data_2D8[9].reach = 1;
+	}
+	i = 0x13;
+	while (i--) {
+		if (lbl_1_data_2D8[i].owner >= 0) {
+			fn_1_3554(i);
+		}
+	}
+}
+
+void fn_1_3AF0(s32 hex)
+{
+	HuVecF scaled;
+	HuVecF delta;
+	HuVecF pos;
+	s32 pan;
+	s16 model;
+	s32 i;
+	f32 t;
+
+	model = lbl_1_bss_0->unk352;
+	PSVECSubtract(&lbl_1_data_1E8[hex], &lbl_1_bss_0->unk3A4, &delta);
+	pan = (s16)(64.0f + 24.0f * (lbl_1_data_1E8[hex].x / 320.0f));
+	HuAudFXPlayPan(0x4BD, pan);
+	for (i = 0; i < 0x14; i++) {
+		t = (f32)i / 20.0f;
+		t = sin(3.141592653589793 * (f64)t * 0.5);
+		t = sin(3.141592653589793 * (f64)t * 0.5);
+		t = sin(3.141592653589793 * (f64)t * 0.5);
+		PSVECScale(&delta, &scaled, t);
+		PSVECAdd(&lbl_1_bss_0->unk3A4, &scaled, &pos);
+		Hu3DModelPosSet(model, pos.x, pos.y, pos.z);
+		HuPrcVSleep();
+	}
+	PSVECAdd(&lbl_1_bss_0->unk3A4, &delta, &lbl_1_bss_0->unk3A4);
+	Hu3DModelPosSet(model, lbl_1_bss_0->unk3A4.x, lbl_1_bss_0->unk3A4.y, lbl_1_bss_0->unk3A4.z);
+}
+
+void fn_1_3D38(s32 from, s32 to)
+{
+	HuVecF diff;
+	MGWARSHEX *hex;
+	f32 bestDist PC_INIT(0.0f);
+	f32 dist;
+	s32 found;
+	s32 best PC_INIT(0);
+	s32 n;
+	s8 i;
+
+	hex = &lbl_1_data_2D8[from];
+	if (from == to) {
+		hex->visited = 1;
+		return;
+	}
+	found = 0;
+	i = 6;
+	while (i--) {
+		n = hex->nb[i];
+		if (n >= 0) {
+			PSVECSubtract(&lbl_1_data_1E8[n], &lbl_1_data_1E8[to], &diff);
+			dist = PSVECSquareMag(&diff);
+			if (found == 0 || dist < bestDist) {
+				bestDist = dist;
+				best = n;
+				found = 1;
+			}
+		}
+	}
+	fn_1_3D38(best, to);
+	hex->visited = 1;
+}
+
+void fn_1_4170(s32 target)
+{
+	s32 i;
+	MGWARSHEX *hex;
+	s32 cur;
+	s16 model;
+
+	model = MDL(0x248);
+	if (target != 9) {
+		i = 0x13;
+		while (i--) {
+			lbl_1_data_2D8[i].visited = 0;
+		}
+		Hu3DModelAttrSet(model, 1);
+		fn_1_3D38(9, target);
+		cur = 9;
+		while (cur != target) {
+			hex = &lbl_1_data_2D8[cur];
+			hex->visited = 0;
+			i = 6;
+			while (i--) {
+				if (hex->nb[i] >= 0 && lbl_1_data_2D8[hex->nb[i]].visited != 0) {
+					cur = hex->nb[i];
+					break;
+				}
+			}
+			fn_1_3AF0(cur);
+		}
+		HuAudFXPlayPan(0x4BE, (s16)(64.0f + 24.0f * (lbl_1_data_1E8[target].x / 320.0f)));
+		Hu3DModelAttrReset(model, 1);
+		Hu3DModelPosSet(model, lbl_1_bss_0->unk3A4.x, 20.0f + lbl_1_bss_0->unk3A4.y, lbl_1_bss_0->unk3A4.z);
+	}
+}
+
+void fn_1_4534(s32 hex, s32 variant)
+{
+	s16 model;
+	s16 model2;
+	s32 pan;
+
+	model = lbl_1_bss_0->models[hex + 6];
+	switch (lbl_1_bss_0->hexState[hex]) {
+	case 0:
+		Hu3DModelAttrReset(model, 0x40000001);
+		lbl_1_bss_0->hexState[hex] = 1;
+		break;
+	case 1:
+		fn_1_AD8(model, 121.0f, 150.0f);
+		Hu3DModelAttrReset(model, 0x40000001);
+		lbl_1_bss_0->hexState[hex] = 2;
+		break;
+	case 2:
+		if (Hu3DMotionEndCheck(model) != 0) {
+			pan = (s16)(64.0f + 24.0f * (lbl_1_data_1E8[hex].x / 320.0f));
+			HuAudFXPlayPan(0x4BF, pan);
+			model2 = fn_1_B34(hex, variant);
+			fn_1_AD8(model2, 151.0f, 180.0f);
+			Hu3DModelAttrReset(model2, 0x40000001);
+			lbl_1_bss_0->hexState[hex] = 3;
+			if (lbl_1_data_2D8[hex].owner >= 0) {
+				fn_1_F828(lbl_1_data_2D8[hex].owner);
+			}
+			if (lbl_1_data_2D8[hex].mark >= 0) {
+				fn_1_F808(lbl_1_data_2D8[hex].mark);
+				switch (lbl_1_data_2D8[hex].mark) {
+				case 0:
+				case 2:
+					HuAudFXPlayPan(0x4C0, 0x28);
+					break;
+				case 1:
+				case 3:
+					HuAudFXPlayPan(0x4C1, 0x58);
+					break;
+				}
+			}
+		}
+		break;
+	case 3:
+		if (Hu3DMotionEndCheck(model) != 0) {
+			fn_1_AD8(model, 0.0f, 120.0f);
+			Hu3DMotionTimeSet(model, (f32)lbl_1_bss_0->unk36C);
+			Hu3DModelAttrSet(model, 0x40000001);
+			lbl_1_bss_0->hexState[hex] = 4;
+		}
+		break;
+	case 4:
+		break;
+	}
+}
+
+void fn_1_4958(void)
+{
+	s16 model;
+	s32 i;
+	s8 owner;
+
+	fn_1_AD8(MDL(0x1DC), 0.0f, 660.0f);
+	i = 0x13;
+	while (i--) {
+		if (lbl_1_bss_4->owner[i] < 0) {
+			model = fn_1_B34(i, 4);
+		} else {
+			owner = lbl_1_bss_4->owner[i];
+			model = fn_1_B34(i, owner);
+		}
+		fn_1_AD8(model, 0.0f, 120.0f);
+		Hu3DModelAttrSet(model, 0x40000001);
+		lbl_1_bss_0->hexState[i] = 4;
+	}
+}
+
+void fn_1_4BC4(void)
+{
+	s32 i;
+	s32 k;
+	s8 cam;
+	s8 order[4];
+
+	i = 4;
+	while (i--) {
+		Hu3DModelAttrReset(lbl_1_bss_0->models[i + 0x2C], 0x40000003);
+		Hu3DMotionTimeSet(lbl_1_bss_0->models[i + 0x2C], Hu3DMotionMaxTimeGet(lbl_1_bss_0->models[i + 0x2C]));
+		order[i] = (s8)i;
+	}
+	k = 0;
+	while (lbl_1_bss_0->unk10 & 0x400) {
+		HuAudFXPlay(0x4B8);
+		i = 5;
+		while (i--) {
+			if (lbl_1_bss_0->unk10 & 0x400) {
+				HuPrcVSleep();
+			} else {
+				break;
+			}
+		}
+		cam = order[k];
+		fn_1_12AC(cam);
+		if (Hu3DMotionEndCheck(lbl_1_bss_0->models[order[k] + 0x2C]) != 0) {
+			Hu3DMotionTimeSet(lbl_1_bss_0->models[order[k] + 0x2C], 0.0f);
+		}
+		k++;
+		if (k == 4) {
+			k = 0;
+		}
+	}
+	HuPrcEnd();
+}
+
+void fn_1_4E94(void)
+{
+	lbl_1_bss_0->unk10 |= 0x400;
+	HuPrcChildCreate(fn_1_4BC4, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_4EE8(void)
+{
+	s32 i;
+	s32 j;
+
+	i = 0;
+	while (lbl_1_bss_0->unk10 & 0x800) {
+		fn_1_12AC(lbl_1_bss_0->unk14[i]);
+		j = 0x78;
+		while (j--) {
+			if (lbl_1_bss_0->unk10 & 0x800) {
+				HuPrcVSleep();
+			} else {
+				break;
+			}
+		}
+		i++;
+		if (i == (s8)lbl_1_bss_0->unk18) {
+			i = 0;
+		}
+	}
+	HuPrcEnd();
+}
+
+void fn_1_50DC(void)
+{
+	lbl_1_bss_0->unk10 |= 0x800;
+	HuPrcChildCreate(fn_1_4EE8, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_5130(void)
+{
+	HuVecF pts[4];
+	f32 col[4];
+	f32 knots[4];
+	HuVecF delta;
+	HuVecF scaled;
+	f32 t;
+	f32 t2;
+	s32 total;
+	s32 i;
+	s32 k;
+
+	if (lbl_1_bss_0->unk1D4 != 0) {
+		total = lbl_1_bss_0->unk1B8 + lbl_1_bss_0->unk1D4;
+		pts[0] = lbl_1_bss_0->unk19C;
+		pts[1] = lbl_1_bss_0->unk19C;
+		pts[2] = lbl_1_bss_0->unk1BC;
+		pts[3] = lbl_1_bss_0->unk1C8;
+		knots[0] = -1.0f;
+		knots[1] = 0.0f;
+		knots[2] = (f32)lbl_1_bss_0->unk1B8;
+		knots[3] = (f32)total;
+		for (i = 0;; i++) {
+			t = (f32)i;
+			if (total == i) {
+				lbl_1_bss_0->unk1A8 = lbl_1_bss_0->unk1C8;
+				break;
+			}
+			if (lbl_1_bss_0->unk1B8 == i) {
+				pts[0] = lbl_1_bss_0->unk19C;
+				pts[1] = lbl_1_bss_0->unk1BC;
+				pts[2] = lbl_1_bss_0->unk1C8;
+				pts[3] = lbl_1_bss_0->unk1C8;
+				knots[0] = 0.0f;
+				knots[1] = (f32)lbl_1_bss_0->unk1B8;
+				knots[2] = (f32)total;
+				knots[3] = (f32)(total + 1);
+			}
+			k = 4;
+			while (k--) {
+				col[k] = pts[k].x;
+			}
+			lbl_1_bss_0->unk1A8.x = InterpolateBMLine(col, knots, t);
+			k = 4;
+			while (k--) {
+				col[k] = pts[k].y;
+			}
+			lbl_1_bss_0->unk1A8.y = InterpolateBMLine(col, knots, t);
+			k = 4;
+			while (k--) {
+				col[k] = pts[k].z;
+			}
+			lbl_1_bss_0->unk1A8.z = InterpolateBMLine(col, knots, t);
+			Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
+			HuPrcVSleep();
+		}
+	} else {
+		for (i = 0; lbl_1_bss_0->unk1B8 != i; i++) {
+			t2 = sin(3.141592653589793 * (f64)(f32)sin(3.141592653589793 * (f64)((f32)i / (f32)lbl_1_bss_0->unk1B8) * 0.5) * 0.5);
+			PSVECSubtract(&lbl_1_bss_0->unk1BC, &lbl_1_bss_0->unk19C, &delta);
+			PSVECScale(&delta, &scaled, t2);
+			PSVECAdd(&lbl_1_bss_0->unk19C, &scaled, &lbl_1_bss_0->unk1A8);
+			Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
+			HuPrcVSleep();
+		}
+		lbl_1_bss_0->unk1A8 = lbl_1_bss_0->unk1BC;
+	}
+	Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
+	lbl_1_bss_0->unk10 |= 0x200;
+	HuPrcEnd();
 }
