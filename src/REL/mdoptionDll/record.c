@@ -39,11 +39,6 @@ typedef struct MdRecWork_s {
     int streamId; //0x18
 } MDREC_WORK;
 
-typedef struct MdSpriteWork_s {
-    u8 pad_000[0x28E];
-    HUSPRGRPID grpId[32];
-} MDSPRITE_WORK;
-
 extern void MdMessHelpWinCreate(MDMESS_WORK *mess, int winNo, int msg, float x, float y, int w, int h, float z, int type);
 extern void MdMessWinAttrSet(MDMESS_WORK *mess, int winNo, u32 attr);
 extern void MdMessWinClose(MDMESS_WORK *mess, int winNo);
@@ -54,8 +49,8 @@ extern void MdMessWinMesSet(MDMESS_WORK *mess, int winNo, int msg);
 extern void MdMessWinPosSet(MDMESS_WORK *mess, int winNo, float x, float y);
 extern void MdMessWinScaleSet(MDMESS_WORK *mess, int winNo, float x, float y);
 extern void MdMessWinSpeedSet(MDMESS_WORK *mess, int winNo, s16 speed);
-extern HuVec2f *MdSpriteGrpPosGet(MDSPRITE_WORK *sprite, int grpNo);
-extern HuVec2f *MdSpriteGrpScaleGet(MDSPRITE_WORK *sprite, int grpNo);
+extern HuVecF *MdSpriteGrpPosGet(MDSPRITE_WORK *sprite, int grpNo);
+extern HuVecF *MdSpriteGrpScaleGet(MDSPRITE_WORK *sprite, int grpNo);
 extern void fn_1_A930(int cmd);
 void fn_1_1B418(void);
 
@@ -431,12 +426,12 @@ void fn_1_1A468(int cmd)
 }
 void fn_1_1A7C0(void)
 {
-    HuVec2f *scale;
+    HuVecF *scale;
     MDMESS_WORK *mess;
     MDREC_CATEGORY *category;
     int i;
     s16 grp;
-    HuVec2f *pos;
+    HuVecF *pos;
     SYS *sys;
     MDREC_SND *snd;
     int d;
@@ -507,12 +502,12 @@ void fn_1_1A7C0(void)
 
 void fn_1_1AD88(void)
 {
-    HuVec2f *scale;
+    HuVecF *scale;
     MDMESS_WORK *mess;
     MDREC_CATEGORY *category;
     int i;
     s16 grp;
-    HuVec2f *pos;
+    HuVecF *pos;
     SYS *sys;
     MDREC_SND *snd;
     int d;
