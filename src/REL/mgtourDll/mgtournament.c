@@ -459,7 +459,7 @@ HU3DPARMANPARAM lbl_1_data_130 = {
     { { 0xFF, 0xFF, 0xFF, 0 }, { 0xFF, 0xFF, 0xFF, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
 };
 
-static BOOL MgtAngleSub(f32 *angle, f32 end, f32 speed)
+static inline BOOL MgtAngleSub(f32 *angle, f32 end, f32 speed)
 {
     f32 diff = *angle - end;
     f32 change = fmodf(diff, 180.0f);
