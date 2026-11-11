@@ -152,11 +152,18 @@ const Vec lbl_1_rodata_1B0 = { 0.0f, 0.0f, -1.0f };
 
 extern void fn_1_7AC(u32 mask);
 extern u32 fn_1_7E4(u32 mask);
+#ifdef TARGET_PC
 extern s16 fn_1_938(s32 arg);
-extern s32 fn_1_96C(void);
 extern s8 fn_1_99C(void);
+#else
+extern s32 fn_1_938(s32 arg);
+extern s32 fn_1_99C(void);
+#endif
+extern s32 fn_1_96C(void);
 extern s32 fn_1_9D4(s32 arg);
 
+extern double sin();
+extern double cos();
 extern void fn_1_D658(void);
 extern void fn_1_DEFC(void);
 extern void fn_1_F708(void);
@@ -865,6 +872,554 @@ void fn_1_D820(s32 flag, MGT_PLAYER *players)
 
 void fn_1_DEFC(void)
 {
+    MGTVec2 start[4];
+    s32 order[4];
+    s32 pathNo[4];
+    s32 frame[4];
+    s32 seg[4];
+    Vec in3;
+    Vec out3;
+    Vec in5;
+    Vec a5;
+    Vec b5;
+    Vec in7;
+    Vec a7;
+    Vec b7;
+    Vec in11;
+    Vec a11;
+    Vec b11;
+    s32 attrs[2];
+    MGTVec2 c8;
+    MGTVec2 c9;
+    s32 i;
+    MGTSCOREWORK *work;
+    s32 n;
+    s32 timer;
+    s32 se;
+    s32 mdl;
+    MGTSCOREPATH *path7;
+    MGTSCOREPATH *path11;
+    MGTSCOREPT *pt5;
+    MGTSCOREPT *pt7;
+    MGTSCOREPT *pt11;
+    s32 base;
+    MGTSCOREPATH *path5;
+    f32 ease;
+    f32 ease2;
+    f32 ease3;
+    f32 f9;
+    f32 f9b;
+    f32 f9c;
+    f32 f9d;
+    f32 ang;
+    f32 rad;
+    f32 f23;
+    f32 f29;
+    s32 cnt;
+    s8 rot[4];
+    s32 done5;
+    s32 done7;
+    ANIMDATA *anim;
+    f32 step;
+    s32 vib;
+    s16 grp;
+    s32 nAttr;
+
+    work = &lbl_1_bss_177A0;
+    se = -1;
+#ifdef TARGET_PC
+    n = 0;
+    timer = 0;
+    cnt = 0;
+    nAttr = 0;
+    for (i = 0; i < 4; i++) {
+        rot[i] = i;
+        order[i] = i;
+        pathNo[i] = -1;
+        frame[i] = 0;
+        seg[i] = 0;
+        start[i].x = 0.0f;
+        start[i].y = 0.0f;
+    }
+    attrs[0] = 0;
+    attrs[1] = 0;
+#endif
+    while (fn_1_7E4(0x80000000) != 0) {
+        switch (work->mode) {
+            case 0:
+                work->mode = 1;
+                break;
+            case 2:
+                i = 4;
+                while (i--) {
+                    rot[i] = (s8)i;
+                }
+                fn_1_BB14(rot, 4);
+                n = 4;
+                timer = 0x78;
+                cnt = 6;
+                work->mode = 3;
+                break;
+            case 3:
+                base = 4 - n;
+                if (--cnt == 0) {
+                    fn_1_BB14(rot, n);
+                    cnt = 6;
+                    i = n;
+                    while (i--) {
+                        mdl = lbl_1_bss_177A0.mdl[rot[i] + 0xC];
+                        in3.x = lbl_1_data_8A8[base + i].x;
+                        in3.y = lbl_1_data_8A8[base + i].y;
+                        in3.z = 1000.0f;
+                        Hu3D2Dto3D(&in3, 4, &out3);
+                        Hu3DModelPosSetV(mdl, &out3);
+                    }
+                }
+                if (--timer == 0) {
+                    timer = 0x3C;
+                    mdl = lbl_1_bss_177A0.mdl[base + 0xC];
+                    in3.x = lbl_1_data_8A8[base].x;
+                    in3.y = lbl_1_data_8A8[base].y;
+                    in3.z = 1000.0f;
+                    Hu3D2Dto3D(&in3, 4, &out3);
+                    Hu3DModelPosSetV(mdl, &out3);
+                    switch (n) {
+                        case 4:
+                            HuAudFXPlayPan(0x4A5, 0x34);
+                            break;
+                        case 3:
+                            HuAudFXPlayPan(0x4A5, 0x46);
+                            break;
+                        case 2:
+                            HuAudFXPlayPan(0x4A5, 0x52);
+                            break;
+                    }
+                    n--;
+                    if (n == 1) {
+                        mdl = lbl_1_bss_177A0.mdl[0xF];
+                        in3.x = lbl_1_data_8A8[3].x;
+                        in3.y = lbl_1_data_8A8[3].y;
+                        in3.z = 1000.0f;
+                        Hu3D2Dto3D(&in3, 4, &out3);
+                        Hu3DModelPosSetV(mdl, &out3);
+                        work->mode = 1;
+                    }
+                    cnt = 1;
+                    i = n;
+                    while (i--) {
+                        rot[i] = (s8)((4 - n) + i);
+                    }
+                }
+                break;
+            case 4:
+                i = 4;
+                while (i--) {
+                    pathNo[i] = -1;
+                }
+                fn_1_BB78(order);
+                switch (fn_1_99C()) {
+                    case 0:
+                        pathNo[0] = 0xA;
+                        pathNo[1] = 0xB;
+                        pathNo[2] = 0xC;
+                        pathNo[3] = 0xD;
+                        break;
+                    case 1:
+                        pathNo[0] = 0xC;
+                        pathNo[1] = 0xD;
+                        pathNo[2] = 0xA;
+                        pathNo[3] = 0xB;
+                        break;
+                    case 2:
+                        if (order[0] == 4) {
+                            pathNo[0] = 0xC;
+                            pathNo[1] = 0xA;
+                        } else {
+                            pathNo[0] = 0xA;
+                            pathNo[1] = 0xC;
+                        }
+                        if (order[2] == 6) {
+                            pathNo[2] = 0xD;
+                            pathNo[3] = 0xB;
+                        } else {
+                            pathNo[2] = 0xB;
+                            pathNo[3] = 0xD;
+                        }
+                        break;
+                    case 3:
+                        if (order[0] == 4) {
+                            pathNo[0] = 0xA;
+                            pathNo[1] = 0xC;
+                        } else {
+                            pathNo[0] = 0xC;
+                            pathNo[1] = 0xA;
+                        }
+                        if (order[2] == 6) {
+                            pathNo[2] = 0xB;
+                            pathNo[3] = 0xD;
+                        } else {
+                            pathNo[2] = 0xD;
+                            pathNo[3] = 0xB;
+                        }
+                        break;
+                }
+                i = 4;
+                while (i--) {
+                    frame[i] = 0;
+                    seg[i] = 0;
+                }
+                work->mode = 5;
+                break;
+            case 5:
+                done5 = 0;
+                i = 4;
+                while (i--) {
+                    if (pathNo[i] >= 0) {
+                        mdl = lbl_1_bss_177A0.mdl[i + 0xC];
+                        path5 = &lbl_1_data_920[pathNo[i]];
+                        pt5 = &path5->pt[seg[i]];
+                        ease = (f32)frame[i] / pt5->frames;
+                        ease = sin(3.141592653589793 * ease * 0.5);
+                        ease = sin(3.141592653589793 * ease * 0.5);
+                        if (seg[i] == 0) {
+                            in5.x = start[i].x;
+                            in5.y = start[i].y;
+                            in5.z = 1000.0f;
+                            Hu3D2Dto3D(&in5, 4, &a5);
+                        } else {
+                            in5.x = path5->pt[seg[i] - 1].x;
+                            in5.y = path5->pt[seg[i] - 1].y;
+                            in5.z = 1000.0f;
+                            Hu3D2Dto3D(&in5, 4, &a5);
+                        }
+                        in5.x = pt5->x;
+                        in5.y = pt5->y;
+                        in5.z = 1000.0f;
+                        Hu3D2Dto3D(&in5, 4, &b5);
+                        PSVECSubtract(&b5, &a5, &b5);
+                        PSVECScale(&b5, &b5, ease);
+                        PSVECAdd(&b5, &a5, &in5);
+                        Hu3DModelPosSetV(mdl, &in5);
+                        frame[i]++;
+                        if (pt5->frames <= (f32)frame[i]) {
+                            frame[i] = 0;
+                            seg[i]++;
+                            if (path5->num == seg[i]) {
+                                pathNo[i] = -1;
+                            }
+                        }
+                    } else {
+                        done5++;
+                    }
+                }
+                if (done5 == 4) {
+                    work->mode = 1;
+                }
+                break;
+            case 6:
+                i = 4;
+                while (i--) {
+                    pathNo[i] = -1;
+                }
+                fn_1_BB78(order);
+                switch (fn_1_99C()) {
+                    case 0:
+                        if (fn_1_7E4(8) == 0) {
+                            se = HuAudFXPlay(0x4AB);
+                        }
+                        pathNo[0] = 0;
+                        pathNo[1] = 1;
+                        break;
+                    case 1:
+                        if (fn_1_7E4(8) == 0) {
+                            se = HuAudFXPlay(0x4AB);
+                        }
+                        pathNo[2] = 2;
+                        pathNo[3] = 3;
+                        break;
+                }
+                i = 4;
+                while (i--) {
+                    start[i] = lbl_1_data_8A8[order[i]];
+                    frame[i] = 0;
+                    seg[i] = 0;
+                }
+                work->mode = 7;
+                break;
+            case 7:
+                done7 = 0;
+                i = 4;
+                while (i--) {
+                    if (pathNo[i] >= 0) {
+                        mdl = lbl_1_bss_177A0.mdl[i + 0xC];
+                        path7 = &lbl_1_data_920[pathNo[i]];
+                        pt7 = &path7->pt[seg[i]];
+                        ease2 = (f32)frame[i] / pt7->frames;
+                        if (seg[i] == 0) {
+                            in7.x = start[i].x;
+                            in7.y = start[i].y;
+                            in7.z = 1000.0f;
+                            Hu3D2Dto3D(&in7, 4, &a7);
+                        } else {
+                            in7.x = path7->pt[seg[i] - 1].x;
+                            in7.y = path7->pt[seg[i] - 1].y;
+                            in7.z = 1000.0f;
+                            Hu3D2Dto3D(&in7, 4, &a7);
+                        }
+                        in7.x = pt7->x;
+                        in7.y = pt7->y;
+                        in7.z = 1000.0f;
+                        Hu3D2Dto3D(&in7, 4, &b7);
+                        PSVECSubtract(&b7, &a7, &b7);
+                        PSVECScale(&b7, &b7, ease2);
+                        PSVECAdd(&b7, &a7, &in7);
+                        Hu3DModelPosSetV(mdl, &in7);
+                        frame[i]++;
+                        if (pt7->frames <= (f32)frame[i]) {
+                            frame[i] = 0;
+                            seg[i]++;
+                            if (path7->num == seg[i]) {
+                                start[i] = *(MGTVec2 *)&path7->pt[seg[i] - 1];
+                                pathNo[i] = -1;
+                            }
+                        }
+                    } else {
+                        done7++;
+                    }
+                }
+                if (done7 == 4) {
+                    if (se >= 0) {
+                        HuAudFXStop(se);
+                        se = -1;
+                    }
+                    work->mode = 1;
+                }
+                break;
+            case 8:
+                c8 = lbl_1_data_918;
+                c8.y -= 20.0f;
+                if (lbl_1_bss_177A0.grpRing < 0) {
+                    grp = HuSprGrpCreate(0xC);
+                    lbl_1_bss_177A0.grpRing = grp;
+                    c8 = lbl_1_data_918;
+                    c8.y -= 20.0f;
+                    rad = 30.0f;
+                    step = 0.5235988f;
+                    ang = 0.0f;
+                    i = 0xC;
+                    while (i--) {
+                        anim = HuSprAnimRead(HuDataSelHeapReadNum(0x9A0023, HU_MEMNUM_OVL, HEAP_MODEL));
+                        HuSprGrpMemberSet(grp, i, HuSprCreate(anim, 0x28, 0));
+                        HuSprPosSet(lbl_1_bss_177A0.grpRing, i, c8.x + rad * cos(ang), c8.y + rad * sin(ang));
+                    }
+                }
+                timer = 0x78;
+                HuPrcChildCreate(fn_1_F9D0, 0x64, 0x1000, 0, HuPrcCurrentGet());
+                HuAudFXPlay(0x4AA);
+                omVibrate(GwPlayerConf[fn_1_938(fn_1_96C())].padNo, 0x14, 4, 2);
+                work->mode = 9;
+                break;
+            case 9:
+                c9 = lbl_1_data_918;
+                c9.y -= 20.0f;
+                f9 = (f32)timer / 120.0f;
+                f9b = 0.5f * f9;
+                f9c = 0.1f + 0.9 * f9;
+                f9d = 30.0f + 50.0f * (1.0f - f9);
+                step = 0.5235988f;
+                ang = 0.0f;
+                i = 0xC;
+                while (i--) {
+                    HuSprPosSet(lbl_1_bss_177A0.grpRing, i, c9.x + f9d * cos(ang), c9.y + f9d * sin(ang));
+                    HuSprTPLvlSet(lbl_1_bss_177A0.grpRing, i, f9b);
+                    HuSprScaleSet(lbl_1_bss_177A0.grpRing, i, f9c, f9c);
+                    ang += step;
+                }
+                timer--;
+                if (timer == 0) {
+                    work->mode = 1;
+                }
+                break;
+            case 10:
+                i = 4;
+                while (i--) {
+                    pathNo[i] = -1;
+                }
+                fn_1_BB78(order);
+                n = 4;
+                switch (fn_1_99C()) {
+                    case 0:
+                        nAttr = 2;
+                        if (fn_1_96C() == 0) {
+                            attrs[0] = 2;
+                            attrs[1] = 5;
+                            pathNo[0] = 4;
+                            pathNo[1] = 5;
+                        } else {
+                            attrs[0] = 3;
+                            attrs[1] = 4;
+                            pathNo[0] = 5;
+                            pathNo[1] = 4;
+                        }
+                        break;
+                    case 1:
+                        nAttr = 2;
+                        if (fn_1_96C() == 0) {
+                            attrs[0] = 6;
+                            attrs[1] = 9;
+                            pathNo[2] = 6;
+                            pathNo[3] = 7;
+                        } else {
+                            attrs[0] = 7;
+                            attrs[1] = 8;
+                            pathNo[2] = 7;
+                            pathNo[3] = 6;
+                        }
+                        break;
+                    case 2:
+                        nAttr = 1;
+                        if (fn_1_96C() == 0) {
+                            attrs[0] = 0xB;
+                            if (order[2] == 6) {
+                                pathNo[3] = 8;
+                            } else {
+                                pathNo[2] = 8;
+                            }
+                        } else {
+                            attrs[0] = 0xA;
+                            if (order[0] == 4) {
+                                pathNo[1] = 8;
+                            } else {
+                                pathNo[0] = 8;
+                            }
+                        }
+                        break;
+                    case 3:
+                        nAttr = 1;
+                        if (fn_1_96C() == 0) {
+                            attrs[0] = 0xC;
+                            if (order[0] == 4) {
+                                pathNo[0] = 9;
+                            } else {
+                                pathNo[1] = 9;
+                            }
+                        } else {
+                            attrs[0] = 0xD;
+                            if (order[2] == 6) {
+                                pathNo[2] = 9;
+                            } else {
+                                pathNo[3] = 9;
+                            }
+                        }
+                        n = 2;
+                        break;
+#ifdef TARGET_PC
+                    default:
+                        nAttr = 0;
+                        break;
+#endif
+                }
+                i = nAttr;
+                while (i--) {
+                    HuSprAttrReset(lbl_1_bss_177A0.grpMain, (s16)attrs[i], 4);
+                    HuSprTPLvlSet(lbl_1_bss_177A0.grpMain, (s16)attrs[i], 0.0f);
+                }
+                i = 4;
+                while (i--) {
+                    switch (pathNo[i]) {
+                        case 4:
+                        case 5:
+                        case 6:
+                        case 7:
+                            lbl_1_data_920[pathNo[i]].pt[0].x = lbl_1_data_8A8[order[i]].x;
+                            break;
+                    }
+                }
+                i = 4;
+                while (i--) {
+                    start[i] = lbl_1_data_8A8[order[i]];
+                    frame[i] = 0;
+                    seg[i] = 0;
+                }
+                timer = 0;
+                se = HuAudFXPlay(0x4AB);
+                work->mode = 0xB;
+                break;
+            case 11:
+                f29 = (f32)timer / 60.0f;
+                if (n != 0) {
+                    f23 = sin(3.141592653589793 * f29);
+                } else {
+                    f23 = sin(3.141592653589793 * f29 * 0.5);
+                    timer++;
+                }
+                i = 4;
+                while (i--) {
+                    if (pathNo[i] >= 0 && order[i] != pathNo[i]) {
+                        mdl = lbl_1_bss_177A0.mdl[i + 0xC];
+                        path11 = &lbl_1_data_920[pathNo[i]];
+                        pt11 = &path11->pt[seg[i]];
+                        ease3 = (f32)frame[i] / pt11->frames;
+                        if (seg[i] == 0) {
+                            in11.x = start[i].x;
+                            in11.y = start[i].y;
+                            in11.z = 1000.0f;
+                            Hu3D2Dto3D(&in11, 4, &a11);
+                        } else {
+                            in11.x = path11->pt[seg[i] - 1].x;
+                            in11.y = path11->pt[seg[i] - 1].y;
+                            in11.z = 1000.0f;
+                            Hu3D2Dto3D(&in11, 4, &a11);
+                        }
+                        in11.x = pt11->x;
+                        in11.y = pt11->y;
+                        in11.z = 1000.0f;
+                        Hu3D2Dto3D(&in11, 4, &b11);
+                        PSVECSubtract(&b11, &a11, &b11);
+                        PSVECScale(&b11, &b11, ease3);
+                        PSVECAdd(&b11, &a11, &in11);
+                        Hu3DModelPosSetV(mdl, &in11);
+                        frame[i]++;
+                        if (pt11->frames <= (f32)frame[i]) {
+                            if (pathNo[i] == 8 && seg[i] == 1) {
+                                if (se >= 0) {
+                                    HuAudFXStop(se);
+                                    se = -1;
+                                }
+                                vib = GwPlayerConf[fn_1_938(fn_1_96C() == 0)].padNo;
+                                omVibrate(vib, 0x14, 4, 2);
+                                HuAudFXPlay(0x4AC);
+                            }
+                            frame[i] = 0;
+                            seg[i]++;
+                            if (path11->num == seg[i]) {
+                                start[i] = *(MGTVec2 *)&path11->pt[seg[i] - 1];
+                                pathNo[i] = -1;
+                            }
+                        }
+                    }
+                }
+                i = nAttr;
+                while (i--) {
+                    HuSprTPLvlSet(lbl_1_bss_177A0.grpMain, (s16)attrs[i], f23);
+                }
+                timer++;
+                if (timer % 60 == 0) {
+                    if (n == 0) {
+                        work->mode = 1;
+                    }
+                    if (se >= 0) {
+                        HuAudFXStop(se);
+                        se = -1;
+                    }
+                    n--;
+                    timer = 0;
+                }
+                break;
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
 }
 
 void fn_1_F708(void)
