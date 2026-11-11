@@ -352,22 +352,29 @@ void fn_1_D820(s32 arg, MGT_FLOW *flow);
 
 void fn_1_9094(void)
 {
+    MGT_PLAYER *p;
+    MGT_PLAYER *player;
+    s32 i;
+    s8 turn;
+    s32 j;
+    HU3DMODELID model;
+    s32 i3;
+    s8 k;
+    u32 r;
+    s8 *pn;
+    s32 i1;
+    HU3DMODELID model2;
+    HU3DMODELID model3;
+    s8 shuf[4];
+    Vec kamiPos[2];
     s32 order[4];
     s32 tbl[4];
-    s32 a, b, c, d;
     Vec camPos;
     Vec camTarget;
     Vec camUp;
-    Vec kamiPos[2];
-    s8 shuf[4];
-    MGT_PLAYER *player;
-    MGT_PLAYER *p;
-    HU3DMODELID model;
+    s32 a, b, c, d;
+    HU3DMODELID model1;
     s32 timer;
-    s32 i;
-    s32 j;
-    u32 r;
-    s8 turn;
 
     if (lbl_1_bss_1681C->mgNum <= 0) {
         a = -1;
@@ -429,11 +436,11 @@ void fn_1_9094(void)
         HuPrcVSleep();
     }
     lbl_1_bss_16818->stat &= ~0x400;
-    i = 4;
-    while (i--) {
-        model = lbl_1_bss_16818->mdl[i + 7];
-        Hu3DModelCameraSet(model, 0x10);
-        Hu3DModelLayerSet(model, 4);
+    i1 = 4;
+    while (i1--) {
+        model1 = lbl_1_bss_16818->mdl[i1 + 7];
+        Hu3DModelCameraSet(model1, 0x10);
+        Hu3DModelLayerSet(model1, 4);
     }
     Hu3DCameraCreate(0x10);
     Hu3DCameraKill(6);
@@ -470,11 +477,11 @@ void fn_1_9094(void)
     } else {
         Hu3DModelRotSet(lbl_1_bss_16818->mdlShake, 0.0f, 30.0f, 0.0f);
     }
-    model = lbl_1_bss_16818->mdl[4];
+    model3 = lbl_1_bss_16818->mdl[4];
     camUp = lbl_1_data_28[turn + 4];
     camUp.y += 200.0f;
-    Hu3DModelCameraSet(model, 0x10);
-    Hu3DModelPosSetV(model, &camUp);
+    Hu3DModelCameraSet(model3, 0x10);
+    Hu3DModelPosSetV(model3, &camUp);
     lbl_1_bss_16818->stat |= 0x2000;
     HuPrcChildCreate(fn_1_456C, 100, 0x1000, 0, HuPrcCurrentGet());
     HuPrcVSleep();
@@ -527,14 +534,14 @@ void fn_1_9094(void)
     lbl_1_bss_16818->camUp.z = lbl_1_bss_1681C->camTarget.z;
     fn_1_CB8C(order);
     fn_1_D29C(1);
-    i = 4;
-    while (i--) {
-        model = lbl_1_bss_16818->mdl[i + 7];
-        Hu3DModelPosSet(model, -(1.5f * 200.0f) + ((f32)i * 200.0f), 0.0f, lbl_1_data_1B4[lbl_1_bss_16818->player[i].charNo]);
+    i3 = 4;
+    while (i3--) {
+        model = lbl_1_bss_16818->mdl[i3 + 7];
+        Hu3DModelPosSet(model, -(1.5f * 200.0f) + ((f32)i3 * 200.0f), 0.0f, lbl_1_data_1B4[lbl_1_bss_16818->player[i3].charNo]);
         Hu3DModelAttrReset(model, 1);
         Hu3DModelCameraSet(model, 2);
         Hu3DModelLayerSet(model, 0);
-        model = lbl_1_bss_16818->mdl[i + 12];
+        model = lbl_1_bss_16818->mdl[i3 + 12];
         Hu3DModelAttrReset(model, 1);
         Hu3DModelLayerSet(model, 4);
         Hu3DModelCameraSet(model, 0x10);
@@ -621,15 +628,14 @@ void fn_1_9094(void)
         Hu3DCameraKill(2);
         fn_1_D29C(0);
         lbl_1_bss_16818->stat &= ~0x40000000;
-        {
-            s8 k = 4;
-            while (k--) {
-                lbl_1_bss_1681C->playerNo[k] = k;
-            }
+        k = 4;
+        while (k--) {
+            lbl_1_bss_1681C->playerNo[k] = k;
         }
+        pn = lbl_1_bss_1681C->playerNo;
         i = 4;
         while (i--) {
-            shuf[i] = lbl_1_bss_1681C->playerNo[i];
+            shuf[i] = pn[i];
         }
         i = 4;
         while (i--) {
@@ -638,7 +644,7 @@ void fn_1_9094(void)
             } else {
                 r = 0;
             }
-            lbl_1_bss_1681C->playerNo[i] = shuf[r];
+            pn[i] = shuf[r];
             for (j = 0; j <= i; j++) {
                 if (j != r && j > r) {
                     shuf[j - 1] = shuf[j];
@@ -648,10 +654,10 @@ void fn_1_9094(void)
         Hu3DModelLayerSet(lbl_1_bss_16818->mdl[4], 3);
         Hu3DModelAttrSet(lbl_1_bss_16818->mdl[4], 1);
         Hu3DModelCameraSet(lbl_1_bss_16818->mdl[4], 4);
-        model = lbl_1_bss_16818->mdl[2];
-        Hu3DMotionStartEndSet(model, 0.0f, 28.0f);
-        Hu3DMotionTimeSet(model, 0.0f);
-        Hu3DMotionShapeTimeSet(model, 0.0f);
+        model2 = lbl_1_bss_16818->mdl[2];
+        Hu3DMotionStartEndSet(model2, 0.0f, 28.0f);
+        Hu3DMotionTimeSet(model2, 0.0f);
+        Hu3DMotionShapeTimeSet(model2, 0.0f);
         Hu3DModelAttrSet(lbl_1_bss_16818->mdl[2], 0x40000002);
         lbl_1_bss_16818->stat &= ~0x4000;
         HuTHPClose();
@@ -726,6 +732,7 @@ void fn_1_A910(void)
     Hu3DModelKill(lbl_1_bss_16760.hookMdlId);
 }
 
+// Remaining difference: float register/stack allocation of the inlined fn_1_A644 results (target keeps more FPR temps, frame 0x160 vs 0x170).
 void fn_1_A94C(void)
 {
     s16 i;
