@@ -3377,6 +3377,335 @@ BOOL fn_1_C8B4(int param)
     }
 }
 
+typedef struct MdMiniModeAnim_s {
+    s16 mode; //0x00
+    s16 wait; //0x02
+    float radius; //0x04
+    float angle; //0x08
+    float angleStart; //0x0C
+    float angleEnd; //0x10
+    float time[4]; //0x14
+    float t[4]; //0x24
+} MDMINI_MODEANIM;
+
+BOOL fn_1_E44C(int param)
+{
+    MDMINI_MODEANIM *anim;
+    int i;
+    MDMODEL_WORK *model;
+    HuVecF *posP;
+    HuVecF *scaleP;
+    HuVecF *rotP;
+    MDCAMERA_WORK *camera;
+
+    static s16 waitTbl[6] = { 30, 40, 50, 0, 10, 20 };
+    static float angleTbl[6] = { 90, 30, -30, 270, 210, 150 };
+    static float speedTbl[6] = { 45, 40, 45, 60, 55, 50 };
+
+    static HuVecF selPos[2];
+    static HuVecF centerPos[2];
+    static HuVecF center;
+    static MDMINI_MODEANIM modeAnim[6];
+
+    camera = sys->camera;
+    model = sys->model;
+    if(!sys->dirtyF) {
+        if(param == 0) {
+            centerPos[0].x = 0;
+            centerPos[0].y = 0;
+            centerPos[0].z = -2000;
+            centerPos[1].x = 0;
+            centerPos[1].y = 180;
+            centerPos[1].z = -200;
+            center = centerPos[0];
+            for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+                posP = model->posP[i+MDMODEL_CAP_MODE_00];
+                rotP = model->rotP[i+MDMODEL_CAP_MODE_00];
+                scaleP = model->scaleP[i+MDMODEL_CAP_MODE_00];
+                anim->mode = 0;
+                anim->wait = waitTbl[i];
+                anim->radius = 0;
+                anim->angle = -90;
+                anim->angleStart = anim->angle;
+                anim->angleEnd = angleTbl[i];
+                anim->time[0] = 0;
+                anim->time[1] = 0;
+                anim->time[2] = 0;
+                anim->time[3] = 0;
+                anim->t[0] = 0;
+                anim->t[1] = 0;
+                anim->t[2] = 0;
+                anim->t[3] = 0;
+                posP->x = center.x+anim->radius*cos(3.141592653589793*anim->angle/180.0);
+                posP->y = center.y;
+                posP->z = center.z+anim->radius*sin(3.141592653589793*anim->angle/180.0);
+                rotP->x = 0;
+                rotP->y = 0;
+                rotP->z = 0;
+                scaleP->x = 0;
+                scaleP->y = 0;
+                scaleP->z = 0;
+                Hu3DModelDispOn(model->mdlId[i+MDMODEL_CAP_MODE_00]);
+            }
+            fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+        } else if(param == 1) {
+            for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+                anim->mode = 0;
+                anim->angleStart = anim->angle;
+                if(sys->cursorDir == 0) {
+                    anim->angleEnd = 60+anim->angle;
+                } else if(sys->cursorDir == 1) {
+                    anim->angleEnd = anim->angle-60;
+                }
+                anim->time[1] = 0;
+                anim->t[1] = 0;
+            }
+        } else if(param == 2) {
+            for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+                anim->mode = 0;
+                anim->time[0] = 0;
+                anim->time[1] = 0;
+                anim->time[2] = 0;
+                anim->time[3] = 0;
+                anim->t[0] = 0;
+                anim->t[1] = 0;
+                anim->t[2] = 0;
+                anim->t[3] = 0;
+            }
+        } else if(param == 3) {
+            for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+                anim->mode = 0;
+                anim->time[0] = 0;
+                anim->time[1] = 0;
+                anim->time[2] = 0;
+                anim->time[3] = 0;
+                anim->t[0] = 0;
+                anim->t[1] = 0;
+                anim->t[2] = 0;
+                anim->t[3] = 0;
+            }
+            selPos[0] = *model->posP[sys->selNoNow+MDMODEL_CAP_MODE_00];
+            selPos[1].x = 0;
+            selPos[1].y = -50;
+            selPos[1].z = 500;
+        } else if(param == 4) {
+            for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+                anim->mode = 0;
+                anim->time[0] = 0;
+                anim->time[1] = 0;
+                anim->time[2] = 0;
+                anim->time[3] = 0;
+                anim->t[0] = 0;
+                anim->t[1] = 0;
+                anim->t[2] = 0;
+                anim->t[3] = 0;
+                if(i != sys->selNoNow) {
+                    Hu3DModelDispOn(model->mdlId[i+MDMODEL_CAP_MODE_00]);
+                }
+            }
+        }
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 30);
+        MdMathLerp(&center.x, centerPos[0].x, centerPos[1].x, sys->procT);
+        MdMathLerp(&center.y, centerPos[0].y, centerPos[1].y, sys->procT);
+        MdMathLerp(&center.z, centerPos[0].z, centerPos[1].z, sys->procT);
+        for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+            posP = model->posP[i+MDMODEL_CAP_MODE_00];
+            rotP = model->rotP[i+MDMODEL_CAP_MODE_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_MODE_00];
+            switch(anim->mode) {
+                case 0:
+                    if(--anim->wait <= 0) {
+                        anim->wait = 0;
+                        anim->mode = 1;
+                    }
+                    break;
+
+                case 1:
+                    MdMathOscillate(MDMATH_OSC_90, &anim->time[0], &anim->t[0], speedTbl[i]);
+                    MdMathLerp(&anim->radius, 0, 300, anim->t[0]);
+                    MdMathOscillate(MDMATH_OSC_90, &anim->time[1], &anim->t[1], speedTbl[i]);
+                    MdMathLerp(&anim->angle, anim->angleStart, anim->angleEnd, anim->t[1]);
+                    posP->x = center.x+anim->radius*cos(3.141592653589793*anim->angle/180.0);
+                    posP->y = center.y;
+                    posP->z = center.z+anim->radius*sin(3.141592653589793*anim->angle/180.0);
+                    MdMathOscillate(MDMATH_OSC_90, &anim->time[3], &anim->t[3], speedTbl[i]);
+                    if(i == sys->selNoNow) {
+                        MdMathLerpScale(scaleP, 0, 1.5f, anim->t[3]);
+                    } else {
+                        MdMathLerpScale(scaleP, 0, 0.5f, anim->t[3]);
+                    }
+                    if(anim->time[1] >= 1) {
+                        MdMathAngleClamp(&anim->angle);
+                        anim->mode++;
+                    }
+                    break;
+
+                case 2:
+                    break;
+            }
+        }
+    } else if(param == 1) {
+        for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+            posP = model->posP[i+MDMODEL_CAP_MODE_00];
+            rotP = model->rotP[i+MDMODEL_CAP_MODE_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_MODE_00];
+            switch(anim->mode) {
+                case 1:
+                    break;
+
+                case 0:
+                    MdMathOscillate(MDMATH_OSC_90, &anim->time[1], &anim->t[1], 15);
+                    MdMathLerp(&anim->angle, anim->angleStart, anim->angleEnd, anim->t[1]);
+                    posP->x = center.x+anim->radius*cos(3.141592653589793*anim->angle/180.0);
+                    posP->y = center.y;
+                    posP->z = center.z+anim->radius*sin(3.141592653589793*anim->angle/180.0);
+                    if(i == sys->selNoNow) {
+                        MdMathLerpScale(scaleP, 0.5f, 1.5f, anim->t[1]);
+                    } else if(i == sys->selNoPrev) {
+                        MdMathLerpScale(scaleP, 1.5f, 0.5f, anim->t[1]);
+                    }
+                    if(anim->time[1] >= 1) {
+                        MdMathAngleClamp(&anim->angle);
+                        anim->mode++;
+                    }
+                    break;
+            }
+        }
+        if(sys->cursorDir == 0) {
+            MdProcCall(MDMINI_PROC_CURSOR, 11);
+        } else if(sys->cursorDir == 1) {
+            MdProcCall(MDMINI_PROC_CURSOR, 10);
+        }
+    } else if(param == 2) {
+        for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+            posP = model->posP[i+MDMODEL_CAP_MODE_00];
+            rotP = model->rotP[i+MDMODEL_CAP_MODE_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_MODE_00];
+            switch(anim->mode) {
+                case 1:
+                    break;
+
+                case 0:
+                    MdMathOscillate(MDMATH_OSC_90, &anim->time[3], &anim->t[3], 15);
+                    MdMathLerpScale(scaleP, 1, 0, anim->t[3]);
+                    if(anim->time[3] >= 1) {
+                        anim->mode++;
+                    }
+                    break;
+            }
+        }
+    } else if(param == 3) {
+        for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+            posP = model->posP[i+MDMODEL_CAP_MODE_00];
+            rotP = model->rotP[i+MDMODEL_CAP_MODE_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_MODE_00];
+            if(i == sys->selNoNow) {
+                switch(anim->mode) {
+                    case 1:
+                        break;
+
+                    case 0:
+                        MdMathOscillate(MDMATH_OSC_90, &anim->time[0], &anim->t[0], 15);
+                        MdMathOscillate(MDMATH_OSC_180, &anim->time[1], &anim->t[1], 15);
+                        MdMathLerpScaleOfs(scaleP, 1.5f, 2, anim->t[0], 2*anim->t[1]);
+                        if(anim->time[0] >= 1) {
+                            anim->mode++;
+                        }
+                        break;
+                }
+            } else {
+                switch(anim->mode) {
+                    case 1:
+                        break;
+
+                    case 0:
+                        MdMathOscillate(MDMATH_OSC_90, &anim->time[0], &anim->t[0], 15);
+                        MdMathLerpScale(scaleP, 0.5f, 0, anim->t[0]);
+                        if(anim->time[0] >= 1) {
+                            anim->mode++;
+                        }
+                        break;
+                }
+            }
+        }
+    } else if(param == 4) {
+        for(anim=&modeAnim[0], i=0; i<6; i++, anim++) {
+            posP = model->posP[i+MDMODEL_CAP_MODE_00];
+            rotP = model->rotP[i+MDMODEL_CAP_MODE_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_MODE_00];
+            if(i == sys->selNoNow) {
+                switch(anim->mode) {
+                    case 1:
+                        break;
+
+                    case 0:
+                        MdMathOscillate(MDMATH_OSC_90, &anim->time[0], &anim->t[0], 15);
+                        MdMathLerpScale(scaleP, 2, 1.5f, anim->t[0]);
+                        if(anim->time[0] >= 1) {
+                            anim->mode++;
+                        }
+                        break;
+                }
+            } else {
+                switch(anim->mode) {
+                    case 1:
+                        break;
+
+                    case 0:
+                        MdMathOscillate(MDMATH_OSC_90, &anim->time[0], &anim->t[0], 15);
+                        MdMathLerpScale(scaleP, 0, 0.5f, anim->t[0]);
+                        if(anim->time[0] >= 1) {
+                            anim->mode++;
+                        }
+                        break;
+                }
+            }
+        }
+    }
+    if(param == 0) {
+        if(modeAnim[2].mode == 2) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else if(param == 1) {
+        if(modeAnim[5].mode == 1) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else if(param == 2) {
+        if(modeAnim[5].mode == 1) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else if(param == 3) {
+        if(modeAnim[sys->selNoNow].mode == 1) {
+            for(i=0; i<6; i++) {
+                if(i != sys->selNoNow) {
+                    Hu3DModelDispOff(model->mdlId[i+MDMODEL_CAP_MODE_00]);
+                }
+            }
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else if(param == 4) {
+        if(modeAnim[sys->selNoNow].mode == 1) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
+#ifdef TARGET_PC
+    return FALSE;
+#endif
+}
+
 BOOL fn_1_F6C4(int param)
 {
     HuVecF *posP;
