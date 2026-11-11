@@ -2907,6 +2907,9 @@ static s32 MakeCalcNBT(HSFOBJECT *objPtr, HSFFACE *face, s16 endVtx, s16 startVt
     GXPosition3s16(NBT.x * 256.0f, NBT.y * 256.0f, NBT.z * 256.0f);
     GXPosition3s16(NBTB.x * 256.0f, NBTB.y * 256.0f, NBTB.z * 256.0f);
     GXPosition3s16(NBTT.x * 256.0f, NBTT.y * 256.0f, NBTT.z * 256.0f);
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; callers ignore the result
+#endif
 }
 
 static s32 MakeNBT(HSFOBJECT *objPtr, HSFFACE *face, s16 endVtx, s16 startVtx) {
@@ -2933,6 +2936,9 @@ static s32 MakeNBT(HSFOBJECT *objPtr, HSFFACE *face, s16 endVtx, s16 startVtx) {
     GXPosition3s16(NBT.x * 256.0f, NBT.y * 256.0f, NBT.z * 256.0f);
     GXPosition3s16(NBTB.x * 256.0f, NBTB.y * 256.0f, NBTB.z * 256.0f);
     GXPosition3s16(NBTT.x * 256.0f, NBTT.y * 256.0f, NBTT.z * 256.0f);
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; callers ignore the result
+#endif
 }
 
 static void MDFaceCnt(HSFOBJECT *objPtr, HSFFACE *face) {
