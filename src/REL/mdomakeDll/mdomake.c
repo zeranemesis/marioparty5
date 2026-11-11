@@ -121,36 +121,6 @@ MD_PROC MdProcTbl[MDOMAKE_PROC_MAX] = {
     fn_1_54F0
 };
 
-s16 lbl_1_data_314[4] = { 1, 77, 79, 0 };
-
-MDOMAKE_CAMLERP lbl_1_data_31C[1] = {
-    {
-        { 90, 0, 2000 },
-        { 0, 0, 0 },
-        { 90, 0, 1200 },
-        { 0, 50, 0 },
-        2,
-        60
-    }
-};
-
-float lbl_1_data_354[3] = { 90, 210, -30 };
-float lbl_1_data_360[3] = { -90, -210, 30 };
-
-HuVecF lbl_1_data_36C[3] = {
-    { 288, 200, 1200 },
-    { -64, -32, 4000 },
-    { 640, -32, 4000 }
-};
-
-s16 lbl_1_data_390[4] = { 8, 0, 4, 0 };
-float lbl_1_data_398[3] = { 270, 90, 180 };
-float lbl_1_data_3A4[3] = { 630, -270, -180 };
-HuVecF lbl_1_data_3B0[2] = {
-    { 288, -128, 0 },
-    { 288, 64, 0 }
-};
-
 int lbl_1_bss_20;
 HuVecF lbl_1_bss_24[2];
 HuVecF lbl_1_bss_3C[2];
@@ -325,11 +295,21 @@ static void LoadProc(void)
 
 void fn_1_938(void)
 {
-    MDOMAKE_STAR *star = sys->star;
-    MDMODEL_WORK *model = sys->model;
-    MDCAMERA_WORK *camera = sys->camera;
-    HuVecF *pos = model->posP[MDMODEL_STAR];
+    MDMODEL_WORK *model;
+    MDOMAKE_STAR *star;
     int i;
+    HuVecF *pos;
+    MDCAMERA_WORK *camera;
+    MDMESS *mess;
+    HuVecF *rot;
+    HuVecF *scale;
+    model = sys->model;
+    camera = sys->camera;
+    mess = sys->mess;
+    star = sys->star;
+    pos = model->posP[MDMODEL_STAR];
+    rot = model->rotP[MDMODEL_STAR];
+    scale = model->scaleP[MDMODEL_STAR];
     star->mode = MDOMAKE_STAR_NONE;
     star->motNext = 1;
     lbl_1_bss_1E4[0].x = 288;
@@ -340,9 +320,16 @@ void fn_1_938(void)
     while(1) {
         model = sys->model;
         camera = sys->camera;
+        mess = sys->mess;
         star = sys->star;
         pos = model->posP[MDMODEL_STAR];
+        rot = model->rotP[MDMODEL_STAR];
+        scale = model->scaleP[MDMODEL_STAR];
         switch(star->mode) {
+            case MDOMAKE_STAR_NONE:
+                break;
+
+
             case MDOMAKE_STAR_RESET:
                 lbl_1_bss_1C8 = 0;
                 lbl_1_bss_1C4 = 0;
@@ -376,10 +363,11 @@ void fn_1_938(void)
                 lbl_1_bss_1E4[1].y = 300;
                 lbl_1_bss_1E4[1].z = 1000;
                 Hu3D2Dto3D(&lbl_1_bss_1E4[1], camera->camera[MDCAMERA_GUIDE].bit, &lbl_1_bss_1CC[1]);
-                pos->x = lbl_1_bss_1CC[1].x;
-                pos->y = lbl_1_bss_1CC[1].y;
-                pos->z = lbl_1_bss_1CC[1].z;
+                *pos = lbl_1_bss_1CC[1];
                 star->mode = MDOMAKE_STAR_ENTER_IDLE;
+                break;
+
+            case MDOMAKE_STAR_ENTER_IDLE:
                 break;
 
             case MDOMAKE_STAR_EXIT:
@@ -407,6 +395,12 @@ void fn_1_938(void)
                 if(lbl_1_bss_1C8 >= 1) {
                     star->mode = MDOMAKE_STAR_HIDE;
                 }
+                break;
+
+            case MDOMAKE_STAR_HIDE:
+                break;
+
+            case MDOMAKE_STAR_STOP:
                 break;
         }
         switch(star->motNext) {
@@ -437,13 +431,18 @@ void fn_1_938(void)
     }
 }
 
+s16 lbl_1_data_314[4] = { 1, 77, 79, 0 };
+
 void fn_1_1078(void)
 {
-    MDMODEL_WORK *model;
+    MDMODEL_WORK *model = sys->model;
     sys->thpState = 0;
     while(1) {
         model = sys->model;
         switch(sys->thpState) {
+            case 0:
+                break;
+
             case 1:
                 if(sys->selMode == 0) {
                     HuTHPSprCreateVol(lbl_1_data_198[0], 1, 100, 0);
@@ -555,33 +554,8 @@ void fn_1_1700(void)
     MDMODEL_WORK *model = sys->model;
     MDMESS *mess = sys->mess;
     ANIMDATA *animP;
-    MDOMAKE_EFFECT *effect;
-    HU3DPARMANID parManId;
     s16 cameraBit;
     int i;
-    static HU3DPARMANPARAM param = {
-        50,
-        0,
-        2,
-        30,
-        180,
-        { 0, -0.2f, 0 },
-        1,
-        0.8f,
-        30,
-        0.95f,
-        3,
-        {
-            { 0x80, 0xC0, 0xFF, 0xFF },
-            { 0xFF, 0xFF, 0x40, 0xFF },
-            { 0xFF, 0x60, 0x80, 0xFF },
-        },
-        {
-            { 0x80, 0xC0, 0xFF, 0x00 },
-            { 0xFF, 0x40, 0x20, 0x00 },
-            { 0x80, 0x10, 0x10, 0x00 },
-        }
-    };
     MdSpriteDispSet(sprite, MDSPR_GRP_WIN, FALSE);
     MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_LR, FALSE);
     MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_UDLR, FALSE);
@@ -594,15 +568,7 @@ void fn_1_1700(void)
     Hu3DModelDispOn(model->mdlId[MDMODEL_FONTBGFILTER]);
     cameraBit = camera->camera[MDCAMERA_GUIDE].bit;
     animP = sprite->animP[4];
-    effect = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDOMAKE_EFFECT), HU_MEMNUM_OVL);
-    parManId = Hu3DParManCreate(animP, 100, &param);
-    effect->parManId[0] = parManId;
-    Hu3DParManAttrSet(parManId, 0x65);
-    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
-    Hu3DParManRotSet(parManId, 90, 0, 0);
-    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 0);
-    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
-    lbl_1_bss_1FC = effect;
+    lbl_1_bss_1FC = ParticleGlowCreate(animP, 0, cameraBit);
     MdOmakeReset();
     HuPrcVSleep();
     if(sys->evtNo == 0) {
@@ -614,9 +580,9 @@ void fn_1_1700(void)
 }
 
 #define MdOmakeWinOpenAll(mess) do { \
-    MdMessWinOpen(mess, 0, 1, 0, 0, 0, 512, 64, 32, 372, 0); \
-    MdMessWinOpen(mess, 0, 1, 0, 0, 0, 464, 64, 56, 376, 0); \
-    MdMessWinOpen(mess, 1, 1, 0, 0, 1, 448, 32, 64, 340, 0); \
+    MdMessWinOpen(mess, 0, 1, 0, 0, 0, 32, 372, 512, 64, 0); \
+    MdMessWinOpen(mess, 0, 1, 0, 0, 0, 56, 376, 464, 64, 0); \
+    MdMessWinOpen(mess, 1, 1, 0, 0, 1, 64, 340, 448, 32, 0); \
     MdMessWinSpeedSet(mess, 1, 0); \
     MdMessWinAttrSet(mess, 0, HUWIN_ATTR_ALIGN_CENTER); \
     MdMessWinAttrSet(mess, 1, HUWIN_ATTR_ALIGN_CENTER); \
@@ -699,35 +665,33 @@ void fn_1_192C(void)
                     HuPrcVSleep();
                 }
                 choice = MdMessWinChoiceGet(mess, 0);
-                switch(choice) {
-                    case -1:
-                    case 1:
-                        MdMessWinMesSet(mess, 0, FALSE, MDOMAKE_MES(3)+sys->selMode, -1);
-                        MdMessWinMesSet(mess, 1, FALSE, MESSNUM(MESS_SYSHELP, 4), -1);
-                        return;
+                if(choice == -1 || choice == 1) {
+                    MdMessWinMesSet(mess, 0, FALSE, MDOMAKE_MES(3)+sys->selMode, -1);
+                    MdMessWinMesSet(mess, 1, FALSE, MESSNUM(MESS_SYSHELP, 4), -1);
+                    return;
 
-                    case 0:
-                        sys->loadState = MD_LOAD_STATE_LOADING;
-                        sys->loadDir = DATA_mdsel;
-                        star->motNext = 3;
-                        MdMessWinHomeClear(mess, 0);
-                        MdProcWait(MDOMAKE_PROC_CURSOR_UPDATE, 1);
-                        MdOmakeReset();
-                        MdProcWait(MDOMAKE_PROC_WIN_UPDATE, 1);
-                        MdOmakeReset();
-                        WipeColorSet(255, 255, 255);
-                        WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 30);
-                        fn_1_5868(MDOMAKE_AUD_MUSEND);
-                        WipeWait();
-                        while(sys->loadState == MD_LOAD_STATE_LOADING) {
-                            HuPrcVSleep();
-                        }
-                        omOvlHisChg(0, sys->ovlHis->ovl, 0, sys->ovlHis->stat);
-                        sys->ovlCallMode = MD_OVLCALL_RETURN;
-                        sys->nextDll = DLL_mdseldll;
-                        sys->skipWipeF = TRUE;
-                        sys->exitF = TRUE;
-                        return;
+                } else if(choice == 0) {
+                    sys->loadState = MD_LOAD_STATE_LOADING;
+                    sys->loadDir = DATA_mdsel;
+                    star->motNext = 3;
+                    MdMessWinHomeClear(mess, 0);
+                    MdProcWait(MDOMAKE_PROC_CURSOR_UPDATE, 1);
+                    MdOmakeReset();
+                    MdProcWait(MDOMAKE_PROC_WIN_UPDATE, 1);
+                    MdOmakeReset();
+                    WipeColorSet(255, 255, 255);
+                    WipeCreate(WIPE_MODE_OUT, WIPE_TYPE_NORMAL, 30);
+                    fn_1_5868(MDOMAKE_AUD_MUSEND);
+                    WipeWait();
+                    while(sys->loadState == MD_LOAD_STATE_LOADING) {
+                        HuPrcVSleep();
+                    }
+                    omOvlHisChg(0, sys->ovlHis->ovl, 0, sys->ovlHis->stat);
+                    sys->ovlCallMode = MD_OVLCALL_RETURN;
+                    sys->nextDll = DLL_mdseldll;
+                    sys->skipWipeF = TRUE;
+                    sys->exitF = TRUE;
+                    return;
                 }
             } else if(HuPadBtnDown[0] & PAD_BUTTON_A) {
                 fn_1_5868(MDOMAKE_AUD_SECMN_ACCEPT);
@@ -820,6 +784,17 @@ BOOL fn_1_28BC(int param)
     return FALSE;
 }
 
+MDOMAKE_CAMLERP lbl_1_data_31C[1] = {
+    {
+        { 90, 0, 2000 },
+        { 0, 0, 0 },
+        { 90, 0, 1200 },
+        { 0, 50, 0 },
+        2,
+        60
+    }
+};
+
 BOOL fn_1_2A78(int param)
 {
     MDCAMERA *camera = &sys->camera->camera[0];
@@ -831,7 +806,7 @@ BOOL fn_1_2A78(int param)
     MdMathLerp(&camera->center.x, lerp->centerStart.x, lerp->centerEnd.x, sys->t[4]);
     MdMathLerp(&camera->center.y, lerp->centerStart.y, lerp->centerEnd.y, sys->t[4]);
     MdMathLerp(&camera->center.z, lerp->centerStart.z, lerp->centerEnd.z, sys->t[4]);
-    if(sys->time[4] >= 1) {
+    if(sys->time[0] >= 1) {
         return TRUE;
     }
     return FALSE;
@@ -856,93 +831,84 @@ BOOL fn_1_2BF8(int param)
         lbl_1_bss_18C[3].x = 432;
         lbl_1_bss_18C[3].y = 208;
         lbl_1_bss_18C[3].z = 0;
-        switch(param) {
-            case 0:
-                HuSprGrpPosSet(grpId, 0, 0);
-                pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
-                pos->x = lbl_1_bss_18C[0].x;
-                pos->y = lbl_1_bss_18C[0].y;
-                HuSprAttrReset(grpId, 0, HUSPR_ATTR_DISPOFF);
-                pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
-                pos->x = lbl_1_bss_18C[2].x;
-                pos->y = lbl_1_bss_18C[2].y;
-                HuSprAttrReset(grpId, 1, HUSPR_ATTR_DISPOFF);
-                break;
+        if(param == 0) {
+            HuSprGrpPosSet(grpId, 0, 0);
+            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+            pos->x = lbl_1_bss_18C[0].x;
+            pos->y = lbl_1_bss_18C[0].y;
+            HuSprAttrReset(grpId, 0, HUSPR_ATTR_DISPOFF);
+            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+            pos->x = lbl_1_bss_18C[2].x;
+            pos->y = lbl_1_bss_18C[2].y;
+            HuSprAttrReset(grpId, 1, HUSPR_ATTR_DISPOFF);
 
-            case 2:
-                pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
-                pos->x = lbl_1_bss_18C[1].x;
-                pos->y = lbl_1_bss_18C[1].y;
-                HuSprTPLvlSet(grpId, 4, 0);
-                HuSprAttrReset(grpId, 4, HUSPR_ATTR_DISPOFF);
-                break;
+        } else if(param == 2) {
+            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+            pos->x = lbl_1_bss_18C[1].x;
+            pos->y = lbl_1_bss_18C[1].y;
+            HuSprTPLvlSet(grpId, 4, 0);
+            HuSprAttrReset(grpId, 4, HUSPR_ATTR_DISPOFF);
 
-            case 3:
-                pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
-                pos->x = lbl_1_bss_18C[3].x;
-                pos->y = lbl_1_bss_18C[3].y;
-                HuSprTPLvlSet(grpId, 5, 0);
-                HuSprAttrReset(grpId, 5, HUSPR_ATTR_DISPOFF);
-                break;
+        } else if(param == 3) {
+            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+            pos->x = lbl_1_bss_18C[3].x;
+            pos->y = lbl_1_bss_18C[3].y;
+            HuSprTPLvlSet(grpId, 5, 0);
+            HuSprAttrReset(grpId, 5, HUSPR_ATTR_DISPOFF);
         }
         sys->procInitF[2] = 1;
     }
-    switch(param) {
-        case 0:
-            MdMathOscillate(MDMATH_OSC_90, &sys->time[4], &sys->t[4], 15);
-            MdMathLerp(&MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0)->x, lbl_1_bss_18C[0].x, lbl_1_bss_18C[1].x, sys->t[4]);
-            MdMathLerp(&MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1)->x, lbl_1_bss_18C[2].x, lbl_1_bss_18C[3].x, sys->t[4]);
-            break;
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->time[4], &sys->t[4], 15);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[0].x, lbl_1_bss_18C[1].x, sys->t[4]);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[2].x, lbl_1_bss_18C[3].x, sys->t[4]);
 
-        case 1:
-            MdMathOscillate(MDMATH_OSC_90, &sys->time[4], &sys->t[4], 15);
-            MdMathLerp(&MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0)->x, lbl_1_bss_18C[1].x, lbl_1_bss_18C[0].x, sys->t[4]);
-            MdMathLerp(&MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1)->x, lbl_1_bss_18C[3].x, lbl_1_bss_18C[2].x, sys->t[4]);
-            break;
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->time[4], &sys->t[4], 15);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[1].x, lbl_1_bss_18C[0].x, sys->t[4]);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[3].x, lbl_1_bss_18C[2].x, sys->t[4]);
 
-        case 2:
-            MdMathOscillate(MDMATH_OSC_180, &sys->time[4], &sys->t[4], 20);
-            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
-            scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
-            MdMathLerp(&pos->x, lbl_1_bss_18C[1].x, lbl_1_bss_18C[1].x-24, sys->t[4]);
-            MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
-            MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
-            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
-            scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
-            MdMathLerp(&pos->x, lbl_1_bss_18C[1].x, lbl_1_bss_18C[1].x-24, sys->t[4]);
-            MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
-            MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
-            HuSprTPLvlSet(grpId, 4, sys->t[4]);
-            break;
+    } else if(param == 2) {
+        MdMathOscillate(MDMATH_OSC_180, &sys->time[4], &sys->t[4], 20);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+        scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 0);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[1].x, lbl_1_bss_18C[1].x-24, sys->t[4]);
+        MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
+        MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+        scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 4);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[1].x, lbl_1_bss_18C[1].x-24, sys->t[4]);
+        MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
+        MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
+        HuSprTPLvlSet(grpId, 4, sys->t[4]);
 
-        case 3:
-            MdMathOscillate(MDMATH_OSC_180, &sys->time[4], &sys->t[4], 20);
-            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
-            scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
-            MdMathLerp(&pos->x, lbl_1_bss_18C[3].x, 24+lbl_1_bss_18C[3].x, sys->t[4]);
-            MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
-            MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
-            pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
-            scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
-            MdMathLerp(&pos->x, lbl_1_bss_18C[3].x, 24+lbl_1_bss_18C[3].x, sys->t[4]);
-            MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
-            MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
-            HuSprTPLvlSet(grpId, 5, sys->t[4]);
-            break;
+    } else if(param == 3) {
+        MdMathOscillate(MDMATH_OSC_180, &sys->time[4], &sys->t[4], 20);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+        scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 1);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[3].x, 24+lbl_1_bss_18C[3].x, sys->t[4]);
+        MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
+        MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
+        pos = MdSpritePosGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+        scale = MdSpriteScaleGet(sprite, MDSPR_GRP_CURSOR_UDLR, 5);
+        MdMathLerp(&pos->x, lbl_1_bss_18C[3].x, 24+lbl_1_bss_18C[3].x, sys->t[4]);
+        MdMathLerp(&scale->x, 1, 1.5f, sys->t[4]);
+        MdMathLerp(&scale->y, 1, 1.5f, sys->t[4]);
+        HuSprTPLvlSet(grpId, 5, sys->t[4]);
     }
     if(sys->time[4] >= 1) {
-        switch(param) {
-            case 1:
-                MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_UDLR, FALSE);
-                break;
+        if(param == 1) {
+            MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_UDLR, FALSE);
 
-            case 2:
-                HuSprAttrSet(grpId, 4, HUSPR_ATTR_DISPOFF);
-                break;
+        } else if(param == 2) {
+            HuSprAttrSet(grpId, 4, HUSPR_ATTR_DISPOFF);
 
-            case 3:
-                HuSprAttrSet(grpId, 5, HUSPR_ATTR_DISPOFF);
-                break;
+        } else if(param == 3) {
+            HuSprAttrSet(grpId, 5, HUSPR_ATTR_DISPOFF);
         }
         return TRUE;
     }
@@ -1027,6 +993,18 @@ BOOL fn_1_34F0(int param)
     return FALSE;
 }
 
+float lbl_1_data_354[3] = { 90, 210, -30 };
+float lbl_1_data_360[3] = { -90, -210, 30 };
+
+HuVecF lbl_1_data_36C[3] = {
+    { 288, 200, 1200 },
+    { -64, -32, 4000 },
+    { 640, -32, 4000 }
+};
+
+s16 lbl_1_data_390[4] = { 8, 0, 4, 0 };
+float lbl_1_data_398[3] = { 270, 90, 180 };
+float lbl_1_data_3A4[3] = { 630, -270, -180 };
 BOOL fn_1_3C24(int param)
 {
     MDCAMERA_WORK *camera = sys->camera;
@@ -1038,292 +1016,268 @@ BOOL fn_1_3C24(int param)
     MDOMAKE_CAP *cap;
     int i;
     if(sys->procInitF[1] == 0) {
-        switch(param) {
-            case 0:
-                lbl_1_bss_94.x = 0;
-                lbl_1_bss_94.y = 225;
-                lbl_1_bss_94.z = 0;
-                cap = &lbl_1_bss_A0[0];
-                for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                    pos = model->posP[MDMODEL_CAP_START+i];
-                    rot = model->rotP[MDMODEL_CAP_START+i];
-                    scale = model->scaleP[MDMODEL_CAP_START+i];
-                    rot->x = 0;
-                    rot->y = 0;
-                    rot->z = 0;
-                    scale->x = 0;
-                    scale->y = 0;
-                    scale->z = 0;
-                    cap->mode = 0;
-                    cap->delay = lbl_1_data_390[i];
-                    cap->timeA = 0;
-                    cap->timeB = 0;
-                    cap->tA = 0;
-                    cap->tB = 0;
-                    cap->radius = 250;
-                    cap->yaw = lbl_1_data_354[i];
-                    cap->yawBase = 0;
-                    cap->radiusY = 150;
-                    cap->pitch = lbl_1_data_360[i];
-                    cap->pitchBase = 0;
-                    pos->x = lbl_1_bss_94.x+cap->radius*HuCos(cap->yaw);
-                    pos->y = lbl_1_bss_94.y+cap->radiusY*HuSin(cap->pitch);
-                    pos->z = lbl_1_bss_94.z+cap->radius*HuSin(cap->yaw);
-                    cap->end.x = pos->x;
-                    cap->end.y = pos->y;
-                    cap->end.z = pos->z;
-                    cap->radius = 1000;
-                    cap->yaw = lbl_1_data_398[i];
-                    cap->yawBase = lbl_1_data_398[i];
-                    cap->pitchBase = lbl_1_data_3A4[i];
-                    pos->x = cap->end.x+cap->radius*HuCos(cap->yaw);
-                    pos->y = cap->end.y+cap->radius*HuSin(cap->yaw);
-                    pos->z = cap->end.z;
-                }
-                fn_1_5868(MDOMAKE_AUD_SE_ENTER);
-                break;
+        if(param == 0) {
+            lbl_1_bss_94.x = 0;
+            lbl_1_bss_94.y = 225;
+            lbl_1_bss_94.z = 0;
+            cap = &lbl_1_bss_A0[0];
+            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+                pos = model->posP[MDMODEL_CAP_START+i];
+                rot = model->rotP[MDMODEL_CAP_START+i];
+                scale = model->scaleP[MDMODEL_CAP_START+i];
+                rot->x = 0;
+                rot->y = 0;
+                rot->z = 0;
+                scale->x = 0;
+                scale->y = 0;
+                scale->z = 0;
+                cap->mode = 0;
+                cap->delay = lbl_1_data_390[i];
+                cap->timeA = 0;
+                cap->timeB = 0;
+                cap->tA = 0;
+                cap->tB = 0;
+                cap->radius = 250;
+                cap->yaw = lbl_1_data_354[i];
+                cap->yawBase = 0;
+                cap->radiusY = 150;
+                cap->pitch = lbl_1_data_360[i];
+                cap->pitchBase = 0;
+                pos->x = lbl_1_bss_94.x+cap->radius*HuCos(cap->yaw);
+                pos->y = lbl_1_bss_94.y+cap->radiusY*HuSin(cap->pitch);
+                pos->z = lbl_1_bss_94.z+cap->radius*HuSin(cap->yaw);
+                cap->end = *pos;
+                cap->radius = 1000;
+                cap->yaw = lbl_1_data_398[i];
+                cap->yawBase = lbl_1_data_398[i];
+                cap->pitchBase = lbl_1_data_3A4[i];
+                pos->x = cap->end.x+cap->radius*HuCos(cap->yaw);
+                pos->y = cap->end.y+cap->radius*HuSin(cap->yaw);
+                pos->z = cap->end.z;
+            }
+            fn_1_5868(MDOMAKE_AUD_SE_ENTER);
 
-            case 1:
-                cap = &lbl_1_bss_A0[0];
-                for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                    cap->mode = 0;
-                    cap->delay = 0;
-                    cap->timeA = 0;
-                    cap->timeB = 0;
-                    cap->tA = 0;
-                    cap->tB = 0;
-                    cap->yawBase = cap->yaw;
-                    cap->pitchBase = cap->pitch;
-                }
-                break;
+        } else if(param == 1) {
+            cap = &lbl_1_bss_A0[0];
+            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+                cap->mode = 0;
+                cap->delay = 0;
+                cap->timeA = 0;
+                cap->timeB = 0;
+                cap->tA = 0;
+                cap->tB = 0;
+                cap->yawBase = cap->yaw;
+                cap->pitchBase = cap->pitch;
+            }
 
-            case 2:
-                for(i=0; i<MDMODEL_CAP_NUM; i++) {
-                    Hu3D2Dto3D(&lbl_1_data_36C[i], camera->camera[MDCAMERA_MAIN].bit, &lbl_1_bss_70[i]);
+        } else if(param == 2) {
+            for(i=0; i<MDMODEL_CAP_NUM; i++) {
+                Hu3D2Dto3D(&lbl_1_data_36C[i], camera->camera[MDCAMERA_MAIN].bit, &lbl_1_bss_70[i]);
+            }
+            cap = &lbl_1_bss_A0[0];
+            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+                pos = model->posP[MDMODEL_CAP_START+i];
+                rot = model->rotP[MDMODEL_CAP_START+i];
+                scale = model->scaleP[MDMODEL_CAP_START+i];
+                cap->mode = 0;
+                cap->delay = 0;
+                cap->timeA = 0;
+                cap->timeB = 0;
+                cap->tA = 0;
+                cap->tB = 0;
+                cap->start = *pos;
+                if(cap->yaw >= 89 && cap->yaw <= 91) {
+                    cap->end = lbl_1_bss_70[0];
+                } else if(cap->yaw <= -149 && cap->yaw >= -151) {
+                    cap->end = lbl_1_bss_70[1];
+                } else if(cap->yaw <= -29 && cap->yaw >= -31) {
+                    cap->end = lbl_1_bss_70[2];
                 }
-                cap = &lbl_1_bss_A0[0];
-                for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                    pos = model->posP[MDMODEL_CAP_START+i];
-                    cap->mode = 0;
-                    cap->delay = 0;
-                    cap->timeA = 0;
-                    cap->timeB = 0;
-                    cap->tA = 0;
-                    cap->tB = 0;
-                    cap->start.x = pos->x;
-                    cap->start.y = pos->y;
-                    cap->start.z = pos->z;
-                    if(cap->yaw >= 89 && cap->yaw <= 91) {
-                        cap->end.x = lbl_1_bss_70[0].x;
-                        cap->end.y = lbl_1_bss_70[0].y;
-                        cap->end.z = lbl_1_bss_70[0].z;
-                    } else if(cap->yaw <= -149 && cap->yaw >= -151) {
-                        cap->end.x = lbl_1_bss_70[1].x;
-                        cap->end.y = lbl_1_bss_70[1].y;
-                        cap->end.z = lbl_1_bss_70[1].z;
-                    } else if(cap->yaw <= -29 && cap->yaw >= -31) {
-                        cap->end.x = lbl_1_bss_70[2].x;
-                        cap->end.y = lbl_1_bss_70[2].y;
-                        cap->end.z = lbl_1_bss_70[2].z;
-                    }
-                }
-                fn_1_5868(MDOMAKE_AUD_SE_ENTER);
-                break;
+            }
+            fn_1_5868(MDOMAKE_AUD_SE_ENTER);
 
-            case 3:
-                lbl_1_bss_94.x = 0;
-                lbl_1_bss_94.y = 225;
-                lbl_1_bss_94.z = 0;
-                cap = &lbl_1_bss_A0[0];
-                for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                    pos = model->posP[MDMODEL_CAP_START+i];
-                    rot = model->rotP[MDMODEL_CAP_START+i];
-                    scale = model->scaleP[MDMODEL_CAP_START+i];
-                    rot->x = 0;
-                    rot->y = 0;
-                    rot->z = 0;
-                    if(i == sys->selMode) {
-                        scale->x = 2;
-                        scale->y = 2;
-                        scale->z = 2;
-                    } else {
-                        scale->x = 0.75f;
-                        scale->y = 0.75f;
-                        scale->z = 0.75f;
-                    }
-                    Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_START+i]);
-                    cap->mode = 0;
-                    cap->delay = lbl_1_data_390[i];
-                    cap->timeA = 0;
-                    cap->timeB = 0;
-                    cap->tA = 0;
-                    cap->tB = 0;
-                    cap->radius = 250;
-                    cap->yaw = lbl_1_data_354[i];
-                    cap->yawBase = 0;
-                    cap->radiusY = 150;
-                    cap->pitch = lbl_1_data_360[i];
-                    cap->pitchBase = 0;
-                    MdMathAngleClamp(&cap->yaw);
-                    MdMathAngleClamp(&cap->pitch);
-                    pos->x = lbl_1_bss_94.x+cap->radius*HuCos(cap->yaw);
-                    pos->y = lbl_1_bss_94.y+cap->radiusY*HuSin(cap->pitch);
-                    pos->z = lbl_1_bss_94.z+cap->radius*HuSin(cap->yaw);
-                    cap->end.x = pos->x;
-                    cap->end.y = pos->y;
-                    cap->end.z = pos->z;
+        } else if(param == 3) {
+            lbl_1_bss_94.x = 0;
+            lbl_1_bss_94.y = 225;
+            lbl_1_bss_94.z = 0;
+            cap = &lbl_1_bss_A0[0];
+            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+                pos = model->posP[MDMODEL_CAP_START+i];
+                rot = model->rotP[MDMODEL_CAP_START+i];
+                scale = model->scaleP[MDMODEL_CAP_START+i];
+                rot->x = 0;
+                rot->y = 0;
+                rot->z = 0;
+                if(i == sys->selMode) {
+                    scale->x = 2;
+                    scale->y = 2;
+                    scale->z = 2;
+                } else {
+                    scale->x = 0.75f;
+                    scale->y = 0.75f;
+                    scale->z = 0.75f;
                 }
-                break;
+                Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_START+i]);
+                cap->mode = 0;
+                cap->delay = lbl_1_data_390[i];
+                cap->timeA = 0;
+                cap->timeB = 0;
+                cap->tA = 0;
+                cap->tB = 0;
+                cap->radius = 250;
+                cap->yaw = lbl_1_data_354[i];
+                cap->yawBase = 0;
+                cap->radiusY = 150;
+                cap->pitch = lbl_1_data_360[i];
+                cap->pitchBase = 0;
+                MdMathAngleClamp(&cap->yaw);
+                MdMathAngleClamp(&cap->pitch);
+                pos->x = lbl_1_bss_94.x+cap->radius*HuCos(cap->yaw);
+                pos->y = lbl_1_bss_94.y+cap->radiusY*HuSin(cap->pitch);
+                pos->z = lbl_1_bss_94.z+cap->radius*HuSin(cap->yaw);
+                cap->end = *pos;
+            }
         }
         lbl_1_bss_178 = 0;
         sys->procInitF[1] = 1;
     }
-    switch(param) {
-        case 0:
-            cap = &lbl_1_bss_A0[0];
-            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                pos = model->posP[MDMODEL_CAP_START+i];
-                scale = model->scaleP[MDMODEL_CAP_START+i];
-                switch(cap->mode) {
-                    case 0:
-                        if(--cap->delay <= 0) {
-                            Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_START+i]);
-                            cap->mode++;
-                        }
-                        break;
+    if(param == 0) {
+        cap = &lbl_1_bss_A0[0];
+        for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+            pos = model->posP[MDMODEL_CAP_START+i];
+            rot = model->rotP[MDMODEL_CAP_START+i];
+            scale = model->scaleP[MDMODEL_CAP_START+i];
+            switch(cap->mode) {
+                case 0:
+                    if(--cap->delay <= 0) {
+                        Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_START+i]);
+                        cap->mode++;
+                    }
+                    break;
 
-                    case 1:
-                        MdMathOscillate(MDMATH_OSC_90, &cap->timeA, &cap->tA, 60);
-                        MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 60);
-                        MdMathLerp(&cap->radius, 1000, 0, cap->tA);
-                        MdMathLerp(&cap->yaw, cap->yawBase, cap->pitchBase, cap->tA);
-                        pos->x = cap->end.x+cap->radius*HuCos(cap->yaw);
-                        pos->y = cap->end.y+cap->radius*HuSin(cap->yaw);
-                        MdMathLerp(&pos->z, -3000, cap->end.z, cap->tA);
-                        if(i == sys->selMode) {
-                            MdMathLerpScale(scale, 0, 2, cap->tA);
-                        } else {
-                            MdMathLerpScale(scale, 0, 0.75f, cap->tA);
-                        }
-                        if(cap->timeA >= 1) {
-                            cap->radius = 250;
-                            cap->radiusY = 150;
-                            cap->yaw = lbl_1_data_354[i];
-                            cap->pitch = lbl_1_data_360[i];
-                            MdMathAngleClamp(&cap->yaw);
-                            MdMathAngleClamp(&cap->pitch);
-                            cap->mode++;
-                        }
-                        break;
-                }
+                case 1:
+                    MdMathOscillate(MDMATH_OSC_90, &cap->timeA, &cap->tA, 60);
+                    MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 60);
+                    MdMathLerp(&cap->radius, 1000, 0, cap->tA);
+                    MdMathLerp(&cap->yaw, cap->yawBase, cap->pitchBase, cap->tA);
+                    pos->x = cap->end.x+cap->radius*HuCos(cap->yaw);
+                    pos->y = cap->end.y+cap->radius*HuSin(cap->yaw);
+                    MdMathLerp(&pos->z, -3000, cap->end.z, cap->tA);
+                    if(i == sys->selMode) {
+                        MdMathLerpScale(scale, 0, 2, cap->tA);
+                    } else {
+                        MdMathLerpScale(scale, 0, 0.75f, cap->tA);
+                    }
+                    if(cap->timeA >= 1) {
+                        cap->radius = 250;
+                        cap->radiusY = 150;
+                        cap->yaw = lbl_1_data_354[i];
+                        cap->pitch = lbl_1_data_360[i];
+                        MdMathAngleClamp(&cap->yaw);
+                        MdMathAngleClamp(&cap->pitch);
+                        cap->mode++;
+                    }
+                    break;
             }
-            break;
+        }
 
-        case 1:
-            cap = &lbl_1_bss_A0[0];
-            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                pos = model->posP[MDMODEL_CAP_START+i];
-                scale = model->scaleP[MDMODEL_CAP_START+i];
-                switch(cap->mode) {
-                    case 1:
-                        break;
+    } else if(param == 1) {
+        cap = &lbl_1_bss_A0[0];
+        for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+            pos = model->posP[MDMODEL_CAP_START+i];
+            rot = model->rotP[MDMODEL_CAP_START+i];
+            scale = model->scaleP[MDMODEL_CAP_START+i];
+            switch(cap->mode) {
+                case 1:
+                    break;
 
-                    case 0:
-                        MdMathOscillate(MDMATH_OSC_90, &cap->timeA, &cap->tA, 20);
-                        MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 20);
-                        if(sys->turnDir == 0) {
-                            MdMathLerp(&cap->yaw, cap->yawBase, 120+cap->yawBase, cap->tA);
-                            MdMathLerp(&cap->pitch, cap->pitchBase, cap->pitchBase-120, cap->tA);
-                        } else if(sys->turnDir == 1) {
-                            MdMathLerp(&cap->yaw, cap->yawBase, cap->yawBase-120, cap->tA);
-                            MdMathLerp(&cap->pitch, cap->pitchBase, 120+cap->pitchBase, cap->tA);
-                        }
-                        pos->x = lbl_1_bss_94.x+cap->radius*HuCos(cap->yaw);
-                        pos->y = lbl_1_bss_94.y+cap->radiusY*HuSin(cap->pitch);
-                        pos->z = lbl_1_bss_94.z+cap->radius*HuSin(cap->yaw);
-                        if(i == sys->selMode) {
-                            MdMathLerpOfs(&cap->scale, 0.75f, 2, cap->tA, cap->tB);
-                        } else if(i == sys->prevSelMode) {
-                            MdMathLerp(&cap->scale, 2, 0.75f, cap->tA);
-                        } else {
-                            cap->scale = 0.75f;
-                        }
-                        scale->x = cap->scale;
-                        scale->y = cap->scale;
-                        scale->z = cap->scale;
-                        if(cap->timeA >= 1) {
-                            MdMathAngleClamp(&cap->yaw);
-                            MdMathAngleClamp(&cap->pitch);
-                            cap->mode++;
-                        }
-                        break;
-                }
+                case 0:
+                    MdMathOscillate(MDMATH_OSC_90, &cap->timeA, &cap->tA, 20);
+                    MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 20);
+                    if(sys->turnDir == 0) {
+                        MdMathLerp(&cap->yaw, cap->yawBase, 120+cap->yawBase, cap->tA);
+                        MdMathLerp(&cap->pitch, cap->pitchBase, cap->pitchBase-120, cap->tA);
+                    } else if(sys->turnDir == 1) {
+                        MdMathLerp(&cap->yaw, cap->yawBase, cap->yawBase-120, cap->tA);
+                        MdMathLerp(&cap->pitch, cap->pitchBase, 120+cap->pitchBase, cap->tA);
+                    }
+                    pos->x = lbl_1_bss_94.x+cap->radius*HuCos(cap->yaw);
+                    pos->y = lbl_1_bss_94.y+cap->radiusY*HuSin(cap->pitch);
+                    pos->z = lbl_1_bss_94.z+cap->radius*HuSin(cap->yaw);
+                    if(i == sys->selMode) {
+                        MdMathLerpOfs(&cap->scale, 0.75f, 2, cap->tA, cap->tB);
+                    } else if(i == sys->prevSelMode) {
+                        MdMathLerp(&cap->scale, 2, 0.75f, cap->tA);
+                    } else {
+                        cap->scale = 0.75f;
+                    }
+                    scale->x = cap->scale;
+                    scale->y = cap->scale;
+                    scale->z = cap->scale;
+                    if(cap->timeA >= 1) {
+                        MdMathAngleClamp(&cap->yaw);
+                        MdMathAngleClamp(&cap->pitch);
+                        cap->mode++;
+                    }
+                    break;
             }
-            if(sys->turnDir == 0) {
-                MdProcCall(MDOMAKE_PROC_CURSOR_UPDATE, 3);
-            } else if(sys->turnDir == 1) {
-                MdProcCall(MDOMAKE_PROC_CURSOR_UPDATE, 2);
-            }
-            break;
+        }
+        if(sys->turnDir == 0) {
+            MdProcCall(MDOMAKE_PROC_CURSOR_UPDATE, 3);
+        } else if(sys->turnDir == 1) {
+            MdProcCall(MDOMAKE_PROC_CURSOR_UPDATE, 2);
+        }
 
-        case 2:
-            cap = &lbl_1_bss_A0[0];
-            for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
-                pos = model->posP[MDMODEL_CAP_START+i];
-                switch(cap->mode) {
-                    case 1:
-                        break;
+    } else if(param == 2) {
+        cap = &lbl_1_bss_A0[0];
+        for(i=0; i<MDMODEL_CAP_NUM; i++, cap++) {
+            pos = model->posP[MDMODEL_CAP_START+i];
+            rot = model->rotP[MDMODEL_CAP_START+i];
+            scale = model->scaleP[MDMODEL_CAP_START+i];
+            switch(cap->mode) {
+                case 1:
+                    break;
 
-                    case 0:
-                        if(i == sys->selMode) {
-                            MdMathOscillate(MDMATH_OSC_90, &cap->timeA, &cap->tA, 30);
-                            MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 30);
-                            MdMathLerp(&pos->x, cap->start.x, cap->end.x, cap->tA);
-                            MdMathLerpOfs(&pos->y, cap->start.y, cap->end.y, cap->tA, -10*cap->tB);
-                            MdMathLerp(&pos->z, cap->start.z, cap->end.z, cap->tA);
-                        } else {
-                            MdMathOscillate(MDMATH_OSC_90_REV, &cap->timeA, &cap->tA, 30);
-                            MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 30);
-                            MdMathLerp(&pos->x, cap->start.x, cap->end.x, cap->tA);
-                            MdMathLerp(&pos->y, cap->start.y, cap->end.y, cap->tA);
-                            MdMathLerpOfs(&pos->z, cap->start.z, cap->end.z, cap->tA, cap->tB);
+                case 0:
+                    if(i == sys->selMode) {
+                        MdMathOscillate(MDMATH_OSC_90, &cap->timeA, &cap->tA, 30);
+                        MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 30);
+                        MdMathLerp(&pos->x, cap->start.x, cap->end.x, cap->tA);
+                        MdMathLerpOfs(&pos->y, cap->start.y, cap->end.y, cap->tA, -10*cap->tB);
+                        MdMathLerp(&pos->z, cap->start.z, cap->end.z, cap->tA);
+                    } else {
+                        MdMathOscillate(MDMATH_OSC_90_REV, &cap->timeA, &cap->tA, 30);
+                        MdMathOscillate(MDMATH_OSC_180, &cap->timeB, &cap->tB, 30);
+                        MdMathLerp(&pos->x, cap->start.x, cap->end.x, cap->tA);
+                        MdMathLerp(&pos->y, cap->start.y, cap->end.y, cap->tA);
+                        MdMathLerpOfs(&pos->z, cap->start.z, cap->end.z, cap->tA, cap->tB);
+                    }
+                    if(cap->timeA >= 1) {
+                        if(i != sys->selMode) {
+                            Hu3DModelDispOff(model->mdlId[MDMODEL_CAP_START+i]);
                         }
-                        if(cap->timeA >= 1) {
-                            if(i != sys->selMode) {
-                                Hu3DModelDispOff(model->mdlId[MDMODEL_CAP_START+i]);
-                            }
-                            cap->mode++;
-                        }
-                        break;
-                }
+                        cap->mode++;
+                    }
+                    break;
             }
-            break;
+        }
     }
-    switch(param) {
-        case 0:
-            if(lbl_1_bss_A0[0].mode == 2) {
-                return TRUE;
-            }
-            return FALSE;
-
-        case 1:
-            if(lbl_1_bss_A0[0].mode == 1) {
-                return TRUE;
-            }
-            return FALSE;
-
-        case 2:
-            if(lbl_1_bss_A0[0].mode == 1) {
-                return TRUE;
-            }
-            return FALSE;
-
-        case 3:
+    if(param == 0) {
+        if(lbl_1_bss_A0[0].mode == 2) {
             return TRUE;
-
-        default:
-            return FALSE;
+        }
+    } else if(param == 1) {
+        if(lbl_1_bss_A0[0].mode == 1) {
+            return TRUE;
+        }
+    } else if(param == 2) {
+        if(lbl_1_bss_A0[0].mode == 1) {
+            return TRUE;
+        }
+    } else if(param == 3) {
+        return TRUE;
     }
+    return FALSE;
 }
 
 BOOL fn_1_4F34(int param)
@@ -1335,6 +1289,7 @@ BOOL fn_1_4F34(int param)
     HuVecF *pos = model->posP[MDMODEL_STAR];
     HuVecF *rot = model->rotP[MDMODEL_STAR];
     HuVecF *scale = model->scaleP[MDMODEL_STAR];
+    MDOMAKE_EFFECT *effect;
     if(sys->procInitF[1] == 0) {
         lbl_1_bss_54[0].x = 64;
         lbl_1_bss_54[0].y = 300;
@@ -1369,9 +1324,10 @@ BOOL fn_1_4F34(int param)
             MdMathLerp(&rot->x, lbl_1_bss_24[0].x, lbl_1_bss_24[1].x, sys->t[0]);
             MdMathLerp(&rot->y, lbl_1_bss_24[0].y, lbl_1_bss_24[1].y, sys->t[0]);
             MdMathLerpOfs(&rot->z, lbl_1_bss_24[0].z, lbl_1_bss_24[1].z, sys->t[0], 3*sys->t[1]);
-            Hu3DParManPosSet(lbl_1_bss_1FC->parManId[0], pos->x, pos->y, pos->z);
-            Hu3DParManTimeLimitSet(lbl_1_bss_1FC->parManId[0], 2);
-            Hu3DParManAttrReset(lbl_1_bss_1FC->parManId[0], 1);
+            effect = lbl_1_bss_1FC;
+            Hu3DParManPosSet(effect->parManId[0], pos->x, pos->y, pos->z);
+            Hu3DParManTimeLimitSet(effect->parManId[0], 2);
+            Hu3DParManAttrReset(effect->parManId[0], 1);
             if(sys->time[0] >= 0.3f) {
                 MdProcCall(MDOMAKE_PROC_WIN_UPDATE, 1);
                 MdProcCall(MDOMAKE_PROC_CAMERA_LERP, 0);
@@ -1389,6 +1345,11 @@ BOOL fn_1_4F34(int param)
     }
     return FALSE;
 }
+
+HuVecF lbl_1_data_3B0[2] = {
+    { 288, -128, 0 },
+    { 288, 64, 0 }
+};
 
 BOOL fn_1_54F0(int param)
 {

@@ -82,7 +82,7 @@ static MDOMAKE_EFFECT *ParticleDotCreate(ANIMDATA *animP, s16 layer, s16 cameraB
     effectP->parManId[1] = parManId;
     Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDANGLE|HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED90|HU3D_PARMAN_ATTR_TIMEUP);
     Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
-    Hu3DParManRotSet(parManId, frandmod(40)+70, 0, frandmod(80)-40);
+    Hu3DParManRotSet(parManId, (s32)frandmod(40)+70, 0, (s32)frandmod(80)-40);
     Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
     Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
     parManId = Hu3DParManCreate(animP, 100, &param3);

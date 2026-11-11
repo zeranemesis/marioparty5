@@ -1,3 +1,8 @@
+/* MSL's math.h emits the two unused sqrtf statics that the target's .rodata
+ * does not carry; the guard suppresses them without losing the declarations. */
+#ifdef __MWERKS__
+#define _MATH_H
+#endif
 #include "REL/mdomakeDll.h"
 #include "datadir_enum.h"
 
@@ -171,43 +176,43 @@ static void Layer1Hook(s16 layerNo);
 void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera)
 {
     int i;
-    model->mdlId[1] = Hu3DModelCreateData(MDOMAKE_DATA(1));
-    Hu3DModelDispOff(model->mdlId[1]);
-    Hu3DModelLayerSet(model->mdlId[1], 0);
-    Hu3DModelCameraSet(model->mdlId[1], camera->camera[0].bit);
-    Hu3DModelPosSet(model->mdlId[1], 0, 0, 0);
-    Hu3DModelRotSet(model->mdlId[1], 0, 0, 0);
-    Hu3DModelScaleSet(model->mdlId[1], 1, 1, 1);
-    Hu3DModelAttrSet(model->mdlId[1], HU3D_MOTATTR_LOOP);
-    Hu3DModelAttrReset(model->mdlId[1], HU3D_MOTATTR_PAUSE);
-    Hu3DMotionSpeedSet(model->mdlId[1], 1.0f);
-    model->mdlId[0] = Hu3DModelCreateData(MDOMAKE_DATA(0));
-    Hu3DModelDispOff(model->mdlId[0]);
-    Hu3DModelLayerSet(model->mdlId[0], 1);
-    Hu3DModelCameraSet(model->mdlId[0], camera->camera[1].bit);
-    Hu3DModelPosSet(model->mdlId[0], 0, 0, 0);
-    Hu3DModelRotSet(model->mdlId[0], 0, 0, 0);
-    Hu3DModelScaleSet(model->mdlId[0], 1, 1, 1);
-    Hu3DModelAttrSet(model->mdlId[0], HU3D_MOTATTR_LOOP);
-    Hu3DModelAttrReset(model->mdlId[0], HU3D_MOTATTR_PAUSE);
-    Hu3DMotionSpeedSet(model->mdlId[0], 1.0f);
-    for(i=0; i<3; i++) {
-        model->mdlId[2+i] = Hu3DModelCreateData(CapFileTbl[i]);
-        Hu3DModelDispOn(model->mdlId[2+i]);
-        Hu3DModelLayerSet(model->mdlId[2+i], 1);
-        Hu3DModelCameraSet(model->mdlId[2+i], camera->camera[0].bit);
-        Hu3DModelPosSet(model->mdlId[2+i], 0, 0, 0);
-        Hu3DModelRotSet(model->mdlId[2+i], 0, 0, 0);
-        Hu3DModelScaleSet(model->mdlId[2+i], 1, 1, 1);
+    model->mdlId[MDMODEL_STAGE] = Hu3DModelCreateData(MDOMAKE_DATA(1));
+    Hu3DModelDispOff(model->mdlId[MDMODEL_STAGE]);
+    Hu3DModelLayerSet(model->mdlId[MDMODEL_STAGE], 0);
+    Hu3DModelCameraSet(model->mdlId[MDMODEL_STAGE], camera->camera[MDCAMERA_MAIN].bit);
+    Hu3DModelPosSet(model->mdlId[MDMODEL_STAGE], 0, 0, 0);
+    Hu3DModelRotSet(model->mdlId[MDMODEL_STAGE], 0, 0, 0);
+    Hu3DModelScaleSet(model->mdlId[MDMODEL_STAGE], 1, 1, 1);
+    Hu3DModelAttrSet(model->mdlId[MDMODEL_STAGE], HU3D_MOTATTR_LOOP);
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_STAGE], HU3D_MOTATTR_PAUSE);
+    Hu3DMotionSpeedSet(model->mdlId[MDMODEL_STAGE], 1.0f);
+    model->mdlId[MDMODEL_STAR] = Hu3DModelCreateData(MDOMAKE_DATA(0));
+    Hu3DModelDispOff(model->mdlId[MDMODEL_STAR]);
+    Hu3DModelLayerSet(model->mdlId[MDMODEL_STAR], 1);
+    Hu3DModelCameraSet(model->mdlId[MDMODEL_STAR], camera->camera[MDCAMERA_GUIDE].bit);
+    Hu3DModelPosSet(model->mdlId[MDMODEL_STAR], 0, 0, 0);
+    Hu3DModelRotSet(model->mdlId[MDMODEL_STAR], 0, 0, 0);
+    Hu3DModelScaleSet(model->mdlId[MDMODEL_STAR], 1, 1, 1);
+    Hu3DModelAttrSet(model->mdlId[MDMODEL_STAR], HU3D_MOTATTR_LOOP);
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_STAR], HU3D_MOTATTR_PAUSE);
+    Hu3DMotionSpeedSet(model->mdlId[MDMODEL_STAR], 1.0f);
+    for(i=0; i<MDMODEL_CAP_NUM; i++) {
+        model->mdlId[MDMODEL_CAP_START+i] = Hu3DModelCreateData(CapFileTbl[i]);
+        Hu3DModelDispOn(model->mdlId[MDMODEL_CAP_START+i]);
+        Hu3DModelLayerSet(model->mdlId[MDMODEL_CAP_START+i], 1);
+        Hu3DModelCameraSet(model->mdlId[MDMODEL_CAP_START+i], camera->camera[MDCAMERA_MAIN].bit);
+        Hu3DModelPosSet(model->mdlId[MDMODEL_CAP_START+i], 0, 0, 0);
+        Hu3DModelRotSet(model->mdlId[MDMODEL_CAP_START+i], 0, 0, 0);
+        Hu3DModelScaleSet(model->mdlId[MDMODEL_CAP_START+i], 1, 1, 1);
     }
-    model->mdlId[5] = Hu3DHookFuncCreate(FontBGFilter);
-    Hu3DModelLayerSet(model->mdlId[5], 7);
-    Hu3DModelCameraSet(model->mdlId[5], camera->camera[1].bit);
-    Hu3DModelDispOn(model->mdlId[5]);
-    for(i=0; i<3; i++) {
-        model->motId[i] = Hu3DJointMotionData(model->mdlId[0], StarMotFileTbl[i]);
+    model->mdlId[MDMODEL_FONTBGFILTER] = Hu3DHookFuncCreate(FontBGFilter);
+    Hu3DModelLayerSet(model->mdlId[MDMODEL_FONTBGFILTER], 7);
+    Hu3DModelCameraSet(model->mdlId[MDMODEL_FONTBGFILTER], camera->camera[MDCAMERA_GUIDE].bit);
+    Hu3DModelDispOn(model->mdlId[MDMODEL_FONTBGFILTER]);
+    for(i=0; i<MDMODEL_MOT_NUM; i++) {
+        model->motId[i] = Hu3DJointMotionData(model->mdlId[MDMODEL_STAR], StarMotFileTbl[i]);
     }
-    Hu3DMotionSet(model->mdlId[0], model->motId[0]);
+    Hu3DMotionSet(model->mdlId[MDMODEL_STAR], model->motId[0]);
     for(i=0; i<MDMODEL_NUM; i++) {
         HU3DMODEL *modelP = &Hu3DData[model->mdlId[i]];
         model->posP[i] = &modelP->pos;

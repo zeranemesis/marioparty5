@@ -1,3 +1,11 @@
+/* MSL's math.h emits the two unused sqrtf statics that the target's .rodata
+ * does not carry; the guard suppresses them, the declarations are repeated. */
+#ifdef __MWERKS__
+#define _MATH_H
+#define M_PI 3.14159265358979323846
+extern double sin(double x);
+extern double cos(double x);
+#endif
 #include "REL/mdomakeDll.h"
 #include "stdarg.h"
 #include "string.h"

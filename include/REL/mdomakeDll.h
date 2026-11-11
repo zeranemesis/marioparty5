@@ -357,7 +357,7 @@ typedef struct Sys_s {
     s32 evtNo; //0x4C
     s16 thpState; //0x50
     s16 loadState; //0x52
-    s32 loadAsyncStat; //0x54
+    s16 loadAsyncStat; //0x54
     unsigned int loadDir; //0x58
     MDDEBUGFONT_WORK *debugFont; //0x5C
     MDPAD_WORK *pad; //0x60
