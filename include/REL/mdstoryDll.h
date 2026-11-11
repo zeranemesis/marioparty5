@@ -46,7 +46,7 @@
    modelWork 0xB4->mess 0x290 = 7 x 0x44. */
 #define MDSTORY_PLAYERSPR_NUM 1
 #define MDSTORY_MODELWORK_NUM 7
-#define MDSTORY_TEXBUF_MAX 11
+#define MDSTORY_TEXBUF_MAX 7
 
 #define MDSTORY_OSC_MAX 7
 
@@ -118,11 +118,9 @@ enum {
     MDSTORY_OBJ_MAX //4
 };
 
-enum {
-    MDSPR_GRP_FINGER = 38,
-    MDSPR_GRP_RING = 39,
-    MDSPR_GRP_MAX = 40
-};
+#define MDSPR_ANIM_MAX 10
+#define MDSPR_MAX 15
+#define MDSPR_GRP_MAX 5
 
 enum {
     MDSTORY_STAR_NONE, //0
@@ -277,7 +275,9 @@ typedef struct MdLightWork_s {
 } MDLIGHT_WORK;
 
 typedef struct MdSpriteWork_s {
-    HUSPRGRPID grpId[MDSPR_GRP_MAX]; //0x00
+    ANIMDATA *animP[MDSPR_ANIM_MAX]; //0x00
+    HUSPRID sprId[MDSPR_MAX]; //0x28
+    HUSPRGRPID grpId[MDSPR_GRP_MAX]; //0x46
 } MDSPRITE_WORK;
 
 typedef struct MdModelDebugInfo_s {
@@ -287,7 +287,8 @@ typedef struct MdModelDebugInfo_s {
 
 typedef struct MdModelWork_s {
     HU3DMODELID mdlId[MDMODEL_MAX]; //0x00
-    HU3DANIMID animId[MDMODEL_MAX]; //0x34
+    HU3DANIMID animId[24]; //0x34
+    HU3DANIMID toueiAnimId[2]; //0x64
     HuVecF *posP[MDMODEL_MAX]; //0x68
     HuVecF *rotP[MDMODEL_MAX]; //0xD0
     HuVecF *scaleP[MDMODEL_MAX]; //0x138
@@ -350,18 +351,10 @@ typedef struct MdStoryModelWork_s {
     float ofsTime; //0x08
     float t; //0x0C
     float ofsT; //0x10
-    int unk14;
-    float unk18;
-    float unk1C;
-    float unk20;
-    float unk24;
-    float unk28;
-    float unk2C;
-    float unk30;
-    float unk34;
-    float unk38;
-    float unk3C;
-    float unk40;
+    HuVecF posFrom; //0x14
+    HuVecF posTo; //0x20
+    HuVecF rotFrom; //0x2C
+    HuVecF rotTo; //0x38
 } MDSTORY_MODEL_WORK;
 
 typedef struct MdMessWin_s {
@@ -472,7 +465,7 @@ void MdLightUpdateData(MDLIGHT *light);
 void MdLightDebug(MDLIGHT_WORK *lightWork);
 void MdLightPrint(MDLIGHT_WORK *lightWork);
 
-void MdMathMatrixDir(Mtx *matrix, HuVecF *dir);
+Mtx *MdMathMatrixDir(HuVecF *start, HuVecF *end);
 void MdMathMatrixRot(Mtx *matrix, HuVecF *rot);
 void MdMathClamp(float *val, float min, float max);
 void MdMathAngleClamp(float *angle);
@@ -494,7 +487,7 @@ void MdMessKill(MDMESS *mess);
 void MdMessMain(MDMESS *mess, int winNo);
 void MdMessWinOpen(MDMESS *mess, int winNo, s16 type, s16 frame, s16 drawNo, s16 pri, float posX, float posY, s16 w, s16 h, float bgTPLvl);
 void MdMessWinClose(MDMESS *mess, int winNo);
-void MdMessWinKill(MDMESS *mess, int winNo);
+void MdMessWinKill2(MDMESS *mess, int winNo);
 void MdMessWinPosSet(MDMESS *mess, int winNo, float posX, float posY);
 void MdMessWinScaleSet(MDMESS *mess, int winNo, float scaleX, float scaleY);
 void MdMessWinCenterPosSet(MDMESS *mess, int winNo, float posX, float posY);
