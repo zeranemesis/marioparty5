@@ -3101,6 +3101,282 @@ BOOL fn_1_B668(int param)
     }
 }
 
+BOOL fn_1_C8B4(int param)
+{
+    int i;
+    MDMODEL_WORK *model;
+    HuVecF *posP;
+    HuVecF *rotP;
+    HuVecF *scaleP;
+    MDMINI_STAR *star;
+    MDCAMERA_WORK *camera;
+
+    static HuVecF centerPos = { 0, 0, -1000 };
+    static HuVecF chrPos[10] = {
+        { -440, 400, -600 },
+        { -220, 400, -600 },
+        { 0, 400, -600 },
+        { 220, 400, -600 },
+        { 440, 400, -600 },
+        { -440, 130, -600 },
+        { -220, 130, -600 },
+        { 0, 130, -600 },
+        { 220, 130, -600 },
+        { 440, 130, -600 }
+    };
+    static HuVecF playerPos[4] = {
+        { -360, -160, 250 },
+        { -120, -160, 500 },
+        { 120, -160, 750 },
+        { 360, -160, 1000 }
+    };
+    static HuVecF teamPlayerPos[4] = {
+        { -460, 120, -600 },
+        { -220, 120, -600 },
+        { 220, 120, -600 },
+        { 460, 120, -600 }
+    };
+    static HuVec2f cursorTeamPos[4] = {
+        { -130, -900 },
+        { 260, -1100 },
+        { -30, 900 },
+        { 80, 1100 }
+    };
+    static HuVecF handicapPos[4] = {
+        { -460, 120, -600 },
+        { -20, 120, -600 },
+        { 220, 120, -600 },
+        { 460, 120, -600 }
+    };
+
+    camera = sys->camera;
+    model = sys->model;
+    star = sys->star;
+    if(!sys->dirtyF) {
+        if(param == 0) {
+            for(i=0; i<10; i++) {
+                posP = model->posP[i+MDMODEL_CAP_CHR_00];
+                rotP = model->rotP[i+MDMODEL_CAP_CHR_00];
+                scaleP = model->scaleP[i+MDMODEL_CAP_CHR_00];
+                *posP = centerPos;
+                scaleP->x = 0;
+                scaleP->y = 0;
+                scaleP->z = 0;
+                Hu3DModelDispOn(model->mdlId[i+MDMODEL_CAP_CHR_00]);
+                Hu3DModelDispOn(model->mdlId[i+MDMODEL_CHR_00]);
+            }
+            Hu3DModelDispOn(model->mdlId[MDMODEL_STAGE_CHR]);
+            Hu3DLayerHookSet(1+HU3D_LAYER_HOOK_POST, MdToueiLayerHook);
+            fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+        } else if(param != 1) {
+            if(param == 2) {
+                star->mode = MDMINI_STAR_MOVE_LEFT_START;
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 3) {
+                star->mode = MDMINI_STAR_CENTER_START;
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 4) {
+                for(i=0; i<4; i++) {
+                    posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                    rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                    scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                    *posP = playerPos[i];
+                    posP->z = chrPos[sys->chrSel[i]].z;
+                    scaleP->x = 1;
+                    scaleP->y = 1;
+                    scaleP->z = 0.1f;
+                    Hu3DModelDispOn(model->mdlId[sys->chrSel[i]+MDMODEL_CAP_CHR_00]);
+                    Hu3DModelDispOn(model->mdlId[sys->chrSel[i]+MDMODEL_CHR_00]);
+                }
+                for(i=0; i<10; i++) {
+                    posP = model->posP[i+MDMODEL_CAP_CHR_00];
+                    rotP = model->rotP[i+MDMODEL_CAP_CHR_00];
+                    scaleP = model->scaleP[i+MDMODEL_CAP_CHR_00];
+                    if(i != sys->chrSel[0] && i != sys->chrSel[1] && i != sys->chrSel[2] && i != sys->chrSel[3]) {
+                        *posP = chrPos[i];
+                        scaleP->x = 0;
+                        scaleP->y = 0;
+                        scaleP->z = 0;
+                        Hu3DModelDispOn(model->mdlId[i+MDMODEL_CAP_CHR_00]);
+                        Hu3DModelDispOn(model->mdlId[i+MDMODEL_CHR_00]);
+                    }
+                }
+                Hu3DModelDispOn(model->mdlId[MDMODEL_STAGE_CHR]);
+                Hu3DLayerHookSet(1+HU3D_LAYER_HOOK_POST, MdToueiLayerHook);
+                sys->procTime = 1;
+            } else if(param == 5) {
+
+            } else if(param == 6) {
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 7) {
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 8) {
+
+            } else if(param == 9) {
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            } else if(param == 10) {
+                fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
+            }
+        }
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 30);
+        for(i=0; i<10; i++) {
+            posP = model->posP[i+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[i+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, centerPos.x, chrPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, centerPos.y, chrPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, centerPos.z, chrPos[i].z, sys->procT);
+            MdMathLerp(&scaleP->x, 0, 1, sys->procT);
+            MdMathLerp(&scaleP->y, 0, 1, sys->procT);
+            MdMathLerp(&scaleP->z, 0, 0.1f, sys->procT);
+        }
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15);
+        for(i=0; i<10; i++) {
+            posP = model->posP[i+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[i+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&scaleP->x, 1, 0, sys->procT);
+            MdMathLerp(&scaleP->y, 1, 0, sys->procT);
+            MdMathLerp(&scaleP->z, 0.1f, 0, sys->procT);
+        }
+    } else if(param == 2) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 30);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 30);
+        for(i=0; i<4; i++) {
+            posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, chrPos[sys->chrSel[i]].x, playerPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, chrPos[sys->chrSel[i]].y, playerPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, chrPos[sys->chrSel[i]].z, playerPos[i].z, sys->procOfsT);
+        }
+        for(i=0; i<10; i++) {
+            posP = model->posP[i+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[i+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_CHR_00];
+            if(i != sys->chrSel[0] && i != sys->chrSel[1] && i != sys->chrSel[2] && i != sys->chrSel[3]) {
+                MdMathLerp(&scaleP->x, 1, 0, sys->procT);
+                MdMathLerp(&scaleP->y, 1, 0, sys->procT);
+                MdMathLerp(&scaleP->z, 0.1f, 0, sys->procT);
+            }
+        }
+        fn_1_153D0();
+    } else if(param == 3) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 30);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 30);
+        for(i=0; i<4; i++) {
+            posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, playerPos[i].x, chrPos[sys->chrSel[i]].x, sys->procT);
+            MdMathLerp(&posP->y, playerPos[i].y, chrPos[sys->chrSel[i]].y, sys->procT);
+            MdMathLerp(&posP->z, chrPos[sys->chrSel[i]].z, playerPos[i].z, sys->procOfsT);
+        }
+        for(i=0; i<10; i++) {
+            posP = model->posP[i+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[i+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[i+MDMODEL_CAP_CHR_00];
+            if(i != sys->chrSel[0] && i != sys->chrSel[1] && i != sys->chrSel[2] && i != sys->chrSel[3]) {
+                MdMathLerp(&scaleP->x, 0, 1, sys->procT);
+                MdMathLerp(&scaleP->y, 0, 1, sys->procT);
+                MdMathLerp(&scaleP->z, 0, 0.1f, sys->procT);
+            }
+        }
+        fn_1_153D0();
+    } else if(param == 4) {
+
+    } else if(param == 5) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 30);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 30);
+        for(i=0; i<4; i++) {
+            posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, playerPos[i].x, teamPlayerPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, playerPos[i].y, teamPlayerPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, teamPlayerPos[i].z, playerPos[i].z, sys->procOfsT);
+        }
+        MdProcCall(MDMINI_PROC_9, 0);
+        fn_1_153D0();
+    } else if(param == 6) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 30);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 30);
+        for(i=0; i<4; i++) {
+            posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, teamPlayerPos[sys->teamOrder[i]].x, playerPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, teamPlayerPos[sys->teamOrder[i]].y, playerPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, teamPlayerPos[sys->teamOrder[i]].z, playerPos[i].z, sys->procOfsT);
+        }
+        MdProcCall(MDMINI_PROC_9, 1);
+        fn_1_153D0();
+    } else if(param == 7) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15);
+        for(i=0; i<4; i++) {
+            if(sys->teamOrder[i] != sys->teamOrderBackup[i]) {
+                posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                MdMathLerp(&posP->x, teamPlayerPos[sys->teamOrderBackup[i]].x, teamPlayerPos[sys->teamOrder[i]].x, sys->procT);
+                MdMathLerp(&posP->y, teamPlayerPos[sys->teamOrderBackup[i]].y, cursorTeamPos[sys->teamOrder[i]].x, sys->procOfsT);
+                MdMathLerp(&posP->z, -600, cursorTeamPos[sys->teamOrder[i]].y, sys->procOfsT);
+            }
+        }
+        fn_1_153D0();
+        MdProcCall(MDMINI_PROC_CURSOR, sys->cursorDir+22);
+    } else if(param == 8) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 30);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 30);
+        for(i=0; i<4; i++) {
+            posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, playerPos[i].x, handicapPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, playerPos[i].y, handicapPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, handicapPos[i].z, playerPos[i].z, sys->procOfsT);
+        }
+        MdProcCall(MDMINI_PROC_9, 0);
+        fn_1_153D0();
+    } else if(param == 9) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 30);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 30);
+        for(i=0; i<4; i++) {
+            posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            rotP = model->rotP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&posP->x, handicapPos[sys->mdlE[i]].x, playerPos[i].x, sys->procT);
+            MdMathLerp(&posP->y, handicapPos[sys->mdlE[i]].y, playerPos[i].y, sys->procT);
+            MdMathLerp(&posP->z, handicapPos[sys->mdlE[i]].z, playerPos[i].z, sys->procOfsT);
+        }
+        MdProcCall(MDMINI_PROC_9, 1);
+        fn_1_153D0();
+    } else if(param == 10) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procTime, &sys->procT, 15);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procOfsTime, &sys->procOfsT, 15);
+        for(i=0; i<4; i++) {
+            if(sys->mdlE[i] != sys->mdlF[i]) {
+                posP = model->posP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+                MdMathLerp(&posP->x, handicapPos[sys->mdlF[i]].x, handicapPos[sys->mdlE[i]].x, sys->procT);
+                MdMathLerp(&posP->y, handicapPos[sys->mdlF[i]].y, cursorTeamPos[sys->mdlE[i]].x, sys->procOfsT);
+                MdMathLerp(&posP->z, -600, cursorTeamPos[sys->mdlE[i]].y, sys->procOfsT);
+            }
+        }
+        fn_1_153D0();
+        MdProcCall(MDMINI_PROC_CURSOR, sys->cursorDir+22);
+    }
+    if(sys->procTime >= 1) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
 BOOL fn_1_F6C4(int param)
 {
     HuVecF *posP;
