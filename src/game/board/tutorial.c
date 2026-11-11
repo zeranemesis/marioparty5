@@ -103,7 +103,11 @@ BOOL MBTutorialExec(int instNo)
     if(!tutorialExecTbl[instNo]) {
         return FALSE;
     }
+#ifdef TARGET_PC
+    return tutorialExecTbl[instNo](tutorialExecNum[instNo]++); // GC returned r3 = callee result (used for PATH_CHOICE / SAI_CAPSULE_SET)
+#else
     tutorialExecTbl[instNo](tutorialExecNum[instNo]++);
+#endif
 }
 
 static int TutorialExecTurn(int execNum)
@@ -125,6 +129,9 @@ static int TutorialExecTurn(int execNum)
             HuPrcSleep(-1);
             break;
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; this table entry's result is never used (only PathChoice/CapsuleSet results are)
+#endif
 }
 
 static int TutorialExecSai(int execNum)
@@ -174,6 +181,9 @@ static int TutorialExecCapsule(int execNum)
             MBTopWinWait();
             break;
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; this table entry's result is never used (only PathChoice/CapsuleSet results are)
+#endif
 }
 
 static int TutorialExecMasuCapsule(int execNum)
@@ -193,6 +203,9 @@ static int TutorialExecWalkEnd(int execNum)
             MBTopWinWait();
             break;
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; this table entry's result is never used (only PathChoice/CapsuleSet results are)
+#endif
 }
 
 static int TutorialExecWalkEndEvent(int execNum)
@@ -283,6 +296,9 @@ static int TutorialExecTurnEnd(int execNum)
             MBTopWinWait();
             return 0;
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; this table entry's result is never used (only PathChoice/CapsuleSet results are)
+#endif
 }
 
 static int TutorialExecCapsuleSet(int execNum)
@@ -312,6 +328,9 @@ static int TutorialExecCapsuleUse(int execNum)
             MBTopWinWait();
             break;
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; this table entry's result is never used (only PathChoice/CapsuleSet results are)
+#endif
 }
 
 
