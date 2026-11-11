@@ -1,6 +1,9 @@
 #include "REL/mgtourDll.h"
 #include <math.h>
 extern void fn_1_C76C(void);
+u32 fn_1_7E4(u32 mask);
+void fn_1_7AC(u32 mask);
+void fn_1_7C8(u32 mask);
 #define lbl_1_data_7C (&lbl_1_data_28[7])
 extern Vec lbl_1_data_28[12];
 extern u32 lbl_1_data_248[10][4];
@@ -11,63 +14,47 @@ MGT_FLOW *lbl_1_bss_16818;
 MGT_MODEWORK *lbl_1_bss_1681C;
 MGT_FLOW lbl_1_bss_16820;
 
-HUWINID fn_1_660(void)
-{
-    return lbl_1_bss_16818->winId;
-}
+typedef void (*VoidFunc)(void);
+extern void ObjectSetup(void);
+extern const VoidFunc _ctors[];
+extern const VoidFunc _dtors[];
 
-u32 fn_1_7E4(u32 mask)
+int _prolog(void)
 {
-    return lbl_1_bss_16818->stat & mask;
-}
-
-u32 fn_1_83C(u32 mask)
-{
-    return lbl_1_bss_1681C->flag & mask;
-}
-
-u32 fn_1_88C(u32 mask)
-{
-    return lbl_1_bss_16818->flag & mask;
-}
-
-int fn_1_96C(void)
-{
-    return lbl_1_bss_16818->turnNo;
-}
-
-int fn_1_984(void)
-{
-    return lbl_1_bss_16818->charNo;
-}
-
-void fn_1_A0(s8* arr1, s8* arr2, s8 len)
-{
-    s8 i;
-    s8 j;
-    s8 temp1;
-    s8 temp2;
-
-    i = 0;
-    if (len <= 1) {
-        return;
+    const VoidFunc *ctors = _ctors;
+    while (*ctors != 0) {
+        (**ctors)();
+        ctors++;
     }
-    while (i < len - 1) {
-        j = i + 1;
-        while (j < len) {
-            if (arr1[i] > arr1[j]) {
-                temp1 = arr1[i];
-                arr1[i] = arr1[j];
-                arr1[j] = temp1;
-                if (arr2 != NULL) {
-                    temp2 = arr2[i];
-                    arr2[i] = arr2[j];
-                    arr2[j] = temp2;
+    ObjectSetup();
+    return 0;
+}
+
+void _epilog(void)
+{
+    const VoidFunc *dtors = _dtors;
+    while (*dtors != 0) {
+        (**dtors)();
+        dtors++;
+    }
+}
+
+void fn_1_A0(s8 *a, s8 *b, s8 num)
+{
+    int i, j;
+    for (i = 0; i < num - 1; i++) {
+        for (j = i + 1; j < num; j++) {
+            if (a[i] > a[j]) {
+                s8 temp = a[i];
+                a[i] = a[j];
+                a[j] = temp;
+                if (b) {
+                    s8 temp = b[i];
+                    b[i] = b[j];
+                    b[j] = temp;
                 }
             }
-            j++;
         }
-        i++;
     }
 }
 
@@ -94,40 +81,109 @@ void fn_1_140(s8 *arr, int num)
     }
 }
 
-void fn_1_204(void)
+BOOL fn_1_204(f32 *angle, f32 end, f32 speed)
 {
+    f32 diff = *angle - end;
+    f32 change = fmodf(diff, 180);
+    f32 wrap = fmodf(diff, 360);
+    if (fabsf(wrap) > 180.0f) {
+        if (change > 0) {
+            change = -(180.0f - fabsf(change));
+        } else {
+            change = 180.0f - fabsf(change);
+        }
+    }
+    if (fabsf(change) < speed) {
+        *angle = end;
+        return TRUE;
+    }
+    if (change > 0) {
+        change -= speed;
+    } else {
+        change += speed;
+    }
+    *angle = end + change;
+    return FALSE;
+}
+#define MgtAngleSub fn_1_204
+
+void fn_1_40C(int time)
+{
+    while (time--) {
+        HuPrcVSleep();
+    }
 }
 
-void fn_1_40C(void)
+void fn_1_448(int type, int time)
 {
+    WipeCreate(WIPE_MODE_IN, type, time);
+    WipeWait();
 }
 
-void fn_1_448(void)
+void fn_1_49C(int type, int time)
 {
-}
-
-void fn_1_49C(void)
-{
+    WipeCreate(WIPE_MODE_OUT, type, time);
+    WipeWait();
 }
 
 void fn_1_4F0(void)
 {
+    u32 tick;
+    int statId;
+    lbl_1_bss_16818->loadState = 0;
+    tick = OSGetTick();
+    statId = HuDataDirReadAsync(mgDataTbl[lbl_1_bss_16818->mgNo].dataDir);
+    while (!HuDataGetAsyncStat(statId)) {
+        HuPrcVSleep();
+    }
+    lbl_1_bss_16818->loadState = 1;
+    OSReport("Load Time:%d\n", OSTicksToMilliseconds(OSGetTick() - tick));
+    OSReport("Finished!\n");
+    HuPrcEnd();
+    while (1) {
+        HuPrcVSleep();
+    }
 }
 
-void fn_1_5CC(void)
+void fn_1_5CC(int mgNo)
 {
+    lbl_1_bss_16818->mgNo = mgNo;
+    HuDataDirClose(0x9A0000);
+    HuDataDirClose(0x270000);
+    CharModelDataClose(-1);
+    if (!fn_1_7E4(4)) {
+        HuPrcChildCreate(fn_1_4F0, 200, 12288, 0, HuPrcCurrentGet());
+    } else {
+        lbl_1_bss_16818->loadState = 1;
+    }
 }
 
-void fn_1_674(void)
+HUWINID fn_1_660(void)
 {
+    return lbl_1_bss_16818->winId;
+}
+
+void fn_1_674(MGT_PLAYER *player, int seNo)
+{
+    int pan = (int)(32 * (player->pos.x / 200)) + 64;
+    HuAudFXPlayPan(lbl_1_data_248[player->charNo][seNo], pan);
 }
 
 void fn_1_708(void)
 {
+    if (!fn_1_7E4(0x20)) {
+        fn_1_7AC(0x20);
+        HuWinExOpen(lbl_1_bss_16818->winId);
+    }
 }
 
 void fn_1_750(void)
 {
+    if (fn_1_7E4(0x20)) {
+        fn_1_7C8(0x20);
+        HuWinExClose(lbl_1_bss_16818->winId);
+        HuWinHomeClear(lbl_1_bss_16818->winId);
+    }
 }
 
 void fn_1_7AC(u32 mask)
@@ -140,16 +196,24 @@ void fn_1_7C8(u32 mask)
     lbl_1_bss_16818->stat &= ~mask;
 }
 
-// NONMATCHING: 45.45%. Target keeps the global pointer in r4 across the or/clrlwi; MWCC reloads it (lis/addi/lwz) before the stb. Register allocation not controllable from C.
-void fn_1_7FC(u8 mask)
+u32 fn_1_7E4(u32 mask)
 {
-    lbl_1_bss_1681C->flag = (u8)(lbl_1_bss_1681C->flag | mask);
+    return lbl_1_bss_16818->stat & mask;
 }
 
-// NONMATCHING: 45.45%. Target keeps the global pointer in r4 across the andc/clrlwi; MWCC reloads it before the stb. Register allocation not controllable from C.
-void fn_1_81C(u8 mask)
+void fn_1_7FC(u32 mask)
 {
-    lbl_1_bss_1681C->flag = (u8)(lbl_1_bss_1681C->flag & ~mask);
+    lbl_1_bss_1681C->flag |= mask;
+}
+
+void fn_1_81C(u32 mask)
+{
+    lbl_1_bss_1681C->flag &= ~mask;
+}
+
+u32 fn_1_83C(u32 mask)
+{
+    return lbl_1_bss_1681C->flag & mask;
 }
 
 void fn_1_854(u32 mask)
@@ -162,28 +226,37 @@ void fn_1_870(u32 mask)
     lbl_1_bss_16818->flag &= ~mask;
 }
 
-void fn_1_8A4(void)
+u32 fn_1_88C(u32 mask)
 {
+    return lbl_1_bss_16818->flag & mask;
 }
 
-// NONMATCHING: 18.75%. Target reloads the global twice (r4 and r5) and uses lbzx/lhax; MWCC collapses to one register and reorders. Not controllable from C.
+u32 fn_1_8A4(void)
+{
+    return mgDataTbl[(s8)lbl_1_bss_16818->mgTbl[lbl_1_bss_1681C->order[lbl_1_bss_1681C->cur]].mgIdx].nameMes;
+}
+
 s16 fn_1_904(s32 arg)
 {
-    MGT_FLOW *f = lbl_1_bss_16818;
-    s8 idx = (s8)*((u8 *)f + arg + 0x22A);
-    return *(s16 *)((u8 *)f + idx * 0x30 + 0x16);
+    return lbl_1_bss_16818->player[(&lbl_1_bss_16818->player1No)[arg]].charNo;
 }
 
-// NONMATCHING: 18.75%. Same register reallocation as fn_1_904 (target uses r4/r5, MWCC collapses).
 s16 fn_1_938(s32 arg)
 {
-    MGT_FLOW *f = lbl_1_bss_16818;
-    s8 idx = (s8)*((u8 *)f + arg + 0x22A);
-    return *(s16 *)((u8 *)f + idx * 0x30 + 0x14);
+    return lbl_1_bss_16818->player[(&lbl_1_bss_16818->player1No)[arg]].playerNo;
 }
 
-// NONMATCHING: 33.33%. Target emits extsb after the lbz; MWCC omits it (char-return codegen). Not controllable from C.
-s8 fn_1_99C(void)
+int fn_1_96C(void)
+{
+    return lbl_1_bss_16818->turnNo;
+}
+
+int fn_1_984(void)
+{
+    return lbl_1_bss_16818->charNo;
+}
+
+int fn_1_99C(void)
 {
     return lbl_1_bss_1681C->mgNum;
 }
@@ -193,39 +266,122 @@ s8 fn_1_9B4(s32 arg)
     return (s8)*(s16 *)((u8 *)lbl_1_bss_16818 + arg * 0x30 + 0x14);
 }
 
-void fn_1_9D4(void)
+int fn_1_9D4(int no)
 {
+    if (lbl_1_bss_1681C->mgNum <= no) {
+        return -1;
+    }
+    return (&lbl_1_bss_1681C->cur2)[no];
 }
 
-void fn_1_A14(void)
+void fn_1_A14(int mdlId, f32 start, f32 end)
 {
+    Hu3DMotionStartEndSet(mdlId, start, end);
+    Hu3DMotionTimeSet(mdlId, start);
+    Hu3DMotionShapeTimeSet(mdlId, start);
 }
 
 void fn_1_A7C(void)
 {
+    int i;
+    int t;
+    u32 keyMask;
+    s32 key[4];
+    HuWinDisablePlayerSet(lbl_1_bss_16818->winId, 0xF);
+    while ((keyMask = lbl_1_bss_16818->keyMask), !(lbl_1_bss_16818->flag & keyMask)) {
+        for (i = 4; i--;) {
+            key[i] = -1;
+            if (GwPlayerConf[i].type != 0) {
+                key[i] = 0x100;
+            }
+        }
+        HuWinComKeyWait(key[0], key[1], key[2], key[3], 10);
+        for (t = 30; t--;) {
+            HuPrcVSleep();
+        }
+    }
+    HuWinDisablePlayerReset(lbl_1_bss_16818->winId, 0xF);
+    HuWinComKeyReset();
+    HuPrcEnd();
 }
 
-void fn_1_B98(void)
+void fn_1_B98(u32 keyMask)
 {
+    lbl_1_bss_16818->keyMask = keyMask;
+    HuPrcChildCreate(fn_1_A7C, 200, 12288, 0, HuPrcCurrentGet());
 }
 
-void fn_1_BEC(void)
+
+void fn_1_C30(void);
+
+void ObjectSetup(void)
 {
+    _SetFlag(0xB);
+    HuPrcChildCreate(fn_1_C30, 200, 12288, 0, HuPrcCurrentGet());
 }
+
+void fn_1_48B4(void);
+void fn_1_56C0(void);
+void fn_1_6538(void);
+void fn_1_7450(void);
+void fn_1_9094(void);
+void fn_1_A5D8(void);
+void fn_1_7CB8(void);
+void fn_1_5540(void);
 
 void fn_1_C30(void)
 {
+    OMOVLHIS *his = omOvlHisGet(0);
+    BOOL run;
+    BOOL loop;
+    fn_1_48B4();
+    loop = TRUE;
+    while (loop) {
+        run = TRUE;
+        switch (his->evtno) {
+            case 0:
+                fn_1_56C0();
+                loop = TRUE;
+                break;
+            case 1:
+                fn_1_6538();
+                if (!(lbl_1_bss_16818->stat & 8)) {
+                    fn_1_7450();
+                }
+                if (lbl_1_bss_1681C->flag & 1u) {
+                    run = FALSE;
+                }
+                break;
+            case 2:
+                fn_1_9094();
+                run = FALSE;
+                break;
+            case 3:
+                if (lbl_1_bss_16818->stat & 2) {
+                    fn_1_A5D8();
+                }
+                run = FALSE;
+                loop = FALSE;
+                break;
+        }
+        if (run) {
+            fn_1_7CB8();
+        }
+    }
+    fn_1_5540();
+    omOvlReturnEx(1, 1);
+    HuPrcEnd();
 }
 
-void fn_1_D5C(void)
+void fn_1_D5C(int evtno)
 {
+    OMOVLHIS *his = omOvlHisGet(0);
+    omOvlHisChg(0, his->ovl, evtno, his->stat);
 }
 
-// NONMATCHING: 52.63%. Target keeps the current-process pointer in r7 (5th arg) with no frame; MWCC spills it to r31 + a frame. Register allocation not controllable from C.
-void fn_1_DA4(void (*arg)(void))
+void fn_1_DA4(void (*func)(void))
 {
-    HUPROCESS *parent = HuPrcCurrentGet();
-    HuPrcChildCreate(arg, 0x64, 0x1000, 0, parent);
+    HuPrcChildCreate(func, 100, 4096, 0, HuPrcCurrentGet());
     HuPrcVSleep();
 }
 
@@ -656,32 +812,6 @@ HU3DPARMANPARAM lbl_1_data_130 = {
     { { 0xFF, 0xFF, 0xFF, 0xFF }, { 0xFF, 0xFF, 0xFF, 0xFF }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
     { { 0xFF, 0xFF, 0xFF, 0 }, { 0xFF, 0xFF, 0xFF, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
 };
-
-static inline BOOL MgtAngleSub(f32 *angle, f32 end, f32 speed)
-{
-    f32 diff = *angle - end;
-    f32 change = fmodf(diff, 180.0f);
-    f32 wrap = fmodf(diff, 360.0f);
-
-    if (fabsf(wrap) > 180.0f) {
-        if (change > 0.0f) {
-            change = -(180.0f - fabsf(change));
-        } else {
-            change = 180.0f - fabsf(change);
-        }
-    }
-    if (fabsf(change) < speed) {
-        *angle = end;
-        return TRUE;
-    }
-    if (change > 0.0f) {
-        change -= speed;
-    } else {
-        change += speed;
-    }
-    *angle = end + change;
-    return FALSE;
-}
 
 // NONMATCHING: float-literal pool order (sin arg) and callee-saved reg numbering differ; logic complete.
 void fn_1_2E68(void)
@@ -2593,8 +2723,4 @@ void fn_1_B678(HU3DMODEL *modelP, Mtx *mtx)
             }
         }
     }
-}
-
-void ObjectSetup(void)
-{
 }
