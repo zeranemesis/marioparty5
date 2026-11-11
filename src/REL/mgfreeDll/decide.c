@@ -573,9 +573,9 @@ void fn_1_6BC4(s32 mode, s32 selIdx, s32 selCol, s32 selScroll)
     HuWinMesSet(lbl_1_bss_974->id[0x17], 0xE0004);
     HuWinMesSet(lbl_1_bss_974->id[0x18], 0xE0005);
     HuWinMesSet(lbl_1_bss_974->id[0x19], 0xE0006);
-    sprintf(lbl_1_bss_948, "%5d", GwCommon.mgRecord[9]);
-    sprintf(lbl_1_bss_948 + 0xA, "%5d", GwCommon.mgRecord[11]);
-    sprintf(lbl_1_bss_948 + 0x14, "%5d", GwCommon.charPlayNum[0][0]);
+    sprintf(lbl_1_bss_948, "%5d", GwCommon.mgRecord[8]);
+    sprintf(lbl_1_bss_948 + 0xA, "%5d", GwCommon.mgRecord[10]);
+    sprintf(lbl_1_bss_948 + 0x14, "%5d", GwCommon.mgRecord[11]);
     HuWinInsertMesSet(lbl_1_bss_974->id[0x17], MESSNUM_PTR(lbl_1_bss_948), 0);
     HuWinInsertMesSet(lbl_1_bss_974->id[0x18], MESSNUM_PTR(lbl_1_bss_948 + 0xA), 1);
     HuWinInsertMesSet(lbl_1_bss_974->id[0x19], MESSNUM_PTR(lbl_1_bss_948 + 0x14), 2);
