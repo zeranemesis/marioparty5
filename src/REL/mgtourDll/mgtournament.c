@@ -337,14 +337,61 @@ void fn_1_2078(void)
 
 void fn_1_242C(void)
 {
+    int mdl;
+    int mdl2;
+
+    mdl = lbl_1_bss_16818->mdl[0];
+    Hu3DMotionStartEndSet(mdl, 0.0f, 179.0f);
+    Hu3DMotionTimeSet(mdl, 0.0f);
+    Hu3DMotionShapeTimeSet(mdl, 0.0f);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[0], 0x40000082);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[0], 0x40000041);
+    Hu3DCameraMotionOn(lbl_1_bss_16818->mdl[0], 0x10);
+    while (!Hu3DMotionEndCheck(lbl_1_bss_16818->mdl[0])) {
+        HuPrcVSleep();
+    }
+    Hu3DCameraMotionOff(lbl_1_bss_16818->mdl[0]);
+    mdl2 = lbl_1_bss_16818->mdl[0];
+    Hu3DMotionStartEndSet(mdl2, 180.0f, 359.0f);
+    Hu3DMotionTimeSet(mdl2, 180.0f);
+    Hu3DMotionShapeTimeSet(mdl2, 180.0f);
+    Hu3DModelAttrReset(lbl_1_bss_16818->mdl[0], 0x40000082);
+    Hu3DModelAttrSet(lbl_1_bss_16818->mdl[0], 0x40000041);
+    lbl_1_bss_16818->stat |= 0x40;
+    HuPrcEnd();
 }
 
 void fn_1_25E4(void)
 {
+    lbl_1_bss_16818->stat &= ~0x40;
+    HuPrcChildCreate(fn_1_242C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
 }
 
-void fn_1_263C(void)
+f32 lbl_1_data_1B4[13] = { 0.0f, 0.0f, 1000.0f, 0.0f, -3000.0f, 1000.0f, 0.0f, 0.0f, -8000.0f, -3000.0f, -3000.0f, -3000.0f, -3000.0f };
+
+void fn_1_263C(int camBit)
 {
+    f32 spacing = 200.0f;
+    int i;
+    int mdl;
+
+    for (i = 4; i--;) {
+        mdl = lbl_1_bss_16818->mdl[i + 7];
+        Hu3DModelPosSet(mdl, -(1.5f * spacing) + i * spacing, 0.0f, lbl_1_data_1B4[lbl_1_bss_16818->player[i].charNo]);
+        Hu3DModelAttrReset(mdl, 1);
+        Hu3DModelCameraSet(mdl, 2);
+        Hu3DModelLayerSet(mdl, 0);
+        mdl = lbl_1_bss_16818->mdl[i + 12];
+        Hu3DModelAttrReset(mdl, 1);
+        Hu3DModelLayerSet(mdl, 4);
+        Hu3DModelCameraSet(mdl, camBit);
+    }
+    Hu3DCameraCreate(2);
+    Hu3DCameraPerspectiveSet(2, 1.2f, 15000.0f, 40000.0f, 1.2f);
+    Hu3DCameraViewportSet(2, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraScissorSet(2, 0, 0, 640, 480);
+    Hu3DCameraPosSet(2, 0.0f, 100.0f, 30000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 100.0f, 0.0f);
 }
 
 void fn_1_28C0(void)
