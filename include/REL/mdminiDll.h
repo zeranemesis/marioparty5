@@ -34,12 +34,33 @@
 
 #define MDLIGHT_MAX 1
 
+enum {
+    MDCAMERA_BG, //0
+    MDCAMERA_MAIN, //1
+    MDCAMERA_FG, //2
+    MDCAMERA_MAX //3
+};
+
 #define MDMINI_FLOW_MODE_MAX 7
 #define MDMINI_EFFECT_MAX 15
 #define MDMINI_MODEL_MAX 10
 #define MDMINI_MOTION_MAX 3
 
 #define MDMESS_WIN_MAX 2
+
+enum {
+    MD_DEBUGFONT_CTRL_NOP, //0
+    MD_DEBUGFONT_CTRL_CAMERA, //1
+    MD_DEBUGFONT_CTRL_LIGHT, //2
+    MD_DEBUGFONT_CTRL_MODEL, //3
+    MD_DEBUGFONT_CTRL_MAX //4
+};
+
+enum {
+    MDCAMERA_FOCUS_TARGET, //0
+    MDCAMERA_FOCUS_POS, //1
+    MDCAMERA_FOCUS_MAX //2
+};
 
 enum {
     MDMATH_CURVE_STD_BOUNCE, //0
@@ -235,6 +256,23 @@ typedef struct MdPadWork_s {
     u16 DStk[4];
 } MDPAD_WORK;
 
+typedef struct MdCameraTypeInfo_s {
+    int bit;
+    int focusType;
+} MDCAMERA_TYPE_INFO;
+
+typedef struct MdCameraRect_s {
+    float x;
+    float y;
+    float w;
+    float h;
+} MDCAMERA_RECT;
+
+typedef struct MdCameraParam_s {
+    HuVecF hvr;
+    HuVecF center;
+} MDCAMERA_PARAM;
+
 typedef struct MdCamera_s {
     u16 bit; //0x00
     int focusType; //0x04
@@ -253,9 +291,8 @@ typedef struct MdCamera_s {
 typedef struct MdCameraWork_s {
     BOOL createF; //0x00
     MDDEBUGFONT_WORK *debugFont; //0x04
-    MDCAMERA camera[2]; //0x08
-    s16 selCamera; //0x118
-    u8 pad[0x8A];
+    MDCAMERA camera[MDCAMERA_MAX]; //0x08
+    int selCamera; //0x1A0
 } MDCAMERA_WORK;
 
 typedef struct MdLight_s {
@@ -452,12 +489,12 @@ void MdLightUpdateData(MDLIGHT *light);
 void MdLightDebug(MDLIGHT_WORK *lightWork);
 void MdLightPrint(MDLIGHT_WORK *lightWork);
 
-void MdMathMatrixDir(HuVecF *start, HuVecF *end, Mtx *matrix);
+Mtx *MdMathMatrixDir(HuVecF *start, HuVecF *end);
 void MdMathMatrixRot(Mtx *matrix, HuVecF *rot);
 
 void MdMathClamp(float *val, float min, float max);
 void MdMathAngleClamp(float *angle);
-void MdMathOscillate(int type, float *t, float *out, float speed);
+void MdMathOscillate(int type, float *in, float *out, float t);
 void MdMathStdCurveGet(int type, float *in, float *out, float t);
 void MdMathLerp(float *out, float a, float b, float t);
 void MdMathLerpOfs(float *out, float a, float b, float t, float ofs);
@@ -465,8 +502,7 @@ void MdMathLerpColor(u8 *out, float a, float b, float t);
 void MdMathLerpScale(HuVecF *out, float a, float b, float t);
 void MdMathLerpScaleOfs(HuVecF *out, float a, float b, float t, float ofs);
 void MdMathCurveInit(int sampleNum, float *sampleT, float *sample, float *sampleSlope);
-void MdMathCurveGet(float *out, int sampleNum, float *sampleT, float *sample, float *sampleSlope,
-                   float *t, float time);
+void MdMathCurveGet(float *out, int sampleNum, float *sampleT, float *sample, float *sampleSlope, float t);
 void MdMathStdCurveInit(void);
 
 void MdMessCreate(MDMESS *mess);
@@ -478,24 +514,16 @@ void MdMessWinClose(MDMESS *mess, int winNo);
 void MdMessWinKill(MDMESS *mess, int winNo);
 void MdMessWinPosSet(MDMESS *mess, int winNo, float posX, float posY);
 void MdMessWinSpeedSet(MDMESS *mess, int winNo, s16 speed);
+void MdMessWinAttrSet(MDMESS *mess, int winNo, u32 attr);
+void MdMessWinAttrReset(MDMESS *mess, int winNo, u32 attr);
 void MdMessWinPad1Set(MDMESS *mess, int winNo);
-void MdMessWinHomeClear(MDMESS *mess, int winNo);
 void MdMessWinMesSet(MDMESS *mess, int winNo, BOOL choice, ...);
 BOOL MdMessWinCheck(MDMESS *mess, int winNo);
 s16 MdMessWinChoiceNowGet(MDMESS *mess, int winNo);
 void MdMessWinChoiceSet(MDMESS *mess, int winNo, s16 choice);
 int MdMessWinChoiceGet(MDMESS *mess, int winNo);
-void MdMessWinAttrSet(MDMESS *mess, int winNo, u32 attr);
-void MdMessWinAttrReset(MDMESS *mess, int winNo, u32 attr);
-
-void MdSpriteCreate(MDSPRITE_WORK *sprite);
-void MdSpriteDispSet(MDSPRITE_WORK *sprite, int grpNo, BOOL dispF);
-HuVec2f *MdSpriteGrpPosGet(MDSPRITE_WORK *sprite, int grpNo);
-HuVec2f *MdSpriteGrpScaleGet(MDSPRITE_WORK *sprite, int grpNo);
-HuVec2f *MdSpritePosGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
-HuVec2f *MdSpriteScaleGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
-
-void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
+void MdMessWinHomeClear(MDMESS *mess, int winNo);
+s16 MdMessWinStatGet(MDMESS *mess, int winNo);
 
 /* --- mdmini.c ------------------------------------------------------------ */
 
