@@ -450,6 +450,9 @@ int MB5Ev_MasuHatena(int playerNo)
             MB5Ev_Rocket(playerNo);
         }
     }
+#ifdef TARGET_PC
+    return 0; // GC returned r3 = last call result; MASUPLAYERHOOK result is ignored by MasuHatenaMain
+#endif
 }
 
 int MB5_MasuStub(void)
