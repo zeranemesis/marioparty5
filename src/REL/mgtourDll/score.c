@@ -224,7 +224,16 @@ void fn_1_BB14(s8 *str, s32 len)
 void fn_1_BB78(s32 *order)
 {
     s32 idx[4];
+#ifdef TARGET_PC
+    s32 i;
+#endif
 
+#ifdef TARGET_PC
+    for (i = 0; i < 4; i++) {
+        idx[i] = 0;
+        order[i] = i;
+    }
+#endif
     switch (fn_1_9D4(0)) {
         case 0:
             order[0] = 4;
@@ -1424,8 +1433,86 @@ void fn_1_DEFC(void)
 
 void fn_1_F708(void)
 {
+    Vec in;
+    f32 angle[4];
+    MGTVec2 pos;
+    f32 sinv;
+    f32 off;
+    s32 i;
+    s32 mdl;
+
+    i = 4;
+    while (i--) {
+        angle[i] = (f32)frandmod(0x168);
+    }
+    while (fn_1_7E4(0x40000000) != 0) {
+        i = 4;
+        while (i--) {
+            sinv = sin(3.141592653589793 * angle[i] / 180.0);
+            off = 10.0f * sinv;
+            pos.x = lbl_1_data_B98[i].x;
+            pos.y = off + lbl_1_data_B98[i].y;
+            in.x = pos.x;
+            in.y = pos.y;
+            in.z = 1000.0f;
+            Hu3D2Dto3D(&in, 0x10, &in);
+            mdl = lbl_1_bss_177A0.mdl[lbl_1_bss_177A0.sel[i] + 0xC];
+            Hu3DModelPosSetV(mdl, &in);
+            HuSprPosSet(lbl_1_bss_177A0.grpPlate, (s16)(i + 2), lbl_1_data_B58[i].x, off + lbl_1_data_B58[i].y);
+            HuSprPosSet(lbl_1_bss_177A0.grpPlate, (s16)(i + 6), lbl_1_data_B78[i].x, off + lbl_1_data_B78[i].y);
+            if (i == 0) {
+                HuSprPosSet(lbl_1_bss_177A0.grpPlate, 0xA, lbl_1_data_BB8.x, lbl_1_data_BB8.y + off);
+            }
+            angle[i] += 2.0f;
+            if (angle[i] >= 360.0f) {
+                angle[i] -= 360.0f;
+            }
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
 }
 
 void fn_1_F9D0(void)
 {
+    s32 t;
+    s32 state;
+    s32 run;
+    f32 scale;
+
+    run = 1;
+    state = 0;
+    while (run != 0) {
+        switch (state) {
+            case 0:
+                t = 10;
+                state = 1;
+                break;
+            case 1:
+                scale = 1.0f - (f32)t / 10.0f;
+                scale = sin(3.141592653589793 * scale * 0.5);
+                scale *= 0.2f;
+                scale += 1.0f;
+                Hu3DModelScaleSet(lbl_1_bss_177A0.mdl[4], scale, scale, scale);
+                t--;
+                if (t == 0) {
+                    state = 2;
+                    t = 30;
+                }
+                break;
+            case 2:
+                scale = (f32)t / 30.0f;
+                scale = sin(3.141592653589793 * scale * 0.5);
+                scale *= 0.2f;
+                scale += 1.0f;
+                Hu3DModelScaleSet(lbl_1_bss_177A0.mdl[4], scale, scale, scale);
+                t--;
+                if (t == 0) {
+                    run = 0;
+                }
+                break;
+        }
+        HuPrcVSleep();
+    }
+    HuPrcEnd();
 }
