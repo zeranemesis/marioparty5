@@ -370,8 +370,87 @@ void fn_1_44E0(int mode, float speed)
     HuPrcVSleep();
 }
 
+Vec lbl_1_data_28[12] = {
+    { -160.0f, 0.0f, 160.0f },
+    { 0.0f, 0.0f, 160.0f },
+    { 160.0f, 0.0f, 160.0f },
+    { 320.0f, 0.0f, 160.0f },
+    { -180.0f, 31.0f, 420.0f },
+    { 167.0f, 31.0f, 420.0f },
+    { 0.0f, -300.0f, -7000.0f },
+    { 0.0f, 100.0f, 0.0f },
+    { -320.0f, 100.0f, 140.0f },
+    { -420.0f, 100.0f, 140.0f },
+    { -380.0f, 100.0f, 140.0f },
+    { 20.0f, 100.0f, 140.0f }
+};
+
+struct MgtParCol {
+    u8 c[4][4];
+};
+
+struct MgtParCol lbl_1_data_1E8 = {
+    { { 0x80, 0x80, 0x80, 0xFF }, { 0x40, 0x40, 0x40, 0xFF }, { 0x00, 0x00, 0x00, 0x00 }, { 0x40, 0x40, 0x40, 0x80 } }
+};
+
+HU3DPARMANPARAM lbl_1_data_1F8 = {
+    40, 0, 0.3f, 30.0f, 10.0f, { 0.0f, -0.2f, 0.0f }, 2.0f, 1.0f, 40.0f, 0.98f, 2,
+    { { 0xFF, 0xFF, 0xFF, 0xFF }, { 0xFF, 0xFF, 0xFF, 0xFF }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+    { { 0xFF, 0xFF, 0xFF, 0x00 }, { 0xFF, 0xFF, 0xFF, 0x00 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+};
+
+static inline void MgtParColSet(HU3DPARMANPARAM *dst, struct MgtParCol *src)
+{
+    dst->colorStart[0].r = src->c[0][0];
+    dst->colorStart[0].g = src->c[0][1];
+    dst->colorStart[0].b = src->c[0][2];
+    dst->colorStart[0].a = src->c[0][3];
+    dst->colorStart[1].r = src->c[1][0];
+    dst->colorStart[1].g = src->c[1][1];
+    dst->colorStart[1].b = src->c[1][2];
+    dst->colorStart[1].a = src->c[1][3];
+    dst->colorEnd[0].r = src->c[2][0];
+    dst->colorEnd[0].g = src->c[2][1];
+    dst->colorEnd[0].b = src->c[2][2];
+    dst->colorEnd[0].a = src->c[2][3];
+    dst->colorEnd[1].r = src->c[3][0];
+    dst->colorEnd[1].g = src->c[3][1];
+    dst->colorEnd[1].b = src->c[3][2];
+    dst->colorEnd[1].a = src->c[3][3];
+}
+
 void fn_1_456C(void)
 {
+    int angle;
+    HU3DPARMANID parManId;
+    HU3DMODELID mdlId;
+    ANIMDATA *anim;
+    s8 charNo;
+    Vec basePos;
+    Vec pos;
+    float s;
+    mdlId = lbl_1_bss_16818->mdl[4];
+    angle = 0;
+    basePos = lbl_1_data_28[lbl_1_bss_16818->turnNo + 4];
+    charNo = lbl_1_bss_16818->charNo;
+    basePos.y += 25.0f + (40.0f + CharModelHeightGet(charNo));
+    anim = HuSprAnimRead(HuDataSelHeapReadNum(0x9A0023, 0x10000000, HEAP_MODEL));
+    MgtParColSet(&lbl_1_data_1F8, &lbl_1_data_1E8);
+    parManId = Hu3DParManCreate(anim, 100, &lbl_1_data_1F8);
+    Hu3DParManAttrSet(parManId, 0x54);
+    Hu3DParManLayerSet(parManId, 4);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), 1);
+    while (lbl_1_bss_16818->stat & 0x2000) {
+        s = sin(M_PI * angle / 180);
+        pos = basePos;
+        pos.y += 25.0f * s;
+        Hu3DModelPosSetV(mdlId, &pos);
+        Hu3DParManPosSet(parManId, pos.x, pos.y, pos.z);
+        angle = (angle + 1) % 360;
+        HuPrcVSleep();
+    }
+    Hu3DParManAttrSet(parManId, 1);
+    HuPrcEnd();
 }
 
 void fn_1_485C(void)
