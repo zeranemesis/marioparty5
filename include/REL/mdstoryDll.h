@@ -46,7 +46,7 @@
    modelWork 0xB4->mess 0x290 = 7 x 0x44. */
 #define MDSTORY_PLAYERSPR_NUM 1
 #define MDSTORY_MODELWORK_NUM 7
-#define MDSTORY_TEXBUF_MAX 11
+#define MDSTORY_TEXBUF_MAX 7
 
 #define MDSTORY_OSC_MAX 7
 
@@ -351,18 +351,10 @@ typedef struct MdStoryModelWork_s {
     float ofsTime; //0x08
     float t; //0x0C
     float ofsT; //0x10
-    int unk14;
-    float unk18;
-    float unk1C;
-    float unk20;
-    float unk24;
-    float unk28;
-    float unk2C;
-    float unk30;
-    float unk34;
-    float unk38;
-    float unk3C;
-    float unk40;
+    HuVecF posFrom; //0x14
+    HuVecF posTo; //0x20
+    HuVecF rotFrom; //0x2C
+    HuVecF rotTo; //0x38
 } MDSTORY_MODEL_WORK;
 
 typedef struct MdMessWin_s {
