@@ -72,8 +72,8 @@ extern void MdMathLerpScale(HuVecF *out, float a, float b, float t);
 extern void MdMathLerpScaleOfs(HuVecF *out, float a, float b, float t, float ofs);
 extern void MdMathPolarCoord(HuVecF *out, HuVecF *center, float radX, float radZ, float scale, float angle);
 extern void MdSpriteCreate(void *sprite);
-extern HuVec2f *MdSpriteGrpPosGet(void *sprite, int grpNo);
-extern HuVec2f *MdSpriteGrpScaleGet(void *sprite, int grpNo);
+extern HuVecF *MdSpriteGrpPosGet(void *sprite, int grpNo);
+extern HuVecF *MdSpriteGrpScaleGet(void *sprite, int grpNo);
 extern void MdSpriteFadeDispSet(int dispF, int mode);
 extern void MdModelCreate(void *model, void *camera);
 extern void MdModelSoundTypeSet(u8 mode);
@@ -1544,7 +1544,196 @@ void fn_1_2D20(void)
     }
 }
 
-/*@@NEXT@@*/
+/* 0x4768 - proc 0: reset the transition work (timers, flags). */
+s32 fn_1_4768(s32 mode)
+{
+    sys->camInitF = 0;
+    sys->unk3E8 = 0;
+    sys->orbitInitF = 0;
+    sys->unk41C = 0;
+    sys->rumbleTime = 0;
+    sys->camTime[0] = 0.0f;
+    sys->camTime[1] = 0.0f;
+    sys->camTime[2] = 0.0f;
+    sys->camTime[3] = 0.0f;
+    sys->camT[0] = 0.0f;
+    sys->camT[1] = 0.0f;
+    sys->camT[2] = 0.0f;
+    sys->camT[3] = 0.0f;
+    sys->orbitTime[0] = 0.0f;
+    sys->orbitTime[1] = 0.0f;
+    sys->orbitTime[2] = 0.0f;
+    sys->orbitTime[3] = 0.0f;
+    sys->orbitTime[4] = 0.0f;
+    sys->orbitTime[5] = 0.0f;
+    sys->orbitT[0] = 0.0f;
+    sys->orbitT[1] = 0.0f;
+    sys->orbitT[2] = 0.0f;
+    sys->orbitT[3] = 0.0f;
+    sys->orbitT[4] = 0.0f;
+    sys->orbitT[5] = 0.0f;
+    sys->sprInitF = 0;
+    sys->sprTime[0] = 0.0f;
+    sys->sprTime[1] = 0.0f;
+    sys->sprT[0] = 0.0f;
+    sys->sprT[1] = 0.0f;
+    return 0;
+}
+
+/*@@M2@@*/
+
+/* 0x9FD8 - proc 4: slide the mode title sprite in (mode 0) or out. */
+s32 fn_1_9FD8(s32 mode)
+{
+    float t;
+    MDCAMERA_WORK *camera = sys->camera;
+    MDOPT_MODEL_WORK *model = sys->model;
+    HuVecF *pos;
+    HuVecF *scale;
+
+    pos = MdSpriteGrpPosGet(sys->sprite, 0);
+    scale = MdSpriteGrpScaleGet(sys->sprite, 0);
+    if(sys->sprInitF == 0) {
+        if(mode < 50) {
+            fn_1_A930(6);
+            scale->x = 0.0f;
+            scale->y = 0.0f;
+            scale->z = 0.0f;
+        }
+        sys->sprInitF = 1;
+    }
+    MdMathOscillate(MDMATH_OSC_180, &sys->sprTime[1], &sys->sprT[1], 30.0f);
+    if(mode == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->sprTime[0], &sys->sprT[0], 30.0f);
+        MdMathLerp(&t, 0.0f, 1.0f, sys->sprT[0]);
+        scale->x = scale->y = t;
+        pos->x = 288.0f - 100.0f * sys->sprT[1];
+        pos->y = 192.0f + 50.0f * sys->sprT[1];
+    } else {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->sprTime[0], &sys->sprT[0], 30.0f);
+        MdMathLerp(&t, 1.0f, 0.0f, sys->sprT[0]);
+        scale->x = scale->y = t;
+        pos->x = 288.0f + 100.0f * sys->sprT[1];
+        pos->y = 190.0f - 50.0f * sys->sprT[1];
+    }
+    if(sys->sprTime[0] >= 1.0f) {
+        if(mode != 0) {
+            MdOptionModeSpriteKill(sys->sprite);
+            fn_1_A930(7);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/* 0xA324 - helper process: keeps the star model parked at its 2D
+ * anchor, faces it to the camera and plays the requested motion. */
+void fn_1_A324(void)
+{
+    static HuVecF pos2D[2] = {
+        { 56.0f, 400.0f, 1280.0f },
+        { 64.0f, -128.0f, 1280.0f }
+    };
+    MDOPT_MODEL_WORK *model = sys->model;
+    MDCAMERA_WORK *camera = sys->camera;
+    MDMESS_WORK *mess = sys->mess;
+    s32 *stat = &sys->unk398;
+    HuVecF *posP = model->posP[0];
+    HuVecF *rotP = model->rotP[0];
+    HuVecF *scaleP = model->scaleP[0];
+    s16 winStat;
+
+    while(1) {
+        model = sys->model;
+        camera = sys->camera;
+        mess = sys->mess;
+        stat = &sys->unk398;
+        posP = model->posP[0];
+        rotP = model->rotP[0];
+        scaleP = model->scaleP[0];
+        switch(stat[0]) {
+            case 0:
+                break;
+
+            case 1:
+                Hu3D2Dto3D(&pos2D[0], camera->camera[1].bit, &lbl_1_bss_4[0]);
+                *posP = lbl_1_bss_4[0];
+                break;
+        }
+        fn_1_A514(0, 1);
+        winStat = MdMessWinStatGet(mess, 0);
+        switch(stat[1]) {
+            case 0:
+                break;
+
+            case 1:
+                Hu3DModelAttrSet(model->mdlId[0], HU3D_MOTATTR_LOOP);
+                Hu3DModelAttrReset(model->mdlId[0], HU3D_MOTATTR_PAUSE);
+                Hu3DMotionSet(model->mdlId[0], model->motId[0]);
+                stat[1] = 0;
+                break;
+
+            case 2:
+                Hu3DMotionShiftSet(model->mdlId[0], model->motId[1], 0.0f, 32.0f, HU3D_MOTATTR_LOOP);
+                stat[1] = 0;
+                break;
+
+            case 3:
+                Hu3DMotionShiftSet(model->mdlId[0], model->motId[0], 0.0f, 32.0f, HU3D_MOTATTR_LOOP);
+                stat[1] = 0;
+                break;
+        }
+        HuPrcVSleep();
+    }
+}
+
+/* 0xA514 - turn a model around Y so that it faces the given camera. */
+void fn_1_A514(int modelNo, int cameraNo)
+{
+    HuVecF dir;
+    MDCAMERA_WORK *camWork = sys->camera;
+    MDCAMERA *camera;
+    MDOPT_MODEL_WORK *model;
+    HuVecF *posP;
+    HuVecF *rotP;
+    float yaw;
+
+    camera = &camWork->camera[cameraNo];
+    model = sys->model;
+    posP = model->posP[modelNo];
+    rotP = model->rotP[modelNo];
+    dir.x = camera->pos.x - posP->x;
+    dir.y = camera->pos.y - posP->y;
+    dir.z = camera->pos.z - posP->z;
+    yaw = 180.0 * (atan2(dir.x, dir.z) / 3.141592653589793);
+    rotP->y = yaw;
+}
+
+/* 0xA604 - collect the connected controllers into the cursor list. */
+void fn_1_A604(void)
+{
+    u8 unused[4] = { 0, 0, 0, 0 };
+    int i;
+    u16 stat;
+
+    sys->cursorSelNo = 0;
+    for(i = 0; i < 4; i++) {
+        sys->cursorSel[i] = -1;
+    }
+    for(i = 0; i < 4; i++) {
+        stat = HuPadStatGet(i);
+        if(stat == 0) {
+            sys->cursorSel[sys->cursorSelNo] = i;
+            sys->cursorSelF[i] = 1;
+            sys->cursorSelNo++;
+        } else {
+            sys->cursorSelF[i] = 0;
+        }
+    }
+    sys->cursorSelNoPrev = sys->cursorSelNo - 1;
+}
+
+/*@@NEXT@@*//*@@NEXT@@*/
 
 /* 0xA760 - latch the current per-entry cursor selections into
  * the display copy, blanking the entries past the last one. */
@@ -1559,5 +1748,85 @@ void fn_1_A760(void)
         if(i > sys->cursorSelNoPrev) {
             sys->cursorSelPrev[i] = -1;
         }
+    }
+}
+
+/* 0xA7F8 - read this frame's menu command: d-stick repeat (0..1, 6..7)
+ * or the A/B/Y/X buttons (2..5); -1 when nothing was pressed. */
+s32 fn_1_A7F8(void)
+{
+    s32 cmd = -1;
+
+    if(sys->padWork->DStkDown[0] & 1) {
+        cmd = 0;
+    } else if(sys->padWork->DStkDown[0] & 2) {
+        cmd = 1;
+    } else if(sys->padWork->DStkDown[0] & 8) {
+        cmd = 6;
+    } else if(sys->padWork->DStkDown[0] & 4) {
+        cmd = 7;
+    } else if(HuPadBtnDown[0] & 0x200) {
+        cmd = 2;
+    } else if(HuPadBtnDown[0] & 0x100) {
+        cmd = 3;
+    } else if(HuPadBtnDown[0] & 0x40) {
+        cmd = 4;
+    } else if(HuPadBtnDown[0] & 0x20) {
+        cmd = 5;
+    }
+    return cmd;
+}
+
+/* 0xA930 - menu sound effects / BGM control. */
+void fn_1_A930(s32 cmd)
+{
+    switch(cmd) {
+        case 0:
+            lbl_1_bss_654 = HuAudBGMPlay(4);
+            break;
+
+        case 1:
+            HuAudSStreamFadeOut(lbl_1_bss_654, 1000);
+            break;
+
+        case 2:
+            HuAudFXPlay(0);
+            break;
+
+        case 3:
+            HuAudFXPlay(2);
+            break;
+
+        case 4:
+            HuAudFXPlay(3);
+            break;
+
+        case 5:
+            HuAudFXPlay(4);
+            break;
+
+        case 6:
+            HuAudFXPlay(0x5A5);
+            break;
+
+        case 7:
+            HuAudFXPlay(0x5A8);
+            break;
+
+        case 8:
+            HuAudFXPlay(0x5A6);
+            break;
+
+        case 9:
+            HuAudFXPlay(0x5A7);
+            break;
+
+        case 10:
+            HuAudFXPlay(0x5A9);
+            break;
+
+        case 11:
+            HuAudAllStop();
+            break;
     }
 }
