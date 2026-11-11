@@ -148,10 +148,10 @@ static s32 lbl_1_data_780[13][4] = {
     { 2, 3, 0, 1 },
 };
 
-static char lbl_1_bss_948[0x1E];
-static char lbl_1_bss_966[0xE];
-MgFreeDecide *lbl_1_bss_974;
 static MgFreeDecide lbl_1_bss_978;
+MgFreeDecide *lbl_1_bss_974;
+static char lbl_1_bss_966[0xE];
+static char lbl_1_bss_948[0x1E];
 
 void fn_1_46DC(s32 player, s16 grp, s32 member, s16 grp2, s32 prio, s16 member2)
 {
@@ -223,11 +223,9 @@ void fn_1_4A08(void)
     s32 n;
     s32 i;
     s32 j;
-    s8 col;
 
     n = lbl_1_bss_974->count - lbl_1_bss_974->scroll;
-    col = lbl_1_bss_974->col;
-    HuSprPosSet(lbl_1_bss_974->id[27], 8, lbl_1_data_648[col].x, lbl_1_data_648[(s8)lbl_1_bss_974->col].y);
+    HuSprPosSet(lbl_1_bss_974->id[27], 8, lbl_1_data_648[(s8)lbl_1_bss_974->col].x, lbl_1_data_648[(s8)lbl_1_bss_974->col].y);
     if (n <= 8) {
         i = n;
         while (i--) {
