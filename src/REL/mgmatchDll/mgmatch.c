@@ -22,7 +22,7 @@ extern void HuTHPClose(void);
 extern void HuAudSStreamFadeOut(s32 arg0, s32 arg1);
 extern void HuWinExKill(HUWINID arg0);
 extern void fn_1_2E8(void);
-extern void HuAudFXPlayPan(s32 arg0, s32 arg1);
+extern int HuAudFXPlayPan(int seId, s16 pan);
 extern void fn_1_1C08(void);
 extern void fn_1_1EA0(void);
 extern void fn_1_1F58(void);
@@ -146,6 +146,9 @@ void fn_1_C638(void);
 void fn_1_CCE4(f32 *p, s32 n);
 void fn_1_CE5C(void);
 void fn_1_D130(void);
+void fn_1_D184(void);
+void fn_1_112B8(void);
+void fn_1_11F2C(void);
 /* end forward declarations */
 
 M505_FLOW *lbl_1_bss_0;
@@ -3626,6 +3629,1027 @@ void fn_1_D130(void)
 {
     lbl_1_bss_0->flag2 |= 0x00800000;
     HuPrcChildCreate(fn_1_CE5C, 0x63, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_D184(void)
+{
+    Vec lightPos = { 0.0f, 50.0f, 700.0f };
+    Vec lightDir = { 0.0f, 0.0f, -1.0f };
+    Vec lp;
+    Vec bpos[4];
+    Vec q;
+    Vec r;
+    Vec d;
+    Vec camV;
+    Vec tgtV;
+    Vec dest;
+    f32 *pts;
+    HU3DMODELID *ballMdl;
+    CAMMOTIONWORK *buf;
+    CAMMOTIONWORK *tail;
+    M505_PLAYER *pl;
+    OMOVLHIS *dummy;
+    s32 ball[4];
+    s32 tie[4];
+    s32 st2[4];
+    s32 tm[4];
+    s32 sA[4];
+    s32 sB[4];
+    s32 sD[4];
+    s32 inv[4];
+    s32 c1[4];
+    s32 c2[4];
+    s32 d1[4];
+    s32 d2[4];
+    s32 d3[4];
+    s8 perm[4];
+    s8 picks[4];
+    f32 ang[4];
+    f32 spd[4];
+    f32 vel[4];
+    f32 y0[4];
+    f32 y1[4];
+    f32 f;
+    f32 f29;
+    f32 f31;
+    s32 place;
+    s32 count;
+    s32 score;
+    s32 place2;
+    s32 score2;
+    s32 allCom;
+    s32 timer;
+    MGTIMER *timerMg;
+    s32 cur;
+    s32 n;
+    s32 k;
+    s32 i;
+    s32 j;
+    s32 cd;
+    s32 done;
+    s32 seh;
+    s32 pan;
+    s32 wait;
+    s32 st3;
+    s32 st5;
+    s32 st6;
+    s32 st2c;
+    s32 cnt;
+    s32 cam21;
+    s32 t3;
+    s32 done10;
+    s32 done11;
+    s32 max;
+    s32 prevRank;
+    s32 se8;
+    u8 seDone;
+    HU3DMODELID m;
+
+#ifdef TARGET_PC
+    cnt = 0;
+    cam21 = 0;
+    f29 = 0.0f;
+    t3 = 0;
+    seh = 0;
+    pts = lbl_1_data_3A8;
+    memset(d1, 0, sizeof(d1));
+    memset(d2, 0, sizeof(d2));
+    memset(d3, 0, sizeof(d3));
+    memset(c1, 0, sizeof(c1));
+    memset(c2, 0, sizeof(c2));
+    memset(inv, 0, sizeof(inv));
+    memset(sA, 0, sizeof(sA));
+    memset(sB, 0, sizeof(sB));
+    memset(sD, 0, sizeof(sD));
+    memset(st2, 0, sizeof(st2));
+    memset(tm, 0, sizeof(tm));
+    memset(picks, 0, sizeof(picks));
+    memset(ang, 0, sizeof(ang));
+    memset(spd, 0, sizeof(spd));
+    memset(vel, 0, sizeof(vel));
+    memset(y0, 0, sizeof(y0));
+    memset(y1, 0, sizeof(y1));
+    memset(bpos, 0, sizeof(bpos));
+#endif
+    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x100000;
+    HuPrcVSleep();
+    HuPrcVSleep();
+    fn_1_64C(&place, &count, &score);
+    count = 0;
+    allCom = 1;
+    for (i = 0; i < lbl_1_bss_4->teamCount; i++) {
+        if (lbl_1_bss_4->score[i] == score) {
+            tie[count] = i;
+            if (GwPlayerConf[i].type == 0) {
+                allCom = 0;
+            }
+            count += 1;
+        }
+    }
+    if (allCom != 0) {
+        OSReport("ALL COM!!\n");
+    }
+    i = count;
+    while (i-- != 0) {
+        perm[i] = i;
+    }
+    fn_1_140((u8 *)perm, count);
+    if (place == 2) {
+        ballMdl = &lbl_1_bss_0->mdl[0x3A];
+    } else {
+        ballMdl = &lbl_1_bss_0->mdl[0x3B];
+    }
+    for (i = 0; i < count; i++) {
+        ball[i] = ballMdl[perm[i]];
+        Hu3DModelShadowSet((s16)ball[i]);
+    }
+    fn_1_15C74(lbl_1_bss_0->player);
+    pl = lbl_1_bss_0->player;
+    for (i = 0; i < 4; i++) {
+        CharMotionVoiceOnSet(pl->charNo, (s16)lbl_1_data_0[4], 0);
+        pl++;
+    }
+    fn_1_12AE4(2);
+    while (fn_1_12B08() == 0) {
+        HuPrcVSleep();
+    }
+    if (lbl_1_bss_0->bgmId < 0) {
+        lbl_1_bss_0->bgmId = HuAudBGMPlay(0x23);
+    }
+    HuPrcChildCreate(fn_1_168A4, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    if (allCom != 0) {
+        lbl_1_bss_0->keyWaitMask = 0x100;
+        HuPrcChildCreate(fn_1_9FC, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    }
+    while ((lbl_1_bss_0->flag & 0x100) == 0) {
+        HuPrcVSleep();
+    }
+    fn_1_4B4();
+    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x2000;
+    HuPrcChildCreate(fn_1_3850, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    while ((lbl_1_bss_0->flag2 & 0x2000) == 0) {
+        HuPrcVSleep();
+    }
+    switch (count) {
+        case 2:
+            pts = lbl_1_data_3A8;
+            i = count;
+            while (i-- != 0) {
+                Hu3DModelAttrSet(lbl_1_bss_0->parMan[i].id, 0x40000001);
+                Hu3DModelAttrSet(lbl_1_bss_0->parMan[i].id, 1);
+                lbl_1_bss_0->parMan[i].scale = *(Vec *)&lbl_1_data_3A8[i * 3];
+                lbl_1_bss_0->parMan[i].offset = *(Vec *)&lbl_1_data_3A8[i * 3];
+                lbl_1_bss_0->parMan[i].offset.x = lbl_1_bss_0->parMan[i].offset.x + 1200.0f;
+                lbl_1_bss_0->parMan[i].pos = lbl_1_bss_0->parMan[i].offset;
+                Hu3DModelRotSet(lbl_1_bss_0->parMan[i].id, 0.0f, -90.0f, 0.0f);
+            }
+            break;
+        case 3:
+            pts = &lbl_1_data_3A8[2 * 3];
+            i = count;
+            while (i-- != 0) {
+                Hu3DModelAttrSet(lbl_1_bss_0->parMan[i].id, 0x40000001);
+                Hu3DModelAttrSet(lbl_1_bss_0->parMan[i].id, 1);
+                lbl_1_bss_0->parMan[i].scale = *(Vec *)&lbl_1_data_3A8[(i + 2) * 3];
+                lbl_1_bss_0->parMan[i].offset = *(Vec *)&lbl_1_data_3A8[(i + 2) * 3];
+                lbl_1_bss_0->parMan[i].offset.x = lbl_1_bss_0->parMan[i].offset.x + 1200.0f;
+                lbl_1_bss_0->parMan[i].pos = lbl_1_bss_0->parMan[i].offset;
+                Hu3DModelRotSet(lbl_1_bss_0->parMan[i].id, 0.0f, -90.0f, 0.0f);
+            }
+            break;
+    }
+    buf = lbl_1_bss_0->camPath;
+    max = 0x32;
+    lbl_1_bss_0->camPathNum = CamMotionExPathGet(lbl_1_bss_0->mdlCam0, 6, 240.0f, 0, &buf, (int *)&max);
+    i = lbl_1_bss_0->camPathNum;
+    while (i-- != 0) {
+        buf[i].pos.y = buf[i].pos.y - 100.0f;
+    }
+    tail = &lbl_1_bss_0->camPath[lbl_1_bss_0->camPathNum - 1];
+    buf = tail;
+    lbl_1_bss_0->camPath[0].time = 0.0f;
+    lbl_1_bss_0->camPath[0].fov = lbl_1_bss_4->fov;
+    lbl_1_bss_0->camPath[0].pos.x = lbl_1_bss_4->camPos.x;
+    lbl_1_bss_0->camPath[0].pos.y = lbl_1_bss_4->camPos.y;
+    lbl_1_bss_0->camPath[0].pos.z = lbl_1_bss_4->camPos.z;
+    lbl_1_bss_0->camPath[0].up = lbl_1_bss_4->camUp;
+    lbl_1_bss_0->camPath[0].target.x = lbl_1_bss_4->camTarget.x;
+    lbl_1_bss_0->camPath[0].target.y = lbl_1_bss_4->camTarget.y;
+    lbl_1_bss_0->camPath[0].target.z = lbl_1_bss_4->camTarget.z;
+    lbl_1_bss_0->camPath[1].time = 120.0f;
+    lbl_1_bss_0->camPath[1].fov = lbl_1_bss_4->fov;
+    lbl_1_bss_0->camPath[1].pos.x = tail->pos.x;
+    lbl_1_bss_0->camPath[1].pos.y = tail->pos.y;
+    lbl_1_bss_0->camPath[1].pos.z = tail->pos.z;
+    lbl_1_bss_0->camPath[1].up = tail->up;
+    lbl_1_bss_0->camPath[1].target.x = tail->target.x;
+    lbl_1_bss_0->camPath[1].target.y = tail->target.y;
+    lbl_1_bss_0->camPath[1].target.z = tail->target.z;
+    lbl_1_bss_0->camPath[1].pos.y = lbl_1_bss_0->camPath[1].pos.y + 350.0f;
+    lbl_1_bss_0->camPath[1].pos.z = lbl_1_bss_0->camPath[1].pos.z + 250.0f;
+    lbl_1_bss_0->camPath[1].target.y = lbl_1_bss_0->camPath[1].target.y + -200.0f;
+    lbl_1_bss_0->camPath[1].target.z = lbl_1_bss_0->camPath[1].target.z + -300.0f;
+    lbl_1_bss_0->camPathNum = 2;
+    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x100;
+    HuPrcChildCreate(fn_1_1F58, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    i = count;
+    while (i-- != 0) {
+        q = *(Vec *)&pts[i * 3];
+        q.y = 1900.0f;
+        m = lbl_1_bss_0->mdl[i + 0x37];
+        Hu3DModelAttrReset(m, 1);
+        Hu3DModelPosSetV(m, &q);
+        Hu3DModelAttrSet((s16)ball[i], 1);
+        Hu3DModelPosSetV((s16)ball[i], &q);
+    }
+    wait = 0xF0;
+    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 | 0x800000;
+    HuPrcChildCreate(fn_1_CE5C, 0x63, 0x1000, 0, HuPrcCurrentGet());
+    i = count;
+    while (i-- != 0) {
+        n = frandmod(0x19) * 2;
+        k = (s32)((240.0f - (f32)n) - 5.0f);
+        d1[i] = k;
+        d2[i] = k;
+        d3[i] = (frandmod(0x19) * 2) + 0xF;
+        Hu3DModelAttrReset(lbl_1_bss_0->parMan[i].id, 1);
+    }
+    seh = HuAudFXPlayPan(0x4FD, 0x58);
+    HuAudFXVolSet(seh, 0x6E);
+    while (wait-- != 0) {
+        i = count;
+        while (i-- != 0) {
+            if (d1[i] >= 0) {
+                if (d1[i] >= d3[i] && (f32)(d1[i] - d3[i]) < 120.0f) {
+                    Hu3DModelRotSet(lbl_1_bss_0->parMan[i].id, 0.0f,
+                        -90.0f * (f32)sin(3.141592653589793 * (f64)(f32)sin(3.141592653589793 * (f64)((f32)(d1[i] - d3[i]) / 120.0f) * 0.5) * 0.5),
+                        0.0f);
+                }
+                f31 = (f32)sin(3.141592653589793 * (f64)(f32)sin(3.141592653589793 * (f64)(1.0f - ((f32)d1[i] / (f32)d2[i])) * 0.5) * 0.5);
+                PSVECSubtract(&lbl_1_bss_0->parMan[i].scale, &lbl_1_bss_0->parMan[i].offset, &d);
+                PSVECScale(&d, &d, f31);
+                PSVECAdd(&lbl_1_bss_0->parMan[i].offset, &d, &lbl_1_bss_0->parMan[i].pos);
+                Hu3DModelPosSetV(lbl_1_bss_0->parMan[i].id, &lbl_1_bss_0->parMan[i].pos);
+                d1[i] -= 1;
+            }
+        }
+        if (count == 2) {
+            f = 24.0f * (((lbl_1_bss_0->parMan[0].pos.x + lbl_1_bss_0->parMan[1].pos.x) * 0.5f) / 600.0f);
+            HuAudFXPanning(seh, (s32)f + 0x40);
+        } else {
+            f = 24.0f * (lbl_1_bss_0->parMan[1].pos.x / 600.0f);
+            HuAudFXPanning(seh, (s32)f + 0x40);
+        }
+        if ((f32)wait == 180.0f) {
+            m = lbl_1_bss_0->mdl[5];
+            Hu3DMotionTimeSet(m, (f32)(Hu3DMotionMaxTimeGet(m) - 0.01));
+            Hu3DMotionShapeTimeSet(m, (f32)(Hu3DMotionMaxTimeGet(m) - 0.01));
+            Hu3DMotionOverlayTimeSet(m, (f32)(Hu3DMotionMaxTimeGet(m) - 0.01));
+            Hu3DMotionSpeedSet(m, 0.1f);
+            Hu3DMotionShapeSpeedSet(m, 0.1f);
+            Hu3DMotionOverlaySpeedSet(m, 0.1f);
+            Hu3DModelAttrReset(m, 0x40000482);
+            Hu3DModelAttrSet(m, 0x40000904);
+        }
+        HuPrcVSleep();
+    }
+    HuPrcChildCreate(fn_1_16B20, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+    if (allCom != 0) {
+        lbl_1_bss_0->keyWaitMask = 0x800000;
+        HuPrcChildCreate(fn_1_9FC, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+    }
+    while ((lbl_1_bss_0->flag & 0x800000) == 0) {
+        HuPrcVSleep();
+    }
+    if ((lbl_1_bss_0->flag2 & 2) == 0) {
+        timerMg = MgTimerCreate(0);
+        for (k = 0; k < count; k++) {
+            pl = &lbl_1_bss_0->player[tie[k]];
+            lbl_1_bss_0->unknownE00 = pl->charNo;
+            i = count;
+            while (i-- != 0) {
+                c1[i] = i;
+            }
+            j = k;
+            while (j-- != 0) {
+                c1[(s8)picks[j]] = -1;
+            }
+            n = 0;
+            for (i = 0; i < count; i++) {
+                if (c1[i] >= 0) {
+                    c2[n] = i;
+                    n += 1;
+                }
+            }
+            cur = 0;
+            if ((count != 2 || k != 1) && (count != 3 || k != 2)) {
+                HuPrcChildCreate(fn_1_16B7C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+                HuPrcVSleep();
+                if (GwPlayerConf[pl->playerNo].type != 0) {
+                    lbl_1_bss_0->keyWaitMask = 0x1000000;
+                    HuPrcChildCreate(fn_1_9FC, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+                }
+                while ((lbl_1_bss_0->flag & 0x1000000) == 0) {
+                    HuPrcVSleep();
+                }
+                fn_1_4B4();
+                MgTimerParamSet(timerMg, 0x12C, 0, 0);
+                MgTimerModeOnSet(timerMg, 1);
+                MgTimerRecordDispOn(timerMg);
+                fn_1_15DB8(pl, (Vec *)&pts[c2[0] * 3]);
+                if (GwPlayerConf[pl->playerNo].type == 0) {
+                    cd = 0;
+                    while (MgTimerDoneCheck(timerMg) == 0 && (HuPadBtnDown[pl->padNo] & 0x100) == 0) {
+                        if (cd == 0) {
+                            if ((f32)(s8)HuPadStkX[pl->padNo] > 28.0f) {
+                                if (cur < n - 1) {
+                                    cur += 1;
+                                    fn_1_15DB8(pl, (Vec *)&pts[c2[cur] * 3]);
+                                    cd = 0xF;
+                                    HuAudFXPlay(0);
+                                }
+                            } else if ((f32)(s8)HuPadStkX[pl->padNo] < -28.0f && cur > 0) {
+                                cur -= 1;
+                                fn_1_15DB8(pl, (Vec *)&pts[c2[cur] * 3]);
+                                cd = 0xF;
+                                HuAudFXPlay(0);
+                            }
+                        } else {
+                            cd -= 1;
+                        }
+                        HuPrcVSleep();
+                    }
+                    HuAudFXPlay(2);
+                } else {
+                    done = 0;
+                    cd = 0x3C;
+                    while (done == 0) {
+                        if (MgTimerDoneCheck(timerMg) != 0) {
+                            HuAudFXPlay(2);
+                            break;
+                        }
+                        if (cd == 0) {
+                            switch (frandmod(frandmod(0xA) + 8)) {
+                                case 0:
+                                    HuAudFXPlay(2);
+                                    done = 1;
+                                    break;
+                                case 1:
+                                case 2:
+                                    if (cur < n - 1) {
+                                        cur += 1;
+                                        fn_1_15DB8(pl, (Vec *)&pts[c2[cur] * 3]);
+                                        HuAudFXPlay(0);
+                                    }
+                                    break;
+                                case 3:
+                                case 4:
+                                    if (cur > 0) {
+                                        cur -= 1;
+                                        fn_1_15DB8(pl, (Vec *)&pts[c2[cur] * 3]);
+                                        HuAudFXPlay(0);
+                                    }
+                                    break;
+                            }
+                            cd = 0xF;
+                        } else {
+                            cd -= 1;
+                        }
+                        HuPrcVSleep();
+                    }
+                }
+                if (MgTimerDoneCheck(timerMg) == 0) {
+                    MgTimerRecordDispOff(timerMg);
+                }
+            } else {
+                MgTimerRecordDispOff(timerMg);
+                fn_1_15DB8(pl, (Vec *)&pts[c2[0] * 3]);
+                HuPrcChildCreate(fn_1_16BFC, 0x64, 0x1000, 0, HuPrcCurrentGet());
+                HuPrcVSleep();
+                if (GwPlayerConf[pl->playerNo].type != 0) {
+                    lbl_1_bss_0->keyWaitMask = 0x2000000;
+                    HuPrcChildCreate(fn_1_9FC, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+                }
+                while ((lbl_1_bss_0->flag & 0x2000000) == 0) {
+                    HuPrcVSleep();
+                }
+                HuAudFXPlay(2);
+                fn_1_4B4();
+            }
+            fn_1_15DB8(pl, NULL);
+            picks[k] = (s8)c2[cur];
+            dest = *(Vec *)&pts[c2[cur] * 3];
+            fn_1_74FC(pl, &dest);
+            n = 0x1E;
+            while (n-- != 0) {
+                HuPrcVSleep();
+            }
+        }
+        for (k = 0; k < count; k++) {
+            OSReport("%d\n", perm[k] + 2);
+        }
+        n = 0x3C;
+        while (n-- != 0) {
+            HuPrcVSleep();
+        }
+        se8 = 0;
+        st6 = 0;
+        st2c = 0;
+        st5 = 0;
+        st3 = 0;
+        done = 0;
+        i = count;
+        while (i-- != 0) {
+            sA[i] = 0;
+            sB[i] = 0;
+            j = count;
+            while (j-- != 0) {
+                if (picks[j] == i) {
+                    lbl_1_bss_0->parMan[j].playerNo = tie[i];
+                    inv[j] = i;
+                }
+            }
+        }
+        lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x800000;
+        HuPrcVSleep();
+        while (done == 0) {
+            switch (st2c) {
+                case 0:
+                    i = count;
+                    while (i-- != 0) {
+                        Hu3DMotionShiftSet(lbl_1_bss_0->parMan[i].id, lbl_1_bss_0->parMan[i].motB, 0.0f, 15.0f, 0x40000001);
+                        y1[i] = 100.0f;
+                        y0[i] = lbl_1_bss_0->parMan[i].pos.y;
+                        if (lbl_1_bss_0->player[lbl_1_bss_0->parMan[i].playerNo].charNo == 6) {
+                            y1[i] += 30.0f;
+                        }
+                    }
+                    timer = 0;
+                    st2c = 1;
+                    break;
+                case 1:
+                    f31 = (f32)sin(3.141592653589793 * (f64)(f32)sin(3.141592653589793 * (f64)((f32)timer / 60.0f) * 0.5) * 0.5);
+                    if ((f32)timer == 15.0f) {
+                        st3 = 1;
+                    }
+                    if ((f32)timer == 60.0f) {
+                        i = count;
+                        while (i-- != 0) {
+                            lbl_1_bss_0->parMan[i].pos.y = y1[i];
+                        }
+                        st2c = 2;
+                        timer = 0x3C;
+                        HuPrcChildCreate(fn_1_16C7C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+                        HuPrcVSleep();
+                        if (allCom != 0) {
+                            lbl_1_bss_0->keyWaitMask = 0x4000000;
+                            HuPrcChildCreate(fn_1_9FC, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+                        }
+                    } else {
+                        i = count;
+                        while (i-- != 0) {
+                            lbl_1_bss_0->parMan[i].pos.y = y0[i] + (f31 * (y1[i] - y0[i]));
+                        }
+                        timer += 1;
+                    }
+                    break;
+                case 2:
+                    if ((lbl_1_bss_0->flag & 0x4000000) != 0) {
+                        timer -= 1;
+                        if (timer == 0) {
+                            fn_1_4B4();
+                            f29 = 5.6666665f;
+                            timer = 0;
+                            st2c = 3;
+                            st5 = 1;
+                            HuAudFXPlay(0x2C4);
+                        }
+                    }
+                    break;
+                case 3:
+                    timer += 1;
+                    if ((f32)timer == 300.0f) {
+                        i = 4;
+                        while (i-- != 0) {
+                            j = 0;
+                            n = count;
+                            while (n-- != 0) {
+                                if (i == tie[n]) {
+                                    j = 1;
+                                }
+                            }
+                            if (j == 0) {
+                                pl = &lbl_1_bss_0->player[i];
+                                pl->pos.z = 0.0f;
+                                Hu3DModelPosSetV(pl->modelId, &pl->pos);
+                            }
+                        }
+                        fn_1_28BC(3, 0xA);
+                        st2c = 4;
+                    }
+                    i = count;
+                    while (i-- != 0) {
+                        lbl_1_bss_0->parMan[i].pos.y = lbl_1_bss_0->parMan[i].pos.y + f29;
+                    }
+                    lp = lightPos;
+                    lp.y += lbl_1_bss_0->parMan[0].pos.y - 100.0f;
+                    Hu3DGLightPosSetV(lbl_1_bss_0->glightId, &lp, &lightDir);
+                    break;
+                case 4:
+                    i = count;
+                    while (i-- != 0) {
+                        lbl_1_bss_0->parMan[i].pos.y = lbl_1_bss_0->parMan[i].pos.y + f29;
+                    }
+                    lp = lightPos;
+                    lp.y += lbl_1_bss_0->parMan[0].pos.y - 100.0f;
+                    Hu3DGLightPosSetV(lbl_1_bss_0->glightId, &lp, &lightDir);
+                    break;
+                case 5:
+                    i = count;
+                    while (i-- != 0) {
+                        lbl_1_bss_0->parMan[i].pos.y = lbl_1_bss_0->parMan[i].pos.y + f29;
+                    }
+                    timer -= 1;
+                    if (timer == 0) {
+                        st5 = 0xB;
+                        i = count;
+                        while (i-- != 0) {
+                            Hu3DModelAttrSet(lbl_1_bss_0->parMan[i].id, 1);
+                        }
+                        HuAudFXStop(seh);
+                    }
+                    break;
+            }
+            switch (st3) {
+                case 1:
+                    i = count;
+                    while (i-- != 0) {
+                        pl = &lbl_1_bss_0->player[tie[i]];
+                        if (pl->motion != 9) {
+                            CharMotionShiftSet(pl->charNo, pl->mot9, 0.0f, 30.0f, 0x40000001);
+                            pl->motion = 9;
+                        }
+                    }
+                    t3 = 0;
+                    st3 = 2;
+                    break;
+                case 2:
+                    i = count;
+                    while (i-- != 0) {
+                        pl = &lbl_1_bss_0->player[tie[i]];
+                        if (pl->charNo == 6) {
+                            pl->pos.y = 30.0f * ((f32)t3 / 30.0f);
+                        }
+                    }
+                    t3 += 1;
+                    if ((f32)t3 == 30.0f) {
+                        i = count;
+                        while (i-- != 0) {
+                            pl = &lbl_1_bss_0->player[tie[i]];
+                            if (GwPlayerConf[pl->playerNo].type == 0) {
+                                omVibrate(pl->playerNo, 0xC, 4, 2);
+                            }
+                        }
+                        st3 = 0xA;
+                    }
+                    break;
+                case 10:
+                    done10 = 0;
+                    i = count;
+                    while (i-- != 0) {
+                        pl = &lbl_1_bss_0->player[tie[i]];
+                        switch (st2[i]) {
+                            case 0:
+                                pl->pos.y = lbl_1_bss_0->parMan[(s8)picks[i]].pos.y - 100.0f;
+                                break;
+                            case 1:
+                                if (tm[i] < 0) {
+                                    pl->pos.y = pl->pos.y - (spd[i] / 100.0f);
+                                    if (spd[i] <= 8400.0f) {
+                                        spd[i] += 140.0f;
+                                    }
+                                    if (pl->pos.y < 0.0f) {
+                                        st2[i] = 2;
+                                        pl->pos.y = 0.0f;
+                                        if (se8 == 0) {
+                                            HuAudFXPlayPan(0x4FF, 0x40);
+                                            se8 = 1;
+                                        }
+                                        if (pl->motion != 7) {
+                                            CharMotionShiftSet(pl->charNo, pl->mot7, 0.0f, 5.0f, 0x40000001);
+                                            pl->motion = 7;
+                                        }
+                                        if (GwPlayerConf[pl->playerNo].type == 0) {
+                                            omVibrate(pl->playerNo, 0x2D, 4, 2);
+                                        }
+                                    }
+                                } else {
+                                    tm[i] -= 1;
+                                }
+                                break;
+                            case 2:
+                                if (st2[i] == 2) {
+                                    done10 += 1;
+                                }
+                                break;
+                        }
+                    }
+                    if (done10 == count) {
+                        st3 = 0xB;
+                        st5 = 0xA;
+                        cam21 = 0x1E;
+                        st2c = 5;
+                        timer = 0x5A;
+                    }
+                    break;
+            }
+            switch (st5) {
+                case 1:
+                    st5 = 2;
+                    cam21 = 0x14;
+                    break;
+                case 2:
+                    cam21 -= 1;
+                    if (cam21 == 0) {
+                        st5 = 3;
+                    }
+                    break;
+                case 3:
+                    lbl_1_bss_0->camPath[0].time = 0.0f;
+                    lbl_1_bss_0->camPath[0].fov = lbl_1_bss_4->fov;
+                    lbl_1_bss_0->camPath[0].pos.x = lbl_1_bss_0->camPath[1].pos.x;
+                    lbl_1_bss_0->camPath[0].pos.y = lbl_1_bss_0->camPath[1].pos.y;
+                    lbl_1_bss_0->camPath[0].pos.z = lbl_1_bss_0->camPath[1].pos.z;
+                    lbl_1_bss_0->camPath[0].up = lbl_1_bss_0->camPath[1].up;
+                    lbl_1_bss_0->camPath[0].target.x = lbl_1_bss_0->camPath[1].target.x;
+                    lbl_1_bss_0->camPath[0].target.y = lbl_1_bss_0->camPath[1].target.y;
+                    lbl_1_bss_0->camPath[0].target.z = lbl_1_bss_0->camPath[1].target.z;
+                    lbl_1_bss_0->camPath[1].time = 280.0f;
+                    lbl_1_bss_0->camPath[1].target.y = 2100.0f;
+                    lbl_1_bss_0->camPath[1].pos.y = 1600.0f;
+                    lbl_1_bss_0->camPathNum = 2;
+                    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x100;
+                    HuPrcChildCreate(fn_1_1F58, 0x64, 0x1000, 0, HuPrcCurrentGet());
+                    HuPrcVSleep();
+                    st5 = 4;
+                    break;
+                case 10:
+                    camV.x = lbl_1_bss_0->camPath[1].pos.x;
+                    camV.y = lbl_1_bss_0->camPath[1].pos.y;
+                    camV.z = lbl_1_bss_0->camPath[1].pos.z;
+                    tgtV.x = lbl_1_bss_0->camPath[1].target.x;
+                    tgtV.y = lbl_1_bss_0->camPath[1].target.y;
+                    tgtV.z = lbl_1_bss_0->camPath[1].target.z;
+                    if (cam21 != 0) {
+                        cam21 -= 1;
+                        fn_1_CCE4(&camV.x, 0x1E);
+                        fn_1_CCE4(&tgtV.x, 0x1E);
+                    }
+                    Hu3DCameraPosSetV(0x10, &camV, &lbl_1_bss_0->camPath[1].up, &tgtV);
+                    break;
+                case 11:
+                    lbl_1_bss_0->camPath[0].time = 0.0f;
+                    lbl_1_bss_0->camPath[0].fov = lbl_1_bss_4->fov;
+                    lbl_1_bss_0->camPath[0].pos.x = lbl_1_bss_0->camPath[1].pos.x;
+                    lbl_1_bss_0->camPath[0].pos.y = lbl_1_bss_0->camPath[1].pos.y;
+                    lbl_1_bss_0->camPath[0].pos.z = lbl_1_bss_0->camPath[1].pos.z;
+                    lbl_1_bss_0->camPath[0].up = lbl_1_bss_0->camPath[1].up;
+                    lbl_1_bss_0->camPath[0].target.x = lbl_1_bss_0->camPath[1].target.x;
+                    lbl_1_bss_0->camPath[0].target.y = lbl_1_bss_0->camPath[1].target.y;
+                    lbl_1_bss_0->camPath[0].target.z = lbl_1_bss_0->camPath[1].target.z;
+                    lbl_1_bss_0->camPath[1].time = 30.0f;
+                    lbl_1_bss_0->camPath[1].target.y = -500.0f;
+                    lbl_1_bss_0->camPath[1].pos.y = 800.0f;
+                    lp = lightPos;
+                    Hu3DGLightPosSetV(lbl_1_bss_0->glightId, &lp, &lightDir);
+                    lbl_1_bss_0->camPathNum = 2;
+                    lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 & ~0x100;
+                    HuPrcChildCreate(fn_1_1F58, 0x64, 0x1000, 0, HuPrcCurrentGet());
+                    HuPrcVSleep();
+                    st5 = 0xC;
+                    break;
+            }
+            switch (st6) {
+                case 0:
+                    i = count;
+                    while (i-- != 0) {
+                        ang[i] = (f32)frandmod(0x168);
+                        sB[i] = 0;
+                        st2[i] = 0;
+                    }
+                    st6 = 1;
+                    break;
+                case 1:
+                    i = count;
+                    while (i-- != 0) {
+                        if (sB[i] < 1) {
+                            q = *(Vec *)&pts[i * 3];
+                            q.y = (f32)(1900.0 + (40.0 * sin((3.141592653589793 * (f64)ang[i]) / 180.0)));
+                            r.x = q.x;
+                            r.y = q.y;
+                            r.z = q.z;
+                            r.y -= 40.0f;
+                            r.z += 30.0f;
+                            Hu3DModelPosSetV(lbl_1_bss_0->mdl[i + 0x37], &q);
+                            Hu3DModelPosSetV((s16)ball[i], &r);
+                            switch (sB[i]) {
+                                case 0:
+                                    if (100.0f + (220.0f + lbl_1_bss_0->parMan[i].pos.y) >= q.y) {
+                                        Hu3DModelAttrReset(lbl_1_bss_0->mdl[i + 0x37], 0x40000082);
+                                        sB[i] = -1;
+                                    }
+                                    break;
+                                case -1:
+                                    if (220.0f + lbl_1_bss_0->parMan[i].pos.y >= q.y) {
+                                        pl = &lbl_1_bss_0->player[lbl_1_bss_0->parMan[i].playerNo];
+                                        if (pl->motion != 0xA) {
+                                            CharMotionShiftSet(pl->charNo, pl->mot10, 0.0f, 30.0f, 0x40000001);
+                                            pl->motion = 0xA;
+                                        }
+                                        Hu3DMotionAttrSet(pl->mot10, 1);
+                                        fn_1_974(pl, 3);
+                                        if (GwPlayerConf[pl->playerNo].type == 0) {
+                                            omVibrate(pl->playerNo, 0x17, 4, 2);
+                                        }
+                                        st2[inv[i]] = 1;
+                                        tm[inv[i]] = 0x1E;
+                                        spd[inv[i]] = 700.0f;
+                                        Hu3DMotionShiftSet(lbl_1_bss_0->parMan[i].id, lbl_1_bss_0->parMan[i].motA, 0.0f, 15.0f,
+                                            0x40000001);
+                                        pan = (s32)(64.0f + (24.0f * (lbl_1_bss_0->parMan[i].pos.x / 350.0f)));
+                                        OSReport("\x95\x97\x91" "D SE Panning : %d\n", pan);
+                                        HuAudFXPlayPan(0x4FE, pan);
+                                        Hu3DModelAttrReset((s16)ball[i], 1);
+                                        Hu3DModelScaleSet((s16)ball[i], 0.0f, 0.0f, 0.0f);
+                                        sD[i] = 0x14;
+                                        sA[i] = 1;
+                                        sB[i] = 1;
+                                        bpos[i] = r;
+                                        vel[i] = -2.0f;
+                                    }
+                                    break;
+                            }
+                            ang[i] += 1.0f;
+                        }
+                    }
+                    break;
+            }
+            done11 = 0;
+            i = count;
+            while (i-- != 0) {
+                switch (sA[i]) {
+                    case 1:
+                        sD[i] -= 1;
+                        if (sD[i] == 0) {
+                            sA[i] = 0xA;
+                            sD[i] = 0xA;
+                        }
+                        break;
+                    case 10:
+                        f31 = (f32)sin(3.141592653589793 * (f64)((30.0f - (f32)sD[i]) / 30.0f) * 0.5) * 2.0f;
+                        sD[i] -= 1;
+                        if (sD[i] == 0) {
+                            sA[i] = 0xB;
+                            sD[i] = 5;
+                        }
+                        Hu3DModelScaleSet((s16)ball[i], f31, f31, f31);
+                        break;
+                    case 11:
+                        sD[i] -= 1;
+                        if (sD[i] == 0) {
+                            sA[i] = 0x14;
+                            sD[i] = 0x14;
+                        }
+                        break;
+                    case 20:
+                        f31 = (f32)sin(3.141592653589793 * (f64)((f32)sD[i] / 30.0f) * 0.5) + 1.0f;
+                        sD[i] -= 1;
+                        if (sD[i] == 0) {
+                            sA[i] = 0x1E;
+                        }
+                        Hu3DModelScaleSet((s16)ball[i], f31, f31, f31);
+                        break;
+                }
+                switch (sB[i]) {
+                    case 1:
+                        bpos[i].y = bpos[i].y - vel[i];
+                        if (vel[i] < 3.0f) {
+                            if (bpos[i].z < 100.0f + pts[i * 3 + 2]) {
+                                bpos[i].z = bpos[i].z + 1.0f;
+                            }
+                            vel[i] += 0.03f;
+                        } else {
+                            vel[i] += 1.0f;
+                            if (bpos[i].z > 30.0f + pts[i * 3 + 2]) {
+                                bpos[i].z = bpos[i].z - 1.0f;
+                            }
+                        }
+                        if (vel[i] >= 30.0f) {
+                            vel[i] = 30.0f;
+                        }
+                        pl = &lbl_1_bss_0->player[lbl_1_bss_0->parMan[i].playerNo];
+                        if (bpos[i].y < lbl_1_data_3E4[pl->charNo]) {
+                            if (GwPlayerConf[pl->playerNo].type == 0) {
+                                omVibrate(pl->playerNo, 0x17, 4, 2);
+                            }
+                            f = bpos[i].x / 350.0f;
+                            pan = (s32)(64.0f + (24.0f * f));
+                            OSReport("\x90\x94\x8e\x9a SE Panning 1 : %d\n", pan);
+                            HuAudFXPlayPan(0x500, pan);
+                            bpos[i].y = lbl_1_data_3E4[pl->charNo];
+                            vel[i] = -5.0f;
+                            sB[i] = 2;
+                            m = lbl_1_bss_0->mdl[i + 0x22];
+                            Hu3DModelPosSet(m, bpos[i].x, 30.0f + bpos[i].y, bpos[i].z);
+                            Hu3DModelAttrReset(m, 0x40000002);
+                            Hu3DModelAttrReset(m, 1);
+                        }
+                        Hu3DModelPosSetV((s16)ball[i], &bpos[i]);
+                        break;
+                    case 2:
+                        bpos[i].z = bpos[i].z - 1.6f;
+                        bpos[i].y = bpos[i].y - vel[i];
+                        if (vel[i] < 0.0f) {
+                            vel[i] += 0.2f;
+                        } else {
+                            vel[i] += 0.2f;
+                        }
+                        if (vel[i] >= 30.0f) {
+                            vel[i] = 30.0f;
+                        }
+                        if (bpos[i].y < 10.0f) {
+                            f = 24.0f * (bpos[i].x / 350.0f);
+                            pan = (s32)(64.0f + f);
+                            OSReport("\x90\x94\x8e\x9a SE Panning 2 : %d\n", pan);
+                            HuAudFXPlayVolPan(0x500, 0x64, pan);
+                            bpos[i].y = 10.0f;
+                            vel[i] = -3.0f;
+                            sB[i] = 3;
+                        }
+                        Hu3DModelPosSetV((s16)ball[i], &bpos[i]);
+                        break;
+                    case 3:
+                        bpos[i].z = bpos[i].z - 1.6f;
+                        bpos[i].y = bpos[i].y - vel[i];
+                        if (vel[i] < 0.0f) {
+                            vel[i] += 0.2f;
+                        } else {
+                            vel[i] += 0.2f;
+                        }
+                        if (vel[i] >= 30.0f) {
+                            vel[i] = 30.0f;
+                        }
+                        Hu3DModelPosSetV((s16)ball[i], &bpos[i]);
+                        if (bpos[i].y < 10.0f) {
+                            f = 24.0f * (bpos[i].x / 350.0f);
+                            pan = (s32)(64.0f + f);
+                            OSReport("\x90\x94\x8e\x9a SE Panning 3 : %d\n", pan);
+                            HuAudFXPlayVolPan(0x500, 0x50, pan);
+                            bpos[i].y = 10.0f;
+                            sB[i] = 0xA;
+                            vel[i] = 1.0f;
+                            Hu3DModelPosSetV((s16)ball[i], &bpos[i]);
+                        }
+                        break;
+                    case 10:
+                        bpos[i].y = bpos[i].y - vel[i];
+                        vel[i] += 0.06f;
+                        if (vel[i] >= 2.0f) {
+                            vel[i] = 2.0f;
+                        }
+                        if (bpos[i].y < -90.0f) {
+                            d = bpos[i];
+                            d.y = 0.0f;
+                            CharModelLandDustCreate(0, &d);
+                            bpos[i].y = -90.0f;
+                            sB[i] = 0xB;
+                        }
+                        Hu3DModelRotSet((s16)ball[i], bpos[i].y, 0.0f, 0.0f);
+                        break;
+                    case 11:
+                        done11 += 1;
+                        break;
+                }
+            }
+            if (done11 == count) {
+                done = 1;
+            }
+            i = count;
+            while (i-- != 0) {
+                Hu3DModelPosSetV(lbl_1_bss_0->parMan[i].id, &lbl_1_bss_0->parMan[i].pos);
+                pl = &lbl_1_bss_0->player[tie[i]];
+                Hu3DModelPosSetV(pl->modelId, &pl->pos);
+            }
+            HuPrcVSleep();
+        }
+        HuPrcChildCreate(fn_1_16CD8, 0x64, 0x1000, 0, HuPrcCurrentGet());
+        HuPrcVSleep();
+        if (allCom != 0) {
+            lbl_1_bss_0->keyWaitMask = 0x8000000;
+            HuPrcChildCreate(fn_1_9FC, 0xC8, 0x3000, 0, HuPrcCurrentGet());
+        }
+        while ((lbl_1_bss_0->flag & 0x8000000) == 0) {
+            HuPrcVSleep();
+        }
+        fn_1_4B4();
+        n = 0x3C;
+        while (n-- != 0) {
+            HuPrcVSleep();
+        }
+        WipeCreate(2, 6, 0x3C);
+        while (WipeCheckEnd() != 0) {
+            HuPrcVSleep();
+        }
+        m = lbl_1_bss_0->mdl[5];
+        Hu3DMotionTimeSet(m, Hu3DMotionMaxTimeGet(m));
+        Hu3DModelAttrReset(m, 0x40000004);
+        Hu3DModelAttrReset(m, 0x40000002);
+        Hu3DMotionSpeedSet(m, 1.0f);
+        fn_1_64C(&place2, &count, &score2);
+        if (count == 2) {
+            if (place2 == 2) {
+                for (k = 0; k < lbl_1_bss_4->teamCount; k++) {
+                    if (lbl_1_bss_4->score[k] < score2) {
+                        lbl_1_bss_4->rank[3] = k;
+                    } else if (lbl_1_bss_4->score[k] > score2) {
+                        lbl_1_bss_4->rank[0] = k;
+                    }
+                }
+                if (perm[(s8)picks[0]] == 0) {
+                    lbl_1_bss_4->rank[1] = tie[0];
+                    lbl_1_bss_4->rank[2] = tie[1];
+                } else {
+                    lbl_1_bss_4->rank[1] = tie[1];
+                    lbl_1_bss_4->rank[2] = tie[0];
+                }
+            } else {
+                prevRank = score2;
+                for (k = 0; k < lbl_1_bss_4->teamCount; k++) {
+                    if (lbl_1_bss_4->score[k] != score2) {
+                        if (lbl_1_bss_4->score[k] > prevRank) {
+                            if (prevRank != score2) {
+                                lbl_1_bss_4->rank[1] = lbl_1_bss_4->rank[0];
+                            }
+                            lbl_1_bss_4->rank[0] = k;
+                            prevRank = lbl_1_bss_4->score[k];
+                        } else {
+                            lbl_1_bss_4->rank[1] = k;
+                        }
+                    }
+                }
+                if (perm[(s8)picks[0]] == 0) {
+                    lbl_1_bss_4->rank[2] = tie[0];
+                    lbl_1_bss_4->rank[3] = tie[1];
+                } else {
+                    lbl_1_bss_4->rank[2] = tie[1];
+                    lbl_1_bss_4->rank[3] = tie[0];
+                }
+            }
+        } else {
+            for (k = 0; k < count; k++) {
+                lbl_1_bss_4->rank[perm[(s8)picks[k]] + 1] = tie[k];
+            }
+            for (k = 0; k < lbl_1_bss_4->teamCount; k++) {
+                if (lbl_1_bss_4->score[k] > score2) {
+                    lbl_1_bss_4->rank[0] = k;
+                    break;
+                }
+            }
+        }
+        for (k = 0; k < lbl_1_bss_4->teamCount; k++) {
+            OSReport("Rank %d : Player %d\n", k, lbl_1_bss_4->rank[k]);
+        }
+        Hu3DCameraPosSetV(0x10, &lbl_1_bss_4->camPos, &lbl_1_bss_4->camUp, &lbl_1_bss_4->camTarget);
+        Hu3DCameraPerspectiveSet(0x10, lbl_1_bss_4->fov, 20.0f, 60000.0f, 1.2f);
+        pl = lbl_1_bss_0->player;
+        for (i = 0; i < 4; i++) {
+            pl->pos.x = lbl_1_data_30[i * 3];
+            pl->pos.y = lbl_1_data_30[i * 3 + 1];
+            pl->pos.z = lbl_1_data_30[i * 3 + 2];
+            if (pl->motion != 0) {
+                CharMotionShiftSet(pl->charNo, pl->mot0, 0.0f, 1.0f, 0x40000001);
+                pl->motion = 0;
+            }
+            Hu3DModelPosSet(pl->modelId, pl->pos.x, pl->pos.y, pl->pos.z);
+            CharMotionVoiceOnSet(pl->charNo, (s16)lbl_1_data_0[4], 1);
+            pl++;
+        }
+        lbl_1_bss_0->pos.x = lbl_1_data_60[3];
+        lbl_1_bss_0->pos.y = lbl_1_data_60[4];
+        lbl_1_bss_0->pos.z = lbl_1_data_60[5];
+        Hu3DModelPosSet(lbl_1_bss_0->mdlPodium, lbl_1_bss_0->pos.x, lbl_1_bss_0->pos.y, lbl_1_bss_0->pos.z);
+        Hu3DModelRotSet(lbl_1_bss_0->mdlPodium, 0.0f, 45.0f, 0.0f);
+        for (i = 0; i < count; i++) {
+            Hu3DModelAttrSet((s16)ball[i], 1);
+        }
+        WipeCreate(1, 5, 0x3C);
+        while (WipeCheckEnd() != 0) {
+            HuPrcVSleep();
+        }
+    }
 }
 
 void fn_1_112B8(void)

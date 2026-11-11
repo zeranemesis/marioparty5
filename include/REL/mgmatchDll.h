@@ -45,8 +45,8 @@ typedef struct M505Player_s {
     HU3DMOTID mot6;        //0x0E
     HU3DMOTID mot7;        //0x10
     HU3DMOTID mot8;        //0x12
-    s16 pad1;              //0x14
-    s16 pad2;              //0x16
+    HU3DMOTID mot9;        //0x14
+    HU3DMOTID mot10;       //0x16
     s16 playerNo;          //0x18
     s16 charNo;            //0x1A
     s16 padNo;             //0x1C
