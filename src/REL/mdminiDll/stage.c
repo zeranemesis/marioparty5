@@ -184,8 +184,8 @@ static s16 ToueiMdlNoTbl[6] = {
     MDMODEL_FINGER_2P,
     MDMODEL_FINGER_3P,
     MDMODEL_FINGER_4P,
-    MDMODEL_AUX_0,
-    MDMODEL_AUX_1
+    MDMODEL_CAP_WIN,
+    MDMODEL_CAP_GENRE
 };
 
 static char *ToueiTexNameTbl[6] = {
@@ -278,9 +278,9 @@ void MdSpriteCreate(MDSPRITE_WORK *sprite)
     MdSpriteDispSet(sprite, MDSPR_GRP_WIN, FALSE);
     MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_LR, FALSE);
     MdSpriteDispSet(sprite, MDSPR_GRP_CURSOR_UDLR, FALSE);
-    MdSpriteDispSet(sprite, MDSPR_GRP_3, FALSE);
-    MdSpriteDispSet(sprite, MDSPR_GRP_4, FALSE);
-    MdSpriteDispSet(sprite, MDSPR_GRP_5, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_PLAYERNO, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_COMDIF, FALSE);
+    MdSpriteDispSet(sprite, MDSPR_GRP_NAME, FALSE);
 }
 
 void MdSpriteDispSet(MDSPRITE_WORK *sprite, int grpNo, BOOL dispF)
@@ -414,35 +414,35 @@ void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera)
         Hu3DModelMatHookSet(model->mdlId[MDMODEL_CAP_CHR_00+i], ToueiMatHookTbl[i]);
     }
     for(i=0; i<6; i++) {
-        model->mdlId[MDMODEL_CAP_MODE_0+i] = Hu3DModelCreateData(CapModeFileTbl[i]);
-        Hu3DModelAttrReset(model->mdlId[MDMODEL_CAP_MODE_0+i], HU3D_ATTR_DISPOFF);
-        Hu3DModelLayerSet(model->mdlId[MDMODEL_CAP_MODE_0+i], 0);
-        Hu3DModelCameraSet(model->mdlId[MDMODEL_CAP_MODE_0+i], camera->camera[MDCAMERA_MAIN].bit);
-        Hu3DModelPosSet(model->mdlId[MDMODEL_CAP_MODE_0+i], 0, 0, 0);
-        Hu3DModelRotSet(model->mdlId[MDMODEL_CAP_MODE_0+i], 0, 0, 0);
-        Hu3DModelScaleSet(model->mdlId[MDMODEL_CAP_MODE_0+i], 1, 1, 1);
+        model->mdlId[MDMODEL_CAP_MODE_00+i] = Hu3DModelCreateData(CapModeFileTbl[i]);
+        Hu3DModelAttrReset(model->mdlId[MDMODEL_CAP_MODE_00+i], HU3D_ATTR_DISPOFF);
+        Hu3DModelLayerSet(model->mdlId[MDMODEL_CAP_MODE_00+i], 0);
+        Hu3DModelCameraSet(model->mdlId[MDMODEL_CAP_MODE_00+i], camera->camera[MDCAMERA_MAIN].bit);
+        Hu3DModelPosSet(model->mdlId[MDMODEL_CAP_MODE_00+i], 0, 0, 0);
+        Hu3DModelRotSet(model->mdlId[MDMODEL_CAP_MODE_00+i], 0, 0, 0);
+        Hu3DModelScaleSet(model->mdlId[MDMODEL_CAP_MODE_00+i], 1, 1, 1);
     }
-    model->mdlId[MDMODEL_AUX_0] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x2a));
-    Hu3DModelAttrReset(model->mdlId[MDMODEL_AUX_0], HU3D_ATTR_DISPOFF);
-    Hu3DModelLayerSet(model->mdlId[MDMODEL_AUX_0], 3);
-    Hu3DModelCameraSet(model->mdlId[MDMODEL_AUX_0], camera->camera[MDCAMERA_MAIN].bit);
-    Hu3DModelPosSet(model->mdlId[MDMODEL_AUX_0], 0, 0, 0);
-    Hu3DModelRotSet(model->mdlId[MDMODEL_AUX_0], 0, 0, 0);
-    Hu3DModelScaleSet(model->mdlId[MDMODEL_AUX_0], 1, 1, 1);
-    model->mdlId[MDMODEL_AUX_1] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x2b));
-    Hu3DModelAttrReset(model->mdlId[MDMODEL_AUX_1], HU3D_ATTR_DISPOFF);
-    Hu3DModelLayerSet(model->mdlId[MDMODEL_AUX_1], 3);
-    Hu3DModelCameraSet(model->mdlId[MDMODEL_AUX_1], camera->camera[MDCAMERA_MAIN].bit);
-    Hu3DModelPosSet(model->mdlId[MDMODEL_AUX_1], 0, 0, 0);
-    Hu3DModelRotSet(model->mdlId[MDMODEL_AUX_1], 0, 0, 0);
-    Hu3DModelScaleSet(model->mdlId[MDMODEL_AUX_1], 1, 1, 1);
-    model->mdlId[MDMODEL_AUX_2] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x2e));
-    Hu3DModelAttrReset(model->mdlId[MDMODEL_AUX_2], HU3D_ATTR_DISPOFF);
-    Hu3DModelLayerSet(model->mdlId[MDMODEL_AUX_2], 3);
-    Hu3DModelCameraSet(model->mdlId[MDMODEL_AUX_2], camera->camera[MDCAMERA_MAIN].bit);
-    Hu3DModelPosSet(model->mdlId[MDMODEL_AUX_2], 0, 0, 0);
-    Hu3DModelRotSet(model->mdlId[MDMODEL_AUX_2], 0, 0, 0);
-    Hu3DModelScaleSet(model->mdlId[MDMODEL_AUX_2], 1, 1, 1);
+    model->mdlId[MDMODEL_CAP_WIN] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x2a));
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_CAP_WIN], HU3D_ATTR_DISPOFF);
+    Hu3DModelLayerSet(model->mdlId[MDMODEL_CAP_WIN], 3);
+    Hu3DModelCameraSet(model->mdlId[MDMODEL_CAP_WIN], camera->camera[MDCAMERA_MAIN].bit);
+    Hu3DModelPosSet(model->mdlId[MDMODEL_CAP_WIN], 0, 0, 0);
+    Hu3DModelRotSet(model->mdlId[MDMODEL_CAP_WIN], 0, 0, 0);
+    Hu3DModelScaleSet(model->mdlId[MDMODEL_CAP_WIN], 1, 1, 1);
+    model->mdlId[MDMODEL_CAP_GENRE] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x2b));
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_CAP_GENRE], HU3D_ATTR_DISPOFF);
+    Hu3DModelLayerSet(model->mdlId[MDMODEL_CAP_GENRE], 3);
+    Hu3DModelCameraSet(model->mdlId[MDMODEL_CAP_GENRE], camera->camera[MDCAMERA_MAIN].bit);
+    Hu3DModelPosSet(model->mdlId[MDMODEL_CAP_GENRE], 0, 0, 0);
+    Hu3DModelRotSet(model->mdlId[MDMODEL_CAP_GENRE], 0, 0, 0);
+    Hu3DModelScaleSet(model->mdlId[MDMODEL_CAP_GENRE], 1, 1, 1);
+    model->mdlId[MDMODEL_VS] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x2e));
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_VS], HU3D_ATTR_DISPOFF);
+    Hu3DModelLayerSet(model->mdlId[MDMODEL_VS], 3);
+    Hu3DModelCameraSet(model->mdlId[MDMODEL_VS], camera->camera[MDCAMERA_MAIN].bit);
+    Hu3DModelPosSet(model->mdlId[MDMODEL_VS], 0, 0, 0);
+    Hu3DModelRotSet(model->mdlId[MDMODEL_VS], 0, 0, 0);
+    Hu3DModelScaleSet(model->mdlId[MDMODEL_VS], 1, 1, 1);
     for(i=0; i<4; i++) {
         if(i == 0) {
             model->mdlId[MDMODEL_FINGER_1P+i] = Hu3DModelCreateData(DATANUM(DATA_mdmini, 0x22));

@@ -94,6 +94,9 @@ enum {
     MDLIGHT_TYPE_MAX
 };
 
+#define MdProcCall(idx, arg) MdProcTbl[idx](arg)
+#define MdProcWait(idx, arg) do {     while(!MdProcCall(idx, arg)) {         HuPrcVSleep();     } } while(0)
+
 typedef void (*MD_FUNC)(void);
 typedef BOOL (*MD_PROC)(int param);
 
@@ -200,14 +203,14 @@ enum {
     MDMODEL_CAP_CHR_07, //28
     MDMODEL_CAP_CHR_08, //29
     MDMODEL_CAP_CHR_09, //30
-    MDMODEL_CAP_MODE_0, //31
-    MDMODEL_CAP_MODE_1, //32
-    MDMODEL_CAP_MODE_2, //33
-    MDMODEL_CAP_MODE_3, //34
-    MDMODEL_CAP_MODE_4, //35
-    MDMODEL_CAP_MODE_5, //36
-    MDMODEL_AUX_0, //37
-    MDMODEL_AUX_1, //38
+    MDMODEL_CAP_MODE_00, //31
+    MDMODEL_CAP_MODE_01, //32
+    MDMODEL_CAP_MODE_02, //33
+    MDMODEL_CAP_MODE_03, //34
+    MDMODEL_CAP_MODE_04, //35
+    MDMODEL_CAP_MODE_05, //36
+    MDMODEL_CAP_WIN, //37
+    MDMODEL_CAP_GENRE, //38
     MDMODEL_FINGER_1P, //39
     MDMODEL_FINGER_2P, //40
     MDMODEL_FINGER_3P, //41
@@ -216,7 +219,7 @@ enum {
     MDMODEL_RING_2P, //44
     MDMODEL_RING_3P, //45
     MDMODEL_RING_4P, //46
-    MDMODEL_AUX_2, //47
+    MDMODEL_VS, //47
     MDMODEL_FONTBGFILTER, //48
     MDMODEL_MAX //49
 };
@@ -419,6 +422,11 @@ typedef struct MdMess_s {
     MDMESS_WIN win[MDMESS_WIN_MAX];
 } MDMESS;
 
+typedef struct MdModelDebugInfo_s {
+    char *name; //0x00
+    int cameraNo; //0x04
+} MDMODEL_DEBUG_INFO;
+
 typedef struct MdTexBufUnit_s {
     void *addr; //0x00
     GXTexObj texObj; //0x04
@@ -563,8 +571,8 @@ typedef struct Sys_s {
     BOOL cursorInitF; //0x3D8
     BOOL nameInitF; //0x3DC
     BOOL unk3E0;
-    int unk3E4;
-    int unk3E8;
+    int cursorDir; //0x3E4
+    int cursorMode; //0x3E8
     float procTime; //0x3EC
     float procOfsTime; //0x3F0
     float cameraTime; //0x3F4
@@ -583,9 +591,30 @@ typedef struct Sys_s {
     float curveSlope[25]; //0x444
 } SYS;
 
+enum {
+    MDMINI_PROC_RESET, //0
+    MDMINI_PROC_CAMERA, //1
+    MDMINI_PROC_CURSOR, //2
+    MDMINI_PROC_WIN, //3
+    MDMINI_PROC_CAP_PLAYER, //4
+    MDMINI_PROC_CHR, //5
+    MDMINI_PROC_6, //6
+    MDMINI_PROC_CAP_TURN, //7
+    MDMINI_PROC_CAP_BONUS, //8
+    MDMINI_PROC_9, //9
+    MDMINI_PROC_10, //10
+    MDMINI_PROC_11, //11
+    MDMINI_PROC_FINGER, //12
+    MDMINI_PROC_13, //13
+    MDMINI_PROC_NAME, //14
+    MDMINI_PROC_MAX //15
+};
+
 extern SYS *sys;
 extern SYS *sysP;
 extern SYS sysWork;
+extern MD_FUNC MdFlowTbl[MDMINI_FLOW_MAX];
+extern MD_PROC MdProcTbl[MDMINI_PROC_MAX];
 
 /* --- object.c ------------------------------------------------------------ */
 
