@@ -61,7 +61,7 @@ void fn_1_B614(void);
 void fn_1_C19C(void);
 void fn_1_7CC8(void);
 void fn_1_1A80(void);
-void fn_1_57C0(s16, HuVecF *);
+void fn_1_57C0(s16, s32);
 void fn_1_F068(void);
 void fn_1_F848(int, int);
 void fn_1_F808(int);
@@ -102,9 +102,10 @@ typedef struct MgWarsPlayer_s {
 	s16 unkA;
 	s16 charNo;
 	s16 padNo;
-	s32 unk10;
-	f32 unk14;
-	s32 unk18;
+	s8 state;
+	u8 pad11[3];
+	f32 angle;
+	f32 targetAngle;
 } MGWARSPLAYER;
 
 /* Minigame work (lbl_1_bss_8) */
@@ -127,10 +128,10 @@ typedef struct MgWarsWork_s {
 	s32 unk124;
 	MGWARSPLAYER player[4];
 	s16 unk198;
-	u8 pad19A[2];
+	s16 unk19A;
 	HuVecF unk19C;
 	HuVecF unk1A8;
-	s32 unk1B4;
+	f32 unk1B4;
 	s32 unk1B8;
 	HuVecF unk1BC;
 	HuVecF unk1C8;
@@ -1496,4 +1497,402 @@ void fn_1_5130(void)
 	Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
 	lbl_1_bss_0->unk10 |= 0x200;
 	HuPrcEnd();
+}
+
+void fn_1_57C0(s16 idx, s32 frames)
+{
+	HuVecF target;
+	s32 n;
+
+	if (idx < 0x12) {
+		lbl_1_bss_0->unk10 &= ~0x200;
+		if (frames != 0) {
+			n = 0;
+			switch (lbl_1_bss_0->unk19A) {
+			case 1:
+				target = lbl_1_data_E0[5];
+				n = (frames * 2) / 3;
+				break;
+			case 2:
+				target = lbl_1_data_E0[6];
+				n = (frames * 2) / 3;
+				break;
+			case 3:
+				target = lbl_1_data_E0[7];
+				n = (frames * 2) / 3;
+				break;
+			}
+			switch (idx) {
+			case 2:
+				break;
+			case 1:
+				target = lbl_1_data_E0[5];
+				n = (frames * 2) / 3;
+				break;
+			case 3:
+				target = lbl_1_data_E0[7];
+				n = (frames * 0x46) / 105;
+				break;
+			}
+			if (frames < n) {
+				OSReport("補間が上手くいきません！！\n");
+				abort();
+			}
+			if (n != 0) {
+				lbl_1_bss_0->unk1C8 = lbl_1_data_E0[idx];
+				lbl_1_bss_0->unk1BC = target;
+			} else {
+				lbl_1_bss_0->unk1BC = lbl_1_data_E0[idx];
+			}
+			lbl_1_bss_0->unk1D4 = n;
+			lbl_1_bss_0->unk19C = lbl_1_bss_0->unk1A8;
+			lbl_1_bss_0->unk1B8 = frames - n;
+			HuPrcChildCreate(fn_1_5130, 0x64, 0x1000, 0, HuPrcCurrentGet());
+		} else {
+			lbl_1_bss_0->unk1A8 = lbl_1_data_E0[idx];
+			Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
+			lbl_1_bss_0->unk10 |= 0x200;
+		}
+		lbl_1_bss_0->unk19A = idx;
+	}
+}
+
+void fn_1_5B7C(void)
+{
+	HuVecF scaled;
+	HuVecF delta;
+	f32 t;
+	f32 ti;
+	s32 i;
+
+	for (i = 0;; i++) {
+		ti = (f32)i;
+		if (lbl_1_bss_0->unk1B8 == i) {
+			break;
+		}
+		lbl_1_bss_0->unk1B4 = fmodf(lbl_1_bss_0->unk1B4 - 20.0f, 360.0f);
+		t = sin(3.141592653589793 * (ti / (f32)lbl_1_bss_0->unk1B8) * 0.5);
+		PSVECSubtract(&lbl_1_bss_0->unk1BC, &lbl_1_bss_0->unk19C, &delta);
+		PSVECScale(&delta, &scaled, t);
+		PSVECAdd(&lbl_1_bss_0->unk19C, &scaled, &lbl_1_bss_0->unk1A8);
+		Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
+		Hu3DModelRotSet(lbl_1_bss_0->unk198, 0.0f, lbl_1_bss_0->unk1B4, 0.0f);
+		HuPrcVSleep();
+	}
+	lbl_1_bss_0->unk1A8.x = lbl_1_bss_0->unk1BC.x;
+	lbl_1_bss_0->unk1A8.y = lbl_1_bss_0->unk1BC.y;
+	lbl_1_bss_0->unk1A8.z = lbl_1_bss_0->unk1BC.z;
+	lbl_1_bss_0->unk1B4 = 0.0f;
+	Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1A8.x, lbl_1_bss_0->unk1A8.y, lbl_1_bss_0->unk1A8.z);
+	Hu3DModelRotSet(lbl_1_bss_0->unk198, 0.0f, lbl_1_bss_0->unk1B4, 0.0f);
+	lbl_1_bss_0->unk10 |= 0x200;
+	HuPrcEnd();
+}
+
+void fn_1_5EB0(HuVecF *pos, f32 time)
+{
+	lbl_1_bss_0->unk10 &= ~0x200;
+	lbl_1_bss_0->unk19C = *pos;
+	lbl_1_bss_0->unk1BC = *pos;
+	lbl_1_bss_0->unk1BC.y = 120.0f;
+	lbl_1_bss_0->unk1B4 = fmodf(20.0f * time, 360.0f);
+	lbl_1_bss_0->unk1B8 = (s32)time;
+	Hu3DModelPosSet(lbl_1_bss_0->unk198, lbl_1_bss_0->unk1BC.x, lbl_1_bss_0->unk1BC.y, lbl_1_bss_0->unk1BC.z);
+	Hu3DModelRotSet(lbl_1_bss_0->unk198, 0.0f, lbl_1_bss_0->unk1B4, 0.0f);
+	HuPrcChildCreate(fn_1_5B7C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_6068(void)
+{
+	while (1) {
+		if (Hu3DMotionEndCheck(MDL(0x1DC))) {
+			break;
+		}
+		HuPrcVSleep();
+	}
+	Hu3DModelAttrReset(MDL(0x1DC), 0x40000002);
+	Hu3DModelAttrSet(MDL(0x1DC), 0x40000001);
+	fn_1_AD8(MDL(0x1DC), 0.0f, 660.0f);
+	HuPrcEnd();
+}
+
+void fn_1_6130(void)
+{
+	fn_1_AD8(MDL(0x1DC), 661.0f, 700.0f);
+	Hu3DModelAttrReset(MDL(0x1DC), 0x40000001);
+	HuPrcChildCreate(fn_1_6068, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_61D4(void)
+{
+	s32 i;
+	f32 t;
+
+	i = 0x3C;
+	while (Hu3DMotionEndCheck(lbl_1_bss_0->unk352) == 0) {
+		HuPrcVSleep();
+	}
+	while (i--) {
+		t = (f32)i / 60.0f;
+		Hu3DModelTPLvlSet(lbl_1_bss_0->unk352, t);
+		Hu3DModelTPLvlSet(MDL(0x248), t);
+		HuPrcVSleep();
+	}
+	Hu3DModelTPLvlSet(lbl_1_bss_0->unk352, 1.0f);
+	Hu3DModelTPLvlSet(MDL(0x248), 1.0f);
+	Hu3DModelAttrSet(lbl_1_bss_0->unk352, 1);
+	Hu3DModelAttrSet(MDL(0x248), 1);
+	HuPrcEnd();
+}
+
+void fn_1_6318(void)
+{
+	fn_1_AD8(lbl_1_bss_0->unk352, 241.0f, 300.0f);
+	Hu3DModelAttrReset(lbl_1_bss_0->unk352, 0x40000001);
+	fn_1_AD8(MDL(0x1DC), 661.0f, 700.0f);
+	Hu3DModelAttrReset(MDL(0x1DC), 0x40000001);
+	HuPrcChildCreate(fn_1_6068, 0x64, 0x1000, 0, HuPrcCurrentGet());
+	HuPrcChildCreate(fn_1_61D4, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_6444(void)
+{
+	HuVecF dir;
+	HuVecF norm;
+	MGWARSPLAYER *p;
+	s32 i;
+	s32 done;
+	s32 reached;
+	f32 targetAngle;
+	f32 rem;
+	f32 step;
+	f32 ang;
+
+	p = lbl_1_bss_0->player;
+	for (i = 0; i < 4; i++) {
+		switch (lbl_1_bss_0->unk358) {
+		case 0:
+			p->targetAngle = 0.0f;
+			break;
+		case 1:
+			PSVECScale(&lbl_1_data_B0[i], &dir, -1.0f);
+			PSVECNormalize(&dir, &norm);
+			if (norm.z > 1.0f) {
+				norm.z = 1.0f;
+			} else if (norm.z < -1.0f) {
+				norm.z = -1.0f;
+			}
+			ang = acosf(norm.z);
+			if (norm.x < 0.0f) {
+				ang = -ang;
+			}
+			p->targetAngle = (180.0f * ang) / 3.141592653589793;
+			break;
+		case 2:
+			PSVECSubtract(&lbl_1_data_2CC, &lbl_1_data_B0[i], &dir);
+			PSVECNormalize(&dir, &norm);
+			if (norm.z > 1.0f) {
+				norm.z = 1.0f;
+			} else if (norm.z < -1.0f) {
+				norm.z = -1.0f;
+			}
+			ang = acosf(norm.z);
+			if (norm.x < 0.0f) {
+				ang = -ang;
+			}
+			p->targetAngle = (180.0f * ang) / 3.141592653589793;
+			break;
+		}
+		targetAngle = p->targetAngle;
+		rem = fmodf(p->angle - targetAngle, 180.0f);
+		if (fabsf(rem) < 0.01f) {
+			p->angle = targetAngle;
+			reached = 1;
+		} else {
+			if (rem > 0.0f) {
+				step = rem - 0.01f;
+			} else {
+				step = rem + 0.01f;
+			}
+			p->angle = targetAngle + step;
+			reached = 0;
+		}
+		if (reached == 0 && p->state != 3) {
+			CharMotionShiftSet(p->charNo, p->motId[3], 0.0f, 15.0f, 0x40000001);
+			p->state = 3;
+		}
+		p++;
+	}
+	while (1) {
+		done = 0;
+		p = lbl_1_bss_0->player;
+		i = 4;
+		while (i--) {
+			step = lbl_1_bss_0->unk35C;
+			targetAngle = p->targetAngle;
+			rem = fmodf(p->angle - targetAngle, 180.0f);
+			if (fabsf(rem) < step) {
+				p->angle = targetAngle;
+				reached = 1;
+			} else {
+				if (rem > 0.0f) {
+					ang = rem - step;
+				} else {
+					ang = rem + step;
+				}
+				p->angle = targetAngle + ang;
+				reached = 0;
+			}
+			if (reached != 0) {
+				if (p->state != 0) {
+					CharMotionShiftSet(p->charNo, p->motId[0], 0.0f, 15.0f, 0x40000001);
+					p->state = 0;
+				}
+				done++;
+			}
+			Hu3DModelRotSet(p->modelId, 0.0f, p->angle, 0.0f);
+			p++;
+		}
+		if (done != 4) {
+			HuPrcVSleep();
+			continue;
+		}
+		break;
+	}
+	lbl_1_bss_0->unk10 &= ~0x1000;
+	HuPrcEnd();
+}
+
+void fn_1_6A14(void)
+{
+	u8 table[19][13];
+	s32 i;
+	s32 j;
+	s32 cnt;
+	s32 val;
+
+	i = 0x13;
+	while (i--) {
+		j = 12;
+		while (j--) {
+			table[i][j] = j % 4;
+		}
+		table[i][12] = 4;
+		fn_1_A0(table[i], 13);
+		j = 5;
+		while (j--) {
+			Hu3DMotionTimeSet(lbl_1_bss_0->hexModel[i][j], 60.0f);
+			Hu3DModelAttrSet(lbl_1_bss_0->hexModel[i][j], 0x40000002);
+		}
+	}
+	cnt = 0;
+	while (1) {
+		if (cnt == 0xD) {
+			i = 0x13;
+			while (i--) {
+				fn_1_A0(table[i], 13);
+			}
+			cnt = 0;
+		}
+		j = 5;
+		while (j--) {
+			if ((lbl_1_bss_0->unk10 & 0x2000) == 0) {
+				HuPrcVSleep();
+			} else {
+				break;
+			}
+		}
+		if ((lbl_1_bss_0->unk10 & 0x2000) == 0) {
+			i = 0x13;
+			while (i--) {
+				val = (s8)table[i][cnt];
+				fn_1_B34(i, val);
+			}
+			cnt++;
+			continue;
+		}
+		break;
+	}
+	i = 0x13;
+	while (i--) {
+		j = 5;
+		while (j--) {
+			Hu3DMotionTimeSet(lbl_1_bss_0->hexModel[i][j], 0.0f);
+			Hu3DModelAttrReset(lbl_1_bss_0->hexModel[i][j], 0x40000002);
+		}
+		if (lbl_1_bss_4->owner[i] < 0) {
+			fn_1_B34(i, 4);
+		} else {
+			val = lbl_1_bss_4->owner[i];
+			fn_1_B34(i, val);
+		}
+	}
+	HuPrcEnd();
+}
+
+void fn_1_6F54(void)
+{
+	lbl_1_bss_0->unk10 &= ~0x2000;
+	HuPrcChildCreate(fn_1_6A14, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_6FA8(s32 mode, f32 step)
+{
+	lbl_1_bss_0->unk10 |= 0x1000;
+	lbl_1_bss_0->unk358 = (s16)mode;
+	lbl_1_bss_0->unk35C = step;
+	HuPrcChildCreate(fn_1_6444, 0x64, 0x1000, 0, HuPrcCurrentGet());
+	HuPrcVSleep();
+}
+
+void fn_1_7034(void)
+{
+	MGWARSPLAYER *p;
+	s32 i;
+
+	while (lbl_1_bss_0->unk36A-- != 0) {
+		if (lbl_1_bss_0->unk10 & 0x4000) {
+			lbl_1_bss_0->unk36A = -1;
+			HuPrcEnd();
+			return;
+		}
+		HuPrcVSleep();
+	}
+	i = 4;
+	while (i--) {
+		p = &lbl_1_bss_0->player[i];
+		if (p->state != 0) {
+			CharMotionShiftSet(p->charNo, p->motId[0], 0.0f, 15.0f, 0x40000001);
+			p->state = 0;
+		}
+	}
+	HuPrcEnd();
+}
+
+void fn_1_7138(s32 arg0)
+{
+	lbl_1_bss_0->unk10 &= ~0x4000;
+	lbl_1_bss_0->unk36A = (s16)arg0;
+	if (lbl_1_bss_0->unk36A > 0) {
+		HuPrcChildCreate(fn_1_7034, 0x64, 0x1000, 0, HuPrcCurrentGet());
+	}
+}
+
+void fn_1_71C0(void)
+{
+	while (1) {
+		if (Hu3DMotionEndCheck(MDL(0x24C))) {
+			break;
+		}
+		HuPrcVSleep();
+	}
+	Hu3DModelAttrSet(MDL(0x24C), 1);
+	HuPrcEnd();
+}
+
+void fn_1_721C(void)
+{
+	Hu3DModelAttrReset(MDL(0x24C), 0x40000002);
+	Hu3DModelAttrReset(MDL(0x24C), 1);
+	HuPrcChildCreate(fn_1_71C0, 0x64, 0x1000, 0, HuPrcCurrentGet());
 }
