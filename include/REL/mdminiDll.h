@@ -34,6 +34,8 @@
 
 #define MDLIGHT_MAX 1
 
+#define MDSPR_GRP_MEMBERNO(grp, spr) ((spr)-(grp##_START))
+
 enum {
     MDCAMERA_BG, //0
     MDCAMERA_MAIN, //1
@@ -48,12 +50,18 @@ enum {
 
 #define MDMESS_WIN_MAX 2
 
-#define MDMODEL_ANIM_MAX 6
-
 #define MDMINI_TEXBUF_MIRROR 0
 #define MDMINI_TEXBUF_MAX 10
 #define MDMINI_TEXBUF_W 64
 #define MDMINI_TEXBUF_H 64
+
+enum {
+    MD_LOAD_STATE_NONE, //0
+    MD_LOAD_STATE_SEL_LOAD, //1
+    MD_LOAD_STATE_LOAD, //2
+    MD_LOAD_STATE_BOARD_LOAD, //3
+    MD_LOAD_STATE_DONE //4
+};
 
 enum {
     MD_DEBUGFONT_CTRL_NOP, //0
@@ -113,14 +121,14 @@ enum {
     MDMINI_ANIM_WIN_BG, //1
     MDMINI_ANIM_CURSOR, //2
     MDMINI_ANIM_CURSOR_GLOW, //3
-    MDMINI_ANIM_GRP3, //4
-    MDMINI_ANIM_GRP4, //5
+    MDMINI_ANIM_PLAYERNO, //4
+    MDMINI_ANIM_COMDIF, //5
     MDMINI_ANIM_6, //6
     MDMINI_ANIM_7, //7
     MDMINI_ANIM_8, //8
     MDMINI_ANIM_9, //9
     MDMINI_ANIM_10, //10
-    MDMINI_ANIM_GRP5, //11
+    MDMINI_ANIM_MODE_NAME, //11
     MDMINI_ANIM_MAX //12
 };
 
@@ -138,15 +146,15 @@ enum {
     MDSPR_CURSOR_GLOW_UDLR_L, //10
     MDSPR_CURSOR_GLOW_UDLR_U, //11
     MDSPR_CURSOR_GLOW_UDLR_D, //12
-    MDSPR_GRP3_1P, //13
-    MDSPR_GRP3_2P, //14
-    MDSPR_GRP3_3P, //15
-    MDSPR_GRP3_4P, //16
-    MDSPR_GRP4_1P, //17
-    MDSPR_GRP4_2P, //18
-    MDSPR_GRP4_3P, //19
-    MDSPR_GRP4_4P, //20
-    MDSPR_GRP5, //21
+    MDSPR_PLAYERNO_1P, //13
+    MDSPR_PLAYERNO_2P, //14
+    MDSPR_PLAYERNO_3P, //15
+    MDSPR_PLAYERNO_4P, //16
+    MDSPR_COMDIF_1P, //17
+    MDSPR_COMDIF_2P, //18
+    MDSPR_COMDIF_3P, //19
+    MDSPR_COMDIF_4P, //20
+    MDSPR_MODE_NAME, //21
     MDSPR_MAX //22
 };
 
@@ -154,9 +162,9 @@ enum {
     MDSPR_GRP_WIN, //0
     MDSPR_GRP_CURSOR_LR, //1
     MDSPR_GRP_CURSOR_UDLR, //2
-    MDSPR_GRP_3, //3
-    MDSPR_GRP_4, //4
-    MDSPR_GRP_5, //5
+    MDSPR_GRP_PLAYERNO, //3
+    MDSPR_GRP_COMDIF, //4
+    MDSPR_GRP_NAME, //5
     MDSPR_GRP_MAX //6
 };
 
@@ -211,6 +219,69 @@ enum {
     MDMODEL_AUX_2, //47
     MDMODEL_FONTBGFILTER, //48
     MDMODEL_MAX //49
+};
+
+enum {
+    MDMODEL_ANIM_FINGER_1P, //0
+    MDMODEL_ANIM_FINGER_2P, //1
+    MDMODEL_ANIM_FINGER_3P, //2
+    MDMODEL_ANIM_FINGER_4P, //3
+    MDMODEL_ANIM_CAP_TURN, //4
+    MDMODEL_ANIM_CAP_BONUS, //5
+    MDMODEL_ANIM_MAX //6
+};
+
+enum {
+    MDMODEL_MOT_STAR_IDLE, //0
+    MDMODEL_MOT_STAR_TALK, //1
+    MDMODEL_MOT_STAR_TALK_FAST, //2
+    
+    MDMODEL_MOT_MARIO_IDLE,//3
+    MDMODEL_MOT_MARIO_WIN, //4
+    
+    MDMODEL_MOT_LUIGI_IDLE, //5
+    MDMODEL_MOT_LUIGI_WIN, //6
+    
+    MDMODEL_MOT_PEACH_IDLE, //7
+    MDMODEL_MOT_PEACH_WIN, //8
+    
+    MDMODEL_MOT_YOSHI_IDLE, //9
+    MDMODEL_MOT_YOSHI_WIN, //10
+    
+    MDMODEL_MOT_WARIO_IDLE, //11
+    MDMODEL_MOT_WARIO_WIN, //12
+    
+    MDMODEL_MOT_DAISY_IDLE, //13
+    MDMODEL_MOT_DAISY_WIN, //14
+    
+    MDMODEL_MOT_WALUIGI_IDLE, //15
+    MDMODEL_MOT_WALUIGI_WIN, //16
+    
+    MDMODEL_MOT_KINOPIO_IDLE, //17
+    MDMODEL_MOT_KINOPIO_WIN, //18
+    
+    MDMODEL_MOT_TERESA_IDLE, //19
+    MDMODEL_MOT_TERESA_WIN, //20
+    
+    MDMODEL_MOT_MINIKOOPA_IDLE, //21
+    MDMODEL_MOT_MINIKOOPA_WIN, //22
+    
+    MDMODEL_MOT_MAX //23
+};
+
+enum {
+    MDSPR_GRP_WIN_START = MDSPR_WIN_FRAME_TOP,
+    MDSPR_GRP_WIN_END = MDSPR_WIN_BG,
+    MDSPR_GRP_CURSOR_LR_START = MDSPR_CURSOR_LR_R,
+    MDSPR_GRP_CURSOR_LR_END = MDSPR_CURSOR_LR_L,
+    MDSPR_GRP_CURSOR_UDLR_START = MDSPR_CURSOR_UDLR_R,
+    MDSPR_GRP_CURSOR_UDLR_END = MDSPR_CURSOR_GLOW_UDLR_D,
+    MDSPR_GRP_PLAYERNO_START = MDSPR_PLAYERNO_1P,
+    MDSPR_GRP_PLAYERNO_END = MDSPR_PLAYERNO_4P,
+    MDSPR_GRP_COMDIF_START = MDSPR_COMDIF_1P,
+    MDSPR_GRP_COMDIF_END = MDSPR_COMDIF_4P,
+    MDSPR_GRP_NAME_START = MDSPR_MODE_NAME,
+    MDSPR_GRP_NAME_END = MDSPR_MODE_NAME
 };
 
 enum {
@@ -387,31 +458,30 @@ typedef struct MdRingWork_s {
 } MDRING_WORK;
 
 typedef struct MdMiniStar_s {
-    s8 unk0;
-    s8 unk1;
-    s16 unk2;
-    s16 unk4;
+    s16 unk0;
+    s16 mode; //0x02
+    s16 motNext; //0x04
 } MDMINI_STAR;
 
-typedef struct MdMiniPlayerAnim_s {
-    int state; //0x00
-    float t1; //0x04
-    float t2; //0x08
-    float u1; //0x0C
-    float u2; //0x10
-} MDMINI_PLAYERANIM;
+typedef struct MdMiniPlayerSpr_s {
+    int mode; //0x00
+    float time; //0x04
+    float ofsTime; //0x08
+    float t; //0x0C
+    float ofsT; //0x10
+} MDMINI_PLAYERSPR;
 
-typedef struct MdMiniModelAnim_s {
-    int state; //0x00
-    float t1; //0x04
-    float t2; //0x08
-    float u1; //0x0C
-    float u2; //0x10
-    HuVecF pos1; //0x14
-    HuVecF pos2; //0x20
-    HuVecF rot1; //0x2C
-    HuVecF rot2; //0x38
-} MDMINI_MODELANIM;
+typedef struct MdMiniChar_s {
+    int mode; //0x00
+    float time; //0x04
+    float ofsTime; //0x08
+    float t; //0x0C
+    float ofsT; //0x10
+    HuVecF origPos; //0x14
+    HuVecF pos; //0x20
+    HuVecF origRot; //0x2C
+    HuVecF rot; //0x38
+} MDMINI_CHR;
 
 typedef struct MdParticleWork_s {
     s32 manId[3];
@@ -432,41 +502,43 @@ typedef struct Sys_s {
     OMOVL nextDll; //0x14
     s8 exitF; //0x18
     s8 skipWipeF; //0x19
-    s8 selMode; //0x1A
-    s8 prevSelMode; //0x1B
-    s8 playerNum; //0x1C
-    s8 padConnectF[GW_PLAYER_MAX]; //0x1D
-    s8 inUseF[GW_PLAYER_MAX]; //0x21
-    s8 padNo[GW_PLAYER_MAX]; //0x25
-    s8 padNoPrev[GW_PLAYER_MAX]; //0x29
-    s8 charNo[GW_PLAYER_MAX]; //0x2D
-    s8 anmNo[GW_PLAYER_MAX]; //0x31
-    s8 difNo[GW_PLAYER_MAX]; //0x35
-    s8 selSub[MDMINI_MOTION_MAX]; //0x39
-    s8 selNo; //0x3C
+    s8 playerNum; //0x1A
+    s8 prevPlayerNum; //0x1B
+    s8 maxPlayerNum; //0x1C
+    s8 padConnect[GW_PLAYER_MAX]; //0x1D
+    s8 padEnable[GW_PLAYER_MAX]; //0x21
+    s8 padNoConnect[GW_PLAYER_MAX]; //0x25
+    s8 padNoEnable[GW_PLAYER_MAX]; //0x29
+    s8 chrSel[GW_PLAYER_MAX]; //0x2D
+    s8 chrSelEnd[GW_PLAYER_MAX]; //0x31
+    s8 comDif[GW_PLAYER_MAX]; //0x35
+    s8 comPlayerNo[3]; //0x39
+    s8 selComNo; //0x3C
     s8 selNoNow; //0x3D
     s8 selNoPrev; //0x3E
     s8 mgTypeF[6]; //0x3F
     s8 scoreNum; //0x45
     s8 gameType; //0x46
-    s8 subMode; //0x47
-    s16 mdlA[2]; //0x48
-    s8 mdlB[GW_PLAYER_MAX]; //0x4C
-    s8 mdlBPrev[GW_PLAYER_MAX]; //0x50
-    s8 mdlC[2]; //0x54
-    s8 mdlD[3]; //0x56
+    s8 teamOrderNo; //0x47
+    s8 teamPlayer[2][2]; //0x48
+    s8 teamOrder[GW_PLAYER_MAX]; //0x4C
+    s8 teamOrderBackup[GW_PLAYER_MAX]; //0x50
+    s8 teamNo[2]; //0x54
+    s8 teamComPlayerNo[3]; //0x56
     s8 subMode2; //0x59
     s8 mdlE[GW_PLAYER_MAX]; //0x5A
     s8 mdlF[GW_PLAYER_MAX]; //0x5E
     s8 mdlG[3]; //0x62
+    u8 pad65[3]; //0x65
     OMOBJMAN *objman; //0x68
     HUPROCESS *mainProc; //0x6C
     HUPROCESS *loadProc; //0x70
-    HUPROCESS *procA; //0x74
-    HUPROCESS *procB; //0x78
-    HUPROCESS *procC; //0x7C
+    HUPROCESS *starProc; //0x74
+    HUPROCESS *playerSprProc; //0x78
+    HUPROCESS *chrProc; //0x7C
     HUPROCESS *ringProc; //0x80
-    HUPROCESS *messProc[2]; //0x84
+    HUPROCESS *mainWinProc; //0x84
+    HUPROCESS *textWinProc; //0x88
     OMOBJ *obj[MDMINI_OBJ_MAX]; //0x8C
     OMOVLHIS *ovlHis; //0x9C
     int evtNo; //0xA0
@@ -481,18 +553,34 @@ typedef struct Sys_s {
     MDMODEL_WORK *model; //0xC0
     MDTEXBUF_WORK *texbuf; //0xC4
     MDMINI_STAR *star; //0xC8
-    MDMINI_PLAYERANIM playerAnim[GW_PLAYER_MAX]; //0xCC
-    MDMINI_MODELANIM modelAnim[MDMINI_MODEL_MAX]; //0x11C
+    MDMINI_PLAYERSPR playerSpr[GW_PLAYER_MAX]; //0xCC
+    MDMINI_CHR chr[MDMINI_MODEL_MAX]; //0x11C
     MDMESS *mess; //0x3C4
     MDRING_WORK *ring; //0x3C8
-    int initF[7]; //0x3CC
-    int dirF; //0x3E4
-    int unk3E8; //0x3E8
-    float oscT[7]; //0x3EC
-    float oscOut[7]; //0x408
-    float curveT[5]; //0x424
-    float curveSlope[5]; //0x444
-    float pad4A0[0x4];
+    BOOL dirtyF; //0x3CC
+    BOOL teamInitF; //0x3D0
+    BOOL winInitF; //0x3D4
+    BOOL cursorInitF; //0x3D8
+    BOOL nameInitF; //0x3DC
+    BOOL unk3E0;
+    int unk3E4;
+    int unk3E8;
+    float procTime; //0x3EC
+    float procOfsTime; //0x3F0
+    float cameraTime; //0x3F4
+    float cameraTotalTime; //0x3F8
+    float sprTime; //0x3FC
+    float unk400;
+    float nameTime; //0x404
+    float procT; //0x408
+    float procOfsT; //0x40C
+    float cameraT; //0x410
+    float cameraTotalT; //0x414
+    float sprT; //0x418
+    float unk41C;
+    float nameT; //0x420
+    float curveTime[8]; //0x424
+    float curveSlope[25]; //0x444
 } SYS;
 
 extern SYS *sys;
