@@ -55,6 +55,99 @@ void fn_1_112B8(void);
 void fn_1_11F2C(void);
 void fn_1_C638(void);
 extern void abort(void);
+/* forward declarations */
+int _prolog(void);
+void _epilog(void);
+void fn_1_A0(s8 *arg0, u8 *arg1, s8 arg2);
+void fn_1_140(u8 *arg0, s32 arg1);
+void fn_1_204(s32 arg0);
+void fn_1_240(s32 arg0, s32 arg1);
+void fn_1_294(s32 arg0, s32 arg1);
+void fn_1_2E8(void);
+void fn_1_3C4(s32 arg0);
+s16 fn_1_458(void);
+void fn_1_46C(void);
+void fn_1_4B4(void);
+s32 fn_1_510(void);
+s32 fn_1_528(void);
+u8 fn_1_588(void);
+u8 fn_1_59C(void);
+s32 fn_1_5B0(s32 arg0);
+void fn_1_5D0(s32 arg0, s32 arg1);
+u8 fn_1_624(void);
+s32 fn_1_638(void);
+s32 fn_1_64C(s32 *place, s32 *tieNum, s32 *score);
+void fn_1_87C(u32 arg0);
+void fn_1_898(u32 arg0);
+u32 fn_1_8B4(u32 arg0);
+void fn_1_8CC(u32 arg0);
+void fn_1_8EC(u32 arg0);
+u32 fn_1_90C(u32 arg0);
+void fn_1_924(u32 arg0);
+void fn_1_940(u32 arg0);
+u32 fn_1_95C(u32 arg0);
+void fn_1_974(void *arg0, s32 arg1);
+void fn_1_9FC(void);
+void fn_1_B18(s32 arg0);
+void ObjectSetup(void);
+void fn_1_BC0(void);
+void fn_1_D40(s32 arg0);
+void fn_1_D88(void);
+void fn_1_1A24(void *arg0);
+s32 fn_1_1A64(s16 camNo, s32 time, s16 mode);
+void fn_1_1C08(void);
+void fn_1_1DE8(s16 arg0, f32 arg1, s32 arg2);
+s32 fn_1_1E74(void);
+void fn_1_1EA0(void);
+void fn_1_1F00(void);
+void fn_1_1F58(void);
+void fn_1_2000(void);
+void fn_1_2058(void);
+void fn_1_2080(void);
+void fn_1_20BC(void);
+void fn_1_2134(void);
+void fn_1_2170(void);
+void fn_1_2628(void);
+void fn_1_267C(void);
+void fn_1_28BC(s32 arg0, s16 arg1);
+void fn_1_2994(void);
+void fn_1_2F78(void);
+void fn_1_317C(s32 arg0);
+void fn_1_31B0(void);
+s32 fn_1_32C0(void);
+void fn_1_32DC(s32 arg0);
+void fn_1_33AC(void);
+void fn_1_3560(void);
+void fn_1_3850(void);
+void fn_1_3AD0(void);
+void fn_1_3B24(void);
+void fn_1_3C04(void);
+void fn_1_3C40(void);
+void fn_1_4090(void);
+void fn_1_4114(void);
+void fn_1_64B0(void);
+void fn_1_6504(void);
+void fn_1_676C(void);
+void fn_1_67C0(void);
+void fn_1_6B18(void);
+void fn_1_6BE8(void);
+void fn_1_72E8(void);
+void fn_1_74FC(M505_PLAYER *player, Vec *target);
+s32 fn_1_7B6C(f32 *cur, f32 target, f32 step);
+void fn_1_7D74(void);
+void fn_1_8538(s32 arg0, f32 arg1);
+void fn_1_85C4(void);
+void fn_1_9844(void);
+void fn_1_9984(void);
+void fn_1_A524(void);
+void fn_1_B2D8(void);
+void fn_1_BE50(void);
+void fn_1_C638(void);
+void fn_1_CCE4(f32 *p, s32 n);
+void fn_1_CE5C(void);
+void fn_1_D130(void);
+/* end forward declarations */
+
 M505_FLOW *lbl_1_bss_0;
 M505_MODEWORK *lbl_1_bss_4;
 M505_FLOW lbl_1_bss_8;
@@ -208,110 +301,26 @@ void _epilog(void)
     }
 }
 
-void ObjectSetup(void)
+void fn_1_A0(s8 *arg0, u8 *arg1, s8 arg2)
 {
-    GwSystem.subGameNo = 0;
-    _SetFlag(0xb);
-    HuPrcChildCreate(fn_1_BC0, 0xc8, 0x3000, 0, HuPrcCurrentGet());
-}
-
-s16 fn_1_458(void)
-{
-    return lbl_1_bss_0->winId;
-}
-
-u8 fn_1_588(void)
-{
-    return lbl_1_bss_0->winner;
-}
-
-u8 fn_1_624(void)
-{
-    return lbl_1_bss_4->winner;
-}
-
-s32 fn_1_638(void)
-{
-    return lbl_1_bss_0->unknownE00;
-}
-
-u32 fn_1_8B4(u32 arg0)
-{
-    return lbl_1_bss_0->flag2 & arg0;
-}
-
-void fn_1_3C4(s32 arg0)
-{
-    // NONMATCHING: MWCC saves r31 (frame -0x20) although the original keeps every
-    // value dead across its calls and needs only frame -0x10.
-    lbl_1_bss_0->mgNo = arg0;
-    HuDataDirClose(0x980000);
-    HuDataDirClose(0x270000);
-    CharModelDataClose(-1);
-    if (fn_1_8B4(4) == 0) {
-        HuPrcChildCreate(fn_1_2E8, 0xc8, 0x3000, 0, HuPrcCurrentGet());
-    } else {
-        lbl_1_bss_0->loadState = 1;
-    }
-}
-
-static const char lbl_1_data_4B8[] = "Load Time:%d\n";
-
-void fn_1_2E8(void)
-{
-    // NONMATCHING: the mulhwu/srwi tick conversion uses different registers in MWCC
-    // (it also emits an extra li for the 64-bit intermediate).
-    u32 start;
-    s32 stat;
-
-    lbl_1_bss_0->loadState = 0;
-    start = OSGetTick();
-    stat = HuDataDirReadAsync(mgDataTbl[lbl_1_bss_0->mgNo].dataDir);
-    while (HuDataGetAsyncStat(stat) == 0) {
-        HuPrcVSleep();
-    }
-    lbl_1_bss_0->loadState = 1;
-    OSReport(lbl_1_data_4B8,
-             (OSGetTick() - start) / (s32)((u64)((u64)(u32)(*(u32 *)0x800000f8 >> 2) * 0x10624DD3u) >> 38));
-    HuPrcEnd();
-    while (1) {
-        HuPrcVSleep();
-    }
-}
-
-s32 fn_1_528(void)
-{
-    // NONMATCHING: the original keeps each array index in a separate register and
-    // uses indexed addressing (lbzx); MWCC folds the +1/+0x36 into the displacement.
-    return mgDataTbl[((s8 *)lbl_1_bss_4)[((s8 *)lbl_1_bss_4)[((s8 *)lbl_1_bss_4)[0] + 1] * 6 + 0x36]].nameMes;
-}
-
-void fn_1_9FC(void)
-{
-    // NONMATCHING: the original keeps unkE04 in r29 across the polling loop (frame
-    // -0x30 with 3 saved registers); MWCC needs only 2 saved registers (-0x20).
-    s32 key[4];
-    s32 i;
-    s32 n;
-
-    HuWinDisablePlayerSet(lbl_1_bss_0->winId, 0xf);
-    do {
-        i = 4;
-        while (i-- != 0) {
-            key[i] = -1;
-            if (*(s16 *)((u8 *)GwPlayerConf + i * 0xa + 8) != 0) {
-                key[i] = 0x100;
+    s32 i = 0;
+    while (i < arg2 - 1) {
+        s32 j = i + 1;
+        while (j < arg2) {
+            if (arg0[i] > arg0[j]) {
+                s8 tmp = arg0[i];
+                arg0[i] = arg0[j];
+                arg0[j] = tmp;
+                if (arg1) {
+                    u8 t = arg1[i];
+                    arg1[i] = arg1[j];
+                    arg1[j] = t;
+                }
             }
+            j++;
         }
-        HuWinComKeyWait(key[0], key[1], key[2], key[3], 0xa);
-        n = 0x1e;
-        while (n-- != 0) {
-            HuPrcVSleep();
-        }
-    } while ((lbl_1_bss_0->flag & lbl_1_bss_0->keyWaitMask) == 0);
-    HuWinDisablePlayerReset(lbl_1_bss_0->winId, 0xf);
-    HuWinComKeyReset();
-    HuPrcEnd();
+        i++;
+    }
 }
 
 void fn_1_140(u8 *arg0, s32 arg1)
@@ -340,96 +349,11 @@ void fn_1_140(u8 *arg0, s32 arg1)
     }
 }
 
-void fn_1_A0(s8 *arg0, u8 *arg1, s8 arg2)
+void fn_1_204(s32 arg0)
 {
-    s32 i = 0;
-    while (i < arg2 - 1) {
-        s32 j = i + 1;
-        while (j < arg2) {
-            if (arg0[i] > arg0[j]) {
-                s8 tmp = arg0[i];
-                arg0[i] = arg0[j];
-                arg0[j] = tmp;
-                if (arg1) {
-                    u8 t = arg1[i];
-                    arg1[i] = arg1[j];
-                    arg1[j] = t;
-                }
-            }
-            j++;
-        }
-        i++;
+    while (arg0-- != 0) {
+        HuPrcVSleep();
     }
-}
-
-void fn_1_1F58(void)
-{
-    CAMMOTIONWORK *tail = &lbl_1_bss_0->camPath[lbl_1_bss_0->camPathNum - 1];
-    CamMotionExPath(0x10, lbl_1_bss_0->camPath, lbl_1_bss_0->camPathNum);
-    Hu3DCameraPosSetV(0x10, &tail->pos, &tail->up, &tail->target);
-    lbl_1_bss_0->flag2 |= 0x100;
-    HuPrcEnd();
-}
-
-void fn_1_1F00(void)
-{
-    // NONMATCHING: MWCC emits clrlwi r0,9 instead of the original's
-    // rlwinm r0,0,24,22 for this 23-bit mask.
-    lbl_1_bss_0->flag2 &= 0x7FFFFF;
-    HuPrcChildCreate(fn_1_1EA0, 0x64, 0x1000, 0, HuPrcCurrentGet());
-    HuPrcVSleep();
-}
-
-void fn_1_4B4(void)
-{
-    // NONMATCHING: the original caches unk6 in r31 before the fn_1_8B4 test;
-    // MWCC reloads lbl_1_bss_0->winId after the call.
-    if (fn_1_8B4(0x20) != 0) {
-        fn_1_898(0x20);
-        HuWinExClose(lbl_1_bss_0->winId);
-        HuWinHomeClear(lbl_1_bss_0->winId);
-    }
-}
-
-s32 fn_1_1E74(void)
-{
-    return lbl_1_bss_0->camMotionNo == -1;
-}
-
-void fn_1_1EA0(void)
-{
-    CamMotionExPath(0x10, lbl_1_bss_0->camPath, lbl_1_bss_0->camPathNum);
-    lbl_1_bss_0->flag2 |= 0x100;
-    HuPrcEnd();
-}
-
-void fn_1_974(void *arg0, s32 arg1)
-{
-    // NONMATCHING: the original mixes a single-precision load for the 24.0f factor
-    // with a double-precision divide for the 500.0f divisor (lfd/fdiv); MWCC keeps
-    // the whole expression in one precision.
-    HuAudFXPlayPan(lbl_1_data_418[*(s16 *)((u8 *)arg0 + 0x1a)][arg1],
-                   0x40 + (s32)(24.0f * (*(f32 *)((u8 *)arg0 + 0x28) / 500.0f)));
-}
-
-void fn_1_1DE8(s16 arg0, f32 arg1, s32 arg2)
-{
-    lbl_1_bss_0->camMotionNo = arg0;
-    lbl_1_bss_0->camMoveRate = arg1;
-    lbl_1_bss_0->timerType = (s16)arg2;
-    HuPrcChildCreate(fn_1_1C08, 0x64, 0x1000, 0, HuPrcCurrentGet());
-    HuPrcVSleep();
-}
-
-void fn_1_5D0(s32 arg0, s32 arg1)
-{
-    omVibrate(lbl_1_bss_0->player[arg0].padNo, (s16)arg1, 4, 2);
-}
-
-void fn_1_B18(s32 arg0)
-{
-    lbl_1_bss_0->keyWaitMask = arg0;
-    HuPrcChildCreate(fn_1_9FC, 0xc8, 0x3000, 0, HuPrcCurrentGet());
 }
 
 void fn_1_240(s32 arg0, s32 arg1)
@@ -448,15 +372,48 @@ void fn_1_294(s32 arg0, s32 arg1)
     }
 }
 
-void fn_1_1A24(void *arg0)
+static const char lbl_1_data_4B8[] = "Load Time:%d\n";
+
+void fn_1_2E8(void)
 {
-    HuPrcChildCreate(arg0, 0x64, 0x1000, 0, HuPrcCurrentGet());
-    HuPrcVSleep();
+    // NONMATCHING: the mulhwu/srwi tick conversion uses different registers in MWCC
+    // (it also emits an extra li for the 64-bit intermediate).
+    u32 start;
+    s32 stat;
+
+    lbl_1_bss_0->loadState = 0;
+    start = OSGetTick();
+    stat = HuDataDirReadAsync(mgDataTbl[lbl_1_bss_0->mgNo].dataDir);
+    while (HuDataGetAsyncStat(stat) == 0) {
+        HuPrcVSleep();
+    }
+    lbl_1_bss_0->loadState = 1;
+    OSReport(lbl_1_data_4B8,
+             (OSGetTick() - start) / (s32)((u64)((u64)(u32)(*(u32 *)0x800000f8 >> 2) * 0x10624DD3u) >> 38));
+    HuPrcEnd();
+    while (1) {
+        HuPrcVSleep();
+    }
 }
 
-u32 fn_1_90C(u32 arg0)
+void fn_1_3C4(s32 arg0)
 {
-    return lbl_1_bss_4->flag & arg0;
+    // NONMATCHING: MWCC saves r31 (frame -0x20) although the original keeps every
+    // value dead across its calls and needs only frame -0x10.
+    lbl_1_bss_0->mgNo = arg0;
+    HuDataDirClose(0x980000);
+    HuDataDirClose(0x270000);
+    CharModelDataClose(-1);
+    if (fn_1_8B4(4) == 0) {
+        HuPrcChildCreate(fn_1_2E8, 0xc8, 0x3000, 0, HuPrcCurrentGet());
+    } else {
+        lbl_1_bss_0->loadState = 1;
+    }
+}
+
+s16 fn_1_458(void)
+{
+    return lbl_1_bss_0->winId;
 }
 
 void fn_1_46C(void)
@@ -469,56 +426,14 @@ void fn_1_46C(void)
     }
 }
 
-void fn_1_D40(s32 arg0)
+void fn_1_4B4(void)
 {
-    OMOVLHIS *his = omOvlHisGet(0);
-    omOvlHisChg(0, his->ovl, arg0, his->stat);
-}
-
-u32 fn_1_95C(u32 arg0)
-{
-    return lbl_1_bss_0->flag & arg0;
-}
-
-s32 fn_1_5B0(s32 arg0)
-{
-    return (s8)lbl_1_bss_0->player[arg0].playerNo;
-}
-
-void fn_1_8CC(u32 arg0)
-{
-    lbl_1_bss_4->flag |= arg0;
-}
-
-void fn_1_8EC(u32 arg0)
-{
-    lbl_1_bss_4->flag &= ~arg0;
-}
-
-void fn_1_87C(u32 arg0)
-{
-    lbl_1_bss_0->flag2 |= arg0;
-}
-
-void fn_1_898(u32 arg0)
-{
-    lbl_1_bss_0->flag2 &= ~arg0;
-}
-
-void fn_1_924(u32 arg0)
-{
-    lbl_1_bss_0->flag |= arg0;
-}
-
-void fn_1_940(u32 arg0)
-{
-    lbl_1_bss_0->flag &= ~arg0;
-}
-
-void fn_1_204(s32 arg0)
-{
-    while (arg0-- != 0) {
-        HuPrcVSleep();
+    // NONMATCHING: the original caches unk6 in r31 before the fn_1_8B4 test;
+    // MWCC reloads lbl_1_bss_0->winId after the call.
+    if (fn_1_8B4(0x20) != 0) {
+        fn_1_898(0x20);
+        HuWinExClose(lbl_1_bss_0->winId);
+        HuWinHomeClear(lbl_1_bss_0->winId);
     }
 }
 
@@ -527,182 +442,41 @@ s32 fn_1_510(void)
     return lbl_1_bss_4->maxScore;
 }
 
+s32 fn_1_528(void)
+{
+    // NONMATCHING: the original keeps each array index in a separate register and
+    // uses indexed addressing (lbzx); MWCC folds the +1/+0x36 into the displacement.
+    return mgDataTbl[((s8 *)lbl_1_bss_4)[((s8 *)lbl_1_bss_4)[((s8 *)lbl_1_bss_4)[0] + 1] * 6 + 0x36]].nameMes;
+}
+
+u8 fn_1_588(void)
+{
+    return lbl_1_bss_0->winner;
+}
+
 u8 fn_1_59C(void)
 {
     return lbl_1_bss_4->gameType;
 }
 
-void fn_1_2000(void)
+s32 fn_1_5B0(s32 arg0)
 {
-    lbl_1_bss_0->flag2 &= ~0x100;
-    HuPrcChildCreate(fn_1_1F58, 0x64, 0x1000, 0, HuPrcCurrentGet());
-    HuPrcVSleep();
+    return (s8)lbl_1_bss_0->player[arg0].playerNo;
 }
 
-void fn_1_2058(void)
+void fn_1_5D0(s32 arg0, s32 arg1)
 {
-    HuAudJinglePlay(0x85);
-    HuPrcEnd();
+    omVibrate(lbl_1_bss_0->player[arg0].padNo, (s16)arg1, 4, 2);
 }
 
-void fn_1_2080(void)
+u8 fn_1_624(void)
 {
-    HuPrcChildCreate(fn_1_2058, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    return lbl_1_bss_4->winner;
 }
 
-void fn_1_20BC(void)
+s32 fn_1_638(void)
 {
-    s32 i;
-
-    HuAudJinglePlay(0x86);
-    i = 0xd2;
-    while (i-- != 0) {
-        HuPrcVSleep();
-    }
-    if (lbl_1_bss_0->bgmId < 0) {
-        lbl_1_bss_0->bgmId = HuAudBGMPlay(0x23);
-    }
-    HuPrcEnd();
-}
-
-void fn_1_2134(void)
-{
-    HuPrcChildCreate(fn_1_20BC, 0x64, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_2628(void)
-{
-    lbl_1_bss_0->flag2 &= ~0x40;
-    HuPrcChildCreate(fn_1_2170, 0x64, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_317C(s32 arg0)
-{
-    (void)arg0;
-    lbl_1_bss_0->flag2 |= 0x800;
-    lbl_1_bss_0->flag2 &= ~0x1000;
-}
-
-s32 fn_1_32C0(void)
-{
-    return lbl_1_bss_0->itemAnimState == 0;
-}
-
-void fn_1_32DC(s32 arg0)
-{
-    if (lbl_1_bss_0->flag2 & 0x400) {
-        lbl_1_bss_0->itemAnimState = arg0;
-        while (lbl_1_bss_0->itemAnimState != 0) {
-            HuPrcVSleep();
-        }
-        if (arg0 == 1) {
-            lbl_1_bss_0->flag2 |= 0x800;
-            lbl_1_bss_0->flag2 &= ~0x1000;
-            while ((lbl_1_bss_0->flag2 & 0x1000) == 0) {
-                HuPrcVSleep();
-            }
-        }
-    }
-}
-
-void fn_1_3AD0(void)
-{
-    lbl_1_bss_0->flag2 &= ~0x2000;
-    HuPrcChildCreate(fn_1_3850, 0x64, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_3C04(void)
-{
-    HuPrcChildCreate(fn_1_3B24, 0x64, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_4090(void)
-{
-    lbl_1_bss_0->parManMaxTime = (s16)Hu3DMotionMaxTimeGet(lbl_1_bss_0->mdl[16]);
-    lbl_1_bss_0->flag2 |= 0x00090000;
-    HuPrcChildCreate(fn_1_3C40, 0x64, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_64B0(void)
-{
-    lbl_1_bss_0->flag2 &= ~0x4000;
-    HuPrcChildCreate(fn_1_4114, 0x64, 0x1500, 0, HuPrcCurrentGet());
-}
-
-void fn_1_676C(void)
-{
-    lbl_1_bss_0->flag2 |= 0x8000;
-    HuPrcChildCreate(fn_1_6504, 0x64, 0x1500, 0, HuPrcCurrentGet());
-}
-
-void fn_1_8538(s32 arg0, f32 arg1)
-{
-    lbl_1_bss_0->flag2 &= ~0x200000;
-    lbl_1_bss_0->camMotionType = (s16)arg0;
-    lbl_1_bss_0->rotSpeed = arg1;
-    HuPrcChildCreate(fn_1_7D74, 0x64, 0x1000, 0, HuPrcCurrentGet());
-    HuPrcVSleep();
-}
-
-void fn_1_D130(void)
-{
-    lbl_1_bss_0->flag2 |= 0x00800000;
-    HuPrcChildCreate(fn_1_CE5C, 0x63, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_6B18(void)
-{
-    s32 i = 7;
-
-    while (i-- != 0) {
-        Hu3DModelAttrReset(lbl_1_bss_0->parMan[i].id, 1);
-        Hu3DModelLayerSet(lbl_1_bss_0->parMan[i].id, 4);
-        Hu3DModelCameraSet(lbl_1_bss_0->parMan[i].id, 0x10);
-    }
-    lbl_1_bss_0->flag2 &= ~0x40000;
-    HuPrcChildCreate(fn_1_67C0, 0x64, 0x1000, 0, HuPrcCurrentGet());
-}
-
-void fn_1_9844(void)
-{
-    OMOVLHIS *his;
-
-    HuDataDirClose(0x980000);
-    HuDataDirClose(0x270000);
-    CharModelDataClose(-1);
-    HuPrcVSleep();
-    HuTHPClose();
-    if (lbl_1_bss_0->bgmId >= 0) {
-        HuAudSStreamFadeOut(lbl_1_bss_0->bgmId, 0x3e8);
-        lbl_1_bss_0->bgmId = -1;
-    }
-    GwSystem.mgInstF = 1;
-    his = omOvlHisGet(0);
-    omOvlHisChg(0, his->ovl, 0, his->stat);
-    HuWinExClose(lbl_1_bss_0->winId);
-    HuWinExKill(lbl_1_bss_0->winId);
-    WipeCreate(2, 6, 0x3c);
-    while ((u8)WipeCheckEnd() != 0) {
-        HuPrcVSleep();
-    }
-    _ClearFlag(0x30003);
-    _ClearFlag(0x30001);
-    memset(lbl_1_bss_4, 0, 0xd8);
-}
-
-void fn_1_28BC(s32 arg0, s16 arg1)
-{
-    // NONMATCHING: 17.57%. MWCC keeps arg0 in a callee-saved register (r31) and reorders the global copies,
-    // while the original stores arg0 on the stack and keeps the table pointer in r5.
-    const f32 *tbl = &lbl_1_data_60[arg0 * 3];
-
-    lbl_1_bss_0->posTo = lbl_1_bss_0->pos;
-    lbl_1_bss_0->posFrom.x = tbl[0];
-    lbl_1_bss_0->posFrom.y = tbl[1];
-    lbl_1_bss_0->posFrom.z = tbl[2];
-    lbl_1_bss_0->camMoveSpeed = arg1;
-    lbl_1_bss_0->flag2 &= ~0x80;
-    HuPrcChildCreate(fn_1_267C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    return lbl_1_bss_0->unknownE00;
 }
 
 s32 fn_1_64C(s32 *place, s32 *tieNum, s32 *score)
@@ -756,6 +530,101 @@ s32 fn_1_64C(s32 *place, s32 *tieNum, s32 *score)
     return 1;
 }
 
+void fn_1_87C(u32 arg0)
+{
+    lbl_1_bss_0->flag2 |= arg0;
+}
+
+void fn_1_898(u32 arg0)
+{
+    lbl_1_bss_0->flag2 &= ~arg0;
+}
+
+u32 fn_1_8B4(u32 arg0)
+{
+    return lbl_1_bss_0->flag2 & arg0;
+}
+
+void fn_1_8CC(u32 arg0)
+{
+    lbl_1_bss_4->flag |= arg0;
+}
+
+void fn_1_8EC(u32 arg0)
+{
+    lbl_1_bss_4->flag &= ~arg0;
+}
+
+u32 fn_1_90C(u32 arg0)
+{
+    return lbl_1_bss_4->flag & arg0;
+}
+
+void fn_1_924(u32 arg0)
+{
+    lbl_1_bss_0->flag |= arg0;
+}
+
+void fn_1_940(u32 arg0)
+{
+    lbl_1_bss_0->flag &= ~arg0;
+}
+
+u32 fn_1_95C(u32 arg0)
+{
+    return lbl_1_bss_0->flag & arg0;
+}
+
+void fn_1_974(void *arg0, s32 arg1)
+{
+    // NONMATCHING: the original mixes a single-precision load for the 24.0f factor
+    // with a double-precision divide for the 500.0f divisor (lfd/fdiv); MWCC keeps
+    // the whole expression in one precision.
+    HuAudFXPlayPan(lbl_1_data_418[*(s16 *)((u8 *)arg0 + 0x1a)][arg1],
+                   0x40 + (s32)(24.0f * (*(f32 *)((u8 *)arg0 + 0x28) / 500.0f)));
+}
+
+void fn_1_9FC(void)
+{
+    // NONMATCHING: the original keeps unkE04 in r29 across the polling loop (frame
+    // -0x30 with 3 saved registers); MWCC needs only 2 saved registers (-0x20).
+    s32 key[4];
+    s32 i;
+    s32 n;
+
+    HuWinDisablePlayerSet(lbl_1_bss_0->winId, 0xf);
+    do {
+        i = 4;
+        while (i-- != 0) {
+            key[i] = -1;
+            if (*(s16 *)((u8 *)GwPlayerConf + i * 0xa + 8) != 0) {
+                key[i] = 0x100;
+            }
+        }
+        HuWinComKeyWait(key[0], key[1], key[2], key[3], 0xa);
+        n = 0x1e;
+        while (n-- != 0) {
+            HuPrcVSleep();
+        }
+    } while ((lbl_1_bss_0->flag & lbl_1_bss_0->keyWaitMask) == 0);
+    HuWinDisablePlayerReset(lbl_1_bss_0->winId, 0xf);
+    HuWinComKeyReset();
+    HuPrcEnd();
+}
+
+void fn_1_B18(s32 arg0)
+{
+    lbl_1_bss_0->keyWaitMask = arg0;
+    HuPrcChildCreate(fn_1_9FC, 0xc8, 0x3000, 0, HuPrcCurrentGet());
+}
+
+void ObjectSetup(void)
+{
+    GwSystem.subGameNo = 0;
+    _SetFlag(0xb);
+    HuPrcChildCreate(fn_1_BC0, 0xc8, 0x3000, 0, HuPrcCurrentGet());
+}
+
 void fn_1_BC0(void)
 {
     s32 cont;
@@ -806,6 +675,12 @@ void fn_1_BC0(void)
     fn_1_9844();
     omOvlReturnEx(1, 1);
     HuPrcEnd();
+}
+
+void fn_1_D40(s32 arg0)
+{
+    OMOVLHIS *his = omOvlHisGet(0);
+    omOvlHisChg(0, his->ovl, arg0, his->stat);
 }
 
 void fn_1_D88(void)
@@ -952,6 +827,12 @@ void fn_1_D88(void)
     Hu3DCameraMotionOff(lbl_1_bss_0->mdlCam1);
 }
 
+void fn_1_1A24(void *arg0)
+{
+    HuPrcChildCreate(arg0, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+}
+
 s32 fn_1_1A64(s16 camNo, s32 time, s16 mode)
 {
     HSFMOTION *motion;
@@ -1002,6 +883,83 @@ void fn_1_1C08(void)
     }
     lbl_1_bss_0->camMotionNo = -1;
     HuPrcEnd();
+}
+
+void fn_1_1DE8(s16 arg0, f32 arg1, s32 arg2)
+{
+    lbl_1_bss_0->camMotionNo = arg0;
+    lbl_1_bss_0->camMoveRate = arg1;
+    lbl_1_bss_0->timerType = (s16)arg2;
+    HuPrcChildCreate(fn_1_1C08, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+}
+
+s32 fn_1_1E74(void)
+{
+    return lbl_1_bss_0->camMotionNo == -1;
+}
+
+void fn_1_1EA0(void)
+{
+    CamMotionExPath(0x10, lbl_1_bss_0->camPath, lbl_1_bss_0->camPathNum);
+    lbl_1_bss_0->flag2 |= 0x100;
+    HuPrcEnd();
+}
+
+void fn_1_1F00(void)
+{
+    // NONMATCHING: MWCC emits clrlwi r0,9 instead of the original's
+    // rlwinm r0,0,24,22 for this 23-bit mask.
+    lbl_1_bss_0->flag2 &= 0x7FFFFF;
+    HuPrcChildCreate(fn_1_1EA0, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+}
+
+void fn_1_1F58(void)
+{
+    CAMMOTIONWORK *tail = &lbl_1_bss_0->camPath[lbl_1_bss_0->camPathNum - 1];
+    CamMotionExPath(0x10, lbl_1_bss_0->camPath, lbl_1_bss_0->camPathNum);
+    Hu3DCameraPosSetV(0x10, &tail->pos, &tail->up, &tail->target);
+    lbl_1_bss_0->flag2 |= 0x100;
+    HuPrcEnd();
+}
+
+void fn_1_2000(void)
+{
+    lbl_1_bss_0->flag2 &= ~0x100;
+    HuPrcChildCreate(fn_1_1F58, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+}
+
+void fn_1_2058(void)
+{
+    HuAudJinglePlay(0x85);
+    HuPrcEnd();
+}
+
+void fn_1_2080(void)
+{
+    HuPrcChildCreate(fn_1_2058, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
+void fn_1_20BC(void)
+{
+    s32 i;
+
+    HuAudJinglePlay(0x86);
+    i = 0xd2;
+    while (i-- != 0) {
+        HuPrcVSleep();
+    }
+    if (lbl_1_bss_0->bgmId < 0) {
+        lbl_1_bss_0->bgmId = HuAudBGMPlay(0x23);
+    }
+    HuPrcEnd();
+}
+
+void fn_1_2134(void)
+{
+    HuPrcChildCreate(fn_1_20BC, 0x64, 0x1000, 0, HuPrcCurrentGet());
 }
 
 void fn_1_2170(void)
@@ -1104,6 +1062,12 @@ void fn_1_2170(void)
     HuPrcEnd();
 }
 
+void fn_1_2628(void)
+{
+    lbl_1_bss_0->flag2 &= ~0x40;
+    HuPrcChildCreate(fn_1_2170, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
 void fn_1_267C(void)
 {
     Vec diff;
@@ -1125,6 +1089,21 @@ void fn_1_267C(void)
     Hu3DModelPosSet(lbl_1_bss_0->mdlPodium, lbl_1_bss_0->pos.x, lbl_1_bss_0->pos.y, lbl_1_bss_0->pos.z);
     lbl_1_bss_0->flag2 = lbl_1_bss_0->flag2 | 0x80;
     HuPrcEnd();
+}
+
+void fn_1_28BC(s32 arg0, s16 arg1)
+{
+    // NONMATCHING: 17.57%. MWCC keeps arg0 in a callee-saved register (r31) and reorders the global copies,
+    // while the original stores arg0 on the stack and keeps the table pointer in r5.
+    const f32 *tbl = &lbl_1_data_60[arg0 * 3];
+
+    lbl_1_bss_0->posTo = lbl_1_bss_0->pos;
+    lbl_1_bss_0->posFrom.x = tbl[0];
+    lbl_1_bss_0->posFrom.y = tbl[1];
+    lbl_1_bss_0->posFrom.z = tbl[2];
+    lbl_1_bss_0->camMoveSpeed = arg1;
+    lbl_1_bss_0->flag2 &= ~0x80;
+    HuPrcChildCreate(fn_1_267C, 0x64, 0x1000, 0, HuPrcCurrentGet());
 }
 
 void fn_1_2994(void)
@@ -1272,6 +1251,13 @@ void fn_1_2F78(void)
     }
 }
 
+void fn_1_317C(s32 arg0)
+{
+    (void)arg0;
+    lbl_1_bss_0->flag2 |= 0x800;
+    lbl_1_bss_0->flag2 &= ~0x1000;
+}
+
 void fn_1_31B0(void)
 {
     char *movie;
@@ -1286,6 +1272,28 @@ void fn_1_31B0(void)
     HuTHPSprCreateVol(movie, 1, 0, 0.0f);
     Hu3DModelMatHookSet(lbl_1_bss_0->mdl[7], HuTHPMatHook);
     OSReport("Movie = %s\n", movie);
+}
+
+s32 fn_1_32C0(void)
+{
+    return lbl_1_bss_0->itemAnimState == 0;
+}
+
+void fn_1_32DC(s32 arg0)
+{
+    if (lbl_1_bss_0->flag2 & 0x400) {
+        lbl_1_bss_0->itemAnimState = arg0;
+        while (lbl_1_bss_0->itemAnimState != 0) {
+            HuPrcVSleep();
+        }
+        if (arg0 == 1) {
+            lbl_1_bss_0->flag2 |= 0x800;
+            lbl_1_bss_0->flag2 &= ~0x1000;
+            while ((lbl_1_bss_0->flag2 & 0x1000) == 0) {
+                HuPrcVSleep();
+            }
+        }
+    }
 }
 
 void fn_1_33AC(void)
@@ -1443,6 +1451,12 @@ void fn_1_3850(void)
     HuPrcEnd();
 }
 
+void fn_1_3AD0(void)
+{
+    lbl_1_bss_0->flag2 &= ~0x2000;
+    HuPrcChildCreate(fn_1_3850, 0x64, 0x1000, 0, HuPrcCurrentGet());
+}
+
 void fn_1_3B24(void)
 {
     f32 rot;
@@ -1454,6 +1468,11 @@ void fn_1_3B24(void)
         Hu3DModelRotSet(lbl_1_bss_0->mdl[2], 0.0f, rot, 0.0f);
         HuPrcVSleep();
     }
+}
+
+void fn_1_3C04(void)
+{
+    HuPrcChildCreate(fn_1_3B24, 0x64, 0x1000, 0, HuPrcCurrentGet());
 }
 
 void fn_1_3C40(void)
@@ -1504,6 +1523,13 @@ void fn_1_3C40(void)
     }
     Hu3DParManAttrSet((s16)lbl_1_bss_0->parManId[0], 1);
     HuPrcEnd();
+}
+
+void fn_1_4090(void)
+{
+    lbl_1_bss_0->parManMaxTime = (s16)Hu3DMotionMaxTimeGet(lbl_1_bss_0->mdl[16]);
+    lbl_1_bss_0->flag2 |= 0x00090000;
+    HuPrcChildCreate(fn_1_3C40, 0x64, 0x1000, 0, HuPrcCurrentGet());
 }
 
 void fn_1_4114(void)
@@ -1995,6 +2021,12 @@ void fn_1_4114(void)
     HuPrcEnd();
 }
 
+void fn_1_64B0(void)
+{
+    lbl_1_bss_0->flag2 &= ~0x4000;
+    HuPrcChildCreate(fn_1_4114, 0x64, 0x1500, 0, HuPrcCurrentGet());
+}
+
 void fn_1_6504(void)
 {
     Vec a;
@@ -2043,6 +2075,12 @@ void fn_1_6504(void)
     HuPrcEnd();
 }
 
+void fn_1_676C(void)
+{
+    lbl_1_bss_0->flag2 |= 0x8000;
+    HuPrcChildCreate(fn_1_6504, 0x64, 0x1500, 0, HuPrcCurrentGet());
+}
+
 void fn_1_67C0(void)
 {
     HU3DMODELID m;
@@ -2086,6 +2124,19 @@ void fn_1_67C0(void)
         HuPrcVSleep();
     }
     HuPrcEnd();
+}
+
+void fn_1_6B18(void)
+{
+    s32 i = 7;
+
+    while (i-- != 0) {
+        Hu3DModelAttrReset(lbl_1_bss_0->parMan[i].id, 1);
+        Hu3DModelLayerSet(lbl_1_bss_0->parMan[i].id, 4);
+        Hu3DModelCameraSet(lbl_1_bss_0->parMan[i].id, 0x10);
+    }
+    lbl_1_bss_0->flag2 &= ~0x40000;
+    HuPrcChildCreate(fn_1_67C0, 0x64, 0x1000, 0, HuPrcCurrentGet());
 }
 
 void fn_1_6BE8(void)
@@ -2507,6 +2558,15 @@ void fn_1_7D74(void)
     HuPrcEnd();
 }
 
+void fn_1_8538(s32 arg0, f32 arg1)
+{
+    lbl_1_bss_0->flag2 &= ~0x200000;
+    lbl_1_bss_0->camMotionType = (s16)arg0;
+    lbl_1_bss_0->rotSpeed = arg1;
+    HuPrcChildCreate(fn_1_7D74, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
+}
+
 void fn_1_85C4(void)
 {
     Vec camPos = { 0.0f, 2000.0f, 0.0f };
@@ -2737,6 +2797,33 @@ void fn_1_85C4(void)
         Hu3DModelShadowSet(lbl_1_bss_0->parMan[i].id);
     }
     Hu3DModelShadowSet(lbl_1_bss_0->mdlPodium);
+}
+
+void fn_1_9844(void)
+{
+    OMOVLHIS *his;
+
+    HuDataDirClose(0x980000);
+    HuDataDirClose(0x270000);
+    CharModelDataClose(-1);
+    HuPrcVSleep();
+    HuTHPClose();
+    if (lbl_1_bss_0->bgmId >= 0) {
+        HuAudSStreamFadeOut(lbl_1_bss_0->bgmId, 0x3e8);
+        lbl_1_bss_0->bgmId = -1;
+    }
+    GwSystem.mgInstF = 1;
+    his = omOvlHisGet(0);
+    omOvlHisChg(0, his->ovl, 0, his->stat);
+    HuWinExClose(lbl_1_bss_0->winId);
+    HuWinExKill(lbl_1_bss_0->winId);
+    WipeCreate(2, 6, 0x3c);
+    while ((u8)WipeCheckEnd() != 0) {
+        HuPrcVSleep();
+    }
+    _ClearFlag(0x30003);
+    _ClearFlag(0x30001);
+    memset(lbl_1_bss_4, 0, 0xd8);
 }
 
 void fn_1_9984(void)
@@ -3533,4 +3620,10 @@ void fn_1_CE5C(void)
         lbl_1_bss_0->parMan[i].pos = v;
     }
     HuPrcEnd();
+}
+
+void fn_1_D130(void)
+{
+    lbl_1_bss_0->flag2 |= 0x00800000;
+    HuPrcChildCreate(fn_1_CE5C, 0x63, 0x1000, 0, HuPrcCurrentGet());
 }
