@@ -71,7 +71,8 @@ typedef struct SysSprite_s {
 
 typedef struct SysModel_s {
     /* 0x000 */ s16 mdlId[0x4D];
-    /* 0x09A */ s16 motId[0x1D];
+    /* 0x09A */ s16 motId[0x16];
+    /* 0x0C6 */ s16 animId[7];
     /* 0x0D4 */ HuVecF *mdlPos[0x4D];
     /* 0x208 */ HuVecF *mdlRot[0x4D];
     /* 0x33C */ HuVecF *mdlScale[0x4D];
@@ -89,6 +90,7 @@ typedef struct SysTexBufUnit_s {
 
 typedef struct SysTexBuf_s {
     /* 0x000 */ SYSTEXBUFUNIT unit[11];
+    /* 0x210 */ s16 unk210;
 } SYSTEXBUF;
 
 typedef struct SysRing_s {
@@ -113,6 +115,56 @@ typedef struct SysRingWork_s {
     /* 0x000 */ SYSRING ring[11];
     /* 0x2EC */ float scale;
 } SYSRING_WORK;
+
+typedef struct SysParticle_s {
+    /* 0x00 */ s32 mode;
+    /* 0x04 */ s32 delay;
+    /* 0x08 */ float angle;
+    /* 0x0C */ float radius;
+    /* 0x10 */ float tpLvl;
+    /* 0x14 */ float radiusSpeed;
+    /* 0x18 */ float angleSpeed;
+    /* 0x1C */ float velY;
+    /* 0x20 */ float scale;
+    /* 0x24 */ float zRot;
+    /* 0x28 */ HuVecF pos;
+    /* 0x34 */ GXColor color;
+} SYSPARTICLE;
+
+typedef struct SysParticleParam_s {
+    /* 0x00 */ float baseAlpha;
+    /* 0x04 */ float fadeInSpeed2;
+    /* 0x08 */ float fadeOutSpeed1;
+    /* 0x0C */ float fadeInSpeed1;
+    /* 0x10 */ float fadeOutSpeed2;
+    /* 0x14 */ float unk14;
+    /* 0x18 */ float scaleSpeed1;
+    /* 0x1C */ float scaleSpeed2;
+    /* 0x20 */ float unk20;
+    /* 0x24 */ GXColor color;
+} SYSPARTICLE_PARAM;
+
+typedef struct SysParticleBuffer_s SYSPARTICLE_BUFFER;
+typedef void (*SYSPARTICLE_UPDATE_HOOK)(SYSPARTICLE_BUFFER *buffer);
+
+struct SysParticleBuffer_s {
+    /* 0x00 */ s32 pauseF;
+    /* 0x04 */ ANIMDATA *animP;
+    /* 0x08 */ s16 mdlId;
+    /* 0x0A */ s16 num;
+    /* 0x0C */ SYSPARTICLE *particle;
+    /* 0x10 */ SYSPARTICLE_PARAM *param;
+    /* 0x14 */ HU3DPARTICLE *hookWork;
+    /* 0x18 */ HU3DPARTICLEDATA *dataBuf;
+    /* 0x1C */ HU3DPARTICLEHOOK hook;
+    /* 0x20 */ SYSPARTICLE_UPDATE_HOOK updateHook;
+};
+
+typedef struct SysParticleWork_s {
+    /* 0x0000 */ SYSPARTICLE data[0x300];
+    /* 0xA800 */ SYSPARTICLE_BUFFER buffer[2];
+    /* 0xA848 */ SYSPARTICLE_PARAM param;
+} SYSPARTICLE_WORK;
 
 typedef struct SysMessWin_s {
     /* 0x00 */ s16 winId;

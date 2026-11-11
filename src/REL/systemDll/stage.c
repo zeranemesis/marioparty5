@@ -347,7 +347,9 @@ static HuVecF ToueiTexObjOfs[10] = {
 static void DrawMirror(HU3DMODEL *modelP, Mtx *mtx);
 static void ToneDownFilter(HU3DMODEL *modelP, Mtx *mtx);
 static void FontBGFilter(HU3DMODEL *modelP, Mtx *mtx);
-void MdCopyWarpFilter(s16 layerNo);
+static void MdCopyWarpFilter(s16 layerNo);
+static void TexBufFBCopy(NEL_SYS *sys, s32 no);
+static void ToueiZClear(void);
 
 void MdModelCreate(NEL_SYS *sys)
 {
@@ -940,4 +942,705 @@ static void Ring10MatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
 static void Ring11MatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
 {
     RingDraw(10);
+}
+
+void InitGxWarpFilter(void)
+{
+    NEL_SYS *sys = &sysWork;
+    GXColor color = { 0xFF, 0xFF, 0xFF, 0xFF };
+
+    GXSetColorUpdate(1);
+    GXSetAlphaUpdate(1);
+    GXSetAlphaCompare(6, 1, 0, 6, 1);
+    GXSetBlendMode(1, 4, 1, 0xC);
+    GXSetNumTevStages(1);
+    GXSetTevColor(1, color);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(0, 1, 4, 0x3C, 0, 0x7D);
+    GXSetTevOrder(0, 0, 0, 4);
+    GXSetTevColorIn(0, 0xF, 8, 2, 0xF);
+    GXSetTevColorOp(0, 0, 0, 0, 1, 0);
+    GXSetTevAlphaIn(0, 7, 4, 1, 7);
+    GXSetTevAlphaOp(0, 0, 0, 0, 1, 0);
+}
+
+void DrawWarpFilter(HU3DMODEL *modelP, Mtx *mtx)
+{
+    NEL_SYS *sys = &sysWork;
+
+    if (Hu3DCameraNo == 2) {
+        s16 x = 0;
+        s16 y = 0;
+        SYSTEXBUFUNIT *unit;
+        s16 w = 640;
+        s16 h = 480;
+        Mtx44 proj;
+        Mtx modelview;
+        s16 x0;
+        s16 x1;
+        s16 y0;
+        s16 y1;
+
+        GXSetViewport(0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+        MTXOrtho(proj, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -0.0f);
+        GXSetProjection(proj, 1);
+        MTXIdentity(modelview);
+        GXLoadPosMtxImm(modelview, 0);
+        GXSetColorUpdate(1);
+        GXSetAlphaUpdate(1);
+        GXSetAlphaCompare(6, 1, 0, 6, 1);
+        GXSetBlendMode(1, 1, 1, 0xC);
+        GXSetNumChans(1);
+        GXSetNumTexGens(1);
+        GXSetNumTevStages(1);
+        GXSetChanCtrl(4, 0, 1, 1, 0, 0, 2);
+        unit = &((SYSTEXBUF *)sys->texbuf)->unit[10];
+        GXLoadTexObj(&unit->texObj, 0);
+        GXSetTexCoordGen2(0, 1, 4, 0x3C, 0, 0x7D);
+        GXSetTevOrder(0, 0, 0, 4);
+        GXSetTevColorIn(0, 0xF, 0xA, 8, 0xF);
+        GXSetTevColorOp(0, 0, 0, 0, 1, 0);
+        GXSetTevAlphaIn(0, 7, 5, 4, 7);
+        GXSetTevAlphaOp(0, 0, 0, 0, 1, 0);
+        GXSetVtxAttrFmt(1, 9, 1, 3, 0);
+        GXSetVtxAttrFmt(1, 0xB, 1, 5, 0);
+        GXSetVtxAttrFmt(1, 0xD, 1, 4, 0);
+        GXClearVtxDesc();
+        GXSetVtxDesc(9, 1);
+        GXSetVtxDesc(0xB, 1);
+        GXSetVtxDesc(0xD, 1);
+        x0 = x - 1;
+        x1 = x + w;
+        y0 = y - 1;
+        y1 = y + h;
+        GXBegin(0x80, 1, 4);
+        GXPosition3s16(0, 0, 0);
+        GXColor4u8(0xFF, 0xFF, 0, 0x20);
+        GXTexCoord2f32(0.0f, 0.0f);
+        GXPosition3s16(640, 0, 0);
+        GXColor4u8(0xFF, 0xFF, 0, 0x20);
+        GXTexCoord2f32(1.0f, 0.0f);
+        GXPosition3s16(640, 480, 0);
+        GXColor4u8(0xFF, 0xFF, 0, 0x20);
+        GXTexCoord2f32(1.0f, 1.0f);
+        GXPosition3s16(0, 480, 0);
+        GXColor4u8(0xFF, 0xFF, 0, 0x20);
+        GXTexCoord2f32(0.0f, 1.0f);
+        GXEnd();
+    }
+}
+
+void MdLayer1Hook(s16 layerNo)
+{
+    if (Hu3DCameraNo == 2) {
+        Hu3DZClear();
+    }
+}
+
+static void MdCopyWarpFilter(s16 layerNo)
+{
+    NEL_SYS *sys = &sysWork;
+
+    if (Hu3DCameraNo == 0) {
+        TexBufFBCopy(sys, 10);
+        ToueiZClear();
+    }
+}
+
+void MdToueiLayerHook(s16 layerNo)
+{
+    NEL_SYS *sys = &sysWork;
+    SYSTEXBUF *texbuf = (SYSTEXBUF *)sys->texbuf;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    s32 i;
+
+    if (Hu3DCameraNo == 1) {
+        for (i = 0; i < 10; i++) {
+            TexBufFBCopy(sys, i);
+        }
+        ToueiZClear();
+        ((SYSTEXBUF *)sys->texbuf)->unk210 = 0;
+    }
+}
+
+void MdLayer2Hook(s16 layerNo)
+{
+    NEL_SYS *sys = &sysWork;
+
+    if (Hu3DCameraNo == 0) {
+        TexBufFBCopy(sys, 10);
+        ToueiZClear();
+    }
+}
+
+static void DrawMirror(HU3DMODEL *modelP, Mtx *volatile mtx)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    GXColor color = { 0x00, 0xFF, 0x00, 0x90 };
+    Mtx44 proj;
+    SYSTEXBUFUNIT *unit;
+
+    if (dbg->dispTimer != 0) {
+        color.r = dbg->col[0];
+        color.g = dbg->col[1];
+        color.b = dbg->col[2];
+        color.a = dbg->col[3];
+        GXSetViewport(0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+        MTXOrtho(proj, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -16777215.0f);
+        GXSetProjection(proj, 1);
+        MTXIdentity(*mtx);
+        GXLoadPosMtxImm(*mtx, 0);
+        GXSetColorUpdate(1);
+        GXSetAlphaUpdate(1);
+        GXSetAlphaCompare(6, 1, 0, 6, 1);
+        GXSetBlendMode(dbg->type, dbg->unk10, dbg->unk14, dbg->logic);
+        GXSetNumChans(1);
+        GXSetNumTexGens(1);
+        GXSetNumTevStages(1);
+        GXSetChanCtrl(4, 0, 1, 1, 0, 0, 2);
+        unit = &((SYSTEXBUF *)sys->texbuf)->unit[10];
+        GXLoadTexObj(&unit->texObj, 0);
+        GXSetTexCoordGen2(0, 1, 4, 0x3C, 0, 0x7D);
+        GXSetTevOrder(0, 0, 0, 4);
+        GXSetTevColorIn(0, 0xF, 0xA, 8, 0xF);
+        GXSetTevColorOp(0, 0, 0, 0, 1, 0);
+        GXSetTevAlphaIn(0, 7, 5, 4, 7);
+        GXSetTevAlphaOp(0, 0, 0, 0, 1, 0);
+        GXSetVtxAttrFmt(1, 9, 1, 3, 0);
+        GXSetVtxAttrFmt(1, 0xB, 1, 5, 0);
+        GXSetVtxAttrFmt(1, 0xD, 1, 4, 0);
+        GXClearVtxDesc();
+        GXSetVtxDesc(9, 1);
+        GXSetVtxDesc(0xB, 1);
+        GXSetVtxDesc(0xD, 1);
+        GXBegin(0x80, 1, 4);
+        GXPosition3s16(0, 0, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(0.0f, 0.0f);
+        GXPosition3s16(640, 0, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(1.0f, 0.0f);
+        GXPosition3s16(640, 480, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(1.0f, 1.0f);
+        GXPosition3s16(0, 480, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(0.0f, 1.0f);
+        GXEnd();
+    }
+}
+
+static void FontBGFilter(HU3DMODEL *modelP, Mtx *mtx)
+{
+    NEL_SYS *sys = &sysWork;
+    SYSDEBUGFONT *font = (SYSDEBUGFONT *)sys->fontData;
+    GXColor color = { 0, 0, 0, 128 };
+    s16 width = 0;
+    Mtx44 proj;
+
+    if (font->printF == 1) {
+        width = font->maxLen * (s32)(8.0f * font->size);
+        GXSetViewport(0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+        MTXOrtho(proj, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -16777215.0f);
+        GXSetProjection(proj, 1);
+        MTXIdentity(*mtx);
+        GXLoadPosMtxImm(*mtx, 0);
+        GXSetColorUpdate(1);
+        GXSetAlphaUpdate(0);
+        GXSetAlphaCompare(6, 1, 0, 6, 1);
+        GXSetBlendMode(1, 4, 5, 5);
+        GXSetNumChans(1);
+        GXSetNumTexGens(0);
+        GXSetNumTevStages(1);
+        GXSetChanCtrl(4, 0, 0, 1, 0, 0, 0);
+        GXSetChanCtrl(5, 0, 0, 1, 0, 0, 0);
+        GXSetTevOrder(0, 0xFF, 0xFF, 0xFF);
+        GXSetTevColor(1, color);
+        GXSetTevColorIn(0, 2, 0xF, 0xF, 0xF);
+        GXSetTevColorOp(0, 0, 0, 0, 1, 0);
+        GXSetTevAlphaIn(0, 1, 7, 7, 7);
+        GXSetTevAlphaOp(0, 0, 0, 0, 1, 0);
+        GXSetVtxAttrFmt(0, 9, 1, 3, 0);
+        GXClearVtxDesc();
+        GXSetVtxDesc(9, 1);
+        GXBegin(0x80, 0, 4);
+        GXPosition3s16(font->posX, font->posY + font->ofsY, 0);
+        GXPosition3s16(font->posX + width, font->posY + font->ofsY, 0);
+        GXPosition3s16(font->posX + width, font->posY + font->rowOfsY, 0);
+        GXPosition3s16(font->posX, font->posY + font->rowOfsY, 0);
+        GXEnd();
+    }
+}
+
+static void ToneDownFilter(HU3DMODEL *modelP, Mtx *volatile mtx)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    GXColor color = { 0x00, 0xFF, 0x00, 0x90 };
+    Mtx44 proj;
+    SYSTEXBUFUNIT *unit;
+
+    if (dbg->dispTimer != 0) {
+        color.r = dbg->col[0];
+        color.g = dbg->col[1];
+        color.b = dbg->col[2];
+        color.a = dbg->col[3];
+        GXSetViewport(0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+        MTXOrtho(proj, 0.0f, 480.0f, 0.0f, 640.0f, 0.0f, -16777215.0f);
+        GXSetProjection(proj, 1);
+        MTXIdentity(*mtx);
+        GXLoadPosMtxImm(*mtx, 0);
+        GXSetColorUpdate(1);
+        GXSetAlphaUpdate(1);
+        GXSetAlphaCompare(6, 1, 0, 6, 1);
+        GXSetBlendMode(dbg->type, dbg->unk10, dbg->unk14, dbg->logic);
+        GXSetNumChans(1);
+        GXSetNumTexGens(1);
+        GXSetNumTevStages(1);
+        GXSetChanCtrl(4, 0, 1, 1, 0, 0, 2);
+        unit = &((SYSTEXBUF *)sys->texbuf)->unit[10];
+        GXLoadTexObj(&unit->texObj, 0);
+        GXSetTexCoordGen2(0, 1, 4, 0x3C, 0, 0x7D);
+        GXSetTevOrder(0, 0, 0, 4);
+        GXSetTevColorIn(0, 0xF, 0xA, 8, 0xF);
+        GXSetTevColorOp(0, 0, 0, 0, 1, 0);
+        GXSetTevAlphaIn(0, 7, 5, 4, 7);
+        GXSetTevAlphaOp(0, 0, 0, 0, 1, 0);
+        GXSetVtxAttrFmt(1, 9, 1, 3, 0);
+        GXSetVtxAttrFmt(1, 0xB, 1, 5, 0);
+        GXSetVtxAttrFmt(1, 0xD, 1, 4, 0);
+        GXClearVtxDesc();
+        GXSetVtxDesc(9, 1);
+        GXSetVtxDesc(0xB, 1);
+        GXSetVtxDesc(0xD, 1);
+        GXBegin(0x80, 1, 4);
+        GXPosition3s16(0, 0, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(0.0f, 0.0f);
+        GXPosition3s16(640, 0, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(1.0f, 0.0f);
+        GXPosition3s16(640, 480, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(1.0f, 1.0f);
+        GXPosition3s16(0, 480, 0);
+        GXColor4u8(color.r, color.g, color.b, color.a);
+        GXTexCoord2f32(0.0f, 1.0f);
+        GXEnd();
+    }
+}
+
+extern char *MdToueiHookNameTbl[10];
+static void MdTexBufObjPosSet(SYSTEXBUFUNIT *unit, s16 mdlId, char *objName, u16 cameraBit, HuVecF *ofs);
+
+void MdToueiMdlInit(NEL_SYS *sys)
+{
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    s32 i;
+    s16 animId;
+
+    for (i = 0; i < 7; i++) {
+        animId = Hu3DAnimCreate(sprite->animP[ToueiAnmNoTbl[i]], model->mdlId[ToueiMdlNoTbl[i]], ToueiTexNameTbl[i]);
+        model->animId[i] = animId;
+        Hu3DAnimSpeedSet(animId, 1.0f);
+        Hu3DAnimAttrSet(animId, 1);
+        Hu3DAnimAttrSet(animId, 2);
+    }
+    Hu3DAnmNoSet(model->animId[3], 0);
+    Hu3DAnmNoSet(model->animId[4], 1);
+    Hu3DAnmNoSet(model->animId[5], 2);
+    Hu3DAnmNoSet(model->animId[6], 3);
+}
+
+void MdToueiTextureNext(NEL_SYS *sys)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    static s32 anmNo1;
+    static s32 anmNo2;
+    static s32 anmNo3;
+    static s32 anmNo4;
+
+    anmNo1++;
+    if (anmNo1 % 60 == 1) {
+        anmNo2 = ++anmNo2 % 9;
+        Hu3DAnmNoSet(model->animId[0], anmNo2);
+    }
+    if (anmNo1 % 60 == 1) {
+        anmNo3 = ++anmNo3 % 2;
+        Hu3DAnmNoSet(model->animId[1], anmNo3);
+    }
+    if (anmNo1 % 60 == 1) {
+        anmNo4 = ++anmNo4 % 2;
+        Hu3DAnmNoSet(model->animId[2], anmNo4);
+    }
+}
+
+void MdToueiTexBufInit(NEL_SYS *sys)
+{
+    SYSTEXBUFUNIT *unit;
+    s32 i;
+    SYSTEXBUF *texbuf = (SYSTEXBUF *)sys->texbuf;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    for (i = 0; i < 10; i++) {
+        unit = &texbuf->unit[i];
+        unit->w = 64;
+        unit->h = 64;
+        unit->fmt = 4;
+        MdTexBufObjPosSet(unit, model->mdlId[i + 2], MdToueiHookNameTbl[i], ((SYSCAMERA_WORK *)sys->camera)->camera[1].bit, &ToueiTexObjOfs[i]);
+        unit->addr = HuMemDirectMallocNum(HEAP_MODEL, GXGetTexBufferSize(unit->w, unit->h, unit->fmt, 0, 0), HU_MEMNUM_OVL);
+        if (unit->addr == 0) {
+            OSReport("sys->texbuf->unit[NEL_TEXBUF_MIRROR + %d].addr = NULL...\n", i);
+        }
+        GXInitTexObj(&unit->texObj, unit->addr, unit->w, unit->h, unit->fmt, 0, 0, 0);
+        GXInitTexObjLOD(&unit->texObj, 1, 1, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+    }
+    unit = &texbuf->unit[10];
+    unit->x = 0;
+    unit->y = 0;
+    unit->w = 640;
+    unit->h = 480;
+    unit->fmt = 4;
+    unit->addr = HuMemDirectMallocNum(HEAP_MODEL, GXGetTexBufferSize(unit->w, unit->h, unit->fmt, 0, 0), HU_MEMNUM_OVL);
+    if (unit->addr == 0) {
+        OSReport("sys->texbuf->unit[NEL_TEXBUF_WARPFILTER].addr = NULL...\n");
+    }
+    GXInitTexObj(&unit->texObj, unit->addr, unit->w, unit->h, unit->fmt, 0, 0, 0);
+    GXInitTexObjLOD(&unit->texObj, 1, 1, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+}
+
+static void TexBufFBCopy(NEL_SYS *sys, volatile s32 no)
+{
+    SYSTEXBUFUNIT *unit = &((SYSTEXBUF *)sys->texbuf)->unit[no];
+
+    Hu3DFbCopyExec(unit->x, unit->y, unit->w, unit->h, unit->fmt, 0, unit->addr);
+}
+
+static void MdTexBufObjPosSet(SYSTEXBUFUNIT *unit, s16 mdlId, char *objName, u16 cameraBit, HuVecF *ofs)
+{
+    HuVecF pos3D;
+    HuVecF pos2D;
+    s16 x;
+    s16 y;
+
+    Hu3DModelObjPosGet(mdlId, objName, &pos3D);
+    pos3D.x += ofs->x;
+    pos3D.y += ofs->y;
+    pos3D.z += ofs->z;
+    Hu3D3Dto2D(&pos3D, cameraBit, &pos2D);
+    x = (s32)(640.0f * (pos2D.x / 576.0f)) & 0xFFFE;
+    y = (s32)pos2D.y & 0xFFFE;
+    unit->x = x - unit->w / 2;
+    unit->y = y - unit->h / 2;
+}
+
+void MdTexBufPosSet(SYSTEXBUFUNIT *unit, volatile HuVecF *pos, volatile u16 cameraBit)
+{
+    HuVecF pos2D;
+    s16 x;
+    s16 y;
+
+    Hu3D3Dto2D((HuVecF *)pos, cameraBit, &pos2D);
+    x = (s32)(640.0f * (pos2D.x / 576.0f)) & 0xFFFE;
+    y = (s32)pos2D.y & 0xFFFE;
+    unit->x = x - unit->w / 2;
+    unit->y = y - unit->h / 2;
+}
+
+static void ParticleHook(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
+static void ParticleHook2(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
+static void ParticleUpdate(SYSPARTICLE_BUFFER *buffer);
+static void TickParticle(SYSPARTICLE_BUFFER *buffer, s32 num);
+static void UpdateParticleData(SYSPARTICLE_BUFFER *buffer);
+
+void MdParticleCreate(NEL_SYS *sys)
+{
+    SYSPARTICLE_BUFFER *buffer;
+    SYSPARTICLE *data;
+    SYSPARTICLE_PARAM *param;
+    s32 i;
+    SYSMODEL *model;
+    SYSPARTICLE_WORK *particle;
+    SYSSPRITE *sprite;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    particle = (SYSPARTICLE_WORK *)sys->particle;
+    param = &particle->param;
+    param->baseAlpha = 224.0f;
+    param->fadeInSpeed2 = 8.0f;
+    param->fadeOutSpeed1 = 128.0f;
+    param->fadeInSpeed1 = 4.0f;
+    param->fadeOutSpeed2 = 16.0f;
+    param->unk14 = 0.6f;
+    param->scaleSpeed1 = 2.0f;
+    param->scaleSpeed2 = 5.0f;
+    param->unk20 = 0.3f;
+    param->color.r = 80;
+    param->color.g = 198;
+    param->color.b = 255;
+    data = &particle->data[0];
+    for (i = 0; i < 0x300; i++, data++) {
+        data->mode = 0;
+        data->delay = 0;
+        data->angle = 0.0f;
+        data->radius = 0.0f;
+        data->tpLvl = 0.0f;
+        data->radiusSpeed = 0.0f;
+        data->angleSpeed = 0.0f;
+        data->velY = 0.0f;
+        data->scale = 0.0f;
+        data->zRot = 0.0f;
+        data->pos.x = 0.0f;
+        data->pos.y = 0.0f;
+        data->pos.z = 0.0f;
+        data->color.r = data->color.g = data->color.b = data->color.a = 0;
+    }
+    buffer = &particle->buffer[0];
+    buffer->pauseF = 0;
+    buffer->animP = sprite->animP[27];
+    buffer->num = 0x180;
+    buffer->particle = &particle->data[0];
+    buffer->param = param;
+    buffer->hook = ParticleHook;
+    buffer->updateHook = ParticleUpdate;
+    model->mdlId[13] = buffer->mdlId = Hu3DParticleCreate(buffer->animP, buffer->num);
+    buffer->hookWork = (HU3DPARTICLE *)Hu3DData[buffer->mdlId].hookData;
+    buffer->dataBuf = buffer->hookWork->data;
+    Hu3DParticleHookSet(buffer->mdlId, buffer->hook);
+    Hu3DParticleBlendModeSet(buffer->mdlId, 1);
+    Hu3DModelLayerSet(buffer->mdlId, 2);
+    Hu3DModelCameraSet(buffer->mdlId, CAMBIT(2));
+    TickParticle(buffer, 240);
+    UpdateParticleData(buffer);
+    buffer = &particle->buffer[1];
+    buffer->pauseF = 0;
+    buffer->animP = sprite->animP[28];
+    buffer->num = 0x180;
+    buffer->particle = &particle->data[0x180];
+    buffer->param = param;
+    buffer->hook = ParticleHook2;
+    buffer->updateHook = ParticleUpdate;
+    model->mdlId[14] = buffer->mdlId = Hu3DParticleCreate(buffer->animP, buffer->num);
+    buffer->hookWork = (HU3DPARTICLE *)Hu3DData[buffer->mdlId].hookData;
+    buffer->dataBuf = buffer->hookWork->data;
+    Hu3DParticleHookSet(buffer->mdlId, buffer->hook);
+    Hu3DParticleBlendModeSet(buffer->mdlId, 1);
+    Hu3DModelLayerSet(buffer->mdlId, 2);
+    Hu3DModelCameraSet(buffer->mdlId, CAMBIT(2));
+    UpdateParticleData(buffer);
+    Hu3DModelAttrSet(model->mdlId[14], 1);
+}
+
+static void UpdateParticleData(SYSPARTICLE_BUFFER *buffer)
+{
+    SYSPARTICLE *particle;
+    HU3DPARTICLEDATA *dataBuf;
+    s32 i;
+
+    particle = &buffer->particle[0];
+    dataBuf = &buffer->dataBuf[0];
+    for (i = 0; i < buffer->num; i++, particle++, dataBuf++) {
+        dataBuf->scale = particle->scale;
+        dataBuf->zRot = particle->zRot;
+        dataBuf->pos = particle->pos;
+        dataBuf->color = particle->color;
+    }
+    DCStoreRangeNoSync(&buffer->dataBuf[0], sizeof(HU3DPARTICLEDATA) * buffer->num);
+}
+
+static void TickParticle(SYSPARTICLE_BUFFER *buffer, volatile s32 num)
+{
+    s32 i;
+
+    for (i = 0; i < num; i++) {
+        buffer->updateHook(buffer);
+    }
+}
+
+void MdParticleDataUpdate(volatile s32 bufIdx)
+{
+    NEL_SYS *sys = &sysWork;
+    SYSPARTICLE_BUFFER *buffer = &((SYSPARTICLE_WORK *)sys->particle)->buffer[bufIdx];
+
+    buffer->updateHook(buffer);
+    UpdateParticleData(buffer);
+}
+
+static void ParticleHook(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+    MdParticleDataUpdate(0);
+}
+
+static void ParticleHook2(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+    MdParticleDataUpdate(1);
+}
+
+static void ParticleUpdate(SYSPARTICLE_BUFFER *buffer)
+{
+    SYSPARTICLE *particle;
+    SYSPARTICLE_PARAM *param;
+    s32 i;
+    s32 third;
+    s32 border;
+
+    param = buffer->param;
+    third = 0.33f * buffer->num;
+    border = buffer->num - 16;
+    if (buffer->pauseF != 1) {
+        particle = buffer->particle;
+        for (i = 0; i < buffer->num; i++, particle++) {
+            switch (particle->mode) {
+                case 0:
+                    particle->mode++;
+                    break;
+                case 1:
+                    particle->delay = frandmod(256);
+                    particle->mode++;
+                    break;
+                case 2:
+                    if (--particle->delay < 0) {
+                        particle->delay = 0;
+                        particle->mode++;
+                    }
+                    break;
+                case 3:
+                    particle->tpLvl = 0.0f;
+                    particle->radius = 0.0f;
+                    particle->angle = frandmod(360);
+                    if (i < third) {
+                        particle->velY = 0.5f + ((frandmod(100) + 1) / 500.0f);
+                        particle->radiusSpeed = 0.5f + ((frandmod(100) + 1) / 200.0f);
+                        particle->angleSpeed = -0.5f + ((frandmod(100) + 1) / 100.0f);
+                    } else {
+                        particle->velY = 0.5f + ((frandmod(100) + 1) / 100.0f);
+                        particle->radiusSpeed = 0.5f + ((frandmod(100) + 1) / 200.0f);
+                        particle->angleSpeed = -0.5f + ((frandmod(100) + 1) / 100.0f);
+                    }
+                    if (i >= border) {
+                        particle->radius = 384.0f;
+                        particle->velY = 0.0f;
+                        particle->radiusSpeed = 0.0f;
+                        particle->angleSpeed = -0.5f + ((frandmod(100) + 1) / 50.0f);
+                    }
+                    if (i < third) {
+                        particle->color.r = 128;
+                        particle->color.g = 64;
+                        particle->color.b = 255;
+                    } else {
+                        particle->color.r = param->color.r;
+                        particle->color.g = param->color.g;
+                        particle->color.b = param->color.b;
+                    }
+                    particle->color.a = 0;
+                    particle->scale = 0.0f;
+                    particle->zRot = 0.0f;
+                    particle->pos.x = 0.0f;
+                    particle->pos.y = 0.0f;
+                    particle->pos.z = 0.0f;
+                    if (i >= border) {
+                        particle->pos.y = -200.0f + ((frandmod(4000) + 1) / 10.0f);
+                    }
+                    particle->mode++;
+                    break;
+                case 4:
+                case 5:
+                case 6:
+                    if (particle->mode == 4) {
+                        if (i < third) {
+                            particle->scale += param->scaleSpeed2;
+                        } else {
+                            particle->scale += param->scaleSpeed1;
+                        }
+                    }
+                    particle->pos.x = particle->radius * HuCos(particle->angle);
+                    particle->pos.y += particle->velY;
+                    particle->pos.z = particle->radius * HuSin(particle->angle);
+                    particle->radius += particle->radiusSpeed;
+                    particle->angle += particle->angleSpeed;
+                    if (particle->mode == 5) {
+                        if (i < third) {
+                            if (particle->pos.y >= 10.0f) {
+                                particle->mode = 6;
+                            }
+                        } else if (i < border) {
+                            if (particle->pos.y >= 250.0f) {
+                                particle->mode = 6;
+                            }
+                        }
+                    }
+                    if (particle->mode == 4) {
+                        if (i < third) {
+                            particle->tpLvl += 1.0f / param->fadeInSpeed1;
+                        } else {
+                            particle->tpLvl += 1.0f / param->fadeInSpeed2;
+                        }
+                        if (particle->tpLvl >= 1.0f) {
+                            particle->tpLvl = 1.0f;
+                            particle->mode = 5;
+                        }
+                    } else if (particle->mode == 6) {
+                        if (i < third) {
+                            particle->tpLvl -= 1.0f / param->fadeOutSpeed2;
+                        } else {
+                            particle->tpLvl -= 1.0f / param->fadeOutSpeed1;
+                        }
+                        if (particle->tpLvl <= 0.0f) {
+                            particle->tpLvl = 0.0f;
+                        }
+                    }
+                    particle->color.a = param->baseAlpha * particle->tpLvl;
+                    if (particle->mode == 6) {
+                        if (particle->tpLvl <= 0.0f) {
+                            particle->tpLvl = 0.0f;
+                            particle->mode = 3;
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+}
+
+void MdParticleDebug(NEL_SYS *sys)
+{
+    SYSPARTICLE_WORK *particle = (SYSPARTICLE_WORK *)sys->particle;
+    SYSPARTICLE_PARAM *param = &particle->param;
+
+    if (HuPadStkX[0] <= -36) {
+        param->baseAlpha -= 1.0f;
+    } else if (HuPadStkX[0] >= 36) {
+        param->baseAlpha += 1.0f;
+    }
+    if (HuPadStkX[1] <= -36) {
+        param->fadeInSpeed2 -= 1.0f;
+    } else if (HuPadStkX[1] >= 36) {
+        param->fadeInSpeed2 += 1.0f;
+    }
+    if (HuPadStkY[1] <= -36) {
+        param->fadeOutSpeed1 -= 1.0f;
+    } else if (HuPadStkY[1] >= 36) {
+        param->fadeOutSpeed1 += 1.0f;
+    }
+    if ((HuPadBtn[0] & 1) != 0) {
+        param->color.r++;
+    }
+    if ((HuPadBtn[0] & 2) != 0) {
+        param->color.g++;
+    }
+    if ((HuPadBtn[0] & 8) != 0) {
+        param->color.b++;
+    }
+    MdDebugFontPrint("pdebug->alpha  (%.2f)", param->baseAlpha);
+    MdDebugFontPrint("pdebug->dalpha0(%.2f)", param->fadeInSpeed2);
+    MdDebugFontPrint("pdebug->dalpha1(%.2f)", param->fadeOutSpeed1);
+    MdDebugFontPrint("pdebug->len    (%.2f)", param->unk14);
+    MdDebugFontPrint("pdebug->scale  (%.2f)", param->scaleSpeed1);
+    MdDebugFontPrint("pdebug->dy     (%.2f)", param->unk20);
+    MdDebugFontPrint("pdebug->red    (%d)", param->color.r);
+    MdDebugFontPrint("pdebug->green  (%d)", param->color.g);
+    MdDebugFontPrint("pdebug->blue   (%d)", param->color.b);
 }
