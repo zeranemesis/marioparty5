@@ -8,6 +8,12 @@
 #include "game/wipe.h"
 #include "game/saveload.h"
 
+#include "messnum/partymode_sys.h"
+#include "messnum/mapname.h"
+#include "messnum/teamname.h"
+#include "messnum/syshelp.h"
+#include "messnum/mgmode_sys.h"
+
 /* frandmod is deliberately left undeclared (no game/frand.h): the original
  * called it with an implicit int return, which is what makes MWCC emit the
  * signed int -> float "magic 2^52 double" sequence (xoris r0,r0,0x8000). */
@@ -155,6 +161,8 @@ BOOL fn_1_AF34(int param);
 BOOL fn_1_B668(int param);
 BOOL fn_1_F6C4(int param);
 BOOL fn_1_FC94(int param);
+BOOL fn_1_10264(int param);
+BOOL fn_1_106D4(int param);
 BOOL fn_1_113D8(int param);
 BOOL fn_1_149A4(int param);
 void fn_1_14C2C(void);
@@ -179,8 +187,6 @@ void fn_1_81E0(void);
 BOOL fn_1_9AC8(int param);
 BOOL fn_1_C8B4(int param);
 BOOL fn_1_E44C(int param);
-BOOL fn_1_10264(int param);
-BOOL fn_1_106D4(int param);
 BOOL fn_1_10B0C(int param);
 BOOL fn_1_11658(int param);
 /* @end */
@@ -960,10 +966,10 @@ void fn_1_23D8(void)
     HuPrcVSleep();
     if(sys->evtNo == 0) {
         sys->mode = 0;
-        sys->flowMode = 1;
+        sys->flowMode = MDMINI_FLOW_PLAYER_NUM_SEL;
     } else if(sys->evtNo == 1) {
         sys->mode = 50;
-        sys->flowMode = 3;
+        sys->flowMode = MDMINI_FLOW_MAP_SEL;
     }
 }
 
@@ -1435,6 +1441,120 @@ BOOL fn_1_FC94(int param)
         MdMathLerpScale(scaleP, 0.8f, 1, sys->procT);
     }
     fn_1_15CF8(MDMODEL_CAP_GENRE, MDCAMERA_MAIN);
+    if(sys->procTime >= 1) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+BOOL fn_1_10264(int param)
+{
+    HuVecF *posP;
+    MDMODEL_WORK *model;
+    HuVecF *rotP;
+    HuVecF *scaleP;
+
+    MDCAMERA_WORK *camera;
+
+    static HuVecF mdlPos[5] = {
+        { 0, 150, 500 },
+        { 0, 95, 0 },
+        { 0, 150, -500 },
+        { 0, -120, 0 },
+        { 0, 75, 0 }
+    };
+    static HuVecF mdlRot[3] = {
+        { 60, 0, 270 },
+        { 0, 0, 0 },
+        { 0, -270, 0 }
+    };
+
+    camera = sys->camera;
+    model = sys->model;
+    posP = model->posP[MDMODEL_VS];
+    rotP = model->rotP[MDMODEL_VS];
+    scaleP = model->scaleP[MDMODEL_VS];
+    if(!sys->cursorInitF) {
+        if(param == 0) {
+            *posP = mdlPos[0];
+            if(sys->gameType == 2) {
+                posP->x = -15;
+            } else if(sys->gameType == 1) {
+                posP->x = -200;
+            }
+            *rotP = mdlRot[0];
+            scaleP->x = 3;
+            scaleP->y = 3;
+            scaleP->z = 3;
+            Hu3DModelDispOn(model->mdlId[MDMODEL_VS]);
+        } else {
+            param == 1;
+        }
+        sys->cursorInitF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->unk400, &sys->unk41C, 30);
+        MdMathLerp(&posP->y, mdlPos[0].y, mdlPos[1].y, sys->unk41C);
+        MdMathLerp(&posP->z, mdlPos[0].z, mdlPos[1].z, sys->unk41C);
+        MdMathLerp(&rotP->x, mdlRot[0].x, mdlRot[1].x, sys->unk41C);
+        MdMathLerp(&rotP->y, mdlRot[0].y, mdlRot[1].y, sys->unk41C);
+        MdMathLerp(&rotP->z, mdlRot[0].z, mdlRot[1].z, sys->unk41C);
+        MdMathLerpScale(scaleP, 3, 1, sys->unk41C);
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->unk400, &sys->unk41C, 30);
+        MdMathLerp(&posP->y, mdlPos[1].y, mdlPos[2].y, sys->unk41C);
+        MdMathLerp(&posP->z, mdlPos[1].z, mdlPos[2].z, sys->unk41C);
+        MdMathLerp(&rotP->x, mdlRot[1].x, mdlRot[2].x, sys->unk41C);
+        MdMathLerp(&rotP->y, mdlRot[1].y, mdlRot[2].y, sys->unk41C);
+        MdMathLerp(&rotP->z, mdlRot[1].z, mdlRot[2].z, sys->unk41C);
+        MdMathLerpScale(scaleP, 1, 0, sys->unk41C);
+    }
+    if(sys->unk400 >= 1) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+BOOL fn_1_106D4(int param)
+{
+    MDCAMERA_WORK *camera;
+    MDMODEL_WORK *model;
+    HuVecF *scaleP;
+    int i;
+
+    camera = sys->camera;
+    model = sys->model;
+    if(!sys->dirtyF) {
+        sys->dirtyF = TRUE;
+    }
+    if(param == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 30);
+        scaleP = model->scaleP[sys->selNoNow+MDMODEL_CAP_MODE_00];
+        MdMathLerpScale(scaleP, 2, 0, sys->procT);
+        for(i=0; i<4; i++) {
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&scaleP->x, 1, 0, sys->procT);
+            MdMathLerp(&scaleP->y, 1, 0, sys->procT);
+            MdMathLerp(&scaleP->z, 0.1f, 0, sys->procT);
+        }
+    } else if(param == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procTime, &sys->procT, 30);
+        MdMathLerpScale(model->scaleP[MDMODEL_CAP_WIN], 1, 0, sys->procT);
+        MdMathLerpScale(model->scaleP[MDMODEL_CAP_GENRE], 1, 0, sys->procT);
+        scaleP = model->scaleP[sys->selNoNow+MDMODEL_CAP_MODE_00];
+        MdMathLerpScale(scaleP, 2, 0, sys->procT);
+        for(i=0; i<4; i++) {
+            scaleP = model->scaleP[sys->chrSel[i]+MDMODEL_CAP_CHR_00];
+            MdMathLerp(&scaleP->x, 1, 0, sys->procT);
+            MdMathLerp(&scaleP->y, 1, 0, sys->procT);
+            MdMathLerp(&scaleP->z, 0.1f, 0, sys->procT);
+        }
+        if(sys->gameType != 0) {
+            MdMathLerpScale(model->scaleP[MDMODEL_VS], 1, 0, sys->procT);
+        }
+    }
     if(sys->procTime >= 1) {
         return TRUE;
     } else {
