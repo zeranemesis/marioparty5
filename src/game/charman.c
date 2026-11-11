@@ -1263,7 +1263,11 @@ s32 _CharFXPlay(s16 charNo, s16 seNo, u8 voiceFlag)
     CHARWORK *workP = &charWork[charNo];
     HU3DMODEL *modelP = &Hu3DData[workP->modelId];
     if(voiceFlag & 0x1) {
+#ifdef TARGET_PC
+        return 0; // GC r3 stale; result is never used
+#else
         return;
+#endif
     }
     if(workP->attr & 0x8) {
         return CharFXPlayPos(charNo, seNo, &modelP->pos);
@@ -1480,7 +1484,11 @@ static s16 EffectWarnCreate(HU3DMODELID modelId, float posX, float posY, float p
         }
         particleId = EffectCreate(EFFECT_WARN, cameraBit, posX, posY, posZ, scale, &paramNew);
         if(particleId == -1) {
+#ifdef TARGET_PC
+            return -1; // GC r3 stale; result is never used
+#else
             return;
+#endif
         } else {
             effModelP = &Hu3DData[effModelId[EFFECT_WARN][cameraNo]];
             particleP = effModelP->hookData;
@@ -1492,6 +1500,9 @@ static s16 EffectWarnCreate(HU3DMODELID modelId, float posX, float posY, float p
             particleDataP->accel.y = 100;
         }
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; result is never used
+#endif
 }
 
 static s16 EffectBirdCreate(HU3DMODELID modelId, float posX, float posY, float posZ, float scale, s16 charNo, float ofsY, EFFECTPARAM *param)
@@ -1517,7 +1528,11 @@ static s16 EffectBirdCreate(HU3DMODELID modelId, float posX, float posY, float p
         }
         particleId = EffectCreate(EFFECT_BIRD, cameraBit, posX, posY, posZ, scale, &paramNew);
         if(particleId == -1) {
+#ifdef TARGET_PC
+            return -1; // GC r3 stale; result is never used
+#else
             return;
+#endif
         } else {
             effModelP = &Hu3DData[effModelId[EFFECT_BIRD][cameraNo]];
             particleP = effModelP->hookData;
@@ -1528,6 +1543,9 @@ static s16 EffectBirdCreate(HU3DMODELID modelId, float posX, float posY, float p
             particleDataP->vel.y = ofsY;
         }
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; result is never used
+#endif
 }
 
 static s16 EffectCreate(s16 type, s16 cameraBit, float posX, float posY, float posZ, float scale, EFFECTPARAM *param)
@@ -2935,7 +2953,11 @@ s32 CharNpcDustSet(HU3DMODELID modelId, HU3DMOTID motId, s16 type, s16 npcNo)
     HUPROCESS *parent = HuPrcCurrentGet();
     HUPROCESS *process = HuPrcChildCreate(UpdateNpcDust, 100, 8192, 0, parent);
     if(!process) {
+#ifdef TARGET_PC
+        return 0; // GC r3 stale; result is never used
+#else
         return;
+#endif
     } else {
         NPCDUSTWORK *work = HuMemDirectMallocNum(HEAP_HEAP, sizeof(NPCDUSTWORK), HU_MEMNUM_OVL);
         process->property = work;
@@ -2945,6 +2967,9 @@ s32 CharNpcDustSet(HU3DMODELID modelId, HU3DMOTID motId, s16 type, s16 npcNo)
         work->npcNo = npcNo;
         EffectInit();
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; result is never used
+#endif
 }
 
 s32 CharNpcDustVoiceOffSet(HU3DMODELID modelId, HU3DMOTID motId, s16 type)
@@ -3158,7 +3183,11 @@ static s32 PlayStepVoice(s16 charNo, s16 seId, u8 voiceFlag)
     CHARWORK *workP = &charWork[charNo];
     HU3DMODEL *modelP = &Hu3DData[workP->modelId];
     if(voiceFlag & 0x1) {
+#ifdef TARGET_PC
+        return 0; // GC r3 stale; result is never used
+#else
         return;
+#endif
     }
     seId += workP->stepFx;
     if(workP->attr & 0x8) {
@@ -3166,6 +3195,9 @@ static s32 PlayStepVoice(s16 charNo, s16 seId, u8 voiceFlag)
     } else {
         _CharFXPlay(charNo, seId, voiceFlag);
     }
+#ifdef TARGET_PC
+    return 0; // GC r3 stale; result is never used
+#endif
 }
 
 static EFFECTPARAM landEffParam = {
