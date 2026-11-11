@@ -86,7 +86,7 @@ u32 fn_1_90C(u32 arg0);
 void fn_1_924(u32 arg0);
 void fn_1_940(u32 arg0);
 u32 fn_1_95C(u32 arg0);
-void fn_1_974(void *arg0, s32 arg1);
+void fn_1_974(M505_PLAYER *arg0, s32 arg1);
 void fn_1_9FC(void);
 void fn_1_B18(s32 arg0);
 void ObjectSetup(void);
@@ -379,8 +379,6 @@ static const char lbl_1_data_4B8[] = "Load Time:%d\n";
 
 void fn_1_2E8(void)
 {
-    // NONMATCHING: the mulhwu/srwi tick conversion uses different registers in MWCC
-    // (it also emits an extra li for the 64-bit intermediate).
     u32 start;
     s32 stat;
 
@@ -391,8 +389,7 @@ void fn_1_2E8(void)
         HuPrcVSleep();
     }
     lbl_1_bss_0->loadState = 1;
-    OSReport(lbl_1_data_4B8,
-             (OSGetTick() - start) / (s32)((u64)((u64)(u32)(*(u32 *)0x800000f8 >> 2) * 0x10624DD3u) >> 38));
+    OSReport(lbl_1_data_4B8, OSTicksToMilliseconds(OSGetTick() - start));
     HuPrcEnd();
     while (1) {
         HuPrcVSleep();
@@ -447,9 +444,7 @@ s32 fn_1_510(void)
 
 s32 fn_1_528(void)
 {
-    // NONMATCHING: the original keeps each array index in a separate register and
-    // uses indexed addressing (lbzx); MWCC folds the +1/+0x36 into the displacement.
-    return mgDataTbl[((s8 *)lbl_1_bss_4)[((s8 *)lbl_1_bss_4)[((s8 *)lbl_1_bss_4)[0] + 1] * 6 + 0x36]].nameMes;
+    return mgDataTbl[lbl_1_bss_4->mgTbl[lbl_1_bss_4->order[lbl_1_bss_4->entryNo]].mgIdx].nameMes;
 }
 
 u8 fn_1_588(void)
@@ -578,13 +573,9 @@ u32 fn_1_95C(u32 arg0)
     return lbl_1_bss_0->flag & arg0;
 }
 
-void fn_1_974(void *arg0, s32 arg1)
+void fn_1_974(M505_PLAYER *arg0, s32 arg1)
 {
-    // NONMATCHING: the original mixes a single-precision load for the 24.0f factor
-    // with a double-precision divide for the 500.0f divisor (lfd/fdiv); MWCC keeps
-    // the whole expression in one precision.
-    HuAudFXPlayPan(lbl_1_data_418[*(s16 *)((u8 *)arg0 + 0x1a)][arg1],
-                   0x40 + (s32)(24.0f * (*(f32 *)((u8 *)arg0 + 0x28) / 500.0f)));
+    HuAudFXPlayPan(lbl_1_data_418[arg0->charNo][arg1], 0x40 + (s32)(24.0f * (arg0->pos.x / 500.0f)));
 }
 
 void fn_1_9FC(void)
@@ -600,7 +591,7 @@ void fn_1_9FC(void)
         i = 4;
         while (i-- != 0) {
             key[i] = -1;
-            if (*(s16 *)((u8 *)GwPlayerConf + i * 0xa + 8) != 0) {
+            if (GwPlayerConf[i].type != 0) {
                 key[i] = 0x100;
             }
         }
