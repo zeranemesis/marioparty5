@@ -241,11 +241,11 @@ void ObjectSetup(void)
     }
     sys->mess = sys->obj[MDOPTION_OBJ_MESS]->data;
     *(BOOL *)sys->mess = FALSE;
-    sys->sprite = HuMemDirectMallocNum(HEAP_HEAP, 0x2A4, HU_MEMNUM_OVL);
+    sys->sprite = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDSPRITE_WORK), HU_MEMNUM_OVL);
     if(!sys->sprite) {
         OSReport("sys->sprite = NULL...\n");
     }
-    memset(sys->sprite, 0, 0x2A4);
+    memset(sys->sprite, 0, sizeof(MDSPRITE_WORK));
     sys->model = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDOPT_MODEL_WORK), HU_MEMNUM_OVL);
     if(!sys->model) {
         OSReport("sys->model = NULL...\n");
