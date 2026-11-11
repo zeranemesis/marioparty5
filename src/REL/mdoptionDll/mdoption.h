@@ -236,7 +236,13 @@ typedef struct Sys_s {
     u8 padA6[0x398 - 0xA6];    //0xA6
     s32 unk398;                //0x398
     s32 unk39C;                //0x39C
-    u8 pad3A0[0x3D8 - 0x3A0];  //0x3A0
+    u8 pad3A0[0x3A8 - 0x3A0];  //0x3A0
+    void *waveTexBuf;          //0x3A8
+    ANIMDATA *waveAnim[2];     //0x3AC
+    float waveScroll;          //0x3B4
+    float waveSpeed;           //0x3B8
+    float waveIndMtx[2][3];    //0x3BC
+    GXColor waveColor;         //0x3D4
     s32 unk3D8;                //0x3D8
     s32 unk3DC;                //0x3DC
     float modelScale;          //0x3E0
@@ -253,11 +259,31 @@ typedef struct Sys_s {
     s32 sprInitF;              //0x450
     float sprTime[2];          //0x454
     float sprT[2];             //0x45C
-    u8 pad464[0x48C - 0x464];  //0x464
-    s32 unk48C;                //0x48C
-    u8 pad490[0x4D0 - 0x490];  //0x490
+    s32 cursorState;           //0x464
+    float cursorT;             //0x468
+    float cursorOut;           //0x46C
+    s32 rankPhase;             //0x470
+    s32 rankFrame;             //0x474
+    s32 starPhase;             //0x478
+    s32 starFrame;             //0x47C
+    s32 trigSprState;          //0x480
+    s32 trigSprFrame;          //0x484
+    s32 waveNo;                //0x488
+    s32 waveActiveF;           //0x48C
+    s32 waveType;              //0x490
+    s32 waveTimer;             //0x494
+    s32 orbitState[2];         //0x498
+    s32 orbitTimer[2];         //0x4A0
+    s32 orbitWait[2];          //0x4A8
+    s32 orbitOutF;             //0x4B0
+    s32 orbitOutNo;            //0x4B4
+    s32 pad4B8;                //0x4B8
+    s32 rumbleState;           //0x4BC
+    float rumbleT[2];          //0x4C0
+    float rumbleOut[2];        //0x4C8
     s32 unk4D0;                //0x4D0
-    u8 pad4D4[0x4DC - 0x4D4];  //0x4D4
+    float titleT;              //0x4D4
+    float titleOut;            //0x4D8
     HuVecF orbitPos[4];        //0x4DC
     s32 unk50C;                //0x50C
 } SYS;
