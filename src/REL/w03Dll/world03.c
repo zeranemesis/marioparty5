@@ -349,6 +349,9 @@ static void MB3_Stub(void) {
 }
 
 static int MB3Ev_MasuWalkPre(int playerNo) {
+#ifdef TARGET_PC
+    return playerNo; // GC returned r3 = playerNo (empty body, arg untouched); caller ignores it
+#endif
 }
 
 /* ------------------------------ effect hooks ---------------------------- */
