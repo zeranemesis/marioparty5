@@ -1,4 +1,6 @@
 #include "REL/mgtourDll.h"
+#include "math.h"
+extern void fn_1_C76C(void);
 
 HUWINID fn_1_660(void)
 {
@@ -275,12 +277,97 @@ void fn_1_3D2C(void)
 {
 }
 
-void fn_1_3DE4(void)
+static inline BOOL MgtAngleSub(float *angle, float end, float speed)
 {
+    float diff = *angle - end;
+    float change = fmodf(diff, 180);
+    float wrap = fmodf(diff, 360);
+    if (fabsf(wrap) > 180.0f) {
+        if (change > 0) {
+            change = -(180.0f - fabsf(change));
+        } else {
+            change = 180.0f - fabsf(change);
+        }
+    }
+    if (fabsf(change) < speed) {
+        *angle = end;
+        return TRUE;
+    }
+    if (change > 0) {
+        change -= speed;
+    } else {
+        change += speed;
+    }
+    *angle = end + change;
+    return FALSE;
 }
 
-void fn_1_44E0(void)
+void fn_1_3DE4(void)
 {
+    Vec dir;
+    Vec aimPos;
+    MGT_PLAYER *player;
+    int i;
+    int doneNum;
+    float rotEnd;
+    for (player = &lbl_1_bss_16818->player[0], i = 0; i < MGTOUR_PLAYER_MAX; i++, player++) {
+        switch (lbl_1_bss_16818->mode) {
+            case 0:
+                player->rotX = 0;
+                break;
+            case 1:
+                aimPos = lbl_1_bss_16818->shakePos;
+                aimPos.z += 350;
+                VECSubtract(&aimPos, &player->pos, &aimPos);
+                aimPos.y = 0;
+                VECNormalize(&aimPos, &dir);
+                if (dir.z > 1) {
+                    dir.z = 1;
+                } else if (dir.z < -1) {
+                    dir.z = -1;
+                }
+                rotEnd = acosf(dir.z);
+                if (dir.x < 0) {
+                    rotEnd = -rotEnd;
+                }
+                player->rotX = (180 * rotEnd) / M_PI;
+                break;
+        }
+        if (!MgtAngleSub(&player->rotY, player->rotX, 0.01f)) {
+            if (player->state != 1) {
+                CharMotionShiftSet(player->charNo, player->motId[1], 0, 5, HU3D_MOTATTR_LOOP);
+                player->state = 1;
+            }
+        }
+    }
+    while (1) {
+        doneNum = 0;
+        for (player = &lbl_1_bss_16818->player[0], i = MGTOUR_PLAYER_MAX; i--; player++) {
+            if (MgtAngleSub(&player->rotY, player->rotX, lbl_1_bss_16818->rotSpeed)) {
+                if (player->state != 0) {
+                    CharMotionShiftSet(player->charNo, player->motId[0], 0, 5, HU3D_MOTATTR_LOOP);
+                    player->state = 0;
+                }
+                doneNum++;
+            }
+            Hu3DModelRotSet(player->modelId, 0, player->rotY, 0);
+        }
+        if (doneNum == 4) {
+            break;
+        }
+        HuPrcVSleep();
+    }
+    lbl_1_bss_16818->stat |= 0x1000;
+    HuPrcEnd();
+}
+
+void fn_1_44E0(int mode, float speed)
+{
+    lbl_1_bss_16818->stat &= ~0x1000;
+    lbl_1_bss_16818->mode = mode;
+    lbl_1_bss_16818->rotSpeed = speed;
+    HuPrcChildCreate(fn_1_3DE4, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
 }
 
 void fn_1_456C(void)
@@ -289,6 +376,9 @@ void fn_1_456C(void)
 
 void fn_1_485C(void)
 {
+    lbl_1_bss_16818->stat |= 0x2000;
+    HuPrcChildCreate(fn_1_456C, 0x64, 0x1000, 0, HuPrcCurrentGet());
+    HuPrcVSleep();
 }
 
 void fn_1_48B4(void)
@@ -297,6 +387,32 @@ void fn_1_48B4(void)
 
 void fn_1_5540(void)
 {
+    OMOVLHIS *his;
+    if (lbl_1_bss_16818->bgmId >= 0) {
+        HuAudSStreamFadeOut(lbl_1_bss_16818->bgmId, 1000);
+        lbl_1_bss_16818->bgmId = -1;
+    }
+    HuDataDirClose(DATA_mgtour);
+    HuDataDirClose(DATA_instpic);
+    CharModelDataClose(-1);
+    fn_1_C76C();
+    HuTHPClose();
+    GWMgInstFSet(TRUE);
+    his = omOvlHisGet(0);
+    omOvlHisChg(0, his->ovl, 0, his->stat);
+    HuWinExClose(lbl_1_bss_16818->winId);
+    HuWinExKill(lbl_1_bss_16818->winId);
+    if (lbl_1_bss_16818->seId >= 0) {
+        HuAudFXStop(lbl_1_bss_16818->seId);
+        lbl_1_bss_16818->seId = -1;
+    }
+    WipeCreate(WIPE_MODE_OUT, 6, 60);
+    while (WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    _ClearFlag(FLAG_INST_NOHISCHG);
+    _ClearFlag(FLAG_INST_MGMODE);
+    memset(lbl_1_bss_1681C, 0, sizeof(MGT_MODEWORK));
 }
 
 void fn_1_56C0(void)
