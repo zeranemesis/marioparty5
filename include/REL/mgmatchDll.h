@@ -146,8 +146,7 @@ typedef M505_MGENTRY M505_MGINFO;
 /* mgModeWork. */
 typedef struct M505ModeWork_s {
     s8 entryNo;            //0x00
-    s8 orderNo;            //0x01
-    u8 pad[0x14];          //0x02
+    s8 order[MGMATCH_MG_MAX]; //0x01
     u8 flag;               //0x16
     s8 score[MGMATCH_PLAYER_MAX]; //0x17
     u8 gameType;           //0x1B
