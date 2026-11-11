@@ -180,6 +180,7 @@ void fn_1_16168(void);
 void fn_1_161B8(void);
 void fn_1_16308(void);
 void fn_1_16358(void);
+void fn_1_16978(void);
 void fn_1_17008(int cmd);
 int fn_1_171B4(int mdlNo, int cameraNo);
 void fn_1_27F8(void);
@@ -2343,6 +2344,86 @@ void fn_1_16358(void)
         if(sys->mgTypeF[i] == 0) {
             Hu3DModelTPLvlSet(model->mdlId[i+MDMODEL_CAP_MODE_00], 0.2f);
         }
+    }
+}
+
+void fn_1_16978(void)
+{
+    int i;
+
+    for(i=0; i<4; i++) {
+        sdHealthLoss[i] = 0;
+    }
+    if(sys->scoreNum == 0) {
+        mgMatchMaxScore = 3;
+    } else if(sys->scoreNum == 1) {
+        mgMatchMaxScore = 5;
+    } else if(sys->scoreNum == 2) {
+        mgMatchMaxScore = 7;
+    }
+    if(sys->gameType == 0) {
+        mgMatchGameType = 0;
+    } else if(sys->gameType == 1) {
+        mgMatchGameType = 1;
+    } else if(sys->gameType == 2) {
+        mgMatchGameType = 2;
+    }
+    if(sys->selNoNow == 1) {
+        GwPlayer[0].grp = 0;
+        if(sys->gameType == 0) {
+            GwPlayer[0].grp = 0;
+            GwPlayer[1].grp = 1;
+            GwPlayer[2].grp = 2;
+            GwPlayer[3].grp = 3;
+        } else if(sys->gameType == 1) {
+            GwPlayer[0].grp = 0;
+            GwPlayer[1].grp = 1;
+            GwPlayer[2].grp = 1;
+            GwPlayer[3].grp = 1;
+            for(i=0; i<4; i++) {
+                if(sys->mdlE[i] < 1) {
+                    GwPlayer[i].grp = 0;
+                } else {
+                    GwPlayer[i].grp = 1;
+                }
+            }
+        } else if(sys->gameType == 2) {
+            GwPlayer[0].grp = 0;
+            GwPlayer[1].grp = 0;
+            GwPlayer[2].grp = 1;
+            GwPlayer[3].grp = 1;
+            for(i=0; i<4; i++) {
+                if(sys->teamOrder[i] < 2) {
+                    GwPlayer[i].grp = 0;
+                } else {
+                    GwPlayer[i].grp = 1;
+                }
+            }
+        }
+    } else {
+        GwPlayer[0].grp = 0;
+        GwPlayer[1].grp = 1;
+        GwPlayer[2].grp = 2;
+        GwPlayer[3].grp = 3;
+    }
+    for(i=0; i<4; i++) {
+        if(sys->padEnable[i] == 0) {
+            GwPlayer[i].comF = TRUE;
+        } else {
+            GwPlayer[i].comF = FALSE;
+        }
+        GwPlayer[i].charNo = sys->chrSel[i];
+        GwPlayer[i].dif = sys->comDif[i];
+        if(sys->padNoEnable[i] != -1) {
+            GwPlayer[i].padNo = sys->padNoConnect[i];
+        } else {
+            GwPlayer[i].padNo = -1;
+        }
+        GwPlayerConf[i].charNo = GwPlayer[i].charNo;
+        GwPlayerConf[i].padNo = GwPlayer[i].padNo = i;
+        GwPlayerConf[i].dif = GwPlayer[i].dif;
+        GwPlayerConf[i].type = GwPlayer[i].comF;
+        GwPlayerConf[i].grp = GwPlayer[i].grp;
     }
 }
 
