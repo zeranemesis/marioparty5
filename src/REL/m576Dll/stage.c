@@ -55,7 +55,7 @@ void fn_1_D8E0(M576COM *com);
 void fn_1_DBE0(M576COM *com);
 void fn_1_DF40(M576COM *com);
 void fn_1_E494(M576COM *com);
-void _NaviMapInit(s16 mdlId);
+void _NaviMapInit(s32 mdlId);
 
 /* unit-owned .bss, declared in reverse address order */
 M576COM lbl_1_bss_35C[M576_PLAYER_MAX];
@@ -472,7 +472,7 @@ void fn_1_7F44(M576NODE *node, s32 comNo, HuVecF *goal)
     }
 }
 
-void _NaviMapInit(s16 mdlId)
+void _NaviMapInit(s32 mdlId)
 {
     HSFDATA *hsf;
     HSFOBJECT *obj;
@@ -630,7 +630,11 @@ s32 fn_1_869C(M576COM *com)
     s32 sel;
     s32 who;
     s32 dest;
+#ifdef TARGET_PC
+    f32 dist = 0.0f;
+#else
     f32 dist;
+#endif
 
     timer = 1;
     type = fn_1_9EC(lbl_1_bss_324[com->player->actor->param]);
@@ -1045,9 +1049,9 @@ s32 fn_1_B328(M576COM *com, M576NODE **cand, HuVecF *pos, s32 num)
     return idx;
 }
 
-void fn_1_BAD8(M576COM *com, s16 mode)
+void fn_1_BAD8(M576COM *com, s32 mode)
 {
-    com->player->work[0] = mode;
+    com->player->work[0] = (s16)mode;
     com->player->work[1] = 0;
 }
 
@@ -1172,7 +1176,7 @@ s32 fn_1_BD94(M576COM *com)
     return ret;
 }
 
-void fn_1_C16C(s16 mdlId)
+void fn_1_C16C(s32 mdlId)
 {
     s32 i;
 
@@ -1264,6 +1268,11 @@ void fn_1_C31C(M576COM *com)
                 break;
         }
     }
+#ifdef TARGET_PC
+    if (com->player->work[0] < 0 || com->player->work[0] >= 9) {
+        return;
+    }
+#endif
     lbl_1_data_3B0[com->player->work[0]](com);
     com->pos = com->player->actor->pos;
 }

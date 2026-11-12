@@ -11,7 +11,7 @@ float sqrtf(float x);
 
 /* stage.c / score.c */
 void fn_1_BAF4(s32 idx, s32 val);
-void fn_1_C16C(s16 mdlId);
+void fn_1_C16C(s32 mdlId);
 M576COM *fn_1_C1EC(MGPLAYER *player);
 void fn_1_C31C(M576COM *com);
 void fn_1_EA08(OMOBJMAN *om);
@@ -204,7 +204,7 @@ f32 fn_1_A0(f32 angle, f32 dead)
 
 s32 fn_1_174(s32 idx, HuVecF *dest)
 {
-    if (dest != NULL) {
+    if (dest != 0) {
         *dest = lbl_1_data_DC[idx];
     }
     return lbl_1_bss_254[idx];
@@ -270,7 +270,7 @@ s32 fn_1_59C(void)
 
 s32 fn_1_5F4(s32 idx, HuVecF *pos)
 {
-    if (pos != NULL) {
+    if (pos != 0) {
         MgActorPosGet(lbl_1_bss_2D8[idx - 8], pos);
     }
     return lbl_1_bss_2A0[idx - 8];
@@ -295,10 +295,10 @@ s32 fn_1_668(MGPLAYER **player, HuVecF *outPos, f32 *outDist)
         }
     }
     if (best >= 0) {
-        if (outPos != NULL) {
+        if (outPos != 0) {
             *outPos = lbl_1_bss_2D8[best - 8]->pos;
         }
-        if (outDist != NULL) {
+        if (outDist != 0) {
             *outDist = minDist;
         }
     }
@@ -375,10 +375,10 @@ s32 fn_1_8AC(s32 *outPlayer, HuVecF *outPos)
         }
     }
     if (maxCount != 0) {
-        if (outPlayer != NULL) {
+        if (outPlayer != 0) {
             *outPlayer = best;
         }
-        if (outPos != NULL) {
+        if (outPos != 0) {
             MgActorPosGet(lbl_1_bss_2FC[best]->actor, outPos);
         }
     }
