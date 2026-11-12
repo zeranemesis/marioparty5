@@ -676,7 +676,7 @@ void fn_1_5D30(void)
                                lbl_1_bss_1954.motId[lbl_1_bss_1954.timer][6], 0.0f, 8.0f, 0);
             pl = lbl_1_bss_1954.player[lbl_1_bss_1954.timer].playerNo;
             if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
-                GWMgCoinSet(pl, 10);
+                GwPlayer[pl].mgCoinBonus = 10;
             }
             HuAudJinglePlay(0x79);
             lbl_1_bss_1954.phase++;
