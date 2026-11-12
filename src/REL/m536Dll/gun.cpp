@@ -51,8 +51,8 @@ void *lbl_1_data_6A8[5] = { 0, 0, (void *)fn_1_F878, (void *)fn_1_F98C, (void *)
 
 M536_RODATA const f32 lbl_1_rodata_318[4] = { 45.0f, -45.0f, 135.0f, -135.0f };
 
-M536GunList lbl_1_bss_AD4;
 u8 lbl_1_bss_AC8[12];
+M536GunList lbl_1_bss_AD4;
 
 M536Gun *fn_1_F670(M536Gun *self)
 {
