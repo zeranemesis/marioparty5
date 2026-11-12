@@ -68,20 +68,11 @@ M510_VECF lbl_1_data_468 = { 0.0f, 0.0f, 0.0f };
 M510_VECF lbl_1_data_474 = { 0.0f, 0.0f, 0.0f };
 // .data:0x30 (absolute 0x480)
 s32 lbl_1_data_480 = 1;
-// .data:0x54 (absolute 0x4A4)
-M510_VECF lbl_1_data_4A4 = { 385.0f, 130.0f, -940.0f };
-// .data:0x60 (absolute 0x4B0)
-M510_VECF lbl_1_data_4B0 = { 670.0f, 185.0f, -860.0f };
-// .data:0x6C (absolute 0x4BC)
-M510_VECF lbl_1_data_4BC = { 360.0f, 40.0f, -850.0f };
-// .data:0x78 (absolute 0x4C8)
-M510_VECF lbl_1_data_4C8 = { 635.0f, 65.0f, -720.0f };
-
 // The REL's global object pointer lives in m510.c
 extern M510_OBJ *lbl_1_bss_0;
 
-s16 lbl_1_bss_7820;
 END_WORK lbl_1_bss_7824;
+s16 lbl_1_bss_7820;
 
 void fn_1_9B0C(M510_OBJ *data)
 {
@@ -373,6 +364,7 @@ s32 fn_1_A4F4(M510_OBJ *data)
             data->state = 7;
         }
         break;
+    case 7:
     default:
         ret = 1;
         break;
@@ -452,6 +444,15 @@ s32 fn_1_B350(M510_OBJ *data)
     lbl_1_bss_7824.score = best;
     return ret;
 }
+
+// .data:0x54 (absolute 0x4A4)
+M510_VECF lbl_1_data_4A4 = { 385.0f, 130.0f, -940.0f };
+// .data:0x60 (absolute 0x4B0)
+M510_VECF lbl_1_data_4B0 = { 670.0f, 185.0f, -860.0f };
+// .data:0x6C (absolute 0x4BC)
+M510_VECF lbl_1_data_4BC = { 360.0f, 40.0f, -850.0f };
+// .data:0x78 (absolute 0x4C8)
+M510_VECF lbl_1_data_4C8 = { 635.0f, 65.0f, -720.0f };
 
 void fn_1_B4A4(M510_OBJ *data)
 {
