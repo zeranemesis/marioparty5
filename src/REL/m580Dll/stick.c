@@ -746,3 +746,117 @@ void fn_1_A260(OMOBJ *obj)
     VECScale(&work->vel, &work->vel, 0.98f);
     VECAdd(&work->pos, &work->vel, &work->pos);
 }
+
+void fn_1_BD70(OMOBJ *obj);
+
+void fn_1_BAC0(OMOBJ *obj)
+{
+    M580_STICKWORK *work = obj->data;
+    HU3DMODELID model = obj->mdlId[0];
+    f32 maxTime;
+
+    switch (work->actor->kind) {
+    case 2:
+        fn_1_94A4(lbl_1_data_544[work->index], &work->pos, &work->rot.y);
+        break;
+    case 3:
+        fn_1_94A4(lbl_1_data_6D4[work->index], &work->pos, &work->rot.y);
+        break;
+    }
+    fn_1_92EC(obj, 1);
+    maxTime = Hu3DMotionMaxTimeGet(model) - 1.0;
+    Hu3DMotionTimeSet(model, 1.0 / 65536.0 * (f32)(u16)frand() * maxTime);
+    obj->objFunc = fn_1_BD70;
+}
+
+void fn_1_BD70(OMOBJ *obj)
+{
+    M580_STICKDATA *dir = lbl_1_bss_238[0]->data;
+    M580_STICKWORK *work = obj->data;
+    HU3DMODELID model = obj->mdlId[0];
+    f32 speed;
+
+    switch (work->state) {
+    case 0:
+        work->state++;
+        work->timer = 120.0 + (s32)(180.0 * (1.0 / 65536.0 * (f32)(u16)frand()));
+    case 1:
+        if (--work->timer > 0) {
+            break;
+        }
+        work->state++;
+        work->timer = 60.0 + (s32)(600.0 * (1.0 / 65536.0 * (f32)(u16)frand()));
+        fn_1_92EC(obj, 0);
+    case 2:
+        if (--work->timer <= 0) {
+            work->state++;
+            work->timer = 1;
+            break;
+        }
+        if (MgSeqModeGet() == 6) {
+            work->state++;
+            work->timer = (work->index & 7) * 5;
+            work->unk24 = 1;
+        }
+        if (dir->timer == 0) {
+            break;
+        }
+        work->state++;
+        work->timer = (work->index & 7) * 5;
+    case 3:
+        if (--work->timer > 0) {
+            break;
+        }
+        fn_1_92EC(obj, 1);
+        work->state++;
+        work->timer = 0x78;
+    case 4:
+        if (work->unk24 != 0) {
+            break;
+        }
+        if (--work->timer > 0) {
+            break;
+        }
+        work->state++;
+        if (dir->timer == 0) {
+            work->state = 2;
+            work->timer = 60.0 + (s32)(600.0 * (1.0 / 65536.0 * (f32)(u16)frand()));
+            fn_1_92EC(obj, 0);
+            break;
+        }
+    case 5:
+        if (dir->timer != 0) {
+            break;
+        }
+        work->state++;
+        work->timer = 30.0 + (s32)(120.0 * (1.0 / 65536.0 * (f32)(u16)frand()));
+    case 6:
+        if (work->unk24 != 0) {
+            break;
+        }
+        if (--work->timer > 0) {
+            break;
+        }
+        work->state = 2;
+        work->timer = 120.0 + (s32)(600.0 * (1.0 / 65536.0 * (f32)(u16)frand()));
+        fn_1_92EC(obj, 0);
+        break;
+    }
+    if (work->motion == 0) {
+        speed = 1.0f;
+    } else {
+        switch (work->actor->kind) {
+        case 2:
+            speed = dir->timer != 0 ? 1.0 : 0.7;
+            break;
+        case 3:
+            speed = dir->timer != 0 ? 2.0 : 1.0;
+            break;
+        default:
+            speed = 1.0f;
+            break;
+        }
+    }
+    Hu3DMotionSpeedSet(model, speed);
+    fn_1_9194(obj);
+}
