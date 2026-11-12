@@ -801,6 +801,7 @@ void fn_1_80D0(M522RNode *self, M522RNode *other)
 // Move every node of `self` in front of `other`.
 void fn_1_8100(M522RNode *self, M522RNode *other)
 {
+    M522RNode *at;
     M522RNode *first;
     M522RNode *last;
     u8 empty;
@@ -810,14 +811,15 @@ void fn_1_8100(M522RNode *self, M522RNode *other)
         empty = 1;
     }
     if (empty == 0) {
+        at = other;
         first = self->next;
         last = self->prev;
         self->next = self;
         self->prev = self;
-        first->prev = other->prev;
-        last->next = other;
-        other->prev->next = first;
-        other->prev = last;
+        first->prev = at->prev;
+        last->next = at;
+        at->prev->next = first;
+        at->prev = last;
     }
 }
 
@@ -869,7 +871,6 @@ M522RNode *fn_1_8240(M522RCmp cmp, M522RNode *list)
 M522RNode *fn_1_88E8(M522RNode *list)
 {
     M522RNode *fast;
-    M522RNode *second;
 
     fast = list->next;
     if (fast != 0) {
@@ -882,9 +883,9 @@ M522RNode *fn_1_88E8(M522RNode *list)
             fast = fast->next;
         }
     }
-    second = list->next;
+    fast = list->next;
     list->next = 0;
-    return second;
+    return fast;
 }
 
 M522RNode *fn_1_893C(M522RCmp cmp, M522RNode *a, M522RNode *b)
