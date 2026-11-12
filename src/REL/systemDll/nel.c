@@ -15,6 +15,7 @@
 #define NEL_SAVED(sys) ((HuVecF *)&(sys)->pos0x)
 #define NEL_PADW(sys, i) (*(u16 *)((u8 *)(sys) + 0x140 + (i) * 2))
 #define NEL_GRP(sys, i) (*((s8 *)(sys) + 0x260 + (i)))
+#define NEL_TP(sys) ((float *)&(sys)->blendDbg.pad1C[0x30])
 #define PADSTAT(sys) (((u16 *)&(sys)->padStat)[0])
 /* 0x257: second half of mdlSelNo (NEL_SYS declares one 8-entry array) */
 #define NEL_SEL2(sys, i) (*((s8 *)(sys) + 0x257 + (i)))
@@ -39,6 +40,7 @@ typedef struct ParticleDotWork_s {
 
 /* Guide-model slide work (two sets: A = lbl_1_bss_58.., B = lbl_1_bss_2A..). */
 s16 NelBgmId;
+s32 NelTPInit;
 u8 NelStepB[6];
 float NelOscOutB[2];
 float NelOscT3B[4];
@@ -116,7 +118,11 @@ void fn_1_F94(NEL_SYS *sys, volatile float angle);
 void NelGuideBillboardUpdate(NEL_SYS *sys, s32 no);
 void MdRingMain(NEL_SYS *sys);
 void MdFukiMain(NEL_SYS *sys);
+void MdMathClamp(float *val, float min, float max);
 void MdBlendDebugMain(void);
+void MdDebugBlendColor(void);
+void MdDebugPointMove(void);
+void MdTPDebug(void);
 void MdSpriteDebugMain(void);
 void fn_1_19CCC(void);
 void MdObjCameraCreate(OMOBJ *obj);
@@ -7662,4 +7668,300 @@ void fn_1_19DE8(void)
         }
         HuPrcSleep(10);
     }
+}
+
+static s32 NelBlendPrev = -1;
+static char *NelBmName[4] = { "GX_BM_NONE", "GX_BM_BLEND", "GX_BM_LOGIC", "GX_BM_SUBTRACT" };
+static char *NelLoName[16] = {
+    "GX_LO_CLEAR", "GX_LO_AND", "GX_LO_REVAND", "GX_LO_COPY", "GX_LO_INVAND", "GX_LO_NOOP", "GX_LO_XOR", "GX_LO_OR",
+    "GX_LO_NOR", "GX_LO_EQUIV", "GX_LO_INV", "GX_LO_REVOR", "GX_LO_INVCOPY", "GX_LO_INVOR", "GX_LO_NAND", "GX_LO_SET",
+};
+static char *NelBlName[8] = {
+    "GX_BL_ZERO", "GX_BL_ONE", "GX_BL_SRCCLR", "GX_BL_INVSRCCLR", "GX_BL_SRCALPHA", "GX_BL_INVSRCALPHA", "GX_BL_DSTALPHA", "GX_BL_INVDSTALPHA",
+};
+
+void MdBlendDebugMain(void)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    if (dbg->stat == 3) {
+        if ((HuPadBtnDown[0] & 0x20) != 0) {
+            dbg->dispTimer = (dbg->dispTimer += 1) % 3;
+        }
+        if (dbg->dispTimer == 1 && dbg->dispTimer != NelBlendPrev) {
+            Hu3DModelAttrSet(model->mdlId[0xC], 1);
+        } else if (dbg->dispTimer == 2 && dbg->dispTimer != NelBlendPrev) {
+            Hu3DModelAttrReset(model->mdlId[0xC], 1);
+        }
+        NelBlendPrev = dbg->dispTimer;
+        if (HuPadTrigL[0] > 0x4B) {
+            if (HuPadSubStkX[0] <= -0x1D) {
+                dbg->col[0]--;
+            }
+            if (HuPadSubStkY[0] >= 0x1D) {
+                dbg->col[1]--;
+            }
+            if (HuPadSubStkX[0] >= 0x1D) {
+                dbg->col[2]--;
+            }
+            if (HuPadSubStkY[0] <= -0x1D) {
+                dbg->col[3]--;
+            }
+            if ((HuPadBtnDown[0] & 8) != 0) {
+                if (--dbg->type == -1) {
+                    dbg->type = 3;
+                }
+            }
+            if ((HuPadBtnDown[0] & 4) != 0) {
+                if (--dbg->logic == -1) {
+                    dbg->logic = 0xF;
+                }
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                if (--dbg->unk10 == -1) {
+                    dbg->unk10 = 7;
+                }
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                if (--dbg->unk14 == -1) {
+                    dbg->unk14 = 7;
+                }
+            }
+        } else {
+            if (HuPadSubStkX[0] <= -0x1D) {
+                dbg->col[0]++;
+            }
+            if (HuPadSubStkY[0] >= 0x1D) {
+                dbg->col[1]++;
+            }
+            if (HuPadSubStkX[0] >= 0x1D) {
+                dbg->col[2]++;
+            }
+            if (HuPadSubStkY[0] <= -0x1D) {
+                dbg->col[3]++;
+            }
+            if ((HuPadBtnDown[0] & 8) != 0) {
+                dbg->type = (dbg->type += 1) % 4;
+            }
+            if ((HuPadBtnDown[0] & 4) != 0) {
+                dbg->logic = (dbg->logic += 1) % 16;
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                dbg->unk10 = (dbg->unk10 += 1) % 8;
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                dbg->unk14 = (dbg->unk14 += 1) % 8;
+            }
+        }
+        MdDebugFontPrint("col(%d / %d / %d / %d)", dbg->col[0], dbg->col[1], dbg->col[2], dbg->col[3]);
+        MdDebugFontPrint("type(%s)", NelBmName[dbg->type]);
+        MdDebugFontPrint("src(%s)", NelBlName[dbg->unk10]);
+        MdDebugFontPrint("dst(%s)", NelBlName[dbg->unk14]);
+        MdDebugFontPrint("logic(%s)", NelLoName[dbg->logic]);
+    }
+}
+
+void MdSpriteDebugMain(void)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+
+    if (dbg->stat == 2) {
+        MdSpriteDebug(sys);
+    }
+}
+
+void fn_1_1A404(void)
+{
+    NEL_SYS *sys = &sysWork;
+    MD_MODEL *model = sys->model;
+    s16 mdlId = model->mdlId[0x20];
+}
+
+void MdDebugPointMove(void)
+{
+    HuVecF *p;
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    SYSSPRITE *volatile sprite = (SYSSPRITE *)sys->sprite;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    if (sys->unk234 != 0 || dbg->stat != 0) {
+        return;
+    }
+    p = model->mdlPos[sys->mdlNo[0] + 2];
+    if (HuPadTrigL[0] <= 0x4B) {
+        if (HuPadSubStkX[0] <= -0x1D) {
+            p->x -= 5.0f;
+        } else if (HuPadSubStkX[0] >= 0x1D) {
+            p->x += 5.0f;
+        }
+        if (HuPadStkY[0] <= -0x24) {
+            p->y -= 5.0f;
+        } else if (HuPadStkY[0] >= 0x24) {
+            p->y += 5.0f;
+        }
+        if (HuPadSubStkY[0] <= -0x1D) {
+            p->z += 5.0f;
+        } else if (HuPadSubStkY[0] >= 0x1D) {
+            p->z -= 5.0f;
+        }
+    } else {
+        if (HuPadSubStkX[0] <= -0x1D) {
+            p->x -= 1.0f;
+        } else if (HuPadSubStkX[0] >= 0x1D) {
+            p->x += 1.0f;
+        }
+        if (HuPadStkY[0] <= -0x24) {
+            p->y -= 1.0f;
+        } else if (HuPadStkY[0] >= 0x24) {
+            p->y += 1.0f;
+        }
+        if (HuPadSubStkY[0] <= -0x1D) {
+            p->z += 1.0f;
+        } else if (HuPadSubStkY[0] >= 0x1D) {
+            p->z -= 1.0f;
+        }
+    }
+    MdDebugFontPrint("XYZ(%.1f / %.1f / %.1f)", p->x, p->y, p->z);
+}
+
+void MdTPDebug(void)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+
+    if (sys->unk234 != 0 || dbg->stat != 0) {
+        return;
+    }
+    if (NelTPInit == 0) {
+        NEL_TP(sys)[0] = -12.0f;
+        NEL_TP(sys)[1] = -12.0f;
+        NEL_TP(sys)[2] = 44.0f;
+        NEL_TP(sys)[3] = -22.0f;
+        NelTPInit = 1;
+    }
+    if (HuPadTrigL[0] <= 0x4B) {
+        if (HuPadSubStkX[0] <= -0x1D) {
+            NEL_TP(sys)[0] -= 1.0f;
+        } else if (HuPadSubStkX[0] >= 0x1D) {
+            NEL_TP(sys)[0] += 1.0f;
+        }
+        if (HuPadSubStkY[0] <= -0x1D) {
+            NEL_TP(sys)[1] -= 1.0f;
+        } else if (HuPadSubStkY[0] >= 0x1D) {
+            NEL_TP(sys)[1] += 1.0f;
+        }
+    } else {
+        if (HuPadSubStkX[0] <= -0x1D) {
+            NEL_TP(sys)[2] -= 1.0f;
+        } else if (HuPadSubStkX[0] >= 0x1D) {
+            NEL_TP(sys)[2] += 1.0f;
+        }
+        if (HuPadSubStkY[0] <= -0x1D) {
+            NEL_TP(sys)[3] -= 1.0f;
+        } else if (HuPadSubStkY[0] >= 0x1D) {
+            NEL_TP(sys)[3] += 1.0f;
+        }
+    }
+    MdMathClamp(&NEL_TP(sys)[0], -32.0f, 32.0f);
+    MdMathClamp(&NEL_TP(sys)[1], -32.0f, 32.0f);
+    MdMathClamp(&NEL_TP(sys)[2], -64.0f, 64.0f);
+    MdMathClamp(&NEL_TP(sys)[3], -32.0f, 32.0f);
+    MdDebugFontPrint("TP0(%.2f)", NEL_TP(sys)[0]);
+    MdDebugFontPrint("TP1(%.2f)", NEL_TP(sys)[1]);
+    MdDebugFontPrint("TP2(%.2f)", NEL_TP(sys)[2]);
+    MdDebugFontPrint("TP3(%.2f)", NEL_TP(sys)[3]);
+    MdVecTbl[0xD].x = NEL_TP(sys)[0];
+    MdVecTbl[0xD].y = NEL_TP(sys)[1];
+    MdVecTbl[7].x = -NEL_TP(sys)[2] - 13.0f;
+    MdVecTbl[7].y = NEL_TP(sys)[3];
+    MdVecTbl[7].z = NEL_TP(sys)[2] - 11.0f;
+}
+
+static s32 NelBlendPrev2 = -1;
+static char *NelBmName2[4] = { "GX_BM_NONE", "GX_BM_BLEND", "GX_BM_LOGIC", "GX_BM_SUBTRACT" };
+static char *NelLoName2[16] = {
+    "GX_LO_CLEAR", "GX_LO_AND", "GX_LO_REVAND", "GX_LO_COPY", "GX_LO_INVAND", "GX_LO_NOOP", "GX_LO_XOR", "GX_LO_OR",
+    "GX_LO_NOR", "GX_LO_EQUIV", "GX_LO_INV", "GX_LO_REVOR", "GX_LO_INVCOPY", "GX_LO_INVOR", "GX_LO_NAND", "GX_LO_SET",
+};
+static char *NelBlName2[8] = {
+    "GX_BL_ZERO", "GX_BL_ONE", "GX_BL_SRCCLR", "GX_BL_INVSRCCLR", "GX_BL_SRCALPHA", "GX_BL_INVSRCALPHA", "GX_BL_DSTALPHA", "GX_BL_INVDSTALPHA",
+};
+
+void MdDebugBlendColor(void)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    if (sys->unk234 != 0 || dbg->stat != 0) {
+        return;
+    }
+    if (HuPadTrigL[0] > 0x4B) {
+        if (HuPadSubStkX[0] <= -0x1D) {
+            dbg->tpCol[0]--;
+        }
+        if (HuPadSubStkY[0] >= 0x1D) {
+            dbg->tpCol[1]--;
+        }
+        if (HuPadSubStkX[0] >= 0x1D) {
+            dbg->tpCol[2]--;
+        }
+        if (HuPadSubStkY[0] <= -0x1D) {
+            dbg->tpCol[3]--;
+        }
+        if ((HuPadBtnDown[0] & 8) != 0) {
+            if (--dbg->tpSel == -1) {
+                dbg->tpSel = 3;
+            }
+        }
+        if ((HuPadBtnDown[0] & 4) != 0) {
+            if (--dbg->tp2 == -1) {
+                dbg->tp2 = 0xF;
+            }
+        }
+        if ((HuPadBtnDown[0] & 0x100) != 0) {
+            if (--dbg->tp0 == -1) {
+                dbg->tp0 = 7;
+            }
+        }
+        if ((HuPadBtnDown[0] & 0x200) != 0) {
+            if (--dbg->tp1 == -1) {
+                dbg->tp1 = 7;
+            }
+        }
+    } else {
+        if (HuPadSubStkX[0] <= -0x1D) {
+            dbg->tpCol[0]++;
+        }
+        if (HuPadSubStkY[0] >= 0x1D) {
+            dbg->tpCol[1]++;
+        }
+        if (HuPadSubStkX[0] >= 0x1D) {
+            dbg->tpCol[2]++;
+        }
+        if (HuPadSubStkY[0] <= -0x1D) {
+            dbg->tpCol[3]++;
+        }
+        if ((HuPadBtnDown[0] & 8) != 0) {
+            dbg->tpSel = (dbg->tpSel += 1) % 4;
+        }
+        if ((HuPadBtnDown[0] & 4) != 0) {
+            dbg->tp2 = (dbg->tp2 += 1) % 16;
+        }
+        if ((HuPadBtnDown[0] & 0x100) != 0) {
+            dbg->tp0 = (dbg->tp0 += 1) % 8;
+        }
+        if ((HuPadBtnDown[0] & 0x200) != 0) {
+            dbg->tp1 = (dbg->tp1 += 1) % 8;
+        }
+    }
+    MdDebugFontPrint("col(%d / %d / %d / %d)", dbg->tpCol[0], dbg->tpCol[1], dbg->tpCol[2], dbg->tpCol[3]);
+    MdDebugFontPrint("type(%s)", NelBmName2[dbg->tpSel]);
+    MdDebugFontPrint("src(%s)", NelBlName2[dbg->tp0]);
+    MdDebugFontPrint("dst(%s)", NelBlName2[dbg->tp1]);
+    MdDebugFontPrint("logic(%s)", NelLoName2[dbg->tp2]);
 }
