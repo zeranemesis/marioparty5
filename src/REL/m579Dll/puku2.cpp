@@ -12,7 +12,7 @@ extern M579MotionMgr *lbl_1_bss_A14;
 }
 
 extern "C" {
-M579Puku *fn_1_6074(M579Puku *self, s32 dataNum, s32 type);
+M579Puku *fn_1_6074(M579Puku *self, s16 *src, s32 type);
 M579Puku *fn_1_625C(M579Puku *self, s16 flag);
 M579Puku *fn_1_62B4(M579Fish *owner, s32 type);
 void fn_1_6388(void);
@@ -50,7 +50,7 @@ M579_RODATA const Vec lbl_1_rodata_160 = { 0.0f, 0.0f, 0.0f };
 u8 lbl_1_bss_9F0[12];
 M579Node lbl_1_bss_9FC;
 
-M579Puku *fn_1_6074(M579Puku *self, s32 dataNum, s32 type)
+M579Puku *fn_1_6074(M579Puku *self, s16 *src, s32 type)
 {
     f64 scale;
     M579Ptmf p;
@@ -59,7 +59,7 @@ M579Puku *fn_1_6074(M579Puku *self, s32 dataNum, s32 type)
     self->anim = -1;
     self->u18 = 0;
     self->frame = 0;
-    fn_1_2DB4(&self->model, dataNum);
+    fn_1_2DB4(&self->model, src);
     self->busy = 0;
     self->type = type;
     self->state = 0;

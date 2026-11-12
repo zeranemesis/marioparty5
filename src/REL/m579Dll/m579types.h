@@ -103,6 +103,7 @@ typedef struct M579S16Vec {
 typedef struct M579MotionMgr {
     M579Base base;
     M579S16Vec motion;
+    s16 model[2];
 } M579MotionMgr;
 
 typedef struct M579Puku {
@@ -147,7 +148,7 @@ f32 fn_1_4D1C(void);
 void fn_1_9668(Vec *pos, s32 seId);
 void fn_1_1360(void *list, void *dst);
 /* model wrappers (m579.cpp); a model is an s16 handle */
-s16 *fn_1_2DB4(s16 *model, s32 dataNum);
+s16 *fn_1_2DB4(s16 *dst, s16 *src);
 void fn_1_2E08(s16 *model, s32 attr);
 void fn_1_2E40(s16 *model, s32 attr);
 void fn_1_2EF4(s16 *model, Vec *pos);
