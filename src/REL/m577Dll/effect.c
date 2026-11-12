@@ -3,33 +3,16 @@
 #include "game/sprite.h"
 #include "game/frand.h"
 
-typedef struct EffectHookData_s {
-    s16 unk0;
-    s16 unk2;
-    u8 unk4[0x18];
-    struct EffectData_s *owner; /* 0x1C */
-    u8 unk20[0x10];
-    s16 maxCnt; /* 0x30 */
-    u8 unk32[0x16];
-    HU3DPARTICLEDATA *data; /* 0x48 */
-} EffectHookData;
-
 typedef struct EffectData_s {
-    EffectHookData *hook; /* 0x00 */
-    ANIMDATA *anim;       /* 0x04 */
-    s32 arg;              /* 0x08 */
-    HU3DMODELID modelId;  /* 0x0C */
+    HU3DPARTICLE *hook;  /* 0x00 */
+    ANIMDATA *anim;      /* 0x04 */
+    HuVecF *pos;         /* 0x08 */
+    HU3DMODELID modelId; /* 0x0C */
 } EffectData;
-
-typedef struct EffectWork_s {
-    u32 unk0;
-    u32 unk4;
-    HuVecF *pos; /* 0x08 */
-} EffectWork;
 
 void fn_1_B730(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
 
-void fn_1_B5D4(EffectData *arg0, u16 arg1, s32 arg2)
+void fn_1_B5D4(EffectData *arg0, u16 arg1, HuVecF *arg2)
 {
     ANIMDATA *anim;
     HU3DMODELID modelId;
@@ -48,8 +31,8 @@ void fn_1_B5D4(EffectData *arg0, u16 arg1, s32 arg2)
     arg0->modelId = modelId;
     arg0->anim = anim;
     arg0->hook = Hu3DData[modelId].hookData;
-    arg0->hook->unk2 = 0;
-    arg0->hook->owner = arg0;
+    arg0->hook->emitCnt = 0;
+    arg0->hook->work = arg0;
     part = arg0->hook->data;
     count = arg0->hook->maxCnt;
     for (i = 0; i < count; i++, part++) {
@@ -57,7 +40,7 @@ void fn_1_B5D4(EffectData *arg0, u16 arg1, s32 arg2)
         part->time = 0;
         part->parManId = 0;
     }
-    arg0->arg = arg2;
+    arg0->pos = arg2;
 }
 
 void fn_1_B71C(void)
@@ -66,13 +49,13 @@ void fn_1_B71C(void)
 
 void fn_1_B720(EffectData *arg0, s32 arg1)
 {
-    arg0->hook->unk2 = arg1;
+    arg0->hook->emitCnt = arg1;
 }
 
 void fn_1_B730(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 {
     HU3DPARTICLEDATA *part;
-    EffectWork *work;
+    EffectData *work;
     f32 rate;
     f32 fade;
     s8 sp8;

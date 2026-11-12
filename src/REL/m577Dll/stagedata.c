@@ -2804,6 +2804,11 @@ static s16 *lbl_1_data_28A18[0x24] = {
 s16 *fn_1_B430(s32 arg0, s32 arg1)
 {
     s32 i = arg1 + (arg0 * 3);
+#ifdef TARGET_PC
+    if (i < 0 || i >= 0xC) {
+        i = 0;
+    }
+#endif
     return lbl_1_data_B120[i];
 }
 
@@ -2814,6 +2819,11 @@ s16 *fn_1_B430(s32 arg0, s32 arg1)
 s16 *fn_1_B460(s32 arg0, s32 arg1, s32 arg2)
 {
     s32 i = (arg1 * 3 + arg2) + (arg0 * 0xC);
+#ifdef TARGET_PC
+    if (i < 0 || i >= 0x24) {
+        i = 0;
+    }
+#endif
     return lbl_1_data_28A18[i];
 }
 
