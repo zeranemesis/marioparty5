@@ -83,4 +83,57 @@ struct M580StageGlobal_s {
     /* 0x4 */ s32 unk4;
 };
 
+/* ---- collision world (reflect.c): shared by player/stick/puck ---- */
+#include "game/object.h"
+#include "game/hsfformat.h"
+#include "humath.h"
+
+#define M580_BODY_MAX 20
+
+typedef struct M580Line_s {
+    /* 0x00 */ HuVecF p[2];
+    /* 0x18 */ HuVecF n;
+    /* 0x24 */ f32 d;
+} M580_LINE; /* size 0x28 */
+
+typedef struct M580SrcLine_s {
+    /* 0x00 */ HuVecF p[2];
+    /* 0x18 */ Mtx *mtx;
+} M580_SRCLINE;
+
+typedef struct M580Body_s M580_BODY;
+typedef s32 (*M580_HITFUNC)(M580_BODY *self, M580_BODY *other);
+typedef void (*M580_UPDATEFUNC)(OMOBJ *obj);
+
+struct M580Body_s {
+    /* 0x00 */ u32 flags;
+    /* 0x04 */ u32 mask;
+    /* 0x08 */ s32 kind;
+    /* 0x0C */ s32 id;
+    /* 0x10 */ s32 type; /* 0 = circle, 0xA = wall set */
+    /* 0x14 */ OMOBJ *obj;
+    /* 0x18 */ M580_UPDATEFUNC update;
+    /* 0x1C */ M580_HITFUNC hit;
+    union {
+        struct {
+            /* 0x20 */ HuVecF *pos;
+            /* 0x24 */ HuVecF *vel;
+            /* 0x28 */ HuVecF prev;
+            /* 0x34 */ f32 radius;
+            /* 0x38 */ f32 weight;
+        } circle;
+        struct {
+            /* 0x20 */ s32 lineNum;
+            /* 0x24 */ M580_LINE *lines;
+            /* 0x28 */ M580_LINE *prevLines;
+            /* 0x2C */ M580_SRCLINE *src;
+            /* 0x30 */ s32 objNum;
+            /* 0x34 */ HSFTRANSFORM **objs;
+            /* 0x38 */ Mtx *mtx;
+        } wall;
+    } u;
+    /* 0x3C */ M580_LINE *hitLine;
+};
+
+
 #endif
