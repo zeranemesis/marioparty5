@@ -40,6 +40,8 @@ static s8 lbl_1_bss_0;
 static s8 lbl_1_bss_1;
 static s8 lbl_1_bss_2;
 static s32 bgmStream;
+static s32 lbl_1_bss_28;
+static HuVecF lbl_1_bss_2C[2];
 static HuVecF lbl_1_bss_44[3];
 static HuVecF lbl_1_bss_68[3];
 static HuVecF lbl_1_bss_8C[2];
@@ -80,6 +82,8 @@ void MdSpriteCreate(MDSPRITE_WORK *sprite);
 void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
 void MdToueiMdlInit(void);
 Mtx *MdMathMatrixDir(HuVecF *start, HuVecF *end);
+void MdMathMatrixRotRPY(Mtx *matrix, HuVecF *rot);
+void MdMathMtxTrans(Mtx *src, Mtx *dst, HuVecF *trans);
 void MdMathOscillate(int type, float *in, float *out, float t);
 void MdMathLerp(float *out, float a, float b, float t);
 void MdMathLerpScale(HuVecF *out, float a, float b, float t);
@@ -139,7 +143,7 @@ void fn_1_9714(void);
 void fn_1_9CC8(s32 arg0);
 s32 fn_1_9A70(void);
 void fn_1_9E88(void);
-void fn_1_80A8(s32 arg0);
+void fn_1_80A8(void);
 void fn_1_A2BC(s32 arg0, s32 arg1);
 void MdPosAdjustMode(void);
 void fn_1_A094(s32 no);
@@ -151,6 +155,18 @@ static HuVecF lbl_1_data_10[2] = {
     { 310.0f, 290.0f, 2500.0f },
     { -70.0f, 200.0f, 150.0f }
 };
+
+static HuVecF lbl_1_data_28[7] = {
+    { -65.0f, 134.5f, -371.0f },
+    { 103.5f, 134.5f, -371.0f },
+    { 272.0f, 134.5f, -371.0f },
+    { -151.0f, 110.5f, -115.0f },
+    { 18.5f, 134.5f, -115.0f },
+    { 190.5f, 134.5f, -115.0f },
+    { 362.0f, 135.0f, -115.0f }
+};
+
+static HuVecF lbl_1_data_7C = { -90.0f, 0.0f, 0.0f };
 
 void (*MdFlowTbl[6])(void) = {
     fn_1_DD8, fn_1_1058, fn_1_1448, fn_1_1DF0, fn_1_22B8, fn_1_2A3C
@@ -350,8 +366,8 @@ void MdInit(void)
     HuDataDirClose(DATA_mdcard);
     HuPrcVSleep();
     MdToueiMdlInit();
-    sys->unk38C = 0;
-    sys->unk390 = 1;
+    sys->finger.state = 0;
+    sys->finger.cmd = 1;
     sys->unk5C = HuPrcChildCreate(fn_1_7DA0, 109, 12288, 0, sys->objman);
     for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
         cell->unk0 = 0;
@@ -463,7 +479,7 @@ void fn_1_1058(void)
             MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
             MdMessWinMesSet(mess, 2, 0x150000);
             fn_1_A094(11);
-            sys->unk390 = 2;
+            sys->finger.cmd = 2;
             sys->step = 1;
             break;
 
@@ -987,7 +1003,7 @@ void fn_1_2A3C(void)
     model = sys->model;
     sprite = sys->sprite;
     mess = sys->mess;
-    state = &sys->unk38C;
+    state = &sys->finger.state;
     switch(sys->step) {
         case 0:
             sys->turn = 0;
@@ -1002,7 +1018,8 @@ void fn_1_2A3C(void)
         case 1:
             stat = MdProcTbl[8](0);
             if(stat == 1) {
-                fn_1_80A8(MdProcTbl[0](0));
+                MdProcTbl[0](0);
+                fn_1_80A8();
                 sys->step = 2;
             }
             break;
@@ -1123,7 +1140,7 @@ void fn_1_2A3C(void)
                     if(sys->plChr[3] == -1) {
                         MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
                         MdMessWinMesSet(mess, 2, 0x15000F);
-                        sys->unk390 = 2;
+                        sys->finger.cmd = 2;
                     } else {
                         MdMessWinClose(mess, 0);
                         MdMessWinHomeClear(mess, 2);
@@ -1140,7 +1157,7 @@ void fn_1_2A3C(void)
                     } else if(sys->plChr[sys->turn-1] != -1) {
                         MdMessWinClose(mess, 0);
                         MdMessWinKill(mess, 2);
-                        sys->unk390 = 3;
+                        sys->finger.cmd = 3;
                     }
                     sys->step = 2;
                 }
@@ -1196,7 +1213,7 @@ void fn_1_2A3C(void)
                     Hu3DModelLayerSet(model->mdlId[sys->plSlot[i]*3+sys->unk3B[i]+3], 2);
                 }
                 MdMessWinKill(mess, 2);
-                sys->unk390 = 3;
+                sys->finger.cmd = 3;
                 Hu3DModelAttrReset(model->mdlId[2], HU3D_MOTATTR_PAUSE);
                 Hu3DModelAttrSet(model->mdlId[2], HU3D_MOTATTR_REV);
                 Hu3DMotionSpeedSet(model->mdlId[2], 4.0f);
@@ -1982,6 +1999,144 @@ s32 fn_1_78C4(s32 mode)
         return 1;
     }
     return 0;
+}
+
+static HuVecF lbl_1_data_36C[2] = {
+    { 64.0f, 300.0f, 1280.0f },
+    { 64.0f, -128.0f, 1280.0f }
+};
+
+static HuVecF lbl_1_data_384[4] = {
+    { -300.0f, 2200.0f, -100.0f },
+    { -100.0f, 2200.0f, -100.0f },
+    { 100.0f, 2200.0f, -100.0f },
+    { 300.0f, 2200.0f, -100.0f }
+};
+
+// remaining diff: first switch compare tree
+void fn_1_7DA0(void)
+{
+    int i;
+    MDMODEL_WORK *model = sys->model;
+    MDCAMERA_WORK *camWork = sys->camera;
+    MDMESS_WORK *mess = sys->mess;
+    MDCARD_FNG *finger = &sys->finger;
+    HuVecF *pos = model->posP[0];
+    HuVecF *rot = model->rotP[0];
+    HuVecF *scale = model->scaleP[0];
+
+    while(1) {
+        model = sys->model;
+        camWork = sys->camera;
+        mess = sys->mess;
+        finger = &sys->finger;
+        pos = model->posP[0];
+        rot = model->rotP[0];
+        scale = model->scaleP[0];
+        switch(finger->state) {
+            case 0:
+                Hu3D2Dto3D(&lbl_1_data_36C[0], camWork->camera[1].bit, &lbl_1_bss_2C[0]);
+                *pos = lbl_1_bss_2C[0];
+                fn_1_942C(0, 1);
+                break;
+
+            case 1:
+                finger->t = 0.0f;
+                finger->out = 0.0f;
+                for(i=0; i<2; i++) {
+                    Hu3D2Dto3D(&lbl_1_data_36C[i], camWork->camera[1].bit, &lbl_1_bss_2C[i]);
+                }
+                finger->state = 2;
+                break;
+
+            case 2:
+                MdMathOscillate(MDMATH_OSC_90_REV, &finger->t, &finger->out, 60.0f);
+                MdMathLerp(&pos->x, lbl_1_bss_2C[0].x, lbl_1_bss_2C[1].x, finger->out);
+                MdMathLerp(&pos->y, lbl_1_bss_2C[0].y, lbl_1_bss_2C[1].y, finger->out);
+                MdMathLerp(&pos->z, lbl_1_bss_2C[0].z, lbl_1_bss_2C[1].z, finger->out);
+                if(finger->t >= 1.0f) {
+                    finger->state = 3;
+                }
+                break;
+        }
+        switch(finger->cmd) {
+            case 0:
+                break;
+
+            case 1:
+                Hu3DModelAttrSet(model->mdlId[0], HU3D_MOTATTR_LOOP);
+                Hu3DModelAttrReset(model->mdlId[0], HU3D_MOTATTR_PAUSE);
+                Hu3DMotionSet(model->mdlId[0], model->motId[0]);
+                finger->cmd = 0;
+                break;
+
+            case 2:
+                Hu3DMotionShiftSet(model->mdlId[0], model->motId[1], 0.0f, 32.0f, HU3D_MOTATTR_LOOP);
+                finger->cmd = 0;
+                break;
+
+            case 3:
+                Hu3DMotionShiftSet(model->mdlId[0], model->motId[0], 0.0f, 32.0f, HU3D_MOTATTR_LOOP);
+                finger->cmd = 0;
+                break;
+        }
+        HuPrcVSleep();
+    }
+}
+
+void fn_1_80A8(void)
+{
+    int i;
+    MDMODEL_WORK *model;
+    MDCAMERA_WORK *camWork;
+    MDCAMERA *cam;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF vec;
+    Mtx *dirA;
+    Mtx *dirB;
+    Mtx rotMtx;
+    Mtx mtxA;
+    Mtx mtxB;
+    Mtx mtxC;
+
+    camWork = sys->camera;
+    cam = &camWork->camera[0];
+    model = sys->model;
+    MdMathMatrixRotRPY(&rotMtx, model->rotP[2]);
+    MdMathMtxTrans(&rotMtx, &mtxA, model->posP[2]);
+    MdMathMatrixRotRPY(&mtxB, &lbl_1_data_7C);
+    for(i=0; i<7; i++) {
+        pos = model->posP[i*3+3];
+        rot = model->rotP[i*3+3];
+        lbl_1_bss_2F0[i].scrPos = *pos;
+        vec = lbl_1_data_28[i];
+        vec.y += 200.0f;
+        MdMathMtxTrans(&mtxB, &mtxC, &vec);
+        PSMTXConcat(mtxA, mtxC, mtxC);
+        Hu3DMtxTransGet(mtxC, &lbl_1_bss_2F0[i].pos);
+        lbl_1_bss_2F0[i].rot = *rot;
+        vec = lbl_1_data_28[i];
+        vec.x -= 70.0f;
+        vec.y += 150.0f;
+        vec.z -= 200.0f;
+        MdMathMtxTrans(&mtxB, &mtxC, &vec);
+        PSMTXConcat(mtxA, mtxC, mtxC);
+        Hu3DMtxTransGet(mtxC, &lbl_1_bss_2F0[i].fingerPos);
+        dirA = MdMathMatrixDir(&lbl_1_bss_2F0[i].fingerPos, &cam->pos);
+        Hu3DMtxRotGet(*dirA, &lbl_1_bss_2F0[i].fingerRot);
+    }
+    for(i=0; i<4; i++) {
+        lbl_1_bss_200[i].scrPos.x = 168.0f+(80.0f*(float)i);
+        lbl_1_bss_200[i].scrPos.y = 340.0f;
+        lbl_1_bss_200[i].scrPos.z = 2000.0f;
+        Hu3D2Dto3D(&lbl_1_bss_200[i].scrPos, cam->bit, &lbl_1_bss_200[i].pos);
+        dirB = MdMathMatrixDir(&lbl_1_bss_200[i].pos, &cam->pos);
+        Hu3DMtxRotGet(*dirB, &lbl_1_bss_200[i].rot);
+        lbl_1_bss_200[i].fingerPos = lbl_1_data_384[i];
+        dirB = MdMathMatrixDir(&lbl_1_bss_200[i].pos, &lbl_1_bss_200[i].fingerPos);
+        Hu3DMtxRotGet(*dirB, &lbl_1_bss_200[i].fingerRot);
+    }
 }
 
 void fn_1_942C(s32 modelNo, s32 cameraNo)

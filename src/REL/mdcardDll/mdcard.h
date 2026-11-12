@@ -264,6 +264,13 @@ typedef struct MdCardCell_s {
     u8 pad4[0x14 - 0x4];
 } MDCARD_CELL;
 
+typedef struct MdCardFng_s {
+    s32 state; //0x00
+    s32 cmd; //0x04
+    float t; //0x08
+    float out; //0x0C
+} MDCARD_FNG;
+
 typedef struct Sys_s {
     s32 step;                  //0x00
     s32 subStep;               //0x04
@@ -306,10 +313,7 @@ typedef struct Sys_s {
     MDCARD_MSG msg;            //0x98
     MDCARD_SLOT unk9C[7];      //0x9C (msg lives at 0x98; slots follow at 0x9C)
     MDCARD_CELL unk33C[4];     //0x33C
-    s32 unk38C;                //0x38C
-    s32 unk390;                //0x390
-    s32 unk394;                //0x394
-    s32 unk398;                //0x398
+    MDCARD_FNG finger;         //0x38C
     s32 procInit;              //0x39C
     s32 unk3A0;                //0x3A0
     s32 unk3A4;                //0x3A4
