@@ -1837,6 +1837,7 @@ s32 fn_1_4158(M528CAM *cam)
 s32 fn_1_43B4(M528CAM *cam)
 {
     f32 t;
+    s32 deg;
     s32 done;
 
     done = 0;
@@ -1851,7 +1852,8 @@ s32 fn_1_43B4(M528CAM *cam)
                 done = 1;
             }
             t = (f32)cam->timer / 30.0f;
-            cam->aimY = lbl_1_data_2BC[1][1] + (15.0f * (1.0f - t)) * HuSin((cam->timer * 0x24) % 360);
+            deg = (cam->timer * 0x24) % 360;
+            cam->aimY = lbl_1_data_2BC[1][1] + (15.0f * (1.0f - t)) * HuSin(deg);
             break;
     }
     return done;
@@ -1861,6 +1863,7 @@ s32 fn_1_43B4(M528CAM *cam)
 s32 fn_1_4540(M528CAM *cam)
 {
     f32 t;
+    s32 deg;
     s32 done;
 
     done = 0;
@@ -1875,7 +1878,8 @@ s32 fn_1_4540(M528CAM *cam)
                 done = 1;
             }
             t = (f32)cam->timer / 30.0f;
-            cam->aimY = lbl_1_data_2BC[1][1] + (30.0f * (1.0f - t)) * HuSin((cam->timer * 0x24) % 360);
+            deg = (cam->timer * 0x24) % 360;
+            cam->aimY = lbl_1_data_2BC[1][1] + (30.0f * (1.0f - t)) * HuSin(deg);
             break;
     }
     return done;
@@ -1908,6 +1912,7 @@ void fn_1_46CC(M528MAIN *work)
 s32 fn_1_47F0(M528TEAM *team)
 {
     s32 done;
+    s16 mdl;
 
     done = 0;
     switch (team->state) {
@@ -1924,10 +1929,14 @@ s32 fn_1_47F0(M528TEAM *team)
             }
             team->slot[0].pos.y = team->pivot.y;
             team->slot[1].pos.y = team->pivot.y;
-            Hu3DModelPosSet(team->mdl, team->pivot.x, team->pivot.y, team->pivot.z);
-            Hu3DModelPosSet(team->slot[0].mdl, team->slot[0].pos.x, team->slot[0].pos.y, team->slot[0].pos.z);
-            Hu3DModelPosSet(team->slot[1].mdl, team->slot[1].pos.x, team->slot[1].pos.y, team->slot[1].pos.z);
-            Hu3DModelPosSet(team->spinMdl, team->pivot.x, team->pivot.y, team->pivot.z);
+            mdl = team->mdl;
+            Hu3DModelPosSet(mdl, team->pivot.x, team->pivot.y, team->pivot.z);
+            mdl = team->slot[0].mdl;
+            Hu3DModelPosSet(mdl, team->slot[0].pos.x, team->slot[0].pos.y, team->slot[0].pos.z);
+            mdl = team->slot[1].mdl;
+            Hu3DModelPosSet(mdl, team->slot[1].pos.x, team->slot[1].pos.y, team->slot[1].pos.z);
+            mdl = team->spinMdl;
+            Hu3DModelPosSet(mdl, team->pivot.x, team->pivot.y, team->pivot.z);
             break;
     }
     return done;
@@ -1936,14 +1945,14 @@ s32 fn_1_47F0(M528TEAM *team)
 /* Losing team seesaw flies off the top of the screen. */
 s32 fn_1_495C(M528TEAM *team)
 {
-    u16 pan[2] = { 0x30, 0x50 };
+    s32 done = 0;
+    s16 pan[2] = { 0x30, 0x50 };
     M528MAIN *main;
-    s32 done;
+    s16 mdl;
 
-    done = 0;
+    main = lbl_1_bss_298->data;
     switch (team->state) {
         case 0:
-            main = lbl_1_bss_298->data;
             HuAudFXPlayPan(0x78F, pan[main->winner ^ 1]);
             team->timer = 0;
             team->state++;
@@ -1955,10 +1964,14 @@ s32 fn_1_495C(M528TEAM *team)
             }
             team->slot[0].pos.y = team->pivot.y;
             team->slot[1].pos.y = team->pivot.y;
-            Hu3DModelPosSet(team->mdl, team->pivot.x, team->pivot.y, team->pivot.z);
-            Hu3DModelPosSet(team->slot[0].mdl, team->slot[0].pos.x, team->slot[0].pos.y, team->slot[0].pos.z);
-            Hu3DModelPosSet(team->slot[1].mdl, team->slot[1].pos.x, team->slot[1].pos.y, team->slot[1].pos.z);
-            Hu3DModelPosSet(team->spinMdl, team->pivot.x, team->pivot.y, team->pivot.z);
+            mdl = team->mdl;
+            Hu3DModelPosSet(mdl, team->pivot.x, team->pivot.y, team->pivot.z);
+            mdl = team->slot[0].mdl;
+            Hu3DModelPosSet(mdl, team->slot[0].pos.x, team->slot[0].pos.y, team->slot[0].pos.z);
+            mdl = team->slot[1].mdl;
+            Hu3DModelPosSet(mdl, team->slot[1].pos.x, team->slot[1].pos.y, team->slot[1].pos.z);
+            mdl = team->spinMdl;
+            Hu3DModelPosSet(mdl, team->pivot.x, team->pivot.y, team->pivot.z);
             break;
     }
     return done;
@@ -1967,17 +1980,15 @@ s32 fn_1_495C(M528TEAM *team)
 /* Winning sector pops off the wheel and flies sideways. */
 s32 fn_1_4B04(M528SEG *seg)
 {
+    s32 done = 0;
     f32 drift[2] = { -7.0f, 7.0f };
     M528MAIN *main;
-    s32 done;
+    s16 mdl;
 
-    done = 0;
     main = lbl_1_bss_298->data;
     switch (seg->state) {
         case 0:
-            seg->pos2.x = seg->pos.x;
-            seg->pos2.y = seg->pos.y;
-            seg->pos2.z = seg->pos.z;
+            seg->pos2 = seg->pos;
             seg->timer = 0;
             seg->state++;
             HuAudFXPlay(0x78B);
@@ -1989,7 +2000,8 @@ s32 fn_1_4B04(M528SEG *seg)
             seg->pos2.y = seg->pos2.y + (100.0 - 2.4 * seg->timer);
             seg->pos2.x += drift[main->winner];
             seg->pos.z += 1.0f;
-            Hu3DModelPosSet(seg->mdl[1], seg->pos2.x, seg->pos2.y, seg->pos2.z);
+            mdl = seg->mdl[1];
+            Hu3DModelPosSet(mdl, seg->pos2.x, seg->pos2.y, seg->pos2.z);
             break;
     }
     return done;
@@ -1998,6 +2010,7 @@ s32 fn_1_4B04(M528SEG *seg)
 /* Winning sector sinks, then bobs. */
 s32 fn_1_4C84(M528SEG *seg)
 {
+    s32 done = 0;
     M528MAIN *volatile main = lbl_1_bss_298->data;
 
     switch (seg->state) {
@@ -2014,9 +2027,7 @@ s32 fn_1_4C84(M528SEG *seg)
             seg->pos.y -= 5.0f;
             seg->timer++;
             if (seg->timer == 0x12) {
-                seg->pos2.x = seg->pos.x;
-                seg->pos2.y = seg->pos.y;
-                seg->pos2.z = seg->pos.z;
+                seg->pos2 = seg->pos;
                 seg->timer = 0;
                 seg->state++;
             }
@@ -2031,7 +2042,7 @@ s32 fn_1_4C84(M528SEG *seg)
             Hu3DModelPosSet(seg->mdl[1], seg->pos2.x, seg->pos2.y, seg->pos2.z);
             break;
     }
-    return 0;
+    return done;
 }
 
 void fn_1_4E80(M528MAIN *work)
