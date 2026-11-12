@@ -1136,12 +1136,11 @@ void fn_1_4E58(void)
     s32 sgn;
     float t;
     float ang;
-    float ang2;
     float z;
-    void *prop;
+    HUPROCESS *proc;
 
-    prop = HuPrcCurrentGet()->property;
-    dir = (s16)(uintptr_t)prop;
+    proc = HuPrcCurrentGet();
+    dir = (s16)(uintptr_t)proc->property;
     if (dir != 0) {
         HuTHPClose();
         Hu3DModelMatHookSet(lbl_1_bss_62[lbl_1_bss_10], NULL);
@@ -1163,10 +1162,10 @@ void fn_1_4E58(void)
             } else {
                 sgn = 1;
             }
-            ang2 = ang + 45.0 * (j / 10.0) * sgn;
+            t = ang + 45.0 * (j / 10.0) * sgn;
             for (k = 0; k < 8; k++) {
-                z = 600.0 * cos(3.141592653589793 * (ang2 - (float)(k * 45)) / 180.0) - 600.0 - 300.0;
-                Hu3DModelPosSet(lbl_1_bss_62[k], 500.0 * sin(3.141592653589793 * (ang2 - (float)(k * 45)) / 180.0), 157.0f, z);
+                z = 600.0 * cos(3.141592653589793 * (t - (float)(k * 45)) / 180.0) - 600.0 - 300.0;
+                Hu3DModelPosSet(lbl_1_bss_62[k], 500.0 * sin(3.141592653589793 * (t - (float)(k * 45)) / 180.0), 157.0f, z);
             }
             HuPrcVSleep();
         }
