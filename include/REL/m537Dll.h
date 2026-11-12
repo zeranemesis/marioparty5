@@ -138,6 +138,12 @@ void *__register_global_object(void *object, void *destructor, void *regmem);
 
 extern M537_NODE lbl_1_bss_C;
 
+struct M537Camera;
+struct M537Stage;
+struct M537Dorrie;
+extern struct M537Camera *lbl_1_bss_A10;
+extern struct M537Stage *lbl_1_bss_A14;
+
 /* Inline list-empty test the original compiled into the destroy-all loops. */
 static inline u8 M537ListEmpty(M537_NODE *list)
 {
