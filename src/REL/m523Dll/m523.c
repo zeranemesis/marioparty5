@@ -97,23 +97,25 @@ Point3d lbl_1_data_1E4[3] = {
 
 
 
-OMOBJ *lbl_1_bss_0;
-OMOBJ *lbl_1_bss_4;
-s32 lbl_1_bss_8;
-s32 lbl_1_bss_C;
-s32 lbl_1_bss_10;
-s32 lbl_1_bss_14;
-s32 lbl_1_bss_18;
-s32 lbl_1_bss_1C;
-s32 lbl_1_bss_20;
-s32 lbl_1_bss_24[8];
-M523Camera lbl_1_bss_44;
-s16 lbl_1_bss_8C[6];
-M523Camera lbl_1_bss_98;
-s16 lbl_1_bss_E0;
 OMOBJMAN *lbl_1_bss_E4;
+s16 lbl_1_bss_E0;
+M523Camera lbl_1_bss_98;
+s16 lbl_1_bss_8C[6];
+M523Camera lbl_1_bss_44;
+s32 lbl_1_bss_24[8];
+s32 lbl_1_bss_20;
+s32 lbl_1_bss_1C;
+s32 lbl_1_bss_18;
+s32 lbl_1_bss_14;
+s32 lbl_1_bss_10;
+s32 lbl_1_bss_C;
+s32 lbl_1_bss_8;
+OMOBJ *lbl_1_bss_4;
+OMOBJ *lbl_1_bss_0;
 
 M523_RODATA const u32 lbl_1_rodata_8C[5] = { 0x00510000, 0x00510001, 0x00510002, 0x00510005, 0x00510003 };
+
+M523_RODATA const M523Light lbl_1_rodata_A0 = { { -800.0f, 1500.0f, 800.0f }, { 800.0f, -1500.0f, -800.0f }, { 0xFF, 0xFF, 0xFF, 0xFF } };
 
 
 
@@ -150,10 +152,25 @@ void ObjectSetup(void)
     MgSeqModeDelaySet(7, 0x12C);
 }
 
+static inline s32 M523CamMoveCheck(OMOBJ *obj)
+{
+    M523CamMove *move = (M523CamMove *)obj->data;
+
+    if (move->moveF & 2) {
+        return 1;
+    }
+    return 0;
+}
+
+static inline void M523CamMoveKill(OMOBJ *obj)
+{
+    omDelObjEx(lbl_1_bss_E4, obj);
+}
+
 void fn_1_12C(s16 mode, s16 frameNo)
 {
     s16 models[3];
-    M523Light light = { { -800.0f, 1500.0f, 800.0f }, { 800.0f, -1500.0f, -800.0f }, { 0xFF, 0xFF, 0xFF, 0xFF } };
+    M523Light light;
     s32 i;
     HU3DMODELID model;
     HU3DLIGHTID lightId;
@@ -167,7 +184,7 @@ void fn_1_12C(s16 mode, s16 frameNo)
     }
     Hu3DModelLayerSet(lbl_1_bss_8C[1], 3);
     Hu3DMotionSpeedSet(lbl_1_bss_8C[3], 0.4f);
-    model = Hu3DModelCreate(HuDataSelHeapReadNum(M523_HSF_fuse, HU_MEMNUM_OVL, HEAP_MODEL));
+    model = Hu3DModelCreate(HuDataSelHeapReadNum(M523_HSF_grass, HU_MEMNUM_OVL, HEAP_MODEL));
     for (i = 0; i < 3; i++) {
         if (i == 0) {
             models[i] = model;
@@ -179,6 +196,7 @@ void fn_1_12C(s16 mode, s16 frameNo)
     }
     fn_1_1068(&lbl_1_data_6C);
     lbl_1_bss_44 = lbl_1_data_6C;
+    light = lbl_1_rodata_A0;
     lightId = Hu3DGLightCreateV(&light.pos, &light.target, &light.color);
     Hu3DGLightStaticSet(lightId, 1);
     Hu3DGLightInfinitytSet(lightId);
@@ -205,7 +223,6 @@ void fn_1_12C(s16 mode, s16 frameNo)
 
 void fn_1_524(s16 mode, s16 frameNo)
 {
-    M523CamMove *move;
 
     if (frameNo == 30) {
         HuAudFXPlay(0x74A);
@@ -216,9 +233,8 @@ void fn_1_524(s16 mode, s16 frameNo)
             lbl_1_bss_14 = 4;
             break;
         case 4:
-            move = (M523CamMove *)lbl_1_bss_4->data;
-            if ((move->moveF & 2) == 0) {
-                omDelObjEx(lbl_1_bss_E4, lbl_1_bss_4);
+            if (M523CamMoveCheck(lbl_1_bss_4) == 0) {
+                M523CamMoveKill(lbl_1_bss_4);
                 MgSeqModeNext();
             }
             break;
@@ -261,7 +277,6 @@ void fn_1_76C(s16 mode, s16 frameNo)
 {
     s32 i;
     s32 allDone;
-    M523CamMove *move;
 
     allDone = 1;
     for (i = 0; i < 4; i++) {
@@ -278,9 +293,8 @@ void fn_1_76C(s16 mode, s16 frameNo)
             }
         }
     } else {
-        move = (M523CamMove *)lbl_1_bss_0->data;
-        if ((move->moveF & 2) == 0) {
-            omDelObjEx(lbl_1_bss_E4, lbl_1_bss_0);
+        if (M523CamMoveCheck(lbl_1_bss_0) == 0) {
+            M523CamMoveKill(lbl_1_bss_0);
             MgSeqModeNext();
         }
     }
@@ -300,7 +314,7 @@ void fn_1_8E8(OMOBJ *obj)
 {
     s32 i;
     s32 moving;
-    s32 vol;
+    s16 vol;
     f32 ratio;
 
     if (lbl_1_bss_18 != 5) {
@@ -410,8 +424,8 @@ void fn_1_E58(Point3d *pos, s16 *outY, s16 *outX)
 void fn_1_F34(Point3d *pos, s16 seId)
 {
     Point3d scr;
-    s32 pan;
-    s32 vol;
+    s16 pan;
+    s16 vol;
 
     Hu3D3Dto2D(pos, lbl_1_bss_44.camNo, &scr);
     pan = 48.0f + (32.0f * (scr.x / 576.0f));
@@ -514,148 +528,103 @@ void fn_1_1724(M523Camera *cam)
     lbl_1_bss_98 = *cam;
 }
 
+#define M523_RAD(a) ((3.141592653589793 * (a)) / 180.0)
+
 void fn_1_1754(M523Camera *cam)
 {
-    Vec sp8;
-    f32 temp_f26;
-    f32 temp_f27;
-    f32 temp_f28;
-    f32 temp_f29;
-    f32 temp_f30;
-    f32 temp_f31;
-    f64 temp_f25;
-    f64 temp_f25_2;
-    f64 temp_f25_3;
-    f64 temp_f25_4;
-    f64 temp_f24;
-    f64 temp_f24_2;
-    f64 temp_f24_3;
-    f64 temp_f24_4;
-    f64 temp_f24_5;
-    f64 temp_f24_6;
-    f64 temp_f24_7;
-    f64 temp_f24_8;
-    f64 temp_f24_9;
-    f64 temp_f24_10;
-    f64 temp_f24_11;
-    f64 temp_f24_12;
+    Vec axis;
+    f32 angX;
+    f32 angY;
+    f32 angZ;
+    f32 bx;
+    f32 by;
+    f32 bz;
 
-    temp_f30 = cam->angX;
-    temp_f29 = cam->angY;
-    temp_f31 = cam->angZ;
-    temp_f24 = cos((3.141592653589793 * (f64) temp_f30) / 180.0);
-    cam->pos.x = (f32) ((f64) cam->target.x + ((f64) cam->dist * (sin((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24)));
-    cam->pos.y = (f32) ((f64) cam->target.y + ((f64) cam->dist * -sin((3.141592653589793 * (f64) temp_f30) / 180.0)));
-    temp_f24_2 = cos((3.141592653589793 * (f64) temp_f30) / 180.0);
-    cam->pos.z = (f32) ((f64) cam->target.z + ((f64) cam->dist * (cos((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24_2)));
-    PSVECSubtract(&cam->pos, &cam->target, &sp8);
-    PSVECNormalize(&sp8, &sp8);
-    temp_f24_3 = sin((3.141592653589793 * (f64) temp_f30) / 180.0);
-    temp_f28 = (f32) (sin((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24_3);
-    temp_f27 = (f32) cos((3.141592653589793 * (f64) temp_f30) / 180.0);
-    temp_f24_4 = sin((3.141592653589793 * (f64) temp_f30) / 180.0);
-    temp_f26 = (f32) (cos((3.141592653589793 * (f64) temp_f29) / 180.0) * temp_f24_4);
-    temp_f24_5 = (f64) sp8.y * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
-    temp_f25 = (f64) temp_f26 * (((f64) (sp8.x * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) + temp_f24_5);
-    temp_f24_6 = (f64) sp8.z * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
-    temp_f24_7 = (f64) temp_f27 * (((f64) (sp8.x * sp8.y) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) - temp_f24_6);
-    cam->up.x = (f32) (((f64) temp_f28 * ((f64) (sp8.x * sp8.x) + ((f64) (1.0f - (sp8.x * sp8.x)) * cos((3.141592653589793 * (f64) temp_f31) / 180.0)))) + temp_f24_7 + temp_f25);
-    temp_f24_8 = (f64) sp8.x * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
-    temp_f25_2 = (f64) temp_f26 * (((f64) (sp8.y * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) - temp_f24_8);
-    temp_f24_9 = (f64) sp8.z * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
-    temp_f24_10 = (f64) temp_f28 * (((f64) (sp8.x * sp8.y) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) + temp_f24_9);
-    temp_f24_11 = (f64) sp8.x * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
-    temp_f24_12 = (f64) temp_f27 * (((f64) (sp8.y * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) + temp_f24_11);
-    cam->up.y = (f32) (((f64) temp_f27 * ((f64) (sp8.y * sp8.y) + ((f64) (1.0f - (sp8.y * sp8.y)) * cos((3.141592653589793 * (f64) temp_f31) / 180.0)))) + temp_f24_10 + temp_f25_2);
-    temp_f25_3 = (f64) sp8.y * sin((3.141592653589793 * (f64) temp_f31) / 180.0);
-    temp_f25_4 = ((f64) temp_f28 * (((f64) (sp8.x * sp8.z) * (1.0 - cos((3.141592653589793 * (f64) temp_f31) / 180.0))) - temp_f25_3)) + temp_f24_12;
-    cam->up.z = (f32) (((f64) temp_f26 * ((f64) (sp8.z * sp8.z) + ((f64) (1.0f - (sp8.z * sp8.z)) * cos((3.141592653589793 * (f64) temp_f31) / 180.0)))) + temp_f25_4);
+    angX = cam->angX;
+    angY = cam->angY;
+    angZ = cam->angZ;
+    cam->pos.x = cam->target.x + (cam->dist * (sin(M523_RAD(angY)) * cos(M523_RAD(angX))));
+    cam->pos.y = cam->target.y + (cam->dist * -sin(M523_RAD(angX)));
+    cam->pos.z = cam->target.z + (cam->dist * (cos(M523_RAD(angY)) * cos(M523_RAD(angX))));
+    PSVECSubtract(&cam->pos, &cam->target, &axis);
+    PSVECNormalize(&axis, &axis);
+    bx = sin(M523_RAD(angY)) * sin(M523_RAD(angX));
+    by = cos(M523_RAD(angX));
+    bz = cos(M523_RAD(angY)) * sin(M523_RAD(angX));
+    cam->up.x = (bx * ((axis.x * axis.x) + ((1.0f - (axis.x * axis.x)) * cos(M523_RAD(angZ))))) + (by * (((axis.x * axis.y) * (1.0 - cos(M523_RAD(angZ)))) - (axis.z * sin(M523_RAD(angZ))))) + (bz * (((axis.x * axis.z) * (1.0 - cos(M523_RAD(angZ)))) + (axis.y * sin(M523_RAD(angZ)))));
+    cam->up.y = (by * ((axis.y * axis.y) + ((1.0f - (axis.y * axis.y)) * cos(M523_RAD(angZ))))) + (bx * (((axis.x * axis.y) * (1.0 - cos(M523_RAD(angZ)))) + (axis.z * sin(M523_RAD(angZ))))) + (bz * (((axis.y * axis.z) * (1.0 - cos(M523_RAD(angZ)))) - (axis.x * sin(M523_RAD(angZ)))));
+    cam->up.z = (bz * ((axis.z * axis.z) + ((1.0f - (axis.z * axis.z)) * cos(M523_RAD(angZ))))) + ((bx * (((axis.x * axis.z) * (1.0 - cos(M523_RAD(angZ)))) - (axis.y * sin(M523_RAD(angZ))))) + (by * (((axis.y * axis.z) * (1.0 - cos(M523_RAD(angZ)))) + (axis.x * sin(M523_RAD(angZ))))));
     PSVECNormalize(&cam->up, &cam->up);
 }
 
 void fn_1_1E18(M523Camera *cam)
 {
     f32 mtx[4][4];
-    f32 dx = cam->pos.x - cam->target.x;
-    f32 dy = cam->pos.y - cam->target.y;
-    f32 dz = cam->pos.z - cam->target.z;
-    f32 len2 = (dz * dz) + ((dx * dx) + (dy * dy));
-    f32 dist;
-    f32 angY;
-    f32 a;
-    f32 c;
-    f32 s;
-    f32 ry;
+    f32 dx;
+    f32 dz;
+    f32 dy;
+    f32 ang;
     f32 rx;
-    f32 rz;
-    int i;
-    int j;
+    f32 ry;
+    volatile f32 rz;
+    s32 i;
+    s32 j;
 
-    if (len2 > 0.0f) {
-        double r = __frsqrte(len2);
-
-        r = 0.5 * r * (3.0 - (len2 * r * r));
-        r = 0.5 * r * (3.0 - (len2 * r * r));
-        r = 0.5 * r * (3.0 - (len2 * r * r));
-        r = 0.5 * r * (3.0 - (len2 * r * r));
-        dist = (f32) (len2 * r);
-    } else {
-        dist = len2;
-    }
-    cam->dist = dist;
-    angY = (f32) (180.0 * (atan2(dz, dx) / M_PI));
-    cam->angY = -(angY - 90.0f);
+    dx = cam->pos.x - cam->target.x;
+    dy = cam->pos.y - cam->target.y;
+    dz = cam->pos.z - cam->target.z;
+    cam->dist = sqrtf((dz * dz) + ((dx * dx) + (dy * dy)));
+    ang = 180.0 * (atan2(dz, dx) / 3.141592653589793);
+    cam->angY = -(ang - 90.0f);
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
             mtx[i][j] = 0.0f;
         }
     }
-    a = (f32) ((M_PI * -angY) / 180.0);
-    c = (f32) cos(a);
-    s = (f32) sin(a);
-    mtx[0][0] = c;
-    mtx[0][2] = s;
-    mtx[1][1] = 1.0f;
-    mtx[2][0] = -s;
-    mtx[2][2] = c;
-    mtx[3][3] = 1.0f;
-    ry = (dz * mtx[2][0]) + ((dx * mtx[0][0]) + (dy * mtx[0][1]));
-    rx = (dz * mtx[2][2]) + ((dx * mtx[1][2]) + (dy * mtx[1][1]));
-    rz = (dz * mtx[2][3]) + ((dx * mtx[1][3]) + (dy * mtx[1][2]));
-    cam->angX = -(f32) (180.0 * (atan2(rx, ry) / M_PI));
+    mtx[0][0] = mtx[2][2] = cos(M523_RAD(-ang));
+    mtx[2][0] = -sin(M523_RAD(-ang));
+    mtx[0][2] = sin(M523_RAD(-ang));
+    mtx[1][1] = mtx[3][3] = 1.0f;
+    rx = (dz * mtx[2][0]) + ((dx * mtx[0][0]) + (dy * mtx[1][0]));
+    ry = (dz * mtx[2][1]) + ((dx * mtx[0][1]) + (dy * mtx[1][1]));
+    rz = (dz * mtx[2][3]) + ((dx * mtx[0][3]) + (dy * mtx[1][3]));
+    cam->angX = -(180.0 * (atan2(ry, rx) / 3.141592653589793));
     cam->angZ = 0.0f;
 }
 
 void fn_1_221C(OMOBJ *obj)
 {
-    M523CamMove *move = (M523CamMove *)obj->data;
-    M523Camera *start = &move->start;
-    M523Camera *end = &move->end;
-    M523Camera *cam = move->cam;
+    M523Camera *start;
+    M523Camera *cam;
+    M523Camera *end;
+    M523CamMove *move;
     f32 ratio;
 
-    if ((move->moveF & 2) == 0) {
-        return;
+    move = (M523CamMove *)obj->data;
+    if ((move->moveF & 2) != 0) {
+        cam = move->cam;
+        start = &move->start;
+        end = &move->end;
+        move->time += 1.0f;
+        ratio = move->time / move->totalTime;
+        if (cam->mode == 0) {
+            cam->pos.x = start->pos.x + (ratio * (end->pos.x - start->pos.x));
+            cam->pos.y = start->pos.y + (ratio * (end->pos.y - start->pos.y));
+            cam->pos.z = start->pos.z + (ratio * (end->pos.z - start->pos.z));
+        } else {
+            cam->dist = start->dist + (ratio * (end->dist - start->dist));
+            cam->angX = start->angX + (ratio * (end->angX - start->angX));
+            cam->angY = start->angY + (ratio * (end->angY - start->angY));
+        }
+        cam->target.x = start->target.x + (ratio * (end->target.x - start->target.x));
+        cam->target.y = start->target.y + (ratio * (end->target.y - start->target.y));
+        cam->target.z = start->target.z + (ratio * (end->target.z - start->target.z));
+        if (move->time >= move->totalTime) {
+            *cam = *end;
+            move->moveF = move->moveF & ~2;
+        }
+        fn_1_1154(cam);
     }
-    move->time += 1.0f;
-    ratio = move->time / move->totalTime;
-    if (cam->mode == 0) {
-        cam->pos.x = start->pos.x + (ratio * (end->pos.x - start->pos.x));
-        cam->pos.y = start->pos.y + (ratio * (end->pos.y - start->pos.y));
-        cam->pos.z = start->pos.z + (ratio * (end->pos.z - start->pos.z));
-    } else {
-        cam->dist = start->dist + (ratio * (end->dist - start->dist));
-        cam->angX = start->angX + (ratio * (end->angX - start->angX));
-        cam->angY = start->angY + (ratio * (end->angY - start->angY));
-    }
-    cam->target.x = start->target.x + (ratio * (end->target.x - start->target.x));
-    cam->target.y = start->target.y + (ratio * (end->target.y - start->target.y));
-    cam->target.z = start->target.z + (ratio * (end->target.z - start->target.z));
-    if (move->time >= move->totalTime) {
-        *cam = *end;
-        move->moveF = move->moveF & ~2;
-    }
-    fn_1_1154(cam);
 }
 
 OMOBJ *MgCameraMoveEntry(M523Camera *start, M523Camera *end, f32 time)
@@ -665,11 +634,15 @@ OMOBJ *MgCameraMoveEntry(M523Camera *start, M523Camera *end, f32 time)
 
     if (start->camNo != end->camNo) {
         OSReport(lbl_1_data_0);
+#ifdef TARGET_PC
+        return NULL;
+#else
         return;
+#endif
     }
     obj = omAddObjEx(lbl_1_bss_E4, 0x2000, 0, 0, -1, fn_1_221C);
-    move = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M523CamMove), HU_MEMNUM_OVL);
-    obj->data = move;
+    obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M523CamMove), HU_MEMNUM_OVL);
+    move = (M523CamMove *)obj->data;
     move->totalTime = time;
     move->time = 0.0f;
     move->cam = start;
@@ -700,17 +673,18 @@ void fn_1_2568(OMOBJ *obj)
 
 void fn_1_259C(OMOBJ *obj)
 {
-    M523Camera *cam = (M523Camera *)obj->data;
-    M523Camera *src = (M523Camera *)obj->work[2];
-    s32 range = obj->work[1];
+    M523Camera *cam;
+    s32 range;
 
+    cam = (M523Camera *)obj->data;
+    range = obj->work[1];
     if (obj->work[0] == 0) {
-        fn_1_1154(src);
+        fn_1_1154((M523Camera *)obj->work[2]);
         omDelObjEx(lbl_1_bss_E4, obj);
         return;
     }
-    cam->target.x = src->target.x + (f32) frandmod(range * 2) - (f32) range;
-    cam->target.y = src->target.y + (f32) frandmod(range * 2) - (f32) range;
+    cam->target.x = ((M523Camera *)obj->work[2])->target.x + (f32)(s32)frandmod(range * 2) - (f32)range;
+    cam->target.y = ((M523Camera *)obj->work[2])->target.y + (f32)(s32)frandmod(range * 2) - (f32)range;
     fn_1_1154(cam);
     obj->work[0] -= 1;
 }
@@ -718,33 +692,27 @@ void fn_1_259C(OMOBJ *obj)
 void fn_1_26E4(M523Camera *cam, s32 count, s32 range)
 {
     OMOBJ *obj;
+    M523Camera *data;
 
     obj = omAddObjEx(lbl_1_bss_E4, 0x2000, 0, 0, -1, fn_1_259C);
     obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M523Camera), HU_MEMNUM_OVL);
-    *(M523Camera *)obj->data = *cam;
+    data = (M523Camera *)obj->data;
     obj->work[0] = count;
     obj->work[1] = range;
+    *data = *cam;
     obj->work[2] = (uintptr_t)cam;
 }
 
 f32 fn_1_27A0(s16 padNo)
 {
-    s32 sum;
-    f32 mag;
-
-    sum = (s32)HuPadStkX[padNo] * (s32)HuPadStkX[padNo] + (s32)HuPadStkY[padNo] * (s32)HuPadStkY[padNo];
-    mag = (f32) sum;
-    if (mag > 0.0f) {
-        mag = sqrtf(mag);
-    }
-    return mag;
+    return sqrtf((f32)(HuPadStkX[padNo] * HuPadStkX[padNo] + HuPadStkY[padNo] * HuPadStkY[padNo]));
 }
 
 f32 fn_1_2924(s16 padNo)
 {
     f32 angle;
 
-    angle = (f32) (180.0 * (atan2((f64) (s8) HuPadStkY[padNo], (f64) (s8) HuPadStkX[padNo]) / 3.141592653589793) - 90.0);
+    angle = (f32) (180.0 * (atan2((f32)HuPadStkY[padNo], (f32)HuPadStkX[padNo]) / 3.141592653589793) - 90.0);
     if (angle < 0.0f) {
         angle += 360.0f;
     }
@@ -763,7 +731,7 @@ void fn_1_2A34(OMOBJ *obj)
         obj->objFunc = (OMOBJFUNC)fn_1_2AE4;
         WipeCreate(2, 6, 0x3C);
     } else {
-        flow->funcTbl[flow->index](obj, flow->funcTbl);
+        (*(flow->funcTbl + flow->index))(obj, flow->funcTbl);
     }
 }
 
@@ -776,18 +744,18 @@ void fn_1_2AE4(OMOBJ *obj)
 
 OMOBJ *fn_1_2B1C(M523FlowFunc *funcTbl)
 {
-    OMOBJ *obj;
     M523Flow *flow;
-    s32 i;
+    OMOBJ *obj;
     s32 j;
+    s32 i;
 
     i = 0;
     while (funcTbl[i] != NULL) {
         i++;
     }
     obj = omAddObjEx(lbl_1_bss_E4, 0x2000, 0, 0, -1, fn_1_2A34);
-    flow = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M523Flow), HU_MEMNUM_OVL);
-    obj->data = flow;
+    obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M523Flow), HU_MEMNUM_OVL);
+    flow = (M523Flow *)obj->data;
     flow->funcNum = i;
     flow->funcTbl = funcTbl;
     flow->index = 0;
@@ -827,11 +795,19 @@ s32 fn_1_2CBC(OMOBJ *obj)
     return flow->index;
 }
 
-s32 fn_1_2CD8(OMOBJ *obj, s32 index)
+static inline s32 M523FlowIndexGet(OMOBJ *obj)
 {
     M523Flow *flow = (M523Flow *)obj->data;
 
-    if (flow->index == index) {
+    return flow->index;
+}
+
+s32 fn_1_2CD8(OMOBJ *obj, s32 index)
+{
+    s32 *sp8;
+
+    sp8 = (s32 *)obj->data;
+    if (index == M523FlowIndexGet(obj)) {
         return 1;
     }
     return 0;
@@ -900,11 +876,7 @@ void fn_1_2EB4(OMOBJ *obj, s16 mesNo, s16 mesArg)
         flowP->gameMesId = GameMesCreate(mesNo, mesArg);
     } else if (!GameMesStatGet(flowP->gameMesId)) {
         flowP->gameMesId = -1;
-        if (flowP->index == flowP->funcNum - 1) {
-            OSReport(lbl_1_data_4C);
-        } else {
-            flowP->index++;
-        }
+        MgFlowNext(obj);
     }
 }
 
@@ -916,11 +888,7 @@ void fn_1_2F70(OMOBJ *obj, void *flow)
         flowP->gameMesId = GameMesCreate(2, 0);
     } else if (!GameMesStatGet(flowP->gameMesId)) {
         flowP->gameMesId = -1;
-        if (flowP->index == flowP->funcNum - 1) {
-            OSReport(lbl_1_data_4C);
-        } else {
-            flowP->index++;
-        }
+        MgFlowNext(obj);
     }
 }
 
@@ -932,11 +900,7 @@ void fn_1_3024(OMOBJ *obj, void *flow)
         flowP->gameMesId = GameMesCreate(2, 1);
     } else if (!GameMesStatGet(flowP->gameMesId)) {
         flowP->gameMesId = -1;
-        if (flowP->index == flowP->funcNum - 1) {
-            OSReport(lbl_1_data_4C);
-        } else {
-            flowP->index++;
-        }
+        MgFlowNext(obj);
     }
 }
 
@@ -947,11 +911,7 @@ void fn_1_30D8(OMOBJ *obj, void *flow)
     flowP->timer = MgTimerCreate(flowP->timerType);
     MgTimerParamSet(flowP->timer, flowP->maxTime, flowP->endTime, flowP->recordTime);
     MgTimerModeOnSet(flowP->timer, 1);
-    if (flowP->index == flowP->funcNum - 1) {
-        OSReport(lbl_1_data_4C);
-    } else {
-        flowP->index++;
-    }
+    MgFlowNext(obj);
 }
 
 void fn_1_3178(M523Player *player, s16 index)
@@ -963,12 +923,8 @@ void fn_1_3178(M523Player *player, s16 index)
     player->type = GwPlayerConf[index].type;
     player->dif = GwPlayerConf[index].dif;
     player->state = 0;
-    player->pos.x = 0.0f;
-    player->pos.y = 0.0f;
-    player->pos.z = 0.0f;
-    player->rot.x = 0.0f;
-    player->rot.y = 0.0f;
-    player->rot.z = 0.0f;
+    player->pos.x = player->pos.y = player->pos.z = 0.0f;
+    player->rot.x = player->rot.y = player->rot.z = 0.0f;
 }
 
 s32 fn_1_3244(Vec *pos, Vec *target, Vec *angle, f32 dist)
@@ -997,7 +953,7 @@ f32 fn_1_3368(f32 ang0, f32 ang1, f32 max)
     f32 result;
     f32 diff;
 
-    diff = (f32) fmod((f64) (ang1 - ang0), 360.0);
+    diff = fmodf(ang1 - ang0, 360.0f);
     if (diff < 0.0f) {
         diff += 360.0f;
     }
@@ -1011,7 +967,7 @@ f32 fn_1_3368(f32 ang0, f32 ang1, f32 max)
             diff = max;
         }
     }
-    result = (f32) fmod((f64) (ang0 + diff), 360.0);
+    result = fmodf(ang0 + diff, 360.0f);
     if (result < 0.0f) {
         result += 360.0f;
     }
@@ -1023,9 +979,8 @@ s32 fn_1_34D8(Vec *pos, Vec *target, Vec *cur, f32 dist)
     Vec sp20;
     Vec sp14;
     Vec sp8;
-    f32 temp_f1;
-    f32 temp_f30;
-    f32 temp_f31;
+    f32 mag;
+    f32 ang;
 
     sp8 = *target;
     while (TRUE) {
@@ -1034,27 +989,28 @@ s32 fn_1_34D8(Vec *pos, Vec *target, Vec *cur, f32 dist)
             return 0;
         }
         PSVECSubtract(target, cur, &sp14);
-        temp_f1 = PSVECMag(&sp14);
-        if (temp_f1 >= dist) {
-            return 0;
-        }
-        if (temp_f1 == 0.0f) {
-            *target = *pos;
-        } else {
-            PSVECNormalize(&sp14, &sp14);
-            PSVECScale(&sp14, &sp14, dist);
-            PSVECAdd(cur, &sp14, target);
-        }
-        PSVECSubtract(target, pos, &sp14);
-        if (PSVECMag(&sp14) >= 0.001f) {
+        mag = PSVECMag(&sp14);
+        if (mag < dist) {
+            if (mag != 0.0f) {
+                PSVECNormalize(&sp14, &sp14);
+                PSVECScale(&sp14, &sp14, dist);
+                PSVECAdd(cur, &sp14, target);
+            } else {
+                *target = *pos;
+            }
+            PSVECSubtract(target, pos, &sp14);
+            if (PSVECMag(&sp14) < 0.001f) {
+                mag = PSVECMag(&sp20);
+                ang = 180.0 * (atan2(sp14.z, sp14.x) / 3.141592653589793);
+                ang += 30.0f;
+                sp20.x = mag * sin((3.141592653589793 * ang) / 180.0);
+                sp20.z = mag * cos((3.141592653589793 * ang) / 180.0);
+                PSVECAdd(pos, &sp20, target);
+                continue;
+            }
             return 1;
         }
-        temp_f31 = PSVECMag(&sp20);
-        temp_f30 = (f32) (180.0 * (atan2((f64) sp14.z, (f64) sp14.x) / 3.141592653589793));
-        temp_f30 += 30.0f;
-        sp20.x = (f32) ((f64) temp_f31 * sin((3.141592653589793 * (f64) temp_f30) / 180.0));
-        sp20.z = (f32) ((f64) temp_f31 * cos((3.141592653589793 * (f64) temp_f30) / 180.0));
-        PSVECAdd(pos, &sp20, target);
+        return 0;
     }
 }
 
@@ -1080,16 +1036,12 @@ f32 fn_1_3788(Vec *a, Vec *b, Vec *c)
 s32 fn_1_37CC(Vec *dir, Vec *pos, Vec *target, Vec *out, Vec *result)
 {
     Vec sp28;
-    Vec sp1C;
-    Vec sp10;
     f32 temp_f1;
     f32 temp_f30;
 
     PSVECSubtract(out, target, &sp28);
-    PSVECSubtract(target, pos, &sp1C);
-    temp_f30 = PSVECDotProduct(dir, &sp1C);
-    PSVECSubtract(target, out, &sp10);
-    temp_f1 = PSVECDotProduct(dir, &sp10);
+    temp_f30 = fn_1_3788(dir, pos, target);
+    temp_f1 = fn_1_3788(dir, out, target);
     if (temp_f1 == 0.0f) {
         return 0;
     }
