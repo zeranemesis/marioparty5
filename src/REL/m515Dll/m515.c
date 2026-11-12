@@ -1677,7 +1677,9 @@ void fn_1_6980(M515_PLY *ply)
 void fn_1_69B8(M515_PLY *ply, M515_SUB *sub)
 {
     s32 i;
+    f32 sc;
 
+    sc = 1.1f;
     if (sub->mdl < 0) {
         sub->mdl = Hu3DModelCreateData(lbl_1_data_364[1]);
         ply->item[0].mdl = sub->mdl;
@@ -1742,8 +1744,7 @@ void fn_1_6FE8(M515_PLY *ply)
     s32 n;
 
     ply->v5e8 = 0;
-    n = 0;
-    for (i = 0; i < 5; i++) {
+    for (i = 0, n = 0; i < 5; i++) {
         for (j = 0; j < 5; j++, n++) {
             if (ply->cell[i][j].type == 2) {
                 ply->cell[i][j].item = &ply->item[ply->v5e8];
@@ -1884,6 +1885,7 @@ u16 fn_1_7924(M515_PLY *ply)
     f32 ang;
     f32 ay;
     f32 ax;
+    f32 sum;
 
     ret = 0;
     sx = HuPadStkX[ply->pad];
@@ -1903,7 +1905,8 @@ u16 fn_1_7924(M515_PLY *ply)
     } else {
         ax = sx;
     }
-    if (ax + ay > 32.0f) {
+    sum = ax + ay;
+    if (sum > 32.0) {
         if (ang >= -30.0f && ang < 60.0f) {
             ret = 1;
         } else if (ang >= 60.0f && ang < 150.0f) {
@@ -1929,6 +1932,8 @@ void fn_1_7BE8(M515_ITEM *item, M515_SUB *sub)
     f32 t;
 
     switch (item->f20) {
+    case 0:
+        break;
     case 1:
         item->f22 = 0;
         Hu3DMotionSet(item->mdl, item->mot);
@@ -1941,18 +1946,19 @@ void fn_1_7BE8(M515_ITEM *item, M515_SUB *sub)
             item->f20++;
             return;
         }
-        return;
+        break;
     case 3:
         item->f22++;
         if (item->f22 >= 10) {
             item->f20++;
         }
-        t = ((f32)item->f22 - 2.0f) * 0.125f;
+        t = (f32)item->f22 - 2.0f;
+        t *= 0.125f;
         p.x = (1.0f - t) * item->a.x + t * item->b.x;
-        p.y = 1.0f + item->a.y;
+        p.y = 1.0f + item->b.y;
         p.z = (1.0f - t) * item->a.z + t * item->b.z;
         Hu3DModelPosSet(item->mdl, p.x, p.y, p.z);
-        p.y = 0.5f + item->a.y;
+        p.y = 0.5f + item->b.y;
         Hu3DModelPosSet(item->mdl2, p.x, p.y, p.z);
         return;
     case 4:
