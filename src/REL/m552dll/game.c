@@ -1355,7 +1355,13 @@ s32 fn_1_6DE0(void)
                     alpha = 0.0f;
                     pop->active = 0;
                     for (k = 0; k < 5; k++) {
-                        espDispOff(lbl_1_bss_33C2[i][pop->spr[k]]);
+#ifdef TARGET_PC
+                        /* unused digits hold -1: the GC read the neighbouring sprite slot */
+                        if (pop->spr[k] >= 0)
+#endif
+                        {
+                            espDispOff(lbl_1_bss_33C2[i][pop->spr[k]]);
+                        }
                         pop->spr[k] = -1;
                     }
                     espDispOn(lbl_1_bss_33C0);

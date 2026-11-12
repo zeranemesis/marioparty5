@@ -90,6 +90,15 @@ s32 fn_1_7A40(void)
     if (lbl_1_bss_3700.item[prev].alive == 0) {
         lbl_1_bss_3700.item[prev].y -= 8.5f;
     }
+#ifdef TARGET_PC
+    /* an unused slot has shape -1: the GC read the 0.0f just before lbl_1_data_498 */
+    if (lbl_1_bss_3700.item[prev].shape < 0) {
+        if (lbl_1_bss_3700.item[prev].y < 1050.0f - (155.0f + (0.0f + lbl_1_data_498[next->shape]) * 0.5f)) {
+            ret = next->shape + 1;
+        }
+        return ret;
+    }
+#endif
     if (lbl_1_bss_3700.item[prev].y
         < 1050.0f - (155.0f + (lbl_1_data_498[lbl_1_bss_3700.item[prev].shape] + lbl_1_data_498[next->shape]) * 0.5f)) {
         ret = next->shape + 1;
