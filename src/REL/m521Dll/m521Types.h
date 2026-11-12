@@ -71,10 +71,34 @@ struct CCtl {
     CCtlInput m_in;  /* 0x04 */
 };
 
-/* One hand/face of the clock: only the leading fields the players touch. */
+/* Clock hand model (class m521::CClockHand, size 0x68 on GC). */
+struct CClockHand {
+    CModel m_model;
+    Mtx m_baseMtx;
+    Mtx m_mtx;
+    f32 m_angle;
+    MtxPtr getMtx() { return m_mtx; }
+};
+
+/* The clock: two hands (hour = 0, minute = 1) plus their guide models. */
 struct CClock {
-    void *m_vptr;     /* 0x00 */
-    M521Vec m_center; /* 0x04 */
+    s32 m_kind;           /* 0x00 */
+    M521Vec m_pos;        /* 0x04 */
+    f32 m_time;           /* 0x10 */
+    u8 m_stopped[2];      /* 0x14 */
+    s32 m_cnt[2];         /* 0x18 */
+    s32 m_phase;          /* 0x20 */
+    f32 m_speed;          /* 0x24 */
+    f32 m_ang[2];         /* 0x28 */
+    f32 m_total[2];       /* 0x30 */
+    f32 m_target[2];      /* 0x38 */
+    f32 m_goal[2];        /* 0x40 */
+    s32 m_frame;          /* 0x48 */
+    s32 m_sfx[2];         /* 0x4C */
+    s32 m_timer[2];       /* 0x54 */
+    s32 m_last[2];        /* 0x5C */
+    CClockHand *m_hand[2];/* 0x64 */
+    CModel *m_model[2];   /* 0x6C */
 };
 
 /* Growable array of u16 motion ids (cdeque). */

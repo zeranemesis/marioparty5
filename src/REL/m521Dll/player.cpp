@@ -637,7 +637,7 @@ f32 fn_1_16BD0(CPlayer *self)
     } else {
         clock = lbl_1_bss_A54;
     }
-    PSVECSubtract(&clock->m_center, (M521Vec *)&self->m_pos, &diff);
+    PSVECSubtract(&clock->m_pos, (M521Vec *)&self->m_pos, &diff);
     return PSVECMag(&diff);
 }
 
