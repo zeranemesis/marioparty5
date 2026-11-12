@@ -1229,8 +1229,8 @@ void fn_1_359C(s16 mode, s16 frameNo)
             for (i = 0; i < 4; i++) {
                 data = lbl_1_bss_124[i]->data;
                 if (lbl_1_bss_50[data->unk0] != -1) {
-                    CharModelItemHookGet(lbl_1_bss_14[data->unk0]->charNo, 2, 0);
-                    OSReport("FLO:%d\n", data->unk0, hook);
+                    hook = CharModelItemHookGet(lbl_1_bss_14[data->unk0]->charNo, 2, 0);
+                    OSReport("FLO:%d\n", data->unk0);
                     Hu3DModelPosSet(lbl_1_bss_F0[i], 0.0f, 0.0f, 0.0f);
                     Hu3DModelHookSet(lbl_1_bss_14[data->unk0]->actor->mdlId, hook, lbl_1_bss_F0[data->unk0]);
                 }
