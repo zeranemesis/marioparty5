@@ -183,15 +183,63 @@ typedef struct M543Mg_s {
 
 /* per-player saved material colours (lbl_1_bss_8DC, 0x15C bytes on GC) */
 typedef struct M543Actor_s {
-    u8 pad_00[0xC];
+    s16 mode;
+    s16 sub;
+    u8 pad_04[0x8];
     f32 colorScale;
-    u8 *matColors;
-    u8 pad_14[0x148];
+    u8 * matColors;
+    s16 f14;
+    s16 f16;
+    s16 f18;
+    s16 f1A;
+    f32 f1C;
+    f32 f20;
+    f32 f24;
+    f32 f28;
+    f32 f2C;
+    f32 f30;
+    s16 f34;
+    u8 pad_36[0x2];
+    f32 f38;
+    f32 f3C;
+    f32 f40;
+    f32 f44;
+    f32 f48;
+    f32 f4C;
+    s16 f50;
+    u8 pad_52[0x8];
+    s16 f5A;
+    s16 f5C;
+    u8 pad_5E[0xEE];
+    s32 btn;
+    s32 btnDown;
+    s32 stkX;
+    s32 stkY;
 } M543Actor;
 
 /* game state block (lbl_1_bss_B94, 0x74 bytes on GC) */
 typedef struct M543Game_s {
-    u8 pad_00[0x50];
+    s16 phase;
+    s16 f_02;
+    s16 f_04;
+    s16 f_06;
+    s16 f_08;
+    s16 f_0A;
+    s16 f_0C;
+    s16 f_0E;
+    s16 f_10;
+    s16 pad_12;
+    f32 f_14;
+    f32 pad_18;
+    f32 f_1C;
+    s16 pad_20;
+    s16 f_22;
+    f32 f_24;
+    u8 pad_28[0x14];
+    s16 winner;
+    u8 pad_3E[0xA];
+    MGTIMER *timer;
+    s32 pad_4C;
     s32 bgmStream;
     s32 jingleStream;
     s32 pad_58;
@@ -201,11 +249,25 @@ typedef struct M543Game_s {
 
 /* board tile (0x20 bytes, lbl_1_bss_33C) and path node (0x14 bytes, lbl_1_bss_1C) */
 typedef struct M543Tile_s {
-    u8 d[0x20];
+    s16 active;
+    s16 flag2;
+    s16 mode;
+    s16 sel;
+    s16 prevSel;
+    s16 step;
+    s16 phase;
+    s16 f_0E;
+    f32 f_10;
+    f32 time;
+    s16 mot[3];
+    s16 pad_1E;
 } M543Tile;
 
 typedef struct M543Node_s {
-    u8 d[0x14];
+    f32 x;
+    f32 y;
+    f32 z;
+    s16 adj[4];
 } M543Node;
 
 void fn_1_3FC(void);

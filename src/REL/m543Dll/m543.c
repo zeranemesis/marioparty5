@@ -25,11 +25,11 @@ extern const M543VoidFunc _dtors[];
 
 /* game.c */
 s32 fn_1_5A6C(M543State *state);
-s16 fn_1_5B78(void);
+s32 fn_1_5B78(void);
 s32 fn_1_5BB0(void);
 s32 fn_1_5C20(void);
 s32 fn_1_623C(void);
-s16 fn_1_6314(void);
+s32 fn_1_6314(void);
 s32 fn_1_634C(void);
 s16 fn_1_64AC(void);
 s32 fn_1_64DC(void);
