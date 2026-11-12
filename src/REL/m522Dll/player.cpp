@@ -40,6 +40,14 @@ extern "C" void *memmove(void *dst, const void *src, unsigned long n);
 
 #define HV(p) ((HuVecF *)(p))
 
+/* Vector setter taking doubles, as the original's Vec constructor does. */
+static inline void M522VecSet(M522_VEC3 *v, f64 x, f64 y, f64 z)
+{
+    v->x = x;
+    v->y = y;
+    v->z = z;
+}
+
 static inline f32 M522Mag(M522_VEC3 *v)
 {
     return PSVECMag(HV(v));
@@ -50,6 +58,18 @@ static inline f32 M522Min(f32 a, f32 b)
     f32 r;
 
     if (a < b) {
+        r = a;
+    } else {
+        r = b;
+    }
+    return r;
+}
+
+static inline f64 M522MaxD(f64 a, f64 b)
+{
+    f64 r;
+
+    if (a > b) {
         r = a;
     } else {
         r = b;
@@ -69,9 +89,10 @@ static inline f32 M522Max(f32 a, f32 b)
     return r;
 }
 
-#define M522_STAGE_ASSERT()                                      \
-    if (lbl_1_bss_18 == 0) {                                     \
-        fn_1_6A70(lbl_1_data_5EB, lbl_1_data_5FB, 0x27);         \
+#define M522_STAGE_ASSERT()                              \
+    if (lbl_1_bss_18 != 0) {                             \
+    } else {                                             \
+        fn_1_6A70(lbl_1_data_5EB, lbl_1_data_5FB, 0x27); \
     }
 
 /* vector<u16> of motion ids. */
@@ -337,6 +358,16 @@ inline void M522SetState(M522_PLAYERBASE *self, M522_PTMF ptmf)
         M522_PTMF next = ptmf;    \
         M522SetState(self, next); \
     }
+
+/* Singleton accessor: the assert of singleton.h, then the pointer. */
+static inline void *M522Stage(void)
+{
+    void *p;
+
+    M522_STAGE_ASSERT();
+    p = lbl_1_bss_18;
+    return p;
+}
 
 
 /* Spawn positions of the CPU players, handed out by fn_1_F604. */
@@ -764,19 +795,23 @@ void fn_1_FFF8(M522_PLAYERBASE *self, s32 dataNum)
 void fn_1_10070(M522_PLAYERBASE *self, u32 motion, u8 loop)
 {
     u32 attr;
+    u32 size;
+    s16 *id;
 
-    if (motion < self->motions.m_size) {
+    size = self->motions.m_size;
+    if (motion < size) {
     } else {
         fn_1_6A70(lbl_1_data_5C4, lbl_1_data_5E0, 0x101);
     }
-    if (self->motion != motion || CharMotionEndCheck(self->charNo) != 0) {
+    if (self->motion != (s32)motion || CharMotionEndCheck(self->charNo) != 0) {
         CharModelAttrSet(self->charNo, 0x40000002);
         if (loop != 0) {
             attr = 0x40000001;
         } else {
             attr = 0;
         }
-        CharMotionShiftSet(self->charNo, *fn_1_14F48(&self->motions, motion), 0.0f, 16.0f, attr);
+        id = fn_1_14F48(&self->motions, motion);
+        CharMotionShiftSet(self->charNo, *id, 0.0f, 16.0f, attr);
         self->motion = motion;
     }
 }
@@ -853,8 +888,7 @@ M522_PLAYER *fn_1_10324(M522_PLAYER *self, s32 index)
     Hu3DModelHookSet(self->model.id, self->hook, self->objA->id);
     fn_1_9DEC(self->objB, 5);
     fn_1_9BA8(self->objB, 0x40000001);
-    M522_STAGE_ASSERT();
-    baseY = fn_1_F1B8(lbl_1_bss_18) - 100.0f;
+    baseY = fn_1_F1B8(M522Stage()) - 100.0f;
     self->pos.x = -550.0f;
     self->pos.y = baseY;
     self->pos.z = 0.0f;
@@ -913,8 +947,7 @@ void fn_1_10A00(M522_PLAYER *self)
 {
     self->amp = 0.99 * self->amp + 0.1;
     if (self->timer <= 0) {
-        M522_STAGE_ASSERT();
-        if (fn_1_F194(lbl_1_bss_18) != 0) {
+            if (fn_1_F194(M522Stage()) != 0) {
             self->mode = fn_1_12028(self);
             switch (self->mode) {
             case 0:
@@ -941,11 +974,9 @@ void fn_1_10DF8(M522_PLAYER *self)
     if (!(time < 25.0f)) {
         M522_VEC3 pos = lbl_1_rodata_528;
         M522_VEC3 rot;
-        M522_STAGE_ASSERT();
-        pos.y = 100.0f + fn_1_F1B8(lbl_1_bss_18);
+            pos.y = 100.0f + fn_1_F1B8(M522Stage());
         rot = lbl_1_rodata_534;
-        M522_STAGE_ASSERT();
-        fn_1_EF38(lbl_1_bss_18, &pos);
+            fn_1_EF38(M522Stage(), &pos);
         CharEffectHitCreate(1, HV(&pos), HV(&rot));
         omVibrate(self->index, 12, 6, 6);
         self->amp = 0.0f;
@@ -965,8 +996,7 @@ void fn_1_1103C(M522_PLAYER *self)
     time = fn_1_10160(self);
     if (!(time <= 30.0f)) {
         range = CharMotionMaxTimeGet(self->charNo) - 30.0f;
-        M522_STAGE_ASSERT();
-        floorY = fn_1_F1B8(lbl_1_bss_18) - 100.0f;
+            floorY = fn_1_F1B8(M522Stage()) - 100.0f;
         if (floorY < 200.0f) {
             target = 200.0f;
         } else {
@@ -1013,18 +1043,11 @@ void fn_1_114CC(M522_PLAYER *self)
 void fn_1_11694(M522_PLAYER *self)
 {
     f64 t;
-    f64 v;
 
     self->amp = self->amp * 0.9;
-    M522_STAGE_ASSERT();
-    self->vel.y = 0.01 * ((400.0f + fn_1_F1B8(lbl_1_bss_18)) - self->pos.y);
+    self->vel.y = 0.01 * ((400.0f + fn_1_F1B8(M522Stage())) - self->pos.y);
     t = self->ofsY - 0.5172413793103449;
-    if ((f32)t > 0.0f) {
-        v = t;
-    } else {
-        v = 0.0;
-    }
-    self->ofsY = v;
+    self->ofsY = M522MaxD(t, 0.0);
 }
 
 void fn_1_117EC(M522_PLAYER *self)
@@ -1088,30 +1111,30 @@ void fn_1_11D60(M522_PLAYER *self)
 void fn_1_11E34(M522_PLAYER *self)
 {
     M522_VEC3 v;
-    f32 z;
-    f64 y;
     char *hook;
+    M522_MODEL *mp;
+    M522_MODEL *b1;
+    M522_MODEL *b2;
+    s16 id;
+    s16 id2;
 
-    z = self->pos.z;
-    y = self->pos.y + self->amp * sin(self->phase);
-    v.x = self->pos.x;
-    v.y = y;
-    v.z = z;
+    M522VecSet(&v, self->pos.x, self->pos.y + self->amp * sin(self->phase), self->pos.z);
     fn_1_9C94(&self->model, &v);
     PSVECAdd(HV(&self->vel), HV(&self->pos), HV(&self->pos));
     self->phase = self->phase + 0.05235987755982988;
-    v.x = self->ofsX;
-    v.y = self->ofsY;
-    v.z = 0.0f;
+    M522VecSet(&v, self->ofsX, self->ofsY, 0.0f);
     fn_1_9CDC(&self->model, &v);
     hook = CharModelItemHookGet(self->charNo, 4, 4);
-    Hu3DModelObjPosGet(self->model.id, hook, HV(&v));
-    fn_1_9C94(self->objB, &v);
+    mp = (self != 0) ? &self->model : 0;
+    id = mp->id;
+    id2 = id;
+    Hu3DModelObjPosGet(id2, hook, HV(&v));
+    b1 = self->objB;
+    fn_1_9C94(b1, &v);
     self->objBY = self->objBY + 0.01 * (self->ofsY - self->objBY);
-    v.x = 0.0f;
-    v.y = self->objBY;
-    v.z = 0.0f;
-    fn_1_9CDC(self->objB, &v);
+    M522VecSet(&v, 0.0f, self->objBY, 0.0f);
+    b2 = self->objB;
+    fn_1_9CDC(b2, &v);
 }
 
 s32 fn_1_12028(M522_PLAYER *self)
@@ -1298,8 +1321,7 @@ void fn_1_12B68(M522_COM *self)
         fn_1_13DCC(self);
     }
     MgActorPosGet(self->mg->actor, HV(&p));
-    M522_STAGE_ASSERT();
-    if (p.y < (f32)(fn_1_F1B8(lbl_1_bss_18) - 50.0) || p.x > 500.0f) {
+    if (p.y < (f32)(fn_1_F1B8(M522Stage()) - 50.0) || p.x > 500.0f) {
         fn_1_13698(self);
         self->flying = 1;
         MgPlayerPauseOn(self->mg);
@@ -1328,8 +1350,7 @@ void fn_1_12B68(M522_COM *self)
         MgPlayerAttrReset(self->mg, 1);
         self->timer = 0x12;
     }
-    M522_STAGE_ASSERT();
-    steady = fn_1_F194(lbl_1_bss_18);
+    steady = fn_1_F194(M522Stage());
     if (fn_1_13A10(self) != 0 && self->steady != 0 && steady == 0) {
         omVibrate(self->index, 12, 6, 6);
     }
@@ -1536,8 +1557,7 @@ void fn_1_13CE8(M522_COM *self)
 
     if (self->grounded != 0) {
         MgActorPosGet(self->mg->actor, HV(&p));
-        M522_STAGE_ASSERT();
-        if (p.y <= (f32)(1.0 + fn_1_F1B8(lbl_1_bss_18))) {
+            if (p.y <= (f32)(1.0 + fn_1_F1B8(M522Stage()))) {
             omVibrate(self->index, 12, 6, 6);
             self->grounded = 0;
         }
@@ -1582,8 +1602,7 @@ void fn_1_13E18(M522_COM *self)
             break;
         }
     }
-    M522_STAGE_ASSERT();
-    steady = fn_1_F194(lbl_1_bss_18);
+    steady = fn_1_F194(M522Stage());
     if ((self->mg->actor->colGroundAttr & 0x407F) != 0) {
         if (wantJump != 0) {
             fn_1_148B4(&self->pad, 1);
