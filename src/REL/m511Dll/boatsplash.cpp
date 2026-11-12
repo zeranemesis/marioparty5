@@ -5,6 +5,8 @@
 
 #include "game/hu3d.h"
 
+#include "REL/m511Dll/m511objs.h"
+
 #ifdef TARGET_PC
 #define SPL_VTX3(x, y, z) GXPosition3f32(x, y, z)
 #define SPL_TEX2(s, t) GXTexCoord2f32(s, t)
@@ -48,27 +50,6 @@ struct Mgr511SplashRoot {
 };
 
 extern Mgr511SplashRoot *lbl_1_bss_A38;
-
-/* Water spray around the boat. */
-struct Mgr511Splash {
-    s16 modelId;
-    HU3DPARTICLE *particle;
-    Vec pos;
-    Vec rot;
-    Vec pos2;
-    u8 flag;
-    f32 speed;
-};
-
-/* Expanding ring on the water. */
-struct Mgr511SplashRing {
-    s16 modelId;
-    ANIMDATA *anim;
-    Vec pos;
-    u8 active;
-    f32 timer;
-    f32 scale;
-};
 
 /* Burst of droplets. */
 struct Mgr511SplashBurst {
