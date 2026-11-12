@@ -1740,10 +1740,21 @@ void fn_1_B70(OMOBJ *arg0)
     } else {
         f32 spB8;
         f32 sp114;
+        f32 spB4;
         s32 sp118;
 
         sp11C = pl->unk1C;
         sp118 = (U32(MPP(mp, 0x3C), 0x84) & 0x407F) == 0;
+        if (px * px + pz * pz > 0.0f) {
+            f64 r = __frsqrte(px * px + pz * pz);
+
+            r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
+            r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
+            spB4 = (f32) ((px * px + pz * pz) * (0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)))));
+        } else {
+            spB4 = px * px + pz * pz;
+        }
+        sp114 = spB4;
         if (lbl_1_bss_1A0 == 2 || lbl_1_bss_1A0 == 3) {
             if (lbl_1_bss_1A0 == 2) {
                 if (lbl_1_bss_0 < 0xD7) {
@@ -1855,18 +1866,6 @@ void fn_1_B70(OMOBJ *arg0)
             var_r21 = (s8) ((-5.6f * tz) * dist);
         }
         if ((lbl_1_bss_1A0 == 5 || lbl_1_bss_1A0 == 6) && pl->unk1C == 2) {
-            f32 spB4;
-
-            if (px * px + pz * pz > 0.0f) {
-                f64 r = __frsqrte(px * px + pz * pz);
-
-                r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
-                r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
-                spB4 = (f32) ((px * px + pz * pz) * (0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)))));
-            } else {
-                spB4 = px * px + pz * pz;
-            }
-            sp114 = spB4;
             if ((sp114 > 700.0f && (sp118 == 0 || py < 0.0f))
                 || (lbl_1_bss_1A0 == 5 && M520I(lbl_1_bss_5C8, 6) >= 0x28 && M520I(lbl_1_bss_5C8, 6) < 0xC8
                     && (U32(MPP(mp, 0x3C), 0x84) & 0x407F) != 0)) {
