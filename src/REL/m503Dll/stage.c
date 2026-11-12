@@ -210,7 +210,7 @@ void fn_1_AA0C(OMOBJ *obj)
         rot.z = 0.0f;
         Hu3DModelRotSetV(id, &rot);
         maxTime = Hu3DMotionMaxTimeGet(id);
-        Hu3DMotionTimeSet(id, 1.52587890625e-05 * (f64)(f32)(s32)frand() * maxTime);
+        Hu3DMotionTimeSet(id, 1.52587890625e-05 * (f64)(f32)(s32)FRAND16() * maxTime);
     }
 }
 
@@ -257,11 +257,11 @@ void fn_1_AF20(s8 type, s32 mode)
 
     switch (type) {
         case 0:
-            pos.x = -2010.0000000000002 + 3410.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
+            pos.x = -2010.0000000000002 + 3410.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
             pos.z = -7800.0f;
             break;
         case 1:
-            off = 1131.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
+            off = 1131.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
             pos.x = 4213.0 + (f64)off;
             if (off != 0.0f) {
                 off = 100.0 * (2.0 * ((f64)off / 1131.0));
@@ -270,15 +270,15 @@ void fn_1_AF20(s8 type, s32 mode)
             break;
         case 2:
             pos.x = 1630.0f;
-            pos.z = -7500.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            pos.z = -7500.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
             break;
         case 3:
-            pos.x = -3105.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            pos.x = -3105.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
             pos.z = -7160.0f;
             break;
         case 4:
             pos.x = -4530.0f;
-            pos.z = -7045.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            pos.z = -7045.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
             break;
 #ifdef TARGET_PC
         default:

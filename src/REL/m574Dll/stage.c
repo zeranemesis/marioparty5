@@ -1,5 +1,6 @@
 #include "REL/m574Dll.h"
 #include "game/mg/seqman.h"
+#include "game/frand.h"
 
 typedef struct M574StageCell_s {
     s32 v00;
@@ -386,7 +387,7 @@ void fn_1_2514(OMOBJ *p, s32 flag, s32 n) {
         } else {
             base = 120.0f;
         }
-        base = base + 10.0 * (3.0517578125e-05 * (f32)((u16)frand() - 0x8000));
+        base = base + 10.0 * (3.0517578125e-05 * (f32)((u16)FRAND16() - 0x8000));
         vel.x = 100.0 * (0.2 * sin(3.141592653589793 * base / 180.0));
         vel.y = 100.0 * (0.2 * cos(3.141592653589793 * base / 180.0));
         fn_1_6C2C(&v, &vel);
@@ -447,7 +448,7 @@ void fn_1_26F4(OMOBJ *p) {
                 } else {
                     base = 120.0f;
                 }
-                base = base + 10.0 * (3.0517578125e-05 * (f32)((u16)frand() - 0x8000));
+                base = base + 10.0 * (3.0517578125e-05 * (f32)((u16)FRAND16() - 0x8000));
                 vel.x = 100.0 * (0.2 * sin(3.141592653589793 * base / 180.0));
                 vel.y = 100.0 * (0.2 * cos(3.141592653589793 * base / 180.0));
                 fn_1_6C2C(&pos, &vel);
@@ -833,7 +834,7 @@ void fn_1_383C(OMOBJ *p) {
         for (j = 0; j < 3; j++) {
             obj = Hu3DModelObjPtrGet(modelId, lbl_1_data_2D8[j + i * 3]);
             cell->v50[j] = (HSFOBJECT *)obj;
-            val = (s32)(20.0 * (1.52587890625e-05 * (f32)(s32)(u16)frand()));
+            val = (s32)(20.0 * (1.52587890625e-05 * (f32)(s32)(u16)FRAND16()));
             cell->v20[j] = val;
             cell->f2C[j] = cell->f38[j] = 18.0f * (f32)val;
         }
@@ -873,7 +874,7 @@ void fn_1_3A1C(OMOBJ *p) {
                 cell->v04 = 0;
                 cell->v10 = 1;
                 for (j = 0; j < 3; j++) {
-                    cell->f44[j] = 4.0 + 1.52587890625e-05 * (f32)(s32)(u16)frand();
+                    cell->f44[j] = 4.0 + 1.52587890625e-05 * (f32)(s32)(u16)FRAND16();
                     cell->v14[j] = 0;
                 }
                 Hu3DModelAttrReset(model, 0x40000002);
@@ -907,7 +908,7 @@ void fn_1_3A1C(OMOBJ *p) {
                                 stop = 0;
                                 break;
                             case 1:
-                                if (1.52587890625e-05 * (f32)(s32)(u16)frand() < 0.5) {
+                                if (1.52587890625e-05 * (f32)(s32)(u16)FRAND16() < 0.5) {
                                     stop = 1;
                                 }
                                 else {
@@ -915,7 +916,7 @@ void fn_1_3A1C(OMOBJ *p) {
                                 }
                                 break;
                             case 2:
-                                if (1.52587890625e-05 * (f32)(s32)(u16)frand() < 0.5) {
+                                if (1.52587890625e-05 * (f32)(s32)(u16)FRAND16() < 0.5) {
                                     stop = 1;
                                 }
                                 else {
@@ -1349,7 +1350,7 @@ void fn_1_4EE8(OMOBJ *p) {
         switch (slot->v00) {
             case 0:
                 slot->v00++;
-                slot->v10.x = slot->v10.x + 150.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
+                slot->v10.x = slot->v10.x + 150.0 * (3.0517578125e-05 * (f32)((s32)FRAND16() - 0x8000));
                 slot->f34 = 0.0f;
                 Hu3DMotionSet(model, p->mtnId[0]);
                 // fallthrough
@@ -1636,7 +1637,7 @@ void fn_1_5934(OMOBJ *p) {
                 else {
                     base = 120.0f;
                 }
-                ang = base + 10.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
+                ang = base + 10.0 * (3.0517578125e-05 * (f32)((s32)FRAND16() - 0x8000));
                 vel.x = 100.0 * (0.2 * sin(3.141592653589793 * ang / 180.0));
                 vel.y = 100.0 * (0.2 * cos(3.141592653589793 * ang / 180.0));
                 fn_1_6C2C(&pos, &vel);

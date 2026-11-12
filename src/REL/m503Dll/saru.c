@@ -271,7 +271,7 @@ void fn_1_5810(OMOBJMAN *objMan)
                 w->owner = type;
                 lbl_1_bss_9C[n9C++] = obj;
                 Hu3DModelLayerSet(model, 7);
-                r = (s32)(4.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
+                r = (s32)(4.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
                 for (j = 0; j < 4; j++) {
                     if (r >= 4) {
                         r = 0;
@@ -292,8 +292,8 @@ void fn_1_5810(OMOBJMAN *objMan)
                 if (type == 8) {
                     w->kind = 4;
                 } else {
-                    w->kind = (s32)(4.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
-                    r = (s32)(3.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
+                    w->kind = (s32)(4.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
+                    r = (s32)(3.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
                     for (j = 0; j < 4; j++) {
                         if (r >= 4) {
                             r = 0;
@@ -452,7 +452,11 @@ void fn_1_60EC(OMOBJ *obj)
                     fn_1_9A04(obj, 0);
                     w->attract = 0;
                     w->state--;
+#ifdef TARGET_PC
+                    w->timer = 480.0 + (f64)(u16)frand();
+#else
                     w->timer = 480.0 + (f64)frand();
+#endif
                 }
             }
             break;
@@ -491,9 +495,9 @@ void fn_1_6458(OMOBJ *obj)
 {
     M503Saru *w = obj->data;
 
-    w->pos.x = obj->trans.x = 300.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+    w->pos.x = obj->trans.x = 300.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
     w->pos.y = obj->trans.y = 0.0f;
-    w->pos.z = obj->trans.z = 300.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+    w->pos.z = obj->trans.z = 300.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
     w->rotY = 0.0f;
     w->actor.flags = 1;
     w->actor.unk04 = 1;
@@ -555,7 +559,7 @@ void fn_1_6618(OMOBJ *obj)
                 fn_1_9A04(obj, 0);
                 model = *obj->mdlId;
                 maxTime = Hu3DMotionMaxTimeGet(model) - 1.0;
-                Hu3DMotionTimeSet(model, 1.52587890625e-05 * (f64)(f32)(s32)frand() * maxTime);
+                Hu3DMotionTimeSet(model, 1.52587890625e-05 * (f64)(f32)(s32)FRAND16() * maxTime);
                 if ((u32)w->type == 8U) {
                     fn_1_6C0C(obj, 3);
                 } else {
@@ -719,7 +723,7 @@ s32 fn_1_6FC4(OMOBJ *obj)
             w->sub++;
             w->cnt24 = 0;
             w->cnt28 = 0;
-            idx = (s32)(3.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
+            idx = (s32)(3.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
             ang = lbl_1_data_488[idx];
             w->velTarget.y = 28.333334f;
             w->velTarget.x = 26.666668f * HuSin(ang);
@@ -956,15 +960,15 @@ s32 fn_1_7D6C(OMOBJ *obj)
                 w->subTimer++;
                 if (!((f32)w->subTimer < 480.0f) && lbl_1_bss_40 < 8
                     && (lbl_1_bss_40 < 3
-                        || !((f32)(100.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand())) > lbl_1_data_4D0[w->kind]))) {
+                        || !((f32)(100.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16())) > lbl_1_data_4D0[w->kind]))) {
                     w->sub++;
                     w->cnt24 = 0;
                     w->cnt28 = 0;
                     w->inGoal = 0;
                     lbl_1_bss_40++;
-                    ang = lbl_1_data_3BC[w->goalIdx] + 20.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                    speed = 0.016666668f * (1000.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
-                    w->velTarget.y = 0.016666668f * (2400.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
+                    ang = lbl_1_data_3BC[w->goalIdx] + 20.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                    speed = 0.016666668f * (1000.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
+                    w->velTarget.y = 0.016666668f * (2400.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
                     w->velTarget.x = (f64)speed * HuSin(ang);
                     w->velTarget.z = (f64)speed * HuCos(ang);
                     w->seId = fn_1_1FD8(0x641, &w->pos);
@@ -1089,12 +1093,12 @@ s32 fn_1_8AD8(OMOBJ *obj)
             if (other != NULL) {
                 fn_1_5708(other, &opos, NULL);
                 ang = 180.0 * (atan2((f64)(w->pos.x - opos.x), (f64)(w->pos.z - opos.z)) / M_PI);
-                speed = 0.016666668f * (300.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
-                w->velTarget.y = 0.016666668f * (1600.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
+                speed = 0.016666668f * (300.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
+                w->velTarget.y = 0.016666668f * (1600.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
             } else {
-                ang = 360.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
-                speed = 0.016666668f * (200.0 + 200.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
-                w->velTarget.y = 0.016666668f * (1500.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand()));
+                ang = 360.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
+                speed = 0.016666668f * (200.0 + 200.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
+                w->velTarget.y = 0.016666668f * (1500.0 + 400.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16()));
             }
             w->velTarget.x = (f64)speed * HuSin(ang);
             w->velTarget.z = (f64)speed * HuCos(ang);

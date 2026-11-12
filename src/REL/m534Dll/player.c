@@ -332,7 +332,7 @@ static void fn_1_2EB8(OMOBJ *obj)
     M534PLAYER *p = obj->data;
     if ((p->wait = p->wait - 1.0) <= 0.0f) {
         p->btnDown |= 0x100;
-        p->wait = p->speed + 2.5 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF));
+        p->wait = p->speed + 2.5 * (1.52587890625e-05 * (f32) (s32) (FRAND16() & 0xFFFF));
     }
 }
 

@@ -752,16 +752,22 @@ static void ObjectLoad(void)
     }
     /* the root is the object without a parent, and every child knows it now */
     for (i = 0; i < sFileHead.object.num; i++) {
-        if ((s32)PORT_BE32(file[i].mesh.parent) == -1) {
+        if (sObjects[i].type != HSF_OBJ_CAMERA && sObjects[i].type != HSF_OBJ_LIGHT && (s32)PORT_BE32(file[i].mesh.parent) == -1) {
             sModel->root = &sObjects[i];
             break;
         }
     }
     for (i = 0; i < sFileHead.object.num; i++) {
         u32 j;
+        /* a camera or a light shares its storage with the mesh: its bytes are not a child count */
+        if (sObjects[i].type == HSF_OBJ_CAMERA || sObjects[i].type == HSF_OBJ_LIGHT) {
+            continue;
+        }
         for (j = 0; j < sObjects[i].mesh.childNum; j++) {
-            if (sObjects[i].mesh.child != NULL && sObjects[i].mesh.child[j] != NULL) {
-                sObjects[i].mesh.child[j]->mesh.parent = &sObjects[i];
+            HSFOBJECT *child = (sObjects[i].mesh.child != NULL) ? sObjects[i].mesh.child[j] : NULL;
+
+            if (child != NULL && child->type != HSF_OBJ_CAMERA && child->type != HSF_OBJ_LIGHT) {
+                child->mesh.parent = &sObjects[i];
             }
         }
     }

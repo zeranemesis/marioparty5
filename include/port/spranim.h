@@ -14,6 +14,9 @@ ANIMDATA *PortSprAnimRead(void *file);
 ANIMDATA *PortSprAnimFind(const void *file);
 /* Called before an animation is freed, so its file can be converted again. */
 void PortSprAnimForget(const ANIMDATA *anim);
+/* Called when a file buffer is freed / when a block group is freed: its animations must not be found again. */
+void PortSprAnimForgetFile(const void *file);
+void PortSprAnimForgetNum(u32 num);
 
 #ifdef __cplusplus
 }

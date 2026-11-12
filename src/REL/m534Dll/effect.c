@@ -68,10 +68,10 @@ static void fn_1_64EC(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
         switch (data->time) {
             case 0:
                 data->time++;
-                data->accel.x = 0.8 * (3.0517578125e-05 * (f32) ((s32) (frand() & 0xFFFF) - 0x8000));
-                data->accel.y = 0.1 + 0.2 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF));
-                data->accel.z = 0.8 * (3.0517578125e-05 * (f32) ((s32) (frand() & 0xFFFF) - 0x8000));
-                data->scale = 10.0 + 40.0 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF));
+                data->accel.x = 0.8 * (3.0517578125e-05 * (f32) ((s32) (FRAND16() & 0xFFFF) - 0x8000));
+                data->accel.y = 0.1 + 0.2 * (1.52587890625e-05 * (f32) (s32) (FRAND16() & 0xFFFF));
+                data->accel.z = 0.8 * (3.0517578125e-05 * (f32) ((s32) (FRAND16() & 0xFFFF) - 0x8000));
+                data->scale = 10.0 + 40.0 * (1.52587890625e-05 * (f32) (s32) (FRAND16() & 0xFFFF));
                 data->zRot = 0.0f;
                 data->color.a = 0xB4;
             case 1:
@@ -145,7 +145,7 @@ static void fn_1_69E4(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
         switch (data->time) {
             case 0:
                 data->time++;
-                data->scale = 5.0 + 5.0 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF));
+                data->scale = 5.0 + 5.0 * (1.52587890625e-05 * (f32) (s32) (FRAND16() & 0xFFFF));
                 data->zRot = 0.0f;
                 data->color.a = 0x32;
             case 1:

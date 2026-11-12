@@ -1,6 +1,9 @@
 #include "game/memory.h"
 #include "game/init.h"
 #include "dolphin/os.h"
+#ifdef TARGET_PC
+#include "port/spranim.h"
+#endif
 
 static u32 HeapSizeTbl[HEAP_MAX] = { 0x200000, 0xC0000, 0xB00000, 0x580000, 0 };
 static void *HeapTbl[HEAP_MAX];
@@ -101,6 +104,9 @@ void HuMemDirectFree(void *ptr)
         mflr retaddr
     }
 #endif
+#ifdef TARGET_PC
+    PortSprAnimForgetFile(ptr);
+#endif
     HuMemMemoryFree(ptr, retaddr);
 }
 
@@ -113,6 +119,9 @@ void HuMemDirectFreeNum(HEAPID heap, u32 num)
     asm {
         mflr retaddr
     }
+#endif
+#ifdef TARGET_PC
+    PortSprAnimForgetNum(num);
 #endif
     HuMemMemoryFreeNum(HeapTbl[heap], num, retaddr);
 }

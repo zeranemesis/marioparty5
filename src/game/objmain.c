@@ -90,7 +90,8 @@ static void omWatchOverlayProc(void)
                  * of watching for children that will never exist; giving up
                  * after twice avoids bouncing between two absent overlays.
                  */
-                if(omcurdll < 0 || omDLLinfoTbl[omcurdll]->handle == NULL) {
+                /* an overlay that returned from its own prolog (omOvlKill) has already released its DLL */
+                if(omcurovl != DLL_NONE && (omcurdll < 0 || omDLLinfoTbl[omcurdll]->handle == NULL)) {
                     static OMOVL missingOvl = DLL_NONE;
                     OMOVL failedOvl = omcurovl;
                     OSReport("objman>overlay %d is not part of this build\n", failedOvl);

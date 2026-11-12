@@ -594,10 +594,10 @@ void fn_1_48C8(OMOBJ *obj)
         p->target = NULL;
         if (changed != 0) {
             p->wait = info->holdWait;
-            if (1.52587890625e-05 * (f64)(f32)(s32)frand() <= info->chance) {
+            if (1.52587890625e-05 * (f64)(f32)(s32)FRAND16() <= info->chance) {
                 fn_1_A080(p->item, NULL, &p->dest);
             } else {
-                rnd = 1.52587890625e-05 * (f64)(f32)(s32)frand();
+                rnd = 1.52587890625e-05 * (f64)(f32)(s32)FRAND16();
                 fn_1_A338((s32)(4.0 * rnd), &p->dest);
             }
         }

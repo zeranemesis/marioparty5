@@ -30,6 +30,7 @@ float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 #ifdef TARGET_PC
 #include "port/dolassets.h"
+#include "port/spranim.h"
 #else
 #include "refMapData0.inc"
 #include "refMapData1.inc"
@@ -391,7 +392,12 @@ void Hu3DAllKill(void)
     Hu3DCameraAllKill();
     Hu3DLightAllKill();
     Hu3DAnimAllKill();
+#ifdef TARGET_PC
+    /* the default map is the animation converted from refMapData0, not the file itself: freeing it left a stale cache entry */
+    if(reflectAnim[0] != PortSprAnimFind(refMapData0)) {
+#else
     if(reflectAnim[0] != (void *)refMapData0) {
+#endif
         HuMemDirectFree(reflectAnim[0]);
     }
     reflectAnim[0] = HuSprAnimRead(refMapData0);

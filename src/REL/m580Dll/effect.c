@@ -148,9 +148,9 @@ void fn_1_DA00(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
         switch (pd->time) {
             case 0:
                 pd->time++;
-                pd->vel.x = 2.0 * (3.0517578125e-05 * (f32)(frand() - 0x8000));
-                pd->vel.y = 5.0 + 2.0 * (1.52587890625e-05 * (f32)frand());
-                pd->vel.z = 2.0 * (3.0517578125e-05 * (f32)(frand() - 0x8000));
+                pd->vel.x = 2.0 * (3.0517578125e-05 * (f32)(FRAND16() - 0x8000));
+                pd->vel.y = 5.0 + 2.0 * (1.52587890625e-05 * (f32)FRAND16());
+                pd->vel.z = 2.0 * (3.0517578125e-05 * (f32)(FRAND16() - 0x8000));
                 pd->color.r = 0xFF;
                 pd->color.g = 0xFF;
                 pd->color.b = 0xFF;
@@ -201,9 +201,9 @@ void fn_1_DD18(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
         switch (pd->time) {
             case 0:
                 pd->time++;
-                pd->vel.x = 2.0 * (3.0517578125e-05 * (f32)(frand() - 0x8000));
-                pd->vel.y = 5.0 + 2.0 * (1.52587890625e-05 * (f32)frand());
-                pd->vel.z = 2.0 * (3.0517578125e-05 * (f32)(frand() - 0x8000));
+                pd->vel.x = 2.0 * (3.0517578125e-05 * (f32)(FRAND16() - 0x8000));
+                pd->vel.y = 5.0 + 2.0 * (1.52587890625e-05 * (f32)FRAND16());
+                pd->vel.z = 2.0 * (3.0517578125e-05 * (f32)(FRAND16() - 0x8000));
                 pd->color.r = 0xE0;
                 pd->color.g = 0xE0;
                 pd->color.b = 0x80;

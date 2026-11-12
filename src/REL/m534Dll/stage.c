@@ -372,7 +372,7 @@ void fn_1_4114(s32 slot)
             s->splashOn[i] = 1;
             model = obj->mdlId[i + 10];
             Hu3DModelPosSetV(model, &lbl_1_data_208[slot]);
-            Hu3DModelRotSet(model, 0.0f, 360.0 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF)), 0.0f);
+            Hu3DModelRotSet(model, 0.0f, 360.0 * (1.52587890625e-05 * (f32) (s32) (FRAND16() & 0xFFFF)), 0.0f);
             Hu3DModelAttrReset(model, 1);
             Hu3DModelAttrReset(model, 0x40000002);
             Hu3DMotionTimeSet(model, 0.0f);
@@ -880,7 +880,7 @@ static void fn_1_5F94(void)
     f32 off;
 
     pos.y = s->footY + (640.0 + 10.0 * (3.0517578125e-05 * M534_RND16));
-    vel.y = 0.2 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF)) - 1.5;
+    vel.y = 0.2 * (1.52587890625e-05 * (f32) (s32) (FRAND16() & 0xFFFF)) - 1.5;
     ang = s->footRotY;
     sn = sin(3.141592653589793 * ang / 180.0);
     cs = cos(3.141592653589793 * ang / 180.0);

@@ -137,6 +137,32 @@ void PortSprAnimForget(const ANIMDATA *anim)
     }
 }
 
+/* A buffer freed without HuSprAnimKill (HuMemDirectFree) may be reallocated at the same address with other content. */
+void PortSprAnimForgetFile(const void *file)
+{
+    u32 i;
+
+    for (i = 0; i < SPRANIM_CACHE_MAX; i++) {
+        if (sCache[i].file == file) {
+            sCache[i].file = NULL;
+            sCache[i].anim = NULL;
+        }
+    }
+}
+
+/* An overlay frees its heaps by memory number without killing its animations: forget those living in them. */
+void PortSprAnimForgetNum(u32 num)
+{
+    u32 i;
+
+    for (i = 0; i < SPRANIM_CACHE_MAX; i++) {
+        if (sCache[i].anim != NULL && (HuMemNumGet(sCache[i].anim) == num || HuMemNumGet((void *)sCache[i].file) == num)) {
+            sCache[i].file = NULL;
+            sCache[i].anim = NULL;
+        }
+    }
+}
+
 ANIMDATA *PortSprAnimRead(void *file)
 {
     const u8 *base = file;

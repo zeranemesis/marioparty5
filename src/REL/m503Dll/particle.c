@@ -70,11 +70,11 @@ void fn_1_C6A4(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
         switch (data->time) {
             case 0:
                 data->time++;
-                data->accel.x = 0.8 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->accel.y = 5.0 + 0.5 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
-                data->accel.z = 0.8 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->scale = 200.0 + 40.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
-                data->zRot = 360.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
+                data->accel.x = 0.8 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->accel.y = 5.0 + 0.5 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
+                data->accel.z = 0.8 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->scale = 200.0 + 40.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
+                data->zRot = 360.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
                 data->color.a = 0xB4;
             case 1:
                 data->scale += 10.0f;
@@ -207,11 +207,11 @@ void fn_1_CEB0(HuVecF *pos)
         if (data->time < 0) {
             data->time = 1;
             data->pos = *pos;
-            data->accel.x = 0.6 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-            data->accel.y = 2.0 + 0.5 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
-            data->accel.z = 0.6 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-            data->scale = 300.0 + 40.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
-            data->zRot = 360.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
+            data->accel.x = 0.6 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+            data->accel.y = 2.0 + 0.5 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
+            data->accel.z = 0.6 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+            data->scale = 300.0 + 40.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
+            data->zRot = 360.0 * (1.52587890625e-05 * (f64)(f32)(s32)FRAND16());
             data->color.a = 0xA0;
             return;
         }

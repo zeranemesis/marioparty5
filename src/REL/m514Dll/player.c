@@ -706,14 +706,14 @@ void fn_1_3D6C(OMOBJ *obj)
     switch (p->unk28) {
         case 0:
             p->unk28++;
-            p->comTimer = (s32)((f64)com->waitBase + (f64)com->waitRange * (1.52587890625e-05 * (f64)(f32)frand()));
+            p->comTimer = (s32)((f64)com->waitBase + (f64)com->waitRange * (1.52587890625e-05 * (f64)(f32)FRAND16()));
             /* fallthrough */
         case 1:
             p->comTimer--;
             if (p->comTimer <= 0) {
                 p->padDown = 0x300;
                 p->padBtn = 0x300;
-                p->comTimer = (s32)((f64)com->holdBase + (f64)com->holdRange * (1.52587890625e-05 * (f64)(f32)frand()));
+                p->comTimer = (s32)((f64)com->holdBase + (f64)com->holdRange * (1.52587890625e-05 * (f64)(f32)FRAND16()));
             }
             return;
     }

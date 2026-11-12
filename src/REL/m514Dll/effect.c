@@ -510,14 +510,14 @@ void fn_1_728C(HU3DMODEL *modelP, HU3DPARTICLE *par, Mtx mtx)
         switch (data->time) {
             case 0:
                 data->time++;
-                data->pos.x = data->pos.x + 100.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->pos.y = data->pos.y + 30.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->pos.z = data->pos.z + 100.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->accel.x = 2.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->accel.y = 1.0 + 0.2 * (1.52587890625e-05 * (f64)(f32)frand());
-                data->accel.z = 0.8 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
-                data->scale = 80.0 + 30.0 * (1.52587890625e-05 * (f64)(f32)frand());
-                data->zRot = 360.0 * (1.52587890625e-05 * (f64)(f32)frand());
+                data->pos.x = data->pos.x + 100.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->pos.y = data->pos.y + 30.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->pos.z = data->pos.z + 100.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->accel.x = 2.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->accel.y = 1.0 + 0.2 * (1.52587890625e-05 * (f64)(f32)FRAND16());
+                data->accel.z = 0.8 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
+                data->scale = 80.0 + 30.0 * (1.52587890625e-05 * (f64)(f32)FRAND16());
+                data->zRot = 360.0 * (1.52587890625e-05 * (f64)(f32)FRAND16());
                 data->color.a = 0xC8;
                 /* fallthrough */
             case 1:
@@ -713,9 +713,9 @@ void fn_1_7EBC(HuVecF *pos)
             sp->t2 = frand();
             sp->t3 = frand();
             *(u32 *)&sp->col = 0xFFFFFFFF;
-            sp->size = 40.0 + 20.0 * (1.52587890625e-05 * (f64)(f32)frand());
-            sp->x = (pos->x + 30.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000))) - 50.0;
-            sp->y = pos->y + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            sp->size = 40.0 + 20.0 * (1.52587890625e-05 * (f64)(f32)FRAND16());
+            sp->x = (pos->x + 30.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000))) - 50.0;
+            sp->y = pos->y + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)FRAND16() - 0x8000));
             sp->z = pos->z - 100.0;
             return;
         }
