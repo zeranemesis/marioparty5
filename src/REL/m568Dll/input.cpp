@@ -359,7 +359,7 @@ void fn_1_69E0(InputObj *self, InputOut *out, SceneNode *actor)
     if (fn_1_6E94(self, out, actor) == 0) {
         target = fn_1_65C4();
         if (target != 0) {
-            fn_1_D0A0(&facing, pos, actor->dirY);
+            fn_1_D0A0(&facing, pos, actor->radius);
             dz = target->pos.z - pos->z;
             dx = target->pos.x - pos->x;
             if ((dz * dz + dx * dx) < (f32)(lbl_1_data_264 * lbl_1_data_264)) {
@@ -477,7 +477,7 @@ void fn_1_7110(InputObj *self, InputOut *out, SceneNode *actor, SceneNode *targe
     s32 dir;
 
     pos = &actor->pos;
-    fn_1_D0A0(&facing, pos, actor->dirY);
+    fn_1_D0A0(&facing, pos, actor->radius);
     tpos = &target->pos;
     skill = self->skill;
     d = actor->pos.x - target->pos.x;
@@ -595,7 +595,7 @@ void fn_1_76BC(AiInput *self, InputOut *out, SceneNode *actor)
     pos = &actor->pos;
     t = fn_1_7998(self, pos);
     if (t != 0) {
-        fn_1_D0A0(&facing, pos, actor->dirY);
+        fn_1_D0A0(&facing, pos, actor->radius);
         dx = t->pos.x - actor->pos.x;
         if (dx < -1.0f) {
             v = -1.0f;

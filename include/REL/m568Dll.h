@@ -32,6 +32,12 @@ struct M568PosOwner {
     M568PosSource src;  // 0x10
 };
 
+// Sphere: centre and radius.
+struct M568Sphere {
+    Vec pos;
+    f32 radius;
+};
+
 // Element of the lbl_1_bss_9F4 list (the octtree effects).
 struct M568Effect {
     M568Link link;     // 0x00
@@ -53,7 +59,7 @@ struct SceneNode {
     s32 slot;          // 0x0C
     u8 pad10[0x64];
     Vec pos;           // 0x74
-    f32 dirY;          // 0x80
+    f32 radius;        // 0x80 (pos/radius form a sphere)
     u8 pad84[0xC];
     Vec vel;           // 0x90
     u8 pad9C[0x1C];

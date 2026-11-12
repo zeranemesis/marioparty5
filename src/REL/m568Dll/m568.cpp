@@ -1533,12 +1533,6 @@ f32 fn_1_55E0(f32 from, f32 to)
 
 // ---------------------------------------------------------------- shadow / collision helpers
 
-// Sphere: centre and radius.
-typedef struct M568Sphere_s {
-    Vec pos;
-    f32 radius;
-} M568Sphere;
-
 inline f32 M568SphereRadius(M568Sphere *s)
 {
     return s->radius;
