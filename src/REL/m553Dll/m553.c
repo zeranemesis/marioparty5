@@ -56,6 +56,7 @@ typedef struct M553Shadow_s {
     HuVecF target;
     HuVecF dir;
     HuVecF up;
+    HuVecF unk3C;
     f32 dist;
     f32 tpLvl;
 } M553SHADOW;
@@ -72,6 +73,10 @@ typedef struct M553ParWork_s {
     f32 alphaDelta;
     f32 colorFactor;
 } M553PARWORK;
+
+typedef struct M553Pair_s {
+    s16 v[5];
+} M553Pair;
 
 typedef struct M553Fade_s {
     u8 pad00[0xC];
@@ -230,7 +235,7 @@ M553CAM *lbl_1_bss_14;
 s32 lbl_1_bss_18[0x118];
 s32 lbl_1_bss_478[5];
 M553FADE lbl_1_bss_48C[2];
-s16 lbl_1_bss_7E8[10];
+M553Pair lbl_1_bss_7E8[2];
 s32 lbl_1_bss_7FC[0x3B8];
 OMOBJMAN *lbl_1_bss_1EE0;
 void *lbl_1_bss_1EE8;
@@ -277,7 +282,7 @@ void ObjectSetup(void)
     fn_1_E234(0, lbl_1_data_28[lbl_1_bss_16DC.unk06]);
     fn_1_E234(1, lbl_1_data_28[lbl_1_bss_16DC.unk22]);
     for (i = 0; i < 2; i++) {
-        fn_1_E254(i, &lbl_1_bss_7E8[i * 5]);
+        fn_1_E254(i, &lbl_1_bss_7E8[i]);
     }
     omAddObjEx(lbl_1_bss_1EE0, 0x7FDA, 0, 0, -1, fn_1_E844);
     omAddObjEx(lbl_1_bss_1EE0, 0x7FDA, 0, 0, -1, fn_1_478);
@@ -463,13 +468,14 @@ void fn_1_14F4(M553SHADOW *shadow)
 s32 fn_1_1880(f32 *value, f32 time, f32 from, f32 to)
 {
     f32 step;
-    f32 absA;
     f32 absB;
+    f32 absA;
     s32 ret = 0;
 
     step = (to - from) / time;
     *value += step;
-    if (step != 0.0f) {
+    if (step == 0.0f) {
+    } else {
         ret = (s32)((to - *value) / step);
     }
     ret += 1;
@@ -483,7 +489,7 @@ s32 fn_1_1880(f32 *value, f32 time, f32 from, f32 to)
     } else {
         absB = from - (-1.0f * *value);
     }
-    if (absA <= absB) {
+    if (step <= absB) {
         *value = to;
         ret = 0;
     }
@@ -493,13 +499,14 @@ s32 fn_1_1880(f32 *value, f32 time, f32 from, f32 to)
 s32 fn_1_19A0(f32 *value, f32 time, f32 from, f32 to)
 {
     f32 step;
-    f32 absA;
     f32 absB;
+    f32 absA;
     s32 ret = 0;
 
     step = (to - from) / time;
     *value += step;
-    if (step != 0.0f) {
+    if (step == 0.0f) {
+    } else {
         ret = (s32)((to - *value) / step);
     }
     ret += 1;
@@ -513,7 +520,7 @@ s32 fn_1_19A0(f32 *value, f32 time, f32 from, f32 to)
     } else {
         absB = from - (-1.0f * *value);
     }
-    if (absA <= absB) {
+    if (step <= absB) {
         ret = 0;
     }
     return ret;
@@ -595,70 +602,86 @@ void fn_1_1F10(void)
 
 void fn_1_1F14(s16 pad)
 {
+    s8 x;
+    s8 y;
+    s8 sx;
+    s8 sy;
+    u16 btn;
     s32 btnDown;
-    s8 stkX;
-    s8 stkY;
-    s8 subX;
-    s8 subY;
-    s8 absX;
-    s8 absY;
-    s8 absSubX;
-    s8 absSubY;
-    u16 btn = HuPadBtn[pad];
 
+    btn = HuPadBtn[pad];
     btnDown = HuPadBtnDown[pad];
-    absX = (HuPadStkX[pad] >= 0) ? HuPadStkX[pad] : -HuPadStkX[pad];
-    stkX = (absX < 10) ? 0 : HuPadStkX[pad];
-    absY = (HuPadStkY[pad] >= 0) ? HuPadStkY[pad] : -HuPadStkY[pad];
-    stkY = (absY < 10) ? 0 : HuPadStkY[pad];
-    absSubX = (HuPadSubStkX[pad] >= 0) ? HuPadSubStkX[pad] : -HuPadSubStkX[pad];
-    subX = (absSubX < 8) ? 0 : HuPadSubStkX[pad];
-    absSubY = (HuPadSubStkY[pad] >= 0) ? HuPadSubStkY[pad] : -HuPadSubStkY[pad];
-    subY = (absSubY < 8) ? 0 : HuPadSubStkY[pad];
-    if (btn & 0x400) {
-        CZoom += 20.0f;
+    {
+        s32 absX;
+        s8 stkX;
+        s32 absY;
+        s8 stkY;
+        s32 absSX;
+        s8 subX;
+        s32 absSY;
+        s8 subY;
+
+        x = HuPadStkX[pad];
+        absX = (x >= 0) ? x : -x;
+        stkX = (absX < 10) ? 0 : x;
+        x = stkX;
+        y = HuPadStkY[pad];
+        absY = (y >= 0) ? y : -y;
+        stkY = (absY < 10) ? 0 : y;
+        y = stkY;
+        sx = HuPadSubStkX[pad];
+        absSX = (sx >= 0) ? sx : -sx;
+        subX = (absSX < 8) ? 0 : sx;
+        sx = subX;
+        sy = HuPadSubStkY[pad];
+        absSY = (sy >= 0) ? sy : -sy;
+        subY = (absSY < 8) ? 0 : sy;
+        sy = subY;
+        if (btn & 0x400) {
+            CZoom += 20.0f;
+        }
+        if (btn & 0x800) {
+            CZoom -= 20.0f;
+        }
+        if (x > 0) {
+            Center.x += 10.0f;
+        }
+        if (x < 0) {
+            Center.x -= 10.0f;
+        }
+        if (y > 0) {
+            Center.y += 10.0f;
+        }
+        if (y < 0) {
+            Center.y -= 10.0f;
+        }
+        if (sx > 0) {
+            CRot.y += 1.0f;
+        }
+        if (sx < 0) {
+            CRot.y -= 1.0f;
+        }
+        if (sy > 0) {
+            CRot.x += 1.0f;
+        }
+        if (sy < 0) {
+            CRot.x -= 1.0f;
+        }
+        if (btn & 0x2000) {
+            CRot.z += 1.0f;
+        }
+        if (btn & 0x4000) {
+            CRot.z -= 1.0f;
+        }
+        if (btn & 8) {
+            Center.z += 10.0f;
+        }
+        if (btn & 4) {
+            Center.z -= 10.0f;
+        }
+        print8(25, 30, 1.5f, lbl_1_data_2B6, Center.x, Center.y, Center.z, CZoom);
+        print8(25, 48, 1.5f, lbl_1_data_2DB, CRot.x, CRot.y, CRot.z);
     }
-    if (btn & 0x800) {
-        CZoom -= 20.0f;
-    }
-    if (stkX > 0) {
-        Center.x += 10.0f;
-    }
-    if (stkX < 0) {
-        Center.x -= 10.0f;
-    }
-    if (stkY > 0) {
-        Center.y += 10.0f;
-    }
-    if (stkY < 0) {
-        Center.y -= 10.0f;
-    }
-    if (subX > 0) {
-        CRot.y += 1.0f;
-    }
-    if (subX < 0) {
-        CRot.y -= 1.0f;
-    }
-    if (subY > 0) {
-        CRot.x += 1.0f;
-    }
-    if (subY < 0) {
-        CRot.x -= 1.0f;
-    }
-    if (btn & 0x2000) {
-        CRot.z += 1.0f;
-    }
-    if (btn & 0x4000) {
-        CRot.z -= 1.0f;
-    }
-    if (btn & 8) {
-        Center.z += 10.0f;
-    }
-    if (btn & 4) {
-        Center.z -= 10.0f;
-    }
-    print8(25, 30, 1.5f, lbl_1_data_2B6, Center.x, Center.y, Center.z, CZoom);
-    print8(25, 48, 1.5f, lbl_1_data_2DB, CRot.x, CRot.y, CRot.z);
 }
 
 void fn_1_23CC(void)
@@ -750,21 +773,26 @@ void fn_1_2B4C(HuVecF *pos)
 
 s16 fn_1_2D1C(s16 type, s16 life, M553PARWORK *work, f32 x, f32 y, f32 z, f32 scale, f32 scaleBase)
 {
-    s16 ret = -1;
-    HU3DPARTICLE *particle = Hu3DData[lbl_1_bss_1EEC].hookData;
-    s16 i;
     HU3DPARTICLEDATA *data;
+    HU3DPARTICLE *particle;
+    s16 i;
+    HU3DMODEL *model;
+    M553PARWORK *parWork;
+    s16 ret;
 
+    ret = -1;
+    model = &Hu3DData[lbl_1_bss_1EEC];
+    particle = model->hookData;
+    parWork = particle->work;
+    i = 0;
     data = particle->data;
-    for (i = 0; i < particle->maxCnt; i++, data++) {
+    for (; i < particle->maxCnt; i++, data++) {
         if (data->scale == 0.0f) {
-            ((M553PARWORK *)particle->work)[i] = *work;
+            parWork[i] = *work;
             data->pos.x = x;
             data->pos.y = y;
             data->pos.z = z;
-            data->vel.x = work->vel.x;
-            data->vel.y = work->vel.y;
-            data->vel.z = work->vel.z;
+            data->vel = work->vel;
             data->color.r = work->colorStart[0];
             data->color.g = work->colorStart[1];
             data->color.b = work->colorStart[2];
@@ -861,11 +889,11 @@ void fn_1_3350(s16 no)
     s8 *dst;
     s16 i;
 
-    model = &Hu3DData[lbl_1_bss_0[no + 1]->actor->mdlId];
-    dst = HuMemDirectMallocNum(HEAP_HEAP, model->hsf->materialNum * 3, HU_MEMNUM_OVL);
-    lbl_1_bss_48C[no].color = dst;
+    model = &Hu3DData[(lbl_1_bss_0 + no)[1]->actor->mdlId];
+    dst = lbl_1_bss_48C[no].color = HuMemDirectMallocNum(HEAP_HEAP, model->hsf->materialNum * 3, HU_MEMNUM_OVL);
+    i = 0;
     mat = model->hsf->material;
-    for (i = 0; i < model->hsf->materialNum; i++, mat++) {
+    for (; i < model->hsf->materialNum; i++, mat++) {
         *dst = mat->color[0];
         dst++;
         *dst = mat->color[1];
@@ -877,23 +905,22 @@ void fn_1_3350(s16 no)
 
 s32 fn_1_3448(s16 no, f32 rate)
 {
-    s32 ret = 0;
-    HU3DMODEL *model;
     HSFMATERIAL *mat;
-    M553FADE *fade;
+    HU3DMODEL *model;
     s16 i;
+    s32 ret;
 
-    model = &Hu3DData[lbl_1_bss_0[no + 1]->actor->mdlId];
-    fade = &lbl_1_bss_48C[no];
-    fade->rate = fade->rate * rate;
-    if (fade->rate < 0.9f) {
+    ret = 0;
+    model = &Hu3DData[(lbl_1_bss_0 + no)[1]->actor->mdlId];
+    if ((lbl_1_bss_48C[no].rate *= rate) < 0.9f) {
         ret = 1;
     }
+    i = 0;
     mat = model->hsf->material;
-    for (i = 0; i < model->hsf->materialNum; i++, mat++) {
-        mat->color[0] = (s32)((f32)mat->color[0] * rate);
-        mat->color[1] = (s32)((f32)mat->color[1] * rate);
-        mat->color[2] = (s32)((f32)mat->color[2] * rate);
+    for (; i < model->hsf->materialNum; i++, mat++) {
+        mat->color[0] = (f32)mat->color[0] * rate;
+        mat->color[1] = (f32)mat->color[1] * rate;
+        mat->color[2] = (f32)mat->color[2] * rate;
     }
     return ret;
 }
@@ -907,10 +934,11 @@ void fn_1_35B8(s16 no)
     s16 i;
 
     lbl_1_bss_48C[no].rate = 255.0f;
-    model = &Hu3DData[lbl_1_bss_0[no + 1]->actor->mdlId];
+    model = &Hu3DData[(lbl_1_bss_0 + no)[1]->actor->mdlId];
     src = lbl_1_bss_48C[no].color;
+    i = 0;
     mat = model->hsf->material;
-    for (i = 0; i < model->hsf->materialNum; i++, mat++) {
+    for (; i < model->hsf->materialNum; i++, mat++) {
         mat->color[0] = *src;
         src++;
         mat->color[1] = *src;
