@@ -12,9 +12,16 @@
 #include "game/process.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
+#include "game/sprite.h"
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef __MWERKS__
+#define M536_RODATA __declspec(section ".rodata")
+#else
+#define M536_RODATA
 #endif
 
 /* Intrusive list node every m536 work object starts with (see fn_1_1264/1330). */
