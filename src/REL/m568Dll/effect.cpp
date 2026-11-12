@@ -305,13 +305,13 @@ void fn_1_C234(void)
 
     while (1) {
         empty = 0;
-        if (lbl_1_bss_A44.prev == &lbl_1_bss_A44 && lbl_1_bss_A44.prev == lbl_1_bss_A44.next) {
+        if (lbl_1_bss_A44.next == &lbl_1_bss_A44 && lbl_1_bss_A44.next == lbl_1_bss_A44.prev) {
             empty = 1;
         }
         if (empty != 0) {
             break;
         }
-        p = (EffectPuff *)lbl_1_bss_A44.next;
+        p = (EffectPuff *)lbl_1_bss_A44.prev;
         if (p != 0) {
             Hu3DModelKill(p->modelId);
             if (p != 0) {
@@ -431,13 +431,13 @@ void fn_1_C788(void)
 
     while (1) {
         empty = 0;
-        if (lbl_1_bss_A58.prev == &lbl_1_bss_A58 && lbl_1_bss_A58.prev == lbl_1_bss_A58.next) {
+        if (lbl_1_bss_A58.next == &lbl_1_bss_A58 && lbl_1_bss_A58.next == lbl_1_bss_A58.prev) {
             empty = 1;
         }
         if (empty != 0) {
             break;
         }
-        p = (EffectPuff *)lbl_1_bss_A58.next;
+        p = (EffectPuff *)lbl_1_bss_A58.prev;
         if (p != 0) {
             Hu3DModelKill(p->modelId);
             if (p != 0) {
@@ -513,7 +513,7 @@ void fn_1_C908(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 void fn_1_CB5C(M568Link *head, void (*volatile fn)(EffectPuff *))
 {
     M568Link *h2 = head;
-    M568Link *first = head->prev;
+    M568Link *first = head->next;
     M568Link *first2 = first;
     fn_1_CC7C(first2, h2, fn);
 }
@@ -521,7 +521,7 @@ void fn_1_CB5C(M568Link *head, void (*volatile fn)(EffectPuff *))
 void fn_1_CBBC(M568Link *head, void (*volatile fn)(EffectPuff *))
 {
     M568Link *h2 = head;
-    M568Link *first = head->prev;
+    M568Link *first = head->next;
     M568Link *first2 = first;
     fn_1_CC1C(first2, h2, fn);
 }
@@ -531,7 +531,7 @@ void fn_1_CC1C(M568Link *first, M568Link *end, void (*fn)(EffectPuff *))
     M568Link *p = first;
     while (p != end) {
         fn((EffectPuff *)p);
-        p = p->prev;
+        p = p->next;
     }
 }
 
@@ -540,7 +540,7 @@ void fn_1_CC7C(M568Link *first, M568Link *end, void (*fn)(EffectPuff *))
     M568Link *p = first;
     while (p != end) {
         fn((EffectPuff *)p);
-        p = p->prev;
+        p = p->next;
     }
 }
 

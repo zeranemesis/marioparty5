@@ -10,8 +10,8 @@
 
 // Intrusive doubly-linked node (self-linked when unlinked).
 struct M568Link {
-    M568Link *prev;  // 0x00
-    M568Link *next;  // 0x04
+    M568Link *next;  // 0x00
+    M568Link *prev;  // 0x04
 };
 
 // Model handle wrapper: the first halfword is the Hu3D model id.

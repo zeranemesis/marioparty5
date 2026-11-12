@@ -50,9 +50,6 @@ extern void (*_dtors[])(void);
 
 // ---------------------------------------------------------------- types
 
-// The header's M568Link: the forward chain is the word at 0x00 ("prev"),
-// the backward chain the word at 0x04 ("next"); names run against the
-// traversal direction, only the offsets matter.
 typedef M568Link M568Node;
 
 // Camera pose: eye position, up vector, look-at target.
@@ -562,15 +559,15 @@ void fn_1_4DFC(void *ptr);
 
 void fn_1_187C(void *link)
 {
-    ((M568Node *)link)->prev = (M568Node *)link;
     ((M568Node *)link)->next = (M568Node *)link;
+    ((M568Node *)link)->prev = (M568Node *)link;
 }
 
 void *fn_1_1888(void *link, s16 flag)
 {
     if (link != 0) {
-        ((M568Node *)link)->prev->next = ((M568Node *)link)->next;
         ((M568Node *)link)->next->prev = ((M568Node *)link)->prev;
+        ((M568Node *)link)->prev->next = ((M568Node *)link)->next;
         if (flag > 0 && link != 0) {
             HuMemDirectFree(link);
         }
@@ -580,10 +577,10 @@ void *fn_1_1888(void *link, s16 flag)
 
 void fn_1_18F4(M568Node *self)
 {
-    self->prev->next = self->next;
     self->next->prev = self->prev;
-    self->prev = self;
+    self->prev->next = self->next;
     self->next = self;
+    self->prev = self;
 }
 
 // Insert `self` right after `other`.
@@ -591,10 +588,10 @@ void fn_1_1918(M568Node *self, M568Node *other)
 {
     M568Node *at = other;
 
-    self->next = at;
-    self->prev = at->prev;
-    at->prev->next = self;
-    at->prev = self;
+    self->prev = at;
+    self->next = at->next;
+    at->next->prev = self;
+    at->next = self;
 }
 
 // Insert `self` right before `other`.
@@ -602,10 +599,10 @@ void fn_1_1948(M568Node *self, M568Node *other)
 {
     M568Node *at = other;
 
-    self->prev = at;
-    self->next = at->next;
-    at->next->prev = self;
-    at->next = self;
+    self->next = at;
+    self->prev = at->prev;
+    at->prev->next = self;
+    at->prev = self;
 }
 
 // Move every node of `self` in front of `other`.
@@ -617,19 +614,19 @@ void fn_1_1978(M568Node *self, M568Node *other)
     u8 empty;
 
     empty = 0;
-    if (self->prev == self && self->prev == self->next) {
+    if (self->next == self && self->next == self->prev) {
         empty = 1;
     }
     if (empty == 0) {
         dest = other;
-        first = self->prev;
-        last = self->next;
-        self->prev = self;
+        first = self->next;
+        last = self->prev;
         self->next = self;
-        first->next = dest->next;
-        last->prev = dest;
-        dest->next->prev = first;
-        dest->next = last;
+        self->prev = self;
+        first->prev = dest->prev;
+        last->next = dest;
+        dest->prev->next = first;
+        dest->prev = last;
     }
 }
 
@@ -641,21 +638,21 @@ void fn_1_1A00(M568Node *self, M568Cmp cmp)
     u8 empty;
 
     empty = 0;
-    if (self->prev == self && self->prev == self->next) {
+    if (self->next == self && self->next == self->prev) {
         empty = 1;
     }
     if (empty == 0) {
-        self->next->prev = 0;
-        node = fn_1_1AB8(cmp, self->prev);
-        self->prev = node;
+        self->prev->next = 0;
+        node = fn_1_1AB8(cmp, self->next);
+        self->next = node;
         tail = self;
         while (node != 0) {
-            node->next = tail;
+            node->prev = tail;
             tail = node;
-            node = node->prev;
+            node = node->next;
         }
-        self->next = tail;
-        tail->prev = self;
+        self->prev = tail;
+        tail->next = self;
     }
 }
 
@@ -668,7 +665,7 @@ M568Node *fn_1_1AB8(M568Cmp cmp, M568Node *list)
     if (list == 0) {
         return 0;
     }
-    if (list->prev == 0) {
+    if (list->next == 0) {
         return list;
     }
     second = fn_1_2160(list);
@@ -683,19 +680,19 @@ M568Node *fn_1_2160(M568Node *list)
     M568Node *fast;
     M568Node *second;
 
-    fast = list->prev;
+    fast = list->next;
     if (fast != 0) {
-        fast = fast->prev;
+        fast = fast->next;
     }
     while (fast != 0) {
-        list = list->prev;
-        fast = fast->prev;
+        list = list->next;
+        fast = fast->next;
         if (fast != 0) {
-            fast = fast->prev;
+            fast = fast->next;
         }
     }
-    second = list->prev;
-    list->prev = 0;
+    second = list->next;
+    list->next = 0;
     return second;
 }
 
@@ -707,21 +704,21 @@ M568Node *fn_1_21B4(M568Cmp cmp, M568Node *a, M568Node *b)
     tail = &head;
     while (a != 0 && b != 0) {
         if (cmp(a, b) != 0) {
-            tail->prev = a;
+            tail->next = a;
             tail = a;
-            a = a->prev;
+            a = a->next;
         } else {
-            tail->prev = b;
+            tail->next = b;
             tail = b;
-            b = b->prev;
+            b = b->next;
         }
     }
     if (a == 0) {
-        tail->prev = b;
+        tail->next = b;
     } else {
-        tail->prev = a;
+        tail->next = a;
     }
-    return head.prev;
+    return head.next;
 }
 
 // ---------------------------------------------------------------- task list
@@ -734,7 +731,7 @@ void fn_1_2260(s32 bit)
     M568Node *c;
     M568Node *nx;
 
-    b = lbl_1_bss_C.prev;
+    b = lbl_1_bss_C.next;
     c = b;
     t = (M568Task *)c;
     lbl_1_bss_14 = bit;
@@ -742,7 +739,7 @@ void fn_1_2260(s32 bit)
     while ((M568Node *)t != end) {
         t->flags |= 1 << bit;
         t->vtbl->onFlag(t, bit);
-        nx = t->link.prev;
+        nx = t->link.next;
         t = (M568Task *)nx;
     }
 }
@@ -756,7 +753,7 @@ s32 fn_1_22F8(void)
     M568Node *nx;
     s32 bit;
 
-    b = lbl_1_bss_C.prev;
+    b = lbl_1_bss_C.next;
     c = b;
     t = (M568Task *)c;
     end = &lbl_1_bss_C;
@@ -765,7 +762,7 @@ s32 fn_1_22F8(void)
         if ((t->flags & (1 << bit)) != 0) {
             return 0;
         }
-        nx = t->link.prev;
+        nx = t->link.next;
         t = (M568Task *)nx;
     }
     return 1;
@@ -779,13 +776,13 @@ void fn_1_2384(void)
     M568Node *c;
     M568Node *nx;
 
-    b = lbl_1_bss_C.prev;
+    b = lbl_1_bss_C.next;
     c = b;
     t = (M568Task *)c;
     end = &lbl_1_bss_C;
     while ((M568Node *)t != end) {
         t->vtbl->update(t);
-        nx = t->link.prev;
+        nx = t->link.next;
         t = (M568Task *)nx;
     }
 }
@@ -802,13 +799,13 @@ void fn_1_23F8(void)
 
     while (1) {
         empty = 0;
-        if (lbl_1_bss_C.prev == &lbl_1_bss_C && lbl_1_bss_C.prev == lbl_1_bss_C.next) {
+        if (lbl_1_bss_C.next == &lbl_1_bss_C && lbl_1_bss_C.next == lbl_1_bss_C.prev) {
             empty = 1;
         }
         if (empty != 0) {
             break;
         }
-        t = (M568Task *)lbl_1_bss_C.next;
+        t = (M568Task *)lbl_1_bss_C.prev;
         if (t != 0) {
             t->vtbl->dtor(t, 1);
         }
@@ -821,8 +818,8 @@ M568Task *fn_1_24C0(M568Task *self, s16 flag)
         self->vtbl = &lbl_1_data_23C;
         if (self != 0) {
             if (self != 0) {
-                self->link.prev->next = self->link.next;
                 self->link.next->prev = self->link.prev;
+                self->link.prev->next = self->link.next;
             }
         }
         if (flag > 0 && self != 0) {
@@ -1874,8 +1871,8 @@ void fn_1_606C(u32 *p, u32 words)
 
 void fn_1_60B8(void)
 {
-    lbl_1_bss_C.prev = &lbl_1_bss_C;
     lbl_1_bss_C.next = &lbl_1_bss_C;
+    lbl_1_bss_C.prev = &lbl_1_bss_C;
 #ifdef __MWERKS__
     __register_global_object(&lbl_1_bss_C, (void *)fn_1_6218, lbl_1_bss_0);
 #endif
@@ -1889,8 +1886,8 @@ void *fn_1_6218(M568Node *self, s16 flag)
 {
     if (self != 0) {
         if (self != 0) {
-            self->prev->next = self->next;
             self->next->prev = self->prev;
+            self->prev->next = self->next;
         }
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
