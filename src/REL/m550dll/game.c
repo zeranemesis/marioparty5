@@ -508,9 +508,8 @@ void fn_1_3904(s32 side)
                 }
                 if (lbl_1_bss_14AC.player[side].btnDown == 0x200) {
                     lbl_1_bss_1EC0[side] = 2;
-                    return;
                 }
-                return;
+                break;
             case 1:
                 if (lbl_1_bss_14AC.player[side].btnDown == 0x200) {
                     if (lbl_1_bss_14AC.winner == 0) {
@@ -594,8 +593,7 @@ void fn_1_3DD8(s32 side)
                 lbl_1_bss_14AC.modes[side + 1] = 1;
                 return;
             }
-        default:
-            return;
+            break;
         case 1:
             if (lbl_1_bss_14AC.motion[side].shiftState == 0) {
                 lbl_1_bss_14AC.modes[side + 1] = 2;
@@ -787,8 +785,8 @@ void fn_1_4C00(void)
     f32 time = -1.0f;
     s32 side;
     s32 i;
-    s16 *modelId;
     s32 count;
+    s16 *modelId;
 
     for (side = 0; side < 2; side++) {
         count = 0;
@@ -803,7 +801,7 @@ void fn_1_4C00(void)
                 count++;
             }
         }
-        if (count == 0 && lbl_1_bss_14AC.score[(side ^ 1) + 2] == 0x1E && (s32)MgSeqModeGet() == 5 && lbl_1_bss_14AC.modes[(side ^ 1) + 1] == 0) {
+        if (count == 0 && lbl_1_bss_14AC.score[(side ^ 1) + 2] == 0x1E && (count = MgSeqModeGet()) == 5 && lbl_1_bss_14AC.modes[(side ^ 1) + 1] == 0) {
             MgSeqModeNext();
             HuAudSStreamFadeOut(lbl_1_data_3B8, 0x3E8);
         }
