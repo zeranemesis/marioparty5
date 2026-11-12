@@ -2056,9 +2056,9 @@ void fn_1_72D0(M577Team *team)
     M577Sled *sled = p->sled;
     M577Pole *pole;
     M577StageVec *v;
-    M577StageVec q;
-    M577StageVec p2;
     M577StageVec p1;
+    M577StageVec p2;
+    M577StageVec q;
     f32 diff;
     f32 ad;
     f32 k;
@@ -2067,7 +2067,6 @@ void fn_1_72D0(M577Team *team)
     f32 t;
     s32 n;
     s32 i;
-    s32 j;
 
     if (team->done == 0) {
         fn_1_72A8(team);
@@ -2104,11 +2103,10 @@ void fn_1_72D0(M577Team *team)
     sled->pt.y += team->speed;
     n = team->course->count / 2 - 1;
     v = team->course->table;
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++, v += 2) {
         if (fn_1_B4D0(&sled->pt, v) != 0) {
             break;
         }
-        v += 2;
     }
     if (i == n) {
         if (p->timer == 0) {
@@ -2120,7 +2118,7 @@ void fn_1_72D0(M577Team *team)
         } else {
             v = team->course->table;
             q.y = sled->pt.y;
-            for (j = 0; j < n; j++) {
+            for (i = 0; i < n; i++, v += 2) {
                 p1.x = (v[0].x + v[1].x) * 0.5f;
                 p1.y = (v[0].y + v[1].y) * 0.5f;
                 p2.x = (v[2].x + v[3].x) * 0.5f;
@@ -2130,23 +2128,18 @@ void fn_1_72D0(M577Team *team)
                 if (fn_1_B4D0(&q, v) != 0) {
                     break;
                 }
-                v += 2;
             }
 #ifdef TARGET_PC
-            if (j == n) {
+            if (i == n) {
                 v -= 2;
             }
 #endif
             if (q.x > sled->pt.x) {
-                p1.x = v[0].x;
-                p1.y = v[0].y;
-                p2.x = v[2].x;
-                p2.y = v[2].y;
+                p1 = v[0];
+                p2 = v[2];
             } else {
-                p1.x = v[1].x;
-                p1.y = v[1].y;
-                p2.x = v[3].x;
-                p2.y = v[3].y;
+                p1 = v[1];
+                p2 = v[3];
             }
             fn_1_A754(&sled->line, &p1.x, &p2.x);
             sled->pos.x = fn_1_A9D0(&sled->line, q.y);
@@ -2233,9 +2226,9 @@ void fn_1_7D24(M577Team *team)
     M577Player *p;
     M577Sled *sled;
     M577StageVec *v;
-    M577StageVec q;
-    M577StageVec p2;
     M577StageVec p1;
+    M577StageVec p2;
+    M577StageVec q;
     f32 sumV;
     f32 maxX;
     f32 minX;
@@ -2245,7 +2238,6 @@ void fn_1_7D24(M577Team *team)
     s32 fail;
     s32 n;
     s32 i;
-    s32 j;
     s32 k;
 
     if (team->done == 0) {
@@ -2278,11 +2270,10 @@ void fn_1_7D24(M577Team *team)
         sled->pt.y += team->speed;
         n = team->course->count / 2 - 1;
         v = team->course->table;
-        for (i = 0; i < n; i++) {
+        for (i = 0; i < n; i++, v += 2) {
             if (fn_1_B4D0(&sled->pt, v) != 0) {
                 break;
             }
-            v += 2;
         }
         if (i == n) {
             if (p->timer == 0) {
@@ -2291,7 +2282,7 @@ void fn_1_7D24(M577Team *team)
             } else {
                 v = team->course->table;
                 q.y = sled->pt.y;
-                for (j = 0; j < n; j++) {
+                for (i = 0; i < n; i++, v += 2) {
                     p1.x = (v[0].x + v[1].x) * 0.5f;
                     p1.y = (v[0].y + v[1].y) * 0.5f;
                     p2.x = (v[2].x + v[3].x) * 0.5f;
@@ -2301,23 +2292,18 @@ void fn_1_7D24(M577Team *team)
                     if (fn_1_B4D0(&q, v) != 0) {
                         break;
                     }
-                    v += 2;
                 }
 #ifdef TARGET_PC
-                if (j == n) {
+                if (i == n) {
                     v -= 2;
                 }
 #endif
                 if (q.x > sled->pt.x) {
-                    p1.x = v[0].x;
-                    p1.y = v[0].y;
-                    p2.x = v[2].x;
-                    p2.y = v[2].y;
+                    p1 = v[0];
+                    p2 = v[2];
                 } else {
-                    p1.x = v[1].x;
-                    p1.y = v[1].y;
-                    p2.x = v[3].x;
-                    p2.y = v[3].y;
+                    p1 = v[1];
+                    p2 = v[3];
                 }
                 fn_1_A754(&sled->line, &p1.x, &p2.x);
                 sled->pos.x = fn_1_A9D0(&sled->line, q.y);
@@ -2414,9 +2400,9 @@ void fn_1_85F4(M577Team *team)
     M577Player *p = team->player[0];
     M577Sled *sled = p->sled;
     M577StageVec *v;
-    M577StageVec q;
     M577StageVec p1;
     M577StageVec p2;
+    M577StageVec q;
     f32 vol;
     f32 pan;
     f32 t;
@@ -2443,7 +2429,7 @@ void fn_1_85F4(M577Team *team)
             n = team->course->count / 2 - 1;
             v = team->course->table;
             q.y = sled->pt.y;
-            for (i = 0; i < n; i++) {
+            for (i = 0; i < n; i++, v += 2) {
                 p1.x = (v[0].x + v[1].x) * 0.5f;
                 p1.y = (v[0].y + v[1].y) * 0.5f;
                 p2.x = (v[2].x + v[3].x) * 0.5f;
@@ -2454,7 +2440,6 @@ void fn_1_85F4(M577Team *team)
                     sled->unk4C = q.x;
                     break;
                 }
-                v += 2;
             }
             sled->unk50 = sled->pt.x;
             sled->velX = 0.0f;
@@ -2521,9 +2506,9 @@ void fn_1_8BB8(M577Team *team)
     M577Player *p;
     M577Sled *sled;
     M577StageVec *v;
-    M577StageVec q;
     M577StageVec p1;
     M577StageVec p2;
+    M577StageVec q;
     f32 maxX;
     f32 minX;
     f32 vol;
@@ -2564,7 +2549,7 @@ void fn_1_8BB8(M577Team *team)
                 if (p->state != 0) {
                     v = team->course->table;
                     q.y = sled->pt.y;
-                    for (j = 0; j < n; j++) {
+                    for (j = 0; j < n; j++, v += 2) {
                         p1.x = (v[0].x + v[1].x) * 0.5f;
                         p1.y = (v[0].y + v[1].y) * 0.5f;
                         p2.x = (v[2].x + v[3].x) * 0.5f;
@@ -2575,7 +2560,6 @@ void fn_1_8BB8(M577Team *team)
                             sled->unk4C = q.x;
                             break;
                         }
-                        v += 2;
                     }
                     sled->unk50 = sled->pt.x;
                     sled->velX = 0.0f;
