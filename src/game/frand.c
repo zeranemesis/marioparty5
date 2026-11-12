@@ -36,6 +36,11 @@ f32 frandf(void) {
 u32 frandmod(u32 arg0) {
     u32 ret;
     frand_seed = frandom();
+#ifdef TARGET_PC
+    if(arg0 == 0) {
+        return 0; // PPC divwu by zero doesn't trap; x86 does
+    }
+#endif
     ret = (frand_seed & 0x7FFFFFFF)%arg0;
     return ret;
 }

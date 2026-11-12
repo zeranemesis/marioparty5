@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
 #include "game/board/main.h"
 #include "game/board/player.h"
 #include "game/board/masu.h"
@@ -179,6 +182,24 @@ void MBMasuKill(void)
     ptr = ((u8 *)ptr)+sizeof(HuVecF); \
 } while (0)
     
+#ifdef TARGET_PC
+// board data is stored big-endian
+#undef DATA_READ16
+#define DATA_READ16(ptr, dst) do {     (dst) = PORT_BE16(*((u16 *)(ptr)));     ptr = ((u8 *)ptr)+sizeof(u16); } while (0)
+
+#undef DATA_READLINK
+#define DATA_READLINK(ptr, dst) do {     (dst) = PORT_BE16(*((u16 *)(ptr)))+1;     ptr = ((u8 *)ptr)+sizeof(u16); } while (0)
+
+#undef DATA_READ32
+#define DATA_READ32(ptr, dst) do {     (dst) = PORT_BE32(*((u32 *)(ptr)));     ptr = ((u8 *)ptr)+sizeof(u32); } while (0)
+
+#undef DATA_READCOUNT
+#define DATA_READCOUNT(dataPtr, ptr, dst) do {     (dst) = PORT_BE32(*((u32 *)(dataPtr)));     ptr = ((u8 *)dataPtr)+sizeof(s32); } while (0)
+
+#undef DATA_READVEC
+#define DATA_READVEC(ptr, dst) do {     memcpy(&(dst), ptr, sizeof(HuVecF));     PORT_BE32_INPLACE(&(dst), 3);     ptr = ((u8 *)ptr)+sizeof(HuVecF); } while (0)
+#endif
+
 BOOL MBMasuDataRead(int layer, int dataNum)
 {
     MASU *masuP;

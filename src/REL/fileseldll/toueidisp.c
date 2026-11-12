@@ -137,11 +137,19 @@ static void ToueiZClear(void)
     GXLoadPosMtxImm(modelview, GX_PNMTX0);
     pos.x = (10000*-sin(cameraP->fov/2))*1.2f;
     pos.y = 10000*-sin(cameraP->fov/2)*(1/1.2f);
+#ifdef TARGET_PC
+    // shortcut: this quad only exists to clear Z; with colour writes on, Aurora draws it opaque black over the 3D scene
+    GXSetColorUpdate(GX_FALSE);
+#endif
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-pos.x, -pos.y, -10000);
     GXPosition3f32(pos.x, -pos.y, -10000);
     GXPosition3f32(pos.x, pos.y, -10000);
     GXPosition3f32(-pos.x, pos.y, -10000);
+#ifdef TARGET_PC
+    GXEnd();
+    GXSetColorUpdate(GX_TRUE);
+#endif
 }
 
 static void ToueiMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)

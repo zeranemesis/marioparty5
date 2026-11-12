@@ -215,6 +215,21 @@ static void PadADConv(s16 pad, PADStatus *status)
 {
     s16 stickX, stickY;
     s16 spA, sp8;
+#ifdef TARGET_PC
+    // the keyboard only has d-pad buttons; menus read stick-derived DStk, so fold the d-pad into it
+    PADStatus dpadStatus = *status;
+    if(status->button & PAD_BUTTON_LEFT) {
+        dpadStatus.stickX = -100;
+    } else if(status->button & PAD_BUTTON_RIGHT) {
+        dpadStatus.stickX = 100;
+    }
+    if(status->button & PAD_BUTTON_UP) {
+        dpadStatus.stickY = 100;
+    } else if(status->button & PAD_BUTTON_DOWN) {
+        dpadStatus.stickY = -100;
+    }
+    status = &dpadStatus;
+#endif
     spA = 0;
     sp8 = 0;
     stickX = abs(status->stickX);

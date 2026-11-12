@@ -169,7 +169,15 @@ target_compile_definitions(dol PRIVATE TARGET_DOL)
 # RELs link against dol like a GameCube module links against main.dol: every
 # function is exported, and shared data is marked SHARED_SYM (dllexport/dllimport).
 set_target_properties(dol PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-target_link_libraries(dol PUBLIC aurora::core aurora::card aurora::dvd aurora::gx aurora::mtx aurora::os aurora::si aurora::vi aurora::pad musyx absl::flat_hash_map nlohmann_json::nlohmann_json fmt::fmt rmlui_debugger)
+if (MSVC)
+    # also export aurora's GX API so RELs share dol's GX state instead of embedding their own copy
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/gx_exports.def
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_gx_def.py ${CMAKE_BINARY_DIR}/gx_exports.def $<TARGET_FILE:aurora_gx> $<TARGET_FILE:aurora_os> $<TARGET_FILE:aurora_vi> $<TARGET_FILE:aurora_pad> $<TARGET_FILE:aurora_si> $<TARGET_FILE:aurora_dvd> $<TARGET_FILE:aurora_card>
+        DEPENDS aurora_gx aurora_os aurora_vi aurora_pad aurora_si aurora_dvd aurora_card ${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_gx_def.py)
+    target_sources(dol PRIVATE ${CMAKE_BINARY_DIR}/gx_exports.def)
+endif ()
+target_link_libraries(dol PRIVATE aurora::core aurora::card aurora::dvd aurora::gx aurora::mtx aurora::os aurora::si aurora::vi aurora::pad musyx absl::flat_hash_map nlohmann_json::nlohmann_json fmt::fmt rmlui_debugger)
 # TODO it doesn't work on Linux yet
 if (WIN32)
     if(USE_ASAN)
@@ -235,7 +243,7 @@ foreach (dir ${REL_TARGETS})
             # every REL module needs its own copy of these (see each file's comment):
             # empty _ctors/_dtors, and the progressive-scan render modes Aurora
             # declares but does not define
-            add_library(${dir} SHARED ${REL_SOURCE_FILES} src/port/rel_ctors.c src/port/gx_render_modes.c)
+            add_library(${dir} SHARED ${REL_SOURCE_FILES} src/port/rel_ctors.c src/port/gx_render_modes.c src/port/rel_vi.c)
             list(APPEND BINARY_TARGETS ${dir})
             if (USE_ASAN)
                 set_source_files_properties(${REL_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-fsanitize=address")
@@ -275,7 +283,7 @@ foreach (dir ${REL_TARGETS})
                 endif()
                 set_target_properties(${dir} PROPERTIES PREFIX "")
             endif ()
-            target_link_libraries(${dir} PRIVATE dol musyx aurora::mtx aurora::gx)
+            target_link_libraries(${dir} PRIVATE dol musyx aurora::mtx)
             add_dependencies(mp5native ${dir})
         endif ()
     endif ()
