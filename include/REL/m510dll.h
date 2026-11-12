@@ -94,7 +94,7 @@ typedef struct M510PlayerModelWork_s {
     s32 grp;                        //0x10
     OMOBJ *obj;                     //0x14
     s16 modelId;                    //0x18
-    u8 pad1A[2];                    //0x1A
+    u8 pad1A[0x2C - 0x1A];          //0x1A
     M510_PAD pad;                   //0x2C (+0x84)
     s16 motion;                     //0xB0
     s16 nextMotion;                 //0xB2
