@@ -826,9 +826,8 @@ void fn_1_111C(s16 mode, s16 frameNo)
 void fn_1_113C(OMOBJ *obj)
 {
     M528PLAYER *player;
-    M528MAIN *work;
-    s32 slotNo;
     s32 i;
+    M528MAIN *work;
 
     player = obj->data;
     work = lbl_1_bss_298->data;
@@ -840,9 +839,9 @@ void fn_1_113C(OMOBJ *obj)
     player->dif = GwPlayerConf[player->playerNo].dif;
     player->obj = obj;
     work->player[player->playerNo] = player;
-    slotNo = work->teamPlayer[player->grp][0] != NULL;
-    work->teamPlayer[player->grp][slotNo] = player;
-    player->slot = &work->team[player->grp].slot[slotNo];
+    i = work->teamPlayer[player->grp][0] != NULL;
+    work->teamPlayer[player->grp][i] = player;
+    player->slot = &work->team[player->grp].slot[i];
     *obj->mdlId = CharModelCreate(player->charNo, 2);
     for (i = 0; i < 8; i++) {
         obj->mtnId[i] = CharMotionCreate(player->charNo, lbl_1_data_28[player->charNo][i]);
@@ -1738,6 +1737,7 @@ void fn_1_3A00(M528MAIN *work)
 /* Camera blend from view 0 to view 1 over 100 frames. */
 s32 fn_1_3CA0(M528CAM *cam)
 {
+    f32 frac;
     f32 t;
     f32 u;
     s32 done;
@@ -1753,7 +1753,8 @@ s32 fn_1_3CA0(M528CAM *cam)
                 cam->state = 0;
                 done = 1;
             }
-            t = 1.0 - (0.5 + 0.5 * HuCos(180.0f * ((f32)cam->timer / 100.0f)));
+            frac = (f32)cam->timer / 100.0f;
+            t = 1.0 - (0.5 + 0.5 * HuCos(180.0f * frac));
             u = 1.0f - t;
             cam->rotX = lbl_1_data_2BC[0][3] * u + lbl_1_data_2BC[1][3] * t;
             cam->rotY = lbl_1_data_2BC[0][4] * u + lbl_1_data_2BC[1][4] * t;
@@ -1769,6 +1770,7 @@ s32 fn_1_3CA0(M528CAM *cam)
 /* Camera blend from view 1 to view 2 over 90 frames. */
 s32 fn_1_3EFC(M528CAM *cam)
 {
+    f32 frac;
     f32 t;
     f32 u;
     s32 done;
@@ -1784,7 +1786,8 @@ s32 fn_1_3EFC(M528CAM *cam)
                 cam->state = 0;
                 done = 1;
             }
-            t = 1.0 - (0.5 + 0.5 * HuCos(180.0f * ((f32)cam->timer / 90.0f)));
+            frac = (f32)cam->timer / 90.0f;
+            t = 1.0 - (0.5 + 0.5 * HuCos(180.0f * frac));
             u = 1.0f - t;
             cam->rotX = lbl_1_data_2BC[1][3] * u + lbl_1_data_2BC[2][3] * t;
             cam->rotY = lbl_1_data_2BC[1][4] * u + lbl_1_data_2BC[2][4] * t;
@@ -1800,6 +1803,7 @@ s32 fn_1_3EFC(M528CAM *cam)
 /* Camera blend from view 1 to view 3 over 90 frames. */
 s32 fn_1_4158(M528CAM *cam)
 {
+    f32 frac;
     f32 t;
     f32 u;
     s32 done;
@@ -1815,7 +1819,8 @@ s32 fn_1_4158(M528CAM *cam)
                 cam->state = 0;
                 done = 1;
             }
-            t = 1.0 - (0.5 + 0.5 * HuCos(180.0f * ((f32)cam->timer / 90.0f)));
+            frac = (f32)cam->timer / 90.0f;
+            t = 1.0 - (0.5 + 0.5 * HuCos(180.0f * frac));
             u = 1.0f - t;
             cam->rotX = lbl_1_data_2BC[1][3] * u + lbl_1_data_2BC[3][3] * t;
             cam->rotY = lbl_1_data_2BC[1][4] * u + lbl_1_data_2BC[3][4] * t;
