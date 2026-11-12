@@ -217,6 +217,27 @@ char lbl_1_bss_A50[12];
 PlNode lbl_1_bss_A5C;
 }
 
+static inline s16 PlId(PlModelId *p)
+{
+    return p->id;
+}
+
+#define PL_ITER_BEGIN                                         PlNode *pl_t1 = lbl_1_bss_A5C.next;                       PlNode *pl_t2 = pl_t1;                                    PlNode *n = pl_t2;                                        PlNode *pl_end = &lbl_1_bss_A5C;
+#define PL_ITER_NEXT              {                                 PlNode *pl_nx = n->next;         n = pl_nx;                }
+
+// singleton accessors (assert on a null instance)
+static inline void *PlCamera(void)
+{
+    PL_ASSERT(lbl_1_bss_A14 != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
+    return lbl_1_bss_A14;
+}
+
+static inline void *PlScore(void)
+{
+    PL_ASSERT(lbl_1_bss_9FC != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
+    return lbl_1_bss_9FC;
+}
+
 // ------------------------------------------------------------------ functions
 
 static inline s32 PlAngToS(f32 deg)
@@ -261,9 +282,10 @@ extern "C" f32 fn_1_8F00(f32 a, f32 b, f32 lim)
 // Start position of lane idx (the lanes are shuffled by fn_1_9104).
 extern "C" void fn_1_9064(HuVecF *out, s32 idx)
 {
+    f64 z = 100.0 + (750.0 + (f64)(lbl_1_data_370[idx] * 0x8C));
     out->x = -50.0f;
     out->y = 0.0f;
-    out->z = 100.0 + (750.0 + (f64)(lbl_1_data_370[idx] * 0x8C));
+    out->z = z;
 }
 
 extern "C" void fn_1_9104(void)
@@ -295,30 +317,38 @@ extern "C" void fn_1_91AC(void)
 
 extern "C" Player *fn_1_9250(Player *self, s32 idx)
 {
+    Player *self0 = self;
     s32 i;
     s16 hookMdl;
     char *hookName;
     s16 m;
-    PlPtmf t;
+    void *sc;
+    s16 padv;
+    u32 sz;
 
-    fn_1_1264(self);
+    fn_1_1264(self0);
     self->unk3C = 0;
     fn_1_2D18(&self->chr, GwPlayerConf[idx].charNo, 3);
     fn_1_2C94(&self->model2, 0x460006);
-    self->vibTimer = 0;
+    self->stepFlag = 0;
     self->unkA0 = 0;
-    self->mot.cap = 0;
-    self->mot.size = 0;
-    self->mot.data = 0;
+    {
+        PlVec *v = &self->mot;
+        PlVec *v2 = v;
+        v2->cap = 0;
+        v2->size = 0;
+        v2->data = 0;
+    }
     fn_1_1330(self, &lbl_1_bss_A5C);
     self->idx = idx;
     self->charNo = GwPlayerConf[idx].charNo;
     self->dif = GwPlayerConf[idx].dif;
     if (GwPlayerConf[idx].type != 0) {
-        self->pad = -1;
+        padv = -1;
     } else {
-        self->pad = GwPlayerConf[idx].padNo;
+        padv = GwPlayerConf[idx].padNo;
     }
+    self->pad = padv;
     self->hitWall = 0;
     self->angle = 0.0f;
     self->angVel = 0.0f;
@@ -336,17 +366,16 @@ extern "C" Player *fn_1_9250(Player *self, s32 idx)
     fn_1_9B08(self, 0x870090);
     fn_1_9B08(self, 0x8C006C);
     fn_1_9B08(self, 0x8C006D);
-    PL_ASSERT(self->mot.size == 4, lbl_1_data_38C, lbl_1_data_3AF, 0x95);
+    sz = self->mot.size;
+    PL_ASSERT(sz == 4, lbl_1_data_38C, lbl_1_data_3AF, 0x95);
     CharMotionDataClose((s16)self->charNo);
-    m = self->chr.id;
+    m = PlId(&self->chr);
     Hu3DModelShadowSet(m);
     Hu3DModelShadowDispOn(m);
     Hu3DModelLayerSet(m, 3);
     Hu3DModelCameraSet(m, 1);
     Hu3DModelAttrSet(m, 0x4000);
-    self->pos.x = -50.0f;
-    self->pos.y = 0.0f;
-    self->pos.z = 100.0 + (750.0 + (f64)(lbl_1_data_370[idx] * 0x8C));
+    fn_1_9064(&self->pos, idx);
     self->angle = fn_1_C91C(self);
     fn_1_C3C8(self);
     self->prevPos.x = self->pos.x;
@@ -360,17 +389,16 @@ extern "C" Player *fn_1_9250(Player *self, s32 idx)
     self->ticks = 1;
     self->radius = 750.0f;
     fn_1_2EF4(&self->chr, &self->pos);
-    t = lbl_1_data_380;
+    PlPtmf t = lbl_1_data_380;
     self->hook = t;
-    self->link = Hu3DModelLink(self->chr.id);
+    self->link = Hu3DModelLink(PlId(&self->chr));
     Hu3DModelShadowReset(self->link);
     Hu3DModelLayerSet(self->link, 0);
     Hu3DModelCameraSet(self->link, 1);
     Hu3DModelAttrReset(self->link, 1);
-    PL_ASSERT(lbl_1_bss_9FC != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
-    fn_1_DC94(lbl_1_bss_9FC, self->idx, self->charNo);
-    PL_ASSERT(lbl_1_bss_9FC != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
-    fn_1_DDDC(lbl_1_bss_9FC, self->idx, self->laps, self->ticks);
+    fn_1_DC94(PlScore(), self->idx, self->charNo);
+    sc = PlScore();
+    fn_1_DDDC(sc, self->idx, self->laps, self->ticks);
     self->hooks[0] = self->model2.id;
     self->hooks[1] = Hu3DModelLink(self->model2.id);
     self->hooks[2] = Hu3DModelLink(self->model2.id);
@@ -485,6 +513,7 @@ extern "C" Player *fn_1_9A14(Player *self, s16 flag)
     return self;
 }
 
+#pragma dont_inline on
 extern "C" s16 fn_1_9B08(Player *self, s32 dataNum)
 {
     s16 mot;
@@ -496,14 +525,20 @@ extern "C" s16 fn_1_9B08(Player *self, s32 dataNum)
     return mot;
 }
 
+#pragma dont_inline reset
+
 extern "C" void fn_1_9B84(void)
 {
     PlNode *first;
+    PlNode *t1;
+    PlNode *t2;
 
     fn_1_CB00(&lbl_1_bss_A5C, fn_1_A50C);
     fn_1_CB00(&lbl_1_bss_A5C, fn_1_A6E0);
     fn_1_9C20();
-    first = lbl_1_bss_A5C.next;
+    t1 = lbl_1_bss_A5C.next;
+    t2 = t1;
+    first = t2;
     if (first != &lbl_1_bss_A5C) {
         fn_1_12DC(first);
         fn_1_1330(first, &lbl_1_bss_A5C);
@@ -513,20 +548,21 @@ extern "C" void fn_1_9B84(void)
 // Ranks the players by distance covered (laps * 360 + angle round the oval).
 extern "C" void fn_1_9C20(void)
 {
-    s32 order[4] = { 0, 1, 2, 3 };
-    f32 dist[4];
     Player *pl[4];
-    PlNode *n;
-    s32 cnt;
+    f32 dist[4];
+    PlNode *t1 = lbl_1_bss_A5C.next;
+    PlNode *t2 = t1;
+    PlNode *n = t2;
+    PlNode *end = &lbl_1_bss_A5C;
+    s32 order[4] = { 0, 1, 2, 3 };
+    s32 cnt = 0;
     s32 i;
     s32 j;
     s32 rank;
-    f32 tf;
-    s32 ti;
+    f32 ta;
+    f32 tb;
 
-    n = lbl_1_bss_A5C.next;
-    cnt = 0;
-    while (n != &lbl_1_bss_A5C) {
+    while (n != end) {
         Player *p = (Player *)n;
 #ifdef TARGET_PC
         if (cnt >= 4) {
@@ -537,18 +573,23 @@ extern "C" void fn_1_9C20(void)
         dist[cnt] = p->posAngle + (f32)(p->laps * 0x168);
         p->rank = 0;
         cnt++;
-        n = n->next;
+        {
+            PlNode *nx = n->next;
+            n = nx;
+        }
     }
     if (fn_1_1F30() == 2) {
         for (i = 0; i < 3; i++) {
             for (j = 0; j < 3; j++) {
                 if (dist[j] < dist[j + 1]) {
-                    tf = dist[j];
-                    dist[j] = dist[j + 1];
-                    dist[j + 1] = tf;
-                    ti = order[j];
-                    order[j] = order[j + 1];
-                    order[j + 1] = ti;
+                    ta = dist[j];
+                    tb = dist[j + 1];
+                    dist[j] = tb;
+                    dist[j + 1] = ta;
+                    ta = order[j];
+                    tb = order[j + 1];
+                    order[j] = (s32)tb;
+                    order[j + 1] = (s32)ta;
                 }
             }
         }
@@ -565,18 +606,17 @@ extern "C" void fn_1_9C20(void)
 // Picks the winner (flag == 0) or tells whether all four have finished.
 extern "C" s32 fn_1_9EAC(u8 flag)
 {
-    PlNode *n;
     f32 best;
     s32 cnt;
 
-    n = lbl_1_bss_A5C.next;
+    PL_ITER_BEGIN
     cnt = 0;
     if (flag != 0) {
-        while (n != &lbl_1_bss_A5C) {
+        while (n != pl_end) {
             if (((Player *)n)->finished != 0) {
                 cnt++;
             }
-            n = n->next;
+            PL_ITER_NEXT
         }
         if (cnt >= 4) {
             return 1;
@@ -584,7 +624,7 @@ extern "C" s32 fn_1_9EAC(u8 flag)
         return 0;
     }
     best = -1.0f;
-    while (n != &lbl_1_bss_A5C) {
+    while (n != pl_end) {
         Player *p = (Player *)n;
         if (p->finished != 0 && p->finishPos > best) {
             if (lbl_1_bss_A4C != 0) {
@@ -595,26 +635,24 @@ extern "C" s32 fn_1_9EAC(u8 flag)
             lbl_1_bss_A4C = p;
             cnt++;
         }
-        n = n->next;
+        PL_ITER_NEXT
     }
     if (cnt == 0) {
         return 0;
     }
     fn_1_255C(lbl_1_bss_A4C->idx);
-    PL_ASSERT(lbl_1_bss_A14 != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
-    fn_1_7488(lbl_1_bss_A14);
+    fn_1_7488(PlCamera());
     return 1;
 }
 
 extern "C" s32 fn_1_A040(u8 flag)
 {
-    PlNode *n;
     s32 cnt;
 
-    n = lbl_1_bss_A5C.next;
+    PL_ITER_BEGIN
     cnt = 0;
     if (flag != 0) {
-        while (n != &lbl_1_bss_A5C) {
+        while (n != pl_end) {
             Player *p = (Player *)n;
             if (p->finished != 0) {
                 GwPlayer[p->idx].mgScore = p->ticks;
@@ -622,16 +660,16 @@ extern "C" s32 fn_1_A040(u8 flag)
             } else {
                 GwPlayer[p->idx].mgScore = 0;
             }
-            n = n->next;
+            PL_ITER_NEXT
         }
     } else {
-        while (n != &lbl_1_bss_A5C) {
+        while (n != pl_end) {
             Player *p = (Player *)n;
             if (p->finished != 0) {
                 p->finished = 0;
                 cnt++;
             }
-            n = n->next;
+            PL_ITER_NEXT
         }
         if (lbl_1_bss_A4C != 0) {
             lbl_1_bss_A4C->finished = 1;
@@ -646,22 +684,21 @@ extern "C" s32 fn_1_A040(u8 flag)
 extern "C" void fn_1_A160(void)
 {
     s16 chars[4];
-    PlNode *n;
     s32 cnt;
 
 #ifdef TARGET_PC
     chars[0] = chars[1] = chars[2] = chars[3] = 0;
 #endif
-    n = lbl_1_bss_A5C.next;
+    PL_ITER_BEGIN
     cnt = 0;
-    while (n != &lbl_1_bss_A5C) {
+    while (n != pl_end) {
 #ifdef TARGET_PC
         if (cnt >= 4) {
             break;
         }
 #endif
         chars[cnt++] = ((Player *)n)->charNo;
-        n = n->next;
+        PL_ITER_NEXT
     }
     CharLoseVoicePlay(chars[0], chars[1], chars[2], chars[3]);
 }
@@ -675,17 +712,16 @@ extern "C" void fn_1_A1F0(void)
 
 extern "C" s32 fn_1_A23C(void)
 {
-    PlNode *n;
     s32 best;
 
     best = 0x4650;
-    n = lbl_1_bss_A5C.next;
-    while (n != &lbl_1_bss_A5C) {
+    PL_ITER_BEGIN
+    while (n != pl_end) {
         Player *p = (Player *)n;
         if (p->finished != 0 && p->pad >= 0 && p->ticks < best) {
             best = p->ticks;
         }
-        n = n->next;
+        PL_ITER_NEXT
     }
     return best;
 }
@@ -693,26 +729,24 @@ extern "C" s32 fn_1_A23C(void)
 extern "C" void fn_1_A2C8(void)
 {
     if (lbl_1_bss_A4C != 0) {
-        PL_ASSERT(lbl_1_bss_A14 != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
-        fn_1_7488(lbl_1_bss_A14);
+        fn_1_7488(PlCamera());
     }
 }
 
 // Bounding box of all players: centre and extent on x/z.
 extern "C" void fn_1_A350(HuVecF *center, HuVecF *size)
 {
-    PlNode *n;
     f32 maxX;
     f32 minX;
     f32 maxZ;
     f32 minZ;
 
-    n = lbl_1_bss_A5C.next;
+    PL_ITER_BEGIN
     maxX = 0.0f;
     minX = 0.0f;
     maxZ = 0.0f;
     minZ = 0.0f;
-    while (n != &lbl_1_bss_A5C) {
+    while (n != pl_end) {
         Player *p = (Player *)n;
         if (p->pos.x > maxX) {
             maxX = p->pos.x;
@@ -726,7 +760,7 @@ extern "C" void fn_1_A350(HuVecF *center, HuVecF *size)
         if (p->pos.z < minZ) {
             minZ = p->pos.z;
         }
-        n = n->next;
+        PL_ITER_NEXT
     }
     center->x = (maxX + minX) * 0.5f;
     center->y = 0.0f;
@@ -802,8 +836,7 @@ extern "C" void fn_1_A6E0(Player *self)
                         self->finished = 1;
                         self->finishPos = self->pos.x;
                     }
-                    PL_ASSERT(lbl_1_bss_9FC != 0, lbl_1_data_3BA, lbl_1_data_3CA, 0x27);
-                    fn_1_DDDC(lbl_1_bss_9FC, self->idx, self->laps, self->ticks);
+                    fn_1_DDDC(PlScore(), self->idx, self->laps, self->ticks);
                     if ((self->idx & 1) != 0) {
                         HuAudFXPlay(0x6C7);
                     } else {
@@ -839,7 +872,6 @@ extern "C" void fn_1_AB34(Player *self)
     HuVecF b;
     HuVecF d;
     HuVecF other;
-    PlNode *n;
     f32 dist;
     f32 w;
     f32 w2;
@@ -850,8 +882,8 @@ extern "C" void fn_1_AB34(Player *self)
     if (self->pushTimer > 0) {
         self->pushTimer = self->pushTimer - 1;
     }
-    n = lbl_1_bss_A5C.next;
-    while (n != &lbl_1_bss_A5C) {
+    PL_ITER_BEGIN
+    while (n != pl_end) {
         Player *p = (Player *)n;
         if (self != p) {
             other.x = p->pos.x;
@@ -885,7 +917,7 @@ extern "C" void fn_1_AB34(Player *self)
                 p->hitWall = p->hitWall | fn_1_C3C8(p);
             }
         }
-        n = n->next;
+        PL_ITER_NEXT
     }
 }
 
@@ -1240,6 +1272,7 @@ extern "C" void fn_1_C0C0(Player *self)
     self->angVel = self->angVel * 0.9f;
 }
 
+#pragma dont_inline on
 // Keeps a player inside the arena (two end caps and the straight sections);
 // returns 1 when it hit a wall.
 extern "C" s32 fn_1_C3C8(Player *self)
@@ -1335,13 +1368,18 @@ extern "C" f32 fn_1_C91C(Player *self)
     return ang;
 }
 
+#pragma dont_inline reset
+
 extern "C" s16 *fn_1_CA88(PlVec *v, u32 idx)
 {
     if (idx >= v->size) {
         fprintf(__files + 0xA0, lbl_1_data_3E4);
         abort();
     }
-    return v->data + idx;
+    {
+        s16 **dp = &v->data;
+        return *dp + idx;
+    }
 }
 
 extern "C" void fn_1_CB00(PlNode *head, void (*fn)(Player *))
@@ -1361,6 +1399,7 @@ extern "C" void fn_1_CB60(PlNode *first, PlNode *end, void (*fn)(Player *))
     }
 }
 
+#pragma dont_inline on
 // vector<s16>::insert(pos, n, value)
 extern "C" void fn_1_CBC0(PlVec *v, s16 *pos, u32 n, s16 *val)
 {
@@ -1536,6 +1575,8 @@ extern "C" void fn_1_CF70(PlVec *v, u32 cap)
         (void)sv2;
     }
 }
+
+#pragma dont_inline reset
 
 extern "C" void fn_1_D098(void)
 {
