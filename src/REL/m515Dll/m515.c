@@ -39,7 +39,8 @@ typedef struct M515Item_s {
     char pad_04[4];
     HuVecF a;
     HuVecF b;
-    s32 f20;
+    s16 f20;
+    char pad_22[2];
     s16 f24;
     char pad_26[2];
 } M515_ITEM;
@@ -144,7 +145,10 @@ struct M515Sub_s {
 };
 
 typedef struct M515Mark_s {
-    char pad_00[0x2c];
+    s16 m0;
+    char pad_02[2];
+    s16 m4;
+    char pad_06[0x2c - 6];
 } M515_MARK;
 
 typedef struct M515Fx_s {
@@ -185,6 +189,7 @@ struct M515Ply_s {
 };
 
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+s32 rand8(void);
 
 typedef void (*M515_VOIDFN)(void);
 extern const M515_VOIDFN _ctors[];
@@ -874,6 +879,181 @@ void fn_1_6318(M515_PLY *ply)
     ply->v480 = 0;
 }
 
+s32 fn_1_6324(M515_PLY *ply, M515_SUB *sub)
+{
+    s32 ret = 0;
+    M515_CELL *cell;
+    M515_CELL *next;
+    M515_ITEM *item;
+    s16 a[4] = { 3, 2, 1, 0 };
+    s16 b[4][4] = { { 0, 2, 1, 3 }, { 1, 0, 3, 2 }, { 2, 3, 0, 1 }, { 3, 1, 2, 0 } };
+    s16 pan[4] = { 0x30, 0x50, 0x30, 0x50 };
+
+    cell = 0;
+    next = 0;
+    ply->v480++;
+    if (ply->v480 == 10) {
+        switch (ply->v47c) {
+        case 0:
+            cell = ply->p3f8->nbr[3];
+            if (cell != 0 && cell->nbr[3] != 0) {
+                next = cell->nbr[3];
+            }
+            break;
+        case 1:
+            cell = ply->p3f8->nbr[0];
+            if (cell != 0 && cell->nbr[0] != 0) {
+                next = cell->nbr[0];
+            }
+            break;
+        case 2:
+            cell = ply->p3f8->nbr[1];
+            if (cell != 0 && cell->nbr[1] != 0) {
+                next = cell->nbr[1];
+            }
+            break;
+        case 3:
+            cell = ply->p3f8->nbr[2];
+            if (cell != 0 && cell->nbr[2] != 0) {
+                next = cell->nbr[2];
+            }
+            break;
+        }
+        if (cell != 0 && cell->type == 2) {
+            if ((ply->idx & 1) != 0) {
+                HuAudFXPlayPan(0x6E2, pan[ply->idx]);
+            } else {
+                HuAudFXPlayPan(0x6E1, pan[ply->idx]);
+            }
+            omVibrate(ply->idx, 12, 4, 2);
+            CharModelHitCreate(ply->chr);
+            item = cell->item;
+            if (next != 0 && next->type == 0) {
+                if (item != 0) {
+                    item->a = cell->vec;
+                    item->b = next->vec;
+                }
+                next->type = cell->type;
+                cell->type = 0;
+                next->item = cell->item;
+                cell->item = 0;
+            } else if (item != 0) {
+                item->a = cell->vec;
+                item->b = cell->vec;
+            }
+            if (item != 0) {
+                item->f20 = 1;
+                item->mot = sub->mot[a[b[ply->v47c][item->f24]]];
+            }
+        }
+    }
+    if (ply->v480 == 0x19) {
+        Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+    }
+    if (ply->v480 > 0x1D) {
+        ret = 1;
+    }
+    return ret;
+}
+
+s16 fn_1_66D0(M515_PLY *ply)
+{
+    s32 ret = 0;
+    M515_CELL *cell;
+
+    switch (ply->v680 & 0xF) {
+    case 0:
+    case 3:
+    case 5:
+    case 6:
+    case 7:
+        break;
+    case 1:
+        ret = 2;
+        cell = ply->p3f8->nbr[3];
+        if (cell != 0 && (cell->type == 0 || cell->type == 4)) {
+            if (ply->v484 == 15) {
+                ply->vec = cell->vec;
+                ply->p3f8 = cell;
+                ply->v484 = 0;
+            }
+            if (cell->type == 4) {
+                if (ply->v0e == 2) {
+                    ret = 5;
+                } else {
+                    ply->hook = fn_1_9DF8;
+                    ret = 4;
+                }
+            } else {
+                ret = 1;
+            }
+        }
+        if (ply->v486 == 5) {
+            ply->v47e = 0;
+            ply->v486 = 0;
+        }
+        break;
+    case 2:
+        ret = 2;
+        cell = ply->p3f8->nbr[0];
+        if (cell != 0 && (cell->type == 0 || cell->type == 4)) {
+            if (ply->v484 == 15) {
+                ply->vec = cell->vec;
+                ply->p3f8 = cell;
+                ply->v484 = 0;
+            }
+            ret = 1;
+        }
+        if (ply->v486 == 5) {
+            ply->v47e = 1;
+            ply->v486 = 0;
+        }
+        break;
+    case 4:
+        ret = 2;
+        cell = ply->p3f8->nbr[1];
+        if (cell != 0 && (cell->type == 0 || cell->type == 4)) {
+            if (ply->v484 == 15) {
+                ply->vec = cell->vec;
+                ply->p3f8 = cell;
+                ply->v484 = 0;
+            }
+            ret = 1;
+        }
+        if (ply->v486 == 5) {
+            ply->v47e = 2;
+            ply->v486 = 0;
+        }
+        break;
+    case 8:
+        ret = 2;
+        cell = ply->p3f8->nbr[2];
+        if (cell != 0 && (cell->type == 0 || cell->type == 4)) {
+            if (ply->v484 == 15) {
+                ply->vec = cell->vec;
+                ply->p3f8 = cell;
+                ply->v484 = 0;
+            }
+            if (cell->type == 4) {
+                if (ply->v0e == 2) {
+                    ret = 5;
+                } else {
+                    ply->hook = fn_1_9DF8;
+                    ret = 4;
+                }
+            } else {
+                ret = 1;
+            }
+        }
+        if (ply->v486 == 5) {
+            ply->v47e = 3;
+            ply->v486 = 0;
+        }
+        break;
+    }
+    return ret;
+}
+
 void fn_1_6980(M515_PLY *ply)
 {
     if (ply->v682 > 0) {
@@ -884,6 +1064,21 @@ void fn_1_6980(M515_PLY *ply)
     case 0x10:
         ply->v682 = 5;
         break;
+    }
+}
+
+void fn_1_72E4(M515_PLY *ply)
+{
+    s32 i;
+    M515_SUB *sub;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    for (i = 0; i < 8; i++) {
+        Hu3DModelAttrSet(ply->mark[i].m0, HU3D_ATTR_DISPOFF);
+        Hu3DMotionSet(ply->mark[i].m0, sub->mot[4]);
+        Hu3DMotionTimeSet(ply->mark[i].m0, 0.0f);
+        Hu3DModelAttrSet(ply->mark[i].m0, 0x40000002);
+        Hu3DModelAttrSet(ply->mark[i].m4, HU3D_ATTR_DISPOFF);
     }
 }
 
