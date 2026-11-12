@@ -375,6 +375,8 @@ void MdLightSetupModel(MDLIGHT_WORK *lightWork)
 {
     register MDLIGHT *light;
     register MDMODEL_WORK *model = sysP->model;
+    /* the original keeps these two dead locals in r30/r31 */
+    light = &lightWork->light[0];
 }
 
 void MdLightUpdate(MDLIGHT_WORK *lightWork)
