@@ -1685,30 +1685,33 @@ void fn_1_38F8(M528MAIN *work)
 /* Place the wheel sector models on the circle at the current wheel angle. */
 void fn_1_3A00(M528MAIN *work)
 {
-    M528SEG *seg;
     f32 angle;
-    s16 mdl;
     s32 i;
+    s16 mdl;
+    M528SEG *seg;
 
     for (i = 0; i < 0x10; i++) {
         seg = &work->seg[i];
         angle = work->wheelAngle + seg->angle;
-        seg->pos.x = 1480.0 * HuSin(angle);
-        seg->pos.y = -620.0f;
-        seg->pos.z = 1480.0 * HuCos(angle) - 1680.0;
+        work->seg[i].pos.x = 1480.0 * HuSin(angle);
+        work->seg[i].pos.y = -620.0f;
+        work->seg[i].pos.z = 1480.0 * HuCos(angle) - 1680.0;
         mdl = seg->mdl[0];
-        Hu3DModelPosSet(mdl, seg->pos.x, seg->pos.y, seg->pos.z);
+        Hu3DModelPosSet(mdl, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
         Hu3DModelRotSet(mdl, 0.0f, angle, 0.0f);
         mdl = seg->mdl[1];
-        Hu3DModelPosSet(mdl, seg->pos.x, seg->pos.y, seg->pos.z);
+        Hu3DModelPosSet(mdl, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
         Hu3DModelRotSet(mdl, 0.0f, angle, 0.0f);
         mdl = seg->mdl[2];
-        Hu3DModelPosSet(mdl, seg->pos.x, seg->pos.y, seg->pos.z);
+        Hu3DModelPosSet(mdl, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
         Hu3DModelRotSet(mdl, 0.0f, angle, 0.0f);
     }
-    Hu3DModelRotSet(work->mdlCache[4], 0.0f, work->wheelAngle, 0.0f);
-    Hu3DModelRotSet(work->mdlCache[5], 0.0f, work->wheelAngle, 0.0f);
-    Hu3DModelRotSet(work->mdlCache[7], 0.0f, work->wheelAngle, 0.0f);
+    mdl = work->mdlCache[4];
+    Hu3DModelRotSet(mdl, 0.0f, work->wheelAngle, 0.0f);
+    mdl = work->mdlCache[5];
+    Hu3DModelRotSet(mdl, 0.0f, work->wheelAngle, 0.0f);
+    mdl = work->mdlCache[7];
+    Hu3DModelRotSet(mdl, 0.0f, work->wheelAngle, 0.0f);
 }
 
 /* Camera blend from view 0 to view 1 over 100 frames. */
