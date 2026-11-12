@@ -13,18 +13,6 @@ typedef void (*M553VoidFunc)(void);
 extern const M553VoidFunc _ctors[];
 extern const M553VoidFunc _dtors[];
 
-typedef struct M553CamInit_s {
-    HuVecF target;
-    HuVecF rot;
-    f32 zoom;
-    f32 aspect;
-    f32 vpX;
-    f32 vpY;
-    f32 vpW;
-    f32 vpH;
-    f32 fov;
-} M553CAMINIT;
-
 typedef struct M553Light_s {
     HU3DLIGHTID id;
     HuVecF pos;

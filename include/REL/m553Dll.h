@@ -150,6 +150,20 @@ typedef struct M553Shadow_s {
     f32 tpLvl;
 } M553SHADOW;
 
+typedef struct M553CamInit_s {
+    HuVecF target;
+    HuVecF rot;
+    f32 zoom;
+    f32 aspect;
+    f32 vpX;
+    f32 vpY;
+    f32 vpW;
+    f32 vpH;
+    f32 fov;
+} M553CAMINIT;
+
+extern M553CAMINIT lbl_1_data_190[4];
+
 typedef struct M553GCell_s {
     s16 active;
     s16 vis;
