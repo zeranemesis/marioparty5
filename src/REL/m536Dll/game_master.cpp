@@ -1,3 +1,7 @@
+#ifdef TARGET_PC
+#include <stddef.h>
+#include "dolphin/os.h" /* before dol2asm.h, whose asm macro breaks the C++ headers */
+#endif
 #include "types.h"
 #include "dol2asm.h"
 
@@ -19,11 +23,33 @@ void fn_1_6524(void);
 void fn_1_6528(void);
 void fn_1_6550(void);
 void fn_1_6584(M536GameMaster *self);
+#ifdef TARGET_PC
+void fn_1_658C(M536GameMaster *self, s16 flag);
+#else
 void fn_1_658C(M536GameMaster *self);
+#endif
 
 // The primary base occupies 0x00..0x1F and the second base 0x20..; the only
 // members this unit touches are the two vtable slots, the object handle at
 // 0x358 and the frame counter at 0x35C.
+#ifdef TARGET_PC
+/* The second base is m536.cpp's M536CThread (vptr, OS thread + stack, semaphore, value): on PC the
+ * OS structures are larger, and m_obj holds an MGTIMER pointer. */
+typedef void *M536TimerSlot;
+struct M536GameMaster {
+    s32 m_unk0;
+    void **m_vptr;
+    s8 m_unk8[0x18];
+    void **m_vptr2;
+    OSThread m_thOs;
+    u32 *m_thStack;
+    OSSemaphore m_sem;
+    s32 m_value;
+    M536TimerSlot m_obj;
+    s32 m_counter;
+};
+#else
+typedef s32 M536TimerSlot;
 struct M536GameMaster {
     s32 m_unk0;
     void **m_vptr;
@@ -33,6 +59,7 @@ struct M536GameMaster {
     s32 m_obj;
     s32 m_counter;
 };
+#endif
 
 int printf(const char *fmt, ...);
 u32 OSGetTick(void);
@@ -55,12 +82,12 @@ void fn_1_5268(void *self, u32 flag);
 void fn_1_52E4(void *self, s32 flag);
 void fn_1_5398(void *self, s32 flag);
 void fn_1_5428(void *self, s32 flag);
-void fn_1_5AA0(s32 *obj, s32 value);
-void fn_1_5B68(s32 *obj, s32 value);
-void fn_1_5BC4(s32 *obj, s32 a, s32 b, s32 c);
-void fn_1_5CBC(s32 *obj, s32 flag);
-void fn_1_5DB0(s32 *obj);
-u8 fn_1_5E18(s32 *obj);
+void fn_1_5AA0(M536TimerSlot *obj, s32 value);
+void fn_1_5B68(M536TimerSlot *obj, s32 value);
+void fn_1_5BC4(M536TimerSlot *obj, s32 a, s32 b, s32 c);
+void fn_1_5CBC(M536TimerSlot *obj, s32 flag);
+void fn_1_5DB0(M536TimerSlot *obj);
+u8 fn_1_5E18(M536TimerSlot *obj);
 void *fn_1_6628(void *self);
 void *fn_1_73BC(void *self);
 void *fn_1_8B94(void *self);
@@ -304,6 +331,24 @@ void fn_1_6550(void)
     lbl_1_bss_9F8 = 0xD2;
 }
 
+#ifdef TARGET_PC
+// this-adjusting thunks of the second base (the thread object)
+#define M536_FROM_THREAD(p) ((M536GameMaster *)((u8 *)(p) - offsetof(M536GameMaster, m_vptr2)))
+void fn_1_6584(M536GameMaster *self)
+{
+    fn_1_6308(M536_FROM_THREAD(self));
+}
+
+void fn_1_658C(M536GameMaster *self, s16 flag)
+{
+    __dt__Q24m53611CGameMasterFv(M536_FROM_THREAD(self), flag);
+}
+
+u32 m536GameMasterSize(void)
+{
+    return sizeof(M536GameMaster);
+}
+#else
 #pragma noinline
 void fn_1_6584(M536GameMaster *self)
 {
@@ -321,7 +366,18 @@ void fn_1_658C(M536GameMaster *self)
         b __dt__Q24m53611CGameMasterFv
     }
 }
+#endif
 
 }
 
 SECTION_CTORS void *const _ctors_game_master = (void *)fn_1_6550;
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_6550)(void) = fn_1_6550;
+#else
+struct PortStaticInit_6550 {
+    PortStaticInit_6550() { fn_1_6550(); }
+};
+static PortStaticInit_6550 lbl_port_init_6550;
+#endif

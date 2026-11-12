@@ -348,7 +348,7 @@ void fn_1_EE68(M536Bullet *self)
     s16 id;
     f32 rotY;
 
-    __ptmf_scall(self);
+    M536PtmfSCall(self, &self->m_hook);
     rotY = self->m_rotY;
     rot.x = 0.0f;
     rot.y = rotY;
@@ -498,3 +498,13 @@ void *fn_1_F618(void *self, s16 freeIt)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_F5C0)(void) = fn_1_F5C0;
+#else
+struct PortStaticInit_F5C0 {
+    PortStaticInit_F5C0() { fn_1_F5C0(); }
+};
+static PortStaticInit_F5C0 lbl_port_init_F5C0;
+#endif

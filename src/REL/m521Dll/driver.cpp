@@ -26,6 +26,10 @@ double __frsqrte(double x);
 extern int __float_nan[];
 extern int __float_huge[];
 
+#ifdef TARGET_PC
+#include <math.h>
+static inline double drv_sqrt(double x) { return sqrt(x); } /* NaN for x < 0, like MSL */
+#else
 static inline double drv_sqrt(double x)
 {
     if (x > 0.0) {
@@ -42,10 +46,15 @@ static inline double drv_sqrt(double x)
 
     return *(float *)__float_huge;
 }
+#endif
 
 // stderr of the C library (element 2 of the FILE table)
 extern u8 __files[];
+#ifdef TARGET_PC
+#define DRV_STDERR ((void *)0) /* fn_1_4C9C ignores the stream */
+#else
 #define DRV_STDERR ((void *)(__files + 0xA0))
+#endif
 int fn_1_4C9C(void *file, const char *msg, ...);
 
 // singleton.h assertion
@@ -164,6 +173,9 @@ void *lbl_1_data_3CC[4] = { 0, 0, (void *)fn_1_DAA4, (void *)fn_1_B040 };
 void *lbl_1_data_3DC[4] = { 0, 0, (void *)fn_1_AFE8, 0 };
 
 // slots of the player / score handlers, called through the object list (gamemaster)
+#ifdef TARGET_PC /* C++ const globals are internal on MSVC; gamemaster.cpp uses these */
+extern const M521Ptmf lbl_1_data_4CC, lbl_1_data_520, lbl_1_data_52C;
+#endif
 const M521Ptmf lbl_1_data_4CC = M521_PTMF_INIT(fn_1_15F04);
 const M521Ptmf lbl_1_data_520 = M521_PTMF_INIT(fn_1_17840);
 const M521Ptmf lbl_1_data_52C = M521_PTMF_INIT(fn_1_17920);
@@ -1778,3 +1790,13 @@ void fn_1_114DC()
 
 DRV_RODATA const u32 lbl_1_rodata_238 = 0x20;
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_114DC)(void) = fn_1_114DC;
+#else
+struct PortStaticInit_114DC {
+    PortStaticInit_114DC() { fn_1_114DC(); }
+};
+static PortStaticInit_114DC lbl_port_init_114DC;
+#endif

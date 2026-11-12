@@ -661,7 +661,7 @@ void fn_1_B1AC(M536Player *self)
 {
     Vec rot;
 
-    __ptmf_scall(self);
+    M536PtmfSCall(self, &self->m_hook);
     lbl_1_bss_AA4++;
     if (self->m_dead == 0) {
         self->m_score = lbl_1_bss_AA4;
@@ -1289,3 +1289,13 @@ void *fn_1_D6A4(void *node, s16 freeIt)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_D61C)(void) = fn_1_D61C;
+#else
+struct PortStaticInit_D61C {
+    PortStaticInit_D61C() { fn_1_D61C(); }
+};
+static PortStaticInit_D61C lbl_port_init_D61C;
+#endif

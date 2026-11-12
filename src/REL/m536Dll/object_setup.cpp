@@ -10,6 +10,9 @@ extern "C" {
 void *fn_1_46CC(u32 size);
 void *__ct__Q24m53611CGameMasterFv(void *self);
 void fn_1_2284(void *self, s32 arg1, s32 arg2);
+#ifdef TARGET_PC
+u32 m536GameMasterSize(void);
+#endif
 
 CFrame lbl_1_bss_A18(120);
 CFrame lbl_1_bss_A1C(210);
@@ -20,7 +23,11 @@ void ObjectSetup(void)
     void *mem;
     void *master;
 
+#ifdef TARGET_PC
+    mem = fn_1_46CC(m536GameMasterSize()); /* 0x360 on GameCube; the thread is larger on PC */
+#else
     mem = fn_1_46CC(0x360);
+#endif
     if (mem) {
         mem = __ct__Q24m53611CGameMasterFv(mem);
     }

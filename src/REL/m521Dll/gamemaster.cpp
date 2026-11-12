@@ -9,7 +9,11 @@
 extern "C" {
 // Opaque 4 byte object (count-down timer) the master keeps at 0x358.
 typedef struct GameMapList {
+#ifdef TARGET_PC
+    void *unk0; /* CTimer: holds the MGTIMER pointer */
+#else
     s32 unk0;
+#endif
 } GameMapList;
 
 // Owner of the player list (a_set.h singleton list head).
@@ -1224,3 +1228,13 @@ void fn_1_140D0(CSubThread *node)
     fn_1_11B08((GameMaster *)((u8 *)node - offsetof(GameMaster, mapNode)), 0);
 }
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_1400C)(void) = fn_1_1400C;
+#else
+struct PortStaticInit_1400C {
+    PortStaticInit_1400C() { fn_1_1400C(); }
+};
+static PortStaticInit_1400C lbl_port_init_1400C;
+#endif

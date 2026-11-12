@@ -226,7 +226,7 @@ void fn_1_FD14(M536GunUnit *unit)
     s16 muzzle, muzzleId;
     s16 shadow, shadowId;
 
-    __ptmf_scall(unit);
+    M536PtmfSCall(unit, &unit->m_hook);
     rotY = unit->m_rotY;
     rot.x = 0.0f;
     rot.y = rotY;
@@ -430,3 +430,13 @@ void *fn_1_103D0(void *self, s16 freeIt)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_10378)(void) = fn_1_10378;
+#else
+struct PortStaticInit_10378 {
+    PortStaticInit_10378() { fn_1_10378(); }
+};
+static PortStaticInit_10378 lbl_port_init_10378;
+#endif

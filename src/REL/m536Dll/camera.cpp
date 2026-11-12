@@ -201,7 +201,7 @@ void fn_1_6E38(M536Camera *self, s32 mode)
 void fn_1_6F80(M536Camera *self)
 {
     if (__ptmf_test(&self->m_hook) != 0) {
-        __ptmf_scall(self);
+        M536PtmfSCall(self, &self->m_hook);
         Hu3DFogClear();
     }
 }

@@ -40,9 +40,15 @@ void fn_1_5448(void *obj, s32 flag);
 HU3DMOTID Hu3DMotionCreate(void *hsf);
 HU3DMODELID Hu3DModelCameraCreate(HU3DMOTID motId, u32 cameraBit);
 void Hu3DCameraMotionStart(HU3DMODELID modelId, u32 cameraBit);
-void Hu3DCameraCreate(s16 camId);
-void Hu3DCameraPerspectiveSet(s16 camId, f32 aspect, f32 nearZ, f32 farZ, f32 fovy);
-void Hu3DCameraViewportSet(s16 camId, f32 left, f32 top, f32 wd, f32 ht, f32 nearZ, f32 farZ);
+/* hsfman.c takes the camera bits as int: an s16 argument leaves the upper bits undefined on x64 */
+#ifdef TARGET_PC
+typedef int M521CamBits;
+#else
+typedef s16 M521CamBits;
+#endif
+void Hu3DCameraCreate(M521CamBits camId);
+void Hu3DCameraPerspectiveSet(M521CamBits camId, f32 aspect, f32 nearZ, f32 farZ, f32 fovy);
+void Hu3DCameraViewportSet(M521CamBits camId, f32 left, f32 top, f32 wd, f32 ht, f32 nearZ, f32 farZ);
 void Hu3DModelKill(HU3DMODELID modelId);
 void *HuDataSelHeapReadNum(u32 fileIdx, u32 heapAddr, s32 num);
 }
@@ -60,10 +66,6 @@ static const CameraPath s_cameraPath = {
     395.9320374f, 1367.4566650f, 292.0061035f, -0.3923721f, 0.0f, -0.0f, 0.9198066f
 };
 
-/* lbl_1_data_5A0 in the original: {0, -1, 0}, the empty pointer-to-member the
- * target copies into m_hook in both switch arms. Naming CCamera::step instead
- * produced an undefined symbol step__7CCameraFv and broke the REL link. */
-static const PTMF s_nullPmf = {0, -1, {0}};
 
 class CCamera {
 public:
@@ -90,6 +92,12 @@ void fn_1_145A4(CCamera *self);
 void fn_1_145F8(CCamera *self, s32 flip);
 void fn_1_14744(CCamera *self);
 CCamera *fn_1_14840(CCamera *self, s16 freeIt);
+
+/* lbl_1_data_594 / 5A0 / 5AC: the pointer-to-member hooks the camera modes install
+ * (intro step that releases phase 0 after 240 frames, idle, winner pan). */
+static const PTMF s_introPmf = {0, -1, {(void *)fn_1_143D4}};
+static const PTMF s_idlePmf = {0, -1, {(void *)fn_1_143D0}};
+static const PTMF s_winPmf = {0, -1, {(void *)fn_1_14744}};
 
 void *lbl_1_data_5B8[6] = {
     0, 0, (void *)fn_1_14840, (void *)fn_1_14424, (void *)fn_1_145A4, 0
@@ -173,14 +181,14 @@ void fn_1_14424(CCamera *self, s32 mode)
     switch (mode) {
     case 0:
         self->m_pathTo = s_cameraPath;
-        self->m_hook = s_nullPmf;
+        self->m_hook = s_introPmf;
         self->m_camModelId =
             Hu3DModelCameraCreate(Hu3DMotionCreate(HuDataSelHeapReadNum(0x4F000E, 0x10000000, 2)), 1);
         Hu3DCameraMotionStart(self->m_camModelId, 1);
         break;
     case 1:
         self->m_pathTo = s_cameraPath;
-        self->m_hook = s_nullPmf;
+        self->m_hook = s_idlePmf;
         Hu3DModelKill(self->m_camModelId);
         self->m_bitFlags &= ~(1 << mode);
         break;
@@ -197,7 +205,11 @@ void fn_1_14424(CCamera *self, s32 mode)
 void fn_1_145A4(CCamera *self)
 {
     if (__ptmf_test((PTMF *)&self->m_hook) != 0) {
+#ifdef TARGET_PC
+        ((void (*)(void *))self->m_hook.f_data.f_addr)(self);
+#else
         __ptmf_scall(self);
+#endif
     }
     self->m_timer++;
 }
@@ -215,7 +227,7 @@ void fn_1_145F8(CCamera *self, s32 flip)
     self->m_pathTo = path;
     self->m_pathFrom.v[1] += 50.0f;
     self->m_pathFrom.v[2] += 200.0f;
-    self->m_hook = s_nullPmf;
+    self->m_hook = s_winPmf;
     self->m_timer = 0;
 }
 

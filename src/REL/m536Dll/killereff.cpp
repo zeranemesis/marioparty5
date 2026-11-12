@@ -645,3 +645,13 @@ void *fn_1_8A1C(void *self, s16 freeIt)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_88BC)(void) = fn_1_88BC;
+#else
+struct PortStaticInit_88BC {
+    PortStaticInit_88BC() { fn_1_88BC(); }
+};
+static PortStaticInit_88BC lbl_port_init_88BC;
+#endif

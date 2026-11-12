@@ -55,6 +55,10 @@ typedef struct MgTimer_s {
     u8 digitB;
 } MGTIMER;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 MGTIMER* MgTimerCreate(int type);
 void MgTimerKill(MGTIMER* timer);
 int MgTimerModeGet(MGTIMER* timer);
@@ -64,9 +68,6 @@ void MgTimerPosSet(MGTIMER* timer, float posX, float posY);
 /* Plain C in the original: the DOL defines MgTimerRecordSet unmangled, so a .cpp
  * including this header needs the guard or it emits MgTimerRecordSet__FP9MgTimer_si
  * and the REL link cannot resolve it. */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void MgTimerPosGet(MGTIMER* timer, float *posX, float *posY);
 void MgTimerModeOnSet(MGTIMER* timer, int offType);

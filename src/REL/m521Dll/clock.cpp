@@ -1061,3 +1061,13 @@ void fn_1_48C8(void)
     lbl_1_bss_8 = 0xD2;
 }
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_48C8)(void) = fn_1_48C8;
+#else
+struct PortStaticInit_48C8 {
+    PortStaticInit_48C8() { fn_1_48C8(); }
+};
+static PortStaticInit_48C8 lbl_port_init_48C8;
+#endif

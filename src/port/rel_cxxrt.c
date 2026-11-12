@@ -17,3 +17,29 @@ void *__register_global_object(void *object, void *destructor, void *regmem)
     return object;
 }
 #endif
+
+/* MWCC pointer-to-member runtime, for the layout the decomp declares
+ * ({this delta, vtable offset, function}). __ptmf_scall cannot be generic (MWCC
+ * passes the pmf in r12), so callers do the call themselves under TARGET_PC.
+ * shortcut: test looks at the function only (the decomp's null pmf is {0, -1, 0}),
+ * virtual pmfs are not supported. */
+#ifndef TARGET_DOL
+typedef struct PortPtmf {
+    long thisDelta;
+    long vtblOffset;
+    void *func;
+} PortPtmf;
+
+const PortPtmf __ptmf_null = { 0, 0, 0 };
+
+int __ptmf_test(const PortPtmf *pmf)
+{
+    return pmf->func != 0;
+}
+#endif
+
+/* MSL's float constants, read by the sqrt that the REL modules inline (in the DOL on GameCube). */
+#ifndef TARGET_DOL
+int __float_nan[] = { 0x7FFFFFFF };
+int __float_huge[] = { 0x7F800000 };
+#endif

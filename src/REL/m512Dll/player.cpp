@@ -118,11 +118,17 @@ void *__dl__FPv(void *);
 void *__nw__FUl(u32 size);
 void __register_global_object(void *obj, void *dtor, void *reg);
 void __ptmf_scall(void *obj);
+#ifdef TARGET_PC /* the module's own fprintf clashes with the C library's */
+#define fprintf m512Fprintf
+#endif
 int fprintf(void *unused, const char *fmt, ...);
 void abort(void);
 void *memmove(void *dst, const void *src, u32 n);
 void *memcpy(void *dst, const void *src, u32 n);
 extern u8 __files[];
+#ifdef TARGET_PC /* stderr of the C library: m512Fprintf ignores the stream */
+#define __files ((u8 *)0)
+#endif
 void *fn_1_1264(void *self);
 void fn_1_1270(void *self, int flag);
 void fn_1_12DC(void *self);

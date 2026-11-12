@@ -8,6 +8,9 @@
 // already holds one copy, so the REL would grow by 16 bytes. Only the API
 // this unit actually touches is declared here instead.
 
+#ifdef TARGET_PC
+#include <stddef.h>
+#endif
 typedef signed char s8;
 typedef unsigned char u8;
 typedef signed short s16;
@@ -101,8 +104,8 @@ void MgTimerRecordDispOn(M512MGTIMER *timer);
 // ------------------------------------------------------------------- types
 
 typedef struct {
-    u32 unk0;
-    u32 unk4;
+    void *unk0;           // list node (next, prev)
+    void *unk4;
     void *vtable;         // 0x08
     s32 bitmask;          // 0x0C
     M512MGTIMER *timer;   // 0x10
@@ -126,8 +129,8 @@ typedef struct {
 } M512ScoreItem;
 
 typedef struct {
-    u32 unk0;
-    u32 unk4;
+    void *unk0;           // list node (next, prev)
+    void *unk4;
     void *vtable;         // 0x08
     s32 bitmask;          // 0x0C
     u8 animF;             // 0x10
@@ -138,7 +141,11 @@ typedef struct {
 extern "C" {
 void fn_1_1DDC(void *self);                                     // base vtable slot
 void fn_1_D3E8(M512Score *self);
+#ifdef TARGET_PC
+M512Score *fn_1_D178(M512Score *self, s32 param, u8 wideF);
+#else
 void fn_1_D178(M512Score *self, s32 param, u8 wideF);
+#endif
 void *fn_1_D27C(M512Score *self, s16 flag);
 void *fn_1_D308(M512Score *self, s16 flag);
 void fn_1_D4C4(M512Score *self);
@@ -208,7 +215,11 @@ void fn_1_D3E8(M512Score *self)
     self->timerOnF = 1;
 }
 
+#ifdef TARGET_PC
+M512Score *fn_1_D178(M512Score *self, s32 param, u8 wideF)
+#else
 void fn_1_D178(M512Score *self, s32 param, u8 wideF)
+#endif
 {
     void *singleton;
 
@@ -221,7 +232,11 @@ void fn_1_D178(M512Score *self, s32 param, u8 wideF)
     }
     singleton = (void *)&self->timer;
     if (singleton != 0) {
+#ifdef TARGET_PC
+        singleton = (void *)((u8 *)singleton - offsetof(M512Score, timer));
+#else
         singleton = (void *)((u8 *)singleton - 0x10);
+#endif
     }
     lbl_1_bss_A00 = singleton;
     self->vtable = MGSCORE_VTBL;
@@ -231,6 +246,9 @@ void fn_1_D178(M512Score *self, s32 param, u8 wideF)
     if (self->wideF == 0) {
         fn_1_D3E8(self);
     }
+#ifdef TARGET_PC
+    return self;
+#endif
 }
 
 void *fn_1_D27C(M512Score *self, s16 flag)
@@ -355,7 +373,11 @@ void *fn_1_D804(M512ScoreList *self, u8 recordF, s32 arg2)
     }
     singleton = (void *)&self->animF;
     if (singleton != 0) {
+#ifdef TARGET_PC
+        singleton = (void *)((u8 *)singleton - offsetof(M512ScoreList, animF));
+#else
         singleton = (void *)((u8 *)singleton - 0x10);
+#endif
     }
     lbl_1_bss_9FC = singleton;
     self->vtable = MGSCOREL_VTBL;

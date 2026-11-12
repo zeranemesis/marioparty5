@@ -29,7 +29,7 @@ extern DustOwner *lbl_1_bss_A0C;
 }
 
 extern "C" void *fn_1_7A34(DustOwner *self, s16 flag);
-extern "C" void fn_1_7B14(DustPuff *self, s32 bit);
+extern "C" void fn_1_7B14(DustOwner *self, s32 bit);
 extern "C" void fn_1_7B2C(void);
 extern "C" void fn_1_7E5C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
 extern "C" void fn_1_7CDC(void);
@@ -118,7 +118,7 @@ extern "C" void *fn_1_7A34(DustOwner *self, s16 flag)
     return self;
 }
 
-extern "C" void fn_1_7B14(DustPuff *self, s32 bit)
+extern "C" void fn_1_7B14(DustOwner *self, s32 bit)
 {
     self->unkC &= ~(1 << bit);
 }

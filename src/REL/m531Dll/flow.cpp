@@ -45,10 +45,16 @@ void fn_1_F668(void *clean, Vec *pos, f32 value);
 f32 fn_1_F744(void *clean);
 
 void Hu3DBGColorSet(u8 r, u8 g, u8 b);
-void Hu3DCameraCreate(u16 bit);
-void Hu3DCameraPerspectiveSet(u16 bit, f32 fov, f32 nearZ, f32 farZ, f32 aspect);
-void Hu3DCameraViewportSet(u16 bit, f32 x, f32 y, f32 w, f32 h, f32 nearZ, f32 farZ);
-void Hu3DCameraPosSetV(u16 bit, Vec *pos, Vec *up, Vec *target);
+/* hsfman.c takes the camera bits as int: a u16 argument leaves the upper bits undefined on x64 */
+#ifdef TARGET_PC
+typedef int PortCamBits;
+#else
+typedef u16 PortCamBits;
+#endif
+void Hu3DCameraCreate(PortCamBits bit);
+void Hu3DCameraPerspectiveSet(PortCamBits bit, f32 fov, f32 nearZ, f32 farZ, f32 aspect);
+void Hu3DCameraViewportSet(PortCamBits bit, f32 x, f32 y, f32 w, f32 h, f32 nearZ, f32 farZ);
+void Hu3DCameraPosSetV(PortCamBits bit, Vec *pos, Vec *up, Vec *target);
 s16 Hu3DGLightCreateV(Vec *pos, Vec *dir, GXColor *color);
 void Hu3DGLightInfinitytSet(s16 id);
 void Hu3DGLightStaticSet(s16 id, s32 on);
@@ -517,7 +523,7 @@ void fn_1_3C8C(m531::CFlow *self)
         fn_1_24D4(&self->m_timer, 1);
         for (i = 0; i < 4; i++) {
             CPlayer *player = self->m_player[i];
-            player->m_base.m_vt->m_set0(&player->m_base);
+            player->m_base.m_vt->m_set1(&player->m_base);
         }
         {
             CPlayerRunner *runner = self->m_runner;
@@ -554,7 +560,7 @@ void fn_1_3D74(m531::CFlow *self)
         fn_1_25C8(&self->m_timer);
         for (k = 0; k < 4; k++) {
             CPlayer *player = self->m_player[k];
-            player->m_base.m_vt->m_set1(&player->m_base);
+            player->m_base.m_vt->m_set0(&player->m_base);
         }
         self->m_step = 0;
         self->m_counter = 0;

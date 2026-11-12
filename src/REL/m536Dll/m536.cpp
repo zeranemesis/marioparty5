@@ -105,7 +105,13 @@ void *fn_1_0(u32 size)
 {
     void *p;
 
+#ifdef TARGET_PC
+    /* shortcut: callers pass GC object sizes (fn_1_0(0x4C)); a field takes at most twice its GC room on 64-bit,
+     * so double them rather than overflow. Upgrade: sizeof of the constructed types at every call site. */
+    p = HuMemDirectMallocNum(HEAP_HEAP, size * 2, 0x10000000);
+#else
     p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+#endif
     if (p != 0) {
     } else {
         fn_1_1D4("ptr != NULL", "new.cpp", 0x17);
@@ -2089,3 +2095,13 @@ void *fn_1_6000(void *obj, s16 freeIt)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_5EA0)(void) = fn_1_5EA0;
+#else
+struct PortStaticInit_5EA0 {
+    PortStaticInit_5EA0() { fn_1_5EA0(); }
+};
+static PortStaticInit_5EA0 lbl_port_init_5EA0;
+#endif

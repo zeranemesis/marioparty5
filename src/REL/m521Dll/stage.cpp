@@ -60,6 +60,10 @@ struct CModel {
 CModel *__ct__6CModelFUi(CModel *self, u32 modelIdx);
 void __dt__6CModelFv(CModel *self, s32 freeIt);
 
+#ifdef TARGET_PC /* aurora has no PSVECScale/PSVECAdd, only the C versions */
+#define PSVECScale C_VECScale
+#define PSVECAdd C_VECAdd
+#endif
 void PSVECNormalize(const Vec3 *src, Vec3 *dst);
 void PSVECScale(const Vec3 *src, Vec3 *dst, f32 scale);
 void PSVECAdd(Vec3 *dst, const Vec3 *a, const Vec3 *b);
@@ -306,7 +310,11 @@ void fn_1_15084(CStage *self)
     void *c;
 
     if (__ptmf_test(&self->m_hook) != 0) {
+#ifdef TARGET_PC
+        ((void (*)(void *))self->m_hook.f_data.f_addr)(self);
+#else
         __ptmf_scall(self);
+#endif
     }
     a = self->m_unk10;
     fn_1_C4C(a);
@@ -372,3 +380,13 @@ void *lbl_1_data_66C[5] = {
     0, 0, (void *)fn_1_15120, (void *)fn_1_15108, (void *)fn_1_15084
 };
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_15264)(void) = fn_1_15264;
+#else
+struct PortStaticInit_15264 {
+    PortStaticInit_15264() { fn_1_15264(); }
+};
+static PortStaticInit_15264 lbl_port_init_15264;
+#endif

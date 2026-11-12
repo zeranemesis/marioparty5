@@ -1,6 +1,12 @@
 #include "dolphin/gx.h"
 #include "dolphin/mtx.h"
 
+#ifdef TARGET_PC
+// The real model struct: the opaque GC-sized copy has the wrong stride and hookData offset on PC.
+#include "game/hu3d.h"
+#define m_hookData hookData
+#define HU3DMODEL_s Hu3DModel_s
+#else
 typedef s16 HU3DMODELID;
 
 // Opaque except for hookData, which the hook receives back as the CDebugLine.
@@ -11,6 +17,7 @@ struct HU3DMODEL_s {
 };
 
 extern HU3DMODEL_s Hu3DData[];
+#endif
 
 extern "C" {
 typedef void (*HU3DMODELHOOK)(HU3DMODEL_s *modelP, Mtx *mtx);

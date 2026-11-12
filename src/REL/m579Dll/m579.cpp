@@ -80,8 +80,14 @@ extern void MgTimerModeOffSet(void *timer);
 extern void MgTimerKill(void *timer);
 extern void *MgTimerCreate(s32 arg);
 extern s32 MgTimerDoneCheck(void *timer);
-extern void Hu3DCameraPosSetV(u16 cam, M579Cam *self, f32 *a, f32 *b);
-extern void Hu3DCameraPosGet(u16 cam, M579Cam *self, f32 *a, f32 *b);
+/* hsfman.c takes the camera bits as int: a u16 argument leaves the upper bits undefined on x64 */
+#ifdef TARGET_PC
+typedef int PortCamBits;
+#else
+typedef u16 PortCamBits;
+#endif
+extern void Hu3DCameraPosSetV(PortCamBits cam, M579Cam *self, f32 *a, f32 *b);
+extern void Hu3DCameraPosGet(PortCamBits cam, M579Cam *self, f32 *a, f32 *b);
 extern void C_MTXLookAt(void *mtx, void *eye, void *cen, void *up);
 extern void PSMTXInverse(void *src, void *dst);
 extern void PSVECAdd(void *a, void *b, void *c);

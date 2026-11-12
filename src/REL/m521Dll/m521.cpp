@@ -1159,6 +1159,9 @@ MtxPtr CModel::getMatrix()
 {
     return Hu3DData[m_id].mtx;
 }
+#ifdef TARGET_PC
+extern "C" MtxPtr getMatrix__6CModelFv(CModel *m) { return m->getMatrix(); }
+#endif
 
 CModel *__dt__6CModelFv(CModel *self, s16 flag)
 {
@@ -1896,3 +1899,13 @@ CListNode *fn_1_AA68(CListNode *self, s16 flag)
     return self;
 }
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_A908)(void) = fn_1_A908;
+#else
+struct PortStaticInit_A908 {
+    PortStaticInit_A908() { fn_1_A908(); }
+};
+static PortStaticInit_A908 lbl_port_init_A908;
+#endif

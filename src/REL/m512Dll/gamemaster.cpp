@@ -19,19 +19,31 @@ typedef unsigned int u32;
 
 // Head of M512Score (see REL/m512Dll/score.cpp); only ->timer at 0x10 is read.
 struct M512ScoreHead {
-    s32 unk00;
-    s32 unk04;
+    void *unk00;     // list node (next, prev)
+    void *unk04;
     void *vtable;
     s32 bitmask;
     void *timer;     // 0x10
 };
 
+#ifdef TARGET_PC
+#include <stddef.h>
+#include "dolphin/os.h"
+#endif
 struct CGameMaster {
     void *m_f0;        // 0x00
     void *m_vtbl;      // 0x04
     char m_f8[0x18];   // 0x08
     void *m_vtbl2;     // 0x20
+#ifdef TARGET_PC
+    /* rest of M512SubThread (m512.cpp): thread, stack, semaphore, arg; larger than 0x334 on PC */
+    OSThread m_thOs;
+    u32 *m_thStack;
+    OSSemaphore m_sem;
+    s32 m_arg;
+#else
     char m_f24[0x334]; // 0x24
+#endif
     void *m_f358;      // 0x358
     void *m_f35C;        // 0x35C score window
     s32 m_f360;        // 0x360 frame tick
@@ -108,7 +120,9 @@ s32 GWMgRecordGet(s32 idx);
 void GWMgRecordSet(s32 idx, s32 rec);
 
 s32 _CheckFlag(u32 flag);
+#ifndef TARGET_PC /* dolphin/os.h declares it on PC */
 s32 OSGetTick(void);
+#endif
 
 int printf(const char *fmt, ...);
 
@@ -133,7 +147,11 @@ extern "C" bool fn_1_66A0(CGameMaster *self);
 extern "C" void fn_1_66FC(CGameMaster *self);
 extern "C" void fn_1_6700(CGameMaster *self);
 extern "C" void fn_1_6758(CGameMaster *self);
+#ifdef TARGET_PC
+extern "C" void fn_1_6760(CGameMaster *self, s16 flag);
+#else
 extern "C" void fn_1_6760(CGameMaster *self);
+#endif
 
 // ---------------------------------------------------------------------- data
 
@@ -400,6 +418,24 @@ extern "C" void fn_1_6700(CGameMaster *self)
     fn_1_1DE0();
 }
 
+#ifdef TARGET_PC
+// this-adjusting thunks of the second base (the sub-thread)
+#define M512_FROM_THREAD(p) ((CGameMaster *)((char *)(p) - offsetof(CGameMaster, m_vtbl2)))
+extern "C" void fn_1_6758(CGameMaster *self)
+{
+    fn_1_635C(M512_FROM_THREAD(self));
+}
+
+extern "C" void fn_1_6760(CGameMaster *self, s16 flag)
+{
+    __dt__Q24m51211CGameMasterFv(M512_FROM_THREAD(self), flag);
+}
+
+extern "C" u32 m512GameMasterSize(void)
+{
+    return sizeof(CGameMaster);
+}
+#else
 extern "C" void fn_1_6758(CGameMaster *self)
 {
     __asm {
@@ -415,3 +451,4 @@ extern "C" void fn_1_6760(CGameMaster *self)
         b      __dt__Q24m51211CGameMasterFv
     }
 }
+#endif

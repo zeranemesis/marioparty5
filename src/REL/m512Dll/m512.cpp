@@ -217,6 +217,9 @@ M512Master *lbl_1_bss_9EC;
 // ---------------------------------------------------------------- code
 
 void fn_1_1D4(const char *expr, const char *file, s32 line);
+#ifdef TARGET_PC /* the module's own fprintf clashes with the C library's */
+#define fprintf m512Fprintf
+#endif
 int fprintf(void *unused, const char *fmt, ...);
 void *fn_1_6000(M512Node *self, s16 flag);
 void fn_1_408(M512Cam *self, Vec *x, Vec *y, Vec *z);
@@ -224,7 +227,13 @@ void fn_1_56C(M512Cam *self, Vec *delta);
 
 void *__nw__FUl(s32 size)
 {
+#ifdef TARGET_PC
+    /* shortcut: callers pass GC object sizes (__nw__FUl(0x48)); a field takes at most twice its GC room on
+     * 64-bit, so double them rather than overflow. Upgrade: sizeof of the constructed types at every call site. */
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size * 2, 0x10000000);
+#else
     void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+#endif
 
     M512_ASSERT(p != 0, lbl_1_data_0, lbl_1_data_C, 0x17);
     return p;

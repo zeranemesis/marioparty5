@@ -26,7 +26,11 @@ s32 fn_1_6998(void);
 
 // stderr of the C library (element 2 of the FILE table)
 extern u8 __files[];
+#ifdef TARGET_PC
+#define PLAYER_STDERR ((void *)0) /* fn_1_4C9C ignores the stream */
+#else
 #define PLAYER_STDERR ((void *)(__files + 0xA0))
+#endif
 
 // CModel (m521 unit)
 CModel *fn_1_7780(CModel *self, s16 charNo, s32 kind);
@@ -1082,3 +1086,13 @@ void fn_1_17F44(void)
     lbl_1_bss_AB0 = 0xD2;
 }
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_17F44)(void) = fn_1_17F44;
+#else
+struct PortStaticInit_17F44 {
+    PortStaticInit_17F44() { fn_1_17F44(); }
+};
+static PortStaticInit_17F44 lbl_port_init_17F44;
+#endif

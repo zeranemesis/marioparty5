@@ -13,14 +13,17 @@
 typedef s16 HU3DMODELID;
 
 /* Pointer-to-member-function slot. The GameCube build keeps the MWCC layout
- * (this-delta, vtable index, function address); on PC the slot is just the
- * function pointer, called directly with the object. */
+ * (this-delta, vtable index, function address); on PC the function is called
+ * directly with the object, but the slot keeps the same fields so it matches
+ * the PTMF that camera.cpp and stage.cpp declare (same object sizes). */
 #ifdef TARGET_PC
 typedef struct M521Ptmf_s {
+    s32 delta;
+    s32 vidx;
     void (*fn)(void *self);
 } M521Ptmf;
-#define M521_PTMF_INIT(f) { (void (*)(void *))(f) }
-#define M521_PTMF_NULL_INIT { 0 }
+#define M521_PTMF_INIT(f) { 0, -1, (void (*)(void *))(f) }
+#define M521_PTMF_NULL_INIT { 0, -1, 0 }
 #define M521PtmfTest(p) ((p)->fn != 0)
 #define M521PtmfCall(obj, p) ((p)->fn(obj))
 #else
@@ -197,10 +200,12 @@ struct CScore {
 
 /* OS thread with its heap stack, and the thread whose body is virtual slot 3 of the
  * object (the game master embeds one at 0x20). */
+#ifndef TARGET_PC /* Aurora defines its own (larger) OSSemaphore */
 typedef struct OSSemaphore {
     OSThreadQueue queue;
     s32 count;
 } OSSemaphore;
+#endif
 
 typedef struct CThread {
     OSThread m_th;

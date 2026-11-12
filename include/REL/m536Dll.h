@@ -106,6 +106,12 @@ typedef struct M536PTMF_s {
 
 s32 __ptmf_test(M536_PTMF *ptmf);
 void __ptmf_scall(void *self);
+/* MWCC passes the pmf in r12, so on PC the (always non-virtual) member is called directly. */
+#ifdef TARGET_PC
+#define M536PtmfSCall(obj, pmf) (((void (*)(void *))(pmf)->fn)(obj))
+#else
+#define M536PtmfSCall(obj, pmf) __ptmf_scall(obj)
+#endif
 
 void fn_1_1D4(const char *cond, const char *file, s32 line);
 void fn_1_C8(void *ptr);
