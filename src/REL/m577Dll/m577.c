@@ -833,7 +833,7 @@ void fn_1_1600(s16 mode, s16 frameNo)
 {
     M577Work *w = workObj->data;
     M577Player *p;
-    s16 playerNo;
+    s32 playerNo;
     s32 i;
     s32 n;
 
@@ -2183,7 +2183,7 @@ void fn_1_72D0(M577Team *team)
     Hu3DModelRotSet(sled->mWheel, sled->roll, 0.0f, 0.0f);
     Hu3DModelPosSetV(pole->m28, &pole->pos);
     Hu3DModelPosSet(pole->m2C, pole->pos.x, pole->pos.y, pole->pos.z);
-    pole->rot = pole->rot - (360.0f * team->speed) / 273.94686980565;
+    sled->pole->rot -= (360.0f * team->speed) / 273.94686980565;
     while (sled->pole->rot > 180.0f) {
         sled->pole->rot -= 360.0f;
     }
@@ -2745,7 +2745,7 @@ void fn_1_9380(M577Team *team)
     Hu3DModelRotSet(sled->mWheel, sled->roll, 0.0f, 0.0f);
     Hu3DModelPosSetV(sled->pole->m28, &sled->pole->pos);
     Hu3DModelPosSet(sled->pole->m2C, sled->pole->pos.x, sled->pole->pos.y, sled->pole->pos.z);
-    sled->pole->rot = sled->pole->rot - (360.0f * team->speed) / 273.94686980565;
+    sled->pole->rot -= (360.0f * team->speed) / 273.94686980565;
     while (sled->pole->rot > 180.0f) {
         sled->pole->rot -= 360.0f;
     }
@@ -2956,7 +2956,7 @@ void fn_1_A36C(M577Team *team)
     Hu3DModelRotSet(sled->mWheel, sled->roll, 0.0f, 0.0f);
     Hu3DModelPosSetV(sled->pole->m28, &sled->pole->pos);
     Hu3DModelPosSet(sled->pole->m2C, sled->pole->pos.x, sled->pole->pos.y, sled->pole->pos.z);
-    sled->pole->rot = sled->pole->rot - 19.7118514397737;
+    sled->pole->rot -= 19.7118514397737;
     while (sled->pole->rot > 180.0f) {
         sled->pole->rot -= 360.0f;
     }
