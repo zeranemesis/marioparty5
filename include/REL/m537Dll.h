@@ -181,6 +181,16 @@ typedef struct M537Effect {
     ANIMDATA *anim[4];  /* 0x10 */
 } M537Effect;
 
+/* Holder of a dorrie owned by the stage (4 bytes on GameCube). */
+typedef struct M537DorriePtr {
+    M537Dorrie *p;
+} M537DorriePtr;
+
+/* Holder of a model owned by the stage. */
+typedef struct M537ModelPtr {
+    s16 *p;
+} M537ModelPtr;
+
 struct M537Camera;
 struct M537Stage;
 struct M537Water;

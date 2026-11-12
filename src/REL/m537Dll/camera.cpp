@@ -49,7 +49,7 @@ void fn_1_9E0(M537CamLook *cam, u16 cameraBit);
 void fn_1_C08(Vec *camVec, s32 pad);
 s32 fn_1_A0D4(void);
 M537Dorrie *fn_1_96CC(M537Stage *stage, s32 index);
-Mtx *fn_1_6558(M537Dorrie *dorrie, s32 part, Mtx mtx);
+MtxPtr fn_1_6558(M537Dorrie *dorrie, s32 part, Mtx mtx);
 
 M537Camera *fn_1_8B30(M537Camera *self, s16 freeIt);
 void fn_1_8BFC(M537Camera *self, s32 mode);

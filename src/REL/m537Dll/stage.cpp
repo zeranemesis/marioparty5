@@ -31,16 +31,6 @@ extern "C" {
 
 extern void *lbl_1_data_1FC[];
 
-// Holder of a dorrie owned by the stage.
-struct M537DorriePtr {
-    M537Dorrie *m_p;
-};
-
-// Holder of a model owned by the stage.
-struct M537ModelPtr {
-    s16 *m_p;
-};
-
 // The stage work object (singleton at lbl_1_bss_A14).
 struct M537Stage {
     M537_NODE m_node;           /* 0x00 */
@@ -146,13 +136,13 @@ M537Stage *fn_1_9290(M537Stage *self)
 
 void fn_1_9490(M537ModelPtr *self)
 {
-    self->m_p = 0;
+    self->p = 0;
 }
 
 M537DorriePtr *fn_1_949C(M537DorriePtr *self, s16 freeIt)
 {
     if (self != 0) {
-        fn_1_61AC(self->m_p, 1);
+        fn_1_61AC(self->p, 1);
         if (freeIt > 0) {
             fn_1_C8(self);
         }
@@ -212,7 +202,7 @@ M537Stage *fn_1_95AC(M537Stage *self, s16 freeIt)
 
 M537Dorrie *fn_1_96CC(M537Stage *self, s32 index)
 {
-    return self->m_dorrie[index].m_p;
+    return self->m_dorrie[index].p;
 }
 
 void fn_1_96DC(M537Stage *self, s32 bit)
@@ -235,11 +225,11 @@ void fn_1_96F4(M537Stage *self)
         if (d != 0) {
             d = fn_1_5E4C(d, i);
         }
-        if (self->m_dorrie[i].m_p != d) {
-            fn_1_61AC(self->m_dorrie[i].m_p, 1);
-            self->m_dorrie[i].m_p = d;
+        if (self->m_dorrie[i].p != d) {
+            fn_1_61AC(self->m_dorrie[i].p, 1);
+            self->m_dorrie[i].p = d;
         }
-        fn_1_66D0(self->m_dorrie[i].m_p, lbl_1_rodata_2A8[i], lbl_1_rodata_2B8);
+        fn_1_66D0(self->m_dorrie[i].p, lbl_1_rodata_2A8[i], lbl_1_rodata_2B8);
     }
 }
 
@@ -256,21 +246,21 @@ void fn_1_97C8(M537Stage *self)
         if (m != 0) {
             m = fn_1_2C94(m, lbl_1_rodata_2C0[i]);
         }
-        if (self->m_part[i].m_p != m) {
-            fn_1_30F4(self->m_part[i].m_p, 1);
-            self->m_part[i].m_p = m;
+        if (self->m_part[i].p != m) {
+            fn_1_30F4(self->m_part[i].p, 1);
+            self->m_part[i].p = m;
         }
-        id = *self->m_part[i].m_p;
+        id = *self->m_part[i].p;
         tmax = Hu3DMotionMaxTimeGet(id);
         Hu3DMotionSpeedSet(id, tmax / 499.8f);
         Hu3DMotionTimeSet(id, tmax - (f32)i);
-        fn_1_2E08(self->m_part[i].m_p, 0x40000001);
+        fn_1_2E08(self->m_part[i].p, 0x40000001);
     }
 }
 
 void fn_1_9928(M537DorriePtr *self, M537Dorrie *dorrie)
 {
-    self->m_p = dorrie;
+    self->p = dorrie;
 }
 
 }
