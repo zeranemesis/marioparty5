@@ -21,7 +21,7 @@ static void Ring8MatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
 static void Ring9MatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
 static void Ring10MatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
 static void Ring11MatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
-static void MdSpriteDispSet(s32 grpNo, s32 dispF);
+void MdSpriteDispSet(s32 grpNo, s32 dispF);
 
 typedef struct SpriteInfo_s {
     s16 animNo;
@@ -218,7 +218,7 @@ void MdSpriteCreate(NEL_SYS *sys)
     sprite->tpLvl = 0.6f;
 }
 
-static void MdSpriteDispSet(s32 grpNo, s32 dispF)
+void MdSpriteDispSet(s32 grpNo, s32 dispF)
 {
     NEL_SYS *sys = &sysWork;
     SPRITEGRPINFO *grpInfo;
@@ -347,7 +347,7 @@ static HuVecF ToueiTexObjOfs[10] = {
 static void DrawMirror(HU3DMODEL *modelP, Mtx *mtx);
 static void ToneDownFilter(HU3DMODEL *modelP, Mtx *mtx);
 static void FontBGFilter(HU3DMODEL *modelP, Mtx *mtx);
-static void MdCopyWarpFilter(s16 layerNo);
+void MdCopyWarpFilter(s16 layerNo);
 static void TexBufFBCopy(NEL_SYS *sys, s32 no);
 static void ToueiZClear(void);
 
@@ -1037,7 +1037,7 @@ void MdLayer1Hook(s16 layerNo)
     }
 }
 
-static void MdCopyWarpFilter(s16 layerNo)
+void MdCopyWarpFilter(s16 layerNo)
 {
     NEL_SYS *sys = &sysWork;
 
@@ -1645,10 +1645,10 @@ void MdParticleDebug(NEL_SYS *sys)
     MdDebugFontPrint("pdebug->blue   (%d)", param->color.b);
 }
 
-static void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo);
-static void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z);
+void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo);
+void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z);
 static void MdRingColorReset(NEL_SYS *sys, s32 no);
-static void MdRingDispSet(NEL_SYS *sys, volatile s32 no, s32 dispF);
+void MdRingDispSet(NEL_SYS *sys, volatile s32 no, s32 dispF);
 static void MdRingScaleSet(NEL_SYS *sys, s32 no, float scale);
 
 void MdRingCreate(NEL_SYS *sys)
@@ -1857,7 +1857,7 @@ void MdRingModeSet(NEL_SYS *sys, s32 no, s32 mode)
     ring->mode = mode;
 }
 
-static void MdRingDispSet(NEL_SYS *sys, volatile s32 no, s32 dispF)
+void MdRingDispSet(NEL_SYS *sys, volatile s32 no, s32 dispF)
 {
     SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
     SYSMODEL *model = (SYSMODEL *)sys->model;
@@ -1879,14 +1879,14 @@ static void MdRingScaleSet(NEL_SYS *sys, s32 no, float scale)
     (*ring->scaleP)->z = scale;
 }
 
-static void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo)
+void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo)
 {
     SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
 
     ring->baseMdlNo = mdlNo;
 }
 
-static void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z)
+void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z)
 {
     SYSRING *ring = &((SYSRING_WORK *)sys->ring)->ring[no];
 
@@ -1906,9 +1906,9 @@ static void MdRingColorReset(NEL_SYS *sys, s32 no)
     ring->ofsT = 0.0f;
 }
 
-static void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp);
-static void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo);
-static void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode);
+void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp);
+void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo);
+void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode);
 
 void MdFukiInit(NEL_SYS *sys)
 {
@@ -1995,21 +1995,21 @@ void MdFukiMain(NEL_SYS *sys)
     }
 }
 
-static void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp)
+void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp)
 {
     SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
 
     fuki->grp = grp;
 }
 
-static void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo)
+void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo)
 {
     SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
 
     fuki->memberNo = memberNo;
 }
 
-static void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode)
+void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode)
 {
     SYSFUKI *fuki = &((SYSFUKI *)sys->fuki)[no];
 
