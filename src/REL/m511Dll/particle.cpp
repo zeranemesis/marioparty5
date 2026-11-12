@@ -10,7 +10,7 @@ extern "C" void *__dl__FPv(void *self);
 extern "C" void fn_1_1D88(void *self);
 extern "C" void fn_1_1D94(void *self, s32 arg1);
 extern "C" void fn_1_1E54(void *self, void **arg1);
-u16 fn_1_5578(s32 arg0, f32 arg1);
+extern "C" u32 fn_1_5578(void);
 extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 extern "C" s32 frand(void);
 
@@ -95,7 +95,7 @@ struct Mgr511ParticleRoot {
 
 extern "C" {
 
-extern void *lbl_1_bss_2C;
+extern "C" void *lbl_1_bss_2C[2];
 
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_354[6];
@@ -212,13 +212,13 @@ void fn_1_894C(Mgr511Smoke *arg0, struct ParticleNode *arg1)
     node->state = 0;
     seed = frand() & 0xF;
     node->rate = (s16)(seed + 7);
-    node->posX = (f32)(arg0->posX + (50.0f * (0.000030517578f * ((f32)fn_1_5578(seed, 0.0f) - 32768.0f))));
+    node->posX = (f32)(arg0->posX + (50.0f * (0.000030517578f * ((f32)fn_1_5578() - 32768.0f))));
     node->posY = (f32)(100.0f + arg0->posY);
-    temp_f1 = 50.0f * (0.000030517578f * ((f32)fn_1_5578(0, 100.0f) - 32768.0f));
+    temp_f1 = 50.0f * (0.000030517578f * ((f32)fn_1_5578() - 32768.0f));
     node->posZ = (f32)(arg0->posZ + temp_f1);
-    temp_f1_2 = 0.2f + (0.1f * (0.000015258789f * (f32)fn_1_5578(0, temp_f1)));
+    temp_f1_2 = 0.2f + (0.1f * (0.000015258789f * (f32)fn_1_5578()));
     node->size = (f32)(100.0f * temp_f1_2);
-    node->angle = (f32)(0.017453292f * (360.0f * (0.000015258789f * (f32)fn_1_5578(0, temp_f1_2))));
+    node->angle = (f32)(0.017453292f * (360.0f * (0.000015258789f * (f32)fn_1_5578())));
     color = frand();
     node->cr = (u8)color;
     node->cg = (u8)(color >> 8);
@@ -328,14 +328,14 @@ void fn_1_917C(Mgr511Spark *arg0, struct ParticleNode *arg1)
     node->state = 0;
     seed = frand() & 0xF;
     node->rate = (s16)(seed + 7);
-    temp_f1 = 70.0f * (0.000030517578f * ((f32)fn_1_5578(seed, 0.0f) - 32768.0f));
+    temp_f1 = 70.0f * (0.000030517578f * ((f32)fn_1_5578() - 32768.0f));
     node->posX = (f32)(arg0->posX + temp_f1);
     node->posY = arg0->posY;
-    temp_f1_2 = 70.0f * (0.000030517578f * ((f32)fn_1_5578(0, temp_f1) - 32768.0f));
+    temp_f1_2 = 70.0f * (0.000030517578f * ((f32)fn_1_5578() - 32768.0f));
     node->posZ = (f32)(arg0->posZ + temp_f1_2);
-    temp_f1_3 = 0.2f + (0.3f * (0.000015258789f * (f32)fn_1_5578(0, temp_f1_2)));
+    temp_f1_3 = 0.2f + (0.3f * (0.000015258789f * (f32)fn_1_5578()));
     node->size = (f32)(100.0f * temp_f1_3);
-    node->angle = (f32)(0.017453292f * (360.0f * (0.000015258789f * (f32)fn_1_5578(0, temp_f1_3))));
+    node->angle = (f32)(0.017453292f * (360.0f * (0.000015258789f * (f32)fn_1_5578())));
     color = frand();
     node->vel = 0.0f;
     node->cr = (u8)color;
@@ -373,14 +373,14 @@ void fn_1_93BC(Mgr511Spark *arg0, Mtx mtx)
                     node->state = 0;
                     seed = frand() & 0xF;
                     node->rate = (s16)(seed + 7);
-                    temp_f1 = 70.0f * (0.000030517578f * ((f32)fn_1_5578(seed, 0.0f) - 32768.0f));
+                    temp_f1 = 70.0f * (0.000030517578f * ((f32)fn_1_5578() - 32768.0f));
                     node->posX = (f32)(arg0->posX + temp_f1);
                     node->posY = arg0->posY;
-                    temp_f1_2 = 70.0f * (0.000030517578f * ((f32)fn_1_5578(0, temp_f1) - 32768.0f));
+                    temp_f1_2 = 70.0f * (0.000030517578f * ((f32)fn_1_5578() - 32768.0f));
                     node->posZ = (f32)(arg0->posZ + temp_f1_2);
-                    temp_f1_3 = 0.2f + (0.3f * (0.000015258789f * (f32)fn_1_5578(0, temp_f1_2)));
+                    temp_f1_3 = 0.2f + (0.3f * (0.000015258789f * (f32)fn_1_5578()));
                     node->size = (f32)(100.0f * temp_f1_3);
-                    node->angle = (f32)(0.017453292f * (360.0f * (0.000015258789f * (f32)fn_1_5578(0, temp_f1_3))));
+                    node->angle = (f32)(0.017453292f * (360.0f * (0.000015258789f * (f32)fn_1_5578())));
                     color = frand();
                     node->vel = 0.0f;
                     node->cr = (u8)color;

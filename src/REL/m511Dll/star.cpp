@@ -14,16 +14,16 @@ extern "C" void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapM
    "Failed to find symbol fn_1_1D88__FPv in any module". */
 extern "C" void *__dl__FPv(void *self);
 extern "C" void *__nw__FUl(u32 size);
-void __construct_array(void *arr, void (*ctor)(void *), void *(*dtor)(void *, s16), u32 size, u32 count);
-void __destroy_arr(void *arr, void *(*dtor)(void *, s16), u32 size, u32 count);
+extern "C" void __construct_array(void *arr, void (*ctor)(void *), void *(*dtor)(void *, s16), u32 size, u32 count);
+extern "C" void __destroy_arr(void *arr, void *(*dtor)(void *, s16), u32 size, u32 count);
 extern "C" void fn_1_1D88(void *self);
 extern "C" void fn_1_1D94(void *self, s32 arg1);
 extern "C" void fn_1_1E54(void *self, void **arg1);
 extern "C" void fn_1_372C(void *self, s32 arg1);
 extern "C" void fn_1_3B8C(void *self, s32 arg1);
-void *fn_1_8F38(void *arg0, Point3d *arg1, s32 arg2);
-void *fn_1_9128(void *arg0, s16 arg1);
-void fn_1_9700(void *arg0, Point3d *arg1, Point3d *arg2);
+extern "C" void *fn_1_8F38(void *arg0, Point3d *arg1, s32 arg2);
+extern "C" void *fn_1_9128(void *arg0, s16 arg1);
+extern "C" void fn_1_9700(void *arg0, Point3d *arg1, Point3d *arg2);
 extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 
 struct Mgr511Star;
@@ -78,7 +78,7 @@ struct Mgr511StarRoot {
 
 extern "C" {
 
-extern void *lbl_1_bss_2C;
+extern "C" void *lbl_1_bss_2C[2];
 
 extern Mgr511StarMaster *lbl_1_bss_A2C;
 extern Mgr511StarRoot *lbl_1_bss_A38;

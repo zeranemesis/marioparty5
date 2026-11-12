@@ -96,7 +96,7 @@ struct Mgr511ScoreRoot {
 
 extern "C" {
 
-extern void *lbl_1_bss_2C;
+extern "C" void *lbl_1_bss_2C[2];
 
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_62C[6];
