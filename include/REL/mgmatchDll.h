@@ -45,8 +45,8 @@ typedef struct M505Player_s {
     HU3DMOTID mot6;        //0x0E
     HU3DMOTID mot7;        //0x10
     HU3DMOTID mot8;        //0x12
-    s16 pad1;              //0x14
-    s16 pad2;              //0x16
+    HU3DMOTID mot9;        //0x14
+    HU3DMOTID mot10;       //0x16
     s16 playerNo;          //0x18
     s16 charNo;            //0x1A
     s16 padNo;             //0x1C
@@ -76,9 +76,9 @@ typedef struct M505ParMan_s {
     Vec offset;            //0x10
     Vec scale;             //0x1C
     s16 playerNo;          //0x28
-    s16 pad2;              //0x2A
     HU3DMOTID motA;        //0x2A
     HU3DMOTID motB;        //0x2C
+    s16 pad2;              //0x2E
 } M505_PARMAN;            //0x30
 
 /* The module work structure (lbl_1_bss_8). */
@@ -146,8 +146,7 @@ typedef M505_MGENTRY M505_MGINFO;
 /* mgModeWork. */
 typedef struct M505ModeWork_s {
     s8 entryNo;            //0x00
-    s8 orderNo;            //0x01
-    u8 pad[0x14];          //0x02
+    s8 order[MGMATCH_MG_MAX]; //0x01
     u8 flag;               //0x16
     s8 score[MGMATCH_PLAYER_MAX]; //0x17
     u8 gameType;           //0x1B
@@ -174,20 +173,19 @@ extern const M505Proc _ctors[];
 extern const M505Proc _dtors[];
 
 /* score.c */
-s32 fn_1_12404(s8 gameType, s8 maxScore, M505_PLAYER *player, s8 *score,
-               HU3DMODELID *mdl, M505_FLOW *flow);
+void fn_1_12404(s8 gameType, s8 maxScore, M505_PLAYER *player, s8 *score, HU3DMODELID *mdl);
 void fn_1_12934(void);
-void fn_1_12AE4(s32 no);
+void fn_1_12AE4(s8 no);
 s32 fn_1_12B08(void);
-s32 fn_1_12B4C(void);
-void fn_1_138B8(Vec *pos, Vec *scale, s8 winTeam, s8 playerNo, s8 gameType,
-               Vec *standPos, f32 yOffset, f32 zOffset);
-void fn_1_13C1C(s8 winTeam, s8 gameType, s8 maxScore, u8 *order, s32 *rank);
+s8 fn_1_12B4C(void);
+void fn_1_138B8(Vec *dst, Vec *scale, s32 row, s32 col, s32 gameType, f32 div, f32 z);
+void fn_1_13C1C(s16 team, s32 gameType, s32 maxScore, s32 *order, s32 *rank);
+void fn_1_15690(s32 type, s32 *order, s32 *rank);
 
 /* mess.c */
 void fn_1_15BC8(void);
 void fn_1_15C74(M505_PLAYER *player);
-void fn_1_15DB8(M505_PLAYER *player, void *msg, s32 size);
+void fn_1_15DB8(M505_PLAYER *player, Vec *pos);
 void fn_1_15F24(void);
 void fn_1_15F88(void);
 void fn_1_16018(void);
