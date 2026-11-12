@@ -20,8 +20,8 @@ typedef struct M550Player_s {
     /* 0x06 */ s16 charNo;
     /* 0x08 */ s16 cpuLevel;
     /* 0x0A */ s16 padNo;
-    /* 0x0C */ u32 btn;
-    /* 0x10 */ u32 btnDown;
+    /* 0x0C */ s32 btn;
+    /* 0x10 */ s32 btnDown;
     /* 0x14 */ s8 stkX;
     /* 0x15 */ s8 stkY;
     /* 0x16 */ u16 btnRep;
@@ -109,8 +109,7 @@ typedef struct M550State_s {
     /* 0x050 */ M550MOTION motion[2];
     /* 0x0F8 */ s32 *modelData;
     /* 0x0FC */ s16 stageNo;
-    /* 0x100 */ s32 mode;
-    /* 0x104 */ s32 pmode[2];
+    /* 0x100 */ s32 modes[3]; /* [0] game mode, [1 + side] per-player state */
     /* 0x10C */ s32 unk10C;
     /* 0x110 */ s32 timer;
     /* 0x114 */ s32 unk114;
@@ -133,6 +132,11 @@ typedef struct M550Cpu_s {
     /* 0x08 */ s32 wait;
     /* 0x0C */ s32 count;
 } M550CPU;
+
+/* Three-entry index tables kept in game.c's .rodata (see fn_1_50D8). */
+typedef struct M550Idx3_s {
+    s32 v[3];
+} M550IDX3;
 
 void M550StageInit(OMOBJMAN *om);
 void M550StageClose(void);
