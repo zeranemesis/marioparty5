@@ -3,11 +3,7 @@
 #include "game/data.h"
 #include "game/hu3d.h"
 #include "game/sprite.h"
-#include "REL/m579Dll/m579types.h"
-
-typedef struct M579FishMgr {
-    M579Base base;
-} M579FishMgr;
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);

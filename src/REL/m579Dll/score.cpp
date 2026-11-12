@@ -1,34 +1,13 @@
-#include "dolphin/types.h"
+#include "dolphin.h"
 #include "game/data.h"
 #include "game/sprite.h"
+#include "REL/m579Dll/m579objs.h"
 
 #ifdef __MWERKS__
 #define M579_RODATA __declspec(section ".rodata")
 #else
 #define M579_RODATA
 #endif
-
-typedef struct MGSCORE MGSCORE;
-
-typedef struct M579ScoreEntry {
-    s16 win;
-    s16 grp;
-    MGSCORE *score;
-    f32 tpLvl;
-    s32 type;
-    s32 value;
-    f32 x;
-    f32 y;
-} M579ScoreEntry;
-
-typedef struct M579Score {
-    void *prev;
-    void *next;
-    void **vtable;
-    s32 flags;
-    s32 active;
-    M579ScoreEntry entry[4];
-} M579Score;
 
 extern "C" {
 s16 MgScoreWinCreate(s16 sizeX, s16 sizeY);
@@ -44,11 +23,6 @@ void MgScoreColorSet(MGSCORE *score, u8 r, u8 g, u8 b);
 void MgScoreMaxDigitSet(MGSCORE *score, s32 maxDigit);
 void MgScoreDispOn(MGSCORE *score);
 void MgScoreDispOff(MGSCORE *score);
-void *fn_1_1264(void *self);
-void fn_1_1270(void *self, s32 arg);
-void fn_1_1330(void *self, void *arg);
-void fn_1_1D4(const char *expr, const char *file, s32 line);
-void fn_1_C8(void *self);
 
 extern void *lbl_1_bss_C;
 extern void *lbl_1_data_1FC;

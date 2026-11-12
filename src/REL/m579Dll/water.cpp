@@ -2,13 +2,7 @@
 #include "game/data.h"
 #include "game/hu3d.h"
 #include "game/sprite.h"
-#include "REL/m579Dll/m579types.h"
-
-/* Water singleton: spray/ripple sprites and the particle managers. */
-typedef struct M579WaterMgr {
-    M579Base base;
-    ANIMDATA *anim[3];
-} M579WaterMgr;
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);

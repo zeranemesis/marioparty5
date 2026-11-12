@@ -2,48 +2,7 @@
 #include <math.h>
 #include "game/data.h"
 #include "game/hu3d.h"
-#include "REL/m579Dll/m579types.h"
-
-/* Small background fish. */
-typedef struct M579Zako {
-    M579Node node;
-    s32 u08;
-    M579Ptmf update;
-    s32 anim;
-    s32 u1C;
-    Vec pos;
-    s32 frame;
-    f32 phase;
-    s16 model;
-    f32 yaw;
-    f32 speed;
-    f32 target;
-    u8 type;
-    s32 pad48;
-    s32 timer;
-    f32 roll;
-} M579Zako;
-
-/* Item (treasure) manager. */
-typedef struct M579ItemMgr {
-    M579Base base;
-    M579S16Vec motion;
-    M579Ptmf update;
-    s32 anim;
-    s16 model[3];
-    u8 landed;
-    u8 hidden;
-    s32 frame;
-    Vec vel;
-    Vec pos;
-    f32 f50;
-    f32 f54;
-    f32 f58;
-    f32 f5C;
-    s16 hook;
-    u8 u62;
-    f32 f64;
-} M579ItemMgr;
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);

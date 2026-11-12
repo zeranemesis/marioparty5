@@ -49,6 +49,7 @@ M579_RODATA const Vec lbl_1_rodata_160 = { 0.0f, 0.0f, 0.0f };
 
 u8 lbl_1_bss_9F0[12];
 M579Node lbl_1_bss_9FC;
+void *lbl_1_bss_A04;
 
 M579Puku *fn_1_6074(M579Puku *self, s16 *src, s32 type)
 {

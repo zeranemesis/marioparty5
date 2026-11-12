@@ -3,24 +3,7 @@
 #include "game/hu3d.h"
 #include "game/pad.h"
 #include <math.h>
-#include "REL/m579Dll/m579types.h"
-
-typedef struct M579Actor {
-    M579Node node;
-    Vec pos;
-} M579Actor;
-
-typedef struct M579Camera {
-    M579Base base;
-    M579Cam cam;
-    s32 frame;
-    M579Ptmf update;
-    s16 model;
-    M579Actor *target;
-    u8 debugOn;
-    u8 debugHold;
-    M579Cam debugCam;
-} M579Camera;
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 s32 __ptmf_test(void *ptmf);

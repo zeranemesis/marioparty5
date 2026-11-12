@@ -11,37 +11,7 @@ void *memmove(void *dst, const void *src, unsigned long n);
 #include "game/gamework.h"
 #include "game/hu3d.h"
 #include "game/pad.h"
-#include "REL/m579Dll/m579types.h"
-
-/* Fisher player (one per controller). */
-struct M579Player {
-    M579Node node;
-    Vec pos;
-    M579Ptmf update;
-    s32 idx;
-    s32 charNo;
-    s32 padNo;
-    s32 anim;
-    s32 dif;
-    f32 yaw;
-    f32 f38;
-    f32 yawTarget;
-    f32 stick;
-    s32 state;
-    f32 dist;
-    s16 model;
-    u8 loser;
-    s32 frame;
-    M579Fish *fish;
-    M579Fish *target;
-    s32 count;
-    s32 score;
-    u8 u64;
-    s32 timer;
-    s32 active;
-    s32 u70;
-    M579S16Vec motion;
-};
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);

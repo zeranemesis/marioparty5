@@ -3,22 +3,18 @@
 #include "game/data.h"
 #include "game/hu3d.h"
 #include "game/sprite.h"
-#include "REL/m579Dll/m579types.h"
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);
 void fn_1_A680(void *mem, Vec *pos, f32 size);
 extern u8 lbl_1_bss_C[];
 extern u8 lbl_1_data_1FC[];
-extern void *lbl_1_bss_A04;
+extern M579EffMgr *lbl_1_bss_A04;
 }
 
 /* Splash particle effect object. */
 typedef M579Spray M579Splash;
-
-typedef struct M579EffMgr {
-    M579Base base;
-} M579EffMgr;
 
 extern "C" {
 void *fn_1_BA70(M579EffMgr *self);
@@ -67,7 +63,7 @@ void *fn_1_BA70(M579EffMgr *self)
         if (q != 0) {
             q -= 0x10;
         }
-        lbl_1_bss_A04 = q;
+        lbl_1_bss_A04 = (M579EffMgr *) q;
     }
 #endif
     self->base.vtbl = lbl_1_data_3E4;

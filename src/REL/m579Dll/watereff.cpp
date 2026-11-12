@@ -3,27 +3,7 @@
 #include "game/gxarray.h"
 #include "game/hu3d.h"
 #include "game/sprite.h"
-#include "REL/m579Dll/m579types.h"
-
-/* Byte vector holding the water reflection texture. */
-typedef struct M579U8Vec {
-    u32 cap;
-    u32 size;
-    u8 *data;
-} M579U8Vec;
-
-typedef struct M579WaterEff {
-    M579Base base;
-    s16 model;
-    GXTexObj reflTex;
-    GXTexObj waveTex;
-    M579U8Vec buf;
-    void *waveData;
-    ANIMDATA *anim;
-    Mtx mtx[4];
-    f32 scrollX;
-    f32 scrollY;
-} M579WaterEff;
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 extern M579WaterEff *lbl_1_bss_A24;

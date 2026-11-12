@@ -1,45 +1,20 @@
-#include "dolphin/types.h"
+#include "dolphin.h"
 #include <dolphin/gx.h>
+#include "game/sprite.h"
+#include "REL/m579Dll/m579objs.h"
 
-#define M_PI 3.14159265358979323846
 
 extern "C" {
-typedef struct {
-    f32 x;
-    f32 y;
-    f32 z;
-} HuVecF;
-
 double cos(double x);
 double sin(double x);
 double tan(double x);
 
-struct M579StageModel {
-    s16 field0;
-    s16 field2;
-};
 
-class M579Stage {
-public:
-    u64 unk0;
-    void **vtable;
-    s32 field_C;
-    M579StageModel model;
-};
-
-void fn_1_1264(void *self);
-void fn_1_1270(void *self, s32 arg2);
-void fn_1_1330(void *self, void *arg2);
-void fn_1_1D4(const char *msg, const char *file, s32 line);
 void fn_1_2C94(void *p, s32 v);
-void fn_1_2E08(void *p, s32 v);
-void fn_1_304C(void *p, s32 v);
-void fn_1_30F4(void *p, s32 v);
-void fn_1_3244(void *p, const char *name);
-void *fn_1_C8(void *self);
+void fn_1_3244(s16 *model, const char *name);
 
 void fn_1_B574(void);
-void fn_1_B578(void *self, s32 bit);
+void fn_1_B578(M579Stage *self, s32 bit);
 void fn_1_B5F0(void *self, void *mtx);
 void fn_1_B620();
 void *fn_1_B98C(M579Stage *self, s16 flag);
@@ -48,7 +23,7 @@ extern void *lbl_1_bss_A30;
 extern s32 lbl_1_bss_C;
 extern void *lbl_1_data_1FC[];
 
-void Hu3DModelObjDrawInit(void *obj, s32 arg1);
+void Hu3DModelObjDrawInit(void *obj, void *arg1);
 s32 Hu3DModelLightInfoSet(s16 modelId, s16 staticF);
 void Hu3DShadowCreate(f32 fov, f32 near, f32 far);
 void Hu3DShadowSizeSet(u16 size);
@@ -72,12 +47,15 @@ void *fn_1_B2C8(M579Stage *self)
     f64 scale;
 
     fn_1_1264(self);
-    self->vtable = lbl_1_data_1FC;
-    self->field_C = 0;
+    self->base.vtbl = lbl_1_data_1FC;
+    self->base.flags = 0;
     fn_1_1330(self, &lbl_1_bss_C);
 if (lbl_1_bss_A30 != 0) {
         fn_1_1D4(lbl_1_data_36C, lbl_1_data_37C, 0x35);
     }
+#ifdef TARGET_PC
+    lbl_1_bss_A30 = self;
+#else
     {
         u8 *base = (u8 *) &self->model;
         if (base != 0) {
@@ -85,7 +63,8 @@ if (lbl_1_bss_A30 != 0) {
         }
         lbl_1_bss_A30 = base;
     }
-    self->vtable = lbl_1_data_3A4;
+#endif
+    self->base.vtbl = lbl_1_data_3A4;
     fn_1_2C94(&self->model.field0, 0x850000);
     fn_1_2C94(&self->model.field2, 0x850001);
     Hu3DModelLightInfoSet(self->model.field0, 1);
@@ -128,9 +107,9 @@ void fn_1_B574(void)
 {
 }
 
-void fn_1_B578(void *self, s32 bit)
+void fn_1_B578(M579Stage *self, s32 bit)
 {
-    *(u32 *) ((u8 *) self + 0xc) &= ~(u32) (1u << bit);
+    self->base.flags &= ~(u32) (1u << bit);
     if (bit >= 5 || bit < 0) {
     }
 }
@@ -139,7 +118,7 @@ void fn_1_B5A0(void *self, void *arg1)
 {
     M579Stage *p;
     M579Stage *q;
-    Hu3DModelObjDrawInit(self, (s32) arg1);
+    Hu3DModelObjDrawInit(self, arg1);
     q = (M579Stage *) lbl_1_bss_A30;
     p = q;
     fn_1_B5F0(p, (void *) arg1);
@@ -199,12 +178,13 @@ s32 i;
         GXColor4u8(0x40, 0x40, 0x40, 0xff);
         i++;
     }
+    GXEnd();
 }
 
 void *fn_1_B98C(M579Stage *self, s16 flag)
 {
     if (self != 0) {
-        self->vtable = lbl_1_data_3A4;
+        self->base.vtbl = lbl_1_data_3A4;
         fn_1_30F4(&self->model.field2, -1);
         fn_1_30F4(&self->model.field0, -1);
         if (&self->model.field0 != 0) {
@@ -214,7 +194,7 @@ if (lbl_1_bss_A30 == 0) {
             lbl_1_bss_A30 = (void *) 0;
         }
         if (self != 0) {
-            self->vtable = lbl_1_data_1FC;
+            self->base.vtbl = lbl_1_data_1FC;
             if (self != 0) {
                 fn_1_1270(self, 0);
             }

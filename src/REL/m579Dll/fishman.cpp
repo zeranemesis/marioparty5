@@ -1,8 +1,13 @@
 #include "dolphin.h"
 #include <math.h>
-#include "REL/m579Dll/m579types.h"
+#include "game/sprite.h"
+#include "REL/m579Dll/m579objs.h"
 
 /* Rope simulation of the fish actor (M579Fish). */
+M579FishMgr *lbl_1_bss_A28;
+M579Score *lbl_1_bss_A2C;
+void *lbl_1_bss_A30;
+
 extern "C" {
 void fn_1_7B4C(M579Fish *f);
 s32 fn_1_7CD8(M579Fish *f, Vec *a);
