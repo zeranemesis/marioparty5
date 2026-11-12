@@ -413,6 +413,12 @@ void fn_1_3578(s32 arg0)
     if (row > 7) {
         row = 7;
     }
+#ifdef TARGET_PC
+    /* fn_1_38D4 can return 6; the GC code reads one past the row / array. Clamp. */
+    if (lbl_1_bss_B1C.f_124[arg0][0] > 5) {
+        lbl_1_bss_B1C.f_124[arg0][0] = 5;
+    }
+#endif
     lbl_1_bss_B1C.f_124[arg0][1] = tbl[row][lbl_1_bss_B1C.f_124[arg0][0]];
     lbl_1_bss_B1C.f_134[arg0][0] += (f32)lbl_1_bss_B1C.f_124[arg0][1];
     if (lbl_1_bss_B1C.f_134[arg0][0] >= 1000.0f) {
