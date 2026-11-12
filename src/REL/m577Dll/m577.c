@@ -963,7 +963,7 @@ void fn_1_1B40(OMOBJ *obj)
 {
     M577Player *p = obj->data;
 
-    if (((M577Work *)workObj->data)->active != 0 && p->team->state != 2 && p->func != NULL) {
+    if (((M577Work *)workObj->data)->active != 0 && p->team->state != 2 && p->func != 0) {
         p->func(p);
     }
 }
@@ -1126,24 +1126,21 @@ void fn_1_23CC(M577Cam *cam)
 void fn_1_263C(M577List *list, M577Node *pool, s32 count)
 {
     s32 i;
-    M577Node *node;
 
-    node = pool;
     list->used = NULL;
-    list->free = node;
-    for (i = 0; i < count - 1; i++) {
-        node->prev = NULL;
-        node->next = node + 1;
-        node->func = NULL;
-        node->arg = NULL;
-        node->list = list;
-        node++;
+    list->free = pool;
+    for (i = 0; i < count - 1; i++, pool++) {
+        pool->prev = NULL;
+        pool->next = pool + 1;
+        pool->func = NULL;
+        pool->arg = NULL;
+        pool->list = list;
     }
-    node->prev = NULL;
-    node->next = NULL;
-    node->func = NULL;
-    node->arg = NULL;
-    node->list = list;
+    pool->prev = NULL;
+    pool->next = NULL;
+    pool->func = NULL;
+    pool->arg = NULL;
+    pool->list = list;
 }
 
 M577Node *fn_1_26C0(M577List *list, s32 (*func)(M577Node *), void *arg)
@@ -1151,12 +1148,12 @@ M577Node *fn_1_26C0(M577List *list, s32 (*func)(M577Node *), void *arg)
     M577Node *node;
 
     node = list->free;
-    if (node != NULL) {
+    if (node != 0) {
         list->free = node->next;
         node->func = func;
         node->arg = arg;
         node->next = list->used;
-        if (node->next != NULL) {
+        if (node->next != 0) {
             node->next->prev = node;
         }
         list->used = node;
@@ -1168,14 +1165,14 @@ void fn_1_2714(M577Node *node)
 {
     M577List *list;
 
-    if (node != NULL) {
+    if (node != 0) {
         list = node->list;
-        if (node->prev != NULL) {
+        if (node->prev != 0) {
             node->prev->next = node->next;
         } else {
             list->used = node->next;
         }
-        if (node->next != NULL) {
+        if (node->next != 0) {
             node->next->prev = node->prev;
         }
         node->prev = NULL;
@@ -1191,9 +1188,9 @@ void fn_1_278C(M577List *list)
     M577Node *next;
 
     node = list->used;
-    while (node != NULL) {
+    while (node != 0) {
         next = node->next;
-        if (node->func != NULL && node->func(node) != 0) {
+        if (node->func != 0 && node->func(node) != 0) {
             fn_1_2714(node);
         }
         node = next;
@@ -1796,8 +1793,9 @@ void fn_1_579C(M577Stage *stage)
 #define M577_STEER_A(p) \
     do { \
     M577Sled *sled; \
-    f32 v; \
-    f32 v2; \
+    f32 a0; \
+    f32 r0; \
+    f32 b0; \
 \
     sled = p->sled; \
     if (p->stick < 0) { \
@@ -1821,29 +1819,32 @@ void fn_1_579C(M577Stage *stage)
     } else { \
         if (p->motRate > 0.5f) { \
             if (p->motRate - 0.05f < 0.5f) { \
-                v = 0.5f; \
+                a0 = 0.5f; \
             } else { \
-                v = p->motRate - 0.05f; \
+                a0 = p->motRate - 0.05f; \
             } \
-            v2 = v; \
+            r0 = a0; \
         } else { \
             if (0.05f + p->motRate > 0.5f) { \
-                v = 0.5f; \
+                b0 = 0.5f; \
             } else { \
-                v = 0.05f + p->motRate; \
+                b0 = 0.05f + p->motRate; \
             } \
-            v2 = v; \
+            r0 = b0; \
         } \
-        p->motRate = v2; \
+        p->motRate = r0; \
     } \
     } while (0)
 
 #define M577_STEER_B(p) \
     do { \
     M577Sled *sled; \
-    f32 v; \
-    f32 v2; \
-    f32 v3; \
+    f32 a0; \
+    f32 r0; \
+    f32 b0; \
+    f32 a1; \
+    f32 r1; \
+    f32 b1; \
 \
     sled = p->sled; \
     if (p->stick < 0) { \
@@ -1867,36 +1868,36 @@ void fn_1_579C(M577Stage *stage)
     } else { \
         if (sled->velX > 0.0f) { \
             if (sled->velX - 0.5f < 0.0f) { \
-                v = 0.0f; \
+                a0 = 0.0f; \
             } else { \
-                v = sled->velX - 0.5f; \
+                a0 = sled->velX - 0.5f; \
             } \
-            v2 = v; \
+            r0 = a0; \
         } else { \
             if (0.5f + sled->velX > 0.0f) { \
-                v = 0.0f; \
+                b0 = 0.0f; \
             } else { \
-                v = 0.5f + sled->velX; \
+                b0 = 0.5f + sled->velX; \
             } \
-            v2 = v; \
+            r0 = b0; \
         } \
-        sled->velX = v2; \
+        sled->velX = r0; \
         if (p->motRate > 0.5f) { \
             if (p->motRate - 0.05f < 0.5f) { \
-                v = 0.5f; \
+                a1 = 0.5f; \
             } else { \
-                v = p->motRate - 0.05f; \
+                a1 = p->motRate - 0.05f; \
             } \
-            v3 = v; \
+            r1 = a1; \
         } else { \
             if (0.05f + p->motRate > 0.5f) { \
-                v = 0.5f; \
+                b1 = 0.5f; \
             } else { \
-                v = 0.05f + p->motRate; \
+                b1 = 0.05f + p->motRate; \
             } \
-            v3 = v; \
+            r1 = b1; \
         } \
-        p->motRate = v3; \
+        p->motRate = r1; \
     } \
     } while (0)
 
@@ -1960,8 +1961,9 @@ void fn_1_7040(M577Team *team)
 {
     M577Player *p;
     M577Sled *sled;
-    f32 v;
-    f32 v2;
+    f32 a0;
+    f32 r0;
+    f32 b0;
     f32 t;
     s16 n;
     s32 i;
@@ -1981,20 +1983,20 @@ void fn_1_7040(M577Team *team)
                 sled = p->sled;
                 if (p->motRate > 0.5f) {
                     if (p->motRate - 0.1f < 0.5f) {
-                        v = 0.5f;
+                        a0 = 0.5f;
                     } else {
-                        v = p->motRate - 0.1f;
+                        a0 = p->motRate - 0.1f;
                     }
-                    v2 = v;
+                    r0 = a0;
                 } else {
                     if (0.1f + p->motRate > 0.5f) {
-                        v = 0.5f;
+                        b0 = 0.5f;
                     } else {
-                        v = 0.1f + p->motRate;
+                        b0 = 0.1f + p->motRate;
                     }
-                    v2 = v;
+                    r0 = b0;
                 }
-                p->motRate = v2;
+                p->motRate = r0;
                 t = p->motMax * p->motRate;
                 CharMotionTimeSet(p->charNo, t);
                 Hu3DMotionTimeSet(sled->mSled, t);
@@ -2651,8 +2653,12 @@ void fn_1_9380(M577Team *team)
     f32 sp10;
     f32 diff;
     f32 k;
-    f32 v;
-    f32 v2;
+    f32 a0;
+    f32 r0;
+    f32 b0;
+    f32 a1;
+    f32 r1;
+    f32 b1;
     f32 vol;
     f32 pitch;
     f32 t;
@@ -2676,20 +2682,20 @@ void fn_1_9380(M577Team *team)
     }
     if (sled->pos.x > 0.0f) {
         if (sled->pos.x - 1.5f < 0.0f) {
-            v = 0.0f;
+            a0 = 0.0f;
         } else {
-            v = sled->pos.x - 1.5f;
+            a0 = sled->pos.x - 1.5f;
         }
-        v2 = v;
+        r0 = a0;
     } else {
         if (1.5f + sled->pos.x > 0.0f) {
-            v = 0.0f;
+            b0 = 0.0f;
         } else {
-            v = 1.5f + sled->pos.x;
+            b0 = 1.5f + sled->pos.x;
         }
-        v2 = v;
+        r0 = b0;
     }
-    sled->pos.x = v2;
+    sled->pos.x = r0;
     sled->velX = 0.0f;
     pole = sled->pole;
     pole->pos.x += pole->velX;
@@ -2728,20 +2734,20 @@ void fn_1_9380(M577Team *team)
     Hu3DModelRotSet(sled->pole->m2A, sled->pole->rot, 0.0f, 0.0f);
     if (p->motRate > 0.5f) {
         if (p->motRate - 0.05f < 0.5f) {
-            v = 0.5f;
+            a1 = 0.5f;
         } else {
-            v = p->motRate - 0.05f;
+            a1 = p->motRate - 0.05f;
         }
-        v2 = v;
+        r1 = a1;
     } else {
         if (0.05f + p->motRate > 0.5f) {
-            v = 0.5f;
+            b1 = 0.5f;
         } else {
-            v = 0.05f + p->motRate;
+            b1 = 0.05f + p->motRate;
         }
-        v2 = v;
+        r1 = b1;
     }
-    p->motRate = v2;
+    p->motRate = r1;
     t = p->motMax * p->motRate;
     CharMotionTimeSet(p->charNo, t);
     Hu3DMotionTimeSet(sled->mSled, t);
@@ -2785,8 +2791,12 @@ void fn_1_9C08(M577Team *team)
     f32 sumV;
     f32 maxX;
     f32 minX;
-    f32 v;
-    f32 v2;
+    f32 a0;
+    f32 r0;
+    f32 b0;
+    f32 a1;
+    f32 r1;
+    f32 b1;
     f32 vol;
     f32 pitch;
     f32 t;
@@ -2815,20 +2825,20 @@ void fn_1_9C08(M577Team *team)
         sled = team->player[i]->sled;
         if (sled->pos.x > 0.0f) {
             if (sled->pos.x - 1.5f < 0.0f) {
-                v = 0.0f;
+                a0 = 0.0f;
             } else {
-                v = sled->pos.x - 1.5f;
+                a0 = sled->pos.x - 1.5f;
             }
-            v2 = v;
+            r0 = a0;
         } else {
             if (1.5f + sled->pos.x > 0.0f) {
-                v = 0.0f;
+                b0 = 0.0f;
             } else {
-                v = 1.5f + sled->pos.x;
+                b0 = 1.5f + sled->pos.x;
             }
-            v2 = v;
+            r0 = b0;
         }
-        sled->pos.x = v2;
+        sled->pos.x = r0;
         sled->velX = 0.0f;
     }
     team->dist += team->speed;
@@ -2841,20 +2851,20 @@ void fn_1_9C08(M577Team *team)
         sled = p->sled;
         if (p->motRate > 0.5f) {
             if (p->motRate - 0.05f < 0.5f) {
-                v = 0.5f;
+                a1 = 0.5f;
             } else {
-                v = p->motRate - 0.05f;
+                a1 = p->motRate - 0.05f;
             }
-            v2 = v;
+            r1 = a1;
         } else {
             if (0.05f + p->motRate > 0.5f) {
-                v = 0.5f;
+                b1 = 0.5f;
             } else {
-                v = 0.05f + p->motRate;
+                b1 = 0.05f + p->motRate;
             }
-            v2 = v;
+            r1 = b1;
         }
-        p->motRate = v2;
+        p->motRate = r1;
         t = p->motMax * p->motRate;
         CharMotionTimeSet(p->charNo, t);
         Hu3DMotionTimeSet(sled->mSled, t);
@@ -3029,8 +3039,9 @@ void fn_1_AA4C(M577Work *w)
 s32 fn_1_AB34(M577Node *node)
 {
     M577Player *p;
-    f32 v;
-    f32 v2;
+    f32 a0;
+    f32 r0;
+    f32 b0;
     f32 t;
     s32 done;
 
@@ -3051,20 +3062,20 @@ s32 fn_1_AB34(M577Node *node)
             p->sled->pos.y = (f64)p->sled->baseY + ((f64)(15.0f * (1.0f - t)) * (1.0 - cos(M_PI * (72.0f * (f32)p->subTimer) / 180.0)));
             if (p->motRate > 0.5f) {
                 if (p->motRate - 0.05f < 0.5f) {
-                    v = 0.5f;
+                    a0 = 0.5f;
                 } else {
-                    v = p->motRate - 0.05f;
+                    a0 = p->motRate - 0.05f;
                 }
-                v2 = v;
+                r0 = a0;
             } else {
                 if (0.05f + p->motRate > 0.5f) {
-                    v = 0.5f;
+                    b0 = 0.5f;
                 } else {
-                    v = 0.05f + p->motRate;
+                    b0 = 0.05f + p->motRate;
                 }
-                v2 = v;
+                r0 = b0;
             }
-            p->motRate = v2;
+            p->motRate = r0;
             Hu3DMotionTimeSet(p->sled->mSled, p->motMax * p->motRate);
             break;
         case 2:
@@ -3101,8 +3112,9 @@ s32 fn_1_AB34(M577Node *node)
 s32 fn_1_AF68(M577Node *node)
 {
     M577Player *p;
-    f32 v;
-    f32 v2;
+    f32 a0;
+    f32 r0;
+    f32 b0;
     f32 t;
     s32 done;
 
@@ -3120,20 +3132,20 @@ s32 fn_1_AF68(M577Node *node)
             }
             if (p->motRate > 0.5f) {
                 if (p->motRate - 0.05f < 0.5f) {
-                    v = 0.5f;
+                    a0 = 0.5f;
                 } else {
-                    v = p->motRate - 0.05f;
+                    a0 = p->motRate - 0.05f;
                 }
-                v2 = v;
+                r0 = a0;
             } else {
                 if (0.05f + p->motRate > 0.5f) {
-                    v = 0.5f;
+                    b0 = 0.5f;
                 } else {
-                    v = 0.05f + p->motRate;
+                    b0 = 0.05f + p->motRate;
                 }
-                v2 = v;
+                r0 = b0;
             }
-            p->motRate = v2;
+            p->motRate = r0;
             t = p->motMax * p->motRate;
             CharMotionTimeSet(p->charNo, t);
             Hu3DMotionTimeSet(p->sled->mSled, t);
