@@ -237,6 +237,7 @@ void MdToueiTexBufInit(NEL_SYS *sys);
 void MdParticleCreate(NEL_SYS *sys);
 void MdRingCreate(NEL_SYS *sys);
 void MdMathPoint3Dto2D(HuVecF *src, volatile s32 cameraNo, volatile HuVecF *dst);
+void MdMathModel3Dto2D(volatile s32 mdlNo, volatile s32 cameraNo, volatile HuVecF *dst);
 
 HuVec2f *MdSpritePosGet(int grpNo, int memberNo);
 HuVec2f *MdSpriteScaleGet(int grpNo, int memberNo);
