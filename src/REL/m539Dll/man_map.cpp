@@ -10,14 +10,6 @@
 
 extern "C" {
 
-typedef struct M539Fade_s {
-    s32 frames;
-    s32 cur;
-    f32 from;
-    f32 hold;
-    f32 to;
-} M539Fade;
-
 typedef struct M539ManMap_s {
     s32 unk0;
     s32 unk4;

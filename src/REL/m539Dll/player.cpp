@@ -44,8 +44,8 @@ void *fn_1_63E0(void *p, s32 idx);
 void *fn_1_64B8(void *p);
 void fn_1_6398(void *p);
 void *fn_1_2D18(void *p, s16 chr, s32 n);
-void fn_1_3084(s16 *p, u16 mask);
-void fn_1_304C(s16 *p, s32 n);
+void fn_1_3084(M539Model *p, u16 mask);
+void fn_1_304C(M539Model *p, s32 n);
 void fn_1_1264(void *self);
 void fn_1_1270(void *self, s32 arg);
 void fn_1_1330(void *self, void *arg);
@@ -123,7 +123,7 @@ void *fn_1_D010(s32 idx)
 M539Player *fn_1_D0B4(M539Player *self, s32 idx, M539Game *game)
 {
     void *sub;
-    s16 *mdl;
+    M539Model *mdl;
 
     fn_1_1264(self);
     if (GwPlayerConf[idx].type != 0) {
@@ -141,9 +141,9 @@ M539Player *fn_1_D0B4(M539Player *self, s32 idx, M539Game *game)
     self->mot.cap = 0;
     self->mot.size = 0;
     self->mot.items = 0;
-    mdl = (s16 *)fn_1_0(2);
+    mdl = (M539Model *)fn_1_0(sizeof(M539Model));
     if (mdl != 0) {
-        mdl = (s16 *)fn_1_2D18(mdl, GwPlayerConf[idx].charNo, 3);
+        mdl = (M539Model *)fn_1_2D18(mdl, GwPlayerConf[idx].charNo, 3);
     }
     self->model = mdl;
     self->timer = 0;
@@ -171,8 +171,8 @@ M539Player *fn_1_D0B4(M539Player *self, s32 idx, M539Game *game)
     }
     CharMotionDataClose((s16)self->charNo);
     CharModelFxFlagSet((s16)self->charNo, 0);
-    Hu3DModelShadowSet(*self->model);
-    Hu3DModelShadowDispOn(*self->model);
+    Hu3DModelShadowSet(self->model->id);
+    Hu3DModelShadowDispOn(self->model->id);
     {
         M539Ptmf t = lbl_1_data_430;
         self->hook = t;
@@ -288,7 +288,7 @@ void fn_1_D788(M539Player *self)
     }
     CharModelVoicePanSet((s16)self->charNo, pan);
     sub = self->sub;
-    if (fn_1_1F30() == 2 && self->game->unkAC != 8) {
+    if (fn_1_1F30() == 2 && self->game->step != 8) {
         fn_1_6398(sub);
     } else {
         sub->flag8 = 0;
@@ -306,8 +306,8 @@ void fn_1_D788(M539Player *self)
 
 void fn_1_D8A0(M539Player *self, s32 idx, u8 flag)
 {
-    s16 *modelP = self->model;
-    s16 model = M539Deref(modelP);
+    M539Model *modelP = self->model;
+    s16 model = modelP->id;
     s16 *mp = fn_1_EA70(&self->mot, idx);
     s16 mot = *mp;
     (void)model;
@@ -373,7 +373,7 @@ void fn_1_DAF0(M539Player *self, s32 state)
         }
         break;
     case 3:
-        Hu3DMotionSpeedSet(*self->model, 1.0f);
+        Hu3DMotionSpeedSet(self->model->id, 1.0f);
         fn_1_D8A0(self, 4, 1);
         break;
     case 4:
@@ -511,10 +511,10 @@ void fn_1_E6C0(M539Player *self)
 {
     M539Game *g = self->game;
 
-    self->pos.x = g->pos.x;
-    self->pos.y = g->pos.y;
-    self->pos.z = g->pos.z;
-    if (self->game->f78 > 0.0f) {
+    self->pos.x = g->headPos.x;
+    self->pos.y = g->headPos.y;
+    self->pos.z = g->headPos.z;
+    if (self->game->delta.y > 0.0f) {
         self->pos.x = 50.0f;
         {
             M539Ptmf t = lbl_1_data_4A4;

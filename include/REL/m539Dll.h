@@ -100,25 +100,71 @@ typedef struct M539PlayerSub_s {
     u8 flag8;
 } M539PlayerSub;
 
-// Per-player game object (the 0xC8 byte record the player reports to).
+typedef struct M539Node_s {
+    struct M539Node_s *next;
+    struct M539Node_s *prev;
+} M539Node;
+
+// Hu3D model wrapper: owns one model id.
+typedef struct M539Model_s {
+    s16 id;
+} M539Model;
+
+typedef struct M539Fade_s {
+    s32 frames;
+    s32 cur;
+    f32 from;
+    f32 hold;
+    f32 to;
+} M539Fade;
+
+// The drum prop (drum.cpp): intrusive link, spin state, three models.
+typedef struct M539Drum_s {
+    M539Node link;
+    f32 angle;
+    f32 speed;
+    s32 state;
+    u8 pad14[0x24 - 0x14];
+    M539Model *mdl[3];
+    s32 timer;
+} M539Drum;
+
+typedef struct M539ScoreSpr_s {
+    M539Node link;
+    f32 x;
+    f32 y;
+    f32 z;
+    s32 value;
+    s32 frame;
+    void *score;
+    M539Ptmf hook;
+} M539ScoreSpr;
+
+// Per-player game object (the 0xC8 byte record the player reports to): the
+// seven-segment board above a player (score.cpp).
 typedef struct M539Game_s {
-    void *node0;
-    void *node4;
-    u8 pad08[0x1C - 0x08];
-    s16 *model1C;
-    s16 *model20;
-    void *owned24[9];
-    s16 *model48;
-    s16 *model4C;
-    s16 *owned50[3];
-    Vec pos;
-    u8 pad68[0x78 - 0x68];
-    f32 f78;
-    u8 pad7C[0xAC - 0x7C];
-    s32 unkAC;
-    s32 score;
-    void *sprite;
-    u8 padB8[0xC8 - 0xB8];
+    M539Node link;
+    s32 player;
+    u8 pad0C[0x1C - 0x0C];
+    M539Model *board;
+    M539Model *roller;
+    M539Drum *digits[3][3];
+    M539Model *block;
+    M539Model *head;
+    M539Model *sprs[3];
+    Vec headPos;
+    Vec lastPos;
+    Vec delta;
+    f32 rot;
+    M539Fade digitFade;
+    M539Fade rollFade;
+    s32 step;
+    s32 rollValue;
+    M539ScoreSpr *effect;
+    s32 unkB8;
+    s32 loopSnd;
+    s32 lastDigit;
+    s32 tick;
 } M539Game;
 
 typedef struct M539Player_s {
@@ -134,7 +180,7 @@ typedef struct M539Player_s {
     s32 curMot;
     s32 state;
     M539Vec mot;
-    s16 *model;
+    M539Model *model;
     Vec vel;
     Vec acc;
     f32 rot;
@@ -143,13 +189,74 @@ typedef struct M539Player_s {
     M539Game *game;
 } M539Player;
 
+#ifdef M539_USE_DOLPHIN_HEADERS
+typedef struct M539MasterVtbl_s {
+    void *rtti[2];
+    void *(*dtor)(void *self, s16 flag);
+    void (*setup)(void *self, void *objman);
+    void (*update)(void *self);
+    void (*finish)(void *self);
+} M539MasterVtbl;
+
+typedef struct M539Master_s {
+    s32 pad0;
+    M539MasterVtbl *vtbl;
+    s32 slot[4];
+    s32 mesId;
+    s32 counter;
+} M539Master;
+
+typedef struct M539ThreadVtbl_s {
+    void *rtti[2];
+    void *(*dtor)(void *self, s16 flag);
+    s32 (*run)(void *self, s32 arg);
+    void (*runMaster)(void *self);
+} M539ThreadVtbl;
+
+typedef struct M539Thread_s {
+    OSThread thread;
+    u32 *stack;
+} M539Thread;
+
+typedef struct M539Sem_s {
+    s32 count;
+    OSThreadQueue queue;
+} M539Sem;
+
+typedef struct M539SubThread_s {
+    M539ThreadVtbl *vtbl;
+    M539Thread th;
+    M539Sem sem;
+    s32 arg;
+} M539SubThread;
+
+typedef struct M539TimerObj_s {
+    MGTIMER *timer;
+} M539TimerObj;
+
+// The two lists live in one 0x10 byte holder: players first, game objects second.
+typedef struct M539Holder_s {
+    M539Node players;
+    M539Node games;
+} M539Holder;
+
+typedef struct M539GM_s {
+    M539Master base;
+    M539SubThread thread;
+    M539TimerObj timer;
+    M539Player *players[4];
+    M539Holder *holder;
+    M539Game *games[4];
+} M539GM;
+#endif
+
 void fn_1_C8(void *ptr);
 void *fn_1_558C(void *self, s32 prio);
 void *fn_1_5608(void *self, s16 arg);
 void fn_1_56BC(void *self, s32 arg);
 void fn_1_574C(void *self, s32 arg);
 
-void *fn_1_72E8(s32 id);
+M539Model *fn_1_72E8(s32 id);
 void fn_1_2E08(void *actor, u32 flags);
 void fn_1_2EF4(void *actor, Vec *pos);
 void fn_1_2F3C(void *actor, Vec *rot);
