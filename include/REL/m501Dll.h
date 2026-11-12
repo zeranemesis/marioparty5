@@ -49,6 +49,39 @@ public:
     }
 };
 
+struct CCameraView {
+    Vec m_pos;
+    Quaternion m_rot;
+};
+
+class CCamera {
+public:
+    void rotateCamera(f32 yaw, f32 pitch);
+    void rotateCameraUp(f32 angle);
+    void getLookAtVec(Vec *a, Vec *b, Vec *c);
+    void getLookAtMtxInverse(Mtx *mtx);
+    void applyOffsetLocal(Vec *offset);
+    void applyOffset(Vec *offset);
+    void resetLookAt();
+    void setView(CCameraView *view);
+    void getView(CCameraView *view);
+    void lerpView(CCameraView *a, CCameraView *b, f32 t);
+    void getOffset(Vec *out);
+    void getOffsetTo(Vec *a, Vec *b);
+    void setPos(u16 camNo);
+    void getPos(u16 camNo);
+    void printView();
+    f32 GetStickX(int pad);
+    f32 GetStickY(int pad);
+    f32 GetSubStickX(int pad);
+    f32 GetSubStickY(int pad);
+    void debugView(int pad);
+
+    Vec m_pos;    // 0x00
+    Vec m_up;     // 0x0C
+    Vec m_target; // 0x18
+};
+
 class CGameObject : public CLinkNode {
 public:
     static CLinkList ObjectList;
@@ -104,11 +137,13 @@ public:
 namespace m501 {
 class CStage;
 class CParticle;
+class CCameraObj;
 
 
 class CGameMaster {
 public:
     static CStage *stageInstance;
+    static CCameraObj *cameraInstance;
 };
 
 /* singleton.h: the instance is published as the address of the CSingleton
@@ -210,6 +245,48 @@ extern "C" void update__Q24m5017CAsiatoManFv(void);
 extern "C" void close__Q24m5017CAsiatoManFv(void);
 extern "C" void fn_1_A6C0(Vec *pos, s32 colorIdx);
 extern "C" void fn_1_A768(Vec *pos, s32 colorIdx);
+
+/* singleton base of CCameraObj: publishes the instance, no assertions */
+class CCameraSingleton {
+public:
+    CCameraSingleton()
+    {
+#ifndef TARGET_PC /* on PC the CCameraObj constructor publishes itself */
+        char *ms_ptr = (char *)this;
+        if (ms_ptr != 0) {
+            ms_ptr -= M501_MEMBER_OFFSET;
+        }
+        CGameMaster::cameraInstance = (CCameraObj *)ms_ptr;
+#endif
+    }
+
+    ~CCameraSingleton()
+    {
+        CGameMaster::cameraInstance = (CCameraObj *)0;
+    }
+};
+
+class CCameraObj : public CGameObject, public CCameraSingleton, public CCamera {
+public:
+    typedef void (CCameraObj::*PROC)();
+
+    CCameraObj();
+    virtual ~CCameraObj();
+    virtual void on_new_mode(int mode);
+    virtual void on_update();
+    void set_focus_player(Vec *pos);
+    void proc_idle();
+    void proc_null();
+    void proc_focus_player();
+    void proc_move_up();
+
+    CCameraView m_viewFrom; // 0x34
+    CCameraView m_viewTo;   // 0x50
+    s32 m_timer;            // 0x6C
+    PROC m_proc;            // 0x70
+    HU3DMODELID m_model;    // 0x7C
+};
+
 }
 
 #endif
