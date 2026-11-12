@@ -138,6 +138,7 @@ static void fn_1_348(s16 mode, s16 frameNo)
     MgSeqModeNext();
 }
 
+/* Remaining difference: the original switch has an extra empty case 4 compare without a branch. */
 static void fn_1_3B8(s16 mode, s16 frameNo)
 {
     if (frameNo == 0) {
