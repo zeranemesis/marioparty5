@@ -318,6 +318,17 @@ public:
     void insert(T *pos, unsigned long n, const T &value);
     void reserve(unsigned long n);
 
+    /* the original inlines these tiny helpers (and spills their temporaries) */
+    unsigned long max_size_raw() { return 0xFFFFFFFFUL / sizeof(T); }
+    unsigned long max_size_mid() { return max_size_raw(); }
+    unsigned long max_size() { return max_size_mid(); }
+    unsigned long capacity() { return m_cap; }
+    T *&data_ref() { return m_data; }
+    unsigned long &size_ref() { return m_size; }
+    unsigned long &cap_ref() { return m_cap; }
+    T *begin() { return m_data; }
+    T *end() { return begin() + m_size; }
+
     unsigned long m_cap;
     unsigned long m_size;
     T *m_data;

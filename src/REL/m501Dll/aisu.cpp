@@ -500,13 +500,13 @@ void __vector_pod<int, allocator<int> >::insert(int *pos, unsigned long n, const
     if (n == 0) {
         return;
     }
-    unsigned long maxSize = 0x3FFFFFFF;
+    unsigned long maxSize = max_size();
     if (n > maxSize || m_size > maxSize - n) {
         fprintf(M501_STDERR, "vector::insert length error\n");
         abort();
     }
-    if (m_size + n <= m_cap) {
-        int *end = m_data + m_size;
+    if (m_size + n <= capacity()) {
+        int *end = this->end();
         int after = end - pos;
         const int *p = &value;
         if (end - (after - n) <= p && p < end) {
@@ -534,7 +534,7 @@ void __vector_pod<int, allocator<int> >::insert(int *pos, unsigned long n, const
     int *oldData = m_data;
     int idx = pos - m_data;
     unsigned long newSize = m_size + n;
-    unsigned long cap = m_cap != 0 ? m_cap : 1;
+    unsigned long cap = capacity() != 0 ? capacity() : 1;
     while (newSize > cap) {
         if (cap < (maxSize >> 1)) {
             cap *= 2;
@@ -547,33 +547,33 @@ void __vector_pod<int, allocator<int> >::insert(int *pos, unsigned long n, const
         fprintf(M501_STDERR, "Memory allocation failure");
         abort();
     }
-    m_data = buf;
+    data_ref() = buf;
     unsigned long cnt = n;
-    int *d = m_data + idx;
+    int *d = begin() + idx;
     while (cnt != 0) {
         *d = value;
         d++;
         cnt--;
     }
     if (oldData != 0) {
-        int *dst = m_data;
+        int *dst = begin();
         int *src = oldData;
         while (src < oldData + idx) {
             *dst = *src;
             src++;
             dst++;
         }
-        dst = m_data + idx + n;
+        dst = begin() + idx + n;
         src = oldData + idx;
-        while (src < oldData + m_size) {
+        while (src < oldData + size_ref()) {
             *dst = *src;
             src++;
             dst++;
         }
         __dl__FPv(oldData);
     }
-    m_size = newSize;
-    m_cap = cap;
+    size_ref() = newSize;
+    cap_ref() = cap;
 }
 
 template <>
@@ -582,13 +582,13 @@ void __vector_pod<HuVec2f_s, allocator<HuVec2f_s> >::insert(HuVec2f_s *pos, unsi
     if (n == 0) {
         return;
     }
-    unsigned long maxSize = 0x1FFFFFFF;
+    unsigned long maxSize = max_size();
     if (n > maxSize || m_size > maxSize - n) {
         fprintf(M501_STDERR, "vector::insert length error\n");
         abort();
     }
-    if (m_size + n <= m_cap) {
-        HuVec2f_s *end = m_data + m_size;
+    if (m_size + n <= capacity()) {
+        HuVec2f_s *end = this->end();
         int after = end - pos;
         const HuVec2f_s *p = &value;
         unsigned long cnt = n;
@@ -649,7 +649,7 @@ void __vector_pod<HuVec2f_s, allocator<HuVec2f_s> >::insert(HuVec2f_s *pos, unsi
     tmp.m_size = 0;
     tmp.m_data = 0;
     unsigned long newSize = m_size + n;
-    unsigned long cap = m_cap != 0 ? m_cap : 1;
+    unsigned long cap = capacity() != 0 ? capacity() : 1;
     while (newSize > cap) {
         if (cap < (maxSize >> 1)) {
             cap *= 2;
