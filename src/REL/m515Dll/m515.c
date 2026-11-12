@@ -154,10 +154,8 @@ struct M515Sub_s {
     s16 v1da;
     s16 v1dc[4][3];
     s32 v1f4;
-    s16 v1f8[3];
-    char pad_1FE[0x204 - 0x1FE];
-    s16 v204[3];
-    char pad_20A[0x210 - 0x20A];
+    s16 v1f8[6];
+    s16 v204[6];
     s16 v210[6];
     s16 v21c;
     s16 v21e;
@@ -2457,6 +2455,63 @@ void fn_1_2EB4(M515_SUB *sub)
 
     lightId = Hu3DGLightCreate(0.0f, 4800.0f, 3600.0f, 0.0f, -1.0f, -1.0f, 0xFF, 0xFF, 0xFF);
     Hu3DGLightInfinitytSet(lightId);
+}
+
+void fn_1_2F3C(M515_SUB *sub)
+{
+    s32 j;
+    s16 a;
+    s16 b;
+    s16 t;
+
+    for (j = 0; j < 3; j++) {
+        sub->v02[j] = rand8() / 26;
+    }
+    sub->v1d8 = 0;
+    sub->mdl = -1;
+    sub->mdl2 = -1;
+    for (j = 0; j < 17; j++) {
+        sub->cache[j] = -1;
+    }
+    for (j = 0; j < 8; j++) {
+        sub->mot[j] = -1;
+    }
+    sub->v21c = 0;
+    sub->v21e = 0;
+    sub->v220 = 0;
+    for (j = 0; j < 3; j++) {
+        sub->v1f8[j] = (s16)j;
+        sub->v204[j] = (s16)j;
+        sub->v210[j] = (s16)j;
+    }
+    for (; j < 6; j++) {
+        sub->v1f8[j] = 0;
+        sub->v204[j] = 0;
+        sub->v210[j] = (s16)j;
+    }
+    for (j = 2; j < 2; j++) {
+        a = rand8() / 86;
+        b = rand8() / 86;
+        t = sub->v1f8[a];
+        sub->v1f8[a] = sub->v1f8[b];
+        sub->v1f8[b] = t;
+        a = rand8() / 86;
+        b = rand8() / 86;
+        t = sub->v204[a];
+        sub->v204[a] = sub->v204[b];
+        sub->v204[b] = t;
+        a = rand8() / 43;
+        b = rand8() / 43;
+        t = sub->v210[a];
+        sub->v210[a] = sub->v210[b];
+        sub->v210[b] = t;
+    }
+    a = rand8() / 43;
+    b = rand8() / 43;
+    t = sub->v210[a];
+    sub->v210[a] = sub->v210[b];
+    sub->v210[b] = t;
+    sub->v1d4 = 0;
 }
 
 void fn_1_5C40(M515_SUB *sub)
