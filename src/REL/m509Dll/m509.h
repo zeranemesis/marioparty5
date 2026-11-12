@@ -18,6 +18,13 @@ typedef struct M509Base {
     u32 flags;
 } M509Base;
 
+/* Pointer to member function in the CodeWarrior layout (adjustment, vtable index or -1, function). */
+typedef struct M509Ptmf {
+    s32 adj;
+    s32 vtblIdx;
+    void *func;
+} M509Ptmf;
+
 extern "C" {
 void fn_1_0(const char *cond, const char *file, s32 line);
 void *fn_1_104(s32 size);

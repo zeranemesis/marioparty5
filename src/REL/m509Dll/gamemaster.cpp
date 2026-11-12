@@ -60,7 +60,7 @@ u32 lbl_1_bss_38;
 u32 lbl_1_bss_3C;
 u32 lbl_1_bss_40;
 u32 lbl_1_bss_44;
-u32 lbl_1_bss_48;
+void *lbl_1_bss_48;
 
 /* These five are in the object's .data, not .rodata: the assert call takes
  * their addresses through R_PPC_ADDR16_HA/LO, so they must be writable
