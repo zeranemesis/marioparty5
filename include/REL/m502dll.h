@@ -67,8 +67,60 @@ typedef struct M502Stage_s {
 } M502STAGE;
 
 /* TEMP placeholders, expanded in the owning files */
-typedef struct M502Block_s { u8 raw[0xF50]; } M502BLOCK;
-typedef struct M502Input_s { u8 raw[0x1C]; } M502INPUT;
+/* block.c: one cell of the 3 x 27 grid (0x24 bytes) */
+typedef struct M502Cell_s {
+    s32 unk0;
+    u16 kind;       /* 0x04 */
+    s16 pad6;
+    s32 vis;        /* 0x08 */
+    s16 timerC;     /* 0x0C */
+    s16 timerE;     /* 0x0E */
+    Vec pos;        /* 0x10 */
+    s16 unk1C;
+    s16 unk1E;
+    u16 unk20;
+    s16 unk22;
+} M502CELL;
+
+typedef struct M502Block_s {
+    struct M502Player_s *player;
+    M502CELL cell[3][27];   /* 0x04 */
+    u8 levelFx[3][0x13C];   /* 0xB68 */
+    u8 fx[2][0x18];         /* 0xF1C */
+    s16 hook;               /* 0xF4C */
+    s16 padF4E;
+} M502BLOCK;
+/* input.c: AI driver (0x14 bytes on GC) */
+typedef struct M502Ai_s {
+    struct M502Input_s *input;
+    u16 step;       /* 0x04 */
+    u16 sub;        /* 0x06 */
+    u16 cnt;        /* 0x08 */
+    u16 wait;       /* 0x0A */
+    s32 enabled;    /* 0x0C: nonzero = computer controlled */
+    u16 target;     /* 0x10 */
+    u16 flag;       /* 0x12 */
+} M502AI;
+
+/* input.c: one pad or AI input (0x30 bytes on GC) */
+typedef struct M502Input_s {
+    struct M502PlrSub_s *plr;
+    M502AI ai;      /* 0x04 */
+    s32 padNo;      /* 0x18 */
+    u32 btn;        /* 0x1C */
+    u32 btnDown;    /* 0x20 */
+    s8 stkX;        /* 0x24 */
+    u8 pad25;
+    u16 btnRep;     /* 0x26 */
+    s8 stkY;        /* 0x28 */
+    s8 subX;        /* 0x29 */
+    s8 subY;        /* 0x2A */
+    u8 trigL;       /* 0x2B */
+    u8 trigR;       /* 0x2C */
+    u8 dStk;        /* 0x2D */
+    u8 dStkRep;     /* 0x2E */
+    u8 pad2F;
+} M502INPUT;
 typedef struct M502PlrSub_s {
     struct M502Player_s *player;
     u16 mode;       /* 0x04 */
@@ -82,10 +134,7 @@ typedef struct M502PlrSub_s {
     OMOBJ *obj;     /* 0x1C */
     s32 active;     /* 0x20 */
     M502INPUT input; /* 0x24 */
-    s32 v40;
-    s32 v44;
-    s32 v48;
-    u8 pad4C[0x14];
+    u8 pad54[0xC];
     s32 lane;       /* 0x60 */
     u8 pad64[8];
     f32 vel;        /* 0x6C */
@@ -201,6 +250,18 @@ void fn_1_3390(HU3DDRAWOBJ *drawObj);
 void fn_1_38E0(M502PLRSUB *plr, s32 no, M502PLAYER *player);
 void fn_1_3B88(M502PLRSUB *plr);
 s32 fn_1_3BF4(M502PLRSUB *plr);
+
+/* input.c */
+void fn_1_58E0(M502AI *ai);
+void fn_1_5EB8(M502AI *ai);
+void fn_1_6250(M502AI *ai, s16 *lvl, s16 *row, s16 *col);
+void fn_1_6400(M502INPUT *in, s32 playerNo, M502PLRSUB *plr);
+void fn_1_6478(M502INPUT *in);
+void fn_1_64B8(M502INPUT *in);
+void fn_1_57B4(M502AI *ai, s32 playerNo, M502INPUT *in);
+void fn_1_5818(M502AI *ai);
+void fn_1_5848(M502AI *ai);
+void fn_1_6E1C(Vec *pos, s16 *lvl, s16 *row, s16 *col);
 
 /* block.c */
 void fn_1_6664(M502BLOCK *b, s32 no, M502PLAYER *player);
