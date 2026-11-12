@@ -71,7 +71,7 @@ M536_EFFOBJ *fn_1_8098(M536_EFFOBJ *self, Vec *pos);
 s16 *fn_1_2D18(s16 *out, s16 charNo, s16 flag);
 void fn_1_2EF4(s16 *modelId, Vec *pos);
 void fn_1_2F3C(s16 *modelId, Vec *rot);
-void fn_1_234(void *file, const char *msg);
+void fn_1_234(void *file, const char *fmt, ...);
 s32 fn_1_4AE0(void);
 s32 fn_1_1F30(void);
 void *__register_global_object(void *object, void *destructor, void *regmem);

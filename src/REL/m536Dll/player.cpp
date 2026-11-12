@@ -92,7 +92,6 @@ u16 *fn_1_D00C(M536VecU16 *vec, u32 index);
 void *fn_1_D6A4(void *node, s16 freeIt);
 s32 fn_1_B4B0(s32 owner, Vec *pos);
 f32 fn_1_BCD0(Vec *a, Vec *b);
-s32 fn_1_BD44(M536Player *self, f32 *outAngle, s8 *outAlone);
 
 s32 lbl_1_data_3C8 = -1;
 Vec lbl_1_data_3CC = { 0.0f, 10.0f, -150.0f };
@@ -139,9 +138,15 @@ f32 fn_1_9B50(f32 a, f32 b)
 f32 fn_1_9C08(f32 a, f32 b, f32 limit)
 {
     f32 diff;
+    f32 d0;
+    f32 d1;
+    f32 d2;
     f32 ret;
 
-    diff = fn_1_9B50(a, b);
+    d0 = fn_1_9B50(a, b);
+    d1 = d0;
+    d2 = d1;
+    diff = d2;
     if (diff < -limit) {
         ret = -limit;
     } else if (diff > limit) {
@@ -836,127 +841,154 @@ f32 fn_1_BCD0(Vec *a, Vec *b)
     return 180.0 * (atan2(a->x - b->x, a->z - b->z) / 3.141592653589793);
 }
 
-// Finds the opponent closest to the cannon heading; false when nobody is within 60 degrees.
-s32 fn_1_BD44(M536Player *self, f32 *outAngle, s8 *outAlone)
-{
-    Mtx mtx;
-    Vec dir;
-    M536Player *p;
-    M536Player *p0;
-    M536Player *p1;
-    M536Player *end;
-    M536Player *nx;
-    f32 base;
-    f32 ang;
-    f32 diff;
-    f32 absDiff;
-    f32 best;
-    f32 bestAbs;
-    s32 count;
+// The original compiled fn_1_BD44 into fn_1_C0FC and fn_1_C0FC into fn_1_C6DC;
+// MWCC 1.3.2 will not inline bodies this large, so the bodies are macros.
 
-    PSMTXRotRad(mtx, 'y', 0.017453292f * self->m_rotY);
-    PSMTXMultVec(mtx, &lbl_1_data_4AC, &dir);
-    base = fn_1_BCD0(&dir, &lbl_1_data_4B8);
-    best = 0.0f;
-    bestAbs = 90.0f;
-    p0 = (M536Player *)lbl_1_bss_A98.next;
-    p1 = p0;
-    p = p1;
-    end = (M536Player *)&lbl_1_bss_A98;
-    count = 0;
-    while (p != end) {
-        if (p->m_idx != self->m_idx && p->m_hitTimer == 0 && p->m_hp > 0) {
-            ang = fn_1_BCD0(&p->m_pos, &self->m_pos);
-            diff = fn_1_9B50(ang, base);
-            if (diff < 0.0f) {
-                absDiff = -diff;
-            } else {
-                absDiff = diff;
-            }
-            if (absDiff < bestAbs) {
-                best = diff;
-                if (diff < 0.0f) {
-                    bestAbs = -diff;
-                } else {
-                    bestAbs = diff;
-                }
-            }
-        }
-        if (p->m_pad >= 0 && p->m_hp > 0) {
-            count++;
-        }
-        nx = (M536Player *)p->m_node.next;
-        p = nx;
-    }
-    if (count == 0) {
-        *outAlone = 1;
-    }
-    *outAngle = best;
-    if (bestAbs >= 60.0f) {
-        return 0;
-    }
-    return 1;
-}
+// Finds the opponent closest to the cannon heading; found is false when nobody
+// is within 60 degrees, alone is set when no other human is still playing.
+#define M536_FIND_TARGET(self, outAngle, outAlone, found)                          \
+    do {                                                                           \
+        Mtx mtx;                                                                   \
+        Vec dir;                                                                   \
+        M536Player *p;                                                             \
+        M536Player *p0;                                                            \
+        M536Player *p1;                                                            \
+        M536Player *end;                                                           \
+        M536Player *nx;                                                            \
+        f32 base;                                                                  \
+        f32 ang;                                                               \
+        f32 ang0;                                                              \
+        f32 ang1;                                                              \
+        f32 diff0;                                                             \
+        f32 diff;                                                                  \
+        f32 absDiff;                                                               \
+        f32 best;                                                                  \
+        f32 bestAbs;                                                               \
+        s32 count;                                                                 \
+        PSMTXRotRad(mtx, 'y', 0.017453292f * (self)->m_rotY);                      \
+        PSMTXMultVec(mtx, &lbl_1_data_4AC, &dir);                                  \
+        base = fn_1_BCD0(&dir, &lbl_1_data_4B8);                                   \
+        best = 0.0f;                                                               \
+        bestAbs = 90.0f;                                                           \
+        p0 = (M536Player *)lbl_1_bss_A98.next;                                     \
+        p1 = p0;                                                                   \
+        p = p1;                                                                    \
+        end = (M536Player *)&lbl_1_bss_A98;                                        \
+        count = 0;                                                                 \
+        while (p != end) {                                                         \
+            if (p->m_idx != (self)->m_idx && p->m_hitTimer == 0 && p->m_hp > 0) { \
+                ang0 = fn_1_BCD0(&p->m_pos, &(self)->m_pos);                   \
+                ang1 = ang0;                                                   \
+                ang = ang1;                                                    \
+                diff0 = fn_1_9B50(ang, base);                                  \
+                diff = diff0;                                                  \
+                if (diff < 0.0f) {                                                 \
+                    absDiff = -diff;                                               \
+                } else {                                                           \
+                    absDiff = diff;                                                \
+                }                                                                  \
+                if (absDiff < bestAbs) {                                           \
+                    best = diff;                                                   \
+                    if (diff < 0.0f) {                                             \
+                        bestAbs = -diff;                                           \
+                    } else {                                                       \
+                        bestAbs = diff;                                            \
+                    }                                                              \
+                }                                                                  \
+            }                                                                      \
+            if (p->m_pad >= 0 && p->m_hp > 0) {                                    \
+                count++;                                                           \
+            }                                                                      \
+            nx = (M536Player *)p->m_node.next;                                     \
+            p = nx;                                                                \
+        }                                                                          \
+        if (count == 0) {                                                          \
+            *(outAlone) = 1;                                                       \
+        }                                                                          \
+        *(outAngle) = best;                                                        \
+        if (bestAbs >= 60.0f) {                                                    \
+            (found) = 0;                                                           \
+        } else {                                                                   \
+            (found) = 1;                                                           \
+        }                                                                          \
+    } while (0)
 
 // Decides whether an AI-controlled player fires this frame.
+#define M536_AI_FIRE(self, fire)                                                   \
+    do {                                                                           \
+        f32 angle;                                                                 \
+        f32 absAngle;                                                              \
+        s8 alone;                                                                  \
+        s32 found;                                                                 \
+        (fire) = 0;                                                                \
+        alone = 0;                                                                 \
+        M536_FIND_TARGET(self, &angle, &alone, found);                             \
+        if (found != 0) {                                                          \
+            if (alone == 1) {                                                      \
+                if (angle < 0.0f) {                                                \
+                    absAngle = -angle;                                             \
+                } else {                                                           \
+                    absAngle = angle;                                              \
+                }                                                                  \
+                if (absAngle < 7.0f && (fn_1_4AE0() & 3) == 0) {                   \
+                    (fire) = 1;                                                    \
+                }                                                                  \
+            } else {                                                               \
+                switch ((self)->m_ai) {                                            \
+                case 0:                                                            \
+                    if ((fn_1_4AE0() & 0x3F) == 0) {                               \
+                        (fire) = 1;                                                \
+                    }                                                              \
+                    break;                                                         \
+                case 1:                                                            \
+                    if (angle < 0.0f) {                                            \
+                        absAngle = -angle;                                         \
+                    } else {                                                       \
+                        absAngle = angle;                                          \
+                    }                                                              \
+                    if (absAngle < 40.0f && (fn_1_4AE0() & 0x1F) == 0) {           \
+                        (fire) = 1;                                                \
+                    }                                                              \
+                    break;                                                         \
+                case 2:                                                            \
+                    if (angle < 0.0f) {                                            \
+                        absAngle = -angle;                                         \
+                    } else {                                                       \
+                        absAngle = angle;                                          \
+                    }                                                              \
+                    if (absAngle < 25.0f && (fn_1_4AE0() & 0x1F) == 0) {           \
+                        (fire) = 1;                                                \
+                    }                                                              \
+                    break;                                                         \
+                case 3:                                                            \
+                    if (angle < 0.0f) {                                            \
+                        absAngle = -angle;                                         \
+                    } else {                                                       \
+                        absAngle = angle;                                          \
+                    }                                                              \
+                    if (absAngle < 10.0f && (fn_1_4AE0() & 0xF) == 0) {            \
+                        (fire) = 1;                                                \
+                    }                                                              \
+                    break;                                                         \
+                }                                                                  \
+            }                                                                      \
+        }                                                                          \
+    } while (0)
+
+s32 fn_1_BD44(M536Player *self, f32 *outAngle, s8 *outAlone)
+{
+    s32 found;
+
+    M536_FIND_TARGET(self, outAngle, outAlone, found);
+    return found;
+}
+
 s32 fn_1_C0FC(M536Player *self)
 {
-    f32 angle;
-    f32 absAngle;
-    s8 alone;
+    s32 fire;
 
-    alone = 0;
-    if (fn_1_BD44(self, &angle, &alone) != 0) {
-        if (alone == 1) {
-            if (angle < 0.0f) {
-                absAngle = -angle;
-            } else {
-                absAngle = angle;
-            }
-            if (absAngle < 7.0f && (fn_1_4AE0() & 3) == 0) {
-                return 1;
-            }
-            return 0;
-        }
-        switch (self->m_ai) {
-        case 0:
-            if ((fn_1_4AE0() & 0x3F) == 0) {
-                return 1;
-            }
-            break;
-        case 1:
-            if (angle < 0.0f) {
-                absAngle = -angle;
-            } else {
-                absAngle = angle;
-            }
-            if (absAngle < 40.0f && (fn_1_4AE0() & 0x1F) == 0) {
-                return 1;
-            }
-            break;
-        case 2:
-            if (angle < 0.0f) {
-                absAngle = -angle;
-            } else {
-                absAngle = angle;
-            }
-            if (absAngle < 25.0f && (fn_1_4AE0() & 0x1F) == 0) {
-                return 1;
-            }
-            break;
-        case 3:
-            if (angle < 0.0f) {
-                absAngle = -angle;
-            } else {
-                absAngle = angle;
-            }
-            if (absAngle < 10.0f && (fn_1_4AE0() & 0xF) == 0) {
-                return 1;
-            }
-            break;
-        }
-    }
-    return 0;
+    M536_AI_FIRE(self, fire);
+    return fire;
 }
 
 void fn_1_C6DC(M536Player *self)
@@ -966,6 +998,7 @@ void fn_1_C6DC(M536Player *self)
     s32 idx;
     s16 se;
     u8 want;
+    s32 aiFire;
 
     if (self->m_hitTimer == 0) {
         if ((f32)self->m_fireTimer < 120.0f && (f32)self->m_fireTimer > 114.0f) {
@@ -998,7 +1031,8 @@ void fn_1_C6DC(M536Player *self)
             fire.z = self->m_pos.z;
             want = 0;
             if (self->m_pad < 0) {
-                if (fn_1_C0FC(self) != 0) {
+                M536_AI_FIRE(self, aiFire);
+                if (aiFire != 0) {
                     want = 1;
                 }
             } else if ((HuPadBtnDown[self->m_pad] & 0x100) != 0) {
@@ -1062,36 +1096,63 @@ void fn_1_D0E4(M536Player *node, M536PlayerList *stop, M536PlayerFn cb)
     }
 }
 
-// std::vector<u16>::insert(pos, count, value)
+// std::vector<u16>::insert(pos, count, value). The extra named copies mirror the
+// inlined helpers (max_size(), end(), capacity()) the original compiled in.
 void fn_1_D144(M536VecU16 *vec, u16 *pos, u32 count, u16 *value)
 {
-    u32 maxSize;
+    M536VecU16 *self0;
+    M536VecU16 *self1;
+    M536VecU16 *self2;
+    M536VecU16 *self3;
+    volatile u32 max0;
+    volatile u32 max1;
+    volatile u32 max2;
+    u32 cap0;
+    u32 cap1;
+    u16 **ref;
     u16 *end;
+    u16 *base0;
+    u16 *base1;
     u16 *src;
     u16 *dst;
     u16 *oldData;
     u16 *newData;
+    u16 *newData1;
     s32 tail;
+    s32 tail2;
+    s32 n1;
+    s32 n2;
+    u16 *mid;
+    u16 *tailEnd;
     s32 index;
     u32 k;
     u32 newSize;
     u32 newCap;
+    u32 cap2;
 
     if (count != 0) {
-        maxSize = 0x7FFFFFFF;
-        if (count > maxSize || vec->m_size > maxSize - count) {
+        self0 = vec;
+        max0 = 0x7FFFFFFF;
+        max1 = max0;
+        max2 = max1;
+        if (count > max2 || vec->m_size > max2 - count) {
             fn_1_234(M536_STDERR, "vector::insert length error\n");
             abort();
         }
-        if (vec->m_size + count <= vec->m_cap) {
-            end = vec->m_data + vec->m_size;
+        self1 = vec;
+        cap0 = self1->m_cap;
+        cap1 = cap0;
+        if (vec->m_size + count <= cap1) {
+            ref = &vec->m_data;
+            end = *ref + vec->m_size;
             tail = end - pos;
             src = value;
             if ((end - (tail - (s32)count)) <= src && src < end) {
                 src = src + count;
             }
             if (tail != 0) {
-                memmove(end + count - tail, pos, tail * 2);
+                tail2 = end - pos;
+                memmove(end + count - tail2, pos, tail2 * 2);
             }
             k = count;
             dst = pos;
@@ -1103,58 +1164,83 @@ void fn_1_D144(M536VecU16 *vec, u16 *pos, u32 count, u16 *value)
             vec->m_size = vec->m_size + count;
             return;
         }
-        oldData = vec->m_data;
-        index = pos - oldData;
+        ref = &vec->m_data;
+        base0 = *ref;
+        base1 = base0;
+        index = pos - base1;
+        ref = &vec->m_data;
+        oldData = *ref;
         newSize = vec->m_size + count;
-        if (vec->m_cap != 0) {
-            newCap = vec->m_cap;
+        self2 = vec;
+        if (self2->m_cap != 0) {
+            self3 = vec;
+            cap2 = self3->m_cap;
         } else {
-            newCap = 1;
+            cap2 = 1;
         }
+        newCap = cap2;
         while (newSize > newCap) {
-            if (newCap < (maxSize >> 1)) {
+            if (newCap < (max2 >> 1)) {
                 newCap *= 2;
             } else {
-                newCap = maxSize;
+                newCap = max2;
             }
         }
+        ref = &vec->m_data;
         newData = (u16 *)fn_1_0(newCap * 2);
         if (newData == 0) {
             fn_1_234(M536_STDERR, "Memory allocation failure");
             abort();
         }
-        vec->m_data = newData;
+        newData1 = newData;
+        *ref = newData1;
         k = count;
-        dst = vec->m_data + index;
+        ref = &vec->m_data;
+        dst = *ref + index;
         while (k != 0) {
             *dst = *value;
             dst++;
             k--;
         }
         if (oldData != 0) {
-            memcpy(vec->m_data, oldData, index * 2);
-            memcpy(vec->m_data + index + count, oldData + index, ((oldData + vec->m_size) - (oldData + index)) * 2);
+            ref = &vec->m_data;
+            mid = oldData + index;
+            n1 = mid - oldData;
+            memcpy(*ref, oldData, n1 * 2);
+            ref = &vec->m_data;
+            tailEnd = oldData + vec->m_size;
+            n2 = tailEnd - mid;
+            memcpy(*ref + index + count, mid, n2 * 2);
             fn_1_C8(oldData);
         }
         vec->m_size = newSize;
-        vec->m_cap = newCap;
+        self0 = vec;
+        self0->m_cap = newCap;
     }
 }
 
 // std::vector<u16>::reserve(newCap)
 void fn_1_D4F4(M536VecU16 *vec, u32 newCap)
 {
-    u32 maxSize;
+    M536VecU16 *self0;
+    M536VecU16 *self1;
+    volatile u32 max0;
+    volatile u32 max1;
     u16 *oldData;
     u16 *newData;
+    u16 *e0;
+    s32 n;
 
     if (newCap > vec->m_cap) {
-        maxSize = 0x7FFFFFFF;
-        if (newCap > maxSize) {
+        max0 = 0x7FFFFFFF;
+        max1 = max0;
+        if (newCap > max1) {
             fn_1_234(M536_STDERR, "vector::reserve length error\n");
             abort();
         }
         oldData = vec->m_data;
+        self0 = vec;
+        self1 = self0;
         newData = (u16 *)fn_1_0(newCap * 2);
         if (newData == 0) {
             fn_1_234(M536_STDERR, "Memory allocation failure");
@@ -1162,7 +1248,9 @@ void fn_1_D4F4(M536VecU16 *vec, u32 newCap)
         }
         vec->m_data = newData;
         if (oldData != 0) {
-            memcpy(vec->m_data, oldData, ((oldData + vec->m_size) - oldData) * 2);
+            e0 = oldData + vec->m_size;
+            n = e0 - oldData;
+            memcpy(vec->m_data, oldData, n * 2);
             fn_1_C8(oldData);
         }
         vec->m_cap = newCap;
