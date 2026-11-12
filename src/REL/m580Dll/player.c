@@ -26,6 +26,8 @@ double cos(double);
 
 #define M580_PLAYER_MAX 4
 
+#define M580_RAND() ((f32)(1.0 / 65536.0 * (f32)(u16)frand()))
+
 static inline f32 M580_WrapDeg(f32 deg)
 {
     return fmod(deg, 360.0);
@@ -51,9 +53,7 @@ typedef struct M580PlayerWork_s {
     /* 0x34 */ s32 unk34;
     /* 0x38 */ s32 aiWait;
     /* 0x3C */ s32 aiTarget;
-    /* 0x40 */ s32 unk40;
-    /* 0x44 */ s32 unk44;
-    /* 0x48 */ s32 unk48;
+    /* 0x40 */ HuVecF aiGoal;
     /* 0x4C */ M580_AIFUNC aiFunc;
     /* 0x50 */ s32 aiState;
     /* 0x54 */ s32 unk54;
@@ -86,7 +86,7 @@ typedef struct M580PlayerWork_s {
     /* 0xD0 */ s32 unkD0;
     /* 0xD4 */ s32 voice;
     /* 0xD8 */ s32 seId;
-    /* 0xDC */ s32 unkDC;
+    /* 0xDC */ OMOBJ *partner;
     /* 0xE0 */ s32 shown;
     /* 0xE4 */ f32 alpha;
     /* 0xE8 */ M580_SHADOW shadow;
@@ -155,6 +155,21 @@ void fn_1_5A14(OMOBJ *obj);
 void fn_1_5B94(OMOBJ *obj);
 void fn_1_5C64(OMOBJ *obj, M580_AIFUNC func);
 void fn_1_6548(OMOBJ *obj);
+void fn_1_6450(OMOBJ *obj);
+void fn_1_6754(OMOBJ *obj);
+void fn_1_6878(OMOBJ *obj);
+void fn_1_6D84(OMOBJ *obj);
+void fn_1_6FC4(OMOBJ *obj);
+void fn_1_74D4(OMOBJ *obj);
+s32 fn_1_55A0(OMOBJ *obj);
+s32 fn_1_5704(void);
+s32 fn_1_5770(OMOBJ *obj);
+s32 fn_1_583C(OMOBJ *obj);
+s32 fn_1_7BE4(OMOBJ *obj, HuVecF *target, f32 halfAngle);
+OMOBJ *fn_1_7E48(u32 team, OMOBJ *exclude, HuVecF *pos, s32 nearest, f32 dir, f32 halfAngle, f32 maxDist);
+s32 fn_1_8194(OMOBJ *obj, HuVecF *pos, f32 *rot);
+void fn_1_83FC(OMOBJ *obj);
+extern M580_STAGEGLOBAL lbl_1_bss_B0;
 s32 fn_1_5504(OMOBJ *obj);
 s32 fn_1_78B4(OMOBJ *obj);
 f32 fn_1_79C4(OMOBJ *obj, HuVecF *target);
@@ -1175,4 +1190,651 @@ void fn_1_5C64(OMOBJ *obj, M580_AIFUNC func)
     work->unk5C = 0.0f;
     work->unk60 = 0;
     work->unk64 = 0;
+}
+
+s32 fn_1_5CB0(OMOBJ *obj, HuVecF *target, f32 rot, f32 speed)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+    HuVecF goal;
+    HuVecF puck;
+    HuVecF approach;
+    f32 dist;
+    s32 idx;
+
+    goal = *target;
+    if (work->aiTarget != 1) {
+        if (fn_1_5704() != 0) {
+            if (fn_1_5770(obj) != 0) {
+                if (fn_1_583C(obj) != 0) {
+                    goal = work->pos;
+                    goal.x = 0.0f;
+                } else {
+                    if (work->pos.x < 0.0f) {
+                        idx = 0;
+                    } else {
+                        idx = 2;
+                    }
+                    if (work->pos.z > 0.0f) {
+                        idx++;
+                    }
+                    goal = lbl_1_data_268[idx];
+                }
+            }
+        }
+    }
+    dist = HuMagPoint2D(goal.x - work->pos.x, goal.z - work->pos.z);
+    if (dist > 100.0) {
+        approach.x = goal.x - 50.0 * sin(M_PI * work->rotY / 180.0);
+        approach.y = goal.y;
+        approach.z = goal.z - 50.0 * cos(M_PI * work->rotY / 180.0);
+        work->stickAng = fn_1_79C4(obj, &approach);
+        work->stickMag = speed;
+    } else if (dist < 50.0) {
+        work->stickAng = rot;
+        if (dist > 20.0) {
+            work->stickMag = 0.0f;
+        } else {
+            work->stickMag = 0.1f;
+        }
+        return 1;
+    } else {
+        work->stickAng = fn_1_79C4(obj, &goal);
+        work->stickMag = 0.5 * speed;
+    }
+    if (fn_1_55A0(obj) != 0) {
+        if (work->rotY < 180.0) {
+            work->stickAng = work->stickAng + 30.0;
+        } else {
+            work->stickAng = work->stickAng - 30.0;
+        }
+    }
+    return 0;
+}
+
+s32 fn_1_63D4(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    if (work->aiTarget != work->aiState) {
+        fn_1_5C64(obj, fn_1_6450);
+        return 1;
+    }
+    return 0;
+}
+
+void fn_1_6450(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIFUNC func;
+
+    switch (work->aiTarget) {
+    case 0:
+        func = fn_1_6754;
+        break;
+    case 1:
+        func = fn_1_6878;
+        break;
+    case 2:
+        func = fn_1_6D84;
+        break;
+    case 3:
+        func = fn_1_6FC4;
+        break;
+    default:
+        func = fn_1_74D4;
+        break;
+    }
+    fn_1_5C64(obj, func);
+    work->aiState = work->aiTarget;
+    work->aiFunc(obj);
+}
+
+void fn_1_6548(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+
+    switch (work->unk54) {
+    case 0:
+        work->unk54++;
+    case 1:
+        if (fn_1_D544() != 0) {
+            break;
+        }
+        work->unk54++;
+        work->unk58 = 6;
+    case 2:
+        if (work->defend != 0) {
+            if (--work->unk58 <= 0) {
+                work->padDown |= 0x100;
+                work->padHold |= 0x100;
+                work->unk58 = param->n0 + (s32)(param->n1 * M580_RAND());
+            }
+        }
+        if (fn_1_D6EC() != 0) {
+            break;
+        }
+        work->unk54++;
+        work->unk58 = 0;
+    case 3:
+        if (++work->unk58 < 30.0) {
+            break;
+        }
+        fn_1_5C64(obj, fn_1_6450);
+        break;
+    }
+}
+
+void fn_1_6754(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+    OMOBJ *holder;
+    s32 flag;
+
+    if (fn_1_63D4(obj) == 0) {
+        flag = 0;
+        if (work->unkAC != 0) {
+            flag = 1;
+        }
+        if (++work->unk58 > 0x1E) {
+            work->unk58 = 0;
+            flag = 1;
+        }
+        if (flag != 0) {
+            holder = fn_1_D30C(&work->aiGoal, NULL);
+        }
+        fn_1_5CB0(obj, &work->aiGoal, 0.0f, 1.0f);
+    }
+}
+
+void fn_1_6878(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+    OMOBJ *mateObj = fn_1_7818(obj);
+    M580_PLAYERWORK *mate = mateObj->data;
+    HuVecF puckPos;
+    HuVecF puckVel;
+    HuVecF tgt;
+    OMOBJ *holder;
+    OMOBJ *near;
+    f32 goalDist;
+    f32 wallX;
+    s32 skip;
+    s32 far;
+    s32 atWall;
+
+    holder = fn_1_D30C(&puckPos, &puckVel);
+    if (fn_1_63D4(obj) == 0 && work->motion != 3) {
+        if (work->unk54 == 0) {
+            skip = 0;
+            if (++work->unk58 >= 0x1E) {
+                skip = 1;
+            } else if (work->unk58 == 1) {
+                skip = 1;
+                if ((work->team != 0 || !(work->pos.x < 0.0f)) && (work->team != 1 || !(work->pos.x > 0.0f))) {
+                    near = fn_1_7E48(work->team ^ 1, NULL, &work->pos, 1, work->rotY, 60.0f, 300.0f);
+                    if (near != NULL) {
+                        fn_1_8194(near, &work->aiGoal, NULL);
+                        skip = 0;
+                    }
+                }
+            }
+            if (skip == 0) {
+                work->stickAng = 180.0 + fn_1_79C4(obj, &work->aiGoal);
+                work->stickMag = 1.0f;
+                return;
+            }
+            work->unk54++;
+            work->unk58 = 0;
+        }
+        goalDist = fn_1_7A6C(obj, &lbl_1_data_174[work->team ^ 1]);
+        far = 0;
+        if (goalDist > 100.0 + fn_1_7A6C(mateObj, &lbl_1_data_174[work->team ^ 1])) {
+            far = 1;
+        }
+        if (fn_1_7E48(work->team ^ 1, NULL, &work->pos, 1, work->rotY, 50.0f, 300.0 + 100.0 * (1.5 * param->p0))
+            != NULL) {
+            far = 1;
+        }
+        if (work->unkA4 != 0) {
+            far = 0;
+        }
+        if (far != 0 && M580_RAND() < param->p2 && fn_1_7BE4(obj, &mate->pos, 28.0f) != 0) {
+            work->padDown |= 0x100;
+            work->padHold |= 0x100;
+            return;
+        }
+        if (work->motion != 2) {
+            atWall = 0;
+            wallX = lbl_1_data_1BC[work->team].x;
+            if (wallX > 0.0f) {
+                if (work->pos.x >= wallX - 50.0) {
+                    atWall = 1;
+                }
+            } else {
+                if (work->pos.x <= 50.0 + wallX) {
+                    atWall = 1;
+                }
+            }
+            if (atWall != 0) {
+                work->padDown |= 0x200;
+                work->padHold |= 0x200;
+                work->aiGoal = lbl_1_data_174[work->team ^ 1];
+                return;
+            }
+            tgt.x = wallX;
+            tgt.y = work->pos.y;
+            tgt.z = 0.8 * work->pos.z;
+            fn_1_5CB0(obj, &tgt, lbl_1_data_14C[work->slot], 1.0f);
+            work->stickAng = work->stickAng + 15.0;
+            return;
+        }
+        work->stickAng = fn_1_79C4(obj, &work->aiGoal);
+        work->stickMag = 0.5f;
+    }
+}
+
+void fn_1_6D84(OMOBJ *obj)
+{
+    M580_AIPARAM *param = &lbl_1_data_208[((M580_PLAYERWORK *)obj->data)->dif];
+    M580_PLAYERWORK *mate = fn_1_7818(obj)->data;
+    HuVecF puckPos;
+    HuVecF puckVel;
+    HuVecF tgt;
+    OMOBJ *holder;
+    f64 offX;
+    f64 offZ;
+
+    holder = fn_1_D30C(&puckPos, &puckVel);
+    if (fn_1_63D4(obj) == 0) {
+        tgt = mate->pos;
+        if (mate->vel.x < 0.0f) {
+            offX = -200.0;
+        } else {
+            offX = 200.0;
+        }
+        tgt.x = tgt.x + offX;
+        if (tgt.x > 750.0) {
+            tgt.x = 750.0f;
+        }
+        if (tgt.x < -750.0) {
+            tgt.x = -750.0f;
+        }
+        if (tgt.z < 0.0f) {
+            offZ = 500.0;
+        } else {
+            offZ = -500.0;
+        }
+        tgt.z = tgt.z + 0.8 * ((f32)offZ - tgt.z);
+        fn_1_5CB0(obj, &tgt, 180.0 + mate->rotY, 1.0f);
+    }
+}
+
+void fn_1_6FC4(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+    OMOBJ *mateObj = fn_1_7818(obj);
+    M580_PLAYERWORK *mate = mateObj->data;
+    HuVecF puckPos;
+    HuVecF puckVel;
+    HuVecF tgt;
+    OMOBJ *holder;
+    f32 myDist;
+    f32 mateDist;
+    s32 chase;
+
+    holder = fn_1_D30C(&puckPos, &puckVel);
+    if (work->aiTarget != 0) {
+        if (work->aiTarget == 2) {
+            if (mate->unkB0 > 30.0) {
+                if (fn_1_63D4(obj) != 0) {
+                    return;
+                }
+            }
+        } else {
+            if (fn_1_63D4(obj) != 0) {
+                return;
+            }
+        }
+    }
+    if (work->unk54 == 0) {
+        work->unk54++;
+        if (M580_RAND() < param->p0) {
+            work->unk60 = 0;
+        } else {
+            work->unk60 = 1;
+        }
+    }
+    myDist = fn_1_7A6C(obj, &puckPos);
+    mateDist = fn_1_7A6C(mateObj, &puckPos);
+    chase = 0;
+    if (work->unk60 == 0) {
+        if (myDist < mateDist) {
+            chase = 1;
+        }
+    } else {
+        chase = 1;
+    }
+    if (chase != 0) {
+        if (--work->unk58 <= 0) {
+            if (M580_RAND() < param->p1) {
+                work->unk64 = 0;
+            } else {
+                work->unk64 = 1;
+            }
+            work->unk58 = 0x3C;
+        }
+        work->unk5C = work->unk5C - param->p1;
+        if (work->unk5C < 0.0) {
+            work->unk5C = 2.0f;
+            work->aiGoal = puckPos;
+        }
+        fn_1_5CB0(obj, &work->aiGoal, 0.0f, 1.0f);
+        if (work->unk64 != 0) {
+            work->stickAng = work->stickAng + 25.0;
+        }
+        if (myDist < 350.0 && work->aiWait == 0 && M580_RAND() < param->p3) {
+            work->padHold |= 0x200;
+            work->padDown |= 0x200;
+            work->aiWait = 0x78;
+        }
+        if (work->aiWait < 60.0) {
+            work->stickAng = work->stickAng + 15.0;
+        }
+    } else {
+        tgt = lbl_1_data_174[work->team];
+        tgt.x = tgt.x + 0.6 * (puckPos.x - tgt.x);
+        tgt.z = tgt.z + 0.6 * (puckPos.z - tgt.z);
+        fn_1_5CB0(obj, &tgt, lbl_1_data_14C[work->slot], 1.0f);
+    }
+}
+
+void fn_1_74D4(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+    s32 idx;
+
+    if (work->aiTarget == -1) {
+        work->unk58 = 0;
+    }
+    if (++work->unk58 > 42.0) {
+        if (fn_1_63D4(obj) != 0) {
+            return;
+        }
+    }
+    idx = (work->slot & 3) ^ (lbl_1_bss_50 & 1);
+    fn_1_5CB0(obj, &lbl_1_bss_64[idx], lbl_1_bss_54[idx], 1.0f);
+}
+
+void fn_1_7634(OMOBJ *obj, u32 motion)
+{
+    M580_PLAYERWORK *work = obj->data;
+    f32 shift;
+
+    if (work->motion != motion && motion < 9) {
+        if (work->motion < 0) {
+            shift = 0.0f;
+        } else {
+            shift = 60.0f * lbl_1_data_B0[motion].shift;
+        }
+        work->motion = motion;
+        work->motionFrame = 0;
+        CharMotionShiftSet(work->charNo, obj->mtnId[lbl_1_data_B0[motion].index], 0.0f, shift, lbl_1_data_B0[motion].attr);
+        CharMotionSpeedSet(work->charNo, 1.0f);
+    }
+}
+
+s32 fn_1_774C(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    if (CharMotionEndCheck(work->charNo) != 0 && CharMotionShiftIDGet(work->charNo) < 0) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_77B8(OMOBJ *obj)
+{
+    s32 ret = 0;
+
+    if (CharMotionShiftIDGet(((M580_PLAYERWORK *)obj->data)->charNo) < 0) {
+        ret = 1;
+    }
+    return ret;
+}
+
+OMOBJ *fn_1_7818(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    OMOBJ *other;
+    s32 i;
+
+    if (work->partner != NULL) {
+        return work->partner;
+    }
+    for (i = 0; i < M580_PLAYER_MAX; i++) {
+        other = lbl_1_bss_9C[i];
+        if (other != obj && ((M580_PLAYERWORK *)other->data)->team == work->team) {
+            work->partner = other;
+            return other;
+        }
+    }
+    return NULL;
+}
+
+s32 fn_1_78B4(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work;
+    OMOBJ *holder;
+    OMOBJ *partner;
+    OMOBJ *other;
+    s32 i;
+
+    if (fn_1_D544() != 0) {
+        return -1;
+    }
+    holder = fn_1_D30C(NULL, NULL);
+    if (holder == NULL) {
+        return 0;
+    }
+    if (holder == obj) {
+        return 1;
+    }
+    if (holder->work[0] >= 4) {
+        return -1;
+    }
+    work = obj->data;
+    if (work->partner != NULL) {
+        partner = work->partner;
+    } else {
+        for (i = 0; i < M580_PLAYER_MAX; i++) {
+            other = lbl_1_bss_9C[i];
+            if (other != obj && ((M580_PLAYERWORK *)other->data)->team == work->team) {
+                work->partner = other;
+                partner = other;
+                break;
+            }
+        }
+        if (i >= M580_PLAYER_MAX) {
+            partner = NULL;
+        }
+    }
+    if (holder == partner) {
+        return 2;
+    }
+    return 3;
+}
+
+f32 fn_1_79C4(OMOBJ *obj, HuVecF *target)
+{
+    M580_PLAYERWORK *work = obj->data;
+    f32 dx = target->x - work->pos.x;
+    f32 dz = target->z - work->pos.z;
+
+    return 180.0 * (atan2(dx, dz) / M_PI);
+}
+
+f32 fn_1_7A6C(OMOBJ *obj, HuVecF *target)
+{
+    M580_PLAYERWORK *work = obj->data;
+    f32 dx = target->x - work->pos.x;
+    f32 dz = target->z - work->pos.z;
+
+    return HuMagPoint2D(dx, dz);
+}
+
+s32 fn_1_7BE4(OMOBJ *obj, HuVecF *target, f32 halfAngle)
+{
+    M580_PLAYERWORK *work = obj->data;
+    f32 ang = fn_1_79C4(obj, target);
+    f32 dist = fn_1_7A6C(obj, target);
+
+    if (fn_1_7E48(work->team ^ 1, NULL, &work->pos, 1, ang, halfAngle, 350.0 + dist) != NULL) {
+        return 0;
+    }
+    return 1;
+}
+
+s32 fn_1_7E2C(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    return work->playerNo;
+}
+
+OMOBJ *fn_1_7E48(u32 team, OMOBJ *exclude, HuVecF *pos, s32 nearest, f32 dir, f32 halfAngle, f32 maxDist)
+{
+    OMOBJ *best = NULL;
+    OMOBJ *worst = NULL;
+    f32 bestDist = 100000.0f;
+    f32 worstDist = 0.0f;
+    s32 i;
+
+    for (i = 0; i < M580_PLAYER_MAX; i++) {
+        OMOBJ *other = lbl_1_bss_9C[i];
+
+        if (other != exclude) {
+            M580_PLAYERWORK *w = other->data;
+
+            if (w->team == team) {
+                f32 dx = w->pos.x - pos->x;
+                f32 dz = w->pos.z - pos->z;
+                f32 dist;
+                f32 ang;
+
+                if (halfAngle < 180.0) {
+                    ang = M580_WrapDeg((f32)(180.0 * (atan2(dx, dz) / M_PI)) - dir);
+                    if (ang < 0.0f) {
+                        ang += 360.0f;
+                    }
+                    if (ang > halfAngle && ang < 360.0f - halfAngle) {
+                        continue;
+                    }
+                }
+                dist = HuMagPoint2D(dx, dz);
+                if (!(dist > maxDist)) {
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        best = other;
+                    }
+                    if (dist > worstDist) {
+                        worstDist = dist;
+                        worst = other;
+                    }
+                }
+            }
+        }
+    }
+    if (nearest != 0) {
+        return best;
+    }
+    return worst;
+}
+
+s32 fn_1_8194(OMOBJ *obj, HuVecF *pos, f32 *rot)
+{
+    s32 invalid = 0;
+    M580_PLAYERWORK *work;
+
+    if (obj == NULL) {
+        invalid = 1;
+    }
+#ifdef TARGET_PC
+    if (obj != NULL && obj->work[0] >= 4) {
+#else
+    if (obj->work[0] >= 4) {
+#endif
+        invalid = 1;
+    }
+    if (pos != NULL) {
+        if (invalid == 0) {
+            work = obj->data;
+            pos->x = work->pos.x;
+            pos->y = work->pos.y;
+            pos->z = work->pos.z;
+        } else {
+            pos->z = 0.0f;
+            pos->y = 0.0f;
+            pos->x = 0.0f;
+        }
+    }
+    if (rot != NULL) {
+        if (invalid == 0) {
+            *rot = ((M580_PLAYERWORK *)obj->data)->rotY;
+        } else {
+            *rot = 0.0f;
+        }
+    }
+    return 1;
+}
+
+s32 fn_1_8258(u32 team)
+{
+    M580_PLAYERWORK *work;
+    s32 i;
+
+    for (i = 0; i < M580_PLAYER_MAX; i++) {
+        work = lbl_1_bss_9C[i]->data;
+        if (work->team == team && work->isCpu == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void fn_1_82CC(u32 team)
+{
+    M580_PLAYERWORK *work;
+    s32 i;
+
+    for (i = 0; i < M580_PLAYER_MAX; i++) {
+        work = lbl_1_bss_9C[i]->data;
+        if (work->team == team) {
+            omVibrate(work->playerNo, 0xF, 6, 6);
+        }
+    }
+}
+
+void fn_1_8358(OMOBJMAN *objMan)
+{
+    OMOBJ *obj;
+    void *anim;
+
+    obj = omAddObjEx(objMan, 0x1E, 0xA, 1, OM_GRP_NONE, fn_1_83FC);
+    lbl_1_bss_B0.stage = (M580_STAGE *)obj;
+    obj->stat |= 0x100;
+    anim = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M580_STAGEANIM), HU_MEMNUM_OVL);
+    obj->data = anim;
+    memset(anim, 0, sizeof(M580_STAGEANIM));
+    obj->work[0] = 0;
+}
+
+void fn_1_83F8(void)
+{
 }

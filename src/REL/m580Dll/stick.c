@@ -154,8 +154,8 @@ s32 fn_1_1D04(void);
 u32 fn_1_1D58(u32 team);
 f32 fn_1_2634(f32 from, f32 to, f32 t);
 s32 fn_1_89A8(s32 index, f32 *pos, f32 *angle);
-OMOBJ *fn_1_7E48(s32 index, s32 mode, HuVecF *pos, s32 flag, f32 dir, f32 minDist, f32 maxDist);
-void fn_1_8194(OMOBJ *player, HuVecF *out, s32 mode);
+OMOBJ *fn_1_7E48(u32 team, OMOBJ *exclude, HuVecF *pos, s32 nearest, f32 dir, f32 halfAngle, f32 maxDist);
+s32 fn_1_8194(OMOBJ *obj, HuVecF *pos, f32 *rot);
 void fn_1_ED34(M580_SHADOW *shadow);
 s32 fn_1_11DC4(M580_BODY *body);
 
@@ -649,9 +649,9 @@ void fn_1_A260(OMOBJ *obj)
                 if (++work->timer > 48.0) {
                     fn_1_92EC(obj, 4);
                     work->busy = 1;
-                    hit = fn_1_7E48(work->index, 0, &work->pos, (frand() & 1) == 0, work->actor->initRot, 80.0f, 3000.0f);
+                    hit = fn_1_7E48(work->index, NULL, &work->pos, (frand() & 1) == 0, work->actor->initRot, 80.0f, 3000.0f);
                     if (hit != NULL) {
-                        fn_1_8194(hit, &target, 0);
+                        fn_1_8194(hit, &target, NULL);
                         work->targetRot = fn_1_9528(obj, &target);
                     } else {
                         work->targetRot = work->targetRot + 10.0 * (1.0 / 32768.0 * (f32)((u16)frand() - 0x8000));
