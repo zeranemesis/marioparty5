@@ -37,14 +37,22 @@ struct M515Slot_s {
 typedef struct M515Item_s {
     s16 mdl;
     s16 mot;
-    char pad_04[4];
+    s16 mdl2;
+    char pad_06[2];
     HuVecF a;
     HuVecF b;
     s16 f20;
-    char pad_22[2];
+    s16 f22;
     s16 f24;
     char pad_26[2];
+    f32 f28;
 } M515_ITEM;
+
+typedef struct M515Place_s {
+    s16 id;
+    s16 pos;
+    f32 rot;
+} M515_PLACE;
 
 // Board cell, stride 0x28. nbr: right, left, down, up.
 struct M515Cell_s {
@@ -122,9 +130,10 @@ struct M515Sub_s {
     s16 idb6[4][3];
     char pad_0CE[0xDC - 0xCE];
     s16 mdl;
-    char pad_0DE[0xE0 - 0xDE];
+    s16 mdl2;
     s16 mot[8];
-    char pad_0F0[0x130 - 0xF0];
+    char pad_0F0[0x10C - 0xF0];
+    s16 cache[18];
     M515_GRP grp[4];
     s16 v1d0;
     s16 v1d2;
@@ -145,14 +154,6 @@ struct M515Sub_s {
     s16 v0cac;
     char pad_CAE[0xCB0 - 0xCAE];
 };
-
-typedef struct M515Mark_s {
-    s16 m0;
-    char pad_02[2];
-    s16 m4;
-    char pad_06[0x28 - 6];
-    f32 m28;
-} M515_MARK;
 
 typedef struct M515Fx_s {
     char pad_00[0x10];
@@ -180,7 +181,7 @@ struct M515Ply_s {
     s16 v482;
     s16 v484;
     s16 v486;
-    M515_MARK mark[8];
+    M515_ITEM item[8];
     s16 v5e8;
     s16 mdlIds[3][25];
         u16 v680;
@@ -263,7 +264,7 @@ s32 fn_1_6324(M515_PLY *ply, M515_SUB *sub);
 s16 fn_1_66D0(M515_PLY *ply);
 u16 fn_1_7924(M515_PLY *ply);
 u16 fn_1_DD18(M515_PLY *ply);
-void fn_1_7BE8(M515_MARK *mark, M515_SUB *sub);
+void fn_1_7BE8(M515_ITEM *item, M515_SUB *sub);
 void fn_1_81A8(M515_SLOT *slot, M515_PLY *ply);
 s32 fn_1_7878(M515_PLY *ply);
 void fn_1_6980(M515_PLY *ply);
@@ -296,6 +297,19 @@ s32 lbl_1_data_118[13][8] = {
     { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E },
     { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E },
     { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E }
+};
+
+s32 lbl_1_data_320[17] = {
+    0x490028, 0x490029, 0x49002A, 0x49002B, 0x49002C, 0x49002D, 0x49002E, 0x49002F, 0x490030,
+    0x490031, 0x490032, 0x490033, 0x490034, 0x490035, 0x490036, 0x490037, 0x490038
+};
+
+s32 lbl_1_data_364[17] = {
+    0x490039, 0x49003A, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
+s32 lbl_1_data_3A8[8] = {
+    0x49003B, 0x49003C, 0x49003D, 0x49003E, 0x49003F, 0x490040, 0x490041, 0x490042
 };
 
 u16 lbl_1_data_530[25] = {
@@ -338,9 +352,381 @@ u16 lbl_1_data_6F2[25] = {
     1, 1, 0, 0, 0, 1, 1, 1, 0, 2, 1, 1, 0, 1, 0, 1, 1, 2, 0, 0, 1, 1, 0, 1, 1
 };
 
+u16 lbl_1_data_724[25] = {
+    0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 1, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_756[25] = {
+    0, 2, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 2, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_788[25] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 2, 1, 1, 2, 1, 0, 1, 1, 0, 0, 0
+};
+
+u16 lbl_1_data_7BA[25] = {
+    0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0
+};
+
+u16 lbl_1_data_7EC[25] = {
+    0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 1, 2, 1, 1, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_81E[25] = {
+    1, 0, 0, 0, 1, 1, 0, 2, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1
+};
+
+u16 lbl_1_data_850[25] = {
+    1, 0, 0, 1, 1, 1, 2, 2, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1
+};
+
+u16 lbl_1_data_882[25] = {
+    1, 0, 2, 0, 0, 1, 1, 0, 2, 2, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1
+};
+
+u16 lbl_1_data_8B4[25] = {
+    1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 2, 0, 2, 0, 1, 0, 2, 0, 1
+};
+
+u16 lbl_1_data_8E6[25] = {
+    1, 0, 2, 0, 1, 0, 2, 0, 1, 1, 1, 0, 2, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1
+};
+
+u16 lbl_1_data_918[25] = {
+    0, 2, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 2, 0, 1, 0, 2, 0, 1, 0, 2, 0, 2, 0
+};
+
+u16 lbl_1_data_94A[25] = {
+    1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_97C[25] = {
+    0, 0, 0, 0, 0, 0, 2, 2, 2, 0, 1, 0, 0, 0, 1, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_9AE[25] = {
+    0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_9E0[25] = {
+    1, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 2, 0, 2, 1, 0, 2, 2, 2, 0, 0, 1, 0, 0, 0
+};
+
+u16 lbl_1_data_A12[25] = {
+    0, 0, 2, 0, 0, 0, 1, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 1, 0, 0, 0, 2, 0, 0
+};
+
+u16 lbl_1_data_A44[25] = {
+    1, 0, 2, 0, 0, 0, 1, 0, 2, 0, 2, 0, 2, 0, 0, 0, 1, 1, 1, 2, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_A76[25] = {
+    1, 0, 2, 0, 1, 0, 0, 0, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 2, 0, 1, 0, 0, 0, 1
+};
+
+u16 lbl_1_data_AA8[25] = {
+    1, 0, 2, 0, 1, 1, 2, 0, 2, 0, 0, 2, 0, 0, 0, 0, 1, 1, 1, 2, 0, 0, 0, 0, 0
+};
+
+u16 lbl_1_data_ADA[25] = {
+    0, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 1, 0, 1, 1, 0, 1, 2, 1, 1, 0, 0, 0, 1
+};
+
+M515_PLACE lbl_1_data_B0C[5] = {
+    { 16, 0, 0.0f },
+    { 6, 12, 0.0f },
+    { 1, 23, 0.0f },
+    { 4, 4, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_B34[4] = {
+    { 16, 0, 0.0f },
+    { 6, 12, 180.0f },
+    { 4, 18, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_B54[7] = {
+    { 16, 0, 0.0f },
+    { 8, 4, 0.0f },
+    { 7, 7, 0.0f },
+    { 3, 9, 270.0f },
+    { 6, 23, 0.0f },
+    { 1, 24, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_B8C[6] = {
+    { 6, 7, 180.0f },
+    { 4, 11, 0.0f },
+    { 7, 12, 0.0f },
+    { 6, 17, 0.0f },
+    { 16, 24, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_BBC[8] = {
+    { 8, 0, 0.0f },
+    { 4, 1, 0.0f },
+    { 3, 10, 90.0f },
+    { 6, 15, 0.0f },
+    { 7, 17, 0.0f },
+    { 1, 20, 0.0f },
+    { 16, 24, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_BFC[7] = {
+    { 16, 0, 0.0f },
+    { 8, 3, 0.0f },
+    { 2, 4, 0.0f },
+    { 6, 8, 0.0f },
+    { 7, 17, 0.0f },
+    { 4, 18, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_C34[6] = {
+    { 16, 0, 0.0f },
+    { 2, 4, 0.0f },
+    { 7, 12, 0.0f },
+    { 4, 13, 0.0f },
+    { 6, 17, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_C64[6] = {
+    { 4, 11, 0.0f },
+    { 6, 12, 180.0f },
+    { 7, 17, 0.0f },
+    { 1, 20, 0.0f },
+    { 16, 24, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_C94[6] = {
+    { 8, 0, 0.0f },
+    { 2, 1, 0.0f },
+    { 6, 16, 0.0f },
+    { 7, 17, 0.0f },
+    { 16, 24, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_CC4[6] = {
+    { 16, 0, 0.0f },
+    { 7, 7, 0.0f },
+    { 4, 13, 0.0f },
+    { 6, 23, 0.0f },
+    { 1, 24, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_CF4[4] = {
+    { 11, 6, 0.0f },
+    { 12, 16, 0.0f },
+    { 10, 19, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_D14[6] = {
+    { 11, 6, 0.0f },
+    { 12, 8, 270.0f },
+    { 12, 16, 90.0f },
+    { 9, 12, 0.0f },
+    { 11, 18, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_D44[6] = {
+    { 10, 10, 0.0f },
+    { 11, 11, 270.0f },
+    { 12, 13, 270.0f },
+    { 12, 20, 90.0f },
+    { 9, 21, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_D74[5] = {
+    { 2, 4, 0.0f },
+    { 10, 10, 0.0f },
+    { 11, 12, 270.0f },
+    { 9, 13, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_D9C[5] = {
+    { 10, 7, 0.0f },
+    { 12, 12, 270.0f },
+    { 9, 19, 0.0f },
+    { 9, 20, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_DC4[9] = {
+    { 12, 0, 270.0f },
+    { 11, 4, 270.0f },
+    { 11, 10, 0.0f },
+    { 12, 13, 270.0f },
+    { 10, 14, 0.0f },
+    { 11, 19, 270.0f },
+    { 14, 21, 90.0f },
+    { 9, 23, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_E0C[9] = {
+    { 11, 0, 270.0f },
+    { 12, 3, 0.0f },
+    { 11, 9, 270.0f },
+    { 2, 10, 90.0f },
+    { 9, 15, 0.0f },
+    { 12, 16, 270.0f },
+    { 15, 18, 270.0f },
+    { 10, 20, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_E54[9] = {
+    { 9, 0, 0.0f },
+    { 9, 5, 0.0f },
+    { 11, 6, 270.0f },
+    { 10, 10, 0.0f },
+    { 12, 18, 270.0f },
+    { 9, 19, 0.0f },
+    { 14, 21, 90.0f },
+    { 10, 24, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_E9C[8] = {
+    { 12, 3, 270.0f },
+    { 10, 4, 0.0f },
+    { 14, 6, 90.0f },
+    { 11, 9, 270.0f },
+    { 10, 10, 0.0f },
+    { 9, 20, 0.0f },
+    { 10, 24, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_EDC[8] = {
+    { 10, 0, 0.0f },
+    { 10, 4, 0.0f },
+    { 12, 9, 180.0f },
+    { 11, 10, 270.0f },
+    { 9, 14, 0.0f },
+    { 15, 18, 270.0f },
+    { 12, 21, 180.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_F1C[5] = {
+    { 13, 5, 90.0f },
+    { 4, 9, 0.0f },
+    { 4, 15, 0.0f },
+    { 17, 19, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_F44[7] = {
+    { 17, 0, 0.0f },
+    { 13, 1, 0.0f },
+    { 13, 3, 0.0f },
+    { 17, 4, 0.0f },
+    { 4, 16, 0.0f },
+    { 4, 18, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_F7C[3] = {
+    { 13, 10, 90.0f },
+    { 17, 14, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_F94[3] = {
+    { 13, 5, 90.0f },
+    { 17, 9, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_FAC[5] = {
+    { 17, 0, 0.0f },
+    { 17, 14, 0.0f },
+    { 13, 21, 90.0f },
+    { 13, 3, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_FD4[3] = {
+    { 13, 6, 90.0f },
+    { 4, 18, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_FEC[5] = {
+    { 13, 0, 90.0f },
+    { 17, 6, 0.0f },
+    { 4, 16, 0.0f },
+    { 5, 17, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_1014[5] = {
+    { 17, 0, 0.0f },
+    { 13, 4, 90.0f },
+    { 13, 20, 90.0f },
+    { 17, 24, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_103C[5] = {
+    { 13, 4, 0.0f },
+    { 3, 5, 90.0f },
+    { 4, 16, 0.0f },
+    { 5, 17, 0.0f },
+    { -1, 0, 0.0f }
+};
+
+M515_PLACE lbl_1_data_1064[6] = {
+    { 13, 12, 0.0f },
+    { 17, 14, 0.0f },
+    { 4, 17, 0.0f },
+    { 5, 19, 270.0f },
+    { 3, 20, 90.0f },
+    { -1, 0, 0.0f }
+};
+
 u16 * lbl_1_data_1094[10] = {
     lbl_1_data_530, lbl_1_data_562, lbl_1_data_594, lbl_1_data_5C6, lbl_1_data_5F8,
     lbl_1_data_62A, lbl_1_data_65C, lbl_1_data_68E, lbl_1_data_6C0, lbl_1_data_6F2
+};
+
+u16 * lbl_1_data_10BC[10] = {
+    lbl_1_data_724, lbl_1_data_756, lbl_1_data_788, lbl_1_data_7BA, lbl_1_data_7EC,
+    lbl_1_data_81E, lbl_1_data_850, lbl_1_data_882, lbl_1_data_8B4, lbl_1_data_8E6
+};
+
+u16 * lbl_1_data_10E4[10] = {
+    lbl_1_data_918, lbl_1_data_94A, lbl_1_data_97C, lbl_1_data_9AE, lbl_1_data_9E0,
+    lbl_1_data_A12, lbl_1_data_A44, lbl_1_data_A76, lbl_1_data_AA8, lbl_1_data_ADA
+};
+
+M515_PLACE * lbl_1_data_110C[10] = {
+    lbl_1_data_B0C, lbl_1_data_B34, lbl_1_data_B54, lbl_1_data_B8C, lbl_1_data_BBC,
+    lbl_1_data_BFC, lbl_1_data_C34, lbl_1_data_C64, lbl_1_data_C94, lbl_1_data_CC4
+};
+
+M515_PLACE * lbl_1_data_1134[10] = {
+    lbl_1_data_CF4, lbl_1_data_D14, lbl_1_data_D44, lbl_1_data_D74, lbl_1_data_D9C,
+    lbl_1_data_DC4, lbl_1_data_E0C, lbl_1_data_E54, lbl_1_data_E9C, lbl_1_data_EDC
+};
+
+M515_PLACE * lbl_1_data_115C[10] = {
+    lbl_1_data_F1C, lbl_1_data_F44, lbl_1_data_F7C, lbl_1_data_F94, lbl_1_data_FAC,
+    lbl_1_data_FD4, lbl_1_data_FEC, lbl_1_data_1014, lbl_1_data_103C, lbl_1_data_1064
 };
 // DATA END
 
@@ -852,7 +1238,7 @@ void fn_1_2684(OMOBJ *obj)
             omSetRot(obj, ply->rot.x, ply->rot.y, ply->rot.z);
         }
         for (i = 0; i < ply->v5e8; i++) {
-            fn_1_7BE8(&ply->mark[i], sub);
+            fn_1_7BE8(&ply->item[i], sub);
         }
     }
 }
@@ -1293,11 +1679,11 @@ void fn_1_72E4(M515_PLY *ply)
 
     sub = M515_SUBOF(lbl_1_bss_4);
     for (i = 0; i < 8; i++) {
-        Hu3DModelAttrSet(ply->mark[i].m0, HU3D_ATTR_DISPOFF);
-        Hu3DMotionSet(ply->mark[i].m0, sub->mot[4]);
-        Hu3DMotionTimeSet(ply->mark[i].m0, 0.0f);
-        Hu3DModelAttrSet(ply->mark[i].m0, 0x40000002);
-        Hu3DModelAttrSet(ply->mark[i].m4, HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrSet(ply->item[i].mdl, HU3D_ATTR_DISPOFF);
+        Hu3DMotionSet(ply->item[i].mdl, sub->mot[4]);
+        Hu3DMotionTimeSet(ply->item[i].mdl, 0.0f);
+        Hu3DModelAttrSet(ply->item[i].mdl, 0x40000002);
+        Hu3DModelAttrSet(ply->item[i].mdl2, HU3D_ATTR_DISPOFF);
     }
 }
 
@@ -1962,8 +2348,8 @@ void fn_1_CC20(s16 layerNo)
                     }
                 }
                 for (j = 0; j < ply->v5e8; j++) {
-                    Hu3DModelAttrSet(ply->mark[j].m0, HU3D_ATTR_DISPOFF);
-                    Hu3DModelAttrSet(ply->mark[j].m4, HU3D_ATTR_DISPOFF);
+                    Hu3DModelAttrSet(ply->item[j].mdl, HU3D_ATTR_DISPOFF);
+                    Hu3DModelAttrSet(ply->item[j].mdl2, HU3D_ATTR_DISPOFF);
                 }
             }
         }
@@ -1982,8 +2368,8 @@ void fn_1_CC20(s16 layerNo)
                 }
             }
             for (j = 0; j < ply->v5e8; j++) {
-                Hu3DModelAttrReset(ply->mark[j].m0, HU3D_ATTR_DISPOFF);
-                Hu3DModelAttrReset(ply->mark[j].m4, HU3D_ATTR_DISPOFF);
+                Hu3DModelAttrReset(ply->item[j].mdl, HU3D_ATTR_DISPOFF);
+                Hu3DModelAttrReset(ply->item[j].mdl2, HU3D_ATTR_DISPOFF);
             }
         }
     }
@@ -1995,12 +2381,12 @@ void fn_1_E548(M515_PLY *ply)
     f32 t;
 
     for (i = 0; i < ply->v5e8; i++) {
-        ply->mark[i].m28 += 2.0f;
-        if (ply->mark[i].m28 > 360.0f) {
-            ply->mark[i].m28 -= 360.0f;
+        ply->item[i].f28 += 2.0f;
+        if (ply->item[i].f28 > 360.0f) {
+            ply->item[i].f28 -= 360.0f;
         }
-        t = 0.05f * HuSin(ply->mark[i].m28);
-        Hu3DModelScaleSet(ply->mark[i].m0, 1.1f, 1.05f + t, 1.1f);
-        Hu3DModelScaleSet(ply->mark[i].m4, 1.1f - t, 1.1f, 1.1f - t);
+        t = 0.05f * HuSin(ply->item[i].f28);
+        Hu3DModelScaleSet(ply->item[i].mdl, 1.1f, 1.05f + t, 1.1f);
+        Hu3DModelScaleSet(ply->item[i].mdl2, 1.1f - t, 1.1f, 1.1f - t);
     }
 }
