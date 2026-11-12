@@ -57,11 +57,11 @@ M536Score *fn_1_D6FC(M536Score *self)
     self->m_vptr = lbl_1_data_1FC;
     self->m_flag = 0;
     fn_1_1330(self, &lbl_1_bss_C);
-    if (lbl_1_bss_9FC != NULL) {
+    if (lbl_1_bss_9FC != 0) {
         fn_1_1D4("ms_pointer == 0", "singleton.h", 0x35);
     }
     ms = (M536Score *)((u8 *)self + 0x10);
-    if (ms != NULL) {
+    if (ms != 0) {
         ms = (M536Score *)((u8 *)ms - 0x10);
     }
     lbl_1_bss_9FC = ms;
@@ -96,8 +96,8 @@ M536Score *fn_1_D6FC(M536Score *self)
 
 M536Score *fn_1_DA34(M536Score *self, s16 freeIt)
 {
-    if (self != NULL) {
-        if (lbl_1_bss_9FC == NULL) {
+    if (self != 0) {
+        if (lbl_1_bss_9FC == 0) {
             fn_1_1D4("ms_pointer != 0", "singleton.h", 0x3D);
         }
         lbl_1_bss_9FC = NULL;
@@ -203,17 +203,17 @@ void fn_1_E144(M536Score *self, s32 bit)
 
 M536Score *fn_1_E180(M536Score *self, s16 freeIt)
 {
-    if (self != NULL) {
+    if (self != 0) {
         self->m_vptr = lbl_1_data_5A0;
-        if ((M536Score *)((u8 *)self + 0x10) != NULL) {
-            if (lbl_1_bss_9FC == NULL) {
+        if ((M536Score *)((u8 *)self + 0x10) != 0) {
+            if (lbl_1_bss_9FC == 0) {
                 fn_1_1D4("ms_pointer != 0", "singleton.h", 0x3D);
             }
             lbl_1_bss_9FC = NULL;
         }
-        if (self != NULL) {
+        if (self != 0) {
             self->m_vptr = lbl_1_data_1FC;
-            if (self != NULL) {
+            if (self != 0) {
                 fn_1_1270(self, 0);
             }
         }

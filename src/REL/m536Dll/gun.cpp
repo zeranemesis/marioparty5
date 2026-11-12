@@ -64,11 +64,11 @@ M536Gun *fn_1_F670(M536Gun *self)
     self->m_vptr = lbl_1_data_1FC;
     self->m_flag = 0;
     fn_1_1330(self, &lbl_1_bss_C);
-    if (lbl_1_bss_A04 != NULL) {
+    if (lbl_1_bss_A04 != 0) {
         fn_1_1D4("ms_pointer == 0", "singleton.h", 0x35);
     }
     ms = (M536Gun *)((u8 *)self + 0x10);
-    if (ms != NULL) {
+    if (ms != 0) {
         ms = (M536Gun *)((u8 *)ms - 0x10);
     }
     lbl_1_bss_A04 = ms;
@@ -81,7 +81,7 @@ M536Gun *fn_1_F670(M536Gun *self)
     Hu3DModelAttrSet(self->m_mdl[2], 1);
     for (i = 0; i < 4; i++) {
         unit = (M536GunUnit *)fn_1_0(sizeof(M536GunUnit));
-        if (unit != NULL) {
+        if (unit != 0) {
             fn_1_F9B4(unit, &self->m_mdl[0], &self->m_mdl[1], &self->m_mdl[2], i);
         }
     }
@@ -90,8 +90,8 @@ M536Gun *fn_1_F670(M536Gun *self)
 
 M536Gun *fn_1_F7EC(M536Gun *self, s16 freeIt)
 {
-    if (self != NULL) {
-        if (lbl_1_bss_A04 == NULL) {
+    if (self != 0) {
+        if (lbl_1_bss_A04 == 0) {
             fn_1_1D4("ms_pointer != 0", "singleton.h", 0x3D);
         }
         lbl_1_bss_A04 = NULL;
@@ -104,21 +104,21 @@ M536Gun *fn_1_F7EC(M536Gun *self, s16 freeIt)
 
 M536Gun *fn_1_F878(M536Gun *self, s16 freeIt)
 {
-    if (self != NULL) {
+    if (self != 0) {
         self->m_vptr = lbl_1_data_6A8;
         fn_1_FBF8();
         fn_1_30F4(&self->m_mdl[2], -1);
         fn_1_30F4(&self->m_mdl[1], -1);
         fn_1_30F4(&self->m_mdl[0], -1);
-        if ((M536Gun *)((u8 *)self + 0x10) != NULL) {
-            if (lbl_1_bss_A04 == NULL) {
+        if ((M536Gun *)((u8 *)self + 0x10) != 0) {
+            if (lbl_1_bss_A04 == 0) {
                 fn_1_1D4("ms_pointer != 0", "singleton.h", 0x3D);
             }
             lbl_1_bss_A04 = NULL;
         }
-        if (self != NULL) {
+        if (self != 0) {
             self->m_vptr = lbl_1_data_1FC;
-            if (self != NULL) {
+            if (self != 0) {
                 fn_1_1270(self, 0);
             }
         }
@@ -180,7 +180,7 @@ M536GunUnit *fn_1_F9B4(M536GunUnit *self, s16 *a, s16 *b, s16 *c, s32 idx)
 
 M536GunUnit *fn_1_FBA0(M536GunUnit *self, s16 freeIt)
 {
-    if (self != NULL) {
+    if (self != 0) {
         fn_1_1270(self, 0);
         if (freeIt > 0) {
             fn_1_C8(self);
@@ -191,23 +191,19 @@ M536GunUnit *fn_1_FBA0(M536GunUnit *self, s16 freeIt)
 
 void fn_1_FBF8(void)
 {
-    u8 empty;
+    M536_NODE *back;
+    M536_NODE *back2;
     M536GunUnit *unit;
 
-    for (;;) {
-        empty = 0;
-        if (lbl_1_bss_AD4.m_node.next == &lbl_1_bss_AD4.m_node && lbl_1_bss_AD4.m_node.next == lbl_1_bss_AD4.m_node.prev) {
-            empty = 1;
-        }
-        if (empty != 0) {
-            break;
-        }
-        unit = (M536GunUnit *)lbl_1_bss_AD4.m_node.prev;
-        if (unit != NULL) {
+    while (M536ListEmpty(&lbl_1_bss_AD4.m_node) == 0) {
+        back = lbl_1_bss_AD4.m_node.prev;
+        back2 = back;
+        unit = (M536GunUnit *)back2;
+        if (unit != 0) {
             fn_1_30F4(&unit->m_mdlMuzzle, -1);
             fn_1_30F4(&unit->m_mdlShadow, -1);
             fn_1_30F4(&unit->m_mdlBody, -1);
-            if (unit != NULL) {
+            if (unit != 0) {
                 fn_1_1270(unit, 0);
             }
             fn_1_C8(unit);
@@ -424,7 +420,7 @@ void fn_1_10378(void)
 
 void *fn_1_103D0(void *self, s16 freeIt)
 {
-    if (self != NULL) {
+    if (self != 0) {
         fn_1_1270(self, 0);
         if (freeIt > 0) {
             fn_1_C8(self);

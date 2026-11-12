@@ -50,9 +50,31 @@ void *fn_1_0(u32 size);
 s16 *fn_1_2C94(s16 *out, int dataNum);
 s16 *fn_1_2DB4(s16 *out, s16 *modelId);
 void fn_1_30F4(s16 *modelId, s16 flag);
+/* Effect object shared by killereff.cpp and killer.cpp (0x10 bytes). */
+typedef struct M536EffObj_s {
+    M536_NODE node;
+    s16 mdl;
+    s32 unkC;
+} M536_EFFOBJ;
+
+f32 fn_1_4D1C(void);
+void fn_1_12DC(void *node);
+M536_EFFOBJ *fn_1_7B3C(M536_EFFOBJ *self, Vec *pos, f32 rotY);
+M536_EFFOBJ *fn_1_8098(M536_EFFOBJ *self, Vec *pos);
 void *__register_global_object(void *object, void *destructor, void *regmem);
 
 extern M536_NODE lbl_1_bss_C;
+
+/* Inline list-empty test the original compiled into the destroy-all loops. */
+static inline u8 M536ListEmpty(M536_NODE *list)
+{
+    u8 r = 0;
+
+    if (list->next == list && list->next == list->prev) {
+        r = 1;
+    }
+    return r;
+}
 
 #ifdef __cplusplus
 }

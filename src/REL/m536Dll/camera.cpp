@@ -45,11 +45,11 @@ M536Camera *fn_1_6628(M536Camera *self)
     self->m_vptr = lbl_1_data_1FC;
     self->m_flag = 0;
     fn_1_1330(self, &lbl_1_bss_C);
-    if (lbl_1_bss_A14 != NULL) {
+    if (lbl_1_bss_A14 != 0) {
         fn_1_1D4("ms_pointer == 0", "singleton.h", 0x35);
     }
     ms = (M536Camera *)((u8 *)self + 0x10);
-    if (ms != NULL) {
+    if (ms != 0) {
         ms = (M536Camera *)((u8 *)ms - 0x10);
     }
     lbl_1_bss_A14 = ms;
@@ -76,8 +76,8 @@ M536Camera *fn_1_6628(M536Camera *self)
 
 M536Camera *fn_1_6870(M536Camera *self, s16 freeIt)
 {
-    if (self != NULL) {
-        if (lbl_1_bss_A14 == NULL) {
+    if (self != 0) {
+        if (lbl_1_bss_A14 == 0) {
             fn_1_1D4("ms_pointer != 0", "singleton.h", 0x3D);
         }
         lbl_1_bss_A14 = NULL;
@@ -90,7 +90,7 @@ M536Camera *fn_1_6870(M536Camera *self, s16 freeIt)
 
 M536Camera *fn_1_68FC(M536Camera *self, s16 freeIt)
 {
-    if (self != NULL) {
+    if (self != 0) {
         fn_1_1270(self, 0);
         if (freeIt > 0) {
             fn_1_C8(self);
@@ -250,17 +250,17 @@ s16 fn_1_706C(Vec *pos)
 
 M536Camera *fn_1_72F0(M536Camera *self, s16 freeIt)
 {
-    if (self != NULL) {
+    if (self != 0) {
         self->m_vptr = lbl_1_data_2D0;
-        if ((M536Camera *)((u8 *)self + 0x10) != NULL) {
-            if (lbl_1_bss_A14 == NULL) {
+        if ((M536Camera *)((u8 *)self + 0x10) != 0) {
+            if (lbl_1_bss_A14 == 0) {
                 fn_1_1D4("ms_pointer != 0", "singleton.h", 0x3D);
             }
             lbl_1_bss_A14 = NULL;
         }
-        if (self != NULL) {
+        if (self != 0) {
             self->m_vptr = lbl_1_data_1FC;
-            if (self != NULL) {
+            if (self != 0) {
                 fn_1_1270(self, 0);
             }
         }
