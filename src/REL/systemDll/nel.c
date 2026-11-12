@@ -27,6 +27,22 @@ typedef struct ParticleGlow_s {
 void MdSpriteDebug(NEL_SYS *sys);
 void MdSpriteDispSet(s32 grpNo, s32 dispF);
 void MdLayer1Hook(s16 layerNo);
+s32 fn_1_1835C(NEL_SYS *sys, s32 idx, s32 flag);
+void fn_1_17BD8(NEL_SYS *sys);
+void fn_1_17CE4(NEL_SYS *sys);
+void fn_1_18834(NEL_SYS *sys);
+void fn_1_17FC4(NEL_SYS *sys, s32 a, s32 b);
+void fn_1_19818(NEL_SYS *sys);
+void fn_1_19C10(NEL_SYS *sys, s32 idx);
+void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp);
+void MdFukiMemberNoSet(NEL_SYS *sys, s32 no, s32 memberNo);
+void MdFukiModeSet(NEL_SYS *sys, s32 no, s32 mode);
+void MdFukiHookSet(NEL_SYS *sys, s32 no, SYSFUKI_HOOK hook);
+void MdRingMdlSet(NEL_SYS *sys, s32 no, s32 mdlNo);
+void MdRingOfsSet(NEL_SYS *sys, s32 no, float x, float y, float z);
+void MdToueiLayerHook(s16 layerNo);
+void fn_1_19C00(NEL_SYS *sys, s32 idx);
+void fn_1_19C70(NEL_SYS *sys, s32 idx);
 void fn_1_196B4(NEL_SYS *sys, s32 no);
 void fn_1_17A2C(NEL_SYS *sys);
 void fn_1_19780(NEL_SYS *sys);
@@ -1418,6 +1434,364 @@ void fn_1_2390(NEL_SYS *sys, MDFLOWENT *tbl)
             break;
     }
 }
+
+/* ring/player slot currently being edited */
+#define RP() (sys->ringMdlNo[sys->selNo])
+
+void fn_1_2C88(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    s32 i;
+    s32 max;
+    SYSSPRITE *sprite;
+    SYSMODEL *model;
+    SYSFUKI *fuki;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    fuki = (SYSFUKI *)sys->fuki;
+    switch (sys->stat) {
+        case 0:
+            Hu3DModelAttrReset(model->mdlId[1], 1);
+            for (i = 0; i < 10; i++) {
+                Hu3DModelAttrReset(model->mdlId[i + 2], 1);
+            }
+            for (i = 0; i < 10; i++) {
+                Hu3DModelAttrReset(model->mdlId[i + 16], 1);
+            }
+            Hu3DModelPosSet(model->mdlId[1], MdVecTbl[27].x, MdVecTbl[27].y, MdVecTbl[27].z);
+            Hu3DModelScaleSet(model->mdlId[1], MdVecTbl[28].x, MdVecTbl[28].y, MdVecTbl[28].z);
+            for (i = 0; i < 10; i++) {
+                fn_1_196B4(sys, i + 2);
+            }
+            for (i = 0; i < 10; i++) {
+                Hu3DModelPosSet(model->mdlId[i + 16], MdVecTbl[i + 39].x, MdVecTbl[i + 39].y, MdVecTbl[i + 39].z);
+                Hu3DModelScaleSet(model->mdlId[i + 16], 0.0f, 0.0f, 0.0f);
+            }
+            MdSpriteDispSet(1, 0);
+            MdSpriteDispSet(2, 0);
+            MdSpriteDispSet(3, 0);
+            MdSpriteDispSet(4, 0);
+            HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+            HuSprGrpPosSet(sprite->grpId[2], 0.0f, 0.0f);
+            HuSprGrpPosSet(sprite->grpId[3], 0.0f, 0.0f);
+            HuSprGrpPosSet(sprite->grpId[4], 0.0f, 0.0f);
+            Hu3DLayerHookSet(9, MdToueiLayerHook);
+            MdMessDlgMesSet(0, -1);
+            MdMessDlgMesSet(1, 0x6000F);
+            sys->stat = 1;
+            break;
+        case 1:
+            if (MdProcTbl[0x30].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                fn_1_28FAC(2, 0x20004);
+                sys->stat = 2;
+            }
+            break;
+        case 2:
+            if (MdProcTbl[0x1B].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 3;
+            }
+            break;
+        case 3:
+            if (sys->fukiMode[0] == 0 && fuki[0].mode == 0 && (HuPadBtnDown[0] & PAD_BUTTON_B) != 0) {
+                fn_1_28F74(2);
+                fn_1_19904(5);
+                sys->stat = 4;
+            } else {
+                for (i = 0; i < 4; i++) {
+                    if (sys->fukiMode[i] != 1 && (fuki[i].mode == 0 || fuki[i].mode == 3)) {
+                        if (fn_1_1835C(sys, i, 0) == 1) {
+                            fn_1_19904(2);
+                            fn_1_17BD8(sys);
+                        } else if ((HuPadBtnDown[i] & PAD_BUTTON_B) != 0 && sys->fukiMode[i] == 2 && fuki[i].mode == 3) {
+                            MdFukiGrpSet(sys, i, 3);
+                            MdFukiMemberNoSet(sys, i, i);
+                            MdFukiHookSet(sys, i, fn_1_19C10);
+                            MdFukiModeSet(sys, i, 4);
+                            Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[i] + 2], model->motId[sys->mdlNo[i] * 2], 0.0f, 16.0f, 0x40000001);
+                            fn_1_19904(5);
+                            MdRingModeSet(sys, i, 4);
+                        } else if ((HuPadBtnDown[i] & PAD_BUTTON_A) != 0 && sys->fukiMode[i] == 0 && fuki[i].mode == 0) {
+                            MdFukiGrpSet(sys, i, 3);
+                            MdFukiMemberNoSet(sys, i, i);
+                            MdFukiHookSet(sys, i, fn_1_19C00);
+                            MdFukiModeSet(sys, i, 1);
+                            Hu3DModelAttrSet(model->mdlId[i + 0x42], 1);
+                            Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[i] + 2], model->motId[sys->mdlNo[i] * 2 + 1], 0.0f, 8.0f, 0);
+                            fn_1_19904(4);
+                            MdRingModeSet(sys, i, 1);
+                            MdRingOfsSet(sys, i, 0.0f, 0.0f, 0.0f);
+                            MdRingMdlSet(sys, i, sys->mdlNo[i] + 0x10);
+                        }
+                    }
+                }
+                if (((sys->fukiMode[0] == 2 && fuki[0].mode == 3) || sys->fukiMode[0] == 1)
+                    && ((sys->fukiMode[1] == 2 && fuki[1].mode == 3) || sys->fukiMode[1] == 1)
+                    && ((sys->fukiMode[2] == 2 && fuki[2].mode == 3) || sys->fukiMode[2] == 1)
+                    && ((sys->fukiMode[3] == 2 && fuki[3].mode == 3) || sys->fukiMode[3] == 1)) {
+                    if (sys->playerNum == 3) {
+                        fn_1_28F74(2);
+                        if (sys->modeSel == 0) {
+                            sys->stat = 9;
+                        } else if (sys->modeSel == 1) {
+                            sys->stat = 0;
+                            sys->flowNo = 8;
+                        }
+                    } else {
+                        sys->selNo = 0;
+                        fn_1_18834(sys);
+                        fn_1_17CE4(sys);
+                        Hu3DModelAttrReset(model->mdlId[RP() + 0x42], 1);
+                        MdMessDlgMesSet(0, -1);
+                        MdMessDlgMesSet(3, 0x60010);
+                        MdMessDlgInsertMesReset();
+                        MdMessDlgInsertMesAdd(0x6000D - sys->playerNum - sys->selNo, 0);
+                        sys->stat = 6;
+                    }
+                }
+            }
+            break;
+        case 4:
+            if (MdProcTbl[0x1C].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 5;
+            }
+            break;
+        case 5:
+            if (MdProcTbl[0x31].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0;
+                sys->flowNo = 5;
+            }
+            break;
+        case 14:
+            if (fuki[0].mode == 0) {
+                sys->stat = 2;
+            }
+            break;
+        case 6:
+            if (sys->selNo == 0 && (HuPadBtnDown[0] & PAD_BUTTON_B) != 0) {
+                for (i = 0; i < 4; i++) {
+                    if (sys->fukiMode[i] == 2 || sys->fukiMode[i] == 3) {
+                        Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[i] + 2], model->motId[sys->mdlNo[i] * 2], 0.0f, 16.0f, 0x40000001);
+                        MdRingModeSet(sys, i, 4);
+                        MdFukiHookSet(sys, i, fn_1_19C70);
+                        MdFukiModeSet(sys, i, 4);
+                    }
+                }
+                Hu3DModelAttrSet(model->mdlId[RP() + 0x42], 1);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, 0x6000F);
+                fn_1_19904(5);
+                sys->stat = 14;
+            } else if (fn_1_1835C(sys, RP(), 1) == 1) {
+                fn_1_19904(2);
+                fn_1_17CE4(sys);
+            } else if ((HuPadBtnDown[0] & PAD_BUTTON_B) != 0 && sys->selNo > 0) {
+                Hu3DModelAttrSet(model->mdlId[RP() + 0x42], 1);
+                sys->selNo--;
+                Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[RP()] + 2], model->motId[sys->mdlNo[RP()] * 2], 0.0f, 16.0f, 0x40000001);
+                fn_1_19904(5);
+                MdRingModeSet(sys, sys->selNo + 4, 4);
+                if (sys->modeSel == 0) {
+                    MdFukiGrpSet(sys, RP(), 4);
+                    MdFukiMemberNoSet(sys, RP(), sys->selNo);
+                } else if (sys->modeSel == 1) {
+                    MdFukiGrpSet(sys, RP(), 3);
+                    MdFukiMemberNoSet(sys, RP(), sys->selNo + 4);
+                }
+                MdFukiHookSet(sys, RP(), NULL);
+                MdFukiModeSet(sys, RP(), 4);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60010);
+                MdMessDlgInsertMesReset();
+                MdMessDlgInsertMesAdd(0x6000D - sys->playerNum - sys->selNo, 0);
+                sys->stat = 17;
+            } else if ((HuPadBtnDown[0] & PAD_BUTTON_A) != 0) {
+                if (sys->modeSel == 0) {
+                    MdFukiGrpSet(sys, RP(), 3);
+                    MdFukiMemberNoSet(sys, RP(), sys->selNo + 4);
+                    MdFukiHookSet(sys, RP(), NULL);
+                    MdFukiModeSet(sys, RP(), 1);
+                    MdMessDlgMesSet(0, -1);
+                    MdMessDlgMesSet(1, 0x60011);
+                    Hu3DModelAttrSet(model->mdlId[RP() + 0x42], 1);
+                    HuSprAttrReset(sprite->grpId[1], 0, 4);
+                    HuSprAttrReset(sprite->grpId[1], 1, 4);
+                    HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+                    HuSprPosSet(sprite->grpId[1], 0, -100.0f, 0.0f);
+                    HuSprPosSet(sprite->grpId[1], 1, -100.0f, 0.0f);
+                    Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[RP()] + 2], model->motId[sys->mdlNo[RP()] * 2 + 1], 0.0f, 8.0f, 0);
+                    MdRingModeSet(sys, sys->selNo + 4, 1);
+                    MdRingOfsSet(sys, sys->selNo + 4, 0.0f, 0.0f, 0.0f);
+                    MdRingMdlSet(sys, sys->selNo + 4, sys->mdlNo[RP()] + 0x10);
+                    fn_1_19904(4);
+                    sys->stat = 15;
+                } else if (sys->modeSel == 1) {
+                    MdFukiGrpSet(sys, RP(), 3);
+                    MdFukiMemberNoSet(sys, RP(), sys->selNo + 4);
+                    MdFukiHookSet(sys, RP(), NULL);
+                    MdFukiModeSet(sys, RP(), 1);
+                    Hu3DModelAttrSet(model->mdlId[RP() + 0x42], 1);
+                    Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[RP()] + 2], model->motId[sys->mdlNo[RP()] * 2 + 1], 0.0f, 8.0f, 0);
+                    MdRingModeSet(sys, sys->selNo + 4, 1);
+                    MdRingOfsSet(sys, sys->selNo + 4, 0.0f, 0.0f, 0.0f);
+                    MdRingMdlSet(sys, sys->selNo + 4, sys->mdlNo[RP()] + 0x10);
+                    if (sys->selNo >= 2 - sys->playerNum) {
+                        fn_1_28F74(2);
+                        fn_1_19904(3);
+                    } else {
+                        fn_1_19904(4);
+                    }
+                    sys->stat = 16;
+                }
+            }
+            break;
+        case 15:
+            if (fuki[RP()].mode == 3) {
+                HuVec2f *scale = MdSpriteScaleGet(4, sys->selNo);
+                scale->x = 1.0f;
+                scale->y = 1.0f;
+                sys->stat = 10;
+            }
+            break;
+        case 16:
+            if (fuki[RP()].mode == 3) {
+                sys->fukiMode[RP()] = 3;
+                sys->selNo++;
+                if (sys->selNo < 3 - sys->playerNum) {
+                    fn_1_18834(sys);
+                    fn_1_17CE4(sys);
+                    Hu3DModelAttrReset(model->mdlId[RP() + 0x42], 1);
+                }
+                if (sys->selNo >= 3 - sys->playerNum) {
+                    sys->stat = 0;
+                    sys->flowNo = 8;
+                } else {
+                    MdMessDlgMesSet(0, -1);
+                    MdMessDlgMesSet(3, 0x60010);
+                    MdMessDlgInsertMesReset();
+                    MdMessDlgInsertMesAdd(0x6000D - sys->playerNum - sys->selNo, 0);
+                    sys->stat = 6;
+                }
+            }
+            break;
+        case 17:
+            if (fuki[RP()].mode == 0) {
+                Hu3DModelAttrReset(model->mdlId[RP() + 0x42], 1);
+                sys->fukiMode[RP()] = 1;
+                fn_1_17CE4(sys);
+                sys->stat = 6;
+            }
+            break;
+        case 10:
+            if (MdProcTbl[0x15].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                HuSprAttrSet(sprite->grpId[3], (s16)(sys->selNo + 4), 4);
+                HuSprAttrReset(sprite->grpId[4], sys->selNo, 4);
+                fn_1_17FC4(sys, RP(), sys->selNo);
+                sys->stat = 8;
+            }
+            break;
+        case 11:
+            if (MdProcTbl[0x17].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 8;
+            }
+            break;
+        case 12:
+            if (MdProcTbl[0x16].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                Hu3DModelAttrReset(model->mdlId[RP() + 0x42], 1);
+                sys->stat = 6;
+            }
+            break;
+        case 13:
+            if (MdProcTbl[0x16].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->selNo++;
+                if (sys->selNo < 3 - sys->playerNum) {
+                    fn_1_18834(sys);
+                    fn_1_17CE4(sys);
+                    Hu3DModelAttrReset(model->mdlId[RP() + 0x42], 1);
+                    sys->stat = 6;
+                } else if (sys->selNo >= 3 - sys->playerNum) {
+                    sys->stat = 9;
+                }
+            }
+            break;
+        case 7:
+            if (((SYSMESS *)sys->mess)->mode == 5) {
+                HuSprAttrSet(sprite->grpId[3], (s16)(sys->selNo + 4), 4);
+                HuSprAttrReset(sprite->grpId[4], sys->selNo, 4);
+                HuSprAttrReset(sprite->grpId[1], 0, 4);
+                HuSprAttrReset(sprite->grpId[1], 1, 4);
+                fn_1_17FC4(sys, RP(), sys->selNo);
+                sys->stat = 8;
+            }
+            break;
+        case 8:
+            if (GwCommon.veryHardUnlock == 1) {
+                max = 4;
+            } else {
+                max = 3;
+            }
+            if ((PADSTAT(sys) & 1) != 0 || (PADSTAT(sys) & 2) != 0) {
+                if ((PADSTAT(sys) & 1) != 0) {
+                    sys->sel = 0;
+                    if (--sys->mdlSelNo[RP()] == -1) {
+                        sys->mdlSelNo[RP()] = max - 1;
+                    }
+                } else if ((PADSTAT(sys) & 2) != 0) {
+                    sys->sel = 1;
+                    sys->mdlSelNo[RP()]++;
+                    sys->mdlSelNo[RP()] = sys->mdlSelNo[RP()] % max;
+                }
+                fn_1_19904(2);
+                fn_1_17FC4(sys, RP(), sys->selNo);
+                sys->stat = 11;
+            } else if ((HuPadBtnDown[0] & PAD_BUTTON_B) != 0) {
+                MdFukiGrpSet(sys, RP(), 4);
+                MdFukiMemberNoSet(sys, RP(), sys->selNo);
+                MdFukiHookSet(sys, RP(), NULL);
+                MdFukiModeSet(sys, RP(), 4);
+                Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[RP()] + 2], model->motId[sys->mdlNo[RP()] * 2], 0.0f, 16.0f, 0x40000001);
+                MdRingModeSet(sys, sys->selNo + 4, 4);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60010);
+                MdMessDlgInsertMesReset();
+                MdMessDlgInsertMesAdd(0x6000D - sys->playerNum - sys->selNo, 0);
+                fn_1_19904(5);
+                sys->stat = 12;
+            } else if ((HuPadBtnDown[0] & PAD_BUTTON_A) != 0) {
+                sys->fukiMode[RP()] = 3;
+                if (sys->selNo + 1 < 3 - sys->playerNum) {
+                    MdMessDlgMesSet(0, -1);
+                    MdMessDlgMesSet(3, 0x60010);
+                    MdMessDlgInsertMesReset();
+                    MdMessDlgInsertMesAdd(0x6000C - sys->playerNum - sys->selNo, 0);
+                }
+                if (sys->selNo >= 2 - sys->playerNum) {
+                    fn_1_28F74(2);
+                    fn_1_19904(3);
+                } else {
+                    fn_1_19904(4);
+                }
+                sys->stat = 13;
+            }
+            break;
+        case 9:
+            if (MdProcTbl[0x32].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0;
+                sys->flowNo = 9;
+            }
+            break;
+    }
+    fn_1_19818(sys);
+}
+
 
 /* fn_1_18BA0 - copy the per-slot "selected model B" table over
  * the "selected model C2" table (both 4 entries). */
