@@ -345,7 +345,58 @@ struct M537GameMaster {
     s32 m_counter;          /* 0x35C */
 };
 
-struct M537Water;
+/* Particle spray emitter (0x18 on GameCube). */
+typedef struct M537Spray {
+    M537_NODE node;     /* 0x00 */
+    void **vptr;        /* 0x08 */
+    s32 flag;           /* 0x0C */
+    s16 mdl;            /* 0x10 */
+    ANIMDATA *anim;     /* 0x14 */
+} M537Spray;
+
+/* Water wake quad (0x28 on GameCube). */
+typedef struct M537Wake {
+    M537_NODE node;     /* 0x00 */
+    void **vptr;        /* 0x08 */
+    s32 flag;           /* 0x0C */
+    s16 mdl;            /* 0x10 */
+    ANIMDATA *anim;     /* 0x14 */
+    Vec pos;            /* 0x18 */
+    f32 t;              /* 0x24 */
+} M537Wake;
+
+/* The water surface (singleton at lbl_1_bss_9F0): 32x32 spring grid, screen copy and indirect map. */
+struct M537Water {
+    M537_NODE node;             /* 0x00 */
+    void **vptr;                /* 0x08 */
+    s32 flag;                   /* 0x0C */
+    GXTexObj tex0;              /* 0x10 */
+    GXTexObj tex1;              /* 0x30 */
+    u8 pad50[0x10];             /* 0x50 */
+#ifdef TARGET_PC
+    alignas(32)
+#endif
+    u8 img[0x96000];            /* 0x60 */
+    ANIMDATA *anim[3];          /* 0x96060 */
+    Vec texOfs;                 /* 0x9606C */
+    HSFOBJECT *obj[3];          /* 0x96078 */
+    s16 id;                     /* 0x96084 */
+    s16 mdl;                    /* 0x96086 */
+    f32 time;                   /* 0x96088 */
+    s32 seId;                   /* 0x9608C */
+    u8 pad90[0x10];             /* 0x96090 */
+    u8 ind[0x800];              /* 0x960A0 */
+    Vec pos[32][32];            /* 0x968A0 */
+    Vec vel[32][32];            /* 0x998A0 */
+    Vec uv[32][32];             /* 0x9C8A0 */
+    u8 col[32][32][4];          /* 0x9F8A0 */
+};
+
+extern struct M537Water *lbl_1_bss_9F0;
+
+#ifndef TARGET_PC
+typedef char M537Water_size_check[(sizeof(struct M537Water) == 0xA08A0) ? 1 : -1];
+#endif
 extern struct M537Center *lbl_1_bss_A0C;
 extern struct M537Camera *lbl_1_bss_A10;
 extern struct M537Stage *lbl_1_bss_A14;
