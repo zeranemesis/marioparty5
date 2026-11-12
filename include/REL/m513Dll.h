@@ -167,6 +167,8 @@ typedef struct M513Sphere_s {
     f32 radius;
 } M513Sphere;
 
+#define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
+
 extern M513Node lbl_1_bss_C;
 extern M513TaskVtblEx lbl_1_data_218;
 extern M513MasterVtbl lbl_1_data_200;

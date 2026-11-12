@@ -43,7 +43,6 @@ void ObjectSetup(void);
 extern void (*_ctors[])(void);
 extern void (*_dtors[])(void);
 
-#define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
 // The inlined form of the assertion handler (singleton.h, model.cpp, ...).
 #define M513_ASSERT_INL(cond, expr, file, line)                                      if (cond) {                                                                          (void)0;                                                                     } else {                                                                             char assertBuf[0x400];                                                           sprintf(assertBuf, lbl_1_data_14, (file), (line), (expr));                       OSPanic(lbl_1_data_32, 0x12, assertBuf);                                     }
