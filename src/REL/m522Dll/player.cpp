@@ -19,7 +19,15 @@ extern "C" double sin(double x);
 extern "C" double cos(double x);
 extern "C" double atan2(double y, double x);
 extern "C" double fmod(double x, double y);
-extern "C" double fabs(double x);
+inline float atan2f(float y, float x)
+{
+    return (float)atan2(y, x);
+}
+extern "C" double __fabs(double x);
+inline double fabs(double f)
+{
+    return __fabs(f);
+}
 extern "C" void *memcpy(void *dst, const void *src, unsigned long n);
 extern "C" void *memmove(void *dst, const void *src, unsigned long n);
 #endif
@@ -31,6 +39,35 @@ extern "C" void *memmove(void *dst, const void *src, unsigned long n);
 #endif
 
 #define HV(p) ((HuVecF *)(p))
+
+static inline f32 M522Mag(M522_VEC3 *v)
+{
+    return PSVECMag(HV(v));
+}
+
+static inline f32 M522Min(f32 a, f32 b)
+{
+    f32 r;
+
+    if (a < b) {
+        r = a;
+    } else {
+        r = b;
+    }
+    return r;
+}
+
+static inline f32 M522Max(f32 a, f32 b)
+{
+    f32 r;
+
+    if (a > b) {
+        r = a;
+    } else {
+        r = b;
+    }
+    return r;
+}
 
 #define M522_STAGE_ASSERT()                                      \
     if (lbl_1_bss_18 == 0) {                                     \
@@ -898,17 +935,12 @@ void fn_1_10A00(M522_PLAYER *self)
 void fn_1_10DF8(M522_PLAYER *self)
 {
     f32 time;
-    M522_VEC3 pos;
-    M522_VEC3 rot;
 
     self->amp = self->amp * 0.8;
-    if (CharMotionShiftIDGet(self->charNo) >= 0) {
-        time = CharMotionShiftTimeGet(self->charNo) - 1.0f;
-    } else {
-        time = CharMotionTimeGet(self->charNo);
-    }
+    time = fn_1_10160(self);
     if (!(time < 25.0f)) {
-        pos = lbl_1_rodata_528;
+        M522_VEC3 pos = lbl_1_rodata_528;
+        M522_VEC3 rot;
         M522_STAGE_ASSERT();
         pos.y = 100.0f + fn_1_F1B8(lbl_1_bss_18);
         rot = lbl_1_rodata_534;
@@ -930,11 +962,7 @@ void fn_1_1103C(M522_PLAYER *self)
     f32 target;
     f32 t;
 
-    if (CharMotionShiftIDGet(self->charNo) >= 0) {
-        time = CharMotionShiftTimeGet(self->charNo) - 1.0f;
-    } else {
-        time = CharMotionTimeGet(self->charNo);
-    }
+    time = fn_1_10160(self);
     if (!(time <= 30.0f)) {
         range = CharMotionMaxTimeGet(self->charNo) - 30.0f;
         M522_STAGE_ASSERT();
@@ -960,11 +988,7 @@ void fn_1_113BC(M522_PLAYER *self)
 {
     f32 time;
 
-    if (CharMotionShiftIDGet(self->charNo) >= 0) {
-        time = CharMotionShiftTimeGet(self->charNo) - 1.0f;
-    } else {
-        time = CharMotionTimeGet(self->charNo);
-    }
+    time = fn_1_10160(self);
     if (time >= 16.0f) {
         CharModelAttrSet(self->charNo, 0x40000004);
         M522_SETSTATE(self, lbl_1_data_644);
@@ -1170,7 +1194,6 @@ void fn_1_12368(M522_PLAYER *self)
 
 M522_COM *fn_1_12530(M522_COM *self, s32 index, const M522_VEC3 *spawn)
 {
-    MGACTOR_PARAM param;
     s16 mdl;
 
     fn_1_FB6C(self, index);
@@ -1193,7 +1216,7 @@ M522_COM *fn_1_12530(M522_COM *self, s32 index, const M522_VEC3 *spawn)
     self->pad.y = 0.0f;
     self->pad.btnDown = 0;
     self->pad.btn = 0;
-    param = lbl_1_rodata_5E8;
+    MGACTOR_PARAM param = lbl_1_rodata_5E8;
     param.height = CharModelHeightGet(self->charNo);
     param.param = index;
     self->mg = MgPlayerCreate(index, &param, 4, 1, 0x13, 0);
@@ -1315,18 +1338,16 @@ void fn_1_12B68(M522_COM *self)
 
 void fn_1_12EB0(M522_COM *self)
 {
-    M522_VEC3 d;
-    M522_VEC3 target;
+    M522_VEC3 d = lbl_1_rodata_61C;
     M522_VEC3 diff;
     f64 ax;
     f64 az;
     s32 sx;
     s32 sz;
 
-    d = lbl_1_rodata_61C;
     d.x = self->cur.x;
     d.z = self->cur.z;
-    if (PSVECMag(HV(&d)) < 500.0f) {
+    if (M522Mag(&d) < 500.0f) {
         ax = fabs(self->dir.x);
         if (self->cur.x < 0.0f) {
             sx = -1;
@@ -1342,9 +1363,9 @@ void fn_1_12EB0(M522_COM *self)
         }
         self->dir.z = (f64)sz * az;
     }
-    target = lbl_1_rodata_628;
+    M522_VEC3 target = lbl_1_rodata_628;
     PSVECSubtract(HV(&target), HV(&self->cur), HV(&diff));
-    if (PSVECMag(HV(&diff)) < 2400.0f) {
+    if (M522Mag(&diff) < 2400.0f) {
         fn_1_130D0(self);
     }
 }
@@ -1366,7 +1387,7 @@ void fn_1_130D0(M522_COM *self)
     PSVECNormalize(HV(&self->dir), HV(&self->dir));
     PSVECScale(HV(&self->dir), HV(&self->dir), 10.0f);
     self->dir.y = 13.333333f;
-    self->rotY = 180.0 * ((f64)(f32)atan2(self->cur.x, self->cur.z) / 3.141592653589793);
+    self->rotY = 180.0 * ((f64)atan2f(self->cur.x, self->cur.z) / 3.141592653589793);
     self->rotX = 0.0f;
     self->flying = 1;
     MgPlayerPauseOn(self->mg);
@@ -1538,7 +1559,7 @@ void fn_1_13E18(M522_COM *self)
 {
     M522_PLAYER *human;
     M522_VEC3 pos;
-    M522_VEC3 tgt;
+    M522_VEC3 tgt = lbl_1_rodata_654;
     M522_VEC3 avg;
     f32 limit;
     f32 mag;
@@ -1582,7 +1603,6 @@ void fn_1_13E18(M522_COM *self)
         }
     }
     MgActorPosGet(self->mg->actor, HV(&pos));
-    tgt = lbl_1_rodata_654;
     tgt.x = pos.x;
     tgt.z = pos.z;
     found = fn_1_144D4(self, &avg, 150.0f);
@@ -1605,7 +1625,7 @@ void fn_1_13E18(M522_COM *self)
     } else {
         limit = 250.0;
     }
-    mag = PSVECMag(HV(&tgt));
+    mag = M522Mag(&tgt);
     if (mag > limit || found != 0) {
         PSVECScale(HV(&tgt), HV(&tgt), limit / mag);
         fn_1_14708(self, &tgt, 0.016666666666666666 * (100.0 * (2.0 + 0.3 * (f64)self->dif)));
@@ -1643,7 +1663,7 @@ u8 fn_1_144D4(M522_COM *self, M522_VEC3 *out, f32 radius)
         d.x = p.x - pos.x;
         d.y = 0.0f;
         d.z = p.z - pos.z;
-        dist = PSVECMag(HV(&d));
+        dist = M522Mag(&d);
         if (dist <= r) {
             r = dist;
             PSVECAdd(HV(&p), HV(out), HV(out));
@@ -1664,17 +1684,17 @@ s32 fn_1_14708(M522_COM *self, M522_VEC3 *target, f32 maxDist)
     M522_VEC3 d;
     f32 limit;
     f32 mag;
+    f64 dx;
+    f64 dz;
 
-    if (maxDist < 10.0f) {
-        limit = maxDist;
-    } else {
-        limit = 10.0f;
-    }
+    limit = M522Min(maxDist, 10.0f);
     MgActorPosGet(self->mg->actor, HV(&cur));
-    d.x = target->x - cur.x;
+    dz = target->z - cur.z;
+    dx = target->x - cur.x;
+    d.x = dx;
     d.y = 0.0f;
-    d.z = target->z - cur.z;
-    mag = PSVECMag(HV(&d));
+    d.z = dz;
+    mag = M522Mag(&d);
     if (mag < limit) {
         return 1;
     }
@@ -1701,20 +1721,19 @@ void fn_1_148B4(M522_PAD *self, u8 down)
 
 s32 fn_1_148DC(M522_PAD *self, M522_VEC3 *dir)
 {
+    M522_VEC3 d = lbl_1_rodata_6C0;
     M522_ANGLE a;
-    M522_VEC3 d;
     f32 ang;
     f32 k;
     f32 mag;
     s32 result;
 
-    d = lbl_1_rodata_6C0;
     d.x = dir->x;
     d.z = dir->z;
     fn_1_14D04(&a, -3.1415927f, 3.1415927f, self->angle);
-    ang = (f32)atan2(d.x, d.z);
+    ang = atan2f(d.x, d.z);
     k = (f32)(1.0 - (fabs(fn_1_14DF4(&a, ang) * 0.5f) / 3.141592653589793));
-    mag = k * PSVECMag(HV(&d));
+    mag = k * M522Mag(&d);
     self->angle = fn_1_14E30(&a, ang, 0.05);
     self->x = (f64)mag * sin(fn_1_14F40(&a));
     self->y = -mag * cos(fn_1_14F40(&a));
@@ -1765,21 +1784,8 @@ void fn_1_14D00(M522_PLAYERBASE *self)
 
 M522_ANGLE *fn_1_14D04(M522_ANGLE *self, f32 a, f32 b, f32 cur)
 {
-    f32 lo;
-    f32 hi;
-
-    if (a < b) {
-        lo = a;
-    } else {
-        lo = b;
-    }
-    self->min = lo;
-    if (a > b) {
-        hi = a;
-    } else {
-        hi = b;
-    }
-    self->max = hi;
+    self->min = M522Min(a, b);
+    self->max = M522Max(a, b);
     self->range = self->max - self->min;
     self->cur = fn_1_14EA4(self, cur);
     return self;
