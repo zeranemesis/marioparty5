@@ -451,11 +451,21 @@ char lbl_1_data_7BB[] = "Memory allocation failure";
 
 s16 fn_1_F564(M522_VEC3 *pos)
 {
+#ifdef TARGET_PC
+    M522_VEC3 screen;
     f32 x;
+#else
+    f32 x;
+#endif
     s16 pan;
     s16 result;
 
+#ifdef TARGET_PC
+    Hu3D3Dto2D(HV(pos), 1, HV(&screen));
+    x = screen.x;
+#else
     Hu3D3Dto2D(HV(pos), 1, HV(&x));
+#endif
     x = x * 0.11111111f;
     pan = (s16)(32.0f + x);
     if (pan < 0) {
@@ -1593,21 +1603,26 @@ void fn_1_13E18(M522_COM *self)
 {
     M522_PLAYER *human;
     M522_VEC3 pos;
-    M522_VEC3 tgt = lbl_1_rodata_654;
     M522_VEC3 avg;
     f32 limit;
     f32 mag;
-    u8 wantJump;
+    f32 sec;
+    u32 wantJump;
     u8 steady;
     u8 found;
     u8 jump;
+    u8 expired;
     s32 state;
+    s32 state2;
+    s32 frames;
+    u32 *attr;
 
     wantJump = 0;
     human = (M522_PLAYER *)fn_1_FAF8();
     if (human != 0) {
         state = fn_1_108F8(human);
-        switch (state) {
+        state2 = state;
+        switch (state2) {
         case 0:
             wantJump = fn_1_BD30((f32)(5 - self->dif)) / 5.0 < 0.047619047619047616;
             break;
@@ -1617,10 +1632,13 @@ void fn_1_13E18(M522_COM *self)
         }
     }
     steady = fn_1_F194(M522Stage());
-    if ((self->mg->actor->colGroundAttr & 0x407F) != 0) {
-        if (wantJump != 0) {
+    attr = &self->mg->actor->colGroundAttr;
+    if ((*attr & 0x407F) != 0) {
+        if ((u8)wantJump != 0) {
             fn_1_148B4(&self->pad, 1);
-            self->jumpWait = (s32)(60.0f * fn_1_BD68(0.2f, 1.0f));
+            sec = 60.0f * fn_1_BD68(0.2f, 1.0f);
+            frames = (s32)sec;
+            self->jumpWait = frames;
         }
     } else {
         jump = 0;
@@ -1631,11 +1649,15 @@ void fn_1_13E18(M522_COM *self)
             fn_1_148B4(&self->pad, jump);
         }
     }
+    expired = 0;
     if (self->jumpWait > 0) {
-        if (--self->jumpWait == 0) {
+        self->jumpWait = self->jumpWait - 1;
+        if (self->jumpWait == 0) {
+            expired = 1;
         }
     }
     MgActorPosGet(self->mg->actor, HV(&pos));
+    M522_VEC3 tgt = lbl_1_rodata_654;
     tgt.x = pos.x;
     tgt.z = pos.z;
     found = fn_1_144D4(self, &avg, 150.0f);
