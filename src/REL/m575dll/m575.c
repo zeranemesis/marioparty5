@@ -51,9 +51,6 @@ void fn_1_3DE0(M575Stage *self, M575Main *main);
 void fn_1_4360(M575Stage *self);
 void fn_1_442C(M575Stage *self);
 s32 fn_1_D00C(M575Game *game);
-void fn_1_E478(void);
-void fn_1_E4C8(void);
-void fn_1_EBEC(void);
 
 void ObjectSetup(void);
 void fn_1_280(s16 mode, s16 frameNo);
@@ -731,9 +728,9 @@ s32 fn_1_14F0(M575Player *player)
     return ret;
 }
 
-void fn_1_1C00(s32 arg)
+void fn_1_1C00(M575Game *game)
 {
-    fn_1_E424(arg);
+    fn_1_E424(game);
 }
 
 #define M575_VTX(p, col)     {         Vec v_ = (p);         GXColor c_ = (col);         GXPosition3f32(v_.x, v_.y, v_.z);         GXColor4u8(c_.r, c_.g, c_.b, c_.a);     }
