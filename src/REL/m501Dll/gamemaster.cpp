@@ -45,9 +45,9 @@ CGameMaster::CGameMaster() :
     m_aisu((u32)DATANUM(DATA_m501, 5)),
     m_handles(0x1000)
 {
-    Hu3DModelShadowSet(m_cone.m_id);
-    Hu3DModelShadowDispOn(m_cone.m_id);
-    Hu3DModelLayerSet(m_cone.m_id, 0);
+    Hu3DModelShadowSet(m_cone.getId());
+    Hu3DModelShadowDispOn(m_cone.getId());
+    Hu3DModelLayerSet(m_cone.getId(), 0);
 }
 
 CGameMaster::~CGameMaster()
@@ -162,25 +162,38 @@ void CGameMaster::thread_exec()
     }
 }
 
-/* true when (x, z) is outside the arena or too close to a listed point */
-extern "C" s32 fn_1_6C44(std::vector<HuVec2f_s> *points, f32 x, f32 z)
+static inline f32 Sqr(f32 v)
 {
-    HuVec2f_s *p;
+    return v * v;
+}
 
-    if ((x * x) + (z * z) > 206297.66f) {
+/* true when (x, z) is outside the arena or too close to a listed point */
+static inline s32 CheckBad(std::vector<HuVec2f_s> *points, f32 x, f32 z)
+{
+    f32 cx;
+    f32 cz;
+    HuVec2f_s *it;
+    HuVec2f_s *end;
+
+    if (Sqr(x) + Sqr(z) > 206297.66f) {
         return 1;
     }
-    p = points->m_data;
-    while (p != points->m_data + points->m_size) {
-        HuVec2f_s d;
-        d.y = p->y - (414.244f + z);
-        d.x = p->x - (1578.489f + x);
-        if ((d.x * d.x) + (d.y * d.y) < (f32)(s_minDist * s_minDist)) {
+    cx = 1578.489f + x;
+    cz = 414.244f + z;
+    it = points->begin();
+    end = points->end();
+    while (it != end) {
+        if (Sqr(it->x - cx) + Sqr(it->y - cz) < (f32)(s_minDist * s_minDist)) {
             return 1;
         }
-        p++;
+        it++;
     }
     return 0;
+}
+
+extern "C" s32 fn_1_6C44(std::vector<HuVec2f_s> *points, f32 x, f32 z)
+{
+    return CheckBad(points, x, z);
 }
 
 void CGameMaster::newAisu()
@@ -195,38 +208,19 @@ void CGameMaster::newAisu()
     CPlayer::GetPlayerDist(&points);
     fn_1_8510(&points);
     tries = 200;
-    for (;;) {
+    do {
         x = CRandom::frandom(-454.2f, 454.2f);
         z = CRandom::frandom(-454.2f, 454.2f);
         tries -= 1;
         if (tries == 0) {
             return;
         }
-        bool bad = false;
-        if ((x * x) + (z * z) > 206297.66f) {
-            bad = true;
-        } else {
-            HuVec2f_s *p = points.m_data;
-            while (p != points.m_data + points.m_size) {
-                HuVec2f_s d;
-                d.y = p->y - (414.244f + z);
-                d.x = p->x - (1578.489f + x);
-                if ((d.x * d.x) + (d.y * d.y) < (f32)(s_minDist * s_minDist)) {
-                    bad = true;
-                    break;
-                }
-                p++;
-            }
-        }
-        if (!bad) {
-            y = 100.0f * CRandom::frandom(8.0f, 40.0f);
-            pos.x = 1578.489f + x;
-            pos.y = 5060.02f + y;
-            pos.z = 414.244f + z;
-            new CAisu((s32)CRandom::irandom() % 8, &pos);
-            return;
-        }
-    }
+    } while (CheckBad(&points, x, z));
+    y = 100.0f * CRandom::frandom(8.0f, 40.0f);
+    pos.x = 1578.489f + x;
+    pos.y = 5060.02f + y;
+    pos.z = 414.244f + z;
+    new CAisu((s32)CRandom::irandom() % 8, &pos);
 }
 
 /* vector destructors: the three flavours the original emits */

@@ -326,8 +326,16 @@ public:
     T *&data_ref() { return m_data; }
     unsigned long &size_ref() { return m_size; }
     unsigned long &cap_ref() { return m_cap; }
-    T *begin() { return m_data; }
-    T *end() { return begin() + m_size; }
+    T *begin()
+    {
+        T **ref = &m_data;
+        return *ref;
+    }
+    T *end()
+    {
+        T **ref = &m_data;
+        return *ref + m_size;
+    }
 
     unsigned long m_cap;
     unsigned long m_size;
