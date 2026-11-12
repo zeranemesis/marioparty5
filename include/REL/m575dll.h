@@ -67,6 +67,7 @@ typedef struct M575Com_s {
 typedef struct M575Player_s {
     struct M575Main_s *main;
     u16 state;
+    s16 stateTimer;
     struct MgPlayer_s *mgPlayer;
     s16 slot;
     s16 playerNo;
@@ -343,6 +344,9 @@ void fn_1_B0E8(M575Coin *self);
 void fn_1_C464(M575Jugem *self, M575Main *main);
 void fn_1_C5E0(M575Jugem *self);
 void fn_1_C630(M575Jugem *self);
+
+s32 fn_1_46B4(M575StageItem *self);
+s32 fn_1_D00C(M575Game *game);
 
 void fn_1_3A7C(M575Score *self, u16 side, M575Main *main);
 void fn_1_3CD8(M575Score *self);

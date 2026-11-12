@@ -50,7 +50,6 @@ void fn_1_931C(M575Light *light);
 void fn_1_3DE0(M575Stage *self, M575Main *main);
 void fn_1_4360(M575Stage *self);
 void fn_1_442C(M575Stage *self);
-s32 fn_1_D00C(M575Game *game);
 
 void ObjectSetup(void);
 void fn_1_280(s16 mode, s16 frameNo);

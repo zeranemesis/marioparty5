@@ -10,7 +10,6 @@
 s32 fn_1_530(s32 seId);
 void fn_1_4538(M575StageItem *self, s16 idx, M575Stage *stage);
 void fn_1_463C(M575StageItem *self);
-s32 fn_1_46B4(M575StageItem *self);
 
 void fn_1_3DE0(M575Stage *self, M575Main *main)
 {
