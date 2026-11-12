@@ -2,12 +2,14 @@
 #include "REL/m522Dll.h"
 #include "REL/m522Vec.h"
 
+extern "C" {
 #include "game/audio.h"
 #include "game/data.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
 #include "game/hu3d.h"
 #include "game/mg/actman.h"
+}
 
 #ifdef TARGET_PC
 #include <math.h>
@@ -36,7 +38,7 @@ extern "C" void *memmove(void *dst, const void *src, unsigned long n);
     }
 
 /* vector<u16> of motion ids. */
-typedef M522Vec<u16> M522_U16VEC;
+typedef M522Vec<s16> M522_U16VEC;
 typedef M522Vec<s32> M522_HANDLES;
 
 /* Registration record of a static object (__register_global_object). */
@@ -278,14 +280,26 @@ f32 fn_1_14DF4(M522_ANGLE *self, f32 x);
 f32 fn_1_14E30(M522_ANGLE *self, f32 target, f64 rate);
 f32 fn_1_14EA4(M522_ANGLE *self, f32 x);
 f32 fn_1_14F40(M522_ANGLE *self);
-u16 *fn_1_14F48(M522_U16VEC *self, u32 index);
+s16 *fn_1_14F48(M522_U16VEC *self, u32 index);
 void fn_1_14FC0(M522_NODE *head, void (*func)(M522_PLAYERBASE *));
 void fn_1_15020(M522_NODE *first, M522_NODE *end, void (*func)(M522_PLAYERBASE *));
-void fn_1_15080(M522_U16VEC *self, u16 *pos, u32 n, u16 *xp);
+void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp);
 f32 fn_1_15430(M522_ANGLE *self, f32 a, f32 b);
 void fn_1_15648(void);
 void *fn_1_156D0(M522_NODE *self, s16 flag);
 }
+
+/* Member function pointers travel by value: MWCC copies them to the stack. */
+inline void M522SetState(M522_PLAYERBASE *self, M522_PTMF ptmf)
+{
+    self->state = ptmf;
+}
+
+#define M522_SETSTATE(self, ptmf) \
+    {                             \
+        M522_PTMF next = ptmf;    \
+        M522SetState(self, next); \
+    }
 
 
 /* Spawn positions of the CPU players, handed out by fn_1_F604. */
@@ -418,75 +432,77 @@ void fn_1_F6E4(void)
 
 void fn_1_F76C(void)
 {
-    M522_NODE *first;
-    M522_NODE *tmp;
     M522_NODE *it;
     M522_NODE *end;
+    M522_NODE *first;
+    M522_NODE *tmp;
+    M522_NODE *next;
 
     first = lbl_1_bss_A64.prev;
     tmp = first;
     it = tmp;
     end = &lbl_1_bss_A64;
     while (it != end) {
-        ((M522_PLAYERBASE *)it)->state = lbl_1_data_5A0;
-        tmp = it->prev;
-        it = tmp;
+        M522SetState((M522_PLAYERBASE *)it, lbl_1_data_5A0);
+        next = it->prev;
+        it = next;
     }
 }
 
 void fn_1_F800(void)
 {
-    M522_NODE *first;
-    M522_NODE *tmp;
     M522_NODE *it;
     M522_NODE *end;
+    M522_NODE *first;
+    M522_NODE *tmp;
+    M522_NODE *next;
 
     first = lbl_1_bss_A64.prev;
     tmp = first;
     it = tmp;
     end = &lbl_1_bss_A64;
     while (it != end) {
-        ((M522_PLAYERBASE *)it)->state = lbl_1_data_5AC;
-        tmp = it->prev;
-        it = tmp;
+        M522SetState((M522_PLAYERBASE *)it, lbl_1_data_5AC);
+        next = it->prev;
+        it = next;
     }
 }
 
 void fn_1_F894(void)
 {
-    M522_NODE *first;
-    M522_NODE *tmp;
     M522_NODE *it;
     M522_NODE *end;
+    M522_NODE *first;
+    M522_NODE *tmp;
+    M522_NODE *next;
 
     first = lbl_1_bss_A64.prev;
     tmp = first;
     it = tmp;
     end = &lbl_1_bss_A64;
     while (it != end) {
-        M522_PLAYERBASE *p = (M522_PLAYERBASE *)it;
-        p->vtbl[6](p);
-        tmp = it->prev;
-        it = tmp;
+        ((M522_PLAYERBASE *)it)->vtbl[6]((M522_PLAYERBASE *)it);
+        next = it->prev;
+        it = next;
     }
 }
 
 void fn_1_F904(void)
 {
-    M522_NODE *first;
-    M522_NODE *tmp;
     M522_NODE *it;
     M522_NODE *end;
+    M522_NODE *first;
+    M522_NODE *tmp;
+    M522_NODE *next;
 
     first = lbl_1_bss_A64.prev;
     tmp = first;
     it = tmp;
     end = &lbl_1_bss_A64;
     while (it != end) {
-        M522_PLAYERBASE *p = (M522_PLAYERBASE *)it;
-        p->vtbl[5](p);
-        tmp = it->prev;
-        it = tmp;
+        ((M522_PLAYERBASE *)it)->vtbl[5]((M522_PLAYERBASE *)it);
+        next = it->prev;
+        it = next;
     }
 }
 
@@ -496,17 +512,18 @@ void fn_1_F974(void)
     M522_NODE *tmp;
     u8 empty;
 
-    while (1) {
-        empty = 0;
-        if (lbl_1_bss_A64.prev == &lbl_1_bss_A64 && lbl_1_bss_A64.prev == lbl_1_bss_A64.next) {
-            empty = 1;
-        }
-        if (empty != 0) {
-            break;
-        }
-        last = lbl_1_bss_A64.next;
-        tmp = last;
-        fn_1_FEA8((M522_PLAYERBASE *)tmp, 1);
+    goto test;
+body:
+    last = lbl_1_bss_A64.next;
+    tmp = last;
+    fn_1_FEA8((M522_PLAYERBASE *)tmp, 1);
+test:
+    empty = 0;
+    if (lbl_1_bss_A64.prev == &lbl_1_bss_A64 && lbl_1_bss_A64.prev == lbl_1_bss_A64.next) {
+        empty = 1;
+    }
+    if (empty == 0) {
+        goto body;
     }
 }
 
@@ -528,48 +545,44 @@ s32 fn_1_FA28(void)
 
 M522_PLAYERBASE *fn_1_FA84(s32 index)
 {
-    M522_NODE *first;
-    M522_NODE *tmp;
     M522_NODE *it;
     M522_NODE *end;
+    M522_NODE *first;
+    M522_NODE *tmp;
+    M522_NODE *next;
 
     first = lbl_1_bss_A64.prev;
     tmp = first;
     it = tmp;
     end = &lbl_1_bss_A64;
-    while (1) {
-        if (it == end) {
-            return 0;
-        }
+    for (; it != end; it = next) {
         if (((M522_PLAYERBASE *)it)->index == index) {
             return (M522_PLAYERBASE *)it;
         }
-        tmp = it->prev;
-        it = tmp;
+        next = it->prev;
     }
+    return 0;
 }
 
 M522_PLAYERBASE *fn_1_FAF8(void)
 {
-    M522_NODE *first;
-    M522_NODE *tmp;
     M522_NODE *it;
     M522_NODE *end;
+    M522_NODE *first;
+    M522_NODE *tmp;
+    M522_NODE *next;
 
     first = lbl_1_bss_A64.prev;
     tmp = first;
     it = tmp;
     end = &lbl_1_bss_A64;
-    while (1) {
-        if (it == end) {
-            return 0;
-        }
+    for (; it != end; it = next) {
         if (((M522_PLAYERBASE *)it)->grp == 0) {
             return (M522_PLAYERBASE *)it;
         }
-        tmp = it->prev;
-        it = tmp;
+        next = it->prev;
     }
+    return 0;
 }
 
 M522_PLAYERBASE *fn_1_FB6C(M522_PLAYERBASE *self, s32 index)
@@ -599,11 +612,17 @@ M522_PLAYERBASE *fn_1_FB6C(M522_PLAYERBASE *self, s32 index)
     return self;
 }
 
+/* The vector data is released through its address, as the MSL inlines do. */
+#define M522_VEC_FREE(vec)                      {                                               s16 **pb = &(vec)->m_data;                  s16 *data = *pb;                            fn_1_6964(data);                        }
+
 M522_U16VEC *fn_1_FCAC(M522_U16VEC *vec, s16 flag)
 {
     if (vec != 0) {
-        if (vec != 0 && vec != 0 && vec->m_data != 0) {
-            fn_1_6964(vec->m_data);
+        if (vec != 0 && vec != 0) {
+            s16 **pa = &vec->m_data;
+            if (*pa != 0) {
+                M522_VEC_FREE(vec);
+            }
         }
         if (flag > 0) {
             fn_1_6964(vec);
@@ -615,8 +634,11 @@ M522_U16VEC *fn_1_FCAC(M522_U16VEC *vec, s16 flag)
 M522_U16VEC *fn_1_FD40(M522_U16VEC *vec, s16 flag)
 {
     if (vec != 0) {
-        if (vec != 0 && vec->m_data != 0) {
-            fn_1_6964(vec->m_data);
+        if (vec != 0) {
+            s16 **pa = &vec->m_data;
+            if (*pa != 0) {
+                M522_VEC_FREE(vec);
+            }
         }
         if (flag > 0) {
             fn_1_6964(vec);
@@ -628,8 +650,9 @@ M522_U16VEC *fn_1_FD40(M522_U16VEC *vec, s16 flag)
 M522_U16VEC *fn_1_FDCC(M522_U16VEC *vec, s16 flag)
 {
     if (vec != 0) {
-        if (vec->m_data != 0) {
-            fn_1_6964(vec->m_data);
+        s16 **pa = &vec->m_data;
+        if (*pa != 0) {
+            M522_VEC_FREE(vec);
         }
         if (flag > 0) {
             fn_1_6964(vec);
@@ -653,8 +676,11 @@ M522_PLAYERBASE *fn_1_FEA8(M522_PLAYERBASE *self, s16 flag)
 {
     if (self != 0) {
         self->vtbl = lbl_1_data_760;
-        if (&self->motions != 0 && &self->motions != 0 && &self->motions != 0 && self->motions.m_data != 0) {
-            fn_1_6964(self->motions.m_data);
+        if (&self->motions != 0 && &self->motions != 0 && &self->motions != 0) {
+            s16 **pa = &self->motions.m_data;
+            if (*pa != 0) {
+                M522_VEC_FREE(&self->motions);
+            }
         }
         if (self != 0) {
             fn_1_8010(self, 0);
@@ -690,10 +716,12 @@ void fn_1_FF70(M522_PLAYERBASE *self)
 
 void fn_1_FFF8(M522_PLAYERBASE *self, s32 dataNum)
 {
-    u16 id;
+    s16 id;
 
     id = CharMotionCreate(self->charNo, dataNum);
-    fn_1_15080(&self->motions, self->motions.m_data + self->motions.m_size, 1, &id);
+    s16 *const *pp = &self->motions.m_data;
+    s16 *last = *pp + self->motions.m_size;
+    fn_1_15080(&self->motions, last, 1, &id);
 }
 
 void fn_1_10070(M522_PLAYERBASE *self, u32 motion, u8 loop)
@@ -841,7 +869,7 @@ s32 fn_1_108F8(M522_PLAYER *self)
 
 void fn_1_109A4(M522_PLAYER *self)
 {
-    self->state = lbl_1_data_608;
+    M522_SETSTATE(self, lbl_1_data_608);
 }
 
 void fn_1_10A00(M522_PLAYER *self)
@@ -855,12 +883,12 @@ void fn_1_10A00(M522_PLAYER *self)
             case 0:
                 fn_1_10070(self, 1, 0);
                 HuAudFXPlayPan(0x73A, fn_1_F564(&self->pos));
-                self->state = lbl_1_data_614;
+                M522_SETSTATE(self, lbl_1_data_614);
                 return;
             case 1:
                 fn_1_10070(self, 1, 0);
                 HuAudFXPlayPan(0x73A, fn_1_F564(&self->pos));
-                self->state = lbl_1_data_620;
+                M522_SETSTATE(self, lbl_1_data_620);
                 return;
             }
         }
@@ -890,7 +918,7 @@ void fn_1_10DF8(M522_PLAYER *self)
         omVibrate(self->index, 12, 6, 6);
         self->amp = 0.0f;
         self->baseY = self->pos.y;
-        self->state = lbl_1_data_62C;
+        M522_SETSTATE(self, lbl_1_data_62C);
     }
 }
 
@@ -923,7 +951,7 @@ void fn_1_1103C(M522_PLAYER *self)
             self->amp = 80.0f;
             fn_1_10070(self, 0, 1);
             self->mode = 2;
-            self->state = lbl_1_data_638;
+            M522_SETSTATE(self, lbl_1_data_638);
         }
     }
 }
@@ -939,7 +967,7 @@ void fn_1_113BC(M522_PLAYER *self)
     }
     if (time >= 16.0f) {
         CharModelAttrSet(self->charNo, 0x40000004);
-        self->state = lbl_1_data_644;
+        M522_SETSTATE(self, lbl_1_data_644);
     }
 }
 
@@ -948,13 +976,13 @@ void fn_1_114CC(M522_PLAYER *self)
     if (CharMotionEndCheck(self->charNo) != 0) {
         fn_1_10070(self, 0, 1);
         self->mode = 2;
-        self->state = lbl_1_data_650;
+        M522_SETSTATE(self, lbl_1_data_650);
         return;
     }
     if (fn_1_12028(self) == 0) {
         self->mode = 0;
         CharModelAttrReset(self->charNo, 0x40000004);
-        self->state = lbl_1_data_65C;
+        M522_SETSTATE(self, lbl_1_data_65C);
     }
 }
 
@@ -984,7 +1012,7 @@ void fn_1_117EC(M522_PLAYER *self)
         self->vel.y = 16.666666f;
         self->vel.z = -8.333333f;
         omVibrate(self->index, 24, 12, 0);
-        self->state = lbl_1_data_668;
+        M522_SETSTATE(self, lbl_1_data_668);
     }
 }
 
@@ -1010,7 +1038,7 @@ void fn_1_11A20(M522_PLAYER *self)
         fn_1_10070(self, 2, 1);
         omVibrate(self->index, 6, 3, 6);
         HuAudFXPlayPan(0x748, pan);
-        self->state = lbl_1_data_674;
+        M522_SETSTATE(self, lbl_1_data_674);
         return;
     }
     self->vel.x = 0.0f;
@@ -1018,7 +1046,7 @@ void fn_1_11A20(M522_PLAYER *self)
     self->vel.z = 0.0f;
     fn_1_10070(self, 4, 1);
     CharFXPlayPan(self->charNo, 0x1FA, pan);
-    self->state = lbl_1_data_680;
+    M522_SETSTATE(self, lbl_1_data_680);
 }
 
 void fn_1_11D60(M522_PLAYER *self)
@@ -1030,7 +1058,7 @@ void fn_1_11D60(M522_PLAYER *self)
     self->vel.x = -0.16666667f;
     self->vel.y = 0.0f;
     self->vel.z = 0.0f;
-    self->state = lbl_1_data_68C;
+    M522_SETSTATE(self, lbl_1_data_68C);
 }
 
 void fn_1_11E34(M522_PLAYER *self)
@@ -1229,13 +1257,13 @@ void fn_1_12A44(M522_COM *self)
     MgPlayerPauseOff(self->mg, HV(&self->pos));
     MgPlayerAttrSet(self->mg, 1);
     self->grounded = 1;
-    self->state = lbl_1_data_6CC;
+    M522_SETSTATE(self, lbl_1_data_6CC);
 }
 
 void fn_1_12AE4(M522_COM *self)
 {
     MgPlayerAttrReset(self->mg, 1);
-    self->state = lbl_1_data_6D8;
+    M522_SETSTATE(self, lbl_1_data_6D8);
 }
 
 void fn_1_12B68(M522_COM *self)
@@ -1258,7 +1286,7 @@ void fn_1_12B68(M522_COM *self)
         self->dir.z = p.z;
         PSVECSubtract(HV(&self->dir), HV(&self->cur), HV(&self->dir));
         omVibrate(self->index, 6, 3, 6);
-        self->state = lbl_1_data_6E4;
+        M522_SETSTATE(self, lbl_1_data_6E4);
     }
     self->cur.x = p.x;
     self->cur.y = p.y;
@@ -1345,7 +1373,7 @@ void fn_1_130D0(M522_COM *self)
     fn_1_10070(self, 1, 1);
     omVibrate(self->index, 24, 12, 0);
     HuAudFXPlayPan(0x746, fn_1_F564(&self->cur));
-    self->state = lbl_1_data_6F0;
+    M522_SETSTATE(self, lbl_1_data_6F0);
 }
 
 void fn_1_133F8(M522_COM *self)
@@ -1363,7 +1391,7 @@ void fn_1_133FC(M522_COM *self)
         actor->rotY = fn_1_14E30(&a, 0.0f, 0.1);
         if (fabs(actor->rotY) < 0.1) {
             actor->rotY = 0.0f;
-            self->state = lbl_1_data_6FC;
+            M522_SETSTATE(self, lbl_1_data_6FC);
         }
     }
 }
@@ -1372,7 +1400,7 @@ void fn_1_13550(M522_COM *self)
 {
     if (self->out == 0 && lbl_1_bss_A54 > 0) {
         fn_1_10070(self, 2, 0);
-        self->state = lbl_1_data_708;
+        M522_SETSTATE(self, lbl_1_data_708);
     }
 }
 
@@ -1394,7 +1422,7 @@ void fn_1_1370C(M522_COM *self)
         MgPlayerAttrSet(self->mg, 1);
         if (self->out == 0) {
             MgPlayerComStkOn(self->mg);
-            self->state = lbl_1_data_714;
+            M522_SETSTATE(self, lbl_1_data_714);
         }
     }
 }
@@ -1429,7 +1457,8 @@ void fn_1_1384C(M522_COM *self)
 
 u8 fn_1_13A10(M522_COM *self)
 {
-    return (u8)((self->mg->actor->colGroundAttr & 0x407F) != 0);
+    u32 *attr = &self->mg->actor->colGroundAttr;
+    return (u8)((*attr & 0x407F) != 0);
 }
 
 s32 fn_1_13A48(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
@@ -1783,7 +1812,7 @@ f32 fn_1_14F40(M522_ANGLE *self)
     return self->cur;
 }
 
-u16 *fn_1_14F48(M522_U16VEC *self, u32 index)
+s16 *fn_1_14F48(M522_U16VEC *self, u32 index)
 {
     if (index >= self->m_size) {
         fn_1_6AD0(M522_STDERR, lbl_1_data_780);
@@ -1794,7 +1823,10 @@ u16 *fn_1_14F48(M522_U16VEC *self, u32 index)
 
 void fn_1_14FC0(M522_NODE *head, void (*func)(M522_PLAYERBASE *))
 {
-    fn_1_15020(head->prev, head, func);
+    M522_NODE *end = head;
+    M522_NODE *first = head->prev;
+    M522_NODE *tmp = first;
+    fn_1_15020(tmp, end, func);
 }
 
 void fn_1_15020(M522_NODE *first, M522_NODE *end, void (*func)(M522_PLAYERBASE *))
@@ -1808,13 +1840,13 @@ void fn_1_15020(M522_NODE *first, M522_NODE *end, void (*func)(M522_PLAYERBASE *
     }
 }
 
-void fn_1_15080(M522_U16VEC *self, u16 *pos, u32 n, u16 *xp)
+void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
 {
-    const u16 *px;
+    const s16 *px;
     u32 max;
-    u16 *end;
-    u16 *dst;
-    u16 *oldData;
+    s16 *end;
+    s16 *dst;
+    s16 *oldData;
     s32 after;
     s32 index;
     u32 newSize;
@@ -1862,7 +1894,7 @@ void fn_1_15080(M522_U16VEC *self, u16 *pos, u32 n, u16 *xp)
                 newCap = max;
             }
         }
-        self->m_data = (u16 *)fn_1_689C(newCap * 2);
+        self->m_data = (s16 *)fn_1_689C(newCap * 2);
         if (self->m_data == 0) {
             fn_1_6AD0(M522_STDERR, lbl_1_data_7BB);
             abort();
