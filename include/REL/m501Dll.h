@@ -18,6 +18,7 @@ struct Hu3DMtx {
     f32 m[4][3];
 };
 
+struct Hu3DModel_s;
 class CLinkList;
 
 class CRandom {
@@ -36,7 +37,17 @@ public:
     void insertBack(CLinkList *list);
 };
 
-class CLinkList : public CLinkNode {};
+class CLinkList : public CLinkNode {
+public:
+    bool isEmpty()
+    {
+        bool empty = false;
+        if (m_prev == this && m_prev == m_next) {
+            empty = true;
+        }
+        return empty;
+    }
+};
 
 class CGameObject : public CLinkNode {
 public:
@@ -181,12 +192,12 @@ public:
     CAsiato(Vec *pos, f32 rot);
     ~CAsiato();
     static void update(CAsiato *asiato);
-    static void drawHook(struct Hu3DModel_s *model, Mtx *mtx);
+    static void drawHook(Hu3DModel_s *model, Mtx *mtx);
     static void drawAsiato(CAsiato *asiato, CAsiatoDrawData *data);
     static void execAsiatoList(CLinkList *list, void (*func)(CAsiato *));
     static void execAsiatoList(CAsiato *node, CAsiato *end, void (*func)(CAsiato *));
     static void drawAsiatoList(CLinkList *list, CAsiatoDrawData *data);
-    static void drawAsiatoList(CAsiato *node, CAsiato *end, CAsiatoDrawData *data);
+    void drawAsiatoList(CAsiato *end, CAsiatoDrawData *data);
 
     Vec m_pos;  // 0x08
     f32 m_rot;  // 0x14
