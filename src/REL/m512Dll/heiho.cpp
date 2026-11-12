@@ -101,8 +101,10 @@ HEIHO_RODATA const f32 lbl_1_rodata_558[3] = { -104.0f, 200.0f, 550.0f };
 HEIHO_RODATA const f32 lbl_1_rodata_564[3] = { 0.0f, 0.0f, 0.0f };
 }
 
-char lbl_1_bss_AA8[8];
+extern "C" {
+f64 lbl_1_bss_AA8;
 char lbl_1_bss_AB0[8];
+}
 s32 lbl_1_bss_AB8;
 s32 lbl_1_bss_ABC;
 s32 lbl_1_bss_AC0;

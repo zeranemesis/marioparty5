@@ -6,6 +6,7 @@
 // (lbl_1_bss_A5C), the winner and the vector<s16> helpers.
 #define _MATH_H
 #include "types.h"
+#include "REL/m512Dll.h"
 extern "C" {
 #include "game/hu3d.h"
 #include "game/data.h"
@@ -137,7 +138,7 @@ void fn_1_30F4(void *self, s32 id);
 u32 fn_1_4AE0(void);
 void fn_1_7488(void *camera);
 s32 fn_1_76BC(HuVecF *pos, s32 se);
-void *fn_1_7B4C(void *self, HuVecF *pos);
+DustPuff *fn_1_7B4C(DustPuff *self, HuVecF *pos);
 void fn_1_DC94(void *score, s32 idx, s32 kind);
 void fn_1_DDDC(void *score, s32 idx, s32 digits, s32 maxTime);
 
@@ -1053,7 +1054,7 @@ extern "C" void fn_1_B420(Player *self)
     char *name1;
     char *name2;
     s32 k;
-    void *puff;
+    DustPuff *puff;
 
     if ((s8)lbl_1_bss_A70[0] == 0) {
         lbl_1_bss_A68 = 60.0;
@@ -1136,7 +1137,7 @@ extern "C" void fn_1_B420(Player *self)
                 ax = out.x;
             }
             if (ax > 10.0f && (self->ticks & 1) != 0) {
-                puff = __nw__FUl(0x10);
+                puff = (DustPuff *)__nw__FUl(sizeof(DustPuff));
                 if (puff != 0) {
                     fn_1_7B4C(puff, &p1);
                 }
@@ -1153,7 +1154,7 @@ extern "C" void fn_1_B420(Player *self)
                 ax = out.x;
             }
             if (ax > 10.0f && (self->ticks & 1) != 0) {
-                puff = __nw__FUl(0x10);
+                puff = (DustPuff *)__nw__FUl(sizeof(DustPuff));
                 if (puff != 0) {
                     fn_1_7B4C(puff, &p2);
                 }

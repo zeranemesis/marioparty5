@@ -117,7 +117,7 @@ extern ZakoNode lbl_1_bss_C;
 extern void *lbl_1_data_1FC[4];
 extern ZakoMgr *lbl_1_bss_A08;
 extern f64 lbl_1_bss_AA8;
-extern u8 lbl_1_bss_AB0;
+extern char lbl_1_bss_AB0[8];
 }
 
 extern "C" void *fn_1_E99C(ZakoMgr *self, s16 flag);
@@ -633,9 +633,9 @@ extern "C" s32 fn_1_FB38(Zako *z)
     HuVecF out;
     Mtx m;
 
-    if ((s8)lbl_1_bss_AB0 == 0) {
+    if ((s8)lbl_1_bss_AB0[0] == 0) {
         lbl_1_bss_AA8 = 60.0;
-        lbl_1_bss_AB0 = 1;
+        lbl_1_bss_AB0[0] = 1;
     }
     dir.x = 0.0f;
     dir.y = 0.0f;
