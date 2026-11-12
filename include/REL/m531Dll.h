@@ -185,15 +185,17 @@ protected:
     s32 m_unk1C;
 };
 
+struct CPlayer;
+struct CFlowStage;
+
 namespace m531 {
 
 class CGameMaster : public CMinigameCore {
-protected:
+public:
     s32 m_mode;
     OMOBJ *m_obj;
     OMOBJMAN *m_objMan;
 
-public:
     CGameMaster() { m_mode = 0; }
     virtual ~CGameMaster();
     virtual void on_setup(OMOBJMAN *objMan);
@@ -232,10 +234,14 @@ public:
     virtual void mode5();
     virtual void mode6();
 
-private:
-    u8 m_unk2C[0x50 - 0x2C];
-    CTimer m_timer;
-    u8 m_unk54[0x208 - 0x54];
+    ::CPlayer *m_player[4]; // 0x2C
+    s32 m_unk3C[2];
+    ::CFlowStage *m_stage; // 0x44
+    s32 m_unk48[2];
+    CTimer m_timer; // 0x50
+    // Two 10x5 float grids (mode 0 and mode 1), indexed [row][column].
+    f32 m_grid[2][10][5]; // 0x54
+    u8 m_unk1E4[0x208 - 0x1E4];
 };
 
 // Base of the score display: an OMOBJ whose objFunc calls on_update().
@@ -254,5 +260,119 @@ public:
 };
 
 } // namespace m531
+
+// Stage object (CStage and its derived classes): the vtable pointer follows the data.
+struct CStageObj;
+struct StageObjVt {
+    void *m_head[2];
+    void (*m_update)(CStageObj *self);
+    CStageObj *(*m_dtor)(CStageObj *self, s16 flag);
+};
+
+struct CStageObj {
+    OMOBJMAN *m_objMan;
+    HU3DMODELID m_model;
+    OMOBJ *m_obj;
+    Vec m_pos;
+    Vec m_rot;
+    Vec m_scale;
+    const StageObjVt *m_vt;
+};
+
+// Object of the player stage ("stage" = flow field) read by the players.
+struct CFlowStage {
+    s32 m_unk0[18];
+    f32 m_angle; // 0x48
+};
+
+struct CPlayerBase;
+
+struct PlayerBaseVt {
+    void *m_head[2];
+    void (*m_update0)(CPlayerBase *self);
+    void (*m_update1)(CPlayerBase *self);
+    void (*m_update2)(CPlayerBase *self);
+    void (*m_update3)(CPlayerBase *self);
+    void (*m_input)(CPlayerBase *self);
+    void (*m_cpu)(CPlayerBase *self);
+    void (*m_post)(CPlayerBase *self);
+    CPlayerBase *(*m_dtor)(CPlayerBase *self, s16 flag);
+    void (*m_set0)(CPlayerBase *self);
+    void (*m_set1)(CPlayerBase *self);
+};
+
+struct PlayerMotInfo {
+    s32 dataNum;
+    u32 attr;
+    f32 shiftTime;
+};
+
+// MWCC puts the vtable pointer after the data of the class (offset 0xB0 on the GC).
+struct CPlayerBase {
+    OMOBJMAN *m_objMan;
+    s16 m_playerNo;
+    s16 m_charNo;
+    s16 m_model;
+    s16 m_motId[32];
+    s16 m_type;
+    s16 m_dif;
+    s8 m_padNo;
+    s32 m_curMot;
+    u8 m_flag54;
+    u8 m_flag55;
+    OMOBJ *m_obj;
+    PlayerMotInfo *m_motTbl;
+    s32 m_motNum;
+    f32 m_stickX;
+    f32 m_stickY;
+    u8 m_unk6C[0x78 - 0x6C];
+    Vec m_home; // 0x78
+    Vec m_pos;
+    Vec m_rot;
+    Vec m_scale;
+    s32 m_nextMot;
+    s32 m_dataNum;
+    const PlayerBaseVt *m_vt;
+};
+
+class CEffectParticle;
+
+// The cleaning-contest player (vtable lbl_1_data_3C4).
+struct CPlayer {
+    CPlayerBase m_base;
+    f32 m_turn; // 0xB4
+    m531::CFlow *m_flow;
+    s32 m_unkBC;
+    CEffectParticle *m_hit; // 0xC0
+    s16 m_hatModel; // 0xC4
+    Vec m_unkC8;
+    f32 m_unkD4;
+    u8 m_unkD8;
+    f32 m_unkDC;
+    s32 m_side; // 0xE0
+    f32 m_unkE4;
+    s32 m_unkE8;
+    u8 m_unkEC;
+    f32 m_unkF0;
+    s32 m_team; // 0xF4
+    u8 m_unkF8;
+    s32 m_se; // 0xFC
+    s32 m_unk100;
+    s32 m_dir; // 0x104
+    Vec m_cell; // 0x108
+    s32 m_unk114;
+    f32 m_unk118;
+    Vec m_target; // 0x11C
+    Vec m_unk128;
+};
+
+// The player that runs over the stage (vtable lbl_1_data_364).
+struct CPlayerRunner {
+    CPlayerBase m_base;
+    s32 m_frame; // 0xB4
+    CStageObj *m_obj[2]; // 0xB8
+    f32 m_vel; // 0xC0
+    u8 m_hit; // 0xC4
+};
 
 #endif

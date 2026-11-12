@@ -7,55 +7,6 @@ void *__dl__FPv(void *ptr);
 HU3DMODELID Hu3DModelCreate(void *data);
 }
 
-struct CPlayerBase;
-
-struct PlayerBaseVt {
-    void *m_head[2];
-    void (*m_update0)(CPlayerBase *self);
-    void (*m_update1)(CPlayerBase *self);
-    void (*m_update2)(CPlayerBase *self);
-    void (*m_update3)(CPlayerBase *self);
-    void (*m_input)(CPlayerBase *self);
-    void (*m_cpu)(CPlayerBase *self);
-    void (*m_post)(CPlayerBase *self);
-    CPlayerBase *(*m_dtor)(CPlayerBase *self, s16 flag);
-    void (*m_set0)(CPlayerBase *self);
-    void (*m_set1)(CPlayerBase *self);
-};
-
-struct PlayerMotInfo {
-    s32 dataNum;
-    u32 attr;
-    f32 shiftTime;
-};
-
-// MWCC puts the vtable pointer after the data of the class (offset 0xB0 on the GC).
-struct CPlayerBase {
-    OMOBJMAN *m_objMan;
-    s16 m_playerNo;
-    s16 m_charNo;
-    s16 m_model;
-    s16 m_motId[32];
-    s16 m_type;
-    s16 m_dif;
-    s8 m_padNo;
-    s32 m_curMot;
-    u8 m_flag54;
-    u8 m_flag55;
-    OMOBJ *m_obj;
-    PlayerMotInfo *m_motTbl;
-    s32 m_motNum;
-    f32 m_stickX;
-    f32 m_stickY;
-    u8 m_unk6C[0x84 - 0x6C];
-    Vec m_pos;
-    Vec m_rot;
-    Vec m_scale;
-    s32 m_nextMot;
-    s32 m_dataNum;
-    const PlayerBaseVt *m_vt;
-};
-
 extern "C" {
 extern PlayerBaseVt lbl_1_data_394;
 extern PlayerBaseVt lbl_1_data_440;
