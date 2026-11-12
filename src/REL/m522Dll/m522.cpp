@@ -1355,7 +1355,7 @@ M522RModel *fn_1_9A7C(M522RModel *self, HU3DMODELHOOK hook)
 // Build a character model; `type` selects the model variant bit.
 M522RModel *fn_1_9AB8(M522RModel *self, s32 charNo, s32 type)
 {
-    s16 variant;
+    s32 variant;
 
     variant = 0;
     switch (type) {
@@ -1376,7 +1376,7 @@ M522RModel *fn_1_9AB8(M522RModel *self, s32 charNo, s32 type)
     return self;
 }
 
-inline s32 M522RModelIdGet(M522RModel *m)
+inline s16 M522RModelIdGet(M522RModel *m)
 {
     return m->id;
 }
