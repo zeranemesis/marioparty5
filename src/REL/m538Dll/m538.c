@@ -3156,7 +3156,7 @@ s32 fn_1_7F04(M538_PLAYER *arg0) {
 }
 
 s32 fn_1_7FAC(M538_PLAYER *arg0) {
-    f32 (*sp20)[4];
+    Mtx sp20;
     Point3d sp14;
     Point3d sp8;
     M538_NODE0 *temp_r30;
@@ -3229,8 +3229,8 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
             if (temp_r3_2 != NULL) {
                 temp_r3_2->rotY = (f32) arg0->x;
                 temp_r3_2->rotZ = (s32) arg0->y;
-                temp_r3->x = (f32) arg0->z;
-                temp_r3->rotX = 0;
+                temp_r3_2->x = (f32) arg0->z;
+                temp_r3_2->rotX = 0;
             }
         }
         if ((f32) fabs(arg0->rotY) < 1.0f) {

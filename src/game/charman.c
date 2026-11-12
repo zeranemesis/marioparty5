@@ -1291,7 +1291,11 @@ static s16 CharWinVoicePlay(s16 charNo, u8 voiceFlag)
     } else {
         seNo = CHARVOICEID(4);
     }
+#ifdef TARGET_PC
+    ret = _CharFXPlay(charNo, seNo, voiceFlag); // GC returns an uninitialised stack slot
+#else
     _CharFXPlay(charNo, seNo, voiceFlag);
+#endif
     return ret;
 }
 
@@ -2975,7 +2979,11 @@ s32 CharNpcDustSet(HU3DMODELID modelId, HU3DMOTID motId, s16 type, s16 npcNo)
 s32 CharNpcDustVoiceOffSet(HU3DMODELID modelId, HU3DMOTID motId, s16 type)
 {
     s32 ret;
+#ifdef TARGET_PC
+    ret = CharNpcDustSet(modelId, motId, type, CHAR_NPC_NONE); // GC returns an uninitialised stack slot
+#else
     CharNpcDustSet(modelId, motId, type, CHAR_NPC_NONE);
+#endif
     return ret;
 }
 

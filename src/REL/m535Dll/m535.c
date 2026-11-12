@@ -582,7 +582,7 @@ extern u8 lbl_1_bss_8284[12 * 0x14];
 u8 lbl_1_bss_8374[0xBD0];
 
 extern void OSReport(const char *msg, ...);
-extern u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, u8 mipmap, u8 maxLod);
+extern u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap, u8 max_lod);
 extern s32 rand8(void);
 extern s16 espEntry(u32 dataNum, s16 prio, s16 bank);
 extern void espDispOff(s16 espId);

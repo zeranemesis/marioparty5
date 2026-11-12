@@ -1497,7 +1497,11 @@ s32 fn_1_2EC0(M528TEAM *team)
 
     result = 0;
     main = lbl_1_bss_298->data;
-    slot0 = slot0;
+#ifdef TARGET_PC
+    slot0 = &team->slot[0];
+#else
+    slot0 = slot0; // GC: r30 = team (slot[0] is at offset 0)
+#endif
     slot1 = &team->slot[1];
     diffAlpha = slot0->alpha - slot1->alpha;
     diffActive = slot0->active - slot1->active;

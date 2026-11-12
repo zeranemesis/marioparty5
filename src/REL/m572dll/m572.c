@@ -1740,7 +1740,16 @@ loop_47:
         return -2;
     }
     if (((OMOBJ *) lbl_1_bss_1C[var_r29] != NULL) && (temp_r30 = lbl_1_bss_1C[var_r29]->data, (((s32) temp_r30->unk2C.i == 0) != 0)) && (((arg1 != 0) && (arg1 != 1)) || ((s32) temp_r31->unk5C.i == (s32) temp_r30->unk38.i))) {
+#ifdef TARGET_PC
+        {
+            f32 vec[3]; // fn_1_4C04 fills 3 floats (sp8, spC, sp10 on GC)
+            fn_1_4C04(vec, var_r29);
+            sp8 = vec[0];
+            spC = vec[1];
+        }
+#else
         fn_1_4C04(&sp8, var_r29);
+#endif
         sp20 = sp8;
         sp24 = 0.0f;
         sp28 = spC;
@@ -1865,7 +1874,16 @@ loop_21:
     if ((OMOBJ *) lbl_1_bss_1C[var_r30] != NULL) {
         temp_r31 = lbl_1_bss_1C[var_r30]->data;
         if (((s32) temp_r31->unk2C.i == 0) && ((s32) temp_r29->unk5C.i == (s32) temp_r31->unk38.i)) {
+#ifdef TARGET_PC
+            {
+                f32 vec[3]; // fn_1_4C04 fills 3 floats (spC, sp10, sp14 on GC)
+                fn_1_4C04(vec, var_r30);
+                spC = vec[0];
+                sp10 = vec[1];
+            }
+#else
             fn_1_4C04(&spC, var_r30);
+#endif
             sp24 = spC;
             sp28 = 0.0f;
             sp2C = sp10;

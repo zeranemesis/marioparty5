@@ -583,7 +583,11 @@ void M506TimerCreate(M506_WORK *work)
 BOOL M506FlowUpdate(M506_WORK *work)
 {
     BOOL result = FALSE;
+#ifdef TARGET_PC
+    uintptr_t *mode = &M506MainObj->work[3]; // work[] is uintptr_t on PC
+#else
     u32 *mode = &M506MainObj->work[3];
+#endif
     switch(*mode) {
         case 0:
             if(work->gameMesId < 0) {

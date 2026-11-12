@@ -34,14 +34,16 @@ void fn_1_2648(s32 i);
 s32 HuAudBGMPlay(s32 bgmNo);
 u32 WipeCheckEnd(void);
 void Hu3DTexScrollPosSet(s16 id, f32 a, f32 b, f32 c);
-void GWMgRecordSet(s32 a, s32 b);
-s32 _CheckFlag(s32 flag);
+void GWMgRecordSet(s32 a, u32 b);
+s32 _CheckFlag(u32 flag);
 void Hu3DModelCameraSet(HU3DMODELID modelId, s32 a1);
 void Hu3DModelLayerSet(HU3DMODELID modelId, s32 a1);
 #ifdef TARGET_PC
 // Aurora maps PSVEC* to its own functions through macros in dolphin/mtx.h
 #include "dolphin/mtx.h"
+#define M547_VEC(p) ((Vec *)(p))
 #else
+#define M547_VEC(p) (p)
 void PSVECSubtract(void *dst, void *a, void *b);
 void PSVECNormalize(void *v, void *w);
 #endif
@@ -682,7 +684,11 @@ void fn_1_5DC4(void)
 
 void fn_1_670C(s32 i)
 {
+#ifdef TARGET_PC
+    Vec v; // PSVECSubtract writes 3 floats; M547Vec2 was too small
+#else
     M547Vec2 v;
+#endif
     f32 t;
 
     switch (lbl_1_bss_6D4[0]) {
@@ -699,9 +705,9 @@ void fn_1_670C(s32 i)
             lbl_1_data_344[0] = 0.0f;
             lbl_1_data_344[1] = 0.5 + 0.5 * t;
             lbl_1_data_344[2] = 75.0f + 75.0f * t;
-            PSVECSubtract(&lbl_1_bss_38[0x18], &lbl_1_bss_38[0], &v);
-            PSVECNormalize(&v, &v);
-            HuAudFXListnerSet(&lbl_1_bss_38[0], &v, 30000.0f, 1000.0f);
+            PSVECSubtract(M547_VEC(&lbl_1_bss_38[0x18]), M547_VEC(&lbl_1_bss_38[0]), M547_VEC(&v));
+            PSVECNormalize(M547_VEC(&v), M547_VEC(&v));
+            HuAudFXListnerSet(M547_VEC(&lbl_1_bss_38[0]), M547_VEC(&v), 30000.0f, 1000.0f);
             lbl_1_data_340 = HuAudFXEmiterPlay(0x837, &lbl_1_bss_488.slots[i]);
         }
         break;

@@ -10216,7 +10216,11 @@ static void KoopaLast5Exec(int mdlId, BOOL partyF)
     int rouletteMdlId; //r18
     
     float time; //f31
+#ifdef TARGET_PC
+    float prevTime = 0.0f; // GC reads the caller's stale f30
+#else
     float prevTime; //f30
+#endif
     float t; //f29
     
     int rouletteData[10]; //sp+0x10C
@@ -10823,7 +10827,11 @@ static void KoopaMasuExec(int mdlId, BOOL partyF)
     float yOfs; //f28
     float motTime; //f27
     float dist; //f26
+#ifdef TARGET_PC
+    float prevTime = 0.0f; // GC reads the caller's stale f25
+#else
     float prevTime; //f25
+#endif
     double tpLvl; //f24
     
     HuVecF playerPos[GW_PLAYER_MAX]; //sp+0x1DC
@@ -13066,7 +13074,11 @@ void MBCapsuleDonkeyExec(void)
     float effRotX; //f26
     
     Mtx hookMtx; //sp+0x138
+#ifdef TARGET_PC
+    int motFile[10]; // GC: int[8] overlapping hookMtx (entries 8-9 overwritten later)
+#else
     int motFile[8]; //sp+0x118
+#endif
     HuVecF playerPos; //sp+0x10C
     HuVecF mdlPos; //sp+0x100
     HuVecF viewRot; //sp+0xF4
