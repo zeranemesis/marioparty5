@@ -837,7 +837,9 @@ s16 fn_1_753C(void)
 
 s32 fn_1_7F30(void)
 {
-    s32 t;
+    f32 spd;
+    s32 ret = 0;
+    s32 t = 0;
 
     switch (lbl_1_bss_D0.phase) {
     case 0:
@@ -851,17 +853,18 @@ s32 fn_1_7F30(void)
         }
         break;
     case 2:
-        t = fn_1_18E8(&lbl_1_bss_8->center.x, 60.0f, -12.0f, -211.0f);
-        t += fn_1_18E8(&lbl_1_bss_8->center.y, 60.0f, 208.0f, 218.0f);
-        t += fn_1_18E8(&lbl_1_bss_8->center.z, 60.0f, -120.0f, 0.0f);
-        t += fn_1_18E8(&lbl_1_bss_8->rotX, 60.0f, -11.0f, -11.0f);
-        t += fn_1_18E8(&lbl_1_bss_8->rotY, 60.0f, 0.0f, -29.0f);
-        if ((s16)(t + fn_1_18E8(&lbl_1_bss_8->zoom, 60.0f, 141.0f, 310.0f)) == 0) {
+        spd = 60.0f;
+        t += fn_1_18E8(&lbl_1_bss_8->center.x, spd, -12.0f, -211.0f);
+        t += fn_1_18E8(&lbl_1_bss_8->center.y, spd, 208.0f, 218.0f);
+        t += fn_1_18E8(&lbl_1_bss_8->center.z, spd, -120.0f, 0.0f);
+        t += fn_1_18E8(&lbl_1_bss_8->rotX, spd, -11.0f, -11.0f);
+        t += fn_1_18E8(&lbl_1_bss_8->rotY, spd, 0.0f, -29.0f);
+        if ((s16)(t + fn_1_18E8(&lbl_1_bss_8->zoom, spd, 141.0f, 310.0f)) == 0) {
             lbl_1_bss_D0.phase++;
         }
         break;
     }
-    return 0;
+    return ret;
 }
 
 s16 fn_1_817C(void)
