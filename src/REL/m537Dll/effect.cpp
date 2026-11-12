@@ -2,8 +2,6 @@
 #include <math.h>
 
 extern "C" {
-void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT,
-                  GXTexFilter filter);
 
 extern void *lbl_1_data_1FC[];
 extern const f32 lbl_1_rodata_1F8;

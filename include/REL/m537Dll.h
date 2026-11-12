@@ -134,6 +134,8 @@ void fn_1_2F3C(s16 *modelId, Vec *rot);
 int fn_1_234(void *file, const char *fmt, ...);
 s32 fn_1_4AE0(void);
 s32 fn_1_1F30(void);
+void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT,
+                  GXTexFilter filter);
 void fn_1_2E08(s16 *modelId, u32 attr);
 void fn_1_2E40(s16 *modelId, u32 attr);
 void fn_1_304C(s16 *modelId, s16 layerNo);
@@ -191,9 +193,29 @@ typedef struct M537ModelPtr {
     s16 *p;
 } M537ModelPtr;
 
+/* Water splash object (0x14 on GameCube). */
+typedef struct M537Splash {
+    M537_NODE node;     /* 0x00 */
+    void **vptr;        /* 0x08 */
+    s32 flag;           /* 0x0C */
+    s16 mdl;            /* 0x10 */
+} M537Splash;
+
+/* Ripple particle object (0x1C on GameCube). */
+typedef struct M537Ripple {
+    M537_NODE node;         /* 0x00 */
+    void **vptr;            /* 0x08 */
+    s32 flag;               /* 0x0C */
+    s16 mdl;                /* 0x10 */
+    ANIMDATA *anim;         /* 0x14 */
+    HU3DPARTICLE *particle; /* 0x18 */
+} M537Ripple;
+
+struct M537Center;
 struct M537Camera;
 struct M537Stage;
 struct M537Water;
+extern struct M537Center *lbl_1_bss_A0C;
 extern struct M537Camera *lbl_1_bss_A10;
 extern struct M537Stage *lbl_1_bss_A14;
 
