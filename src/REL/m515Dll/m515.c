@@ -8,6 +8,7 @@
 #include "game/audio.h"
 #include "game/charman.h"
 #include "game/mg/seqman.h"
+#include "humath.h"
 
 typedef struct M515Node2_s M515_NODE2;
 typedef s32 (*M515_NODEFN)(M515_NODE2 *node);
@@ -176,6 +177,8 @@ struct M515Ply_s {
     M515_FX fx;
 };
 
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+
 typedef void (*M515_VOIDFN)(void);
 extern const M515_VOIDFN _ctors[];
 extern const M515_VOIDFN _dtors[];
@@ -223,6 +226,11 @@ void fn_1_2F3C(M515_SUB *sub);
 void fn_1_5C40(M515_SUB *sub);
 void fn_1_5DB0(M515_SUB *sub);
 void fn_1_C83C(void);
+s32 fn_1_BFD0(M515_NODE2 *node);
+s32 fn_1_C0D0(M515_NODE2 *node);
+s32 fn_1_C150(M515_NODE2 *node);
+s32 fn_1_C26C(M515_NODE2 *node);
+M515_NODE2 *fn_1_5CE4(M515_SUB *sub);
 void fn_1_73B0(M515_PLY *ply, s32 row);
 void fn_1_7768(M515_PLY *ply, s32 row);
 void fn_1_77F0(M515_PLY *ply, s32 row);
@@ -911,10 +919,101 @@ void fn_1_9804(M515_ENTRY *entry, M515_SLOT *slot, s32 index)
     entry->e08 = 0;
 }
 
+void fn_1_9828(M515_ESPPAIR *esp)
+{
+    esp->id0 = espEntry(0x490043, 10, 0);
+    espDrawNoSet(esp->id0, 0);
+    espPosSet(esp->id0, 576.0f, 240.0f);
+    espAttrSet(esp->id0, 1);
+    esp->id1 = espEntry(0x490044, 10, 0);
+    espDrawNoSet(esp->id1, 0);
+    espPosSet(esp->id1, 576.0f, 240.0f);
+    espAttrSet(esp->id1, 1);
+    esp->f4 = 640.0f;
+    esp->f8 = 480.0f;
+    esp->fc = 0.0f;
+}
+
 void fn_1_9920(M515_ESPPAIR *esp)
 {
     espKill(esp->id0);
     espKill(esp->id1);
+}
+
+f32 fn_1_BD10(s16 mdl, s32 idx, f32 t)
+{
+    f32 lo[2] = { 0.0f, 400.0f };
+    f32 hi[2] = { 400.0f, 800.0f };
+    f32 k;
+    f32 y;
+
+    k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+    if (k > 1.0f) {
+        k = 1.0f;
+    }
+    y = (1.0f - k) * lo[idx] + k * hi[idx];
+    Hu3DModelPosSet(mdl, 0.0f, y, 0.0f);
+    return y;
+}
+
+void fn_1_BE78(M515_SUB *sub, s16 mdl, s16 mode)
+{
+    M515_NODE2 *node;
+
+    node = fn_1_5CE4(sub);
+    if (node != 0) {
+        if (mode != 0) {
+            node->func = fn_1_BFD0;
+        } else {
+            node->func = fn_1_C0D0;
+        }
+        node->f00 = mdl;
+    }
+}
+
+void fn_1_BF24(M515_SUB *sub, s16 mdl, s16 mode)
+{
+    M515_NODE2 *node;
+
+    node = fn_1_5CE4(sub);
+    if (node != 0) {
+        if (mode != 0) {
+            node->func = fn_1_C150;
+        } else {
+            node->func = fn_1_C26C;
+        }
+        node->f00 = mdl;
+    }
+}
+
+s32 fn_1_BFD0(M515_NODE2 *node)
+{
+    s32 ret = 0;
+
+    switch (node->f04) {
+    case 0:
+        if (node->f00 >= 0) {
+            Hu3DModelAttrReset(node->f00, HU3D_ATTR_DISPOFF);
+            node->f02 = Hu3DMotionIDGet(node->f00);
+            if (node->f02 >= 0) {
+                Hu3DMotionTimeSet(node->f00, Hu3DMotionMaxTimeGet(node->f00) - 1.0f);
+                Hu3DModelAttrSet(node->f00, 0x40000004);
+                Hu3DModelAttrReset(node->f00, 0x40000002);
+                node->f04++;
+            } else {
+                ret = 1;
+            }
+        } else {
+            ret = 1;
+        }
+        break;
+    case 1:
+        if (Hu3DMotionEndCheck(node->f00) != 0) {
+            ret = fn_1_C0D0(node);
+        }
+        break;
+    }
+    return ret;
 }
 
 s32 fn_1_C0D0(M515_NODE2 *node)
@@ -931,6 +1030,40 @@ s32 fn_1_C0D0(M515_NODE2 *node)
     return 1;
 }
 
+s32 fn_1_C150(M515_NODE2 *node)
+{
+    s32 ret = 0;
+
+    switch (node->f04) {
+    case 0:
+        if (node->f00 >= 0) {
+            node->f02 = Hu3DMotionIDGet(node->f00);
+            if (node->f02 >= 0) {
+                Hu3DMotionTimeSet(node->f00, 0.0f);
+                Hu3DModelAttrReset(node->f00, 0x40000004);
+                Hu3DModelAttrReset(node->f00, 0x40000002);
+                node->f04++;
+            } else {
+                Hu3DModelAttrSet(node->f00, HU3D_ATTR_DISPOFF);
+                ret = 1;
+            }
+        } else {
+            ret = 1;
+        }
+        break;
+    case 1:
+        if (Hu3DMotionEndCheck(node->f00) != 0) {
+            node->f04++;
+        }
+        break;
+    case 2:
+        Hu3DModelAttrSet(node->f00, HU3D_ATTR_DISPOFF);
+        ret = fn_1_C26C(node);
+        break;
+    }
+    return ret;
+}
+
 s32 fn_1_C26C(M515_NODE2 *node)
 {
     if (node->f00 >= 0) {
@@ -940,9 +1073,30 @@ s32 fn_1_C26C(M515_NODE2 *node)
     return 1;
 }
 
+void fn_1_C83C(void)
+{
+    Hu3DShadowMultiCreate(15.0f, 20.0f, 12000.0f,
+        lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    Hu3DShadowMultiTPLvlSet(0.3f,
+        lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    Hu3DShadowMultiSizeSet(24,
+        lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+}
+
 void fn_1_CAF0(M515_SUB *sub, s32 i)
 {
     Hu3DModelAttrReset(sub->idb6[i][0], HU3D_ATTR_DISPOFF);
     Hu3DModelAttrReset(sub->id26[i], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->ida6[i], HU3D_ATTR_DISPOFF);
+}
+
+void fn_1_CB60(M515_SUB *sub, s32 i)
+{
+    Hu3DModelAttrReset(sub->idb6[i][0], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->id16[i], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->id1e[i], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->id96[i][0], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->id76[i].a, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->id76[i].b, HU3D_ATTR_DISPOFF);
     Hu3DModelAttrReset(sub->ida6[i], HU3D_ATTR_DISPOFF);
 }
