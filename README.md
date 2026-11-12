@@ -133,6 +133,7 @@ Building the port:
 ```sh
 git submodule update --init --recursive
 git -C extern/musyx apply ../../patches/musyx-mp5.patch
+git -C extern/aurora apply ../../patches/aurora-mp5.patch
 python tools/build_port.py            # Windows (MSVC), Linux or macOS
 ```
 

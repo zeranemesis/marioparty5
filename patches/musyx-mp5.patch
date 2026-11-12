@@ -41,12 +41,12 @@ index 41191b4..3e53f45 100644
 +++ b/src/musyx/runtime/hw_dspctrl.c
 @@ -349,7 +349,7 @@ u16 dspCmdFirstSize = 0;
  u16 *dspCmdList = NULL;
-
+ 
  #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1) // MUSYXTODO
 -u32 dspCompressorOn = 0;
 +bool dspCompressorOn = false;
  #endif
-
+ 
  u32 dspHRTFOn = FALSE;
 diff --git a/src/musyx/runtime/hw_pc_samples.c b/src/musyx/runtime/hw_pc_samples.c
 index f280381..b78235a 100644
@@ -55,7 +55,7 @@ index f280381..b78235a 100644
 @@ -81,7 +81,7 @@ bool dataRemoveSDir(SDIR_DATA *sdir) {
    return false;
  }
-
+ 
 -bool dataAddSampleReference(u16 id) {
 +bool dataAddSampleReference(u16 id, ARAMInfo* aramInfo) {
    SDIR_DATA *entry = activeSample(id, NULL);
@@ -72,7 +72,7 @@ index f280381..b78235a 100644
    entry->ref_cnt = 1;
    return true;
  }
-
+ 
 -bool dataRemoveSampleReference(u16 id) {
 +bool dataRemoveSampleReference(u16 id, ARAMInfo* aramInfo) {
    SDIR_DATA *entry = activeSample(id, NULL);
@@ -106,3 +106,22 @@ index 847c51c..c6e9479 100644
          while (inserted)
            pcRemoveRecord(&prepared.records[--inserted]);
          dataRemoveSDir(prepared.assets.directory);
+diff --git a/src/musyx/runtime/synthvoice.c b/src/musyx/runtime/synthvoice.c
+index 3ad906e..65a7735 100644
+--- a/src/musyx/runtime/synthvoice.c
++++ b/src/musyx/runtime/synthvoice.c
+@@ -452,7 +452,14 @@ u32 voiceAllocate(u8 priority, u8 maxVoices,
+ #endif
+                   u8 fxFlag) {
+ #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
++#if MUSY_TARGET == MUSY_TARGET_PC
++  /* the GC build returns the voice only because it is still in r3; return it explicitly */
++  s32 voice = voiceAllocateFind(priority, maxVoices, allocId, fxFlag);
++  voiceAllocateDo(voice, fxFlag);
++  return voice;
++#else
+   voiceAllocateDo(voiceAllocateFind(priority, maxVoices, allocId, fxFlag), fxFlag);
++#endif
+ #else
+   s32 i;                // r31
+   s32 num;              // r26

@@ -1,0 +1,62 @@
+diff --git a/lib/card/CardGciFolder.cpp b/lib/card/CardGciFolder.cpp
+index ec4f379..5a860ef 100644
+--- a/lib/card/CardGciFolder.cpp
++++ b/lib/card/CardGciFolder.cpp
+@@ -78,7 +78,7 @@ ECardResult CardGciFolder::openFile(const char* filename, FileHandle& handleOut)
+     idx++;
+   }
+ 
+-  return ECardResult::NOCARD;
++  return ECardResult::NOFILE;
+ }
+ 
+ ECardResult CardGciFolder::openFile(uint32_t fileno, FileHandle& handleOut) {
+@@ -92,7 +92,7 @@ ECardResult CardGciFolder::openFile(uint32_t fileno, FileHandle& handleOut) {
+     return ECardResult::READY;
+   }
+ 
+-  return ECardResult::NOCARD;
++  return ECardResult::NOFILE;
+ }
+ 
+ ECardResult CardGciFolder::createFile(const char* filename, size_t size, FileHandle& handleOut) {
+@@ -121,7 +121,7 @@ ECardResult CardGciFolder::createFile(const char* filename, size_t size, FileHan
+   }
+ 
+   gciFileHeader->swapEndian();
+-  m_files.push_back({*gciFileHeader, fileSize, reinterpret_cast<const char8_t*>(gciFilename.c_str()), false}); // push non-endian swapped header first
++  m_files.push_back({*gciFileHeader, fileSize, reinterpret_cast<const char8_t*>(gciFilename.c_str()), true}); // CARDCreate leaves the file open; push non-endian swapped header first
+   handleOut = FileHandle(m_files.size() - 1, 0);
+ 
+   return ECardResult::READY;
+diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
+index 9ca9036..e7a82c4 100644
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -118,6 +118,12 @@ void store_cached_texture(const GXTexObj_& obj, gfx::TextureHandle handle, u32 t
+     return;
+   }
+ 
++  // shortcut: this game never calls GXDestroyTexObj and GXInitTexObj mints a new id each call, so the cache
++  // grew without bound (20+ GB, then a crash); flush it past a cap instead of tracking lifetimes.
++  if (s_textureObjectCaches.size() > 4096) {
++    do_clear_static_texture_cache();
++    s_tlutObjectCaches.clear();
++  }
+   auto& entry = s_textureObjectCaches[obj.texObjId];
+   if (entry.tlutObjId != tlutObjId) {
+     clear_texture_dependency(obj.texObjId, entry.tlutObjId);
+diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
+index 3671ed5..a150317 100644
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -1194,6 +1194,9 @@ std::string build_shader_source(const ShaderConfig& config) noexcept {
+       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::B));
+     } else if (tcg.src == GX_TG_TANGENT) {
+       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::T));
++    } else if (tcg.src == GX_MAX_TEXGENSRC) {
++      // shortcut: texgen not configured (stage samples a coord beyond GXSetNumTexGens, undefined on hardware); sample (0,0).
++      vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f(0.0, 0.0, 1.0, 1.0);", i);
+     } else
+       UNLIKELY FATAL("unhandled tcg src {}", underlying(tcg.src));
+     if (tcg.type == GX_TG_MTX2x4 || tcg.type == GX_TG_MTX3x4) {
