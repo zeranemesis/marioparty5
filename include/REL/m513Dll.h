@@ -186,6 +186,38 @@ typedef struct M513IndHook_s {
 
 extern M513IndHook *lbl_1_bss_9F0;
 
+/* MWCC pointer-to-member-function triple: this adjust, vtable index, function. */
+typedef struct M513Ptmf_s {
+    long adj;
+    long idx;
+    void (*fn)(void *);
+} M513Ptmf;
+
+#ifdef TARGET_PC
+#define M513_PTMF_TEST(p) ((p)->adj != 0 || (p)->idx != 0 || (p)->fn != 0)
+#define M513_PTMF_CALL(p, self) ((p)->fn(self))
+#else
+long __ptmf_test(const void *ptmf);
+void __ptmf_scall(void *self);
+#define M513_PTMF_TEST(p) __ptmf_test(p)
+#define M513_PTMF_CALL(p, self) __ptmf_scall(self)
+#endif
+
+/* std::vector<s16> as built by this module. */
+typedef struct M513Vec16_s {
+    u32 cap;
+    u32 size;
+    s16 *data;
+} M513Vec16;
+
+/* The "stderr" argument the library's fprintf wrapper ignores. */
+#ifdef TARGET_PC
+#define M513_STDERR ((void *)0)
+#else
+extern u8 __files[];
+#define M513_STDERR ((void *)(__files + 0xA0))
+#endif
+
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
 extern M513Node lbl_1_bss_C;
