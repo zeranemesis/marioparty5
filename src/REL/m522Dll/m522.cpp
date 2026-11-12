@@ -984,22 +984,29 @@ void fn_1_8B7C(M522RTask *self)
 }
 
 // Destroy every registered task, last one first.
+inline u8 M522RIsEmpty(M522RNode *n)
+{
+    u8 empty;
+
+    empty = 0;
+    if (n->next == n && n->next == n->prev) {
+        empty = 1;
+    }
+    return empty;
+}
+
 void fn_1_8B80(void)
 {
     M522RTask *t;
-    u8 empty;
+    M522RNode *p;
+    M522RNode *q;
 
-    while (1) {
-        empty = 0;
-        if (lbl_1_bss_2C.next == &lbl_1_bss_2C && lbl_1_bss_2C.next == lbl_1_bss_2C.prev) {
-            empty = 1;
-        }
-        if (empty != 0) {
-            break;
-        }
-        t = (M522RTask *)lbl_1_bss_2C.prev;
+    while (!M522RIsEmpty(&lbl_1_bss_2C)) {
+        p = lbl_1_bss_2C.prev;
+        q = p;
+        t = (M522RTask *)q;
         if (t != 0) {
-            t->vtbl->dtor(t, 1);
+            t = t->vtbl->dtor(t, 1);
         }
     }
 }
