@@ -9,40 +9,9 @@ s32 irandom__7CRandomFv(void);
 }
 
 /* one cell of the 16 x 12 grid: wall bits (0x40/0x80), a marker and the countdowns that grow walls */
-typedef struct MazeCell {
-    u8 wall;
-    u8 mark;
-    u8 fade;
-    u8 vTimer;
-    u8 hTimer;
-} MazeCell;
 
 /* a walker that carves the wall pattern while the intro runs */
-typedef struct MazeWalker {
-    u8 state;
-    u8 dir;
-    u8 unused;
-    u8 row;
-    u8 col;
-} MazeWalker;
 
-typedef struct Maze {
-    M509Base base;
-    s16 hook[2];
-    u8 dirty;
-    u32 phase;
-    s32 alpha;
-    u8 busy;
-    s32 busyTimer;
-    s32 busyParam;
-    s32 timer;
-    s32 hold;
-    s32 sfx;
-    MazeCell cell[16][12];
-    MazeWalker walker[3];
-    u64 seedSaved;
-    u64 seed;
-} Maze;
 
 extern "C" {
 void *fn_1_5A7C(Maze *self);

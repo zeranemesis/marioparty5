@@ -58,48 +58,9 @@ void fn_1_EC0(void *node);
 void *fn_1_104(s32 size);
 }
 
-typedef struct PlayerNode {
-    PlayerNode *next;
-    PlayerNode *prev;
-} PlayerNode;
 
-typedef struct PlayerVec {
-    u32 cap;
-    u32 size;
-    s16 *data;
-} PlayerVec;
 
-typedef struct Player {
-    PlayerNode node;
-    M509Ptmf state;
-    s32 idx;
-    s32 charNo;
-    s32 pad;
-    s32 unk20;
-    s32 motion;
-    s32 dif;
-    f32 rotY;
-    f32 targetRotY;
-    f32 speed;
-    s32 pushTimer;
-    s32 stunTimer;
-    s32 act;
-    Vec pos;
-    Vec prev;
-    s32 cellKey;
-    u8 cellWalls;
-    s32 aiTimer;
-    s16 model;
-    u8 inGoal;
-    u8 blink;
-    s32 frame;
-    PlayerVec mot;
-} Player;
 
-typedef struct PlayerMgr {
-    M509Base base;
-    s16 model[2];
-} PlayerMgr;
 
 extern "C" {
 void *fn_1_EB14(PlayerMgr *self);

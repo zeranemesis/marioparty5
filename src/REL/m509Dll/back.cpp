@@ -16,30 +16,8 @@ void fn_1_3D30(s16 *model, u32 attr);
 void fn_1_3FAC(s16 *model, u16 cam);
 }
 
-typedef struct BackItem {
-    s32 idx;
-    s16 *model;
-    Vec pos;
-    Vec vel;
-    Vec rot;
-    Vec rotVel;
-    f32 scale;
-} BackItem;
 
-typedef struct Back {
-    M509Base base;
-    u8 mode;
-    s16 model[3];
-    BackItem item[3];
-} Back;
 
-typedef struct BackSky {
-    M509Base base;
-    f32 spin;
-    f32 spinRot;
-    Vec pos;
-    s16 model;
-} BackSky;
 
 extern "C" {
 void *fn_1_CED0(Back *self);

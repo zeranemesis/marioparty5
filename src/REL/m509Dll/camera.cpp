@@ -12,14 +12,6 @@ void fn_1_FFFC(Vec *pos);
 extern void *lbl_1_bss_48;
 }
 
-typedef struct Camera {
-    M509Base base;
-    Vec pos;
-    Vec up;
-    Vec target;
-    s32 frame;
-    M509Ptmf update;
-} Camera;
 
 extern "C" {
 void *fn_1_DEEC(Camera *self);

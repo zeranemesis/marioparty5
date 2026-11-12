@@ -1,4 +1,8 @@
-#include "dolphin/types.h"
+#include "game/hu3d.h"
+extern "C" {
+#include "game/mg/timer.h"
+}
+#include "REL/m509Dll/m509types.h"
 
 class CFrame {
 public:
@@ -45,7 +49,7 @@ void ObjectSetup(void)
     void *mem;
     void *master;
 
-    mem = fn_1_282C(0xD20);
+    mem = fn_1_282C(sizeof(M509GameMaster));
     if (mem) {
         mem = fn_1_C2D0(mem);
     }

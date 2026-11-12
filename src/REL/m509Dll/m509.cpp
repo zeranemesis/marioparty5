@@ -17,6 +17,9 @@ extern "C" {
 #include "game/mg/timer.h"
 }
 
+#include "REL/m509Dll/m509types.h"
+typedef M509Base M509Obj;
+
 #ifdef __MWERKS__
 #define M509_RODATA __declspec(section ".rodata")
 #else
@@ -25,52 +28,13 @@ extern "C" {
 
 /* Nodes of the circular intrusive list every m509 object hangs on; the real objects continue with
  * a vtable at +8 and a flag word at +0xC. */
-typedef struct M509Node {
-    M509Node *next;
-    M509Node *prev;
-} M509Node;
 
-typedef struct M509Obj {
-    M509Node node;
-    void **vtbl;
-    u32 flags;
-} M509Obj;
 
-typedef struct M509Sema {
-    OSThreadQueue queue;
-    s32 count;
-} M509Sema;
 
-typedef struct M509Thread {
-    OSThread th;
-    u32 *stack;
-} M509Thread;
 
-typedef struct M509SubThread {
-    void **vtbl;
-    M509Thread thread;
-    M509Sema sema;
-    s32 arg;
-} M509SubThread;
 
-typedef struct M509Core {
-    void **vtbl0;
-    void **vtbl;
-    s32 winner[4];
-    s32 gameMes;
-    s32 delay;
-} M509Core;
 
-typedef struct M509Cam {
-    Vec pos;
-    Vec up;
-    Vec target;
-} M509Cam;
 
-typedef struct M509CamView {
-    Vec pos;
-    Quaternion rot;
-} M509CamView;
 
 class CMT19937 {
 public:

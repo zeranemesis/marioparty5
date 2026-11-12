@@ -5,18 +5,16 @@
 #include "game/hu3d.h"
 #include "game/sprite.h"
 
+extern "C" {
+#include "game/mg/timer.h"
+}
+#include "REL/m509Dll/m509types.h"
+
 #ifdef __MWERKS__
 #define XX_RODATA __declspec(section ".rodata")
 #else
 #define XX_RODATA
 #endif
-
-/* Header of every m509 object: two words of base data, the vtable at +8 and the flag word at +0xC. */
-typedef struct M509Base {
-    void *base[2];
-    void **vtbl;
-    u32 flags;
-} M509Base;
 
 typedef struct {
     s16 grp;
@@ -35,12 +33,6 @@ typedef struct StartSpr {
 } StartSpr;
 
 /* Pointer to member function in the CodeWarrior layout (adjustment, vtable index or -1, function). */
-typedef struct M509Ptmf {
-    s32 adj;
-    s32 vtblIdx;
-    void *func;
-} M509Ptmf;
-
 extern "C" {
 void fn_1_0(const char *cond, const char *file, s32 line);
 void *fn_1_104(s32 size);
