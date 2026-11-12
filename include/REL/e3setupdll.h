@@ -20,9 +20,6 @@ HUSPRGRPID MgNameCreate(void *arg);
 
 /* toueidisp.c */
 void ToueiDispInit(void);
-void ToueiFBCopy(void *arg);
-void ToueiZClear(void *arg);
-void ToueiMatHook(void *arg);
 
 #ifdef __cplusplus
 }
