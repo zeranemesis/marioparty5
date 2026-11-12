@@ -374,8 +374,8 @@ void MdInit(void)
     }
     sys->unk58 = HuPrcChildCreate(fn_1_9100, 108, 4096, 0, sys->objman);
     for(slot=&sys->unk9C[0], j=0; j<7; j++, slot++) {
-        slot->unk0 = 0;
-        slot->unk4 = 0;
+        slot->state = 0;
+        slot->val = 0;
     }
     HuPrcVSleep();
 }
@@ -1030,7 +1030,7 @@ void fn_1_2A3C(void)
                 MdProcTbl[0](0);
                 lbl_1_bss_0 = 1;
                 slot = &sys->unk9C[sys->plSlot[sys->turn]];
-                slot->unk0 = 1;
+                slot->state = 1;
                 sys->step = 3;
             }
             break;
@@ -1039,22 +1039,22 @@ void fn_1_2A3C(void)
             stat = fn_1_9A70();
             if(stat == 0 || stat == 1) {
                 slot = &sys->unk9C[sys->plSlotPrev[sys->turn]];
-                slot->unk0 = 4;
+                slot->state = 4;
                 fn_1_9CC8(stat);
                 sys->plSlotPrev[sys->turn] = sys->plSlot[sys->turn];
                 slot = &sys->unk9C[sys->plSlot[sys->turn]];
-                slot->unk0 = 1;
+                slot->state = 1;
                 fn_1_A094(2);
                 MdProcTbl[9](2);
             } else if(stat == 2) {
                 fn_1_A094(5);
                 if(sys->turn == 0) {
                     slot = &sys->unk9C[sys->plSlot[sys->turn]];
-                    slot->unk0 = 4;
+                    slot->state = 4;
                     sys->step = 4;
                 } else {
                     slot = &sys->unk9C[sys->plSlot[sys->turn]];
-                    slot->unk0 = 4;
+                    slot->state = 4;
                     for(i=0; i<3; i++) {
                         Hu3DMotionShiftSet(model->mdlId[sys->plSlot[sys->turn-1]*3+i+3], model->motId[sys->plSlot[sys->turn-1]*3+i+23], 0.0f, 56.0f, 0);
                     }
@@ -1065,8 +1065,8 @@ void fn_1_2A3C(void)
             } else if(stat == 3) {
                 sys->unk3B[sys->turn] = stat-3;
                 slot = &sys->unk9C[sys->plSlot[sys->turn]];
-                slot->unk0 = 7;
-                slot->unk4 = sys->unk3B[sys->turn];
+                slot->state = 7;
+                slot->val = sys->unk3B[sys->turn];
                 if(sys->turn < 3) {
                     fn_1_A094(4);
                 } else {
@@ -1123,7 +1123,7 @@ void fn_1_2A3C(void)
         case 7:
             MdProcTbl[9](1);
             slot = &sys->unk9C[sys->plSlot[sys->turn]];
-            if(slot->unk0 == 9) {
+            if(slot->state == 9) {
                 MdProcTbl[0](0);
                 for(i=0; i<3; i++) {
                     mdlIdx = sys->plSlot[sys->turn]*3+i+3;
@@ -1167,11 +1167,11 @@ void fn_1_2A3C(void)
         case 8:
             MdProcTbl[9](1);
             slot = &sys->unk9C[sys->plSlot[sys->turn]];
-            if(slot->unk0 == 6) {
+            if(slot->state == 6) {
                 MdProcTbl[0](0);
                 sys->turn--;
                 slot = &sys->unk9C[sys->plSlot[sys->turn]];
-                slot->unk0 = 10;
+                slot->state = 10;
                 if(sys->plChr[sys->turn] != -1 && sys->plChr[sys->turn+1] == -1) {
                     MdMessHelpWinCreate(mess, 0, 0x20004, 0.0, 340.0, 0x200, 0x20, 0.0, 0);
                     MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
@@ -1187,7 +1187,7 @@ void fn_1_2A3C(void)
         case 9:
             MdProcTbl[9](0);
             slot = &sys->unk9C[sys->plSlot[sys->turn]];
-            if(slot->unk0 == 12) {
+            if(slot->state == 12) {
                 MdProcTbl[0](0);
                 sys->unk3B[sys->turn] = 0;
                 for(i=0; i<3; i++) {
@@ -1268,7 +1268,7 @@ void fn_1_2A3C(void)
             Hu3DMotionTimeSet(model->mdlId[2], 0.0f);
             Hu3DModelAttrSet(model->mdlId[2], HU3D_MOTATTR_PAUSE);
             for(slot=&sys->unk9C[0], i=0; i<7; i++, slot++) {
-                slot->unk0 = 0;
+                slot->state = 0;
             }
             fn_1_98C8();
             for(i=0; i<4; i++) {
@@ -1344,7 +1344,7 @@ void fn_1_2A3C(void)
                 MdProcTbl[0](0);
                 for(i=0; i<4; i++) {
                     slot = &sys->unk9C[sys->plSlot[i]];
-                    slot->unk0 = 13;
+                    slot->state = 13;
                 }
                 fn_1_A094(1);
                 WipeColorSet(255, 255, 255);
@@ -2136,6 +2136,207 @@ void fn_1_80A8(void)
         lbl_1_bss_200[i].fingerPos = lbl_1_data_384[i];
         dirB = MdMathMatrixDir(&lbl_1_bss_200[i].pos, &lbl_1_bss_200[i].fingerPos);
         Hu3DMtxRotGet(*dirB, &lbl_1_bss_200[i].fingerRot);
+    }
+}
+
+// remaining diff: operand order of i*3+j+3 index math
+void fn_1_84AC(void)
+{
+    int i;
+    int j;
+    int idx;
+    MDCARD_SLOT *slot;
+    MDMODEL_WORK *model;
+    MDCAMERA_WORK *camWork;
+    HuVecF *pos[3];
+    HuVecF *rot[3];
+    HuVecF *scale[3];
+
+    camWork = sys->camera;
+    model = sys->model;
+    slot = &sys->unk9C[0];
+    for(i=0; i<7; i++, slot++) {
+        for(j=0; j<3; j++) {
+            pos[j] = model->posP[i*3+j+3];
+            rot[j] = model->rotP[i*3+j+3];
+            scale[j] = model->scaleP[i*3+j+3];
+        }
+        switch(slot->state) {
+            case 1:
+                slot->t[0] = 0.0f;
+                slot->t[1] = 0.0f;
+                slot->out[0] = 0.0f;
+                slot->out[1] = 0.0f;
+                slot->fromPos.x = pos[0]->x;
+                slot->fromPos.y = pos[0]->y;
+                slot->fromPos.z = pos[0]->z;
+                slot->toPos.x = lbl_1_bss_2F0[i].pos.x;
+                slot->toPos.y = lbl_1_bss_2F0[i].pos.y;
+                slot->toPos.z = lbl_1_bss_2F0[i].pos.z;
+                slot->state = 2;
+                break;
+
+            case 2:
+                MdMathOscillate(MDMATH_OSC_90, &slot->t[0], &slot->out[0], 8.0f);
+                MdMathOscillate(MDMATH_OSC_180, &slot->t[1], &slot->out[1], 8.0f);
+                MdMathLerpOfs(&pos[0]->x, slot->fromPos.x, slot->toPos.x, slot->out[0], 0.75f*slot->out[1]);
+                MdMathLerpOfs(&pos[0]->y, slot->fromPos.y, slot->toPos.y, slot->out[0], 0.75f*slot->out[1]);
+                MdMathLerpOfs(&pos[0]->z, slot->fromPos.z, slot->toPos.z, slot->out[0], 0.75f*slot->out[1]);
+                for(j=1; j<3; j++) {
+                    *pos[j] = *pos[0];
+                }
+                if(slot->t[0] >= 1.0f) {
+                    slot->state = 3;
+                }
+                break;
+
+            case 4:
+                slot->t[0] = 0.0f;
+                slot->t[1] = 0.0f;
+                slot->out[0] = 0.0f;
+                slot->out[1] = 0.0f;
+                slot->fromPos.x = pos[0]->x;
+                slot->fromPos.y = pos[0]->y;
+                slot->fromPos.z = pos[0]->z;
+                slot->toPos.x = lbl_1_bss_2F0[i].scrPos.x;
+                slot->toPos.y = lbl_1_bss_2F0[i].scrPos.y;
+                slot->toPos.z = lbl_1_bss_2F0[i].scrPos.z;
+                slot->state = 5;
+                break;
+
+            case 5:
+                MdMathOscillate(MDMATH_OSC_90, &slot->t[0], &slot->out[0], 8.0f);
+                MdMathLerp(&pos[0]->x, slot->fromPos.x, slot->toPos.x, slot->out[0]);
+                MdMathLerp(&pos[0]->y, slot->fromPos.y, slot->toPos.y, slot->out[0]);
+                MdMathLerp(&pos[0]->z, slot->fromPos.z, slot->toPos.z, slot->out[0]);
+                for(j=1; j<3; j++) {
+                    *pos[j] = *pos[0];
+                }
+                if(slot->t[0] >= 1.0f) {
+                    slot->state = 6;
+                }
+                break;
+
+            case 7:
+                slot->t[0] = 0.0f;
+                slot->t[1] = 0.0f;
+                slot->out[0] = 0.0f;
+                slot->out[1] = 0.0f;
+                slot->fromPos.x = pos[0]->x;
+                slot->fromPos.y = pos[0]->y;
+                slot->fromPos.z = pos[0]->z;
+                slot->toPos.x = lbl_1_bss_200[sys->turn].pos.x;
+                slot->toPos.y = lbl_1_bss_200[sys->turn].pos.y;
+                slot->toPos.z = lbl_1_bss_200[sys->turn].pos.z;
+                slot->fromRot.x = rot[0]->x;
+                slot->fromRot.y = rot[0]->y;
+                slot->fromRot.z = rot[0]->z;
+                slot->toRot.x = lbl_1_bss_200[sys->turn].rot.x;
+                slot->toRot.y = lbl_1_bss_200[sys->turn].rot.y;
+                slot->toRot.z = lbl_1_bss_200[sys->turn].rot.z;
+                slot->state = 8;
+                break;
+
+            case 8:
+                MdMathOscillate(MDMATH_OSC_90, &slot->t[0], &slot->out[0], 25.0f);
+                MdMathOscillate(MDMATH_OSC_180, &slot->t[1], &slot->out[1], 25.0f);
+                MdMathLerp(&pos[0]->x, slot->fromPos.x, slot->toPos.x, slot->out[0]);
+                MdMathLerp(&pos[0]->y, slot->fromPos.y, slot->toPos.y, slot->out[0]);
+                MdMathLerp(&pos[0]->z, slot->fromPos.z, slot->toPos.z, slot->out[0]);
+                MdMathLerp(&rot[0]->x, slot->fromRot.x, slot->toRot.x, slot->out[0]);
+                MdMathLerp(&rot[0]->y, slot->fromRot.y, slot->toRot.y, slot->out[0]);
+                MdMathLerp(&rot[0]->z, slot->fromRot.z, slot->toRot.z, slot->out[0]);
+                for(j=1; j<3; j++) {
+                    *pos[j] = *pos[0];
+                    *rot[j] = *rot[0];
+                }
+                if(slot->t[0] >= 1.0f) {
+                    slot->state = 9;
+                }
+                break;
+
+            case 10:
+                slot->t[0] = 0.0f;
+                slot->t[1] = 0.0f;
+                slot->out[0] = 0.0f;
+                slot->out[1] = 0.0f;
+                slot->fromPos.x = pos[0]->x;
+                slot->fromPos.y = pos[0]->y;
+                slot->fromPos.z = pos[0]->z;
+                slot->toPos.x = lbl_1_bss_2F0[i].pos.x;
+                slot->toPos.y = lbl_1_bss_2F0[i].pos.y;
+                slot->toPos.z = lbl_1_bss_2F0[i].pos.z;
+                slot->fromRot.x = rot[0]->x;
+                slot->fromRot.y = rot[0]->y;
+                slot->fromRot.z = rot[0]->z;
+                slot->toRot.x = lbl_1_bss_2F0[i].rot.x;
+                slot->toRot.y = lbl_1_bss_2F0[i].rot.y;
+                slot->toRot.z = lbl_1_bss_2F0[i].rot.z;
+                slot->state = 11;
+                break;
+
+            case 11:
+                MdMathOscillate(MDMATH_OSC_90, &slot->t[0], &slot->out[0], 25.0f);
+                MdMathOscillate(MDMATH_OSC_180, &slot->t[1], &slot->out[1], 25.0f);
+                MdMathLerp(&pos[0]->x, slot->fromPos.x, slot->toPos.x, slot->out[0]);
+                MdMathLerp(&pos[0]->y, slot->fromPos.y, slot->toPos.y, slot->out[0]);
+                MdMathLerp(&pos[0]->z, slot->fromPos.z, slot->toPos.z, slot->out[0]);
+                MdMathLerp(&rot[0]->x, slot->fromRot.x, slot->toRot.x, slot->out[0]);
+                MdMathLerp(&rot[0]->y, slot->fromRot.y, slot->toRot.y, slot->out[0]);
+                MdMathLerp(&rot[0]->z, slot->fromRot.z, slot->toRot.z, slot->out[0]);
+                for(j=1; j<3; j++) {
+                    *pos[j] = *pos[0];
+                    *rot[j] = *rot[0];
+                }
+                if(slot->t[0] >= 1.0f) {
+                    slot->state = 12;
+                }
+                break;
+
+            case 13:
+                idx = 0;
+                for(j=0; j<4; j++) {
+                    if(i == sys->plSlot[j]) {
+                        idx = j;
+                        break;
+                    }
+                }
+                slot->t[0] = 0.0f;
+                slot->t[1] = 0.0f;
+                slot->out[0] = 0.0f;
+                slot->out[1] = 0.0f;
+                slot->fromPos.x = pos[0]->x;
+                slot->fromPos.y = pos[0]->y;
+                slot->fromPos.z = pos[0]->z;
+                slot->toPos.x = lbl_1_bss_200[idx].fingerPos.x;
+                slot->toPos.y = lbl_1_bss_200[idx].fingerPos.y;
+                slot->toPos.z = lbl_1_bss_200[idx].fingerPos.z;
+                slot->fromRot.x = rot[0]->x;
+                slot->fromRot.y = rot[0]->y;
+                slot->fromRot.z = rot[0]->z;
+                slot->toRot.x = lbl_1_bss_200[idx].fingerRot.x;
+                slot->toRot.y = lbl_1_bss_200[idx].fingerRot.y;
+                slot->toRot.z = lbl_1_bss_200[idx].fingerRot.z;
+                slot->state = 14;
+                break;
+
+            case 14:
+                MdMathOscillate(MDMATH_OSC_90_REV, &slot->t[0], &slot->out[0], 64.0f);
+                MdMathLerp(&pos[0]->x, slot->fromPos.x, slot->toPos.x, slot->out[0]);
+                MdMathLerp(&pos[0]->y, slot->fromPos.y, slot->toPos.y, slot->out[0]);
+                MdMathLerp(&pos[0]->z, slot->fromPos.z, slot->toPos.z, slot->out[0]);
+                MdMathLerp(&rot[0]->x, slot->fromRot.x, slot->toRot.x, slot->out[0]);
+                MdMathLerp(&rot[0]->y, slot->fromRot.y, slot->toRot.y, slot->out[0]);
+                MdMathLerp(&rot[0]->z, slot->fromRot.z, slot->toRot.z, slot->out[0]);
+                for(j=1; j<3; j++) {
+                    *pos[j] = *pos[0];
+                    *rot[j] = *rot[0];
+                }
+                if(slot->t[0] >= 1.0f) {
+                    slot->state = 15;
+                }
+                break;
+        }
     }
 }
 

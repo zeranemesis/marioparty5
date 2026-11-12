@@ -254,9 +254,15 @@ typedef struct MdCardMsg_s {
 } MDCARD_MSG;
 
 typedef struct MdCardSlot_s {
-    s32 unk0; //0x00
-    s32 unk4; //0x04
-    u8 pad8[0x60 - 0x8];
+    s32 state; //0x00
+    s32 val; //0x04
+    float t[2]; //0x08
+    float out[2]; //0x10
+    u8 pad18[0x30 - 0x18];
+    HuVecF fromPos; //0x30
+    HuVecF toPos; //0x3C
+    HuVecF fromRot; //0x48
+    HuVecF toRot; //0x54
 } MDCARD_SLOT;
 
 typedef struct MdCardCell_s {
