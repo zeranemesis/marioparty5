@@ -30,19 +30,42 @@ typedef struct M534Main_s {
     s32 state;    /* 0x00 */
     s32 timer4;   /* 0x04 */
     s32 busy;     /* 0x08 */
-    s32 unkC;     /* 0x0C */
-    s32 timer10;  /* 0x10 */
+    u32 camPhase; /* 0x0C */
+    u32 camTimer; /* 0x10 */
     s32 phase;    /* 0x14 */
     s32 timer18;  /* 0x18 */
-    s32 unk1C;    /* 0x1C */
-    s32 timer20;  /* 0x20 */
-    s32 unk24[4]; /* 0x24 */
+    s32 endPhase; /* 0x1C */
+    u32 endTimer; /* 0x20 */
+    u32 unk24[4]; /* 0x24 */
     s32 unk34[4]; /* 0x34 */
     s32 unk44[4]; /* 0x44 */
-    s32 unk54;    /* 0x54 */
+    u32 mode;     /* 0x54 */
     u32 flags58;  /* 0x58 */
     u32 flags5C;  /* 0x5C */
 } M534MAIN;
+
+/* camera.c */
+void (*fn_1_19E8(HUPROCESS *proc))(OMOBJ *);
+void (*fn_1_1DF4(HUPROCESS *proc, OMOBJ *obj))(OMOBJ *);
+
+/* player.c */
+void fn_1_2290(HUPROCESS *proc);
+void fn_1_2438(void);
+
+/* stage.c */
+void fn_1_3360(HUPROCESS *proc);
+void fn_1_33E8(void);
+s32 fn_1_4624(void);
+BOOL fn_1_49BC(void);
+BOOL fn_1_49FC(void);
+
+/* effect.c */
+void fn_1_6314(HUPROCESS *proc);
+void fn_1_6338(void);
+
+/* score.c */
+void fn_1_6BDC(HUPROCESS *proc, OMOBJ **mainObj);
+void fn_1_6C74(void);
 
 /* m534.c */
 void fn_1_444(OMOBJ *obj);

@@ -3,17 +3,6 @@
 extern void (*_ctors[])(void);
 extern void (*_dtors[])(void);
 
-extern void (*fn_1_19E8(HUPROCESS *))(OMOBJ *);
-extern void (*fn_1_1DF4(HUPROCESS *, OMOBJ *))(OMOBJ *);
-extern void fn_1_2290(HUPROCESS *);
-extern void fn_1_2438(void);
-extern void fn_1_3360(HUPROCESS *);
-extern void fn_1_33E8(void);
-extern void fn_1_6314(HUPROCESS *);
-extern void fn_1_6338(void);
-extern void fn_1_6BDC(HUPROCESS *, OMOBJ **);
-extern void fn_1_6C74(void);
-
 static void ObjectSetup(void);
 static void fn_1_36C(OMOBJ *obj);
 static void fn_1_648(OMOBJ *obj);
@@ -112,14 +101,14 @@ static void fn_1_36C(OMOBJ *obj)
     memset(m, 0, sizeof(M534MAIN));
     m->state = 0;
     m->timer4 = 0;
-    m->unkC = 0;
-    m->timer10 = 0;
+    m->camPhase = 0;
+    m->camTimer = 0;
     m->phase = 0;
     m->timer18 = 0;
-    m->unk1C = 0;
-    m->timer20 = 0;
+    m->endPhase = 0;
+    m->endTimer = 0;
     m->busy = 0;
-    m->unk54 = 3;
+    m->mode = 3;
     m->unk44[0] = m->unk44[1] = m->unk44[2] = m->unk44[3] = -1;
     m->flags58 = 0;
     m->flags5C = 0;
@@ -131,9 +120,9 @@ void fn_1_444(OMOBJ *obj)
     M534MAIN *m = obj->data;
 
     m->timer4++;
-    m->timer10++;
+    m->camTimer++;
     m->timer18++;
-    m->timer20++;
+    m->endTimer++;
     if (omSysExitReq != 0 && (u32) m->state != 5) {
         m->state = 4;
         if (lbl_1_bss_8 != -1) {
@@ -154,7 +143,7 @@ void fn_1_518(OMOBJ *obj)
             case 0:
                 WipeCreate(1, 5, 60);
                 m->state = 1;
-                m->timer10 = 0;
+                m->camTimer = 0;
                 obj->objFunc = fn_1_19E8(lbl_1_bss_20);
                 break;
             case 1:
@@ -164,7 +153,7 @@ void fn_1_518(OMOBJ *obj)
                 break;
             case 2:
                 m->state = 3;
-                m->timer20 = 0;
+                m->endTimer = 0;
                 obj->objFunc = fn_1_1DF4(lbl_1_bss_20, obj);
                 break;
             case 3:
@@ -286,7 +275,7 @@ s32 fn_1_1694(void)
 
 s32 fn_1_16AC(void)
 {
-    return ((M534MAIN *) lbl_1_bss_1C->data)->unkC;
+    return ((M534MAIN *) lbl_1_bss_1C->data)->camPhase;
 }
 
 s32 fn_1_16C4(void)
@@ -296,12 +285,12 @@ s32 fn_1_16C4(void)
 
 s32 fn_1_16DC(void)
 {
-    return ((M534MAIN *) lbl_1_bss_1C->data)->unk1C;
+    return ((M534MAIN *) lbl_1_bss_1C->data)->endPhase;
 }
 
 void fn_1_16F4(s32 arg)
 {
-    ((M534MAIN *) lbl_1_bss_1C->data)->unk54 = arg;
+    ((M534MAIN *) lbl_1_bss_1C->data)->mode = arg;
 }
 
 s32 fn_1_170C(s32 no)
