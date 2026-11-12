@@ -1,3 +1,4 @@
+#ifndef TARGET_PC
 #include "dolphin/mtx.h"
 
 // Declared here rather than through game/hu3d.h and game/sprite.h: those headers
@@ -207,3 +208,196 @@ void fn_1_2B3C(CEffectParticle *self)
 {
     Hu3DModelAttrSet(self->m_model, 1);
 }
+#else // TARGET_PC
+// The 64-bit port cannot use the compiler's class layout (vtable first, mangled
+// symbol names), so the base classes are plain structs with a hand-written
+// vtable pointer after the data, exactly as polish.cpp and cleaneff.cpp expect,
+// and the constructors and destructors are exported under the GameCube symbols.
+#define _MATH_H
+extern "C" {
+#include "dolphin.h"
+#include "game/object.h"
+#include "game/hu3d.h"
+#include "game/sprite.h"
+
+void *__dl__FPv(void *ptr);
+}
+
+struct CEffectModel;
+struct EffectModelVt {
+    void *m_head[2];
+    void (*m_update)(CEffectModel *self);
+    void (*m_draw)(CEffectModel *self, Mtx *mtx);
+    CEffectModel *(*m_dtor)(CEffectModel *self, s16 flag);
+};
+
+struct CEffectModel {
+    OMOBJMAN *m_objMan;
+    OMOBJ *m_obj;
+    HU3DMODELID m_model;
+    const EffectModelVt *m_vt;
+};
+
+struct CEffectParticle;
+struct EffectParticleVt {
+    void *m_head[2];
+    CEffectParticle *(*m_dtor)(CEffectParticle *self, s16 flag);
+    void (*m_draw)(CEffectParticle *self, Mtx *mtx);
+};
+
+struct CEffectParticle {
+    ANIMDATA *m_anim;
+    HU3DMODELID m_model;
+    HU3DPARTICLE *m_workPtr;
+    const EffectParticleVt *m_vt;
+};
+
+extern "C" {
+void fn_1_26EC(OMOBJ *obj);
+void fn_1_2738(HU3DMODEL *modelP, Mtx *mtx);
+void fn_1_296C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
+void fn_1_28CC(CEffectModel *self, u16 camera);
+void fn_1_2904(CEffectModel *self);
+void fn_1_2938(CEffectModel *self);
+void fn_1_2AD0(CEffectParticle *self, u16 camera);
+void fn_1_2B08(CEffectParticle *self);
+void fn_1_2B3C(CEffectParticle *self);
+void __ct__12CEffectModelFP9Process_sssUs(CEffectModel *self, OMOBJMAN *objMan, s16 layer, s16 prio, u16 camera);
+void __dt__12CEffectModelFv(CEffectModel *self, s32 flag);
+void __ct__15CEffectParticleFilUs(CEffectParticle *self, int dataNum, u32 maxCnt, u16 camera);
+void __dt__15CEffectParticleFv(CEffectParticle *self, s32 flag);
+}
+
+static void EffectModelUpdate(CEffectModel *self)
+{
+}
+
+static void EffectModelDraw(CEffectModel *self, Mtx *mtx)
+{
+}
+
+static CEffectModel *EffectModelDtor(CEffectModel *self, s16 flag)
+{
+    __dt__12CEffectModelFv(self, flag);
+    return self;
+}
+
+static const EffectModelVt sEffectModelVt = { { NULL, NULL }, EffectModelUpdate, EffectModelDraw, EffectModelDtor };
+
+static void EffectParticleDraw(CEffectParticle *self, Mtx *mtx)
+{
+}
+
+static CEffectParticle *EffectParticleDtor(CEffectParticle *self, s16 flag)
+{
+    __dt__15CEffectParticleFv(self, flag);
+    return self;
+}
+
+static const EffectParticleVt sEffectParticleVt = { { NULL, NULL }, EffectParticleDtor, EffectParticleDraw };
+
+extern "C" {
+
+// The object's objFunc forwards to the first virtual.
+void fn_1_26EC(OMOBJ *obj)
+{
+    CEffectModel *self = (CEffectModel *)obj->data;
+    self->m_vt->m_update(self);
+}
+
+// The model's Hu3D hook, registered through Hu3DHookFuncCreate.
+void fn_1_2738(HU3DMODEL *modelP, Mtx *mtx)
+{
+    CEffectModel *self = (CEffectModel *)modelP->hookData;
+    self->m_vt->m_draw(self, mtx);
+}
+
+void __ct__12CEffectModelFP9Process_sssUs(CEffectModel *self, OMOBJMAN *objMan, s16 layer, s16 prio, u16 camera)
+{
+    HU3DMODEL *modelP;
+
+    self->m_vt = &sEffectModelVt;
+    self->m_objMan = objMan;
+    self->m_obj = omAddObjEx(objMan, prio, 0, 0, -1, fn_1_26EC);
+    self->m_obj->data = self;
+    self->m_model = Hu3DHookFuncCreate(fn_1_2738);
+    modelP = &Hu3DData[self->m_model];
+    modelP->hookData = self;
+    Hu3DModelLayerSet(self->m_model, layer);
+    Hu3DModelCameraSet(self->m_model, camera);
+}
+
+void __dt__12CEffectModelFv(CEffectModel *self, s32 flag)
+{
+    if (self != NULL) {
+        self->m_vt = &sEffectModelVt;
+        self->m_obj->data = NULL;
+        omDelObjEx(self->m_objMan, self->m_obj);
+        Hu3DModelKill(self->m_model);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+}
+
+void fn_1_28CC(CEffectModel *self, u16 camera)
+{
+    Hu3DModelCameraSet(self->m_model, camera);
+}
+
+void fn_1_2904(CEffectModel *self)
+{
+    Hu3DModelAttrReset(self->m_model, 1);
+}
+
+void fn_1_2938(CEffectModel *self)
+{
+    Hu3DModelAttrSet(self->m_model, 1);
+}
+
+// The particle's Hu3D hook, registered through Hu3DParticleHookSet.
+void fn_1_296C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+    CEffectParticle *self = (CEffectParticle *)particleP->work;
+    self->m_vt->m_draw(self, (Mtx *)mtx);
+}
+
+void __ct__15CEffectParticleFilUs(CEffectParticle *self, int dataNum, u32 maxCnt, u16 camera)
+{
+    self->m_vt = &sEffectParticleVt;
+    self->m_anim = HuSprAnimRead(HuDataSelHeapReadNum(dataNum, 0x10000000, 2));
+    HuSprAnimLock(self->m_anim);
+    self->m_model = Hu3DParticleCreate(self->m_anim, maxCnt);
+    self->m_workPtr = (HU3DPARTICLE *)Hu3DData[self->m_model].hookData;
+    self->m_workPtr->work = self;
+    fn_1_2AD0(self, camera);
+}
+
+void __dt__15CEffectParticleFv(CEffectParticle *self, s32 flag)
+{
+    if (self != NULL) {
+        self->m_vt = &sEffectParticleVt;
+        HuSprAnimKill(self->m_anim);
+        Hu3DModelKill(self->m_model);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+}
+
+void fn_1_2AD0(CEffectParticle *self, u16 camera)
+{
+    Hu3DModelCameraSet(self->m_model, camera);
+}
+
+void fn_1_2B08(CEffectParticle *self)
+{
+    Hu3DModelAttrReset(self->m_model, 1);
+}
+
+void fn_1_2B3C(CEffectParticle *self)
+{
+    Hu3DModelAttrSet(self->m_model, 1);
+}
+}
+#endif

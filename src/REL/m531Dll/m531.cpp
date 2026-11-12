@@ -204,6 +204,15 @@ void fn_1_100(void *ptr)
     }
 }
 
+#ifdef TARGET_PC
+// The GameCube symbol of operator delete, reached by the other units of the module.
+extern "C" void *__dl__FPv(void *ptr)
+{
+    operator delete(ptr);
+    return ptr;
+}
+#endif
+
 void _prolog(void)
 {
     void (**ctor)(void) = _ctors;
