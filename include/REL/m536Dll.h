@@ -3,9 +3,27 @@
 
 #include "dolphin.h"
 #include "humath.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/hu3d.h"
+#ifdef __cplusplus
+}
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/data.h"
+#ifdef __cplusplus
+}
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/memory.h"
+#ifdef __cplusplus
+}
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -20,9 +38,27 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/pad.h"
+#ifdef __cplusplus
+}
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/process.h"
+#ifdef __cplusplus
+}
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/gamework.h"
+#ifdef __cplusplus
+}
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,7 +73,13 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/sprite.h"
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __cplusplus
 extern "C" {
