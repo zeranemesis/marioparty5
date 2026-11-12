@@ -88,7 +88,7 @@ s32 fn_1_20B8(CClock *self, const M521Vec *a, const M521Vec *b);
 s32 fn_1_22BC(CClock *self, s32 arg);
 f32 fn_1_231C(f32 a, f32 b);
 M521Vec *fn_1_23D8(M521Vec *out, f32 deg);
-void fn_1_2480(CClock *self, s32 idx);
+s32 fn_1_2480(CClock *self, s32 idx);
 s32 fn_1_24D0(CClock *self, f32 angle);
 s32 fn_1_2658(CClock *self, s32 idx, s32 dir);
 s32 fn_1_2998(CClock *self, f32 deg);
@@ -708,9 +708,9 @@ M521Vec *fn_1_23D8(M521Vec *out, f32 deg)
     return out;
 }
 
-void fn_1_2480(CClock *self, s32 idx)
+s32 fn_1_2480(CClock *self, s32 idx)
 {
-    fn_1_2658(self, idx, fn_1_2EFC(self, idx));
+    return fn_1_2658(self, idx, fn_1_2EFC(self, idx));
 }
 
 s32 fn_1_24D0(CClock *self, f32 angle)
