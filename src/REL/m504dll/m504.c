@@ -11,25 +11,9 @@
 #include "game/wipe.h"
 #include "string.h"
 
-/* Debug line drawing: raw FIFO writes on GC, GX vertex calls on PC. */
-#ifdef TARGET_PC
+/* Debug line drawing: the GX vertex inlines write the FIFO on GC and call GX on PC. */
 #define M504_POS(v) GXPosition3f32((v).x, (v).y, (v).z)
 #define M504_COL(c) GXColor4u8((c).r, (c).g, (c).b, (c).a)
-#else
-#define M504_POS(v)           \
-    do {                      \
-        GXWGFifo.f32 = (v).x; \
-        GXWGFifo.f32 = (v).y; \
-        GXWGFifo.f32 = (v).z; \
-    } while (0)
-#define M504_COL(c)          \
-    do {                     \
-        GXWGFifo.u8 = (c).r; \
-        GXWGFifo.u8 = (c).g; \
-        GXWGFifo.u8 = (c).b; \
-        GXWGFifo.u8 = (c).a; \
-    } while (0)
-#endif
 
 typedef struct DbgLine_s {
     Vec a;
@@ -191,7 +175,9 @@ void fn_1_1EC(void)
 
 void fn_1_25C(void)
 {
-    fn_1_C64(lbl_1_bss_0, 0);
+    M504WORK *work = lbl_1_bss_0;
+
+    fn_1_C64(work, 0);
 }
 
 void fn_1_298(void)
