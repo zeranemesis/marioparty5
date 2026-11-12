@@ -2,10 +2,12 @@
 #include "REL/m522Dll.h"
 #include "REL/m522Vec.h"
 
+extern "C" {
 #include "game/audio.h"
 #include "game/gxarray.h"
 #include "game/hu3d.h"
 #include "game/mg/actman.h"
+}
 
 #ifdef TARGET_PC
 #include <math.h>
