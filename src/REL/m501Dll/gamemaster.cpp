@@ -283,8 +283,8 @@ extern "C" void *fn_1_729C(void *self, s16 flag)
     std::vector<HuVec2f_s> *vec = (std::vector<HuVec2f_s> *)self;
     if (vec != 0) {
         fn_1_7328(vec);
-        HuVec2f_s *data = vec->m_data;
-        if (data != 0) {
+        if (vec->data_ref() != 0) {
+            HuVec2f_s *data = vec->begin();
             __dl__FPv(data);
         }
         if (flag > 0) {
@@ -297,10 +297,11 @@ extern "C" void *fn_1_729C(void *self, s16 flag)
 extern "C" void fn_1_7328(void *self)
 {
     std::vector<HuVec2f_s> *vec = (std::vector<HuVec2f_s> *)self;
-    HuVec2f_s *begin = vec->m_data;
-    HuVec2f_s *end = vec->m_data + vec->m_size;
+    HuVec2f_s *begin = vec->begin();
+    HuVec2f_s *end = begin + vec->m_size;
     while (end > begin) {
         end--;
+        HuVec2f_s *p = end;
     }
     vec->m_size = 0;
 }
