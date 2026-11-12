@@ -15,6 +15,55 @@
 
 typedef void (*VoidFunc)(void);
 
+typedef struct MdPinInfo_s {
+    HuVecF scrPos; //0x00
+    HuVecF pos; //0x0C
+    HuVecF rot; //0x18
+    HuVecF fingerPos; //0x24
+    HuVecF fingerRot; //0x30
+} MDPIN_INFO;
+
+typedef struct MdManSel_s {
+    s8 cur; //0x00
+    s8 next; //0x01
+} MDMAN_SEL;
+
+typedef struct MdCamMove_s {
+    HuVecF centerFrom; //0x00
+    HuVecF hvrFrom; //0x0C
+    HuVecF centerTo; //0x18
+    HuVecF hvrTo; //0x24
+} MDCAM_MOVE;
+
+/* .bss, in address order (a function-local static of the original is a file static here) */
+static s8 lbl_1_bss_0;
+static s8 lbl_1_bss_1;
+static s8 lbl_1_bss_2;
+static s32 bgmStream;
+static HuVecF lbl_1_bss_44[3];
+static HuVecF lbl_1_bss_68[3];
+static HuVecF lbl_1_bss_8C[2];
+static HuVecF lbl_1_bss_A4[4];
+static HuVecF lbl_1_bss_D4[2];
+static s8 lbl_1_bss_EC;
+static HuVecF lbl_1_bss_F0;
+static HuVecF lbl_1_bss_FC[4];
+static HuVecF lbl_1_bss_12C[4];
+static float lbl_1_bss_15C;
+static float lbl_1_bss_160;
+static MDMAN_SEL lbl_1_bss_164[4];
+static HuVecF lbl_1_bss_16C[4];
+static HuVecF lbl_1_bss_19C;
+static float lbl_1_bss_1A8;
+static float lbl_1_bss_1AC;
+static HuVecF lbl_1_bss_1B0[2];
+static MDCAM_MOVE lbl_1_bss_1C8;
+static s32 lbl_1_bss_1F8;
+static s32 lbl_1_bss_1FC;
+static MDPIN_INFO lbl_1_bss_200[4];
+static MDPIN_INFO lbl_1_bss_2F0[7];
+
+
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
 
@@ -30,6 +79,7 @@ s16 MdMessWinChoiceGet(MDMESS_WORK *mess, int winNo);
 void MdSpriteCreate(MDSPRITE_WORK *sprite);
 void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
 void MdToueiMdlInit(void);
+Mtx *MdMathMatrixDir(HuVecF *start, HuVecF *end);
 void MdMathOscillate(int type, float *in, float *out, float t);
 void MdMathLerp(float *out, float a, float b, float t);
 void MdMathLerpScale(HuVecF *out, float a, float b, float t);
@@ -77,8 +127,8 @@ s32 fn_1_4DC8(s32 arg0);
 s32 fn_1_4F80(s32 mode);
 s32 fn_1_61F8(s32 mode);
 s32 fn_1_6B0C(s32 mode);
-s32 fn_1_71B8(s32 arg0);
-s32 fn_1_78C4(s32 arg0);
+s32 fn_1_71B8(s32 mode);
+s32 fn_1_78C4(s32 mode);
 void fn_1_7DA0(void);
 void fn_1_84AC(void);
 void fn_1_9100(void);
@@ -97,6 +147,11 @@ s32 fn_1_A204(s32 modelNo, s32 cameraNo);
 
 static float lbl_1_data_0[4] = { 0.64f, 4000.0f, 80.0f, 2500.0f };
 
+static HuVecF lbl_1_data_10[2] = {
+    { 310.0f, 290.0f, 2500.0f },
+    { -70.0f, 200.0f, 150.0f }
+};
+
 void (*MdFlowTbl[6])(void) = {
     fn_1_DD8, fn_1_1058, fn_1_1448, fn_1_1DF0, fn_1_22B8, fn_1_2A3C
 };
@@ -105,12 +160,6 @@ s32 (*MdProcTbl[10])() = {
     fn_1_44F8, fn_1_461C, fn_1_4944, fn_1_4C00, fn_1_4DC8, fn_1_4F80, fn_1_61F8, fn_1_6B0C, fn_1_71B8, fn_1_78C4
 };
 
-static s8 lbl_1_bss_0;
-static s8 lbl_1_bss_1;
-static s8 lbl_1_bss_2;
-static s32 bgmStream;
-static s32 lbl_1_bss_1F8;
-static s32 lbl_1_bss_1FC;
 SYS sysWork;
 SYS *sys;
 SYS *sysP;
@@ -1305,35 +1354,12 @@ void fn_1_2A3C(void)
     }
 }
 
-static HuVecF lbl_1_bss_A4[4];
-static HuVecF lbl_1_bss_D4[2];
-static s8 lbl_1_bss_EC;
-static HuVecF lbl_1_bss_F0;
-static HuVecF lbl_1_bss_FC[4];
 
-typedef struct MdManSel_s {
-    s8 cur; //0x00
-    s8 next; //0x01
-} MDMAN_SEL;
 
-static HuVecF lbl_1_bss_12C[4];
-static float lbl_1_bss_15C;
-static float lbl_1_bss_160;
-static MDMAN_SEL lbl_1_bss_164[4];
-static HuVecF lbl_1_bss_16C[4];
-static HuVecF lbl_1_bss_19C;
 
-typedef struct MdCamMove_s {
-    HuVecF centerFrom; //0x00
-    HuVecF hvrFrom; //0x0C
-    HuVecF centerTo; //0x18
-    HuVecF hvrTo; //0x24
-} MDCAM_MOVE;
 
-static float lbl_1_bss_1A8;
-static float lbl_1_bss_1AC;
-static HuVecF lbl_1_bss_1B0[2];
-static MDCAM_MOVE lbl_1_bss_1C8;
+
+
 
 static HuVecF lbl_1_data_318[2] = {
     { 288.0f, 100.0f, 3000.0f },
@@ -1821,6 +1847,137 @@ s32 fn_1_6B0C(s32 mode)
                 }
             }
         } else if(mode == 1) {
+        }
+        return 1;
+    }
+    return 0;
+}
+
+// remaining diff: extsh on camera bit (see fn_1_4944)
+s32 fn_1_71B8(s32 mode)
+{
+    MDCAMERA_WORK *camWork;
+    MDMODEL_WORK *model;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+    Mtx *mtxP;
+    Mtx rotMtx;
+
+    camWork = sys->camera;
+    model = sys->model;
+    pos = model->posP[2];
+    rot = model->rotP[2];
+    scale = model->scaleP[2];
+    if(sys->procInit == 0) {
+        lbl_1_bss_8C[0].x = lbl_1_data_10[0].x;
+        lbl_1_bss_8C[0].y = lbl_1_data_10[0].y;
+        lbl_1_bss_8C[0].z = lbl_1_data_10[0].z;
+        lbl_1_bss_68[0].x = 0.0f;
+        lbl_1_bss_68[0].y = 0.0f;
+        lbl_1_bss_68[0].z = 0.0f;
+        Hu3D2Dto3D(&lbl_1_bss_8C[0], camWork->camera[0].bit, &lbl_1_bss_68[1]);
+        lbl_1_bss_44[0].x = 0.0f;
+        lbl_1_bss_44[0].y = 0.0f;
+        lbl_1_bss_44[0].z = 0.0f;
+        mtxP = MdMathMatrixDir(&lbl_1_bss_68[1], &camWork->camera[0].pos);
+        PSMTXRotRad(rotMtx, 'X', 1.5707964f);
+        PSMTXConcat(*mtxP, rotMtx, *mtxP);
+        Hu3DMtxRotGet(*mtxP, &lbl_1_bss_44[1]);
+        if(mode == 2) {
+            lbl_1_bss_8C[1].x = 288.0f;
+            lbl_1_bss_8C[1].y = -384.0f;
+            lbl_1_bss_8C[1].z = 2500.0f;
+            Hu3D2Dto3D(&lbl_1_bss_8C[1], camWork->camera[0].bit, &lbl_1_bss_68[2]);
+            lbl_1_bss_44[2].x = 0.0f;
+            lbl_1_bss_44[2].y = -180.0f;
+            lbl_1_bss_44[2].z = 0.0f;
+        }
+        sys->procInit = 1;
+    }
+    if(mode == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 60.0f);
+        MdMathLerp(&pos->x, lbl_1_bss_68[0].x, lbl_1_bss_68[1].x, sys->procOut[0]);
+        MdMathLerp(&pos->y, lbl_1_bss_68[0].y, lbl_1_bss_68[1].y, sys->procOut[0]);
+        MdMathLerp(&pos->z, lbl_1_bss_68[0].z, lbl_1_bss_68[1].z, sys->procOut[0]);
+        MdMathLerp(&rot->x, lbl_1_bss_44[0].x, lbl_1_bss_44[1].x, sys->procOut[0]);
+        MdMathLerp(&rot->y, lbl_1_bss_44[0].y, lbl_1_bss_44[1].y, sys->procOut[0]);
+        MdMathLerp(&rot->z, lbl_1_bss_44[0].z, lbl_1_bss_44[1].z, sys->procOut[0]);
+    } else if(mode == 1) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procT[0], &sys->procOut[0], 30.0f);
+        MdMathLerp(&pos->x, lbl_1_bss_68[1].x, lbl_1_bss_68[0].x, sys->procOut[0]);
+        MdMathLerp(&pos->y, lbl_1_bss_68[1].y, lbl_1_bss_68[0].y, sys->procOut[0]);
+        MdMathLerp(&pos->z, lbl_1_bss_68[1].z, lbl_1_bss_68[0].z, sys->procOut[0]);
+        MdMathLerp(&rot->x, lbl_1_bss_44[1].x, lbl_1_bss_44[0].x, sys->procOut[0]);
+        MdMathLerp(&rot->y, lbl_1_bss_44[1].y, lbl_1_bss_44[0].y, sys->procOut[0]);
+        MdMathLerp(&rot->z, lbl_1_bss_44[1].z, lbl_1_bss_44[0].z, sys->procOut[0]);
+    } else if(mode == 2) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procT[0], &sys->procOut[0], 60.0f);
+        MdMathLerp(&pos->x, lbl_1_bss_68[0].x, lbl_1_bss_68[2].x, sys->procOut[0]);
+        MdMathLerp(&pos->y, lbl_1_bss_68[0].y, lbl_1_bss_68[2].y, sys->procOut[0]);
+        MdMathLerp(&pos->z, lbl_1_bss_68[0].z, lbl_1_bss_68[2].z, sys->procOut[0]);
+        MdMathLerp(&rot->x, lbl_1_bss_44[0].x, lbl_1_bss_44[2].x, sys->procOut[0]);
+        MdMathLerp(&rot->y, lbl_1_bss_44[0].y, lbl_1_bss_44[2].y, sys->procOut[0]);
+        MdMathLerp(&rot->z, lbl_1_bss_44[0].z, lbl_1_bss_44[2].z, sys->procOut[0]);
+        MdMathLerpScale(scale, 1.0f, 0.0f, sys->procOut[0]);
+    }
+    fn_1_98C8();
+    if(sys->procT[0] >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_78C4(s32 mode)
+{
+    MDCAMERA_WORK *camWork;
+    MDMODEL_WORK *model;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+    MDCARD_SLOT *slot;
+
+    camWork = sys->camera;
+    model = sys->model;
+    pos = model->posP[32];
+    rot = model->rotP[32];
+    scale = model->scaleP[32];
+    if(sys->procInit == 0) {
+        if(mode == 0) {
+            slot = &sys->unk9C[sys->plSlot[sys->turn]];
+            *pos = lbl_1_bss_2F0[sys->plSlot[sys->turn]].fingerPos;
+            *rot = lbl_1_bss_2F0[sys->plSlot[sys->turn]].fingerRot;
+            scale->x = 0.0f;
+            scale->y = 0.0f;
+            scale->z = 0.0f;
+            Hu3DModelAttrReset(model->mdlId[32], HU3D_ATTR_DISPOFF);
+            if(sys->plChr[sys->turn] == -1) {
+                Hu3DAnmNoSet(model->animId[0], 4);
+            } else {
+                Hu3DAnmNoSet(model->animId[0], sys->plChr[sys->turn]);
+            }
+        } else if(mode == 1) {
+        } else if(mode == 2) {
+        }
+        sys->procInit = 1;
+    }
+    if(mode == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 15.0f);
+        MdMathOscillate(MDMATH_OSC_180, &sys->procT[1], &sys->procOut[1], 15.0f);
+        MdMathLerpScaleOfs(scale, 0.0f, 4.0f, sys->procOut[0], 2.0f*sys->procOut[1]);
+    } else if(mode == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 15.0f);
+        MdMathLerpScale(scale, 4.0f, 0.0f, sys->procOut[0]);
+    } else if(mode == 2) {
+        slot = &sys->unk9C[sys->plSlot[sys->turn]];
+        *pos = lbl_1_bss_2F0[sys->plSlot[sys->turn]].fingerPos;
+        *rot = lbl_1_bss_2F0[sys->plSlot[sys->turn]].fingerRot;
+    }
+    if(sys->procT[0] >= 1.0f) {
+        if(mode == 0) {
+        } else if(mode == 1) {
+            Hu3DModelAttrSet(model->mdlId[32], HU3D_ATTR_DISPOFF);
+        } else if(mode == 2) {
         }
         return 1;
     }
