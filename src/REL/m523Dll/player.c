@@ -761,9 +761,7 @@ void fn_1_6294(OMOBJ *obj)
     fn_1_E58(&player->pos, &vol, &pan);
     CharModelVoicePanSet(player->charNo, pan);
     CharModelVoiceVolSet(player->charNo, vol);
-    player->velSave.x = player->vel.x;
-    player->velSave.y = player->vel.y;
-    player->velSave.z = player->vel.z;
+    player->velSave = player->vel;
     player->vel.x = player->vel.y = player->vel.z = 0.0f;
     if (lbl_1_bss_18 == 2 && player->shockF != 0 && player->state != 2) {
         fn_1_61E0(player);
@@ -1054,6 +1052,8 @@ static void fn_1_76E4(OMOBJ *obj)
     player = (M523Player *)obj->data;
     if (lbl_1_bss_18 == 4) {
         switch (player->state) {
+            case 0:
+                break;
             case 5:
                 fn_1_3F68(obj, 9);
                 Hu3DMotionSet(player->fuseModel, player->fuseMotLose);
@@ -1079,6 +1079,8 @@ static void fn_1_7898(OMOBJ *obj)
     player = (M523Player *)obj->data;
     if (lbl_1_bss_18 == 4 && (obj->work[0] == 0 || (obj->work[0] -= 1, obj->work[0] == 0))) {
         switch (player->state) {
+            case 0:
+                break;
             case 5:
                 fn_1_3F68(obj, 9);
                 Hu3DMotionSet(player->fuseModel, player->fuseMotWin);
@@ -1123,6 +1125,7 @@ void fn_1_7C84(OMOBJ *obj)
     s32 hit[4][4];
     Point3d diff;
     Point3d relVel;
+    f32 dist;
     s32 i;
     s32 j;
     M523Player *player;
@@ -1147,7 +1150,8 @@ void fn_1_7C84(OMOBJ *obj)
                     other = lbl_1_bss_140[j];
                     if (player != other && other != lbl_1_bss_13C) {
                         PSVECSubtract(&player->pos, &other->pos, &diff);
-                        if (!(PSVECMag(&diff) > (player->radius + other->radius))) {
+                        dist = PSVECMag(&diff);
+                        if (!(dist > (player->radius + other->radius))) {
                             PSVECSubtract(&player->vel, &other->vel, &relVel);
                             PSVECNormalize(&diff, &diff);
                             {
