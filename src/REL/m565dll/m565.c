@@ -221,7 +221,7 @@ static void fn_1_5EC(s16 mode, s16 frameNo)
         }
         MgPlayerVibrateKill(sys->players[3].mg);
         lbl_1_data_0 = 0;
-        game->unkE = 0;
+        game->step = 0;
     }
     mesId = MgSeqGameMesIdGet();
     if (game->bgm >= 0 && (GameMesStatGet(mesId) & 0x10) != 0) {

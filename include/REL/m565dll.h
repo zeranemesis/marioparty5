@@ -113,7 +113,7 @@ typedef struct M565Player_s {
     M565Com com; // 0x20
     HuVecF *pos; // 0x74
     HuVecF *rot; // 0x78
-    u8 pad_7C[4];
+    f32 facing; // 0x7C
     struct M565Player_s *near; // 0x80
     f32 nearDist; // 0x84
     s16 col; // 0x88
@@ -214,9 +214,9 @@ struct M565Game_s {
     u8 pad_04[4];
     s32 frame; // 0x08
     u8 pad_0C[2];
-    s16 unkE; // 0x0E
+    u16 step; // 0x0E
     s32 timer; // 0x10
-    u8 pad_14[4];
+    s32 counter; // 0x14
     M565Sys sys; // 0x18
     s32 enable; // 0x3870
     s32 mesId; // 0x3874
