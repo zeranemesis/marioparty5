@@ -273,17 +273,17 @@ s32 fn_1_1694(void)
     return ((M534MAIN *) lbl_1_bss_1C->data)->state;
 }
 
-s32 fn_1_16AC(void)
+u32 fn_1_16AC(void)
 {
     return ((M534MAIN *) lbl_1_bss_1C->data)->camPhase;
 }
 
-s32 fn_1_16C4(void)
+u32 fn_1_16C4(void)
 {
     return ((M534MAIN *) lbl_1_bss_1C->data)->phase;
 }
 
-s32 fn_1_16DC(void)
+u32 fn_1_16DC(void)
 {
     return ((M534MAIN *) lbl_1_bss_1C->data)->endPhase;
 }
