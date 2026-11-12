@@ -202,6 +202,12 @@ void fn_1_9E0C(M536Player *self)
         cx = limit;
         cz = limit;
         break;
+#ifdef TARGET_PC
+    default:
+        cx = 0.0f;
+        cz = 0.0f;
+        break;
+#endif
     }
     self->m_wait--;
     if (self->m_wait < 0) {

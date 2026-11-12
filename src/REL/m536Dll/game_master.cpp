@@ -94,13 +94,13 @@ void *lbl_1_data_238[12] = {
 s32 lbl_1_bss_9F0;
 s32 lbl_1_bss_9F4;
 s32 lbl_1_bss_9F8;
-s32 lbl_1_bss_9FC;
-s32 lbl_1_bss_A00;
-s32 lbl_1_bss_A04;
-s32 lbl_1_bss_A08;
-s32 lbl_1_bss_A0C;
-s32 lbl_1_bss_A10;
-s32 lbl_1_bss_A14;
+void *lbl_1_bss_9FC;
+void *lbl_1_bss_A00;
+void *lbl_1_bss_A04;
+void *lbl_1_bss_A08;
+void *lbl_1_bss_A0C;
+void *lbl_1_bss_A10;
+void *lbl_1_bss_A14;
 
 // ---------------------------------------------------------------- unit
 
