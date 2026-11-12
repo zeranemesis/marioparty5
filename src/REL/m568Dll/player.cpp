@@ -615,17 +615,29 @@ static void fn_1_11380(Player568 *self)
     Mtx r;
     Quaternion q;
     M568Tube *tube;
+    M568Tube *t0;
+    M568Tube *t1;
+    Vec *pp0;
+    Vec *pp;
+    M568Model *mm;
+    f32 fx;
+    f32 fy;
+    f32 fz;
+    f32 sp;
     s16 modelId;
     s16 mot;
 
     PSMTXRotRad(m, 'Y', 3.1415927f);
-    if (self->tube->down != 0) {
+    t0 = self->tube;
+    t1 = t0;
+    if (t1->down != 0) {
         self->spin = (f32)((f64)self->spin + 6.0);
         if (self->spin > 360.0f) {
             self->spin = (f32)(self->spin - 360.0f);
         }
         PSMTXTransApply(m, m, 0.0f, -50.0f, 0.0f);
-        PSMTXRotRad(r, 'X', 0.017453292f * self->spin);
+        sp = self->spin;
+        PSMTXRotRad(r, 'X', 0.017453292f * sp);
         PSMTXConcat(r, m, m);
         PSMTXTransApply(m, m, 0.0f, 50.0f, 0.0f);
     }
@@ -633,7 +645,13 @@ static void fn_1_11380(Player568 *self)
     PSMTXQuat(r, &q);
     PSMTXConcat(r, m, m);
     tube = self->tube;
-    PSMTXTransApply(m, fn_1_36F0(self->model), tube->pos.x, tube->pos.y, tube->pos.z);
+    pp0 = &tube->pos;
+    pp = pp0;
+    fz = pp->z;
+    fy = pp->y;
+    fx = pp->x;
+    mm = self->model;
+    PSMTXTransApply(m, fn_1_36F0(mm), fx, fy, fz);
     if (self->tube->down != 0) {
         modelId = self->model->id;
         mot = *fn_1_11914(&self->motions, 4);
@@ -723,23 +741,53 @@ static void fn_1_1198C(M568Link *list, s32 *count)
     M568Link *a;
     M568Link *b;
     M568Link *last;
+    M568Link *l;
+    M568Link *it0;
+    M568Link *it1;
+    M568Link *l1;
+    M568Link *e0;
+    M568Link *n0;
+    M568Link *n1;
+    M568Link *nx;
+    Vec *pa0;
+    Vec *pa1;
+    Vec *pb0;
+    Vec *pb1;
+    s32 *c;
 
-    a = list->prev;
-    last = list->next;
+    c = count;
+    it0 = list->prev;
+    it1 = it0;
+    a = it1;
+    l1 = list;
+    l = l1;
+    e0 = l->next;
+    last = e0;
     while (a != last) {
-        b = a->prev;
-        while (b != list) {
-            fn_1_FD38(count, &((Player568 *)a)->pos, &((Player568 *)b)->pos);
-            b = b->prev;
+        n0 = a->prev;
+        b = n0;
+        while (b != l) {
+            pb0 = &((Player568 *)b)->pos;
+            pb1 = pb0;
+            pa0 = &((Player568 *)a)->pos;
+            pa1 = pa0;
+            if (fn_1_5634(pa1, pb1) != 0) {
+                *c = *c + 1;
+            }
+            n1 = b->prev;
+            b = n1;
         }
-        a = a->prev;
+        nx = a->prev;
+        a = nx;
     }
 }
 
 // vector<s32>::insert(pos, n, value)
 static void fn_1_11A4C(PlrVec *v, s32 *pos, u32 n, s32 *val)
 {
-    const u32 max = 0x3FFFFFFF;
+    u32 m1 = 0x3FFFFFFF;
+    u32 m2 = m1;
+    u32 max = m2;
     s32 *end;
     s32 *s;
     s32 *d;
@@ -747,6 +795,15 @@ static void fn_1_11A4C(PlrVec *v, s32 *pos, u32 n, s32 *val)
     s32 *old;
     s32 *src;
     s32 *dst;
+    s32 **pd;
+    s32 *base;
+    PlrVec *w;
+    PlrVec *w2;
+    s32 *lim;
+    s32 *lim2;
+    u32 szc;
+    u32 capv;
+    u32 capc;
     s32 move;
     s32 idx;
     u32 newSize;
@@ -758,8 +815,12 @@ static void fn_1_11A4C(PlrVec *v, s32 *pos, u32 n, s32 *val)
             fn_1_84C(PLR_STDERR, lbl_1_data_646);
             abort();
         }
-        if (v->size + n <= v->cap) {
-            end = v->data + v->size;
+        w = v;
+        capv = w->cap;
+        capc = capv;
+        if (v->size + n <= capc) {
+            pd = &v->data;
+            end = *pd + v->size;
             move = (s32)(end - pos);
             if (end - (move - (s32)n) <= val && val < end) {
                 val = val + n;
@@ -780,14 +841,21 @@ static void fn_1_11A4C(PlrVec *v, s32 *pos, u32 n, s32 *val)
                 dst++;
                 cnt--;
             }
-            v->size = v->size + n;
+            w2 = v;
+            szc = w2->size + n;
+            v->size = szc;
             return;
         }
-        idx = (s32)(pos - v->data);
-        old = v->data;
+        pd = &v->data;
+        base = *pd;
+        idx = (s32)(pos - base);
+        pd = &v->data;
+        old = *pd;
         newSize = v->size + n;
-        if (v->cap != 0) {
-            cap = v->cap;
+        w = v;
+        if (w->cap != 0) {
+            w2 = v;
+            cap = w2->cap;
         } else {
             cap = 1;
         }
@@ -803,68 +871,91 @@ static void fn_1_11A4C(PlrVec *v, s32 *pos, u32 n, s32 *val)
             fn_1_84C(PLR_STDERR, lbl_1_data_663);
             abort();
         }
-        v->data = p;
+        pd = &v->data;
+        *pd = p;
         cnt = n;
-        dst = v->data + idx;
+        pd = &v->data;
+        dst = *pd + idx;
         while (cnt != 0) {
             *dst = *val;
             dst++;
             cnt--;
         }
         if (old != 0) {
-            dst = v->data;
+            pd = &v->data;
+            dst = *pd;
             src = old;
-            while (src < old + idx) {
+            lim = old + idx;
+            lim2 = lim;
+            while (src < lim2) {
                 *dst = *src;
                 src++;
                 dst++;
             }
-            dst = v->data + idx + n;
+            pd = &v->data;
+            dst = *pd + idx + n;
             src = old + idx;
-            while (src < old + v->size) {
+            lim = old + v->size;
+            lim2 = lim;
+            while (src < lim2) {
                 *dst = *src;
                 src++;
                 dst++;
             }
             fn_1_6E0(old);
         }
-        v->size = newSize;
-        v->cap = cap;
+        w2 = v;
+        w2->size = newSize;
+        w = v;
+        w->cap = cap;
     }
 }
 
 // vector<s32>::reserve(n)
 static void fn_1_11E04(PlrVec *v, u32 n)
 {
-    const u32 max = 0x3FFFFFFF;
+    u32 m1 = 0x3FFFFFFF;
+    u32 m2 = m1;
+    u32 max = m2;
     s32 *old;
     s32 *p;
     s32 *src;
     s32 *dst;
+    PlrVec *t0;
+    PlrVec *t1;
+    s32 **pd;
+    s32 *lim;
 
     if (n > v->cap) {
         if (n > max) {
             fn_1_84C(PLR_STDERR, lbl_1_data_67D);
             abort();
         }
-        old = v->data;
+        t0 = v;
+        t1 = t0;
+        pd = &v->data;
+        old = *pd;
         p = (s32 *)fn_1_618(n * sizeof(s32));
         if (p == 0) {
             fn_1_84C(PLR_STDERR, lbl_1_data_663);
             abort();
         }
-        v->data = p;
+        pd = &t1->data;
+        *pd = p;
         if (old != 0) {
-            dst = v->data;
+            pd = &t1->data;
+            dst = *pd;
             src = old;
-            while (src < old + v->size) {
+            lim = old + v->size;
+            while (src < lim) {
                 *dst = *src;
                 src++;
                 dst++;
             }
             fn_1_6E0(old);
         }
-        v->cap = n;
+        t0 = v;
+        t0->cap = n;
     }
 }
 
