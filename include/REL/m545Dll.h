@@ -179,4 +179,25 @@ typedef struct M545PtclWork_s {
     f32 colorStep;
 } M545PtclWork;
 
+/* game-flow block (lbl_1_bss_19C, 0xA4 bytes) */
+typedef struct M545Game_s {
+    u8 pad_00[8];
+    f32 fallSpeed;
+    f32 f0C[12];
+    u8 pad_3C[0x10];
+    s16 winner;
+    s16 timer4E;
+    s16 timer50;
+    s16 flag52;
+    s32 bgmId;
+    s32 jingleId;
+    s32 fxId[12];
+    s16 fxFlag[12];
+} M545Game;
+
+/* per-player block, 0xC8 bytes (lbl_1_bss_C) */
+typedef struct M545Plr_s {
+    u8 raw[0xC8];
+} M545Plr;
+
 #endif
