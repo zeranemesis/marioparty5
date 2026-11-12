@@ -278,7 +278,11 @@ typedef struct Sys_s {
     s8 curSel;                 //0x1F
     s8 prevSel;                //0x20
     s8 selNum;                 //0x21
-    u8 pad22[0x3B - 0x22];     //0x22
+    u8 pad22[0x2E - 0x22];     //0x22
+    s8 plChr[4];               //0x2E
+    s8 plSlot[4];              //0x32
+    s8 plSlotPrev[4];          //0x36
+    s8 turn;                   //0x3A
     s8 unk3B[4];               //0x3B
     u8 pad3F;                  //0x3F
     s16 loadState;             //0x40

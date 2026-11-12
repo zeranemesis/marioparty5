@@ -97,6 +97,9 @@ s32 (*MdProcTbl[10])() = {
     fn_1_44F8, fn_1_461C, fn_1_4944, fn_1_4C00, fn_1_4DC8, fn_1_4F80, fn_1_61F8, fn_1_6B0C, fn_1_71B8, fn_1_78C4
 };
 
+static s8 lbl_1_bss_0;
+static s8 lbl_1_bss_1;
+static s8 lbl_1_bss_2;
 static s32 bgmStream;
 static s32 lbl_1_bss_1F8;
 static s32 lbl_1_bss_1FC;
@@ -904,6 +907,391 @@ void fn_1_22B8(void)
                 MdProcTbl[0](0);
                 sys->step = 0;
                 sys->flowMode = 5;
+            }
+            break;
+    }
+}
+
+// remaining diff: temp register allocation / operand order of index math (logic complete)
+void fn_1_2A3C(void)
+{
+    int i;
+    MDMODEL_WORK *model;
+    MDCARD_SLOT *slot;
+    MDMESS_WORK *mess;
+    int stat;
+    int mdlIdx;
+    MDCARD_CELL *cell;
+    int j;
+    int motIdx;
+    s32 *state;
+    MDSPRITE_WORK *sprite;
+
+    model = sys->model;
+    sprite = sys->sprite;
+    mess = sys->mess;
+    state = &sys->unk38C;
+    switch(sys->step) {
+        case 0:
+            sys->turn = 0;
+            sys->plSlot[sys->turn] = 0;
+            sys->plSlotPrev[sys->turn] = 0;
+            MdProcTbl[0](0);
+            MdMessWinHomeClear(mess, 2);
+            MdMessWinInsertMesSet(mess, 2, 0x15000E, sys->plChr[sys->turn] + 0x15001C);
+            sys->step = 1;
+            break;
+
+        case 1:
+            stat = MdProcTbl[8](0);
+            if(stat == 1) {
+                fn_1_80A8(MdProcTbl[0](0));
+                sys->step = 2;
+            }
+            break;
+
+        case 2:
+            stat = MdProcTbl[9](0);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                lbl_1_bss_0 = 1;
+                slot = &sys->unk9C[sys->plSlot[sys->turn]];
+                slot->unk0 = 1;
+                sys->step = 3;
+            }
+            break;
+
+        case 3:
+            stat = fn_1_9A70();
+            if(stat == 0 || stat == 1) {
+                slot = &sys->unk9C[sys->plSlotPrev[sys->turn]];
+                slot->unk0 = 4;
+                fn_1_9CC8(stat);
+                sys->plSlotPrev[sys->turn] = sys->plSlot[sys->turn];
+                slot = &sys->unk9C[sys->plSlot[sys->turn]];
+                slot->unk0 = 1;
+                fn_1_A094(2);
+                MdProcTbl[9](2);
+            } else if(stat == 2) {
+                fn_1_A094(5);
+                if(sys->turn == 0) {
+                    slot = &sys->unk9C[sys->plSlot[sys->turn]];
+                    slot->unk0 = 4;
+                    sys->step = 4;
+                } else {
+                    slot = &sys->unk9C[sys->plSlot[sys->turn]];
+                    slot->unk0 = 4;
+                    for(i=0; i<3; i++) {
+                        Hu3DMotionShiftSet(model->mdlId[sys->plSlot[sys->turn-1]*3+i+3], model->motId[sys->plSlot[sys->turn-1]*3+i+23], 0.0f, 56.0f, 0);
+                    }
+                    cell = &sys->unk33C[sys->turn-1];
+                    cell->unk0 = 4;
+                    sys->step = 8;
+                }
+            } else if(stat == 3) {
+                sys->unk3B[sys->turn] = stat-3;
+                slot = &sys->unk9C[sys->plSlot[sys->turn]];
+                slot->unk0 = 7;
+                slot->unk4 = sys->unk3B[sys->turn];
+                if(sys->turn < 3) {
+                    fn_1_A094(4);
+                } else {
+                    fn_1_A094(3);
+                }
+                for(i=0; i<3; i++) {
+                    mdlIdx = sys->plSlot[sys->turn]*3+i+3;
+                    motIdx = sys->plSlot[sys->turn]*3+i+23;
+                    Hu3DMotionSet(model->mdlId[mdlIdx], model->motId[motIdx]);
+                    Hu3DMotionTimeSet(model->mdlId[mdlIdx], 0.0f);
+                    Hu3DModelAttrReset(model->mdlId[mdlIdx], HU3D_MOTATTR_LOOP);
+                    Hu3DModelAttrSet(model->mdlId[mdlIdx], HU3D_MOTATTR_PAUSE);
+                    if(i == sys->unk3B[sys->turn]) {
+                        Hu3DModelAttrReset(model->mdlId[mdlIdx], HU3D_ATTR_DISPOFF);
+                    } else {
+                        Hu3DModelAttrSet(model->mdlId[mdlIdx], HU3D_ATTR_DISPOFF);
+                    }
+                }
+                sys->step = 7;
+            }
+            break;
+
+        case 4:
+            stat = MdProcTbl[9](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 5;
+            }
+            break;
+
+        case 5:
+            stat = MdProcTbl[8](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 6;
+            }
+            break;
+
+        case 6:
+            stat = MdProcTbl[7](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x15000D - sys->curSel);
+                if(sys->selNum == 1) {
+                    sys->step = 3;
+                } else {
+                    sys->step = 2;
+                }
+                sys->flowMode = 4;
+            }
+            break;
+
+        case 7:
+            MdProcTbl[9](1);
+            slot = &sys->unk9C[sys->plSlot[sys->turn]];
+            if(slot->unk0 == 9) {
+                MdProcTbl[0](0);
+                for(i=0; i<3; i++) {
+                    mdlIdx = sys->plSlot[sys->turn]*3+i+3;
+                    motIdx = sys->plSlot[sys->turn]*3+i+2;
+                    Hu3DMotionSet(model->mdlId[mdlIdx], model->motId[motIdx]);
+                    Hu3DMotionTimeSet(model->mdlId[mdlIdx], 0.0f);
+                    Hu3DModelAttrReset(model->mdlId[mdlIdx], HU3D_MOTATTR_PAUSE);
+                    Hu3DModelAttrSet(model->mdlId[mdlIdx], HU3D_MOTATTR_LOOP);
+                }
+                cell = &sys->unk33C[sys->turn];
+                cell->unk0 = 1;
+                sys->turn++;
+                if(sys->turn >= 4) {
+                    if(sys->plChr[3] == -1) {
+                        MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
+                        MdMessWinMesSet(mess, 2, 0x15000F);
+                        sys->unk390 = 2;
+                    } else {
+                        MdMessWinClose(mess, 0);
+                        MdMessWinHomeClear(mess, 2);
+                        MdMessWinMesSet(mess, 2, 0x15000F);
+                    }
+                    sys->step = 10;
+                } else {
+                    sys->plSlot[sys->turn] = sys->plSlot[sys->turn-1];
+                    fn_1_9CC8(1);
+                    sys->plSlotPrev[sys->turn] = sys->plSlot[sys->turn];
+                    if(sys->plChr[sys->turn] != -1) {
+                        MdMessWinHomeClear(mess, 2);
+                        MdMessWinInsertMesSet(mess, 2, 0x15000E, sys->plChr[sys->turn] + 0x15001C);
+                    } else if(sys->plChr[sys->turn-1] != -1) {
+                        MdMessWinClose(mess, 0);
+                        MdMessWinKill(mess, 2);
+                        sys->unk390 = 3;
+                    }
+                    sys->step = 2;
+                }
+            }
+            break;
+
+        case 8:
+            MdProcTbl[9](1);
+            slot = &sys->unk9C[sys->plSlot[sys->turn]];
+            if(slot->unk0 == 6) {
+                MdProcTbl[0](0);
+                sys->turn--;
+                slot = &sys->unk9C[sys->plSlot[sys->turn]];
+                slot->unk0 = 10;
+                if(sys->plChr[sys->turn] != -1 && sys->plChr[sys->turn+1] == -1) {
+                    MdMessHelpWinCreate(mess, 0, 0x20004, 0.0, 340.0, 0x200, 0x20, 0.0, 0);
+                    MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
+                    MdMessWinInsertMesSet(mess, 2, 0x15000E, sys->plChr[sys->turn] + 0x15001C);
+                } else if(sys->plChr[sys->turn] != -1) {
+                    MdMessWinHomeClear(mess, 2);
+                    MdMessWinInsertMesSet(mess, 2, 0x15000E, sys->plChr[sys->turn] + 0x15001C);
+                }
+                sys->step = 9;
+            }
+            break;
+
+        case 9:
+            MdProcTbl[9](0);
+            slot = &sys->unk9C[sys->plSlot[sys->turn]];
+            if(slot->unk0 == 12) {
+                MdProcTbl[0](0);
+                sys->unk3B[sys->turn] = 0;
+                for(i=0; i<3; i++) {
+                    mdlIdx = sys->plSlot[sys->turn]*3+i+3;
+                    if(i == sys->unk3B[sys->turn]) {
+                        Hu3DModelAttrReset(model->mdlId[mdlIdx], HU3D_ATTR_DISPOFF);
+                    } else {
+                        Hu3DModelAttrSet(model->mdlId[mdlIdx], HU3D_ATTR_DISPOFF);
+                    }
+                }
+                sys->step = 3;
+            }
+            break;
+
+        case 10:
+            stat = MdMessWinChoiceGet(mess, 2);
+            if(stat == -1 || stat == 1) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150010);
+                sys->step = 11;
+            } else if(stat == 0) {
+                for(i=0; i<4; i++) {
+                    Hu3DModelLayerSet(model->mdlId[sys->plSlot[i]*3+sys->unk3B[i]+3], 2);
+                }
+                MdMessWinKill(mess, 2);
+                sys->unk390 = 3;
+                Hu3DModelAttrReset(model->mdlId[2], HU3D_MOTATTR_PAUSE);
+                Hu3DModelAttrSet(model->mdlId[2], HU3D_MOTATTR_REV);
+                Hu3DMotionSpeedSet(model->mdlId[2], 4.0f);
+                fn_1_A094(10);
+                fn_1_9E88();
+                sys->loadState = 1;
+                sys->loadDirNo = DATA_card;
+                sys->step = 16;
+            }
+            break;
+
+        case 11:
+            stat = MdMessWinChoiceGet(mess, 2);
+            if(stat == -1 || stat == 1) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150002);
+                sys->step = 12;
+            } else if(stat == 0) {
+                sys->step = 13;
+            }
+            break;
+
+        case 12:
+            stat = MdMessWinChoiceGet(mess, 2);
+            if(stat == -1 || stat == 1) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x15000F);
+                sys->step = 10;
+            } else if(stat == 0) {
+                fn_1_A094(1);
+                WipeColorSet(255, 255, 255);
+                WipeCreate(2, 0, 30);
+                sys->loadState = 1;
+                sys->loadDirNo = DATA_mdomake;
+                sys->step = 14;
+            }
+            break;
+
+        case 13:
+            WipeColorSet(0, 0, 0);
+            WipeCreate(2, 0, 30);
+            while(WipeCheckEnd()) {
+                HuPrcVSleep();
+            }
+            MdMessWinHomeClear(mess, 2);
+            model->posP[2]->x = 0.0f;
+            model->posP[2]->y = 0.0f;
+            model->posP[2]->z = 0.0f;
+            model->rotP[2]->x = 0.0f;
+            model->rotP[2]->y = 0.0f;
+            model->rotP[2]->z = 0.0f;
+            Hu3DMotionTimeSet(model->mdlId[2], 0.0f);
+            Hu3DModelAttrSet(model->mdlId[2], HU3D_MOTATTR_PAUSE);
+            for(slot=&sys->unk9C[0], i=0; i<7; i++, slot++) {
+                slot->unk0 = 0;
+            }
+            fn_1_98C8();
+            for(i=0; i<4; i++) {
+                sys->unk3B[i] = 0;
+            }
+            for(i=0; i<7; i++) {
+                for(j=0; j<3; j++) {
+                    if(j == 0) {
+                        Hu3DModelAttrReset(model->mdlId[i*3+j+3], HU3D_ATTR_DISPOFF);
+                    } else {
+                        Hu3DModelAttrSet(model->mdlId[i*3+j+3], HU3D_ATTR_DISPOFF);
+                    }
+                    Hu3DMotionSet(model->mdlId[i*3+j+3], model->motId[i*3+j+23]);
+                    Hu3DMotionTimeSet(model->mdlId[i*3+j+3], 0.0f);
+                    Hu3DModelAttrSet(model->mdlId[i*3+j+3], HU3D_MOTATTR_PAUSE);
+                }
+            }
+            MdSpriteDispSet(sprite, 2, FALSE);
+            for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
+                cell->unk0 = 0;
+            }
+            WipeColorSet(0, 0, 0);
+            WipeCreate(1, 0, 30);
+            while(WipeCheckEnd()) {
+                HuPrcVSleep();
+            }
+            sys->step = 0;
+            sys->flowMode = 3;
+            break;
+
+        case 14:
+            stat = WipeCheckEnd();
+            if(stat == 0) {
+                sys->step = 15;
+            }
+            break;
+
+        case 15:
+            if(sys->loadState == 2) {
+                sys->ovlMode = 2;
+                sys->ovlNo = 0x5E;
+                sys->skipWipeF = 1;
+                sys->exitF = 1;
+            }
+            break;
+
+        case 16:
+            if(Hu3DMotionEndCheck(model->mdlId[2]) == 1) {
+                for(i=0; i<7; i++) {
+                    if(i != sys->plSlot[0] && i != sys->plSlot[1] && i != sys->plSlot[2] && i != sys->plSlot[3]) {
+                        Hu3DModelAttrSet(model->mdlId[i*3+3], HU3D_ATTR_DISPOFF);
+                    }
+                }
+                sys->step = 17;
+            }
+            break;
+
+        case 17:
+            stat = MdProcTbl[8](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                *state = 1;
+                for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
+                    cell->unk0 = 4;
+                }
+                sys->step = 18;
+            }
+            break;
+
+        case 18:
+            stat = MdProcTbl[8](2);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                for(i=0; i<4; i++) {
+                    slot = &sys->unk9C[sys->plSlot[i]];
+                    slot->unk0 = 13;
+                }
+                fn_1_A094(1);
+                WipeColorSet(255, 255, 255);
+                WipeCreate(2, 0, 60);
+                sys->step = 19;
+            }
+            break;
+
+        case 19:
+            stat = WipeCheckEnd();
+            if(stat == 0) {
+                sys->step = 20;
+            }
+            break;
+
+        case 20:
+            if(sys->loadState == 2) {
+                sys->ovlMode = 0;
+                sys->ovlNo = 2;
+                sys->skipWipeF = 1;
+                sys->exitF = 1;
             }
             break;
     }
