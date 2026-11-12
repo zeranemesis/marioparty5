@@ -249,8 +249,10 @@ typedef struct RescardPlayer_s {
 typedef struct RescardCard_s {
     s8 kind; //0x00 0 = zero card, 1 = star card
     s8 state; //0x01
-    s8 id; //0x02
-    u8 pad03[9];
+    s8 id; //0x02 model slot (MDMODEL_DRAW + n)
+    u8 pad03;
+    float oscT; //0x04
+    float oscOut; //0x08
 } RESCARD_CARD;
 
 typedef struct RescardDraw_s {
