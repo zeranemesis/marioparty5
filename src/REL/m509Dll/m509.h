@@ -1,0 +1,55 @@
+#ifndef M509_H
+#define M509_H
+
+#include "game/data.h"
+#include "game/hu3d.h"
+#include "game/sprite.h"
+
+extern "C" {
+#include "game/mg/timer.h"
+}
+#include "REL/m509Dll/m509types.h"
+
+#ifdef __MWERKS__
+#define XX_RODATA __declspec(section ".rodata")
+#else
+#define XX_RODATA
+#endif
+
+typedef struct {
+    s16 grp;
+    f32 x;
+    f32 y;
+} StartSprEntry;
+
+typedef struct StartSpr {
+    void *base[2];
+    void **vtbl;
+    u32 flags;
+    u8 fadeOut;
+    s32 timer;
+    f32 alpha;
+    StartSprEntry entry[4];
+} StartSpr;
+
+/* Pointer to member function in the CodeWarrior layout (adjustment, vtable index or -1, function). */
+extern "C" {
+void fn_1_0(const char *cond, const char *file, s32 line);
+void *fn_1_104(s32 size);
+void fn_1_21C(void *self);
+void fn_1_E48(void *self);
+void fn_1_E54(void *self, s32 flag);
+void fn_1_F14(void *self, void *base);
+extern u8 lbl_1_bss_1C[];
+extern u8 lbl_1_data_1C4[];
+
+/* model wrappers (m509.cpp); a model is an s16 handle */
+s16 *fn_1_3BBC(s16 *model, s32 dataNum);
+void fn_1_3E1C(s16 *model, Vec *pos);
+void fn_1_3E64(s16 *model, Vec *rot);
+void fn_1_3EAC(s16 *model, Vec *scale);
+void fn_1_3F74(s16 *model, s16 layer);
+s16 *fn_1_401C(s16 *model, s16 flag);
+}
+
+#endif

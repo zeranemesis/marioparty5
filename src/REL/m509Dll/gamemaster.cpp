@@ -1,4 +1,8 @@
-#include "dolphin/types.h"
+#include "game/hu3d.h"
+extern "C" {
+#include "game/mg/timer.h"
+}
+#include "REL/m509Dll/m509types.h"
 
 extern "C" {
 void *fn_1_2B68(void *self);
@@ -55,12 +59,12 @@ void fn_1_FDB0(void);
  * in maze.o, so from this unit it is only a reference. The five below are
  * the other per-object singletons and this unit owns all of them: the target
  * object carries them as B at .bss 0x00, 0x04, 0x08, 0x0c, 0x10. */
-extern u32 lbl_1_bss_30;
+extern void *lbl_1_bss_30;
 u32 lbl_1_bss_38;
 u32 lbl_1_bss_3C;
 u32 lbl_1_bss_40;
-u32 lbl_1_bss_44;
-u32 lbl_1_bss_48;
+void *lbl_1_bss_44;
+void *lbl_1_bss_48;
 
 /* These five are in the object's .data, not .rodata: the assert call takes
  * their addresses through R_PPC_ADDR16_HA/LO, so they must be writable
@@ -75,15 +79,16 @@ int printf(const char *fmt, ...);
 
 // singleton.h reaches the singleton through its address, so every access is a
 // lis/addi pair followed by a load or store at offset 0.
+#ifdef TARGET_PC
+#define SINGLETON (*(u64 *)&lbl_1_bss_30)
+#else
 #define SINGLETON (*(u32 *)&lbl_1_bss_30)
+#endif
+#include <stddef.h>
+#define GM(p_) ((M509GameMaster *)(p_))
 
 typedef void (*VoidFunc)(void *self);
 
-typedef struct {
-    f32 x;
-    f32 y;
-    f32 z;
-} Vec;
 
 void fn_1_C3E8(void *self);
 void fn_1_C4A8(void *self);
@@ -118,11 +123,11 @@ VoidFunc lbl_1_data_32D4[13] = {
 void *__dt__Q24m50911CGameMasterFv(void *self, s16 flag)
 {
     if (self) {
-        *(VoidFunc **)((u32)self + 4) = lbl_1_data_32D4;
-        *(VoidFunc **)((u32)self + 0x20) = &lbl_1_data_32D4[6];
+        GM(self)->core.vtbl = (void **)lbl_1_data_32D4;
+        GM(self)->sub.vtbl = (void **)&lbl_1_data_32D4[6];
         printf(lbl_1_data_32A2, lbl_1_data_3280);
-        fn_1_4E04((void *)((u32)self + 0x358), -1);
-        fn_1_9E8((void *)((u32)self + 0x20), 0);
+        fn_1_4E04(&GM(self)->timer, -1);
+        fn_1_9E8(&GM(self)->sub, 0);
         fn_1_2CF4(self, 0);
         if (flag > 0) {
             fn_1_2944(self);
@@ -134,16 +139,16 @@ void *__dt__Q24m50911CGameMasterFv(void *self, s16 flag)
 void fn_1_C3E8(void *self)
 {
     setSeed__7CRandomFi(OSGetTick());
-    void *r30 = fn_1_104(0x14);
+    void *r30 = fn_1_104(sizeof(PlayerMgr));
     if (r30) {
         r30 = fn_1_EB14(r30);
     }
-    void *r29 = fn_1_104(0x48);
+    void *r29 = fn_1_104(sizeof(Camera));
     if (r29) {
         r29 = fn_1_DEEC(r29);
     }
     for (s32 i = 0; i < 4; i++) {
-        void *r28 = fn_1_104(0x7C);
+        void *r28 = fn_1_104(sizeof(Player));
         if (r28) {
             r28 = fn_1_F1FC(r28, i);
         }
@@ -153,7 +158,7 @@ void fn_1_C3E8(void *self)
 
 void fn_1_C4A8(void *self)
 {
-    fn_1_BEC((void *)((u32)self + 0x20), 0);
+    fn_1_BEC(&GM(self)->sub, 0);
     fn_1_39AC();
     fn_1_F7E0();
 }
@@ -163,15 +168,15 @@ void fn_1_C4A8(void *self)
 // at r27/r26/r25. Declaration order decides the ladder (BRIEF 6).
 void fn_1_C4E0(void *self)
 {
-    void *r30 = fn_1_104(0xCC);
+    void *r30 = fn_1_104(sizeof(Back));
     if (r30) {
         r30 = fn_1_CED0(r30);
     }
-    void *r29 = fn_1_104(0x28);
+    void *r29 = fn_1_104(sizeof(BackSky));
     if (r29) {
         r29 = fn_1_D98C(r29);
     }
-    void *r28 = fn_1_104(0x418);
+    void *r28 = fn_1_104(sizeof(Maze));
     if (r28) {
         r28 = fn_1_5A7C(r28);
     }
@@ -186,26 +191,26 @@ void fn_1_C4E0(void *self)
         if (SINGLETON) {
             fn_1_0(lbl_1_data_32A6, lbl_1_data_32B6, 0x35);
         }
-        lbl_1_bss_30 = (u32)ms;
+        lbl_1_bss_30 = ms;
     }
     fn_1_3888(0);
     fn_1_381C();
     HuAudFXPlay(0x692);
     for (s32 i = 0; i < 0xB4; i++) {
-        fn_1_CE8((void *)((u32)self + 0x20), 0);
+        fn_1_CE8(&GM(self)->sub, 0);
     }
     fn_1_3888(1);
     u32 r19 = HuAudBGMPlay(0x3E);
     fn_1_3334();
     while (!fn_1_34A4()) {
-        fn_1_CE8((void *)((u32)self + 0x20), 0);
+        fn_1_CE8(&GM(self)->sub, 0);
     }
     s32 r23 = 0;
     s32 r25 = 0;
     s32 r26 = 0;
     fn_1_3888(2);
-    fn_1_4E60((void *)((u32)self + 0x358), 0xA8C, 0, 0);
-    fn_1_4F58((void *)((u32)self + 0x358), 1);
+    fn_1_4E60(&GM(self)->timer, 0xA8C, 0, 0);
+    fn_1_4F58(&GM(self)->timer, 1);
     while (true) {
         s32 r0 = r25 * 0x3C;
         if (r26 < r0) {
@@ -220,25 +225,25 @@ void fn_1_C4E0(void *self)
                 fn_1_0(lbl_1_data_32C2, lbl_1_data_32B6, 0x27);
                 break;
             }
-            u32 ms = lbl_1_bss_30;
-            fn_1_C224((void *)ms, irandom__7CRandomFv());
+            void *ms = lbl_1_bss_30;
+            fn_1_C224(ms, irandom__7CRandomFv());
             HuAudFXPlayVol(0x68F, fn_1_E1A0(&vec));
             fn_1_FA3C();
             r23++;
             r25 += 2;
             r26++;
         } else {
-            fn_1_CE8((void *)((u32)self + 0x20), 0);
+            fn_1_CE8(&GM(self)->sub, 0);
             if (fn_1_C85C(self) == 0) continue;
             break;
         }
     }
-    fn_1_504C((void *)((u32)self + 0x35C));
+    fn_1_504C(&GM(self)->timer);
     fn_1_3888(3);
     HuAudSStreamFadeOut(r19, 0x64);
     fn_1_33EC();
     for (s32 i = 0; i < 0xB4; i++) {
-        fn_1_CE8((void *)((u32)self + 0x20), -1);
+        fn_1_CE8(&GM(self)->sub, -1);
     }
     fn_1_3888(4);
     fn_1_FDB0();
@@ -246,11 +251,11 @@ void fn_1_C4E0(void *self)
     HuAudJinglePlay(r20);
     fn_1_3578();
     while (!fn_1_34A4()) {
-        fn_1_CE8((void *)((u32)self + 0x20), 0);
+        fn_1_CE8(&GM(self)->sub, 0);
     }
     fn_1_3874();
     while (true) {
-        fn_1_CE8((void *)((u32)self + 0x20), -1);
+        fn_1_CE8(&GM(self)->sub, -1);
     }
 }
 
@@ -281,7 +286,7 @@ void *fn_1_C7D0(void *self, s16 arg)
 s32 fn_1_C85C(void *self)
 {
     s32 ret = 1;
-    u32 val = fn_1_50B4((void *)((u32)self + 0x358));
+    u32 val = fn_1_50B4(&GM(self)->timer);
     if ((u8)val != 0) {
         ret = 0;
     } else if (fn_1_F864(val) == 0) {
@@ -311,23 +316,23 @@ void fn_1_C8E0(void)
 // (b, not bl); MWCC -O0 never emits a tail call.
 void fn_1_C914(void *self)
 {
-    fn_1_C4E0((void *)((u32)self - 0x20));
+    fn_1_C4E0((void *)((u8 *)self - offsetof(M509GameMaster, sub)));
 }
 
 // NONMATCHING: virtual-base adjustor thunk, same reason as fn_1_C914.
 void fn_1_C91C(void *self)
 {
-    __dt__Q24m50911CGameMasterFv((void *)((u32)self - 0x20), 1);
+    __dt__Q24m50911CGameMasterFv((void *)((u8 *)self - offsetof(M509GameMaster, sub)), 1);
 }
 
 void *fn_1_C2D0(void *self)
 {
     fn_1_2B68(self);
-    fn_1_7C8((void *)((u32)self + 0x20), 0x10000);
-    *(VoidFunc **)((u32)self + 4) = lbl_1_data_32D4;
-    *(VoidFunc **)((u32)self + 0x20) = &lbl_1_data_32D4[6];
-    fn_1_4D3C((void *)((u32)self + 0x358), 0);
-    setSeed__8CMT19937Fi((void *)((u32)self + 0x35C), 0x1571);
+    fn_1_7C8(&GM(self)->sub, 0x10000);
+    GM(self)->core.vtbl = (void **)lbl_1_data_32D4;
+    GM(self)->sub.vtbl = (void **)&lbl_1_data_32D4[6];
+    fn_1_4D3C(&GM(self)->timer, 0);
+    setSeed__8CMT19937Fi(&GM(self)->mt, 0x1571);
     return self;
 }
 }
