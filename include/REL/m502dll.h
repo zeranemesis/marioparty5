@@ -148,7 +148,33 @@ typedef struct M502Opening_s {
     s16 esp[3];     /* 0x1C */
     s16 pad22;
 } M502OPENING;
-typedef struct M502Bat_s { u8 raw[0x248]; } M502BAT;
+typedef struct M502BatItem_s {
+    struct M502Bat_s *bat;
+    u16 state;      /* 0x04 */
+    u16 t;          /* 0x06 */
+    u16 t2;         /* 0x08 */
+    u16 k;          /* 0x0A */
+    s16 model;      /* 0x0C */
+    s16 mot0;       /* 0x0E */
+    s16 mot1;       /* 0x10 */
+    s16 mot2;       /* 0x12 */
+    s32 visible;    /* 0x14 */
+    Vec pos;        /* 0x18 */
+    f32 offX;       /* 0x24 */
+    f32 offY;       /* 0x28 */
+    f32 offZ;       /* 0x2C */
+    Vec rot;        /* 0x30 */
+    s32 dir;        /* 0x3C */
+    s32 unk40;
+    f32 power;      /* 0x44 */
+} M502BATITEM;
+
+typedef struct M502Bat_s {
+    struct M502Player_s *player;
+    u16 phase;      /* 0x04 */
+    u16 pad6;
+    M502BATITEM item[8]; /* 0x08 */
+} M502BAT;
 
 /* models loaded once per game (0x35C bytes on GC) */
 typedef struct M502Models_s {
@@ -269,6 +295,9 @@ void fn_1_5848(M502AI *ai);
 void fn_1_6E1C(Vec *pos, s16 *lvl, s16 *row, s16 *col);
 
 /* block.c */
+void Hu3D3Dto2D(Vec *pos, s32 camBit, Vec *out);
+void fn_1_6CFC(s16 lvl, s16 row, s16 col, Vec *out);
+s32 fn_1_6CB8(Vec *v);
 void fn_1_6664(M502BLOCK *b, s32 no, M502PLAYER *player);
 void fn_1_6778(M502BLOCK *b);
 void fn_1_6808(M502BLOCK *b);
