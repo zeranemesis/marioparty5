@@ -71,6 +71,8 @@ void fn_1_8A40(M504PLAYER *player);
 void fn_1_91B0(M504PLAYER *player);
 void fn_1_9334(M504PLAYER *player);
 
+char lbl_1_bss_7810[0x10];
+
 /* Stage object table (0x20 per entry) copied into the stage by fn_1_255C. */
 typedef struct M504StageDef_s {
     s16 mdlIdx;

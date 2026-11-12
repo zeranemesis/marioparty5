@@ -19,21 +19,6 @@ typedef struct PadOwner_s {
     s32 playerNo;
 } PADOWNER;
 
-typedef struct PadCtrl_s {
-    void *unk0;
-    s32 playerNo;
-    u8 unk8[0xD8];
-    u16 unkE0; /* 0xE0 */
-    u8 padE2[0x1E];
-    /* 0x100: node position the pad is measured against, written by fn_1_BEF0
-       and read by fn_1_C1E8. */
-    Vec unk100;
-    u8 unk10C[0x28];
-    /* 0x134 / 0x135: the two stick bytes fn_1_BEF0 writes. */
-    s8 stkX;
-    s8 stkY;
-} PADCTRL;
-
 typedef struct InputWork_s {
     struct InputMain_s *main;
     u16 state;

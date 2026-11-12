@@ -22,13 +22,13 @@ void fn_1_BC54(INPUTWORK *work)
 void fn_1_BC84(INPUTWORK *work)
 {
     register INPUTMAIN *main;
-    register PADCTRL *ctrl;
+    register M504WANWAN *ctrl;
     register void **table;
     register u8 *entry;
     register void *entry2;
 
     main = work->main;
-    ctrl = (PADCTRL *)main->playerConf->unk0;
+    ctrl = &((M504PLAYER *)main->playerConf)->slot->wanwan;
     main->btnDown = 0;
     main->stkY = 0;
     main->stkX = 0;
@@ -58,11 +58,11 @@ void fn_1_BC84(INPUTWORK *work)
                 break;
             }
             if (work->dif == 0 || work->dif == 1) {
-                if (ctrl->unkE0 == 5 || ctrl->unkE0 == 6) {
+                if (ctrl->state == 5 || ctrl->state == 6) {
                     work->state = 2;
                     work->timer = 0;
                 }
-            } else if (ctrl->unkE0 == 6) {
+            } else if (ctrl->state == 6) {
                 work->state = 2;
                 work->timer = 0;
             }
@@ -90,11 +90,11 @@ void fn_1_BC84(INPUTWORK *work)
                 break;
             }
             if (work->dif == 0 || work->dif == 1) {
-                if (ctrl->unkE0 == 5) {
+                if (ctrl->state == 5) {
                     work->state = 6;
                     work->timer = 0;
                 }
-            } else if (ctrl->unkE0 == 6) {
+            } else if (ctrl->state == 6) {
                 work->state = 6;
                 work->timer = 0;
             }
@@ -125,18 +125,18 @@ s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
     Vec sp24 = {0.0f, 0.0f, 0.0f};
     Vec sp36 = {0.0f, 0.0f, 0.0f};
     INPUTMAIN *main;
-    PADCTRL *ctrl;
+    M504PLAYER *ctrl;
     Vec *node;
     f32 f30;
     f32 f31;
     s32 ret = 0;
 
     main = work->main;
-    ctrl = (PADCTRL *)main->playerConf->unk0;
+    ctrl = (M504PLAYER *)main->playerConf;
     sp36.y = 0.0f;
 
     node = (Vec *)((u8 *)entry + work->unk6 * 12 + 4);
-    PSVECSubtract(node, &ctrl->unk100, &sp36);
+    PSVECSubtract(node, &ctrl->pos, &sp36);
     f30 = PSVECMag(&sp36);
 
     f31 = f30 / 15.0f;
@@ -147,7 +147,7 @@ s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
     }
 
     if (f30 < 15.0f) {
-        ctrl->unk100 = *node;
+        ctrl->pos = *node;
         work->unk6 = work->unk6 + 1;
         if (work->unk6 >= *(s16 *)entry) {
             ret = 1;
@@ -169,10 +169,10 @@ s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
 s32 fn_1_C178(INPUTWORK *work)
 {
     INPUTMAIN *main = work->main;
-    PADCTRL *ctrl = (PADCTRL *)main->playerConf->unk0;
+    M504WANWAN *ctrl = &((M504PLAYER *)main->playerConf)->slot->wanwan;
     s32 ret = 0;
 
-    if (ctrl->unkE0 == 5 || ctrl->unkE0 == 6) {
+    if (ctrl->state == 5 || ctrl->state == 6) {
         main->btn |= 0x100;
     } else {
         ret = 1;
@@ -184,23 +184,24 @@ s32 fn_1_C178(INPUTWORK *work)
 s32 fn_1_C1E8(INPUTWORK *work)
 {
     INPUTMAIN *main = work->main;
-    PADCTRL *ctrl = (PADCTRL *)main->playerConf->unk0;
+    M504PLAYER *player = (M504PLAYER *)main->playerConf;
+    M504WANWAN *ctrl = &player->slot->wanwan;
     Vec sp8 = {0.0f, 0.0f, 0.0f};
     f32 f31;
     s32 ret = 0;
 
-    PSVECSubtract((Vec *) (u8 *) main + 0x60, (Vec *) ((u8 *) ctrl + 0x38), &sp8);
+    PSVECSubtract(&player->pos, &ctrl->pos, &sp8);
     f31 = PSVECMag(&sp8);
 
     if (work->dif == 0 || work->dif == 1) {
-        if (ctrl->unkE0 == 7) {
+        if (ctrl->state == 7) {
             ret = 1;
         }
-    } else if (ctrl->unkE0 == 3) {
+    } else if (ctrl->state == 3) {
         if (f31 < 600.0f) {
             ret = 1;
         }
-    } else if (ctrl->unkE0 == 4) {
+    } else if (ctrl->state == 4) {
         if (f31 < 700.0f) {
             ret = 1;
         }
