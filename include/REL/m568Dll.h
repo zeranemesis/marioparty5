@@ -20,6 +20,7 @@ struct M568Model {
 };
 
 struct SceneNode;
+struct EffectMgr;
 
 extern "C" {
 
@@ -27,6 +28,7 @@ extern void *lbl_1_bss_9F0;
 extern SceneNode *lbl_1_bss_9F4;
 extern SceneNode *lbl_1_bss_9F8;
 extern SceneNode *lbl_1_bss_A0C;
+extern EffectMgr *lbl_1_bss_A10;
 
 void fn_1_7EC(const char *expr, const char *file, s32 line);
 void fn_1_6E0(void *mem);
