@@ -1525,7 +1525,7 @@ void fn_1_A400(M522RModel *self, s32 time)
 
 // ---------------------------------------------------------------- Mersenne Twister
 
-extern const u32 lbl_1_rodata_50[2] = { 0, 0x9908B0DF };
+M522R_RODATA extern const u32 lbl_1_rodata_360[2] = { 0, 0x9908B0DF };
 
 void fn_1_A46C(M522RRand *r, u32 seed)
 {
@@ -1582,16 +1582,16 @@ u32 fn_1_A6A4(M522RRand *r)
         k = 0;
         while (k < 0xE3) {
             y = (r->mt[k] & 0x80000000) | (r->mt[k + 1] & 0x7FFFFFFF);
-            r->mt[k] = lbl_1_rodata_50[y & 1] ^ ((y >> 1) ^ r->mt[k + 0x18D]);
+            r->mt[k] = lbl_1_rodata_360[y & 1] ^ ((y >> 1) ^ r->mt[k + 0x18D]);
             k++;
         }
         while (k < 0x26F) {
             y = (r->mt[k] & 0x80000000) | (r->mt[k + 1] & 0x7FFFFFFF);
-            r->mt[k] = lbl_1_rodata_50[y & 1] ^ ((y >> 1) ^ r->mt[k - 0xE3]);
+            r->mt[k] = lbl_1_rodata_360[y & 1] ^ ((y >> 1) ^ r->mt[k - 0xE3]);
             k++;
         }
         y = (r->mt[0x26F] & 0x80000000) | (r->mt[0] & 0x7FFFFFFF);
-        r->mt[0x26F] = (y >> 1) ^ r->mt[0x18C] ^ lbl_1_rodata_50[y & 1];
+        r->mt[0x26F] = (y >> 1) ^ r->mt[0x18C] ^ lbl_1_rodata_360[y & 1];
         r->idx = 0;
     }
     y = r->mt[r->idx++];
@@ -2123,7 +2123,7 @@ void *fn_1_CB78(M522RNode *self, s16 flag)
 
 // The module's one static initialiser, hooked into the constructor table.
 #ifdef __MWERKS__
-__declspec(section ".ctors") void (*const lbl_ctor_61C4)(void) = fn_1_CA18;
+__declspec(section ".ctors") void (*const lbl_ctor_CA18)(void) = fn_1_CA18;
 #else
 struct M522RStaticInit {
     M522RStaticInit() { fn_1_CA18(); }
