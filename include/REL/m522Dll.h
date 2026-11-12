@@ -2,6 +2,7 @@
 #define _M522DLL_H
 
 #include "types.h"
+#include "dolphin/gx.h"
 
 /* The mode controller of the main board, CGameMaster.  ObjectSetup() builds it
  * in a 0x368 byte allocation, so only the members this module touches need to
@@ -82,5 +83,60 @@ typedef struct M522Vec3_s {
     f32 y;
     f32 z;
 } M522_VEC3;
+
+/* Model handle object: fn_1_9A34 creates the Hu3D model, fn_1_9E94 kills it. */
+typedef struct M522Model_s {
+    /* 0x0 */ s16 id;
+} M522_MODEL;
+
+/* Opaque singletons shared between units. */
+typedef struct M522Camera_s M522_CAMERA;
+
+/* One wave of the fire distortion texture (fn_1_0). */
+typedef struct M522FireWave_s {
+    /* 0x0 */ f32 phase;
+    /* 0x4 */ f32 delta;
+    /* 0x8 */ f32 amp;
+} M522_FIREWAVE;
+
+/* MSL vector header: capacity, size, data (this order). */
+typedef struct M522WaveVec_s {
+    /* 0x0 */ u32 cap;
+    /* 0x4 */ u32 size;
+    /* 0x8 */ M522_FIREWAVE *data;
+} M522_WAVEVEC;
+
+/* The fire / sun effect object (fn_1_0).  The distortion texture is 32 byte
+ * aligned for DCFlushRangeNoSync. */
+typedef struct M522Fire_s {
+    /* 0x000 */ s16 model;
+    /* 0x004 */ f32 field4;
+    /* 0x008 */ f32 field8;
+    /* 0x00C */ GXTexObj texObj;
+    /* 0x040 */ u8 tex[0x800] __attribute__((aligned(32)));
+    /* 0x840 */ M522_WAVEVEC waves;
+} M522_FIRE;
+
+/* One spark of the fire effect (fn_1_AB0 / fn_1_B88). */
+typedef struct M522Spark_s {
+    /* 0x0 */ s32 kind;
+    /* 0x4 */ s32 frames;
+    /* 0x8 */ s32 frame;
+    /* 0xC */ s32 wait;
+} M522_SPARK;
+
+typedef struct M522SparkVec_s {
+    /* 0x0 */ u32 cap;
+    /* 0x4 */ u32 size;
+    /* 0x8 */ M522_SPARK *data;
+} M522_SPARKVEC;
+
+/* The fire effect object (fn_1_824). */
+typedef struct M522FireEff_s {
+    /* 0x00 */ M522_EFFECT base;
+    /* 0x14 */ M522_MODEL *model;
+    /* 0x18 */ f32 anim;
+    /* 0x1C */ M522_SPARKVEC sparks;
+} M522_FIREEFF;
 
 #endif

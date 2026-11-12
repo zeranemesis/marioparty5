@@ -58,7 +58,7 @@ void fn_1_74A4(M522_CAMVIEW *view, s32 flag);
 void fn_1_8004(M522_NODE *node);
 void fn_1_8010(M522_NODE *node, s32 flag);
 void fn_1_80D0(M522_NODE *node, M522_NODE *other);
-f64 fn_1_F1B8(void *self);
+f32 fn_1_F1B8(void *self);
 s32 fn_1_FA28(void);
 s32 __ptmf_test(M522_PTMF *ptmf);
 void __ptmf_scall(void *self);
@@ -288,7 +288,7 @@ void fn_1_D7F4(M522_CAMERA *self)
     M522_CAMVIEW view;
     M522_VEC3 target;
     M522_PTMF next;
-    f64 offset;
+    f32 offset;
 
     fn_1_6F90(&self->view, &self->pathA);
     if (lbl_1_bss_18 != 0) {
@@ -314,7 +314,7 @@ void fn_1_D980(M522_CAMERA *self)
 {
     M522_CAMVIEW view;
     M522_PTMF next;
-    f64 offset;
+    f32 offset;
     s32 index;
 
     fn_1_6F90(&self->view, &self->pathA);

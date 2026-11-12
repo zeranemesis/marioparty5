@@ -1,3 +1,4 @@
+#define _MATH_H
 #include "REL/m522Dll.h"
 
 #include "game/data.h"
