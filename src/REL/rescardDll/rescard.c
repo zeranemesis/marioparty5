@@ -22,6 +22,175 @@ typedef struct RescardEffect_s {
     int parManId[3];
 } RESCARD_EFFECT;
 
+/* effect helpers (static, defined first so the callers inline them) */
+static RESCARD_EFFECT *ParticleDotCreate(ANIMDATA *animP, s16 layer, s16 cameraBit)
+{
+    static HU3DPARMANPARAM param1 = {
+        30,
+        0,
+        50,
+        10,
+        180,
+        { 0, -0.05f, 0 },
+        20,
+        0.8f,
+        10,
+        1,
+        2,
+        {
+            { 0xFF, 0xFF, 0xFF, 0xFF },
+            { 0xFF, 0xFF, 0x40, 0xFF },
+        },
+        {
+            { 0xFF, 0x80, 0x80, 0x00 },
+            { 0xFF, 0x40, 0x20, 0x00 },
+        }
+    };
+    static HU3DPARMANPARAM param2 = {
+        40,
+        0,
+        50,
+        0,
+        90,
+        { 0, -0.05f, 0 },
+        35,
+        0.88f,
+        25,
+        0.99f,
+        1,
+        {
+            { 0xFF, 0xFF, 0xFF, 0xFF },
+        },
+        {
+            { 0xFF, 0x80, 0x80, 0x00 },
+        }
+    };
+    static HU3DPARMANPARAM param3 = {
+        30,
+        0,
+        30,
+        60,
+        180,
+        { 0, 0, 0 },
+        0.2f,
+        1.0f,
+        100,
+        1.0f,
+        2,
+        {
+            { 0xFF, 0xFF, 0xFF, 0x20 },
+        },
+        {
+            { 0x40, 0x20, 0x20, 0x00 },
+        }
+    };
+    HU3DPARMANID parManId;
+    RESCARD_EFFECT *effectP;
+    effectP = HuMemDirectMallocNum(HEAP_HEAP, sizeof(RESCARD_EFFECT), HU_MEMNUM_OVL);
+    parManId = Hu3DParManCreate(animP, 100, &param1);
+    effectP->parManId[0] = parManId;
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED70|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, 90, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    parManId = Hu3DParManCreate(animP, 100, &param2);
+    effectP->parManId[1] = parManId;
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDANGLE|HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED90|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, frandmod(40)+70, 0, frandmod(80)-40);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    parManId = Hu3DParManCreate(animP, 100, &param3);
+    effectP->parManId[2] = parManId;
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, 0, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    return effectP;
+}
+
+static void ParticleDotPosSet(RESCARD_EFFECT *effectP, HuVecF *pos)
+{
+    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
+    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParManPosSet(effectP->parManId[1], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[1], 2);
+    Hu3DParManAttrReset(effectP->parManId[1], HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParManPosSet(effectP->parManId[2], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[2], 5);
+    Hu3DParManAttrReset(effectP->parManId[2], HU3D_PARMAN_ATTR_TIMEUP);
+}
+
+static void ParticleDotKill(RESCARD_EFFECT *effectP)
+{
+    Hu3DParManKill(effectP->parManId[0]);
+    Hu3DParManKill(effectP->parManId[1]);
+    Hu3DParManKill(effectP->parManId[2]);
+}
+
+static RESCARD_EFFECT *ParticleGlowCreate(ANIMDATA *animP, s16 layer, s16 cameraBit)
+{
+    static HU3DPARMANPARAM param = {
+        50,
+        0,
+        2,
+        30,
+        180,
+        { 0, -0.2f, 0 },
+        1,
+        0.8f,
+        30,
+        0.95f,
+        3,
+        {
+            { 128, 192, 255, 255 },
+            { 255, 255, 64, 255 },
+            { 255, 96, 128, 255 },
+        },
+        {
+            { 128, 192, 255, 0 },
+            { 255, 64, 32, 0 },
+            { 128, 16, 16, 0 },
+        }
+    };
+    HU3DPARMANID parManId;
+    RESCARD_EFFECT *effectP;
+    effectP = HuMemDirectMallocNum(HEAP_HEAP, sizeof(RESCARD_EFFECT), HU_MEMNUM_OVL);
+    parManId = Hu3DParManCreate(animP, 100, &param);
+    effectP->parManId[0] = parManId;
+    Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED70|HU3D_PARMAN_ATTR_TIMEUP);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
+    Hu3DParManRotSet(parManId, 90, 0, 0);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
+    return effectP;
+}
+
+static void ParticleGlowPosSet(RESCARD_EFFECT *effectP, HuVecF *pos)
+{
+    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
+    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
+}
+
+static void ParticleGlowKill(RESCARD_EFFECT *effectP)
+{
+    Hu3DParManKill(effectP->parManId[0]);
+}
+
+
+/* one star/zero-star model orbiting the winning pin */
+typedef struct RescardOrbit_s {
+    s8 unk0;
+    s8 unk1;
+    s16 mdl; //model slot, -1 = unused
+    float angle; //0x04
+    float scale; //0x08
+} RESCARD_ORBIT;
+
 enum {
     RESCARD_OBJ_DEBUGFONT,
     RESCARD_OBJ_PAD,
@@ -66,15 +235,20 @@ s32 ResCardDrawStkDirGet(void);
 s32 ResCardDrawCursorModeSet(s32 mode);
 void ResCardDrawTimerPosSet(void);
 void ResCardDrawCursorMove(s32 dir);
+void ResCardSpotScaleCalc(void);
+void ResCardBillboardUpdate(s32 modelNo, s32 cameraNo);
+s16 ResCardFXPanGet(s32 modelNo, s32 cameraNo);
 void ResCardBGMReset(void);
-static RESCARD_EFFECT *ParticleGlowCreate(ANIMDATA *animP, s16 layer, s16 cameraBit);
-static void ParticleGlowPosSet(RESCARD_EFFECT *effectP, HuVecF *pos);
 void ResCardWinVoicePlay(void);
 
 extern void MdLightSetupModel(MDLIGHT_WORK *lightWork);
 extern void MdMathStdCurveInit(void);
 extern void MdMathOscillate(int type, float *time, float *t, float step);
 extern void MdMathLerp(float *out, float a, float b, float t);
+extern void MdMathLerpScale(HuVecF *out, float a, float b, float t);
+extern void MdMathLerpScaleOfs(HuVecF *out, float a, float b, float t, float ofs);
+extern void MdMathAngleClamp(float *angle);
+extern Mtx *MdMathMatrixDir(HuVecF *start, HuVecF *end);
 extern void MdObjDebugFontCreate(OMOBJ *obj);
 extern void MdObjPadMain(OMOBJ *obj);
 extern void MdObjCameraCreate(OMOBJ *obj);
@@ -82,6 +256,8 @@ extern void MdObjLightCreate(OMOBJ *obj);
 extern void MdObjMessCreate(OMOBJ *obj);
 extern void MdMessKill(void);
 extern void MdMessWinOpen(MDMESS_WORK *mess, int winNo, float posX, float posY, s16 w, s16 h, float bgTPLvl, s16 drawNo);
+extern void MdMessHelpWinCreate(MDMESS_WORK *mess, int winNo, u32 mesNo, float posX, float posY, s16 w, s16 h, float bgTPLvl, s16 drawNo);
+extern void MdMessWinClose(MDMESS_WORK *mess, int winNo);
 extern void MdMessWinKill(MDMESS_WORK *mess, int winNo);
 extern void MdMessWinMesSet(MDMESS_WORK *mess, int winNo, u32 mesNo);
 extern void MdMessWinInsertMesSet(MDMESS_WORK *mess, int winNo, u32 mesNo, u32 insertMesNo);
@@ -94,6 +270,7 @@ extern void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
 extern void MdModelRemoveAmb(MDMODEL_WORK *model, HU3DMODELID mdlId);
 extern void MdModelUpdateAmb(MDMODEL_WORK *model);
 
+s8 winVoiceFlag[4];
 SYS sysWork;
 SYS *sys;
 SYS *sysP;
@@ -109,6 +286,11 @@ f32 lbl_1_bss_3BC;
 f32 lbl_1_bss_3C0;
 f32 lbl_1_bss_3C4;
 RESCARD_FOCUS lbl_1_bss_3C8;
+s16 lbl_1_bss_34[6];
+RESCARD_EFFECT *lbl_1_bss_44[33];
+s8 lbl_1_bss_C8;
+RESCARD_ORBIT lbl_1_bss_CC[33];
+HuVecF lbl_1_bss_258;
 HuVecF lbl_1_bss_35C[4];
 f32 lbl_1_bss_264[2];
 f32 lbl_1_bss_26C[2];
@@ -301,8 +483,8 @@ void MdInit(void)
     HuPrcVSleep();
     HuDataDirClose(DATA_rescard);
     HuPrcVSleep();
-    sys->score->unkE0 = 0;
-    sys->score->phase = 1;
+    sys->score->info.unkE0 = 0;
+    sys->score->info.phase = 1;
     sys->starProc = HuPrcChildCreate(ResCardStarUpdate, 106, 12288, 0, sys->objman);
     sys->pinProc = HuPrcChildCreate(ResCardPinUpdate, 107, 12288, 0, sys->objman);
     sys->bgmProc = HuPrcChildCreate(ResCardBGMReset, 108, 4096, 0, sys->objman);
@@ -321,8 +503,8 @@ void MdClose(void)
     }
     ResCardAudExec(28);
     MdMessKill();
-    if(sys->score->mesId >= 0) {
-        GameMesKill(sys->score->mesId);
+    if(sys->score->info.mesId >= 0) {
+        GameMesKill(sys->score->info.mesId);
     }
     MgTimerKill(sys->timer);
     if(sys->retMode == 0) {
@@ -432,7 +614,7 @@ static void ResCardFlowScore(void)
             MdMessWinOpen(mess, 1, 48, 376, 480, 64, 1.0f, 0);
             MdMessWinMesSet(mess, 1, 0x150011);
             ResCardAudExec(25);
-            score->phase = 2;
+            score->info.phase = 2;
             lbl_1_bss_4 = 0;
             sys->unk00 = 1;
             break;
@@ -442,7 +624,7 @@ static void ResCardFlowScore(void)
                 MdProcTbl[0]();
                 ResCardAudExec(1);
                 MdMessWinKill(mess, 1);
-                score->phase = 3;
+                score->info.phase = 3;
                 sys->unk00 = 8;
             }
             break;
@@ -489,8 +671,8 @@ static void ResCardFlowScore(void)
             cnt = 0;
             lbl_1_bss_3F8 = -1;
             for(i=0; i<4; i++) {
-                if(score->rank[i] == score->rankNum) {
-                    if(score->rank[i] != 1) {
+                if(score->info.rank[i] == score->info.rankNum) {
+                    if(score->info.rank[i] != 1) {
                         ResCardPinMotStart(i);
                         sys->pin[i].state = 7;
                     } else {
@@ -503,10 +685,10 @@ static void ResCardFlowScore(void)
                     cnt++;
                 }
             }
-            if(score->rankNum > 1 && score->rankMax > 1) {
-                score->rankNum--;
-            } else if(score->rankNum > 1 && score->rankMax == 1 && cnt == 0) {
-                score->rankNum--;
+            if(score->info.rankNum > 1 && score->info.rankMax > 1) {
+                score->info.rankNum--;
+            } else if(score->info.rankNum > 1 && score->info.rankMax == 1 && cnt == 0) {
+                score->info.rankNum--;
             }
             if(cnt != 0) {
                 sys->unk00 = 5;
@@ -515,28 +697,28 @@ static void ResCardFlowScore(void)
 
         case 5:
             if(score->player[lbl_1_bss_3F8].state == 7) {
-                if(score->rankNum == 1) {
+                if(score->info.rankNum == 1) {
                     sys->unk00 = 6;
                 } else {
                     sys->unk00 = 11;
                 }
-                if(score->rankNum > 1 && score->rankMax == 1) {
-                    score->rankNum--;
+                if(score->info.rankNum > 1 && score->info.rankMax == 1) {
+                    score->info.rankNum--;
                 }
-                if(score->rankNum == 1 && score->rankMax == 1 && sys->unk00 == 11) {
+                if(score->info.rankNum == 1 && score->info.rankMax == 1 && sys->unk00 == 11) {
                     sys->unk00 = 12;
                 }
             }
             break;
 
         case 6:
-            if(score->rankMax > 1) {
+            if(score->info.rankMax > 1) {
                 sys->unk00 = 0;
                 sys->flow = 2;
                 break;
             }
             for(i=0; i<4; i++) {
-                if(score->rank[i] == 1) {
+                if(score->info.rank[i] == 1) {
                     score->draw.sel = i;
                     break;
                 }
@@ -544,7 +726,7 @@ static void ResCardFlowScore(void)
             MdMessWinOpen(mess, 1, 48, 376, 480, 64, 1.0f, 0);
             MdMessWinInsertMesSet(mess, 1, 0x150018, score->player[score->draw.sel].charNo);
             ResCardAudExec(27);
-            score->phase = 2;
+            score->info.phase = 2;
             sys->unk00 = 7;
             break;
 
@@ -574,9 +756,9 @@ static void ResCardFlowDraw(void)
 
         case 1:
             MdMessWinOpen(mess, 1, 48, 376, 480, 64, 1.0f, 0);
-            MdMessWinInsertMesSet(mess, 1, 0x150014, score->rankMax+0x150017);
+            MdMessWinInsertMesSet(mess, 1, 0x150014, score->info.rankMax+0x150017);
             ResCardAudExec(26);
-            score->phase = 2;
+            score->info.phase = 2;
             ResCardAudExec(2);
             sys->unk00 = 2;
             break;
@@ -631,15 +813,15 @@ static void ResCardFlowWin(void)
         case 1:
             if(MdProcTbl[2]() == 1) {
                 MdProcTbl[0]();
-                score->mesId = GameMesCreate(4, 3, score->player[draw->sel].charNo, -1, -1, -1);
+                score->info.mesId = GameMesCreate(4, 3, score->player[draw->sel].charNo, -1, -1, -1);
                 ResCardAudExec(4);
-                score->unkEA = 1;
+                score->info.unkEA = 1;
                 sys->unk00 = 2;
             }
             break;
 
         case 2:
-            if(GameMesStatGet(score->mesId) == 0) {
+            if(GameMesStatGet(score->info.mesId) == 0) {
                 sys->unk00 = 3;
             }
             break;
@@ -833,27 +1015,27 @@ void ResCardScoreCreate(void)
         score->player[i].unk14 = 0;
     }
     for(i=0; i<4; i++) {
-        score->rank[i] = 1;
+        score->info.rank[i] = 1;
         for(j=0; j<4; j++) {
             if((score->player[j].starNum-score->player[j].ztarNum) > (score->player[i].starNum-score->player[i].ztarNum)) {
-                score->rank[i]++;
+                score->info.rank[i]++;
             }
         }
     }
-    score->mesId = -1;
-    score->rankMax = 0;
-    score->rankNum = 1;
+    score->info.mesId = -1;
+    score->info.rankMax = 0;
+    score->info.rankNum = 1;
     for(i=0; i<4; i++) {
-        if(score->rank[i] == 1) {
-            score->rankMax++;
+        if(score->info.rank[i] == 1) {
+            score->info.rankMax++;
         }
-        if(score->rankNum < score->rank[i]) {
-            score->rankNum = score->rank[i];
+        if(score->info.rankNum < score->info.rank[i]) {
+            score->info.rankNum = score->info.rank[i];
         }
     }
     ResCardDrawStarCreate();
-    score->unkE0 = 0;
-    score->unkEA = 0;
+    score->info.unkE0 = 0;
+    score->info.unkEA = 0;
 }
 
 /* per-player star count cards: pop the card model out above the pin, flip
@@ -997,7 +1179,7 @@ void ResCardScoreUpdate(void)
                     } else {
                         HuSprPosSet(grpId[i], 2, 0, 0);
                     }
-                    if(score->rank[i] == 1) {
+                    if(score->info.rank[i] == 1) {
                         ResCardAudExec(7);
                     } else {
                         ResCardAudExec(6);
@@ -1364,7 +1546,7 @@ void ResCardDrawStarUpdate(void)
                     }
                 }
                 for(j=0; j<4; j++) {
-                    if(score->rank[j] == 1 && j != draw->sel) {
+                    if(score->info.rank[j] == 1 && j != draw->sel) {
                         ResCardPinMotStart(j);
                         sys->pin[j].state = 10;
                     }
@@ -1624,7 +1806,7 @@ void ResCardDrawCursorReset(s32 playerNo)
     }
     for (i = 0; i < 3; i++) {
         sel = (sel + 1) % 4;
-        if (score->rank[sel] == 1) {
+        if (score->info.rank[sel] == 1) {
             score->draw.sel = sel;
             break;
         }
@@ -1685,24 +1867,604 @@ void ResCardDrawCursorMove(s32 dir)
     }
 }
 
-/* kill the three particles of a "dot" effect record. */
-static void ParticleDotKill(RESCARD_EFFECT *effectP)
+/* place the four spot lights (one per pin) and aim them. */
+void ResCardSpotCreate(void)
 {
-    Hu3DParManKill(effectP->parManId[0]);
-    Hu3DParManKill(effectP->parManId[1]);
-    Hu3DParManKill(effectP->parManId[2]);
+    MDMODEL_WORK *model = sys->model;
+    RESCARD_PIN *pin = sys->pin;
+    int i;
+
+    for(i=0; i<4; i++, pin++) {
+        pin->state = 0;
+        pin->pos.x = -450.0f+(300.0f*i);
+        pin->pos.y = 750;
+        pin->pos.z = 50;
+        pin->center.x = pin->pos.x;
+        pin->center.y = 0;
+        pin->center.z = 0;
+        pin->target.x = pin->center.x;
+        pin->target.y = pin->center.y;
+        pin->target.z = pin->center.z;
+        pin->width = 1;
+        pin->oscT = 0;
+        pin->oscOut = 0;
+        pin->radius = 0;
+        pin->radiusPhase = frandmod(360);
+        pin->angle = 0;
+        pin->anglePhase = frandmod(360);
+    }
+    ResCardSpotScaleCalc();
 }
 
-/* move a "glow" effect's single particle and restart its lifetime. */
-static void ParticleGlowPosSet(RESCARD_EFFECT *effectP, HuVecF *pos)
+/* aim every spot model from its light position at its target point and
+ * stretch it to the distance. */
+static inline void SpotScaleCalcInl(void)
 {
-    Hu3DParManPosSet(effectP->parManId[0], pos->x, pos->y, pos->z);
-    Hu3DParManTimeLimitSet(effectP->parManId[0], 2);
-    Hu3DParManAttrReset(effectP->parManId[0], HU3D_PARMAN_ATTR_TIMEUP);
+    MDMODEL_WORK *model = sys->model;
+    RESCARD_PIN *pin = sys->pin;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+    HuVecF rotNew;
+    HuVecF diff;
+    float dist;
+    int i;
+
+    for(i=0; i<4; i++, pin++) {
+        pos = model->posP[MDMODEL_SPOT+i];
+        rot = model->rotP[MDMODEL_SPOT+i];
+        scale = model->scaleP[MDMODEL_SPOT+i];
+        pin->target.x = pin->center.x+pin->radius*cos(3.141592653589793*pin->angle/180.0);
+        pin->target.z = pin->center.z+pin->radius*sin(3.141592653589793*pin->angle/180.0);
+        if(pin->target.x == pin->pos.x && pin->target.z == pin->pos.z) {
+            pin->target.z -= 1;
+        }
+        pos->x = pin->pos.x;
+        pos->y = pin->pos.y;
+        pos->z = pin->pos.z;
+        Hu3DMtxRotGet(*MdMathMatrixDir(&pin->pos, &pin->target), &rotNew);
+        if(rotNew.y == -90.0f) {
+            rotNew.x *= -1.0f;
+        }
+        rot->x = rotNew.x;
+        rot->y = rotNew.y;
+        rot->z = rotNew.z;
+        diff.x = pin->pos.x-pin->target.x;
+        diff.y = pin->pos.y-pin->target.y;
+        diff.z = pin->pos.z-pin->target.z;
+        dist = sqrtf(diff.z*diff.z+(diff.x*diff.x+diff.y*diff.y));
+        scale->x = pin->width;
+        scale->y = pin->width;
+        scale->z = dist/630.0f;
+    }
 }
 
-/* kill a "glow" effect's single particle. */
-static void ParticleGlowKill(RESCARD_EFFECT *effectP)
+/* out-of-line copy (SpotUpdate uses the inlined body, as the original does) */
+void ResCardSpotScaleCalc(void)
 {
-    Hu3DParManKill(effectP->parManId[0]);
+    SpotScaleCalcInl();
+}
+
+/* spot sway: {phase speed, radius amplitude, angle phase speed, angle amplitude} */
+static f32 lbl_1_data_524[4] = { 2.5f, 400.0f, 0.3f, 180.0f };
+
+/* advance (mode 0) or just re-evaluate (mode 1) the sway of one spot. */
+static inline void SpotAngleUpdateInl(s32 playerNo, s32 mode)
+{
+    RESCARD_PIN *pin = &sys->pin[playerNo];
+
+    switch(mode) {
+        case 0:
+            pin->radiusPhase += lbl_1_data_524[0];
+            MdMathAngleClamp(&pin->radiusPhase);
+            pin->radius = lbl_1_data_524[1]*sin(3.141592653589793*pin->radiusPhase/180.0);
+            pin->anglePhase += lbl_1_data_524[2];
+            MdMathAngleClamp(&pin->anglePhase);
+            pin->angle = lbl_1_data_524[3]*sin(3.141592653589793*pin->anglePhase/180.0);
+            MdMathAngleClamp(&pin->angle);
+            return;
+
+        case 1:
+            MdMathAngleClamp(&pin->radiusPhase);
+            pin->radius = lbl_1_data_524[1]*sin(3.141592653589793*pin->radiusPhase/180.0);
+            MdMathAngleClamp(&pin->anglePhase);
+            pin->angle = lbl_1_data_524[3]*sin(3.141592653589793*pin->anglePhase/180.0);
+            MdMathAngleClamp(&pin->angle);
+            return;
+    }
+}
+
+void ResCardSpotAngleUpdate(s32 playerNo, s32 mode)
+{
+    SpotAngleUpdateInl(playerNo, mode);
+}
+
+static s32 lbl_1_data_534 = -1;
+
+/* spot light state machine: fade the spot in, sway it, narrow it onto the
+ * winner, fade it out. */
+void ResCardSpotUpdate(void)
+{
+    MDMODEL_WORK *model = sys->model;
+    RESCARD_PIN *pin = sys->pin;
+    int i;
+
+    for(i=0; i<4; i++, pin++) {
+        switch(pin->state) {
+            case 1:
+                Hu3DModelAttrReset(model->mdlId[MDMODEL_SPOT+i], HU3D_ATTR_DISPOFF);
+                pin->oscT = 0;
+                pin->oscOut = 0;
+                pin->width = 0;
+                pin->state = 2;
+                SpotScaleCalcInl();
+                break;
+
+            case 2:
+                MdMathOscillate(2, &pin->oscT, &pin->oscOut, 30);
+                MdMathLerp(&pin->width, 0, 1, pin->oscOut);
+                if(pin->oscT >= 1.0f) {
+                    pin->state = 3;
+                }
+                SpotAngleUpdateInl(i, 0);
+                SpotScaleCalcInl();
+                break;
+
+            case 3:
+                SpotAngleUpdateInl(i, 0);
+                SpotScaleCalcInl();
+                break;
+
+            case 4:
+                pin->oscT = 0;
+                pin->oscOut = 0;
+                pin->saveRadiusPhase = pin->radiusPhase;
+                pin->saveAnglePhase = pin->anglePhase;
+                pin->state = 5;
+                SpotAngleUpdateInl(i, 1);
+                SpotScaleCalcInl();
+                break;
+
+            case 5:
+                MdMathOscillate(1, &pin->oscT, &pin->oscOut, 120);
+                MdMathLerp(&pin->radiusPhase, pin->saveRadiusPhase, 0, pin->oscOut);
+                if(pin->oscT >= 1.0f) {
+                    pin->state = 6;
+                }
+                SpotAngleUpdateInl(i, 1);
+                SpotScaleCalcInl();
+                break;
+
+            case 7:
+                pin->oscT = 0;
+                pin->oscOut = 0;
+                pin->saveWidth = pin->width;
+                pin->state = 8;
+                SpotScaleCalcInl();
+                break;
+
+            case 8:
+                MdMathOscillate(2, &pin->oscT, &pin->oscOut, 30);
+                MdMathLerp(&pin->width, pin->saveWidth, 0, pin->oscOut);
+                if(pin->oscT >= 1.0f) {
+                    Hu3DModelAttrSet(model->mdlId[MDMODEL_SPOT+i], HU3D_ATTR_DISPOFF);
+                    pin->state = 9;
+                }
+                SpotAngleUpdateInl(i, 0);
+                SpotScaleCalcInl();
+                break;
+
+            case 10:
+                pin->oscT = 0;
+                pin->oscOut = 0;
+                pin->saveWidth = pin->width;
+                pin->state = 11;
+                SpotScaleCalcInl();
+                break;
+
+            case 11:
+                MdMathOscillate(2, &pin->oscT, &pin->oscOut, 30);
+                MdMathLerp(&pin->width, pin->saveWidth, 0, pin->oscOut);
+                if(pin->oscT >= 1.0f) {
+                    Hu3DModelAttrSet(model->mdlId[MDMODEL_SPOT+i], HU3D_ATTR_DISPOFF);
+                    pin->state = 12;
+                }
+                SpotAngleUpdateInl(i, 1);
+                SpotScaleCalcInl();
+                break;
+        }
+    }
+}
+
+/* star position on the 2D screen (x, y, depth) */
+static HuVecF lbl_1_data_56C = { 64, 308, 1280 };
+
+/* camera-facing star animation process. */
+void ResCardStarUpdate(void)
+{
+    MDMODEL_WORK *model = sys->model;
+    MDCAMERA_WORK *camera = sys->camera;
+    MDMESS_WORK *mess = sys->mess;
+    RESCARD_INFO *info = &sys->score->info;
+    HuVecF *pos = model->posP[MDMODEL_STAR];
+    HuVecF *rot = model->rotP[MDMODEL_STAR];
+    HuVecF *scale = model->scaleP[MDMODEL_STAR];
+
+    while(1) {
+        model = sys->model;
+        camera = sys->camera;
+        mess = sys->mess;
+        info = &sys->score->info;
+        pos = model->posP[MDMODEL_STAR];
+        rot = model->rotP[MDMODEL_STAR];
+        scale = model->scaleP[MDMODEL_STAR];
+        if(info->unkE0 == 0) {
+            Hu3D2Dto3D(&lbl_1_data_56C, camera->camera[1].bit, &lbl_1_bss_258);
+            *pos = lbl_1_bss_258;
+            ResCardBillboardUpdate(0, 1);
+        }
+        switch(info->phase) {
+            case 0:
+                break;
+
+            case 1:
+                Hu3DModelAttrSet(model->mdlId[MDMODEL_STAR], HU3D_MOTATTR_LOOP);
+                Hu3DModelAttrReset(model->mdlId[MDMODEL_STAR], HU3D_MOTATTR_PAUSE);
+                Hu3DMotionSet(model->mdlId[MDMODEL_STAR], model->motId[0]);
+                info->phase = 0;
+                break;
+
+            case 2:
+                Hu3DMotionShiftSet(model->mdlId[MDMODEL_STAR], model->motId[1], 0, 32, HU3D_MOTATTR_LOOP);
+                info->phase = 0;
+                break;
+
+            case 3:
+                Hu3DMotionShiftSet(model->mdlId[MDMODEL_STAR], model->motId[0], 0, 32, HU3D_MOTATTR_LOOP);
+                info->phase = 0;
+                break;
+        }
+        HuPrcVSleep();
+    }
+}
+
+/* pin process: when the winner is known, circle the star/zero-star models
+ * around the winning pin. */
+void ResCardPinUpdate(void)
+{
+    MDCAMERA_WORK *camera;
+    MDMODEL_WORK *model;
+    MDSPRITE_WORK *sprite;
+    RESCARD_SCORE *score;
+    RESCARD_PLAYER *player;
+    RESCARD_ORBIT *orbit;
+    HuVecF *pinPos;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+    float angleStep;
+    int i;
+
+    while(1) {
+        camera = sys->camera;
+        model = sys->model;
+        sprite = sys->sprite;
+        score = sys->score;
+        player = &score->player[score->draw.sel];
+        switch(score->info.unkEA) {
+            case 1:
+                for(i=0; i<33; i++) {
+                    lbl_1_bss_44[i] = NULL;
+                }
+                pinPos = model->posP[MDMODEL_PIN+score->draw.sel];
+                lbl_1_bss_C8 = 0;
+                orbit = lbl_1_bss_CC;
+                for(i=0; i<33; i++, orbit++) {
+                    if(i < player->starNum) {
+                        lbl_1_bss_44[lbl_1_bss_C8] = ParticleGlowCreate(sprite->animP[4], 0, camera->camera[0].bit);
+                        orbit->mdl = MDMODEL_WIN_STAR+i;
+                        lbl_1_bss_C8++;
+                    } else if(i < player->starNum+player->ztarNum) {
+                        orbit->mdl = MDMODEL_WIN_ZTAR+(i-player->starNum);
+                        lbl_1_bss_C8++;
+                    } else {
+                        orbit->mdl = -1;
+                    }
+                }
+                orbit = lbl_1_bss_CC;
+                for(i=0; i<lbl_1_bss_C8; i++, orbit++) {
+                    if(orbit->mdl != -1) {
+                        orbit->unk0 = 0;
+                        orbit->unk1 = 0;
+                        angleStep = 360.0f/lbl_1_bss_C8;
+                        orbit->angle = angleStep*i;
+                        MdMathAngleClamp(&orbit->angle);
+                        pos = model->posP[orbit->mdl];
+                        rot = model->rotP[orbit->mdl];
+                        scale = model->scaleP[orbit->mdl];
+                        pos->x = pinPos->x+300.0f*cos(3.141592653589793*orbit->angle/180.0);
+                        pos->y = 100.0+(pinPos->y+(0.1*(100.0*sin(3.141592653589793*(4.0f*orbit->angle)/180.0))));
+                        pos->z = pinPos->z+300.0f*sin(3.141592653589793*orbit->angle/180.0);
+                        rot->x = 0;
+                        rot->y = 0;
+                        rot->z = 0;
+                        orbit->scale = 0;
+                        scale->x = orbit->scale;
+                        scale->y = orbit->scale;
+                        scale->z = orbit->scale;
+                        Hu3DMotionTimeSet(model->mdlId[MDMODEL_WIN_STAR], frandmod(60));
+                        Hu3DModelAttrReset(model->mdlId[orbit->mdl], HU3D_ATTR_DISPOFF);
+                    }
+                }
+                score->info.unkEA = 2;
+                break;
+
+            case 2:
+                pinPos = model->posP[MDMODEL_PIN+score->draw.sel];
+                orbit = lbl_1_bss_CC;
+                for(i=0; i<lbl_1_bss_C8; i++, orbit++) {
+                    if(lbl_1_bss_CC[0].mdl != -1) {
+                        pos = model->posP[orbit->mdl];
+                        scale = model->scaleP[orbit->mdl];
+                        orbit->angle -= 2;
+                        pos->x = pinPos->x+300.0f*cos(3.141592653589793*orbit->angle/180.0);
+                        pos->y = 100.0+(pinPos->y+(0.1*(100.0*sin(3.141592653589793*(4.0f*orbit->angle)/180.0))));
+                        pos->z = pinPos->z+300.0f*sin(3.141592653589793*orbit->angle/180.0);
+                        if(orbit->scale < 0.5f) {
+                            orbit->scale += 0.008333334f;
+                            if(orbit->scale >= 0.5f) {
+                                orbit->scale = 0.5f;
+                            }
+                            scale->x = orbit->scale;
+                            scale->y = orbit->scale;
+                            scale->z = orbit->scale;
+                        }
+                        if(lbl_1_bss_44[i] != NULL) {
+                            ParticleGlowPosSet(lbl_1_bss_44[i], pos);
+                        }
+                    }
+                }
+                break;
+        }
+        HuPrcVSleep();
+    }
+}
+
+/* start a random pin motion for one player and play its voice. */
+void ResCardPinMotStart(s32 playerNo)
+{
+    MDMODEL_WORK *model = sys->model;
+    u32 motSel;
+    u32 speedAdd;
+
+    motSel = frandmod(2);
+    speedAdd = (frandmod(49)+1)/100;
+    Hu3DMotionSet(model->mdlId[MDMODEL_PIN+playerNo], model->motId[(motSel*4)+playerNo+6]);
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_PIN+playerNo], HU3D_MOTATTR_LOOP);
+    Hu3DModelAttrReset(model->mdlId[MDMODEL_PIN+playerNo], HU3D_MOTATTR_PAUSE);
+    Hu3DMotionSpeedSet(model->mdlId[MDMODEL_PIN+playerNo], 0.5f+speedAdd);
+    ResCardAudExec(playerNo+17);
+}
+
+/* turn a model about Y so it faces the given camera. */
+void ResCardBillboardUpdate(s32 modelNo, s32 cameraNo)
+{
+    MDCAMERA *camera = &sys->camera->camera[cameraNo];
+    MDMODEL_WORK *model = sys->model;
+    HuVecF *pos = model->posP[modelNo];
+    HuVecF *rot = model->rotP[modelNo];
+    HuVecF diff;
+
+    diff.x = camera->pos.x-pos->x;
+    diff.y = camera->pos.y-pos->y;
+    diff.z = camera->pos.z-pos->z;
+    rot->y = 180.0*(atan2(diff.x, diff.z)/3.141592653589793);
+}
+
+/* sound effect / bgm dispatcher. */
+void ResCardAudExec(u32 no)
+{
+    MDMODEL_WORK *model = sys->model;
+    MDCAMERA_WORK *camera = sys->camera;
+    HuVecF in;
+    HuVecF out;
+    s16 pan;
+
+    switch(no) {
+        case 0:
+            lbl_1_bss_40 = HuAudBGMPlay(21);
+            return;
+
+        case 1:
+        case 2:
+            switch(no) {
+                case 1:
+                    HuAudSStreamPauseFadeOut(lbl_1_bss_40, 1, 1000);
+                    return;
+
+                case 2:
+                    HuAudSStreamPauseFadeOut(lbl_1_bss_40, 0, 1000);
+                    return;
+            }
+            break;
+
+        case 3:
+            HuAudSStreamFadeOut(lbl_1_bss_40, 1000);
+            return;
+
+        case 4:
+            lbl_1_bss_0 = 1;
+            HuAudJinglePlay(129);
+            return;
+
+        case 5:
+        case 6:
+        case 7:
+            switch(no) {
+                case 5:
+                    lbl_1_bss_C = 0;
+                    HuAudFXPlay(31);
+                    return;
+
+                case 6:
+                    HuAudFXPlay(33);
+                    return;
+
+                case 7:
+                    if(lbl_1_bss_C == 0) {
+                        lbl_1_bss_C = 1;
+                        HuAudFXPlay(32);
+                        return;
+                    }
+                    break;
+            }
+            break;
+
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+            switch(no) {
+                case 8:
+                    HuAudFXPlay(0);
+                    return;
+
+                case 9:
+                    HuAudFXPlay(2);
+                    return;
+
+                case 11:
+                    HuAudFXPlay(1021);
+                    return;
+
+                case 12:
+                    HuAudFXPlay(4);
+                    return;
+
+                case 13:
+                    HuAudFXPlay(1039);
+                    return;
+
+                case 14:
+                    HuAudFXPlay(1100);
+                    return;
+
+                case 15:
+                    HuAudFXPlay(1139);
+                    return;
+
+                case 16:
+                    HuAudFXPlay(851);
+                    return;
+            }
+            break;
+
+        case 17:
+        case 18:
+        case 19:
+        case 20:
+        case 21:
+        case 22:
+        case 23:
+        case 24:
+            if(no <= 20) {
+                in = *model->posP[no-10];
+                Hu3D3Dto2D(&in, camera->camera[0].bit, &out);
+                HuAudFXPlayPan(1140, 32.0f+(0.11111111f*out.x));
+                winVoiceFlag[no-17] = 1;
+                return;
+            }
+            if(no <= 24) {
+                in = *model->posP[no-10];
+                Hu3D3Dto2D(&in, camera->camera[0].bit, &out);
+                HuAudFXPlayPan(1141, 32.0f+(0.11111111f*out.x));
+                return;
+            }
+            break;
+
+        case 25:
+        case 26:
+        case 27:
+            pan = ResCardFXPanGet(0, 1);
+            switch(no) {
+                case 25:
+                    HuAudFXPlayPan(754, pan);
+                    return;
+
+                case 26:
+                    HuAudFXPlayPan(753, pan);
+                    return;
+
+                case 27:
+                    HuAudFXPlayPan(753, pan);
+                    return;
+            }
+            break;
+
+        case 28:
+            HuAudAllStop();
+            break;
+    }
+}
+
+/* stereo pan (0..64) of a model's screen position. */
+s16 ResCardFXPanGet(s32 modelNo, s32 cameraNo)
+{
+    HuVecF scr;
+
+    Hu3D3Dto2D(sys->model->posP[modelNo], sys->camera->camera[cameraNo].bit, &scr);
+    return 32.0f+(0.11111111f*scr.x);
+}
+
+/* bgm process: five seconds after the jingle, resume the stream. */
+void ResCardBGMReset(void)
+{
+    lbl_1_bss_0 = 0;
+    lbl_1_bss_10 = 0;
+    while(1) {
+        switch(lbl_1_bss_0) {
+            case 0:
+                break;
+
+            case 1:
+                if(++lbl_1_bss_10 >= 300) {
+                    ResCardAudExec(2);
+                    lbl_1_bss_0++;
+                }
+                break;
+        }
+        HuPrcVSleep();
+    }
+}
+
+/* delayed win voices: forty frames after a pin sound, play that player's voice. */
+void ResCardWinVoicePlay(void)
+{
+    int i;
+
+    for(i=0; i<4; i++) {
+        winVoiceFlag[i] = 0;
+        lbl_1_bss_34[i] = 0;
+    }
+    while(1) {
+        for(i=0; i<4; i++) {
+            switch(winVoiceFlag[i]) {
+                case 0:
+                    break;
+
+                case 1:
+                    if(++lbl_1_bss_34[i] >= 40) {
+                        winVoiceFlag[i] = 0;
+                        ResCardAudExec(i+21);
+                    }
+                    break;
+            }
+        }
+        HuPrcVSleep();
+    }
 }

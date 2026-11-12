@@ -267,22 +267,38 @@ typedef struct RescardDraw_s {
     RESCARD_CARD card[8]; //0x20
 } RESCARD_DRAW;
 
+typedef struct RescardInfo_s {
+    s32 unkE0; //0x00 nonzero = star model left alone
+    s32 phase; //0x04 star motion request
+    s16 mesId; //0x08
+    s8 unkEA; //0x0A orbit state
+    s8 rankMax; //0x0B number of players on the top rank
+    s8 rankNum; //0x0C
+    s8 rank[4]; //0x0D
+    u8 padF1[3];
+} RESCARD_INFO;
+
 typedef struct RescardScore_s {
     RESCARD_PLAYER player[4]; //0x00
     RESCARD_DRAW draw; //0x60
-    s32 unkE0; //0xE0
-    s32 phase; //0xE4
-    s16 mesId; //0xE8
-    s8 unkEA; //0xEA
-    s8 rankMax; //0xEB number of players on the top rank
-    s8 rankNum; //0xEC
-    s8 rank[4]; //0xED
-    u8 padF1[3];
+    RESCARD_INFO info; //0xE0
 } RESCARD_SCORE;
 
 typedef struct RescardPin_s {
     s32 state; //0x00
-    u8 pad04[0x50 - 4];
+    HuVecF pos; //0x04 spot light position
+    HuVecF target; //0x10 point the spot is aimed at
+    HuVecF center; //0x1C center of the sway
+    float width; //0x28 spot width (model scale x/y)
+    float oscT; //0x2C
+    float oscOut; //0x30
+    float radius; //0x34 sway radius
+    float radiusPhase; //0x38
+    float angle; //0x3C sway angle (degrees)
+    float anglePhase; //0x40
+    float saveWidth; //0x44
+    float saveRadiusPhase; //0x48
+    float saveAnglePhase; //0x4C
 } RESCARD_PIN;
 
 typedef struct RescardFocus_s {
