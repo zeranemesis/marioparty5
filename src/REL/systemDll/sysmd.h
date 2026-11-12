@@ -230,6 +230,14 @@ void MdMessWinSpeedSet(s32 winNo, s16 speed);
 void MdMessDlgSprUpdate(SYSMESS *volatile mess);
 void MdMessKill(void);
 
+void MdSpriteCreate(NEL_SYS *sys);
+void MdModelCreate(NEL_SYS *sys);
+void MdToueiMdlInit(NEL_SYS *sys);
+void MdToueiTexBufInit(NEL_SYS *sys);
+void MdParticleCreate(NEL_SYS *sys);
+void MdRingCreate(NEL_SYS *sys);
+void MdMathPoint3Dto2D(HuVecF *src, volatile s32 cameraNo, volatile HuVecF *dst);
+
 HuVec2f *MdSpritePosGet(int grpNo, int memberNo);
 HuVec2f *MdSpriteScaleGet(int grpNo, int memberNo);
 void MdMathLerp(float *out, float a, float b, float t);
