@@ -61,17 +61,6 @@ struct StgHit {
     Vec *b;
 };
 
-// 0x30-byte octree effect object (layout owned by octtree.cpp).
-struct StgOctEffect {
-    M568Link link;
-    Vec pos;
-    f32 radius;
-    M568Model model;
-    Vec cur;
-    u8 played;
-    s32 seId;
-};
-
 // Archive object: slot 8 looks a named block up.
 struct StgArchive {
     void **vtbl;
@@ -127,7 +116,7 @@ void fn_1_370C(M568Model *self, s32 arg);
 StgArchive *fn_1_0(StgArchive *self, s32 dataNum);
 void fn_1_A8(StgArchive *self, s32 arg);
 StgHolder *fn_1_98D8(StgHolder *self);
-StgOctEffect *fn_1_F7A0(StgOctEffect *self, s32 type, Vec *pos);
+M568OctEffect *fn_1_F7A0(M568OctEffect *self, s32 type, Vec *pos);
 void fn_1_FA10(StgOctNode *nodes, s32 count);
 StgOctNode *fn_1_FB30(StgOctNode *root, f32 x, f32 y, f32 z);
 void fn_1_F424(StgPlane *plane, Vec *v0, Vec *v1, Vec *v2);
@@ -408,11 +397,11 @@ u8 fn_1_D690(Vec *pos)
 
 static void fn_1_D7DC(Stage568 *self, s32 type, Vec *tbl, s32 count)
 {
-    StgOctEffect *e;
+    M568OctEffect *e;
     s32 i;
 
     for (i = 0; i < count; i++) {
-        e = (StgOctEffect *)fn_1_618(sizeof(StgOctEffect));
+        e = (M568OctEffect *)fn_1_618(sizeof(M568OctEffect));
         if (e != 0) {
             fn_1_F7A0(e, type, tbl + i);
         }

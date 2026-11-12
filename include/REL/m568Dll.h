@@ -81,4 +81,15 @@ struct M568Tube {
     M568Model model;  // 0xD4
 };
 
+// Octree effect object (octtree.cpp); the tube reads its position and flag.
+struct M568OctEffect {
+    M568Link link;     // 0x00
+    Vec pos;           // 0x08
+    f32 radius;        // 0x14
+    M568Model model;   // 0x18
+    Vec cur;           // 0x1C
+    u8 played;         // 0x28
+    s32 seId;          // 0x2C
+};
+
 #endif
