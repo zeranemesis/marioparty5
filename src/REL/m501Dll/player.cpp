@@ -171,7 +171,10 @@ CPlayer::CPlayer(int playerNo) :
     m_lastPos.y = m_circle.m_pos.y;
     m_lastPos.z = m_circle.m_pos.z;
     m_stepCount = 0;
-    m_proc = &CPlayer::proc_hold_cone;
+    {
+        CPlayer::PROC tmp = &CPlayer::proc_hold_cone;
+        m_proc = tmp;
+    }
     memset(&m_comTimer, 0, 0x24); /* comTimer .. comLocal are contiguous 32-bit fields */
     m_coneHandle = 0;
 }
@@ -378,7 +381,10 @@ void CPlayer::startConeDrop(int handle)
     }
     m_coneHandle = handle;
     if (CGameObject::GetUpdateMode() == 2) {
-        m_proc = &CPlayer::proc_drop_cone_start;
+        {
+            CPlayer::PROC tmp = &CPlayer::proc_drop_cone_start;
+            m_proc = tmp;
+        }
     }
 }
 
@@ -539,7 +545,10 @@ f32 CPlayer::SubAngleMax(f32 a, f32 b, f32 max)
 void CPlayer::proc_hold_cone()
 {
     setMotion(0, false);
-    m_proc = &CPlayer::proc_main;
+    {
+        CPlayer::PROC tmp = &CPlayer::proc_main;
+        m_proc = tmp;
+    }
 }
 
 void CPlayer::proc_main()
@@ -553,13 +562,19 @@ void CPlayer::proc_drop_cone_start()
 {
     setMotion(2, true);
     Hu3DMotionShiftStartEndSet(m_model.getId(), 0.0f, 24.0f);
-    m_proc = &CPlayer::proc_drop_cone;
+    {
+        CPlayer::PROC tmp = &CPlayer::proc_drop_cone;
+        m_proc = tmp;
+    }
 }
 
 void CPlayer::proc_drop_cone()
 {
     if (CharMotionEndCheck(m_charNo) != 0) {
-        m_proc = &CPlayer::proc_main;
+        {
+            CPlayer::PROC tmp = &CPlayer::proc_main;
+            m_proc = tmp;
+        }
     }
 }
 
@@ -576,7 +591,10 @@ void CPlayer::startWinnerMove()
     it = copy;
     end = (CPlayer *)&playerList;
     while (it != end) {
-        it->m_proc = &CPlayer::proc_winner_move;
+        {
+            CPlayer::PROC tmp = &CPlayer::proc_winner_move;
+            it->m_proc = tmp;
+        }
         it->m_waitTimer = 1;
         next = (CPlayer *)it->m_prev;
         it = next;
@@ -689,12 +707,18 @@ bool CPlayer::StartPlayerWin()
     winners = 0;
     while (p != (CPlayer *)&playerList) {
         if (p->m_isWinner != 0) {
-            p->m_proc = &CPlayer::proc_lose;
+            {
+                CPlayer::PROC tmp = &CPlayer::proc_lose;
+                p->m_proc = tmp;
+            }
             p->m_timer34 = 0x1E;
             CharWinLoseVoicePlay(p->m_charNo, 0x8C0030, 0x1FA);
             winners += 1;
         } else {
-            p->m_proc = &CPlayer::proc_win;
+            {
+                CPlayer::PROC tmp = &CPlayer::proc_win;
+                p->m_proc = tmp;
+            }
         }
         if (p == s_winner) {
             if (CGameMaster::cameraInstance != 0) {
@@ -728,7 +752,10 @@ void CPlayer::proc_win()
 {
     Hu3DMotionSpeedSet(m_model.getId(), 1.0f);
     setMotion(4, true);
-    m_proc = &CPlayer::proc_shrink_cone;
+    {
+        CPlayer::PROC tmp = &CPlayer::proc_shrink_cone;
+        m_proc = tmp;
+    }
 }
 
 void CPlayer::proc_shrink_cone()
