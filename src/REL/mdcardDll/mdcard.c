@@ -1,8 +1,5 @@
 // mdcardDll/mdcard - decompilation of the mdcardDll/mdcard unit (46528 B, 39 fns).
-// Done: _prolog, _epilog, ObjectSetup, MdMain, fn_1_9A0, LoadProc, MdInit, MdClose, fn_1_DD8,
-// fn_1_942C, fn_1_A204. Still to write (address order): fn_1_1058, fn_1_1448, fn_1_1DF0, fn_1_22B8,
-// fn_1_2A3C, fn_1_44F8..fn_1_4F80, fn_1_61F8..fn_1_78C4, fn_1_7DA0, fn_1_80A8, fn_1_84AC, fn_1_9100,
-// fn_1_951C, fn_1_9714, fn_1_98C8, fn_1_9A70, fn_1_9CC8, fn_1_9E88, fn_1_A094, fn_1_A2BC, MdPosAdjustMode.
+// All 39 functions are written (see per-function comments for the remaining non-identical ones).
 
 #include "REL/mdcardDll/mdcard.h"
 #include "datadir_enum.h"
@@ -14,6 +11,10 @@
 #include "math.h"
 
 typedef void (*VoidFunc)(void);
+
+SYS sysWork;
+SYS *sys;
+SYS *sysP;
 
 typedef struct MdPinInfo_s {
     HuVecF scrPos; //0x00
@@ -42,30 +43,30 @@ typedef struct MdCamMove_s {
 
 /* .bss: MWCC lays statics out in reverse declaration order, so the block is declared by descending address
    (the function-local statics of the original are file statics here) */
-static MDPIN_INFO lbl_1_bss_2F0[7];
-static MDPIN_INFO lbl_1_bss_200[4];
-static s32 lbl_1_bss_1FC;
-static s32 lbl_1_bss_1F8;
-static MDCAM_MOVE lbl_1_bss_1C8;
-static HuVecF lbl_1_bss_1B0[2];
-static float lbl_1_bss_1AC;
-static float lbl_1_bss_1A8;
-static HuVecF lbl_1_bss_19C;
-static HuVecF lbl_1_bss_16C[4];
-static MDMAN_SEL lbl_1_bss_164[4];
-static float lbl_1_bss_160;
-static float lbl_1_bss_15C;
-static HuVecF lbl_1_bss_12C[4];
-static HuVecF lbl_1_bss_FC[4];
-static HuVecF lbl_1_bss_F0;
-static s8 lbl_1_bss_EC;
-static HuVecF lbl_1_bss_D4[2];
-static HuVecF lbl_1_bss_A4[4];
-static HuVecF lbl_1_bss_8C[2];
-static HuVecF lbl_1_bss_68[3];
-static HuVecF lbl_1_bss_44[3];
-static HuVecF lbl_1_bss_2C[2];
-static s32 bgmStream;
+MDPIN_INFO lbl_1_bss_2F0[7];
+MDPIN_INFO lbl_1_bss_200[4];
+s32 lbl_1_bss_1FC;
+s32 lbl_1_bss_1F8;
+MDCAM_MOVE lbl_1_bss_1C8;
+HuVecF lbl_1_bss_1B0[2];
+float lbl_1_bss_1AC;
+float lbl_1_bss_1A8;
+HuVecF lbl_1_bss_19C;
+HuVecF lbl_1_bss_16C[4];
+MDMAN_SEL lbl_1_bss_164[4];
+float lbl_1_bss_160;
+float lbl_1_bss_15C;
+HuVecF lbl_1_bss_12C[4];
+HuVecF lbl_1_bss_FC[4];
+HuVecF lbl_1_bss_F0;
+s8 lbl_1_bss_EC;
+HuVecF lbl_1_bss_D4[2];
+HuVecF lbl_1_bss_A4[4];
+HuVecF lbl_1_bss_8C[2];
+HuVecF lbl_1_bss_68[3];
+HuVecF lbl_1_bss_44[3];
+HuVecF lbl_1_bss_2C[2];
+s32 bgmStream;
 static MDL_INFO *mdlInfoP;
 static HuVec2f sprPos;
 static float sprRot;
@@ -73,10 +74,10 @@ static s32 menuSel;
 static s32 mdlSel;
 static s32 dispTimer;
 static s32 showF;
-static s32 lbl_1_bss_4;
-static s8 lbl_1_bss_2;
-static s8 lbl_1_bss_1;
-static s8 lbl_1_bss_0;
+s32 lbl_1_bss_4;
+s8 lbl_1_bss_2;
+s8 lbl_1_bss_1;
+s8 lbl_1_bss_0;
 
 
 extern const VoidFunc _ctors[];
@@ -191,9 +192,6 @@ s32 (*MdProcTbl[10])() = {
     fn_1_44F8, fn_1_461C, fn_1_4944, fn_1_4C00, fn_1_4DC8, fn_1_4F80, fn_1_61F8, fn_1_6B0C, fn_1_71B8, fn_1_78C4
 };
 
-SYS sysWork;
-SYS *sys;
-SYS *sysP;
 
 int _prolog(void)
 {
@@ -2351,6 +2349,9 @@ void fn_1_84AC(void)
                     slot->state = 15;
                 }
                 break;
+
+            case 15:
+                break;
         }
     }
 }
@@ -2647,67 +2648,43 @@ void fn_1_9E88(void)
     GwCardCommon.boardSize = sys->selMode;
 }
 
-// jump table here; original is a compare tree (remaining diff)
 void fn_1_A094(s32 no)
 {
     s16 pan;
 
-    switch(no) {
-        case 0:
-            bgmStream = HuAudBGMPlay(39);
-            break;
-
-        case 1:
-            HuAudSStreamFadeOut(bgmStream, 1000);
-            break;
-
-        case 2:
-            HuAudFXPlay(0);
-            break;
-
-        case 3:
-            HuAudFXPlay(2);
-            break;
-
-        case 4:
-            HuAudFXPlay(1);
-            break;
-
-        case 5:
-            HuAudFXPlay(3);
-            break;
-
-        case 6:
-            HuAudFXPlay(1021);
-            break;
-
-        case 7:
-            HuAudFXPlay(1039);
-            break;
-
-        case 8:
-            HuAudFXPlay(1014);
-            break;
-
-        case 9:
-            HuAudFXPlay(1137);
-            break;
-
-        case 10:
-            HuAudFXPlay(1138);
-            break;
-
-        case 11:
-        case 12:
+    if(no >= 11) {
+        if(no == 13) {
+            HuAudAllStop();
+        } else if(no < 13) {
             pan = fn_1_A204(0, 1);
             if(no == 11) {
                 HuAudFXPlayPan(754, pan);
             }
-            break;
-
-        case 13:
-            HuAudAllStop();
-            break;
+        }
+    } else if(no == 1) {
+        HuAudSStreamFadeOut(bgmStream, 1000);
+    } else if(no > 1) {
+        if(no == 2) {
+            HuAudFXPlay(0);
+        } else if(no == 3) {
+            HuAudFXPlay(2);
+        } else if(no == 4) {
+            HuAudFXPlay(1);
+        } else if(no == 5) {
+            HuAudFXPlay(3);
+        } else if(no == 6) {
+            HuAudFXPlay(1021);
+        } else if(no == 7) {
+            HuAudFXPlay(1039);
+        } else if(no == 8) {
+            HuAudFXPlay(1014);
+        } else if(no == 9) {
+            HuAudFXPlay(1137);
+        } else if(no == 10) {
+            HuAudFXPlay(1138);
+        }
+    } else if(no == 0) {
+        bgmStream = HuAudBGMPlay(39);
     }
 }
 

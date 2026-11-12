@@ -331,6 +331,7 @@ typedef struct Sys_s {
     s32 unk3AC;                //0x3AC
     float procT[4];            //0x3B0
     float procOut[4];          //0x3C0
+    s32 unk3D0;                //0x3D0
 } SYS;
 
 extern SYS *sys;
