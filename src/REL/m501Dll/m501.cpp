@@ -556,18 +556,20 @@ CLinkNode::CLinkNode(CLinkNode &)
 
 void CLinkNode::insertFront(CLinkList *list)
 {
-    m_next = list;
-    m_prev = list->m_prev;
-    list->m_prev->m_next = this;
-    list->m_prev = this;
+    CLinkList *l = list;
+    m_next = l;
+    m_prev = l->m_prev;
+    l->m_prev->m_next = this;
+    l->m_prev = this;
 }
 
 void CLinkNode::insertBack(CLinkList *list)
 {
-    m_prev = list;
-    m_next = list->m_next;
-    list->m_next->m_prev = this;
-    list->m_next = this;
+    CLinkList *l = list;
+    m_prev = l;
+    m_next = l->m_next;
+    l->m_next->m_prev = this;
+    l->m_next = this;
 }
 
 void CLinkNode::copyLink(CLinkList *list)
@@ -679,7 +681,7 @@ CLinkList CGameObject::ObjectList;
 s32 CGameObject::s_updateMode;
 CMinigameCore *CMinigameCore::instance;
 
-void CGameObject::SetObjExecMode(s32 mode)
+void CGameObject::SetObjExecMode(int mode)
 {
     CGameObject *obj;
 
@@ -692,22 +694,29 @@ void CGameObject::SetObjExecMode(s32 mode)
 
 s32 CGameObject::CheckObjExec()
 {
-    CGameObject *obj = (CGameObject *)ObjectList.m_prev;
-    while (obj != (CGameObject *)&ObjectList) {
-        if ((obj->m_execMode & (1 << s_updateMode)) != 0) {
+    CLinkList *list = &ObjectList;
+    CGameObject *first = (CGameObject *)list->m_prev;
+    CGameObject *obj = first;
+    while (obj != (CGameObject *)list) {
+        int mode = s_updateMode;
+        if ((obj->m_execMode & (1 << mode)) != 0) {
             return 0;
         }
-        obj = (CGameObject *)obj->m_prev;
+        CGameObject *next = (CGameObject *)obj->m_prev;
+        obj = next;
     }
     return 1;
 }
 
 void CGameObject::UpdateAll()
 {
-    CGameObject *obj;
-
-    for (obj = (CGameObject *)ObjectList.m_prev; obj != (CGameObject *)&ObjectList; obj = (CGameObject *)obj->m_prev) {
+    CLinkList *list = &ObjectList;
+    CGameObject *first = (CGameObject *)list->m_prev;
+    CGameObject *obj = first;
+    while (obj != (CGameObject *)list) {
         obj->on_update();
+        CGameObject *next = (CGameObject *)obj->m_prev;
+        obj = next;
     }
 }
 
@@ -796,7 +805,8 @@ void CMinigameCore::ObjUpdate(omObj_s *obj)
         obj->objFunc = MgExit;
         return;
     }
-    instance->update();
+    CMinigameCore *core = instance;
+    core->update();
 }
 
 void CMinigameCore::update()
@@ -855,14 +865,16 @@ void CMinigameCore::StartStartGameMes()
 {
     M501_ASSERT(instance != 0, "ms_pointer != 0", "singleton.h", 0x27);
     CMinigameCore *core = instance;
-    core->m_gameMes = GameMesCreate(2, 0);
+    CMinigameCore *core2 = core;
+    core2->m_gameMes = GameMesCreate(2, 0);
 }
 
 void CMinigameCore::StartFinishGameMes()
 {
     M501_ASSERT(instance != 0, "ms_pointer != 0", "singleton.h", 0x27);
     CMinigameCore *core = instance;
-    core->m_gameMes = GameMesCreate(2, 1);
+    CMinigameCore *core2 = core;
+    core2->m_gameMes = GameMesCreate(2, 1);
 }
 
 bool CMinigameCore::CheckGameMes()
@@ -949,9 +961,10 @@ CModel::CModel(unsigned int dataNum)
     m_id = Hu3DModelCreate(data);
 }
 
-CModel::CModel(HU3DMODELHOOK hook)
+extern "C" CModel *__ct__6CModelF13HU3DMODELHOOK(CModel *self, HU3DMODELHOOK hook)
 {
-    m_id = Hu3DHookFuncCreate(hook);
+    self->m_id = Hu3DHookFuncCreate(hook);
+    return self;
 }
 
 CModel::CModel(int charNo, int mode)
@@ -976,7 +989,9 @@ CModel::CModel(int charNo, int mode)
 
 CModel::CModel(CModel &src)
 {
-    m_id = Hu3DModelLink(src.m_id);
+    s16 srcId = src.m_id;
+    s16 id = srcId;
+    m_id = Hu3DModelLink(id);
 }
 
 void CModel::setAttr(unsigned int attr)
@@ -1302,8 +1317,11 @@ extern "C" bool fn_1_4F0C(CCircle *a, CCircle *b)
     f32 sum;
 
     PSVECSubtract(&a->m_pos, &b->m_pos, &delta);
-    sum = a->m_radius + b->m_radius;
-    return PSVECMag(&delta) < sum;
+    f32 ra = b->m_radius;
+    f32 rb = a->m_radius;
+    sum = rb + ra;
+    f32 dist = PSVECMag(&delta);
+    return dist < sum;
 }
 
 /* pushes two overlapping circles apart, weighted by wa/wb */
@@ -1314,17 +1332,27 @@ extern "C" s32 fn_1_4FB4(CCircle *a, CCircle *b, f32 wa, f32 wb)
     f32 sum;
     f32 dist;
 
-    sum = a->m_radius + b->m_radius;
+    f32 wa2 = wa;
+    f32 rb = b->m_radius;
+    f32 ra = a->m_radius;
+    sum = ra + rb;
     PSVECSubtract(&b->m_pos, &a->m_pos, &delta);
-    dist = PSVECMag(&delta);
+    f32 d0 = PSVECMag(&delta);
+    dist = d0;
     if (dist >= sum) {
         return 0;
     }
+    f32 wa3 = wa2;
+    f32 inv = 1.0f - wa2;
     PSVECScale(&delta, &delta, (wb * (sum - dist)) / dist);
-    PSVECScale(&delta, &shift, -wa);
-    PSVECAdd(&shift, &a->m_pos, &a->m_pos);
-    PSVECScale(&delta, &shift, 1.0f - wa);
-    PSVECAdd(&shift, &b->m_pos, &b->m_pos);
+    PSVECScale(&delta, &shift, -wa3);
+    Vec *s1 = &shift;
+    Vec *s2 = s1;
+    PSVECAdd(s2, &a->m_pos, &a->m_pos);
+    PSVECScale(&delta, &shift, inv);
+    Vec *s3 = &shift;
+    Vec *s4 = s3;
+    PSVECAdd(s4, &b->m_pos, &b->m_pos);
     return 1;
 }
 
@@ -1347,16 +1375,20 @@ CSubThread::~CSubThread()
 
 bool CSubThread::isTerminated()
 {
-    return OSIsThreadTerminated(&m_thread.m_thread) != 0;
+    OSThread *th = &m_thread.m_thread;
+    bool terminated = OSIsThreadTerminated(th) != 0;
+    return (u8)terminated;
 }
 
 s32 CSubThread::wakeupThread(int arg)
 {
-    if (OSIsThreadTerminated(&m_thread.m_thread) != 0) {
+    int a = arg;
+    OSThread *th = &m_thread.m_thread;
+    if (OSIsThreadTerminated(th) != 0) {
         return m_arg;
     }
-    m_arg = arg;
-    OSResumeThread(&m_thread.m_thread);
+    m_arg = a;
+    OSResumeThread(th);
     OSWaitSemaphore(&m_sema);
     m_thread.getStackRemain();
     OSCheckActiveThreads();
@@ -1574,6 +1606,9 @@ extern "C" void fn_1_5D90(void)
     CGameObject::ObjectList.m_prev = &CGameObject::ObjectList;
     CGameObject::ObjectList.m_next = &CGameObject::ObjectList;
     __register_global_object(&CGameObject::ObjectList, fn_1_5E18, s_objectListChain);
+    s_delay18.m_value = 0x78;
+    s_winnerDelay.m_value = 0xD2;
+    s_delay20.m_value = 0xD2;
 }
 
 extern "C" void *fn_1_5E18(void *self, s16 flag)

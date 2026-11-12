@@ -128,7 +128,7 @@ public:
 
     virtual void on_new_mode(int mode) = 0;
     virtual void on_update();
-    static void SetObjExecMode(s32 mode);
+    static void SetObjExecMode(int mode);
     static s32 CheckObjExec();
     static void UpdateAll();
     static void Close();
@@ -188,7 +188,6 @@ class CModel {
 public:
     CModel(void *data);
     CModel(unsigned int dataNum);
-    CModel(HU3DMODELHOOK hook);
     CModel(int charNo, int mode);
     CModel(CModel &src);
     ~CModel();
@@ -220,6 +219,9 @@ public:
 
     s16 m_id;
 };
+
+/* the original symbol mangles the hook typedef by name, keep it as plain C */
+extern "C" CModel *__ct__6CModelF13HU3DMODELHOOK(CModel *self, HU3DMODELHOOK hook);
 
 class CMT19937 {
 public:
