@@ -4,6 +4,7 @@
 extern "C" {
 #include "game/wipe.h"
 #include "game/gamemes.h"
+#include "game/mg/timer.h"
 }
 
 // m536 top-level unit: runtime support (allocator, assert, list helpers, a look-at
@@ -73,7 +74,7 @@ void fn_1_246C(void);
 void fn_1_2C18(void);
 void fn_1_48C0(void);
 M536VObj *fn_1_4934(M536VObj *self, s16 freeIt);
-void *fn_1_52E4(void *self, s16 freeIt);
+void *fn_1_52E4(void *obj, s16 freeIt);
 void fn_1_2370(OMOBJ *obj);
 void fn_1_2400(M536Main *self);
 void fn_1_2470(void);
@@ -1701,6 +1702,384 @@ s32 fn_1_50C4(M536Sphere *a, M536Sphere *b, f32 ka, f32 kb)
     PSVECScale(&d, &t, pullB);
     PSVECAdd(&t, &b->m_pos, &b->m_pos);
     return 1;
+}
+
+// ---- threads
+
+struct M536Semaphore {
+    s32 m_count;
+    OSThreadQueue m_queue;
+};
+
+void OSInitSemaphore(M536Semaphore *sem, s32 count);
+s32 OSWaitSemaphore(M536Semaphore *sem);
+s32 OSSignalSemaphore(M536Semaphore *sem);
+
+// OS thread plus the heap block holding its stack.
+struct M536Thread {
+    OSThread m_os;      /* 0x000 */
+    u32 *m_stack;       /* 0x318 */
+};
+
+// Thread object: vtable (slot 3 is the thread body), the thread and a semaphore
+// the creator waits on.
+struct M536CThread {
+    void **m_vptr;          /* 0x000 */
+    M536Thread m_th;        /* 0x008 */
+    M536Semaphore m_sem;    /* 0x328 */
+    s32 m_value;            /* 0x334 */
+};
+
+M536Thread *fn_1_5588(M536Thread *th, void *(*entry)(void *), void *param, u32 stackSize, s32 priority, u16 attr);
+void fn_1_56E8(M536Thread *th, void *(*entry)(void *), void *param, u32 *stack, u32 words, s32 priority, u16 attr);
+M536Thread *fn_1_580C(M536Thread *th, s16 freeIt);
+u32 fn_1_5940(M536Thread *th);
+s32 fn_1_59E0(u32 *stack, s32 mode);
+void fn_1_5A54(u32 *stack, u32 words);
+void *fn_1_552C(void *self);
+void *fn_1_6000(void *self, s16 freeIt);
+
+s32 fn_1_5244(void)
+{
+    return OSGetThreadPriority(OSGetCurrentThread());
+}
+
+M536CThread *fn_1_5268(M536CThread *self, u32 stackSize)
+{
+    self->m_vptr = lbl_1_data_1C4;
+    fn_1_5588(&self->m_th, fn_1_552C, self, stackSize, OSGetThreadPriority(OSGetCurrentThread()), 1);
+    OSInitSemaphore(&self->m_sem, 0);
+    return self;
+}
+
+void *fn_1_52E4(void *obj, s16 freeIt)
+{
+    M536CThread *self = (M536CThread *)obj;
+
+    if (self != 0) {
+        self->m_vptr = lbl_1_data_1C4;
+        fn_1_580C(&self->m_th, -1);
+        if (freeIt > 0 && self != 0) {
+            HuMemDirectFree(self);
+        }
+    }
+    return self;
+}
+
+u8 fn_1_5350(M536CThread *self)
+{
+    OSThread *th;
+
+    th = &self->m_th.m_os;
+    return (u8)(OSIsThreadTerminated(th) != 0);
+}
+
+// Resume the thread with `value` and wait until it hands control back.
+s32 fn_1_5398(M536CThread *self, s32 value)
+{
+    OSThread *th0;
+    OSThread *th1;
+    M536Semaphore *sem;
+
+    th0 = &self->m_th.m_os;
+    if (OSIsThreadTerminated(th0) != 0) {
+        return self->m_value;
+    }
+    self->m_value = value;
+    th1 = &self->m_th.m_os;
+    OSResumeThread(th1);
+    sem = &self->m_sem;
+    OSWaitSemaphore(sem);
+    fn_1_5940(&self->m_th);
+    OSCheckActiveThreads();
+    return self->m_value;
+}
+
+// Called from inside the thread: hand `value` back to the creator and suspend.
+s32 fn_1_5428(M536CThread *self, s32 value)
+{
+    if (OSGetCurrentThread() == &self->m_th.m_os) {
+    } else {
+        M536_ASSERT_FAIL("::OSGetCurrentThread() == m_th", "subthread.cpp", 0x47);
+    }
+    if (OSIsThreadTerminated(&self->m_th.m_os) == 0) {
+    } else {
+        M536_ASSERT_FAIL("!::OSIsThreadTerminated(m_th)", "subthread.cpp", 0x4A);
+    }
+    self->m_value = value;
+    OSSignalSemaphore(&self->m_sem);
+    OSSuspendThread(&self->m_th.m_os);
+    return self->m_value;
+}
+
+void *fn_1_552C(void *obj)
+{
+    M536CThread *self = (M536CThread *)obj;
+
+    ((void (*)(M536CThread *, s32))self->m_vptr[3])(self, self->m_value);
+    OSSignalSemaphore(&self->m_sem);
+    return 0;
+}
+
+// Thread with a heap-allocated stack.
+M536Thread *fn_1_5588(M536Thread *th, void *(*entry)(void *), void *param, u32 stackSize, s32 priority, u16 attr)
+{
+    u32 words;
+    u32 *stack;
+
+    words = stackSize >> 2;
+    stack = (u32 *)HuMemDirectMallocNum(HEAP_HEAP, words * 4, 0x10000000);
+    if (stack != 0) {
+    } else {
+        M536_ASSERT_FAIL("ptr != NULL", "new.cpp", 0x17);
+    }
+    th->m_stack = stack;
+    fn_1_56E8(th, entry, param, stack, words, priority, attr);
+    return th;
+}
+
+// Thread on a caller-supplied stack.
+M536Thread *fn_1_566C(M536Thread *th, void *(*entry)(void *), void *param, u32 *stack, u32 stackSize, s32 priority, u16 attr)
+{
+    th->m_stack = 0;
+    fn_1_56E8(th, entry, param, stack, stackSize >> 2, priority, attr);
+    return th;
+}
+
+void fn_1_56E8(M536Thread *th, void *(*entry)(void *), void *param, u32 *stack, u32 words, s32 priority, u16 attr)
+{
+    u8 ok;
+
+    ok = 0;
+    if (priority >= 0 && priority <= 0x1F) {
+        ok = 1;
+    }
+    if (ok != 0) {
+    } else {
+        M536_ASSERT_FAIL("priority >= OS_PRIORITY_MIN && priority <= OS_PRIORITY_MAX", "thread.cpp", 0x52);
+    }
+    fn_1_5A54(stack, words);
+    fn_1_59E0(stack, 0);
+    if ((u8)(OSCreateThread(&th->m_os, entry, param, &stack[words], words * 4, priority, attr) != 0) == 0) {
+        OSPanic("thread.cpp", 0x60, "OSCreateThread() failed.");
+    }
+}
+
+M536Thread *fn_1_580C(M536Thread *th, s16 freeIt)
+{
+    u32 *stack;
+    u32 total;
+    u32 remain;
+
+    if (th != 0) {
+        if (OSIsThreadTerminated(&th->m_os) == 0) {
+            OSCancelThread(&th->m_os);
+        }
+        if (lbl_1_bss_9E8 != 0) {
+            total = (u32)(th->m_os.stackBase - (u8 *)th->m_os.stackEnd);
+            remain = fn_1_5940(th);
+            printf("delete CThread@%p\nstack remain/total = 0x%08x/0x%08x (%f%%)\n", th, remain, total,
+                (100.0 * (f64)remain) / (f64)total);
+        }
+        stack = th->m_stack;
+        if (stack != 0) {
+            HuMemDirectFree(stack);
+        }
+        if (freeIt > 0 && th != 0) {
+            HuMemDirectFree(th);
+        }
+    }
+    return th;
+}
+
+// Bytes of stack never touched (checks the canary at the end of the stack first).
+u32 fn_1_5940(M536Thread *th)
+{
+    u32 *end;
+    u32 *p;
+
+    end = th->m_os.stackEnd;
+    if (fn_1_59E0(end, 1) != 0) {
+        OSPanic("thread.cpp", 0x7F, "stack overflow\n");
+    }
+    p = end;
+    while (p < (u32 *)th->m_os.stackBase) {
+        if (*p == 0xDEADBABE) {
+            p++;
+            continue;
+        }
+        break;
+    }
+    return (u32)((u8 *)p - (u8 *)end);
+}
+
+// mode 0 writes the 8-word canary, mode 1 returns non-zero when it was overwritten.
+s32 fn_1_59E0(u32 *stack, s32 mode)
+{
+    u32 *p;
+    u32 *end;
+
+    p = stack;
+    end = p + 8;
+    switch (mode) {
+    case 0:
+        while (p != end) {
+            *p = 0xDEADBABE;
+            p++;
+        }
+        return 0;
+    case 1:
+        while (p != end) {
+            if (*p++ != 0xDEADBABE) {
+                return 1;
+            }
+        }
+        return 0;
+    default:
+        return 0;
+    }
+}
+
+void fn_1_5A54(u32 *stack, u32 words)
+{
+    u32 *p;
+    u32 *end;
+
+    p = stack;
+    if (lbl_1_bss_9E8 != 0) {
+        end = p + words;
+        while (p != end) {
+            *p = 0xDEADBABE;
+            p++;
+        }
+    }
+}
+
+// ---- timer handle wrappers
+
+MGTIMER **fn_1_5AA0(MGTIMER **out, s32 type)
+{
+    switch (type) {
+    case 0:
+        *out = MgTimerCreate(0);
+        break;
+    case 1:
+        *out = MgTimerCreate(1);
+        break;
+    case 2:
+        *out = MgTimerCreate(2);
+        break;
+    default:
+        M536_ASSERT_FAIL("false", "timer.cpp", 0x1E);
+        break;
+    }
+    return out;
+}
+
+MGTIMER **fn_1_5B68(MGTIMER **timer, s16 freeIt)
+{
+    if (timer != 0) {
+        MgTimerKill(*timer);
+        if (freeIt > 0 && timer != 0) {
+            HuMemDirectFree(timer);
+        }
+    }
+    return timer;
+}
+
+void fn_1_5BC4(MGTIMER **timer, s32 maxTime, s32 endTime, s32 recordTime)
+{
+    MgTimerParamSet(*timer, maxTime, endTime, recordTime);
+}
+
+void fn_1_5C0C(MGTIMER **timer)
+{
+    MgTimerValueGet(*timer);
+}
+
+void fn_1_5C3C(MGTIMER **timer, f32 x, f32 y)
+{
+    MgTimerPosSet(*timer, x, y);
+}
+
+void fn_1_5C7C(MGTIMER **timer, f32 *x, f32 *y)
+{
+    MgTimerPosGet(*timer, x, y);
+}
+
+void fn_1_5CBC(MGTIMER **timer, s32 offType)
+{
+    switch (offType) {
+    case 0:
+        MgTimerModeOnSet(*timer, 0);
+        return;
+    case 1:
+        MgTimerModeOnSet(*timer, 1);
+        return;
+    case 2:
+        MgTimerModeOnSet(*timer, 2);
+        return;
+    default:
+        M536_ASSERT_FAIL("false", "timer.cpp", 0x48);
+        return;
+    }
+}
+
+void fn_1_5D80(MGTIMER **timer)
+{
+    MgTimerModeOffSet(*timer);
+}
+
+void fn_1_5DB0(MGTIMER **timer)
+{
+    if ((*timer)->stopF == 0) {
+        (*timer)->stopF = 1;
+        (*timer)->mode = 1;
+    }
+}
+
+void fn_1_5DDC(MGTIMER **timer)
+{
+    MgTimerKill(*timer);
+    *timer = MgTimerCreate(0);
+}
+
+u8 fn_1_5E18(MGTIMER **timer)
+{
+    return (u8)(MgTimerDoneCheck(*timer) != 0);
+}
+
+void fn_1_5E58(MGTIMER **timer, u8 r, u8 g, u8 b)
+{
+    MgTimerWinColorSet(*timer, r, g, b);
+}
+
+// Static initializer: the work object list, the default speeds and the RNG seed.
+void fn_1_5EA0(void)
+{
+    lbl_1_bss_C.next = &lbl_1_bss_C;
+    lbl_1_bss_C.prev = &lbl_1_bss_C;
+    __register_global_object(&lbl_1_bss_C, (void *)fn_1_6000, &lbl_1_bss_0);
+    lbl_1_bss_18 = 0x78;
+    lbl_1_bss_1C = 0xD2;
+    lbl_1_bss_20 = 0xD2;
+    fn_1_4A08(0x1571);
+}
+
+void *fn_1_6000(void *obj, s16 freeIt)
+{
+    M536_NODE *self = (M536_NODE *)obj;
+
+    if (self != 0) {
+        if (self != 0) {
+            self->next->prev = self->prev;
+            self->prev->next = self->next;
+        }
+        if (freeIt > 0 && self != 0) {
+            HuMemDirectFree(self);
+        }
+    }
+    return self;
 }
 
 }
