@@ -32,7 +32,7 @@ typedef struct M580PuckData_s {
     /* 0x22 */ HU3DMODELID shadow;
     /* 0x24 */ HuVecF pos;
     /* 0x30 */ HuVecF vel;
-    /* 0x3C */ u32 hitId;
+    /* 0x3C */ OMOBJ *hitId; /* player object holding the puck */
     /* 0x40 */ s32 hitTime;
     /* 0x44 */ s32 sudden;
     /* 0x48 */ s32 suddenTime;
@@ -50,7 +50,7 @@ void fn_1_1908(HuVecF *pos);
 void fn_1_212C(s32 seId, HuVecF *pos);
 void fn_1_EC74(HuVecF *pos, HuVecF *vel);
 void fn_1_EDF8(s32 sudden);
-s32 fn_1_7E2C(s32 hitId);
+s32 fn_1_7E2C(OMOBJ *hitId);
 
 void fn_1_C99C(OMOBJ *obj);
 void fn_1_CBCC(OMOBJ *obj);
@@ -264,7 +264,7 @@ s32 fn_1_D054(HuVecF *center, f32 dir, f32 halfAngle, f32 range)
     return 1;
 }
 
-s32 fn_1_D30C(HuVecF *pos, HuVecF *vel)
+OMOBJ *fn_1_D30C(HuVecF *pos, HuVecF *vel)
 {
     M580PuckData *data = lbl_1_bss_240->data;
 
@@ -280,7 +280,7 @@ s32 fn_1_D30C(HuVecF *pos, HuVecF *vel)
     return data->hitId;
 }
 
-u32 fn_1_D390(HuVecF *pos, HuVecF *vel, u32 hitId, f32 lerp)
+OMOBJ *fn_1_D390(HuVecF *pos, HuVecF *vel, OMOBJ *hitId, f32 lerp)
 {
     M580PuckData *data = lbl_1_bss_240->data;
 
@@ -371,7 +371,7 @@ s32 fn_1_D6EC(void)
     return data->sudden;
 }
 
-s32 fn_1_D714(s32 hitId)
+s32 fn_1_D714(OMOBJ *hitId)
 {
     M580PuckData *data = lbl_1_bss_240->data;
     s32 team = fn_1_7E2C(hitId);
