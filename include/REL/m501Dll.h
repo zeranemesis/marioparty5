@@ -4,6 +4,12 @@
 #include "dolphin/types.h"
 #include <dolphin/gx/GXStruct.h>
 #include <dolphin/mtx.h>
+#include <dolphin/os/OSThread.h>
+
+struct OSSemaphore {
+    OSThreadQueue queue;
+    s32 count;
+};
 
 /* Local copies of the small support classes m501.cpp defines: CGameObject's
  * constructor has to be visible here so a derived constructor can inline it,
@@ -24,6 +30,8 @@ class CLinkList;
 class CRandom {
 public:
     static float frandom(float min, float max);
+    static u32 irandom();
+    static void setSeed(int seed);
 };
 
 class CLinkNode {
@@ -34,7 +42,9 @@ public:
     CLinkNode();
     CLinkNode(CLinkNode &);
     ~CLinkNode();
+    void insertFront(CLinkList *list);
     void insertBack(CLinkList *list);
+    void copyLink(CLinkList *list);
 };
 
 class CLinkList : public CLinkNode {
@@ -47,6 +57,33 @@ public:
         }
         return empty;
     }
+};
+
+/* the original symbol carries a comparator typed "void", keep it as plain C */
+extern "C" void sortList__9CLinkListFPFP9CLinkNodeP9CLinkNode_v(CLinkList *list, bool (*cmp)(CLinkNode *, CLinkNode *));
+
+struct CHandleNode {
+    CHandleNode *m_next;
+    CHandleNode *m_prev;
+    void *m_ptr;
+    u32 m_index : 20;
+    u32 m_gen : 12;
+};
+
+class CHandleMan {
+public:
+    CHandleMan(unsigned int n);
+    ~CHandleMan();
+    int insertHandle(void *ptr);
+    void *removeHandle(int handle);
+    void *getHandlePtr(int handle);
+    int getHandleNum();
+    int getEndHandleNum();
+    int getBeginHandleNum();
+
+    CHandleNode *m_nodes;
+    CHandleNode *m_used;
+    u32 m_count;
 };
 
 struct CCameraView {
@@ -67,14 +104,13 @@ public:
     void getView(CCameraView *view);
     void lerpView(CCameraView *a, CCameraView *b, f32 t);
     void getOffset(Vec *out);
-    void getOffsetTo(Vec *a, Vec *b);
     void setPos(u16 camNo);
     void getPos(u16 camNo);
     void printView();
-    f32 GetStickX(int pad);
-    f32 GetStickY(int pad);
-    f32 GetSubStickX(int pad);
-    f32 GetSubStickY(int pad);
+    static f32 GetStickX(int pad);
+    static f32 GetStickY(int pad);
+    static f32 GetSubStickX(int pad);
+    static f32 GetSubStickY(int pad);
     void debugView(int pad);
 
     Vec m_pos;    // 0x00
@@ -82,15 +118,23 @@ public:
     Vec m_target; // 0x18
 };
 
+/* the original symbol has no float in its signature, keep it as plain C */
+extern "C" void getOffsetTo__7CCameraFP3VecP3Vec(CCamera *self, Vec *a, Vec *b, f32 t);
+
 class CGameObject : public CLinkNode {
 public:
     static CLinkList ObjectList;
+    static s32 s_updateMode;
 
     virtual void on_new_mode(int mode) = 0;
-    virtual void on_update() {}
-    void SetObjExecMode(s32 mode);
+    virtual void on_update();
+    static void SetObjExecMode(s32 mode);
+    static s32 CheckObjExec();
+    static void UpdateAll();
+    static void Close();
+    static s32 GetUpdateMode();
 
-    virtual ~CGameObject() {}
+    virtual ~CGameObject();
 
     s32 m_execMode;
 
@@ -101,37 +145,161 @@ public:
     }
 };
 
+class CMinigameCore {
+public:
+    static CMinigameCore *instance;
+
+    void *operator new(unsigned long size);
+    void *operator new[](unsigned long size);
+    void operator delete(void *ptr);
+    void operator delete[](void *ptr);
+
+    CMinigameCore();
+    virtual ~CMinigameCore();
+    virtual void on_setup(struct Process_s *objMan) = 0;
+    virtual void on_update();
+    virtual void on_close() = 0;
+
+    void setup(int prio, int stackSize);
+    void actorSetup(int, int);
+    static void ObjUpdate(struct omObj_s *obj);
+    void update();
+    static void MgExit(struct omObj_s *obj);
+    static void AddWinner(int player);
+    static bool CheckWinner(int player);
+    static void StartStartGameMes();
+    static void StartFinishGameMes();
+    static bool CheckGameMes();
+    static void StartWinnerGameMes();
+    static void StartRecordGameMes(unsigned int rec);
+    static void StartFadeIn();
+    static void StartFadeOut();
+    static void ExitReq();
+
+    u32 m_unk0;      // 0x00
+    s32 m_winner[4]; // 0x08
+    s32 m_gameMes;   // 0x18
+    s32 m_delay;     // 0x1C
+};
+
+typedef void (*HU3DMODELHOOK)(Hu3DModel_s *, Mtx *);
+
 class CModel {
 public:
+    CModel(void *data);
     CModel(unsigned int dataNum);
+    CModel(HU3DMODELHOOK hook);
+    CModel(int charNo, int mode);
+    CModel(CModel &src);
     ~CModel();
+    void setAttr(unsigned int attr);
+    void resetAttr(unsigned int attr);
+    void setObjXform(struct omObj_s *obj);
+    void setPos(Vec *pos);
+    void setRot(Vec *rot);
+    void setScale(Vec *scale);
+    void setScale(f32 scale);
+    void setTPLvl(f32 lvl);
+    void setLayer(s16 layer);
+    void setCamera(unsigned short camBit);
     Hu3DMtx *getMatrix();
     void setHookData(void *data);
+    void *getObjPtr(const char *name);
+    void set_shadow();
+    void setShadowMap();
+    void setShadowMapObj(const char *name);
+    void resetShadowMapObj();
+    void shadowMapOffObj(char *name);
+    void shadowOnObj(char *name);
+    void shadowOffObj(char *name);
+    void shadowOnlyObjOn(char *name);
+    void shadowOnlyObjOff(char *name);
+    void setMotTime(int time);
 
     s16 getId() { return m_id; }
 
     s16 m_id;
 };
 
+class CMT19937 {
+public:
+    CMT19937(int seed = 5489) { setSeed(seed); }
+    void setSeed(int seed);
+    u32 random();
+    u32 irandom();
+    f32 nrandom();
+    f32 nrandom2();
+    f32 nrandomMid();
+    double frandom();
+    f32 randomMantissa();
+    u32 gen();
+
+    u32 m_state[624];
+    u32 m_index;
+};
+
+/* the original symbol has no parameters in its signature, keep it as plain C */
+extern "C" void setSeedDefault__8CMT19937Fv(CMT19937 *self, u32 *key, u32 keyLen);
+
 class COMObj {
 public:
-    virtual ~COMObj() {}
-    virtual void OmObjUpdate(struct omObj_s *obj);
+    virtual ~COMObj();
     virtual void on_update(struct omObj_s *obj);
-    virtual void OmObjDelete(struct omObj_s *obj);
 
-    static void OmObjUpdateStatic(struct omObj_s *obj);
+    static void OmObjUpdate(struct omObj_s *obj);
+    static void OmObjDelete(struct omObj_s *obj);
+    static void OmObjDelete(struct Process_s *proc, struct omObj_s *obj);
 
     COMObj(struct omObj_s *obj);
 };
 
+class CThread {
+public:
+    CThread(void *(*func)(void *), void *arg, u32 stackSize, s32 priority, u16 attr);
+    CThread(void *(*func)(void *), void *arg, u32 *stack, u32 stackSize, s32 priority, u16 attr);
+    void createThread(void *(*func)(void *), void *arg, u32 *stack, u32 stackWords, s32 priority, u16 attr);
+    ~CThread();
+    u32 getStackRemain();
+    static s32 checkStackOverflow(u32 *stack, int mode);
+    static void initStack(u32 *stack, u32 words);
+
+    OSThread m_thread;
+    u32 *m_stack;
+};
+
 class CSubThread {
 public:
-    virtual ~CSubThread() {}
-    virtual void *ThreadMain(void *arg);
+    virtual ~CSubThread();
+    virtual void thread_main(int arg) = 0;
 
     CSubThread(unsigned long stackSize);
-    s32 GetStartPriority();
+    static s32 GetStartPriority();
+    bool isTerminated();
+    s32 wakeupThread(int arg);
+    s32 sleepThread(int arg);
+    static void *ThreadMain(void *self);
+
+    CThread m_thread;
+    OSSemaphore m_sema;
+    s32 m_arg;
+};
+
+class CTimer {
+public:
+    CTimer(int type);
+    ~CTimer();
+    void setParam(int a, int b, int c);
+    s32 getValue();
+    void setPos(f32 x, f32 y);
+    void getPos(f32 *x, f32 *y);
+    void setModeOn(int mode);
+    void setModeOff();
+    void stopTimer();
+    void resetTimer();
+    bool checkDone();
+    void setWinColor(u8 r, u8 g, u8 b);
+
+    struct MgTimer_s *m_timer;
 };
 
 namespace m501 {
