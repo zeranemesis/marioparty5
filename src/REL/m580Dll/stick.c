@@ -133,9 +133,6 @@ char lbl_1_data_544[50][8] = {
 };
 char lbl_1_data_6D4[6][8] = { "kame1", "kame2", "kame3", "kame4", "kame5", "kame6" };
 char lbl_1_data_704[16] = "itemhook_sao";
-HuVecF lbl_1_data_738 = { 0.0f, -10.0f, 0.0f };
-s32 lbl_1_data_744[2] = { DATANUM(DATA_m580, 0x0B), DATANUM(DATA_m580, 0x0C) };
-char lbl_1_data_74C[12] = "itemhook_L";
 
 void fn_1_8B98(OMOBJ *obj);
 void fn_1_8B64(OMOBJ *obj);
@@ -531,6 +528,10 @@ void fn_1_9970(OMOBJ *obj)
     Hu3DModelObjPosGet(model, lbl_1_data_704, &pos);
     fn_1_D60C(&pos);
 }
+
+HuVecF lbl_1_data_738 = { 0.0f, -10.0f, 0.0f };
+s32 lbl_1_data_744[2] = { DATANUM(DATA_m580, 0x0B), DATANUM(DATA_m580, 0x0C) };
+char lbl_1_data_74C[12] = "itemhook_L";
 
 void fn_1_A260(OMOBJ *obj);
 
