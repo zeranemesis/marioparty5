@@ -284,6 +284,12 @@ void fn_1_1268C(M568Tube *self)
     Vec n;
     Vec t;
     Vec *g;
+    Vec *g0;
+    Vec *up0;
+    M568PosOwner *s0;
+    M568PosOwner *s1;
+    f32 d;
+    f32 d2;
 
     up.x = 0.0f;
     up.y = 20.0f;
@@ -292,11 +298,17 @@ void fn_1_1268C(M568Tube *self)
     down.x = 0.0f;
     down.y = -20.0f;
     down.z = 0.0f;
-    fn_1_13ECC(self, &down, &down);
+    up0 = &down;
+    fn_1_13ECC(self, &down, up0);
     TUBE_CHECK_STAGE(0x27);
-    if (fn_1_E304(lbl_1_bss_9F0, &down, &up, &down) != 0) {
-        g = fn_1_E2FC(lbl_1_bss_9F0);
-        PSVECScale(g, &n, -PSVECDotProduct(g, &self->vel));
+    s0 = lbl_1_bss_9F0;
+    s1 = s0;
+    if (fn_1_E304(s1, &down, &up, &down) != 0) {
+        g0 = fn_1_E2FC(s1);
+        g = g0;
+        d = PSVECDotProduct(g, &self->vel);
+        d2 = d;
+        PSVECScale(g, &n, -d2);
         PSVECAdd(&self->vel, &n, &n);
         PSVECScale(&n, &t, -1.0f);
         PSVECAdd(&t, &self->force, &self->force);
@@ -305,7 +317,9 @@ void fn_1_1268C(M568Tube *self)
 
 void fn_1_1284C(M568Tube *self, Vec *out)
 {
-    fn_1_D0A0(out, &self->pos, self->radius);
+    f32 r = self->radius;
+
+    fn_1_D0A0(out, &self->pos, r);
 }
 
 void fn_1_1289C(M568Tube *self)
@@ -319,31 +333,23 @@ void fn_1_1289C(M568Tube *self)
 
 void fn_1_1290C(M568Tube *self)
 {
-    Vec up;
-    Vec down;
-    Vec n;
-    Vec t;
-    Vec *g;
     f32 y;
+    f32 y2;
+    f32 y3;
+    f32 gx;
+    f32 gy;
+    f32 gz;
+    f32 ux;
+    f32 uy;
+    f32 uz;
+    f32 rx;
+    f32 ry;
+    f32 rx2;
+    f32 ry2;
 
     if (fn_1_2548() != 2) {
         if (self->ghost != 0) {
-            up.x = 0.0f;
-            up.y = 20.0f;
-            up.z = 0.0f;
-            fn_1_13ECC(self, &up, &up);
-            down.x = 0.0f;
-            down.y = -20.0f;
-            down.z = 0.0f;
-            fn_1_13ECC(self, &down, &down);
-            TUBE_CHECK_STAGE(0x27);
-            if (fn_1_E304(lbl_1_bss_9F0, &down, &up, &down) != 0) {
-                g = fn_1_E2FC(lbl_1_bss_9F0);
-                PSVECScale(g, &n, -PSVECDotProduct(g, &self->vel));
-                PSVECAdd(&self->vel, &n, &n);
-                PSVECScale(&n, &t, -1.0f);
-                PSVECAdd(&t, &self->force, &self->force);
-            }
+            fn_1_1268C(self);
         } else {
             self->spin.z = -1.0f;
         }
@@ -351,10 +357,22 @@ void fn_1_1290C(M568Tube *self)
     if (__ptmf_test(&self->hook) != 0) {
         __ptmf_scall(self);
     }
-    self->up.x = (f32)((0.9099999964237213 * (f64)self->up.x) + (0.09000000357627869 * (f64)self->upGoal.x));
-    self->up.y = (f32)((0.9099999964237213 * (f64)self->up.y) + (0.09000000357627869 * (f64)self->upGoal.y));
-    y = (f32)((0.9099999964237213 * (f64)self->up.z) + (0.09000000357627869 * (f64)self->upGoal.z));
-    self->up.z = y;
+    gx = self->upGoal.x;
+    ux = self->up.x;
+    rx = (f32)((0.9099999964237213 * (f64)ux) + (0.09000000357627869 * (f64)gx));
+    rx2 = rx;
+    self->up.x = rx2;
+    gy = self->upGoal.y;
+    uy = self->up.y;
+    ry = (f32)((0.9099999964237213 * (f64)uy) + (0.09000000357627869 * (f64)gy));
+    ry2 = ry;
+    self->up.y = ry2;
+    gz = self->upGoal.z;
+    uz = self->up.z;
+    y = (f32)((0.9099999964237213 * (f64)uz) + (0.09000000357627869 * (f64)gz));
+    y2 = y;
+    y3 = y2;
+    self->up.z = y3;
     fn_1_13DE4(self);
     self->prev.x = self->pos.x;
     self->prev.y = self->pos.y;
@@ -368,10 +386,13 @@ void fn_1_1290C(M568Tube *self)
 
 void fn_1_12D10(M568Tube *self)
 {
+    f32 r;
+
     fn_1_13634(self);
     fn_1_13994(self);
     if (self->down == 0) {
-        fn_1_CED4(&self->pos, self->radius);
+        r = self->radius;
+        fn_1_CED4(&self->pos, r);
     }
     fn_1_12FD8(self);
     fn_1_13B54(self);
@@ -381,11 +402,13 @@ void fn_1_12D84(M568Tube *self)
 {
     Vec g;
     M568Ptmf tmp;
+    f32 r;
 
     fn_1_13634(self);
     fn_1_13994(self);
     if (self->down == 0) {
-        fn_1_CED4(&self->pos, self->radius);
+        r = self->radius;
+        fn_1_CED4(&self->pos, r);
     }
     fn_1_12FD8(self);
     fn_1_13B54(self);
@@ -433,21 +456,15 @@ void fn_1_12F28(M568Tube *self, Vec *dir)
 
 static void fn_1_12FD8(M568Tube *self)
 {
-    Mtx m;
-    Quaternion q;
     Vec a6C;
     Vec t54;
     Vec t60;
     Vec hit;
     Vec n3C;
     Vec n30;
-    Vec a8;
-    Vec v24;
     Vec *np;
     TubeEffect *e;
     f32 r;
-    f32 ax;
-    f32 ax2;
 
     fn_1_134D4(self);
     TUBE_CHECK_STAGE(0x27);
@@ -471,16 +488,7 @@ static void fn_1_12FD8(M568Tube *self)
             n3C.x = np->x;
             n3C.y = np->y;
             n3C.z = np->z;
-            if (n3C.x < 0.0f) {
-                ax = -n3C.x;
-            } else {
-                ax = n3C.x;
-            }
-            if (!(ax > sin(0.10471975511965977))) {
-                self->upGoal.x = n3C.x;
-                self->upGoal.y = n3C.y;
-                self->upGoal.z = n3C.z;
-            }
+            fn_1_12E80(self, &n3C);
         }
         return;
     }
@@ -501,36 +509,26 @@ static void fn_1_12FD8(M568Tube *self)
     if (e != 0) {
         fn_1_C0A8(e, &self->pos, 100.0f);
     }
-    if (n30.x < 0.0f) {
-        ax2 = -n30.x;
-    } else {
-        ax2 = n30.x;
-    }
-    if (!(ax2 > sin(0.10471975511965977))) {
-        self->upGoal.x = n30.x;
-        self->upGoal.y = n30.y;
-        self->upGoal.z = n30.z;
-    }
-    a8.x = 0.0f;
-    a8.y = 1.0f;
-    a8.z = 0.0f;
-    fn_1_ED98(&q, &a8, &n30);
-    PSMTXQuat(m, &q);
-    PSMTXMultVecSR(m, &self->spin, &v24);
-    PSVECScale(&v24, &v24, 10.0f);
-    PSVECAdd(&v24, &self->force, &self->force);
+    fn_1_12E80(self, &n30);
+    fn_1_12F28(self, &n30);
     fn_1_13994(self);
 }
 
 static f32 fn_1_133FC(M568Tube *self, Vec *n, Vec *v)
 {
     Vec t;
+    Vec *p;
+    Vec *q;
     f32 d;
+    f32 s;
 
     d = PSVECDotProduct(v, n);
     if (d < 0.0f) {
-        PSVECScale(n, &t, self->mass * -d);
-        PSVECAdd(&t, &self->force, &self->force);
+        s = self->mass * -d;
+        PSVECScale(n, &t, s);
+        p = &t;
+        q = p;
+        PSVECAdd(q, &self->force, &self->force);
     }
     return d;
 }
@@ -558,18 +556,30 @@ static void fn_1_134D4(M568Tube *self)
 static void fn_1_13634(M568Tube *self)
 {
     Vec g;
+    Vec *p;
+    Vec *q;
+    f32 m;
 
     TUBE_CHECK_STAGE(0x27);
-    fn_1_CE54(&g, self->mass);
-    PSVECAdd(&g, &self->force, &self->force);
+    m = self->mass;
+    fn_1_CE54(&g, m);
+    p = &g;
+    q = p;
+    PSVECAdd(q, &self->force, &self->force);
 }
 
 void fn_1_136CC(M568Tube *self, f32 k)
 {
     Vec t;
+    Vec *p;
+    Vec *q;
+    f32 s;
 
-    PSVECScale(&self->vel, &t, -0.8f * self->mass * k);
-    PSVECAdd(&t, &self->force, &self->force);
+    s = -0.8f * self->mass * k;
+    PSVECScale(&self->vel, &t, s);
+    p = &t;
+    q = p;
+    PSVECAdd(q, &self->force, &self->force);
 }
 
 static s32 fn_1_1375C(M568Tube *self, Vec *p)
@@ -580,9 +590,7 @@ static s32 fn_1_1375C(M568Tube *self, Vec *p)
     Vec d;
     Vec dir;
     Vec par;
-    Vec t;
     Vec *n;
-    f32 dot;
 
     a.x = 0.0f;
     a.y = p->y;
@@ -599,11 +607,7 @@ static s32 fn_1_1375C(M568Tube *self, Vec *p)
     PSVECNormalize(&dir, &dir);
     PSVECScale(&dir, &par, PSVECDotProduct(&dir, &self->vel));
     n = fn_1_E2FC(lbl_1_bss_9F0);
-    dot = PSVECDotProduct(&par, n);
-    if (dot < 0.0f) {
-        PSVECScale(n, &t, self->mass * -dot);
-        PSVECAdd(&t, &self->force, &self->force);
-    }
+    fn_1_133FC(self, n, &par);
     return 1;
 }
 
@@ -621,25 +625,33 @@ static void fn_1_13994(M568Tube *self)
 void fn_1_13A30(Vec *out, Vec *v)
 {
     Vec g;
+    f32 d;
+    f32 d2;
 
     fn_1_CE20(&g);
-    PSVECScale(&g, out, PSVECDotProduct(&g, v));
+    d = PSVECDotProduct(&g, v);
+    d2 = d;
+    PSVECScale(&g, out, d2);
 }
 
 void fn_1_13A90(M568Tube *self, f32 limit)
 {
     Vec par;
     Vec perp;
-    Vec g;
     Vec *v;
+    f32 lim;
+    f32 mag;
+    f32 mag2;
 
+    lim = limit;
     v = &self->vel;
-    fn_1_CE20(&g);
-    PSVECScale(&g, &par, PSVECDotProduct(&g, v));
+    fn_1_13A30(&par, v);
     PSVECSubtract(v, &par, &perp);
-    if (!(PSVECMag(&perp) < limit)) {
+    mag = PSVECMag(&perp);
+    mag2 = mag;
+    if (!(mag2 < lim)) {
         PSVECNormalize(&perp, &perp);
-        PSVECScale(&perp, v, limit);
+        PSVECScale(&perp, v, lim);
         PSVECAdd(&par, v, v);
     }
 }
@@ -647,37 +659,17 @@ void fn_1_13A90(M568Tube *self, f32 limit)
 static void fn_1_13B54(M568Tube *self)
 {
     Vec old;
-    Vec par;
-    Vec perp;
-    Vec g;
-    Vec *v;
 
     old.x = self->vel.x;
     old.y = self->vel.y;
     old.z = self->vel.z;
     PSVECAdd(&self->accel, &old, &self->vel);
-    v = &self->vel;
-    fn_1_CE20(&g);
-    PSVECScale(&g, &par, PSVECDotProduct(&g, v));
-    PSVECSubtract(v, &par, &perp);
-    if (!(PSVECMag(&perp) < 25.0f)) {
-        PSVECNormalize(&perp, &perp);
-        PSVECScale(&perp, v, 25.0f);
-        PSVECAdd(&par, v, v);
-    }
+    fn_1_13A90(self, 25.0f);
     self->accel.x = 0.0f;
     self->accel.y = 0.0f;
     self->accel.z = 0.0f;
     PSVECAdd(&self->vel, &old, &old);
-    v = &self->vel;
-    fn_1_CE20(&g);
-    PSVECScale(&g, &par, PSVECDotProduct(&g, v));
-    PSVECSubtract(v, &par, &perp);
-    if (!(PSVECMag(&perp) < 25.0f)) {
-        PSVECNormalize(&perp, &perp);
-        PSVECScale(&perp, v, 25.0f);
-        PSVECAdd(&par, v, v);
-    }
+    fn_1_13A90(self, 25.0f);
     PSVECScale(&old, &old, 0.5f);
     PSVECAdd(&old, &self->pos, &self->pos);
 }
