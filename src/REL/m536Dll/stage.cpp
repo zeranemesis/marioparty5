@@ -594,9 +594,7 @@ void fn_1_9AA0(void)
 SECTION_CTORS void *const _ctors_stage = (void *)fn_1_9AA0;
 
 // static initialiser of this unit (in .ctors on GameCube)
-#ifdef __MWERKS__
-__declspec(section ".ctors") void (*const lbl_ctor_9AA0)(void) = fn_1_9AA0;
-#else
+#ifndef __MWERKS__ /* the .ctors entry is SECTION_CTORS above */
 struct PortStaticInit_9AA0 {
     PortStaticInit_9AA0() { fn_1_9AA0(); }
 };

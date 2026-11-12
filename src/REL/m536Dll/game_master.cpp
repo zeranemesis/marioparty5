@@ -373,9 +373,7 @@ void fn_1_658C(M536GameMaster *self)
 SECTION_CTORS void *const _ctors_game_master = (void *)fn_1_6550;
 
 // static initialiser of this unit (in .ctors on GameCube)
-#ifdef __MWERKS__
-__declspec(section ".ctors") void (*const lbl_ctor_6550)(void) = fn_1_6550;
-#else
+#ifndef __MWERKS__ /* the .ctors entry is SECTION_CTORS above */
 struct PortStaticInit_6550 {
     PortStaticInit_6550() { fn_1_6550(); }
 };
