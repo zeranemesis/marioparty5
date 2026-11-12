@@ -80,6 +80,14 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "game/mg/timer.h"
+#ifdef __cplusplus
+}
+#endif
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -327,6 +335,14 @@ struct M537Center {
     Vec m_pos;              /* 0x10 */
     Vec m_vel;              /* 0x1C */
     M537ArmPtr m_arm[4];    /* 0x28 */
+};
+
+// The minigame master object: core, thread (second base at 0x20), timer and frame counter.
+struct M537GameMaster {
+    M537Main m_core;        /* 0x00 */
+    M537CThread m_thread;   /* 0x20 */
+    MGTIMER *m_timer;       /* 0x358 */
+    s32 m_counter;          /* 0x35C */
 };
 
 struct M537Water;

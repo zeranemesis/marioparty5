@@ -4,7 +4,6 @@
 extern "C" {
 #include "game/wipe.h"
 #include "game/gamemes.h"
-#include "game/mg/timer.h"
 }
 
 // m537 top-level unit: runtime support (allocator, assert, list helpers, a look-at
