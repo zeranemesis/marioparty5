@@ -268,7 +268,7 @@ static void fn_1_1364(OMOBJ *obj)
     }
 }
 
-s32 fn_1_1694(void)
+u32 fn_1_1694(void)
 {
     return ((M534MAIN *) lbl_1_bss_1C->data)->state;
 }

@@ -97,14 +97,19 @@ f32 fn_1_4848(void);
 void fn_1_6314(HUPROCESS *proc);
 void fn_1_6338(void);
 
+void fn_1_6458(HuVecF *pos);
+void fn_1_6938(HuVecF *pos, HuVecF *vel);
+
 /* score.c */
+void fn_1_74B0(s32 team, s32 amount);
+s32 fn_1_74E8(s32 team);
 void fn_1_6BDC(HUPROCESS *proc, OMOBJ **mainObj);
 void fn_1_6C74(void);
 
 /* m534.c */
 void fn_1_444(OMOBJ *obj);
 void fn_1_518(OMOBJ *obj);
-s32 fn_1_1694(void);
+u32 fn_1_1694(void);
 u32 fn_1_16AC(void);
 u32 fn_1_16C4(void);
 u32 fn_1_16DC(void);
