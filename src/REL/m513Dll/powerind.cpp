@@ -37,7 +37,6 @@ void fn_1_AE0C(HU3DMODEL *model, Mtx *mtx)
 
 M513IndHook *fn_1_AE58(M513IndHook *self)
 {
-    M513IndHook *ms;
     HU3DMODELID hookId;
     s32 i;
 
@@ -46,11 +45,7 @@ M513IndHook *fn_1_AE58(M513IndHook *self)
     self->flags = 0;
     fn_1_1834(&self->link, &lbl_1_bss_C);
     M513_ASSERT(lbl_1_bss_9F0 == 0, lbl_1_data_378, lbl_1_data_388, 0x35);
-    ms = (M513IndHook *)((char *)self + 0x10);
-    if (ms != 0) {
-        ms = (M513IndHook *)((char *)ms - 0x10);
-    }
-    lbl_1_bss_9F0 = ms;
+    M513_SINGLETON_SET(lbl_1_bss_9F0, self, M513IndHook);
     self->vtbl = lbl_1_data_3A4;
     hookId = Hu3DHookFuncCreate(fn_1_AE0C);
     Hu3DModelLayerSet(hookId, 4);
@@ -99,7 +94,7 @@ M513IndHook *fn_1_B110(M513IndHook *self, s16 flag)
         for (i = 0; i < 32; i++) {
             HuSprAnimKill(self->sprAnim[i]);
         }
-        if ((void *)((char *)self + 0x10) != 0) {
+        if (M513_SUBOBJ_NONNULL(self)) {
             M513_ASSERT(lbl_1_bss_9F0 != 0, lbl_1_data_394, lbl_1_data_388, 0x3D);
             lbl_1_bss_9F0 = 0;
         }

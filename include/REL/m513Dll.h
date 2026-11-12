@@ -468,6 +468,16 @@ typedef struct M513GameMaster_s {
 
 M513GameMaster *fn_1_B570(M513GameMaster *self);
 
+/* Singleton registration: the original stores the pointer to the singleton<T>
+ * subobject (this + 0x10) rebased by -0x10, i.e. the object itself. */
+#ifdef TARGET_PC
+#define M513_SINGLETON_SET(var, self, T) ((var) = (self))
+#define M513_SUBOBJ_NONNULL(self) ((self) != 0)
+#else
+#define M513_SINGLETON_SET(var, self, T)                                                               {                                                                                                      T *ms_ = (T *)((char *)(self) + 0x10);                                                             if (ms_ != 0) {                                                                                        ms_ = (T *)((char *)ms_ - 0x10);                                                               }                                                                                                  (var) = ms_;                                                                                   }
+#define M513_SUBOBJ_NONNULL(self) ((void *)((char *)(self) + 0x10) != 0)
+#endif
+
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
 extern M513Node lbl_1_bss_C;

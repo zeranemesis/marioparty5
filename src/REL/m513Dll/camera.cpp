@@ -29,7 +29,6 @@ f32 lbl_1_data_6C8[9] = { 0.0f, 250.0f, -500.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 
 
 M513Camera *fn_1_FD60(M513Camera *self)
 {
-    M513Camera *ms;
     M513Ptmf tmp;
 
     fn_1_1768(&self->link);
@@ -37,11 +36,7 @@ M513Camera *fn_1_FD60(M513Camera *self)
     self->flags = 0;
     fn_1_1834(&self->link, &lbl_1_bss_C);
     M513_ASSERT(lbl_1_bss_A18 == 0, lbl_1_data_6F8, lbl_1_data_708, 0x35);
-    ms = (M513Camera *)((char *)self + 0x10);
-    if (ms != 0) {
-        ms = (M513Camera *)((char *)ms - 0x10);
-    }
-    lbl_1_bss_A18 = ms;
+    M513_SINGLETON_SET(lbl_1_bss_A18, self, M513Camera);
     self->vtbl = lbl_1_data_748;
     tmp = lbl_1_data_6EC;
     self->pmf = tmp;
@@ -149,7 +144,7 @@ M513Camera *fn_1_103E4(M513Camera *self, s16 flag)
 {
     if (self != 0) {
         self->vtbl = lbl_1_data_748;
-        if ((void *)((char *)self + 0x10) != 0) {
+        if (M513_SUBOBJ_NONNULL(self)) {
             M513_ASSERT(lbl_1_bss_A18 != 0, lbl_1_data_714, lbl_1_data_708, 0x3D);
             lbl_1_bss_A18 = 0;
         }

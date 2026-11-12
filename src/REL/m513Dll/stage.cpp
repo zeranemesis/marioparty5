@@ -16,7 +16,6 @@ void *lbl_1_data_78C[5] = { 0, 0, (void *)fn_1_10874, (void *)fn_1_1084C, (void 
 
 M513Stage *fn_1_104B0(M513Stage *self)
 {
-    M513Stage *ms;
     GXColor lightColor;
     Vec lightPos;
     Vec lightDir;
@@ -29,11 +28,7 @@ M513Stage *fn_1_104B0(M513Stage *self)
     self->flags = 0;
     fn_1_1834(&self->link, &lbl_1_bss_C);
     M513_ASSERT(lbl_1_bss_A1C == 0, lbl_1_data_760, lbl_1_data_770, 0x35);
-    ms = (M513Stage *)((char *)self + 0x10);
-    if (ms != 0) {
-        ms = (M513Stage *)((char *)ms - 0x10);
-    }
-    lbl_1_bss_A1C = ms;
+    M513_SINGLETON_SET(lbl_1_bss_A1C, self, M513Stage);
     self->vtbl = lbl_1_data_78C;
 
     fn_1_3198(&self->model[0], M513_HSF_stage);
@@ -105,7 +100,7 @@ M513Stage *fn_1_10874(M513Stage *self, s16 flag)
         fn_1_35F8(&self->model[2], -1);
         fn_1_35F8(&self->model[1], -1);
         fn_1_35F8(&self->model[0], -1);
-        if ((void *)((char *)self + 0x10) != 0) {
+        if (M513_SUBOBJ_NONNULL(self)) {
             M513_ASSERT(lbl_1_bss_A1C != 0, lbl_1_data_77C, lbl_1_data_770, 0x3D);
             lbl_1_bss_A1C = 0;
         }

@@ -383,7 +383,11 @@ void fn_1_122F8(M513Player *self)
             noise = 50.0f * (0.000030517578f * ((f32)(u16)frand() - 32768.0f));
             target.y = self->pos.y + (200.0f + (150.0f * frac) + noise);
             target.z += -500.0f;
+#ifdef TARGET_PC
+            start.y += lbl_1_rodata_500[((u32)self->charNo < 13) ? self->charNo : 12];
+#else
             start.y += lbl_1_rodata_500[self->charNo];
+#endif
             e1 = self->eff[self->effIdx];
             e2 = e1;
             fn_1_9FE4(e2, &start, &target, 0.0f);

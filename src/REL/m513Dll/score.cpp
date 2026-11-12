@@ -32,6 +32,13 @@ void fn_1_13EA4(M513Score *self, s32 bit);
 void fn_1_13430(M513Score *self);
 void fn_1_13AA4(M513Score *self, s32 idx, s32 charNo, s32 x, s32 y);
 
+// Index of a character in the portrait table (clamped on PC).
+#ifdef TARGET_PC
+#define M513_PORTRAIT(c) lbl_1_data_95C[((u32)(c) < 15) ? (c) : 14]
+#else
+#define M513_PORTRAIT(c) lbl_1_data_95C[c]
+#endif
+
 M513_RODATA const s32 lbl_1_rodata_580[8] = { 0x4A, 0x36, 0x1F4, 0x36, 0x4A, 0x1A8, 0x1F4, 0x1A8 };
 
 M513Ptmf lbl_1_data_918 = { 0, -1, (void (*)(void *))fn_1_1220C };
@@ -47,18 +54,13 @@ void *lbl_1_data_998[5] = { 0, 0, (void *)fn_1_13304, (void *)fn_1_13EA4, (void 
 
 M513Score *fn_1_13174(M513Score *self, s32 recordTime, u8 multi)
 {
-    M513Score *ms;
 
     fn_1_1768(&self->link);
     self->vtbl = (void **)&lbl_1_data_218;
     self->flags = 0;
     fn_1_1834(&self->link, &lbl_1_bss_C);
     M513_ASSERT(lbl_1_bss_A20 == 0, lbl_1_data_930, lbl_1_data_940, 0x35);
-    ms = (M513Score *)((char *)self + 0x10);
-    if (ms != 0) {
-        ms = (M513Score *)((char *)ms - 0x10);
-    }
-    lbl_1_bss_A20 = ms;
+    M513_SINGLETON_SET(lbl_1_bss_A20, self, M513Score);
     self->vtbl = lbl_1_data_998;
     self->recordTime = recordTime;
     self->created = 0;
@@ -97,7 +99,7 @@ M513Score *fn_1_13304(M513Score *self, s16 flag)
                 MgTimerKill(self->timer);
             }
         }
-        if ((void *)((char *)self + 0x10) != 0) {
+        if (M513_SUBOBJ_NONNULL(self)) {
             M513_ASSERT(lbl_1_bss_A20 != 0, lbl_1_data_94C, lbl_1_data_940, 0x3D);
             lbl_1_bss_A20 = 0;
         }
@@ -199,7 +201,7 @@ void fn_1_13764(M513Score *self)
 // Player portrait next to a timer window.
 void fn_1_13AA4(M513Score *self, s32 idx, s32 charNo, s32 x, s32 y)
 {
-    self->esp[idx] = espEntry(lbl_1_data_95C[charNo], 0, 0);
+    self->esp[idx] = espEntry(M513_PORTRAIT(charNo), 0, 0);
     espBankSet(self->esp[idx], 0);
     espPosSet(self->esp[idx], (f32)x, (f32)y);
     espDispOn(self->esp[idx]);
@@ -328,7 +330,7 @@ void fn_1_13EA4(M513Score *self, s32 bit)
                         self->timers[i]->winDispF = 0;
                         y = pos[i * 2 + 1];
                         x = (s32)((f32)pos[i * 2] - 42.0f);
-                        self->esp[i] = espEntry(lbl_1_data_95C[GwPlayerConf[i].charNo], 0, 0);
+                        self->esp[i] = espEntry(M513_PORTRAIT(GwPlayerConf[i].charNo), 0, 0);
                         espBankSet(self->esp[i], 0);
                         espPosSet(self->esp[i], (f32)x, (f32)y);
                         espDispOn(self->esp[i]);
