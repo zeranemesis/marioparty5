@@ -1,5 +1,13 @@
 #include "dolphin/types.h"
 
+// The game master is 0x3B0 bytes on the GameCube; pointer members make it larger on PC.
+#ifdef TARGET_PC
+extern "C" u32 m521GameMasterSize(void);
+#define MASTER_ALLOC_SIZE m521GameMasterSize()
+#else
+#define MASTER_ALLOC_SIZE 0x3B0
+#endif
+
 class CFrame {
 public:
     CFrame(s32 frame) { m_frame = frame; }
@@ -20,7 +28,7 @@ void ObjectSetup(void)
     void *mem;
     void *master;
 
-    mem = fn_1_9134(0x3B0);
+    mem = fn_1_9134(MASTER_ALLOC_SIZE);
     if (mem) {
         mem = fn_1_11520(mem);
     }

@@ -2,6 +2,14 @@
 
 typedef s16 HU3DMODELID;
 
+// The clocks the stage owns are CClock objects (0x74 bytes on the GameCube; pointer members make them larger on PC).
+#ifdef TARGET_PC
+extern "C" u32 m521ClockSize(void);
+#define CLOCK_ALLOC_SIZE m521ClockSize()
+#else
+#define CLOCK_ALLOC_SIZE 0x74
+#endif
+
 extern "C" {
 typedef struct PTMF {
     long this_delta;
@@ -220,7 +228,7 @@ CStage *fn_1_149C0(CStage *self)
     fn_1_7D14(lbl_1_bss_A30, "tobiraRL");
     fn_1_7D14(lbl_1_bss_A40, "tobiraBR");
     fn_1_7D14(lbl_1_bss_A40, "tobiraBL");
-    effect = fn_1_4A68(0x74);
+    effect = fn_1_4A68(CLOCK_ALLOC_SIZE);
     if (effect != 0) {
         effect = fn_1_38(effect, 0, &s_effectPos[0]);
     }
@@ -228,7 +236,7 @@ CStage *fn_1_149C0(CStage *self)
         fn_1_5DC(self->m_unk10, 1);
         self->m_unk10 = effect;
     }
-    effect = fn_1_4A68(0x74);
+    effect = fn_1_4A68(CLOCK_ALLOC_SIZE);
     if (effect != 0) {
         effect = fn_1_38(effect, 1, &s_effectPos[1]);
     }
@@ -236,7 +244,7 @@ CStage *fn_1_149C0(CStage *self)
         fn_1_5DC(self->m_unk18, 1);
         self->m_unk18 = effect;
     }
-    effect = fn_1_4A68(0x74);
+    effect = fn_1_4A68(CLOCK_ALLOC_SIZE);
     if (effect != 0) {
         effect = fn_1_38(effect, 2, &s_effectPos[2]);
     }
