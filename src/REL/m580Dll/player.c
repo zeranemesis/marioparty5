@@ -26,6 +26,11 @@ double cos(double);
 
 #define M580_PLAYER_MAX 4
 
+static inline f32 M580_WrapDeg(f32 deg)
+{
+    return fmod(deg, 360.0);
+}
+
 typedef void (*M580_AIFUNC)(OMOBJ *obj);
 
 /* work block of one player object (0x148 bytes on GC) */
@@ -719,6 +724,7 @@ void fn_1_4488(OMOBJ *obj)
     f32 ang;
     f32 t;
     s32 ok;
+    f32 reach = 120.0f;
 
     work->body.flags &= ~4;
     if (fn_1_D544() != 0) {
@@ -758,13 +764,13 @@ void fn_1_4488(OMOBJ *obj)
                 halfAngle = 45.0f;
                 ok = 1;
             } else {
-                halfAngle = 120.0f;
+                halfAngle = reach;
                 ok = 1;
             }
             if (holder != NULL && holder->work[0] >= 4) {
                 ok = 0;
             }
-            if (ok != 0 && fn_1_D054(&work->pos, work->rotY, halfAngle, 120.0f) != 0) {
+            if (ok != 0 && fn_1_D054(&work->pos, work->rotY, halfAngle, reach) != 0) {
                 holder = fn_1_D390(NULL, NULL, obj, 1.0f);
                 work->unkA4 = 0x1E;
                 fn_1_7634(obj, 4);
@@ -782,14 +788,14 @@ void fn_1_4488(OMOBJ *obj)
         }
     }
     if (holder == obj) {
-        if (fn_1_7A6C(obj, &puckPos) > 80.0 + 120.0f) {
+        if (fn_1_7A6C(obj, &puckPos) > 80.0 + reach) {
             holder = fn_1_D390(NULL, NULL, NULL, 1.0f);
         } else {
             work->unkB0++;
             ang = work->rotY;
-            puckPos.x = work->pos.x + 120.0f * sin(M_PI * ang / 180.0);
+            puckPos.x = work->pos.x + reach * sin(M_PI * ang / 180.0);
             puckPos.y = work->pos.y;
-            puckPos.z = work->pos.z + 120.0f * cos(M_PI * ang / 180.0);
+            puckPos.z = work->pos.z + reach * cos(M_PI * ang / 180.0);
             puckVel.z = 0.0f;
             puckVel.y = 0.0f;
             puckVel.x = 0.0f;
@@ -864,6 +870,7 @@ void fn_1_4DDC(OMOBJ *obj)
     HuVecF puckPos;
     HuVecF puckVel;
     f32 ang;
+    f32 reach = 120.0f;
 
     if ((work->padDown & 0x100) != 0) {
         fn_1_7634(obj, 4);
@@ -875,9 +882,9 @@ void fn_1_4DDC(OMOBJ *obj)
     }
     if (fn_1_D30C(&puckPos, &puckVel) == obj) {
         ang = work->rotY;
-        puckPos.x = work->pos.x + 120.0f * sin(M_PI * ang / 180.0);
+        puckPos.x = work->pos.x + reach * sin(M_PI * ang / 180.0);
         puckPos.y = work->pos.y;
-        puckPos.z = work->pos.z + 120.0f * cos(M_PI * ang / 180.0);
+        puckPos.z = work->pos.z + reach * cos(M_PI * ang / 180.0);
         puckVel.z = 0.0f;
         puckVel.y = 0.0f;
         puckVel.x = 0.0f;
@@ -1107,7 +1114,7 @@ void fn_1_5A14(OMOBJ *obj)
     HU3DMODELID model;
     HU3DMODELID shadow;
 
-    work->rotY = fmod(work->rotY, 360.0);
+    work->rotY = M580_WrapDeg(work->rotY);
     if (work->rotY < 0.0) {
         work->rotY = work->rotY + 360.0;
     }
