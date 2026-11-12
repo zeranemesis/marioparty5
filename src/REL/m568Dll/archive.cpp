@@ -62,7 +62,7 @@ void *fn_1_534(Archive *self, char *name, s32 arg);
 
 s32 lbl_1_data_0 = 0;
 char lbl_1_data_4[] = "idx >=0 && idx <= GetPublicNum()";
-char lbl_1_data_25[] = "archive.cpp";
+char lbl_1_data_25[15] = "archive.cpp";
 s32 lbl_1_data_34 = 0;
 void *lbl_1_data_38[3] = { 0, 0, (void *)fn_1_534 };
 void *lbl_1_data_44[3] = { 0, 0, 0 };

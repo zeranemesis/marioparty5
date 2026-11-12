@@ -18,7 +18,7 @@ void fn_1_7EC(const char *expr, const char *file, int line);
 
 char lbl_1_data_538[] = "Invalid Axis";
 char lbl_1_data_545[] = "!\"Invalid Axis\"";
-char lbl_1_data_555[] = "misc.cpp";
+char lbl_1_data_555[11] = "misc.cpp";
 
 // Builds the rotation (axis * 1/sin, half-angle sine) taking a onto b.
 void fn_1_ED98(M568Quat *out, Point3d *volatile a, Point3d *volatile b)
