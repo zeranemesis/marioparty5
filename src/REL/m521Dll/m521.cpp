@@ -25,11 +25,6 @@ int sprintf(char *buf, const char *fmt, ...);
 int vprintf(const char *fmt, va_list args);
 void ObjectSetup(void);
 
-typedef struct OSSemaphore {
-    OSThreadQueue queue;
-    s32 count;
-} OSSemaphore;
-
 void OSInitSemaphore(OSSemaphore *sem, s32 count);
 s32 OSWaitSemaphore(OSSemaphore *sem);
 s32 OSSignalSemaphore(OSSemaphore *sem);
@@ -73,20 +68,6 @@ typedef struct CMt {
 typedef struct CTimer {
     MGTIMER *m_timer;
 } CTimer;
-
-// OS thread with its heap stack.
-typedef struct CThread {
-    OSThread m_th;
-    u32 *m_stack;
-} CThread;
-
-// Thread whose body is the virtual slot 3 of the object.
-typedef struct CSubThread {
-    void **m_vtbl;
-    CThread m_thread;
-    OSSemaphore m_sem;
-    s32 m_arg;
-} CSubThread;
 
 typedef u8 (*CListCmp)(CListNode *a, CListNode *b);
 

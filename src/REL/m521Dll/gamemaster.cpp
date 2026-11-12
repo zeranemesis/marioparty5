@@ -7,11 +7,6 @@
 #include "REL/m521Dll/m521Types.h"
 
 extern "C" {
-typedef struct GameMapNode {
-    void **vtable;  // 0x00
-    s8 unk04[0x2C];
-} GameMapNode;  // size 0x30
-
 // Opaque 4 byte object (count-down timer) the master keeps at 0x358.
 typedef struct GameMapList {
     s32 unk0;
@@ -34,8 +29,7 @@ typedef struct GameMaster {
     void **vtable;         // 0x00 base class vtable
     void **vtable2;        // 0x04 own vtable
     s8 unk08[0x18];
-    GameMapNode mapNode;   // 0x20
-    s8 unk50[0x308];
+    CSubThread mapNode;    // 0x20 map thread (0x338 bytes)
     GameMapList mapList;   // 0x358
     s32 score[2];          // 0x35C
     s32 playerNo[2][2];    // 0x364
@@ -44,6 +38,12 @@ typedef struct GameMaster {
     GameBoard board;       // 0x388
     GameGadget gadget[2];  // 0x38C
 } GameMaster;
+
+#ifdef __MWERKS__
+// GameCube layout checks: the embedded thread ends at 0x358, the player list at 0x378.
+typedef char GameMasterCheck1[offsetof(GameMaster, mapList) == 0x358 ? 1 : -1];
+typedef char GameMasterCheck2[offsetof(GameMaster, player) == 0x378 ? 1 : -1];
+#endif
 
 // Node of the intrusive list fn_1_134A8 walks: the container doubles as the
 // sentinel its inner scan stops on, and m_last is the outer scan's end.
@@ -83,10 +83,10 @@ void fn_1_76AC(void);
 void fn_1_924C(void *obj);
 void fn_1_9470(u32 seed);
 s32 fn_1_9548(void);
-void fn_1_9CD0(GameMapNode *node, s32 arg);
-void fn_1_9D4C(GameMapNode *node, s16 flag);
-void fn_1_9E00(GameMapNode *node, s32 arg);
-void fn_1_9E90(GameMapNode *node, s32 arg);
+void fn_1_9CD0(CSubThread *node, s32 arg);
+void fn_1_9D4C(CSubThread *node, s16 flag);
+void fn_1_9E00(CSubThread *node, s32 arg);
+void fn_1_9E90(CSubThread *node, s32 arg);
 void fn_1_A508(GameMapList *list, s32 arg);
 void fn_1_A5D0(GameMapList *list, s16 flag);
 void fn_1_A62C(GameMapList *list, s32 time, s32 a, s32 b);
@@ -175,8 +175,8 @@ void fn_1_134A8(GameNode *self, GameNodeCb cb);
 void fn_1_1353C(u32 *first, u32 *last);
 void fn_1_137A0(u32 *a, u32 *b, u32 *c);
 void fn_1_13F6C(u32 *first, u32 *last);
-void fn_1_140C8(GameMapNode *node);
-void fn_1_140D0(GameMapNode *node);
+void fn_1_140C8(CSubThread *node);
+void fn_1_140D0(CSubThread *node);
 
 // Virtual tables of GameMaster: the first is stored at offset 4, the second
 // (base at offset 0x20) lives right behind it.
@@ -210,7 +210,7 @@ GameMaster *fn_1_11520(GameMaster *self)
     fn_1_69A8(self);
     fn_1_9CD0(&self->mapNode, 0x8000);
     self->vtable2 = lbl_1_data_538;
-    self->mapNode.vtable = &lbl_1_data_538[6];
+    self->mapNode.m_vtbl = &lbl_1_data_538[6];
     fn_1_A508(&self->mapList, 0);
     list = (CListNode *)fn_1_4A68(sizeof(CListNode));
     if (list != 0) {
@@ -404,7 +404,7 @@ GameMaster *fn_1_11B08(GameMaster *self, s16 flag)
 {
     if (self != 0) {
         self->vtable2 = lbl_1_data_538;
-        self->mapNode.vtable = &lbl_1_data_538[6];
+        self->mapNode.m_vtbl = &lbl_1_data_538[6];
         fn_1_11780(&self->board, -1);
         fn_1_A5D0(&self->mapList, -1);
         fn_1_9D4C(&self->mapNode, 0);
@@ -1214,12 +1214,12 @@ void fn_1_1400C(void)
     __register_global_object(&lbl_1_bss_A40, (void *)fn_1_4C8, lbl_1_bss_A34);
 }
 
-void fn_1_140C8(GameMapNode *node)
+void fn_1_140C8(CSubThread *node)
 {
     fn_1_12CA8((GameMaster *)((u8 *)node - offsetof(GameMaster, mapNode)));
 }
 
-void fn_1_140D0(GameMapNode *node)
+void fn_1_140D0(CSubThread *node)
 {
     fn_1_11B08((GameMaster *)((u8 *)node - offsetof(GameMaster, mapNode)), 0);
 }

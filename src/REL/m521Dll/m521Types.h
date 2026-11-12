@@ -8,6 +8,7 @@
 
 #include "dolphin/types.h"
 #include "dolphin/mtx.h"
+#include "dolphin/os.h"
 
 typedef s16 HU3DMODELID;
 
@@ -193,6 +194,25 @@ struct CScore {
     u8 m_active;           /* 0x10 */
     ScoreEntry m_entry[2]; /* 0x14 */
 };
+
+/* OS thread with its heap stack, and the thread whose body is virtual slot 3 of the
+ * object (the game master embeds one at 0x20). */
+typedef struct OSSemaphore {
+    OSThreadQueue queue;
+    s32 count;
+} OSSemaphore;
+
+typedef struct CThread {
+    OSThread m_th;
+    u32 *m_stack;
+} CThread;
+
+typedef struct CSubThread {
+    void **m_vtbl;
+    CThread m_thread;
+    OSSemaphore m_sem;
+    s32 m_arg;
+} CSubThread;
 
 /* ---- controllers (driver unit): pad controller, CPU controller and its task queue ---- */
 
