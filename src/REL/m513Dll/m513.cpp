@@ -3,6 +3,7 @@
 // a Mersenne Twister, a sub-thread class and the C++ static initialisers.
 #define _MATH_H
 extern "C" {
+#include "REL/m513Dll.h"
 #include "dolphin.h"
 #include "humath.h"
 #include "game/hu3d.h"
@@ -46,130 +47,6 @@ extern void (*_dtors[])(void);
 
 // The inlined form of the assertion handler (singleton.h, model.cpp, ...).
 #define M513_ASSERT_INL(cond, expr, file, line)                                      if (cond) {                                                                          (void)0;                                                                     } else {                                                                             char assertBuf[0x400];                                                           sprintf(assertBuf, lbl_1_data_14, (file), (line), (expr));                       OSPanic(lbl_1_data_32, 0x12, assertBuf);                                     }
-
-// ---------------------------------------------------------------- types
-
-typedef struct M513Node_s {
-    struct M513Node_s *next;
-    struct M513Node_s *prev;
-} M513Node;
-
-// Camera pose: eye position, up vector, look-at target.
-typedef struct M513Cam_s {
-    Vec pos;
-    Vec up;
-    Vec target;
-} M513Cam;
-
-// Stored pose: position plus orientation quaternion.
-typedef struct M513Pose_s {
-    Vec pos;
-    Quaternion rot;
-} M513Pose;
-
-// A pose viewed as the seven raw words the pose-table dump prints.
-typedef union M513PoseBits_u {
-    M513Pose pose;
-    u32 w[7];
-} M513PoseBits;
-
-// Task registered on the module-wide list; its vtable lives at +8.
-struct M513Task_s;
-typedef struct M513TaskVtbl_s {
-    void *rtti[2];
-    struct M513Task_s *(*dtor)(struct M513Task_s *self, s16 flag);
-    void (*onFlag)(struct M513Task_s *self, s32 bit);
-    void (*update)(struct M513Task_s *self);
-    void *unk;
-} M513TaskVtbl;
-
-// Pointer-to-member-function triple (MWCC layout) following the task vtable.
-typedef struct M513TaskPtmf_s {
-    long delta;
-    long vOffset;
-    void (*func)(void);
-} M513TaskPtmf;
-
-typedef struct M513TaskVtblEx_s {
-    M513TaskVtbl vtbl;
-    M513TaskPtmf ptmf[2];
-} M513TaskVtblEx;
-
-typedef struct M513Task_s {
-    M513Node link;
-    M513TaskVtbl *vtbl;
-    u32 flags;
-} M513Task;
-
-// Singleton game master (only the base part that m513 touches).
-struct M513Master_s;
-typedef struct M513MasterVtbl_s {
-    void *rtti[2];
-    struct M513Master_s *(*dtor)(struct M513Master_s *self, s16 flag);
-    void (*setup)(struct M513Master_s *self, OMOBJMAN *objman);
-    void (*update)(struct M513Master_s *self);
-    void (*finish)(struct M513Master_s *self);
-} M513MasterVtbl;
-
-typedef struct M513Master_s {
-    s32 pad0;
-    M513MasterVtbl *vtbl;
-    s32 slot[4];
-    s32 mesId;
-    s32 counter;
-} M513Master;
-
-// Sub-thread: vtable, OSThread, stack pointer, semaphore, argument.
-struct M513SubThread_s;
-typedef struct M513ThreadVtbl_s {
-    void *rtti[2];
-    struct M513SubThread_s *(*dtor)(struct M513SubThread_s *self, s16 flag);
-    s32 (*run)(struct M513SubThread_s *self, s32 arg);
-} M513ThreadVtbl;
-
-typedef struct M513Thread_s {
-    OSThread thread;
-    u32 *stack;
-} M513Thread;
-
-typedef struct M513Sem_s {
-    s32 count;
-    OSThreadQueue queue;
-} M513Sem;
-
-typedef struct M513SubThread_s {
-    M513ThreadVtbl *vtbl;
-    M513Thread th;
-    M513Sem sem;
-    s32 arg;
-} M513SubThread;
-
-// Mersenne Twister state.
-typedef struct M513Rand_s {
-    u32 mt[0x270];
-    u32 idx;
-} M513Rand;
-
-// Functor kept in an object's data slot: slot +0xC runs it.
-struct M513Functor_s;
-typedef struct M513FunctorVtbl_s {
-    void *rtti[2];
-    struct M513Functor_s *(*dtor)(struct M513Functor_s *self, s16 flag);
-    void (*run)(struct M513Functor_s *self, OMOBJ *obj);
-} M513FunctorVtbl;
-
-typedef struct M513Functor_s {
-    M513FunctorVtbl *vtbl;
-} M513Functor;
-
-// A wrapper that owns a Hu3D model / MgTimer handle.
-typedef struct M513Model_s {
-    HU3DMODELID id;
-} M513Model;
-
-typedef struct M513TimerObj_s {
-    MGTIMER *timer;
-} M513TimerObj;
 
 // ---------------------------------------------------------------- data
 
@@ -572,7 +449,6 @@ void fn_1_C08(M513Cam *self, s32 pad)
 
 // ---------------------------------------------------------------- intrusive list
 
-typedef u8 (*M513Cmp)(M513Node *a, M513Node *b);
 
 M513Node *fn_1_204C(M513Node *list);
 M513Node *fn_1_20A0(M513Cmp cmp, M513Node *a, M513Node *b);
@@ -584,26 +460,7 @@ void fn_1_4CE8(void *ptr);
 
 // ---------------------------------------------------------------- handle table
 
-// Slot of the handle table: free/used list links, payload and the handle id
-// (20 bit slot index, 12 bit use counter).
-typedef struct M513HandleEnt_s {
-    struct M513HandleEnt_s *next;
-    struct M513HandleEnt_s *prev;
-    void *obj;
-    union {
-        u32 id;
-        struct {
-            u32 index : 20;
-            u32 count : 12;
-        } b;
-    } h;
-} M513HandleEnt;
 
-typedef struct M513HandleTbl_s {
-    M513HandleEnt *ents; // slot 0 heads the free list
-    M513HandleEnt *tail; // sentinel of the used list
-    u32 max;
-} M513HandleTbl;
 
 // The id word is a 20 bit slot index over a 12 bit use counter; PC code
 // reads/writes the whole word so it does not depend on the bitfield layout.
@@ -1796,10 +1653,7 @@ f32 fn_1_5520(Vec *out, Vec *dir, Vec *target, f32 size)
 
 
 // Sphere: centre and radius.
-typedef struct M513Sphere_s {
-    Vec pos;
-    f32 radius;
-} M513Sphere;
+
 
 inline f32 M513SphereRadius(M513Sphere *s)
 {

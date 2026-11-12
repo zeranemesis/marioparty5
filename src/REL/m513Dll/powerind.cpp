@@ -1,4 +1,4 @@
-#include "REL/m513Dll.h"
+#include "REL/m513Old.h"
 #include "game/sprite.h"
 
 /* The "indicator" hook object. It owns a 640x480 RGB565 texture and copies the

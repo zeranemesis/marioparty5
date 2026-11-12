@@ -1,4 +1,4 @@
-#include "REL/m513Dll.h"
+#include "REL/m513Old.h"
 
 /* The stage object: work list node, base class subobject and the three models
  * the minigame loads out of DATA_m513. */
