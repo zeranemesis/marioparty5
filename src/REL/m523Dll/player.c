@@ -65,7 +65,7 @@ static void fn_1_7898(OMOBJ *obj);
 static f32 fn_1_85A8(M523Player *player);
 static void fn_1_8874(M523Player *player);
 static void fn_1_8A80(M523Player *player, s16 hitNo);
-static void fn_1_8B60(M523Player *player, s32 mode);
+static void fn_1_8B60(M523Player *player, s32 mode, f32 turn);
 static s16 fn_1_8D14(M523Player *player);
 static f32 fn_1_8DF0(M523Player *player);
 static s16 fn_1_9218(void);
@@ -149,11 +149,11 @@ OMOBJ *fn_1_3914(s16 grp)
 void fn_1_39DC(void)
 {
     s16 cpuNo;
-    s16 i;
+    s32 i;
     OMOBJ *obj;
     M523Player *player;
     HU3DMODELID model;
-    s32 j;
+    s16 sel;
 
     cpuNo = 1;
     for (i = 0; i < 4; i++) {
@@ -202,8 +202,8 @@ void fn_1_39DC(void)
             Hu3DModelLayerSet(model, 4);
             Hu3DModelShadowSet(model);
             CharMotionVoiceOnSet(player->charNo, lbl_1_data_22C[4], 0);
-            j = lbl_1_rodata_F0[player->charNo];
-            model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_10C[j], HU_MEMNUM_OVL, HEAP_MODEL));
+            sel = lbl_1_rodata_F0[player->charNo];
+            model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_10C[sel], HU_MEMNUM_OVL, HEAP_MODEL));
             Hu3DModelAttrSet(model, 0x40000001);
             obj->mdlId[1] = model;
             Hu3DModelLayerSet(model, 4);
@@ -211,9 +211,9 @@ void fn_1_39DC(void)
             Hu3DModelHookSet(model, lbl_1_data_350, obj->mdlId[0]);
             player->fuseModel = model;
             player->fuseMot = Hu3DMotionIDGet(model);
-            player->fuseMotWin = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_rodata_118[j], HU_MEMNUM_OVL, HEAP_MODEL));
-            player->fuseMotLose = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_rodata_124[j], HU_MEMNUM_OVL, HEAP_MODEL));
-            player->fuseMotHit = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_rodata_130[j], HU_MEMNUM_OVL, HEAP_MODEL));
+            player->fuseMotWin = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_rodata_118[sel], HU_MEMNUM_OVL, HEAP_MODEL));
+            player->fuseMotLose = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_rodata_124[sel], HU_MEMNUM_OVL, HEAP_MODEL));
+            player->fuseMotHit = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_rodata_130[sel], HU_MEMNUM_OVL, HEAP_MODEL));
             Hu3DModelPosSetV(obj->mdlId[1], &player->pos);
             Hu3DModelRotSetV(obj->mdlId[1], &player->rot);
             model = Hu3DModelCreate(HuDataSelHeapReadNum(0x510012, HU_MEMNUM_OVL, HEAP_MODEL));
@@ -228,13 +228,13 @@ void fn_1_39DC(void)
     }
     CharEffectLayerSet(5);
     fn_1_9574();
-    for (j = 0; j < 3; j++) {
-        lbl_1_bss_130[j] = 0;
+    for (i = 0; i < 3; i++) {
+        lbl_1_bss_130[i] = 0;
     }
-    for (j = 0; j < 10; j++) {
-        lbl_1_bss_150[j].x = 0.0f;
-        lbl_1_bss_150[j].y = 0.0f;
-        lbl_1_bss_150[j].z = 0.0f;
+    for (i = 0; i < 10; i++) {
+        lbl_1_bss_150[i].x = 0.0f;
+        lbl_1_bss_150[i].y = 0.0f;
+        lbl_1_bss_150[i].z = 0.0f;
     }
 }
 
@@ -1201,10 +1201,10 @@ static f32 fn_1_85A8(M523Player *player)
     s32 chance[4] = { 0, 0, 0x23, 0x19 };
     Point3d diff;
     f32 mag;
+    f32 ret;
     s16 hitNo;
 
-    player->stkY = 0;
-    player->stkX = 0;
+    player->stkX = player->stkY = 0;
     PSVECSubtract(&player->aiTarget, &player->pos, &diff);
     diff.y = 0.0f;
     if (PSVECMag(&diff) < 15.0f) {
@@ -1216,7 +1216,7 @@ static f32 fn_1_85A8(M523Player *player)
             player->aiState = 1;
             player->aiTimer = 100;
         case 1:
-            if (player->dif >= 2 && (hitNo = fn_1_8D14(player), hitNo != -1) && frandmod(100) <= chance[player->dif]) {
+            if (player->dif >= 2 && (hitNo = fn_1_8D14(player), hitNo != -1) && (s32)frandmod(100) <= chance[player->dif]) {
                 if (player->dif <= 2) {
                     player->aiState = 0;
                 } else {
@@ -1227,7 +1227,7 @@ static f32 fn_1_85A8(M523Player *player)
                 if (player->aiTimer == 0) {
                     player->aiState = 0;
                 }
-                fn_1_8B60(player, 1);
+                fn_1_8B60(player, 1, 15.0f);
             }
             break;
     }
@@ -1286,7 +1286,7 @@ static void fn_1_8A80(M523Player *player, s16 hitNo)
     }
 }
 
-static void fn_1_8B60(M523Player *player, s32 mode)
+static void fn_1_8B60(M523Player *player, s32 mode, f32 turn)
 {
     Point3d dir;
     f32 ang;
@@ -1481,7 +1481,12 @@ static void fn_1_9574(void)
     lbl_1_bss_E8.next = NULL;
     lbl_1_bss_E8.prev = &lbl_1_bss_10C;
     lbl_1_bss_E8.model = -1;
-    Hu3DModelLayerSet(Hu3DHookFuncCreate(fn_1_9978), 1);
+    {
+        HU3DMODELID hook;
+
+        hook = Hu3DHookFuncCreate(fn_1_9978);
+        Hu3DModelLayerSet(hook, 1);
+    }
 }
 
 void fn_1_98E8(M523Cyl *cyl);
