@@ -59,7 +59,8 @@ M513Node *lbl_1_bss_A10;
 M513Node *lbl_1_bss_A14;
 struct M513Camera_s *lbl_1_bss_A18;
 struct M513Stage_s *lbl_1_bss_A1C;
-s32 lbl_1_bss_A20[2];
+struct M513Score_s *lbl_1_bss_A20;
+s32 lbl_1_bss_A24;
 
 M513_RODATA const s32 lbl_1_rodata_3EC[3] = { 0, 2, 3 };
 
