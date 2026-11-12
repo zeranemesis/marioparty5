@@ -65,4 +65,22 @@ typedef struct M522Effect_s {
     /* 0x10 */ s32 handle;
 } M522_EFFECT;
 
+/* CodeWarrior pointer to member function: {this adjust, vtable offset (-1 for a
+ * plain member), function}.  Only the plain form is used by the module. */
+typedef struct M522Ptmf_s {
+    s32 this_delta;
+    s32 v_offset;
+    union {
+        void *f_addr;
+        s32 ve_offset;
+    } f_data;
+} M522_PTMF;
+
+/* Plain float triple (Vec without pulling dolphin/mtx.h into the unit). */
+typedef struct M522Vec3_s {
+    f32 x;
+    f32 y;
+    f32 z;
+} M522_VEC3;
+
 #endif
