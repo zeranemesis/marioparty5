@@ -1,3 +1,6 @@
+/* Not byte-identical (register/stack allocation or constant-pool scheduling only; logic matches the asm):
+   BF8, 2044 (r30/r31 swap), 2E08 (one more FPR), 3494, 3E10, 72D0, 7D24, 85F4, 8BB8, 9380, 9C08 (midpoint
+   constants reloaded per statement in the original), AB34, B134 (espPosSet arg order). */
 #include "types.h"
 #include "game/hu3d.h"
 #include "game/charman.h"
