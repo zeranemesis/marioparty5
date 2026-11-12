@@ -5,6 +5,9 @@
 #include "game/data.h"
 #include "game/process.h"
 
+/* 0x140: four u16 pad-edge words (NEL_SYS declares them as s32 padStat..unk14C) */
+#define PADSTAT(sys) (((u16 *)&(sys)->padStat)[0])
+
 typedef struct MdFlowEnt_s MDFLOWENT;
 struct MdFlowEnt_s { void (*func)(NEL_SYS *sys, MDFLOWENT *ent); };
 typedef struct MdProcEnt_s MDPROCENT;
@@ -19,6 +22,9 @@ typedef struct ParticleGlow_s {
 } ParticleGlow;
 
 void MdSpriteDebug(NEL_SYS *sys);
+void MdSpriteDispSet(s32 grpNo, s32 dispF);
+void MdLayer1Hook(s16 layerNo);
+void fn_1_F94(NEL_SYS *sys, volatile float angle);
 void NelGuideBillboardUpdate(NEL_SYS *sys, s32 no);
 void MdRingMain(NEL_SYS *sys);
 void MdFukiMain(NEL_SYS *sys);
@@ -33,6 +39,7 @@ void MdMathStdCurveInit(void);
 
 void ObjectSetup(void);
 void MdInit(NEL_SYS *sys, MDFLOWENT *tbl);
+/* shortcut: MdProcTbl dispatch loads r4 once in the original (call-through-arg); register pressure also differs (idx kept in a reg). */
 void MdClose(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_1108(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_15EC(NEL_SYS *sys, MDFLOWENT *tbl);
@@ -437,6 +444,210 @@ void LoadProc(void)
             break;
         }
         HuPrcVSleep();
+    }
+}
+
+void MdInit(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    SYSMODEL *model;
+    SYSCAMERA_WORK *camera;
+    SYSSPRITE *sprite;
+    s32 i;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    camera = (SYSCAMERA_WORK *)sys->camera;
+    sys->stat = 0;
+    sys->timer = 0;
+    sys->angle = 90.0f + 60.0f * sys->unk23D;
+    MdMathAngleClamp(&sys->angle);
+    MdCameraPosSet(&camera->camera[2], 90.0, 0.0, 1920.0, 0.0, 0.0, 0.0);
+    MdCameraUpdate(camera);
+    Hu3DModelAttrSet(model->mdlId[0], 1);
+    Hu3DModelAttrSet(model->mdlId[1], 1);
+    for (i = 0; i < 10; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 2], 1);
+    }
+    Hu3DModelAttrReset(model->mdlId[12], 1);
+    Hu3DModelAttrSet(model->mdlId[15], 1);
+    for (i = 0; i < 10; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 16], 1);
+    }
+    for (i = 0; i < 6; i++) {
+        Hu3DModelAttrReset(model->mdlId[i + 26], 1);
+    }
+    for (i = 0; i < 7; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 32], 1);
+    }
+    for (i = 0; i < 11; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 39], 1);
+    }
+    Hu3DModelAttrSet(model->mdlId[50], 1);
+    Hu3DModelAttrSet(model->mdlId[51], 1);
+    for (i = 0; i < 4; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 52], 1);
+    }
+    for (i = 0; i < 3; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 56], 1);
+    }
+    Hu3DModelAttrSet(model->mdlId[59], 1);
+    for (i = 0; i < 2; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 60], 1);
+    }
+    Hu3DModelAttrSet(model->mdlId[65], 1);
+    for (i = 0; i < 4; i++) {
+        Hu3DModelAttrSet(model->mdlId[i + 66], 1);
+    }
+    Hu3DModelAttrReset(model->mdlId[13], 1);
+    Hu3DModelAttrSet(model->mdlId[74], 1);
+    fn_1_F94(sys, sys->angle);
+    MdSpriteDispSet(1, 0);
+    MdSpriteDispSet(2, 0);
+    MdSpriteDispSet(3, 0);
+    MdSpriteDispSet(4, 0);
+    MdSpriteDispSet(5, 0);
+    MdSpriteDispSet(6, 0);
+    MdSpriteDispSet(7, 0);
+    for (i = 0; i < 6; i++) {
+        Hu3DModelLayerSet(model->mdlId[i + 26], 3);
+    }
+    Hu3DLayerHookSet(8, NULL);
+    Hu3DLayerHookSet(8, NULL);
+    Hu3DLayerHookSet(9, NULL);
+    Hu3DLayerHookSet(8, NULL);
+    Hu3DLayerHookSet(2, NULL);
+    Hu3DLayerHookSet(3, MdLayer1Hook);
+    Hu3DLayerHookSet(2, NULL);
+    Hu3DLayerHookSet(10, NULL);
+    Hu3DLayerHookSet(7, MdLayer1Hook);
+    MdMessDlgMesSet(0, -1);
+    MdMessWinKill(2);
+    if (sys->unk23F == 0) {
+        WipeColorSet(0, 0, 0);
+    } else if (sys->unk23F == 1) {
+        WipeColorSet(255, 255, 255);
+    }
+    WipeCreate(1, 5, 30);
+    while (WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    sys->stat = 0;
+    sys->flowNo = 1;
+}
+
+void MdClose(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    s32 idx;
+    s32 volatile ret;
+    SYSMODEL *volatile model;
+    SYSMESS *mess;
+
+    model = (SYSMODEL *)sys->model;
+    mess = (SYSMESS *)sys->mess;
+    switch (sys->stat) {
+        case 0:
+            MdMessDlgMesSet(0, -1);
+            MdMessDlgMesSet(1, 0x40000);
+            sys->stat = 1;
+            return;
+        case 1:
+            if (mess->mode == 5) {
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->unk23D + 0x40002);
+                sys->stat = 2;
+                return;
+            }
+            break;
+        case 2:
+            if ((PADSTAT(sys) & 1) != 0 || (PADSTAT(sys) & 2) != 0) {
+                MdMessDlgMesSet(0, -1);
+                if ((PADSTAT(sys) & 1) != 0) {
+                    sys->stat = 4;
+                    return;
+                }
+                if ((PADSTAT(sys) & 2) != 0) {
+                    sys->stat = 5;
+                    return;
+                }
+            } else {
+                if ((HuPadBtnDown[0] & PAD_BUTTON_B) != 0) {
+                    MdMessDlgMesSet(0, -1);
+                    MdMessDlgMesSet(2, 0x40001);
+                    sys->stat = 3;
+                    return;
+                }
+                if ((HuPadBtnDown[0] & PAD_BUTTON_A) != 0 && sys->unk23D == 0) {
+                    sys->stat = 6;
+                    return;
+                }
+            }
+            break;
+        case 3:
+            if (mess->mode == 5) {
+                if (mess->choice == -1 || mess->choice == 1) {
+                    MdMessDlgMesSet(0, -1);
+                    MdMessDlgMesSet(1, sys->unk23D + 0x40002);
+                    sys->stat = 2;
+                    return;
+                } else if (mess->choice == 0) {
+                    sys->stat = 7;
+                    return;
+                }
+            }
+            break;
+        case 4:
+        case 5:
+            idx = sys->stat + 0x1D;
+            ret = (MdProcTbl + idx)->func(sys, MdProcTbl + idx);
+            if (ret == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                if (sys->stat == 4) {
+                    if (--sys->unk23D == -1) {
+                        sys->unk23D = 5;
+                    }
+                } else if (sys->stat == 5) {
+                    sys->unk23D = (sys->unk23D + 1) % 6;
+                }
+                MdMathAngleClamp(&sys->angle);
+                MdMessDlgMesSet(1, sys->unk23D + 0x40002);
+                sys->stat = 2;
+                return;
+            }
+            break;
+        case 6:
+            WipeColorSet(255, 255, 255);
+            WipeCreate(2, 0, 30);
+            while (WipeCheckEnd()) {
+                HuPrcVSleep();
+            }
+            sys->stat = 0;
+            sys->flowNo = 2;
+            return;
+        case 7:
+            sys->ovlMode = 2;
+            sys->ovlNo = 0x61;
+            sys->exitReqF = 1;
+            break;
+        default:
+            break;
+    }
+}
+
+void fn_1_F94(NEL_SYS *sys, volatile float angle)
+{
+    s32 i;
+    SYSMODEL *model;
+    float ang;
+    float r = 200.0f;
+    float y = -200.0f;
+    float z;
+
+    ang = 0.0f;
+    model = (SYSMODEL *)sys->model;
+    for (i = 0; i < 6; i++) {
+        ang = angle + 60.0f * i;
+        z = (float)(400.0 + r * sin(3.141592653589793 * ang / 180.0));
+        Hu3DModelPosSet(model->mdlId[i + 26], r * cos(3.141592653589793 * ang / 180.0), y, z);
     }
 }
 
