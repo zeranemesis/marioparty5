@@ -432,6 +432,27 @@ void fn_1_BA9C(HU3DMODEL *model, Mtx *mtx)
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+#ifdef TARGET_PC
+#define M503_VTX(px, py, pz, c, ss, tt)     GXPosition3f32(px, py, pz); GXColor4u8((c).r, (c).g, (c).b, (c).a); GXTexCoord2f32(ss, tt)
+    for (i = 0; i < 0x27; i++) {
+        for (j = 0; j < 0x27; j++) {
+            x = -585.0 + 30.0 * (f64)j;
+            z = -585.0 + 30.0 * (f64)i;
+            s = 0.02564102564102564 * (f64)j;
+            t = 0.02564102564102564 * (f64)i;
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            cell = &work->cells[i][j];
+            M503_VTX(x, cell->height, z, cell->col, s, t);
+            cell = &work->cells[i][j + 1];
+            M503_VTX(30.0f + x, cell->height, z, cell->col, 0.02564102564102564f + s, t);
+            cell = &work->cells[i + 1][j + 1];
+            M503_VTX(30.0f + x, cell->height, 30.0f + z, cell->col, 0.02564102564102564f + s, 0.02564102564102564f + t);
+            cell = &work->cells[i + 1][j];
+            M503_VTX(x, cell->height, 30.0f + z, cell->col, s, 0.02564102564102564f + t);
+            GXEnd();
+        }
+    }
+#else
     for (i = 0; i < 0x27; i++) {
         for (j = 0; j < 0x27; j++) {
             x = -585.0 + 30.0 * (f64)j;
@@ -469,6 +490,7 @@ void fn_1_BA9C(HU3DMODEL *model, Mtx *mtx)
             GXWGFifo.f32 = 0.02564102564102564 + (f64)t;
         }
     }
+#endif
 }
 
 f32 fn_1_BFE8(f32 x, f32 z)
