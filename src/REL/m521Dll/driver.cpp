@@ -223,9 +223,9 @@ const char lbl_1_data_40B[] = "Memory allocation failure";
         abort();                               \
     } while (0)
 
+extern const u32 lbl_1_rodata_238;
 u32 lbl_1_data_428 = 1;
 u32 lbl_1_data_46C = 1;
-DRV_RODATA const u32 lbl_1_rodata_238 = 0x20;
 
 s32 lbl_1_bss_A00;
 s32 lbl_1_bss_A04;
@@ -937,6 +937,59 @@ DrvTask **fn_1_DB10(CDequeMap *self, u32 idx)
 
 /* ---- helpers of the template: inline iterator operations ---- */
 
+static inline const u32 &drvMinRef(const u32 &a, const u32 &b)
+{
+    return (b < a) ? b : a;
+}
+
+static inline const u32 &drvMin(const u32 &a, const u32 &b)
+{
+    const u32 &r = drvMinRef(a, b);
+    return r;
+}
+
+/* number of slots between two map iterators (distance) */
+static inline u32 mapDistImpl(CMapIt first, CMapIt last)
+{
+    u32 n = last.m_idx - first.m_idx;
+    return n;
+}
+
+static inline u32 mapDist(CMapIt first, CMapIt last)
+{
+    u32 n = mapDistImpl(first, last);
+    return n;
+}
+
+/* deque helpers: length limit, capacity in tasks, in-place construction */
+static inline u32 dqMaxLen()
+{
+    u32 m = 0x0FFFFFFF;
+    return m;
+}
+
+static inline u32 dqTaskCap(const CDeque *d)
+{
+    u32 blocks = d->m_map.m_size;
+    return d->m_blk * (blocks - 1);
+}
+
+static inline DrvTask *dqPlace(DrvTask *p)
+{
+    return p;
+}
+
+static inline DrvTask *dqConstruct(DrvTask *p, const DrvTask *src)
+{
+    DrvTask *q = dqPlace(p);
+    if (q != 0) {
+        DrvTask *r = q;
+        *r = *src;
+        q = r;
+    }
+    return q;
+}
+
 /* first / one-past-last slot of the map */
 static inline CMapIt mapBegin(CDequeMap *m)
 {
@@ -949,16 +1002,20 @@ static inline CMapIt mapBegin(CDequeMap *m)
 
 static inline CMapIt mapEnd(CDequeMap *m)
 {
-    CMapIt it;
     u32 t = m->m_start + m->m_size;
-    it.m_map = m;
-    it.m_idx = m->m_size;
     if (t < m->m_cap) {
+        CMapIt it;
+        it.m_map = m;
+        it.m_idx = m->m_size;
         it.m_slot = m->m_data + t;
+        return it;
     } else {
+        CMapIt it;
+        it.m_map = m;
+        it.m_idx = m->m_size;
         it.m_slot = m->m_data + (t - m->m_cap);
+        return it;
     }
-    return it;
 }
 
 static inline CMapIt mapAt(CDequeMap *m, u32 idx)
@@ -1020,6 +1077,88 @@ static inline void dqNext(CDequeIt *it)
         it->m_cur = *it->m_slot;
         it->m_end = it->m_cur + n;
     }
+}
+
+/* cdeque::reserve, inlined where the template uses it */
+static inline void mapReserve(CDequeMap *self, u32 n)
+{
+    DrvTask **nd;
+    CMapIt it;
+    CMapIt end;
+
+    if (n > fn_1_1147C(self)) {
+        fn_1_4C9C(DRV_STDERR, "cdeque::reserve length error\n");
+        abort();
+    }
+    if (n > self->m_cap) {
+        nd = (DrvTask **)fn_1_4A68(n * sizeof(DrvTask *));
+        if (nd == 0) {
+            DRV_ABORT_ALLOC();
+        }
+        if (self->m_data != 0) {
+            end = mapEnd(self);
+            it = mapBegin(self);
+            mapCopy(it, end, nd);
+            if (self->m_data != 0) {
+                __dl__FPv(self->m_data);
+            }
+        }
+        self->m_cap = n;
+        self->m_data = nd;
+        self->m_start = 0;
+    }
+}
+
+static inline DrvTask *dqCopyTasks(CDequeIt first, CDequeIt last, DrvTask *dst)
+{
+    while (first.m_cur != last.m_cur) {
+        dqConstruct(dst, first.m_cur);
+        dst++;
+        dqNext(&first);
+    }
+    return dst;
+}
+
+/* iterator -> const_iterator conversion */
+static inline CMapIt mapToConst(CMapIt it)
+{
+    CMapIt c;
+    c.m_map = it.m_map;
+    c.m_idx = it.m_idx;
+    c.m_slot = it.m_slot;
+    return c;
+}
+
+/* slot of the map by raw index, and release of the block it points to */
+static inline DrvTask **mapSlot(CDequeMap *m, u32 idx)
+{
+    return m->m_data + idx;
+}
+
+static inline void dqFreeBlock(DrvTask **slot)
+{
+    DrvTask *blk = *slot;
+    __dl__FPv(blk);
+    *slot = 0;
+}
+
+static inline u32 mapSize(const CDequeMap *m)
+{
+    return m->m_size;
+}
+
+static inline CDequeIt dqEndConst(const CDeque *d)
+{
+    CDequeIt it;
+    fn_1_F5CC(&it, d, d->m_off + d->m_cnt);
+    return it;
+}
+
+static inline CDequeIt dqBeginConst(const CDeque *d)
+{
+    CDequeIt it;
+    fn_1_F5CC(&it, d, d->m_off);
+    return it;
 }
 
 CDequeMap *fn_1_E2A8(CDequeMap *self, s16 freeIt)
@@ -1091,27 +1230,25 @@ void fn_1_DDEC(CDeque *self)
     slot = &self->m_map.m_data[q];
     elem = *slot + (at % self->m_blk);
     self->m_cnt--;
-    while (self->m_blk * (self->m_map.m_size - 1) - (self->m_off + self->m_cnt) >= (self->m_blk * 3) >> 1) {
+    while (dqTaskCap(self) - (self->m_off + self->m_cnt) >= (self->m_blk * 3) >> 1) {
         self->m_map.m_size--;
         q = self->m_map.m_size - 1 + self->m_map.m_start;
         if (q >= self->m_map.m_cap) {
             q -= self->m_map.m_cap;
         }
-        slot = &self->m_map.m_data[q];
-        __dl__FPv(*slot);
-        *slot = 0;
+        slot = mapSlot(&self->m_map, q);
+        dqFreeBlock(slot);
     }
     if (self->m_cnt == 0) {
-        n = self->m_map.m_size - 2;
+        n = mapSize(&self->m_map) - 2;
         while (n != 0) {
             self->m_map.m_size--;
             q = self->m_map.m_size - 1 + self->m_map.m_start;
             if (q >= self->m_map.m_cap) {
                 q -= self->m_map.m_cap;
             }
-            slot = &self->m_map.m_data[q];
-            __dl__FPv(*slot);
-            *slot = 0;
+            slot = mapSlot(&self->m_map, q);
+            dqFreeBlock(slot);
             n--;
         }
         self->m_off = self->m_blk >> 1;
@@ -1128,7 +1265,7 @@ void fn_1_DFE0(CDeque *self, const DrvTask *item)
     u32 at;
     u32 q;
 
-    if (self->m_cnt > 0x0FFFFFFF - 1) {
+    if (self->m_cnt > dqMaxLen() - 1) {
         fn_1_4C9C(DRV_STDERR, "deque::push_back length error\n");
         abort();
     }
@@ -1142,31 +1279,29 @@ void fn_1_DFE0(CDeque *self, const DrvTask *item)
     spare.m_start = 0;
     spare.m_data = 0;
     grew = 0;
-    if (self->m_off + self->m_cnt == self->m_blk * (self->m_map.m_size - 1)) {
+    if (self->m_off + self->m_cnt == dqTaskCap(self)) {
         grew = fn_1_EF30(self, 0, &spare, &added, 1);
     }
     at = self->m_off + self->m_cnt;
     if (at < self->m_blk) {
-        p = *(self->m_map.m_data + self->m_map.m_start) + at;
-        if (p != 0) {
-            *p = *item;
-        }
+        DrvTask **slot = self->m_map.m_data + self->m_map.m_start;
+        p = dqConstruct(*slot + at, item);
     } else {
+        DrvTask **slot;
         q = at / self->m_blk + self->m_map.m_start;
         if (q >= self->m_map.m_cap) {
             q -= self->m_map.m_cap;
         }
-        p = *(self->m_map.m_data + q) + (at % self->m_blk);
-        if (p != 0) {
-            *p = *item;
-        }
+        slot = self->m_map.m_data + q;
+        p = dqConstruct(*slot + (at % self->m_blk), item);
     }
     self->m_cnt++;
     if (spare.m_data != 0) {
         __dl__FPv(spare.m_data);
     }
     while (self->m_off >= (self->m_blk * 3) >> 1) {
-        __dl__FPv(*(self->m_map.m_data + self->m_map.m_start));
+        DrvTask **first = self->m_map.m_data + self->m_map.m_start;
+        __dl__FPv(*first);
         fn_1_E748(&self->m_map);
         self->m_off -= self->m_blk;
     }
@@ -1181,11 +1316,14 @@ CDeque *fn_1_E388(CDeque *self, const CDeque *src)
     CDequeIt it;
     CDequeIt end;
 
+    CDequeMap *map;
+
     self->m_blk = lbl_1_rodata_238;
-    self->m_map.m_cap = 0;
-    self->m_map.m_size = 0;
-    self->m_map.m_start = 0;
-    self->m_map.m_data = 0;
+    map = &self->m_map;
+    map->m_cap = 0;
+    map->m_size = 0;
+    map->m_start = 0;
+    map->m_data = 0;
     self->m_off = 0;
     self->m_cnt = src->m_cnt;
     if (self->m_cnt != 0) {
@@ -1203,15 +1341,9 @@ CDeque *fn_1_E388(CDeque *self, const CDeque *src)
         fn_1_E784(&self->m_map, &nul);
         self->m_off = (self->m_blk - self->m_cnt) >> 1;
         dst = blk + self->m_off;
-        fn_1_F5CC(&end, src, src->m_off + src->m_cnt);
-        fn_1_F5CC(&it, src, src->m_off);
-        while (it.m_cur != end.m_cur) {
-            if (dst != 0) {
-                *dst = *it.m_cur;
-            }
-            dst++;
-            dqNext(&it);
-        }
+        end = dqEndConst(src);
+        it = dqBeginConst(src);
+        dqCopyTasks(it, end, dst);
     }
     return self;
 }
@@ -1219,11 +1351,14 @@ CDeque *fn_1_E388(CDeque *self, const CDeque *src)
 /* default deque */
 void fn_1_E6F0(CDeque *self, const void *unused)
 {
+    CDequeMap *map;
+
     self->m_blk = lbl_1_rodata_238;
-    self->m_map.m_cap = 0;
-    self->m_map.m_size = 0;
-    self->m_map.m_start = 0;
-    self->m_map.m_data = 0;
+    map = &self->m_map;
+    map->m_cap = 0;
+    map->m_size = 0;
+    map->m_start = 0;
+    map->m_data = 0;
     self->m_off = 0;
     self->m_cnt = 0;
 }
@@ -1294,31 +1429,7 @@ void fn_1_E784(CDequeMap *self, DrvTask *const *val)
 /* cdeque::reserve */
 void fn_1_EA80(CDequeMap *self, u32 n)
 {
-    DrvTask **nd;
-    CMapIt it;
-    CMapIt end;
-
-    if (n > fn_1_1147C(self)) {
-        fn_1_4C9C(DRV_STDERR, "cdeque::reserve length error\n");
-        abort();
-    }
-    if (n > self->m_cap) {
-        nd = (DrvTask **)fn_1_4A68(n * sizeof(DrvTask *));
-        if (nd == 0) {
-            DRV_ABORT_ALLOC();
-        }
-        if (self->m_data != 0) {
-            end = mapEnd(self);
-            it = mapBegin(self);
-            mapCopy(it, end, nd);
-            if (self->m_data != 0) {
-                __dl__FPv(self->m_data);
-            }
-        }
-        self->m_cap = n;
-        self->m_data = nd;
-        self->m_start = 0;
-    }
+    mapReserve(self, n);
 }
 
 /* cdeque::resize */
@@ -1326,8 +1437,6 @@ void fn_1_ECA4(CDequeMap *self, u32 n, DrvTask *val)
 {
     DrvTask *v;
     CMapIt end;
-    CMapIt first;
-    CMapIt last;
     CMapIt res;
 
     v = val;
@@ -1337,9 +1446,7 @@ void fn_1_ECA4(CDequeMap *self, u32 n, DrvTask *val)
         return;
     }
     if (n < self->m_size) {
-        first = mapAt(self, n);
-        last = mapEnd(self);
-        fn_1_FFB4(&res, self, first, last);
+        fn_1_FFB4(&res, self, mapAt(self, n), mapEnd(self));
     }
 }
 
@@ -1347,12 +1454,7 @@ void fn_1_ECA4(CDequeMap *self, u32 n, DrvTask *val)
 u8 fn_1_EF30(CDeque *self, s32 front, CDequeMap *spare, u32 *count, s32 n)
 {
     DrvTask *blk;
-    DrvTask **nd;
     DrvTask *nul;
-    CMapIt first;
-    CMapIt last;
-    CMapIt it;
-    CMapIt end;
     u32 cap2;
     u32 t;
     u32 left;
@@ -1371,31 +1473,9 @@ u8 fn_1_EF30(CDeque *self, s32 front, CDequeMap *spare, u32 *count, s32 n)
                 fn_1_FF40(&self->m_map, spare);
                 grew = 1;
                 cap2 = spare->m_cap * 2;
-                if (cap2 > fn_1_1147C(&self->m_map)) {
-                    fn_1_4C9C(DRV_STDERR, "cdeque::reserve length error\n");
-                    abort();
-                }
-                if (cap2 > self->m_map.m_cap) {
-                    nd = (DrvTask **)fn_1_4A68(cap2 * sizeof(DrvTask *));
-                    if (nd == 0) {
-                        DRV_ABORT_ALLOC();
-                    }
-                    if (self->m_map.m_data != 0) {
-                        end = mapEnd(&self->m_map);
-                        it = mapBegin(&self->m_map);
-                        mapCopy(it, end, nd);
-                        if (self->m_map.m_data != 0) {
-                            __dl__FPv(self->m_map.m_data);
-                        }
-                    }
-                    self->m_map.m_cap = cap2;
-                    self->m_map.m_data = nd;
-                    self->m_map.m_start = 0;
-                }
-                last = mapEnd(spare);
-                first = mapBegin(spare);
+                mapReserve(&self->m_map, cap2);
                 tag = lbl_1_bss_A10;
-                fn_1_FBA8(&self->m_map, first, last, &tag);
+                fn_1_FBA8(&self->m_map, mapToConst(mapBegin(spare)), mapToConst(mapEnd(spare)), &tag);
             }
         }
         t = self->m_map.m_size - 1 + self->m_map.m_start;
@@ -1497,7 +1577,6 @@ void fn_1_F87C(CDeque *self, CDequeIt first, CDequeIt last)
     u32 r;
     u32 e;
     u32 take;
-    u32 *pick;
     u32 left;
     CMapIt it;
     DrvTask *base;
@@ -1508,12 +1587,7 @@ void fn_1_F87C(CDeque *self, CDequeIt first, CDequeIt last)
         q = first.m_pos / self->m_blk;
         r = first.m_pos % self->m_blk;
         e = r + n;
-        if (e < self->m_blk) {
-            pick = &e;
-        } else {
-            pick = &self->m_blk;
-        }
-        take = *pick;
+        take = drvMin(e, self->m_blk);
         it = mapAt(&self->m_map, q);
         base = *it.m_slot;
         for (p = base + r; p < base + take; p++) {
@@ -1544,19 +1618,13 @@ void fn_1_FBA8(CDequeMap *self, CMapIt first, CMapIt last, const u8 *tag)
     u32 lim;
     u32 a;
     u32 b;
-    u32 *pick;
     DrvTask **old;
     DrvTask **dst;
 
-    n = last.m_idx - first.m_idx;
+    n = mapDist(first, last);
     a = 0x3FFFFFFF;
     b = 0x7FFFFFFF;
-    if (a > b) {
-        pick = &b;
-    } else {
-        pick = &a;
-    }
-    lim = *pick;
+    lim = drvMin(a, b);
     if (n > lim) {
         fn_1_4C9C(DRV_STDERR, "cdeque::assign length error\n");
         abort();
@@ -1625,10 +1693,10 @@ void fn_1_FFB4(CMapIt *out, CDequeMap *self, CMapIt first, CMapIt last)
         return;
     }
     b = mapBegin(self);
-    before = first.m_idx - b.m_idx;
+    before = mapDist(b, first);
     e = mapEnd(self);
-    after = e.m_idx - last.m_idx;
-    n = last.m_idx - first.m_idx;
+    after = mapDist(last, e);
+    n = mapDist(first, last);
     if (before < after) {
         if (before != 0) {
             d = last;
@@ -1675,7 +1743,6 @@ void fn_1_104A8(CDequeMap *self, CMapIt pos, u32 n, DrvTask *const *val)
 {
     u32 a;
     u32 b;
-    u32 *pick;
     u32 lim;
     u32 before;
     u32 after;
@@ -1696,21 +1763,16 @@ void fn_1_104A8(CDequeMap *self, CMapIt pos, u32 n, DrvTask *const *val)
     }
     a = 0x3FFFFFFF;
     b = 0x7FFFFFFF;
-    if (b < a) {
-        pick = &b;
-    } else {
-        pick = &a;
-    }
-    lim = *pick;
+    lim = drvMin(a, b);
     if (n > lim || self->m_size > lim - n) {
         fn_1_4C9C(DRV_STDERR, "cdeque::insert length error\n");
         abort();
     }
     if (self->m_size + n <= self->m_cap) {
         b0 = mapBegin(self);
-        before = pos.m_idx - b0.m_idx;
+        before = mapDist(b0, pos);
         e0 = mapEnd(self);
-        after = e0.m_idx - pos.m_idx;
+        after = mapDist(pos, e0);
         if (before < after) {
             if (self->m_start >= n) {
                 self->m_start -= n;
@@ -1758,7 +1820,7 @@ void fn_1_104A8(CDequeMap *self, CMapIt pos, u32 n, DrvTask *const *val)
         newCap *= 2;
     }
     b0 = mapBegin(self);
-    before = pos.m_idx - b0.m_idx;
+    before = mapDist(b0, pos);
     nd = (DrvTask **)fn_1_4A68(newCap * sizeof(DrvTask *));
     if (nd == 0) {
         DRV_ABORT_ALLOC();
@@ -1789,14 +1851,8 @@ u32 fn_1_1147C(CDequeMap *self)
 {
     u32 a = 0x3FFFFFFF;
     u32 b = 0x7FFFFFFF;
-    u32 *pick;
 
-    if (a > b) {
-        pick = &b;
-    } else {
-        pick = &a;
-    }
-    return *pick;
+    return drvMin(a, b);
 }
 
 void fn_1_114DC()
@@ -1806,4 +1862,6 @@ void fn_1_114DC()
     lbl_1_bss_A08 = 0xD2;
     lbl_1_bss_A0C = 0x96;
 }
+
+DRV_RODATA const u32 lbl_1_rodata_238 = 0x20;
 }
