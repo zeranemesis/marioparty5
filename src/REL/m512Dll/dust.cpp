@@ -71,7 +71,8 @@ extern "C" DustOwner *fn_1_78A4(DustOwner *self)
     self->vtbl = lbl_1_data_1FC;
     self->unkC = 0;
     fn_1_1330(self, &lbl_1_bss_C);
-    if (lbl_1_bss_A0C != 0) {
+    if (lbl_1_bss_A0C == 0) {
+        } else {
         fn_1_1D4(lbl_1_data_2F0, lbl_1_data_300, 0x35);
     }
     {
@@ -90,7 +91,8 @@ extern "C" DustOwner *fn_1_78A4(DustOwner *self)
 extern "C" DustOwner *fn_1_79A8(DustOwner *self, s16 flag)
 {
     if (self != 0) {
-        if (lbl_1_bss_A0C == 0) {
+        if (lbl_1_bss_A0C != 0) {
+            } else {
             fn_1_1D4(lbl_1_data_30C, lbl_1_data_300, 0x3D);
         }
         lbl_1_bss_A0C = 0;
@@ -107,8 +109,9 @@ extern "C" void *fn_1_7A34(DustOwner *self, s16 flag)
         self->vtbl = lbl_1_data_31C;
         fn_1_7CDC();
         HuSprAnimKill(lbl_1_bss_A28);
-        if (self != 0) {
-            if (lbl_1_bss_A0C == 0) {
+        if ((void *)((char *)self + 0x10) != 0) {
+            if (lbl_1_bss_A0C != 0) {
+                } else {
                 fn_1_1D4(lbl_1_data_30C, lbl_1_data_300, 0x3D);
             }
             lbl_1_bss_A0C = 0;
