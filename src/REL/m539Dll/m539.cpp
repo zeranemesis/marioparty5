@@ -731,40 +731,64 @@ M539Node *fn_1_1B9C(M539Cmp cmp, M539Node *a, M539Node *b)
 void fn_1_1C48(s32 bit)
 {
     M539Task *t;
+    M539Node *end;
+    M539Node *b;
+    M539Node *c;
+    M539Node *nx;
 
-    t = (M539Task *)lbl_1_bss_C.next;
+    b = lbl_1_bss_C.next;
+    c = b;
+    t = (M539Task *)c;
     lbl_1_bss_14 = bit;
-    while ((M539Node *)t != &lbl_1_bss_C) {
+    end = &lbl_1_bss_C;
+    while ((M539Node *)t != end) {
         t->flags |= 1 << bit;
         t->vtbl->onFlag(t, bit);
-        t = (M539Task *)t->link.next;
+        nx = t->link.next;
+        t = (M539Task *)nx;
     }
 }
 
 s32 fn_1_1CE0(void)
 {
     M539Task *t;
+    M539Node *end;
+    M539Node *b;
+    M539Node *c;
+    M539Node *nx;
+    s32 bit;
 
-    t = (M539Task *)lbl_1_bss_C.next;
-    while (1) {
-        if ((M539Node *)t == &lbl_1_bss_C) {
-            return 1;
-        }
-        if ((t->flags & (1 << lbl_1_bss_14)) != 0) {
+    b = lbl_1_bss_C.next;
+    c = b;
+    t = (M539Task *)c;
+    end = &lbl_1_bss_C;
+    while ((M539Node *)t != end) {
+        bit = lbl_1_bss_14;
+        if ((t->flags & (1 << bit)) != 0) {
             return 0;
         }
-        t = (M539Task *)t->link.next;
+        nx = t->link.next;
+        t = (M539Task *)nx;
     }
+    return 1;
 }
 
 void fn_1_1D6C(void)
 {
     M539Task *t;
+    M539Node *end;
+    M539Node *b;
+    M539Node *c;
+    M539Node *nx;
 
-    t = (M539Task *)lbl_1_bss_C.next;
-    while ((M539Node *)t != &lbl_1_bss_C) {
+    b = lbl_1_bss_C.next;
+    c = b;
+    t = (M539Task *)c;
+    end = &lbl_1_bss_C;
+    while ((M539Node *)t != end) {
         t->vtbl->update(t);
-        t = (M539Task *)t->link.next;
+        nx = t->link.next;
+        t = (M539Task *)nx;
     }
 }
 
@@ -899,13 +923,20 @@ void fn_1_2400(M539Master *self);
 
 void fn_1_2370(OMOBJ *obj)
 {
+    OMOBJ *self;
+    M539Master *m;
+    M539Master *cur;
+
+    self = obj;
     if (omSysExitReq != 0 && WipeCheckEnd() == 0) {
         fn_1_2C18();
         HuAudFadeOut(0x3E8);
-        obj->objFunc = (OMOBJFUNC)fn_1_2470;
+        self->objFunc = (OMOBJFUNC)fn_1_2470;
         return;
     }
-    fn_1_2400(lbl_1_bss_9EC);
+    m = lbl_1_bss_9EC;
+    cur = m;
+    fn_1_2400(cur);
 }
 
 void fn_1_2400(M539Master *self)
@@ -924,19 +955,29 @@ void fn_1_246C(M539Master *self)
 void fn_1_2470(void)
 {
     M539Master *m;
+    M539Master *cur;
+    M539Master *obj;
+    s32 c;
+    u8 hitZero;
 
     m = lbl_1_bss_9EC;
+    cur = m;
     if (WipeCheckEnd() != 0) {
-        m->vtbl->update(m);
-        if (m->counter > 0) {
-            if (--m->counter == 0) {
+        cur->vtbl->update(cur);
+        hitZero = 0;
+        if (cur->counter > 0) {
+            c = cur->counter - 1;
+            cur->counter = c;
+            if (c == 0) {
+                hitZero = 1;
             }
         }
         return;
     }
-    m->vtbl->finish(m);
-    if (m != 0) {
-        m->vtbl->dtor(m, 1);
+    cur->vtbl->finish(cur);
+    obj = cur;
+    if (obj != 0) {
+        obj = obj->vtbl->dtor(obj, 1);
     }
     CharModelKill(-1);
     omOvlReturnEx(1, 1);
@@ -1545,10 +1586,16 @@ f32 fn_1_4FC8(f32 from, f32 to)
 f32 fn_1_501C(Vec *out, Vec *dir, Vec *target, f32 size)
 {
     f32 dist;
+    Vec *o1;
+    Vec *o2;
+    Vec *o3;
 
     dist = size / tan(0.0872664600610733);
     PSVECScale(dir, out, dist);
-    PSVECSubtract(target, out, out);
+    o1 = out;
+    o2 = o1;
+    o3 = o2;
+    PSVECSubtract(target, o3, o3);
     return dist;
 }
 
@@ -1559,28 +1606,40 @@ void fn_1_50C4(s16 camBit, Vec *dir, Vec *target, f32 width, f32 depth)
 {
     Vec dn;
     Vec pos;
+    f32 halfWidth;
     f32 halfDepth;
     f32 dist;
     f32 nearZ;
     f32 farZ;
+    Vec *posPtr;
+    Vec *posRef;
+    f32 dist1;
+    f32 dist2;
+    f32 dist3;
     s32 upIdx;
     s32 count;
     s32 i;
     const Vec *up;
 
+    halfWidth = width * 0.5f;
     halfDepth = depth * 0.5f;
     PSVECNormalize(dir, &dn);
-    if (fabs(dn.y) < 0.5f) {
+    if (__fabs(dn.y) < 0.5f) {
         upIdx = 0;
     } else {
         upIdx = 1;
     }
     up = &lbl_1_rodata_74[upIdx];
-    dist = (f32)((width * 0.5f) / tan(0.0872664600610733));
+    dist = (f32)(halfWidth / tan(0.0872664600610733));
     PSVECScale(&dn, &pos, dist);
     PSVECSubtract(target, &pos, &pos);
-    nearZ = dist - halfDepth;
-    farZ = dist + halfDepth;
+    posPtr = &pos;
+    posRef = posPtr;
+    dist1 = dist;
+    dist2 = dist1;
+    dist3 = dist2;
+    nearZ = dist3 - halfDepth;
+    farZ = dist3 + halfDepth;
     count = 0;
     i = 0;
     while (i < 0x10) {
@@ -1591,13 +1650,13 @@ void fn_1_50C4(s16 camBit, Vec *dir, Vec *target, f32 width, f32 depth)
     }
     if (count < 2) {
         Hu3DShadowCreate(10.0f, nearZ, farZ);
-        Hu3DShadowPosSet(&pos, (Vec *)up, target);
+        Hu3DShadowPosSet(posRef, (Vec *)up, target);
         Hu3DShadowSizeSet(0x1E0);
         Hu3DShadowTPLvlSet(0.4f);
         return;
     }
     Hu3DShadowMultiCreate(10.0f, nearZ, farZ, camBit);
-    Hu3DShadowMultiPosSet(&pos, (Vec *)up, target, camBit);
+    Hu3DShadowMultiPosSet(posRef, (Vec *)up, target, camBit);
     Hu3DShadowMultiSizeSet(0x1E0, camBit);
     Hu3DShadowMultiTPLvlSet(0.4f, camBit);
 }
@@ -1608,14 +1667,25 @@ typedef struct M539Sphere_s {
     f32 radius;
 } M539Sphere;
 
-u32 fn_1_5340(M539Sphere *a, M539Sphere *b)
+inline f32 M539SphereRadius(M539Sphere *s)
+{
+    return s->radius;
+}
+
+int fn_1_5340(M539Sphere *a, M539Sphere *b)
 {
     Vec d;
+    f32 rb;
+    f32 ra;
     f32 sum;
+    f32 dist;
 
     PSVECSubtract(&a->pos, &b->pos, &d);
-    sum = a->radius + b->radius;
-    return PSVECMag(&d) < sum;
+    rb = M539SphereRadius(b);
+    ra = M539SphereRadius(a);
+    sum = ra + rb;
+    dist = PSVECMag(&d);
+    return dist < sum;
 }
 
 // Push two overlapping spheres apart; ka/kb weight the move of each.
@@ -1623,16 +1693,22 @@ s32 fn_1_53E8(M539Sphere *a, M539Sphere *b, f32 ka, f32 kb)
 {
     Vec d;
     Vec off;
+    f32 rb;
+    f32 ra;
     f32 sum;
     f32 dist;
+    f32 k;
 
-    sum = a->radius + b->radius;
+    rb = M539SphereRadius(b);
+    ra = M539SphereRadius(a);
+    sum = ra + rb;
     PSVECSubtract(&b->pos, &a->pos, &d);
     dist = PSVECMag(&d);
     if (dist >= sum) {
         return 0;
     }
-    PSVECScale(&d, &d, (kb * (sum - dist)) / dist);
+    k = (kb * (sum - dist)) / dist;
+    PSVECScale(&d, &d, k);
     PSVECScale(&d, &off, -ka);
     PSVECAdd(&off, &a->pos, &a->pos);
     PSVECScale(&d, &off, 1.0f - ka);
@@ -1647,18 +1723,18 @@ s32 fn_1_5568(void)
     return OSGetThreadPriority(OSGetCurrentThread());
 }
 
-s32 fn_1_5850(M539SubThread *self);
-void fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr);
+void *fn_1_5850(void *arg);
+M539Thread *fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr);
 
 M539SubThread *fn_1_558C(M539SubThread *self, u32 stackSize)
 {
     self->vtbl = &lbl_1_data_1C4;
-    fn_1_58AC(&self->th, (void *(*)(void *))fn_1_5850, self, stackSize, OSGetThreadPriority(OSGetCurrentThread()), 1);
+    fn_1_58AC(&self->th, fn_1_5850, self, stackSize, OSGetThreadPriority(OSGetCurrentThread()), 1);
     OSInitSemaphore(&self->sem, 0);
     return self;
 }
 
-void fn_1_5B30(M539Thread *th, s16 flag);
+M539Thread *fn_1_5B30(M539Thread *th, s16 flag);
 
 M539SubThread *fn_1_5608(M539SubThread *self, s16 flag)
 {
@@ -1672,21 +1748,36 @@ M539SubThread *fn_1_5608(M539SubThread *self, s16 flag)
     return self;
 }
 
+// CThread::IsTerminated(), inlined with its own `this`.
+inline u8 M539ThreadDone(M539Thread *th)
+{
+    return OSIsThreadTerminated(&th->thread) != 0;
+}
+
 u8 fn_1_5674(M539SubThread *self)
 {
-    return OSIsThreadTerminated(&self->th.thread) != 0;
+    M539Thread *th = &self->th;
+
+    return OSIsThreadTerminated(&th->thread) != 0;
 }
 
 u32 fn_1_5C64(M539Thread *th);
 
 s32 fn_1_56BC(M539SubThread *self, s32 arg)
 {
-    if (OSIsThreadTerminated(&self->th.thread) != 0) {
+    M539Thread *thIsDone;
+    M539Thread *thResume;
+    M539Sem *sem;
+
+    thIsDone = &self->th;
+    if (OSIsThreadTerminated(&thIsDone->thread) != 0) {
         return self->arg;
     }
     self->arg = arg;
-    OSResumeThread(&self->th.thread);
-    OSWaitSemaphore(&self->sem);
+    thResume = &self->th;
+    OSResumeThread(&thResume->thread);
+    sem = &self->sem;
+    OSWaitSemaphore(sem);
     fn_1_5C64(&self->th);
     OSCheckActiveThreads();
     return self->arg;
@@ -1694,24 +1785,38 @@ s32 fn_1_56BC(M539SubThread *self, s32 arg)
 
 s32 fn_1_574C(M539SubThread *self, s32 arg)
 {
-    M539_ASSERT_INL(OSGetCurrentThread() == &self->th.thread, lbl_1_data_CB, lbl_1_data_BD, 0x47);
-    M539_ASSERT_INL(OSIsThreadTerminated(&self->th.thread) == 0, lbl_1_data_EA, lbl_1_data_BD, 0x4A);
+    M539Thread *thCur;
+    M539Thread *thDone;
+    M539Sem *sem;
+    M539Thread *thSuspend;
+
+    thCur = &self->th;
+    M539_ASSERT_INL(OSGetCurrentThread() == &thCur->thread, lbl_1_data_CB, lbl_1_data_BD, 0x47);
+    thDone = &self->th;
+    M539_ASSERT_INL(OSIsThreadTerminated(&thDone->thread) == 0, lbl_1_data_EA, lbl_1_data_BD, 0x4A);
     self->arg = arg;
-    OSSignalSemaphore(&self->sem);
-    OSSuspendThread(&self->th.thread);
+    sem = &self->sem;
+    OSSignalSemaphore(sem);
+    thSuspend = &self->th;
+    OSSuspendThread(&thSuspend->thread);
     return self->arg;
 }
 
-s32 fn_1_5850(M539SubThread *self)
+void *fn_1_5850(void *arg)
 {
+    M539SubThread *self;
+    M539Sem *sem;
+
+    self = (M539SubThread *)arg;
     self->vtbl->run(self, self->arg);
-    OSSignalSemaphore(&self->sem);
+    sem = &self->sem;
+    OSSignalSemaphore(sem);
     return 0;
 }
 
 void fn_1_5A0C(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr);
 
-void fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr)
+M539Thread *fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr)
 {
     u32 words;
     u32 *stack;
@@ -1721,12 +1826,17 @@ void fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 p
     M539_ASSERT_INL(stack != 0, lbl_1_data_0, lbl_1_data_C, 0x17);
     th->stack = stack;
     fn_1_5A0C(th, func, arg, stack, words, prio, attr);
+    return th;
 }
 
-void fn_1_5990(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 size, s32 prio, u16 attr)
+M539Thread *fn_1_5990(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 size, s32 prio, u16 attr)
 {
+    u32 words;
+
     th->stack = 0;
-    fn_1_5A0C(th, func, arg, stack, size >> 2, prio, attr);
+    words = size >> 2;
+    fn_1_5A0C(th, func, arg, stack, words, prio, attr);
+    return th;
 }
 
 void fn_1_5D78(u32 *p, u32 words);
@@ -1748,10 +1858,11 @@ void fn_1_5A0C(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32
     }
 }
 
-void fn_1_5B30(M539Thread *th, s16 flag)
+M539Thread *fn_1_5B30(M539Thread *th, s16 flag)
 {
     u32 total;
     u32 remain;
+    u32 *stack;
 
     if (th != 0) {
         if (OSIsThreadTerminated(&th->thread) == 0) {
@@ -1762,13 +1873,15 @@ void fn_1_5B30(M539Thread *th, s16 flag)
             remain = fn_1_5C64(th);
             printf(lbl_1_data_167, th, remain, total, (100.0 * (f64)remain) / (f64)total);
         }
-        if (th->stack != 0) {
-            HuMemDirectFree(th->stack);
+        stack = th->stack;
+        if (stack != 0) {
+            HuMemDirectFree(stack);
         }
         if (flag > 0 && th != 0) {
             HuMemDirectFree(th);
         }
     }
+    return th;
 }
 
 u32 fn_1_5C64(M539Thread *th)
@@ -1938,7 +2051,9 @@ void fn_1_61C4(void)
 {
     lbl_1_bss_C.next = &lbl_1_bss_C;
     lbl_1_bss_C.prev = &lbl_1_bss_C;
+#ifdef __MWERKS__
     __register_global_object(&lbl_1_bss_C, (void *)fn_1_6324, lbl_1_bss_0);
+#endif
     lbl_1_bss_18 = 0x78;
     lbl_1_bss_1C = 0xD2;
     lbl_1_bss_20 = 0xD2;
@@ -1958,4 +2073,14 @@ void *fn_1_6324(M539Node *self, s16 flag)
     }
     return self;
 }
+
+// The module's one static initialiser, hooked into the constructor table.
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_61C4)(void) = fn_1_61C4;
+#else
+struct M539StaticInit {
+    M539StaticInit() { fn_1_61C4(); }
+};
+static M539StaticInit lbl_static_init;
+#endif
 }
