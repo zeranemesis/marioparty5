@@ -16,8 +16,20 @@ typedef struct M522Queue_s {
     /* 0x000 */ s32 m_opaque[1];
 } M522_QUEUE;
 
+/* Handle table entry: free/used list links, the object and the handle value
+ * (index in the upper 20 bits, generation in the low 12). */
+typedef struct M522HandleEnt_s {
+    /* 0x0 */ struct M522HandleEnt_s *next;
+    /* 0x4 */ struct M522HandleEnt_s *prev;
+    /* 0x8 */ void *obj;
+    /* 0xC */ u32 handle;
+} M522_HANDLEENT;
+
+/* Handle table (handle.cpp): the entries, the used list head and the count. */
 typedef struct M522HeapSel_s {
-    /* 0x000 */ u8 m_opaque[0xC];
+    /* 0x0 */ M522_HANDLEENT *entries;
+    /* 0x4 */ M522_HANDLEENT *used;
+    /* 0x8 */ u32 count;
 } M522_HEAPSEL;
 
 typedef struct M522GameMaster_s {

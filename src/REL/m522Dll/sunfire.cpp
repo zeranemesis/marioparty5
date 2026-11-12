@@ -18,7 +18,7 @@ typedef struct M522SprMgr_s {
     /* 0x08 */ M522_VTFN *vtbl;
     /* 0x0C */ u32 flags;
     /* 0x10 */ ANIMDATA *sprite[2];
-    /* 0x18 */ s32 handleGrp;
+    /* 0x18 */ M522_HEAPSEL *handleGrp;
 } M522_SPRMGR;
 
 extern "C" {
@@ -30,9 +30,9 @@ void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT,
 void *__register_global_object(void *object, void *destructor, void *regmem);
 void fn_1_6964(void *ptr);
 void fn_1_6A70(const char *cond, const char *file, s32 line);
-s32 fn_1_7D74(s32 grp, void *obj);
-void fn_1_7E04(s32 grp, s32 handle);
-u32 fn_1_7EC8(s32 grp, s32 handle);
+s32 fn_1_7D74(M522_HEAPSEL *grp, void *obj);
+void fn_1_7E04(M522_HEAPSEL *grp, s32 handle);
+u32 fn_1_7EC8(M522_HEAPSEL *grp, s32 handle);
 void fn_1_8004(M522_NODE *node);
 void fn_1_8010(M522_NODE *node, s32 flag);
 void fn_1_807C(M522_NODE *node);
@@ -101,7 +101,7 @@ char *lbl_1_data_540[8] = {
  * handle group of the effects. */
 u8 lbl_1_bss_A30[0xC];
 M522_NODE lbl_1_bss_A3C;
-s32 lbl_1_bss_A44;
+M522_HEAPSEL *lbl_1_bss_A44;
 
 extern "C" {
 SUNFIRE_RODATA extern const s32 lbl_1_rodata_420[2];
@@ -110,7 +110,7 @@ SUNFIRE_RODATA const s32 lbl_1_rodata_420[2] = { 0x500005, 0x500006 };
 
 extern "C" {
 
-M522_SPRMGR *fn_1_DEA0(M522_SPRMGR *self, s32 handleGrp)
+M522_SPRMGR *fn_1_DEA0(M522_SPRMGR *self, M522_HEAPSEL *handleGrp)
 {
     s32 i;
     M522_SPRMGR *singleton;
