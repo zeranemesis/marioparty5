@@ -79,6 +79,20 @@ char lbl_1_data_572[] = "vector::insert length error\n";
 char lbl_1_data_58F[] = "Memory allocation failure";
 char lbl_1_data_5A9[] = "vector::reserve length error\n";
 
+void fn_1_1220C(void);
+void fn_1_12208(void);
+void fn_1_F698(void *self);
+void fn_1_F3EC(void *self);
+
+typedef struct M513PtmfPair_s {
+    M513Ptmf a;
+    M513Ptmf b;
+} M513PtmfPair;
+
+M513PtmfPair lbl_1_data_5C8 = { { 0, -1, (void (*)(void *))fn_1_1220C }, { 0, -1, (void (*)(void *))fn_1_12208 } };
+M513Ptmf lbl_1_data_5E0 = { 0, -1, (void (*)(void *))fn_1_F698 };
+M513Ptmf lbl_1_data_5EC = { 0, -1, (void (*)(void *))fn_1_F3EC };
+
 M513_RODATA const s32 lbl_1_rodata_374[5] = { 0x6D1, 0x6D2, 0x6D3, 0x6D4, 0 };
 
 M513ModelPtr *fn_1_D738(M513ModelPtr *self)
