@@ -102,6 +102,7 @@ typedef s32 (*M515_HOOKFN)(M515_ENTRY *entry, M515_PLY *self);
 s32 fn_1_B0B8(M515_ENTRY *entry, M515_PLY *self);
 s32 fn_1_9DF8(M515_ENTRY *entry, M515_PLY *self);
 s32 fn_1_D928(M515_ENTRY *entry, M515_PLY *self);
+s32 fn_1_B5D8(M515_ENTRY *entry, M515_PLY *self);
 
 // Global state block (0xcb0 bytes) hung off the first object's data.
 struct M515Sub_s {
@@ -197,7 +198,7 @@ extern const M515_VOIDFN _dtors[];
 void ObjectSetup(void);
 
 // .bss:0x0 / 0x4 / 0x8. bss_4 is the one live object pointer.
-void *lbl_1_bss_0;
+s32 lbl_1_bss_0;
 OMOBJ *lbl_1_bss_4;
 OMOBJMAN *lbl_1_bss_8;
 
@@ -412,6 +413,108 @@ void fn_1_928(s16 mode, s16 frameNo)
     M515_SUB *sub = M515_SUBOF(lbl_1_bss_4);
 
     Hu3DModelAttrSet(sub->modelId, HU3D_ATTR_DISPOFF);
+}
+
+void fn_1_968(s16 mode, s16 frameNo)
+{
+    M515_SUB *sub;
+    M515_PLY *ply;
+    s32 i;
+    s32 n;
+    s32 list[4];
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    n = 0;
+    for (i = 0; i < 4; i++) {
+        ply = sub->ply[i];
+        list[n] = -1;
+        if (ply->v482 == 5) {
+            list[n] = i;
+            n++;
+        }
+    }
+    if (n != 0) {
+        sub->v0cac = 1;
+        if (n == 1) {
+            sub->v1d6 = list[0];
+        } else {
+            sub->v1d6 = list[rand8() / (0xFF / n + 1)];
+        }
+        MgSeqModeNext();
+        for (i = 0; i < 4; i++) {
+            ply = sub->ply[i];
+            if (ply->hook != fn_1_9DF8) {
+                if (i == sub->v1d6) {
+                    ply->hook = fn_1_B5D8;
+                } else {
+                    ply->hook = fn_1_B0B8;
+                    if (ply->v482 == 5) {
+                        ply->vec = ply->from;
+                        ply->v484 = 0;
+                    }
+                }
+                ply->p684->e00 = 0;
+            }
+            ply->v680 = 0;
+            ply->v682 = 0;
+        }
+        return;
+    }
+    sub->v1d4 = 1;
+}
+
+void fn_1_B08(s16 mode, s16 frameNo)
+{
+    M515_SUB *sub;
+    M515_PLY *ply;
+    s32 i;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    sub->v1d4 = 0;
+    switch (sub->v1d0) {
+    case 1:
+        break;
+    case 0:
+        HuAudSStreamFadeOut(lbl_1_bss_0, 1000);
+        sub->v0cac = 1;
+        if (sub->v1d6 >= 0) {
+            ply = sub->ply[sub->v1d6];
+            MgSeqWinnerSet(ply->chr, -1, -1, -1);
+        } else {
+            for (i = 0; i < 4; i++) {
+                ply = sub->ply[i];
+                if (ply->hook != fn_1_9DF8) {
+                    ply->hook = fn_1_B0B8;
+                    ply->p684->e00 = 0;
+                }
+                ply->v680 = 0;
+                ply->v682 = 0;
+            }
+            MgSeqWinnerSet(-1, -1, -1, -1);
+        }
+        sub->v1da = 0;
+        sub->v1d0++;
+        break;
+    }
+    for (i = 0; i < 4; i++) {
+        ply = sub->ply[i];
+        if (ply->hook != 0) {
+            if (ply->hook(ply->p684, ply) != 0 && ply->hook == fn_1_9DF8) {
+                ply->hook = fn_1_B0B8;
+                ply->p684->e00 = 0;
+            }
+            if (ply->hook == fn_1_9DF8) {
+                fn_1_5FD0(ply);
+                fn_1_611C(ply);
+                omSetTra(ply->obj, ply->pos.x, ply->pos.y, ply->pos.z);
+                omSetRot(ply->obj, ply->rot.x, ply->rot.y, ply->rot.z);
+            }
+            if (ply->hook == fn_1_D928) {
+                ply->hook = fn_1_B0B8;
+                ply->p684->e00 = 0;
+            }
+        }
+    }
 }
 
 void fn_1_1D20(s16 mode, s16 frameNo)
