@@ -29,7 +29,7 @@ void fn_1_3A64(M510_PLAYER_WORK *work, s16 playerNo, M510_OBJ *obj)
     work->pitch.pos = lbl_1_data_110[playerNo];
     work->pitch.pos.z += -250.0f;
 
-    fn_1_509C(&work->ballPathWork, work);
+    fn_1_509C(&work->ballWork, work);
     fn_1_3DC8(&work->model, playerNo, work);
     fn_1_CE04(&work->score, 0, playerNo);
 
@@ -61,7 +61,7 @@ void fn_1_3CCC(M510_PLAYER_WORK *work)
     Hu3DModelKill(work->modelId);
     fn_1_D1AC(&work->score);
     fn_1_4284(&work->model);
-    fn_1_51B4(&work->ballPathWork);
+    fn_1_51B4(&work->ballWork);
     fn_1_49A4(&work->pitch);
     memset(work, 0, sizeof(M510_PLAYER_WORK));
 }
@@ -73,7 +73,7 @@ s32 fn_1_3D34(M510_PLAYER_WORK *work)
     fn_1_49F4(&work->pitch);
     fn_1_4328(&work->model);
     fn_1_D234(&work->score);
-    fn_1_5230(&work->ballPathWork);
+    fn_1_5230(&work->ballWork);
 
     if (work->flag != 0) {
         maxTime = Hu3DMotionMaxTimeGet(work->modelId);

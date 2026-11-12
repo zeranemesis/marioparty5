@@ -75,8 +75,8 @@ s32 fn_1_966C(M510_OBJ *obj)
         if (obj->timer1++ > 5) {
             for (i = 0; i < 4; i++) {
                 pitch = &obj->players[i].pitch;
-                pitch->state = 3;
-                pitch->unk24 = 1;
+                pitch->index = 3;
+                pitch->active = 1;
             }
             obj->timer1 = 0;
             obj->state++;
