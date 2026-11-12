@@ -28,6 +28,11 @@ typedef struct MdManSel_s {
     s8 next; //0x01
 } MDMAN_SEL;
 
+typedef struct MdlInfo_s {
+    const char *name; //0x00
+    s32 cameraNo; //0x04
+} MDL_INFO;
+
 typedef struct MdCamMove_s {
     HuVecF centerFrom; //0x00
     HuVecF hvrFrom; //0x0C
@@ -61,6 +66,13 @@ static HuVecF lbl_1_bss_68[3];
 static HuVecF lbl_1_bss_44[3];
 static HuVecF lbl_1_bss_2C[2];
 static s32 bgmStream;
+static MDL_INFO *mdlInfoP;
+static HuVec2f sprPos;
+static float sprRot;
+static s32 menuSel;
+static s32 mdlSel;
+static s32 dispTimer;
+static s32 showF;
 static s32 lbl_1_bss_4;
 static s8 lbl_1_bss_2;
 static s8 lbl_1_bss_1;
@@ -147,6 +159,8 @@ void fn_1_9E88(void);
 void fn_1_80A8(void);
 void fn_1_A2BC(s32 arg0, s32 arg1);
 void MdPosAdjustMode(void);
+void MdMathAngleClamp(float *angle);
+void MdDebugFontPrint(MDDEBUGFONT_WORK *debugFont, const char *str, ...);
 void fn_1_A094(s32 no);
 s32 fn_1_A204(s32 modelNo, s32 cameraNo);
 
@@ -2713,4 +2727,259 @@ s32 fn_1_A204(s32 modelNo, s32 cameraNo)
     Hu3D3Dto2D(pos, *bit, &dst);
     ret = (s32)(32.0f+(1.0f/9.0f)*dst.x);
     return ret;
+}
+
+static HuVecF lbl_1_data_410 = { 0.0f, 1.0f, 0.0f };
+
+void fn_1_A2BC(s32 modelNo, s32 cameraNo)
+{
+    HuVecF camPos;
+    HuVecF mdlPos;
+    HuVecF dir;
+    HuVecF cross2;
+    HuVecF cross;
+    Mtx mtx;
+    HuVecF rotOut;
+    MDMODEL_WORK *model;
+
+    model = sys->model;
+    camPos = sys->camera->camera[cameraNo].pos;
+    mdlPos = *model->posP[modelNo];
+    VECSubtract(&camPos, &mdlPos, &dir);
+    VECNormalize(&dir, &dir);
+    VECCrossProduct(&lbl_1_data_410, &dir, &cross);
+    VECNormalize(&cross, &cross);
+    VECCrossProduct(&dir, &cross, &cross2);
+    VECNormalize(&cross2, &cross2);
+    mtx[0][1] = cross2.x;
+    mtx[1][1] = cross2.y;
+    mtx[2][1] = cross2.z;
+    mtx[0][0] = cross.x;
+    mtx[1][0] = cross.y;
+    mtx[2][0] = cross.z;
+    mtx[0][2] = dir.x;
+    mtx[1][2] = dir.y;
+    mtx[2][2] = dir.z;
+    Hu3DMtxRotGet(mtx, &rotOut);
+    model->rotP[modelNo]->x = rotOut.x;
+    model->rotP[modelNo]->y = rotOut.y;
+    model->rotP[modelNo]->z = rotOut.z;
+}
+static MDL_INFO mdlInfo[39] = {
+    { "STAR", 0 },
+    { "STAGE", 0 },
+    { "BOX", 0 },
+    { "PIN0_MARIO", 0 },
+    { "PIN1_MARIO", 0 },
+    { "PIN2_MARIO", 0 },
+    { "PIN0_LUIGI", 0 },
+    { "PIN1_LUIGI", 0 },
+    { "PIN2_LUIGI", 0 },
+    { "PIN0_PEACH", 0 },
+    { "PIN1_PEACH", 0 },
+    { "PIN2_PEACH", 0 },
+    { "PIN0_YOSHI", 0 },
+    { "PIN1_YOSHI", 0 },
+    { "PIN2_YOSHI", 0 },
+    { "PIN0_WARIO", 0 },
+    { "PIN1_WARIO", 0 },
+    { "PIN2_WARIO", 0 },
+    { "PIN0_DAISY", 0 },
+    { "PIN1_DAISY", 0 },
+    { "PIN2_DAISY", 0 },
+    { "PIN0_WALUIGI", 0 },
+    { "PIN1_WALUIGI", 0 },
+    { "PIN2_WALUIGI", 0 },
+    { "MAN0", 0 },
+    { "MAN1", 0 },
+    { "MAN2", 0 },
+    { "MAN3", 0 },
+    { "COM0", 0 },
+    { "COM1", 0 },
+    { "COM2", 0 },
+    { "COM3", 0 },
+    { "FINGER", 0 },
+    { "CARD_ROOT", 0 },
+    { "CARD_ITEM", 0 },
+    { "CARD_EVENT", 0 },
+    { "CARD_KOOPA", 0 },
+    { "CARD_STAR", 1 },
+    { "FONTBGFILTER", 0 }
+};
+
+#define MDADJ_STICK(p, v) \
+    if(HuPadSubStkX[0] <= -29) { \
+        p->x -= v; \
+    } else if(HuPadSubStkX[0] >= 29) { \
+        p->x += v; \
+    } \
+    if(HuPadStkY[0] <= -36) { \
+        p->y -= v; \
+    } else if(HuPadStkY[0] >= 36) { \
+        p->y += v; \
+    } \
+    if(HuPadSubStkY[0] <= -29) { \
+        p->z += v; \
+    } else if(HuPadSubStkY[0] >= 29) { \
+        p->z -= v; \
+    }
+
+// remaining diff: a dead mr r24 copy, extsh on camera bit
+void MdPosAdjustMode(void)
+{
+    int i;
+    u32 attr;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+    MDDEBUGFONT_WORK *font;
+    MDMODEL_WORK *model;
+    HUSPRGRPID grpId;
+    MDSPRITE_WORK *sprite;
+    MDCAMERA_WORK *camWork;
+    HuVecF scr;
+
+    font = sys->debugFont;
+    camWork = sys->camera;
+    sprite = sys->sprite;
+    model = sys->model;
+    grpId = sprite->grpId[3];
+    if(font->ctrl != MD_DEBUGFONT_CTRL_MODEL) {
+        return;
+    }
+#ifdef TARGET_PC
+    pos = model->posP[mdlSel];
+    rot = model->rotP[mdlSel];
+    scale = model->scaleP[mdlSel];
+    attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+#endif
+    if(showF == 0) {
+        if((HuPadBtn[0] & 0x400) != 0) {
+            if(++dispTimer >= 60) {
+                MdSpriteDispSet(sprite, 3, TRUE);
+                dispTimer = 0;
+                showF = 1;
+            }
+        } else {
+            dispTimer = 0;
+        }
+    } else if(showF == 1) {
+        while(1) {
+            if((HuPadBtn[0] & 0x400) != 0) {
+                if(++dispTimer >= 60) {
+                    MdSpriteDispSet(sprite, 3, FALSE);
+                    dispTimer = 0;
+                    showF = 0;
+                    break;
+                }
+            } else {
+                dispTimer = 0;
+            }
+            if(font->ctrl == MD_DEBUGFONT_CTRL_MODEL) {
+                if((sys->padWork->DStkDown[0] & 1) != 0) {
+                    for(i=0; i<39; i++) {
+                        if(--mdlSel == -1) {
+                            mdlSel = 38;
+                        }
+                        if((Hu3DModelAttrGet(model->mdlId[mdlSel]) & 1) == 0) {
+                            break;
+                        }
+                    }
+                } else if((sys->padWork->DStkDown[0] & 2) != 0) {
+                    for(i=0; i<39; i++) {
+#ifdef TARGET_PC
+                        mdlSel++;
+                        mdlSel = mdlSel % 39;
+#else
+                        mdlSel = (++mdlSel) % 39;
+#endif
+                        if((Hu3DModelAttrGet(model->mdlId[mdlSel]) & 1) == 0) {
+                            break;
+                        }
+                    }
+                }
+                if((HuPadBtnDown[0] & 4) != 0) {
+#ifdef TARGET_PC
+                    menuSel++;
+                    menuSel = menuSel % 3;
+#else
+                    menuSel = (++menuSel) % 3;
+#endif
+                }
+                mdlInfoP = &mdlInfo[mdlSel];
+                pos = model->posP[mdlSel];
+                rot = model->rotP[mdlSel];
+                scale = model->scaleP[mdlSel];
+                attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+                if(menuSel == 0) {
+                        if(HuPadTrigL[0] <= 75) {
+                            MDADJ_STICK(pos, 5.0f)
+                        } else if((HuPadBtn[0] & 0x40) != 0) {
+                            MDADJ_STICK(pos, 0.5f)
+                        } else {
+                            MDADJ_STICK(pos, 1.0f)
+                        }
+                } else if(menuSel == 1) {
+                        if(HuPadTrigL[0] <= 75) {
+                            MDADJ_STICK(rot, 10.0f)
+                        } else if((HuPadBtn[0] & 0x40) != 0) {
+                            MDADJ_STICK(rot, 1.0f)
+                        } else {
+                            MDADJ_STICK(rot, 5.0f)
+                        }
+                } else if(menuSel == 2) {
+                        if(HuPadTrigL[0] <= 75) {
+                            if(HuPadSubStkX[0] <= -29) {
+                                scale->x -= 0.05f;
+                                scale->y -= 0.05f;
+                                scale->z -= 0.05f;
+                            } else if(HuPadSubStkX[0] >= 29) {
+                                scale->x += 0.05f;
+                                scale->y += 0.05f;
+                                scale->z += 0.05f;
+                            }
+                        } else if((HuPadBtn[0] & 0x40) != 0) {
+                            MDADJ_STICK(scale, 0.01f)
+                        } else {
+                            MDADJ_STICK(scale, 0.1f)
+                        }
+                }
+            }
+            HuSprPosSet(grpId, 0, 32.0f, 0.0f);
+            HuSprPosSet(grpId, 1, -32.0f, 0.0f);
+            sprRot = sprRot+2.0f;
+            MdMathAngleClamp(&sprRot);
+            HuSprGrpZRotSet(grpId, sprRot);
+            Hu3D3Dto2D(pos, camWork->camera[mdlInfoP->cameraNo].bit, &scr);
+            HuSprGrpPosSet(grpId, scr.x, scr.y);
+            if((attr & 1) != 0) {
+                HuSprAttrSet(grpId, 0, 0x80);
+                HuSprAttrSet(grpId, 1, 0x80);
+                HuSprGrpTPLvlSet(grpId, 0.4f);
+            } else {
+                HuSprAttrReset(grpId, 0, 0x80);
+                HuSprAttrReset(grpId, 1, 0x80);
+                HuSprGrpTPLvlSet(grpId, 1.0f);
+            }
+            MdDebugFontPrint(font, "POS-ADJUST-MODE(%2d / %2d) -> %s", mdlSel, 39, mdlInfoP->name);
+            if(font->ctrl == MD_DEBUGFONT_CTRL_MODEL) {
+                if(menuSel == 0) {
+                    MdDebugFontPrint(font, "*  POS(%.1f / %.1f / %.1f)", pos->x, pos->y, pos->z);
+                } else {
+                    MdDebugFontPrint(font, "   POS(%.1f / %.1f / %.1f)", pos->x, pos->y, pos->z);
+                }
+                if(menuSel == 1) {
+                    MdDebugFontPrint(font, "*  ROT(%.1f / %.1f / %.1f)", rot->x, rot->y, rot->z);
+                } else {
+                    MdDebugFontPrint(font, "   ROT(%.1f / %.1f / %.1f)", rot->x, rot->y, rot->z);
+                }
+                if(menuSel == 2) {
+                    MdDebugFontPrint(font, "*SCALE(%.2f / %.2f / %.2f)", scale->x, scale->y, scale->z);
+                } else {
+                    MdDebugFontPrint(font, " SCALE(%.2f / %.2f / %.2f)", scale->x, scale->y, scale->z);
+                }
+            }
+            HuPrcVSleep();
+        }
+    }
 }
