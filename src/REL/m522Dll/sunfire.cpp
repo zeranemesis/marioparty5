@@ -91,10 +91,16 @@ char lbl_1_data_528[] = "brock_f";
 char lbl_1_data_530[] = "brock_g";
 char lbl_1_data_538[] = "brock_h";
 
+#ifdef TARGET_PC /* other units reference it with C linkage */
+extern "C" {
+#endif
 char *lbl_1_data_540[8] = {
     lbl_1_data_500, lbl_1_data_508, lbl_1_data_510, lbl_1_data_518,
     lbl_1_data_520, lbl_1_data_528, lbl_1_data_530, lbl_1_data_538,
 };
+#ifdef TARGET_PC
+}
+#endif
 
 
 /* Registration record for the global list head, then the head itself and the
@@ -336,9 +342,11 @@ void fn_1_E65C(M522_NODE *head, void (*func)(M522_EFFECT *))
             if (done != 0) {
                 break;
             }
-            fn_1_807C(tmp.prev);
-            fn_1_80D0(tmp.prev, head);
-            func((M522_EFFECT *)tmp.prev);
+            /* the node is read once (r30 in the original): unlinking it changes tmp.prev */
+            M522_NODE *node = tmp.prev;
+            fn_1_807C(node);
+            fn_1_80D0(node, head);
+            func((M522_EFFECT *)node);
         }
         fn_1_8010(&tmp, 0);
     }
@@ -376,3 +384,13 @@ void fn_1_E804(void)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_E804)(void) = fn_1_E804;
+#else
+struct PortStaticInit_E804 {
+    PortStaticInit_E804() { fn_1_E804(); }
+};
+static PortStaticInit_E804 lbl_port_init_E804;
+#endif

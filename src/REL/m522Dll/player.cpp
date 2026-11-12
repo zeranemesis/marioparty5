@@ -2037,3 +2037,13 @@ void *fn_1_156D0(M522_NODE *self, s16 flag)
     }
     return self;
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_15648)(void) = fn_1_15648;
+#else
+struct PortStaticInit_15648 {
+    PortStaticInit_15648() { fn_1_15648(); }
+};
+static PortStaticInit_15648 lbl_port_init_15648;
+#endif

@@ -121,7 +121,13 @@ M522_VTFN lbl_1_data_120[] = {
 
 /* Singleton of the spawner. */
 void *lbl_1_bss_18;
+#ifdef TARGET_PC /* other units reference it with C linkage */
+extern "C" {
+#endif
 M522_BUBBLEMGR *lbl_1_bss_1C;
+#ifdef TARGET_PC
+}
+#endif
 
 extern "C" {
 BUBBLE_RODATA extern const MGACTOR_PARAM lbl_1_rodata_198;

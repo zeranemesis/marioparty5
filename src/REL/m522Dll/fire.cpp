@@ -214,7 +214,13 @@ M522_VTFN lbl_1_data_64[] = {
 f32 lbl_1_bss_0;
 M522_FIREWAVE lbl_1_bss_4;
 M522_FIRE *lbl_1_bss_10;
+#ifdef TARGET_PC /* other units reference it with C linkage */
+extern "C" {
+#endif
 void *lbl_1_bss_14;
+#ifdef TARGET_PC
+}
+#endif
 
 extern "C" {
 FIRE_RODATA extern const M522_VEC3 lbl_1_rodata_38;
@@ -1181,3 +1187,13 @@ void fn_1_4934(void)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_4934)(void) = fn_1_4934;
+#else
+struct PortStaticInit_4934 {
+    PortStaticInit_4934() { fn_1_4934(); }
+};
+static PortStaticInit_4934 lbl_port_init_4934;
+#endif

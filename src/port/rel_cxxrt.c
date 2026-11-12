@@ -77,4 +77,14 @@ void *PortHu3DModelHookData(int modelId)
 {
     return Hu3DData[modelId].hookData;
 }
+
+void PortHu3DModelHookDataSet(int modelId, void *data)
+{
+    Hu3DData[modelId].hookData = data;
+}
+
+void *PortHu3DModelMtx(int modelId)
+{
+    return Hu3DData[modelId].mtx;
+}
 #endif

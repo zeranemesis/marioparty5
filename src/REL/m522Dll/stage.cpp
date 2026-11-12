@@ -79,7 +79,7 @@ void *fn_1_9E94(M522_MODEL *model, s16 flag);
 HSFOBJECT *fn_1_9EF0(M522_MODEL *model, char *name);
 void fn_1_9FE4(M522_MODEL *model, char *name);
 void fn_1_D718(M522_CAMERA *camera, f32 offset);
-s16 fn_1_F564(s32 player);
+s16 fn_1_F564(M522_VEC3 *player); /* the sound position, a pointer (player.cpp) */
 
 M522_STAGE *fn_1_E85C(M522_STAGE *self);
 void *fn_1_EB78(M522_OWNER *owner, s16 flag);
@@ -335,7 +335,7 @@ void fn_1_EE24(M522_STAGE *self)
     MgActorColMapInit(ids, 2, 8);
 }
 
-void fn_1_EF38(M522_STAGE *self, s32 player)
+void fn_1_EF38(M522_STAGE *self, M522_VEC3 *player)
 {
     M522_VEC3 pos;
     s16 pan;

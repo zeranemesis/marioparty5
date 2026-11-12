@@ -228,7 +228,13 @@ void fn_1_6E08(M522RCam *self, Vec *delta);
 
 void *fn_1_689C(s32 size)
 {
+#ifdef TARGET_PC
+    /* shortcut: callers pass GC object sizes (fn_1_689C(0xAC)); a field takes at most twice its GC room on
+     * 64-bit, so double them rather than overflow. Upgrade: sizeof of the constructed types at every call site. */
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size * 2, 0x10000000);
+#else
     void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+#endif
 
     M522R_ASSERT(p != 0, lbl_1_data_190, lbl_1_data_19C, 0x17);
     return p;

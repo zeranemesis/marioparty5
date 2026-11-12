@@ -18,6 +18,16 @@ typedef struct {
 
 extern M579Hu3DModel Hu3DData[];
 
+/* Pointers the GameCube code passes as 32-bit ints; and the real model array, whose stride and
+ * field offsets differ from the GC-sized copy above. */
+#ifdef TARGET_PC
+typedef void *M579Ptr;
+void *PortHu3DModelMtx(int modelId);
+void PortHu3DModelHookDataSet(int modelId, void *data);
+#else
+typedef u32 M579Ptr;
+#endif
+
 typedef struct M579Node M579Node;
 
 struct M579Node {
@@ -71,7 +81,7 @@ extern void Hu3DModelLayerSet(s16 id, s16 layer);
 extern void Hu3DModelCameraSet(s16 id, u16 cam);
 extern void Hu3DModelShadowSet(s16 id);
 extern void Hu3DModelShadowMapSet(s16 id);
-extern void Hu3DModelShadowMapObjSet(s16 id, u32 obj);
+extern void Hu3DModelShadowMapObjSet(s16 id, M579Ptr obj);
 extern void Hu3DModelShadowMapObjReset(s16 id);
 extern s32 MgTimerValueGet(void *timer);
 extern void MgTimerPosSet(void *timer, f32 x, f32 y);
@@ -128,14 +138,25 @@ void fn_1_2C44(void)
     omSysExitReq = 1;
 }
 
+#ifdef TARGET_PC
+void fn_1_30BC(M579Hu3DRef *self, void *val)
+{
+    PortHu3DModelHookDataSet(self->id, val);
+}
+#else
 void fn_1_30BC(M579Hu3DRef *self, s32 val)
 {
     Hu3DData[self->id].unk_120 = val;
 }
+#endif
 
 void *fn_1_30D8(M579Hu3DRef *self)
 {
+#ifdef TARGET_PC
+    return PortHu3DModelMtx(self->id);
+#else
     return &Hu3DData[self->id].unk_F0;
+#endif
 }
 
 void fn_1_4854(M579VtblHolder *obj, M579Thing *self)
@@ -163,14 +184,14 @@ void fn_1_1264(M579Node *self)
     self->unk_04 = self;
 }
 
-void fn_1_C8(u32 p)
+void fn_1_C8(M579Ptr p)
 {
     if (p != 0) {
         HuMemDirectFree((void *)p);
     }
 }
 
-void fn_1_100(u32 p)
+void fn_1_100(M579Ptr p)
 {
     if (p != 0) {
         HuMemDirectFree((void *)p);
@@ -254,7 +275,7 @@ void fn_1_3214(M579Hu3DRef *self)
     Hu3DModelShadowMapSet(self->id);
 }
 
-void fn_1_3244(M579Hu3DRef *self, u32 obj)
+void fn_1_3244(M579Hu3DRef *self, M579Ptr obj)
 {
     Hu3DModelShadowMapObjSet(self->id, obj);
 }
@@ -264,14 +285,14 @@ void fn_1_327C(M579Hu3DRef *self)
     Hu3DModelShadowMapObjReset(self->id);
 }
 
-void fn_1_47E4(u32 p)
+void fn_1_47E4(M579Ptr p)
 {
     if (p != 0) {
         HuMemDirectFree((void *)p);
     }
 }
 
-void fn_1_481C(u32 p)
+void fn_1_481C(M579Ptr p)
 {
     if (p != 0) {
         HuMemDirectFree((void *)p);

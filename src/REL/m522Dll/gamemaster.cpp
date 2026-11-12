@@ -276,7 +276,16 @@ struct M522LimitsInit {
 
 /* gamemaster.o owns this in the original (camera.o and stage.o reference it as
    UND), so it must not be static. */
+#ifdef TARGET_PC
+/* on PC the word is the camera singleton pointer camera.cpp and stage.cpp use, and the
+ * initialiser object lives apart */
+static M522LimitsInit s_portLimitsInit;
+extern "C" {
+void *lbl_1_bss_A1C;
+}
+#else
 M522LimitsInit lbl_1_bss_A1C;
+#endif
 
 #ifdef TARGET_PC
 /* this adjustors of the secondary base (CMinigameCore at 0x20): step back to
