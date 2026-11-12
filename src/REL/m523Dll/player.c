@@ -348,10 +348,7 @@ f32 fn_1_43A4(M523Player *player)
 
     player->stkX = HuPadStkX[player->padNo];
     player->stkY = -HuPadStkY[player->padNo];
-    mag = (f32)((player->stkX * player->stkX) + (player->stkY * player->stkY));
-    if (mag > 0.0f) {
-        mag = sqrtf(mag);
-    }
+    mag = sqrtf((f32)((player->stkX * player->stkX) + (player->stkY * player->stkY)));
     return mag;
 }
 
@@ -392,29 +389,34 @@ void fn_1_4654(OMOBJ *obj)
 
 void fn_1_4700(M523Player *player)
 {
-    OMOBJ *obj;
-    HU3DMODELID model;
-    s16 freeIdx[3];
-    s16 num;
     s16 slot;
-    s16 i;
+    OMOBJ *obj;
 
-    num = 0;
-    for (i = 0; i < 3; i++) {
-        if (lbl_1_bss_130[i] == 0) {
-            freeIdx[num++] = i;
+    {
+        s16 freeIdx[3];
+        s16 num;
+
+        num = 0;
+        for (slot = 0; slot < 3; slot++) {
+            if (lbl_1_bss_130[slot] == 0) {
+                freeIdx[num++] = slot;
+            }
+        }
+        if (num == 0) {
+            slot = 0;
+        } else {
+            slot = freeIdx[frandmod(num)];
         }
     }
-    if (num == 0) {
-        slot = 0;
-    } else {
-        slot = freeIdx[frandmod(num)];
-    }
     lbl_1_bss_130[slot] = 1;
-    model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_13C[slot], HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(model, 5);
-    obj = omAddObjEx(lbl_1_bss_E4, 0x1400, 1, 0, -1, fn_1_4654);
-    obj->mdlId[0] = model;
+    {
+        HU3DMODELID model;
+
+        model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_13C[slot], HU_MEMNUM_OVL, HEAP_MODEL));
+        Hu3DModelLayerSet(model, 5);
+        obj = omAddObjEx(lbl_1_bss_E4, 0x1400, 1, 0, -1, fn_1_4654);
+        obj->mdlId[0] = model;
+    }
     obj->work[0] = player->index;
     obj->work[1] = slot;
     omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
@@ -426,9 +428,7 @@ void fn_1_4858(void)
 
     if (lbl_1_bss_1C == 0) {
         for (i = 0; i < 4; i++) {
-            lbl_1_bss_140[i]->dest.x = lbl_1_data_278[lbl_1_bss_140[i]->teamNo].x;
-            lbl_1_bss_140[i]->dest.y = lbl_1_data_278[lbl_1_bss_140[i]->teamNo].y;
-            lbl_1_bss_140[i]->dest.z = lbl_1_data_278[lbl_1_bss_140[i]->teamNo].z;
+            lbl_1_bss_140[i]->dest = lbl_1_data_278[lbl_1_bss_140[i]->teamNo];
         }
     } else {
         fn_1_7488();
@@ -930,19 +930,14 @@ static void fn_1_6800(OMOBJ *obj)
         PSVECNormalize(&diff, &diff);
         player->stkX = 56.0f * diff.x;
         player->stkY = 56.0f * diff.z;
-        mag = (f32)((player->stkX * player->stkX) + (player->stkY * player->stkY));
-        if (mag > 0.0f) {
-            mag = sqrtf(mag);
-        }
+        mag = sqrtf((f32)((player->stkX * player->stkX) + (player->stkY * player->stkY)));
         player->vel.x = 0.26785713f * player->stkX;
         player->vel.z = 0.26785713f * player->stkY;
         player->vel.y = 0.0f;
     }
     fn_1_4110(player);
     for (i = 0; i < 4; i++) {
-        lbl_1_bss_140[i]->prevPos.x = lbl_1_bss_140[i]->pos.x;
-        lbl_1_bss_140[i]->prevPos.y = lbl_1_bss_140[i]->pos.y;
-        lbl_1_bss_140[i]->prevPos.z = lbl_1_bss_140[i]->pos.z;
+        lbl_1_bss_140[i]->prevPos = lbl_1_bss_140[i]->pos;
     }
     PSVECAdd(&player->pos, &player->vel, &player->pos);
     fn_1_427C(player);
@@ -1078,9 +1073,7 @@ static void fn_1_7488(void)
             continue;
         }
 #endif
-        lbl_1_bss_140[idx[i]]->dest.x = lbl_1_data_2A8[i].x;
-        lbl_1_bss_140[idx[i]]->dest.y = lbl_1_data_2A8[i].y;
-        lbl_1_bss_140[idx[i]]->dest.z = lbl_1_data_2A8[i].z;
+        lbl_1_bss_140[idx[i]]->dest = lbl_1_data_2A8[i];
     }
 }
 
@@ -1092,9 +1085,7 @@ void fn_1_7654(void)
     for (i = 0; i < 4; i++) {
         player = lbl_1_bss_140[i];
         if (player->teamNo != 0) {
-            lbl_1_bss_140[i]->dest.x = lbl_1_data_278[player->teamNo].x;
-            lbl_1_bss_140[i]->dest.y = lbl_1_data_278[player->teamNo].y;
-            lbl_1_bss_140[i]->dest.z = lbl_1_data_278[player->teamNo].z;
+            lbl_1_bss_140[i]->dest = lbl_1_data_278[player->teamNo];
         }
     }
 }
@@ -1210,12 +1201,12 @@ void fn_1_7C84(OMOBJ *obj)
                                 f32 dot;
 
                                 dot = PSVECDotProduct(&relVel, &diff);
-                                player->vel.x = player->vel.x + (((f64)-1.8f * (diff.x * dot)) * 0.5);
-                                player->vel.y = player->vel.y + (((f64)-1.8f * (diff.y * dot)) * 0.5);
-                                player->vel.z = player->vel.z + (((f64)-1.8f * (diff.z * dot)) * 0.5);
-                                other->vel.x = other->vel.x + (((f64)1.8f * (diff.x * dot)) * 0.5);
-                                other->vel.y = other->vel.y + (((f64)1.8f * (diff.y * dot)) * 0.5);
-                                other->vel.z = other->vel.z + (((f64)1.8f * (diff.z * dot)) * 0.5);
+                                player->vel.x = player->vel.x + (((f64)-1.8f * (f64)(diff.x * dot) * 0.5));
+                                player->vel.y = player->vel.y + (((f64)-1.8f * (f64)(diff.y * dot) * 0.5));
+                                player->vel.z = player->vel.z + (((f64)-1.8f * (f64)(diff.z * dot) * 0.5));
+                                other->vel.x = other->vel.x + (((f64)1.8f * (f64)(diff.x * dot) * 0.5));
+                                other->vel.y = other->vel.y + (((f64)1.8f * (f64)(diff.y * dot) * 0.5));
+                                other->vel.z = other->vel.z + (((f64)1.8f * (f64)(diff.z * dot) * 0.5));
                             }
                             hit[i][j] = 1;
                             fn_1_7198(lbl_1_bss_140[i]);
@@ -1283,11 +1274,7 @@ static f32 fn_1_85A8(M523Player *player)
             }
             break;
     }
-    mag = (f32)((player->stkX * player->stkX) + (player->stkY * player->stkY));
-    if (mag > 0.0f) {
-        mag = sqrtf(mag);
-    }
-    return mag;
+    return sqrtf((f32)((player->stkX * player->stkX) + (player->stkY * player->stkY)));
 }
 
 static void fn_1_8874(M523Player *player)
@@ -1295,8 +1282,8 @@ static void fn_1_8874(M523Player *player)
     Point3d diff;
     f32 ang;
     f32 dist;
-    s32 retry;
     s32 overlap;
+    s32 retry;
     s32 i;
 
     retry = 0;
@@ -1306,9 +1293,9 @@ static void fn_1_8874(M523Player *player)
         if (player->dif == 0) {
             dist = 800.0f - player->radius;
         } else {
-            dist = frandmod((s16)(800.0f - player->radius));
+            dist = (s32)frandmod((s32)(800.0f - player->radius));
         }
-        ang = frandmod(0x168);
+        ang = (s32)frandmod(0x168);
         player->aiTarget.x = dist * cos((3.141592653589793 * ang) / 180.0);
         player->aiTarget.z = dist * sin((3.141592653589793 * ang) / 180.0);
         player->aiTarget.y = 0.0f;
@@ -1328,9 +1315,11 @@ static void fn_1_8874(M523Player *player)
 static void fn_1_8A80(M523Player *player, s16 hitNo)
 {
     Point3d diff;
+    M523Player *other;
     f32 radius;
 
-    PSVECSubtract(&player->pos, &lbl_1_bss_140[hitNo]->pos, &diff);
+    other = lbl_1_bss_140[hitNo];
+    PSVECSubtract(&player->pos, &other->pos, &diff);
     PSVECScale(&diff, &diff, 200.0f);
     PSVECAdd(&player->pos, &diff, &player->aiTarget);
     radius = player->radius;
@@ -1343,9 +1332,9 @@ static void fn_1_8A80(M523Player *player, s16 hitNo)
 static void fn_1_8B60(M523Player *player, s32 mode)
 {
     Point3d dir;
-    f32 base;
-    f32 diff;
     f32 ang;
+    f32 diff;
+    f32 tgt;
 
 #ifdef TARGET_PC
     dir.x = 0.0f;
@@ -1353,14 +1342,15 @@ static void fn_1_8B60(M523Player *player, s32 mode)
     dir.z = 0.0f;
 #endif
     if (mode != 0) {
-        base = player->rot.y;
-        diff = fn_1_CEC(base, fn_1_C88(&player->pos, &player->aiTarget));
+        ang = player->rot.y;
+        tgt = fn_1_C88(&player->pos, &player->aiTarget);
+        diff = fn_1_CEC(ang, tgt);
         if (fabs(diff) < 15.0f) {
-            ang = base + diff;
+            ang += diff;
         } else if (diff < 0.0f) {
-            ang = base - 15.0f;
+            ang -= 15.0f;
         } else {
-            ang = base + 15.0f;
+            ang += 15.0f;
         }
         dir.x = sin((3.141592653589793 * ang) / 180.0);
         dir.z = cos((3.141592653589793 * ang) / 180.0);
@@ -1376,16 +1366,20 @@ static s16 fn_1_8D14(M523Player *player)
 {
     Point3d out;
     s16 result;
-    s16 i;
+    s32 i;
     M523Player *other;
     f32 dist;
 
     result = -1;
     for (i = 0; i < 4; i++) {
         other = lbl_1_bss_140[i];
-        if (other != player && other->shockF != 0 && (dist = fn_1_D58(&other->pos, &player->pos, &player->aiTarget, &out), !(dist < 0.0f)) && dist < 100.0f) {
-            result = i;
-            break;
+        if (other != player && other->shockF != 0) {
+            dist = fn_1_D58(&other->pos, &player->pos, &player->aiTarget, &out);
+            if (dist < 0.0f) {
+            } else if (dist < 100.0f) {
+                result = i;
+                break;
+            }
         }
     }
     return result;
@@ -1431,22 +1425,18 @@ static f32 fn_1_8DF0(M523Player *player)
     PSVECNormalize(&diff, &diff);
     player->stkX = 56.0f * diff.x;
     player->stkY = 56.0f * diff.z;
-    mag = (f32)((player->stkX * player->stkX) + (player->stkY * player->stkY));
-    if (mag > 0.0f) {
-        mag = sqrtf(mag);
-    }
-    return mag;
+    return sqrtf((f32)((player->stkX * player->stkX) + (player->stkY * player->stkY)));
 }
 
 s32 fn_1_90EC(M523Player *player)
 {
-    s32 chance[4] = { 10, 15, 20, 20 };
     Point3d diff;
+    s32 chance[4] = { 10, 15, 20, 20 };
 
     PSVECSubtract(&lbl_1_bss_13C->pos, &player->pos, &diff);
     diff.y = 0.0f;
     if (PSVECMag(&diff) < 100.0f) {
-        if (frandmod(100) < chance[player->dif]) {
+        if ((s32)frandmod(100) < chance[player->dif]) {
             if (player->dif <= 2) {
                 return 1;
             }
@@ -1454,7 +1444,7 @@ s32 fn_1_90EC(M523Player *player)
             if (PSVECMag(&diff) < 50.0f) {
                 return 1;
             }
-        } else if (frandmod(100) < chance[player->dif]) {
+        } else if ((s32)frandmod(100) < chance[player->dif]) {
             return 1;
         }
     }
@@ -1466,7 +1456,7 @@ static s16 fn_1_9218(void)
     Point3d diff;
     f32 best;
     s16 result;
-    s16 i;
+    s32 i;
 
     best = 9999.9f;
     result = -1;
@@ -1485,16 +1475,14 @@ static s16 fn_1_9218(void)
 static void fn_1_92F4(M523Player *player)
 {
     Point3d diff;
-    f32 range;
-    f32 dist;
     f32 ang;
+    f32 dist;
     s32 retry;
 
     do {
         retry = 0;
-        range = 800.0f - player->radius;
-        dist = range - 5.0f;
-        ang = frandmod(0x168);
+        dist = 800.0f - player->radius - 5.0f;
+        ang = (s32)frandmod(0x168);
         player->aiTarget.x = dist * cos((3.141592653589793 * ang) / 180.0);
         player->aiTarget.z = dist * sin((3.141592653589793 * ang) / 180.0);
         player->aiTarget.y = 0.0f;
@@ -1512,13 +1500,9 @@ static void fn_1_9440(M523Player *player)
     s32 i;
 
     if (player->dif < 2) {
-        player->aiTarget.x = lbl_1_bss_13C->pos.x;
-        player->aiTarget.y = lbl_1_bss_13C->pos.y;
-        player->aiTarget.z = lbl_1_bss_13C->pos.z;
+        player->aiTarget = lbl_1_bss_13C->pos;
     } else {
-        sum.z = 0.0f;
-        sum.y = 0.0f;
-        sum.x = 0.0f;
+        sum.x = sum.y = sum.z = 0.0f;
         for (i = 0; i < 10; i++) {
             PSVECAdd(&sum, &lbl_1_bss_150[i], &sum);
         }
@@ -1584,8 +1568,9 @@ static void fn_1_962C(OMOBJ *obj)
 
 static M523Cyl *fn_1_9798(Point3d *pos)
 {
-    OMOBJ *obj;
     M523Cyl *cyl;
+    M523Cyl *list;
+    OMOBJ *obj;
     HU3DMODELID model;
 
     obj = omAddObjEx(lbl_1_bss_E4, 0x1200, 1, 0, -1, fn_1_962C);
@@ -1593,10 +1578,11 @@ static M523Cyl *fn_1_9798(Point3d *pos)
     cyl = (M523Cyl *)obj->data;
     cyl->state = 0;
     cyl->killF = 0;
-    lbl_1_bss_E8.prev->next = cyl;
-    cyl->prev = lbl_1_bss_E8.prev;
-    cyl->next = &lbl_1_bss_E8;
-    lbl_1_bss_E8.prev = cyl;
+    list = &lbl_1_bss_E8;
+    list->prev->next = cyl;
+    cyl->prev = list->prev;
+    cyl->next = list;
+    list->prev = cyl;
     cyl->index = cyl->prev->index + 1;
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x510013, HU_MEMNUM_OVL, HEAP_MODEL));
     cyl->model = model;
@@ -1604,9 +1590,7 @@ static M523Cyl *fn_1_9798(Point3d *pos)
     Hu3DModelLayerSet(model, 1);
     Hu3DModelAttrSet(model, 0x400000);
     omSetTra(obj, 5000.0f, 0.0f, 0.0f);
-    cyl->pos.x = pos->x;
-    cyl->pos.y = pos->y;
-    cyl->pos.z = pos->z;
+    cyl->pos = *pos;
     cyl->pos.y = 0.0f;
     return cyl;
 }
