@@ -689,6 +689,11 @@ s32 fn_1_6B64(void)
     case 2:
         if (slot->time < 1.0f) {
             lbl_1_bss_C.idx++;
+#ifdef TARGET_PC
+            if (lbl_1_bss_C.idx > 9) {
+                lbl_1_bss_C.idx = 9;
+            }
+#endif
             fn_1_6E9C(lbl_1_bss_C.idx);
             slot->motion = 0;
             slot->speed = 1.0f;
