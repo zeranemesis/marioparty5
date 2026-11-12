@@ -19,18 +19,6 @@ typedef struct M539ScoreMgr_s {
     s32 flags;
 } M539ScoreMgr;
 
-typedef struct M539ScoreSpr_s {
-    s32 unk0;
-    s32 unk4;
-    f32 x;
-    f32 y;
-    f32 z;
-    s32 value;
-    s32 frame;
-    void *score;
-    M539Ptmf hook;
-} M539ScoreSpr;
-
 typedef struct M539ScoreList_s {
     void *head;
     void *tail;

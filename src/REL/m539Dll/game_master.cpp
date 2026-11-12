@@ -107,7 +107,7 @@ void fn_1_27BC(void);
 s32 fn_1_2874(void);
 void fn_1_2BEC(void);
 void fn_1_2C44(void);
-void *fn_1_30F4(s16 *self, s16 flag);
+void *fn_1_30F4(M539Model *self, s16 flag);
 void fn_1_4A08(u32 seed);
 M539TimerObj *fn_1_5DC4(M539TimerObj *self, s32 type);
 M539TimerObj *fn_1_5E8C(M539TimerObj *self, s16 flag);
@@ -186,22 +186,22 @@ void *fn_1_86AC(void **self, s16 flag);
 // Destroy one game object: its sprite, owned models and buffers, then unlink.
 static inline void M539DestroyGame(M539Game *g)
 {
-    if (&g->sprite != 0) {
-        fn_1_F40C(g->sprite, 1);
+    if (&g->effect != 0) {
+        fn_1_F40C(g->effect, 1);
     }
-    __destroy_arr(g->owned50, (void *)fn_1_6974, sizeof(g->owned50[0]), 3);
-    if (&g->model4C != 0) {
-        fn_1_30F4(g->model4C, 1);
+    __destroy_arr(g->sprs, (void *)fn_1_6974, sizeof(g->sprs[0]), 3);
+    if (&g->head != 0) {
+        fn_1_30F4(g->head, 1);
     }
-    if (&g->model48 != 0) {
-        fn_1_30F4(g->model48, 1);
+    if (&g->block != 0) {
+        fn_1_30F4(g->block, 1);
     }
-    __destroy_arr(g->owned24, (void *)fn_1_86AC, sizeof(g->owned24[0]), 9);
-    if (&g->model20 != 0) {
-        fn_1_30F4(g->model20, 1);
+    __destroy_arr(g->digits, (void *)fn_1_86AC, sizeof(g->digits[0]), 9);
+    if (&g->roller != 0) {
+        fn_1_30F4(g->roller, 1);
     }
-    if (&g->model1C != 0) {
-        fn_1_30F4(g->model1C, 1);
+    if (&g->board != 0) {
+        fn_1_30F4(g->board, 1);
     }
     if (g != 0) {
         fn_1_1270((M539Node *)g, 0);
@@ -515,7 +515,7 @@ s32 fn_1_8E10(M539GM *self)
     i = 0;
     while (i < 4) {
         rank[i].idx = i;
-        rank[i].score = self->games[i]->score;
+        rank[i].score = self->games[i]->rollValue;
         i++;
     }
     fn_1_949C(&rank[0], &rank[4], fn_1_8DF0);
