@@ -33,14 +33,14 @@ typedef struct M576ScoreWork_s {
     M576PlayerScore player[GW_PLAYER_MAX];
 } M576ScoreWork;
 
-M576Pos lbl_1_data_0[GW_PLAYER_MAX] = {
+M576Pos lbl_1_data_538[GW_PLAYER_MAX] = {
     { 55.0f, 59.0f },
     { 175.0f, 59.0f },
     { 401.0f, 59.0f },
     { 521.0f, 59.0f }
 };
 
-s32 lbl_1_data_20[15] = {
+s32 lbl_1_data_558[15] = {
     DATANUM(DATA_m576, 0x11),
     DATANUM(DATA_m576, 0x12),
     DATANUM(DATA_m576, 0x13),
@@ -58,7 +58,7 @@ s32 lbl_1_data_20[15] = {
     DATANUM(DATA_m576, 0x1A)
 };
 
-OMOBJ *lbl_1_bss_0;
+OMOBJ *lbl_1_bss_470;
 
 void fn_1_EA08(OMOBJMAN *om)
 {
@@ -66,7 +66,7 @@ void fn_1_EA08(OMOBJMAN *om)
     M576ScoreWork *work;
 
     obj = omAddObjEx(om, 0x14, 0, 0, OM_GRP_NONE, fn_1_EA90);
-    lbl_1_bss_0 = obj;
+    lbl_1_bss_470 = obj;
     work = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M576ScoreWork), HU_MEMNUM_OVL);
     obj->data = work;
     memset(work, 0, sizeof(M576ScoreWork));
@@ -87,18 +87,18 @@ void fn_1_EA90(OMOBJ *obj)
     for (i = 0; i < GW_PLAYER_MAX; i++) {
         winId = MgScoreWinCreate(0x50, 0x28);
         work->player[i].winId = winId;
-        MgScoreWinPosSet(winId, lbl_1_data_0[i].x, lbl_1_data_0[i].y);
+        MgScoreWinPosSet(winId, lbl_1_data_538[i].x, lbl_1_data_538[i].y);
         MgScoreWinDispSet(winId, 0);
         scorePtr = MgScoreCreate(DATANUM(DATA_mgconst, 0x31), -1, 0);
         work->player[i].scorePtr = scorePtr;
         MgScoreMaxDigitSet(scorePtr, 1);
         MgScoreDispOff(scorePtr);
-        MgScorePosSet(scorePtr, 14.0f + lbl_1_data_0[i].x, lbl_1_data_0[i].y);
+        MgScorePosSet(scorePtr, 14.0f + lbl_1_data_538[i].x, lbl_1_data_538[i].y);
         MgScoreColorSet(scorePtr, 0xFF, 0xD8, 0x15);
-        anim = HuSprAnimDataRead(lbl_1_data_20[GwPlayerConf[i].charNo]);
+        anim = HuSprAnimDataRead(lbl_1_data_558[GwPlayerConf[i].charNo]);
         sprGrpId = HuSprGrpCreate(1);
         work->player[i].sprGrpId = sprGrpId;
-        HuSprGrpPosSet(sprGrpId, lbl_1_data_0[i].x, lbl_1_data_0[i].y);
+        HuSprGrpPosSet(sprGrpId, lbl_1_data_538[i].x, lbl_1_data_538[i].y);
         HuSprGrpMemberSet(sprGrpId, 0, HuSprCreate(anim, 0, 0));
         HuSprPosSet(sprGrpId, 0, -21.0f, 0.0f);
         for (j = 0; j < 1; j++) {
@@ -160,14 +160,14 @@ void fn_1_ECC4(OMOBJ *obj)
 
 void fn_1_EEC0(s32 idx)
 {
-    M576ScoreWork *work = lbl_1_bss_0->data;
+    M576ScoreWork *work = lbl_1_bss_470->data;
 
     work->player[idx].score += 1;
 }
 
 void fn_1_EEF8(s32 idx)
 {
-    M576ScoreWork *work = lbl_1_bss_0->data;
+    M576ScoreWork *work = lbl_1_bss_470->data;
 
     work->player[idx].score -= 1;
 }
