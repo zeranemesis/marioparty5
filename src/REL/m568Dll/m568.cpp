@@ -515,7 +515,7 @@ void fn_1_1220(M568Cam *self, s32 pad)
     PSMTXMultVecSR(rot, &y, &self->up);
     PSVECSubtract(&self->pos, &z, &self->target);
     fast = (btn & 0x200) != 0;
-    speed = fast ? 70.0f : 20.0f;
+    speed = fast ? 70.0f : 20.0f;  // orig re-extends fast to u8 before the test (1 insn)
     C_MTXLookAt(inv, &self->pos, &self->up, &self->target);
     PSMTXInverse(inv, inv);
     mv.x = (speed * (u8)((btn & 2) != 0)) - (speed * (u8)((btn & 1) != 0));
@@ -562,24 +562,20 @@ void fn_1_4DFC(void *ptr);
 
 void fn_1_187C(void *link)
 {
-    M568Node *self = (M568Node *)link;
-
-    self->prev = self;
-    self->next = self;
+    ((M568Node *)link)->prev = (M568Node *)link;
+    ((M568Node *)link)->next = (M568Node *)link;
 }
 
 void *fn_1_1888(void *link, s16 flag)
 {
-    M568Node *self = (M568Node *)link;
-
-    if (self != 0) {
-        self->prev->next = self->next;
-        self->next->prev = self->prev;
-        if (flag > 0 && self != 0) {
-            HuMemDirectFree(self);
+    if (link != 0) {
+        ((M568Node *)link)->prev->next = ((M568Node *)link)->next;
+        ((M568Node *)link)->next->prev = ((M568Node *)link)->prev;
+        if (flag > 0 && link != 0) {
+            HuMemDirectFree(link);
         }
     }
-    return self;
+    return link;
 }
 
 void fn_1_18F4(M568Node *self)
@@ -615,6 +611,7 @@ void fn_1_1948(M568Node *self, M568Node *other)
 // Move every node of `self` in front of `other`.
 void fn_1_1978(M568Node *self, M568Node *other)
 {
+    M568Node *dest;
     M568Node *first;
     M568Node *last;
     u8 empty;
@@ -624,14 +621,15 @@ void fn_1_1978(M568Node *self, M568Node *other)
         empty = 1;
     }
     if (empty == 0) {
+        dest = other;
         first = self->prev;
         last = self->next;
         self->prev = self;
         self->next = self;
-        first->next = other->next;
-        last->prev = other;
-        other->next->prev = first;
-        other->next = last;
+        first->next = dest->next;
+        last->prev = dest;
+        dest->next->prev = first;
+        dest->next = last;
     }
 }
 
