@@ -32,7 +32,7 @@ void fn_1_6964(void *ptr);
 void fn_1_6A70(const char *cond, const char *file, s32 line);
 s32 fn_1_7D74(s32 grp, void *obj);
 void fn_1_7E04(s32 grp, s32 handle);
-void fn_1_7EC8(s32 grp, s32 handle);
+u32 fn_1_7EC8(s32 grp, s32 handle);
 void fn_1_8004(M522_NODE *node);
 void fn_1_8010(M522_NODE *node, s32 flag);
 void fn_1_807C(M522_NODE *node);
@@ -173,7 +173,7 @@ void fn_1_E04C(M522_SPRMGR *self, s16 flag)
     }
 }
 
-void fn_1_E11C(s32 index, s32 bmpNo, s32 texMapId, s32 wrapS, s32 wrapT)
+void fn_1_E11C(s32 index, s32 texMapId, s32 wrapS, s32 wrapT, s32 filter)
 {
     M522_SPRMGR *mgr;
     M522_SPRMGR *inst;
@@ -186,7 +186,7 @@ void fn_1_E11C(s32 index, s32 bmpNo, s32 texMapId, s32 wrapS, s32 wrapT)
     mgr = lbl_1_bss_14;
     inst = mgr;
     self = inst;
-    HuSprTexLoad(self->sprite[index], 0, (s16)bmpNo, texMapId, wrapS, wrapT);
+    HuSprTexLoad(self->sprite[index], 0, (s16)texMapId, wrapS, wrapT, filter);
 }
 
 void fn_1_E1D4(M522_SPRMGR *self, s32 bit)
@@ -301,9 +301,9 @@ s32 fn_1_E5C0(M522_EFFECT *self)
     return self->handle;
 }
 
-void fn_1_E5C8(s32 handle)
+u32 fn_1_E5C8(s32 handle)
 {
-    fn_1_7EC8(lbl_1_bss_A44, handle);
+    return fn_1_7EC8(lbl_1_bss_A44, handle);
 }
 
 void fn_1_E5FC(M522_NODE *head, void (*func)(M522_EFFECT *))

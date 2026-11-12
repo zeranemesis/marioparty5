@@ -139,4 +139,23 @@ typedef struct M522FireEff_s {
     /* 0x1C */ M522_SPARKVEC sparks;
 } M522_FIREEFF;
 
+/* The burst effect (fn_1_17E8): effect base followed by a vector header. */
+typedef struct M522BurstObj_s {
+    /* 0x00 */ M522_EFFECT base;
+    /* 0x14 */ u32 cap;
+    /* 0x18 */ u32 size;
+    /* 0x1C */ void *data;
+} M522_BURSTOBJ;
+
+/* The bubble spawner (fn_1_4950): a counter and two vector headers. */
+typedef struct M522BubbleMgrObj_s {
+    /* 0x00 */ s32 spawned;
+    /* 0x04 */ u32 posCap;
+    /* 0x08 */ u32 posSize;
+    /* 0x0C */ void *posData;
+    /* 0x10 */ u32 handleCap;
+    /* 0x14 */ u32 handleSize;
+    /* 0x18 */ void *handleData;
+} M522_BUBBLEMGROBJ;
+
 #endif

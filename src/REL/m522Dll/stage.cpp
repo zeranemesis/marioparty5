@@ -183,7 +183,7 @@ M522_STAGE *fn_1_E85C(M522_STAGE *self)
 #else
     __construct_array(self->holes, (void *)fn_1_EBD0, (void *)fn_1_9B8, sizeof(M522_MODELPTR), 2);
 #endif
-    owner = fn_1_689C(0x1C);
+    owner = fn_1_689C(sizeof(M522_BUBBLEMGROBJ));
     if (owner != 0) {
         owner = fn_1_4950(owner);
     }

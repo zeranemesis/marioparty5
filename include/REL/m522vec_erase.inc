@@ -1,4 +1,4 @@
-void M522_FN(M522_VEC *self, M522_T *pos)
+M522_ERASE_TYPE M522_FN(M522_VEC *self, M522_T *pos)
 {
     M522_T *last = self->end();
     M522_T *dst;
@@ -15,4 +15,5 @@ void M522_FN(M522_VEC *self, M522_T *pos)
     }
     self->m_size--;
     m522Destroy(self->m_data + self->m_size);
+    M522_ERASE_RETURN
 }

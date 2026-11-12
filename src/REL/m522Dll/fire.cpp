@@ -122,7 +122,7 @@ void fn_1_9E94(M522_MODEL *model, s16 flag);
 void fn_1_9FE4(M522_MODEL *model, char *name);
 f32 fn_1_BABC(void);
 f32 fn_1_BD68(f32 min, f32 max);
-void fn_1_E11C(s32 index, s32 bmpNo, s32 texMapId, s32 wrapS, s32 wrapT);
+void fn_1_E11C(s32 index, s32 texMapId, s32 wrapS, s32 wrapT, s32 filter);
 M522_EFFECT *fn_1_E44C(M522_EFFECT *self);
 void fn_1_E534(M522_EFFECT *self, s16 flag);
 
@@ -235,9 +235,9 @@ FIRE_RODATA const GXVtxDescList lbl_1_rodata_98[3] = {
     { GX_VA_NULL, GX_NONE },
 };
 FIRE_RODATA const GXVtxAttrFmtList lbl_1_rodata_B0[3] = {
-    { GX_VA_POS, GX_POS_XYZ, GX_U16, 0 },
+    { GX_VA_POS, GX_POS_XYZ, GX_F32, 0 },
     { GX_VA_TEX0, GX_TEX_ST, GX_F32, 0 },
-    { GX_VA_NULL, GX_POS_XYZ, GX_U8, 0 },
+    { GX_VA_NULL, GX_POS_XY, GX_U8, 0 },
 };
 FIRE_RODATA const M522_VEC3 lbl_1_rodata_F8 = { 0.0f, 0.0f, 0.0f };
 FIRE_RODATA const GXVtxDescList lbl_1_rodata_120[3] = {
@@ -248,7 +248,7 @@ FIRE_RODATA const GXVtxDescList lbl_1_rodata_120[3] = {
 FIRE_RODATA const GXVtxAttrFmtList lbl_1_rodata_138[3] = {
     { GX_VA_POS, GX_POS_XYZ, GX_F32, 0 },
     { GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0 },
-    { GX_VA_NULL, GX_POS_XYZ, GX_U8, 0 },
+    { GX_VA_NULL, GX_POS_XY, GX_U8, 0 },
 };
 }
 
@@ -1045,6 +1045,8 @@ extern "C" {
 #undef M522_VEC
 #undef M522_T
 
+#define M522_ERASE_TYPE void
+#define M522_ERASE_RETURN
 #define M522_FN fn_1_32D8
 #define M522_VEC M522_TRAILS
 #define M522_T M522Trail
@@ -1052,6 +1054,8 @@ extern "C" {
 #undef M522_FN
 #undef M522_VEC
 #undef M522_T
+#undef M522_ERASE_TYPE
+#undef M522_ERASE_RETURN
 
 void fn_1_3498(void)
 {
