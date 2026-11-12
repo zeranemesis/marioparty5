@@ -10,8 +10,10 @@
 // then overwrites it with its own, so both stores land on offset 0x00.
 
 #include "REL/m568Dll.h"
+extern "C" {
 #include "game/gamework.h"
 #include "game/pad.h"
+}
 
 struct InputObj;
 
