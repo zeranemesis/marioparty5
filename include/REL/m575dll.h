@@ -317,6 +317,12 @@ void fn_1_678C(M575Com *self);
 void fn_1_9B58(M575TuboEff *self, const Vec *arg1, const Vec *arg2);
 void fn_1_CFE4(M575Jugem *self, M575Player *player);
 
+void fn_1_851C(M575Camera *self, s16 side, M575Main *main);
+void fn_1_8778(M575Camera *self);
+void fn_1_87A8(M575Camera *self);
+void fn_1_89D8(M575Camera *a, M575Camera *b, f32 t);
+void fn_1_8C68(M575Camera *self);
+
 void fn_1_3A7C(M575Score *self, u16 side, M575Main *main);
 void fn_1_3CD8(M575Score *self);
 void fn_1_3D28(M575Score *self);
