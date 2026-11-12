@@ -1,7 +1,13 @@
 #include "REL/m504dll.h"
 #include "string.h"
 
-extern u8 *lbl_1_data_4134[];
+/* Path records start with a big-endian s16 count stored in a u32 word. */
+#ifdef TARGET_PC
+#define PATH_COUNT(e) ((s16)(*(u32 *)(e) >> 16))
+#else
+#define PATH_COUNT(e) (*(s16 *)(e))
+#endif
+
 
 void PSVECSubtract(const Vec *a, const Vec *b, Vec *dst);
 f32 PSVECMag(const Vec *v);
@@ -10,12 +16,20 @@ s32 rand8(void);
 s32 fn_1_BEF0(INPUTWORK *work, u8 *entry);
 s32 fn_1_C178(INPUTWORK *work);
 s32 fn_1_C1E8(INPUTWORK *work);
+#ifdef TARGET_PC
+INPUTNODE *fn_1_C2CC(INPUTWORK *work, INPUTNODE *table);
+#else
 void **fn_1_C2CC(INPUTWORK *work, void **table);
+#endif
 u16 fn_1_C3E0(INPUTWORK *work);
 
 void fn_1_BC54(INPUTWORK *work)
 {
+#ifdef TARGET_PC
+    memset(work, 0, sizeof(INPUTWORK));
+#else
     memset(work, 0, 0x24);
+#endif
 }
 
 // NONMATCHING: register allocation of the switch cases differs
@@ -23,7 +37,11 @@ void fn_1_BC84(INPUTWORK *work)
 {
     register INPUTMAIN *main;
     register M504WANWAN *ctrl;
+#ifdef TARGET_PC
+    INPUTNODE *table;
+#else
     register void **table;
+#endif
     register u8 *entry;
     register void *entry2;
 
@@ -33,13 +51,22 @@ void fn_1_BC84(INPUTWORK *work)
     main->stkY = 0;
     main->stkX = 0;
 
+#ifdef TARGET_PC
+    table = (INPUTNODE *)work->dataTable;
+    entry = NULL;
+    entry2 = NULL;
+    if (table != NULL) {
+        entry = (u8 *)table->pathA;
+        entry2 = (u8 *)table->pathB;
+#else
     table = work->dataTable;
     if (table != NULL) {
         entry = table[0];
         entry2 = table[1];
-        if (*(s16 *)entry == 0) {
+#endif
+        if (PATH_COUNT(entry) == 0) {
             work->state = 6;
-        } else if (*(s16 *)entry < 0) {
+        } else if (PATH_COUNT(entry) < 0) {
             work->state = 7;
         }
     }
@@ -100,7 +127,11 @@ void fn_1_BC84(INPUTWORK *work)
             }
             break;
         case 6:
+#ifdef TARGET_PC
+            work->dataTable = (void **)fn_1_C2CC(work, table);
+#else
             work->dataTable = fn_1_C2CC(work, table);
+#endif
             work->state = 0;
             break;
         case 7:
@@ -149,7 +180,7 @@ s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
     if (f30 < 15.0f) {
         ctrl->pos = *node;
         work->unk6 = work->unk6 + 1;
-        if (work->unk6 >= *(s16 *)entry) {
+        if (work->unk6 >= PATH_COUNT(entry)) {
             ret = 1;
         }
     } else {
@@ -210,6 +241,39 @@ s32 fn_1_C1E8(INPUTWORK *work)
 }
 
 /* Picks the node with the fewest uses, ties broken by index, then bumps it. */
+#ifdef TARGET_PC
+INPUTNODE *fn_1_C2CC(INPUTWORK *work, INPUTNODE *table)
+{
+    s32 locals[12];
+    s32 best;
+    s32 count;
+    s32 i;
+    s32 n;
+    INPUTNODE *node;
+
+    best = 9999;
+    n = table->count;
+    for (i = 0; i < n; i++) {
+        node = table->next[i];
+        if (node->uses < best) {
+            best = node->uses;
+        }
+    }
+
+    count = 0;
+    for (i = 0; i < n; i++) {
+        node = table->next[i];
+        if (node->uses == best) {
+            locals[count] = i;
+            count++;
+        }
+    }
+
+    node = table->next[locals[rand8() % (count * 10) / 10]];
+    node->uses++;
+    return node;
+}
+#else
 void **fn_1_C2CC(INPUTWORK *work, void **table)
 {
     INPUTMAIN *main = work->main;
@@ -244,3 +308,4 @@ void **fn_1_C2CC(INPUTWORK *work, void **table)
     *p = *p + 1;
     return node;
 }
+#endif

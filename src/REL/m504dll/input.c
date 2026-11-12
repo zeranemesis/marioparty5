@@ -3,6 +3,12 @@
 #include "REL/m504dll.h"
 #include "string.h"
 
+#ifdef TARGET_PC
+#define INPUT_TBL(x) ((void **)&(x))
+#else
+#define INPUT_TBL(x) (x)
+#endif
+
 extern GWPLAYERCONF GwPlayerConf[];
 extern u16 HuPadBtn[];
 extern u16 HuPadBtnDown[];
@@ -601,6 +607,302 @@ extern u32 lbl_1_data_2DC4[];
 extern u32 lbl_1_data_2DD4[];
 extern u32 lbl_1_data_2DE4[];
 extern u32 lbl_1_data_2DF4[];
+#ifdef TARGET_PC
+extern INPUTNODE lbl_1_data_2E04;
+extern INPUTNODE lbl_1_data_2E14;
+extern INPUTNODE lbl_1_data_2E38;
+extern INPUTNODE lbl_1_data_2E74;
+extern INPUTNODE lbl_1_data_2EB0;
+extern INPUTNODE lbl_1_data_2ED4;
+extern INPUTNODE lbl_1_data_2EE4;
+extern INPUTNODE lbl_1_data_2EFC;
+extern INPUTNODE lbl_1_data_2F0C;
+extern INPUTNODE lbl_1_data_2F20;
+extern INPUTNODE lbl_1_data_2F30;
+extern INPUTNODE lbl_1_data_2F40;
+extern INPUTNODE lbl_1_data_2F50;
+extern INPUTNODE lbl_1_data_2F60;
+extern INPUTNODE lbl_1_data_2F70;
+extern INPUTNODE lbl_1_data_2F88;
+extern INPUTNODE lbl_1_data_2F98;
+extern INPUTNODE lbl_1_data_2FA8;
+extern INPUTNODE lbl_1_data_2FB8;
+extern INPUTNODE lbl_1_data_2FC8;
+extern INPUTNODE lbl_1_data_2FD8;
+extern INPUTNODE lbl_1_data_2FE8;
+extern INPUTNODE lbl_1_data_2FF8;
+extern INPUTNODE lbl_1_data_3008;
+extern INPUTNODE lbl_1_data_3020;
+extern INPUTNODE lbl_1_data_3030;
+extern INPUTNODE lbl_1_data_3044;
+extern INPUTNODE lbl_1_data_3054;
+extern INPUTNODE lbl_1_data_3064;
+extern INPUTNODE lbl_1_data_3074;
+extern INPUTNODE lbl_1_data_3084;
+extern INPUTNODE lbl_1_data_3094;
+extern INPUTNODE lbl_1_data_30A4;
+extern INPUTNODE lbl_1_data_30B4;
+extern INPUTNODE lbl_1_data_30C4;
+extern INPUTNODE lbl_1_data_30D4;
+extern INPUTNODE lbl_1_data_30E4;
+extern INPUTNODE lbl_1_data_30F4;
+extern INPUTNODE lbl_1_data_3104;
+extern INPUTNODE lbl_1_data_3114;
+extern INPUTNODE lbl_1_data_3124;
+extern INPUTNODE lbl_1_data_3134;
+extern INPUTNODE lbl_1_data_3144;
+extern INPUTNODE lbl_1_data_3154;
+extern INPUTNODE lbl_1_data_3164;
+extern INPUTNODE lbl_1_data_3174;
+extern INPUTNODE lbl_1_data_3184;
+extern INPUTNODE lbl_1_data_3194;
+extern INPUTNODE lbl_1_data_31A4;
+extern INPUTNODE lbl_1_data_31B4;
+extern INPUTNODE lbl_1_data_31C4;
+extern INPUTNODE lbl_1_data_31D4;
+extern INPUTNODE lbl_1_data_31E4;
+extern INPUTNODE lbl_1_data_31F4;
+extern INPUTNODE lbl_1_data_3204;
+extern INPUTNODE lbl_1_data_3214;
+extern INPUTNODE lbl_1_data_3224;
+extern INPUTNODE lbl_1_data_3234;
+extern INPUTNODE lbl_1_data_3244;
+extern INPUTNODE lbl_1_data_3254;
+extern INPUTNODE lbl_1_data_3264;
+extern INPUTNODE lbl_1_data_3274;
+extern INPUTNODE lbl_1_data_3284;
+extern INPUTNODE lbl_1_data_3294;
+extern INPUTNODE lbl_1_data_32A4;
+extern INPUTNODE lbl_1_data_32B4;
+extern INPUTNODE lbl_1_data_32C4;
+extern INPUTNODE lbl_1_data_32D4;
+extern INPUTNODE lbl_1_data_32E4;
+extern INPUTNODE lbl_1_data_32F4;
+extern INPUTNODE lbl_1_data_3304;
+extern INPUTNODE lbl_1_data_3314;
+extern INPUTNODE lbl_1_data_3324;
+extern INPUTNODE lbl_1_data_3334;
+extern INPUTNODE lbl_1_data_3344;
+extern INPUTNODE lbl_1_data_3354;
+extern INPUTNODE lbl_1_data_3364;
+extern INPUTNODE lbl_1_data_3374;
+extern INPUTNODE lbl_1_data_3384;
+extern INPUTNODE lbl_1_data_3394;
+extern INPUTNODE lbl_1_data_33A4;
+extern INPUTNODE lbl_1_data_33B4;
+extern INPUTNODE lbl_1_data_33C4;
+extern INPUTNODE lbl_1_data_33D4;
+extern INPUTNODE lbl_1_data_33E4;
+extern INPUTNODE lbl_1_data_33F4;
+extern INPUTNODE lbl_1_data_3404;
+extern INPUTNODE lbl_1_data_3414;
+extern INPUTNODE lbl_1_data_3424;
+extern INPUTNODE lbl_1_data_3434;
+extern INPUTNODE lbl_1_data_3444;
+extern INPUTNODE lbl_1_data_3454;
+extern INPUTNODE lbl_1_data_3464;
+extern INPUTNODE lbl_1_data_3474;
+extern INPUTNODE lbl_1_data_3484;
+extern INPUTNODE lbl_1_data_3494;
+extern INPUTNODE lbl_1_data_34A4;
+extern INPUTNODE lbl_1_data_34B4;
+extern INPUTNODE lbl_1_data_34C4;
+extern INPUTNODE lbl_1_data_34D4;
+extern INPUTNODE lbl_1_data_34E4;
+extern INPUTNODE lbl_1_data_34F4;
+extern INPUTNODE lbl_1_data_3504;
+extern INPUTNODE lbl_1_data_3514;
+extern INPUTNODE lbl_1_data_3524;
+extern INPUTNODE lbl_1_data_3534;
+extern INPUTNODE lbl_1_data_3544;
+extern INPUTNODE lbl_1_data_3554;
+extern INPUTNODE lbl_1_data_3564;
+extern INPUTNODE lbl_1_data_3574;
+extern INPUTNODE lbl_1_data_3584;
+extern INPUTNODE lbl_1_data_3594;
+extern INPUTNODE lbl_1_data_35A4;
+extern INPUTNODE lbl_1_data_35B4;
+extern INPUTNODE lbl_1_data_35C4;
+extern INPUTNODE lbl_1_data_35D4;
+extern INPUTNODE lbl_1_data_35E4;
+extern INPUTNODE lbl_1_data_35F4;
+extern INPUTNODE lbl_1_data_3604;
+extern INPUTNODE lbl_1_data_3614;
+extern INPUTNODE lbl_1_data_3624;
+extern INPUTNODE lbl_1_data_3634;
+extern INPUTNODE lbl_1_data_3644;
+extern INPUTNODE lbl_1_data_3654;
+extern INPUTNODE lbl_1_data_3664;
+extern INPUTNODE lbl_1_data_3674;
+extern INPUTNODE lbl_1_data_3684;
+extern INPUTNODE lbl_1_data_3694;
+extern INPUTNODE lbl_1_data_36A4;
+extern INPUTNODE lbl_1_data_36B4;
+extern INPUTNODE lbl_1_data_36C4;
+extern INPUTNODE lbl_1_data_36D4;
+extern INPUTNODE lbl_1_data_36E4;
+extern INPUTNODE lbl_1_data_36F4;
+extern INPUTNODE lbl_1_data_3704;
+extern INPUTNODE lbl_1_data_3714;
+extern INPUTNODE lbl_1_data_3724;
+extern INPUTNODE lbl_1_data_3734;
+extern INPUTNODE lbl_1_data_3744;
+extern INPUTNODE lbl_1_data_3754;
+extern INPUTNODE lbl_1_data_3764;
+extern INPUTNODE lbl_1_data_3774;
+extern INPUTNODE lbl_1_data_3784;
+extern INPUTNODE lbl_1_data_3794;
+extern INPUTNODE lbl_1_data_37A4;
+extern INPUTNODE lbl_1_data_37B4;
+extern INPUTNODE lbl_1_data_37C4;
+extern INPUTNODE lbl_1_data_37D4;
+extern INPUTNODE lbl_1_data_37E4;
+extern INPUTNODE lbl_1_data_37F4;
+extern INPUTNODE lbl_1_data_3804;
+extern INPUTNODE lbl_1_data_3814;
+extern INPUTNODE lbl_1_data_3824;
+extern INPUTNODE lbl_1_data_3834;
+extern INPUTNODE lbl_1_data_3844;
+extern INPUTNODE lbl_1_data_3854;
+extern INPUTNODE lbl_1_data_3864;
+extern INPUTNODE lbl_1_data_3874;
+extern INPUTNODE lbl_1_data_3884;
+extern INPUTNODE lbl_1_data_3894;
+extern INPUTNODE lbl_1_data_38A4;
+extern INPUTNODE lbl_1_data_38B4;
+extern INPUTNODE lbl_1_data_38C4;
+extern INPUTNODE lbl_1_data_38D4;
+extern INPUTNODE lbl_1_data_38E4;
+extern INPUTNODE lbl_1_data_38F4;
+extern INPUTNODE lbl_1_data_3904;
+extern INPUTNODE lbl_1_data_3914;
+extern INPUTNODE lbl_1_data_3924;
+extern INPUTNODE lbl_1_data_3934;
+extern INPUTNODE lbl_1_data_3944;
+extern INPUTNODE lbl_1_data_3954;
+extern INPUTNODE lbl_1_data_3964;
+extern INPUTNODE lbl_1_data_3974;
+extern INPUTNODE lbl_1_data_3984;
+extern INPUTNODE lbl_1_data_3994;
+extern INPUTNODE lbl_1_data_39A4;
+extern INPUTNODE lbl_1_data_39B4;
+extern INPUTNODE lbl_1_data_39C4;
+extern INPUTNODE lbl_1_data_39D4;
+extern INPUTNODE lbl_1_data_39E4;
+extern INPUTNODE lbl_1_data_39F4;
+extern INPUTNODE lbl_1_data_3A04;
+extern INPUTNODE lbl_1_data_3A14;
+extern INPUTNODE lbl_1_data_3A24;
+extern INPUTNODE lbl_1_data_3A34;
+extern INPUTNODE lbl_1_data_3A44;
+extern INPUTNODE lbl_1_data_3A54;
+extern INPUTNODE lbl_1_data_3A64;
+extern INPUTNODE lbl_1_data_3A74;
+extern INPUTNODE lbl_1_data_3A84;
+extern INPUTNODE lbl_1_data_3A94;
+extern INPUTNODE lbl_1_data_3AA4;
+extern INPUTNODE lbl_1_data_3AB4;
+extern INPUTNODE lbl_1_data_3AC4;
+extern INPUTNODE lbl_1_data_3AD4;
+extern INPUTNODE lbl_1_data_3AE4;
+extern INPUTNODE lbl_1_data_3AF4;
+extern INPUTNODE lbl_1_data_3B04;
+extern INPUTNODE lbl_1_data_3B14;
+extern INPUTNODE lbl_1_data_3B24;
+extern INPUTNODE lbl_1_data_3B38;
+extern INPUTNODE lbl_1_data_3B48;
+extern INPUTNODE lbl_1_data_3B58;
+extern INPUTNODE lbl_1_data_3B68;
+extern INPUTNODE lbl_1_data_3B7C;
+extern INPUTNODE lbl_1_data_3B8C;
+extern INPUTNODE lbl_1_data_3B9C;
+extern INPUTNODE lbl_1_data_3BAC;
+extern INPUTNODE lbl_1_data_3BBC;
+extern INPUTNODE lbl_1_data_3BD0;
+extern INPUTNODE lbl_1_data_3BE0;
+extern INPUTNODE lbl_1_data_3BF0;
+extern INPUTNODE lbl_1_data_3C00;
+extern INPUTNODE lbl_1_data_3C10;
+extern INPUTNODE lbl_1_data_3C20;
+extern INPUTNODE lbl_1_data_3C30;
+extern INPUTNODE lbl_1_data_3C40;
+extern INPUTNODE lbl_1_data_3C50;
+extern INPUTNODE lbl_1_data_3C64;
+extern INPUTNODE lbl_1_data_3C74;
+extern INPUTNODE lbl_1_data_3C84;
+extern INPUTNODE lbl_1_data_3C94;
+extern INPUTNODE lbl_1_data_3CA8;
+extern INPUTNODE lbl_1_data_3CB8;
+extern INPUTNODE lbl_1_data_3CC8;
+extern INPUTNODE lbl_1_data_3CD8;
+extern INPUTNODE lbl_1_data_3CE8;
+extern INPUTNODE lbl_1_data_3CF8;
+extern INPUTNODE lbl_1_data_3D08;
+extern INPUTNODE lbl_1_data_3D1C;
+extern INPUTNODE lbl_1_data_3D2C;
+extern INPUTNODE lbl_1_data_3D3C;
+extern INPUTNODE lbl_1_data_3D4C;
+extern INPUTNODE lbl_1_data_3D5C;
+extern INPUTNODE lbl_1_data_3D6C;
+extern INPUTNODE lbl_1_data_3D7C;
+extern INPUTNODE lbl_1_data_3D90;
+extern INPUTNODE lbl_1_data_3DA0;
+extern INPUTNODE lbl_1_data_3DB0;
+extern INPUTNODE lbl_1_data_3DC0;
+extern INPUTNODE lbl_1_data_3DD0;
+extern INPUTNODE lbl_1_data_3DE0;
+extern INPUTNODE lbl_1_data_3DF0;
+extern INPUTNODE lbl_1_data_3E00;
+extern INPUTNODE lbl_1_data_3E10;
+extern INPUTNODE lbl_1_data_3E20;
+extern INPUTNODE lbl_1_data_3E30;
+extern INPUTNODE lbl_1_data_3E40;
+extern INPUTNODE lbl_1_data_3E50;
+extern INPUTNODE lbl_1_data_3E60;
+extern INPUTNODE lbl_1_data_3E74;
+extern INPUTNODE lbl_1_data_3E84;
+extern INPUTNODE lbl_1_data_3E94;
+extern INPUTNODE lbl_1_data_3EA4;
+extern INPUTNODE lbl_1_data_3EB8;
+extern INPUTNODE lbl_1_data_3EC8;
+extern INPUTNODE lbl_1_data_3ED8;
+extern INPUTNODE lbl_1_data_3EE8;
+extern INPUTNODE lbl_1_data_3EF8;
+extern INPUTNODE lbl_1_data_3F08;
+extern INPUTNODE lbl_1_data_3F18;
+extern INPUTNODE lbl_1_data_3F28;
+extern INPUTNODE lbl_1_data_3F38;
+extern INPUTNODE lbl_1_data_3F48;
+extern INPUTNODE lbl_1_data_3F58;
+extern INPUTNODE lbl_1_data_3F68;
+extern INPUTNODE lbl_1_data_3F78;
+extern INPUTNODE lbl_1_data_3F8C;
+extern INPUTNODE lbl_1_data_3F9C;
+extern INPUTNODE lbl_1_data_3FAC;
+extern INPUTNODE lbl_1_data_3FBC;
+extern INPUTNODE lbl_1_data_3FCC;
+extern INPUTNODE lbl_1_data_3FE0;
+extern INPUTNODE lbl_1_data_3FF0;
+extern INPUTNODE lbl_1_data_4000;
+extern INPUTNODE lbl_1_data_4010;
+extern INPUTNODE lbl_1_data_4020;
+extern INPUTNODE lbl_1_data_4030;
+extern INPUTNODE lbl_1_data_4040;
+extern INPUTNODE lbl_1_data_4050;
+extern INPUTNODE lbl_1_data_4060;
+extern INPUTNODE lbl_1_data_4074;
+extern INPUTNODE lbl_1_data_4084;
+extern INPUTNODE lbl_1_data_4094;
+extern INPUTNODE lbl_1_data_40A4;
+extern INPUTNODE lbl_1_data_40B4;
+extern INPUTNODE lbl_1_data_40C4;
+extern INPUTNODE lbl_1_data_40D4;
+extern INPUTNODE lbl_1_data_40E4;
+extern INPUTNODE lbl_1_data_40F4;
+extern INPUTNODE lbl_1_data_4104;
+extern INPUTNODE lbl_1_data_4114;
+extern INPUTNODE lbl_1_data_4124;
+#else
 extern u32 lbl_1_data_2E04[];
 extern void *lbl_1_data_2E14[];
 extern void *lbl_1_data_2E38[];
@@ -895,7 +1197,12 @@ extern u32 lbl_1_data_40F4[];
 extern u32 lbl_1_data_4104[];
 extern u32 lbl_1_data_4114[];
 extern u32 lbl_1_data_4124[];
+#endif
+#ifdef TARGET_PC
+extern INPUTNODE *lbl_1_data_4134[];
+#else
 extern u8 *lbl_1_data_4134[];
+#endif
 extern u32 gap_04_000045BC_data[];
 
 u32 lbl_1_data_528[4] = {
@@ -3244,6 +3551,1478 @@ u32 lbl_1_data_2DF4[4] = {
     0x00010000, 0xC3320000, 0x00000000, 0x45680000,
 };
 
+#ifdef TARGET_PC
+INPUTNODE lbl_1_data_2E04 = {
+    lbl_1_data_528, NULL, 1, 0,
+    { &lbl_1_data_4040 },
+};
+
+INPUTNODE lbl_1_data_2E14 = {
+    lbl_1_data_528, NULL, 6, 0,
+    { &lbl_1_data_2ED4, &lbl_1_data_2F60, &lbl_1_data_2FF8, &lbl_1_data_3094, &lbl_1_data_3124, &lbl_1_data_31A4 },
+};
+
+INPUTNODE lbl_1_data_2E38 = {
+    lbl_1_data_528, NULL, 12, 0,
+    { &lbl_1_data_3224, &lbl_1_data_32E4, &lbl_1_data_33A4, &lbl_1_data_3464, &lbl_1_data_3524, &lbl_1_data_35E4, &lbl_1_data_36A4, &lbl_1_data_3764, &lbl_1_data_3824, &lbl_1_data_38E4, &lbl_1_data_39A4, &lbl_1_data_3A64 },
+};
+
+INPUTNODE lbl_1_data_2E74 = {
+    lbl_1_data_528, NULL, 12, 0,
+    { &lbl_1_data_3224, &lbl_1_data_32E4, &lbl_1_data_33A4, &lbl_1_data_3464, &lbl_1_data_3524, &lbl_1_data_35E4, &lbl_1_data_36A4, &lbl_1_data_3764, &lbl_1_data_3824, &lbl_1_data_38E4, &lbl_1_data_39A4, &lbl_1_data_3A64 },
+};
+
+INPUTNODE lbl_1_data_2EB0 = {
+    lbl_1_data_528, NULL, 6, 0,
+    { &lbl_1_data_3B24, &lbl_1_data_3C40, &lbl_1_data_3D5C, &lbl_1_data_3E40, &lbl_1_data_3F48, &lbl_1_data_4040 },
+};
+
+INPUTNODE lbl_1_data_2ED4 = {
+    lbl_1_data_548, lbl_1_data_564, 1, 0,
+    { &lbl_1_data_2EE4 },
+};
+
+INPUTNODE lbl_1_data_2EE4 = {
+    lbl_1_data_574, lbl_1_data_584, 3, 0,
+    { &lbl_1_data_2EFC, &lbl_1_data_2F88, &lbl_1_data_3020 },
+};
+
+INPUTNODE lbl_1_data_2EFC = {
+    lbl_1_data_594, lbl_1_data_5A4, 1, 0,
+    { &lbl_1_data_2F0C },
+};
+
+INPUTNODE lbl_1_data_2F0C = {
+    lbl_1_data_5B4, lbl_1_data_5C4, 2, 0,
+    { &lbl_1_data_2F20, &lbl_1_data_3044 },
+};
+
+INPUTNODE lbl_1_data_2F20 = {
+    lbl_1_data_5D4, lbl_1_data_5E4, 1, 0,
+    { &lbl_1_data_2F30 },
+};
+
+INPUTNODE lbl_1_data_2F30 = {
+    lbl_1_data_5F4, lbl_1_data_604, 1, 0,
+    { &lbl_1_data_2F40 },
+};
+
+INPUTNODE lbl_1_data_2F40 = {
+    lbl_1_data_614, lbl_1_data_624, 1, 0,
+    { &lbl_1_data_2F50 },
+};
+
+INPUTNODE lbl_1_data_2F50 = {
+    lbl_1_data_634, lbl_1_data_644, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_2F60 = {
+    lbl_1_data_654, lbl_1_data_670, 1, 0,
+    { &lbl_1_data_2F70 },
+};
+
+INPUTNODE lbl_1_data_2F70 = {
+    lbl_1_data_680, lbl_1_data_6A8, 3, 0,
+    { &lbl_1_data_2F88, &lbl_1_data_2EFC, &lbl_1_data_3020 },
+};
+
+INPUTNODE lbl_1_data_2F88 = {
+    lbl_1_data_6B8, lbl_1_data_6C8, 1, 0,
+    { &lbl_1_data_2F98 },
+};
+
+INPUTNODE lbl_1_data_2F98 = {
+    lbl_1_data_6D8, lbl_1_data_700, 1, 0,
+    { &lbl_1_data_2FA8 },
+};
+
+INPUTNODE lbl_1_data_2FA8 = {
+    lbl_1_data_710, lbl_1_data_720, 1, 0,
+    { &lbl_1_data_2FB8 },
+};
+
+INPUTNODE lbl_1_data_2FB8 = {
+    lbl_1_data_730, lbl_1_data_740, 1, 0,
+    { &lbl_1_data_2FC8 },
+};
+
+INPUTNODE lbl_1_data_2FC8 = {
+    lbl_1_data_750, lbl_1_data_760, 1, 0,
+    { &lbl_1_data_2FD8 },
+};
+
+INPUTNODE lbl_1_data_2FD8 = {
+    lbl_1_data_770, lbl_1_data_780, 1, 0,
+    { &lbl_1_data_2FE8 },
+};
+
+INPUTNODE lbl_1_data_2FE8 = {
+    lbl_1_data_790, lbl_1_data_7A0, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_2FF8 = {
+    lbl_1_data_7B0, lbl_1_data_7CC, 1, 0,
+    { &lbl_1_data_3008 },
+};
+
+INPUTNODE lbl_1_data_3008 = {
+    lbl_1_data_7DC, lbl_1_data_7EC, 3, 0,
+    { &lbl_1_data_3020, &lbl_1_data_2EFC, &lbl_1_data_2F88 },
+};
+
+INPUTNODE lbl_1_data_3020 = {
+    lbl_1_data_7FC, lbl_1_data_80C, 1, 0,
+    { &lbl_1_data_3030 },
+};
+
+INPUTNODE lbl_1_data_3030 = {
+    lbl_1_data_81C, lbl_1_data_838, 2, 0,
+    { &lbl_1_data_3044, &lbl_1_data_2F20 },
+};
+
+INPUTNODE lbl_1_data_3044 = {
+    lbl_1_data_848, lbl_1_data_858, 1, 0,
+    { &lbl_1_data_3054 },
+};
+
+INPUTNODE lbl_1_data_3054 = {
+    lbl_1_data_868, lbl_1_data_890, 1, 0,
+    { &lbl_1_data_3064 },
+};
+
+INPUTNODE lbl_1_data_3064 = {
+    lbl_1_data_8A0, lbl_1_data_8B0, 1, 0,
+    { &lbl_1_data_3074 },
+};
+
+INPUTNODE lbl_1_data_3074 = {
+    lbl_1_data_8C0, lbl_1_data_8D0, 1, 0,
+    { &lbl_1_data_3084 },
+};
+
+INPUTNODE lbl_1_data_3084 = {
+    lbl_1_data_8E0, lbl_1_data_8F0, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3094 = {
+    lbl_1_data_900, lbl_1_data_91C, 1, 0,
+    { &lbl_1_data_30A4 },
+};
+
+INPUTNODE lbl_1_data_30A4 = {
+    lbl_1_data_92C, lbl_1_data_93C, 1, 0,
+    { &lbl_1_data_30B4 },
+};
+
+INPUTNODE lbl_1_data_30B4 = {
+    lbl_1_data_94C, lbl_1_data_95C, 1, 0,
+    { &lbl_1_data_30C4 },
+};
+
+INPUTNODE lbl_1_data_30C4 = {
+    lbl_1_data_96C, lbl_1_data_97C, 1, 0,
+    { &lbl_1_data_30D4 },
+};
+
+INPUTNODE lbl_1_data_30D4 = {
+    lbl_1_data_98C, lbl_1_data_99C, 1, 0,
+    { &lbl_1_data_30E4 },
+};
+
+INPUTNODE lbl_1_data_30E4 = {
+    lbl_1_data_9AC, lbl_1_data_9BC, 1, 0,
+    { &lbl_1_data_30F4 },
+};
+
+INPUTNODE lbl_1_data_30F4 = {
+    lbl_1_data_9CC, lbl_1_data_9DC, 1, 0,
+    { &lbl_1_data_3104 },
+};
+
+INPUTNODE lbl_1_data_3104 = {
+    lbl_1_data_9EC, lbl_1_data_9FC, 1, 0,
+    { &lbl_1_data_3114 },
+};
+
+INPUTNODE lbl_1_data_3114 = {
+    lbl_1_data_A0C, lbl_1_data_A1C, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3124 = {
+    lbl_1_data_A2C, lbl_1_data_A48, 1, 0,
+    { &lbl_1_data_3134 },
+};
+
+INPUTNODE lbl_1_data_3134 = {
+    lbl_1_data_A58, lbl_1_data_A68, 1, 0,
+    { &lbl_1_data_3144 },
+};
+
+INPUTNODE lbl_1_data_3144 = {
+    lbl_1_data_A78, lbl_1_data_A88, 1, 0,
+    { &lbl_1_data_3154 },
+};
+
+INPUTNODE lbl_1_data_3154 = {
+    lbl_1_data_A98, lbl_1_data_AC0, 1, 0,
+    { &lbl_1_data_3164 },
+};
+
+INPUTNODE lbl_1_data_3164 = {
+    lbl_1_data_AD0, lbl_1_data_AE0, 1, 0,
+    { &lbl_1_data_3174 },
+};
+
+INPUTNODE lbl_1_data_3174 = {
+    lbl_1_data_AF0, lbl_1_data_B00, 1, 0,
+    { &lbl_1_data_3184 },
+};
+
+INPUTNODE lbl_1_data_3184 = {
+    lbl_1_data_B10, lbl_1_data_B20, 1, 0,
+    { &lbl_1_data_3194 },
+};
+
+INPUTNODE lbl_1_data_3194 = {
+    lbl_1_data_B30, lbl_1_data_B40, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_31A4 = {
+    lbl_1_data_B50, lbl_1_data_B78, 1, 0,
+    { &lbl_1_data_31B4 },
+};
+
+INPUTNODE lbl_1_data_31B4 = {
+    lbl_1_data_B88, lbl_1_data_B98, 1, 0,
+    { &lbl_1_data_31C4 },
+};
+
+INPUTNODE lbl_1_data_31C4 = {
+    lbl_1_data_BA8, lbl_1_data_BC4, 1, 0,
+    { &lbl_1_data_31D4 },
+};
+
+INPUTNODE lbl_1_data_31D4 = {
+    lbl_1_data_BD4, lbl_1_data_BE4, 1, 0,
+    { &lbl_1_data_31E4 },
+};
+
+INPUTNODE lbl_1_data_31E4 = {
+    lbl_1_data_BF4, lbl_1_data_C04, 1, 0,
+    { &lbl_1_data_31F4 },
+};
+
+INPUTNODE lbl_1_data_31F4 = {
+    lbl_1_data_C14, lbl_1_data_C24, 1, 0,
+    { &lbl_1_data_3204 },
+};
+
+INPUTNODE lbl_1_data_3204 = {
+    lbl_1_data_C34, lbl_1_data_C44, 1, 0,
+    { &lbl_1_data_3214 },
+};
+
+INPUTNODE lbl_1_data_3214 = {
+    lbl_1_data_C54, lbl_1_data_C64, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3224 = {
+    lbl_1_data_C74, lbl_1_data_C90, 1, 0,
+    { &lbl_1_data_3234 },
+};
+
+INPUTNODE lbl_1_data_3234 = {
+    lbl_1_data_CA0, lbl_1_data_CB0, 1, 0,
+    { &lbl_1_data_3244 },
+};
+
+INPUTNODE lbl_1_data_3244 = {
+    lbl_1_data_CC0, lbl_1_data_CD0, 1, 0,
+    { &lbl_1_data_3254 },
+};
+
+INPUTNODE lbl_1_data_3254 = {
+    lbl_1_data_CE0, lbl_1_data_CF0, 1, 0,
+    { &lbl_1_data_3264 },
+};
+
+INPUTNODE lbl_1_data_3264 = {
+    lbl_1_data_D00, lbl_1_data_D10, 1, 0,
+    { &lbl_1_data_3274 },
+};
+
+INPUTNODE lbl_1_data_3274 = {
+    lbl_1_data_D20, lbl_1_data_D30, 1, 0,
+    { &lbl_1_data_3284 },
+};
+
+INPUTNODE lbl_1_data_3284 = {
+    lbl_1_data_D40, lbl_1_data_D50, 1, 0,
+    { &lbl_1_data_3294 },
+};
+
+INPUTNODE lbl_1_data_3294 = {
+    lbl_1_data_D60, lbl_1_data_D70, 1, 0,
+    { &lbl_1_data_32A4 },
+};
+
+INPUTNODE lbl_1_data_32A4 = {
+    lbl_1_data_D80, lbl_1_data_D90, 1, 0,
+    { &lbl_1_data_32B4 },
+};
+
+INPUTNODE lbl_1_data_32B4 = {
+    lbl_1_data_DA0, lbl_1_data_DB0, 1, 0,
+    { &lbl_1_data_32C4 },
+};
+
+INPUTNODE lbl_1_data_32C4 = {
+    lbl_1_data_DC0, lbl_1_data_DD0, 1, 0,
+    { &lbl_1_data_32D4 },
+};
+
+INPUTNODE lbl_1_data_32D4 = {
+    lbl_1_data_DE0, lbl_1_data_DF0, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_32E4 = {
+    lbl_1_data_E00, lbl_1_data_E1C, 1, 0,
+    { &lbl_1_data_32F4 },
+};
+
+INPUTNODE lbl_1_data_32F4 = {
+    lbl_1_data_E2C, lbl_1_data_E3C, 1, 0,
+    { &lbl_1_data_3304 },
+};
+
+INPUTNODE lbl_1_data_3304 = {
+    lbl_1_data_E4C, lbl_1_data_E74, 1, 0,
+    { &lbl_1_data_3314 },
+};
+
+INPUTNODE lbl_1_data_3314 = {
+    lbl_1_data_E84, lbl_1_data_E94, 1, 0,
+    { &lbl_1_data_3324 },
+};
+
+INPUTNODE lbl_1_data_3324 = {
+    lbl_1_data_EA4, lbl_1_data_EB4, 1, 0,
+    { &lbl_1_data_3334 },
+};
+
+INPUTNODE lbl_1_data_3334 = {
+    lbl_1_data_EC4, lbl_1_data_ED4, 1, 0,
+    { &lbl_1_data_3344 },
+};
+
+INPUTNODE lbl_1_data_3344 = {
+    lbl_1_data_EE4, lbl_1_data_EF4, 1, 0,
+    { &lbl_1_data_3354 },
+};
+
+INPUTNODE lbl_1_data_3354 = {
+    lbl_1_data_F04, lbl_1_data_F14, 1, 0,
+    { &lbl_1_data_3364 },
+};
+
+INPUTNODE lbl_1_data_3364 = {
+    lbl_1_data_F24, lbl_1_data_F34, 1, 0,
+    { &lbl_1_data_3374 },
+};
+
+INPUTNODE lbl_1_data_3374 = {
+    lbl_1_data_F44, lbl_1_data_F54, 1, 0,
+    { &lbl_1_data_3384 },
+};
+
+INPUTNODE lbl_1_data_3384 = {
+    lbl_1_data_F64, lbl_1_data_F74, 1, 0,
+    { &lbl_1_data_3394 },
+};
+
+INPUTNODE lbl_1_data_3394 = {
+    lbl_1_data_F84, lbl_1_data_F94, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_33A4 = {
+    lbl_1_data_FA4, lbl_1_data_FB4, 1, 0,
+    { &lbl_1_data_33B4 },
+};
+
+INPUTNODE lbl_1_data_33B4 = {
+    lbl_1_data_FC4, lbl_1_data_FD4, 1, 0,
+    { &lbl_1_data_33C4 },
+};
+
+INPUTNODE lbl_1_data_33C4 = {
+    lbl_1_data_FE4, lbl_1_data_FF4, 1, 0,
+    { &lbl_1_data_33D4 },
+};
+
+INPUTNODE lbl_1_data_33D4 = {
+    lbl_1_data_1004, lbl_1_data_1014, 1, 0,
+    { &lbl_1_data_33E4 },
+};
+
+INPUTNODE lbl_1_data_33E4 = {
+    lbl_1_data_1024, lbl_1_data_1034, 1, 0,
+    { &lbl_1_data_33F4 },
+};
+
+INPUTNODE lbl_1_data_33F4 = {
+    lbl_1_data_1050, lbl_1_data_1078, 1, 0,
+    { &lbl_1_data_3404 },
+};
+
+INPUTNODE lbl_1_data_3404 = {
+    lbl_1_data_1088, lbl_1_data_1098, 1, 0,
+    { &lbl_1_data_3414 },
+};
+
+INPUTNODE lbl_1_data_3414 = {
+    lbl_1_data_10A8, lbl_1_data_10B8, 1, 0,
+    { &lbl_1_data_3424 },
+};
+
+INPUTNODE lbl_1_data_3424 = {
+    lbl_1_data_10C8, lbl_1_data_10D8, 1, 0,
+    { &lbl_1_data_3434 },
+};
+
+INPUTNODE lbl_1_data_3434 = {
+    lbl_1_data_10E8, lbl_1_data_10F8, 1, 0,
+    { &lbl_1_data_3444 },
+};
+
+INPUTNODE lbl_1_data_3444 = {
+    lbl_1_data_1108, lbl_1_data_1118, 1, 0,
+    { &lbl_1_data_3454 },
+};
+
+INPUTNODE lbl_1_data_3454 = {
+    lbl_1_data_1128, lbl_1_data_1138, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3464 = {
+    lbl_1_data_1148, lbl_1_data_117C, 1, 0,
+    { &lbl_1_data_3474 },
+};
+
+INPUTNODE lbl_1_data_3474 = {
+    lbl_1_data_118C, lbl_1_data_119C, 1, 0,
+    { &lbl_1_data_3484 },
+};
+
+INPUTNODE lbl_1_data_3484 = {
+    lbl_1_data_11AC, lbl_1_data_11BC, 1, 0,
+    { &lbl_1_data_3494 },
+};
+
+INPUTNODE lbl_1_data_3494 = {
+    lbl_1_data_11CC, lbl_1_data_11DC, 1, 0,
+    { &lbl_1_data_34A4 },
+};
+
+INPUTNODE lbl_1_data_34A4 = {
+    lbl_1_data_11EC, lbl_1_data_11FC, 1, 0,
+    { &lbl_1_data_34B4 },
+};
+
+INPUTNODE lbl_1_data_34B4 = {
+    lbl_1_data_120C, lbl_1_data_121C, 1, 0,
+    { &lbl_1_data_34C4 },
+};
+
+INPUTNODE lbl_1_data_34C4 = {
+    lbl_1_data_122C, lbl_1_data_123C, 1, 0,
+    { &lbl_1_data_34D4 },
+};
+
+INPUTNODE lbl_1_data_34D4 = {
+    lbl_1_data_124C, lbl_1_data_125C, 1, 0,
+    { &lbl_1_data_34E4 },
+};
+
+INPUTNODE lbl_1_data_34E4 = {
+    lbl_1_data_126C, lbl_1_data_12A0, 1, 0,
+    { &lbl_1_data_34F4 },
+};
+
+INPUTNODE lbl_1_data_34F4 = {
+    lbl_1_data_12B0, lbl_1_data_12C0, 1, 0,
+    { &lbl_1_data_3504 },
+};
+
+INPUTNODE lbl_1_data_3504 = {
+    lbl_1_data_12D0, lbl_1_data_12E0, 1, 0,
+    { &lbl_1_data_3514 },
+};
+
+INPUTNODE lbl_1_data_3514 = {
+    lbl_1_data_12F0, lbl_1_data_1300, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3524 = {
+    lbl_1_data_1310, lbl_1_data_1350, 1, 0,
+    { &lbl_1_data_3534 },
+};
+
+INPUTNODE lbl_1_data_3534 = {
+    lbl_1_data_1360, lbl_1_data_1370, 1, 0,
+    { &lbl_1_data_3544 },
+};
+
+INPUTNODE lbl_1_data_3544 = {
+    lbl_1_data_1380, lbl_1_data_1390, 1, 0,
+    { &lbl_1_data_3554 },
+};
+
+INPUTNODE lbl_1_data_3554 = {
+    lbl_1_data_13A0, lbl_1_data_13B0, 1, 0,
+    { &lbl_1_data_3564 },
+};
+
+INPUTNODE lbl_1_data_3564 = {
+    lbl_1_data_13C0, lbl_1_data_13D0, 1, 0,
+    { &lbl_1_data_3574 },
+};
+
+INPUTNODE lbl_1_data_3574 = {
+    lbl_1_data_13E0, lbl_1_data_13F0, 1, 0,
+    { &lbl_1_data_3584 },
+};
+
+INPUTNODE lbl_1_data_3584 = {
+    lbl_1_data_1400, lbl_1_data_1428, 1, 0,
+    { &lbl_1_data_3594 },
+};
+
+INPUTNODE lbl_1_data_3594 = {
+    lbl_1_data_1438, lbl_1_data_1448, 1, 0,
+    { &lbl_1_data_35A4 },
+};
+
+INPUTNODE lbl_1_data_35A4 = {
+    lbl_1_data_1458, lbl_1_data_1468, 1, 0,
+    { &lbl_1_data_35B4 },
+};
+
+INPUTNODE lbl_1_data_35B4 = {
+    lbl_1_data_1478, lbl_1_data_1488, 1, 0,
+    { &lbl_1_data_35C4 },
+};
+
+INPUTNODE lbl_1_data_35C4 = {
+    lbl_1_data_1498, lbl_1_data_14A8, 1, 0,
+    { &lbl_1_data_35D4 },
+};
+
+INPUTNODE lbl_1_data_35D4 = {
+    lbl_1_data_14B8, lbl_1_data_14C8, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_35E4 = {
+    lbl_1_data_14D8, lbl_1_data_14E8, 1, 0,
+    { &lbl_1_data_35F4 },
+};
+
+INPUTNODE lbl_1_data_35F4 = {
+    lbl_1_data_14F8, lbl_1_data_1520, 1, 0,
+    { &lbl_1_data_3604 },
+};
+
+INPUTNODE lbl_1_data_3604 = {
+    lbl_1_data_1530, lbl_1_data_1540, 1, 0,
+    { &lbl_1_data_3614 },
+};
+
+INPUTNODE lbl_1_data_3614 = {
+    lbl_1_data_1550, lbl_1_data_1560, 1, 0,
+    { &lbl_1_data_3624 },
+};
+
+INPUTNODE lbl_1_data_3624 = {
+    lbl_1_data_1570, lbl_1_data_1580, 1, 0,
+    { &lbl_1_data_3634 },
+};
+
+INPUTNODE lbl_1_data_3634 = {
+    lbl_1_data_1590, lbl_1_data_15A0, 1, 0,
+    { &lbl_1_data_3644 },
+};
+
+INPUTNODE lbl_1_data_3644 = {
+    lbl_1_data_15B0, lbl_1_data_15C0, 1, 0,
+    { &lbl_1_data_3654 },
+};
+
+INPUTNODE lbl_1_data_3654 = {
+    lbl_1_data_15D0, lbl_1_data_15E0, 1, 0,
+    { &lbl_1_data_3664 },
+};
+
+INPUTNODE lbl_1_data_3664 = {
+    lbl_1_data_15F0, lbl_1_data_1600, 1, 0,
+    { &lbl_1_data_3674 },
+};
+
+INPUTNODE lbl_1_data_3674 = {
+    lbl_1_data_1610, lbl_1_data_1620, 1, 0,
+    { &lbl_1_data_3684 },
+};
+
+INPUTNODE lbl_1_data_3684 = {
+    lbl_1_data_1630, lbl_1_data_1640, 1, 0,
+    { &lbl_1_data_3694 },
+};
+
+INPUTNODE lbl_1_data_3694 = {
+    lbl_1_data_1650, lbl_1_data_166C, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_36A4 = {
+    lbl_1_data_167C, lbl_1_data_1698, 1, 0,
+    { &lbl_1_data_36B4 },
+};
+
+INPUTNODE lbl_1_data_36B4 = {
+    lbl_1_data_16A8, lbl_1_data_16B8, 1, 0,
+    { &lbl_1_data_36C4 },
+};
+
+INPUTNODE lbl_1_data_36C4 = {
+    lbl_1_data_16C8, lbl_1_data_16D8, 1, 0,
+    { &lbl_1_data_36D4 },
+};
+
+INPUTNODE lbl_1_data_36D4 = {
+    lbl_1_data_16E8, lbl_1_data_16F8, 1, 0,
+    { &lbl_1_data_36E4 },
+};
+
+INPUTNODE lbl_1_data_36E4 = {
+    lbl_1_data_1708, lbl_1_data_1718, 1, 0,
+    { &lbl_1_data_36F4 },
+};
+
+INPUTNODE lbl_1_data_36F4 = {
+    lbl_1_data_1728, lbl_1_data_1738, 1, 0,
+    { &lbl_1_data_3704 },
+};
+
+INPUTNODE lbl_1_data_3704 = {
+    lbl_1_data_1748, lbl_1_data_1758, 1, 0,
+    { &lbl_1_data_3714 },
+};
+
+INPUTNODE lbl_1_data_3714 = {
+    lbl_1_data_1768, lbl_1_data_1778, 1, 0,
+    { &lbl_1_data_3724 },
+};
+
+INPUTNODE lbl_1_data_3724 = {
+    lbl_1_data_1788, lbl_1_data_17A4, 1, 0,
+    { &lbl_1_data_3734 },
+};
+
+INPUTNODE lbl_1_data_3734 = {
+    lbl_1_data_17B4, lbl_1_data_17C4, 1, 0,
+    { &lbl_1_data_3744 },
+};
+
+INPUTNODE lbl_1_data_3744 = {
+    lbl_1_data_17D4, lbl_1_data_17E4, 1, 0,
+    { &lbl_1_data_3754 },
+};
+
+INPUTNODE lbl_1_data_3754 = {
+    lbl_1_data_17F4, lbl_1_data_1804, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3764 = {
+    lbl_1_data_1814, lbl_1_data_1824, 1, 0,
+    { &lbl_1_data_3774 },
+};
+
+INPUTNODE lbl_1_data_3774 = {
+    lbl_1_data_1834, lbl_1_data_1844, 1, 0,
+    { &lbl_1_data_3784 },
+};
+
+INPUTNODE lbl_1_data_3784 = {
+    lbl_1_data_1854, lbl_1_data_1864, 1, 0,
+    { &lbl_1_data_3794 },
+};
+
+INPUTNODE lbl_1_data_3794 = {
+    lbl_1_data_1874, lbl_1_data_1884, 1, 0,
+    { &lbl_1_data_37A4 },
+};
+
+INPUTNODE lbl_1_data_37A4 = {
+    lbl_1_data_1894, lbl_1_data_18A4, 1, 0,
+    { &lbl_1_data_37B4 },
+};
+
+INPUTNODE lbl_1_data_37B4 = {
+    lbl_1_data_18B4, lbl_1_data_18C4, 1, 0,
+    { &lbl_1_data_37C4 },
+};
+
+INPUTNODE lbl_1_data_37C4 = {
+    lbl_1_data_18D4, lbl_1_data_18E4, 1, 0,
+    { &lbl_1_data_37D4 },
+};
+
+INPUTNODE lbl_1_data_37D4 = {
+    lbl_1_data_18F4, lbl_1_data_1904, 1, 0,
+    { &lbl_1_data_37E4 },
+};
+
+INPUTNODE lbl_1_data_37E4 = {
+    lbl_1_data_1914, lbl_1_data_1924, 1, 0,
+    { &lbl_1_data_37F4 },
+};
+
+INPUTNODE lbl_1_data_37F4 = {
+    lbl_1_data_1934, lbl_1_data_1944, 1, 0,
+    { &lbl_1_data_3804 },
+};
+
+INPUTNODE lbl_1_data_3804 = {
+    lbl_1_data_1954, lbl_1_data_1964, 1, 0,
+    { &lbl_1_data_3814 },
+};
+
+INPUTNODE lbl_1_data_3814 = {
+    lbl_1_data_1974, lbl_1_data_1984, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3824 = {
+    lbl_1_data_1994, lbl_1_data_19B0, 1, 0,
+    { &lbl_1_data_3834 },
+};
+
+INPUTNODE lbl_1_data_3834 = {
+    lbl_1_data_19C0, lbl_1_data_19D0, 1, 0,
+    { &lbl_1_data_3844 },
+};
+
+INPUTNODE lbl_1_data_3844 = {
+    lbl_1_data_19E0, lbl_1_data_19F0, 1, 0,
+    { &lbl_1_data_3854 },
+};
+
+INPUTNODE lbl_1_data_3854 = {
+    lbl_1_data_1A00, lbl_1_data_1A10, 1, 0,
+    { &lbl_1_data_3864 },
+};
+
+INPUTNODE lbl_1_data_3864 = {
+    lbl_1_data_1A20, lbl_1_data_1A6C, 1, 0,
+    { &lbl_1_data_3874 },
+};
+
+INPUTNODE lbl_1_data_3874 = {
+    lbl_1_data_1A7C, lbl_1_data_1A8C, 1, 0,
+    { &lbl_1_data_3884 },
+};
+
+INPUTNODE lbl_1_data_3884 = {
+    lbl_1_data_1A9C, lbl_1_data_1AAC, 1, 0,
+    { &lbl_1_data_3894 },
+};
+
+INPUTNODE lbl_1_data_3894 = {
+    lbl_1_data_1ABC, lbl_1_data_1ACC, 1, 0,
+    { &lbl_1_data_38A4 },
+};
+
+INPUTNODE lbl_1_data_38A4 = {
+    lbl_1_data_1ADC, lbl_1_data_1AEC, 1, 0,
+    { &lbl_1_data_38B4 },
+};
+
+INPUTNODE lbl_1_data_38B4 = {
+    lbl_1_data_1AFC, lbl_1_data_1B0C, 1, 0,
+    { &lbl_1_data_38C4 },
+};
+
+INPUTNODE lbl_1_data_38C4 = {
+    lbl_1_data_1B1C, lbl_1_data_1B2C, 1, 0,
+    { &lbl_1_data_38D4 },
+};
+
+INPUTNODE lbl_1_data_38D4 = {
+    lbl_1_data_1B3C, lbl_1_data_1B4C, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_38E4 = {
+    lbl_1_data_1B5C, lbl_1_data_1B84, 1, 0,
+    { &lbl_1_data_38F4 },
+};
+
+INPUTNODE lbl_1_data_38F4 = {
+    lbl_1_data_1B94, lbl_1_data_1BA4, 1, 0,
+    { &lbl_1_data_3904 },
+};
+
+INPUTNODE lbl_1_data_3904 = {
+    lbl_1_data_1BB4, lbl_1_data_1BC4, 1, 0,
+    { &lbl_1_data_3914 },
+};
+
+INPUTNODE lbl_1_data_3914 = {
+    lbl_1_data_1BD4, lbl_1_data_1BE4, 1, 0,
+    { &lbl_1_data_3924 },
+};
+
+INPUTNODE lbl_1_data_3924 = {
+    lbl_1_data_1BF4, lbl_1_data_1C1C, 1, 0,
+    { &lbl_1_data_3934 },
+};
+
+INPUTNODE lbl_1_data_3934 = {
+    lbl_1_data_1C2C, lbl_1_data_1C3C, 1, 0,
+    { &lbl_1_data_3944 },
+};
+
+INPUTNODE lbl_1_data_3944 = {
+    lbl_1_data_1C4C, lbl_1_data_1C5C, 1, 0,
+    { &lbl_1_data_3954 },
+};
+
+INPUTNODE lbl_1_data_3954 = {
+    lbl_1_data_1C6C, lbl_1_data_1C7C, 1, 0,
+    { &lbl_1_data_3964 },
+};
+
+INPUTNODE lbl_1_data_3964 = {
+    lbl_1_data_1C8C, lbl_1_data_1C9C, 1, 0,
+    { &lbl_1_data_3974 },
+};
+
+INPUTNODE lbl_1_data_3974 = {
+    lbl_1_data_1CAC, lbl_1_data_1CBC, 1, 0,
+    { &lbl_1_data_3984 },
+};
+
+INPUTNODE lbl_1_data_3984 = {
+    lbl_1_data_1CCC, lbl_1_data_1CDC, 1, 0,
+    { &lbl_1_data_3994 },
+};
+
+INPUTNODE lbl_1_data_3994 = {
+    lbl_1_data_1CEC, lbl_1_data_1CFC, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_39A4 = {
+    lbl_1_data_1D0C, lbl_1_data_1D40, 1, 0,
+    { &lbl_1_data_39B4 },
+};
+
+INPUTNODE lbl_1_data_39B4 = {
+    lbl_1_data_1D50, lbl_1_data_1D6C, 1, 0,
+    { &lbl_1_data_39C4 },
+};
+
+INPUTNODE lbl_1_data_39C4 = {
+    lbl_1_data_1D7C, lbl_1_data_1D8C, 1, 0,
+    { &lbl_1_data_39D4 },
+};
+
+INPUTNODE lbl_1_data_39D4 = {
+    lbl_1_data_1D9C, lbl_1_data_1DB8, 1, 0,
+    { &lbl_1_data_39E4 },
+};
+
+INPUTNODE lbl_1_data_39E4 = {
+    lbl_1_data_1DC8, lbl_1_data_1DD8, 1, 0,
+    { &lbl_1_data_39F4 },
+};
+
+INPUTNODE lbl_1_data_39F4 = {
+    lbl_1_data_1DE8, lbl_1_data_1DF8, 1, 0,
+    { &lbl_1_data_3A04 },
+};
+
+INPUTNODE lbl_1_data_3A04 = {
+    lbl_1_data_1E08, lbl_1_data_1E18, 1, 0,
+    { &lbl_1_data_3A14 },
+};
+
+INPUTNODE lbl_1_data_3A14 = {
+    lbl_1_data_1E28, lbl_1_data_1E38, 1, 0,
+    { &lbl_1_data_3A24 },
+};
+
+INPUTNODE lbl_1_data_3A24 = {
+    lbl_1_data_1E48, lbl_1_data_1E58, 1, 0,
+    { &lbl_1_data_3A34 },
+};
+
+INPUTNODE lbl_1_data_3A34 = {
+    lbl_1_data_1E68, lbl_1_data_1E78, 1, 0,
+    { &lbl_1_data_3A44 },
+};
+
+INPUTNODE lbl_1_data_3A44 = {
+    lbl_1_data_1E88, lbl_1_data_1E98, 1, 0,
+    { &lbl_1_data_3A54 },
+};
+
+INPUTNODE lbl_1_data_3A54 = {
+    lbl_1_data_1EA8, lbl_1_data_1EB8, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3A64 = {
+    lbl_1_data_1EC8, lbl_1_data_1EF0, 1, 0,
+    { &lbl_1_data_3A74 },
+};
+
+INPUTNODE lbl_1_data_3A74 = {
+    lbl_1_data_1F00, lbl_1_data_1F10, 1, 0,
+    { &lbl_1_data_3A84 },
+};
+
+INPUTNODE lbl_1_data_3A84 = {
+    lbl_1_data_1F20, lbl_1_data_1F30, 1, 0,
+    { &lbl_1_data_3A94 },
+};
+
+INPUTNODE lbl_1_data_3A94 = {
+    lbl_1_data_1F40, lbl_1_data_1F50, 1, 0,
+    { &lbl_1_data_3AA4 },
+};
+
+INPUTNODE lbl_1_data_3AA4 = {
+    lbl_1_data_1F60, lbl_1_data_1F70, 1, 0,
+    { &lbl_1_data_3AB4 },
+};
+
+INPUTNODE lbl_1_data_3AB4 = {
+    lbl_1_data_1F80, lbl_1_data_1F90, 1, 0,
+    { &lbl_1_data_3AC4 },
+};
+
+INPUTNODE lbl_1_data_3AC4 = {
+    lbl_1_data_1FA0, lbl_1_data_1FB0, 1, 0,
+    { &lbl_1_data_3AD4 },
+};
+
+INPUTNODE lbl_1_data_3AD4 = {
+    lbl_1_data_1FC0, lbl_1_data_1FDC, 1, 0,
+    { &lbl_1_data_3AE4 },
+};
+
+INPUTNODE lbl_1_data_3AE4 = {
+    lbl_1_data_1FEC, lbl_1_data_1FFC, 1, 0,
+    { &lbl_1_data_3AF4 },
+};
+
+INPUTNODE lbl_1_data_3AF4 = {
+    lbl_1_data_200C, lbl_1_data_201C, 1, 0,
+    { &lbl_1_data_3B04 },
+};
+
+INPUTNODE lbl_1_data_3B04 = {
+    lbl_1_data_202C, lbl_1_data_203C, 1, 0,
+    { &lbl_1_data_3B14 },
+};
+
+INPUTNODE lbl_1_data_3B14 = {
+    lbl_1_data_204C, lbl_1_data_205C, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3B24 = {
+    lbl_1_data_206C, lbl_1_data_2088, 2, 0,
+    { &lbl_1_data_3B38, &lbl_1_data_3B48 },
+};
+
+INPUTNODE lbl_1_data_3B38 = {
+    lbl_1_data_2098, lbl_1_data_20A8, 1, 0,
+    { &lbl_1_data_3B58 },
+};
+
+INPUTNODE lbl_1_data_3B48 = {
+    lbl_1_data_20B8, lbl_1_data_20C8, 1, 0,
+    { &lbl_1_data_3B58 },
+};
+
+INPUTNODE lbl_1_data_3B58 = {
+    lbl_1_data_20D8, lbl_1_data_20E8, 1, 0,
+    { &lbl_1_data_3B68 },
+};
+
+INPUTNODE lbl_1_data_3B68 = {
+    lbl_1_data_20F8, lbl_1_data_2138, 2, 0,
+    { &lbl_1_data_3B7C, &lbl_1_data_3B8C },
+};
+
+INPUTNODE lbl_1_data_3B7C = {
+    lbl_1_data_2148, lbl_1_data_2158, 1, 0,
+    { &lbl_1_data_3B9C },
+};
+
+INPUTNODE lbl_1_data_3B8C = {
+    lbl_1_data_2168, lbl_1_data_2178, 1, 0,
+    { &lbl_1_data_3B9C },
+};
+
+INPUTNODE lbl_1_data_3B9C = {
+    lbl_1_data_2188, lbl_1_data_21A4, 1, 0,
+    { &lbl_1_data_3BAC },
+};
+
+INPUTNODE lbl_1_data_3BAC = {
+    lbl_1_data_21B4, lbl_1_data_21F4, 1, 0,
+    { &lbl_1_data_3BBC },
+};
+
+INPUTNODE lbl_1_data_3BBC = {
+    lbl_1_data_2204, lbl_1_data_222C, 2, 0,
+    { &lbl_1_data_3BD0, &lbl_1_data_3BE0 },
+};
+
+INPUTNODE lbl_1_data_3BD0 = {
+    lbl_1_data_223C, lbl_1_data_224C, 1, 0,
+    { &lbl_1_data_3BF0 },
+};
+
+INPUTNODE lbl_1_data_3BE0 = {
+    lbl_1_data_225C, lbl_1_data_226C, 1, 0,
+    { &lbl_1_data_3BF0 },
+};
+
+INPUTNODE lbl_1_data_3BF0 = {
+    lbl_1_data_227C, lbl_1_data_228C, 1, 0,
+    { &lbl_1_data_3C00 },
+};
+
+INPUTNODE lbl_1_data_3C00 = {
+    lbl_1_data_229C, lbl_1_data_22AC, 1, 0,
+    { &lbl_1_data_3C10 },
+};
+
+INPUTNODE lbl_1_data_3C10 = {
+    lbl_1_data_22BC, lbl_1_data_22CC, 1, 0,
+    { &lbl_1_data_3C20 },
+};
+
+INPUTNODE lbl_1_data_3C20 = {
+    lbl_1_data_22DC, lbl_1_data_22EC, 1, 0,
+    { &lbl_1_data_3C30 },
+};
+
+INPUTNODE lbl_1_data_3C30 = {
+    lbl_1_data_22FC, lbl_1_data_230C, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3C40 = {
+    lbl_1_data_231C, lbl_1_data_2344, 1, 0,
+    { &lbl_1_data_3C50 },
+};
+
+INPUTNODE lbl_1_data_3C50 = {
+    lbl_1_data_2354, lbl_1_data_2364, 2, 0,
+    { &lbl_1_data_3C64, &lbl_1_data_3C74 },
+};
+
+INPUTNODE lbl_1_data_3C64 = {
+    lbl_1_data_2374, lbl_1_data_239C, 1, 0,
+    { &lbl_1_data_3C84 },
+};
+
+INPUTNODE lbl_1_data_3C74 = {
+    lbl_1_data_23AC, lbl_1_data_23D4, 1, 0,
+    { &lbl_1_data_3C84 },
+};
+
+INPUTNODE lbl_1_data_3C84 = {
+    lbl_1_data_23E4, lbl_1_data_23F4, 1, 0,
+    { &lbl_1_data_3C94 },
+};
+
+INPUTNODE lbl_1_data_3C94 = {
+    lbl_1_data_2404, lbl_1_data_2414, 2, 0,
+    { &lbl_1_data_3CA8, &lbl_1_data_3CB8 },
+};
+
+INPUTNODE lbl_1_data_3CA8 = {
+    lbl_1_data_2424, lbl_1_data_2434, 1, 0,
+    { &lbl_1_data_3CC8 },
+};
+
+INPUTNODE lbl_1_data_3CB8 = {
+    lbl_1_data_2444, lbl_1_data_2454, 1, 0,
+    { &lbl_1_data_3CC8 },
+};
+
+INPUTNODE lbl_1_data_3CC8 = {
+    lbl_1_data_2464, lbl_1_data_2474, 1, 0,
+    { &lbl_1_data_3CD8 },
+};
+
+INPUTNODE lbl_1_data_3CD8 = {
+    lbl_1_data_2484, lbl_1_data_2494, 1, 0,
+    { &lbl_1_data_3CE8 },
+};
+
+INPUTNODE lbl_1_data_3CE8 = {
+    lbl_1_data_24A4, lbl_1_data_24B4, 1, 0,
+    { &lbl_1_data_3CF8 },
+};
+
+INPUTNODE lbl_1_data_3CF8 = {
+    lbl_1_data_24C4, lbl_1_data_24D4, 1, 0,
+    { &lbl_1_data_3D08 },
+};
+
+INPUTNODE lbl_1_data_3D08 = {
+    lbl_1_data_24E4, lbl_1_data_24F4, 2, 0,
+    { &lbl_1_data_3D1C, &lbl_1_data_3D2C },
+};
+
+INPUTNODE lbl_1_data_3D1C = {
+    lbl_1_data_2504, lbl_1_data_2514, 1, 0,
+    { &lbl_1_data_3D3C },
+};
+
+INPUTNODE lbl_1_data_3D2C = {
+    lbl_1_data_2524, lbl_1_data_2534, 1, 0,
+    { &lbl_1_data_3D3C },
+};
+
+INPUTNODE lbl_1_data_3D3C = {
+    lbl_1_data_2544, lbl_1_data_2554, 1, 0,
+    { &lbl_1_data_3D4C },
+};
+
+INPUTNODE lbl_1_data_3D4C = {
+    lbl_1_data_2564, lbl_1_data_2574, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3D5C = {
+    lbl_1_data_2584, lbl_1_data_25A0, 1, 0,
+    { &lbl_1_data_3D6C },
+};
+
+INPUTNODE lbl_1_data_3D6C = {
+    lbl_1_data_25B0, lbl_1_data_25C0, 1, 0,
+    { &lbl_1_data_3D7C },
+};
+
+INPUTNODE lbl_1_data_3D7C = {
+    lbl_1_data_25D0, lbl_1_data_25F8, 2, 0,
+    { &lbl_1_data_3D90, &lbl_1_data_3DA0 },
+};
+
+INPUTNODE lbl_1_data_3D90 = {
+    lbl_1_data_2608, lbl_1_data_2624, 1, 0,
+    { &lbl_1_data_3DB0 },
+};
+
+INPUTNODE lbl_1_data_3DA0 = {
+    lbl_1_data_2634, lbl_1_data_2650, 1, 0,
+    { &lbl_1_data_3DB0 },
+};
+
+INPUTNODE lbl_1_data_3DB0 = {
+    lbl_1_data_2660, lbl_1_data_2670, 1, 0,
+    { &lbl_1_data_3DC0 },
+};
+
+INPUTNODE lbl_1_data_3DC0 = {
+    lbl_1_data_2680, lbl_1_data_26B4, 1, 0,
+    { &lbl_1_data_3DD0 },
+};
+
+INPUTNODE lbl_1_data_3DD0 = {
+    lbl_1_data_26C4, lbl_1_data_26D4, 1, 0,
+    { &lbl_1_data_3DE0 },
+};
+
+INPUTNODE lbl_1_data_3DE0 = {
+    lbl_1_data_26E4, lbl_1_data_26F4, 1, 0,
+    { &lbl_1_data_3DF0 },
+};
+
+INPUTNODE lbl_1_data_3DF0 = {
+    lbl_1_data_2704, lbl_1_data_2738, 1, 0,
+    { &lbl_1_data_3E00 },
+};
+
+INPUTNODE lbl_1_data_3E00 = {
+    lbl_1_data_2748, lbl_1_data_2758, 1, 0,
+    { &lbl_1_data_3E10 },
+};
+
+INPUTNODE lbl_1_data_3E10 = {
+    lbl_1_data_2768, lbl_1_data_2778, 1, 0,
+    { &lbl_1_data_3E20 },
+};
+
+INPUTNODE lbl_1_data_3E20 = {
+    lbl_1_data_2788, lbl_1_data_2798, 1, 0,
+    { &lbl_1_data_3E30 },
+};
+
+INPUTNODE lbl_1_data_3E30 = {
+    lbl_1_data_27A8, lbl_1_data_27B8, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3E40 = {
+    lbl_1_data_27C8, lbl_1_data_27E4, 1, 0,
+    { &lbl_1_data_3E50 },
+};
+
+INPUTNODE lbl_1_data_3E50 = {
+    lbl_1_data_27F4, lbl_1_data_2804, 1, 0,
+    { &lbl_1_data_3E60 },
+};
+
+INPUTNODE lbl_1_data_3E60 = {
+    lbl_1_data_2814, lbl_1_data_2824, 2, 0,
+    { &lbl_1_data_3E74, &lbl_1_data_3E84 },
+};
+
+INPUTNODE lbl_1_data_3E74 = {
+    lbl_1_data_2834, lbl_1_data_2844, 1, 0,
+    { &lbl_1_data_3E94 },
+};
+
+INPUTNODE lbl_1_data_3E84 = {
+    lbl_1_data_2854, lbl_1_data_2864, 1, 0,
+    { &lbl_1_data_3E94 },
+};
+
+INPUTNODE lbl_1_data_3E94 = {
+    lbl_1_data_2874, lbl_1_data_2890, 1, 0,
+    { &lbl_1_data_3EA4 },
+};
+
+INPUTNODE lbl_1_data_3EA4 = {
+    lbl_1_data_28A0, lbl_1_data_28B0, 2, 0,
+    { &lbl_1_data_3EB8, &lbl_1_data_3EC8 },
+};
+
+INPUTNODE lbl_1_data_3EB8 = {
+    lbl_1_data_28C0, lbl_1_data_28D0, 1, 0,
+    { &lbl_1_data_3ED8 },
+};
+
+INPUTNODE lbl_1_data_3EC8 = {
+    lbl_1_data_28E0, lbl_1_data_28F0, 1, 0,
+    { &lbl_1_data_3ED8 },
+};
+
+INPUTNODE lbl_1_data_3ED8 = {
+    lbl_1_data_2900, lbl_1_data_291C, 1, 0,
+    { &lbl_1_data_3EE8 },
+};
+
+INPUTNODE lbl_1_data_3EE8 = {
+    lbl_1_data_292C, lbl_1_data_293C, 1, 0,
+    { &lbl_1_data_3EF8 },
+};
+
+INPUTNODE lbl_1_data_3EF8 = {
+    lbl_1_data_294C, lbl_1_data_295C, 1, 0,
+    { &lbl_1_data_3F08 },
+};
+
+INPUTNODE lbl_1_data_3F08 = {
+    lbl_1_data_296C, lbl_1_data_297C, 1, 0,
+    { &lbl_1_data_3F18 },
+};
+
+INPUTNODE lbl_1_data_3F18 = {
+    lbl_1_data_298C, lbl_1_data_299C, 1, 0,
+    { &lbl_1_data_3F28 },
+};
+
+INPUTNODE lbl_1_data_3F28 = {
+    lbl_1_data_29AC, lbl_1_data_29BC, 1, 0,
+    { &lbl_1_data_3F38 },
+};
+
+INPUTNODE lbl_1_data_3F38 = {
+    lbl_1_data_29CC, lbl_1_data_29DC, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_3F48 = {
+    lbl_1_data_29EC, lbl_1_data_29FC, 1, 0,
+    { &lbl_1_data_3F58 },
+};
+
+INPUTNODE lbl_1_data_3F58 = {
+    lbl_1_data_2A0C, lbl_1_data_2A34, 1, 0,
+    { &lbl_1_data_3F68 },
+};
+
+INPUTNODE lbl_1_data_3F68 = {
+    lbl_1_data_2A44, lbl_1_data_2A54, 1, 0,
+    { &lbl_1_data_3F78 },
+};
+
+INPUTNODE lbl_1_data_3F78 = {
+    lbl_1_data_2A64, lbl_1_data_2A74, 2, 0,
+    { &lbl_1_data_3F8C, &lbl_1_data_3F9C },
+};
+
+INPUTNODE lbl_1_data_3F8C = {
+    lbl_1_data_2A84, lbl_1_data_2A94, 1, 0,
+    { &lbl_1_data_3FAC },
+};
+
+INPUTNODE lbl_1_data_3F9C = {
+    lbl_1_data_2AA4, lbl_1_data_2AB4, 1, 0,
+    { &lbl_1_data_3FAC },
+};
+
+INPUTNODE lbl_1_data_3FAC = {
+    lbl_1_data_2AC4, lbl_1_data_2AD4, 1, 0,
+    { &lbl_1_data_3FBC },
+};
+
+INPUTNODE lbl_1_data_3FBC = {
+    lbl_1_data_2AE4, lbl_1_data_2B0C, 1, 0,
+    { &lbl_1_data_3FCC },
+};
+
+INPUTNODE lbl_1_data_3FCC = {
+    lbl_1_data_2B1C, lbl_1_data_2B2C, 1, 0,
+    { &lbl_1_data_3FE0, &lbl_1_data_3FF0 },
+};
+
+INPUTNODE lbl_1_data_3FE0 = {
+    lbl_1_data_2B3C, lbl_1_data_2B4C, 1, 0,
+    { &lbl_1_data_4000 },
+};
+
+INPUTNODE lbl_1_data_3FF0 = {
+    lbl_1_data_2B5C, lbl_1_data_2B6C, 1, 0,
+    { &lbl_1_data_4000 },
+};
+
+INPUTNODE lbl_1_data_4000 = {
+    lbl_1_data_2B7C, lbl_1_data_2B98, 1, 0,
+    { &lbl_1_data_4010 },
+};
+
+INPUTNODE lbl_1_data_4010 = {
+    lbl_1_data_2BA8, lbl_1_data_2BB8, 1, 0,
+    { &lbl_1_data_4020 },
+};
+
+INPUTNODE lbl_1_data_4020 = {
+    lbl_1_data_2BC8, lbl_1_data_2BD8, 1, 0,
+    { &lbl_1_data_4030 },
+};
+
+INPUTNODE lbl_1_data_4030 = {
+    lbl_1_data_2BE8, lbl_1_data_2BF8, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_4040 = {
+    lbl_1_data_2C08, lbl_1_data_2C48, 1, 0,
+    { &lbl_1_data_4050 },
+};
+
+INPUTNODE lbl_1_data_4050 = {
+    lbl_1_data_2C58, lbl_1_data_2C68, 1, 0,
+    { &lbl_1_data_4060 },
+};
+
+INPUTNODE lbl_1_data_4060 = {
+    lbl_1_data_2C78, lbl_1_data_2C88, 2, 0,
+    { &lbl_1_data_4074, &lbl_1_data_4084 },
+};
+
+INPUTNODE lbl_1_data_4074 = {
+    lbl_1_data_2C98, lbl_1_data_2CA8, 1, 0,
+    { &lbl_1_data_4094 },
+};
+
+INPUTNODE lbl_1_data_4084 = {
+    lbl_1_data_2CB8, lbl_1_data_2CC8, 1, 0,
+    { &lbl_1_data_4094 },
+};
+
+INPUTNODE lbl_1_data_4094 = {
+    lbl_1_data_2CD8, lbl_1_data_2CE8, 1, 0,
+    { &lbl_1_data_40A4 },
+};
+
+INPUTNODE lbl_1_data_40A4 = {
+    lbl_1_data_2CF8, lbl_1_data_2D08, 1, 0,
+    { &lbl_1_data_40B4 },
+};
+
+INPUTNODE lbl_1_data_40B4 = {
+    lbl_1_data_2D18, lbl_1_data_2D28, 1, 0,
+    { &lbl_1_data_40C4 },
+};
+
+INPUTNODE lbl_1_data_40C4 = {
+    lbl_1_data_2D38, lbl_1_data_2D54, 1, 0,
+    { &lbl_1_data_40D4 },
+};
+
+INPUTNODE lbl_1_data_40D4 = {
+    lbl_1_data_2D64, lbl_1_data_2D74, 1, 0,
+    { &lbl_1_data_40E4 },
+};
+
+INPUTNODE lbl_1_data_40E4 = {
+    lbl_1_data_2D84, lbl_1_data_2D94, 1, 0,
+    { &lbl_1_data_40F4 },
+};
+
+INPUTNODE lbl_1_data_40F4 = {
+    lbl_1_data_2DA4, lbl_1_data_2DB4, 1, 0,
+    { &lbl_1_data_4104 },
+};
+
+INPUTNODE lbl_1_data_4104 = {
+    lbl_1_data_2DC4, lbl_1_data_2DD4, 1, 0,
+    { &lbl_1_data_4114 },
+};
+
+INPUTNODE lbl_1_data_4114 = {
+    lbl_1_data_2DE4, lbl_1_data_2DF4, 1, 0,
+    { &lbl_1_data_4124 },
+};
+
+INPUTNODE lbl_1_data_4124 = {
+    lbl_1_data_538, NULL, 1, 0,
+    { NULL },
+};
+
+#else
 u32 lbl_1_data_2E04[4] = {
     (u32 )&lbl_1_data_528, 0x00000000, 0x00010000, (u32 )&lbl_1_data_4040,
 };
@@ -4448,7 +6227,302 @@ u32 lbl_1_data_4114[4] = {
 u32 lbl_1_data_4124[4] = {
     (u32 )&lbl_1_data_538, 0x00000000, 0x00010000, 0x00000000,
 };
+#endif
 
+#ifdef TARGET_PC
+/* The first original slot is lbl_1_bss_7810 (0x10 bytes, too small for INPUTNODE); it only had its counter cleared. */
+INPUTNODE *lbl_1_data_4134[290] = {
+    &lbl_1_data_2ED4,
+    &lbl_1_data_2EE4,
+    &lbl_1_data_2EFC,
+    &lbl_1_data_2F0C,
+    &lbl_1_data_2F20,
+    &lbl_1_data_2F30,
+    &lbl_1_data_2F40,
+    &lbl_1_data_2F50,
+    &lbl_1_data_2F60,
+    &lbl_1_data_2F70,
+    &lbl_1_data_2F88,
+    &lbl_1_data_2F98,
+    &lbl_1_data_2FA8,
+    &lbl_1_data_2FB8,
+    &lbl_1_data_2FC8,
+    &lbl_1_data_2FD8,
+    &lbl_1_data_2FE8,
+    &lbl_1_data_2FF8,
+    &lbl_1_data_3008,
+    &lbl_1_data_3020,
+    &lbl_1_data_3030,
+    &lbl_1_data_3044,
+    &lbl_1_data_3054,
+    &lbl_1_data_3064,
+    &lbl_1_data_3074,
+    &lbl_1_data_3084,
+    &lbl_1_data_3094,
+    &lbl_1_data_30A4,
+    &lbl_1_data_30B4,
+    &lbl_1_data_30C4,
+    &lbl_1_data_30D4,
+    &lbl_1_data_30E4,
+    &lbl_1_data_30F4,
+    &lbl_1_data_3104,
+    &lbl_1_data_3114,
+    &lbl_1_data_3124,
+    &lbl_1_data_3134,
+    &lbl_1_data_3144,
+    &lbl_1_data_3154,
+    &lbl_1_data_3164,
+    &lbl_1_data_3174,
+    &lbl_1_data_3184,
+    &lbl_1_data_3194,
+    &lbl_1_data_31A4,
+    &lbl_1_data_31B4,
+    &lbl_1_data_31C4,
+    &lbl_1_data_31D4,
+    &lbl_1_data_31E4,
+    &lbl_1_data_31F4,
+    &lbl_1_data_3204,
+    &lbl_1_data_3214,
+    &lbl_1_data_3224,
+    &lbl_1_data_3234,
+    &lbl_1_data_3244,
+    &lbl_1_data_3254,
+    &lbl_1_data_3264,
+    &lbl_1_data_3274,
+    &lbl_1_data_3284,
+    &lbl_1_data_3294,
+    &lbl_1_data_32A4,
+    &lbl_1_data_32B4,
+    &lbl_1_data_32C4,
+    &lbl_1_data_32D4,
+    &lbl_1_data_32E4,
+    &lbl_1_data_32F4,
+    &lbl_1_data_3304,
+    &lbl_1_data_3314,
+    &lbl_1_data_3324,
+    &lbl_1_data_3334,
+    &lbl_1_data_3344,
+    &lbl_1_data_3354,
+    &lbl_1_data_3364,
+    &lbl_1_data_3374,
+    &lbl_1_data_3384,
+    &lbl_1_data_3394,
+    &lbl_1_data_33A4,
+    &lbl_1_data_33B4,
+    &lbl_1_data_33C4,
+    &lbl_1_data_33D4,
+    &lbl_1_data_33E4,
+    &lbl_1_data_33F4,
+    &lbl_1_data_3404,
+    &lbl_1_data_3414,
+    &lbl_1_data_3424,
+    &lbl_1_data_3434,
+    &lbl_1_data_3444,
+    &lbl_1_data_3454,
+    &lbl_1_data_3464,
+    &lbl_1_data_3474,
+    &lbl_1_data_3484,
+    &lbl_1_data_3494,
+    &lbl_1_data_34A4,
+    &lbl_1_data_34B4,
+    &lbl_1_data_34C4,
+    &lbl_1_data_34D4,
+    &lbl_1_data_34E4,
+    &lbl_1_data_34F4,
+    &lbl_1_data_3504,
+    &lbl_1_data_3514,
+    &lbl_1_data_3524,
+    &lbl_1_data_3534,
+    &lbl_1_data_3544,
+    &lbl_1_data_3554,
+    &lbl_1_data_3564,
+    &lbl_1_data_3574,
+    &lbl_1_data_3584,
+    &lbl_1_data_3594,
+    &lbl_1_data_35A4,
+    &lbl_1_data_35B4,
+    &lbl_1_data_35C4,
+    &lbl_1_data_35D4,
+    &lbl_1_data_35E4,
+    &lbl_1_data_35F4,
+    &lbl_1_data_3604,
+    &lbl_1_data_3614,
+    &lbl_1_data_3624,
+    &lbl_1_data_3634,
+    &lbl_1_data_3644,
+    &lbl_1_data_3654,
+    &lbl_1_data_3664,
+    &lbl_1_data_3674,
+    &lbl_1_data_3684,
+    &lbl_1_data_3694,
+    &lbl_1_data_36A4,
+    &lbl_1_data_36B4,
+    &lbl_1_data_36C4,
+    &lbl_1_data_36D4,
+    &lbl_1_data_36E4,
+    &lbl_1_data_36F4,
+    &lbl_1_data_3704,
+    &lbl_1_data_3714,
+    &lbl_1_data_3724,
+    &lbl_1_data_3734,
+    &lbl_1_data_3744,
+    &lbl_1_data_3754,
+    &lbl_1_data_3764,
+    &lbl_1_data_3774,
+    &lbl_1_data_3784,
+    &lbl_1_data_3794,
+    &lbl_1_data_37A4,
+    &lbl_1_data_37B4,
+    &lbl_1_data_37C4,
+    &lbl_1_data_37D4,
+    &lbl_1_data_37E4,
+    &lbl_1_data_37F4,
+    &lbl_1_data_3804,
+    &lbl_1_data_3814,
+    &lbl_1_data_3824,
+    &lbl_1_data_3834,
+    &lbl_1_data_3844,
+    &lbl_1_data_3854,
+    &lbl_1_data_3864,
+    &lbl_1_data_3874,
+    &lbl_1_data_3884,
+    &lbl_1_data_3894,
+    &lbl_1_data_38A4,
+    &lbl_1_data_38B4,
+    &lbl_1_data_38C4,
+    &lbl_1_data_38D4,
+    &lbl_1_data_38E4,
+    &lbl_1_data_38F4,
+    &lbl_1_data_3904,
+    &lbl_1_data_3914,
+    &lbl_1_data_3924,
+    &lbl_1_data_3934,
+    &lbl_1_data_3944,
+    &lbl_1_data_3954,
+    &lbl_1_data_3964,
+    &lbl_1_data_3974,
+    &lbl_1_data_3984,
+    &lbl_1_data_3994,
+    &lbl_1_data_39A4,
+    &lbl_1_data_39B4,
+    &lbl_1_data_39C4,
+    &lbl_1_data_39D4,
+    &lbl_1_data_39E4,
+    &lbl_1_data_39F4,
+    &lbl_1_data_3A04,
+    &lbl_1_data_3A14,
+    &lbl_1_data_3A24,
+    &lbl_1_data_3A34,
+    &lbl_1_data_3A44,
+    &lbl_1_data_3A54,
+    &lbl_1_data_3A64,
+    &lbl_1_data_3A74,
+    &lbl_1_data_3A84,
+    &lbl_1_data_3A94,
+    &lbl_1_data_3AA4,
+    &lbl_1_data_3AB4,
+    &lbl_1_data_3AC4,
+    &lbl_1_data_3AD4,
+    &lbl_1_data_3AE4,
+    &lbl_1_data_3AF4,
+    &lbl_1_data_3B04,
+    &lbl_1_data_3B14,
+    &lbl_1_data_3B24,
+    &lbl_1_data_3B38,
+    &lbl_1_data_3B58,
+    &lbl_1_data_3B68,
+    &lbl_1_data_3B7C,
+    &lbl_1_data_3B9C,
+    &lbl_1_data_3BAC,
+    &lbl_1_data_3BBC,
+    &lbl_1_data_3BD0,
+    &lbl_1_data_3BF0,
+    &lbl_1_data_3C00,
+    &lbl_1_data_3C10,
+    &lbl_1_data_3C20,
+    &lbl_1_data_3C30,
+    &lbl_1_data_3B48,
+    &lbl_1_data_3B8C,
+    &lbl_1_data_3BE0,
+    &lbl_1_data_3C40,
+    &lbl_1_data_3C50,
+    &lbl_1_data_3C64,
+    &lbl_1_data_3C84,
+    &lbl_1_data_3C94,
+    &lbl_1_data_3CA8,
+    &lbl_1_data_3CC8,
+    &lbl_1_data_3CD8,
+    &lbl_1_data_3CE8,
+    &lbl_1_data_3CF8,
+    &lbl_1_data_3D08,
+    &lbl_1_data_3D1C,
+    &lbl_1_data_3D3C,
+    &lbl_1_data_3D4C,
+    &lbl_1_data_3C74,
+    &lbl_1_data_3CB8,
+    &lbl_1_data_3D2C,
+    &lbl_1_data_3D5C,
+    &lbl_1_data_3D6C,
+    &lbl_1_data_3D7C,
+    &lbl_1_data_3D90,
+    &lbl_1_data_3DB0,
+    &lbl_1_data_3DC0,
+    &lbl_1_data_3DD0,
+    &lbl_1_data_3DE0,
+    &lbl_1_data_3DF0,
+    &lbl_1_data_3E00,
+    &lbl_1_data_3E10,
+    &lbl_1_data_3E20,
+    &lbl_1_data_3E30,
+    &lbl_1_data_3DA0,
+    &lbl_1_data_3E40,
+    &lbl_1_data_3E50,
+    &lbl_1_data_3E60,
+    &lbl_1_data_3E74,
+    &lbl_1_data_3E94,
+    &lbl_1_data_3EA4,
+    &lbl_1_data_3EB8,
+    &lbl_1_data_3ED8,
+    &lbl_1_data_3EE8,
+    &lbl_1_data_3EF8,
+    &lbl_1_data_3F08,
+    &lbl_1_data_3F18,
+    &lbl_1_data_3F28,
+    &lbl_1_data_3F38,
+    &lbl_1_data_3E84,
+    &lbl_1_data_3EC8,
+    &lbl_1_data_3F48,
+    &lbl_1_data_3F58,
+    &lbl_1_data_3F68,
+    &lbl_1_data_3F78,
+    &lbl_1_data_3F8C,
+    &lbl_1_data_3FAC,
+    &lbl_1_data_3FBC,
+    &lbl_1_data_3FCC,
+    &lbl_1_data_3FE0,
+    &lbl_1_data_4000,
+    &lbl_1_data_4010,
+    &lbl_1_data_4020,
+    &lbl_1_data_4030,
+    &lbl_1_data_3F9C,
+    &lbl_1_data_3FF0,
+    &lbl_1_data_4040,
+    &lbl_1_data_4050,
+    &lbl_1_data_4060,
+    &lbl_1_data_4074,
+    &lbl_1_data_4094,
+    &lbl_1_data_40A4,
+    &lbl_1_data_40B4,
+    &lbl_1_data_40C4,
+    &lbl_1_data_40D4,
+    &lbl_1_data_40E4,
+    &lbl_1_data_40F4,
+    &lbl_1_data_4104,
+    &lbl_1_data_4114,
+    &lbl_1_data_4084,
+    &lbl_1_data_4124,
+};
+#else
 u8 *lbl_1_data_4134[290] = {
     (u8 *)&lbl_1_bss_7810, (u8 *)&lbl_1_data_2ED4, (u8 *)&lbl_1_data_2EE4, 
     (u8 *)&lbl_1_data_2EFC, (u8 *)&lbl_1_data_2F0C, (u8 *)&lbl_1_data_2F20, 
@@ -4548,6 +6622,7 @@ u8 *lbl_1_data_4134[290] = {
     (u8 *)&lbl_1_data_40F4, (u8 *)&lbl_1_data_4104, (u8 *)&lbl_1_data_4114, 
     (u8 *)&lbl_1_data_4084, (u8 *)&lbl_1_data_4124,
 };
+#endif
 
 u32 gap_04_000045BC_data[1] = {
     0x00000000,
@@ -4631,7 +6706,11 @@ void fn_1_BAC4(INPUTWORK *work, INPUTMAIN *main)
 
     playerNo = main->playerConf->unk0->playerNo;
 
+#ifdef TARGET_PC
+    memset(work, 0, sizeof(INPUTWORK));
+#else
     memset(work, 0, 0x24);
+#endif
     work->main = main;
 
     work->type = GwPlayerConf[playerNo].type;
@@ -4654,15 +6733,15 @@ void fn_1_BAC4(INPUTWORK *work, INPUTMAIN *main)
     work->dif = v1;
 
     if (work->dif == 0) {
-        t1 = lbl_1_data_2E14;
+        t1 = INPUT_TBL(lbl_1_data_2E14);
     } else {
         if (work->dif == 1) {
-            t2 = lbl_1_data_2E38;
+            t2 = INPUT_TBL(lbl_1_data_2E38);
         } else {
             if (work->dif == 2) {
-                t3 = lbl_1_data_2E74;
+                t3 = INPUT_TBL(lbl_1_data_2E74);
             } else {
-                t3 = lbl_1_data_2EB0;
+                t3 = INPUT_TBL(lbl_1_data_2EB0);
             }
             t2 = t3;
         }
@@ -4671,6 +6750,10 @@ void fn_1_BAC4(INPUTWORK *work, INPUTMAIN *main)
     work->dataTable = t1;
 
     for (i = 0; lbl_1_data_4134[i] != NULL; i++) {
+#ifdef TARGET_PC
+        lbl_1_data_4134[i]->uses = 0;
+#else
         *(u16 *)(lbl_1_data_4134[i] + 0xA) = 0;
+#endif
     }
 }

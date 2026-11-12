@@ -33,6 +33,18 @@ typedef struct InputWork_s {
     f32 smoothY; /* 0x20 */
 } INPUTWORK;
 
+#ifdef TARGET_PC
+/* CPU input script node (GC layout: ptr, ptr, u16 count, u16 uses, ptr next[count]).
+ * pathA/pathB point at {s16 count; s16 pad; Vec pts[count]} records. */
+typedef struct InputNode_s {
+    u32 *pathA;
+    u32 *pathB;
+    u16 count;
+    u16 uses;
+    struct InputNode_s *next[12];
+} INPUTNODE;
+#endif
+
 typedef struct InputMain_s {
     PADOWNER *playerConf;
     INPUTWORK work;
