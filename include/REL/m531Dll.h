@@ -112,7 +112,7 @@ void Hu3DModelScaleSet(HU3DMODELID modelId, float x, float y, float z);
 HU3DMOTID Hu3DMotionCreate(void *data);
 HU3DMOTID Hu3DMotionSet(HU3DMODELID modelId, HU3DMOTID motId);
 void Hu3DMotionKill(HU3DMOTID motId);
-void Hu3DMotionShiftSet(HU3DMOTID motId, float start, float end);
+void Hu3DMotionShiftSet(HU3DMODELID modelId, HU3DMOTID motId, float start, float end, u32 attr);
 HU3DMOTID Hu3DJointMotion(HU3DMODELID modelId, void *data);
 SHARED_SYM extern HU3DCAMERA Hu3DCamera[16];
 SHARED_SYM extern HU3DMODEL Hu3DData[512];
