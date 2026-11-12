@@ -38,8 +38,7 @@ typedef struct M513Input_s {
 
 extern "C" {
 
-void fn_1_72AC(s32 padNo, s32 arg);
-void fn_1_6D0C(void *unused, M513Input *in, s32 arg);
+void fn_1_72AC(void *work, Mtx mtx);
 
 M513Input *fn_1_6618(M513Input *self, s16 flag);
 M513Input *fn_1_6B60(M513Input *self, s16 flag);
@@ -158,11 +157,12 @@ M513Input *fn_1_6CA0(M513Input *self, s16 flag)
     return self;
 }
 
-void fn_1_6D0C(void *unused, M513Input *in, s32 arg)
+// Particle hook of the torch flame (the torch itself lives in taimatsu.cpp).
+void fn_1_6D0C(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx)
 {
-    s32 pad = in->u.padNo;
+    void *work = particle->work;
 
-    fn_1_72AC(pad, arg);
+    fn_1_72AC(work, mtx);
 }
 
 }

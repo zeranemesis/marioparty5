@@ -101,6 +101,8 @@ s32 lbl_1_bss_20;
 M513Rand lbl_1_bss_24;
 u8 lbl_1_bss_9E8;
 M513Master *lbl_1_bss_9EC;
+M513IndHook *lbl_1_bss_9F0;
+s32 lbl_1_bss_9F4;
 
 // ---------------------------------------------------------------- code
 

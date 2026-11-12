@@ -9,6 +9,7 @@
 #include "game/memory.h"
 #include "game/data.h"
 #include "game/mg/timer.h"
+#include "game/sprite.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -166,6 +167,24 @@ typedef struct M513Sphere_s {
     Vec pos;
     f32 radius;
 } M513Sphere;
+
+/* "Indicator" singleton (powerind.cpp). It owns a 640x480 RGB565 copy of the
+ * frame buffer, so the whole texture is part of the object; the sub animations
+ * are used as particle textures by the other units. */
+typedef struct M513IndHook_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    u8 pad10[0x20];
+    GXTexObj texObj;
+    u8 pad50[0x10];
+    u16 frameBuf[0x280 * 0x1E0];
+    f32 fade[3];
+    ANIMDATA *sprAnim[32];
+    ANIMDATA *subAnim[4];
+} M513IndHook;
+
+extern M513IndHook *lbl_1_bss_9F0;
 
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
