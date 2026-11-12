@@ -286,17 +286,11 @@ f32 fn_1_EEF0(f32 a, f32 b, f32 limit)
 {
     f32 d;
     f32 ret;
-    f32 lim = limit;
-    s32 sa = (s32)(182.04444444444445 * a);
-    s32 ia = sa;
-    s32 sb = (s32)(182.04444444444445 * b);
-    s32 ib = sb;
-    s32 n = ia - ib;
-    s32 w = (u16)(n - 0x8000) - 0x8000;
-    s32 w2 = w;
+    f32 r1 = fn_1_EE38(a, b);
+    f32 r2 = r1;
+    f32 r3 = r2;
 
-    d = 0.0054931640625 * w2;
-    limit = lim;
+    d = r3;
     if (d < -limit) {
         ret = -limit;
     } else if (d > limit) {
@@ -482,7 +476,9 @@ void *fn_1_F70C(Player *self, s16 flag)
 s16 fn_1_F764(Player *self, s32 dataNum)
 {
     s16 id = CharMotionCreate(self->charNo, dataNum);
-    fn_1_12804(&self->mot, self->mot.data + self->mot.size, 1, &id);
+    s16 **pd = &self->mot.data;
+    s16 *end = *pd + self->mot.size;
+    fn_1_12804(&self->mot, end, 1, &id);
     return id;
 }
 
@@ -565,7 +561,6 @@ void fn_1_FAA0(Player *self)
     Vec target;
     Vec dir;
     f32 mag;
-    f32 d;
     f32 step;
     f32 absStep;
 
@@ -583,14 +578,7 @@ void fn_1_FAA0(Player *self)
         self->pos.x = 0.0f;
         self->pos.z = 0.0f;
     }
-    d = 0.0054931640625 * ((u16)((0 - (s32)(182.04444444444445 * self->rotY)) - 0x8000) - 0x8000);
-    if (d < -13.666667f) {
-        step = -13.666667f;
-    } else if (d > 13.666667f) {
-        step = 13.666667f;
-    } else {
-        step = d;
-    }
+    step = fn_1_EEF0(0.0f, self->rotY, 13.666667f);
     self->rotY = self->rotY + step;
     if (step < 0.0f) {
         absStep = -step;
@@ -1067,10 +1055,19 @@ void fn_1_11394(Player *self, Vec *out)
 
 void fn_1_11D1C(Player *self)
 {
-    if ((s32)(((1650.0f + self->prev.x) / 100.0f) / 2.2f) != (s32)(((1650.0f + self->pos.x) / 100.0f) / 2.2f)) {
+    f32 gx0 = (1650.0f + self->prev.x) / 100.0f;
+    f32 gz0 = (1210.0f + self->prev.z) / 100.0f;
+    s32 ix0 = (s32)(gx0 / 2.2f);
+    s32 iz0 = (s32)(gz0 / 2.2f);
+    f32 gx1 = (1650.0f + self->pos.x) / 100.0f;
+    f32 gz1 = (1210.0f + self->pos.z) / 100.0f;
+    s32 ix1 = (s32)(gx1 / 2.2f);
+    s32 iz1 = (s32)(gz1 / 2.2f);
+
+    if (ix0 != ix1) {
         self->pos.x = self->prev.x;
     }
-    if ((s32)(((1210.0f + self->prev.z) / 100.0f) / 2.2f) != (s32)(((1210.0f + self->pos.z) / 100.0f) / 2.2f)) {
+    if (iz0 != iz1) {
         self->pos.z = self->prev.z;
     }
 }
@@ -1144,9 +1141,11 @@ s16 *fn_1_126CC(PlayerVec *vec, u32 idx)
 
 void fn_1_12744(PlayerNode *head, void (*fn)(Player *))
 {
-    void (*f)(Player *) = fn;
+    PlayerNode *h = head;
+    PlayerNode *first = h->next;
+    PlayerNode *first2 = first;
 
-    fn_1_127A4(head->next, head, f);
+    fn_1_127A4(first2, h, fn);
 }
 
 void fn_1_127A4(PlayerNode *first, PlayerNode *end, void (*fn)(Player *))
@@ -1165,30 +1164,51 @@ void fn_1_12804(PlayerVec *vec, s16 *pos, u32 n, s16 *val)
 {
     s16 *src = val;
     u32 maxSize;
+    u32 max1;
+    u32 max2;
+    u32 max3;
+    PlayerVec *v1;
+    PlayerVec *v2;
+    PlayerVec *v3;
+    s16 *base;
+    s16 *newData;
+    s16 *newData2;
+    s16 **pd;
     s16 *end;
     s16 *old;
     s16 *mem;
     s16 *dst;
     s32 tail;
     s32 off;
+    s32 cnt;
+    u32 capNow;
     u32 newSize;
     u32 cap;
     u32 k;
 
     if (n != 0) {
+        v1 = vec;
         maxSize = 0x7FFFFFFF;
-        if (n > maxSize || vec->size > maxSize - n) {
+        max1 = maxSize;
+        max2 = max1;
+        max3 = max2;
+        if (n > max3 || vec->size > max3 - n) {
             fn_1_60(PLAYER_STDERR, lbl_1_data_355E);
             abort();
         }
-        if (vec->size + n <= vec->cap) {
-            end = vec->data + vec->size;
+        v3 = vec;
+        u32 *pcap = &v3->cap;
+        capNow = *pcap;
+        if (vec->size + n <= capNow) {
+            pd = &vec->data;
+            end = *pd + vec->size;
             tail = end - pos;
             if (end - (tail - n) <= src && src < end) {
                 src += n;
             }
             if (tail != 0) {
-                memmove(end + n - tail, pos, tail * 2);
+                cnt = end - pos;
+                memmove(end + n - cnt, pos, cnt * 2);
             }
             dst = pos;
             for (k = n; k != 0; k--) {
@@ -1198,51 +1218,79 @@ void fn_1_12804(PlayerVec *vec, s16 *pos, u32 n, s16 *val)
             vec->size = vec->size + n;
             return;
         }
-        off = pos - vec->data;
-        old = vec->data;
+        pd = &vec->data;
+        base = *pd;
+        off = pos - base;
+        pd = &vec->data;
+        old = *pd;
         newSize = vec->size + n;
-        cap = vec->cap != 0 ? vec->cap : 1;
+        v1 = vec;
+        if (v1->cap != 0) {
+            v2 = vec;
+            cap = v2->cap;
+        } else {
+            cap = 1;
+        }
         while (newSize > cap) {
-            if (cap < (maxSize >> 1)) {
+            if (cap < (max2 >> 1)) {
                 cap *= 2;
             } else {
-                cap = maxSize;
+                cap = max2;
             }
         }
+        pd = &vec->data;
         mem = (s16 *)fn_1_104(cap * 2);
         if (mem == 0) {
             fn_1_60(PLAYER_STDERR, lbl_1_data_357B);
             abort();
         }
-        vec->data = mem;
-        dst = vec->data + off;
+        newData = mem;
+        *pd = newData;
+        pd = &vec->data;
+        dst = *pd + off;
         for (k = n; k != 0; k--) {
             *dst = *src;
             dst++;
         }
         if (old != 0) {
-            memcpy(vec->data, old, off * 2);
-            memcpy(vec->data + off + n, old + off, (vec->size - off) * 2);
+            pd = &vec->data;
+            newData2 = *pd;
+            cnt = (old + off) - old;
+            memcpy(newData2, old, cnt * 2);
+            pd = &vec->data;
+            newData2 = *pd + (off + n);
+            cnt = (old + vec->size) - (old + off);
+            memcpy(newData2, old + off, cnt * 2);
             fn_1_21C(old);
         }
         vec->size = newSize;
-        vec->cap = cap;
+        v1 = vec;
+        v1->cap = cap;
     }
 }
 
 void fn_1_12BB4(PlayerVec *vec, u32 n)
 {
     u32 maxSize;
+    u32 max1;
+    PlayerVec *v1;
+    PlayerVec *v2;
+    s16 **pd;
     s16 *old;
     s16 *mem;
+    s32 cnt;
 
     if (n > vec->cap) {
         maxSize = 0x7FFFFFFF;
-        if (n > maxSize) {
+        max1 = maxSize;
+        if (n > max1) {
             fn_1_60(PLAYER_STDERR, lbl_1_data_3595);
             abort();
         }
-        old = vec->data;
+        pd = &vec->data;
+        old = *pd;
+        v1 = vec;
+        v2 = v1;
         mem = (s16 *)fn_1_104(n * 2);
         if (mem == 0) {
             fn_1_60(PLAYER_STDERR, lbl_1_data_357B);
@@ -1250,7 +1298,8 @@ void fn_1_12BB4(PlayerVec *vec, u32 n)
         }
         vec->data = mem;
         if (old != 0) {
-            memcpy(vec->data, old, (vec->size) * 2);
+            cnt = (old + vec->size) - old;
+            memcpy(vec->data, old, cnt * 2);
             fn_1_21C(old);
         }
         vec->cap = n;

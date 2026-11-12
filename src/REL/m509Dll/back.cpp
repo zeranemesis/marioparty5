@@ -4,7 +4,14 @@ extern "C" {
 double cos(double x);
 double sin(double x);
 s32 irandom__7CRandomFv(void);
+#ifdef TARGET_PC
+/* the host ABI returns the double CRandom::randomMantissa produces in a different register than a float */
+double randomMantissa__7CRandomFv(void);
+#define BACK_RANDOM_MANTISSA() ((f32)randomMantissa__7CRandomFv())
+#else
 f32 randomMantissa__7CRandomFv(void);
+#define BACK_RANDOM_MANTISSA() randomMantissa__7CRandomFv()
+#endif
 void fn_1_3D30(s16 *model, u32 attr);
 void fn_1_3FAC(s16 *model, u16 cam);
 }
@@ -108,28 +115,28 @@ void fn_1_D05C(Back *self, BackItem *item)
     }
     switch (r) {
     case 0:
-        px = 100.0f * (15.0f * (randomMantissa__7CRandomFv() - 0.5f));
+        px = 100.0f * (15.0f * (BACK_RANDOM_MANTISSA() - 0.5f));
         pz = -2500.0f;
-        vx = 20.0f * (randomMantissa__7CRandomFv() - 0.5f);
-        vz = 10.0f + 20.0f * randomMantissa__7CRandomFv();
+        vx = 20.0f * (BACK_RANDOM_MANTISSA() - 0.5f);
+        vz = 10.0f + 20.0f * BACK_RANDOM_MANTISSA();
         break;
     case 1:
-        px = 100.0f * (15.0f * (randomMantissa__7CRandomFv() - 0.5f));
+        px = 100.0f * (15.0f * (BACK_RANDOM_MANTISSA() - 0.5f));
         pz = 2500.0f;
-        vx = 20.0f * (randomMantissa__7CRandomFv() - 0.5f);
-        vz = -(20.0f * randomMantissa__7CRandomFv()) - 10.0f;
+        vx = 20.0f * (BACK_RANDOM_MANTISSA() - 0.5f);
+        vz = -(20.0f * BACK_RANDOM_MANTISSA()) - 10.0f;
         break;
     case 2:
         px = -3000.0f;
-        pz = 100.0f * (12.0f * (randomMantissa__7CRandomFv() - 0.5f));
-        vx = 10.0f + 20.0f * randomMantissa__7CRandomFv();
-        vz = 20.0f * (randomMantissa__7CRandomFv() - 0.5f);
+        pz = 100.0f * (12.0f * (BACK_RANDOM_MANTISSA() - 0.5f));
+        vx = 10.0f + 20.0f * BACK_RANDOM_MANTISSA();
+        vz = 20.0f * (BACK_RANDOM_MANTISSA() - 0.5f);
         break;
     case 3:
         px = 3000.0f;
-        pz = 100.0f * (12.0f * (randomMantissa__7CRandomFv() - 0.5f));
-        vx = -(20.0f * randomMantissa__7CRandomFv()) - 10.0f;
-        vz = 20.0f * (randomMantissa__7CRandomFv() - 0.5f);
+        pz = 100.0f * (12.0f * (BACK_RANDOM_MANTISSA() - 0.5f));
+        vx = -(20.0f * BACK_RANDOM_MANTISSA()) - 10.0f;
+        vz = 20.0f * (BACK_RANDOM_MANTISSA() - 0.5f);
         break;
     }
     item->scale = 0.0f;
@@ -139,12 +146,12 @@ void fn_1_D05C(Back *self, BackItem *item)
     item->vel.x = vx;
     item->vel.y = 0.0f;
     item->vel.z = vz;
-    ry = 3.141592653589793 * (60.0f * randomMantissa__7CRandomFv()) / 180.0;
+    ry = 3.141592653589793 * (60.0f * BACK_RANDOM_MANTISSA()) / 180.0;
     item->rot.x = 0.0f;
     item->rot.y = ry;
     item->rot.z = 0.0f;
-    a = randomMantissa__7CRandomFv() - 0.5f;
-    b = 180.0f * randomMantissa__7CRandomFv();
+    a = BACK_RANDOM_MANTISSA() - 0.5f;
+    b = 180.0f * BACK_RANDOM_MANTISSA();
     item->rotVel.x = 0.0f;
     item->rotVel.y = b;
     item->rotVel.z = 5.0f * a;
