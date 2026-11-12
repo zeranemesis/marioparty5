@@ -401,10 +401,10 @@ static f32 markOfs[11][2] = {
     { -79.356f, 265.9656f },
 };
 
-static s32 seHandle[2];
-static s32 bgmStream;
-static OMOBJ *workObj;
 static OMOBJMAN *objman;
+static OMOBJ *workObj;
+static s32 bgmStream;
+static s32 seHandle[2];
 
 static const u16 camBit[4] = { 1, 2, 4, 8 };
 
@@ -436,9 +436,10 @@ void ObjectSetup(void)
 
     objman = omInitObjMan(0xA, 0x2000);
     omGameSysInit(objman);
-    workObj = omAddObjEx(objman, 0x65, 0, 0, -1, fn_1_1BC8);
-    workObj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M577Work), HU_MEMNUM_OVL);
-    w = workObj->data;
+    obj = omAddObjEx(objman, 0x65, 0, 0, -1, fn_1_1BC8);
+    workObj = obj;
+    obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M577Work), HU_MEMNUM_OVL);
+    w = obj->data;
     w->active = 0;
     fn_1_1DD8(w);
     fn_1_1D50();
@@ -483,75 +484,79 @@ void fn_1_314(s16 mode, s16 frameNo)
     M577Work *w = workObj->data;
     M577Sled *sled;
     f32 rotX;
+    f32 y;
+    f32 z;
     f32 t;
 
-    if ((u32)w->state <= 6U) {
-        switch (w->state) {
-            case 0:
-                MgSeqModeChangeOff();
-                w->sub = 0;
-                w->timer = 0;
+    switch (w->state) {
+        case 0:
+            MgSeqModeChangeOff();
+            w->sub = 0;
+            w->timer = 0;
+            sled = w->team[0].player[0]->sled;
+            sled->pos.y -= -30.0f;
+            sled->pole->pos.y -= 30.0f;
+            Hu3DModelPosSetV(sled->mSled, &sled->pos);
+            Hu3DModelPosSetV(sled->mShadow, &sled->pos);
+            Hu3DModelPosSetV(sled->pole->m28, &sled->pole->pos);
+            Hu3DModelPosSetV(sled->pole->m2C, &sled->pole->pos);
+            HuAudFXPlay(0x940);
+            w->state++;
+        case 1:
+            w->timer++;
+            if (w->timer == 0x96) {
+                w->state++;
+            }
+            t = (f32)w->timer / 150.0f;
+            rotX = -20.0 * (1.0 - sin(M_PI * (90.0f * t) / 180.0));
+            z = 16000.0 * -sin(M_PI * rotX / 180.0);
+            y = 16000.0 * cos(M_PI * rotX / 180.0) - 16000.0;
+            w->cam[0].target.y = y + camInit[0].target.y;
+            w->cam[0].target.z = z + camInit[0].target.z;
+            w->cam[0].rot.y = rotX + camInit[0].rot.y;
+            if (w->timer > 0x3C && w->timer <= 0x5A) {
                 sled = w->team[0].player[0]->sled;
-                sled->pos.y -= -30.0f;
-                sled->pole->pos.y -= 30.0f;
+                sled->pos.y += -1.0f;
+                sled->pole->pos.y += 1.0f;
                 Hu3DModelPosSetV(sled->mSled, &sled->pos);
                 Hu3DModelPosSetV(sled->mShadow, &sled->pos);
                 Hu3DModelPosSetV(sled->pole->m28, &sled->pole->pos);
                 Hu3DModelPosSetV(sled->pole->m2C, &sled->pole->pos);
-                HuAudFXPlay(0x940);
+            }
+            break;
+        case 2:
+            w->timer = 0;
+            w->state++;
+        case 3:
+            w->timer++;
+            if (w->timer == 0x1E) {
                 w->state++;
-            case 1:
-                w->timer++;
-                if (w->timer == 0x96) {
-                    w->state++;
-                }
-                rotX = -20.0 * (1.0 - sin(M_PI * (90.0f * ((f32)w->timer / 150.0f)) / 180.0));
-                w->cam[0].target.y = 16000.0 * cos(M_PI * rotX / 180.0) - 16000.0 + camInit[0].target.y;
-                w->cam[0].target.z = 16000.0 * -sin(M_PI * rotX / 180.0) + camInit[0].target.z;
-                w->cam[0].rot.y = rotX + camInit[0].rot.y;
-                if (w->timer > 0x3C && w->timer <= 0x5A) {
-                    sled = w->team[0].player[0]->sled;
-                    sled->pos.y += -1.0f;
-                    sled->pole->pos.y += 1.0f;
-                    Hu3DModelPosSetV(sled->mSled, &sled->pos);
-                    Hu3DModelPosSetV(sled->mShadow, &sled->pos);
-                    Hu3DModelPosSetV(sled->pole->m28, &sled->pole->pos);
-                    Hu3DModelPosSetV(sled->pole->m2C, &sled->pole->pos);
-                }
-                break;
-            case 2:
-                w->timer = 0;
+            }
+            t = (f32)w->timer / 30.0f;
+            w->split.x = 640.0f * (1.0f - t) + 320.0f * t;
+            break;
+        case 4:
+            espAttrReset(w->esp[0], 4);
+            espAttrReset(w->esp[1], 4);
+            espAttrReset(w->esp[2], 4);
+            w->timer = 0;
+            w->state++;
+        case 5:
+            w->timer++;
+            if (w->timer == 0x1E) {
                 w->state++;
-            case 3:
-                w->timer++;
-                if (w->timer == 0x1E) {
-                    w->state++;
-                }
-                t = (f32)w->timer / 30.0f;
-                w->split.x = 640.0f * (1.0f - t) + 320.0f * t;
-                break;
-            case 4:
-                espAttrReset(w->esp[0], 4);
-                espAttrReset(w->esp[1], 4);
-                espAttrReset(w->esp[2], 4);
-                w->timer = 0;
-                w->state++;
-            case 5:
-                w->timer++;
-                if (w->timer == 0x1E) {
-                    w->state++;
-                }
-                break;
-            case 6:
-                bgmStream = HuAudBGMPlay(0x34);
-                Hu3DModelAttrSet(w->stage[0].m0C, 1);
-                Hu3DModelAttrSet(w->stage[1].m0C, 1);
-                MgSeqModeNext();
-                break;
-        }
+            }
+            break;
+        case 6:
+            bgmStream = HuAudBGMPlay(0x34);
+            Hu3DModelAttrSet(w->stage[0].m0C, 1);
+            Hu3DModelAttrSet(w->stage[1].m0C, 1);
+            MgSeqModeNext();
+            break;
     }
     fn_1_2044(&w->split);
 }
+
 
 void fn_1_798(s16 mode, s16 frameNo)
 {
@@ -666,181 +671,180 @@ void fn_1_BF8(s16 mode, s16 frameNo)
     f32 t;
     s32 i;
 
-    if ((u32)w->state <= 8U) {
-        switch (w->state) {
-            case 0:
-                MgSeqModeChangeOff();
-                w->sub = 0;
-                if (w->unk1B5E < 0) {
-                    w->state = 1;
-                    w->team[0].done = 1;
-                    w->team[1].done = 1;
-                    return;
-                }
-                w->state = 4;
+    switch (w->state) {
+        case 0:
+            MgSeqModeChangeOff();
+            w->sub = 0;
+            if (w->unk1B5E < 0) {
+                w->state = 1;
+                w->team[0].done = 1;
+                w->team[1].done = 1;
                 return;
-            case 1:
-                if (w->team[0].func == fn_1_703C && w->team[1].func == fn_1_703C) {
-                    for (i = 0; i < 4; i++) {
-                        p = w->player[i];
-                        p->timer = 1;
-                        CharMotionShiftSet(p->charNo, p->obj->mtnId[8], 0.0f, 5.0f, 0x40000001);
-                    }
-                    w->timer = 0;
-                    w->state++;
-                    return;
-                }
-                break;
-            case 2:
-                w->timer++;
-                if (w->timer == 0x3C) {
-                    w->state++;
-                }
-                t = (f32)w->timer / 60.0f;
+            }
+            w->state = 4;
+            return;
+        case 1:
+            if (w->team[0].func == fn_1_703C && w->team[1].func == fn_1_703C) {
                 for (i = 0; i < 4; i++) {
                     p = w->player[i];
-                    p->rot.y = 180.0f * t;
-                    Hu3DModelRotSetV(p->mdlId, &p->rot);
-                    omSetRot(p->obj, p->rot.x, p->rot.y, p->rot.z);
+                    p->timer = 1;
+                    CharMotionShiftSet(p->charNo, p->obj->mtnId[8], 0.0f, 5.0f, 0x40000001);
                 }
+                w->timer = 0;
+                w->state++;
                 return;
-            case 3:
-                MgSeqModeNext();
-                return;
-            case 4:
-                if (w->team[w->unk1B5E ^ 1].func == fn_1_703C) {
-                    if (w->unk1B5E == 0) {
-                        if (w->team[0].func == fn_1_9380) {
-                            w->state++;
-                            return;
-                        }
-                    } else if (w->team[1].func == fn_1_9C08) {
+            }
+            break;
+        case 2:
+            w->timer++;
+            if (w->timer == 0x3C) {
+                w->state++;
+            }
+            t = (f32)w->timer / 60.0f;
+            for (i = 0; i < 4; i++) {
+                p = w->player[i];
+                p->rot.y = 180.0f * t;
+                Hu3DModelRotSetV(p->mdlId, &p->rot);
+                omSetRot(p->obj, p->rot.x, p->rot.y, p->rot.z);
+            }
+            return;
+        case 3:
+            MgSeqModeNext();
+            return;
+        case 4:
+            if (w->team[w->unk1B5E ^ 1].func == fn_1_703C) {
+                if (w->unk1B5E == 0) {
+                    if (w->team[0].func == fn_1_9380) {
                         w->state++;
                         return;
                     }
-                }
-                break;
-            case 5:
-                for (i = 0; i < 4; i++) {
-                    w->player[i]->timer = 1;
-                }
-                WipeColorSet(0xFF, 0xFF, 0xFF);
-                WipeCreate(2, 0, 0x3C);
-                w->sub = 0;
-                w->state++;
-            case 6:
-                if (WipeCheckEnd() == 0) {
+                } else if (w->team[1].func == fn_1_9C08) {
                     w->state++;
                     return;
                 }
-                break;
-            case 7:
-                team = &w->team[w->unk1B5E ^ 1];
-                for (i = 0; i < team->count; i++) {
-                    Hu3DModelAttrSet(team->sled[i]->mSled, 1);
-                    Hu3DModelAttrSet(team->sled[i]->mShadow, 1);
-                }
-                if (w->unk1B5E == 1) {
-                    Hu3DModelAttrSet(team->sled[0]->pole->m28, 1);
-                    Hu3DModelAttrSet(team->sled[0]->pole->m2C, 1);
-                }
-                Hu3DModelAttrSet(team->stage->m04, 1);
-                Hu3DModelAttrSet(team->stage->m06, 1);
-                Hu3DModelAttrSet(team->stage->m08, 1);
-                Hu3DModelAttrSet(team->stage->m0A, 1);
-                Hu3DModelAttrSet(team->stage->m0C, 1);
-                Hu3DModelAttrSet(team->stage->m0E, 1);
-                Hu3DModelAttrSet(team->stage->m10, 1);
-                Hu3DModelAttrSet(team->stage->m12, 1);
-                Hu3DModelAttrSet(team->stage->m14, 1);
-                Hu3DModelAttrSet(team->stage->m16, 1);
-                Hu3DModelAttrSet(team->stage->m18, 1);
-                Hu3DModelAttrSet(team->stage->m1A, 1);
-                Hu3DModelAttrSet(team->stage->m1C, 1);
-                Hu3DModelAttrSet(team->stage->m1E, 1);
-                Hu3DModelAttrSet(team->stage->m20, 1);
-                Hu3DModelAttrSet(team->stage->m38, 1);
-                Hu3DModelAttrSet(team->stage->m3A, 1);
-                for (i = 0; i < 0xB; i++) {
-                    Hu3DModelAttrSet(team->stage->mark[i], 1);
-                }
-                team2 = &w->team[w->unk1B5E];
-                Hu3DModelAttrSet(team2->stage->m04, 1);
-                Hu3DModelAttrSet(team2->stage->m06, 1);
-                Hu3DModelAttrSet(team2->stage->m08, 1);
-                Hu3DModelAttrSet(team2->stage->m0A, 1);
-                Hu3DModelAttrSet(team2->stage->m0C, 1);
-                Hu3DModelAttrSet(team2->stage->m0E, 1);
-                Hu3DModelAttrSet(team2->stage->m10, 1);
-                Hu3DModelAttrSet(team2->stage->m12, 1);
-                Hu3DModelAttrSet(team2->stage->m14, 1);
-                Hu3DModelAttrSet(team2->stage->m16, 1);
-                Hu3DModelAttrSet(team2->stage->m18, 1);
-                Hu3DModelAttrSet(team2->stage->m1A, 1);
-                Hu3DModelAttrSet(team2->stage->m1C, 1);
-                Hu3DModelAttrSet(team2->stage->m1E, 1);
-                Hu3DModelAttrSet(team2->stage->m20, 1);
-                Hu3DModelAttrSet(team2->stage->m38, 1);
-                Hu3DModelAttrSet(team2->stage->m3A, 1);
-                for (i = 0; i < 0xB; i++) {
-                    Hu3DModelAttrSet(team2->stage->mark[i], 1);
-                }
-                espAttrSet(w->esp[0], 4);
-                espAttrSet(w->esp[1], 4);
-                espAttrSet(w->esp[2], 4);
-                Hu3DModelAttrReset(w->mdlCache[13], 1);
-                Hu3DModelRotSet(w->mdlCache[11], 0.0f, 180.0f, 0.0f);
-                if (w->unk1B5E == 0) {
-                    w->split.x = 640.0f;
-                    team2->func = fn_1_A36C;
-                    team2->player[0]->sled->pos.x = 0.0f;
-                    team2->player[0]->sled->pole->pos.x = 100.0f;
-                    Hu3DModelPosSetV(team2->sled[0]->mSled, &team2->sled[0]->pos);
-                    Hu3DModelPosSetV(team2->sled[0]->pole->m28, &team2->sled[0]->pole->pos);
-                    fn_1_AA4C(w);
-                    fn_1_2E08(&w->rope[0]);
-                } else {
-                    w->split.x = 0.0f;
-                    team2->func = fn_1_A5CC;
-                    team2->player[0]->sled->pos.x = 250.0f;
-                    team2->player[1]->sled->pos.x = 0.0f;
-                    team2->player[2]->sled->pos.x = -250.0f;
-                    Hu3DModelPosSetV(team2->sled[0]->mSled, &team2->sled[0]->pos);
-                    Hu3DModelPosSetV(team2->sled[1]->mSled, &team2->sled[1]->pos);
-                    Hu3DModelPosSetV(team2->sled[2]->mSled, &team2->sled[2]->pos);
-                    fn_1_AA4C(w);
-                    for (i = 0; i < 0x78; i++) {
-                        fn_1_2E08(&w->rope[1]);
-                        fn_1_2E08(&w->rope[2]);
-                    }
-                }
-                Hu3DCameraPerspectiveSet(camBit[w->unk1B5E], 15.0f, 20.0f, 40000.0f, 1.2f);
-                Hu3DCameraViewportSet(camBit[w->unk1B5E], 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
-                Hu3DCameraScissorSet(camBit[w->unk1B5E], 0, 0, 0x280, 0x1E0);
-                fn_1_2044(&w->split);
-                team2->cam->rot.x = camInit[1].rot.x;
-                team2->cam->rot.y = camInit[1].rot.y;
-                team2->cam->rot.z = camInit[1].rot.z;
-                team2->cam->target.x = camInit[1].target.x;
-                team2->cam->target.y = camInit[1].target.y;
-                team2->cam->target.z = camInit[1].target.z;
-                for (i = 0; i < team2->count; i++) {
-                    if (team2->player[i]->charNo == 3) {
-                        team2->player[i]->pos.z -= 100.0f;
-                        Hu3DModelPosSetV(team2->player[i]->mdlId, &team2->player[i]->pos);
-                        omSetTra(team2->player[i]->obj, team2->player[i]->pos.x, team2->player[i]->pos.y, team2->player[i]->pos.z);
-                    }
-                }
-                WipeCreate(1, 0, 0x3C);
+            }
+            break;
+        case 5:
+            for (i = 0; i < 4; i++) {
+                w->player[i]->timer = 1;
+            }
+            WipeColorSet(0xFF, 0xFF, 0xFF);
+            WipeCreate(2, 0, 0x3C);
+            w->sub = 0;
+            w->state++;
+        case 6:
+            if (WipeCheckEnd() == 0) {
                 w->state++;
-            case 8:
-                fn_1_B26C(w);
-                if (WipeCheckEnd() == 0) {
-                    MgSeqModeNext();
+                return;
+            }
+            break;
+        case 7:
+            team = &w->team[w->unk1B5E ^ 1];
+            for (i = 0; i < team->count; i++) {
+                Hu3DModelAttrSet(team->sled[i]->mSled, 1);
+                Hu3DModelAttrSet(team->sled[i]->mShadow, 1);
+            }
+            if (w->unk1B5E == 1) {
+                Hu3DModelAttrSet(team->sled[0]->pole->m28, 1);
+                Hu3DModelAttrSet(team->sled[0]->pole->m2C, 1);
+            }
+            Hu3DModelAttrSet(team->stage->m04, 1);
+            Hu3DModelAttrSet(team->stage->m06, 1);
+            Hu3DModelAttrSet(team->stage->m08, 1);
+            Hu3DModelAttrSet(team->stage->m0A, 1);
+            Hu3DModelAttrSet(team->stage->m0C, 1);
+            Hu3DModelAttrSet(team->stage->m0E, 1);
+            Hu3DModelAttrSet(team->stage->m10, 1);
+            Hu3DModelAttrSet(team->stage->m12, 1);
+            Hu3DModelAttrSet(team->stage->m14, 1);
+            Hu3DModelAttrSet(team->stage->m16, 1);
+            Hu3DModelAttrSet(team->stage->m18, 1);
+            Hu3DModelAttrSet(team->stage->m1A, 1);
+            Hu3DModelAttrSet(team->stage->m1C, 1);
+            Hu3DModelAttrSet(team->stage->m1E, 1);
+            Hu3DModelAttrSet(team->stage->m20, 1);
+            Hu3DModelAttrSet(team->stage->m38, 1);
+            Hu3DModelAttrSet(team->stage->m3A, 1);
+            for (i = 0; i < 0xB; i++) {
+                Hu3DModelAttrSet(team->stage->mark[i], 1);
+            }
+            team2 = &w->team[w->unk1B5E];
+            Hu3DModelAttrSet(team2->stage->m04, 1);
+            Hu3DModelAttrSet(team2->stage->m06, 1);
+            Hu3DModelAttrSet(team2->stage->m08, 1);
+            Hu3DModelAttrSet(team2->stage->m0A, 1);
+            Hu3DModelAttrSet(team2->stage->m0C, 1);
+            Hu3DModelAttrSet(team2->stage->m0E, 1);
+            Hu3DModelAttrSet(team2->stage->m10, 1);
+            Hu3DModelAttrSet(team2->stage->m12, 1);
+            Hu3DModelAttrSet(team2->stage->m14, 1);
+            Hu3DModelAttrSet(team2->stage->m16, 1);
+            Hu3DModelAttrSet(team2->stage->m18, 1);
+            Hu3DModelAttrSet(team2->stage->m1A, 1);
+            Hu3DModelAttrSet(team2->stage->m1C, 1);
+            Hu3DModelAttrSet(team2->stage->m1E, 1);
+            Hu3DModelAttrSet(team2->stage->m20, 1);
+            Hu3DModelAttrSet(team2->stage->m38, 1);
+            Hu3DModelAttrSet(team2->stage->m3A, 1);
+            for (i = 0; i < 0xB; i++) {
+                Hu3DModelAttrSet(team2->stage->mark[i], 1);
+            }
+            espAttrSet(w->esp[0], 4);
+            espAttrSet(w->esp[1], 4);
+            espAttrSet(w->esp[2], 4);
+            Hu3DModelAttrReset(w->mdlCache[13], 1);
+            Hu3DModelRotSet(w->mdlCache[11], 0.0f, 180.0f, 0.0f);
+            if (w->unk1B5E == 0) {
+                w->split.x = 640.0f;
+                team2->func = fn_1_A36C;
+                team2->player[0]->sled->pos.x = 0.0f;
+                team2->player[0]->sled->pole->pos.x = 100.0f;
+                Hu3DModelPosSetV(team2->sled[0]->mSled, &team2->sled[0]->pos);
+                Hu3DModelPosSetV(team2->sled[0]->pole->m28, &team2->sled[0]->pole->pos);
+                fn_1_AA4C(w);
+                fn_1_2E08(&w->rope[0]);
+            } else {
+                w->split.x = 0.0f;
+                team2->func = fn_1_A5CC;
+                team2->player[0]->sled->pos.x = 250.0f;
+                team2->player[1]->sled->pos.x = 0.0f;
+                team2->player[2]->sled->pos.x = -250.0f;
+                Hu3DModelPosSetV(team2->sled[0]->mSled, &team2->sled[0]->pos);
+                Hu3DModelPosSetV(team2->sled[1]->mSled, &team2->sled[1]->pos);
+                Hu3DModelPosSetV(team2->sled[2]->mSled, &team2->sled[2]->pos);
+                fn_1_AA4C(w);
+                for (i = 0; i < 0x78; i++) {
+                    fn_1_2E08(&w->rope[1]);
+                    fn_1_2E08(&w->rope[2]);
                 }
-                break;
-        }
+            }
+            Hu3DCameraPerspectiveSet(camBit[w->unk1B5E], 15.0f, 20.0f, 40000.0f, 1.2f);
+            Hu3DCameraViewportSet(camBit[w->unk1B5E], 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+            Hu3DCameraScissorSet(camBit[w->unk1B5E], 0, 0, 0x280, 0x1E0);
+            fn_1_2044(&w->split);
+            team2->cam->rot.x = camInit[1].rot.x;
+            team2->cam->rot.y = camInit[1].rot.y;
+            team2->cam->rot.z = camInit[1].rot.z;
+            team2->cam->target.x = camInit[1].target.x;
+            team2->cam->target.y = camInit[1].target.y;
+            team2->cam->target.z = camInit[1].target.z;
+            for (i = 0; i < team2->count; i++) {
+                if (team2->player[i]->charNo == 3) {
+                    team2->player[i]->pos.z -= 100.0f;
+                    Hu3DModelPosSetV(team2->player[i]->mdlId, &team2->player[i]->pos);
+                    omSetTra(team2->player[i]->obj, team2->player[i]->pos.x, team2->player[i]->pos.y, team2->player[i]->pos.z);
+                }
+            }
+            WipeCreate(1, 0, 0x3C);
+            w->state++;
+        case 8:
+            fn_1_B26C(w);
+            if (WipeCheckEnd() == 0) {
+                MgSeqModeNext();
+            }
+            break;
     }
+
 }
 
 void fn_1_1600(s16 mode, s16 frameNo)
@@ -2061,7 +2065,7 @@ void fn_1_72D0(M577Team *team)
     pole = sled->pole;
     pole->pos.x += pole->velX;
     diff = pole->pos.x - sled->pos.x;
-    ad = fabs(diff);
+    ad = fabsf(diff);
     if (ad > 100.0f) {
         k = 0.2f * (100.0f - ad);
         sled->pos.x -= k * (diff / ad);
@@ -2176,7 +2180,7 @@ void fn_1_72D0(M577Team *team)
         if (team->done != 0) {
             pitch = 8191.0f * (team->speed / team->speedMax) - 8191.0f;
         } else {
-            t = (f32)fabs(sled->velX) / 10.0f;
+            t = fabsf(sled->velX) / 10.0f;
             if (t > 1.0f) {
                 t = 1.0f;
             }
@@ -2333,7 +2337,7 @@ void fn_1_7D24(M577Team *team)
         if (sled->pos.x < minX) {
             minX = sled->pos.x;
         }
-        sumV += (f32)fabs(sled->velX);
+        sumV += fabsf(sled->velX);
     }
     team->cam->target.x = 0.5f * (maxX + minX);
     if (team->speed < team->speedMax * 0.25f) {
@@ -2690,7 +2694,7 @@ void fn_1_9380(M577Team *team)
     pole = sled->pole;
     pole->pos.x += pole->velX;
     diff = pole->pos.x - sled->pos.x;
-    sp10 = (f32)fabs(diff);
+    sp10 = fabsf(diff);
     if (sp10 > 100.0f) {
         k = 0.2f * (100.0f - sp10);
         sled->pos.x -= k * (diff / sp10);
@@ -2870,7 +2874,7 @@ void fn_1_9C08(M577Team *team)
         if (sled->pos.x < minX) {
             minX = sled->pos.x;
         }
-        sp8 = (f32)fabs(sled->velX);
+        sp8 = fabsf(sled->velX);
         sumV += sp8;
     }
     team->cam->target.x = 0.5f * (maxX + minX);
@@ -2983,9 +2987,9 @@ f32 fn_1_A8D4(M577Line *line, M577StageVec *pt)
     f32 r;
 
     if (line->vert != 0) {
-        r = (f32)fabs(line->offset - pt->x);
+        r = fabsf(line->offset - pt->x);
     } else {
-        r = (f32)fabs(line->offset + (line->slope * pt->x - pt->y)) / line->norm;
+        r = fabsf(line->offset + (line->slope * pt->x - pt->y)) / line->norm;
     }
     return r;
 }
