@@ -106,13 +106,20 @@ f32 fn_1_C7C8(M539Fade *self);
 void fn_1_CBAC(void *self, M539Fade *fade);
 void fn_1_C540(void);
 
-// NONMATCHING: register allocation only.
+// Singleton accessor (inlined, so the pointer passes through two copies).
 void *fn_1_BEBC(void)
 {
-    if (lbl_1_bss_A10 == NULL) {
+    void *inst;
+    void *copy;
+
+    if (lbl_1_bss_A10 != 0) {
+        (void)0;
+    } else {
         fn_1_1D4(lbl_1_data_3B0, lbl_1_data_3C0, 0x27);
     }
-    return lbl_1_bss_A10;
+    inst = lbl_1_bss_A10;
+    copy = inst;
+    return copy;
 }
 
 // NONMATCHING: register allocation only.
@@ -261,12 +268,19 @@ void fn_1_C540(void)
 // NONMATCHING: register allocation only.
 void fn_1_C544(M539ManMap *self)
 {
+    s16 grp;
+    s16 *l0;
+    s16 *l1;
+
     if (M539PtmfTest(&self->fadeHook) != 0) {
         M539PtmfCall(self, &self->fadeHook);
     }
-    HuSprTPLvlSet(self->sprGrp, 0, fn_1_C7C8(&self->fade));
-    fn_1_9F6C(self->sprLight[0]);
-    fn_1_9F6C(self->sprLight[1]);
+    grp = self->sprGrp;
+    HuSprTPLvlSet(grp, 0, fn_1_C7C8(&self->fade));
+    l0 = self->sprLight[0];
+    fn_1_9F6C(l0);
+    l1 = self->sprLight[1];
+    fn_1_9F6C(l1);
 }
 
 // NONMATCHING: register allocation only.
