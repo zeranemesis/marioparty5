@@ -6,6 +6,7 @@
 // (lbl_1_bss_A5C), the winner and the vector<s16> helpers.
 #define _MATH_H
 #include "types.h"
+extern "C" {
 #include "game/hu3d.h"
 #include "game/data.h"
 #include "game/audio.h"
@@ -13,6 +14,7 @@
 #include "game/gamework.h"
 #include "game/charman.h"
 #include "game/object.h"
+}
 
 #ifdef __MWERKS__
 #define PL_RODATA __declspec(section ".rodata")
@@ -1044,6 +1046,11 @@ extern "C" void fn_1_B420(Player *self)
     f64 vy;
     f64 vz;
     f64 mag;
+    f32 ang;
+    f64 vx2;
+    f64 vy2;
+    f64 vz2;
+    f32 boost;
     f32 mult;
     f32 w;
     f32 ax;
@@ -1065,6 +1072,10 @@ extern "C" void fn_1_B420(Player *self)
     dir.z = mag;
     PSMTXRotRad(m, 'y', 0.017453292f * self->angle);
     PSMTXMultVec(m, (Vec *)&dir, (Vec *)&out);
+    vx2 = 0.016666666666666666 * ((59.0 * vx) + (f64)out.x);
+    vy2 = 0.016666666666666666 * ((59.0 * vy) + (f64)out.y);
+    vz2 = 0.016666666666666666 * ((59.0 * vz) + (f64)out.z);
+    boost = 1.0f + 0.1f * (f32)self->rank;
     mult = 1.0f;
     if (self->pad < 0) {
         f32 tbl[4] = { 0.43f, 0.7f, 0.9f, 1.0f };
@@ -1072,23 +1083,24 @@ extern "C" void fn_1_B420(Player *self)
     }
     dir.x = 0.0f;
     dir.y = 0.0f;
-    dir.z = (f64)mult * (0.003 * (f64)self->speed * (f64)(1.0f + 0.1f * (f32)self->rank));
+    dir.z = (f64)mult * (0.003 * (f64)self->speed * (f64)boost);
+    ang = (f64)self->angle + (0.05 * (f64)self->angVel);
     if (self->angle > 180.0f) {
         self->angle = self->angle - 360.0f;
     }
     if (self->angle < -180.0f) {
         self->angle = self->angle + 360.0f;
     }
-    PSMTXRotRad(m, 'y', 0.017453292f * (f32)((f64)self->angle + (0.05 * (f64)self->angVel)));
+    PSMTXRotRad(m, 'y', 0.017453292f * ang);
     PSMTXMultVec(m, (Vec *)&dir, (Vec *)&out);
     if ((s8)lbl_1_bss_A80[0] == 0) {
         lbl_1_bss_A78 = 3600.0 / lbl_1_bss_A68;
         lbl_1_bss_A80[0] = 1;
     }
     w = 1.0f;
-    dir.x = (0.016666666666666666 * ((59.0 * vx) + (f64)out.x)) + (lbl_1_bss_A78 * (f64)out.x);
-    dir.y = (0.016666666666666666 * ((59.0 * vy) + (f64)out.y)) + (lbl_1_bss_A78 * (f64)out.y);
-    dir.z = (0.016666666666666666 * ((59.0 * vz) + (f64)out.z)) + (lbl_1_bss_A78 * (f64)out.z);
+    dir.x = vx2 + (lbl_1_bss_A78 * (f64)out.x);
+    dir.y = vy2 + (lbl_1_bss_A78 * (f64)out.y);
+    dir.z = vz2 + (lbl_1_bss_A78 * (f64)out.z);
     PSMTXInverse(m, inv);
     PSMTXMultVec(inv, (Vec *)&dir, (Vec *)&out);
     if (self->hitWall != 0) {
