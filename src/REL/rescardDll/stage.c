@@ -273,8 +273,8 @@ void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera)
     int i;
 
     for(i=0; i<4; i++) {
-        player[i].pinNo = sysP->score->player[i].pinNo;
-        player[i].pinVar = sysP->score->player[i].pinVar;
+        player[i].pinNo = sysP->score->player[i].charNo;
+        player[i].pinVar = sysP->score->player[i].pedestalF;
     }
     model->ambScale = 1.0f;
     for(i=0; i<MDMODEL_AMB_MAX; i++) {
