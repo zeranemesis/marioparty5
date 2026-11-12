@@ -674,7 +674,7 @@ void fn_1_19A4(void)
         if (M548.slots[i].time == 50.0f || M548.slots[i].time == 51.0f) {
             if (M548.slots[i].motion == 1) {
                 lbl_1_bss_20[i] = (lbl_1_bss_20[i] + 1) % 64;
-                scaleY = 1.0 - 0.01 * sin(3.141592653589793 * (lbl_1_bss_20[i] * 360 / 64) / 180.0);
+                scaleY = 1.0 - 0.01f * sin(3.141592653589793 * (lbl_1_bss_20[i] * 360 / 64) / 180.0);
                 Hu3DModelScaleSet(M548.modelIds[i][168], 1.0f, scaleY, 1.0f);
                 lbl_1_bss_28[0] = -1.0 * sin(3.141592653589793 * (lbl_1_bss_20[i] * 360 / 64) / 180.0);
             } else {
