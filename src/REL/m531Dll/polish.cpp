@@ -1,166 +1,487 @@
-#include "dolphin/mtx.h"
-#include "dolphin/gx.h"
-
-// game/hu3d.h and game/sprite.h are not included: both pull in MSL math.h,
-// whose inline std::sqrtf emits constants into .rodata, and this unit has no
-// .rodata section of its own.
+// m531Dll "polish": the particle and model effects of the cleaning contest
+// (dust puffs, sparkles, polish lines), all built on the engine particle
+// manager. Each effect class carries its vtable pointer after the base data
+// (offset 0xC on the GameCube) and is driven through hand-written vtables.
+#define _MATH_H
 extern "C" {
-typedef s16 HU3DMODELID;
-typedef s16 HU3DMOTID;
-typedef struct Process_s OMOBJMAN;
-typedef struct omObj_s OMOBJ;
-typedef void (*OMOBJFUNC)(OMOBJ *obj);
-typedef struct Hu3DModel_s HU3DMODEL;
-typedef struct Hu3DParticle_s HU3DPARTICLE;
-typedef struct ANIMDATA ANIMDATA;
+#include "dolphin.h"
+#include "game/hu3d.h"
+#include "game/frand.h"
+}
 
-// sizeof(HU3DMODEL) is 0x134, which is how Hu3DData is indexed here.
-struct Hu3DModel_s {
-    u8 unk000[0x120];
-    void *hookData;
-    u8 unk124[0x134 - 0x124];
-};
-extern HU3DMODEL Hu3DData[];
+extern "C" {
+double sin(double x);
+double cos(double x);
 
 void *__dl__FPv(void *ptr);
-// The base constructor and destructor live in effect.cpp, so they are reached
+// The base constructors and destructors live in effect.cpp, so they are reached
 // through their mangled symbols rather than through the class definitions.
 void __ct__15CEffectParticleFilUs(void *self, int dataNum, u32 maxCnt, u16 camera);
 void __dt__15CEffectParticleFv(void *self, s32 flag);
-void __ct__12CEffectModelFP9Process_sssUs(void *self, OMOBJMAN *objMan, s16 layer,
-                                          s16 prio, u16 camera);
+void __ct__12CEffectModelFP9Process_sssUs(void *self, struct Process_s *objMan, s16 layer, s16 prio, u16 camera);
 void __dt__12CEffectModelFv(void *self, s32 flag);
 
-// Defined in effect.cpp too: the shared Hu3D hook both particle classes use.
-void fn_1_296C(HU3DMODEL *modelP, struct Hu3DParticle_s *particleP, Mtx *mtx);
-
-void Hu3DParticleColSet(s16 id, u8 r, u8 g, u8 b);
-void Hu3DParticleTPLvlSet(s16 id, f32 level);
-void Hu3DParticleBlendModeSet(s16 id, s32 mode);
-void Hu3DParticleHookSet(s16 id, void (*hook)(HU3DMODEL *, struct Hu3DParticle_s *, Mtx *));
-void Hu3DModelLayerSet(HU3DMODELID modelId, s16 layerNo);
-void Hu3DModelPosSet(HU3DMODELID modelId, f32 x, f32 y, f32 z);
-void Hu3DModelRotSet(HU3DMODELID modelId, f32 x, f32 y, f32 z);
+// Defined in effect.cpp too: the shared Hu3D hook all particle classes use.
+void fn_1_296C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
+void fn_1_2B3C(void *self);
 }
 
-static const f32 kZero = 0.0f;
+struct CEffectParticle;
 
-// Base of the particle classes in this unit: an animation pointer at 0x00, a
-// model id at 0x04, then the vtable pointer at 0x0C once a derived class adds
-// its own data after the two-word base header.
-class CEffectParticle {
-public:
+struct EffectParticleVt {
+    void *m_head[2];
+    CEffectParticle *(*m_dtor)(CEffectParticle *self, s16 flag);
+    void (*m_update)(CEffectParticle *self);
+};
+
+// Base of the particle classes: animation, model id, particle work, vtable.
+struct CEffectParticle {
     ANIMDATA *m_anim;
     HU3DMODELID m_model;
-    u16 pad6;
-    u32 pad8;
-    void **vptr;
-    f32 m_a[3];
-    f32 m_b[3];
-
-public:
-    virtual ~CEffectParticle();
+    HU3DPARTICLE *m_work;
+    const EffectParticleVt *m_vt;
 };
 
-// fn_1_70BC belongs to the model family, not the particle family: it calls
-// CEffectModel's destructor.
-class CEffectModel {
-public:
-    OMOBJMAN *m_objMan;
-    OMOBJ *m_obj;
-    u16 pad8;
-    void **vptr;
-
-public:
-    virtual ~CEffectModel();
+// A particle effect with two Vec parameters (position and rotation/area).
+struct CParticleFill {
+    CEffectParticle m_base;
+    Vec m_a; // 0x10
+    Vec m_b; // 0x1C
 };
 
-// fn_1_7030 and fn_1_704C store three floats into the two 12-byte groups that
-// follow the base, at 0x10 and 0x1C.
-class CParticleFill : public CEffectParticle {
-public:
+struct CEffectModel;
+
+struct EffectModelVt {
+    void *m_head[2];
+    void (*m_update)(CEffectModel *self);
+    void (*m_draw)(CEffectModel *self, Mtx mtx);
+    CEffectModel *(*m_dtor)(CEffectModel *self, s16 flag);
 };
 
-// The three classes below each carry a distinct vtable; only the destructor
-// pair differs, and the second virtual is not part of this unit's text.
-class CParticleFillA : public CParticleFill {
-public:
-    virtual void fn_1_7120();
-    virtual void fn_1_7124(CParticleFillA *self, f32 mtx[3][4]);
-    virtual void fn_1_70BC(s16 flag);
+struct CEffectModel {
+    struct Process_s *m_objMan;
+    struct omObj_s *m_obj;
+    HU3DMODELID m_model;
+    const EffectModelVt *m_vt;
 };
 
-class CParticleFillB : public CParticleFill {
-public:
-    virtual void fn_1_74E0(s16 flag);
-    virtual void fn_1_6168();
-};
-
-class CParticleFillC : public CParticleFill {
-public:
-    virtual void fn_1_7544(s16 flag);
-    virtual void fn_1_5DFC();
+// A drawn model effect carrying the same two Vec parameters.
+struct CModelFill {
+    CEffectModel m_base;
+    Vec m_a; // 0x10
+    Vec m_b; // 0x1C
 };
 
 extern "C" {
-void fn_1_7120(CParticleFillA *self);
-void fn_1_6168(CParticleFillB *self);
-void fn_1_5DFC(CParticleFillC *self);
-CEffectModel *fn_1_70BC(CEffectModel *self, s16 flag);
-CParticleFillB *fn_1_74E0(CParticleFillB *self, s16 flag);
-CParticleFillC *fn_1_7544(CParticleFillC *self, s16 flag);
-CEffectParticle *fn_1_5CC4(CEffectParticle *self, s16 flag);
-CEffectParticle *fn_1_6654(CEffectParticle *self, s16 flag);
+void *fn_1_5700(CEffectParticle *self, const Vec *pos);
 void fn_1_57DC(CEffectParticle *self);
-void fn_1_7124(CParticleFillA *self, f32 mtx[3][4]);
+CEffectParticle *fn_1_5CC4(CEffectParticle *self, s16 flag);
+void *fn_1_5D28(CEffectParticle *self, s32 dataNum, s32 maxCnt, const Vec *pos, const Vec *rot);
+void fn_1_5DFC(CEffectParticle *self);
+void *fn_1_6080(CEffectParticle *self, s32 maxCnt, const Vec *pos, const Vec *rot);
+void fn_1_6168(CEffectParticle *self);
+CEffectParticle *fn_1_6654(CEffectParticle *self, s16 flag);
+void *fn_1_66B8(CParticleFill *self, s32 maxCnt, const Vec *pos, const Vec *rot);
+void fn_1_6808(CParticleFill *self, HU3DPARTICLEDATA *data);
+void fn_1_6A8C(CEffectParticle *self);
+void fn_1_7030(CParticleFill *self, const Vec *src);
+void fn_1_704C(CParticleFill *self, const Vec *src);
+void *fn_1_7068(CModelFill *self, struct Process_s *objMan);
+CEffectModel *fn_1_70BC(CEffectModel *self, s16 flag);
+void fn_1_7120(CEffectModel *self);
+void fn_1_7124(CModelFill *self, Mtx mtx);
+CEffectParticle *fn_1_74E0(CEffectParticle *self, s16 flag);
+CEffectParticle *fn_1_7544(CEffectParticle *self, s16 flag);
+
+extern EffectModelVt lbl_1_data_168;
+extern EffectParticleVt lbl_1_data_17C;
+extern EffectParticleVt lbl_1_data_18C;
+extern EffectParticleVt lbl_1_data_19C;
+extern EffectParticleVt lbl_1_data_1AC;
 }
 
-static void *kVtblFillA[] = {
-    NULL, NULL, (void *)fn_1_70BC, (void *)fn_1_7120, (void *)fn_1_7124
-};
-static void *kVtblFillB[] = {NULL, NULL, (void *)fn_1_74E0, (void *)fn_1_6168};
-static void *kVtblFillC[] = {NULL, NULL, (void *)fn_1_7544, (void *)fn_1_5DFC};
-static void *kVtblFreeA[] = {NULL, NULL, (void *)fn_1_5CC4, (void *)fn_1_57DC,
-                             (void *)NULL};
-static void *kVtblFreeB[] = {NULL, NULL, (void *)fn_1_6654, (void *)fn_1_6168};
-
-// vtable slot 0 holds the destructor proper, so it is the same address as the
-// deleting destructor below; that is what the original emits as well.
-extern "C" {
-
-void fn_1_7120(CParticleFillA *self)
+void *fn_1_5700(CEffectParticle *self, const Vec *pos)
 {
-    (void)self;
+    s16 id;
+
+    __ct__15CEffectParticleFilUs(self, 0x590002, 8, 1);
+    self->m_vt = &lbl_1_data_1AC;
+    id = self->m_model;
+    Hu3DParticleColSet(id, 0xFF, 0xFF, 0xFF);
+    Hu3DParticleTPLvlSet(id, 0.0f);
+    Hu3DParticleBlendModeSet(id, 0);
+    Hu3DParticleHookSet(id, fn_1_296C);
+    Hu3DModelLayerSet(id, 5);
+    Hu3DModelPosSet(id, pos->x, pos->y, pos->z);
+    return self;
 }
 
-void fn_1_6168(CParticleFillB *self)
+void fn_1_57DC(CEffectParticle *self)
 {
-    (void)self;
+    HU3DMODEL *modelP;
+    HU3DPARTICLE *par;
+    HU3DPARTICLEDATA *d;
+    s32 i;
+    s32 active;
+    f32 phase;
+    f32 diff;
+
+    modelP = &Hu3DData[self->m_model];
+    par = self->m_work;
+    if (par->count == 0) {
+        d = par->data;
+        for (i = 0; i < par->maxCnt; i++, d++) {
+            phase = 360.0f * (f32)i;
+            d->vel.x = sin(0.017453292f * (phase / (f32)par->maxCnt));
+            d->vel.y = 0.01f + (0.000015258789f * (f32)frand());
+            phase = 360.0f * (f32)i;
+            d->vel.z = cos(0.017453292f * (phase / (f32)par->maxCnt));
+            d->scale = 100.0f + (50.0f * (0.000015258789f * (f32)frand()));
+            d->pos.x = 0.05f * (100.0f * d->vel.x);
+            d->pos.y = 0.0f;
+            d->pos.z = 0.05f * (100.0f * d->vel.z);
+            d->color.a = 0;
+            d->time = 0;
+            d->parManId = 0;
+            d->zRot = 0.017453292f * (360.0f * (0.000015258789f * (f32)frand()));
+        }
+    }
+    d = par->data;
+    active = 0;
+    for (i = 0; i < par->maxCnt; i++, d++) {
+        if (d->time == 0 || d->color.a != 0) {
+            if (d->time == 0) {
+                d->color.a = d->color.a + 0x10;
+                if (d->color.a >= 0xF0) {
+                    d->color.a = 0xF0;
+                    d->time = d->time + 1;
+                }
+            } else if (d->color.a != 0) {
+                d->color.a = d->color.a - 8;
+            }
+            active++;
+            {
+                s16 t = d->parManId;
+                d->parManId = t + 1;
+                d->scale = d->scale + (0.1f * (f32)t);
+            }
+            if ((600.0f - d->scale) < 0.0f) {
+                diff = -600.0f - d->scale;
+            } else {
+                diff = 600.0f - d->scale;
+            }
+            phase = 0.005f * diff;
+            if (d->scale <= 0.0f) {
+                d->color.a = 0;
+            }
+            d->pos.x = d->pos.x + (d->vel.x * phase);
+            d->pos.y = d->pos.y + d->vel.y;
+            d->pos.z = d->pos.z + (d->vel.z * phase);
+        }
+    }
+    if (active == 0 && self != NULL) {
+        self->m_vt->m_dtor(self, 1);
+    }
 }
 
-void fn_1_5DFC(CParticleFillC *self)
+CEffectParticle *fn_1_5CC4(CEffectParticle *self, s16 flag)
 {
-    (void)self;
+    if (self != NULL) {
+        self->m_vt = &lbl_1_data_1AC;
+        __dt__15CEffectParticleFv(self, 0);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
 }
 
-void fn_1_7030(CParticleFill *self, const f32 *src)
+void *fn_1_5D28(CEffectParticle *self, s32 dataNum, s32 maxCnt, const Vec *pos, const Vec *rot)
 {
-    self->m_a[0] = src[0];
-    self->m_a[1] = src[1];
-    self->m_a[2] = src[2];
+    s16 id;
+
+    __ct__15CEffectParticleFilUs(self, dataNum, maxCnt, 1);
+    self->m_vt = &lbl_1_data_19C;
+    id = self->m_model;
+    Hu3DParticleColSet(id, 0xE0, 0xFF, 0xFF);
+    Hu3DParticleBlendModeSet(id, 0);
+    Hu3DParticleHookSet(id, fn_1_296C);
+    Hu3DModelLayerSet(id, 5);
+    Hu3DModelPosSet(id, pos->x, pos->y, pos->z);
+    Hu3DModelRotSet(id, rot->x, rot->y, rot->z);
+    return self;
 }
 
-void fn_1_704C(CParticleFill *self, const f32 *src)
+void fn_1_5DFC(CEffectParticle *self)
 {
-    self->m_b[0] = src[0];
-    self->m_b[1] = src[1];
-    self->m_b[2] = src[2];
+    HU3DMODEL *modelP;
+    HU3DPARTICLE *par;
+    HU3DPARTICLEDATA *d;
+    s32 i;
+    f32 fi;
+
+    modelP = &Hu3DData[self->m_model];
+    par = self->m_work;
+    if (par->count == 0) {
+        i = 0;
+        d = par->data;
+        for (; i < par->maxCnt; i++, d++) {
+            d->vel.x = 0.0f;
+            d->vel.y = 0.0f;
+            d->vel.z = 10.0f;
+            d->scale = 0.0f;
+            d->pos.x = 0.0f;
+            d->pos.y = 0.0f;
+            fi = i;
+            d->pos.z = fi * (150.0f / (f32)par->maxCnt);
+            d->color.a = 0xFF;
+            d->time = 0;
+            d->parManId = 0;
+            d->zRot = 0.017453292f * (360.0f * (0.000015258789f * (f32)frand()));
+        }
+    }
+    i = 0;
+    d = par->data;
+    for (; i < par->maxCnt; i++, d++) {
+        if (d->pos.z > 150.0f) {
+            d->pos.x = 0.0f;
+            d->pos.y = 0.0f;
+            d->pos.z = 0.0f;
+            d->scale = 0.0f;
+            d->color.a = 0xFF;
+        } else {
+            d->pos.x = d->pos.x + d->vel.x;
+            d->pos.y = d->pos.y + d->vel.y;
+            d->pos.z = d->pos.z + d->vel.z;
+            d->scale = d->pos.z / 1.5f;
+        }
+    }
+}
+
+void *fn_1_6080(CEffectParticle *self, s32 maxCnt, const Vec *pos, const Vec *rot)
+{
+    s16 id;
+
+    __ct__15CEffectParticleFilUs(self, 0x590004, maxCnt, 1);
+    self->m_vt = &lbl_1_data_18C;
+    id = self->m_model;
+    Hu3DParticleColSet(id, 0xFF, 0xFF, 0xFF);
+    Hu3DParticleTPLvlSet(id, 0.0f);
+    Hu3DParticleBlendModeSet(id, 1);
+    Hu3DParticleHookSet(id, fn_1_296C);
+    Hu3DModelLayerSet(id, 5);
+    Hu3DModelPosSet(id, pos->x, pos->y, pos->z);
+    Hu3DModelRotSet(id, rot->x, rot->y, rot->z);
+    return self;
+}
+
+void fn_1_6168(CEffectParticle *self)
+{
+    HU3DMODEL *modelP;
+    HU3DPARTICLE *par;
+    HU3DPARTICLEDATA *d;
+    s32 i;
+    f32 r;
+    f32 a;
+    f32 b;
+    f32 c;
+    f32 f;
+    u32 col;
+
+    modelP = &Hu3DData[self->m_model];
+    par = self->m_work;
+    if (par->count == 0) {
+        i = 0;
+        d = par->data;
+        for (; i < par->maxCnt; i++, d++) {
+            d->vel.y = 0.0f;
+            r = 0.25f + (0.25f * (0.000015258789f * (f32)frand()));
+            d->scale = 100.0f * r;
+            d->vel.x = d->scale;
+            a = 0.000030517578f * ((f32)frand() - 32768.0f);
+            d->pos.x = 150.0f * a;
+            b = 0.000030517578f * ((f32)frand() - 32768.0f);
+            d->pos.y = 150.0f * b;
+            c = 0.000030517578f * ((f32)frand() - 32768.0f);
+            d->pos.z = 100.0f * c;
+            d->time = 0;
+            f = 360.0f * (0.000015258789f * (f32)frand());
+            d->zRot = 0.017453292f * f;
+            col = frand();
+            d->color.r = col;
+            d->color.g = col >> 8;
+            d->color.b = col >> 16;
+            d->color.a = 0;
+        }
+    }
+    par->dataCnt = 0;
+    i = 0;
+    d = par->data;
+    for (; i < par->maxCnt; i++, d++) {
+        if (d->time <= 1) {
+            switch (d->time) {
+                case 0:
+                    d->color.a = (u8)(s32)((f32)d->color.a + (4.0f * (0.04f * d->scale)));
+                    par->dataCnt = par->dataCnt + 1;
+                    if (d->color.a < 0xFA) {
+                        break;
+                    }
+                    d->color.a = 0xFF;
+                    d->time = d->time + 1;
+                case 1:
+                    d->color.a = (u8)(s32)((f32)d->color.a - (4.0f * (0.04f * d->scale)));
+                    d->scale = d->vel.x * ((f32)d->color.a / 255.0f);
+                    if (d->scale < 0.0f) {
+                        d->scale = 0.0f;
+                    }
+                    par->dataCnt = par->dataCnt + 1;
+                    if (d->color.a <= 8) {
+                        d->time = d->time + 1;
+                    }
+                    break;
+            }
+            d->zRot = d->zRot + (0.017453292f * d->vel.y);
+            d->vel.y = d->vel.y + 0.002724069383556748;
+            d->pos.y = d->pos.y - d->vel.y;
+        }
+    }
+    if (par->dataCnt == 0 && self != NULL) {
+        self->m_vt->m_dtor(self, 1);
+    }
+}
+
+CEffectParticle *fn_1_6654(CEffectParticle *self, s16 flag)
+{
+    if (self != NULL) {
+        self->m_vt = &lbl_1_data_18C;
+        __dt__15CEffectParticleFv(self, 0);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+void *fn_1_66B8(CParticleFill *self, s32 maxCnt, const Vec *pos, const Vec *rot)
+{
+    s16 id;
+
+    __ct__15CEffectParticleFilUs(self, 0x590004, maxCnt, 1);
+    self->m_base.m_vt = &lbl_1_data_17C;
+    id = self->m_base.m_model;
+    Hu3DParticleColSet(id, 0xFF, 0xFF, 0xFF);
+    Hu3DParticleTPLvlSet(id, 0.0f);
+    Hu3DParticleBlendModeSet(id, 1);
+    Hu3DParticleHookSet(id, fn_1_296C);
+    Hu3DModelLayerSet(id, 5);
+    Hu3DModelPosSet(id, 0.0f, 0.0f, 0.0f);
+    Hu3DModelRotSet(id, 0.0f, 0.0f, 0.0f);
+    self->m_a.x = pos->x;
+    self->m_a.y = pos->y;
+    self->m_a.z = pos->z;
+    self->m_b.x = rot->x;
+    self->m_b.y = rot->y;
+    self->m_b.z = rot->z;
+    fn_1_2B3C(&self->m_base);
+    return self;
+}
+
+// Starts (or restarts) one polish spark around the fill position.
+static inline void SparkRespawn(CParticleFill *self, HU3DPARTICLEDATA *d)
+{
+    s32 r;
+    f32 a;
+    f32 b;
+    f32 c;
+    f32 e;
+    f32 f;
+    u32 col;
+
+    d->time = 0;
+    r = frand() & 0xF;
+    d->parManId = r + 4;
+    a = 50.0f * (0.000030517578f * ((f32)frand() - 32768.0f));
+    d->pos.x = self->m_a.x + a;
+    b = 50.0f * (0.000030517578f * ((f32)frand() - 32768.0f));
+    d->pos.y = 50.0f + b;
+    c = 50.0f * (0.000030517578f * ((f32)frand() - 32768.0f));
+    d->pos.z = self->m_a.z + c;
+    e = 0.2f + (0.2f * (0.000015258789f * (f32)frand()));
+    d->scale = 100.0f * e;
+    f = 360.0f * (0.000015258789f * (f32)frand());
+    d->zRot = 0.017453292f * f;
+    col = frand();
+    d->color.r = col;
+    d->color.g = col >> 8;
+    d->color.b = col >> 16;
+    d->color.a = 0;
+}
+
+void fn_1_6808(CParticleFill *self, HU3DPARTICLEDATA *data)
+{
+    SparkRespawn(self, data);
+}
+
+void fn_1_6A8C(CEffectParticle *self)
+{
+    HU3DMODEL *modelP;
+    HU3DPARTICLE *par;
+    HU3DPARTICLEDATA *d;
+    s32 i;
+
+    modelP = &Hu3DData[self->m_model];
+    par = self->m_work;
+    if (par->count == 0) {
+        i = 0;
+        d = par->data;
+        for (; i < par->maxCnt; i++, d++) {
+            SparkRespawn((CParticleFill *)self, d);
+        }
+    }
+    i = 0;
+    d = par->data;
+    for (; i < par->maxCnt; i++, d++) {
+        if (d->time == 0) {
+            d->color.a = d->color.a + 4;
+            if (d->color.a > 0xFA) {
+                d->color.a = 0xFF;
+                d->time = d->time + 1;
+            }
+        } else {
+            d->color.a = d->color.a - d->parManId;
+            if (d->color.a < 0x14) {
+                SparkRespawn((CParticleFill *)self, d);
+            }
+        }
+        d->zRot = d->zRot + 0.017453292f;
+    }
+}
+
+void fn_1_7030(CParticleFill *self, const Vec *src)
+{
+    self->m_a.x = src->x;
+    self->m_a.y = src->y;
+    self->m_a.z = src->z;
+}
+
+void fn_1_704C(CParticleFill *self, const Vec *src)
+{
+    self->m_b.x = src->x;
+    self->m_b.y = src->y;
+    self->m_b.z = src->z;
+}
+
+void *fn_1_7068(CModelFill *self, struct Process_s *objMan)
+{
+    __ct__12CEffectModelFP9Process_sssUs(self, objMan, 4, 5, 1);
+    self->m_base.m_vt = &lbl_1_data_168;
+    return self;
 }
 
 CEffectModel *fn_1_70BC(CEffectModel *self, s16 flag)
 {
-    if (self != 0) {
-        self->vptr = kVtblFillA;
+    if (self != NULL) {
+        self->m_vt = &lbl_1_data_168;
         __dt__12CEffectModelFv(self, 0);
         if (flag > 0) {
             __dl__FPv(self);
@@ -169,240 +490,121 @@ CEffectModel *fn_1_70BC(CEffectModel *self, s16 flag)
     return self;
 }
 
-CParticleFillB *fn_1_74E0(CParticleFillB *self, s16 flag)
+void fn_1_7120(CEffectModel *self)
 {
-    if (self != 0) {
-        self->vptr = kVtblFillB;
-        __dt__15CEffectParticleFv(self, 0);
-        if (flag > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return self;
 }
 
-CParticleFillC *fn_1_7544(CParticleFillC *self, s16 flag)
+// Draws the polish area as a red outline (five-vertex line strip) on the floor.
+void fn_1_7124(CModelFill *self, Mtx mtx)
 {
-    if (self != 0) {
-        self->vptr = kVtblFillC;
-        __dt__15CEffectParticleFv(self, 0);
-        if (flag > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return self;
-}
+    f32 v0, v1, v2, v3, v4, v5, v6, v7, v8, v9;
 
-CEffectParticle *fn_1_5CC4(CEffectParticle *self, s16 flag)
-{
-    if (self != 0) {
-        self->vptr = kVtblFreeA;
-        __dt__15CEffectParticleFv(self, 0);
-        if (flag > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return self;
-}
-
-CEffectParticle *fn_1_6654(CEffectParticle *self, s16 flag)
-{
-    if (self != 0) {
-        self->vptr = kVtblFreeB;
-        __dt__15CEffectParticleFv(self, 0);
-        if (flag > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return self;
-}
-
-// Each constructor runs the base constructor, stamps its own vtable over the
-// base's, then configures the particle: colour, texture level, blend mode, the
-// shared hook, the render layer, and the model's position and rotation. These
-// are written out one by one rather than sharing a helper, because the helper
-// form changes each one's prologue.
-
-// 0x5902, 0x5904 and 0x5905 are data numbers, built as lis+addi.
-extern "C" {
-
-CEffectParticle *fn_1_5700(CEffectParticle *self, const f32 *rot)
-{
-    s16 id;
-
-    __ct__15CEffectParticleFilUs(self, 0x5902, 8, 1);
-    self->vptr = kVtblFreeA;
-    id = (s16)self->m_model;
-    Hu3DParticleColSet(id, 0xFF, 0xFF, 0xFF);
-    Hu3DParticleTPLvlSet(id, kZero);
-    Hu3DParticleBlendModeSet(id, 0);
-    Hu3DParticleHookSet(id, fn_1_296C);
-    Hu3DModelLayerSet(id, 5);
-    Hu3DModelPosSet(id, rot[0], rot[1], rot[2]);
-    return self;
-}
-
-// NONMATCHING: the original keeps self in r28 and builds the data number with
-// lis+addi; a plain local makes MWCC pick r26 and a plain literal gives li
-CEffectParticle *fn_1_6080(CEffectParticle *self, u32 maxCnt, const f32 *pos, const f32 *rot)
-{
-    int dataNum = 0x5900;
-    s16 id;
-
-    dataNum = dataNum + 4;
-    __ct__15CEffectParticleFilUs(self, dataNum, maxCnt, 1);
-    self->vptr = kVtblFreeB;
-    id = (s16)self->m_model;
-    Hu3DParticleColSet(id, 0xFF, 0xFF, 0xFF);
-    Hu3DParticleTPLvlSet(id, kZero);
-    Hu3DParticleBlendModeSet(id, 1);
-    Hu3DParticleHookSet(id, fn_1_296C);
-    Hu3DModelLayerSet(id, 5);
-    Hu3DModelPosSet(id, pos[0], pos[1], pos[2]);
-    Hu3DModelRotSet(id, rot[0], rot[1], rot[2]);
-    return self;
-}
-
-// NONMATCHING: frame setup differs - original uses _savegpr_27 (5 GPRs + 5 FPRs)
-// while MWCC allocates different callee-saved registers for this body
-CEffectParticle *fn_1_5D28(void *self, u32 maxCnt, const f32 *pos, const f32 *rot)
-{
-    CEffectParticle *p = (CEffectParticle *)self;
-
-    __ct__15CEffectParticleFilUs(self, 0x5905, maxCnt, 1);
-    p->vptr = kVtblFillC;
-    Hu3DParticleColSet(p->m_model, 0xE0, 0xFF, 0xFF);
-    Hu3DParticleBlendModeSet(p->m_model, 1);
-    Hu3DParticleHookSet(p->m_model, fn_1_296C);
-    Hu3DModelLayerSet(p->m_model, 5);
-    Hu3DModelPosSet(p->m_model, pos[0], pos[1], pos[2]);
-    Hu3DModelRotSet(p->m_model, rot[0], rot[1], rot[2]);
-    return p;
-}
-
-CEffectParticle *fn_1_66B8(void *self, u32 maxCnt, const f32 *pos, const f32 *rot)
-{
-    CEffectParticle *p = (CEffectParticle *)self;
-
-    __ct__15CEffectParticleFilUs(self, 0x5904, maxCnt, 1);
-    p->vptr = kVtblFillB;
-    Hu3DParticleColSet(p->m_model, 0xFF, 0xFF, 0xFF);
-    Hu3DParticleTPLvlSet(p->m_model, kZero);
-    Hu3DParticleBlendModeSet(p->m_model, 1);
-    Hu3DParticleHookSet(p->m_model, fn_1_296C);
-    Hu3DModelLayerSet(p->m_model, 5);
-    Hu3DModelPosSet(p->m_model, pos[0], pos[1], pos[2]);
-    Hu3DModelRotSet(p->m_model, rot[0], rot[1], rot[2]);
-    return p;
-}
-
-CEffectModel *fn_1_7068(void *self, OMOBJMAN *objMan)
-{
-    __ct__12CEffectModelFP9Process_sssUs(self, objMan, 4, 5, 1);
-    ((CEffectModel *)self)->vptr = kVtblFillA;
-    return (CEffectModel *)self;
-}
-
-} // extern "C"
-
-} // extern "C"
-// NONMATCHING: two residual gaps vs the original ' GXSetChanCtrl's enable/light-mask
-// and its diffuse/attn pair are swapped, and the f30/f31 load order at the first
-// vertex differs. Body is otherwise identical instruction-for-instruction.
-// Billboard draw: sets up an alpha-blended GX pipeline with no textures and
-// no culling, then emits a five-vertex strip. Vertices 0/2/4 use the quad's
-// near edge and 1/3 its far edge; every vertex carries the same tint
-// (r=0xFF, g=b=0x28, a=0xFF). Positions go straight into the XFIFO.
-#define XFIFO_F ((volatile f32 *)0xCC008000)
-#define XFIFO_C ((volatile u8 *)0xCC008000)
-
-static const f32 kBillboardZ = 0.0f;
-
-void fn_1_7124(CParticleFillA *self, f32 mtx[3][4])
-{
     GXLoadPosMtxImm(mtx, 0);
     GXClearVtxDesc();
-    GXSetVtxDesc((GXAttr)9, (GXAttrType)1);
-    GXSetVtxDesc((GXAttr)0xB, (GXAttrType)1);
-    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)9, GX_POS_XYZ, GX_F32, 0);
-    GXSetVtxAttrFmt((GXVtxFmt)0, (GXAttr)0xB, GX_POS_XYZ, (GXCompType)5, 0);
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     GXSetNumTevStages(1);
     GXSetNumTexGens(0);
-    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, (GXChannelID)4);
-    GXSetTevOp(GX_TEVSTAGE0, (GXTevMode)4);
-    GXSetZMode(GX_FALSE, (GXCompare)7, GX_FALSE);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
     GXSetNumChans(1);
-    GXSetChanCtrl((GXChannelID)4, GX_FALSE, (GXColorSrc)0, (GXColorSrc)1, 1, (GXDiffuseFn)1, (GXAttnFn)2);
-    GXSetZCompLoc(0);
-    GXSetAlphaCompare((GXCompare)6, 0x1, GX_AOP_AND, (GXCompare)6, 0x1);
-    GXSetBlendMode((GXBlendMode)0, (GXBlendFactor)1, (GXBlendFactor)1, (GXLogicOp)0x5);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, GX_LIGHT0, GX_DF_CLAMP, GX_AF_SPOT);
+    GXSetZCompLoc(GX_FALSE);
+    GXSetAlphaCompare(GX_GEQUAL, 1, GX_AOP_AND, GX_GEQUAL, 1);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ONE, GX_LO_NOOP);
     GXSetAlphaUpdate(GX_TRUE);
-
-    f32 *near_x = (f32 *)((u8 *)self + 0x10);
-    f32 *far_x = (f32 *)((u8 *)self + 0x1C);
-    GXBegin((GXPrimitive)0xB0, (GXVtxFmt)0, 5);
-
-    f32 v0 = near_x[2];
-    f32 v1 = near_x[0];
-    f32 v2 = far_x[2];
-    f32 v3 = far_x[0];
-    f32 v4 = near_x[2];
-    f32 v5 = near_x[0];
-    f32 v6 = far_x[0];
-    f32 v7 = far_x[2];
-    f32 v8 = near_x[0];
-    f32 v9 = near_x[2];
-    XFIFO_F[0] = v0; XFIFO_F[0] = kBillboardZ; XFIFO_F[0] = v1;
-    XFIFO_C[0] = 0xFF; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0xFF;
-    XFIFO_F[0] = v4; XFIFO_F[0] = kBillboardZ; XFIFO_F[0] = v2;
-    XFIFO_C[0] = 0xFF; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0xFF;
-    XFIFO_F[0] = v3; XFIFO_F[0] = kBillboardZ; XFIFO_F[0] = v5;
-    XFIFO_C[0] = 0xFF; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0xFF;
-    XFIFO_F[0] = v6; XFIFO_F[0] = kBillboardZ; XFIFO_F[0] = v7;
-    XFIFO_C[0] = 0xFF; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0xFF;
-    XFIFO_F[0] = v8; XFIFO_F[0] = kBillboardZ; XFIFO_F[0] = v9;
-    XFIFO_C[0] = 0xFF; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0x28; XFIFO_C[0] = 0xFF;
-    return;
-
-    GXBegin((GXPrimitive)0xB0, (GXVtxFmt)0, 5);
-
-    XFIFO_F[0] = near_x[2];
-    XFIFO_F[0] = kBillboardZ;
-    XFIFO_F[0] = near_x[0];
-    XFIFO_C[0] = 0xFF;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0xFF;
-
-    XFIFO_F[0] = near_x[2];
-    XFIFO_F[0] = kBillboardZ;
-    XFIFO_F[0] = far_x[2];
-    XFIFO_C[0] = 0xFF;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0xFF;
-
-    XFIFO_F[0] = far_x[0];
-    XFIFO_F[0] = kBillboardZ;
-    XFIFO_F[0] = far_x[2];
-    XFIFO_C[0] = 0xFF;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0xFF;
-
-    XFIFO_F[0] = far_x[0];
-    XFIFO_F[0] = kBillboardZ;
-    XFIFO_F[0] = near_x[0];
-    XFIFO_C[0] = 0xFF;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0xFF;
-
-    XFIFO_F[0] = near_x[0];
-    XFIFO_F[0] = kBillboardZ;
-    XFIFO_F[0] = near_x[2];
-    XFIFO_C[0] = 0xFF;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0x28;
-    XFIFO_C[0] = 0xFF;
+    GXBegin(GX_LINESTRIP, GX_VTXFMT0, 5);
+    v0 = self->m_a.x;
+    v1 = self->m_a.z;
+    v2 = self->m_a.x;
+    v3 = self->m_b.z;
+    v4 = self->m_b.x;
+    v5 = self->m_b.z;
+    v6 = self->m_b.x;
+    v7 = self->m_a.z;
+    v8 = self->m_a.x;
+    v9 = self->m_a.z;
+#ifdef TARGET_PC
+    GXPosition3f32(v0, 0.0f, v1);
+    GXColor4u8(0xFF, 0x28, 0x28, 0xFF);
+    GXPosition3f32(v2, 0.0f, v3);
+    GXColor4u8(0xFF, 0x28, 0x28, 0xFF);
+    GXPosition3f32(v4, 0.0f, v5);
+    GXColor4u8(0xFF, 0x28, 0x28, 0xFF);
+    GXPosition3f32(v6, 0.0f, v7);
+    GXColor4u8(0xFF, 0x28, 0x28, 0xFF);
+    GXPosition3f32(v8, 0.0f, v9);
+    GXColor4u8(0xFF, 0x28, 0x28, 0xFF);
+    GXEnd();
+#else
+    GXWGFifo.f32 = v0;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = v1;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.f32 = v2;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = v3;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.f32 = v4;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = v5;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.f32 = v6;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = v7;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.f32 = v8;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = v9;
+    GXWGFifo.u8 = 0xFF;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0x28;
+    GXWGFifo.u8 = 0xFF;
+#endif
 }
+
+CEffectParticle *fn_1_74E0(CEffectParticle *self, s16 flag)
+{
+    if (self != NULL) {
+        self->m_vt = &lbl_1_data_17C;
+        __dt__15CEffectParticleFv(self, 0);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+CEffectParticle *fn_1_7544(CEffectParticle *self, s16 flag)
+{
+    if (self != NULL) {
+        self->m_vt = &lbl_1_data_19C;
+        __dt__15CEffectParticleFv(self, 0);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+// Vtables: two zero header words, then the slots in order.
+EffectModelVt lbl_1_data_168 = { { NULL, NULL }, fn_1_7120, (void (*)(CEffectModel *, Mtx))fn_1_7124, fn_1_70BC };
+EffectParticleVt lbl_1_data_17C = { { NULL, NULL }, fn_1_74E0, fn_1_6A8C };
+EffectParticleVt lbl_1_data_18C = { { NULL, NULL }, fn_1_6654, fn_1_6168 };
+EffectParticleVt lbl_1_data_19C = { { NULL, NULL }, fn_1_7544, fn_1_5DFC };
+EffectParticleVt lbl_1_data_1AC = { { NULL, NULL }, fn_1_5CC4, fn_1_57DC };

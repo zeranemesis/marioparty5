@@ -112,7 +112,7 @@ void Hu3DModelScaleSet(HU3DMODELID modelId, float x, float y, float z);
 HU3DMOTID Hu3DMotionCreate(void *data);
 HU3DMOTID Hu3DMotionSet(HU3DMODELID modelId, HU3DMOTID motId);
 void Hu3DMotionKill(HU3DMOTID motId);
-void Hu3DMotionShiftSet(HU3DMOTID motId, float start, float end);
+void Hu3DMotionShiftSet(HU3DMODELID modelId, HU3DMOTID motId, float start, float end, u32 attr);
 HU3DMOTID Hu3DJointMotion(HU3DMODELID modelId, void *data);
 SHARED_SYM extern HU3DCAMERA Hu3DCamera[16];
 SHARED_SYM extern HU3DMODEL Hu3DData[512];
@@ -120,7 +120,7 @@ SHARED_SYM extern HU3DMODEL Hu3DData[512];
 void *HuDataSelHeapReadNum(int dataNum, s32 num, int heap);
 void HuMemDirectFree(void *ptr);
 void *HuMemDirectMallocNum(s32 heap, u32 size, int align);
-void HuPrcCurrentGet(void);
+void *HuPrcCurrentGet(void);
 
 HU3DMODELID CharModelCreate(s16 charNo, s16 model);
 void CharModelKill(s16 charNo);
@@ -159,12 +159,11 @@ public:
     s32 valueGet();
     void posSet(float start, float end);
 
-private:
     void *m_timer;
 };
 
 class CMinigameCore {
-protected:
+public:
     u32 m_unk0;
 
 public:
@@ -179,21 +178,26 @@ public:
 
     void setup(int prio, int stackSize);
 
-protected:
     s32 m_winner[4];
     s32 m_unk18;
     s32 m_unk1C;
 };
 
+struct CPlayer;
+struct CFlowCamera;
+struct CStageSet;
+struct CPlayerRunner;
+
 namespace m531 {
 
+class CScore;
+
 class CGameMaster : public CMinigameCore {
-protected:
+public:
     s32 m_mode;
     OMOBJ *m_obj;
     OMOBJMAN *m_objMan;
 
-public:
     CGameMaster() { m_mode = 0; }
     virtual ~CGameMaster();
     virtual void on_setup(OMOBJMAN *objMan);
@@ -232,10 +236,25 @@ public:
     virtual void mode5();
     virtual void mode6();
 
-private:
-    u8 m_unk2C[0x50 - 0x2C];
-    CTimer m_timer;
-    u8 m_unk54[0x208 - 0x54];
+    ::CPlayer *m_player[4]; // 0x2C
+    ::CPlayerRunner *m_runner; // 0x3C
+    ::CStageSet *m_stageSet; // 0x40
+    ::CFlowCamera *m_camera; // 0x44
+    void *m_cleaner; // 0x48
+    CScore *m_score; // 0x4C
+    CTimer m_timer; // 0x50
+    // Two 10x5 float grids (mode 0 and mode 1), indexed [row][column].
+    f32 m_grid[2][10][5]; // 0x54
+    s32 m_counter; // 0x1E4
+    s16 m_mesCount; // 0x1E8
+    s16 m_pad1EA;
+    s16 m_mesStart; // 0x1EC
+    s16 m_mesEnd; // 0x1EE
+    s32 m_result; // 0x1F0
+    s32 m_step; // 0x1F4
+    s32 m_winner; // 0x1F8
+    f32 m_scoreVal[2]; // 0x1FC
+    s32 m_bgm; // 0x204
 };
 
 // Base of the score display: an OMOBJ whose objFunc calls on_update().
@@ -253,6 +272,147 @@ public:
     virtual ~CScoreBase();
 };
 
+class CScore : public CScoreBase {
+public:
+    s16 m_esp[2][3];
+    s32 m_unk18[2];
+    u8 m_unk20;
+    s32 m_unk24;
+
+    CScore(OMOBJMAN *objMan);
+    virtual void on_update();
+    virtual ~CScore();
+};
+
 } // namespace m531
+
+// Stage object (CStage and its derived classes): the vtable pointer follows the data.
+struct CStageObj;
+struct StageObjVt {
+    void *m_head[2];
+    void (*m_update)(CStageObj *self);
+    CStageObj *(*m_dtor)(CStageObj *self, s16 flag);
+};
+
+struct CStageObj {
+    OMOBJMAN *m_objMan;
+    HU3DMODELID m_model;
+    OMOBJ *m_obj;
+    Vec m_pos;
+    Vec m_rot;
+    Vec m_scale;
+    const StageObjVt *m_vt;
+};
+
+// The flow camera object: eye, up and target with the destination it eases towards.
+struct CFlowCamera;
+struct FlowCamVt {
+    void *m_head[2];
+    void (*m_update0)(CFlowCamera *self);
+    void (*m_update1)(CFlowCamera *self);
+};
+
+struct CFlowCamera {
+    OMOBJMAN *m_objMan;
+    Vec m_pos; // 0x04
+    Vec m_up; // 0x10
+    Vec m_target; // 0x1C
+    OMOBJ *m_obj; // 0x28
+    s32 m_frame; // 0x2C
+    Vec m_destPos; // 0x30
+    Vec m_destTarget; // 0x3C
+    f32 m_angle; // 0x48
+    const FlowCamVt *m_vt; // 0x4C
+};
+
+struct CPlayerBase;
+
+struct PlayerBaseVt {
+    void *m_head[2];
+    void (*m_update0)(CPlayerBase *self);
+    void (*m_update1)(CPlayerBase *self);
+    void (*m_update2)(CPlayerBase *self);
+    void (*m_update3)(CPlayerBase *self);
+    void (*m_input)(CPlayerBase *self);
+    void (*m_cpu)(CPlayerBase *self);
+    void (*m_post)(CPlayerBase *self);
+    CPlayerBase *(*m_dtor)(CPlayerBase *self, s16 flag);
+    void (*m_set0)(CPlayerBase *self);
+    void (*m_set1)(CPlayerBase *self);
+};
+
+struct PlayerMotInfo {
+    s32 dataNum;
+    u32 attr;
+    f32 shiftTime;
+};
+
+// MWCC puts the vtable pointer after the data of the class (offset 0xB0 on the GC).
+struct CPlayerBase {
+    OMOBJMAN *m_objMan;
+    s16 m_playerNo;
+    s16 m_charNo;
+    s16 m_model;
+    s16 m_motId[32];
+    s16 m_type;
+    s16 m_dif;
+    s8 m_padNo;
+    s32 m_curMot;
+    u8 m_flag54;
+    u8 m_flag55;
+    OMOBJ *m_obj;
+    PlayerMotInfo *m_motTbl;
+    s32 m_motNum;
+    f32 m_stickX;
+    f32 m_stickY;
+    Vec m_spawn; // 0x6C
+    Vec m_home; // 0x78
+    Vec m_pos;
+    Vec m_rot;
+    Vec m_scale;
+    s32 m_nextMot;
+    s32 m_dataNum;
+    const PlayerBaseVt *m_vt;
+};
+
+class CEffectParticle;
+
+// The cleaning-contest player (vtable lbl_1_data_3C4).
+struct CPlayer {
+    CPlayerBase m_base;
+    f32 m_turn; // 0xB4
+    m531::CFlow *m_flow;
+    void *m_unkBC;
+    CEffectParticle *m_hit; // 0xC0
+    s16 m_hatModel; // 0xC4
+    Vec m_unkC8;
+    f32 m_unkD4;
+    u8 m_unkD8;
+    f32 m_unkDC;
+    s32 m_side; // 0xE0
+    f32 m_unkE4;
+    s32 m_unkE8;
+    u8 m_unkEC;
+    f32 m_unkF0;
+    s32 m_team; // 0xF4
+    u8 m_unkF8;
+    s32 m_se; // 0xFC
+    s32 m_unk100;
+    s32 m_dir; // 0x104
+    Vec m_cell; // 0x108
+    s32 m_unk114;
+    f32 m_unk118;
+    Vec m_target; // 0x11C
+    Vec m_unk128;
+};
+
+// The player that runs over the stage (vtable lbl_1_data_364).
+struct CPlayerRunner {
+    CPlayerBase m_base;
+    s32 m_frame; // 0xB4
+    CStageObj *m_obj[2]; // 0xB8
+    f32 m_vel; // 0xC0
+    u8 m_hit; // 0xC4
+};
 
 #endif

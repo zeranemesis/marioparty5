@@ -1,3 +1,4 @@
+#ifndef TARGET_PC
 #include "dolphin/mtx.h"
 
 // Declared here rather than through game/object.h and game/hu3d.h: in C++ that header pulls
@@ -99,3 +100,72 @@ void CStage::setShadow()
     Hu3DModelShadowDispOn(m_model);
 }
 }
+#else // TARGET_PC
+// PC: CStage is the plain CStageObj struct (vtable pointer after the data, as
+// object.cpp expects) and its members are exported under the GameCube symbols.
+#include "REL/m531Dll.h"
+
+extern "C" {
+void *__dl__FPv(void *ptr);
+void *__ct__Q24m5316CStageFP9Process_sissUs(CStageObj *self, OMOBJMAN *objMan, int dataNum, s16 layer, s16 prio, u16 camera);
+CStageObj *__dt__Q24m5316CStageFv(CStageObj *self, s16 flag);
+void setShadow__Q24m5316CStageFv(CStageObj *self);
+void on_update__Q24m5316CStageFv(CStageObj *self);
+}
+
+static const StageObjVt sStageVt = { { NULL, NULL }, on_update__Q24m5316CStageFv, __dt__Q24m5316CStageFv };
+
+static void StageObjUpdate(OMOBJ *obj)
+{
+    CStageObj *self = (CStageObj *)obj->data;
+    self->m_vt->m_update(self);
+}
+
+extern "C" {
+
+void on_update__Q24m5316CStageFv(CStageObj *self)
+{
+}
+
+void *__ct__Q24m5316CStageFP9Process_sissUs(CStageObj *self, OMOBJMAN *objMan, int dataNum, s16 layer, s16 prio, u16 camera)
+{
+    self->m_vt = &sStageVt;
+    self->m_objMan = objMan;
+    self->m_model = Hu3DModelCreate(HuDataSelHeapReadNum(dataNum, 0x10000000, 2));
+    self->m_obj = omAddObjEx(objMan, prio, 16, 16, -1, StageObjUpdate);
+    self->m_obj->data = self;
+    Hu3DModelLayerSet(self->m_model, layer);
+    Hu3DModelCameraSet(self->m_model, camera);
+    self->m_pos.x = 0.0f;
+    self->m_pos.y = 0.0f;
+    self->m_pos.z = 0.0f;
+    self->m_rot.x = 0.0f;
+    self->m_rot.y = 0.0f;
+    self->m_rot.z = 0.0f;
+    self->m_scale.x = 1.0f;
+    self->m_scale.y = 1.0f;
+    self->m_scale.z = 1.0f;
+    return self;
+}
+
+CStageObj *__dt__Q24m5316CStageFv(CStageObj *self, s16 flag)
+{
+    if (self != NULL) {
+        self->m_vt = &sStageVt;
+        Hu3DModelKill(self->m_model);
+        self->m_obj->data = NULL;
+        omDelObjEx(self->m_objMan, self->m_obj);
+        if (flag > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+void setShadow__Q24m5316CStageFv(CStageObj *self)
+{
+    Hu3DModelShadowSet(self->m_model);
+    Hu3DModelShadowDispOn(self->m_model);
+}
+}
+#endif
