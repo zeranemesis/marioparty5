@@ -246,8 +246,7 @@ typedef struct M577Work_s {
 
 #define M577_MODEL(dst, idx)                                                                       \
     if (w->mdlCache[idx] < 0) {                                                                    \
-        dst = Hu3DModelCreate(HuDataSelHeapReadNum(modelDataTbl[idx], HU_MEMNUM_OVL, HEAP_MODEL)); \
-        w->mdlCache[idx] = dst;                                                                    \
+        dst = w->mdlCache[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(modelDataTbl[idx], HU_MEMNUM_OVL, HEAP_MODEL)); \
     } else {                                                                                       \
         dst = Hu3DModelLink(w->mdlCache[idx]);                                                     \
     }
@@ -837,7 +836,6 @@ void fn_1_1600(s16 mode, s16 frameNo)
 {
     M577Work *w = workObj->data;
     M577Player *p;
-    M577Player *p2;
     s16 playerNo;
     s32 i;
     s32 n;
@@ -858,12 +856,12 @@ void fn_1_1600(s16 mode, s16 frameNo)
                     n = 3;
                 }
                 for (i = 0; i < n; i++) {
-                    p2 = w->team[w->unk1B5E].player[i];
-                    playerNo = p2->playerNo;
+                    p = w->team[w->unk1B5E].player[i];
+                    playerNo = p->playerNo;
                     if (_CheckFlag(0x1000F) == 0) {
                         GwPlayer[playerNo].mgCoinBonus = 0xA;
                     }
-                    CharMotionShiftSet(p2->charNo, p2->obj->mtnId[6], 0.0f, 5.0f, 0);
+                    CharMotionShiftSet(p->charNo, p->obj->mtnId[6], 0.0f, 5.0f, 0);
                 }
             }
             w->sub++;
@@ -902,6 +900,7 @@ void fn_1_17CC(s16 mode, s16 frameNo)
 void fn_1_1870(OMOBJ *obj)
 {
     M577Player *p = obj->data;
+    M577Work *w = workObj->data;
     s32 i;
 
     p->playerNo = obj->work[0];
@@ -911,7 +910,7 @@ void fn_1_1870(OMOBJ *obj)
     p->type = GwPlayerConf[p->playerNo].type;
     p->dif = GwPlayerConf[p->playerNo].dif;
     p->obj = obj;
-    ((M577Work *)workObj->data)->player[p->playerNo] = p;
+    w->player[p->playerNo] = p;
     obj->mdlId[0] = CharModelCreate(p->charNo, 8);
     p->mdlId = obj->mdlId[0];
     for (i = 0; i < 9; i++) {
@@ -1011,7 +1010,7 @@ void fn_1_1D50(void)
 
 void fn_1_1DD8(M577Work *w)
 {
-    f32 sp8;
+    volatile f32 sp8;
     s32 i;
 
     for (i = 0; i < 2; i++) {
@@ -1040,16 +1039,22 @@ void fn_1_1FEC(M577Split *split)
 void fn_1_2044(M577Split *split)
 {
     f32 aspect;
+    s32 i;
 
-    Hu3DCameraViewportSet(camBit[0], 0.0f, 0.0f, split->x, 480.0f, 0.0f, 1.0f);
-    Hu3DCameraViewportSet(camBit[1], split->x, 0.0f, 640.0f - split->x, 480.0f, 0.0f, 1.0f);
-    Hu3DCameraScissorSet(camBit[0], 0, 0, (u32)split->x, 0x1E0);
-    Hu3DCameraScissorSet(camBit[1], (u32)split->x, 0, (u32)(640.0f - split->x), 0x1E0);
+    i = 0;
+    Hu3DCameraViewportSet(camBit[i], 0.0f, 0.0f, split->x, 480.0f, 0.0f, 1.0f);
+    i++;
+    Hu3DCameraViewportSet(camBit[i], split->x, 0.0f, 640.0f - split->x, 480.0f, 0.0f, 1.0f);
+    i = 0;
+    Hu3DCameraScissorSet(camBit[i], 0, 0, (u32)split->x, 0x1E0);
+    i++;
+    Hu3DCameraScissorSet(camBit[i], (u32)split->x, 0, (u32)(640.0f - split->x), 0x1E0);
+    i = 0;
     aspect = 0.9f * split->x / 480.0f;
     if (aspect < 0.0f) {
         aspect = 0.0f;
     }
-    Hu3DCameraPerspectiveSet(camBit[0], 15.0f, 20.0f, 40000.0f, aspect);
+    Hu3DCameraPerspectiveSet(camBit[i], 15.0f, 20.0f, 40000.0f, aspect);
 }
 
 void fn_1_225C(void)
@@ -1084,9 +1089,8 @@ void fn_1_2364(M577Cam *cam, s16 bit)
 void fn_1_23CC(M577Cam *cam)
 {
     HuVecF pos;
-    f32 sp8;
-    f64 rx;
-    f64 ry;
+    volatile f32 sp8;
+    f64 trig;
 
     while (cam->rot.x > 360.0f) {
         cam->rot.x -= 360.0f;
@@ -1100,11 +1104,11 @@ void fn_1_23CC(M577Cam *cam)
     while (cam->rot.y < 0.0f) {
         cam->rot.y += 360.0f;
     }
-    rx = cos(M_PI * cam->rot.x / 180.0);
-    pos.x = cam->target.x + cam->rot.z * cos(M_PI * cam->rot.y / 180.0) * rx;
+    trig = cos(M_PI * cam->rot.x / 180.0);
+    pos.x = cam->target.x + cam->rot.z * cos(M_PI * cam->rot.y / 180.0) * trig;
     pos.y = cam->target.y + cam->rot.z * sin(M_PI * cam->rot.y / 180.0);
-    ry = sin(M_PI * cam->rot.x / 180.0);
-    pos.z = cam->target.z + cam->rot.z * cos(M_PI * cam->rot.y / 180.0) * ry;
+    trig = sin(M_PI * cam->rot.x / 180.0);
+    pos.z = cam->target.z + cam->rot.z * cos(M_PI * cam->rot.y / 180.0) * trig;
     sp8 = cam->target.z;
     Hu3DCameraPosSet(cam->bit, pos.x, pos.y, pos.z, 0.0f, 1.0f, 0.0f, cam->target.x, cam->target.y, sp8);
 }
