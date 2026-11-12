@@ -1,3 +1,6 @@
+#ifdef __MWERKS__
+#define _MATH_H /* the original object has no math.h sqrt literals */
+#endif
 #include "game/hu3d.h"
 extern "C" {
 #include "game/mg/timer.h"
