@@ -1348,41 +1348,43 @@ static f32 fn_1_8DF0(M523Player *player)
     f32 mag;
 
     switch (player->aiState) {
-        case 0:
-            if (player->aiTimer == 0) {
-                fn_1_92F4(player);
-                player->aiState = 1;
-                break;
-            }
-            player->aiTimer--;
-            return 0.0f;
         case 1:
             if (player->index == fn_1_9218()) {
                 fn_1_9440(player);
                 player->aiState = 2;
             }
-            break;
+        default:
+        block_12:
+            PSVECSubtract(&player->aiTarget, &player->pos, &diff);
+            diff.y = 0.0f;
+            if (PSVECMag(&diff) < 50.0f) {
+                player->aiState = 0;
+                if (player->dif == 0) {
+                    player->aiTimer = frandmod(30) + 45;
+                } else if (player->dif == 1) {
+                    player->aiTimer = frandmod(30) + 15;
+                } else {
+                    player->aiTimer = 0;
+                }
+                return 0.0f;
+            }
+            PSVECNormalize(&diff, &diff);
+            player->stkX = 56.0f * diff.x;
+            player->stkY = 56.0f * diff.z;
+            mag = sqrtf((f32)((player->stkX * player->stkX) + (player->stkY * player->stkY)));
+            return mag;
         case 2:
             fn_1_9440(player);
-            break;
+            goto block_12;
+        case 0:
+            if (player->aiTimer == 0) {
+                fn_1_92F4(player);
+                player->aiState = 1;
+                goto block_12;
+            }
+            player->aiTimer--;
+            return 0.0f;
     }
-    PSVECSubtract(&player->aiTarget, &player->pos, &diff);
-    diff.y = 0.0f;
-    if (PSVECMag(&diff) < 50.0f) {
-        player->aiState = 0;
-        if (player->dif == 0) {
-            player->aiTimer = frandmod(30) + 45;
-        } else if (player->dif == 1) {
-            player->aiTimer = frandmod(30) + 15;
-        } else {
-            player->aiTimer = 0;
-        }
-        return 0.0f;
-    }
-    PSVECNormalize(&diff, &diff);
-    player->stkX = 56.0f * diff.x;
-    player->stkY = 56.0f * diff.z;
-    return sqrtf((f32)((player->stkX * player->stkX) + (player->stkY * player->stkY)));
 }
 
 s32 fn_1_90EC(M523Player *player)
