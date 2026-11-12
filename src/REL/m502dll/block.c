@@ -21,7 +21,7 @@ void fn_1_9058(M502BLOCKFX *fx);
 void fn_1_912C(M502BLOCKFX *fx, s32 idx, Vec *pos);
 
 static HU3DMODELHOOK lbl_1_data_E98[4] = { fn_1_8904, fn_1_8940, fn_1_897C, fn_1_89B8 };
-static M502BLOCK *lbl_1_data_EA8[4];
+static M502BLOCK *lbl_1_data_EA8[4] = { NULL, NULL, NULL, NULL };
 static s32 lbl_1_data_EB8 = 1;
 static Vec lbl_1_data_EBC[8] = {
     { -0.8f, 1.6f, 0.0f },
@@ -54,8 +54,8 @@ static Vec lbl_1_data_F7C[8] = {
     { 1.8f, 3.6f, 0.0f },
 };
 
-static f32 lbl_1_bss_5048;
 static f32 lbl_1_bss_504C;
+static f32 lbl_1_bss_5048;
 
 void fn_1_6664(M502BLOCK *b, s32 no, M502PLAYER *player)
 {

@@ -156,9 +156,12 @@ typedef struct M502PlrSub_s {
     OMOBJ *obj;     /* 0x1C */
     s32 active;     /* 0x20 */
     M502INPUT input; /* 0x24 */
-    u8 pad54[0xC];
+    s32 landing;    /* 0x54 */
+    f32 landY;      /* 0x58 */
+    f32 startY;     /* 0x5C */
     s32 lane;       /* 0x60 */
-    u8 pad64[8];
+    s32 hold;       /* 0x64 */
+    f32 jumpVel;    /* 0x68 */
     f32 vel;        /* 0x6C */
     s16 unk70;
     s16 pad72;
