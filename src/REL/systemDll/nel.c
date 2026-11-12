@@ -37,6 +37,12 @@ struct {
     s32 pad;
 } ParWork;
 
+/* Per-slot ring change state (current / next ring set). */
+struct {
+    s8 cur;
+    s8 next;
+} NelRingChg[4];
+
 void MdSpriteDebug(NEL_SYS *sys);
 void MdSpriteDispSet(s32 grpNo, s32 dispF);
 void MdLayer1Hook(s16 layerNo);
@@ -3738,8 +3744,8 @@ s32 fn_1_A61C(NEL_SYS *sys, MDPROCENT *tbl)
     sys->oscVal1c = 0.0f;
     sys->oscVal2 = 0.0f;
     sys->oscVal2b = 0.0f;
-    sys->sclVal35 = 0.0f;
     sys->sclVal36 = 0.0f;
+    sys->sclVal37 = 0.0f;
     return 0;
 }
 
@@ -5113,6 +5119,308 @@ s32 fn_1_FDE0(NEL_SYS *sys, MDPROCENT *tbl)
         }
     }
     if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_FF08(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+    HuVecF *scl;
+
+    sys->oscSpd = 30.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 0; i < 2; i++) {
+        pos = model->mdlPos[i + 0x32];
+        scl = model->mdlScale[i + 0x32];
+        MdMathLerp(&pos->x, MdVecTbl[0x12].x, MdVecTbl[i + 0xF].x, sys->oscVal1);
+        MdMathLerp(&pos->y, MdVecTbl[0x12].y, MdVecTbl[i + 0xF].y, sys->oscVal1);
+        MdMathLerp(&pos->z, MdVecTbl[0x12].z, MdVecTbl[i + 0xF].z, sys->oscVal1);
+        if (i == sys->modeSel) {
+            MdMathLerpScale(scl, 0.0f, MdVecTbl[0x13].z, sys->oscVal1);
+        } else {
+            MdMathLerpScale(scl, 0.0f, MdVecTbl[0x13].y, sys->oscVal1);
+        }
+    }
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_100A8(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *volatile rot;
+    HuVecF *scl;
+
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    MdMathOscillate(3, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathOscillate(6, &sys->oscTime1c, &sys->oscVal1c, sys->oscSpd);
+    for (i = 0; i < 2; i++) {
+        rot = model->mdlRot[i + 0x32];
+        scl = model->mdlScale[i + 0x32];
+        if (i != sys->modeSel) {
+            MdMathLerpScale(scl, MdVecTbl[0x13].z, MdVecTbl[0x13].y, sys->oscVal1);
+        } else {
+            MdMathLerpScaleOfs(scl, MdVecTbl[0x13].y, MdVecTbl[0x13].z, sys->oscVal1, 1.5f * sys->oscVal1b);
+        }
+    }
+    MdProcTbl[5].func(sys, MdProcTbl);
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_10220(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+    HuVecF *scl;
+
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(2, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    MdMathOscillate(3, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    for (i = 0; i < 2; i++) {
+        pos = model->mdlPos[i + 0x32];
+        scl = model->mdlScale[i + 0x32];
+        if (i == sys->modeSel) {
+            MdMathLerpScale(scl, MdVecTbl[0x13].z, MdVecTbl[0x13].x, sys->oscVal1);
+            if (i == 0) {
+                MdMathLerp(&pos->x, MdVecTbl[0xF].x, MdVecTbl[0x11].x, sys->oscVal1);
+                MdMathLerp(&pos->y, MdVecTbl[0xF].y, MdVecTbl[0x11].y, sys->oscVal1);
+                MdMathLerpOfs(&pos->z, MdVecTbl[0xF].z, MdVecTbl[0x11].z, sys->oscVal1, -8.0f * sys->oscVal1b);
+            } else if (i == 1) {
+                MdMathLerp(&pos->x, MdVecTbl[0x10].x, MdVecTbl[0x11].x, sys->oscVal1);
+                MdMathLerp(&pos->y, MdVecTbl[0x10].y, MdVecTbl[0x11].y, sys->oscVal1);
+                MdMathLerpOfs(&pos->z, MdVecTbl[0x10].z, MdVecTbl[0x11].z, sys->oscVal1, -8.0f * sys->oscVal1b);
+            }
+        } else {
+            MdMathLerpScale(scl, MdVecTbl[0x13].y, 0.0f, sys->oscVal1);
+        }
+    }
+    NelGuideBillboardUpdate(sys, sys->modeSel + 0x32);
+    MdMathOscillate(0, &sys->sclVal36, &sys->sclVal37, sys->oscSpd);
+    MdMathLerp(&sys->unk13C, 1.0f, 0.5f, sys->sclVal37);
+    fn_1_198E0(model->mdlId[sys->modeSel + 0x32], sys->unk13C);
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_104C0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+    HuVecF *scl;
+
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    MdMathOscillate(3, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    for (i = 0; i < 2; i++) {
+        pos = model->mdlPos[i + 0x32];
+        scl = model->mdlScale[i + 0x32];
+        if (i == sys->modeSel) {
+            MdMathLerpScale(scl, MdVecTbl[0x13].x, MdVecTbl[0x13].z, sys->oscVal1);
+            if (i == 0) {
+                MdMathLerp(&pos->x, MdVecTbl[0x11].x, MdVecTbl[0xF].x, sys->oscVal1);
+                MdMathLerp(&pos->y, MdVecTbl[0x11].y, MdVecTbl[0xF].y, sys->oscVal1);
+                MdMathLerpOfs(&pos->z, MdVecTbl[0x11].z, MdVecTbl[0xF].z, sys->oscVal1, 8.0f * sys->oscVal1b);
+            } else if (i == 1) {
+                MdMathLerp(&pos->x, MdVecTbl[0x11].x, MdVecTbl[0x10].x, sys->oscVal1);
+                MdMathLerp(&pos->y, MdVecTbl[0x11].y, MdVecTbl[0x10].y, sys->oscVal1);
+                MdMathLerpOfs(&pos->z, MdVecTbl[0x11].z, MdVecTbl[0x10].z, sys->oscVal1, 8.0f * sys->oscVal1b);
+            }
+        } else {
+            MdMathLerpScale(scl, 0.0f, MdVecTbl[0x13].y, sys->oscVal1);
+        }
+    }
+    NelGuideBillboardUpdate(sys, sys->modeSel + 0x32);
+    MdMathOscillate(0, &sys->sclVal36, &sys->sclVal37, sys->oscSpd);
+    MdMathLerp(&sys->unk13C, 0.5f, 1.0f, sys->sclVal37);
+    fn_1_198E0(model->mdlId[sys->modeSel + 0x32], sys->unk13C);
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_10760(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *scl;
+
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 0; i < 4; i++) {
+        scl = model->mdlScale[i + 0x34];
+        if (i <= sys->playerNum) {
+            MdMathLerpScale(scl, 0.0f, 1.0f, sys->oscVal1);
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        scl = model->mdlScale[i + 0x38];
+        if (i >= sys->playerNum) {
+            MdMathLerpScale(scl, 0.0f, 1.0f, sys->oscVal1);
+        }
+    }
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_108A0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+    HuVecF *scl;
+
+    sys->oscSpd = 30.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 0; i < 4; i++) {
+        pos = model->mdlPos[i + 0x34];
+        scl = model->mdlScale[i + 0x34];
+        if (i <= sys->playerNum) {
+            MdMathLerp(&pos->x, MdVecTbl[0x1A].x, MdVecTbl[i + 0x15].x, sys->oscVal1);
+            MdMathLerp(&pos->y, MdVecTbl[0x1A].y, MdVecTbl[i + 0x15].y, sys->oscVal1);
+            MdMathLerp(&pos->z, MdVecTbl[0x1A].z, MdVecTbl[i + 0x15].z, sys->oscVal1);
+            MdMathLerpScale(scl, 0.0f, 1.0f, sys->oscVal1);
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        pos = model->mdlPos[i + 0x38];
+        scl = model->mdlScale[i + 0x38];
+        if (i >= sys->playerNum) {
+            MdMathLerp(&pos->x, MdVecTbl[0x1A].x, MdVecTbl[i + 0x16].x, sys->oscVal1);
+            MdMathLerp(&pos->y, MdVecTbl[0x1A].y, MdVecTbl[i + 0x16].y, sys->oscVal1);
+            MdMathLerp(&pos->z, MdVecTbl[0x1A].z, MdVecTbl[i + 0x16].z, sys->oscVal1);
+            MdMathLerpScale(scl, 0.0f, 1.0f, sys->oscVal1);
+        }
+    }
+    for (i = 0; i < 7; i++) {
+        NelGuideBillboardUpdate(sys, i + 0x34);
+    }
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_10B30(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *scl;
+
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(2, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 0; i < 4; i++) {
+        scl = model->mdlScale[i + 0x34];
+        if (i <= sys->playerNum) {
+            MdMathLerpScale(scl, 1.0f, 0.0f, sys->oscVal1);
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        scl = model->mdlScale[i + 0x38];
+        if (i >= sys->playerNum) {
+            MdMathLerpScale(scl, 1.0f, 0.0f, sys->oscVal1);
+        }
+    }
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_10C70(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+    HuVecF *scl;
+
+    if (sys->initF1 == 0) {
+        for (i = 0; i < 4; i++) {
+            if (i >= sys->unk242) {
+                NelRingChg[i].cur = 1;
+                NelRingChg[i].next = 1;
+            } else {
+                if (i <= sys->selSub) {
+                    NelRingChg[i].cur = 0;
+                } else {
+                    NelRingChg[i].cur = 1;
+                }
+                if (i <= sys->playerNum) {
+                    NelRingChg[i].next = 0;
+                } else {
+                    NelRingChg[i].next = 1;
+                }
+            }
+        }
+        for (i = 1; i < sys->unk242; i++) {
+            if (NelRingChg[i].cur != NelRingChg[i].next) {
+                Hu3DModelAttrReset(model->mdlId[i + 0x34], 1);
+                Hu3DModelAttrReset(model->mdlId[i + 0x37], 1);
+                ((SYSRING_WORK *)sys->ring)->scale = 0.5f;
+                MdRingModeSet(sys, i + 7, 6);
+                MdRingOfsSet(sys, i + 7, 0.0f, 0.0f, -100.0f);
+                if (NelRingChg[i].next == 0) {
+                    MdRingMdlSet(sys, i + 7, i + 0x34);
+                } else if (NelRingChg[i].next == 1) {
+                    MdRingMdlSet(sys, i + 7, i + 0x37);
+                }
+            }
+        }
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 1; i < sys->unk242; i++) {
+        if (NelRingChg[i].cur != NelRingChg[i].next) {
+            if (NelRingChg[i].cur == 0) {
+                pos = model->mdlPos[i + 0x34];
+                scl = model->mdlScale[i + 0x34];
+            } else {
+                pos = model->mdlPos[i + 0x37];
+                scl = model->mdlScale[i + 0x37];
+            }
+            MdMathLerpScale(scl, 1.0f, 0.0f, sys->oscVal1);
+            MdMathLerp(&pos->z, MdVecTbl[0x15].z, MdVecTbl[0x19].z, sys->oscVal1);
+            if (NelRingChg[i].next == 0) {
+                pos = model->mdlPos[i + 0x34];
+                scl = model->mdlScale[i + 0x34];
+            } else {
+                pos = model->mdlPos[i + 0x37];
+                scl = model->mdlScale[i + 0x37];
+            }
+            MdMathLerpScale(scl, 0.0f, 1.0f, sys->oscVal1);
+            MdMathLerp(&pos->y, MdVecTbl[0x19].y, MdVecTbl[0x15].y, sys->oscVal1);
+            pos->z = MdVecTbl[0x15].z;
+        }
+    }
+    MdProcTbl[8].func(sys, MdProcTbl);
+    if (sys->oscTime1 >= 1.0f) {
+        for (i = 1; i < sys->unk242; i++) {
+            if (NelRingChg[i].cur != NelRingChg[i].next) {
+                if (NelRingChg[i].cur == 0) {
+                    Hu3DModelAttrSet(model->mdlId[i + 0x34], 1);
+                } else {
+                    Hu3DModelAttrSet(model->mdlId[i + 0x37], 1);
+                }
+            }
+        }
         return 1;
     }
     return 0;
