@@ -3984,6 +3984,368 @@ s32 fn_1_B120(NEL_SYS *sys, MDPROCENT *tbl)
     return 0;
 }
 
+s32 fn_1_B534(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    float *p;
+
+    if (sys->initF1 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[62], 2, &pt);
+        sys->pos0x = pt.x - MdVecTbl[8].x;
+        sys->pos0y = pt.y;
+        MdMathPoint3Dto2D(&MdVecTbl[65], 2, &pt);
+        sys->pos1y = pt.x + MdVecTbl[8].x;
+        sys->pos2x = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    p = (float *)MdSpritePosGet(1, 0);
+    MdMathLerp(p, -12.0f, sys->pos0x, sys->oscVal1);
+    p[1] = sys->pos0y;
+    p = (float *)MdSpritePosGet(1, 1);
+    MdMathLerp(p, 588.0f, sys->pos1y, sys->oscVal1);
+    p[1] = sys->pos2x;
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_B6D0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    float *p;
+
+    if (sys->initF1 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[62], 2, &pt);
+        sys->pos0x = pt.x - MdVecTbl[8].x;
+        sys->pos0y = pt.y;
+        MdMathPoint3Dto2D(&MdVecTbl[65], 2, &pt);
+        sys->pos1y = pt.x + MdVecTbl[8].x;
+        sys->pos2x = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    p = (float *)MdSpritePosGet(1, 0);
+    MdMathLerp(p, sys->pos0x, -12.0f, sys->oscVal1);
+    p[1] = sys->pos0y;
+    p = (float *)MdSpritePosGet(1, 1);
+    MdMathLerp(p, sys->pos1y, 588.0f, sys->oscVal1);
+    p[1] = sys->pos2x;
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_B86C(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+
+    if (sys->initF2 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[sys->sel * 3 + 0x3E], 2, &pt);
+        if (sys->sel == 0) {
+            sys->sclPos0x = pt.x - MdVecTbl[8].x;
+            HuSprAttrReset(sprite->grpId[1], 4, 4);
+        } else if (sys->sel == 1) {
+            sys->sclPos0x = pt.x + MdVecTbl[8].x;
+            HuSprAttrReset(sprite->grpId[1], 5, 4);
+        }
+        sys->sclPos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF2 = 1;
+    }
+    MdMathOscillate(3, &sys->oscTime2, &sys->oscVal2, sys->oscSpd);
+    if (sys->sel == 0) {
+        p = MdSpritePosGet(1, 0);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x - MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpritePosGet(1, 4);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x - MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpriteScaleGet(1, 0);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        p = MdSpriteScaleGet(1, 4);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        HuSprTPLvlSet(1, 4, sys->oscVal2);
+    } else if (sys->sel == 1) {
+        p = MdSpritePosGet(1, 1);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x + MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpritePosGet(1, 5);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x + MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpriteScaleGet(1, 1);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        p = MdSpriteScaleGet(1, 5);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        HuSprTPLvlSet(1, 5, sys->oscVal2);
+    }
+    if (sys->oscTime2 >= 1.0f) {
+        if (sys->sel == 0) {
+            HuSprAttrSet(sprite->grpId[1], 4, 4);
+        } else {
+            HuSprAttrSet(sprite->grpId[1], 5, 4);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_BC80(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    float *p;
+
+    if (sys->initF1 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[78], 2, &pt);
+        sys->pos0x = pt.x;
+        sys->pos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    p = (float *)MdSpritePosGet(1, 0);
+    MdMathLerp(p, -12.0f, sys->pos0x - MdVecTbl[9].x, sys->oscVal1);
+    p[1] = sys->pos0y;
+    p = (float *)MdSpritePosGet(1, 1);
+    MdMathLerp(p, 588.0f, sys->pos0x + MdVecTbl[9].x, sys->oscVal1);
+    p[1] = sys->pos0y;
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_BDF4(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    float *p;
+
+    if (sys->initF1 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[78], 2, &pt);
+        sys->pos0x = pt.x;
+        sys->pos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    p = (float *)MdSpritePosGet(1, 0);
+    MdMathLerp(p, sys->pos0x - MdVecTbl[9].x, -12.0f, sys->oscVal1);
+    p[1] = sys->pos0y;
+    p = (float *)MdSpritePosGet(1, 1);
+    MdMathLerp(p, sys->pos0x + MdVecTbl[9].x, 588.0f, sys->oscVal1);
+    p[1] = sys->pos0y;
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_BF68(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+
+    if (sys->initF2 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[0x4E], 2, &pt);
+        if (sys->sel == 0) {
+            sys->sclPos0x = pt.x - MdVecTbl[9].x;
+            HuSprAttrReset(sprite->grpId[1], 4, 4);
+        } else if (sys->sel == 1) {
+            sys->sclPos0x = pt.x + MdVecTbl[9].x;
+            HuSprAttrReset(sprite->grpId[1], 5, 4);
+        }
+        sys->sclPos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF2 = 1;
+    }
+    MdMathOscillate(3, &sys->oscTime2, &sys->oscVal2, sys->oscSpd);
+    if (sys->sel == 0) {
+        p = MdSpritePosGet(1, 0);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x - MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpritePosGet(1, 4);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x - MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpriteScaleGet(1, 0);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        p = MdSpriteScaleGet(1, 4);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        HuSprTPLvlSet(1, 4, sys->oscVal2);
+    } else if (sys->sel == 1) {
+        p = MdSpritePosGet(1, 1);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x + MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpritePosGet(1, 5);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x + MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpriteScaleGet(1, 1);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        p = MdSpriteScaleGet(1, 5);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        HuSprTPLvlSet(1, 5, sys->oscVal2);
+    }
+    if (sys->oscTime2 >= 1.0f) {
+        if (sys->sel == 0) {
+            HuSprAttrSet(sprite->grpId[1], 4, 4);
+        } else {
+            HuSprAttrSet(sprite->grpId[1], 5, 4);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_C36C(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    float *p;
+
+    if (sys->initF1 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[81], 2, &pt);
+        sys->pos0x = pt.x;
+        sys->pos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    p = (float *)MdSpritePosGet(1, 0);
+    MdMathLerp(p, -12.0f, sys->pos0x - MdVecTbl[10].x, sys->oscVal1);
+    p[1] = sys->pos0y;
+    p = (float *)MdSpritePosGet(1, 1);
+    MdMathLerp(p, 588.0f, sys->pos0x + MdVecTbl[10].x, sys->oscVal1);
+    p[1] = sys->pos0y;
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_C4E0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    float *p;
+
+    if (sys->initF1 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[81], 2, &pt);
+        sys->pos0x = pt.x;
+        sys->pos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    p = (float *)MdSpritePosGet(1, 0);
+    MdMathLerp(p, sys->pos0x - MdVecTbl[10].x, -12.0f, sys->oscVal1);
+    p[1] = sys->pos0y;
+    p = (float *)MdSpritePosGet(1, 1);
+    MdMathLerp(p, sys->pos0x + MdVecTbl[10].x, 588.0f, sys->oscVal1);
+    p[1] = sys->pos0y;
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_C654(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    HuVecF pt;
+    SYSMODEL *volatile model = (SYSMODEL *)sys->model;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+
+    if (sys->initF2 == 0) {
+        MdMathPoint3Dto2D(&MdVecTbl[0x51], 2, &pt);
+        if (sys->sel == 0) {
+            sys->sclPos0x = pt.x - MdVecTbl[10].x;
+            if (sys->selSub != 1 || sys->menuNo != 0) {
+                HuSprAttrReset(sprite->grpId[1], 4, 4);
+            }
+        } else if (sys->sel == 1) {
+            sys->sclPos0x = pt.x + MdVecTbl[10].x;
+            if (sys->selSub != 1 || sys->menuNo != 8) {
+                HuSprAttrReset(sprite->grpId[1], 5, 4);
+            }
+        }
+        sys->sclPos0y = pt.y;
+        HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+        sys->initF2 = 1;
+    }
+    sys->oscSpd = 15.0f;
+    MdMathOscillate(3, &sys->oscTime2, &sys->oscVal2, sys->oscSpd);
+    if (sys->sel == 0) {
+        p = MdSpritePosGet(1, 0);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x - MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpritePosGet(1, 4);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x - MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpriteScaleGet(1, 0);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        p = MdSpriteScaleGet(1, 4);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        HuSprTPLvlSet(1, 4, sys->oscVal2);
+    } else if (sys->sel == 1) {
+        p = MdSpritePosGet(1, 1);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x + MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpritePosGet(1, 5);
+        MdMathLerp(&p->x, sys->sclPos0x, sys->sclPos0x + MdVecTbl[6].y, sys->oscVal2);
+        p->y = sys->sclPos0y;
+        p = MdSpriteScaleGet(1, 1);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        p = MdSpriteScaleGet(1, 5);
+        MdMathLerp(&p->x, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        MdMathLerp(&p->y, 1.0f, MdVecTbl[6].z, sys->oscVal2);
+        HuSprTPLvlSet(1, 5, sys->oscVal2);
+    }
+    if (sys->oscTime2 >= 1.0f) {
+        if (sys->sel == 0) {
+            HuSprAttrSet(sprite->grpId[1], 4, 4);
+        } else {
+            HuSprAttrSet(sprite->grpId[1], 5, 4);
+        }
+        return 1;
+    }
+    return 0;
+}
+
 
 /* fn_1_18BA0 - copy the per-slot "selected model B" table over
  * the "selected model C2" table (both 4 entries). */
