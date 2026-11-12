@@ -251,7 +251,8 @@ typedef struct M504Light_s {
 typedef struct M504Work_s {
     HUPROCESS *proc; /* 0x00 */
     s32 unk4;
-    s32 unk8;
+    u16 unk8;
+    u16 step; /* 0x0A */
     s32 timer; /* 0x0C */
     u16 unk10;
     s16 mdl[19]; /* 0x12 */
