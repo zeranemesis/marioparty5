@@ -443,9 +443,9 @@ void fn_1_1950(MGTIMER *timer)
     MgTimerModeOnSet(timer, 1);
 }
 
-void fn_1_197C(MGTIMER *timer)
+BOOL fn_1_197C(MGTIMER *timer)
 {
-    MgTimerDoneCheck(timer);
+    return MgTimerDoneCheck(timer);
 }
 
 void fn_1_19A4(MGTIMER *timer)

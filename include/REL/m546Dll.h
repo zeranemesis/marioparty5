@@ -266,7 +266,8 @@ typedef struct M546Game_s {
     s16 diff28;
     s16 pad_2A;
     f32 fallVel;
-    s32 mask30;
+    s16 mask30;
+    s16 pad_32;
     f32 tp34[3];
     s16 cur;
     s16 win;
