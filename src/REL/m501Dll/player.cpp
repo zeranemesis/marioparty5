@@ -37,7 +37,7 @@ namespace std {
 template <>
 vector<int, allocator<int> >::~vector()
 {
-    if (m_data != 0) {
+    if (this != 0 && this != 0 && this != 0 && m_data != 0) {
         __dl__FPv(m_data);
     }
 }
@@ -248,10 +248,20 @@ void CPlayer::GetStartPos(Vec *out, int playerNo)
 
 void CPlayer::PlayerShow()
 {
-    CPlayer *p = (CPlayer *)playerList.m_prev;
-    while (p != (CPlayer *)&playerList) {
-        p->m_model.resetAttr(1);
-        p = (CPlayer *)p->m_prev;
+    CPlayer *it;
+    CPlayer *end;
+    CPlayer *first;
+    CPlayer *copy;
+    CPlayer *next;
+
+    first = (CPlayer *)playerList.m_prev;
+    copy = first;
+    it = copy;
+    end = (CPlayer *)&playerList;
+    while (it != end) {
+        it->m_model.resetAttr(1);
+        next = (CPlayer *)it->m_prev;
+        it = next;
     }
 }
 
@@ -314,9 +324,15 @@ void CPlayer::doStageCollide()
 void CPlayer::getJointPos(Vec *out)
 {
     Mtx *mtx = m_coneJoint->getMatrix();
-    out->x = (*mtx)[0][3];
-    out->y = (*mtx)[1][3];
-    out->z = (*mtx)[2][3];
+    f32 x;
+    f32 y;
+    f32 z;
+    z = (*mtx)[2][3];
+    y = (*mtx)[1][3];
+    x = (*mtx)[0][3];
+    out->x = x;
+    out->y = y;
+    out->z = z;
 }
 
 void CPlayer::CheckAisu(CPlayer *p)
@@ -324,10 +340,7 @@ void CPlayer::CheckAisu(CPlayer *p)
     Vec pos;
 
     p->centerAisu();
-    Mtx *mtx = p->m_coneJoint->getMatrix();
-    pos.x = (*mtx)[0][3];
-    pos.y = (*mtx)[1][3];
-    pos.z = (*mtx)[2][3];
+    p->getJointPos(&pos);
     CAisu *aisu = CAisu::checkTake(&pos, 20.0f);
     if (aisu == 0) {
         pos.y += 200.0f;
@@ -346,12 +359,22 @@ void CPlayer::CheckAisu(CPlayer *p)
 
 void CPlayer::startConeDrop(int handle)
 {
-    CPlayer *p = (CPlayer *)playerList.m_prev;
-    while (p != (CPlayer *)&playerList) {
-        if (p->m_coneHandle == handle) {
+    CPlayer *it;
+    CPlayer *end;
+    CPlayer *first;
+    CPlayer *copy;
+    CPlayer *next;
+
+    first = (CPlayer *)playerList.m_prev;
+    copy = first;
+    it = copy;
+    end = (CPlayer *)&playerList;
+    while (it != end) {
+        if (it->m_coneHandle == handle) {
             return;
         }
-        p = (CPlayer *)p->m_prev;
+        next = (CPlayer *)it->m_prev;
+        it = next;
     }
     m_coneHandle = handle;
     if (CGameObject::GetUpdateMode() == 2) {
@@ -362,10 +385,7 @@ void CPlayer::startConeDrop(int handle)
 s32 CPlayer::centerAisu()
 {
     Vec pos;
-    Mtx *mtx = m_coneJoint->getMatrix();
-    pos.x = (*mtx)[0][3];
-    pos.y = (*mtx)[1][3];
-    pos.z = (*mtx)[2][3];
+    getJointPos(&pos);
     CAisu *aisu = (CAisu *)CAisu::getHandle(m_coneHandle);
     if (aisu == 0) {
         return 0;
@@ -380,10 +400,7 @@ void CPlayer::updateComTargetPos()
     Vec pos;
 
     PSMTXInverse(m_mtx, inv);
-    Mtx *mtx = m_coneJoint->getMatrix();
-    pos.x = (*mtx)[0][3];
-    pos.y = (*mtx)[1][3];
-    pos.z = (*mtx)[2][3];
+    getJointPos(&pos);
     PSMTXMultVec(inv, &pos, &m_comLocal);
 }
 
@@ -548,11 +565,21 @@ void CPlayer::proc_drop_cone()
 
 void CPlayer::startWinnerMove()
 {
-    CPlayer *p = (CPlayer *)playerList.m_prev;
-    while (p != (CPlayer *)&playerList) {
-        p->m_proc = &CPlayer::proc_winner_move;
-        p->m_waitTimer = 1;
-        p = (CPlayer *)p->m_prev;
+    CPlayer *it;
+    CPlayer *end;
+    CPlayer *first;
+    CPlayer *copy;
+    CPlayer *next;
+
+    first = (CPlayer *)playerList.m_prev;
+    copy = first;
+    it = copy;
+    end = (CPlayer *)&playerList;
+    while (it != end) {
+        it->m_proc = &CPlayer::proc_winner_move;
+        it->m_waitTimer = 1;
+        next = (CPlayer *)it->m_prev;
+        it = next;
     }
 }
 
@@ -954,8 +981,17 @@ extern "C" void *fn_1_FB20(std::vector<int> *vec, s16 flag)
 /* drop from the candidate list every aisu another player is already chasing */
 extern "C" void fn_1_FBAC(CPlayer *self, std::vector<int> *ids)
 {
-    CPlayer *p = (CPlayer *)playerList.m_prev;
-    while (p != (CPlayer *)&playerList) {
+    CPlayer *p;
+    CPlayer *end2;
+    CPlayer *first2;
+    CPlayer *copy2;
+    CPlayer *next;
+
+    first2 = (CPlayer *)playerList.m_prev;
+    copy2 = first2;
+    p = copy2;
+    end2 = (CPlayer *)&playerList;
+    while (p != end2) {
         if (p != self) {
             int *it = ids->begin();
             int *end = ids->end();
@@ -971,34 +1007,52 @@ extern "C" void fn_1_FBAC(CPlayer *self, std::vector<int> *ids)
                 }
             }
         }
-        CPlayer *next = (CPlayer *)p->m_prev;
+        next = (CPlayer *)p->m_prev;
         p = next;
     }
 }
 
 void CPlayer::GetPlayerDist(std::vector<HuVec2f_s> *out)
 {
-    HuVec2f_s v = { 0.0f, 0.0f };
+    HuVec2f_s v;
+    CPlayer *it;
+    CPlayer *end;
+    CPlayer *first;
+    CPlayer *copy;
+    CPlayer *next;
 
-    CPlayer *p = (CPlayer *)playerList.m_prev;
-    while (p != (CPlayer *)&playerList) {
-        v.x = 0.0f;
-        v.y = 0.0f;
-        v.x = p->m_circle.m_pos.x;
-        v.y = p->m_circle.m_pos.z;
+    first = (CPlayer *)playerList.m_prev;
+    copy = first;
+    it = copy;
+    end = (CPlayer *)&playerList;
+    while (it != end) {
+        v = (HuVec2f_s){ 0.0f, 0.0f };
+        v.x = it->m_circle.m_pos.x;
+        v.y = it->m_circle.m_pos.z;
         out->insert(out->m_data + out->m_size, 1, v);
-        p = (CPlayer *)p->m_prev;
+        next = (CPlayer *)it->m_prev;
+        it = next;
     }
 }
 
 bool CPlayer::CheckWinIdle()
 {
-    CPlayer *p = (CPlayer *)playerList.m_prev;
-    while (p != (CPlayer *)&playerList) {
-        if (p->m_waitTimer > 0) {
+    CPlayer *it;
+    CPlayer *end;
+    CPlayer *first;
+    CPlayer *copy;
+    CPlayer *next;
+
+    first = (CPlayer *)playerList.m_prev;
+    copy = first;
+    it = copy;
+    end = (CPlayer *)&playerList;
+    while (it != end) {
+        if (it->m_waitTimer > 0) {
             return false;
         }
-        p = (CPlayer *)p->m_prev;
+        next = (CPlayer *)it->m_prev;
+        it = next;
     }
     return true;
 }
