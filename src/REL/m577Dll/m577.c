@@ -1328,8 +1328,8 @@ void fn_1_2E08(M577Rope *rope)
 
 void fn_1_3494(M577Team *team, s16 side)
 {
-    u16 solo[3] = { 0x19, 0x3C, 0x64 };
-    u16 trio[3] = { 0x23, 0x46, 0x64 };
+    s16 solo[3] = { 0x19, 0x3C, 0x64 };
+    s16 trio[3] = { 0x23, 0x46, 0x64 };
     M577Work *w = workObj->data;
     M577Player *p;
     M577Sled *sled;
@@ -1339,17 +1339,21 @@ void fn_1_3494(M577Team *team, s16 side)
     s32 k;
     s32 j;
     s32 n;
+    s32 n2;
+    s16 cnt;
 
     team->side = side;
     if (side != 0) {
-        team->count = 3;
+        n = 3;
     } else {
-        team->count = 1;
+        n = 1;
     }
+    team->count = n;
     fn_1_45AC(team->stage, team->cam->bit);
     team->stage->side = side;
     team->done = 0;
-    for (i = 0; i < team->count; i++) {
+    cnt = team->count;
+    for (i = 0; i < cnt; i++) {
         p = team->player[i];
         Hu3DModelCameraSet(p->mdlId, team->cam->bit);
         if (side != 0) {
@@ -1409,10 +1413,11 @@ void fn_1_3494(M577Team *team, s16 side)
         team->sled[2]->ropeBack = &team->rope[1]->b;
     }
     if (side != 0) {
-        n = 2;
+        n2 = 2;
     } else {
-        n = 1;
+        n2 = 1;
     }
+    n = n2;
     for (j = 0; j < n; j++) {
         for (i = 0; i < team->rope[j]->count; i++) {
             Hu3DModelCameraSet(team->rope[j]->mdl[i], team->cam->bit);
@@ -1427,18 +1432,20 @@ void fn_1_3494(M577Team *team, s16 side)
 
 void fn_1_3AB8(M577Work *w)
 {
-    u16 unused[4] = { 3, 2, 1, 1 };
-    u16 rot[3] = { 0, 1, 2 };
+    s16 unused[4] = { 3, 2, 1, 1 };
+    s16 rot[3] = { 0, 1, 2 };
     s16 a;
     s16 b;
+    s16 tmp;
     s32 k;
     s32 i;
 
     for (i = 0; i < 3; i++) {
         a = frandmod(3);
         b = frandmod(3);
+        tmp = rot[a];
         rot[a] = rot[b];
-        rot[b] = rot[a];
+        rot[b] = tmp;
     }
     k = 0;
     for (i = 0; i < 4; i++) {
@@ -1451,7 +1458,7 @@ void fn_1_3AB8(M577Work *w)
                 continue;
             }
 #endif
-            w->team[1].player[(s16)rot[k]] = w->player[i];
+            w->team[1].player[rot[k]] = w->player[i];
             w->player[i]->team = &w->team[1];
             w->player[i]->teamIdx = rot[k];
             k++;
