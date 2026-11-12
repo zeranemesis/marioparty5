@@ -46,6 +46,11 @@ void fn_1_1264(void *node);
 void *fn_1_1270(void *node, s32 flag);
 void fn_1_1330(void *node, void *head);
 void fn_1_C08(Vec *pos, s32 mode);
+void *fn_1_0(u32 size);
+s16 *fn_1_2C94(s16 *out, int dataNum);
+s16 *fn_1_2DB4(s16 *out, s16 *modelId);
+void fn_1_30F4(s16 *modelId, s16 flag);
+void *__register_global_object(void *object, void *destructor, void *regmem);
 
 extern M536_NODE lbl_1_bss_C;
 
