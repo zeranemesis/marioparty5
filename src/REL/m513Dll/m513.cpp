@@ -6,21 +6,51 @@ extern "C" {
 #include "REL/m513Dll.h"
 #include "dolphin.h"
 #include "humath.h"
+extern "C" {
 #include "game/hu3d.h"
+}
+extern "C" {
 #include "game/object.h"
+}
+extern "C" {
 #include "game/memory.h"
+}
+extern "C" {
 #include "game/gamemes.h"
+}
+extern "C" {
 #include "game/wipe.h"
+}
+extern "C" {
 #include "game/flag.h"
+}
+extern "C" {
 #include "game/gamework.h"
+}
+extern "C" {
 #include "game/data.h"
+}
+extern "C" {
 #include "game/audio.h"
+}
+extern "C" {
 #include "game/pad.h"
+}
+extern "C" {
 #include "game/mgdata.h"
+}
+extern "C" {
 #include "game/charman.h"
+}
+extern "C" {
 #include "game/process.h"
+}
+extern "C" {
 #include "game/mg/timer.h"
+}
+extern "C" {
 #include "game/mg/actman.h"
+}
 #include "stdarg.h"
 #include "stdio.h"
 }

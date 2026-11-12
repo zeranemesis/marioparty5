@@ -1,5 +1,7 @@
 #include "REL/m513Old.h"
+extern "C" {
 #include "game/sprite.h"
+}
 
 /* The "indicator" hook object. It owns a 640x480 RGB565 texture and copies the
  * frame buffer into it every hook callback, so the whole frame buffer is part

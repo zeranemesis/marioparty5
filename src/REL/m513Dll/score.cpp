@@ -2,9 +2,15 @@
 // there is one timer window per player, otherwise a single timer.
 #define _MATH_H
 #include "REL/m513Dll.h"
+extern "C" {
 #include "game/gamework.h"
+}
+extern "C" {
 #include "game/gamemes.h"
+}
+extern "C" {
 #include "game/esprite.h"
+}
 
 #ifdef __MWERKS__
 #define M513_RODATA __declspec(section ".rodata")
@@ -12,18 +18,7 @@
 #define M513_RODATA
 #endif
 
-typedef struct M513Score_s {
-    M513Node link;
-    void **vtbl;
-    u32 flags;
-    MGTIMER *timer;
-    MGTIMER *timers[4];
-    s32 recordTime;
-    u8 created;
-    u8 multi;
-    s16 esp[4];
-    s16 win[4];
-} M513Score;
+
 
 extern "C" {
 extern M513Score *lbl_1_bss_A20;

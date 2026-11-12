@@ -1,40 +1,18 @@
 // m513Dll input: player input sources. A base object with a virtual update()
 // that fills an input state, a pad reader and a CPU (random) player.
 #include "REL/m513Dll.h"
+extern "C" {
 #include "game/gamework.h"
+}
+extern "C" {
 #include "game/pad.h"
+}
 extern "C" {
 #include "game/frand.h"
 }
 #include "math.h"
 
-// Output of update(): stick x/y, stick magnitude and the pressed buttons.
-typedef struct M513InputState_s {
-    f32 x;
-    f32 y;
-    f32 mag;
-    u32 btn;
-} M513InputState;
 
-struct M513Input_s;
-typedef struct M513InputVtbl_s {
-    void *rtti[2];
-    struct M513Input_s *(*dtor)(struct M513Input_s *self, s16 flag);
-    void (*update)(struct M513Input_s *self, M513InputState *out);
-} M513InputVtbl;
-
-typedef struct M513Input_s {
-    M513InputVtbl *vtbl;
-    M513InputState st;
-    s32 level;     // CPU strength
-    s32 playerNo;
-    union {
-        s32 padNo; // pad reader
-        f32 base;  // CPU: base wait
-    } u;
-    f32 range;     // CPU: random extra wait
-    s32 timer;     // CPU: frames to the next press
-} M513Input;
 
 extern "C" {
 

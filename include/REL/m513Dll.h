@@ -2,6 +2,11 @@
 #define _M513DLL_H
 
 #include "types.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stddef.h>
 #include "dolphin.h"
 #include "humath.h"
 #include "game/hu3d.h"
@@ -10,6 +15,10 @@
 #include "game/data.h"
 #include "game/mg/timer.h"
 #include "game/sprite.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -217,6 +226,141 @@ typedef struct M513Vec16_s {
 extern u8 __files[];
 #define M513_STDERR ((void *)(__files + 0xA0))
 #endif
+
+// Output of update(): stick x/y, stick magnitude and the pressed buttons.
+typedef struct M513InputState_s {
+    f32 x;
+    f32 y;
+    f32 mag;
+    u32 btn;
+} M513InputState;
+
+struct M513Input_s;
+typedef struct M513InputVtbl_s {
+    void *rtti[2];
+    struct M513Input_s *(*dtor)(struct M513Input_s *self, s16 flag);
+    void (*update)(struct M513Input_s *self, M513InputState *out);
+} M513InputVtbl;
+
+typedef struct M513Input_s {
+    M513InputVtbl *vtbl;
+    M513InputState st;
+    s32 level;     // CPU strength
+    s32 playerNo;
+    union {
+        s32 padNo; // pad reader
+        f32 base;  // CPU: base wait
+    } u;
+    f32 range;     // CPU: random extra wait
+    s32 timer;     // CPU: frames to the next press
+} M513Input;
+
+typedef struct M513ModelPtr_s {
+    M513Model *p;
+} M513ModelPtr;
+
+// Leaf-burst particle effect (0x28 bytes).
+typedef struct M513LeafFx_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    s16 modelId;
+    HU3DPARTICLE *particle;
+    u8 done;
+    Vec pos;
+} M513LeafFx;
+
+// A thrown leaf (0x58 bytes), member of the leaf set.
+typedef struct M513Leaf_s {
+    M513Node link;
+    M513Model model;
+    M513ModelPtr sub[2];
+    f32 time;
+    s32 unk18;
+    Vec pos;
+    Vec rot;
+    u8 flag;
+    s32 idx;
+    s32 step;
+    f32 frac;
+    HSFOBJECT *obj[2];
+    M513Ptmf hook;
+} M513Leaf;
+
+// Smoke particle object (0x34 bytes).
+typedef struct M513Smoke_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    s16 modelId;
+    HU3DPARTICLE *particle;
+    Vec pos;
+    Vec vec;
+    u8 active;
+} M513Smoke;
+
+// Controller (0x48 bytes): owns the smoke object and a draw hook.
+typedef struct M513PowerEff_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    Vec pos;
+    Vec target;
+    s16 hookModel;
+    u8 col[4];
+    f32 timer;
+    s32 state;
+    f32 limit;
+    M513Smoke *smoke;
+    s32 frame;
+    f32 scale;
+} M513PowerEff;
+
+typedef struct M513Score_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    MGTIMER *timer;
+    MGTIMER *timers[4];
+    s32 recordTime;
+    u8 created;
+    u8 multi;
+    s16 esp[4];
+    s16 win[4];
+} M513Score;
+
+typedef struct M513Heiho_s {
+    M513Node link;
+    M513Model model;
+    s32 motion;
+    M513Vec16 mot;
+    Vec pos;
+    f32 unk28;
+    Vec rot;
+    s32 idx;
+    s32 state;
+    f32 t;
+    M513Model item;
+    f32 t2;
+    s32 cnt;
+    M513Ptmf hook;
+} M513Heiho;
+
+/* Size of the pad input object: it ends before the CPU-only fields. */
+#define M513_PADINPUT_SIZE offsetof(M513Input, range)
+
+/* The camera singleton (camera.cpp): task base, camera pose, state hook. */
+typedef struct M513Camera_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    M513Cam cam;
+    M513Ptmf pmf;
+    s16 motionId;
+    f32 angle;
+    Vec destPos;
+    Vec destTarget;
+} M513Camera;
 
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 

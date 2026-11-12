@@ -3,7 +3,9 @@
 // (std::vector<s16>) and a PTMF state hook.
 #define _MATH_H
 #include "REL/m513Dll.h"
+extern "C" {
 #include "game/audio.h"
+}
 
 extern "C" {
 void abort(void);
@@ -18,26 +20,9 @@ int fn_1_234(void *unused, const char *fmt, ...);
 #define M513_RODATA
 #endif
 
-typedef struct M513ModelPtr_s {
-    M513Model *p;
-} M513ModelPtr;
 
-typedef struct M513Heiho_s {
-    M513Node link;
-    M513Model model;
-    s32 motion;
-    M513Vec16 mot;
-    Vec pos;
-    f32 unk28;
-    Vec rot;
-    s32 idx;
-    s32 state;
-    f32 t;
-    M513Model item;
-    f32 t2;
-    s32 cnt;
-    M513Ptmf hook;
-} M513Heiho;
+
+
 
 extern "C" {
 

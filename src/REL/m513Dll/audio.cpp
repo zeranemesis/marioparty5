@@ -1,15 +1,17 @@
 // m513Dll audio: positional sound helpers (project a world position through a
 // camera to screen space, then pan / attenuate).
 #include "REL/m513Dll.h"
+extern "C" {
 #include "game/audio.h"
+}
+extern "C" {
 #include "game/charman.h"
+}
 
 extern "C" {
 #include <math.h>
 void C_MTXLookAt(Mtx m, const Point3d *camPos, const Vec *camUp, const Point3d *target);
 void PSMTXMultVec(const Mtx m, const Vec *src, Vec *dst);
-s32 HuAudFXPanning(s32 seNo, s16 pan);
-s32 HuAudFXVolSet(s32 seNo, s16 vol);
 
 void fn_1_14348(Point3d *pos, s16 cameraBit, Point3d *out);
 s32 fn_1_145A8(s32 seId, Point3d *pos);

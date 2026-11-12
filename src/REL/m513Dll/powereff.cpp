@@ -12,34 +12,9 @@ extern "C" {
 #define M513_RODATA
 #endif
 
-// Smoke particle object (0x34 bytes).
-typedef struct M513Smoke_s {
-    M513Node link;
-    void **vtbl;
-    u32 flags;
-    s16 modelId;
-    HU3DPARTICLE *particle;
-    Vec pos;
-    Vec vec;
-    u8 active;
-} M513Smoke;
 
-// Controller (0x48 bytes): owns the smoke object and a draw hook.
-typedef struct M513PowerEff_s {
-    M513Node link;
-    void **vtbl;
-    u32 flags;
-    Vec pos;
-    Vec target;
-    s16 hookModel;
-    u8 col[4];
-    f32 timer;
-    s32 state;
-    f32 limit;
-    M513Smoke *smoke;
-    s32 frame;
-    f32 scale;
-} M513PowerEff;
+
+
 
 extern "C" {
 

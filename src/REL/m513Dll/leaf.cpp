@@ -12,37 +12,11 @@ extern "C" {
 #define M513_RODATA
 #endif
 
-typedef struct M513ModelPtr_s {
-    M513Model *p;
-} M513ModelPtr;
 
-// Leaf-burst particle effect (0x28 bytes).
-typedef struct M513LeafFx_s {
-    M513Node link;
-    void **vtbl;
-    u32 flags;
-    s16 modelId;
-    HU3DPARTICLE *particle;
-    u8 done;
-    Vec pos;
-} M513LeafFx;
 
-// A thrown leaf (0x58 bytes), member of the leaf set.
-typedef struct M513Leaf_s {
-    M513Node link;
-    M513Model model;
-    M513ModelPtr sub[2];
-    f32 time;
-    s32 unk18;
-    Vec pos;
-    Vec rot;
-    u8 flag;
-    s32 idx;
-    s32 step;
-    f32 frac;
-    HSFOBJECT *obj[2];
-    M513Ptmf hook;
-} M513Leaf;
+
+
+
 
 inline HU3DMODELID M513LeafSubId(M513Leaf *self, s32 i)
 {
