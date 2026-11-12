@@ -1,5 +1,9 @@
 #include "REL/m522Dll.h"
 
+#ifdef TARGET_PC
+#include <stddef.h>
+#endif
+
 /* The three CTime limits of the mode controller, set up by fn_1_D0E4. */
 static s32 lbl_1_bss_A10;
 static s32 lbl_1_bss_A14;
@@ -49,8 +53,8 @@ M522_UNKAC *fn_1_D1B4(M522_UNKAC *self);
 void fn_1_6A70(const char *cond, const char *file, s32 line);
 u8 fn_1_8A80(void);
 u8 fn_1_9614(void);
-u8 fn_1_F194(s32 ptr);
-s32 fn_1_F1F8(s32 ptr);
+u8 fn_1_F194(void *stage);
+s32 fn_1_F1F8(void *stage);
 s32 fn_1_FA28(void);
 void fn_1_89E8(s32 mode);
 void fn_1_998C(void);
@@ -78,8 +82,13 @@ void fn_1_D094(M522_GAMEMASTER *self);
 void fn_1_D0C0(void);
 void fn_1_D0E4(void);
 u8 fn_1_CF6C(M522_GAMEMASTER *self);
+#ifdef TARGET_PC
+void fn_1_D118(void *core);
+void fn_1_D120(void *core, s16 flag);
+#else
 void fn_1_D118(void);
 void fn_1_D120(void);
+#endif
 }
 
 typedef void (*M522_VFN)(void *);
@@ -216,7 +225,7 @@ u8 fn_1_CF6C(M522_GAMEMASTER *self)
     if (lbl_1_bss_18 == 0) {
         fn_1_6A70(lbl_1_data_3C0, lbl_1_data_3D0, 0x27);
     }
-    if (!fn_1_F194((s32)lbl_1_bss_18)) {
+    if (!fn_1_F194(lbl_1_bss_18)) {
         return 0;
     }
     mode = fn_1_FA28();
@@ -231,7 +240,7 @@ u8 fn_1_CF6C(M522_GAMEMASTER *self)
         if (lbl_1_bss_18 == 0) {
             fn_1_6A70(lbl_1_data_3C0, lbl_1_data_3D0, 0x27);
         }
-        if (fn_1_F1F8((s32)lbl_1_bss_18) > 0) {
+        if (fn_1_F1F8(lbl_1_bss_18) > 0) {
             ret = 0;
         }
     }
@@ -269,6 +278,19 @@ struct M522LimitsInit {
    UND), so it must not be static. */
 M522LimitsInit lbl_1_bss_A1C;
 
+#ifdef TARGET_PC
+/* this adjustors of the secondary base (CMinigameCore at 0x20): step back to
+ * the CGameMaster and forward to the real member. */
+void fn_1_D118(void *core)
+{
+    fn_1_CDE0((M522_GAMEMASTER *)((u8 *)core - offsetof(M522_GAMEMASTER, m_core)));
+}
+
+void fn_1_D120(void *core, s16 flag)
+{
+    fn_1_CC64((M522_GAMEMASTER *)((u8 *)core - offsetof(M522_GAMEMASTER, m_core)), flag);
+}
+#else
 /* The original is an 8 byte C++ this adjustor that tail branches, subi r3 /
  * b fn_1_CDE0.  MWCC has no tail call at -O0,p, so the two instructions go in
  * an inline __asm block; the body must declare no parameter or MWCC spills
@@ -295,3 +317,4 @@ void fn_1_D120(void)
     }
 }
 #pragma dont_inline reset
+#endif

@@ -17,7 +17,12 @@ void fn_1_90A8(void *self);
 
 extern "C" void ObjectSetup(void)
 {
+#ifdef TARGET_PC
+    /* the master holds vtable pointers, which are twice as wide here */
+    void *master = fn_1_B46C(0x368 * 2);
+#else
     void *master = fn_1_B46C(0x368);
+#endif
     void *core;
     if (master != 0) {
         master = fn_1_CBEC(master);
