@@ -1,374 +1,540 @@
 // m503Dll/stage - stage setup and per-frame drive for the mini-game.
 #include "types.h"
 #include "game/object.h"
+#include "game/hu3d.h"
+#include "game/data.h"
+#include "game/frand.h"
+#include "game/memory.h"
 #include "game/sprite.h"
-#include <math.h>
+#include "humath.h"
+#include "REL/m503Dll.h"
 #include <string.h>
 
-typedef s16 HU3DMODELID;
-typedef s16 HU3DMOTID;
+#ifndef M_PI
+#define M_PI 3.141592653589793
+#endif
 
-/* The engine indexes Hu3DData with the real 0x134 stride, which the shared
- * header model does not describe, so the m503 view of an entry is spelled out
- * here: the stage code only ever reaches hookData at 0x120. */
-typedef struct {
-    u8 unk000[0x120];
-    void *hookData;
-    u8 unk124[0x10];
-} M503MODEL;
+double atan2(double, double);
 
-/* One grid cell of the stage field: a position plus the packed tint. */
-typedef struct {
-    f32 x;
-    f32 y;
-    f32 z;
-    u8 col[4];
-} M503CELL;
+/* Not in the shared headers; without these MWCC assumes int returns and
+ * promotes the float arguments. */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
-/* Actor descriptor handed to the attractor table; layout matches ACTOR. */
+/* Attractor actor: same layout as the entries of the actor table. */
 typedef struct {
     s32 flags;
     s32 unk04;
     s32 unk08;
     s32 state;
     OMOBJ *owner;
-    void (*hook)(void *);
-    void *tab;
-    f32 scale;
+    void (*hook)(OMOBJ *owner);
+    HuVecF *pos;
+    f32 rad;
     s32 mode;
-} M503ACT;
+} M503StageActor;
 
-/* Spawn row of the stage table: 0x14 bytes, y is what the actor copies. */
+/* Attractor spawn table row: position, radius and mode. */
 typedef struct {
-    f32 x;
-    s32 pad;
-    f32 y;
-    s32 flag;
-} M503TAB;
+    HuVecF pos;
+    f32 rad;
+    s32 mode;
+} M503AttractInfo;
 
-extern const f32 lbl_1_rodata_450;
-extern const f32 lbl_1_rodata_454;
-extern const f64 lbl_1_rodata_458;
-extern const f64 lbl_1_rodata_460;
-extern const f64 lbl_1_rodata_468;
-extern const f64 lbl_1_rodata_470;
-extern const f64 lbl_1_rodata_478;
-extern const f64 lbl_1_rodata_480;
-extern const f64 lbl_1_rodata_4B8;
-extern const f32 lbl_1_rodata_488;
-extern const f64 lbl_1_rodata_518;
-extern const f64 lbl_1_rodata_520;
-extern const f64 lbl_1_rodata_550;
-extern const f64 lbl_1_rodata_558;
-extern const f32 lbl_1_rodata_560;
-extern const f64 lbl_1_rodata_570;
-extern const f64 lbl_1_rodata_578;
-extern const f32 lbl_1_rodata_580;
-extern const f32 lbl_1_rodata_584;
-extern const f64 lbl_1_rodata_588;
-extern const f32 lbl_1_rodata_590;
-extern const f64 lbl_1_rodata_598;
+typedef struct {
+    f32 height;
+    f32 base;
+    f32 delta;
+    GXColor col;
+} M503Cell;
 
-extern const f32 lbl_1_data_584[];
-extern const f32 lbl_1_data_5D8[];
-extern const M503TAB lbl_1_data_520[];
+/* Hook data of the water-surface model (0x66B4 bytes on GC). */
+typedef struct {
+    ANIMDATA *anim;
+    HuVecF pos;
+    f32 kernel[13][13];
+    M503Cell cells[40][40];
+} M503Field;
 
-extern s8 lbl_1_data_62C[];
-extern OMOBJ *lbl_1_bss_B8;
+extern s32 fn_1_DFA8(void *actor);
+extern void fn_1_CEB0(HuVecF *pos);
+extern void fn_1_CE1C(HuVecF *pos);
 
+void fn_1_A6FC(OMOBJMAN *objMan);
+void fn_1_A78C(void);
 void fn_1_A790(OMOBJ *obj);
 void fn_1_A928(OMOBJ *obj);
 void fn_1_AA0C(OMOBJ *obj);
 void fn_1_AD34(OMOBJ *obj);
 void fn_1_AE8C(OMOBJ *obj);
-void fn_1_AF20(s8 arg0, s32 arg1);
-void fn_1_B278(M503MODEL *mdl, f32 scale);
+void fn_1_AF20(s8 type, s32 mode);
+void fn_1_B278(HU3DMODEL *model, f32 scale);
 void fn_1_B888(OMOBJ *obj);
 void fn_1_B9D0(HU3DMODELID id);
-void fn_1_BA9C(M503MODEL *mdl, Mtx *mtx);
+void fn_1_BA9C(HU3DMODEL *model, Mtx *mtx);
 f32 fn_1_BFE8(f32 x, f32 z);
 f32 fn_1_C18C(f32 x, f32 z);
-void fn_1_C424(f32 x, f32 y, f32 z);
+void fn_1_C424(f32 x, f32 z, f32 scale);
 
-s32 fn_1_DFA8(void *actor);
-void fn_1_CEB0(Vec *v);
-void fn_1_CE1C(Vec *v);
-s32 frand(void);
+M503AttractInfo lbl_1_data_520[5] = {
+    { { -470.0f, 0.0f, -425.0f }, 250.0f, 0 },
+    { { 470.0f, 0.0f, -425.0f }, 250.0f, 0 },
+    { { 470.0f, 0.0f, 500.0f }, 300.0f, 0 },
+    { { -470.0f, 0.0f, 500.0f }, 300.0f, 0 },
+    { { 0.0f, 0.0f, 0.0f }, 450.0f, 1 },
+};
 
-/* Not in the shared header; without these MWCC assumes int returns and
- * promotes the float arguments. */
-BOOL Hu3DMotionEndCheck(HU3DMOTID motId);
-float Hu3DMotionMaxTimeGet(HU3DMOTID motId);
-void Hu3DMotionStartEndSet(HU3DMOTID motId, float start, float end);
-void Hu3DMotionTimeSet(HU3DMOTID motId, float time);
+HuVecF lbl_1_data_584[7] = {
+    { 3047.0f, -13048.0f, -6562.0f },
+    { 3277.0f, -13048.0f, -6402.0f },
+    { 3578.0f, -13048.0f, -6650.0f },
+    { 3748.0f, -13048.0f, -6505.0f },
+    { 4066.0f, -13048.0f, -6593.0f },
+    { 2849.0f, -13048.0f, -6445.0f },
+    { 2660.0f, -13048.0f, -6633.0f },
+};
 
-// NONMATCHING: the heap id 0x1000 arrives as lis r5 rather than li r5, i.e. the
-// original materialises it from something other than an inline literal.
-// Spawns the stage driver object, allocates its 0xB4-byte work area and clears it.
-void fn_1_A6FC(OMOBJMAN *arg0)
+HuVecF lbl_1_data_5D8[7] = {
+    { -3731.0f, -13048.0f, -6562.0f },
+    { -3465.0f, -13048.0f, -6402.0f },
+    { -3130.0f, -13048.0f, -6650.0f },
+    { -2923.0f, -13048.0f, -6505.0f },
+    { -2651.0f, -13048.0f, -6593.0f },
+    { -3946.0f, -13048.0f, -6445.0f },
+    { -4129.0f, -13048.0f, -6633.0f },
+};
+
+s8 lbl_1_data_62C[16] = { 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 4, 0, 1, 0, 1 };
+
+OMOBJ *lbl_1_bss_B8;
+
+void fn_1_A6FC(OMOBJMAN *objMan)
 {
     OMOBJ *obj;
     void *work;
 
-    obj = omAddObjEx(arg0, 0x14, 0xB, 0, -1, fn_1_A790);
+    obj = omAddObjEx(objMan, 0x14, 0xB, 0, OM_GRP_NONE, fn_1_A790);
     lbl_1_bss_B8 = obj;
-    work = HuMemDirectMallocNum(0, 0xB4, 0x1000);
-    *(s32 *)((u8 *)obj + 0x5C) = (s32)work;
-    memset(work, 0, 0xB4);
-    *(s32 *)((u8 *)obj + 0x4C) = 0;
+    work = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M503StageActor) * 5, HU_MEMNUM_OVL);
+    obj->data = work;
+    memset(work, 0, sizeof(M503StageActor) * 5);
+    obj->work[0] = 0;
 }
 
 void fn_1_A78C(void)
 {
 }
 
-// NONMATCHING: three call sites materialise the heap id 0x1000 (and one file id
-// 0x3D00) with lis instead of the li MWCC always picks for a literal that fits
-// in a signed 16-bit immediate.
-// One-time stage build: makes the three board models, the shared hook model,
-// then registers the five attractor actors.
 void fn_1_A790(OMOBJ *obj)
 {
-    s32 i;
+    M503StageActor *act = obj->data;
+    M503AttractInfo *info;
     HU3DMODELID id;
-    M503ACT *act;
-    M503TAB *tab;
-    u8 *work;
+    s32 i;
 
-    work = (u8 *)obj->data;
-    omSetTra(obj, lbl_1_rodata_450, lbl_1_rodata_450, lbl_1_rodata_450);
-    id = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D00, 0x1000, 2));
+    omSetTra(obj, 0.0f, 0.0f, 0.0f);
+    id = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D0000, HU_MEMNUM_OVL, HEAP_MODEL));
     obj->mdlId[0] = id;
     Hu3DModelLayerSet(id, 0);
-    id = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D01, 0x1000, 2));
+    id = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D0001, HU_MEMNUM_OVL, HEAP_MODEL));
     obj->mdlId[1] = id;
     Hu3DModelLayerSet(id, 5);
-    id = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D02, 0x1000, 2));
+    id = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D0002, HU_MEMNUM_OVL, HEAP_MODEL));
     obj->mdlId[2] = id;
     Hu3DModelLayerSet(id, 4);
     fn_1_AA0C(obj);
-    id = Hu3DHookFuncCreate((HU3DMODELHOOK)fn_1_BA9C);
+    id = Hu3DHookFuncCreate(fn_1_BA9C);
     obj->mdlId[10] = id;
     Hu3DModelLayerSet(id, 1);
     fn_1_B9D0(id);
-    act = (M503ACT *)work;
-    tab = (M503TAB *)lbl_1_data_520;
-    for (i = 0; i < 5; i++) {
+    info = lbl_1_data_520;
+    for (i = 0; i < 5; i++, act++, info++) {
         act->flags = 1;
         act->unk04 = 2;
         act->unk08 = i;
         act->state = 0;
         act->owner = obj;
-        act->hook = 0;
-        act->tab = tab;
-        act->scale = tab->y;
-        act->mode = tab->flag;
+        act->hook = NULL;
+        act->pos = &info->pos;
+        act->rad = info->rad;
+        act->mode = info->mode;
         fn_1_DFA8(act);
-        act++;
-        tab++;
     }
     obj->objFunc = fn_1_A928;
 }
 
-// Per-frame stage update: moves the seven cursor models, drives the
-// attractor table and keeps the looping motions running.
 void fn_1_A928(OMOBJ *obj)
 {
-    HU3DMOTID mot;
+    HU3DMODELID id;
 
     fn_1_AD34(obj);
     fn_1_AE8C(obj);
     fn_1_B888(obj);
-    mot = obj->mdlId[0];
-    if (Hu3DMotionEndCheck(mot)) {
-        Hu3DModelAttrSet(mot, 0x40000001);
-        Hu3DMotionStartEndSet(mot, lbl_1_rodata_454, Hu3DMotionMaxTimeGet(mot));
+    id = obj->mdlId[0];
+    if (Hu3DMotionEndCheck(id) != 0) {
+        Hu3DModelAttrSet(id, 0x40000001);
+        Hu3DMotionStartEndSet(id, 241.0f, Hu3DMotionMaxTimeGet(id));
     }
-    mot = obj->mdlId[1];
-    if (Hu3DMotionEndCheck(mot)) {
-        Hu3DModelAttrSet(mot, 0x40000001);
-        Hu3DMotionStartEndSet(mot, lbl_1_rodata_454, Hu3DMotionMaxTimeGet(mot));
+    id = obj->mdlId[1];
+    if (Hu3DMotionEndCheck(id) != 0) {
+        Hu3DModelAttrSet(id, 0x40000001);
+        Hu3DMotionStartEndSet(id, 241.0f, Hu3DMotionMaxTimeGet(id));
     }
     obj->work[0]++;
 }
 
-// The seven cursor slots sit at 0x40+3*2 of the model list; for the first
-// 0x190 frames they interpolate between the two board tables, on the final
-// frame they are simply switched on.
+void fn_1_AA0C(OMOBJ *obj)
+{
+    HU3DMODELID first;
+    HU3DMODELID id;
+    HuVecF dir;
+    HuVecF rot;
+    f32 maxTime;
+    s32 i;
+
+    for (i = 0; i < 7; i++) {
+        if (i == 0) {
+            first = Hu3DModelCreate(HuDataSelHeapReadNum(0x3D0003, HU_MEMNUM_OVL, HEAP_MODEL));
+            id = first;
+        } else {
+            id = Hu3DModelLink(first);
+        }
+        obj->mdlId[i + 3] = id;
+        Hu3DModelAttrSet(id, 0x40000001);
+        Hu3DModelLayerSet(id, 2);
+        dir.x = lbl_1_data_5D8[i].x - lbl_1_data_584[i].x;
+        dir.y = lbl_1_data_5D8[i].y - lbl_1_data_584[i].y;
+        dir.z = lbl_1_data_5D8[i].z - lbl_1_data_584[i].z;
+        rot.x = 57.29578f * atan2(-dir.y, HuMagXZVecF(&dir));
+        rot.y = 90.0 + 57.29578f * atan2(dir.x, dir.z);
+        rot.z = 0.0f;
+        Hu3DModelRotSetV(id, &rot);
+        maxTime = Hu3DMotionMaxTimeGet(id);
+        Hu3DMotionTimeSet(id, 1.52587890625e-05 * (f64)(f32)(s32)frand() * maxTime);
+    }
+}
+
 void fn_1_AD34(OMOBJ *obj)
 {
-    s32 i;
     HuVecF pos;
     f32 rate;
+    s32 i;
+    s32 time = obj->work[0];
 
-    if (obj->work[0] <= 0x190) {
-        if (obj->work[0] == 0x190) {
+    if (time <= 0x190) {
+        if (time == 0x190) {
             for (i = 0; i < 7; i++) {
                 Hu3DModelAttrSet(obj->mdlId[i + 3], 1);
             }
-        } else {
-            rate = (f32)(((f64)obj->work[0] - lbl_1_rodata_480) / lbl_1_rodata_488);
-            for (i = 0; i < 7; i++) {
-                pos.x = lbl_1_data_584[i * 3] + rate * (lbl_1_data_5D8[i * 3] - lbl_1_data_584[i * 3]);
-                pos.y = lbl_1_data_584[i * 3 + 1] + rate * (lbl_1_data_5D8[i * 3 + 1] - lbl_1_data_584[i * 3 + 1]);
-                pos.z = lbl_1_data_584[i * 3 + 2] + rate * (lbl_1_data_5D8[i * 3 + 2] - lbl_1_data_584[i * 3 + 2]);
-                Hu3DModelPosSetV(obj->mdlId[i + 3], &pos);
-            }
+            return;
+        }
+        rate = (f32)time / 400.0f;
+        for (i = 0; i < 7; i++) {
+            pos.x = lbl_1_data_584[i].x + rate * (lbl_1_data_5D8[i].x - lbl_1_data_584[i].x);
+            pos.y = lbl_1_data_584[i].y + rate * (lbl_1_data_5D8[i].y - lbl_1_data_584[i].y);
+            pos.z = lbl_1_data_584[i].z + rate * (lbl_1_data_5D8[i].z - lbl_1_data_584[i].z);
+            Hu3DModelPosSetV(obj->mdlId[i + 3], &pos);
         }
     }
 }
 
-// Walks the 16-entry spawn table: every entry drives its target, and the last
-// one is flagged as the active row so the caller knows where the sweep stopped.
 void fn_1_AE8C(OMOBJ *obj)
 {
     s32 i;
 
-    if (obj->work[0] < 2) {
-        for (i = 0; i < 16; i++) {
-            fn_1_AF20((s8)lbl_1_data_62C[i & 15], 0);
+    if ((u32)obj->work[0] < 2U) {
+        for (i = 0; i < 0x10; i++) {
+            fn_1_AF20(lbl_1_data_62C[i & 0xF], 0);
         }
     }
-    fn_1_AF20((s8)lbl_1_data_62C[obj->work[0] & 15], 1);
+    fn_1_AF20(lbl_1_data_62C[obj->work[0] & 0xF], 1);
 }
 
-// Bilinear relaxation of the 40x40 stage height field: every cell drifts
-// towards its neighbour average and is re-tinted from the value it just lost.
-void fn_1_B888(OMOBJ *obj)
+void fn_1_AF20(s8 type, s32 mode)
 {
+    HuVecF pos;
+    f32 off;
+
+    switch (type) {
+        case 0:
+            pos.x = -2010.0000000000002 + 3410.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
+            pos.z = -7800.0f;
+            break;
+        case 1:
+            off = 1131.0 * (1.52587890625e-05 * (f64)(f32)(s32)frand());
+            pos.x = 4213.0 + (f64)off;
+            if (off != 0.0f) {
+                off = 100.0 * (2.0 * ((f64)off / 1131.0));
+            }
+            pos.z = -7990.000000000001 + (f64)off;
+            break;
+        case 2:
+            pos.x = 1630.0f;
+            pos.z = -7500.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            break;
+        case 3:
+            pos.x = -3105.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            pos.z = -7160.0f;
+            break;
+        case 4:
+            pos.x = -4530.0f;
+            pos.z = -7045.0 + 50.0 * (3.0517578125e-05 * (f64)(f32)((s32)frand() - 0x8000));
+            break;
+#ifdef TARGET_PC
+        default:
+            pos.x = 0.0f;
+            pos.z = 0.0f;
+            break;
+#endif
+    }
+    if (mode == 0) {
+        pos.y = -13800.0f;
+        fn_1_CEB0(&pos);
+        return;
+    }
+    pos.y = -14000.0f;
+    fn_1_CE1C(&pos);
+}
+
+void fn_1_B278(HU3DMODEL *model, f32 scale)
+{
+    M503Field *work = model->hookData;
+    M503Cell *cell;
+    f32 maxDist;
+    f32 x;
+    f32 z;
+    f32 ratio;
+    f32 height;
     s32 i;
     s32 j;
-    s32 v;
-    u8 *work;
-    M503CELL *cell;
-    f32 y;
-    f32 z;
 
-    work = (u8 *)((M503MODEL *)((u8 *)Hu3DData + obj->mdlId[10] * 0x134))->hookData;
+    maxDist = sqrtf(720000.0f);
     for (i = 0; i < 40; i++) {
         for (j = 0; j < 40; j++) {
-            cell = (M503CELL *)(work + (i * 0x280 + j * 0x10 + 0x2B4));
-            y = cell->y;
-            z = cell->z;
-            cell->x = cell->x + lbl_1_rodata_550 * (y + z - cell->x);
-            cell->z = lbl_1_rodata_450;
-            v = (s32)((f64)z / lbl_1_rodata_558) + 0xFF;
-            if (v > 0xFF) {
-                v = 0xFF;
+            cell = &work->cells[i][j];
+            x = -585.0 + 30.0 * (f64)j;
+            z = -585.0 + 30.0 * (f64)i;
+            ratio = HuMagPoint2D(x, z) / maxDist;
+            if (ratio > 1.0f) {
+                ratio = 1.0f;
             }
-            if (v < 0xC8) {
-                v = 0xC8;
+            height = (f64)scale * -cos(1.5707963267948966 * (f64)ratio);
+            cell->base = height;
+            cell->height = height;
+            cell->delta = 0.0f;
+            cell->col.r = 0xFF;
+            cell->col.g = 0xFF;
+            cell->col.b = 0xFF;
+            cell->col.a = 0xFF;
+        }
+    }
+    for (i = 0; i < 13; i++) {
+        for (j = 0; j < 13; j++) {
+            x = -185.0 + 30.0 * (f64)j;
+            z = -185.0 + 30.0 * (f64)i;
+            ratio = HuMagPoint2D(x, z) / 200.0f;
+            if (ratio > 1.0f) {
+                ratio = 1.0f;
             }
-            cell->col[0] = (u8)v;
-            cell->col[1] = (u8)v;
-            cell->col[2] = (u8)v;
-            cell->col[3] = 0xFF;
+            work->kernel[i][j] = cos(1.5707963267948966 * (f64)ratio);
         }
     }
 }
 
-// Allocates the 0x66B4-byte field block hung off the hook model and fills in
-// its header (animation plus three zeroed floats).
-void fn_1_B9D0(HU3DMODELID id)
+void fn_1_B888(OMOBJ *obj)
 {
-    M503MODEL *mdl;
-    u8 *work;
-
-    mdl = (M503MODEL *)((u8 *)Hu3DData + id * 0x134);
-    work = (u8 *)HuMemDirectMallocNum(0, 0x66B4, 0x1000);
-    mdl->hookData = work;
-    memset(work, 0, 0x66B4);
-    *(void **)work = HuSprAnimRead(HuDataSelHeapReadNum(0x3D26, 0x1000, 2));
-    *(f32 *)(work + 4) = lbl_1_rodata_450;
-    *(f32 *)(work + 8) = lbl_1_rodata_450;
-    *(f32 *)(work + 0xC) = lbl_1_rodata_450;
-    fn_1_B278(mdl, lbl_1_rodata_560);
-}
-
-// Marches a probe around the board at one-degree steps, summing the distance
-// field fn_1_C18C reports, then rescales the total into a score.
-f32 fn_1_BFE8(f32 x, f32 z)
-{
-    f32 ang;
-    f32 sum;
-    f32 dx;
-    f32 dz;
-
-    ang = lbl_1_rodata_450;
-    sum = lbl_1_rodata_450;
-    sum = fn_1_C18C(x, z);
-    ang = lbl_1_rodata_450;
-    while (ang < lbl_1_rodata_584) {
-        dx = (f32)(sin(lbl_1_rodata_570 * ang / lbl_1_rodata_578) * lbl_1_rodata_458 * lbl_1_rodata_4B8);
-        dz = (f32)(cos(lbl_1_rodata_570 * ang / lbl_1_rodata_578) * lbl_1_rodata_458 * lbl_1_rodata_4B8);
-        sum = sum + fn_1_C18C(x + dx, z + dz);
-        ang = ang + lbl_1_rodata_580;
-    }
-    return (f32)(lbl_1_rodata_588 + (sum / lbl_1_rodata_590));
-}
-
-// Samples the smoothed height field with bilinear weights and returns the
-// interpolated height; zero outside the 0..38 cell window.
-f32 fn_1_C18C(f32 x, f32 z)
-{
-    u32 a;
-    u32 b;
-    f32 fa;
-    f32 fb;
-    u8 *work;
-    f32 c00;
-    f32 c01;
-    f32 c10;
-    f32 c11;
-
-    fa = (f32)((f64)x - lbl_1_rodata_518);
-    a = (u32)((f64)fa / lbl_1_rodata_520);
-    if (a >= 0x27) {
-        return lbl_1_rodata_450;
-    }
-    fa = (f32)((fa - lbl_1_rodata_520 * ((f64)a - lbl_1_rodata_598)) / lbl_1_rodata_520);
-    fb = (f32)((f64)z - lbl_1_rodata_518);
-    b = (u32)((f64)fb / lbl_1_rodata_520);
-    if (b >= 0x27) {
-        return lbl_1_rodata_450;
-    }
-    fb = (f32)((fb - lbl_1_rodata_520 * ((f64)b - lbl_1_rodata_598)) / lbl_1_rodata_520);
-    work = (u8 *)((M503MODEL *)((u8 *)Hu3DData + lbl_1_bss_B8->mdlId[10] * 0x134))->hookData;
-    c00 = ((M503CELL *)(work + (b * 0x280 + a * 0x10 + 0x2B4)))->x;
-    c01 = ((M503CELL *)(work + (b * 0x280 + (a + 1) * 0x10 + 0x2B4)))->x;
-    c10 = ((M503CELL *)(work + ((b + 1) * 0x280 + a * 0x10 + 0x2B4)))->x;
-    c11 = ((M503CELL *)(work + ((b + 1) * 0x280 + (a + 1) * 0x10 + 0x2B4)))->x;
-    c00 = c00 + fa * ((c01 - c00) / lbl_1_rodata_520);
-    c10 = c10 + fa * ((c11 - c10) / lbl_1_rodata_520);
-    return c00 + fb * ((c10 - c00) / lbl_1_rodata_520);
-}
-
-// Pushes a height-field stamp down into the stage grid, skipping out of range
-// cells. x/z pick the cell, y is unused by the maths.
-void fn_1_C424(f32 x, f32 y, f32 z)
-{
+    M503Field *work;
+    M503Cell *cell;
+    f32 delta;
+    s32 val;
     s32 i;
     s32 j;
-    u32 a;
-    u32 b;
-    u32 ai;
-    u32 bi;
-    u8 *work;
-    f32 (*height)[13];
-    M503CELL (*cells)[40];
 
-    work = (u8 *)((M503MODEL *)((u8 *)Hu3DData + lbl_1_bss_B8->mdlId[10] * 0x134))->hookData;
-    height = (f32 (*)[13])(work + 0x10);
-    cells = (M503CELL (*)[40])(work + 0x2B4);
-    ai = (u32)(((f64)x - lbl_1_rodata_518) / lbl_1_rodata_520) - 6;
-    bi = (u32)(((f64)y - lbl_1_rodata_518) / lbl_1_rodata_520) - 6;
-    for (i = 0; i < 13; i++) {
-        a = bi + i;
-        if (a < 40) {
-            for (j = 0; j < 13; j++) {
-                b = ai + j;
-                if (b < 40) {
-                    cells[a][b].z = cells[a][b].z - z * height[i][j];
+    for (i = 0; i < 40; i++) {
+        for (j = 0; j < 40; j++) {
+            work = Hu3DData[obj->mdlId[10]].hookData;
+            cell = &work->cells[i][j];
+            delta = cell->delta;
+            cell->height = cell->height + 0.1 * ((cell->base + delta) - cell->height);
+            cell->delta = 0.0f;
+            val = (s32)((f64)delta / 0.3) + 0xFF;
+            if (val > 0xFF) {
+                val = 0xFF;
+            }
+            if (val < 0xC8) {
+                val = 0xC8;
+            }
+            cell->col.r = val;
+            cell->col.g = val;
+            cell->col.b = val;
+            cell->col.a = 0xFF;
+        }
+    }
+}
+
+void fn_1_B9D0(HU3DMODELID id)
+{
+    HU3DMODEL *model = &Hu3DData[id];
+    M503Field *work;
+
+    work = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M503Field), HU_MEMNUM_OVL);
+    model->hookData = work;
+    memset(work, 0, sizeof(M503Field));
+    work->anim = HuSprAnimRead(HuDataSelHeapReadNum(0x3D0026, HU_MEMNUM_OVL, HEAP_MODEL));
+    work->pos.x = 0.0f;
+    work->pos.y = 0.0f;
+    work->pos.z = 0.0f;
+    fn_1_B278(model, 100.0f);
+}
+
+#ifdef TARGET_PC
+#define M503_FIFO_COLOR(c) \
+    GXWGFifo.u8 = (c).r; \
+    GXWGFifo.u8 = (c).g; \
+    GXWGFifo.u8 = (c).b; \
+    GXWGFifo.u8 = (c).a
+#else
+#define M503_FIFO_COLOR(c) GXWGFifo.u32 = *(u32 *)&(c)
+#endif
+
+void fn_1_BA9C(HU3DMODEL *model, Mtx *mtx)
+{
+    M503Field *work = model->hookData;
+    M503Cell *cell;
+    Mtx mat;
+    f32 x;
+    f32 z;
+    f32 s;
+    f32 t;
+    s32 i;
+    s32 j;
+
+    HuSprTexLoad(work->anim, 0, GX_TEXMAP0, GX_CLAMP, GX_CLAMP, GX_LINEAR);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, GX_FALSE, 0x7D);
+    PSMTXIdentity(mat);
+    PSMTXTrans(mat, work->pos.x, work->pos.y, work->pos.z);
+    PSMTXConcat(*mtx, mat, mat);
+    GXLoadPosMtxImm(mat, 0);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_TRUE, GX_LESS, GX_TRUE);
+    GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_AND, GX_LEQUAL, 0xFF);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_COPY);
+    GXSetNumChans(1);
+    GXSetNumTexGens(1);
+    GXSetNumTevStages(1);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    for (i = 0; i < 0x27; i++) {
+        for (j = 0; j < 0x27; j++) {
+            x = -585.0 + 30.0 * (f64)j;
+            z = -585.0 + 30.0 * (f64)i;
+            s = 0.02564102564102564 * (f64)j;
+            t = 0.02564102564102564 * (f64)i;
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            cell = &work->cells[i][j];
+            GXWGFifo.f32 = x;
+            GXWGFifo.f32 = cell->height;
+            GXWGFifo.f32 = z;
+            M503_FIFO_COLOR(cell->col);
+            GXWGFifo.f32 = s;
+            GXWGFifo.f32 = t;
+            cell = &work->cells[i][j + 1];
+            GXWGFifo.f32 = 30.0 + (f64)x;
+            GXWGFifo.f32 = cell->height;
+            GXWGFifo.f32 = z;
+            M503_FIFO_COLOR(cell->col);
+            GXWGFifo.f32 = 0.02564102564102564 + (f64)s;
+            GXWGFifo.f32 = t;
+            cell = &work->cells[i + 1][j + 1];
+            GXWGFifo.f32 = 30.0 + (f64)x;
+            GXWGFifo.f32 = cell->height;
+            GXWGFifo.f32 = 30.0 + (f64)z;
+            M503_FIFO_COLOR(cell->col);
+            GXWGFifo.f32 = 0.02564102564102564 + (f64)s;
+            GXWGFifo.f32 = 0.02564102564102564 + (f64)t;
+            cell = &work->cells[i + 1][j];
+            GXWGFifo.f32 = x;
+            GXWGFifo.f32 = cell->height;
+            GXWGFifo.f32 = 30.0 + (f64)z;
+            M503_FIFO_COLOR(cell->col);
+            GXWGFifo.f32 = s;
+            GXWGFifo.f32 = 0.02564102564102564 + (f64)t;
+        }
+    }
+}
+
+f32 fn_1_BFE8(f32 x, f32 z)
+{
+    f32 dx;
+    f32 sum;
+    f32 ang;
+
+    sum = fn_1_C18C(x, z);
+    ang = 0.0f;
+    while (ang < 359.0f) {
+        dx = 100.0 * (0.5 * HuSin(ang));
+        sum += fn_1_C18C(x + dx, z + (f32)(100.0 * (0.5 * HuCos(ang))));
+        ang += 90.0f;
+    }
+    return 20.0 + (f64)(sum / 5.0f);
+}
+
+f32 fn_1_C18C(f32 x, f32 z)
+{
+    M503Field *work = Hu3DData[lbl_1_bss_B8->mdlId[10]].hookData;
+    f32 offX;
+    f32 offZ;
+    f32 fracX;
+    f32 fracZ;
+    f32 c00;
+    f32 c10;
+    f32 c11;
+    f32 row0;
+    u32 ix;
+    u32 iz;
+
+    offX = x - -585.0;
+    ix = (u32)((f64)offX / 30.0);
+    if (ix >= 0x27U) {
+        return 0.0f;
+    }
+    offZ = z - -585.0;
+    iz = (u32)((f64)offZ / 30.0);
+    if (iz >= 0x27U) {
+        return 0.0f;
+    }
+    fracX = ((f64)offX - 30.0 * (f64)(f32)ix) / 30.0;
+    c00 = work->cells[iz][ix].height;
+    c10 = work->cells[iz + 1][ix].height;
+    row0 = (f64)c00 + (f64)fracX * ((f64)(work->cells[iz][ix + 1].height - c00) / 30.0);
+    c11 = work->cells[iz + 1][ix + 1].height;
+    fracZ = ((f64)offZ - 30.0 * (f64)(f32)iz) / 30.0;
+    return (f64)row0 + (f64)fracZ * ((f64)((f32)((f64)c10 + (f64)fracX * ((f64)(c11 - c10) / 30.0)) - row0) / 30.0);
+}
+
+void fn_1_C424(f32 x, f32 z, f32 scale)
+{
+    M503Field *work = Hu3DData[lbl_1_bss_B8->mdlId[10]].hookData;
+    u32 row;
+    u32 col;
+    u32 i;
+    u32 j;
+
+    for (i = 0; i < 13U; i++) {
+        row = (u32)(((f64)z - -585.0) / 30.0) - 6 + i;
+        if (row < 0x28U) {
+            for (j = 0; j < 13U; j++) {
+                col = (u32)(((f64)x - -585.0) / 30.0) - 6 + j;
+                if (col < 0x28U) {
+                    work->cells[row][col].delta = work->cells[row][col].delta - scale * work->kernel[i][j];
                 }
             }
         }
