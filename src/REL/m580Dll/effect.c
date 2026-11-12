@@ -356,6 +356,9 @@ void fn_1_E36C(M580_SHADOW *shadow, Mtx *mtx)
         GXColor4u8(0, 0, 0, a1);
         GXTexCoord2f32(s0, 1.0f);
         GXTexCoord2f32(0.0f, 1.0f);
+#ifdef TARGET_PC
+        GXEnd();
+#endif
     }
 }
 
