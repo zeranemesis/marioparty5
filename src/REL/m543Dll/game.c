@@ -61,6 +61,7 @@ s16 fn_1_EF58(s16 arg0);
 
 void MgActorPosGet(MGACTOR *actorP, HuVecF *pos);
 
+s32 lbl_1_bss_15E4_pad; /* original symbol lbl_1_bss_15E0 is 8 bytes long */
 M543State *lbl_1_bss_15E0;
 
 /* unit-owned .data, in original address order */
@@ -113,7 +114,14 @@ s16 lbl_1_data_560[15][21] = {
     { 17, 21, 47, 25, 44, 29, 45, 34, 16, 26, 31, 53, 15, 38, 18, 23, 28, 41, -1, 0, 0 },
     { 15, 17, 38, 18, 23, 28, 41, 29, 44, 48, 52, 32, 53, 49, 34, 16, 20, 21, 51, 24, -1 },
 };
+s16 lbl_1_data_560_pad = 0; /* original symbol lbl_1_data_560 is 0x278 bytes long */
 s32 (*lbl_1_data_7F4[2])(s16) = { fn_1_7394, fn_1_7704 };
+s16 lbl_1_data_8A0[2][4] = { { 5, -1, 1, -5 }, { 5, -1, 1, -5 } };
+s16 lbl_1_data_8B0[2][4] = { { 3, 0, 1, 2 }, { 3, 0, 1, 2 } };
+f32 lbl_1_data_8FC[25] = {
+    0.0f, 0.0f, 0.0f, 0.0f, 913.0f, 0.0f, -1177.0f, 993.0f, 0.0f, -1038.0f, 550.0f, 1000.0f, -3250.0f,
+    593.0f, 312.0f, -1119.0f, -462.0f, 330.0f, -1100.0f, -1000.0f, 40.0f, -2100.0f, -2500.0f, 0.0f, -3900.0f,
+};
 
 void fn_1_3CEC(M543State *state)
 {
@@ -434,6 +442,7 @@ s32 fn_1_5A6C(M543State *state)
 {
     HU3DMODEL *model0;
     HU3DMODEL *model1;
+    s32 result = 1;
 
     fn_1_3CEC(state);
     MgPlayerPadSet(lbl_1_bss_0.player[0], 0, 0, 0, 0);
@@ -447,16 +456,16 @@ s32 fn_1_5A6C(M543State *state)
     lbl_1_bss_8DC[1].f38 = model1->pos.x;
     lbl_1_bss_8DC[1].f3C = model1->pos.y;
     lbl_1_bss_8DC[1].f40 = model1->pos.z;
-    return 1;
+    return result;
 }
 
 s32 fn_1_5B78(void)
 {
-    s16 ret;
+    s16 result = 0;
 
-    ret = fn_1_86E4();
+    result = fn_1_86E4();
     fn_1_6770();
-    return ret;
+    return result;
 }
 
 s32 fn_1_5BB0(void)
@@ -590,11 +599,11 @@ s32 fn_1_623C(void)
 
 s32 fn_1_6314(void)
 {
-    s16 ret;
+    s16 result = 0;
 
-    ret = fn_1_91F8();
+    result = fn_1_91F8();
     fn_1_6770();
-    return ret;
+    return result;
 }
 
 s32 fn_1_634C(void)
@@ -620,16 +629,20 @@ s32 fn_1_634C(void)
 
 s32 fn_1_64AC(void)
 {
+    s16 result = 1;
+
     fn_1_6770();
-    return 1;
+    return result;
 }
 
 s32 fn_1_64DC(void)
 {
+    s16 result = 1;
+
     fn_1_3CCC();
     MgActorKill(lbl_1_bss_0.player[0]->actor);
     MgActorKill(lbl_1_bss_0.player[1]->actor);
-    return 1;
+    return result;
 }
 
 void fn_1_6534(void)
@@ -1580,7 +1593,6 @@ void fn_1_A6B0(M543Actor *actors)
     f32 cz;
     f32 vx;
     f32 vz;
-    s16 pass;
     s16 sp8;
     s16 i;
     s16 j;
@@ -1591,6 +1603,9 @@ void fn_1_A6B0(M543Actor *actors)
     s16 pushed;
 
     sp8 = 0;
+#ifdef TARGET_PC
+    order[0] = order[1] = order[2] = order[3] = 0;
+#endif
     for (i = 0; i < 2; i++) {
         push68[i] = 0.0f;
         push60[i] = 0.0f;
@@ -1842,105 +1857,626 @@ void fn_1_A6B0(M543Actor *actors)
             actors[i].f38 = actors[i].f44;
             actors[i].f40 = actors[i].f4C;
         }
-        for (pass = 0; pass < 2; pass++) {
-            for (j = 0; j < 0x10; j++) {
-                if (lbl_1_data_380[j][0] < lbl_1_data_380[j][2]) {
-                    lo0 = lbl_1_data_380[j][0];
-                    hi0 = lbl_1_data_380[j][2];
-                } else {
-                    lo0 = lbl_1_data_380[j][2];
-                    hi0 = lbl_1_data_380[j][0];
-                }
-                if (lbl_1_data_380[j][1] < lbl_1_data_380[j][3]) {
-                    lo1 = lbl_1_data_380[j][1];
-                    hi1 = lbl_1_data_380[j][3];
-                } else {
-                    lo1 = lbl_1_data_380[j][3];
-                    hi1 = lbl_1_data_380[j][1];
-                }
-                if (actors[i].f38 + 25.0f * lbl_1_data_380[j][4] >= lo0
-                    && actors[i].f38 - 25.0f * lbl_1_data_380[j][4] <= hi0
-                    && actors[i].f40 + 25.0f * lbl_1_data_380[j][5] >= lo1
-                    && actors[i].f40 - 25.0f * lbl_1_data_380[j][5] <= hi1) {
-                    dx = lbl_1_data_380[j][0] - lbl_1_data_380[j][2];
-                    dz = lbl_1_data_380[j][1] - lbl_1_data_380[j][3];
-                    len2 = dx * dx + dz * dz;
-                    proj = -1.0f * (dx * (lbl_1_data_380[j][0] - actors[i].f38)
-                                    + dz * (lbl_1_data_380[j][1] - actors[i].f40));
-                    t = proj / len2;
-                    cx = dx * t + lbl_1_data_380[j][0];
-                    cz = dz * t + lbl_1_data_380[j][1];
-                    vx = actors[i].f38 - cx;
-                    vz = actors[i].f40 - cz;
-                    dist = sqrtf(vx * vx + vz * vz);
-                    if (dist < 25.0f) {
-                        if (dist <= 1.0f) {
-                            dist = 1.0f;
-                        }
-                        sgn = 1.0f;
-                        ax = actors[i].f38;
-                        az = actors[i].f40;
-                        switch (j) {
-                        case 0:
-                            if (-ax + az < -784.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 1:
-                            if (ax > 554.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 5:
-                            if (ax > 554.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 6:
-                            if (ax + az > 784.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 7:
-                            if (az > 554.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 8:
-                            if (-ax + az > 784.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 9:
-                            if (ax < -554.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 13:
-                            if (ax < -554.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 14:
-                            if (ax + az < -784.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        case 15:
-                            if (az < -554.0f) {
-                                sgn = -1.0f;
-                            }
-                            break;
-                        }
-                        k = (1.0f + 25.0f) / dist;
-                        actors[i].f38 = cx + sgn * (vx * k);
-                        actors[i].f40 = cz + sgn * (vz * k);
+        for (j = 0; j < 0x10; j++) {
+            if (lbl_1_data_380[j][0] < lbl_1_data_380[j][2]) {
+                lo0 = lbl_1_data_380[j][0];
+                hi0 = lbl_1_data_380[j][2];
+            } else {
+                lo0 = lbl_1_data_380[j][2];
+                hi0 = lbl_1_data_380[j][0];
+            }
+            if (lbl_1_data_380[j][1] < lbl_1_data_380[j][3]) {
+                lo1 = lbl_1_data_380[j][1];
+                hi1 = lbl_1_data_380[j][3];
+            } else {
+                lo1 = lbl_1_data_380[j][3];
+                hi1 = lbl_1_data_380[j][1];
+            }
+            if (actors[i].f38 + 25.0f * lbl_1_data_380[j][4] >= lo0
+                && actors[i].f38 - 25.0f * lbl_1_data_380[j][4] <= hi0
+                && actors[i].f40 + 25.0f * lbl_1_data_380[j][5] >= lo1
+                && actors[i].f40 - 25.0f * lbl_1_data_380[j][5] <= hi1) {
+                dx = lbl_1_data_380[j][0] - lbl_1_data_380[j][2];
+                dz = lbl_1_data_380[j][1] - lbl_1_data_380[j][3];
+                len2 = dx * dx + dz * dz;
+                proj = -1.0f * (dx * (lbl_1_data_380[j][0] - actors[i].f38)
+                                + dz * (lbl_1_data_380[j][1] - actors[i].f40));
+                t = proj / len2;
+                cx = dx * t + lbl_1_data_380[j][0];
+                cz = dz * t + lbl_1_data_380[j][1];
+                vx = actors[i].f38 - cx;
+                vz = actors[i].f40 - cz;
+                dist = sqrtf(vx * vx + vz * vz);
+                if (dist < 25.0f) {
+                    if (dist <= 1.0f) {
+                        dist = 1.0f;
                     }
+                    sgn = 1.0f;
+                    ax = actors[i].f38;
+                    az = actors[i].f40;
+                    switch (j) {
+                    case 0:
+                        if (-ax + az < -784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 1:
+                        if (ax > 554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 5:
+                        if (ax > 554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 6:
+                        if (ax + az > 784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 7:
+                        if (az > 554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 8:
+                        if (-ax + az > 784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 9:
+                        if (ax < -554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 13:
+                        if (ax < -554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 14:
+                        if (ax + az < -784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 15:
+                        if (az < -554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    }
+                    k = (1.0f + 25.0f) / dist;
+                    actors[i].f38 = cx + sgn * (vx * k);
+                    actors[i].f40 = cz + sgn * (vz * k);
+                }
+            }
+        }
+        for (j = 0; j < 0x10; j++) {
+            if (lbl_1_data_380[j][0] < lbl_1_data_380[j][2]) {
+                lo0 = lbl_1_data_380[j][0];
+                hi0 = lbl_1_data_380[j][2];
+            } else {
+                lo0 = lbl_1_data_380[j][2];
+                hi0 = lbl_1_data_380[j][0];
+            }
+            if (lbl_1_data_380[j][1] < lbl_1_data_380[j][3]) {
+                lo1 = lbl_1_data_380[j][1];
+                hi1 = lbl_1_data_380[j][3];
+            } else {
+                lo1 = lbl_1_data_380[j][3];
+                hi1 = lbl_1_data_380[j][1];
+            }
+            if (actors[i].f38 + 25.0f * lbl_1_data_380[j][4] >= lo0
+                && actors[i].f38 - 25.0f * lbl_1_data_380[j][4] <= hi0
+                && actors[i].f40 + 25.0f * lbl_1_data_380[j][5] >= lo1
+                && actors[i].f40 - 25.0f * lbl_1_data_380[j][5] <= hi1) {
+                dx = lbl_1_data_380[j][0] - lbl_1_data_380[j][2];
+                dz = lbl_1_data_380[j][1] - lbl_1_data_380[j][3];
+                len2 = dx * dx + dz * dz;
+                proj = -1.0f * (dx * (lbl_1_data_380[j][0] - actors[i].f38)
+                                + dz * (lbl_1_data_380[j][1] - actors[i].f40));
+                t = proj / len2;
+                cx = dx * t + lbl_1_data_380[j][0];
+                cz = dz * t + lbl_1_data_380[j][1];
+                vx = actors[i].f38 - cx;
+                vz = actors[i].f40 - cz;
+                dist = sqrtf(vx * vx + vz * vz);
+                if (dist < 25.0f) {
+                    if (dist <= 1.0f) {
+                        dist = 1.0f;
+                    }
+                    sgn = 1.0f;
+                    ax = actors[i].f38;
+                    az = actors[i].f40;
+                    switch (j) {
+                    case 0:
+                        if (-ax + az < -784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 1:
+                        if (ax > 554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 5:
+                        if (ax > 554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 6:
+                        if (ax + az > 784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 7:
+                        if (az > 554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 8:
+                        if (-ax + az > 784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 9:
+                        if (ax < -554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 13:
+                        if (ax < -554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 14:
+                        if (ax + az < -784.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    case 15:
+                        if (az < -554.0f) {
+                            sgn = -1.0f;
+                        }
+                        break;
+                    }
+                    k = (1.0f + 25.0f) / dist;
+                    actors[i].f38 = cx + sgn * (vx * k);
+                    actors[i].f40 = cz + sgn * (vz * k);
                 }
             }
         }
         if (lbl_1_bss_B94.winner == 0 && lbl_1_data_500[0][0] < actors[i].f38) {
             lbl_1_bss_B94.winner = i | ((i ^ 1) * 2);
         }
+    }
+}
+
+void fn_1_D408(s16 arg0)
+{
+    f32 speedTbl[4] = { 7.2f, 8.0f, 9.0f, 10.28571f };
+    f32 paramTbl[4][5] = {
+        { 25.0f, 25.0f, 25.0f, 25.0f, 10.0f },
+        { 25.0f, 25.0f, 15.0f, 35.0f, 15.0f },
+        { 20.0f, 20.0f, 5.0f, 55.0f, 20.0f },
+        { 15.0f, 15.0f, 10.0f, 60.0f, 30.0f },
+    };
+    f32 fieldTbl[4] = { 2.88f, 3.6f, 4.8f, 7.2f };
+    s16 chanceTbl[4] = { 50, 40, 30, 15 };
+    s16 waitTbl[4] = { 20, 15, 10, 3 };
+    s16 lvl;
+
+    if (lbl_1_bss_15E0->chars[arg0].cpuLevel != 0) {
+        lbl_1_bss_8DC[arg0].f50 = 1;
+        lbl_1_bss_8DC[arg0].f52 = lbl_1_bss_15E0->chars[arg0].cpuLevel - 1;
+        lbl_1_bss_8DC[arg0].fA4 = speedTbl[lbl_1_bss_8DC[arg0].f52];
+        lbl_1_bss_8DC[arg0].f9C = 11.0f;
+        lbl_1_bss_8DC[arg0].f74[0] = paramTbl[lbl_1_bss_8DC[arg0].f52][0];
+        lbl_1_bss_8DC[arg0].f74[1] = paramTbl[lbl_1_bss_8DC[arg0].f52][1];
+        lbl_1_bss_8DC[arg0].f74[2] = paramTbl[lbl_1_bss_8DC[arg0].f52][2];
+        lbl_1_bss_8DC[arg0].f74[3] = paramTbl[lbl_1_bss_8DC[arg0].f52][3];
+        lbl_1_bss_8DC[arg0].f74[4] = paramTbl[lbl_1_bss_8DC[arg0].f52][4];
+        lbl_1_bss_8DC[arg0].f7E = chanceTbl[lbl_1_bss_8DC[arg0].f52];
+        lbl_1_bss_8DC[arg0].fA8 = fieldTbl[lbl_1_bss_8DC[arg0].f52];
+        lbl_1_bss_8DC[arg0].f142 = waitTbl[lbl_1_bss_8DC[arg0].f52];
+        lbl_1_bss_8DC[arg0].f106[0] = -1;
+        lbl_1_bss_8DC[arg0].f106[4] = -1;
+        lbl_1_bss_8DC[arg0].f106[0x1A] = -1;
+        lbl_1_bss_8DC[arg0].f106[0x1D] = -1;
+        lbl_1_bss_8DC[arg0].tileHit[0x15] = 1;
+        lbl_1_bss_8DC[arg0].tileHit[0x16] = 1;
+        lbl_1_bss_8DC[arg0].tileHit[0x27] = 1;
+        lbl_1_bss_8DC[arg0].tileHit[0x28] = 1;
+        if (arg0 == 0) {
+            lbl_1_bss_8DC[arg0].f146 = frandmod(2) + 1;
+        } else if (arg0 == 1) {
+            if (lbl_1_bss_8DC[0].f146 == 1) {
+                lbl_1_bss_8DC[1].f146 = frandmod(2) + 2;
+            } else if (lbl_1_bss_8DC[0].f146 == 2) {
+                lbl_1_bss_8DC[1].f146 = 3;
+            } else {
+                lbl_1_bss_8DC[1].f146 = frandmod(3) + 1;
+            }
+        }
+        lvl = lbl_1_bss_8DC[arg0].f146;
+        lbl_1_bss_8DC[arg0].f144 = lvl;
+        lbl_1_bss_8DC[arg0].f148 = lvl;
+    }
+}
+
+s32 fn_1_D9E8(s16 arg0)
+{
+    s16 dirTbl[4] = { -1, 1, -5, 5 };
+    s16 used[4] = { 0, 0, 0, 0 };
+    s16 bonus[4] = { 0, 0, 0, 0 };
+    s32 score[4];
+    s16 best;
+    s16 sel;
+    s16 i;
+    s16 j;
+    s16 r;
+
+    lbl_1_bss_8DC[arg0].stkX = 0;
+    lbl_1_bss_8DC[arg0].stkY = 0;
+    lbl_1_bss_8DC[arg0].btnDown = 0;
+    lbl_1_bss_8DC[arg0].btn = 0;
+    switch (lbl_1_bss_8DC[arg0].f54) {
+    case 0:
+        lbl_1_bss_8DC[arg0].f84 = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f148].x;
+        lbl_1_bss_8DC[arg0].f88 = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f148].y;
+        lbl_1_bss_8DC[arg0].f8C = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f148].z;
+        lbl_1_bss_8DC[arg0].fA0 = lbl_1_bss_8DC[arg0].fA4;
+        lbl_1_bss_8DC[arg0].f54++;
+        /* fallthrough */
+    case 1:
+        if (fn_1_E144(arg0) != 0) {
+            if (lbl_1_bss_8DC[arg0].f146 == 0x1A || lbl_1_bss_8DC[arg0].f146 == 0x1B || lbl_1_bss_8DC[arg0].f146 == 0x1C) {
+                lbl_1_bss_8DC[arg0].f54 = 3;
+            } else {
+                r = fn_1_EF58(arg0);
+                if (r == 2) {
+                    lbl_1_bss_8DC[arg0].f54 = 2;
+                } else if (r == 1) {
+                    lbl_1_bss_8DC[arg0].f84 = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f148].x;
+                    lbl_1_bss_8DC[arg0].f88 = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f148].y;
+                    lbl_1_bss_8DC[arg0].f8C = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f148].z;
+                    lbl_1_bss_8DC[arg0].fA0 = lbl_1_bss_8DC[arg0].fA4;
+                    if ((lbl_1_bss_8DC[arg0].f52 == 2 || lbl_1_bss_8DC[arg0].f52 == 3) && lbl_1_bss_8DC[arg0].f146 >= 0xF) {
+                        switch (lbl_1_bss_8DC[arg0].f146) {
+                        case 15:
+                        case 16:
+                        case 20:
+                        case 21:
+                        case 25:
+                        case 26:
+                            bonus[1] = lbl_1_bss_8DC[arg0].f74[4];
+                            break;
+                        case 18:
+                        case 19:
+                        case 23:
+                        case 24:
+                        case 28:
+                        case 29:
+                            bonus[0] = lbl_1_bss_8DC[arg0].f74[4];
+                            break;
+                        }
+                    }
+                    for (i = 0; i < 4; i++) {
+                        for (j = 0; j < 4; j++) {
+                            if (used[j] == 0) {
+                                score[j] = frandmod(lbl_1_bss_8DC[arg0].f74[j] + bonus[j]);
+                            } else {
+                                score[j] = -1;
+                            }
+                        }
+                        best = 0;
+                        sel = 0;
+                        for (j = 0; j < 4; j++) {
+                            if (score[j] >= best) {
+                                best = score[j];
+                                sel = j;
+                            }
+                        }
+                        used[sel] = 1;
+                        lbl_1_data_8B0[arg0][i] = sel;
+                    }
+                    for (i = 0; i < 4; i++) {
+                        lbl_1_data_8A0[arg0][i] = dirTbl[lbl_1_data_8B0[arg0][i]];
+                    }
+                }
+            }
+        }
+        break;
+    case 2:
+        if (fn_1_E340(arg0) != 0) {
+            lbl_1_bss_8DC[arg0].f54 = 1;
+        }
+        break;
+    case 3:
+        lbl_1_bss_8DC[arg0].f84 = lbl_1_bss_1C[27].x;
+        lbl_1_bss_8DC[arg0].f88 = lbl_1_bss_1C[27].y;
+        lbl_1_bss_8DC[arg0].f8C = lbl_1_bss_1C[27].z;
+        lbl_1_bss_8DC[arg0].fA0 = lbl_1_bss_8DC[arg0].fA4;
+        if (fn_1_E144(arg0) != 0) {
+            lbl_1_bss_8DC[arg0].f54++;
+        }
+        break;
+    case 4:
+        lbl_1_bss_8DC[arg0].f84 = 654.0f;
+        lbl_1_bss_8DC[arg0].f8C = 0.0f;
+        lbl_1_bss_8DC[arg0].fA0 = lbl_1_bss_8DC[arg0].fA4;
+        fn_1_E144(arg0);
+        break;
+    }
+    return 0;
+}
+
+s16 fn_1_E144(s16 arg0)
+{
+    M543Vec3 pos;
+    s16 ret;
+
+    ret = 0;
+    switch (lbl_1_bss_8DC[arg0].f80) {
+    case 0:
+        MgPlayerComStkOn(lbl_1_bss_0.player[arg0]);
+        lbl_1_bss_8DC[arg0].f80++;
+        break;
+    case 1:
+        pos.x = lbl_1_bss_8DC[arg0].f84;
+        pos.y = lbl_1_bss_8DC[arg0].f88;
+        pos.z = lbl_1_bss_8DC[arg0].f8C;
+        if (arg0 == 0) {
+            pos.x += 4.0f;
+            pos.z += 4.0f;
+        } else {
+            pos.x -= 4.0f;
+            pos.z -= 4.0f;
+        }
+        if (MgPlayerVecChase(lbl_1_bss_0.player[arg0], (HuVecF *)&pos, lbl_1_bss_8DC[arg0].fA0, lbl_1_bss_8DC[arg0].f9C) != 0) {
+            ret = 1;
+        }
+        break;
+    case 2:
+        MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+        lbl_1_bss_8DC[arg0].f80 = 0;
+        ret = 1;
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_E340(s16 arg0)
+{
+    f32 offs[4][4] = {
+        { 0.0f, -40.0f, 0.0f, -40.0f },
+        { 0.0f, 40.0f, 0.0f, 40.0f },
+        { -40.0f, 0.0f, -40.0f, 0.0f },
+        { 40.0f, 0.0f, 40.0f, 0.0f },
+    };
+    M543Vec3 pos;
+    f32 bonus;
+    s16 ret;
+    s16 done;
+    s16 chased;
+
+    bonus = 0.0f;
+    ret = 0;
+    switch (lbl_1_bss_8DC[arg0].f62) {
+    case 0:
+        if (lbl_1_bss_33C[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]]].active != 0
+            && frandmod(0x65) < lbl_1_bss_8DC[arg0].f7E) {
+            bonus = 1.0f;
+        }
+        lbl_1_bss_8DC[arg0].f84 = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].x
+            + offs[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]][0]
+            + bonus * offs[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]][2];
+        lbl_1_bss_8DC[arg0].f8C = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].z
+            + offs[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]][1]
+            + bonus * offs[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]][3];
+        lbl_1_bss_8DC[arg0].fA0 = 5.0f * bonus + lbl_1_bss_8DC[arg0].fA8;
+        lbl_1_bss_8DC[arg0].f5E = 0;
+        lbl_1_bss_8DC[arg0].f90 = lbl_1_bss_8DC[arg0].f84;
+        lbl_1_bss_8DC[arg0].f94 = lbl_1_bss_8DC[arg0].f88;
+        lbl_1_bss_8DC[arg0].f98 = lbl_1_bss_8DC[arg0].f8C;
+        lbl_1_bss_8DC[arg0].f62++;
+        /* fallthrough */
+    case 1:
+        done = 0;
+        switch (lbl_1_bss_8DC[arg0].f80) {
+        case 0:
+            MgPlayerComStkOn(lbl_1_bss_0.player[arg0]);
+            lbl_1_bss_8DC[arg0].f80++;
+            break;
+        case 1:
+            pos.x = lbl_1_bss_8DC[arg0].f84;
+            pos.y = lbl_1_bss_8DC[arg0].f88;
+            pos.z = lbl_1_bss_8DC[arg0].f8C;
+            if (arg0 == 0) {
+                pos.x += 4.0f;
+                pos.z += 4.0f;
+            } else {
+                pos.x -= 4.0f;
+                pos.z -= 4.0f;
+            }
+            if (MgPlayerVecChase(lbl_1_bss_0.player[arg0], (HuVecF *)&pos, lbl_1_bss_8DC[arg0].fA0, lbl_1_bss_8DC[arg0].f9C) != 0) {
+                done = 1;
+            }
+            break;
+        case 2:
+            MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+            lbl_1_bss_8DC[arg0].f80 = 0;
+            done = 1;
+            break;
+        }
+        chased = done;
+        if (chased == 0) {
+            if (lbl_1_bss_8DC[arg0].f5E++ >= 0x5A) {
+                chased = 1;
+            }
+        }
+        if (lbl_1_bss_8DC[arg0].f18 != 0) {
+            chased = 1;
+        }
+        if (chased != 0) {
+            lbl_1_bss_8DC[arg0].f64 = 0;
+            lbl_1_bss_8DC[arg0].f62++;
+        }
+        break;
+    case 2:
+        if (lbl_1_bss_8DC[arg0].f64++ > lbl_1_bss_8DC[arg0].f142) {
+            lbl_1_bss_8DC[arg0].f62++;
+        }
+        break;
+    case 3:
+        if (lbl_1_bss_33C[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]]].active != 0) {
+            lbl_1_bss_8DC[arg0].tileHit[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]]] = 1;
+            lbl_1_bss_8DC[arg0].f66 = -1;
+            lbl_1_bss_8DC[arg0].f62++;
+        } else {
+            lbl_1_bss_8DC[arg0].tileHit[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][lbl_1_bss_8DC[arg0].f66]]] = 2;
+            lbl_1_bss_8DC[arg0].f60++;
+            lbl_1_bss_8DC[arg0].f62 = 0;
+            ret = 1;
+        }
+        break;
+    case 4:
+        lbl_1_bss_8DC[arg0].f84 = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].x;
+        lbl_1_bss_8DC[arg0].f8C = lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].z;
+        lbl_1_bss_8DC[arg0].fA0 = lbl_1_bss_8DC[arg0].fA8;
+        done = 0;
+        switch (lbl_1_bss_8DC[arg0].f80) {
+        case 0:
+            MgPlayerComStkOn(lbl_1_bss_0.player[arg0]);
+            lbl_1_bss_8DC[arg0].f80++;
+            break;
+        case 1:
+            pos.x = lbl_1_bss_8DC[arg0].f84;
+            pos.y = lbl_1_bss_8DC[arg0].f88;
+            pos.z = lbl_1_bss_8DC[arg0].f8C;
+            if (arg0 == 0) {
+                pos.x += 4.0f;
+                pos.z += 4.0f;
+            } else {
+                pos.x -= 4.0f;
+                pos.z -= 4.0f;
+            }
+            if (MgPlayerVecChase(lbl_1_bss_0.player[arg0], (HuVecF *)&pos, lbl_1_bss_8DC[arg0].fA0, lbl_1_bss_8DC[arg0].f9C) != 0) {
+                done = 1;
+            }
+            break;
+        case 2:
+            MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+            lbl_1_bss_8DC[arg0].f80 = 0;
+            done = 1;
+            break;
+        }
+        if (done != 0) {
+            lbl_1_bss_8DC[arg0].f62 = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_EF58(s16 arg0)
+{
+    s16 ret;
+    s16 cnt;
+    s16 i;
+    s16 v28;
+    s16 v29;
+    s16 t;
+
+    ret = 0;
+    cnt = 0;
+    switch (lbl_1_bss_8DC[arg0].f60) {
+    case 0:
+        lbl_1_bss_8DC[arg0].f66 = -1;
+        lbl_1_bss_8DC[arg0].f68 = 0;
+        lbl_1_bss_8DC[arg0].f6A = 0;
+        for (i = 0; i < 4; i++) {
+            t = lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][i];
+            if (t != lbl_1_bss_8DC[arg0].f144
+                && lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][i]] != -1 && t >= 0 && t <= 0x1D) {
+                if (lbl_1_bss_8DC[arg0].tileHit[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][i]]] == 0) {
+                    if (lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][i]] < 0x29) {
+                        lbl_1_bss_8DC[arg0].f66 = i;
+                        return 2;
+                    }
+                    lbl_1_bss_8DC[arg0].f66 = i;
+                } else if (lbl_1_bss_8DC[arg0].tileHit[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[lbl_1_data_8B0[arg0][i]]] == 2) {
+                    if (lbl_1_bss_8DC[arg0].f144 != lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][i]) {
+                        lbl_1_bss_8DC[arg0].f68 = i;
+                    }
+                    lbl_1_bss_8DC[arg0].f6C[lbl_1_bss_8DC[arg0].f6A] = i;
+                    lbl_1_bss_8DC[arg0].f6A++;
+                }
+            }
+        }
+        lbl_1_bss_8DC[arg0].f60++;
+        return ret;
+    case 1:
+        if (lbl_1_bss_8DC[arg0].f66 != -1) {
+            lbl_1_bss_8DC[arg0].f14A = 0;
+        } else {
+            lbl_1_bss_8DC[arg0].f14A = 1;
+        }
+        for (i = 0; i < 4; i++) {
+            if (lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[i] == -1) {
+                cnt++;
+            } else if (lbl_1_bss_8DC[arg0].tileHit[lbl_1_bss_1C[lbl_1_bss_8DC[arg0].f146].adj[i]] == 1) {
+                cnt++;
+            }
+        }
+        v28 = 0;
+        v29 = 0;
+        if (cnt >= 3) {
+            lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146] = 3;
+            lbl_1_bss_8DC[arg0].f14A = 1;
+        } else if (cnt == 2) {
+            if (lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][lbl_1_bss_8DC[arg0].f68]] == 2) {
+                lbl_1_bss_8DC[arg0].f14A = 1;
+            }
+            lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146] = 2;
+            if (lbl_1_bss_8DC[arg0].f14A != 0) {
+                lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146] = 3;
+            }
+        } else if (cnt <= 1) {
+            if (lbl_1_bss_8DC[arg0].f14A != 0) {
+                v28 = 0;
+                for (i = 0; i < lbl_1_bss_8DC[arg0].f6A; i++) {
+                    if (lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][lbl_1_bss_8DC[arg0].f6C[i]]] != 3) {
+                        if (v28 == 0) {
+                            v29 = lbl_1_bss_8DC[arg0].f6C[i];
+                        }
+                        v28++;
+                    }
+                }
+                lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146] = 3;
+            } else {
+                lbl_1_bss_8DC[arg0].f106[lbl_1_bss_8DC[arg0].f146] = 1;
+            }
+        }
+        if (lbl_1_bss_8DC[arg0].f66 != -1) {
+            lbl_1_bss_8DC[arg0].f148 = lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][lbl_1_bss_8DC[arg0].f66];
+        } else if (lbl_1_bss_8DC[arg0].f14A != 0) {
+            if (v28 != 0) {
+                lbl_1_bss_8DC[arg0].f148 = lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][v29];
+            } else if (cnt >= 3) {
+                lbl_1_bss_8DC[arg0].f148 = lbl_1_bss_8DC[arg0].f144;
+            } else {
+                lbl_1_bss_8DC[arg0].f148 = lbl_1_bss_8DC[arg0].f146 + lbl_1_data_8A0[arg0][lbl_1_bss_8DC[arg0].f68];
+            }
+        }
+        lbl_1_bss_8DC[arg0].f144 = lbl_1_bss_8DC[arg0].f146;
+        lbl_1_bss_8DC[arg0].f146 = lbl_1_bss_8DC[arg0].f148;
+        lbl_1_bss_8DC[arg0].f60 = 0;
+        ret = 1;
+        return ret;
+    default:
+        return ret;
     }
 }
