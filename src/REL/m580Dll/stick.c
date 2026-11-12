@@ -157,6 +157,8 @@ s32 fn_1_1D04(void);
 u32 fn_1_1D58(u32 team);
 f32 fn_1_2634(f32 from, f32 to, f32 t);
 s32 fn_1_89A8(s32 index, f32 *pos, f32 *angle);
+OMOBJ *fn_1_7E48(s32 index, s32 mode, HuVecF *pos, s32 flag, f32 dir, f32 minDist, f32 maxDist);
+void fn_1_8194(OMOBJ *player, HuVecF *out, s32 mode);
 void fn_1_ED34(M580_SHADOW *shadow);
 s32 fn_1_11DC4(M580_BODY *body);
 
@@ -528,4 +530,219 @@ void fn_1_9970(OMOBJ *obj)
     Hu3DModelRotSetV(shadow, &work->rot);
     Hu3DModelObjPosGet(model, lbl_1_data_704, &pos);
     fn_1_D60C(&pos);
+}
+
+void fn_1_A260(OMOBJ *obj);
+
+void fn_1_9F44(OMOBJ *obj)
+{
+    M580_STICKWORK *work = obj->data;
+    s32 index = work->index;
+    HU3DMODELID model = obj->mdlId[0];
+    HU3DMODELID hook;
+
+    obj->work[0] = index + 4;
+    work->targetRot = work->actor->initRot;
+    work->idle = 0;
+    hook = fn_1_8CA4(lbl_1_data_744[index]);
+    Hu3DModelHookSet(model, lbl_1_data_74C, hook);
+    work->shadow.active = 1;
+    work->shadow.charNo = 0xD;
+    work->shadow.team = index;
+    work->shadow.pos = &work->pos;
+    work->shadow.ofs = &lbl_1_data_738;
+    work->shadow.rot = &work->rot.y;
+    fn_1_ED34(&work->shadow);
+    work->body.flags = 8;
+    work->body.mask = 0xA;
+    work->body.kind = 2;
+    work->body.id = index;
+    work->body.type = 0;
+    work->body.obj = obj;
+    work->body.update = fn_1_9194;
+    work->body.hit = NULL;
+    work->body.u.circle.pos = &work->pos;
+    work->body.u.circle.vel = &work->vel;
+    work->body.u.circle.prev = work->pos;
+    work->body.u.circle.radius = 40.0f;
+    work->body.u.circle.weight = 0.1f;
+    fn_1_11DC4(&work->body);
+    fn_1_92EC(obj, 0);
+    obj->objFunc = fn_1_A260;
+}
+
+void fn_1_A260(OMOBJ *obj)
+{
+    M580_STICKWORK *work = obj->data;
+    HuVecF *home = work->actor->initPos;
+    HuVecF puckPos;
+    HuVecF puckVel;
+    HuVecF target;
+    OMOBJ *holder;
+    OMOBJ *hit;
+    f32 dist;
+    f32 speed;
+    f32 gain;
+    f32 velX;
+    f32 velZ;
+    f32 ang;
+    f32 rotY;
+    f32 relX;
+    f32 relZ;
+
+    holder = fn_1_D30C(&puckPos, &puckVel);
+    relX = puckPos.x - work->pos.x;
+    relZ = puckPos.z - work->pos.z;
+    dist = HuMagPoint2D(relX, relZ);
+    switch (work->state) {
+    case 0:
+        if (fn_1_89A8(work->index + 4, &work->pos.x, &work->rot.y) != 0) {
+            break;
+        }
+        fn_1_92EC(obj, 0);
+        work->body.flags |= 1;
+        work->state++;
+    case 1:
+        if (MgSeqModeGet() != 5) {
+            break;
+        }
+        work->state++;
+        work->wait = 0;
+        work->timer = 0;
+    case 2:
+        if (MgSeqModeGet() == 6) {
+            work->state++;
+            break;
+        }
+        if (work->wait != 0) {
+            work->wait--;
+        }
+        if (work->wait == 0 && holder != obj) {
+            if (fn_1_D054(&work->pos, work->rot.y, 45.0f, 20.0 + 100.0f) != 0) {
+                holder = fn_1_D390(NULL, NULL, obj, 1.0f);
+                if (holder == obj) {
+                    work->timer = 0;
+                    fn_1_92EC(obj, 3);
+                    work->busy = 1;
+                }
+            }
+            if (holder != obj) {
+                if ((work->index == 0 && puckPos.x < work->pos.x - 200.0)
+                    || (work->index == 1 && puckPos.x > work->pos.x + 200.0)) {
+                    work->targetRot = work->actor->initRot;
+                } else {
+                    work->targetRot = fn_1_9528(obj, &puckPos);
+                }
+            }
+        }
+        if (holder == obj) {
+            ang = work->rot.y - 30.0;
+            puckPos.x = work->pos.x + 100.0f * sin(M_PI * ang / 180.0);
+            puckPos.y = work->pos.y;
+            puckPos.z = work->pos.z + 100.0f * cos(M_PI * ang / 180.0);
+            puckVel.z = 0.0f;
+            puckVel.y = 0.0f;
+            puckVel.x = 0.0f;
+            rotY = work->rot.y;
+            if (work->motion != 4) {
+                if (++work->timer > 48.0) {
+                    fn_1_92EC(obj, 4);
+                    work->busy = 1;
+                    hit = fn_1_7E48(work->index, 0, &work->pos, (frand() & 1) == 0, work->actor->initRot, 80.0f, 3000.0f);
+                    if (hit != NULL) {
+                        fn_1_8194(hit, &target, 0);
+                        work->targetRot = fn_1_9528(obj, &target);
+                    } else {
+                        work->targetRot = work->targetRot + 10.0 * (1.0 / 32768.0 * (f32)((u16)frand() - 0x8000));
+                    }
+                } else {
+                    work->targetRot = work->actor->initRot;
+                }
+            } else if (work->frame == 0xD) {
+                work->wait = 0x12;
+                speed = 1000.0 * (1.0f / 60.0f) + 300.0 * (1.0f / 60.0f) * (1.0 / 65536.0 * (f32)(u16)frand());
+                puckVel.x = speed * sin(M_PI * rotY / 180.0);
+                puckVel.z = speed * cos(M_PI * rotY / 180.0);
+                work->busy = 1;
+                holder = NULL;
+            }
+            holder = fn_1_D390(&puckPos, &puckVel, holder, 0.2f);
+        } else {
+            target = *home;
+            if (dist > 800.0) {
+                target.z = target.z + 0.3 * puckPos.z;
+                speed = 0.4f;
+                gain = 0.05f;
+            } else {
+                target.z = puckPos.z;
+                if (target.z < -180.0) {
+                    target.z = -180.0f;
+                }
+                if (target.z > 180.0) {
+                    target.z = 180.0f;
+                }
+                if (dist > 500.0) {
+                    speed = 0.4f;
+                    gain = 0.045f;
+                } else {
+                    speed = 0.3f;
+                    gain = 0.035f;
+                }
+            }
+            if (work->busy == 0) {
+                if (HuMagPoint2D(target.x - work->pos.x, target.z - work->pos.z) > 30.0) {
+                    ang = fn_1_9528(obj, &target);
+                    velX = 1.0f / 60.0f * (100.0 * (10.0 * (speed * sin(M_PI * ang / 180.0))));
+                    velZ = 1.0f / 60.0f * (100.0 * (10.0 * (speed * cos(M_PI * ang / 180.0))));
+                    fn_1_92EC(obj, 2);
+                    work->idle = 0x30;
+                } else {
+                    velZ = 0.0f;
+                    velX = 0.0f;
+                    if (--work->idle < 0) {
+                        fn_1_92EC(obj, 0);
+                    }
+                }
+            } else {
+                velZ = 0.0f;
+                velX = 0.0f;
+                work->idle = 0;
+            }
+            work->vel.x = work->vel.x + gain * (velX - work->vel.x);
+            work->vel.z = work->vel.z + gain * (velZ - work->vel.z);
+        }
+        break;
+    case 3:
+        if (MgSeqModeGet() != 6) {
+            target = *home;
+            if (HuMagPoint2D(target.x - work->pos.x, target.z - work->pos.z) > 50.0) {
+                ang = fn_1_9528(obj, &target);
+                work->targetRot = ang;
+                velX = 1.0f / 60.0f * (100.0 * (10.0 * (0.8f * sin(M_PI * ang / 180.0))));
+                velZ = 1.0f / 60.0f * (100.0 * (10.0 * (0.8f * cos(M_PI * ang / 180.0))));
+                fn_1_92EC(obj, 2);
+                work->idle = 0x30;
+            } else {
+                velZ = 0.0f;
+                velX = 0.0f;
+                work->targetRot = work->actor->initRot;
+                if (--work->idle < 0) {
+                    fn_1_92EC(obj, 0);
+                }
+            }
+            work->vel.x = work->vel.x + 0.08f * (velX - work->vel.x);
+            work->vel.z = work->vel.z + 0.08f * (velZ - work->vel.z);
+            if (MgSeqModeGet() == 8) {
+                work->state++;
+                work->targetRot = 0.0f;
+                if (fn_1_1D58(work->index) == 1) {
+                    fn_1_92EC(obj, 5);
+                }
+            }
+        }
+        break;
+    }
+    work->rot.y = fn_1_2634(work->rot.y, work->targetRot, 0.05f);
+    VECScale(&work->vel, &work->vel, 0.98f);
+    VECAdd(&work->pos, &work->vel, &work->pos);
 }
