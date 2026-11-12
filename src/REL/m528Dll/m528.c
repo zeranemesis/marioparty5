@@ -2513,8 +2513,12 @@ s32 fn_1_7794(M528NODE *node)
     M528PARTICLE *p;
     M528MAIN *work;
     f32 ang;
+    f32 up;
     f32 spd;
     s16 mdl;
+    s32 ispd;
+    s32 iang;
+    s32 iup;
 
     work = lbl_1_bss_298->data;
     p = node->data;
@@ -2536,9 +2540,12 @@ s32 fn_1_7794(M528NODE *node)
             p->rot.y = (f32)frandmod(0xB4);
             p->rot.z = (f32)frandmod(0x1F) - 15.0f;
             spd = (f32)0xA;
-            ang = (f32)0;
+            iang = 0;
+            ang = (f32)iang;
             p->vel.x = spd * HuSin(ang);
-            p->vel.y = (f32)0x46;
+            iup = 0x46;
+            up = (f32)iup;
+            p->vel.y = up;
             p->vel.z = spd * HuCos(ang);
             p->timer = 0;
             Hu3DModelPosSetV(p->mdl, &p->pos);
