@@ -496,58 +496,63 @@ s32 fn_1_1B1C(M544State *state, s16 pad, s16 idx)
 
 void fn_1_1E68(s16 arg0)
 {
-    s32 down;
-    s8 subY;
-    s8 absSubY;
-    s8 subX;
-    s8 absSubX;
-    s8 stkY;
-    s8 absY;
-    s8 stkX;
-    s8 absX;
+    s8 v;
     u16 btn;
+    s32 down;
+    s8 absX;
+    s8 stkX;
+    s8 absY;
+    s8 stkY;
+    s8 absSubX;
+    s8 subX;
+    s8 absSubY;
+    s8 subY;
 
     btn = HuPadBtn[arg0];
     down = HuPadBtnDown[arg0];
-    if (HuPadStkX[arg0] >= 0) {
-        absX = HuPadStkX[arg0];
+    v = HuPadStkX[arg0];
+    if (v >= 0) {
+        absX = v;
     } else {
-        absX = -HuPadStkX[arg0];
+        absX = -v;
     }
     if (absX < 0xA) {
         stkX = 0;
     } else {
-        stkX = HuPadStkX[arg0];
+        stkX = v;
     }
-    if (HuPadStkY[arg0] >= 0) {
-        absY = HuPadStkY[arg0];
+    v = HuPadStkY[arg0];
+    if (v >= 0) {
+        absY = v;
     } else {
-        absY = -HuPadStkY[arg0];
+        absY = -v;
     }
     if (absY < 0xA) {
         stkY = 0;
     } else {
-        stkY = HuPadStkY[arg0];
+        stkY = v;
     }
-    if (HuPadSubStkX[arg0] >= 0) {
-        absSubX = HuPadSubStkX[arg0];
+    v = HuPadSubStkX[arg0];
+    if (v >= 0) {
+        absSubX = v;
     } else {
-        absSubX = -HuPadSubStkX[arg0];
+        absSubX = -v;
     }
     if (absSubX < 8) {
         subX = 0;
     } else {
-        subX = HuPadSubStkX[arg0];
+        subX = v;
     }
-    if (HuPadSubStkY[arg0] >= 0) {
-        absSubY = HuPadSubStkY[arg0];
+    v = HuPadSubStkY[arg0];
+    if (v >= 0) {
+        absSubY = v;
     } else {
-        absSubY = -HuPadSubStkY[arg0];
+        absSubY = -v;
     }
     if (absSubY < 8) {
         subY = 0;
     } else {
-        subY = HuPadSubStkY[arg0];
+        subY = v;
     }
     if ((btn & 0x400) != 0) {
         CZoom += 20.0f;
@@ -688,15 +693,17 @@ s16 fn_1_2EE4(M544PtclWork *arg0, f32 x, f32 y, f32 z, f32 scale)
     HU3DPARTICLEDATA *data;
     HU3DPARTICLE *particle;
     s16 i;
-    s16 ret;
+    HU3DMODEL *model;
     M544PtclWork *work;
+    s16 ret;
 
     ret = -1;
-    particle = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_826].hookData;
+    model = &Hu3DData[lbl_1_bss_826];
+    particle = (HU3DPARTICLE *)model->hookData;
     work = (M544PtclWork *)particle->work;
     data = particle->data + particle->emitCnt;
     for (i = particle->emitCnt; i < particle->maxCnt; i++, data++) {
-        if (0.0f == data->scale) {
+        if (data->scale == 0.0f) {
             break;
         }
     }
@@ -785,10 +792,11 @@ void fn_1_30B8(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 
 void fn_1_34D0(void)
 {
+    void *data;
     HU3DPARTICLE *particle;
 
-    HuDataSelHeapReadNum(0x66001E, 0x10000000, 2);
-    lbl_1_bss_824 = Hu3DParticleCreate(HuSprAnimRead(HuDataSelHeapReadNum(0x66001E, 0x10000000, 2)), 1);
+    data = HuDataSelHeapReadNum(0x66001E, 0x10000000, 2);
+    lbl_1_bss_824 = Hu3DParticleCreate(HuSprAnimRead(data), 1);
     Hu3DParticleHookSet(lbl_1_bss_824, fn_1_3AD4);
     Hu3DParticleBlendModeSet(lbl_1_bss_824, 0);
     Hu3DModelLayerSet(lbl_1_bss_824, 7);
@@ -832,35 +840,27 @@ void fn_1_35DC(s16 arg0)
         { 10.0f, -50.0f, 0.0f, 10.0f, 50.0f, 0.0f },
         { 10.0f, -50.0f, 0.0f, 10.0f, 50.0f, 0.0f },
     };
-    HuVecF base;
     HuVecF vA;
     HuVecF vB;
-    HuVecF sp8;
+    HuVecF base;
     HuVecF sp14;
+    HuVecF sp8;
     f32 scale;
-    s16 id;
     s16 ch;
-    HuVecF *p;
+    HuVecF *pB;
+    HuVecF *pA;
 
-    id = arg0;
-    ch = lbl_1_bss_914->chars[id].charNo;
+    ch = lbl_1_bss_914->chars[arg0].charNo;
     if (ch >= 0xD) {
         ch = 6;
     }
-    if (id >= 2) {
-        id = (lbl_1_bss_D0.plrMask & 2) >> 1;
+    if (arg0 >= 2) {
+        arg0 = (lbl_1_bss_D0.plrMask & 2) >> 1;
     }
-    p = &lbl_1_bss_914->models[id + 0x20].pos;
-    base.x = p->x;
-    base.y = p->y;
-    base.z = p->z;
-    vA.x = p->x;
-    vA.y = p->y;
-    vA.z = p->z;
-    vB.x = p->x;
-    vB.y = p->y;
-    vB.z = p->z;
-    if (id == 0) {
+    base = lbl_1_bss_914->models[arg0 + 0x20].pos;
+    vA = base;
+    vB = base;
+    if (arg0 == 0) {
         vA.x += tblA[ch][0];
         vA.y += tblA[ch][1] + yOff[ch];
         vA.z += tblA[ch][2];
@@ -877,37 +877,33 @@ void fn_1_35DC(s16 arg0)
         vB.z += tblB[ch][5];
         scale = 50.0f;
     }
-    sp8.x = vB.x;
-    sp8.y = vB.y;
-    sp8.z = vB.z;
-    sp14.x = vA.x;
-    sp14.y = vA.y;
-    sp14.z = vA.z;
-    fn_1_39E8(&sp14, &sp8, scale);
+    sp8 = vB;
+    sp14 = vA;
+    pB = &sp8;
+    pA = &sp14;
+    fn_1_39E8(pA, pB, scale);
 }
 
 void fn_1_39E8(HuVecF *arg0, HuVecF *arg1, f32 scale)
 {
     HU3DPARTICLEDATA *data;
+    HU3DMODEL *model;
+    HU3DPARTICLE *particle;
 
-    data = ((HU3DPARTICLE *)Hu3DData[lbl_1_bss_824].hookData)->data;
+    model = &Hu3DData[lbl_1_bss_824];
+    particle = (HU3DPARTICLE *)model->hookData;
+    data = particle->data;
     data->time = 0;
     data->parManId = 0;
-    data->pos.x = arg0->x;
-    data->pos.y = arg0->y;
-    data->pos.z = arg0->z;
-    data->vel.x = arg0->x;
-    data->vel.y = arg0->y;
-    data->vel.z = arg0->z;
-    data->accel.x = arg1->x;
-    data->accel.y = arg1->y;
-    data->accel.z = arg1->z;
+    data->pos = *arg0;
+    data->vel = *arg0;
+    data->accel = *arg1;
     data->color.r = 0xFF;
     data->color.g = 0xFF;
     data->color.b = 0xFF;
     data->color.a = 0xFF;
     data->scale = scale;
-    if (data->scale != 0.0f) {
+    if (0.0f != data->scale) {
         lbl_1_bss_D0.flag2C = 1;
     }
 }
@@ -915,16 +911,12 @@ void fn_1_39E8(HuVecF *arg0, HuVecF *arg1, f32 scale)
 void fn_1_3AD4(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 {
     HU3DPARTICLEDATA *data;
-    s16 r1;
-    s16 r2;
-    u8 a;
 
     data = particleP->data;
     if (data->scale > 0.0f) {
         switch (data->time) {
         case 0:
-            r1 = fn_1_18E8(&data->pos.y, 10.0f, data->vel.y, data->accel.y);
-            if (r1 == 0) {
+            if (fn_1_18E8(&data->pos.y, 10.0f, data->vel.y, data->accel.y) == 0) {
                 data->vel.x = data->pos.x;
                 data->vel.y = data->pos.y;
                 data->vel.z = data->pos.z;
@@ -937,8 +929,7 @@ void fn_1_3AD4(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
             }
             break;
         case 1:
-            r2 = fn_1_18E8(&data->pos.y, 3.0f, data->vel.y, data->accel.y);
-            if (r2 == 0) {
+            if (fn_1_18E8(&data->pos.y, 3.0f, data->vel.y, data->accel.y) == 0) {
                 data->time += 1;
             }
             break;
@@ -948,9 +939,7 @@ void fn_1_3AD4(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
             }
             break;
         case 3:
-            a = data->color.a - 0x32;
-            data->color.a = a;
-            if (a < 0x32) {
+            if ((data->color.a -= 0x32) < 0x32) {
                 data->color.a = 0;
                 data->scale = 0.0f;
             }
