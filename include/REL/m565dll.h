@@ -294,6 +294,11 @@ void fn_1_8B44(M565Puku *puku);
 void fn_1_8BA8(M565Puku *puku);
 M565PukuItem *fn_1_8C70(M565Puku *puku, HuVecF *from, HuVecF *to, s32 big, f32 peak);
 
+/* com.c */
+void fn_1_9EAC(M565Com *com, M565Player *player);
+void fn_1_9FF4(M565Com *com);
+void fn_1_A050(M565Com *com);
+
 /* opening.c / ending.c */
 s32 fn_1_E740(M565Game *game);
 s32 fn_1_EE4C(M565Game *game);
