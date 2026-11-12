@@ -654,8 +654,14 @@ static void *HuDataDecodeIt(void *bufP, s32 bufOfs, s32 num, HEAPID heap)
 		dataStart = data;
 	} else {
 		s32 *data = buf;
+#ifdef TARGET_PC
+		// the archive header is big-endian on the disc
+		rawLen = PORT_BE32(*data); data++;
+		decodeType = PORT_BE32(*data); data++;
+#else
 		rawLen = *data++;
 		decodeType = *data++;
+#endif
 		dataStart = data;
 	}
 	switch(heap) {
@@ -710,7 +716,11 @@ void *HuDataReadNumHeapShortForce(int dataNum, s32 num, HEAPID heap)
 		DVDClose(&fileInfo);
 		return NULL;
 	}
+#ifdef TARGET_PC
+	fileNumMax = PORT_BE32(*fileData);
+#else
 	fileNumMax = *fileData;
+#endif
 	if(fileNumMax <= fileNum) {
 		HuMemDirectFree(fileData);
 		OSReport("data.c%d: Data Number Error(0x%08x)\n", 1068, dataNum);
@@ -719,14 +729,22 @@ void *HuDataReadNumHeapShortForce(int dataNum, s32 num, HEAPID heap)
 	}
 	dataHdr = fileData;
 	dataHdr += fileNum+1;
+#ifdef TARGET_PC
+	fileOfs = PORT_BE32(*dataHdr);
+#else
 	fileOfs = *dataHdr;
+#endif
 	readOfs = OSRoundDown32B(fileOfs);
 	if(fileNumMax <= fileNum+1) {
 		readLen = fileInfo.length;
 		dataOfs = readLen-readOfs;
 	} else {
 		dataHdr++;
+#ifdef TARGET_PC
+		dataOfs = PORT_BE32(*dataHdr)-readOfs;
+#else
 		dataOfs = (*dataHdr)-readOfs;
+#endif
 		readLen = fileInfo.length;
 	}
 	readLen = OSRoundUp32B(dataOfs);
