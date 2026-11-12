@@ -111,10 +111,14 @@ typedef struct M513Thread_s {
     u32 *stack;
 } M513Thread;
 
+#ifdef TARGET_PC
+typedef OSSemaphore M513Sem; /* Aurora's semaphore is larger than the GC one */
+#else
 typedef struct M513Sem_s {
     s32 count;
     OSThreadQueue queue;
 } M513Sem;
+#endif
 
 typedef struct M513SubThread_s {
     M513ThreadVtbl *vtbl;

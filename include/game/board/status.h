@@ -1,5 +1,8 @@
 #ifndef _BOARD_STATUS_H
 #define _BOARD_STATUS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 #include "game/sprite.h"
@@ -55,4 +58,7 @@ int MBStatusColorGet(int playerNo);
 void MBStatusColorAllSet(int color);
 void MBStatusDispFocusSet(int playerNo, BOOL dispF);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

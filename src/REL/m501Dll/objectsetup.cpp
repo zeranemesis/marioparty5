@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 class CTime {
 public:
     CTime(int v) : m_time(v) {}
@@ -9,7 +10,7 @@ static CTime lbl_1_bss_C4(210);
 static CTime lbl_1_bss_C8(210);
 class CMinigameCore {
 public:
-    void *operator new(unsigned long size);
+    void *operator new(size_t size);
     void setup(int a, int b);
 };
 

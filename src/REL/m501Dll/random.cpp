@@ -6,7 +6,11 @@ public:
     void setSeed(int seed);
     u32 irandom();
     double frandom();
+#ifdef TARGET_PC
+    f32 randomMantissa(); /* m501.cpp defines it returning f32 (same f1 register on GC) */
+#else
     double randomMantissa();
+#endif
 
 private:
     u32 m_state[624];

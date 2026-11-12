@@ -1,5 +1,8 @@
 #ifndef _GAME_PAD_H
 #define _GAME_PAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -33,4 +36,7 @@ void HuPadRumbleAllStop(void);
 s16 HuPadStatGet(s16 pad);
 u32 HuPadRumbleGet(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

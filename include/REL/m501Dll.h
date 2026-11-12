@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 #ifndef _M501DLL_H
 #define _M501DLL_H
 
@@ -7,10 +8,14 @@
 #include "humath.h"
 #include <dolphin/os/OSThread.h>
 
+#ifdef TARGET_PC
+#include <dolphin/os/OSSemaphore.h> /* Aurora's semaphore is larger than the GC one */
+#else
 struct OSSemaphore {
     OSThreadQueue queue;
     s32 count;
 };
+#endif
 
 /* Local copies of the small support classes m501.cpp defines: CGameObject's
  * constructor has to be visible here so a derived constructor can inline it,
@@ -135,7 +140,7 @@ public:
     static void Close();
     static s32 GetUpdateMode();
 
-#ifdef M501_GAMEOBJECT_DTOR_OUT_OF_LINE /* m501.cpp owns the out-of-line copy; the other units inline it */
+#if defined(M501_GAMEOBJECT_DTOR_OUT_OF_LINE) && !defined(TARGET_PC) /* m501.cpp owns the out-of-line copy; the other units inline it */
     virtual ~CGameObject();
 #else
     virtual ~CGameObject() {}
@@ -154,8 +159,8 @@ class CMinigameCore {
 public:
     static CMinigameCore *instance;
 
-    void *operator new(unsigned long size);
-    void *operator new[](unsigned long size);
+    void *operator new(size_t size);
+    void *operator new[](size_t size);
     void operator delete(void *ptr);
     void operator delete[](void *ptr);
 

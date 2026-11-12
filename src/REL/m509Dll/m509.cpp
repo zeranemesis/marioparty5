@@ -54,9 +54,11 @@ void OSPanic(const char *file, int line, const char *msg, ...);
 int sprintf(char *buf, const char *fmt, ...);
 int printf(const char *fmt, ...);
 int vprintf(const char *fmt, va_list args);
+#ifndef TARGET_PC
 void OSInitSemaphore(M509Sema *sem, s32 count);
 s32 OSWaitSemaphore(M509Sema *sem);
 s32 OSSignalSemaphore(M509Sema *sem);
+#endif
 void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
 OMOBJMAN *MgActorObjectSetup(void);
 }
@@ -350,7 +352,7 @@ M509Thread *fn_1_510(M509Thread *self, s16 flag)
 
 u32 fn_1_644(M509Thread *self)
 {
-    u32 *base = self->th.stackEnd;
+    u32 *base = (u32 *)self->th.stackEnd;
     if (fn_1_6E4(base, 1) != 0) {
         OSPanic(lbl_1_data_3D, 0x7F, lbl_1_data_D9);
     }

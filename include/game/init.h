@@ -1,5 +1,8 @@
 #ifndef _GAME_INIT_H
 #define _GAME_INIT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -18,4 +21,7 @@ void HuSysInit(GXRenderModeObj *mode);
 void HuSysBeforeRender();
 void HuSysDoneRender(s32 retraceCount);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

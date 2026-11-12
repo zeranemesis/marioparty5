@@ -1,5 +1,8 @@
 #ifndef _GAME_THPSIMPLE_H
 #define _GAME_THPSIMPLE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -85,4 +88,7 @@ s32 THPSimpleSetVolume(s32 left, s32 right);
 SHARED_SYM extern UnkThpStruct10 SimpleControl;
 SHARED_SYM extern s32 bufIdx;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

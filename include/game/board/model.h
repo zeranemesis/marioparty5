@@ -1,5 +1,8 @@
 #ifndef _BOARD_MODEL_H
 #define _BOARD_MODEL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/charman.h"
 #include "game/hu3d.h"
@@ -141,4 +144,7 @@ MBMODEL *MBModelGet(MBMODELID modelId);
 void MBModelStub(void);
 int MBModelSePlay(MBMODELID modelId, s16 seId);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

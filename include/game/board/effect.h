@@ -1,5 +1,8 @@
 #ifndef _BOARD_EFFECT_H
 #define _BOARD_EFFECT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/hu3d.h"
 #include "game/sprite.h"
@@ -79,4 +82,7 @@ void MBEffAttrReset(HU3DMODELID modelId, u8 attr);
 MBEFFECTDATA *MBEffDataCreate(MBEFFECT *effP);
 int MBEffUnkTotalGet(void *ptr, int no);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

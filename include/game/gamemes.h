@@ -1,5 +1,8 @@
 #ifndef _GAME_GAMEMES_H
 #define _GAME_GAMEMES_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "humath.h"
@@ -173,4 +176,7 @@ SHARED_SYM extern unsigned int GameMesVWait;
 SHARED_SYM extern int GameMesLanguageNo;
 SHARED_SYM extern OMOVL GameMesOvlPrev;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _GAME_THPMAIN_H
 #define _GAME_THPMAIN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin/types.h"
@@ -26,4 +29,7 @@ void HuTHPMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
 SHARED_SYM extern HUPROCESS *THPProc;
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _GAME_AUDIO_H
 #define _GAME_AUDIO_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "msm.h"
@@ -90,4 +93,7 @@ SHARED_SYM extern float Snd3DDistOffset;
 SHARED_SYM extern BOOL musicOffF;
 SHARED_SYM extern u8 fadeStat;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

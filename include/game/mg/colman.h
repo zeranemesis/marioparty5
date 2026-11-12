@@ -1,5 +1,8 @@
 #ifndef _MG_COLMAN_H
 #define _MG_COLMAN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <dolphin.h>
 #include "game/hu3d.h"
@@ -92,4 +95,7 @@ COLBODY *ColBodyGet(int no);
 BOOL ColPolyGet(HuVecF *pos1, HuVecF *pos2, u32 mask, HuVecF *outPos, u32 *outCode, int *outMdlNo, HSFOBJECT **outObj, int *outTriNo);
 void ColBodyExec(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

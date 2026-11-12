@@ -1,5 +1,8 @@
 #ifndef _BOARD_COIN_H
 #define _BOARD_COIN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 #include "game/board/model.h"
@@ -72,4 +75,7 @@ void MBCoinAddAllProcExec(int coinNumP1, int coinNumP2, int coinNumP3, int coinN
 void MBCoinAddAllDispExec(int coinNumP1, int coinNumP2, int coinNumP3, int coinNumP4, BOOL dispF);
 void MBCoinAddAllExec(int coinNumP1, int coinNumP2, int coinNumP3, int coinNumP4);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

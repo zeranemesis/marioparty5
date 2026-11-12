@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 // m531Dll "m531": the module's runtime layer -- camera pose maths, the
 // minigame core singleton, thin MgTimer wrappers and the module entry points.
 #define _MATH_H
@@ -68,7 +69,7 @@ class CMinigameCore {
 public:
     u32 m_unk0;
 
-    void *operator new(unsigned long size);
+    void *operator new(size_t size);
     void operator delete(void *ptr);
 
     CMinigameCore();
@@ -792,7 +793,7 @@ void fn_1_1F68(void)
     omSysExitReq = 1;
 }
 
-void *CMinigameCore::operator new(unsigned long size)
+void *CMinigameCore::operator new(size_t size)
 {
     void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
 

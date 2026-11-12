@@ -151,12 +151,6 @@ void OSDumpContext(OSContext *context)
     puts("OSDumpContext is a stub");
 }
 
-OSThread *OSGetCurrentThread()
-{
-    puts("OSGetCurrentThread is a stub");
-    return 0;
-}
-
 u16 OSGetFontEncode()
 {
     puts("OSGetFontEncode is a stub");
@@ -215,12 +209,6 @@ BOOL OSRestoreInterrupts(BOOL level)
     return FALSE;
 }
 
-s32 OSResumeThread(OSThread *thread)
-{
-    puts("OSResumeThread is a stub");
-    return 0;
-}
-
 void OSSetCurrentContext(OSContext *context)
 {
     puts("OSSetCurrentContext is a stub");
@@ -231,21 +219,10 @@ void OSSetStringTable(void *stringTable)
     puts("OSSetStringTable is a stub");
 }
 
-s32 OSSuspendThread(OSThread *thread)
-{
-    puts("OSSuspendThread is a stub");
-    return 0;
-}
-
 BOOL OSUnlink(OSModuleInfo *oldModule)
 {
     puts("OSUnlink is a stub");
     return FALSE;
-}
-
-void OSWakeupThread(OSThreadQueue *queue)
-{
-    puts("OSWakeupThread is a stub");
 }
 
 void PPCHalt()
@@ -295,12 +272,16 @@ void VISetNextFrameBuffer(void *fb)
     // puts("VISetNextFrameBuffer is a stub");
 }
 
+void PortThreadRetrace(void); /* osthread_pc.c */
+
 void VIWaitForRetrace()
 {
 if (sVIRetraceCallback)
 {
     sVIRetraceCallback(0);
 }
+    /* the main thread sleeps until the next frame: lower-priority threads run now */
+    PortThreadRetrace();
 }
 
 void __GXSetSUTexSize()

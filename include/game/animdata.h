@@ -1,5 +1,8 @@
 #ifndef _GAME_ANIMDATA_H
 #define _GAME_ANIMDATA_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 
@@ -80,4 +83,7 @@ typedef struct AnimData_s {
     ANIMBMP *bmp;
 } ANIMDATA;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

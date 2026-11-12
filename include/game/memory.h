@@ -1,5 +1,8 @@
 #ifndef _GAME_MEMORY_H
 #define _GAME_MEMORY_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 
@@ -47,4 +50,7 @@ u32 HuMemNumGet(void *ptr);
 #endif
 void HuMemHeapDump(void *heap, s16 status);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

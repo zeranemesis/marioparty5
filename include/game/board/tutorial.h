@@ -1,5 +1,8 @@
 #ifndef _BOARD_TUTORIAL_H
 #define _BOARD_TUTORIAL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 #include "datanum/w10.h"
@@ -25,4 +28,7 @@ BOOL MBTutorialExitFlagGet(void);
 s16 MBTutorialSprDispOn(unsigned int dataNum);
 void MBTutorialSprDispOff(s16 sprId);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

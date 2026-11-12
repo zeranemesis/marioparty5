@@ -1,5 +1,8 @@
 #ifndef _GAME_DISP_H
 #define _GAME_DISP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define HU_DISP_WIDTH 576.0f
 #define HU_DISP_WIDTHI ((int)HU_DISP_WIDTH)
@@ -15,4 +18,7 @@
 #define HU_FB_WIDTH 640
 #define HU_FB_HEIGHT 480
 
+#ifdef __cplusplus
+}
+#endif
 #endif

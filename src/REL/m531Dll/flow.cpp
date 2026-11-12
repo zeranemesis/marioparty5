@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 // m531Dll "flow": the cleaning contest's game flow -- the camera object, the
 // CFlow mode functions (setup, intro, play, result, exit), the result check and
 // the std::sort-style helpers that order the players by team.
@@ -5,7 +6,7 @@
 #include "game/flag.h"
 #include "game/gamework.h"
 
-inline void *operator new(unsigned long, void *p)
+inline void *operator new(size_t, void *p)
 {
     return p;
 }

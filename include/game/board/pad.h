@@ -1,5 +1,8 @@
 #ifndef _BOARD_PAD_H
 #define _BOARD_PAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/pad.h"
 
@@ -14,4 +17,7 @@ s8 MBPadStkYGet(int padNo);
 #define MBPadTrigL(padNo) (HuPadTrigL[padNo])
 #define MBPadTrigR(padNo) (HuPadTrigR[padNo])
 
+#ifdef __cplusplus
+}
+#endif
 #endif

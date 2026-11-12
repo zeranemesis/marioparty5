@@ -1,5 +1,8 @@
 #ifndef _BOARD_TELOP_H
 #define _BOARD_TELOP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/charman.h"
 #include "game/board/main.h"
@@ -20,4 +23,7 @@ void MBTelopComNumCreate(void);
 void MBTauntInit(void);
 void MBTauntKill(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

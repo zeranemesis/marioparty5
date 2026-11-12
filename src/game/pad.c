@@ -18,6 +18,9 @@ typedef struct PadRumble_s {
     s16 numRumble;
 } RUMBLEDATA;
 
+#ifdef TARGET_PC
+void Mp5Test_PadHook(PADStatus *status);
+#endif
 static void PadReadVSync(u32 retraceCount);
 static void PadADConv(s16 pad, PADStatus *status);
 
@@ -112,6 +115,9 @@ static void PadReadVSync(u32 retraceCount)
     if(!HuDvdErrWait) {
         RumbleBit = PADRead(status);
         PADClampCircle(status);
+#ifdef TARGET_PC
+        Mp5Test_PadHook(status); /* MP5_TEST_MG: scripted pads, see portmain.cpp */
+#endif
         chan = 0;
         if(GlobalCounterOld == GlobalCounter) {
              RumbleCounter++;

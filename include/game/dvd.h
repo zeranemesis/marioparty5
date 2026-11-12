@@ -1,5 +1,8 @@
 #ifndef _GAME_DVD_H
 #define _GAME_DVD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 #include "game/memory.h"
@@ -17,4 +20,7 @@ void HuDvdDataClose(void *ptr);
 void HuDvdErrorWatch();
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

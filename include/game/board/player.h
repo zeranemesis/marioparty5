@@ -1,5 +1,8 @@
 #ifndef _BOARD_PLAYER_H
 #define _BOARD_PLAYER_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/model.h"
 #include "game/board/audio.h"
@@ -219,4 +222,7 @@ BOOL MBPlayerBlackoutGet(void);
 void MBPlayerMasuCornerSet(int playerNo, s8 cornerNo);
 s8 MBPlayerMasuCornerGet(int playerNo);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

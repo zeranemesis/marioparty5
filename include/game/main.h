@@ -1,5 +1,8 @@
 #ifndef _GAME_MAIN_H
 #define _GAME_MAIN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -12,4 +15,7 @@ SHARED_SYM extern u32 GlobalCounter;
 void HuSysVWaitSet(s16 vWait);
 s16 HuSysVWaitGet(s16 prev);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

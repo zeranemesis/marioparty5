@@ -114,27 +114,7 @@ void OSInitMessageQueue(OSMessageQueue *mq, OSMessage *msgArray, s32 msgCount)
     (void)msgCount;
 }
 
-BOOL OSCreateThread(OSThread *thread, void *(*func)(void *), void *param, void *stack, u32 stackSize,
-    OSPriority priority, u16 attr)
-{
-    (void)thread;
-    (void)func;
-    (void)param;
-    (void)stack;
-    (void)stackSize;
-    (void)priority;
-    (void)attr;
-    return FALSE;
-}
-
-void OSSleepThread(OSThreadQueue *queue)
-{
-    (void)queue;
-}
-
-void OSYieldThread(void)
-{
-}
+/* OS threads and semaphores: src/port/osthread_pc.c */
 
 void AISetStreamPlayState(u32 state)
 {

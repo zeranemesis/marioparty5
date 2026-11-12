@@ -1,5 +1,8 @@
 #ifndef _BOARD_AUDIO_H
 #define _BOARD_AUDIO_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/audio.h"
 
@@ -42,4 +45,7 @@ void MBAudFXStop(int seNo);
 int MBAudFXPosPlay(s16 seNo, Vec *pos);
 u8 MBAudFXPosPanGet(Vec *pos);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

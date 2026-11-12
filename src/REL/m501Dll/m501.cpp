@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 #define M501_GAMEOBJECT_DTOR_OUT_OF_LINE
 #include "REL/m501Dll.h"
 #include "datanum/m501.h"
@@ -45,7 +46,7 @@ extern void (*_dtors[])(void);
         __assert_fail(t_, f_, l_); \
     }
 
-void *operator new(unsigned long size)
+void *operator new(size_t size)
 {
     void *ptr = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
     if (ptr != 0) {
@@ -55,7 +56,7 @@ void *operator new(unsigned long size)
     return ptr;
 }
 
-void *operator new[](unsigned long size)
+void *operator new[](size_t size)
 {
     void *ptr = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
     if (ptr != 0) {
@@ -735,9 +736,22 @@ void CGameObject::Close()
     }
 }
 
+#ifndef TARGET_PC /* inline in m501Dll.h on PC: MSVC has no per-unit inline/out-of-line split */
 CGameObject::~CGameObject()
 {
 }
+#endif
+
+#ifdef TARGET_PC
+/* aisu.cpp calls the destructor by its MWCC name (this, delete flag) */
+extern "C" void __dt__9CLinkNodeFv(void *self, s32 flag)
+{
+    ((CLinkNode *)self)->~CLinkNode();
+    if (flag > 0) {
+        operator delete(self);
+    }
+}
+#endif
 
 s32 CGameObject::GetUpdateMode()
 {
@@ -1241,14 +1255,14 @@ f32 CMT19937::randomMantissa()
     return 1.1920929e-7f * (f32)(gen() >> 9);
 }
 
-void *CMinigameCore::operator new(unsigned long size)
+void *CMinigameCore::operator new(size_t size)
 {
     void *ptr = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
     M501_ASSERT(ptr != 0, "ptr != NULL", "om.cpp", 0x18);
     return ptr;
 }
 
-void *CMinigameCore::operator new[](unsigned long size)
+void *CMinigameCore::operator new[](size_t size)
 {
     void *ptr = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
     M501_ASSERT(ptr != 0, "ptr != NULL", "om.cpp", 0x1F);
@@ -1413,7 +1427,7 @@ void *CSubThread::ThreadMain(void *self)
 CThread::CThread(void *(*func)(void *), void *arg, u32 stackSize, s32 priority, u16 attr)
 {
     u32 words = stackSize >> 2;
-    u32 *stack = (u32 *)operator new(words * 4);
+    u32 *stack = (u32 *)operator new((size_t)(words * 4));
     m_stack = stack;
     createThread(func, arg, stack, words, priority, attr);
 }
@@ -1456,7 +1470,7 @@ CThread::~CThread()
 
 u32 CThread::getStackRemain()
 {
-    u32 *base = m_thread.stackEnd;
+    u32 *base = (u32 *)m_thread.stackEnd;
     if (checkStackOverflow(base, 1) != 0) {
         OSPanic("thread.cpp", 0x7F, "stack overflow\n");
     }

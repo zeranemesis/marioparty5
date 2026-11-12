@@ -1,5 +1,8 @@
 #ifndef _MG_ACTMAN_H
 #define _MG_ACTMAN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/object.h"
 #include "game/hu3d.h"
@@ -210,4 +213,7 @@ void MgPlayerModeAttrSet(MGPLAYER *playerP, u16 attr);
 
 BOOL MgPlayerStunSet(MGPLAYER *playerP, int stunType, float angle, int maxTime);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

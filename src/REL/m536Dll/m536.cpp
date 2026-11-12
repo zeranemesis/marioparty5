@@ -1706,14 +1706,20 @@ s32 fn_1_50C4(M536Sphere *a, M536Sphere *b, f32 ka, f32 kb)
 
 // ---- threads
 
+#ifdef TARGET_PC
+typedef OSSemaphore M536Semaphore; /* Aurora's semaphore is larger than the GC one */
+#else
 struct M536Semaphore {
     s32 m_count;
     OSThreadQueue m_queue;
 };
+#endif
 
+#ifndef TARGET_PC
 void OSInitSemaphore(M536Semaphore *sem, s32 count);
 s32 OSWaitSemaphore(M536Semaphore *sem);
 s32 OSSignalSemaphore(M536Semaphore *sem);
+#endif
 
 // OS thread plus the heap block holding its stack.
 struct M536Thread {
@@ -1898,7 +1904,7 @@ u32 fn_1_5940(M536Thread *th)
     u32 *end;
     u32 *p;
 
-    end = th->m_os.stackEnd;
+    end = (u32 *)th->m_os.stackEnd;
     if (fn_1_59E0(end, 1) != 0) {
         OSPanic("thread.cpp", 0x7F, "stack overflow\n");
     }

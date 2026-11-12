@@ -1,5 +1,8 @@
 #ifndef _GAME_OBJECT_H
 #define _GAME_OBJECT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -176,4 +179,7 @@ SHARED_SYM extern HuVecF Center;
 SHARED_SYM extern HuVecF CRot;
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

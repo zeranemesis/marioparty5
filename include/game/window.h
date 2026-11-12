@@ -1,5 +1,8 @@
 #ifndef _GAME_WINDOW_H
 #define _GAME_WINDOW_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "game/animdata.h"
@@ -244,4 +247,7 @@ void HuWinExKill(HUWINID winId);
 void HuWinExSpeakerSet(HUWINID winId, s16 speakerNo);
 void *MessData_MesPtrGet(void *data, u32 messNum);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _GAME_SAVELOAD_H
 #define _GAME_SAVELOAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -95,4 +98,7 @@ void SLSaveStaffExec(void);
 void SLSaveModeExec(s16 sdModeF);
 s32 SLSaveSdBExec(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

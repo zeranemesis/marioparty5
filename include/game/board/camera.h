@@ -1,5 +1,8 @@
 #ifndef _BOARD_CAMERA_H
 #define _BOARD_CAMERA_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/hu3d.h"
 #include "game/board/model.h"
@@ -141,4 +144,7 @@ void MBCameraLookAtGetInv(Mtx lookAtInv);
 void MBCameraFocusPlayerAddAll(void);
 void MBCameraPointFocusSet(HuVecF *rot, HuVecF *offset, float fov, s16 maxTime);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

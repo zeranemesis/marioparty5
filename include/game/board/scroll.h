@@ -1,5 +1,8 @@
 #ifndef _BOARD_SCROLL_H
 #define _BOARD_SCROLL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 
@@ -19,4 +22,7 @@ void MBStarScrollKill(void);
 void MBMapViewCameraSet(const HuVecF *rot, const HuVecF *pos, float zoom);
 void MBMapViewHookSet(MAPVIEWHOOK hook);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

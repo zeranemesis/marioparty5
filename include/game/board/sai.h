@@ -1,5 +1,8 @@
 #ifndef _BOARD_SAI_H
 #define _BOARD_SAI_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 
@@ -60,4 +63,7 @@ void MBSaiNumKill(int playerNo);
 void MBSaiNumShrinkSet(int playerNo);
 BOOL MBSaiNumStopCheck(int playerNo);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

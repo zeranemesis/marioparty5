@@ -1,5 +1,8 @@
 #ifndef _BOARD_PAUSE_H
 #define _BOARD_PAUSE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/object.h"
 #include "datanum/bpause.h"
@@ -23,4 +26,7 @@ BOOL MBPauseOptionExec(int playerNo);
 void MBPauseDispCopyCreate(void);
 void MBPauseDispCopyKill(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

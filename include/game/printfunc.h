@@ -1,5 +1,8 @@
 #ifndef _GAME_PRINTFUNC_H
 #define _GAME_PRINTFUNC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -33,4 +36,7 @@ SHARED_SYM extern u16 empstrline;
 SHARED_SYM extern int fontcolor;
 SHARED_SYM extern u32 procfunc;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _GAME_CLUSTER_EXEC_H
 #define _GAME_CLUSTER_EXEC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/hu3d.h"
 
@@ -9,4 +12,7 @@ void SetClusterMain(HSFCLUSTER *arg0);
 void ClusterProc(HU3DMODEL *arg0);
 void ClusterMotionExec(HU3DMODEL *arg0);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

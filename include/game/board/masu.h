@@ -1,5 +1,8 @@
 #ifndef _BOARD_MASU_H
 #define _BOARD_MASU_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/hu3d.h"
 #include "game/board/capsule.h"
@@ -136,4 +139,7 @@ s16 MBMasuDonkeySet(s16 no);
 s16 MBMasuDonkeyGet(s16 no);
 s16 MBMasuDonkeyNumGet(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

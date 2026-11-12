@@ -1,5 +1,8 @@
 #ifndef _GAME_ARMEM_H
 #define _GAME_ARMEM_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 #include "game/memory.h"
@@ -24,4 +27,7 @@ void HuARDirFree(unsigned int dir);
 void *HuAR_ARAMtoMRAMFileRead(unsigned int dataNum, u32 num, HEAPID heap);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

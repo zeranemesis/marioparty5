@@ -1,5 +1,8 @@
 #ifndef _GAME_FRAND_H
 #define _GAME_FRAND_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 
@@ -14,4 +17,7 @@ u32 frandmod(u32 arg0);
 #define FRAND16() frand()
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 #endif

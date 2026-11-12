@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 #include "dolphin/types.h"
 
 typedef struct Process_s OMOBJMAN;
@@ -23,7 +24,7 @@ protected:
     u32 m_unk0;
 
 public:
-    void *operator new(unsigned long size);
+    void *operator new(size_t size);
     void operator delete(void *ptr);
 
     CMinigameCore();

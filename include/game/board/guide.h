@@ -1,5 +1,8 @@
 #ifndef _BOARD_GUIDE_H
 #define _BOARD_GUIDE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/model.h"
 #include "game/board/main.h"
@@ -33,4 +36,7 @@ void MBGuideScreenPosGet(HuVecF *pos);
 int MBGuideNoGet(void);
 int MBGuideSpeakerNoGet(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

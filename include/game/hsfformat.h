@@ -1,5 +1,8 @@
 #ifndef _GAME_HSFFORMAT_H
 #define _GAME_HSFFORMAT_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 #include "humath.h"
@@ -519,4 +522,7 @@ typedef struct HsfData_s {
     s16 matrixNum;
 } HSFDATA;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

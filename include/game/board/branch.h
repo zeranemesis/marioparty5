@@ -1,5 +1,8 @@
 #ifndef _BOARD_BRANCH_H
 #define _BOARD_BRANCH_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 #include "game/board/masu.h"
@@ -12,4 +15,7 @@ void MBBranchFlagReset(u32 flag);
 void MBBranchFlagInit(void);
 u32 MBBranchFlagGet(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

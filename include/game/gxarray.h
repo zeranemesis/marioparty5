@@ -1,5 +1,8 @@
 #ifndef _GAME_GXARRAY_H
 #define _GAME_GXARRAY_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 
@@ -18,4 +21,7 @@
 #define GXSETARRAY(attr, data, size, stride, le) GXSetArray((attr), (data), (stride))
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 #endif

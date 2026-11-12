@@ -1,5 +1,8 @@
 #ifndef _GAME_HSFEX_H
 #define _GAME_HSFEX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 #include "humath.h"
@@ -25,4 +28,7 @@ void Hu3DMtxTransGet(Mtx src, HuVecF *dst);
 void Hu3DMtxRotGet(Mtx src, HuVecF *dst);
 void Hu3DMtxScaleGet(Mtx src, HuVecF *dst);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

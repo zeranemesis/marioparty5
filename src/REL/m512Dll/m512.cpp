@@ -33,9 +33,11 @@ extern "C" {
 extern "C" {
 
 double tan(double);
+#ifndef TARGET_PC
 void OSInitSemaphore(void *sem, s32 count);
 s32 OSWaitSemaphore(void *sem);
 s32 OSSignalSemaphore(void *sem);
+#endif
 double fabs(double);
 void __register_global_object(void *obj, void *dtor, void *reg);
 void ObjectSetup(void);
@@ -119,10 +121,14 @@ typedef struct M512Thread_s {
     u32 *stack;
 } M512Thread;
 
+#ifdef TARGET_PC
+typedef OSSemaphore M512Sem; /* Aurora's semaphore is larger than the GC one */
+#else
 typedef struct M512Sem_s {
     s32 count;
     OSThreadQueue queue;
 } M512Sem;
+#endif
 
 typedef struct M512SubThread_s {
     M512ThreadVtbl *vtbl;
@@ -1816,7 +1822,7 @@ u32 fn_1_5940(M512Thread *th)
     u32 *base;
     u32 *p;
 
-    base = th->thread.stackEnd;
+    base = (u32 *)th->thread.stackEnd;
     if (fn_1_59E0(base, 1) != 0) {
         OSPanic(lbl_1_data_108, 0x7F, lbl_1_data_1A4);
     }

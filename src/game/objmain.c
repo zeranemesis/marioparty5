@@ -121,8 +121,15 @@ static void omWatchOverlayProc(void)
     }
 }
 
+#ifdef TARGET_PC
+OMOVL Mp5Test_OvlCallHook(OMOVL ovl); /* MP5_TEST_MG, see portmain.cpp */
+#endif
+
 void omOvlCallEx(OMOVL ovl, s16 unlinkF, s32 evtno, s32 stat)
 {
+#ifdef TARGET_PC
+    ovl = Mp5Test_OvlCallHook(ovl);
+#endif
     OSReport("objman>Call New Ovl %d(%d)\n", ovl, unlinkF);
     if(omovlhisidx >= OMOVLHIS_MAX) {
         OSReport("objman>OVL Call over error\n");

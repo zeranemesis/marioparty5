@@ -70,6 +70,10 @@ def parse_configure():
         if not m:
             continue
         status, path = m.group(1), m.group(2)
+        src = re.search(r'source\s*=\s*"([^"]+)"', line)
+        if src:
+            # the unit is compiled from another file (e.g. camera.cpp built from camera.c)
+            path = src.group(1)
         if path.startswith("REL/") and path.count("/") >= 2 and lib == "Rel":
             rels[path.split("/")[1]].append((status, path))
         elif lib in NATIVE_DOL_LIBS:

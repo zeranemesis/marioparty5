@@ -1,5 +1,8 @@
 #ifndef _BOARD_STAR_H
 #define _BOARD_STAR_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 
@@ -31,4 +34,7 @@ void MBStarMasuDispSet(int masuId, BOOL dispF);
 void MBStarDispSetAll(BOOL dispF);
 void MBStarTutorialExec(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -218,10 +218,14 @@ typedef struct M539Thread_s {
     u32 *stack;
 } M539Thread;
 
+#ifdef TARGET_PC
+typedef OSSemaphore M539Sem; /* Aurora's semaphore is larger than the GC one */
+#else
 typedef struct M539Sem_s {
     s32 count;
     OSThreadQueue queue;
 } M539Sem;
+#endif
 
 typedef struct M539SubThread_s {
     M539ThreadVtbl *vtbl;

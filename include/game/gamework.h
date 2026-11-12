@@ -5,8 +5,16 @@
 #include "dolphin.h"
 #include "game/flag.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //HACK: to prevent prototype errors
+#ifdef __cplusplus
+extern "C" void HuPadRumbleAllStop(void);
+#else
 extern void HuPadRumbleAllStop(void);
+#endif
 
 #define GW_PLAYER_MAX 4
 
@@ -488,6 +496,10 @@ void GWTotalStarAdd(s16 totalStar);
 u16 GWTotalStarGet(void);
 void GWSdCommonInit(void);
 void GWSaveCompleteSet(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __cplusplus
 }

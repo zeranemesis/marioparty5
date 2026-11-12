@@ -1,5 +1,8 @@
 #ifndef _GAME_ESPRITE_H
 #define _GAME_ESPRITE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 #include "game/data.h"
@@ -23,4 +26,7 @@ void espBankSet(s16 espId, s16 bank);
 void espDrawNoSet(s16 espId, s16 drawNo);
 void espPriSet(s16 espId, s16 pri);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

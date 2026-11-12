@@ -1,5 +1,8 @@
 #ifndef _BOARD_GATE_H
 #define _BOARD_GATE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 
@@ -19,4 +22,7 @@ void MBGateDossunKill(int no);
 int MBGateDossunSearch(s16 masuId);
 int MBGateDossunExec(int playerNo, int masuId);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

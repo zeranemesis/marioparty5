@@ -1,5 +1,8 @@
 #ifndef _GAME_ENVELOPE_EXEC_H
 #define _GAME_ENVELOPE_EXEC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "game/hsfformat.h"
@@ -10,4 +13,7 @@ void InitVtxParm(HSFDATA *arg0);
 
 SHARED_SYM extern HuVecF *Vertextop;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

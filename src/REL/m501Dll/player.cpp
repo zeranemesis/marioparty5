@@ -257,6 +257,10 @@ void CPlayer::GetStartPos(Vec *out, int playerNo)
     out->z = vz;
 }
 
+#ifdef TARGET_PC
+/* camera.cpp calls it by its MWCC name */
+extern "C" void PlayerShow__Q24m5017CPlayerFv(void);
+#endif
 void CPlayer::PlayerShow()
 {
     CPlayer *it;
@@ -1064,7 +1068,12 @@ void CPlayer::GetPlayerDist(std::vector<HuVec2f_s> *out)
     it = copy;
     end = (CPlayer *)&playerList;
     while (it != end) {
+#ifdef TARGET_PC
+        v.x = 0.0f;
+        v.y = 0.0f;
+#else
         v = (HuVec2f_s){ 0.0f, 0.0f };
+#endif
         v.x = it->m_circle.m_pos.x;
         v.y = it->m_circle.m_pos.z;
         out->insert(out->m_data + out->m_size, 1, v);
@@ -1204,3 +1213,10 @@ extern "C" CPlayer *fn_1_10158(CPlayer *player, s16 flag)
 }
 
 } // namespace m501
+
+#ifdef TARGET_PC
+extern "C" void PlayerShow__Q24m5017CPlayerFv(void)
+{
+    m501::CPlayer::PlayerShow();
+}
+#endif

@@ -20,10 +20,14 @@ typedef struct M509Ptmf {
     void *func;
 } M509Ptmf;
 
+#ifdef TARGET_PC
+typedef OSSemaphore M509Sema; /* Aurora's semaphore is larger than the GC one */
+#else
 typedef struct M509Sema {
     OSThreadQueue queue;
     s32 count;
 } M509Sema;
+#endif
 
 typedef struct M509Thread {
     OSThread th;

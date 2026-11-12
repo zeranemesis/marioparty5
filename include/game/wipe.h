@@ -1,5 +1,8 @@
 #ifndef _GAME_WIPE_H
 #define _GAME_WIPE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -58,4 +61,7 @@ static inline void WipeWait(void)
 SHARED_SYM extern WIPEWORK wipeData;
 SHARED_SYM extern BOOL wipeFadeInF;
 
+#ifdef __cplusplus
+}
+#endif
 #endif

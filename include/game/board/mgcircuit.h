@@ -1,5 +1,8 @@
 #ifndef _BOARD_MGCALL_H
 #define _BOARD_MGCALL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 
@@ -12,4 +15,7 @@ void MBCircuitCarInit(void);
 int MBCircuitGoalDistGet(void);
 BOOL MBCircuitGoalCheck(int playerNo);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -552,3 +552,123 @@ extern "C" int port_main(int argc, char* argv[]) {
 
     return 0;
 }
+
+/*
+ * Mini-game test bench: MP5_TEST_MG=<index into mgDataTbl> (e.g. 1 = m502).
+ * Unset, none of this does anything. Set, the game boots as usual and:
+ *  - all four pads are scripted (START taps through the title, then random
+ *    stick/D-pad/A/B/X/Y/Z/L/R input, never START so the game is not paused);
+ *  - the title's jump to the file select is redirected to the instruction
+ *    overlay with 4 human players set up as Free Play would, so the mini-game
+ *    runs and returns (via instdll) to the title;
+ *  - "TESTMG:" lines are logged: start, a heartbeat every 120 frames.
+ * tools-side driver: scratchpad mgtest/run_mg.py.
+ */
+extern "C" {
+#include <game/flag.h>
+#include <game/gamework.h>
+#include <game/mgdata.h>
+#include <game/object.h>
+}
+
+static int tmMg = -2; // -2: env not read yet, -1: disabled
+static bool tmStarted = false;
+static u32 tmFrame = 0;
+static u32 tmRng = 12345;
+
+static u32 tmRand() {
+    tmRng ^= tmRng << 13;
+    tmRng ^= tmRng >> 17;
+    tmRng ^= tmRng << 5;
+    return tmRng;
+}
+
+static void tmInit() {
+    if (tmMg != -2) {
+        return;
+    }
+    const char* env = getenv("MP5_TEST_MG");
+    tmMg = env != nullptr && *env != 0 ? atoi(env) : -1;
+    tmRng = 12345 + tmMg * 7919;
+}
+
+static void tmSetupPlayers() {
+    static const s16 grpTbl[][4] = {{0, 0, 0, 0}, {0, 1, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 1, 3, 3}};
+    int type = mgDataTbl[tmMg].type;
+    for (int i = 0; i < GW_PLAYER_MAX; i++) {
+        s16 grp = type < 7 ? grpTbl[type][i] : 0;
+        GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
+        GwPlayerConf[i].padNo = GwPlayer[i].padNo = i;
+        GwPlayerConf[i].dif = GwPlayer[i].dif = 1;
+        GwPlayerConf[i].type = GwPlayer[i].comF = GW_TYPE_MAN;
+        GwPlayerConf[i].grp = GwPlayer[i].grp = grp;
+    }
+    GwSystem.mgNo = tmMg;
+    GwSystem.mgInstF = 1;
+    GwSystem.subGameNo = 0;
+    _SetFlag(FLAG_INST_MGMODE);
+    _ClearFlag(FLAG_MGINST_ON); // skip the instruction screens
+}
+
+extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
+    tmInit();
+    if (tmMg < 0) {
+        return ovl;
+    }
+    // the boot overlay blanks charNo right after its omOvlCall returns, so set the players up again for the mini-game itself
+    if (tmStarted && ovl == (OMOVL)mgDataTbl[tmMg].ovl) {
+        tmSetupPlayers();
+    }
+    if (tmStarted || ovl != DLL_fileseldll) {
+        return ovl;
+    }
+    tmStarted = true;
+    tmSetupPlayers();
+    printf("TESTMG: start mg=%d mgovl=%d bootovl=%d instovl=%d\n", tmMg, mgDataTbl[tmMg].ovl, DLL_bootdll, DLL_instdll);
+    fflush(stdout);
+    return DLL_instdll;
+}
+
+extern "C" void Mp5Test_PadHook(PADStatus* st) {
+    tmInit();
+    if (tmMg < 0) {
+        return;
+    }
+    tmFrame++;
+    if (tmFrame % 120 == 0) {
+        printf("TESTMG: frame %u started=%d\n", tmFrame, tmStarted);
+        fflush(stdout);
+    }
+    static u16 held[4];
+    static s8 stk[4][4];
+    for (int i = 0; i < 4; i++) {
+        memset(&st[i], 0, sizeof(st[i]));
+        if (!tmStarted) {
+            if (i == 0 && (tmFrame / 20) % 2) {
+                st[i].button = PAD_BUTTON_START | PAD_BUTTON_A;
+            }
+            continue;
+        }
+        if (tmFrame % 24 == (u32)i * 6) { // new stick/D-pad pose every 24 frames
+            u32 r = tmRand();
+            held[i] = (r & 1) ? (u16)(1 << ((r >> 1) & 3)) : 0;
+            stk[i][0] = (r & 0x100) ? (s8)((r >> 9) % 141) - 70 : 0;
+            stk[i][1] = (r & 0x200) ? (s8)((r >> 17) % 141) - 70 : 0;
+            stk[i][2] = (s8)((r >> 3) % 100) - 50;
+            stk[i][3] = (s8)((r >> 11) % 100) - 50;
+        }
+        u32 r = tmRand();
+        u16 b = held[i];
+        if (!(r & 0x30)) b |= PAD_BUTTON_A;
+        if (!(r & 0xC0)) b |= PAD_BUTTON_B;
+        if (!((r >> 8) & 0x7)) b |= PAD_BUTTON_X;
+        if (!((r >> 11) & 0x7)) b |= PAD_BUTTON_Y;
+        if (!((r >> 14) & 0xF)) b |= PAD_TRIGGER_Z;
+        if (!((r >> 18) & 0xF)) b |= PAD_TRIGGER_L;
+        if (!((r >> 22) & 0xF)) b |= PAD_TRIGGER_R;
+        st[i].button = b;
+        st[i].stickX = stk[i][0]; st[i].stickY = stk[i][1]; st[i].substickX = stk[i][2]; st[i].substickY = stk[i][3];
+        st[i].triggerLeft = (b & PAD_TRIGGER_L) ? 255 : 0;
+        st[i].triggerRight = (b & PAD_TRIGGER_R) ? 255 : 0;
+    }
+}

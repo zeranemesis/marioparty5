@@ -1,5 +1,8 @@
 #ifndef _BOARD_MAIN_H
 #define _BOARD_MAIN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "game/object.h"
@@ -100,4 +103,7 @@ float MBAngleLerpSin(float a, float b, float t);
 float MBAngleLerpCos(float a, float b, float t);
 void MBPointDepthScale(HuVecF *src, float scale, HuVecF *dst);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

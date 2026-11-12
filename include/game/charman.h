@@ -1,5 +1,8 @@
 #ifndef _GAME_CHARMAN_H
 #define _GAME_CHARMAN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -115,4 +118,7 @@ s16 CharMotionExtraTimeGet(s16 charNo, int motNo);
 
 SHARED_SYM extern unsigned int charDataDirTbl[CHARNO_MAX][6];
 
+#ifdef __cplusplus
+}
+#endif
 #endif

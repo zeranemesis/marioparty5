@@ -1,5 +1,8 @@
 #ifndef _GAME_CARD_H
 #define _GAME_CARD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -21,4 +24,7 @@ s32 HuCardDelete(s16 slot, const char *fileName);
 s32 HuCardSectorSizeGet(s16 slot);
 s32 HuCardFreeSpaceGet(s16 slot, u32 *byteNotUsed, u32 *filesNotUsed);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

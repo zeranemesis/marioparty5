@@ -1,5 +1,8 @@
 #ifndef _GAME_HSFLOAD_H
 #define _GAME_HSFLOAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/hsfformat.h"
 
@@ -9,4 +12,7 @@ char *SetName(u32 *strOfs);
 char *MakeObjectName(char *name);
 s32 CmpObjectName(char *name1, char *name2);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _BOARD_MGCALL_H
 #define _BOARD_MGCALL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/board/main.h"
 
@@ -15,4 +18,7 @@ void MBMgCallVsExec(void);
 void MBMgCallDataClose(void);
 void MBMgCallTutorialExec(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

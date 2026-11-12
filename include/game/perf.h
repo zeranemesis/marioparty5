@@ -1,5 +1,8 @@
 #ifndef _GAME_PERF_H
 #define _GAME_PERF_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 
@@ -15,4 +18,7 @@ void HuPerfZero(void);
 void HuPerfBegin(s32 id);
 void HuPerfEnd(s32 id);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

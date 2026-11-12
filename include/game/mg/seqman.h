@@ -1,5 +1,8 @@
 #ifndef _MG_SEQMAN_H
 #define _MG_SEQMAN_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 #include "game/mg/timer.h"
@@ -86,4 +89,7 @@ void MgSeqMaxTimeSet(s16 maxTime);
 void MgSeqStatBitSet(u16 bit);
 void MgSeqStatBitReset(u16 bit);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

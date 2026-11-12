@@ -1,5 +1,8 @@
 #ifndef _GAME_OBJDLL_H
 #define _GAME_OBJDLL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "game/object.h"
@@ -30,4 +33,7 @@ void omDLLHeaderDump(OSModuleHeader *module);
 
 SHARED_SYM extern OMDLLINFO *omDLLinfoTbl[OMDLLINFO_MAX];
 
+#ifdef __cplusplus
+}
+#endif
 #endif

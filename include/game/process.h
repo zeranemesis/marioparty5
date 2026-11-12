@@ -1,5 +1,8 @@
 #ifndef _GAME_PROCESS_H
 #define _GAME_PROCESS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 
@@ -68,4 +71,7 @@ void HuPrcResetStat(HUPROCESS *process, u16 value);
 void HuPrcAllPause(s32 flag);
 void HuPrcAllUPause(s32 flag);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _MG_SCORE_H
 #define _MG_SCORE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 #include "game/object.h"
@@ -61,4 +64,7 @@ void MgScoreDispOff(MGSCORE *score);
 void MgScorePriSet(MGSCORE *score, s16 arg1);
 void MgScoreModeDefaultSet(MGSCORE *score);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

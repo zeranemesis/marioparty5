@@ -1,5 +1,8 @@
 #ifndef _GAME_MGDATA_H
 #define _GAME_MGDATA_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "version.h"
 #include "dolphin.h"
@@ -68,4 +71,7 @@ s32 MgNoGet(s16 ovlNo);
 int MgSubModeGet(void);
 int MgDecaScoreCalc(int gameNo, int mgScore);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef _GAME_JMP_H
 #define _GAME_JMP_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin.h"
 
@@ -16,4 +19,7 @@ typedef struct jump_buf {
 s32 gcsetjmp(jmp_buf *jump);
 s32 gclongjmp(jmp_buf *jump, s32 status);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

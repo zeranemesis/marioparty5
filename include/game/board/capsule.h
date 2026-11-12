@@ -1,5 +1,8 @@
 #ifndef _BOARD_CAPSULE_H
 #define _BOARD_CAPSULE_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "dolphin/types.h"
 #include "game/object.h"
@@ -437,4 +440,7 @@ BOOL MBCapsuleMiracleGlowCheck(OMOBJ *obj);
 
 #define MBCapsuleChanceCharAdd(pos, charNo) MBCapsuleChanceSprAdd(pos, (charNo)|0x8000);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,3 +1,4 @@
+#include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 #ifndef _M522VEC_H
 #define _M522VEC_H
 
@@ -31,7 +32,7 @@ s32 fn_1_6AD0(void *file, const char *msg);
 #else
 extern "C" u8 __files[];
 #define M522_STDERR ((void *)(__files + 0xA0))
-inline void *operator new(unsigned long, void *p) { return p; }
+inline void *operator new(size_t, void *p) { return p; }
 #endif
 
 template <class T>

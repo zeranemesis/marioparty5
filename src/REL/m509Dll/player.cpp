@@ -16,7 +16,9 @@ extern "C" char __files[];
 
 extern "C" {
 void abort(void);
+#ifndef TARGET_PC
 void *memmove(void *dst, const void *src, unsigned long n);
+#endif
 int fn_1_60(void *file, const char *fmt, ...);
 void PSVECAdd(const Vec *a, const Vec *b, Vec *ab);
 void PSVECSubtract(const Vec *a, const Vec *b, Vec *a_b);

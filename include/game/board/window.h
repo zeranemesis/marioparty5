@@ -1,5 +1,8 @@
 #ifndef _BOARD_WINDOW_H
 #define _BOARD_WINDOW_H
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "game/window.h"
 #include "game/process.h"
@@ -109,4 +112,7 @@ HUWINID MBWinIDGet(s16 winNo);
 HUWINID MBTopWinIDGet(void);
 void MBWinCenterGet(s16 winNo, HuVec2f *pos);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

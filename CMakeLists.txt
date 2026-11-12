@@ -237,13 +237,19 @@ list(REMOVE_DUPLICATES REL_TARGETS)
 foreach (dir ${REL_TARGETS})
     if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/src/REL/${dir})
         set(REL_SOURCE_FILES ${REL_FILES})
-        list(FILTER REL_SOURCE_FILES INCLUDE REGEX "^src/REL/${dir}/.*\\.c$")
+        # shortcut: C++ modules whose 64-bit port is unfinished are listed here until they link
+        set(REL_CPP_SKIP m509Dll m511Dll m512Dll m513Dll m521Dll m522Dll m531Dll m536Dll m539Dll)
+        if (${dir} IN_LIST REL_CPP_SKIP)
+            set(REL_SOURCE_FILES "")
+        else ()
+            list(FILTER REL_SOURCE_FILES INCLUDE REGEX "^src/REL/${dir}/.*\\.(c|cpp)$")
+        endif ()
 
         if (REL_SOURCE_FILES)
             # every REL module needs its own copy of these (see each file's comment):
             # empty _ctors/_dtors, and the progressive-scan render modes Aurora
             # declares but does not define
-            add_library(${dir} SHARED ${REL_SOURCE_FILES} src/port/rel_ctors.c src/port/gx_render_modes.c src/port/rel_vi.c)
+            add_library(${dir} SHARED ${REL_SOURCE_FILES} src/port/rel_ctors.c src/port/gx_render_modes.c src/port/rel_vi.c src/port/rel_cxxrt.c src/port/rel_cxxnew.cpp)
             list(APPEND BINARY_TARGETS ${dir})
             if (USE_ASAN)
                 set_source_files_properties(${REL_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-fsanitize=address")
