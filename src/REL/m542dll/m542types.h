@@ -127,7 +127,13 @@ extern s32 lbl_1_bss_4;
 extern s32 lbl_1_bss_8;
 extern s32 lbl_1_bss_C;
 extern u8 lbl_1_bss_10;
-extern M542AI lbl_1_bss_14[2];
+/* lbl_1_bss_14 is 0x40 bytes long in the original (two entries plus tail padding). */
+typedef struct {
+    M542AI ai[2];
+    s32 pad[2];
+} M542AITAB;
+
+extern M542AITAB lbl_1_bss_14;
 extern s16 lbl_1_bss_54[2][9];
 extern OMCAMERAVIEW lbl_1_bss_78[4];
 

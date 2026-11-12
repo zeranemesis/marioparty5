@@ -17,6 +17,13 @@
 #define M542_RODATA
 #endif
 
+#ifdef TARGET_PC
+/* the original indexes lbl_1_data_2A8 (13 rows) with the raw character number */
+#define M542_TEXROW(c) ((c) > 12 ? 12 : ((c) < 0 ? 0 : (c)))
+#else
+#define M542_TEXROW(c) (c)
+#endif
+
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
@@ -111,7 +118,7 @@ char lbl_1_data_31C[20] = "TL32m542burst01";
 /* ---- bss (declared in reverse: MWCC lays bss out in reverse order) ---- */
 OMCAMERAVIEW lbl_1_bss_78[4];
 s16 lbl_1_bss_54[2][9];
-M542AI lbl_1_bss_14[2];
+M542AITAB lbl_1_bss_14;
 u8 lbl_1_bss_10;
 s32 lbl_1_bss_C;
 s32 lbl_1_bss_8;
@@ -446,8 +453,8 @@ void fn_1_FC8(void)
         e->pos.z = -128.0f;
         Hu3DModelAttrSet(e->model, 1);
         lbl_1_bss_1940[i][4] = Hu3DTexScrollCreate(e->model, lbl_1_data_31C);
-        Hu3DTexScrollPosSet(lbl_1_bss_1940[i][4], lbl_1_data_2A8[lbl_1_bss_1954.player[i].charNo][0],
-                            lbl_1_data_2A8[lbl_1_bss_1954.player[i].charNo][1], 0.0f);
+        Hu3DTexScrollPosSet(lbl_1_bss_1940[i][4], lbl_1_data_2A8[M542_TEXROW(lbl_1_bss_1954.player[i].charNo)][0],
+                            lbl_1_data_2A8[M542_TEXROW(lbl_1_bss_1954.player[i].charNo)][1], 0.0f);
     }
     e = &lbl_1_bss_1588[0x1d];
     e->model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_0[0x1e], 0x10000000, HEAP_MODEL));

@@ -39,12 +39,15 @@ s32 fn_1_835C(s32 arg0);
 s32 lbl_1_data_330 = -1;
 s32 lbl_1_data_334[2] = { -1, -1 };
 
-f32 lbl_1_data_33C[14][2] = {
+struct {
+    f32 tbl[14][2];
+    f32 pad;                   /* lbl_1_data_33C is 0x74 bytes long in the original */
+} lbl_1_data_33C = { {
     { 0.0f, 0.0f }, { 0.0f, 0.25f }, { 0.0f, 0.5f }, { 0.0f, 0.75f },
     { 0.25f, 0.0f }, { 0.25f, 0.25f }, { 0.25f, 0.5f }, { 0.25f, 0.75f },
     { 0.5f, 0.0f }, { 0.5f, 0.25f }, { 0.5f, 0.5f }, { 0.0f, 0.0f },
     { 0.25f, 0.0f }, { 0.75f, 0.75f },
-};
+}, 0.0f };
 
 HuVecF lbl_1_data_3B0[6] = {
     { 0.0f, -100.0f, 0.0f }, { 0.0f, -100.0f, 0.0f }, { 0.0f, -100.0f, 0.0f },
@@ -52,6 +55,7 @@ HuVecF lbl_1_data_3B0[6] = {
 };
 
 /* ---- bss (declared in reverse: MWCC lays bss out in reverse order) ---- */
+u8 lbl_1_bss_1B2A[0xe]; /* tail of the original lbl_1_bss_1B28 (0x10 bytes) */
 s16 lbl_1_bss_1B28;
 M542EMIT lbl_1_bss_1AA8[4];
 M542WORK lbl_1_bss_1954;
@@ -193,7 +197,7 @@ void fn_1_2FD8(s32 arg0, s32 arg1)
         }
     }
     for (i = 0; i < 4; i++) {
-        Hu3DTexScrollPosSet(lbl_1_bss_1940[arg0][i], lbl_1_data_33C[digit[i]][0], lbl_1_data_33C[digit[i]][1], 0.0f);
+        Hu3DTexScrollPosSet(lbl_1_bss_1940[arg0][i], lbl_1_data_33C.tbl[digit[i]][0], lbl_1_data_33C.tbl[digit[i]][1], 0.0f);
     }
 }
 
@@ -209,7 +213,7 @@ void fn_1_3178(void)
         digit[2] = 0;
         digit[3] = 0;
         for (j = 0; j < 4; j++) {
-            Hu3DTexScrollPosSet(lbl_1_bss_1940[i][j], lbl_1_data_33C[digit[j]][0], lbl_1_data_33C[digit[j]][1], 0.0f);
+            Hu3DTexScrollPosSet(lbl_1_bss_1940[i][j], lbl_1_data_33C.tbl[digit[j]][0], lbl_1_data_33C.tbl[digit[j]][1], 0.0f);
         }
         lbl_1_bss_1954.st[i + 2] = 0;
         lbl_1_bss_1954.power[i] = 0;
@@ -250,7 +254,7 @@ void fn_1_328C(void)
             digitC[2] = 0;
             digitC[3] = 1;
             for (j = 0; j < 4; j++) {
-                Hu3DTexScrollPosSet(lbl_1_bss_1940[i][j], lbl_1_data_33C[digitC[j]][0], lbl_1_data_33C[digitC[j]][1], 0.0f);
+                Hu3DTexScrollPosSet(lbl_1_bss_1940[i][j], lbl_1_data_33C.tbl[digitC[j]][0], lbl_1_data_33C.tbl[digitC[j]][1], 0.0f);
             }
         } else if (lbl_1_bss_1954.power[i] < 600) {
             val = 1000 - (lbl_1_bss_1954.power[i] * 1000) / 600;
@@ -265,14 +269,14 @@ void fn_1_328C(void)
                 }
             }
             for (k = 0; k < 4; k++) {
-                Hu3DTexScrollPosSet(lbl_1_bss_1940[i][k], lbl_1_data_33C[digitB[k]][0], lbl_1_data_33C[digitB[k]][1], 0.0f);
+                Hu3DTexScrollPosSet(lbl_1_bss_1940[i][k], lbl_1_data_33C.tbl[digitB[k]][0], lbl_1_data_33C.tbl[digitB[k]][1], 0.0f);
             }
         } else {
             for (l = 0; l < 4; l++) {
                 digitA[l] = 10;
             }
             for (l = 0; l < 4; l++) {
-                Hu3DTexScrollPosSet(lbl_1_bss_1940[i][l], lbl_1_data_33C[digitA[l]][0], lbl_1_data_33C[digitA[l]][1], 0.0f);
+                Hu3DTexScrollPosSet(lbl_1_bss_1940[i][l], lbl_1_data_33C.tbl[digitA[l]][0], lbl_1_data_33C.tbl[digitA[l]][1], 0.0f);
             }
         }
     }
@@ -447,15 +451,20 @@ void fn_1_4994(void)
     s32 i;
 
     for (i = 0; i < 2; i++) {
-        memset(&lbl_1_bss_14[i], 0, sizeof(M542AI));
-        lbl_1_bss_14[i].kind = lbl_1_bss_1954.player[i].dif - 1;
-        lbl_1_bss_14[i].target = tbl[lbl_1_bss_14[i].kind];
-        if (lbl_1_bss_14[i].kind == 3) {
-            lbl_1_bss_14[i].target -= rand8() % 3;
+        memset(&lbl_1_bss_14.ai[i], 0, sizeof(M542AI));
+        lbl_1_bss_14.ai[i].kind = lbl_1_bss_1954.player[i].dif - 1;
+#ifdef TARGET_PC
+        /* human players have dif == 0, so kind is -1 here and the original reads tbl[-1] */
+        lbl_1_bss_14.ai[i].target = tbl[lbl_1_bss_14.ai[i].kind < 0 ? 0 : lbl_1_bss_14.ai[i].kind];
+#else
+        lbl_1_bss_14.ai[i].target = tbl[lbl_1_bss_14.ai[i].kind];
+#endif
+        if (lbl_1_bss_14.ai[i].kind == 3) {
+            lbl_1_bss_14.ai[i].target -= rand8() % 3;
         } else {
-            lbl_1_bss_14[i].target -= rand8() % 18;
+            lbl_1_bss_14.ai[i].target -= rand8() % 18;
         }
-        lbl_1_bss_14[i].wait = rand8() % 120 + 120;
+        lbl_1_bss_14.ai[i].wait = rand8() % 120 + 120;
     }
 }
 
@@ -464,16 +473,16 @@ s32 fn_1_4B50(s32 arg0)
     s32 ret;
 
     ret = 0;
-    if (lbl_1_bss_1954.power[arg0] >= lbl_1_bss_14[arg0].target) {
-        lbl_1_bss_14[arg0].holdMax = 15 - rand8() % 6;
-        lbl_1_bss_14[arg0].holdTime = lbl_1_bss_14[arg0].holdMax + rand8() % 3 + 5;
+    if (lbl_1_bss_1954.power[arg0] >= lbl_1_bss_14.ai[arg0].target) {
+        lbl_1_bss_14.ai[arg0].holdMax = 15 - rand8() % 6;
+        lbl_1_bss_14.ai[arg0].holdTime = lbl_1_bss_14.ai[arg0].holdMax + rand8() % 3 + 5;
         ret = 1;
-    } else if (lbl_1_bss_1954.power[arg0] < lbl_1_bss_14[arg0].target - 45) {
-        lbl_1_bss_14[arg0].wait--;
-        if (lbl_1_bss_14[arg0].wait <= 0) {
-            lbl_1_bss_14[arg0].holdMax = rand8() % 6 + 10;
-            lbl_1_bss_14[arg0].holdTime = 0;
-            lbl_1_bss_14[arg0].wait = rand8() % 60 + 60;
+    } else if (lbl_1_bss_1954.power[arg0] < lbl_1_bss_14.ai[arg0].target - 45) {
+        lbl_1_bss_14.ai[arg0].wait--;
+        if (lbl_1_bss_14.ai[arg0].wait <= 0) {
+            lbl_1_bss_14.ai[arg0].holdMax = rand8() % 6 + 10;
+            lbl_1_bss_14.ai[arg0].holdTime = 0;
+            lbl_1_bss_14.ai[arg0].wait = rand8() % 60 + 60;
             ret = 1;
         }
     }
@@ -482,31 +491,31 @@ s32 fn_1_4B50(s32 arg0)
 
 void fn_1_4D48(s32 arg0)
 {
-    switch (lbl_1_bss_14[arg0].step) {
+    switch (lbl_1_bss_14.ai[arg0].step) {
     case 0:
         if (fn_1_4B50(arg0) != 0) {
-            lbl_1_bss_14[arg0].timer = 0;
-            lbl_1_bss_14[arg0].step++;
+            lbl_1_bss_14.ai[arg0].timer = 0;
+            lbl_1_bss_14.ai[arg0].step++;
             lbl_1_bss_1954.player[arg0].btnDown = 0x100;
             lbl_1_bss_1954.player[arg0].btn = 0x100;
         }
         break;
     case 1:
         lbl_1_bss_1954.player[arg0].btn = 0x100;
-        lbl_1_bss_14[arg0].timer++;
-        if (lbl_1_bss_14[arg0].timer >= lbl_1_bss_14[arg0].holdMax) {
-            if (lbl_1_bss_14[arg0].holdTime != 0) {
-                lbl_1_bss_14[arg0].step++;
+        lbl_1_bss_14.ai[arg0].timer++;
+        if (lbl_1_bss_14.ai[arg0].timer >= lbl_1_bss_14.ai[arg0].holdMax) {
+            if (lbl_1_bss_14.ai[arg0].holdTime != 0) {
+                lbl_1_bss_14.ai[arg0].step++;
             } else {
-                lbl_1_bss_14[arg0].step = 0;
+                lbl_1_bss_14.ai[arg0].step = 0;
             }
         }
         break;
     case 2:
-        lbl_1_bss_14[arg0].timer++;
-        if (lbl_1_bss_14[arg0].timer == lbl_1_bss_14[arg0].holdTime) {
+        lbl_1_bss_14.ai[arg0].timer++;
+        if (lbl_1_bss_14.ai[arg0].timer == lbl_1_bss_14.ai[arg0].holdTime) {
             lbl_1_bss_1954.player[arg0].btnDown = 0x100;
-            lbl_1_bss_14[arg0].step++;
+            lbl_1_bss_14.ai[arg0].step++;
         }
         break;
     }
@@ -529,10 +538,8 @@ void fn_1_5420(void)
 {
     s32 i;
     s32 cnt;
-    s32 loser;
 
-    cnt = 0;
-    for (i = 0; i < 2; i++) {
+    for (i = 0, cnt = 0; i < 2; i++) {
         fn_1_4008(i);
         if (lbl_1_bss_1954.jump[i].state == 0) {
             cnt++;
@@ -576,12 +583,11 @@ void fn_1_5420(void)
             } else {
                 lbl_1_bss_1954.timer = 1;
             }
-            loser = lbl_1_bss_1954.timer ^ 1;
-            lbl_1_bss_1954.anim[loser] = 0;
-            Hu3DMotionTimeSet(lbl_1_bss_1954.ents[loser + 7].model, 0.0f);
-            Hu3DMotionSpeedSet(lbl_1_bss_1954.ents[loser + 7].model, 3.0f);
-            Hu3DMotionTimeSet(lbl_1_bss_1954.ents[loser + 9].model, 0.0f);
-            Hu3DMotionSpeedSet(lbl_1_bss_1954.ents[loser + 9].model, 3.0f);
+            lbl_1_bss_1954.anim[lbl_1_bss_1954.timer ^ 1] = 0;
+            Hu3DMotionTimeSet(lbl_1_bss_1954.ents[(lbl_1_bss_1954.timer ^ 1) + 7].model, 0.0f);
+            Hu3DMotionSpeedSet(lbl_1_bss_1954.ents[(lbl_1_bss_1954.timer ^ 1) + 7].model, 3.0f);
+            Hu3DMotionTimeSet(lbl_1_bss_1954.ents[(lbl_1_bss_1954.timer ^ 1) + 9].model, 0.0f);
+            Hu3DMotionSpeedSet(lbl_1_bss_1954.ents[(lbl_1_bss_1954.timer ^ 1) + 9].model, 3.0f);
             if (lbl_1_bss_1954.timer == 0) {
                 HuAudFXPlay(0x816);
                 lbl_1_data_334[1] = HuAudFXPlay(0x818);
