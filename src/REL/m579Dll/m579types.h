@@ -147,6 +147,7 @@ s32 fn_1_4AE0(void);
 f32 fn_1_4D1C(void);
 void fn_1_9668(Vec *pos, s32 seId);
 void fn_1_1360(void *list, void *dst);
+s16 *fn_1_7528(M579S16Vec *vec, u32 idx);
 /* model wrappers (m579.cpp); a model is an s16 handle */
 s16 *fn_1_2DB4(s16 *dst, s16 *src);
 void fn_1_2E08(s16 *model, s32 attr);
