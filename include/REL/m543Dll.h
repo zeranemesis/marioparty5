@@ -210,7 +210,14 @@ typedef struct M543Actor_s {
     u8 pad_52[0x8];
     s16 f5A;
     s16 f5C;
-    u8 pad_5E[0xEE];
+    u8 pad_5E[0x26];
+    f32 f84;
+    u8 pad_88[0x4];
+    f32 f8C;
+    u8 pad_90[0xC];
+    f32 f9C;
+    f32 fA0;
+    u8 pad_A4[0xA8];
     s32 btn;
     s32 btnDown;
     s32 stkX;
