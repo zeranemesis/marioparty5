@@ -5,70 +5,14 @@
 // system, which lays the two players out at +0x08 and +0xd4.
 #include "types.h"
 #include "REL/m575dll.h"
+#include "game/gamework.h"
+#include "game/mg/actman.h"
 #include "game/frand.h"
 #include "string.h"
 #include "humath.h"
 
-typedef s16 HU3DMODELID;
-typedef s16 HU3DMOTID;
-
-// game/gamework.h pulls in the whole game header set; the five s16 fields are
-// all this unit reads out of GwPlayerConf.
-typedef struct comGwPlayerConf_s {
-    s16 charNo;
-    s16 padNo;
-    s16 dif;
-    s16 grp;
-    s16 type;
-} COM_GWPLAYERCONF;
-
-extern COM_GWPLAYERCONF GwPlayerConf[4];
-
-// Per-player work record. Only the offsets the COM reads are named.
-typedef struct comUnk8_s {
-    u8 pad0[0x28];
-    s32 unk28;
-} COM_UNK8;
-
-typedef struct comPlayer_s {
-    struct comSystem_s *system;
-    u8 pad4[4];
-    COM_UNK8 *unk8;
-    u8 padC[0x0E - 0x0C];
-    s16 playerNo;
-    u8 pad10[0x78 - 0x10];
-    Vec *unk78;
-    u8 pad7C[0x88 - 0x7C];
-    Vec unk88;
-    f32 unk94;
-    u32 unk98;
-    u8 pad9C[4];
-    s32 unkA0;
-    u8 padA4[0xCC - 0xA4];
-} COM_PLAYER;
-
-typedef struct comSystem_s {
-    void *unk00;
-    u8 pad04[4];
-    COM_PLAYER players[2];
-} COM_SYSTEM;
-
-// The AI tuning block the game system carries at +0x1a0.
-typedef struct comAi_s {
-    u8 pad0[0x20];
-    f32 unk20;
-    u8 pad24[0x2C - 0x24];
-    void *unk2C;
-} COM_AI;
-
-// The board state block the game system carries at +0xe90.
-typedef struct comBoard_s {
-    u8 pad0[4];
-    u16 mode;
-} COM_BOARD;
-
-#define COM_AI_OF(sys) ((COM_AI *)((u8 *)(sys) + 0x1a0))
-#define COM_BOARD_OF(sys) ((COM_BOARD *)((u8 *)(sys) + 0xe90))
+#define COM_AI_OF(main) (&(main)->ten)
+#define COM_BOARD_OF(main) (&(main)->tubo)
 
 static const f32 lbl_1_rodata_258[1] = { 50.0f };
 static const f32 lbl_1_rodata_25C[1] = { 6.0f };
@@ -88,27 +32,8 @@ static const f32 lbl_1_rodata_318[1] = { 30.0f };
 static const f32 lbl_1_rodata_31C[1] = { 0.8f };
 static const f32 lbl_1_rodata_320[1] = { 56.0f };
 
-// The 0x4C-byte control block. Only the offsets the five functions below reach
-// are named; 0x4C is the size both constructors clear.
-typedef struct com_s {
-    COM_PLAYER *work;
-    u16 mode;
-    s16 timer;
-    s32 unk8;
-    s32 unkC;
-    u16 unk10;
-    u8 pad12[2];
-    Vec unk14;
-    Vec unk20;
-    s32 unk2C;
-    s32 unk30;
-    f32 unk34;
-    f32 unk38;
-    s32 unk3C;
-    s32 unk40;
-    s32 unk44;
-    s32 unk48;
-} COM;
+typedef M575Com COM;
+typedef M575Player COM_PLAYER;
 
 void fn_1_6630(COM *self, COM_PLAYER *work);
 void fn_1_675C(COM *self);
@@ -118,7 +43,6 @@ s32 fn_1_6BE4(COM *self);
 s32 fn_1_734C(COM *self);
 s32 fn_1_8180(COM *self);
 s32 fn_1_79A0(COM *self);
-f64 fn_1_30CC(f32 arg0, f32 arg1, f32 arg2);
 
 // Initialises the control block: links it to the player work record, copies the
 // player's difficulty over, maps the pad number onto a skill tier and seeds the
@@ -153,7 +77,7 @@ void fn_1_6630(COM *self, COM_PLAYER *work)
     }
     self->unk10 = (u16)tier;
 
-    self->unk20 = *work->unk78;
+    self->unk20 = *work->pos;
     self->unk14 = self->unk20;
     self->unkC = 0;
 }
@@ -171,9 +95,9 @@ void fn_1_675C(COM *self)
 void fn_1_678C(COM *self)
 {
     COM_PLAYER *work = self->work;
-    COM_SYSTEM *sys = work->system;
-    COM_AI *ai = COM_AI_OF(sys);
-    COM_PLAYER *other = (work == &sys->players[0]) ? &sys->players[1] : &sys->players[0];
+    M575Main *sys = work->main;
+    M575Ten *ai = COM_AI_OF(sys);
+    COM_PLAYER *other = (work == &sys->player[0]) ? &sys->player[1] : &sys->player[0];
 
     self->unk3C = 0;
     self->unk40 = 0;
@@ -185,14 +109,14 @@ void fn_1_678C(COM *self)
             self->mode = 0;
             self->timer = (s16)(frand() % 30 + 30);
 
-            if (work->unk94 < lbl_1_rodata_258[0] && other->unk94 > lbl_1_rodata_258[0] && other->unkA0 > 120) {
+            if (work->speed < lbl_1_rodata_258[0] && other->speed > lbl_1_rodata_258[0] && other->timer > 120) {
                 self->mode = 3;
                 self->timer = (s16)(frand() % 30 + 30);
             }
-            else if ((self->unk10 == 0 && ai->unk20 > lbl_1_rodata_25C[0])
-                  || (self->unk10 == 1 && ai->unk20 > lbl_1_rodata_260[0] && frand() % 10000 < 9500)
-                  || (self->unk10 == 2 && ai->unk20 > lbl_1_rodata_264[0] && frand() % 10000 < 8500)
-                  || (self->unk10 == 3 && ai->unk20 > lbl_1_rodata_268[0] && frand() % 10000 < 7500)) {
+            else if ((self->unk10 == 0 && ai->rot > lbl_1_rodata_25C[0])
+                  || (self->unk10 == 1 && ai->rot > lbl_1_rodata_260[0] && frand() % 10000 < 9500)
+                  || (self->unk10 == 2 && ai->rot > lbl_1_rodata_264[0] && frand() % 10000 < 8500)
+                  || (self->unk10 == 3 && ai->rot > lbl_1_rodata_268[0] && frand() % 10000 < 7500)) {
                 self->mode = 1;
                 self->timer = (s16)(frand() % 30 + 30);
             }
@@ -200,11 +124,11 @@ void fn_1_678C(COM *self)
                   || (self->unk10 == 1 && frand() % 10000 < 9000)
                   || (self->unk10 == 2 && frand() % 10000 < 8000)
                   || (self->unk10 == 3 && frand() % 10000 < 3000)) {
-                if (work->unk98 != 0 && work->unk94 > lbl_1_rodata_258[0]) {
+                if (work->target != 0 && work->speed > lbl_1_rodata_258[0]) {
                     self->mode = 2;
                     self->timer = (s16)(frand() % 30 + 30);
                 }
-                else if (other->unk94 > lbl_1_rodata_258[0] && other->unkA0 > 120) {
+                else if (other->speed > lbl_1_rodata_258[0] && other->timer > 120) {
                     self->mode = 3;
                     self->timer = (s16)(frand() % 30 + 30);
                 }
@@ -238,85 +162,224 @@ void fn_1_678C(COM *self)
     }
 }
 
-// Per-frame aim update. Works out how far the COM has drifted from the player's
-// board position and from the opponent, latches the three flag words when it is
-// too far away or has just switched targets, then folds the horizontal error
-// into an analogue stick deflection (0x34/0x38) and the truncated byte deflections
-// (0x40/0x44).
-s32 fn_1_8180(COM *self)
+// Stance 1: pick an aim point on the ten (the tube) from its axis, blended with the
+// heading of the player's own velocity, and scale it by how far the tube has tilted.
+s32 fn_1_6BE4(COM *self)
 {
     COM_PLAYER *work = self->work;
-    COM_SYSTEM *sys = work->system;
-    COM_PLAYER *other = (work == &sys->players[0]) ? &sys->players[1] : &sys->players[0];
-    Vec delta;
-    Vec oppDelta;
-    Vec playerPos;
-    f32 dist;
-    f32 oppDist;
+    M575Main *sys = work->main;
+    M575Player *other;
+    M575Game *game = sys->game;
+    M575Ten *ten = &sys->ten;
+    M575TuboEff *eff = &ten->eff;
+    Vec up0 = { 0.0f, 1.0f, 0.0f };
+    Vec up1;
+    Vec dir;
+    Vec v;
+    f64 angA;
+    f64 angB;
+    f64 tmp;
+    f64 mix;
+    f32 rot;
     f32 ratio;
-    f32 outer;
-    f32 inner;
+    f32 clamped;
+    f32 lo;
+    f32 scale;
+    f32 factor;
 
-    playerPos = work->unk88;
-    PSVECSubtract(&self->unk14, &playerPos, &delta);
-    delta.y = 0.0f;
-    dist = PSVECMag(&delta);
-    if (dist < 10.0f) {
+    if (work == &sys->player[0]) {
+        other = &sys->player[1];
+    }
+    else {
+        other = &sys->player[0];
+    }
+    up1 = up0;
+    dir.x = eff->mtx[1][0];
+    dir.y = eff->mtx[1][1];
+    dir.z = eff->mtx[1][2];
+    PSVECNormalize(&dir, &dir);
+    rot = ten->rot;
+    if (rot < 5.0f) {
         return 1;
     }
-    PSVECSubtract(work->unk78, other->unk78, &oppDelta);
-    oppDelta.y = 0.0f;
-    oppDist = PSVECMag(&oppDelta);
-    if (dist < 100.0f && oppDist < 100.0f) {
-        return 1;
+    v = dir;
+    v.y = 0.0f;
+    if (v.x != 0.0f || v.z != 0.0f) {
+        PSVECNormalize(&v, &v);
     }
-
-    if (self->unk30 != 0) {
-        if (work->unk8->unk28 != 1) {
-            self->unk30 = 0;
-        }
-        else if (dist > 60.0f) {
-            self->unk48 |= 0x100;
-        }
-    }
-    else if (self->unk2C != 0) {
-        if (work->unk8->unk28 == 1) {
-            self->unk2C = 0;
-            self->unk30 = 1;
-        }
-        else if (dist > 60.0f) {
-            self->unk3C |= 0x100;
-            self->unk48 |= 0x100;
-        }
-        else {
-            self->unk2C = 0;
-        }
-    }
-
-    if (delta.x != lbl_1_rodata_27C[0] || delta.y != lbl_1_rodata_27C[0] || delta.z != lbl_1_rodata_27C[0]) {
-        PSVECNormalize(&delta, &delta);
-    }
-
-    ratio = dist / 30.0f;
+    ratio = (rot - 5.0f) / 25.0f;
     if (ratio > 1.0f) {
-        outer = 1.0f;
+        clamped = 1.0f;
     }
     else {
         if (ratio < 0.0f) {
-            inner = 0.0f;
+            lo = 0.0f;
         }
         else {
-            inner = ratio;
+            lo = ratio;
         }
-        outer = inner;
+        clamped = lo;
     }
-    ratio = outer;    delta.x = delta.x * ratio;
-    delta.z = delta.z * ratio;
+    scale = 0.5f + 0.5f * clamped;
+    if ((f32)HuAtan(-v.x, -v.z) > 180.0f) {
+        angA = HuAtan(-v.x, -v.z) - 360.0;
+    }
+    else {
+        if ((f32)HuAtan(-v.x, -v.z) <= -180.0f) {
+            tmp = 360.0 + HuAtan(-v.x, -v.z);
+        }
+        else {
+            tmp = HuAtan(-v.x, -v.z);
+        }
+        angA = tmp;
+    }
+    v = work->vel;
+    v.y = 0.0f;
+    if (v.x != 0.0f || v.z != 0.0f) {
+        PSVECNormalize(&v, &v);
+    }
+    if ((f32)HuAtan(v.x, v.z) > 180.0f) {
+        angB = HuAtan(v.x, v.z) - 360.0;
+    }
+    else {
+        if ((f32)HuAtan(v.x, v.z) <= -180.0f) {
+            tmp = 360.0 + HuAtan(v.x, v.z);
+        }
+        else {
+            tmp = HuAtan(v.x, v.z);
+        }
+        angB = tmp;
+    }
+    mix = fn_1_30CC((f32)angB, (f32)angA, 0.5f);
+    v.x = (f32)HuSin(mix);
+    v.y = 0.0f;
+    v.z = (f32)HuCos(mix);
+    if (other->falling == 0 && other->speed > work->speed) {
+        if (self->unk10 == 0) {
+            factor = 0.0f;
+        }
+        else {
+            if (self->unk10 == 1) {
+                lo = 0.1f;
+            }
+            else {
+                lo = 0.2f;
+            }
+            factor = lo;
+        }
+        scale *= factor;
+    }
+    PSVECScale(&v, &v, 320.0f * scale);
+    self->unk14 = v;
+    if (rot > 15.0f) {
+        if (game->frame % 10 == 0) {
+            self->unk2C = 1;
+        }
+    }
+    else if (rot > 7.5f && game->frame % 30 == 0) {
+        self->unk2C = 1;
+    }
+    fn_1_8180(self);
+    return 0;
+}
 
-    self->unk34 = (0.8f * self->unk34) + (0.2f * delta.x);
-    self->unk38 = (0.8f * self->unk38) + (0.2f * delta.z);
-    self->unk40 = (s8)(56.0f * self->unk34);
-    self->unk44 = (s8)(56.0f * -self->unk38);
+// Stance 2: chase the coin the player has locked onto, unless it is too far,
+// the tube is already tilting, or the COM is too far from the middle.
+s32 fn_1_734C(COM *self)
+{
+    COM_PLAYER *work = self->work;
+    M575Main *sys = work->main;
+    M575Game *game = sys->game;
+    M575Ten *ten = &sys->ten;
+    M575TuboEff *eff = &ten->eff;
+    M575CoinItem *coin;
+    Vec zero0 = { 0.0f, 0.0f, 0.0f };
+    Vec zero1;
+    Vec zeroTmp;
+    Vec v;
+    f64 angA;
+    f64 angB;
+    f64 tmp;
+    f64 mix;
+    f32 dist;
+    f32 scale;
+
+    zero1 = zero0;
+    if (work->target == NULL) {
+        return 1;
+    }
+    if (work->target->active == 0) {
+        return 1;
+    }
+    if (ten->rot > 15.0f) {
+        return 1;
+    }
+    if (work->target->kind == 0) {
+        if (work->targetDist > 500.0f) {
+            return 1;
+        }
+    }
+    else if (work->targetDist > 700.0f) {
+        return 1;
+    }
+    if ((self->unk10 == 0 || self->unk10 == 1) && work->speed > 350.0f) {
+        Vec *p;
+        zeroTmp.x = 0.0f;
+        zeroTmp.y = 0.0f;
+        zeroTmp.z = 0.0f;
+        p = &zeroTmp;
+        self->unk14 = *p;
+        return 1;
+    }
+    coin = work->target;
+    v = coin->rel;
+    v.y = 0.0f;
+    dist = PSVECMag(&v);
+    if (v.x != 0.0f || v.z != 0.0f) {
+        PSVECNormalize(&v, &v);
+    }
+    if ((f32)HuAtan(v.x, v.z) > 180.0f) {
+        angA = HuAtan(v.x, v.z) - 360.0;
+    }
+    else {
+        if ((f32)HuAtan(v.x, v.z) <= -180.0f) {
+            tmp = 360.0 + HuAtan(v.x, v.z);
+        }
+        else {
+            tmp = HuAtan(v.x, v.z);
+        }
+        angA = tmp;
+    }
+    v = work->vel;
+    v.y = 0.0f;
+    if (v.x != 0.0f || v.z != 0.0f) {
+        PSVECNormalize(&v, &v);
+    }
+    if ((f32)HuAtan(v.x, v.z) > 180.0f) {
+        angB = HuAtan(v.x, v.z) - 360.0;
+    }
+    else {
+        if ((f32)HuAtan(v.x, v.z) <= -180.0f) {
+            tmp = 360.0 + HuAtan(v.x, v.z);
+        }
+        else {
+            tmp = HuAtan(v.x, v.z);
+        }
+        angB = tmp;
+    }
+    mix = fn_1_30CC((f32)angB, (f32)angA, 0.5f);
+    v.x = (f32)HuSin(mix);
+    v.y = 0.0f;
+    v.z = (f32)HuCos(mix);
+    if (dist < 150.0f) {
+        scale = 150.0f;
+    }
+    else {
+        scale = dist;
+    }
+    PSVECScale(&v, &v, scale);
+    self->unk14 = v;
+    fn_1_8180(self);
     return 0;
 }
 
@@ -328,10 +391,10 @@ s32 fn_1_8180(COM *self)
 s32 fn_1_7A80(COM *self)
 {
     COM_PLAYER *work = self->work;
-    COM_SYSTEM *sys = work->system;
-    void *a = sys->unk00;
-    COM_AI *ai = COM_AI_OF(sys);
-    void *b = &ai->unk2C;
+    M575Main *sys = work->main;
+    M575Game *a = sys->game;
+    M575Ten *ai = COM_AI_OF(sys);
+    M575TuboEff *b = &ai->eff;
     Vec up;
     Vec *upP;
     Vec up2;
@@ -347,7 +410,7 @@ s32 fn_1_7A80(COM *self)
     up = lbl_1_rodata_2F4;
     upP = &up;
     up2 = *upP;
-    playerPos = work->unk88;
+    playerPos = work->vel;
 
     PSVECSubtract(&self->unk20, &playerPos, &v);
     v.y = 0.0f;
@@ -397,7 +460,7 @@ s32 fn_1_7A80(COM *self)
     }
     aimA = (f32)ang;
 
-    v = work->unk88;
+    v = work->vel;
     v.y = 0.0f;
     if (v.x != lbl_1_rodata_27C[0] || v.z != lbl_1_rodata_27C[0]) {
         PSVECNormalize(&v, &v);
@@ -434,11 +497,11 @@ s32 fn_1_7A80(COM *self)
 s32 fn_1_79A0(COM *self)
 {
     COM_PLAYER *work = self->work;
-    COM_SYSTEM *sys = work->system;
-    COM_AI *ai = COM_AI_OF(sys);
-    COM_BOARD *board = COM_BOARD_OF(sys);
+    M575Main *sys = work->main;
+    M575Ten *ai = COM_AI_OF(sys);
+    M575Tubo *board = COM_BOARD_OF(sys);
 
-    if (work->unk94 > lbl_1_rodata_258[0] && work->unk8->unk28 != 1) {
+    if (work->speed > lbl_1_rodata_258[0] && work->mgPlayer->mode != 1) {
         Vec tmp;
         Vec *p;
         tmp = lbl_1_rodata_2E8;
@@ -447,9 +510,91 @@ s32 fn_1_79A0(COM *self)
         fn_1_8180(self);
         return 1;
     }
-    if (board->mode == 0) {
+    if (board->unk4 == 0) {
         self->unk3C |= 0x100;
         self->unk48 |= 0x100;
     }
+    return 0;
+}
+
+// Per-frame aim update. Works out how far the COM has drifted from the player's
+// board position and from the opponent, latches the three flag words when it is
+// too far away or has just switched targets, then folds the horizontal error
+// into an analogue stick deflection (0x34/0x38) and the truncated byte deflections
+// (0x40/0x44).
+s32 fn_1_8180(COM *self)
+{
+    COM_PLAYER *work = self->work;
+    M575Main *sys = work->main;
+    COM_PLAYER *other = (work == &sys->player[0]) ? &sys->player[1] : &sys->player[0];
+    Vec delta;
+    Vec oppDelta;
+    Vec playerPos;
+    f32 dist;
+    f32 oppDist;
+    f32 ratio;
+    f32 outer;
+    f32 inner;
+
+    playerPos = work->vel;
+    PSVECSubtract(&self->unk14, &playerPos, &delta);
+    delta.y = 0.0f;
+    dist = PSVECMag(&delta);
+    if (dist < 10.0f) {
+        return 1;
+    }
+    PSVECSubtract(work->pos, other->pos, &oppDelta);
+    oppDelta.y = 0.0f;
+    oppDist = PSVECMag(&oppDelta);
+    if (dist < 100.0f && oppDist < 100.0f) {
+        return 1;
+    }
+
+    if (self->unk30 != 0) {
+        if (work->mgPlayer->mode != 1) {
+            self->unk30 = 0;
+        }
+        else if (dist > 60.0f) {
+            self->unk48 |= 0x100;
+        }
+    }
+    else if (self->unk2C != 0) {
+        if (work->mgPlayer->mode == 1) {
+            self->unk2C = 0;
+            self->unk30 = 1;
+        }
+        else if (dist > 60.0f) {
+            self->unk3C |= 0x100;
+            self->unk48 |= 0x100;
+        }
+        else {
+            self->unk2C = 0;
+        }
+    }
+
+    if (delta.x != lbl_1_rodata_27C[0] || delta.y != lbl_1_rodata_27C[0] || delta.z != lbl_1_rodata_27C[0]) {
+        PSVECNormalize(&delta, &delta);
+    }
+
+    ratio = dist / 30.0f;
+    if (ratio > 1.0f) {
+        outer = 1.0f;
+    }
+    else {
+        if (ratio < 0.0f) {
+            inner = 0.0f;
+        }
+        else {
+            inner = ratio;
+        }
+        outer = inner;
+    }
+    ratio = outer;    delta.x = delta.x * ratio;
+    delta.z = delta.z * ratio;
+
+    self->unk34 = (0.8f * self->unk34) + (0.2f * delta.x);
+    self->unk38 = (0.8f * self->unk38) + (0.2f * delta.z);
+    self->unk40 = (s8)(56.0f * self->unk34);
+    self->unk44 = (s8)(56.0f * -self->unk38);
     return 0;
 }

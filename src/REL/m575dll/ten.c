@@ -6,10 +6,6 @@
 // _half/_three to this unit's .rodata; the original object has neither.
 extern double acos(double x);
 
-// REL/m575dll/m575.c and REL/m575dll/tuboeff.c, whose headers still pull in
-// math.h the same way.
-extern void fn_1_2D5C(Quaternion *q, const Vec *v0, const Vec *v1);
-extern void fn_1_530(u16 dataNum);
 
 static const f32 lbl_1_rodata_160[1] = { 0.0f };
 static const f32 lbl_1_rodata_164[1] = { 750.0f };
@@ -37,11 +33,11 @@ static const f32 lbl_1_rodata_1B8[2] = { 25.0f, 0.0f };
 void fn_1_4BCC(M575Ten *self, M575Main *main)
 {
     M575Main *mainCopy = main;
-    M575TenConf *tenConf = &mainCopy->tenConf;
+    M575Camera *tenConf = &mainCopy->camera;
     HU3DMODELID modelId;
 
     memset(self, 0, sizeof(M575Ten));
-    if (mainCopy->unk4 == 0) {
+    if (mainCopy->side == 0) {
         modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x820007, HU_MEMNUM_OVL, HEAP_MODEL));
         self->modelId = modelId;
         self->motionId = Hu3DJointMotion(modelId, HuDataSelHeapReadNum(0x820016, HU_MEMNUM_OVL, HEAP_MODEL));
@@ -58,7 +54,7 @@ void fn_1_4BCC(M575Ten *self, M575Main *main)
     Hu3DModelLayerSet(modelId, 0);
     Hu3DModelAttrReset(modelId, 1);
     Hu3DModelShadowMapSet(modelId);
-    self->pos = &Hu3DData[modelId].pos;
+    self->pos = (Vec *)&Hu3DData[modelId].pos;
     self->mtx = (MtxPtr)&Hu3DData[modelId].mtx;
     Hu3DMotionSet(modelId, self->motionId);
     Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
@@ -69,7 +65,7 @@ void fn_1_4BCC(M575Ten *self, M575Main *main)
     Hu3DModelCameraSet(modelId, tenConf->camBit);
     Hu3DModelLayerSet(modelId, 0);
     Hu3DModelAttrSet(modelId, 1);
-    self->pos2 = &Hu3DData[modelId].pos;
+    self->pos2 = (Vec *)&Hu3DData[modelId].pos;
     self->mtx2 = (MtxPtr)&Hu3DData[modelId].mtx;
     fn_1_9320(&self->eff, 0, (const Vec *)&lbl_1_rodata_170, lbl_1_rodata_164[0], lbl_1_rodata_168[0], lbl_1_rodata_16C[0]);
 }
@@ -86,7 +82,7 @@ void fn_1_4E98(M575Ten *self)
 void fn_1_4EF0(M575Ten *self)
 {
     M575Main *main = self->main;
-    M575MainConf *conf = main->conf;
+    M575Game *conf = main->game;
     M575TuboEff *eff = &self->eff;
     Mtx mtx;
     Vec v;
@@ -139,7 +135,7 @@ void fn_1_4EF0(M575Ten *self)
         angle = lbl_1_rodata_1A0[0];
     }
 
-    if (conf->unkC >= 5) {
+    if (conf->mode >= 5) {
         v.x = dir.x;
         v.y = lbl_1_rodata_160[0];
         v.z = dir.z;
@@ -166,10 +162,10 @@ void fn_1_4EF0(M575Ten *self)
     self->rot = angle;
 
     if (self->prevRot < lbl_1_rodata_1B8[0] && self->rot > lbl_1_rodata_1B8[0] && self->counter == 0) {
-        if (main->unk4 == 0) {
+        if (main->side == 0) {
             fn_1_530(0x930);
         }
-        else if (main->unk4 == 1) {
+        else if (main->side == 1) {
             fn_1_530(0x931);
         }
         self->counter = 0x1E;
