@@ -272,6 +272,13 @@ void fn_1_C2B0(M515_PLY *ply);
 void fn_1_D384(M515_PLY *ply);
 void fn_1_72E4(M515_PLY *ply);
 s32 fn_1_9594(M515_SLOT *slot);
+s32 fn_1_86F4(M515_SLOT *slot);
+s32 fn_1_8964(M515_SLOT *slot);
+s32 fn_1_8BD4(M515_SLOT *slot);
+s32 fn_1_8E44(M515_SLOT *slot);
+s32 fn_1_90B4(M515_SLOT *slot);
+s32 fn_1_9324(M515_SLOT *slot);
+f32 fn_1_BD10(s16 mdl, s32 idx, f32 t);
 void fn_1_D0D8(M515_SUB *sub);
 s32 fn_1_83E8(M515_SLOT *slot);
 void fn_1_BE78(M515_SUB *sub, s16 mdl, s16 mode);
@@ -3840,6 +3847,341 @@ void fn_1_9958(M515_ESPPAIR *esp)
     Hu3DCameraScissorSet(lbl_1_rodata_10[i], x, y, 640.0f - x, 480.0f - y);
     espPosSet(esp->id0, 576.0f * (x / 640.0f), 240.0f);
     espPosSet(esp->id1, 288.0f, 480.0f * (y / 480.0f));
+}
+
+s32 fn_1_9DF8(M515_ENTRY *entry, M515_PLY *ply)
+{
+    M515_SUB *sub;
+    s32 k0;
+    s32 k1;
+    s32 ret = 0;
+    f32 d;
+    f32 t;
+    f32 z[4] = { -450.0f, -600.0f, -750.0f, -900.0f };
+    s16 pan[4] = { 0x30, 0x50, 0x30, 0x50 };
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    ply->v680 = 0;
+    switch (entry->e00) {
+    case 0:
+        entry->e02 = 0;
+        ply->v486 = 0;
+        if (ply->v0e == 0) {
+            ply->v47e = 0;
+            entry->camfn = fn_1_86F4;
+            ply->vec.z = z[0];
+            ply->vec.y = 25.0f;
+            fn_1_BF24(sub, sub->idA[1][ply->idx], 1);
+        } else {
+            ply->v47e = 3;
+            entry->camfn = fn_1_8E44;
+            ply->vec.z = -z[0];
+            ply->vec.y = 425.0f;
+            fn_1_BF24(sub, sub->idA[5][ply->idx], 1);
+            fn_1_BE78(sub, sub->idA[3][ply->idx], 0);
+            fn_1_BE78(sub, sub->id76[ply->idx].d, 0);
+            fn_1_BE78(sub, sub->id96[ply->idx][0], 0);
+        }
+        ply->v484 = 0;
+        Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[2], 0.0f, 5.0f, 0x40000001);
+        entry->e00++;
+    case 1:
+        entry->e02++;
+        if (entry->e02 >= 15) {
+            entry->e00++;
+        }
+        break;
+    case 2:
+        if (ply->v0e == 0) {
+            ply->vec.z = z[1];
+        } else {
+            ply->vec.z = -z[1];
+        }
+        ply->v484 = 0;
+        entry->e02 = 0;
+        entry->e00++;
+    case 3:
+        entry->e02++;
+        if (entry->e02 >= 15) {
+            entry->e00++;
+        }
+        break;
+    case 4:
+        if (ply->v0e == 0) {
+            Hu3DModelAttrReset(sub->id76[ply->idx].a, 0x40000002);
+            ply->vec.z = z[2];
+        } else {
+            Hu3DModelAttrReset(sub->id76[ply->idx].c, 0x40000002);
+            ply->vec.z = -z[2];
+        }
+        if ((ply->idx & 1) != 0) {
+            HuAudFXPlayPan(0x6E6, pan[ply->idx]);
+        } else {
+            HuAudFXPlayPan(0x6E5, pan[ply->idx]);
+        }
+        ply->v484 = 0;
+        entry->e02 = 0;
+        entry->e00++;
+    case 5:
+        entry->e02++;
+        if (entry->e02 >= 15) {
+            if (ply->v0e == 0) {
+                fn_1_BE78(sub, sub->idA[0][ply->idx], 1);
+                fn_1_BE78(sub, sub->idA[6][ply->idx], 1);
+                fn_1_BE78(sub, sub->idA[7][ply->idx], 1);
+                fn_1_BE78(sub, sub->idA[8][ply->idx], 1);
+                fn_1_BE78(sub, sub->idA[9][ply->idx], 1);
+                fn_1_BE78(sub, sub->idae[ply->idx], 0);
+                Hu3DModelAttrReset(sub->id76[ply->idx].a, 0x40000002);
+            } else {
+                fn_1_BE78(sub, sub->idA[0][ply->idx], 1);
+                fn_1_BE78(sub, sub->idA[4][ply->idx], 1);
+                fn_1_BE78(sub, sub->idA[9][ply->idx], 1);
+                fn_1_BE78(sub, sub->idC[ply->idx], 1);
+                Hu3DModelAttrReset(sub->id76[ply->idx].c, 0x40000002);
+            }
+            entry->e00++;
+        }
+        break;
+    case 6:
+        if (ply->v0e == 0) {
+            ply->vec.z = z[3];
+        } else {
+            ply->vec.z = -z[3];
+        }
+        ply->v484 = 0;
+        entry->e02 = 0;
+        entry->e00++;
+    case 7:
+        entry->e02++;
+        if (entry->e02 >= 15) {
+            if (ply->v0e == 0) {
+                fn_1_BE78(sub, sub->idA[1][ply->idx], 1);
+                Hu3DModelAttrSet(sub->id76[ply->idx].a, 0x40000004);
+                Hu3DModelAttrReset(sub->id76[ply->idx].a, 0x40000002);
+                for (k0 = 0; k0 < 25; k0++) {
+                    if (ply->mdlIds[0][k0] >= 0) {
+                        Hu3DModelAttrSet(ply->mdlIds[0][k0], HU3D_ATTR_DISPOFF);
+                    }
+                }
+            } else {
+                fn_1_BE78(sub, sub->idA[5][ply->idx], 1);
+                Hu3DModelAttrSet(sub->id76[ply->idx].c, 0x40000004);
+                Hu3DModelAttrReset(sub->id76[ply->idx].c, 0x40000002);
+                for (k1 = 0; k1 < 25; k1++) {
+                    if (ply->mdlIds[1][k1] >= 0) {
+                        Hu3DModelAttrSet(ply->mdlIds[1][k1], HU3D_ATTR_DISPOFF);
+                    }
+                }
+            }
+            fn_1_72E4(ply);
+            entry->e00++;
+        }
+        break;
+    case 8:
+        ply->v486 = 0;
+        entry->e02 = 0;
+        if (ply->v0e == 0) {
+            ply->v47e = 1;
+        } else {
+            ply->v47e = 2;
+        }
+        entry->e00++;
+    case 9:
+        if (ply->v0e == 0) {
+            if (ply->v47c == 1 && ply->v486 == 5) {
+                if (ply->obj->mtnId[0] != Hu3DMotionIDGet(ply->obj->mdlId[0])
+                    && ply->obj->mtnId[0] != Hu3DMotionShiftIDGet(ply->obj->mdlId[0])) {
+                    Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+                }
+                ply->v47e = 3;
+                ply->v486 = 0;
+            }
+        } else if (ply->v47c == 2 && ply->v486 == 5) {
+            if (ply->obj->mtnId[0] != Hu3DMotionIDGet(ply->obj->mdlId[0])
+                && ply->obj->mtnId[0] != Hu3DMotionShiftIDGet(ply->obj->mdlId[0])) {
+                Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+            }
+            ply->v47e = 0;
+            ply->v486 = 0;
+        }
+        entry->e02++;
+        if (entry->e02 >= 10) {
+            entry->e00++;
+        }
+        break;
+    case 10:
+        if (entry->camfn == 0) {
+            entry->e02 = 0;
+            entry->e00++;
+            if (ply->v0e == 0) {
+                entry->camfn = fn_1_8964;
+            } else {
+                entry->camfn = fn_1_90B4;
+            }
+            if ((ply->idx & 1) != 0) {
+                HuAudFXPlayPan(0x6E4, pan[ply->idx]);
+            } else {
+                HuAudFXPlayPan(0x6E3, pan[ply->idx]);
+            }
+            omVibrate(ply->idx, 15, 6, 6);
+        }
+        break;
+    case 11:
+        entry->e02++;
+        if (entry->e02 == 5) {
+            if (ply->v0e == 0) {
+                fn_1_BE78(sub, sub->idA[3][ply->idx], 0);
+                fn_1_BE78(sub, sub->idA[4][ply->idx], 0);
+                fn_1_BE78(sub, sub->idA[5][ply->idx], 0);
+                fn_1_BE78(sub, sub->idb6[ply->idx][1], 0);
+                fn_1_BE78(sub, sub->idB[ply->idx][0], 0);
+                fn_1_BE78(sub, sub->id76[ply->idx].c, 0);
+                fn_1_BE78(sub, sub->id76[ply->idx].d, 0);
+                fn_1_BE78(sub, sub->id96[ply->idx][1], 0);
+                fn_1_BF24(sub, sub->idb6[ply->idx][0], 0);
+                Hu3DModelLayerSet(sub->idA[6][ply->idx], 2);
+            } else {
+                fn_1_BE78(sub, sub->idA[7][ply->idx], 0);
+                fn_1_BE78(sub, sub->idA[8][ply->idx], 0);
+                fn_1_BE78(sub, sub->idb6[ply->idx][2], 0);
+                fn_1_BE78(sub, sub->idB[ply->idx][1], 0);
+                fn_1_BF24(sub, sub->idb6[ply->idx][1], 0);
+            }
+        }
+        if (entry->e02 == 0x55) {
+            omVibrate(ply->idx, 15, 6, 6);
+        }
+        if (entry->e02 >= 0x64) {
+            if (ply->v0e == 1) {
+                fn_1_BF24(sub, sub->idB[ply->idx][0], 0);
+                fn_1_BF24(sub, sub->id96[ply->idx][0], 0);
+                fn_1_BF24(sub, sub->ida6[ply->idx], 0);
+            }
+            entry->e00 = 0x12;
+        }
+        d = (f32)entry->e02 / 100.0f;
+        t = fn_1_BD10(sub->id96[ply->idx][ply->v0e], ply->v0e, d);
+        ply->from.y = 25.0f + t;
+        ply->vec.y = 25.0f + t;
+        break;
+    case 12:
+        ply->v0e++;
+        if (ply->v0e == 1) {
+            entry->camfn = fn_1_8BD4;
+            ply->vec.z = z[2];
+            ply->vec.y = 425.0f;
+        } else {
+            entry->camfn = fn_1_9324;
+            ply->vec.z = -z[2];
+            ply->vec.y = 825.0f;
+        }
+        fn_1_C2B0(ply);
+        ply->v484 = 0;
+        entry->e02 = 0;
+        if (ply->obj->mtnId[2] != Hu3DMotionIDGet(ply->obj->mdlId[0])
+            && ply->obj->mtnId[2] != Hu3DMotionShiftIDGet(ply->obj->mdlId[0])) {
+            Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[2], 0.0f, 5.0f, 0x40000001);
+        }
+        entry->e00++;
+    case 13:
+        entry->e02++;
+        if (entry->e02 == 10) {
+            if (ply->v0e == 1) {
+                fn_1_BF24(sub, sub->idA[0][ply->idx], 0);
+                fn_1_BF24(sub, sub->idA[3][ply->idx], 0);
+                fn_1_BF24(sub, sub->idA[4][ply->idx], 1);
+                fn_1_BF24(sub, sub->idA[7][ply->idx], 0);
+                fn_1_BF24(sub, sub->idA[8][ply->idx], 1);
+                fn_1_BF24(sub, sub->idA[9][ply->idx], 1);
+                fn_1_BF24(sub, sub->id76[ply->idx].d, 0);
+                Hu3DMotionSet(sub->idae[ply->idx], sub->v108);
+                fn_1_BF24(sub, sub->idae[ply->idx], 1);
+            } else {
+                fn_1_BF24(sub, sub->idA[1][ply->idx], 0);
+                fn_1_BF24(sub, sub->idA[7][ply->idx], 1);
+                fn_1_BF24(sub, sub->id76[ply->idx].b, 0);
+                fn_1_BE78(sub, sub->idae[ply->idx], 0);
+            }
+        }
+        if (entry->e02 >= 15) {
+            if (ply->v0e == 1) {
+                Hu3DModelAttrSet(sub->id76[ply->idx].b, 0x40000004);
+                Hu3DModelAttrReset(sub->id76[ply->idx].b, 0x40000002);
+            } else {
+                Hu3DModelAttrSet(sub->id76[ply->idx].d, 0x40000004);
+                Hu3DModelAttrReset(sub->id76[ply->idx].d, 0x40000002);
+            }
+            entry->e00++;
+        }
+        break;
+    case 14:
+        if (ply->v0e == 1) {
+            ply->vec.z = z[1];
+        } else {
+            ply->vec.z = -z[1];
+        }
+        ply->v484 = 0;
+        entry->e02 = 0;
+        entry->e00++;
+    case 15:
+        entry->e02++;
+        if (entry->e02 == 5 && ply->v0e == 2) {
+            fn_1_BF24(sub, sub->idC[ply->idx], 1);
+            Hu3DModelLayerSet(sub->idA[6][ply->idx], 6);
+        }
+        if (entry->e02 >= 15) {
+            entry->e00++;
+        }
+        break;
+    case 16:
+        if (ply->v0e == 1) {
+            ply->vec.z = z[0];
+        } else {
+            ply->vec.z = -z[0];
+        }
+        ply->v484 = 0;
+        entry->e02 = 0;
+        entry->e00++;
+    case 17:
+        entry->e02++;
+        if (entry->e02 >= 15) {
+            if (ply->v0e == 1) {
+                fn_1_BF24(sub, sub->id76[ply->idx].a, 0);
+            } else {
+                fn_1_BF24(sub, sub->idA[2][ply->idx], 0);
+                fn_1_BF24(sub, sub->idA[4][ply->idx], 0);
+                fn_1_BF24(sub, sub->id76[ply->idx].c, 0);
+                fn_1_BF24(sub, sub->idA[3][ply->idx], 0);
+            }
+            entry->e00 = 0;
+            ret = 1;
+        }
+        break;
+    case 18:
+        if (ply->v0e == 0) {
+            Hu3DModelAttrReset(sub->id76[ply->idx].b, 0x40000002);
+        } else {
+            Hu3DModelAttrReset(sub->id76[ply->idx].d, 0x40000002);
+        }
+        if ((ply->idx & 1) != 0) {
+            HuAudFXPlayPan(0x6E6, pan[ply->idx]);
+        } else {
+            HuAudFXPlayPan(0x6E5, pan[ply->idx]);
+        }
+        entry->e02 = 0;
+        entry->e00++;
+    case 19:
+        entry->e02++;
+        if (entry->e02 >= 10) {
+            entry->e00 = 0xC;
+        }
+        break;
+    }
+    if (entry->camfn != 0 && entry->camfn(entry->slot) != 0) {
+        entry->camfn = 0;
+    }
+    return ret;
 }
 
 s32 fn_1_B0B8(M515_ENTRY *entry, M515_PLY *ply)
