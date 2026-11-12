@@ -46,7 +46,7 @@ void fn_1_2D98(void);
 void fn_1_3088(void);
 void fn_1_3174(void);
 void fn_1_3324(void);
-void fn_1_4E8C(M550STATE *state, M550MODEL *model, s32 *modelData);
+void fn_1_4E8C(M550STATE *state, M550MODEL *model, M550MODELIDS *modelData);
 void fn_1_50D8(s16 stageNo);
 void fn_1_58F4(M550MOTIONSET *p0, M550MOTIONSET *p1);
 void fn_1_5918(s16 *p0, s16 *p1);
@@ -141,7 +141,7 @@ void ObjectSetup(void)
     for (i = 0; i < 0xB7; i++) {
         lbl_1_bss_A8[i].id = -1;
     }
-    fn_1_4E8C(&lbl_1_bss_14AC, lbl_1_bss_A8, lbl_1_data_8);
+    fn_1_4E8C(&lbl_1_bss_14AC, lbl_1_bss_A8, (M550MODELIDS *)lbl_1_data_8);
     lbl_1_bss_14AC.player[0].objman = omInitObjMan(0x32, 0x2000);
     omGameSysInit(lbl_1_bss_14AC.player[0].objman);
     omAddObjEx(lbl_1_bss_14AC.player[0].objman, 0x7FDA, 0, 0, -1, omOutView);

@@ -75,9 +75,7 @@ typedef struct M550Motion_s {
 /* Decoration/effect work slot (0x4C bytes). */
 typedef struct M550Fx_s {
     /* 0x00 */ s32 state;
-    /* 0x04 */ s32 time;
-    /* 0x08 */ s32 work08;
-    /* 0x0C */ s32 work0C;
+    /* 0x04 */ s32 cnt[3];
     /* 0x10 */ s32 work10;
     /* 0x14 */ s32 work14;
     /* 0x18 */ s32 work18;
@@ -99,6 +97,17 @@ typedef struct M550MotionSet_s {
     s32 id[5];
 } M550MOTIONSET;
 
+/* The model file id table (lbl_1_data_8); stage setup reaches some entries
+   as named member arrays, so mirror that layout. */
+typedef struct M550ModelIds_s {
+    /* 0x00 */ s32 id[0x33];
+    /* 0xCC */ s32 cc[2];
+    /* 0xD4 */ s32 d4[2];
+    /* 0xDC */ s32 dc[2];
+    /* 0xE4 */ s32 e4;
+    /* 0xE8 */ s32 e8[2];
+} M550MODELIDS;
+
 /* lbl_1_bss_14AC: the module-wide game state block. */
 typedef struct M550State_s {
     /* 0x000 */ M550PLAYER player[2];
@@ -107,7 +116,7 @@ typedef struct M550State_s {
     /* 0x040 */ M550MOTIONSET *motionSet[2];
     /* 0x048 */ s16 *motionId[2];
     /* 0x050 */ M550MOTION motion[2];
-    /* 0x0F8 */ s32 *modelData;
+    /* 0x0F8 */ M550MODELIDS *modelData;
     /* 0x0FC */ s16 stageNo;
     /* 0x100 */ s32 modes[3]; /* [0] game mode, [1 + side] per-player state */
     /* 0x10C */ s32 unk10C;
