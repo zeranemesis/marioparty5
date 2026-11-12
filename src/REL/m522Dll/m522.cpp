@@ -1503,7 +1503,7 @@ void fn_1_A04C(M522RModel *self, char *name)
     HSFOBJECT *obj;
     u32 *flags;
 
-    obj = M522RObjGet(self, name);
+    obj = fn_1_9EF0(self, name);
     flags = (u32 *)obj->constData;
     *flags &= ~8;
 }
@@ -1512,7 +1512,7 @@ void fn_1_A0F8(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
 
-    obj = M522RObjGet(self, name);
+    obj = fn_1_9EF0(self, name);
     obj->flags |= 0x400;
 }
 
@@ -1520,7 +1520,7 @@ void fn_1_A1A0(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
 
-    obj = M522RObjGet(self, name);
+    obj = fn_1_9EF0(self, name);
     obj->flags &= ~0x400;
 }
 
@@ -1529,7 +1529,7 @@ void fn_1_A248(M522RModel *self, char *name)
     HSFOBJECT *obj;
     HSFTRANSFORM *base;
 
-    obj = M522RObjGet(self, name);
+    obj = fn_1_9EF0(self, name);
     obj->flags |= 0x400;
     base = &obj->mesh.base;
     base->scale.x = 0.0f;
@@ -1542,7 +1542,7 @@ void fn_1_A324(M522RModel *self, char *name)
     HSFOBJECT *obj;
     HSFTRANSFORM *base;
 
-    obj = M522RObjGet(self, name);
+    obj = fn_1_9EF0(self, name);
     obj->flags &= ~0x400;
     base = &obj->mesh.base;
     base->scale.x = 1.0f;
