@@ -76,6 +76,23 @@ typedef struct M579Fish {
     f32 yaw;
 } M579Fish;
 
+/* Spray particle effect (water.cpp, effect.cpp). */
+typedef struct M579Spray {
+    M579Node node;
+    s16 model;
+    s32 count;
+} M579Spray;
+
+/* Expanding ripple on the water surface (water.cpp). */
+typedef struct M579Ripple {
+    M579Node node;
+    s16 model;
+    Vec pos;
+    f32 scale;
+    f32 maxScale;
+    u8 alpha;
+} M579Ripple;
+
 typedef struct M579S16Vec {
     u32 cap;
     u32 size;
@@ -128,6 +145,7 @@ void abort(void);
 s32 fn_1_4AE0(void);
 f32 fn_1_4D1C(void);
 void fn_1_9668(Vec *pos, s32 seId);
+void fn_1_1360(void *list, void *dst);
 /* model wrappers (m579.cpp); a model is an s16 handle */
 s16 *fn_1_2DB4(s16 *model, s32 dataNum);
 void fn_1_2E08(s16 *model, s32 attr);

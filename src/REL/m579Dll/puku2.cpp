@@ -182,7 +182,7 @@ void fn_1_6534(M579Puku *self)
     void *mem;
 
     if ((self->pos.y > -150.0 && self->prev.y <= -150.0) || (self->pos.y < -150.0 && self->prev.y >= -150.0)) {
-        mem = fn_1_0(0x10);
+        mem = fn_1_0(sizeof(M579Spray));
         if (mem != 0) {
             fn_1_BD18(mem, &self->pos, self->type);
         }
@@ -274,7 +274,7 @@ void fn_1_6990(M579Puku *self)
     void *mem;
 
     if (self->type != 0) {
-        mem = fn_1_0(0x10);
+        mem = fn_1_0(sizeof(M579Spray));
         if (mem != 0) {
             fn_1_A084(mem, &self->pos);
         }
@@ -381,7 +381,7 @@ void fn_1_6AD4(M579Puku *self)
         fn_1_682C(self, 0, 0);
     }
     if (self->type != 0) {
-        mem = fn_1_0(0x10);
+        mem = fn_1_0(sizeof(M579Spray));
         if (mem != 0) {
             fn_1_A084(mem, &self->pos);
         }

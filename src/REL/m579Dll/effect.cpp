@@ -14,11 +14,7 @@ extern void *lbl_1_bss_A04;
 }
 
 /* Splash particle effect object. */
-typedef struct M579Splash {
-    M579Node node;
-    s16 model;
-    s32 count;
-} M579Splash;
+typedef M579Spray M579Splash;
 
 typedef struct M579EffMgr {
     M579Base base;
@@ -145,7 +141,7 @@ M579Splash *fn_1_BD18(M579Splash *self, Vec *pos, s32 type)
     }
     Hu3DParticleTPLvlSet(self->model, 0.0f);
     Hu3DParticleBlendModeSet(self->model, 0);
-    mem = fn_1_0(0x24);
+    mem = fn_1_0(sizeof(M579Ripple));
     if (mem != 0) {
         if (type == 0) {
             size = 0xC8;
