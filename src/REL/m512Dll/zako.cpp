@@ -171,10 +171,13 @@ void *lbl_1_data_580[5] = { 0, 0, (void *)fn_1_E99C, (void *)fn_1_EAF4, (void *)
 char lbl_1_data_594[] = "vector::at index out of range\0vector::insert length error\n\0Memory allocation failure\0vector::reserve length error\n\0";
 }
 
+// local statics of player.cpp's fn_1_B420 (the split put them in this unit's bss)
+extern "C" {
 f64 lbl_1_bss_A68;
 char lbl_1_bss_A70[1];
 f64 lbl_1_bss_A78;
-f64 lbl_1_bss_A80;
+char lbl_1_bss_A80[8];
+}
 s32 lbl_1_bss_A88;
 s32 lbl_1_bss_A8C;
 s32 lbl_1_bss_A90;
