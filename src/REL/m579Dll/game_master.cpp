@@ -1,4 +1,6 @@
-#include "dolphin/types.h"
+#include "dolphin.h"
+#include "game/sprite.h"
+#include "REL/m579Dll/m579objs.h"
 
 extern "C" {
 typedef void (*VoidFunc)(void);
@@ -64,14 +66,14 @@ void HuAudJinglePlay(s16 id);
 void HuAudSStreamFadeOut(s32 seq, s32 fade);
 u32 OSGetTick(void);
 
-u32 lbl_1_bss_A08;
-u32 lbl_1_bss_A0C;
-u32 lbl_1_bss_A10;
-u32 lbl_1_bss_A14;
-u32 lbl_1_bss_A18;
-u32 lbl_1_bss_A1C;
-u32 lbl_1_bss_A20;
-u32 lbl_1_bss_A24;
+M579Camera *lbl_1_bss_A08;
+M579WaterMgr *lbl_1_bss_A0C;
+M579ItemMgr *lbl_1_bss_A10;
+M579MotionMgr *lbl_1_bss_A14;
+s32 lbl_1_bss_A18;
+s32 lbl_1_bss_A1C;
+s32 lbl_1_bss_A20;
+M579WaterEff *lbl_1_bss_A24;
 
 void *fn_1_7650(M579GameMaster *self);
 void *fn_1_76BC(M579GameMaster *self, s16 flag);
@@ -135,47 +137,47 @@ void fn_1_7748(void)
     OSGetTick();
     fn_1_4A08();
 
-    p1 = fn_1_0(0x1c);
+    p1 = fn_1_0(sizeof(M579WaterMgr));
     if (p1 != 0) {
         p1 = fn_1_97CC(p1);
     }
 
-    p2 = fn_1_0(0x10);
+    p2 = fn_1_0(sizeof(M579EffMgr));
     if (p2 != 0) {
         p2 = fn_1_BA70(p2);
     }
 
-    p3 = fn_1_0(0x14);
+    p3 = fn_1_0(sizeof(M579Stage));
     if (p3 != 0) {
         p3 = fn_1_B2C8(p3);
     }
 
-    p4 = fn_1_0(0x74);
+    p4 = fn_1_0(sizeof(M579Camera));
     if (p4 != 0) {
         p4 = fn_1_8B0C(p4);
     }
 
-    p5 = fn_1_0(0x84);
+    p5 = fn_1_0(sizeof(M579Score));
     if (p5 != 0) {
         p5 = fn_1_14208(p5);
     }
 
-    p6 = fn_1_0(0x10);
+    p6 = fn_1_0(sizeof(M579FishMgr));
     if (p6 != 0) {
         p6 = fn_1_10C84(p6);
     }
 
-    p7 = fn_1_0(0x20);
+    p7 = fn_1_0(sizeof(M579MotionMgr));
     if (p7 != 0) {
         p7 = fn_1_15AD8(p7);
     }
 
-    p8 = fn_1_0(0x130);
+    p8 = fn_1_0(sizeof(M579WaterEff));
     if (p8 != 0) {
         p8 = fn_1_148AC(p8);
     }
 
-    p9 = fn_1_0(0x68);
+    p9 = fn_1_0(sizeof(M579ItemMgr));
     if (p9 != 0) {
         p9 = fn_1_16F3C(p9);
     }
@@ -183,7 +185,7 @@ void fn_1_7748(void)
     CharEffectLayerSet(3);
 
     for (i = 0; i < 4; i++) {
-        p10 = fn_1_0(0x80);
+        p10 = fn_1_0(sizeof(M579Player));
         if (p10 != 0) {
             p10 = fn_1_CAD0(p10, i);
         }
