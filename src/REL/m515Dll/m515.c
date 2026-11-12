@@ -9,6 +9,8 @@
 #include "game/charman.h"
 #include "game/mg/seqman.h"
 
+typedef struct M515Node2_s M515_NODE2;
+typedef s32 (*M515_NODEFN)(M515_NODE2 *node);
 typedef struct M515Slot_s M515_SLOT;
 typedef struct M515Cell_s M515_CELL;
 typedef struct M515Node2_s M515_NODE2;
@@ -55,20 +57,25 @@ typedef struct M515Entry_s {
 typedef struct M515EspPair_s {
     s16 id0;
     s16 id1;
+    f32 f4;
+    f32 f8;
+    f32 fc;
 } M515_ESPPAIR;
 
-// Model-ID table read by fn_1_CAF0. Only the three offsets it touches matter.
-typedef struct M515IdTriple_s {
-    s16 first;
-    char pad_02[4];
-} M515_IDTRIPLE;
+typedef struct M515Id4_s {
+    s16 a;
+    s16 b;
+    s16 c;
+    s16 d;
+} M515_ID4;
 
-typedef struct M515Ids_s {
-    char pad_00[0x26];
-    s16 run1[0x40];
-    s16 run2[8];
-    M515_IDTRIPLE run3[4];
-} M515_IDS;
+// Per-player group of the global state (stride 0x28).
+typedef struct M515Grp_s {
+    s32 f00;
+    char pad_04[8];
+    s32 f0c;
+    char pad_10[0x28 - 0x10];
+} M515_GRP;
 
 // Intrusive doubly-linked node (stride 0x14) behind the head/cur lists of M515_SUB.
 struct M515Node2_s {
@@ -76,7 +83,7 @@ struct M515Node2_s {
     s16 f02;
     s16 f04;
     char pad_06[2];
-    s32 (*func)(M515_NODE2 *node);
+    M515_NODEFN func;
     M515_NODE2 *prev;
     M515_NODE2 *next;
 };
@@ -92,28 +99,40 @@ struct M515Sub_s {
     s16 v00;
     s16 v02[5];
     s16 modelId;
-    char pad_00e[0xdc - 0xe];
+    char pad_00E[0x16 - 0xE];
+    s16 id16[4];
+    s16 id1e[4];
+    s16 id26[4];
+    char pad_02E[0x76 - 0x2E];
+    M515_ID4 id76[4];
+    s16 id96[4][2];
+    s16 ida6[4];
+    char pad_0AE[0xB6 - 0xAE];
+    s16 idb6[4][3];
+    char pad_0CE[0xDC - 0xCE];
     s16 mdl;
+    char pad_0DE[0xE0 - 0xDE];
     s16 mot[8];
-    char pad_0ee[0x1d0 - 0xee];
+    char pad_0F0[0x130 - 0xF0];
+    M515_GRP grp[4];
     s16 v1d0;
     s16 v1d2;
     s16 v1d4;
     s16 v1d6;
-    char pad_1d8[2];
+    s16 v1d8;
     s16 v1da;
     s16 v1dc[4][3];
     s32 v1f4;
-    char pad_1f8[0x224 - 0x1f8];
+    char pad_1F8[0x224 - 0x1F8];
     M515_PLY *ply[4];
     M515_SLOT slot[4];
     M515_ENTRY entry[4];
     M515_ESPPAIR esp;
-    char pad_338[0x344 - 0x338];
     M515_NODE2 *head;
     M515_NODE2 *cur;
     M515_NODE2 node[0x78];
     s16 v0cac;
+    char pad_CAE[0xCB0 - 0xCAE];
 };
 
 typedef struct M515Mark_s {
@@ -218,7 +237,7 @@ u16 fn_1_7924(M515_PLY *ply);
 u16 fn_1_DD18(M515_PLY *ply);
 void fn_1_7BE8(M515_MARK *mark, M515_SUB *sub);
 void fn_1_81A8(M515_SLOT *slot, M515_PLY *ply);
-s16 fn_1_7878(M515_PLY *ply);
+s32 fn_1_7878(M515_PLY *ply);
 void fn_1_6980(M515_PLY *ply);
 void fn_1_6318(M515_PLY *ply);
 s32 fn_1_611C(M515_PLY *ply);
@@ -525,7 +544,7 @@ void fn_1_2684(OMOBJ *obj)
     if (sub->v1d4 != 0) {
         if (ply->v482 == 4) {
             ply->v682 = 0;
-            if (fn_1_7878(ply) != 0) {
+            if ((s16)fn_1_7878(ply) != 0) {
                 ply->v482 = 0;
             }
             fn_1_5FD0(ply);
@@ -863,7 +882,7 @@ void fn_1_77F0(M515_PLY *ply, s32 r)
     }
 }
 
-s16 fn_1_7878(M515_PLY *self)
+s32 fn_1_7878(M515_PLY *self)
 {
     s32 ret = 0;
     M515_SUB *global = M515_SUBOF(lbl_1_bss_4);
@@ -898,32 +917,32 @@ void fn_1_9920(M515_ESPPAIR *esp)
     espKill(esp->id1);
 }
 
-s32 fn_1_C0D0(M515_ENTRY *entry)
+s32 fn_1_C0D0(M515_NODE2 *node)
 {
-    if (entry->e00 >= 0) {
-        Hu3DModelAttrReset(entry->e00, HU3D_ATTR_DISPOFF);
-        entry->e02 = Hu3DMotionIDGet(entry->e00);
-        if (entry->e02 >= 0) {
-            Hu3DMotionTimeSet(entry->e00, 0.0f);
-            Hu3DModelAttrSet(entry->e00, 0x40000002);
+    if (node->f00 >= 0) {
+        Hu3DModelAttrReset(node->f00, HU3D_ATTR_DISPOFF);
+        node->f02 = Hu3DMotionIDGet(node->f00);
+        if (node->f02 >= 0) {
+            Hu3DMotionTimeSet(node->f00, 0.0f);
+            Hu3DModelAttrSet(node->f00, 0x40000002);
         }
     }
 
     return 1;
 }
 
-s32 fn_1_C26C(M515_ENTRY *entry)
+s32 fn_1_C26C(M515_NODE2 *node)
 {
-    if (entry->e00 >= 0) {
-        Hu3DModelAttrSet(entry->e00, HU3D_ATTR_DISPOFF);
+    if (node->f00 >= 0) {
+        Hu3DModelAttrSet(node->f00, HU3D_ATTR_DISPOFF);
     }
 
     return 1;
 }
 
-void fn_1_CAF0(M515_IDS *ids, s32 i)
+void fn_1_CAF0(M515_SUB *sub, s32 i)
 {
-    Hu3DModelAttrReset(ids->run3[i].first, HU3D_ATTR_DISPOFF);
-    Hu3DModelAttrReset(ids->run1[i], HU3D_ATTR_DISPOFF);
-    Hu3DModelAttrReset(ids->run2[i], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->idb6[i][0], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->id26[i], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(sub->ida6[i], HU3D_ATTR_DISPOFF);
 }
