@@ -1,34 +1,41 @@
-#include "dolphin/types.h"
+#ifndef TARGET_PC
+#define _MATH_H
+#endif
+#include "REL/m537Dll.h"
+
+// m537::CGameMaster is written as plain C inside extern "C" with an explicit
+// 12-word vtable. The object carries two vtable slots, so the last two vtable
+// entries are this-adjusting thunks; on GameCube they are inline __asm blocks,
+// on PC they are plain C functions that step back to the master object.
 
 extern "C" {
-u32 fn_1_0(u32 size);
-void fn_1_10230(s32 arg0, s32 arg1);
-void fn_1_10590(void);
+
+
 void fn_1_1C48(s32 arg);
 u8 fn_1_1CE0(void);
 void fn_1_1D6C(void);
 void fn_1_1DE0(void);
-void fn_1_1F40(void *self);
-void fn_1_20CC(void *self, s32 arg);
+M537Main *fn_1_1F40(M537Main *self);
+M537Main *fn_1_20CC(M537Main *self, s16 freeIt);
 void fn_1_2704(void);
 void fn_1_27BC(void);
 u8 fn_1_2874(void);
 void fn_1_2BEC(void);
 void fn_1_2C44(void);
 void fn_1_47E4(void *self);
-void fn_1_4A08(void);
-void fn_1_5040(void *self, u32 arg);
-void fn_1_50BC(void *self, s32 arg);
-void fn_1_5170(s32 self, s32 arg);
-void fn_1_5200(s32 self, s32 arg);
-void fn_1_5878(void *self, s32 arg);
-void fn_1_5940(void *self, s32 arg);
-void fn_1_599C(s32 self, s32 arg1, s32 arg2, s32 arg3);
-void fn_1_5A94(s32 self, s32 arg);
-void fn_1_5B88(s32 self);
-u8 fn_1_5BF0(s32 self);
-u32 fn_1_8964(u32 self);
-u32 fn_1_9290(u32 self);
+void fn_1_4A08(u32 seed);
+M537CThread *fn_1_5040(M537CThread *self, u32 stackSize);
+void *fn_1_50BC(void *self, s16 freeIt);
+s32 fn_1_5170(M537CThread *self, s32 value);
+s32 fn_1_5200(M537CThread *self, s32 value);
+MGTIMER **fn_1_5878(MGTIMER **out, s32 type);
+MGTIMER **fn_1_5940(MGTIMER **timer, s16 freeIt);
+void fn_1_599C(MGTIMER **timer, s32 maxTime, s32 endTime, s32 recordTime);
+void fn_1_5A94(MGTIMER **timer, s32 offType);
+void fn_1_5B88(MGTIMER **timer);
+u8 fn_1_5BF0(MGTIMER **timer);
+M537Camera *fn_1_8964(M537Camera *self);
+M537Stage *fn_1_9290(M537Stage *self);
 void fn_1_99D0(void);
 void fn_1_9ACC(void);
 void fn_1_9B64(void);
@@ -36,44 +43,29 @@ void fn_1_9BFC(void);
 void fn_1_9D74(void);
 void fn_1_9EE4(void);
 s32 fn_1_A0C4(void);
-u32 fn_1_FF4C(u32 self);
-s32 HuAudBGMPlay(s32 arg);
-void HuAudFXPlay(s32 arg);
-void HuAudJinglePlay(s32 arg);
-void HuAudSStreamFadeOut(s32 arg1, s32 arg2);
-void Hu3DShadowCreate(f32 fov, f32 near, f32 far);
-void Hu3DShadowPosSet(void *pos, void *up, void *target);
-void Hu3DShadowSizeSet(u16 size);
-void Hu3DShadowTPLvlSet(f32 lvl);
-u32 OSGetTick(void);
-
-typedef struct M537GameMaster_s {
-    void *unk0;
-    void *unk4;
-    u8 pad0[0x20 - 0x8];
-    void *unk20;
-    u8 pad1[0x358 - 0x24];
-    void *unk358;
-} M537GameMaster;
+M537Center *fn_1_FF4C(M537Center *self);
+M537Center *fn_1_10230(M537Center *self, s16 freeIt);
+void fn_1_10590(void);
 
 s32 lbl_1_bss_A00;
 s32 lbl_1_bss_A04;
 s32 lbl_1_bss_A08;
-s32 lbl_1_bss_A0C;
-s32 lbl_1_bss_A10;
-s32 lbl_1_bss_A14;
+M537Center *lbl_1_bss_A0C;
+M537Camera *lbl_1_bss_A10;
+M537Stage *lbl_1_bss_A14;
 
-typedef struct M537Shadow_s {
-    s32 v[9];
-} M537Shadow;
+// Shadow light placement: position, up vector and target.
+struct M537Shadow {
+    Vec v[3];
+};
 
-typedef struct M537ShadowFov_s {
+struct M537ShadowFov {
     f32 v[2];
-} M537ShadowFov;
+};
 
 extern const M537ShadowFov lbl_1_rodata_1F8 = {{288.0f, 0.0f}};
 extern const M537Shadow lbl_1_rodata_200 = {
-    {0x0, 0x45FA0000, 0x0, 0x0, 0x0, 0xBF800000, 0x0, 0x0, 0x0},
+    {{0.0f, 8000.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
 };
 
 /* Preserve the original constant pool and load order instead of folding literals. */
@@ -81,51 +73,57 @@ extern const f32 lbl_1_rodata_224 = 30.0f;
 extern const f32 lbl_1_rodata_228 = 6800.0f;
 extern const f32 lbl_1_rodata_22C = 7200.0f;
 extern const f32 lbl_1_rodata_230[2] = {0.4f, 0.0f};
-void *fn_1_83CC(void *self);
-void *fn_1_8438(void *self, s16 arg);
+
+void *fn_1_83CC(M537GameMaster *self);
+void *fn_1_8438(M537GameMaster *self, s16 arg);
 void fn_1_84C4(void);
-void fn_1_8604(s32 arg);
-void fn_1_8640(s32 arg);
-u8 fn_1_87C4(s32 arg);
-void fn_1_881C(s32 arg);
+void fn_1_8604(M537GameMaster *self);
+void fn_1_8640(M537GameMaster *self);
+u8 fn_1_87C4(M537GameMaster *self);
+void fn_1_881C(M537GameMaster *self);
 void fn_1_8848(void);
 void fn_1_888C(void);
+#ifdef TARGET_PC
+void fn_1_88C0(M537CThread *thread);
+void *fn_1_88C8(M537CThread *thread, s16 flag);
+#else
 void fn_1_88C0(void);
 void fn_1_88C8(void);
+#endif
 
 void *lbl_1_data_320[] = {
     0,
     0,
-    fn_1_8438,
-    fn_1_84C4,
-    fn_1_8604,
-    fn_1_8848,
+    (void *)fn_1_8438,
+    (void *)fn_1_84C4,
+    (void *)fn_1_8604,
+    (void *)fn_1_8848,
     0,
     0,
-    fn_1_88C8,
-    fn_1_88C0,
-    fn_1_881C,
-    fn_1_8640,
+    (void *)fn_1_88C8,
+    (void *)fn_1_88C0,
+    (void *)fn_1_881C,
+    (void *)fn_1_8640,
 };
 
-void *fn_1_83CC(void *self)
+void *fn_1_83CC(M537GameMaster *self)
 {
-    fn_1_1F40(self);
-    fn_1_5040((u8 *)self + 0x20, 0x8000);
-    ((M537GameMaster *)self)->unk4 = lbl_1_data_320;
-    ((M537GameMaster *)self)->unk20 = (void *)((u8 *)lbl_1_data_320 + 0x18);
-    fn_1_5878((u8 *)self + 0x358, 0);
+    fn_1_1F40(&self->m_core);
+    fn_1_5040(&self->m_thread, 0x8000);
+    self->m_core.m_vptr = lbl_1_data_320;
+    self->m_thread.m_vptr = &lbl_1_data_320[6];
+    fn_1_5878(&self->m_timer, 0);
     return self;
 }
 
-void *fn_1_8438(void *self, s16 arg)
+void *fn_1_8438(M537GameMaster *self, s16 arg)
 {
     if (self != 0) {
-        ((M537GameMaster *)self)->unk4 = lbl_1_data_320;
-        ((M537GameMaster *)self)->unk20 = (void *)((u8 *)lbl_1_data_320 + 0x18);
-        fn_1_5940((u8 *)self + 0x358, -1);
-        fn_1_50BC((u8 *)self + 0x20, 0);
-        fn_1_20CC(self, 0);
+        self->m_core.m_vptr = lbl_1_data_320;
+        self->m_thread.m_vptr = &lbl_1_data_320[6];
+        fn_1_5940(&self->m_timer, -1);
+        fn_1_50BC(&self->m_thread, 0);
+        fn_1_20CC(&self->m_core, 0);
         if (arg > 0) {
             fn_1_47E4(self);
         }
@@ -136,42 +134,53 @@ void *fn_1_8438(void *self, s16 arg)
 void fn_1_84C4(void)
 {
     M537Shadow sp;
-    u32 temp1;
-    u32 temp2;
-    u32 temp3;
+    M537Stage *stage;
+    M537Camera *camera;
+    M537Center *center;
 
-    OSGetTick();
-    fn_1_4A08();
+    fn_1_4A08(OSGetTick());
     sp = lbl_1_rodata_200;
     Hu3DShadowCreate(*(volatile const f32 *)&lbl_1_rodata_224, *(volatile const f32 *)&lbl_1_rodata_228, *(volatile const f32 *)&lbl_1_rodata_22C);
-    Hu3DShadowPosSet(&sp.v[0], &sp.v[3], &sp.v[6]);
+    Hu3DShadowPosSet(&sp.v[0], &sp.v[1], &sp.v[2]);
     Hu3DShadowSizeSet(0xF0);
     Hu3DShadowTPLvlSet(*(volatile const f32 *)&lbl_1_rodata_230);
-    temp1 = fn_1_0(0x34);
-    if (temp1 != 0) {
-        temp1 = fn_1_9290(temp1);
+#ifdef TARGET_PC
+    stage = (M537Stage *)fn_1_0(sizeof(M537Stage));
+#else
+    stage = (M537Stage *)fn_1_0(0x34);
+#endif
+    if (stage != 0) {
+        stage = fn_1_9290(stage);
     }
-    temp2 = fn_1_0(0xB8);
-    if (temp2 != 0) {
-        temp2 = fn_1_8964(temp2);
+#ifdef TARGET_PC
+    camera = (M537Camera *)fn_1_0(sizeof(M537Camera));
+#else
+    camera = (M537Camera *)fn_1_0(0xB8);
+#endif
+    if (camera != 0) {
+        camera = fn_1_8964(camera);
     }
     fn_1_99D0();
-    temp3 = fn_1_0(0x38);
-    if (temp3 != 0) {
-        temp3 = fn_1_FF4C(temp3);
+#ifdef TARGET_PC
+    center = (M537Center *)fn_1_0(sizeof(M537Center));
+#else
+    center = (M537Center *)fn_1_0(0x38);
+#endif
+    if (center != 0) {
+        center = fn_1_FF4C(center);
     }
 }
 
-void fn_1_8604(s32 arg0)
+void fn_1_8604(M537GameMaster *self)
 {
-    fn_1_5170(arg0 + 0x20, 0);
+    fn_1_5170(&self->m_thread, 0);
     fn_1_1D6C();
     fn_1_9ACC();
     fn_1_10590();
 }
 
 #pragma dont_inline on
-void fn_1_8640(s32 arg0)
+void fn_1_8640(M537GameMaster *self)
 {
     s32 var1;
     s32 var2;
@@ -182,28 +191,28 @@ void fn_1_8640(s32 arg0)
     fn_1_2BEC();
     HuAudFXPlay(0x7DC);
     while (fn_1_1CE0() == 0) {
-        fn_1_5200(arg0 + 0x20, 0);
+        fn_1_5200(&self->m_thread, 0);
     }
     var4 = HuAudBGMPlay(0x36);
     fn_1_1C48(1);
     fn_1_2704();
     while (fn_1_2874() == 0) {
-        fn_1_5200(arg0 + 0x20, 0);
+        fn_1_5200(&self->m_thread, 0);
     }
     fn_1_1C48(2);
     fn_1_9B64();
-    fn_1_599C(arg0 + 0x358, 0xE10, 0, 0);
-    fn_1_5A94(arg0 + 0x358, 1);
-    while (fn_1_87C4(arg0) == 0) {
-        fn_1_5200(arg0 + 0x20, 0);
+    fn_1_599C(&self->m_timer, 0xE10, 0, 0);
+    fn_1_5A94(&self->m_timer, 1);
+    while (fn_1_87C4(self) == 0) {
+        fn_1_5200(&self->m_thread, 0);
     }
-    fn_1_5B88(arg0 + 0x358);
+    fn_1_5B88(&self->m_timer);
     fn_1_1C48(3);
     fn_1_9BFC();
     fn_1_27BC();
     HuAudSStreamFadeOut(var4, 0x64);
     for (var1 = 0; var1 < 0xB4; var1++) {
-        fn_1_5200(arg0 + 0x20, 0);
+        fn_1_5200(&self->m_thread, 0);
     }
     fn_1_1C48(4);
     fn_1_9D74();
@@ -212,35 +221,35 @@ void fn_1_8640(s32 arg0)
     } else {
         var3 = 0x79;
     }
-    HuAudJinglePlay(var3);
+    HuAudJinglePlay((s32)var3);
     for (var2 = 0; var2 < lbl_1_bss_A08; var2++) {
-        fn_1_5200(arg0 + 0x20, 0);
+        fn_1_5200(&self->m_thread, 0);
     }
     fn_1_2C44();
     while (1) {
-        fn_1_5200(arg0 + 0x20, -1);
+        fn_1_5200(&self->m_thread, -1);
     }
 }
 
-u8 fn_1_87C4(s32 arg0)
+u8 fn_1_87C4(M537GameMaster *self)
 {
     u8 res;
 
     res = 1;
-    if ((fn_1_5BF0(arg0 + 0x358) == 0) && (fn_1_A0C4() > 1)) {
+    if ((fn_1_5BF0(&self->m_timer) == 0) && (fn_1_A0C4() > 1)) {
         res = 0;
     }
     return res;
 }
 
-void fn_1_881C(s32 arg0)
+void fn_1_881C(M537GameMaster *self)
 {
-    fn_1_5BF0(arg0 + 0x358);
+    fn_1_5BF0(&self->m_timer);
 }
 
 void fn_1_8848(void)
 {
-    s32 var;
+    M537Center *var;
 
     fn_1_9EE4();
     fn_1_1DE0();
@@ -255,6 +264,17 @@ void fn_1_888C(void)
     lbl_1_bss_A08 = 0xD2;
 }
 
+#ifdef TARGET_PC
+void fn_1_88C0(M537CThread *thread)
+{
+    fn_1_8640((M537GameMaster *)((u8 *)thread - offsetof(M537GameMaster, m_thread)));
+}
+
+void *fn_1_88C8(M537CThread *thread, s16 flag)
+{
+    return fn_1_8438((M537GameMaster *)((u8 *)thread - offsetof(M537GameMaster, m_thread)), flag);
+}
+#else
 #pragma dont_inline on
 void fn_1_88C0(void)
 {
@@ -274,7 +294,15 @@ void fn_1_88C8(void)
     }
 }
 #pragma dont_inline reset
+#endif
 }
 
+#ifdef TARGET_PC
+// The GC build links fn_1_888C through the .ctors section; PC runs it at load time.
+static struct M537GameMasterInit {
+    M537GameMasterInit() { fn_1_888C(); }
+} lbl_1_gameMasterInit;
+#else
 __declspec(section ".ctors")
 static void (*const gameMasterInit)(void) = fn_1_888C;
+#endif
