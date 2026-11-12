@@ -71,7 +71,7 @@ typedef struct M502Stage_s {
 typedef struct M502Cell_s {
     s32 unk0;
     u16 kind;       /* 0x04 */
-    s16 pad6;
+    u16 type;       /* 0x06 */
     s32 vis;        /* 0x08 */
     s16 timerC;     /* 0x0C */
     s16 timerE;     /* 0x0E */
@@ -82,11 +82,33 @@ typedef struct M502Cell_s {
     s16 unk22;
 } M502CELL;
 
+/* block.c: debris burst shown when a block breaks (0x13C bytes on GC) */
+typedef struct M502LevelFx_s {
+    struct M502Block_s *block;
+    u16 state;      /* 0x04 */
+    u16 t;          /* 0x06 */
+    s32 active;     /* 0x08 */
+    Vec pos[8];     /* 0x0C */
+    Vec vel[8];     /* 0x6C */
+    Vec acc[8];     /* 0xCC */
+    s16 model[8];   /* 0x12C */
+} M502LEVELFX;
+
+/* block.c: dust puff model (0x18 bytes on GC) */
+typedef struct M502BlockFx_s {
+    struct M502Block_s *block;
+    u16 state;      /* 0x04 */
+    u16 pad6;
+    f32 amb[3];     /* 0x08 */
+    s16 idx;        /* 0x14 */
+    s16 pad16;
+} M502BLOCKFX;
+
 typedef struct M502Block_s {
     struct M502Player_s *player;
     M502CELL cell[3][27];   /* 0x04 */
-    u8 levelFx[3][0x13C];   /* 0xB68 */
-    u8 fx[2][0x18];         /* 0xF1C */
+    M502LEVELFX levelFx[3]; /* 0xB68 */
+    M502BLOCKFX fx[2];      /* 0xF1C */
     s16 hook;               /* 0xF4C */
     s16 padF4E;
 } M502BLOCK;
@@ -138,9 +160,11 @@ typedef struct M502PlrSub_s {
     s32 lane;       /* 0x60 */
     u8 pad64[8];
     f32 vel;        /* 0x6C */
-    u8 pad70[4];
+    s16 unk70;
+    s16 pad72;
     s32 flag74;     /* 0x74 */
-    u8 pad78[4];
+    s16 unk78;
+    s16 pad7A;
 } M502PLRSUB;
 typedef struct M502Opening_s {
     struct M502Main_s *main;
@@ -304,6 +328,7 @@ void fn_1_6808(M502BLOCK *b);
 void fn_1_7290(M502BLOCK *dst, M502BLOCK *src);
 void fn_1_735C(M502BLOCK *b);
 void fn_1_8F04(M502BLOCK *b);
+s32 fn_1_70B0(M502BLOCK *b, s16 lvl, s16 row, s16 col, s16 n);
 
 /* opening.c / ending.c / bat.c */
 void fn_1_9468(M502OPENING *o, M502MAIN *m);
