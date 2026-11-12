@@ -9,6 +9,7 @@
 #include "game/hsfex.h"
 #include "game/memory.h"
 #include "humath.h"
+#include "REL/m503Dll.h"
 #include <string.h>
 
 #ifndef M_PI
@@ -19,30 +20,6 @@ double atan2(double, double);
 double fmod(double, double);
 
 typedef void (*VoidFunc)(void);
-
-/* Game state kept in lbl_1_bss_20->data (0x80 bytes). */
-typedef struct {
-    s32 state;
-    s32 stateTime;
-    s32 lock;
-    s32 wipeDone;
-    s32 unk10;
-    u32 time14;
-    s32 phase;
-    s32 phaseTime;
-    s32 unk20;
-    s32 time24;
-    s32 unk28[4];
-    s32 unk38[4];
-    s32 unk48[4];
-    s32 unk58;
-    s32 unk5C;
-    s32 unk60[4];
-    s32 unk70;
-    s32 unk74;
-    s32 unk78;
-    s32 unk7C;
-} M503Data;
 
 /* Camera intro state kept in lbl_1_bss_1C->data (0xC bytes). */
 typedef struct {
@@ -74,8 +51,6 @@ s32 _prolog(void);
 void _epilog(void);
 void ObjectSetup(void);
 void fn_1_348(OMOBJ *obj);
-void fn_1_430(OMOBJ *obj);
-void fn_1_5B0(OMOBJ *obj);
 void fn_1_6D0(OMOBJ *obj);
 void fn_1_A38(OMOBJ *obj);
 void fn_1_DF4(OMOBJ *obj);
