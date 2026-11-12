@@ -15,6 +15,7 @@ extern "C" {
 #include "game/data.h"
 #include "game/mg/timer.h"
 #include "game/sprite.h"
+#include "datanum/m513.h"
 
 #ifdef __cplusplus
 }
@@ -429,6 +430,16 @@ typedef struct M513Stage_s {
     u32 flags;
     s16 modelId[3];
 } M513Stage;
+
+/* Singleton pointers (defined in kuribo.cpp / leaf.cpp). */
+extern M513Node *lbl_1_bss_A10;
+extern M513Node *lbl_1_bss_A14;
+extern M513Node *lbl_1_bss_A0C;
+extern M513Node *lbl_1_bss_9F8;
+extern M513ModelPtr *lbl_1_bss_9FC;
+extern M513Camera *lbl_1_bss_A18;
+extern M513Stage *lbl_1_bss_A1C;
+extern M513Score *lbl_1_bss_A20;
 
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
