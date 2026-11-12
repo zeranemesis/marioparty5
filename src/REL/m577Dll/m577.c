@@ -863,7 +863,7 @@ void fn_1_1600(s16 mode, s16 frameNo)
             }
             w->sub++;
         case 1:
-            return;
+            break;
     }
 }
 
@@ -1011,14 +1011,12 @@ void fn_1_1D50(M577Work *w)
 
 void fn_1_1DD8(M577Work *w)
 {
-    volatile f32 sp8;
     s32 i;
 
     for (i = 0; i < 2; i++) {
         Hu3DCameraCreate(camBit[i]);
         Hu3DCameraPerspectiveSet(camBit[i], 15.0f, 20.0f, 40000.0f, 0.6f);
-        sp8 = 0.0f;
-        Hu3DCameraPosSet(camBit[i], 0.0f, 300.0f, 1000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 150.0f, sp8);
+        Hu3DCameraPosSet(camBit[i], 0.0f, 300.0f, 1000.0f, 0.0f, 1.0f, 0.0f, 0.0f, 150.0f, 0.0f);
         fn_1_2364(&w->cam[i], camBit[i]);
         w->cam[i].rot.x = camInit[i].rot.x;
         w->cam[i].rot.y = camInit[i].rot.y;
@@ -1090,7 +1088,6 @@ void fn_1_2364(M577Cam *cam, s16 bit)
 void fn_1_23CC(M577Cam *cam)
 {
     HuVecF pos;
-    volatile f32 sp8;
     f64 trig;
 
     while (cam->rot.x > 360.0f) {
@@ -1110,8 +1107,7 @@ void fn_1_23CC(M577Cam *cam)
     pos.y = cam->target.y + cam->rot.z * sin(M_PI * cam->rot.y / 180.0);
     trig = sin(M_PI * cam->rot.x / 180.0);
     pos.z = cam->target.z + cam->rot.z * cos(M_PI * cam->rot.y / 180.0) * trig;
-    sp8 = cam->target.z;
-    Hu3DCameraPosSet(cam->bit, pos.x, pos.y, pos.z, 0.0f, 1.0f, 0.0f, cam->target.x, cam->target.y, sp8);
+    Hu3DCameraPosSet(cam->bit, pos.x, pos.y, pos.z, 0.0f, 1.0f, 0.0f, cam->target.x, cam->target.y, cam->target.z);
 }
 
 void fn_1_263C(M577List *list, M577Node *pool, s32 count)
@@ -2945,7 +2941,8 @@ void fn_1_9C08(M577Team *team)
 
 void fn_1_A36C(M577Team *team)
 {
-    M577Sled *sled = team->player[0]->sled;
+    M577Player *p = team->player[0];
+    M577Sled *sled = p->sled;
 
     Hu3DModelPosSetV(sled->mSled, &sled->pos);
     Hu3DModelPosSet(sled->mShadow, sled->pos.x, sled->pos.y, sled->pos.z);
@@ -2977,11 +2974,13 @@ void fn_1_A36C(M577Team *team)
 
 void fn_1_A5CC(M577Team *team)
 {
+    M577Player *p;
     M577Sled *sled;
     s32 i;
 
     for (i = 0; i < 3; i++) {
-        sled = team->player[i]->sled;
+        p = team->player[i];
+        sled = p->sled;
         Hu3DModelPosSetV(sled->mSled, &sled->pos);
         Hu3DModelPosSet(sled->mShadow, sled->pos.x, sled->pos.y, sled->pos.z);
         sled->roll = sled->roll - 19.7118514397737;
