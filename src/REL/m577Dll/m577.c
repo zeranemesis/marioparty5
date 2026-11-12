@@ -189,7 +189,7 @@ struct M577Player_s {
     s16 grp;           /* 0x3C */
     s16 padNo;         /* 0x3E */
     s16 unk40;         /* 0x40 */
-    s16 unk42;         /* 0x42 */
+    s16 aiIdx;         /* 0x42: PC only, index into aiTbl */
     s16 type;          /* 0x44 */
     s16 dif;           /* 0x46 */
     s16 teamIdx;       /* 0x48 */
@@ -386,20 +386,6 @@ static struct {
 static s32 seActive[2] = { 0, 0 };
 
 static s32 charSeTbl[13] = { 0x1FD, 0x1E9, 0x261, 0x2B1, 0x289, 0x1C1, 0x29D, 0x1D5, 0x275, 0x239, 0x24D, 0x225, 0x211 };
-
-static f32 markOfs[11][2] = {
-    { -8.1268f, -449.323f },
-    { -11.295f, 158.7648f },
-    { -16.807f, -784.302f },
-    { -21.9995f, 398.8714f },
-    { -27.733f, -281.36f },
-    { -36.1195f, 449.9174f },
-    { -51.451f, 42.53f },
-    { -58.605f, 17.1205f },
-    { -67.79f, 122.0516f },
-    { -71.5715f, -360.486f },
-    { -79.356f, 265.9656f },
-};
 
 static OMOBJMAN *objman;
 static OMOBJ *workObj;
@@ -1337,8 +1323,8 @@ void fn_1_2E08(M577Rope *rope)
 
 void fn_1_3494(M577Team *team, s16 side)
 {
-    u16 trio[3] = { 0x23, 0x46, 0x64 };
     u16 solo[3] = { 0x19, 0x3C, 0x64 };
+    u16 trio[3] = { 0x23, 0x46, 0x64 };
     M577Work *w = workObj->data;
     M577Player *p;
     M577Sled *sled;
@@ -1388,6 +1374,9 @@ void fn_1_3494(M577Team *team, s16 side)
             p->func = fn_1_64BC;
             p->aiTbl = 0;
         }
+#ifdef TARGET_PC
+        p->aiIdx = 0;
+#endif
         team->sled[i]->team = team;
         fn_1_3E10(team->sled[i], p, side);
         team->sled[i]->pos.z = 400.0f * (f32)i;
@@ -1433,8 +1422,8 @@ void fn_1_3494(M577Team *team, s16 side)
 
 void fn_1_3AB8(M577Work *w)
 {
-    u16 rot[3] = { 0, 1, 2 };
     u16 unused[4] = { 3, 2, 1, 1 };
+    u16 rot[3] = { 0, 1, 2 };
     s16 a;
     s16 b;
     s32 k;
@@ -1452,6 +1441,11 @@ void fn_1_3AB8(M577Work *w)
             w->team[0].player[0] = w->player[i];
             w->player[i]->team = &w->team[0];
         } else {
+#ifdef TARGET_PC
+            if (k >= 3) {
+                continue;
+            }
+#endif
             w->team[1].player[(s16)rot[k]] = w->player[i];
             w->player[i]->team = &w->team[1];
             w->player[i]->teamIdx = rot[k];
@@ -1583,6 +1577,20 @@ void fn_1_3E10(M577Sled *sled, M577Player *player, s32 side)
     p2.y = (v[2].y + v[3].y) * 0.5f;
     fn_1_A754(&sled->line, &p1.x, &p2.x);
 }
+
+static f32 markOfs[11][2] = {
+    { -8.1268f, -449.323f },
+    { -11.295f, 158.7648f },
+    { -16.807f, -784.302f },
+    { -21.9995f, 398.8714f },
+    { -27.733f, -281.36f },
+    { -36.1195f, 449.9174f },
+    { -51.451f, 42.53f },
+    { -58.605f, 17.1205f },
+    { -67.79f, 122.0516f },
+    { -71.5715f, -360.486f },
+    { -79.356f, 265.9656f },
+};
 
 void fn_1_45AC(M577Stage *stage, u16 bit)
 {
@@ -1941,15 +1949,27 @@ void fn_1_674C(M577Player *p)
 
 void fn_1_6ACC(M577Player *p)
 {
+#ifdef TARGET_PC
+    /* the AI table has 0x691 entries per row */
+    p->stick = p->aiIdx < 0x691 ? p->aiTbl[p->aiIdx] : 0;
+    p->aiIdx++;
+#else
     p->stick = *p->aiTbl;
     p->aiTbl++;
+#endif
     M577_STEER_A(p);
 }
 
 void fn_1_6D0C(M577Player *p)
 {
+#ifdef TARGET_PC
+    /* the AI table has 0x691 entries per row */
+    p->stick = p->aiIdx < 0x691 ? p->aiTbl[p->aiIdx] : 0;
+    p->aiIdx++;
+#else
     p->stick = *p->aiTbl;
     p->aiTbl++;
+#endif
     M577_STEER_B(p);
 }
 
@@ -1961,13 +1981,16 @@ void fn_1_7040(M577Team *team)
 {
     M577Player *p;
     M577Sled *sled;
+    f32 t;
     f32 a0;
     f32 r0;
     f32 b0;
-    f32 t;
-    s16 n;
+    s32 n;
     s32 i;
 
+#ifdef TARGET_PC
+    sled = team->player[0]->sled;
+#endif
     switch (team->sub) {
         case 0:
             if (seActive[team->side] != 0) {
@@ -2008,7 +2031,6 @@ void fn_1_7040(M577Team *team)
             team->timer++;
             if (team->timer == 5) {
                 team->sub++;
-                return;
             }
             return;
         case 2:
@@ -2055,7 +2077,7 @@ void fn_1_72D0(M577Team *team)
             team->func = fn_1_7040;
             team->sub = 0;
         }
-        if (team->speed < team->speedMax * 0.25f) {
+        if (team->speed < 0.25f * team->speedMax) {
             fn_1_B720(sled->eff, 0);
             fn_1_B720(sled->pole->eff, 0);
         }
@@ -2107,6 +2129,11 @@ void fn_1_72D0(M577Team *team)
                 }
                 v += 2;
             }
+#ifdef TARGET_PC
+            if (j == n) {
+                v -= 2;
+            }
+#endif
             if (q.x > sled->pt.x) {
                 p1.x = v[0].x;
                 p1.y = v[0].y;
@@ -2166,7 +2193,7 @@ void fn_1_72D0(M577Team *team)
     t = p->motMax * p->motRate;
     CharMotionTimeSet(p->charNo, t);
     Hu3DMotionTimeSet(sled->mSled, t);
-    if (team->speed < team->speedMax * 0.25f) {
+    if (team->speed < 0.25f * team->speedMax) {
         if (seActive[0] != 0) {
             seActive[0] = 0;
             HuAudFXStop(seHandle[0]);
@@ -2230,7 +2257,7 @@ void fn_1_7D24(M577Team *team)
             team->func = fn_1_7040;
             team->sub = 0;
         }
-        if (team->speed < team->speedMax * 0.25f) {
+        if (team->speed < 0.25f * team->speedMax) {
             for (i = 0; i < 3; i++) {
                 fn_1_B720(team->player[i]->sled->eff, 0);
             }
@@ -2273,6 +2300,11 @@ void fn_1_7D24(M577Team *team)
                     }
                     v += 2;
                 }
+#ifdef TARGET_PC
+                if (j == n) {
+                    v -= 2;
+                }
+#endif
                 if (q.x > sled->pt.x) {
                     p1.x = v[0].x;
                     p1.y = v[0].y;
@@ -2342,7 +2374,7 @@ void fn_1_7D24(M577Team *team)
         sumV += fabsf(sled->velX);
     }
     team->cam->target.x = 0.5f * (maxX + minX);
-    if (team->speed < team->speedMax * 0.25f) {
+    if (team->speed < 0.25f * team->speedMax) {
         if (seActive[1] != 0) {
             seActive[1] = 0;
             HuAudFXStop(seHandle[1]);
@@ -2648,23 +2680,21 @@ void fn_1_9380(M577Team *team)
 {
     M577Player *p = team->player[0];
     M577Sled *sled = p->sled;
-    M577Work *sp14;
     M577Pole *pole;
-    f32 sp10;
+    f32 pitch;
+    f32 vol;
     f32 diff;
     f32 k;
+    f32 t;
     f32 a0;
     f32 r0;
     f32 b0;
     f32 a1;
     f32 r1;
     f32 b1;
-    f32 vol;
-    f32 pitch;
-    f32 t;
+    f32 sp10;
 
     if (team->done == 0) {
-        sp14 = workObj->data;
         fn_1_72A8(team);
         fn_1_B720(sled->eff, 1);
         fn_1_B720(sled->pole->eff, 1);
@@ -2675,7 +2705,7 @@ void fn_1_9380(M577Team *team)
             team->func = fn_1_7040;
             team->sub = 0;
         }
-        if (team->speed < team->speedMax * 0.25f) {
+        if (team->speed < 0.25f * team->speedMax) {
             fn_1_B720(sled->eff, 0);
             fn_1_B720(sled->pole->eff, 0);
         }
@@ -2723,8 +2753,7 @@ void fn_1_9380(M577Team *team)
     Hu3DModelRotSet(sled->mWheel, sled->roll, 0.0f, 0.0f);
     Hu3DModelPosSetV(sled->pole->m28, &sled->pole->pos);
     Hu3DModelPosSet(sled->pole->m2C, sled->pole->pos.x, sled->pole->pos.y, sled->pole->pos.z);
-    pole = sled->pole;
-    pole->rot = pole->rot - (360.0f * team->speed) / 273.94686980565;
+    sled->pole->rot = sled->pole->rot - (360.0f * team->speed) / 273.94686980565;
     while (sled->pole->rot > 180.0f) {
         sled->pole->rot -= 360.0f;
     }
@@ -2751,7 +2780,7 @@ void fn_1_9380(M577Team *team)
     t = p->motMax * p->motRate;
     CharMotionTimeSet(p->charNo, t);
     Hu3DMotionTimeSet(sled->mSled, t);
-    if (team->speed < team->speedMax * 0.25f) {
+    if (team->speed < 0.25f * team->speedMax) {
         if (seActive[0] != 0) {
             seActive[0] = 0;
             HuAudFXStop(seHandle[0]);
@@ -2764,6 +2793,7 @@ void fn_1_9380(M577Team *team)
         if (vol < -1.0f) {
             vol = -1.0f;
         }
+        vol = 48.0f + 16.0f * vol;
         if (team->done != 0) {
             pitch = 8191.0f * (team->speed / team->speedMax) - 8191.0f;
         } else {
@@ -2777,7 +2807,7 @@ void fn_1_9380(M577Team *team)
             seHandle[0] = HuAudFXPlay(0x93C);
             seActive[0] = 1;
         }
-        HuAudFXPanning(seHandle[0], (s16)(48.0f + 16.0f * vol));
+        HuAudFXPanning(seHandle[0], (s16)vol);
         HuAudFXPitchSet(seHandle[0], (s16)pitch);
     }
 }
@@ -2786,11 +2816,11 @@ void fn_1_9C08(M577Team *team)
 {
     M577Player *p;
     M577Sled *sled;
-    M577Work *spC;
     f32 sp8;
     f32 sumV;
     f32 maxX;
     f32 minX;
+    f32 t;
     f32 a0;
     f32 r0;
     f32 b0;
@@ -2799,11 +2829,9 @@ void fn_1_9C08(M577Team *team)
     f32 b1;
     f32 vol;
     f32 pitch;
-    f32 t;
     s32 i;
 
     if (team->done == 0) {
-        spC = workObj->data;
         fn_1_72A8(team);
         for (i = 0; i < 3; i++) {
             fn_1_B720(team->player[i]->sled->eff, 1);
@@ -2815,7 +2843,7 @@ void fn_1_9C08(M577Team *team)
             team->func = fn_1_7040;
             team->sub = 0;
         }
-        if (team->speed < team->speedMax * 0.25f) {
+        if (team->speed < 0.25f * team->speedMax) {
             for (i = 0; i < 3; i++) {
                 fn_1_B720(team->player[i]->sled->eff, 0);
             }
@@ -2888,7 +2916,7 @@ void fn_1_9C08(M577Team *team)
         sumV += sp8;
     }
     team->cam->target.x = 0.5f * (maxX + minX);
-    if (team->speed < team->speedMax * 0.25f) {
+    if (team->speed < 0.25f * team->speedMax) {
         if (seActive[1] != 0) {
             seActive[1] = 0;
             HuAudFXStop(seHandle[1]);
@@ -3039,6 +3067,7 @@ void fn_1_AA4C(M577Work *w)
 s32 fn_1_AB34(M577Node *node)
 {
     M577Player *p;
+    f32 t2;
     f32 a0;
     f32 r0;
     f32 b0;
@@ -3098,9 +3127,9 @@ s32 fn_1_AB34(M577Node *node)
                 CharMotionSet(p->charNo, p->obj->mtnId[2]);
                 CharModelAttrSet(p->charNo, 0x40000002);
                 p->motRate = 0.5f;
-                t = p->motMax * p->motRate;
-                CharMotionTimeSet(p->charNo, t);
-                Hu3DMotionTimeSet(p->sled->mSled, t);
+                t2 = p->motMax * p->motRate;
+                CharMotionTimeSet(p->charNo, t2);
+                Hu3DMotionTimeSet(p->sled->mSled, t2);
                 p->state = 2;
                 done = 1;
             }
@@ -3112,10 +3141,10 @@ s32 fn_1_AB34(M577Node *node)
 s32 fn_1_AF68(M577Node *node)
 {
     M577Player *p;
+    f32 t;
     f32 a0;
     f32 r0;
     f32 b0;
-    f32 t;
     s32 done;
 
     done = 0;
