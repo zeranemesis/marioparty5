@@ -4298,6 +4298,9 @@ BOOL fn_1_113D8(int param)
             return FALSE;
         }
     }
+#ifdef TARGET_PC
+    return FALSE; // GC fell through with stale r3; param != 0 is not used
+#endif
 }
 
 BOOL fn_1_11658(int param)
