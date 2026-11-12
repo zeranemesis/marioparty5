@@ -35,7 +35,7 @@ void HuAudFXPlay(s32 id);
 u32 HuAudBGMPlay(s32 id);
 void HuAudSStreamFadeOut(s32 id, s32 time);
 void fn_1_33EC(void);
-u8 fn_1_3874(void);
+void fn_1_3874(void);
 void fn_1_3578(void);
 void HuAudJinglePlay(s32 id);
 void fn_1_CE8(void *self, s32 val);
@@ -53,7 +53,7 @@ void fn_1_F7E0(void);
 void fn_1_4E60(void *self, u32 a, u32 b, u32 c);
 void fn_1_4F58(void *self, u32 val);
 void fn_1_21C(void *self);
-void fn_1_FDB0(void);
+u8 fn_1_FDB0(void); /* player.cpp: result picks the jingle */
 
 /* lbl_1_bss_30 is the singleton every assert here tests; it is defined once
  * in maze.o, so from this unit it is only a reference. The five below are
@@ -246,8 +246,8 @@ void fn_1_C4E0(void *self)
         fn_1_CE8(&GM(self)->sub, -1);
     }
     fn_1_3888(4);
-    fn_1_FDB0();
-    s16 r20 = fn_1_3874() ? 0x7B : 0x79;
+    /* the asm tests fn_1_FDB0's result; fn_1_3874 (exit request) comes after the wait below */
+    s16 r20 = fn_1_FDB0() ? 0x7B : 0x79;
     HuAudJinglePlay(r20);
     fn_1_3578();
     while (!fn_1_34A4()) {

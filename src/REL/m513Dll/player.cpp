@@ -649,3 +649,13 @@ void fn_1_13140(void)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_13140)(void) = fn_1_13140;
+#else
+struct PortStaticInit_13140 {
+    PortStaticInit_13140() { fn_1_13140(); }
+};
+static PortStaticInit_13140 lbl_port_init_13140;
+#endif

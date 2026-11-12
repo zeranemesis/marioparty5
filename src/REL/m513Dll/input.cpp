@@ -37,12 +37,19 @@ void fn_1_6578(M513Input *self)
     self->vtbl->update(self, &self->st);
 }
 
+#ifdef TARGET_PC
+M513Input *fn_1_65E0(M513Input *self, s32 playerNo) /* callers use the result: GC returns self in r3 */
+#else
 void fn_1_65E0(M513Input *self, s32 playerNo)
+#endif
 {
     self->vtbl = &lbl_1_data_278;
     self->vtbl = &lbl_1_data_268;
     self->playerNo = playerNo;
     self->u.padNo = GwPlayerConf[playerNo].padNo;
+#ifdef TARGET_PC
+    return self;
+#endif
 }
 
 M513Input *fn_1_6618(M513Input *self, s16 flag)

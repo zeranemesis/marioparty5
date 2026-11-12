@@ -318,9 +318,9 @@ void fn_1_74C(void)
     HuAudAllStop();
 }
 
-void fn_1_76C(s16 streamId)
+s32 fn_1_76C(s16 streamId) /* opening.c keeps the stream id (r3) */
 {
-    HuAudBGMPlay(streamId);
+    return HuAudBGMPlay(streamId);
 }
 
 s32 fn_1_794(s16 streamId)

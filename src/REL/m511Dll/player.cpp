@@ -1729,7 +1729,7 @@ void fn_1_153FC(Mgr511S16Vec *v, s16 *where, u32 count, s16 *value)
             u32 after = (u32)(end - where);
 
             src = value;
-            if (end - (after - count) <= src && src < end) {
+            if (end - (after - (s32)count) <= src && src < end) { /* signed: on 64-bit the u32 wrap no longer cancels out */
                 src = src + count;
             }
             if (after != 0) {

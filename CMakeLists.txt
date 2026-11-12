@@ -243,7 +243,7 @@ foreach (dir ${REL_TARGETS})
     if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/src/REL/${dir})
         set(REL_SOURCE_FILES ${REL_FILES})
         # shortcut: C++ modules whose 64-bit port is unfinished are listed here until they link
-        set(REL_CPP_SKIP m511Dll m512Dll m513Dll m521Dll m522Dll m536Dll m539Dll)
+        set(REL_CPP_SKIP m511Dll m512Dll m521Dll m522Dll m536Dll m539Dll)
         if (${dir} IN_LIST REL_CPP_SKIP)
             set(REL_SOURCE_FILES "")
         else ()

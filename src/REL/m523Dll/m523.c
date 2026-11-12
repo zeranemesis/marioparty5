@@ -421,7 +421,7 @@ void fn_1_E58(Point3d *pos, s16 *outY, s16 *outX)
     *outY = 96.0f + (31.0f * (scr.y / 480.0f));
 }
 
-void fn_1_F34(Point3d *pos, s16 seId)
+s32 fn_1_F34(Point3d *pos, s16 seId) /* player.c keeps the SE id (r3) */
 {
     Point3d scr;
     s16 pan;
@@ -430,7 +430,7 @@ void fn_1_F34(Point3d *pos, s16 seId)
     Hu3D3Dto2D(pos, lbl_1_bss_44.camNo, &scr);
     pan = 48.0f + (32.0f * (scr.x / 576.0f));
     vol = 96.0f + (31.0f * (scr.y / 480.0f));
-    HuAudFXPlayVolPan(seId, vol, pan);
+    return HuAudFXPlayVolPan(seId, vol, pan);
 }
 
 void fn_1_1014(void) {

@@ -391,7 +391,7 @@ void fn_1_E13C(M513Heiho *self)
                     first3 = first2;
                     it = first3;
                     while (it != set2) {
-                        if (((M513Heiho *)it)->idx != self->idx) {
+                        if (((M513Leaf *)it)->idx != self->idx) { /* the leaf set: same 0x38 offset as the heiho idx on GC only */
                             nx = it->next;
                             nx2 = nx;
                             it = nx2;
@@ -400,6 +400,9 @@ void fn_1_E13C(M513Heiho *self)
                         break;
                     }
                     (void)set;
+#ifdef TARGET_PC
+                    if (it != set2) /* no match: GC reads the list head as a leaf */
+#endif
                     fn_1_8394(it);
                     self->cnt = 0xFF;
                     p.x = self->pos.x;
@@ -517,7 +520,7 @@ void fn_1_E908(M513Vec16 *v, s16 *pos, u32 n, s16 *val)
             s16 *src = srcP;
             u32 k;
             s16 *p;
-            if (end - (after - n) <= src && src < end) {
+            if (end - (after - (s32)n) <= src && src < end) { /* signed: on 64-bit the u32 wrap no longer cancels out */
                 src += n;
             }
             if (after != 0) {

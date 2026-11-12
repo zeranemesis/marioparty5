@@ -163,7 +163,7 @@ static void M513PlayerDelete(M513Player *p)
         }
 #ifdef TARGET_PC
         for (i = 15; i >= 0; i--) {
-            fn_1_BAF0(&p->eff[i], -1);
+            fn_1_BAF0((M513Player **)&p->eff[i], -1); /* a slot destructor shared by the pointer arrays */
         }
 #else
         __destroy_arr(p->eff, (void *)fn_1_BAF0, 4, 0x10);
@@ -1002,3 +1002,13 @@ M513Master *fn_1_D730(M513SubThread *thread, s16 flag)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_D6F4)(void) = fn_1_D6F4;
+#else
+struct PortStaticInit_D6F4 {
+    PortStaticInit_D6F4() { fn_1_D6F4(); }
+};
+static PortStaticInit_D6F4 lbl_port_init_D6F4;
+#endif

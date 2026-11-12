@@ -1433,7 +1433,7 @@ extern "C" void fn_1_CBC0(PlVec *v, s16 *pos, u32 n, s16 *val)
             s16 *src = srcP;
             u32 k;
             s16 *p;
-            if (end - (after - n) <= src && src < end) {
+            if (end - (after - (s32)n) <= src && src < end) { /* signed: on 64-bit the u32 wrap no longer cancels out */
                 src += n;
             }
             if (after != 0) {
