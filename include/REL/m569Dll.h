@@ -69,9 +69,7 @@ typedef struct m569Kuribo_s {
     /* 0x1C */ f32 unk1C[4];
     /* 0x2C */ s32 motNo;
     /* 0x30 */ f32 prevTime;
-    /* 0x34 */ s16 jointMot[3];
-    /* 0x3A */ s16 pad3A;
-    /* 0x3C */ s32 pad3C;
+    /* 0x34 */ s32 jointMot[3];
 } M569KURIBO;
 
 /* Audience kuribo (0x40 bytes). */
@@ -100,6 +98,7 @@ typedef struct m569Block_s {
 } M569BLOCK;
 
 /* m569.c */
+extern s32 lbl_1_bss_14;
 extern OMOBJMAN *lbl_1_bss_D4;
 extern M569CAM lbl_1_bss_34;
 extern OMOBJ **lbl_1_bss_F8;

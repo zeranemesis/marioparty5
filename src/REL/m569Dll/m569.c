@@ -106,7 +106,7 @@ static s32 lbl_1_bss_4;
 static s16 lbl_1_bss_8;
 static M569KURIBO *lbl_1_bss_C;
 static MGTIMER *lbl_1_bss_10;
-static s32 lbl_1_bss_14;
+s32 lbl_1_bss_14;
 static M569LIGHT lbl_1_bss_18;
 M569CAM lbl_1_bss_34;
 static s16 lbl_1_bss_7C[6];
