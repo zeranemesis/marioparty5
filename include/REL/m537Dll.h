@@ -134,13 +134,56 @@ void fn_1_2F3C(s16 *modelId, Vec *rot);
 int fn_1_234(void *file, const char *fmt, ...);
 s32 fn_1_4AE0(void);
 s32 fn_1_1F30(void);
+void fn_1_2E08(s16 *modelId, u32 attr);
+void fn_1_2E40(s16 *modelId, u32 attr);
+void fn_1_304C(s16 *modelId, s16 layerNo);
+void fn_1_31E4(s16 *modelId);
+void fn_1_3214(s16 *modelId);
 void *__register_global_object(void *object, void *destructor, void *regmem);
 
 extern M537_NODE lbl_1_bss_C;
 
+/* Circular value range used by the dorrie rotation (fn_1_6C20 and friends). */
+typedef struct M537Cycle_s {
+    f64 lo;     /* 0x00 */
+    f64 hi;     /* 0x08 */
+    f64 range;  /* 0x10 */
+    f64 value;  /* 0x18 */
+} M537_CYCLE;
+
+/* std::vector<s16>: capacity, size, data (fn_1_6D0C inserts). */
+typedef struct M537VecS16_s {
+    u32 cap;
+    u32 size;
+    s16 *data;
+} M537_VECS16;
+
+/* One dorrie: model id (CModel at 0), rotation cycle, tween state, motion list. */
+typedef struct M537Dorrie {
+    s16 mdl;            /* 0x00 */
+    M537_CYCLE cyc;     /* 0x08 */
+    f64 from;           /* 0x28 */
+    f64 to;             /* 0x30 */
+    f64 t;              /* 0x38 */
+    f64 dur;            /* 0x40 */
+    u8 turn;            /* 0x48 */
+    s32 count;          /* 0x4C */
+    M537_VECS16 mot;    /* 0x50 */
+    s32 timer;          /* 0x5C */
+    s16 *shadow;        /* 0x60 */
+} M537Dorrie;
+
+/* Lens flare object: list node, vtable, flags, then the four flare sprites. */
+typedef struct M537Effect {
+    M537_NODE node;     /* 0x00 */
+    void **vptr;        /* 0x08 */
+    s32 flag;           /* 0x0C */
+    ANIMDATA *anim[4];  /* 0x10 */
+} M537Effect;
+
 struct M537Camera;
 struct M537Stage;
-struct M537Dorrie;
+struct M537Water;
 extern struct M537Camera *lbl_1_bss_A10;
 extern struct M537Stage *lbl_1_bss_A14;
 

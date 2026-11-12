@@ -8,14 +8,6 @@ void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, 
 extern void *lbl_1_data_1FC[];
 extern const f32 lbl_1_rodata_1F8;
 
-// Lens flare object: list node, vtable, flags, then the four flare sprites.
-struct M537Effect {
-    M537_NODE m_node;   /* 0x00 */
-    void **m_vptr;      /* 0x08 */
-    s32 m_flag;         /* 0x0C */
-    ANIMDATA *m_anim[4];/* 0x10 */
-};
-
 // One flare ghost: size, position along the sun axis, colour and sprite.
 struct M537Flare {
     f32 m_size;
@@ -72,8 +64,8 @@ M537Effect *fn_1_72A0(M537Effect *self)
     s32 i;
 
     fn_1_1264(self);
-    self->m_vptr = lbl_1_data_1FC;
-    self->m_flag = 0;
+    self->vptr = lbl_1_data_1FC;
+    self->flag = 0;
     fn_1_1330(self, &lbl_1_bss_C);
     if (lbl_1_bss_9F8 == 0) {
     } else {
@@ -84,13 +76,13 @@ M537Effect *fn_1_72A0(M537Effect *self)
         ms = (M537Effect *)((u8 *)ms - 0x10);
     }
     lbl_1_bss_9F8 = ms;
-    self->m_vptr = lbl_1_data_308;
+    self->vptr = lbl_1_data_308;
     mdl = Hu3DHookFuncCreate(fn_1_7254);
     Hu3DModelLayerSet(mdl, 7);
     Hu3DModelCameraSet(mdl, 1);
     for (i = 0; i < 4; i++) {
-        self->m_anim[i] = HuSprAnimRead(HuDataSelHeapReadNum(lbl_1_rodata_F8[i], 0x10000000, HEAP_MODEL));
-        HuSprAnimLock(self->m_anim[i]);
+        self->anim[i] = HuSprAnimRead(HuDataSelHeapReadNum(lbl_1_rodata_F8[i], 0x10000000, HEAP_MODEL));
+        HuSprAnimLock(self->anim[i]);
     }
     return self;
 }
@@ -126,9 +118,9 @@ M537Effect *fn_1_74C0(M537Effect *self, s16 freeIt)
     s32 i;
 
     if (self != 0) {
-        self->m_vptr = lbl_1_data_308;
+        self->vptr = lbl_1_data_308;
         for (i = 0; i < 4; i++) {
-            HuSprAnimKill(self->m_anim[i]);
+            HuSprAnimKill(self->anim[i]);
         }
         if ((M537Effect *)((u8 *)self + 0x10) != 0) {
             if (lbl_1_bss_9F8 != 0) {
@@ -138,7 +130,7 @@ M537Effect *fn_1_74C0(M537Effect *self, s16 freeIt)
             lbl_1_bss_9F8 = 0;
         }
         if (self != 0) {
-            self->m_vptr = lbl_1_data_1FC;
+            self->vptr = lbl_1_data_1FC;
             if (self != 0) {
                 fn_1_1270(self, 0);
             }
@@ -152,7 +144,7 @@ M537Effect *fn_1_74C0(M537Effect *self, s16 freeIt)
 
 void fn_1_75B8(M537Effect *self, s32 bit)
 {
-    self->m_flag &= ~(1 << bit);
+    self->flag &= ~(1 << bit);
 }
 
 void fn_1_75D0(M537Effect *self)
@@ -160,7 +152,7 @@ void fn_1_75D0(M537Effect *self)
     s32 i;
 
     for (i = 1; i < 4; i++) {
-        HuSprTexLoad(self->m_anim[i], 0, (s16)lbl_1_rodata_108[i], GX_REPEAT, GX_REPEAT, GX_LINEAR);
+        HuSprTexLoad(self->anim[i], 0, (s16)lbl_1_rodata_108[i], GX_REPEAT, GX_REPEAT, GX_LINEAR);
     }
 }
 
@@ -191,7 +183,7 @@ void fn_1_764C(M537Effect *self, Mtx mtx)
     GXLoadPosMtxImm(ident, GX_PNMTX0);
     PSMTXMultVecSR(mtx, &toCam, &dir);
     if (!(dir.z < 0.0f)) {
-        HuSprTexLoad(self->m_anim[0], 0, GX_TEXMAP0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
+        HuSprTexLoad(self->anim[0], 0, GX_TEXMAP0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
         GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -226,7 +218,7 @@ void fn_1_764C(M537Effect *self, Mtx mtx)
             fn_1_81AC(&ghostPos, self, &sunScr, mtx);
             pos0 = ghostPos;
             for (i = 1; i < 4; i++) {
-                HuSprTexLoad(self->m_anim[i], 0, (s16)lbl_1_rodata_108[i], GX_REPEAT, GX_REPEAT, GX_LINEAR);
+                HuSprTexLoad(self->anim[i], 0, (s16)lbl_1_rodata_108[i], GX_REPEAT, GX_REPEAT, GX_LINEAR);
             }
             for (j = 1; j < 8; j++) {
                 s2 = 240.0f * lbl_1_rodata_118[j].m_pos;
