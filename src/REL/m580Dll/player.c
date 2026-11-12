@@ -26,6 +26,8 @@ double cos(double);
 
 #define M580_PLAYER_MAX 4
 
+typedef void (*M580_AIFUNC)(OMOBJ *obj);
+
 /* work block of one player object (0x148 bytes on GC) */
 typedef struct M580PlayerWork_s {
     /* 0x00 */ s32 playerNo;
@@ -41,7 +43,19 @@ typedef struct M580PlayerWork_s {
     /* 0x28 */ s32 isCpu;
     /* 0x2C */ s32 dif;
     /* 0x30 */ s32 unk30;
-    /* 0x34 */ u8 pad34[0x34];
+    /* 0x34 */ s32 unk34;
+    /* 0x38 */ s32 aiWait;
+    /* 0x3C */ s32 aiTarget;
+    /* 0x40 */ s32 unk40;
+    /* 0x44 */ s32 unk44;
+    /* 0x48 */ s32 unk48;
+    /* 0x4C */ M580_AIFUNC aiFunc;
+    /* 0x50 */ s32 aiState;
+    /* 0x54 */ s32 unk54;
+    /* 0x58 */ s32 unk58;
+    /* 0x5C */ f32 unk5C;
+    /* 0x60 */ s32 unk60;
+    /* 0x64 */ s32 unk64;
     /* 0x68 */ s32 state;
     /* 0x6C */ s32 timer;
     /* 0x70 */ s32 frame;
@@ -73,6 +87,16 @@ typedef struct M580PlayerWork_s {
     /* 0xE8 */ M580_SHADOW shadow;
     /* 0x108 */ M580_BODY body;
 } M580_PLAYERWORK;
+
+/* CPU skill table entry */
+typedef struct M580AiParam_s {
+    /* 0x00 */ f32 p0;
+    /* 0x04 */ f32 p1;
+    /* 0x08 */ f32 p2;
+    /* 0x0C */ f32 p3;
+    /* 0x10 */ s32 n0;
+    /* 0x14 */ s32 n1;
+} M580_AIPARAM;
 
 typedef struct M580PlayerMotion_s {
     /* 0x00 */ u16 index;
@@ -124,6 +148,12 @@ void fn_1_4DDC(OMOBJ *obj);
 s32 fn_1_4F58(OMOBJ *obj, HuVecF *target, f32 rot, f32 speed);
 void fn_1_5A14(OMOBJ *obj);
 void fn_1_5B94(OMOBJ *obj);
+void fn_1_5C64(OMOBJ *obj, M580_AIFUNC func);
+void fn_1_6548(OMOBJ *obj);
+s32 fn_1_5504(OMOBJ *obj);
+s32 fn_1_78B4(OMOBJ *obj);
+f32 fn_1_79C4(OMOBJ *obj, HuVecF *target);
+f32 fn_1_7A6C(OMOBJ *obj, HuVecF *target);
 void fn_1_7634(OMOBJ *obj, u32 motion);
 s32 fn_1_774C(OMOBJ *obj);
 OMOBJ *fn_1_7818(OMOBJ *obj);
@@ -629,4 +659,513 @@ void fn_1_4124(OMOBJ *obj, s32 seId)
     s16 pan = fn_1_2004(&work->pos);
 
     work->seId = CharFXPlayVolPan(work->charNo, seId, fn_1_2098(&work->pos), pan);
+}
+
+void fn_1_4198(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    f32 mag = work->stickMag;
+    f32 velX;
+    f32 velZ;
+
+    if (work->autoMove == 0 && fn_1_D544() == 0 && (fn_1_D6EC() == 0 || work->defend == 0)) {
+        if (obj == fn_1_D30C(NULL, NULL)) {
+            mag = mag * 0.7;
+        }
+        if (mag > 0.05f && work->unk90 == 0) {
+            if (work->unkA8 == 0) {
+                work->rotY = fn_1_2634(work->rotY, work->stickAng, 0.3f);
+            }
+            if (work->busy == 0) {
+                velX = 1.0f / 60.0f * (1000.0 * (mag * sin(M_PI * work->stickAng / 180.0)));
+                velZ = 1.0f / 60.0f * (1000.0 * (mag * cos(M_PI * work->stickAng / 180.0)));
+                work->vel.x = work->vel.x + 0.03 * (velX - work->vel.x);
+                work->vel.z = work->vel.z + 0.03 * (velZ - work->vel.z);
+                fn_1_7634(obj, 1);
+                Hu3DMotionSpeedSet(obj->mdlId[0], 1.2f * mag);
+            }
+        } else {
+            if (work->busy == 0) {
+                fn_1_7634(obj, 0);
+            }
+            VECScale(&work->vel, &work->vel, 0.99f);
+        }
+    }
+}
+
+void fn_1_440C(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    work->unkA4 = 0;
+    work->unkA8 = 0;
+    work->unkAC = 0;
+    work->unkB0 = 0;
+    work->unkB4 = 0;
+    work->unkB8 = 0;
+    CharMotionSpeedSet(work->charNo, 1.0f);
+}
+
+void fn_1_4488(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_PLAYERWORK *mate;
+    OMOBJ *holder;
+    HuVecF puckPos;
+    HuVecF puckVel;
+    HuVecF target;
+    f32 puckSpeed;
+    f32 halfAngle;
+    f32 ang;
+    f32 t;
+    s32 ok;
+
+    work->body.flags &= ~4;
+    if (fn_1_D544() != 0) {
+        fn_1_440C(obj);
+        return;
+    }
+    if (fn_1_D6EC() != 0 && work->defend != 0) {
+        fn_1_4DDC(obj);
+        return;
+    }
+    if (work->unkA4 != 0) {
+        work->unkA4--;
+    }
+    if (work->unkB8 != 0) {
+        work->unkB8--;
+    }
+    if (work->unkAC != 0) {
+        work->unkAC--;
+    }
+    if (work->unkB4 != 0) {
+        work->unkB4--;
+        VECScale(&work->vel, &work->vel, 0.9f);
+        work->body.flags |= 4;
+    }
+    if (work->motion == 2 && work->motionFrame > 0x3C) {
+        work->busy = 0;
+    }
+    mate = fn_1_7818(obj)->data;
+    holder = fn_1_D30C(&puckPos, &puckVel);
+    puckSpeed = HuMagPoint2D(puckVel.x, puckVel.z);
+    if (holder != obj) {
+        work->unkA4 = 0;
+        work->unkA8 = 0;
+        work->unkB0 = 0;
+        if (work->unkB8 == 0) {
+            if (work->unkAC == 0) {
+                halfAngle = 45.0f;
+                ok = 1;
+            } else {
+                halfAngle = 120.0f;
+                ok = 1;
+            }
+            if (holder != NULL && holder->work[0] >= 4) {
+                ok = 0;
+            }
+            if (ok != 0 && fn_1_D054(&work->pos, work->rotY, halfAngle, 120.0f) != 0) {
+                holder = fn_1_D390(NULL, NULL, obj, 1.0f);
+                work->unkA4 = 0x1E;
+                fn_1_7634(obj, 4);
+                work->busy = 1;
+            }
+        }
+        if (work->unkB4 == 0 && holder != obj && (work->padDown & 0x200) != 0) {
+            fn_1_7634(obj, 5);
+            work->busy = 1;
+        }
+        if (work->motion == 5 && work->motionFrame == 0xC) {
+            work->vel.x = 1.0f / 60.0f * (100.0 * (15.0 * sin(M_PI * work->rotY / 180.0)));
+            work->vel.z = 1.0f / 60.0f * (100.0 * (15.0 * cos(M_PI * work->rotY / 180.0)));
+            work->unkB4 = 0x12;
+        }
+    }
+    if (holder == obj) {
+        if (fn_1_7A6C(obj, &puckPos) > 80.0 + 120.0f) {
+            holder = fn_1_D390(NULL, NULL, NULL, 1.0f);
+        } else {
+            work->unkB0++;
+            ang = work->rotY;
+            puckPos.x = work->pos.x + 120.0f * sin(M_PI * ang / 180.0);
+            puckPos.y = work->pos.y;
+            puckPos.z = work->pos.z + 120.0f * cos(M_PI * ang / 180.0);
+            puckVel.z = 0.0f;
+            puckVel.y = 0.0f;
+            puckVel.x = 0.0f;
+            if (work->motion != 2) {
+                if ((work->padDown & 0x200) != 0) {
+                    fn_1_7634(obj, 2);
+                    work->busy = 1;
+                }
+            } else {
+                VECScale(&work->vel, &work->vel, 0.98f);
+                if (work->motionFrame < 0x18) {
+                    if (CharMotionTimeGet(work->charNo) >= 15.0) {
+                        CharMotionSpeedSet(work->charNo, 0.0f);
+                    }
+                } else {
+                    CharMotionSpeedSet(work->charNo, 1.0f);
+                }
+                if (work->motionFrame == 0x1C) {
+                    work->unkB8 = 0xC;
+                    ang = work->rotY;
+                    puckVel.x = 66.666672f * sin(M_PI * ang / 180.0);
+                    puckVel.y = 20.000002f;
+                    puckVel.z = 66.666672f * cos(M_PI * ang / 180.0);
+                    holder = fn_1_D390(NULL, NULL, NULL, 1.0f);
+                    omVibrate(work->playerNo, 0x14, 6, 6);
+                }
+            }
+            if (holder != NULL && (work->padHold & 0x400) != 0) {
+                fn_1_7634(obj, 3);
+                work->busy = 1;
+            }
+            if (holder != NULL) {
+                if (work->unkA8 == 0) {
+                    if (work->unkA4 == 0 && (work->padHold & 0x100) != 0) {
+                        work->unkA8 = 1;
+                    }
+                } else {
+                    if (work->unkA8 == 1) {
+                        fn_1_7634(obj, 3);
+                        work->busy = 1;
+                    }
+                    t = fn_1_7A6C(obj, &mate->pos) / 33.333336f;
+                    target.x = mate->pos.x + mate->vel.x * t;
+                    target.y = mate->pos.y;
+                    target.z = mate->pos.z + mate->vel.z * t;
+                    work->rotY = fn_1_2634(work->rotY, fn_1_79C4(obj, &target), 0.3f);
+                    work->unkA8++;
+                }
+            }
+            if (holder != NULL && work->motion == 3 && work->motionFrame == 0xD) {
+                work->unkB8 = 0xC;
+                mate->unkAC = 0x5A;
+                ang = work->rotY;
+                puckVel.x = 33.333336f * sin(M_PI * ang / 180.0);
+                puckVel.z = 33.333336f * cos(M_PI * ang / 180.0);
+                holder = fn_1_D390(NULL, NULL, NULL, 1.0f);
+                omVibrate(work->playerNo, 0xC, 6, 6);
+            }
+            fn_1_D390(&puckPos, &puckVel, holder, 0.3f);
+        }
+    }
+    if (holder != obj) {
+        work->unkA4 = 0;
+        work->unkA8 = 0;
+    }
+}
+
+void fn_1_4DDC(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_PLAYERWORK *mate = fn_1_7818(obj)->data;
+    HuVecF puckPos;
+    HuVecF puckVel;
+    f32 ang;
+
+    if ((work->padDown & 0x100) != 0) {
+        fn_1_7634(obj, 4);
+        work->busy = 1;
+        if (fn_1_D714(obj) != 0) {
+            work->unkA8 = 1;
+            mate->unkAC = 0x5A;
+        }
+    }
+    if (fn_1_D30C(&puckPos, &puckVel) == obj) {
+        ang = work->rotY;
+        puckPos.x = work->pos.x + 120.0f * sin(M_PI * ang / 180.0);
+        puckPos.y = work->pos.y;
+        puckPos.z = work->pos.z + 120.0f * cos(M_PI * ang / 180.0);
+        puckVel.z = 0.0f;
+        puckVel.y = 0.0f;
+        puckVel.x = 0.0f;
+        fn_1_D390(&puckPos, &puckVel, obj, 0.3f);
+    }
+}
+
+s32 fn_1_4F58(OMOBJ *obj, HuVecF *target, f32 rot, f32 speed)
+{
+    M580_PLAYERWORK *work = obj->data;
+    f32 dx;
+    f32 dz;
+    f32 dist;
+    f32 velX;
+    f32 velZ;
+    f32 gain;
+
+    if (obj == fn_1_D30C(NULL, NULL)) {
+        speed = speed * 0.7;
+    }
+    work->autoMove = 1;
+    dx = target->x - work->pos.x;
+    dz = target->z - work->pos.z;
+    dist = HuMagPoint2D(dx, dz);
+    if (dist < 200.0) {
+        speed = 0.5f;
+        if (dist < 100.0) {
+            speed = 0.2f;
+        }
+    }
+    if (dist < 70.0) {
+        if (work->busy == 0) {
+            if (dist < 20.0) {
+                fn_1_7634(obj, 0);
+            } else {
+                fn_1_7634(obj, 1);
+                Hu3DMotionSpeedSet(obj->mdlId[0], 0.5f);
+            }
+        }
+        work->pos.x = work->pos.x + 0.1 * dx;
+        work->pos.z = work->pos.z + 0.1 * dz;
+        VECScale(&work->vel, &work->vel, 0.8f);
+        work->rotY = fn_1_2634(work->rotY, rot, 0.1f);
+        if (dist > 35.0) {
+            return 0;
+        }
+        if (fn_1_2750(work->rotY, rot) > 4.0) {
+            return 0;
+        }
+        if (VECMag(&work->vel) > 2.0) {
+            return 0;
+        }
+        work->vel.z = 0.0f;
+        work->vel.x = 0.0f;
+        work->rotY = rot;
+        work->autoMove = 0;
+        return 1;
+    }
+    if (work->busy == 0) {
+        fn_1_7634(obj, 1);
+        Hu3DMotionSpeedSet(obj->mdlId[0], 0.8f * speed);
+    }
+    work->rotY = fn_1_2634(work->rotY, 180.0 * (atan2(dx, dz) / M_PI), 0.3f);
+    velX = 1.0f / 60.0f * (1000.0 * (speed * sin(M_PI * work->rotY / 180.0)));
+    velZ = 1.0f / 60.0f * (1000.0 * (speed * cos(M_PI * work->rotY / 180.0)));
+    gain = 0.1f;
+    work->vel.x = work->vel.x + 0.1f * (velX - work->vel.x);
+    if (fn_1_5504(obj) != 0) {
+        if (work->pos.z < 0.0f) {
+            velZ = -16.666668f;
+        } else {
+            velZ = 16.666668f;
+        }
+        gain = 0.2f;
+    }
+    work->vel.z = work->vel.z + gain * (velZ - work->vel.z);
+    return 0;
+}
+
+s32 fn_1_5504(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    if (work->pos.z < -250.0) {
+        return 0;
+    }
+    if (work->pos.z > 250.0) {
+        return 0;
+    }
+    if (work->pos.x < -1100.0) {
+        return 1;
+    }
+    if (work->pos.x > 1100.0) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_55A0(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_PLAYERWORK *w2;
+    s32 inGoal;
+
+    if (work->pos.z < -250.0) {
+        inGoal = 0;
+    } else if (work->pos.z > 250.0) {
+        inGoal = 0;
+    } else if (work->pos.x < -1100.0) {
+        inGoal = 1;
+    } else if (work->pos.x > 1100.0) {
+        inGoal = 1;
+    } else {
+        inGoal = 0;
+    }
+    if (inGoal != 0) {
+        w2 = obj->data;
+        if (w2->pos.x < 0.0f) {
+            if (w2->rotY < 45.0) {
+                return 0;
+            }
+            if (w2->rotY > 135.0) {
+                return 0;
+            }
+            return 1;
+        }
+        if (w2->rotY < 225.0) {
+            return 0;
+        }
+        if (w2->rotY > 315.0) {
+            return 0;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_5704(void)
+{
+    HuVecF pos;
+
+    fn_1_D30C(&pos, NULL);
+    if (pos.x < -1000.0) {
+        return 1;
+    }
+    if (pos.x > 1000.0) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_5770(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    if (work->pos.z < -250.0) {
+        return 0;
+    }
+    if (work->pos.z > 250.0) {
+        return 0;
+    }
+    if (work->pos.x > -1000.0 && work->pos.x < -800.0) {
+        return 1;
+    }
+    if (work->pos.x > 800.0 && work->pos.x < 1000.0) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_583C(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    if (work->pos.z < -250.0) {
+        return 0;
+    }
+    if (work->pos.z > 250.0) {
+        return 0;
+    }
+    if (work->pos.x < -900.0) {
+        return 1;
+    }
+    if (work->pos.x > 900.0) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_58D8(M580_BODY *self, M580_BODY *other)
+{
+    OMOBJ *obj = self->obj;
+    M580_PLAYERWORK *work = obj->data;
+    M580_PLAYERWORK *w2;
+    s16 pan;
+
+    if ((other->flags & 4) != 0) {
+        if (obj == fn_1_D30C(NULL, NULL)) {
+            fn_1_D390(NULL, NULL, NULL, 1.0f);
+            work->unkB8 = 0x1E;
+        }
+        omVibrate(work->playerNo, 0x14, 0xC, 0);
+        w2 = obj->data;
+        pan = fn_1_2004(&w2->pos);
+        w2->seId = CharFXPlayVolPan(w2->charNo, 0x1FC, fn_1_2098(&w2->pos), pan);
+        if (other->kind == 0) {
+            M580_PLAYERWORK *otherWork = other->obj->data;
+
+            omVibrate(otherWork->playerNo, 0x14, 0xC, 0);
+        }
+    }
+    switch (other->kind) {
+    case 2:
+    case 0:
+        work->unkC0 = 1;
+        break;
+    case 3:
+        work->unkCC = 1;
+        break;
+    }
+    return 1;
+}
+
+void fn_1_5A14(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    HU3DMODELID model;
+    HU3DMODELID shadow;
+
+    work->rotY = fmod(work->rotY, 360.0);
+    if (work->rotY < 0.0) {
+        work->rotY = work->rotY + 360.0;
+    }
+    model = obj->mdlId[0];
+    Hu3DModelPosSetV(model, &work->pos);
+    Hu3DModelRotSet(model, 0.0f, work->rotY, 0.0f);
+    shadow = obj->mdlId[1];
+    if (work->alpha > 0.0) {
+        Hu3DModelAttrReset(shadow, 1);
+        Hu3DModelPosSetV(shadow, &work->pos);
+        Hu3DModelScaleSet(shadow, work->alpha, 1.0f, work->alpha);
+    } else {
+        Hu3DModelAttrSet(shadow, 1);
+    }
+    work->body.u.circle.prev = work->pos;
+    fn_1_1908(&work->pos);
+}
+
+M580_AIPARAM lbl_1_data_208[4] = {
+    { 0.3f, 0.2f, 0.05f, 0.0f, 0xA, 6 },
+    { 0.5f, 0.4f, 0.2f, 0.0f, 9, 4 },
+    { 0.7f, 0.6f, 0.5f, 0.15f, 8, 3 },
+    { 0.95f, 0.8f, 0.8f, 0.3f, 7, 2 },
+};
+HuVecF lbl_1_data_268[4] = {
+    { -700.0f, 0.0f, -400.0f }, { -700.0f, 0.0f, 400.0f }, { 700.0f, 0.0f, -400.0f }, { 700.0f, 0.0f, 400.0f },
+};
+
+void fn_1_5B94(OMOBJ *obj)
+{
+    M580_PLAYERWORK *work = obj->data;
+    M580_AIPARAM *param = &lbl_1_data_208[work->dif];
+
+    work->autoMove = 0;
+    if (work->aiWait != 0) {
+        work->aiWait--;
+    }
+    switch (work->unk30) {
+    case 0:
+        work->unk30++;
+        work->aiTarget = -1;
+        work->aiState = -1;
+        fn_1_5C64(obj, fn_1_6548);
+    case 1:
+        work->aiTarget = fn_1_78B4(obj);
+        work->aiFunc(obj);
+        return;
+    }
+}
+
+void fn_1_5C64(OMOBJ *obj, M580_AIFUNC func)
+{
+    M580_PLAYERWORK *work = obj->data;
+
+    work->aiFunc = func;
+    work->unk54 = 0;
+    work->unk58 = 0;
+    work->unk5C = 0.0f;
+    work->unk60 = 0;
+    work->unk64 = 0;
 }
