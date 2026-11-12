@@ -69,11 +69,17 @@ static s32 s_unused70;
 static s32 s_unused74;
 static s32 s_unused78;
 static u8 s_aisuConeChain[12];
-extern "C" u8 aisuConeList__Q24m5015CAisu[8];
+extern "C" {
+u8 aisuConeList__Q24m5015CAisu[8];
+}
 static u8 s_aisuAllChain[12];
-extern "C" u8 aisuAllList__Q24m5015CAisu[8];
+extern "C" {
+u8 aisuAllList__Q24m5015CAisu[8];
+}
 static u8 s_aisuFallChain[12];
-extern "C" u8 aisuFallList__Q24m5015CAisu[8];
+extern "C" {
+u8 aisuFallList__Q24m5015CAisu[8];
+}
 #define aisuConeList (*(CLinkList *)aisuConeList__Q24m5015CAisu)
 #define aisuAllList (*(CLinkList *)aisuAllList__Q24m5015CAisu)
 #define aisuFallList (*(CLinkList *)aisuFallList__Q24m5015CAisu)
