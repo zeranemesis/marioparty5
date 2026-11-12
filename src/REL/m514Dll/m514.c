@@ -400,6 +400,9 @@ s16 fn_1_16DC(void)
 
 s16 fn_1_16EC(s32 idx)
 {
+#ifdef TARGET_PC
+    idx &= 3;
+#endif
     return lbl_1_bss_20[idx];
 }
 

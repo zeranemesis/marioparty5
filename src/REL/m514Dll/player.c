@@ -480,13 +480,22 @@ void fn_1_2E8C(OMOBJ *obj)
             if (p->pos.x < lbl_1_data_138[9].x) {
                 fn_1_3EC0(obj, 2);
                 p->unk5C = p->unk5C + 0.1 * (1.0 - p->unk5C);
+#ifdef TARGET_PC
+                Hu3DMotionSpeedSet(obj->mdlId[0], p->unk5C * lbl_1_data_1B0[p->charNo & 0xF]);
+#else
                 Hu3DMotionSpeedSet(obj->mdlId[0], p->unk5C * lbl_1_data_1B0[p->charNo]);
+#endif
                 break;
             }
             p->runState++;
             p->runTimer = 0;
             /* fallthrough */
         case 3:
+#ifdef TARGET_PC
+            if (p->jumpNo > 2) {
+                break;
+            }
+#endif
             jump = &lbl_1_data_23C[p->jumpNo];
             p->vel.x = p->vel.x * 0.5;
             p->runTimer++;
@@ -503,6 +512,11 @@ void fn_1_2E8C(OMOBJ *obj)
             }
             break;
         case 4:
+#ifdef TARGET_PC
+            if (p->jumpNo > 2) {
+                break;
+            }
+#endif
             jump = &lbl_1_data_23C[p->jumpNo];
             if (p->vel.y >= 0.0f) {
                 p->unk60 = p->unk60 - 0.00500000026077032;
@@ -774,7 +788,11 @@ s32 fn_1_41C4(s32 grp)
 
 f32 fn_1_4238(s32 idx)
 {
-    M514PLAYER *p = lbl_1_bss_70[idx]->data;
+    M514PLAYER *p;
 
+#ifdef TARGET_PC
+    idx &= 3;
+#endif
+    p = lbl_1_bss_70[idx]->data;
     return p->pos.x;
 }
