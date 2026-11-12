@@ -20,9 +20,16 @@ typedef struct M515Ply_s M515_PLY;
 
 // Global per-player board slot, stride 0x30, at sub+0x234.
 struct M515Slot_s {
-    char pad_00[0x18];
+    f32 f00;
+    f32 f04;
+    f32 f08;
+    HuVecF look;
     HuVecF vec;
-    char pad_24[0x30 - 0x24];
+    s16 state;
+    s16 timer;
+    s16 idx;
+    char pad_2a[2];
+    s32 f2c;
 };
 
 // Board item attached to a cell.
@@ -226,6 +233,9 @@ void fn_1_2F3C(M515_SUB *sub);
 void fn_1_5C40(M515_SUB *sub);
 void fn_1_5DB0(M515_SUB *sub);
 void fn_1_C83C(void);
+void fn_1_BE78(M515_SUB *sub, s16 mdl, s16 mode);
+void fn_1_BF24(M515_SUB *sub, s16 mdl, s16 mode);
+extern f32 lbl_1_data_28[60];
 s32 fn_1_BFD0(M515_NODE2 *node);
 s32 fn_1_C0D0(M515_NODE2 *node);
 s32 fn_1_C150(M515_NODE2 *node);
@@ -253,6 +263,15 @@ s32 fn_1_5FD0(M515_PLY *ply);
 void fn_1_9804(M515_ENTRY *entry, M515_SLOT *slot, s32 index);
 
 // DATA BEGIN
+f32 lbl_1_data_28[60] = {
+    270.0f, 10.0f, 4240.0f, 0.0f, 108.0f, 204.0f, 420.0f, 40.0f, 6000.0f, 25.0f, 25.0f, 75.0f,
+    420.0f, 40.0f, 6000.0f, 25.0f, 25.0f, -900.0f, 240.0f, 40.0f, 6000.0f, -25.0f, 425.0f,
+    -675.0f, 240.0f, 40.0f, 6000.0f, -25.0f, 425.0f, -75.0f, 240.0f, 40.0f, 6000.0f, -25.0f,
+    425.0f, 900.0f, 60.0f, 40.0f, 6000.0f, 25.0f, 825.0f, 675.0f, 60.0f, 40.0f, 6000.0f, 25.0f,
+    825.0f, 75.0f, 90.0f, 15.0f, 1900.0f, 0.0f, 1000.0f, -225.0f, 90.0f, 4.0f, 1970.0f, 0.0f,
+    150.0f, -225.0f
+};
+
 s32 lbl_1_data_118[13][8] = {
     { 0x8C0000, 0x8C0001, 0x8C0002, 0x8C0005, 0x8C0006, 0x8C0007, 0x8C000D, 0x8C000E },
     { 0x330000, 0x330001, 0x330002, 0x330005, 0x330006, 0x330007, 0x33000D, 0x33000E },
@@ -907,6 +926,378 @@ s32 fn_1_7878(M515_PLY *self)
         }
     }
 
+    return ret;
+}
+
+void fn_1_7E5C(M515_SLOT *slot, s16 idx)
+{
+    f32 *src;
+
+    if (idx == 0) {
+        src = lbl_1_data_28;
+    } else {
+        src = &lbl_1_data_28[6];
+    }
+    slot->f00 = src[0];
+    slot->f04 = src[1];
+    slot->f08 = src[2];
+    slot->look.x = src[3];
+    slot->look.y = src[4];
+    slot->look.z = src[5];
+    slot->state = 0;
+    slot->timer = 0;
+    slot->idx = idx;
+    slot->f2c = 0;
+}
+
+void fn_1_7EE0(M515_SLOT *slot)
+{
+    f32 x;
+    f32 y;
+    f32 z;
+
+    if (slot->f00 > 360.0f) {
+        slot->f00 = slot->f00 - 360.0f;
+    }
+    if (slot->f00 < 0.0f) {
+        slot->f00 += 360.0f;
+    }
+    if (slot->f04 > 360.0f) {
+        slot->f04 = slot->f04 - 360.0f;
+    }
+    if (slot->f04 < 0.0f) {
+        slot->f04 += 360.0f;
+    }
+    x = slot->look.x + (0.5f * slot->f08) * HuCos(slot->f04) * HuCos(slot->f00);
+    y = slot->look.y + (0.5f * slot->f08) * HuSin(slot->f04);
+    z = slot->look.z + (0.5f * slot->f08) * HuCos(slot->f04) * HuSin(slot->f00);
+    Hu3DCameraPosSet(lbl_1_rodata_10[slot->idx], x, y, z, 0.0f, 1.0f, 0.0f, slot->look.x,
+        slot->look.y, slot->look.z);
+}
+
+void fn_1_81A8(M515_SLOT *slot, M515_PLY *ply)
+{
+    f32 a;
+
+    if (ply->v0e == 1) {
+        if (ply->pos.x > 150.0f) {
+            a = ply->pos.x - 150.0f;
+        } else if (ply->pos.x < -150.0f) {
+            a = 0.5f * (150.0f + ply->pos.x);
+        } else {
+            a = 0.0f;
+        }
+    } else if (ply->pos.x > 150.0f) {
+        a = 0.5f * (ply->pos.x - 150.0f);
+    } else if (ply->pos.x < -150.0f) {
+        a = 150.0f + ply->pos.x;
+    } else {
+        a = 0.0f;
+    }
+    if (ply->v0e == 1) {
+        slot->look.x = a - 25.0f;
+    } else {
+        slot->look.x = 25.0f + a;
+    }
+    if (ply->pos.z > 150.0f) {
+        a = ply->pos.z - 150.0f;
+    } else if (ply->pos.z < -150.0f) {
+        a = 150.0f + ply->pos.z;
+    } else {
+        a = 0.0f;
+    }
+    if (a > 150.0f) {
+        a = 150.0f;
+    }
+    if (a < -150.0f) {
+        a = -150.0f;
+    }
+    if (ply->v0e == 1) {
+        slot->look.z = 75.0f + a;
+        return;
+    }
+    slot->look.z = a - 75.0f;
+}
+
+s32 fn_1_83E8(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    s32 ret;
+    f32 k;
+    f32 inv;
+    f32 t;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer == 0x37) {
+            fn_1_BE78(sub, sub->id16[slot->idx], 0);
+            fn_1_BF24(sub, sub->id26[slot->idx], 1);
+        }
+        if (slot->timer >= 0x78) {
+            fn_1_BE78(sub, sub->id96[slot->idx][0], 0);
+            fn_1_BE78(sub, sub->id76[slot->idx].a, 0);
+            fn_1_BE78(sub, sub->id76[slot->idx].a, 0);
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 120.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[0] * inv + lbl_1_data_28[6] * k;
+        slot->f04 = lbl_1_data_28[1] * inv + lbl_1_data_28[7] * k;
+        slot->f08 = lbl_1_data_28[2] * inv + lbl_1_data_28[8] * k;
+        slot->look.x = lbl_1_data_28[3] * inv + lbl_1_data_28[9] * k;
+        slot->look.y = lbl_1_data_28[4] * inv + lbl_1_data_28[10] * k;
+        slot->look.z = lbl_1_data_28[5] * inv + lbl_1_data_28[11] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_86F4(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->vec = slot->look;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 70) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 70.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[6] * inv + lbl_1_data_28[12] * k;
+        slot->f04 = lbl_1_data_28[7] * inv + lbl_1_data_28[13] * k;
+        slot->f08 = lbl_1_data_28[8] * inv + lbl_1_data_28[14] * k;
+        slot->look.x = slot->vec.x * inv + lbl_1_data_28[15] * k;
+        slot->look.y = slot->vec.y * inv + lbl_1_data_28[16] * k;
+        slot->look.z = slot->vec.z * inv + lbl_1_data_28[17] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_8964(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 100) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 100.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[12] * inv + lbl_1_data_28[18] * k;
+        slot->f04 = lbl_1_data_28[13] * inv + lbl_1_data_28[19] * k;
+        slot->f08 = lbl_1_data_28[14] * inv + lbl_1_data_28[20] * k;
+        slot->look.x = lbl_1_data_28[15] * inv + lbl_1_data_28[21] * k;
+        slot->look.y = lbl_1_data_28[16] * inv + lbl_1_data_28[22] * k;
+        slot->look.z = lbl_1_data_28[17] * inv + lbl_1_data_28[23] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_8BD4(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 45) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 45.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[18] * inv + lbl_1_data_28[24] * k;
+        slot->f04 = lbl_1_data_28[19] * inv + lbl_1_data_28[25] * k;
+        slot->f08 = lbl_1_data_28[20] * inv + lbl_1_data_28[26] * k;
+        slot->look.x = lbl_1_data_28[21] * inv + lbl_1_data_28[27] * k;
+        slot->look.y = lbl_1_data_28[22] * inv + lbl_1_data_28[28] * k;
+        slot->look.z = lbl_1_data_28[23] * inv + lbl_1_data_28[29] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_8E44(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->vec = slot->look;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 70) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 70.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[24] * inv + lbl_1_data_28[30] * k;
+        slot->f04 = lbl_1_data_28[25] * inv + lbl_1_data_28[31] * k;
+        slot->f08 = lbl_1_data_28[26] * inv + lbl_1_data_28[32] * k;
+        slot->look.x = slot->vec.x * inv + lbl_1_data_28[33] * k;
+        slot->look.y = slot->vec.y * inv + lbl_1_data_28[34] * k;
+        slot->look.z = slot->vec.z * inv + lbl_1_data_28[35] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_90B4(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 100) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 100.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[30] * inv + lbl_1_data_28[36] * k;
+        slot->f04 = lbl_1_data_28[31] * inv + lbl_1_data_28[37] * k;
+        slot->f08 = lbl_1_data_28[32] * inv + lbl_1_data_28[38] * k;
+        slot->look.x = lbl_1_data_28[33] * inv + lbl_1_data_28[39] * k;
+        slot->look.y = lbl_1_data_28[34] * inv + lbl_1_data_28[40] * k;
+        slot->look.z = lbl_1_data_28[35] * inv + lbl_1_data_28[41] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_9324(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 45) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 45.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[36] * inv + lbl_1_data_28[42] * k;
+        slot->f04 = lbl_1_data_28[37] * inv + lbl_1_data_28[43] * k;
+        slot->f08 = lbl_1_data_28[38] * inv + lbl_1_data_28[44] * k;
+        slot->look.x = lbl_1_data_28[39] * inv + lbl_1_data_28[45] * k;
+        slot->look.y = lbl_1_data_28[40] * inv + lbl_1_data_28[46] * k;
+        slot->look.z = lbl_1_data_28[41] * inv + lbl_1_data_28[47] * k;
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_9594(M515_SLOT *slot)
+{
+    M515_SUB *sub;
+    f32 k;
+    f32 inv;
+    f32 t;
+    s32 ret;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    switch (slot->state) {
+    case 0:
+        slot->timer = 0;
+        slot->vec = slot->look;
+        slot->state++;
+    case 1:
+        slot->timer++;
+        if (slot->timer >= 80) {
+            slot->state = 0;
+            ret = 1;
+        }
+        t = (f32)slot->timer / 80.0f;
+        k = 1.0 - (0.5 + 0.5 * HuCos(180.0f * t));
+        inv = 1.0f - k;
+        slot->f00 = lbl_1_data_28[42] * inv + lbl_1_data_28[48] * k;
+        slot->f04 = lbl_1_data_28[43] * inv + lbl_1_data_28[49] * k;
+        slot->f08 = lbl_1_data_28[44] * inv + lbl_1_data_28[50] * k;
+        slot->look.x = slot->vec.x * inv + lbl_1_data_28[51] * k;
+        slot->look.y = slot->vec.y * inv + lbl_1_data_28[52] * k;
+        slot->look.z = slot->vec.z * inv + lbl_1_data_28[53] * k;
+        break;
+    }
     return ret;
 }
 
