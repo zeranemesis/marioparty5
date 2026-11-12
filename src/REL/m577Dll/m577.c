@@ -285,7 +285,7 @@ void fn_1_1D50(void);
 void fn_1_1DD8(M577Work *w);
 void fn_1_1FEC(M577Split *split);
 void fn_1_2044(M577Split *split);
-void fn_1_225C(void);
+void fn_1_225C(M577Split *split);
 void fn_1_2260(void);
 void fn_1_2364(M577Cam *cam, s16 bit);
 void fn_1_23CC(M577Cam *cam);
@@ -551,7 +551,7 @@ void fn_1_798(s16 mode, s16 frameNo)
             w->state = 0;
             w->sub++;
         case 1:
-            return;
+            break;
     }
 }
 
@@ -642,7 +642,7 @@ void fn_1_B0C(s16 mode, s16 frameNo)
             w->state = 0;
             w->sub++;
         case 1:
-            return;
+            break;
     }
 }
 
@@ -880,7 +880,7 @@ void fn_1_17CC(s16 mode, s16 frameNo)
     M577Work *w = workObj->data;
     s32 i;
 
-    fn_1_225C();
+    fn_1_225C(&w->split);
     if (w->esp[0] >= 0) {
         espKill(w->esp[0]);
     }
@@ -945,8 +945,9 @@ void fn_1_1870(OMOBJ *obj)
 void fn_1_1B40(OMOBJ *obj)
 {
     M577Player *p = obj->data;
+    M577Work *w = workObj->data;
 
-    if (((M577Work *)workObj->data)->active != 0 && p->team->state != 2 && p->func != 0) {
+    if (w->active != 0 && p->team->state != 2 && p->func != 0) {
         p->func(p);
     }
 }
@@ -1003,7 +1004,10 @@ void fn_1_1CF4(M577Work *w)
 
 void fn_1_1D50(void)
 {
-    Hu3DGLightInfinitytSet(Hu3DGLightCreate(0.0f, 4000.0f, 0.0f, 0.0f, -1.0f, -1.0f, 0x7F, 0x7F, 0x7F));
+    HU3DLIGHTID light;
+
+    light = Hu3DGLightCreate(0.0f, 4000.0f, 0.0f, 0.0f, -1.0f, -1.0f, 0x7F, 0x7F, 0x7F);
+    Hu3DGLightInfinitytSet(light);
 }
 
 void fn_1_1DD8(M577Work *w)
@@ -1055,7 +1059,7 @@ void fn_1_2044(M577Split *split)
     Hu3DCameraPerspectiveSet(camBit[i], 15.0f, 20.0f, 40000.0f, aspect);
 }
 
-void fn_1_225C(void)
+void fn_1_225C(M577Split *split)
 {
 }
 
@@ -3189,8 +3193,8 @@ void fn_1_B134(M577Work *w)
 void fn_1_B26C(M577Work *w)
 {
     s16 mdl = w->mdlCache[13];
-    f32 t;
     f32 rot;
+    f32 t;
 
     w->ringAngle += 10.0f;
     t = w->ringAngle / w->course.value;
