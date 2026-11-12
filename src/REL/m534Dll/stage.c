@@ -96,10 +96,13 @@ OMOBJ *lbl_1_bss_48;
 void fn_1_3360(HUPROCESS *objman)
 {
     OMOBJ *obj;
+    void *data;
 
-    obj = lbl_1_bss_48 = omAddObjEx(objman, 0x14, 0x1C, 0, -1, fn_1_33EC);
-    obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M534STAGE), 0x10000000U);
-    memset(obj->data, 0, sizeof(M534STAGE));
+    obj = omAddObjEx(objman, 0x14, 0x1C, 0, -1, fn_1_33EC);
+    lbl_1_bss_48 = obj;
+    data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M534STAGE), 0x10000000U);
+    obj->data = data;
+    memset(data, 0, sizeof(M534STAGE));
 }
 
 void fn_1_33E8(void)
@@ -308,19 +311,21 @@ static void fn_1_3E04(OMOBJ *obj)
 static void fn_1_3F04(OMOBJ *obj)
 {
     M534STAGE *s = obj->data;
+    s16 model;
     s32 i;
 
     for (i = 0; i < 5; i++) {
         s->cloudPos[i].x += s->cloudSpd[i];
-        Hu3DModelPosSetV(obj->mdlId[i + 5], &s->cloudPos[i]);
+        model = obj->mdlId[i + 5];
+        Hu3DModelPosSetV(model, &s->cloudPos[i]);
     }
 }
 
 static void fn_1_3FA0(OMOBJ *obj)
 {
     M534STAGE *s = obj->data;
-    s16 model;
     s32 i;
+    s16 model;
 
     for (i = 0; i < 16; i++) {
         model = Hu3DModelCreate(HuDataSelHeapReadNum(0x5C000A, 0x10000000, HEAP_MODEL));
@@ -352,7 +357,8 @@ static void fn_1_406C(OMOBJ *obj)
 
 void fn_1_4114(s32 slot)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
     s16 model;
     s32 i;
 
@@ -364,7 +370,7 @@ void fn_1_4114(s32 slot)
     for (i = 0; i < 16; i++) {
         if (s->splashOn[i] == 0) {
             s->splashOn[i] = 1;
-            model = lbl_1_bss_48->mdlId[i + 10];
+            model = obj->mdlId[i + 10];
             Hu3DModelPosSetV(model, &lbl_1_data_208[slot]);
             Hu3DModelRotSet(model, 0.0f, 360.0 * (1.52587890625e-05 * (f32) (s32) (frand() & 0xFFFF)), 0.0f);
             Hu3DModelAttrReset(model, 1);
@@ -412,7 +418,8 @@ static void fn_1_430C(OMOBJ *obj)
 
 void fn_1_43D4(s32 slot)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
 
 #ifdef TARGET_PC
     if (slot < 0 || slot > 3) {
@@ -434,8 +441,7 @@ static void fn_1_4450(OMOBJ *obj)
     s->state = 0;
     s->wait = 12;
     s->follow = 0.5f;
-    s->footY = -710.0f;
-    s->footTarget = -710.0f;
+    s->footTarget = s->footY = -710.0f;
 }
 
 void fn_1_449C(s32 team)
@@ -470,7 +476,8 @@ void fn_1_449C(s32 team)
 
 s32 fn_1_4624(void)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
     s32 a = fn_1_74E8(0);
     s32 b = fn_1_74E8(1);
 
@@ -485,39 +492,40 @@ s32 fn_1_4624(void)
 
 f32 fn_1_46A8(void)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
     f32 b;
     f32 d;
-    f32 v;
 
     b = fn_1_74E8(1);
     d = fn_1_74E8(0) - b;
     if (d >= 0.0) {
         if (d <= 4.0) {
-            v = 0.0f;
+            d = 0.0f;
         } else {
-            v = d - 4.0;
+            d = d - 4.0;
         }
     } else {
         if (d >= -4.0) {
-            v = 0.0f;
+            d = 0.0f;
         } else {
-            v = d + 4.0;
+            d = d + 4.0;
         }
     }
-    v = v * 5.0;
-    if (v > 20.0) {
-        v = 20.0f;
+    d = d * 5.0;
+    if (d > 20.0) {
+        d = 20.0f;
     }
-    if (v < -20.0) {
-        v = -20.0f;
+    if (d < -20.0) {
+        d = -20.0f;
     }
-    return v;
+    return d;
 }
 
 f32 fn_1_4848(void)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
     f32 v;
 
     if (fn_1_4624() != 0) {
@@ -536,7 +544,7 @@ f32 fn_1_4848(void)
 
 void fn_1_4970(void)
 {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < 4; i++) {
         omVibrate(i, 0x28, 0xC, 0);
@@ -545,13 +553,15 @@ void fn_1_4970(void)
 
 BOOL fn_1_49BC(void)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
     return s->state == 12;
 }
 
 BOOL fn_1_49FC(void)
 {
-    M534STAGE *s = lbl_1_bss_48->data;
+    OMOBJ *obj = lbl_1_bss_48;
+    M534STAGE *s = obj->data;
     return s->state == 8;
 }
 
@@ -563,15 +573,15 @@ static void fn_1_4A3C(OMOBJ *obj)
     f32 f;
     s32 lead;
     s32 done;
-    s32 i;
+    s32 vi;
     s16 model;
 
     switch (s->state) {
         case 0:
             if (fn_1_16AC() == 5) {
                 Hu3DModelAttrReset(obj->mdlId[2], 0x40000002);
-                for (i = 0; i < 4; i++) {
-                    omVibrate(i, 0x28, 0xC, 0);
+                for (vi = 0; vi < 4; vi++) {
+                    omVibrate(vi, 0x28, 0xC, 0);
                 }
                 s->state = 1;
             }
@@ -772,6 +782,8 @@ static void fn_1_4A3C(OMOBJ *obj)
                 s->timer = 0;
                 Center.y = s->camY;
             }
+            break;
+        case 12:
             break;
     }
     if (s->bounceAmp >= 1.0) {
