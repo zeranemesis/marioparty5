@@ -12,6 +12,13 @@
 #include "game/process.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "game/charman.h"
+#ifdef __cplusplus
+}
+#endif
 #include "game/sprite.h"
 
 #ifdef __cplusplus
@@ -61,6 +68,12 @@ f32 fn_1_4D1C(void);
 void fn_1_12DC(void *node);
 M536_EFFOBJ *fn_1_7B3C(M536_EFFOBJ *self, Vec *pos, f32 rotY);
 M536_EFFOBJ *fn_1_8098(M536_EFFOBJ *self, Vec *pos);
+s16 *fn_1_2D18(s16 *out, s16 charNo, s16 flag);
+void fn_1_2EF4(s16 *modelId, Vec *pos);
+void fn_1_2F3C(s16 *modelId, Vec *rot);
+void fn_1_234(void *file, const char *msg);
+s32 fn_1_4AE0(void);
+s32 fn_1_1F30(void);
 void *__register_global_object(void *object, void *destructor, void *regmem);
 
 extern M536_NODE lbl_1_bss_C;

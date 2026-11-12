@@ -38,7 +38,7 @@ struct M536Killer {
     M536KillerSlot m_slot[4];   /* 0x14 */
 };
 
-s32 fn_1_B4B0(s32 owner, Vec *pos, f32 radius);
+s32 fn_1_B4B0(s32 owner, Vec *pos);
 
 M536Killer *fn_1_E42C(M536Killer *self, s16 freeIt);
 void fn_1_E650(M536Killer *self, s32 bit);
@@ -407,7 +407,7 @@ void fn_1_EF4C(M536Bullet *self)
     prev.x = self->m_pos.x - 5.0f * self->m_vel.x;
     prev.y = self->m_pos.y - 5.0f * self->m_vel.y;
     prev.z = self->m_pos.z - 5.0f * self->m_vel.z;
-    if (fn_1_B4B0(self->m_owner, &self->m_pos, 5.0f) != 0 || fn_1_E7BC(self->m_owner, &self->m_pos) != 0) {
+    if (fn_1_B4B0(self->m_owner, &self->m_pos) != 0 || fn_1_E7BC(self->m_owner, &self->m_pos) != 0) {
         t4 = lbl_1_data_638;
         self->m_hook = t4;
     }
