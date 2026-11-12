@@ -47,4 +47,22 @@ typedef struct M522UnkAC_s {
  * second register comes from. */
 extern void *lbl_1_bss_18;
 
+/* Doubly linked list node used by every object of the module (fn_1_8004 and
+ * friends).  The first word is the one the list walkers follow. */
+typedef struct M522Node_s {
+    /* 0x0 */ struct M522Node_s *prev;
+    /* 0x4 */ struct M522Node_s *next;
+} M522_NODE;
+
+/* Virtual table slot, cast to the real signature at every call site. */
+typedef void (*M522_VTFN)(void);
+
+/* Base of the effect objects (fn_1_E44C): list node, hook model id, vtable. */
+typedef struct M522Effect_s {
+    /* 0x00 */ M522_NODE node;
+    /* 0x08 */ s16 hook;
+    /* 0x0C */ M522_VTFN *vtbl;
+    /* 0x10 */ s32 handle;
+} M522_EFFECT;
+
 #endif
