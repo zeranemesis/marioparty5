@@ -1485,41 +1485,43 @@ s16 fn_1_2E3C(M528PLAYER *player)
  * sector animation reaches its end. */
 s32 fn_1_2EC0(M528TEAM *team)
 {
-    f32 diffAlpha;
-    f32 diffActive;
-    f32 tiltAdd;
     f32 power;
     f32 c;
     f32 s;
+    f32 diffActive;
+    f32 tiltAdd;
+    f32 diffAlpha;
     s32 result;
     M528MAIN *main;
+    M528SLOT *slot0;
     M528SLOT *slot1;
 
     result = 0;
     main = lbl_1_bss_298->data;
+    slot0 = slot0;
     slot1 = &team->slot[1];
-    diffAlpha = team->slot[0].alpha - slot1->alpha;
-    diffActive = team->slot[0].active - slot1->active;
+    diffAlpha = slot0->alpha - slot1->alpha;
+    diffActive = slot0->active - slot1->active;
     if (diffActive == 0.0f) {
         tiltAdd = 5.0f * (-team->tilt / 25.0f);
     } else {
         tiltAdd = 0.0f;
     }
-    fn_1_32D0(&team->slot[0]);
+    fn_1_32D0(slot0);
     fn_1_32D0(slot1);
     team->tilt += tiltAdd + (6.4f * diffAlpha + 0.5f * diffActive);
-    if (team->slot[0].waitFrames - slot1->waitFrames == 0) {
+    if (slot0->waitFrames - slot1->waitFrames == 0) {
         power = 0.0f;
     } else {
-        power = fabs(team->slot[0].alpha - slot1->alpha);
+        power = fabsf(slot0->alpha - slot1->alpha);
         if (power > 1.0f) {
             power = 1.0f;
         }
-        if (team->slot[0].hit != 0 || slot1->hit != 0) {
+        if (slot0->hit != 0 || slot1->hit != 0) {
             HuAudFXPlay(team->sndId);
         }
     }
-    team->slot[0].hit = 0;
+    slot0->hit = 0;
     slot1->hit = 0;
     if (team->tilt > 25.0f) {
         power = 0.0f;
@@ -1539,11 +1541,11 @@ s32 fn_1_2EC0(M528TEAM *team)
     c = 150.0 * HuCos(team->tilt);
     s = 150.0 * HuSin(team->tilt);
     Hu3DModelRotSet(team->mdl, 0.0f, 0.0f, team->tilt);
-    team->slot[0].pos.x = team->pivot.x - c;
-    team->slot[0].pos.y = team->pivot.y - s;
+    slot0->pos.x = team->pivot.x - c;
+    slot0->pos.y = team->pivot.y - s;
     slot1->pos.x = team->pivot.x + c;
     slot1->pos.y = team->pivot.y + s;
-    Hu3DModelPosSet(team->slot[0].mdl, team->slot[0].pos.x, team->slot[0].pos.y, team->slot[0].pos.z);
+    Hu3DModelPosSet(slot0->mdl, slot0->pos.x, slot0->pos.y, slot0->pos.z);
     Hu3DModelPosSet(slot1->mdl, slot1->pos.x, slot1->pos.y, slot1->pos.z);
     Hu3DModelRotSet(team->spinMdl, 0.0f, 0.0f, team->spin);
     return result;
