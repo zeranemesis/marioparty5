@@ -22,6 +22,37 @@ double sin(double x);
 double cos(double x);
 double fmod(double x, double y);
 
+// Pointer-to-member-function slot. The GameCube build keeps the MWCC layout
+// (this-delta, vtable index, function address); on PC the slot is just the
+// function pointer, called directly with the object.
+#ifdef TARGET_PC
+typedef struct M539Ptmf_s {
+    void (*fn)(void *self);
+} M539Ptmf;
+#define M539_PTMF_INIT(f) { (void (*)(void *))(f) }
+#define M539_PTMF_NULL_INIT { 0 }
+#define M539_PTMF_SET_FROM(dst, tbl, f) ((dst).fn = (void (*)(void *))(f))
+#define M539_PTMF_NULL M539PtmfNull
+static const M539Ptmf M539PtmfNull = { 0 };
+#define M539PtmfTest(p) ((p)->fn != 0)
+#define M539PtmfCall(obj, p) ((p)->fn(obj))
+#else
+typedef struct M539Ptmf_s {
+    s32 delta;
+    s32 vidx;
+    void *fn;
+} M539Ptmf;
+#define M539_PTMF_INIT(f) { 0, -1, (void *)(f) }
+#define M539_PTMF_NULL_INIT { 0, -1, 0 }
+#define M539_PTMF_SET_FROM(dst, tbl, f) ((dst).delta = (tbl).delta, (dst).vidx = (tbl).vidx, (dst).fn = (void *)(f))
+#define M539_PTMF_NULL __ptmf_null
+extern M539Ptmf __ptmf_null;
+s32 __ptmf_test(M539Ptmf *p);
+void __ptmf_scall(void *obj, M539Ptmf *p);
+#define M539PtmfTest(p) __ptmf_test(p)
+#define M539PtmfCall(obj, p) __ptmf_scall((obj), (p))
+#endif
+
 typedef struct M539Heiho_s {
     s32 curIdx;
     Vec pos;

@@ -12,12 +12,6 @@
 
 extern "C" {
 
-typedef struct {
-    s32 ptmfA;
-    s32 ptmfB;
-    void *ptmfFn;
-} PTMF;
-
 typedef struct M539ScoreMgr_s {
     s32 unk0;
     s32 unk4;
@@ -34,7 +28,7 @@ typedef struct M539ScoreSpr_s {
     s32 value;
     s32 frame;
     void *score;
-    PTMF hook;
+    M539Ptmf hook;
 } M539ScoreSpr;
 
 typedef struct M539ScoreList_s {
@@ -47,17 +41,22 @@ extern void *lbl_1_data_1FC;
 extern s32 lbl_1_bss_C;
 extern void *lbl_1_bss_A0C;
 
+void fn_1_F5C4(M539ScoreSpr *self);
+void fn_1_F744(M539ScoreSpr *self);
+M539ScoreMgr *fn_1_F150(M539ScoreMgr *self, s16 arg);
+void fn_1_F220(M539ScoreMgr *self, s32 arg);
+void fn_1_F238(void);
+
 char lbl_1_data_540[] = "ms_pointer == 0";
 char lbl_1_data_550[] = "singleton.h";
 char lbl_1_data_55C[] = "ms_pointer != 0";
-s32 lbl_1_data_56C[3] = {0, -1, 0};
-s32 lbl_1_data_578[3] = {0, -1, 0};
-void *lbl_1_data_584[5];
+M539Ptmf lbl_1_data_56C = M539_PTMF_INIT(fn_1_F5C4);
+M539Ptmf lbl_1_data_578 = M539_PTMF_INIT(fn_1_F744);
+void *lbl_1_data_584[5] = { 0, 0, (void *)fn_1_F150, (void *)fn_1_F220, (void *)fn_1_F238 };
 
 s32 lbl_1_bss_A58[3];
 M539ScoreList lbl_1_bss_A64;
 
-void __ptmf_scall(void *obj, PTMF *ptmf);
 void __register_global_object(void *obj, void *dtor, void *reg);
 
 void fn_1_1264(void *self);
@@ -160,7 +159,7 @@ void fn_1_F238(void)
 M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 arg)
 {
     s32 v = value;
-    s32 *hook;
+    M539Ptmf *hook;
     s32 digits;
 
     fn_1_1264(self);
@@ -175,14 +174,12 @@ M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 a
         return fn_1_F40C(self, 1);
     }
     if (arg == 0) {
-        hook = lbl_1_data_56C;
+        hook = &lbl_1_data_56C;
     }
     else {
-        hook = lbl_1_data_578;
+        hook = &lbl_1_data_578;
     }
-    self->hook.ptmfA = hook[0];
-    self->hook.ptmfB = hook[1];
-    self->hook.ptmfFn = (void *)hook[2];
+    self->hook = *hook;
     if (arg == 1) {
         digits = 2;
     }
@@ -255,7 +252,7 @@ void fn_1_F55C(void)
 
 void fn_1_F58C(void *self)
 {
-    __ptmf_scall(self, &((M539ScoreSpr *)self)->hook);
+    M539PtmfCall(self, &((M539ScoreSpr *)self)->hook);
 }
 
 // NONMATCHING: register allocation only.

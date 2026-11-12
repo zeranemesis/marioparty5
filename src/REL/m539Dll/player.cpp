@@ -11,12 +11,6 @@
 
 extern "C" {
 
-typedef struct M539Ptmf_s {
-    s32 a;
-    s32 b;
-    void *fn;
-} M539Ptmf;
-
 typedef struct M539Vec_s {
     u32 cap;
     u32 size;
@@ -105,8 +99,6 @@ void fn_1_10400(M539Game *g);
 void fn_1_104A8(M539Game *g, M539Ptmf *p);
 void fn_1_10A90(M539Game *g);
 void fn_1_10BE8(M539Game *g);
-s32 __ptmf_test(M539Ptmf *p);
-void __ptmf_scall(void *obj, M539Ptmf *p);
 
 void CharFXPlayPan(s16 chr, s16 se, s16 pan);
 void CharModelFxFlagSet(s16 chr, s32 flag);
@@ -133,17 +125,17 @@ s32 lbl_1_bss_A48;
 s32 lbl_1_bss_A4C;
 s32 lbl_1_bss_A50;
 
-M539Ptmf lbl_1_data_430 = { 0, -1, 0 };
+M539Ptmf lbl_1_data_430 = M539_PTMF_NULL_INIT;
 char lbl_1_data_43C[] = "sm_ptr != 0";
 char lbl_1_data_448[] = "a_set.h";
 char lbl_1_data_450[] = "m_mot_id.size() == NUMBEROF_MOTION";
 char lbl_1_data_473[] = "player.cpp";
-M539Ptmf lbl_1_data_480 = { 0, -1, 0 };
-M539Ptmf lbl_1_data_48C = { 0, -1, 0 };
-M539Ptmf lbl_1_data_498 = { 0, -1, 0 };
-M539Ptmf lbl_1_data_4A4 = { 0, -1, 0 };
-M539Ptmf lbl_1_data_4B0 = { 0, -1, 0 };
-M539Ptmf lbl_1_data_4BC = { 0, -1, 0 };
+M539Ptmf lbl_1_data_480 = M539_PTMF_NULL_INIT;
+M539Ptmf lbl_1_data_48C = M539_PTMF_NULL_INIT;
+M539Ptmf lbl_1_data_498 = M539_PTMF_NULL_INIT;
+M539Ptmf lbl_1_data_4A4 = M539_PTMF_NULL_INIT;
+M539Ptmf lbl_1_data_4B0 = M539_PTMF_NULL_INIT;
+M539Ptmf lbl_1_data_4BC = M539_PTMF_NULL_INIT;
 char lbl_1_data_4C8[] = "vector::at index out of range";
 char lbl_1_data_4E6[] = "vector::insert length error\n";
 char lbl_1_data_503[] = "Memory allocation failure";
@@ -344,8 +336,8 @@ void fn_1_D788(M539Player *self)
     } else {
         sub->flag8 = 0;
     }
-    if (__ptmf_test(&self->hook) != 0) {
-        __ptmf_scall(self, &self->hook);
+    if (M539PtmfTest(&self->hook) != 0) {
+        M539PtmfCall(self, &self->hook);
     }
     fn_1_D9E4(self);
     fn_1_2EF4(self->model, &self->pos);

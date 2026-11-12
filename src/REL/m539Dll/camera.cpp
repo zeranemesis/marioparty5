@@ -16,12 +16,6 @@
 
 extern "C" {
 
-typedef struct M539Ptmf_s {
-    s32 a;
-    s32 b;
-    void *fn;
-} M539Ptmf;
-
 typedef struct M539CamSub_s {
     u8 data[0x24];
 } M539CamSub;
@@ -40,7 +34,6 @@ typedef struct M539Camera_s {
 typedef void (*M539Fn)(void);
 
 extern u16 HuPadBtnDown[4];
-extern M539Ptmf __ptmf_null;
 extern void *lbl_1_bss_A14;
 extern s32 lbl_1_bss_C;
 extern void *lbl_1_data_1FC;
@@ -51,8 +44,6 @@ void Hu3DCameraPerspectiveSet(int cameraBit, float fov, float near, float far, f
 void Hu3DCameraViewportSet(int cameraBit, float vpX, float vpY, float vpW, float vpH, float vpNearZ, float vpFarZ);
 void Hu3DCameraScissorSet(int cameraBit, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 void Hu3DFogSet(float start, float end, u8 r, u8 g, u8 b);
-s32 __ptmf_test(M539Ptmf *p);
-void __ptmf_scall(void *obj, M539Ptmf *p);
 
 void fn_1_1264(void *self);
 void fn_1_1270(void *self, s32 arg);
@@ -70,8 +61,8 @@ void fn_1_BC24(M539Camera *self);
 char lbl_1_data_340[] = "ms_pointer == 0";
 char lbl_1_data_350[] = "singleton.h";
 char lbl_1_data_35C[] = "ms_pointer != 0";
-M539Ptmf lbl_1_data_36C = { 0, -1, (void *)fn_1_B3C4 };
-M539Ptmf lbl_1_data_378 = { 0, -1, (void *)fn_1_B3C0 };
+M539Ptmf lbl_1_data_36C = M539_PTMF_INIT(fn_1_B3C4);
+M539Ptmf lbl_1_data_378 = M539_PTMF_INIT(fn_1_B3C0);
 f32 lbl_1_data_384[5] = { 1024.0f, 18939.0f, 37.0f, 40.0f, 57.0f };
 void *lbl_1_data_398[6] = { 0, 0, (void *)fn_1_BDF0, (void *)fn_1_BB14, (void *)fn_1_BC24, 0 };
 
@@ -127,7 +118,7 @@ M539Camera *fn_1_AB68(M539Camera *self)
     }
     lbl_1_bss_A14 = single;
     self->vtable = lbl_1_data_398;
-    self->hook = __ptmf_null;
+    self->hook = M539_PTMF_NULL;
     Hu3DCameraCreate(0xF);
     fn_1_A4D0(2.0f);
     Hu3DBGColorSet(0, 0, 0);
@@ -210,8 +201,8 @@ void fn_1_BB14(M539Camera *self, s32 state)
 
 void fn_1_BC24(M539Camera *self)
 {
-    if (__ptmf_test(&self->hook) != 0) {
-        __ptmf_scall(self, &self->hook);
+    if (M539PtmfTest(&self->hook) != 0) {
+        M539PtmfCall(self, &self->hook);
     }
     self->frame = self->frame + 1;
     fn_1_9A0(&self->sub0, 3);

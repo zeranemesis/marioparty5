@@ -18,12 +18,6 @@ typedef struct M539Fade_s {
     f32 to;
 } M539Fade;
 
-typedef struct {
-    s32 ptmfA;
-    s32 ptmfB;
-    void *ptmfFn;
-} PTMF;
-
 typedef struct M539ManMap_s {
     s32 unk0;
     s32 unk4;
@@ -32,7 +26,7 @@ typedef struct M539ManMap_s {
     s16 *shadowLight;
     s16 *infLight;
     s16 *sprLight[2];
-    PTMF fadeHook;
+    M539Ptmf fadeHook;
     s16 sprGrp;
     M539Fade fade;
 } M539ManMap;
@@ -61,7 +55,7 @@ double lbl_1_rodata_250;
 
 char lbl_1_data_3B0[] = "ms_pointer != 0";
 char lbl_1_data_3C0[] = "singleton.h";
-s32 lbl_1_data_3CC[3] = {0, -1, 0};
+M539Ptmf lbl_1_data_3CC = M539_PTMF_NULL_INIT;
 char lbl_1_data_3D8[] = "ms_pointer == 0";
 char lbl_1_data_3E8[] = "lights > 0";
 char lbl_1_data_3F3[] = "man_map.cpp";
@@ -75,8 +69,6 @@ s32 lbl_1_bss_A40;
 
 void *__construct_array(void *ptr, void *ctor, void *dtor, u32 size, u32 n);
 void __destroy_arr(void *block, void *dtor, u32 size, u32 n);
-s32 __ptmf_test(const PTMF *ptmf);
-void __ptmf_scall(void *obj, PTMF *ptmf);
 
 void *HuDataSelHeapReadNum(u32 dataNum, u32 num, s32 heap);
 void *HuSprAnimRead(void *data);
@@ -213,9 +205,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     HuSprGrpMemberSet(self->sprGrp, 0, HuSprCreate(anim, 0x190, 0));
     HuSprTPLvlSet(self->sprGrp, 0, 0.0f);
     HuSprPosSet(self->sprGrp, 0, 288.0f, 240.0f);
-    self->fadeHook.ptmfA = lbl_1_data_3CC[0];
-    self->fadeHook.ptmfB = lbl_1_data_3CC[1];
-    self->fadeHook.ptmfFn = (void *)fn_1_C540;
+    M539_PTMF_SET_FROM(self->fadeHook, lbl_1_data_3CC, fn_1_C540);
     fn_1_2E08(self->infLight, 0x40000001);
     return self;
 }
@@ -271,8 +261,8 @@ void fn_1_C540(void)
 // NONMATCHING: register allocation only.
 void fn_1_C544(M539ManMap *self)
 {
-    if (__ptmf_test(&self->fadeHook) != 0) {
-        __ptmf_scall(self, &self->fadeHook);
+    if (M539PtmfTest(&self->fadeHook) != 0) {
+        M539PtmfCall(self, &self->fadeHook);
     }
     HuSprTPLvlSet(self->sprGrp, 0, fn_1_C7C8(&self->fade));
     fn_1_9F6C(self->sprLight[0]);
