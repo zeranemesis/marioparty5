@@ -60,10 +60,13 @@ struct CMapIt {
     CDequeMap *m_map;
     u32 m_idx;
     DrvTask **m_slot;
+    u8 m_tag;
 };
 
 struct CDequeIt {
-    CMapIt m_blk;
+    CDequeMap *m_map;
+    u32 m_idx;
+    DrvTask **m_slot;
     DrvTask *m_cur;
     DrvTask *m_end;
     u32 m_pos;
@@ -932,7 +935,870 @@ DrvTask **fn_1_DB10(CDequeMap *self, u32 idx)
     return &self->m_data[idx];
 }
 
-//TEMPLATE_BEGIN
+/* ---- helpers of the template: inline iterator operations ---- */
+
+/* first / one-past-last slot of the map */
+static inline CMapIt mapBegin(CDequeMap *m)
+{
+    CMapIt it;
+    it.m_map = m;
+    it.m_idx = 0;
+    it.m_slot = m->m_data + m->m_start;
+    return it;
+}
+
+static inline CMapIt mapEnd(CDequeMap *m)
+{
+    CMapIt it;
+    u32 t = m->m_start + m->m_size;
+    it.m_map = m;
+    it.m_idx = m->m_size;
+    if (t < m->m_cap) {
+        it.m_slot = m->m_data + t;
+    } else {
+        it.m_slot = m->m_data + (t - m->m_cap);
+    }
+    return it;
+}
+
+static inline CMapIt mapAt(CDequeMap *m, u32 idx)
+{
+    CMapIt it = mapBegin(m);
+    u32 cap;
+    u32 t;
+    it.m_idx += idx;
+    cap = it.m_map->m_cap;
+    t = it.m_map->m_start + it.m_idx;
+    if (t >= cap) {
+        t -= cap;
+    }
+    it.m_slot = it.m_map->m_data + t;
+    return it;
+}
+
+static inline void mapNext(CMapIt *it)
+{
+    it->m_idx++;
+    it->m_slot++;
+    if (it->m_slot == it->m_map->m_data + it->m_map->m_cap) {
+        it->m_slot = it->m_map->m_data;
+    }
+}
+
+static inline void mapPrev(CMapIt *it)
+{
+    it->m_idx--;
+    if (it->m_slot == it->m_map->m_data) {
+        it->m_slot = it->m_map->m_data + it->m_map->m_cap;
+    }
+    it->m_slot--;
+}
+
+/* copy [first, last) to dst */
+static inline DrvTask **mapCopy(CMapIt first, CMapIt last, DrvTask **dst)
+{
+    while (first.m_idx != last.m_idx) {
+        *dst = *first.m_slot;
+        mapNext(&first);
+        dst++;
+    }
+    return dst;
+}
+
+/* step of the deque iterator, moving to the next block when the current one ends */
+static inline void dqNext(CDequeIt *it)
+{
+    it->m_pos++;
+    it->m_cur++;
+    if (it->m_cur == it->m_end) {
+        u32 n = it->m_end - *it->m_slot;
+        it->m_idx++;
+        it->m_slot++;
+        if (it->m_slot == it->m_map->m_data + it->m_map->m_cap) {
+            it->m_slot = it->m_map->m_data;
+        }
+        it->m_cur = *it->m_slot;
+        it->m_end = it->m_cur + n;
+    }
+}
+
+CDequeMap *fn_1_E2A8(CDequeMap *self, s16 freeIt)
+{
+    if (self != 0) {
+        if (self != 0 && self->m_data != 0) {
+            __dl__FPv(self->m_data);
+        }
+        if (freeIt > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+CDequeMap *fn_1_E31C(CDequeMap *self, s16 freeIt)
+{
+    if (self != 0) {
+        if (self->m_data != 0) {
+            __dl__FPv(self->m_data);
+        }
+        if (freeIt > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+/* ~deque body: destroy the tasks (trivial), free the blocks. */
+void fn_1_DB3C(CDeque *self)
+{
+    CDequeIt last;
+    CDequeIt first;
+    CMapIt it;
+    CMapIt stop;
+
+    if (self->m_map.m_size != 0) {
+        fn_1_F724(&last, self, self->m_off + self->m_cnt);
+        fn_1_F724(&first, self, self->m_off);
+        fn_1_F87C(self, first, last);
+        stop = mapEnd(&self->m_map);
+        stop.m_idx--;
+        if (stop.m_slot == stop.m_map->m_data) {
+            stop.m_slot = stop.m_map->m_data + stop.m_map->m_cap;
+        }
+        stop.m_slot--;
+        it = mapBegin(&self->m_map);
+        while (it.m_idx != stop.m_idx) {
+            __dl__FPv(*it.m_slot);
+            mapNext(&it);
+        }
+    }
+}
+
+/* pop_back */
+void fn_1_DDEC(CDeque *self)
+{
+    DrvTask **slot;
+    DrvTask *elem;
+    u32 at;
+    u32 q;
+    u32 n;
+
+    at = self->m_off + (self->m_cnt - 1);
+    q = at / self->m_blk + self->m_map.m_start;
+    if (q >= self->m_map.m_cap) {
+        q -= self->m_map.m_cap;
+    }
+    slot = &self->m_map.m_data[q];
+    elem = *slot + (at % self->m_blk);
+    self->m_cnt--;
+    while (self->m_blk * (self->m_map.m_size - 1) - (self->m_off + self->m_cnt) >= (self->m_blk * 3) >> 1) {
+        self->m_map.m_size--;
+        q = self->m_map.m_size - 1 + self->m_map.m_start;
+        if (q >= self->m_map.m_cap) {
+            q -= self->m_map.m_cap;
+        }
+        slot = &self->m_map.m_data[q];
+        __dl__FPv(*slot);
+        *slot = 0;
+    }
+    if (self->m_cnt == 0) {
+        n = self->m_map.m_size - 2;
+        while (n != 0) {
+            self->m_map.m_size--;
+            q = self->m_map.m_size - 1 + self->m_map.m_start;
+            if (q >= self->m_map.m_cap) {
+                q -= self->m_map.m_cap;
+            }
+            slot = &self->m_map.m_data[q];
+            __dl__FPv(*slot);
+            *slot = 0;
+            n--;
+        }
+        self->m_off = self->m_blk >> 1;
+    }
+}
+
+/* push_back */
+void fn_1_DFE0(CDeque *self, const DrvTask *item)
+{
+    u32 added;
+    CDequeMap spare;
+    u8 grew;
+    DrvTask *p;
+    u32 at;
+    u32 q;
+
+    if (self->m_cnt > 0x0FFFFFFF - 1) {
+        fn_1_4C9C(DRV_STDERR, "deque::push_back length error\n");
+        abort();
+    }
+    if (self->m_map.m_size == 0) {
+        fn_1_EA80(&self->m_map, 2);
+        fn_1_ECA4(&self->m_map, 1, 0);
+    }
+    added = 0;
+    spare.m_cap = 0;
+    spare.m_size = 0;
+    spare.m_start = 0;
+    spare.m_data = 0;
+    grew = 0;
+    if (self->m_off + self->m_cnt == self->m_blk * (self->m_map.m_size - 1)) {
+        grew = fn_1_EF30(self, 0, &spare, &added, 1);
+    }
+    at = self->m_off + self->m_cnt;
+    if (at < self->m_blk) {
+        p = *(self->m_map.m_data + self->m_map.m_start) + at;
+        if (p != 0) {
+            *p = *item;
+        }
+    } else {
+        q = at / self->m_blk + self->m_map.m_start;
+        if (q >= self->m_map.m_cap) {
+            q -= self->m_map.m_cap;
+        }
+        p = *(self->m_map.m_data + q) + (at % self->m_blk);
+        if (p != 0) {
+            *p = *item;
+        }
+    }
+    self->m_cnt++;
+    if (spare.m_data != 0) {
+        __dl__FPv(spare.m_data);
+    }
+    while (self->m_off >= (self->m_blk * 3) >> 1) {
+        __dl__FPv(*(self->m_map.m_data + self->m_map.m_start));
+        fn_1_E748(&self->m_map);
+        self->m_off -= self->m_blk;
+    }
+}
+
+/* deque copy */
+CDeque *fn_1_E388(CDeque *self, const CDeque *src)
+{
+    DrvTask *blk;
+    DrvTask *nul;
+    DrvTask *dst;
+    CDequeIt it;
+    CDequeIt end;
+
+    self->m_blk = lbl_1_rodata_238;
+    self->m_map.m_cap = 0;
+    self->m_map.m_size = 0;
+    self->m_map.m_start = 0;
+    self->m_map.m_data = 0;
+    self->m_off = 0;
+    self->m_cnt = src->m_cnt;
+    if (self->m_cnt != 0) {
+        fn_1_EA80(&self->m_map, 2);
+        fn_1_ECA4(&self->m_map, 1, 0);
+        if (self->m_blk < self->m_cnt) {
+            self->m_blk = self->m_cnt;
+        }
+        blk = (DrvTask *)fn_1_4A68(self->m_blk * sizeof(DrvTask));
+        if (blk == 0) {
+            DRV_ABORT_ALLOC();
+        }
+        *(self->m_map.m_data + self->m_map.m_start) = blk;
+        nul = 0;
+        fn_1_E784(&self->m_map, &nul);
+        self->m_off = (self->m_blk - self->m_cnt) >> 1;
+        dst = blk + self->m_off;
+        fn_1_F5CC(&end, src, src->m_off + src->m_cnt);
+        fn_1_F5CC(&it, src, src->m_off);
+        while (it.m_cur != end.m_cur) {
+            if (dst != 0) {
+                *dst = *it.m_cur;
+            }
+            dst++;
+            dqNext(&it);
+        }
+    }
+    return self;
+}
+
+/* default deque */
+void fn_1_E6F0(CDeque *self, const void *unused)
+{
+    self->m_blk = lbl_1_rodata_238;
+    self->m_map.m_cap = 0;
+    self->m_map.m_size = 0;
+    self->m_map.m_start = 0;
+    self->m_map.m_data = 0;
+    self->m_off = 0;
+    self->m_cnt = 0;
+}
+
+/* cdeque::pop_front */
+void fn_1_E748(CDequeMap *self)
+{
+    self->m_size--;
+    self->m_start++;
+    if (self->m_start >= self->m_cap) {
+        self->m_start -= self->m_cap;
+    }
+}
+
+/* cdeque::push_back */
+void fn_1_E784(CDequeMap *self, DrvTask *const *val)
+{
+    const u32 *keep;
+    u32 newCap;
+    u32 t;
+    u32 cap;
+    DrvTask **nd;
+    CMapIt it;
+    CMapIt end;
+
+    if (self->m_size == fn_1_1147C(self)) {
+        fn_1_4C9C(DRV_STDERR, "cdeque::push_back length error\n");
+        abort();
+    }
+    cap = self->m_cap;
+    if (self->m_size < cap) {
+        t = self->m_size + self->m_start;
+        if (t >= self->m_cap) {
+            t -= self->m_cap;
+        }
+        self->m_data[t] = *val;
+        self->m_size++;
+        return;
+    }
+    if (self->m_cap < lbl_1_data_428) {
+        keep = &lbl_1_data_428;
+    } else {
+        keep = &self->m_cap;
+    }
+    newCap = *keep;
+    if (self->m_size + 1 > newCap) {
+        newCap *= 2;
+    }
+    nd = (DrvTask **)fn_1_4A68(newCap * sizeof(DrvTask *));
+    if (nd == 0) {
+        DRV_ABORT_ALLOC();
+    }
+    nd[self->m_size] = *val;
+    if (self->m_size != 0) {
+        end = mapEnd(self);
+        it = mapBegin(self);
+        mapCopy(it, end, nd);
+    }
+    if (self->m_data != 0) {
+        __dl__FPv(self->m_data);
+    }
+    self->m_data = nd;
+    self->m_size++;
+    self->m_cap = newCap;
+    self->m_start = 0;
+}
+
+/* cdeque::reserve */
+void fn_1_EA80(CDequeMap *self, u32 n)
+{
+    DrvTask **nd;
+    CMapIt it;
+    CMapIt end;
+
+    if (n > fn_1_1147C(self)) {
+        fn_1_4C9C(DRV_STDERR, "cdeque::reserve length error\n");
+        abort();
+    }
+    if (n > self->m_cap) {
+        nd = (DrvTask **)fn_1_4A68(n * sizeof(DrvTask *));
+        if (nd == 0) {
+            DRV_ABORT_ALLOC();
+        }
+        if (self->m_data != 0) {
+            end = mapEnd(self);
+            it = mapBegin(self);
+            mapCopy(it, end, nd);
+            if (self->m_data != 0) {
+                __dl__FPv(self->m_data);
+            }
+        }
+        self->m_cap = n;
+        self->m_data = nd;
+        self->m_start = 0;
+    }
+}
+
+/* cdeque::resize */
+void fn_1_ECA4(CDequeMap *self, u32 n, DrvTask *val)
+{
+    DrvTask *v;
+    CMapIt end;
+    CMapIt first;
+    CMapIt last;
+    CMapIt res;
+
+    v = val;
+    if (n > self->m_size) {
+        end = mapEnd(self);
+        fn_1_104A8(self, end, n - self->m_size, &v);
+        return;
+    }
+    if (n < self->m_size) {
+        first = mapAt(self, n);
+        last = mapEnd(self);
+        fn_1_FFB4(&res, self, first, last);
+    }
+}
+
+/* deque: append one block of tasks at the back of the map */
+u8 fn_1_EF30(CDeque *self, s32 front, CDequeMap *spare, u32 *count, s32 n)
+{
+    DrvTask *blk;
+    DrvTask **nd;
+    DrvTask *nul;
+    CMapIt first;
+    CMapIt last;
+    CMapIt it;
+    CMapIt end;
+    u32 cap2;
+    u32 t;
+    u32 left;
+    u8 grew;
+    u8 tag;
+
+    grew = 0;
+    left = n - front;
+    do {
+        blk = (DrvTask *)fn_1_4A68(self->m_blk * sizeof(DrvTask));
+        if (blk == 0) {
+            DRV_ABORT_ALLOC();
+        }
+        if (grew == 0) {
+            if (self->m_map.m_size == self->m_map.m_cap) {
+                fn_1_FF40(&self->m_map, spare);
+                grew = 1;
+                cap2 = spare->m_cap * 2;
+                if (cap2 > fn_1_1147C(&self->m_map)) {
+                    fn_1_4C9C(DRV_STDERR, "cdeque::reserve length error\n");
+                    abort();
+                }
+                if (cap2 > self->m_map.m_cap) {
+                    nd = (DrvTask **)fn_1_4A68(cap2 * sizeof(DrvTask *));
+                    if (nd == 0) {
+                        DRV_ABORT_ALLOC();
+                    }
+                    if (self->m_map.m_data != 0) {
+                        end = mapEnd(&self->m_map);
+                        it = mapBegin(&self->m_map);
+                        mapCopy(it, end, nd);
+                        if (self->m_map.m_data != 0) {
+                            __dl__FPv(self->m_map.m_data);
+                        }
+                    }
+                    self->m_map.m_cap = cap2;
+                    self->m_map.m_data = nd;
+                    self->m_map.m_start = 0;
+                }
+                last = mapEnd(spare);
+                first = mapBegin(spare);
+                tag = lbl_1_bss_A10;
+                fn_1_FBA8(&self->m_map, first, last, &tag);
+            }
+        }
+        t = self->m_map.m_size - 1 + self->m_map.m_start;
+        if (t >= self->m_map.m_cap) {
+            t -= self->m_map.m_cap;
+        }
+        self->m_map.m_data[t] = blk;
+        nul = 0;
+        fn_1_F59C(&self->m_map, &nul);
+        *count = *count + 1;
+        if (left > self->m_blk) {
+            left -= self->m_blk;
+            continue;
+        }
+        break;
+    } while (1);
+    return grew;
+}
+
+void fn_1_F59C(CDequeMap *self, DrvTask *const *val)
+{
+    CDequeMap *m = self;
+    DrvTask *const *v = val;
+    fn_1_E784(m, v);
+}
+
+/* deque iterator at index idx (const / mutable) */
+void fn_1_F5CC(CDequeIt *out, const CDeque *self, u32 idx)
+{
+    CMapIt it;
+    DrvTask *base;
+    DrvTask *cur;
+    u32 t;
+
+    it = mapBegin((CDequeMap *)&self->m_map);
+    if (idx < self->m_blk) {
+        if (self->m_map.m_size != 0) {
+            base = *it.m_slot;
+        } else {
+            base = 0;
+        }
+        cur = base + idx;
+    } else {
+        it.m_idx += idx / self->m_blk;
+        t = it.m_map->m_start + it.m_idx;
+        if (t >= it.m_map->m_cap) {
+            t -= it.m_map->m_cap;
+        }
+        it.m_slot = it.m_map->m_data + t;
+        base = *it.m_slot;
+        cur = base + (idx % self->m_blk);
+    }
+    out->m_map = it.m_map;
+    out->m_idx = it.m_idx;
+    out->m_slot = it.m_slot;
+    out->m_cur = cur;
+    out->m_end = base + self->m_blk;
+    out->m_pos = idx;
+}
+
+void fn_1_F724(CDequeIt *out, CDeque *self, u32 idx)
+{
+    CMapIt it;
+    DrvTask *base;
+    DrvTask *cur;
+    u32 t;
+
+    it = mapBegin(&self->m_map);
+    if (idx < self->m_blk) {
+        if (self->m_map.m_size != 0) {
+            base = *it.m_slot;
+        } else {
+            base = 0;
+        }
+        cur = base + idx;
+    } else {
+        it.m_idx += idx / self->m_blk;
+        t = it.m_map->m_start + it.m_idx;
+        if (t >= it.m_map->m_cap) {
+            t -= it.m_map->m_cap;
+        }
+        it.m_slot = it.m_map->m_data + t;
+        base = *it.m_slot;
+        cur = base + (idx % self->m_blk);
+    }
+    out->m_map = it.m_map;
+    out->m_idx = it.m_idx;
+    out->m_slot = it.m_slot;
+    out->m_cur = cur;
+    out->m_end = base + self->m_blk;
+    out->m_pos = idx;
+}
+
+/* destroy the tasks of [first, last): they are trivial, only the walk remains */
+void fn_1_F87C(CDeque *self, CDequeIt first, CDequeIt last)
+{
+    u32 n;
+    u32 q;
+    u32 r;
+    u32 e;
+    u32 take;
+    u32 *pick;
+    u32 left;
+    CMapIt it;
+    DrvTask *base;
+    DrvTask *p;
+
+    if (first.m_cur != last.m_cur) {
+        n = last.m_pos - first.m_pos;
+        q = first.m_pos / self->m_blk;
+        r = first.m_pos % self->m_blk;
+        e = r + n;
+        if (e < self->m_blk) {
+            pick = &e;
+        } else {
+            pick = &self->m_blk;
+        }
+        take = *pick;
+        it = mapAt(&self->m_map, q);
+        base = *it.m_slot;
+        for (p = base + r; p < base + take; p++) {
+        }
+        left = n - (take - r);
+        if (left != 0) {
+            mapNext(&it);
+            while (left >= self->m_blk) {
+                base = *it.m_slot;
+                for (p = base; p < base + self->m_blk; p++) {
+                }
+                mapNext(&it);
+                left -= self->m_blk;
+            }
+            if (left != 0) {
+                base = *it.m_slot;
+                for (p = base; p < base + left; p++) {
+                }
+            }
+        }
+    }
+}
+
+/* cdeque::assign(first, last) */
+void fn_1_FBA8(CDequeMap *self, CMapIt first, CMapIt last, const u8 *tag)
+{
+    u32 n;
+    u32 lim;
+    u32 a;
+    u32 b;
+    u32 *pick;
+    DrvTask **old;
+    DrvTask **dst;
+
+    n = last.m_idx - first.m_idx;
+    a = 0x3FFFFFFF;
+    b = 0x7FFFFFFF;
+    if (a > b) {
+        pick = &b;
+    } else {
+        pick = &a;
+    }
+    lim = *pick;
+    if (n > lim) {
+        fn_1_4C9C(DRV_STDERR, "cdeque::assign length error\n");
+        abort();
+    }
+    if (n <= self->m_cap) {
+        mapCopy(first, last, self->m_data);
+        self->m_start = 0;
+        self->m_size = n;
+        return;
+    }
+    old = self->m_data;
+    self->m_data = (DrvTask **)fn_1_4A68(n * sizeof(DrvTask *));
+    if (self->m_data == 0) {
+        DRV_ABORT_ALLOC();
+    }
+    dst = self->m_data;
+    mapCopy(first, last, dst);
+    if (old != 0) {
+        __dl__FPv(old);
+    }
+    self->m_cap = n;
+    self->m_size = n;
+    self->m_start = 0;
+}
+
+/* cdeque::swap */
+void fn_1_FF40(CDequeMap *self, CDequeMap *other)
+{
+    u32 t0;
+    u32 t1;
+    u32 t2;
+    DrvTask **t3;
+
+    if (self != other) {
+        t0 = self->m_cap;
+        self->m_cap = other->m_cap;
+        other->m_cap = t0;
+        t1 = self->m_size;
+        self->m_size = other->m_size;
+        other->m_size = t1;
+        t2 = self->m_start;
+        self->m_start = other->m_start;
+        other->m_start = t2;
+        t3 = self->m_data;
+        self->m_data = other->m_data;
+        other->m_data = t3;
+    }
+}
+
+/* cdeque::erase(first, last) */
+void fn_1_FFB4(CMapIt *out, CDequeMap *self, CMapIt first, CMapIt last)
+{
+    CMapIt b;
+    CMapIt e;
+    CMapIt d;
+    CMapIt s;
+    CMapIt stop;
+    u32 before;
+    u32 after;
+    u32 n;
+
+    if (first.m_idx == last.m_idx) {
+        out->m_map = first.m_map;
+        out->m_idx = first.m_idx;
+        out->m_slot = first.m_slot;
+        return;
+    }
+    b = mapBegin(self);
+    before = first.m_idx - b.m_idx;
+    e = mapEnd(self);
+    after = e.m_idx - last.m_idx;
+    n = last.m_idx - first.m_idx;
+    if (before < after) {
+        if (before != 0) {
+            d = last;
+            s = first;
+            stop = mapBegin(self);
+            while (s.m_idx != stop.m_idx) {
+                mapPrev(&d);
+                mapPrev(&s);
+                *d.m_slot = *s.m_slot;
+            }
+        }
+        self->m_start += n;
+        if (self->m_start >= self->m_cap) {
+            self->m_start -= self->m_cap;
+        }
+    } else if (after != 0) {
+        d = first;
+        e = mapEnd(self);
+        s = last;
+        while (s.m_idx != e.m_idx) {
+            *d.m_slot = *s.m_slot;
+            mapNext(&s);
+            mapNext(&d);
+        }
+    }
+    self->m_size -= n;
+    out->m_map = first.m_map;
+    out->m_idx = first.m_idx;
+    out->m_slot = first.m_slot;
+}
+
+/* fill n slots from it with *val */
+static inline void mapFill(CMapIt it, u32 n, DrvTask *const *val)
+{
+    while (n != 0) {
+        *it.m_slot = *val;
+        mapNext(&it);
+        n--;
+    }
+}
+
+/* cdeque::insert(pos, n, val) */
+void fn_1_104A8(CDequeMap *self, CMapIt pos, u32 n, DrvTask *const *val)
+{
+    u32 a;
+    u32 b;
+    u32 *pick;
+    u32 lim;
+    u32 before;
+    u32 after;
+    u32 newSize;
+    u32 newCap;
+    const u32 *keep;
+    CMapIt b0;
+    CMapIt e0;
+    CMapIt d;
+    CMapIt s;
+    CMapIt se;
+    CMapIt src;
+    DrvTask **nd;
+    DrvTask **p;
+
+    if (n == 0) {
+        return;
+    }
+    a = 0x3FFFFFFF;
+    b = 0x7FFFFFFF;
+    if (b < a) {
+        pick = &b;
+    } else {
+        pick = &a;
+    }
+    lim = *pick;
+    if (n > lim || self->m_size > lim - n) {
+        fn_1_4C9C(DRV_STDERR, "cdeque::insert length error\n");
+        abort();
+    }
+    if (self->m_size + n <= self->m_cap) {
+        b0 = mapBegin(self);
+        before = pos.m_idx - b0.m_idx;
+        e0 = mapEnd(self);
+        after = e0.m_idx - pos.m_idx;
+        if (before < after) {
+            if (self->m_start >= n) {
+                self->m_start -= n;
+            } else {
+                self->m_start = self->m_cap - (n - self->m_start);
+            }
+            if (before == 0) {
+                mapFill(mapBegin(self), n, val);
+            } else {
+                /* move the first `before` tasks n slots down, then fill the gap */
+                d = mapBegin(self);
+                s = mapAt(self, n);
+                se = mapAt(self, n + before);
+                while (s.m_idx != se.m_idx) {
+                    *d.m_slot = *s.m_slot;
+                    mapNext(&s);
+                    mapNext(&d);
+                }
+                mapFill(mapAt(self, before), n, val);
+            }
+        } else if (after == 0) {
+            mapFill(mapEnd(self), n, val);
+        } else {
+            /* move the tail n slots up, then fill the gap */
+            d = mapAt(self, self->m_size + n);
+            s = mapEnd(self);
+            while (s.m_idx != pos.m_idx) {
+                mapPrev(&d);
+                mapPrev(&s);
+                *d.m_slot = *s.m_slot;
+            }
+            mapFill(pos, n, val);
+        }
+        self->m_size += n;
+        return;
+    }
+    newSize = self->m_size + n;
+    if (self->m_cap < lbl_1_data_46C) {
+        keep = &lbl_1_data_46C;
+    } else {
+        keep = &self->m_cap;
+    }
+    newCap = *keep;
+    while (newSize > newCap) {
+        newCap *= 2;
+    }
+    b0 = mapBegin(self);
+    before = pos.m_idx - b0.m_idx;
+    nd = (DrvTask **)fn_1_4A68(newCap * sizeof(DrvTask *));
+    if (nd == 0) {
+        DRV_ABORT_ALLOC();
+    }
+    if (before != 0) {
+        mapCopy(mapBegin(self), pos, nd);
+    }
+    p = nd + before;
+    for (a = n; a != 0; a--) {
+        *p = *val;
+        p++;
+    }
+    if (before < self->m_size) {
+        e0 = mapEnd(self);
+        mapCopy(pos, e0, nd + (before + n));
+    }
+    if (self->m_data != 0) {
+        __dl__FPv(self->m_data);
+    }
+    self->m_data = nd;
+    self->m_size = newSize;
+    self->m_cap = newCap;
+    self->m_start = 0;
+}
+
+/* cdeque::max_size */
+u32 fn_1_1147C(CDequeMap *self)
+{
+    u32 a = 0x3FFFFFFF;
+    u32 b = 0x7FFFFFFF;
+    u32 *pick;
+
+    if (a > b) {
+        pick = &b;
+    } else {
+        pick = &a;
+    }
+    return *pick;
+}
+
 void fn_1_114DC()
 {
     lbl_1_bss_A00 = 0x78;
