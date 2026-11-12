@@ -68,7 +68,7 @@ s32 fn_1_928(s32 no);
 void fn_1_AAC(s32 no);
 f32 fn_1_CC8(f32 cur, f32 target, f32 speed);
 s32 fn_1_6D7C(s32 grp, const Vec *pos, f32 ofs, f32 speed, f32 len);
-void fn_1_70B0(s32 handle, s32 idx, Vec *out);
+void *fn_1_70B0(s32 idx, Vec *pos, Vec *vel);
 void fn_1_6478(s32 grp, f32 scale);
 f32 fn_1_6568(s32 grp);
 
@@ -444,7 +444,7 @@ void fn_1_19AC(OMOBJ *obj)
         if (ret < 0) {
             break;
         }
-        fn_1_70B0(ret, 0, &pos);
+        fn_1_70B0(ret, NULL, &pos);
         if (PSVECMag(&pos) > 33.33333507180214) {
             player->unk34 = 1;
         }

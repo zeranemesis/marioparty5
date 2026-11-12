@@ -3,15 +3,16 @@
 
 typedef struct M574StageCell_s {
     s32 v00;
-    u8 pad04[0x08];
+    s32 v04;
+    s32 v08;
     s32 v0C;
     s32 v10;
-    u8 pad14[0x0C];
+    s32 v14[3];
     s32 v20[3];
     f32 f2C[3];
     f32 f38[3];
-    u8 pad44[0x0C];
-    void *v50[3];
+    f32 f44[3];
+    HSFOBJECT *v50[3];
 } M574_STAGE_CELL;
 
 typedef struct M574SlotHook_s {
@@ -32,7 +33,7 @@ typedef struct M574StageSlot_s {
     u8 pad08[0x08];
     Vec v10;
     Vec v1C;
-    u8 pad28[0x0C];
+    Vec v28;
     f32 f34;
     s32 v38;
     f32 f3C;
@@ -66,14 +67,15 @@ typedef struct M574StageRow_s {
 
 typedef struct M574StageMot_s {
     s32 v00;
-    u8 pad04[0x08];
+    s32 v04;
+    s32 v08;
     s32 v0C;
     Vec v10;
     Vec v1C;
     u8 pad28[0x10];
     s32 v38;
     Vec v3C;
-    void *v48;
+    HSFOBJECT *v48;
     M574_SLOT_HOOK hook;
     u8 pad70[0x18];
 } M574_STAGE_MOT;
@@ -117,13 +119,11 @@ typedef struct M574StageTbl_s {
     s16 ids[5];
     u8 padA6[0x02];
     M574_STAGE_ROW row[4];
-    M574_STAGE_CELL cell[1];
-    u8 pad244[0x5C];
+    M574_STAGE_CELL cell[2];
     M574_STAGE_ENT2 ent2[2];
     M574_STAGE_SLOT slotB[14];
     M574_STAGE_SLOT slotA[6];
-    M574_STAGE_SLOT slot[1];
-    u8 padED8[0x88];
+    M574_STAGE_SLOT slot[2];
     M574_SLOT_HOOK hookF60;
     u8 padF84[0x18];
     M574_STAGE_HOOKENT hookEnt[4];
@@ -215,6 +215,42 @@ typedef struct M574Hu3DModel_s {
     M574_MOTGRP *grp120;
 } M574_HU3DMODEL;
 
+typedef struct M574HitPlane_s {
+    Vec p0;
+    Vec p1;
+    Vec n;
+    f32 d;
+} M574_HOOK_PLANE;
+
+typedef struct M574HookWall_s {
+    s32 flag;
+    s32 shape;
+    s32 id;
+    s32 kind;
+    void *user;
+    s32 unk14;
+    void *hook;
+    s32 edgeNum;
+    void *planeA;
+    void *planeB;
+    void *edge;
+    s32 objNum;
+    void *objTbl;
+    void *mtxTbl;
+    M574_HOOK_PLANE *lastPlane;
+} M574_HOOK_WALL;
+
+typedef struct M574HitCol_s {
+    u32 flag;
+    s32 shape;
+    s32 id;
+    s32 kind;
+    void *user;
+    void *hook;
+    Vec *pos;
+    Vec *vel;
+} M574_HIT_COL;
+
 M574_STAGE_OBJ *lbl_1_bss_48;
 
 s32 lbl_1_data_220[4] = { 0x0081000C, 0x0081000D, 0x00810011, 0x00810012 };
@@ -234,6 +270,8 @@ f32 lbl_1_data_280[4] = { 60.0f, 300.0f, 60.0f, 300.0f };
 char lbl_1_data_290[4][10] = {
     "furihan", "furihan", "furihan", "furihan"
 };
+
+s32 lbl_1_data_2B8[3] = { 0, 1, 2 };
 
 u8 lbl_1_data_2C4[20] = {
     0, 1, 0, 0, 1, 1, 2, 0, 1, 2, 2, 1, 0, 2, 1, 1, 0, 2, 0, 2
@@ -275,6 +313,16 @@ Vec lbl_1_data_48C[2] = {
 };
 
 char lbl_1_data_4A4[12] = "kuppaabomb";
+
+Vec lbl_1_data_4B0[2] = {
+    { -95.0f, 1215.0f, 1000.0f },
+    { 95.0f, 1215.0f, 1000.0f }
+};
+
+Vec lbl_1_data_4C8[2] = {
+    { 3.0f, 3.0f, -1.0f },
+    { -3.0f, 3.0f, -1.0f }
+};
 
 M574_TEXANIM_DEF lbl_1_data_504 = {
     "845memit",
@@ -339,6 +387,9 @@ void Hu3DTexScrollPosSet(HU3DTEXSCRID id, f32 x, f32 y, f32 z);
 double fmod(double x, double y);
 
 void fn_1_77D4(s32 a, s32 b);
+s32 fn_1_4330(f32 f);
+void fn_1_7874(s32 grp, s32 type);
+f32 fn_1_CC8(f32 cur, f32 target, f32 rate);
 void fn_1_C10(s32 a, void *b);
 
 void fn_1_20CC(M574_STAGE_OBJ *p);
@@ -374,7 +425,9 @@ void fn_1_8FDC(M574_SLOT_HOOK *hook);
 s32 fn_1_5D64(s32 unused, M574_STAGE_OBJ *p);
 f32 fn_1_6568(s32 idx);
 void fn_1_8FA8(M574_SLOT_HOOK *hook, M574_MODEL_OBJ *obj);
-void fn_1_47DC(M574_STAGE_OBJ *p, M574_STAGE_TBL *tbl);
+s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col);
+void fn_1_5680(f32 *x);
+void fn_1_63B0(M574_VEC3 *a, M574_VEC3 *b, s32 idx);
 s32 fn_1_6CC8(s32 idx);
 s32 fn_1_918(void);
 void fn_1_8F54(M574_SLOT_HOOK *hook, HU3DMODELID model);
@@ -387,9 +440,9 @@ void fn_1_2028(OMOBJMAN *objMan) {
     obj = (M574_STAGE_OBJ *)omAddObjEx(objMan, 0x14, 0x21, 3, OM_GRP_NONE, (void (*)(OMOBJ *))fn_1_20CC);
     lbl_1_bss_48 = obj;
     obj->unk00 |= 0x100;
-    tbl = HuMemDirectMallocNum(0, 0x108C, 0x10000000);
+    tbl = HuMemDirectMallocNum(0, sizeof(M574_STAGE_TBL), 0x10000000);
     obj->unk5C = tbl;
-    memset(tbl, 0, 0x108C);
+    memset(tbl, 0, sizeof(M574_STAGE_TBL));
     obj->v4C = 0;
 }
 
@@ -946,7 +999,7 @@ void fn_1_383C(M574_STAGE_OBJ *p) {
         cell->v0C = -1;
         for (j = 0; j < 3; j++) {
             obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(modelId, lbl_1_data_2D8[j + i * 3]);
-            cell->v50[j] = obj;
+            cell->v50[j] = (HSFOBJECT *)obj;
             val = (s32)(20.0 * (1.52587890625e-05 * (f32)(s32)(u16)frand()));
             cell->v20[j] = val;
             cell->f2C[j] = cell->f38[j] = 18.0f * (f32)val;
@@ -957,6 +1010,184 @@ void fn_1_383C(M574_STAGE_OBJ *p) {
         Hu3DModelAttrSet(model, 0x40000002);
         Hu3DMotionStartEndSet(model, lbl_1_rodata_128, lbl_1_rodata_178);
         Hu3DMotionTimeSet(model, lbl_1_rodata_128);
+    }
+}
+
+void fn_1_3A1C(M574_STAGE_OBJ *p) {
+    M574_STAGE_CELL *cell;
+    M574_STAGE_TBL *tbl;
+    HU3DMODELID model;
+    s16 modelId;
+    s32 i;
+    s32 j;
+    s32 idx;
+    s32 limit;
+    s32 sym;
+    s32 stop;
+    s32 n;
+    f32 ang;
+
+    tbl = p->unk5C;
+    modelId = p->unk40->id0A;
+    for (i = 0; i < 2; i++) {
+        cell = &tbl->cell[i];
+        model = ((s16 *)p->unk40)[i + 0x1D];
+        switch (cell->v00) {
+            case 0:
+                break;
+            case 1:
+                cell->v00++;
+                cell->v04 = 0;
+                cell->v10 = 1;
+                for (j = 0; j < 3; j++) {
+                    cell->f44[j] = 4.0 + 1.52587890625e-05 * (f32)(s32)(u16)frand();
+                    cell->v14[j] = 0;
+                }
+                Hu3DModelAttrReset(model, 0x40000002);
+                Hu3DModelAttrSet(model, 0x40000001);
+                Hu3DMotionStartEndSet(model, 0.0f, 60.0f);
+                Hu3DMotionTimeSet(model, 0.0f);
+                if (i == 0) {
+                    cell->v0C = HuAudFXPlay(0x91F);
+                }
+                else {
+                    cell->v0C = HuAudFXPlay(0x920);
+                }
+                break;
+            case 2:
+                for (j = 0; j < 3; j++) {
+                    if (cell->v14[j] != 0) {
+                        continue;
+                    }
+                    if (MgSeqModeGet() == 5) {
+                        limit = 60.0 * (3.0 + 0.4 * j);
+                    }
+                    else {
+                        limit = 60.0 * (1.0 + 0.4 * j);
+                    }
+                    if (cell->v04 > limit) {
+                        cell->v14[j] = 1;
+                        idx = cell->f38[j] / 18.0f;
+                        cell->f38[j] = 18.0f * (f32)idx;
+                        switch (j) {
+                            case 0:
+                                stop = 0;
+                                break;
+                            case 1:
+                                if (1.52587890625e-05 * (f32)(s32)(u16)frand() < 0.5) {
+                                    stop = 1;
+                                }
+                                else {
+                                    stop = 0;
+                                }
+                                break;
+                            case 2:
+                                if (1.52587890625e-05 * (f32)(s32)(u16)frand() < 0.5) {
+                                    stop = 1;
+                                }
+                                else {
+                                    stop = 0;
+                                }
+                                break;
+                        }
+                        if (j != 0 && stop != 0) {
+                            sym = fn_1_4330(cell->f38[j]);
+                            while (1) {
+                                if (idx >= 0x14) {
+                                    idx = 0;
+                                }
+                                if (lbl_1_data_2C4[idx] == sym) {
+                                    break;
+                                }
+                                idx++;
+                            }
+                            cell->f38[j] = 18.0f * (f32)idx;
+                        }
+                        if (j == 2) {
+                            n = cell->v00;
+                            cell->v00 = n + 1;
+                            cell->v04 = 0;
+                            if (fn_1_918() <= 1) {
+                                sym = fn_1_4330(cell->f38[j]);
+                                while (1) {
+                                    if (idx >= 0x14) {
+                                        idx = 0;
+                                    }
+                                    if (lbl_1_data_2C4[idx] != sym) {
+                                        break;
+                                    }
+                                    idx++;
+                                }
+                                cell->f38[j] = 18.0f * (f32)idx;
+                            }
+                        }
+                    }
+                    else if ((f32)cell->v04 > (f32)(60.0 * (0.2 * j))) {
+                        cell->f38[j] += cell->f44[j];
+                    }
+                }
+                cell->v04++;
+                break;
+            case 3:
+                n = cell->v04 + 1;
+                cell->v04 = n;
+                if (!((f32)n < 54.0)) {
+                    cell->v00++;
+                    cell->v10 = 0;
+                    if (i == 0) {
+                        HuAudFXStop(cell->v0C);
+                    }
+                    else {
+                        HuAudFXStop(cell->v0C);
+                    }
+                    sym = cell->v20[0];
+                    if (sym == cell->v20[1] && sym == cell->v20[2]) {
+                        fn_1_7874(i, lbl_1_data_2B8[sym]);
+                        if (i == 0) {
+                            HuAudFXPlay(0x921);
+                        }
+                        else {
+                            HuAudFXPlay(0x922);
+                        }
+                        cell->v08 = 0x3C;
+                        Hu3DModelAttrReset(model, 0x40000002);
+                        Hu3DModelAttrSet(model, 0x40000001);
+                        Hu3DMotionStartEndSet(model, 60.0f, Hu3DMotionMaxTimeGet(model));
+                        Hu3DMotionTimeSet(model, 60.0f);
+                    }
+                    else {
+                        cell->v08 = 0x1E;
+                        Hu3DModelAttrSet(model, 0x40000002);
+                        Hu3DModelAttrReset(model, 0x40000001);
+                        Hu3DMotionStartEndSet(model, 0.0f, 60.0f);
+                        Hu3DMotionTimeSet(model, 0.0f);
+                    }
+                }
+                break;
+            case 4:
+                n = cell->v08 - 1;
+                cell->v08 = n;
+                if (n <= 0) {
+                    cell->v00 = 0;
+                    Hu3DModelAttrSet(model, 0x40000002);
+                    Hu3DModelAttrReset(model, 0x40000001);
+                    Hu3DMotionStartEndSet(model, 0.0f, 60.0f);
+                    Hu3DMotionTimeSet(model, 0.0f);
+                }
+                break;
+        }
+        for (j = 0; j < 3; j++) {
+            ang = fmod(cell->f38[j], 360.0);
+            if (ang < 0.0f) {
+                ang += 360.0f;
+            }
+            cell->f38[j] = ang;
+            cell->f2C[j] = fn_1_CC8(cell->f2C[j], cell->f38[j], 0.1f);
+            cell->v20[j] = fn_1_4330(cell->f2C[j]);
+            if (cell->v50[j] != NULL) {
+                cell->v50[j]->mesh.base.rot.x = cell->f2C[j];
+            }
+        }
     }
 }
 
@@ -1098,6 +1329,125 @@ void fn_1_4660(M574_STAGE_OBJ *p) {
     }
 }
 
+s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col) {
+    M574_STAGE_TBL *tbl;
+    M574_STAGE_ENT2 *ent;
+    M574_STAGE_SLOT *slot;
+    M574_HOOK_PLANE *plane;
+    M574_HOOK_PLANE *plane2;
+    f32 dx;
+    f32 dy;
+    f32 dist;
+    f32 minY;
+    s32 id;
+    s32 idx;
+    s32 idx2;
+    s32 side;
+    s32 which;
+    s32 ok;
+
+    tbl = lbl_1_bss_48->unk5C;
+    id = wall->id;
+    idx = -1;
+    if (id < 2) {
+        side = 0;
+    }
+    else {
+        side = 1;
+    }
+    if (id >= 1 && id <= 2) {
+        if (!(wall->lastPlane->n.y > -0.5)) {
+            idx = (wall->lastPlane->p0.x - col->pos->x) / 100.0;
+            if (idx < 0) {
+                idx = 0;
+            }
+            if (idx > 4) {
+                idx = 4;
+            }
+            fn_1_77D4(side, 0xA);
+            if (col->pos->x < 0.0f) {
+                fn_1_C10(0x916, col->pos);
+            }
+            else {
+                fn_1_C10(0x917, col->pos);
+            }
+        }
+    }
+    else {
+        if (wall->lastPlane->n.y > 0.5) {
+            plane = wall->lastPlane;
+            dx = (plane->p0.x + plane->p1.x) * 0.5f - col->pos->x;
+            dy = (plane->p0.y + plane->p1.y) * 0.5f - col->pos->y;
+            dist = sqrtf(dx * dx + dy * dy);
+            if (dist < 300.0) {
+                if ((col->flag & 2) == 0) {
+                    if (wall->id == 0) {
+                        which = 0;
+                    }
+                    else {
+                        which = 1;
+                    }
+                    ent = &lbl_1_bss_48->unk5C->ent2[which];
+                    if (ent->v00 == 0) {
+                        ent->v00++;
+                        ent->v48 = col;
+                        col->flag |= 2;
+                        col->vel->x = 0.0f;
+                        col->vel->y = 0.0f;
+                        plane2 = wall->lastPlane;
+                        ent->f10 = plane2->p0.x + 0.5 * (plane2->p1.x - plane2->p0.x);
+                        ent->f14 = plane2->p0.y + 0.5 * (plane2->p1.y - plane2->p0.y);
+                        ent->f34 = 80.0f;
+                        ok = 1;
+                    }
+                    else {
+                        ok = 0;
+                    }
+                }
+                else {
+                    ok = 0;
+                }
+                if (ok != 0) {
+                    return 1;
+                }
+            }
+        }
+        if ((id != 0 || !(wall->lastPlane->n.x < 0.5)) && (id != 3 || !(wall->lastPlane->n.x > -0.5))) {
+            minY = wall->lastPlane->p0.y;
+            if (minY > wall->lastPlane->p1.y) {
+                minY = wall->lastPlane->p1.y;
+            }
+            idx2 = (col->pos->y - minY) / 100.0;
+            if (idx2 < 0) {
+                idx2 = 0;
+            }
+            if (idx2 >= 2) {
+                idx = -1;
+            }
+            else {
+                idx = idx2 + 5;
+                fn_1_77D4(side, 0xB);
+                if (col->pos->x < 0.0f) {
+                    fn_1_C10(0x916, col->pos);
+                }
+                else {
+                    fn_1_C10(0x917, col->pos);
+                }
+            }
+        }
+    }
+    if (idx >= 0) {
+        slot = &tbl->slotB[idx + side * 7];
+        if (slot->v00 == 0) {
+            slot->v00++;
+            if (idx < 5) {
+                fn_1_5680(&slot->v10.x);
+            }
+        }
+    }
+    return 0;
+}
+
 void fn_1_4D28(M574_STAGE_OBJ *p) {
     M574_SLOT_HOOK *h;
     M574_STAGE_SLOT *slot;
@@ -1144,6 +1494,154 @@ void fn_1_4D28(M574_STAGE_OBJ *p) {
         fn_1_8B48(h);
         (void)tbl;
         (void)tbl;
+    }
+}
+
+void fn_1_4EE8(M574_STAGE_OBJ *p) {
+    M574_STAGE_TBL *tbl;
+    M574_STAGE_SLOT *slot;
+    HU3DMODELID model;
+    Vec *target;
+    f32 rotTarget;
+    s32 i;
+    s32 n;
+    f64 dir;
+
+    tbl = p->unk5C;
+    for (i = 0; i < 2; i++) {
+        slot = &tbl->slot[i];
+        model = ((s16 *)p->unk40)[i + 0x1F];
+        target = &lbl_1_data_48C[i];
+        rotTarget = 0.0f;
+        switch (slot->v00) {
+            case 0:
+                slot->v00++;
+                slot->v10.x = slot->v10.x + 150.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
+                slot->f34 = 0.0f;
+                Hu3DMotionSet(model, ((s16 *)p->unk48)[0]);
+                // fallthrough
+            case 1:
+                if (MgSeqModeGet() != 5) {
+                    break;
+                }
+                slot->v00++;
+                if ((s32)(frand() & 1) != 0) {
+                    dir = -1.0;
+                }
+                else {
+                    dir = 1.0;
+                }
+                slot->f34 = dir;
+                Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[1], 0.0f, 12.0f, 0x40000001);
+                // fallthrough
+            case 2:
+                if (MgSeqModeGet() != 5) {
+                    slot->v00 = 8;
+                    slot->f34 = 0.0f;
+                    Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[0], 0.0f, 12.0f, 0x40000001);
+                }
+                else if (slot->f34 < 0.0f) {
+                    if (slot->v10.x > target->x - 180.0) {
+                        rotTarget = 270.0f;
+                    }
+                    else {
+                        slot->f34 = 1.0f;
+                    }
+                }
+                else if (slot->v10.x < 180.0 + target->x) {
+                    rotTarget = 90.0f;
+                }
+                else {
+                    slot->f34 = -1.0f;
+                }
+                break;
+            case 3:
+                slot->v1C.y = slot->v1C.y - 1.666666753590107;
+                if (!(slot->v10.y + slot->v1C.y > target->y)) {
+                    slot->v10.y = target->y;
+                    slot->v1C.y = 0.0f;
+                    if (p->unk5C->cell[i].v10 == 0) {
+                        slot->v00++;
+                        slot->v04 = 0;
+                        Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[0], 0.0f, 30.0f, 0x40000001);
+                    }
+                }
+                break;
+            case 4:
+                n = slot->v04 + 1;
+                slot->v04 = n;
+                if (!((f32)n < 30.0)) {
+                    slot->v00 = 2;
+                    if ((s32)(frand() & 1) != 0) {
+                        dir = -1.0;
+                    }
+                    else {
+                        dir = 1.0;
+                    }
+                    slot->f34 = dir;
+                    Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[1], 0.0f, 12.0f, 0x40000001);
+                }
+                break;
+            case 5:
+                slot->f40 = slot->f40 - 0.2;
+                if (slot->f40 > 0.4) {
+                    break;
+                }
+                slot->f40 = 0.4f;
+                slot->v00++;
+                // fallthrough
+            case 6:
+                if (p->unk5C->cell[i].v10 != 0) {
+                    break;
+                }
+                slot->v00++;
+                // fallthrough
+            case 7:
+                slot->f40 = slot->f40 + 0.1;
+                if (!(slot->f40 < 1.0)) {
+                    slot->f40 = 1.0f;
+                    slot->v00 = 4;
+                    slot->v04 = 0;
+                    Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[0], 0.0f, 30.0f, 0x40000001);
+                }
+                break;
+            case 8:
+                break;
+        }
+        if ((slot->v00 == 2 || slot->v00 == 4) && slot->v38 != 0) {
+            slot->v04 = 0;
+            slot->f34 = 0.0f;
+            if (MgSeqModeGet() == 5 && p->unk5C->cell[i].v00 == 0) {
+                p->unk5C->cell[i].v00++;
+            }
+            Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[2], 0.0f, 12.0f, 0x40000001);
+            if (slot->v38 == 1) {
+                slot->v00 = 5;
+                fn_1_77D4(i, 7);
+                if (slot->v10.x < 0.0f) {
+                    fn_1_C10(0x92B, &slot->v10);
+                    return;
+                }
+                fn_1_C10(0x92C, &slot->v10);
+                return;
+            }
+            slot->v00 = 3;
+            slot->v1C.y = 13.333334f;
+            fn_1_77D4(i, 8);
+            if (slot->v10.x < 0.0f) {
+                fn_1_C10(0x91A, &slot->v10);
+                return;
+            }
+            fn_1_C10(0x91B, &slot->v10);
+            return;
+        }
+        slot->v38 = 0;
+        slot->v28.y = fn_1_CC8(slot->v28.y, rotTarget, 0.05f);
+        slot->v1C.x = slot->v1C.x + 0.05 * (0.01666666753590107 * (150.0 * slot->f34) - slot->v1C.x);
+        PSVECAdd(&slot->v10, &slot->v1C, &slot->v10);
+        Hu3DModelPosSet(model, slot->v10.x, slot->v10.y - 20.0, slot->v10.z);
+        Hu3DModelRotSetV(model, &slot->v28);
+        Hu3DModelScaleSetV(model, (Vec *)&slot->f3C);
     }
 }
 
@@ -1235,11 +1733,106 @@ void fn_1_5750(M574_STAGE_OBJ *p) {
     mot->v38 = 0;
     mot->v1C.x = mot->v1C.y = mot->v1C.z = lbl_1_rodata_128;
     obj3 = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(model, lbl_1_data_4A4);
-    mot->v48 = obj3;
+    mot->v48 = (HSFOBJECT *)obj3;
     if (obj3 != (M574_MODEL_OBJ *)0) {
         mot->v3C.x = obj3->v1C.x;
         mot->v3C.y = obj3->v1C.y;
         mot->v3C.z = obj3->v1C.z;
+    }
+}
+
+void fn_1_5934(M574_STAGE_OBJ *p) {
+    M574_STAGE_TBL *tbl;
+    M574_STAGE_MOT *mot;
+    HSFOBJECT *obj;
+    HU3DMODELID model;
+    Vec vel;
+    Vec pos;
+    f32 ang;
+    f32 base;
+    s32 side;
+    s32 n;
+    s32 k;
+
+    tbl = p->unk5C;
+    mot = &tbl->mot;
+    model = p->unk40->id;
+    switch (mot->v00) {
+        case 0:
+            if (mot->v38 == 0 || MgSeqModeGet() != 5) {
+                break;
+            }
+            mot->v00++;
+            mot->v04 = 0;
+            fn_1_77D4(mot->v0C, 6);
+            HuAudFXPlay(0x91C);
+            HuAudFXPlay(0x91E);
+            tbl->v0C--;
+            fn_1_63B0((M574_VEC3 *)&lbl_1_data_4B0[0], (M574_VEC3 *)&lbl_1_data_4C8[0], tbl->v0C);
+            fn_1_63B0((M574_VEC3 *)&lbl_1_data_4B0[1], (M574_VEC3 *)&lbl_1_data_4C8[1], tbl->v0C);
+            // fallthrough
+        case 1:
+            if (tbl->v0C > 0) {
+                n = mot->v04 + 1;
+                mot->v04 = n;
+                if (n >= 4) {
+                    mot->v00--;
+                    mot->v04 = 0;
+                }
+                break;
+            }
+            mot->v00++;
+            mot->v04 = 0;
+            // fallthrough
+        case 2:
+            n = mot->v04 + 1;
+            mot->v04 = n;
+            if ((f32)n < 60.0) {
+                break;
+            }
+            side = mot->v0C;
+            mot = &p->unk5C->mot;
+            pos.x = mot->v10.x;
+            pos.y = mot->v10.y - 150.0;
+            pos.z = 300.0f;
+            vel.z = 80.0f;
+            for (k = 0; k < 5; k++) {
+                if (side == 0) {
+                    base = 240.0f;
+                }
+                else {
+                    base = 120.0f;
+                }
+                ang = base + 10.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
+                vel.x = 100.0 * (0.2 * sin(3.141592653589793 * ang / 180.0));
+                vel.y = 100.0 * (0.2 * cos(3.141592653589793 * ang / 180.0));
+                fn_1_6C2C(&pos, &vel.x);
+            }
+            mot->v00++;
+            mot->v04 = 0;
+            // fallthrough
+        case 3:
+            n = mot->v04 + 1;
+            mot->v04 = n;
+            if (!((f32)n < 60.0)) {
+                mot->v00 = 0;
+                mot->v04 = 0;
+                tbl->v0C = 5;
+            }
+            break;
+    }
+    if (Hu3DMotionEndCheck(model) != 0) {
+        Hu3DModelAttrSet(model, 0x40000001);
+        Hu3DMotionStartEndSet(model, 0.0f, 60.0f);
+        Hu3DMotionTimeSet(model, 0.0f);
+    }
+    mot = &tbl->mot;
+    mot->v38 = 0;
+    PSVECScale(&mot->v1C, &mot->v1C, 0.2f);
+    obj = mot->v48;
+    if (obj != NULL) {
+        obj->mesh.base.pos.x = mot->v3C.x + mot->v1C.x;
+        obj->mesh.base.pos.y = mot->v3C.y + mot->v1C.y;
     }
 }
 
