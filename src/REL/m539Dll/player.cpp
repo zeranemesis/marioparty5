@@ -11,49 +11,6 @@
 
 extern "C" {
 
-typedef struct M539Vec_s {
-    u32 cap;
-    u32 size;
-    s16 *items;
-} M539Vec;
-
-typedef struct M539PlayerSub_s {
-    u8 pad0[8];
-    u8 flag8;
-} M539PlayerSub;
-
-// The game object the player reports to.
-typedef struct M539Game_s {
-    u8 pad0[0x5C];
-    Vec pos;
-    u8 pad68[0x78 - 0x68];
-    f32 f78;
-    u8 pad7C[0xAC - 0x7C];
-    s32 unkAC;
-} M539Game;
-
-typedef struct M539Player_s {
-    void *node0;
-    void *node4;
-    M539PlayerSub *sub;
-    M539Ptmf hook;
-    s32 plyIdx;
-    s32 charNo;
-    f32 height;
-    Vec pos;
-    s32 unk30;
-    s32 curMot;
-    s32 state;
-    M539Vec mot;
-    s16 *model;
-    Vec vel;
-    Vec acc;
-    f32 rot;
-    u8 flag68;
-    s32 timer;
-    M539Game *game;
-} M539Player;
-
 typedef struct M539VObj_s {
     s32 pad0;
     s32 pad4;
@@ -150,13 +107,13 @@ void *fn_1_D010(s32 idx)
 {
     void *obj;
     if (GwPlayerConf[idx].type != 0) {
-        obj = fn_1_0(0x348);
+        obj = fn_1_0(M539_ALLOC_SIZE(0x348));
         if (obj != 0) {
             obj = fn_1_64B8(obj);
         }
         return obj;
     }
-    obj = fn_1_0(0x14);
+    obj = fn_1_0(M539_ALLOC_SIZE(0x14));
     if (obj != 0) {
         obj = fn_1_63E0(obj, idx);
     }
@@ -170,12 +127,12 @@ M539Player *fn_1_D0B4(M539Player *self, s32 idx, M539Game *game)
 
     fn_1_1264(self);
     if (GwPlayerConf[idx].type != 0) {
-        sub = fn_1_0(0x348);
+        sub = fn_1_0(M539_ALLOC_SIZE(0x348));
         if (sub != 0) {
             sub = fn_1_64B8(sub);
         }
     } else {
-        sub = fn_1_0(0x14);
+        sub = fn_1_0(M539_ALLOC_SIZE(0x14));
         if (sub != 0) {
             sub = fn_1_63E0(sub, idx);
         }
