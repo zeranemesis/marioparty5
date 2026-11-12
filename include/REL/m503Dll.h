@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include "game/object.h"
+#include "humath.h"
 
 /* Game state kept in lbl_1_bss_20->data (0x80 bytes). */
 typedef struct {
@@ -28,7 +29,32 @@ typedef struct {
     s32 unk7C;
 } M503Data;
 
+/* Actor record embedded in objects; same layout as the actor table entries. */
+typedef struct {
+    u32 flags;
+    s32 unk04;
+    s32 unk08;
+    s32 state;
+    OMOBJ *owner;
+    void (*fn)(OMOBJ *owner);
+    HuVecF *pos;
+    f32 rad;
+#ifdef TARGET_PC
+    s32 mode;
+#endif
+} M503Actor;
+
+/* One expanding ring tracked by the ring drawer; pos and offset point into the owner's data. */
+typedef struct {
+    s32 active;
+    f32 scale;
+    HuVecF *pos;
+    HuVecF *offset;
+} M503Ring;
+
 extern OMOBJ *lbl_1_bss_20;
+
+void fn_1_D134(M503Ring *ring);
 
 void fn_1_430(OMOBJ *obj);
 void fn_1_5B0(OMOBJ *obj);

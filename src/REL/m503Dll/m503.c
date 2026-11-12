@@ -504,7 +504,7 @@ s32 fn_1_1F44(HuVecF *pos)
     return vol;
 }
 
-void fn_1_1FD8(s32 seId, HuVecF *pos)
+s32 fn_1_1FD8(s32 seId, HuVecF *pos)
 {
     HuVecF scr;
     s16 pan;
@@ -525,7 +525,7 @@ void fn_1_1FD8(s32 seId, HuVecF *pos)
     if (vol > 0x7F) {
         vol = 0x7F;
     }
-    HuAudFXPlayVolPan(seId, vol, pan);
+    return HuAudFXPlayVolPan(seId, vol, pan);
 }
 
 void fn_1_210C(s32 seNo, HuVecF *pos)

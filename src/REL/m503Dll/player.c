@@ -98,7 +98,7 @@ extern s32 fn_1_1D00(void);
 extern s32 *fn_1_1D18(void);
 extern s32 fn_1_1EB0(HuVecF *pos);
 extern s32 fn_1_1F44(HuVecF *pos);
-extern void fn_1_1FD8(s32 seId, HuVecF *pos);
+extern s32 fn_1_1FD8(s32 seId, HuVecF *pos);
 extern f32 fn_1_2B7C(f32 from, f32 to, f32 rate);
 extern OMOBJ *fn_1_9D18(HuVecF *pos, f32 yaw, f32 fov, f32 dist);
 extern s32 fn_1_A080(OMOBJ *item, HuVecF *pos, HuVecF *dest);

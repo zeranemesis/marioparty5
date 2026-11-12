@@ -6,19 +6,13 @@
 #include "game/memory.h"
 #include "game/sprite.h"
 #include "humath.h"
+#include "REL/m503Dll.h"
 #include <string.h>
 
 #ifndef M_PI
 #define M_PI 3.141592653589793
 #endif
 
-/* One expanding ring tracked by the ring drawer; pos and offset point into the owner's data. */
-typedef struct {
-    s32 active;
-    f32 scale;
-    HuVecF *pos;
-    HuVecF *offset;
-} M503Ring;
 
 typedef struct {
     M503Ring *rings[0x28];
