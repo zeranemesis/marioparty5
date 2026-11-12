@@ -131,7 +131,7 @@ typedef struct M550State_s {
     /* 0x140 */ s32 unk140[2];
     /* 0x148 */ HuVecF fxVec[4];
     /* 0x178 */ M550FX fx[17];
-    /* 0x68C */ u8 unk68C[0xA14 - 0x68C];
+    /* 0x684 */ u8 unk684[0xA14 - 0x684];
 } M550STATE;
 
 /* lbl_1_bss_4: per-player CPU control block (0x10 bytes). */

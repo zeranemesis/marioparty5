@@ -51,26 +51,30 @@ M550STATE *lbl_1_bss_1FC0;
 
 void fn_1_4E8C(M550STATE *state, M550MODEL *model, M550MODELIDS *modelData)
 {
-    s16 i;
     s16 j;
+    s16 i;
 
     lbl_1_bss_1FC0 = state;
     memset(lbl_1_bss_1FC0, 0, sizeof(M550STATE));
     lbl_1_bss_1FC0->model = model;
     lbl_1_bss_1FC0->modelData = modelData;
-    for (i = 0; i < 2; i++) {
+    i = 0;
+    do {
         for (j = 0; j < 4; j++) {
             if (i == GwPlayerConf[j].grp) {
                 lbl_1_bss_1FC0->player[i].pno = j;
-                break;
+                i++;
+                if (i >= 2) {
+                    break;
+                }
             }
         }
-    }
-    for (i = 0; i < 2; i++) {
-        lbl_1_bss_1FC0->player[i].charNo = GwPlayerConf[lbl_1_bss_1FC0->player[i].pno].charNo;
-        lbl_1_bss_1FC0->player[i].padNo = GwPlayerConf[lbl_1_bss_1FC0->player[i].pno].padNo;
-        if (GwPlayerConf[lbl_1_bss_1FC0->player[i].pno].type != 0) {
-            lbl_1_bss_1FC0->player[i].cpuLevel = GwPlayerConf[lbl_1_bss_1FC0->player[i].pno].dif + 1;
+    } while (i < 2);
+    for (j = 0; j < 2; j++) {
+        lbl_1_bss_1FC0->player[j].charNo = GwPlayerConf[lbl_1_bss_1FC0->player[j].pno].charNo;
+        lbl_1_bss_1FC0->player[j].padNo = GwPlayerConf[lbl_1_bss_1FC0->player[j].pno].padNo;
+        if (GwPlayerConf[lbl_1_bss_1FC0->player[j].pno].type != 0) {
+            lbl_1_bss_1FC0->player[j].cpuLevel = GwPlayerConf[lbl_1_bss_1FC0->player[j].pno].dif + 1;
         }
     }
 }
@@ -213,22 +217,29 @@ void fn_1_5918(s16 *p0, s16 *p1)
     lbl_1_bss_1FC0->motionId[1] = p1;
 }
 
+/* The first four model slots (stage x2, characters x2) as named members. */
+typedef struct M550ModelHead_s {
+    M550MODEL stage[2];
+    M550MODEL chr[2];
+} M550MODELHEAD;
+#define M550_CHR(i) (((M550MODELHEAD *)lbl_1_bss_1FC0->model)->chr[i])
+
 void fn_1_593C(void)
 {
     s32 i;
 
     for (i = 0; i < 2; i++) {
-        lbl_1_bss_1FC0->model[i + 2].id = CharModelCreate(lbl_1_bss_1FC0->player[i].charNo, 1);
-        Hu3DModelPosSet(lbl_1_bss_1FC0->model[i + 2].id, (f32)(i * 0x1A4 - 0xD2), 1000.0f, 0.0f);
+        M550_CHR(i).id = CharModelCreate(lbl_1_bss_1FC0->player[i].charNo, 1);
+        Hu3DModelPosSet(M550_CHR(i).id, (f32)(i * 0x1A4 - 0xD2), 1000.0f, 0.0f);
         lbl_1_bss_1FC0->model[i + 2].pos.x = (f32)(i * 0x1A4 - 0xD2);
         lbl_1_bss_1FC0->model[i + 2].pos.y = 1000.0f;
         lbl_1_bss_1FC0->model[i + 2].pos.z = 0.0f;
         lbl_1_bss_1FC0->model[i + 2].rot.x = 0.0f;
         lbl_1_bss_1FC0->model[i + 2].rot.y = 90.0f + (f32)(i * 0xB4);
         lbl_1_bss_1FC0->model[i + 2].rot.z = 0.0f;
-        Hu3DModelAttrSet(lbl_1_bss_1FC0->model[i + 2].id, 0x40000001);
-        Hu3DModelCameraSet(lbl_1_bss_1FC0->model[i + 2].id, 1);
-        Hu3DModelLayerSet(lbl_1_bss_1FC0->model[i + 2].id, 4);
+        Hu3DModelAttrSet(M550_CHR(i).id, 0x40000001);
+        Hu3DModelCameraSet(M550_CHR(i).id, 1);
+        Hu3DModelLayerSet(M550_CHR(i).id, 4);
     }
 }
 
@@ -322,7 +333,7 @@ void fn_1_61E8(OMOBJ *obj)
         }
         if (m->attrReset != 0) {
             Hu3DModelAttrReset(lbl_1_bss_1FC0->model[modelIdx].id, m->attrReset);
-            m->attrReset = ~(m->attrReset | m->attrReset);
+            m->attrReset = ~m->attrReset;
             m->prevAttrSet = m->attrSet &= m->attrReset;
             m->attrReset = 0;
         }
@@ -347,7 +358,7 @@ void fn_1_61E8(OMOBJ *obj)
                 m->maxTime = Hu3DMotionMaxTimeGet(lbl_1_bss_1FC0->model[modelIdx].id);
                 m->prevTime = m->time;
                 m->shiftState = 0;
-                m->prevMotNo = m->motNo = m->shiftMotNo;
+                m->motNo = m->prevMotNo = m->shiftMotNo;
                 break;
         }
         m->time = Hu3DMotionTimeGet(lbl_1_bss_1FC0->model[modelIdx].id);
@@ -446,7 +457,6 @@ void fn_1_6B6C(void)
     s32 i;
     M550FX *fx;
     M550MODEL *model;
-    M550MODEL *first;
 
     for (i = 0; i < 4; i++) {
         fx = &lbl_1_bss_1FC0->fx[i + 5];
@@ -471,8 +481,8 @@ void fn_1_6B6C(void)
             model->rot.y = 75.0f;
         }
     }
-    first = lbl_1_bss_1FC0->model;
-    first->rot.y -= 0.005f;
+    model = lbl_1_bss_1FC0->model;
+    model->rot.y -= 0.005f;
 }
 
 void fn_1_6D8C(void)
@@ -494,8 +504,8 @@ void fn_1_6DA4(void)
             fx->cnt[0]--;
             return;
         }
-        if (lbl_1_bss_1FC0->fx[9].state == 0) {
-            lbl_1_bss_1FC0->fx[9].state = 1;
+        if (fx->state == 0) {
+            fx->state = 1;
             fx->cnt[0] = 0;
             fx->cnt[1] = 0;
             fx->cnt[2] = 0;
@@ -675,15 +685,15 @@ void fn_1_7C4C(void)
     M550MODEL *model;
 
     fx = &lbl_1_bss_1FC0->fx[15];
-    model = &lbl_1_bss_1FC0->model[idx[0]];
+    model = &lbl_1_bss_1FC0->model[0xA1];
     if (fx->cnt[0] >= -1) {
         if (fx->cnt[0] == -1) {
             Hu3DModelAttrSet(model->id, 1);
             fx->cnt[0]--;
         }
-        if (lbl_1_bss_1FC0->fx[15].state == 0) {
+        if (fx->state == 0) {
             if (fx->cnt[0]++ > 0x320) {
-                lbl_1_bss_1FC0->fx[15].state = 1;
+                fx->state = 1;
                 fx->cnt[0] = 0;
                 Hu3DModelAttrReset(model->id, 1);
                 Hu3DMotionTimeSet(model->id, 50.0f);
@@ -695,7 +705,7 @@ void fn_1_7C4C(void)
                 Hu3DModelPosSetV(model->id, &model->pos);
             }
         }
-        if (lbl_1_bss_1FC0->fx[15].state == 1) {
+        if (fx->state == 1) {
             fx->cnt[0]++;
             if (fx->cnt[0] >= 0x63) {
                 Hu3DMotionTimeSet(model->id, 51.0f);
@@ -703,15 +713,15 @@ void fn_1_7C4C(void)
             }
             model->pos.x += 5.0f;
             if (model->pos.x > 4000.0f) {
-                lbl_1_bss_1FC0->fx[15].state = 2;
+                fx->state = 2;
                 fx->cnt[0] = 0;
                 fx->cnt[1] = (rand8() % 5) * 0x1E + 0x258;
             }
         }
-        if (lbl_1_bss_1FC0->fx[15].state == 2) {
+        if (fx->state == 2) {
             if (fx->cnt[0]++ >= fx->cnt[1]) {
                 model->pos.x = -2000.0f;
-                lbl_1_bss_1FC0->fx[15].state = 1;
+                fx->state = 1;
             }
         }
     }
@@ -731,12 +741,12 @@ void fn_1_7EE0(void)
 
     fx = &lbl_1_bss_1FC0->fx[16];
     model = &lbl_1_bss_1FC0->model[idx[0]];
-    if (lbl_1_bss_1FC0->fx[16].state >= 0) {
-        switch (lbl_1_bss_1FC0->fx[16].state) {
+    if (fx->state >= 0) {
+        switch (fx->state) {
             case 0:
                 if (fx->cnt[0]++ > 0x12C) {
                     fx->cnt[0] = -0xC8;
-                    lbl_1_bss_1FC0->fx[16].state = 1;
+                    fx->state = 1;
                     Hu3DModelAttrReset(model->id, 1);
                     Hu3DMotionTimeSet(model->id, 0.0f);
                     Hu3DMotionSpeedSet(model->id, 0.25f);
@@ -756,7 +766,7 @@ void fn_1_7EE0(void)
                 model->pos.x += 14.85 * sin(0.39269908169872414);
                 model->pos.z += 14.85 * cos(0.39269908169872414);
                 if (model->pos.z >= 2000.0f) {
-                    lbl_1_bss_1FC0->fx[16].state = 2;
+                    fx->state = 2;
                     fx->cnt[0] = 0;
                     fx->cnt[1] = (rand8() % 8) * 0x1E + 0x12C;
                     return;
@@ -764,7 +774,7 @@ void fn_1_7EE0(void)
                 break;
             case 2:
                 if (fx->cnt[0]++ >= fx->cnt[1]) {
-                    lbl_1_bss_1FC0->fx[16].state = 1;
+                    fx->state = 1;
                     Hu3DMotionTimeSet(model->id, 0.0f);
                     model->pos.x = (rand8() % 4) * 0x1F4 - 0x1104;
                     model->pos.z = -13000.0f;
@@ -804,12 +814,14 @@ void fn_1_8190(void)
 void fn_1_8350(void)
 {
     s32 modelIdx[4] = { 0x99, 0x9B, 0x9C, 0x9F };
+    f32 time;
     s32 i;
     s16 *modelId;
 
     for (i = 0; i < 4; i++) {
         modelId = &lbl_1_bss_1FC0->model[modelIdx[i]].id;
-        if (Hu3DMotionTimeGet(*modelId) >= 99.0f) {
+        time = Hu3DMotionTimeGet(*modelId);
+        if (time >= 99.0f) {
             Hu3DMotionTimeSet(*modelId, 50.0f);
         }
     }
