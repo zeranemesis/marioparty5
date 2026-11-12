@@ -273,6 +273,18 @@ void fn_1_585C(HU3DMODEL *modelP, Mtx *mtx)
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 
+#ifdef TARGET_PC
+    c0 = c1 = c2 = c3 = lbl_1_data_4D0;
+    GXPosition3f32(-15.0f, 1.0f, -240.0f);
+    GXColor1u32(c0);
+    GXPosition3f32(15.0f, 1.0f, -240.0f);
+    GXColor1u32(c1);
+    GXPosition3f32(15.0f, 1.0f, 230.0f);
+    GXColor1u32(c2);
+    GXPosition3f32(-15.0f, 1.0f, 230.0f);
+    GXColor1u32(c3);
+    GXEnd();
+#else
 GXWGFifo.f32 = -15.0f;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = -240.0f;
@@ -296,6 +308,7 @@ GXWGFifo.f32 = -15.0f;
     GXWGFifo.f32 = 230.0f;
     c3 = lbl_1_data_4D0;
     GXWGFifo.u32 = c3;
+#endif
 }
 
 

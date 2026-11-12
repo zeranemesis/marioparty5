@@ -3,7 +3,7 @@
 extern void (*_ctors[])(void);
 extern void (*_dtors[])(void);
 
-static void ObjectSetup(void);
+void ObjectSetup(void);
 static void fn_1_36C(OMOBJ *obj);
 static void fn_1_648(OMOBJ *obj);
 static void fn_1_924(OMOBJ *obj);
@@ -53,7 +53,7 @@ void _epilog(void)
     }
 }
 
-static void ObjectSetup(void)
+void ObjectSetup(void)
 {
     Vec zero = { 0.0f, 0.0f, 0.0f };
     Vec back = { 0.0f, 0.0f, -1.0f };

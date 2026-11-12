@@ -77,7 +77,7 @@ HUSPRGRPID MgNameCreate(void *arg) {
     xTbl = HuMemDirectMalloc(HEAP_HEAP, 0xC8);
     wTbl = HuMemDirectMalloc(HEAP_HEAP, 0xC8);
 
-    for (p = (u8 *)HuWinMesPtrGet((u32)arg), width = 0, count = 0; *p != 0; p++) {
+    for (p = (u8 *)HuWinMesPtrGet((u32)(uintptr_t)arg), width = 0, count = 0; *p != 0; p++) {
         if (*p == ' ' || *p == 0x10) {
             width += 0x14;
             continue;

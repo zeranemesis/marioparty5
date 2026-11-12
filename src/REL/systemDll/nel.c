@@ -1386,7 +1386,7 @@ void fn_1_2390(NEL_SYS *sys, MDFLOWENT *tbl)
 
     sprite = (SYSSPRITE *)sys->sprite;
     model = (SYSMODEL *)sys->model;
-    mess = (s32)sys->mess;
+    mess = (s32)(uintptr_t)sys->mess;
     switch (sys->stat) {
         case 0:
             for (i = 0; i < 4; i++) {
