@@ -236,17 +236,21 @@ extern "C" CPlayer *fn_1_B920(CPlayer *player, s16 flag)
 void CPlayer::createMotion(int dataNum)
 {
     int mot = CharMotionCreate(m_charNo, dataNum);
-    m_motIds.insert(m_motIds.m_data + m_motIds.m_size, 1, mot);
+    m_motIds.insert(m_motIds.end(), 1, mot);
 }
 
 void CPlayer::GetStartPos(Vec *out, int playerNo)
 {
-    f32 ang = (f32)playerNo * 1.8f - 1.5 * 1.8f;
-    f32 dx = 100.0 * (ang * cos(-0.9296086f));
-    f32 dz = 100.0 * (ang * sin(-0.9296086f));
-    out->x = 1578.489f + dx;
+    f32 rad = -0.9296086f;
+    f32 k = 1.8f;
+    f32 ang = playerNo * k - 1.5 * k;
+    f32 dx = 100.0 * (ang * cos(rad));
+    f32 dz = 100.0 * (ang * sin(rad));
+    f32 vx = 1578.489f + dx;
+    f32 vz = 414.244f + dz;
+    out->x = vx;
     out->y = 5060.02f;
-    out->z = 414.244f + dz;
+    out->z = vz;
 }
 
 void CPlayer::PlayerShow()
@@ -901,6 +905,11 @@ void CPlayer::clampMag()
     m_moveMag = m;
 }
 
+static inline f32 Sqr(f32 v)
+{
+    return v * v;
+}
+
 /* nearest aisu handle to a position (an out-of-line copy of code getComMoveDir inlines) */
 static inline s32 NearestAisu(std::vector<int> *ids, Vec *pos)
 {
@@ -911,9 +920,7 @@ static inline s32 NearestAisu(std::vector<int> *ids, Vec *pos)
     while (it != end) {
         CAisu *aisu = (CAisu *)CAisu::getHandle(*it);
         if (aisu != 0) {
-            f32 dz = aisu->m_pos.z - pos->z;
-            f32 dx = aisu->m_pos.x - pos->x;
-            f32 d = dx * dx + dz * dz;
+            f32 d = Sqr(aisu->m_pos.x - pos->x) + Sqr(aisu->m_pos.z - pos->z);
             if (!(best < d)) {
                 best = d;
                 bestHandle = *it;
@@ -1135,30 +1142,30 @@ namespace std {
 template <>
 void __vector_pod<int, allocator<int> >::reserve(unsigned long n)
 {
-    if (n > m_cap) {
+    if (n > capacity()) {
         unsigned long maxSize = max_size();
         if (n > maxSize) {
             fprintf(M501_STDERR, "vector::reserve length error\n");
             abort();
         }
-        int *oldData = m_data;
+        int *oldData = begin();
         int *buf = (int *)__nw__FUl(n * 4);
         if (buf == 0) {
             fprintf(M501_STDERR, "Memory allocation failure");
             abort();
         }
-        m_data = buf;
+        data_ref() = buf;
         if (oldData != 0) {
-            int *dst = m_data;
+            int *dst = begin();
             int *src = oldData;
-            while (src < oldData + m_size) {
+            while (src < oldData + size_ref()) {
                 *dst = *src;
                 src++;
                 dst++;
             }
             __dl__FPv(oldData);
         }
-        m_cap = n;
+        cap_ref() = n;
     }
 }
 }
