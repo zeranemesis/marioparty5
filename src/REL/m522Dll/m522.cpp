@@ -1906,10 +1906,18 @@ M522RThread *fn_1_C100(M522RThread *th, void *(*func)(void *), void *arg, u32 si
 {
     u32 words;
     u32 *stack;
+    void *p;
+    void *q;
+    void *r;
+    void *s;
 
     words = size >> 2;
-    stack = (u32 *)HuMemDirectMallocNum(HEAP_HEAP, words * 4, 0x10000000);
-    M522R_ASSERT_INL(stack != 0, lbl_1_data_190, lbl_1_data_19C, 0x17);
+    p = HuMemDirectMallocNum(HEAP_HEAP, words * 4, 0x10000000);
+    M522R_ASSERT_INL(p != 0, lbl_1_data_190, lbl_1_data_19C, 0x17);
+    q = p;
+    r = q;
+    s = r;
+    stack = (u32 *)s;
     th->stack = stack;
     fn_1_C260(th, func, arg, stack, words, prio, attr);
     return th;
@@ -1931,6 +1939,7 @@ s32 fn_1_C558(u32 *p, s32 mode);
 void fn_1_C260(M522RThread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr)
 {
     u8 ok;
+    u8 created;
 
     ok = 0;
     if (prio >= 0 && prio <= 0x1F) {
@@ -1939,7 +1948,8 @@ void fn_1_C260(M522RThread *th, void *(*func)(void *), void *arg, u32 *stack, u3
     M522R_ASSERT_INL(ok != 0, lbl_1_data_2BC, lbl_1_data_2B1, 0x52);
     fn_1_C5CC(stack, words);
     fn_1_C558(stack, 0);
-    if ((u8)(OSCreateThread(&th->thread, func, arg, &stack[words], words * 4, prio, attr) != 0) == 0) {
+    created = (OSCreateThread(&th->thread, func, arg, &stack[words], words * 4, prio, attr) != 0);
+    if (created == 0) {
         OSPanic(lbl_1_data_2B1, 0x60, lbl_1_data_2F7);
     }
 }
@@ -2133,10 +2143,15 @@ void fn_1_C9D0(M522RTimerObj *self, u8 r, u8 g, u8 b)
 
 void fn_1_CA18(void)
 {
-    lbl_1_bss_2C.next = &lbl_1_bss_2C;
-    lbl_1_bss_2C.prev = &lbl_1_bss_2C;
+    M522RNode *self;
+    M522RNode *obj;
+
+    self = &lbl_1_bss_2C;
+    self->next = self;
+    self->prev = self;
+    obj = self;
 #ifdef __MWERKS__
-    __register_global_object(&lbl_1_bss_2C, (void *)fn_1_CB78, lbl_1_bss_20);
+    __register_global_object(obj, (void *)fn_1_CB78, lbl_1_bss_20);
 #endif
     lbl_1_bss_38 = 0x78;
     lbl_1_bss_3C = 0xD2;
