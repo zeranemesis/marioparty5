@@ -332,6 +332,13 @@ void fn_1_9E8C(M575Tubo *self);
 void fn_1_9EE4(M575Tubo *self);
 M575CoinItem *fn_1_B240(M575Coin *self, u16 kind, Vec *pos, Vec *vel, f32 time);
 
+void fn_1_AEF0(M575Coin *self, M575Main *main);
+void fn_1_B074(M575Coin *self);
+void fn_1_B0E8(M575Coin *self);
+void fn_1_C464(M575Jugem *self, M575Main *main);
+void fn_1_C5E0(M575Jugem *self);
+void fn_1_C630(M575Jugem *self);
+
 void fn_1_3A7C(M575Score *self, u16 side, M575Main *main);
 void fn_1_3CD8(M575Score *self);
 void fn_1_3D28(M575Score *self);
