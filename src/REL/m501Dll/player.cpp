@@ -1,41 +1,6 @@
 #include "REL/m501Dll.h"
 
-struct Vec {
-    f32 x, y, z;
-};
-
-class CLinkList {
-public:
-    CLinkNode *m_head;
-    CLinkNode *m_tail;
-    CLinkList() : m_head(0), m_tail(0) {}
-};
-
 namespace m501 {
-
-class CPlayer : public CGameObject {
-public:
-    CPlayer(int playerIdx);
-    virtual ~CPlayer();
-
-    static s32 ComparePlayer(CLinkNode *a, CLinkNode *b);
-
-    void proc_main();
-    void proc_shrink_cone();
-    void fn_1_B920();
-    void fn_1_10158();
-    static void execPlayerList(CLinkList *list, void (*func)(CPlayer *));
-    static void execPlayerList(CPlayer *first, CLinkList *list, void (*func)(CPlayer *));
-
-    void getMoveDir(Vec *dir);
-    void movePlayer(Vec *dir);
-
-private:
-    char pad_10[0x14]; // 0x10-0x23
-    s32 m_compareValue; // 0x24
-    char pad_28[0x1C]; // 0x28-0x43
-    f32 m_coneScale; // 0x44
-};
 
 #pragma global_optimizer on
 #pragma optimization_level 4
@@ -109,17 +74,17 @@ namespace m501 {
 
 void CPlayer::execPlayerList(CLinkList *list, void (*func)(CPlayer *))
 {
-    CPlayer *first = (CPlayer *)list->m_head;
+    CPlayer *first = (CPlayer *)list->m_prev;
     CLinkList *listPtr = list;
     execPlayerList(first, listPtr, func);
 }
 
 void CPlayer::execPlayerList(CPlayer *first, CLinkList *list, void (*func)(CPlayer *))
 {
-    // Stub - will be implemented later
-    (void)first;
-    (void)list;
-    (void)func;
+    while (first != (CPlayer *)list) {
+        func(first);
+        first = (CPlayer *)first->m_prev;
+    }
 }
 
 } // namespace m501

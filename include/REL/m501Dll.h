@@ -4,6 +4,7 @@
 #include "dolphin/types.h"
 #include <dolphin/gx/GXStruct.h>
 #include <dolphin/mtx.h>
+#include "humath.h"
 #include <dolphin/os/OSThread.h>
 
 struct OSSemaphore {
@@ -272,7 +273,7 @@ public:
 class CSubThread {
 public:
     virtual ~CSubThread();
-    virtual void thread_main(int arg) = 0;
+    virtual void thread_main() = 0;
 
     CSubThread(unsigned long stackSize);
     static s32 GetStartPriority();
@@ -304,17 +305,65 @@ public:
     struct MgTimer_s *m_timer;
 };
 
+
+namespace std {
+template <class T>
+class allocator {
+};
+
+/* three-word vector: capacity, size, data */
+template <class T, class A>
+class __vector_pod {
+public:
+    T *insert(T *pos, unsigned long n, const T &value);
+    void reserve(unsigned long n);
+
+    unsigned long m_cap;
+    unsigned long m_size;
+    T *m_data;
+};
+
+template <class T, class A = allocator<T> >
+class vector : public __vector_pod<T, A> {
+public:
+    vector()
+    {
+        this->m_cap = 0;
+        this->m_size = 0;
+        this->m_data = 0;
+    }
+    ~vector();
+};
+}
+
 namespace m501 {
 class CStage;
 class CParticle;
 class CCameraObj;
 
-
-class CGameMaster {
+class CGameMaster : public CMinigameCore, public CSubThread {
 public:
     static CStage *stageInstance;
     static CCameraObj *cameraInstance;
+
+    CGameMaster();
+    virtual ~CGameMaster();
+    virtual void on_setup(Process_s *objMan);
+    virtual void on_update();
+    virtual void on_close();
+    virtual void thread_main();
+    void thread_exec();
+    void newAisu();
+    static CModel *GetConeModel();
+    static CModel *GetAisuModel();
+
+    CTimer m_timer;      // 0x358
+    CModel m_cone;       // 0x35C
+    CModel m_aisu;       // 0x35E
+    CHandleMan m_handles; // 0x360
 };
+
+
 
 /* singleton.h: the instance is published as the address of the CSingleton
  * subobject (offset 0x10), walked back to the start of the object. */
@@ -456,6 +505,75 @@ public:
     PROC m_proc;            // 0x70
     HU3DMODELID m_model;    // 0x7C
 };
+
+
+class CStage : public CGameObject, public CSingleton {
+public:
+    CStage();
+    virtual ~CStage();
+    virtual void on_new_mode(int mode);
+    virtual void on_update();
+    void setAisuMotion();
+
+private:
+    CModel m_stage;
+    CModel m_border;
+    CModel m_camera;
+    CModel m_aisu;
+    s32 m_timer;
+    f32 m_angle;
+};
+
+class CPlayer : public CGameObject {
+public:
+    CPlayer(int playerNo);
+    virtual ~CPlayer();
+    virtual void on_new_mode(int mode);
+
+    static s32 ComparePlayer(CLinkNode *a, CLinkNode *b);
+    static void UpdateAll();
+    static void Close();
+    static bool CheckWinIdle();
+    static bool StartPlayerWin();
+    static void startWinnerMove();
+    static void PlayerShow();
+    static void GetPlayerDist(std::vector<HuVec2f_s> *out);
+    static void execPlayerList(CLinkList *list, void (*func)(CPlayer *));
+    static void execPlayerList(CPlayer *first, CLinkList *list, void (*func)(CPlayer *));
+
+    void proc_main();
+    void proc_shrink_cone();
+    void getMoveDir(Vec *dir);
+    void movePlayer(Vec *dir);
+
+    /* the remaining fields are not decoded yet (player.cpp is unfinished) */
+    u8 m_pad10[0x24 - 0x10];
+    s32 m_compareValue; // 0x24
+    u8 m_pad28[0x44 - 0x28];
+    f32 m_coneScale; // 0x44
+    u8 m_pad48[0x14C - 0x48];
+};
+
+class CAisu : public CLinkNode {
+public:
+    CAisu(int type, Vec *pos);
+    ~CAisu();
+    static void init(CHandleMan *handleMan);
+    static void UpdateAll();
+    static void Close();
+    static void *getHandle(int handle);
+    void setPos(Vec *pos, f32 t);
+
+    static CHandleMan *aisuHandleMan;
+
+    u8 m_pad08[0x24 - 0x08];
+    Vec m_pos; // 0x24
+    /* the remaining fields are not decoded yet (aisu.cpp is unfinished) */
+    u8 m_pad30[0xC8 - 0x30];
+};
+
+extern "C" void fn_1_8510(std::vector<HuVec2f_s> *out);
+
 
 }
 

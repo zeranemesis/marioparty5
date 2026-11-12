@@ -1408,7 +1408,8 @@ s32 CSubThread::sleepThread(int arg)
 void *CSubThread::ThreadMain(void *self)
 {
     CSubThread *thread = (CSubThread *)self;
-    thread->thread_main(thread->m_arg);
+    s32 arg = thread->m_arg;
+    thread->thread_main();
     OSSignalSemaphore(&thread->m_sema);
     return 0;
 }

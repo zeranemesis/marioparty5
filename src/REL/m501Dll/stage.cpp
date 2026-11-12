@@ -1,21 +1,14 @@
 #include "REL/m501Dll.h"
 #include "datanum/m501.h"
 
-struct Vec3 {
-    f32 x, y, z;
-};
-
 extern "C" {
-void PSVECNormalize(Vec3 *src, Vec3 *dst);
-void PSVECScale(Vec3 *src, Vec3 *dst, f32 scale);
-void PSVECAdd(Vec3 *a, Vec3 *b, Vec3 *dst);
 
 void Hu3DLighInit(void);
-s32 Hu3DGLightCreateV(Vec3 *pos, Vec3 *dir, GXColor *color);
+s32 Hu3DGLightCreateV(Vec *pos, Vec *dir, GXColor *color);
 void Hu3DGLightInfinitytSet(s16 lightId);
 void Hu3DShadowCreate(f32 fov, f32 near, f32 far);
 void Hu3DShadowTPLvlSet(f32 tpLvl);
-void Hu3DShadowPosSet(Vec3 *camPos, Vec3 *camUp, Vec3 *camTarget);
+void Hu3DShadowPosSet(Vec *camPos, Vec *camUp, Vec *camTarget);
 void Hu3DShadowColSet(u8 r, u8 g, u8 b);
 void Hu3DModelShadowMapSet(s16 modelId);
 s16 Hu3DMotionShapeIDGet(s16 modelId);
@@ -31,25 +24,9 @@ double cos(f64 x);
 
 namespace m501 {
 
-static Vec3 s_lightPos = {9654.0f, 8151.0f, 2774.0f};
+static Vec s_lightPos = {9654.0f, 8151.0f, 2774.0f};
 static GXColor s_lightColor = {0xFF, 0xFF, 0xFF, 0xFF};
 
-class CStage : public CGameObject, public CSingleton {
-public:
-    CStage();
-    virtual ~CStage();
-    virtual void on_new_mode(int mode);
-    virtual void on_update();
-    void setAisuMotion();
-
-private:
-    CModel m_stage;
-    CModel m_border;
-    CModel m_camera;
-    CModel m_aisu;
-    s32 m_timer;
-    f32 m_angle;
-};
 
 CStage::CStage() :
     m_stage((u32)M501_HSF_stage),
@@ -57,10 +34,10 @@ CStage::CStage() :
     m_camera((u32)M501_HSF_stage_border),
     m_aisu((u32)M501_HSF_stage_shadow)
 {
-    Vec3 lightDir;
-    Vec3 shadowPos;
-    Vec3 up;
-    Vec3 pos;
+    Vec lightDir;
+    Vec shadowPos;
+    Vec up;
+    Vec pos;
 
     m_timer = 0;
 
