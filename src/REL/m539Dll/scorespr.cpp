@@ -12,12 +12,6 @@
 
 extern "C" {
 
-typedef struct {
-    s32 ptmfA;
-    s32 ptmfB;
-    void *ptmfFn;
-} PTMF;
-
 typedef struct M539ScoreMgr_s {
     s32 unk0;
     s32 unk4;
@@ -34,7 +28,7 @@ typedef struct M539ScoreSpr_s {
     s32 value;
     s32 frame;
     void *score;
-    PTMF hook;
+    M539Ptmf hook;
 } M539ScoreSpr;
 
 typedef struct M539ScoreList_s {
@@ -47,17 +41,22 @@ extern void *lbl_1_data_1FC;
 extern s32 lbl_1_bss_C;
 extern void *lbl_1_bss_A0C;
 
+void fn_1_F5C4(M539ScoreSpr *self);
+void fn_1_F744(M539ScoreSpr *self);
+M539ScoreMgr *fn_1_F150(M539ScoreMgr *self, s16 arg);
+void fn_1_F220(M539ScoreMgr *self, s32 arg);
+void fn_1_F238(void);
+
 char lbl_1_data_540[] = "ms_pointer == 0";
 char lbl_1_data_550[] = "singleton.h";
 char lbl_1_data_55C[] = "ms_pointer != 0";
-s32 lbl_1_data_56C[3] = {0, -1, 0};
-s32 lbl_1_data_578[3] = {0, -1, 0};
-void *lbl_1_data_584[5];
+M539Ptmf lbl_1_data_56C = M539_PTMF_INIT(fn_1_F5C4);
+M539Ptmf lbl_1_data_578 = M539_PTMF_INIT(fn_1_F744);
+void *lbl_1_data_584[5] = { 0, 0, (void *)fn_1_F150, (void *)fn_1_F220, (void *)fn_1_F238 };
 
 s32 lbl_1_bss_A58[3];
 M539ScoreList lbl_1_bss_A64;
 
-void __ptmf_scall(void *obj, PTMF *ptmf);
 void __register_global_object(void *obj, void *dtor, void *reg);
 
 void fn_1_1264(void *self);
@@ -92,7 +91,12 @@ M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 a
 // NONMATCHING: register allocation only.
 M539ScoreMgr *fn_1_EFF4(M539ScoreMgr *self)
 {
-    fn_1_1264(self);
+    M539ScoreMgr *a;
+    M539ScoreMgr *b;
+
+    a = self;
+    b = a;
+    fn_1_1264(b);
     self->vtable = &lbl_1_data_1FC;
     self->flags = 0;
     fn_1_1330(self, &lbl_1_bss_C);
@@ -160,7 +164,7 @@ void fn_1_F238(void)
 M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 arg)
 {
     s32 v = value;
-    s32 *hook;
+    M539Ptmf *hook;
     s32 digits;
 
     fn_1_1264(self);
@@ -175,14 +179,12 @@ M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 a
         return fn_1_F40C(self, 1);
     }
     if (arg == 0) {
-        hook = lbl_1_data_56C;
+        hook = &lbl_1_data_56C;
     }
     else {
-        hook = lbl_1_data_578;
+        hook = &lbl_1_data_578;
     }
-    self->hook.ptmfA = hook[0];
-    self->hook.ptmfB = hook[1];
-    self->hook.ptmfFn = (void *)hook[2];
+    self->hook = *hook;
     if (arg == 1) {
         digits = 2;
     }
@@ -228,21 +230,35 @@ M539ScoreSpr *fn_1_F40C(M539ScoreSpr *self, s16 arg)
     return self;
 }
 
-// NONMATCHING: register allocation only.
+static inline u8 M539ScoreListEmpty(void)
+{
+    u8 empty;
+
+    empty = 0;
+    if (lbl_1_bss_A64.head == &lbl_1_bss_A64 && lbl_1_bss_A64.head == lbl_1_bss_A64.tail) {
+        empty = 1;
+    }
+    return empty;
+}
+
+// Kill every live score sprite, last one first.
 void fn_1_F480(void)
 {
+    M539ScoreSpr *last;
+    M539ScoreSpr *copy;
     M539ScoreSpr *node;
 
-    for (;;) {
-        if (lbl_1_bss_A64.head == &lbl_1_bss_A64 && lbl_1_bss_A64.head == lbl_1_bss_A64.tail) {
-            break;
-        }
-        node = (M539ScoreSpr *)lbl_1_bss_A64.tail;
+    while (M539ScoreListEmpty() == 0) {
+        last = (M539ScoreSpr *)lbl_1_bss_A64.tail;
+        copy = last;
+        node = copy;
         if (node != NULL) {
             if (node->score != NULL) {
                 MgScoreKill(node->score);
             }
-            fn_1_1270(node, 0);
+            if (node != NULL) {
+                fn_1_1270(node, 0);
+            }
             fn_1_C8(node);
         }
     }
@@ -255,7 +271,7 @@ void fn_1_F55C(void)
 
 void fn_1_F58C(void *self)
 {
-    __ptmf_scall(self, &((M539ScoreSpr *)self)->hook);
+    M539PtmfCall(self, &((M539ScoreSpr *)self)->hook);
 }
 
 // NONMATCHING: register allocation only.
@@ -303,26 +319,45 @@ void fn_1_F744(M539ScoreSpr *self)
     }
 }
 
-// NONMATCHING: register allocation only.
+typedef struct M539LNode_s {
+    struct M539LNode_s *next;
+    struct M539LNode_s *prev;
+} M539LNode;
+
+// Run `fn` on every sprite of `list`: move them to a scratch list first so `fn`
+// may relink them.
 void fn_1_F914(M539ScoreList *list, void (*fn)(void *))
 {
-    void *spC;
-    void *end = list->unk8;
+    M539LNode tmp;
+    M539LNode *tp;
+    M539LNode *a;
+    M539LNode *b;
+    M539LNode *node;
+    u8 empty;
+    u8 empty2;
 
+    empty = 0;
     if (list->head == list && list->head == list->tail) {
-        return;
+        empty = 1;
     }
-    fn_1_1264(&spC);
-    fn_1_1360(list, &spC);
-    for (;;) {
-        if (spC == &spC && spC == end) {
-            break;
-        }
-        fn_1_12DC(spC);
-        fn_1_1330(spC, (s32 *)list);
-        fn(spC);
+    if (empty == 0) {
+        tp = &tmp;
+        fn_1_1264(tp);
+        fn_1_1360(list, (void **)&tmp);
+        do {
+            a = tmp.next;
+            b = a;
+            node = b;
+            fn_1_12DC(node);
+            fn_1_1330(node, (s32 *)list);
+            fn(node);
+            empty2 = 0;
+            if (tmp.next == &tmp && tmp.next == tmp.prev) {
+                empty2 = 1;
+            }
+        } while (empty2 == 0);
+        fn_1_1270(&tmp, 0);
     }
-    fn_1_1270(&spC, 0);
 }
 
 // NONMATCHING: register allocation only.
@@ -341,8 +376,13 @@ M539ScoreSpr *fn_1_FA04(M539ScoreSpr *self, s16 arg)
 
 void fn_1_FA5C(void)
 {
-    fn_1_1264(&lbl_1_bss_A64);
-    __register_global_object(&lbl_1_bss_A64, (void *)fn_1_FA04, lbl_1_bss_A58);
+    M539ScoreList *list;
+    M539ScoreList *obj;
+
+    list = &lbl_1_bss_A64;
+    fn_1_1264(list);
+    obj = list;
+    __register_global_object(obj, (void *)fn_1_FA04, lbl_1_bss_A58);
 }
 
 }

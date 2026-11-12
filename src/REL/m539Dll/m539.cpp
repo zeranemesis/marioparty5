@@ -1,25 +1,237 @@
-#include "REL/m539Dll.h"
+// m539Dll "m539": the module's runtime layer -- camera pose maths, an intrusive
+// list of tasks, the game-master singleton plumbing, thin Hu3D/MgTimer wrappers,
+// a Mersenne Twister, a sub-thread class and the C++ static initialisers.
+#define _MATH_H
+extern "C" {
+#include "dolphin.h"
+#include "humath.h"
+#include "game/hu3d.h"
+#include "game/object.h"
+#include "game/memory.h"
+#include "game/gamemes.h"
+#include "game/wipe.h"
+#include "game/flag.h"
+#include "game/gamework.h"
+#include "game/data.h"
+#include "game/audio.h"
+#include "game/pad.h"
+#include "game/mgdata.h"
+#include "game/charman.h"
+#include "game/process.h"
+#include "game/mg/timer.h"
+#include "game/mg/actman.h"
+#include "stdarg.h"
+#include "stdio.h"
+}
 
-extern s16 omSysExitReq;
+#ifdef __MWERKS__
+#define M539_RODATA __declspec(section ".rodata")
+#else
+#define M539_RODATA
+#endif
 
 extern "C" {
 
-typedef struct M539Hu3DData_s {
-    u8 unk_000[0x120];
-    void *hookData;
-    u8 unk_124[0x134 - 0x124];
-} M539Hu3DData;
+double tan(double);
+void OSInitSemaphore(void *sem, s32 count);
+s32 OSWaitSemaphore(void *sem);
+s32 OSSignalSemaphore(void *sem);
+double fabs(double);
+void __register_global_object(void *obj, void *dtor, void *reg);
+void ObjectSetup(void);
+extern void (*_ctors[])(void);
+extern void (*_dtors[])(void);
 
-extern M539Hu3DData Hu3DData[];
+#define M539_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
-void fn_1_2C44(void)
+// The inlined form of the assertion handler (singleton.h, model.cpp, ...).
+#define M539_ASSERT_INL(cond, expr, file, line)                                      if (cond) {                                                                          (void)0;                                                                     } else {                                                                             char assertBuf[0x400];                                                           sprintf(assertBuf, lbl_1_data_14, (file), (line), (expr));                       OSPanic(lbl_1_data_32, 0x12, assertBuf);                                     }
+
+// ---------------------------------------------------------------- types
+
+typedef struct M539Node_s {
+    struct M539Node_s *next;
+    struct M539Node_s *prev;
+} M539Node;
+
+// Camera pose: eye position, up vector, look-at target.
+typedef struct M539Cam_s {
+    Vec pos;
+    Vec up;
+    Vec target;
+} M539Cam;
+
+// Stored pose: position plus orientation quaternion.
+typedef struct M539Pose_s {
+    Vec pos;
+    Quaternion rot;
+} M539Pose;
+
+// A pose viewed as the seven raw words the pose-table dump prints.
+typedef union M539PoseBits_u {
+    M539Pose pose;
+    u32 w[7];
+} M539PoseBits;
+
+// Task registered on the module-wide list; its vtable lives at +8.
+struct M539Task_s;
+typedef struct M539TaskVtbl_s {
+    void *rtti[2];
+    struct M539Task_s *(*dtor)(struct M539Task_s *self, s16 flag);
+    void (*onFlag)(struct M539Task_s *self, s32 bit);
+    void (*update)(struct M539Task_s *self);
+} M539TaskVtbl;
+
+typedef struct M539Task_s {
+    M539Node link;
+    M539TaskVtbl *vtbl;
+    u32 flags;
+} M539Task;
+
+// Singleton game master (only the base part that m539 touches).
+struct M539Master_s;
+typedef struct M539MasterVtbl_s {
+    void *rtti[2];
+    struct M539Master_s *(*dtor)(struct M539Master_s *self, s16 flag);
+    void (*setup)(struct M539Master_s *self, OMOBJMAN *objman);
+    void (*update)(struct M539Master_s *self);
+    void (*finish)(struct M539Master_s *self);
+} M539MasterVtbl;
+
+typedef struct M539Master_s {
+    s32 pad0;
+    M539MasterVtbl *vtbl;
+    s32 slot[4];
+    s32 mesId;
+    s32 counter;
+} M539Master;
+
+// Sub-thread: vtable, OSThread, stack pointer, semaphore, argument.
+struct M539SubThread_s;
+typedef struct M539ThreadVtbl_s {
+    void *rtti[2];
+    struct M539SubThread_s *(*dtor)(struct M539SubThread_s *self, s16 flag);
+    s32 (*run)(struct M539SubThread_s *self, s32 arg);
+} M539ThreadVtbl;
+
+typedef struct M539Thread_s {
+    OSThread thread;
+    u32 *stack;
+} M539Thread;
+
+typedef struct M539Sem_s {
+    s32 count;
+    OSThreadQueue queue;
+} M539Sem;
+
+typedef struct M539SubThread_s {
+    M539ThreadVtbl *vtbl;
+    M539Thread th;
+    M539Sem sem;
+    s32 arg;
+} M539SubThread;
+
+// Mersenne Twister state.
+typedef struct M539Rand_s {
+    u32 mt[0x270];
+    u32 idx;
+} M539Rand;
+
+// Functor kept in an object's data slot: slot +0xC runs it.
+struct M539Functor_s;
+typedef struct M539FunctorVtbl_s {
+    void *rtti[2];
+    struct M539Functor_s *(*dtor)(struct M539Functor_s *self, s16 flag);
+    void (*run)(struct M539Functor_s *self, OMOBJ *obj);
+} M539FunctorVtbl;
+
+typedef struct M539Functor_s {
+    M539FunctorVtbl *vtbl;
+} M539Functor;
+
+// A wrapper that owns a Hu3D model / MgTimer handle.
+typedef struct M539Model_s {
+    HU3DMODELID id;
+} M539Model;
+
+typedef struct M539TimerObj_s {
+    MGTIMER *timer;
+} M539TimerObj;
+
+// ---------------------------------------------------------------- data
+
+char lbl_1_data_0[] = "ptr != NULL";
+char lbl_1_data_C[] = "new.cpp";
+char lbl_1_data_14[] = "\nASSERTION FAILED at %s:%d\n%s";
+char lbl_1_data_32[] = "assert.cpp";
+char lbl_1_data_3D[] = "{{0x%08x,0x%08x,0x%08x},{0x%08x,0x%08x,0x%08x,0x%08x}},\n";
+char lbl_1_data_76[] = "singleton.h";
+char lbl_1_data_82[] = "ms_pointer == 0";
+char lbl_1_data_92[] = "ms_pointer != 0";
+char lbl_1_data_A2[] = "model.cpp";
+char lbl_1_data_AC[] = "p != NULL";
+char lbl_1_data_B6[] = "om.cpp";
+char lbl_1_data_BD[] = "subthread.cpp";
+char lbl_1_data_CB[] = "::OSGetCurrentThread() == m_th";
+char lbl_1_data_EA[] = "!::OSIsThreadTerminated(m_th)";
+char lbl_1_data_108[] = "thread.cpp";
+char lbl_1_data_113[] = "priority >= OS_PRIORITY_MIN && priority <= OS_PRIORITY_MAX";
+char lbl_1_data_14E[] = "OSCreateThread() failed.";
+char lbl_1_data_167[] = "delete CThread@%p\nstack remain/total = 0x%08x/0x%08x (%f%%)\n";
+char lbl_1_data_1A4[] = "stack overflow\n";
+char lbl_1_data_1B4[] = "timer.cpp";
+char lbl_1_data_1BE[] = "false";
+
+M539SubThread *fn_1_5608(M539SubThread *self, s16 flag);
+M539Task *fn_1_1EA8(M539Task *self, s16 flag);
+void fn_1_1DDC(M539Task *self);
+M539Master *fn_1_20CC(M539Master *self, s16 flag);
+void fn_1_246C(M539Master *self);
+M539Functor *fn_1_4934(M539Functor *self, s16 flag);
+void fn_1_48C0(M539Functor *self, OMOBJ *obj);
+void fn_1_4874(OMOBJ *obj);
+
+M539ThreadVtbl lbl_1_data_1C4 = { { 0, 0 }, fn_1_5608, 0 };
+M539FunctorVtbl lbl_1_data_1D4 = { { 0, 0 }, fn_1_4934, fn_1_48C0 };
+M539MasterVtbl lbl_1_data_1E4 = { { 0, 0 }, fn_1_20CC, 0, fn_1_246C, 0 };
+M539TaskVtbl lbl_1_data_1FC = { { 0, 0 }, fn_1_1EA8, 0, fn_1_1DDC };
+
+// ---------------------------------------------------------------- bss
+
+u8 lbl_1_bss_0[0xC];
+M539Node lbl_1_bss_C;
+s32 lbl_1_bss_14;
+s32 lbl_1_bss_18;
+s32 lbl_1_bss_1C;
+s32 lbl_1_bss_20;
+M539Rand lbl_1_bss_24;
+u8 lbl_1_bss_9E8;
+M539Master *lbl_1_bss_9EC;
+
+// ---------------------------------------------------------------- code
+
+void fn_1_1D4(const char *expr, const char *file, s32 line);
+int fn_1_234(void *unused, const char *fmt, ...);
+void *fn_1_6324(M539Node *self, s16 flag);
+void fn_1_408(M539Cam *self, Vec *x, Vec *y, Vec *z);
+void fn_1_56C(M539Cam *self, Vec *delta);
+
+void *fn_1_0(s32 size)
 {
-    omSysExitReq = 1;
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+
+    M539_ASSERT(p != 0, lbl_1_data_0, lbl_1_data_C, 0x17);
+    return p;
 }
 
-void HuMemDirectFree(void *ptr);
+void *fn_1_64(s32 size)
+{
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
 
-// Release an optional owned block; a NULL owner is a no-op.
+    M539_ASSERT(p != 0, lbl_1_data_0, lbl_1_data_C, 0x17);
+    return p;
+}
+
 void fn_1_C8(void *ptr)
 {
     if (ptr != 0) {
@@ -27,7 +239,6 @@ void fn_1_C8(void *ptr)
     }
 }
 
-// Second owner type, same lifetime rule.
 void fn_1_100(void *ptr)
 {
     if (ptr != 0) {
@@ -35,147 +246,873 @@ void fn_1_100(void *ptr)
     }
 }
 
-// NONMATCHING: register allocation - uses r31/stack frame instead of r0
-void fn_1_30BC(void *arg0, void *arg1)
+void _prolog(void)
 {
-    s16 index = *(s16 *)arg0;
-    Hu3DData[index].hookData = arg1;
+    void (**ctor)(void) = _ctors;
+
+    while (*ctor != 0) {
+        (*ctor)();
+        ctor++;
+    }
+    ObjectSetup();
 }
 
-// NONMATCHING: register allocation - uses r31/stack frame instead of r0
-void *fn_1_30D8(void *arg0)
+void _epilog(void)
 {
-    s16 index = *(s16 *)arg0;
-    return (u8 *)&Hu3DData[index] + 0xF0;
+    void (**dtor)(void) = _dtors;
+
+    while (*dtor != 0) {
+        (*dtor)();
+        dtor++;
+    }
 }
 
-typedef struct M539UnkStructA_s {
-    void *vtable;
-    u8 unk_04[0x10];
-    void (*func_14)(void *, void *);
-    u8 unk_18[0x44];
-    void *unk_5C;
-} M539UnkStructA;
-
-typedef struct M539UnkStructB_s {
-    u8 unk_00[0x14];
-    void (*func_14)(void *, void *);
-    u8 unk_18[0x44];
-    M539UnkStructA *unk_5C;
-} M539UnkStructB;
-
-extern void *lbl_1_data_1D4[];
-extern void fn_1_4874(void *, void *);
-extern void fn_1_48C0(void);
-extern void *fn_1_4934(void *, s16);
-
-void fn_1_4854(M539UnkStructA *arg0, M539UnkStructB *arg1)
+void fn_1_1D4(const char *expr, const char *file, s32 line)
 {
-    arg0->vtable = lbl_1_data_1D4;
-    arg1->unk_5C = arg0;
-    arg1->func_14 = fn_1_4874;
+    char buf[0x40C];
+
+    sprintf(buf, lbl_1_data_14, file, line, expr);
+    OSPanic(lbl_1_data_32, 0x12, buf);
 }
 
-typedef struct M539ListNode_s {
-    struct M539ListNode_s *prev;
-    struct M539ListNode_s *next;
-} M539ListNode;
-
-// NONMATCHING: register allocation - uses stack frame and r31/r30 instead of r0/r4
-void fn_1_12DC(M539ListNode *node)
+int fn_1_234(void *unused, const char *fmt, ...)
 {
-    M539ListNode *prev = node->prev;
-    M539ListNode *next = node->next;
+    va_list ap;
+    int ret;
 
-    prev->next = next;
-    next->prev = prev;
-    node->prev = node;
-    node->next = node;
+    va_start(ap, fmt);
+    ret = vprintf(fmt, ap);
+    va_end(ap);
+    return ret;
 }
 
-void *OSGetCurrentThread(void);
-s32 OSGetThreadPriority(void *thread);
-
-// NONMATCHING: register allocation - saves r31 unnecessarily
-s32 fn_1_5568(void)
+// Orbit: rotate about the camera X axis (pitch) then world Y (yaw).
+void fn_1_2D8(M539Cam *self, f32 pitch, f32 yaw)
 {
-    void *thread = OSGetCurrentThread();
-    return OSGetThreadPriority(thread);
+    Vec ax, ay, az;
+    Mtx rotA, rotB, rot;
+
+    fn_1_408(self, &ax, &ay, &az);
+    PSMTXRotAxisRad(rotA, &ax, 0.017453292f * pitch);
+    PSMTXRotRad(rotB, 'Y', 0.017453292f * yaw);
+    PSMTXConcat(rotA, rotB, rot);
+    PSMTXMultVecSR(rot, &az, &az);
+    PSMTXMultVecSR(rot, &ay, &self->up);
+    PSVECSubtract(&self->pos, &az, &self->target);
 }
 
-// An 8-byte pair that is handed a back-pointer to itself in both halves.
-typedef struct M539Pair_s {
-    void *a;
-    void *b;
-} M539Pair;
-
-extern void *lbl_1_bss_14;
-extern u8 lbl_1_bss_24;
-
-void fn_1_1264(M539Pair *self)
+void fn_1_39C(M539Cam *self, f32 angle)
 {
-    self->a = self;
-    self->b = self;
+    Mtx m;
+    Vec axis;
+
+    PSVECSubtract(&self->target, &self->pos, &axis);
+    PSMTXRotAxisRad(m, &axis, 0.017453292f * angle);
+    PSMTXMultVec(m, &self->up, &self->up);
 }
 
-// Reads the single word parked at lbl_1_bss_14 and hands it straight back.
-void *fn_1_1F30(void)
+// Camera basis: the three rows of the look-at matrix.
+void fn_1_408(M539Cam *self, Vec *x, Vec *y, Vec *z)
+{
+    Mtx m;
+
+    C_MTXLookAt(m, &self->pos, &self->up, &self->target);
+    x->x = m[0][0];
+    x->y = m[0][1];
+    x->z = m[0][2];
+    y->x = m[1][0];
+    y->y = m[1][1];
+    y->z = m[1][2];
+    z->x = m[2][0];
+    z->y = m[2][1];
+    z->z = m[2][2];
+}
+
+void fn_1_4B0(M539Cam *self, Mtx out)
+{
+    C_MTXLookAt(out, &self->pos, &self->up, &self->target);
+    PSMTXInverse(out, out);
+}
+
+void fn_1_504(M539Cam *self, Vec *local)
+{
+    Mtx m;
+    Vec world;
+
+    C_MTXLookAt(m, &self->pos, &self->up, &self->target);
+    PSMTXInverse(m, m);
+    PSMTXMultVecSR(m, local, &world);
+    fn_1_56C(self, &world);
+}
+
+void fn_1_56C(M539Cam *self, Vec *delta)
+{
+    PSVECAdd(delta, &self->target, &self->target);
+    PSVECAdd(delta, &self->pos, &self->pos);
+}
+
+void fn_1_5C0(M539Cam *self)
+{
+    self->up.x = 0.0f;
+    self->up.y = 1.0f;
+    self->up.z = 0.0f;
+    self->pos.x = 0.0f;
+    self->pos.y = 0.0f;
+    self->pos.z = 5000.0f;
+    self->target.x = 0.0f;
+    self->target.y = 0.0f;
+    self->target.z = 0.0f;
+}
+
+void fn_1_654(M539Cam *self, M539Pose *pose)
+{
+    Mtx m;
+
+    PSMTXQuat(m, &pose->rot);
+    self->up.x = m[0][1];
+    self->up.y = m[1][1];
+    self->up.z = m[2][1];
+    self->pos.x = pose->pos.x;
+    self->pos.y = pose->pos.y;
+    self->pos.z = pose->pos.z;
+    self->target.x = pose->pos.x - m[0][2];
+    self->target.y = pose->pos.y - m[1][2];
+    self->target.z = pose->pos.z - m[2][2];
+}
+
+void fn_1_6F4(M539Cam *self, M539Pose *out)
+{
+    Mtx m;
+
+    C_MTXLookAt(m, &self->pos, &self->up, &self->target);
+    PSMTXInverse(m, m);
+    out->pos.x = self->pos.x;
+    out->pos.y = self->pos.y;
+    out->pos.z = self->pos.z;
+    C_QUATMtx(&out->rot, m);
+}
+
+void fn_1_76C(M539Cam *self, M539Pose *a, M539Pose *b, f32 t)
+{
+    Mtx m;
+    Quaternion q;
+    Vec p, pa, pb;
+
+    C_QUATSlerp(&a->rot, &b->rot, &q, t);
+    PSVECScale(&a->pos, &pa, 1.0f - t);
+    PSVECScale(&b->pos, &pb, t);
+    PSVECAdd(&pa, &pb, &p);
+    PSMTXQuat(m, &q);
+    self->up.x = m[0][1];
+    self->up.y = m[1][1];
+    self->up.z = m[2][1];
+    self->pos.x = p.x;
+    self->pos.y = p.y;
+    self->pos.z = p.z;
+    self->target.x = p.x - m[0][2];
+    self->target.y = p.y - m[1][2];
+    self->target.z = p.z - m[2][2];
+}
+
+void fn_1_87C(M539Cam *self, M539Cam *src)
+{
+    Vec delta;
+
+    PSVECSubtract(&src->pos, &self->pos, &delta);
+    self->pos.x = src->pos.x;
+    self->pos.y = src->pos.y;
+    self->pos.z = src->pos.z;
+    PSVECAdd(&self->target, &delta, &self->target);
+}
+
+void fn_1_8E8(M539Cam *self, Vec *a, Vec *b, f32 t)
+{
+    Vec pa, pb, delta;
+
+    PSVECScale(a, &pa, 1.0f - t);
+    PSVECScale(b, &pb, t);
+    PSVECAdd(&pa, &pb, &pb);
+    PSVECSubtract(&pb, &self->pos, &delta);
+    self->pos.x = pb.x;
+    self->pos.y = pb.y;
+    self->pos.z = pb.z;
+    PSVECAdd(&self->target, &delta, &self->target);
+}
+
+void fn_1_9A0(M539Cam *self, u16 camBit)
+{
+    Hu3DCameraPosSetV(camBit, &self->pos, &self->up, &self->target);
+}
+
+void fn_1_9E0(M539Cam *self, u16 camBit)
+{
+    Hu3DCameraPosGet(camBit, &self->pos, &self->up, &self->target);
+}
+
+// Dump the current camera as a pose table row (floats printed as raw words).
+void fn_1_A20(M539Cam *self)
+{
+    Mtx m;
+    M539PoseBits out;
+
+    C_MTXLookAt(m, &self->pos, &self->up, &self->target);
+    PSMTXInverse(m, m);
+    out.pose.pos.x = self->pos.x;
+    out.pose.pos.y = self->pos.y;
+    out.pose.pos.z = self->pos.z;
+    C_QUATMtx(&out.pose.rot, m);
+    printf(lbl_1_data_3D, out.w[0], out.w[1], out.w[2], out.w[3], out.w[4], out.w[5], out.w[6]);
+}
+
+f32 fn_1_AB8(s32 pad)
+{
+    return 0.017857144f * HuPadStkX[pad];
+}
+
+f32 fn_1_B0C(s32 pad)
+{
+    return 0.017857144f * HuPadStkY[pad];
+}
+
+f32 fn_1_B60(s32 pad)
+{
+    return 0.016949153f * HuPadSubStkX[pad];
+}
+
+f32 fn_1_BB4(s32 pad)
+{
+    return 0.016949153f * HuPadSubStkY[pad];
+}
+
+// Free-fly debug camera driven by pad `pad`.
+void fn_1_C08(M539Cam *self, s32 pad)
+{
+    Mtx inv, rot, rotB, rotA, m, dump;
+    M539PoseBits out;
+    Vec mv, fwd, z, y, x;
+    f32 yaw, pitch, speed, len;
+    u32 btn;
+    u8 fast;
+
+    btn = HuPadBtn[pad];
+    if (btn & 0x800) {
+        self->up.x = 0.0f;
+        self->up.y = 1.0f;
+        self->up.z = 0.0f;
+    }
+    yaw = -4.0f * fn_1_AB8(pad);
+    pitch = -4.0f * fn_1_B0C(pad);
+    C_MTXLookAt(m, &self->pos, &self->up, &self->target);
+    x.x = m[0][0];
+    x.y = m[0][1];
+    x.z = m[0][2];
+    y.x = m[1][0];
+    y.y = m[1][1];
+    y.z = m[1][2];
+    z.x = m[2][0];
+    z.y = m[2][1];
+    z.z = m[2][2];
+    PSMTXRotAxisRad(rotA, &x, 0.017453292f * pitch);
+    PSMTXRotRad(rotB, 'Y', 0.017453292f * yaw);
+    PSMTXConcat(rotA, rotB, rot);
+    PSMTXMultVecSR(rot, &z, &z);
+    PSMTXMultVecSR(rot, &y, &self->up);
+    PSVECSubtract(&self->pos, &z, &self->target);
+    fast = (btn & 0x200) != 0;
+    speed = fast ? 70.0f : 20.0f;
+    C_MTXLookAt(inv, &self->pos, &self->up, &self->target);
+    PSMTXInverse(inv, inv);
+    mv.x = (speed * (u8)((btn & 2) != 0)) - (speed * (u8)((btn & 1) != 0));
+    mv.y = (speed * (u8)((btn & 8) != 0)) - (speed * (u8)((btn & 4) != 0));
+    mv.x = mv.x + (speed * fn_1_B60(pad));
+    mv.z = 0.0f;
+    PSMTXMultVecSR(inv, &mv, &mv);
+    mv.y = mv.y + (speed * fn_1_BB4(pad));
+    PSVECAdd(&mv, &self->target, &self->target);
+    PSVECAdd(&mv, &self->pos, &self->pos);
+    fwd.x = 0.0f;
+    fwd.y = 0.0f;
+    fwd.z = (f32)((u8)((btn & 0x400) != 0) - (u8)((btn & 0x100) != 0));
+    PSMTXMultVecSR(inv, &fwd, &fwd);
+    fwd.y = 0.0f;
+    len = PSVECMag(&fwd);
+    if (len > 1e-10f) {
+        PSVECScale(&fwd, &fwd, speed / len);
+        PSVECAdd(&fwd, &self->target, &self->target);
+        PSVECAdd(&fwd, &self->pos, &self->pos);
+    }
+    if ((HuPadBtnDown[pad] & 0x200) != 0) {
+        C_MTXLookAt(dump, &self->pos, &self->up, &self->target);
+        PSMTXInverse(dump, dump);
+        out.pose.pos.x = self->pos.x;
+        out.pose.pos.y = self->pos.y;
+        out.pose.pos.z = self->pos.z;
+        C_QUATMtx(&out.pose.rot, dump);
+        printf(lbl_1_data_3D, out.w[0], out.w[1], out.w[2], out.w[3], out.w[4], out.w[5], out.w[6]);
+    }
+}
+
+// ---------------------------------------------------------------- intrusive list
+
+typedef u8 (*M539Cmp)(M539Node *a, M539Node *b);
+
+M539Node *fn_1_1B48(M539Node *list);
+M539Node *fn_1_1B9C(M539Cmp cmp, M539Node *a, M539Node *b);
+M539Node *fn_1_14A0(M539Cmp cmp, M539Node *list);
+void fn_1_2370(OMOBJ *obj);
+void fn_1_2470(void);
+void fn_1_2C18(void);
+void fn_1_47E4(void *ptr);
+
+void fn_1_1264(M539Node *self)
+{
+    self->next = self;
+    self->prev = self;
+}
+
+void *fn_1_1270(M539Node *self, s16 flag)
+{
+    if (self != 0) {
+        self->next->prev = self->prev;
+        self->prev->next = self->next;
+        if (flag > 0 && self != 0) {
+            HuMemDirectFree(self);
+        }
+    }
+    return self;
+}
+
+void fn_1_12DC(M539Node *self)
+{
+    self->next->prev = self->prev;
+    self->prev->next = self->next;
+    self->next = self;
+    self->prev = self;
+}
+
+// Insert `self` right after `other`.
+void fn_1_1300(M539Node *self, M539Node *other)
+{
+    M539Node *at = other;
+
+    self->prev = at;
+    self->next = at->next;
+    at->next->prev = self;
+    at->next = self;
+}
+
+// Insert `self` right before `other`.
+void fn_1_1330(M539Node *self, M539Node *other)
+{
+    M539Node *at = other;
+
+    self->next = at;
+    self->prev = at->prev;
+    at->prev->next = self;
+    at->prev = self;
+}
+
+// Move every node of `self` in front of `other`.
+void fn_1_1360(M539Node *self, M539Node *other)
+{
+    M539Node *first;
+    M539Node *last;
+    u8 empty;
+
+    empty = 0;
+    if (self->next == self && self->next == self->prev) {
+        empty = 1;
+    }
+    if (empty == 0) {
+        first = self->next;
+        last = self->prev;
+        self->next = self;
+        self->prev = self;
+        first->prev = other->prev;
+        last->next = other;
+        other->prev->next = first;
+        other->prev = last;
+    }
+}
+
+// Merge sort the circular list `self` with `cmp`, then relink the prev chain.
+void fn_1_13E8(M539Node *self, M539Cmp cmp)
+{
+    M539Node *node;
+    M539Node *prev;
+    u8 empty;
+
+    empty = 0;
+    if (self->next == self && self->next == self->prev) {
+        empty = 1;
+    }
+    if (empty == 0) {
+        self->prev->next = 0;
+        node = fn_1_14A0(cmp, self->next);
+        self->next = node;
+        prev = self;
+        while (node != 0) {
+            node->prev = prev;
+            prev = node;
+            node = node->next;
+        }
+        self->prev = prev;
+        prev->next = self;
+    }
+}
+
+M539Node *fn_1_14A0(M539Cmp cmp, M539Node *list)
+{
+    M539Node *second;
+    M539Node *a;
+    M539Node *b;
+
+    if (list == 0) {
+        return 0;
+    }
+    if (list->next == 0) {
+        return list;
+    }
+    second = fn_1_1B48(list);
+    a = fn_1_14A0(cmp, list);
+    b = fn_1_14A0(cmp, second);
+    return fn_1_1B9C(cmp, a, b);
+}
+
+// Cut the list in the middle and return the second half.
+M539Node *fn_1_1B48(M539Node *list)
+{
+    M539Node *fast;
+    M539Node *second;
+
+    fast = list->next;
+    if (fast != 0) {
+        fast = fast->next;
+    }
+    while (fast != 0) {
+        list = list->next;
+        fast = fast->next;
+        if (fast != 0) {
+            fast = fast->next;
+        }
+    }
+    second = list->next;
+    list->next = 0;
+    return second;
+}
+
+M539Node *fn_1_1B9C(M539Cmp cmp, M539Node *a, M539Node *b)
+{
+    M539Node head;
+    M539Node *tail;
+
+    tail = &head;
+    while (a != 0 && b != 0) {
+        if (cmp(a, b) != 0) {
+            tail->next = a;
+            tail = a;
+            a = a->next;
+        } else {
+            tail->next = b;
+            tail = b;
+            b = b->next;
+        }
+    }
+    if (a == 0) {
+        tail->next = b;
+    } else {
+        tail->next = a;
+    }
+    return head.next;
+}
+
+// ---------------------------------------------------------------- task list
+
+void fn_1_1C48(s32 bit)
+{
+    M539Task *t;
+    M539Node *end;
+    M539Node *b;
+    M539Node *c;
+    M539Node *nx;
+
+    b = lbl_1_bss_C.next;
+    c = b;
+    t = (M539Task *)c;
+    lbl_1_bss_14 = bit;
+    end = &lbl_1_bss_C;
+    while ((M539Node *)t != end) {
+        t->flags |= 1 << bit;
+        t->vtbl->onFlag(t, bit);
+        nx = t->link.next;
+        t = (M539Task *)nx;
+    }
+}
+
+s32 fn_1_1CE0(void)
+{
+    M539Task *t;
+    M539Node *end;
+    M539Node *b;
+    M539Node *c;
+    M539Node *nx;
+    s32 bit;
+
+    b = lbl_1_bss_C.next;
+    c = b;
+    t = (M539Task *)c;
+    end = &lbl_1_bss_C;
+    while ((M539Node *)t != end) {
+        bit = lbl_1_bss_14;
+        if ((t->flags & (1 << bit)) != 0) {
+            return 0;
+        }
+        nx = t->link.next;
+        t = (M539Task *)nx;
+    }
+    return 1;
+}
+
+void fn_1_1D6C(void)
+{
+    M539Task *t;
+    M539Node *end;
+    M539Node *b;
+    M539Node *c;
+    M539Node *nx;
+
+    b = lbl_1_bss_C.next;
+    c = b;
+    t = (M539Task *)c;
+    end = &lbl_1_bss_C;
+    while ((M539Node *)t != end) {
+        t->vtbl->update(t);
+        nx = t->link.next;
+        t = (M539Task *)nx;
+    }
+}
+
+void fn_1_1DDC(M539Task *self)
+{
+}
+
+// Destroy every registered task, last one first.
+void fn_1_1DE0(void)
+{
+    M539Task *t;
+    u8 empty;
+
+    while (1) {
+        empty = 0;
+        if (lbl_1_bss_C.next == &lbl_1_bss_C && lbl_1_bss_C.next == lbl_1_bss_C.prev) {
+            empty = 1;
+        }
+        if (empty != 0) {
+            break;
+        }
+        t = (M539Task *)lbl_1_bss_C.prev;
+        if (t != 0) {
+            t->vtbl->dtor(t, 1);
+        }
+    }
+}
+
+M539Task *fn_1_1EA8(M539Task *self, s16 flag)
+{
+    if (self != 0) {
+        self->vtbl = &lbl_1_data_1FC;
+        if (self != 0) {
+            if (self != 0) {
+                self->link.next->prev = self->link.prev;
+                self->link.prev->next = self->link.next;
+            }
+        }
+        if (flag > 0 && self != 0) {
+            HuMemDirectFree(self);
+        }
+    }
+    return self;
+}
+
+s32 fn_1_1F30(void)
 {
     return lbl_1_bss_14;
 }
 
-// Doubly-linked node: the two list helpers below splice a node onto the front
-// of a chain, which is why both reload the neighbour's head between stores.
-typedef struct M539Node_s {
-    struct M539Node_s *f00;
-    struct M539Node_s *f04;
-} M539Node;
+// ---------------------------------------------------------------- game master
 
-// The wrapper that owns a payload block; only two of its fields are touched.
-typedef struct M539Inner_s {
-    u32 f00;
-    u8 pad04[0x14 - 0x04];
-    s32 f14;
-} M539Inner;
-
-typedef struct M539Outer_s {
-    M539Inner *inner;
-} M539Outer;
-
-void WipeCreate(s32 wipeId, s32 arg1, s32 arg2);
-
-// NONMATCHING: the store sequence is byte-for-byte the same, but the target
-// parks the second parameter in r31 and spills it (frame 0x10) where MWCC
-// keeps it in the incoming r4 and needs no frame at all.
-// Splice self onto the front of the chain reached through the *other* slot.
-void fn_1_1300(M539Node *self, M539Node *other)
+M539Master *fn_1_1F40(M539Master *self)
 {
-    self->f04 = other;
-    self->f00 = other->f00;
-    other->f00->f04 = self;
-    other->f00 = self;
+    s32 i;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC == 0, lbl_1_data_82, lbl_1_data_76, 0x35);
+    lbl_1_bss_9EC = self;
+    self->vtbl = &lbl_1_data_1E4;
+    self->counter = 0;
+    i = 0;
+    while (i < 4) {
+        self->slot[i] = -1;
+        i++;
+    }
+    return self;
 }
 
-// NONMATCHING: same r31-vs-r4 allocation difference as fn_1_1300.
-// Mirror image of fn_1_1300, walking the pair of offsets swapped.
-void fn_1_1330(M539Node *self, M539Node *other)
+M539Master *fn_1_2010(M539Master *self, s16 flag)
 {
-    self->f00 = other;
-    self->f04 = other->f04;
-    other->f04->f00 = self;
-    other->f04 = self;
+    if (self != 0) {
+        M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x3D);
+        lbl_1_bss_9EC = 0;
+        if (flag > 0 && self != 0) {
+            HuMemDirectFree(self);
+        }
+    }
+    return self;
 }
 
-// Latches the payload the first time it is asked to, and only then.
-void fn_1_60D4(M539Outer *self)
+M539Master *fn_1_20CC(M539Master *self, s16 flag)
 {
-    if (self->inner->f14 == 0) {
-        self->inner->f14 = 1;
-        self->inner->f00 = 1;
+    M539Master *m;
+    s32 i;
+    s32 p;
+
+    if (self != 0) {
+        self->vtbl = &lbl_1_data_1E4;
+        if (mgDataTbl[GwSystem.mgNo].type != 3) {
+            M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+            m = lbl_1_bss_9EC;
+            i = 0;
+            while (i < 4) {
+                p = m->slot[i];
+                if (p >= 0 && _CheckFlag(0x1000F) == 0) {
+                    GwPlayer[p].mgCoinBonus = 10;
+                }
+                i++;
+            }
+        }
+        if (self != 0) {
+            M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x3D);
+            lbl_1_bss_9EC = 0;
+        }
+        if (flag > 0) {
+            fn_1_47E4(self);
+        }
+    }
+    return self;
+}
+
+void fn_1_2284(M539Master *self, s32 objMax, s32 prio)
+{
+    OMOBJMAN *om;
+
+    om = omInitObjMan((s16)objMax, prio);
+    omGameSysInit(om);
+    self->vtbl->setup(self, om);
+    omAddObjEx(om, 0, 0, 0, -1, fn_1_2370);
+}
+
+void fn_1_2308(M539Master *self)
+{
+    OMOBJMAN *om;
+
+    om = MgActorObjectSetup();
+    self->vtbl->setup(self, om);
+    omAddObjEx(om, 0, 0, 0, -1, fn_1_2370);
+}
+
+void fn_1_2400(M539Master *self);
+
+void fn_1_2370(OMOBJ *obj)
+{
+    OMOBJ *self;
+    M539Master *m;
+    M539Master *cur;
+
+    self = obj;
+    if (omSysExitReq != 0 && WipeCheckEnd() == 0) {
+        fn_1_2C18();
+        HuAudFadeOut(0x3E8);
+        self->objFunc = (OMOBJFUNC)fn_1_2470;
+        return;
+    }
+    m = lbl_1_bss_9EC;
+    cur = m;
+    fn_1_2400(cur);
+}
+
+void fn_1_2400(M539Master *self)
+{
+    self->vtbl->update(self);
+    if (self->counter > 0) {
+        if (--self->counter == 0) {
+        }
     }
 }
 
-// The two wipe descriptors the module installs at boot.
+void fn_1_246C(M539Master *self)
+{
+}
+
+void fn_1_2470(void)
+{
+    M539Master *m;
+    M539Master *cur;
+    M539Master *obj;
+    s32 c;
+    u8 hitZero;
+
+    m = lbl_1_bss_9EC;
+    cur = m;
+    if (WipeCheckEnd() != 0) {
+        cur->vtbl->update(cur);
+        hitZero = 0;
+        if (cur->counter > 0) {
+            c = cur->counter - 1;
+            cur->counter = c;
+            if (c == 0) {
+                hitZero = 1;
+            }
+        }
+        return;
+    }
+    cur->vtbl->finish(cur);
+    obj = cur;
+    if (obj != 0) {
+        obj = obj->vtbl->dtor(obj, 1);
+    }
+    CharModelKill(-1);
+    omOvlReturnEx(1, 1);
+}
+
+// Register a player in the first free slot.
+void fn_1_255C(s32 player)
+{
+    s32 *slots;
+    s32 i;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+    slots = lbl_1_bss_9EC->slot;
+    i = 0;
+    while (i < 4) {
+        if (slots[i] < 0) {
+            slots[i] = player;
+            return;
+        }
+        i++;
+    }
+}
+
+s32 fn_1_2630(s32 player)
+{
+    s32 i;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+    i = 0;
+    while (i < 4) {
+        if (player == lbl_1_bss_9EC->slot[i]) {
+            return 1;
+        }
+        i++;
+    }
+    return 0;
+}
+
+void fn_1_2704(void)
+{
+    M539Master *m;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+    m = lbl_1_bss_9EC;
+    m->mesId = GameMesCreate(2, 0);
+}
+
+void fn_1_27BC(void)
+{
+    M539Master *m;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+    m = lbl_1_bss_9EC;
+    m->mesId = GameMesCreate(2, 1);
+}
+
+s32 fn_1_2874(void)
+{
+    M539Master *m;
+    s32 ret;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+    m = lbl_1_bss_9EC;
+    ret = 0;
+    if (GameMesStatGet(-1) == 0 && (u8)(m->counter <= 0) != 0) {
+        ret = 1;
+    }
+    return ret;
+}
+
+// Announce the result: sort the registered players and print their characters.
+void fn_1_2948(void)
+{
+    M539Master *m;
+    s32 *slots;
+    s32 chars[4];
+    s32 n;
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 tmp;
+    s16 charNo;
+
+    M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+    m = lbl_1_bss_9EC;
+    m->counter = lbl_1_bss_1C;
+    slots = m->slot;
+    n = 0;
+    while (n < 4) {
+        if (slots[n] >= 0) {
+            n++;
+            continue;
+        }
+        break;
+    }
+    if (n == 0) {
+        GameMesCreate(2, 2);
+        return;
+    }
+    i = 1;
+    while (i < n) {
+        j = i;
+        while (j >= 1 && slots[j - 1] > slots[j]) {
+            tmp = slots[j - 1];
+            slots[j - 1] = slots[j];
+            slots[j] = tmp;
+            j--;
+        }
+        i++;
+    }
+    k = 0;
+    while (k < 4) {
+        if (slots[k] < 0) {
+            charNo = -1;
+        } else {
+            charNo = GwPlayerConf[slots[k]].charNo;
+        }
+        chars[k] = charNo;
+        k++;
+    }
+    GameMesCreate(4, 3, chars[0], chars[1], chars[2], chars[3]);
+}
+
+void fn_1_2B14(s32 mes)
+{
+    M539Master *m;
+
+    if (_CheckFlag(0x1000F) == 0) {
+        M539_ASSERT_INL(lbl_1_bss_9EC != 0, lbl_1_data_92, lbl_1_data_76, 0x27);
+        m = lbl_1_bss_9EC;
+        m->mesId = GameMesCreate(0xE, mes);
+        HuAudJinglePlay(0x86);
+    }
+}
+
 void fn_1_2BEC(void)
 {
     WipeCreate(1, 5, 0x3C);
@@ -186,434 +1123,136 @@ void fn_1_2C18(void)
     WipeCreate(2, 6, 0x3C);
 }
 
-// Two single-field owners: one keyed by a timer handle, one by a model id.
-typedef struct M539Timer_s {
-    s32 f00;
-} M539Timer;
-
-typedef struct M539Model_s {
-    s16 f00;
-} M539Model;
-
-extern s32 MgTimerValueGet(s32 handle);
-extern void MgTimerModeOffSet(s32 handle);
-extern void Hu3DModelShadowSet(s16 modelId);
-extern void Hu3DModelShadowMapSet(s16 modelId);
-extern void Hu3DModelShadowMapObjReset(s16 modelId);
-
-// Thin forwarders. The handle is reloaded through a spilled r31 because the
-// callee clobbers every volatile register.
-void fn_1_5F30(M539Timer *self)
+void fn_1_2C44(void)
 {
-    MgTimerValueGet(self->f00);
+    omSysExitReq = 1;
 }
 
-void fn_1_60A4(M539Timer *self)
+// ---------------------------------------------------------------- Hu3D model wrappers
+
+M539Model *fn_1_2C58(M539Model *self, void *data)
 {
-    MgTimerModeOffSet(self->f00);
+    self->id = Hu3DModelCreate(data);
+    return self;
 }
 
-void fn_1_31E4(M539Model *self)
+M539Model *fn_1_2C94(M539Model *self, s32 dataNum)
 {
-    Hu3DModelShadowSet(self->f00);
+    self->id = Hu3DModelCreateData(dataNum);
+    return self;
 }
 
-void fn_1_3214(M539Model *self)
+M539Model *fn_1_2CDC(M539Model *self, HU3DMODELHOOK hook)
 {
-    Hu3DModelShadowMapSet(self->f00);
+    self->id = Hu3DHookFuncCreate(hook);
+    return self;
 }
 
-void fn_1_327C(M539Model *self)
+// Build a character model; `type` selects the model variant bit.
+M539Model *fn_1_2D18(M539Model *self, s32 charNo, s32 type)
 {
-    Hu3DModelShadowMapObjReset(self->f00);
+    s16 variant;
+
+    variant = 0;
+    switch (type) {
+        case 0:
+            variant = 1;
+            break;
+        case 1:
+            variant = 2;
+            break;
+        case 2:
+            variant = 4;
+            break;
+        case 3:
+            variant = 8;
+            break;
+    }
+    self->id = CharModelCreate((s16)charNo, variant);
+    return self;
 }
 
-extern void Hu3DModelAttrSet(s16 modelId, s32 attr);
-extern void Hu3DModelAttrReset(s16 modelId, s32 attr);
-extern void Hu3DModelTPLvlSet(s16 modelId, f32 lvl);
-extern void Hu3DModelLayerSet(s16 modelId, s16 layer);
-extern void Hu3DModelCameraSet(s16 modelId, u16 camBit);
-extern double fn_1_4184(void *self);
-
-// NONMATCHING: include/REL/m539Dll.h pins this one to (void *, u32) and seven
-// other translation units call through that declaration, so it cannot take a
-// named struct type here -- and a void * parameter is exactly what makes MWCC
-// spill (stw r3/lwz r3) where the target keeps it in r31.
-// The second argument arrives in a volatile register but has to survive the
-// call, so each of these stores it to the frame at 0x8 and reloads it.
-void fn_1_2E08(void *actor, u32 flags)
+inline s32 M539ModelIdGet(M539Model *m)
 {
-    Hu3DModelAttrSet(*(s16 *)actor, flags);
+    return m->id;
 }
 
-void fn_1_2E40(M539Model *self, s32 attr)
+M539Model *fn_1_2DB4(M539Model *self, M539Model *parent)
 {
-    Hu3DModelAttrReset(self->f00, attr);
+    self->id = Hu3DModelLink(M539ModelIdGet(parent));
+    return self;
 }
 
-void fn_1_3014(M539Model *self, f32 lvl)
+void fn_1_2E08(M539Model *self, u32 attr)
 {
-    Hu3DModelTPLvlSet(self->f00, lvl);
+    Hu3DModelAttrSet(self->id, attr);
+}
+
+void fn_1_2E40(M539Model *self, u32 attr)
+{
+    Hu3DModelAttrReset(self->id, attr);
+}
+
+// Apply an object's transform (translation, rotation, scale) to the model.
+void fn_1_2E78(M539Model *self, OMOBJ *obj)
+{
+    HU3DMODELID id;
+
+    id = self->id;
+    Hu3DModelPosSet(id, obj->trans.x, obj->trans.y, obj->trans.z);
+    Hu3DModelRotSet(id, obj->rot.x, obj->rot.y, obj->rot.z);
+    Hu3DModelScaleSet(id, obj->scale.x, obj->scale.y, obj->scale.z);
+}
+
+void fn_1_2EF4(M539Model *self, Vec *pos)
+{
+    Hu3DModelPosSet(self->id, pos->x, pos->y, pos->z);
+}
+
+void fn_1_2F3C(M539Model *self, Vec *rot)
+{
+    Hu3DModelRotSet(self->id, rot->x, rot->y, rot->z);
+}
+
+void fn_1_2F84(M539Model *self, Vec *scale)
+{
+    Hu3DModelScaleSet(self->id, scale->x, scale->y, scale->z);
+}
+
+void fn_1_2FCC(M539Model *self, f32 scale)
+{
+    Hu3DModelScaleSet(self->id, scale, scale, scale);
+}
+
+void fn_1_3014(M539Model *self, f32 tpLvl)
+{
+    Hu3DModelTPLvlSet(self->id, tpLvl);
 }
 
 void fn_1_304C(M539Model *self, s16 layer)
 {
-    Hu3DModelLayerSet(self->f00, layer);
+    Hu3DModelLayerSet(self->id, layer);
 }
 
 void fn_1_3084(M539Model *self, u16 camBit)
 {
-    Hu3DModelCameraSet(self->f00, camBit);
+    Hu3DModelCameraSet(self->id, camBit);
 }
 
-// The helper hands back a double, so the product only gets rounded on the way
-// out -- that frsp is the whole reason the function exists in this shape.
-f32 fn_1_4F90(f32 scale)
+void fn_1_30BC(M539Model *self, void *data)
 {
-    return scale * fn_1_4184(&lbl_1_bss_24);
+    Hu3DData[self->id].hookData = data;
 }
 
-void fn_1_47E4(void *self)
+MtxPtr fn_1_30D8(M539Model *self)
 {
-    if (self != 0) {
-        HuMemDirectFree(self);
-    }
-}
-
-// Camera record: the three blocks the Hu3D camera helpers read are at 0x00,
-// 0x0C and 0x18, so f0C is a Vec3 and f18 the one right behind it.
-typedef struct M539Vec3_s {
-    f32 x;
-    f32 y;
-    f32 z;
-} M539Vec3;
-
-typedef struct M539Cam_s {
-    u16 f00;
-    u8 pad02[0x0C - 0x02];
-    M539Vec3 f0C;
-    M539Vec3 f18;
-} M539Cam;
-
-extern void Hu3DModelShadowMapObjSet(s16 modelId, s32 arg);
-extern s16 Hu3DModelCreate(s32 arg);
-extern s16 Hu3DHookFuncCreate(s32 arg);
-extern void MgTimerKill(s32 handle);
-extern s32 MgTimerCreate(s32 mode);
-extern void MgTimerPosSet(s32 handle, f32 x, f32 y);
-extern void MgTimerPosGet(s32 handle, s32 *x, s32 *y);
-extern s32 MgTimerDoneCheck(s32 handle);
-extern void Hu3DCameraPosSetV(u16 camId, void *obj, M539Vec3 *a, M539Vec3 *b);
-extern void Hu3DCameraPosGet(u16 camId, void *obj, M539Vec3 *a, M539Vec3 *b);
-
-void fn_1_3244(M539Model *self, s32 arg)
-{
-    Hu3DModelShadowMapObjSet(self->f00, arg);
-}
-
-// Hands the freshly built id straight back to the caller.
-M539Model *fn_1_2C58(M539Model *self, s32 arg)
-{
-    self->f00 = Hu3DModelCreate(arg);
-    return self;
-}
-
-M539Model *fn_1_2CDC(M539Model *self, s32 arg)
-{
-    self->f00 = Hu3DHookFuncCreate(arg);
-    return self;
-}
-
-void fn_1_9A0(M539Cam *self, u16 camId)
-{
-    Hu3DCameraPosSetV(camId, self, &self->f0C, &self->f18);
-}
-
-void fn_1_9E0(M539Cam *self, u16 camId)
-{
-    Hu3DCameraPosGet(camId, self, &self->f0C, &self->f18);
-}
-
-void fn_1_5F60(M539Timer *self, f32 x, f32 y)
-{
-    MgTimerPosSet(self->f00, x, y);
-}
-
-void fn_1_5FA0(M539Timer *self, s32 *x, s32 *y)
-{
-    MgTimerPosGet(self->f00, x, y);
-}
-
-// Kills the old timer and parks a fresh one in the same slot.
-void fn_1_6100(M539Timer *self)
-{
-    MgTimerKill(self->f00);
-    self->f00 = MgTimerCreate(0);
-}
-
-// The neg/or/srwi/clrlwi run is MWCC collapsing "!= 0" into a byte.
-u8 fn_1_613C(M539Timer *self)
-{
-    return MgTimerDoneCheck(self->f00) != 0;
-}
-
-// The retail vtables in this module are read at 0x00, 0x08, 0x0C and 0x10 by
-// the functions below, so spell all five slots out rather than padding.
-typedef s32 (*M539VFn)(void *self, ...);
-
-typedef struct M539Vtbl_s {
-    M539VFn v01;
-    M539VFn v02;
-    M539VFn v03;
-    M539VFn v04;
-    M539VFn v05;
-} M539Vtbl;
-
-typedef struct M539Virtual_s {
-    u8 pad00[0x5C];
-    M539Vtbl *f5C;
-} M539Virtual;
-
-extern void Hu3DModelScaleSet(s16 modelId, f32 x, f32 y, f32 z);
-extern void Hu3DModelPosSet(s16 modelId, f32 x, f32 y, f32 z);
-extern void Hu3DModelRotSet(s16 modelId, f32 x, f32 y, f32 z);
-extern void MgTimerWinColorSet(s32 handle, u8 r, u8 g, u8 b);
-extern void MgTimerParamSet(s32 handle, s32 a, s32 b, s32 c);
-extern s32 OSIsThreadTerminated(void *thread);
-extern void *HuDataSelHeapReadNum(s32 group, s32 first, s32 count);
-
-void fn_1_481C(void *self)
-{
-    if (self != 0) {
-        HuMemDirectFree(self);
-    }
-}
-
-void fn_1_2F84(M539Model *self, M539Vec3 *v)
-{
-    Hu3DModelScaleSet(self->f00, v->x, v->y, v->z);
-}
-
-// NONMATCHING fn_1_2EF4 / fn_1_2F3C: include/REL/m539Dll.h fixes the first
-// argument at void *, and casting it to a struct here still leaves MWCC
-// spilling the parameter (stw r3/lwz r3) instead of parking it in r30.
-// The call sequence itself is correct.
-void fn_1_2EF4(void *actor, Vec *pos)
-{
-    Hu3DModelPosSet(((M539Model *)actor)->f00, pos->x, pos->y, pos->z);
-}
-
-void fn_1_2F3C(void *actor, Vec *rot)
-{
-    Hu3DModelRotSet(((M539Model *)actor)->f00, rot->x, rot->y, rot->z);
-}
-
-// f1 is parked in f31 across the model-id load; stfd is just how MWCC saves a
-// float that happens to sit in the double-width half of f31.
-void fn_1_2FCC(M539Model *self, f32 scale)
-{
-    Hu3DModelScaleSet(self->f00, scale, scale, scale);
-}
-
-// NONMATCHING: the spill is right but the addend is not -- the target forms
-// self+8 in r31 and hands r31 over, MWCC folds the addend into the call setup.
-// Here the void * is deliberate: the target spills the argument to 0x8(r1),
-// which is exactly what MWCC does for an untyped pointer.
-u8 fn_1_5674(void *self)
-{
-    return OSIsThreadTerminated((u8 *)self + 8) != 0;
-}
-
-void fn_1_617C(M539Timer *self, u8 r, u8 g, u8 b)
-{
-    MgTimerWinColorSet(self->f00, r, g, b);
-}
-
-void fn_1_5EE8(M539Timer *self, s32 a, s32 b, s32 c)
-{
-    MgTimerParamSet(self->f00, a, b, c);
-}
-
-// NONMATCHING: the virtual call is right, the prologue is not -- this file
-// already declares fn_1_4874 as (void *, void *) so the struct-typed self
-// cannot be used and the vtable load ends up through a spill.
-// Virtual dispatch through slot 0x0C, loaded via mtctr/bctrl. The second
-// argument is part of the published signature but the target never reads it.
-void fn_1_4874(void *actor, void *arg1)
-{
-    M539Virtual *self = (M539Virtual *)actor;
-
-    self->f5C->v03(self);
-}
-
-// NONMATCHING: the 0x1000 group number is materialised as lis r4,0x1000 in
-// the target and as a single li r4,0x1000 by MWCC -- see the li/lis note in
-// docs/HANDOVER.md. The body itself is a straight model build from data.
-M539Model *fn_1_2C94(M539Model *self, s32 group)
-{
-    self->f00 = Hu3DModelCreate((s32)HuDataSelHeapReadNum(group, 0x1000, 2));
-    return self;
-}
-
-// Stick lookups. The tables hold signed chars (lbz + extsb) and the per-axis
-// bias is a double in rodata_28, which is what forces the magic-base int->double
-// conversion the target shows before its fmuls.
-extern const s8 HuPadStkX[];
-extern const s8 HuPadStkY[];
-extern const s8 HuPadSubStkX[];
-extern const s8 HuPadSubStkY[];
-extern const f32 lbl_1_rodata_20;
-extern const f32 lbl_1_rodata_30;
-extern const f64 lbl_1_rodata_28;
-
-// NONMATCHING fn_1_AB8 / fn_1_B0C / fn_1_BB4 / fn_1_B60: every instruction
-// agrees except the final multiply. The target emits "fsubs f0,f0,f1" then
-// "fmuls f1,f2,f0" -- a *single*-precision multiply that reads the low half of
-// the double result with no frsp between them. MWCC insists on promoting the
-// float operand to double and emits fmul + frsp instead, and asking for it
-// explicitly with a (f32) cast only makes it reload the bias a second time.
-// Bodies below are semantically correct; only that one instruction differs.
-f32 fn_1_AB8(s32 idx)
-{
-    return lbl_1_rodata_20 * (HuPadStkX[idx] - lbl_1_rodata_28);
-}
-
-f32 fn_1_B0C(s32 idx)
-{
-    return (HuPadStkY[idx] - lbl_1_rodata_28) * lbl_1_rodata_20;
-}
-
-f32 fn_1_BB4(s32 idx)
-{
-    return (HuPadSubStkY[idx] - lbl_1_rodata_28) * lbl_1_rodata_30;
-}
-
-f32 fn_1_B60(s32 idx)
-{
-    return (HuPadSubStkX[idx] - lbl_1_rodata_28) * lbl_1_rodata_30;
-}
-
-// A look record: two Vec3s at 0x0C and 0x18, matching the two helpers above.
-typedef struct M539Look_s {
-    u8 pad00[0x0C];
-    M539Vec3 f0C;
-    M539Vec3 f18;
-} M539Look;
-
-typedef struct M539Vec3Tail_s {
-    M539Vec3 f00;
-    u8 pad0C[0x18 - 0x0C];
-    M539Vec3 f18;
-} M539Vec3Tail;
-
-extern void PSVECAdd(const Vec *a, const Vec *b, Vec *dst);
-extern void C_MTXLookAt(void *out, M539Look *look, M539Vec3 *eye, M539Vec3 *up);
-extern void PSMTXInverse(void *mtx, void *out);
-
-// The accumulator is the SECOND parameter: the target moves r3 into r31 and
-// r4 into r30, then calls PSVECAdd(acc, &v->f18, &v->f18) and PSVECAdd(acc, v, v).
-void fn_1_56C(M539Vec3Tail *v, Vec *acc)
-{
-    PSVECAdd(acc, (Vec *)&v->f18, (Vec *)&v->f18);
-    PSVECAdd(acc, (Vec *)&v->f00, (Vec *)&v->f00);
-}
-
-void fn_1_4B0(M539Look *look, void *out)
-{
-    C_MTXLookAt(out, look, &look->f0C, &look->f18);
-    PSMTXInverse(out, out);
-}
-
-// fn_1_4184 returns a double, so the lerp is computed in double and only
-// rounded on the way out -- that frsp is the last instruction before blr.
-f32 fn_1_4FC8(f32 from, f32 to)
-{
-    return from + (to - from) * fn_1_4184(&lbl_1_bss_24);
-}
-
-// Walks a chain of next-pointers and returns the first live node, or NULL.
-// The target runs this as a do/while so the test is "still walking" rather
-// than "has a node", which is why the head is dereferenced before the check.
-typedef struct M539Chain_s {
-    struct M539Chain_s *next;
-} M539Chain;
-
-M539Chain *fn_1_1B48(M539Chain *head)
-{
-    M539Chain *node = head;
-
-    while (node != 0) {
-        node = node->next;
-    }
-    return node;
-}
-
-// NONMATCHING: 17 of 19 instructions agree. The target lays the do-while out
-// as "b <test>; body; test; bne body" -- it jumps over its own loop body on
-// entry -- while MWCC falls straight into the body, leaving one branch out and
-// shortening the beq by 4.
-// Fills a table with the retail "unused" marker, but only once the module's
-// init flag has been set. 0xDEADBABE does not fit a 16-bit immediate, so MWCC
-// reaches for lis/subi -- and happens to pick the same pair as the target.
-extern const u8 lbl_1_bss_9E8;
-
-void fn_1_5D78(s32 *table, s32 count)
-{
-    s32 *end;
-
-    if (lbl_1_bss_9E8 != 0) {
-        end = (s32 *)((u8 *)table + count * 4);
-        do {
-            *table = 0xDEADBABE;
-            table++;
-        } while (table != end);
-    }
-}
-
-// Owner records for the three conditional-release helpers below. The flag is
-// an s16 (sth/lha round-trip) and the three differ only in what they release:
-// a Hu3D model, an MgTimer handle, or a bare pointer block.
-typedef struct M539Link_s {
-    s16 f00;
-} M539Link;
-
-typedef struct M539Owner_s {
-    void *p;
-} M539Owner;
-
-// Big record: vtable at 0x000, semaphore at 0x328, and a pointer handed to the
-// virtual call at 0x334.
-typedef struct M539Big_s {
-    M539Vtbl *vtable;
-    u8 pad004[4];
-    u8 f08[0x328 - 0x08];
-    u32 f328;
-    u8 pad32C[0x334 - 0x32C];
-    void *f334;
-} M539Big;
-
-extern s32 Hu3DModelLink(s32 modelId);
-extern s32 Hu3DModelKill(s32 modelId);
-extern void OSSignalSemaphore(void *sem);
-
-// NONMATCHING fn_1_2DB4: 66.67 %. The target loads the s16 into r0 and then
-// sign-extends into r30 with a separate extsh; MWCC folds the two into a single
-// "lha r30, 0(r29)". The named s32 below already recovers most of the gap
-// (19.05 % -> 66.67 %) by forcing the value into its own register.
-// The named s32 is not decoration: without it MWCC passes the lha result
-// straight through and drops the extsh the target emits into a second register.
-M539Model *fn_1_2DB4(M539Model *self, M539Link *parent)
-{
-    s32 id = parent->f00;
-
-    self->f00 = Hu3DModelLink(id);
-    return self;
+    return Hu3DData[self->id].mtx;
 }
 
 M539Model *fn_1_30F4(M539Model *self, s16 flag)
 {
     if (self != 0) {
-        Hu3DModelKill(self->f00);
+        Hu3DModelKill(self->id);
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
         }
@@ -621,10 +1260,279 @@ M539Model *fn_1_30F4(M539Model *self, s16 flag)
     return self;
 }
 
-M539Timer *fn_1_5E8C(M539Timer *self, s16 flag)
+inline HSFOBJECT *M539ObjGet(M539Model *self, char *name)
+{
+    HSFOBJECT *obj;
+
+    obj = Hu3DModelObjPtrGet(self->id, name);
+    M539_ASSERT_INL(obj != 0, lbl_1_data_AC, lbl_1_data_A2, 0x8A);
+    return obj;
+}
+
+HSFOBJECT *fn_1_3150(M539Model *self, char *name)
+{
+    return M539ObjGet(self, name);
+}
+
+void fn_1_31E4(M539Model *self)
+{
+    Hu3DModelShadowSet(self->id);
+}
+
+void fn_1_3214(M539Model *self)
+{
+    Hu3DModelShadowMapSet(self->id);
+}
+
+void fn_1_3244(M539Model *self, char *name)
+{
+    Hu3DModelShadowMapObjSet(self->id, name);
+}
+
+void fn_1_327C(M539Model *self)
+{
+    Hu3DModelShadowMapObjReset(self->id);
+}
+
+void fn_1_32AC(M539Model *self, char *name)
+{
+    HSFOBJECT *obj;
+    u32 *flags;
+
+    obj = M539ObjGet(self, name);
+    flags = (u32 *)obj->constData;
+    *flags &= ~8;
+}
+
+void fn_1_3358(M539Model *self, char *name)
+{
+    HSFOBJECT *obj;
+
+    obj = M539ObjGet(self, name);
+    obj->flags |= 0x400;
+}
+
+void fn_1_3400(M539Model *self, char *name)
+{
+    HSFOBJECT *obj;
+
+    obj = M539ObjGet(self, name);
+    obj->flags &= ~0x400;
+}
+
+void fn_1_34A8(M539Model *self, char *name)
+{
+    HSFOBJECT *obj;
+    HSFTRANSFORM *base;
+
+    obj = M539ObjGet(self, name);
+    obj->flags |= 0x400;
+    base = &obj->mesh.base;
+    base->scale.x = 0.0f;
+    base->scale.y = 0.0f;
+    base->scale.z = 0.0f;
+}
+
+void fn_1_3584(M539Model *self, char *name)
+{
+    HSFOBJECT *obj;
+    HSFTRANSFORM *base;
+
+    obj = M539ObjGet(self, name);
+    obj->flags &= ~0x400;
+    base = &obj->mesh.base;
+    base->scale.x = 1.0f;
+    base->scale.y = 1.0f;
+    base->scale.z = 1.0f;
+}
+
+void fn_1_3660(M539Model *self, s32 time)
+{
+    Hu3DMotionTimeSet(M539ModelIdGet(self), (f32)time);
+}
+
+// ---------------------------------------------------------------- Mersenne Twister
+
+extern const u32 lbl_1_rodata_50[2] = { 0, 0x9908B0DF };
+
+void fn_1_36CC(M539Rand *r, u32 seed)
+{
+    r->mt[0] = seed;
+    r->idx = 1;
+    while (r->idx < 0x270) {
+        r->mt[r->idx] = r->idx + (((r->mt[r->idx - 1]) ^ ((r->mt[r->idx - 1]) >> 30)) * 0x6C078965);
+        r->idx++;
+    }
+}
+
+void fn_1_3740(M539Rand *r, u32 *key, u32 len)
+{
+    u32 i;
+    u32 j;
+    u32 k;
+
+    fn_1_36CC(r, 19650218);
+    i = 1;
+    j = 0;
+    k = (len < 0x270) ? 0x270 : len;
+    while (k != 0) {
+        r->mt[i] = key[j] + ((r->mt[i] ^ ((r->mt[i - 1] ^ (r->mt[i - 1] >> 30)) * 0x19660D)) + j);
+        i++;
+        j++;
+        if (i >= 0x270) {
+            r->mt[0] = r->mt[0x26F];
+            i = 1;
+        }
+        if (j >= len) {
+            j = 0;
+        }
+        k--;
+    }
+    k = 0x26F;
+    while (k != 0) {
+        r->mt[i] = (r->mt[i] ^ ((r->mt[i - 1] ^ (r->mt[i - 1] >> 30)) * 0x5D588B65)) - i;
+        i++;
+        if (i >= 0x270) {
+            r->mt[0] = r->mt[0x26F];
+            i = 1;
+        }
+        k--;
+    }
+    r->mt[0] = 0x80000000;
+}
+
+u32 fn_1_3904(M539Rand *r)
+{
+    u32 k;
+    u32 y;
+
+    if (r->idx >= 0x270) {
+        k = 0;
+        while (k < 0xE3) {
+            y = (r->mt[k] & 0x80000000) | (r->mt[k + 1] & 0x7FFFFFFF);
+            r->mt[k] = lbl_1_rodata_50[y & 1] ^ ((y >> 1) ^ r->mt[k + 0x18D]);
+            k++;
+        }
+        while (k < 0x26F) {
+            y = (r->mt[k] & 0x80000000) | (r->mt[k + 1] & 0x7FFFFFFF);
+            r->mt[k] = lbl_1_rodata_50[y & 1] ^ ((y >> 1) ^ r->mt[k - 0xE3]);
+            k++;
+        }
+        y = (r->mt[0x26F] & 0x80000000) | (r->mt[0] & 0x7FFFFFFF);
+        r->mt[0x26F] = (y >> 1) ^ r->mt[0x18C] ^ lbl_1_rodata_50[y & 1];
+        r->idx = 0;
+    }
+    y = r->mt[r->idx++];
+    y ^= y >> 11;
+    y ^= (y << 7) & 0x9D2C5680;
+    y ^= (y << 15) & 0xEFC60000;
+    return y ^ (y >> 18);
+}
+
+u32 fn_1_3A90(M539Rand *r)
+{
+    return fn_1_3904(r) >> 1;
+}
+
+f32 fn_1_3C28(M539Rand *r)
+{
+    return 2.3283064e-10f * (f32)fn_1_3904(r);
+}
+
+f32 fn_1_3DEC(M539Rand *r)
+{
+    return 2.3283064e-10f * (f32)fn_1_3904(r);
+}
+
+f32 fn_1_3FB0(M539Rand *r)
+{
+    return 2.3283064e-10f * (0.5f + (f32)fn_1_3904(r));
+}
+
+f64 fn_1_4184(M539Rand *r)
+{
+    u32 a;
+    u32 b;
+
+    a = fn_1_3904(r) >> 5;
+    b = fn_1_3904(r) >> 6;
+    return 1.1102230246251565e-16 * ((67108864.0 * (f64)a) + (f64)b);
+}
+
+f32 fn_1_44FC(M539Rand *r)
+{
+    return 1.1920929e-7f * (f32)(fn_1_3904(r) >> 9);
+}
+
+// ---------------------------------------------------------------- allocation / functor objects
+
+void *fn_1_46CC(s32 size)
+{
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+
+    M539_ASSERT_INL(p != 0, lbl_1_data_0, lbl_1_data_B6, 0x18);
+    return p;
+}
+
+void *fn_1_4758(s32 size)
+{
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+
+    M539_ASSERT_INL(p != 0, lbl_1_data_0, lbl_1_data_B6, 0x1F);
+    return p;
+}
+
+void fn_1_47E4(void *ptr)
+{
+    if (ptr != 0) {
+        HuMemDirectFree(ptr);
+    }
+}
+
+void fn_1_481C(void *ptr)
+{
+    if (ptr != 0) {
+        HuMemDirectFree(ptr);
+    }
+}
+
+// Functor owned by an object: the object's data slot points at it.
+void fn_1_4854(M539Functor *self, OMOBJ *obj)
+{
+    self->vtbl = &lbl_1_data_1D4;
+    obj->data = self;
+    obj->objFunc = fn_1_4874;
+}
+
+void fn_1_4874(OMOBJ *obj)
+{
+    M539Functor *self;
+
+    self = (M539Functor *)obj->data;
+    self->vtbl->run(self, obj);
+}
+
+void fn_1_48C0(M539Functor *self, OMOBJ *obj)
+{
+}
+
+void fn_1_48C4(OMOBJ *obj)
+{
+    M539Functor *fn;
+    M539Functor *p;
+
+    fn = (M539Functor *)obj->data;
+    p = fn;
+    if (p != 0) {
+        p = p->vtbl->dtor(p, 1);
+    }
+    omDelObjEx(HuPrcCurrentGet(), obj);
+}
+
+M539Functor *fn_1_4934(M539Functor *self, s16 flag)
 {
     if (self != 0) {
-        MgTimerKill(self->f00);
+        self->vtbl = &lbl_1_data_1D4;
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
         }
@@ -632,12 +1540,207 @@ M539Timer *fn_1_5E8C(M539Timer *self, s16 flag)
     return self;
 }
 
-// Returns self: the target ends with "mr r3, r31" immediately before blr, so
-// the pointer is handed back even though every path through it can free it.
-void *fn_1_4934(void *self, s16 flag)
+void fn_1_4994(OMOBJMAN *man, OMOBJ *obj)
+{
+    M539Functor *fn;
+    M539Functor *p;
+
+    fn = (M539Functor *)obj->data;
+    p = fn;
+    if (p != 0) {
+        p = p->vtbl->dtor(p, 1);
+    }
+    omDelObjEx(man, obj);
+}
+
+// ---------------------------------------------------------------- global random number generator
+
+void fn_1_4A08(u32 seed)
+{
+    fn_1_36CC(&lbl_1_bss_24, seed);
+}
+
+u32 fn_1_4AE0(void)
+{
+    return fn_1_3904(&lbl_1_bss_24) >> 1;
+}
+
+f32 fn_1_4D1C(void)
+{
+    return 1.1920929e-7f * (f32)(fn_1_3904(&lbl_1_bss_24) >> 9);
+}
+
+f32 fn_1_4F90(f32 scale)
+{
+    return scale * fn_1_4184(&lbl_1_bss_24);
+}
+
+f32 fn_1_4FC8(f32 from, f32 to)
+{
+    return from + (to - from) * fn_1_4184(&lbl_1_bss_24);
+}
+
+// ---------------------------------------------------------------- shadow / collision helpers
+
+// Distance at which a 5 degree field of view spans `size`; `out` = target - dir * distance.
+f32 fn_1_501C(Vec *out, Vec *dir, Vec *target, f32 size)
+{
+    f32 dist;
+    Vec *o1;
+    Vec *o2;
+    Vec *o3;
+
+    dist = size / tan(0.0872664600610733);
+    PSVECScale(dir, out, dist);
+    o1 = out;
+    o2 = o1;
+    o3 = o2;
+    PSVECSubtract(target, o3, o3);
+    return dist;
+}
+
+extern const Vec lbl_1_rodata_74[2] = { { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
+
+// Create a (multi-camera) shadow projecting along `dir` onto `target`.
+void fn_1_50C4(s16 camBit, Vec *dir, Vec *target, f32 width, f32 depth)
+{
+    Vec dn;
+    Vec pos;
+    f32 halfWidth;
+    f32 halfDepth;
+    f32 dist;
+    f32 nearZ;
+    f32 farZ;
+    Vec *posPtr;
+    Vec *posRef;
+    f32 dist1;
+    f32 dist2;
+    f32 dist3;
+    s32 upIdx;
+    s32 count;
+    s32 i;
+    const Vec *up;
+
+    halfWidth = width * 0.5f;
+    halfDepth = depth * 0.5f;
+    PSVECNormalize(dir, &dn);
+    if (__fabs(dn.y) < 0.5f) {
+        upIdx = 0;
+    } else {
+        upIdx = 1;
+    }
+    up = &lbl_1_rodata_74[upIdx];
+    dist = (f32)(halfWidth / tan(0.0872664600610733));
+    PSVECScale(&dn, &pos, dist);
+    PSVECSubtract(target, &pos, &pos);
+    posPtr = &pos;
+    posRef = posPtr;
+    dist1 = dist;
+    dist2 = dist1;
+    dist3 = dist2;
+    nearZ = dist3 - halfDepth;
+    farZ = dist3 + halfDepth;
+    count = 0;
+    i = 0;
+    while (i < 0x10) {
+        if ((camBit & (1 << i)) != 0) {
+            count++;
+        }
+        i++;
+    }
+    if (count < 2) {
+        Hu3DShadowCreate(10.0f, nearZ, farZ);
+        Hu3DShadowPosSet(posRef, (Vec *)up, target);
+        Hu3DShadowSizeSet(0x1E0);
+        Hu3DShadowTPLvlSet(0.4f);
+        return;
+    }
+    Hu3DShadowMultiCreate(10.0f, nearZ, farZ, camBit);
+    Hu3DShadowMultiPosSet(posRef, (Vec *)up, target, camBit);
+    Hu3DShadowMultiSizeSet(0x1E0, camBit);
+    Hu3DShadowMultiTPLvlSet(0.4f, camBit);
+}
+
+// Sphere: centre and radius.
+typedef struct M539Sphere_s {
+    Vec pos;
+    f32 radius;
+} M539Sphere;
+
+inline f32 M539SphereRadius(M539Sphere *s)
+{
+    return s->radius;
+}
+
+int fn_1_5340(M539Sphere *a, M539Sphere *b)
+{
+    Vec d;
+    f32 rb;
+    f32 ra;
+    f32 sum;
+    f32 dist;
+
+    PSVECSubtract(&a->pos, &b->pos, &d);
+    rb = M539SphereRadius(b);
+    ra = M539SphereRadius(a);
+    sum = ra + rb;
+    dist = PSVECMag(&d);
+    return dist < sum;
+}
+
+// Push two overlapping spheres apart; ka/kb weight the move of each.
+s32 fn_1_53E8(M539Sphere *a, M539Sphere *b, f32 ka, f32 kb)
+{
+    Vec d;
+    Vec off;
+    f32 rb;
+    f32 ra;
+    f32 sum;
+    f32 dist;
+    f32 k;
+
+    rb = M539SphereRadius(b);
+    ra = M539SphereRadius(a);
+    sum = ra + rb;
+    PSVECSubtract(&b->pos, &a->pos, &d);
+    dist = PSVECMag(&d);
+    if (dist >= sum) {
+        return 0;
+    }
+    k = (kb * (sum - dist)) / dist;
+    PSVECScale(&d, &d, k);
+    PSVECScale(&d, &off, -ka);
+    PSVECAdd(&off, &a->pos, &a->pos);
+    PSVECScale(&d, &off, 1.0f - ka);
+    PSVECAdd(&off, &b->pos, &b->pos);
+    return 1;
+}
+
+// ---------------------------------------------------------------- threads
+
+s32 fn_1_5568(void)
+{
+    return OSGetThreadPriority(OSGetCurrentThread());
+}
+
+void *fn_1_5850(void *arg);
+M539Thread *fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr);
+
+M539SubThread *fn_1_558C(M539SubThread *self, u32 stackSize)
+{
+    self->vtbl = &lbl_1_data_1C4;
+    fn_1_58AC(&self->th, fn_1_5850, self, stackSize, OSGetThreadPriority(OSGetCurrentThread()), 1);
+    OSInitSemaphore(&self->sem, 0);
+    return self;
+}
+
+M539Thread *fn_1_5B30(M539Thread *th, s16 flag);
+
+M539SubThread *fn_1_5608(M539SubThread *self, s16 flag)
 {
     if (self != 0) {
-        ((M539Owner *)self)->p = lbl_1_data_1D4;
+        self->vtbl = &lbl_1_data_1C4;
+        fn_1_5B30(&self->th, -1);
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
         }
@@ -645,102 +1748,228 @@ void *fn_1_4934(void *self, s16 flag)
     return self;
 }
 
-// Virtual call with (self, self->f334), then post the semaphore and report 0.
-// NONMATCHING fn_1_5850: the call sequence is right but the target reserves a
-// 0x20 frame against MWCC's 0x10, so every displacement after the prologue is
-// 4 bytes short and the body never lines up.
-s32 fn_1_5850(M539Big *self)
+// CThread::IsTerminated(), inlined with its own `this`.
+inline u8 M539ThreadDone(M539Thread *th)
 {
-    self->vtable->v03(self, self->f334);
-    OSSignalSemaphore(&self->f328);
+    return OSIsThreadTerminated(&th->thread) != 0;
+}
+
+u8 fn_1_5674(M539SubThread *self)
+{
+    M539Thread *th = &self->th;
+
+    return OSIsThreadTerminated(&th->thread) != 0;
+}
+
+u32 fn_1_5C64(M539Thread *th);
+
+s32 fn_1_56BC(M539SubThread *self, s32 arg)
+{
+    M539Thread *thIsDone;
+    M539Thread *thResume;
+    M539Sem *sem;
+
+    thIsDone = &self->th;
+    if (OSIsThreadTerminated(&thIsDone->thread) != 0) {
+        return self->arg;
+    }
+    self->arg = arg;
+    thResume = &self->th;
+    OSResumeThread(&thResume->thread);
+    sem = &self->sem;
+    OSWaitSemaphore(sem);
+    fn_1_5C64(&self->th);
+    OSCheckActiveThreads();
+    return self->arg;
+}
+
+s32 fn_1_574C(M539SubThread *self, s32 arg)
+{
+    M539Thread *thCur;
+    M539Thread *thDone;
+    M539Sem *sem;
+    M539Thread *thSuspend;
+
+    thCur = &self->th;
+    M539_ASSERT_INL(OSGetCurrentThread() == &thCur->thread, lbl_1_data_CB, lbl_1_data_BD, 0x47);
+    thDone = &self->th;
+    M539_ASSERT_INL(OSIsThreadTerminated(&thDone->thread) == 0, lbl_1_data_EA, lbl_1_data_BD, 0x4A);
+    self->arg = arg;
+    sem = &self->sem;
+    OSSignalSemaphore(sem);
+    thSuspend = &self->th;
+    OSSuspendThread(&thSuspend->thread);
+    return self->arg;
+}
+
+void *fn_1_5850(void *arg)
+{
+    M539SubThread *self;
+    M539Sem *sem;
+
+    self = (M539SubThread *)arg;
+    self->vtbl->run(self, self->arg);
+    sem = &self->sem;
+    OSSignalSemaphore(sem);
     return 0;
 }
 
-// NONMATCHING fn_1_1D4: 79.17 %, 23 of 24 instructions identical including the
-// 0x420 frame and the vararg order. The target emits "crclr cr1eq" before the
-// sprintf to declare that no argument went in an FPR; MWCC omits it here.
-// Fatal-argument formatter: sprintf into a 0x40C scratch buffer (the frame is
-// 0x420 once the three spilled parameters at 0x08..0x10 are accounted for),
-// then hand it to OSPanic. The varargs order is param2, param3, param1 --
-// r5, r6, r7 in that order, not the source order.
-extern const char lbl_1_data_14[];
-extern const char lbl_1_data_32[];
-extern int sprintf(char *dst, const char *fmt, ...);
-extern void OSPanic(const char *file, s32 line, const char *msg);
+void fn_1_5A0C(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr);
 
-void fn_1_1D4(s32 arg1, s32 arg2, s32 arg3)
+M539Thread *fn_1_58AC(M539Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr)
 {
-    char buf[0x40C];
+    u32 words;
+    u32 *stack;
 
-    sprintf(buf, lbl_1_data_14, arg2, arg3, arg1);
-    OSPanic(lbl_1_data_32, 0x12, buf);
+    words = size >> 2;
+    stack = (u32 *)HuMemDirectMallocNum(HEAP_HEAP, words * 4, 0x10000000);
+    M539_ASSERT_INL(stack != 0, lbl_1_data_0, lbl_1_data_C, 0x17);
+    th->stack = stack;
+    fn_1_5A0C(th, func, arg, stack, words, prio, attr);
+    return th;
 }
 
-// Three-float records: f00/f0C/f18 for the axis maths, f00/f18 for the
-// direction-copy helper.
-typedef struct M539Axis_s {
-    M539Vec3 f00;
-    M539Vec3 f0C;
-    M539Vec3 f18;
-} M539Axis;
-
-typedef struct M539Dir_s {
-    M539Vec3 f00;
-    u8 pad0C[0x18 - 0x0C];
-    M539Vec3 f18;
-} M539Dir;
-
-extern void PSVECSubtract(const Vec *a, const Vec *b, Vec *dst);
-extern void PSMTXRotAxisRad(Vec *dst, Vec *axis, f32 angle);
-extern void PSMTXMultVec(Vec *mtx, const Vec *src, Vec *dst);
-extern void Hu3DMotionTimeSet(s32 motionId, double time);
-extern void fn_1_5B30(void *self, s32 arg);
-extern const f32 lbl_1_rodata_10;
-extern M539VFn lbl_1_data_1C4[];
-
-// Copies src over dst, then folds the delta it just clobbered into dst->f18.
-void fn_1_87C(M539Dir *dst, M539Dir *src)
+M539Thread *fn_1_5990(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 size, s32 prio, u16 attr)
 {
-    Vec delta;
+    u32 words;
 
-    PSVECSubtract((Vec *)src, (Vec *)dst, &delta);
-    dst->f00 = src->f00;
-    PSVECAdd((Vec *)&dst->f18, &delta, (Vec *)&dst->f18);
+    th->stack = 0;
+    words = size >> 2;
+    fn_1_5A0C(th, func, arg, stack, words, prio, attr);
+    return th;
 }
 
-// NONMATCHING fn_1_3660: 66.67 %. Same extsh fusion as fn_1_2DB4 (MWCC emits
-// "lha r31" where the target wants "lha r0" + "extsh r31,r0"), plus MWCC reloads
-// lbl_1_rodata_28 after the magic-base pair instead of keeping it in f1.
-// magic-base int->double again, but here the result is handed straight to a
-// double parameter, so there is no fmuls to disagree about.
-void fn_1_3660(M539Model *self, s32 time)
-{
-    s32 motionId = self->f00;
+void fn_1_5D78(u32 *p, u32 words);
+s32 fn_1_5D04(u32 *p, s32 mode);
 
-    Hu3DMotionTimeSet(motionId, time - lbl_1_rodata_28);
+void fn_1_5A0C(M539Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr)
+{
+    u8 ok;
+
+    ok = 0;
+    if (prio >= 0 && prio <= 0x1F) {
+        ok = 1;
+    }
+    M539_ASSERT_INL(ok != 0, lbl_1_data_113, lbl_1_data_108, 0x52);
+    fn_1_5D78(stack, words);
+    fn_1_5D04(stack, 0);
+    if ((u8)(OSCreateThread(&th->thread, func, arg, &stack[words], words * 4, prio, attr) != 0) == 0) {
+        OSPanic(lbl_1_data_108, 0x60, lbl_1_data_14E);
+    }
 }
 
-// NONMATCHING fn_1_39C: call sequence correct, frame wrong. The target reserves
-// 0x50 (locals through 0x4F) against MWCC's 0x30 -- the block at 0x18 is 0x38
-// bytes in the original, not the 0x0C a Vec3 needs, and I cannot tell from the
-// disassembly what the extra 0x2C is holding.
-// Rotates around the axis spanned by f18 - f00, then applies the matrix to f0C.
-void fn_1_39C(M539Axis *self, f32 angle)
+M539Thread *fn_1_5B30(M539Thread *th, s16 flag)
 {
-    Vec axis;
-    Vec delta;
+    u32 total;
+    u32 remain;
+    u32 *stack;
 
-    PSVECSubtract((Vec *)&self->f18, (Vec *)&self->f00, &delta);
-    PSMTXRotAxisRad(&axis, &delta, lbl_1_rodata_10 * angle);
-    PSMTXMultVec(&axis, (Vec *)&self->f0C, (Vec *)&self->f0C);
+    if (th != 0) {
+        if (OSIsThreadTerminated(&th->thread) == 0) {
+            OSCancelThread(&th->thread);
+        }
+        if (lbl_1_bss_9E8 != 0) {
+            total = (uintptr_t)th->thread.stackBase - (uintptr_t)th->thread.stackEnd;
+            remain = fn_1_5C64(th);
+            printf(lbl_1_data_167, th, remain, total, (100.0 * (f64)remain) / (f64)total);
+        }
+        stack = th->stack;
+        if (stack != 0) {
+            HuMemDirectFree(stack);
+        }
+        if (flag > 0 && th != 0) {
+            HuMemDirectFree(th);
+        }
+    }
+    return th;
 }
 
-// Same shape as fn_1_4934, plus an init call on the block at +8.
-void *fn_1_5608(void *self, s16 flag)
+u32 fn_1_5C64(M539Thread *th)
+{
+    u32 *base;
+    u32 *p;
+
+    base = th->thread.stackEnd;
+    if (fn_1_5D04(base, 1) != 0) {
+        OSPanic(lbl_1_data_108, 0x7F, lbl_1_data_1A4);
+    }
+    p = base;
+    while (p < (u32 *)th->thread.stackBase) {
+        if (*p == 0xDEADBABE) {
+            p++;
+            continue;
+        }
+        break;
+    }
+    return (u32)((uintptr_t)p - (uintptr_t)base);
+}
+
+// Stack guard: mode 0 fills the 32 byte guard, mode 1 checks it.
+s32 fn_1_5D04(u32 *p, s32 mode)
+{
+    u32 *end;
+    u32 v;
+
+    end = p + 8;
+    switch (mode) {
+        case 0:
+            while (p != end) {
+                *p = 0xDEADBABE;
+                p++;
+            }
+            return 0;
+        case 1:
+            while (p != end) {
+                v = *p;
+                p++;
+                if (v != 0xDEADBABE) {
+                    return 1;
+                }
+            }
+            return 0;
+        default:
+            return 0;
+    }
+}
+
+void fn_1_5D78(u32 *p, u32 words)
+{
+    u32 *end;
+
+    if (lbl_1_bss_9E8 != 0) {
+        end = p + words;
+        while (p != end) {
+            *p = 0xDEADBABE;
+            p++;
+        }
+    }
+}
+
+// ---------------------------------------------------------------- MgTimer wrappers
+
+M539TimerObj *fn_1_5DC4(M539TimerObj *self, s32 type)
+{
+    switch (type) {
+        case 0:
+            self->timer = MgTimerCreate(0);
+            break;
+        case 1:
+            self->timer = MgTimerCreate(1);
+            break;
+        case 2:
+            self->timer = MgTimerCreate(2);
+            break;
+        default:
+            M539_ASSERT_INL(0, lbl_1_data_1BE, lbl_1_data_1B4, 0x1E);
+            break;
+    }
+    return self;
+}
+
+M539TimerObj *fn_1_5E8C(M539TimerObj *self, s16 flag)
 {
     if (self != 0) {
-        ((M539Owner *)self)->p = lbl_1_data_1C4;
-        fn_1_5B30((u8 *)self + 8, -1);
+        MgTimerKill(self->timer);
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
         }
@@ -748,132 +1977,95 @@ void *fn_1_5608(void *self, s16 flag)
     return self;
 }
 
-// Chain node whose child vtable lives at +8, used by the module-wide walk.
-typedef struct M539Chain2_s {
-    struct M539Chain2_s *next;
-    u8 pad04[0x08 - 0x04];
-    M539Vtbl *child;
-} M539Chain2;
-
-// Record whose vtable pointer sits at 0x5C.
-typedef struct M539Del_s {
-    u8 pad00[0x5C];
-    M539Vtbl *f5C;
-} M539Del;
-
-extern void *HuMemDirectMallocNum(s32 heap, s32 size, s32 align);
-extern s32 HuPrcCurrentGet(void);
-extern void omDelObjEx(s32 treeId, void *obj);
-extern u8 lbl_1_bss_C[];
-extern u8 lbl_1_data_0[];
-extern u8 lbl_1_data_C[];
-
-// Walks the whole chain rooted at lbl_1_bss_C, calling slot 0x10 on each
-// child's vtable, and stops when the link comes back to the root.
-// NONMATCHING fn_1_1D6C: the walk itself is right, but the target opens a
-// 0x20 frame and spills r27-r31 through _savegpr_27 while MWCC keeps the node,
-// the sentinel and the child in one register and never spills at all. Tried
-// both do/while and for(;;)+break; same result, so it is the loop's register
-// demand, not its shape.
-void fn_1_1D6C(void)
+void fn_1_5EE8(M539TimerObj *self, s32 maxTime, s32 endTime, s32 recordTime)
 {
-    M539Chain2 *root = (M539Chain2 *)lbl_1_bss_C;
-    M539Chain2 *node = root;
-
-    do {
-        node->child->v05(node->child);
-        node = node->next;
-    } while (node != root);
+    MgTimerParamSet(self->timer, maxTime, endTime, recordTime);
 }
 
-// NONMATCHING fn_1_48C4: 82.14 %, 5 of 28 differ, all of them register choice
-// -- the target loads the vtable into r29 and reuses r31 for both the call
-// argument copy and the return value, MWCC puts the vtable in r31 and the
-// result in r29. Naming the vtable pointer in a local is what recovered the
-// function from 28.57 %.
-// Posts a virtual notification if there is a vtable, then unlinks the object
-// from the tree HuPrcCurrentGet() names.
-void fn_1_48C4(M539Del *self)
+void fn_1_5F30(M539TimerObj *self)
 {
-    // rc has to stay initialised: without the "rc = 0" MWCC treats it as read
-// before set and inserts a crclr, which costs more than the one extra
-// instruction the initialiser costs (82.14 % vs 67.86 %).
-M539Vtbl *vt = self->f5C;
-    s32 rc = 0;
+    MgTimerValueGet(self->timer);
+}
 
-    if (vt != 0) {
-        rc = vt->v03(vt, 1);
+void fn_1_5F60(M539TimerObj *self, f32 x, f32 y)
+{
+    MgTimerPosSet(self->timer, x, y);
+}
+
+void fn_1_5FA0(M539TimerObj *self, f32 *x, f32 *y)
+{
+    MgTimerPosGet(self->timer, x, y);
+}
+
+void fn_1_5FE0(M539TimerObj *self, s32 offType)
+{
+    switch (offType) {
+        case 0:
+            MgTimerModeOnSet(self->timer, 0);
+            return;
+        case 1:
+            MgTimerModeOnSet(self->timer, 1);
+            return;
+        case 2:
+            MgTimerModeOnSet(self->timer, 2);
+            return;
+        default:
+            M539_ASSERT_INL(0, lbl_1_data_1BE, lbl_1_data_1B4, 0x48);
+            return;
     }
-    omDelObjEx(HuPrcCurrentGet(), self);
 }
 
-// NONMATCHING fn_1_0 and fn_1_64: 72 %, 3 of 25 instructions differ. One is
-// the li/lis wall -- 0x1000 is "lis r5,0x1000" in the retail build and a single
-// "li r5,0x1000" here, which alone makes them unreachable. The other two are
-// the knock-on branch layout: the target branches "beq" into the panic call and
-// "b" past it, MWCC inverts to a single "bne" over the block. See the li/lis
-// rule in docs/HANDOVER.md.
-void *fn_1_64(s32 size)
+void fn_1_60A4(M539TimerObj *self)
 {
-    void *block = HuMemDirectMallocNum(0, size, 0x1000);
-
-    if (block == 0) {
-        fn_1_1D4((s32)lbl_1_data_0, (s32)lbl_1_data_C, 0x17);
-    }
-    return block;
+    MgTimerModeOffSet(self->timer);
 }
 
-void *fn_1_0(s32 size)
+// Stop the timer the first time it is asked to.
+void fn_1_60D4(M539TimerObj *self)
 {
-    void *block = HuMemDirectMallocNum(0, size, 0x1000);
-
-    if (block == 0) {
-        fn_1_1D4((s32)lbl_1_data_0, (s32)lbl_1_data_C, 0x17);
+    if (self->timer->stopF == 0) {
+        self->timer->stopF = 1;
+        self->timer->mode = 1;
     }
-    return block;
 }
 
-// The two words are POINTERS to another node of the same shape, not scalars:
-// the target does "stw r0, 0x4(r3)" where r3 is the *value* of f00, which only
-// makes sense as node->next = other.
-typedef struct M539Swap_s {
-    struct M539Swap_s *f00;
-    struct M539Swap_s *f04;
-} M539Swap;
-
-// The 0x270-entry LCG table; the counter lives immediately after the array.
-typedef struct M539Rand_s {
-    s32 v[0x270];
-    s32 count;
-} M539Rand;
-
-extern void PSMTXMultVecSR(void *mtx, void *vec, Vec *dst);
-
-// NONMATCHING fn_1_4994: same virtual-notify-then-unlink as fn_1_48C4 but the
-// tree id arrives as a plain argument instead of coming from HuPrcCurrentGet.
-// fn_1_4994(s32 treeId, M539Del *self)
-void fn_1_4994(s32 treeId, M539Del *self)
+void fn_1_6100(M539TimerObj *self)
 {
-    M539Vtbl *vt = self->f5C;
-    s32 rc = 0;
-
-    if (vt != 0) {
-        rc = vt->v03(vt, 1);
-    }
-    omDelObjEx(treeId, self);
+    MgTimerKill(self->timer);
+    self->timer = MgTimerCreate(0);
 }
 
-// The shuffle is written the way the target has it -- f04 = f00, then f00 =
-// f04 -- which is why the binary reloads both words between the two stores
-// instead of keeping the old f04 in a register.
-// fn_1_6324 is fn_1_1270 plus one extra redundant NULL test on the way in.
-// Same node-pointer shuffle, same types.
-void *fn_1_6324(void *self, s16 flag)
+u8 fn_1_613C(M539TimerObj *self)
+{
+    return MgTimerDoneCheck(self->timer) != 0;
+}
+
+void fn_1_617C(M539TimerObj *self, u8 r, u8 g, u8 b)
+{
+    MgTimerWinColorSet(self->timer, r, g, b);
+}
+
+// ---------------------------------------------------------------- static initialisers
+
+void fn_1_61C4(void)
+{
+    lbl_1_bss_C.next = &lbl_1_bss_C;
+    lbl_1_bss_C.prev = &lbl_1_bss_C;
+#ifdef __MWERKS__
+    __register_global_object(&lbl_1_bss_C, (void *)fn_1_6324, lbl_1_bss_0);
+#endif
+    lbl_1_bss_18 = 0x78;
+    lbl_1_bss_1C = 0xD2;
+    lbl_1_bss_20 = 0xD2;
+    fn_1_36CC(&lbl_1_bss_24, 0x1571);
+}
+
+void *fn_1_6324(M539Node *self, s16 flag)
 {
     if (self != 0) {
         if (self != 0) {
-            ((M539Swap *)self)->f00->f04 = ((M539Swap *)self)->f04;
-            ((M539Swap *)self)->f00 = ((M539Swap *)self)->f04;
+            self->next->prev = self->prev;
+            self->prev->next = self->next;
         }
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
@@ -882,127 +2074,13 @@ void *fn_1_6324(void *self, s16 flag)
     return self;
 }
 
-// NONMATCHING fn_1_1270 (88.89 %) and fn_1_6324 (89.66 %): 4-5 instructions
-// differ, all reloads. The target reloads BOTH self->f00 and self->f04 after
-// the "f00->f04 = f04" store; MWCC proves the store cannot alias self and
-// keeps one in a register. Typing the two words as node POINTERS rather than
-// scalars is what took fn_1_1270 from 77.78 % to 88.89 % -- the target's
-// "stw r0, 0x4(r3)" stores through the value of f00, not into self.
-void *fn_1_1270(void *self, s16 flag)
-{
-    if (self != 0) {
-        ((M539Swap *)self)->f00->f04 = ((M539Swap *)self)->f04;
-        ((M539Swap *)self)->f00 = ((M539Swap *)self)->f04;
-        if (flag > 0 && self != 0) {
-            HuMemDirectFree(self);
-        }
-    }
-    return self;
-}
-
-// Numerical Recipes LCG, 0x6C078965. Both constants are too wide for li, so
-// MWCC reaches for lis/subi exactly as the target does. The u32 casts are load
-// bearing: the target uses srwi and cmplwi, i.e. the shift and the bound test
-// are LOGICAL, not arithmetic.
-void fn_1_36CC(M539Rand *r, s32 seed)
-{
-    r->v[0] = seed;
-    r->count = 1;
-    while ((u32)r->count < 0x270) {
-        r->v[r->count] = r->count +
-            (((u32)r->v[r->count - 1] ^ ((u32)r->v[r->count - 1] >> 30)) * 0x6C078965);
-        r->count++;
-    }
-}
-
-// A 0x30-byte transform matrix, per the frame layouts below.
-typedef u8 Mat[0x30];
-
-// Pose record: three Vec3s at 0x18, 0x24 and 0x30, which is exactly the
-// triplet the three Hu3D setters read.
-typedef struct M539Pose_s {
-    u8 pad00[0x18];
-    M539Vec3 f18;
-    M539Vec3 f24;
-    M539Vec3 f30;
-} M539Pose;
-
-// Record with a semaphore at 0x328 and a vtable pointer at 0x334.
-typedef struct M539Big2_s {
-    M539VFn f00;
-    u8 pad04[0x318 - 0x04];
-    u32 f318;
-    u8 pad31C[0x334 - 0x31C];
-    M539VFn f334;
-} M539Big2;
-
-extern void C_QUATMtx(void *dst, void *mtx);
-extern s32 OSGetThreadPriority(void *thread);
-extern void OSInitSemaphore(void *sem, s32 count);
-extern void fn_1_5A0C(void *self, s32 a, s32 b, s32 c, s32 d, s32 e, u16 f);
-extern void fn_1_58AC(void *dst, s32 (*fn)(M539Big *), void *self, s32 a, s32 b, s32 c);
-
-// Builds the view matrix from the two Vec3s, copies the position, then turns
-// the inverted matrix into the quaternion stored at out+0xC.
-void fn_1_6F4(M539Axis *self, M539Axis *out)
-{
-    Mat m;
-
-    C_MTXLookAt(m, (M539Look *)self, (M539Vec3 *)&self->f0C, (M539Vec3 *)&self->f18);
-    PSMTXInverse(m, m);
-    out->f00 = self->f00;
-    C_QUATMtx(&out->f0C, m);
-}
-
-// Loads position, rotation and scale straight out of the pose record. The model
-// id is hoisted into a local so the three calls share one lha.
-void fn_1_2E78(M539Model *self, M539Pose *pose)
-{
-    s16 id = self->f00;
-
-    Hu3DModelPosSet(id, pose->f18.x, pose->f18.y, pose->f18.z);
-    Hu3DModelRotSet(id, pose->f24.x, pose->f24.y, pose->f24.z);
-    Hu3DModelScaleSet(id, pose->f30.x, pose->f30.y, pose->f30.z);
-}
-
-// Submits a process and posts its semaphore. The current thread handle is
-// fetched inline so its priority can be forwarded to fn_1_58AC.
-void *fn_1_558C(void *self, s32 arg1)
-{
-    s32 prio;
-
-    ((M539Big *)self)->vtable = (M539Vtbl *)lbl_1_data_1C4;
-    prio = OSGetThreadPriority(OSGetCurrentThread());
-    fn_1_58AC(((M539Big *)self)->f08, &fn_1_5850, self, arg1, prio, 1);
-    OSInitSemaphore(&((M539Big *)self)->f328, 0);
-    return self;
-}
-
-// Zeroes the field at 0x318 and forwards everything, with the fourth argument
-// right-shifted by two on the way through. The sixth argument is a u16 (the
-// prologue spills it with sth and reloads it with lhz); the fourth is u32 so
-// the shift comes out as srwi.
-void *fn_1_5990(void *self, s32 a, s32 b, s32 c, u32 d, s32 e, u16 f)
-{
-    u32 t;
-
-    ((M539Big2 *)self)->f318 = 0;
-    t = d >> 2;
-    fn_1_5A0C(self, a, b, c, t, e, f);
-    return self;
-}
-
-// Empty translation-unit anchors: a bare blr each.
-void fn_1_1DDC(void)
-{
-}
-
-void fn_1_246C(void)
-{
-}
-
-void fn_1_48C0(void)
-{
-}
-
+// The module's one static initialiser, hooked into the constructor table.
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_61C4)(void) = fn_1_61C4;
+#else
+struct M539StaticInit {
+    M539StaticInit() { fn_1_61C4(); }
+};
+static M539StaticInit lbl_static_init;
+#endif
 }
