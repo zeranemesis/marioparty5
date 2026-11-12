@@ -9,18 +9,18 @@
 #define INPUT_TBL(x) (x)
 #endif
 
-extern GWPLAYERCONF GwPlayerConf[];
-extern u16 HuPadBtn[];
-extern u16 HuPadBtnDown[];
-extern u16 HuPadBtnRep[];
-extern s8 HuPadStkX[];
-extern s8 HuPadStkY[];
-extern s8 HuPadSubStkX[];
-extern s8 HuPadSubStkY[];
-extern u8 HuPadTrigL[];
-extern u8 HuPadTrigR[];
-extern u8 HuPadDStk[];
-extern u8 HuPadDStkRep[];
+SHARED_SYM extern GWPLAYERCONF GwPlayerConf[];
+SHARED_SYM extern u16 HuPadBtn[];
+SHARED_SYM extern u16 HuPadBtnDown[];
+SHARED_SYM extern u16 HuPadBtnRep[];
+SHARED_SYM extern s8 HuPadStkX[];
+SHARED_SYM extern s8 HuPadStkY[];
+SHARED_SYM extern s8 HuPadSubStkX[];
+SHARED_SYM extern s8 HuPadSubStkY[];
+SHARED_SYM extern u8 HuPadTrigL[];
+SHARED_SYM extern u8 HuPadTrigR[];
+SHARED_SYM extern u8 HuPadDStk[];
+SHARED_SYM extern u8 HuPadDStkRep[];
 
 
 extern void fn_1_BC54(INPUTWORK *work);
