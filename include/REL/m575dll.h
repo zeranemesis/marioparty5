@@ -70,7 +70,7 @@ typedef struct M575Player_s {
     struct MgPlayer_s *mgPlayer;
     s16 slot;
     s16 playerNo;
-    s16 charNo;
+    s32 charNo;
     s16 modelId;
     s16 motion[9];
     f32 height;
@@ -296,6 +296,26 @@ void fn_1_33C4(Vec *out, M575Path *path, s32 t);
 void fn_1_3880(M575Main *main, s16 side, M575Game *game);
 void fn_1_396C(M575Main *main);
 s32 fn_1_39E4(M575Main *main);
+
+void fn_1_535C(M575Player *self, s16 slot, s16 playerNo, M575Main *main);
+void fn_1_55EC(M575Player *self);
+s32 fn_1_562C(M575Player *self);
+void fn_1_5C88(M575Player *self, s32 on);
+void fn_1_6630(M575Com *self, M575Player *work);
+void fn_1_675C(M575Com *self);
+void fn_1_678C(M575Com *self);
+void fn_1_9B58(M575TuboEff *self, const Vec *arg1, const Vec *arg2);
+void fn_1_CFE4(M575Jugem *self, M575Player *player);
+
+void fn_1_535C(M575Player *self, s16 slot, s16 playerNo, M575Main *main);
+void fn_1_55EC(M575Player *self);
+s32 fn_1_562C(M575Player *self);
+void fn_1_5C88(M575Player *self, s32 on);
+void fn_1_6630(M575Com *self, M575Player *work);
+void fn_1_675C(M575Com *self);
+void fn_1_678C(M575Com *self);
+void fn_1_9B58(M575TuboEff *self, const Vec *arg1, const Vec *arg2);
+void fn_1_CFE4(M575Jugem *self, M575Player *player);
 
 void fn_1_3A7C(M575Score *self, u16 side, M575Main *main);
 void fn_1_3CD8(M575Score *self);
