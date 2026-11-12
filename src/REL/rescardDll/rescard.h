@@ -209,14 +209,73 @@ typedef struct MdModelWork_s {
     HU3DMODELID ambId[MDMODEL_AMB_MAX]; //0x500
 } MDMODEL_WORK;
 
+/* model slots (sys->model->mdlId[]) */
+enum {
+    MDMODEL_BG = 0,        //0 backdrop with the star motions
+    MDMODEL_STAGE = 1,     //1..6
+    MDMODEL_PIN = 7,       //7..10 per player
+    MDMODEL_CUR = 11,      //11..14 per player
+    MDMODEL_SPOT = 15,     //15..18
+    MDMODEL_POP = 19,      //19..20
+    MDMODEL_POP_A = 21,    //21..42 (links of POP 0)
+    MDMODEL_POP_B = 43,    //43..53 (links of POP 1)
+    MDMODEL_BILL_A = 54,   //54..57
+    MDMODEL_BILL_B = 58,   //58..61
+    MDMODEL_BILL_C = 62,   //62..65
+    MDMODEL_BILL_D = 66,   //66..73
+    MDMODEL_E74 = 74,
+    MDMODEL_E75 = 75,      //75..78
+    MDMODEL_E79 = 79,      //79..82
+    MDMODEL_RING = 83,
+    MDMODEL_E84 = 84,      //84..87
+    MDMODEL_FONTBGFILTER = 88
+};
+
+typedef struct RescardPlayer_s {
+    s8 pinNo; //0x00
+    u8 pad01[4];
+    s8 pinVar; //0x05
+    u8 pad06[0x18 - 6];
+} RESCARD_PLAYER;
+
+typedef struct RescardScore_s {
+    RESCARD_PLAYER player[4]; //0x00
+    u8 pad60[0xF4 - 0x60];
+} RESCARD_SCORE;
+
 typedef struct Sys_s {
-    u8 pad00[0x1C];
+    s32 unk00; //0x00
+    s32 unk04; //0x04
+    s32 unk08; //0x08
+    s32 frame; //0x0C
+    s32 flow; //0x10 MdFlowTbl index
+    s32 retMode; //0x14
+    OMOVL ovl; //0x18
     s8 exitF; //0x1C
     s8 skipWipeF; //0x1D
-    u8 pad1E[0x70 - 0x1E];
+    u8 pad1E[2];
+    OMOBJMAN *objman; //0x20
+    HUPROCESS *mainProc; //0x24
+    HUPROCESS *starProc; //0x28
+    HUPROCESS *pinProc; //0x2C
+    HUPROCESS *bgmProc; //0x30
+    HUPROCESS *voiceProc; //0x34
+    HUPROCESS *loadProc; //0x38
+    OMOBJ *obj[5]; //0x3C debugfont, pad, camera, light, mess
+    s16 loadState; //0x50
+    s16 loadAsyncStat; //0x52
+    s32 dataDir; //0x54
+    MDDEBUGFONT_WORK *debugFont; //0x58
+    MDPAD_WORK *padWork; //0x5C
+    MDCAMERA_WORK *camera; //0x60
+    MDLIGHT_WORK *light; //0x64
+    MDMESS_WORK *mess; //0x68
+    MDSPRITE_WORK *sprite; //0x6C
     MDMODEL_WORK *model; //0x70
-    void *score; //0x74
-    u8 pad78[0x1E0 - 0x78];
+    RESCARD_SCORE *score; //0x74
+    u8 pad78[0x1D8 - 0x78];
+    MGTIMER *timer; //0x1D8
+    u8 pad1DC[4];
 } SYS;
 
 extern SYS *sys;
