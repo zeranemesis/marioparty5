@@ -74,7 +74,7 @@ void fn_1_C08(Vec *pos, s32 mode);
 void *fn_1_0(u32 size);
 s16 *fn_1_2C94(s16 *out, int dataNum);
 s16 *fn_1_2DB4(s16 *out, s16 *modelId);
-void fn_1_30F4(s16 *modelId, s16 flag);
+s16 *fn_1_30F4(s16 *modelId, s16 freeIt);
 /* Effect object shared by killereff.cpp and killer.cpp (0x10 bytes). */
 typedef struct M536EffObj_s {
     M536_NODE node;

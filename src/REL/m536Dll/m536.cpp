@@ -949,4 +949,404 @@ void fn_1_2470(void)
     omOvlReturnEx(1, 1);
 }
 
+// ---- module main object helpers (player slots, game messages)
+
+void fn_1_255C(s32 playerId)
+{
+    M536Main *ms;
+    s32 *slots;
+    s32 i;
+
+    if (lbl_1_bss_9EC != 0) {
+    } else {
+        M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+    }
+    slots = lbl_1_bss_9EC->m_player;
+    for (i = 0; i < 4; i++) {
+        if (slots[i] < 0) {
+            slots[i] = playerId;
+            return;
+        }
+    }
+}
+
+s32 fn_1_2630(s32 playerId)
+{
+    s32 i;
+
+    if (lbl_1_bss_9EC != 0) {
+    } else {
+        M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+    }
+    for (i = 0; i < 4; i++) {
+        if (playerId == lbl_1_bss_9EC->m_player[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void fn_1_2704(void)
+{
+    M536Main *ms;
+
+    if (lbl_1_bss_9EC != 0) {
+    } else {
+        M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+    }
+    ms = lbl_1_bss_9EC;
+    ms->m_msg = GameMesCreate(2, 0);
+}
+
+void fn_1_27BC(void)
+{
+    M536Main *ms;
+
+    if (lbl_1_bss_9EC != 0) {
+    } else {
+        M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+    }
+    ms = lbl_1_bss_9EC;
+    ms->m_msg = GameMesCreate(2, 1);
+}
+
+s32 fn_1_2874(void)
+{
+    M536Main *ms;
+    s32 ret;
+
+    if (lbl_1_bss_9EC != 0) {
+    } else {
+        M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+    }
+    ms = lbl_1_bss_9EC;
+    ret = 0;
+    if (GameMesStatGet(-1) == 0 && (u8)(ms->m_timer <= 0) != 0) {
+        ret = 1;
+    }
+    return ret;
+}
+
+// Announces the result: the players that joined are sorted by player number.
+void fn_1_2948(void)
+{
+    s32 *slots;
+    s32 chars[4];
+    s32 n;
+    s32 i;
+    s32 j;
+    s32 t;
+    s16 charNo;
+
+    if (lbl_1_bss_9EC != 0) {
+    } else {
+        M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+    }
+    lbl_1_bss_9EC->m_timer = lbl_1_bss_1C;
+    slots = lbl_1_bss_9EC->m_player;
+    n = 0;
+    while (n < 4) {
+        if (slots[n] >= 0) {
+            n++;
+            continue;
+        }
+        break;
+    }
+    if (n == 0) {
+        GameMesCreate(2, 2);
+        return;
+    }
+    for (i = 1; i < n; i++) {
+        j = i;
+        while (j >= 1 && slots[j - 1] > slots[j]) {
+            t = slots[j - 1];
+            slots[j - 1] = slots[j];
+            slots[j] = t;
+            j--;
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        if (slots[i] < 0) {
+            charNo = -1;
+        } else {
+            charNo = GwPlayerConf[slots[i]].charNo;
+        }
+        chars[i] = charNo;
+    }
+    GameMesCreate(4, 3, chars[0], chars[1], chars[2], chars[3]);
+}
+
+void fn_1_2B14(s32 result)
+{
+    M536Main *ms;
+
+    if (_CheckFlag(0x1000F) == 0) {
+        if (lbl_1_bss_9EC != 0) {
+        } else {
+            M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
+        }
+        ms = lbl_1_bss_9EC;
+        ms->m_msg = GameMesCreate(0xE, result);
+        HuAudJinglePlay(0x86);
+    }
+}
+
+// ---- Hu3D wrappers that take a pointer to the model id
+
+void fn_1_2BEC(void)
+{
+    WipeCreate(1, 5, 0x3C);
+}
+
+void fn_1_2C18(void)
+{
+    WipeCreate(2, 6, 0x3C);
+}
+
+void fn_1_2C44(void)
+{
+    omSysExitReq = 1;
+}
+
+s16 *fn_1_2C58(s16 *out, void *data)
+{
+    *out = Hu3DModelCreate(data);
+    return out;
+}
+
+s16 *fn_1_2C94(s16 *out, int dataNum)
+{
+    *out = Hu3DModelCreate(HuDataSelHeapReadNum(dataNum, 0x10000000, HEAP_MODEL));
+    return out;
+}
+
+s16 *fn_1_2CDC(s16 *out, void *hookFunc)
+{
+    *out = Hu3DHookFuncCreate((HU3DMODELHOOK)hookFunc);
+    return out;
+}
+
+s16 *fn_1_2D18(s16 *out, s16 charNo, s16 type)
+{
+    s16 attr;
+
+    attr = 0;
+    switch (type) {
+    case 0:
+        attr = 1;
+        break;
+    case 1:
+        attr = 2;
+        break;
+    case 2:
+        attr = 4;
+        break;
+    case 3:
+        attr = 8;
+        break;
+    }
+    *out = CharModelCreate(charNo, attr);
+    return out;
+}
+
+s16 *fn_1_2DB4(s16 *out, s16 *modelId)
+{
+    s16 id = (s16)*modelId;
+
+    *out = Hu3DModelLink(id);
+    return out;
+}
+
+void fn_1_2E08(s16 *modelId, u32 attr)
+{
+    Hu3DModelAttrSet(*modelId, attr);
+}
+
+void fn_1_2E40(s16 *modelId, u32 attr)
+{
+    Hu3DModelAttrReset(*modelId, attr);
+}
+
+// Placement block: pad, then position, rotation and scale triples.
+struct M536Xform {
+    u8 m_pad[0x18];
+    Vec m_pos;
+    Vec m_rot;
+    Vec m_scale;
+};
+
+void fn_1_2E78(s16 *modelId, M536Xform *xform)
+{
+    s16 id = *modelId;
+
+    Hu3DModelPosSet(id, xform->m_pos.x, xform->m_pos.y, xform->m_pos.z);
+    Hu3DModelRotSet(id, xform->m_rot.x, xform->m_rot.y, xform->m_rot.z);
+    Hu3DModelScaleSet(id, xform->m_scale.x, xform->m_scale.y, xform->m_scale.z);
+}
+
+void fn_1_2EF4(s16 *modelId, Vec *pos)
+{
+    Hu3DModelPosSet(*modelId, pos->x, pos->y, pos->z);
+}
+
+void fn_1_2F3C(s16 *modelId, Vec *rot)
+{
+    Hu3DModelRotSet(*modelId, rot->x, rot->y, rot->z);
+}
+
+void fn_1_2F84(s16 *modelId, Vec *scale)
+{
+    Hu3DModelScaleSet(*modelId, scale->x, scale->y, scale->z);
+}
+
+void fn_1_2FCC(s16 *modelId, f32 scale)
+{
+    Hu3DModelScaleSet(*modelId, scale, scale, scale);
+}
+
+void fn_1_3014(s16 *modelId, f32 lvl)
+{
+    Hu3DModelTPLvlSet(*modelId, lvl);
+}
+
+void fn_1_304C(s16 *modelId, s16 layerNo)
+{
+    Hu3DModelLayerSet(*modelId, layerNo);
+}
+
+void fn_1_3084(s16 *modelId, u16 cameraBit)
+{
+    Hu3DModelCameraSet(*modelId, cameraBit);
+}
+
+void fn_1_30BC(s16 *modelId, void *hookData)
+{
+    Hu3DData[*modelId].hookData = hookData;
+}
+
+Mtx *fn_1_30D8(s16 *modelId)
+{
+    return &Hu3DData[*modelId].mtx;
+}
+
+s16 *fn_1_30F4(s16 *modelId, s16 freeIt)
+{
+    if (modelId != 0) {
+        Hu3DModelKill(*modelId);
+        if (freeIt > 0 && modelId != 0) {
+            HuMemDirectFree(modelId);
+        }
+    }
+    return modelId;
+}
+
+HSFOBJECT *fn_1_3150(s16 *modelId, char *objName)
+{
+    HSFOBJECT *obj;
+
+    obj = Hu3DModelObjPtrGet(*modelId, objName);
+    if (obj != 0) {
+    } else {
+        M536_ASSERT_FAIL("p != NULL", "model.cpp", 0x8A);
+    }
+    return obj;
+}
+
+void fn_1_31E4(s16 *modelId)
+{
+    Hu3DModelShadowSet(*modelId);
+}
+
+void fn_1_3214(s16 *modelId)
+{
+    Hu3DModelShadowMapSet(*modelId);
+}
+
+void fn_1_3244(s16 *modelId, char *objName)
+{
+    Hu3DModelShadowMapObjSet(*modelId, objName);
+}
+
+void fn_1_327C(s16 *modelId)
+{
+    Hu3DModelShadowMapObjReset(*modelId);
+}
+
+void fn_1_32AC(s16 *modelId, char *objName)
+{
+    HSFOBJECT *obj;
+    u32 *flags;
+
+    obj = Hu3DModelObjPtrGet(*modelId, objName);
+    if (obj != 0) {
+    } else {
+        M536_ASSERT_FAIL("p != NULL", "model.cpp", 0x8A);
+    }
+    flags = (u32 *)obj->constData;
+    *flags &= 0xFFFFFFF7;
+}
+
+void fn_1_3358(s16 *modelId, char *objName)
+{
+    HSFOBJECT *obj;
+
+    obj = Hu3DModelObjPtrGet(*modelId, objName);
+    if (obj != 0) {
+    } else {
+        M536_ASSERT_FAIL("p != NULL", "model.cpp", 0x8A);
+    }
+    obj->flags = obj->flags | 0x400;
+}
+
+void fn_1_3400(s16 *modelId, char *objName)
+{
+    HSFOBJECT *obj;
+
+    obj = Hu3DModelObjPtrGet(*modelId, objName);
+    if (obj != 0) {
+    } else {
+        M536_ASSERT_FAIL("p != NULL", "model.cpp", 0x8A);
+    }
+    obj->flags = obj->flags & 0xFFFFFBFF;
+}
+
+void fn_1_34A8(s16 *modelId, char *objName)
+{
+    HSFOBJECT *obj;
+    HSFTRANSFORM *base;
+
+    obj = Hu3DModelObjPtrGet(*modelId, objName);
+    if (obj != 0) {
+    } else {
+        M536_ASSERT_FAIL("p != NULL", "model.cpp", 0x8A);
+    }
+    obj->flags = obj->flags | 0x400;
+    base = &obj->mesh.base;
+    base->scale.x = 0.0f;
+    base->scale.y = 0.0f;
+    base->scale.z = 0.0f;
+}
+
+void fn_1_3584(s16 *modelId, char *objName)
+{
+    HSFOBJECT *obj;
+    HSFTRANSFORM *base;
+
+    obj = Hu3DModelObjPtrGet(*modelId, objName);
+    if (obj != 0) {
+    } else {
+        M536_ASSERT_FAIL("p != NULL", "model.cpp", 0x8A);
+    }
+    obj->flags = obj->flags & 0xFFFFFBFF;
+    base = &obj->mesh.base;
+    base->scale.x = 1.0f;
+    base->scale.y = 1.0f;
+    base->scale.z = 1.0f;
+}
+
+void fn_1_3660(s16 *modelId, s32 time)
+{
+    Hu3DMotionTimeSet(*modelId, (f32)time);
+}
+
 }
