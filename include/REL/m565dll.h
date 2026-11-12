@@ -224,6 +224,9 @@ struct M565Game_s {
     s32 unk387C; // 0x387C
 };
 
+/* DOL */
+s32 rand8(void);
+
 /* m565.c */
 extern M565Game *lbl_1_bss_0;
 extern OMOBJMAN *lbl_1_bss_4;
