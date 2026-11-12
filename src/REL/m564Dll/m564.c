@@ -252,7 +252,7 @@ void fn_1_C50(s16 mode, volatile s16 frameNo) {
 }
 
 void fn_1_C98(s16 mode, s16 frameNo) {
-    s16 i;
+    s32 i;
     s32 cnt;
 
     cnt = 0;
@@ -316,7 +316,7 @@ void fn_1_D00(s16 mode, volatile s16 frameNo) {
 }
 
 void fn_1_F24(s16 mode, volatile s16 frameNo) {
-    s16 i;
+    s32 i;
 
     if (frameNo == 30) {
         lbl_1_bss_20 = 1;
@@ -333,7 +333,6 @@ void fn_1_F24(s16 mode, volatile s16 frameNo) {
 
 void fn_1_FEC(s16 mode, s16 frameNo) {
     s32 i;
-    s16 j;
 
     if (lbl_1_bss_20 == 0) {
         if (frameNo == 0) {
@@ -346,9 +345,9 @@ void fn_1_FEC(s16 mode, s16 frameNo) {
                     fn_1_7210(lbl_1_bss_1E8[i], 0);
                 }
             }
-            for (j = 0; j < 4; j++) {
-                if (fn_1_5E5C(j) == 0) {
-                    omVibrate(lbl_1_bss_100[j]->playerNo, 12, 12, 0);
+            for (i = 0; i < 4; i++) {
+                if (fn_1_5E5C(i) == 0) {
+                    omVibrate(lbl_1_bss_100[i]->playerNo, 12, 12, 0);
                 }
             }
         }
@@ -359,12 +358,12 @@ void fn_1_10F0(s16 mode, s16 frameNo) {
 }
 
 void fn_1_10F4(OMOBJ *obj) {
-    s16 i;
+    s32 i;
 
     MgActorExec();
     for (i = 0; i < 4; i++) {
         if (fn_1_5E5C(i) != 0) {
-            Hu3DModelRotSetV(lbl_1_bss_100[i]->mgPlayer->actor->mdlId, &lbl_1_bss_100[i]->rot);
+            Hu3DModelRotSetV((s16)lbl_1_bss_100[i]->mgPlayer->actor->mdlId, &lbl_1_bss_100[i]->rot);
         }
     }
 }

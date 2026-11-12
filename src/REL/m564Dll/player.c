@@ -403,7 +403,7 @@ s16 fn_1_5FDC(Vec *pos) {
     f32 d;
     f32 best;
     s16 found;
-    s16 i;
+    s32 i;
 
     best = 9999.9f;
     found = -1;

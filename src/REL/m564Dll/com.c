@@ -172,7 +172,7 @@ void fn_1_A008(M564_PLAYER *work) {
 s32 fn_1_A218(M564_PLAYER *work, s16 bombNo) {
     s16 tbl[4] = { 120, 110, 100, 90 };
     f32 d;
-    s16 i;
+    s32 i;
 
     if (fn_1_8D60(bombNo) == 0) {
         return 0;
@@ -196,7 +196,7 @@ s16 fn_1_A38C(M564_PLAYER *work) {
     f32 d;
     f32 best;
     s16 found;
-    s16 i;
+    s32 i;
 
     found = -1;
     best = 9999.9f;
@@ -217,7 +217,7 @@ s16 fn_1_A594(M564_PLAYER *work) {
     f32 d;
     f32 best;
     s16 found;
-    s16 i;
+    s32 i;
 
     found = -1;
     best = 9999.9f;
@@ -243,7 +243,7 @@ s32 fn_1_A678(M564_PLAYER *work) {
 f32 fn_1_A6C0(M564_PLAYER *work) {
     f32 d;
     f32 best;
-    s16 i;
+    s32 i;
 
     best = 9999.9f;
     for (i = 0; i < 4; i++) {
@@ -279,13 +279,17 @@ s32 fn_1_A8D8(M564_PLAYER *work, s32 chase) {
     f32 cur;
     f32 diff;
     f32 rot;
+    f32 dist;
+    f32 ang;
 
-    if (fn_1_13F0(&work->pos, &work->comTarget, &v) < 10.0f) {
+    dist = fn_1_13F0(&work->pos, &work->comTarget, &v);
+    if (dist < 10.0f) {
         return 1;
     }
     if (chase != 0) {
         cur = work->mgPlayer->actor->rotY;
-        diff = fn_1_1338(cur, fn_1_12D4(&work->pos, &work->comTarget));
+        ang = fn_1_12D4(&work->pos, &work->comTarget);
+        diff = fn_1_1338(cur, ang);
         if (fabs(diff) < 15.0) {
             rot = cur + diff;
         } else if (diff < 0.0f) {
@@ -339,7 +343,7 @@ s32 fn_1_AB2C(M564_PLAYER *work, M564_PLAYER *other) {
 
 s32 fn_1_AD38(M564_PLAYER *work) {
     s32 tbl[4] = { 0, 30, 60, 100 };
-    s16 i;
+    s32 i;
 
     if (frandmod(100) < tbl[work->varNo]) {
         for (i = 0; i < 4; i++) {

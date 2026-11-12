@@ -354,7 +354,7 @@ void fn_1_7154(M564_BOMB *bomb) {
 
 void fn_1_7210(M564_BOMB *bomb, s32 sound) {
     Vec p;
-    s16 i;
+    s32 i;
     f32 d;
 
     if (bomb->state != 7) {
@@ -499,7 +499,7 @@ s16 fn_1_8340(Vec *pos, f32 rotY) {
     f32 d;
     f32 best;
     s16 found;
-    s16 i;
+    s32 i;
 
     best = 9999.0f;
     found = -1;
@@ -608,7 +608,7 @@ s32 fn_1_8D60(s16 bombNo) {
 }
 
 void fn_1_8DEC(void) {
-    s16 i;
+    s32 i;
 
     for (i = 0; i < 15; i++) {
         if (fn_1_8D60(i) != 0) {
@@ -731,7 +731,7 @@ void fn_1_95D4(void) {
 }
 
 s16 fn_1_9810(void) {
-    s16 list[10];
+    s32 list[10];
     s32 cnt;
     s32 i;
 
