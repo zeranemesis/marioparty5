@@ -136,4 +136,18 @@ struct M580Body_s {
 };
 
 
+/* ---- ground shadow decal entry (effect.c), embedded in the player work block ---- */
+#include "game/sprite.h"
+
+typedef struct M580Shadow_s {
+    /* 0x00 */ s32 active;
+    /* 0x04 */ s32 charNo;
+    /* 0x08 */ s32 team;
+    /* 0x0C */ HuVecF *pos;
+    /* 0x10 */ HuVecF *ofs;
+    /* 0x14 */ f32 *rot;
+    /* 0x18 */ ANIMDATA *anim;
+    /* 0x1C */ s32 frame;
+} M580_SHADOW;
+
 #endif
