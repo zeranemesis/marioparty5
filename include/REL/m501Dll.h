@@ -317,6 +317,7 @@ class __vector_pod {
 public:
     void insert(T *pos, unsigned long n, const T &value);
     void reserve(unsigned long n);
+    T *at(unsigned long idx);
 
     /* the original inlines these tiny helpers (and spills their temporaries) */
     unsigned long max_size_raw() { return 0xFFFFFFFFUL / sizeof(T); }
@@ -543,36 +544,6 @@ private:
     f32 m_angle;
 };
 
-class CPlayer : public CGameObject {
-public:
-    CPlayer(int playerNo);
-    virtual ~CPlayer();
-    virtual void on_new_mode(int mode);
-
-    static s32 ComparePlayer(CLinkNode *a, CLinkNode *b);
-    static void UpdateAll();
-    static void Close();
-    static bool CheckWinIdle();
-    static bool StartPlayerWin();
-    static void startWinnerMove();
-    static void PlayerShow();
-    static void GetPlayerDist(std::vector<HuVec2f_s> *out);
-    static void execPlayerList(CLinkList *list, void (*func)(CPlayer *));
-    static void execPlayerList(CPlayer *first, CLinkList *list, void (*func)(CPlayer *));
-
-    void proc_main();
-    void proc_shrink_cone();
-    void getMoveDir(Vec *dir);
-    void movePlayer(Vec *dir);
-
-    /* the remaining fields are not decoded yet (player.cpp is unfinished) */
-    u8 m_pad10[0x24 - 0x10];
-    s32 m_compareValue; // 0x24
-    u8 m_pad28[0x44 - 0x28];
-    f32 m_coneScale; // 0x44
-    u8 m_pad48[0x14C - 0x48];
-};
-
 class CJoint {
 public:
     CJoint();
@@ -591,6 +562,91 @@ public:
     CJoint *m_next;  // 0x68
     CJoint *m_prev;  // 0x6C
     u8 m_locked;     // 0x70 matrix needs recomputing
+};
+
+struct CCircle {
+    Vec m_pos;
+    f32 m_radius;
+};
+
+class CPlayer : public CLinkNode {
+public:
+    typedef void (CPlayer::*PROC)();
+
+    CPlayer(int playerNo);
+    ~CPlayer() {}
+
+    static s32 ComparePlayer(CLinkNode *a, CLinkNode *b);
+    static void UpdateAll();
+    static void Close();
+    static bool CheckWinIdle();
+    static bool StartPlayerWin();
+    static void startWinnerMove();
+    static void PlayerShow();
+    static void GetPlayerDist(std::vector<HuVec2f_s> *out);
+    static s16 getVoicePan(Vec *pos);
+    static void GetStartPos(Vec *out, int playerNo);
+    static void UpdatePlayer(CPlayer *player);
+    static void CheckAisu(CPlayer *player);
+    static f32 SubAngle(f32 a, f32 b);
+    static f32 SubAngleMax(f32 a, f32 b, f32 max);
+    static void SortPlayerList();
+    static void GetStickData(char *x, char *y, char min, char max);
+    static void execPlayerList(CLinkList *list, void (*func)(CPlayer *));
+    static void execPlayerList(CPlayer *first, CPlayer *end, void (*func)(CPlayer *));
+
+    void createMotion(int dataNum);
+    void doStageCollide();
+    void getJointPos(Vec *out);
+    void startConeDrop(int handle);
+    s32 centerAisu();
+    void updateComTargetPos();
+    void shrinkCone();
+    void setMotion(int idx, bool loop);
+    void proc_hold_cone();
+    void proc_main();
+    void proc_drop_cone_start();
+    void proc_drop_cone();
+    void proc_winner_move();
+    void proc_lose();
+    void proc_win();
+    void proc_shrink_cone();
+    f32 getWinAngleSpeed(f32 a, f32 b);
+    s32 movePlayer(Vec *dir);
+    void getMoveDir(Vec *dir);
+    void clampMag();
+    void getComMoveDir(Vec *dir);
+
+    PROC m_proc;              // 0x08
+    s32 m_playerNo;           // 0x14
+    s32 m_charNo;             // 0x18
+    s32 m_padNo;              // 0x1C
+    f32 m_speed;              // 0x20
+    s32 m_score;              // 0x24
+    u8 m_isWinner;            // 0x28
+    s32 m_coneHandle;         // 0x2C
+    s32 m_waitTimer;          // 0x30
+    s32 m_timer34;            // 0x34
+    f32 m_angle;              // 0x38
+    f32 m_targetAngle;        // 0x3C
+    f32 m_moveMag;            // 0x40
+    f32 m_coneScale;          // 0x44
+    CCircle m_circle;         // 0x48 position and radius
+    Mtx m_mtx;                // 0x58
+    Vec m_lastPos;            // 0x88
+    s32 m_stepCount;          // 0x94
+    u8 m_running;             // 0x98
+    CModel m_model;           // 0x9A
+    CModel m_cone;            // 0x9C
+    CJoint m_joint;           // 0xA0
+    CJoint *m_coneJoint;      // 0x114
+    s32 m_motion;             // 0x118
+    std::vector<int> m_motIds; // 0x11C
+    s32 m_comTimer;           // 0x128
+    s32 m_pad12C;             // 0x12C
+    Vec m_comTarget;          // 0x130
+    s32 m_comAisu;            // 0x13C
+    Vec m_comLocal;           // 0x140
 };
 
 struct CAisuDrawData {

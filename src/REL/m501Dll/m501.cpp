@@ -1306,11 +1306,6 @@ void COMObj::OmObjDelete(Process_s *proc, omObj_s *obj)
     omDelObjEx(proc, obj);
 }
 
-struct CCircle {
-    Vec m_pos;
-    f32 m_radius;
-};
-
 extern "C" bool fn_1_4F0C(CCircle *a, CCircle *b)
 {
     Vec delta;
