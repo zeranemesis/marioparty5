@@ -1066,7 +1066,7 @@ void MdMessMain(MDMESS_WORK *mess)
     }
 }
 
-void MdMessKill(void)
+void MdMessKill(MDMESS_WORK *mess)
 {
     HuWinAllKill();
 }

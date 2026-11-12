@@ -1,56 +1,74 @@
 // mdcardDll/mdcard - decompilation of the mdcardDll/mdcard unit (46528 B, 39 fns).
-// _prolog, _epilog, MdMain, fn_1_9A0, fn_1_A204 and fn_1_942C match; the rest are absent.
+// Done: _prolog, _epilog, ObjectSetup, MdMain, fn_1_9A0, LoadProc, MdInit, MdClose, fn_1_DD8,
+// fn_1_942C, fn_1_A204. Still to write (address order): fn_1_1058, fn_1_1448, fn_1_1DF0, fn_1_22B8,
+// fn_1_2A3C, fn_1_44F8..fn_1_4F80, fn_1_61F8..fn_1_78C4, fn_1_7DA0, fn_1_80A8, fn_1_84AC, fn_1_9100,
+// fn_1_951C, fn_1_9714, fn_1_98C8, fn_1_9A70, fn_1_9CC8, fn_1_9E88, fn_1_A094, fn_1_A2BC, MdPosAdjustMode.
 
-#include "types.h"
-#include "game/object.h"
-#include "game/process.h"
+#include "REL/mdcardDll/mdcard.h"
+#include "datadir_enum.h"
+#include "game/hsfex.h"
+#include "game/gamework.h"
+#include "game/wipe.h"
+#include "dolphin/os.h"
+#include "math.h"
 
 typedef void (*VoidFunc)(void);
-typedef void (*MD_FUNC)(void);
 
 extern const VoidFunc _ctors[];
 extern const VoidFunc _dtors[];
 
-/* sys + 0x98: the pad-input message state block (mode at +0, choice at +2). */
-typedef struct MdcardMsg_s {
-    s16 mode;   //0x00
-    s16 choice; //0x02
-} MdcardMsg;
+void MdObjDebugFontCreate(OMOBJ *obj);
+void MdObjPadMain(OMOBJ *obj);
+void MdObjCameraCreate(OMOBJ *obj);
+void MdObjLightCreate(OMOBJ *obj);
+void MdObjShadowCreate(OMOBJ *obj);
+void MdObjMessCreate(OMOBJ *obj);
+void MdMathStdCurveInit(void);
+void MdMessKill(MDMESS_WORK *mess);
+s16 MdMessWinChoiceGet(MDMESS_WORK *mess, int winNo);
+void MdSpriteCreate(MDSPRITE_WORK *sprite);
+void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
+void MdToueiMdlInit(void);
 
-typedef struct Sys_s {
-    u8 pad0[0x0C];
-    s32 counter;  //0x0C
-    s32 flowMode; //0x10
-    u8 pad14[8];
-    s8 exitF;     //0x1C
-    u8 pad1D[0x63];
-    void *unk80;  //0x80
-    u8 pad84[8];
-    void *mess;   //0x8C
-    u8 pad90[4];
-    void *unk94;  //0x94
-    MdcardMsg msg; //0x98
-    u8 pad9C[0x338];
-} SYS;
+void ObjectSetup(void);
+void MdMain(void);
+void MdInit(void);
+void MdClose(void);
+void fn_1_9A0(void);
+void LoadProc(void);
+void fn_1_DD8(void);
+void fn_1_1058(void);
+void fn_1_1448(void);
+void fn_1_1DF0(void);
+void fn_1_22B8(void);
+void fn_1_2A3C(void);
+s32 fn_1_44F8(void);
+s32 fn_1_461C(void);
+s32 fn_1_4944(s32 arg0);
+s32 fn_1_4C00(s32 arg0);
+s32 fn_1_4DC8(s32 arg0);
+s32 fn_1_4F80(s32 arg0);
+s32 fn_1_61F8(s32 arg0);
+s32 fn_1_6B0C(s32 arg0);
+s32 fn_1_71B8(s32 arg0);
+s32 fn_1_78C4(s32 arg0);
+void fn_1_7DA0(void);
+void fn_1_84AC(void);
+void fn_1_9100(void);
+void fn_1_98C8(void);
+void fn_1_A094(s32 arg0);
+
+void (*MdFlowTbl[6])(void) = {
+    fn_1_DD8, fn_1_1058, fn_1_1448, fn_1_1DF0, fn_1_22B8, fn_1_2A3C
+};
+
+s32 (*MdProcTbl[10])() = {
+    fn_1_44F8, fn_1_461C, fn_1_4944, fn_1_4C00, fn_1_4DC8, fn_1_4F80, fn_1_61F8, fn_1_6B0C, fn_1_71B8, fn_1_78C4
+};
 
 SYS sysWork;
 SYS *sys;
 SYS *sysP;
-
-MD_FUNC MdFlowTbl[6];
-
-f32 lbl_1_rodata_DC = 32.0f;
-f32 lbl_1_rodata_104 = 0.1111111119389534f;
-f64 lbl_1_rodata_98 = 3.14159265358979323846;
-f64 lbl_1_rodata_A0 = 180.0;
-
-void ObjectSetup(void);
-void MdInit(void);
-void MdClose(void);
-void fn_1_84AC(void);
-void Hu3D3Dto2D(f32 *src, u16 cameraBit, f32 *dst);
-f64 atan2(f64 y, f64 x);
-s16 MdMessWinChoiceGet(void *mess, int winNo);
 
 int _prolog(void)
 {
@@ -74,6 +92,90 @@ void _epilog(void)
     }
 }
 
+void ObjectSetup(void)
+{
+    sys = &sysWork;
+    sysP = sys;
+    sys->step = 0;
+    sys->subStep = 0;
+    sys->unk8 = 0;
+    sys->counter = 0;
+    sys->flowMode = 0;
+    sys->ovlMode = 0;
+    sys->ovlNo = 0x70;
+    sys->exitF = 0;
+    sys->skipWipeF = 0;
+    sys->objman = omInitObjMan(512, 8192);
+    omGameSysInit(sys->objman);
+    sys->obj[MDCARD_OBJ_DEBUGFONT] = omAddObjEx(sys->objman, 100, 0, 0, -1, MdObjDebugFontCreate);
+    sys->obj[MDCARD_OBJ_DEBUGFONT]->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDDEBUGFONT_WORK), HU_MEMNUM_OVL);
+    if(!sys->obj[MDCARD_OBJ_DEBUGFONT]->data) {
+        OSReport("sys->obj[MDCARD_OBJ_DEBUGFONT]->data = NULL...\n");
+    }
+    sys->debugFont = sys->obj[MDCARD_OBJ_DEBUGFONT]->data;
+    sys->debugFont->createF = FALSE;
+    sys->obj[MDCARD_OBJ_PAD] = omAddObjEx(sys->objman, 101, 0, 0, -1, MdObjPadMain);
+    sys->obj[MDCARD_OBJ_PAD]->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDPAD_WORK), HU_MEMNUM_OVL);
+    if(!sys->obj[MDCARD_OBJ_PAD]->data) {
+        OSReport("sys->obj[MDCARD_OBJ_PAD]->data = NULL...\n");
+    }
+    sys->padWork = sys->obj[MDCARD_OBJ_PAD]->data;
+    sys->obj[MDCARD_OBJ_CAMERA] = omAddObjEx(sys->objman, 102, 0, 0, -1, MdObjCameraCreate);
+    sys->obj[MDCARD_OBJ_CAMERA]->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDCAMERA_WORK), HU_MEMNUM_OVL);
+    if(!sys->obj[MDCARD_OBJ_CAMERA]->data) {
+        OSReport("sys->obj[MDCARD_OBJ_CAMERA]->data = NULL...\n");
+    }
+    sys->camera = sys->obj[MDCARD_OBJ_CAMERA]->data;
+    sys->camera->createF = FALSE;
+    sys->camera->debugFont = sys->debugFont;
+    sys->obj[MDCARD_OBJ_LIGHT] = omAddObjEx(sys->objman, 103, 0, 0, -1, MdObjLightCreate);
+    sys->obj[MDCARD_OBJ_LIGHT]->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDLIGHT_WORK), HU_MEMNUM_OVL);
+    if(!sys->obj[MDCARD_OBJ_LIGHT]->data) {
+        OSReport("sys->obj[MDCARD_OBJ_LIGHT]->data = NULL...\n");
+    }
+    sys->light = sys->obj[MDCARD_OBJ_LIGHT]->data;
+    sys->light->createF = FALSE;
+    sys->light->debugFont = sys->debugFont;
+    sys->obj[MDCARD_OBJ_SHADOW] = omAddObjEx(sys->objman, 104, 0, 0, -1, MdObjShadowCreate);
+    sys->obj[MDCARD_OBJ_SHADOW]->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDSHADOW_WORK), HU_MEMNUM_OVL);
+    if(!sys->obj[MDCARD_OBJ_SHADOW]->data) {
+        OSReport("sys->obj[MDCARD_OBJ_SHADOW]->data = NULL...\n");
+    }
+    sys->shadow = sys->obj[MDCARD_OBJ_SHADOW]->data;
+    sys->shadow->createF = FALSE;
+    sys->shadow->debugFont = sys->debugFont;
+    sys->obj[MDCARD_OBJ_MESS] = omAddObjEx(sys->objman, 105, 0, 0, -1, MdObjMessCreate);
+    sys->obj[MDCARD_OBJ_MESS]->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDMESS_WORK), HU_MEMNUM_OVL);
+    if(!sys->obj[MDCARD_OBJ_MESS]->data) {
+        OSReport("sys->obj[MDCARD_OBJ_MESS]->data = NULL...\n");
+    }
+    sys->mess = sys->obj[MDCARD_OBJ_MESS]->data;
+    sys->mess->createF = FALSE;
+    sys->sprite = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDSPRITE_WORK), HU_MEMNUM_OVL);
+    if(!sys->sprite) {
+        OSReport("sys->sprite = NULL...\n");
+    }
+    sys->model = HuMemDirectMallocNum(HEAP_HEAP, sizeof(MDMODEL_WORK), HU_MEMNUM_OVL);
+    if(!sys->model) {
+        OSReport("sys->model = NULL...\n");
+    }
+    MdMathStdCurveInit();
+    Hu3DBGColorSet(0, 0, 0);
+    Hu3DNoSyncSet(0);
+    while(1) {
+        if(sys->debugFont->createF == TRUE && sys->camera->createF == TRUE && sys->light->createF == TRUE
+            && sys->shadow->createF == TRUE && sys->mess->createF == TRUE) {
+            break;
+        }
+        HuPrcVSleep();
+    }
+    sys->mainProc = HuPrcChildCreate(MdMain, 107, 12288, 0, sys->objman);
+    sys->loadState = 0;
+    sys->loadAsyncStat = 0;
+    sys->loadDirNo = DATA_mdsel;
+    sys->loadProc = HuPrcChildCreate(LoadProc, 110, 12288, 0, sys->objman);
+}
+
 void MdMain(void)
 {
     MdInit();
@@ -90,8 +192,8 @@ void MdMain(void)
 
 void fn_1_9A0(void)
 {
-    void *win;
-    MdcardMsg *msg;
+    MDMESS_WORK *win;
+    MDCARD_MSG *msg;
 
     win = sys->mess;
     msg = &sys->msg;
@@ -111,43 +213,122 @@ void fn_1_9A0(void)
         HuPrcVSleep();
     }
 }
-s32 fn_1_A204(s32 arg0, s32 arg1)
+
+void LoadProc(void)
 {
-    f32 dst[3];
-    u16 *ent;
-    void *b94;
-    void *b80;
-    void *obj;
+    OSTick tick;
+
+    while(1) {
+        switch(sys->loadState) {
+            case 0:
+                break;
+
+            case 1:
+                tick = OSGetTick();
+                sys->loadAsyncStat = HuDataDirReadAsync(sys->loadDirNo);
+                while(!HuDataGetAsyncStat(sys->loadAsyncStat)) {
+                    HuPrcVSleep();
+                }
+                OSReport("Load Time:%d\n", OSTicksToMilliseconds(OSGetTick()-tick));
+                OSReport("Finished!\n");
+                sys->loadState = 2;
+                break;
+
+            case 2:
+                HuPrcEnd();
+                break;
+        }
+        HuPrcVSleep();
+    }
+}
+
+void MdInit(void)
+{
+    MDCARD_SLOT *slot;
+    MDCARD_CELL *cell;
+    int i;
+    int j;
+
+    MdSpriteCreate(sys->sprite);
+    HuPrcVSleep();
+    MdModelCreate(sys->model, sys->camera);
+    HuPrcVSleep();
+    HuDataDirClose(DATA_mdcard);
+    HuPrcVSleep();
+    MdToueiMdlInit();
+    sys->unk38C = 0;
+    sys->unk390 = 1;
+    sys->unk5C = HuPrcChildCreate(fn_1_7DA0, 109, 12288, 0, sys->objman);
+    for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
+        cell->unk0 = 0;
+    }
+    sys->unk58 = HuPrcChildCreate(fn_1_9100, 108, 4096, 0, sys->objman);
+    for(slot=&sys->unk9C[0], j=0; j<7; j++, slot++) {
+        slot->unk0 = 0;
+        slot->unk4 = 0;
+    }
+    HuPrcVSleep();
+}
+
+void MdClose(void)
+{
+    if(sys->skipWipeF == 0) {
+        WipeCreate(2, 0, 60);
+        while(WipeCheckEnd()) {
+            HuPrcVSleep();
+        }
+    }
+    fn_1_A094(13);
+    MdMessKill(sys->mess);
+    if(sys->ovlMode == 0) {
+        omOvlGotoEx(sys->ovlNo, 1, 0, 0);
+    } else if(sys->ovlMode == 1) {
+        omOvlCallEx(sys->ovlNo, 1, 0, 0);
+    } else if(sys->ovlMode == 2) {
+        omOvlReturnEx(1, 1);
+    }
+    HuPrcEnd();
+    while(1) {
+        HuPrcVSleep();
+    }
+}
+
+void fn_1_942C(s32 modelNo, s32 cameraNo)
+{
+    HuVecF d;
+    MDCAMERA *cam;
+    HuVecF *pos;
+    MDMODEL_WORK *model;
+    HuVecF *rot;
+    MDCAMERA_WORK *camWork;
+    float out;
+
+    camWork = sys->camera;
+    cam = &camWork->camera[cameraNo];
+    model = sys->model;
+    pos = model->posP[modelNo];
+    rot = model->rotP[modelNo];
+    d.x = cam->pos.x - pos->x;
+    d.y = cam->pos.y - pos->y;
+    d.z = cam->pos.z - pos->z;
+    out = (float)(atan2(d.x, d.z)/M_PI*180.0);
+    rot->y = out;
+}
+
+s32 fn_1_A204(s32 modelNo, s32 cameraNo)
+{
+    HuVecF dst;
+    u16 *bit;
+    MDMODEL_WORK *model;
+    MDCAMERA_WORK *camWork;
+    HuVecF *pos;
     s32 ret;
 
-    b80 = sys->unk80;
-    ent = (u16 *)((u8 *)b80 + arg1 * 0x88 + 8);
-    b94 = sys->unk94;
-    obj = *(void * const *)((u8 *)b94 + arg0 * 4 + 0xA8);
-    Hu3D3Dto2D((f32 *)obj, *ent, dst);
-    ret = (s32)(lbl_1_rodata_DC + lbl_1_rodata_104 * dst[0]);
+    camWork = sys->camera;
+    bit = &camWork->camera[cameraNo].bit;
+    model = sys->model;
+    pos = model->posP[modelNo];
+    Hu3D3Dto2D(pos, *bit, &dst);
+    ret = (s32)(32.0f+(1.0f/9.0f)*dst.x);
     return ret;
 }
-
-void fn_1_942C(s32 arg0, s32 arg1)
-{
-    f32 d[3];
-    u8 *ent;
-    void *obj1;
-    void *b94;
-    void *obj2;
-    void *b80;
-    f32 out;
-
-    b80 = sys->unk80;
-    ent = (u8 *)b80 + arg1 * 0x88 + 8;
-    b94 = sys->unk94;
-    obj1 = *(void * const *)((u8 *)b94 + arg0 * 4 + 0xA8);
-    obj2 = *(void * const *)((u8 *)b94 + arg0 * 4 + 0x144);
-    d[0] = ((f32 *)ent)[2] - ((f32 *)obj1)[0];
-    d[1] = ((f32 *)ent)[3] - ((f32 *)obj1)[1];
-    d[2] = ((f32 *)ent)[4] - ((f32 *)obj1)[2];
-    out = (f32)(atan2(d[0], d[2]) / lbl_1_rodata_98 * lbl_1_rodata_A0);
-    ((f32 *)obj2)[1] = out;
-}
-

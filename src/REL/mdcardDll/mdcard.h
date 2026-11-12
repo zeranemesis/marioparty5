@@ -236,17 +236,57 @@ typedef struct MdSpriteWork_s {
     float fadeAlpha; //0x3C
 } MDSPRITE_WORK;
 
-/* Offsets recovered from the original overlay's sys-> accesses. */
+/* Offsets recovered from the original overlay's sys-> accesses (GC layout;
+ * pointer members are real pointers so offsets after 0x44 differ on PC). */
+enum {
+    MDCARD_OBJ_DEBUGFONT,
+    MDCARD_OBJ_PAD,
+    MDCARD_OBJ_CAMERA,
+    MDCARD_OBJ_LIGHT,
+    MDCARD_OBJ_SHADOW,
+    MDCARD_OBJ_MESS,
+    MDCARD_OBJ_MAX
+};
+
+typedef struct MdCardMsg_s {
+    s16 mode;   //0x00
+    s16 choice; //0x02
+} MDCARD_MSG;
+
+typedef struct MdCardSlot_s {
+    s32 unk0; //0x00
+    s32 unk4; //0x04
+    u8 pad8[0x60 - 0x8];
+} MDCARD_SLOT;
+
+typedef struct MdCardCell_s {
+    s32 unk0; //0x00
+    u8 pad4[0x14 - 0x4];
+} MDCARD_CELL;
+
 typedef struct Sys_s {
-    s32 unk0;                  //0x00
-    s32 unk4;                  //0x04
+    s32 step;                  //0x00
+    s32 subStep;               //0x04
     s32 unk8;                  //0x08
     s32 counter;               //0x0C
     s32 flowMode;              //0x10
-    s32 unk14;                 //0x14
-    s32 unk18;                 //0x18
+    s32 ovlMode;               //0x14 0 = goto, 1 = call, 2 = return
+    s32 ovlNo;                 //0x18
     s8 exitF;                  //0x1C
-    u8 pad1D[0x78 - 0x1D];     //0x1D
+    s8 skipWipeF;              //0x1D
+    s8 unk1E;                  //0x1E
+    s8 unk1F;                  //0x1F
+    u8 pad20[0x40 - 0x20];     //0x20
+    s16 loadState;             //0x40
+    s16 loadAsyncStat;         //0x42
+    s32 loadDirNo;             //0x44
+    OMOBJMAN *objman;          //0x48
+    HUPROCESS *mainProc;       //0x4C
+    HUPROCESS *unk50;          //0x50
+    HUPROCESS *loadProc;       //0x54
+    HUPROCESS *unk58;          //0x58
+    HUPROCESS *unk5C;          //0x5C
+    OMOBJ *obj[MDCARD_OBJ_MAX]; //0x60
     MDDEBUGFONT_WORK *debugFont; //0x78
     MDPAD_WORK *padWork;       //0x7C
     MDCAMERA_WORK *camera;     //0x80
@@ -255,9 +295,12 @@ typedef struct Sys_s {
     MDMESS_WORK *mess;         //0x8C
     MDSPRITE_WORK *sprite;     //0x90
     MDMODEL_WORK *model;       //0x94
-    s16 msgMode;               //0x98
-    s16 msgChoice;             //0x9A
-    u8 pad9C[0x3CC - 0x9C];    //0x9C
+    MDCARD_MSG msg;            //0x98
+    MDCARD_SLOT unk9C[7];      //0x9C (msg lives at 0x98; slots follow at 0x9C)
+    MDCARD_CELL unk33C[4];     //0x33C
+    s32 unk38C;                //0x38C
+    s32 unk390;                //0x390
+    u8 pad394[0x3D4 - 0x394];  //0x394
 } SYS;
 
 extern SYS *sys;
