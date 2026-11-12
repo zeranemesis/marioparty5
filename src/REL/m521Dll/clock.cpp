@@ -59,6 +59,12 @@ CHandSlot *fn_1_54C(CHandSlot *self, s16 flag);
 void fn_1_5A4(CHandSlot *self);
 void fn_1_5D0(s32 *self);
 CClock *fn_1_5DC(CClock *self, s16 flag);
+#ifdef TARGET_PC
+u32 m521ClockSize(void)
+{
+    return sizeof(CClock);
+}
+#endif
 void fn_1_658(CClock *self, M521Vec *out, s32 idx);
 void fn_1_6B8(CClock *self, M521Vec *out, s32 idx, f32 along, f32 side);
 void fn_1_7A0(CClock *self);

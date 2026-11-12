@@ -194,6 +194,13 @@ typedef struct SortPivot {
 u32 *fn_1_13898(u32 *first, u32 *last, SortPivot *cmp);
 u32 *fn_1_13BA4(u32 *first, u32 *last, SortPivot *cmp);
 
+#ifdef TARGET_PC
+u32 m521GameMasterSize(void)
+{
+    return sizeof(GameMaster);
+}
+#endif
+
 GameMaster *fn_1_11520(GameMaster *self)
 {
     CListNode *list;
