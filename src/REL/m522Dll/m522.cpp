@@ -1630,7 +1630,8 @@ u32 fn_1_A6A4(M522RRand *r)
     y ^= y >> 11;
     y ^= (y << 7) & 0x9D2C5680;
     y ^= (y << 15) & 0xEFC60000;
-    return y ^ (y >> 18);
+    y ^= (y >> 18);
+    return y;
 }
 
 u32 fn_1_A830(M522RRand *r)
@@ -1665,7 +1666,10 @@ f64 fn_1_AF24(M522RRand *r)
 
 f32 fn_1_B29C(M522RRand *r)
 {
-    return 1.1920929e-7f * (f32)(fn_1_A6A4(r) >> 9);
+    u32 v;
+
+    v = fn_1_A6A4(r) >> 9;
+    return 1.1920929e-7f * (f32)v;
 }
 
 // ---------------------------------------------------------------- allocation / functor objects
@@ -1771,7 +1775,10 @@ u32 fn_1_B880(void)
 
 f32 fn_1_BABC(void)
 {
-    return 1.1920929e-7f * (f32)(fn_1_A6A4(&lbl_1_bss_44) >> 9);
+    u32 v;
+
+    v = fn_1_A6A4(&lbl_1_bss_44) >> 9;
+    return 1.1920929e-7f * (f32)v;
 }
 
 f32 fn_1_BD30(f32 scale)
