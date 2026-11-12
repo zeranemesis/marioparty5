@@ -31,6 +31,23 @@ void MdSpriteCreate(MDSPRITE_WORK *sprite);
 void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
 void MdToueiMdlInit(void);
 
+void MdMessWinOpen(MDMESS_WORK *mess, int winNo, float posX, float posY, s16 w, s16 h, float bgTPLvl, s16 drawNo);
+void MdMessWinClose(MDMESS_WORK *mess, int winNo);
+void MdMessWinKill(MDMESS_WORK *mess, int winNo);
+void MdMessWinPosSet(MDMESS_WORK *mess, int winNo, float posX, float posY);
+void MdMessWinHomeClear(MDMESS_WORK *mess, int winNo);
+void MdMessWinMesSet(MDMESS_WORK *mess, int winNo, u32 mesNo);
+void MdMessWinInsertMesSet(MDMESS_WORK *mess, int winNo, u32 mesNo, u32 insertMesNo);
+BOOL MdMessWinCheck(MDMESS_WORK *mess, int winNo);
+s16 MdMessWinChoiceNowGet(MDMESS_WORK *mess, int winNo);
+void MdMessWinChoiceNowSet(MDMESS_WORK *mess, int winNo, s16 choice);
+void MdMessWinAttrSet(MDMESS_WORK *mess, int winNo, u32 attr);
+void MdMessWinAttrReset(MDMESS_WORK *mess, int winNo, u32 attr);
+void MdMessHelpWinCreate(MDMESS_WORK *mess, int winNo, u32 mesNo, float posX, float posY, s16 w, s16 h, float bgTPLvl, s16 drawNo);
+void MdSpriteDispSet(MDSPRITE_WORK *sprite, int grpNo, BOOL dispF);
+HuVec2f *MdSpritePosGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
+HuVec2f *MdSpriteScaleGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
+
 void ObjectSetup(void);
 void MdMain(void);
 void MdInit(void);
@@ -343,6 +360,322 @@ void fn_1_DD8(void)
     sys->step = 0;
     sys->subStep = 0;
     sys->flowMode = 1;
+}
+
+// remaining diff: WipeCheckEnd result kept in r0 instead of r30
+void fn_1_1058(void)
+{
+    MDMESS_WORK *mess;
+    int stat;
+    MDMODEL_WORK *model;
+
+    model = sys->model;
+    mess = sys->mess;
+    switch(sys->step) {
+        case 0:
+            MdProcTbl[0](0);
+            sys->step = 6;
+            break;
+
+        case 6:
+            stat = MdProcTbl[1](0);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 8;
+            }
+            break;
+
+        case 8:
+            MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
+            MdMessWinMesSet(mess, 2, 0x150000);
+            fn_1_A094(11);
+            sys->unk390 = 2;
+            sys->step = 1;
+            break;
+
+        case 1:
+            stat = MdMessWinCheck(mess, 2);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150001);
+                sys->step = 2;
+            }
+            break;
+
+        case 2:
+            stat = MdMessWinChoiceGet(mess, 2);
+            if(stat == -1) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150002);
+                sys->step = 3;
+            } else if(stat == 0) {
+                MdMessWinKill(mess, 2);
+                sys->step = 0;
+                sys->flowMode = 2;
+            } else if(stat == 1) {
+                sys->step = 0;
+                sys->flowMode = 3;
+            }
+            break;
+
+        case 3:
+            stat = MdMessWinChoiceGet(mess, 2);
+            if(stat == -1 || stat == 1) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150001);
+                sys->step = 2;
+            } else if(stat == 0) {
+                fn_1_A094(1);
+                WipeColorSet(255, 255, 255);
+                WipeCreate(2, 0, 30);
+                sys->loadState = 1;
+                sys->loadDirNo = DATA_mdomake;
+                sys->step = 4;
+            }
+            break;
+
+        case 4:
+            if(WipeCheckEnd() == 0) {
+                sys->step = 5;
+            }
+            break;
+
+        case 5:
+            if(sys->loadState == 2) {
+                sys->ovlMode = 2;
+                sys->ovlNo = 0x5E;
+                sys->skipWipeF = 1;
+                sys->exitF = 1;
+            }
+            break;
+    }
+}
+
+// remaining diff: r30/r31 swap between mess and stat (register allocation)
+void fn_1_1448(void)
+{
+    MDMODEL_WORK *model;
+    int i;
+    int stat;
+    MDMESS_WORK *mess;
+
+    model = sys->model;
+    mess = sys->mess;
+    if((HuPadBtnDown[0] & 0x200) != 0 && (sys->step != 0 || sys->step != 0x16)) {
+        sys->step = 0x16;
+    }
+    switch(sys->step) {
+        case 0:
+            MdProcTbl[0](0);
+            MdMessWinOpen(mess, 1, 64.0f, 160.0f, 0x1C0, 0x60, 1.0f, 0x40);
+            MdMessWinMesSet(mess, 1, 0x140000);
+            sys->step = 1;
+            break;
+
+        case 1:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140001);
+                sys->step = 2;
+            }
+            break;
+
+        case 2:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140002);
+                sys->step = 3;
+            }
+            break;
+
+        case 3:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                sys->step = 4;
+            }
+            break;
+
+        case 4:
+            stat = MdProcTbl[2](0x21);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinMesSet(mess, 1, 0x140003);
+                sys->step = 5;
+            }
+            break;
+
+        case 5:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                sys->step = 6;
+            }
+            break;
+
+        case 6:
+            stat = MdProcTbl[4](0x21);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 7;
+            }
+            break;
+
+        case 7:
+            stat = MdProcTbl[2](0x22);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140004);
+                sys->step = 8;
+            }
+            break;
+
+        case 8:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                sys->step = 9;
+            }
+            break;
+
+        case 9:
+            stat = MdProcTbl[4](0x22);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 10;
+            }
+            break;
+
+        case 10:
+            stat = MdProcTbl[2](0x23);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140005);
+                sys->step = 11;
+            }
+            break;
+
+        case 11:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                sys->step = 12;
+            }
+            break;
+
+        case 12:
+            stat = MdProcTbl[4](0x23);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 13;
+            }
+            break;
+
+        case 13:
+            stat = MdProcTbl[2](0x24);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140009);
+                sys->step = 14;
+            }
+            break;
+
+        case 14:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                sys->step = 15;
+            }
+            break;
+
+        case 15:
+            stat = MdProcTbl[3](0x24);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x14000A);
+                sys->step = 16;
+            }
+            break;
+
+        case 16:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                sys->step = 17;
+            }
+            break;
+
+        case 17:
+            stat = MdProcTbl[4](0x24);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 18;
+            }
+            break;
+
+        case 18:
+            stat = MdProcTbl[2](0x25);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140007);
+                sys->step = 19;
+            }
+            break;
+
+        case 19:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinHomeClear(mess, 1);
+                sys->step = 20;
+            }
+            break;
+
+        case 20:
+            stat = MdProcTbl[4](0x25);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 1);
+                MdMessWinMesSet(mess, 1, 0x140008);
+                sys->step = 21;
+            }
+            break;
+
+        case 21:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                MdMessWinKill(mess, 1);
+                MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
+                sys->step = 0;
+                sys->flowMode = 3;
+            }
+            break;
+
+        case 22:
+            WipeColorSet(0, 0, 0);
+            WipeCreate(2, 0, 30);
+            while(WipeCheckEnd()) {
+                HuPrcVSleep();
+            }
+            for(i=0; i<5; i++) {
+                Hu3DModelAttrSet(model->mdlId[i+33], HU3D_ATTR_DISPOFF);
+            }
+            MdMessWinClose(mess, 1);
+            WipeColorSet(0, 0, 0);
+            WipeCreate(1, 0, 30);
+            while(WipeCheckEnd()) {
+                HuPrcVSleep();
+            }
+            MdMessWinOpen(mess, 2, 80.0f, 376.0f, 0x1A0, 0x40, 1.0f, 0);
+            MdMessWinMesSet(mess, 2, 0x150001);
+            sys->step = 2;
+            sys->flowMode = 1;
+            break;
+    }
 }
 
 void fn_1_942C(s32 modelNo, s32 cameraNo)
