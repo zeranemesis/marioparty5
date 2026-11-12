@@ -1265,7 +1265,7 @@ void fn_1_96E8(void)
     s32 j;
     s32 k;
     s32 tmp;
-    s16 charNo;
+    s32 charNo;
 
     m = M522RMasterGet2();
     m->counter = lbl_1_bss_3C;
@@ -1311,8 +1311,7 @@ void fn_1_98B4(s32 mes)
     M522RMaster *m;
 
     if (_CheckFlag(0x1000F) == 0) {
-        M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-        m = lbl_1_bss_A0C;
+        m = M522RMasterGet2();
         m->mesId = GameMesCreate(0xE, mes);
         HuAudJinglePlay(0x86);
     }
