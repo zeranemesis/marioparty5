@@ -85,7 +85,7 @@ typedef struct M545State_s {
     s32 phase;
     s32 flagE4;
     s32 stepE8;
-    u8 pad_EC[4];
+    s32 stepEC;
     s32 timerF0;
     s32 stepF4;
     u8 pad_F8[0x38];
@@ -181,10 +181,15 @@ typedef struct M545PtclWork_s {
 
 /* game-flow block (lbl_1_bss_19C, 0xA4 bytes) */
 typedef struct M545Game_s {
-    u8 pad_00[8];
+    s16 unk0;
+    s16 stage2;
+    s16 unk4;
+    s16 timer6;
     f32 fallSpeed;
     f32 f0C[12];
-    u8 pad_3C[0x10];
+    f32 camY;
+    f32 camZoom;
+    u8 pad_44[8];
     s16 winner;
     s16 timer4E;
     s16 timer50;
@@ -197,7 +202,25 @@ typedef struct M545Game_s {
 
 /* per-player block, 0xC8 bytes (lbl_1_bss_C) */
 typedef struct M545Plr_s {
-    u8 raw[0xC8];
+    s32 unk0;
+    s16 count;
+    s16 unk6;
+    M545Vec3 scale;
+    M545Vec3 pos;
+    Mtx mtx;
+    s16 mode;
+    s16 pad_52;
+    char *hook[2];
+    s16 flag5C;
+    s16 alive;
+    s32 counts[6];
+    s32 totals[6];
+    u8 pad_90[8];
+    s32 counter98;
+    s32 timer9C;
+    s32 unkA0;
+    u8 pad_A4[8];
+    f32 angle[6];
 } M545Plr;
 
 #endif
