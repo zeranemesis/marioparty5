@@ -2011,6 +2011,7 @@ s32 fn_1_4B04(M528SEG *seg)
 s32 fn_1_4C84(M528SEG *seg)
 {
     s32 done = 0;
+    s16 mdl;
     M528MAIN *volatile main = lbl_1_bss_298->data;
 
     switch (seg->state) {
@@ -2031,7 +2032,8 @@ s32 fn_1_4C84(M528SEG *seg)
                 seg->timer = 0;
                 seg->state++;
             }
-            Hu3DModelPosSet(seg->mdl[1], seg->pos.x, seg->pos.y, seg->pos.z);
+            mdl = seg->mdl[1];
+            Hu3DModelPosSet(mdl, seg->pos.x, seg->pos.y, seg->pos.z);
             break;
         case 3:
             seg->timer++;
@@ -2039,7 +2041,8 @@ s32 fn_1_4C84(M528SEG *seg)
                 seg->timer = 0;
             }
             seg->pos2.y = seg->pos2.y + 2.0 * HuSin((360.0f * (f32)seg->timer) / 5.0f);
-            Hu3DModelPosSet(seg->mdl[1], seg->pos2.x, seg->pos2.y, seg->pos2.z);
+            mdl = seg->mdl[1];
+            Hu3DModelPosSet(mdl, seg->pos2.x, seg->pos2.y, seg->pos2.z);
             break;
     }
     return done;
@@ -2373,11 +2376,11 @@ M528_PRELOAD(fn_1_6CB4, 0x34, 2)
 
 s32 fn_1_6DF0(M528NODE *node)
 {
+    s32 done = 0;
     M528PARTICLE *p;
     M528MAIN *work;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
     s16 mdl;
     s32 type;
@@ -2412,11 +2415,11 @@ s32 fn_1_6DF0(M528NODE *node)
                 p->rot.y = 0.0f;
                 p->rot.z = 0.0f;
             }
-            spd = (f32)(frandmod(3) + 6);
+            dist = (f32)(frandmod(3) + 6);
             up = (f32)(frandmod(0x28) + 0x28);
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = 0.1f + spd * HuCos(ang);
+            p->vel.z = 0.1f + dist * HuCos(ang);
             p->timer = 0;
             p->duration = frandmod(0x1E) + 1;
             Hu3DModelPosSetV(p->mdl, &p->pos);
@@ -2440,7 +2443,7 @@ s32 fn_1_6DF0(M528NODE *node)
             Hu3DModelRotSetV(p->mdl, &p->rot);
             break;
     }
-    return 0;
+    return done;
 }
 
 s32 fn_1_72E4(M528NODE *node)
@@ -2449,7 +2452,6 @@ s32 fn_1_72E4(M528NODE *node)
     M528MAIN *work;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
     s16 mdl;
     s32 type;
@@ -2476,11 +2478,11 @@ s32 fn_1_72E4(M528NODE *node)
             p->rot.x = 0.0f;
             p->rot.y = (f32)frandmod(0xB4);
             p->rot.z = (f32)frandmod(0x1F) - 15.0f;
-            spd = (f32)(frandmod(4) + 5);
+            dist = (f32)(frandmod(4) + 5);
             up = (f32)(frandmod(0x28) + 0x28);
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = spd * HuCos(ang);
+            p->vel.z = dist * HuCos(ang);
             p->timer = 0;
             p->duration = frandmod(0x1E) + 1;
             Hu3DModelPosSetV(p->mdl, &p->pos);
@@ -2923,9 +2925,7 @@ s32 fn_1_8FFC(M528NODE *node)
     HSFMATERIAL *mat;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
-    f32 rnd;
     s16 mdl;
     s16 matNum;
     s32 done;
@@ -2945,25 +2945,21 @@ s32 fn_1_8FFC(M528NODE *node)
             Hu3DModelAttrSet(mdl, 1);
             Hu3DModelAttrSet(mdl, 0x40000002);
             Hu3DModelLayerSet(mdl, 2);
-            rnd = M528_RND();
-            dist = 135.0f * rnd;
+            dist = 135.0f * M528_RND();
             ang = (84.0f * M528_RND()) - 42.0f;
             p->pos.x = (600.0f * (f32)work->winner + dist * HuSin(ang)) - 300.0;
             p->pos.y = -300.0f;
             p->pos.z = (dist * HuCos(ang)) - 210.0;
             p->rot.x = 0.0f;
-            rnd = M528_RND();
-            p->rot.y = 180.0f * rnd;
+            p->rot.y = 180.0f * M528_RND();
             p->rot.z = 0.0f;
             p->timer = 0;
-            rnd = 4.0f * M528_RND();
-            spd = 4.0f + rnd;
+            dist = 4.0f + (4.0f * M528_RND());
             up = 40.0f + 40.0f * M528_RND();
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = 0.1f + spd * HuCos(ang);
-            rnd = 4.0f * M528_RND();
-            p->unk24 = 1.0f + rnd;
+            p->vel.z = 0.1f + dist * HuCos(ang);
+            p->unk24 = 1.0f + (4.0f * M528_RND());
             p->unk28 = 1.0f + (4.0f * M528_RND());
             p->unk2C = 0.0f;
             hsf = Hu3DData[p->mdl].hsf;
@@ -3026,7 +3022,6 @@ s32 fn_1_97C8(M528NODE *node)
     M528MAIN *work;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
     s16 mdl;
     s16 mtn;
@@ -3055,14 +3050,14 @@ s32 fn_1_97C8(M528NODE *node)
             p->rot.x = 0.0f;
             p->rot.y = 360.0f * M528_RND();
             p->rot.z = 0.0f;
-            spd = 4.3f + 2.0f * M528_RND();
+            dist = 4.3f + 2.0f * M528_RND();
             if (ang > 90.0f && ang < 270.0f) {
-                spd *= 0.7f;
+                dist *= 0.7f;
             }
             up = 45.0f + 40.0f * M528_RND();
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = spd * HuCos(ang);
+            p->vel.z = dist * HuCos(ang);
             p->timer = 0;
             p->duration = (frandmod(6) * 5) + 1;
             Hu3DModelPosSetV(p->mdl, &p->pos);
@@ -3099,9 +3094,7 @@ s32 fn_1_9D5C(M528NODE *node)
     f32 scale;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
-    f32 rnd;
     s16 mdl;
     s32 type;
 
@@ -3112,7 +3105,7 @@ s32 fn_1_9D5C(M528NODE *node)
             if (p->mdl < 0) {
                 type = frandmod(3);
                 if (type == 2) {
-                    type = 4;
+            type = 4;
                 }
                 M528_GETMDL(mdl, work->mdlCache[type + 0x24], type + 0x24);
                 p->mdl = mdl;
@@ -3125,8 +3118,7 @@ s32 fn_1_9D5C(M528NODE *node)
             Hu3DModelLayerSet(mdl, 2);
             scale = 0.7f + M528_RND();
             Hu3DModelScaleSet(mdl, scale, scale, 1.0f);
-            rnd = 84.0f * M528_RND();
-            ang = rnd - 42.0f;
+            ang = (84.0f * M528_RND()) - 42.0f;
             dist = 40.0f * M528_RND();
             p->pos.x = (600.0f * (f32)work->winner + dist * HuSin(ang)) - 300.0;
             p->pos.y = -300.0f;
@@ -3134,14 +3126,12 @@ s32 fn_1_9D5C(M528NODE *node)
             p->rot.x = 0.0f;
             p->rot.y = 0.0f;
             p->rot.z = 0.0f;
-            rnd = 4.0f * M528_RND();
-            spd = 4.2f + rnd;
+            dist = 4.2f + (4.0f * M528_RND());
             up = 35.0f + 28.0f * M528_RND();
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = spd * HuCos(ang);
-            rnd = 5.0f * M528_RND();
-            p->unk2C = 5.0f + rnd;
+            p->vel.z = dist * HuCos(ang);
+            p->unk2C = 5.0f + (5.0f * M528_RND());
             p->timer = 0;
             p->duration = (frandmod(6) * 5) + 1;
             Hu3DModelPosSetV(p->mdl, &p->pos);
@@ -3182,9 +3172,7 @@ s32 fn_1_A3A0(M528NODE *node)
     f32 scale;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
-    f32 rnd;
     f32 rnd2;
     s16 mdl;
     s16 matNum;
@@ -3208,27 +3196,23 @@ s32 fn_1_A3A0(M528NODE *node)
             Hu3DModelLayerSet(mdl, 2);
             scale = 0.1f + 0.5f * M528_RND();
             Hu3DModelScaleSet(mdl, scale, scale, scale);
-            rnd = M528_RND();
-            dist = 100.0f * rnd;
+            dist = 100.0f * M528_RND();
             ang = (84.0f * M528_RND()) - 42.0f;
             p->pos.x = (600.0f * (f32)work->winner + dist * HuSin(ang)) - 300.0;
             p->pos.y = -300.0f;
             p->pos.z = (dist * HuCos(ang)) - 210.0;
             rnd2 = M528_RND();
             p->rot.x = 350.0f - 60.0f * rnd2;
-            rnd = M528_RND();
-            p->rot.y = 180.0f * rnd;
+            p->rot.y = 180.0f * M528_RND();
             p->rot.z = 0.0f;
             p->timer = 0;
-            rnd = 4.0f * M528_RND();
-            spd = 4.0f + rnd;
+            dist = 4.0f + (4.0f * M528_RND());
             up = 30.0f + 30.0f * M528_RND();
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = spd * HuCos(ang);
+            p->vel.z = dist * HuCos(ang);
             p->unk24 = rnd2;
-            rnd = 8.0f * M528_RND();
-            p->unk28 = 4.0f + rnd;
+            p->unk28 = 4.0f + (8.0f * M528_RND());
             p->unk2C = 0.0f;
             hsf = Hu3DData[p->mdl].hsf;
             mat = hsf->material;
@@ -3294,9 +3278,7 @@ s32 fn_1_ABAC(M528NODE *node)
     f32 scale;
     f32 dist;
     f32 ang;
-    f32 spd;
     f32 up;
-    f32 rnd;
     f32 rnd2;
     s16 mdl;
     s32 done;
@@ -3317,24 +3299,21 @@ s32 fn_1_ABAC(M528NODE *node)
             Hu3DModelLayerSet(mdl, 2);
             scale = 0.1f + 0.5f * M528_RND();
             Hu3DModelScaleSet(mdl, scale, scale, scale);
-            rnd = M528_RND();
-            dist = 100.0f * rnd;
+            dist = 100.0f * M528_RND();
             ang = (84.0f * M528_RND()) - 42.0f;
             p->pos.x = (600.0f * (f32)work->winner + dist * HuSin(ang)) - 300.0;
             p->pos.y = -300.0f;
             p->pos.z = (dist * HuCos(ang)) - 210.0;
             rnd2 = M528_RND();
             p->rot.x = 350.0f - 60.0f * rnd2;
-            rnd = M528_RND();
-            p->rot.y = 180.0f * rnd;
+            p->rot.y = 180.0f * M528_RND();
             p->rot.z = 0.0f;
             p->timer = 0;
-            rnd = 4.0f * M528_RND();
-            spd = 4.0f + rnd;
+            dist = 4.0f + (4.0f * M528_RND());
             up = 30.0f + 30.0f * M528_RND();
-            p->vel.x = spd * HuSin(ang);
+            p->vel.x = dist * HuSin(ang);
             p->vel.y = up;
-            p->vel.z = spd * HuCos(ang);
+            p->vel.z = dist * HuCos(ang);
             p->unk24 = rnd2;
             p->unk28 = 4.0f + (8.0f * M528_RND());
             p->unk2C = 0.0f;
