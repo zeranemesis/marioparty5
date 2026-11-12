@@ -18,6 +18,22 @@ typedef struct M509Base {
     u32 flags;
 } M509Base;
 
+typedef struct {
+    s16 grp;
+    f32 x;
+    f32 y;
+} StartSprEntry;
+
+typedef struct StartSpr {
+    void *base[2];
+    void **vtbl;
+    u32 flags;
+    u8 fadeOut;
+    s32 timer;
+    f32 alpha;
+    StartSprEntry entry[4];
+} StartSpr;
+
 /* Pointer to member function in the CodeWarrior layout (adjustment, vtable index or -1, function). */
 typedef struct M509Ptmf {
     s32 adj;

@@ -1,37 +1,4 @@
-#include "game/data.h"
-#include "game/sprite.h"
-
-#ifdef __MWERKS__
-#define XX_RODATA __declspec(section ".rodata")
-#else
-#define XX_RODATA
-#endif
-
-extern "C" {
-void fn_1_0(const char *cond, const char *file, s32 line);
-void fn_1_21C(void *self);
-void fn_1_E48(void *self);
-void fn_1_E54(void *self, s32 flag);
-void fn_1_F14(void *self, void *base);
-extern u8 lbl_1_bss_1C[];
-extern u8 lbl_1_data_1C4[];
-}
-
-typedef struct {
-    s16 grp;
-    f32 x;
-    f32 y;
-} StartSprEntry;
-
-typedef struct StartSpr {
-    void *base[2];
-    void **vtbl;
-    u32 flags;
-    u8 fadeOut;
-    s32 timer;
-    f32 alpha;
-    StartSprEntry entry[4];
-} StartSpr;
+#include "REL/m509Dll/m509.h"
 
 extern "C" {
 void *fn_1_C924(StartSpr *self, s32 *icons);
