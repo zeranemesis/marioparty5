@@ -16,7 +16,6 @@
 #include "game/charman.h"
 #include "game/data.h"
 #include "game/flag.h"
-#include "game/frand.h"
 #include "game/gamework.h"
 #include "game/hsfformat.h"
 #include "game/hu3d.h"
@@ -29,6 +28,11 @@
 
 #ifndef __MWERKS__
 #include "game/audio.h"
+#include "game/frand.h"
+#else
+/* The original calls frandmod with an implicit int return, which is what makes
+ * MWCC convert it with the signed int -> float magic double. */
+extern s32 frandmod();
 #endif
 
 #ifdef __MWERKS__
@@ -203,24 +207,22 @@ typedef struct m528Main_s {
 } M528MAIN;
 
 /* Load model data[dataIdx] into the cache slot, or link the cached one. */
-#define M528_GETMDL(var, slot, dataIdx)                   \
-    do {                                                  \
-        if ((slot) < 0) {                                 \
-            (var) = Hu3DModelCreateData(lbl_1_data_1C8[dataIdx]); \
-            (slot) = (var);                               \
-        } else {                                          \
-            (var) = Hu3DModelLink(slot);                  \
-        }                                                 \
+#define M528_GETMDL(var, slot, dataIdx)                                       \
+    do {                                                                      \
+        if ((slot) < 0) {                                                     \
+            var = slot = Hu3DModelCreateData(lbl_1_data_1C8[dataIdx]);        \
+        } else {                                                              \
+            var = Hu3DModelLink(slot);                                        \
+        }                                                                     \
     } while (0)
 
-#define M528_GETMTN(var, slot, mdl, dataNum)              \
-    do {                                                  \
-        if ((slot) < 0) {                                 \
-            (var) = Hu3DJointMotionData(mdl, dataNum);    \
-            (slot) = (var);                               \
-        } else {                                          \
-            (var) = (slot);                               \
-        }                                                 \
+#define M528_GETMTN(var, slot, mdl, dataNum)                                  \
+    do {                                                                      \
+        if ((slot) < 0) {                                                     \
+            var = slot = Hu3DJointMotionData(mdl, dataNum);                   \
+        } else {                                                              \
+            var = (slot);                                                     \
+        }                                                                     \
     } while (0)
 
 /* ---- function prototypes ---- */
@@ -418,10 +420,10 @@ static HuVecF lbl_1_data_31C[0x37] = {
 };
 
 /* ---- bss globals (m528) ---- */
-static s32 lbl_1_bss_0;
-static HuVecF lbl_1_bss_4[0x37];
-static OMOBJ *lbl_1_bss_298;
 static OMOBJMAN *lbl_1_bss_29C;
+static OMOBJ *lbl_1_bss_298;
+static HuVecF lbl_1_bss_4[0x37];
+static s32 lbl_1_bss_0;
 
 /* ---- rodata (m528) ---- */
 M528_RODATA const u16 lbl_1_rodata_10[4] = { 1, 2, 4, 8 };
@@ -2339,7 +2341,7 @@ s32 fn_1_6DF0(M528NODE *node)
     f32 spd;
     f32 up;
     s16 mdl;
-    s16 type;
+    s32 type;
 
 #ifdef TARGET_PC
     type = 0;
@@ -2411,7 +2413,7 @@ s32 fn_1_72E4(M528NODE *node)
     f32 spd;
     f32 up;
     s16 mdl;
-    s16 type;
+    s32 type;
 
     work = lbl_1_bss_298->data;
     p = node->data;
@@ -2529,7 +2531,7 @@ s32 fn_1_7B44(M528NODE *node)
     f32 ang;
     s16 mdl;
     s16 mtn;
-    s16 type;
+    s32 type;
 
     work = lbl_1_bss_298->data;
     p = node->data;
@@ -2757,7 +2759,7 @@ s32 fn_1_87F4(M528NODE *node)
     f32 ang;
     f32 spd;
     s16 mdl;
-    s16 type;
+    s32 type;
 
     work = lbl_1_bss_298->data;
     p = node->data;
@@ -3062,7 +3064,7 @@ s32 fn_1_9D5C(M528NODE *node)
     f32 up;
     f32 rnd;
     s16 mdl;
-    s16 type;
+    s32 type;
 
     work = lbl_1_bss_298->data;
     p = node->data;
