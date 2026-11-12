@@ -359,6 +359,12 @@ inline void M522SetState(M522_PLAYERBASE *self, M522_PTMF ptmf)
         M522SetState(self, next); \
     }
 
+static inline f32 M522Max2(f32 a, f32 b)
+{
+    f32 r = M522Max(a, b);
+    return r;
+}
+
 /* Singleton accessor: the assert of singleton.h, then the pointer. */
 static inline void *M522Stage(void)
 {
@@ -368,6 +374,12 @@ static inline void *M522Stage(void)
     p = lbl_1_bss_18;
     return p;
 }
+
+static inline f32 M522MotionMaxTime(M522_PLAYERBASE *self)
+{
+    return CharMotionMaxTimeGet(self->charNo);
+}
+
 
 
 /* Spawn positions of the CPU players, handed out by fn_1_F604. */
@@ -995,13 +1007,9 @@ void fn_1_1103C(M522_PLAYER *self)
 
     time = fn_1_10160(self);
     if (!(time <= 30.0f)) {
-        range = CharMotionMaxTimeGet(self->charNo) - 30.0f;
+        range = M522MotionMaxTime(self) - 30.0f;
             floorY = fn_1_F1B8(M522Stage()) - 100.0f;
-        if (floorY < 200.0f) {
-            target = 200.0f;
-        } else {
-            target = floorY;
-        }
+        target = M522Max2(200.0f, floorY);
         t = (time - 30.0f) / range;
         self->pos.y = (1.0 - t) * self->baseY + t * target;
         if (CharMotionEndCheck(self->charNo) != 0) {
@@ -1165,9 +1173,12 @@ s32 fn_1_12084(M522_PLAYER *self)
 
 s32 fn_1_120DC(M522_PLAYER *self)
 {
+    f64 base;
     f64 interval;
+    f64 limit;
     f64 weight;
     f64 chance;
+    f64 chanceCopy;
     s32 alive;
     s32 total;
     f32 roll;
@@ -1175,8 +1186,10 @@ s32 fn_1_120DC(M522_PLAYER *self)
     if (self->mode != 2) {
         return 2;
     }
-    interval = 60.0 * (0.2 * (f64)(4 - self->dif));
-    if (fn_1_BABC() > 1.0 / interval) {
+    base = 0.2 * (f64)(4 - self->dif);
+    interval = 60.0 * base;
+    limit = interval;
+    if (fn_1_BABC() > 1.0 / limit) {
         return 2;
     }
     alive = fn_1_12984();
@@ -1185,7 +1198,8 @@ s32 fn_1_120DC(M522_PLAYER *self)
         chance = 1.0 - (f64)alive / (f64)total;
         weight = 0.3 * (f64)self->dif;
         chance = (1.0 - weight) * chance + weight * 1.0;
-        if (fn_1_BABC() < chance) {
+        chanceCopy = chance;
+        if (fn_1_BABC() < chanceCopy) {
             return 0;
         }
     }
@@ -1877,6 +1891,8 @@ void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
     u32 newSize;
     u32 newCap;
     u32 k;
+    u32 *pcap;
+    s16 *fresh;
 
     px = xp;
     if (n != 0) {
@@ -1905,10 +1921,10 @@ void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
             return;
         }
         index = pos - self->begin();
-        oldData = self->m_data;
+        oldData = self->begin();
         newSize = self->m_size + n;
-        if (self->m_cap != 0) {
-            newCap = self->m_cap;
+        if (self->capacity() != 0) {
+            newCap = self->capacity();
         } else {
             newCap = 1;
         }
@@ -1919,25 +1935,27 @@ void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
                 newCap = max;
             }
         }
-        self->m_data = (s16 *)fn_1_689C(newCap * 2);
-        if (self->m_data == 0) {
+        fresh = (s16 *)fn_1_689C(newCap * 2);
+        if (fresh == 0) {
             fn_1_6AD0(M522_STDERR, lbl_1_data_7BB);
             abort();
         }
+        self->m_data = fresh;
         k = n;
-        dst = self->m_data + index;
+        dst = self->begin() + index;
         while (k != 0) {
             *dst = *px;
             dst++;
             k--;
         }
         if (oldData != 0) {
-            memcpy(self->m_data, oldData, index * 2);
-            memcpy(self->m_data + index + n, oldData + index, (oldData + self->m_size - (oldData + index)) * 2);
+            memcpy(self->begin(), oldData, index * 2);
+            memcpy(self->begin() + index + n, oldData + index, (oldData + self->m_size - (oldData + index)) * 2);
             fn_1_6964(oldData);
         }
         self->m_size = newSize;
-        self->m_cap = newCap;
+        pcap = &self->m_cap;
+        *pcap = newCap;
     }
 }
 
