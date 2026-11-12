@@ -31,7 +31,7 @@ extern u8 lbl_1_bss_C[];
 extern u8 lbl_1_data_1FC[];
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 void GXSetVtxAttrFmtv(GXVtxFmt vtxfmt, GXVtxAttrFmtList *list);
-void fn_1_2CDC(s16 *model, void (*hook)(HU3DMODEL *, Mtx));
+void fn_1_2CDC(s16 *model, HU3DMODELHOOK hook);
 void fn_1_30BC(s16 *model, void *hookData);
 
 void *fn_1_148AC(M579WaterEff *self);
@@ -43,7 +43,7 @@ M579WaterEff *fn_1_14D1C(M579WaterEff *self, s16 flag);
 void fn_1_14E50(M579WaterEff *self, s32 bit);
 void fn_1_14E68(Vec *pos, f32 *out);
 void fn_1_14ED8(M579WaterEff *self);
-void fn_1_15130(HU3DMODEL *modelP, Mtx mtx);
+void fn_1_15130(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_15168(M579WaterEff *self, GXTexMapID map, u32 texMtxId, Mtx mtx);
 void fn_1_15280(M579WaterEff *self, GXTexMapID map, u32 texMtxId);
 void fn_1_152CC(M579WaterEff *self, s32 map, u32 texMtxId);
@@ -302,9 +302,9 @@ void fn_1_14ED8(M579WaterEff *self)
     PSMTXTransApply(self->mtx[3], self->mtx[3], pos.x / 600.0f, pos.z / 600.0f, 0.0f);
 }
 
-void fn_1_15130(HU3DMODEL *modelP, Mtx mtx)
+void fn_1_15130(HU3DMODEL *modelP, Mtx *mtx)
 {
-    fn_1_1537C((M579WaterEff *) modelP->hookData, mtx);
+    fn_1_1537C((M579WaterEff *) modelP->hookData, *mtx);
 }
 
 void fn_1_15168(M579WaterEff *self, GXTexMapID map, u32 texMtxId, Mtx mtx)

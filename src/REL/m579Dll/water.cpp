@@ -14,7 +14,7 @@ extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);
 void GXSetVtxAttrFmtv(GXVtxFmt vtxfmt, GXVtxAttrFmtList *list);
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
-void fn_1_2CDC(s16 *model, void (*hook)(HU3DMODEL *, Mtx));
+void fn_1_2CDC(s16 *model, HU3DMODELHOOK hook);
 void fn_1_30BC(s16 *model, void *hookData);
 f32 fn_1_4FC8(f32 lo, f32 hi);
 extern M579WaterMgr *lbl_1_bss_A0C;
@@ -44,7 +44,7 @@ void fn_1_A3EC(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
 M579Ripple *fn_1_A680(M579Ripple *self, Vec *pos, f32 maxScale);
 M579Ripple *fn_1_A754(M579Ripple *self, s16 flag);
 M579Ripple *fn_1_A7AC(M579Ripple *self, s16 flag);
-void fn_1_A818(HU3DMODEL *modelP, Mtx mtx);
+void fn_1_A818(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_A850(void);
 void fn_1_A924(void);
 void fn_1_A954(M579Ripple *self);
@@ -480,9 +480,9 @@ M579Ripple *fn_1_A7AC(M579Ripple *self, s16 flag)
     return self;
 }
 
-void fn_1_A818(HU3DMODEL *modelP, Mtx mtx)
+void fn_1_A818(HU3DMODEL *modelP, Mtx *mtx)
 {
-    fn_1_AA44((M579Ripple *) modelP->hookData, mtx);
+    fn_1_AA44((M579Ripple *) modelP->hookData, *mtx);
 }
 
 void fn_1_A850(void)
