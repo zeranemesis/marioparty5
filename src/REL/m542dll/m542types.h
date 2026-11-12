@@ -60,9 +60,14 @@ typedef struct {
     M542SLOT slot[2];          // 0x50
     s32 *data;                 // 0x98
     s16 f_9c;                  // 0x9c
-    s32 mode;                  // 0xa0
-    s32 timer;                 // 0xa4
-    s32 fall[2];               // 0xa8
+    union {
+        s32 st[4];             // 0xa0 (the original indexes fall as st[i + 2])
+        struct {
+            s32 mode;          // 0xa0
+            s32 timer;         // 0xa4
+            s32 fall[2];       // 0xa8
+        };
+    };
     s32 phase;                 // 0xb0
     s32 power[2];              // 0xb4
     s32 f_bc;                  // 0xbc
@@ -94,9 +99,7 @@ typedef struct {
     s32 idx;                   // 0x08
     s32 cnt;                   // 0x0c
     f32 ang;                   // 0x10
-    f32 x;                     // 0x14
-    f32 y;                     // 0x18
-    f32 z;                     // 0x1c
+    HuVecF pos;                // 0x14
 } M542EMIT;                    // 0x20 bytes
 
 /* CPU player decision state (0x1c bytes each). */
