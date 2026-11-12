@@ -31,15 +31,41 @@ struct M568PosOwner {
     M568PosSource src;  // 0x10
 };
 
-struct SceneNode;
+// Element of the lbl_1_bss_9F4 list (the octtree effects).
+struct M568Effect {
+    M568Link link;     // 0x00
+    Vec pos;           // 0x08
+    f32 radius;        // 0x14
+    M568Model model;   // 0x18
+    Vec cur;           // 0x1C
+    u8 played;         // 0x28
+    s32 seId;          // 0x2C
+};
+
+// Element of the lbl_1_bss_9F8 list (the actors the pad/AI inputs drive); only
+// the fields the units touch are named, the gaps hold data this module never
+// reads.
+struct SceneNode {
+    M568Link link;     // 0x00
+    u8 inactive;       // 0x08
+    u8 pad09[3];
+    s32 slot;          // 0x0C
+    u8 pad10[0x64];
+    Vec pos;           // 0x74
+    f32 dirY;          // 0x80
+    u8 pad84[0xC];
+    Vec vel;           // 0x90
+    u8 pad9C[0x1C];
+    u8 dead;           // 0xB8
+};
+
 struct EffectMgr;
 
 extern "C" {
 
 extern M568PosOwner *lbl_1_bss_9F0;
-extern SceneNode *lbl_1_bss_9F4;
+extern M568Effect *lbl_1_bss_9F4;
 extern SceneNode *lbl_1_bss_9F8;
-extern SceneNode *lbl_1_bss_A0C;
 extern EffectMgr *lbl_1_bss_A10;
 
 void fn_1_7EC(const char *expr, const char *file, s32 line);
