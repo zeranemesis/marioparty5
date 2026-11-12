@@ -15,17 +15,10 @@ typedef struct M574StageCell_s {
     HSFOBJECT *v50[3];
 } M574_STAGE_CELL;
 
-typedef struct M574SlotHook_s {
-    s32 v00;
-    s32 v04;
-    s32 v08;
-    s32 v0C;
-    void *v10;
-    s32 v14;
-    void *v18;
-    void *v1C;
-    f32 v20;
-} M574_SLOT_HOOK;
+typedef union M574PtrU_s {
+    HSFOBJECT *obj;
+    M574_COLLIDER *col;
+} M574_PTRU;
 
 typedef struct M574StageSlot_s {
     s32 v00;
@@ -39,21 +32,10 @@ typedef struct M574StageSlot_s {
     f32 f3C;
     f32 f40;
     f32 f44;
-    void *v48;
-    M574_SLOT_HOOK hook;
+    M574_PTRU v48;
+    M574_COL_CIRCLE hook;
     u8 pad70[0x18];
 } M574_STAGE_SLOT;
-
-typedef struct M574SlotPtr_s {
-    u8 pad00[0x1C];
-    f32 f1C;
-    f32 f20;
-} M574_SLOT_PTR;
-
-typedef struct M574StageHookEnt_s {
-    M574_SLOT_HOOK hook;
-    u8 pad24[0x18];
-} M574_STAGE_HOOKENT;
 
 typedef struct M574StageRow_s {
     f32 f00;
@@ -61,8 +43,7 @@ typedef struct M574StageRow_s {
     f32 f08;
     f32 f0C;
     s32 v10;
-    M574_SLOT_HOOK hook;
-    u8 pad38[0x18];
+    M574_COL_WALL hook;
 } M574_STAGE_ROW;
 
 typedef struct M574StageMot_s {
@@ -76,42 +57,12 @@ typedef struct M574StageMot_s {
     s32 v38;
     Vec v3C;
     HSFOBJECT *v48;
-    M574_SLOT_HOOK hook;
+    M574_COL_CIRCLE hook;
     u8 pad70[0x18];
 } M574_STAGE_MOT;
 
-typedef struct M574StageEnt_s {
-    s16 v00;
-    u8 pad02[0x12];
-    Vec v14;
-    u8 pad20[0x0C];
-    f32 f2C;
-    u8 pad30[0x04];
-    Vec v34;
-    u8 pad40[0x03];
-    u8 v43;
-} M574_STAGE_ENT;
-
-typedef struct M574StageEnt2_s {
-    s32 v00;
-    u8 pad04[0x0C];
-    f32 f10;
-    f32 f14;
-    u8 pad18[0x1C];
-    f32 f34;
-    u8 pad38[0x10];
-    void *v48;
-    u8 pad4C[0x3C];
-} M574_STAGE_ENT2;
-
-typedef struct M574StageEnt3_s {
-    u32 v00;
-    u8 pad04[0x18];
-    Vec *v1C;
-} M574_STAGE_ENT3;
-
 typedef struct M574StageTbl_s {
-    u8 pad00[0x08];
+    s32 timer[2];
     HU3DTEXSCRID texId;
     s32 v0C;
     f32 f10;
@@ -120,13 +71,12 @@ typedef struct M574StageTbl_s {
     u8 padA6[0x02];
     M574_STAGE_ROW row[4];
     M574_STAGE_CELL cell[2];
-    M574_STAGE_ENT2 ent2[2];
+    M574_STAGE_SLOT ent2[2];
     M574_STAGE_SLOT slotB[14];
     M574_STAGE_SLOT slotA[6];
     M574_STAGE_SLOT slot[2];
-    M574_SLOT_HOOK hookF60;
-    u8 padF84[0x18];
-    M574_STAGE_HOOKENT hookEnt[4];
+    M574_COL_WALL hookF60;
+    M574_COL_WALL hookEnt[4];
 } M574_STAGE_TBL;
 
 typedef struct M574ScrollUv_s {
@@ -134,124 +84,13 @@ typedef struct M574ScrollUv_s {
     f32 y;
 } M574_SCROLL_UV;
 
-typedef struct M574ModelObj_s {
-    u8 pad00[0x1C];
-    Vec v1C;
-    u8 pad28[0x08];
-    f32 f30;
-} M574_MODEL_OBJ;
-
-typedef struct M574ModelNode_s {
-    u8 pad00[0x04];
-    s16 v04;
-    u8 pad06[0x02];
-    s16 id08;
-    s16 id0A;
-    u8 pad0C[0x02];
-    s16 id0E;
-    s16 id;
-} M574_MODEL_NODE;
-
-typedef struct M574ModelPos_s {
-    u8 pad00[0x1C];
-    f32 x;
-    f32 y;
-    f32 z;
-} M574_MODEL_POS;
-
-typedef struct M574StageObj_s {
-    u16 unk00;
-    u8 pad02[0x06];
-    s32 unk08;
-    u8 pad0C[0x08];
-    void *v14;
-    f32 *unk18;
-    Vec *v1C;
-    u8 pad20[0x10];
-    s16 v30;
-    u8 pad32[0x06];
-    f32 *unk38;
-    u8 pad3C[0x04];
-    M574_MODEL_NODE *unk40;
-    u8 pad44[0x04];
-    M574_STAGE_ENT *unk48;
-    s32 v4C;
-    u8 pad50[0x0C];
-    M574_STAGE_TBL *unk5C;
-} M574_STAGE_OBJ;
-
 typedef struct M574TexAnimDef_s {
     char name[12];
     f32 f[20];
     s32 datanum[4];
 } M574_TEXANIM_DEF;
 
-typedef struct M574Vec3_s {
-    s32 x;
-    s32 y;
-    s32 z;
-} M574_VEC3;
-
-typedef struct M574MotNode_s {
-    s16 f00;
-    u8 pad02[0x12];
-    M574_VEC3 rot;
-    u8 pad20[0x0C];
-    f32 f2C;
-    u8 pad30[0x04];
-    M574_VEC3 pos;
-    u8 pad40[0x04];
-} M574_MOTNODE;
-
-typedef struct M574MotGrp_s {
-    u8 pad00[0x30];
-    s16 cnt30;
-    u8 pad32[0x16];
-    M574_MOTNODE *nd48;
-} M574_MOTGRP;
-
-typedef struct M574Hu3DModel_s {
-    u8 pad00[0x120];
-    M574_MOTGRP *grp120;
-} M574_HU3DMODEL;
-
-typedef struct M574HitPlane_s {
-    Vec p0;
-    Vec p1;
-    Vec n;
-    f32 d;
-} M574_HOOK_PLANE;
-
-typedef struct M574HookWall_s {
-    s32 flag;
-    s32 shape;
-    s32 id;
-    s32 kind;
-    void *user;
-    s32 unk14;
-    void *hook;
-    s32 edgeNum;
-    void *planeA;
-    void *planeB;
-    void *edge;
-    s32 objNum;
-    void *objTbl;
-    void *mtxTbl;
-    M574_HOOK_PLANE *lastPlane;
-} M574_HOOK_WALL;
-
-typedef struct M574HitCol_s {
-    u32 flag;
-    s32 shape;
-    s32 id;
-    s32 kind;
-    void *user;
-    void *hook;
-    Vec *pos;
-    Vec *vel;
-} M574_HIT_COL;
-
-M574_STAGE_OBJ *lbl_1_bss_48;
+OMOBJ *lbl_1_bss_48;
 
 s32 lbl_1_data_220[4] = { 0x0081000C, 0x0081000D, 0x00810011, 0x00810012 };
 
@@ -392,107 +231,102 @@ void fn_1_7874(s32 grp, s32 type);
 f32 fn_1_CC8(f32 cur, f32 target, f32 rate);
 void fn_1_C10(s32 a, void *b);
 
-void fn_1_20CC(M574_STAGE_OBJ *p);
-void fn_1_2364(M574_STAGE_OBJ *p);
-void fn_1_2928(M574_STAGE_OBJ *p);
-void fn_1_2F8C(M574_STAGE_OBJ *p);
-void fn_1_3374(M574_STAGE_OBJ *p);
-void fn_1_383C(M574_STAGE_OBJ *p);
-void fn_1_448C(M574_STAGE_OBJ *p);
-void fn_1_4D28(M574_STAGE_OBJ *p);
-void fn_1_5750(M574_STAGE_OBJ *p);
-void fn_1_5E5C(M574_STAGE_OBJ *p);
-void fn_1_6168(M574_STAGE_OBJ *p);
-void fn_1_2B88(M574_STAGE_OBJ *p);
-void fn_1_26F4(M574_STAGE_OBJ *p);
-void fn_1_3154(M574_STAGE_OBJ *p);
-void fn_1_34B0(M574_STAGE_OBJ *p);
-void fn_1_3A1C(M574_STAGE_OBJ *p);
-void fn_1_4660(M574_STAGE_OBJ *p);
-void fn_1_4EE8(M574_STAGE_OBJ *p);
-void fn_1_5934(M574_STAGE_OBJ *p);
-void fn_1_5ECC(M574_STAGE_OBJ *p);
-void fn_1_629C(M574_STAGE_OBJ *p);
-s32 fn_1_3240(M574_STAGE_OBJ *p, M574_STAGE_OBJ *p2);
-void fn_1_8B48(M574_SLOT_HOOK *hook);
-s32 fn_1_5628(M574_STAGE_OBJ *p);
-void fn_1_62A0(s32 unused, M574_STAGE_OBJ *p);
+void fn_1_20CC(OMOBJ *p);
+void fn_1_2364(OMOBJ *p);
+void fn_1_2928(OMOBJ *p);
+void fn_1_2F8C(OMOBJ *p);
+void fn_1_3374(OMOBJ *p);
+void fn_1_383C(OMOBJ *p);
+void fn_1_448C(OMOBJ *p);
+void fn_1_4D28(OMOBJ *p);
+void fn_1_5750(OMOBJ *p);
+void fn_1_5E5C(OMOBJ *p);
+void fn_1_6168(OMOBJ *p);
+void fn_1_2B88(OMOBJ *p);
+void fn_1_26F4(OMOBJ *p);
+void fn_1_3154(OMOBJ *p);
+void fn_1_34B0(OMOBJ *p);
+void fn_1_3A1C(OMOBJ *p);
+void fn_1_4660(OMOBJ *p);
+void fn_1_4EE8(OMOBJ *p);
+void fn_1_5934(OMOBJ *p);
+void fn_1_5ECC(OMOBJ *p);
+void fn_1_629C(OMOBJ *p);
+s32 fn_1_3240(M574_COL_CIRCLE *c, M574_COLLIDER *col);
+s32 fn_1_5628(M574_COL_CIRCLE *c, M574_COLLIDER *col);
+void fn_1_62A0(HU3DMODEL *model, HU3DPARTICLE *p, Mtx mtx);
 u32 frand(void);
 double sin(double x);
 double cos(double x);
-void fn_1_6C2C(Vec *v, f32 *s);
-void fn_1_8FDC(M574_SLOT_HOOK *hook);
-s32 fn_1_5D64(s32 unused, M574_STAGE_OBJ *p);
+s32 fn_1_5D64(M574_COL_CIRCLE *c, M574_COLLIDER *col);
 f32 fn_1_6568(s32 idx);
-void fn_1_8FA8(M574_SLOT_HOOK *hook, M574_MODEL_OBJ *obj);
-s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col);
+s32 fn_1_47DC(M574_COL_WALL *wall, M574_COLLIDER *col);
 void fn_1_5680(f32 *x);
-void fn_1_63B0(M574_VEC3 *a, M574_VEC3 *b, s32 idx);
+void fn_1_63B0(Vec *a, Vec *b, s32 idx);
 s32 fn_1_6CC8(s32 idx);
 s32 fn_1_918(void);
-void fn_1_8F54(M574_SLOT_HOOK *hook, HU3DMODELID model);
-s32 fn_1_2D88(M574_STAGE_OBJ *p, M574_SLOT_HOOK *hook);
+s32 fn_1_2D88(M574_COL_WALL *wall, M574_COLLIDER *col);
 
 void fn_1_2028(OMOBJMAN *objMan) {
-    M574_STAGE_OBJ *obj;
+    OMOBJ *obj;
     M574_STAGE_TBL *tbl;
 
-    obj = (M574_STAGE_OBJ *)omAddObjEx(objMan, 0x14, 0x21, 3, OM_GRP_NONE, (void (*)(OMOBJ *))fn_1_20CC);
+    obj = omAddObjEx(objMan, 0x14, 0x21, 3, OM_GRP_NONE, fn_1_20CC);
     lbl_1_bss_48 = obj;
-    obj->unk00 |= 0x100;
+    obj->stat |= OM_STAT_MODELPAUSE;
     tbl = HuMemDirectMallocNum(0, sizeof(M574_STAGE_TBL), 0x10000000);
-    obj->unk5C = tbl;
+    obj->data = tbl;
     memset(tbl, 0, sizeof(M574_STAGE_TBL));
-    obj->v4C = 0;
+    obj->work[0] = 0;
 }
 
 void fn_1_20C8(void) {
 }
 
-void fn_1_20CC(M574_STAGE_OBJ *p) {
+void fn_1_20CC(OMOBJ *p) {
     HU3DMODELID model;
-    M574_SLOT_HOOK *h;
+    M574_COL_WALL *h;
     M574_STAGE_TBL *tbl;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810000, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[0] = model;
+    p->mdlId[0] = model;
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DModelLayerSet(model, 3);
     Hu3DModelShadowMapSet(model);
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810001, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[1] = model;
+    p->mdlId[1] = model;
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DModelLayerSet(model, 3);
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810002, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[2] = model;
+    p->mdlId[2] = model;
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DModelLayerSet(model, 7);
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810003, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[3] = model;
+    p->mdlId[3] = model;
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DModelLayerSet(model, 7);
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810006, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[4] = model;
+    p->mdlId[4] = model;
     Hu3DModelAttrSet(model, 1);
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810004, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[5] = model;
+    p->mdlId[5] = model;
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DModelLayerSet(model, 3);
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810016, HU_MEMNUM_OVL, HEAP_MODEL));
-    ((s16 *)p->unk40)[6] = model;
+    p->mdlId[6] = model;
     Hu3DModelAttrSet(model, 1);
     h = &tbl->hookF60;
-    h->v00 = 1;
-    h->v04 = 5;
-    h->v08 = 0;
-    h->v0C = 1;
-    h->v10 = p;
-    h->v14 = 0;
-    h->v18 = 0;
+    h->flag = 1;
+    h->shape = 5;
+    h->id = 0;
+    h->kind = 1;
+    h->user = p;
+    h->unk14 = 0;
+    h->hook = 0;
     fn_1_8F54(h, model);
     fn_1_8FDC(h);
-    fn_1_8B48(h);
+    fn_1_8B48((M574_COLHEAD *)h);
     fn_1_2928(p);
     fn_1_2F8C(p);
     fn_1_3374(p);
@@ -503,51 +337,49 @@ void fn_1_20CC(M574_STAGE_OBJ *p) {
     fn_1_5E5C(p);
     fn_1_6168(p);
     Hu3DZClearLayerSet(5);
-    p->v14 = (void *)fn_1_2364;
+    p->objFunc = fn_1_2364;
 }
 
-void fn_1_23E8(M574_STAGE_OBJ *p, s16 idx, s32 n) {
-    M574_STAGE_TBL *unused = p->unk5C;
-    M574_MODEL_POS *pos;
+void fn_1_23E8(OMOBJ *p, s16 idx, s32 n) {
+    M574_STAGE_TBL *unused = p->data;
+    HSFOBJECT *pos;
     s16 modelId;
 
-    modelId = p->unk40->id08;
-    pos = (M574_MODEL_POS *)Hu3DModelObjPtrGet(modelId, &lbl_1_data_3D0[n][0]);
-    if (pos != (M574_MODEL_POS *)0) {
-        Hu3DModelPosSet(idx, pos->x, pos->y, pos->z);
+    modelId = p->mdlId[4];
+    pos = Hu3DModelObjPtrGet(modelId, &lbl_1_data_3D0[n][0]);
+    if (pos != NULL) {
+        Hu3DModelPosSet(idx, pos->mesh.base.pos.x, pos->mesh.base.pos.y, pos->mesh.base.pos.z);
     }
 }
 
-void fn_1_2478(M574_STAGE_OBJ *p, f32 *out, s32 n) {
-    M574_STAGE_TBL *unused = p->unk5C;
-    M574_MODEL_POS *pos;
+void fn_1_2478(OMOBJ *p, f32 *out, s32 n) {
+    M574_STAGE_TBL *unused = p->data;
+    HSFOBJECT *pos;
     s16 modelId;
 
-    modelId = p->unk40->id08;
-    pos = (M574_MODEL_POS *)Hu3DModelObjPtrGet(modelId, &lbl_1_data_3D0[n][0]);
-    if (pos != (M574_MODEL_POS *)0) {
-        out[0] = pos->x;
-        out[1] = pos->y;
-        out[2] = pos->z;
+    modelId = p->mdlId[4];
+    pos = Hu3DModelObjPtrGet(modelId, &lbl_1_data_3D0[n][0]);
+    if (pos != NULL) {
+        out[0] = pos->mesh.base.pos.x;
+        out[1] = pos->mesh.base.pos.y;
+        out[2] = pos->mesh.base.pos.z;
     }
 }
 
-void fn_1_2514(M574_STAGE_OBJ *p, s32 flag, s32 n) {
+void fn_1_2514(OMOBJ *p, s32 flag, s32 n) {
     M574_STAGE_MOT *mot;
     s32 i;
     M574_STAGE_TBL *tbl;
     f32 base;
     Vec v;
-    f32 f80;
-    f32 cv;
-    f32 sv;
+    Vec vel;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     mot = &tbl->mot;
     v.x = mot->v10.x;
     v.y = mot->v10.y - 150.0;
     v.z = 300.0f;
-    f80 = lbl_1_rodata_E4;
+    vel.z = lbl_1_rodata_E4;
     for (i = 0; i < n; i++) {
         if (flag == 0) {
             base = 240.0f;
@@ -555,13 +387,13 @@ void fn_1_2514(M574_STAGE_OBJ *p, s32 flag, s32 n) {
             base = 120.0f;
         }
         base = base + 10.0 * (3.0517578125e-05 * (f32)((u16)frand() - 0x8000));
-        sv = 100.0 * (0.2 * sin(3.141592653589793 * base / 180.0));
-        cv = 100.0 * (0.2 * cos(3.141592653589793 * base / 180.0));
-        fn_1_6C2C(&v, &sv);
+        vel.x = 100.0 * (0.2 * sin(3.141592653589793 * base / 180.0));
+        vel.y = 100.0 * (0.2 * cos(3.141592653589793 * base / 180.0));
+        fn_1_6C2C(&v, &vel);
     }
 }
 
-void fn_1_2364(M574_STAGE_OBJ *p) {
+void fn_1_2364(OMOBJ *p) {
     fn_1_2B88(p);
     fn_1_3154(p);
     fn_1_34B0(p);
@@ -572,24 +404,25 @@ void fn_1_2364(M574_STAGE_OBJ *p) {
     fn_1_5ECC(p);
     fn_1_629C(p);
     fn_1_26F4(p);
-    p->v4C++;
+    p->work[0]++;
 }
 
-void fn_1_26F4(M574_STAGE_OBJ *p) {
+void fn_1_26F4(OMOBJ *p) {
     /* Non-identique : tie-break de registres. En donnant un nom au second
-       `p->unk5C` (t2) on obtient _savegpr_26 et le scratch r26 comme le
+       `p->data` (t2) on obtient _savegpr_26 et le scratch r26 comme le
        code original ; il reste 8 lignes, toutes des renommages : MWCC donne
        tbl=r29/mot=r30 la ou CodeWarrior donne tbl=r30/mot=r29. L'ordre de
        declaration de tbl/mot/t2 ne change rien a l'objet produit. */
     s32 i;
-    M574_STAGE_TBL *tbl;
-    M574_STAGE_MOT *mot;
     M574_STAGE_TBL *t2;
+    M574_STAGE_MOT *mot;
+    M574_STAGE_TBL *tbl;
     s32 j;
     f32 base;
-    f32 a[6];
+    Vec vel;
+    Vec pos;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     if (MgSeqModeGet() != 5) {
         return;
     }
@@ -602,12 +435,12 @@ void fn_1_26F4(M574_STAGE_OBJ *p) {
             continue;
         }
         if ((((s32 *)tbl)[i] -= 1) < 0) {
-            t2 = p->unk5C;
+            t2 = p->data;
             mot = &t2->mot;
-            a[0] = mot->v10.x;
-            a[1] = mot->v10.y - 150.0;
-            a[2] = 300.0f;
-            a[5] = 80.0f;
+            pos.x = mot->v10.x;
+            pos.y = mot->v10.y - 150.0;
+            pos.z = 300.0f;
+            vel.z = 80.0f;
             for (j = 0; j < 1; j++) {
                 if (i == 0) {
                     base = 240.0f;
@@ -615,24 +448,24 @@ void fn_1_26F4(M574_STAGE_OBJ *p) {
                     base = 120.0f;
                 }
                 base = base + 10.0 * (3.0517578125e-05 * (f32)((u16)frand() - 0x8000));
-                a[3] = 100.0 * (0.2 * sin(3.141592653589793 * base / 180.0));
-                a[4] = 100.0 * (0.2 * cos(3.141592653589793 * base / 180.0));
-                fn_1_6C2C((Vec *)&a[0], &a[3]);
+                vel.x = 100.0 * (0.2 * sin(3.141592653589793 * base / 180.0));
+                vel.y = 100.0 * (0.2 * cos(3.141592653589793 * base / 180.0));
+                fn_1_6C2C(&pos, &vel);
             }
             ((s32 *)tbl)[i] = 0x78;
         }
     }
 }
 
-void fn_1_2B88(M574_STAGE_OBJ *p) {
+void fn_1_2B88(OMOBJ *p) {
     M574_STAGE_ROW *row;
     s32 i;
     s16 id;
-    M574_MODEL_OBJ *obj;
+    HSFOBJECT *obj;
     M574_STAGE_TBL *tbl;
     f32 fv;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 4; i++) {
         row = &tbl->row[i];
         row->f08 = row->f08 + 0.5 * (row->f0C - row->f08);
@@ -644,74 +477,74 @@ void fn_1_2B88(M574_STAGE_OBJ *p) {
             row->f04 = 0.0f;
         }
         row->f04 = row->f04 / 60.0;
-        id = ((s16 *)p->unk40)[i + 9];
+        id = p->mdlId[i + 9];
         Hu3DModelRotSet(id, 0.0f, 0.0f, row->f08);
-        id = ((s16 *)p->unk40)[i + 0x11];
+        id = p->mdlId[i + 0x11];
         fv = fn_1_6568(i);
         Hu3DMotionTimeSet(id, 30.0 * (1.0 - fv));
         if (row->v10 == 0) {
             if (MgSeqModeGet() == 6) {
                 row->v10 = 1;
                 Hu3DModelLayerSet(id, 3);
-                id = p->unk40->v04;
+                id = p->mdlId[2];
                 Hu3DModelLayerSet(id, 3);
             }
         }
-        id = ((s16 *)p->unk40)[i + 0xD];
-        obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id, lbl_1_data_290[i]);
-        if (obj != (M574_MODEL_OBJ *)0) {
-            obj->f30 = row->f08;
+        id = p->mdlId[i + 0xD];
+        obj = Hu3DModelObjPtrGet(id, lbl_1_data_290[i]);
+        if (obj != NULL) {
+            obj->mesh.base.rot.z = row->f08;
         }
         fn_1_8FDC(&row->hook);
     }
 }
 
-void fn_1_2928(M574_STAGE_OBJ *p) {
+void fn_1_2928(OMOBJ *p) {
     s32 i;
-    M574_SLOT_HOOK *h;
+    M574_COL_WALL *h;
     HU3DMODELID model;
-    M574_MODEL_OBJ *o;
+    HSFOBJECT *o;
     M574_STAGE_TBL *tbl;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 4; i++) {
         model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_220[i], HU_MEMNUM_OVL, HEAP_MODEL));
-        ((s16 *)p->unk40)[i + 9] = model;
+        p->mdlId[i + 9] = model;
         Hu3DModelLayerSet(model, 4);
         Hu3DModelShadowSet(model);
         Hu3DModelPosSetV(model, (HuVecF *)lbl_1_data_250[i]);
         tbl->row[i].f08 = tbl->row[i].f0C = lbl_1_data_280[i];
         model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_240[i], HU_MEMNUM_OVL, HEAP_MODEL));
-        ((s16 *)p->unk40)[i + 0x11] = model;
+        p->mdlId[i + 0x11] = model;
         Hu3DModelLayerSet(model, 6);
         Hu3DModelShadowSet(model);
         Hu3DModelAttrSet(model, 0x40000002);
         Hu3DMotionTimeSet(model, 0.0f);
         model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_230[i], HU_MEMNUM_OVL, HEAP_MODEL));
-        ((s16 *)p->unk40)[i + 0xD] = model;
+        p->mdlId[i + 0xD] = model;
         Hu3DModelAttrSet(model, 1);
-        o = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(model, lbl_1_data_290[i]);
-        if (o != (M574_MODEL_OBJ *)0) {
-            o->v1C.x = lbl_1_data_250[i][0];
-            o->v1C.y = lbl_1_data_250[i][1];
-            o->v1C.z = lbl_1_data_250[i][2];
+        o = Hu3DModelObjPtrGet(model, lbl_1_data_290[i]);
+        if (o != NULL) {
+            o->mesh.base.pos.x = lbl_1_data_250[i][0];
+            o->mesh.base.pos.y = lbl_1_data_250[i][1];
+            o->mesh.base.pos.z = lbl_1_data_250[i][2];
         }
         h = &tbl->row[i].hook;
-        h->v00 = 1;
-        h->v04 = 6;
-        h->v08 = i;
-        h->v0C = 1;
-        h->v10 = p;
-        h->v14 = 0;
-        h->v18 = (void *)fn_1_2D88;
+        h->flag = 1;
+        h->shape = 6;
+        h->id = i;
+        h->kind = 1;
+        h->user = p;
+        h->unk14 = 0;
+        h->hook = fn_1_2D88;
         fn_1_8F54(h, model);
         fn_1_8FDC(h);
         fn_1_8FDC(h);
-        fn_1_8B48(h);
+        fn_1_8B48((M574_COLHEAD *)h);
     }
 }
 
-s32 fn_1_2D88(M574_STAGE_OBJ *p, M574_SLOT_HOOK *hook) {
+s32 fn_1_2D88(M574_COL_WALL *wall, M574_COLLIDER *col) {
     /* Non-identique : MWCC 1.3.2 charge les deux litteraux (100.0 puis 0.5)
        en tete d'expression et fait `fmul f0, f0, f32` (litteral en operande A)
        la ou CodeWarrior charge 0.5 apres le `fsubs` et ecrit
@@ -721,12 +554,12 @@ s32 fn_1_2D88(M574_STAGE_OBJ *p, M574_SLOT_HOOK *hook) {
     M574_STAGE_TBL *tbl;
     f32 scale;
 
-    tbl = lbl_1_bss_48->unk5C;
-    idx = p->unk08;
+    tbl = lbl_1_bss_48->data;
+    idx = wall->id;
     row = &tbl->row[idx];
-    if (p->unk38[7] > 0.3) {
+    if (wall->lastPlane->n.y > 0.3) {
         if (row->f04 >= 0.1) {
-            scale = 100.0 * ((*(f32 *)hook->v18 - lbl_1_data_250[idx][0]) * 0.5);
+            scale = 100.0 * ((col->pos->x - lbl_1_data_250[idx][0]) * 0.5);
             if (idx & 1) {
                 scale = -scale;
             }
@@ -734,82 +567,82 @@ s32 fn_1_2D88(M574_STAGE_OBJ *p, M574_SLOT_HOOK *hook) {
                 if (scale > 1.0) {
                     scale = 1.0f;
                 }
-                ((f32 *)hook->v1C)[0] = ((f32 *)hook->v1C)[0] -
-                    50.0 * p->unk38[6] * 100.0 * 0.01666666753590107 * scale;
-                ((f32 *)hook->v1C)[1] = ((f32 *)hook->v1C)[1] -
-                    50.0 * p->unk38[7] * 100.0 * 0.01666666753590107 * scale;
+                col->vel->x = col->vel->x -
+                    50.0 * wall->lastPlane->n.x * 100.0 * 0.01666666753590107 * scale;
+                col->vel->y = col->vel->y -
+                    50.0 * wall->lastPlane->n.y * 100.0 * 0.01666666753590107 * scale;
                 if (idx & 1) {
                     scale = -scale;
                 }
-                ((f32 *)hook->v1C)[0] = ((f32 *)hook->v1C)[0] + 100.0 * (0.1 * scale);
+                col->vel->x = col->vel->x + 100.0 * (0.1 * scale);
             }
         }
     }
     return 0;
 }
 
-void fn_1_2F8C(M574_STAGE_OBJ *p) {
+void fn_1_2F8C(OMOBJ *p) {
     M574_STAGE_TBL *unused2;
     M574_STAGE_TBL *unused1;
-    M574_SLOT_HOOK *h;
+    M574_COL_CIRCLE *h;
     s32 i;
     M574_STAGE_SLOT *slot;
-    M574_MODEL_OBJ *obj;
-    M574_MODEL_OBJ *obj2;
+    HSFOBJECT *obj;
+    HSFOBJECT *obj2;
     HU3DMODELID model;
     M574_STAGE_TBL *tbl;
     HU3DMODELID id;
     HU3DMODELID id2;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 6; i++) {
         slot = &tbl->slotA[i];
         model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_42C[i + 1],
                                                      HU_MEMNUM_OVL, HEAP_MODEL));
-        ((s16 *)p->unk40)[i + 0x15] = model;
+        p->mdlId[i + 0x15] = model;
         Hu3DModelLayerSet(model, 4);
         Hu3DModelAttrSet(model, 0x40000001);
         Hu3DMotionStartEndSet(model, lbl_1_rodata_128, lbl_1_rodata_178);
-        unused2 = p->unk5C;
-        id = p->unk40->id08;
-        obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id, lbl_1_data_3D0[i + 1]);
-        if (obj != (M574_MODEL_OBJ *)0) {
-            Hu3DModelPosSet(model, obj->v1C.x, obj->v1C.y, obj->v1C.z);
+        unused2 = p->data;
+        id = p->mdlId[4];
+        obj = Hu3DModelObjPtrGet(id, lbl_1_data_3D0[i + 1]);
+        if (obj != NULL) {
+            Hu3DModelPosSet(model, obj->mesh.base.pos.x, obj->mesh.base.pos.y, obj->mesh.base.pos.z);
         }
-        unused1 = p->unk5C;
-        id2 = p->unk40->id08;
-        obj2 = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id2, lbl_1_data_3D0[i + 1]);
-        if (obj2 != (M574_MODEL_OBJ *)0) {
-            slot->v10.x = obj2->v1C.x;
-            slot->v10.y = obj2->v1C.y;
-            slot->v10.z = obj2->v1C.z;
+        unused1 = p->data;
+        id2 = p->mdlId[4];
+        obj2 = Hu3DModelObjPtrGet(id2, lbl_1_data_3D0[i + 1]);
+        if (obj2 != NULL) {
+            slot->v10.x = obj2->mesh.base.pos.x;
+            slot->v10.y = obj2->mesh.base.pos.y;
+            slot->v10.z = obj2->mesh.base.pos.z;
         }
         h = &slot->hook;
-        h->v00 = 1;
-        h->v04 = 3;
-        h->v08 = i;
-        h->v0C = 0;
-        h->v10 = p;
-        h->v14 = 0;
-        h->v18 = fn_1_3240;
-        h->v1C = &slot->v10;
-        h->v20 = lbl_1_rodata_E4;
-        fn_1_8B48(h);
+        h->flag = 1;
+        h->shape = 3;
+        h->id = i;
+        h->kind = 0;
+        h->user = p;
+        h->unk14 = 0;
+        h->hook = fn_1_3240;
+        h->pos = &slot->v10;
+        h->radius = lbl_1_rodata_E4;
+        fn_1_8B48((M574_COLHEAD *)h);
     }
 }
 
-void fn_1_3154(M574_STAGE_OBJ *p) {
+void fn_1_3154(OMOBJ *p) {
     s32 i;
     s16 modelId;
     M574_STAGE_SLOT *s;
     M574_STAGE_TBL *tbl;
     Vec tmp;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     i = 0;
     while (i < 6) {
         s = &tbl->slotA[i];
-        modelId = ((s16 *)p->unk40)[i + 0x15];
+        modelId = p->mdlId[i + 0x15];
         if (Hu3DMotionEndCheck(modelId)) {
             Hu3DModelAttrSet(modelId, 0x40000001);
             Hu3DMotionStartEndSet(modelId, 0.0f, 60.0f);
@@ -822,58 +655,58 @@ void fn_1_3154(M574_STAGE_OBJ *p) {
     }
 }
 
-s32 fn_1_3240(M574_STAGE_OBJ *p, M574_STAGE_OBJ *p2) {
+s32 fn_1_3240(M574_COL_CIRCLE *c, M574_COLLIDER *col) {
     s32 idx;
-    M574_STAGE_OBJ *stage;
+    OMOBJ *stage;
     s16 modelId;
     M574_STAGE_SLOT *slot;
     M574_STAGE_TBL *tbl;
 
-    idx = p->unk08;
+    idx = c->id;
     stage = lbl_1_bss_48;
-    tbl = stage->unk5C;
+    tbl = stage->data;
     slot = &tbl->slotA[idx];
-    modelId = ((s16 *)stage->unk40)[idx + 0x15];
+    modelId = stage->mdlId[idx + 0x15];
     Hu3DModelAttrReset(modelId, 0x40000001);
     Hu3DMotionStartEndSet(modelId, 60.0f, Hu3DMotionMaxTimeGet(modelId));
     Hu3DMotionTimeSet(modelId, 60.0f);
-    PSVECNormalize(p2->v1C, &slot->v1C);
+    PSVECNormalize(col->vel, &slot->v1C);
     PSVECScale(&slot->v1C, &slot->v1C, 50.0f);
     fn_1_77D4(lbl_1_data_450[idx], lbl_1_data_468[idx]);
-    if (*p2->unk18 < 0.0f) {
-        fn_1_C10(0x918, p2->unk18);
+    if (col->pos->x < 0.0f) {
+        fn_1_C10(0x918, col->pos);
     } else {
-        fn_1_C10(0x919, p2->unk18);
+        fn_1_C10(0x919, col->pos);
     }
     return 0;
 }
 
-void fn_1_3374(M574_STAGE_OBJ *p) {
+void fn_1_3374(OMOBJ *p) {
     M574_STAGE_TBL *unused;
-    M574_STAGE_ENT2 *ent;
+    M574_STAGE_SLOT *ent;
     M574_STAGE_TBL *tbl;
     HU3DMODELID id2;
     HU3DMODELID model;
-    M574_MODEL_OBJ *obj;
+    HSFOBJECT *obj;
     s32 i;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 2; i++) {
         ent = &tbl->ent2[i];
         ent->v00 = 0;
         model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_42C[i + 7],
                                                      HU_MEMNUM_OVL, HEAP_MODEL));
-        ((s16 *)p->unk40)[i + 0x1B] = model;
+        p->mdlId[i + 0x1B] = model;
         Hu3DModelAttrSet(model, 0x40000002);
         Hu3DModelAttrSet(model, 0x40000080);
         Hu3DMotionTimeSet(model, lbl_1_rodata_128);
         Hu3DMotionShapeTimeSet(model, lbl_1_rodata_128);
         Hu3DModelLayerSet(model, 4);
-        unused = p->unk5C;
-        id2 = p->unk40->id08;
-        obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id2, lbl_1_data_3D0[i + 7]);
-        if (obj != (M574_MODEL_OBJ *)0) {
-            Hu3DModelPosSet(model, obj->v1C.x, obj->v1C.y, obj->v1C.z);
+        unused = p->data;
+        id2 = p->mdlId[4];
+        obj = Hu3DModelObjPtrGet(id2, lbl_1_data_3D0[i + 7]);
+        if (obj != NULL) {
+            Hu3DModelPosSet(model, obj->mesh.base.pos.x, obj->mesh.base.pos.y, obj->mesh.base.pos.z);
         }
         (void)i;
         (void)i;
@@ -882,20 +715,20 @@ void fn_1_3374(M574_STAGE_OBJ *p) {
     }
 }
 
-void fn_1_34B0(M574_STAGE_OBJ *p) {
+void fn_1_34B0(OMOBJ *p) {
     /* 1 seule ligne differente : `&= 0xE0000000` ; MWCC 1.3.2 choisit
        clrrwi (clear bits bas) la ou CodeWarrior emet rlwinm 0,31,29. */
     M574_STAGE_SLOT *s;
-    M574_SLOT_HOOK *h;
+    M574_COLLIDER *h;
     s32 i;
     s16 id;
     M574_STAGE_TBL *tbl;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 2; i++) {
-        s = (M574_STAGE_SLOT *)&tbl->ent2[i];
-        id = ((s16 *)p->unk40)[i + 0x1B];
-        h = s->v48;
+        s = &tbl->ent2[i];
+        id = p->mdlId[i + 0x1B];
+        h = s->v48.col;
         switch (s->v00) {
         case 0:
             break;
@@ -922,11 +755,11 @@ void fn_1_34B0(M574_STAGE_OBJ *p) {
                 break;
             }
             s->v00++;
-            ((f32 *)h->v1C)[0] = 0.0f;
-            ((f32 *)h->v1C)[1] = 333.33334f;
-            h->v00 &= ~2;
+            h->vel->x = 0.0f;
+            h->vel->y = 333.33334f;
+            h->flag &= ~2;
             h = 0;
-            s->v48 = h;
+            s->v48.col = h;
             if (i == 0) {
                 HuAudFXPlay(0x929);
             } else {
@@ -939,26 +772,26 @@ void fn_1_34B0(M574_STAGE_OBJ *p) {
             s->v00 = 0;
             break;
         }
-        if (h != (M574_SLOT_HOOK *)0) {
-            ((f32 *)h->v1C)[0] = 0.0f;
-            ((f32 *)h->v1C)[1] = 0.0f;
-            ((f32 *)h->v18)[0] = s->v10.x;
-            ((f32 *)h->v18)[1] = s->v10.y + s->f34;
+        if (h != (M574_COLLIDER *)0) {
+            h->vel->x = 0.0f;
+            h->vel->y = 0.0f;
+            h->pos->x = s->v10.x;
+            h->pos->y = s->v10.y + s->f34;
         }
     }
 }
 
-s32 fn_1_3704(M574_STAGE_OBJ *p, M574_STAGE_ENT3 *q) {
-    M574_STAGE_ENT2 *ent;
-    f32 *v;
-    M574_STAGE_OBJ *stage;
+s32 fn_1_3704(M574_COL_WALL *wall, M574_COLLIDER *col) {
+    M574_STAGE_SLOT *ent;
+    M574_PLANE *v;
+    OMOBJ *stage;
     s32 flag;
     M574_STAGE_TBL *tbl;
 
-    if ((q->v00 & 2) == 0) {
+    if ((col->flag & 2) == 0) {
         stage = lbl_1_bss_48;
-        tbl = stage->unk5C;
-        if (p->unk08 == 0) {
+        tbl = stage->data;
+        if (wall->id == 0) {
             flag = 0;
         } else {
             flag = 1;
@@ -966,13 +799,13 @@ s32 fn_1_3704(M574_STAGE_OBJ *p, M574_STAGE_ENT3 *q) {
         ent = &tbl->ent2[flag];
         if (ent->v00 == 0) {
             ent->v00++;
-            ent->v48 = q;
-            q->v00 |= 2;
-            q->v1C->x = 0.0f;
-            q->v1C->y = 0.0f;
-            v = p->unk38;
-            ent->f10 = v[0] + 0.5 * (v[3] - v[0]);
-            ent->f14 = v[1] + 0.5 * (v[4] - v[1]);
+            ent->v48.col = col;
+            col->flag |= 2;
+            col->vel->x = 0.0f;
+            col->vel->y = 0.0f;
+            v = wall->lastPlane;
+            ent->v10.x = v->p0.x + 0.5 * (v->p1.x - v->p0.x);
+            ent->v10.y = v->p0.y + 0.5 * (v->p1.y - v->p0.y);
             ent->f34 = 80.0f;
             return 1;
         }
@@ -980,7 +813,7 @@ s32 fn_1_3704(M574_STAGE_OBJ *p, M574_STAGE_ENT3 *q) {
     return 0;
 }
 
-void fn_1_383C(M574_STAGE_OBJ *p) {
+void fn_1_383C(OMOBJ *p) {
     /* Non-identique : MWCC 1.3.2 repartit val/tbl/obj en r26/r25/r24 la ou
        CodeWarrior met tbl/obj/val ; 7 lignes, rename de registres seule. */
     M574_STAGE_CELL *cell;
@@ -988,24 +821,24 @@ void fn_1_383C(M574_STAGE_OBJ *p) {
     s32 i;
     HU3DMODELID model;
     M574_STAGE_TBL *tbl;
-    M574_MODEL_OBJ *obj;
+    HSFOBJECT *obj;
     s32 val;
     s16 modelId;
 
-    tbl = p->unk5C;
-    modelId = p->unk40->id0A;
+    tbl = p->data;
+    modelId = p->mdlId[5];
     for (i = 0; i < 2; i++) {
         cell = &tbl->cell[i];
         cell->v0C = -1;
         for (j = 0; j < 3; j++) {
-            obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(modelId, lbl_1_data_2D8[j + i * 3]);
+            obj = Hu3DModelObjPtrGet(modelId, lbl_1_data_2D8[j + i * 3]);
             cell->v50[j] = (HSFOBJECT *)obj;
             val = (s32)(20.0 * (1.52587890625e-05 * (f32)(s32)(u16)frand()));
             cell->v20[j] = val;
             cell->f2C[j] = cell->f38[j] = 18.0f * (f32)val;
         }
         model = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_314[i], 0x10000000, 2));
-        ((s16 *)p->unk40)[i + 0x1D] = model;
+        p->mdlId[i + 0x1D] = model;
         Hu3DModelLayerSet(model, 4);
         Hu3DModelAttrSet(model, 0x40000002);
         Hu3DMotionStartEndSet(model, lbl_1_rodata_128, lbl_1_rodata_178);
@@ -1013,7 +846,7 @@ void fn_1_383C(M574_STAGE_OBJ *p) {
     }
 }
 
-void fn_1_3A1C(M574_STAGE_OBJ *p) {
+void fn_1_3A1C(OMOBJ *p) {
     M574_STAGE_CELL *cell;
     M574_STAGE_TBL *tbl;
     HU3DMODELID model;
@@ -1027,11 +860,11 @@ void fn_1_3A1C(M574_STAGE_OBJ *p) {
     s32 n;
     f32 ang;
 
-    tbl = p->unk5C;
-    modelId = p->unk40->id0A;
+    tbl = p->data;
+    modelId = p->mdlId[5];
     for (i = 0; i < 2; i++) {
         cell = &tbl->cell[i];
-        model = ((s16 *)p->unk40)[i + 0x1D];
+        model = p->mdlId[i + 0x1D];
         switch (cell->v00) {
             case 0:
                 break;
@@ -1211,9 +1044,9 @@ s32 fn_1_4330(f32 f) {
     return lbl_1_data_2C4[i];
 }
 
-void fn_1_43E8(M574_STAGE_OBJ *p, s32 idx) {
+void fn_1_43E8(OMOBJ *p, s32 idx) {
     M574_STAGE_CELL *c;
-    M574_STAGE_TBL *tbl = p->unk5C;
+    M574_STAGE_TBL *tbl = p->data;
 
     c = &tbl->cell[idx];
 
@@ -1222,54 +1055,54 @@ void fn_1_43E8(M574_STAGE_OBJ *p, s32 idx) {
     }
 }
 
-s32 fn_1_445C(M574_STAGE_OBJ *p, s32 idx) {
+s32 fn_1_445C(OMOBJ *p, s32 idx) {
     M574_STAGE_CELL *c;
-    M574_STAGE_TBL *tbl = p->unk5C;
+    M574_STAGE_TBL *tbl = p->data;
 
     c = &tbl->cell[idx];
     return c->v10;
 }
 
-void fn_1_448C(M574_STAGE_OBJ *p) {
+void fn_1_448C(OMOBJ *p) {
     M574_STAGE_SLOT *slot;
-    M574_STAGE_HOOKENT *ent;
+    M574_COL_WALL *ent;
     s32 i;
-    M574_MODEL_OBJ *obj;
+    HSFOBJECT *obj;
     HU3DMODELID id;
     s32 idx;
     s32 a;
     M574_STAGE_TBL *tbl;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     id = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810017, 0x10000000, 2));
-    p->unk40->id0E = id;
+    p->mdlId[7] = id;
     Hu3DModelAttrSet(id, 1);
     for (i = 0; i < 4; i++) {
-        obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id, lbl_1_data_3A8[i]);
-        if (obj != (M574_MODEL_OBJ *)0) {
+        obj = Hu3DModelObjPtrGet(id, lbl_1_data_3A8[i]);
+        if (obj != NULL) {
             ent = &tbl->hookEnt[i];
-            ent->hook.v00 = 1;
-            ent->hook.v04 = 4;
-            ent->hook.v08 = i;
-            ent->hook.v0C = 1;
-            ent->hook.v10 = p;
-            ent->hook.v14 = 0;
-            ent->hook.v18 = fn_1_47DC;
-            fn_1_8FA8(&ent->hook, obj);
-            fn_1_8FDC(&ent->hook);
-            fn_1_8B48(&ent->hook);
+            ent->flag = 1;
+            ent->shape = 4;
+            ent->id = i;
+            ent->kind = 1;
+            ent->user = p;
+            ent->unk14 = 0;
+            ent->hook = fn_1_47DC;
+            fn_1_8FA8(ent, obj);
+            fn_1_8FDC(ent);
+            fn_1_8B48((M574_COLHEAD *)ent);
         }
     }
-    id = p->unk40->id0A;
+    id = p->mdlId[5];
     idx = 0;
     for (a = 0; a < 2; a++) {
         for (i = 0; i < 7; i++) {
             slot = &tbl->slotB[idx];
-            obj = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id, lbl_1_data_31C[idx]);
-            slot->v48 = obj;
-            if (obj != (M574_MODEL_OBJ *)0) {
-                slot->v10.x = obj->v1C.x;
-                slot->v10.y = obj->v1C.y;
+            obj = Hu3DModelObjPtrGet(id, lbl_1_data_31C[idx]);
+            slot->v48.obj = obj;
+            if (obj != NULL) {
+                slot->v10.x = obj->mesh.base.pos.x;
+                slot->v10.y = obj->mesh.base.pos.y;
                 slot->v10.z = lbl_1_rodata_128;
             }
             slot->v00 = 0;
@@ -1281,21 +1114,21 @@ void fn_1_448C(M574_STAGE_OBJ *p) {
     }
 }
 
-void fn_1_4660(M574_STAGE_OBJ *p) {
+void fn_1_4660(OMOBJ *p) {
     M574_STAGE_SLOT *slot;
-    M574_SLOT_PTR *ptr;
+    HSFOBJECT *ptr;
     s32 i;
     s32 j;
     s32 k;
     M574_STAGE_TBL *tbl;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     k = 0;
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 7; j++) {
             slot = &tbl->slotB[k];
-            ptr = slot->v48;
-            if (ptr != (M574_SLOT_PTR *)0) {
+            ptr = slot->v48.obj;
+            if (ptr != NULL) {
                 switch (slot->v00) {
                 case 0:
                     break;
@@ -1320,8 +1153,8 @@ void fn_1_4660(M574_STAGE_OBJ *p) {
                 } else {
                     slot->f3C = slot->f34;
                 }
-                ptr->f1C = slot->v10.x + slot->f3C;
-                ptr->f20 = slot->v10.y + slot->f40;
+                ptr->mesh.base.pos.x = slot->v10.x + slot->f3C;
+                ptr->mesh.base.pos.y = slot->v10.y + slot->f40;
                 slot->v04++;
                 k++;
             }
@@ -1329,12 +1162,12 @@ void fn_1_4660(M574_STAGE_OBJ *p) {
     }
 }
 
-s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col) {
+s32 fn_1_47DC(M574_COL_WALL *wall, M574_COLLIDER *col) {
     M574_STAGE_TBL *tbl;
-    M574_STAGE_ENT2 *ent;
+    M574_STAGE_SLOT *ent;
     M574_STAGE_SLOT *slot;
-    M574_HOOK_PLANE *plane;
-    M574_HOOK_PLANE *plane2;
+    M574_PLANE *plane;
+    M574_PLANE *plane2;
     f32 dx;
     f32 dy;
     f32 dist;
@@ -1346,7 +1179,7 @@ s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col) {
     s32 which;
     s32 ok;
 
-    tbl = lbl_1_bss_48->unk5C;
+    tbl = lbl_1_bss_48->data;
     id = wall->id;
     idx = -1;
     if (id < 2) {
@@ -1387,16 +1220,16 @@ s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col) {
                     else {
                         which = 1;
                     }
-                    ent = &lbl_1_bss_48->unk5C->ent2[which];
+                    ent = &((M574_STAGE_TBL *)lbl_1_bss_48->data)->ent2[which];
                     if (ent->v00 == 0) {
                         ent->v00++;
-                        ent->v48 = col;
+                        ent->v48.col = col;
                         col->flag |= 2;
                         col->vel->x = 0.0f;
                         col->vel->y = 0.0f;
                         plane2 = wall->lastPlane;
-                        ent->f10 = plane2->p0.x + 0.5 * (plane2->p1.x - plane2->p0.x);
-                        ent->f14 = plane2->p0.y + 0.5 * (plane2->p1.y - plane2->p0.y);
+                        ent->v10.x = plane2->p0.x + 0.5 * (plane2->p1.x - plane2->p0.x);
+                        ent->v10.y = plane2->p0.y + 0.5 * (plane2->p1.y - plane2->p0.y);
                         ent->f34 = 80.0f;
                         ok = 1;
                     }
@@ -1448,8 +1281,8 @@ s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col) {
     return 0;
 }
 
-void fn_1_4D28(M574_STAGE_OBJ *p) {
-    M574_SLOT_HOOK *h;
+void fn_1_4D28(OMOBJ *p) {
+    M574_COL_CIRCLE *h;
     M574_STAGE_SLOT *slot;
     HU3DMODELID mot;
     s32 i;
@@ -1458,7 +1291,7 @@ void fn_1_4D28(M574_STAGE_OBJ *p) {
     M574_STAGE_TBL *tbl;
     HU3DMOTID joint;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 2; i++) {
         slot = &tbl->slot[i];
         if (i == 0) {
@@ -1468,13 +1301,13 @@ void fn_1_4D28(M574_STAGE_OBJ *p) {
             for (j = 0; j < 3; j++) {
                 joint = Hu3DJointMotion(mot, HuDataSelHeapReadNum(lbl_1_data_480[j],
                                             HU_MEMNUM_OVL, HEAP_MODEL));
-                ((s16 *)p->unk48)[j] = joint;
+                p->mtnId[j] = joint;
             }
         } else {
             mot = Hu3DModelLink(model);
         }
-        ((s16 *)p->unk40)[i + 0x1F] = mot;
-        Hu3DMotionSet(mot, p->unk48->v00);
+        p->mdlId[i + 0x1F] = mot;
+        Hu3DMotionSet(mot, p->mtnId[0]);
         Hu3DModelAttrSet(mot, 0x40000001);
         Hu3DModelLayerSet(mot, 4);
         Hu3DModelShadowSet(mot);
@@ -1482,22 +1315,22 @@ void fn_1_4D28(M574_STAGE_OBJ *p) {
         slot->v10 = lbl_1_data_48C[i];
         slot->f3C = slot->f40 = slot->f44 = lbl_1_rodata_160;
         h = &slot->hook;
-        h->v00 = 1;
-        h->v04 = 2;
-        h->v08 = i;
-        h->v0C = 0;
-        h->v10 = p;
-        h->v14 = 0;
-        h->v18 = fn_1_5628;
-        h->v1C = &slot->v10;
-        h->v20 = lbl_1_rodata_218;
-        fn_1_8B48(h);
+        h->flag = 1;
+        h->shape = 2;
+        h->id = i;
+        h->kind = 0;
+        h->user = p;
+        h->unk14 = 0;
+        h->hook = fn_1_5628;
+        h->pos = &slot->v10;
+        h->radius = lbl_1_rodata_218;
+        fn_1_8B48((M574_COLHEAD *)h);
         (void)tbl;
         (void)tbl;
     }
 }
 
-void fn_1_4EE8(M574_STAGE_OBJ *p) {
+void fn_1_4EE8(OMOBJ *p) {
     M574_STAGE_TBL *tbl;
     M574_STAGE_SLOT *slot;
     HU3DMODELID model;
@@ -1507,10 +1340,10 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
     s32 n;
     f64 dir;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     for (i = 0; i < 2; i++) {
         slot = &tbl->slot[i];
-        model = ((s16 *)p->unk40)[i + 0x1F];
+        model = p->mdlId[i + 0x1F];
         target = &lbl_1_data_48C[i];
         rotTarget = 0.0f;
         switch (slot->v00) {
@@ -1518,7 +1351,7 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
                 slot->v00++;
                 slot->v10.x = slot->v10.x + 150.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
                 slot->f34 = 0.0f;
-                Hu3DMotionSet(model, ((s16 *)p->unk48)[0]);
+                Hu3DMotionSet(model, p->mtnId[0]);
                 // fallthrough
             case 1:
                 if (MgSeqModeGet() != 5) {
@@ -1532,13 +1365,13 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
                     dir = 1.0;
                 }
                 slot->f34 = dir;
-                Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[1], 0.0f, 12.0f, 0x40000001);
+                Hu3DMotionShiftSet(model, p->mtnId[1], 0.0f, 12.0f, 0x40000001);
                 // fallthrough
             case 2:
                 if (MgSeqModeGet() != 5) {
                     slot->v00 = 8;
                     slot->f34 = 0.0f;
-                    Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[0], 0.0f, 12.0f, 0x40000001);
+                    Hu3DMotionShiftSet(model, p->mtnId[0], 0.0f, 12.0f, 0x40000001);
                 }
                 else if (slot->f34 < 0.0f) {
                     if (slot->v10.x > target->x - 180.0) {
@@ -1560,10 +1393,10 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
                 if (!(slot->v10.y + slot->v1C.y > target->y)) {
                     slot->v10.y = target->y;
                     slot->v1C.y = 0.0f;
-                    if (p->unk5C->cell[i].v10 == 0) {
+                    if (((M574_STAGE_TBL *)p->data)->cell[i].v10 == 0) {
                         slot->v00++;
                         slot->v04 = 0;
-                        Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[0], 0.0f, 30.0f, 0x40000001);
+                        Hu3DMotionShiftSet(model, p->mtnId[0], 0.0f, 30.0f, 0x40000001);
                     }
                 }
                 break;
@@ -1579,7 +1412,7 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
                         dir = 1.0;
                     }
                     slot->f34 = dir;
-                    Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[1], 0.0f, 12.0f, 0x40000001);
+                    Hu3DMotionShiftSet(model, p->mtnId[1], 0.0f, 12.0f, 0x40000001);
                 }
                 break;
             case 5:
@@ -1591,7 +1424,7 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
                 slot->v00++;
                 // fallthrough
             case 6:
-                if (p->unk5C->cell[i].v10 != 0) {
+                if (((M574_STAGE_TBL *)p->data)->cell[i].v10 != 0) {
                     break;
                 }
                 slot->v00++;
@@ -1602,7 +1435,7 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
                     slot->f40 = 1.0f;
                     slot->v00 = 4;
                     slot->v04 = 0;
-                    Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[0], 0.0f, 30.0f, 0x40000001);
+                    Hu3DMotionShiftSet(model, p->mtnId[0], 0.0f, 30.0f, 0x40000001);
                 }
                 break;
             case 8:
@@ -1611,10 +1444,10 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
         if ((slot->v00 == 2 || slot->v00 == 4) && slot->v38 != 0) {
             slot->v04 = 0;
             slot->f34 = 0.0f;
-            if (MgSeqModeGet() == 5 && p->unk5C->cell[i].v00 == 0) {
-                p->unk5C->cell[i].v00++;
+            if (MgSeqModeGet() == 5 && ((M574_STAGE_TBL *)p->data)->cell[i].v00 == 0) {
+                ((M574_STAGE_TBL *)p->data)->cell[i].v00++;
             }
-            Hu3DMotionShiftSet(model, ((s16 *)p->unk48)[2], 0.0f, 12.0f, 0x40000001);
+            Hu3DMotionShiftSet(model, p->mtnId[2], 0.0f, 12.0f, 0x40000001);
             if (slot->v38 == 1) {
                 slot->v00 = 5;
                 fn_1_77D4(i, 7);
@@ -1645,15 +1478,15 @@ void fn_1_4EE8(M574_STAGE_OBJ *p) {
     }
 }
 
-s32 fn_1_5628(M574_STAGE_OBJ *p) {
-    M574_STAGE_OBJ *stage;
+s32 fn_1_5628(M574_COL_CIRCLE *c, M574_COLLIDER *col) {
+    OMOBJ *stage;
     M574_STAGE_SLOT *s;
     s32 idx;
     M574_STAGE_TBL *tbl;
 
-    idx = p->unk08;
+    idx = c->id;
     stage = lbl_1_bss_48;
-    tbl = stage->unk5C;
+    tbl = stage->data;
     s = &tbl->slot[idx];
     s->v38 = 1;
     return 0;
@@ -1662,14 +1495,14 @@ s32 fn_1_5628(M574_STAGE_OBJ *p) {
 void fn_1_5680(f32 *x) {
     M574_STAGE_SLOT *slot;
     s32 i;
-    M574_STAGE_OBJ *stage;
+    OMOBJ *stage;
     M574_STAGE_TBL *tbl;
     f32 v1;
     f32 v2;
     f64 v3;
 
     stage = lbl_1_bss_48;
-    tbl = stage->unk5C;
+    tbl = stage->data;
     i = 0;
     while (i < 2) {
         slot = &tbl->slot[i];
@@ -1684,64 +1517,64 @@ void fn_1_5680(f32 *x) {
     }
 }
 
-void fn_1_5750(M574_STAGE_OBJ *p) {
+void fn_1_5750(OMOBJ *p) {
     M574_STAGE_TBL *tbl;
     M574_STAGE_MOT *mot;
     HU3DMODELID model;
     s16 id1;
-    M574_MODEL_OBJ *obj1;
+    HSFOBJECT *obj1;
     s16 id2;
-    M574_MODEL_OBJ *obj2;
-    M574_SLOT_HOOK *hook;
-    M574_MODEL_OBJ *obj3;
+    HSFOBJECT *obj2;
+    M574_COL_CIRCLE *hook;
+    HSFOBJECT *obj3;
     M574_STAGE_TBL *unused1;
     M574_STAGE_TBL *unused2;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     mot = &tbl->mot;
     model = Hu3DModelCreate(HuDataSelHeapReadNum(0x00810005, 0x10000000, 2));
-    p->unk40->id = model;
+    p->mdlId[8] = model;
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DMotionStartEndSet(model, lbl_1_rodata_128, lbl_1_rodata_178);
     Hu3DModelLayerSet(model, 4);
-    unused1 = p->unk5C;
-    id1 = p->unk40->id08;
-    obj1 = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id1, lbl_1_data_3D0[0]);
-    if (obj1 != (M574_MODEL_OBJ *)0) {
-        Hu3DModelPosSet(model, obj1->v1C.x, obj1->v1C.y, obj1->v1C.z);
+    unused1 = p->data;
+    id1 = p->mdlId[4];
+    obj1 = Hu3DModelObjPtrGet(id1, lbl_1_data_3D0[0]);
+    if (obj1 != NULL) {
+        Hu3DModelPosSet(model, obj1->mesh.base.pos.x, obj1->mesh.base.pos.y, obj1->mesh.base.pos.z);
     }
-    unused2 = p->unk5C;
-    id2 = p->unk40->id08;
-    obj2 = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(id2, lbl_1_data_3D0[0]);
-    if (obj2 != (M574_MODEL_OBJ *)0) {
-        mot->v10.x = obj2->v1C.x;
-        mot->v10.y = obj2->v1C.y;
-        mot->v10.z = obj2->v1C.z;
+    unused2 = p->data;
+    id2 = p->mdlId[4];
+    obj2 = Hu3DModelObjPtrGet(id2, lbl_1_data_3D0[0]);
+    if (obj2 != NULL) {
+        mot->v10.x = obj2->mesh.base.pos.x;
+        mot->v10.y = obj2->mesh.base.pos.y;
+        mot->v10.z = obj2->mesh.base.pos.z;
     }
     hook = &mot->hook;
-    hook->v00 = 1;
-    hook->v04 = 1;
-    hook->v08 = 100;
-    hook->v0C = 0;
-    hook->v10 = p;
-    hook->v14 = 0;
-    hook->v18 = fn_1_5D64;
-    hook->v1C = &mot->v10;
-    hook->v20 = 200.0f;
-    fn_1_8B48(hook);
+    hook->flag = 1;
+    hook->shape = 1;
+    hook->id = 100;
+    hook->kind = 0;
+    hook->user = p;
+    hook->unk14 = 0;
+    hook->hook = fn_1_5D64;
+    hook->pos = &mot->v10;
+    hook->radius = 200.0f;
+    fn_1_8B48((M574_COLHEAD *)hook);
     mot->v00 = 0;
     mot->v38 = 0;
     mot->v1C.x = mot->v1C.y = mot->v1C.z = lbl_1_rodata_128;
-    obj3 = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(model, lbl_1_data_4A4);
+    obj3 = Hu3DModelObjPtrGet(model, lbl_1_data_4A4);
     mot->v48 = (HSFOBJECT *)obj3;
-    if (obj3 != (M574_MODEL_OBJ *)0) {
-        mot->v3C.x = obj3->v1C.x;
-        mot->v3C.y = obj3->v1C.y;
-        mot->v3C.z = obj3->v1C.z;
+    if (obj3 != NULL) {
+        mot->v3C.x = obj3->mesh.base.pos.x;
+        mot->v3C.y = obj3->mesh.base.pos.y;
+        mot->v3C.z = obj3->mesh.base.pos.z;
     }
 }
 
-void fn_1_5934(M574_STAGE_OBJ *p) {
+void fn_1_5934(OMOBJ *p) {
     M574_STAGE_TBL *tbl;
     M574_STAGE_MOT *mot;
     HSFOBJECT *obj;
@@ -1754,9 +1587,9 @@ void fn_1_5934(M574_STAGE_OBJ *p) {
     s32 n;
     s32 k;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     mot = &tbl->mot;
-    model = p->unk40->id;
+    model = p->mdlId[8];
     switch (mot->v00) {
         case 0:
             if (mot->v38 == 0 || MgSeqModeGet() != 5) {
@@ -1768,8 +1601,8 @@ void fn_1_5934(M574_STAGE_OBJ *p) {
             HuAudFXPlay(0x91C);
             HuAudFXPlay(0x91E);
             tbl->v0C--;
-            fn_1_63B0((M574_VEC3 *)&lbl_1_data_4B0[0], (M574_VEC3 *)&lbl_1_data_4C8[0], tbl->v0C);
-            fn_1_63B0((M574_VEC3 *)&lbl_1_data_4B0[1], (M574_VEC3 *)&lbl_1_data_4C8[1], tbl->v0C);
+            fn_1_63B0(&lbl_1_data_4B0[0], &lbl_1_data_4C8[0], tbl->v0C);
+            fn_1_63B0(&lbl_1_data_4B0[1], &lbl_1_data_4C8[1], tbl->v0C);
             // fallthrough
         case 1:
             if (tbl->v0C > 0) {
@@ -1791,7 +1624,7 @@ void fn_1_5934(M574_STAGE_OBJ *p) {
                 break;
             }
             side = mot->v0C;
-            mot = &p->unk5C->mot;
+            mot = &((M574_STAGE_TBL *)p->data)->mot;
             pos.x = mot->v10.x;
             pos.y = mot->v10.y - 150.0;
             pos.z = 300.0f;
@@ -1806,7 +1639,7 @@ void fn_1_5934(M574_STAGE_OBJ *p) {
                 ang = base + 10.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
                 vel.x = 100.0 * (0.2 * sin(3.141592653589793 * ang / 180.0));
                 vel.y = 100.0 * (0.2 * cos(3.141592653589793 * ang / 180.0));
-                fn_1_6C2C(&pos, &vel.x);
+                fn_1_6C2C(&pos, &vel);
             }
             mot->v00++;
             mot->v04 = 0;
@@ -1836,20 +1669,20 @@ void fn_1_5934(M574_STAGE_OBJ *p) {
     }
 }
 
-s32 fn_1_5D64(s32 unused, M574_STAGE_OBJ *p) {
+s32 fn_1_5D64(M574_COL_CIRCLE *c, M574_COLLIDER *col) {
     M574_STAGE_MOT *mot;
-    M574_STAGE_OBJ *stage;
+    OMOBJ *stage;
     s16 modelId;
     s32 flag;
     M574_STAGE_TBL *tbl;
 
     stage = lbl_1_bss_48;
-    tbl = stage->unk5C;
+    tbl = stage->data;
     mot = &tbl->mot;
-    modelId = stage->unk40->id;
+    modelId = stage->mdlId[8];
     if (mot->v00 == 0) {
         mot->v38 = 1;
-        if (*p->unk18 < 0.0f) {
+        if (col->pos->x < 0.0f) {
             flag = 0;
         } else {
             flag = 1;
@@ -1858,22 +1691,22 @@ s32 fn_1_5D64(s32 unused, M574_STAGE_OBJ *p) {
         Hu3DModelAttrReset(modelId, 0x40000001);
         Hu3DMotionStartEndSet(modelId, 60.0f, Hu3DMotionMaxTimeGet(modelId));
         Hu3DMotionTimeSet(modelId, 60.0f);
-        PSVECNormalize(p->v1C, &mot->v1C);
+        PSVECNormalize(col->vel, &mot->v1C);
         PSVECScale(&mot->v1C, &mot->v1C, 50.0f);
     }
     return 0;
 }
 
-void fn_1_5E5C(M574_STAGE_OBJ *p) {
-    M574_STAGE_TBL *tbl = p->unk5C;
-    s16 modelId = p->unk40->id;
+void fn_1_5E5C(OMOBJ *p) {
+    M574_STAGE_TBL *tbl = p->data;
+    s16 modelId = p->mdlId[8];
 
     tbl->texId = Hu3DTexScrollCreate(modelId, lbl_1_data_504.name);
     tbl->v0C = 5;
     tbl->f10 = lbl_1_rodata_254;
 }
 
-void fn_1_5ECC(M574_STAGE_OBJ *p) {
+void fn_1_5ECC(OMOBJ *p) {
     M574_STAGE_TBL *tbl;
     f32 cur;
     f32 ux;
@@ -1887,7 +1720,7 @@ void fn_1_5ECC(M574_STAGE_OBJ *p) {
     f32 m4;
     s32 idx;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     /* The u32->f32 bias idiom (lis 0x4330 / lfd / fsubs 2^52) is what the original
        emits for both (f32)(v ^ 0x8000) conversions below. */
     base = (f32)tbl->v0C - tbl->f10;
@@ -1921,30 +1754,30 @@ void fn_1_5ECC(M574_STAGE_OBJ *p) {
     Hu3DTexScrollPosSet(tbl->texId, ux, uy, lbl_1_rodata_128);
 }
 
-void fn_1_6168(M574_STAGE_OBJ *p) {
-    M574_MOTNODE *nd;
+void fn_1_6168(OMOBJ *p) {
+    HU3DPARTICLEDATA *nd;
     HU3DMODELID particle;
     s32 i;
-    M574_MOTGRP *grp;
+    HU3DPARTICLE *grp;
     s32 j;
     M574_STAGE_TBL *tbl;
     ANIMDATA *anim;
 
-    tbl = p->unk5C;
+    tbl = p->data;
     anim = HuSprAnimDataRead(0x81 << 16 | 0x20);
     for (i = 0; i < 5; i++) {
         particle = Hu3DParticleCreate(anim, 8);
         tbl->ids[i] = particle;
-        grp = ((M574_HU3DMODEL *)((u8 *)Hu3DData + particle * 0x134))->grp120;
+        grp = Hu3DData[particle].hookData;
         Hu3DParticleBlendModeSet(particle, HU3D_PARTICLE_BLEND_NORMAL);
-        Hu3DParticleHookSet(particle, (HU3DPARTICLEHOOK)fn_1_62A0);
+        Hu3DParticleHookSet(particle, fn_1_62A0);
         Hu3DModelLayerSet(particle, 7);
         Hu3DModelPosSet(particle, lbl_1_rodata_128, lbl_1_rodata_128,
                         lbl_1_rodata_128);
         Hu3DParticleAnimModeSet(particle, 4 - i);
-        for (nd = grp->nd48, j = 0; j < grp->cnt30; j++, nd++) {
-            nd->f00 = -1;
-            nd->f2C = lbl_1_rodata_128;
+        for (nd = grp->data, j = 0; j < grp->maxCnt; j++, nd++) {
+            nd->time = -1;
+            nd->scale = lbl_1_rodata_128;
         }
         (void)nd;
         (void)nd;
@@ -1953,29 +1786,29 @@ void fn_1_6168(M574_STAGE_OBJ *p) {
     }
 }
 
-void fn_1_629C(M574_STAGE_OBJ *p) {
+void fn_1_629C(OMOBJ *p) {
 }
 
-void fn_1_62A0(s32 unused, M574_STAGE_OBJ *p) {
-    M574_STAGE_ENT *e;
+void fn_1_62A0(HU3DMODEL *model, HU3DPARTICLE *p, Mtx mtx) {
+    HU3DPARTICLEDATA *e;
     s32 i;
 
-    e = p->unk48;
+    e = p->data;
     i = 0;
-    while (i < p->v30) {
-        switch (e->v00) {
+    while (i < p->maxCnt) {
+        switch (e->time) {
         case 0:
-            e->v00++;
-            e->f2C = 200.0f;
-            e->v43 = 0xB4;
+            e->time++;
+            e->scale = 200.0f;
+            e->color.a = 0xB4;
         case 1:
-            e->f2C -= 10.0f;
-            e->v43 -= 4;
-            if (e->f2C <= 0.0f || e->v43 > 0xF0) {
-                e->v00 = -1;
-                e->f2C = 0.0f;
+            e->scale -= 10.0f;
+            e->color.a -= 4;
+            if (e->scale <= 0.0f || e->color.a > 0xF0) {
+                e->time = -1;
+                e->scale = 0.0f;
             } else {
-                PSVECAdd(&e->v34, &e->v14, &e->v34);
+                PSVECAdd(&e->pos, &e->accel, &e->pos);
             }
             break;
         }
@@ -1984,21 +1817,21 @@ void fn_1_62A0(s32 unused, M574_STAGE_OBJ *p) {
     }
 }
 
-void fn_1_63B0(M574_VEC3 *a, M574_VEC3 *b, s32 idx) {
-    M574_MOTNODE *nd;
-    M574_MOTGRP *grp;
+void fn_1_63B0(Vec *a, Vec *b, s32 idx) {
+    HU3DPARTICLEDATA *nd;
+    HU3DPARTICLE *grp;
     s32 i;
     M574_STAGE_TBL *tbl;
 
-    tbl = lbl_1_bss_48->unk5C;
-    grp = ((M574_HU3DMODEL *)((u8 *)Hu3DData + tbl->ids[4 - idx] * 0x134))->grp120;
-    nd = grp->nd48;
+    tbl = lbl_1_bss_48->data;
+    grp = Hu3DData[tbl->ids[4 - idx]].hookData;
+    nd = grp->data;
     i = 0;
-    while (i < grp->cnt30) {
-        if (nd->f00 < 0) {
-            nd->f00 = 0;
+    while (i < grp->maxCnt) {
+        if (nd->time < 0) {
+            nd->time = 0;
             nd->pos = *a;
-            nd->rot = *b;
+            nd->accel = *b;
             break;
         }
         i++;
@@ -2011,7 +1844,7 @@ void fn_1_6478(s32 idx, f32 f) {
     M574_STAGE_TBL *tbl;
     f32 v;
 
-    tbl = lbl_1_bss_48->unk5C;
+    tbl = lbl_1_bss_48->data;
     row = &tbl->row[idx];
     if (f - row->f00 > 0.2) {
         HuAudFXPlay(lbl_1_data_560[idx]);
@@ -2029,7 +1862,7 @@ f32 fn_1_6568(s32 idx) {
     M574_STAGE_TBL *tbl;
     f32 v;
 
-    tbl = lbl_1_bss_48->unk5C;
+    tbl = lbl_1_bss_48->data;
     row = &tbl->row[idx];
     if (idx & 1) {
         v = lbl_1_data_280[idx] - row->f08;
