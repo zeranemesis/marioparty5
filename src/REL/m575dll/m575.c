@@ -46,9 +46,6 @@ void espDispOff(s16 espId);
 void fn_1_9250(M575Light *light, M575Main *main);
 void fn_1_92C8(M575Light *light);
 void fn_1_931C(M575Light *light);
-void fn_1_9BC8(M575Tubo *self, M575Main *main);
-void fn_1_9E8C(M575Tubo *self);
-void fn_1_9EE4(M575Tubo *self);
 void fn_1_AEF0(M575Coin *self, M575Main *main);
 void fn_1_B074(M575Coin *self);
 void fn_1_B0E8(M575Coin *self);
@@ -428,9 +425,9 @@ void fn_1_730(M575Game *game, OMOBJMAN *objman)
     else {
         game->firstSide = 2;
     }
-    game->unk2606 = frand() % 20 + 5;
+    game->coinThresh[0] = frand() % 20 + 5;
     if (game->firstSide == 2) {
-        game->unk2608 = frand() % 10 + game->unk2606 + 10;
+        game->coinThresh[1] = frand() % 10 + game->coinThresh[0] + 10;
     }
     fn_1_E478();
     fn_1_EBEC();

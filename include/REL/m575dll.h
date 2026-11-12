@@ -218,9 +218,9 @@ typedef struct M575Tubo_s {
     s16 motionId;
     Vec *unk18;
     f32 *unk1C;
-    s32 unk20;
-    s32 unk24;
-    s32 unk28;
+    f32 unk20;
+    f32 unk24;
+    f32 unk28;
     M575TuboEff eff;
     Mtx mtx;
     s16 unk148;
@@ -258,8 +258,7 @@ typedef struct M575Game_s {
     s16 colMapNum;
     s16 esp;
     s16 firstSide;
-    s16 unk2606;
-    s16 unk2608;
+    s16 coinThresh[2];
     s32 bgm;
     s32 unk2610;
 } M575Game;
@@ -322,6 +321,16 @@ void fn_1_8778(M575Camera *self);
 void fn_1_87A8(M575Camera *self);
 void fn_1_89D8(M575Camera *a, M575Camera *b, f32 t);
 void fn_1_8C68(M575Camera *self);
+
+void fn_1_9BC8(M575Tubo *self, M575Main *main);
+void fn_1_9E8C(M575Tubo *self);
+void fn_1_9EE4(M575Tubo *self);
+M575CoinItem *fn_1_B240(M575Coin *self, u16 kind, Vec *pos, Vec *vel, f32 time);
+
+void fn_1_9BC8(M575Tubo *self, M575Main *main);
+void fn_1_9E8C(M575Tubo *self);
+void fn_1_9EE4(M575Tubo *self);
+M575CoinItem *fn_1_B240(M575Coin *self, u16 kind, Vec *pos, Vec *vel, f32 time);
 
 void fn_1_3A7C(M575Score *self, u16 side, M575Main *main);
 void fn_1_3CD8(M575Score *self);
