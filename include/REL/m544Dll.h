@@ -34,8 +34,8 @@ typedef struct M544CharSlot_s {
 typedef struct M544Mdl_s {
     s16 id;
     s16 pad_02;
-    M544Vec3 pos;
-    M544Vec3 rot;
+    HuVecF pos;
+    HuVecF rot;
 } M544Mdl;
 
 /* character/prop motion controller, 0x54 bytes */
@@ -197,5 +197,65 @@ typedef struct M544Game_s {
     s32 fxId[6]; /* 0x3C */
     s16 fxFlag[6]; /* 0x54 */
 } M544Game;
+
+/* stage-object block (lbl_1_bss_C, 0x74 bytes on GC) */
+typedef struct M544Stage_s {
+    s16 phase; /* 0x00 */
+    s16 phase2; /* 0x02 */
+    s16 mode; /* 0x04 */
+    s16 pad_06;
+    f32 tpLvl; /* 0x08 */
+    s16 timerC; /* 0x0C */
+    s16 timerE; /* 0x0E */
+    s16 pad_10;
+    s16 idx; /* 0x12 */
+    s16 pad_14;
+    s16 flag16; /* 0x16 */
+    char name[0x2C]; /* 0x18 */
+    Mtx mtx; /* 0x44 */
+} M544Stage;
+
+/* per-player object (lbl_1_bss_80, 2 entries of 0x28 bytes on GC) */
+typedef struct M544Obj_s {
+    s16 f0;
+    s16 f2;
+    s16 state; /* 0x04 */
+    s16 stage; /* 0x06 */
+    s16 timer; /* 0x08 */
+    s16 flagA; /* 0x0A */
+    s16 mode; /* 0x0C */
+    s16 count; /* 0x0E */
+    HuVecF scale; /* 0x10 */
+    char *hook; /* 0x1C */
+    s16 pad_20;
+    s16 delay; /* 0x22 */
+    s16 aiMode; /* 0x24 */
+    s16 target; /* 0x26 */
+} M544Obj;
+
+/* flying item (lbl_1_bss_828, 4 entries of 0x2C bytes on GC) */
+typedef struct M544Item_s {
+    HuVecF a; /* 0x00 */
+    HuVecF b; /* 0x0C */
+    s32 timer; /* 0x18 */
+    s32 state; /* 0x1C */
+    s32 active; /* 0x20 */
+    s32 owner; /* 0x24 */
+    f32 alpha; /* 0x28 */
+} M544Item;
+
+/* random round table (lbl_1_bss_8D8, 10 entries of 6 bytes) */
+typedef struct M544Rnd_s {
+    s16 a;
+    s16 b;
+    s16 c;
+} M544Rnd;
+
+extern M544Cam *lbl_1_bss_8;
+extern M544Light *lbl_1_bss_4;
+extern M544Shadow *lbl_1_bss_0;
+extern M544Stage lbl_1_bss_C;
+extern M544Obj lbl_1_bss_80[2];
+extern M544Game lbl_1_bss_D0;
 
 #endif
