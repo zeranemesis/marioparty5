@@ -2,7 +2,9 @@
 #include "datanum/m501.h"
 #include "game/hu3d.h"
 #include "game/data.h"
+extern "C" {
 #include "game/audio.h"
+}
 #include "game/gamework.h"
 #include "game/object.h"
 

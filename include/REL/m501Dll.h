@@ -315,7 +315,7 @@ class allocator {
 template <class T, class A>
 class __vector_pod {
 public:
-    T *insert(T *pos, unsigned long n, const T &value);
+    void insert(T *pos, unsigned long n, const T &value);
     void reserve(unsigned long n);
 
     unsigned long m_cap;
@@ -554,6 +554,41 @@ public:
     u8 m_pad48[0x14C - 0x48];
 };
 
+class CJoint {
+public:
+    CJoint();
+    ~CJoint();
+    Mtx *getMatrix();
+    void lockMatrixChain();
+    void lockMatrix();
+    void setSuper(CJoint *super);
+    void setSuperJoint(CJoint *super);
+    void resetSuperJoint();
+
+    Mtx m_world;     // 0x00 composed matrix of the whole chain
+    Mtx m_local;     // 0x30 this joint's own matrix, the one getMatrix returns
+    CJoint *m_super; // 0x60
+    CJoint *m_child; // 0x64 tail of the child list
+    CJoint *m_next;  // 0x68
+    CJoint *m_prev;  // 0x6C
+    u8 m_locked;     // 0x70 matrix needs recomputing
+};
+
+struct CAisuDrawData {
+    s16 m_model;
+    Mtx m_mtx;
+};
+
+class CAisu;
+
+/* layout of a non-virtual pointer-to-member-function, so the state procs can
+ * keep their original fn_1_xxxx symbol names */
+struct CAisuProc {
+    s32 m_adj;
+    s32 m_vt;
+    void (*m_fn)(CAisu *);
+};
+
 class CAisu : public CLinkNode {
 public:
     CAisu(int type, Vec *pos);
@@ -562,14 +597,34 @@ public:
     static void UpdateAll();
     static void Close();
     static void *getHandle(int handle);
+    static void AisuUpdate(CAisu *aisu);
+    static void drawHook(Hu3DModel_s *model, Mtx *mtx);
+    static void drawAisu(CAisu *aisu, CAisuDrawData *data);
+    static void execAisuList(CLinkList *list, void (*func)(CAisu *));
+    static void drawAisuList(CLinkList *list, CAisuDrawData *data);
+    static void drawAisuList(CAisu *first, CAisu *end, CAisuDrawData *data);
+    static void GetHandleList(std::vector<int> &out);
+    static bool checkSlowMove(Vec *pos);
+    static CAisu *checkTake(Vec *pos, f32 radius);
     void setPos(Vec *pos, f32 t);
+    void setObjName(int variant);
+    void playSound(int se);
+    CJoint *doTake(CJoint *parent, int randomize);
 
     static CHandleMan *aisuHandleMan;
 
-    u8 m_pad08[0x24 - 0x08];
-    Vec m_pos; // 0x24
-    /* the remaining fields are not decoded yet (aisu.cpp is unfinished) */
-    u8 m_pad30[0xC8 - 0x30];
+    CAisuProc m_proc;    // 0x08
+    s32 m_type;          // 0x14
+    u8 m_shadow : 1;     // 0x18 bit 0x80
+    u8 m_taken : 1;      // 0x18 bit 0x40
+    f32 m_scale;         // 0x1C
+    f32 m_shadowScale;   // 0x20
+    Vec m_pos;           // 0x24
+    Vec m_vel;           // 0x30
+    char m_name[16];     // 0x3C
+    s32 m_sound;         // 0x4C
+    CJoint m_joint;      // 0x50
+    s32 m_handle;        // 0xC4
 };
 
 extern "C" void fn_1_8510(std::vector<HuVec2f_s> *out);
