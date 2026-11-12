@@ -106,6 +106,14 @@ typedef struct M579Puku {
     u8 state;
 } M579Puku;
 
+#ifdef TARGET_PC
+#include <stdio.h>
+#define M579_STDERR ((void *) stderr)
+#else
+extern "C" u8 __files[];
+#define M579_STDERR ((void *) (__files + 0xA0))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 void *fn_1_0(s32 size);

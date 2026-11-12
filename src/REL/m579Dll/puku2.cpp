@@ -10,12 +10,6 @@ void fn_1_BD18(void *mem, Vec *pos, s32 type);
 void fn_1_A084(void *mem, Vec *pos);
 extern M579MotionMgr *lbl_1_bss_A14;
 }
-#ifndef TARGET_PC
-extern "C" u8 __files[];
-#endif
-#ifdef TARGET_PC
-#include <stdio.h>
-#endif
 
 extern "C" {
 M579Puku *fn_1_6074(M579Puku *self, s32 dataNum, s32 type);
@@ -441,11 +435,7 @@ void fn_1_74C8(M579Node *first, M579Node *list, void (*fn)(M579Puku *))
 s16 *fn_1_7528(M579S16Vec *vec, u32 idx)
 {
     if (idx >= vec->size) {
-#ifdef TARGET_PC
-        fn_1_234(stderr, lbl_1_data_25C);
-#else
-        fn_1_234(__files + 0xA0, lbl_1_data_25C);
-#endif
+        fn_1_234(M579_STDERR, lbl_1_data_25C);
         abort();
     }
     return &vec->data[idx];
