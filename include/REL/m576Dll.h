@@ -36,19 +36,33 @@ typedef struct M576Com_s {
     /* 0x0E */ s16 trailMax;
     /* 0x10 */ HuVecF targetPos;
     /* 0x1C */ HuVecF pos;
-    /* 0x28 */ f32 unk28;
+    /* 0x28 */ f32 reach;
     /* 0x2C */ s16 target;
-    /* 0x2E */ s16 unk2E;
+    /* 0x2E */ s16 coinTarget;
     /* 0x30 */ s16 timer30;
-    /* 0x32 */ s16 unk32;
+    /* 0x32 */ s16 timer32;
     /* 0x34 */ s16 timer34;
-    /* 0x36 */ s16 unk36;
+    /* 0x36 */ s16 cooldown;
     /* 0x38 */ s8 level;
     /* 0x3C */ s32 mode;
-    /* 0x40 */ s32 unk40;
+    /* 0x40 */ s8 targetType;
+    /* 0x41 */ s8 state;
 } M576COM;
 
 /* m576.c */
+s32 fn_1_174(s32 idx, HuVecF *dest);
+s32 fn_1_1BC(HuVecF *dest);
+s32 fn_1_234(HuVecF *dest);
+s8 fn_1_424(s32 idx);
+s32 fn_1_59C(void);
+s32 fn_1_5F4(s32 idx, HuVecF *pos);
+s32 fn_1_668(MGPLAYER **player, HuVecF *outPos, f32 *outDist);
+s32 fn_1_798(MGPLAYER **player);
+s32 fn_1_854(s32 playerNo);
+s32 fn_1_8AC(s32 *outPlayer, HuVecF *outPos);
+void fn_1_9A4(s32 idx, HuVecF *pos);
+s32 fn_1_9EC(s32 idx);
+u32 fn_1_A54(s32 idx);
 extern OMOBJ *lbl_1_bss_0;
 extern OMOBJMAN *lbl_1_bss_4;
 extern s32 lbl_1_bss_8;
