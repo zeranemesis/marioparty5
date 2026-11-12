@@ -1,4 +1,4 @@
-void M522_FN(M522_VEC *self, const M522_T *first, const M522_T *last)
+void M522_FN(M522_VEC *self, const M522_T *first, const M522_T *last, u8 *tag)
 {
     u32 n = last - first;
     M522_T *p;

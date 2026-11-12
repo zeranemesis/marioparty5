@@ -12,8 +12,13 @@
 
 #include "REL/m522Dll.h"
 
+#ifdef TARGET_PC
+#include <stdlib.h>
+#else
+extern "C" void abort(void);
+#endif
+
 extern "C" {
-void abort(void);
 void *fn_1_689C(u32 size);
 void fn_1_6964(void *ptr);
 s32 fn_1_6AD0(void *file, const char *msg);
@@ -59,23 +64,31 @@ public:
     u32 capacity()
     {
         u32 *pc = &m_cap;
-        return *pc;
+        u32 cap = *pc;
+        u32 result = cap;
+        return result;
     }
-    T *begin()
+    T *begin() const
     {
-        T **pp = &m_data;
+        T *const *pp = &m_data;
         return *pp;
     }
-    T *end()
+    T *end() const
     {
-        T **pp = &m_data;
-        return *pp + m_size;
+        T *const *pp = &m_data;
+        T *last = *pp + m_size;
+        T *result = last;
+        return result;
     }
 
     static void construct(T *p, const T &x)
     {
+        T *placed = p;
         if (p != 0) {
             new (p) T(x);
+            T *copy1 = placed;
+            T *copy2 = copy1;
+            placed = copy2;
         }
     }
 

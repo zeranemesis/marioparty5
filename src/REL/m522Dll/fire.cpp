@@ -5,6 +5,13 @@
 #include "game/gxarray.h"
 #include "game/hu3d.h"
 
+#ifdef TARGET_PC
+#include <math.h>
+#else
+extern "C" double sin(double x);
+extern "C" double cos(double x);
+#endif
+
 #ifdef __MWERKS__
 #define FIRE_RODATA __declspec(section ".rodata")
 #else
@@ -13,8 +20,8 @@
 
 extern "C" {
 void fn_1_3498(void);
-void fn_1_4390(M522Vec<M522_VEC3> *self, const M522_VEC3 *first, const M522_VEC3 *last);
-void fn_1_4504(M522Vec<M522_VEC3> *self, const M522_VEC3 *first, const M522_VEC3 *last);
+void fn_1_4390(M522Vec<M522_VEC3> *self, const M522_VEC3 *first, const M522_VEC3 *last, u8 *tag);
+void fn_1_4504(M522Vec<M522_VEC3> *self, const M522_VEC3 *first, const M522_VEC3 *last, u8 *tag);
 }
 
 /* One position of a trail, and the trail itself: a ring of 8 points plus the
@@ -33,7 +40,13 @@ public:
         pts.m_cap = 0;
         pts.m_size = 0;
         pts.m_data = 0;
-        fn_1_4390(&pts, o.pts.m_data, o.pts.m_data + o.pts.m_size);
+#ifdef TARGET_PC
+        u8 tag0 = 0;
+#else
+        u8 tag0;
+#endif
+        u8 tag = tag0;
+        fn_1_4390(&pts, o.pts.begin(), o.pts.begin() + o.pts.m_size, &tag);
         vel = o.vel;
         total = o.total;
         remain = o.remain;
@@ -42,7 +55,13 @@ public:
     M522Trail &operator=(const M522Trail &o)
     {
         if (&pts != &o.pts) {
-            fn_1_4504(&pts, o.pts.m_data, o.pts.m_data + o.pts.m_size);
+#ifdef TARGET_PC
+            u8 tag0 = 0;
+#else
+            u8 tag0;
+#endif
+            u8 tag = tag0;
+            fn_1_4504(&pts, o.pts.begin(), o.pts.begin() + o.pts.m_size, &tag);
         }
         vel = o.vel;
         total = o.total;
@@ -68,6 +87,15 @@ inline void m522Destroy(M522Trail *t)
     }
 }
 
+/* Model handle read through two accessor layers. */
+inline s16 m522ModelId(M522_MODEL *const *slot)
+{
+    M522_MODEL *model = *slot;
+    s16 id = model->id;
+    s16 handle = id;
+    return handle;
+}
+
 typedef M522Vec<M522_FIREWAVE> M522_WAVES;
 typedef M522Vec<M522_SPARK> M522_SPARKS;
 typedef M522Vec<M522_VEC3> M522_POINTS;
@@ -84,8 +112,6 @@ extern M522_FIRE *lbl_1_bss_10;
 extern M522_NODE lbl_1_bss_2C;
 
 void GXSetVtxAttrFmtv(GXVtxFmt fmt, const GXVtxAttrFmtList *list);
-double sin(double x);
-double cos(double x);
 void DCFlushRangeNoSync(void *addr, u32 size);
 void fn_1_6A70(const char *cond, const char *file, s32 line);
 M522_MODEL *fn_1_9A34(M522_MODEL *model, s32 dataNum);
@@ -150,8 +176,8 @@ void fn_1_412C(M522_POINTS *self);
 void *fn_1_4188(M522_POINTS *self, s16 flag);
 void fn_1_422C(M522_TRAILS *self);
 void *fn_1_4304(M522_TRAILS *self, s16 flag);
-void fn_1_4390(M522_POINTS *self, const M522_VEC3 *first, const M522_VEC3 *last);
-void fn_1_4504(M522_POINTS *self, const M522_VEC3 *first, const M522_VEC3 *last);
+void fn_1_4390(M522_POINTS *self, const M522_VEC3 *first, const M522_VEC3 *last, u8 *tag);
+void fn_1_4504(M522_POINTS *self, const M522_VEC3 *first, const M522_VEC3 *last, u8 *tag);
 void fn_1_487C(M522_WAVES *self);
 void fn_1_48D8(M522_SPARKS *self);
 void fn_1_4934(void);
@@ -501,7 +527,7 @@ void fn_1_AB0(M522_FIREEFF *self, s32 kind)
     HSFFACE *face;
     s32 i;
 
-    obj = Hu3DModelObjPtrGet(self->model->id, lbl_1_data_44[kind]);
+    obj = Hu3DModelObjPtrGet(m522ModelId(&self->model), lbl_1_data_44[kind]);
     if (obj != 0) {
         faces = obj->mesh.face;
         face = (HSFFACE *)faces->data;
@@ -543,9 +569,16 @@ void fn_1_C2C(M522_SPARK *dst, const M522_SPARK *src)
 
 void fn_1_C50(M522_SPARK *spark)
 {
+    u8 expired = 0;
+    f32 jitter;
+    f32 scaled;
+    f32 delay;
+    s32 frames;
+
     if (spark->wait > 0) {
         spark->wait = spark->wait - 1;
         if (spark->wait == 0) {
+            expired = 1;
         }
     }
     if (spark->wait <= 0) {
@@ -553,7 +586,11 @@ void fn_1_C50(M522_SPARK *spark)
         if (spark->frame > spark->frames) {
             spark->frame = 0;
             if (spark->kind == 1) {
-                spark->wait = (s32)(60.0f * (10.0f * fn_1_BABC()));
+                jitter = 10.0f * fn_1_BABC();
+                scaled = 60.0f * jitter;
+                delay = scaled;
+                frames = (s32)delay;
+                spark->wait = frames;
             }
         }
     }
@@ -577,13 +614,20 @@ void fn_1_F84(M522_FIREEFF *self)
 {
     M522_SPARK *spark;
     M522_SPARK *end;
+    u8 expired;
+    f32 jitter;
+    f32 scaled;
+    f32 delay;
+    s32 frames;
 
     spark = self->sparks.data;
     end = self->sparks.data + self->sparks.size;
     while (spark != end) {
+        expired = 0;
         if (spark->wait > 0) {
             spark->wait = spark->wait - 1;
             if (spark->wait == 0) {
+                expired = 1;
             }
         }
         if (spark->wait <= 0) {
@@ -591,7 +635,11 @@ void fn_1_F84(M522_FIREEFF *self)
             if (spark->frame > spark->frames) {
                 spark->frame = 0;
                 if (spark->kind == 1) {
-                    spark->wait = (s32)(60.0f * (10.0f * fn_1_BABC()));
+                    jitter = 10.0f * fn_1_BABC();
+                    scaled = 60.0f * jitter;
+                    delay = scaled;
+                    frames = (s32)delay;
+                    spark->wait = frames;
                 }
             }
         }
@@ -652,12 +700,12 @@ void fn_1_12C0(M522_FIREEFF *self, s32 kind, Mtx camera, Mtx rot, M522_SPARK **c
     M522_SPARK *spark;
 
     name = lbl_1_data_44[kind];
-    Hu3DModelObjMtxGet(self->model->id, name, objMtx);
+    Hu3DModelObjMtxGet(m522ModelId(&self->model), name, objMtx);
     PSMTXConcat(camera, objMtx, objMtx);
     PSMTXConcat(objMtx, rot, objMtx);
     GXLoadPosMtxImm(objMtx, 0);
     fn_1_E11C(kind, 0, 0, 0, 1);
-    obj = Hu3DModelObjPtrGet(self->model->id, name);
+    obj = Hu3DModelObjPtrGet(m522ModelId(&self->model), name);
     faces = obj->mesh.face;
     face = (HSFFACE *)faces->data;
     GXSETARRAY(GX_VA_POS, obj->mesh.vertex->data, obj->mesh.vertex->count * sizeof(HuVecF), sizeof(HuVecF), TRUE);
@@ -830,6 +878,9 @@ s32 fn_1_1D30(M522Trail *self)
     M522_VEC3 *cur;
     M522_VEC3 *next;
     f32 mag;
+    f32 rx, ry, rz;
+    f64 keepX, keepY, keepZ;
+    f64 addX, addY, addZ;
 
     cur = self->pts.m_data + self->index;
     self->index = self->index + 1;
@@ -841,12 +892,21 @@ s32 fn_1_1D30(M522Trail *self)
     mag = PSVECMag((Vec *)&self->vel);
     self->remain = self->remain - mag;
     rnd = lbl_1_rodata_F8;
-    rnd.x = fn_1_BD68(-4.0f, 4.0f);
-    rnd.y = fn_1_BD68(0.0f, 4.0f);
-    rnd.z = fn_1_BD68(-4.0f, 4.0f);
-    self->vel.x = (f32)((0.8 * (f64)self->vel.x) + (0.2 * (f64)rnd.x));
-    self->vel.y = (f32)((0.8 * (f64)self->vel.y) + (0.2 * (f64)rnd.y));
-    self->vel.z = (f32)((0.8 * (f64)self->vel.z) + (0.2 * (f64)rnd.z));
+    rx = fn_1_BD68(-4.0f, 4.0f);
+    rnd.x = rx;
+    ry = fn_1_BD68(0.0f, 4.0f);
+    rnd.y = ry;
+    rz = fn_1_BD68(-4.0f, 4.0f);
+    rnd.z = rz;
+    keepX = 0.8 * (f64)self->vel.x;
+    addX = 0.2 * (f64)rnd.x;
+    self->vel.x = (f32)(keepX + addX);
+    keepY = 0.8 * (f64)self->vel.y;
+    addY = 0.2 * (f64)rnd.y;
+    self->vel.y = (f32)(keepY + addY);
+    keepZ = 0.8 * (f64)self->vel.z;
+    addZ = 0.2 * (f64)rnd.z;
+    self->vel.z = (f32)(keepZ + addZ);
     return self->remain > 0.0f;
 }
 
@@ -858,6 +918,9 @@ void fn_1_1FE4(M522_BURST *self)
     M522_VEC3 *cur;
     M522_VEC3 *next;
     u32 size;
+    f32 rx, ry, rz;
+    f64 keepX, keepY, keepZ;
+    f64 addX, addY, addZ;
 
     trail = self->trails.m_data;
     end = self->trails.m_data + self->trails.m_size;
@@ -872,12 +935,21 @@ void fn_1_1FE4(M522_BURST *self)
         PSVECAdd((Vec *)cur, (Vec *)&trail->vel, (Vec *)next);
         trail->remain = trail->remain - PSVECMag((Vec *)&trail->vel);
         rnd = lbl_1_rodata_F8;
-        rnd.x = fn_1_BD68(-4.0f, 4.0f);
-        rnd.y = fn_1_BD68(0.0f, 4.0f);
-        rnd.z = fn_1_BD68(-4.0f, 4.0f);
-        trail->vel.x = (f32)((0.8 * (f64)trail->vel.x) + (0.2 * (f64)rnd.x));
-        trail->vel.y = (f32)((0.8 * (f64)trail->vel.y) + (0.2 * (f64)rnd.y));
-        trail->vel.z = (f32)((0.8 * (f64)trail->vel.z) + (0.2 * (f64)rnd.z));
+        rx = fn_1_BD68(-4.0f, 4.0f);
+        rnd.x = rx;
+        ry = fn_1_BD68(0.0f, 4.0f);
+        rnd.y = ry;
+        rz = fn_1_BD68(-4.0f, 4.0f);
+        rnd.z = rz;
+        keepX = 0.8 * (f64)trail->vel.x;
+        addX = 0.2 * (f64)rnd.x;
+        trail->vel.x = (f32)(keepX + addX);
+        keepY = 0.8 * (f64)trail->vel.y;
+        addY = 0.2 * (f64)rnd.y;
+        trail->vel.y = (f32)(keepY + addY);
+        keepZ = 0.8 * (f64)trail->vel.z;
+        addZ = 0.2 * (f64)rnd.z;
+        trail->vel.z = (f32)(keepZ + addZ);
         if (!(trail->remain > 0.0f)) {
             fn_1_32D8(&self->trails, trail);
         }

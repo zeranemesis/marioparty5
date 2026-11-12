@@ -5,6 +5,12 @@
 #include "game/hu3d.h"
 #include "game/pad.h"
 
+#ifdef TARGET_PC
+#include <math.h>
+#else
+extern "C" double cos(double x);
+#endif
+
 #ifdef __MWERKS__
 #define CAMERA_RODATA __declspec(section ".rodata")
 #else
@@ -46,7 +52,6 @@ extern void *lbl_1_bss_18;
 extern M522_NODE lbl_1_bss_2C;
 extern M522_VTFN lbl_1_data_3A8[];
 
-double cos(double x);
 void fn_1_6964(void *ptr);
 void fn_1_6A70(const char *cond, const char *file, s32 line);
 void fn_1_6EF0(M522_CAMVIEW *view, const M522_CAMPATH *path);
