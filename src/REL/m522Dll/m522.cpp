@@ -1210,12 +1210,23 @@ s32 fn_1_93D0(s32 player)
     return 0;
 }
 
+// CGameMaster::GetInstance(), inlined with its assertion.
+inline M522RMaster *M522RMasterGet(void)
+{
+    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
+    return lbl_1_bss_A0C;
+}
+
+inline M522RMaster *M522RMasterGet2(void)
+{
+    return M522RMasterGet();
+}
+
 void fn_1_94A4(void)
 {
     M522RMaster *m;
 
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-    m = lbl_1_bss_A0C;
+    m = M522RMasterGet2();
     m->mesId = GameMesCreate(2, 0);
 }
 
@@ -1223,8 +1234,7 @@ void fn_1_955C(void)
 {
     M522RMaster *m;
 
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-    m = lbl_1_bss_A0C;
+    m = M522RMasterGet2();
     m->mesId = GameMesCreate(2, 1);
 }
 
@@ -1233,8 +1243,7 @@ s32 fn_1_9614(void)
     M522RMaster *m;
     s32 ret;
 
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-    m = lbl_1_bss_A0C;
+    m = M522RMasterGet2();
     ret = 0;
     if (GameMesStatGet(-1) == 0 && (u8)(m->counter <= 0) != 0) {
         ret = 1;
