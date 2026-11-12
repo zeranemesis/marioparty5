@@ -6,12 +6,30 @@
 #include "game/hu3d.h"
 #include "game/data.h"
 #include "game/memory.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/audio.h"
+#ifdef __cplusplus
+}
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/object.h"
+#ifdef __cplusplus
+}
+#endif
 #include "game/pad.h"
 #include "game/process.h"
 #include "game/gamework.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "game/hsfex.h"
+#ifdef __cplusplus
+}
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
