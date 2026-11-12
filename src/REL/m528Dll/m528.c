@@ -1573,7 +1573,9 @@ void fn_1_3330(M528MAIN *work)
     f32 unused[2] = { 1.0f, -1.0f };
     M528PLAYER *player;
     f32 power;
+    f32 power2;
     s16 wait;
+    s16 wait2;
     s32 i;
     s32 j;
 
@@ -1614,17 +1616,17 @@ void fn_1_3330(M528MAIN *work)
                     player->onSlot = 1;
                     player->slot->active = 1.0f;
                     if (player->strong != 0) {
-                        wait = 9;
+                        wait2 = 9;
                     } else {
-                        wait = 6;
+                        wait2 = 6;
                     }
-                    player->slot->waitFrames = wait;
+                    player->slot->waitFrames = wait2;
                     if (player->speed > 1.0f) {
-                        power = 1.0f;
+                        power2 = 1.0f;
                     } else {
-                        power = player->speed;
+                        power2 = player->speed;
                     }
-                    player->slot->alpha = power;
+                    player->slot->alpha = power2;
                     player->hook = fn_1_2488;
                     player->slot->hit = 1;
                 } else if (player->hook == fn_1_1ECC) {
