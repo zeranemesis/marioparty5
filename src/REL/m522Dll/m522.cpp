@@ -1974,13 +1974,15 @@ u32 fn_1_C4B8(M522RThread *th)
 {
     u32 *base;
     u32 *p;
+    u32 *end;
 
     base = th->thread.stackEnd;
     if (fn_1_C558(base, 1) != 0) {
         OSPanic(lbl_1_data_2B1, 0x7F, lbl_1_data_34D);
     }
     p = base;
-    while (p < (u32 *)th->thread.stackBase) {
+    end = (u32 *)th->thread.stackBase;
+    while (p < end) {
         if (*p == 0xDEADBABE) {
             p++;
             continue;
@@ -1994,28 +1996,24 @@ u32 fn_1_C4B8(M522RThread *th)
 s32 fn_1_C558(u32 *p, s32 mode)
 {
     u32 *end;
-    u32 v;
 
     end = p + 8;
     switch (mode) {
         case 0:
-            while (p != end) {
+            do {
                 *p = 0xDEADBABE;
                 p++;
-            }
-            return 0;
+            } while (p != end);
+            break;
         case 1:
-            while (p != end) {
-                v = *p;
-                p++;
-                if (v != 0xDEADBABE) {
+            do {
+                if (*p++ != 0xDEADBABE) {
                     return 1;
                 }
-            }
-            return 0;
-        default:
-            return 0;
+            } while (p != end);
+            break;
     }
+    return 0;
 }
 
 void fn_1_C5CC(u32 *p, u32 words)
