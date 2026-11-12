@@ -164,21 +164,21 @@ extern "C" void fn_1_C928(M522State0 **self)
     }
 }
 
-typedef struct M522Node_s {
-    struct M522Node_s *f00;
-    struct M522Node_s *f04;
+typedef struct M522ListNode_s {
+    struct M522ListNode_s *f00;
+    struct M522ListNode_s *f04;
     u32 f08;
     u32 f0C;
     u16 f0E_hi : 4;
     u16 f0E_count : 12;
-} M522Node;
+} M522ListNode;
 
 extern "C" void HuMemDirectFree(void *ptr);
 
-extern "C" s32 fn_1_7F38(M522Node *self)
+extern "C" s32 fn_1_7F38(M522ListNode *self)
 {
     s32 count = 0;
-    M522Node *n = self->f00;
+    M522ListNode *n = self->f00;
     while (n != self) {
         n = n->f00;
         count++;
@@ -186,12 +186,12 @@ extern "C" s32 fn_1_7F38(M522Node *self)
     return count;
 }
 
-extern "C" s32 fn_1_7F74(M522Node *self)
+extern "C" s32 fn_1_7F74(M522ListNode *self)
 {
     s32 count;
-    M522Node *head = self->f04;
+    M522ListNode *head = self->f04;
     count = 0;
-    M522Node *n = head->f00;
+    M522ListNode *n = head->f00;
     while (n != head) {
         n = n->f00;
         count++;
@@ -199,12 +199,12 @@ extern "C" s32 fn_1_7F74(M522Node *self)
     return count;
 }
 
-extern "C" s32 fn_1_7FBC(M522Node *self)
+extern "C" s32 fn_1_7FBC(M522ListNode *self)
 {
     s32 count;
-    M522Node *head = self->f00;
+    M522ListNode *head = self->f00;
     count = 0;
-    M522Node *n = head->f00;
+    M522ListNode *n = head->f00;
     while (n != head) {
         n = n->f00;
         count++;
@@ -212,7 +212,7 @@ extern "C" s32 fn_1_7FBC(M522Node *self)
     return count;
 }
 
-extern "C" M522Node *fn_1_8010(M522Node *node, s16 arg1)
+extern "C" M522ListNode *fn_1_8010(M522ListNode *node, s16 arg1)
 {
     if (node != 0) {
         node->f00->f04 = node->f04;
@@ -226,10 +226,10 @@ extern "C" M522Node *fn_1_8010(M522Node *node, s16 arg1)
     return node;
 }
 
-extern "C" M522Node *fn_1_7D04(M522Node *node, s16 arg1)
+extern "C" M522ListNode *fn_1_7D04(M522ListNode *node, s16 arg1)
 {
     if (node != 0) {
-        M522Node *child = node->f00;
+        M522ListNode *child = node->f00;
         if (child != 0) {
             HuMemDirectFree(child);
         }
@@ -242,7 +242,7 @@ extern "C" M522Node *fn_1_7D04(M522Node *node, s16 arg1)
     return node;
 }
 
-extern "C" u32 fn_1_7EC8(M522Node *self, u32 arg1)
+extern "C" u32 fn_1_7EC8(M522ListNode *self, u32 arg1)
 {
     if (arg1 == 0) {
         return 0;
@@ -257,16 +257,16 @@ extern "C" u32 fn_1_7EC8(M522Node *self, u32 arg1)
     return *(u32 *)(e + 0x8);
 }
 
-extern "C" u32 fn_1_7D74(M522Node *self, u32 arg1)
+extern "C" u32 fn_1_7D74(M522ListNode *self, u32 arg1)
 {
-    M522Node *head = self->f00;
-    M522Node *n = head->f00;
+    M522ListNode *head = self->f00;
+    M522ListNode *n = head->f00;
     if (n == head) {
         return 0;
     }
     n->f00->f04 = n->f04;
     n->f04->f00 = n->f00;
-    M522Node *dst = self->f04;
+    M522ListNode *dst = self->f04;
     n->f00 = dst->f00;
     n->f04 = dst;
     dst->f00->f04 = n;
