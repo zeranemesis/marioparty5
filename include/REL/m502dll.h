@@ -142,7 +142,12 @@ typedef struct M502PlrSub_s {
     s32 flag74;     /* 0x74 */
     u8 pad78[4];
 } M502PLRSUB;
-typedef struct M502Opening_s { u8 raw[0x24]; } M502OPENING;
+typedef struct M502Opening_s {
+    struct M502Main_s *main;
+    u8 pad4[0x18];
+    s16 esp[3];     /* 0x1C */
+    s16 pad22;
+} M502OPENING;
 typedef struct M502Bat_s { u8 raw[0x248]; } M502BAT;
 
 /* models loaded once per game (0x35C bytes on GC) */
@@ -177,7 +182,7 @@ typedef struct M502Main_s {
     OMOBJMAN *objman;
     OMOBJ *obj;
     s32 state;          /* 0x08 */
-    s32 unkC;
+    s32 unkC;           /* opening step */
     s32 timer;          /* 0x10 */
     s32 vibTimer;       /* 0x14 */
     s32 mesId;          /* 0x18 */
