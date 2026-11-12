@@ -651,7 +651,6 @@ void fn_1_BF8(s16 mode, s16 frameNo)
     M577Work *w = workObj->data;
     M577Player *p;
     M577Team *team;
-    M577Team *team2;
     f32 t;
     s32 i;
 
@@ -752,26 +751,26 @@ void fn_1_BF8(s16 mode, s16 frameNo)
             for (i = 0; i < 0xB; i++) {
                 Hu3DModelAttrSet(team->stage->mark[i], 1);
             }
-            team2 = &w->team[w->unk1B5E];
-            Hu3DModelAttrSet(team2->stage->m04, 1);
-            Hu3DModelAttrSet(team2->stage->m06, 1);
-            Hu3DModelAttrSet(team2->stage->m08, 1);
-            Hu3DModelAttrSet(team2->stage->m0A, 1);
-            Hu3DModelAttrSet(team2->stage->m0C, 1);
-            Hu3DModelAttrSet(team2->stage->m0E, 1);
-            Hu3DModelAttrSet(team2->stage->m10, 1);
-            Hu3DModelAttrSet(team2->stage->m12, 1);
-            Hu3DModelAttrSet(team2->stage->m14, 1);
-            Hu3DModelAttrSet(team2->stage->m16, 1);
-            Hu3DModelAttrSet(team2->stage->m18, 1);
-            Hu3DModelAttrSet(team2->stage->m1A, 1);
-            Hu3DModelAttrSet(team2->stage->m1C, 1);
-            Hu3DModelAttrSet(team2->stage->m1E, 1);
-            Hu3DModelAttrSet(team2->stage->m20, 1);
-            Hu3DModelAttrSet(team2->stage->m38, 1);
-            Hu3DModelAttrSet(team2->stage->m3A, 1);
+            team = &w->team[w->unk1B5E];
+            Hu3DModelAttrSet(team->stage->m04, 1);
+            Hu3DModelAttrSet(team->stage->m06, 1);
+            Hu3DModelAttrSet(team->stage->m08, 1);
+            Hu3DModelAttrSet(team->stage->m0A, 1);
+            Hu3DModelAttrSet(team->stage->m0C, 1);
+            Hu3DModelAttrSet(team->stage->m0E, 1);
+            Hu3DModelAttrSet(team->stage->m10, 1);
+            Hu3DModelAttrSet(team->stage->m12, 1);
+            Hu3DModelAttrSet(team->stage->m14, 1);
+            Hu3DModelAttrSet(team->stage->m16, 1);
+            Hu3DModelAttrSet(team->stage->m18, 1);
+            Hu3DModelAttrSet(team->stage->m1A, 1);
+            Hu3DModelAttrSet(team->stage->m1C, 1);
+            Hu3DModelAttrSet(team->stage->m1E, 1);
+            Hu3DModelAttrSet(team->stage->m20, 1);
+            Hu3DModelAttrSet(team->stage->m38, 1);
+            Hu3DModelAttrSet(team->stage->m3A, 1);
             for (i = 0; i < 0xB; i++) {
-                Hu3DModelAttrSet(team2->stage->mark[i], 1);
+                Hu3DModelAttrSet(team->stage->mark[i], 1);
             }
             espAttrSet(w->esp[0], 4);
             espAttrSet(w->esp[1], 4);
@@ -780,22 +779,22 @@ void fn_1_BF8(s16 mode, s16 frameNo)
             Hu3DModelRotSet(w->mdlCache[11], 0.0f, 180.0f, 0.0f);
             if (w->unk1B5E == 0) {
                 w->split.x = 640.0f;
-                team2->func = fn_1_A36C;
-                team2->player[0]->sled->pos.x = 0.0f;
-                team2->player[0]->sled->pole->pos.x = 100.0f;
-                Hu3DModelPosSetV(team2->sled[0]->mSled, &team2->sled[0]->pos);
-                Hu3DModelPosSetV(team2->sled[0]->pole->m28, &team2->sled[0]->pole->pos);
+                team->func = fn_1_A36C;
+                team->player[0]->sled->pos.x = 0.0f;
+                team->player[0]->sled->pole->pos.x = 100.0f;
+                Hu3DModelPosSetV(team->sled[0]->mSled, &team->sled[0]->pos);
+                Hu3DModelPosSetV(team->sled[0]->pole->m28, &team->sled[0]->pole->pos);
                 fn_1_AA4C(w);
                 fn_1_2E08(&w->rope[0]);
             } else {
                 w->split.x = 0.0f;
-                team2->func = fn_1_A5CC;
-                team2->player[0]->sled->pos.x = 250.0f;
-                team2->player[1]->sled->pos.x = 0.0f;
-                team2->player[2]->sled->pos.x = -250.0f;
-                Hu3DModelPosSetV(team2->sled[0]->mSled, &team2->sled[0]->pos);
-                Hu3DModelPosSetV(team2->sled[1]->mSled, &team2->sled[1]->pos);
-                Hu3DModelPosSetV(team2->sled[2]->mSled, &team2->sled[2]->pos);
+                team->func = fn_1_A5CC;
+                team->player[0]->sled->pos.x = 250.0f;
+                team->player[1]->sled->pos.x = 0.0f;
+                team->player[2]->sled->pos.x = -250.0f;
+                Hu3DModelPosSetV(team->sled[0]->mSled, &team->sled[0]->pos);
+                Hu3DModelPosSetV(team->sled[1]->mSled, &team->sled[1]->pos);
+                Hu3DModelPosSetV(team->sled[2]->mSled, &team->sled[2]->pos);
                 fn_1_AA4C(w);
                 for (i = 0; i < 0x78; i++) {
                     fn_1_2E08(&w->rope[1]);
@@ -806,17 +805,17 @@ void fn_1_BF8(s16 mode, s16 frameNo)
             Hu3DCameraViewportSet(camBit[w->unk1B5E], 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
             Hu3DCameraScissorSet(camBit[w->unk1B5E], 0, 0, 0x280, 0x1E0);
             fn_1_2044(&w->split);
-            team2->cam->rot.x = camInit[1].rot.x;
-            team2->cam->rot.y = camInit[1].rot.y;
-            team2->cam->rot.z = camInit[1].rot.z;
-            team2->cam->target.x = camInit[1].target.x;
-            team2->cam->target.y = camInit[1].target.y;
-            team2->cam->target.z = camInit[1].target.z;
-            for (i = 0; i < team2->count; i++) {
-                if (team2->player[i]->charNo == 3) {
-                    team2->player[i]->pos.z -= 100.0f;
-                    Hu3DModelPosSetV(team2->player[i]->mdlId, &team2->player[i]->pos);
-                    omSetTra(team2->player[i]->obj, team2->player[i]->pos.x, team2->player[i]->pos.y, team2->player[i]->pos.z);
+            team->cam->rot.x = camInit[1].rot.x;
+            team->cam->rot.y = camInit[1].rot.y;
+            team->cam->rot.z = camInit[1].rot.z;
+            team->cam->target.x = camInit[1].target.x;
+            team->cam->target.y = camInit[1].target.y;
+            team->cam->target.z = camInit[1].target.z;
+            for (i = 0; i < team->count; i++) {
+                if (team->player[i]->charNo == 3) {
+                    team->player[i]->pos.z -= 100.0f;
+                    Hu3DModelPosSetV(team->player[i]->mdlId, &team->player[i]->pos);
+                    omSetTra(team->player[i]->obj, team->player[i]->pos.x, team->player[i]->pos.y, team->player[i]->pos.z);
                 }
             }
             WipeCreate(1, 0, 0x3C);
