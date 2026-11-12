@@ -85,6 +85,7 @@ void fn_1_2390(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_2C88(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_46F4(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_5B18(NEL_SYS *sys, MDFLOWENT *tbl);
+void fn_1_18BD8(NEL_SYS *sys);
 void fn_1_716C(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_7C88(NEL_SYS *sys, MDFLOWENT *tbl);
 void fn_1_8F18(NEL_SYS *sys, MDFLOWENT *tbl);
@@ -2581,6 +2582,623 @@ void fn_1_5B18(NEL_SYS *sys, MDFLOWENT *tbl)
                 MdProcTbl[2].func(sys, MdProcTbl);
                 sys->stat = 0;
                 sys->flowNo = 9;
+            }
+            break;
+    }
+}
+
+void fn_1_716C(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    s16 grp;
+    s32 ret;
+    s16 j;
+    s8 i;
+    HuVecF *pos;
+    HuVecF *scl;
+    SYSSPRITE *sprite;
+    SYSMODEL *model;
+    SYSMESS *volatile mess;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    mess = (SYSMESS *)sys->mess;
+    switch (sys->stat) {
+        case 0:
+            sys->selNo3 = 0;
+            sys->unk27C = MdVecTbl[0x50].y;
+            sys->unk274 = 90.0f + 51.42857f * sys->selNo3;
+            for (i = 0; i < 7; i++) {
+                Hu3DModelAttrReset(model->mdlId[i + 0x20], 1);
+            }
+            for (i = 0; i < 7; i++) {
+                scl = model->mdlScale[i + 0x20];
+                pos = model->mdlPos[i + 0x20];
+                pos->x = MdVecTbl[0x4E].x + sys->unk27C * cos(3.141592653589793 * (sys->unk274 - 51.42857f * i) / 180.0);
+                pos->z = MdVecTbl[0x4E].z + sys->unk27C * sin(3.141592653589793 * (sys->unk274 - 51.42857f * i) / 180.0);
+                pos->y = MdVecTbl[0x4E].y;
+                scl->x = 0.0f;
+                scl->y = 0.0f;
+                scl->z = 0.0f;
+            }
+            grp = sprite->grpId[1];
+            HuSprGrpPosSet(sprite->grpId[1], 0.0f, 0.0f);
+            HuSprAttrReset(grp, 0, 4);
+            HuSprAttrReset(grp, 1, 4);
+            HuSprAttrSet(grp, 2, 4);
+            HuSprAttrSet(grp, 3, 4);
+            HuSprPosSet(grp, 0, -100.0f, 0.0f);
+            HuSprPosSet(grp, 1, -100.0f, 0.0f);
+            sys->stat = 1;
+            return;
+        case 1:
+            if ((ret = MdProcTbl[0x3D].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                fn_1_18BD8(sys);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->selNo3 * 2 + 0x70001);
+                sys->stat = 2;
+                return;
+            }
+            break;
+        case 2:
+            NEL_INT10(sys) = 0;
+            sys->timer = 0;
+            sys->stat = 3;
+            return;
+        case 3:
+            if ((ret = MdProcTbl[0xC].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 4;
+                return;
+            }
+            break;
+        case 4:
+            if ((PADSTAT(sys) & 1) != 0 || (PADSTAT(sys) & 2) != 0) {
+                sys->selPrevNo = sys->selNo3;
+                if ((PADSTAT(sys) & 1) != 0) {
+                    sys->sel = 0;
+                    sys->selNo3++;
+                    sys->selNo3 = sys->selNo3 % 7;
+                    sys->stat = 9;
+                } else if ((PADSTAT(sys) & 2) != 0) {
+                    sys->sel = 1;
+                    if (--sys->selNo3 == -1) {
+                        sys->selNo3 = 6;
+                    }
+                    sys->stat = 10;
+                }
+                fn_1_19904(2);
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                fn_1_19904(3);
+                sys->stat = 11;
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                sys->stat = 5;
+                fn_1_19904(5);
+                return;
+            }
+            break;
+        case 5:
+            if ((ret = MdProcTbl[0xD].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 6;
+                return;
+            }
+            break;
+        case 6:
+            if ((ret = MdProcTbl[0x3E].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                HuSprAttrSet(sprite->grpId[6], sys->selNo3, 4);
+                switch (sys->modeSel) {
+                    case 0:
+                        sys->stat = 7;
+                        return;
+                    case 1:
+                        sys->stat = 8;
+                        return;
+                }
+            }
+            break;
+        case 7:
+            if ((ret = MdProcTbl[0x33].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                if (sys->playerNum == 3) {
+                    for (i = 0; i < 4; i++) {
+                        if (sys->fukiMode[i] == 2 || sys->fukiMode[i] == 3) {
+                            if (sys->fukiMode[i] == 2) {
+                                sys->fukiMode[i] = 0;
+                            } else if (sys->fukiMode[i] == 3) {
+                                sys->fukiMode[i] = 1;
+                            }
+                            Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[i] + 2], model->motId[sys->mdlNo[i] * 2], 0.0f, 16.0f, 0x40000001);
+                            MdRingModeSet(sys, i, 4);
+                        }
+                    }
+                    for (j = 0; j < 3 - sys->playerNum; j++) {
+                        HuSprAttrSet(sprite->grpId[3], j + 4, 4);
+                        HuSprAttrSet(sprite->grpId[4], j, 4);
+                    }
+                    for (j = 0; j < 4; j++) {
+                        HuSprAttrSet(sprite->grpId[3], j, 4);
+                    }
+                    MdMessDlgMesSet(0, -1);
+                    MdMessDlgMesSet(1, 0x6000F);
+                    sys->stat = 2;
+                    sys->flowNo = 6;
+                    return;
+                }
+                for (i = 0; i < 4; i++) {
+                    if (sys->fukiMode[i] == 3) {
+                        sys->fukiMode[i] = 1;
+                        Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[i] + 2], model->motId[sys->mdlNo[i] * 2], 0.0f, 16.0f, 0x40000001);
+                        MdRingModeSet(sys, sys->mdlSelNo[i + 4] + 4, 4);
+                    }
+                }
+                for (j = 0; j < 3 - sys->playerNum; j++) {
+                    HuSprAttrSet(sprite->grpId[4], j, 4);
+                }
+                sys->selNo = 0;
+                fn_1_18834(sys);
+                fn_1_17CE4(sys);
+                Hu3DModelAttrReset(model->mdlId[sys->ringMdlNo[sys->selNo] + 0x42], 1);
+                fn_1_19818(sys);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60010);
+                MdMessDlgInsertMesReset();
+                MdMessDlgInsertMesAdd(0x6000D - sys->playerNum - sys->selNo, 0);
+                sys->stat = 6;
+                sys->flowNo = 6;
+                return;
+            }
+            break;
+        case 8:
+            if ((ret = MdProcTbl[0x35].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, 0x60012);
+                for (j = 0; j < 3 - sys->playerNum; j++) {
+                    HuSprAttrReset(sprite->grpId[3], j + 4, 4);
+                    HuSprAttrSet(sprite->grpId[4], j, 4);
+                }
+                sys->sel = 1;
+                sys->stat = 2;
+                sys->flowNo = 8;
+                return;
+            }
+            break;
+        case 9:
+        case 10:
+            if ((ret = MdProcTbl[sys->stat + 0x36].func(sys, &MdProcTbl[sys->stat + 0x36])) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                fn_1_18BD8(sys);
+                NEL_INT10(sys) = 1;
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->selNo3 * 2 + 0x70001);
+                sys->stat = 4;
+                return;
+            }
+            break;
+        case 11:
+            if ((ret = MdProcTbl[0xD].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 12;
+                return;
+            }
+            break;
+        case 12:
+            if ((ret = MdProcTbl[0x41].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0;
+                sys->flowNo = 10;
+            }
+            break;
+    }
+}
+
+void fn_1_7C88(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    s8 i;
+    SYSSPRITE *sprite;
+    SYSMODEL *model;
+    SYSMESS *mess;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    mess = (SYSMESS *)sys->mess;
+    switch (sys->stat) {
+        case 0:
+            Hu3DModelAttrReset(model->mdlId[0x3B], 1);
+            for (i = 0; i < 5; i++) {
+                if (i == sys->menuNo2) {
+                    Hu3DModelAttrReset(model->mdlId[i + 0x3C], 1);
+                } else {
+                    Hu3DModelAttrSet(model->mdlId[i + 0x3C], 1);
+                }
+            }
+            Hu3DModelAttrReset(model->mdlId[0x41], 1);
+            Hu3DAnmNoSet(model->animId[0], sys->menuNo);
+            Hu3DAnmNoSet(model->animId[2], sys->menuNo3);
+            model->mdlPos[0x3B]->x = MdVecTbl[0x51].x;
+            model->mdlPos[0x3B]->y = MdVecTbl[0x51].y;
+            model->mdlPos[0x3B]->z = MdVecTbl[0x51].z;
+            for (i = 0; i < 5; i++) {
+                model->mdlPos[i + 0x3C]->x = MdVecTbl[0x54].x;
+                model->mdlPos[i + 0x3C]->y = MdVecTbl[0x54].y;
+                model->mdlPos[i + 0x3C]->z = MdVecTbl[0x54].z;
+            }
+            model->mdlPos[0x41]->x = MdVecTbl[0x57].x;
+            model->mdlPos[0x41]->y = MdVecTbl[0x57].y;
+            model->mdlPos[0x41]->z = MdVecTbl[0x57].z;
+            model->mdlScale[0x3B]->x = 0.0f;
+            model->mdlScale[0x3B]->y = 0.0f;
+            model->mdlScale[0x3B]->z = 0.0f;
+            for (i = 0; i < 5; i++) {
+                model->mdlScale[i + 0x3C]->x = 0.0f;
+                model->mdlScale[i + 0x3C]->y = 0.0f;
+                model->mdlScale[i + 0x3C]->z = 0.0f;
+            }
+            model->mdlScale[0x41]->x = 0.0f;
+            model->mdlScale[0x41]->y = 0.0f;
+            model->mdlScale[0x41]->z = 0.0f;
+            HuSprGrpPosSet(sprite->grpId[1], 288.0f, 240.0f);
+            HuSprAttrReset(sprite->grpId[1], 0, 4);
+            HuSprAttrReset(sprite->grpId[1], 1, 4);
+            HuSprPosSet(sprite->grpId[1], 0, -300.0f, 0.0f);
+            HuSprPosSet(sprite->grpId[1], 1, 300.0f, 0.0f);
+            if (sys->menuNo == 0) {
+                HuSprAttrSet(sprite->grpId[1], 0, 4);
+            } else if (sys->menuNo == 8) {
+                HuSprAttrSet(sprite->grpId[1], 1, 4);
+            } else {
+                HuSprAttrReset(sprite->grpId[1], 0, 4);
+                HuSprAttrReset(sprite->grpId[1], 1, 4);
+            }
+            sys->stat = 1;
+            return;
+        case 1:
+            if (MdProcTbl[0x43].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60016);
+                MdMessDlgInsertMesReset();
+                MdMessDlgInsertMesAdd(sys->menuNo + 0x60017, 0);
+                sys->stat = 2;
+                return;
+            }
+            break;
+        case 2:
+            if (mess->mode == 5) {
+                NEL_INT10(sys) = 0;
+                sys->timer = 0;
+                sys->stat = 3;
+                return;
+            }
+            break;
+        case 3:
+            if (MdProcTbl[0xF].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 4;
+                return;
+            }
+            break;
+        case 4:
+            if (((PADSTAT(sys) & 1) != 0 && sys->menuNo != 0) || ((PADSTAT(sys) & 2) != 0 && sys->menuNo != 8)
+                || ((HuPadBtnDown[0] & 0x40) != 0 && sys->menuNo != 0) || ((HuPadBtnDown[0] & 0x20) != 0 && sys->menuNo != 8)) {
+                if ((HuPadBtnDown[0] & 0x40) != 0) {
+                    sys->sel = 0;
+                    sys->menuNo = 0;
+                } else if ((HuPadBtnDown[0] & 0x20) != 0) {
+                    sys->sel = 1;
+                    sys->menuNo = 8;
+                } else if ((PADSTAT(sys) & 1) != 0) {
+                    sys->sel = 0;
+                    if (--sys->menuNo == -1) {
+                        sys->menuNo = 0;
+                    }
+                } else if ((PADSTAT(sys) & 2) != 0) {
+                    sys->sel = 1;
+                    if (++sys->menuNo == 9) {
+                        sys->menuNo = 8;
+                    }
+                }
+                Hu3DAnmNoSet(model->animId[0], sys->menuNo);
+                if (sys->menuNo == 0) {
+                    HuSprAttrSet(sprite->grpId[1], 0, 4);
+                    HuSprAttrReset(sprite->grpId[1], 1, 4);
+                } else if (sys->menuNo == 8) {
+                    HuSprAttrSet(sprite->grpId[1], 1, 4);
+                    HuSprAttrReset(sprite->grpId[1], 0, 4);
+                } else {
+                    HuSprAttrReset(sprite->grpId[1], 0, 4);
+                    HuSprAttrReset(sprite->grpId[1], 1, 4);
+                }
+                NEL_INT10(sys) = 1;
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60016);
+                MdMessDlgInsertMesReset();
+                MdMessDlgInsertMesAdd(sys->menuNo + 0x60017, 0);
+                fn_1_19904(2);
+                sys->selSub = 1;
+                sys->stat = 0x1C;
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                fn_1_19904(3);
+                sys->stat = 8;
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                sys->stat = 5;
+                fn_1_19904(5);
+                return;
+            }
+            break;
+        case 0x1C:
+            if (MdProcTbl[0x11].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 4;
+                return;
+            }
+            break;
+        case 5:
+            if (MdProcTbl[0x10].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 6;
+                return;
+            }
+            break;
+        case 6:
+            if (MdProcTbl[0x44].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 7;
+                return;
+            }
+            break;
+        case 7:
+            if (MdProcTbl[0x42].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                HuSprAttrReset(sprite->grpId[1], 0, 4);
+                HuSprAttrReset(sprite->grpId[1], 1, 4);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->selNo3 * 2 + 0x70001);
+                sys->stat = 2;
+                sys->flowNo = 9;
+                return;
+            }
+            break;
+        case 8:
+            if (MdProcTbl[0x10].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 9;
+                return;
+            }
+            break;
+        case 9:
+            if (MdProcTbl[0x45].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->menuNo2 + 0x60020);
+                sys->stat = 10;
+                return;
+            }
+            break;
+        case 10:
+            if (MdProcTbl[0x47].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 11;
+                return;
+            }
+            break;
+        case 11:
+            if (mess->mode == 5) {
+                HuSprAttrReset(sprite->grpId[1], 0, 4);
+                HuSprAttrReset(sprite->grpId[1], 1, 4);
+                sys->stat = 12;
+                return;
+            }
+            break;
+        case 12:
+            if (MdProcTbl[0xF].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 13;
+                return;
+            }
+            break;
+        case 13:
+            if ((PADSTAT(sys) & 1) != 0 || (PADSTAT(sys) & 2) != 0) {
+                if ((PADSTAT(sys) & 1) != 0) {
+                    sys->sel = 0;
+                    if (--sys->menuNo2 == -1) {
+                        sys->menuNo2 = 4;
+                    }
+                } else if ((PADSTAT(sys) & 2) != 0) {
+                    sys->sel = 1;
+                    sys->menuNo2++;
+                    sys->menuNo2 = sys->menuNo2 % 5;
+                }
+                fn_1_19904(2);
+                for (i = 0; i < 5; i++) {
+                    if (i == sys->menuNo2) {
+                        Hu3DModelAttrReset(model->mdlId[i + 0x3C], 1);
+                        model->mdlScale[i + 0x3C]->x = 1.0f;
+                        model->mdlScale[i + 0x3C]->y = 1.0f;
+                        model->mdlScale[i + 0x3C]->z = 1.0f;
+                    } else {
+                        Hu3DModelAttrSet(model->mdlId[i + 0x3C], 1);
+                        model->mdlScale[i + 0x3C]->x = 0.0f;
+                        model->mdlScale[i + 0x3C]->y = 0.0f;
+                        model->mdlScale[i + 0x3C]->z = 0.0f;
+                    }
+                }
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->menuNo2 + 0x60020);
+                sys->selSub = 0;
+                sys->stat = 0x1D;
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                sys->stat = 0x11;
+                fn_1_19904(3);
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                sys->stat = 0xE;
+                fn_1_19904(5);
+                return;
+            }
+            break;
+        case 0x1D:
+            if (MdProcTbl[0x11].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 13;
+                return;
+            }
+            break;
+        case 14:
+            if (MdProcTbl[0x10].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 15;
+                return;
+            }
+            break;
+        case 15:
+            if (MdProcTbl[0x48].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60016);
+                MdMessDlgInsertMesReset();
+                MdMessDlgInsertMesAdd(sys->menuNo + 0x60017, 0);
+                sys->stat = 16;
+                return;
+            }
+            break;
+        case 16:
+            if (MdProcTbl[0x46].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                if (sys->menuNo == 0) {
+                    HuSprAttrSet(sprite->grpId[1], 0, 4);
+                } else if (sys->menuNo == 8) {
+                    HuSprAttrSet(sprite->grpId[1], 1, 4);
+                } else {
+                    HuSprAttrReset(sprite->grpId[1], 0, 4);
+                    HuSprAttrReset(sprite->grpId[1], 1, 4);
+                }
+                sys->stat = 3;
+                return;
+            }
+            break;
+        case 17:
+            if (MdProcTbl[0x10].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0x12;
+                return;
+            }
+            break;
+        case 18:
+            if (MdProcTbl[0x49].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->menuNo3 + 0x60025);
+                sys->stat = 0x13;
+                return;
+            }
+            break;
+        case 19:
+            if (MdProcTbl[0x4B].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0x14;
+                return;
+            }
+            break;
+        case 20:
+            if (mess->mode == 5) {
+                sys->stat = 0x15;
+                return;
+            }
+            break;
+        case 21:
+            if (MdProcTbl[0xF].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0x16;
+                return;
+            }
+            break;
+        case 22:
+            if ((PADSTAT(sys) & 1) != 0 || (PADSTAT(sys) & 2) != 0) {
+                if ((PADSTAT(sys) & 1) != 0) {
+                    sys->sel = 0;
+                    if (--sys->menuNo3 == -1) {
+                        sys->menuNo3 = 1;
+                    }
+                } else if ((PADSTAT(sys) & 2) != 0) {
+                    sys->sel = 1;
+                    sys->menuNo3++;
+                    sys->menuNo3 = sys->menuNo3 % 2;
+                }
+                Hu3DAnmNoSet(model->animId[2], sys->menuNo3);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->menuNo3 + 0x60025);
+                fn_1_19904(2);
+                sys->selSub = 0;
+                sys->stat = 0x1E;
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                sys->stat = 0x1A;
+                fn_1_19904(3);
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                sys->stat = 0x17;
+                fn_1_19904(5);
+                return;
+            }
+            break;
+        case 0x1E:
+            if (MdProcTbl[0x11].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0x16;
+                return;
+            }
+            break;
+        case 23:
+            if (MdProcTbl[0x10].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0x18;
+                return;
+            }
+            break;
+        case 24:
+            if (MdProcTbl[0x4C].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->menuNo2 + 0x60020);
+                sys->stat = 0x19;
+                return;
+            }
+            break;
+        case 25:
+            if (MdProcTbl[0x4A].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0xB;
+                return;
+            }
+            break;
+        case 26:
+            if (MdProcTbl[0x10].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0x1B;
+                return;
+            }
+            break;
+        case 27:
+            if (MdProcTbl[0x4D].func(sys, MdProcTbl) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0;
+                sys->flowNo = 0xB;
             }
             break;
     }
