@@ -2242,23 +2242,21 @@ void fn_1_5BF8(M528MAIN *work)
 {
     s32 prob[8] = { 20, 20, 15, 15, 10, 10, 7, 3 };
     f32 angle;
-    s16 rnd;
     s16 mdl;
-    s16 mdl2;
-    s16 mdl3;
-    s16 mtn;
-    s16 mtn2;
-    s16 type;
-    s32 acc;
     s32 i;
+    s16 mtn;
+    s32 type;
+    s32 acc;
+    s32 rnd;
 
     for (i = 0; i < 0x10; i++) {
         rnd = frandmod(100);
         acc = 0;
-        type = 0;
-        while (type < 8 && rnd >= acc + prob[type]) {
+        for (type = 0; type < 8; type++) {
+            if (rnd < acc + prob[type]) {
+                break;
+            }
             acc += prob[type];
-            type++;
         }
         M528_GETMDL(mdl, work->mdlCache[type + 0xD], type + 0xD);
         work->seg[i].mdl[0] = mdl;
@@ -2275,43 +2273,43 @@ void fn_1_5BF8(M528MAIN *work)
         Hu3DModelRotSet(mdl, 0.0f, work->seg[i].angle, 0.0f);
         Hu3DModelAttrReset(mdl, 1);
         if (type == 7) {
-            M528_GETMDL(mdl2, work->segMdlCache[i], 0xB);
-            M528_GETMTN(mtn, work->mtnCache[2], mdl2, lbl_1_data_2A0[2]);
-            Hu3DMotionSet(mdl2, mtn);
+            M528_GETMDL(mdl, work->segMdlCache[i], 0xB);
+            M528_GETMTN(mtn, work->mtnCache[2], mdl, lbl_1_data_2A0[2]);
+            Hu3DMotionSet(mdl, mtn);
         } else {
-            M528_GETMDL(mdl2, work->segMdlCache[i], 9);
-            M528_GETMTN(mtn, work->mtnCache[0], mdl2, lbl_1_data_2A0[0]);
-            Hu3DMotionSet(mdl2, mtn);
+            M528_GETMDL(mdl, work->segMdlCache[i], 9);
+            M528_GETMTN(mtn, work->mtnCache[0], mdl, lbl_1_data_2A0[0]);
+            Hu3DMotionSet(mdl, mtn);
         }
-        work->seg[i].mdl[1] = mdl2;
-        Hu3DModelAttrSet(mdl2, 1);
-        Hu3DModelAttrSet(mdl2, 0x40000002);
-        Hu3DModelAttrSet(mdl2, 0x40000080);
-        Hu3DModelLayerSet(mdl2, 1);
-        Hu3DModelPosSet(mdl2, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
-        Hu3DModelRotSet(mdl2, 0.0f, work->seg[i].angle, 0.0f);
-        Hu3DMotionSet(mdl2, mtn);
-        Hu3DMotionShapeSet(mdl2, mtn);
-        Hu3DModelAttrReset(mdl2, 1);
+        work->seg[i].mdl[1] = mdl;
+        Hu3DModelAttrSet(mdl, 1);
+        Hu3DModelAttrSet(mdl, 0x40000002);
+        Hu3DModelAttrSet(mdl, 0x40000080);
+        Hu3DModelLayerSet(mdl, 1);
+        Hu3DModelPosSet(mdl, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
+        Hu3DModelRotSet(mdl, 0.0f, work->seg[i].angle, 0.0f);
+        Hu3DMotionSet(mdl, mtn);
+        Hu3DMotionShapeSet(mdl, mtn);
+        Hu3DModelAttrReset(mdl, 1);
         if (type == 7) {
-            M528_GETMDL(mdl3, work->segMdlCache2[i], 0xC);
-            M528_GETMTN(mtn2, work->mtnCache[3], mdl3, lbl_1_data_2A0[3]);
-            Hu3DMotionSet(mdl3, mtn2);
+            M528_GETMDL(mdl, work->segMdlCache2[i], 0xC);
+            M528_GETMTN(mtn, work->mtnCache[3], mdl, lbl_1_data_2A0[3]);
+            Hu3DMotionSet(mdl, mtn);
         } else {
-            M528_GETMDL(mdl3, work->segMdlCache2[i], 0xA);
-            M528_GETMTN(mtn2, work->mtnCache[1], mdl3, lbl_1_data_2A0[1]);
-            Hu3DMotionSet(mdl3, mtn2);
+            M528_GETMDL(mdl, work->segMdlCache2[i], 0xA);
+            M528_GETMTN(mtn, work->mtnCache[1], mdl, lbl_1_data_2A0[1]);
+            Hu3DMotionSet(mdl, mtn);
         }
-        work->seg[i].mdl[2] = mdl3;
-        Hu3DModelAttrSet(mdl3, 1);
-        Hu3DModelAttrSet(mdl3, 0x40000002);
-        Hu3DModelAttrSet(mdl3, 0x40000080);
-        Hu3DModelLayerSet(mdl3, 1);
-        Hu3DModelPosSet(mdl3, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
-        Hu3DModelRotSet(mdl3, 0.0f, work->seg[i].angle, 0.0f);
-        Hu3DMotionSet(mdl3, mtn2);
-        Hu3DMotionShapeSet(mdl3, mtn2);
-        Hu3DModelAttrReset(mdl3, 1);
+        work->seg[i].mdl[2] = mdl;
+        Hu3DModelAttrSet(mdl, 1);
+        Hu3DModelAttrSet(mdl, 0x40000002);
+        Hu3DModelAttrSet(mdl, 0x40000080);
+        Hu3DModelLayerSet(mdl, 1);
+        Hu3DModelPosSet(mdl, work->seg[i].pos.x, work->seg[i].pos.y, work->seg[i].pos.z);
+        Hu3DModelRotSet(mdl, 0.0f, work->seg[i].angle, 0.0f);
+        Hu3DMotionSet(mdl, mtn);
+        Hu3DMotionShapeSet(mdl, mtn);
+        Hu3DModelAttrReset(mdl, 1);
     }
 }
 
