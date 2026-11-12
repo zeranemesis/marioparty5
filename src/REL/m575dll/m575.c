@@ -49,7 +49,7 @@ void fn_1_931C(M575Light *light);
 void fn_1_AEF0(M575Coin *self, M575Main *main);
 void fn_1_B074(M575Coin *self);
 void fn_1_B0E8(M575Coin *self);
-void fn_1_C464(M575Jugem *self, M575Main *main);
+
 void fn_1_C5E0(M575Jugem *self);
 void fn_1_C630(M575Jugem *self);
 void fn_1_3DE0(M575Stage *self, M575Main *main);
