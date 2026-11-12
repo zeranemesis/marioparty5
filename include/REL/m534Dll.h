@@ -94,7 +94,7 @@ void fn_1_449C(s32 team);
 f32 fn_1_4848(void);
 
 /* effect.c */
-void fn_1_6314(HUPROCESS *proc);
+void fn_1_6314();
 void fn_1_6338(void);
 
 void fn_1_6458(HuVecF *pos);
