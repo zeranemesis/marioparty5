@@ -8,6 +8,10 @@ public:
 static CTime lbl_1_bss_C0(120);
 static CTime lbl_1_bss_C4(210);
 static CTime lbl_1_bss_C8(210);
+#ifdef TARGET_PC
+/* the real classes: the local copy below has the GC size (0x370), too small for the 64-bit object */
+#include "REL/m501Dll.h"
+#else
 class CMinigameCore {
 public:
     void *operator new(size_t size);
@@ -21,6 +25,7 @@ public:
     char pad[0x370];
 };
 }
+#endif
 
 extern "C" void ObjectSetup(void)
 {

@@ -81,7 +81,9 @@ extern "C" void fn_1_AAA4(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
 
 /* the colour pointer rides in the model's hookData */
 #ifdef TARGET_PC
-#define PARTICLE_COLOR_SLOT(id) (Hu3DData[id].hookData)
+/* GC keeps it in motShapeWork.start (a 4-byte float); hookData is the particle work, so use a side table */
+static void *s_portParticleColor[HU3D_MODEL_MAX];
+#define PARTICLE_COLOR_SLOT(id) (s_portParticleColor[id])
 #else
 #define PARTICLE_COLOR_SLOT(id) (*(void **)&Hu3DData[id].motShapeWork.start)
 #endif

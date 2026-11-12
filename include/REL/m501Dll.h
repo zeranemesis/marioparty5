@@ -42,6 +42,11 @@ public:
 
 class CLinkNode {
 public:
+#ifdef TARGET_PC
+    /* MSVC puts a derived class's vtable pointer first unless its base is polymorphic: this keeps every
+     * CLinkNode base at offset 0 of its object, as the MWCC layout the decompiled list casts rely on */
+    virtual void PortLinkNodeAnchor() {}
+#endif
     CLinkNode *m_prev;
     CLinkNode *m_next;
 
