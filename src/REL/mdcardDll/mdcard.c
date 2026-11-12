@@ -75,8 +75,8 @@ s32 fn_1_4944(s32 arg0);
 s32 fn_1_4C00(s32 arg0);
 s32 fn_1_4DC8(s32 arg0);
 s32 fn_1_4F80(s32 mode);
-s32 fn_1_61F8(s32 arg0);
-s32 fn_1_6B0C(s32 arg0);
+s32 fn_1_61F8(s32 mode);
+s32 fn_1_6B0C(s32 mode);
 s32 fn_1_71B8(s32 arg0);
 s32 fn_1_78C4(s32 arg0);
 void fn_1_7DA0(void);
@@ -1305,6 +1305,12 @@ void fn_1_2A3C(void)
     }
 }
 
+static HuVecF lbl_1_bss_A4[4];
+static HuVecF lbl_1_bss_D4[2];
+static s8 lbl_1_bss_EC;
+static HuVecF lbl_1_bss_F0;
+static HuVecF lbl_1_bss_FC[4];
+
 typedef struct MdManSel_s {
     s8 cur; //0x00
     s8 next; //0x01
@@ -1632,6 +1638,189 @@ s32 fn_1_4F80(s32 mode)
                     Hu3DModelAttrSet(model->mdlId[i+lbl_1_bss_164[i].next*4+24], HU3D_ATTR_DISPOFF);
                 }
             }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+// remaining diff: a few dead mr pairs around MdSpritePosGet results
+s32 fn_1_61F8(s32 mode)
+{
+    MDSPRITE_WORK *sprite;
+    MDMODEL_WORK *model;
+    HUSPRGRPID grpId;
+    HuVec2f *pos;
+    HuVec2f *scale;
+
+    sprite = sys->sprite;
+    model = sys->model;
+    grpId = sprite->grpId[1];
+    if(lbl_1_bss_2 == 0) {
+        lbl_1_bss_FC[0].x = 112.0f;
+        lbl_1_bss_FC[1].x = 464.0f;
+        lbl_1_bss_FC[0].y = 64.0f+(176.0f*lbl_1_data_0[0]);
+        lbl_1_bss_FC[1].y = lbl_1_bss_FC[0].y;
+        lbl_1_bss_FC[2].x = -128.0f;
+        lbl_1_bss_FC[3].x = 704.0f;
+        lbl_1_bss_FC[2].y = lbl_1_bss_FC[0].y;
+        lbl_1_bss_FC[3].y = lbl_1_bss_FC[1].y;
+        lbl_1_bss_2 = 1;
+    }
+    if(sys->unk3A0 == 0) {
+        HuSprGrpPosSet(grpId, 0.0f, 0.0f);
+        if(mode == 0) {
+            pos = MdSpritePosGet(sprite, 1, 0);
+            pos->x = lbl_1_bss_FC[2].x;
+            pos->y = lbl_1_bss_FC[2].y;
+            HuSprAttrReset(grpId, 0, HUSPR_ATTR_DISPOFF);
+            pos = MdSpritePosGet(sprite, 1, 1);
+            pos->x = lbl_1_bss_FC[3].x;
+            pos->y = lbl_1_bss_FC[3].y;
+            HuSprAttrReset(grpId, 1, HUSPR_ATTR_DISPOFF);
+        } else if(mode == 1) {
+        } else if(mode == 2) {
+            pos = MdSpritePosGet(sprite, 1, 2);
+            pos->x = lbl_1_bss_FC[2].x;
+            pos->y = lbl_1_bss_FC[2].y;
+            HuSprTPLvlSet(grpId, 2, 0.0f);
+            HuSprAttrReset(grpId, 2, HUSPR_ATTR_DISPOFF);
+        } else if(mode == 3) {
+            pos = MdSpritePosGet(sprite, 1, 3);
+            pos->x = lbl_1_bss_FC[3].x;
+            pos->y = lbl_1_bss_FC[3].y;
+            HuSprTPLvlSet(grpId, 3, 0.0f);
+            HuSprAttrReset(grpId, 3, HUSPR_ATTR_DISPOFF);
+        }
+        sys->unk3A0 = 1;
+    }
+    if(mode == 0) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procT[1], &sys->procOut[1], 15.0f);
+        MdMathLerp((float *)MdSpritePosGet(sprite, 1, 0), lbl_1_bss_FC[2].x, lbl_1_bss_FC[0].x, sys->procOut[1]);
+        MdMathLerp((float *)MdSpritePosGet(sprite, 1, 1), lbl_1_bss_FC[3].x, lbl_1_bss_FC[1].x, sys->procOut[1]);
+    } else if(mode == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procT[1], &sys->procOut[1], 15.0f);
+        MdMathLerp((float *)MdSpritePosGet(sprite, 1, 0), lbl_1_bss_FC[0].x, lbl_1_bss_FC[2].x, sys->procOut[1]);
+        MdMathLerp((float *)MdSpritePosGet(sprite, 1, 1), lbl_1_bss_FC[1].x, lbl_1_bss_FC[3].x, sys->procOut[1]);
+    } else if(mode == 2) {
+        MdMathOscillate(MDMATH_OSC_180, &sys->procT[1], &sys->procOut[1], 15.0f);
+        pos = MdSpritePosGet(sprite, 1, 0);
+        scale = MdSpriteScaleGet(sprite, 1, 0);
+        MdMathLerp(&pos->x, lbl_1_bss_FC[0].x, lbl_1_bss_FC[0].x-24.0f, sys->procOut[1]);
+        MdMathLerp(&scale->x, 1.0f, 1.5f, sys->procOut[1]);
+        MdMathLerp(&scale->y, 1.0f, 1.5f, sys->procOut[1]);
+        pos = MdSpritePosGet(sprite, 1, 2);
+        scale = MdSpriteScaleGet(sprite, 1, 2);
+        MdMathLerp(&pos->x, lbl_1_bss_FC[0].x, lbl_1_bss_FC[0].x-24.0f, sys->procOut[1]);
+        MdMathLerp(&scale->x, 1.0f, 1.5f, sys->procOut[1]);
+        MdMathLerp(&scale->y, 1.0f, 1.5f, sys->procOut[1]);
+        HuSprTPLvlSet(grpId, 2, sys->procOut[1]);
+    } else if(mode == 3) {
+        MdMathOscillate(MDMATH_OSC_180, &sys->procT[1], &sys->procOut[1], 15.0f);
+        pos = MdSpritePosGet(sprite, 1, 1);
+        scale = MdSpriteScaleGet(sprite, 1, 1);
+        MdMathLerp(&pos->x, lbl_1_bss_FC[1].x, 24.0f+lbl_1_bss_FC[1].x, sys->procOut[1]);
+        MdMathLerp(&scale->x, 1.0f, 1.5f, sys->procOut[1]);
+        MdMathLerp(&scale->y, 1.0f, 1.5f, sys->procOut[1]);
+        pos = MdSpritePosGet(sprite, 1, 3);
+        scale = MdSpriteScaleGet(sprite, 1, 3);
+        MdMathLerp(&pos->x, lbl_1_bss_FC[1].x, 24.0f+lbl_1_bss_FC[1].x, sys->procOut[1]);
+        MdMathLerp(&scale->x, 1.0f, 1.5f, sys->procOut[1]);
+        MdMathLerp(&scale->y, 1.0f, 1.5f, sys->procOut[1]);
+        HuSprTPLvlSet(grpId, 3, sys->procOut[1]);
+    }
+    if(sys->procT[1] >= 1.0f) {
+        if(mode == 0) {
+        } else if(mode == 1) {
+            HuSprAttrSet(grpId, 0, HUSPR_ATTR_DISPOFF);
+            HuSprAttrSet(grpId, 1, HUSPR_ATTR_DISPOFF);
+        } else if(mode == 2) {
+            HuSprAttrSet(grpId, 2, HUSPR_ATTR_DISPOFF);
+        } else if(mode == 3) {
+            HuSprAttrSet(grpId, 3, HUSPR_ATTR_DISPOFF);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+// remaining diff: float operand order, extsh on camera bit (see fn_1_4944)
+s32 fn_1_6B0C(s32 mode)
+{
+    int i;
+    MDCAMERA_WORK *camWork;
+    MDMODEL_WORK *model;
+    MDMESS_WORK *mess;
+    HuVecF in[4];
+    HuVecF out[4];
+
+    camWork = sys->camera;
+    model = sys->model;
+    mess = sys->mess;
+    if(lbl_1_bss_EC == 0) {
+        lbl_1_bss_D4[0].x = 48.0f;
+        lbl_1_bss_D4[0].y = 64.0f;
+        lbl_1_bss_D4[1].x = 48.0f;
+        lbl_1_bss_D4[1].y = -240.0f;
+        for(i=0; i<4; i++) {
+            lbl_1_bss_A4[i].x = 48.0f-((288.0f-((3.0f*lbl_1_data_0[2])*0.5f))+((float)i*lbl_1_data_0[2]));
+            lbl_1_bss_A4[i].y = 64.0f-(64.0f+(176.0f*lbl_1_data_0[0]));
+        }
+        lbl_1_bss_EC = 1;
+    }
+    if(sys->procInit == 0) {
+        if(mode == 0) {
+            lbl_1_bss_F0.x = 48.0f;
+            lbl_1_bss_F0.y = 64.0f;
+        } else if(mode == 1) {
+            MdMessWinOpen(mess, 1, lbl_1_bss_D4[1].x, lbl_1_bss_D4[1].y, 0x1E0, 0xB0, 1.0f, 0x40);
+            MdMessWinHomeClear(mess, 1);
+            MdMessWinAttrSet(mess, 1, HUWIN_ATTR_ALIGN_CENTER);
+            MdMessWinMesSet(mess, 1, 0x150009);
+            for(i=0; i<4; i++) {
+                if(i < sys->curSel+1) {
+                    Hu3DModelAttrReset(model->mdlId[i+24], HU3D_ATTR_DISPOFF);
+                } else {
+                    Hu3DModelAttrReset(model->mdlId[i+28], HU3D_ATTR_DISPOFF);
+                }
+            }
+        }
+        sys->procInit = 1;
+    }
+    if(mode == 0) {
+        MdMathOscillate(MDMATH_OSC_90_REV, &sys->procT[0], &sys->procOut[0], 30.0f);
+        MdMathLerp(&lbl_1_bss_F0.x, lbl_1_bss_D4[0].x, lbl_1_bss_D4[1].x, sys->procOut[0]);
+        MdMathLerp(&lbl_1_bss_F0.y, lbl_1_bss_D4[0].y, lbl_1_bss_D4[1].y, sys->procOut[0]);
+    } else if(mode == 1) {
+        MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 30.0f);
+        MdMathLerp(&lbl_1_bss_F0.x, lbl_1_bss_D4[1].x, lbl_1_bss_D4[0].x, sys->procOut[0]);
+        MdMathLerp(&lbl_1_bss_F0.y, lbl_1_bss_D4[1].y, lbl_1_bss_D4[0].y, sys->procOut[0]);
+    }
+    MdMessWinPosSet(mess, 1, lbl_1_bss_F0.x, lbl_1_bss_F0.y);
+    for(i=0; i<4; i++) {
+        in[i].x = lbl_1_bss_F0.x-lbl_1_bss_A4[i].x;
+        in[i].y = lbl_1_bss_F0.y-lbl_1_bss_A4[i].y;
+        in[i].z = lbl_1_data_0[3];
+        Hu3D2Dto3D(&in[i], camWork->camera[1].bit, &out[i]);
+        if(i < sys->curSel+1) {
+            *model->posP[i+24] = out[i];
+            fn_1_942C(i+24, 1);
+        } else {
+            *model->posP[i+28] = out[i];
+            fn_1_942C(i+28, 1);
+        }
+    }
+    if(sys->procT[0] >= 1.0f) {
+        if(mode == 0) {
+            MdMessWinClose(mess, 1);
+            for(i=0; i<4; i++) {
+                if(i < sys->curSel+1) {
+                    Hu3DModelAttrSet(model->mdlId[i+24], HU3D_ATTR_DISPOFF);
+                } else {
+                    Hu3DModelAttrSet(model->mdlId[i+28], HU3D_ATTR_DISPOFF);
+                }
+            }
+        } else if(mode == 1) {
         }
         return 1;
     }
