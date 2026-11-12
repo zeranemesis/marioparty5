@@ -9,6 +9,7 @@
 #include "game/hsfex.h"
 #include "game/gamework.h"
 #include "game/wipe.h"
+#include "game/audio.h"
 #include "dolphin/os.h"
 #include "math.h"
 
@@ -56,7 +57,8 @@ void fn_1_7DA0(void);
 void fn_1_84AC(void);
 void fn_1_9100(void);
 void fn_1_98C8(void);
-void fn_1_A094(s32 arg0);
+void fn_1_A094(s32 no);
+s32 fn_1_A204(s32 modelNo, s32 cameraNo);
 
 void (*MdFlowTbl[6])(void) = {
     fn_1_DD8, fn_1_1058, fn_1_1448, fn_1_1DF0, fn_1_22B8, fn_1_2A3C
@@ -66,6 +68,7 @@ s32 (*MdProcTbl[10])() = {
     fn_1_44F8, fn_1_461C, fn_1_4944, fn_1_4C00, fn_1_4DC8, fn_1_4F80, fn_1_61F8, fn_1_6B0C, fn_1_71B8, fn_1_78C4
 };
 
+static s32 bgmStream;
 SYS sysWork;
 SYS *sys;
 SYS *sysP;
@@ -362,6 +365,70 @@ void fn_1_942C(s32 modelNo, s32 cameraNo)
     d.z = cam->pos.z - pos->z;
     out = (float)(atan2(d.x, d.z)/M_PI*180.0);
     rot->y = out;
+}
+
+// jump table here; original is a compare tree (remaining diff)
+void fn_1_A094(s32 no)
+{
+    s16 pan;
+
+    switch(no) {
+        case 0:
+            bgmStream = HuAudBGMPlay(39);
+            break;
+
+        case 1:
+            HuAudSStreamFadeOut(bgmStream, 1000);
+            break;
+
+        case 2:
+            HuAudFXPlay(0);
+            break;
+
+        case 3:
+            HuAudFXPlay(2);
+            break;
+
+        case 4:
+            HuAudFXPlay(1);
+            break;
+
+        case 5:
+            HuAudFXPlay(3);
+            break;
+
+        case 6:
+            HuAudFXPlay(1021);
+            break;
+
+        case 7:
+            HuAudFXPlay(1039);
+            break;
+
+        case 8:
+            HuAudFXPlay(1014);
+            break;
+
+        case 9:
+            HuAudFXPlay(1137);
+            break;
+
+        case 10:
+            HuAudFXPlay(1138);
+            break;
+
+        case 11:
+        case 12:
+            pan = fn_1_A204(0, 1);
+            if(no == 11) {
+                HuAudFXPlayPan(754, pan);
+            }
+            break;
+
+        case 13:
+            HuAudAllStop();
+            break;
+    }
 }
 
 s32 fn_1_A204(s32 modelNo, s32 cameraNo)
