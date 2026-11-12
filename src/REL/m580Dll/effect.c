@@ -476,6 +476,7 @@ void fn_1_EDF8(s32 show)
 {
     OMOBJ *obj = lbl_1_bss_248;
     M580EffectData *data = obj->data;
+    s32 *showP = &data->show;
 
-    data->show = show;
+    *showP = show;
 }
