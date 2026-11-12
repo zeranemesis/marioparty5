@@ -449,6 +449,13 @@ void fn_1_E010(CCleanSide *self)
     f32 h;
     f32 v;
     f64 d;
+    f32 rc;
+    f32 q;
+    f32 at;
+    f32 at2;
+    f32 ang;
+    f32 rsq;
+    f32 xsq;
 
     p = &self->m_height[0][0];
     count = 0;
@@ -459,7 +466,14 @@ void fn_1_E010(CCleanSide *self)
             } else {
                 r = y / 0.5f;
             }
-            h = (f32)(0.05 * sin(14.0f * (f32)atan(x / r)) + 1.05 * (f64)(x * x + r * r));
+            rc = r;
+            q = x / rc;
+            at = (f32)atan(q);
+            at2 = at;
+            ang = 14.0f * at2;
+            rsq = rc * rc;
+            xsq = x * x;
+            h = (f32)(0.05 * sin(ang) + 1.05 * (f64)(xsq + rsq));
             if (h < 1.0f) {
                 if (h <= 0.9200000017881393) {
                     d = 240.0;
@@ -511,7 +525,7 @@ void fn_1_E560(CCleanSide *self)
 }
 
 // Packs a 8x4 block of heights into 4 rows of 8 mask bytes; returns the number of cells >= thresh.
-s32 fn_1_E5A4(u8 **dst, const f32 *src, s32 stride, s32 thresh)
+static inline s32 CleanPackBlock(u8 **dst, const f32 *src, s32 stride, s32 thresh)
 {
     s32 count = 0;
     s32 row;
@@ -538,8 +552,13 @@ s32 fn_1_E5A4(u8 **dst, const f32 *src, s32 stride, s32 thresh)
     return count;
 }
 
+s32 fn_1_E5A4(u8 **dst, const f32 *src, s32 stride, s32 thresh)
+{
+    return CleanPackBlock(dst, src, stride, thresh);
+}
+
 // State 4: rebuilds the I8 mask texture from the heights.
-void fn_1_E694(CCleanSide *self)
+static inline void CleanPack(CCleanSide *self)
 {
     u8 *out;
     s32 sum;
@@ -551,7 +570,7 @@ void fn_1_E694(CCleanSide *self)
         sum = 0;
         for (y = 0; y < CLEAN_GRID; y += 4) {
             for (x = 0; x < CLEAN_GRID; x += 8) {
-                sum += fn_1_E5A4(&out, &self->m_height[y][x], CLEAN_GRID, (s32)self->m_thresh);
+                sum += CleanPackBlock(&out, &self->m_height[y][x], CLEAN_GRID, (s32)self->m_thresh);
             }
         }
         DCFlushRangeNoSync(self->m_maskImg, 0x4000);
@@ -559,15 +578,31 @@ void fn_1_E694(CCleanSide *self)
     }
 }
 
+void fn_1_E694(CCleanSide *self)
+{
+    CleanPack(self);
+}
+
 // World position -> grid cell, clamped; returns nonzero when the position was outside the grid.
+static inline s32 CellClamp(s32 v)
+{
+    s32 r;
+
+    if (v < 0) {
+        r = 0;
+    } else if (v > 0x7F) {
+        r = 0x7F;
+    } else {
+        r = v;
+    }
+    return r;
+}
+
 static inline u8 CleanCell(CCleanSide *self, const Vec *pos, s32 *outX, s32 *outZ)
 {
     u8 outside;
     u8 zHigh;
     u8 zLow;
-    s32 v;
-    s32 cx;
-    s32 cz;
 
     *outX = (s32)((128.0f * (pos->x - self->m_x0)) / (self->m_x1 - self->m_x0));
     *outZ = (s32)((128.0f * (pos->z - self->m_z0)) / (self->m_z1 - self->m_z0));
@@ -584,24 +619,8 @@ static inline u8 CleanCell(CCleanSide *self, const Vec *pos, s32 *outX, s32 *out
         outside = 0;
     }
     if (outside != 0) {
-        v = *outX;
-        if (v < 0) {
-            cx = 0;
-        } else if (v > 0x7F) {
-            cx = 0x7F;
-        } else {
-            cx = v;
-        }
-        *outX = cx;
-        v = *outZ;
-        if (v < 0) {
-            cz = 0;
-        } else if (v > 0x7F) {
-            cz = 0x7F;
-        } else {
-            cz = v;
-        }
-        *outZ = cz;
+        *outX = CellClamp(*outX);
+        *outZ = CellClamp(*outZ);
     }
     return outside;
 }
@@ -832,7 +851,7 @@ f32 fn_1_F7BC(CCleanSide *self, const Vec *a, const Vec *b)
 }
 
 // State 2: dirt that touches a clean cell erodes by 3.1875 per tick.
-void fn_1_FDC8(CCleanSide *self)
+static inline void CleanErode(CCleanSide *self)
 {
     s32 count;
     s32 z;
@@ -844,6 +863,12 @@ void fn_1_FDC8(CCleanSide *self)
     f32 down;
     f32 v;
     f32 nv;
+    f32 nv2;
+    f32 nv3;
+    f32 left2;
+    f32 right2;
+    f32 up2;
+    f32 down2;
 
     if (self->m_state == 2) {
         count = 0;
@@ -871,14 +896,20 @@ void fn_1_FDC8(CCleanSide *self)
                     } else {
                         down = 0.0f;
                     }
-                    if (left <= 0.0f || right <= 0.0f || up <= 0.0f || down <= 0.0f) {
+                    left2 = left;
+                    right2 = right;
+                    up2 = up;
+                    down2 = down;
+                    if (left2 <= 0.0f || right2 <= 0.0f || up2 <= 0.0f || down2 <= 0.0f) {
                         v = *cell - 3.1875f;
                         if (0.0f > v) {
                             nv = 0.0f;
                         } else {
                             nv = v;
                         }
-                        *cell = nv;
+                        nv2 = nv;
+                        nv3 = nv2;
+                        *cell = nv3;
                     }
                     if (*cell >= self->m_thresh) {
                         count++;
@@ -890,8 +921,13 @@ void fn_1_FDC8(CCleanSide *self)
     }
 }
 
+void fn_1_FDC8(CCleanSide *self)
+{
+    CleanErode(self);
+}
+
 // Scrolls the distortion texture along a slowly turning direction.
-void fn_1_100CC(CCleanSide *self)
+static inline void CleanScroll(CCleanSide *self)
 {
     f32 t;
 
@@ -910,6 +946,11 @@ void fn_1_100CC(CCleanSide *self)
     if (self->m_scrollV < 0.0f) {
         self->m_scrollV = (f32)(self->m_scrollV + 1.0f);
     }
+}
+
+void fn_1_100CC(CCleanSide *self)
+{
+    CleanScroll(self);
 }
 
 void fn_1_10294(CCleanSide *self)
@@ -941,9 +982,9 @@ void fn_1_10330(CCleanSide *self)
         }
         self->m_dirty = 0;
     }
-    fn_1_FDC8(self);
-    fn_1_E694(self);
-    fn_1_100CC(self);
+    CleanErode(self);
+    CleanPack(self);
+    CleanScroll(self);
     self->m_state++;
     if (self->m_state >= 6) {
         self->m_state = 0;
@@ -1069,34 +1110,82 @@ f32 *fn_1_11178(CFloatVec *vec, f32 *first, f32 *last)
     return first;
 }
 
+// Accessors and copy/fill primitives of the original STL, inlined into insert.
+static inline u32 VecMax(CFloatVec *vec)
+{
+    u32 m = 0x3FFFFFFF;
+    u32 m2 = m;
+    return m2;
+}
+
+static inline u32 VecCap(CFloatVec *vec)
+{
+    CFloatVec *t = vec;
+    u32 c = t->m_cap;
+    return c;
+}
+
+static inline f32 *VecBegin(CFloatVec *vec)
+{
+    f32 **p = &vec->m_data;
+    return *p;
+}
+
+static inline f32 *VecEnd(CFloatVec *vec)
+{
+    f32 **p = &vec->m_data;
+    return *p + vec->m_size;
+}
+
+static inline f32 *VecCopy(f32 *first, f32 *last, f32 *dst)
+{
+    f32 *s = first;
+    f32 *d = dst;
+    while (s < last) {
+        *d = *s;
+        s++;
+        d++;
+    }
+    return d;
+}
+
+static inline void VecFill(f32 *dst, u32 n, const f32 *value)
+{
+    u32 cnt = n;
+    f32 *d = dst;
+    while (cnt != 0) {
+        *d = *value;
+        d++;
+        cnt--;
+    }
+}
+
 // vector<float>::insert(pos, count, value)
 void fn_1_11220(CFloatVec *vec, f32 *pos, u32 count, const f32 *value)
 {
-    const u32 maxSize = 0x3FFFFFFF;
+    u32 maxSize;
     f32 *end;
     s32 moveCount;
     const f32 *src;
     f32 *from;
     f32 *to;
-    f32 *fill;
-    u32 i;
     f32 *oldData;
     s32 index;
     u32 newSize;
     u32 newCap;
     f32 *newData;
     f32 *dst;
-    f32 *p;
 
     if (count == 0) {
         return;
     }
+    maxSize = VecMax(vec);
     if (count > maxSize || vec->m_size > maxSize - count) {
         fn_1_234(CLEAN_STDERR, "vector::insert length error\n");
         abort();
     }
-    if (vec->m_size + count <= vec->m_cap) {
-        end = vec->m_data + vec->m_size;
+    if (vec->m_size + count <= VecCap(vec)) {
+        end = VecEnd(vec);
         moveCount = (s32)(end - pos);
         src = value;
         if ((end - (moveCount - (s32)count)) <= src && src < end) {
@@ -1111,21 +1200,15 @@ void fn_1_11220(CFloatVec *vec, f32 *pos, u32 count, const f32 *value)
                 *to = *from;
             }
         }
-        i = count;
-        fill = pos;
-        while (i != 0) {
-            *fill = *src;
-            fill++;
-            i--;
-        }
+        VecFill(pos, count, src);
         vec->m_size += count;
         return;
     }
-    oldData = vec->m_data;
+    oldData = VecBegin(vec);
     index = (s32)(pos - oldData);
     newSize = vec->m_size + count;
-    if (vec->m_cap != 0) {
-        newCap = vec->m_cap;
+    if (VecCap(vec) != 0) {
+        newCap = VecCap(vec);
     } else {
         newCap = 1;
     }
@@ -1142,24 +1225,10 @@ void fn_1_11220(CFloatVec *vec, f32 *pos, u32 count, const f32 *value)
         abort();
     }
     vec->m_data = newData;
-    i = count;
-    dst = newData + index;
-    while (i != 0) {
-        *dst = *value;
-        dst++;
-        i--;
-    }
+    VecFill(VecBegin(vec) + index, count, value);
     if (oldData != 0) {
-        dst = newData;
-        for (p = oldData; p < oldData + index; p++) {
-            *dst = *p;
-            dst++;
-        }
-        dst = newData + index + count;
-        for (p = oldData + index; p < oldData + vec->m_size; p++) {
-            *dst = *p;
-            dst++;
-        }
+        dst = VecCopy(oldData, oldData + index, VecBegin(vec));
+        dst = VecCopy(oldData + index, oldData + vec->m_size, VecBegin(vec) + index + count);
         __dl__FPv(oldData);
     }
     vec->m_size = newSize;

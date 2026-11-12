@@ -30,7 +30,7 @@ void fn_1_704C(void *self, const Vec *src);
 void fn_1_2B08(CEffectParticle *self);
 f32 fn_1_4B6C(m531::CFlow *flow, s32 mode, s32 col, s32 row);
 void fn_1_4BC0(m531::CFlow *flow, s32 mode, s32 col, s32 row, f32 value);
-f32 fn_1_F7BC(void *a, Vec *p0, Vec *p1, f32 x, f32 y);
+f32 fn_1_F7BC(void *a, Vec *p0, Vec *p1);
 void *fn_1_805C(void *self, OMOBJMAN *objMan, s32 dataNum, s32 index);
 void fn_1_8190(CStageObj *self);
 
@@ -526,7 +526,7 @@ f32 fn_1_A568(CPlayer *self)
     b.x = 100.0f + a.x;
     b.y = 0.0f;
     b.z = 100.0f + a.z;
-    result = fn_1_F7BC(self->m_unkBC, &a, &b, 100.0f, -230.0f);
+    result = fn_1_F7BC(self->m_unkBC, &a, &b);
     self->m_target.x = a.x + (0.5f * (b.x - a.x));
     target->y = 0.0f;
     target->z = a.z + (0.5f * (b.z - a.z));
