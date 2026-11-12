@@ -8,16 +8,7 @@ extern "C" {
 void DCStoreRangeNoSync(void *addr, u32 nBytes);
 }
 
-typedef struct M513Torch_s {
-    M513Node link;
-    void **vtbl;
-    s32 flags;
-    s16 modelId;
-    HU3DPARTICLE *particle;
-    f32 time;
-    s32 count;
-    s32 emit;
-} M513Torch;
+
 
 extern "C" {
 

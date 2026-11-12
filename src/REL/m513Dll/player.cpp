@@ -21,37 +21,7 @@ extern "C" {
 #define M513_RODATA
 #endif
 
-typedef struct M513InputPtr_s {
-    M513Input *p;
-} M513InputPtr;
 
-typedef struct M513LeafPtr_s {
-    M513Leaf *p;
-} M513LeafPtr;
-
-typedef struct M513Player_s {
-    M513Node link;
-    Vec pos;
-    f32 unk14;
-    Vec rot;
-    s32 active;
-    M513Ptmf hook;
-    s32 charNo;
-    s32 motion;
-    s32 playerNo;
-    s32 state;
-    f32 t;
-    s32 score;
-    f32 cryT;
-    u8 done;
-    u8 type;
-    M513PowerEff *eff[16];
-    s32 effIdx;
-    M513Vec16 mot;
-    M513Model *model;
-    M513Input *input;
-    M513Leaf *leaf;
-} M513Player;
 
 extern "C" {
 

@@ -362,6 +362,74 @@ typedef struct M513Camera_s {
     Vec destTarget;
 } M513Camera;
 
+typedef struct M513InputPtr_s {
+    M513Input *p;
+} M513InputPtr;
+
+typedef struct M513LeafPtr_s {
+    M513Leaf *p;
+} M513LeafPtr;
+
+typedef struct M513Player_s {
+    M513Node link;
+    Vec pos;
+    f32 unk14;
+    Vec rot;
+    s32 active;
+    M513Ptmf hook;
+    s32 charNo;
+    s32 motion;
+    s32 playerNo;
+    s32 state;
+    f32 t;
+    s32 score;
+    f32 cryT;
+    u8 done;
+    u8 type;
+    M513PowerEff *eff[16];
+    s32 effIdx;
+    M513Vec16 mot;
+    M513Model *model;
+    M513Input *input;
+    M513Leaf *leaf;
+} M513Player;
+
+typedef struct M513Kuribo_s {
+    M513Node link;
+    M513Model model;
+    Vec pos;
+    f32 unk18;
+    Vec rot;
+    s32 motion;
+    s32 target;
+    M513Vec16 mot;
+    s32 state;
+    f32 t;
+    s32 dir;
+    f32 wait;
+    s32 mode;
+    M513Ptmf hook;
+} M513Kuribo;
+
+typedef struct M513Torch_s {
+    M513Node link;
+    void **vtbl;
+    s32 flags;
+    s16 modelId;
+    HU3DPARTICLE *particle;
+    f32 time;
+    s32 count;
+    s32 emit;
+} M513Torch;
+
+/* The stage object: three models loaded from DATA_m513. */
+typedef struct M513Stage_s {
+    M513Node link;
+    void **vtbl;
+    u32 flags;
+    s16 modelId[3];
+} M513Stage;
+
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 
 extern M513Node lbl_1_bss_C;

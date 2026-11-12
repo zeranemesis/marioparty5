@@ -12,22 +12,7 @@ extern "C" {
 #define M513_RODATA
 #endif
 
-typedef struct M513Kuribo_s {
-    M513Node link;
-    M513Model model;
-    Vec pos;
-    f32 unk18;
-    Vec rot;
-    s32 motion;
-    s32 target;
-    M513Vec16 mot;
-    s32 state;
-    f32 t;
-    s32 dir;
-    f32 wait;
-    s32 mode;
-    M513Ptmf hook;
-} M513Kuribo;
+
 
 extern "C" {
 
