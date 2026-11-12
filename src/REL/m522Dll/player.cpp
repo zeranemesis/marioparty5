@@ -223,6 +223,8 @@ extern M522_PFN lbl_1_data_760[];
 extern char lbl_1_data_780[];
 extern char lbl_1_data_79E[];
 extern char lbl_1_data_7BB[];
+extern const volatile f32 lbl_1_rodata_4C8;
+extern const volatile f32 lbl_1_rodata_4CC;
 extern const M522_VEC3 lbl_1_rodata_4D0[3];
 extern const M522_VEC3 lbl_1_rodata_528;
 extern const M522_VEC3 lbl_1_rodata_534;
@@ -382,6 +384,9 @@ static inline f32 M522MotionMaxTime(M522_PLAYERBASE *self)
 
 
 
+/* Screen x to pan: scale and bias. */
+PLAYER_RODATA const volatile f32 lbl_1_rodata_4C8 = 0.11111111f;
+PLAYER_RODATA const volatile f32 lbl_1_rodata_4CC = 32.0f;
 /* Spawn positions of the CPU players, handed out by fn_1_F604. */
 PLAYER_RODATA const M522_VEC3 lbl_1_rodata_4D0[3] = {
     { 0.0f, 2500.0f, -200.0f },
@@ -451,23 +456,13 @@ char lbl_1_data_7BB[] = "Memory allocation failure";
 
 s16 fn_1_F564(M522_VEC3 *pos)
 {
-#ifdef TARGET_PC
     M522_VEC3 screen;
-    f32 x;
-#else
-    f32 x;
-#endif
-    s16 pan;
-    s16 result;
+    s32 result;
+    s32 pan;
 
-#ifdef TARGET_PC
     Hu3D3Dto2D(HV(pos), 1, HV(&screen));
-    x = screen.x;
-#else
-    Hu3D3Dto2D(HV(pos), 1, HV(&x));
-#endif
-    x = x * 0.11111111f;
-    pan = (s16)(32.0f + x);
+    screen.x = screen.x * lbl_1_rodata_4C8;
+    pan = lbl_1_rodata_4CC + screen.x;
     if (pan < 0) {
         result = 0;
     } else if (pan > 0x7F) {
@@ -475,7 +470,7 @@ s16 fn_1_F564(M522_VEC3 *pos)
     } else {
         result = pan;
     }
-    return result;
+    return (s16)result;
 }
 
 void fn_1_F604(void)
