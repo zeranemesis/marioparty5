@@ -66,6 +66,10 @@ OMOBJ *MgCameraMoveEntry(M569CAM *from, M569CAM *to, f32 frames);
 
 /* ---------------------------------------------------------------- data */
 
+static char lbl_1_data_0[] = "MgCameraMoveEntry : Camera Number Different\n";
+static char lbl_1_data_2D[] = "MgFlowSet : Value is Max Over\n";
+static char lbl_1_data_4C[] = "MgFlowNext : Value is Max Over\n";
+
 static const s32 lbl_1_rodata_8C[5] = { 0x7C0000, 0x7C0001, 0x7C0002, 0x7C0003, 0x7C0004 };
 
 static M569CAM lbl_1_data_6C = {
