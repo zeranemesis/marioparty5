@@ -49,4 +49,36 @@ void fn_1_1888(void *link, s32 arg);
 
 }
 
+// GC pointer-to-member-function layout (state hook of player/tube).
+struct M568Ptmf {
+    s32 adj;
+    s32 idx;
+    void (*fn)(void *);
+};
+
+// The physics body of one player (tube.cpp), also read by player.cpp.
+struct M568Tube {
+    M568Link node;    // 0x00
+    u8 ghost;         // 0x08 (grp == 0 body)
+    s32 index;        // 0x0C character index
+    Vec up;           // 0x10 smoothed up vector
+    Vec upGoal;       // 0x1C
+    Quaternion quat;  // 0x28
+    Mtx mtx;          // 0x38
+    M568Ptmf hook;    // 0x68 state hook
+    Vec pos;          // 0x74
+    f32 radius;       // 0x80
+    Vec prev;         // 0x84
+    Vec vel;          // 0x90
+    Vec accel;        // 0x9C
+    Vec force;        // 0xA8
+    f32 mass;         // 0xB4
+    u8 down;          // 0xB8
+    s32 event;        // 0xBC
+    s32 seA;          // 0xC0
+    s32 seB;          // 0xC4
+    Vec spin;         // 0xC8
+    M568Model model;  // 0xD4
+};
+
 #endif
