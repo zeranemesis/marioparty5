@@ -711,6 +711,15 @@ void fn_1_4898(s32 side, s32 step)
 {
     M550MODEL *model;
 
+#ifdef TARGET_PC
+    /* step is 1..0x1E on GC; keep the slot indices inside their arrays */
+    if (step < 1) {
+        step = 1;
+    }
+    if (step > 0x1E) {
+        step = 0x1E;
+    }
+#endif
     model = &lbl_1_bss_14AC.model[6 + (side ^ 1) * 0x1E + (0x1D - (step - 1))];
     Hu3DModelAttrSet(model->id, 1);
     if (step > 0x13) {

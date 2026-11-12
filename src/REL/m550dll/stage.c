@@ -13,8 +13,12 @@
 
 #include "string.h"
 
+#ifdef __MWERKS__
 double sin(double x);
 double cos(double x);
+#else
+#include <math.h>
+#endif
 int rand8(void);
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
@@ -53,6 +57,9 @@ void fn_1_4E8C(M550STATE *state, M550MODEL *model, M550MODELIDS *modelData)
 {
     s16 j;
     s16 i;
+#ifdef TARGET_PC
+    s16 pass = 0;
+#endif
 
     lbl_1_bss_1FC0 = state;
     memset(lbl_1_bss_1FC0, 0, sizeof(M550STATE));
@@ -69,7 +76,12 @@ void fn_1_4E8C(M550STATE *state, M550MODEL *model, M550MODELIDS *modelData)
                 }
             }
         }
+#ifdef TARGET_PC
+        /* the GC loop never ends when a team has no player */
+    } while (i < 2 && ++pass < 4);
+#else
     } while (i < 2);
+#endif
     for (j = 0; j < 2; j++) {
         lbl_1_bss_1FC0->player[j].charNo = GwPlayerConf[lbl_1_bss_1FC0->player[j].pno].charNo;
         lbl_1_bss_1FC0->player[j].padNo = GwPlayerConf[lbl_1_bss_1FC0->player[j].pno].padNo;
@@ -126,7 +138,7 @@ void fn_1_50D8(s16 stageNo)
     }
     for (i = 0; i < 2; i++) {
         p = &lbl_1_bss_1FC0->model[0xA1 + i];
-        p->id = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->cc[i], HU_MEMNUM_OVL, HEAP_MODEL));
+        p->id = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->n.cc[i], HU_MEMNUM_OVL, HEAP_MODEL));
         Hu3DModelAttrSet(p->id, 1);
         Hu3DMotionSpeedSet(p->id, 0.5f);
         Hu3DModelCameraSet(p->id, 1);
@@ -135,7 +147,7 @@ void fn_1_50D8(s16 stageNo)
         p = &lbl_1_bss_1FC0->model[0xA3 + i * 2];
         for (j = 0; j < 2; j++) {
             if (j == 0) {
-                baseId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->d4[i], HU_MEMNUM_OVL, HEAP_MODEL));
+                baseId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->n.d4[i], HU_MEMNUM_OVL, HEAP_MODEL));
                 p->id = baseId;
             } else {
                 p->id = Hu3DModelLink(baseId);
@@ -166,7 +178,7 @@ void fn_1_50D8(s16 stageNo)
     for (i = 0; i < 10; i++) {
         p = &lbl_1_bss_1FC0->model[0xA9 + i];
         if (i == 0) {
-            baseId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->e4, HU_MEMNUM_OVL, HEAP_MODEL));
+            baseId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->n.e4, HU_MEMNUM_OVL, HEAP_MODEL));
             p->id = baseId;
         } else {
             p->id = Hu3DModelLink(baseId);
@@ -187,7 +199,7 @@ void fn_1_50D8(s16 stageNo)
             Hu3DModelAttrSet(p->id, 1);
 #endif
             if (j == 0) {
-                baseId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->e8[i], HU_MEMNUM_OVL, HEAP_MODEL));
+                baseId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_bss_1FC0->modelData->n.e8[i], HU_MEMNUM_OVL, HEAP_MODEL));
                 p->id = baseId;
                 lbl_1_data_420[i] = Hu3DJointMotion(p->id, HuDataSelHeapReadNum(lbl_1_data_0[i], HU_MEMNUM_OVL, HEAP_MODEL));
                 Hu3DModelScaleSet(p->id, 2.2f, 2.2f, 2.2f);
@@ -610,14 +622,8 @@ void fn_1_719C(void)
         } else {
             model->rot.y = 270.0f + fx->f30;
         }
-        if (i < 3) {
-            if (i != 0) {
-                if (i >= 0) {
-                    model->pos.x = pos[0] + fx->f2C * sin(3.141592653589793 * fx->f30 / 180.0);
-                    model->pos.z = pos[2] + fx->f2C * cos(3.141592653589793 * fx->f30 / 180.0);
-                    model->pos.y = pos[1];
-                }
-            } else {
+        switch (i) {
+            case 0:
                 if (fx->work18 == 0) {
                     model->pos.x = fx->f2C * sin(3.141592653589793 * fx->f30 / 180.0);
                     model->pos.z = fx->f2C * cos(3.141592653589793 * fx->f30 / 180.0);
@@ -663,11 +669,19 @@ void fn_1_719C(void)
                     Hu3DModelPosSetV(trail->id, &trail->pos);
                     fx->cnt[1] = (fx->cnt[1] + 1) % 10;
                 }
-            }
-        } else if (i < 5) {
-            model->pos.x = pos[3] + fx->f2C * sin(3.141592653589793 * fx->f30 / 180.0);
-            model->pos.z = pos[5] + fx->f2C * cos(3.141592653589793 * fx->f30 / 180.0);
-            model->pos.y = pos[4];
+                break;
+            case 1:
+            case 2:
+                model->pos.x = pos[0] + fx->f2C * sin(3.141592653589793 * fx->f30 / 180.0);
+                model->pos.z = pos[2] + fx->f2C * cos(3.141592653589793 * fx->f30 / 180.0);
+                model->pos.y = pos[1];
+                break;
+            case 3:
+            case 4:
+                model->pos.x = pos[3] + fx->f2C * sin(3.141592653589793 * fx->f30 / 180.0);
+                model->pos.z = pos[5] + fx->f2C * cos(3.141592653589793 * fx->f30 / 180.0);
+                model->pos.y = pos[4];
+                break;
         }
     }
 }

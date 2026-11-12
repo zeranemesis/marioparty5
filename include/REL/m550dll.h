@@ -99,13 +99,16 @@ typedef struct M550MotionSet_s {
 
 /* The model file id table (lbl_1_data_8); stage setup reaches some entries
    as named member arrays, so mirror that layout. */
-typedef struct M550ModelIds_s {
-    /* 0x00 */ s32 id[0x33];
-    /* 0xCC */ s32 cc[2];
-    /* 0xD4 */ s32 d4[2];
-    /* 0xDC */ s32 dc[2];
-    /* 0xE4 */ s32 e4;
-    /* 0xE8 */ s32 e8[2];
+typedef union M550ModelIds_u {
+    s32 id[0x3C];
+    struct {
+        /* 0x00 */ s32 unk00[0x33];
+        /* 0xCC */ s32 cc[2];
+        /* 0xD4 */ s32 d4[2];
+        /* 0xDC */ s32 dc[2];
+        /* 0xE4 */ s32 e4;
+        /* 0xE8 */ s32 e8[2];
+    } n;
 } M550MODELIDS;
 
 /* lbl_1_bss_14AC: the module-wide game state block. */
