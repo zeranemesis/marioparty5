@@ -1,3 +1,6 @@
+#ifndef TARGET_PC
+#define _MATH_H
+#endif
 #include "REL/m537Dll.h"
 
 // m537::CGameMaster is written as plain C inside extern "C" with an explicit
