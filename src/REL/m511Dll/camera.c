@@ -69,7 +69,7 @@ typedef struct Mgr511Arr12 {
 } Mgr511Arr12;
 
 extern void *lbl_1_data_40[];
-extern void *lbl_1_bss_2C[];
+extern void *lbl_1_bss_2C[2];
 
 void fn_1_A278(Mgr511Camera *cam);
 void fn_1_A3B4(Mgr511Camera *cam);

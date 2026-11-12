@@ -46,7 +46,7 @@ void fn_1_CF8(char *cond, char *file, s32 line);
 u16 fn_1_5578(void);
 
 extern void *lbl_1_data_40[];
-extern void *lbl_1_bss_2C[2];
+extern "C" void *lbl_1_bss_2C[2];
 
 /* Lattice size of the water surface. */
 #define WATER_N 16

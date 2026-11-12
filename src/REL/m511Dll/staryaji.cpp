@@ -17,9 +17,9 @@ extern "C" void __register_global_object(void *obj, void *(*dtor)(void *, s16), 
 extern "C" void fn_1_1D88(void *self);
 extern "C" void fn_1_1D94(void *self, s32 arg1);
 extern "C" void fn_1_1E54(void *self, void **arg1);
-f32 fn_1_884(s32 arg0, f32 arg1, f32 arg2);
+extern "C" f32 fn_1_884(s32 arg0, f32 arg1, f32 arg2);
 extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
-void fn_1_DAB8(s32 arg0, f32 *arg1);
+extern "C" void fn_1_DAB8(s32 arg0, f32 *arg1);
 
 struct Mgr511StarYaji;
 
@@ -71,7 +71,7 @@ struct Mgr511Scene {
 
 extern "C" {
 
-extern void *lbl_1_bss_2C;
+extern "C" void *lbl_1_bss_2C[2];
 
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_4E4[6];

@@ -20,12 +20,12 @@ typedef struct {
 extern "C" void *__dl__FPv(void *self);
 extern "C" void *__nw__FUl(u32 size);
 extern "C" void __register_global_object(void *obj, void *(*dtor)(void *, s16), void *reg);
-f32 fn_1_1A150(u32 self, void *arg1);
+extern "C" f32 fn_1_1A150(void *self, void *arg1);
 extern "C" void fn_1_1D88(void *self);
 extern "C" void fn_1_1D94(void *self, s32 arg1);
 extern "C" void fn_1_1E54(void *self, void **arg1);
 extern "C" void fn_1_372C(void *self, s32 arg1);
-void fn_1_384C(void *self, void *arg1);
+extern "C" void fn_1_384C(void *self, void *arg1);
 extern "C" void fn_1_398C(void *self, void *arg1);
 extern "C" void fn_1_39D4(void *self, void *arg1, f32 arg2);
 extern "C" void fn_1_3B8C(void *self, s32 arg1);
@@ -51,7 +51,7 @@ struct Mgr511StageNode {
     s16 modelId;
     u16 pad22;
     u32 unk24;
-    u32 mgr;
+    void *mgr;
 };
 
 struct Mgr511Stage {
@@ -76,8 +76,8 @@ struct Mgr511StageList {
 extern "C" {
 
 extern Mgr511Stage *lbl_1_bss_18;
-extern u32 lbl_1_bss_1C;
-extern void *lbl_1_bss_2C;
+extern "C" void *lbl_1_bss_1C;
+extern "C" void *lbl_1_bss_2C[2];
 
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_464[6];

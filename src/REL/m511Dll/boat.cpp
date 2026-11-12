@@ -50,7 +50,7 @@ struct Mgr510BoatList {
     Mgr510Boat *prev;
 };
 
-extern void *lbl_1_bss_2C[2];
+extern "C" void *lbl_1_bss_2C[2];
 extern void *lbl_1_data_2C[5];
 extern void *lbl_1_data_40[6];
 
@@ -58,7 +58,7 @@ s32 lbl_1_bss_0[3];
 Mgr510BoatList lbl_1_bss_C;
 Mgr510Boat *lbl_1_bss_14;
 s32 lbl_1_bss_18;
-s32 lbl_1_bss_1C;
+void *lbl_1_bss_1C;
 
 static const s32 lbl_1_rodata_10[4] = {
     DATANUM(DATA_m511, 0x0D),

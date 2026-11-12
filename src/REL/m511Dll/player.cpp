@@ -6,12 +6,14 @@
 #include "dolphin.h"
 
 #include "datadir_enum.h"
+extern "C" {
 #include "game/audio.h"
 #include "game/charman.h"
 #include "game/gamework.h"
 #include "game/hu3d.h"
 #include "game/object.h"
 #include "game/pad.h"
+}
 
 #include "REL/m511Dll/m511objs.h"
 

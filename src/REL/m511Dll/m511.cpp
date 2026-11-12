@@ -3,6 +3,7 @@
 
 #include "dolphin.h"
 
+extern "C" {
 #include "game/audio.h"
 #include "game/charman.h"
 #include "game/flag.h"
@@ -17,6 +18,7 @@
 #include "game/pad.h"
 #include "game/process.h"
 #include "game/wipe.h"
+}
 
 #ifndef TARGET_PC
 /* Not declared by the GameCube headers of this project. */
