@@ -1035,6 +1035,18 @@ s32 fn_1_8CD0(void)
 
 // ---------------------------------------------------------------- game master
 
+// CGameMaster::GetInstance(), inlined with its assertion.
+inline M522RMaster *M522RMasterGet(void)
+{
+    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
+    return lbl_1_bss_A0C;
+}
+
+inline M522RMaster *M522RMasterGet2(void)
+{
+    return M522RMasterGet();
+}
+
 M522RMaster *fn_1_8CE0(M522RMaster *self)
 {
     s32 i;
@@ -1072,8 +1084,7 @@ M522RMaster *fn_1_8E6C(M522RMaster *self, s16 flag)
     if (self != 0) {
         self->vtbl = &lbl_1_data_390;
         if (mgDataTbl[GwSystem.mgNo].type != 3) {
-            M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-            m = lbl_1_bss_A0C;
+            m = M522RMasterGet2();
             i = 0;
             while (i < 4) {
                 p = m->slot[i];
@@ -1180,11 +1191,12 @@ void fn_1_9210(void)
 // Register a player in the first free slot.
 void fn_1_92FC(s32 player)
 {
+    M522RMaster *m;
     s32 *slots;
     s32 i;
 
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-    slots = lbl_1_bss_A0C->slot;
+    m = M522RMasterGet2();
+    slots = m->slot;
     i = 0;
     while (i < 4) {
         if (slots[i] < 0) {
@@ -1198,28 +1210,19 @@ void fn_1_92FC(s32 player)
 s32 fn_1_93D0(s32 player)
 {
     s32 i;
+    s32 *slots;
+    M522RMaster *m;
 
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
+    m = M522RMasterGet2();
+    slots = m->slot;
     i = 0;
     while (i < 4) {
-        if (player == lbl_1_bss_A0C->slot[i]) {
+        if (player == slots[i]) {
             return 1;
         }
         i++;
     }
     return 0;
-}
-
-// CGameMaster::GetInstance(), inlined with its assertion.
-inline M522RMaster *M522RMasterGet(void)
-{
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-    return lbl_1_bss_A0C;
-}
-
-inline M522RMaster *M522RMasterGet2(void)
-{
-    return M522RMasterGet();
 }
 
 void fn_1_94A4(void)
@@ -1264,8 +1267,7 @@ void fn_1_96E8(void)
     s32 tmp;
     s16 charNo;
 
-    M522R_ASSERT_INL(lbl_1_bss_A0C != 0, lbl_1_data_23B, lbl_1_data_21F, 0x27);
-    m = lbl_1_bss_A0C;
+    m = M522RMasterGet2();
     m->counter = lbl_1_bss_3C;
     slots = m->slot;
     n = 0;
