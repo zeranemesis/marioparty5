@@ -10,6 +10,7 @@
 #include "game/printfunc.h"
 #include "game/wipe.h"
 #include "game/mg/seqman.h"
+#include "game/mg/timer.h"
 #include "REL/m548dll.h"
 
 s32 rand8(void);
@@ -30,7 +31,7 @@ void fn_1_2AD4(void);
 void fn_1_309C(void);
 void fn_1_3DCC(void);
 void fn_1_4F44(void);
-void fn_1_5014(s16 arg0);
+void fn_1_5014(s32 arg0);
 void fn_1_54C0(void);
 void fn_1_59FC(void);
 void fn_1_5D84(void);
@@ -67,13 +68,13 @@ s16 lbl_1_bss_5D2[3];
 s16 lbl_1_bss_5D0;
 M548State lbl_1_bss_3F0;
 M548Game lbl_1_bss_3D0;
-M548Vec3 lbl_1_bss_3B8[2];
+M548Fx lbl_1_bss_3B8;
 s16 lbl_1_bss_3B4;
 M548CryPos lbl_1_bss_384[2];
 M548StageModel lbl_1_bss_154[20];
 s16 lbl_1_bss_138[14];
 OMCAMERAVIEW lbl_1_bss_58[8];
-s32 lbl_1_bss_54;
+MGTIMER *lbl_1_bss_54;
 s16 lbl_1_bss_50;
 M548Vec3 lbl_1_bss_44;
 M548Vec3 lbl_1_bss_38;
@@ -117,9 +118,10 @@ M548MotSet lbl_1_data_184[13] = {
     { 0xB00000, 0xB00023, 0xB00022, 0xB00006, 0xB00079 },
     { 0xB00000, 0xB00023, 0xB00022, 0xB00006, 0xB00079 },
 };
-f32 lbl_1_data_288[26] = {
-    0.0f, -0.15f, -5.0f, -0.3f, 10.0f, -0.25f, 0.0f, -0.1f, -5.0f, -0.35f, 10.0f, -0.25f, -10.0f,
-    -0.5f, 0.0f, 0.2f, 0.0f, -0.15f, 0.0f, -0.15f, 0.0f, -0.15f, 0.0f, -0.15f, 0.0f, -0.15f,
+M548Vec2 lbl_1_data_288[13] = {
+    { 0.0f, -0.15f }, { -5.0f, -0.3f }, { 10.0f, -0.25f }, { 0.0f, -0.1f }, { -5.0f, -0.35f },
+    { 10.0f, -0.25f }, { -10.0f, -0.5f }, { 0.0f, 0.2f }, { 0.0f, -0.15f }, { 0.0f, -0.15f },
+    { 0.0f, -0.15f }, { 0.0f, -0.15f }, { 0.0f, -0.15f },
 };
 MGSEQ_PARAM lbl_1_data_2F0 = {
     0, 0,
@@ -237,7 +239,7 @@ void fn_1_15C(s16 mode)
     omAddObjEx(M548.objman, 0x7FDA, 0, 0, -1, (OMOBJFUNC)fn_1_19A4);
     lbl_1_bss_20[0] = lbl_1_bss_20[1] = 0;
     omAddObjEx(M548.objman, 0x7FDA, 0, 0, -1, (OMOBJFUNC)fn_1_70B0);
-    lbl_1_bss_54 = 0;
+    lbl_1_bss_54 = NULL;
     MgSeqModeDelaySet(mode + 1, -1);
     MgSeqModeNext();
 }
@@ -642,7 +644,7 @@ void fn_1_167C(void)
     lbl_1_bss_38.y = 0.0f;
     lbl_1_bss_38.z = 0.0f;
     for (i = 0; i < 5; i++) {
-        model = M548.modelIds[i][210] = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_168[i + 1], 0x10000000, 2));
+        model = M548_MDLID(&M548, i, 15) = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_168[i + 1], 0x10000000, 2));
         Hu3DModelAttrSet(model, 1);
         Hu3DModelPosSet(model, -500.0f + 1000.0f * i, 500.0f, 200.0f);
         Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
@@ -675,15 +677,15 @@ void fn_1_19A4(void)
             if (M548.slots[i].motion == 1) {
                 lbl_1_bss_20[i] = (lbl_1_bss_20[i] + 1) % 64;
                 scaleY = 1.0 - 0.01f * sin(3.141592653589793 * (lbl_1_bss_20[i] * 360 / 64) / 180.0);
-                Hu3DModelScaleSet(M548.modelIds[i][168], 1.0f, scaleY, 1.0f);
+                Hu3DModelScaleSet(M548_MDLID(&M548, i, 12), 1.0f, scaleY, 1.0f);
                 lbl_1_bss_28[0] = -1.0 * sin(3.141592653589793 * (lbl_1_bss_20[i] * 360 / 64) / 180.0);
             } else {
                 lbl_1_bss_20[i] = 0;
-                Hu3DModelScaleSet(M548.modelIds[i][168], 1.0f, 1.0f, 1.0f);
+                Hu3DModelScaleSet(M548_MDLID(&M548, i, 12), 1.0f, 1.0f, 1.0f);
             }
         } else {
             lbl_1_bss_20[i] = 0;
-            Hu3DModelScaleSet(M548.modelIds[i][168], 1.0f, 1.0f, 1.0f);
+            Hu3DModelScaleSet(M548_MDLID(&M548, i, 12), 1.0f, 1.0f, 1.0f);
         }
     }
 }

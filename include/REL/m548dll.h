@@ -55,6 +55,11 @@ typedef struct M548Vec3_s {
     f32 z;
 } M548Vec3;
 
+typedef struct M548Vec2_s {
+    f32 x;
+    f32 y;
+} M548Vec2;
+
 /* one 0x30 block of animation state per scripted prop (stage.c) */
 typedef struct M548AnimBlock_s {
     s32 hold;
@@ -95,6 +100,14 @@ typedef struct M548MotSet_s {
     u32 unk10;
 } M548MotSet;
 
+/* effect sequencer state (m548.c bss 0x3B8) */
+typedef struct M548Fx_s {
+    s32 state;
+    s32 timer;
+    s32 idx;
+    M548Vec3 pos;
+} M548Fx;
+
 /* game-flow block (m548.c bss 0x3D0) */
 typedef struct M548Game_s {
     s16 unk0;
@@ -125,12 +138,28 @@ typedef struct M548State_s {
     u8 pad_9E[2];
     s32 stateA0;
     s32 stateA4;
-    s32 fieldA8;
-    s32 fieldAC;
-    s32 counters[4];
-    M548Vec3 pos[3];
-    u8 pad_E4[0xC];
+    s32 stateA8;
+    s32 padAC;
+    s32 timerB0;
+    s32 camIdxB4;
+    s32 timerB8;
+    s32 padBC;
+    f32 fadeC0;
+    u8 padC4[8];
+    f32 posCC;
+    f32 posD0;
+    f32 posD4;
+    f32 timeD8;
+    u8 padDC[0x14];
     M548AnimBlock anim[5];
 } M548State;
+
+/* model id of entry `base + row` of the stage model table: the GC code walks it as s16 (*)[14] (same 0x1C
+ * stride), PC uses the real struct array */
+#ifdef TARGET_PC
+#define M548_MDLID(st, row, base) ((st)->models[(base) + (row)].id)
+#else
+#define M548_MDLID(st, row, base) ((st)->modelIds[row][(base) * 14])
+#endif
 
 #endif
