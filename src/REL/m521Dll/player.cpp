@@ -41,8 +41,8 @@ CCtl *fn_1_B3CC(CCtl *self, CPlayer *owner);
 
 // clock hands (clock unit)
 s32 fn_1_139C(CClock *c, s32 idx, f32 v);
-void fn_1_1824(M521Sphere *s);
-s32 fn_1_1CA0(CClock *c, const M521Sphere *pos, M521Vec *outNormal, f32 *outDot);
+s32 fn_1_1824(CClock *c, M521Vec *pt);
+s32 fn_1_1CA0(CClock *c, const M521Vec *pos, M521Vec *outNormal, f32 *outDot);
 u8 fn_1_9B2C(M521Sphere *a, M521Sphere *b, f32 f0, f32 f1);
 
 extern CModel *lbl_1_bss_A30;
@@ -424,8 +424,7 @@ void fn_1_15F04(CPlayer *self)
     self->m_f60 = self->m_f60 + fn_1_153F0(self->m_f64, self->m_f60, 13.666667f);
     fn_1_168C0(self);
     fn_1_16720(self);
-    fn_1_1650C(self);
-    fn_1_1824(&self->m_pos);
+    fn_1_1824(fn_1_1650C(self), (M521Vec *)&self->m_pos);
     if (self->m_flag51 == 0) {
         rotVec.x = 0.0f;
         rotVec.y = self->m_f60;
@@ -593,7 +592,7 @@ void fn_1_168C0(CPlayer *self)
         } else {
             clock = lbl_1_bss_A54;
         }
-        idx = fn_1_1CA0(clock, &self->m_pos, &normal, &dot);
+        idx = fn_1_1CA0(clock, (M521Vec *)&self->m_pos, &normal, &dot);
         self->m_i5C = idx;
         if (idx < 0) {
             fn_1_16C54(self, 1);
@@ -748,7 +747,7 @@ void fn_1_170F8(CPlayer *self)
         } else {
             clock = lbl_1_bss_A54;
         }
-        if (fn_1_1CA0(clock, &self->m_pos, &normal, &dot) >= 0) {
+        if (fn_1_1CA0(clock, (M521Vec *)&self->m_pos, &normal, &dot) >= 0) {
             fn_1_17578(self, &dir);
             dot = PSVECDotProduct(&normal, &dir);
             if (dot < 0.0f) {
