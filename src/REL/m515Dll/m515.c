@@ -82,8 +82,8 @@ typedef struct M515Id4_s {
 typedef struct M515Grp_s {
     s32 f00;
     char pad_04[8];
-    s32 f0c;
-    char pad_10[0x28 - 0x10];
+    s16 f0c;
+    char pad_0e[0x28 - 0x0e];
 } M515_GRP;
 
 // Intrusive doubly-linked node (stride 0x14) behind the head/cur lists of M515_SUB.
@@ -239,6 +239,8 @@ void fn_1_2F3C(M515_SUB *sub);
 void fn_1_5C40(M515_SUB *sub);
 void fn_1_5DB0(M515_SUB *sub);
 void fn_1_C83C(void);
+void fn_1_D0D8(M515_SUB *sub);
+s32 fn_1_83E8(M515_SLOT *slot);
 void fn_1_BE78(M515_SUB *sub, s16 mdl, s16 mode);
 void fn_1_BF24(M515_SUB *sub, s16 mdl, s16 mode);
 extern f32 lbl_1_data_28[60];
@@ -406,6 +408,118 @@ void fn_1_1FC(s16 mode, s16 frameNo)
     fn_1_32C4(sub);
     fn_1_CE98(sub);
     MgSeqModeNext();
+}
+
+void fn_1_26C(s16 mode, s16 frameNo)
+{
+    M515_SUB *sub;
+    M515_PLY *ply;
+    s32 i;
+    f32 t;
+    f32 u;
+    HuVecF p[3] = { { -150.0f, 25.0f, 1000.0f }, { 0.0f, 25.0f, 1000.0f }, { 0.0f, 25.0f, 450.0f } };
+    f32 unused[4] = { 160.0f, 180.0f, 195.0f, 200.0f };
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    ply = sub->ply[0];
+    switch (sub->v1da) {
+    case 0:
+        HuAudFXPlay(0x6E8);
+        MgSeqModeChangeOff();
+        sub->v1d2 = 0;
+        sub->v1da++;
+    case 1:
+        fn_1_D0D8(sub);
+        sub->v1d2++;
+        t = (f32)sub->v1d2 / 40.0f;
+        ply->pos.x = p[0].x * (1.0f - t) + p[1].x * t;
+        omSetTra(ply->obj, ply->pos.x, ply->pos.y, ply->pos.z);
+        if (sub->v1d2 >= 0x28) {
+            Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0);
+            sub->v1d2 = 0;
+            sub->v1da++;
+            return;
+        }
+        break;
+    case 2:
+        fn_1_D0D8(sub);
+        sub->v1d2++;
+        if (sub->v1d2 >= 0x1E) {
+            Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[6], 60.0f, 5.0f, 0);
+            sub->v1d2 = 0;
+            sub->v1da++;
+            return;
+        }
+        break;
+    case 3:
+        fn_1_D0D8(sub);
+        sub->v1d2++;
+        if (sub->v1d2 == 0x37) {
+            Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+        }
+        t = (f32)sub->v1d2 / 60.0f;
+        ply->rot.y = 90.0f * (1.0f - t) + 180.0f * t;
+        omSetRot(ply->obj, ply->rot.x, ply->rot.y, ply->rot.z);
+        if (sub->v1d2 >= 0x3C) {
+            HuAudFXPlay(0x6DF);
+            Hu3DModelAttrReset(sub->ida6[0], 0x40000002);
+            sub->v1d2 = 0;
+            sub->v1da++;
+            sub->grp[0].f00++;
+            sub->grp[1].f00++;
+            sub->grp[2].f00++;
+            sub->grp[3].f00++;
+            return;
+        }
+        break;
+    case 4:
+        fn_1_D0D8(sub);
+        sub->v1d2++;
+        if (sub->v1d2 >= 0x50) {
+            Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[1], 0.0f, 5.0f, 0x40000001);
+            sub->v1d2 = 0;
+            sub->v1da++;
+            return;
+        }
+        break;
+    case 5:
+        fn_1_D0D8(sub);
+        sub->v1d2++;
+        t = (f32)sub->v1d2 / 120.0f;
+        if (t > 1.0f) {
+            t = 1.0f;
+            if (ply->obj->mtnId[0] != Hu3DMotionIDGet(ply->obj->mdlId[0])
+                && ply->obj->mtnId[0] != Hu3DMotionShiftIDGet(ply->obj->mdlId[0])) {
+                Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+            }
+        }
+        ply->pos.z = p[1].z * (1.0f - t) + p[2].z * t;
+        omSetTra(ply->obj, ply->pos.x, ply->pos.y, ply->pos.z);
+        if (sub->v1d2 == 0x3C) {
+            Hu3DModelAttrSet(sub->ida6[0], 0x40000004);
+        }
+        if (sub->v1d2 == 0x2D) {
+            Hu3DModelAttrReset(sub->id1e[0], HU3D_ATTR_DISPOFF);
+        }
+        if (sub->v1d2 > 0x14) {
+            if (fn_1_83E8(&sub->slot[0]) != 0) {
+                for (i = 0; i < 4; i++) {
+                    Hu3DModelAttrSet(sub->grp[i].f0c, HU3D_ATTR_DISPOFF);
+                }
+                sub->v1da++;
+            }
+            u = (f32)sub->slot[0].timer / 120.0f;
+            sub->esp.f4 = 640.0f * (1.0f - u) + 320.0f * u;
+            sub->esp.f8 = 480.0f * (1.0f - u) + 240.0f * u;
+            fn_1_9958(&sub->esp);
+            return;
+        }
+        break;
+    case 6:
+        lbl_1_bss_0 = HuAudBGMPlay(0x37);
+        MgSeqModeNext();
+        break;
+    }
 }
 
 void fn_1_928(s16 mode, s16 frameNo)
