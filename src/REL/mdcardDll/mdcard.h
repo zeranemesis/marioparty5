@@ -258,7 +258,8 @@ typedef struct MdCardSlot_s {
     s32 val; //0x04
     float t[2]; //0x08
     float out[2]; //0x10
-    u8 pad18[0x30 - 0x18];
+    HuVecF savePos; //0x18
+    HuVecF saveRot; //0x24
     HuVecF fromPos; //0x30
     HuVecF toPos; //0x3C
     HuVecF fromRot; //0x48
@@ -266,8 +267,9 @@ typedef struct MdCardSlot_s {
 } MDCARD_SLOT;
 
 typedef struct MdCardCell_s {
-    s32 unk0; //0x00
-    u8 pad4[0x14 - 0x4];
+    s32 state; //0x00
+    float t[2]; //0x04
+    float out[2]; //0x0C
 } MDCARD_CELL;
 
 typedef struct MdCardFng_s {
@@ -291,7 +293,9 @@ typedef struct Sys_s {
     s8 curSel;                 //0x1F
     s8 prevSel;                //0x20
     s8 selNum;                 //0x21
-    u8 pad22[0x2E - 0x22];     //0x22
+    s8 padConn[4];             //0x22
+    s8 padUse[4];              //0x26
+    s8 padList[4];             //0x2A
     s8 plChr[4];               //0x2E
     s8 plSlot[4];              //0x32
     s8 plSlotPrev[4];          //0x36

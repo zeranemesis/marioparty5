@@ -35,35 +35,36 @@ typedef struct MdCamMove_s {
     HuVecF hvrTo; //0x24
 } MDCAM_MOVE;
 
-/* .bss, in address order (a function-local static of the original is a file static here) */
-static s8 lbl_1_bss_0;
-static s8 lbl_1_bss_1;
-static s8 lbl_1_bss_2;
-static s32 bgmStream;
-static s32 lbl_1_bss_28;
-static HuVecF lbl_1_bss_2C[2];
-static HuVecF lbl_1_bss_44[3];
-static HuVecF lbl_1_bss_68[3];
-static HuVecF lbl_1_bss_8C[2];
-static HuVecF lbl_1_bss_A4[4];
-static HuVecF lbl_1_bss_D4[2];
-static s8 lbl_1_bss_EC;
-static HuVecF lbl_1_bss_F0;
-static HuVecF lbl_1_bss_FC[4];
-static HuVecF lbl_1_bss_12C[4];
-static float lbl_1_bss_15C;
-static float lbl_1_bss_160;
-static MDMAN_SEL lbl_1_bss_164[4];
-static HuVecF lbl_1_bss_16C[4];
-static HuVecF lbl_1_bss_19C;
-static float lbl_1_bss_1A8;
-static float lbl_1_bss_1AC;
-static HuVecF lbl_1_bss_1B0[2];
-static MDCAM_MOVE lbl_1_bss_1C8;
-static s32 lbl_1_bss_1F8;
-static s32 lbl_1_bss_1FC;
-static MDPIN_INFO lbl_1_bss_200[4];
+/* .bss: MWCC lays statics out in reverse declaration order, so the block is declared by descending address
+   (the function-local statics of the original are file statics here) */
 static MDPIN_INFO lbl_1_bss_2F0[7];
+static MDPIN_INFO lbl_1_bss_200[4];
+static s32 lbl_1_bss_1FC;
+static s32 lbl_1_bss_1F8;
+static MDCAM_MOVE lbl_1_bss_1C8;
+static HuVecF lbl_1_bss_1B0[2];
+static float lbl_1_bss_1AC;
+static float lbl_1_bss_1A8;
+static HuVecF lbl_1_bss_19C;
+static HuVecF lbl_1_bss_16C[4];
+static MDMAN_SEL lbl_1_bss_164[4];
+static float lbl_1_bss_160;
+static float lbl_1_bss_15C;
+static HuVecF lbl_1_bss_12C[4];
+static HuVecF lbl_1_bss_FC[4];
+static HuVecF lbl_1_bss_F0;
+static s8 lbl_1_bss_EC;
+static HuVecF lbl_1_bss_D4[2];
+static HuVecF lbl_1_bss_A4[4];
+static HuVecF lbl_1_bss_8C[2];
+static HuVecF lbl_1_bss_68[3];
+static HuVecF lbl_1_bss_44[3];
+static HuVecF lbl_1_bss_2C[2];
+static s32 bgmStream;
+static s32 lbl_1_bss_4;
+static s8 lbl_1_bss_2;
+static s8 lbl_1_bss_1;
+static s8 lbl_1_bss_0;
 
 
 extern const VoidFunc _ctors[];
@@ -140,7 +141,7 @@ void fn_1_98C8(void);
 void fn_1_942C(s32 modelNo, s32 cameraNo);
 void fn_1_951C(void);
 void fn_1_9714(void);
-void fn_1_9CC8(s32 arg0);
+void fn_1_9CC8(s32 dir);
 s32 fn_1_9A70(void);
 void fn_1_9E88(void);
 void fn_1_80A8(void);
@@ -370,7 +371,7 @@ void MdInit(void)
     sys->finger.cmd = 1;
     sys->unk5C = HuPrcChildCreate(fn_1_7DA0, 109, 12288, 0, sys->objman);
     for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
-        cell->unk0 = 0;
+        cell->state = 0;
     }
     sys->unk58 = HuPrcChildCreate(fn_1_9100, 108, 4096, 0, sys->objman);
     for(slot=&sys->unk9C[0], j=0; j<7; j++, slot++) {
@@ -1059,7 +1060,7 @@ void fn_1_2A3C(void)
                         Hu3DMotionShiftSet(model->mdlId[sys->plSlot[sys->turn-1]*3+i+3], model->motId[sys->plSlot[sys->turn-1]*3+i+23], 0.0f, 56.0f, 0);
                     }
                     cell = &sys->unk33C[sys->turn-1];
-                    cell->unk0 = 4;
+                    cell->state = 4;
                     sys->step = 8;
                 }
             } else if(stat == 3) {
@@ -1134,7 +1135,7 @@ void fn_1_2A3C(void)
                     Hu3DModelAttrSet(model->mdlId[mdlIdx], HU3D_MOTATTR_LOOP);
                 }
                 cell = &sys->unk33C[sys->turn];
-                cell->unk0 = 1;
+                cell->state = 1;
                 sys->turn++;
                 if(sys->turn >= 4) {
                     if(sys->plChr[3] == -1) {
@@ -1288,7 +1289,7 @@ void fn_1_2A3C(void)
             }
             MdSpriteDispSet(sprite, 2, FALSE);
             for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
-                cell->unk0 = 0;
+                cell->state = 0;
             }
             WipeColorSet(0, 0, 0);
             WipeCreate(1, 0, 30);
@@ -1332,7 +1333,7 @@ void fn_1_2A3C(void)
                 MdProcTbl[0](0);
                 *state = 1;
                 for(cell=&sys->unk33C[0], i=0; i<4; i++, cell++) {
-                    cell->unk0 = 4;
+                    cell->state = 4;
                 }
                 sys->step = 18;
             }
@@ -2340,6 +2341,76 @@ void fn_1_84AC(void)
     }
 }
 
+void fn_1_9100(void)
+{
+    int i;
+    MDCAMERA_WORK *camWork = sys->camera;
+    MDMODEL_WORK *model = sys->model;
+    MDSPRITE_WORK *sprite = sys->sprite;
+    HUSPRGRPID grpId = sprite->grpId[2];
+    MDCARD_CELL *cell;
+    HuVec2f *scale;
+
+    while(1) {
+        camWork = sys->camera;
+        model = sys->model;
+        sprite = sys->sprite;
+        grpId = sprite->grpId[2];
+        HuSprGrpPosSet(grpId, 0.0f, 0.0f);
+        cell = &sys->unk33C[0];
+        for(i=0; i<4; i++, cell++) {
+            scale = MdSpriteScaleGet(sprite, 2, i);
+            switch(cell->state) {
+                case 0:
+                case 3:
+                case 6:
+                    break;
+
+                case 1:
+                    HuSprAttrReset(grpId, i, HUSPR_ATTR_DISPOFF);
+                    HuSprPosSet(grpId, i, lbl_1_bss_200[i].scrPos.x, lbl_1_bss_200[i].scrPos.y-64.0f);
+                    scale->x = 0.0f;
+                    scale->y = 0.0f;
+                    cell->t[0] = 0.0f;
+                    cell->t[1] = 0.0f;
+                    cell->out[0] = 0.0f;
+                    cell->out[1] = 0.0f;
+                    cell->state = 2;
+                    break;
+
+                case 2:
+                    MdMathOscillate(MDMATH_OSC_90, &cell->t[0], &cell->out[0], 15.0f);
+                    MdMathOscillate(MDMATH_OSC_180, &cell->t[1], &cell->out[1], 15.0f);
+                    MdMathLerpOfs(&scale->x, 0.0f, 1.0f, cell->out[0], 0.5f*cell->out[1]);
+                    scale->y = scale->x;
+                    if(cell->t[0] >= 1.0f) {
+                        cell->state = 3;
+                    }
+                    break;
+
+                case 4:
+                    cell->t[0] = 0.0f;
+                    cell->t[1] = 0.0f;
+                    cell->out[0] = 0.0f;
+                    cell->out[1] = 0.0f;
+                    cell->state = 5;
+                    break;
+
+                case 5:
+                    MdMathOscillate(MDMATH_OSC_90, &cell->t[0], &cell->out[0], 15.0f);
+                    MdMathLerp(&scale->x, 1.0f, 0.0f, cell->out[0]);
+                    scale->y = scale->x;
+                    if(cell->t[0] >= 1.0f) {
+                        HuSprAttrSet(grpId, i, HUSPR_ATTR_DISPOFF);
+                        cell->state = 6;
+                    }
+                    break;
+            }
+        }
+        HuPrcVSleep();
+    }
+}
+
 void fn_1_942C(s32 modelNo, s32 cameraNo)
 {
     HuVecF d;
@@ -2360,6 +2431,206 @@ void fn_1_942C(s32 modelNo, s32 cameraNo)
     d.z = cam->pos.z - pos->z;
     out = (float)(atan2(d.x, d.z)/M_PI*180.0);
     rot->y = out;
+}
+
+void fn_1_951C(void)
+{
+    int i;
+    u16 stat;
+    u8 tmp[4] = { 0, 0, 0, 0 };
+
+    sys->selNum = 0;
+    for(i=0; i<4; i++) {
+        sys->padList[i] = -1;
+    }
+    for(i=0; i<4; i++) {
+        stat = HuPadStatGet(i);
+        if(stat == 0) {
+            sys->padList[sys->selNum] = i;
+            sys->padConn[i] = 1;
+            sys->selNum++;
+        } else {
+            sys->padConn[i] = 0;
+        }
+    }
+    if(sys->padConn[0] == 0) {
+        for(i=0; i<4; i++) {
+            sys->padList[i] = -1;
+            sys->padConn[i] = 0;
+        }
+        sys->padList[0] = 0;
+        sys->padConn[0] = 1;
+        sys->selNum = 1;
+    }
+    sys->curSel = sys->selNum-1;
+}
+
+// remaining diff: one extra callee-saved register in the original
+void fn_1_9714(void)
+{
+    int i;
+    HUSPRGRPID grpId;
+
+    grpId = sys->sprite->grpId[2];
+    for(i=0; i<4; i++) {
+        sys->plChr[i] = sys->padList[i];
+        if(i > sys->curSel) {
+            sys->plChr[i] = -1;
+        }
+    }
+    for(i=0; i<4; i++) {
+        sys->padUse[i] = 0;
+    }
+    for(i=0; i<4; i++) {
+        if(sys->plChr[i] != -1) {
+            sys->padUse[sys->plChr[i]] = 1;
+        }
+    }
+    for(i=0; i<4; i++) {
+        if(sys->plChr[i] != -1) {
+            HuSprBankSet(grpId, i, sys->plChr[i]);
+        } else {
+            HuSprBankSet(grpId, i, 4);
+        }
+    }
+}
+
+// remaining diff: operand order of i*3+j+3
+void fn_1_98C8(void)
+{
+    int i;
+    int j;
+    MDCARD_SLOT *slot;
+    MDMODEL_WORK *model;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *rotC;
+    Mtx rotMtx;
+    Mtx mtxA;
+    Mtx mtxB;
+    Mtx mtxC;
+
+    model = sys->model;
+    pos = model->posP[2];
+    rotC = model->rotP[2];
+    MdMathMatrixRotRPY(&rotMtx, rotC);
+    MdMathMtxTrans(&rotMtx, &mtxA, pos);
+    slot = &sys->unk9C[0];
+    for(i=0; i<7; i++, slot++) {
+        if(slot->state != 9 && slot->state != 13 && slot->state != 14 && slot->state != 15) {
+            MdMathMatrixRotRPY(&mtxB, &lbl_1_data_7C);
+            MdMathMtxTrans(&mtxB, &mtxC, &lbl_1_data_28[i]);
+            PSMTXConcat(mtxA, mtxC, mtxC);
+            for(j=0; j<3; j++) {
+                rot = model->rotP[i*3+j+3];
+                Hu3DMtxTransGet(mtxC, model->posP[i*3+j+3]);
+                Hu3DMtxRotGet(mtxC, rot);
+            }
+            slot->savePos = *model->posP[i*3+3];
+            slot->saveRot = *model->rotP[i*3+3];
+        }
+    }
+}
+
+s32 fn_1_9A70(void)
+{
+    s32 ret;
+
+    ret = -1;
+    if(sys->plChr[sys->turn] != -1) {
+        if((sys->padWork->DStkDown[sys->plChr[sys->turn]] & 1) != 0) {
+            ret = 0;
+        } else if((sys->padWork->DStkDown[sys->plChr[sys->turn]] & 2) != 0) {
+            ret = 1;
+        } else if((HuPadBtnDown[sys->plChr[sys->turn]] & 0x200) != 0) {
+            ret = 2;
+        } else if((HuPadBtnDown[sys->plChr[sys->turn]] & 0x100) != 0) {
+            ret = 3;
+        }
+    } else if(sys->counter % 15 == 0) {
+        lbl_1_bss_4++;
+        lbl_1_bss_4 %= 8;
+        if(lbl_1_bss_4 == 0) {
+            ret = 3;
+        } else {
+            ret = frandmod(2);
+        }
+    }
+    return ret;
+}
+
+void fn_1_9CC8(s32 dir)
+{
+    int i;
+    MDCARD_SLOT *slot;
+    s8 avail[7];
+
+    slot = &sys->unk9C[0];
+    for(i=0; i<7; i++, slot++) {
+        if(slot->state == 9) {
+            avail[i] = 0;
+        } else {
+            avail[i] = 1;
+        }
+    }
+    for(i=0; i<7; i++) {
+        if(dir == 0) {
+            if(--sys->plSlot[sys->turn] == -1) {
+                sys->plSlot[sys->turn] = 6;
+            }
+        } else if(dir == 1) {
+#ifdef TARGET_PC
+            sys->plSlot[sys->turn]++;
+            sys->plSlot[sys->turn] = sys->plSlot[sys->turn] % 7;
+#else
+            sys->plSlot[sys->turn] = (++sys->plSlot[sys->turn]) % 7;
+#endif
+        }
+        if(avail[sys->plSlot[sys->turn]] == 1) {
+            break;
+        }
+    }
+}
+
+void fn_1_9E88(void)
+{
+    int i;
+    s8 next;
+    s8 sel[4];
+
+#ifdef TARGET_PC
+    next = 0;
+#endif
+    for(i=0; i<4; i++) {
+        sel[i] = -1;
+    }
+    for(i=0; i<4; i++) {
+        if(sys->plChr[i] != -1) {
+            sel[sys->plChr[i]] = sys->plSlot[i];
+        } else {
+            next = i;
+            break;
+        }
+    }
+    for(i=0; i<4; i++) {
+        if(sel[i] == -1) {
+            sel[i] = sys->plSlot[next];
+            next++;
+        }
+    }
+    for(i=0; i<4; i++) {
+        GwPlayerConf[i].charNo = sel[i];
+        if(sys->padUse[i] == 0) {
+            GwPlayerConf[i].type = 1;
+        } else {
+            GwPlayerConf[i].type = 0;
+        }
+        GwPlayerConf[i].padNo = i;
+        GwCardCommon.pedestalF[i] = sys->unk3B[i];
+        GwCardCommon.starNum[i] = 0;
+        GwCardCommon.ztarNum[i] = 0;
+    }
+    GwCardCommon.boardSize = sys->selMode;
 }
 
 // jump table here; original is a compare tree (remaining diff)
