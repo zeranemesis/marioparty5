@@ -107,6 +107,13 @@ typedef struct m528Cam_s {
 
 typedef s32 (*M528CamFunc)(M528CAM *);
 
+/* CPU control state of a player. */
+typedef struct m528Ai_s {
+    /* 0x0 */ s16 state;
+    /* 0x2 */ s16 timer;
+    /* 0x4 */ s16 wait;
+} M528AI;
+
 typedef struct m528Player_s {
     /* 0x00 */ HuVecF pos;
     /* 0x0C */ HuVecF rot;
@@ -130,9 +137,7 @@ typedef struct m528Player_s {
     /* 0x44 */ f32 baseY;
     /* 0x48 */ f32 speed;
     /* 0x4C */ struct m528Player_s *partner;
-    /* 0x50 */ s16 aiState;
-    /* 0x52 */ s16 aiTimer;
-    /* 0x54 */ s16 aiWait;
+    /* 0x50 */ M528AI ai;
     /* 0x56 */ s16 unk56;
     /* 0x58 */ M528SLOT *slot;
 } M528PLAYER;
@@ -453,8 +458,8 @@ void _epilog(void)
 void ObjectSetup(void)
 {
     OMOBJ *obj;
-    M528MAIN *work;
     s32 i;
+    M528MAIN *work;
 
     lbl_1_bss_29C = omInitObjMan(10, 0x2000);
     omGameSysInit(lbl_1_bss_29C);
@@ -851,7 +856,7 @@ void fn_1_113C(OMOBJ *obj)
     player->hook = fn_1_1DFC;
     player->state = 0;
     player->onSlot = 0;
-    player->aiState = 0;
+    player->ai.state = 0;
     obj->objFunc = fn_1_1368;
 }
 
@@ -953,9 +958,9 @@ void fn_1_16C4()
 
 void fn_1_17B0()
 {
-    HuVecF target = { 0.0f, 0.0f, 0.0f };
-    HuVecF pos = { 0.0f, 4000.0f, 1000.0f };
     HuVecF up = { 0.0f, 1.0f, 0.0f };
+    HuVecF pos = { 0.0f, 4000.0f, 1000.0f };
+    HuVecF target = { 0.0f, 0.0f, 0.0f };
 
     Hu3DShadowCreate(15.0f, 20.0f, 20000.0f);
     Hu3DShadowTPLvlSet(0.3f);
@@ -1034,7 +1039,7 @@ void fn_1_1A20(M528CAM *cam)
 /* Place the players on their pedals and set the panning of their voices. */
 void fn_1_1CAC(M528MAIN *work)
 {
-    u16 pan[4] = { 0x28, 0x38, 0x48, 0x58 };
+    s16 pan[4] = { 0x28, 0x38, 0x48, 0x58 };
     M528PLAYER *player;
     s32 i;
     s32 j;
@@ -1057,6 +1062,8 @@ void fn_1_1CAC(M528MAIN *work)
 
 s32 fn_1_1DFC(M528PLAYER *player)
 {
+    f32 time;
+
     switch (player->state) {
         case 0:
             CharMotionSet(player->charNo, player->obj->mtnId[1]);
@@ -1065,7 +1072,8 @@ s32 fn_1_1DFC(M528PLAYER *player)
             player->state++;
             break;
         case 1:
-            CharMotionTimeSet(player->charNo, CharMotionMaxTimeGet(player->charNo));
+            time = CharMotionMaxTimeGet(player->charNo);
+            CharMotionTimeSet(player->charNo, time);
             CharModelAttrReset(player->charNo, 0x40000002);
             player->state++;
             break;
@@ -1240,13 +1248,16 @@ s32 fn_1_2488(M528PLAYER *player)
 
 s32 fn_1_2564(M528PLAYER *player)
 {
-    if (player->state != 0) {
-    } else if (CharMotionEndCheck(player->charNo) != 0) {
-        CharMotionSet(player->charNo, *player->obj->mtnId);
-        CharMotionSpeedSet(player->charNo, 1.0f);
-        CharModelAttrSet(player->charNo, 0x40000001);
-        player->state = 0;
-        player->hook = fn_1_1F8C;
+    switch (player->state) {
+        case 0:
+            if (CharMotionEndCheck(player->charNo) != 0) {
+                CharMotionSet(player->charNo, *player->obj->mtnId);
+                CharMotionSpeedSet(player->charNo, 1.0f);
+                CharModelAttrSet(player->charNo, 0x40000001);
+                player->state = 0;
+                player->hook = fn_1_1F8C;
+            }
+            break;
     }
     return 0;
 }
@@ -1303,19 +1314,20 @@ s32 fn_1_2758(M528PLAYER *player)
 /* CPU player: decide whether to press while standing on the pedal. */
 s32 fn_1_27AC(M528PLAYER *player)
 {
+    s32 pressed = 0;
     s32 pressChance[2][4] = { { 50, 80, 95, 99 }, { 25, 15, 10, 5 } };
     s32 idleChance[2][4] = { { 10, 5, 0, 0 }, { 10, 5, 0, 0 } };
-    s32 pressed;
     s32 partnerBusy;
     s32 partnerAir;
     M528MAIN *main;
+    M528AI *ai;
 
-    pressed = 0;
     main = lbl_1_bss_298->data;
     if (main->inputOn == 0) {
         return 0;
     }
-    switch (player->aiState) {
+    ai = &player->ai;
+    switch (ai->state) {
         case 0:
             partnerAir = 1;
             partnerBusy = 1;
@@ -1326,23 +1338,23 @@ s32 fn_1_27AC(M528PLAYER *player)
                 partnerAir = 0;
             }
             if (frandmod(100) < pressChance[partnerAir][player->dif]) {
-                player->aiTimer = 0;
+                ai->timer = 0;
                 if (partnerAir != 0) {
-                    player->aiWait = frandmod(18) + 9;
+                    ai->wait = frandmod(18) + 9;
                 } else {
-                    player->aiWait = frandmod(8) + 4;
+                    ai->wait = frandmod(8) + 4;
                 }
-                player->aiState++;
+                ai->state++;
             } else {
-                player->aiTimer = idleChance[partnerAir][player->dif] <= frandmod(100);
+                ai->timer = idleChance[partnerAir][player->dif] <= frandmod(100);
                 pressed = 1;
             }
             break;
         case 1:
-            player->aiTimer++;
-            if (player->aiTimer > player->aiWait) {
-                player->aiTimer = 0;
-                player->aiState = 0;
+            ai->timer++;
+            if (ai->timer > ai->wait) {
+                ai->timer = 0;
+                ai->state = 0;
             }
             break;
     }
@@ -1351,19 +1363,20 @@ s32 fn_1_27AC(M528PLAYER *player)
 
 s32 fn_1_2A00(M528PLAYER *player)
 {
+    s32 pressed = 0;
     s32 chanceA[2][4] = { { 30, 60, 55, 50 }, { 30, 60, 55, 50 } };
     s32 chanceB[2][4] = { { 80, 85, 90, 95 }, { 80, 85, 90, 95 } };
-    s32 pressed;
     s32 partnerBusy;
     s32 partnerAir;
     M528MAIN *main;
+    M528AI *ai;
 
-    pressed = 0;
     main = lbl_1_bss_298->data;
     if (main->inputOn == 0) {
         return 0;
     }
-    switch (player->aiState) {
+    ai = &player->ai;
+    switch (ai->state) {
         case 0:
             partnerAir = 1;
             partnerBusy = 1;
@@ -1375,20 +1388,20 @@ s32 fn_1_2A00(M528PLAYER *player)
             }
             if (player->strong != 0) {
                 if (frandmod(100) < chanceB[partnerAir][player->dif]) {
-                    player->aiWait = fn_1_2C40(player->strong, player->dif);
+                    ai->wait = fn_1_2C40(player->strong, player->dif);
                 } else {
-                    player->aiWait = 0;
+                    ai->wait = 0;
                 }
             } else if (frandmod(100) < chanceA[partnerAir][player->dif]) {
-                player->aiWait = fn_1_2C40(player->strong, player->dif);
+                ai->wait = fn_1_2C40(player->strong, player->dif);
             } else {
-                player->aiWait = 0;
+                ai->wait = 0;
             }
-            player->aiState++;
+            ai->state++;
         case 1:
-            player->aiTimer++;
-            if (player->aiTimer == player->aiWait) {
-                player->aiTimer = 0;
+            ai->timer++;
+            if (ai->timer == ai->wait) {
+                ai->timer = 0;
                 pressed = 1;
             }
             break;
@@ -1455,11 +1468,13 @@ s16 fn_1_2D7C(M528PLAYER *player)
 s16 fn_1_2E3C(M528PLAYER *player)
 {
     M528MAIN *main = lbl_1_bss_298->data;
+    M528AI *ai;
 
     if (main->inputOn == 0) {
         return 0;
     }
-    if (player->aiTimer != 0) {
+    ai = &player->ai;
+    if (ai->timer != 0) {
         player->holdFrames++;
     }
     return player->holdFrames > 5;
@@ -1668,20 +1683,20 @@ s32 fn_1_3750(M528SEG *seg, f32 power)
 
 void fn_1_38F8(M528MAIN *work)
 {
-    s16 pick;
+    s32 pick;
 
     work->teamPlayer[0][0]->partner = work->teamPlayer[0][1];
     work->teamPlayer[0][1]->partner = work->teamPlayer[0][0];
     work->teamPlayer[1][0]->partner = work->teamPlayer[1][1];
     work->teamPlayer[1][1]->partner = work->teamPlayer[1][0];
     pick = frandmod(2);
-    work->teamPlayer[0][pick]->aiTimer = 0;
-    work->teamPlayer[0][pick]->aiWait = frandmod(0xF) + 0x1E;
-    work->teamPlayer[0][pick]->aiState = 1;
+    work->teamPlayer[0][pick]->ai.timer = 0;
+    work->teamPlayer[0][pick]->ai.wait = frandmod(0xF) + 0x1E;
+    work->teamPlayer[0][pick]->ai.state = 1;
     pick = frandmod(2);
-    work->teamPlayer[1][pick]->aiTimer = 0;
-    work->teamPlayer[1][pick]->aiWait = frandmod(0xF) + 0x1E;
-    work->teamPlayer[1][pick]->aiState = 1;
+    work->teamPlayer[1][pick]->ai.timer = 0;
+    work->teamPlayer[1][pick]->ai.wait = frandmod(0xF) + 0x1E;
+    work->teamPlayer[1][pick]->ai.state = 1;
 }
 
 /* Place the wheel sector models on the circle at the current wheel angle. */
@@ -1863,6 +1878,7 @@ void fn_1_46CC(M528MAIN *work)
 {
     s32 adj[2];
     s32 i;
+    s16 mdl;
 
     for (i = 0; i < 2; i++) {
         work->team[i].seg = &work->seg[work->sel[i]];
@@ -1871,8 +1887,10 @@ void fn_1_46CC(M528MAIN *work)
     adj[1] = (work->sel[1] + 1) % 16;
     for (i = 0; i < 0x10; i++) {
         if (i != work->sel[0] && i != work->sel[1] && i != adj[0] && i != adj[1]) {
-            Hu3DModelAttrSet(work->seg[i].mdl[1], 1);
-            Hu3DModelAttrSet(work->seg[i].mdl[2], 1);
+            mdl = work->seg[i].mdl[1];
+            Hu3DModelAttrSet(mdl, 1);
+            mdl = work->seg[i].mdl[2];
+            Hu3DModelAttrSet(mdl, 1);
         }
     }
 }
@@ -2010,14 +2028,17 @@ s32 fn_1_4C84(M528SEG *seg)
 void fn_1_4E80(M528MAIN *work)
 {
     s32 idx;
+    s16 mdl;
 
     if (work->winner != 0) {
         idx = (work->sel[1] + 5) % 16;
     } else {
         idx = (work->sel[0] + 0xB) % 16;
     }
-    Hu3DModelAttrReset(work->seg[idx].mdl[1], 1);
-    Hu3DModelAttrReset(work->seg[idx].mdl[2], 1);
+    mdl = work->seg[idx].mdl[1];
+    Hu3DModelAttrReset(mdl, 1);
+    mdl = work->seg[idx].mdl[2];
+    Hu3DModelAttrReset(mdl, 1);
 }
 
 /* Chain the 256 list nodes into a free list. */
