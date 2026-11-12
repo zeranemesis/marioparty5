@@ -281,7 +281,7 @@ void fn_1_1B40(OMOBJ *obj);
 void fn_1_1BC8(OMOBJ *obj);
 void fn_1_1C4C(OMOBJ *obj);
 void fn_1_1CF4(M577Work *w);
-void fn_1_1D50(void);
+void fn_1_1D50(M577Work *w);
 void fn_1_1DD8(M577Work *w);
 void fn_1_1FEC(M577Split *split);
 void fn_1_2044(M577Split *split);
@@ -426,7 +426,7 @@ void ObjectSetup(void)
     w = obj->data;
     w->active = 0;
     fn_1_1DD8(w);
-    fn_1_1D50();
+    fn_1_1D50(w);
     for (i = 0; i < 4; i++) {
         obj = omAddObjEx(objman, 0x64, 1, 9, 0, fn_1_1870);
         obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M577Player), HU_MEMNUM_OVL);
@@ -558,8 +558,7 @@ void fn_1_798(s16 mode, s16 frameNo)
 void fn_1_7EC(s16 mode, s16 frameNo)
 {
     M577Work *w = workObj->data;
-    M577Team *t0;
-    M577Team *t1;
+    M577Team *t;
     f32 prog0;
     f32 prog1;
 
@@ -576,10 +575,10 @@ void fn_1_7EC(s16 mode, s16 frameNo)
             w->active = 1;
             w->state++;
         case 1:
-            t0 = &w->team[0];
-            prog0 = t0->dist / t0->course->value;
-            t1 = &w->team[1];
-            prog1 = t1->dist / t1->course->value;
+            t = &w->team[0];
+            prog0 = t->dist / t->course->value;
+            t = &w->team[1];
+            prog1 = t->dist / t->course->value;
             if (prog0 >= 1.0f || prog1 >= 1.0f) {
                 if (prog0 >= 1.0f && prog1 >= 1.0f) {
                     Hu3DModelAttrReset(w->stage[0].m12, 0x40000002);
@@ -1002,7 +1001,7 @@ void fn_1_1CF4(M577Work *w)
     }
 }
 
-void fn_1_1D50(void)
+void fn_1_1D50(M577Work *w)
 {
     HU3DLIGHTID light;
 
@@ -1775,7 +1774,7 @@ void fn_1_579C(M577Stage *stage)
             Hu3DModelAttrReset(stage->mark[9], 1);
             Hu3DModelAttrReset(stage->mark[10], 1);
         }
-        if (stage->done52 == 0 && stage->rot >= 16.25f) {
+        if (stage->done52 == 0 && stage->rot - 16.25f >= 0.0f) {
             stage->done52 = 1;
             Hu3DModelAttrReset(stage->m38, 0x40000002);
             if (stage->side != 0) {
@@ -1785,7 +1784,7 @@ void fn_1_579C(M577Stage *stage)
                 HuAudFXPlayPan(0x941, 0x30);
             }
         }
-        if (stage->done54 == 0 && stage->rot >= 57.38f) {
+        if (stage->done54 == 0 && stage->rot - 57.38f >= 0.0f) {
             stage->done54 = 1;
             Hu3DModelAttrReset(stage->m3A, 0x40000002);
             if (stage->side != 0) {
