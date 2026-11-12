@@ -2,6 +2,9 @@
 #include "datadir_enum.h"
 #include "game/memory.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include "port/endian.h"
+#endif
 
 /*
  * archive.cpp: a small in-memory archive loaded from a data file.
@@ -11,10 +14,19 @@
  * that hold block-relative offsets), a public table of {data offset, name
  * offset} pairs, a second table of pairs, and a name string pool.
  *
- * GC relocates the data block in place (offset words become pointers). The PC
- * build cannot widen those 4-byte words, so it leaves them as offsets and
- * only records that the block was "relocated".
+ * The file comes from the big-endian disc. GC relocates the data block in
+ * place (offset words become pointers). The PC build cannot widen those 4-byte
+ * words and must byte-swap what it reads, so it leaves the file buffer
+ * untouched, reads every header/table word through AR32, and resolves each
+ * relocation word into a real pointer in a side table (relocPtrs[i] is the
+ * target of the word listed in relocs[i]).
  */
+
+#ifdef TARGET_PC
+#define AR32(x) ((u32)PORT_BE32(x))
+#else
+#define AR32(x) (x)
+#endif
 
 struct ArchiveHeader {
     u32 size;        // 0x00 total size, bounds the name pool
@@ -52,6 +64,9 @@ struct Archive {
     ArchiveHeader *file;      // 0x44
     ArchiveHeader *buf;       // 0x48
     u8 relocated;             // 0x4C
+#ifdef TARGET_PC
+    void **relocPtrs;         // resolved relocation targets, one per reloc word
+#endif
 };
 
 extern "C" {
@@ -78,6 +93,9 @@ Archive *fn_1_0(Archive *self, s32 dataNum)
     }
     self->buf = (ArchiveHeader *)HuDataSelHeapReadNum(dataNum, 0x10000000, HEAP_MODEL);
     self->relocated = 0;
+#ifdef TARGET_PC
+    self->relocPtrs = 0;
+#endif
     fn_1_24C(self, self->buf, 0);
     return self;
 }
@@ -86,6 +104,12 @@ Archive *fn_1_A8(Archive *self, s16 flags)
 {
     if (self != 0) {
         self->vptr = lbl_1_data_38;
+#ifdef TARGET_PC
+        if (self->relocPtrs != 0) {
+            HuMemDirectFree(self->relocPtrs);
+            self->relocPtrs = 0;
+        }
+#endif
         if (flags > 0) {
             fn_1_6E0(self);
         }
@@ -93,23 +117,33 @@ Archive *fn_1_A8(Archive *self, s16 flags)
     return self;
 }
 
-// Fixes up the offset words inside the data block (GC only, see top).
+// Fixes up the offset words inside the data block. GC rewrites them in place;
+// PC resolves them into relocPtrs (see top).
 void fn_1_100(Archive *self)
 {
+#ifdef TARGET_PC
+    if (self->data != 0 && self->relocs != 0 && self->relocated == 0) {
+        u32 i;
+
+        self->relocPtrs = (void **)HuMemDirectMallocNum(HEAP_MODEL, self->relocNum * sizeof(void *), 0x10000000);
+        for (i = 0; i < self->relocNum; i++) {
+            u32 *word = (u32 *)(self->data + AR32((u32)self->relocs[i]));
+
+            self->relocPtrs[i] = self->data + AR32(*word);
+        }
+        self->relocated = 1;
+    }
+#else
     if (self->data != 0 && self->relocs != 0 && self->relocated == 0
-#ifndef TARGET_PC
-        && *(u32 *)(self->data + self->relocs[0]) < (u32)self->data
-#endif
-    ) {
-#ifndef TARGET_PC
+        && *(u32 *)(self->data + self->relocs[0]) < (u32)self->data) {
         u32 i;
         for (i = 0; i < self->relocNum; i++) {
             u32 *word = (u32 *)(self->data + self->relocs[i]);
             *word += (u32)self->data;
         }
-#endif
         self->relocated = 1;
     }
+#endif
 }
 
 s32 fn_1_1A8(Archive *self)
@@ -121,14 +155,21 @@ void *fn_1_1B0(Archive *self, s32 idx)
 {
     u8 ok = 0;
 
+#ifdef TARGET_PC
+    if (idx >= 0 && idx < (s32)self->publicNum) {
+#else
     if (idx >= 0 && idx <= (s32)self->publicNum) {
+#endif
         ok = 1;
     }
     if (ok != 0) {
     } else {
         fn_1_7EC(lbl_1_data_4, lbl_1_data_25, 0x5C);
+#ifdef TARGET_PC
+        return 0;
+#endif
     }
-    return self->data + self->publics[idx].dataOff;
+    return self->data + AR32(self->publics[idx].dataOff);
 }
 
 s32 fn_1_24C(Archive *self, ArchiveHeader *file, s32 arg)
@@ -140,17 +181,17 @@ s32 fn_1_24C(Archive *self, ArchiveHeader *file, s32 arg)
         *p = (s8)lbl_1_data_34;
     }
     self->loaded = 1;
-    self->size = file->size;
-    self->dataSize = file->dataSize;
-    self->relocNum = file->relocNum;
-    self->publicNum = file->publicNum;
-    self->tableNum = file->tableNum;
+    self->size = AR32(file->size);
+    self->dataSize = AR32(file->dataSize);
+    self->relocNum = AR32(file->relocNum);
+    self->publicNum = AR32(file->publicNum);
+    self->tableNum = AR32(file->tableNum);
     self->flags[0] = file->flags[0];
     self->flags[1] = file->flags[1];
     self->flags[2] = file->flags[2];
     self->flags[3] = file->flags[3];
-    self->w1C = file->w18;
-    self->w20 = file->w1C;
+    self->w1C = AR32(file->w18);
+    self->w20 = AR32(file->w1C);
     off = sizeof(ArchiveHeader);
     if (self->dataSize != 0) {
         self->data = (u8 *)(file + 1);
@@ -181,7 +222,7 @@ char *fn_1_428(Archive *self, s32 idx)
     if (idx < 0 || self->publicNum <= (u32)idx) {
         return 0;
     }
-    return self->names + self->publics[idx].nameOff;
+    return self->names + AR32(self->publics[idx].nameOff);
 }
 
 void *fn_1_460(Archive *self, char *name, s32 arg)
@@ -192,7 +233,7 @@ void *fn_1_460(Archive *self, char *name, s32 arg)
     s32 i;
 
     for (i = 0; i < num; i++) {
-        if (strcmp(names + publics[i].nameOff, name) == 0) {
+        if (strcmp(names + AR32(publics[i].nameOff), name) == 0) {
             u8 ok = 0;
             if (i >= 0 && i <= (s32)self->publicNum) {
                 ok = 1;
@@ -201,7 +242,7 @@ void *fn_1_460(Archive *self, char *name, s32 arg)
             } else {
                 fn_1_7EC(lbl_1_data_4, lbl_1_data_25, 0x5C);
             }
-            return self->data + self->publics[i].dataOff;
+            return self->data + AR32(self->publics[i].dataOff);
         }
     }
     return 0;
@@ -220,7 +261,7 @@ void *fn_1_534(Archive *self, char *name, s32 arg)
             result = 0;
             break;
         }
-        if (strcmp(names + publics[i].nameOff, name) == 0) {
+        if (strcmp(names + AR32(publics[i].nameOff), name) == 0) {
             u8 ok = 0;
             if (i >= 0 && i <= (s32)self->publicNum) {
                 ok = 1;
@@ -229,7 +270,7 @@ void *fn_1_534(Archive *self, char *name, s32 arg)
             } else {
                 fn_1_7EC(lbl_1_data_4, lbl_1_data_25, 0x5C);
             }
-            result = self->data + self->publics[i].dataOff;
+            result = self->data + AR32(self->publics[i].dataOff);
             break;
         }
         i++;

@@ -1,4 +1,4 @@
-#include "dolphin/types.h"
+#include "REL/m568Dll.h"
 
 class CFrame {
 public:
@@ -20,7 +20,11 @@ void ObjectSetup(void)
     void *mem;
     void *master;
 
+#ifdef TARGET_PC
+    mem = fn_1_4CE4(sizeof(GameMaster));
+#else
     mem = fn_1_4CE4(0x360);
+#endif
     if (mem) {
         mem = fn_1_7F1C(mem);
     }

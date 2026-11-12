@@ -38,19 +38,11 @@ struct OctNode {
     OctLink child[8]; // 0x20
 };
 
-struct OctEffect {
-    M568Link link;     // 0x00
-    Vec pos;           // 0x08
-    f32 radius;        // 0x14
-    M568Model model;   // 0x18
-    Vec cur;           // 0x1C
-    u8 played;         // 0x28
-    s32 seId;          // 0x2C
-};
+typedef M568Effect OctEffect;
 
 extern "C" {
 
-void fn_1_1948(void *obj, SceneNode *sm);
+void fn_1_1948(void *obj, M568Effect *sm);
 void fn_1_32AC(M568Model *model, s32 dataNum, s32 arg);
 void fn_1_3420(M568Model *model, u32 arg);
 void fn_1_3458(M568Model *model, u32 arg);
