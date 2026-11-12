@@ -6559,6 +6559,236 @@ s32 fn_1_15CE4(NEL_SYS *sys, MDPROCENT *tbl)
     return 0;
 }
 
+s32 fn_1_16444(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *rot = model->mdlRot[0x46];
+    HuVecF *scl = model->mdlScale[0x46];
+
+    if (sys->initF1 == 0) {
+        Hu3DModelAttrReset(model->mdlId[0x46], 1);
+        pos->x = MdVecTbl[0x63].x;
+        pos->y = MdVecTbl[0x63].y;
+        pos->z = MdVecTbl[0x63].z;
+        rot->x = MdVecTbl[0x69].x;
+        rot->y = MdVecTbl[0x69].y;
+        rot->z = MdVecTbl[0x69].z;
+        scl->x = MdVecTbl[0x6C].x;
+        scl->y = MdVecTbl[0x6C].x;
+        scl->z = MdVecTbl[0x6C].x;
+        sys->initF1 = 1;
+    }
+    MdMathOscillate(1, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathLerp(&pos->x, MdVecTbl[0x63].x, MdVecTbl[0x64].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x63].y, MdVecTbl[0x64].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x63].z, MdVecTbl[0x64].z, sys->oscVal1b);
+    MdMathLerp(&rot->x, MdVecTbl[0x69].x, MdVecTbl[0x6A].x, sys->oscVal1b);
+    MdMathLerp(&rot->y, MdVecTbl[0x69].y, MdVecTbl[0x6A].y, sys->oscVal1b);
+    MdMathLerp(&rot->z, MdVecTbl[0x69].z, MdVecTbl[0x6A].z, sys->oscVal1b);
+    MdMathLerpScale(scl, MdVecTbl[0x6C].x, MdVecTbl[0x6C].y, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_1664C(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *rot = model->mdlRot[0x46];
+    HuVecF *scl = model->mdlScale[0x46];
+
+    MdMathOscillate(2, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathLerp(&pos->x, MdVecTbl[0x64].x, MdVecTbl[0x65].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x64].y, MdVecTbl[0x65].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x64].z, MdVecTbl[0x65].z, sys->oscVal1b);
+    MdMathLerp(&rot->x, MdVecTbl[0x6A].x, MdVecTbl[0x6B].x, sys->oscVal1b);
+    MdMathLerp(&rot->y, MdVecTbl[0x6A].y, MdVecTbl[0x6B].y, sys->oscVal1b);
+    MdMathLerp(&rot->z, MdVecTbl[0x6A].z, MdVecTbl[0x6B].z, sys->oscVal1b);
+    MdMathLerpScale(scl, MdVecTbl[0x6C].y, MdVecTbl[0x6C].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        Hu3DModelAttrSet(model->mdlId[0x46], 1);
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_167D0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *volatile rot = model->mdlRot[0x46];
+    HuVecF *volatile scl = model->mdlScale[0x46];
+
+    MdMathOscillate(2, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathLerp(&pos->x, MdVecTbl[0x64].x, MdVecTbl[0x66].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x64].y, MdVecTbl[0x66].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x64].z, MdVecTbl[0x66].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_168C8(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *volatile rot = model->mdlRot[0x46];
+    HuVecF *volatile scl = model->mdlScale[0x46];
+
+    MdMathOscillate(2, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathLerp(&pos->x, MdVecTbl[0x66].x, MdVecTbl[0x64].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x66].y, MdVecTbl[0x64].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x66].z, MdVecTbl[0x64].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_169C0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *volatile rot = model->mdlRot[0x46];
+    HuVecF *volatile scl = model->mdlScale[0x46];
+
+    MdMathOscillate(1, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathLerp(&pos->x, MdVecTbl[0x66].x, MdVecTbl[0x67].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x66].y, MdVecTbl[0x67].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x66].z, MdVecTbl[0x67].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_16AB8(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *volatile rot = model->mdlRot[0x46];
+    HuVecF *volatile scl = model->mdlScale[0x46];
+
+    MdMathOscillate(1, &sys->oscTime1b, &sys->oscVal1b, sys->oscSpd);
+    MdMathLerp(&pos->x, MdVecTbl[0x67].x, MdVecTbl[0x66].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x67].y, MdVecTbl[0x66].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x67].z, MdVecTbl[0x66].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_16BB0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *volatile rot = model->mdlRot[0x46];
+    HuVecF *volatile scl = model->mdlScale[0x46];
+
+    MdMathOscillate(1, &sys->oscTime1b, &sys->oscVal1b, 30.0f);
+    MdMathLerp(&pos->x, MdVecTbl[0x67].x, MdVecTbl[0x68].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x67].y, MdVecTbl[0x68].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x67].z, MdVecTbl[0x68].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_16CB0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos = model->mdlPos[0x46];
+    HuVecF *volatile rot = model->mdlRot[0x46];
+    HuVecF *volatile scl = model->mdlScale[0x46];
+
+    MdMathOscillate(1, &sys->oscTime1b, &sys->oscVal1b, 30.0f);
+    MdMathLerp(&pos->x, MdVecTbl[0x68].x, MdVecTbl[0x67].x, sys->oscVal1b);
+    MdMathLerp(&pos->y, MdVecTbl[0x68].y, MdVecTbl[0x67].y, sys->oscVal1b);
+    MdMathLerp(&pos->z, MdVecTbl[0x68].z, MdVecTbl[0x67].z, sys->oscVal1b);
+    if (sys->oscTime1b >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_16DB0(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+    HuVecF *rot;
+
+    if (sys->initF1 == 0) {
+        fn_1_19904(8);
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 60.0f;
+    MdMathOscillate(1, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 0; i < 4; i++) {
+        pos = model->mdlPos[sys->mdlNo[i] + 2];
+        rot = model->mdlRot[sys->mdlNo[i] + 2];
+        MdMathLerp(&pos->x, MdVecTbl[i + 0x5B].x, MdVecTbl[i + 0x5F].x, sys->oscVal1);
+        MdMathLerp(&pos->y, MdVecTbl[i + 0x5B].y, MdVecTbl[i + 0x5F].y, sys->oscVal1);
+        MdMathLerp(&pos->z, MdVecTbl[i + 0x5B].z, MdVecTbl[i + 0x5F].z, sys->oscVal1);
+        MdMathLerp(&rot->x, 0.0f, 90.0f, sys->oscVal1);
+        if (i < 2) {
+            MdMathLerp(&rot->y, 0.0f, 180.0f, sys->oscVal1);
+        } else {
+            MdMathLerp(&rot->y, 0.0f, -180.0f, sys->oscVal1);
+        }
+    }
+    MdMathLerpScale(model->mdlScale[sys->selNo3 + 0x20], MdVecTbl[0x4F].z, 2.0f + MdVecTbl[0x4F].z, sys->oscVal1);
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_17010(NEL_SYS *sys, MDPROCENT *tbl)
+{
+    s32 i;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    HuVecF *pos;
+
+    if (sys->initF1 == 0) {
+        for (i = 0; i < 4; i++) {
+            Hu3DMotionShiftSet(model->mdlId[sys->mdlNo[i] + 2], model->motId[sys->mdlNo[i] * 2], 0.0f, 16.0f, 0x40000001);
+        }
+        *(HuVecF *)&sys->pos0x = *model->mdlPos[0x1A];
+        sys->initF1 = 1;
+    }
+    sys->oscSpd = 60.0f;
+    MdMathOscillate(2, &sys->oscTime1, &sys->oscVal1, sys->oscSpd);
+    for (i = 0; i < 0xA; i++) {
+        if (i == sys->mdlNo[0] || i == sys->mdlNo[1] || i == sys->mdlNo[2] || i == sys->mdlNo[3]) {
+            MdMathLerpScale(model->mdlScale[i + 0x10], 1.0f, 0.0f, sys->oscVal1);
+        }
+    }
+    MdMathLerpScale(model->mdlScale[sys->selNo3 + 0x20], MdVecTbl[0x4F].z, 0.0f, sys->oscVal1);
+    MdMathLerpScale(model->mdlScale[sys->modeSel + 0x32], MdVecTbl[0x13].x, 0.0f, sys->oscVal1);
+    MdMathLerpScale(model->mdlScale[0x3B], MdVecTbl[0x13].x, 0.0f, sys->oscVal1);
+    MdMathLerpScale(model->mdlScale[sys->menuNo2 + 0x3C], MdVecTbl[0x13].x, 0.0f, sys->oscVal1);
+    MdMathLerpScale(model->mdlScale[0x41], MdVecTbl[0x13].x, 0.0f, sys->oscVal1);
+    if (sys->modeSel == 1) {
+        MdMathLerpScale(model->mdlScale[0x46], MdVecTbl[0x13].x, 0.0f, sys->oscVal1);
+    }
+    pos = model->mdlPos[0x1A];
+    MdMathLerp(&pos->x, sys->pos0x, MdVecTbl[1].x, sys->oscVal1);
+    MdMathLerp(&pos->y, sys->pos0y, MdVecTbl[1].y, sys->oscVal1);
+    MdMathLerp(&pos->z, sys->pos1x, MdVecTbl[1].z, sys->oscVal1);
+    NelGuideBillboardUpdate(sys, 0x1A);
+    if (sys->oscTime1 >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
 
 
 
