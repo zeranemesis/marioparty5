@@ -184,9 +184,13 @@ public:
 };
 
 struct CPlayer;
-struct CFlowStage;
+struct CFlowCamera;
+struct CStageSet;
+struct CPlayerRunner;
 
 namespace m531 {
+
+class CScore;
 
 class CGameMaster : public CMinigameCore {
 public:
@@ -233,13 +237,24 @@ public:
     virtual void mode6();
 
     ::CPlayer *m_player[4]; // 0x2C
-    s32 m_unk3C[2];
-    ::CFlowStage *m_stage; // 0x44
-    s32 m_unk48[2];
+    ::CPlayerRunner *m_runner; // 0x3C
+    ::CStageSet *m_stageSet; // 0x40
+    ::CFlowCamera *m_camera; // 0x44
+    void *m_cleaner; // 0x48
+    CScore *m_score; // 0x4C
     CTimer m_timer; // 0x50
     // Two 10x5 float grids (mode 0 and mode 1), indexed [row][column].
     f32 m_grid[2][10][5]; // 0x54
-    u8 m_unk1E4[0x208 - 0x1E4];
+    s32 m_counter; // 0x1E4
+    s16 m_mesCount; // 0x1E8
+    s16 m_pad1EA;
+    s16 m_mesStart; // 0x1EC
+    s16 m_mesEnd; // 0x1EE
+    s32 m_result; // 0x1F0
+    s32 m_step; // 0x1F4
+    s32 m_winner; // 0x1F8
+    f32 m_scoreVal[2]; // 0x1FC
+    s32 m_bgm; // 0x204
 };
 
 // Base of the score display: an OMOBJ whose objFunc calls on_update().
@@ -255,6 +270,18 @@ protected:
 public:
     virtual void on_update();
     virtual ~CScoreBase();
+};
+
+class CScore : public CScoreBase {
+public:
+    s16 m_esp[2][3];
+    s32 m_unk18[2];
+    u8 m_unk20;
+    s32 m_unk24;
+
+    CScore(OMOBJMAN *objMan);
+    virtual void on_update();
+    virtual ~CScore();
 };
 
 } // namespace m531
@@ -277,10 +304,25 @@ struct CStageObj {
     const StageObjVt *m_vt;
 };
 
-// Object of the player stage ("stage" = flow field) read by the players.
-struct CFlowStage {
-    s32 m_unk0[18];
+// The flow camera object: eye, up and target with the destination it eases towards.
+struct CFlowCamera;
+struct FlowCamVt {
+    void *m_head[2];
+    void (*m_update0)(CFlowCamera *self);
+    void (*m_update1)(CFlowCamera *self);
+};
+
+struct CFlowCamera {
+    OMOBJMAN *m_objMan;
+    Vec m_pos; // 0x04
+    Vec m_up; // 0x10
+    Vec m_target; // 0x1C
+    OMOBJ *m_obj; // 0x28
+    s32 m_frame; // 0x2C
+    Vec m_destPos; // 0x30
+    Vec m_destTarget; // 0x3C
     f32 m_angle; // 0x48
+    const FlowCamVt *m_vt; // 0x4C
 };
 
 struct CPlayerBase;
@@ -323,7 +365,7 @@ struct CPlayerBase {
     s32 m_motNum;
     f32 m_stickX;
     f32 m_stickY;
-    u8 m_unk6C[0x78 - 0x6C];
+    Vec m_spawn; // 0x6C
     Vec m_home; // 0x78
     Vec m_pos;
     Vec m_rot;
@@ -340,7 +382,7 @@ struct CPlayer {
     CPlayerBase m_base;
     f32 m_turn; // 0xB4
     m531::CFlow *m_flow;
-    s32 m_unkBC;
+    void *m_unkBC;
     CEffectParticle *m_hit; // 0xC0
     s16 m_hatModel; // 0xC4
     Vec m_unkC8;

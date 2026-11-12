@@ -30,7 +30,7 @@ void fn_1_704C(void *self, const Vec *src);
 void fn_1_2B08(CEffectParticle *self);
 f32 fn_1_4B6C(m531::CFlow *flow, s32 mode, s32 col, s32 row);
 void fn_1_4BC0(m531::CFlow *flow, s32 mode, s32 col, s32 row, f32 value);
-f32 fn_1_F7BC(s32 a, Vec *p0, Vec *p1, f32 x, f32 y);
+f32 fn_1_F7BC(void *a, Vec *p0, Vec *p1, f32 x, f32 y);
 void *fn_1_805C(void *self, OMOBJMAN *objMan, s32 dataNum, s32 index);
 void fn_1_8190(CStageObj *self);
 
@@ -58,12 +58,12 @@ static inline void PlayerPanSet(s16 charNo, Vec *pos)
     fn_1_D0C4(charNo, pos);
 }
 
-static inline CFlowStage *FlowGetStage(m531::CFlow *flow)
+static inline CFlowCamera *FlowGetStage(m531::CFlow *flow)
 {
-    return flow->m_stage;
+    return flow->m_camera;
 }
 
-static inline f32 StageGetAngle(CFlowStage *stage)
+static inline f32 StageGetAngle(CFlowCamera *stage)
 {
     return stage->m_angle;
 }
@@ -79,7 +79,7 @@ public:
 extern "C" {
 f32 fn_1_90CC(f32 from, f32 to, f32 rate);
 f32 fn_1_91D0(f32 from, f32 to);
-CPlayer *fn_1_9270(CPlayer *self, m531::CFlow *flow, s32 arg2, PlayerMotInfo *tbl, s32 num, s16 playerNo, s32 team);
+CPlayer *fn_1_9270(CPlayer *self, m531::CFlow *flow, void *arg2, PlayerMotInfo *tbl, s32 num, s16 playerNo, s32 team);
 CPlayer *fn_1_948C(CPlayer *self, s16 flag);
 void fn_1_9520(CPlayer *self);
 void fn_1_95DC(CPlayer *self);
@@ -159,7 +159,7 @@ f32 fn_1_91D0(f32 from, f32 to)
     return diff;
 }
 
-CPlayer *fn_1_9270(CPlayer *self, m531::CFlow *flow, s32 arg2, PlayerMotInfo *tbl, s32 num, s16 playerNo, s32 team)
+CPlayer *fn_1_9270(CPlayer *self, m531::CFlow *flow, void *arg2, PlayerMotInfo *tbl, s32 num, s16 playerNo, s32 team)
 {
     void *effect;
 
