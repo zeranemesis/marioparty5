@@ -6,14 +6,18 @@
 #include "game/process.h"
 #include "game/charman.h"
 #include "game/gamework.h"
+#include "game/audio.h"
+#include <math.h>
 
 /* 0x140: four u16 pad-edge words (NEL_SYS declares them as s32 padStat..unk14C) */
 /* 0x10: written with integer stores (NEL_SYS declares it float angSpd) */
 #define NEL_INT10(sys) (*(s32 *)&(sys)->angSpd)
 #define NEL_SAVED(sys) ((HuVecF *)&(sys)->pos0x)
+#define NEL_PADW(sys, i) (*(u16 *)((u8 *)(sys) + 0x140 + (i) * 2))
+#define NEL_GRP(sys, i) (*((s8 *)(sys) + 0x260 + (i)))
 #define PADSTAT(sys) (((u16 *)&(sys)->padStat)[0])
 /* 0x257: second half of mdlSelNo (NEL_SYS declares one 8-entry array) */
-#define NEL_SEL2(sys, i) (((s8 *)(sys))[0x257 + (i)])
+#define NEL_SEL2(sys, i) (*((s8 *)(sys) + 0x257 + (i)))
 
 typedef struct MdFlowEnt_s MDFLOWENT;
 struct MdFlowEnt_s { void (*func)(NEL_SYS *sys, MDFLOWENT *ent); };
@@ -34,6 +38,7 @@ typedef struct ParticleDotWork_s {
 } ParticleDotWork;
 
 /* Guide-model slide work (two sets: A = lbl_1_bss_58.., B = lbl_1_bss_2A..). */
+s16 NelBgmId;
 u8 NelStepB[6];
 float NelOscOutB[2];
 float NelOscT3B[4];
@@ -93,9 +98,11 @@ void fn_1_19C70(NEL_SYS *sys, s32 idx);
 void fn_1_196B4(NEL_SYS *sys, s32 no);
 void fn_1_17A2C(NEL_SYS *sys);
 void fn_1_19780(NEL_SYS *sys);
-void fn_1_19B10(s32 arg);
+void fn_1_19B10(volatile s32 arg);
 void fn_1_198E0(s32 modelId, float angle);
-void fn_1_193FC(NEL_SYS *sys, s32 arg);
+void fn_1_193FC(NEL_SYS *sys, volatile s32 arg);
+void MdCopyWarpFilter(s16 layerNo);
+s16 fn_1_19A68(volatile s32 no, volatile s32 camNo);
 void fn_1_19904(s32 arg);
 void fn_1_17930(NEL_SYS *sys);
 void fn_1_28F74(s32 arg);
@@ -118,7 +125,7 @@ void MdObjPadMain(void);
 void MdObjDebugFontCreate(OMOBJ *obj);
 void MdMathStdCurveInit(void);
 
-void fn_1_18C68(NEL_SYS *sys, s32 arg);
+void fn_1_18C68(NEL_SYS *sys, volatile s32 arg);
 void MdFukiInit(NEL_SYS *sys);
 void fn_1_17354(NEL_SYS *sys);
 void fn_1_17EBC(NEL_SYS *sys);
@@ -522,6 +529,22 @@ MDPROCENT MdProcTbl[0x5B] = {
 
 float MdCurveTbl[5] = { 0.0f, 16.0f, 64.0f, 32.0f, -65.0f };
 HuVec2f MdTblC38[4] = { { -130.0f, -900.0f }, { 130.0f, -1100.0f }, { -30.0f, 900.0f }, { 80.0f, 1100.0f } };
+
+static s8 MdTblC58[5][4] = { { 0, 4, 1, 3 }, { 1, 0, 2, 4 }, { 2, 1, 3, 0 }, { 3, 2, 4, 1 }, { 4, 3, 0, 2 } };
+static s8 MdTblC6C[5][4] = { { 0, 1, 4, 2 }, { 1, 2, 0, 3 }, { 2, 3, 1, 4 }, { 3, 4, 2, 0 }, { 4, 0, 3, 1 } };
+static s8 MdTblC80[3][4] = { { 0, 1, 2, 3 }, { 0, 2, 1, 3 }, { 0, 3, 1, 2 } };
+static s8 MdTblC8C[3][4] = { { 0, 1, 2, 3 }, { 0, 2, 1, 3 }, { 0, 2, 3, 1 } };
+static s8 MdTblC98[0x2D][2] = {
+    { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 0, 5 }, { 0, 6 }, { 0, 7 }, { 0, 8 }, { 0, 9 },
+    { 1, 2 }, { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 6 }, { 1, 7 }, { 1, 8 }, { 1, 9 },
+    { 2, 3 }, { 2, 4 }, { 2, 5 }, { 2, 6 }, { 2, 7 }, { 2, 8 }, { 2, 9 },
+    { 3, 4 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 3, 8 }, { 3, 9 },
+    { 4, 5 }, { 4, 6 }, { 4, 7 }, { 4, 8 }, { 4, 9 },
+    { 5, 6 }, { 5, 7 }, { 5, 8 }, { 5, 9 },
+    { 6, 7 }, { 6, 8 }, { 6, 9 },
+    { 7, 8 }, { 7, 9 },
+    { 8, 9 },
+};
 
 void ObjectSetup(void)
 {
@@ -7068,5 +7091,575 @@ void fn_1_181A4(NEL_SYS *sys)
         p = MdSpritePosGet(4, NEL_SEL2(sys, sys->mdlSelNoC[i]));
         p->x = pt.x;
         p->y = pt.y;
+    }
+}
+
+s32 fn_1_1835C(NEL_SYS *sys, s32 no, s32 flag)
+{
+    s32 i;
+    s32 padNo;
+    s8 used[10];
+
+    if ((flag == 0 && sys->fukiMode[no] == 2) || (flag == 1 && sys->fukiMode[no] == 3)) {
+        return 0;
+    }
+    if (flag == 0) {
+        padNo = no;
+    } else if (flag == 1) {
+        padNo = 0;
+    }
+    if ((NEL_PADW(sys, padNo) & 1) != 0 || (NEL_PADW(sys, padNo) & 2) != 0 || (NEL_PADW(sys, padNo) & 8) != 0 || (NEL_PADW(sys, padNo) & 4) != 0) {
+        for (i = 0; i < 10; i++) {
+            used[i] = -1;
+        }
+        for (i = 0; i < 4; i++) {
+            if (i != no && sys->fukiMode[i] != 1) {
+                used[sys->mdlNo[i]] = 0;
+            }
+        }
+        if ((NEL_PADW(sys, padNo) & 1) != 0) {
+            for (i = 0; i < 4; i++) {
+                if (--sys->mdlNo[no] == -1) {
+                    sys->mdlNo[no] = 9;
+                }
+                if (used[sys->mdlNo[no]] == -1) {
+                    break;
+                }
+            }
+        } else if ((NEL_PADW(sys, padNo) & 2) != 0) {
+            for (i = 0; i < 4; i++) {
+                sys->mdlNo[no] = (sys->mdlNo[no] += 1) % 10;
+                if (used[sys->mdlNo[no]] == -1) {
+                    break;
+                }
+            }
+        } else if ((NEL_PADW(sys, padNo) & 8) != 0) {
+            if (sys->mdlNo[no] < 5) {
+                for (i = 0; i < 4; i++) {
+                    if (used[MdTblC58[sys->mdlNo[no]][i] + 5] == -1) {
+                        sys->mdlNo[no] = MdTblC58[sys->mdlNo[no]][i] + 5;
+                        break;
+                    }
+                }
+            } else {
+                for (i = 0; i < 4; i++) {
+                    if (used[MdTblC58[sys->mdlNo[no] - 5][i]] == -1) {
+                        sys->mdlNo[no] = MdTblC58[sys->mdlNo[no] - 5][i];
+                        break;
+                    }
+                }
+            }
+        } else if ((NEL_PADW(sys, padNo) & 4) != 0) {
+            if (sys->mdlNo[no] < 5) {
+                for (i = 0; i < 4; i++) {
+                    if (used[MdTblC6C[sys->mdlNo[no]][i] + 5] == -1) {
+                        sys->mdlNo[no] = MdTblC6C[sys->mdlNo[no]][i] + 5;
+                        break;
+                    }
+                }
+            } else {
+                for (i = 0; i < 4; i++) {
+                    if (used[MdTblC6C[sys->mdlNo[no] - 5][i]] == -1) {
+                        sys->mdlNo[no] = MdTblC6C[sys->mdlNo[no] - 5][i];
+                        break;
+                    }
+                }
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+void fn_1_18834(NEL_SYS *sys)
+{
+    s32 i;
+    s32 n = 0;
+    s8 used[10];
+
+    for (i = 0; i < 10; i++) {
+        used[i] = -1;
+    }
+    for (i = 0; i < 4; i++) {
+        if (sys->fukiMode[i] == 2 || sys->fukiMode[i] == 3) {
+            used[sys->mdlNo[i]] = 0;
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        if (used[i] == -1) {
+            sys->mdlNo[sys->ringMdlNo[sys->selNo]] = i;
+            return;
+        }
+    }
+}
+
+void fn_1_18910(NEL_SYS *sys)
+{
+    s32 i;
+    s32 j;
+    s32 n = 0;
+
+    for (i = 0; i < 2; i++) {
+        sys->ringMdlGrp[i] = MdTblC80[sys->selSubNo][i];
+        *((s8 *)sys + 0x262 + i) = MdTblC80[sys->selSubNo][i + 2];
+    }
+    for (i = 0; i < 4; i++) {
+        sys->mdlSelNoB[i] = MdTblC8C[sys->selSubNo][i];
+    }
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 0x2D; j++) {
+            if ((sys->mdlNo[NEL_GRP(sys, i * 2)] == MdTblC98[j][0] && sys->mdlNo[NEL_GRP(sys, i * 2 + 1)] == MdTblC98[j][1])
+                || (sys->mdlNo[NEL_GRP(sys, i * 2 + 1)] == MdTblC98[j][0] && sys->mdlNo[NEL_GRP(sys, i * 2)] == MdTblC98[j][1])) {
+                (&sys->winMes0)[i] = j;
+                break;
+            }
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        sys->mdlSelNoC[i] = -1;
+    }
+    for (i = 0; i < 4; i++) {
+        if (sys->fukiMode[MdTblC80[sys->selSubNo][i]] == 3) {
+            sys->mdlSelNoC[n] = MdTblC80[sys->selSubNo][i];
+            n++;
+            if (n >= 3) {
+                break;
+            }
+        }
+    }
+}
+
+void fn_1_18BA0(NEL_SYS *sys)
+{
+    s32 i;
+    for (i = 0; i < 4; i++) {
+        sys->mdlSelNoC2[i] = sys->mdlSelNoB[i];
+    }
+}
+
+void fn_1_18BD8(NEL_SYS *sys)
+{
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    s16 grp = sprite->grpId[6];
+    s32 i;
+
+    for (i = 0; i < 7; i++) {
+        if (i == sys->selNo3) {
+            HuSprAttrReset(grp, i, 4);
+        } else {
+            HuSprAttrSet(grp, i, 4);
+        }
+    }
+}
+
+void fn_1_18C68(NEL_SYS *sys, volatile s32 arg)
+{
+    HuVecF pt[4];
+    HuVecF tmp;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    s16 grp;
+    s32 i;
+    HuVec2f *p;
+
+    if (sys->modeSel == 0) {
+        for (i = 0; i < 4; i++) {
+            MdMathModel3Dto2D(sys->mdlNo[i] + 0x10, 2, &pt[i]);
+        }
+    } else if (sys->modeSel == 1) {
+        for (i = 0; i < 2; i++) {
+            MdMathModel3Dto2D(sys->mdlNo[NEL_GRP(sys, i * 2)] + 0x10, 2, &pt[i * 2]);
+            MdMathModel3Dto2D(sys->mdlNo[NEL_GRP(sys, i * 2 + 1)] + 0x10, 2, &pt[i * 2 + 1]);
+        }
+    }
+    grp = sprite->grpId[7];
+    if (sys->modeSel == 0) {
+        for (i = 0; i < 4; i++) {
+            tmp = pt[i];
+            tmp.y += 36.0f;
+            p = MdSpritePosGet(7, i);
+            p->x = tmp.x;
+            p->y = tmp.y;
+            p = MdSpritePosGet(7, i + 4);
+            p->x = 16.0f + tmp.x;
+            p->y = tmp.y;
+            HuSprBankSet(grp, (s16)(i + 4), sys->unk283[i]);
+        }
+    } else if (sys->modeSel == 1) {
+        for (i = 0; i < 2; i++) {
+            tmp.x = (pt[i * 2].x + pt[i * 2 + 1].x) * 0.5f;
+            tmp.y = (pt[i * 2].y + pt[i * 2 + 1].y) * 0.5f;
+            tmp.y += 32.0f;
+            p = MdSpritePosGet(7, i);
+            p->x = tmp.x;
+            p->y = tmp.y;
+            p = MdSpritePosGet(7, i + 4);
+            p->x = 16.0f + tmp.x;
+            p->y = tmp.y;
+            HuSprBankSet(grp, (s16)(i + 4), sys->unk283[i]);
+        }
+    }
+    if (arg != 1) {
+        p = MdSpritePosGet(1, 0);
+        p->x = pt[0].x - 64.0f;
+        p->y = pt[0].y;
+        p = MdSpritePosGet(1, 1);
+        p->x = 64.0f + pt[3].x;
+        p->y = pt[3].y;
+        switch (sys->modeSel) {
+            case 0:
+                p = MdSpritePosGet(1, 3);
+                p->x = pt[sys->unk287].x;
+                p->y = pt[sys->unk287].y - 72.0f;
+                p = MdSpritePosGet(1, 3);
+                p->x = pt[sys->unk287].x;
+                p->y = 64.0f + pt[sys->unk287].y;
+                break;
+            case 1:
+                p = MdSpritePosGet(1, 2);
+                p->x = (pt[sys->unk287 * 2].x + pt[sys->unk287 * 2 + 1].x) * 0.5f;
+                tmp.y = (pt[sys->unk287 * 2].y + pt[sys->unk287 * 2 + 1].y) * 0.5f;
+                p->y = tmp.y - 72.0f;
+                p = MdSpritePosGet(1, 3);
+                p->x = (pt[sys->unk287 * 2].x + pt[sys->unk287 * 2 + 1].x) * 0.5f;
+                p->y = 64.0f + (pt[sys->unk287 * 2].y + pt[sys->unk287 * 2 + 1].y) * 0.5f;
+                break;
+        }
+    }
+}
+
+void fn_1_1923C(NEL_SYS *sys)
+{
+    HuVecF pos;
+    SYSSPRITE *volatile sprite = (SYSSPRITE *)sys->sprite;
+    HUSPRGRP *volatile grp = &HuSprGrpData[5];
+    HuVec2f *p;
+
+    p = MdSpritePosGet(5, 0);
+    pos.x = (288.0f + p->x) - 115.0f;
+    pos.y = (160.0f + p->y) - 6.0f;
+    MdMessWinPosSet(0, pos.x, pos.y);
+    p = MdSpritePosGet(5, 1);
+    pos.x = (288.0f + p->x) - 115.0f;
+    pos.y = (160.0f + p->y) - 6.0f;
+    MdMessWinPosSet(1, pos.x, pos.y);
+}
+
+void fn_1_19364(NEL_SYS *sys)
+{
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    if ((HuPadBtnDown[0] & PAD_BUTTON_UP) != 0) {
+        sys->unk288 = (sys->unk288 += 1) % 5;
+        fn_1_193FC(sys, sys->unk288);
+    }
+}
+
+void fn_1_193FC(NEL_SYS *sys, volatile s32 arg)
+{
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    sys->unk288 = arg;
+    if (sys->unk288 == 0) {
+        dbg->dispTimer = 0;
+        Hu3DModelAttrSet(model->mdlId[0], 1);
+        Hu3DModelAttrSet(model->mdlId[0xF], 1);
+        Hu3DLayerHookSet(8, NULL);
+        return;
+    }
+    dbg->dispTimer = 2;
+    Hu3DModelAttrReset(model->mdlId[0], 1);
+    Hu3DModelAttrReset(model->mdlId[0xF], 1);
+    Hu3DLayerHookSet(8, MdCopyWarpFilter);
+    switch (sys->unk288) {
+        case 1:
+            dbg->type = 2;
+            dbg->unk10 = 0;
+            dbg->unk14 = 0;
+            dbg->logic = 0xC;
+            dbg->col[0] = 0xFF;
+            dbg->col[1] = 0xFF;
+            dbg->col[2] = 0xFF;
+            break;
+        case 2:
+            dbg->type = 1;
+            dbg->unk10 = 2;
+            dbg->unk14 = 5;
+            dbg->logic = 0xC;
+            dbg->col[0] = 0xFF;
+            dbg->col[1] = 0xFF;
+            dbg->col[2] = 0xFF;
+            break;
+        case 3:
+            dbg->type = 3;
+            dbg->unk10 = 0;
+            dbg->unk14 = 0;
+            dbg->logic = 0xC;
+            dbg->col[0] = 0x40;
+            dbg->col[1] = 0x20;
+            dbg->col[2] = 0xA0;
+            break;
+        case 4:
+            dbg->type = 3;
+            dbg->unk10 = 0;
+            dbg->unk14 = 0;
+            dbg->logic = 0xC;
+            dbg->col[0] = 0xFF;
+            dbg->col[1] = 0xFF;
+            dbg->col[2] = 0xFF;
+            break;
+    }
+}
+
+void NelGuideBillboardUpdate(NEL_SYS *sys, s32 no)
+{
+    HuVecF dir;
+    SYSCAMERA *cam;
+    HuVecF *pos;
+    SYSMODEL *model;
+    HuVecF *rot;
+    SYSCAMERA_WORK *camWork;
+    float ang;
+
+    camWork = (SYSCAMERA_WORK *)sys->camera;
+    cam = &camWork->camera[2];
+    model = (SYSMODEL *)sys->model;
+    pos = model->mdlPos[no];
+    rot = model->mdlRot[no];
+    dir.x = cam->pos.x - pos->x;
+    dir.y = cam->pos.y - pos->y;
+    dir.z = cam->pos.z - pos->z;
+    ang = 180.0 * (atan2(dir.x, dir.z) / 3.141592653589793);
+    rot->y = ang;
+}
+
+void fn_1_196B4(NEL_SYS *sys, s32 no)
+{
+    HuVecF dir;
+    SYSCAMERA *cam;
+    HuVecF *pos;
+    SYSMODEL *model;
+    HuVecF *rot;
+    SYSCAMERA_WORK *camWork;
+    float ang;
+
+    camWork = (SYSCAMERA_WORK *)sys->camera;
+    cam = &camWork->camera[1];
+    model = (SYSMODEL *)sys->model;
+    pos = model->mdlPos[no];
+    rot = model->mdlRot[no];
+    dir.x = cam->pos.x - pos->x;
+    dir.y = cam->pos.y - pos->y;
+    dir.z = cam->pos.z - pos->z;
+    ang = 180.0 * (atan2(dir.x, dir.z) / 3.141592653589793);
+    rot->y = ang;
+}
+
+void fn_1_19780(NEL_SYS *sys)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        if (sys->fukiMode[i] == 0) {
+            Hu3DAnmNoSet(model->animId[i + 3], i);
+        } else {
+            Hu3DAnmNoSet(model->animId[i + 3], 4);
+        }
+    }
+}
+
+void fn_1_19818(NEL_SYS *sys)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    s32 i;
+    HuVecF *p;
+
+    for (i = 0; i < 4; i++) {
+        p = model->mdlPos[i + 0x42];
+        *p = *model->mdlPos[sys->mdlNo[i] + 0x10];
+        p->x -= 60.0f;
+        p->y += 105.0f;
+        p->z += 30.0f;
+    }
+}
+
+void fn_1_198E0(s32 modelId, float angle)
+{
+    NEL_SYS *sys = &sysWork;
+    MD_MODEL *model = sys->model;
+}
+
+void fn_1_19904(s32 arg)
+{
+    s16 pan;
+
+    switch (arg) {
+        case 0:
+            NelBgmId = HuAudBGMPlay(4);
+            break;
+        case 1:
+            HuAudSStreamFadeOut(NelBgmId, 1000);
+            break;
+        case 2:
+            HuAudFXPlay(0);
+            break;
+        case 3:
+            HuAudFXPlay(2);
+            break;
+        case 4:
+            HuAudFXPlay(1);
+            break;
+        case 5:
+            HuAudFXPlay(3);
+            break;
+        case 6:
+            HuAudFXPlay(0x3E1);
+            break;
+        case 7:
+            HuAudFXPlay(0x3E2);
+            break;
+        case 8:
+            HuAudFXPlay(0x3E3);
+            break;
+        default:
+            pan = fn_1_19A68(0x1A, 2);
+            switch (arg) {
+                case 9:
+                    HuAudFXPlayPan(0x2EE, pan);
+                    break;
+                case 10:
+                    HuAudFXPlayPan(0x2EF, pan);
+                    break;
+            }
+            break;
+        case 11:
+            HuAudAllStop();
+            break;
+    }
+}
+
+s16 fn_1_19A68(volatile s32 no, volatile s32 camNo)
+{
+    NEL_SYS *sys = &sysWork;
+    SYSCAMERA *cam;
+    SYSMODEL *model;
+    SYSCAMERA_WORK *camWork;
+    HuVecF *pos;
+    s16 ret;
+    HuVecF pt;
+
+    camWork = (SYSCAMERA_WORK *)sys->camera;
+    cam = &camWork->camera[camNo];
+    model = (SYSMODEL *)sys->model;
+    pos = model->mdlPos[no];
+    Hu3D3Dto2D(pos, cam->bit, &pt);
+    ret = (s16)(32.0f + 0.11111111f * pt.x);
+    return ret;
+}
+
+void fn_1_19B10(volatile s32 arg)
+{
+    NEL_SYS *sys = &sysWork;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    switch (arg) {
+        case 0:
+            Hu3DModelAttrSet(model->mdlId[0x1A], 0x40000001);
+            Hu3DModelAttrReset(model->mdlId[0x1A], 0x40000002);
+            Hu3DMotionSet(model->mdlId[0x1A], model->motId[0x14]);
+            break;
+        case 1:
+            Hu3DMotionShiftSet(model->mdlId[0x1A], model->motId[0x15], 0.0f, 32.0f, 0x40000001);
+            break;
+        case 2:
+            Hu3DMotionShiftSet(model->mdlId[0x1A], model->motId[0x14], 0.0f, 32.0f, 0x40000001);
+            break;
+    }
+}
+
+void fn_1_19C00(NEL_SYS *sys, s32 idx)
+{
+    sys->fukiMode[idx] = 2;
+}
+
+void fn_1_19C10(NEL_SYS *sys, s32 idx)
+{
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    sys->fukiMode[idx] = 0;
+    Hu3DModelAttrReset(model->mdlId[idx + 0x42], 1);
+}
+
+void fn_1_19C70(NEL_SYS *sys, s32 idx)
+{
+    if (sys->fukiMode[idx] == 2) {
+        sys->fukiMode[idx] = 0;
+    } else if (sys->fukiMode[idx] == 3) {
+        sys->fukiMode[idx] = 1;
+    }
+}
+
+void fn_1_19CB8(NEL_SYS *sys)
+{
+    MD_MODEL *model = sys->model;
+}
+
+void fn_1_19CCC(void)
+{
+    NEL_SYS *sys = &sysWork;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+
+    dbg->stat = 1;
+    dbg->dispTimer = 0;
+    dbg->col[0] = 0xFF;
+    dbg->col[1] = 0xFF;
+    dbg->col[2] = 0xFF;
+    dbg->col[3] = 0xFF;
+    dbg->type = 3;
+    dbg->unk10 = 0;
+    dbg->unk14 = 0;
+    dbg->logic = 0xC;
+    dbg->tpCol[0] = 0xFF;
+    dbg->tpCol[1] = 0xFF;
+    dbg->tpCol[2] = 0xFF;
+    dbg->tpCol[3] = 0xFF;
+    dbg->tpSel = 3;
+    dbg->tp0 = 0;
+    dbg->tp1 = 0;
+    dbg->tp2 = 0xC;
+}
+
+void fn_1_19D84(void)
+{
+    SYSPARTICLE_BUFFER *buf;
+    NEL_SYS *sys = &sysWork;
+    SYSPARTICLE_WORK *work;
+
+    work = (SYSPARTICLE_WORK *)sys->particle;
+    buf = &work->buffer[1];
+    if ((HuPadBtn[0] & PAD_BUTTON_B) != 0) {
+        buf->pauseF = 1;
+    } else {
+        buf->pauseF = 0;
+    }
+}
+
+void fn_1_19DE8(void)
+{
+    s32 i;
+    NEL_SYS *sys = &sysWork;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    if ((HuPadBtnDown[0] & 0x800) != 0) {
+        for (i = 0; i < 10; i++) {
+            Hu3DMotionShiftSet(model->mdlId[i + 2], model->motId[i * 2 + 1], 0.0f, 8.0f, 0);
+        }
+        HuPrcSleep(180);
+        for (i = 0; i < 10; i++) {
+            Hu3DMotionShiftSet(model->mdlId[i + 2], model->motId[i * 2], 0.0f, 8.0f, 0x40000001);
+        }
+        HuPrcSleep(10);
     }
 }
