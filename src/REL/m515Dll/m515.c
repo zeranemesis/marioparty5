@@ -94,9 +94,14 @@ typedef struct M515Id4_s {
 // Per-player group of the global state (stride 0x28).
 typedef struct M515Grp_s {
     s32 f00;
-    char pad_04[8];
+    s32 f04;
+    s32 f08;
     s16 f0c;
-    char pad_0e[0x28 - 0x0e];
+    char pad_0e[2];
+    f32 f10;
+    char pad_14[4];
+    f32 f18;
+    HuVecF pos;
 } M515_GRP;
 
 // Intrusive doubly-linked node (stride 0x14) behind the head/cur lists of M515_SUB.
@@ -169,10 +174,11 @@ struct M515Sub_s {
 
 typedef struct M515Fx_s {
     s16 f00;
-    char pad_02[2];
+    s16 f02;
     s16 f04;
-    char pad_06[2];
-    s32 f08;
+    s16 f06;
+    s16 f08;
+    char pad_0a[2];
     u16 *fc;
 } M515_FX;
 
@@ -3501,6 +3507,47 @@ void fn_1_9920(M515_ESPPAIR *esp)
     espKill(esp->id1);
 }
 
+void fn_1_9958(M515_ESPPAIR *esp)
+{
+    f32 a[4] = { 8.0f, -8.0f, 8.0f, -8.0f };
+    f32 b[4] = { 20.0f, 20.0f, -20.0f, -20.0f };
+    f32 x;
+    f32 y;
+    s32 c;
+    s32 d;
+    f32 e;
+    f32 f;
+    s32 i;
+
+    x = esp->f4;
+    y = esp->f8;
+    c = 8;
+    d = 20;
+    e = 8.0f;
+    f = 20.0f;
+    i = 0;
+    Hu3DCameraViewportSet(lbl_1_rodata_10[i], 0.0f, 0.0f, 16.0f + x, 40.0f + y, 0.0f, 1.0f);
+    i++;
+    Hu3DCameraViewportSet(lbl_1_rodata_10[i], x - 16.0f, 0.0f, 16.0f + (640.0f - x), 40.0f + y, 0.0f,
+        1.0f);
+    i++;
+    Hu3DCameraViewportSet(lbl_1_rodata_10[i], 0.0f, y - 40.0f, 16.0f + x, 40.0f + (480.0f - y), 0.0f,
+        1.0f);
+    i++;
+    Hu3DCameraViewportSet(lbl_1_rodata_10[i], x - 16.0f, y - 40.0f, 16.0f + (640.0f - x),
+        40.0f + (480.0f - y), 0.0f, 1.0f);
+    i = 0;
+    Hu3DCameraScissorSet(lbl_1_rodata_10[i], 0, 0, x, y);
+    i++;
+    Hu3DCameraScissorSet(lbl_1_rodata_10[i], x, 0, 640.0f - x, y);
+    i++;
+    Hu3DCameraScissorSet(lbl_1_rodata_10[i], 0, y, x, 480.0f - y);
+    i++;
+    Hu3DCameraScissorSet(lbl_1_rodata_10[i], x, y, 640.0f - x, 480.0f - y);
+    espPosSet(esp->id0, 576.0f * (x / 640.0f), 240.0f);
+    espPosSet(esp->id1, 288.0f, 480.0f * (y / 480.0f));
+}
+
 f32 fn_1_BD10(s16 mdl, s32 idx, f32 t)
 {
     f32 lo[2] = { 0.0f, 400.0f };
@@ -3743,6 +3790,170 @@ void fn_1_CC20(s16 layerNo)
             }
         }
     }
+}
+
+void fn_1_CE98(M515_SUB *sub)
+{
+    M515_PLY *ply;
+    s32 i;
+    HuVecF pts[4] = { { 130.0f, 110.0f, -800.0f }, { 30.0f, 100.0f, -780.0f },
+        { -40.0f, 120.0f, -810.0f }, { -120.0f, 110.0f, -800.0f } };
+    f32 spd[4] = { 3.9f, 5.7f, 9.3f, 7.5f };
+    s32 cnt[4] = { 15, 18, 16, 14 };
+
+    ply = sub->ply[0];
+    for (i = 0; i < 4; i++) {
+        sub->grp[i].f0c = ply->item[i + 2].mdl;
+        Hu3DModelAttrReset(sub->grp[i].f0c, HU3D_ATTR_DISPOFF);
+        Hu3DModelPosSet(sub->grp[i].f0c, pts[i].x, pts[i].y, pts[i].z);
+        Hu3DModelRotSet(sub->grp[i].f0c, 0.0f, 0.0f, 0.0f);
+        sub->grp[i].f10 = 0.0f;
+        sub->grp[i].f18 = spd[i];
+        sub->grp[i].f00 = 0;
+        sub->grp[i].f04 = cnt[i];
+        sub->grp[i].f08 = 0;
+        sub->grp[i].pos = pts[i];
+    }
+}
+
+void fn_1_D0D8(M515_SUB *sub)
+{
+    s32 i;
+    f32 rot;
+    f32 t;
+    f32 py;
+
+    for (i = 0; i < 4; i++) {
+        switch (sub->grp[i].f00) {
+        case 0:
+            break;
+        case 1:
+            sub->grp[i].f08++;
+            if (sub->grp[i].f08 >= sub->grp[i].f04) {
+                sub->grp[i].f00++;
+            }
+            t = (f32)sub->grp[i].f08 / (f32)sub->grp[i].f04;
+            if (i < 2) {
+                rot = 180.0 * t;
+            } else {
+                rot = -180.0f * t;
+            }
+            Hu3DModelRotSet(sub->grp[i].f0c, 0.0f, rot, 0.0f);
+            break;
+        case 2:
+            sub->grp[i].pos.z -= 6.0f;
+            break;
+        }
+        sub->grp[i].f10 += sub->grp[i].f18;
+        if (sub->grp[i].f10 > 360.0f) {
+            sub->grp[i].f10 -= 360.0f;
+        }
+        py = sub->grp[i].pos.y + 3.0 * HuSin(sub->grp[i].f10);
+        Hu3DModelPosSet(sub->grp[i].f0c, sub->grp[i].pos.x, py, sub->grp[i].pos.z);
+    }
+}
+
+u16 fn_1_DD18(M515_PLY *ply)
+{
+    u16 ret = 0;
+    M515_FX *fx;
+    s16 a[4] = { 0x78, 0x3C, 0x2D, 0x1E };
+    s16 b[4] = { 0x3C, 0x1E, 0xF, 0 };
+    s16 c[4] = { 0x78, 0x3C, 0x2D, 0x1E };
+    s16 d[4] = { 0x78, 0x5A, 0x3C, 0x2D };
+    s16 e[4] = { 0x1E, 0, 0, 0 };
+    s16 g[4] = { 0x3C, 0x2D, 0x1E, 0xF };
+
+    fx = &ply->fx;
+    switch (fx->f00) {
+    case 0:
+        fx->f02 = 0;
+        fx->f06 = 0;
+        fx->f08 = rand8() / (0xFF / g[ply->dif] + 1);
+        fx->f00++;
+        break;
+    case 1:
+        fx->f02++;
+        if (fx->f02 > fx->f08 + a[ply->dif]) {
+            fx->f08 = rand8() / (0xFF / g[ply->dif] + 1);
+            fx->f02 = 0;
+            fx->f00++;
+        }
+        break;
+    case 2:
+        if (fx->fc[fx->f06] == 0x10) {
+            fx->f00 = 10;
+        } else if (fx->fc[fx->f06] == 0x20) {
+            fx->f00 = 20;
+        } else {
+            fx->f00 = 30;
+        }
+        break;
+    case 10:
+        fx->f02++;
+        if (fx->f02 >= fx->f08 + b[ply->dif]) {
+            fx->f08 = rand8() / (0xFF / g[ply->dif] + 1);
+            fx->f00 = 11;
+        } else {
+            break;
+        }
+    case 11:
+        ret = fx->fc[fx->f06];
+        fx->f00 = 12;
+        fx->f02 = 0;
+        break;
+    case 12:
+        fx->f02++;
+        if (fx->f02 >= fx->f08 + c[ply->dif]) {
+            fx->f08 = rand8() / (0xFF / g[ply->dif] + 1);
+            fx->f06++;
+            if (fx->fc[fx->f06] == 0x10) {
+                fx->f00 = 10;
+            } else if (fx->fc[fx->f06] == 0x20) {
+                fx->f00 = 20;
+            } else {
+                fx->f00 = 30;
+            }
+            fx->f02 = 0;
+        }
+        break;
+    case 20:
+        fx->f02++;
+        if (fx->f02 >= fx->f08 + d[ply->dif]) {
+            fx->f08 = rand8() / (0xFF / g[ply->dif] + 1);
+            ret = fx->fc[fx->f06];
+            fx->f00 = 21;
+        }
+        break;
+    case 30:
+        ret = fx->fc[fx->f06];
+        fx->f02++;
+        if (fx->f02 >= 15) {
+            fx->f06++;
+            if (fx->fc[fx->f06] == 0x10) {
+                fx->f00 = 10;
+            } else if (fx->fc[fx->f06] == 0x20) {
+                fx->f00 = 20;
+            } else if (ret == fx->fc[fx->f06]) {
+                fx->f00 = 30;
+            } else if (ply->dif >= 2) {
+                fx->f00 = 30;
+            } else {
+                fx->f00 = 31;
+            }
+            fx->f02 = 0;
+        }
+        break;
+    case 31:
+        fx->f02++;
+        if (fx->f02 >= fx->f08 + 15) {
+            fx->f08 = rand8() / (0xFF / g[ply->dif] + 1);
+            fx->f00 = 30;
+            fx->f02 = 0;
+        }
+        break;
+    }
+    return ret;
 }
 
 void fn_1_E274(M515_FX *fx, s16 kind, s16 dif)
