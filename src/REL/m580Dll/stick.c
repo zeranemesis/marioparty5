@@ -25,6 +25,11 @@ double Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 #define M580_STICK_MOTNUM 6
 
+static inline f32 M580_WrapDeg(f32 deg)
+{
+    return fmod(deg, 360.0);
+}
+
 /* one motion of an actor: data file, blend time (seconds) and motion attributes;
    dataNum -1 = unused slot, -2 = end of list */
 typedef struct M580StickMotion_s {
@@ -148,7 +153,7 @@ s32 fn_1_D054(HuVecF *center, f32 dir, f32 halfAngle, f32 range);
 HU3DMODELID fn_1_D56C(void);
 void fn_1_D60C(HuVecF *pos);
 void fn_1_D654(void);
-u32 fn_1_1D04(void);
+s32 fn_1_1D04(void);
 u32 fn_1_1D58(u32 team);
 f32 fn_1_2634(f32 from, f32 to, f32 t);
 s32 fn_1_89A8(s32 index, f32 *pos, f32 *angle);
@@ -317,7 +322,7 @@ void fn_1_9194(OMOBJ *obj)
     M580_STICKWORK *work = obj->data;
     HU3DMODELID model = obj->mdlId[0];
 
-    work->rot.y = fmod(work->rot.y, 360.0);
+    work->rot.y = M580_WrapDeg(work->rot.y);
     work->rot.z = 0.0f;
     work->rot.x = 0.0f;
     Hu3DModelPosSetV(model, &work->pos);
@@ -412,4 +417,115 @@ f32 fn_1_95D0(OMOBJ *obj, HuVecF *target)
     f32 dz = target->z - work->pos.z;
 
     return HuMagPoint2D(dx, dz);
+}
+
+void fn_1_9970(OMOBJ *obj);
+
+void fn_1_9748(OMOBJ *obj)
+{
+    M580_STICKWORK *work = obj->data;
+    HU3DMODELID model;
+
+    model = fn_1_8CA4(DATANUM(DATA_m580, 0x20));
+    obj->mdlId[2] = model;
+    Hu3DModelLayerSet(model, 1);
+    fn_1_92EC(obj, 0);
+    obj->objFunc = fn_1_9970;
+}
+
+void fn_1_9970(OMOBJ *obj)
+{
+    M580_STICKWORK *work = obj->data;
+    HU3DMODELID model = obj->mdlId[0];
+    HU3DMODELID shadow = obj->mdlId[2];
+    HuVecF pos;
+    HuVecF offset;
+    f32 s;
+
+    switch (work->state) {
+    case 0:
+        work->state++;
+        work->timer = 0;
+        work->alpha = 0.0f;
+        Hu3DModelHookSet(model, lbl_1_data_704, fn_1_D56C());
+    case 1:
+        if (++work->timer < 210.0) {
+            break;
+        }
+        work->state++;
+    case 2:
+        if ((work->alpha += 1.0 / 75.0) < 1.0) {
+            break;
+        }
+        work->alpha = 1.0f;
+        work->state++;
+        work->timer = 0;
+    case 3:
+        if (++work->timer < 60.0) {
+            break;
+        }
+        work->state++;
+        Hu3DModelHookObjReset(model, lbl_1_data_704);
+        fn_1_D654();
+        HuAudFXPlay(0x960);
+    case 4:
+        if (++work->timer < 30.0) {
+            break;
+        }
+        work->state++;
+    case 5: {
+        s32 mode = MgSeqModeGet();
+
+        if (mode != 5 && mode != 6) {
+            break;
+        }
+        work->state++;
+    }
+    case 6:
+        if ((work->alpha -= (f64)(1.0f / 60.0f)) > 0.0) {
+            break;
+        }
+        work->alpha = 0.0f;
+        work->state++;
+    case 7:
+        if (fn_1_D544() == 0) {
+            break;
+        }
+        work->state++;
+        work->timer = 0;
+    case 8:
+        if (fn_1_1D04() < 2) {
+            break;
+        }
+        if (++work->timer < 60.0) {
+            break;
+        }
+        work->state = 2;
+        Hu3DModelHookSet(model, lbl_1_data_704, fn_1_D56C());
+        break;
+    }
+    s = sin(M_PI * (90.0 * work->alpha) / 180.0);
+    if (0.0 == s) {
+        Hu3DModelAttrSet(model, 1);
+        Hu3DModelAttrSet(shadow, 1);
+    } else {
+        Hu3DModelAttrReset(model, 1);
+        Hu3DModelAttrReset(shadow, 1);
+    }
+    VECSubtract(&work->actor->initPos[1], &work->actor->initPos[0], &offset);
+    VECScale(&offset, &offset, s);
+    VECAdd(&work->actor->initPos[0], &offset, &work->pos);
+    work->targetRot = M580_WrapDeg(1.0 + work->targetRot);
+    if (work->targetRot < 0.0) {
+        work->targetRot = work->targetRot + 360.0;
+    }
+    pos.x = work->pos.x + 100.0 * (0.3 * sin(M_PI * work->targetRot / 180.0));
+    pos.y = work->pos.y + 100.0 * (0.2 * sin(M_PI * work->targetRot / 180.0));
+    pos.z = work->pos.z + 100.0 * (0.2 * cos(M_PI * work->targetRot / 180.0));
+    Hu3DModelPosSetV(model, &pos);
+    Hu3DModelRotSetV(model, &work->rot);
+    Hu3DModelPosSet(shadow, pos.x, -pos.y, pos.z);
+    Hu3DModelRotSetV(shadow, &work->rot);
+    Hu3DModelObjPosGet(model, lbl_1_data_704, &pos);
+    fn_1_D60C(&pos);
 }
