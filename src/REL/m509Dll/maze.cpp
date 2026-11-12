@@ -57,29 +57,29 @@ void fn_1_C224(void *unused, s32 idx);
 extern u8 lbl_1_data_210[0x3000];
 }
 
-char lbl_1_data_3210[] = "ms_pointer == 0";
-char lbl_1_data_3220[] = "singleton.h";
-char lbl_1_data_322C[] = "ms_pointer != 0";
-u8 lbl_1_data_3258[4][4] = { { 0, 0, 2, 3 }, { 1, 1, 2, 3 }, { 0, 1, 2, 2 }, { 0, 1, 3, 3 } };
-void *lbl_1_data_3268[6] = { 0, 0, (void *)fn_1_5D8C, (void *)fn_1_5E68, (void *)fn_1_5EDC, 0 };
+extern "C" char lbl_1_data_3210[] = "ms_pointer == 0";
+extern "C" char lbl_1_data_3220[] = "singleton.h";
+extern "C" char lbl_1_data_322C[] = "ms_pointer != 0";
+extern "C" u8 lbl_1_data_3258[4][4] = { { 0, 0, 2, 3 }, { 1, 1, 2, 3 }, { 0, 1, 2, 2 }, { 0, 1, 3, 3 } };
+extern "C" void *lbl_1_data_3268[6] = { 0, 0, (void *)fn_1_5D8C, (void *)fn_1_5E68, (void *)fn_1_5EDC, 0 };
 
-void *lbl_1_bss_30;
-Maze *lbl_1_bss_34;
+extern "C" { void *lbl_1_bss_30; }
+extern "C" { Maze *lbl_1_bss_34; }
 
-XX_RODATA const Vec lbl_1_rodata_134[16] = {
+extern "C" XX_RODATA const Vec lbl_1_rodata_134[16] = {
     { 0.0f, 0.0f, -80.0f }, { -40.0f, 0.0f, 80.0f }, { 0.0f, 0.0f, 40.0f }, { 40.0f, 0.0f, 80.0f },
     { 0.0f, 0.0f, 80.0f }, { -40.0f, 0.0f, -80.0f }, { 0.0f, 0.0f, -40.0f }, { 40.0f, 0.0f, -80.0f },
     { -80.0f, 0.0f, 0.0f }, { 80.0f, 0.0f, 40.0f }, { 40.0f, 0.0f, 0.0f }, { 80.0f, 0.0f, -40.0f },
     { 80.0f, 0.0f, 0.0f }, { -80.0f, 0.0f, 40.0f }, { -40.0f, 0.0f, 0.0f }, { -80.0f, 0.0f, -40.0f },
 };
-XX_RODATA const GXColor lbl_1_rodata_FC[14] = {
+extern "C" XX_RODATA const GXColor lbl_1_rodata_FC[14] = {
     { 0xFE, 0x00, 0x00, 0xFF }, { 0x00, 0x00, 0xFE, 0xFF }, { 0xFF, 0x7B, 0xDE, 0xFF }, { 0x00, 0xFF, 0x00, 0xFF },
     { 0x7D, 0x00, 0xBE, 0xFF }, { 0xFF, 0xFF, 0x00, 0xFF }, { 0x3F, 0x43, 0x8C, 0xFF }, { 0xFF, 0xFF, 0xFF, 0xFF },
     { 0x00, 0xFF, 0xFF, 0xFF }, { 0xFF, 0x60, 0x16, 0xFF }, { 0xFF, 0x50, 0x50, 0xFF }, { 0x50, 0xFF, 0x50, 0xFF },
     { 0x50, 0x50, 0xFF, 0xFF }, { 0xFF, 0xFF, 0xFF, 0xFF },
 };
-XX_RODATA const u8 lbl_1_rodata_204[6] = { 0, 1, 2, 4, 3, 5 };
-XX_RODATA const u8 lbl_1_rodata_20A[6] = { 0, 2, 1, 3, 4, 5 };
+extern "C" XX_RODATA const u8 lbl_1_rodata_204[6] = { 0, 1, 2, 4, 3, 5 };
+extern "C" XX_RODATA const u8 lbl_1_rodata_20A[6] = { 0, 2, 1, 3, 4, 5 };
 
 /* state shared by every draw routine below */
 #define MAZE_GX_BEGIN_STATE() \

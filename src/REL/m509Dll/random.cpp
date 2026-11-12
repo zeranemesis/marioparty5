@@ -44,3 +44,11 @@ float CRandom::frandom(float min, float max)
 {
     return min + (max - min) * randInstance.frandom();
 }
+
+#ifdef TARGET_PC
+/* the other units call CRandom/CMT19937 by their MWCC names with C linkage, as the GC objects do */
+extern "C" void setSeed__7CRandomFi(int seed) { CRandom::setSeed(seed); }
+extern "C" u32 irandom__7CRandomFv(void) { return CRandom::irandom(); }
+extern "C" double randomMantissa__7CRandomFv(void) { return CRandom::randomMantissa(); }
+extern "C" void setSeed__8CMT19937Fi(CMT19937 *self, int seed) { self->setSeed(seed); }
+#endif

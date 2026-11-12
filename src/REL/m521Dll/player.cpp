@@ -993,7 +993,7 @@ void fn_1_17A6C(CDeque16 *self, u16 *pos, u32 n, u16 *val)
             end = self->m_data + self->m_size;
             tail = end - pos;
             src = val;
-            if (end - (tail - n) <= src && src < end) {
+            if (end - (tail - (s32)n) <= src && src < end) { /* signed: on 64-bit the u32 wrap no longer cancels out */
                 src = src + n;
             }
             if ((u32)tail != 0) {

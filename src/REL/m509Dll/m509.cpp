@@ -200,40 +200,40 @@ void fn_1_5980(void);
 void *fn_1_5A08(M509Obj *self, s16 flag);
 }
 
-char lbl_1_data_0[] = "\nASSERTION FAILED at %s:%d\n%s";
-char lbl_1_data_1E[] = "assert.cpp";
-char lbl_1_data_29[] = "new.cpp";
-char lbl_1_data_31[] = "ptr != NULL";
-char lbl_1_data_3D[] = "thread.cpp";
-char lbl_1_data_48[] = "priority >= OS_PRIORITY_MIN && priority <= OS_PRIORITY_MAX";
-char lbl_1_data_83[] = "OSCreateThread() failed.";
-char lbl_1_data_9C[] = "delete CThread@%p\nstack remain/total = 0x%08x/0x%08x (%f%%)\n";
-char lbl_1_data_D9[] = "stack overflow\n";
-char lbl_1_data_E9[] = "subthread.cpp";
-char lbl_1_data_F7[] = "::OSGetCurrentThread() == m_th";
-char lbl_1_data_116[] = "!::OSIsThreadTerminated(m_th)";
-char lbl_1_data_134[] = "om.cpp";
-char lbl_1_data_13B[] = "singleton.h";
-char lbl_1_data_147[] = "ms_pointer == 0";
-char lbl_1_data_157[] = "ms_pointer != 0";
-char lbl_1_data_167[] = "model.cpp";
-char lbl_1_data_171[] = "p != NULL";
-char lbl_1_data_17B[] = "timer.cpp";
-char lbl_1_data_185[] = "false";
-char lbl_1_data_18B[] = "{{0x%08x,0x%08x,0x%08x},{0x%08x,0x%08x,0x%08x,0x%08x}},\n";
-void *lbl_1_data_1C4[5] = { 0, 0, (void *)fn_1_3AE8, 0, (void *)fn_1_3A1C };
-void *lbl_1_data_1D8[6] = { 0, 0, (void *)fn_1_2CF4, 0, (void *)fn_1_309C, 0 };
-void *lbl_1_data_1F0[4] = { 0, 0, (void *)fn_1_2A94, (void *)fn_1_2A20 };
-void *lbl_1_data_200[4] = { 0, 0, (void *)fn_1_9E8, 0 };
+extern "C" char lbl_1_data_0[] = "\nASSERTION FAILED at %s:%d\n%s";
+extern "C" char lbl_1_data_1E[] = "assert.cpp";
+extern "C" char lbl_1_data_29[] = "new.cpp";
+extern "C" char lbl_1_data_31[] = "ptr != NULL";
+extern "C" char lbl_1_data_3D[] = "thread.cpp";
+extern "C" char lbl_1_data_48[] = "priority >= OS_PRIORITY_MIN && priority <= OS_PRIORITY_MAX";
+extern "C" char lbl_1_data_83[] = "OSCreateThread() failed.";
+extern "C" char lbl_1_data_9C[] = "delete CThread@%p\nstack remain/total = 0x%08x/0x%08x (%f%%)\n";
+extern "C" char lbl_1_data_D9[] = "stack overflow\n";
+extern "C" char lbl_1_data_E9[] = "subthread.cpp";
+extern "C" char lbl_1_data_F7[] = "::OSGetCurrentThread() == m_th";
+extern "C" char lbl_1_data_116[] = "!::OSIsThreadTerminated(m_th)";
+extern "C" char lbl_1_data_134[] = "om.cpp";
+extern "C" char lbl_1_data_13B[] = "singleton.h";
+extern "C" char lbl_1_data_147[] = "ms_pointer == 0";
+extern "C" char lbl_1_data_157[] = "ms_pointer != 0";
+extern "C" char lbl_1_data_167[] = "model.cpp";
+extern "C" char lbl_1_data_171[] = "p != NULL";
+extern "C" char lbl_1_data_17B[] = "timer.cpp";
+extern "C" char lbl_1_data_185[] = "false";
+extern "C" char lbl_1_data_18B[] = "{{0x%08x,0x%08x,0x%08x},{0x%08x,0x%08x,0x%08x,0x%08x}},\n";
+extern "C" void *lbl_1_data_1C4[5] = { 0, 0, (void *)fn_1_3AE8, 0, (void *)fn_1_3A1C };
+extern "C" void *lbl_1_data_1D8[6] = { 0, 0, (void *)fn_1_2CF4, 0, (void *)fn_1_309C, 0 };
+extern "C" void *lbl_1_data_1F0[4] = { 0, 0, (void *)fn_1_2A94, (void *)fn_1_2A20 };
+extern "C" void *lbl_1_data_200[4] = { 0, 0, (void *)fn_1_9E8, 0 };
 
-u8 lbl_1_bss_0;
-s32 lbl_1_bss_4;
-s32 lbl_1_bss_8;
-s32 lbl_1_bss_C;
-u8 lbl_1_bss_10[12];
-M509Node lbl_1_bss_1C;
-s32 lbl_1_bss_24;
-M509Core *lbl_1_bss_28;
+extern "C" { u8 lbl_1_bss_0; }
+extern "C" { s32 lbl_1_bss_4; }
+extern "C" { s32 lbl_1_bss_8; }
+extern "C" { s32 lbl_1_bss_C; }
+extern "C" { u8 lbl_1_bss_10[12]; }
+extern "C" { M509Node lbl_1_bss_1C; }
+extern "C" { s32 lbl_1_bss_24; }
+extern "C" { M509Core *lbl_1_bss_28; }
 
 #define M509_ASSERT(c_, t_, f_, l_) ((c_) ? (void)0 : fn_1_0(t_, f_, l_))
 
@@ -667,7 +667,7 @@ void fn_1_18A0(CMT19937 *self, u32 *key, u32 keyLen)
     self->m_state[0] = 0x80000000;
 }
 
-M509_RODATA const u32 lbl_1_rodata_10[2] = { 0, 0x9908B0DF };
+extern "C" M509_RODATA const u32 lbl_1_rodata_10[2] = { 0, 0x9908B0DF };
 
 inline u32 CMT19937::gen()
 {
@@ -1694,6 +1694,16 @@ void fn_1_5980(void)
     lbl_1_bss_1C.prev = &lbl_1_bss_1C;
     __register_global_object(&lbl_1_bss_1C, (void *(*)(void *, s16))fn_1_5A08, lbl_1_bss_10);
 }
+
+// The module's static initialiser, hooked into the constructor table.
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_5980)(void) = fn_1_5980;
+#else
+struct M509StaticInit {
+    M509StaticInit() { fn_1_5980(); }
+};
+static M509StaticInit lbl_static_init;
+#endif
 
 void *fn_1_5A08(M509Obj *self, s16 flag)
 {

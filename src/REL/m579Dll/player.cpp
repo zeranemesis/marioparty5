@@ -1179,7 +1179,7 @@ void fn_1_106CC(M579S16Vec *vec, s16 *pos, u32 n, s16 *val)
             endp = *d0 + vec->size;
             tail = (s32) (endp - pos);
             src = val;
-            if (endp - (tail - n) <= src && src < endp) {
+            if (endp - (tail - (s32)n) <= src && src < endp) { /* signed: on 64-bit the u32 wrap no longer cancels out */
                 src = src + n;
             }
             if (tail != 0) {

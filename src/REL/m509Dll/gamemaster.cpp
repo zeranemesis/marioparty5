@@ -336,3 +336,13 @@ void *fn_1_C2D0(void *self)
     return self;
 }
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_C8E0)(void) = fn_1_C8E0;
+#else
+struct PortStaticInit_C8E0 {
+    PortStaticInit_C8E0() { fn_1_C8E0(); }
+};
+static PortStaticInit_C8E0 lbl_port_init_C8E0;
+#endif

@@ -38,7 +38,7 @@ void CharModelVoicePanSet(s16 charNo, s16 pan);
 void CharModelVoiceVolSet(s16 charNo, s16 vol);
 s16 CharMotionCreate(s16 charNo, u32 dataNum);
 void CharMotionDataClose(s16 charNo);
-void CharMotionShiftSet(s16 charNo, s16 motId, u32 attr, f32 start, f32 end);
+void CharMotionShiftSet(s16 charNo, s16 motId, f32 start, f32 end, u32 attr);
 s32 CharNpcDustVoiceOffSet(s16 modelId, s16 motId, s16 type);
 s16 Hu3DGLightCreateV(Vec *pos, Vec *dir, GXColor *color);
 void Hu3DGLightInfinitytSet(s16 light);
@@ -779,7 +779,7 @@ void fn_1_10774(Player *self)
 
     if (self->motion != 0) {
         Hu3DModelAttrReset(model, 0x40000002);
-        CharMotionShiftSet(self->charNo, mot, 0x40000001, 0.0f, 8.0f);
+        CharMotionShiftSet(self->charNo, mot, 0.0f, 8.0f, 0x40000001);
         self->motion = 0;
     }
     tmp = lbl_1_data_3534;
@@ -1166,7 +1166,7 @@ void fn_1_12804(PlayerVec *vec, s16 *pos, u32 n, s16 *val)
             pd = &vec->data;
             end = *pd + vec->size;
             tail = end - pos;
-            if (end - (tail - n) <= src && src < end) {
+            if (end - (tail - (s32)n) <= src && src < end) { /* signed: on 64-bit the u32 wrap no longer cancels out */
                 src += n;
             }
             if (tail != 0) {
@@ -1288,3 +1288,13 @@ void *fn_1_12D64(PlayerNode *self, s16 flag)
     }
     return self;
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_12CDC)(void) = fn_1_12CDC;
+#else
+struct PortStaticInit_12CDC {
+    PortStaticInit_12CDC() { fn_1_12CDC(); }
+};
+static PortStaticInit_12CDC lbl_port_init_12CDC;
+#endif
