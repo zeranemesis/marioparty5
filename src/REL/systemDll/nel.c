@@ -119,6 +119,8 @@ void NelGuideBillboardUpdate(NEL_SYS *sys, s32 no);
 void MdRingMain(NEL_SYS *sys);
 void MdFukiMain(NEL_SYS *sys);
 void MdMathClamp(float *val, float min, float max);
+void MdMathAngleClamp(float *angle);
+void MdPosAdjustMode(NEL_SYS *sys);
 void MdBlendDebugMain(void);
 void MdDebugBlendColor(void);
 void MdDebugPointMove(void);
@@ -7964,4 +7966,314 @@ void MdDebugBlendColor(void)
     MdDebugFontPrint("src(%s)", NelBlName2[dbg->tp0]);
     MdDebugFontPrint("dst(%s)", NelBlName2[dbg->tp1]);
     MdDebugFontPrint("logic(%s)", NelLoName2[dbg->tp2]);
+}
+
+void MdPosAdjustMode(NEL_SYS *sys)
+{
+    static NEL_MDLINFO mdlInfo[0x4D] = {
+        { "WARP", 0 }, { "CHRWORLD", 1 }, { "CHR00", 1 },
+        { "CHR01", 1 }, { "CHR02", 1 }, { "CHR03", 1 },
+        { "CHR04", 1 }, { "CHR05", 1 }, { "CHR06", 1 },
+        { "CHR07", 1 }, { "CHR08", 1 }, { "CHR09", 1 },
+        { "NELTYA", 2 }, { "PARTICLE00", 2 }, { "PARTICLE01", 2 },
+        { "WARPFILTER", 2 }, { "MIRROR00", 2 }, { "MIRROR01", 2 },
+        { "MIRROR02", 2 }, { "MIRROR03", 2 }, { "MIRROR04", 2 },
+        { "MIRROR05", 2 }, { "MIRROR06", 2 }, { "MIRROR07", 2 },
+        { "MIRROR08", 2 }, { "MIRROR09", 2 }, { "STAR00", 2 },
+        { "STAR01", 2 }, { "STAR02", 2 }, { "STAR03", 2 },
+        { "STAR04", 2 }, { "STAR05", 2 }, { "MAPCAPSULE00", 2 },
+        { "MAPCAPSULE01", 2 }, { "MAPCAPSULE02", 2 }, { "MAPCAPSULE03", 2 },
+        { "MAPCAPSULE04", 2 }, { "MAPCAPSULE05", 2 }, { "MAPCAPSULE06", 2 },
+        { "RING1P", 2 }, { "RING2P", 2 }, { "RING3P", 2 },
+        { "RING4P", 2 }, { "RINGCOM0", 2 }, { "RINGCOM1", 2 },
+        { "RINGCOM2", 2 }, { "RINGEFF0", 2 }, { "RINGEFF1", 2 },
+        { "RINGEFF2", 2 }, { "RINGEFF3", 2 }, { "BROYALCAPSULE", 2 },
+        { "TMATCHCAPSULE", 2 }, { "MAN00CAPSULE", 2 }, { "MAN01CAPSULE", 2 },
+        { "MAN02CAPSULE", 2 }, { "MAN03CAPSULE", 2 }, { "COM00CAPSULE", 2 },
+        { "COM01CAPSULE", 2 }, { "COM02CAPSULE", 2 }, { "TURNSETCAPSULE", 2 },
+        { "MINISETCAPSULE_0", 2 }, { "MINISETCAPSULE_1", 2 }, { "MINISETCAPSULE_2", 2 },
+        { "MINISETCAPSULE_3", 2 }, { "MINISETCAPSULE_4", 2 }, { "BONUSSETCAPSULE", 2 },
+        { "FINGER00", 2 }, { "FINGER01", 2 }, { "FINGER02", 2 },
+        { "FINGER03", 2 }, { "VS", 2 }, { "DECIDECAPSULE", 2 },
+        { "REDCAPSULE", 2 }, { "BLUECAPSULE", 2 }, { "BG", 2 },
+        { "TONEDOWNFILTER", 2 }, { "FONTBGFILTER", 2 },
+    };
+    static NEL_MDLINFO *mdlInfoP;
+    static HuVec2f sprPos;
+    static float sprRot;
+    static s32 menuSel;
+    static s32 mdlSel;
+    static s32 dispTimer;
+    static s32 showF;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+    HuVecF pt;
+    HuVecF pt2;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    NEL_BLENDDBG *dbg = &sys->blendDbg;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+    s16 grp = sprite->grpId[9];
+    s32 i;
+    u32 attr;
+    s16 j;
+    s16 n;
+    HuVec2f *p;
+
+    if (sys->unk234 != 0 || dbg->stat != 0) {
+        return;
+    }
+    if (showF == 0) {
+        if ((HuPadBtn[0] & 0x400) != 0) {
+            if (++dispTimer >= 0x78) {
+                MdSpriteDispSet(9, 1);
+                dispTimer = 0;
+                showF = 1;
+            }
+        } else {
+            dispTimer = 0;
+        }
+    } else if (showF == 1) {
+        while (1) {
+            if ((HuPadBtn[0] & 0x400) != 0) {
+                if (++dispTimer >= 0x78) {
+                    MdSpriteDispSet(9, 0);
+                    dispTimer = 0;
+                    showF = 0;
+                    return;
+                }
+            } else {
+                dispTimer = 0;
+            }
+            if ((PADSTAT(sys) & 1) != 0) {
+                for (i = 0; i < 0x4D; i++) {
+                    if (--mdlSel == -1) {
+                        mdlSel = 0x4C;
+                    }
+                    attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+                    if ((attr & 1) == 0) {
+                        break;
+                    }
+                }
+            } else if ((PADSTAT(sys) & 2) != 0) {
+                for (i = 0; i < 0x4D; i++) {
+                    mdlSel = (mdlSel += 1) % 0x4D;
+                    attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+                    if ((attr & 1) == 0) {
+                        break;
+                    }
+                }
+            }
+            if ((HuPadBtnDown[0] & 4) != 0) {
+                menuSel = (menuSel += 1) % 3;
+            }
+            mdlInfoP = &mdlInfo[mdlSel];
+            pos = model->mdlPos[mdlSel];
+            rot = model->mdlRot[mdlSel];
+            scale = model->mdlScale[mdlSel];
+            attr = Hu3DModelAttrGet(model->mdlId[mdlSel]);
+            switch (menuSel) {
+                case 0:
+                    if (HuPadTrigL[0] <= 0x4B) {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            pos->x -= 5.0f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            pos->x += 5.0f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            pos->y -= 5.0f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            pos->y += 5.0f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            pos->z += 5.0f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            pos->z -= 5.0f;
+                        }
+                    } else if ((HuPadBtn[0] & 0x40) != 0) {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            pos->x -= 0.5f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            pos->x += 0.5f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            pos->y -= 0.5f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            pos->y += 0.5f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            pos->z += 0.5f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            pos->z -= 0.5f;
+                        }
+                    } else {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            pos->x -= 1.0f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            pos->x += 1.0f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            pos->y -= 1.0f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            pos->y += 1.0f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            pos->z += 1.0f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            pos->z -= 1.0f;
+                        }
+                    }
+                    break;
+                case 1:
+                    if (HuPadTrigL[0] <= 0x4B) {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            rot->x -= 10.0f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            rot->x += 10.0f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            rot->y -= 10.0f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            rot->y += 10.0f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            rot->z += 10.0f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            rot->z -= 10.0f;
+                        }
+                    } else if ((HuPadBtn[0] & 0x40) != 0) {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            rot->x -= 1.0f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            rot->x += 1.0f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            rot->y -= 1.0f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            rot->y += 1.0f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            rot->z += 1.0f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            rot->z -= 1.0f;
+                        }
+                    } else {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            rot->x -= 5.0f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            rot->x += 5.0f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            rot->y -= 5.0f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            rot->y += 5.0f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            rot->z += 5.0f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            rot->z -= 5.0f;
+                        }
+                    }
+                    break;
+                case 2:
+                    if (HuPadTrigL[0] <= 0x4B) {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            scale->x -= 0.05f;
+                            scale->y -= 0.05f;
+                            scale->z -= 0.05f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            scale->x += 0.05f;
+                            scale->y += 0.05f;
+                            scale->z += 0.05f;
+                        }
+                    } else if ((HuPadBtn[0] & 0x40) != 0) {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            scale->x -= 0.01f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            scale->x += 0.01f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            scale->y -= 0.01f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            scale->y += 0.01f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            scale->z += 0.01f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            scale->z -= 0.01f;
+                        }
+                    } else {
+                        if (HuPadSubStkX[0] <= -0x1D) {
+                            scale->x -= 0.1f;
+                        } else if (HuPadSubStkX[0] >= 0x1D) {
+                            scale->x += 0.1f;
+                        }
+                        if (HuPadStkY[0] <= -0x24) {
+                            scale->y -= 0.1f;
+                        } else if (HuPadStkY[0] >= 0x24) {
+                            scale->y += 0.1f;
+                        }
+                        if (HuPadSubStkY[0] <= -0x1D) {
+                            scale->z += 0.1f;
+                        } else if (HuPadSubStkY[0] >= 0x1D) {
+                            scale->z -= 0.1f;
+                        }
+                    }
+                    break;
+            }
+            HuSprPosSet(grp, 0, 32.0f, 0.0f);
+            HuSprPosSet(grp, 1, -32.0f, 0.0f);
+            sprRot += 2.0f;
+            MdMathAngleClamp(&sprRot);
+            HuSprGrpZRotSet(grp, sprRot);
+            MdMathPoint3Dto2D(pos, mdlInfoP->group, &pt);
+            HuSprGrpPosSet(grp, pt.x, pt.y);
+            if ((attr & 1) != 0) {
+                HuSprAttrSet(grp, 0, 0x80);
+                HuSprAttrSet(grp, 1, 0x80);
+                HuSprGrpTPLvlSet(grp, 0.4f);
+            } else {
+                HuSprAttrReset(grp, 0, 0x80);
+                HuSprAttrReset(grp, 1, 0x80);
+                HuSprGrpTPLvlSet(grp, 1.0f);
+            }
+            MdDebugFontPrint("POS-ADJUST-MODE(%2d / %2d) -> %s", mdlSel, 0x4D, mdlInfoP->name);
+            if (dbg->stat == 0) {
+                if (menuSel == 0) {
+                    MdDebugFontPrint("*  POS(%.1f / %.1f / %.1f)", pos->x, pos->y, pos->z);
+                } else {
+                    MdDebugFontPrint("   POS(%.1f / %.1f / %.1f)", pos->x, pos->y, pos->z);
+                }
+                if (menuSel == 1) {
+                    MdDebugFontPrint("*  ROT(%.1f / %.1f / %.1f)", rot->x, rot->y, rot->z);
+                } else {
+                    MdDebugFontPrint("   ROT(%.1f / %.1f / %.1f)", rot->x, rot->y, rot->z);
+                }
+                if (menuSel == 2) {
+                    MdDebugFontPrint("*SCALE(%.2f / %.2f / %.2f)", scale->x, scale->y, scale->z);
+                } else {
+                    MdDebugFontPrint(" SCALE(%.2f / %.2f / %.2f)", scale->x, scale->y, scale->z);
+                }
+            }
+            sprite = (SYSSPRITE *)sys->sprite;
+            n = 0;
+            for (j = 0; j < 4; j++) {
+                MdMathModel3Dto2D(sys->mdlNo[j] + 0x10, 2, &pt2);
+                pt2.x += MdVecTbl[0xD].x;
+                pt2.y += MdVecTbl[0xD].y;
+                if (sys->fukiMode[j] == 2) {
+                    p = MdSpritePosGet(3, j);
+                    p->x = pt2.x;
+                    p->y = pt2.y;
+                } else {
+                    p = MdSpritePosGet(4, n);
+                    p->x = pt2.x;
+                    p->y = pt2.y;
+                    n++;
+                }
+            }
+            fn_1_18C68(sys, 1);
+            HuPrcVSleep();
+        }
+    }
 }
