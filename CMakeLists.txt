@@ -273,6 +273,8 @@ foreach (dir ${REL_TARGETS})
                 target_compile_options(${dir} PRIVATE "/wd4305") # truncation
                 target_compile_options(${dir} PRIVATE "/wd4018") # signed/unsigned mismatch
                 target_compile_options(${dir} PRIVATE "/wd4996") # unsafe sprintf, etc
+                # the decompiled C++ passes string literals to char * parameters, as MWCC allowed
+                target_compile_options(${dir} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/Zc:strictStrings->")
                 target_compile_options(${dir} PRIVATE "/wd4146") # unary minus operator applied to unsigned type, result still unsigned
                 target_compile_options(${dir} PRIVATE "/wd4552") # result of expression not used
                 target_compile_options(${dir} PRIVATE "/wd4553") # result of expression not used: == vs =

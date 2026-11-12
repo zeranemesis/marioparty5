@@ -38,8 +38,13 @@ f64 fn_1_5A60(f32 min, f32 max);
 
 /* Same layout as the scene resource root declared in boatshadow.cpp. */
 struct Mgr511SplashRoot {
+#ifdef TARGET_PC
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
+#else
     u32 unk0;
     u32 unk4;
+#endif
     void **vtable;
     s32 unkC;
     ANIMDATA *unk10;

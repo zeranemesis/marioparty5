@@ -28,17 +28,22 @@ extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 
 struct Mgr511Star;
 
-void *fn_1_D7B4(Mgr511Star **arg0, s16 arg1);
-void fn_1_D80C(void *arg0);
-void *fn_1_D838(Mgr511Star **arg0, s16 arg1);
-void fn_1_D890(void *arg0);
-Mgr511Star *fn_1_DF70(Mgr511Star *arg0, s32 arg_sp0);
-void *fn_1_E060(Mgr511Star *arg0, s16 arg1);
-void fn_1_E0B4(Mgr511Star *arg0);
-void fn_1_E220(Mgr511Star *arg0);
-void fn_1_E268(Mgr511Star *arg0, Mtx mtx);
-void fn_1_E8AC(void *arg0, s32 arg1);
-void fn_1_E8B4(void *arg0, s32 arg1);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M_PC_C extern "C"
+#else
+#define M_PC_C
+#endif
+M_PC_C void *fn_1_D7B4(Mgr511Star **arg0, s16 arg1);
+M_PC_C void fn_1_D80C(void *arg0);
+M_PC_C void *fn_1_D838(Mgr511Star **arg0, s16 arg1);
+M_PC_C void fn_1_D890(void *arg0);
+M_PC_C Mgr511Star *fn_1_DF70(Mgr511Star *arg0, s32 arg_sp0);
+M_PC_C void *fn_1_E060(Mgr511Star *arg0, s16 arg1);
+M_PC_C void fn_1_E0B4(Mgr511Star *arg0);
+M_PC_C void fn_1_E220(Mgr511Star *arg0);
+M_PC_C void fn_1_E268(Mgr511Star *arg0, Mtx mtx);
+M_PC_C void fn_1_E8AC(void *arg0, s32 arg1);
+M_PC_C void fn_1_E8B4(void *arg0, s32 arg1);
 
 /* One twinkling star cluster: 0x28C bytes. */
 struct Mgr511Star {

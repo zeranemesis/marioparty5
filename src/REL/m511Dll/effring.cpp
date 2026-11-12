@@ -23,9 +23,14 @@ extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 
 struct Mgr511Effring;
 
-void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx);
-void fn_1_7654(Mgr511Effring *arg1, Point3d *arg2, s32 arg3, f32 arg4, f32 arg5, f32 arg6);
-void fn_1_7A44(f32 *arg0, Mgr511Effring *arg1, Mtx mtx);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M511_PC_C extern "C"
+#else
+#define M511_PC_C
+#endif
+M511_PC_C void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx);
+M511_PC_C void fn_1_7654(Mgr511Effring *arg1, Point3d *arg2, s32 arg3, f32 arg4, f32 arg5, f32 arg6);
+M511_PC_C void fn_1_7A44(f32 *arg0, Mgr511Effring *arg1, Mtx mtx);
 
 struct Mgr511Effring {
     void *unk0;

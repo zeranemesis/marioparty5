@@ -34,14 +34,19 @@ extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 struct Mgr511Stage;
 struct Mgr511StageNode;
 
-Mgr511StageNode *fn_1_CE34(Mgr511StageNode *arg0, Mgr511Stage *arg1, M511_VECF *arg2);
-void fn_1_D00C(void);
-void fn_1_D0E0(void);
-void fn_1_D110(Mgr511StageNode *arg0);
-void fn_1_D138(Mgr511StageNode *arg0);
-void fn_1_D1A8(Mgr511StageNode **arg0, void (*arg1)(Mgr511StageNode *));
-void fn_1_D208(Mgr511StageNode *arg0, Mgr511StageNode **arg1, void (*arg2)(Mgr511StageNode *));
-void *fn_1_D2C0(void *arg0, s16 arg1);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M_PC_C extern "C"
+#else
+#define M_PC_C
+#endif
+M_PC_C Mgr511StageNode *fn_1_CE34(Mgr511StageNode *arg0, Mgr511Stage *arg1, M511_VECF *arg2);
+M_PC_C void fn_1_D00C(void);
+M_PC_C void fn_1_D0E0(void);
+M_PC_C void fn_1_D110(Mgr511StageNode *arg0);
+M_PC_C void fn_1_D138(Mgr511StageNode *arg0);
+M_PC_C void fn_1_D1A8(Mgr511StageNode **arg0, void (*arg1)(Mgr511StageNode *));
+M_PC_C void fn_1_D208(Mgr511StageNode *arg0, Mgr511StageNode **arg1, void (*arg2)(Mgr511StageNode *));
+M_PC_C void *fn_1_D2C0(void *arg0, s16 arg1);
 
 struct Mgr511StageNode {
     void *unk0;

@@ -17,10 +17,15 @@ extern "C" s32 frand(void);
 struct Mgr511Smoke;
 struct Mgr511Spark;
 
-void fn_1_894C(Mgr511Smoke *arg0, struct ParticleNode *arg1);
-void fn_1_8B8C(Mgr511Smoke *arg0, Mtx mtx);
-void fn_1_917C(Mgr511Spark *arg0, struct ParticleNode *arg1);
-void fn_1_93BC(Mgr511Spark *arg0, Mtx mtx);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M511_PC_C extern "C"
+#else
+#define M511_PC_C
+#endif
+M511_PC_C void fn_1_894C(Mgr511Smoke *arg0, struct ParticleNode *arg1);
+M511_PC_C void fn_1_8B8C(Mgr511Smoke *arg0, Mtx mtx);
+M511_PC_C void fn_1_917C(Mgr511Spark *arg0, struct ParticleNode *arg1);
+M511_PC_C void fn_1_93BC(Mgr511Spark *arg0, Mtx mtx);
 
 /* One entry of the particle pool: 0x44 bytes. */
 struct ParticleNode {
@@ -88,10 +93,19 @@ struct Mgr511Spark {
     s32 unk24;
 };
 
+#ifdef TARGET_PC
+struct Mgr511ParticleRoot {
+    void *node[2];
+    void **vtable;
+    s32 unkC;
+    void *unk10;
+};
+#else
 struct Mgr511ParticleRoot {
     u8 pad10[0x10];
     s32 unk10;
 };
+#endif
 
 extern "C" {
 

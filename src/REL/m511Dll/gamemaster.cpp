@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stddef.h>
 
 #include "dolphin.h"
 
@@ -75,6 +76,20 @@ extern "C" void HuAudSStreamFadeOut(s32 id, s32 speed);
 extern "C" void HuAudJinglePlay(s16 id);
 void GWMgRecordSet(s32 id, u32 value);
 
+#ifdef TARGET_PC
+/* m511.cpp's Mgr511SubThread (vtable, thread + stack, semaphore, result) and timer: larger on PC */
+struct Mgr510SubA {
+    void *unk0;
+    OSThread thread;
+    u32 *stack;
+    OSSemaphore sem;
+    s32 result;
+};
+
+struct Mgr510SubB {
+    void *unk0;
+};
+#else
 struct Mgr510SubA {
     void *unk0;
     u8 pad4[0x334];
@@ -83,10 +98,16 @@ struct Mgr510SubA {
 struct Mgr510SubB {
     u32 unk0;
 };
+#endif
 
 struct Mgr510Rec {
+#ifdef TARGET_PC
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
+#else
     u32 unk0;
     u32 unk4;
+#endif
     u32 unk8;
     MGTIMER *unk10;
 };
@@ -397,12 +418,27 @@ void fn_1_8444(void)
 
 void fn_1_8478(CGameMaster *arg0)
 {
+#ifdef TARGET_PC
+    fn_1_7FE8((CGameMaster *)((u8 *)arg0 - offsetof(CGameMaster, subA)));
+#else
     fn_1_7FE8((CGameMaster *)((s32)arg0 - 0x20));
+#endif
 }
+
+#ifdef TARGET_PC
+unsigned int m511GameMasterSize(void)
+{
+    return sizeof(CGameMaster);
+}
+#endif
 
 void fn_1_8480(CGameMaster *arg0)
 {
+#ifdef TARGET_PC
+    __dt__Q24m51111CGameMasterFv((CGameMaster *)((u8 *)arg0 - offsetof(CGameMaster, subA)), 0);
+#else
     __dt__Q24m51111CGameMasterFv((CGameMaster *)((s32)arg0 - 0x20), 0);
+#endif
 }
 
 void *lbl_1_data_304[13] = {

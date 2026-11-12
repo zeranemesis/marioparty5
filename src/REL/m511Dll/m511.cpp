@@ -106,7 +106,13 @@ void *__nw__FUl(unsigned long size)
 {
     void *p;
 
+#ifdef TARGET_PC
+    /* shortcut: callers pass GC object sizes (__nw__FUl(0x3EC)); a field takes at most twice its GC room on
+     * 64-bit, so double them rather than overflow. Upgrade: sizeof of the constructed types at every call site. */
+    p = HuMemDirectMallocNum(HEAP_HEAP, size * 2, 0x10000000);
+#else
     p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+#endif
     if (p != 0) {
     } else {
         fn_1_CF8("ptr != NULL", "new.cpp", 0x17);
@@ -1781,7 +1787,11 @@ Mgr511CThread *fn_1_62A4(Mgr511CThread *t, s16 flag)
             OSCancelThread(&t->thread);
         }
         if (lbl_1_bss_A08 != 0) {
+#ifdef TARGET_PC
+            total = (u32)((u8 *)t->thread.stackBase - (u8 *)t->thread.stackEnd);
+#else
             total = (u32)t->thread.stackBase - (u32)t->thread.stackEnd;
+#endif
             remain = fn_1_63D8(t);
             printf("delete CThread@%p\nstack remain/total = 0x%08x/0x%08x (%f%%)\n", t, remain, total, (100.0 * (f64)remain) / (f64)total);
         }
@@ -1802,7 +1812,7 @@ u32 fn_1_63D8(Mgr511CThread *t)
     u32 *p;
     s32 r;
 
-    base = t->thread.stackEnd;
+    base = (u32 *)t->thread.stackEnd;
     r = fn_1_6478(base, 1);
     if (r != 0) {
         OSPanic("thread.cpp", 0x7F, "stack overflow\n");
@@ -1815,7 +1825,11 @@ u32 fn_1_63D8(Mgr511CThread *t)
             break;
         }
     }
+#ifdef TARGET_PC
+    return (u32)((u8 *)p - (u8 *)base);
+#else
     return (u32)p - (u32)base;
+#endif
 }
 
 s32 fn_1_6478(u32 *p, s32 mode)

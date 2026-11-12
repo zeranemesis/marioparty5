@@ -1,3 +1,38 @@
+diff --git a/include/dolphin/gx/GXVert.h b/include/dolphin/gx/GXVert.h
+index 2770b44..be4f8cd 100644
+--- a/include/dolphin/gx/GXVert.h
++++ b/include/dolphin/gx/GXVert.h
+@@ -140,6 +140,30 @@ void GXParam1f32(const f32 x);
+ void GXParam3f32(const f32 x, const f32 y, const f32 z);
+ void GXParam4f32(const f32 x, const f32 y, const f32 z, const f32 w);
+ 
++#if defined(TARGET_PC) && defined(__cplusplus)
++/* MP5: C++ game code writes vertices through GXWGFifo; each member assignment becomes the matching raw
++ * write instead of a store to the (unmapped) GameCube FIFO address. */
++struct AuroraWGPipeF32 { void operator=(f32 v) const { GXParam1f32(v); } };
++struct AuroraWGPipeU8 { void operator=(u8 v) const { GXParam1u8(v); } };
++struct AuroraWGPipeS8 { void operator=(s8 v) const { GXParam1s8(v); } };
++struct AuroraWGPipeU16 { void operator=(u16 v) const { GXParam1u16(v); } };
++struct AuroraWGPipeS16 { void operator=(s16 v) const { GXParam1s16(v); } };
++struct AuroraWGPipeU32 { void operator=(u32 v) const { GXParam1u32(v); } };
++struct AuroraWGPipeS32 { void operator=(s32 v) const { GXParam1s32(v); } };
++struct AuroraWGPipe {
++  AuroraWGPipeF32 f32;
++  AuroraWGPipeU8 u8;
++  AuroraWGPipeS8 s8;
++  AuroraWGPipeU16 u16;
++  AuroraWGPipeS16 s16;
++  AuroraWGPipeU32 u32;
++  AuroraWGPipeS32 s32;
++};
++static const AuroraWGPipe sAuroraWGPipe = {};
++#undef GXWGFifo
++#define GXWGFifo sAuroraWGPipe
++#endif
++
+ #ifdef __cplusplus
+ }
+ #endif
 diff --git a/lib/card/CardGciFolder.cpp b/lib/card/CardGciFolder.cpp
 index ec4f379..5a860ef 100644
 --- a/lib/card/CardGciFolder.cpp

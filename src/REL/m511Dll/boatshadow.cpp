@@ -29,8 +29,13 @@ struct Mgr510Shadow;
 
 
 struct Mgr510Singleton {
+#ifdef TARGET_PC
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
+#else
     u32 unk0;
     u32 unk4;
+#endif
     void **vtable;
     s32 unkC;
     ANIMDATA *unk10;
@@ -223,26 +228,26 @@ void fn_1_C1CC(Mgr510Shadow *arg0, f32 (*arg1)[4])
     GXSetZMode(1, GX_LEQUAL, 0);
     GXSetCullMode(GX_CULL_NONE);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-    *(volatile f32 *)0xCC008000 = -80.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = -160.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = 1.0f;
-    *(volatile f32 *)0xCC008000 = -80.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = 200.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = 80.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = 200.0f;
-    *(volatile f32 *)0xCC008000 = 1.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = 80.0f;
-    *(volatile f32 *)0xCC008000 = 0.0f;
-    *(volatile f32 *)0xCC008000 = -160.0f;
-    *(volatile f32 *)0xCC008000 = 1.0f;
-    *(volatile f32 *)0xCC008000 = 1.0f;
+    GXWGFifo.f32 = -80.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = -160.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 1.0f;
+    GXWGFifo.f32 = -80.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 200.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 80.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 200.0f;
+    GXWGFifo.f32 = 1.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 80.0f;
+    GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = -160.0f;
+    GXWGFifo.f32 = 1.0f;
+    GXWGFifo.f32 = 1.0f;
 }
 
 void *lbl_1_data_41C[5] = {

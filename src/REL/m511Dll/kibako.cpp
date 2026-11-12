@@ -39,16 +39,21 @@ struct Mgr510KibakoVec {
     f32 unk8;
 };
 
-Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, Mgr510KibakoVec *arg2, Vec *arg_sp0);
-void fn_1_19364(void);
-void fn_1_19450(void);
-void fn_1_19480(Mgr510Kibako *arg0);
-void fn_1_194D0(Mgr510Kibako *arg0);
-void fn_1_1952C(Mgr510Kibako *arg0);
-void fn_1_19648(Mgr510Kibako *arg0);
-void fn_1_19694(void **arg0, void (*arg1)(Mgr510Kibako *));
-void fn_1_196F4(void *arg0, void **arg1, void (*arg2)(Mgr510Kibako *));
-void *fn_1_197AC(void *arg0, s16 arg1);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M_PC_C extern "C"
+#else
+#define M_PC_C
+#endif
+M_PC_C Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, Mgr510KibakoVec *arg2, Vec *arg_sp0);
+M_PC_C void fn_1_19364(void);
+M_PC_C void fn_1_19450(void);
+M_PC_C void fn_1_19480(Mgr510Kibako *arg0);
+M_PC_C void fn_1_194D0(Mgr510Kibako *arg0);
+M_PC_C void fn_1_1952C(Mgr510Kibako *arg0);
+M_PC_C void fn_1_19648(Mgr510Kibako *arg0);
+M_PC_C void fn_1_19694(void **arg0, void (*arg1)(Mgr510Kibako *));
+M_PC_C void fn_1_196F4(void *arg0, void **arg1, void (*arg2)(Mgr510Kibako *));
+M_PC_C void *fn_1_197AC(void *arg0, s16 arg1);
 
 struct Mgr510Kibako {
     Mgr510Kibako *next;
@@ -65,8 +70,13 @@ struct Mgr510Kibako {
 };
 
 struct Mgr510KibakoMaster {
+#ifdef TARGET_PC
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
+#else
     u32 unk0;
     u32 unk4;
+#endif
     void **vtable;
     s32 unkC;
     s16 modelId;

@@ -30,13 +30,18 @@ struct Mgr511StarYajiMaster {
     s32 unkC;
 };
 
-void fn_1_EDD8(void);
-void fn_1_EEA8(void);
-void fn_1_F148(Mgr511StarYaji *arg0);
-void fn_1_F47C(Mgr511StarYaji *arg0, Mtx mtx);
-void fn_1_F95C(Mgr511StarYaji **arg0, void (*arg1)(Mgr511StarYaji *));
-void fn_1_F9BC(Mgr511StarYaji *arg0, Mgr511StarYaji **arg1, void (*arg2)(Mgr511StarYaji *));
-void *fn_1_FA74(void *arg0, s16 arg1);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M_PC_C extern "C"
+#else
+#define M_PC_C
+#endif
+M_PC_C void fn_1_EDD8(void);
+M_PC_C void fn_1_EEA8(void);
+M_PC_C void fn_1_F148(Mgr511StarYaji *arg0);
+M_PC_C void fn_1_F47C(Mgr511StarYaji *arg0, Mtx mtx);
+M_PC_C void fn_1_F95C(Mgr511StarYaji **arg0, void (*arg1)(Mgr511StarYaji *));
+M_PC_C void fn_1_F9BC(Mgr511StarYaji *arg0, Mgr511StarYaji **arg1, void (*arg2)(Mgr511StarYaji *));
+M_PC_C void *fn_1_FA74(void *arg0, s16 arg1);
 
 struct Mgr511StarYaji {
     Mgr511StarYaji *next;

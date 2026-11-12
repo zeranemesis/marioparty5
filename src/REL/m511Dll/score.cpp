@@ -2,16 +2,31 @@
 #include "game/memory.h"
 #include "game/sprite.h"
 
-/* Minimal view of the Mg timer record; only the fields this unit touches. */
+#include <stddef.h>
+
+/* View of game/mg/timer.h's MgTimer up to the score window id, the fields this unit touches
+ * (mode 0x00, stopF 0x14, winDispF 0x1C, winGrpId 0x48 per the original object). Nothing before
+ * winGrpId is pointer sized, so the offsets hold on PC too. */
 struct MGTIMER {
-    s32 unk0;
-    u8 pad04[0x10];
-    s32 unk14;
-    u8 pad18[0x14];
-    void *winGrpId;
-    s32 winDispF;
-    s32 stopF;
     s32 mode;
+    s32 prevMode;
+    s32 type;
+    s32 offType;
+    s32 dispOnF;
+    s32 stopF;
+    s32 scaleDir;
+    s32 winDispF;
+    u8 flashFlag;
+    s32 maxTime;
+    s32 endTime;
+    s32 speed;
+    s32 time;
+    s32 recordTime;
+    s32 fadeOutTime;
+    f32 pos[2];
+    s16 timeUnit;
+    s16 gameMesId;
+    s16 winGrpId;
 };
 
 /* These are plain C in the original: m511.o defines them unmangled
@@ -49,10 +64,15 @@ void MgScoreWinPosSet(void *win, f32 x, f32 y);
 struct Mgr511ScoreBoard;
 struct Mgr511Score;
 
-void fn_1_15C24(Mgr511Score *arg0);
+#ifdef TARGET_PC /* the definitions below sit in extern "C" blocks */
+#define M_PC_C extern "C"
+#else
+#define M_PC_C
+#endif
+M_PC_C void fn_1_15C24(Mgr511Score *arg0);
 void fn_1_166E0(Mgr511Score *arg0, Mgr511ScoreBoard *arg1);
-void fn_1_169DC(Mgr511ScoreBoard *arg1);
-void fn_1_16B10(Mgr511ScoreBoard *arg1);
+M_PC_C void fn_1_169DC(Mgr511ScoreBoard *arg1);
+M_PC_C void fn_1_16B10(Mgr511ScoreBoard *arg1);
 
 struct Mgr511Score {
     void *unk0;
@@ -210,9 +230,9 @@ void fn_1_15DE8(Mgr511Score *arg0)
 
 void fn_1_15E1C(Mgr511Score *arg0)
 {
-    if (arg0->timer->unk14 == 0) {
-        arg0->timer->unk14 = 1;
-        arg0->timer->unk0 = 1;
+    if (arg0->timer->stopF == 0) {
+        arg0->timer->stopF = 1;
+        arg0->timer->mode = 1;
     }
 }
 
@@ -459,7 +479,7 @@ void fn_1_169DC(Mgr511ScoreBoard *arg1)
             arg1->timer->mode = 1;
         }
         MgTimerPosSet(arg1->timer, 10.0f + lbl_1_rodata_8A0[arg1->index].x, 8.0f + lbl_1_rodata_8A0[arg1->index].y);
-        MgScoreWinDispSet(arg1->timer->winGrpId, 0);
+        MgScoreWinDispSet((void *)(size_t)(s32)arg1->timer->winGrpId, 0);
         arg1->timer->winDispF = 0;
         arg1->hasTimer = 1;
     }
