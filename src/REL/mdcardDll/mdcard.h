@@ -274,9 +274,11 @@ typedef struct Sys_s {
     s32 ovlNo;                 //0x18
     s8 exitF;                  //0x1C
     s8 skipWipeF;              //0x1D
-    s8 unk1E;                  //0x1E
-    s8 unk1F;                  //0x1F
-    u8 pad20[0x3B - 0x20];     //0x20
+    s8 selMode;                //0x1E
+    s8 curSel;                 //0x1F
+    s8 prevSel;                //0x20
+    s8 selNum;                 //0x21
+    u8 pad22[0x3B - 0x22];     //0x22
     s8 unk3B[4];               //0x3B
     u8 pad3F;                  //0x3F
     s16 loadState;             //0x40

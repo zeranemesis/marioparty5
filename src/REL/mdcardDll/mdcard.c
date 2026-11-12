@@ -43,7 +43,11 @@ s16 MdMessWinChoiceNowGet(MDMESS_WORK *mess, int winNo);
 void MdMessWinChoiceNowSet(MDMESS_WORK *mess, int winNo, s16 choice);
 void MdMessWinAttrSet(MDMESS_WORK *mess, int winNo, u32 attr);
 void MdMessWinAttrReset(MDMESS_WORK *mess, int winNo, u32 attr);
+#ifdef __MWERKS__
+void MdMessHelpWinCreate(MDMESS_WORK *mess, int winNo, u32 mesNo, double posX, double posY, s16 w, s16 h, double bgTPLvl, s16 drawNo);
+#else
 void MdMessHelpWinCreate(MDMESS_WORK *mess, int winNo, u32 mesNo, float posX, float posY, s16 w, s16 h, float bgTPLvl, s16 drawNo);
+#endif
 void MdSpriteDispSet(MDSPRITE_WORK *sprite, int grpNo, BOOL dispF);
 HuVec2f *MdSpritePosGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
 HuVec2f *MdSpriteScaleGet(MDSPRITE_WORK *sprite, int grpNo, int memberNo);
@@ -74,6 +78,14 @@ void fn_1_7DA0(void);
 void fn_1_84AC(void);
 void fn_1_9100(void);
 void fn_1_98C8(void);
+void fn_1_951C(void);
+void fn_1_9714(void);
+void fn_1_9CC8(s32 arg0);
+s32 fn_1_9A70(void);
+void fn_1_9E88(void);
+void fn_1_80A8(s32 arg0);
+void fn_1_A2BC(s32 arg0, s32 arg1);
+void MdPosAdjustMode(void);
 void fn_1_A094(s32 no);
 s32 fn_1_A204(s32 modelNo, s32 cameraNo);
 
@@ -86,6 +98,8 @@ s32 (*MdProcTbl[10])() = {
 };
 
 static s32 bgmStream;
+static s32 lbl_1_bss_1F8;
+static s32 lbl_1_bss_1FC;
 SYS sysWork;
 SYS *sys;
 SYS *sysP;
@@ -349,8 +363,8 @@ void fn_1_DD8(void)
     MdProcTbl[0](0);
     msg = &sys->msg;
     msg->mode = 0;
-    sys->unk1E = 0;
-    sys->unk1F = 3;
+    sys->selMode = 0;
+    sys->curSel = 3;
     WipeColorSet(255, 255, 255);
     WipeCreate(1, 0, 30);
     fn_1_A094(0);
@@ -674,6 +688,223 @@ void fn_1_1448(void)
             MdMessWinMesSet(mess, 2, 0x150001);
             sys->step = 2;
             sys->flowMode = 1;
+            break;
+    }
+}
+
+void fn_1_1DF0(void)
+{
+    MDMODEL_WORK *model;
+    int stat;
+    MDMESS_WORK *mess;
+    MDCARD_MSG *msg;
+
+    model = sys->model;
+    mess = sys->mess;
+    msg = &sys->msg;
+    switch(sys->step) {
+        case 0:
+            sys->selMode = 0;
+            MdProcTbl[0](0);
+            MdMessWinHomeClear(mess, 2);
+            MdMessWinMesSet(mess, 2, 0x150003);
+            fn_1_A094(12);
+            Hu3DModelAttrReset(model->mdlId[2], HU3D_MOTATTR_REV);
+            Hu3DModelAttrReset(model->mdlId[2], HU3D_MOTATTR_PAUSE);
+            Hu3DMotionSpeedSet(model->mdlId[2], 1.0f);
+            fn_1_A094(9);
+            sys->step = 1;
+            break;
+
+        case 1:
+            stat = MdMessWinCheck(mess, 2);
+            if(stat != 0) {
+                MdMessWinOpen(mess, 1, 48.0f, 64.0f, 0x1E0, 0xB0, 1.0f, 0x40);
+                sys->step = 2;
+            }
+            break;
+
+        case 2:
+            MdProcTbl[0](0);
+            MdMessHelpWinCreate(mess, 0, 0x20004, 0.0, 340.0, 0x200, 0x20, 0.0, 0);
+            MdMessWinAttrSet(mess, 1, HUWIN_ATTR_ALIGN_CENTER);
+            MdMessWinMesSet(mess, 1, 0x150004);
+            MdMessWinChoiceNowSet(mess, 1, 0);
+            lbl_1_bss_1FC = 0;
+            MdMessWinHomeClear(mess, 2);
+            MdMessWinMesSet(mess, 2, 0x150005);
+            sys->unk50 = HuPrcChildCreate(fn_1_9A0, 106, 0x1000, 0, sys->objman);
+            msg->mode = 1;
+            sys->step = 3;
+            break;
+
+        case 3:
+            lbl_1_bss_1F8 = MdMessWinChoiceNowGet(mess, 1);
+            if(lbl_1_bss_1FC != lbl_1_bss_1F8 && lbl_1_bss_1F8 >= 0 && lbl_1_bss_1F8 <= 3) {
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150005 + lbl_1_bss_1F8);
+            }
+            lbl_1_bss_1FC = lbl_1_bss_1F8;
+            if(msg->mode == 2) {
+                HuPrcKill(sys->unk50);
+                sys->step = 4;
+            }
+            break;
+
+        case 4:
+            stat = MdMessWinCheck(mess, 1);
+            if(stat != 0) {
+                if(msg->choice == -1) {
+                    MdMessWinClose(mess, 0);
+                    MdMessWinAttrReset(mess, 1, HUWIN_ATTR_ALIGN_CENTER);
+                    MdMessWinKill(mess, 1);
+                    MdMessWinHomeClear(mess, 2);
+                    MdMessWinMesSet(mess, 2, 0x150001);
+                    Hu3DModelAttrReset(model->mdlId[2], HU3D_MOTATTR_PAUSE);
+                    Hu3DModelAttrSet(model->mdlId[2], HU3D_MOTATTR_REV);
+                    Hu3DMotionSpeedSet(model->mdlId[2], 2.0f);
+                    fn_1_A094(10);
+                    sys->step = 2;
+                    sys->flowMode = 1;
+                } else {
+                    sys->selMode = msg->choice;
+                    sys->step = 0;
+                    sys->flowMode = 4;
+                }
+            }
+            break;
+    }
+}
+
+// remaining diff: sys@ha/jumptable temp register allocation (r3/r4/r30)
+void fn_1_22B8(void)
+{
+    MDMODEL_WORK *model;
+    MDMESS_WORK *mess;
+    int stat;
+    MDCARD_MSG *msg;
+
+    model = sys->model;
+    mess = sys->mess;
+    msg = &sys->msg;
+    switch(sys->step) {
+        case 0:
+            MdProcTbl[0](0);
+            fn_1_951C();
+            sys->prevSel = sys->curSel;
+            MdMessWinHomeClear(mess, 1);
+            MdMessWinMesSet(mess, 1, 0x150009);
+            sys->step = 1;
+            break;
+
+        case 1:
+            stat = MdProcTbl[5](0);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x15000D - sys->curSel);
+                if(sys->selNum == 1) {
+                    sys->step = 3;
+                } else {
+                    sys->step = 2;
+                }
+            }
+            break;
+
+        case 2:
+            stat = MdProcTbl[6](0);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 3;
+            }
+            break;
+
+        case 3:
+            if((sys->padWork->DStkDown[0] & 1) != 0 && sys->selNum > 1) {
+                sys->prevSel = sys->curSel;
+                sys->curSel--;
+                if(sys->curSel == -1) {
+                    sys->curSel = sys->selNum-1;
+                }
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x15000D - sys->curSel);
+                fn_1_A094(2);
+                sys->step = 6;
+            } else if((sys->padWork->DStkDown[0] & 2) != 0 && sys->selNum > 1) {
+                sys->prevSel = sys->curSel;
+                sys->curSel++;
+                sys->curSel = sys->curSel % sys->selNum;
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x15000D - sys->curSel);
+                fn_1_A094(2);
+                sys->step = 7;
+            } else if((HuPadBtnDown[0] & 0x200) != 0) {
+                fn_1_A094(5);
+                if(sys->selNum == 1) {
+                    sys->step = 5;
+                } else {
+                    sys->step = 4;
+                }
+            } else if((HuPadBtnDown[0] & 0x100) != 0) {
+                fn_1_9714();
+                fn_1_A094(3);
+                if(sys->selNum == 1) {
+                    sys->step = 9;
+                } else {
+                    sys->step = 8;
+                }
+            }
+            break;
+
+        case 4:
+            stat = MdProcTbl[6](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 5;
+            }
+            break;
+
+        case 5:
+            stat = MdProcTbl[5](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                MdMessWinAttrSet(mess, 1, HUWIN_ATTR_ALIGN_CENTER);
+                MdMessWinMesSet(mess, 1, 0x150004);
+                MdMessWinChoiceNowSet(mess, 1, 0);
+                lbl_1_bss_1FC = 0;
+                MdMessWinHomeClear(mess, 2);
+                MdMessWinMesSet(mess, 2, 0x150005);
+                sys->unk50 = HuPrcChildCreate(fn_1_9A0, 106, 0x1000, 0, sys->objman);
+                msg->mode = 1;
+                sys->step = 3;
+                sys->flowMode = 3;
+            }
+            break;
+
+        case 6:
+        case 7:
+            stat = MdProcTbl[5](sys->step-4);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 3;
+            }
+            break;
+
+        case 8:
+            stat = MdProcTbl[6](1);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 9;
+            }
+            break;
+
+        case 9:
+            stat = MdProcTbl[7](0);
+            if(stat == 1) {
+                MdProcTbl[0](0);
+                sys->step = 0;
+                sys->flowMode = 5;
+            }
             break;
     }
 }
