@@ -1029,6 +1029,9 @@ void MB4_MainObjUpdate(OMOBJ *obj) {
 
     stateP = &mb4_Work[0x17];
     for (playerNo = 0; playerNo < 4; playerNo++) {
+#ifdef TARGET_PC
+        MBPlayerPosGet(playerNo, &pos); // GC reads stale stack here (first pass uninitialised)
+#endif
         if ((pos.x != 0.0f || pos.y != 0.0f || pos.y != 0.0f) &&
             MBPlayerMotionNoGet(playerNo) != 0xA &&
             MBPlayerMotionNoGet(playerNo) != 6 &&
