@@ -170,22 +170,14 @@ void fn_1_39DC(void)
         player->shockSe = -1;
         player->doneF = 0;
         player->aiTimer = 0;
-        player->velSave.z = 0.0f;
-        player->velSave.y = 0.0f;
-        player->velSave.x = 0.0f;
-        player->vel.z = 0.0f;
-        player->vel.y = 0.0f;
-        player->vel.x = 0.0f;
-        player->aiTarget.z = 0.0f;
-        player->aiTarget.y = 0.0f;
-        player->aiTarget.x = 0.0f;
+        player->velSave.x = player->velSave.y = player->velSave.z = 0.0f;
+        player->vel.x = player->vel.y = player->vel.z = 0.0f;
+        player->aiTarget.x = player->aiTarget.y = player->aiTarget.z = 0.0f;
         if (player->grp == 0) {
             lbl_1_bss_13C = player;
             player->teamNo = 0;
             player->radius = 50.0f;
-            player->pos.x = lbl_1_data_248[1].x;
-            player->pos.y = lbl_1_data_248[1].y;
-            player->pos.z = lbl_1_data_248[1].z;
+            player->pos = lbl_1_data_248[1];
             player->state = 14;
             player->aiState = 0;
             player->aiTimer = 0;
@@ -200,9 +192,7 @@ void fn_1_39DC(void)
             cpuNo++;
             player->radius = 150.0f;
             fn_1_5AFC(player);
-            player->spawnPos.x = player->pos.x;
-            player->spawnPos.y = player->pos.y;
-            player->spawnPos.z = player->pos.z;
+            player->spawnPos = player->pos;
             player->state = 19;
             player->aiState = 0;
             player->aiTimer = 30;
@@ -459,10 +449,9 @@ static void fn_1_4900(OMOBJ *obj)
             break;
         case 16:
             if (obj->work[0]++ >= 25) {
+                obj->work[0] == 1; /* dead compare, kept for codegen */
                 fn_1_3F68(obj, 2);
-                player->dest.x = lbl_1_data_248[player->teamNo].x;
-                player->dest.y = lbl_1_data_248[player->teamNo].y;
-                player->dest.z = lbl_1_data_248[player->teamNo].z;
+                player->dest = lbl_1_data_248[player->teamNo];
                 player->state = 17;
                 lbl_1_bss_14 = 3;
             }
@@ -470,9 +459,7 @@ static void fn_1_4900(OMOBJ *obj)
         case 17:
             PSVECSubtract(&player->dest, &player->pos, &diff);
             if (PSVECMag(&diff) < 15.0f) {
-                player->pos.x = player->dest.x;
-                player->pos.y = player->dest.y;
-                player->pos.z = player->dest.z;
+                player->pos = player->dest;
                 player->state = 18;
                 fn_1_3F68(obj, 6);
                 obj->objFunc = fn_1_4CCC;
@@ -488,19 +475,17 @@ static void fn_1_4900(OMOBJ *obj)
 
 void fn_1_4CCC(OMOBJ *obj)
 {
-    s16 pan;
     s16 vol;
-    Point3d rot;
+    s16 pan;
     Point3d target;
+    Point3d rot;
     M523Player *player;
-    M523Player *hit;
 
     player = (M523Player *)obj->data;
     fn_1_E58(&player->pos, &vol, &pan);
     CharModelVoicePanSet(player->charNo, pan);
     CharModelVoiceVolSet(player->charNo, vol);
-    player->vel.z = 0.0f;
-    player->vel.x = 0.0f;
+    player->vel.x = player->vel.z = 0.0f;
     switch (player->state) {
         case 1:
             if (lbl_1_bss_18 == 2) {
@@ -509,15 +494,9 @@ void fn_1_4CCC(OMOBJ *obj)
                 return;
             }
             fn_1_4ED4(obj);
-        default:
-            omSetRot(obj, player->rot.x, player->rot.y, player->rot.z);
-            omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
-            return;
+            break;
         case 2:
-            hit = lbl_1_bss_140[player->hitNo];
-            target.x = hit->pos.x;
-            target.y = hit->pos.y;
-            target.z = hit->pos.z;
+            target = lbl_1_bss_140[player->hitNo]->pos;
             target.y = 200.0f;
             player->rot.y += 4.0f;
             if (fn_1_3244(&player->pos, &target, &rot, 3.0f) != 0) {
@@ -525,17 +504,16 @@ void fn_1_4CCC(OMOBJ *obj)
                 player->state = 7;
                 obj->objFunc = fn_1_58A8;
             }
-            omSetRot(obj, player->rot.x, player->rot.y, player->rot.z);
-            omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
-            return;
+            break;
     }
+    omSetRot(obj, player->rot.x, player->rot.y, player->rot.z);
+    omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
 }
 
 static void fn_1_4ED4(OMOBJ *obj)
 {
-    Point3d tmp;
-    f32 mag;
     f32 velMag;
+    f32 mag;
     M523Player *player;
 
     player = (M523Player *)obj->data;
@@ -569,31 +547,26 @@ static void fn_1_4ED4(OMOBJ *obj)
             lbl_1_bss_150[i - 1] = lbl_1_bss_150[i];
         }
     }
-    lbl_1_bss_150[9].x = player->vel.x;
-    lbl_1_bss_150[9].y = player->vel.y;
-    lbl_1_bss_150[9].z = player->vel.z;
+    lbl_1_bss_150[9] = player->vel;
 }
 
 static void fn_1_54A8(OMOBJ *obj)
 {
-    Point3d tmp;
     Point3d diff;
+    f32 mag;
     M523Player *player;
 
     player = (M523Player *)obj->data;
-    player->vel.z = 0.0f;
-    player->vel.y = 0.0f;
-    player->vel.x = 0.0f;
+    player->vel.x = player->vel.y = player->vel.z = 0.0f;
     switch (player->state) {
         case 1:
             PSVECSubtract(&lbl_1_data_278[0], &player->pos, &diff);
             diff.y = 0.0f;
-            if (PSVECMag(&diff) < 15.0f) {
+            mag = PSVECMag(&diff);
+            if (mag < 15.0f) {
                 fn_1_3F68(obj, 0);
                 player->state = 4;
-                player->vel.x = diff.x;
-                player->vel.y = diff.y;
-                player->vel.z = diff.z;
+                player->vel = diff;
             } else {
                 PSVECNormalize(&diff, &diff);
                 player->vel.x = 15.0f * diff.x;
@@ -675,6 +648,7 @@ static void fn_1_5CB8(OMOBJ *obj)
 {
     Point3d diff;
     f32 frame;
+    f32 step;
     M523Player *player;
 
     player = (M523Player *)obj->data;
@@ -684,9 +658,7 @@ static void fn_1_5CB8(OMOBJ *obj)
             if (PSVECMag(&diff) < 30.0f) {
                 obj->work[0] = 300;
                 obj->work[1] = 0;
-                player->pos.x = player->dest.x;
-                player->pos.y = player->dest.y;
-                player->pos.z = player->dest.z;
+                player->pos = player->dest;
                 player->state = 20;
                 player->rot.y = 170.0f;
                 lbl_1_bss_14 = 1;
@@ -697,8 +669,9 @@ static void fn_1_5CB8(OMOBJ *obj)
             }
             break;
         case 20:
-            player->rot.y -= 5.729578f;
-            player->rot.x += 5.729578f;
+            step = 5.729578f;
+            player->rot.y -= step;
+            player->rot.x += step;
             if (player->rot.x >= (495.0f - (65.0f * (f32)(player->teamNo - 2)))) {
                 if (player->teamNo >= 2) {
                     player->state = 21;
@@ -723,9 +696,7 @@ static void fn_1_5CB8(OMOBJ *obj)
         case 21:
             PSVECSubtract(&lbl_1_data_248[player->teamNo], &player->pos, &diff);
             if (PSVECMag(&diff) < 30.0f) {
-                player->pos.x = lbl_1_data_248[player->teamNo].x;
-                player->pos.y = lbl_1_data_248[player->teamNo].y;
-                player->pos.z = lbl_1_data_248[player->teamNo].z;
+                player->pos = lbl_1_data_248[player->teamNo];
                 player->state = 25;
             } else {
                 PSVECNormalize(&diff, &diff);
@@ -734,33 +705,27 @@ static void fn_1_5CB8(OMOBJ *obj)
             }
             break;
         case 22:
-            switch (obj->work[0]) {
-                case 0:
-                    omVibrate(player->index, 0x5A, 6, 6);
-                    Hu3DMotionTimeSet(obj->mdlId[2], 0.0f);
-                    Hu3DModelAttrReset(obj->mdlId[2], 0x40000002);
-                    player->shockSe = fn_1_F34(&player->pos, 0x74C);
-                    break;
-                case 14:
-                    fn_1_9798(&player->pos);
-                    Hu3DModelAttrSet(obj->mdlId[2], 0x40000002);
-                    break;
-                case 74:
-                    Hu3DModelAttrReset(obj->mdlId[2], 0x40000002);
-                    break;
-                case 89:
-                    player->state = 25;
-                    Hu3DMotionTimeSet(obj->mdlId[2], 0.0f);
-                    Hu3DModelAttrSet(obj->mdlId[2], 0x40000002);
-                    HuAudFXStop(player->shockSe);
-                    break;
+            if (obj->work[0] == 0) {
+                omVibrate(player->index, 0x5A, 6, 6);
+                Hu3DMotionTimeSet(obj->mdlId[2], 0.0f);
+                Hu3DModelAttrReset(obj->mdlId[2], 0x40000002);
+                player->shockSe = fn_1_F34(&player->pos, 0x74C);
+            } else if (obj->work[0] == 14) {
+                fn_1_9798(&player->pos);
+                Hu3DModelAttrSet(obj->mdlId[2], 0x40000002);
+            } else if (obj->work[0] == 74) {
+                Hu3DModelAttrReset(obj->mdlId[2], 0x40000002);
+            } else if (obj->work[0] == 89) {
+                player->state = 25;
+                Hu3DMotionTimeSet(obj->mdlId[2], 0.0f);
+                Hu3DModelAttrSet(obj->mdlId[2], 0x40000002);
+                HuAudFXStop(player->shockSe);
             }
             obj->work[0]++;
             break;
         case 25:
             obj->objFunc = fn_1_6294;
-            player->rot.y = 0.0f;
-            player->rot.x = 0.0f;
+            player->rot.x = player->rot.y = 0.0f;
             Hu3DModelRotSetV(player->obj->mdlId[1], &player->rot);
             Hu3DModelRotSetV(player->obj->mdlId[2], &player->rot);
             break;
@@ -788,8 +753,8 @@ static void fn_1_61E0(M523Player *player)
 
 void fn_1_6294(OMOBJ *obj)
 {
-    s16 pan;
     s16 vol;
+    s16 pan;
     M523Player *player;
 
     player = (M523Player *)obj->data;
@@ -799,9 +764,7 @@ void fn_1_6294(OMOBJ *obj)
     player->velSave.x = player->vel.x;
     player->velSave.y = player->vel.y;
     player->velSave.z = player->vel.z;
-    player->vel.z = 0.0f;
-    player->vel.y = 0.0f;
-    player->vel.x = 0.0f;
+    player->vel.x = player->vel.y = player->vel.z = 0.0f;
     if (lbl_1_bss_18 == 2 && player->shockF != 0 && player->state != 2) {
         fn_1_61E0(player);
         player->state = 3;
@@ -896,19 +859,14 @@ void fn_1_6294(OMOBJ *obj)
 static void fn_1_6800(OMOBJ *obj)
 {
     Point3d diff;
-    Point3d tmp;
-    Point3d push;
     f32 mag;
+    f32 dmag;
     s32 i;
     M523Player *player;
-    M523Player *other;
 
     player = (M523Player *)obj->data;
-    player->stkY = 0;
-    player->stkX = 0;
-    player->vel.z = 0.0f;
-    player->vel.y = 0.0f;
-    player->vel.x = 0.0f;
+    player->stkX = player->stkY = 0;
+    player->vel.x = player->vel.y = player->vel.z = 0.0f;
     if (player->doneF != 0) {
         player->state = 5;
         if (lbl_1_bss_1C == 0) {
@@ -921,11 +879,10 @@ static void fn_1_6800(OMOBJ *obj)
     }
     PSVECSubtract(&player->dest, &player->pos, &diff);
     diff.y = 0.0f;
-    if (PSVECMag(&diff) < 15.0f) {
+    dmag = PSVECMag(&diff);
+    if (dmag < 15.0f) {
         player->doneF = 1;
-        player->vel.x = diff.x;
-        player->vel.y = diff.y;
-        player->vel.z = diff.z;
+        player->vel = diff;
     } else {
         PSVECNormalize(&diff, &diff);
         player->stkX = 56.0f * diff.x;
@@ -1137,9 +1094,7 @@ static void fn_1_7898(OMOBJ *obj)
                     omResetStatBit(obj, 0x100);
                     Hu3DModelHookReset(player->fuseModel);
                     player->state = 6;
-                    player->vel.z = 0.0f;
-                    player->vel.y = 0.0f;
-                    player->vel.x = 0.0f;
+                    player->vel.x = player->vel.y = player->vel.z = 0.0f;
                     fn_1_3F68(obj, 10);
                     omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
                     obj->work[1] = 0;
@@ -1153,9 +1108,7 @@ static void fn_1_7898(OMOBJ *obj)
                 PSVECAdd(&player->pos, &player->vel, &tmp);
                 if (tmp.y < 0.0f) {
                     fn_1_3F68(obj, 7);
-                    player->vel.z = 0.0f;
-                    player->vel.y = 0.0f;
-                    player->vel.x = 0.0f;
+                    player->vel.x = player->vel.y = player->vel.z = 0.0f;
                     tmp.y = 0.0f;
                     player->state = 0;
                 }
