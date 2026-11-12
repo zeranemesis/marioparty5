@@ -279,7 +279,7 @@ s16 fn_1_928(s32 no)
     return winnerTbl[no];
 }
 
-u32 fn_1_940(u32 grp)
+s32 fn_1_940(u32 grp)
 {
     s32 i;
     u32 ret;
