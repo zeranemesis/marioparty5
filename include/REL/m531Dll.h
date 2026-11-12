@@ -120,7 +120,7 @@ SHARED_SYM extern HU3DMODEL Hu3DData[512];
 void *HuDataSelHeapReadNum(int dataNum, s32 num, int heap);
 void HuMemDirectFree(void *ptr);
 void *HuMemDirectMallocNum(s32 heap, u32 size, int align);
-void HuPrcCurrentGet(void);
+void *HuPrcCurrentGet(void);
 
 HU3DMODELID CharModelCreate(s16 charNo, s16 model);
 void CharModelKill(s16 charNo);
@@ -159,12 +159,11 @@ public:
     s32 valueGet();
     void posSet(float start, float end);
 
-private:
     void *m_timer;
 };
 
 class CMinigameCore {
-protected:
+public:
     u32 m_unk0;
 
 public:
@@ -179,7 +178,6 @@ public:
 
     void setup(int prio, int stackSize);
 
-protected:
     s32 m_winner[4];
     s32 m_unk18;
     s32 m_unk1C;
