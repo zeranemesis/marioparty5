@@ -87,7 +87,7 @@ typedef struct M522RTaskVtbl_s {
 typedef struct M522RTask_s {
     M522RNode link;
     M522RTaskVtbl *vtbl;
-    u32 flags;
+    s32 flags;
 } M522RTask;
 
 // Singleton game master (only the base part that m539 touches).
@@ -523,7 +523,7 @@ void fn_1_74A4(M522RCam *self, s32 pad)
     PSMTXMultVecSR(rot, &y, &self->up);
     PSVECSubtract(&self->pos, &z, &self->target);
     fast = (btn & 0x200) != 0;
-    speed = fast ? 70.0f : 20.0f;
+    speed = (u8)fast ? 70.0f : 20.0f;
     C_MTXLookAt(inv, &self->pos, &self->up, &self->target);
     PSMTXInverse(inv, inv);
     mv.x = (speed * (u8)((btn & 2) != 0)) - (speed * (u8)((btn & 1) != 0));
@@ -573,8 +573,13 @@ typedef struct M522RHandleNode_s {
     struct M522RHandleNode_s *next;
     struct M522RHandleNode_s *prev;
     void *ptr;
-    u32 index : 20;
-    u32 gen : 12;
+    union {
+        u32 handle;
+        struct {
+            u32 index : 20;
+            u32 gen : 12;
+        } b;
+    } u;
 } M522RHandleNode;
 
 typedef struct M522RHandleMan_s {
@@ -595,26 +600,33 @@ typedef struct M522ListNode_s {
 M522_HEAPSEL *fn_1_7B00(M522RHandleMan *self, u32 n)
 {
     u32 i;
-    M522RHandleNode *nodes;
+    void *p;
+    void *q;
+    void *r;
+    void *s;
 
     M522R_ASSERT_INL(n <= 0x1000, lbl_1_data_211, lbl_1_data_206, 0x44);
     self->count = n;
-    nodes = (M522RHandleNode *)fn_1_689C((n + 1) * sizeof(M522RHandleNode));
-    self->nodes = nodes;
+    p = HuMemDirectMallocNum(HEAP_HEAP, (n + 1) * sizeof(M522RHandleNode), 0x10000000);
+    M522R_ASSERT_INL(p != 0, lbl_1_data_190, lbl_1_data_19C, 0x17);
+    q = p;
+    r = q;
+    s = r;
+    self->nodes = (M522RHandleNode *)s;
     self->used = &self->nodes[n];
     self->used->next = self->used;
     self->used->prev = self->used;
     for (i = 1; i < n; i++) {
-        self->nodes[i].next = &self->nodes[i + 1];
-        self->nodes[i].prev = &self->nodes[i - 1];
+        self->nodes[i].next = &self->nodes[i] + 1;
+        self->nodes[i].prev = &self->nodes[i] - 1;
         self->nodes[i].ptr = 0;
-        self->nodes[i].index = i;
-        self->nodes[i].gen = 0;
+        self->nodes[i].u.b.index = i;
+        self->nodes[i].u.b.gen = 0;
     }
     self->nodes[1].prev = &self->nodes[0];
     self->nodes[n - 1].next = &self->nodes[0];
     self->nodes[0].next = &self->nodes[1];
-    self->nodes[0].prev = &self->nodes[n - 1];
+    self->nodes[0].prev = &self->nodes[n] - 1;
     return (M522_HEAPSEL *)self;
 }
 
@@ -634,27 +646,28 @@ M522_HEAPSEL *fn_1_7D04(M522_HEAPSEL *table, s16 flag)
     return table;
 }
 
-/* Take a free entry, bind obj to it and return the new handle. */
-u32 fn_1_7D74(M522_HEAPSEL *table, void *obj)
+u32 fn_1_7D74(M522RHandleMan *self, void *ptr)
 {
-    M522_HANDLEENT *ent = table->entries->next;
+    M522RHandleNode *node;
 
-    if (ent == table->entries) {
+    node = self->nodes[0].next;
+    if (node == &self->nodes[0]) {
         return 0;
     }
-    ent->next->prev = ent->prev;
-    ent->prev->next = ent->next;
-    ent->next = table->used->next;
-    ent->prev = table->used;
-    table->used->next->prev = ent;
-    table->used->next = ent;
-    ent->obj = obj;
-    ent->handle = (ent->handle & ~0xFFFu) | (((ent->handle & 0xFFFu) + 1) & 0xFFFu);
-    return ent->handle;
+    node->next->prev = node->prev;
+    node->prev->next = node->next;
+    node->next = self->used->next;
+    node->prev = self->used;
+    self->used->next->prev = node;
+    self->used->next = node;
+    node->ptr = ptr;
+    node->u.b.gen += 1;
+    return node->u.handle;
 }
 
-void *fn_1_7E04(M522RHandleMan *self, u32 h)
+void *fn_1_7E04(M522RHandleMan *self, int handle)
 {
+    u32 h = handle;
     M522RHandleNode *node;
     void *ptr;
 
@@ -665,7 +678,7 @@ void *fn_1_7E04(M522RHandleMan *self, u32 h)
         return 0;
     }
     node = &self->nodes[h >> 12];
-    if (((node->index << 12) | node->gen) != h) {
+    if (node->u.handle != handle) {
         return 0;
     }
     ptr = node->ptr;
@@ -680,21 +693,22 @@ void *fn_1_7E04(M522RHandleMan *self, u32 h)
 }
 
 
-void *fn_1_7EC8(M522_HEAPSEL *table, u32 handle)
+void *fn_1_7EC8(M522RHandleMan *self, int handle)
 {
-    M522_HANDLEENT *ent;
+    u32 h = handle;
+    M522RHandleNode *node;
 
-    if (handle == 0) {
+    if (h == 0) {
         return 0;
     }
-    if ((handle >> 12) >= table->count) {
+    if ((h >> 12) >= self->count) {
         return 0;
     }
-    ent = table->entries + (handle >> 12);
-    if (ent->handle != handle) {
+    node = &self->nodes[h >> 12];
+    if (node->u.handle != handle) {
         return 0;
     }
-    return ent->obj;
+    return node->ptr;
 }
 
 s32 fn_1_7F38(M522ListNode *self)
@@ -911,8 +925,8 @@ void fn_1_89E8(s32 bit)
     b = lbl_1_bss_2C.next;
     c = b;
     t = (M522RTask *)c;
-    lbl_1_bss_34 = bit;
     end = &lbl_1_bss_2C;
+    lbl_1_bss_34 = bit;
     while ((M522RNode *)t != end) {
         t->flags |= 1 << bit;
         t->vtbl->onFlag(t, bit);
@@ -925,10 +939,10 @@ s32 fn_1_8A80(void)
 {
     M522RTask *t;
     M522RNode *end;
+    s32 bit;
     M522RNode *b;
     M522RNode *c;
     M522RNode *nx;
-    s32 bit;
 
     b = lbl_1_bss_2C.next;
     c = b;
