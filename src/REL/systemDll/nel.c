@@ -5,12 +5,15 @@
 #include "game/data.h"
 #include "game/process.h"
 #include "game/charman.h"
+#include "game/gamework.h"
 
 /* 0x140: four u16 pad-edge words (NEL_SYS declares them as s32 padStat..unk14C) */
 /* 0x10: written with integer stores (NEL_SYS declares it float angSpd) */
 #define NEL_INT10(sys) (*(s32 *)&(sys)->angSpd)
 #define NEL_SAVED(sys) ((HuVecF *)&(sys)->pos0x)
 #define PADSTAT(sys) (((u16 *)&(sys)->padStat)[0])
+/* 0x257: second half of mdlSelNo (NEL_SYS declares one 8-entry array) */
+#define NEL_SEL2(sys, i) (((s8 *)(sys))[0x257 + (i)])
 
 typedef struct MdFlowEnt_s MDFLOWENT;
 struct MdFlowEnt_s { void (*func)(NEL_SYS *sys, MDFLOWENT *ent); };
@@ -43,6 +46,7 @@ float NelOscT1A[4];
 /* Ring rotation work: base positions, angle, radius. */
 HuVecF NelRingBase[4];
 float NelRingAng;
+float NelGuideAng;
 float NelRingRad;
 struct {
     s8 cur;
@@ -74,7 +78,7 @@ s32 fn_1_1835C(NEL_SYS *sys, s32 idx, s32 flag);
 void fn_1_17BD8(NEL_SYS *sys);
 void fn_1_17CE4(NEL_SYS *sys);
 void fn_1_18834(NEL_SYS *sys);
-void fn_1_17FC4(NEL_SYS *sys, s32 a, s32 b);
+void fn_1_17FC4(NEL_SYS *sys, s32 no, s32 sprNo);
 void fn_1_19818(NEL_SYS *sys);
 void fn_1_19C10(NEL_SYS *sys, s32 idx);
 void MdFukiGrpSet(NEL_SYS *sys, s32 no, s32 grp);
@@ -98,6 +102,7 @@ void fn_1_28F74(s32 arg);
 void fn_1_28FAC(s32 a, s32 b);
 void SLBoardLoad(void);
 void MBPartySaveInit(s32 arg);
+void MBPlayerSaveInit(s32 teamF, s32 bonusStarF, s32 mgPack, s32 turnMax, s32 h1, s32 h2, s32 h3, s32 h4);
 void MdRingDispSet(NEL_SYS *sys, s32 no, s32 dispF);
 void MdRingModeSet(NEL_SYS *sys, s32 no, s32 mode);
 void fn_1_F94(NEL_SYS *sys, volatile float angle);
@@ -6789,84 +6794,279 @@ s32 fn_1_17010(NEL_SYS *sys, MDPROCENT *tbl)
     return 0;
 }
 
-
-
-
-/* fn_1_18BA0 - copy the per-slot "selected model B" table over
- * the "selected model C2" table (both 4 entries). */
-void fn_1_18BA0(NEL_SYS *sys)
+void fn_1_17354(NEL_SYS *sys)
 {
     s32 i;
+
+    GwSystem.partyF = 1;
+    if (sys->modeSel == 0) {
+        GwSystem.teamF = 0;
+    } else if (sys->modeSel == 1) {
+        GwSystem.teamF = 1;
+    }
+    if (sys->menuNo3 == 0) {
+        GwSystem.bonusStarF = 1;
+    } else if (sys->menuNo3 == 1) {
+        GwSystem.bonusStarF = 0;
+    }
+    switch (sys->menuNo2) {
+        case 0:
+            GwSystem.mgPack = 0;
+            break;
+        case 1:
+            GwSystem.mgPack = 1;
+            break;
+        case 2:
+            GwSystem.mgPack = 2;
+            break;
+        case 3:
+            GwSystem.mgPack = 3;
+            break;
+        case 4:
+            GwSystem.mgPack = 4;
+            break;
+    }
+    GwSystem.turnNo = 1;
+    GwSystem.turnMax = sys->menuNo * 5 + 10;
+    GwSystem.boardNo = sys->selNo3;
     for (i = 0; i < 4; i++) {
-        sys->mdlSelNoC2[i] = sys->mdlSelNoB[i];
+        if (sys->fukiMode[i] == 0 || sys->fukiMode[i] == 2) {
+            GwPlayer[i].comF = 0;
+        } else {
+            GwPlayer[i].comF = 1;
+        }
+        GwPlayer[i].charNo = sys->mdlNo[i];
+        GwPlayer[i].dif = sys->mdlSelNo[i];
+        if (sys->mdlSelNoB[i] <= 1) {
+            GwPlayer[i].grp = 0;
+        } else {
+            GwPlayer[i].grp = 1;
+        }
+        if (sys->modeSel == 0) {
+            GwPlayer[i].handicap = sys->unk283[i];
+        } else if (sys->modeSel == 1) {
+            if (GwPlayer[i].grp == 0) {
+                GwPlayer[i].handicap = sys->unk283[0];
+            } else if (GwPlayer[i].grp == 1) {
+                GwPlayer[i].handicap = sys->unk283[1];
+            }
+        }
+        if (sys->unk247[i] != -1) {
+            GwPlayer[i].padNo = sys->unk247[i];
+        } else {
+            GwPlayer[i].padNo = -1;
+        }
+        GwPlayerConf[i].charNo = GwPlayer[i].charNo;
+        GwPlayer[i].padNo = i;
+        GwPlayerConf[i].padNo = i;
+        GwPlayerConf[i].dif = GwPlayer[i].dif;
+        GwPlayerConf[i].type = GwPlayer[i].comF;
+        GwPlayerConf[i].grp = GwPlayer[i].grp;
+    }
+    MBPartySaveInit(GwSystem.boardNo);
+    MBPlayerSaveInit(GwSystem.teamF, GwSystem.bonusStarF, GwSystem.mgPack, GwSystem.turnMax, GwPlayer[0].handicap, GwPlayer[1].handicap, GwPlayer[2].handicap, GwPlayer[3].handicap);
+}
+
+void fn_1_17930(NEL_SYS *sys)
+{
+    u8 tbl[4] = { 0, 0, 0, 0 };
+    s32 i;
+    u16 stat;
+
+    sys->unk242 = 0;
+    for (i = 0; i < 4; i++) {
+        sys->unk247[i] = -1;
+    }
+    for (i = 0; i < 4; i++) {
+        stat = HuPadStatGet(i);
+        if (stat == 0) {
+            sys->unk247[sys->unk242] = i;
+            sys->pad243[i] = 1;
+            sys->unk242++;
+        } else {
+            sys->pad243[i] = 0;
+        }
+    }
+    sys->playerNum = sys->unk242 - 1;
+}
+
+void fn_1_17A2C(NEL_SYS *sys)
+{
+    s32 i;
+    s32 cnt = 0;
+
+    for (i = 0; i < 4; i++) {
+        sys->mdlNo[i] = i;
+        sys->fukiMode[i] = 1;
+        sys->mdlSelNo[i] = 1;
+        NEL_SEL2(sys, i) = -1;
+        sys->ringMdlNo[i] = -1;
+    }
+    sys->selNo = 0;
+    for (i = 0; i < sys->playerNum + 1; i++) {
+        sys->fukiMode[sys->unk247[i]] = 0;
+    }
+    for (i = 0; i < 4; i++) {
+        if (sys->fukiMode[i] == 1) {
+            NEL_SEL2(sys, i) = cnt;
+            sys->ringMdlNo[cnt] = i;
+            cnt++;
+        }
     }
 }
 
-/* fn_1_198E0 - reached from the model-init flow with a model id
- * and a 90-degree angle.  The original resolves the shared model
- * block into a local and returns void, so the store is the only
- * observable effect; reproduced as written rather than as a return. */
-void fn_1_198E0(s32 modelId, float angle)
+void fn_1_17B20(NEL_SYS *sys)
 {
-    NEL_SYS *sys = &sysWork;
-    MD_MODEL *model = sys->model;
+    SYSMODEL *model = (SYSMODEL *)sys->model;
+
+    NelGuideAng += 2.0f;
+    model->mdlPos[0x1A]->y = (float)(MdVecTbl[0].y + 16.0 * sin(3.141592653589793 * NelGuideAng / 180.0));
 }
 
-/* fn_1_19C00 - fuki hook: mark slot idx as "mode 2". */
-void fn_1_19C00(NEL_SYS *sys, s32 idx)
+void fn_1_17BD8(NEL_SYS *sys)
 {
-    sys->fukiMode[idx] = 2;
-}
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+    s32 i;
 
-/* fn_1_19C70 - fuki hook: step the slot's mode down (2 -> 0,
- * 3 -> 1), leaving anything else alone. */
-void fn_1_19C70(NEL_SYS *sys, s32 idx)
-{
-    if (sys->fukiMode[idx] == 2) {
-        sys->fukiMode[idx] = 0;
-    } else if (sys->fukiMode[idx] == 3) {
-        sys->fukiMode[idx] = 1;
+    for (i = 0; i < 4; i++) {
+        MdMathModel3Dto2D(sys->mdlNo[i] + 0x10, 2, &pt);
+        pt.x += MdVecTbl[0xD].x;
+        pt.y += MdVecTbl[0xD].y;
+        if (sys->fukiMode[i] == 0 || sys->fukiMode[i] == 2) {
+            p = MdSpritePosGet(3, i);
+            p->x = pt.x;
+            p->y = pt.y;
+        } else {
+            p = MdSpritePosGet(3, i + 4);
+            p->x = pt.x;
+            p->y = pt.y;
+        }
     }
 }
 
-/* fn_1_19CB8 - hand back the shared model block for this sys. */
-MD_MODEL *fn_1_19CB8(NEL_SYS *sys)
+void fn_1_17CE4(NEL_SYS *sys)
 {
-    MD_MODEL *model = sys->model;
-    return model;
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+
+    MdMathModel3Dto2D(sys->mdlNo[sys->ringMdlNo[sys->selNo]] + 0x10, 2, &pt);
+    pt.x += MdVecTbl[0xD].x;
+    pt.y += MdVecTbl[0xD].y;
+    p = MdSpritePosGet(3, sys->selNo + 4);
+    p->x = pt.x;
+    p->y = pt.y;
 }
 
-/* MdSpriteDebugMain - drop into the sprite debugger when the
- * blend-debug state machine is parked on its "show" state. */
-void MdSpriteDebugMain(void)
+void fn_1_17DA4(NEL_SYS *sys)
 {
-    if (sysWork.blendDbg.stat == 2) {
-        MdSpriteDebug(&sysWork);
+    s32 i;
+    HuVec2f *p;
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    s32 n = 0;
+
+    for (i = 0; i < 4; i++) {
+        MdMathModel3Dto2D(sys->mdlNo[i] + 0x10, 2, &pt);
+        pt.x += MdVecTbl[0xD].x;
+        pt.y += MdVecTbl[0xD].y;
+        if (sys->fukiMode[i] == 2) {
+            HuSprAttrReset(sprite->grpId[3], i, 4);
+            p = MdSpritePosGet(3, i);
+            p->x = pt.x;
+            p->y = pt.y;
+        } else {
+            HuSprAttrReset(sprite->grpId[3], n + 4, 4);
+            p = MdSpritePosGet(3, n + 4);
+            p->x = pt.x;
+            p->y = pt.y;
+            n++;
+        }
     }
 }
 
-/* fn_1_1A404 - read model slot 0x20's id out of the shared model
- * block.  As in the original the id lands in a local and the
- * function returns void. */
-void fn_1_1A404(void)
+void fn_1_17EBC(NEL_SYS *sys)
 {
-    NEL_SYS *sys = &sysWork;
-    MD_MODEL *model = sys->model;
-    s16 mdlId = model->mdlId[0x20];
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    s32 n = 0;
+    HuVec2f *p;
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        MdMathModel3Dto2D(sys->mdlNo[i] + 0x10, 2, &pt);
+        pt.x += MdVecTbl[0xD].x;
+        pt.y += MdVecTbl[0xD].y;
+        if (sys->fukiMode[i] == 2) {
+            p = MdSpritePosGet(3, i);
+            p->x = pt.x;
+            p->y = pt.y;
+        } else {
+            p = MdSpritePosGet(4, n);
+            p->x = pt.x;
+            p->y = pt.y;
+            n++;
+        }
+    }
 }
 
-/* ParticleGlowKill - tear a glow particle effect down by its
- * particle-manager handle. */
-void ParticleGlowKill(ParticleGlowWork *p)
+void fn_1_17FC4(NEL_SYS *sys, s32 no, s32 sprNo)
 {
-    Hu3DParManKill((s16)p->parManId);
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+
+    MdMathModel3Dto2D(sys->mdlNo[no] + 0x10, 2, &pt);
+    pt.x += MdVecTbl[0xD].x;
+    pt.y += MdVecTbl[0xD].y;
+    p = MdSpritePosGet(4, sprNo);
+    p->x = pt.x;
+    p->y = pt.y;
+    HuSprBankSet(sprite->grpId[4], sprNo, sys->mdlSelNo[no]);
 }
 
-/* ParticleGlowPosSet - move a glow to `pos`, then restart it with a
- * two-frame life limit and attribute bit 1. */
-void ParticleGlowPosSet(ParticleGlowWork *p, Vec *pos)
+void fn_1_18084(NEL_SYS *sys)
 {
-    Hu3DParManPosSet((s16)p->parManId, pos->x, pos->y, pos->z);
-    Hu3DParManTimeLimitSet((s16)p->parManId, 2);
-    Hu3DParManAttrReset((s16)p->parManId, 1);
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+    HuVec2f *p;
+
+    MdMathModel3Dto2D(sys->mdlNo[sys->mdlSelNoC[sys->selNo]] + 0x10, 2, &pt);
+    pt.x += MdVecTbl[0xD].x;
+    pt.y += MdVecTbl[0xD].y;
+    p = MdSpritePosGet(4, NEL_SEL2(sys, sys->mdlSelNoC[sys->selNo]));
+    p->x = pt.x;
+    p->y = pt.y;
+    HuSprBankSet(sprite->grpId[4], NEL_SEL2(sys, sys->mdlSelNoC[sys->selNo]), sys->mdlSelNo[sys->mdlSelNoC[sys->selNo]]);
+}
+
+void fn_1_181A4(NEL_SYS *sys)
+{
+    s32 i;
+    HuVec2f *p;
+    HuVecF pt;
+    SYSSPRITE *sprite = (SYSSPRITE *)sys->sprite;
+
+    for (i = 0; i < 4; i++) {
+        MdMathModel3Dto2D(sys->mdlNo[i] + 0x10, 2, &pt);
+        pt.x += MdVecTbl[0xD].x;
+        pt.y += MdVecTbl[0xD].y;
+        if (sys->fukiMode[i] == 2) {
+            HuSprAttrReset(sprite->grpId[3], i, 4);
+            p = MdSpritePosGet(3, i);
+            p->x = pt.x;
+            p->y = pt.y;
+        }
+    }
+    for (i = 0; i < 3 - sys->playerNum; i++) {
+        MdMathModel3Dto2D(sys->mdlNo[sys->mdlSelNoC[i]] + 0x10, 2, &pt);
+        pt.x += MdVecTbl[0xD].x;
+        pt.y += MdVecTbl[0xD].y;
+        HuSprAttrReset(sprite->grpId[4], NEL_SEL2(sys, sys->mdlSelNoC[i]), 4);
+        p = MdSpritePosGet(4, NEL_SEL2(sys, sys->mdlSelNoC[i]));
+        p->x = pt.x;
+        p->y = pt.y;
+    }
 }
