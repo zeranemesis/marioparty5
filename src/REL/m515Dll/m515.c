@@ -8,6 +8,8 @@
 #include "game/audio.h"
 #include "game/charman.h"
 #include "game/mg/seqman.h"
+#include "game/pad.h"
+#include "game/data.h"
 #include "humath.h"
 #include "dolphin/mtx.h"
 
@@ -1672,6 +1674,95 @@ void fn_1_6980(M515_PLY *ply)
     }
 }
 
+void fn_1_69B8(M515_PLY *ply, M515_SUB *sub)
+{
+    s32 i;
+
+    if (sub->mdl < 0) {
+        sub->mdl = Hu3DModelCreateData(lbl_1_data_364[1]);
+        ply->item[0].mdl = sub->mdl;
+        for (i = 0; i < 8; i++) {
+            sub->mot[i] = Hu3DJointMotionData(sub->mdl, lbl_1_data_3A8[i]);
+        }
+        Hu3DMotionSet(sub->mdl, sub->mot[4]);
+    } else {
+        ply->item[0].mdl = Hu3DModelLink(sub->mdl);
+    }
+    Hu3DModelAttrSet(ply->item[0].mdl, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(ply->item[0].mdl, 0x40000002);
+    Hu3DModelLayerSet(ply->item[0].mdl, 3);
+    Hu3DModelPosSet(ply->item[0].mdl, 0.0f, 1.0f, 0.0f);
+    Hu3DModelRotSet(ply->item[0].mdl, 0.0f, 0.0f, 0.0f);
+    Hu3DModelCameraSet(ply->item[0].mdl, lbl_1_rodata_10[ply->idx]);
+    Hu3DModelScaleSet(ply->item[0].mdl, 1.1f, 1.1f, 1.1f);
+    ply->item[0].f20 = 0;
+    ply->item[0].f28 = 45.0f * (rand8() / 32);
+    for (i = 1; i < 8; i++) {
+        ply->item[i].mdl = Hu3DModelLink(sub->mdl);
+        Hu3DModelAttrSet(ply->item[i].mdl, HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrSet(ply->item[i].mdl, 0x40000002);
+        Hu3DModelLayerSet(ply->item[i].mdl, 3);
+        Hu3DModelPosSet(ply->item[i].mdl, 0.0f, 1.0f, 0.0f);
+        Hu3DModelRotSet(ply->item[i].mdl, 0.0f, 0.0f, 0.0f);
+        Hu3DModelCameraSet(ply->item[i].mdl, lbl_1_rodata_10[ply->idx]);
+        Hu3DModelScaleSet(ply->item[i].mdl, 1.1f, 1.1f, 1.1f);
+        ply->item[i].f20 = 0;
+        ply->item[i].f28 = 45.0f * (rand8() / 32);
+    }
+    if (sub->mdl2 < 0) {
+        sub->mdl2 = Hu3DModelCreateData(lbl_1_data_364[0]);
+        ply->item[0].mdl2 = sub->mdl2;
+    } else {
+        ply->item[0].mdl2 = Hu3DModelLink(sub->mdl2);
+    }
+    Hu3DModelAttrSet(ply->item[0].mdl2, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(ply->item[0].mdl2, 0x40000002);
+    Hu3DModelLayerSet(ply->item[0].mdl2, 2);
+    Hu3DModelPosSet(ply->item[0].mdl2, 0.0f, 0.5f, 0.0f);
+    Hu3DModelRotSet(ply->item[0].mdl2, 0.0f, 0.0f, 0.0f);
+    Hu3DModelCameraSet(ply->item[0].mdl2, lbl_1_rodata_10[ply->idx]);
+    Hu3DModelScaleSet(ply->item[0].mdl, 1.1f, 1.1f, 1.1f);
+    for (i = 1; i < 8; i++) {
+        ply->item[i].mdl2 = Hu3DModelLink(sub->mdl2);
+        Hu3DModelAttrSet(ply->item[i].mdl2, HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrSet(ply->item[i].mdl2, 0x40000002);
+        Hu3DModelLayerSet(ply->item[i].mdl2, 2);
+        Hu3DModelPosSet(ply->item[i].mdl2, 0.0f, 0.5f, 0.0f);
+        Hu3DModelRotSet(ply->item[i].mdl2, 0.0f, 0.0f, 0.0f);
+        Hu3DModelCameraSet(ply->item[i].mdl2, lbl_1_rodata_10[ply->idx]);
+        Hu3DModelScaleSet(ply->item[i].mdl2, 1.1f, 1.1f, 1.1f);
+    }
+}
+
+void fn_1_6FE8(M515_PLY *ply)
+{
+    f32 rotY[4] = { 180.0f, 90.0f, 270.0f, 0.0f };
+    s32 i;
+    s32 j;
+    s32 n;
+
+    ply->v5e8 = 0;
+    n = 0;
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++, n++) {
+            if (ply->cell[i][j].type == 2) {
+                ply->cell[i][j].item = &ply->item[ply->v5e8];
+                ply->v5e8++;
+                ply->cell[i][j].item->a = ply->cell[i][j].vec;
+                ply->cell[i][j].item->b = ply->cell[i][j].vec;
+                ply->cell[i][j].item->f24 = rand8() / 64;
+                Hu3DModelAttrReset(ply->cell[i][j].item->mdl, HU3D_ATTR_DISPOFF);
+                Hu3DModelPosSet(ply->cell[i][j].item->mdl, ply->cell[i][j].vec.x,
+                    1.0f + ply->cell[i][j].vec.y, ply->cell[i][j].vec.z);
+                Hu3DModelRotSet(ply->cell[i][j].item->mdl, 0.0f, rotY[ply->cell[i][j].item->f24], 0.0f);
+                Hu3DModelAttrReset(ply->cell[i][j].item->mdl2, HU3D_ATTR_DISPOFF);
+                Hu3DModelPosSet(ply->cell[i][j].item->mdl2, ply->cell[i][j].vec.x,
+                    0.5f + ply->cell[i][j].vec.y, ply->cell[i][j].vec.z);
+            }
+        }
+    }
+}
+
 void fn_1_72E4(M515_PLY *ply)
 {
     s32 i;
@@ -1684,6 +1775,62 @@ void fn_1_72E4(M515_PLY *ply)
         Hu3DMotionTimeSet(ply->item[i].mdl, 0.0f);
         Hu3DModelAttrSet(ply->item[i].mdl, 0x40000002);
         Hu3DModelAttrSet(ply->item[i].mdl2, HU3D_ATTR_DISPOFF);
+    }
+}
+
+void fn_1_73B0(M515_PLY *ply, s32 row)
+{
+    M515_SUB *sub;
+    M515_PLACE *tbl;
+    f32 rot0;
+    s32 pos;
+    s32 id;
+    s32 i;
+    s32 py;
+    s32 px;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    if (row == 0) {
+        tbl = lbl_1_data_110C[sub->v02[row]];
+        rot0 = 0.0f;
+    } else if (row == 1) {
+        tbl = lbl_1_data_1134[sub->v02[row]];
+        rot0 = 180.0f;
+    } else {
+        tbl = lbl_1_data_115C[sub->v02[row]];
+        rot0 = 0.0f;
+    }
+    i = 0;
+    while (i < 25) {
+        if (tbl->id < 0) {
+            break;
+        }
+        id = tbl->id - 1;
+        if (sub->cache[id] < 0) {
+            sub->cache[id] = Hu3DModelCreateData(lbl_1_data_320[id]);
+            ply->mdlIds[row][i] = sub->cache[id];
+        } else {
+            ply->mdlIds[row][i] = Hu3DModelLink(sub->cache[id]);
+        }
+        if (row == 1) {
+            pos = 24 - tbl->pos;
+        } else {
+            pos = tbl->pos;
+        }
+        py = pos / 5;
+        px = pos % 5;
+        Hu3DModelAttrSet(ply->mdlIds[row][i], HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrSet(ply->mdlIds[row][i], 0x40000002);
+        Hu3DModelLayerSet(ply->mdlIds[row][i], 1);
+        Hu3DModelPosSet(ply->mdlIds[row][i], 150.0f * px - 300.0f, 400.0f * row,
+            150.0f * py - 300.0f);
+        Hu3DModelRotSet(ply->mdlIds[row][i], 0.0f, tbl->rot + rot0, 0.0f);
+        Hu3DModelCameraSet(ply->mdlIds[row][i], lbl_1_rodata_10[ply->idx]);
+        i++;
+        tbl++;
+    }
+    for (; i < 25; i++) {
+        ply->mdlIds[row][i] = -1;
     }
 }
 
@@ -1727,6 +1874,102 @@ s32 fn_1_7878(M515_PLY *self)
     }
 
     return ret;
+}
+
+u16 fn_1_7924(M515_PLY *ply)
+{
+    u16 ret;
+    f32 sx;
+    f32 sy;
+    f32 ang;
+    f32 ay;
+    f32 ax;
+
+    ret = 0;
+    sx = HuPadStkX[ply->pad];
+    sy = HuPadStkY[ply->pad];
+    if (ply->v0e == 1) {
+        sx *= -1.0f;
+        sy *= -1.0f;
+    }
+    ang = HuAtan(sx, sy);
+    if (sy < 0.0f) {
+        ay = -sy;
+    } else {
+        ay = sy;
+    }
+    if (sx < 0.0f) {
+        ax = -sx;
+    } else {
+        ax = sx;
+    }
+    if (ax + ay > 32.0f) {
+        if (ang >= -30.0f && ang < 60.0f) {
+            ret = 1;
+        } else if (ang >= 60.0f && ang < 150.0f) {
+            ret = 2;
+        } else if (ang >= -120.0f && ang < -30.0f) {
+            ret = 4;
+        } else {
+            ret = 8;
+        }
+    }
+    if ((HuPadBtnDown[ply->pad] & 0x800) != 0) {
+        ply->v682 = 0;
+        ret = 0x20;
+    } else if ((HuPadBtnDown[ply->pad] & 0x200) != 0) {
+        ret |= 0x10;
+    }
+    return ret;
+}
+
+void fn_1_7BE8(M515_ITEM *item, M515_SUB *sub)
+{
+    HuVecF p;
+    f32 t;
+
+    switch (item->f20) {
+    case 1:
+        item->f22 = 0;
+        Hu3DMotionSet(item->mdl, item->mot);
+        Hu3DModelAttrSet(item->mdl, 0x40000001);
+        Hu3DModelAttrReset(item->mdl, 0x40000002);
+        item->f20++;
+    case 2:
+        item->f22++;
+        if (item->f22 >= 2) {
+            item->f20++;
+            return;
+        }
+        return;
+    case 3:
+        item->f22++;
+        if (item->f22 >= 10) {
+            item->f20++;
+        }
+        t = ((f32)item->f22 - 2.0f) * 0.125f;
+        p.x = (1.0f - t) * item->a.x + t * item->b.x;
+        p.y = 1.0f + item->a.y;
+        p.z = (1.0f - t) * item->a.z + t * item->b.z;
+        Hu3DModelPosSet(item->mdl, p.x, p.y, p.z);
+        p.y = 0.5f + item->a.y;
+        Hu3DModelPosSet(item->mdl2, p.x, p.y, p.z);
+        return;
+    case 4:
+        item->f22++;
+        if (item->f22 >= 20) {
+            Hu3DMotionShiftSet(item->mdl, sub->mot[7], 0.0f, 3.0f, 0x40000001);
+            item->f20++;
+            return;
+        }
+        break;
+    case 5:
+        item->f22++;
+        if (item->f22 >= 100) {
+            Hu3DModelAttrSet(item->mdl, 0x40000002);
+        }
+        break;
+    }
 }
 
 void fn_1_7E5C(M515_SLOT *slot, s16 idx)
