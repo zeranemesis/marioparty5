@@ -8,27 +8,6 @@ void __dl__FPv(void *ptr);
 
 namespace m501 {
 
-class CJoint {
-public:
-    CJoint();
-    ~CJoint();
-    Mtx *getMatrix();
-    void lockMatrixChain();
-    void lockMatrix();
-    void setSuper(CJoint *super);
-    void setSuperJoint(CJoint *super);
-    void resetSuperJoint();
-
-private:
-    Mtx m_world;    // 0x00 composed matrix of the whole chain
-    Mtx m_local;    // 0x30 this joint's own matrix, the one getMatrix returns
-    CJoint *m_super; // 0x60
-    CJoint *m_child; // 0x64 tail of the child list
-    CJoint *m_next;  // 0x68
-    CJoint *m_prev;  // 0x6C
-    u8 m_locked;     // 0x70 matrix needs recomputing
-};
-
 CJoint::CJoint()
 {
     PSMTXIdentity(m_world);
