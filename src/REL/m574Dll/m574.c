@@ -270,12 +270,12 @@ static void fn_1_8E8(s16 mode, s16 frameNo)
     fn_1_71B8();
 }
 
-s16 fn_1_918(void)
+s32 fn_1_918(void)
 {
     return timeLeft;
 }
 
-s16 fn_1_928(s32 no)
+s32 fn_1_928(s32 no)
 {
     return winnerTbl[no];
 }
@@ -330,7 +330,7 @@ s16 fn_1_A34(u32 grp, u32 idx)
     return -1;
 }
 
-void fn_1_AAC(void)
+void fn_1_AAC(s32 no)
 {
     if (++loseCount == 4) {
         CharLoseVoicePlay(charNoTbl[0], charNoTbl[1], charNoTbl[2], charNoTbl[3]);

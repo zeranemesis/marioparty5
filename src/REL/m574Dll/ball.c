@@ -10,19 +10,6 @@
 
 #define M574_BALL_MAX 80
 
-typedef struct M574Collider_s {
-    /* 0x00 */ u32 flag;
-    /* 0x04 */ s32 shape;
-    /* 0x08 */ s32 id;
-    /* 0x0C */ s32 kind;
-    /* 0x10 */ void *user;
-    /* 0x14 */ void (*hook)(void *);
-    /* 0x18 */ HuVecF *pos;
-    /* 0x1C */ HuVecF *vel;
-    /* 0x20 */ HuVecF prevPos;
-    /* 0x2C */ f32 radius;
-} M574_COLLIDER;
-
 typedef struct M574Ball_s {
     /* 0x00 */ s32 state;
     /* 0x04 */ s32 unk04;
@@ -36,7 +23,6 @@ typedef struct M574Ball_s {
     /* 0x3C */ M574_COLLIDER collider;
 } M574_BALL;
 
-s32 fn_1_8AD0(M574_COLLIDER *col);
 void fn_1_1F9C(s32 grp);
 void fn_1_77D4(s32 grp, s32 num);
 
