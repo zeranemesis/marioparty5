@@ -267,6 +267,9 @@ void fn_1_2F3C(M515_SUB *sub);
 void fn_1_5C40(M515_SUB *sub);
 void fn_1_5DB0(M515_SUB *sub);
 void fn_1_C83C(void);
+void fn_1_C2B0(M515_PLY *ply);
+void fn_1_D384(M515_PLY *ply);
+void fn_1_72E4(M515_PLY *ply);
 s32 fn_1_9594(M515_SLOT *slot);
 void fn_1_D0D8(M515_SUB *sub);
 s32 fn_1_83E8(M515_SLOT *slot);
@@ -3805,6 +3808,60 @@ s32 fn_1_C26C(M515_NODE2 *node)
     return 1;
 }
 
+void fn_1_C2B0(M515_PLY *ply)
+{
+    s32 i;
+    s32 j;
+    u16 *tbl;
+    s32 k1;
+    s32 k2;
+    f32 y;
+    M515_SUB *sub;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    if (ply->v0e == 1) {
+        tbl = lbl_1_data_10BC[sub->v02[ply->v0e]];
+        y = 400.0f * ply->v0e;
+        for (i = 4; i >= 0; i--) {
+            for (j = 4; j >= 0; j--) {
+                ply->cell[i][j].type = *tbl++;
+                ply->cell[i][j].vec.y = y;
+            }
+        }
+        ply->p3f8 = &ply->ext[1];
+        ply->ext[0].type = 4;
+        ply->ext[0].vec.y = 25.0f + y;
+        ply->ext[1].type = 3;
+        ply->ext[1].vec.y = 25.0f + y;
+        for (k1 = 0; k1 < 25; k1++) {
+            if (ply->mdlIds[1][k1] >= 0) {
+                Hu3DModelAttrReset(ply->mdlIds[1][k1], HU3D_ATTR_DISPOFF);
+            }
+        }
+    } else {
+        tbl = lbl_1_data_10E4[sub->v02[ply->v0e]];
+        y = 400.0f * ply->v0e;
+        for (i = 0; i < 5; i++) {
+            for (j = 0; j < 5; j++) {
+                ply->cell[i][j].type = *tbl++;
+                ply->cell[i][j].vec.y = y;
+            }
+        }
+        ply->p3f8 = &ply->ext[0];
+        ply->ext[0].type = 3;
+        ply->ext[0].vec.y = 25.0f + y;
+        ply->ext[1].type = 4;
+        ply->ext[1].vec.y = 25.0f + y;
+        for (k2 = 0; k2 < 25; k2++) {
+            if (ply->mdlIds[2][k2] >= 0) {
+                Hu3DModelAttrReset(ply->mdlIds[2][k2], HU3D_ATTR_DISPOFF);
+            }
+        }
+    }
+    fn_1_6FE8(ply);
+    fn_1_E274(&ply->fx, ply->v0e, ply->dif);
+}
+
 void fn_1_C83C(void)
 {
     Hu3DShadowMultiCreate(15.0f, 20.0f, 12000.0f,
@@ -3975,6 +4032,111 @@ void fn_1_D0D8(M515_SUB *sub)
         py = sub->grp[i].pos.y + 3.0 * HuSin(sub->grp[i].f10);
         Hu3DModelPosSet(sub->grp[i].f0c, sub->grp[i].pos.x, py, sub->grp[i].pos.z);
     }
+}
+
+void fn_1_D384(M515_PLY *ply)
+{
+    s32 i;
+    s32 j;
+    f32 rotY;
+    s16 dir;
+    u16 *tbl;
+    M515_SUB *sub;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    if (ply->v0e == 1) {
+        tbl = lbl_1_data_10BC[sub->v02[ply->v0e]];
+        for (i = 4; i >= 0; i--) {
+            for (j = 4; j >= 0; j--) {
+                ply->cell[i][j].type = *tbl++;
+            }
+        }
+        ply->p3f8 = &ply->ext[1];
+        rotY = 0.0f;
+        dir = 3;
+    } else {
+        if (ply->v0e == 0) {
+            tbl = lbl_1_data_1094[sub->v02[ply->v0e]];
+        } else {
+            tbl = lbl_1_data_10E4[sub->v02[ply->v0e]];
+        }
+        for (i = 0; i < 5; i++) {
+            for (j = 0; j < 5; j++) {
+                ply->cell[i][j].type = *tbl++;
+            }
+        }
+        ply->p3f8 = &ply->ext[0];
+        rotY = 180.0f;
+        dir = 0;
+    }
+    ply->pos = ply->p3f8->vec;
+    ply->rot.x = 0.0f;
+    ply->rot.y = rotY;
+    ply->rot.z = 0.0f;
+    ply->v484 = 15;
+    ply->v486 = 5;
+    ply->v480 = 0;
+    ply->v47c = dir;
+    ply->v47e = dir;
+    ply->from = ply->p3f8->vec;
+    ply->vec = ply->p3f8->vec;
+    omSetTra(ply->obj, ply->pos.x, ply->pos.y, ply->pos.z);
+    omSetRot(ply->obj, ply->rot.x, ply->rot.y, ply->rot.z);
+    fn_1_72E4(ply);
+    fn_1_6FE8(ply);
+}
+
+s32 fn_1_D928(M515_ENTRY *entry, M515_PLY *ply)
+{
+    M515_SUB *sub;
+    M515_SLOT *slot;
+    s32 ret;
+    f32 x;
+    f32 y;
+    f32 z;
+
+    ret = 0;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    ply->v680 = 0;
+    slot = entry->slot;
+    switch (entry->e00) {
+    case 0:
+        Hu3DModelAttrReset(sub->idce[ply->idx], HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrReset(sub->idce[ply->idx], 0x40000080);
+        Hu3DMotionShapeTimeSet(sub->idce[ply->idx], 0.0f);
+        if (ply->obj->mtnId[0] != Hu3DMotionIDGet(ply->obj->mdlId[0])
+            && ply->obj->mtnId[0] != Hu3DMotionShiftIDGet(ply->obj->mdlId[0])) {
+            Hu3DMotionShiftSet(ply->obj->mdlId[0], ply->obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+        }
+        entry->e02 = 0;
+        entry->e00++;
+        break;
+    case 1:
+        entry->e02++;
+        if (entry->e02 == 0x2D) {
+            fn_1_D384(ply);
+            fn_1_81A8(entry->slot, ply);
+        }
+        if (entry->e02 >= 0x5A) {
+            fn_1_E274(&ply->fx, ply->v0e, ply->dif);
+            Hu3DModelAttrSet(sub->idce[ply->idx], HU3D_ATTR_DISPOFF);
+            entry->e00 = 0;
+            entry->e02 = 0;
+            ret = 1;
+        }
+        break;
+    }
+    x = slot->look.x + (0.39f * slot->f08) * HuCos(slot->f04) * HuCos(slot->f00);
+    y = slot->look.y + (0.39f * slot->f08) * HuSin(slot->f04);
+    z = slot->look.z + (0.39f * slot->f08) * HuCos(slot->f04) * HuSin(slot->f00);
+    if (ply->idx < 2) {
+        y = y + 8.0f;
+    } else {
+        y = y - 8.0f;
+    }
+    Hu3DModelPosSet(sub->idce[ply->idx], x, y, z);
+    Hu3DModelRotSet(sub->idce[ply->idx], -slot->f04, 90.0f - slot->f00, 0.0f);
+    return ret;
 }
 
 u16 fn_1_DD18(M515_PLY *ply)
