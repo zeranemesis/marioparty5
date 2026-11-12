@@ -8277,3 +8277,83 @@ void MdPosAdjustMode(NEL_SYS *sys)
         }
     }
 }
+
+ParticleDotWork *ParticleDotCreate(ANIMDATA *anim, s16 layer, s16 cameraBit)
+{
+    ParticleDotWork *dot;
+    s16 parId;
+    float rotY;
+
+    dot = HuMemDirectMallocNum(0, sizeof(ParticleDotWork), 0x10000000);
+    parId = Hu3DParManCreate(anim, 100, &ParticleDot1);
+    dot->parManId[0] = parId;
+    Hu3DParManAttrSet(parId, 0x65);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+    Hu3DParManRotSet(parId, 90.0f, 0.0f, 0.0f);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), cameraBit);
+    parId = Hu3DParManCreate(anim, 100, &ParticleDot2);
+    dot->parManId[1] = parId;
+    Hu3DParManAttrSet(parId, 0x163);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+    rotY = frandmod(0x50) - 0x28;
+    Hu3DParManRotSet(parId, frandmod(0x28) + 0x46, 0.0f, rotY);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), cameraBit);
+    parId = Hu3DParManCreate(anim, 100, &ParticleDot3);
+    dot->parManId[2] = parId;
+    Hu3DParManAttrSet(parId, 0x21);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+    Hu3DParManRotSet(parId, 0.0f, 0.0f, 0.0f);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), cameraBit);
+    return dot;
+}
+
+void ParticleDotPosSet(ParticleDotWork *dot, Vec *pos)
+{
+    Hu3DParManPosSet((s16)dot->parManId[0], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet((s16)dot->parManId[0], 2);
+    Hu3DParManAttrReset((s16)dot->parManId[0], 1);
+    Hu3DParManPosSet((s16)dot->parManId[1], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet((s16)dot->parManId[1], 2);
+    Hu3DParManAttrReset((s16)dot->parManId[1], 1);
+    Hu3DParManPosSet((s16)dot->parManId[2], pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet((s16)dot->parManId[2], 5);
+    Hu3DParManAttrReset((s16)dot->parManId[2], 1);
+}
+
+void ParticleDotKill(ParticleDotWork *dot)
+{
+    Hu3DParManKill((s16)dot->parManId[0]);
+    Hu3DParManKill((s16)dot->parManId[1]);
+    Hu3DParManKill((s16)dot->parManId[2]);
+}
+
+ParticleGlowWork *ParticleGlowCreate(ANIMDATA *anim, s16 layer, s16 cameraBit)
+{
+    ParticleGlowWork *glow;
+    s16 parId;
+
+    glow = HuMemDirectMallocNum(0, 0xC, 0x10000000);
+    parId = Hu3DParManCreate(anim, 100, &ParticleGlow);
+    glow->parManId = parId;
+    Hu3DParManAttrSet(parId, 0x65);
+    Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+    Hu3DParManRotSet(parId, 90.0f, 0.0f, 0.0f);
+    Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), layer);
+    Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), cameraBit);
+    return glow;
+}
+
+void ParticleGlowPosSet(ParticleGlowWork *p, Vec *pos)
+{
+    Hu3DParManPosSet((s16)p->parManId, pos->x, pos->y, pos->z);
+    Hu3DParManTimeLimitSet((s16)p->parManId, 2);
+    Hu3DParManAttrReset((s16)p->parManId, 1);
+}
+
+void ParticleGlowKill(ParticleGlowWork *p)
+{
+    Hu3DParManKill((s16)p->parManId);
+}
