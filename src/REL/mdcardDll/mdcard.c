@@ -293,6 +293,55 @@ void MdClose(void)
     }
 }
 
+void fn_1_DD8(void)
+{
+    int i;
+    MDMODEL_WORK *model;
+    MDSPRITE_WORK *sprite;
+    MDMESS_WORK *mess;
+    MDCARD_MSG *msg;
+
+    sprite = sys->sprite;
+    model = sys->model;
+    mess = sys->mess;
+    for(i=0; i<4; i++) {
+        sys->unk3B[i] = 0;
+    }
+    MdSpriteDispSet(sprite, 0, FALSE);
+    MdSpriteDispSet(sprite, 1, FALSE);
+    MdSpriteDispSet(sprite, 3, FALSE);
+    Hu3DModelAttrReset(model->mdlId[0], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(model->mdlId[1], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(model->mdlId[2], HU3D_ATTR_DISPOFF);
+    for(i=0; i<7; i++) {
+        Hu3DModelAttrReset(model->mdlId[i*3+3], HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrSet(model->mdlId[i*3+4], HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrSet(model->mdlId[i*3+5], HU3D_ATTR_DISPOFF);
+    }
+    for(i=0; i<8; i++) {
+        Hu3DModelAttrSet(model->mdlId[i+24], HU3D_ATTR_DISPOFF);
+    }
+    Hu3DModelAttrSet(model->mdlId[32], HU3D_ATTR_DISPOFF);
+    for(i=0; i<5; i++) {
+        Hu3DModelAttrSet(model->mdlId[i+33], HU3D_ATTR_DISPOFF);
+    }
+    fn_1_98C8();
+    MdProcTbl[0](0);
+    msg = &sys->msg;
+    msg->mode = 0;
+    sys->unk1E = 0;
+    sys->unk1F = 3;
+    WipeColorSet(255, 255, 255);
+    WipeCreate(1, 0, 30);
+    fn_1_A094(0);
+    while(WipeCheckEnd()) {
+        HuPrcVSleep();
+    }
+    sys->step = 0;
+    sys->subStep = 0;
+    sys->flowMode = 1;
+}
+
 void fn_1_942C(s32 modelNo, s32 cameraNo)
 {
     HuVecF d;

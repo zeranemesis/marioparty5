@@ -276,7 +276,9 @@ typedef struct Sys_s {
     s8 skipWipeF;              //0x1D
     s8 unk1E;                  //0x1E
     s8 unk1F;                  //0x1F
-    u8 pad20[0x40 - 0x20];     //0x20
+    u8 pad20[0x3B - 0x20];     //0x20
+    s8 unk3B[4];               //0x3B
+    u8 pad3F;                  //0x3F
     s16 loadState;             //0x40
     s16 loadAsyncStat;         //0x42
     s32 loadDirNo;             //0x44
