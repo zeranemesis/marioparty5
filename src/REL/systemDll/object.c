@@ -140,8 +140,15 @@ void MdObjPadMain(void)
     s32 i;
 
     for (i = 0; i < 4; i++) {
+#ifdef TARGET_PC
+        u16 *pad = (u16 *)&sys->padStat;
+
+        pad[i] = HuPadDStk[i] & ~pad[4 + i];
+        pad[4 + i] = HuPadDStk[i];
+#else
         *(u16 *)((u8 *)sys + 0x140 + i * 2) = HuPadDStk[i] & ~*(u16 *)((u8 *)sys + 0x148 + i * 2);
         *(u16 *)((u8 *)sys + 0x148 + i * 2) = HuPadDStk[i];
+#endif
     }
 }
 

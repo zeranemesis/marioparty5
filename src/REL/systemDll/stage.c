@@ -2049,6 +2049,9 @@ static void ToueiZClear(void)
     GXSetVtxDesc(9, 1);
     GXSetVtxAttrFmt(0, 9, 1, 4, 0);
     color.r = color.g = color.b = 0;
+#ifdef TARGET_PC
+    color.a = 0;
+#endif
     GXSetTevColor(1, color);
     GXSetTevOrder(0, 0xFF, 0xFF, 4);
     GXSetTevColorIn(0, 0xF, 0xF, 0xF, 2);

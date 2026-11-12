@@ -13,12 +13,24 @@
 /* 0x10: written with integer stores (NEL_SYS declares it float angSpd) */
 #define NEL_INT10(sys) (*(s32 *)&(sys)->angSpd)
 #define NEL_SAVED(sys) ((HuVecF *)&(sys)->pos0x)
+#ifdef TARGET_PC
+#define NEL_PADW(sys, i) (((u16 *)&(sys)->padStat)[i])
+#else
 #define NEL_PADW(sys, i) (*(u16 *)((u8 *)(sys) + 0x140 + (i) * 2))
+#endif
+#ifdef TARGET_PC
+#define NEL_GRP(sys, i) ((sys)->ringMdlGrp[i])
+#else
 #define NEL_GRP(sys, i) (*((s8 *)(sys) + 0x260 + (i)))
+#endif
 #define NEL_TP(sys) ((float *)&(sys)->blendDbg.pad1C[0x30])
 #define PADSTAT(sys) (((u16 *)&(sys)->padStat)[0])
 /* 0x257: second half of mdlSelNo (NEL_SYS declares one 8-entry array) */
+#ifdef TARGET_PC
+#define NEL_SEL2(sys, i) ((sys)->mdlSelNo[4 + (i)])
+#else
 #define NEL_SEL2(sys, i) (*((s8 *)(sys) + 0x257 + (i)))
+#endif
 
 typedef struct MdFlowEnt_s MDFLOWENT;
 struct MdFlowEnt_s { void (*func)(NEL_SYS *sys, MDFLOWENT *ent); };
@@ -7222,7 +7234,11 @@ void fn_1_18910(NEL_SYS *sys)
 
     for (i = 0; i < 2; i++) {
         sys->ringMdlGrp[i] = MdTblC80[sys->selSubNo][i];
+#ifdef TARGET_PC
+        sys->ringMdlGrp[2 + i] = MdTblC80[sys->selSubNo][i + 2];
+#else
         *((s8 *)sys + 0x262 + i) = MdTblC80[sys->selSubNo][i + 2];
+#endif
     }
     for (i = 0; i < 4; i++) {
         sys->mdlSelNoB[i] = MdTblC8C[sys->selSubNo][i];
