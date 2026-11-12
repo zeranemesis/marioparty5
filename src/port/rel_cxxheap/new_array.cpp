@@ -1,0 +1,11 @@
+/* Global operator new/delete of the C++ REL modules on the game heap (as their MWCC __nw__FUl/__dl__FPv).
+ * One operator per file: the static library rel_cxxheap only supplies the ones a module does not define
+ * itself (see CMakeLists.txt). Never part of dol. */
+#ifndef TARGET_DOL
+#include <stddef.h>
+#include <new>
+extern "C" {
+#include "game/memory.h"
+}
+void *operator new[](size_t size) { return HuMemDirectMallocNum(HEAP_HEAP, (s32)size, 0x10000000); }
+#endif

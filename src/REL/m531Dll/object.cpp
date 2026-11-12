@@ -1,4 +1,7 @@
 #include "REL/m531Dll.h"
+#ifdef TARGET_PC
+extern "C" void __dt__15CEffectParticleFv(void *self, s32 flag); /* effect.cpp */
+#endif
 
 extern "C" {
 void PSMTXMultVec(const Mtx m, const Vec *src, Vec *dst);
@@ -193,7 +196,12 @@ CStageSet *fn_1_7E40(CStageSet *self, s16 flag)
                 obj->m_vt->m_dtor(obj, 1);
             }
         }
+        #ifdef TARGET_PC
+        /* the object is effect.cpp's PC struct: destroy it through its MWCC destructor, not a C++ vtable */
+        __dt__15CEffectParticleFv(self->m_fx, 1);
+        #else
         delete self->m_fx;
+        #endif
         for (i = 0; i < 8; i++) {
             CStageObj *obj = self->m_cloud[i];
             if (obj != NULL) {

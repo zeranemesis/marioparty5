@@ -365,7 +365,7 @@ void fn_1_296C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 void __ct__15CEffectParticleFilUs(CEffectParticle *self, int dataNum, u32 maxCnt, u16 camera)
 {
     self->m_vt = &sEffectParticleVt;
-    self->m_anim = HuSprAnimRead(HuDataSelHeapReadNum(dataNum, 0x10000000, 2));
+    self->m_anim = HuSprAnimRead(HuDataSelHeapReadNum(dataNum, 0x10000000, (HEAPID)2));
     HuSprAnimLock(self->m_anim);
     self->m_model = Hu3DParticleCreate(self->m_anim, maxCnt);
     self->m_workPtr = (HU3DPARTICLE *)Hu3DData[self->m_model].hookData;

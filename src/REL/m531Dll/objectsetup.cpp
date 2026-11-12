@@ -1,6 +1,10 @@
 #include <stddef.h> /* size_t for operator new (unsigned long on GC) */
 #include "dolphin/types.h"
 
+#ifdef TARGET_PC
+/* the real classes: the local copies below have the GC sizes, too small for the 64-bit objects */
+#include "REL/m531Dll.h"
+#else
 typedef struct Process_s OMOBJMAN;
 typedef struct omObj_s OMOBJ;
 
@@ -84,6 +88,7 @@ private:
     u8 m_unk54[0x208 - 0x54];
 };
 }
+#endif
 
 CTime lbl_1_bss_60(120);
 CTime lbl_1_bss_64(210);

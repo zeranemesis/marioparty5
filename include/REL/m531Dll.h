@@ -136,8 +136,8 @@ void HuAudFXPanning(int seNo, s16 pan);
 void HuAudFadeOut(s32 speed);
 int HuAudJinglePlay(s16 streamId);
 
-extern s8 HuPadStkX[4];
-extern s8 HuPadStkY[4];
+SHARED_SYM extern s8 HuPadStkX[4];
+SHARED_SYM extern s8 HuPadStkY[4];
 extern s8 HuPadSubStkX[4];
 extern s8 HuPadSubStkY[4];
 extern u16 HuPadBtn[4];

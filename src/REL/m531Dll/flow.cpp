@@ -367,7 +367,13 @@ void *fn_1_3264(m531::CFlow *self, s16 flag)
         fn_1_D8F8(self->m_cleaner, 1);
         fn_1_7E40(self->m_stageSet, 1);
         delete self->m_score;
+#ifdef TARGET_PC
+        if (flag >= 0) /* flag -1: called from ~CFlow, the compiler destroys the members and bases */
+#endif
         fn_1_2380(&self->m_timer, -1);
+#ifdef TARGET_PC
+        if (flag >= 0)
+#endif
         if (self != NULL) {
             self->CMinigameCore::~CMinigameCore();
         }
@@ -1153,3 +1159,27 @@ void *__vt__Q24m5315CFlow[13] = {
     (void *)fn_1_3F60, (void *)fn_1_41EC, (void *)fn_1_491C,
 };
 }
+
+#ifdef TARGET_PC
+/* MSVC builds CFlow's vtable from the class: the virtuals forward to the functions __vt__Q24m5315CFlow holds on GC */
+CTimer::~CTimer() { fn_1_2380(this, 0); } /* MWCC-style destructor, no delete */
+m531::CFlow::~CFlow() { fn_1_3264(this, -1); }
+void m531::CFlow::on_close() { fn_1_4BF8(); }
+void m531::CFlow::mode0() { fn_1_33D8(this); }
+void m531::CFlow::mode1() { fn_1_3C14(this); }
+void m531::CFlow::mode2() { fn_1_3C8C(this); }
+void m531::CFlow::mode3() { fn_1_3D74(this); }
+void m531::CFlow::mode4() { fn_1_3F60(this); }
+void m531::CFlow::mode5() { fn_1_41EC(this); }
+void m531::CFlow::mode6() { fn_1_491C(this); }
+#endif
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_56CC)(void) = fn_1_56CC;
+#else
+struct PortStaticInit_56CC {
+    PortStaticInit_56CC() { fn_1_56CC(); }
+};
+static PortStaticInit_56CC lbl_port_init_56CC;
+#endif

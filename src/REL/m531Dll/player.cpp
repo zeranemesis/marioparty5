@@ -1,5 +1,8 @@
 #include "REL/m531Dll.h"
 #include <math.h>
+#ifdef TARGET_PC
+extern "C" void __dt__15CEffectParticleFv(void *self, s32 flag); /* effect.cpp */
+#endif
 
 extern "C" {
 void PSVECSubtract(const Vec *a, const Vec *b, Vec *ab);
@@ -12,9 +15,9 @@ void PSMTXMultVecSR(const Mtx m, const Vec *src, Vec *dst);
 void *__dl__FPv(void *ptr);
 void *fn_1_0(s32 size);
 HU3DMODELID Hu3DModelCreate(void *data);
-void Hu3DModelHookSet(HU3DMODELID modelId, s32 hook, s16 arg);
-void CharModelHookDustCreate(s16 charNo, s32 hook);
-s32 CharModelItemHookGet(s16 charNo, s32 a, s32 b);
+void Hu3DModelHookSet(HU3DMODELID modelId, char *hook, s16 arg);
+void CharModelHookDustCreate(s16 charNo, char *hook);
+char *CharModelItemHookGet(s16 charNo, s16 model, s16 hookNo);
 void CharModelStepFxSet(s16 charNo, s32 a);
 void CharEffectLayerSet(s32 layer);
 void CharEffectHitCreate(s32 type, Vec *pos, Vec *rot);
@@ -48,7 +51,7 @@ void fn_1_CB20(CPlayerBase *self);
 CPlayerBase *fn_1_CB34(CPlayerBase *self, OMOBJMAN *objMan, PlayerMotInfo *tbl, s32 num, s32 dataNum);
 }
 
-static inline s32 PlayerItemHook(s16 charNo)
+static inline char *PlayerItemHook(s16 charNo)
 {
     return CharModelItemHookGet(charNo, 2, 0);
 }
@@ -205,7 +208,12 @@ CPlayer *fn_1_948C(CPlayer *self, s16 flag)
 {
     if (self != NULL) {
         self->m_base.m_vt = &lbl_1_data_3C4;
+        #ifdef TARGET_PC
+        /* the object is effect.cpp's PC struct: destroy it through its MWCC destructor, not a C++ vtable */
+        __dt__15CEffectParticleFv(self->m_hit, 1);
+        #else
         delete self->m_hit;
+        #endif
         fn_1_C590(&self->m_base, 0);
         if (flag > 0) {
             __dl__FPv(self);
@@ -362,7 +370,12 @@ void fn_1_9E54(CPlayer *self)
 {
     CharModelHookDustCreate(self->m_base.m_charNo, PlayerItemHook(self->m_base.m_charNo));
     fn_1_CA30(&self->m_base);
+    #ifdef TARGET_PC
+    /* the object is effect.cpp's PC struct: destroy it through its MWCC destructor, not a C++ vtable */
+    __dt__15CEffectParticleFv(self->m_hit, 1);
+    #else
     delete self->m_hit;
+    #endif
     self->m_hit = (CEffectParticle *)0;
     HuAudFXStop(self->m_se);
 }
@@ -903,3 +916,13 @@ PlayerBaseVt lbl_1_data_3C4 = {
     VT(fn_1_964C), VT(fn_1_97E4), VT(fn_1_9878), VT(fn_1_9BF4), VT(fn_1_9EF4), VT(fn_1_9F1C), VT(fn_1_AA98),
     (CPlayerBase * (*)(CPlayerBase *, s16)) fn_1_948C, VT(fn_1_9E54), VT(fn_1_9CC4),
 };
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_BA68)(void) = fn_1_BA68;
+#else
+struct PortStaticInit_BA68 {
+    PortStaticInit_BA68() { fn_1_BA68(); }
+};
+static PortStaticInit_BA68 lbl_port_init_BA68;
+#endif

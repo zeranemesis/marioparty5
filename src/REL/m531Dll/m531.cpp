@@ -171,7 +171,13 @@ CMinigameCore *lbl_1_bss_C;
 
 void *fn_1_0(s32 size)
 {
+#ifdef TARGET_PC
+    /* shortcut: callers pass GC object sizes (fn_1_0(0x34)); a field takes at most twice its GC room on 64-bit,
+     * so double them rather than overflow. Upgrade: sizeof of the constructed types at every call site. */
+    void *p = HuMemDirectMallocNum(HEAP_HEAP, size * 2, 0x10000000);
+#else
     void *p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+#endif
 
     if (p != NULL) {
     } else {
@@ -983,3 +989,13 @@ void fn_1_26B8(void)
 
 // Vtable of the object thunk: deleting destructor, then run().
 ThunkVt lbl_1_data_BC = { { NULL, NULL }, fn_1_21E4, fn_1_2170 };
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_26B8)(void) = fn_1_26B8;
+#else
+struct PortStaticInit_26B8 {
+    PortStaticInit_26B8() { fn_1_26B8(); }
+};
+static PortStaticInit_26B8 lbl_port_init_26B8;
+#endif

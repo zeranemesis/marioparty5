@@ -34,6 +34,8 @@
 
 static GXColor rgba[100];
 static char *StringTable;
+static const char *sFileStrings; /* the string table inside the file buffer */
+static u32 sStringSize;
 
 static const u8 *sFile;          /* the model file, untouched */
 static HSFFILEHEADER sFileHead;  /* its header, byte-swapped */
@@ -107,12 +109,19 @@ static char *NameAt(u32 rawOffset)
     if (offset == 0xFFFFFFFFu) {
         return NULL;
     }
+    if (offset >= sStringSize) {
+        /* outside the copied table (size not as expected): keep the file pointer */
+        return (char *)sFileStrings + offset;
+    }
     return StringTable + offset;
 }
 
 /* hsfmotion.c passes track fields MotionLoad already converted to host order, so no swap here (like hsfload.c's GetString) */
 char *SetName(u32 *strOfs)
 {
+    if (*strOfs >= sStringSize) {
+        return (char *)sFileStrings + *strOfs;
+    }
     return StringTable + *strOfs;
 }
 
@@ -138,13 +147,20 @@ static void FileLoad(const void *data)
         dst[i] = PORT_BE32(src[i]);
     }
 
-    StringTable = (char *)FilePtr(sFileHead.string.ofs);
+    sFileStrings = (const char *)FilePtr(sFileHead.string.ofs);
+    StringTable = (char *)sFileStrings;
     sSymbols = FilePtr(sFileHead.symbol.ofs);
 
     sModel = HuMemDirectMallocNum(HEAP_MODEL, sizeof(HSFDATA), HuMemNumGet((void *)data));
     memset(sModel, 0, sizeof(HSFDATA));
     memcpy(sModel->magic, data, sizeof(sModel->magic));
     sMallocNo = (u32)(uintptr_t)sModel;
+    /* names must live as long as the model, not the file buffer the game may free or reuse */
+    sStringSize = sFileHead.string.num > 0 ? (u32)sFileHead.string.num : 0;
+    if (sStringSize != 0) {
+        StringTable = Alloc(sStringSize + 1);
+        memcpy(StringTable, sFileStrings, sStringSize);
+    }
 
     sObjects = NULL;
     sVertex = sNormal = sSt = sColor = sFace = NULL;
@@ -915,6 +931,21 @@ static void PartLoad(void)
     }
 }
 
+/* Clusters load before parts (objects point at clusters): resolve their part pointers once parts exist. */
+static void ClusterPartFixup(void)
+{
+    const HSFFILECLUSTER *file;
+    u32 i;
+
+    if (sFileHead.cluster.num == 0 || sCluster == NULL) {
+        return;
+    }
+    file = FilePtr(sFileHead.cluster.ofs);
+    for (i = 0; i < sFileHead.cluster.num; i++) {
+        sCluster[i].part = SearchPartPtr((s32)PORT_BE32(file[i].part));
+    }
+}
+
 static void ClusterLoad(void)
 {
     const HSFFILECLUSTER *file;
@@ -1206,6 +1237,7 @@ HSFDATA *LoadHSF(void *data)
     ObjectLoad();
     SkeletonLoad();
     PartLoad();
+    ClusterPartFixup();
     ShapeLoad();
     MapAttrLoad();
     MotionLoad();
@@ -1234,16 +1266,18 @@ void ClusterAdjustObject(HSFDATA *model, HSFDATA *srcModel)
     for (i = 0; i < srcModel->clusterNum; i++, cluster++) {
         HSFOBJECT *object = model->object;
         s32 j;
+        /* targetName and target share a union: read the name before the index overwrites it */
+        char *targetName = cluster->targetName;
 
         cluster->target = -1;
         for (j = 0; j < model->objectNum; j++, object++) {
-            if (CmpObjectName(object->name, cluster->targetName) == 0) {
+            if (CmpObjectName(object->name, targetName) == 0) {
                 cluster->target = j;
                 break;
             }
         }
         if (cluster->target == -1) {
-            OSReport("Search Object Error %s\n", cluster->targetName);
+            OSReport("Search Object Error %s\n", targetName);
         }
     }
 }
