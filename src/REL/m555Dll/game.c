@@ -23,7 +23,7 @@ s32 fn_1_8F4C(s16 arg);
 void Hu3DFogSet(f32 near, f32 far, u8 r, u8 g, u8 b);
 void Hu3DFogClear(void);
 void MgSeqWinnerSet(s16 a, s32 b, s32 c, s32 d);
-s32 _CheckFlag(s32 flag);
+s32 _CheckFlag(u32 flag);
 void CharFXPlay(s16 id, s32 arg);
 void fn_1_2CB0(s16 a, s32 b);
 void fn_1_2E60(s32 a, s32 b);
