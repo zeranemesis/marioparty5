@@ -217,7 +217,9 @@ typedef struct M543Actor_s {
     u8 pad_90[0xC];
     f32 f9C;
     f32 fA0;
-    u8 pad_A4[0xA8];
+    u8 pad_A4[0x8];
+    s16 tileHit[0x29];
+    u8 pad_FE[0x4E];
     s32 btn;
     s32 btnDown;
     s32 stkX;
@@ -264,7 +266,8 @@ typedef struct M543Tile_s {
     s16 step;
     s16 phase;
     s16 f_0E;
-    f32 f_10;
+    s16 f_10;
+    s16 pad_12;
     f32 time;
     s16 mot[3];
     s16 pad_1E;

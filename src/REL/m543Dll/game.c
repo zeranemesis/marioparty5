@@ -1544,3 +1544,403 @@ void fn_1_A69C(MGACTOR *actorP, int param)
 
     sp8 = actorP->param;
 }
+
+void fn_1_A6B0(M543Actor *actors)
+{
+    f32 push60[2];
+    f32 push68[2];
+    f32 edge[4][4];
+    f32 nrm[4][2];
+    s16 order[4];
+    f32 minX;
+    f32 minZ;
+    f32 maxX;
+    f32 maxZ;
+    f32 scaleX;
+    f32 scaleZ;
+    f32 radius;
+    f32 len2;
+    f32 proj;
+    f32 t;
+    f32 k;
+    f32 dx;
+    f32 dz;
+    f32 px;
+    f32 pz;
+    f32 dist;
+    f32 sgn;
+    f32 rotY;
+    f32 lo0;
+    f32 hi0;
+    f32 lo1;
+    f32 hi1;
+    f32 ax;
+    f32 az;
+    f32 cx;
+    f32 cz;
+    f32 vx;
+    f32 vz;
+    s16 pass;
+    s16 sp8;
+    s16 i;
+    s16 j;
+    s16 e;
+    s16 k2;
+    s16 idx;
+    s16 hit;
+    s16 pushed;
+
+    sp8 = 0;
+    for (i = 0; i < 2; i++) {
+        push68[i] = 0.0f;
+        push60[i] = 0.0f;
+    }
+    radius = 40.0f + 25.0f;
+    for (j = 0, idx = 0xF; j < 0x29; j++, idx++) {
+        if (lbl_1_bss_33C[j].active == 0) {
+            continue;
+        }
+        if (idx < 0x24) {
+            minX = lbl_1_bss_15E0->models[idx].x - 25.0f;
+            minZ = lbl_1_bss_15E0->models[idx].z - 80.5f;
+            maxX = 25.0f + lbl_1_bss_15E0->models[idx].x;
+            maxZ = 80.5f + lbl_1_bss_15E0->models[idx].z;
+            scaleX = 1.0f;
+            scaleZ = 0.0f;
+        } else {
+            minX = lbl_1_bss_15E0->models[idx].x - 80.5f;
+            minZ = lbl_1_bss_15E0->models[idx].z - 25.0f;
+            maxX = 80.5f + lbl_1_bss_15E0->models[idx].x;
+            maxZ = 25.0f + lbl_1_bss_15E0->models[idx].z;
+            scaleX = 0.0f;
+            scaleZ = 1.0f;
+        }
+        hit = 0;
+        for (i = 0; i < 2; i++) {
+            scaleX = 1.0f;
+            scaleZ = 1.0f;
+            if (actors[i].f38 + radius * 1.0f >= minX && actors[i].f38 - radius * scaleX <= maxX
+                && actors[i].f40 + radius * scaleZ >= minZ && actors[i].f40 - radius * scaleZ <= maxZ) {
+                hit = 1;
+                lbl_1_bss_33C[j].f_10 = i;
+                if (actors[i].f38 + 25.0f * scaleX >= minX && actors[i].f38 - 25.0f * scaleX <= maxX
+                    && actors[i].f40 + 25.0f * scaleZ >= minZ && actors[i].f40 - 25.0f * scaleZ <= maxZ) {
+                    actors[i].f18 = 1;
+                    actors[i].f16 = 1;
+                    edge[0][0] = minX;
+                    edge[0][1] = minZ;
+                    edge[0][2] = maxX;
+                    edge[0][3] = minZ;
+                    edge[1][0] = maxX;
+                    edge[1][1] = minZ;
+                    edge[1][2] = maxX;
+                    edge[1][3] = maxZ;
+                    edge[2][0] = maxX;
+                    edge[2][1] = maxZ;
+                    edge[2][2] = minX;
+                    edge[2][3] = maxZ;
+                    edge[3][0] = minX;
+                    edge[3][1] = maxZ;
+                    edge[3][2] = minX;
+                    edge[3][3] = minZ;
+                    nrm[0][0] = 1.0f;
+                    nrm[0][1] = 1.0f;
+                    nrm[1][0] = 1.0f;
+                    nrm[1][1] = 1.0f;
+                    nrm[2][0] = 1.0f;
+                    nrm[2][1] = 1.0f;
+                    nrm[3][0] = 1.0f;
+                    nrm[3][1] = 1.0f;
+                    rotY = lbl_1_bss_0.player[i]->actor->rotY;
+                    if (rotY <= 45.0f && rotY > -45.0f) {
+                        order[0] = 0;
+                        order[3] = 2;
+                        if (rotY <= 45.0f && rotY > 0.0f) {
+                            order[1] = 3;
+                            order[2] = 1;
+                        }
+                        if (rotY <= 0.0f && rotY > -45.0f) {
+                            order[1] = 1;
+                            order[2] = 3;
+                        }
+                    }
+                    if (rotY <= 135.0f && rotY > 45.0f) {
+                        order[0] = 3;
+                        order[3] = 1;
+                        if (rotY <= 135.0f && rotY > 90.0f) {
+                            order[1] = 2;
+                            order[2] = 0;
+                        }
+                        if (rotY <= 90.0f && rotY > 45.0f) {
+                            order[1] = 0;
+                            order[2] = 2;
+                        }
+                    }
+                    if (rotY <= -45.0f && rotY > -135.0f) {
+                        order[0] = 1;
+                        order[3] = 3;
+                        if (rotY <= -45.0f && rotY > -90.0f) {
+                            order[1] = 0;
+                            order[2] = 2;
+                        }
+                        if (rotY <= -90.0f && rotY > -135.0f) {
+                            order[1] = 2;
+                            order[2] = 0;
+                        }
+                    }
+                    if (rotY <= -135.0f || rotY > 135.0f) {
+                        order[0] = 2;
+                        order[3] = 0;
+                        if (rotY <= -135.0f) {
+                            order[1] = 1;
+                            order[2] = 3;
+                        }
+                        if (rotY > 135.0f) {
+                            order[1] = 3;
+                            order[2] = 1;
+                        }
+                    }
+                    pushed = 0;
+                    for (k2 = 0; k2 < 4; k2++) {
+                        e = order[k2];
+                        if (actors[i].f38 + 25.0f * nrm[e][0] >= minX && actors[i].f38 - 25.0f * nrm[e][0] <= maxX
+                            && actors[i].f40 + 25.0f * nrm[e][1] >= minZ && actors[i].f40 - 25.0f * nrm[e][1] <= maxZ) {
+                            dx = edge[e][0] - edge[e][2];
+                            dz = edge[e][1] - edge[e][3];
+                            len2 = dx * dx + dz * dz;
+                            proj = -1.0f * (dx * (edge[e][0] - actors[i].f38) + dz * (edge[e][1] - actors[i].f40));
+                            t = proj / len2;
+                            ax = dx * t + edge[e][0];
+                            az = dz * t + edge[e][1];
+                            dx = actors[i].f38 - ax;
+                            dz = actors[i].f40 - az;
+                            dist = sqrtf(dx * dx + dz * dz);
+                            if (dist < 25.0f) {
+                                if (dist <= 1.0f) {
+                                    dist = 1.0f;
+                                }
+                                k = (1.0f + 25.0f) / dist;
+                                actors[i].f38 = ax + 1.0f * (dx * k);
+                                actors[i].f40 = az + 1.0f * (dz * k);
+                                if (pushed == 0) {
+                                    switch (e) {
+                                    case 0:
+                                        push60[i] = -1.0f;
+                                        break;
+                                    case 1:
+                                        push68[i] = 1.0f;
+                                        break;
+                                    case 2:
+                                        push60[i] = 1.0f;
+                                        break;
+                                    case 3:
+                                        push68[i] = -1.0f;
+                                        break;
+                                    }
+                                    pushed = 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (hit != 0 && lbl_1_bss_33C[j].step == 2) {
+            lbl_1_bss_33C[j].sel = 0;
+            if (lbl_1_bss_33C[j].sel != lbl_1_bss_33C[j].prevSel) {
+                omVibrate(lbl_1_bss_15E0->chars[lbl_1_bss_33C[j].f_10].playerNo, 0xA, 4, 2);
+                actors[0].tileHit[j] = 1;
+                actors[1].tileHit[j] = 1;
+                fn_1_3A5C(0, 0x7E, 64.0f + 0.042666666f * lbl_1_bss_15E0->models[idx].x);
+            }
+        } else if (lbl_1_bss_33C[j].step == 2) {
+            lbl_1_bss_33C[j].sel = 1;
+        }
+    }
+    for (i = 0; i < 2; i++) {
+        if (push68[i] != 0.0f || push60[i] != 0.0f) {
+            actors[i].f1C = actors[i].f38;
+            actors[i].f20 = actors[i].f3C;
+            actors[i].f24 = actors[i].f40;
+            actors[i].f28 = actors[i].f38;
+            actors[i].f2C = actors[i].f3C;
+            actors[i].f30 = actors[i].f40;
+            if (push68[i] != 0.0f) {
+                actors[i].f28 = actors[i].f38 + 30.0f * push68[i];
+            }
+            if (push60[i] != 0.0f) {
+                actors[i].f30 = actors[i].f40 + 30.0f * push60[i];
+            }
+        }
+    }
+    for (i = 0; i < 2; i++) {
+        if (actors[i ^ 1].f16 != 0) {
+            dx = actors[i ^ 1].f38 - actors[i].f38;
+            dz = actors[i ^ 1].f40 - actors[i].f40;
+            dist = sqrtf(dx * dx + dz * dz);
+            if (dist < 70.0f) {
+                if (dist <= 1.0f) {
+                    dist = 1.0f;
+                }
+                k = 70.0f / dist;
+                actors[i].f38 = actors[i ^ 1].f38 - dx * k;
+                actors[i].f40 = actors[i ^ 1].f40 - dz * k;
+                if (actors[0].f34 == 0) {
+                    if (actors[0].f50 != 0) {
+                        actors[0].f5C++;
+                    }
+                    if (actors[0].f5C > 0x28) {
+                        actors[0].f5A = 0x50;
+                        actors[1].f5A = -1;
+                        actors[1].f5C = 0;
+                    }
+                    if (actors[0].f5C > 0xB4) {
+                        actors[0].f5A = -1;
+                        actors[0].f5C = 0;
+                    }
+                } else {
+                    actors[0].f5C = 0;
+                }
+                if (actors[1].f34 == 0) {
+                    if (actors[1].f50 != 0) {
+                        actors[1].f5C++;
+                    }
+                    if (actors[1].f5C > 0x28) {
+                        actors[1].f5A = 0x50;
+                        actors[0].f5A = -1;
+                        actors[0].f5C = 0;
+                    }
+                    if (actors[1].f5C > 0xB4) {
+                        actors[1].f5A = -1;
+                        actors[1].f5C = 0;
+                    }
+                } else {
+                    actors[1].f5C = 0;
+                }
+                lbl_1_bss_B94.f_22 = 1;
+            }
+        }
+        for (j = 0; j < 4; j++) {
+            dx = lbl_1_data_500[j][0] - actors[i].f38;
+            dz = lbl_1_data_500[j][1] - actors[i].f40;
+            dist = sqrtf(dx * dx + dz * dz);
+            if (dist < 1.0f + 25.0f) {
+                if (dist <= 1.0f) {
+                    dist = 1.0f;
+                }
+                k = (1.0f + 25.0f) / dist;
+                actors[i].f38 = lbl_1_data_500[j][0] - dx * k;
+                actors[i].f40 = lbl_1_data_500[j][1] - dz * k;
+            }
+        }
+        ax = actors[i].f38;
+        az = actors[i].f40;
+        if ((!(-ax + az > -784.0f) || !(ax < 554.0f) || !(ax + az < 784.0f) || !(az < 554.0f) || !(-ax + az < 784.0f)
+             || !(ax > -554.0f) || !(ax + az > -784.0f) || !(az > -554.0f))
+            && (!(ax > -754.0f) || !(az > -150.0f) || !(az < 150.0f))
+            && (!(ax < 754.0f) || !(az > -150.0f) || !(az < 150.0f))) {
+            actors[i].f38 = actors[i].f44;
+            actors[i].f40 = actors[i].f4C;
+        }
+        for (pass = 0; pass < 2; pass++) {
+            for (j = 0; j < 0x10; j++) {
+                if (lbl_1_data_380[j][0] < lbl_1_data_380[j][2]) {
+                    lo0 = lbl_1_data_380[j][0];
+                    hi0 = lbl_1_data_380[j][2];
+                } else {
+                    lo0 = lbl_1_data_380[j][2];
+                    hi0 = lbl_1_data_380[j][0];
+                }
+                if (lbl_1_data_380[j][1] < lbl_1_data_380[j][3]) {
+                    lo1 = lbl_1_data_380[j][1];
+                    hi1 = lbl_1_data_380[j][3];
+                } else {
+                    lo1 = lbl_1_data_380[j][3];
+                    hi1 = lbl_1_data_380[j][1];
+                }
+                if (actors[i].f38 + 25.0f * lbl_1_data_380[j][4] >= lo0
+                    && actors[i].f38 - 25.0f * lbl_1_data_380[j][4] <= hi0
+                    && actors[i].f40 + 25.0f * lbl_1_data_380[j][5] >= lo1
+                    && actors[i].f40 - 25.0f * lbl_1_data_380[j][5] <= hi1) {
+                    dx = lbl_1_data_380[j][0] - lbl_1_data_380[j][2];
+                    dz = lbl_1_data_380[j][1] - lbl_1_data_380[j][3];
+                    len2 = dx * dx + dz * dz;
+                    proj = -1.0f * (dx * (lbl_1_data_380[j][0] - actors[i].f38)
+                                    + dz * (lbl_1_data_380[j][1] - actors[i].f40));
+                    t = proj / len2;
+                    cx = dx * t + lbl_1_data_380[j][0];
+                    cz = dz * t + lbl_1_data_380[j][1];
+                    vx = actors[i].f38 - cx;
+                    vz = actors[i].f40 - cz;
+                    dist = sqrtf(vx * vx + vz * vz);
+                    if (dist < 25.0f) {
+                        if (dist <= 1.0f) {
+                            dist = 1.0f;
+                        }
+                        sgn = 1.0f;
+                        ax = actors[i].f38;
+                        az = actors[i].f40;
+                        switch (j) {
+                        case 0:
+                            if (-ax + az < -784.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 1:
+                            if (ax > 554.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 5:
+                            if (ax > 554.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 6:
+                            if (ax + az > 784.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 7:
+                            if (az > 554.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 8:
+                            if (-ax + az > 784.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 9:
+                            if (ax < -554.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 13:
+                            if (ax < -554.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 14:
+                            if (ax + az < -784.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        case 15:
+                            if (az < -554.0f) {
+                                sgn = -1.0f;
+                            }
+                            break;
+                        }
+                        k = (1.0f + 25.0f) / dist;
+                        actors[i].f38 = cx + sgn * (vx * k);
+                        actors[i].f40 = cz + sgn * (vz * k);
+                    }
+                }
+            }
+        }
+        if (lbl_1_bss_B94.winner == 0 && lbl_1_data_500[0][0] < actors[i].f38) {
+            lbl_1_bss_B94.winner = i | ((i ^ 1) * 2);
+        }
+    }
+}
