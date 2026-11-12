@@ -1,6 +1,12 @@
-#include "dolphin/types.h"
+#define _MATH_H
+#define M539_USE_DOLPHIN_HEADERS
+extern "C" {
+#include "dolphin.h"
 #include "game/gamework.h"
 #include "game/pad.h"
+#include "game/mg/timer.h"
+}
+#include "REL/m539Dll.h"
 
 // The pad/IRQ objects of m539 are polymorphic: every instance starts with a
 // vtable pointer that the module keeps in .data by hand. There is no RTTI in
@@ -36,7 +42,7 @@ typedef struct M539Handler_s {
     u8 unk8;
     u8 unk9[3];
     s32 unkC;
-    M539Slot *subVptr;
+    M539SubThread sub;
 } M539Handler;
 
 typedef void (*M539PollFn)(M539Handler *self, void *st);
@@ -115,15 +121,15 @@ void *fn_1_64B8(M539Handler *self)
 {
     self->vptr = (M539Slot *)lbl_1_data_244;
     self->unk8 = 0;
-    fn_1_558C(&self->subVptr, 0x8000);
+    fn_1_558C(&self->sub, 0x8000);
     self->vptr = (M539Slot *)lbl_1_data_210;
-    self->subVptr = (M539Slot *)((u8 *)lbl_1_data_210 + 0x10);
+    self->sub.vtbl = (M539ThreadVtbl *)((u8 *)lbl_1_data_210 + 0x10);
     return self;
 }
 
 void fn_1_6524(M539Handler *self, s32 arg)
 {
-    fn_1_56BC(&self->subVptr, arg);
+    fn_1_56BC(&self->sub, arg);
 }
 
 // NONMATCHING: the second parameter is copied straight into r29 (mr r29, r4)
@@ -134,7 +140,7 @@ void fn_1_6558(M539Handler *self, M539PadState *st)
 
     for (i = 8; i != 0; i--) {
         for (n = fn_1_4AE0() % 30 + 0x1E; n > 0; n--) {
-            fn_1_574C(&self->subVptr, 0);
+            fn_1_574C(&self->sub, 0);
         }
         st->unk4 = 1;
     }
@@ -144,8 +150,8 @@ void *fn_1_6600(M539Handler *self, s16 flag)
 {
     if (self) {
         self->vptr = (M539Slot *)lbl_1_data_210;
-        self->subVptr = (M539Slot *)((u8 *)lbl_1_data_210 + 0x10);
-        fn_1_5608(&self->subVptr, 0);
+        self->sub.vtbl = (M539ThreadVtbl *)((u8 *)lbl_1_data_210 + 0x10);
+        fn_1_5608(&self->sub, 0);
         if (self) {
             self->vptr = (M539Slot *)lbl_1_data_244;
         }

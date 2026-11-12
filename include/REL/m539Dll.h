@@ -143,6 +143,72 @@ typedef struct M539Player_s {
     M539Game *game;
 } M539Player;
 
+#ifdef M539_USE_DOLPHIN_HEADERS
+typedef struct M539Node_s {
+    struct M539Node_s *next;
+    struct M539Node_s *prev;
+} M539Node;
+
+typedef struct M539MasterVtbl_s {
+    void *rtti[2];
+    void *(*dtor)(void *self, s16 flag);
+    void (*setup)(void *self, void *objman);
+    void (*update)(void *self);
+    void (*finish)(void *self);
+} M539MasterVtbl;
+
+typedef struct M539Master_s {
+    s32 pad0;
+    M539MasterVtbl *vtbl;
+    s32 slot[4];
+    s32 mesId;
+    s32 counter;
+} M539Master;
+
+typedef struct M539ThreadVtbl_s {
+    void *rtti[2];
+    void *(*dtor)(void *self, s16 flag);
+    s32 (*run)(void *self, s32 arg);
+    void (*runMaster)(void *self);
+} M539ThreadVtbl;
+
+typedef struct M539Thread_s {
+    OSThread thread;
+    u32 *stack;
+} M539Thread;
+
+typedef struct M539Sem_s {
+    s32 count;
+    OSThreadQueue queue;
+} M539Sem;
+
+typedef struct M539SubThread_s {
+    M539ThreadVtbl *vtbl;
+    M539Thread th;
+    M539Sem sem;
+    s32 arg;
+} M539SubThread;
+
+typedef struct M539TimerObj_s {
+    MGTIMER *timer;
+} M539TimerObj;
+
+// The two lists live in one 0x10 byte holder: players first, game objects second.
+typedef struct M539Holder_s {
+    M539Node players;
+    M539Node games;
+} M539Holder;
+
+typedef struct M539GM_s {
+    M539Master base;
+    M539SubThread thread;
+    M539TimerObj timer;
+    M539Player *players[4];
+    M539Holder *holder;
+    M539Game *games[4];
+} M539GM;
+#endif
+
 void fn_1_C8(void *ptr);
 void *fn_1_558C(void *self, s32 prio);
 void *fn_1_5608(void *self, s16 arg);
