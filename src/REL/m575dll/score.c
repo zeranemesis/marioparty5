@@ -36,13 +36,13 @@ static const f32 lbl_1_rodata_E8[2] = { 494.0f, 0.0f };
 // NONMATCHING: one instruction differs - the original keeps the esp id in a
 // register for the last espDispOff (mr r3, r29) while using the local there
 // costs the register allocator its r29 slot (see the esp note above).
-void fn_1_3A7C(M575Score *self, u16 side, s32 arg2)
+void fn_1_3A7C(M575Score *self, u16 side, M575Main *main)
 {
     struct MgScore_s *score;
     s16 esp;
 
     memset(self, 0, sizeof(M575Score));
-    self->unk0 = arg2;
+    self->main = main;
     self->side = side;
     self->value = 0;
     self->winId = MgScoreWinCreate(0x70, 0x28);
