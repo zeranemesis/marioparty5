@@ -63,7 +63,7 @@ void fn_1_9E94(M522_MODEL *model, s16 flag);
 M522_EFFECT *fn_1_E44C(M522_EFFECT *self);
 void fn_1_E534(M522_EFFECT *self, s16 flag);
 s32 fn_1_E5C0(M522_EFFECT *self);
-u32 fn_1_E5C8(s32 handle);
+void *fn_1_E5C8(s32 handle);
 M522_BURSTOBJ *fn_1_17E8(M522_BURSTOBJ *self, M522_VEC3 *pos, s32 count, f32 len, f32 time);
 void fn_1_4188(void *self, s16 flag);
 void fn_1_412C(M522_POSVEC *self);

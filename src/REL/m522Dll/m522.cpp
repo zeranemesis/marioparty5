@@ -22,9 +22,9 @@ extern "C" void fn_1_99E4(void)
     omSysExitReq = 1;
 }
 
-extern "C" void fn_1_9E5C(s16 *index, u32 value)
+extern "C" void fn_1_9E5C(s16 *index, void *value)
 {
-    Hu3DData[*index].hookData = (void *)value;
+    Hu3DData[*index].hookData = value;
 }
 
 extern "C" Mtx *fn_1_9E78(s16 *index)
@@ -226,54 +226,56 @@ extern "C" M522ListNode *fn_1_8010(M522ListNode *node, s16 arg1)
     return node;
 }
 
-extern "C" M522ListNode *fn_1_7D04(M522ListNode *node, s16 arg1)
+extern "C" M522_HEAPSEL *fn_1_7D04(M522_HEAPSEL *table, s16 flag)
 {
-    if (node != 0) {
-        M522ListNode *child = node->f00;
-        if (child != 0) {
-            HuMemDirectFree(child);
+    if (table != 0) {
+        M522_HANDLEENT *entries = table->entries;
+        if (entries != 0) {
+            HuMemDirectFree(entries);
         }
-        if (arg1 > 0) {
-            if (node != 0) {
-                HuMemDirectFree(node);
+        if (flag > 0) {
+            if (table != 0) {
+                HuMemDirectFree(table);
             }
         }
     }
-    return node;
+    return table;
 }
 
-extern "C" u32 fn_1_7EC8(M522ListNode *self, u32 arg1)
+/* Take a free entry, bind obj to it and return the new handle. */
+extern "C" u32 fn_1_7D74(M522_HEAPSEL *table, void *obj)
 {
-    if (arg1 == 0) {
+    M522_HANDLEENT *ent = table->entries->next;
+
+    if (ent == table->entries) {
         return 0;
     }
-    if ((arg1 >> 12) >= self->f08) {
-        return 0;
-    }
-    u8 *e = (u8 *)self->f00 + ((arg1 >> 12) << 4);
-    if (*(u32 *)(e + 0xC) != arg1) {
-        return 0;
-    }
-    return *(u32 *)(e + 0x8);
+    ent->next->prev = ent->prev;
+    ent->prev->next = ent->next;
+    ent->next = table->used->next;
+    ent->prev = table->used;
+    table->used->next->prev = ent;
+    table->used->next = ent;
+    ent->obj = obj;
+    ent->handle = (ent->handle & ~0xFFFu) | (((ent->handle & 0xFFFu) + 1) & 0xFFFu);
+    return ent->handle;
 }
 
-extern "C" u32 fn_1_7D74(M522ListNode *self, u32 arg1)
+extern "C" void *fn_1_7EC8(M522_HEAPSEL *table, u32 handle)
 {
-    M522ListNode *head = self->f00;
-    M522ListNode *n = head->f00;
-    if (n == head) {
+    M522_HANDLEENT *ent;
+
+    if (handle == 0) {
         return 0;
     }
-    n->f00->f04 = n->f04;
-    n->f04->f00 = n->f00;
-    M522ListNode *dst = self->f04;
-    n->f00 = dst->f00;
-    n->f04 = dst;
-    dst->f00->f04 = n;
-    dst->f00 = n;
-    n->f08 = arg1;
-    n->f0E_count = n->f0E_count + 1;
-    return n->f0C;
+    if ((handle >> 12) >= table->count) {
+        return 0;
+    }
+    ent = table->entries + (handle >> 12);
+    if (ent->handle != handle) {
+        return 0;
+    }
+    return ent->obj;
 }
 
 typedef struct M522ModelRef_s {

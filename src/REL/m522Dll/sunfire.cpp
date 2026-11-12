@@ -32,7 +32,7 @@ void fn_1_6964(void *ptr);
 void fn_1_6A70(const char *cond, const char *file, s32 line);
 s32 fn_1_7D74(M522_HEAPSEL *grp, void *obj);
 void fn_1_7E04(M522_HEAPSEL *grp, s32 handle);
-u32 fn_1_7EC8(M522_HEAPSEL *grp, s32 handle);
+void *fn_1_7EC8(M522_HEAPSEL *grp, s32 handle);
 void fn_1_8004(M522_NODE *node);
 void fn_1_8010(M522_NODE *node, s32 flag);
 void fn_1_807C(M522_NODE *node);
@@ -301,7 +301,7 @@ s32 fn_1_E5C0(M522_EFFECT *self)
     return self->handle;
 }
 
-u32 fn_1_E5C8(s32 handle)
+void *fn_1_E5C8(s32 handle)
 {
     return fn_1_7EC8(lbl_1_bss_A44, handle);
 }
