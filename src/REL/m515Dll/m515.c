@@ -9,6 +9,7 @@
 #include "game/charman.h"
 #include "game/mg/seqman.h"
 #include "humath.h"
+#include "dolphin/mtx.h"
 
 typedef struct M515Node2_s M515_NODE2;
 typedef s32 (*M515_NODEFN)(M515_NODE2 *node);
@@ -149,7 +150,8 @@ typedef struct M515Mark_s {
     s16 m0;
     char pad_02[2];
     s16 m4;
-    char pad_06[0x2c - 6];
+    char pad_06[0x28 - 6];
+    f32 m28;
 } M515_MARK;
 
 typedef struct M515Fx_s {
@@ -1886,6 +1888,37 @@ void fn_1_C83C(void)
         lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
 }
 
+void fn_1_C958(s32 idx, HuVecF *pos, s32 mode)
+{
+    HuVecF up = { 0.0f, 1.0f, 0.0f };
+    HuVecF tgt;
+    HuVecF eye;
+    Vec side;
+    Vec upv;
+    Vec dir;
+
+    tgt = *pos;
+    if (mode != 0) {
+        eye.x = pos->x;
+        eye.y = 800.0f + pos->y;
+        eye.z = pos->z - 2400.0f;
+    } else {
+        eye.x = pos->x;
+        eye.y = 1200.0f + pos->y;
+        eye.z = pos->z;
+    }
+    PSVECSubtract((Vec *)&tgt, (Vec *)&eye, &dir);
+    PSVECNormalize(&dir, &dir);
+    if (dir.x == 0.0f && dir.z == 0.0f) {
+        dir.z = 0.0001f;
+    }
+    PSVECCrossProduct((Vec *)&up, &dir, &side);
+    PSVECNormalize(&side, &side);
+    PSVECCrossProduct(&dir, &side, &upv);
+    PSVECNormalize(&upv, &upv);
+    Hu3DShadowMultiPosSet(&eye, (HuVecF *)&upv, &tgt, lbl_1_rodata_10[idx]);
+}
+
 void fn_1_CAF0(M515_SUB *sub, s32 i)
 {
     Hu3DModelAttrReset(sub->idb6[i][0], HU3D_ATTR_DISPOFF);
@@ -1902,4 +1935,72 @@ void fn_1_CB60(M515_SUB *sub, s32 i)
     Hu3DModelAttrReset(sub->id76[i].a, HU3D_ATTR_DISPOFF);
     Hu3DModelAttrReset(sub->id76[i].b, HU3D_ATTR_DISPOFF);
     Hu3DModelAttrReset(sub->ida6[i], HU3D_ATTR_DISPOFF);
+}
+
+void fn_1_CC20(s16 layerNo)
+{
+    M515_SUB *sub;
+    M515_PLY *ply;
+    s32 i;
+    s32 j;
+    s32 k;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    if (omUPauseFlag + omPauseChk() != 0) {
+        if (sub->v1d8 == 0) {
+            sub->v1d8 = 1;
+            for (i = 0; i < 4; i++) {
+                ply = sub->ply[i];
+                for (j = 0; j < 3; j++) {
+                    if ((Hu3DModelAttrGet(sub->idb6[i][j]) & 1) == 0) {
+                        sub->v1dc[i][j] = 1;
+                        for (k = 0; k < 25; k++) {
+                            if (ply->mdlIds[j][k] >= 0) {
+                                Hu3DModelAttrSet(ply->mdlIds[j][k], HU3D_ATTR_DISPOFF);
+                            }
+                        }
+                    }
+                }
+                for (j = 0; j < ply->v5e8; j++) {
+                    Hu3DModelAttrSet(ply->mark[j].m0, HU3D_ATTR_DISPOFF);
+                    Hu3DModelAttrSet(ply->mark[j].m4, HU3D_ATTR_DISPOFF);
+                }
+            }
+        }
+    } else if (sub->v1d8 != 0) {
+        sub->v1d8 = 0;
+        for (i = 0; i < 4; i++) {
+            ply = sub->ply[i];
+            for (j = 0; j < 3; j++) {
+                if (sub->v1dc[i][j] != 0) {
+                    sub->v1dc[i][j] = 0;
+                    for (k = 0; k < 25; k++) {
+                        if (ply->mdlIds[j][k] >= 0) {
+                            Hu3DModelAttrReset(ply->mdlIds[j][k], HU3D_ATTR_DISPOFF);
+                        }
+                    }
+                }
+            }
+            for (j = 0; j < ply->v5e8; j++) {
+                Hu3DModelAttrReset(ply->mark[j].m0, HU3D_ATTR_DISPOFF);
+                Hu3DModelAttrReset(ply->mark[j].m4, HU3D_ATTR_DISPOFF);
+            }
+        }
+    }
+}
+
+void fn_1_E548(M515_PLY *ply)
+{
+    s32 i;
+    f32 t;
+
+    for (i = 0; i < ply->v5e8; i++) {
+        ply->mark[i].m28 += 2.0f;
+        if (ply->mark[i].m28 > 360.0f) {
+            ply->mark[i].m28 -= 360.0f;
+        }
+        t = 0.05f * HuSin(ply->mark[i].m28);
+        Hu3DModelScaleSet(ply->mark[i].m0, 1.1f, 1.05f + t, 1.1f);
+        Hu3DModelScaleSet(ply->mark[i].m4, 1.1f - t, 1.1f, 1.1f - t);
+    }
 }
