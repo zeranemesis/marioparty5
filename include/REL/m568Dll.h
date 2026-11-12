@@ -45,7 +45,7 @@ extern EffectMgr *lbl_1_bss_A10;
 void fn_1_7EC(const char *expr, const char *file, s32 line);
 void fn_1_6E0(void *mem);
 void fn_1_187C(void *link);
-void fn_1_1888(void *link, s32 arg);
+void *fn_1_1888(void *link, s16 flag);
 
 }
 
