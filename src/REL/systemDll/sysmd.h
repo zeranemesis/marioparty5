@@ -244,6 +244,9 @@ HuVec2f *MdSpriteScaleGet(int grpNo, int memberNo);
 void MdMathLerp(float *out, float a, float b, float t);
 void MdMathLerpScale(HuVecF *out, float a, float b, float t);
 void MathLerpColor(u8 *out, float a, float b, float t);
+void MdMathLerpScaleOfs(HuVecF *out, float a, float b, float t, float ofs);
+void MdMathCurveInit(int sampleNum, float *sampleT, float *sample, float *sampleSlope);
+void MdMathCurveGet(float *out, int sampleNum, float *sampleT, float *sample, float *sampleSlope, float t);
 void MdMathLerpOfs(float *out, float a, float b, float t, float ofs);
 void MdMathOscillate(int type, float *in, float *out, float t);
 
