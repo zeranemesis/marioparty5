@@ -17,6 +17,8 @@
 #include "game/data.h"
 #include "game/sprite.h"
 #include "game/mg/timer.h"
+#include "game/flag.h"
+#include <stddef.h>
 #include "math.h"
 #include "humath.h"
 
@@ -66,7 +68,31 @@ typedef struct M502Stage_s {
 
 /* TEMP placeholders, expanded in the owning files */
 typedef struct M502Block_s { u8 raw[0xF50]; } M502BLOCK;
-typedef struct M502PlrSub_s { u8 raw0[0x60]; s32 lane; u8 raw[0x18]; } M502PLRSUB;
+typedef struct M502Input_s { u8 raw[0x1C]; } M502INPUT;
+typedef struct M502PlrSub_s {
+    struct M502Player_s *player;
+    u16 mode;       /* 0x04 */
+    u16 phase;      /* 0x06 */
+    u16 action;     /* 0x08 */
+    s16 step;       /* 0x0A */
+    s32 unkC;
+    s32 playerNo;   /* 0x10 */
+    s32 charNo;     /* 0x14 */
+    s32 grp;        /* 0x18 */
+    OMOBJ *obj;     /* 0x1C */
+    s32 active;     /* 0x20 */
+    M502INPUT input; /* 0x24 */
+    s32 v40;
+    s32 v44;
+    s32 v48;
+    u8 pad4C[0x14];
+    s32 lane;       /* 0x60 */
+    u8 pad64[8];
+    f32 vel;        /* 0x6C */
+    u8 pad70[4];
+    s32 flag74;     /* 0x74 */
+    u8 pad78[4];
+} M502PLRSUB;
 typedef struct M502Opening_s { u8 raw[0x24]; } M502OPENING;
 typedef struct M502Bat_s { u8 raw[0x248]; } M502BAT;
 
@@ -82,6 +108,7 @@ typedef struct M502Models_s {
 typedef struct M502Light_s {
     s32 unk0;
     s16 id;
+    s16 pad6;
 } M502LIGHT;
 
 /* one player's state (0x1318 bytes on GC) */
@@ -117,9 +144,82 @@ typedef struct M502Main_s {
     s32 bgmId;          /* 0x5018 */
     s32 seId;           /* 0x501C */
     s32 unk5020;
+    s32 unk5024;
 } M502MAIN;
 
 extern M502MAIN *lbl_1_data_0;
+extern M502MAIN lbl_1_bss_0;
+extern s32 lbl_1_bss_5028;
+extern s16 lbl_1_bss_502C;
+extern s32 lbl_1_bss_5030;
+
+s32 rand8(void);
+void ObjectSetup(void);
+void fn_1_134(OMOBJ *obj);
+int fn_1_198(int seId);
+void fn_1_1C0(int seNo);
+void fn_1_1E8(int seNo, s32 speed);
+void fn_1_218(int seNo, s16 pan);
+void fn_1_248(Vec *pos, Vec *heading, f32 sndDist, f32 sndSpeed, f32 startDis, f32 frontSurDis, f32 backSurDis);
+int fn_1_2A0(s16 streamId);
+void fn_1_2C8(int streamNo, s32 speed);
+void fn_1_2F8(void);
+int fn_1_318(s16 streamId);
+int fn_1_340(s16 streamId);
+int fn_1_368(s16 streamId, s16 chanNo);
+void fn_1_398(M502MAIN *m, OMOBJMAN *objman, OMOBJ *obj);
+void fn_1_504(M502MAIN *m);
+s32 fn_1_5DC(M502MAIN *m);
+void fn_1_FD8(M502MAIN *m);
+void fn_1_1018(M502MAIN *m);
+void fn_1_1104(M502MAIN *m);
+void fn_1_1350(M502MAIN *m);
+void fn_1_13A0(M502MAIN *m);
+void fn_1_13F0(M502MODELS *models);
+void fn_1_147C(M502MODELS *models);
+void fn_1_14C0(M502MODELS *models);
+void fn_1_1564(M502MODELS *models);
+void fn_1_15C0(M502LIGHT *light, s32 unk);
+void fn_1_1638(M502LIGHT *light);
+void fn_1_168C(void);
+void fn_1_1690(M502PLAYER *p, s32 no, M502MAIN *m);
+void fn_1_1740(M502PLAYER *p);
+s32 fn_1_17C4(M502PLAYER *p);
+
+/* stage.c */
+void fn_1_21B8(M502STAGE *st, s32 playerNo, M502PLAYER *player);
+void fn_1_2704(M502STAGE *st);
+void fn_1_27A8(M502STAGE *st);
+void fn_1_27AC(void);
+void fn_1_2878(HU3DDRAWOBJ *drawObj);
+void fn_1_2E08(M502STAGE *st, f32 speed);
+void fn_1_3298(M502STAGE *st);
+void fn_1_3380(f32 v);
+void fn_1_3390(HU3DDRAWOBJ *drawObj);
+
+/* player.c */
+void fn_1_38E0(M502PLRSUB *plr, s32 no, M502PLAYER *player);
+void fn_1_3B88(M502PLRSUB *plr);
+s32 fn_1_3BF4(M502PLRSUB *plr);
+
+/* block.c */
+void fn_1_6664(M502BLOCK *b, s32 no, M502PLAYER *player);
+void fn_1_6778(M502BLOCK *b);
+void fn_1_6808(M502BLOCK *b);
+void fn_1_7290(M502BLOCK *dst, M502BLOCK *src);
+void fn_1_735C(M502BLOCK *b);
+void fn_1_8F04(M502BLOCK *b);
+
+/* opening.c / ending.c / bat.c */
+void fn_1_9468(M502OPENING *o, M502MAIN *m);
+void fn_1_95B4(M502OPENING *o);
+void fn_1_9604(M502OPENING *o);
+s32 fn_1_9644(M502MAIN *m);
+s32 fn_1_A914(M502MAIN *m);
+void fn_1_C468(M502BAT *b, M502PLAYER *player);
+void fn_1_C4F0(M502BAT *b);
+void fn_1_C554(M502BAT *b);
+void fn_1_CAC8(M502BAT *b);
 extern s32 lbl_1_data_B60[8];
 
 
