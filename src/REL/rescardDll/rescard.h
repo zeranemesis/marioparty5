@@ -209,39 +209,86 @@ typedef struct MdModelWork_s {
     HU3DMODELID ambId[MDMODEL_AMB_MAX]; //0x500
 } MDMODEL_WORK;
 
-/* model slots (sys->model->mdlId[]) */
+/* model slots (sys->model->mdlId[]), names from the original's mdlInfo table */
 enum {
-    MDMODEL_BG = 0,        //0 backdrop with the star motions
-    MDMODEL_STAGE = 1,     //1..6
-    MDMODEL_PIN = 7,       //7..10 per player
-    MDMODEL_CUR = 11,      //11..14 per player
-    MDMODEL_SPOT = 15,     //15..18
-    MDMODEL_POP = 19,      //19..20
-    MDMODEL_POP_A = 21,    //21..42 (links of POP 0)
-    MDMODEL_POP_B = 43,    //43..53 (links of POP 1)
-    MDMODEL_BILL_A = 54,   //54..57
-    MDMODEL_BILL_B = 58,   //58..61
-    MDMODEL_BILL_C = 62,   //62..65
-    MDMODEL_BILL_D = 66,   //66..73
-    MDMODEL_E74 = 74,
-    MDMODEL_E75 = 75,      //75..78
-    MDMODEL_E79 = 79,      //79..82
+    MDMODEL_STAR = 0,
+    MDMODEL_STAGE = 1,          //1..6 STAGE_BASE, STAGE_SIDE, STAGE_OBJ1-4
+    MDMODEL_PIN = 7,            //7..10
+    MDMODEL_CUR = 11,           //11..14
+    MDMODEL_PEDESTAL = 15,      //15..18
+    MDMODEL_POP_STAR = 19,
+    MDMODEL_POP_ZTAR = 20,
+    MDMODEL_WIN_STAR = 21,      //21..42
+    MDMODEL_WIN_ZTAR = 43,      //43..53
+    MDMODEL_CARD_STAR = 54,     //54..57
+    MDMODEL_CARD_ZTAR = 58,     //58..61
+    MDMODEL_CARD_SZTAR = 62,    //62..65
+    MDMODEL_DRAW = 66,          //66 DRAW_STAR, 67..73 DRAW_ZTAR_0-6
+    MDMODEL_EFF_STARFLASH = 74,
+    MDMODEL_EFF_DICEFLASH = 75, //75..78
+    MDMODEL_EFF_CARDFLASH = 79, //79..82
     MDMODEL_RING = 83,
-    MDMODEL_E84 = 84,      //84..87
+    MDMODEL_SPOT = 84,          //84..87
     MDMODEL_FONTBGFILTER = 88
 };
 
 typedef struct RescardPlayer_s {
-    s8 pinNo; //0x00
-    u8 pad01[4];
-    s8 pinVar; //0x05
-    u8 pad06[0x18 - 6];
+    s8 charNo; //0x00
+    s8 padNo; //0x01 -1 for a COM player
+    s8 starNum; //0x02
+    s8 ztarNum; //0x03
+    s8 type; //0x04
+    s8 pedestalF; //0x05
+    u8 pad06[2];
+    s32 state; //0x08
+    float oscT; //0x0C
+    float oscOut; //0x10
+    s32 unk14; //0x14
 } RESCARD_PLAYER;
+
+typedef struct RescardCard_s {
+    s8 kind; //0x00 0 = zero card, 1 = star card
+    s8 state; //0x01
+    s8 id; //0x02
+    u8 pad03[9];
+} RESCARD_CARD;
+
+typedef struct RescardDraw_s {
+    u32 phase; //0x00
+    s32 wait; //0x04
+    s32 timeLimit; //0x08
+    s32 sel; //0x0C
+    s32 cursor; //0x10
+    s32 remain; //0x14
+    s32 revealIdx; //0x18
+    s32 revealWait; //0x1C
+    RESCARD_CARD card[8]; //0x20
+} RESCARD_DRAW;
 
 typedef struct RescardScore_s {
     RESCARD_PLAYER player[4]; //0x00
-    u8 pad60[0xF4 - 0x60];
+    RESCARD_DRAW draw; //0x60
+    s32 unkE0; //0xE0
+    s32 phase; //0xE4
+    s16 mesId; //0xE8
+    s8 unkEA; //0xEA
+    s8 rankMax; //0xEB number of players on the top rank
+    s8 rankNum; //0xEC
+    s8 rank[4]; //0xED
+    u8 padF1[3];
 } RESCARD_SCORE;
+
+typedef struct RescardPin_s {
+    s32 state; //0x00
+    u8 pad04[0x50 - 4];
+} RESCARD_PIN;
+
+typedef struct RescardFocus_s {
+    HuVecF center; //0x00
+    HuVecF hvr; //0x0C
+    HuVecF centerEnd; //0x18
+    HuVecF hvrEnd; //0x24
+} RESCARD_FOCUS;
 
 typedef struct Sys_s {
     s32 unk00; //0x00
@@ -273,7 +320,12 @@ typedef struct Sys_s {
     MDSPRITE_WORK *sprite; //0x6C
     MDMODEL_WORK *model; //0x70
     RESCARD_SCORE *score; //0x74
-    u8 pad78[0x1D8 - 0x78];
+    RESCARD_PIN pin[4]; //0x78
+    s32 procState; //0x1B8
+    s32 procState2; //0x1BC
+    u8 pad1C0[8];
+    float procT[2]; //0x1C8
+    float procOut[2]; //0x1D0
     MGTIMER *timer; //0x1D8
     u8 pad1DC[4];
 } SYS;
