@@ -30,6 +30,11 @@ s16 MdMessWinChoiceGet(MDMESS_WORK *mess, int winNo);
 void MdSpriteCreate(MDSPRITE_WORK *sprite);
 void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera);
 void MdToueiMdlInit(void);
+void MdMathOscillate(int type, float *in, float *out, float t);
+void MdMathLerp(float *out, float a, float b, float t);
+void MdMathLerpScale(HuVecF *out, float a, float b, float t);
+void MdMathLerpOfs(float *out, float a, float b, float t, float ofs);
+void MdMathLerpScaleOfs(HuVecF *out, float a, float b, float t, float ofs);
 
 void MdMessWinOpen(MDMESS_WORK *mess, int winNo, float posX, float posY, s16 w, s16 h, float bgTPLvl, s16 drawNo);
 void MdMessWinClose(MDMESS_WORK *mess, int winNo);
@@ -1295,6 +1300,170 @@ void fn_1_2A3C(void)
             }
             break;
     }
+}
+
+typedef struct MdCamMove_s {
+    HuVecF centerFrom; //0x00
+    HuVecF hvrFrom; //0x0C
+    HuVecF centerTo; //0x18
+    HuVecF hvrTo; //0x24
+} MDCAM_MOVE;
+
+static float lbl_1_bss_1A8;
+static float lbl_1_bss_1AC;
+static HuVecF lbl_1_bss_1B0[2];
+static MDCAM_MOVE lbl_1_bss_1C8;
+
+static HuVecF lbl_1_data_318[2] = {
+    { 288.0f, 100.0f, 3000.0f },
+    { 0.0f, 0.0f, 0.0f }
+};
+
+s32 fn_1_44F8(void)
+{
+    sys->procInit = 0;
+    sys->unk3A0 = 0;
+    sys->unk3A4 = 0;
+    sys->procT[0] = 0.0f;
+    sys->procT[1] = 0.0f;
+    sys->procT[2] = 0.0f;
+    sys->procT[3] = 0.0f;
+    sys->procOut[0] = 0.0f;
+    sys->procOut[1] = 0.0f;
+    sys->procOut[2] = 0.0f;
+    sys->procOut[3] = 0.0f;
+    return 0;
+}
+
+s32 fn_1_461C(void)
+{
+    MDCAMERA *cam;
+    MDCAMERA_WORK *camWork;
+
+    camWork = sys->camera;
+    cam = &camWork->camera[0];
+    if(sys->procInit == 0) {
+        lbl_1_bss_1C8.centerFrom = cam->center;
+        lbl_1_bss_1C8.hvrFrom.x = cam->hvr.x;
+        lbl_1_bss_1C8.hvrFrom.y = cam->hvr.y;
+        lbl_1_bss_1C8.hvrFrom.z = cam->hvr.z;
+        lbl_1_bss_1C8.centerTo.x = 0.0f;
+        lbl_1_bss_1C8.centerTo.y = 470.0f;
+        lbl_1_bss_1C8.centerTo.z = 0.0f;
+        lbl_1_bss_1C8.hvrTo.x = 50.0f;
+        lbl_1_bss_1C8.hvrTo.y = 15.0f;
+        lbl_1_bss_1C8.hvrTo.z = 4000.0f;
+        sys->procInit = 1;
+    }
+    MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 240.0f);
+    MdMathOscillate(MDMATH_OSC_180, &sys->procT[1], &sys->procOut[1], 240.0f);
+    MdMathLerp(&cam->center.x, lbl_1_bss_1C8.centerFrom.x, lbl_1_bss_1C8.centerTo.x, sys->procOut[0]);
+    MdMathLerp(&cam->center.y, lbl_1_bss_1C8.centerFrom.y, lbl_1_bss_1C8.centerTo.y, sys->procOut[0]);
+    MdMathLerp(&cam->center.z, lbl_1_bss_1C8.centerFrom.z, lbl_1_bss_1C8.centerTo.z, sys->procOut[0]);
+    MdMathLerp(&cam->hvr.x, lbl_1_bss_1C8.hvrFrom.x, lbl_1_bss_1C8.hvrTo.x, sys->procOut[0]);
+    MdMathLerp(&cam->hvr.y, lbl_1_bss_1C8.hvrFrom.y, lbl_1_bss_1C8.hvrTo.y, sys->procOut[0]);
+    MdMathLerpOfs(&cam->hvr.z, lbl_1_bss_1C8.hvrFrom.z, lbl_1_bss_1C8.hvrTo.z, sys->procOut[0], 0.5f*sys->procOut[1]);
+    if(sys->procT[0] >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+// remaining diff: local register order, extsh on camera bit (hsfex.h takes s16)
+s32 fn_1_4944(s32 modelNo)
+{
+    HuVecF *pos;
+    MDMODEL_WORK *model;
+    HuVecF *rot;
+    HuVecF *scale;
+    int i;
+    MDCAMERA_WORK *camWork;
+
+    model = sys->model;
+    camWork = sys->camera;
+    pos = model->posP[modelNo];
+    rot = model->rotP[modelNo];
+    scale = model->scaleP[modelNo];
+    if(sys->procInit == 0) {
+        lbl_1_data_318[1] = lbl_1_data_318[0];
+        lbl_1_data_318[1].x = -128.0f;
+        for(i=0; i<2; i++) {
+            Hu3D2Dto3D(&lbl_1_data_318[i], camWork->camera[1].bit, &lbl_1_bss_1B0[i]);
+        }
+        *pos = lbl_1_bss_1B0[1];
+        rot->x = 90.0f;
+        rot->y = 180.0f;
+        rot->z = 0.0f;
+        scale->x = 1.0f;
+        scale->y = 1.0f;
+        scale->z = 1.0f;
+        Hu3DModelAttrReset(model->mdlId[modelNo], HU3D_ATTR_DISPOFF);
+        fn_1_A094(6);
+        sys->procInit = 1;
+    }
+    MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 30.0f);
+    MdMathLerp(&pos->x, lbl_1_bss_1B0[1].x, lbl_1_bss_1B0[0].x, sys->procOut[0]);
+    MdMathLerp(&pos->y, lbl_1_bss_1B0[1].y, lbl_1_bss_1B0[0].y, sys->procOut[0]);
+    MdMathLerp(&pos->z, lbl_1_bss_1B0[1].z, lbl_1_bss_1B0[0].z, sys->procOut[0]);
+    if(sys->procT[0] >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_4C00(s32 modelNo)
+{
+    MDMODEL_WORK *model;
+    MDCAMERA_WORK *camWork;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+
+    model = sys->model;
+    camWork = sys->camera;
+    pos = model->posP[modelNo];
+    rot = model->rotP[modelNo];
+    scale = model->scaleP[modelNo];
+    if(sys->procInit == 0) {
+        lbl_1_bss_1AC = rot->y;
+        fn_1_A094(8);
+        sys->procInit = 1;
+    }
+    MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 30.0f);
+    MdMathOscillate(MDMATH_OSC_180, &sys->procT[1], &sys->procOut[1], 30.0f);
+    MdMathLerpOfs(&rot->y, lbl_1_bss_1AC, 180.0f+lbl_1_bss_1AC, sys->procOut[0], 0.2f*sys->procOut[1]);
+    if(sys->procT[0] >= 1.0f) {
+        return 1;
+    }
+    return 0;
+}
+
+s32 fn_1_4DC8(s32 modelNo)
+{
+    MDMODEL_WORK *model;
+    MDCAMERA_WORK *camWork;
+    HuVecF *pos;
+    HuVecF *rot;
+    HuVecF *scale;
+
+    model = sys->model;
+    camWork = sys->camera;
+    pos = model->posP[modelNo];
+    rot = model->rotP[modelNo];
+    scale = model->scaleP[modelNo];
+    if(sys->procInit == 0) {
+        lbl_1_bss_1A8 = rot->z;
+        fn_1_A094(7);
+        sys->procInit = 1;
+    }
+    MdMathOscillate(MDMATH_OSC_90, &sys->procT[0], &sys->procOut[0], 30.0f);
+    MdMathLerp(&rot->z, lbl_1_bss_1A8, lbl_1_bss_1A8-512.0f, sys->procOut[0]);
+    MdMathLerpScale(scale, 1.0f, 0.0f, sys->procOut[0]);
+    if(sys->procT[0] >= 1.0f) {
+        Hu3DModelAttrSet(model->mdlId[modelNo], HU3D_ATTR_DISPOFF);
+        return 1;
+    }
+    return 0;
 }
 
 void fn_1_942C(s32 modelNo, s32 cameraNo)

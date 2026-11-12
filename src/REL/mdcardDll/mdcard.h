@@ -308,7 +308,15 @@ typedef struct Sys_s {
     MDCARD_CELL unk33C[4];     //0x33C
     s32 unk38C;                //0x38C
     s32 unk390;                //0x390
-    u8 pad394[0x3D4 - 0x394];  //0x394
+    s32 unk394;                //0x394
+    s32 unk398;                //0x398
+    s32 procInit;              //0x39C
+    s32 unk3A0;                //0x3A0
+    s32 unk3A4;                //0x3A4
+    s32 unk3A8;                //0x3A8
+    s32 unk3AC;                //0x3AC
+    float procT[4];            //0x3B0
+    float procOut[4];          //0x3C0
 } SYS;
 
 extern SYS *sys;
