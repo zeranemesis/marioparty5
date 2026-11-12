@@ -10,17 +10,38 @@
 #include "game/mg/seqman.h"
 
 typedef struct M515Slot_s M515_SLOT;
+typedef struct M515Cell_s M515_CELL;
 typedef struct M515Node2_s M515_NODE2;
 typedef struct M515Sub_s M515_SUB;
 typedef struct M515Ply_s M515_PLY;
 
-// Board cell, stride 0x30, at sub+0x234. Neighbours are reached through the
-// four pointers at the start.
+// Global per-player board slot, stride 0x30, at sub+0x234.
 struct M515Slot_s {
-    M515_SLOT *nbr[4];
-    char pad_10[0x8];
+    char pad_00[0x18];
     HuVecF vec;
     char pad_24[0x30 - 0x24];
+};
+
+// Board item attached to a cell.
+typedef struct M515Item_s {
+    s16 mdl;
+    s16 mot;
+    char pad_04[4];
+    HuVecF a;
+    HuVecF b;
+    s32 f20;
+    s16 f24;
+    char pad_26[2];
+} M515_ITEM;
+
+// Board cell, stride 0x28. nbr: right, left, down, up.
+struct M515Cell_s {
+    M515_CELL *nbr[4];
+    char pad_10[4];
+    M515_ITEM *item;
+    HuVecF vec;
+    u16 type;
+    char pad_26[2];
 };
 
 typedef struct M515Entry_s {
@@ -61,19 +82,23 @@ struct M515Node2_s {
 };
 
 // Per-player continuation hook, stored at ply+0x688.
-typedef s32 (*M515_HOOKFN)(M515_NODE2 *node, M515_PLY *self);
-s32 fn_1_B0B8(M515_NODE2 *node, M515_PLY *self);
-s32 fn_1_9DF8(M515_NODE2 *node, M515_PLY *self);
+typedef s32 (*M515_HOOKFN)(M515_ENTRY *entry, M515_PLY *self);
+s32 fn_1_B0B8(M515_ENTRY *entry, M515_PLY *self);
+s32 fn_1_9DF8(M515_ENTRY *entry, M515_PLY *self);
+s32 fn_1_D928(M515_ENTRY *entry, M515_PLY *self);
 
 // Global state block (0xcb0 bytes) hung off the first object's data.
 struct M515Sub_s {
     s16 v00;
-    char pad_002[0xa];
+    s16 v02[5];
     s16 modelId;
-    char pad_00e[0x1d0 - 0xe];
+    char pad_00e[0xdc - 0xe];
+    s16 mdl;
+    s16 mot[8];
+    char pad_0ee[0x1d0 - 0xee];
     s16 v1d0;
     s16 v1d2;
-    char pad_1d4[2];
+    s16 v1d4;
     s16 v1d6;
     char pad_1d8[2];
     s16 v1da;
@@ -91,20 +116,28 @@ struct M515Sub_s {
     s16 v0cac;
 };
 
+typedef struct M515Mark_s {
+    char pad_00[0x2c];
+} M515_MARK;
+
+typedef struct M515Fx_s {
+    char pad_00[0x10];
+} M515_FX;
+
 // Per-player block (0x6a0 bytes).
 struct M515Ply_s {
     s16 idx;
     s16 chr;
-    char pad_004[0x8];
-    s16 modelId;
+    s16 pad;
+    char pad_006[4];
+    s16 type;
+    s16 dif;
     s16 v0e;
-    char pad_010[0x3f8 - 0x10];
-    M515_SLOT *p3f8;
-    char pad_3fc[0x44c - 0x3fc];
+    M515_CELL cell[5][5];
+    M515_CELL *p3f8;
+    M515_CELL ext[2];
     HuVecF pos;
-    char pad_458[4];
-    f32 v45c;
-    char pad_460[4];
+    HuVecF rot;
     HuVecF from;
     HuVecF vec;
     s16 v47c;
@@ -113,12 +146,15 @@ struct M515Ply_s {
     s16 v482;
     s16 v484;
     s16 v486;
-    char pad_488[0x680 - 0x488];
-    u16 v680;
+    M515_MARK mark[8];
+    s16 v5e8;
+    s16 mdlIds[3][25];
+        u16 v680;
     s16 v682;
-    M515_NODE2 *p684;
+    M515_ENTRY *p684;
     M515_HOOKFN hook;
-    char pad_68c[0x6a0 - 0x68c];
+    OMOBJ *obj;
+    M515_FX fx;
 };
 
 typedef void (*M515_VOIDFN)(void);
@@ -168,7 +204,89 @@ void fn_1_2F3C(M515_SUB *sub);
 void fn_1_5C40(M515_SUB *sub);
 void fn_1_5DB0(M515_SUB *sub);
 void fn_1_C83C(void);
+void fn_1_73B0(M515_PLY *ply, s32 row);
+void fn_1_7768(M515_PLY *ply, s32 row);
+void fn_1_77F0(M515_PLY *ply, s32 row);
+void fn_1_69B8(M515_PLY *ply, M515_SUB *sub);
+void fn_1_6FE8(M515_PLY *ply);
+void fn_1_E274(M515_FX *fx, s16 a, s16 b);
+void fn_1_E548(M515_PLY *ply);
+void fn_1_2684(OMOBJ *obj);
+s32 fn_1_6324(M515_PLY *ply, M515_SUB *sub);
+s16 fn_1_66D0(M515_PLY *ply);
+u16 fn_1_7924(M515_PLY *ply);
+u16 fn_1_DD18(M515_PLY *ply);
+void fn_1_7BE8(M515_MARK *mark, M515_SUB *sub);
+void fn_1_81A8(M515_SLOT *slot, M515_PLY *ply);
+s16 fn_1_7878(M515_PLY *ply);
+void fn_1_6980(M515_PLY *ply);
+void fn_1_6318(M515_PLY *ply);
+s32 fn_1_611C(M515_PLY *ply);
+s32 fn_1_5FD0(M515_PLY *ply);
 void fn_1_9804(M515_ENTRY *entry, M515_SLOT *slot, s32 index);
+
+// DATA BEGIN
+s32 lbl_1_data_118[13][8] = {
+    { 0x8C0000, 0x8C0001, 0x8C0002, 0x8C0005, 0x8C0006, 0x8C0007, 0x8C000D, 0x8C000E },
+    { 0x330000, 0x330001, 0x330002, 0x330005, 0x330006, 0x330007, 0x33000D, 0x33000E },
+    { 0xB70000, 0xB70001, 0xB70002, 0xB70005, 0xB70006, 0xB70007, 0xB7000D, 0xB7000E },
+    { 0xED0000, 0xED0001, 0xED0002, 0xED0005, 0xED0006, 0xED0007, 0xED000D, 0xED000E },
+    { 0xE60000, 0xE60001, 0xE60002, 0xE60005, 0xE60006, 0xE60031, 0xE6000D, 0xE6000E },
+    { 0x170000, 0x170001, 0x170002, 0x170005, 0x170006, 0x170007, 0x17000D, 0x17000E },
+    { 0xE00000, 0xE00001, 0xE00002, 0xE00005, 0xE00006, 0xE00007, 0xE0000D, 0xE0000E },
+    { 0x2D0000, 0x2D0001, 0x2D0002, 0x2D0005, 0x2D0006, 0x2D0007, 0x2D000D, 0x2D000E },
+    { 0xC90000, 0xC90001, 0xC90002, 0xC90005, 0xC90006, 0xC90007, 0xC9000D, 0xC9000E },
+    { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E },
+    { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E },
+    { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E },
+    { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E }
+};
+
+u16 lbl_1_data_530[25] = {
+    1, 1, 0, 0, 1, 1, 1, 0, 2, 0, 1, 1, 1, 0, 0, 1, 1, 0, 2, 0, 1, 1, 0, 1, 0
+};
+
+u16 lbl_1_data_562[25] = {
+    1, 1, 0, 0, 0, 1, 1, 0, 2, 0, 1, 1, 1, 0, 2, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0
+};
+
+u16 lbl_1_data_594[25] = {
+    1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 2, 2, 0, 1, 1, 0, 1, 1
+};
+
+u16 lbl_1_data_5C6[25] = {
+    0, 0, 0, 1, 1, 2, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 2, 0, 1, 1
+};
+
+u16 lbl_1_data_5F8[25] = {
+    1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 0, 0, 1, 1
+};
+
+u16 lbl_1_data_62A[25] = {
+    1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 2, 1, 1, 0, 0, 0
+};
+
+u16 lbl_1_data_65C[25] = {
+    1, 1, 0, 0, 1, 1, 1, 0, 2, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 2, 0
+};
+
+u16 lbl_1_data_68E[25] = {
+    0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1
+};
+
+u16 lbl_1_data_6C0[25] = {
+    1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 2, 2, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1
+};
+
+u16 lbl_1_data_6F2[25] = {
+    1, 1, 0, 0, 0, 1, 1, 1, 0, 2, 1, 1, 0, 1, 0, 1, 1, 2, 0, 0, 1, 1, 0, 1, 1
+};
+
+u16 * lbl_1_data_1094[10] = {
+    lbl_1_data_530, lbl_1_data_562, lbl_1_data_594, lbl_1_data_5C6, lbl_1_data_5F8,
+    lbl_1_data_62A, lbl_1_data_65C, lbl_1_data_68E, lbl_1_data_6C0, lbl_1_data_6F2
+};
+// DATA END
 
 MGSEQ_PARAM lbl_1_data_0 = { 300, 0, fn_1_1FC, fn_1_26C, fn_1_928, fn_1_968, fn_1_B08, fn_1_D30,
     fn_1_1B58, fn_1_1D20, fn_1_1D24 };
@@ -254,6 +372,219 @@ void fn_1_1D24(s16 mode, s16 frameNo)
     M515_SUB *sub = M515_SUBOF(lbl_1_bss_4);
 
     fn_1_9920(&sub->esp);
+}
+
+void fn_1_1D60(OMOBJ *obj)
+{
+    M515_PLY *ply;
+    s32 i;
+    s32 j;
+    s32 unused;
+    M515_SUB *sub;
+    u16 *tbl;
+    HuVecF start = { -150.0f, 25.0f, 1000.0f };
+    f32 rotY[4] = { 180.0f, 90.0f, 270.0f, 0.0f };
+    s16 pan[4] = { 0x30, 0x50, 0x30, 0x50 };
+
+    ply = obj->data;
+    sub = M515_SUBOF(lbl_1_bss_4);
+    ply->v0e = 0;
+    ply->idx = obj->work[0];
+    ply->chr = GwPlayerConf[ply->idx].charNo;
+    ply->pad = GwPlayerConf[ply->idx].padNo;
+    ply->type = GwPlayerConf[ply->idx].type;
+    ply->dif = GwPlayerConf[ply->idx].dif;
+    obj->mdlId[0] = CharModelCreate(ply->chr, 8);
+    for (i = 0; i < 8; i++) {
+        obj->mtnId[i] = CharMotionCreate(ply->chr, lbl_1_data_118[ply->chr][i]);
+    }
+    CharMotionSet(ply->chr, obj->mtnId[0]);
+    Hu3DModelAttrSet(obj->mdlId[0], 0x40000001);
+    Hu3DModelLayerSet(obj->mdlId[0], 3);
+    Hu3DModelCameraSet(obj->mdlId[0], lbl_1_rodata_10[ply->idx]);
+    Hu3DModelShadowSet(obj->mdlId[0]);
+    CharEffectLayerSet(4);
+    CharModelStepFxSet(ply->chr, 1);
+    CharMotionDataClose(ply->chr);
+    tbl = lbl_1_data_1094[sub->v02[ply->v0e]];
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            ply->cell[i][j].type = *tbl++;
+            ply->cell[i][j].vec.x = 150.0f * j - 300.0f;
+            ply->cell[i][j].vec.y = 0.0f;
+            ply->cell[i][j].vec.z = 150.0f * i - 300.0f;
+        }
+    }
+    for (i = 0; i < 5; i++) {
+        ply->cell[0][i].nbr[3] = 0;
+        ply->cell[0][i].nbr[2] = &ply->cell[1][i];
+    }
+    for (i = 0; i < 5; i++) {
+        ply->cell[4][i].nbr[2] = 0;
+        ply->cell[4][i].nbr[3] = &ply->cell[3][i];
+    }
+    for (i = 0; i < 5; i++) {
+        ply->cell[i][0].nbr[1] = 0;
+        ply->cell[i][0].nbr[0] = &ply->cell[i][1];
+    }
+    for (i = 0; i < 5; i++) {
+        ply->cell[i][4].nbr[0] = 0;
+        ply->cell[i][4].nbr[1] = &ply->cell[i][3];
+    }
+    for (i = 1; i < 4; i++) {
+        for (j = 0; j < 5; j++) {
+            ply->cell[i][j].nbr[3] = &ply->cell[i - 1][j];
+            ply->cell[i][j].nbr[2] = &ply->cell[i + 1][j];
+        }
+    }
+    for (i = 0; i < 5; i++) {
+        for (j = 1; j < 4; j++) {
+            ply->cell[i][j].nbr[1] = &ply->cell[i][j - 1];
+            ply->cell[i][j].nbr[0] = &ply->cell[i][j + 1];
+        }
+    }
+    ply->cell[0][2].nbr[3] = &ply->ext[1];
+    ply->cell[4][2].nbr[2] = &ply->ext[0];
+    ply->ext[0].nbr[3] = &ply->cell[4][2];
+    ply->ext[0].nbr[0] = 0;
+    ply->ext[0].nbr[1] = 0;
+    ply->ext[0].nbr[2] = 0;
+    ply->ext[0].type = 3;
+    ply->ext[0].vec.x = 0.0f;
+    ply->ext[0].vec.y = 25.0f;
+    ply->ext[0].vec.z = 450.0f;
+    ply->ext[1].nbr[3] = 0;
+    ply->ext[1].nbr[0] = 0;
+    ply->ext[1].nbr[1] = 0;
+    ply->ext[1].nbr[2] = &ply->cell[0][2];
+    ply->ext[1].type = 4;
+    ply->ext[1].vec.x = 0.0f;
+    ply->ext[1].vec.y = 25.0f;
+    ply->ext[1].vec.z = -450.0f;
+    ply->p3f8 = &ply->ext[0];
+    if (ply->idx == 0) {
+        ply->pos = start;
+        ply->rot.x = 0.0f;
+        ply->rot.y = 90.0f;
+        ply->rot.z = 0.0f;
+        CharMotionSet(ply->chr, obj->mtnId[1]);
+    } else {
+        ply->pos = ply->p3f8->vec;
+        ply->rot.x = 0.0f;
+        ply->rot.y = 180.0f;
+        ply->rot.z = 0.0f;
+    }
+    omSetTra(obj, ply->pos.x, ply->pos.y, ply->pos.z);
+    omSetRot(obj, ply->rot.x, ply->rot.y, ply->rot.z);
+    ply->v482 = 0;
+    ply->v484 = 15;
+    ply->v486 = 5;
+    ply->v480 = 0;
+    ply->v47c = 0;
+    ply->v47e = 0;
+    ply->from = ply->p3f8->vec;
+    ply->vec = ply->p3f8->vec;
+    ply->v680 = 0;
+    ply->v682 = 0;
+    ply->p684 = &sub->entry[ply->idx];
+    ply->hook = 0;
+    fn_1_73B0(ply, 0);
+    fn_1_73B0(ply, 1);
+    fn_1_73B0(ply, 2);
+    fn_1_7768(ply, 0);
+    fn_1_77F0(ply, 1);
+    fn_1_77F0(ply, 2);
+    fn_1_69B8(ply, sub);
+    fn_1_6FE8(ply);
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
+            if (ply->cell[i][j].type == 2) {
+                ply->cell[i][j].item->f24 = rand8() / 86 + 1;
+                Hu3DModelRotSet(ply->cell[i][j].item->mdl, 0.0f, 0.0f, 0.0f);
+                Hu3DModelRotSet(ply->cell[i][j].item->mdl, 0.0f, rotY[ply->cell[i][j].item->f24], 0.0f);
+            }
+        }
+    }
+    ply->obj = obj;
+    fn_1_E274(&ply->fx, 0, ply->dif);
+    CharModelVoicePanSet(ply->chr, pan[ply->idx]);
+    obj->objFunc = fn_1_2684;
+}
+
+void fn_1_2684(OMOBJ *obj)
+{
+    M515_PLY *ply;
+    M515_SUB *sub;
+    s32 i;
+    s32 r27;
+    s32 r26;
+
+    sub = M515_SUBOF(lbl_1_bss_4);
+    ply = obj->data;
+    fn_1_E548(ply);
+    if (sub->v1d4 != 0) {
+        if (ply->v482 == 4) {
+            ply->v682 = 0;
+            if (fn_1_7878(ply) != 0) {
+                ply->v482 = 0;
+            }
+            fn_1_5FD0(ply);
+            fn_1_611C(ply);
+        } else if (ply->v482 == 3) {
+            if (fn_1_6324(ply, sub) != 0) {
+                ply->v482 = 0;
+            }
+        } else {
+            if (ply->type != 0) {
+                ply->v680 = fn_1_DD18(ply);
+            } else {
+                ply->v680 = fn_1_7924(ply);
+            }
+            if (ply->v680 == 0x20) {
+                ply->v682 = 0;
+                ply->v482 = 4;
+                ply->hook = fn_1_D928;
+                return;
+            }
+            r27 = fn_1_5FD0(ply);
+            r26 = fn_1_611C(ply);
+            fn_1_6980(ply);
+            if (r27 != 0 && r26 != 0) {
+                ply->v482 = fn_1_66D0(ply);
+                if ((ply->v482 == 0 || ply->v482 == 2) && ply->v682 > 0) {
+                    ply->v482 = 3;
+                    fn_1_6318(ply);
+                    ply->v682 = 0;
+                }
+            }
+            switch (ply->v482) {
+            case 0:
+                if (obj->mtnId[0] != Hu3DMotionIDGet(obj->mdlId[0])
+                    && obj->mtnId[0] != Hu3DMotionShiftIDGet(obj->mdlId[0])) {
+                    Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[0], 0.0f, 5.0f, 0x40000001);
+                }
+                break;
+            case 1:
+            case 2:
+                if (obj->mtnId[2] != Hu3DMotionIDGet(obj->mdlId[0])
+                    && obj->mtnId[2] != Hu3DMotionShiftIDGet(obj->mdlId[0])) {
+                    Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[2], 0.0f, 5.0f, 0x40000001);
+                }
+                break;
+            case 3:
+                Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[3], 0.0f, 5.0f, 0x40000001);
+                break;
+            }
+            fn_1_81A8(ply->p684->slot, ply);
+        }
+        if (ply->v482 != 5) {
+            omSetTra(obj, ply->pos.x, ply->pos.y, ply->pos.z);
+            omSetRot(obj, ply->rot.x, ply->rot.y, ply->rot.z);
+        }
+        for (i = 0; i < ply->v5e8; i++) {
+            fn_1_7BE8(&ply->mark[i], sub);
+        }
+    }
 }
 
 void fn_1_29CC(void)
@@ -448,7 +779,7 @@ s32 fn_1_5FD0(M515_PLY *ply)
     return ret;
 }
 
-void fn_1_60E8(M515_PLY *ply, M515_SLOT *slot)
+void fn_1_60E8(M515_PLY *ply, M515_CELL *slot)
 {
     if (ply->v484 == 15) {
         ply->vec = slot->vec;
@@ -480,7 +811,7 @@ s32 fn_1_611C(M515_PLY *ply)
         ang[1] += 360.0f;
     }
     t = (f32)ply->v486 / 5.0f;
-    ply->v45c = (1.0f - t) * ang[ply->v47c] + t * ang[ply->v47e];
+    ply->rot.y = (1.0f - t) * ang[ply->v47c] + t * ang[ply->v47e];
     return ret;
 }
 
@@ -497,3 +828,102 @@ void fn_1_6318(M515_PLY *ply)
     ply->v480 = 0;
 }
 
+void fn_1_6980(M515_PLY *ply)
+{
+    if (ply->v682 > 0) {
+        ply->v682--;
+    }
+
+    switch (ply->v680 & 0x10) {
+    case 0x10:
+        ply->v682 = 5;
+        break;
+    }
+}
+
+void fn_1_7768(M515_PLY *ply, s32 r)
+{
+    s32 i;
+
+    for (i = 0; i < 25; i++) {
+        if (ply->mdlIds[r][i] >= 0) {
+            Hu3DModelAttrReset(ply->mdlIds[r][i], HU3D_ATTR_DISPOFF);
+        }
+    }
+}
+
+void fn_1_77F0(M515_PLY *ply, s32 r)
+{
+    s32 i;
+
+    for (i = 0; i < 25; i++) {
+        if (ply->mdlIds[r][i] >= 0) {
+            Hu3DModelAttrSet(ply->mdlIds[r][i], HU3D_ATTR_DISPOFF);
+        }
+    }
+}
+
+s16 fn_1_7878(M515_PLY *self)
+{
+    s32 ret = 0;
+    M515_SUB *global = M515_SUBOF(lbl_1_bss_4);
+
+    if (self->hook != 0) {
+        if (self->hook(self->p684, self) != 0) {
+            if (global->v0cac == 0) {
+                self->hook = 0;
+                ret = 1;
+            } else {
+                self->hook = fn_1_B0B8;
+                self->p684->e00 = 0;
+            }
+        }
+    }
+
+    return ret;
+}
+
+void fn_1_9804(M515_ENTRY *entry, M515_SLOT *slot, s32 index)
+{
+    entry->e02 = 0;
+    entry->e00 = 0;
+    entry->slot = slot;
+    entry->e0c = index;
+    entry->e08 = 0;
+}
+
+void fn_1_9920(M515_ESPPAIR *esp)
+{
+    espKill(esp->id0);
+    espKill(esp->id1);
+}
+
+s32 fn_1_C0D0(M515_ENTRY *entry)
+{
+    if (entry->e00 >= 0) {
+        Hu3DModelAttrReset(entry->e00, HU3D_ATTR_DISPOFF);
+        entry->e02 = Hu3DMotionIDGet(entry->e00);
+        if (entry->e02 >= 0) {
+            Hu3DMotionTimeSet(entry->e00, 0.0f);
+            Hu3DModelAttrSet(entry->e00, 0x40000002);
+        }
+    }
+
+    return 1;
+}
+
+s32 fn_1_C26C(M515_ENTRY *entry)
+{
+    if (entry->e00 >= 0) {
+        Hu3DModelAttrSet(entry->e00, HU3D_ATTR_DISPOFF);
+    }
+
+    return 1;
+}
+
+void fn_1_CAF0(M515_IDS *ids, s32 i)
+{
+    Hu3DModelAttrReset(ids->run3[i].first, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(ids->run1[i], HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrReset(ids->run2[i], HU3D_ATTR_DISPOFF);
+}
