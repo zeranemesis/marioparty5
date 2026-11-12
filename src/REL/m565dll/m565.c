@@ -336,9 +336,9 @@ void fn_1_CF8(Vec *pos, Vec *heading, f32 a, f32 b, f32 c, f32 d, f32 e)
     HuAudFXListnerSetEX(pos, heading, a, b, c, d, e);
 }
 
-void fn_1_D50(s16 id)
+int fn_1_D50(s16 id)
 {
-    HuAudSStreamPlay(id);
+    return HuAudSStreamPlay(id);
 }
 
 void fn_1_D78(int streamNo, s32 speed)
@@ -356,12 +356,12 @@ int fn_1_DC8(s16 id)
     return HuAudBGMPlay(id);
 }
 
-void fn_1_DF0(s16 id)
+int fn_1_DF0(s16 id)
 {
-    HuAudJinglePlay(id);
+    return HuAudJinglePlay(id);
 }
 
-void fn_1_E18(s16 id, s16 chan)
+int fn_1_E18(s16 id, s16 chan)
 {
-    HuAudSStreamChanPlay(id, chan);
+    return HuAudSStreamChanPlay(id, chan);
 }

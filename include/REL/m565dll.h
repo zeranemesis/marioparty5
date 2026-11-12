@@ -121,7 +121,7 @@ typedef struct M565Player_s {
     f32 groundDist; // 0x8C
     s32 fallen; // 0x90
     s32 enabled; // 0x94
-    u8 pad_98[4];
+    s32 survivor; // 0x98
     f32 fallVel; // 0x9C
     s16 fxMdl; // 0xA0
     s16 fxMot; // 0xA2
@@ -242,12 +242,12 @@ void fn_1_C68(int seNo, s32 speed);
 void fn_1_C98(int seNo, s16 pan);
 void fn_1_CC8(int seNo, s16 vol);
 void fn_1_CF8(Vec *pos, Vec *heading, f32 a, f32 b, f32 c, f32 d, f32 e);
-void fn_1_D50(s16 id);
+int fn_1_D50(s16 id);
 void fn_1_D78(int streamNo, s32 speed);
 void fn_1_DA8(void);
 int fn_1_DC8(s16 id);
-void fn_1_DF0(s16 id);
-void fn_1_E18(s16 id, s16 chan);
+int fn_1_DF0(s16 id);
+int fn_1_E18(s16 id, s16 chan);
 
 /* main.c */
 void fn_1_E48(M565Game *game, OMOBJMAN *man);
