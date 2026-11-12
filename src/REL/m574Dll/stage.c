@@ -67,14 +67,15 @@ typedef struct M574StageRow_s {
 
 typedef struct M574StageMot_s {
     s32 v00;
-    u8 pad04[0x08];
+    s32 v04;
+    s32 v08;
     s32 v0C;
     Vec v10;
     Vec v1C;
     u8 pad28[0x10];
     s32 v38;
     Vec v3C;
-    void *v48;
+    HSFOBJECT *v48;
     M574_SLOT_HOOK hook;
     u8 pad70[0x18];
 } M574_STAGE_MOT;
@@ -426,6 +427,7 @@ f32 fn_1_6568(s32 idx);
 void fn_1_8FA8(M574_SLOT_HOOK *hook, M574_MODEL_OBJ *obj);
 s32 fn_1_47DC(M574_HOOK_WALL *wall, M574_HIT_COL *col);
 void fn_1_5680(f32 *x);
+void fn_1_63B0(M574_VEC3 *a, M574_VEC3 *b, s32 idx);
 s32 fn_1_6CC8(s32 idx);
 s32 fn_1_918(void);
 void fn_1_8F54(M574_SLOT_HOOK *hook, HU3DMODELID model);
@@ -438,9 +440,9 @@ void fn_1_2028(OMOBJMAN *objMan) {
     obj = (M574_STAGE_OBJ *)omAddObjEx(objMan, 0x14, 0x21, 3, OM_GRP_NONE, (void (*)(OMOBJ *))fn_1_20CC);
     lbl_1_bss_48 = obj;
     obj->unk00 |= 0x100;
-    tbl = HuMemDirectMallocNum(0, 0x108C, 0x10000000);
+    tbl = HuMemDirectMallocNum(0, sizeof(M574_STAGE_TBL), 0x10000000);
     obj->unk5C = tbl;
-    memset(tbl, 0, 0x108C);
+    memset(tbl, 0, sizeof(M574_STAGE_TBL));
     obj->v4C = 0;
 }
 
@@ -1731,11 +1733,106 @@ void fn_1_5750(M574_STAGE_OBJ *p) {
     mot->v38 = 0;
     mot->v1C.x = mot->v1C.y = mot->v1C.z = lbl_1_rodata_128;
     obj3 = (M574_MODEL_OBJ *)Hu3DModelObjPtrGet(model, lbl_1_data_4A4);
-    mot->v48 = obj3;
+    mot->v48 = (HSFOBJECT *)obj3;
     if (obj3 != (M574_MODEL_OBJ *)0) {
         mot->v3C.x = obj3->v1C.x;
         mot->v3C.y = obj3->v1C.y;
         mot->v3C.z = obj3->v1C.z;
+    }
+}
+
+void fn_1_5934(M574_STAGE_OBJ *p) {
+    M574_STAGE_TBL *tbl;
+    M574_STAGE_MOT *mot;
+    HSFOBJECT *obj;
+    HU3DMODELID model;
+    Vec vel;
+    Vec pos;
+    f32 ang;
+    f32 base;
+    s32 side;
+    s32 n;
+    s32 k;
+
+    tbl = p->unk5C;
+    mot = &tbl->mot;
+    model = p->unk40->id;
+    switch (mot->v00) {
+        case 0:
+            if (mot->v38 == 0 || MgSeqModeGet() != 5) {
+                break;
+            }
+            mot->v00++;
+            mot->v04 = 0;
+            fn_1_77D4(mot->v0C, 6);
+            HuAudFXPlay(0x91C);
+            HuAudFXPlay(0x91E);
+            tbl->v0C--;
+            fn_1_63B0((M574_VEC3 *)&lbl_1_data_4B0[0], (M574_VEC3 *)&lbl_1_data_4C8[0], tbl->v0C);
+            fn_1_63B0((M574_VEC3 *)&lbl_1_data_4B0[1], (M574_VEC3 *)&lbl_1_data_4C8[1], tbl->v0C);
+            // fallthrough
+        case 1:
+            if (tbl->v0C > 0) {
+                n = mot->v04 + 1;
+                mot->v04 = n;
+                if (n >= 4) {
+                    mot->v00--;
+                    mot->v04 = 0;
+                }
+                break;
+            }
+            mot->v00++;
+            mot->v04 = 0;
+            // fallthrough
+        case 2:
+            n = mot->v04 + 1;
+            mot->v04 = n;
+            if ((f32)n < 60.0) {
+                break;
+            }
+            side = mot->v0C;
+            mot = &p->unk5C->mot;
+            pos.x = mot->v10.x;
+            pos.y = mot->v10.y - 150.0;
+            pos.z = 300.0f;
+            vel.z = 80.0f;
+            for (k = 0; k < 5; k++) {
+                if (side == 0) {
+                    base = 240.0f;
+                }
+                else {
+                    base = 120.0f;
+                }
+                ang = base + 10.0 * (3.0517578125e-05 * (f32)((s32)frand() - 0x8000));
+                vel.x = 100.0 * (0.2 * sin(3.141592653589793 * ang / 180.0));
+                vel.y = 100.0 * (0.2 * cos(3.141592653589793 * ang / 180.0));
+                fn_1_6C2C(&pos, &vel.x);
+            }
+            mot->v00++;
+            mot->v04 = 0;
+            // fallthrough
+        case 3:
+            n = mot->v04 + 1;
+            mot->v04 = n;
+            if (!((f32)n < 60.0)) {
+                mot->v00 = 0;
+                mot->v04 = 0;
+                tbl->v0C = 5;
+            }
+            break;
+    }
+    if (Hu3DMotionEndCheck(model) != 0) {
+        Hu3DModelAttrSet(model, 0x40000001);
+        Hu3DMotionStartEndSet(model, 0.0f, 60.0f);
+        Hu3DMotionTimeSet(model, 0.0f);
+    }
+    mot = &tbl->mot;
+    mot->v38 = 0;
+    PSVECScale(&mot->v1C, &mot->v1C, 0.2f);
+    obj = mot->v48;
+    if (obj != NULL) {
+        obj->mesh.base.pos.x = mot->v3C.x + mot->v1C.x;
+        obj->mesh.base.pos.y = mot->v3C.y + mot->v1C.y;
     }
 }
 
