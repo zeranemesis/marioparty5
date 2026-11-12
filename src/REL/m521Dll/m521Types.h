@@ -7,6 +7,7 @@
  * GameCube ones. */
 
 #include "dolphin/types.h"
+#include "dolphin/mtx.h"
 
 typedef s16 HU3DMODELID;
 
@@ -35,11 +36,7 @@ extern "C" void __ptmf_scall(void *self);
 #define M521PtmfCall(obj, p) __ptmf_scall(obj)
 #endif
 
-typedef struct M521Vec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-} M521Vec;
+typedef Vec M521Vec;
 
 /* Intrusive list node: every game object starts with one. */
 struct CListNode {
@@ -51,28 +48,51 @@ struct CModel {
     HU3DMODELID m_id;
 };
 
-/* Object with a virtual destructor in slot 2 of its vtable. */
-struct CVirtual {
-    void **m_vtable;
+/* Sphere used for the player collision: position plus radius. */
+typedef struct M521Sphere_s {
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 r;
+} M521Sphere;
+
+/* Input sample a player controller fills every frame. */
+struct CCtlInput {
+    f32 m_scale; /* 0x00 difficulty speed factor */
+    f32 m_x;     /* 0x04 stick x */
+    f32 m_z;     /* 0x08 stick z */
+    f32 m_mag;   /* 0x0C stick magnitude */
+    u8 m_btn;    /* 0x10 button pressed */
+};
+
+/* Player controller (pad or CPU): virtual destructor in slot 2 of its vtable. */
+struct CCtl {
+    void **m_vtable; /* 0x00 */
+    CCtlInput m_in;  /* 0x04 */
+};
+
+/* One hand/face of the clock: only the leading fields the players touch. */
+struct CClock {
+    void *m_vptr;     /* 0x00 */
+    M521Vec m_center; /* 0x04 */
 };
 
 /* Growable array of u16 motion ids (cdeque). */
 struct CDeque16 {
-    s32 m_unk0;    /* 0x00 */
+    u32 m_cap;     /* 0x00 */
     u32 m_size;    /* 0x04 */
     u16 *m_data;   /* 0x08 */
 };
 
 struct CPlayer {
     CListNode m_node;    /* 0x00 */
-    CVirtual *m_ctl;     /* 0x08 controller object (virtual dtor in slot 2) */
+    CCtl *m_ctl;         /* 0x08 controller object (owned, virtual dtor) */
     M521Ptmf m_hook;     /* 0x0C */
     s32 m_padNo;         /* 0x18 */
     s32 m_slot;          /* 0x1C */
     s32 m_charNo;        /* 0x20 */
     s32 m_motion;        /* 0x24 */
-    M521Vec m_pos;       /* 0x28 */
-    f32 m_f34;           /* 0x34 */
+    M521Sphere m_pos;    /* 0x28 */
     s32 m_i38;           /* 0x38 */
     s32 m_timer;         /* 0x3C */
     s32 m_i40;           /* 0x40 */

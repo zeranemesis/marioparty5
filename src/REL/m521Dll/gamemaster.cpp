@@ -54,7 +54,6 @@ typedef struct GameNode {
 
 typedef void (*GameNodeCb)(GameNode *node1, GameNode *node2);
 
-struct CClock;
 
 void __dl__FPv(void *ptr);
 void *__construct_array(void *ptr, void (*ctor)(void *), void *dtor, u32 size, u32 n);
@@ -281,7 +280,7 @@ CListNode *fn_1_117D8(CListNode *self, s16 flag)
     u8 empty;
     CDeque16 *mot;
     u16 *data;
-    CVirtual *ctl;
+    CCtl *ctl;
 
     if (self != 0) {
         if (self != 0) {
@@ -308,7 +307,7 @@ CListNode *fn_1_117D8(CListNode *self, s16 flag)
                     if (&p->m_ctl != 0) {
                         ctl = p->m_ctl;
                         if (ctl != 0) {
-                            ((void (*)(CVirtual *, s32))ctl->m_vtable[2])(ctl, 1);
+                            ((void (*)(CCtl *, s32))ctl->m_vtable[2])(ctl, 1);
                         }
                     }
                     if (p != 0) {
@@ -341,7 +340,7 @@ CListNode *fn_1_11954(CListNode *self, s16 flag)
     CPlayer *p;
     u8 empty;
     CDeque16 *mot;
-    CVirtual *ctl;
+    CCtl *ctl;
 
     if (self != 0) {
         while (1) {
@@ -364,7 +363,7 @@ CListNode *fn_1_11954(CListNode *self, s16 flag)
                 if (&p->m_ctl != 0) {
                     ctl = p->m_ctl;
                     if (ctl != 0) {
-                        ((void (*)(CVirtual *, s32))ctl->m_vtable[2])(ctl, 1);
+                        ((void (*)(CCtl *, s32))ctl->m_vtable[2])(ctl, 1);
                     }
                 }
                 if (p != 0) {
