@@ -138,6 +138,11 @@ void CAisu::Close()
 
 CAisu::CAisu(int type, Vec *pos)
 {
+#ifdef TARGET_PC /* the GC build leaves these to the first state proc */
+    m_shadow = 0;
+    m_taken = 0;
+    m_shadowScale = 0.0f;
+#endif
     m_type = type;
     m_pos = *pos;
     insertBack(&aisuAllList);

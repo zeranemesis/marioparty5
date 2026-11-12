@@ -135,7 +135,11 @@ public:
     static void Close();
     static s32 GetUpdateMode();
 
+#ifdef M501_GAMEOBJECT_DTOR_OUT_OF_LINE /* m501.cpp owns the out-of-line copy; the other units inline it */
     virtual ~CGameObject();
+#else
+    virtual ~CGameObject() {}
+#endif
 
     s32 m_execMode;
 
@@ -305,6 +309,11 @@ public:
     struct MgTimer_s *m_timer;
 };
 
+
+struct CCircle {
+    Vec m_pos;
+    f32 m_radius;
+};
 
 namespace std {
 template <class T>
@@ -562,11 +571,6 @@ public:
     CJoint *m_next;  // 0x68
     CJoint *m_prev;  // 0x6C
     u8 m_locked;     // 0x70 matrix needs recomputing
-};
-
-struct CCircle {
-    Vec m_pos;
-    f32 m_radius;
 };
 
 class CPlayer : public CLinkNode {

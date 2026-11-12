@@ -144,6 +144,10 @@ CPlayer::CPlayer(int playerNo) :
     m_isWinner = 0;
     m_motion = -1;
     m_coneScale = 1.0f;
+#ifdef TARGET_PC /* the GC build never reads these before they are written */
+    m_moveMag = 0.0f;
+    m_running = 0;
+#endif
     PSMTXIdentity(m_mtx);
     Hu3DModelShadowSet(m_model.getId());
     Hu3DModelShadowDispOn(m_model.getId());

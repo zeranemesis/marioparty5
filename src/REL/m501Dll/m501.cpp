@@ -1,3 +1,4 @@
+#define M501_GAMEOBJECT_DTOR_OUT_OF_LINE
 #include "REL/m501Dll.h"
 #include "datanum/m501.h"
 #include "game/object.h"
