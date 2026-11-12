@@ -1000,6 +1000,11 @@ static s32 ResCardProcStageFocus(void)
     return 0;
 }
 
+/* unreferenced byte table kept for the data layout */
+static s8 lbl_1_data_2FC[0x18] = {
+    1, 0, 2, 0, 0, 0, 3, -1, 2, 0, 1, 1, 0, -1, 2, 0, 1, 2, 4, -1, 2, 0, 1, 0
+};
+
 /* seed the per-player score data from the game work and rank the players. */
 void ResCardScoreCreate(void)
 {
@@ -1203,6 +1208,9 @@ void ResCardScoreUpdate(void)
                 MdSpriteDispSet(sprite, i+2, FALSE);
                 player->state = 10;
                 break;
+
+            case 10:
+                break;
         }
     }
 }
@@ -1364,6 +1372,9 @@ void ResCardDrawUpdate(void)
             if(draw->card[draw->cursor].state == 22) {
                 draw->phase = 12;
             }
+            break;
+
+        case 12:
             break;
     }
     ResCardDrawStarUpdate();
@@ -2079,6 +2090,9 @@ void ResCardSpotUpdate(void)
                 SpotAngleUpdateInl(i, 1);
                 SpotScaleCalcInl();
                 break;
+
+            case 12:
+                break;
         }
     }
 }
@@ -2336,38 +2350,37 @@ void ResCardAudExec(u32 no)
         case 14:
         case 15:
         case 16:
-            switch(no) {
-                case 8:
-                    HuAudFXPlay(0);
-                    return;
-
-                case 9:
-                    HuAudFXPlay(2);
-                    return;
-
-                case 11:
-                    HuAudFXPlay(1021);
-                    return;
-
-                case 12:
-                    HuAudFXPlay(4);
-                    return;
-
-                case 13:
-                    HuAudFXPlay(1039);
-                    return;
-
-                case 14:
-                    HuAudFXPlay(1100);
-                    return;
-
-                case 15:
-                    HuAudFXPlay(1139);
-                    return;
-
-                case 16:
-                    HuAudFXPlay(851);
-                    return;
+            if(no == 8) {
+                HuAudFXPlay(0);
+                return;
+            }
+            if(no == 9) {
+                HuAudFXPlay(2);
+                return;
+            }
+            if(no == 11) {
+                HuAudFXPlay(1021);
+                return;
+            }
+            if(no == 12) {
+                HuAudFXPlay(4);
+                return;
+            }
+            if(no == 13) {
+                HuAudFXPlay(1039);
+                return;
+            }
+            if(no == 14) {
+                HuAudFXPlay(1100);
+                return;
+            }
+            if(no == 15) {
+                HuAudFXPlay(1139);
+                return;
+            }
+            if(no == 16) {
+                HuAudFXPlay(851);
+                return;
             }
             break;
 
