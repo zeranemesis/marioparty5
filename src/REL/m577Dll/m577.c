@@ -253,8 +253,7 @@ typedef struct M577Work_s {
 
 #define M577_MOTION(dst, mdl, idx)                                                                            \
     if (w->mtnCache[idx] < 0) {                                                                               \
-        dst = Hu3DJointMotion(mdl, HuDataSelHeapReadNum(jointMotTbl[idx], HU_MEMNUM_OVL, HEAP_MODEL));         \
-        w->mtnCache[idx] = dst;                                                                               \
+        dst = w->mtnCache[idx] = Hu3DJointMotion(mdl, HuDataSelHeapReadNum(jointMotTbl[idx], HU_MEMNUM_OVL, HEAP_MODEL)); \
     } else {                                                                                                  \
         dst = w->mtnCache[idx];                                                                               \
     }
