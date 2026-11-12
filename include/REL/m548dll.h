@@ -68,6 +68,47 @@ typedef struct M548AnimBlock_s {
     u8 pad_2C[4];
 } M548AnimBlock;
 
+/* per-character cry timer state (m548.c bss 0x0) */
+typedef struct M548Cry_s {
+    s32 unk0;
+    s32 unk4;
+    s32 unk8;
+    s32 unkC;
+} M548Cry;
+
+/* per-character floats (data 0x0 table, copied to bss 0x384) */
+typedef struct M548CryPos_s {
+    f32 unk0;
+    f32 unk4;
+    f32 unk8;
+    f32 unkC;
+    f32 unk10;
+    f32 unk14;
+} M548CryPos;
+
+/* motion data numbers of one character (data 0x184 table) */
+typedef struct M548MotSet_s {
+    u32 unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+} M548MotSet;
+
+/* game-flow block (m548.c bss 0x3D0) */
+typedef struct M548Game_s {
+    s16 unk0;
+    s16 unk2;
+    s16 unk4;
+    s16 unk6;
+    s16 unk8;
+    s16 unkA;
+    s16 unkC;
+    s16 pad_E;
+    f32 unk10[2];
+    f32 unk18[2];
+} M548Game;
+
 /* module state block (lbl_1_bss_3F0, 0x1E0 bytes); m548.c, stage.c and game.c share it */
 typedef struct M548State_s {
     void *objman;
