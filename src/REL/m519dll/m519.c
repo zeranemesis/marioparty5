@@ -3021,7 +3021,9 @@ void fn_1_AE24(M519_SHOT *shot, HuVecF pos)
 {
     int i;
 
-    i = i;
+#ifndef TARGET_PC
+    i = i; // register-allocation trick (reads uninitialised i)
+#endif
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
         Hu3DModelPosSet(shot->modelId[i], pos.x, pos.y, pos.z);
@@ -3053,7 +3055,9 @@ void fn_1_AF64(M519_SHOT *shot)
     s32 i;
     HuVecF pos = { 0.0f, 0.0f, 0.0f };
 
-    i = i;
+#ifndef TARGET_PC
+    i = i; // register-allocation trick (reads uninitialised i)
+#endif
     shot->pos = pos;
     for (i = 0; i < 2; i++) {
         Hu3DModelPosSet(shot->modelId[i], pos.x, pos.y, pos.z);
@@ -3181,7 +3185,9 @@ BOOL fn_1_B70C(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
-    i = i;
+#ifndef TARGET_PC
+    i = i; // register-allocation trick (reads uninitialised i)
+#endif
     for (i = 0; i < 4; i++) {
         mech = lbl_1_bss_F8[i];
         if (mech != owner && mech->mode != 3) {
@@ -3258,7 +3264,9 @@ BOOL fn_1_BAC8(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
-    i = i;
+#ifndef TARGET_PC
+    i = i; // register-allocation trick (reads uninitialised i)
+#endif
     i = 0;
     while (i < 12) {
         obj = lbl_1_bss_178->obj[i];
@@ -3306,7 +3314,9 @@ BOOL fn_1_BECC(M519_SHOT *shot)
     shotCircle.x = shot->pos.x;
     shotCircle.y = shot->pos.z;
     shotCircle.z = shot->radius;
-    i = i;
+#ifndef TARGET_PC
+    i = i; // register-allocation trick (reads uninitialised i)
+#endif
     for (i = 0; i < 44; i++) {
         other = lbl_1_bss_38[i];
         if (other != NULL && shot->mode == 1 && other->activeF && other->ownerNo != shot->ownerNo && other != shot) {
