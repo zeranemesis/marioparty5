@@ -428,7 +428,7 @@ typedef struct M513Stage_s {
     M513Node link;
     void **vtbl;
     u32 flags;
-    s16 modelId[3];
+    M513Model model[3];
 } M513Stage;
 
 /* Singleton pointers (defined in kuribo.cpp / leaf.cpp). */
@@ -440,6 +440,33 @@ extern M513ModelPtr *lbl_1_bss_9FC;
 extern M513Camera *lbl_1_bss_A18;
 extern M513Stage *lbl_1_bss_A1C;
 extern M513Score *lbl_1_bss_A20;
+
+// The four intrusive sets the singletons point into.
+typedef struct M513Sets_s {
+    M513Node players;
+    M513Node leaves;
+    M513Node heihos;
+    M513Node kuribos;
+} M513Sets;
+
+typedef struct M513SetsPtr_s {
+    M513Sets *p;
+} M513SetsPtr;
+
+typedef struct M513GameMaster_s {
+    M513Master base;
+    M513SubThread thread;
+    M513SetsPtr sets;
+    M513ModelPtr *mp;
+    s32 record;
+    u8 multi;
+    s32 winner;
+    M513TimerObj timer;
+    u8 recordChanged;
+} M513GameMaster;
+
+
+M513GameMaster *fn_1_B570(M513GameMaster *self);
 
 #define M513_ASSERT(cond, expr, file, line) ((cond) ? (void)0 : fn_1_1D4((expr), (file), (line)))
 

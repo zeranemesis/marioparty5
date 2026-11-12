@@ -17,30 +17,6 @@ extern "C" {
 #define M513_RODATA
 #endif
 
-// The four intrusive sets the singletons point into.
-typedef struct M513Sets_s {
-    M513Node players;
-    M513Node leaves;
-    M513Node heihos;
-    M513Node kuribos;
-} M513Sets;
-
-typedef struct M513SetsPtr_s {
-    M513Sets *p;
-} M513SetsPtr;
-
-typedef struct M513GameMaster_s {
-    M513Master base;
-    M513SubThread thread;
-    M513SetsPtr sets;
-    M513ModelPtr *mp;
-    s32 record;
-    u8 multi;
-    s32 winner;
-    M513TimerObj timer;
-    u8 recordChanged;
-} M513GameMaster;
-
 // Vtable of the master followed by the one of its thread base and two PTMFs.
 typedef struct M513GMVtbl_s {
     M513MasterVtbl master;

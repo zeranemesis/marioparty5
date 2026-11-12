@@ -1,3 +1,7 @@
+#ifdef TARGET_PC
+#include "REL/m513Dll.h"
+#endif
+
 class CTime {
 public:
     CTime(int v) : m_time(v) {}
@@ -9,6 +13,17 @@ static CTime lbl_1_bss_A2C(210);
 static CTime lbl_1_bss_A30(210);
 
 // operator new, CGameMaster constructor and CMinigameCore setup of this module
+#ifdef TARGET_PC
+extern "C" void ObjectSetup(void)
+{
+    M513GameMaster *master = (M513GameMaster *)fn_1_4BD0(sizeof(M513GameMaster));
+
+    if (master != 0) {
+        master = fn_1_B570(master);
+    }
+    fn_1_2788(&master->base, 1, 0x2000);
+}
+#else
 extern "C" {
 void *fn_1_4BD0(unsigned long size);
 void *fn_1_B570(void *self);
@@ -25,3 +40,4 @@ extern "C" void ObjectSetup(void)
     core = master;
     fn_1_2788(core, 1, 0x2000);
 }
+#endif
