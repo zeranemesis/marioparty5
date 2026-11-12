@@ -40,12 +40,29 @@ typedef Vec M521Vec;
 
 /* Intrusive list node: every game object starts with one. */
 struct CListNode {
-    CListNode *m_prev;
-    CListNode *m_next;
+    CListNode *m_next; /* 0x00 */
+    CListNode *m_prev; /* 0x04 */
 };
 
 struct CModel {
     HU3DMODELID m_id;
+    MtxPtr getMatrix();
+};
+
+/* Base of the game objects: list node, vtable (slot 2 = destructor, slot 3 = flag handler, slot 4 = update). */
+struct CObject {
+    CListNode m_node;  /* 0x00 */
+    void **m_vtable;   /* 0x08 */
+    s32 m_flags;       /* 0x0C */
+};
+
+/* Game master base class (singleton lbl_1_bss_C). */
+struct CAppBase {
+    void **m_vtbl0;    /* 0x00 */
+    void **m_vtbl;     /* 0x04 */
+    s32 m_player[4];   /* 0x08 player ids, -1 = free */
+    s32 m_mes;         /* 0x18 current game message */
+    s32 m_wait;        /* 0x1C frames to wait */
 };
 
 /* Sphere used for the player collision: position plus radius. */

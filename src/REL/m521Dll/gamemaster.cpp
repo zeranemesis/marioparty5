@@ -286,13 +286,13 @@ CListNode *fn_1_117D8(CListNode *self, s16 flag)
         if (self != 0) {
             while (1) {
                 empty = 0;
-                if (self->m_prev == self && self->m_prev == self->m_next) {
+                if (self->m_next == self && self->m_next == self->m_prev) {
                     empty = 1;
                 }
                 if (empty != 0) {
                     break;
                 }
-                p = (CPlayer *)self->m_next;
+                p = (CPlayer *)self->m_prev;
                 if (p != 0) {
                     if (&p->m_model != 0) {
                         __dt__6CModelFv(p->m_model, 1);
@@ -345,13 +345,13 @@ CListNode *fn_1_11954(CListNode *self, s16 flag)
     if (self != 0) {
         while (1) {
             empty = 0;
-            if (self->m_prev == self && self->m_prev == self->m_next) {
+            if (self->m_next == self && self->m_next == self->m_prev) {
                 empty = 1;
             }
             if (empty != 0) {
                 break;
             }
-            p = (CPlayer *)self->m_next;
+            p = (CPlayer *)self->m_prev;
             if (p != 0) {
                 if (&p->m_model != 0) {
                     __dt__6CModelFv(p->m_model, 1);
@@ -480,10 +480,10 @@ void fn_1_11E70(GameMaster *self)
     }
     list = lbl_1_bss_A70;
     pmf = lbl_1_data_4CC;
-    node = list->m_prev;
+    node = list->m_next;
     while (node != list) {
         M521PtmfCall(node, &pmf);
-        node = node->m_prev;
+        node = node->m_next;
     }
     fn_1_134A8((GameNode *)list, (GameNodeCb)fn_1_15D94);
     for (i = 0; i < 2; i++) {
@@ -816,10 +816,10 @@ void fn_1_12CA8(GameMaster *self)
     }
     list = lbl_1_bss_A70;
     pmf = lbl_1_data_520;
-    node = list->m_prev;
+    node = list->m_next;
     while (node != list) {
         M521PtmfCall(node, &pmf);
-        node = node->m_prev;
+        node = node->m_next;
     }
     fn_1_66B0(4);
     if (lbl_1_bss_A4C == 0) {
@@ -853,10 +853,10 @@ void fn_1_12CA8(GameMaster *self)
         }
     } else {
         pmf = lbl_1_data_52C;
-        node = list->m_prev;
+        node = list->m_next;
         while (node != list) {
             M521PtmfCall(node, &pmf);
-            node = node->m_prev;
+            node = node->m_next;
         }
     }
     if (lbl_1_bss_A4C != 0) {

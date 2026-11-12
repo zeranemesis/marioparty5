@@ -28,7 +28,7 @@ extern s8 lbl_1_bss_A5C;
 s32 lbl_1_bss_0;
 s32 lbl_1_bss_4;
 s32 lbl_1_bss_8;
-s32 lbl_1_bss_C;
+void *lbl_1_bss_C;
 
 #ifdef __MWERKS__
 #define CK_RODATA __declspec(section ".rodata")
