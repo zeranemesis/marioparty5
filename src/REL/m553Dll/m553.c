@@ -714,15 +714,16 @@ void fn_1_254C(HuVecF *pos)
 {
     s16 i;
     HuVecF p;
-    f32 speed;
+    s16 alpha;
     f32 scale;
 
     for (i = 0; i < 12; i++) {
-        speed = 6.0f + (f32)frandmod(6);
-        lbl_1_data_2F8.vel.x = speed * sin((3.141592653589793 * (30.0f * (f32)i)) / 180.0);
+        scale = 6.0f + (f32)frandmod(6);
+        lbl_1_data_2F8.vel.x = scale * sin((3.141592653589793 * (30.0f * (f32)i)) / 180.0);
         lbl_1_data_2F8.vel.y = 0.0f;
-        lbl_1_data_2F8.vel.z = speed * cos((3.141592653589793 * (30.0f * (f32)i)) / 180.0);
-        lbl_1_data_2F8.alphaDelta = (s16)(-frandmod(6) - 7);
+        lbl_1_data_2F8.vel.z = scale * cos((3.141592653589793 * (30.0f * (f32)i)) / 180.0);
+        alpha = -frandmod(6) - 7;
+        lbl_1_data_2F8.alphaDelta = alpha;
         p.x = pos->x + (20.0 * sin((3.141592653589793 * (30.0f * (f32)i)) / 180.0));
         p.y = 10.0f + pos->y;
         p.z = pos->z + (20.0 * cos((3.141592653589793 * (30.0f * (f32)i)) / 180.0));
@@ -736,6 +737,7 @@ void fn_1_28D4(HuVecF *pos)
 {
     s16 i;
     HuVecF p;
+    s16 alpha;
     f32 scale;
 
     for (i = 0; i < 30; i++) {
@@ -745,7 +747,8 @@ void fn_1_28D4(HuVecF *pos)
         lbl_1_data_2F8.vel.x = (f32)frandmod(4) - 2.0f;
         lbl_1_data_2F8.vel.y = (f32)frandmod(8);
         lbl_1_data_2F8.vel.z = 0.0f;
-        lbl_1_data_2F8.alphaDelta = (s16)(-frandmod(6) - 5);
+        alpha = -frandmod(6) - 5;
+        lbl_1_data_2F8.alphaDelta = alpha;
         lbl_1_data_2F8.accelY = 0.01f * (f32)frandmod(20);
         scale = 20.0f + (f32)frandmod(40);
         fn_1_2D1C(0, 60, &lbl_1_data_2F8, p.x, p.y, p.z, scale, scale);
@@ -756,18 +759,18 @@ void fn_1_2B4C(HuVecF *pos)
 {
     s16 i;
     HuVecF p;
-    f32 speed;
+    f32 scale;
 
     for (i = 0; i < 10; i++) {
         p.x = pos->x + ((f32)frandmod(110) - 55.0f);
         p.y = pos->y - 10.0f;
         p.z = 55.0f + pos->z;
         lbl_1_data_2F8.vel.x = 0.1f;
-        speed = 6.0f + (f32)frandmod(8);
-        lbl_1_data_2F8.vel.y = 0.1f * speed;
+        lbl_1_data_2F8.vel.y = 0.1f * (6.0f + (f32)frandmod(8));
         lbl_1_data_2F8.vel.z = 0.0f;
         lbl_1_data_2F8.accelY = 0.0f;
-        fn_1_2D1C(1, 40, &lbl_1_data_2F8, p.x, p.y, p.z, 7.0f + (f32)frandmod(10), 1.0f);
+        scale = 7.0f + (f32)frandmod(10);
+        fn_1_2D1C(1, 40, &lbl_1_data_2F8, p.x, p.y, p.z, scale, 1.0f);
     }
 }
 
