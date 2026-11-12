@@ -449,13 +449,9 @@ s32 fn_1_5A6C(M543State *state)
     MgPlayerPadSet(lbl_1_bss_0.player[1], 0, 0, 0, 0);
     MgActorExec();
     model0 = &Hu3DData[lbl_1_bss_15E0->models[0x3C].id];
-    lbl_1_bss_8DC[0].f38 = model0->pos.x;
-    lbl_1_bss_8DC[0].f3C = model0->pos.y;
-    lbl_1_bss_8DC[0].f40 = model0->pos.z;
+    *(HuVecF *)&lbl_1_bss_8DC[0].f38 = model0->pos;
     model1 = &Hu3DData[lbl_1_bss_15E0->models[0x3D].id];
-    lbl_1_bss_8DC[1].f38 = model1->pos.x;
-    lbl_1_bss_8DC[1].f3C = model1->pos.y;
-    lbl_1_bss_8DC[1].f40 = model1->pos.z;
+    *(HuVecF *)&lbl_1_bss_8DC[1].f38 = model1->pos;
     return result;
 }
 
@@ -609,6 +605,8 @@ s32 fn_1_6314(void)
 s32 fn_1_634C(void)
 {
     M543StageSlot *slot;
+    HU3DMODEL *model = &Hu3DData[lbl_1_bss_15E0->models[(lbl_1_bss_B94.winner & 1) + 0x3C].id];
+    s32 result = 0;
 
     if (lbl_1_bss_15E0->field_178 == 0) {
         if (lbl_1_bss_B94.winner != 0) {
@@ -620,11 +618,11 @@ s32 fn_1_634C(void)
             slot->attrReset = 0x40000001;
         }
         lbl_1_bss_15E0->field_178 = 1;
-        lbl_1_bss_B94.f_24 = Hu3DData[lbl_1_bss_15E0->models[(lbl_1_bss_B94.winner & 1) + 0x3C].id].rot.y;
+        lbl_1_bss_B94.f_24 = model->rot.y;
     }
     fn_1_6770();
     CharModelVoicePanSet(lbl_1_bss_15E0->chars[lbl_1_bss_B94.winner & 1].charNo, 0x40);
-    return 0;
+    return result;
 }
 
 s32 fn_1_64AC(void)
@@ -1421,7 +1419,7 @@ s16 fn_1_91F8(void)
             dz = -model->pos.z;
             fn_1_E144(w);
             MgActorExec();
-            if (sqrtf(dx * dx + dz * dz) < 20.0f) {
+            if ((f32)sqrt(dx * dx + dz * dz) < 20.0f) {
                 lbl_1_bss_B94.f_24 = model->rot.y;
                 lbl_1_bss_B94.f_02++;
             }
@@ -1513,7 +1511,7 @@ int fn_1_A308(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
     } else if (a->paramB == 0) {
         dx = lbl_1_bss_8DC[0].f38 - lbl_1_bss_8DC[1].f38;
         dz = lbl_1_bss_8DC[0].f40 - lbl_1_bss_8DC[1].f40;
-        dist = sqrtf(dx * dx + dz * dz);
+        dist = (f32)sqrt(dx * dx + dz * dz);
         if (lbl_1_bss_8DC[0].f34 == 0) {
             if (lbl_1_bss_8DC[0].f50 != 0) {
                 lbl_1_bss_8DC[0].f5C++;
@@ -1729,7 +1727,7 @@ void fn_1_A6B0(M543Actor *actors)
                             az = dz * t + edge[e][1];
                             dx = actors[i].f38 - ax;
                             dz = actors[i].f40 - az;
-                            dist = sqrtf(dx * dx + dz * dz);
+                            dist = (f32)sqrt(dx * dx + dz * dz);
                             if (dist < 25.0f) {
                                 if (dist <= 1.0f) {
                                     dist = 1.0f;
@@ -1792,7 +1790,7 @@ void fn_1_A6B0(M543Actor *actors)
         if (actors[i ^ 1].f16 != 0) {
             dx = actors[i ^ 1].f38 - actors[i].f38;
             dz = actors[i ^ 1].f40 - actors[i].f40;
-            dist = sqrtf(dx * dx + dz * dz);
+            dist = (f32)sqrt(dx * dx + dz * dz);
             if (dist < 70.0f) {
                 if (dist <= 1.0f) {
                     dist = 1.0f;
@@ -1838,7 +1836,7 @@ void fn_1_A6B0(M543Actor *actors)
         for (j = 0; j < 4; j++) {
             dx = lbl_1_data_500[j][0] - actors[i].f38;
             dz = lbl_1_data_500[j][1] - actors[i].f40;
-            dist = sqrtf(dx * dx + dz * dz);
+            dist = (f32)sqrt(dx * dx + dz * dz);
             if (dist < 1.0f + 25.0f) {
                 if (dist <= 1.0f) {
                     dist = 1.0f;
@@ -1886,7 +1884,7 @@ void fn_1_A6B0(M543Actor *actors)
                 cz = dz * t + lbl_1_data_380[j][1];
                 vx = actors[i].f38 - cx;
                 vz = actors[i].f40 - cz;
-                dist = sqrtf(vx * vx + vz * vz);
+                dist = (f32)sqrt(vx * vx + vz * vz);
                 if (dist < 25.0f) {
                     if (dist <= 1.0f) {
                         dist = 1.0f;
@@ -1981,7 +1979,7 @@ void fn_1_A6B0(M543Actor *actors)
                 cz = dz * t + lbl_1_data_380[j][1];
                 vx = actors[i].f38 - cx;
                 vz = actors[i].f40 - cz;
-                dist = sqrtf(vx * vx + vz * vz);
+                dist = (f32)sqrt(vx * vx + vz * vz);
                 if (dist < 25.0f) {
                     if (dist <= 1.0f) {
                         dist = 1.0f;
