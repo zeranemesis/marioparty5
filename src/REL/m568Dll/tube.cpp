@@ -537,17 +537,23 @@ static void fn_1_134D4(M568Tube *self)
 {
     Vec v;
     f32 r;
+    f32 rad;
     f32 ang;
     f64 a;
+    f64 cx;
+    s32 n;
     s32 i;
 
-    for (i = 0; i < 4; i++) {
-        r = 1.2f * self->radius;
+    n = 4;
+    for (i = 0; i < n; i++) {
+        rad = self->radius;
+        r = 1.2f * rad;
         a = 6.283185307179586 * (f64)i;
-        ang = (f32)(a / (f64)4);
+        ang = (f32)(a / (f64)n);
+        cx = (f64)r * cos(ang);
         v.x = (f32)((f64)r * sin(ang));
         v.y = 200.0f;
-        v.z = (f32)((f64)r * cos(ang));
+        v.z = (f32)cx;
         fn_1_1375C(self, &v);
     }
     fn_1_13994(self);
@@ -591,22 +597,36 @@ static s32 fn_1_1375C(M568Tube *self, Vec *p)
     Vec dir;
     Vec par;
     Vec *n;
+    Vec *n0;
+    Vec *ap;
+    M568PosOwner *s0;
+    M568PosOwner *s1;
+    f32 py;
+    f32 dt;
+    f32 dt2;
 
     a.x = 0.0f;
-    a.y = p->y;
+    py = p->y;
+    a.y = py;
     a.z = 0.0f;
-    fn_1_13ECC(self, &a, &a);
+    ap = &a;
+    fn_1_13ECC(self, &a, ap);
     fn_1_13ECC(self, &b, p);
     TUBE_CHECK_STAGE(0x27);
-    if (fn_1_E304(lbl_1_bss_9F0, &hit, &a, &b) == 0) {
+    s0 = lbl_1_bss_9F0;
+    s1 = s0;
+    if (fn_1_E304(s1, &hit, &a, &b) == 0) {
         return 0;
     }
     PSVECSubtract(&hit, &b, &d);
     PSVECAdd(&d, &self->pos, &self->pos);
     PSVECSubtract(&b, &a, &dir);
     PSVECNormalize(&dir, &dir);
-    PSVECScale(&dir, &par, PSVECDotProduct(&dir, &self->vel));
-    n = fn_1_E2FC(lbl_1_bss_9F0);
+    dt = PSVECDotProduct(&dir, &self->vel);
+    dt2 = dt;
+    PSVECScale(&dir, &par, dt2);
+    n0 = fn_1_E2FC(s1);
+    n = n0;
     fn_1_133FC(self, n, &par);
     return 1;
 }
@@ -733,17 +753,29 @@ void fn_1_140D8(M568Tube *self, M568OctEffect *obj)
     Vec d;
     Vec *p;
     Vec *q;
+    Vec *p0;
+    Vec *dp;
+    Vec *dq;
+    f32 dot;
+    f32 dot2;
+    f32 sc;
 
     if (obj->played == 0) {
         p = &self->pos;
-        q = &obj->pos;
+        p0 = &obj->pos;
+        q = p0;
         fn_1_56DC(p, q, 1.0f, 1.0f);
         self->event = 8;
         if (self->ghost != 0) {
             PSVECSubtract(p, q, &d);
             PSVECNormalize(&d, &d);
-            PSVECScale(&d, &d, 0.2f * (-PSVECDotProduct(&self->vel, &d) * self->mass));
-            PSVECAdd(&d, &self->force, &self->force);
+            dot = PSVECDotProduct(&self->vel, &d);
+            dot2 = dot;
+            sc = 0.2f * (-dot2 * self->mass);
+            PSVECScale(&d, &d, sc);
+            dp = &d;
+            dq = dp;
+            PSVECAdd(dq, &self->force, &self->force);
         }
     }
 }
