@@ -82,15 +82,8 @@ typedef struct M552State_s {
     s32 *dataNums; /* 0xF8 */
     s16 stage; /* 0xFC */
     s16 pad_FE;
-    s32 mode; /* 0x100 */
-    s32 sub; /* 0x104 */
-    union {
-        s32 pstate[2]; /* 0x108: per-player puzzle state */
-        s32 winner; /* result phase reuses the first slot */
-    };
-    s32 pad_10C;
-    s32 timer[2]; /* 0x110: move timer (sequence frame counter in slot 0) */
-    s32 timer2[2]; /* 0x118: rotate timer */
+    s32 stat[4]; /* 0x100: [0] mode, [1] sub, [2 + player] puzzle state ([2] doubles as result winner) */
+    s32 timer[4]; /* 0x110: [player] move timer (sequence frame counter in [0]), [2 + player] rotate timer */
     u8 pad_120[0x20];
     f32 moveVec[2][3]; /* 0x140: x, y, rotate step */
     u8 pad_158[0x1C];
