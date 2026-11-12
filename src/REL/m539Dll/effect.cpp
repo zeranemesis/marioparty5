@@ -56,6 +56,9 @@ typedef struct M539Hu3DData_s {
 } M539Hu3DData;
 
 extern M539Hu3DData Hu3DData[];
+#ifdef TARGET_PC
+void *PortHu3DModelHookData(int modelId);
+#endif
 
 typedef struct M539Effect_s {
     void *vtable;
@@ -102,7 +105,8 @@ static const f32 lbl_1_rodata_264 = 50.0f;
 // NONMATCHING: register allocation only.
 void fn_1_C8DC(void *modelP, void *particleP, void *mtx)
 {
-    M539Effect *self = *(M539Effect **)((char *)modelP + 0x1C);
+    /* the effect is the particle's work pointer (lwz r31, 0x1C(r4) in the original) */
+    M539Effect *self = (M539Effect *)((M539Particle *)particleP)->work;
 
     fn_1_CE40(self, (M539Particle *)particleP);
 }
@@ -116,7 +120,11 @@ M539Effect *fn_1_C920(M539Effect *self, Vec *pos)
     self->anim = HuSprAnimRead(HuDataSelHeapReadNum(0x61000C, 0x10000000, 2));
     HuSprAnimLock(self->anim);
     modelId = Hu3DParticleCreate(self->anim, 0x10);
+#ifdef TARGET_PC /* the local Hu3DData copy has the GameCube stride */
+    self->particle = (M539Particle *)PortHu3DModelHookData(modelId);
+#else
     self->particle = (M539Particle *)Hu3DData[modelId].hookData;
+#endif
     self->particle->work = self;
     Hu3DParticleHookSet(modelId, (void *)fn_1_C8DC);
     Hu3DParticleColSet(modelId, 0xF0, 0xF0, 0xF0);

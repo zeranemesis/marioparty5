@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include <stdint.h>
+#endif
 #include "REL/m539Dll.h"
 
 /*
@@ -11,8 +14,13 @@
 extern "C" {
 
 typedef struct M539ManMap_s {
+#ifdef TARGET_PC
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
+#else
     s32 unk0;
     s32 unk4;
+#endif
     void *vtable;
     s32 flags;
     s16 *shadowLight;
@@ -32,6 +40,23 @@ extern void *lbl_1_data_1FC;
 extern s32 lbl_1_bss_C;
 extern void *lbl_1_bss_A10;
 
+#ifdef TARGET_PC
+/* Values from the original man_map.o (the GameCube source still has placeholders). The two
+ * light paths are four Point3d each; 234..23C are read as one Vec, so they stay contiguous. */
+f32 lbl_1_rodata_1C0[12] = { -961.0f, -60.0f, -1777.0f, -1990.0f, -60.0f, -3153.0f,
+                             -777.0f, -60.0f, -3088.0f, -1838.0f, -60.0f, -2113.0f };
+f32 lbl_1_rodata_1F0[12] = { -89.0f, -60.0f, -1000.0f, 1021.0f, -60.0f, -1432.0f,
+                             1021.0f, -60.0f, -1225.0f, 1366.0f, -60.0f, -1225.0f };
+s32 lbl_1_rodata_220[3] = { 0, 0x43960000, (s32)0xC2AA0000 };
+static f32 s_manMapRodata[7] = { 0.0f, 600.0f, 530.0f, 0.5f, 288.0f, 240.0f, 1.0f };
+#define lbl_1_rodata_22C s_manMapRodata[0]
+#define lbl_1_rodata_230 s_manMapRodata[1]
+#define lbl_1_rodata_234 s_manMapRodata[2]
+#define lbl_1_rodata_238 s_manMapRodata[3]
+#define lbl_1_rodata_23C s_manMapRodata[4]
+#define lbl_1_rodata_240 s_manMapRodata[5]
+#define lbl_1_rodata_244 s_manMapRodata[6]
+#else
 void *lbl_1_rodata_1C0[12];
 void *lbl_1_rodata_1F0[12];
 s32 lbl_1_rodata_220[3];
@@ -44,16 +69,29 @@ f32 lbl_1_rodata_240;
 f32 lbl_1_rodata_244;
 double lbl_1_rodata_248;
 double lbl_1_rodata_250;
+#endif
 
 char lbl_1_data_3B0[] = "ms_pointer != 0";
 char lbl_1_data_3C0[] = "singleton.h";
+#ifdef TARGET_PC
+void fn_1_C540(void);
+M539Ptmf lbl_1_data_3CC = M539_PTMF_INIT(fn_1_C540); /* fade hook, per the original data */
+#else
 M539Ptmf lbl_1_data_3CC = M539_PTMF_NULL_INIT;
+#endif
 char lbl_1_data_3D8[] = "ms_pointer == 0";
 char lbl_1_data_3E8[] = "lights > 0";
 char lbl_1_data_3F3[] = "man_map.cpp";
 char lbl_1_data_3FF[] = "inf_light1";
 char lbl_1_data_40A[] = "light_id >= 0";
+#ifdef TARGET_PC
+M539ManMap *fn_1_C634(M539ManMap *self, s16 arg);
+void fn_1_C5CC(M539ManMap *self, s32 arg);
+void fn_1_C544(M539ManMap *self);
+void *lbl_1_data_418[6] = { 0, 0, (void *)fn_1_C634, (void *)fn_1_C5CC, (void *)fn_1_C544, 0 }; /* per the original data */
+#else
 void *lbl_1_data_418[6];
+#endif
 
 s32 lbl_1_bss_A38;
 s32 lbl_1_bss_A3C;
@@ -84,7 +122,17 @@ void fn_1_1330(void *self, s32 *arg);
 void fn_1_1D4(const char *msg, const char *file, s32 line);
 s16 *fn_1_0(s32 arg);
 s16 *fn_1_2C94(s16 *self, s32 dataNum);
-void fn_1_30F4(s32 ptr, s32 flag);
+#ifdef TARGET_PC
+/* fn_1_30F4 takes the model object; the light objects are M539Heiho (actor at 0x30 on GameCube) */
+typedef void *M539PtrArg;
+#define M539_HEIHO_ACTOR(p) ((M539PtrArg)((M539Heiho *)(p))->actor)
+#define M539_HEIHO_ACTOR_OK(p) ((p) != 0)
+#else
+typedef s32 M539PtrArg;
+#define M539_HEIHO_ACTOR(p) (*(s32 *)((char *)(p) + 0x30))
+#define M539_HEIHO_ACTOR_OK(p) ((u32)((p) + 0x30) != 0U)
+#endif
+void fn_1_30F4(M539PtrArg ptr, s32 flag);
 void fn_1_50C4(s32 lightId, Point3d *target, s32 *color, f32 *param, f32 a, f32 b);
 void *fn_1_9DF8(void *self, Point3d *start, s32 count);
 void fn_1_9F6C(void *self);
@@ -155,7 +203,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
         q = fn_1_2C94(q, 0x610000);
     }
     self->infLight = q;
-    __construct_array(&self->sprLight[0], (void *)fn_1_C488, (void *)fn_1_C408, 4, 2);
+    __construct_array(&self->sprLight[0], (void *)fn_1_C488, (void *)fn_1_C408, sizeof(s16 *), 2);
     fn_1_C750(&self->fade, 0, 0.0f);
     if (Hu3DModelLightInfoSet(*self->infLight, 1) <= 0) {
         fn_1_1D4(lbl_1_data_3E8, lbl_1_data_3F3, 0x2A);
@@ -167,8 +215,8 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     if (self->sprLight[0] != p) {
         sprLight = self->sprLight[0];
         if (sprLight != NULL) {
-            if ((u32)(sprLight + 0x30) != 0U) {
-                fn_1_30F4(*(s32 *)((char *)sprLight + 0x30), 1);
+            if (M539_HEIHO_ACTOR_OK(sprLight)) {
+                fn_1_30F4(M539_HEIHO_ACTOR(sprLight), 1);
             }
             fn_1_C8(sprLight);
         }
@@ -181,8 +229,8 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     if (self->sprLight[1] != q) {
         sprLight = self->sprLight[1];
         if (sprLight != NULL) {
-            if ((u32)(sprLight + 0x30) != 0U) {
-                fn_1_30F4(*(s32 *)((char *)sprLight + 0x30), 1);
+            if (M539_HEIHO_ACTOR_OK(sprLight)) {
+                fn_1_30F4(M539_HEIHO_ACTOR(sprLight), 1);
             }
             fn_1_C8(sprLight);
         }
@@ -218,8 +266,8 @@ s16 **fn_1_C408(s16 **arg0, s16 arg1)
     if (arg0 != NULL) {
         elem = *arg0;
         if (elem != NULL) {
-            if ((u32)(elem + 0x30) != 0U) {
-                fn_1_30F4(*(s32 *)((char *)elem + 0x30), 1);
+            if (M539_HEIHO_ACTOR_OK(elem)) {
+                fn_1_30F4(M539_HEIHO_ACTOR(elem), 1);
             }
             fn_1_C8(elem);
         }
@@ -291,12 +339,12 @@ M539ManMap *fn_1_C634(M539ManMap *self, s16 arg)
 
     if (self != NULL) {
         self->vtable = lbl_1_data_418;
-        __destroy_arr(&self->sprLight[0], (void *)fn_1_C408, 4, 2);
+        __destroy_arr(&self->sprLight[0], (void *)fn_1_C408, sizeof(s16 *), 2);
         if (self->infLight != NULL) {
-            fn_1_30F4((s32)self->infLight, 1);
+            fn_1_30F4((M539PtrArg)self->infLight, 1);
         }
         if (self->shadowLight != NULL) {
-            fn_1_30F4((s32)self->shadowLight, 1);
+            fn_1_30F4((M539PtrArg)self->shadowLight, 1);
         }
         if (self->shadowLight != NULL) {
             if (lbl_1_bss_A10 == NULL) {
@@ -317,7 +365,11 @@ M539ManMap *fn_1_C634(M539ManMap *self, s16 arg)
 
 void fn_1_C748(s16 **arg0, s32 arg1)
 {
+#ifdef TARGET_PC
+    *arg0 = (s16 *)(intptr_t)arg1;
+#else
     *arg0 = (s16 *)arg1;
+#endif
 }
 
 // NONMATCHING: register allocation only.
@@ -371,3 +423,13 @@ void fn_1_C8A8(void)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_C8A8)(void) = fn_1_C8A8;
+#else
+struct PortStaticInit_C8A8 {
+    PortStaticInit_C8A8() { fn_1_C8A8(); }
+};
+static PortStaticInit_C8A8 lbl_port_init_C8A8;
+#endif

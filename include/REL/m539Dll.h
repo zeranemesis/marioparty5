@@ -25,6 +25,11 @@ typedef struct {
 #endif
 
 #ifndef M539_USE_DOLPHIN_HEADERS
+#ifdef TARGET_PC /* aurora only has the C versions of these */
+#define PSVECAdd C_VECAdd
+#define PSVECSubtract C_VECSubtract
+#define PSVECScale C_VECScale
+#endif
 void PSVECAdd(const Vec *a, const Vec *b, Vec *dst);
 void PSVECSubtract(const Vec *a, const Vec *b, Vec *dst);
 void PSVECNormalize(Vec *v, Vec *dst);

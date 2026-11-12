@@ -43,3 +43,38 @@ int __ptmf_test(const PortPtmf *pmf)
 int __float_nan[] = { 0x7FFFFFFF };
 int __float_huge[] = { 0x7F800000 };
 #endif
+
+/* MSL's array construction helpers (Runtime NMWException.cp): constructors get 1, destructors -1,
+ * destroyed back to front. */
+#ifndef TARGET_DOL
+typedef void *(*PortCtorDtor)(void *obj, short flag);
+
+void *__construct_array(void *block, PortCtorDtor ctor, PortCtorDtor dtor, unsigned long size, unsigned long n)
+{
+    char *p = (char *)block;
+    unsigned long i;
+    (void)dtor;
+    for (i = 0; i < n; i++, p += size) {
+        ctor(p, 1);
+    }
+    return block;
+}
+
+void __destroy_arr(void *block, PortCtorDtor dtor, unsigned long size, unsigned long n)
+{
+    char *p = (char *)block + size * n;
+    for (; n > 0; n--) {
+        p -= size;
+        dtor(p, -1);
+    }
+}
+#endif
+
+/* Hook data of a 3D model, for REL units that declare Hu3DData with the GameCube stride. */
+#ifndef TARGET_DOL
+#include "game/hu3d.h"
+void *PortHu3DModelHookData(int modelId)
+{
+    return Hu3DData[modelId].hookData;
+}
+#endif

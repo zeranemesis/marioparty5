@@ -31,8 +31,15 @@ typedef struct M539Conf_s {
     s16 charNo, padNo, dif, grp, type;
 } M539Conf;
 
+#ifdef TARGET_PC
+#include "version.h"
+SHARED_SYM
+#endif
 extern M539Conf GwPlayerConf[];
 extern u8 __files[];
+#ifdef TARGET_PC /* stderr of the C library: fn_1_234 ignores the stream */
+#define __files ((u8 *)0)
+#endif
 extern void *lbl_1_bss_A08;
 
 void abort(void);
@@ -775,3 +782,13 @@ void fn_1_EFC0(void)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_EFC0)(void) = fn_1_EFC0;
+#else
+struct PortStaticInit_EFC0 {
+    PortStaticInit_EFC0() { fn_1_EFC0(); }
+};
+static PortStaticInit_EFC0 lbl_port_init_EFC0;
+#endif

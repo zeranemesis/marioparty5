@@ -33,6 +33,10 @@ typedef struct M539Camera_s {
 
 typedef void (*M539Fn)(void);
 
+#ifdef TARGET_PC
+#include "version.h"
+SHARED_SYM
+#endif
 extern u16 HuPadBtnDown[4];
 extern void *lbl_1_bss_A14;
 extern s32 lbl_1_bss_C;

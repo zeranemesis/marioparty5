@@ -196,7 +196,7 @@ static inline void M539DestroyGame(M539Game *g)
     if (&g->block != 0) {
         fn_1_30F4(g->block, 1);
     }
-    __destroy_arr(g->digits, (void *)fn_1_86AC, sizeof(g->digits[0]), 9);
+    __destroy_arr(g->digits, (void *)fn_1_86AC, sizeof(g->digits[0][0]), 9);
     if (&g->roller != 0) {
         fn_1_30F4(g->roller, 1);
     }

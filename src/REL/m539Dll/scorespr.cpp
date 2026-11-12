@@ -13,8 +13,13 @@
 extern "C" {
 
 typedef struct M539ScoreMgr_s {
+#ifdef TARGET_PC
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
+#else
     s32 unk0;
     s32 unk4;
+#endif
     void *vtable;
     s32 flags;
 } M539ScoreMgr;
@@ -374,3 +379,13 @@ void fn_1_FA5C(void)
 }
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_FA5C)(void) = fn_1_FA5C;
+#else
+struct PortStaticInit_FA5C {
+    PortStaticInit_FA5C() { fn_1_FA5C(); }
+};
+static PortStaticInit_FA5C lbl_port_init_FA5C;
+#endif

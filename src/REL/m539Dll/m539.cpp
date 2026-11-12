@@ -10,6 +10,9 @@ extern "C" {
 #include "game/memory.h"
 #include "game/gamemes.h"
 #include "game/wipe.h"
+#ifdef TARGET_PC /* MWCC intrinsic */
+#define __fabs(x) ((x) < 0 ? -(x) : (x))
+#endif
 #include "game/flag.h"
 #include "game/gamework.h"
 #include "game/data.h"

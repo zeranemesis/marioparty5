@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include <stddef.h>
+#endif
 #define _MATH_H
 #define M539_USE_DOLPHIN_HEADERS
 extern "C" {
@@ -61,7 +64,11 @@ void *fn_1_5608(void *self, s16 arg);
 void fn_1_56BC(void *self, s32 arg);
 void fn_1_574C(void *self, s32 arg);
 
+#ifdef TARGET_PC
+M539PadReader *fn_1_63E0(M539PadReader *self, s32 playerNo);
+#else
 void fn_1_63E0(M539PadReader *self, s32 playerNo);
+#endif
 void *fn_1_6420(void *self, s16 flag);
 void fn_1_6478(M539PadReader *self, M539PadState *st);
 void *fn_1_64B8(M539Handler *self);
@@ -73,10 +80,16 @@ void fn_1_66F4(M539Slot *self, M539PadState *st);
 void fn_1_66FC(M539Slot *self, s16 flag);
 // The IRQ handler vtable (0x210) and the vtable of its thread subobject
 // (0x220), followed by the two adjustor thunks that reach the handler.
+#ifdef TARGET_PC
+/* one array: separate globals are not laid out back to back on PC */
+M539Slot lbl_1_data_210[] = { 0, 0, (M539Slot)fn_1_6600, (M539Slot)fn_1_6524,
+                              0, 0, (M539Slot)fn_1_66FC, (M539Slot)fn_1_66F4, (M539Slot)fn_1_6558 };
+#else
 M539Slot lbl_1_data_210[] = { 0, 0, (M539Slot)fn_1_6600, (M539Slot)fn_1_6524 };
 M539Slot lbl_1_data_220[] = { 0, 0, (M539Slot)fn_1_66FC };
 M539Slot lbl_1_data_22C = (M539Slot)fn_1_66F4;
 M539Slot lbl_1_data_230 = (M539Slot)fn_1_6558;
+#endif
 
 // The pad reader vtable (0x234) and the common base one (0x244).
 M539Slot lbl_1_data_234[] = { 0, 0, (M539Slot)fn_1_6688, (M539Slot)fn_1_6478 };
@@ -90,19 +103,30 @@ void fn_1_6398(M539Handler *self)
     ((M539PollFn)self->vptr[3])(self, (void *)&self->unk4);
 }
 
+#ifdef TARGET_PC /* player.cpp uses the returned self (r3 on GameCube) */
+M539PadReader *fn_1_63E0(M539PadReader *self, s32 playerNo)
+#else
 void fn_1_63E0(M539PadReader *self, s32 playerNo)
+#endif
 {
     self->vptr = (M539Slot *)lbl_1_data_244;
     self->unk8 = 0;
     self->vptr = (M539Slot *)lbl_1_data_234;
     self->playerNo = playerNo;
     self->padNo = GwPlayerConf[playerNo].padNo;
+#ifdef TARGET_PC
+    return self;
+#endif
 }
 
 void *fn_1_6420(void *self, s16 flag)
 {
     if (self) {
+#ifdef TARGET_PC
+        *(M539Slot **)self = lbl_1_data_244;
+#else
         ((M539Slot *)self)[0] = (M539Slot)lbl_1_data_244;
+#endif
         if (flag > 0) {
             fn_1_C8(self);
         }
@@ -123,7 +147,7 @@ void *fn_1_64B8(M539Handler *self)
     self->unk8 = 0;
     fn_1_558C(&self->sub, 0x8000);
     self->vptr = (M539Slot *)lbl_1_data_210;
-    self->sub.vtbl = (M539ThreadVtbl *)((u8 *)lbl_1_data_210 + 0x10);
+    self->sub.vtbl = (M539ThreadVtbl *)((u8 *)lbl_1_data_210 + 4 * sizeof(M539Slot));
     return self;
 }
 
@@ -150,7 +174,7 @@ void *fn_1_6600(M539Handler *self, s16 flag)
 {
     if (self) {
         self->vptr = (M539Slot *)lbl_1_data_210;
-        self->sub.vtbl = (M539ThreadVtbl *)((u8 *)lbl_1_data_210 + 0x10);
+        self->sub.vtbl = (M539ThreadVtbl *)((u8 *)lbl_1_data_210 + 4 * sizeof(M539Slot));
         fn_1_5608(&self->sub, 0);
         if (self) {
             self->vptr = (M539Slot *)lbl_1_data_244;
@@ -178,6 +202,18 @@ void *fn_1_6688(M539PadReader *self, s16 flag)
 
 // The two thunks of the handler's thread subobject: they undo the 0x10 this
 // adjustment and jump to the handler's own entry points.
+#ifdef TARGET_PC
+#define M539_FROM_SUB(p) ((M539Handler *)((u8 *)(p) - offsetof(M539Handler, sub)))
+void fn_1_66F4(M539Slot *self, M539PadState *st)
+{
+    fn_1_6558(M539_FROM_SUB(self), st);
+}
+
+void fn_1_66FC(M539Slot *self, s16 flag)
+{
+    fn_1_6600(M539_FROM_SUB(self), flag);
+}
+#else
 void fn_1_66F4(M539Slot *self, M539PadState *st)
 {
     __asm {
@@ -193,5 +229,6 @@ void fn_1_66FC(M539Slot *self, s16 flag)
         b fn_1_6600
     }
 }
+#endif
 
 }
