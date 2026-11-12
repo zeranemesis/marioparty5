@@ -20,9 +20,22 @@ struct MdProcEnt_s { s32 (*func)(NEL_SYS *sys, MDPROCENT *ent); };
 NEL_SYS sysWork;
 
 /* Runtime work struct for a single "glow" particle effect. */
-typedef struct ParticleGlow_s {
+typedef struct ParticleGlowWork_s {
     /* 0x00 */ int parManId;
-} ParticleGlow;
+} ParticleGlowWork;
+
+/* Per-pad particle work: three dot particles and one glow particle. */
+typedef struct ParticleDotWork_s {
+    /* 0x00 */ s32 parManId[3];
+} ParticleDotWork;
+
+struct {
+    struct {
+        ParticleDotWork *dot;
+        ParticleGlowWork *glow;
+    } ent[4];
+    s32 pad;
+} ParWork;
 
 void MdSpriteDebug(NEL_SYS *sys);
 void MdSpriteDispSet(s32 grpNo, s32 dispF);
@@ -74,6 +87,9 @@ void MdObjPadMain(void);
 void MdObjDebugFontCreate(OMOBJ *obj);
 void MdMathStdCurveInit(void);
 
+void fn_1_18C68(NEL_SYS *sys, s32 arg);
+void MdFukiInit(NEL_SYS *sys);
+void fn_1_17354(NEL_SYS *sys);
 void ObjectSetup(void);
 void MdInit(NEL_SYS *sys, MDFLOWENT *tbl);
 /* shortcut: MdProcTbl dispatch loads r4 once in the original (call-through-arg); register pressure also differs (idx kept in a reg). */
@@ -211,6 +227,39 @@ void _epilog(void)
     }
 }
 
+
+static HU3DPARMANPARAM ParticleDot1 = {
+    30, 0, 50.0f, 10.0f, 180.0f,
+    { 0.0f, -0.05f, 0.0f },
+    20.0f, 0.8f, 10.0f, 1.0f,
+    2,
+    { { 255, 255, 255, 255 }, { 255, 255, 64, 255 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+    { { 255, 128, 128, 0 }, { 255, 64, 32, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+};
+static HU3DPARMANPARAM ParticleDot2 = {
+    40, 0, 50.0f, 0.0f, 90.0f,
+    { 0.0f, -0.05f, 0.0f },
+    35.0f, 0.88f, 25.0f, 0.99f,
+    1,
+    { { 255, 255, 255, 255 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+    { { 255, 128, 128, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+};
+static HU3DPARMANPARAM ParticleDot3 = {
+    30, 0, 30.0f, 60.0f, 180.0f,
+    { 0.0f, 0.0f, 0.0f },
+    0.2f, 1.0f, 100.0f, 1.0f,
+    2,
+    { { 255, 255, 255, 32 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+    { { 64, 32, 32, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+};
+static HU3DPARMANPARAM ParticleGlow = {
+    50, 0, 2.0f, 30.0f, 180.0f,
+    { 0.0f, -0.2f, 0.0f },
+    1.0f, 0.8f, 30.0f, 0.95f,
+    3,
+    { { 128, 192, 255, 255 }, { 255, 255, 64, 255 }, { 255, 96, 128, 255 }, { 0, 0, 0, 0 } },
+    { { 128, 192, 255, 0 }, { 255, 64, 32, 0 }, { 128, 16, 16, 0 }, { 0, 0, 0, 0 } },
+};
 
 static s32 MdMdlSelTbl[7] = { 0x76, 0x78, 0x7A, 0x7C, 0x7E, 0x80, 0x82 };
 static HuVecF MdVecTbl[0x6D] = {
@@ -3204,6 +3253,433 @@ void fn_1_7C88(NEL_SYS *sys, MDFLOWENT *tbl)
     }
 }
 
+void fn_1_8F18(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    s16 grp;
+    s16 i;
+    s32 ret;
+    SYSSPRITE *sprite;
+    SYSMODEL *volatile model;
+    SYSMESS *volatile mess;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    mess = (SYSMESS *)sys->mess;
+    switch (sys->stat) {
+        case 0:
+            sys->unk287 = 0;
+            MdSpriteDispSet(1, 1);
+            MdSpriteDispSet(7, 1);
+            grp = sprite->grpId[1];
+            HuSprGrpPosSet(grp, 0.0f, 0.0f);
+            for (i = 0; i < 8; i++) {
+                HuSprAttrReset(grp, i, 4);
+                HuSprPosSet(grp, i, -100.0f, -100.0f);
+            }
+            grp = sprite->grpId[6];
+            HuSprGrpPosSet(grp, 0.0f, 0.0f);
+            for (i = 0; i < 8; i++) {
+                HuSprAttrReset(grp, i, 4);
+                HuSprPosSet(grp, i, -100.0f, -100.0f);
+            }
+            sys->stat = 1;
+            return;
+        case 1:
+            if ((ret = MdProcTbl[0x36].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 2;
+                return;
+            }
+            break;
+        case 2:
+            if ((ret = MdProcTbl[0x12].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60027);
+                MdMessDlgInsertMesReset();
+                if (sys->modeSel == 0) {
+                    MdMessDlgInsertMesAdd(sys->mdlNo[sys->unk287], 0);
+                } else if (sys->modeSel == 1) {
+                    MdMessDlgInsertMesAdd((&sys->winMes0)[sys->unk287] + 0x80000, 0);
+                }
+                fn_1_18C68(sys, 0);
+                sys->stat = 3;
+                return;
+            }
+            break;
+        case 3:
+            if ((PADSTAT(sys) & 1) != 0 || (PADSTAT(sys) & 2) != 0) {
+                if (sys->modeSel == 0) {
+                    if ((PADSTAT(sys) & 1) != 0) {
+                        sys->sel = 0;
+                        if (--sys->unk287 == -1) {
+                            sys->unk287 = 3;
+                        }
+                    } else if ((PADSTAT(sys) & 2) != 0) {
+                        sys->sel = 1;
+                        sys->unk287++;
+                        sys->unk287 = sys->unk287 % 4;
+                    }
+                } else if (sys->modeSel == 1) {
+                    if ((PADSTAT(sys) & 1) != 0) {
+                        sys->sel = 0;
+                        if (--sys->unk287 == -1) {
+                            sys->unk287 = 1;
+                        }
+                    } else if ((PADSTAT(sys) & 2) != 0) {
+                        sys->sel = 1;
+                        sys->unk287++;
+                        sys->unk287 = sys->unk287 % 2;
+                    }
+                }
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(3, 0x60027);
+                MdMessDlgInsertMesReset();
+                if (sys->modeSel == 0) {
+                    MdMessDlgInsertMesAdd(sys->mdlNo[sys->unk287], 0);
+                } else if (sys->modeSel == 1) {
+                    MdMessDlgInsertMesAdd((&sys->winMes0)[sys->unk287] + 0x80000, 0);
+                }
+                fn_1_18C68(sys, 0);
+                fn_1_19904(2);
+                sys->stat = 4;
+                return;
+            }
+            if ((PADSTAT(sys) & 8) != 0 || (PADSTAT(sys) & 4) != 0) {
+                if ((PADSTAT(sys) & 8) != 0) {
+                    sys->sel = 2;
+                    sys->unk283[sys->unk287]++;
+                    sys->unk283[sys->unk287] = sys->unk283[sys->unk287] % 10;
+                } else if ((PADSTAT(sys) & 4) != 0) {
+                    sys->sel = 3;
+                    if (--sys->unk283[sys->unk287] == -1) {
+                        sys->unk283[sys->unk287] = 9;
+                    }
+                }
+                fn_1_18C68(sys, 0);
+                fn_1_19904(2);
+                sys->stat = 4;
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x100) != 0) {
+                sys->stat = 8;
+                fn_1_19904(3);
+                return;
+            }
+            if ((HuPadBtnDown[0] & 0x200) != 0) {
+                grp = sprite->grpId[6];
+                for (i = 0; i < 8; i++) {
+                    HuSprPosSet(grp, i, -100.0f, -100.0f);
+                }
+                fn_1_19904(5);
+                sys->stat = 5;
+                return;
+            }
+            break;
+        case 4:
+            if ((ret = MdProcTbl[0x14].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 3;
+                return;
+            }
+            break;
+        case 5:
+            if ((ret = MdProcTbl[0x13].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 6;
+                return;
+            }
+            break;
+        case 6:
+            if ((ret = MdProcTbl[0x37].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 7;
+                return;
+            }
+            break;
+        case 7:
+            if ((ret = MdProcTbl[0x4E].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                MdMessDlgMesSet(0, -1);
+                MdMessDlgMesSet(1, sys->menuNo3 + 0x60025);
+                grp = sprite->grpId[1];
+                HuSprGrpPosSet(grp, 288.0f, 240.0f);
+                for (i = 0; i < 8; i++) {
+                    HuSprPosSet(grp, i, 0.0f, -350.0f);
+                }
+                sys->stat = 0x14;
+                sys->flowNo = 0xA;
+                return;
+            }
+            break;
+        case 8:
+            if ((ret = MdProcTbl[0x13].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 9;
+                return;
+            }
+            break;
+        case 9:
+            if ((ret = MdProcTbl[0x38].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 0;
+                sys->flowNo = 0xC;
+            }
+            break;
+    }
+}
+
+void fn_1_974C(NEL_SYS *sys, MDFLOWENT *tbl)
+{
+    s8 i;
+    s32 j;
+    s32 ret;
+    s16 camBit;
+    s16 parId;
+    float rotY;
+    SYSSPRITE *sprite;
+    SYSMODEL *model;
+    SYSMESS *mess;
+    ParticleDotWork *dot;
+    ParticleGlowWork *glow;
+    HuVecF *pos;
+
+    sprite = (SYSSPRITE *)sys->sprite;
+    model = (SYSMODEL *)sys->model;
+    mess = (SYSMESS *)sys->mess;
+    switch (sys->stat) {
+        case 0:
+            MdMessDlgMesSet(0, -1);
+            MdMessDlgMesSet(2, 0x60028);
+            fn_1_19904(0xA);
+            sys->stat = 1;
+            return;
+        case 1:
+            if (mess->mode == 5) {
+                switch (mess->choice) {
+                    case -1:
+                    case 1:
+                        MdMessDlgMesSet(0, -1);
+                        MdMessDlgMesSet(2, 0x60029);
+                        sys->stat = 2;
+                        return;
+                    case 0:
+                        MdMessDlgMesSet(0, -1);
+                        MdMessDlgMesSet(1, 0x6002A);
+                        fn_1_19B10(1);
+                        sys->stat = 4;
+                        return;
+                }
+            } else {
+                return;
+            }
+            break;
+        case 9:
+            if ((ret = MdProcTbl[0x39].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 2;
+                sys->flowNo = 0xB;
+                return;
+            }
+            break;
+        case 2:
+            if (mess->mode == 5) {
+                switch (mess->choice) {
+                    case -1:
+                    case 1:
+                        sys->stat = 9;
+                        return;
+                    case 0:
+                        MdSpriteDispSet(3, 0);
+                        MdSpriteDispSet(4, 0);
+                        MdSpriteDispSet(6, 0);
+                        MdSpriteDispSet(7, 0);
+                        for (i = 0; i < 4; i++) {
+                            if (sys->fukiMode[i] == 2) {
+                                MdRingModeSet(sys, i, 4);
+                            } else if (sys->fukiMode[i] == 3) {
+                                MdRingModeSet(sys, sys->mdlSelNo[i + 4] + 4, 4);
+                            }
+                        }
+                        sys->stat = 3;
+                        return;
+                }
+            }
+            break;
+        case 3:
+            if ((ret = MdProcTbl[0x5A].func(sys, MdProcTbl)) == 1) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                HuSprAttrSet(sprite->grpId[1], 4, 4);
+                HuSprAttrSet(sprite->grpId[1], 5, 4);
+                HuSprAttrSet(sprite->grpId[1], 6, 4);
+                HuSprAttrSet(sprite->grpId[1], 7, 4);
+                for (j = 0; j < 0xB; j++) {
+                    MdRingDispSet(sys, j, 1);
+                }
+                Hu3DModelAttrSet(model->mdlId[1], 1);
+                for (j = 0; j < 0xA; j++) {
+                    Hu3DModelAttrSet(model->mdlId[j + 2], 1);
+                }
+                Hu3DLayerHookSet(9, NULL);
+                MdFukiInit(sys);
+                sys->stat = 0;
+                sys->flowNo = 4;
+                return;
+            }
+            break;
+        case 4:
+            Hu3DModelAttrSet(model->mdlId[1], 1);
+            for (j = 0; j < 0xA; j++) {
+                Hu3DModelAttrSet(model->mdlId[j + 2], 1);
+            }
+            for (j = 0; j < 0xA; j++) {
+                Hu3DModelAttrSet(model->mdlId[j + 0x10], 1);
+            }
+            for (j = 0; j < 4; j++) {
+                Hu3DModelAttrReset(model->mdlId[sys->mdlNo[j] + 2], 1);
+                Hu3DModelLayerSet(model->mdlId[sys->mdlNo[j] + 2], 5);
+                Hu3DModelCameraSet(model->mdlId[sys->mdlNo[j] + 2], ((SYSCAMERA_WORK *)sys->camera)->camera[2].bit);
+                Hu3DModelPosSet(model->mdlId[sys->mdlNo[j] + 2], MdVecTbl[j + 0x5B].x, MdVecTbl[j + 0x5B].y, MdVecTbl[j + 0x5B].z);
+            }
+            Hu3DLayerHookSet(9, NULL);
+            for (j = 0; j < 4; j++) {
+                camBit = ((SYSCAMERA_WORK *)sys->camera)->camera[2].bit;
+                dot = HuMemDirectMallocNum(0, 0xC, 0x10000000);
+                parId = Hu3DParManCreate(sprite->animP[29], 100, &ParticleDot1);
+                dot->parManId[0] = parId;
+                Hu3DParManAttrSet(parId, 0x65);
+                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+                Hu3DParManRotSet(parId, 90.0f, 0.0f, 0.0f);
+                Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), 5);
+                Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), camBit);
+                parId = Hu3DParManCreate(sprite->animP[29], 100, &ParticleDot2);
+                dot->parManId[1] = parId;
+                Hu3DParManAttrSet(parId, 0x163);
+                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+                rotY = frandmod(0x50) - 0x28;
+                Hu3DParManRotSet(parId, frandmod(0x28) + 0x46, 0.0f, rotY);
+                Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), 5);
+                Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), camBit);
+                parId = Hu3DParManCreate(sprite->animP[29], 100, &ParticleDot3);
+                dot->parManId[2] = parId;
+                Hu3DParManAttrSet(parId, 0x21);
+                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+                Hu3DParManRotSet(parId, 0.0f, 0.0f, 0.0f);
+                Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), 5);
+                Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), camBit);
+                ParWork.ent[j].dot = dot;
+                pos = model->mdlPos[sys->mdlNo[j] + 2];
+                dot = ParWork.ent[j].dot;
+                Hu3DParManPosSet(dot->parManId[0], pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(dot->parManId[0], 2);
+                Hu3DParManAttrReset(dot->parManId[0], 1);
+                Hu3DParManPosSet(dot->parManId[1], pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(dot->parManId[1], 2);
+                Hu3DParManAttrReset(dot->parManId[1], 1);
+                Hu3DParManPosSet(dot->parManId[2], pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(dot->parManId[2], 5);
+                Hu3DParManAttrReset(dot->parManId[2], 1);
+                camBit = ((SYSCAMERA_WORK *)sys->camera)->camera[2].bit;
+                glow = HuMemDirectMallocNum(0, 0xC, 0x10000000);
+                parId = Hu3DParManCreate(sprite->animP[27], 100, &ParticleGlow);
+                glow->parManId = parId;
+                Hu3DParManAttrSet(parId, 0x65);
+                Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parId), 1);
+                Hu3DParManRotSet(parId, 90.0f, 0.0f, 0.0f);
+                Hu3DModelLayerSet(Hu3DParManModelIDGet(parId), 5);
+                Hu3DModelCameraSet(Hu3DParManModelIDGet(parId), camBit);
+                ParWork.ent[j].glow = glow;
+                pos = model->mdlPos[sys->mdlNo[j] + 2];
+                glow = ParWork.ent[j].glow;
+                Hu3DParManPosSet(glow->parManId, pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(glow->parManId, 2);
+                Hu3DParManAttrReset(glow->parManId, 1);
+            }
+            fn_1_19904(7);
+            MdSpriteDispSet(3, 0);
+            MdSpriteDispSet(4, 0);
+            MdSpriteDispSet(7, 0);
+            for (i = 0; i < 4; i++) {
+                if (sys->fukiMode[i] == 2) {
+                    MdRingModeSet(sys, i, 4);
+                } else if (sys->fukiMode[i] == 3) {
+                    MdRingModeSet(sys, sys->mdlSelNo[i + 4] + 4, 4);
+                }
+            }
+            MdMessWinKill(2);
+            sys->stat = 5;
+            return;
+        case 5:
+            for (j = 0; j < 4; j++) {
+                pos = model->mdlPos[sys->mdlNo[j] + 2];
+                glow = ParWork.ent[j].glow;
+                Hu3DParManPosSet(glow->parManId, pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(glow->parManId, 2);
+                Hu3DParManAttrReset(glow->parManId, 1);
+            }
+            WipeColorSet(0xFF, 0xFF, 0xFF);
+            WipeCreate(2, 0, 0x3C);
+            fn_1_19904(1);
+            sys->stat = 6;
+            return;
+        case 7:
+            if ((ret = MdProcTbl[0x59].func(sys, MdProcTbl)) == 1) {
+                WipeColorSet(0xFF, 0xFF, 0xFF);
+                WipeCreate(2, 0, 0x3C);
+                fn_1_19904(1);
+                MdProcTbl[2].func(sys, MdProcTbl);
+                sys->stat = 6;
+            }
+            for (j = 0; j < 4; j++) {
+                pos = model->mdlPos[sys->mdlNo[j] + 2];
+                glow = ParWork.ent[j].glow;
+                Hu3DParManPosSet(glow->parManId, pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(glow->parManId, 2);
+                Hu3DParManAttrReset(glow->parManId, 1);
+            }
+            return;
+        case 6:
+            MdProcTbl[0x59].func(sys, MdProcTbl);
+            for (j = 0; j < 4; j++) {
+                pos = model->mdlPos[sys->mdlNo[j] + 2];
+                glow = ParWork.ent[j].glow;
+                Hu3DParManPosSet(glow->parManId, pos->x, pos->y, pos->z);
+                Hu3DParManTimeLimitSet(glow->parManId, 2);
+                Hu3DParManAttrReset(glow->parManId, 1);
+            }
+            if (WipeCheckEnd() == 0) {
+                MdProcTbl[2].func(sys, MdProcTbl);
+                fn_1_17354(sys);
+                CharDataClose(-1);
+                CharMotionInit(GwPlayerConf[0].charNo);
+                CharMotionInit(GwPlayerConf[1].charNo);
+                CharMotionInit(GwPlayerConf[2].charNo);
+                CharMotionInit(GwPlayerConf[3].charNo);
+                omOvlHisChg(0, ((OMOVLHIS *)sys->ovlHis)->ovl, 1, ((OMOVLHIS *)sys->ovlHis)->stat);
+                sys->ovlMode = 1;
+                sys->ovlNo = MdMdlSelTbl[sys->selNo3];
+                sys->unk240 = 1;
+                sys->exitReqF = 1;
+                return;
+            }
+            break;
+        case 8:
+            if (sys->loadStat == 2) {
+                CharDataClose(-1);
+                CharMotionInit(GwPlayerConf[0].charNo);
+                CharMotionInit(GwPlayerConf[1].charNo);
+                CharMotionInit(GwPlayerConf[2].charNo);
+                CharMotionInit(GwPlayerConf[3].charNo);
+                omOvlHisChg(0, ((OMOVLHIS *)sys->ovlHis)->ovl, 1, ((OMOVLHIS *)sys->ovlHis)->stat);
+                sys->ovlMode = 1;
+                sys->ovlNo = MdMdlSelTbl[sys->selNo3];
+                sys->unk240 = 1;
+                sys->exitReqF = 1;
+            }
+            break;
+    }
+}
+
 
 /* fn_1_18BA0 - copy the per-slot "selected model B" table over
  * the "selected model C2" table (both 4 entries). */
@@ -3270,14 +3746,14 @@ void fn_1_1A404(void)
 
 /* ParticleGlowKill - tear a glow particle effect down by its
  * particle-manager handle. */
-void ParticleGlowKill(ParticleGlow *p)
+void ParticleGlowKill(ParticleGlowWork *p)
 {
     Hu3DParManKill((s16)p->parManId);
 }
 
 /* ParticleGlowPosSet - move a glow to `pos`, then restart it with a
  * two-frame life limit and attribute bit 1. */
-void ParticleGlowPosSet(ParticleGlow *p, Vec *pos)
+void ParticleGlowPosSet(ParticleGlowWork *p, Vec *pos)
 {
     Hu3DParManPosSet((s16)p->parManId, pos->x, pos->y, pos->z);
     Hu3DParManTimeLimitSet((s16)p->parManId, 2);
