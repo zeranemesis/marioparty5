@@ -143,10 +143,10 @@ struct M515Sub_s {
     s16 mdl;
     s16 mdl2;
     s16 mot[8];
-    char pad_0F0[0x106 - 0xF0];
+    s16 jmot[11];
     s16 v106;
     s16 v108;
-    char pad_10A[0x10C - 0x10A];
+    s16 v10a;
     s16 cache[18];
     M515_GRP grp[4];
     s16 v1d0;
@@ -242,6 +242,10 @@ OMOBJMAN *lbl_1_bss_8;
 M515_RODATA const u16 lbl_1_rodata_10[4] = { 1, 2, 4, 8 };
 
 void fn_1_32C4(M515_SUB *sub);
+void fn_1_5E88(HU3DMODELID modelId, HuVecF *pos, HuVecF *rot, s16 layerNo, u16 cameraBit);
+void fn_1_5F2C(HU3DMODELID modelId, HuVecF *pos, HuVecF *rot, s16 layerNo, u16 cameraBit);
+void fn_1_CAF0(M515_SUB *sub, s32 i);
+void fn_1_CB60(M515_SUB *sub, s32 i);
 void fn_1_CE98(M515_SUB *sub);
 void fn_1_9920(M515_ESPPAIR *esp);
 void fn_1_9828(M515_ESPPAIR *esp);
@@ -284,6 +288,8 @@ s32 fn_1_83E8(M515_SLOT *slot);
 void fn_1_BE78(M515_SUB *sub, s16 mdl, s16 mode);
 void fn_1_BF24(M515_SUB *sub, s16 mdl, s16 mode);
 extern f32 lbl_1_data_28[60];
+extern s32 lbl_1_data_2B8[26];
+extern s32 lbl_1_data_3C8[14];
 s32 fn_1_BFD0(M515_NODE2 *node);
 s32 fn_1_C0D0(M515_NODE2 *node);
 s32 fn_1_C150(M515_NODE2 *node);
@@ -336,10 +342,10 @@ s32 lbl_1_data_118[13][8] = {
     { 0xB00000, 0xB00001, 0xB00002, 0xB00005, 0xB00006, 0xB00007, 0xB0000D, 0xB0000E }
 };
 
-u16 lbl_1_data_2B8[52] = {
-    73, 0, 73, 2, 73, 4, 73, 5, 73, 7, 73, 9, 73, 11, 73, 13, 73, 15, 73, 16, 73, 18, 73, 38,
-    73, 39, 73, 19, 73, 20, 73, 22, 73, 24, 73, 25, 73, 29, 73, 32, 73, 33, 73, 34, 73, 27, 73,
-    35, 73, 36, 73, 37
+s32 lbl_1_data_2B8[26] = {
+    0x490000, 0x490002, 0x490004, 0x490005, 0x490007, 0x490009, 0x49000B, 0x49000D, 0x49000F,
+    0x490010, 0x490012, 0x490026, 0x490027, 0x490013, 0x490014, 0x490016, 0x490018, 0x490019,
+    0x49001D, 0x490020, 0x490021, 0x490022, 0x49001B, 0x490023, 0x490024, 0x490025
 };
 
 s32 lbl_1_data_320[17] = {
@@ -2752,6 +2758,224 @@ void fn_1_2F3C(M515_SUB *sub)
     sub->v210[a] = sub->v210[b];
     sub->v210[b] = t;
     sub->v1d4 = 0;
+}
+
+M515_RODATA const HuVecF lbl_1_rodata_FC = { 0.0f, 0.0f, 0.0f };
+M515_RODATA const HuVecF lbl_1_rodata_108 = { 0.0f, 0.0f, 0.0f };
+M515_RODATA const HuVecF lbl_1_rodata_114 = { 0.0f, 0.0f, 180.0f };
+M515_RODATA const HuVecF lbl_1_rodata_120 = { 0.0f, 400.0f, 0.0f };
+M515_RODATA const HuVecF lbl_1_rodata_12C = { 0.0f, 800.0f, 0.0f };
+M515_RODATA const HuVecF lbl_1_rodata_138 = { 0.0f, 0.0f, 0.0f };
+
+static inline void M515_PutMdl(HU3DMODELID id, HuVecF pos, HuVecF rot, s16 layer, u16 bits)
+{
+    fn_1_5E88(id, &pos, &rot, layer, bits);
+}
+
+static inline void M515_PutShape(HU3DMODELID id, HuVecF pos, HuVecF rot, s16 layer, u16 bits)
+{
+    fn_1_5F2C(id, &pos, &rot, layer, bits);
+}
+void fn_1_32C4(M515_SUB *sub)
+{
+    HuVecF P0 = lbl_1_rodata_FC;
+    HuVecF R0 = lbl_1_rodata_108;
+    HuVecF R180 = lbl_1_rodata_114;
+    HuVecF P400 = lbl_1_rodata_120;
+    HuVecF P800 = lbl_1_rodata_12C;
+    HuVecF PZ = lbl_1_rodata_138;
+    s32 i;
+
+    sub->v02[3] = Hu3DModelCreateData(lbl_1_data_2B8[10]);
+    M515_PutMdl(sub->v02[3], P0, R0, 0, lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    Hu3DModelAttrReset(sub->v02[3], HU3D_ATTR_DISPOFF);
+    Hu3DModelShadowMapSet(sub->v02[3]);
+    sub->v02[4] = Hu3DModelCreateData(lbl_1_data_2B8[11]);
+    M515_PutMdl(sub->v02[4], P0, R0, 0, lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    Hu3DModelAttrReset(sub->v02[4], HU3D_ATTR_DISPOFF);
+    sub->modelId = Hu3DModelCreateData(lbl_1_data_2B8[12]);
+    M515_PutMdl(sub->modelId, PZ, R0, 0, lbl_1_rodata_10[0]);
+    Hu3DModelAttrReset(sub->modelId, 0x40000002);
+    Hu3DModelAttrReset(sub->modelId, HU3D_ATTR_DISPOFF);
+    Hu3DMotionSpeedSet(sub->modelId, 0.7f);
+    sub->idce[4] = Hu3DModelCreateData(lbl_1_data_2B8[19]);
+    M515_PutMdl(sub->idce[4], P0, R0, 0, lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    sub->idce[5] = Hu3DModelCreateData(lbl_1_data_2B8[20]);
+    M515_PutMdl(sub->idce[5], P0, R0, 0, lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    Hu3DModelShadowMapSet(sub->idce[5]);
+    sub->idce[6] = Hu3DModelCreateData(lbl_1_data_2B8[21]);
+    M515_PutMdl(sub->idce[6], P0, R0, 0, lbl_1_rodata_10[0] | lbl_1_rodata_10[1] | lbl_1_rodata_10[2] | lbl_1_rodata_10[3]);
+    Hu3DModelShadowSet(sub->idce[6]);
+
+    i = 0;
+    sub->idA[0][i] = Hu3DModelCreateData(lbl_1_data_2B8[0]);
+    M515_PutMdl(sub->idA[0][i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->jmot[0] = Hu3DJointMotionData(sub->idA[0][i], lbl_1_data_3C8[0]);
+    Hu3DMotionSet(sub->idA[0][i], sub->jmot[0]);
+    sub->idA[1][i] = Hu3DModelCreateData(lbl_1_data_2B8[1]);
+    M515_PutMdl(sub->idA[1][i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->jmot[1] = Hu3DJointMotionData(sub->idA[1][i], lbl_1_data_3C8[1]);
+    Hu3DMotionSet(sub->idA[1][i], sub->jmot[1]);
+    sub->idA[2][i] = Hu3DModelCreateData(lbl_1_data_2B8[2]);
+    M515_PutMdl(sub->idA[2][i], P0, R0, 2, lbl_1_rodata_10[i]);
+    sub->idA[3][i] = Hu3DModelCreateData(lbl_1_data_2B8[3]);
+    M515_PutMdl(sub->idA[3][i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->jmot[2] = Hu3DJointMotionData(sub->idA[3][i], lbl_1_data_3C8[2]);
+    Hu3DMotionSet(sub->idA[3][i], sub->jmot[2]);
+    sub->idA[4][i] = Hu3DModelCreateData(lbl_1_data_2B8[4]);
+    M515_PutMdl(sub->idA[4][i], P0, R180, 6, lbl_1_rodata_10[i]);
+    sub->jmot[3] = Hu3DJointMotionData(sub->idA[4][i], lbl_1_data_3C8[3]);
+    Hu3DMotionSet(sub->idA[4][i], sub->jmot[3]);
+    sub->idA[5][i] = Hu3DModelCreateData(lbl_1_data_2B8[5]);
+    M515_PutMdl(sub->idA[5][i], P0, R180, 6, lbl_1_rodata_10[i]);
+    sub->jmot[4] = Hu3DJointMotionData(sub->idA[5][i], lbl_1_data_3C8[4]);
+    Hu3DMotionSet(sub->idA[5][i], sub->jmot[4]);
+    sub->idA[6][i] = Hu3DModelCreateData(lbl_1_data_2B8[6]);
+    M515_PutMdl(sub->idA[6][i], P0, R180, 6, lbl_1_rodata_10[i]);
+    sub->jmot[5] = Hu3DJointMotionData(sub->idA[6][i], lbl_1_data_3C8[5]);
+    Hu3DMotionSet(sub->idA[6][i], sub->jmot[5]);
+    sub->idA[7][i] = Hu3DModelCreateData(lbl_1_data_2B8[7]);
+    M515_PutMdl(sub->idA[7][i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->jmot[6] = Hu3DJointMotionData(sub->idA[7][i], lbl_1_data_3C8[6]);
+    Hu3DMotionSet(sub->idA[7][i], sub->jmot[6]);
+    sub->idA[8][i] = Hu3DModelCreateData(lbl_1_data_2B8[8]);
+    M515_PutMdl(sub->idA[8][i], P0, R0, 2, lbl_1_rodata_10[i]);
+    sub->idA[9][i] = Hu3DModelCreateData(lbl_1_data_2B8[9]);
+    M515_PutMdl(sub->idA[9][i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->jmot[7] = Hu3DJointMotionData(sub->idA[9][i], lbl_1_data_3C8[7]);
+    Hu3DMotionSet(sub->idA[9][i], sub->jmot[7]);
+    sub->idB[i][0] = Hu3DModelCreateData(lbl_1_data_2B8[13]);
+    M515_PutMdl(sub->idB[i][0], P0, R180, 2, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->idB[i][0]);
+    sub->idB[i][1] = Hu3DModelLink(sub->idB[0][0]);
+    M515_PutMdl(sub->idB[i][1], P400, R0, 2, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->idB[i][1]);
+    sub->idC[i] = Hu3DModelCreateData(lbl_1_data_2B8[14]);
+    M515_PutMdl(sub->idC[i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->jmot[8] = Hu3DJointMotionData(sub->idC[i], lbl_1_data_3C8[8]);
+    Hu3DMotionSet(sub->idC[i], sub->jmot[8]);
+    sub->id76[i].a = Hu3DModelCreateData(lbl_1_data_2B8[15]);
+    M515_PutMdl(sub->id76[i].a, P0, R0, 5, lbl_1_rodata_10[i]);
+    sub->jmot[9] = Hu3DJointMotionData(sub->id76[i].a, lbl_1_data_3C8[9]);
+    Hu3DMotionSet(sub->id76[i].a, sub->jmot[9]);
+    sub->id76[i].b = Hu3DModelLink(sub->id76[0].a);
+    M515_PutMdl(sub->id76[i].b, P400, R0, 5, lbl_1_rodata_10[i]);
+    Hu3DMotionSet(sub->id76[i].b, sub->jmot[9]);
+    sub->id76[i].c = Hu3DModelLink(sub->id76[0].a);
+    M515_PutMdl(sub->id76[i].c, P400, R180, 5, lbl_1_rodata_10[i]);
+    Hu3DMotionSet(sub->id76[i].c, sub->jmot[9]);
+    sub->id76[i].d = Hu3DModelLink(sub->id76[0].a);
+    M515_PutMdl(sub->id76[i].d, P800, R180, 5, lbl_1_rodata_10[i]);
+    Hu3DMotionSet(sub->id76[i].d, sub->jmot[9]);
+    sub->id96[i][0] = Hu3DModelCreateData(lbl_1_data_2B8[16]);
+    M515_PutMdl(sub->id96[i][0], P0, R0, 3, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->id96[i][0]);
+    sub->id96[i][1] = Hu3DModelLink(sub->id96[0][0]);
+    M515_PutMdl(sub->id96[i][1], P400, R180, 3, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->id96[i][1]);
+    sub->ida6[i] = Hu3DModelCreateData(lbl_1_data_2B8[17]);
+    M515_PutMdl(sub->ida6[i], P0, R0, 2, lbl_1_rodata_10[i]);
+    sub->jmot[10] = Hu3DJointMotionData(sub->ida6[i], lbl_1_data_3C8[11]);
+    Hu3DMotionSet(sub->ida6[i], sub->jmot[10]);
+    sub->idae[i] = Hu3DModelCreateData(lbl_1_data_2B8[18]);
+    M515_PutMdl(sub->idae[i], P0, R0, 6, lbl_1_rodata_10[i]);
+    sub->v106 = Hu3DJointMotionData(sub->idae[i], lbl_1_data_3C8[12]);
+    Hu3DMotionSet(sub->idae[i], sub->v106);
+    sub->v108 = Hu3DJointMotionData(sub->idae[i], lbl_1_data_3C8[13]);
+    sub->idb6[i][0] = Hu3DModelCreateData(lbl_1_data_2B8[23]);
+    M515_PutMdl(sub->idb6[i][0], P0, R0, 1, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->idb6[i][0]);
+    sub->idb6[i][1] = Hu3DModelCreateData(lbl_1_data_2B8[24]);
+    M515_PutMdl(sub->idb6[i][1], P400, R180, 1, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->idb6[i][1]);
+    sub->idb6[i][2] = Hu3DModelCreateData(lbl_1_data_2B8[25]);
+    M515_PutMdl(sub->idb6[i][2], P800, R0, 1, lbl_1_rodata_10[i]);
+    Hu3DModelShadowMapSet(sub->idb6[i][2]);
+    sub->idce[i] = Hu3DModelCreateData(lbl_1_data_2B8[22]);
+    M515_PutShape(sub->idce[i], P0, R0, 7, lbl_1_rodata_10[i]);
+    sub->v10a = Hu3DJointMotionData(sub->idce[i], lbl_1_data_3C8[10]);
+    Hu3DMotionShapeSet(sub->idce[i], sub->v10a);
+    i++;
+    for (; i < 4; i++) {
+        sub->idA[0][i] = Hu3DModelLink(sub->idA[0][0]);
+        M515_PutMdl(sub->idA[0][i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[0][i], sub->jmot[0]);
+        sub->idA[1][i] = Hu3DModelLink(sub->idA[1][0]);
+        M515_PutMdl(sub->idA[1][i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[1][i], sub->jmot[1]);
+        sub->idA[2][i] = Hu3DModelLink(sub->idA[2][0]);
+        M515_PutMdl(sub->idA[2][i], P0, R0, 2, lbl_1_rodata_10[i]);
+        sub->idA[3][i] = Hu3DModelLink(sub->idA[3][0]);
+        M515_PutMdl(sub->idA[3][i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[3][i], sub->jmot[2]);
+        sub->idA[4][i] = Hu3DModelLink(sub->idA[4][0]);
+        M515_PutMdl(sub->idA[4][i], P0, R180, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[4][i], sub->jmot[3]);
+        sub->idA[5][i] = Hu3DModelLink(sub->idA[5][0]);
+        M515_PutMdl(sub->idA[5][i], P0, R180, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[5][i], sub->jmot[4]);
+        sub->idA[6][i] = Hu3DModelLink(sub->idA[6][0]);
+        M515_PutMdl(sub->idA[6][i], P0, R180, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[6][i], sub->jmot[5]);
+        sub->idA[7][i] = Hu3DModelLink(sub->idA[7][0]);
+        M515_PutMdl(sub->idA[7][i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[7][i], sub->jmot[6]);
+        sub->idA[8][i] = Hu3DModelLink(sub->idA[8][0]);
+        M515_PutMdl(sub->idA[8][i], P0, R0, 2, lbl_1_rodata_10[i]);
+        sub->idA[9][i] = Hu3DModelLink(sub->idA[9][0]);
+        M515_PutMdl(sub->idA[9][i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idA[9][i], sub->jmot[7]);
+        sub->idB[i][0] = Hu3DModelLink(sub->idB[0][0]);
+        M515_PutMdl(sub->idB[i][0], P0, R180, 2, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->idB[i][0]);
+        sub->idB[i][1] = Hu3DModelLink(sub->idB[0][0]);
+        M515_PutMdl(sub->idB[i][1], P400, R0, 2, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->idB[i][1]);
+        sub->idC[i] = Hu3DModelLink(sub->idC[0]);
+        M515_PutMdl(sub->idC[i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idC[i], sub->jmot[8]);
+        sub->id76[i].a = Hu3DModelLink(sub->id76[0].a);
+        M515_PutMdl(sub->id76[i].a, P0, R0, 5, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->id76[i].a, sub->jmot[9]);
+        sub->id76[i].b = Hu3DModelLink(sub->id76[0].a);
+        M515_PutMdl(sub->id76[i].b, P400, R0, 5, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->id76[i].b, sub->jmot[9]);
+        sub->id76[i].c = Hu3DModelLink(sub->id76[0].a);
+        M515_PutMdl(sub->id76[i].c, P400, R180, 5, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->id76[i].c, sub->jmot[9]);
+        sub->id76[i].d = Hu3DModelLink(sub->id76[0].a);
+        M515_PutMdl(sub->id76[i].d, P800, R180, 5, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->id76[i].d, sub->jmot[9]);
+        sub->id96[i][0] = Hu3DModelLink(sub->id96[0][0]);
+        M515_PutMdl(sub->id96[i][0], P0, R0, 3, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->id96[i][0]);
+        sub->id96[i][1] = Hu3DModelLink(sub->id96[0][0]);
+        M515_PutMdl(sub->id96[i][1], P400, R180, 3, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->id96[i][1]);
+        sub->ida6[i] = Hu3DModelLink(sub->ida6[0]);
+        M515_PutMdl(sub->ida6[i], P0, R0, 2, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->ida6[i], sub->jmot[10]);
+        sub->idae[i] = Hu3DModelLink(sub->idae[0]);
+        M515_PutMdl(sub->idae[i], P0, R0, 6, lbl_1_rodata_10[i]);
+        Hu3DMotionSet(sub->idae[i], sub->v106);
+        Hu3DMotionSet(sub->idae[i], sub->v108);
+        sub->idce[i] = Hu3DModelCreateData(lbl_1_data_2B8[22]);
+        M515_PutShape(sub->idce[i], P0, R0, 7, lbl_1_rodata_10[i]);
+        Hu3DMotionShapeSet(sub->idce[i], sub->v10a);
+        sub->idb6[i][0] = Hu3DModelLink(sub->idb6[0][0]);
+        M515_PutMdl(sub->idb6[i][0], P0, R0, 1, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->idb6[i][0]);
+        sub->idb6[i][1] = Hu3DModelLink(sub->idb6[0][1]);
+        M515_PutMdl(sub->idb6[i][1], P400, R180, 1, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->idb6[i][1]);
+        sub->idb6[i][2] = Hu3DModelLink(sub->idb6[0][2]);
+        M515_PutMdl(sub->idb6[i][2], P800, R0, 1, lbl_1_rodata_10[i]);
+        Hu3DModelShadowMapSet(sub->idb6[i][2]);
+    }
+    fn_1_CAF0(sub, 0);
+    fn_1_CB60(sub, 1);
+    fn_1_CB60(sub, 2);
+    fn_1_CB60(sub, 3);
 }
 
 void fn_1_5C40(M515_SUB *sub)
