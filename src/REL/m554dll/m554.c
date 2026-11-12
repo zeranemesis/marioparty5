@@ -7,6 +7,7 @@
 #include "game/wipe.h"
 #include "game/charman.h"
 #include "game/mg/seqman.h"
+#include "REL/m554dll/m554types.h"
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -25,7 +26,7 @@ extern void fn_1_31C8(void);
 extern void fn_1_53B0(void);
 extern void fn_1_62F0(void *work, void *ents, void *data);
 extern void fn_1_653C(s32 arg0);
-extern void fn_1_6C20(s16 *arg0, s16 *arg1);
+extern void fn_1_6C20(s32 *arg0, s32 *arg1);
 extern void fn_1_6C44(s16 *arg0, s16 *arg1);
 extern void fn_1_6C68(void);
 extern void fn_1_6E80(void);
@@ -48,60 +49,6 @@ void fn_1_A64(void);
 void fn_1_EB4(void);
 void fn_1_144C(void);
 
-typedef struct {
-    s16 model;                 // 0x00
-    HuVecF pos;                // 0x04
-    HuVecF rot;                // 0x10
-} M554ENTRY;                   // 0x1c bytes
-
-typedef struct {
-    s16 padNo;                 // 0x00
-    s16 charNo;                // 0x02
-    s16 human;                 // 0x04
-    u8 pad_06[0x1c - 0x06];
-} M554PLAYER;                  // 0x1c bytes
-
-typedef struct {
-    s16 f_00;                  // 0x00
-    u8 pad_02[6];
-    s32 f_08;                  // 0x08
-} M554ROW;                     // 0x0c bytes
-
-typedef struct {
-    s16 f_00;                  // 0x00
-    s16 f_02;                  // 0x02
-    f32 f_04;                  // 0x04
-    u8 pad_08[4];
-    f32 f_0c;                  // 0x0c
-    u8 pad_10[8];
-    u32 f_18;                  // 0x18
-    u8 pad_1c[0x1c];
-    s16 f_38;                  // 0x38
-    s16 f_3a;                  // 0x3a
-    u32 f_3c;                  // 0x3c
-    f32 f_40;                  // 0x40
-    f32 f_44;                  // 0x44
-    u8 pad_48[0x0c];
-} M554SLOT;                    // 0x54 bytes
-
-typedef struct {
-    OMOBJMAN *objman;          // 0x000
-    M554PLAYER player[2];      // 0x004
-    M554ENTRY *ents;           // 0x03c
-    u8 pad_040[0x10];
-    M554SLOT slot[2];          // 0x050
-    u8 pad_0f8[8];
-    s32 mode;                  // 0x100
-    s32 f_104;                 // 0x104
-    s32 f_108;                 // 0x108
-    s32 f_10c;                 // 0x10c
-    s32 count[4];              // 0x110
-    s32 f_120;                 // 0x120
-    s32 f_124[4];              // 0x124
-    f32 f_134[8];              // 0x134
-    u8 pad_154[0x814 - 0x154];
-} M554WORK;                    // 0x814 bytes
-
 /* ---- data ---- */
 s32 lbl_1_data_0 = 0x700003;
 
@@ -112,20 +59,20 @@ s32 lbl_1_data_4[20] = {
     0x00700010, 0x00700011, 0x00700012, 0x00700013, 0x00700014,
 };
 
-s16 lbl_1_data_54[13][10] = {
-    { 0x87, 0xaf, 0x87, 0xb0, 0x8c, 0x7e, 0x8c, 0x2f, 0x8c, 0x2b },
-    { 0x2e, 0xaf, 0x2e, 0xb0, 0x33, 0x7e, 0x33, 0x2f, 0x33, 0x2b },
-    { 0xb2, 0xaf, 0xb2, 0xb0, 0xb7, 0x7e, 0xb7, 0x2f, 0xb7, 0x2b },
-    { 0xe8, 0xaf, 0xe8, 0xb0, 0xed, 0x7e, 0xed, 0x2f, 0xed, 0x2b },
-    { 0xe1, 0xaf, 0xe1, 0xb0, 0xe6, 0x7e, 0xe6, 0x2f, 0xe6, 0x2b },
-    { 0x12, 0xaf, 0x12, 0xb0, 0x17, 0x7e, 0x17, 0x2f, 0x17, 0x2b },
-    { 0xdb, 0xaf, 0xdb, 0xb0, 0xe0, 0x7e, 0xe0, 0x2f, 0xe0, 0x2b },
-    { 0x28, 0xaf, 0x28, 0xb0, 0x2d, 0x7e, 0x2d, 0x2f, 0x2d, 0x2b },
-    { 0xc4, 0xaf, 0xc4, 0xb0, 0xc9, 0x7e, 0xc9, 0x2f, 0xc9, 0x2b },
-    { 0x9c, 0xaf, 0x9c, 0xb0, 0xb0, 0x7e, 0xb0, 0x2f, 0xb0, 0x2b },
-    { 0x9c, 0xaf, 0x9c, 0xb0, 0xb0, 0x7e, 0xb0, 0x2f, 0xb0, 0x2b },
-    { 0x9c, 0xaf, 0x9c, 0xb0, 0xb0, 0x7e, 0xb0, 0x2f, 0xb0, 0x2b },
-    { 0x9c, 0xaf, 0x9c, 0xb0, 0xb0, 0x7e, 0xb0, 0x2f, 0xb0, 0x2b },
+s32 lbl_1_data_54[13][5] = {
+    { 0x008700af, 0x008700b0, 0x008c007e, 0x008c002f, 0x008c002b },
+    { 0x002e00af, 0x002e00b0, 0x0033007e, 0x0033002f, 0x0033002b },
+    { 0x00b200af, 0x00b200b0, 0x00b7007e, 0x00b7002f, 0x00b7002b },
+    { 0x00e800af, 0x00e800b0, 0x00ed007e, 0x00ed002f, 0x00ed002b },
+    { 0x00e100af, 0x00e100b0, 0x00e6007e, 0x00e6002f, 0x00e6002b },
+    { 0x001200af, 0x001200b0, 0x0017007e, 0x0017002f, 0x0017002b },
+    { 0x00db00af, 0x00db00b0, 0x00e0007e, 0x00e0002f, 0x00e0002b },
+    { 0x002800af, 0x002800b0, 0x002d007e, 0x002d002f, 0x002d002b },
+    { 0x00c400af, 0x00c400b0, 0x00c9007e, 0x00c9002f, 0x00c9002b },
+    { 0x009c00af, 0x009c00b0, 0x00b0007e, 0x00b0002f, 0x00b0002b },
+    { 0x009c00af, 0x009c00b0, 0x00b0007e, 0x00b0002f, 0x00b0002b },
+    { 0x009c00af, 0x009c00b0, 0x00b0007e, 0x00b0002f, 0x00b0002b },
+    { 0x009c00af, 0x009c00b0, 0x00b0007e, 0x00b0002f, 0x00b0002b },
 };
 
 MGSEQ_PARAM lbl_1_data_158 = {
@@ -163,11 +110,8 @@ M554ENTRY lbl_1_bss_10C[0x5c];
 s16 lbl_1_bss_108[2];
 OMCAMERAVIEW lbl_1_bss_98[4];
 s16 lbl_1_bss_84[2][5];
-M554ROW lbl_1_bss_6C[2];
-struct {
-    M554ROW row[7];
-    s32 pad;
-} lbl_1_bss_14;
+M554ROW6C lbl_1_bss_6C[2];
+M554ROW14TAB lbl_1_bss_14;
 HuVecF lbl_1_bss_8;
 s32 lbl_1_bss_4;
 s32 lbl_1_bss_0;
@@ -266,18 +210,18 @@ void fn_1_1C0(s16 arg0)
     Hu3DShadowPosSet(&pos, &up, &target);
     Hu3DModelShadowSet(lbl_1_bss_B1C.ents[0x4e].model);
     Hu3DModelShadowSet(lbl_1_bss_B1C.ents[0x4f].model);
-    lbl_1_bss_B1C.slot[0].f_00 = 0;
-    lbl_1_bss_B1C.slot[0].f_04 = 1.0f;
-    lbl_1_bss_B1C.slot[0].f_0c = 0.0f;
-    lbl_1_bss_B1C.slot[0].f_18 = 0x40000001;
-    lbl_1_bss_B1C.slot[1].f_00 = 0;
-    lbl_1_bss_B1C.slot[1].f_04 = 1.0f;
-    lbl_1_bss_B1C.slot[1].f_0c = 0.0f;
-    lbl_1_bss_B1C.slot[1].f_18 = 0x40000001;
-    lbl_1_bss_B1C.f_134[0] = 800.0f;
-    lbl_1_bss_B1C.f_134[1] = -22.5f;
-    lbl_1_bss_B1C.f_134[4] = 800.0f;
-    lbl_1_bss_B1C.f_134[5] = 22.5f;
+    lbl_1_bss_B1C.slot[0].mot = 0;
+    lbl_1_bss_B1C.slot[0].speed = 1.0f;
+    lbl_1_bss_B1C.slot[0].time = 0.0f;
+    lbl_1_bss_B1C.slot[0].attrSet = 0x40000001;
+    lbl_1_bss_B1C.slot[1].mot = 0;
+    lbl_1_bss_B1C.slot[1].speed = 1.0f;
+    lbl_1_bss_B1C.slot[1].time = 0.0f;
+    lbl_1_bss_B1C.slot[1].attrSet = 0x40000001;
+    lbl_1_bss_B1C.f_134[0][0] = 800.0f;
+    lbl_1_bss_B1C.f_134[0][1] = -22.5f;
+    lbl_1_bss_B1C.f_134[1][0] = 800.0f;
+    lbl_1_bss_B1C.f_134[1][1] = 22.5f;
     MgSeqModeDelaySet((s16)(arg0 + 1), -1);
     MgSeqModeNext();
 }

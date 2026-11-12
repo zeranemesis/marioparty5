@@ -13,80 +13,12 @@
 #include "game/object.h"
 #include "game/wipe.h"
 #include "game/mg/seqman.h"
+#include "REL/m554dll/m554types.h"
 
 double sin(double x);
 double cos(double x);
 s32 rand8(void);
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
-
-typedef struct {
-    s16 model;                 // 0x00
-    HuVecF pos;                // 0x04
-    HuVecF rot;                // 0x10
-} M554ENTRY;                   // 0x1c bytes
-
-typedef struct {
-    s16 padNo;                 // 0x00
-    s16 charNo;                // 0x02
-    s16 dif;                   // 0x04
-    u8 pad_06[6];
-    s32 btn;                   // 0x0c
-    u8 pad_10[0x1c - 0x10];
-} M554PLAYER;                  // 0x1c bytes
-
-typedef struct {
-    s16 f_00;                  // 0x00
-    s16 f_02;                  // 0x02
-    f32 f_04;                  // 0x04
-    u8 pad_08[4];
-    f32 f_0c;                  // 0x0c
-    u8 pad_10[4];
-    f32 f_14;                  // 0x14
-    u32 f_18;                  // 0x18
-    u8 pad_1c[0x1c];
-    s16 f_38;                  // 0x38
-    s16 f_3a;                  // 0x3a
-    u32 f_3c;                  // 0x3c
-    f32 f_40;                  // 0x40
-    f32 f_44;                  // 0x44
-    u8 pad_48[0x0c];
-} M554SLOT;                    // 0x54 bytes
-
-typedef struct {
-    s32 state;                 // 0x00
-    s32 timer;                 // 0x04
-    f32 maxTime;               // 0x08
-} M554ROW14;                   // 0x0c bytes
-
-typedef struct {
-    s16 kind;                  // 0x00
-    s32 flip;                  // 0x04
-    s32 count;                 // 0x08
-} M554ROW6C;                   // 0x0c bytes
-
-typedef struct {
-    OMOBJMAN *objman;          // 0x000
-    M554PLAYER player[2];      // 0x004
-    M554ENTRY *ents;           // 0x03c
-    u8 pad_040[0x10];
-    M554SLOT slot[2];          // 0x050
-    u8 pad_0f8[8];
-    s32 mode;                  // 0x100
-    s32 f_104;                 // 0x104
-    s32 f_108;                 // 0x108
-    s32 winner;                // 0x10c
-    s32 count[4];              // 0x110
-    s32 round;                 // 0x120
-    s32 f_124[2][2];           // 0x124
-    f32 f_134[2][4];           // 0x134
-    s32 hist[2][60];           // 0x154
-    u8 pad_334[0x814 - 0x334];
-} M554WORK;                    // 0x814 bytes
-
-extern M554WORK lbl_1_bss_B1C;
-extern M554ROW14 lbl_1_bss_14[7];
-extern M554ROW6C lbl_1_bss_6C[2];
-extern OMCAMERAVIEW lbl_1_bss_98[4];
 
 void fn_1_3210(s32 arg0);
 void fn_1_3518(void);
@@ -165,19 +97,19 @@ void fn_1_2118(void)
     e->rot.y -= 5.0f;
     if (e->rot.y <= -360.0f) {
         e->rot.y = 0.0f;
-        lbl_1_bss_B1C.slot[0].f_38 = 1;
-        lbl_1_bss_B1C.slot[0].f_3a = 2;
-        lbl_1_bss_B1C.slot[0].f_40 = 0.0f;
-        lbl_1_bss_B1C.slot[0].f_44 = 20.0f;
-        lbl_1_bss_B1C.slot[0].f_3c = 0;
-        lbl_1_bss_B1C.slot[1].f_38 = 1;
-        lbl_1_bss_B1C.slot[1].f_3a = 2;
-        lbl_1_bss_B1C.slot[1].f_40 = 0.0f;
-        lbl_1_bss_B1C.slot[1].f_44 = 20.0f;
-        lbl_1_bss_B1C.slot[1].f_3c = 0;
+        lbl_1_bss_B1C.slot[0].shiftState = 1;
+        lbl_1_bss_B1C.slot[0].shiftMot = 2;
+        lbl_1_bss_B1C.slot[0].shiftStart = 0.0f;
+        lbl_1_bss_B1C.slot[0].shiftEnd = 20.0f;
+        lbl_1_bss_B1C.slot[0].shiftAttr = 0;
+        lbl_1_bss_B1C.slot[1].shiftState = 1;
+        lbl_1_bss_B1C.slot[1].shiftMot = 2;
+        lbl_1_bss_B1C.slot[1].shiftStart = 0.0f;
+        lbl_1_bss_B1C.slot[1].shiftEnd = 20.0f;
+        lbl_1_bss_B1C.slot[1].shiftAttr = 0;
         lbl_1_bss_B1C.mode++;
-        omVibrate(lbl_1_bss_B1C.player[0].padNo, 0xf, 0xc, 0);
-        omVibrate(lbl_1_bss_B1C.player[1].padNo, 0xf, 0xc, 0);
+        omVibrate(lbl_1_bss_B1C.player[0].playerNo, 0xf, 0xc, 0);
+        omVibrate(lbl_1_bss_B1C.player[1].playerNo, 0xf, 0xc, 0);
         CharFXPlayPan(lbl_1_bss_B1C.player[0].charNo, 0x1fc, 0x30);
         CharFXPlayPan(lbl_1_bss_B1C.player[1].charNo, 0x1fc, 0x50);
     }
@@ -185,17 +117,17 @@ void fn_1_2118(void)
 
 void fn_1_22CC(void)
 {
-    if (lbl_1_bss_B1C.slot[0].f_38 == 0 && lbl_1_bss_B1C.slot[0].f_14 == lbl_1_bss_B1C.slot[0].f_0c) {
-        lbl_1_bss_B1C.slot[0].f_38 = 1;
-        lbl_1_bss_B1C.slot[0].f_3a = 1;
-        lbl_1_bss_B1C.slot[0].f_40 = 0.0f;
-        lbl_1_bss_B1C.slot[0].f_44 = 30.0f;
-        lbl_1_bss_B1C.slot[0].f_3c = 0x40000001;
-        lbl_1_bss_B1C.slot[1].f_38 = 1;
-        lbl_1_bss_B1C.slot[1].f_3a = 1;
-        lbl_1_bss_B1C.slot[1].f_40 = 0.0f;
-        lbl_1_bss_B1C.slot[1].f_44 = 30.0f;
-        lbl_1_bss_B1C.slot[1].f_3c = 0x40000001;
+    if (lbl_1_bss_B1C.slot[0].shiftState == 0 && lbl_1_bss_B1C.slot[0].maxTime == lbl_1_bss_B1C.slot[0].time) {
+        lbl_1_bss_B1C.slot[0].shiftState = 1;
+        lbl_1_bss_B1C.slot[0].shiftMot = 1;
+        lbl_1_bss_B1C.slot[0].shiftStart = 0.0f;
+        lbl_1_bss_B1C.slot[0].shiftEnd = 30.0f;
+        lbl_1_bss_B1C.slot[0].shiftAttr = 0x40000001;
+        lbl_1_bss_B1C.slot[1].shiftState = 1;
+        lbl_1_bss_B1C.slot[1].shiftMot = 1;
+        lbl_1_bss_B1C.slot[1].shiftStart = 0.0f;
+        lbl_1_bss_B1C.slot[1].shiftEnd = 30.0f;
+        lbl_1_bss_B1C.slot[1].shiftAttr = 0x40000001;
         omCameraViewMoveSimple(&lbl_1_bss_98[1], 0x78);
         lbl_1_bss_134C = 1;
         MgSeqModeNext();
@@ -227,10 +159,10 @@ void fn_1_240C(void)
             lbl_1_bss_134C = 3;
         }
         if (lbl_1_bss_B1C.winner == 2) {
-            omVibrate(lbl_1_bss_B1C.player[0].padNo, 0x3c, 0xc, 0);
-            omVibrate(lbl_1_bss_B1C.player[1].padNo, 0x3c, 0xc, 0);
+            omVibrate(lbl_1_bss_B1C.player[0].playerNo, 0x3c, 0xc, 0);
+            omVibrate(lbl_1_bss_B1C.player[1].playerNo, 0x3c, 0xc, 0);
         } else {
-            omVibrate(lbl_1_bss_B1C.player[lbl_1_bss_B1C.winner ^ 1].padNo, 0x3c, 0xc, 0);
+            omVibrate(lbl_1_bss_B1C.player[lbl_1_bss_B1C.winner ^ 1].playerNo, 0x3c, 0xc, 0);
         }
         for (i = 0; i < 4; i++) {
             lbl_1_bss_B1C.count[i] = 0;
@@ -314,7 +246,7 @@ void fn_1_2870(void)
     } else {
         hook = &lbl_1_bss_B1C.ents[lbl_1_bss_B1C.winner + 0x4e];
         tgt = &lbl_1_bss_B1C.ents[lbl_1_bss_B1C.winner + 3];
-        pad = lbl_1_bss_B1C.player[lbl_1_bss_B1C.winner].padNo;
+        pad = lbl_1_bss_B1C.player[lbl_1_bss_B1C.winner].playerNo;
         GWMgCoinBonusSet(pad, 10);
         lbl_1_bss_133C = GameMesCreate(4, 3, lbl_1_bss_B1C.player[lbl_1_bss_B1C.winner].charNo, -1, -1, -1);
         HuAudJinglePlay(0x79);
@@ -327,11 +259,11 @@ void fn_1_2870(void)
         lbl_1_bss_98[2].zoom = 495.0f;
         omCameraViewMoveSimple(&lbl_1_bss_98[2], 0x3c);
         lbl_1_bss_134C = 0;
-        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].f_38 = 1;
-        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].f_3a = 3;
-        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].f_40 = 0.0f;
-        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].f_44 = 45.0f;
-        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].f_3c = 0;
+        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].shiftState = 1;
+        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].shiftMot = 3;
+        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].shiftStart = 0.0f;
+        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].shiftEnd = 45.0f;
+        lbl_1_bss_B1C.slot[lbl_1_bss_B1C.winner].shiftAttr = 0;
         Hu3DModelObjMtxGet(hook->model, CharModelItemHookGet(lbl_1_bss_B1C.player[lbl_1_bss_B1C.winner].charNo, 1, 0), mtx);
         Hu3DModelHookReset(hook->model);
         Hu3DMtxRotGet(mtx, &rot);
@@ -486,8 +418,8 @@ void fn_1_3578(s32 arg0)
     if (lbl_1_bss_B1C.f_134[arg0][0] >= 1000.0f) {
         lbl_1_bss_B1C.f_134[arg0][0] = 1000.0f;
     }
-    lbl_1_bss_B1C.slot[arg0].f_04 = mul[lbl_1_bss_B1C.f_124[arg0][0]];
-    if (lbl_1_bss_B1C.slot[arg0].f_0c >= 10.0f && lbl_1_data_24C[arg0] == 0) {
+    lbl_1_bss_B1C.slot[arg0].speed = mul[lbl_1_bss_B1C.f_124[arg0][0]];
+    if (lbl_1_bss_B1C.slot[arg0].time >= 10.0f && lbl_1_data_24C[arg0] == 0) {
         lbl_1_data_24C[arg0] = 0;
         Hu3D3Dto2D(&lbl_1_bss_B1C.ents[arg0 + 0x4e].pos, 1, &scr);
         pan = (s32)(32.0f + (64.0f * scr.x) / 576.0f);
@@ -497,7 +429,7 @@ void fn_1_3578(s32 arg0)
             HuAudFXPlayPan(0x88e, pan);
         }
     }
-    if (lbl_1_data_24C[arg0] != 0 && lbl_1_bss_B1C.slot[arg0].f_0c < 2.0f) {
+    if (lbl_1_data_24C[arg0] != 0 && lbl_1_bss_B1C.slot[arg0].time < 2.0f) {
         lbl_1_data_24C[arg0] = 0;
     }
 }
@@ -510,10 +442,10 @@ s32 fn_1_38D4(s32 arg0)
     s32 sum;
 
     lbl_1_bss_B1C.hist[arg0][lbl_1_bss_B1C.count[0]] = 0;
-    if ((lbl_1_bss_B1C.player[arg0].btn & 0x40) != 0 && lbl_1_data_254 != 0) {
+    if ((lbl_1_bss_B1C.player[arg0].btnDown & 0x40) != 0 && lbl_1_data_254 != 0) {
         lbl_1_data_254 = 0;
         lbl_1_bss_B1C.hist[arg0][lbl_1_bss_B1C.count[0]] = 1;
-    } else if ((lbl_1_bss_B1C.player[arg0].btn & 0x20) != 0 && lbl_1_data_254 != 1) {
+    } else if ((lbl_1_bss_B1C.player[arg0].btnDown & 0x20) != 0 && lbl_1_data_254 != 1) {
         lbl_1_data_254 = 1;
         lbl_1_bss_B1C.hist[arg0][lbl_1_bss_B1C.count[0]] = 1;
     }
@@ -586,9 +518,9 @@ void fn_1_3D6C(s32 arg0)
     lbl_1_bss_6C[arg0].count--;
     if (lbl_1_bss_6C[arg0].count <= 0) {
         if (lbl_1_bss_6C[arg0].flip != 0) {
-            lbl_1_bss_B1C.player[arg0].btn = 0x40;
+            lbl_1_bss_B1C.player[arg0].btnDown = 0x40;
         } else {
-            lbl_1_bss_B1C.player[arg0].btn = 0x20;
+            lbl_1_bss_B1C.player[arg0].btnDown = 0x20;
         }
         lbl_1_bss_6C[arg0].flip = lbl_1_bss_6C[arg0].flip ^ 1;
         lbl_1_bss_6C[arg0].count = fn_1_3B58(arg0);
@@ -625,11 +557,11 @@ void fn_1_4050(s32 arg0)
         b->rot.z = rot.z;
         lbl_1_bss_B1C.f_134[arg0][2] = lbl_1_bss_B1C.f_134[arg0][0];
         lbl_1_bss_B1C.f_134[arg0][3] = lbl_1_bss_B1C.f_134[arg0][1];
-        lbl_1_bss_B1C.slot[arg0].f_38 = 1;
-        lbl_1_bss_B1C.slot[arg0].f_3a = 4;
-        lbl_1_bss_B1C.slot[arg0].f_40 = 0.0f;
-        lbl_1_bss_B1C.slot[arg0].f_44 = 10.0f;
-        lbl_1_bss_B1C.slot[arg0].f_3c = 0x40000001;
+        lbl_1_bss_B1C.slot[arg0].shiftState = 1;
+        lbl_1_bss_B1C.slot[arg0].shiftMot = 4;
+        lbl_1_bss_B1C.slot[arg0].shiftStart = 0.0f;
+        lbl_1_bss_B1C.slot[arg0].shiftEnd = 10.0f;
+        lbl_1_bss_B1C.slot[arg0].shiftAttr = 0x40000001;
     }
     lbl_1_bss_B1C.count[arg0]++;
     if (lbl_1_bss_B1C.count[arg0] < 0x1e) {
@@ -720,9 +652,9 @@ void fn_1_4D60(s32 arg0)
         lbl_1_bss_B1C.f_134[arg0][0] = 1000.0f;
     }
     fn_1_3210(arg0 + 1);
-    lbl_1_bss_B1C.slot[arg0].f_04 += 0.05f;
-    if (lbl_1_bss_B1C.slot[arg0].f_04 > 1.5f) {
-        lbl_1_bss_B1C.slot[arg0].f_04 = 1.5f;
+    lbl_1_bss_B1C.slot[arg0].speed += 0.05f;
+    if (lbl_1_bss_B1C.slot[arg0].speed > 1.5f) {
+        lbl_1_bss_B1C.slot[arg0].speed = 1.5f;
     }
 }
 
@@ -836,7 +768,7 @@ void fn_1_5A5C(void)
     s32 i;
 
     for (i = 0; i < 7; i++) {
-        memset(&lbl_1_bss_14[i], 0, 0xc);
+        memset(&lbl_1_bss_14.row[i], 0, 0xc);
     }
 }
 
@@ -865,33 +797,33 @@ void fn_1_5CCC(s32 arg0)
 
     for (i = 0; i < 7; i++) {
         e = &lbl_1_bss_B1C.ents[i + 7];
-        switch (lbl_1_bss_14[i].state) {
+        switch (lbl_1_bss_14.row[i].state) {
         case 0:
-            lbl_1_bss_14[i].state = 1;
-            lbl_1_bss_14[i].timer = fn_1_5AB0();
+            lbl_1_bss_14.row[i].state = 1;
+            lbl_1_bss_14.row[i].timer = fn_1_5AB0();
             break;
         case 1:
-            lbl_1_bss_14[i].timer--;
-            if (lbl_1_bss_14[i].timer <= 0) {
+            lbl_1_bss_14.row[i].timer--;
+            if (lbl_1_bss_14.row[i].timer <= 0) {
                 Hu3DMotionTimeSet(e->model, 0.0f);
                 Hu3DMotionSpeedSet(e->model, 1.0f);
                 Hu3DModelAttrReset(e->model, 1);
-                lbl_1_bss_14[i].state = 2;
+                lbl_1_bss_14.row[i].state = 2;
                 if (arg0 != 0) {
-                    lbl_1_bss_14[i].state = 3;
+                    lbl_1_bss_14.row[i].state = 3;
                 }
-                lbl_1_bss_14[i].maxTime = Hu3DMotionMaxTimeGet(e->model);
+                lbl_1_bss_14.row[i].maxTime = Hu3DMotionMaxTimeGet(e->model);
             }
             break;
         case 2:
             t = Hu3DMotionTimeGet(e->model);
-            if (t >= lbl_1_bss_14[i].maxTime) {
+            if (t >= lbl_1_bss_14.row[i].maxTime) {
                 Hu3DModelAttrSet(e->model, 1);
-                lbl_1_bss_14[i].state = 1;
+                lbl_1_bss_14.row[i].state = 1;
                 if (arg0 != 0) {
-                    lbl_1_bss_14[i].state = 3;
+                    lbl_1_bss_14.row[i].state = 3;
                 }
-                lbl_1_bss_14[i].timer = fn_1_5AB0();
+                lbl_1_bss_14.row[i].timer = fn_1_5AB0();
             }
             break;
         }
