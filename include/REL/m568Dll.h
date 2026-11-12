@@ -7,6 +7,7 @@
 
 #include "dolphin/types.h"
 #include "dolphin/mtx.h"
+#include "dolphin/os.h"
 
 // Intrusive doubly-linked node (self-linked when unlinked).
 struct M568Link {
@@ -60,6 +61,62 @@ struct SceneNode {
 };
 
 struct EffectMgr;
+
+// Singleton game master: the base part (module-wide plumbing, m568.cpp), the
+// sub-thread the scene script runs on, and the owned scene set.
+struct M568Master;
+struct M568MasterVtbl {
+    void *rtti[2];
+    M568Master *(*dtor)(M568Master *self, s16 flag);
+    void (*setup)(M568Master *self, void *objman);
+    void (*update)(M568Master *self);
+    void (*finish)(M568Master *self);
+};
+
+struct M568Master {
+    s32 pad0;
+    M568MasterVtbl *vtbl;  // 0x04
+    s32 slot[4];           // 0x08 registered player numbers, -1 = free
+    s32 mesId;             // 0x18
+    s32 counter;           // 0x1C
+};
+
+struct M568SubThread;
+struct M568ThreadVtbl {
+    void *rtti[2];
+    M568SubThread *(*dtor)(M568SubThread *self, s16 flag);
+    s32 (*run)(M568SubThread *self, s32 arg);
+};
+
+struct M568Thread {
+    OSThread thread;
+    u32 *stack;
+};
+
+struct M568Sem {
+    s32 count;
+    OSThreadQueue queue;
+};
+
+struct M568SubThread {
+    M568ThreadVtbl *vtbl;
+    M568Thread th;
+    M568Sem sem;
+    s32 arg;
+};
+
+// The three intrusive lists the scene owns (a_set.h): groups, actors, effects.
+struct M568Set {
+    M568Link groups;   // 0x00
+    M568Link actors;   // 0x08
+    M568Link effects;  // 0x10
+};
+
+struct GameMaster {
+    M568Master base;       // 0x00
+    M568SubThread thread;  // 0x20
+    M568Set *set;          // 0x358 (the original's smart pointer holder)
+};
 
 extern "C" {
 

@@ -33,7 +33,6 @@ extern "C" {
 
 extern "C" {
 
-double tan(double);
 void OSInitSemaphore(void *sem, s32 count);
 s32 OSWaitSemaphore(void *sem);
 s32 OSSignalSemaphore(void *sem);
@@ -85,49 +84,6 @@ typedef struct M568Task_s {
     M568TaskVtbl *vtbl;
     u32 flags;
 } M568Task;
-
-// Singleton game master (only the base part that m512 touches).
-struct M568Master_s;
-typedef struct M568MasterVtbl_s {
-    void *rtti[2];
-    struct M568Master_s *(*dtor)(struct M568Master_s *self, s16 flag);
-    void (*setup)(struct M568Master_s *self, OMOBJMAN *objman);
-    void (*update)(struct M568Master_s *self);
-    void (*finish)(struct M568Master_s *self);
-} M568MasterVtbl;
-
-typedef struct M568Master_s {
-    s32 pad0;
-    M568MasterVtbl *vtbl;
-    s32 slot[4];
-    s32 mesId;
-    s32 counter;
-} M568Master;
-
-// Sub-thread: vtable, OSThread, stack pointer, semaphore, argument.
-struct M568SubThread_s;
-typedef struct M568ThreadVtbl_s {
-    void *rtti[2];
-    struct M568SubThread_s *(*dtor)(struct M568SubThread_s *self, s16 flag);
-    s32 (*run)(struct M568SubThread_s *self, s32 arg);
-} M568ThreadVtbl;
-
-typedef struct M568Thread_s {
-    OSThread thread;
-    u32 *stack;
-} M568Thread;
-
-typedef struct M568Sem_s {
-    s32 count;
-    OSThreadQueue queue;
-} M568Sem;
-
-typedef struct M568SubThread_s {
-    M568ThreadVtbl *vtbl;
-    M568Thread th;
-    M568Sem sem;
-    s32 arg;
-} M568SubThread;
 
 // Mersenne Twister state.
 typedef struct M568Rand_s {
@@ -1577,25 +1533,6 @@ f32 fn_1_55E0(f32 from, f32 to)
 
 // ---------------------------------------------------------------- shadow / collision helpers
 
-// Distance at which a 5 degree field of view spans `size`; `out` = target - dir * distance.
-f32 fn_1_5634(Vec *out, Vec *dir, Vec *target, f32 size)
-{
-    f32 dist;
-    Vec *o1;
-    Vec *o2;
-    Vec *o3;
-
-    dist = size / tan(0.0872664600610733);
-    PSVECScale(dir, out, dist);
-    o1 = out;
-    o2 = o1;
-    o3 = o2;
-    PSVECSubtract(target, o3, o3);
-    return dist;
-}
-
-
-
 // Sphere: centre and radius.
 typedef struct M568Sphere_s {
     Vec pos;
@@ -1607,6 +1544,21 @@ inline f32 M568SphereRadius(M568Sphere *s)
     return s->radius;
 }
 
+
+// Do two spheres overlap?
+u32 fn_1_5634(M568Sphere *a, M568Sphere *b)
+{
+    Vec d;
+    f32 sum;
+    f32 rb;
+    f32 ra;
+
+    rb = b->radius;
+    ra = a->radius;
+    sum = ra + rb;
+    PSVECSubtract(&a->pos, &b->pos, &d);
+    return PSVECMag(&d) < sum;
+}
 
 // Push two overlapping spheres apart; ka/kb weight the move of each.
 s32 fn_1_56DC(M568Sphere *a, M568Sphere *b, f32 ka, f32 kb)
