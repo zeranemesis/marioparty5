@@ -5,40 +5,10 @@ extern "C" {
 
 extern void *lbl_1_data_1FC[];
 
-// Look-at camera: position, up vector and target.
-struct M537CamLook {
-    Vec m_pos;      /* 0x00 */
-    Vec m_up;       /* 0x0C */
-    Vec m_target;   /* 0x18 */
-};
-
-// Camera as position plus orientation quaternion.
-struct M537CamQuat {
-    Vec m_pos;          /* 0x00 */
-    Quaternion m_rot;   /* 0x0C */
-};
-
 // Constant camera view followed by the pad word of the original table.
 struct M537CamQuatConst {
     M537CamQuat m_view;
     f32 m_pad;
-};
-
-// The camera work object (singleton at lbl_1_bss_A10).
-struct M537Camera {
-    M537_NODE m_node;       /* 0x00 */
-    void **m_vptr;          /* 0x08 */
-    s32 m_flag;             /* 0x0C */
-    M537CamLook m_look;     /* 0x10 */
-    M537_PTMF m_hook;       /* 0x34 */
-    s16 m_camMdl;           /* 0x40 */
-    f64 m_duration;         /* 0x48 */
-    s32 m_timer;            /* 0x50 */
-    M537CamQuat m_from;     /* 0x54 */
-    M537CamQuat m_to;       /* 0x70 */
-    u8 m_debug;             /* 0x8C */
-    u8 m_debugLock;         /* 0x8D */
-    M537CamLook m_dbg;      /* 0x90 */
 };
 
 void fn_1_654(M537CamLook *cam, const M537CamQuat *src);

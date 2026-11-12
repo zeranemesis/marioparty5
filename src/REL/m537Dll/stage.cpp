@@ -31,17 +31,6 @@ extern "C" {
 
 extern void *lbl_1_data_1FC[];
 
-// The stage work object (singleton at lbl_1_bss_A14).
-struct M537Stage {
-    M537_NODE m_node;           /* 0x00 */
-    void **m_vptr;              /* 0x08 */
-    s32 m_flag;                 /* 0x0C */
-    s16 m_mdl;                  /* 0x10 */
-    s16 *m_sky;                 /* 0x14 */
-    M537DorriePtr m_dorrie[4];  /* 0x18 */
-    M537ModelPtr m_part[3];     /* 0x28 */
-};
-
 M537Dorrie *fn_1_5E4C(M537Dorrie *self, s32 index);
 M537ModelPtr *fn_1_5FB0(M537ModelPtr *self, s16 freeIt);
 M537Dorrie *fn_1_61AC(M537Dorrie *self, s16 freeIt);

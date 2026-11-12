@@ -45,54 +45,6 @@ M537Ripple *fn_1_12C80(M537Ripple *self, Vec *pos);
 s16 *fn_1_2CDC(s16 *out, void *hookFunc);
 void fn_1_30BC(s16 *modelId, void *hookData);
 
-// One rope point: position, previous position and velocity.
-struct M537Pt {
-    Vec m_pos;      /* 0x00 */
-    Vec m_prev;     /* 0x0C */
-    Vec m_vel;      /* 0x18 */
-};
-
-// std::vector<M537Pt>: capacity, size, data.
-struct M537VecPt {
-    u32 m_cap;
-    u32 m_size;
-    M537Pt *m_data;
-};
-
-// std::vector<Vec>.
-struct M537VecV3 {
-    u32 m_cap;
-    u32 m_size;
-    Vec *m_data;
-};
-
-// One rope: list node, drawing hook model, point count, segment length and points.
-struct M537Arm {
-    M537_NODE m_node;       /* 0x00 */
-    s16 m_hook;             /* 0x08 */
-    u32 m_count;            /* 0x0C */
-    f32 m_len;              /* 0x10 */
-    M537VecPt m_pts;        /* 0x14 */
-    Vec m_dir;              /* 0x20 */
-    u8 m_flag;              /* 0x2C */
-    ANIMDATA *m_anim;       /* 0x30 */
-};
-
-// Holder of a rope owned by the centre object.
-struct M537ArmPtr {
-    M537Arm *m_p;
-};
-
-// The centre object (singleton at lbl_1_bss_A0C): model, target and smoothed position.
-struct M537Center {
-    s16 m_mdl;              /* 0x00 */
-    u8 m_flag;              /* 0x02 */
-    Vec m_target;           /* 0x04 */
-    Vec m_pos;              /* 0x10 */
-    Vec m_vel;              /* 0x1C */
-    M537ArmPtr m_arm[4];    /* 0x28 */
-};
-
 // Inlined helpers of the original (std::vector begin/end, Vec normalise, dot).
 static inline M537Pt *M537PtBegin(M537VecPt *v)
 {

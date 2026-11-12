@@ -33,28 +33,6 @@ struct M537Base {
     s32 m_flag;         /* 0x0C */
 };
 
-// Look-at camera: position, up vector and target.
-struct M537CamLook {
-    Vec m_pos;      /* 0x00 */
-    Vec m_up;       /* 0x0C */
-    Vec m_target;   /* 0x18 */
-};
-
-// Camera as position plus orientation quaternion.
-struct M537CamQuat {
-    Vec m_pos;          /* 0x00 */
-    Quaternion m_rot;   /* 0x0C */
-};
-
-// The module main object (singleton at lbl_1_bss_9EC).
-struct M537Main {
-    s32 m_unk0;         /* 0x00 */
-    void **m_vptr;      /* 0x04 */
-    s32 m_player[4];    /* 0x08 */
-    s32 m_msg;          /* 0x18 */
-    s32 m_timer;        /* 0x1C */
-};
-
 // Polymorphic work object owned by an om object.
 struct M537VObj {
     void **m_vptr;
@@ -1650,29 +1628,9 @@ f32 fn_1_4FC8(f32 lo, f32 hi)
 
 // ---- threads
 
-struct M537Semaphore {
-    s32 m_count;
-    OSThreadQueue m_queue;
-};
-
 void OSInitSemaphore(M537Semaphore *sem, s32 count);
 s32 OSWaitSemaphore(M537Semaphore *sem);
 s32 OSSignalSemaphore(M537Semaphore *sem);
-
-// OS thread plus the heap block holding its stack.
-struct M537Thread {
-    OSThread m_os;      /* 0x000 */
-    u32 *m_stack;       /* 0x318 */
-};
-
-// Thread object: vtable (slot 3 is the thread body), the thread and a semaphore
-// the creator waits on.
-struct M537CThread {
-    void **m_vptr;          /* 0x000 */
-    M537Thread m_th;        /* 0x008 */
-    M537Semaphore m_sem;    /* 0x328 */
-    s32 m_value;            /* 0x334 */
-};
 
 M537Thread *fn_1_5360(M537Thread *th, void *(*entry)(void *), void *param, u32 stackSize, s32 priority, u16 attr);
 void fn_1_54C0(M537Thread *th, void *(*entry)(void *), void *param, u32 *stack, u32 words, s32 priority, u16 attr);

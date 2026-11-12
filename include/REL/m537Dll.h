@@ -211,9 +211,124 @@ typedef struct M537Ripple {
     HU3DPARTICLE *particle; /* 0x18 */
 } M537Ripple;
 
-struct M537Center;
-struct M537Camera;
-struct M537Stage;
+// The module main object (singleton at lbl_1_bss_9EC).
+struct M537Main {
+    s32 m_unk0;         /* 0x00 */
+    void **m_vptr;      /* 0x04 */
+    s32 m_player[4];    /* 0x08 */
+    s32 m_msg;          /* 0x18 */
+    s32 m_timer;        /* 0x1C */
+};
+
+// Look-at camera: position, up vector and target.
+struct M537CamLook {
+    Vec m_pos;      /* 0x00 */
+    Vec m_up;       /* 0x0C */
+    Vec m_target;   /* 0x18 */
+};
+
+// Camera as position plus orientation quaternion.
+struct M537CamQuat {
+    Vec m_pos;          /* 0x00 */
+    Quaternion m_rot;   /* 0x0C */
+};
+
+struct M537Semaphore {
+    s32 m_count;
+    OSThreadQueue m_queue;
+};
+
+// OS thread plus the heap block holding its stack.
+struct M537Thread {
+    OSThread m_os;      /* 0x000 */
+    u32 *m_stack;       /* 0x318 */
+};
+
+// Thread object: vtable (slot 3 is the thread body), the thread and a semaphore
+// the creator waits on.
+struct M537CThread {
+    void **m_vptr;          /* 0x000 */
+    M537Thread m_th;        /* 0x008 */
+    M537Semaphore m_sem;    /* 0x328 */
+    s32 m_value;            /* 0x334 */
+};
+
+// The camera work object (singleton at lbl_1_bss_A10).
+struct M537Camera {
+    M537_NODE m_node;       /* 0x00 */
+    void **m_vptr;          /* 0x08 */
+    s32 m_flag;             /* 0x0C */
+    M537CamLook m_look;     /* 0x10 */
+    M537_PTMF m_hook;       /* 0x34 */
+    s16 m_camMdl;           /* 0x40 */
+    f64 m_duration;         /* 0x48 */
+    s32 m_timer;            /* 0x50 */
+    M537CamQuat m_from;     /* 0x54 */
+    M537CamQuat m_to;       /* 0x70 */
+    u8 m_debug;             /* 0x8C */
+    u8 m_debugLock;         /* 0x8D */
+    M537CamLook m_dbg;      /* 0x90 */
+};
+
+// The stage work object (singleton at lbl_1_bss_A14).
+struct M537Stage {
+    M537_NODE m_node;           /* 0x00 */
+    void **m_vptr;              /* 0x08 */
+    s32 m_flag;                 /* 0x0C */
+    s16 m_mdl;                  /* 0x10 */
+    s16 *m_sky;                 /* 0x14 */
+    M537DorriePtr m_dorrie[4];  /* 0x18 */
+    M537ModelPtr m_part[3];     /* 0x28 */
+};
+
+// One rope point: position, previous position and velocity.
+struct M537Pt {
+    Vec m_pos;      /* 0x00 */
+    Vec m_prev;     /* 0x0C */
+    Vec m_vel;      /* 0x18 */
+};
+
+// std::vector<M537Pt>: capacity, size, data.
+struct M537VecPt {
+    u32 m_cap;
+    u32 m_size;
+    M537Pt *m_data;
+};
+
+// std::vector<Vec>.
+struct M537VecV3 {
+    u32 m_cap;
+    u32 m_size;
+    Vec *m_data;
+};
+
+// One rope: list node, drawing hook model, point count, segment length and points.
+struct M537Arm {
+    M537_NODE m_node;       /* 0x00 */
+    s16 m_hook;             /* 0x08 */
+    u32 m_count;            /* 0x0C */
+    f32 m_len;              /* 0x10 */
+    M537VecPt m_pts;        /* 0x14 */
+    Vec m_dir;              /* 0x20 */
+    u8 m_flag;              /* 0x2C */
+    ANIMDATA *m_anim;       /* 0x30 */
+};
+
+// Holder of a rope owned by the centre object.
+struct M537ArmPtr {
+    M537Arm *m_p;
+};
+
+// The centre object (singleton at lbl_1_bss_A0C): model, target and smoothed position.
+struct M537Center {
+    s16 m_mdl;              /* 0x00 */
+    u8 m_flag;              /* 0x02 */
+    Vec m_target;           /* 0x04 */
+    Vec m_pos;              /* 0x10 */
+    Vec m_vel;              /* 0x1C */
+    M537ArmPtr m_arm[4];    /* 0x28 */
+};
+
 struct M537Water;
 extern struct M537Center *lbl_1_bss_A0C;
 extern struct M537Camera *lbl_1_bss_A10;
