@@ -325,12 +325,20 @@ s32 fn_1_3538(M545State *state)
     M545StageSlot *slot;
 
     if (state->flagE4 == 0) {
-        slot = &state->slots[lbl_1_bss_19C.winner];
-        slot->motion = 4;
-        slot->speed = 1.0f;
-        slot->attrSet = 0;
-        slot->attrReset = 0x40000001;
-        slot->time = 0.0f;
+#ifdef TARGET_PC
+        /* a draw leaves winner at -1: the GC code then writes in front of slots[] */
+        if (lbl_1_bss_19C.winner >= 0) {
+            slot = &state->slots[lbl_1_bss_19C.winner];
+#else
+        {
+            slot = &state->slots[lbl_1_bss_19C.winner];
+#endif
+            slot->motion = 4;
+            slot->speed = 1.0f;
+            slot->attrSet = 0;
+            slot->attrReset = 0x40000001;
+            slot->time = 0.0f;
+        }
         state->flagE4 = 1;
     }
     fn_1_40AC(state);
@@ -538,6 +546,10 @@ s16 fn_1_499C(M545State *state, s16 arg1)
     s16 i;
 
     ret = 0;
+#ifdef TARGET_PC
+    sp8 = 0.0f;
+    spC = 0.0f;
+#endif
     if (state->slots[0].motion != 2) {
         lbl_1_bss_19C.timer50 = 0;
         ret = 1;
