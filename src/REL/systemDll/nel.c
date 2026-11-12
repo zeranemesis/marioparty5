@@ -38,27 +38,15 @@ typedef struct ParticleDotWork_s {
     /* 0x00 */ s32 parManId[3];
 } ParticleDotWork;
 
-/* Guide-model slide work (two sets: A = lbl_1_bss_58.., B = lbl_1_bss_2A..). */
-s16 NelBgmId;
-s32 NelTPInit;
-u8 NelStepB[6];
-float NelOscOutB[2];
-float NelOscT3B[4];
-float NelOscT1B[4];
-u8 NelStepA[4];
-float NelOscOutA[2];
-float NelOscT3A[4];
-float NelOscT1A[4];
-
-/* Ring rotation work: base positions, angle, radius. */
-HuVecF NelRingBase[4];
-float NelRingAng;
-float NelGuideAng;
-float NelRingRad;
+/* .bss: MWCC lays these out in reverse declaration order, so the first
+ * declared (ParWork) ends up highest, directly below sysWork. */
 struct {
-    s8 cur;
-    s8 next;
-} NelRingChg2[4];
+    struct {
+        ParticleDotWork *dot;
+        ParticleGlowWork *glow;
+    } ent[4];
+    s32 pad;
+} ParWork;
 
 /* Per-slot ring change state (current / next ring set). */
 struct {
@@ -67,12 +55,27 @@ struct {
 } NelRingChg[4];
 
 struct {
-    struct {
-        ParticleDotWork *dot;
-        ParticleGlowWork *glow;
-    } ent[4];
-    s32 pad;
-} ParWork;
+    s8 cur;
+    s8 next;
+} NelRingChg2[4];
+
+/* Ring rotation work: radius, angle, base positions. */
+float NelRingRad;
+float NelRingAng;
+HuVecF NelRingBase[4];
+
+/* Guide-model slide work (two sets: A = lbl_1_bss_58.., B = lbl_1_bss_2A..). */
+float NelOscT1A[4];
+float NelOscT3A[4];
+float NelOscOutA[2];
+u8 NelStepA[4];
+float NelOscT1B[4];
+float NelOscT3B[4];
+float NelOscOutB[2];
+u8 NelStepB[6];
+s16 NelBgmId;
+extern s32 NelTPInit;
+extern float NelGuideAng;
 
 void MdSpriteDebug(NEL_SYS *sys);
 void MdSpriteDispSet(s32 grpNo, s32 dispF);
@@ -311,6 +314,7 @@ static HU3DPARMANPARAM ParticleGlow = {
 };
 
 static s32 MdMdlSelTbl[7] = { 0x76, 0x78, 0x7A, 0x7C, 0x7E, 0x80, 0x82 };
+s16 MdMdlSelTbl2[7][2] = { { 0xCB, 0 }, { 0xCD, 0 }, { 0xCF, 0 }, { 0xD1, 0 }, { 0xD3, 0 }, { 0xD5, 0 }, { 0xD7, 0 } };
 static HuVecF MdVecTbl[0x6D] = {
     { 0.0f, 0.0f, 1000.0f },
     { 0.0f, -65.0f, 650.0f },
@@ -423,7 +427,7 @@ static HuVecF MdVecTbl[0x6D] = {
     { 3.0f, 1.0f, 0.0f },
 };
 
-float MdTbl694[4] = { 0.0f, 250.0f, 500.0f, 750.0f };
+float MdTbl694[4] = { 250.0f, 500.0f, 750.0f, 1000.0f };
 
 MDFLOWENT MdFlowTbl[13] = {
     MdInit,
@@ -535,24 +539,13 @@ MDPROCENT MdProcTbl[0x5B] = {
     fn_1_17010,
 };
 
-float MdCurveTbl[5] = { 0.0f, 16.0f, 64.0f, 32.0f, -65.0f };
-HuVec2f MdTblC38[4] = { { -130.0f, -900.0f }, { 130.0f, -1100.0f }, { -30.0f, 900.0f }, { 80.0f, 1100.0f } };
-
-static s8 MdTblC58[5][4] = { { 0, 4, 1, 3 }, { 1, 0, 2, 4 }, { 2, 1, 3, 0 }, { 3, 2, 4, 1 }, { 4, 3, 0, 2 } };
-static s8 MdTblC6C[5][4] = { { 0, 1, 4, 2 }, { 1, 2, 0, 3 }, { 2, 3, 1, 4 }, { 3, 4, 2, 0 }, { 4, 0, 3, 1 } };
-static s8 MdTblC80[3][4] = { { 0, 1, 2, 3 }, { 0, 2, 1, 3 }, { 0, 3, 1, 2 } };
-static s8 MdTblC8C[3][4] = { { 0, 1, 2, 3 }, { 0, 2, 1, 3 }, { 0, 2, 3, 1 } };
-static s8 MdTblC98[0x2D][2] = {
-    { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 0, 5 }, { 0, 6 }, { 0, 7 }, { 0, 8 }, { 0, 9 },
-    { 1, 2 }, { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 6 }, { 1, 7 }, { 1, 8 }, { 1, 9 },
-    { 2, 3 }, { 2, 4 }, { 2, 5 }, { 2, 6 }, { 2, 7 }, { 2, 8 }, { 2, 9 },
-    { 3, 4 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 3, 8 }, { 3, 9 },
-    { 4, 5 }, { 4, 6 }, { 4, 7 }, { 4, 8 }, { 4, 9 },
-    { 5, 6 }, { 5, 7 }, { 5, 8 }, { 5, 9 },
-    { 6, 7 }, { 6, 8 }, { 6, 9 },
-    { 7, 8 }, { 7, 9 },
-    { 8, 9 },
-};
+extern float MdCurveTbl[5];
+extern HuVec2f MdTblC38[4];
+static s8 MdTblC58[5][4];
+static s8 MdTblC6C[5][4];
+static s8 MdTblC80[3][4];
+static s8 MdTblC8C[3][4];
+static s8 MdTblC98[0x2D][2];
 
 void ObjectSetup(void)
 {
@@ -3777,6 +3770,7 @@ s32 fn_1_A554(NEL_SYS *sys, MDPROCENT *tbl)
         }
     }
     fn_1_19904(0xB);
+    /* shortcut: the original also loads sys->mess into r3 for this call; MdMessKill is void(void) and ignores it (1 row differs) */
     MdMessKill();
     if (sys->ovlMode == 0) {
         omOvlGotoEx(sys->ovlNo, 1, 0, 0);
@@ -6825,6 +6819,25 @@ s32 fn_1_17010(NEL_SYS *sys, MDPROCENT *tbl)
     return 0;
 }
 
+float MdCurveTbl[5] = { 0.0f, 16.0f, 64.0f, 32.0f, -65.0f };
+HuVec2f MdTblC38[4] = { { -130.0f, -900.0f }, { 130.0f, -1100.0f }, { -30.0f, 900.0f }, { 80.0f, 1100.0f } };
+
+static s8 MdTblC58[5][4] = { { 0, 4, 1, 3 }, { 1, 0, 2, 4 }, { 2, 1, 3, 0 }, { 3, 2, 4, 1 }, { 4, 3, 0, 2 } };
+static s8 MdTblC6C[5][4] = { { 0, 1, 4, 2 }, { 1, 2, 0, 3 }, { 2, 3, 1, 4 }, { 3, 4, 2, 0 }, { 4, 0, 3, 1 } };
+static s8 MdTblC80[3][4] = { { 0, 1, 2, 3 }, { 0, 2, 1, 3 }, { 0, 3, 1, 2 } };
+static s8 MdTblC8C[3][4] = { { 0, 1, 2, 3 }, { 0, 2, 1, 3 }, { 0, 2, 3, 1 } };
+static s8 MdTblC98[0x2D][2] = {
+    { 0, 1 }, { 0, 2 }, { 0, 3 }, { 0, 4 }, { 0, 5 }, { 0, 6 }, { 0, 7 }, { 0, 8 }, { 0, 9 },
+    { 1, 2 }, { 1, 3 }, { 1, 4 }, { 1, 5 }, { 1, 6 }, { 1, 7 }, { 1, 8 }, { 1, 9 },
+    { 2, 3 }, { 2, 4 }, { 2, 5 }, { 2, 6 }, { 2, 7 }, { 2, 8 }, { 2, 9 },
+    { 3, 4 }, { 3, 5 }, { 3, 6 }, { 3, 7 }, { 3, 8 }, { 3, 9 },
+    { 4, 5 }, { 4, 6 }, { 4, 7 }, { 4, 8 }, { 4, 9 },
+    { 5, 6 }, { 5, 7 }, { 5, 8 }, { 5, 9 },
+    { 6, 7 }, { 6, 8 }, { 6, 9 },
+    { 7, 8 }, { 7, 9 },
+    { 8, 9 },
+};
+
 void fn_1_17354(NEL_SYS *sys)
 {
     s32 i;
@@ -7503,48 +7516,37 @@ void fn_1_19904(s32 arg)
 {
     s16 pan;
 
-    switch (arg) {
-        case 0:
-            NelBgmId = HuAudBGMPlay(4);
-            break;
-        case 1:
+    if (arg < 9) {
+        if (arg == 1) {
             HuAudSStreamFadeOut(NelBgmId, 1000);
-            break;
-        case 2:
-            HuAudFXPlay(0);
-            break;
-        case 3:
-            HuAudFXPlay(2);
-            break;
-        case 4:
-            HuAudFXPlay(1);
-            break;
-        case 5:
-            HuAudFXPlay(3);
-            break;
-        case 6:
-            HuAudFXPlay(0x3E1);
-            break;
-        case 7:
-            HuAudFXPlay(0x3E2);
-            break;
-        case 8:
-            HuAudFXPlay(0x3E3);
-            break;
-        default:
-            pan = fn_1_19A68(0x1A, 2);
-            switch (arg) {
-                case 9:
-                    HuAudFXPlayPan(0x2EE, pan);
-                    break;
-                case 10:
-                    HuAudFXPlayPan(0x2EF, pan);
-                    break;
+        } else if (arg > 1) {
+            if (arg == 2) {
+                HuAudFXPlay(0);
+            } else if (arg == 3) {
+                HuAudFXPlay(2);
+            } else if (arg == 4) {
+                HuAudFXPlay(1);
+            } else if (arg == 5) {
+                HuAudFXPlay(3);
+            } else if (arg == 6) {
+                HuAudFXPlay(0x3E1);
+            } else if (arg == 7) {
+                HuAudFXPlay(0x3E2);
+            } else if (arg == 8) {
+                HuAudFXPlay(0x3E3);
             }
-            break;
-        case 11:
-            HuAudAllStop();
-            break;
+        } else if (arg >= 0) {
+            NelBgmId = HuAudBGMPlay(4);
+        }
+    } else if (arg == 11) {
+        HuAudAllStop();
+    } else if (arg < 11) {
+        pan = fn_1_19A68(0x1A, 2);
+        if (arg == 9) {
+            HuAudFXPlayPan(0x2EE, pan);
+        } else if (arg == 10) {
+            HuAudFXPlayPan(0x2EF, pan);
+        }
     }
 }
 
@@ -8357,3 +8359,7 @@ void ParticleGlowKill(ParticleGlowWork *p)
 {
     Hu3DParManKill((s16)p->parManId);
 }
+
+/* declared last so they land lowest in .bss (lbl_1_bss_4 / lbl_1_bss_0) */
+s32 NelTPInit;
+float NelGuideAng;
