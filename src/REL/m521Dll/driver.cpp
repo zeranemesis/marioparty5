@@ -15,93 +15,6 @@
 #define DRV_RODATA
 #endif
 
-/* A behaviour of the CPU controller: void (CDriverAsAI::*)(CDriver::INFO &).
- * The GameCube slot is the MWCC pointer-to-member (this-delta, vtable index,
- * function); on PC it is the function pointer. */
-#ifdef TARGET_PC
-typedef struct DrvPtmf_s {
-    void (*fn)(void *self, void *info);
-} DrvPtmf;
-#define DRV_PTMF_INIT(f) { (void (*)(void *, void *))(f) }
-#define DrvPtmfCall(obj, p, info) ((p)->fn((obj), (info)))
-#else
-typedef M521Ptmf DrvPtmf;
-#define DRV_PTMF_INIT(f) M521_PTMF_INIT(f)
-/* the MWCC call sequence also loads r12 with the PTMF address */
-#define DrvPtmfCall(obj, p, info) ((void (*)(void *, void *))__ptmf_scall)((obj), (info))
-#endif
-
-struct CDriverAsAI;
-
-/* One queued behaviour: object plus pointer-to-member (16 bytes on GC). */
-struct DrvTask {
-    CDriverAsAI *m_obj;
-    DrvPtmf m_pmf;
-};
-
-/* cdeque<DrvTask *>: circular buffer of block pointers. */
-struct CDequeMap {
-    u32 m_cap;        /* 0x00 */
-    u32 m_size;       /* 0x04 */
-    u32 m_start;      /* 0x08 */
-    DrvTask **m_data; /* 0x0C */
-};
-
-/* deque<DrvTask>: m_blk tasks per block, blocks addressed through the map. */
-struct CDeque {
-    u32 m_blk;       /* 0x00 */
-    CDequeMap m_map; /* 0x04 */
-    u32 m_off;       /* 0x14 index of the first task in the first block */
-    u32 m_cnt;       /* 0x18 */
-};
-
-/* Iterator of the map (3 words) and of the deque (6 words). */
-struct CMapIt {
-    CDequeMap *m_map;
-    u32 m_idx;
-    DrvTask **m_slot;
-    u8 m_tag;
-};
-
-struct CDequeIt {
-    CDequeMap *m_map;
-    u32 m_idx;
-    DrvTask **m_slot;
-    DrvTask *m_cur;
-    DrvTask *m_end;
-    u32 m_pos;
-};
-
-/* Pad controller (0x20 bytes): input comes from the pad of the character. */
-struct CDriverAsPad : CCtl {
-    s32 m_charIdx; /* 0x18 */
-    s32 m_padNo;   /* 0x1C */
-};
-
-/* CPU controller (0x94 bytes). */
-struct CDriverAsAI : CCtl {
-    CModel m_model;   /* 0x18 debug-draw hook model */
-    CDeque m_queue;   /* 0x1C queued behaviours */
-    CPlayer *m_owner; /* 0x38 */
-    s32 m_side;       /* 0x3C clock hand side */
-    s32 m_hit;        /* 0x40 hand hit by the owner's front probe */
-    M521Vec m_nrm;    /* 0x44 normal of that hit */
-    f32 m_pen;        /* 0x50 */
-    M521Vec m_dir;    /* 0x54 */
-    s32 m_timer;      /* 0x60 */
-    s32 m_cool;       /* 0x64 */
-    s32 m_wait;       /* 0x68 */
-    s32 m_tick;       /* 0x6C */
-    f32 m_f70;        /* 0x70 */
-    u8 m_flag74;      /* 0x74 */
-    M521Vec m_tgt;    /* 0x78 */
-    f32 m_f84[3];     /* 0x84 */
-    s32 m_state;      /* 0x90 */
-};
-
-/* The INFO a controller fills every frame. */
-typedef CCtlInput DrvInfo;
-
 extern "C" {
 double sin(double x);
 void abort(void);
@@ -264,7 +177,7 @@ void fn_1_AF00(CCtl *self)
     ((void (*)(CCtl *, CCtlInput *))self->m_vtable[3])(self, &self->m_in);
 }
 
-CCtl *fn_1_AF78(CDriverAsPad *self, s32 charIdx)
+CDriverAsPad *fn_1_AF78(CDriverAsPad *self, s32 charIdx)
 {
     self->m_vtable = lbl_1_data_3DC;
     self->m_in.m_x = 0.0f;

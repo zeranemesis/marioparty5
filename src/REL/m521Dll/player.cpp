@@ -35,9 +35,9 @@ void fn_1_79A4(CModel *m, const void *rot);
 MtxPtr getMatrix__6CModelFv(CModel *m);
 
 // controllers (m521 unit)
-CCtl *fn_1_AF78(CCtl *self, s32 charIdx);
+CDriverAsPad *fn_1_AF78(CDriverAsPad *self, s32 charIdx);
 void fn_1_AF00(CCtl *self);
-CCtl *fn_1_B3CC(CCtl *self, CPlayer *owner);
+CDriverAsAI *fn_1_B3CC(CDriverAsAI *self, CPlayer *owner);
 
 // clock hands (clock unit)
 s32 fn_1_139C(CClock *c, s32 idx, f32 v);
@@ -187,28 +187,28 @@ void fn_1_15578(CPlayer *self)
 
 CCtl *fn_1_155B8(s32 charIdx, CPlayer *owner)
 {
-    CCtl *ctl;
-    CCtl *other;
+    CDriverAsAI *cpu;
+    CDriverAsPad *pad;
 
     if (GwPlayerConf[charIdx].type != 0) {
-        ctl = (CCtl *)fn_1_4A68(0x94);
-        if (ctl != 0) {
-            ctl = fn_1_B3CC(ctl, owner);
+        cpu = (CDriverAsAI *)fn_1_4A68(sizeof(CDriverAsAI));
+        if (cpu != 0) {
+            cpu = fn_1_B3CC(cpu, owner);
         }
-        return ctl;
+        return cpu;
     }
-    other = (CCtl *)fn_1_4A68(0x20);
-    if (other != 0) {
-        other = fn_1_AF78(other, charIdx);
+    pad = (CDriverAsPad *)fn_1_4A68(sizeof(CDriverAsPad));
+    if (pad != 0) {
+        pad = fn_1_AF78(pad, charIdx);
     }
-    return other;
+    return pad;
 }
 
 CPlayer *fn_1_15664(CPlayer *self, s32 charIdx, s32 slot)
 {
     CCtl *ctl;
-    CCtl *ctlCpu;
-    CCtl *ctlPad;
+    CDriverAsAI *ctlCpu;
+    CDriverAsPad *ctlPad;
     CModel *model;
     s32 motIds[10];
     M521Ptmf nullHook;
@@ -216,13 +216,13 @@ CPlayer *fn_1_15664(CPlayer *self, s32 charIdx, s32 slot)
 
     fn_1_5CCC(&self->m_node);
     if (GwPlayerConf[charIdx].type != 0) {
-        ctlCpu = (CCtl *)fn_1_4A68(0x94);
+        ctlCpu = (CDriverAsAI *)fn_1_4A68(sizeof(CDriverAsAI));
         if (ctlCpu != 0) {
             ctlCpu = fn_1_B3CC(ctlCpu, self);
         }
         ctl = ctlCpu;
     } else {
-        ctlPad = (CCtl *)fn_1_4A68(0x20);
+        ctlPad = (CDriverAsPad *)fn_1_4A68(sizeof(CDriverAsPad));
         if (ctlPad != 0) {
             ctlPad = fn_1_AF78(ctlPad, charIdx);
         }
