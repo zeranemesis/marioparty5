@@ -38,18 +38,6 @@ struct OctNode {
     OctLink child[8]; // 0x20
 };
 
-// Anything with a virtual "get position" slot at vtable offset 0xC.
-struct M568PosSource {
-    virtual void unused0();
-    virtual Vec *GetPos();
-};
-
-// The singleton at lbl_1_bss_9F0 holds a M568PosSource sub-object at 0x10.
-struct M568PosOwner {
-    u8 pad[0x10];
-    M568PosSource src;  // 0x10
-};
-
 struct OctEffect {
     M568Link link;     // 0x00
     Vec pos;           // 0x08
@@ -95,7 +83,7 @@ OctEffect *fn_1_F7A0(OctEffect *self, s32 type, Vec *pos)
     } else {
         fn_1_7EC(lbl_1_data_560, lbl_1_data_570, 0x27);
     }
-    owner = (M568PosOwner *)lbl_1_bss_9F0;
+    owner = lbl_1_bss_9F0;
     fn_1_D690(&self->pos);
     src = owner->src.GetPos();
     self->cur.x = src->x;
