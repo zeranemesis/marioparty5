@@ -92,10 +92,32 @@ struct M565Stage_s {
     s32 sndWait; // 0x3358
 };
 
+struct M565Player_s;
 typedef struct M565Com_s {
-    u8 pad_00[4];
+    struct M565Player_s *player; // 0x00
     s32 active; // 0x04
-    u8 pad_08[0x3C];
+    u16 level; // 0x08
+    u8 pad_0A[2];
+    struct M565Player_s *target; // 0x0C
+    u8 pad_10[2];
+    s16 shootTimer; // 0x12
+    u16 mode; // 0x14
+    u16 step; // 0x16
+    u16 phase; // 0x18
+    u8 pad_1A[2];
+    s32 timer; // 0x1C
+    s16 prio; // 0x20
+    s16 destCol; // 0x22
+    s16 destRow; // 0x24
+    s16 tgtCol; // 0x26
+    s16 tgtRow; // 0x28
+    u8 pad_2A[2];
+    s32 flag2C; // 0x2C
+    s32 reason0; // 0x30
+    s32 reason1; // 0x34
+    f32 smoothX; // 0x38
+    f32 smoothZ; // 0x3C
+    s32 aim; // 0x40
     s32 btnDown; // 0x44
     s32 stkX; // 0x48
     s32 stkY; // 0x4C
