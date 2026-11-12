@@ -13,21 +13,6 @@ typedef void (*M553VoidFunc)(void);
 extern const M553VoidFunc _ctors[];
 extern const M553VoidFunc _dtors[];
 
-typedef struct M553Cam_s {
-    s32 no;
-    HuVecF pos;
-    HuVecF rot;
-    HuVecF target;
-    HuVecF up;
-    f32 zoom;
-    f32 aspect;
-    f32 vpX;
-    f32 vpY;
-    f32 vpW;
-    f32 vpH;
-    f32 fov;
-} M553CAM;
-
 typedef struct M553CamInit_s {
     HuVecF target;
     HuVecF rot;
@@ -50,17 +35,6 @@ typedef struct M553Light_s {
     GXColor color;
 } M553LIGHT;
 
-typedef struct M553Shadow_s {
-    HuVecF pos;
-    HuVecF rot;
-    HuVecF target;
-    HuVecF dir;
-    HuVecF up;
-    HuVecF unk3C;
-    f32 dist;
-    f32 tpLvl;
-} M553SHADOW;
-
 typedef struct M553ParWork_s {
     s32 unk00;
     u8 colorStart[4];
@@ -78,30 +52,6 @@ typedef struct M553Pair_s {
     s16 v[5];
 } M553Pair;
 
-typedef struct M553Fade_s {
-    u8 pad00[0xC];
-    f32 rate;
-    s8 *color;
-    u8 pad14[0x12C];
-} M553FADE;
-
-typedef struct M553Sound_s {
-    u8 pad00[0x4C];
-    s32 bgm;
-    s32 jingle;
-    s32 pad54;
-    s32 se[22];
-    s16 seState[22];
-} M553SOUND;
-
-typedef struct M553Common_s {
-    u8 pad00[6];
-    s16 unk06;
-    u8 pad08[0x1A];
-    s16 unk22;
-    u8 pad24[0x804 - 0x24];
-} M553COMMON;
-
 typedef struct M553DebugObj_s {
     s32 unk00;
     f32 x;
@@ -118,14 +68,14 @@ typedef struct M553DebugWork_s {
 } M553DEBUGWORK;
 
 /* stage.c */
-extern void fn_1_D9A4(M553COMMON *common, void *work, s32 *data);
+extern void fn_1_D9A4(M553STWORK *common, void *work, s32 *data);
 extern void fn_1_DBF0(s32 arg);
 extern void fn_1_E234(s16 index, s32 *data);
 extern void fn_1_E254(s16 index, void *data);
 extern void fn_1_E844(OMOBJ *obj);
 extern void fn_1_EC64(OMOBJ *obj);
 /* game.c */
-extern s32 fn_1_6064(M553COMMON *common);
+extern s32 fn_1_6064(M553STWORK *common);
 extern s32 fn_1_6170(void);
 extern s32 fn_1_61A8(void);
 extern s32 fn_1_6218(void);
@@ -155,8 +105,8 @@ void fn_1_14F4(M553SHADOW *shadow);
 s16 fn_1_2D1C(s16 type, s16 life, M553PARWORK *work, f32 x, f32 y, f32 z, f32 scale, f32 scaleBase);
 void fn_1_2E8C(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
 
-M553SOUND lbl_1_bss_70C;
-M553COMMON lbl_1_bss_16DC;
+M553GSTATE lbl_1_bss_70C;
+M553STWORK lbl_1_bss_16DC;
 
 MGSEQ_PARAM lbl_1_data_0 = {
     0,
@@ -228,15 +178,15 @@ s16 lbl_1_data_330[24] = {
     0x883, 0x884, 0x885, 0x886, 0x887, 0x888, 0x889, 0x88A, 0x88B, 0x319, 0, 0,
 };
 
-MGPLAYER *lbl_1_bss_0[3];
+M553GPLAYERS lbl_1_bss_0;
 M553SHADOW *lbl_1_bss_C;
 M553LIGHT *lbl_1_bss_10;
 M553CAM *lbl_1_bss_14;
-s32 lbl_1_bss_18[0x118];
-s32 lbl_1_bss_478[5];
-M553FADE lbl_1_bss_48C[2];
+M553GCELL lbl_1_bss_18[35];
+s16 lbl_1_bss_478[10];
+M553GPLAYERSTATE lbl_1_bss_48C[2];
 M553Pair lbl_1_bss_7E8[2];
-s32 lbl_1_bss_7FC[0x3B8];
+M553STMODEL lbl_1_bss_7FC[0x88];
 OMOBJMAN *lbl_1_bss_1EE0;
 void *lbl_1_bss_1EE8;
 s16 lbl_1_bss_1EEC;
@@ -279,8 +229,8 @@ void ObjectSetup(void)
     fn_1_EC4();
     fn_1_13CC();
     fn_1_DBF0(1);
-    fn_1_E234(0, lbl_1_data_28[lbl_1_bss_16DC.unk06]);
-    fn_1_E234(1, lbl_1_data_28[lbl_1_bss_16DC.unk22]);
+    fn_1_E234(0, lbl_1_data_28[lbl_1_bss_16DC.player[0].charNo]);
+    fn_1_E234(1, lbl_1_data_28[lbl_1_bss_16DC.player[1].charNo]);
     for (i = 0; i < 2; i++) {
         fn_1_E254(i, &lbl_1_bss_7E8[i]);
     }
@@ -540,9 +490,9 @@ void fn_1_1B30(MGTIMER *timer)
     MgTimerModeOnSet(timer, 1);
 }
 
-void fn_1_1B5C(MGTIMER *timer)
+s32 fn_1_1B5C(MGTIMER *timer)
 {
-    MgTimerDoneCheck(timer);
+    return MgTimerDoneCheck(timer);
 }
 
 void fn_1_1B84(MGTIMER *timer)
@@ -892,7 +842,7 @@ void fn_1_3350(s16 no)
     s8 *dst;
     s16 i;
 
-    model = &Hu3DData[(lbl_1_bss_0 + no)[1]->actor->mdlId];
+    model = &Hu3DData[lbl_1_bss_0.player[no]->actor->mdlId];
     dst = lbl_1_bss_48C[no].color = HuMemDirectMallocNum(HEAP_HEAP, model->hsf->materialNum * 3, HU_MEMNUM_OVL);
     i = 0;
     mat = model->hsf->material;
@@ -914,7 +864,7 @@ s32 fn_1_3448(s16 no, f32 rate)
     s32 ret;
 
     ret = 0;
-    model = &Hu3DData[(lbl_1_bss_0 + no)[1]->actor->mdlId];
+    model = &Hu3DData[lbl_1_bss_0.player[no]->actor->mdlId];
     if ((lbl_1_bss_48C[no].rate *= rate) < 0.9f) {
         ret = 1;
     }
@@ -937,7 +887,7 @@ void fn_1_35B8(s16 no)
     s16 i;
 
     lbl_1_bss_48C[no].rate = 255.0f;
-    model = &Hu3DData[(lbl_1_bss_0 + no)[1]->actor->mdlId];
+    model = &Hu3DData[lbl_1_bss_0.player[no]->actor->mdlId];
     src = lbl_1_bss_48C[no].color;
     i = 0;
     mat = model->hsf->material;

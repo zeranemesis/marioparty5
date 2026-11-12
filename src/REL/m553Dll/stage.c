@@ -3,91 +3,6 @@
 #include "string.h"
 #include "math.h"
 
-typedef struct M553StModel_s {
-    HU3DMODELID id;
-    HuVecF pos;
-    HuVecF rot;
-} M553STMODEL;
-
-typedef struct M553StPlayer_s {
-    s16 idx;
-    s16 charNo;
-    s16 dif;
-    s16 padNo;
-    s32 btn;
-    s32 btnDown;
-    s8 stkX;
-    u16 btnRep;
-    s8 stkY;
-    s8 subStkX;
-    s8 subStkY;
-    u8 trigL;
-    u8 trigR;
-    u8 dStk;
-    u8 dStkRep;
-} M553STPLAYER;
-
-typedef struct M553StMotCtl_s {
-    s16 motNo;
-    s16 motNoOld;
-    f32 speed;
-    f32 speedOld;
-    f32 time;
-    f32 timeOld;
-    f32 maxTime;
-    u32 attr;
-    u32 attrOld;
-    u32 attrReset;
-    s32 endFlag;
-    s16 endReturn;
-    s16 retMotNo;
-    f32 retTime;
-    u32 retAttr;
-    u32 retAttrReset;
-    s16 shiftMode;
-    s16 shiftMotNo;
-    u32 shiftAttr;
-    f32 shiftStart;
-    f32 shiftEnd;
-    f32 shiftTime;
-    f32 shiftMaxTime;
-    u8 pad50[4];
-} M553STMOTCTL;
-
-typedef struct M553StFx_s {
-    s32 active;
-    s32 t[3];
-    s32 i10;
-    s32 i14;
-    s32 i18;
-    s32 i1C;
-    u8 pad20[0xC];
-    f32 f2C;
-    f32 f30;
-    f32 f34;
-    f32 f38;
-    f32 f3C;
-    f32 f40;
-    f32 f44;
-    u8 pad48[4];
-} M553STFX;
-
-typedef struct M553StWork_s {
-    u8 pad00[4];
-    M553STPLAYER player[2];
-    u8 pad3C[0x1C];
-    M553STMODEL *model;
-    s32 *motData[2];
-    s16 *motId[2];
-    u8 pad70[4];
-    M553STMOTCTL motCtl[2];
-    u8 pad11C[0x54];
-    s32 *data;
-    u8 pad174[0x54];
-    M553STFX fx[21];
-    u8 pad7BC[0x48];
-} M553STWORK;
-
 extern float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 extern s32 rand8(void);
 
@@ -112,7 +27,7 @@ void fn_1_D9A4(M553STWORK *work, M553STMODEL *model, s32 *data)
     s16 p;
 
     lbl_1_bss_1F00 = work;
-    memset(lbl_1_bss_1F00, 0, 0x804);
+    memset(lbl_1_bss_1F00, 0, sizeof(M553STWORK));
     lbl_1_bss_1F00->model = model;
     lbl_1_bss_1F00->data = data;
     p = 0;
