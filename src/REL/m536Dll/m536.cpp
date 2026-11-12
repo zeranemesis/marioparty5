@@ -54,6 +54,11 @@ struct M536Main {
     s32 m_timer;        /* 0x1C */
 };
 
+// Polymorphic work object owned by an om object.
+struct M536VObj {
+    void **m_vptr;
+};
+
 // Intrusive singly linked list node used by the merge sort.
 struct M536Link {
     M536Link *m_next;
@@ -67,8 +72,8 @@ M536Main *fn_1_20CC(M536Main *self, s16 freeIt);
 void fn_1_246C(void);
 void fn_1_2C18(void);
 void fn_1_48C0(void);
-void fn_1_4934(void);
-void fn_1_52E4(void);
+M536VObj *fn_1_4934(M536VObj *self, s16 freeIt);
+void *fn_1_52E4(void *self, s16 freeIt);
 void fn_1_2370(OMOBJ *obj);
 void fn_1_2400(M536Main *self);
 void fn_1_2470(void);
@@ -989,24 +994,32 @@ s32 fn_1_2630(s32 playerId)
 void fn_1_2704(void)
 {
     M536Main *ms;
+    M536Main *ms0;
+    M536Main *ms1;
 
     if (lbl_1_bss_9EC != 0) {
     } else {
         M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
     }
-    ms = lbl_1_bss_9EC;
+    ms0 = lbl_1_bss_9EC;
+    ms1 = ms0;
+    ms = ms1;
     ms->m_msg = GameMesCreate(2, 0);
 }
 
 void fn_1_27BC(void)
 {
     M536Main *ms;
+    M536Main *ms0;
+    M536Main *ms1;
 
     if (lbl_1_bss_9EC != 0) {
     } else {
         M536_ASSERT_FAIL("ms_pointer != 0", "singleton.h", 0x27);
     }
-    ms = lbl_1_bss_9EC;
+    ms0 = lbl_1_bss_9EC;
+    ms1 = ms0;
+    ms = ms1;
     ms->m_msg = GameMesCreate(2, 1);
 }
 
@@ -1347,6 +1360,347 @@ void fn_1_3584(s16 *modelId, char *objName)
 void fn_1_3660(s16 *modelId, s32 time)
 {
     Hu3DMotionTimeSet(*modelId, (f32)time);
+}
+
+// ---- Mersenne Twister (MT19937): state is 0x270 words followed by the index.
+
+M536_RODATA const u32 lbl_1_rodata_50[2] = { 0, 0x9908B0DF };
+
+// Generates the next tempered 32-bit output of the generator at `mt` into `out`.
+#define M536_MT_NEXT(mt, out)                                                        \
+    do {                                                                             \
+        u32 k;                                                                       \
+        u32 y;                                                                       \
+        u32 idx;                                                                     \
+        if ((mt)[0x270] >= 0x270) {                                                  \
+            k = 0;                                                                   \
+            while (k < 0xE3) {                                                       \
+                y = ((mt)[k] & 0x80000000) | ((mt)[k + 1] & 0x7FFFFFFF);             \
+                (mt)[k] = lbl_1_rodata_50[y & 1] ^ ((y >> 1) ^ (mt)[k + 0x18D]);     \
+                k++;                                                                 \
+            }                                                                        \
+            while (k < 0x26F) {                                                      \
+                y = ((mt)[k] & 0x80000000) | ((mt)[k + 1] & 0x7FFFFFFF);             \
+                (mt)[k] = lbl_1_rodata_50[y & 1] ^ ((y >> 1) ^ (mt)[k - 0xE3]);      \
+                k++;                                                                 \
+            }                                                                        \
+            y = ((mt)[0x26F] & 0x80000000) | ((mt)[0] & 0x7FFFFFFF);                 \
+            (mt)[0x26F] = (y >> 1) ^ (mt)[0x18C] ^ lbl_1_rodata_50[y & 1];           \
+            (mt)[0x270] = 0;                                                         \
+        }                                                                            \
+        idx = (mt)[0x270];                                                           \
+        (mt)[0x270] = idx + 1;                                                       \
+        y = (mt)[idx];                                                               \
+        y = y ^ (y >> 11);                                                           \
+        y = y ^ ((y << 7) & 0x9D2C5680);                                             \
+        y = y ^ ((y << 15) & 0xEFC60000);                                            \
+        (out) = y ^ (y >> 18);                                                       \
+    } while (0)
+
+void fn_1_36CC(u32 *mt, u32 seed)
+{
+    mt[0] = seed;
+    mt[0x270] = 1;
+    while (mt[0x270] < 0x270) {
+        mt[mt[0x270]] = mt[0x270] + 0x6C078965 * (mt[mt[0x270] - 1] ^ (mt[mt[0x270] - 1] >> 30));
+        mt[0x270]++;
+    }
+}
+
+// init_by_array
+void fn_1_3740(u32 *mt, u32 *key, u32 keyLen)
+{
+    u32 i;
+    u32 j;
+    u32 k;
+
+    fn_1_36CC(mt, 0x012BD6AA);
+    i = 1;
+    j = 0;
+    if (keyLen < 0x270) {
+        k = 0x270;
+    } else {
+        k = keyLen;
+    }
+    while (k != 0) {
+        mt[i] = key[j] + ((mt[i] ^ ((mt[i - 1] ^ (mt[i - 1] >> 30)) * 0x19660D)) + j);
+        i++;
+        j++;
+        if (i >= 0x270) {
+            mt[0] = mt[0x26F];
+            i = 1;
+        }
+        if (j >= keyLen) {
+            j = 0;
+        }
+        k--;
+    }
+    k = 0x26F;
+    while (k != 0) {
+        mt[i] = (mt[i] ^ ((mt[i - 1] ^ (mt[i - 1] >> 30)) * 0x5D588B65)) - i;
+        i++;
+        if (i >= 0x270) {
+            mt[0] = mt[0x26F];
+            i = 1;
+        }
+        k--;
+    }
+    mt[0] = 0x80000000;
+}
+
+// 32-bit integer
+u32 fn_1_3904(u32 *mt)
+{
+    u32 r;
+
+    M536_MT_NEXT(mt, r);
+    return r;
+}
+
+// 31-bit integer
+u32 fn_1_3A90(u32 *mt)
+{
+    u32 r;
+
+    M536_MT_NEXT(mt, r);
+    return r >> 1;
+}
+
+// real in [0,1]
+f32 fn_1_3C28(u32 *mt)
+{
+    u32 r;
+
+    M536_MT_NEXT(mt, r);
+    return 2.3283064e-10f * (f32)r;
+}
+
+f32 fn_1_3DEC(u32 *mt)
+{
+    u32 r;
+
+    M536_MT_NEXT(mt, r);
+    return 2.3283064e-10f * (f32)r;
+}
+
+// real in (0,1)
+f32 fn_1_3FB0(u32 *mt)
+{
+    u32 r;
+
+    M536_MT_NEXT(mt, r);
+    return 2.3283064e-10f * (0.5f + (f32)r);
+}
+
+// 53-bit resolution real in [0,1)
+f64 fn_1_4184(u32 *mt)
+{
+    u32 a;
+    u32 b;
+
+    M536_MT_NEXT(mt, a);
+    M536_MT_NEXT(mt, b);
+    return 1.1102230246251565e-16 * (67108864.0 * (f64)(a >> 5) + (f64)(b >> 6));
+}
+
+// 24-bit resolution real in [0,1)
+f32 fn_1_44FC(u32 *mt)
+{
+    u32 r;
+
+    M536_MT_NEXT(mt, r);
+    return 1.1920929e-7f * (f32)(r >> 9);
+}
+
+// ---- allocators with their own assert text
+
+void *fn_1_46CC(u32 size)
+{
+    void *p;
+
+    p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+    if (p != 0) {
+    } else {
+        M536_ASSERT_FAIL("ptr != NULL", "om.cpp", 0x18);
+    }
+    return p;
+}
+
+void *fn_1_4758(u32 size)
+{
+    void *p;
+
+    p = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
+    if (p != 0) {
+    } else {
+        M536_ASSERT_FAIL("ptr != NULL", "om.cpp", 0x1F);
+    }
+    return p;
+}
+
+void fn_1_47E4(void *ptr)
+{
+    if (ptr != 0) {
+        HuMemDirectFree(ptr);
+    }
+}
+
+void fn_1_481C(void *ptr)
+{
+    if (ptr != 0) {
+        HuMemDirectFree(ptr);
+    }
+}
+
+// ---- object manager glue: an om object owns a polymorphic work object (om->data)
+
+void fn_1_4874(OMOBJ *om);
+
+void fn_1_4854(M536VObj *object, OMOBJ *om)
+{
+    object->m_vptr = lbl_1_data_1D4;
+    om->data = object;
+    om->objFunc = (OMOBJFUNC)fn_1_4874;
+}
+
+void fn_1_4874(OMOBJ *om)
+{
+    M536VObj *object;
+
+    object = (M536VObj *)om->data;
+    ((void (*)(M536VObj *, OMOBJ *))object->m_vptr[3])(object, om);
+}
+
+void fn_1_48C0(void)
+{
+}
+
+void fn_1_48C4(OMOBJ *om)
+{
+    M536VObj *object;
+
+    object = (M536VObj *)om->data;
+    if (object != 0) {
+        ((void (*)(M536VObj *, s32))object->m_vptr[2])(object, 1);
+    }
+    omDelObjEx(HuPrcCurrentGet(), om);
+}
+
+M536VObj *fn_1_4934(M536VObj *self, s16 freeIt)
+{
+    if (self != 0) {
+        self->m_vptr = lbl_1_data_1D4;
+        if (freeIt > 0 && self != 0) {
+            HuMemDirectFree(self);
+        }
+    }
+    return self;
+}
+
+void fn_1_4994(HUPROCESS *proc, OMOBJ *om)
+{
+    M536VObj *object;
+
+    object = (M536VObj *)om->data;
+    if (object != 0) {
+        ((void (*)(M536VObj *, s32))object->m_vptr[2])(object, 1);
+    }
+    omDelObjEx(proc, om);
+}
+
+// ---- shared random number generator (instance at lbl_1_bss_24)
+
+void fn_1_4A08(u32 seed)
+{
+    lbl_1_bss_24[0] = seed;
+    lbl_1_bss_24[0x270] = 1;
+    while (lbl_1_bss_24[0x270] < 0x270) {
+        lbl_1_bss_24[lbl_1_bss_24[0x270]] =
+            lbl_1_bss_24[0x270] + 0x6C078965 * (lbl_1_bss_24[lbl_1_bss_24[0x270] - 1] ^ (lbl_1_bss_24[lbl_1_bss_24[0x270] - 1] >> 30));
+        lbl_1_bss_24[0x270]++;
+    }
+}
+
+s32 fn_1_4AE0(void)
+{
+    u32 r;
+
+    M536_MT_NEXT(lbl_1_bss_24, r);
+    return r >> 1;
+}
+
+f32 fn_1_4D1C(void)
+{
+    u32 r;
+
+    M536_MT_NEXT(lbl_1_bss_24, r);
+    return 1.1920929e-7f * (f32)(r >> 9);
+}
+
+f32 fn_1_4F90(f32 scale)
+{
+    return (f32)((f64)scale * fn_1_4184(lbl_1_bss_24));
+}
+
+f32 fn_1_4FC8(f32 lo, f32 hi)
+{
+    return (f32)((f64)lo + (f64)(hi - lo) * fn_1_4184(lbl_1_bss_24));
+}
+
+// ---- spheres
+
+struct M536Sphere {
+    Vec m_pos;      /* 0x00 */
+    f32 m_radius;   /* 0x0C */
+};
+
+// True when the two spheres overlap.
+u32 fn_1_501C(M536Sphere *a, M536Sphere *b)
+{
+    Vec d;
+    f32 rb;
+    f32 ra;
+    f32 sum;
+    f32 mag;
+
+    PSVECSubtract(&a->m_pos, &b->m_pos, &d);
+    rb = b->m_radius;
+    ra = a->m_radius;
+    sum = ra + rb;
+    mag = PSVECMag(&d);
+    return (u32)(mag < sum);
+}
+
+// Pushes two overlapping spheres apart; ka/kb weight how far each one moves.
+s32 fn_1_50C4(M536Sphere *a, M536Sphere *b, f32 ka, f32 kb)
+{
+    Vec d;
+    Vec t;
+    f32 rb;
+    f32 ra;
+    f32 sum;
+    f32 mag;
+    f32 push;
+    f32 pullA;
+    f32 pullB;
+
+    rb = b->m_radius;
+    ra = a->m_radius;
+    sum = ra + rb;
+    PSVECSubtract(&b->m_pos, &a->m_pos, &d);
+    mag = PSVECMag(&d);
+    if (mag >= sum) {
+        return 0;
+    }
+    push = (kb * (sum - mag)) / mag;
+    PSVECScale(&d, &d, push);
+    pullA = -ka;
+    PSVECScale(&d, &t, pullA);
+    PSVECAdd(&t, &a->m_pos, &a->m_pos);
+    pullB = 1.0f - ka;
+    PSVECScale(&d, &t, pullB);
+    PSVECAdd(&t, &b->m_pos, &b->m_pos);
+    return 1;
 }
 
 }
