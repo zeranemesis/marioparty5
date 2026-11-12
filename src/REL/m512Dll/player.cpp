@@ -789,7 +789,7 @@ extern "C" void fn_1_A50C(Player *self)
 #endif
     self->hitWall = 0;
     fn_1_AB34(self);
-    self->hitWall = self->hitWall | fn_1_C3C8(self);
+    self->hitWall |= fn_1_C3C8(self);
     fn_1_A604(self);
     if (fn_1_1F30() == 2) {
         if ((f32)self->vibTimer < 6.0f && self->pad >= 0 && self->finished == 0) {
@@ -878,9 +878,7 @@ extern "C" void fn_1_AB34(Player *self)
     f32 w;
     f32 w2;
 
-    a.x = self->pos.x;
-    a.y = self->pos.y;
-    a.z = self->pos.z;
+    a = self->pos;
     if (self->pushTimer > 0) {
         self->pushTimer = self->pushTimer - 1;
     }
@@ -888,12 +886,10 @@ extern "C" void fn_1_AB34(Player *self)
     while (n != pl_end) {
         Player *p = (Player *)n;
         if (self != p) {
-            other.x = p->pos.x;
-            other.y = p->pos.y;
-            other.z = p->pos.z;
+            other = p->pos;
             PSVECSubtract((Vec *)&p->pos, (Vec *)&self->pos, (Vec *)&d);
             dist = PSVECMag((Vec *)&d);
-            if (dist < 120.0f) {
+            if (!(dist >= 120.0f)) {
                 w = 0.5f;
                 w2 = 1.0f - w;
                 PSVECScale((Vec *)&d, (Vec *)&d, (120.0f - dist) / dist);
@@ -915,8 +911,8 @@ extern "C" void fn_1_AB34(Player *self)
                 if (self->vibTimer == 0 || p->vibTimer == 0) {
                     fn_1_76BC(&self->pos, 0x6C3);
                 }
-                self->hitWall = self->hitWall | fn_1_C3C8(self);
-                p->hitWall = p->hitWall | fn_1_C3C8(p);
+                self->hitWall |= fn_1_C3C8(self);
+                p->hitWall |= fn_1_C3C8(p);
             }
         }
         PL_ITER_NEXT
@@ -1284,7 +1280,6 @@ extern "C" void fn_1_C0C0(Player *self)
     self->angVel = self->angVel * 0.9f;
 }
 
-#pragma dont_inline on
 // Keeps a player inside the arena (two end caps and the straight sections);
 // returns 1 when it hit a wall.
 extern "C" s32 fn_1_C3C8(Player *self)
@@ -1379,8 +1374,6 @@ extern "C" f32 fn_1_C91C(Player *self)
     }
     return ang;
 }
-
-#pragma dont_inline reset
 
 extern "C" s16 *fn_1_CA88(PlVec *v, u32 idx)
 {
