@@ -67,6 +67,7 @@ typedef struct Camera {
     Vec target;
     s32 frame;
     M509Ptmf update;
+    s32 pad44; /* the original allocates 0x48 bytes */
 } Camera;
 
 typedef struct BackItem {
@@ -145,7 +146,8 @@ typedef struct Player {
     s32 idx;
     s32 charNo;
     s32 pad;
-    s32 unk20;
+    u8 unk20;
+    u8 pad21[3];
     s32 motion;
     s32 dif;
     f32 rotY;

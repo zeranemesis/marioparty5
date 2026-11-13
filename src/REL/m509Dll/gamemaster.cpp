@@ -98,7 +98,7 @@ void fn_1_C8B8(void *self);
 void fn_1_C8BC(void *self);
 void fn_1_C8E0(void);
 void fn_1_C914(void *self);
-void fn_1_C91C(void *self);
+void *fn_1_C91C(void *self, s16 flag);
 void *__dt__Q24m50911CGameMasterFv(void *self, s16 flag);
 void *fn_1_C2D0(void *self);
 
@@ -317,9 +317,10 @@ void fn_1_C914(void *self)
 }
 
 // NONMATCHING: virtual-base adjustor thunk, same reason as fn_1_C914.
-void fn_1_C91C(void *self)
+void *fn_1_C91C(void *self, s16 flag)
 {
-    __dt__Q24m50911CGameMasterFv((void *)((u8 *)self - offsetof(M509GameMaster, sub)), 1);
+    /* the original forwards its own flag (r4) untouched; the delete flag must not be forced */
+    return __dt__Q24m50911CGameMasterFv((void *)((u8 *)self - offsetof(M509GameMaster, sub)), flag);
 }
 
 void *fn_1_C2D0(void *self)

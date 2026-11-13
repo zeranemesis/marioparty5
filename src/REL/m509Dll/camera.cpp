@@ -2,6 +2,11 @@
 #include "game/pad.h"
 #include <math.h>
 
+#ifdef TARGET_PC
+typedef s32 CamRet; /* x86-64 leaves the upper bits of a narrow return undefined; callers declare s32 */
+#else
+typedef s16 CamRet;
+#endif
 extern "C" {
 s32 __ptmf_test(void *ptmf);
 void __ptmf_scall(void *self, void *ptmf);
@@ -16,8 +21,8 @@ extern void *lbl_1_bss_48;
 extern "C" {
 void *fn_1_DEEC(Camera *self);
 void *fn_1_E114(Camera *self, s16 flag);
-s16 fn_1_E1A0(Vec *pos);
-s16 fn_1_E4B4(Vec *pos);
+CamRet fn_1_E1A0(Vec *pos);
+CamRet fn_1_E4B4(Vec *pos);
 void fn_1_E560(Camera *self);
 void fn_1_E6E0(Camera *self);
 void fn_1_E724(Camera *self);
@@ -91,7 +96,7 @@ void *fn_1_E114(Camera *self, s16 flag)
     return self;
 }
 
-s16 fn_1_E1A0(Vec *pos)
+CamRet fn_1_E1A0(Vec *pos)
 {
     static f64 farDist = 45.0;
     static f64 nearDist = 10.0;
@@ -119,7 +124,7 @@ s16 fn_1_E1A0(Vec *pos)
     return r;
 }
 
-s16 fn_1_E4B4(Vec *pos)
+CamRet fn_1_E4B4(Vec *pos)
 {
     Vec scr;
     s16 v;
