@@ -1,6 +1,8 @@
 /* This unit treats PSVECMag's result as a double (fcmpo against a rodata
    double), so hide the SDK's f32 prototype before it is pulled in. */
+#ifndef TARGET_PC
 #define PSVECMag PSVECMag__f32
+#endif
 #include "game/hu3d.h"
 #include "game/memory.h"
 #include "game/pad.h"
@@ -9,7 +11,9 @@
 #include "game/gamework.h"
 #include "game/object.h"
 #include "REL/m516Dll/m516types.h"
+#ifndef TARGET_PC
 #undef PSVECMag
+#endif
 
 void fn_1_2624(OMOBJ *obj);
 void fn_1_28E0(OMOBJ *obj);
@@ -36,7 +40,9 @@ s32 fn_1_1940(void);
 s32 fn_1_6DEC(s32 idx, Vec *pos, f32 *rotY);
 void PSVECSubtract(const Vec *a, const Vec *b, Vec *out);
 void PSVECAdd(const Vec *a, const Vec *b, Vec *out);
+#ifndef TARGET_PC /* on PC the real PSVECMag returns f32, which promotes to the double compare */
 f64 PSVECMag(const Vec *v);
+#endif
 void fn_1_4558(OMOBJ *obj, u32 arg);
 void fn_1_19E0(s32 player, s32 value1, s32 value2);
 void CharModelVoicePanSet(s16 charNo, s16 pan);
@@ -103,6 +109,7 @@ s32 fn_1_4650(OMOBJ *obj);
 
 OMOBJ *lbl_1_bss_28[4];
 
+// NONMATCHING: one register copy (mr) placed differently.
 void fn_1_254C(OMOBJMAN *objman)
 {
     s32 i;
@@ -124,6 +131,7 @@ void fn_1_2600(void)
     CharModelKill(-1);
 }
 
+// NONMATCHING: register numbering, dif masked as (u32) << 30 >> 30 (asm: clrlwi 30), 0.0f constants re-loaded; stores identical.
 void fn_1_2624(OMOBJ *obj)
 {
     PLAYERWORK *work;
@@ -472,8 +480,7 @@ void fn_1_2F08(OMOBJ *obj)
         work->f58 + work->f78;
 }
 
-// NONMATCHING: register/stack allocation still differs (two extra FPRs
-// spilled for the fabs and fmod temporaries).
+// NONMATCHING: the retry block is a rotated while (idx < 0) in the asm (if here) plus register/frame differences; control flow verified.
 void fn_1_3110(OMOBJ *obj)
 {
     PLAYERWORK *work = (PLAYERWORK *)obj->data;
@@ -561,10 +568,12 @@ void fn_1_3110(OMOBJ *obj)
                 idx = fn_1_89EC(&v, work->hit.f24);
             }
 
-            work->f84 = 1;
+            if (idx < 0) {
+                work->f84 = 1;
 
-            if (0.0f != work->f94) {
-                fn_1_4558(obj, 5);
+                if (0.0f != work->f94) {
+                    fn_1_4558(obj, 5);
+                }
             }
         }
 
@@ -664,7 +673,7 @@ ACTHIT *fn_1_4298(OMOBJ *obj, f32 dx, f32 dy);
 ACTHIT *fn_1_42E8(OMOBJ *obj, f32 dx, f32 dy, f32 radius);
 void fn_1_43B8(OMOBJ *obj, f32 dir, f32 speed);
 
-// Remaining difference: float temporaries in switch cases 2 and 4.
+// NONMATCHING: float temporaries in switch cases 2 and 4 (extra f31 spill, same values).
 void fn_1_3734(OMOBJ *obj)
 {
     PLAYERWORK *work = (PLAYERWORK *)obj->data;
@@ -870,7 +879,7 @@ ACTHIT *fn_1_42E8(OMOBJ *obj, f32 dx, f32 dy, f32 radius)
     return hit;
 }
 
-// Remaining difference: operand load order of the -50.0f add.
+// NONMATCHING: operand load order of the -50.0f add.
 void fn_1_43B8(OMOBJ *obj, f32 dir, f32 speed)
 {
     PLAYERWORK *work = (PLAYERWORK *)obj->data;
