@@ -57,8 +57,14 @@ void fn_1_E94(void);
 void fn_1_10C4(void);
 void fn_1_139C(void);
 void fn_1_14C4(void);
+void fn_1_3D38(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
+s16 fn_1_3B58(M551PtclWork *arg0, s16 which, f32 x, f32 y, f32 z, f32 scale);
+
+extern s16 lbl_1_bss_1799C[2];
+extern void *lbl_1_bss_17998;
 
 /* unit-owned .bss, declared in reverse address order so the offsets match the original */
+s32 gap_17994;
 OMOBJMAN *lbl_1_bss_17990;
 M551State lbl_1_bss_176A8;
 M551StageModel lbl_1_bss_16D94[83];
@@ -395,31 +401,32 @@ s32 fn_1_1850(f32 *arg0, f32 steps, f32 start, f32 target)
 }
 
 // NONMATCHING: dead fmr copies only
-s32 fn_1_1970(f32 *arg0, f32 steps, f32 start, f32 target)
+s32 fn_1_1970(s32 *arg0, s32 steps, s32 start, s32 target)
 {
-    f32 delta;
-    f32 distA;
-    f32 distB;
     s32 ret;
+    s16 delta;
+    s16 distA;
+    s32 distB;
 
     ret = 0;
     delta = (target - start) / steps;
     *arg0 += delta;
-    if (0.0f != delta) {
-        ret = (s32)((target - *arg0) / delta);
+    if (delta != 0) {
+        ret = (s16)((target - *arg0) / delta);
     }
     ret++;
-    if ((start - target) > 0.0f) {
+    if ((start - target) > 0) {
         distA = start - target;
     } else {
-        distA = start - (-1.0f * target);
+        distA = start - (target * -1);
     }
-    if ((start - *arg0) > 0.0f) {
+    if ((start - *arg0) > 0) {
         distB = start - *arg0;
     } else {
-        distB = start - (-1.0f * *arg0);
+        distB = start - (*arg0 * -1);
     }
     if (distA <= distB) {
+        *arg0 = target;
         ret = 0;
     }
     return ret;
@@ -600,3 +607,74 @@ void fn_1_1E9C(s16 pad)
     print8(0x19, 0x30, 1.5f, lbl_1_data_4B3, CRot.x, CRot.y, CRot.z);
 }
 
+
+void fn_1_2354(void)
+{
+    HU3DPARTICLE *particle;
+    ANIMDATA *anim;
+    HU3DPARTICLEDATA *data;
+    s16 i;
+
+    anim = HuSprAnimRead(HuDataSelHeapReadNum(0x6D0019, HU_MEMNUM_OVL, HEAP_MODEL));
+    lbl_1_bss_17998 = HuMemDirectMallocNum(HEAP_HEAP, 150 * sizeof(M551PtclWork), HU_MEMNUM_OVL);
+    lbl_1_bss_1799C[0] = Hu3DParticleCreate(anim, 150);
+    Hu3DParticleHookSet(lbl_1_bss_1799C[0], fn_1_3D38);
+    Hu3DParticleBlendModeSet(lbl_1_bss_1799C[0], 1);
+    Hu3DModelLayerSet(lbl_1_bss_1799C[0], 4);
+    Hu3DModelCameraSet(lbl_1_bss_1799C[0], 1);
+    Hu3DModelAttrSet(lbl_1_bss_1799C[0], 1);
+    Hu3DModelAttrReset(lbl_1_bss_1799C[0], 1);
+    particle = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_1799C[0]].hookData;
+    particle->emitCnt = 0;
+    particle->count = 0;
+    particle->work = lbl_1_bss_17998;
+    data = particle->data;
+    for (i = 0; i < particle->maxCnt; i++, data++) {
+        data->scale = 0.0f;
+    }
+    anim = HuSprAnimRead(HuDataSelHeapReadNum(0x6D001A, HU_MEMNUM_OVL, HEAP_MODEL));
+    lbl_1_bss_17998 = HuMemDirectMallocNum(HEAP_HEAP, 150 * sizeof(M551PtclWork), HU_MEMNUM_OVL);
+    lbl_1_bss_1799C[1] = Hu3DParticleCreate(anim, 150);
+    Hu3DParticleHookSet(lbl_1_bss_1799C[1], fn_1_3D38);
+    Hu3DParticleBlendModeSet(lbl_1_bss_1799C[1], 1);
+    Hu3DModelLayerSet(lbl_1_bss_1799C[1], 4);
+    Hu3DModelCameraSet(lbl_1_bss_1799C[1], 1);
+    Hu3DModelAttrSet(lbl_1_bss_1799C[1], 1);
+    Hu3DModelAttrReset(lbl_1_bss_1799C[1], 1);
+    particle = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_1799C[1]].hookData;
+    particle->emitCnt = 0;
+    particle->count = 0;
+    particle->work = lbl_1_bss_17998;
+    data = particle->data;
+    for (i = 0; i < particle->maxCnt; i++, data++) {
+        data->scale = 0.0f;
+    }
+}
+
+void fn_1_2610(M551Vec3 *arg0)
+{
+    M551Vec3 sp;
+    f32 speed;
+    f32 scale;
+    s16 t;
+    s16 i;
+    s16 unused;
+
+    unused = 0x10;
+    speed = 0.8f;
+    scale = 1.0f;
+    for (i = 0; i < 12; i++) {
+        sp.x = arg0->x + scale * (20.0 * sin(3.141592653589793 * (30.0f * i) / 180.0));
+        sp.y = arg0->y + 10.0f * scale;
+        sp.z = arg0->z + scale * (20.0 * cos(3.141592653589793 * (30.0f * i) / 180.0));
+        speed = scale * (6.0f + frandmod(6));
+        lbl_1_data_4D0.velX = speed * sin(3.141592653589793 * (30.0f * i) / 180.0);
+        lbl_1_data_4D0.velY = 0.0f;
+        lbl_1_data_4D0.velZ = speed * cos(3.141592653589793 * (30.0f * i) / 180.0);
+        t = -frandmod(6) - 7;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01 * frandmod(20);
+        speed = scale * (20.0 + frandmod(20));
+        fn_1_3B58(&lbl_1_data_4D0, 1, sp.x, sp.y, sp.z, speed);
+    }
+}
