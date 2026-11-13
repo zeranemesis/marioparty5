@@ -747,7 +747,7 @@ void fn_1_10608(Player *self, s32 motion, u8 flag)
         } else {
             attr = 0;
         }
-        CharMotionShiftSet(self->charNo, mot, attr, 0.0f, 8.0f);
+        CharMotionShiftSet(self->charNo, mot, 0.0f, 8.0f, attr);
         self->motion = motion;
     }
 }

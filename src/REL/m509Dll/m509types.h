@@ -118,7 +118,7 @@ typedef struct Maze {
     s32 alpha;
     u8 busy;
     s32 busyTimer;
-    s32 busyParam;
+    u8 busyParam;
     s32 timer;
     s32 hold;
     s32 sfx;
