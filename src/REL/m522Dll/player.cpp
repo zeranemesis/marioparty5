@@ -854,7 +854,8 @@ void fn_1_101CC(M522_PLAYERBASE *self, u8 flag)
 void fn_1_10240(M522_PLAYERBASE *self, s32 kind)
 {
     switch (kind) {
-    default:
+    case 0:
+    case 1:
         omVibrate(self->index, 12, 6, 6);
         break;
     case 2:
@@ -1340,7 +1341,7 @@ void fn_1_12B68(M522_COM *self)
         fn_1_13DCC(self);
     }
     MgActorPosGet(self->mg->actor, HV(&p));
-    if (p.y < (f32)(fn_1_F1B8(M522Stage()) - 50.0) || p.x > 500.0f) {
+    if (p.y < (fn_1_F1B8(M522Stage()) - 50.0) || p.x > 500.0f) {
         fn_1_13698(self);
         self->flying = 1;
         MgPlayerPauseOn(self->mg);
@@ -1576,7 +1577,7 @@ void fn_1_13CE8(M522_COM *self)
 
     if (self->grounded != 0) {
         MgActorPosGet(self->mg->actor, HV(&p));
-            if (p.y <= (f32)(1.0 + fn_1_F1B8(M522Stage()))) {
+            if (p.y <= (1.0 + fn_1_F1B8(M522Stage()))) {
             omVibrate(self->index, 12, 6, 6);
             self->grounded = 0;
         }
@@ -1619,7 +1620,7 @@ void fn_1_13E18(M522_COM *self)
         state2 = state;
         switch (state2) {
         case 0:
-            wantJump = fn_1_BD30((f32)(5 - self->dif)) / 5.0 < 0.047619047619047616;
+            wantJump = fn_1_BD30((f32)(5 - self->dif)) / 5.0 < 0.048;
             break;
         case 1:
             wantJump = fn_1_BD30((f32)(self->dif + 1)) * 0.25 < 0.08;
