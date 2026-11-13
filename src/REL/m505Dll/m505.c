@@ -2,6 +2,17 @@
 
 #include "math.h"
 
+#ifdef TARGET_PC
+/* the copies the CPU edits below are GameCube textures in memory (Aurora writes them back big-endian) */
+static u16 M505Tex16(const void *p) { const u8 *b = (const u8 *)p; return (u16)((b[0] << 8) | b[1]); }
+static void M505Tex16Set(void *p, u16 v) { u8 *b = (u8 *)p; b[0] = (u8)(v >> 8); b[1] = (u8)v; }
+#define M505_TEX16(p) M505Tex16(p)
+#define M505_TEX16_SET(p, v) M505Tex16Set((p), (v))
+#else
+#define M505_TEX16(p) (*(u16 *)(p))
+#define M505_TEX16_SET(p, v) (*(u16 *)(p) = (v))
+#endif
+
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 typedef void (*VoidFunc)(void);
@@ -1061,16 +1072,23 @@ void fn_1_4FB4(OMOBJ *obj)
     Hu3DWaterTexPosSet(2.0f * -lbl_1_bss_10, lbl_1_bss_10, -lbl_1_bss_10);
     for (i = 0; i < 4; i++) {
         if (lbl_1_data_119 == 0 && i == 0 && lbl_1_data_111[i] != -1 && lbl_1_data_115[i] != -1) {
+#ifdef TARGET_PC
+            AuroraGXCopyReadbackSync((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + lbl_1_data_115[i] * lbl_1_bss_11EC[i]);
+#endif
             for (x = 0; x < 56; x++) {
                 for (y = 0; y < 60; y++) {
-                    if (*(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 56) * 2))
+                    if (M505_TEX16((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 56) * 2))
                         == 0x8000) {
-                        *(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 56) * 2)) = 2;
+                        M505_TEX16_SET((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 56) * 2), 2);
                     }
                 }
             }
         }
         if (lbl_1_data_119 == 0 && i == 1 && lbl_1_data_111[i] == 0) {
+#ifdef TARGET_PC
+            AuroraGXCopyReadbackSync((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + lbl_1_data_115[i] * lbl_1_bss_11EC[i]);
+            AuroraGXCopyReadbackSync(lbl_1_bss_119C[i]);
+#endif
             for (x = 0; x < 80; x++) {
                 for (y = 0; y < 68; y++) {
                     u16 pix;
@@ -1083,8 +1101,8 @@ void fn_1_4FB4(OMOBJ *obj)
                     s32 srcG;
                     s32 srcB;
 
-                    pix = *(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2));
-                    base = *(u16 *)((u8 *)lbl_1_bss_119C[i] + (x + y * 80) * 2);
+                    pix = M505_TEX16((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2));
+                    base = M505_TEX16((u8 *)lbl_1_bss_119C[i] + (x + y * 80) * 2);
                     r = (base & 0x7C00) >> 7;
                     g = (base & 0x3E0) >> 2;
                     b = (base & 0x1F) * 8;
@@ -1100,9 +1118,9 @@ void fn_1_4FB4(OMOBJ *obj)
                     g = (g >= 255) ? 255 : ((g <= 0) ? 0 : g);
                     b = b * base / 256;
                     b = (b >= 255) ? 255 : ((b <= 0) ? 0 : b);
-                    *(u16 *)((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2))
-                        = (alpha >= 0xE0) ? ((b & 0xF8) >> 3) | (((r & 0xF8) << 7) | ((g & 0xF8) << 2)) | 0x8000
-                                          : ((alpha & 0xE0) << 7) | (((b & 0xF0) >> 4) | (((r & 0xF0) << 4) | (g & 0xF0)));
+                    M505_TEX16_SET((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + (lbl_1_data_115[i] * lbl_1_bss_11EC[i] + (x + y * 80) * 2),
+                        (alpha >= 0xE0) ? ((b & 0xF8) >> 3) | (((r & 0xF8) << 7) | ((g & 0xF8) << 2)) | 0x8000
+                                          : ((alpha & 0xE0) << 7) | (((b & 0xF0) >> 4) | (((r & 0xF0) << 4) | (g & 0xF0))));
                 }
             }
             DCFlushRange((u8 *)lbl_1_bss_11AC[i][lbl_1_data_111[i]] + lbl_1_data_115[i] * lbl_1_bss_11EC[i], lbl_1_bss_11EC[i]);
@@ -1849,7 +1867,13 @@ void fn_1_B694(HU3DMODEL *model, Mtx *mtx)
             GXSetTexCopySrc(x, y, texW, texH);
             GXSetTexCopyDst(texW, texH, GX_TF_RGB5A3, GX_FALSE);
             GXSetCopyClear(clearColor, 0xFFFFFF);
+#ifdef TARGET_PC
+            AuroraGXSetCopyReadback(GX_TRUE); /* the update edits these copies on the CPU */
+#endif
             GXCopyTex(buf, GX_TRUE);
+#ifdef TARGET_PC
+            AuroraGXSetCopyReadback(GX_FALSE);
+#endif
             DCFlushRange(buf, lbl_1_bss_11EC[i]);
             GXPixModeSync();
         }

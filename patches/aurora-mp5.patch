@@ -1,3 +1,31 @@
+diff --git a/cmake/aurora_gx.cmake b/cmake/aurora_gx.cmake
+index e81b621..f984f83 100644
+--- a/cmake/aurora_gx.cmake
++++ b/cmake/aurora_gx.cmake
+@@ -2,6 +2,7 @@ add_library(aurora_gx STATIC
+         lib/gfx/clear.cpp
+         lib/gfx/common.cpp
+         lib/gfx/depth_peek.cpp
++        lib/gfx/copy_readback.cpp
+         lib/gfx/pipeline_cache.cpp
+         lib/gfx/render_worker.cpp
+         lib/gfx/dds_io.cpp
+diff --git a/include/dolphin/gx/GXFrameBuffer.h b/include/dolphin/gx/GXFrameBuffer.h
+index 3aab676..ad7e45f 100644
+--- a/include/dolphin/gx/GXFrameBuffer.h
++++ b/include/dolphin/gx/GXFrameBuffer.h
+@@ -47,6 +47,11 @@ void GXSetPixelFmt(GXPixelFmt pix_fmt, GXZFmt16 z_fmt);
+ void GXSetTexCopySrc(u16 left, u16 top, u16 wd, u16 ht);
+ void GXSetTexCopyDst(u16 wd, u16 ht, GXTexFmt fmt, GXBool mipmap);
+ void GXCopyTex(void* dest, GXBool clear);
++/* Aurora extension: while enabled, each GXCopyTex is also written back to its destination in main memory, in the
++   GameCube texture layout, for games that read or edit the copy on the CPU. The data lands one frame later:
++   AuroraGXCopyReadbackSync(dest) waits for it, writes it, and from then on textures at dest sample that memory. */
++void AuroraGXSetCopyReadback(GXBool enable);
++GXBool AuroraGXCopyReadbackSync(void* dest);
+ u16 GXGetNumXfbLines(u16 efbHeight, f32 yScale);
+ f32 GXGetYScaleFactor(u16 efbHeight, u16 xfbHeight);
+ 
 diff --git a/include/dolphin/gx/GXVert.h b/include/dolphin/gx/GXVert.h
 index 2770b44..be4f8cd 100644
 --- a/include/dolphin/gx/GXVert.h
@@ -64,6 +92,492 @@ index ec4f379..5a860ef 100644
    handleOut = FileHandle(m_files.size() - 1, 0);
  
    return ECardResult::READY;
+diff --git a/lib/dolphin/gx/GXFrameBuffer.cpp b/lib/dolphin/gx/GXFrameBuffer.cpp
+index c196cf6..b48153f 100644
+--- a/lib/dolphin/gx/GXFrameBuffer.cpp
++++ b/lib/dolphin/gx/GXFrameBuffer.cpp
+@@ -1,6 +1,7 @@
+ #include "gx.hpp"
+ #include "__gx.h"
+ 
++#include "../../gfx/copy_readback.hpp"
+ #include "../../gfx/tex_copy_conv.hpp"
+ #include "../../gfx/texture.hpp"
+ #include "../../window.hpp"
+@@ -12,6 +13,8 @@
+ #include <cmath>
+ 
+ namespace {
++bool s_copyReadback = false;
++
+ aurora::Vec2<uint32_t> scale_copy_dst(u32 logicalWidth, u32 logicalHeight) {
+   if (g_gxState.viewportPolicy == AURORA_VIEWPORT_NATIVE) {
+     return {logicalWidth, logicalHeight};
+@@ -195,12 +198,28 @@ void GXCopyTex(void* dest, GXBool clear) {
+   const auto clearColor = clear && g_gxState.colorUpdate;
+   const auto clearAlpha = clear && g_gxState.alphaUpdate;
+   const auto clearDepth = clear && g_gxState.depthUpdate;
++  aurora::gfx::copy_readback::RequestPtr readback;
++  if (s_copyReadback) {
++    readback = aurora::gfx::copy_readback::create(dest, g_gxState.texCopyDstWidth, g_gxState.texCopyDstHeight,
++                                                  texCopyFmt, g_gxState.pixelFmt == GX_PF_RGBA6_Z24, handle.handle);
++  }
+   aurora::gfx::resolve_pass(handle.handle, rect, clearColor, clearAlpha, clearDepth, g_gxState.clearColor,
+-                            aurora::gx::clear_depth_value(), texCopyFmt);
++                            aurora::gx::clear_depth_value(), texCopyFmt, std::move(readback));
+   ++handle.revision;
+   g_gxState.copyTextures[dest] = handle;
+ }
+ 
++void AuroraGXSetCopyReadback(GXBool enable) { s_copyReadback = enable; }
++
++GXBool AuroraGXCopyReadbackSync(void* dest) {
++  if (!aurora::gfx::copy_readback::sync(dest)) {
++    return GX_FALSE;
++  }
++  // the memory now holds the copy (and whatever the game writes into it): sample that, not the GPU texture
++  g_gxState.copyTextures.erase(dest);
++  return GX_TRUE;
++}
++
+ // TODO GXGetYScaleFactor
+ // TODO GXGetNumXfbLines
+ // TODO GXClearBoundingBox
+diff --git a/lib/gfx/clear.cpp b/lib/gfx/clear.cpp
+index d0b4c78..801f229 100644
+--- a/lib/gfx/clear.cpp
++++ b/lib/gfx/clear.cpp
+@@ -1,4 +1,5 @@
+ #include "clear.hpp"
++#include <algorithm>
+ 
+ #include "../webgpu/gpu.hpp"
+ #include "tracy/Tracy.hpp"
+@@ -119,7 +120,15 @@ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass, const wgp
+   pass.SetBlendConstant(&data.color);
+   pass.SetViewport(0.f, 0.f, static_cast<float>(targetSize.width), static_cast<float>(targetSize.height), data.depth,
+                    data.depth);
+-  pass.SetScissorRect(0, 0, targetSize.width, targetSize.height);
++  if (data.scissorWidth > 0 && data.scissorHeight > 0) {
++    const auto x = static_cast<uint32_t>(std::clamp(data.scissorX, 0, static_cast<int32_t>(targetSize.width)));
++    const auto y = static_cast<uint32_t>(std::clamp(data.scissorY, 0, static_cast<int32_t>(targetSize.height)));
++    const auto w = std::min(static_cast<uint32_t>(data.scissorWidth), targetSize.width - x);
++    const auto h = std::min(static_cast<uint32_t>(data.scissorHeight), targetSize.height - y);
++    pass.SetScissorRect(x, y, w, h);
++  } else {
++    pass.SetScissorRect(0, 0, targetSize.width, targetSize.height);
++  }
+   pass.Draw(3);
+ }
+ } // namespace aurora::gfx::clear
+diff --git a/lib/gfx/clear.hpp b/lib/gfx/clear.hpp
+index 2f87117..42af931 100644
+--- a/lib/gfx/clear.hpp
++++ b/lib/gfx/clear.hpp
+@@ -9,6 +9,11 @@ struct DrawData {
+   PipelineRef pipeline;
+   wgpu::Color color;
+   float depth = 0.f;
++  // optional: clear only this rectangle (GXCopyTex clears the copied rectangle); width 0 = whole target
++  int32_t scissorX = 0;
++  int32_t scissorY = 0;
++  int32_t scissorWidth = 0;
++  int32_t scissorHeight = 0;
+ };
+ 
+ constexpr uint32_t ClearPipelineConfigVersion = 2;
+diff --git a/lib/gfx/common.cpp b/lib/gfx/common.cpp
+index eff0c65..3f0b314 100644
+--- a/lib/gfx/common.cpp
++++ b/lib/gfx/common.cpp
+@@ -1,6 +1,7 @@
+ #include "common.hpp"
+ 
+ #include "clear.hpp"
++#include "copy_readback.hpp"
+ #include "depth_peek.hpp"
+ #include "../internal.hpp"
+ #include "../webgpu/gpu.hpp"
+@@ -159,6 +160,7 @@ struct RenderPass {
+ 
+   TextureHandle resolveTarget;
+   GXTexFmt resolveFormat = GX_TF_RGBA8;
++  copy_readback::RequestPtr resolveReadback; // MP5: copy the resolved texture back to main memory
+   ClipRect resolveRect;
+   Range resolveUniformRange;
+   Vec4<float> clearColorValue{0.f, 0.f, 0.f, 0.f};
+@@ -561,10 +563,12 @@ PipelineRef pipeline_ref(const clear::PipelineConfig& config) {
+ }
+ 
+ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool clearAlpha, bool clearDepth,
+-                  Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat) {
++                  Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat,
++                  copy_readback::RequestPtr readback) {
+   // Resolve current render pass
+   auto& prevPass = current_render_passes()[g_currentRenderPass];
+   prevPass.resolveTarget = std::move(texture);
++  prevPass.resolveReadback = std::move(readback);
+   prevPass.resolveRect = rect;
+   prevPass.resolveFormat = resolveFormat;
+   // Push UV transform uniform for tex_copy_conv (crop region in UV space)
+@@ -581,6 +585,9 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
+ 
+   // Populate new render pass from previous
+   const auto msaaSamples = prevPass.msaaSamples;
++  const bool fullRect = rect.x <= 0 && rect.y <= 0 &&
++                        rect.x + rect.width >= static_cast<int32_t>(prevPass.targetSize.width) &&
++                        rect.y + rect.height >= static_cast<int32_t>(prevPass.targetSize.height);
+   RenderPass newPass{
+       .colorView = prevPass.colorView,
+       .resolveView = prevPass.resolveView,
+@@ -592,8 +599,9 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
+       .msaaSamples = msaaSamples,
+       .clearColorValue = clearColorValue,
+       .clearDepthValue = clearDepthValue,
+-      .clearColor = clearColor && clearAlpha,
+-      .clearDepth = clearDepth,
++      // GX clears only the copied rectangle: a load-op clear stands in for it when the copy covers the target
++      .clearColor = clearColor && clearAlpha && fullRect,
++      .clearDepth = clearDepth && fullRect,
+       .hasDepth = prevPass.hasDepth,
+       .hasStencil = prevPass.hasStencil,
+   };
+@@ -601,7 +609,30 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
+   current_render_passes().emplace_back(std::move(newPass));
+   ++g_currentRenderPass;
+ 
+-  if (!newPass.clearColor && (clearColor || clearAlpha)) {
++  if (!fullRect && (clearColor || clearAlpha || clearDepth)) {
++    // A copy of part of the EFB clears that part only (MP5 m505 copies several characters per frame, and each
++    // later copy must still see the scene around the earlier ones): clear draw, scissored to the copy rectangle.
++    push_draw_command(clear::DrawData{
++        .pipeline = pipeline_ref(clear::PipelineConfig{
++            .msaaSamples = msaaSamples,
++            .clearColor = clearColor,
++            .clearAlpha = clearAlpha,
++            .clearDepth = clearDepth,
++        }),
++        .color =
++            wgpu::Color{
++                .r = clearColorValue.x(),
++                .g = clearColorValue.y(),
++                .b = clearColorValue.z(),
++                .a = clearColorValue.w(),
++            },
++        .depth = clearDepthValue,
++        .scissorX = rect.x,
++        .scissorY = rect.y,
++        .scissorWidth = rect.width,
++        .scissorHeight = rect.height,
++    });
++  } else if (!newPass.clearColor && (clearColor || clearAlpha)) {
+     // If we're only clearing color _or_ alpha, perform a clear draw
+     push_draw_command(clear::DrawData{
+         .pipeline = pipeline_ref(clear::PipelineConfig{
+@@ -1350,10 +1381,16 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
+       };
+       cmd.CopyTextureToTexture(&src, &dst, &size);
+     }
++    if (passInfo.resolveReadback) {
++      copy_readback::encode(cmd, passInfo.resolveReadback);
++    }
+   }
+ }
+ 
+-void after_submit() noexcept { depth_peek::after_submit(); }
++void after_submit() noexcept {
++  depth_peek::after_submit();
++  copy_readback::after_submit();
++}
+ 
+ void gpu_synchronize() { render_worker::synchronize(); }
+ 
+diff --git a/lib/gfx/common.hpp b/lib/gfx/common.hpp
+index db245d0..ef29be6 100644
+--- a/lib/gfx/common.hpp
++++ b/lib/gfx/common.hpp
+@@ -234,8 +234,12 @@ uint32_t current_frame() noexcept;
+ void render_pass(const wgpu::RenderPassEncoder& pass, uint32_t idx);
+ void after_submit() noexcept;
+ void gpu_synchronize();
++namespace copy_readback {
++struct Request;
++}
+ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool clearAlpha, bool clearDepth,
+-                  Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat = GX_TF_RGBA8);
++                  Vec4<float> clearColorValue, float clearDepthValue, GXTexFmt resolveFormat = GX_TF_RGBA8,
++                  std::shared_ptr<copy_readback::Request> readback = {});
+ 
+ struct ColorPassDescriptor {
+   const char* label = nullptr;
+diff --git a/lib/gfx/copy_readback.cpp b/lib/gfx/copy_readback.cpp
+new file mode 100644
+index 0000000..eba53b6
+--- /dev/null
++++ b/lib/gfx/copy_readback.cpp
+@@ -0,0 +1,216 @@
++#include "copy_readback.hpp"
++
++#include "texture.hpp"
++#include "../webgpu/gpu.hpp"
++
++#include <absl/container/flat_hash_map.h>
++
++#include <atomic>
++#include <chrono>
++#include <cstring>
++#include <mutex>
++#include <thread>
++#include <vector>
++
++namespace aurora::gfx::copy_readback {
++namespace {
++Module Log("aurora::gfx::copy_readback");
++
++using webgpu::g_device;
++using webgpu::g_instance;
++
++enum class State : int { Created, Encoded, Mapping, Done, Failed };
++} // namespace
++
++struct Request {
++  void* dest = nullptr;
++  uint32_t logicalWidth = 0;
++  uint32_t logicalHeight = 0;
++  GXTexFmt format = GX_TF_RGBA8;
++  bool efbHasAlpha = false;
++  TextureHandle texture;
++  wgpu::Buffer buffer;
++  uint32_t bytesPerRow = 0;
++  uint64_t byteSize = 0;
++  std::atomic<State> state{State::Created};
++  std::vector<uint8_t> pixels; // mapped copy, bytesPerRow * texture height
++};
++
++namespace {
++std::mutex g_mutex;
++absl::flat_hash_map<void*, RequestPtr> g_latest; // per destination, the most recent copy
++std::vector<RequestPtr> g_encoded;              // encoded this frame, mapped after submit
++
++void complete(const RequestPtr& req, wgpu::MapAsyncStatus status) {
++  if (status == wgpu::MapAsyncStatus::Success) {
++    const auto* src = static_cast<const uint8_t*>(req->buffer.GetConstMappedRange(0, req->byteSize));
++    req->pixels.assign(src, src + req->byteSize);
++    req->buffer.Unmap();
++    req->state = State::Done;
++  } else {
++    req->state = State::Failed;
++  }
++}
++
++// texel (x, y) of the logical-size copy, sampled from the (possibly upscaled) resolved texture, as RGBA8
++void texel(const Request& req, uint32_t x, uint32_t y, uint8_t out[4]) {
++  const uint32_t w = req.texture->size.width;
++  const uint32_t h = req.texture->size.height;
++  const uint32_t sx = std::min(w - 1, ((2 * x + 1) * w) / (2 * req.logicalWidth));
++  const uint32_t sy = std::min(h - 1, ((2 * y + 1) * h) / (2 * req.logicalHeight));
++  const uint8_t* p = req.pixels.data() + static_cast<size_t>(sy) * req.bytesPerRow + static_cast<size_t>(sx) * 4;
++  const bool bgra = req.texture->format == wgpu::TextureFormat::BGRA8Unorm ||
++                    req.texture->format == wgpu::TextureFormat::BGRA8UnormSrgb;
++  out[0] = bgra ? p[2] : p[0];
++  out[1] = p[1];
++  out[2] = bgra ? p[0] : p[2];
++  out[3] = req.efbHasAlpha ? p[3] : 0xFF; // an RGB8 or RGB565 EFB copies alpha as opaque
++}
++
++void put16(uint8_t* d, uint16_t v) {
++  d[0] = static_cast<uint8_t>(v >> 8);
++  d[1] = static_cast<uint8_t>(v);
++}
++
++uint16_t rgb5a3(const uint8_t c[4]) {
++  if (c[3] >= 0xE0) {
++    return 0x8000 | ((c[0] >> 3) << 10) | ((c[1] >> 3) << 5) | (c[2] >> 3);
++  }
++  return ((c[3] >> 5) << 12) | ((c[0] >> 4) << 8) | ((c[1] >> 4) << 4) | (c[2] >> 4);
++}
++
++// GameCube tiled layout: 4x4 texel blocks, row-major, big-endian
++bool write_gc(const Request& req) {
++  auto* dst = static_cast<uint8_t*>(req.dest);
++  const uint32_t w = req.logicalWidth;
++  const uint32_t h = req.logicalHeight;
++  uint8_t c[4];
++  switch (req.format) {
++  case GX_TF_RGB5A3:
++  case GX_TF_RGB565:
++    for (uint32_t by = 0; by < h; by += 4) {
++      for (uint32_t bx = 0; bx < w; bx += 4) {
++        for (uint32_t y = by; y < by + 4; y++) {
++          for (uint32_t x = bx; x < bx + 4; x++, dst += 2) {
++            if (x >= w || y >= h) {
++              put16(dst, 0);
++              continue;
++            }
++            texel(req, x, y, c);
++            put16(dst, req.format == GX_TF_RGB5A3
++                           ? rgb5a3(c)
++                           : static_cast<uint16_t>(((c[0] >> 3) << 11) | ((c[1] >> 2) << 5) | (c[2] >> 3)));
++          }
++        }
++      }
++    }
++    return true;
++  case GX_TF_RGBA8:
++    for (uint32_t by = 0; by < h; by += 4) {
++      for (uint32_t bx = 0; bx < w; bx += 4) {
++        uint8_t* ar = dst;
++        uint8_t* gb = dst + 32;
++        for (uint32_t y = by; y < by + 4; y++) {
++          for (uint32_t x = bx; x < bx + 4; x++, ar += 2, gb += 2) {
++            if (x >= w || y >= h) {
++              c[0] = c[1] = c[2] = c[3] = 0;
++            } else {
++              texel(req, x, y, c);
++            }
++            ar[0] = c[3];
++            ar[1] = c[0];
++            gb[0] = c[1];
++            gb[1] = c[2];
++          }
++        }
++        dst += 64;
++      }
++    }
++    return true;
++  default:
++    Log.warn("copy readback: format {} not encoded", static_cast<int>(req.format));
++    return false;
++  }
++}
++} // namespace
++
++RequestPtr create(void* dest, uint32_t logicalWidth, uint32_t logicalHeight, GXTexFmt format, bool efbHasAlpha,
++                  const TextureHandle& texture) {
++  auto req = std::make_shared<Request>();
++  req->dest = dest;
++  req->logicalWidth = logicalWidth;
++  req->logicalHeight = logicalHeight;
++  req->format = format;
++  req->efbHasAlpha = efbHasAlpha;
++  req->texture = texture;
++  req->bytesPerRow = (texture->size.width * 4 + 255) & ~255u;
++  req->byteSize = static_cast<uint64_t>(req->bytesPerRow) * texture->size.height;
++  const wgpu::BufferDescriptor desc{
++      .label = "Copy Readback Buffer",
++      .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
++      .size = req->byteSize,
++  };
++  req->buffer = g_device.CreateBuffer(&desc);
++  std::lock_guard lock{g_mutex};
++  g_latest[dest] = req;
++  return req;
++}
++
++void encode(const wgpu::CommandEncoder& cmd, const RequestPtr& req) noexcept {
++  const wgpu::TexelCopyTextureInfo src{.texture = req->texture->texture};
++  const wgpu::TexelCopyBufferInfo dst{
++      .layout = {.offset = 0, .bytesPerRow = req->bytesPerRow, .rowsPerImage = req->texture->size.height},
++      .buffer = req->buffer,
++  };
++  const wgpu::Extent3D size{.width = req->texture->size.width, .height = req->texture->size.height,
++                            .depthOrArrayLayers = 1};
++  cmd.CopyTextureToBuffer(&src, &dst, &size);
++  req->state = State::Encoded;
++  std::lock_guard lock{g_mutex};
++  g_encoded.push_back(req);
++}
++
++void after_submit() noexcept {
++  std::vector<RequestPtr> pending;
++  {
++    std::lock_guard lock{g_mutex};
++    pending.swap(g_encoded);
++  }
++  for (auto& req : pending) {
++    req->state = State::Mapping;
++    req->buffer.MapAsync(wgpu::MapMode::Read, 0, req->byteSize, wgpu::CallbackMode::AllowSpontaneous,
++                         [req](wgpu::MapAsyncStatus status, wgpu::StringView) { complete(req, status); });
++  }
++}
++
++bool sync(void* dest) noexcept {
++  RequestPtr req;
++  {
++    std::lock_guard lock{g_mutex};
++    const auto it = g_latest.find(dest);
++    if (it == g_latest.end()) {
++      return false;
++    }
++    req = it->second;
++  }
++  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{2};
++  while (req->state != State::Done && req->state != State::Failed) {
++    if (std::chrono::steady_clock::now() > deadline) {
++      Log.warn("copy readback of {} timed out", dest);
++      return false;
++    }
++    g_instance.ProcessEvents();
++    std::this_thread::yield();
++  }
++  if (req->state == State::Failed) {
++    return false;
++  }
++  {
++    std::lock_guard lock{g_mutex};
++    if (g_latest[dest] == req) {
++      g_latest.erase(dest); // written once; a later copy makes a new request
++    }
++  }
++  return write_gc(*req);
++}
++} // namespace aurora::gfx::copy_readback
+diff --git a/lib/gfx/copy_readback.hpp b/lib/gfx/copy_readback.hpp
+new file mode 100644
+index 0000000..0de56ac
+--- /dev/null
++++ b/lib/gfx/copy_readback.hpp
+@@ -0,0 +1,26 @@
++#pragma once
++
++#include "common.hpp"
++
++#include <dolphin/gx/GXEnum.h>
++
++#include <memory>
++
++// EFB copies written back to main memory, for games that read or edit a GXCopyTex destination on the CPU
++// (MP5 m505 turns the copied penguin's opaque black into transparent texels). Opt-in per copy
++// (AuroraGXSetCopyReadback): the resolved texture is copied into a buffer in the same frame, mapped after submit,
++// and AuroraGXCopyReadbackSync re-encodes it in the GameCube texture layout at the copy destination.
++namespace aurora::gfx::copy_readback {
++struct Request;
++using RequestPtr = std::shared_ptr<Request>;
++
++// main thread, inside GXCopyTex: a readback of `texture` once the resolve pass ran
++RequestPtr create(void* dest, uint32_t logicalWidth, uint32_t logicalHeight, GXTexFmt format, bool efbHasAlpha,
++                  const TextureHandle& texture);
++// render worker, right after the resolve pass of the request's pass
++void encode(const wgpu::CommandEncoder& cmd, const RequestPtr& request) noexcept;
++// render worker, after the frame's queue submit
++void after_submit() noexcept;
++// main thread: waits for the latest readback of dest and writes it there; false if none or it failed
++bool sync(void* dest) noexcept;
++} // namespace aurora::gfx::copy_readback
+diff --git a/lib/gfx/texture.cpp b/lib/gfx/texture.cpp
+index 013afc0..ee1ade2 100644
+--- a/lib/gfx/texture.cpp
++++ b/lib/gfx/texture.cpp
+@@ -158,7 +158,8 @@ TextureHandle new_render_texture(uint32_t width, uint32_t height, u32 gxFormat,
+   };
+   const wgpu::TextureDescriptor textureDescriptor{
+       .label = label,
+-      .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::RenderAttachment,
++      .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::CopySrc |
++               wgpu::TextureUsage::RenderAttachment, // CopySrc: copy_readback
+       .dimension = wgpu::TextureDimension::e2D,
+       .size = size,
+       .format = wgpuFormat,
 diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
 index 9ca9036..3d3f3d5 100644
 --- a/lib/gx/gx.cpp
