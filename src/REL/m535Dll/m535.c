@@ -849,7 +849,7 @@ void fn_1_A3C4(OMOBJ *obj)
         lbl_1_bss_81DC[k] = espEntry(tbl.bank[k], 0, 0);
         espDispOff(lbl_1_bss_81DC[k]);
     }
-    lbl_1_bss_81D8 = espEntry(33, 0, 0);
+    lbl_1_bss_81D8 = espEntry(0x210001, 0, 0); /* asm: lis 0x21; addi 1 */
     espDispOff(lbl_1_bss_81D8);
 
     fn_1_2F2C(0, 0);
