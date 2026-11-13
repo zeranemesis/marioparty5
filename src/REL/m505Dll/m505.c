@@ -452,8 +452,8 @@ void fn_1_1284(void)
 }
 
 /* Player update: pad / AI steering, collisions with the obstacles and the other players, falls into the river. */
-// NONMATCHING: the original lays the scalar locals out 0x48 higher in the same 0x9a0 frame
-// and emits 400 bytes of code this body does not generate.
+// NONMATCHING: the original spills extra float/int temporaries to the stack (about 100 more
+// lfs/stfs/lwz/stw) and shifts the frame offsets; opcodes, data and operand wiring otherwise match.
 void fn_1_1828(OMOBJ *obj)
 {
     M505Player *player = obj->data;
@@ -464,7 +464,7 @@ void fn_1_1828(OMOBJ *obj)
     float prevZ = obj->trans.z;
     float prevRotY = obj->rot.y;
     s16 motNo = -1;
-    float waterY[26] = { 0.0f };
+    float waterY[10] = { 0.0f };
     M505Player *other;
     float vx;
     float vz;
@@ -498,7 +498,7 @@ void fn_1_1828(OMOBJ *obj)
     Mtx rotMtx;
 
     player->unk44 = prevX;
-    player->unk3C = player->unk34 = 0.0f;
+    player->unk34 = player->unk3C = 0.0f;
     if (player->mode == 1) {
         if (lbl_1_bss_2ED2C == 1003) {
             if (player->padNo != -1) {
@@ -2614,13 +2614,13 @@ void fn_1_FADC(OMOBJ *obj)
             s32 motOfs[4] = { 0, 2, 4, 6 };
 
             if (i == 0) {
-                lbl_1_data_F0[i][j] = Hu3DMotionMotionMaxTimeGet(obj->mtnId[i + motOfs[j]]) + 1;
+                lbl_1_data_F0[i][j] = (s32) Hu3DMotionMotionMaxTimeGet(obj->mtnId[i + motOfs[j]]) + 1;
                 if (j == 3) {
                     lbl_1_data_F0[i][j] *= 2;
                 }
             }
             else {
-                lbl_1_data_F0[i][j] = Hu3DMotionMaxTimeGet(obj->mdlId[i + 13]) + 1;
+                lbl_1_data_F0[i][j] = (s32) Hu3DMotionMaxTimeGet(obj->mdlId[i + 13]) + 1;
             }
             if (i < 4) {
                 lbl_1_bss_11AC[i][j] = HuMemDirectMallocNum(HEAP_MODEL, lbl_1_bss_11EC[i] * lbl_1_data_F0[i][j], HU_MEMNUM_OVL);
