@@ -478,7 +478,7 @@ void fn_1_668(OMOBJ *obj)
                     vec.x = dx / 0.25f;
                     vec.y = 0.0f;
                     vec.z = -(-dz / 0.25f);
-                    PSMTXRotRad(mtx, 'Z', 0.017453292f * work->comAngle);
+                    PSMTXRotRad(mtx, 'y', 0.017453292f * work->comAngle);
                     PSMTXMultVec(mtx, &vec, &vec);
                     stickX = vec.x;
                     stickY = -vec.z;
@@ -542,7 +542,7 @@ void fn_1_668(OMOBJ *obj)
         vec.x = 0.25f * stickX;
         vec.y = 0.0f;
         vec.z = 0.25f * -stickY;
-        PSMTXRotRad(mtx, 'Z', 0.017453292f * CRotM[1].y);
+        PSMTXRotRad(mtx, 'y', 0.017453292f * CRotM[1].y);
         PSMTXMultVec(mtx, &vec, &vec);
         len = sqrtf((vec.x * vec.x) + (vec.z * vec.z));
         if (len < 0.5f) {
@@ -601,6 +601,11 @@ void fn_1_668(OMOBJ *obj)
             lbl_1_data_19C[work->itemNo] = 0;
         }
         else if (work->modeTime == 0xA) {
+            if (lbl_1_bss_E0[1].num < 3) {
+                lbl_1_bss_E0[1].posX[lbl_1_bss_E0[1].num] = lbl_1_bss_1810[work->itemNo].pos.x;
+                lbl_1_bss_E0[1].posZ[lbl_1_bss_E0[1].num] = lbl_1_bss_1810[work->itemNo].pos.z;
+                lbl_1_bss_E0[1].num++;
+            }
             switch (lbl_1_bss_1810[work->itemNo].kind) {
             case 1:
                 lbl_1_bss_1810[work->itemNo].state = 1;
@@ -701,13 +706,13 @@ void fn_1_668(OMOBJ *obj)
             n = (lbl_1_bss_BC == 1002) ? 0xA : 0x3C;
             if (work->modeTime >= n + 0x14) {
                 if (lbl_1_bss_BC == 1003) {
-                    if (work->charNoClamp < 4) {
-                        work->effTime[work->charNoClamp] = 0x1E;
+                    if (work->score < 4) {
+                        work->effTime[work->score] = 0x1E;
                     }
-                    if (work->charNoClamp + lbl_1_bss_1810[work->itemNo].unk10 < 4) {
-                        work->effTime[work->charNoClamp + lbl_1_bss_1810[work->itemNo].unk10] = 0x1E;
+                    if (work->score + lbl_1_bss_1810[work->itemNo].unk10 < 4) {
+                        work->effTime[work->score + lbl_1_bss_1810[work->itemNo].unk10] = 0x1E;
                     }
-                    work->charNoClamp = lbl_1_bss_1810[work->itemNo].unk10 + work->charNoClamp + 1;
+                    work->score = lbl_1_bss_1810[work->itemNo].unk10 + work->score + 1;
                 }
                 work->mode = 2;
                 work->modeTime = 0;
