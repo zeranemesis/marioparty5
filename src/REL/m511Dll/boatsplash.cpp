@@ -347,7 +347,7 @@ void fn_1_17EC8(Mgr511SplashRing *arg0, Mtx mtx)
         GXSetAlphaUpdate(1);
         GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);
         GXSetNumChans(0);
-        GXSetChanCtrl(GX_COLOR0A0, 0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_NONE);
+        GXSetChanCtrl(GX_COLOR_NULL, /* asm: li r3, 0xff */  0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_NONE);
         GXSetNumTexGens(1);
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
         color.a = (u8)(2.0f * (255.0f * (0.5f - arg0->timer)));

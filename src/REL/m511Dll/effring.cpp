@@ -29,7 +29,7 @@ struct Mgr511Effring;
 #define M511_PC_C
 #endif
 M511_PC_C void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx);
-M511_PC_C void fn_1_7654(Mgr511Effring *arg1, Point3d *arg2, s32 arg3, f32 arg4, f32 arg5, f32 arg6);
+M511_PC_C void fn_1_7654(Mgr511Effring *arg1, Point3d *arg2, s32 color, s32 texMap, f32 scale, f32 size);
 M511_PC_C void fn_1_7A44(f32 *arg0, Mgr511Effring *arg1, Mtx mtx);
 
 struct Mgr511Effring {
@@ -47,7 +47,7 @@ struct EffringQuad {
     f32 size;
     f32 scale;
     s32 color;
-    f32 rate;
+    s32 rate; /* texture map index (0..2); the decomp had it as a float of denormal bit patterns */
 };
 
 extern "C" {
@@ -66,14 +66,14 @@ extern Mgr511Effring *lbl_1_bss_A10;
 static const s32 lbl_1_rodata_D0[4] = {0x450023, 0x450024, 0x450025, 0x450026};
 static const s32 lbl_1_rodata_E8[4] = {0, 1, 2, 3};
 static const struct EffringQuad lbl_1_rodata_F8[8] = {
-    {10.0f, -1.0f, -1, 0.0f},
-    {8.0f, -0.8f, 0x30FFFF80, 3e-45f},
-    {7.0f, -0.7f, 0x60C080FF, 1e-45f},
-    {5.0f, 0.1f, 0x50FFFFFF, 1e-45f},
-    {10.0f, 0.2f, 0x30FFFFC0, 3e-45f},
-    {15.0f, 0.7f, 0x60FFFFFF, 1e-45f},
-    {20.0f, 0.8f, 0x40FFC0FF, 3e-45f},
-    {12.0f, 1.0f, 0x30C0FFFF, 1e-45f},
+    {10.0f, -1.0f, -1, 0},
+    {8.0f, -0.8f, 0x30FFFF80, 2},
+    {7.0f, -0.7f, 0x60C080FF, 1},
+    {5.0f, 0.1f, 0x50FFFFFF, 1},
+    {10.0f, 0.2f, 0x30FFFFC0, 2},
+    {15.0f, 0.7f, 0x60FFFFFF, 1},
+    {20.0f, 0.8f, 0x40FFC0FF, 2},
+    {12.0f, 1.0f, 0x30C0FFFF, 1},
 };
 
 void fn_1_6B0C(HU3DMODEL *arg1, Mtx *mtx)
@@ -212,7 +212,7 @@ void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx)
         spVec.x = sp64.x * scale;
         spVec.y = sp64.y * scale;
         spVec.z = -100.0f;
-        fn_1_7654(arg0, &spVec, lbl_1_rodata_F8[0].color, lbl_1_rodata_F8[0].rate, 1.0f, 10.0f);
+        fn_1_7654(arg0, &spVec, lbl_1_rodata_F8[0].color, lbl_1_rodata_F8[0].rate, 1.0f, lbl_1_rodata_F8[0].size);
         cosFov = (f32)cos((f64)(0.017453292f * cam->fov));
         temp_f31 = (sp64.z - cosFov) / (1.0f - cosFov);
         PSVECScale(&sp64, &sp64, 1.0f - cosFov);
@@ -232,7 +232,7 @@ void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx)
                 sp10 = sp64.x * scale;
                 sp14 = sp64.y * scale;
                 sp18 = -100.0f;
-                fn_1_7654(arg0, (Point3d *)&sp10, lbl_1_rodata_F8[j].color, lbl_1_rodata_F8[j].rate, (f32)(j * 0x10), temp_f31);
+                fn_1_7654(arg0, (Point3d *)&sp10, lbl_1_rodata_F8[j].color, lbl_1_rodata_F8[j].rate, temp_f31, lbl_1_rodata_F8[j].size);
                 scale = lbl_1_rodata_F8[j].size;
             }
             if (!(temp_f31 < 0.8f)) {
@@ -277,52 +277,57 @@ void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx)
     }
 }
 
-// NONMATCHING: the colour byte order and the half-extent expression differ.
-void fn_1_7654(Mgr511Effring *arg1, Point3d *arg2, s32 arg3, f32 arg4, f32 arg5, f32 arg6)
+// NONMATCHING: register allocation. Semantics from the asm: r6 is the texture map index, the colour is
+// bytes [r, g, b, a] = [c, c >> 8, c >> 16, scale * (c >> 24)], and the quad UVs are (0,0) (0,1) (1,1) (1,0).
+void fn_1_7654(Mgr511Effring *arg1, Point3d *arg2, s32 color, s32 texMap, f32 scale, f32 size)
 {
-    f32 sp8;
     f32 half;
-    s32 color;
+    u8 r;
+    u8 g;
+    u8 b;
+    u8 a;
 
-    sp8 = arg6;
-    color = arg3;
-    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)arg3, GX_COLOR0A0);
-    half = (sp8 * arg5) + (arg5 * (4.0f * (f32)arg4));
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMap, GX_COLOR0A0);
+    r = (u8)color;
+    g = (u8)(color >> 8);
+    b = (u8)(color >> 16);
+    a = (u8)(s32)(scale * (f32)(u8)((u32)color >> 24));
+    half = (size * scale) + (scale * (4.0f * (f32)texMap));
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXWGFifo.f32 = arg2->x - half;
     GXWGFifo.f32 = arg2->y - half;
     GXWGFifo.f32 = arg2->z;
-    GXWGFifo.u8 = (u8)(color >> 8);
-    GXWGFifo.u8 = (u8)(color >> 16);
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)(color >> 24));
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)color);
+    GXWGFifo.u8 = r;
+    GXWGFifo.u8 = g;
+    GXWGFifo.u8 = b;
+    GXWGFifo.u8 = a;
     GXWGFifo.f32 = 0.0f;
     GXWGFifo.f32 = 0.0f;
     GXWGFifo.f32 = arg2->x - half;
     GXWGFifo.f32 = arg2->y + half;
     GXWGFifo.f32 = arg2->z;
-    GXWGFifo.u8 = (u8)(color >> 8);
-    GXWGFifo.u8 = (u8)(color >> 16);
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)(color >> 24));
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)color);
-    GXWGFifo.f32 = 1.0f;
+    GXWGFifo.u8 = r;
+    GXWGFifo.u8 = g;
+    GXWGFifo.u8 = b;
+    GXWGFifo.u8 = a;
     GXWGFifo.f32 = 0.0f;
+    GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = arg2->x + half;
     GXWGFifo.f32 = arg2->y + half;
     GXWGFifo.f32 = arg2->z;
-    GXWGFifo.u8 = (u8)(color >> 8);
-    GXWGFifo.u8 = (u8)(color >> 16);
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)(color >> 24));
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)color);
+    GXWGFifo.u8 = r;
+    GXWGFifo.u8 = g;
+    GXWGFifo.u8 = b;
+    GXWGFifo.u8 = a;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = arg2->x + half;
     GXWGFifo.f32 = arg2->y - half;
     GXWGFifo.f32 = arg2->z;
-    GXWGFifo.u8 = (u8)(color >> 8);
-    GXWGFifo.u8 = (u8)(color >> 16);
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)(color >> 24));
-    GXWGFifo.u8 = (u8)(arg5 * (f32)(u8)color);
+    GXWGFifo.u8 = r;
+    GXWGFifo.u8 = g;
+    GXWGFifo.u8 = b;
+    GXWGFifo.u8 = a;
     GXWGFifo.f32 = 1.0f;
     GXWGFifo.f32 = 0.0f;
 }
@@ -341,7 +346,8 @@ void fn_1_7A44(f32 *arg0, Mgr511Effring *arg1, Mtx mtx)
     cosFov = (f32)cos((3.141592653589793 * (f64)(cam->fov * 0.5f)) / 180.0);
     sinFov = (f32)sin((3.141592653589793 * (f64)(cam->fov * 0.5f)) / 180.0);
     depth = (f32)((f64)sp1C.z * (sinFov / cosFov));
-    arg0[0] = 288.0f + (sp1C.x * (288.0f / -depth));
+    /* asm: x uses 1.2 * depth (the aspect ratio), y the plain depth */
+    arg0[0] = 288.0f + (sp1C.x * (288.0f / -(f32)(1.2000000476837158 * (f64)((f64)sp1C.z * (sinFov / cosFov)))));
     arg0[1] = 240.0f + (sp1C.y * (240.0f / depth));
     arg0[2] = 0.0f;
 }

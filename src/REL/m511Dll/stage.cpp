@@ -214,7 +214,7 @@ Mgr511Stage *fn_1_C67C(Mgr511Stage *arg0, s32 arg_sp0)
     spVec.y = lbl_1_rodata_374;
     for (i = 0; i < 0xB; i++) {
         if (i != 5) {
-            spVec.x = (f32)(0x1388 - (i * 0xA * 0x64));
+            spVec.x = (f32)((i * 0xA * 0x64) - 0x1388);
             spVec.z = lbl_1_rodata_370;
             node = (Mgr511StageNode *)__nw__FUl(0x2C);
             if (node != NULL) {
@@ -229,7 +229,7 @@ Mgr511Stage *fn_1_C67C(Mgr511Stage *arg0, s32 arg_sp0)
     }
     for (j = 1; j < 0xA; j++) {
         spVec.x = lbl_1_rodata_370;
-        spVec.z = (f32)(0x1388 - (j * 0xA * 0x64));
+        spVec.z = (f32)((j * 0xA * 0x64) - 0x1388);
         node = (Mgr511StageNode *)__nw__FUl(0x2C);
         if (node != NULL) {
             fn_1_CE34(node, &arg0->modelId16, &spVec); /* asm: addi r4, r30, 0x16 */
