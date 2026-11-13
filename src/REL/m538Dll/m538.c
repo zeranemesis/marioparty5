@@ -269,7 +269,11 @@ void ObjectSetup(void) {
     omGameSysInit(lbl_1_bss_10);
     temp_r31 = omAddObjEx(lbl_1_bss_10, 0x65, 0U, 0U, -1, fn_1_1198);
     lbl_1_bss_C = temp_r31;
+#ifdef TARGET_PC
+    temp_r31->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M538), HU_MEMNUM_OVL); /* pointers are 8 bytes on PC */
+#else
     temp_r31->data = HuMemDirectMallocNum(HEAP_HEAP, 0x1920, HU_MEMNUM_OVL);
+#endif
     temp_r30 = temp_r31->data;
     temp_r30->activeF = 0;
     fn_1_1488(temp_r30);
@@ -278,7 +282,11 @@ void ObjectSetup(void) {
     var_r29 = 0;
     while (var_r29 < 4) {
         temp_r31 = omAddObjEx(lbl_1_bss_10, 0x64, 1U, 0xBU, 0, fn_1_D1C);
+#ifdef TARGET_PC
+        temp_r31->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M538_PLAYER), HU_MEMNUM_OVL);
+#else
         temp_r31->data = HuMemDirectMallocNum(HEAP_HEAP, 0x104, HU_MEMNUM_OVL);
+#endif
         temp_r31->work[0] = (u32) var_r29;
         temp_r30->player[var_r29] = temp_r31->data;
         var_r29 += 1;
