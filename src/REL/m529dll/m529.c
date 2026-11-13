@@ -66,7 +66,7 @@ s32 unk58;
     s32 unk6C;
     s32 unk70;
     s32 unk74;
-    OMOBJ *unk78;
+    s32 unk78;
     s32 unk7C;
     s32 unk80;
     Vec unk84;
@@ -453,7 +453,7 @@ temp_r31->unkB4 = 0.0f;
     temp_r31->unk90 = 0.0f;
     temp_r31->unk74 = 0x3C;
     temp_r31->unk70 = 0x3C;
-    temp_r31->unk78 = NULL;
+    temp_r31->unk78 = 0;
     temp_r31->unk6C = 0;
     switch (temp_r31->unk18) {
     case 0:
@@ -527,7 +527,7 @@ temp_r31->unkB4 = 0.0f;
         temp_r31->unkA4 = 0.0f;
     } else {
         temp_r31->unkA4 = 270.0f;
-        CharMotionSet(temp_r31->unk28, obj->mtnId[3]);
+        CharMotionSet(temp_r31->unk28, obj->mtnId[6]);
         CharMotionSpeedSet(temp_r31->unk28, 0.0f);
         CharMotionTimeSet(temp_r31->unk28, 0.0f);
     }
@@ -555,7 +555,7 @@ void fn_1_B98(OMOBJ *obj)
     Vec sp20;
     Vec sp14;
     Vec sp8;
-OMOBJ *temp_r30;
+s32 temp_r30;
     M529Player *temp_r31 = obj->data;
     float temp_f0;
     float temp_f0_2;
@@ -597,20 +597,20 @@ OMOBJ *temp_r30;
                 if ((temp_r31->unk34 & 0x40) && !(temp_r31->unk34 & 0x20) && (temp_r31->unk34 != 0)) {
                     if (temp_r31->unk34 & 0x40) {
                         if ((temp_r31->unk7C == 1) || (temp_r31->unk7C == -1)) {
-                            temp_r31->unk74 = lbl_1_bss_E8 - (s32) (uintptr_t) temp_r31->unk78;
-                            temp_r31->unk78 = (OMOBJ *) (uintptr_t) lbl_1_bss_E8;
+                            temp_r31->unk74 = lbl_1_bss_E8 - temp_r31->unk78;
+                            temp_r31->unk78 = lbl_1_bss_E8;
                             temp_r31->unk7C = 0;
                             fn_1_1780(obj);
                         }
                     } else if ((temp_r31->unk34 & 0x20) && ((temp_r31->unk7C == 0) || (temp_r31->unk7C == -1))) {
                         temp_r30 = temp_r31->unk78;
-                        temp_r31->unk74 = lbl_1_bss_E8 - (s32) (uintptr_t) temp_r30;
-                        temp_r31->unk78 = (OMOBJ *) (uintptr_t) lbl_1_bss_E8;
+                        temp_r31->unk74 = lbl_1_bss_E8 - temp_r30;
+                        temp_r31->unk78 = lbl_1_bss_E8;
                         temp_r31->unk7C = 1;
                         fn_1_1780(obj);
                     }
                 }
-                if ((lbl_1_bss_E8 - (s32) (uintptr_t) temp_r31->unk78) >= 0x3D) {
+                if ((lbl_1_bss_E8 - temp_r31->unk78) >= 0x3D) {
                     temp_r31->unk80 = 1;
                 }
                 fn_1_4780(obj);
@@ -740,6 +740,8 @@ OMOBJ *temp_r30;
             var_f28 += 360.0f;
         }
         temp_r31->unkA4 = var_f28;
+        break;
+    case 0x7D8:
         break;
     default:
         OSReport(lbl_1_data_3E0, temp_r31->unk8);
@@ -1246,7 +1248,7 @@ if (lbl_1_bss_1C == 0) {
             Hu3DModelAttrReset(lbl_1_bss_84[i], 1);
             lbl_1_bss_54[i].x += (lbl_1_data_1E4[i].x - lbl_1_data_154[i].x) / 60.0f;
             lbl_1_bss_54[i].y += (lbl_1_data_1E4[i].y - lbl_1_data_154[i].y) / 60.0f;
-            lbl_1_bss_54[i].z += (lbl_1_data_1E4[i].z - lbl_1_data_214[i].z) / 60.0f;
+            lbl_1_bss_54[i].z += (lbl_1_data_1E4[i].z - lbl_1_data_154[i].z) / 60.0f;
             Hu3DModelPosSet(lbl_1_bss_84[i], lbl_1_bss_54[i].x, lbl_1_bss_54[i].y, lbl_1_bss_54[i].z);
         }
     }
@@ -1850,7 +1852,7 @@ void fn_1_5A84(Vec *arg0, Vec *arg1)
     } else {
         var_f26 = temp_f30 * temp_f30 + (temp_f31 * temp_f31 + temp_f29 * temp_f29);
     }
-    temp_f27 = 180.0 * atan2(temp_f30, temp_f31) / 3.141592653589793;
+    temp_f27 = 180.0 * (atan2(temp_f30, temp_f31) / 3.141592653589793);
     temp_f21 = 90.0f - temp_f27;
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
