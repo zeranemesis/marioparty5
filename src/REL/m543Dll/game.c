@@ -26,6 +26,7 @@ extern M543CamInit lbl_1_data_1D8[4];
 void fn_1_91C(s16 arg0);
 void fn_1_10C4(void);
 void fn_1_14C4(void);
+s32 fn_1_1850(f32 *arg0, f32 steps, f32 start, f32 target);
 s32 fn_1_1970(f32 *arg0, f32 steps, f32 start, f32 target);
 MGTIMER *fn_1_1A8C(s32 type, s32 maxSec, s32 endSec, f32 x, f32 y);
 void fn_1_1B00(MGTIMER *timer);
@@ -2053,7 +2054,7 @@ void fn_1_A6B0(M543Actor *actors)
 
 void fn_1_D408(s16 arg0)
 {
-    f32 speedTbl[4] = { 7.2f, 8.0f, 9.0f, 10.28571f };
+    f32 speedTbl[4] = { 7.2f, 8.0f, 9.0f, 10.285714f };
     f32 paramTbl[4][5] = {
         { 25.0f, 25.0f, 25.0f, 25.0f, 10.0f },
         { 25.0f, 25.0f, 15.0f, 35.0f, 15.0f },

@@ -117,7 +117,7 @@ M543PtclWork lbl_1_data_340 = {
     0.0f, 2.0f, 1.0f,
     0.85f, 0.85f, 0.85f,
     0.2f,
-    0.0f, 1.0f, -3.0f, 0.02f,
+    0.0f, 1.0f, -5.0f, 0.02f,
 };
 s16 lbl_1_data_378[4] = { 0x819, 0x81A, 0x81B, 0x81C };
 
@@ -654,12 +654,14 @@ void fn_1_251C(M543Vec3 *arg0)
 void fn_1_2898(M543Vec3 *arg0, s16 mode)
 {
     M543Vec3 sp;
+    f32 speed;
     s16 t;
     s16 i;
 
     if (mode == 0) {
         for (i = 0; i < 48; i++) {
-            lbl_1_data_340.velX = (5.0f + frandmod(5)) * sin(3.141592653589793 * (7.5f * i) / 180.0);
+            speed = 5.0f + frandmod(5);
+            lbl_1_data_340.velX = speed * sin(3.141592653589793 * (7.5f * i) / 180.0);
             lbl_1_data_340.velY = frandmod(2);
             lbl_1_data_340.velZ = frandmod(10) - 5.0f;
             t = (f32)-frandmod(6) - 6.0f;
@@ -673,9 +675,10 @@ void fn_1_2898(M543Vec3 *arg0, s16 mode)
         return;
     }
     for (i = 0; i < 48; i++) {
+        speed = 5.0f + frandmod(5);
         lbl_1_data_340.velX = frandmod(10) - 5.0f;
         lbl_1_data_340.velY = frandmod(2);
-        lbl_1_data_340.velZ = (5.0f + frandmod(5)) * sin(3.141592653589793 * (7.5f * i) / 180.0);
+        lbl_1_data_340.velZ = speed * sin(3.141592653589793 * (7.5f * i) / 180.0);
         t = (f32)-frandmod(6) - 6.0f;
         lbl_1_data_340.alphaStep = t;
         sp.x = arg0->x + frandmod(40) - 20.0f;
@@ -736,13 +739,16 @@ void fn_1_3110(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
     HU3DPARTICLEDATA *data;
     s16 i;
     s16 v;
+    s16 cnt;
 
     work = (M543PtclWork *)particleP->work;
     data = particleP->data;
+    cnt = 0;
     i = 0;
     data->time = 0;
     for (; i < particleP->maxCnt; i++, data++) {
-        if (0.0f != data->scale) {
+        if (data->scale > 0.0f) {
+            cnt++;
             data->vel.x = data->vel.x * work[i].mulX;
             data->vel.y = data->vel.y * work[i].mulY;
             data->vel.z = data->vel.z * work[i].mulZ;
