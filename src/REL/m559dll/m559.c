@@ -150,8 +150,8 @@ static M559LISTHEAD lbl_1_bss_BB8;
 static s32 fn_1_1210(M559VEC *target);
 s32 fn_1_1894(OMOBJ *arg0);
 s32 fn_1_19D8(OMOBJ *arg0);
-static s32 fn_1_1394(M559VEC *pos, M559HOOK *hook, f32 range);
-static s32 fn_1_1668(M559VEC *target, M559HOOK *hook, f32 range);
+static s32 fn_1_1394(M559VEC *pos, M559VEC *target, f32 range);
+static s32 fn_1_1668(M559VEC *pos, M559VEC *target, f32 range);
 static void fn_1_1B1C(M559HOOK *hook, OMOBJ *obj);
 static void fn_1_1F28(M559HOOK *hook);
 static void fn_1_2CA8(void);
@@ -515,10 +515,10 @@ void fn_1_1070(OMOBJ *arg0) {
         var_f31 = 150.0f;
     }
     if (MgSeqFrameNoGet() == 0x23) {
-        if (fn_1_1394(&temp_r31->pos, temp_r31, var_f31) != 0) {
+        if (fn_1_1394(&temp_r31->pos, &temp_r31->target, var_f31) != 0) {
             temp_r31->subMode = 1;
         }
-    } else if ((MgSeqFrameNoGet() == 0xE6) && (fn_1_1668(&temp_r31->target, temp_r31, var_f31) != 0)) {
+    } else if ((MgSeqFrameNoGet() == 0xE6) && (fn_1_1668(&temp_r31->pos, &temp_r31->target, var_f31) != 0)) {
         temp_r31->subMode = 1;
     }
     if (((temp_r31->target.x != 0.0f) || (temp_r31->target.z != 0.0f)) && (fn_1_19D8(arg0) != 0)) {
@@ -565,7 +565,7 @@ static s32 fn_1_1210(M559VEC *target) {
     return 1; // GC r3 = last frandmod(0x514) result (random, nearly always nonzero); callers test != 0 as success
 #endif
 }
-static s32 fn_1_1394(M559VEC *pos, M559HOOK *hook, f32 range) {
+static s32 fn_1_1394(M559VEC *pos, M559VEC *target, f32 range) {
     f32 sp20;
     f32 sp1C;
     f32 sp18;
@@ -631,14 +631,14 @@ block_15:
     if ((sp18 == 0.0f) && (sp20 == 0.0f)) {
         sp18 = 0.1f;
     }
-    hook->unk0 = sp18;
-    hook->unk4 = 0.0f;
-    hook->unk8 = sp20;
+    target->x = sp18;
+    target->y = 0.0f;
+    target->z = sp20;
 #ifdef TARGET_PC
     return 1; // GC r3 = last frandmod(0x514) result (random, nearly always nonzero); callers test != 0 as success
 #endif
 }
-static s32 fn_1_1668(M559VEC *target, M559HOOK *hook, f32 range) {
+static s32 fn_1_1668(M559VEC *pos, M559VEC *target, f32 range) {
     f32 sp1C;
     f32 sp18;
     f32 sp14;
@@ -690,9 +690,9 @@ block_11:
             }
         }
     } while (var_r30 != 0x30);
-    hook->unk0 = sp14;
-    hook->unk4 = 0.0f;
-    hook->unk8 = sp1C;
+    target->x = sp14;
+    target->y = 0.0f;
+    target->z = sp1C;
 #ifdef TARGET_PC
     return 1; // GC r3 = last frandmod(0x514) result (random, nearly always nonzero); callers test != 0 as success
 #endif
@@ -1566,17 +1566,17 @@ static void fn_1_41D4(f32 a, f32 b, f32 c) {
         temp_r31->unk14 = spC;
         temp_r31->unkC = sp10;
         temp_r31->unk18 = sp10;
-        temp_r31->field1C.i = 0.0f;
-        temp_r31->field20.i = 0.0f;
-        temp_r31->field24.i = 0.0f;
-        temp_r31->field30.i = 1.0f;
-        temp_r31->field2C.i = 1.0f;
-        temp_r31->field28.i = 1.0f;
+        temp_r31->field1C.f = 0.0f;
+        temp_r31->field20.f = 0.0f;
+        temp_r31->field24.f = 0.0f;
+        temp_r31->field30.f = 1.0f;
+        temp_r31->field2C.f = 1.0f;
+        temp_r31->field28.f = 1.0f;
         temp_r31->field40.i = 0;
         temp_r31->field48.i = (s32) (frandmod(0x2DU) + 0xF);
         temp_r31->field44.i = 0;
         temp_r31->field4C.i = (s32) (frandmod(0x14U) + 0x50);
-        temp_r31->field38.i = (f32) (temp_r31->unk8 / (f32) temp_r31->field4C.i);
+        temp_r31->field38.f = (f32) (temp_r31->unk8 / (f32) temp_r31->field4C.i);
         lbl_1_bss_73C += 1;
     }
 }
@@ -1668,7 +1668,7 @@ static void fn_1_4504(OMOBJ *obj) {
 loop_29:
         if (var_r29 < 4) {
             temp_r30 = lbl_1_bss_9AC[var_r29]->data;
-            if ((((temp_r30->unk8 - temp_r31->pos.x) * (temp_r30->unk8 - temp_r31->pos.x)) + ((temp_r30->unk30 - temp_r31->pos.z) * (temp_r30->unk30 - temp_r31->pos.z))) < 3025.0f) {
+            if ((((temp_r30->unk28 - temp_r31->pos.x) * (temp_r30->unk28 - temp_r31->pos.x)) + ((temp_r30->unk30 - temp_r31->pos.z) * (temp_r30->unk30 - temp_r31->pos.z))) < 3025.0f) {
                 var_r28 = 1;
             } else {
                 var_r28 = 0;
@@ -1731,11 +1731,11 @@ static void fn_1_4910(f32 a, f32 b, f32 c) {
         temp_r31->start.y = spC;
         temp_r31->pos.z = sp10;
         temp_r31->unk18 = sp10;
-        temp_r31->field1C.i = 0.0f;
+        temp_r31->field1C.f = 0.0f;
         temp_r31->field20.f = 0.0f;
-        temp_r31->field24.i = 0.0f;
+        temp_r31->field24.f = 0.0f;
         temp_r31->field30.f = 1.0f;
-        temp_r31->field2C.i = 1.0f;
+        temp_r31->field2C.f = 1.0f;
         temp_r31->field28.f = 1.0f;
         temp_r31->field40.i = 0;
         temp_r31->field48.i = frandmod(0x2DU);
@@ -1833,7 +1833,7 @@ static void fn_1_4C3C(OMOBJ *obj) {
 loop_29:
         if (var_r29 < 4) {
             temp_r30 = lbl_1_bss_9AC[var_r29]->data;
-            if ((((temp_r30->unk8 - temp_r31->pos.x) * (temp_r30->unk8 - temp_r31->pos.x)) + ((temp_r30->unk30 - temp_r31->pos.z) * (temp_r30->unk30 - temp_r31->pos.z))) < 3025.0f) {
+            if ((((temp_r30->unk28 - temp_r31->pos.x) * (temp_r30->unk28 - temp_r31->pos.x)) + ((temp_r30->unk30 - temp_r31->pos.z) * (temp_r30->unk30 - temp_r31->pos.z))) < 3025.0f) {
                 var_r28 = 1;
             } else {
                 var_r28 = 0;
