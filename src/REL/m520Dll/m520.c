@@ -421,16 +421,16 @@ void fn_1_5F90(void)
         if (frame == 0xA) {
             plNo = pd[lbl_1_data_9C][4 / 4];
             if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
-                GwPlayer[plNo].mgCoin = 10;
+                GwPlayer[plNo].mgCoinBonus = 10;
             }
             if (lbl_1_data_9C == 1) {
                 plNo = pd[1][4 / 4];
                 if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
-                    GwPlayer[plNo].mgCoin = 10;
+                    GwPlayer[plNo].mgCoinBonus = 10;
                 }
                 plNo = pd[2][4 / 4];
                 if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
-                    GwPlayer[plNo].mgCoin = 10;
+                    GwPlayer[plNo].mgCoinBonus = 10;
                 }
             }
         }
