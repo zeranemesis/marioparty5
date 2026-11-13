@@ -292,7 +292,16 @@ s32 fn_1_C418(s16 player);
 void fn_1_C64C(s16 player);
 void fn_1_CA38(s16 player, s16 objNo);
 s32 fn_1_CDD8(s16 player);
-void fn_1_FDB0(s16 player); /* part G4 */
+
+/* game.c part G4 */
+s32 fn_1_D0C4(s16 player, s16 limit);
+s32 fn_1_D9E0(s16 player);
+s32 fn_1_E160(s16 player, s16 objNo);
+void fn_1_E880(s16 player);
+s32 fn_1_E90C(s16 player, s16 objNo);
+void fn_1_F0C8(s16 player);
+s32 fn_1_F4A0(s16 player, s16 objNo);
+s32 fn_1_FDB0(s16 player);
 
 extern M549Impact lbl_1_bss_18[10];
 extern M549Ctrl lbl_1_bss_580;
