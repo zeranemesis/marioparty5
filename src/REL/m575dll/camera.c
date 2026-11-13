@@ -22,7 +22,7 @@ void fn_1_851C(M575Camera *self, s16 side, M575Main *main)
 
     memset(self, 0, sizeof(M575Camera));
     self->main = main;
-    self->camBit = lbl_1_data_278[side];
+    self->camBit = lbl_1_data_278[side * 4];
     fn_1_86A8(self, self->camBit);
     up.x = 0.0f;
     up.y = 1.0f;
