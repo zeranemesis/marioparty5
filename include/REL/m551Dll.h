@@ -2,7 +2,98 @@
 #define _M551DLL_H
 
 #include "humath.h"
+#include "game/object.h"
+#include "game/audio.h"
+#include "game/hu3d.h"
+#include "game/mg/timer.h"
+#include "game/mg/seqman.h"
 #include "game/mg/actman.h"
+
+typedef struct M551Vec3_s {
+    f32 x;
+    f32 y;
+    f32 z;
+} M551Vec3;
+
+/* camera block, 0x50 bytes (lbl_1_bss_38 points at an array of these, 0x148 bytes allocated) */
+typedef struct M551Cam_s {
+    s32 idx;
+    M551Vec3 pos;
+    f32 rotX;
+    f32 rotY;
+    f32 rotZ;
+    M551Vec3 center;
+    M551Vec3 up;
+    f32 zoom;
+    f32 aspect;
+    f32 vpX;
+    f32 vpY;
+    f32 vpW;
+    f32 vpH;
+    f32 fov;
+} M551Cam;
+
+/* initial camera values, 0x34 bytes (lbl_1_data_368) */
+typedef struct M551CamInit_s {
+    M551Vec3 center;
+    f32 rotX;
+    f32 rotY;
+    f32 rotZ;
+    f32 zoom;
+    f32 aspect;
+    f32 vpX;
+    f32 vpY;
+    f32 vpW;
+    f32 vpH;
+    f32 fov;
+} M551CamInit;
+
+/* light block, 0x3C bytes (lbl_1_bss_34) */
+typedef struct M551Light_s {
+    s16 id;
+    s16 pad_02;
+    M551Vec3 pos;
+    f32 rotX;
+    f32 rotY;
+    f32 rotZ;
+    M551Vec3 target;
+    M551Vec3 dir;
+    f32 dist;
+    GXColor color;
+} M551Light;
+
+/* shadow block, 0x50 bytes (lbl_1_bss_30) */
+typedef struct M551Shadow_s {
+    M551Vec3 pos;
+    f32 rotX;
+    f32 rotY;
+    f32 rotZ;
+    M551Vec3 target;
+    u8 pad_24[0xC];
+    M551Vec3 up;
+    u8 pad_3C[0xC];
+    f32 dist;
+    f32 tpLvl;
+} M551Shadow;
+
+/* particle template / live work entry, 0x38 bytes (lbl_1_data_4D0) */
+typedef struct M551PtclWork_s {
+    s16 unk0;
+    s16 pad_02;
+    u8 colStart[4];
+    u8 colEnd[4];
+    f32 velX;
+    f32 velY;
+    f32 velZ;
+    f32 mulX;
+    f32 mulY;
+    f32 mulZ;
+    f32 accelY;
+    f32 pad_28;
+    f32 scaleStep;
+    f32 alphaStep;
+    f32 colorStep;
+} M551PtclWork;
 
 /* per-character input slot, 0x1C bytes */
 typedef struct M551CharSlot_s {
@@ -214,17 +305,6 @@ typedef struct M551ItemModel_s {
     s16 mdl[4];          /* 0x00 */
 } M551_ITEMMODEL;
 
-/* The object behind lbl_1_bss_34; only the four ambient bytes are read here. */
-typedef struct M551Amb_s {
-    s32 pad0[0xE];
-    u8 unk38;
-    u8 unk39;
-    u8 unk3A;
-    u8 unk3B;
-} M551_AMB;
-
-extern M551_AMB *lbl_1_bss_34;
-
 /* The record whose s32 at 0x08 fn_1_117B0 range-checks. */
 typedef struct M551RangeChk_s {
     s32 pad0[2];         /* 0x00 */
@@ -239,18 +319,5 @@ typedef struct M551Work_s {
 } M551_WORK;
 
 extern M551_WORK lbl_1_bss_0;
-extern s32 lbl_1_bss_30;
-
-extern s8 lbl_1_bss_3C[0x16760];
-extern s16 lbl_1_bss_1679C[0x54];
-extern M551_ITEM lbl_1_bss_16844[0x12];
-extern M551_PLAYERWORK lbl_1_bss_16A84[2];
-extern M551_FLOW lbl_1_bss_16CB4;
-extern s32 lbl_1_bss_16D5C[0xE];
-extern f32 lbl_1_bss_16D94[0x245];
-extern s16 lbl_1_bss_176A8[0x174];
-extern M551_ITEMMODEL lbl_1_bss_179A0[0xC];
-extern s32 lbl_1_bss_17998;
-extern s16 lbl_1_bss_1799C;
 
 #endif
