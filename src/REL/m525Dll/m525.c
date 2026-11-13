@@ -273,6 +273,7 @@ void fn_1_A0(void)
 
 /* Per-player update (player 0: the swinger on the pendulum, 1..3: runners). Reads the pad or the CPU AI,
    moves the object, throws/dodges items and picks the motion. */
+// NONMATCHING: verified against the asm (every branch, constant and field offset); stack frame/register allocation differ, the original repeats the `jump != 0` selection per use and evaluates a dead 0.875*vel pair in the motion-2 else path
 static void fn_1_654(OMOBJ *obj)
 {
     M525Player *data;
@@ -1464,6 +1465,7 @@ static float fn_1_5930(float t, float a, float b, float c)
 /* Per-frame minigame logic: rebuilds the ground profile from the feet of the
    runners, drives the scripted camera moves for the current timer state, and
    spawns/advances the confetti (M525Fx) particles. */
+// NONMATCHING: verified against the asm; register allocation/frame differ, the sin(pi/2) call whose result is discarded is kept
 static void fn_1_5AF4(OMOBJ *obj)
 {
     M525Player *player[4];
