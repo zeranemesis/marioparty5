@@ -173,7 +173,7 @@ s32 lbl_1_bss_14;
 s32 lbl_1_bss_24;
 f32 lbl_1_bss_28;
 void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx);
-void fn_1_97AC(OMOBJ *obj, Mtx *mtx);
+void fn_1_97AC(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_9F2C(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_A3C4(OMOBJ *obj);
@@ -371,7 +371,7 @@ f32 fn_1_2D68(f32 x, f32 a, f32 b, f32 w)
  * the object's callback runs first, then the bone is drawn with a fixed
  * 0/400/0 offset matrix post-multiplied by the caller's matrix. */
 // NONMATCHING: none known (verified equivalent)
-void fn_1_97AC(OMOBJ *obj, Mtx *mtx)
+void fn_1_97AC(HU3DMODEL *modelP, Mtx *mtx)
 {
     Mtx boneMtx;
 
