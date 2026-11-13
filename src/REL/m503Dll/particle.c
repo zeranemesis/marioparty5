@@ -157,10 +157,10 @@ void fn_1_CB48(HU3DMODEL *modelP, Mtx *mtx)
             GXColor1u32(0xA0);
             for (j = 0; j < 0x20; j++) {
                 GXPosition3f32(scale * sinTbl[j], 0.0f, scale * cosTbl[j]);
-                GXColor1u32(0x16);
+                GXColor1u32(0x10);
             }
             GXPosition3f32(sinTbl[0] * scale, 0.0f, cosTbl[0] * scale);
-            GXColor1u32(0x16);
+            GXColor1u32(0x10);
             GXEnd();
 #else
             GXWGFifo.f32 = 0.0f;
@@ -171,12 +171,12 @@ void fn_1_CB48(HU3DMODEL *modelP, Mtx *mtx)
                 GXWGFifo.f32 = scale * sinTbl[j];
                 GXWGFifo.f32 = 0.0f;
                 GXWGFifo.f32 = scale * cosTbl[j];
-                GXWGFifo.u32 = 0x16;
+                GXWGFifo.u32 = 0x10;
             }
             GXWGFifo.f32 = sinTbl[0] * scale;
             GXWGFifo.f32 = 0.0f;
             GXWGFifo.f32 = cosTbl[0] * scale;
-            GXWGFifo.u32 = 0x16;
+            GXWGFifo.u32 = 0x10;
 #endif
         }
     }
