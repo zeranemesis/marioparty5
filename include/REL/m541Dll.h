@@ -54,9 +54,9 @@ typedef struct M541ModelWork_s {
     float time;     /* 0x0C */
     float timeOld;  /* 0x10 */
     float maxTime;  /* 0x14 */
-    u32 attrReset;  /* 0x18 */
+    u32 attr;       /* 0x18 */
     u32 attrOld;    /* 0x1C */
-    u32 attr;       /* 0x20 */
+    u32 attrReset;  /* 0x20 */
     s32 endCheck;   /* 0x24 */
     s16 nextF;      /* 0x28 */
     s16 nextMotNo;  /* 0x2A */
@@ -86,26 +86,45 @@ typedef struct M541Player_s {
     s8 stkY;        /* 0x18 */
     s8 subStkX;     /* 0x19 */
     s8 subStkY;     /* 0x1A */
-    s8 trigL;       /* 0x1B */
-    s8 trigR;       /* 0x1C */
-    s8 dStk;        /* 0x1D */
-    s8 dStkRep;     /* 0x1E */
+    u8 trigL;       /* 0x1B */
+    u8 trigR;       /* 0x1C */
+    u8 dStk;        /* 0x1D */
+    u8 dStkRep;     /* 0x1E */
 } M541_PLAYER;
 
-/* The stage object itself, 0x2E8 bytes, shared with stage.c. */
+/* The stage object itself (0x2E8 bytes on GC; use sizeof), owned by stage.c (agent S). */
 typedef struct M541Stage_s {
     s16 unk0;            /* 0x00 */
     s16 unk2;            /* 0x02 */
     M541_PLAYER player[2]; /* 0x04, stride 0x1C */
     u8 unk3C[0x1C];      /* 0x3C */
     M541_MODEL *model;   /* 0x58 */
-    u8 unk5C[0x18];      /* 0x5C */
-    M541_MODELWORK work[2]; /* 0x74, stride 0x54 */
-    u8 unk11C[0x54];     /* 0x11C */
+    s32 *motData[3];     /* 0x5C, per player: motion data ids for CharMotionCreate */
+    s16 *motId[3];       /* 0x68, per player: created motion ids (8 each) */
+    M541_MODELWORK work[3]; /* 0x74, stride 0x54 */
     s32 *dataIds;        /* 0x170, array of s32 model data ids */
-    u8 unk174Pad[4];     /* 0x174 */
+    s16 unk174;          /* 0x174 */
     s32 unk178;          /* 0x178 */
+    u8 unk17C[0x16C];    /* 0x17C */
 } M541_STAGE;
+
+/* stage.c (agent S) */
+extern M541_STAGE *lbl_1_bss_3738;
+void fn_1_19AB0(M541_STAGE *stage, M541_MODEL *model, s32 *dataIds);
+void fn_1_19CFC(s16 arg);
+void fn_1_19D10(s16 idx, s32 *val);
+void fn_1_19D30(s16 idx, s16 *val);
+void fn_1_19D50(void);
+void fn_1_19D54(void);
+void fn_1_1A16C(void);
+void fn_1_1A320(void);
+void fn_1_1A6D8(void);
+void fn_1_1A6DC(void);
+void fn_1_1A6E0(void);
+void fn_1_1A6E4(void);
+void fn_1_1A6E8(void);
+void fn_1_1A6EC(void);
+void fn_1_1A6F0(void);
 
 /* Per-player work of game.c (lbl_1_bss_2614, stride 0x90). */
 typedef struct M541PlayerWork_s {
@@ -119,7 +138,7 @@ typedef struct M541PlayerWork_s {
     s16 anim2;       /* 0x10 */
     s16 anim;        /* 0x12 */
     float tpLvl;     /* 0x14 */
-    u8 pad18[4];     /* 0x18 */
+    u8 *colBuf;      /* 0x18, saved material colours (M2) */
     HuVecF pos;      /* 0x1C */
     float velX;      /* 0x28 */
     float velY;      /* 0x2C */
@@ -208,7 +227,11 @@ typedef struct M541Flow_s {
     float angVelZ; /* 0x58 */
     s16 angCount;  /* 0x5C */
     float angAcc;  /* 0x60 */
-    u8 pad64[0x20]; /* 0x64 */
+    u8 pad64[4];    /* 0x64 */
+    s32 bgmId;      /* 0x68 */
+    s32 jingleId;   /* 0x6C */
+    u8 pad70[4];    /* 0x70 */
+    s32 fxId[4];    /* 0x74 */
     s16 playerHook[4]; /* 0x84, stride 2 */
 } M541_FLOW;
 
@@ -240,5 +263,32 @@ void fn_1_2AD4(M541_STAGE *stage);
 s32 fn_1_5C98(void);
 s32 fn_1_5DA4(void);
 s32 fn_1_5DD8(void);
+
+/* ---- M2 (m541.s fn_1_1A70..fn_1_2AB4) ---- */
+typedef struct M541Mg_s {
+    s16 colMdl[2];
+    MGPLAYER *player[4];
+} M541_MG;
+extern M541_MG lbl_1_bss_0;
+extern M541_PLAYERWORK lbl_1_bss_2614[2];
+extern M541_FLOW lbl_1_bss_2734;
+extern s16 lbl_1_data_360[4];
+
+s32 fn_1_1A70(M541_STAGE *stage, s16 pad, s16 idx);
+void fn_1_1DC4(void);
+void fn_1_1DC8(s16 pad);
+void fn_1_2280(s16 idx);
+s32 fn_1_2378(s16 idx, float scale);
+void fn_1_24E8(s16 idx);
+void fn_1_25E4(void);
+void fn_1_2614(void);
+void fn_1_2644(s16 which, s16 speed);
+void fn_1_26AC(s16 which);
+void fn_1_270C(s16 idx);
+void fn_1_27C8(s16 idx, s16 vol, s16 pan);
+void fn_1_2894(s16 idx, s16 pan);
+void fn_1_2924(s16 idx);
+void fn_1_29EC(s16 idx);
+void fn_1_2AB4(void);
 
 #endif
