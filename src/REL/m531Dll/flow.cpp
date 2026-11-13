@@ -255,6 +255,7 @@ void fn_1_2CE8(OMOBJ *obj)
     self->m_vt->m_update1(self);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CFlowCamera *fn_1_2D30(CFlowCamera *self, OMOBJMAN *objMan)
 {
     Vec up;
@@ -301,6 +302,7 @@ CFlowCamera *fn_1_2F64(CFlowCamera *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_2FD4(CFlowCamera *self)
 {
     f32 unused;
@@ -319,6 +321,7 @@ void fn_1_2FD4(CFlowCamera *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_30CC(CFlowCamera *self)
 {
     Vec *pos;
@@ -344,6 +347,7 @@ void fn_1_31F8(CFlowCamera *self)
     self->m_angle = 180.0 * (atan2(diff.x, diff.z) / 3.141592653589793);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void *fn_1_3264(m531::CFlow *self, s16 flag)
 {
     s32 i;
@@ -394,6 +398,7 @@ void fn_1_33D4(void)
 {
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_33D8(m531::CFlow *self)
 {
     CFlowCamera *cam;
@@ -501,6 +506,7 @@ void fn_1_33D8(m531::CFlow *self)
     fn_1_BC40(self, 1);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_3C14(m531::CFlow *self)
 {
     if (WipeCheckEnd() == 0) {
@@ -513,6 +519,7 @@ void fn_1_3C14(m531::CFlow *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_3C8C(m531::CFlow *self)
 {
     s32 i;
@@ -536,6 +543,7 @@ void fn_1_3C8C(m531::CFlow *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_3D74(m531::CFlow *self)
 {
     s32 i;
@@ -569,6 +577,7 @@ void fn_1_3D74(m531::CFlow *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_3F60(m531::CFlow *self)
 {
     CFlowCamera *cam;
@@ -635,6 +644,7 @@ void fn_1_3F60(m531::CFlow *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_41EC(m531::CFlow *self)
 {
     s32 i;
@@ -752,6 +762,7 @@ void fn_1_41EC(m531::CFlow *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_491C(m531::CFlow *self)
 {
     switch (self->m_step) {
@@ -774,6 +785,7 @@ void fn_1_491C(m531::CFlow *self)
 }
 
 // Decides the contest result from the cleaning progress; returns 1 once it is final.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 u8 fn_1_4A18(m531::CFlow *self, s32 time)
 {
     void *clean;
@@ -818,6 +830,7 @@ u8 fn_1_4A18(m531::CFlow *self, s32 time)
     return 1;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 f32 fn_1_4B6C(m531::CFlow *flow, s32 mode, s32 col, s32 row)
 {
     f32 value;
@@ -831,6 +844,7 @@ f32 fn_1_4B6C(m531::CFlow *flow, s32 mode, s32 col, s32 row)
 }
 
 #pragma opt_level 4
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_4BC0(m531::CFlow *flow, s32 mode, s32 col, s32 row, f32 value)
 {
     if (mode == 0) {
@@ -1117,6 +1131,7 @@ u32 *fn_1_5264(u32 *first, u32 *last, PartCmp *cmp)
 }
 
 // Selection sort for the short ranges.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_562C(u32 *first, u32 *last)
 {
     u32 *p;

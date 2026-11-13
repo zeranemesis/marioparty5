@@ -194,6 +194,7 @@ CleanSideVt lbl_1_data_4A0 = {
 
 extern "C" {
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void *fn_1_D62C(CClean *self, struct Process_s *objMan)
 {
     CCleanSide *side0;
@@ -236,6 +237,7 @@ void *fn_1_D62C(CClean *self, struct Process_s *objMan)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CSidePtr *fn_1_D7F0(CSidePtr *self, s16 flag)
 {
     if (self != 0) {
@@ -250,6 +252,7 @@ CSidePtr *fn_1_D7F0(CSidePtr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CClean *fn_1_D86C(CClean *self, s16 flag)
 {
     if (self != 0) {
@@ -265,6 +268,7 @@ CClean *fn_1_D86C(CClean *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CClean *fn_1_D8F8(CClean *self, s16 flag)
 {
     if (self != 0) {
@@ -295,6 +299,7 @@ CClean *fn_1_D8F8(CClean *self, s16 flag)
 }
 
 // Winner check: mode 0 compares the cleaned percentages, otherwise a side wins by reaching 100%.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 s32 fn_1_DA00(CClean *self, u8 mode)
 {
     s32 a = (s32)(100.0f * fn_1_F744(self->m_side[0].m_ptr));
@@ -318,6 +323,7 @@ s32 fn_1_DA00(CClean *self, u8 mode)
     return 2;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CCleanSide *fn_1_DAEC(CClean *self, s32 side)
 {
     switch (side) {
@@ -330,6 +336,7 @@ CCleanSide *fn_1_DAEC(CClean *self, s32 side)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CCleanSide *fn_1_DB1C(CCleanSide *self, struct Process_s *objMan, f32 x0, f32 x1, f32 z0, f32 z1)
 {
     s32 se;
@@ -407,6 +414,7 @@ static inline void VecFree2(CFloatVec *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CFloatVec *fn_1_DD90(CFloatVec *self, s16 flag)
 {
     if (self != 0) {
@@ -418,6 +426,7 @@ CFloatVec *fn_1_DD90(CFloatVec *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CFloatVec *fn_1_DE24(CFloatVec *self, s16 flag)
 {
     if (self != 0) {
@@ -429,6 +438,7 @@ CFloatVec *fn_1_DE24(CFloatVec *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CFloatVec *fn_1_DEB0(CFloatVec *self, s16 flag)
 {
     if (self != 0) {
@@ -440,6 +450,7 @@ CFloatVec *fn_1_DEB0(CFloatVec *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CCleanSide *fn_1_DF34(CCleanSide *self, s16 flag)
 {
     if (self != 0) {
@@ -458,6 +469,7 @@ CCleanSide *fn_1_DF34(CCleanSide *self, s16 flag)
 
 // Fills the 128x128 height grid with the dissolve pattern: a lobed disc that is 240 inside
 // and fades out over the last 0.08 of the radius.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_E010(CCleanSide *self)
 {
     f32 *p;
@@ -515,6 +527,7 @@ void fn_1_E010(CCleanSide *self)
 }
 
 // Builds the 16x32 IA8 distortion pattern (concentric rings) in tiled 4x4 order.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_E31C(CCleanSide *self)
 {
     s32 y;
@@ -538,6 +551,7 @@ void fn_1_E31C(CCleanSide *self)
     GXInitTexObj(&self->m_texWave, CLEAN_WAVE(self), 0x10, 0x20, GX_TF_IA8, GX_REPEAT, GX_REPEAT, GX_FALSE);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_E560(CCleanSide *self)
 {
     self->m_anim = HuSprAnimRead(HuDataSelHeapReadNum(0x590005, 0x10000000, 2));
@@ -571,6 +585,7 @@ static inline s32 CleanPackBlock(u8 **dst, const f32 *src, s32 stride, s32 thres
     return count;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 s32 fn_1_E5A4(u8 **dst, const f32 *src, s32 stride, s32 thresh)
 {
     return CleanPackBlock(dst, src, stride, thresh);
@@ -597,6 +612,7 @@ static inline void CleanPack(CCleanSide *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_E694(CCleanSide *self)
 {
     CleanPack(self);
@@ -644,12 +660,14 @@ static inline u8 CleanCell(CCleanSide *self, const Vec *pos, s32 *outX, s32 *out
     return outside;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 u8 fn_1_E800(CCleanSide *self, const Vec *pos, s32 *outX, s32 *outZ)
 {
     return CleanCell(self, pos, outX, outZ);
 }
 
 // (Re)builds the brush profile for the given radius: 1 - r^2 over a w x h block of cells.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_E9C8(CCleanSide *self, f32 radius)
 {
     Vec pos = { 0.0f, 0.0f, 0.0f };
@@ -699,6 +717,7 @@ void fn_1_E9C8(CCleanSide *self, f32 radius)
 }
 
 // Applies the brush at pos: adds strength * profile to the heights under it (clamped to 0..255).
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_EE68(CCleanSide *self, const Vec *pos, f32 size, f32 strength)
 {
     Vec lo = { 0.0f, 0.0f, 0.0f };
@@ -784,6 +803,7 @@ void fn_1_EE68(CCleanSide *self, const Vec *pos, f32 size, f32 strength)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_F624(CCleanSide *self, const Vec *pos, f32 size)
 {
     fn_1_EE68(self, pos, size, 32.0f);
@@ -801,6 +821,7 @@ void fn_1_F6AC(CCleanSide *self, const Vec *pos)
     self->m_center.z = pos->z;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_F6D4(CCleanSide *self, f32 value)
 {
     f32 v;
@@ -815,12 +836,14 @@ void fn_1_F6D4(CCleanSide *self, f32 value)
     self->m_blend = v;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 f32 fn_1_F744(CCleanSide *self)
 {
     return 1.0f - ((f32)self->m_remain / (f32)self->m_total);
 }
 
 // Fraction of the cells under the rectangle (a, b) that are still dirty.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 f32 fn_1_F7BC(CCleanSide *self, const Vec *a, const Vec *b)
 {
     Vec lo;
@@ -940,6 +963,7 @@ static inline void CleanErode(CCleanSide *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_FDC8(CCleanSide *self)
 {
     CleanErode(self);
@@ -967,6 +991,7 @@ static inline void CleanScroll(CCleanSide *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_100CC(CCleanSide *self)
 {
     CleanScroll(self);
@@ -979,6 +1004,7 @@ void fn_1_10294(CCleanSide *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_102E0(CCleanSide *self)
 {
     if (self->m_seHandle >= 0) {
@@ -988,6 +1014,7 @@ void fn_1_102E0(CCleanSide *self)
 }
 
 // Per-frame update: a six-state cycle (0 brush sound, 2 erosion, 4 mask rebuild), then the scroll.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_10330(CCleanSide *self)
 {
     if (self->m_state == 0) {
@@ -1012,6 +1039,7 @@ void fn_1_10330(CCleanSide *self)
 }
 
 // Draw hook: the mask is drawn through an indirect warp (distortion texture) over the board quad.
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_109C0(CCleanSide *self, Mtx mtx)
 {
     static const f32 kIndMtx[2][3] = { { 0.1f, 0.0f, 0.0f }, { 0.0f, 0.1f, 0.0f } };
@@ -1094,6 +1122,7 @@ void fn_1_109C0(CCleanSide *self, Mtx mtx)
 }
 
 // vector<float>::resize
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_110C8(CFloatVec *vec, u32 size, const f32 *value)
 {
     if (size > vec->m_size) {
@@ -1106,6 +1135,7 @@ void fn_1_110C8(CFloatVec *vec, u32 size, const f32 *value)
 }
 
 // vector<float>::erase(first, last)
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 f32 *fn_1_11178(CFloatVec *vec, f32 *first, f32 *last)
 {
     f32 *end;
@@ -1180,6 +1210,7 @@ static inline void VecFill(f32 *dst, u32 n, const f32 *value)
 }
 
 // vector<float>::insert(pos, count, value)
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_11220(CFloatVec *vec, f32 *pos, u32 count, const f32 *value)
 {
     u32 maxSize;

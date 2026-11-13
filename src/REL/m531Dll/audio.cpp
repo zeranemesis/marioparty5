@@ -22,6 +22,7 @@ void fn_1_D378(int seNo, Point3d *pos);
     outY = 240.0f + (view.y * (240.0f / h));                                                       \
     outZ = 0.0f
 
+// NONMATCHING: register allocation and statement order of the pan computation differ
 void fn_1_CB98(Point3d *pos, s16 cameraBit, Point3d *out)
 {
     Vec view;
@@ -37,6 +38,7 @@ void fn_1_CB98(Point3d *pos, s16 cameraBit, Point3d *out)
     PROJECT(i, out->x, out->y, out->z);
 }
 
+// NONMATCHING: register allocation and statement order of the pan computation differ
 int fn_1_CDF8(int seId, Point3d *pos)
 {
     Vec view;
@@ -57,6 +59,7 @@ int fn_1_CDF8(int seId, Point3d *pos)
     return se;
 }
 
+// NONMATCHING: register allocation and statement order of the pan computation differ
 void fn_1_D0C4(s16 charNo, Point3d *pos)
 {
     Vec view;
@@ -74,6 +77,7 @@ void fn_1_D0C4(s16 charNo, Point3d *pos)
     CharModelVoicePanSet(charNo, (s16)(48.0f + (32.0f * (scr.x / 640.0f))));
 }
 
+// NONMATCHING: register allocation and statement order of the pan computation differ
 void fn_1_D378(int seNo, Point3d *pos)
 {
     Vec view;

@@ -128,6 +128,7 @@ static u8 lbl_1_data_2BC[5] = { 0, 0, 1, 0, 0 };
 
 static const s32 kPotMotion[2] = { 0x590012, 0x590013 };
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CStageSet *fn_1_7BB0(CStageSet *self, OMOBJMAN *objMan)
 {
     s32 i;
@@ -173,6 +174,7 @@ CStageSet *fn_1_7BB0(CStageSet *self, OMOBJMAN *objMan)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CStageSet *fn_1_7E40(CStageSet *self, s16 flag)
 {
     s32 i;
@@ -239,6 +241,7 @@ CObjPot *fn_1_7FF8(CObjPot *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CObjAnim *fn_1_805C(CObjAnim *self, OMOBJMAN *objMan, s32 dataNum, s32 index)
 {
     __ct__Q24m5316CStageFP9Process_sissUs(self, objMan, dataNum, 3, 4, 1);
@@ -256,6 +259,7 @@ CObjAnim *fn_1_805C(CObjAnim *self, OMOBJMAN *objMan, s32 dataNum, s32 index)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_8124(CObjAnim *self)
 {
     s16 model = self->m_base.m_model;
@@ -326,6 +330,7 @@ static inline void Obj81F4(CObjAnim *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_81F4(CObjAnim *self)
 {
     Obj81F4(self);
@@ -377,6 +382,7 @@ static inline void Obj8410(CObjAnim *self)
     Hu3DModelScaleSet(model, self->m_anim.x, self->m_anim.y, self->m_anim.z);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_8410(CObjAnim *self)
 {
     Obj8410(self);
@@ -398,6 +404,7 @@ void fn_1_8750(CObjAnim *self)
     self->m_frame = self->m_frame + 1;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CObjPot *fn_1_8CD4(CObjPot *self, OMOBJMAN *objMan, s32 idx, s32 modelSel, Vec *pos, Vec *rot, u8 flag)
 {
     s16 model;
@@ -434,6 +441,7 @@ CObjPot *fn_1_8CD4(CObjPot *self, OMOBJMAN *objMan, s32 idx, s32 modelSel, Vec *
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CObjCloud *fn_1_8E88(CObjCloud *self, OMOBJMAN *objMan, Vec *pos)
 {
     s16 model;
@@ -450,6 +458,7 @@ CObjCloud *fn_1_8E88(CObjCloud *self, OMOBJMAN *objMan, Vec *pos)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_8FA0(CObjCloud *self)
 {
     s16 model;
@@ -463,6 +472,7 @@ void fn_1_8FA0(CObjCloud *self)
     Hu3DModelPosSet(model, self->m_base.m_pos.x, self->m_base.m_pos.y, self->m_base.m_pos.z);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CObjAnim *fn_1_9064(CObjAnim *self, s16 flag)
 {
     if (self != NULL) {

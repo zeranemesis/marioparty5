@@ -162,6 +162,7 @@ f32 fn_1_91D0(f32 from, f32 to)
     return diff;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CPlayer *fn_1_9270(CPlayer *self, m531::CFlow *flow, void *arg2, PlayerMotInfo *tbl, s32 num, s16 playerNo, s32 team)
 {
     void *effect;
@@ -204,6 +205,7 @@ CPlayer *fn_1_9270(CPlayer *self, m531::CFlow *flow, void *arg2, PlayerMotInfo *
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CPlayer *fn_1_948C(CPlayer *self, s16 flag)
 {
     if (self != NULL) {
@@ -222,6 +224,7 @@ CPlayer *fn_1_948C(CPlayer *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9520(CPlayer *self)
 {
     fn_1_C8D8(&self->m_base, 0xB);
@@ -230,11 +233,13 @@ void fn_1_9520(CPlayer *self)
     Hu3DModelAttrSet(self->m_hatModel, 0x40000002);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_95DC(CPlayer *self)
 {
     CharModelHookDustCreate(self->m_base.m_charNo, PlayerItemHook(self->m_base.m_charNo));
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_964C(CPlayer *self)
 {
     self->m_unkD4 = self->m_unkD4 + 0.016666666666666666;
@@ -260,6 +265,7 @@ void fn_1_964C(CPlayer *self)
     PlayerPanSet(self->m_base.m_charNo, &pos);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_97E4(CPlayer *self)
 {
     void *effect;
@@ -272,6 +278,7 @@ void fn_1_97E4(CPlayer *self)
     PlayerPanSet(self->m_base.m_charNo, &pos);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9878(CPlayer *self)
 {
     u8 arrived = 0;
@@ -328,6 +335,7 @@ void fn_1_9878(CPlayer *self)
     PlayerPanSet(self->m_base.m_charNo, &pos);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9BF4(CPlayer *self)
 {
     static m531::CFlow *s_flow = self->m_flow;
@@ -338,6 +346,7 @@ void fn_1_9BF4(CPlayer *self)
     PlayerPanSet(self->m_base.m_charNo, &pos);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9CC4(CPlayer *self)
 {
     s32 dir;
@@ -366,6 +375,7 @@ void fn_1_9CC4(CPlayer *self)
     self->m_se = HuAudFXPlay(se[self->m_side]);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9E54(CPlayer *self)
 {
     CharModelHookDustCreate(self->m_base.m_charNo, PlayerItemHook(self->m_base.m_charNo));
@@ -385,6 +395,7 @@ void fn_1_9EF4(CPlayer *self)
     fn_1_C83C(&self->m_base);
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9F1C(CPlayer *self)
 {
     static m531::CFlow *s_flow = self->m_flow;
@@ -398,6 +409,7 @@ void fn_1_9F1C(CPlayer *self)
     self->m_unk100 = self->m_unk100 + 1;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9FFC(CPlayer *self)
 {
     s32 row;
@@ -456,6 +468,7 @@ void fn_1_9FFC(CPlayer *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_A2C8(CPlayer *self, s32 exCol, s32 exRow)
 {
     s32 row;
@@ -519,6 +532,7 @@ void fn_1_A2C8(CPlayer *self, s32 exCol, s32 exRow)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 f32 fn_1_A568(CPlayer *self)
 {
     Vec a;
@@ -548,6 +562,7 @@ f32 fn_1_A568(CPlayer *self)
 
 static const s32 kFollowTbl[4] = { 0x36, 0x2A, 0x1E, 0x18 };
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_A714(CPlayer *self, s16 dif)
 {
     Vec diff;
@@ -607,6 +622,7 @@ void fn_1_A714(CPlayer *self, s16 dif)
     self->m_base.m_stickX = self->m_dir << 7;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_AA98(CPlayer *self)
 {
     Mtx mtx;
@@ -643,6 +659,7 @@ void fn_1_AA98(CPlayer *self)
     }
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_ACF8(CPlayer *self)
 {
     Vec newPos;
@@ -696,6 +713,7 @@ void fn_1_ACF8(CPlayer *self)
     self->m_base.m_pos.z = newPos.z;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_B0BC(CPlayer *self)
 {
     Vec cPos;
@@ -780,6 +798,7 @@ void fn_1_B0BC(CPlayer *self)
 
 static const s32 kRunnerData[2] = { 0x590006, 0x590007 };
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 CPlayerRunner *fn_1_B55C(CPlayerRunner *self, OMOBJMAN *objMan, PlayerMotInfo *tbl, s32 num, s32 dataNum)
 {
     s32 i;
@@ -839,6 +858,7 @@ CPlayerRunner *fn_1_B728(CPlayerRunner *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_B7F4(CPlayerRunner *self)
 {
     s32 i;
