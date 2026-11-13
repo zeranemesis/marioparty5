@@ -13,6 +13,7 @@
 #include "game/gamemes.h"
 #include "game/mg/actman.h"
 #include "game/mg/colman.h"
+#include <math.h>
 
 /* lbl_1_bss_5C8 is read both as floats and as raw ints by the target */
 typedef union M520State_u {
@@ -90,10 +91,19 @@ extern void (*_dtors[])(void);
 extern void (*_ctors[])(void);
 extern void ObjectSetup(void);
 extern void fn_1_5F90(void);
-/* the m2c draft reads these two as saved-register scratch and the matrices it
- * builds for the ortho overlay pass */
-SHARED_SYM extern u8 esprite[];
-SHARED_SYM extern u8 espanim[];
+/* the sprite pool lives in the DOL (src/game/esprite.c); same views as there */
+typedef struct esprite_s {
+    s16 memberNo;
+    s16 animNo;
+} ESPRITE;
+typedef struct espanim_s {
+    unsigned int dataNum;
+    u16 useCnt;
+    ANIMDATA *anim;
+} ESPANIM;
+SHARED_SYM extern ESPRITE esprite[];
+SHARED_SYM extern ESPANIM espanim[];
+void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 extern void fn_1_43BC(OMOBJ *);
 extern void fn_1_B70(OMOBJ *);
 
@@ -141,35 +151,15 @@ void fn_1_7830(HU3DMODEL *modelP, f32 (*mtx)[3][4])
 
             r30 = (s32) (128.0 + (127.0 * cos((M_PI * (360.0f * t)) / 180.0)));
             r29 = (s32) (128.0 + (127.0 * cos((M_PI * (2.0f * (360.0f * t))) / 180.0)));
-            *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-            *(f32 *) (uintptr_t) 0xCC008000 = (f32) r31 / 480.0f;
-            *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-            *(u32 *) (uintptr_t) 0xCC008000 = 0;
-            *(u8 *) (uintptr_t) 0xCC008000 = (u8) r29;
-            *(u8 *) (uintptr_t) 0xCC008000 = (u8) r30;
-            *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-            *(f32 *) (uintptr_t) 0xCC008000 = 0.05f;
-            *(f32 *) (uintptr_t) 0xCC008000 = (f32) r31 / 480.0f;
-            *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-            *(u32 *) (uintptr_t) 0xCC008000 = 0;
-            *(u8 *) (uintptr_t) 0xCC008000 = (u8) r29;
-            *(u8 *) (uintptr_t) 0xCC008000 = (u8) r30;
-            *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
+            GXPosition3f32(0.0f, (f32) r31 / 480.0f, 0.0f);
+            GXColor4u8(0, (u8) r29, (u8) r30, 0xFF);
+            GXPosition3f32(0.05f, (f32) r31 / 480.0f, 0.0f);
+            GXColor4u8(0, (u8) r29, (u8) r30, 0xFF);
         }
-        *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-        *(f32 *) (uintptr_t) 0xCC008000 = (f32) r31 / 480.0f;
-        *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-        *(u32 *) (uintptr_t) 0xCC008000 = 0;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) r29;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) r30;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(f32 *) (uintptr_t) 0xCC008000 = 0.05f;
-        *(f32 *) (uintptr_t) 0xCC008000 = (f32) r31 / 480.0f;
-        *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-        *(u32 *) (uintptr_t) 0xCC008000 = 0;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) r29;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) r30;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
+        GXPosition3f32(0.0f, (f32) r31 / 480.0f, 0.0f);
+        GXColor4u8(0, (u8) r29, (u8) r30, 0xFF);
+        GXPosition3f32(0.05f, (f32) r31 / 480.0f, 0.0f);
+        GXColor4u8(0, (u8) r29, (u8) r30, 0xFF);
         GXSetCopyFilter(0, RenderMode->sample_pattern, 0, RenderMode->vfilter);
         GXSetTexCopySrc(0, 0, 0x20, 0x20);
         GXSetTexCopyDst(0x20, 0x20, GX_CTF_GB8, 0);
@@ -201,6 +191,7 @@ s16 print8(s16 x, s16 y, float scale, char *str, ...);
  * the constants are lbl_1_rodata_10 (25, the zoom step), _18 (0.03125, the
  * horizontal nudge), _20 (-32, the vertical nudge divisor), _30/_38 (PI/180).
  */
+// NONMATCHING: debug-only camera nudge; the unused eye/centre vectors are kept in different stack slots
 void fn_1_A0(void)
 {
     f32 cx;
@@ -751,15 +742,16 @@ void fn_1_7014(HU3DMODEL *modelP, f32 (*mtx)[3][4])
     GXSetTevDirect(GX_TEVSTAGE0);
 }
 /*
- * Draws the stage-select markers: transforms the four corner anchors through
- * the view matrix, then emits one textured quad per active slot. The slot's
- * unk18 drives both the texture cell (unk18/3, clamped to 8) and the vertex
- * alpha (a ramp up, a hold, then a ramp down).
+ * Draws the particle sprites: transforms the four camera-facing corner anchors
+ * through the view matrix, then emits one textured quad per active slot. The
+ * slot's age (word 6) drives both the texture cell and the vertex alpha (a
+ * ramp up, a hold, then a ramp down).
  */
-void fn_1_6640(f32 (*arg1)[4])
+// NONMATCHING: register allocation of the per-slot temporaries differs
+void fn_1_6640(HU3DMODEL *modelP, f32 (*mtx)[3][4])
 {
     Point3d pts[4];
-    f32 m[8];
+    f32 m[12];
     s32 i;
     s32 cell;
     s32 alpha;
@@ -767,16 +759,16 @@ void fn_1_6640(f32 (*arg1)[4])
     f32 v0;
     f32 u1;
     f32 v1;
+    s32 age;
+    f32 *rec;
 
-    for (i = 0; i < 0xB; i++) {
-        ((f32 *) m)[i] = *(f32 *) (lbl_1_rodata_460 + (i * 4));
+    for (i = 0; i < 12; i++) {
+        m[i] = lbl_1_rodata_460[i];
     }
-    m[2] *= lbl_1_data_EC[1] * 0.03125f;
-    m[5] *= lbl_1_data_EC[0] * 0.03125f;
     C_MTXLookAt(lbl_1_bss_A8, &Hu3DCamera->pos, &Hu3DCamera->up, &Hu3DCamera->target);
     PSMTXTranspose(lbl_1_bss_A8, lbl_1_bss_98);
     PSMTXMultVecArray(lbl_1_bss_98, (Point3d *) &m[0], pts, 4);
-    GXLoadPosMtxImm(arg1, 0);
+    GXLoadPosMtxImm(*mtx, 0);
     GXSetNumTevStages(1);
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
@@ -799,70 +791,66 @@ void fn_1_6640(f32 (*arg1)[4])
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0);
     GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0);
-    /* esprite[i] = {s16 memberNo; s16 animNo;} (4 bytes) and
-     * espanim[j] = {u32 dataNum; u16 useCnt; ANIMDATA *anim;} (0xC bytes), per
-     * src/game/esprite.c. So the texture is espanim[esprite[i].animNo].anim. */
-    HuSprTexLoad(*(u32 *) (espanim + (*(u32 *) (esprite + (*(s32 *) (uintptr_t) lbl_1_bss_17C * 4) + 2) * 0xC) + 8), 0, 0, 0, 0, 1);
+    HuSprTexLoad(espanim[esprite[lbl_1_bss_17C].animNo].anim, 0, 0, GX_CLAMP, GX_CLAMP, GX_TRUE);
     for (i = 0; i < 0x1E; i++) {
-        s32 v = ((s32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[6];
-
-        if (v == 0) {
+        age = lbl_1_bss_280[i * 7 + 6];
+        if (age == 0) {
             continue;
         }
-        cell = v / 3;
+        if (age < 3) {
+            cell = 0;
+        } else if (age < 6) {
+            cell = 1;
+        } else if (age < 9) {
+            cell = 2;
+        } else if (age < 12) {
+            cell = 3;
+        } else if (age < 15) {
+            cell = 4;
+        } else if (age < 19) {
+            cell = 5;
+        } else if (age < 23) {
+            cell = 6;
+        } else if (age < 27) {
+            cell = 7;
+        } else {
+            cell = 8;
+        }
         if (cell > 8) {
             cell = 8;
         }
-        if (v < 4) {
-            alpha = (0xF0 * v) / 4;
-        } else if (v < 0x1B) {
-            alpha = 0xF0;
-        } else if (v < 0x20) {
-            alpha = 0xF0 - ((0xF0 * (v - 0x1B)) / 5);
+        u0 = (f32) (cell % 5) / 5.0f;
+        v0 = (f32) (cell / 5) * 0.5f;
+        u1 = 0.2f + u0;
+        v1 = 0.5f + v0;
+        u0 = u0 + 0.003125f;
+        v0 = v0 + 0.0078125f;
+        u1 = u1 - 0.003125f;
+        v1 = v1 - 0.0078125f;
+        alpha = 0xF0;
+        if (age < 4) {
+            alpha = (alpha * age) / 4;
+        } else if (age < 0x1B) {
+            alpha = alpha;
+        } else if (age < 0x20) {
+            alpha = alpha - ((alpha * (age - 0x1B)) / 5);
         } else {
             alpha = 0;
         }
-        u0 = ((f32) (cell % 5) / 5.0f) + 0.003125f;
-        v0 = ((f32) (cell / 5) * 0.5f) + 0.0078125f;
-        u1 = (0.2f + ((f32) (cell % 5) / 5.0f)) - 0.003125f;
-        v1 = (0.5f + ((f32) (cell / 5) * 0.5f)) - 0.0078125f;
+        rec = (f32 *) &lbl_1_bss_280[i * 7];
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[0].x + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[0];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[0].y + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[1];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[0].z + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[2];
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) alpha;
-        *(f32 *) (uintptr_t) 0xCC008000 = u0;
-        *(f32 *) (uintptr_t) 0xCC008000 = v0;
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[1].x + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[0];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[1].y + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[1];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[1].z + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[2];
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) alpha;
-        *(f32 *) (uintptr_t) 0xCC008000 = u1;
-        *(f32 *) (uintptr_t) 0xCC008000 = v0;
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[2].x + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[0];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[2].y + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[1];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[2].z + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[2];
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) alpha;
-        *(f32 *) (uintptr_t) 0xCC008000 = u1;
-        *(f32 *) (uintptr_t) 0xCC008000 = v1;
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[3].x + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[0];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[3].y + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[1];
-        *(f32 *) (uintptr_t) 0xCC008000 = pts[3].z + ((f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14)))[2];
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        *(u8 *) (uintptr_t) 0xCC008000 = (u8) alpha;
-        *(f32 *) (uintptr_t) 0xCC008000 = u0;
-        *(f32 *) (uintptr_t) 0xCC008000 = v1;
+        GXPosition3f32(pts[0].x + rec[0], pts[0].y + rec[1], pts[0].z + rec[2]);
+        GXColor4u8(0xFF, 0xFF, 0xFF, (u8) alpha);
+        GXTexCoord2f32(u0, v0);
+        GXPosition3f32(pts[1].x + rec[0], pts[1].y + rec[1], pts[1].z + rec[2]);
+        GXColor4u8(0xFF, 0xFF, 0xFF, (u8) alpha);
+        GXTexCoord2f32(u1, v0);
+        GXPosition3f32(pts[2].x + rec[0], pts[2].y + rec[1], pts[2].z + rec[2]);
+        GXColor4u8(0xFF, 0xFF, 0xFF, (u8) alpha);
+        GXTexCoord2f32(u1, v1);
+        GXPosition3f32(pts[3].x + rec[0], pts[3].y + rec[1], pts[3].z + rec[2]);
+        GXColor4u8(0xFF, 0xFF, 0xFF, (u8) alpha);
+        GXTexCoord2f32(u0, v1);
     }
     GXPixModeSync();
 }
@@ -956,7 +944,7 @@ void fn_1_7ED8(OMOBJ *arg0)
         }
     }
     idx = 0x13;
-    arg0->mdlId[idx] = Hu3DHookFuncCreate((void (*)(HU3DMODEL *, f32 (*)[3][4])) fn_1_6640);
+    arg0->mdlId[idx] = Hu3DHookFuncCreate(fn_1_6640);
     Hu3DModelLayerSet(arg0->mdlId[idx], 4);
     idx = 0x14;
     arg0->mdlId[idx] = Hu3DHookFuncCreate(fn_1_7014);
@@ -1444,47 +1432,29 @@ void fn_1_8A98(OMOBJ *arg0)
  */
 /* fn_1_B70's target rodata, recorded as literals (values extracted with fnasm).
  * See the note above for what each table drives. */
-/* the Mg player record and its actor, as far as this file touches them */
-typedef struct M520Actor_s {
-    u8 pad[0x2C];
-    f32 unk2C;
-    f32 unk30;
-    f32 unk34;
-    u8 pad38[0x2C];
-    f32 unk68;
-    u8 pad6C[0x20];
-    u32 unk84;
-} M520ACTOR;
+/* 3 rows x 10 columns of z offsets, indexed [state][char] */
+static const s32 m520_r1FC[30] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -15, -30, 0, -15, -30, -10, 0, -20, 0, 0, 0, -30, 0, 0, 0, 0, 0, 0 };
+/* MWCC inlines sqrtf as three frsqrte Newton steps (and returns the input for <= 0) */
+static f32 M520Sqrt(f32 v)
+{
+    f64 r;
 
-typedef struct M520MgPlayer_s {
-    u8 pad0[0x02];
-    s16 unk2;      /* 0x02 */
-    s8 unk4;       /* 0x04 */
-    u8 pad6[0x02];
-    u8 *unk8;      /* 0x08 */
-    u8 padC[0x1C];
-    s32 unk28;     /* 0x28 */
-    u8 pad2C[0x10];
-    M520ACTOR *actor; /* 0x3C */
-    u8 *unk40;
-    u8 *unk44;
-    u8 *unk48;
-    u8 *unk4C;
-    u8 *unk50;
-    u8 *unk54;
-    u8 *unk58;
-    u8 *unk5C;
-    u8 *unk60;
-    u8 *unk64;
-    u8 *unk68;
-    u8 *unk6C;
-    u8 *unk70;
-} M520MGPLAYER;
-
-/* 3 rows x 10 columns of animation weights, indexed [state][char]. The target
- * copies 0x78 bytes out of lbl_1_rodata_1FC with a loop, so fnasm never dumps
- * the values; they still have to be read out of the binary. */
-static const f32 m520_r1FC[30] = { 0 };
+    if (v > 0.0f) {
+        r = __frsqrte(v);
+        r = 0.5 * r * (3.0 - (v * (r * r)));
+        r = 0.5 * r * (3.0 - (v * (r * r)));
+        r = 0.5 * r * (3.0 - (v * (r * r)));
+        return (f32) (v * r);
+    }
+    return v;
+}
+void MgPlayerPauseOn(MGPLAYER *playerP);
+#ifdef TARGET_PC
+/* a COM player's padNo can be -1: the original indexes the pad arrays with it anyway (reads the byte before the array); the port must not */
+#define M520_PADOK(n) ((n) >= 0 && (n) < 4)
+#else
+#define M520_PADOK(n) 1
+#endif
 static const s32 m520_r6C[8] = { 30, 10, 10, 0, 30, 20, 10, 5 };
 static const s32 m520_r8C[4] = { 20, 50, 70, 90 };
 static const s32 m520_r9C[4] = { 0, 10, 30, 50 };
@@ -1493,7 +1463,7 @@ static const s32 m520_rCC[8] = { 15, 15, 10, 7, 20, 20, 15, 10 };
 static const s32 m520_rEC[8] = { 23, 18, 12, 10, 15, 5, 4, 4 };
 static const s32 m520_r10C[5] = { 0, 2, 6, 8, 10 };
 static const s32 m520_r120[5] = { 0, 0, 0, 5, 10 };
-static const s32 m520_r134[11] = { 0, 0, 1, 2, 7, 0, 0, 1, 2, 10 };
+static const s32 m520_r134[10] = { 0, 0, 1, 2, 7, 0, 0, 1, 2, 10 };
 static const f32 m520_r15C[20] = { 40.f, 40.f, 74.f, 75.f, 108.f, 161.f, 186.f, 229.f,
                                    278.f, 333.f, 374.f, 431.f, 470.f, 521.f, 565.f, 613.f,
                                    643.f, 700.f, 700.f, 700.f };
@@ -1501,14 +1471,6 @@ static const f32 m520_r1AC[20] = { 104.f, 120.f, 126.f, 155.f, 188.f, 227.f, 266
                                    358.f, 413.f, 462.f, 511.f, 550.f, 601.f, 645.f, 697.f,
                                    750.f, 770.f, 800.f, 800.f };
 
-#define MP8(p, o) (*(s8 *) ((u8 *) (p) + (o)))
-#define MP16(p, o) (*(s16 *) ((u8 *) (p) + (o)))
-#define MP32(p, o) (*(s32 *) ((u8 *) (p) + (o)))
-#define MPP(p, o) (*(u8 **) ((u8 *) (p) + (o)))
-#define F32(p, o) (*(f32 *) ((u8 *) (p) + (o)))
-#define U32(p, o) (*(u32 *) ((u8 *) (p) + (o)))
-#define M520I(arr, n) ((arr)[n].i)
-#define M520F(arr, n) ((arr)[n].f)
 
 /*
  * Per-player update. Slot 0 is the human leader and drives the ring: it reads
@@ -1516,347 +1478,355 @@ static const f32 m520_r1AC[20] = { 104.f, 120.f, 126.f, 155.f, 188.f, 227.f, 266
  * azimuth and speed. The other slots are AI-driven: they pick a target angle
  * on the ring and steer the stick toward it.
  */
+// NONMATCHING: float temporaries, the inlined sqrt and register allocation differ from the original
 void fn_1_B70(OMOBJ *arg0)
 {
-    f32 sp260[4];
-    f32 px;
-    f32 py;
-    f32 pz;
-    s32 sp138;
-    f32 sp13C;
-    s32 sp11C;
-    s32 var_r22;
-    s32 var_r21;
-    s32 var_r26;
-    s32 var_r27;
-    s32 var_r30;
-    s32 spF0;
-    s32 sp48;
     M520PLAYER *pl;
-    u8 *mp;
+    MGPLAYER *mp;
+    HuVecF pos;
+    HuVecF opos[3];
+    f32 angTbl[3];
+    f32 nearTbl[3];
+    f32 lenTbl[3];
+    s32 padOk;
+    s32 btnMask;
+    s32 btnDownMask;
+    s32 stkX;
+    s32 stkY;
+    s32 btn;
+    s32 btnDown;
     s32 i;
     s32 j;
+    s32 best;
+    f32 bestScore;
+    f32 cur;
+    f32 target;
+    f32 d;
+    f32 score;
+    f32 len;
+    f32 w3old;
+    f32 step;
+    s32 sgn;
+    s32 oldState;
+    s32 airborne;
+    f64 val;
+    s32 sp48;
+    HU3DMODEL *mdl;
 
     pl = (M520PLAYER *) arg0->data;
-    mp = (u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx];
-    sp13C = 0.0f;
-    var_r22 = 0;
-    var_r21 = 0;
-    var_r26 = 0;
-    var_r27 = 0;
-    for (var_r30 = 0; var_r30 < 4; var_r30++) {
-        sp260[var_r30] = *(f32 *) ((u8 *) lbl_1_bss_1B8 + (var_r30 * 4));
-    }
-    MgActorPosGet(MPP(mp, 0x3C), &px, &py, &pz);
+    mp = lbl_1_bss_1A4[pl->idx];
+    stkX = 0;
+    stkY = 0;
+    btn = 0;
+    btnDown = 0;
+    MgActorPosGet(mp->actor, &pos);
     if (pl->idx <= 0 || pl->unk1C != 3) {
-        arg0->trans.x = px;
-        arg0->trans.y = py;
-        arg0->trans.z = pz;
-        arg0->rot.y = F32(MPP(mp, 0x3C), 0x68);
+        arg0->trans.x = pos.x;
+        arg0->trans.y = pos.y;
+        arg0->trans.z = pos.z;
+        arg0->rot.y = mp->actor->rotY;
     }
     lbl_1_bss_1A0 = MgSeqModeGet();
     lbl_1_bss_0 = MgSeqFrameNoGet();
-    sp138 = HuPadBtn[(s8) MP8(mp, 4)] & 0xFFFFFEFF;
-    var_r27 = HuPadBtnDown[(s8) MP8(mp, 4)] & 0xFFFFFEFF;
+    padOk = M520_PADOK(mp->padNo);
+    btnMask = padOk ? (HuPadBtn[mp->padNo] & 0xFEFF) : 0;
+    btnDownMask = padOk ? (HuPadBtnDown[mp->padNo] & 0xFEFF) : 0;
     if (lbl_1_bss_1A0 != 5) {
-        MgPlayerPadSet((MGPLAYER *) mp, 0, 0, 0, 0);
-        HuPadTrigR[(s8) MP8(mp, 4)] = 0;
-        HuPadTrigL[(s8) MP8(mp, 4)] = 0;
+        MgPlayerPadSet(mp, 0, 0, 0, 0);
+        if (padOk) {
+            HuPadTrigR[mp->padNo] = 0;
+            HuPadTrigL[mp->padNo] = 0;
+        }
     } else if (pl->padNo != -1) {
-        var_r22 = (s8) (u8) HuPadStkX[pl->padNo];
-        var_r21 = (s8) (u8) HuPadStkY[pl->padNo];
-        var_r27 = HuPadBtn[pl->padNo];
-        var_r26 = HuPadBtnDown[pl->padNo];
+        stkX = HuPadStkX[pl->padNo];
+        stkY = HuPadStkY[pl->padNo];
+        btn = HuPadBtn[pl->padNo];
+        btnDown = HuPadBtnDown[pl->padNo];
     }
     if (pl->idx == 0) {
-        HU3DMODEL *mdl = &Hu3DData[arg0->mdlId[0]];
-        f32 target;
-        f32 step;
-
+        mdl = &Hu3DData[arg0->mdlId[0]];
         target = 0.0f;
         Hu3DModelAttrReset(arg0->mdlId[0], 1);
-        Hu3DModelAttrSet(arg0->mdlId[2], 1);
+        Hu3DModelAttrSet(arg0->mdlId[1], 1);
         if (lbl_1_bss_1A0 == 2) {
             if (lbl_1_bss_0 == 0x44) {
-                var_r26 = 0x100;
-                var_r27 = 0x100;
+                btnDown = 0x100;
+                btn = 0x100;
             } else if (lbl_1_bss_0 > 0x44 && lbl_1_bss_0 <= 0x47) {
-                var_r27 = 0x100;
+                btn = 0x100;
             } else if (lbl_1_bss_0 == 0x4E) {
-                var_r26 = 0x100;
-                var_r27 = 0x100;
+                btnDown = 0x100;
+                btn = 0x100;
             }
         } else if (lbl_1_bss_1A0 == 5 && pl->padNo != -1) {
-            target = (f32) (((HuPadBtn[pl->padNo] & 0x20) > 0 ? 0x60 : 0) - ((HuPadBtn[pl->padNo] & 0x40) > 0 ? 0x60 : 0)) / 96.0f;
+            target = (f32) (((HuPadBtn[pl->padNo] & 0x20) != 0 ? 0x60 : 0) - ((HuPadBtn[pl->padNo] & 0x40) != 0 ? 0x60 : 0)) / 96.0f;
         } else if (lbl_1_bss_1A0 == 5) {
-            /* pick the target: the closest of the three AI players, measured in
-             * the ring's own angle, preferring the nearer one */
-            s32 best = -1;
-            f32 bestScore = -1.0f;
-            f32 cur = M520F(lbl_1_bss_5C8, 2);
-
+            best = -1;
+            bestScore = -1.0f;
+            cur = lbl_1_bss_5C8[2].f;
             for (i = 0; i < 3; i++) {
-                f32 ox;
-                f32 oz;
-                f32 ang;
-                f32 dist;
-                f32 len2;
-                f32 len;
-                f32 near = 360.0f;
-                f32 score;
-
-                MgActorPosGet(MPP((u8 *) (uintptr_t) lbl_1_bss_1A4[i + 1], 0x3C), &ox, &py, &oz);
-                ang = 180.0f * ((f32) atan2(ox, oz) / (f32) M_PI);
-                len2 = (ox * ox) + (oz * oz);
-                if (len2 > 0.0f) {
-                    f64 r = __frsqrte(len2);
-
-                    r = 0.5 * r * (3.0 - (len2 * (r * r)));
-                    r = 0.5 * r * (3.0 - (len2 * (r * r)));
-                    len = (f32) (len2 * (0.5 * r * (3.0 - (len2 * (r * r)))));
-                } else {
-                    len = len2;
-                }
+                MgActorPosGet(lbl_1_bss_1A4[i + 1]->actor, &opos[i]);
+                angTbl[i] = (f32) (180.0 * (atan2(opos[i].x, opos[i].z) / 3.141592653589793));
+                nearTbl[i] = 360.0f;
+                lenTbl[i] = M520Sqrt((opos[i].x * opos[i].x) + (opos[i].z * opos[i].z));
                 for (j = 0; j < 3; j++) {
-                    f32 d = ang - (cur + (f32) (j * 0x78));
-
-                    while (d < -180.0f) {
-                        d += 360.0f;
-                    }
-                    while (d > 180.0f) {
-                        d -= 360.0f;
-                    }
-                    if (fabs(d) < fabs(near)) {
-                        near = d;
+                    d = angTbl[i] - (cur + (f32) (j * 0x78));
+                    d = d + (f32) ((d < -180.0f) ? 180 : ((d > 180.0f) ? -180 : 0));
+                    d = d + (f32) ((d < -180.0f) ? 180 : ((d > 180.0f) ? -180 : 0));
+                    if (fabs(d) < fabs(nearTbl[i])) {
+                        nearTbl[i] = d;
                     }
                 }
-                score = (60.0f - fabs(near)) + (10.0f * ((len - 300.0f) / 400.0f));
+                len = (lenTbl[i] < 300.0f) ? 0.0f : ((lenTbl[i] - 300.0f) / 400.0f);
+                score = (f32) ((60.0 - fabs(nearTbl[i])) + (10.0f * len));
                 if (best == -1 || bestScore < score) {
                     best = i;
                     bestScore = score;
                 }
             }
-            /* 5-state AI: idle -> charge -> lean -> fling -> recover */
             switch (pl->unk38) {
             case 0:
-                target = M520F(lbl_1_bss_5C8, 3);
+                target = lbl_1_bss_5C8[3].f;
                 if (pl->unk3C == 0) {
-                    pl->unk40 = m520_r6C[pl->dif] + (rand8() % 10);
+                    pl->unk40 = m520_r6C[pl->dif] + (rand8() % m520_r6C[pl->dif + 4]);
                 }
                 pl->unk3C += 1;
-                if (pl->unk3C >= pl->unk40) {
-                    if (M520I(lbl_1_bss_5C8, 6) == 0) {
-                        target = 3;
+                if (pl->unk3C < pl->unk40) {
+                    break;
+                }
+                if (lbl_1_bss_5C8[6].i == 0) {
+                    if ((f32) m520_r8C[pl->dif] > (100.0f * ((f32) rand8() / 255.0f))) {
+                        pl->unk38 = 3;
                         pl->unk3C = 0;
-                    } else {
-                        pl->unk40 = m520_rAC[pl->dif] + (rand8() % 10);
-                        if (pl->dif == 3) {
-                            pl->unk38 = (M520F(lbl_1_bss_5C8, 3) * ((f32 *) sp260)[best]) < 0.0f ? 1 : 2;
-                        } else {
-                            pl->unk38 = ((f32 *) sp260)[best] > (100.0f * ((f32) rand8() / 255.0f)) ? 2 : 1;
-                        }
-                        pl->unk3C = 0;
+                        break;
                     }
                 }
+                pl->unk40 = m520_rAC[pl->dif] + (rand8() % m520_rAC[pl->dif + 4]);
+                if (pl->dif == 3) {
+                    pl->unk38 = ((lbl_1_bss_5C8[3].f * nearTbl[best]) < 0.0f) ? 1 : 2;
+                } else {
+                    pl->unk38 = ((f32) m520_r9C[pl->dif] > (100.0f * ((f32) rand8() / 255.0f))) ? 2 : 1;
+                }
+                if (pl->unk38 == 1) {
+                    sgn = 1;
+                } else if (pl->unk44 == 1) {
+                    sgn = (rand8() % 2) + 1;
+                } else {
+                    sgn = (pl->unk44 >= 2) ? 1 : pl->unk38;
+                }
+                pl->unk38 = sgn;
+                pl->unk3C = 0;
+                if (pl->unk38 == 2) {
+                    pl->unk40 = 0;
+                    pl->unk44 += 1;
+                } else {
+                    pl->unk44 = 0;
+                }
+                if (pl->unk38 == 1 || pl->unk44 > 0) {
+                    val = 1.0;
+                } else if (rand8() % 3 != 0) {
+                    val = 0.01;
+                } else if (rand8() % 3 != 0) {
+                    val = 0.5;
+                } else {
+                    val = 1.0;
+                }
+                pl->unk48 = (f32) (((pl->unk48 < 0.0f) ? 1 : -1) * val);
                 break;
             case 3:
-                if (pl->unk3C == 1) {
-                    var_r26 = 0x100;
-                    var_r27 = 0x100;
-                } else if (pl->unk3C < m520_rCC[pl->dif]) {
-                    var_r27 = 0x100;
-                } else if (pl->unk3C == m520_rCC[pl->dif]) {
-                    var_r26 = 0x100;
-                    var_r27 = 0x100;
-                }
                 pl->unk3C += 1;
-                if (pl->unk3C > m520_rCC[pl->dif] && MP32(mp, 0x28) == 0) {
+                if (pl->unk3C == 1) {
+                    btnDown = 0x100;
+                    btn = 0x100;
+                } else if (pl->unk3C < m520_rCC[pl->dif]) {
+                    btn = 0x100;
+                } else if (pl->unk3C == m520_rCC[pl->dif + 4]) {
+                    btnDown = 0x100;
+                    btn = 0x100;
+                }
+                if (pl->unk3C > m520_rCC[pl->dif + 4] && mp->mode == 0) {
                     pl->unk3C = 0;
                     switch (pl->dif) {
                     case 0:
                         pl->unk38 = 4;
-                        pl->unk48 = 0.01f * ((rand8() & 1) ? 1.0f : -1.0f);
+                        pl->unk48 = (f32) (0.01 * (f64) (((rand8() % 2) * 2) - 1));
                         pl->unk40 = 0x78;
                         break;
                     case 1:
                         pl->unk38 = 5;
-                        pl->unk48 = (rand8() & 1) ? 1.0f : -1.0f;
+                        pl->unk48 = (f32) (((rand8() % 2) * 2) - 1);
                         pl->unk40 = 0x78;
                         break;
                     case 2:
-                        pl->unk38 = (rand8() & 1) + 4;
-                        pl->unk48 = (rand8() & 1) ? 1.0f : -1.0f;
-                        pl->unk40 = pl->unk38 == 4 ? rand8() % 30 : (rand8() % 40) + 0x28;
+                        pl->unk38 = (rand8() % 2) + 4;
+                        pl->unk48 = (f32) (((rand8() % 2) * 2) - 1);
+                        if (pl->unk38 == 4) {
+                            pl->unk40 = rand8() % 30;
+                        } else {
+                            pl->unk40 = (rand8() % 40) + 0x28;
+                        }
                         break;
                     case 3:
-                        pl->unk38 = (rand8() % 2) + 4;
-                        pl->unk48 = (rand8() % 3 == 0 ? 1.0f : 0.01f) * ((rand8() & 1) ? 1.0f : -1.0f);
-                        pl->unk40 = pl->unk38 == 4 ? (rand8() % 25) + 0xF : (rand8() % 65) + 0x23;
+                        pl->unk38 = ((rand8() % 4) == 0) + 4;
+                        val = ((rand8() % 2) != 0) ? 1.0 : 0.01;
+                        pl->unk48 = (f32) (val * (f64) (((rand8() % 2) * 2) - 1));
+                        if (pl->unk38 == 4) {
+                            pl->unk40 = (rand8() % 25) + 0xF;
+                        } else {
+                            pl->unk40 = (rand8() % 65) + 0x23;
+                        }
                         break;
                     }
                 }
                 break;
-            default:
+            case 1:
+            case 2:
+            case 4:
+            case 5:
                 target = pl->unk48;
-                if (M520F(lbl_1_bss_5C8, 3) == pl->unk48) {
+                if (lbl_1_bss_5C8[3].f == pl->unk48) {
                     pl->unk3C += 1;
                     if (pl->unk38 != 4 && pl->unk3C > pl->unk40) {
-                        pl->unk38 = 0;
-                        pl->unk40 = 1;
-                        pl->unk3C = 1;
-                    } else if (pl->unk3C > pl->unk40 && pl->unk38 == 4) {
+                        if (pl->dif == 3 && (pl->unk48 * nearTbl[best]) >= 0.0f && fabs(nearTbl[best]) < 30.0
+                            && pl->unk3C < pl->unk40 + 0x5A) {
+                            /* keep going */
+                        } else {
+                            pl->unk38 = 0;
+                            pl->unk40 = 1;
+                            pl->unk3C = 1;
+                            break;
+                        }
+                    }
+                    if (pl->unk3C > pl->unk40 && pl->unk38 == 4) {
                         pl->unk38 = 5;
                         pl->unk3C = 0;
                         pl->unk40 = (rand8() % 40) + 0x64;
-                        pl->unk48 = pl->unk48 < 0.0f ? 1.0f : -1.0f;
+                        pl->unk48 = (f32) ((pl->unk48 < 0.0f) ? 1 : -1);
                     }
                 }
                 break;
             }
         }
-        if (MP32(mp, 0x28) != 0 || mdl->motIdShift != -1) {
+        if (mp->mode != 0 || mdl->motIdShift != -1) {
             target = 0.0f;
         }
-        /* integrate the ring speed toward the target, then the azimuth */
-        step = M520F(lbl_1_bss_5C8, 3);
-        if (fabs(target) < fabs(M520F(lbl_1_bss_5C8, 3))) {
+        w3old = lbl_1_bss_5C8[3].f;
+        if (fabs(target) < fabs(w3old)) {
             step = 1.0f / 15.0f;
         } else {
             step = 1.5f / 15.0f;
         }
-        if (M520F(lbl_1_bss_5C8, 3) < target) {
-            j = 1;
+        sgn = (w3old < target) ? 1 : -1;
+        lbl_1_bss_5C8[3].f = lbl_1_bss_5C8[3].f + ((f32) sgn * step);
+        if ((w3old <= target && lbl_1_bss_5C8[3].f > target) || (w3old >= target && lbl_1_bss_5C8[3].f < target)) {
+            lbl_1_bss_5C8[3].f = target;
+        }
+        lbl_1_bss_5C8[0x7 + lbl_1_bss_5C8[0x7F].i].f = lbl_1_bss_5C8[2].f;
+        lbl_1_bss_5C8[0x43 + lbl_1_bss_5C8[0x7F].i].f = lbl_1_bss_5C8[3].f;
+        lbl_1_bss_5C8[0x7F].i += 1;
+        lbl_1_bss_5C8[0x7F].i = lbl_1_bss_5C8[0x7F].i % 60;
+        lbl_1_bss_5C8[2].f = lbl_1_bss_5C8[2].f + ((360.0f * lbl_1_bss_5C8[3].f) / 360.0f);
+        if (lbl_1_bss_5C8[2].f < -180.0f) {
+            sgn = 360;
+        } else if (lbl_1_bss_5C8[2].f >= 180.0f) {
+            sgn = -360;
         } else {
-            j = -1;
+            sgn = 0;
         }
-        M520F(lbl_1_bss_5C8, 3) += (f32) j * step;
-        if ((step == target && M520F(lbl_1_bss_5C8, 3) > target) || (step == target && M520F(lbl_1_bss_5C8, 3) < target)) {
-            M520F(lbl_1_bss_5C8, 3) = target;
-        }
-        /* the 60-entry ring history, wrapped with a modulo */
-        ((f32 *) ((u8 *) lbl_1_bss_5C8 + (M520I(lbl_1_bss_5C8, 0x7F) * 0x1C)))[0x1C / 4] = M520F(lbl_1_bss_5C8, 2);
-        ((f32 *) ((u8 *) lbl_1_bss_5C8 + (M520I(lbl_1_bss_5C8, 0x7F) * 0x1C)))[0x10C / 4] = M520F(lbl_1_bss_5C8, 3);
-        M520I(lbl_1_bss_5C8, 0x7F) += 1;
-        M520I(lbl_1_bss_5C8, 0x7F) %= 60;
-        M520F(lbl_1_bss_5C8, 2) += (360.0f * M520F(lbl_1_bss_5C8, 3)) / 360.0f;
-        if (M520F(lbl_1_bss_5C8, 2) < -180.0f) {
-            M520F(lbl_1_bss_5C8, 2) += 360.0f;
-        } else if (M520F(lbl_1_bss_5C8, 2) == 180.0f) {
-            M520F(lbl_1_bss_5C8, 2) -= 360.0f;
-        }
-        {
-            s32 mdl2 = *(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14);
-
-            Hu3DModelRotSet(mdl2 + 0xC, 0.0f, M520F(lbl_1_bss_5C8, 2), 0.0f);
-            Hu3DModelRotSet(mdl2 + 0x10, 0.0f, M520F(lbl_1_bss_5C8, 2), 0.0f);
-            Hu3DMotionTimeSet(mdl2 + 0xE, 20.0f + (20.0f * M520F(lbl_1_bss_5C8, 3)));
-        }
-        if (lbl_1_bss_10 == 0 && ((target < 0.0f && lbl_1_bss_C != 0.0f) || (target > 0.0f && lbl_1_bss_C != 0.0f))) {
-            if (((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x23))[0] < 3) {
-                ((f32 *) ((u8 *) lbl_1_bss_1D0 + (((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x23))[0] * 0x14)))[0x90 / 4] = 0.0f;
-                ((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x23))[0] += 1;
+        lbl_1_bss_5C8[2].f = lbl_1_bss_5C8[2].f + (f32) sgn;
+        Hu3DModelRotSet(lbl_1_bss_1B4->mdlId[6], 0.0f, lbl_1_bss_5C8[2].f, 0.0f);
+        Hu3DModelRotSet(lbl_1_bss_1B4->mdlId[8], 0.0f, lbl_1_bss_5C8[2].f, 0.0f);
+        Hu3DMotionTimeSet(lbl_1_bss_1B4->mdlId[7], 20.0f + (20.0f * lbl_1_bss_5C8[3].f));
+        if (lbl_1_bss_10 == 0) {
+            if ((target < 0.0f && lbl_1_bss_C >= 0.0f) || (target > 0.0f && lbl_1_bss_C <= 0.0f)) {
+                if (lbl_1_bss_1D0[0x8C / 4] < 3) {
+                    lbl_1_bss_1D0[0x90 / 4 + lbl_1_bss_1D0[0x8C / 4]] = 0;
+                    lbl_1_bss_1D0[0x8C / 4] += 1;
+                }
+                lbl_1_bss_10 = 6;
             }
-            lbl_1_bss_10 = 6;
         }
-        lbl_1_bss_10 -= lbl_1_bss_10 > 0;
+        lbl_1_bss_10 = lbl_1_bss_10 - (lbl_1_bss_10 > 0);
         lbl_1_bss_C = target;
-        var_r22 = 0;
-        var_r21 = 0;
+        stkX = 0;
+        stkY = 0;
     } else {
-        f32 spB8;
-        f32 sp114;
-        f32 spB4;
-        s32 sp118;
-
-        sp11C = pl->unk1C;
-        sp118 = (U32(MPP(mp, 0x3C), 0x84) & 0x407F) == 0;
-        if (px * px + pz * pz > 0.0f) {
-            f64 r = __frsqrte(px * px + pz * pz);
-
-            r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
-            r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
-            spB4 = (f32) ((px * px + pz * pz) * (0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)))));
-        } else {
-            spB4 = px * px + pz * pz;
-        }
-        sp114 = spB4;
+        oldState = pl->unk1C;
+        airborne = (mp->actor->colGroundAttr & 0x407F) == 0;
+        len = M520Sqrt((pos.x * pos.x) + (pos.z * pos.z));
         if (lbl_1_bss_1A0 == 2 || lbl_1_bss_1A0 == 3) {
             if (lbl_1_bss_1A0 == 2) {
                 if (lbl_1_bss_0 < 0xD7) {
-                    F32(MPP(mp, 0x3C), 0x2C) = (f32) (0x21C * sin((M_PI * ((0.5 * (pl->idx == 1)) + ((pl->idx * 0x78) + 0x3C))) / 180.0));
-                    F32(MPP(mp, 0x3C), 0x34) = (f32) ((0x21C * cos((M_PI * ((0.5 * (pl->idx == 1)) + ((pl->idx * 0x78) + 0x3C))) / 180.0)) - 25.0);
+                    mp->actor->pos.x = (f32) ((0 + 0x21C) * sin((3.141592653589793 * ((0.5 * (f64) (pl->idx == 1)) + (f64) ((pl->idx * 0x78) + 0x3C))) / 180.0));
+                    mp->actor->pos.z = (f32) (((0 + 0x21C) * cos((3.141592653589793 * ((0.5 * (f64) (pl->idx == 1)) + (f64) ((pl->idx * 0x78) + 0x3C))) / 180.0)) - 25.0);
                 }
                 if (lbl_1_bss_0 == 0xE1) {
-                    var_r26 = 0x100;
-                    var_r27 = 0x100;
+                    btnDown = 0x100;
+                    btn = 0x100;
                 } else if (lbl_1_bss_0 > 0xE1 && lbl_1_bss_0 <= 0xF0) {
-                    var_r27 = 0x100;
+                    btn = 0x100;
                 }
             }
-            if (lbl_1_bss_1A0 == 2 && ((lbl_1_bss_0 >= 0xDC && lbl_1_bss_0 <= 0xE1) || sp118 != 0)) {
-                f32 r = 55.0f * (-px / sp114);
-
-                var_r22 = (s8) r;
-                var_r21 = (s8) (55.0f * (-pz / sp114));
+            if (lbl_1_bss_1A0 == 2 && ((lbl_1_bss_0 >= 0xDC && lbl_1_bss_0 <= 0xE1) || airborne != 0)) {
+                stkX = (s32) (55.0f * (-pos.x / len));
+                stkY = (s32) (-55.0f * (-pos.z / len));
             }
         } else if (lbl_1_bss_1A0 == 5 && pl->unk1C == 2 && pl->padNo == -1) {
-            /* AI player: steer the stick toward the chosen angle on the ring */
             f32 ang;
-            f32 dist;
-            f32 best = 10000.0f;
-            f32 radius;
             f32 ringAng;
             f32 ringSpd;
+            f32 bestD;
+            f32 speed;
             f32 tx;
             f32 tz;
             f32 tl;
-            f32 speed;
-            s32 idx;
+            f32 sp;
+            f32 dist;
 
             sp48 = 0;
-            if (M520I(lbl_1_bss_5C8, 6) > 0 && M520I(lbl_1_bss_5C8, 6) < 0xBE) {
+            if (lbl_1_bss_5C8[6].i > 0 && lbl_1_bss_5C8[6].i < 0xBE) {
                 sp48 = 1;
             }
-            idx = ((M520I(lbl_1_bss_5C8, 0x7F) - m520_rEC[pl->dif]) + 0x3C) % 60;
-            ringAng = ((f32 *) ((u8 *) lbl_1_bss_5C8 + (idx * 0x1C)))[0x1C / 4];
-            ringSpd = ((f32 *) ((u8 *) lbl_1_bss_5C8 + (idx * 0x1C)))[0x10C / 4];
-            ang = 180.0f * ((f32) atan2(px, pz) / (f32) M_PI);
+            j = ((lbl_1_bss_5C8[0x7F].i - m520_rEC[(sp48 * 4) + pl->dif]) + 0x3C) % 60;
+            ringAng = lbl_1_bss_5C8[0x7 + j].f;
+            ringSpd = lbl_1_bss_5C8[0x43 + j].f;
+            ang = (f32) (180.0 * (atan2(pos.x, pos.z) / 3.141592653589793));
+            bestD = 10000.0f;
             for (i = -6; i <= 6; i++) {
-                f32 d = fabs(ang - (ringAng + (f32) (i * 0x78)));
-
-                if (fabs(best) > d) {
-                    best = ang - (ringAng + (f32) (i * 0x78));
+                d = ang - (ringAng + (f32) (i * 0x78));
+                if (fabs(bestD) > fabs(d)) {
+                    bestD = d;
                 }
             }
-            if (M520I(lbl_1_bss_5C8, 6) == 0) {
+            if (lbl_1_bss_5C8[6].i == 0) {
                 speed = 360.0f;
-            } else if (M520I(lbl_1_bss_5C8, 6) < 0x46) {
-                speed = 360.0f + (80.0f * ((f32) M520I(lbl_1_bss_5C8, 6) / 70.0f));
-            } else if (M520I(lbl_1_bss_5C8, 6) < 0x64) {
+            } else if (lbl_1_bss_5C8[6].i < 0x46) {
+                speed = 360.0f + (80.0f * ((f32) lbl_1_bss_5C8[6].i / 70.0f));
+            } else if (lbl_1_bss_5C8[6].i < 0x64) {
                 speed = 440.0f;
-            } else if (M520I(lbl_1_bss_5C8, 6) < 0xA0) {
+            } else if (lbl_1_bss_5C8[6].i < 0xA0) {
                 speed = 210.0f;
-            } else if (M520I(lbl_1_bss_5C8, 6) < 0xBE) {
-                speed = 210.0f + (150.0f * ((f32) (M520I(lbl_1_bss_5C8, 6) - 0xA0) / 30.0f));
+            } else if (lbl_1_bss_5C8[6].i < 0xBE) {
+                speed = 210.0f + (150.0f * ((f32) (lbl_1_bss_5C8[6].i - 0xA0) / 30.0f));
             } else {
                 speed = 360.0f;
             }
-            var_r26 = M520I(lbl_1_bss_5C8, 6) == 0x66 ? 0x100 : 0;
-            var_r27 = (M520I(lbl_1_bss_5C8, 6) >= 0x66 && M520I(lbl_1_bss_5C8, 6) <= 0x6E) ? 0x100 : 0;
+            btnDown = (lbl_1_bss_5C8[6].i == 0x66) ? 0x100 : 0;
+            btn = (lbl_1_bss_5C8[6].i >= 0x66 && lbl_1_bss_5C8[6].i <= 0x6E) ? 0x100 : 0;
             pl->unk3C += 1;
             switch (pl->unk38) {
             case 0:
                 pl->unk4C = ang;
-                if ((fabs(ringSpd) > 0.3f && (best * ringSpd) > 0.0f && fabs(best) < 45.0f)
-                    || (fabs(best) < 35.0f && ((best * ringSpd) > 0.0f || fabs(ringSpd) < 0.5f))) {
-                    pl->unk38 = best < 0.0f ? -1 : 1;
+                if ((fabs(ringSpd) > 0.3 && (bestD * ringSpd) > 0.0f && fabs(bestD) < 45.0)
+                    || (fabs(bestD) < 35.0 && ((bestD * ringSpd) > 0.0f || fabs(ringSpd) < 0.5))) {
+                    pl->unk38 = (bestD < 0.0f) ? -1 : 1;
                     pl->unk3C = 0;
                 }
                 break;
             case 1:
             case -1:
                 if (pl->unk3C >= pl->unk40
-                    && ((fabs(ringSpd) < 0.3f && fabs(best) > 45.0f) || ((best * (f32) pl->unk38) < 0.0f && fabs(best) < 35.0f))) {
+                    && ((fabs(ringSpd) < 0.3 && fabs(bestD) > 45.0) || ((bestD * (f32) pl->unk38) < 0.0f && fabs(bestD) < 35.0))) {
                     pl->unk38 = 0;
                     pl->unk3C = 0;
                 } else {
@@ -1874,7 +1844,11 @@ void fn_1_B70(OMOBJ *arg0)
                         pl->unk40 = m520_r120[rand8() % 5];
                         break;
                     case 3:
-                        pl->unk40 = m520_r134[(sp48 * 5) + (rand8() % 5)];
+                        j = 0;
+                        if (lbl_1_bss_5C8[6].i > 0 && lbl_1_bss_5C8[6].i < 0xBE) {
+                            j = 1;
+                        }
+                        pl->unk40 = m520_r134[(j * 5) + (rand8() % 5)];
                         break;
                     }
                     pl->unk3C = 0;
@@ -1882,134 +1856,152 @@ void fn_1_B70(OMOBJ *arg0)
                 break;
             }
             pl->unk50 = speed;
-            tx = (f32) ((f64) pl->unk50 * sin((M_PI * pl->unk4C) / 180.0)) - px;
-            tz = (f32) ((f64) pl->unk50 * cos((M_PI * pl->unk4C) / 180.0)) - pz;
-            tl = sqrtf((tx * tx) + (tz * tz));
-            speed = 5.6f * tl;
-            dist = speed < 120.0f ? 1.0f : 64.0f * (1.0f / speed);
-            var_r22 = (s8) ((5.6f * tx) * dist);
-            var_r21 = (s8) ((-5.6f * tz) * dist);
+            tx = (f32) (((f64) pl->unk50 * sin((3.141592653589793 * pl->unk4C) / 180.0)) - pos.x);
+            tz = (f32) (((f64) pl->unk50 * cos((3.141592653589793 * pl->unk4C) / 180.0)) - pos.z);
+            tl = M520Sqrt((tx * tx) + (tz * tz));
+            sp = 5.6f * tl;
+            if (sp < 120.0f) {
+                dist = 1.0f;
+            } else {
+                dist = 64.0f * (1.0f / sp);
+            }
+            stkX = (s32) ((5.6f * tx) * dist);
+            if (sp < 120.0f) {
+                dist = 1.0f;
+            } else {
+                dist = 64.0f * (1.0f / sp);
+            }
+            stkY = (s32) ((-5.6f * tz) * dist);
         }
         if ((lbl_1_bss_1A0 == 5 || lbl_1_bss_1A0 == 6) && pl->unk1C == 2) {
-            if ((sp114 > 700.0f && (sp118 == 0 || py < 0.0f))
-                || (lbl_1_bss_1A0 == 5 && M520I(lbl_1_bss_5C8, 6) >= 0x28 && M520I(lbl_1_bss_5C8, 6) < 0xC8
-                    && (U32(MPP(mp, 0x3C), 0x84) & 0x407F) != 0)) {
+            if ((len > 700.0f && (airborne == 0 || pos.y < 0.0f))) {
                 pl->unk1C = 3;
+            } else if (lbl_1_bss_1A0 == 5 && lbl_1_bss_5C8[6].i >= 0x28 && lbl_1_bss_5C8[6].i < 0xC8
+                       && (mp->actor->colGroundAttr & 0x407F) != 0) {
+                s32 t = lbl_1_bss_5C8[6].i - 0x1E;
+                f32 fr = (f32) (t % 10) / 10.0f;
+                f32 lo = ((1.0f - fr) * (f32) m520_r15C[t / 10]) + (fr * (f32) m520_r15C[(t / 10) + 1]);
+                f32 hi = ((1.0f - fr) * (f32) m520_r1AC[t / 10]) + (fr * (f32) m520_r1AC[(t / 10) + 1]);
+
+                if (lo - 30.0f <= len && len <= 30.0f + hi) {
+                    pl->unk1C = 3;
+                }
             }
             if (lbl_1_bss_1A0 == 5) {
                 for (i = 0; i < 0x1E; i++) {
-                    f32 *rec = (f32 *) ((u8 *) lbl_1_bss_280 + (i * 0x14));
+                    s32 *rec = &lbl_1_bss_280[i * 7];
 
-                    if (((s32 *) rec)[6] == 0) {
-                        continue;
-                    }
-                    if (((px - rec[0]) * (px - rec[0])) + ((pz - rec[2]) * (pz - rec[2])) < 9025.0f) {
-                        pl->unk1C = 3;
+                    if (rec[6] != 0) {
+                        f32 dx = pos.x - ((f32 *) rec)[0];
+                        f32 dy = pos.y - ((f32 *) rec)[1];
+                        f32 dz = pos.z - ((f32 *) rec)[2];
+
+                        if ((dx * dx) + (dz * dz) < 9025.0f) {
+                            pl->unk1C = 3;
+                        }
                     }
                 }
             }
         }
         if (pl->unk1C == 3) {
-            f32 spA4;
+            f32 dirx;
+            f32 dirz;
 
-            var_r26 = 0;
-            var_r27 = 0;
-            var_r21 = 0;
-            var_r22 = 0;
-            if (sp11C == 2) {
-                MgPlayerModeSet((MGPLAYER *) mp, 0xB);
-                MgPlayerPauseOn((MGPLAYER *) mp);
+            btnDown = 0;
+            btn = 0;
+            stkY = 0;
+            stkX = 0;
+            if (oldState == 2) {
+                MgPlayerModeSet(mp, 0xB);
+                MgPlayerPauseOn(mp);
                 omVibrate((s16) pl->conf, 0x30, 1, 0);
                 CharFXPlay((s16) pl->charFull, 0x1F9);
                 pl->unk34 = 1.0f;
             } else {
-                px = arg0->trans.x;
-                py = arg0->trans.y;
-                pz = arg0->trans.z;
+                pos.x = arg0->trans.x;
+                pos.y = arg0->trans.y;
+                pos.z = arg0->trans.z;
             }
-            if (px * px + pz * pz > 0.0f) {
-                f64 r = __frsqrte(px * px + pz * pz);
-
-                r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
-                r = 0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)));
-                spA4 = (f32) ((px * px + pz * pz) * (0.5 * r * (3.0 - ((px * px + pz * pz) * (r * r)))));
-            } else {
-                spA4 = px * px + pz * pz;
-            }
-            if (spA4 > 1800.0f) {
+            len = M520Sqrt((pos.x * pos.x) + (pos.z * pos.z));
+            if (len > 1800.0f) {
                 Hu3DModelAttrSet(arg0->mdlId[0], 1);
             }
-            CharMotionShiftSet(MP16(mp, 2), F32(MPP(MPP(mp, 8), 0x48), 0x16), 1.0f, 0.0f, 0x40000001);
-            {
-                f32 dx = spA4 == 0.0f ? 0.0f : px / spA4;
-                f32 dz = spA4 == 0.0f ? 0.0f : pz / spA4;
-
-                px += 16.0f * dx;
-                pz += 16.0f * dz;
-                py += 50.0f * pl->unk34;
-                pl->unk34 -= 0.04f;
-                arg0->rot.y = 180.0f * ((f32) atan2(dx, dz) / (f32) M_PI);
-                omSetTra(arg0, px, py, pz);
+            CharMotionShiftSet(mp->charNo, mp->omObj->mtnId[11], 1.0f, 0.0f, 0x40000001);
+            if (len == 0.0f) {
+                dirz = 0.0f;
+                dirx = 0.0f;
+            } else {
+                dirx = pos.x / len;
+                dirz = pos.z / len;
             }
+            pos.x = pos.x + (16.0f * dirx);
+            pos.z = pos.z + (16.0f * dirz);
+            pos.y = pos.y + (50.0f * pl->unk34);
+            pl->unk34 = pl->unk34 - 0.04f;
+            arg0->rot.y = (f32) (180.0 * (atan2(dirx, dirz) / 3.141592653589793));
+            omSetTra(arg0, pos.x, pos.y, pos.z);
         }
     }
     if ((lbl_1_bss_1A0 == 8 || lbl_1_bss_1A0 == 9) && lbl_1_data_9C == 0 && pl->idx == 0) {
-        HU3DMODEL *mdl = &Hu3DData[arg0->mdlId[2]];
-
+        mdl = &Hu3DData[arg0->mdlId[1]];
         Hu3DModelAttrSet(arg0->mdlId[0], 1);
-        Hu3DModelAttrSet(*(u32 *) ((u8 *) lbl_1_bss_1B8 + 4), 1);
-        Hu3DModelAttrSet(*(u32 *) ((u8 *) lbl_1_bss_1B8 + 8), 1);
-        Hu3DModelAttrSet(*(u32 *) ((u8 *) lbl_1_bss_1B8 + 0xC), 1);
-        Hu3DModelAttrReset(arg0->mdlId[2], 1);
+        Hu3DModelAttrSet(lbl_1_bss_1B8[1]->mdlId[0], 1);
+        Hu3DModelAttrSet(lbl_1_bss_1B8[2]->mdlId[0], 1);
+        Hu3DModelAttrSet(lbl_1_bss_1B8[3]->mdlId[0], 1);
+        Hu3DModelAttrReset(arg0->mdlId[1], 1);
         if (pl->charNo == 3) {
             i = -0x1E;
+        } else if (pl->charNo == 4) {
+            i = -0x1E;
         } else {
-            i = pl->charNo == 4 ? -0x1E : 0;
+            i = 0;
         }
-        Hu3DModelPosSet(arg0->mdlId[2], arg0->trans.x, arg0->trans.y, arg0->trans.z + (f32) i);
-        if (mdl->motId != (s16) arg0->mtnId[4]) {
-            Hu3DMotionSet(arg0->mdlId[2], arg0->mtnId[4]);
-            Hu3DModelAttrReset(arg0->mdlId[2], 0x40000002);
-        } else if ((s32) (mdl->motWork.time - 1) == *(s32 *) ((u8 *) (uintptr_t) lbl_1_data_D0 + pl->charFull)) {
+        Hu3DModelPosSet(arg0->mdlId[1], arg0->trans.x, arg0->trans.y, arg0->trans.z + (f32) i);
+        if (mdl->motId != arg0->mtnId[2]) {
+            Hu3DMotionSet(arg0->mdlId[1], arg0->mtnId[2]);
+            Hu3DModelAttrReset(arg0->mdlId[1], 0x40000002);
+        } else if (((s32) mdl->motWork.time) - 1 == lbl_1_data_D0[pl->charFull]) {
             CharFXPlay((s16) pl->charFull, 0x1FA);
         }
     } else if (lbl_1_bss_1A0 == 8 && lbl_1_data_9C > 0 && pl->idx > 0) {
-        MgPlayerModeSet((MGPLAYER *) mp, 0xA);
+        MgPlayerModeSet(mp, 0xA);
     } else if (lbl_1_bss_1A0 == 8 && lbl_1_data_9C == 1 && pl->idx == 0) {
-        MgPlayerModeSet((MGPLAYER *) mp, 0xC);
+        MgPlayerModeSet(mp, 0xC);
     }
-    MgPlayerPadSet((MGPLAYER *) mp, var_r22, var_r21, var_r26 | var_r27, var_r27 | sp138);
-    HuPadBtnRep[(s8) MP8(mp, 4)] &= 0x1010;
-    HuPadBtnRep[(s8) MP8(mp, 4)] |= var_r26 | var_r27;
+    MgPlayerPadSet(mp, stkX, stkY, btnDown | btnDownMask, btn | btnMask);
+    if (padOk) {
+        HuPadBtnRep[mp->padNo] = HuPadBtnRep[mp->padNo] & 0x1010;
+        HuPadBtnRep[mp->padNo] = HuPadBtnRep[mp->padNo] | (btnDown | btnDownMask);
+    }
     if (pl->idx == 0) {
-        f32 spCC = 0.0f;
-        HU3DMODEL *mdl = &Hu3DData[arg0->mdlId[0]];
+        f32 fcc;
+        s32 mot[2];
 
+        fcc = 0.0f;
+        mdl = &Hu3DData[arg0->mdlId[0]];
         if (lbl_1_bss_1A0 == 2 && lbl_1_bss_0 <= 0x44) {
-            spCC = *(f32 *) ((u8 *) &m520_r1FC[0] + (pl->charNo * 4));
+            fcc = (f32) m520_r1FC[pl->charNo];
         } else {
-            s32 sp208[2];
-
             for (i = 0; i < 2; i++) {
-                s16 id = i == 0 ? mdl->motId : mdl->motIdShift;
+                s16 id = (i == 0) ? mdl->motId : mdl->motIdShift;
 
                 if (id == -1) {
-                    sp208[i] = -1;
-                } else if (id == (s16) F32(MPP(MPP(mp, 8), 0x48), 0x16)) {
-                    sp208[i] = 0;
-                } else if (id == (s16) F32(MPP(MPP(mp, 8), 0x48), 0x14) || id == (s16) F32(MPP(MPP(mp, 8), 0x48), 0x18)) {
-                    sp208[i] = 2;
+                    mot[i] = -1;
+                } else if (id == mp->omObj->mtnId[11]) {
+                    mot[i] = 0;
+                } else if (id == mp->omObj->mtnId[10] || id == mp->omObj->mtnId[12]) {
+                    mot[i] = 2;
                 } else {
-                    sp208[i] = 1;
+                    mot[i] = 1;
                 }
             }
-            spCC = *(f32 *) ((u8 *) &m520_r1FC[0] + ((sp208[0] * 0x28) + (pl->charNo * 4)));
-            if (sp208[1] != -1) {
-                f32 t = mdl->motOvlWork.start / mdl->motOvlWork.end;
+            fcc = (f32) m520_r1FC[(mot[0] * 10) + pl->charNo];
+            if (mot[1] != -1) {
+                f32 fr = mdl->motOvlWork.start / mdl->motOvlWork.end;
 
-                spCC = (spCC * (1.0f - t)) + (t * *(f32 *) ((u8 *) &m520_r1FC[0] + ((sp208[1] * 0x28) + (pl->charNo * 4))));
+                fcc = (fcc * (1.0f - fr)) + (fr * (f32) m520_r1FC[(mot[1] * 10) + pl->charNo]);
             }
         }
-        F32(MPP(mp, 0x3C), 0x34) = spCC;
+        mp->actor->pos.z = fcc;
     }
 }
