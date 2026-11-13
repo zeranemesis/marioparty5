@@ -1126,7 +1126,7 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
             temp_f20 = -arg0->x;
             if (temp_f19 == 0.0f) {
                 M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                if (temp_f20 == 0.0f) {
+                if (temp_f20 >= 0.0f) {
                     var_f29 = 1.5707964f;
                 } else {
                     var_f29 = -1.5707964f;
@@ -1167,7 +1167,7 @@ loop_27:
                     temp_f18 = var_r27->x - arg0->x;
                     if (temp_f0_2 == 0.0f) {
                         M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                        if (temp_f18 == 0.0f) {
+                        if (temp_f18 >= 0.0f) {
                             var_f28 = 1.5707964f;
                         } else {
                             var_f28 = -1.5707964f;
@@ -1188,7 +1188,7 @@ loop_27:
                     sp3C = arg0->x - var_r27->x;
                     if (temp_f0_3 == 0.0f) {
                         M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                        if (sp3C == 0.0f) {
+                        if (sp3C >= 0.0f) {
                             var_f27 = 1.5707964f;
                         } else {
                             var_f27 = -1.5707964f;
@@ -1202,7 +1202,7 @@ loop_27:
                     sp34 = -arg0->x;
                     if (temp_f0_4 == 0.0f) {
                         M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                        if (sp34 == 0.0f) {
+                        if (sp34 >= 0.0f) {
                             var_f26 = 1.5707964f;
                         } else {
                             var_f26 = -1.5707964f;
@@ -1224,7 +1224,7 @@ loop_27:
                     sp2C = -arg0->x;
                     if (temp_f0_5 == 0.0f) {
                         M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                        if (sp2C == 0.0f) {
+                        if (sp2C >= 0.0f) {
                             var_f25 = 1.5707964f;
                         } else {
                             var_f25 = -1.5707964f;
@@ -1293,7 +1293,7 @@ block_76:
                 sp24 = var_r27->x - arg0->x;
                 if (temp_f0_6 == 0.0f) {
                     M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                    if (sp24 == 0.0f) {
+                    if (sp24 >= 0.0f) {
                         var_f24 = 1.5707964f;
                     } else {
                         var_f24 = -1.5707964f;
@@ -1391,7 +1391,7 @@ s32 fn_1_29F8(M538_PLAYER *arg0) {
         if (((temp_f30 * temp_f30) + (temp_f29 * temp_f29)) < (&sp18)[arg0->dif]) {
             if (temp_f29 == 0.0f) {
                 M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                if (temp_f30 == 0.0f) {
+                if (temp_f30 >= 0.0f) {
                     var_f28 = 1.5707964f;
                 } else {
                     var_f28 = -1.5707964f;
@@ -1485,7 +1485,7 @@ s32 fn_1_2CB8(M538_PLAYER *arg0) {
                     if (((temp_f27 * temp_f27) + (temp_f28 * temp_f28)) < (&sp28)[arg0->dif]) {
                         if (temp_f28 == 0.0f) {
                             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                            if (temp_f27 == 0.0f) {
+                            if (temp_f27 >= 0.0f) {
                                 var_f26 = 1.5707964f;
                             } else {
                                 var_f26 = -1.5707964f;
@@ -1559,7 +1559,7 @@ loop_21:
                     if (sp1C > 32.0f) {
                         if (temp_f30 == 0.0f) {
                             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                            if (temp_f29 == 0.0f) {
+                            if (temp_f29 >= 0.0f) {
                                 var_f25 = 1.5707964f;
                             } else {
                                 var_f25 = -1.5707964f;
@@ -1655,7 +1655,7 @@ s32 fn_1_32C4(M538_PLAYER *arg0) {
                     if (sp20 < (&sp30)[arg0->dif]) {
                         if (temp_f28 == 0.0f) {
                             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                            if (temp_f27 == 0.0f) {
+                            if (temp_f27 >= 0.0f) {
                                 var_f26 = 1.5707964f;
                             } else {
                                 var_f26 = -1.5707964f;
@@ -1729,7 +1729,7 @@ loop_21:
                     if (sp1C > 32.0f) {
                         if (temp_f30 == 0.0f) {
                             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                            if (temp_f29 == 0.0f) {
+                            if (temp_f29 >= 0.0f) {
                                 var_f25 = 1.5707964f;
                             } else {
                                 var_f25 = -1.5707964f;
@@ -1928,7 +1928,7 @@ s32 fn_1_3F60(M538_PLAYER *arg0) {
         temp_f28 = arg0->x;
         if (temp_f27 == 0.0f) {
             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if (temp_f28 == 0.0f) {
+            if (temp_f28 >= 0.0f) {
                 var_f29 = 1.5707964f;
             } else {
                 var_f29 = -1.5707964f;
@@ -2249,7 +2249,7 @@ loop_50:
                         temp_f26 = temp_r30->z - temp_r31->z;
                         if (temp_f26 == 0.0f) {
                             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                            if (temp_f27 == 0.0f) {
+                            if (temp_f27 >= 0.0f) {
                                 var_f28 = 1.5707964f;
                             } else {
                                 var_f28 = -1.5707964f;
@@ -2880,7 +2880,7 @@ s32 fn_1_6F24(M538_NODE0 *arg0) {
         temp_f28 = temp_r31->x;
         if (temp_f27 == 0.0f) {
             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if (temp_f28 == 0.0f) {
+            if (temp_f28 >= 0.0f) {
                 var_f29 = 1.5707964f;
             } else {
                 var_f29 = -1.5707964f;
@@ -3191,7 +3191,7 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
         temp_f29 = -arg0->x;
         if (temp_f28 == 0.0f) {
             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if (temp_f29 == 0.0f) {
+            if (temp_f29 >= 0.0f) {
                 var_f30 = 1.5707964f;
             } else {
                 var_f30 = -1.5707964f;
@@ -3572,11 +3572,11 @@ s32 fn_1_8CD8(M538_NODE *arg0) {
         temp_r31->color[0] = *(&sp8 + (temp_r29 * 3));
         temp_r31->color[1] = *(&sp8 + ((temp_r29 * 3) + 1));
         temp_r31->color[2] = *(&sp8 + ((temp_r29 * 3) + 2));
-        temp_r31_2 = temp_r31 + 0x3C;
+        temp_r31_2 = temp_r31 + 1;
         temp_r31_2->color[0] = *(&sp8 + (temp_r29 * 3));
         temp_r31_2->color[1] = *(&sp8 + ((temp_r29 * 3) + 1));
         temp_r31_2->color[2] = *(&sp8 + ((temp_r29 * 3) + 2));
-        temp_r31_3 = temp_r31_2 + 0x3C;
+        temp_r31_3 = temp_r31_2 + 1;
         temp_r29_2 = temp_r29 + 1;
         temp_r31_3->color[0] = *(&sp8 + (temp_r29_2 * 3));
         temp_r31_3->color[1] = *(&sp8 + ((temp_r29_2 * 3) + 1));
@@ -3843,6 +3843,7 @@ s32 fn_1_94DC(M538_NODE *arg0) {
         arg0->rotZ = 0.0f;
         Hu3DModelAttrReset(arg0->model, 1U);
         var_r30 = Hu3DData[arg0->model].hsf->material;
+        var_r28 = -1;
         temp_f28 = (arg0->x * arg0->x) + (arg0->z * arg0->z);
         if (temp_f28 < 62500.0f) {
             var_r28 = 0;
@@ -3851,7 +3852,7 @@ s32 fn_1_94DC(M538_NODE *arg0) {
             temp_f27 = arg0->x;
             if (temp_f26 == 0.0f) {
                 M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-                if (temp_f27 == 0.0f) {
+                if (temp_f27 >= 0.0f) {
                     var_f30 = 1.5707964f;
                 } else {
                     var_f30 = -1.5707964f;
@@ -3861,7 +3862,7 @@ s32 fn_1_94DC(M538_NODE *arg0) {
             }
             temp_f24 = (f32) fabs((f32) ((f64) (180.0f * var_f30) / 3.141592653589793));
             M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
-            if ((temp_f24 == 45.0f) && (temp_f24 < 135.0f)) {
+            if ((temp_f24 >= 45.0f) && (temp_f24 < 135.0f)) {
                 var_r28 = 2;
             } else {
                 var_r28 = 1;
@@ -3877,7 +3878,7 @@ loop_19:
             var_r30->color[1] = *(&sp8 + ((var_r29 * 3) + 1));
             var_r30->color[2] = *(&sp8 + ((var_r29 * 3) + 2));
             var_r27 += 1;
-            var_r30 += 0x3C;
+            var_r30 += 1;
             var_r29 += 1;
             goto loop_19;
         }
@@ -4044,7 +4045,7 @@ loop_11:
             var_r30->color[1] = *(&sp8 + ((var_r29 * 3) + 1));
             var_r30->color[2] = *(&sp8 + ((var_r29 * 3) + 2));
             var_r27 += 1;
-            var_r30 += 0x3C;
+            var_r30 += 1;
             var_r29 += 1;
             goto loop_11;
         }
@@ -4336,6 +4337,8 @@ void fn_1_A8A0(M538_CTRL *arg0) {
             arg0->state += 1;
             }
             break;
+    case 5:
+        break;
     }
 }
 
