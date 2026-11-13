@@ -81,10 +81,14 @@ Mgr510Boat *fn_1_0(Mgr510Boat *arg0)
     if (lbl_1_bss_14 == NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
+#ifdef TARGET_PC
+    var_r29 = (Mgr510Boat *)arg0; /* asm: (arg0 + 0x10) - 0x10 bytes */
+#else
     var_r29 = (Mgr510Boat *)((u8 *)arg0 + 0x10);
     if (var_r29 != NULL) {
         var_r29 -= 0x10;
     }
+#endif
     lbl_1_bss_14 = var_r29;
     arg0->unk8.vtable = lbl_1_data_2C;
     for (var_r30 = 0; var_r30 < 4; var_r30++) {
@@ -313,3 +317,13 @@ void *lbl_1_data_40[6] = {
 };
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_7D4)(void) = fn_1_7D4;
+#else
+struct PortStaticInit_7D4 {
+    PortStaticInit_7D4() { fn_1_7D4(); }
+};
+static PortStaticInit_7D4 lbl_port_init_7D4;
+#endif

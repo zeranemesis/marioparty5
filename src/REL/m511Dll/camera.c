@@ -498,7 +498,11 @@ void fn_1_B324(Mgr511Camera *cam, s32 mode)
 void fn_1_B4C0(Mgr511Camera *cam)
 {
     if (__ptmf_test(&cam->ptmf)) {
+#ifdef TARGET_PC /* shortcut: plain-function pmfs only ({0, -1, fn}), like rel_cxxrt.c's __ptmf_test */
+        ((void (*)(void *))cam->ptmf.func)(cam);
+#else
         __ptmf_scall(cam, &cam->ptmf);
+#endif
     }
 }
 

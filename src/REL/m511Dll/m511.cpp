@@ -2007,3 +2007,13 @@ void *lbl_1_data_22C[4] = { 0, 0, (void *)fn_1_53CC, (void *)fn_1_5358 };
 void *lbl_1_data_23C[7] = { 0, 0, (void *)fn_1_2B64, 0, (void *)fn_1_2F04, 0, 0 };
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_6938)(void) = fn_1_6938;
+#else
+struct PortStaticInit_6938 {
+    PortStaticInit_6938() { fn_1_6938(); }
+};
+static PortStaticInit_6938 lbl_port_init_6938;
+#endif

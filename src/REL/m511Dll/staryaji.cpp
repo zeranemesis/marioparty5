@@ -61,7 +61,11 @@ struct Mgr511StarYaji {
     s32 frame;
     s32 playerNo;
     s32 unk34;
+#ifdef TARGET_PC
+    ANIMDATA *anim;
+#else
     s32 anim;
+#endif
 };
 
 struct Mgr511StarYajiList {
@@ -69,10 +73,24 @@ struct Mgr511StarYajiList {
     Mgr511StarYaji *prev;
 };
 
+#ifdef TARGET_PC
+/* boatshadow.cpp's Mgr510Singleton: list node, vtable, flags, then the ANIMDATA pointers */
+struct Mgr511Scene {
+    void *node[2];
+    void **vtable;
+    s32 unkC;
+    ANIMDATA *unk10;
+    ANIMDATA *unk14;
+    ANIMDATA *unk18;
+    ANIMDATA *unk1C;
+    ANIMDATA *unk20;
+};
+#else
 struct Mgr511Scene {
     u8 pad[0x1C];
     s32 unk1C;
 };
+#endif
 
 extern "C" {
 
@@ -84,8 +102,16 @@ extern void *lbl_1_data_4E4[6];
 extern Mgr511StarYajiMaster *lbl_1_bss_A34;
 extern Mgr511Scene *lbl_1_bss_A38;
 
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+Mgr511StarYajiList lbl_1_bss_A9C;
+#else
 extern Mgr511StarYajiList lbl_1_bss_A9C;
+#endif
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+Mgr511StarYaji *lbl_1_bss_A90;
+#else
 extern Mgr511StarYaji *lbl_1_bss_A90;
+#endif
 
 static const s32 lbl_1_rodata_430[4] = {1, 2, 4, 8};
 
@@ -171,7 +197,7 @@ void *fn_1_EA18(void *arg0, s16 arg1)
 
 void fn_1_EAE8(void *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = (s32 *)((u8 *)arg0 + 3 * sizeof(void *)); /* after the list node and vtable: GC 0xC */
 
     *flag &= ~(1 << arg1);
 }
@@ -480,3 +506,12 @@ extern "C" void *lbl_1_data_4E4[6] = {
     (void *) fn_1_EB00,
 };
 
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_FA1C)(void) = fn_1_FA1C;
+#else
+struct PortStaticInit_FA1C {
+    PortStaticInit_FA1C() { fn_1_FA1C(); }
+};
+static PortStaticInit_FA1C lbl_port_init_FA1C;
+#endif

@@ -49,7 +49,11 @@ M_PC_C void fn_1_E8B4(void *arg0, s32 arg1);
 struct Mgr511Star {
     s16 modelId;
     u16 pad2;
+#ifdef TARGET_PC
+    ANIMDATA *anim;
+#else
     s32 anim;
+#endif
     f32 posX;
     f32 posY;
     f32 posZ;
@@ -76,10 +80,24 @@ struct Mgr511StarMaster {
     void *glow[5];
 };
 
+#ifdef TARGET_PC
+/* boatshadow.cpp's Mgr510Singleton: list node, vtable, flags, then the ANIMDATA pointers */
+struct Mgr511StarRoot {
+    void *node[2];
+    void **vtable;
+    s32 unkC;
+    ANIMDATA *unk10;
+    ANIMDATA *unk14;
+    ANIMDATA *unk18;
+    ANIMDATA *unk1C;
+    ANIMDATA *unk20;
+};
+#else
 struct Mgr511StarRoot {
     u8 pad20[0x20];
     s32 unk20;
 };
+#endif
 
 extern "C" {
 
@@ -125,27 +143,32 @@ Mgr511StarMaster *fn_1_D318(Mgr511StarMaster *arg0, s32 arg_sp0)
     }
     lbl_1_bss_A2C = arg0;
     arg0->vtable = lbl_1_data_4A4;
-    fn_1_372C(&arg0->modelId[6], DATANUM(DATA_m511, 0x16));
+    fn_1_372C(&arg0->modelId[0], DATANUM(DATA_m511, 0x16));
     fn_1_372C(&arg0->modelId2[0], DATANUM(DATA_m511, 0x17));
     fn_1_372C(&arg0->modelId2[1], DATANUM(DATA_m511, 0x18));
     fn_1_372C(&arg0->modelId2[2], DATANUM(DATA_m511, 0x19));
     fn_1_372C(&arg0->modelId2[3], DATANUM(DATA_m511, 0x1A));
     fn_1_372C(&arg0->modelId2[4], DATANUM(DATA_m511, 0x1B));
-    __construct_array(arg0->star, fn_1_D890, (void *(*)(void *, s16))fn_1_D838, 4, 5);
+    __construct_array(arg0->star, fn_1_D890, (void *(*)(void *, s16))fn_1_D838, sizeof(void *), 5); /* GC 4 */
     arg0->tick = 0;
     arg0->spin = 0.0f;
-    __construct_array(arg0->glow, fn_1_D80C, (void *(*)(void *, s16))fn_1_D7B4, 4, 5);
-    arg0->link[0] = (s16)arg0->modelId[0];
-    arg0->link[1] = (s16)Hu3DModelLink(arg0->modelId[0]);
-    arg0->link[2] = (s16)Hu3DModelLink(arg0->modelId[0]);
-    arg0->link[3] = (s16)Hu3DModelLink(arg0->modelId[0]);
-    arg0->link[4] = (s16)Hu3DModelLink(arg0->modelId[0]);
+    __construct_array(arg0->glow, fn_1_D80C, (void *(*)(void *, s16))fn_1_D7B4, sizeof(void *), 5); /* GC 4 */
+    /* asm: the base model is 0x4C, its copies 0x4E..0x56 (modelId[1..5]); link[] (0x78) only mirrors modelId2 */
+    arg0->modelId[1] = (s16)arg0->modelId[0];
+    arg0->modelId[2] = (s16)Hu3DModelLink(arg0->modelId[0]);
+    arg0->modelId[3] = (s16)Hu3DModelLink(arg0->modelId[0]);
+    arg0->modelId[4] = (s16)Hu3DModelLink(arg0->modelId[0]);
+    arg0->modelId[5] = (s16)Hu3DModelLink(arg0->modelId[0]);
     for (i = 0; i < 5; i++) {
         cluster = (Mgr511Star *)__nw__FUl(0x28C);
         if (cluster != NULL) {
             cluster = (Mgr511Star *)fn_1_DF70(cluster, 0);
         }
+#ifdef TARGET_PC
+        if ((void *)arg0->star[i] != (void *)cluster) {
+#else
         if ((u32)arg0->star[i] != (u32)cluster) {
+#endif
             fn_1_E060(arg0->star[i], 1);
             arg0->star[i] = cluster;
         }
@@ -158,7 +181,7 @@ Mgr511StarMaster *fn_1_D318(Mgr511StarMaster *arg0, s32 arg_sp0)
         cluster->posZ = sp28;
     }
     for (i = 0; i < 5; i++) {
-        temp_r30 = arg0->link[i];
+        temp_r30 = arg0->modelId[1 + i];
         Hu3DModelLayerSet(temp_r30, 5);
         Hu3DModelPosSetV(temp_r30, (Point3d *)&lbl_1_rodata_388[i]);
         Hu3DModelAttrReset(temp_r30, 1);
@@ -181,7 +204,11 @@ Mgr511StarMaster *fn_1_D318(Mgr511StarMaster *arg0, s32 arg_sp0)
         if (cluster != NULL) {
             glow = fn_1_8F38(glow, (Point3d *)&lbl_1_rodata_388[i], i * 0xC);
         }
+#ifdef TARGET_PC
+        if ((void *)arg0->glow[i] != (void *)glow) {
+#else
         if ((u32)arg0->glow[i] != (u32)glow) {
+#endif
             fn_1_9128(arg0->glow[i], 1);
             arg0->glow[i] = glow;
         }
@@ -250,10 +277,10 @@ void *fn_1_D948(void *arg0, s16 arg1)
     if (arg0 != NULL) {
         self->vtable = lbl_1_data_4A4;
         for (i = 1; i < 5; i++) {
-            Hu3DModelKill(self->link[i]);
+            Hu3DModelKill(self->modelId[1 + i]);
         }
-        __destroy_arr(self->glow, (void *(*)(void *, s16))fn_1_D7B4, 4, 5);
-        __destroy_arr(self->star, (void *(*)(void *, s16))fn_1_D838, 4, 5);
+        __destroy_arr(self->glow, (void *(*)(void *, s16))fn_1_D7B4, sizeof(void *), 5); /* GC 4 */
+        __destroy_arr(self->star, (void *(*)(void *, s16))fn_1_D838, sizeof(void *), 5); /* GC 4 */
         fn_1_3B8C(&self->modelId2[4], -1);
         fn_1_3B8C(&self->modelId2[3], -1);
         fn_1_3B8C(&self->modelId2[2], -1);
@@ -314,7 +341,7 @@ void fn_1_DB04(Mgr511StarMaster *arg0)
             }
             sp14.y += 50.0f * (f32)sin((3.141592653589793 * (f64)var_f31) / 180.0);
         }
-        temp_r29 = self->link[i];
+        temp_r29 = self->modelId[1 + i];
         Hu3DModelPosSetV(temp_r29, &sp14);
         Hu3DModelRotSet(temp_r29, 0.0f, var_f31, 0.0f);
         Hu3DModelScaleSet(temp_r29, var_f30, var_f30, var_f30);
@@ -336,7 +363,7 @@ void fn_1_DB04(Mgr511StarMaster *arg0)
 
 void fn_1_DF04(void *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = (s32 *)((u8 *)arg0 + 3 * sizeof(void *)); /* after the list node and vtable: GC 0xC */
 
     *flag &= ~(1 << arg1);
 }
@@ -522,12 +549,20 @@ void fn_1_E268(Mgr511Star *arg0, Mtx mtx)
 
 void fn_1_E8AC(void *arg0, s32 arg1)
 {
+#ifdef TARGET_PC
+    *(void **)arg0 = (void *)(size_t)arg1; /* the slot is a pointer (star[] / glow[]) */
+#else
     *(s32 *)arg0 = arg1;
+#endif
 }
 
 void fn_1_E8B4(void *arg0, s32 arg1)
 {
+#ifdef TARGET_PC
+    *(void **)arg0 = (void *)(size_t)arg1; /* the slot is a pointer (star[] / glow[]) */
+#else
     *(s32 *)arg0 = arg1;
+#endif
 }
 
 }

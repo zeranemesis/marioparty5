@@ -39,7 +39,7 @@ struct Mgr511StageNode;
 #else
 #define M_PC_C
 #endif
-M_PC_C Mgr511StageNode *fn_1_CE34(Mgr511StageNode *arg0, Mgr511Stage *arg1, M511_VECF *arg2);
+M_PC_C Mgr511StageNode *fn_1_CE34(Mgr511StageNode *arg0, s16 *arg1, M511_VECF *arg2);
 M_PC_C void fn_1_D00C(void);
 M_PC_C void fn_1_D0E0(void);
 M_PC_C void fn_1_D110(Mgr511StageNode *arg0);
@@ -86,11 +86,27 @@ extern "C" void *lbl_1_bss_2C[2];
 
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_464[6];
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+GXColor lbl_1_data_430 = {0x95, 0xAC, 0xE2, 0x00};
+#else
 extern GXColor lbl_1_data_430;
+#endif
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+GXColor lbl_1_data_434 = {0xFF, 0xFF, 0xFF, 0x00};
+#else
 extern GXColor lbl_1_data_434;
+#endif
 
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+Mgr511StageList lbl_1_bss_A84;
+#else
 extern Mgr511StageList lbl_1_bss_A84;
+#endif
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+Mgr511StageNode *lbl_1_bss_A78;
+#else
 extern Mgr511StageNode *lbl_1_bss_A78;
+#endif
 
 static const f32 lbl_1_rodata_36C = 5000.0f;
 static const f32 lbl_1_rodata_370 = -5000.0f;
@@ -143,7 +159,7 @@ Mgr511Stage *fn_1_C67C(Mgr511Stage *arg0, s32 arg_sp0)
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
     lbl_1_bss_18 = arg0;
-    arg0->vtable = lbl_1_data_40;
+    arg0->vtable = lbl_1_data_464; /* asm: lis/addi lbl_1_data_464 (the decomp kept the base vtable) */
     fn_1_372C(&arg0->modelId10, DATANUM(DATA_m511, 0x11));
     fn_1_372C(&arg0->modelId12, DATANUM(DATA_m511, 0x12));
     fn_1_372C(&arg0->modelId14, DATANUM(DATA_m511, 0x13));
@@ -202,12 +218,12 @@ Mgr511Stage *fn_1_C67C(Mgr511Stage *arg0, s32 arg_sp0)
             spVec.z = lbl_1_rodata_370;
             node = (Mgr511StageNode *)__nw__FUl(0x2C);
             if (node != NULL) {
-                fn_1_CE34(node, arg0, &spVec);
+                fn_1_CE34(node, &arg0->modelId16, &spVec); /* asm: addi r4, r30, 0x16 */
             }
             spVec.z = lbl_1_rodata_36C;
             node = (Mgr511StageNode *)__nw__FUl(0x2C);
             if (node != NULL) {
-                fn_1_CE34(node, arg0, &spVec);
+                fn_1_CE34(node, &arg0->modelId16, &spVec); /* asm: addi r4, r30, 0x16 */
             }
         }
     }
@@ -216,12 +232,12 @@ Mgr511Stage *fn_1_C67C(Mgr511Stage *arg0, s32 arg_sp0)
         spVec.z = (f32)(0x1388 - (j * 0xA * 0x64));
         node = (Mgr511StageNode *)__nw__FUl(0x2C);
         if (node != NULL) {
-            fn_1_CE34(node, arg0, &spVec);
+            fn_1_CE34(node, &arg0->modelId16, &spVec); /* asm: addi r4, r30, 0x16 */
         }
         spVec.x = lbl_1_rodata_36C;
         node = (Mgr511StageNode *)__nw__FUl(0x2C);
         if (node != NULL) {
-            fn_1_CE34(node, arg0, &spVec);
+            fn_1_CE34(node, &arg0->modelId16, &spVec); /* asm: addi r4, r30, 0x16 */
         }
     }
     return arg0;
@@ -276,12 +292,12 @@ void fn_1_CDEC(void)
 
 void fn_1_CE0C(void *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = (s32 *)((u8 *)arg0 + 3 * sizeof(void *)); /* after the list node and vtable: GC 0xC */
 
     *flag &= ~(1 << arg1);
 }
 
-Mgr511StageNode *fn_1_CE34(Mgr511StageNode *arg0, Mgr511Stage *arg1, M511_VECF *arg2)
+Mgr511StageNode *fn_1_CE34(Mgr511StageNode *arg0, s16 *arg1, M511_VECF *arg2)
 {
     s16 modelId;
 
@@ -401,3 +417,12 @@ extern "C" void *lbl_1_data_464[6] = {
     (void *) fn_1_CDEC,
 };
 
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_D268)(void) = fn_1_D268;
+#else
+struct PortStaticInit_D268 {
+    PortStaticInit_D268() { fn_1_D268(); }
+};
+static PortStaticInit_D268 lbl_port_init_D268;
+#endif

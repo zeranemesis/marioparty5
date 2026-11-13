@@ -53,6 +53,32 @@ struct ParticleNode {
 };
 
 /* The shared particle pool that both managers allocate out of. */
+#ifdef TARGET_PC
+/* HU3DPARTICLE (game/hu3d.h) up to its data pointer; the GC view below is its 32-bit layout */
+struct ParticlePool {
+    s16 dataCnt;
+    s16 emitCnt;
+    f32 pos[3];
+    f32 unk10[3];
+    void *owner; /* work */
+    s16 animBank;
+    s16 animNo;
+    f32 animSpeed;
+    f32 animTime;
+    u8 blendMode;
+    u8 attr;
+    s16 unk2E;
+    s16 maxCnt;
+    u32 count;
+    u32 prevCounter;
+    u32 prevCount;
+    u32 dlSize;
+    void *anim;
+    struct ParticleNode *data;
+};
+#include <stddef.h>
+static_assert(offsetof(ParticlePool, data) == offsetof(HU3DPARTICLE, data), "ParticlePool view");
+#else
 struct ParticlePool {
     u8 pad00[0x1C];
     void *owner;
@@ -61,9 +87,13 @@ struct ParticlePool {
     u8 pad32[0x16];
     struct ParticleNode *data;
 };
+#endif
 
+/* layout from particle.s (GC offsets): node 0x0, vtable 0x8, flags 0xC, pool 0x14, pos 0x18,
+ * rot 0x24 (y = the player's angle), player 0x30, timer 0x34, done 0x38, tick 0x3C, count 0x40 */
 struct Mgr511Smoke {
-    void *unk0;
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
     void **vtable;
     s32 unkC;
     s16 modelId;
@@ -74,11 +104,19 @@ struct Mgr511Smoke {
     f32 unk24;
     f32 speed;
     f32 unk2C;
+    void *owner; /* the player that leaves the smoke */
     f32 timer;
     u8 pad38;
     s32 tick;
     s32 count;
 };
+
+#ifdef TARGET_PC
+extern "C" void m511PlayerPoseGet(void *player, f32 *pos, f32 *angle); /* player.cpp */
+#define M511_SMOKE_FOLLOW(s)                                                                                                       do {                                                                                                                               f32 pos_[3], ang_;                                                                                                             m511PlayerPoseGet((s)->owner, pos_, &ang_);                                                                                    (s)->posX = pos_[0];                                                                                                           (s)->posY = pos_[1];                                                                                                           (s)->posZ = pos_[2];                                                                                                           (s)->unk24 = 0.0f;                                                                                                             (s)->speed = ang_;                                                                                                             (s)->unk2C = 0.0f;                                                                                                         } while (0)
+#else
+#define M511_SMOKE_FOLLOW(s)                                                                                                       do {                                                                                                                               (s)->posX = *(f32 *)((u8 *)(s)->owner + 0x88);                                                                                 (s)->posY = *(f32 *)((u8 *)(s)->owner + 0x8C);                                                                                 (s)->posZ = *(f32 *)((u8 *)(s)->owner + 0x90);                                                                                 (s)->unk24 = 0.0f;                                                                                                             (s)->speed = *(f32 *)((u8 *)(s)->owner + 0x70);                                                                                (s)->unk2C = 0.0f;                                                                                                         } while (0)
+#endif
 
 struct Mgr511Spark {
     s16 modelId;
@@ -125,7 +163,6 @@ void fn_1_8488(HU3DMODEL *arg1, HU3DPARTICLE *arg2, Mtx mtx)
 Mgr511Smoke *fn_1_84CC(Mgr511Smoke *arg0, Mgr511Smoke *arg1)
 {
     HU3DMODELID pid;
-    Mgr511Smoke *src;
     struct ParticleNode *node;
     s32 i;
 
@@ -134,7 +171,7 @@ Mgr511Smoke *fn_1_84CC(Mgr511Smoke *arg0, Mgr511Smoke *arg1)
     arg0->unkC = 0;
     fn_1_1E54(arg0, (void **)lbl_1_bss_2C);
     arg0->vtable = lbl_1_data_354;
-    src = arg1;
+    arg0->owner = arg1;
     arg0->timer = 0.0f;
     arg0->pad38 = 0;
     arg0->tick = 0;
@@ -152,12 +189,7 @@ Mgr511Smoke *fn_1_84CC(Mgr511Smoke *arg0, Mgr511Smoke *arg1)
     Hu3DModelLayerSet(pid, 6);
     Hu3DModelPosSet(pid, 0.0f, 0.0f, 0.0f);
     Hu3DModelRotSet(pid, 0.0f, 0.0f, 0.0f);
-    arg0->posX = (f32)*(f32 *)((u8 *)src + 0x88);
-    arg0->posY = (f32)*(f32 *)((u8 *)src + 0x8C);
-    arg0->posZ = (f32)*(f32 *)((u8 *)src + 0x90);
-    arg0->unk24 = 0.0f;
-    arg0->speed = (f32)*(s32 *)((u8 *)src + 0x70);
-    arg0->unk2C = 0.0f;
+    M511_SMOKE_FOLLOW(arg0); /* asm: the player's pos (+0x88) and angle (+0x70) */
     node = arg0->pool->data;
     for (i = 0; i < arg0->pool->maxCnt; i++) {
         fn_1_894C(arg0, node);
@@ -183,22 +215,16 @@ void *fn_1_8770(Mgr511Smoke *arg0, s16 arg1)
 
 void fn_1_87F8(void *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = (s32 *)((u8 *)arg0 + 3 * sizeof(void *)); /* after the list node and vtable: GC 0xC */
 
     *flag &= ~(1 << arg1);
 }
 
 void fn_1_8810(Mgr511Smoke *arg0)
 {
-    Mgr511Smoke *src = arg0;
     s32 tick;
 
-    arg0->posX = (f32)*(f32 *)((u8 *)src + 0x88);
-    arg0->posY = (f32)*(f32 *)((u8 *)src + 0x8C);
-    arg0->posZ = (f32)*(f32 *)((u8 *)src + 0x90);
-    arg0->unk24 = 0.0f;
-    arg0->speed = (f32)*(s32 *)((u8 *)src + 0x70);
-    arg0->unk2C = 0.0f;
+    M511_SMOKE_FOLLOW(arg0); /* asm: the player's pos (+0x88) and angle (+0x70) */
     if (arg0->pad38 != 1) {
         tick = arg0->tick;
         arg0->tick = tick + 1;
@@ -274,7 +300,7 @@ void fn_1_8B8C(Mgr511Smoke *arg0, Mtx mtx)
         node++;
     }
     if (var_r25 != 0 && arg0 != NULL) {
-        ((void (*)(Mgr511Smoke *, s32))arg0->vtable[1])(arg0, 1);
+        ((void (*)(Mgr511Smoke *, s32))arg0->vtable[2])(arg0, 1); /* asm: lwz r12, 0x8(r12): the deleting dtor */
     }
 }
 

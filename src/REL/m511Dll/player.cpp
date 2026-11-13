@@ -110,8 +110,9 @@ struct Mgr511Player {
 };
 
 /* Part of the game master used here: per-lap counters and timers. */
-struct Mgr511GmWork {
-    u8 pad00[0x10];
+struct Mgr511GmWork { /* star.cpp's Mgr511StarMaster */
+    void *pad00[3]; /* list node, vtable */
+    s32 padC;
     s32 count[10];
     s32 timer[10];
 };
@@ -490,7 +491,11 @@ Mgr511RingPtr *fn_1_10360(Mgr511RingPtr *p, s16 flag)
 
 void fn_1_103B8(Mgr511RingPtr *p)
 {
+#ifdef TARGET_PC
+    p->p = NULL; /* fn_1_15334 stores 32 bits: half a pointer on PC */
+#else
     fn_1_15334((s32 *)&p->p, 0);
+#endif
 }
 
 void *fn_1_103E4(Mgr511S16Vec *v, s16 flag)
@@ -898,7 +903,11 @@ void fn_1_11804(Mgr511Player *p)
     Mgr511Splash *splash;
     s32 i;
 
+#ifdef TARGET_PC /* shortcut: plain-function pmfs only ({0, -1, fn}), like rel_cxxrt.c's __ptmf_test */
+    ((void (*)(void *))p->state.func)(p);
+#else
     __ptmf_scall(p, &p->state);
+#endif
     speed = p->speed;
     if (lbl_1_bss_1C != 0) {
     } else {
@@ -1729,7 +1738,8 @@ void fn_1_153FC(Mgr511S16Vec *v, s16 *where, u32 count, s16 *value)
             u32 after = (u32)(end - where);
 
             src = value;
-            if (end - (after - (s32)count) <= src && src < end) { /* signed: on 64-bit the u32 wrap no longer cancels out */
+            /* end - (after - count) is where + count once the GC's 32-bit wrap cancels out; spell it so on 64-bit */
+            if (where + count <= src && src < end) {
                 src = src + count;
             }
             if (after != 0) {
@@ -1836,3 +1846,26 @@ void *fn_1_1595C(void *p, s16 flag)
 }
 
 }
+
+#ifdef TARGET_PC
+/* particle.cpp's smoke follows its player; the player layout is only known here */
+extern "C" void m511PlayerPoseGet(void *player, f32 *pos, f32 *angle)
+{
+    Mgr511Player *p = (Mgr511Player *)player;
+
+    pos[0] = p->pos.x;
+    pos[1] = p->pos.y;
+    pos[2] = p->pos.z;
+    *angle = p->angle;
+}
+#endif
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_158D4)(void) = fn_1_158D4;
+#else
+struct PortStaticInit_158D4 {
+    PortStaticInit_158D4() { fn_1_158D4(); }
+};
+static PortStaticInit_158D4 lbl_port_init_158D4;
+#endif

@@ -113,10 +113,14 @@ Mgr510KibakoMaster *fn_1_18A9C(Mgr510KibakoMaster *arg0)
     if (lbl_1_bss_A30 == NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
+#ifdef TARGET_PC
+    var_r29 = (Mgr510KibakoMaster *)arg0; /* asm: (arg0 + 0x10) - 0x10 bytes */
+#else
     var_r29 = (Mgr510KibakoMaster *)((u8 *)arg0 + 0x10);
     if (var_r29 != NULL) {
         var_r29 -= 0x10;
     }
+#endif
     lbl_1_bss_A30 = var_r29;
     arg0->vtable = lbl_1_data_6B0;
     fn_1_372C(&arg0->modelId, DATANUM(DATA_m511, 0x20));
@@ -165,12 +169,20 @@ Mgr510KibakoMaster *fn_1_18C10(Mgr510KibakoMaster *arg0, s16 arg1)
 }
 
 // NONMATCHING: the box placement loop is folded differently.
+#ifdef TARGET_PC
+void fn_1_18CEC(Mgr510KibakoMaster *arg0)
+#else
 void fn_1_18CEC(s32 arg0)
+#endif
 {
     f32 sp14;
     f32 sp10;
     f32 spC;
+#ifdef TARGET_PC
+    Mgr510KibakoMaster *sp8;
+#else
     s32 sp8;
+#endif
     Mgr510Kibako *temp_r3;
     f32 temp_f31;
     f64 temp_f1;
@@ -191,7 +203,11 @@ void fn_1_18CEC(s32 arg0)
             sp14 = (f32)((f64)sp14 + temp_f1_2);
             temp_r3 = (Mgr510Kibako *)__nw__FUl(0x38);
             if (temp_r3 != NULL) {
+#ifdef TARGET_PC
+                fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)&((Mgr510KibakoMaster *)sp8)->modelId, (Vec *)&spC); /* GC +0x10 */
+#else
                 fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)(sp8 + 0x10), (Vec *)&spC);
+#endif
             }
             printf("%d:% f\n", var_r30 + (var_r31 * 5), spC, sp14);
         }
@@ -431,3 +447,13 @@ void *lbl_1_data_6B0[6] = {
 };
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_19754)(void) = fn_1_19754;
+#else
+struct PortStaticInit_19754 {
+    PortStaticInit_19754() { fn_1_19754(); }
+};
+static PortStaticInit_19754 lbl_port_init_19754;
+#endif

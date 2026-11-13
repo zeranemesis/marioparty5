@@ -83,10 +83,14 @@ Mgr510Singleton *fn_1_BD18(Mgr510Singleton *arg0)
     if (lbl_1_bss_A38 == NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
+#ifdef TARGET_PC
+    var_r29 = (Mgr510Singleton *)arg0; /* asm: (arg0 + 0x10) - 0x10 bytes */
+#else
     var_r29 = (Mgr510Singleton *)((u8 *)arg0 + 0x10);
     if (var_r29 != NULL) {
         var_r29 -= 0x10;
     }
+#endif
     lbl_1_bss_A38 = var_r29;
     arg0->vtable = lbl_1_data_41C;
     arg0->unk10 = HuSprAnimRead(HuDataSelHeapReadNum(DATANUM(DATA_m511, 0x29), HU_MEMNUM_OVL, HEAP_MODEL));
@@ -155,7 +159,11 @@ void fn_1_C034(void)
 
 void fn_1_C038(HU3DMODEL *arg0, Mtx *arg1)
 {
+#ifdef TARGET_PC
+    fn_1_C1CC((Mgr510Shadow *)arg0->hookData, (f32 (*)[4])arg1); /* GC +0x120 */
+#else
     fn_1_C1CC((Mgr510Shadow *)(*(void **)((u8 *)arg0 + 0x120)), (f32 (*)[4])arg1);
+#endif
 }
 
 Mgr510Shadow *fn_1_C07C(Mgr510Shadow *arg0)

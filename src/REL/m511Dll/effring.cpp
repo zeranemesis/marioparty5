@@ -57,7 +57,11 @@ extern "C" void *lbl_1_bss_2C[2];
 extern void *lbl_1_data_40[6];
 extern void *lbl_1_data_284[6];
 
+#ifdef TARGET_PC /* the original object defines it; this unit is linked from source on PC */
+Mgr511Effring *lbl_1_bss_A10;
+#else
 extern Mgr511Effring *lbl_1_bss_A10;
+#endif
 
 static const s32 lbl_1_rodata_D0[4] = {0x450023, 0x450024, 0x450025, 0x450026};
 static const s32 lbl_1_rodata_E8[4] = {0, 1, 2, 3};
@@ -145,7 +149,7 @@ void *fn_1_6D50(void *arg0, s16 arg1)
 
 void fn_1_6E48(void *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = (s32 *)((u8 *)arg0 + 3 * sizeof(void *)); /* after the list node and vtable: GC 0xC */
 
     *flag &= ~(1 << arg1);
 }

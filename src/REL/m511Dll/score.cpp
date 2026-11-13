@@ -53,11 +53,12 @@ void MgTimerModeOnSet(MGTIMER *timer, s32 mode);
 s32 MgTimerDoneCheck(MGTIMER *timer);
 s32 MgTimerValueGet(MGTIMER *timer);
 
-void *MgScoreWinCreate(s32 a, s32 b);
-void MgScoreWinColorSet(void *win, u32 r, u32 g, u32 b);
-void MgScoreWinTPLvlSet(void *win, f32 tpLvl);
-void MgScoreWinDispSet(void *win, s32 disp);
-void MgScoreWinPosSet(void *win, f32 x, f32 y);
+/* game/gamemes.h: the window is a sprite group id */
+s16 MgScoreWinCreate(s16 sizeX, s16 sizeY);
+void MgScoreWinColorSet(s16 gid, u8 r, u8 g, u8 b);
+void MgScoreWinTPLvlSet(s16 gid, f32 tpLvl);
+void MgScoreWinDispSet(s16 gid, s32 disp);
+void MgScoreWinPosSet(s16 gid, f32 x, f32 y);
 
 }
 
@@ -75,10 +76,10 @@ M_PC_C void fn_1_169DC(Mgr511ScoreBoard *arg1);
 M_PC_C void fn_1_16B10(Mgr511ScoreBoard *arg1);
 
 struct Mgr511Score {
-    void *unk0;
+    void *unk0; /* list node (next, prev) */
+    void *unk4;
     void **vtable;
     s32 unkC;
-    s32 padC; /* 0x0C */
     MGTIMER *timer;
     s32 param;
     u8 hasTimer;
@@ -86,9 +87,8 @@ struct Mgr511Score {
 };
 
 struct Mgr511ScoreBoard {
-    void *win;
+    s16 win; /* MgScoreWinCreate's sprite group */
     s16 sprGrp;
-    s16 pad2;
     s32 unk4;
     s32 index;
     s32 count;
@@ -254,7 +254,7 @@ void fn_1_15EA0(Mgr511Score *arg0)
 
 void fn_1_15ED0(Mgr511Score *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = &arg0->unkC; /* GC +0xC */
 
     *flag &= ~(1 << arg1);
     switch (arg1) {
@@ -393,8 +393,9 @@ void fn_1_1652C(Mgr511ScoreRoot *arg0, s32 arg1, s32 arg2)
 
 void fn_1_16604(void *arg0, s32 arg1, s32 arg2, s32 arg3)
 {
-    *(s32 *)((u8 *)arg0 + (arg1 * 0x3C) + 0x20) = arg2;
-    *(void **)((u8 *)arg0 + (arg1 * 0x3C) + 0x38) = (void *)arg3;
+    /* arg0 is the score root (lbl_1_bss_A24): GC root + 0x14 + idx * 0x3C + {0xC, 0x24} */
+    ((Mgr511ScoreRoot *)arg0)->board[arg1].count = arg2;
+    ((Mgr511ScoreRoot *)arg0)->board[arg1].param = arg3;
 }
 
 void fn_1_16620(Mgr511ScoreBoard *arg1)
@@ -479,7 +480,7 @@ void fn_1_169DC(Mgr511ScoreBoard *arg1)
             arg1->timer->mode = 1;
         }
         MgTimerPosSet(arg1->timer, 10.0f + lbl_1_rodata_8A0[arg1->index].x, 8.0f + lbl_1_rodata_8A0[arg1->index].y);
-        MgScoreWinDispSet((void *)(size_t)(s32)arg1->timer->winGrpId, 0);
+        MgScoreWinDispSet(arg1->timer->winGrpId, 0);
         arg1->timer->winDispF = 0;
         arg1->hasTimer = 1;
     }
@@ -533,7 +534,7 @@ void fn_1_16B74(Mgr511ScoreRoot *arg0)
 
 void fn_1_16DE4(Mgr511ScoreRoot *arg0, s32 arg1)
 {
-    s32 *flag = (s32 *)((u8 *)arg0 + 0xC);
+    s32 *flag = &arg0->unkC; /* GC +0xC */
 
     *flag &= ~(1 << arg1);
     switch (arg1) {

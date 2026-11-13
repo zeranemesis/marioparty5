@@ -28,7 +28,11 @@ extern "C" void *fn_1_159B4(void *self, u32 arg1, u8 arg2);
 extern "C" bool8 fn_1_15E48(void *arg0);
 extern "C" void fn_1_16040(void *self, u8 arg1);
 extern "C" void fn_1_18A9C(void *self);
+#ifdef TARGET_PC
+extern "C" void fn_1_18CEC(void *arg0);
+#else
 extern "C" void fn_1_18CEC(u32 arg0);
+#endif
 extern "C" void fn_1_19848(void *self);
 extern "C" void fn_1_1B578(void *self);
 extern "C" void fn_1_276C(s32 arg0);
@@ -149,12 +153,24 @@ s32 lbl_1_bss_A18;
 s32 lbl_1_bss_A1C;
 s32 lbl_1_bss_A20;
 void *lbl_1_bss_A24;
+#ifdef TARGET_PC
+void *lbl_1_bss_A28; /* score singleton pointer */
+#else
 s32 lbl_1_bss_A28;
+#endif
 void *lbl_1_bss_A2C;
 /* lbl_1_bss_A30 is defined by m511.o, which references it as UND here. Defining it too makes
    the linker report it multiply-defined. */
+#ifdef TARGET_PC
+extern "C" void *lbl_1_bss_A30; /* Mgr510KibakoMaster * */
+#else
 extern "C" u32 lbl_1_bss_A30;
+#endif
+#ifdef TARGET_PC
+void *lbl_1_bss_A34; /* Mgr511StarYajiMaster * */
+#else
 s32 lbl_1_bss_A34;
+#endif
 
 CGameMaster *__ct__Q24m51111CGameMasterFv(CGameMaster *arg0)
 {
@@ -458,3 +474,13 @@ void *lbl_1_data_304[13] = {
 };
 
 }
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_8444)(void) = fn_1_8444;
+#else
+struct PortStaticInit_8444 {
+    PortStaticInit_8444() { fn_1_8444(); }
+};
+static PortStaticInit_8444 lbl_port_init_8444;
+#endif
