@@ -301,11 +301,15 @@ extern "C" void fn_1_9104(void)
 {
     s32 i;
     s32 j;
+    s32 a;
+    s32 b;
 
     for (i = 0; i < 4; i++) {
         j = fn_1_4AE0() & 3;
-        lbl_1_data_370[i] = lbl_1_data_370[j];
-        lbl_1_data_370[j] = lbl_1_data_370[i];
+        a = lbl_1_data_370[i];
+        b = lbl_1_data_370[j];
+        lbl_1_data_370[i] = b;
+        lbl_1_data_370[j] = a;
     }
 }
 
@@ -1338,7 +1342,7 @@ extern "C" s32 fn_1_C3C8(Player *self)
     z = self->pos.z;
     d = pl_sqrt(ex * ex + (f64)z * (f64)z);
     self->radius = d;
-    if (self->radius < 750.0f) {
+    if (d < 750.0) {
         self->pos.x = cx + 750.0 * (ex / d);
         self->pos.z = 750.0 * ((f64)z / d);
         self->radius = 750.0f;
@@ -1347,7 +1351,7 @@ extern "C" s32 fn_1_C3C8(Player *self)
         }
         return 1;
     }
-    if (self->radius > 1450.0f) {
+    if (d > 1450.0) {
         self->pos.x = cx + 1450.0 * (ex / d);
         self->pos.z = 1450.0 * ((f64)z / d);
         self->radius = 1450.0f;

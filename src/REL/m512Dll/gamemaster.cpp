@@ -156,7 +156,7 @@ extern "C" void fn_1_6760(CGameMaster *self);
 // ---------------------------------------------------------------------- data
 
 char lbl_1_data_210[] = "m512::CGameMaster::~CGameMaster()";
-char lbl_1_data_232[] = "\0%s\n\0";
+char lbl_1_data_232[6] = "%s\n";
 
 // One 12-word object: vtable[0..5] for CGameMaster, vtable[6..9] for the
 // sub-object at +0x20, then a two-entry table.

@@ -1597,25 +1597,6 @@ f32 fn_1_4FC8(f32 from, f32 to)
 
 // ---------------------------------------------------------------- shadow / collision helpers
 
-// Distance at which a 5 degree field of view spans `size`; `out` = target - dir * distance.
-f32 fn_1_501C(Vec *out, Vec *dir, Vec *target, f32 size)
-{
-    f32 dist;
-    Vec *o1;
-    Vec *o2;
-    Vec *o3;
-
-    dist = size / tan(0.0872664600610733);
-    PSVECScale(dir, out, dist);
-    o1 = out;
-    o2 = o1;
-    o3 = o2;
-    PSVECSubtract(target, o3, o3);
-    return dist;
-}
-
-
-
 // Sphere: centre and radius.
 typedef struct M512Sphere_s {
     Vec pos;
@@ -1627,6 +1608,20 @@ inline f32 M512SphereRadius(M512Sphere *s)
     return s->radius;
 }
 
+// Do the two spheres overlap (centre distance < sum of the radii)?
+s32 fn_1_501C(M512Sphere *a, M512Sphere *b)
+{
+    Vec d;
+    f32 rb;
+    f32 ra;
+    f32 sum;
+
+    PSVECSubtract(&a->pos, &b->pos, &d);
+    rb = b->radius;
+    ra = a->radius;
+    sum = ra + rb;
+    return PSVECMag(&d) < sum;
+}
 
 // Push two overlapping spheres apart; ka/kb weight the move of each.
 s32 fn_1_50C4(M512Sphere *a, M512Sphere *b, f32 ka, f32 kb)
