@@ -59,7 +59,7 @@ static s32 (*const PlayerModeTbl[4])(OMOBJ *) = {
 static const f32 MotSpeedTbl[10] = { 1.0f, 0.75f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 
 typedef struct M506MotShift_s {
-    s32 motIdx;
+    f32 motIdx;
     f32 start;
     f32 end;
 } M506_MOT_SHIFT;
@@ -145,6 +145,9 @@ void M506PlayerUpdate(OMOBJ *obj)
     M506_PLAYER_WORK *player = obj->data;
 
     switch (M506MainObj->work[3]) {
+    case 0:
+    case 1:
+        break;
     case 2:
         if (PlayerModeNoTbl[player->no] == 4) {
             M506PlayerInputRead(obj);
@@ -155,7 +158,8 @@ void M506PlayerUpdate(OMOBJ *obj)
         break;
     case 5:
         break;
-    default:
+    case 3:
+    case 4:
         if (PlayerModeNoTbl[player->no] != 4) {
             PlayerModeTbl[PlayerModeNoTbl[player->no]](obj);
         }
@@ -186,7 +190,7 @@ static void M506PlayerMotionSet(M506_PLAYER_WORK *player, OMOBJ *obj, s16 motNo)
             /* fallthrough */
         case 9:
         case 10:
-            Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[MotShiftTbl[motNo - 7].motIdx],
+            Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[(s32)MotShiftTbl[motNo - 7].motIdx],
                 MotShiftTbl[motNo - 7].start, MotShiftTbl[motNo - 7].end, 0);
             break;
         }
@@ -203,7 +207,7 @@ BOOL M506PlayerMotionEndCheck(OMOBJ *obj)
     } else {
         player->motTime = Hu3DMotionShiftTimeGet(obj->mdlId[0]);
     }
-    return player->motTime == player->motMaxTime;
+    return player->motTime >= player->motMaxTime;
 }
 
 // NONMATCHING: faithful translation, not yet instruction-matched
@@ -235,7 +239,7 @@ BOOL M506PlayerInputRead(OMOBJ *obj)
     if (inputF) {
         player->jumpTicks = 0;
         player->jumpF = 0;
-        player->fallTime = 0;
+        player->modeTimer = 0;
         player->nextJumpF = (player->newHeight == 0);
         if (player->curDir != -1 && player->curDir != player->prevDir) {
             if (player->curDir == work->mameSide[player->no][player->newHeight]) {
@@ -247,7 +251,7 @@ BOOL M506PlayerInputRead(OMOBJ *obj)
                 }
             } else {
                 PlayerModeNoTbl[player->no] = 3;
-                player->fallLevel = 1;
+                player->upJumpF = 1;
                 if (player->newHeight != 0) {
                     s16 h = player->newHeight;
                     player->fallLevel++;
@@ -274,7 +278,7 @@ BOOL M506PlayerInputRead(OMOBJ *obj)
             }
         } else {
             PlayerModeNoTbl[player->no] = 1;
-            player->fallLevel = 1;
+            player->upJumpF = 1;
         }
     }
     return 0;
@@ -292,10 +296,10 @@ static s32 M506PlayerModeNormalJump(OMOBJ *obj)
     M506MameUpdate(player);
     M506YCamera->camera[player->no].pos.y += 10.0f;
 
-    switch (player->motId) {
+    switch (player->mode) {
     case 0:
         M506PlayerMotionSet(player, obj, 9);
-        player->motId++;
+        player->mode++;
         player->jumpTimer = 0;
         M506ObjShadowMapSet(player->no, player->newHeight);
         /* fallthrough */
@@ -309,7 +313,7 @@ static s32 M506PlayerModeNormalJump(OMOBJ *obj)
         omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
         if (player->modeTimer > 14) {
             M506PlayerMotionSet(player, obj, 2);
-            player->motId++;
+            player->mode++;
             player->jumpTimer = 0;
         }
         break;
@@ -326,16 +330,14 @@ static s32 M506PlayerModeNormalJump(OMOBJ *obj)
         player->jumpTimer++;
         if (player->modeTimer > 26) {
             M506PlayerMotionSet(player, obj, 7);
-            player->motId++;
+            player->mode++;
         }
         break;
     case 3:
         M506MameModeEnter(player);
         if (player->modeTimer > 29) {
             M506PlayerMotionSet(player, obj, 0);
-            Hu3DModelAttrSet(obj->mdlId[0], HU3D_MOTATTR_LOOP);
-            Hu3DMotionSet(obj->mdlId[0], obj->mtnId[0]);
-            player->motId = 0;
+            player->mode = 0;
             player->curDir = -1;
             PlayerModeNoTbl[player->no] = 4;
             doneF = 1;
@@ -353,11 +355,11 @@ static s32 M506PlayerModeUpJump(OMOBJ *obj)
     s32 doneF = 0;
 
     player->modeTimer++;
-    switch (player->motId) {
+    switch (player->mode) {
     case 0:
         M506PlayerMotionSet(player, obj, 9);
         player->jumpTimer = 0;
-        player->motId++;
+        player->mode++;
         /* fallthrough */
     case 1:
         if (player->nextJumpF == 0) {
@@ -369,7 +371,7 @@ static s32 M506PlayerModeUpJump(OMOBJ *obj)
         omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
         if (player->modeTimer > 14) {
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 2:
@@ -385,7 +387,7 @@ static s32 M506PlayerModeUpJump(OMOBJ *obj)
         if (player->modeTimer > 29) {
             M506PlayerMotionSet(player, obj, 2);
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 3:
@@ -405,16 +407,14 @@ static s32 M506PlayerModeUpJump(OMOBJ *obj)
         player->jumpTimer++;
         if (player->modeTimer > 41) {
             M506PlayerMotionSet(player, obj, 7);
-            player->motId++;
+            player->mode++;
         }
         break;
     case 4:
         M506MameModeEnter(player);
         if (player->modeTimer > 44) {
             M506PlayerMotionSet(player, obj, 0);
-            Hu3DModelAttrSet(obj->mdlId[0], HU3D_MOTATTR_LOOP);
-            Hu3DMotionSet(obj->mdlId[0], obj->mtnId[0]);
-            player->motId = 0;
+            player->mode = 0;
             player->curDir = -1;
             PlayerModeNoTbl[player->no] = 4;
             doneF = 1;
@@ -435,11 +435,11 @@ static s32 M506PlayerModeSideJump(OMOBJ *obj)
     player->modeTimer++;
     M506MameUpdate(player);
 
-    switch (player->motId) {
+    switch (player->mode) {
     case 0:
         M506PlayerMotionSet(player, obj, 9);
         player->jumpTimer = 0;
-        player->motId++;
+        player->mode++;
         M506ObjShadowMapSet(player->no, player->newHeight);
         /* fallthrough */
     case 1:
@@ -458,7 +458,7 @@ static s32 M506PlayerModeSideJump(OMOBJ *obj)
         if (player->modeTimer > 14) {
             M506PlayerMotionSet(player, obj, 2);
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 2:
@@ -480,16 +480,14 @@ static s32 M506PlayerModeSideJump(OMOBJ *obj)
         if (player->modeTimer > 26) {
             M506PlayerMotionSet(player, obj, 7);
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 3:
         M506MameModeEnter(player);
         if (player->modeTimer > 29) {
             M506PlayerMotionSet(player, obj, 0);
-            Hu3DModelAttrSet(obj->mdlId[0], HU3D_MOTATTR_LOOP);
-            Hu3DMotionSet(obj->mdlId[0], obj->mtnId[0]);
-            player->motId = 0;
+            player->mode = 0;
             player->curDir = -1;
             PlayerModeNoTbl[player->no] = 4;
             doneF = 1;
@@ -508,15 +506,15 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
     s32 doneF = 0;
 
     player->modeTimer++;
-    if ((u32)player->motId > 10) {
+    if ((u32)player->mode > 10) {
         return doneF;
     }
 
-    switch (player->motId) {
+    switch (player->mode) {
     case 0:
         M506PlayerMotionSet(player, obj, 9);
         player->jumpTimer = 0;
-        player->motId++;
+        player->mode++;
         /* fallthrough */
     case 1:
         M506MameModeMiss(player);
@@ -535,14 +533,13 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         if (player->modeTimer > 14) {
             if (player->nextJumpF == 0) {
                 M506PlayerMotionSet(player, obj, 8);
-                M506ObjShadowMapReset(player->no, player->newHeight, player->height);
                 FallStartSeNo[player->no] = HuAudFXPlay(FallStartFXTbl[player->no]);
                 HuAudFXPanning(FallStartSeNo[player->no], PlayerPanTbl[player->no]);
                 CharFallSeNo[player->no] = HuAudFXPlay(CharFallFXTbl[player->charNo]);
                 HuAudFXPanning(CharFallSeNo[player->no], PlayerPanTbl[player->no]);
-                player->motId++;
+                player->mode++;
             } else {
-                player->motId = 8;
+                player->mode = 8;
             }
             player->fallTime = 0;
             player->jumpTimer = 0;
@@ -578,9 +575,7 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         player->jumpTimer++;
         if (player->modeTimer > 19) {
             M506PlayerMotionSet(player, obj, 3);
-            Hu3DModelAttrSet(obj->mdlId[0], HU3D_MOTATTR_LOOP);
-            Hu3DMotionSet(obj->mdlId[0], obj->mtnId[3]);
-            player->motId++;
+            player->mode++;
         }
         break;
     case 3:
@@ -616,7 +611,7 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         if (player->fallTime >= (player->fallLevel * 15)) {
             player->jumpTimer = 0;
             player->prevFallTime = player->fallTime;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 4:
@@ -644,7 +639,7 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         if (player->jumpTimer >= 9) {
             player->fallTime = 0;
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
             FallEndSeNo[player->no] = HuAudFXPlay(FallEndFXTbl[player->no]);
             HuAudFXPanning(FallEndSeNo[player->no], PlayerPanTbl[player->no]);
         }
@@ -659,7 +654,7 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         if (player->jumpTimer >= 7) {
             M506PlayerMotionSet(player, obj, 10);
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 6:
@@ -676,16 +671,14 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
             Hu3DMotionTimeSet(obj->mdlId[0], Hu3DMotionMotionMaxTimeGet(obj->mdlId[0]));
             M506PlayerMotionSet(player, obj, 7);
             player->jumpTimer = 1;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 7:
         player->jumpTimer++;
         if (player->jumpTimer > 3) {
             M506PlayerMotionSet(player, obj, 0);
-            Hu3DModelAttrSet(obj->mdlId[0], HU3D_MOTATTR_LOOP);
-            Hu3DMotionSet(obj->mdlId[0], obj->mtnId[0]);
-            player->motId = 0;
+            player->mode = 0;
             player->fallLevel = 0;
             player->curDir = -1;
             PlayerModeNoTbl[player->no] = 4;
@@ -709,7 +702,7 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         if (player->modeTimer > 29) {
             M506PlayerMotionSet(player, obj, 2);
             player->jumpTimer = 0;
-            player->motId++;
+            player->mode++;
         }
         break;
     case 9:
@@ -725,18 +718,14 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
         player->jumpTimer++;
         if (player->modeTimer > 41) {
             M506PlayerMotionSet(player, obj, 7);
-            M506ObjShadowMapReset(player->no, player->newHeight, player->height);
-            Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[MotShiftTbl[0].motIdx], MotShiftTbl[0].start, MotShiftTbl[0].end, 0);
-            player->motId++;
+            player->mode++;
         }
         break;
     case 10:
         M506MameModeEnter(player);
         if (player->modeTimer > 44) {
             M506PlayerMotionSet(player, obj, 0);
-            Hu3DModelAttrSet(obj->mdlId[0], HU3D_MOTATTR_LOOP);
-            Hu3DMotionSet(obj->mdlId[0], obj->mtnId[0]);
-            player->motId = 0;
+            player->mode = 0;
             player->fallLevel = 0;
             player->curDir = -1;
             PlayerModeNoTbl[player->no] = 4;
