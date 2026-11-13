@@ -867,7 +867,7 @@ static void fn_1_23C8(s16 mode, s16 frameNo) {
     s32 var_r31;
     s32 var_r31_2;
     s32 var_r31_3;
-    M559HOOK *temp_r28;
+    M559NOD *temp_r28;
 
     temp_r28 = (*lbl_1_bss_9A8)->data;
     var_r30 = 0;
@@ -977,7 +977,7 @@ loop_3:
     }
 }
 static void fn_1_27A0(s16 mode, s16 frameNo) {
-    M559HOOK *sp8;
+    M559NOD *sp8;
     OMOBJ *temp_r3;
     s32 temp_r29;
     s32 var_r30;
