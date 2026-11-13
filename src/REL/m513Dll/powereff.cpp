@@ -56,6 +56,7 @@ M513_RODATA const f32 lbl_1_rodata_220[6] = { 0.1f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f
         (p)->color.a = 0;                                                                          \
     }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_8E78(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx)
 {
     MtxPtr sp8 = mtx;
@@ -63,6 +64,7 @@ void fn_1_8E78(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx)
     fn_1_94E4((M513Smoke *)particle->work, sp8);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Smoke *fn_1_8EBC(M513Smoke *self)
 {
     HU3DMODELID id;
@@ -121,6 +123,7 @@ M513Smoke *fn_1_9114(M513Smoke *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Start the smoke at `pos`.
 void fn_1_91A8(M513Smoke *self, Vec *pos)
 {
@@ -137,6 +140,7 @@ void fn_1_91A8(M513Smoke *self, Vec *pos)
     self->active = 1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_9240(M513Smoke *self)
 {
     HU3DPARTICLEDATA *p;
@@ -150,16 +154,19 @@ void fn_1_9240(M513Smoke *self)
     self->active = 0;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_929C(M513Smoke *self, s32 bit)
 {
     self->flags &= ~(1 << bit);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_92B4(M513Smoke *self, HU3DPARTICLEDATA *p)
 {
     M513_SMOKE_INIT(self, p);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Particle hook: fade the smoke in and out and let it rise.
 void fn_1_94E4(M513Smoke *self, Mtx mtx)
 {
@@ -211,6 +218,7 @@ void fn_1_9840(M513Smoke *self, Vec *src)
     self->vec.z = src->z;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_985C(HU3DMODEL *model, Mtx mtx)
 {
     MtxPtr sp8 = mtx;
@@ -218,6 +226,7 @@ void fn_1_985C(HU3DMODEL *model, Mtx mtx)
     fn_1_A528((M513PowerEff *)model->hookData, sp8);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513PowerEff *fn_1_98A0(M513PowerEff *self)
 {
     HU3DMODELID hook;
@@ -297,6 +306,7 @@ M513PowerEff *fn_1_98A0(M513PowerEff *self)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513PowerEff **fn_1_9EA4(M513PowerEff **ptr, s16 flag)
 {
     if (ptr != 0) {
@@ -312,6 +322,7 @@ M513PowerEff **fn_1_9EA4(M513PowerEff **ptr, s16 flag)
     return ptr;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513PowerEff *fn_1_9F20(M513PowerEff *self, s16 flag)
 {
     if (self != 0) {
@@ -337,6 +348,7 @@ M513PowerEff *fn_1_9F20(M513PowerEff *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Start the effect: from `pos` towards `target`, holding for `limit` seconds.
 void fn_1_9FE4(M513PowerEff *self, Vec *pos, Vec *target, f32 limit)
 {
@@ -357,11 +369,13 @@ void fn_1_9FE4(M513PowerEff *self, Vec *pos, Vec *target, f32 limit)
     self->col[3] = 0;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_A064(M513PowerEff *self, s32 bit)
 {
     self->flags &= ~(1 << bit);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Virtual update(): fade in, follow the target, fade out.
 void fn_1_A07C(M513PowerEff *self)
 {
@@ -453,6 +467,7 @@ void fn_1_A07C(M513PowerEff *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Draw hook: a glowing quad (distorted through an indirect texture).
 void fn_1_A528(M513PowerEff *self, Mtx mtx)
 {

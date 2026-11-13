@@ -38,6 +38,7 @@ void *lbl_1_data_2A4[5] = { 0, 0, (void *)fn_1_6F78, (void *)fn_1_700C, (void *)
     (p)->parManId = 0.5f * (7.0f + (15.0f * (0.000015258789f * (f32)(u16)frand())));                    \
     (p)->zRot = 0.017453292f * (360.0f * (0.000015258789f * (f32)(u16)frand()))
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Torch *fn_1_6D50(M513Torch *self, Vec *pos)
 {
     HU3DMODELID id;
@@ -100,6 +101,7 @@ M513Torch *fn_1_6F78(M513Torch *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_700C(M513Torch *self, s32 bit)
 {
     self->flags &= ~(1 << bit);
@@ -121,6 +123,7 @@ void fn_1_7078(void *unused, HU3DPARTICLEDATA *p)
     M513_TORCH_INIT(p);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Hook: advance every live flame particle.
 void fn_1_72AC(M513Torch *self, Mtx mtx)
 {

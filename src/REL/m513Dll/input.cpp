@@ -29,6 +29,7 @@ M513InputVtbl lbl_1_data_258 = { { 0, 0 }, fn_1_6B60, fn_1_6BCC };
 M513InputVtbl lbl_1_data_268 = { { 0, 0 }, fn_1_6CA0, fn_1_6670 };
 M513InputVtbl lbl_1_data_278 = { { 0, 0 }, fn_1_6618, 0 };
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_6578(M513Input *self)
 {
     self->st.x = 0.0f;
@@ -63,6 +64,7 @@ M513Input *fn_1_6618(M513Input *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Pad reader: map the analog stick onto a unit disc.
 void fn_1_6670(M513Input *self, M513InputState *out)
 {
@@ -112,6 +114,7 @@ M513Input *fn_1_6B60(M513Input *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_6BCC(M513Input *self, M513InputState *out)
 {
     s32 unused;

@@ -80,6 +80,7 @@ M513Ptmf lbl_1_data_5EC = { 0, -1, (void (*)(void *))fn_1_F3EC };
 
 M513_RODATA const s32 lbl_1_rodata_374[5] = { 0x6D1, 0x6D2, 0x6D3, 0x6D4, 0 };
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513ModelPtr *fn_1_D738(M513ModelPtr *self)
 {
     M513Model *model;
@@ -127,6 +128,7 @@ M513ModelPtr *fn_1_D88C(M513ModelPtr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Position / rotation of a hook object of the shared model; true while the motion plays.
 s32 fn_1_D934(M513ModelPtr *self, s32 idx, Vec *pos, Vec *rot)
 {
@@ -145,6 +147,7 @@ s32 fn_1_D934(M513ModelPtr *self, s32 idx, Vec *pos, Vec *rot)
     return Hu3DMotionEndCheck(id) == 0;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Heiho *fn_1_DA0C(M513Heiho *self, s32 idx)
 {
     HU3DMODELID id;
@@ -188,6 +191,7 @@ M513Heiho *fn_1_DA0C(M513Heiho *self, s32 idx)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Vec16 *fn_1_DC98(M513Vec16 *v, s16 flag)
 {
     if (v != 0) {
@@ -203,6 +207,7 @@ M513Vec16 *fn_1_DC98(M513Vec16 *v, s16 flag)
     return v;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Vec16 *fn_1_DD2C(M513Vec16 *v, s16 flag)
 {
     if (v != 0) {
@@ -218,6 +223,7 @@ M513Vec16 *fn_1_DD2C(M513Vec16 *v, s16 flag)
     return v;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Vec16 *fn_1_DDB8(M513Vec16 *v, s16 flag)
 {
     if (v != 0) {
@@ -244,6 +250,7 @@ M513Heiho *fn_1_DE3C(M513Heiho *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Heiho *fn_1_DE94(M513Heiho *self, s16 flag)
 {
     if (self != 0) {
@@ -263,6 +270,7 @@ M513Heiho *fn_1_DE94(M513Heiho *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Attach the held item model to the left hand.
 void fn_1_DF5C(M513Heiho *self)
 {
@@ -278,6 +286,7 @@ void fn_1_DF5C(M513Heiho *self)
     self->item.id = item;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_E030(M513Heiho *self)
 {
     HU3DMODELID a = self->model.id;
@@ -287,6 +296,7 @@ void fn_1_E030(M513Heiho *self)
     Hu3DModelKill(self->item.id);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Remove this heiho's leaf from the set.
 void fn_1_E084(M513Heiho *self)
 {
@@ -308,6 +318,7 @@ void fn_1_E138(void)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // State hook: throw the item, then the heiho sinks away.
 void fn_1_E13C(M513Heiho *self)
 {
@@ -423,6 +434,7 @@ void fn_1_E13C(M513Heiho *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_E5F0(M513Heiho *self)
 {
     if (M513_PTMF_TEST(&self->hook)) {
@@ -432,6 +444,7 @@ void fn_1_E5F0(M513Heiho *self)
     fn_1_3440(&self->model, &self->rot);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_E650(M513Heiho *self, s32 dataNum)
 {
     HU3DMODELID id = self->model.id;
@@ -440,6 +453,7 @@ void fn_1_E650(M513Heiho *self, s32 dataNum)
     fn_1_E908(&self->mot, self->mot.data + self->mot.size, 1, &mot);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Switch to motion `motion` (looping unless `loop`).
 void fn_1_E6D8(M513Heiho *self, s32 motion, u8 loop, f32 speed)
 {
@@ -460,6 +474,7 @@ void fn_1_E6D8(M513Heiho *self, s32 motion, u8 loop, f32 speed)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_E790(M513Heiho *self)
 {
     Vec p;
@@ -493,6 +508,7 @@ s16 *fn_1_E890(M513Vec16 *v, u32 idx)
 }
 
 #pragma dont_inline on
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // vector<s16>::insert(pos, n, value)
 void fn_1_E908(M513Vec16 *v, s16 *pos, u32 n, s16 *val)
 {
@@ -624,6 +640,7 @@ void fn_1_E908(M513Vec16 *v, s16 *pos, u32 n, s16 *val)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // vector<s16>::reserve(cap)
 void fn_1_ECB8(M513Vec16 *v, u32 cap)
 {

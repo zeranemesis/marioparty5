@@ -412,6 +412,7 @@ f32 fn_1_BB4(s32 pad)
     return 0.016949153f * HuPadSubStkY[pad];
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Free-fly debug camera driven by pad `pad`.
 void fn_1_C08(M513Cam *self, s32 pad)
 {
@@ -507,6 +508,7 @@ void fn_1_4CE8(void *ptr);
 #define M513HANDLE_CLEARCOUNT(e) ((e)->h.b.count = 0)
 #endif
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513HandleTbl *fn_1_1264(M513HandleTbl *self, u32 n)
 {
     M513HandleEnt *ents;
@@ -536,6 +538,7 @@ M513HandleTbl *fn_1_1264(M513HandleTbl *self, u32 n)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513HandleTbl *fn_1_1468(M513HandleTbl *self, s16 flag)
 {
     if (self != 0) {
@@ -549,6 +552,7 @@ M513HandleTbl *fn_1_1468(M513HandleTbl *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 u32 fn_1_14D8(M513HandleTbl *self, void *obj)
 {
     M513HandleEnt *e = self->ents->next;
@@ -567,6 +571,7 @@ u32 fn_1_14D8(M513HandleTbl *self, void *obj)
     return e->h.id;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void *fn_1_1568(M513HandleTbl *self, u32 id)
 {
     M513HandleEnt *e;
@@ -593,6 +598,7 @@ void *fn_1_1568(M513HandleTbl *self, u32 id)
     return obj;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void *fn_1_162C(M513HandleTbl *self, u32 id)
 {
     M513HandleEnt *e;
@@ -622,6 +628,7 @@ s32 fn_1_169C(M513Node *self)
     return n;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_16D8(M513HandleTbl *self)
 {
     M513HandleEnt *tail = self->tail;
@@ -635,6 +642,7 @@ s32 fn_1_16D8(M513HandleTbl *self)
     return n;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_1720(M513HandleTbl *self)
 {
     M513HandleEnt *head = self->ents;
@@ -696,6 +704,7 @@ void fn_1_1834(M513Node *self, M513Node *other)
     at->prev = self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Move every node of `self` in front of `other`.
 void fn_1_1864(M513Node *self, M513Node *other)
 {
@@ -745,6 +754,7 @@ void fn_1_18EC(M513Node *self, M513Cmp cmp)
     }
 }
 
+// NONMATCHING: the original inlines its own recursion several levels deep
 M513Node *fn_1_19A4(M513Cmp cmp, M513Node *list)
 {
     M513Node *second;
@@ -763,6 +773,7 @@ M513Node *fn_1_19A4(M513Cmp cmp, M513Node *list)
     return fn_1_20A0(cmp, a, b);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Cut the list in the middle and return the second half.
 M513Node *fn_1_204C(M513Node *list)
 {
@@ -812,6 +823,7 @@ M513Node *fn_1_20A0(M513Cmp cmp, M513Node *a, M513Node *b)
 
 // ---------------------------------------------------------------- task list
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_214C(s32 bit)
 {
     M513Task *t;
@@ -833,6 +845,7 @@ void fn_1_214C(s32 bit)
     }
 }
 
+// NONMATCHING: flag test compiles as cmpwi instead of cmplwi
 s32 fn_1_21E4(void)
 {
     M513Task *t;
@@ -857,6 +870,7 @@ s32 fn_1_21E4(void)
     return 1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_2270(void)
 {
     M513Task *t;
@@ -880,6 +894,7 @@ void fn_1_22E0(M513Task *self)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Destroy every registered task, last one first.
 void fn_1_22E4(void)
 {
@@ -953,6 +968,7 @@ M513Master *fn_1_2514(M513Master *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Master *fn_1_25D0(M513Master *self, s16 flag)
 {
     M513Master *m;
@@ -984,6 +1000,7 @@ M513Master *fn_1_25D0(M513Master *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_2788(M513Master *self, s32 objMax, s32 prio)
 {
     OMOBJMAN *om;
@@ -994,6 +1011,7 @@ void fn_1_2788(M513Master *self, s32 objMax, s32 prio)
     omAddObjEx(om, 0, 0, 0, -1, fn_1_2874);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_280C(M513Master *self)
 {
     OMOBJMAN *om;
@@ -1005,6 +1023,7 @@ void fn_1_280C(M513Master *self)
 
 void fn_1_2904(M513Master *self);
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_2874(OMOBJ *obj)
 {
     OMOBJ *self;
@@ -1023,6 +1042,7 @@ void fn_1_2874(OMOBJ *obj)
     fn_1_2904(cur);
 }
 
+// NONMATCHING: the unused zero test is a cntlzw sequence here
 void fn_1_2904(M513Master *self)
 {
     self->vtbl->update(self);
@@ -1036,6 +1056,7 @@ void fn_1_2970(M513Master *self)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_2974(void)
 {
     M513Master *m;
@@ -1067,6 +1088,7 @@ void fn_1_2974(void)
     omOvlReturnEx(1, 1);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Register a player in the first free slot.
 void fn_1_2A60(s32 player)
 {
@@ -1085,6 +1107,7 @@ void fn_1_2A60(s32 player)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_2B34(s32 player)
 {
     s32 i;
@@ -1100,6 +1123,7 @@ s32 fn_1_2B34(s32 player)
     return 0;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_2C08(void)
 {
     M513Master *m;
@@ -1109,6 +1133,7 @@ void fn_1_2C08(void)
     m->mesId = GameMesCreate(2, 0);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_2CC0(void)
 {
     M513Master *m;
@@ -1118,6 +1143,7 @@ void fn_1_2CC0(void)
     m->mesId = GameMesCreate(2, 1);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_2D78(void)
 {
     M513Master *m;
@@ -1132,6 +1158,7 @@ s32 fn_1_2D78(void)
     return ret;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Announce the result: sort the registered players and print their characters.
 void fn_1_2E4C(void)
 {
@@ -1185,6 +1212,7 @@ void fn_1_2E4C(void)
     GameMesCreate(4, 3, chars[0], chars[1], chars[2], chars[3]);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_3018(s32 mes)
 {
     M513Master *m;
@@ -1232,6 +1260,7 @@ M513Model *fn_1_31E0(M513Model *self, HU3DMODELHOOK hook)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Build a character model; `type` selects the model variant bit.
 M513Model *fn_1_321C(M513Model *self, s32 charNo, s32 type)
 {
@@ -1261,6 +1290,7 @@ inline s32 M513ModelIdGet(M513Model *m)
     return m->id;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Model *fn_1_32B8(M513Model *self, M513Model *parent)
 {
     self->id = Hu3DModelLink(M513ModelIdGet(parent));
@@ -1378,6 +1408,7 @@ void fn_1_3780(M513Model *self)
     Hu3DModelShadowMapObjReset(self->id);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_37B0(M513Model *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1388,6 +1419,7 @@ void fn_1_37B0(M513Model *self, char *name)
     *flags &= ~8;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_385C(M513Model *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1396,6 +1428,7 @@ void fn_1_385C(M513Model *self, char *name)
     obj->flags |= 0x400;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_3904(M513Model *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1404,6 +1437,7 @@ void fn_1_3904(M513Model *self, char *name)
     obj->flags &= ~0x400;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_39AC(M513Model *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1417,6 +1451,7 @@ void fn_1_39AC(M513Model *self, char *name)
     base->scale.z = 0.0f;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_3A88(M513Model *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1430,6 +1465,7 @@ void fn_1_3A88(M513Model *self, char *name)
     base->scale.z = 1.0f;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_3B64(M513Model *self, s32 time)
 {
     Hu3DMotionTimeSet(M513ModelIdGet(self), (f32)time);
@@ -1449,6 +1485,7 @@ void fn_1_3BD0(M513Rand *r, u32 seed)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_3C44(M513Rand *r, u32 *key, u32 len)
 {
     u32 i;
@@ -1485,6 +1522,7 @@ void fn_1_3C44(M513Rand *r, u32 *key, u32 len)
     r->mt[0] = 0x80000000;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 u32 fn_1_3E08(M513Rand *r)
 {
     u32 k;
@@ -1513,26 +1551,31 @@ u32 fn_1_3E08(M513Rand *r)
     return y ^ (y >> 18);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 u32 fn_1_3F94(M513Rand *r)
 {
     return fn_1_3E08(r) >> 1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_412C(M513Rand *r)
 {
     return 2.3283064e-10f * (f32)fn_1_3E08(r);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_42F0(M513Rand *r)
 {
     return 2.3283064e-10f * (f32)fn_1_3E08(r);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_44B4(M513Rand *r)
 {
     return 2.3283064e-10f * (0.5f + (f32)fn_1_3E08(r));
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f64 fn_1_4688(M513Rand *r)
 {
     u32 a;
@@ -1543,6 +1586,7 @@ f64 fn_1_4688(M513Rand *r)
     return 1.1102230246251565e-16 * ((67108864.0 * (f64)a) + (f64)b);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_4A00(M513Rand *r)
 {
     return 1.1920929e-7f * (f32)(fn_1_3E08(r) >> 9);
@@ -1588,6 +1632,7 @@ void fn_1_4D58(M513Functor *self, OMOBJ *obj)
     obj->objFunc = fn_1_4D78;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_4D78(OMOBJ *obj)
 {
     M513Functor *self;
@@ -1600,6 +1645,7 @@ void fn_1_4DC4(M513Functor *self, OMOBJ *obj)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_4DC8(OMOBJ *obj)
 {
     M513Functor *fn;
@@ -1624,6 +1670,7 @@ M513Functor *fn_1_4E38(M513Functor *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_4E98(OMOBJMAN *man, OMOBJ *obj)
 {
     M513Functor *fn;
@@ -1644,11 +1691,13 @@ void fn_1_4F0C(u32 seed)
     fn_1_3BD0(&lbl_1_bss_24, seed);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 u32 fn_1_4FE4(void)
 {
     return fn_1_3E08(&lbl_1_bss_24) >> 1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_5220(void)
 {
     return 1.1920929e-7f * (f32)(fn_1_3E08(&lbl_1_bss_24) >> 9);
@@ -1690,6 +1739,7 @@ inline f32 M513SphereRadius(M513Sphere *s)
 }
 
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Push two overlapping spheres apart; ka/kb weight the move of each.
 s32 fn_1_55C8(M513Sphere *a, M513Sphere *b, f32 ka, f32 kb)
 {
@@ -1730,6 +1780,7 @@ s32 fn_1_5748(void)
 void *fn_1_5A30(void *arg);
 M513Thread *fn_1_5A8C(M513Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr);
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513SubThread *fn_1_576C(M513SubThread *self, u32 stackSize)
 {
     self->vtbl = &lbl_1_data_1E0;
@@ -1806,6 +1857,7 @@ s32 fn_1_592C(M513SubThread *self, s32 arg)
     return self->arg;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void *fn_1_5A30(void *arg)
 {
     M513SubThread *self;
@@ -1820,6 +1872,7 @@ void *fn_1_5A30(void *arg)
 
 void fn_1_5BEC(M513Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr);
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Thread *fn_1_5A8C(M513Thread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr)
 {
     u32 words;
@@ -1846,6 +1899,7 @@ M513Thread *fn_1_5B70(M513Thread *th, void *(*func)(void *), void *arg, u32 *sta
 void fn_1_5F58(u32 *p, u32 words);
 s32 fn_1_5EE4(u32 *p, s32 mode);
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_5BEC(M513Thread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr)
 {
     u8 ok;
@@ -1888,6 +1942,7 @@ M513Thread *fn_1_5D10(M513Thread *th, s16 flag)
     return th;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 u32 fn_1_5E44(M513Thread *th)
 {
     u32 *base;
@@ -1908,6 +1963,7 @@ u32 fn_1_5E44(M513Thread *th)
     return (u32)((uintptr_t)p - (uintptr_t)base);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Stack guard: mode 0 fills the 32 byte guard, mode 1 checks it.
 s32 fn_1_5EE4(u32 *p, s32 mode)
 {
@@ -2051,6 +2107,7 @@ void fn_1_635C(M513TimerObj *self, u8 r, u8 g, u8 b)
 
 // ---------------------------------------------------------------- static initialisers
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_63A4(void)
 {
     lbl_1_bss_C.next = &lbl_1_bss_C;

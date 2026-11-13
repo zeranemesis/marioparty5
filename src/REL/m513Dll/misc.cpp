@@ -41,6 +41,7 @@ M513Vec64 *fn_1_117D4(const Vec *a, const Vec *b, M513Vec64 *dst);
 M513Vec64 *fn_1_1180C(const Vec *a, const M513Vec64 *b, M513Vec64 *dst);
 void fn_1_11440(M513Plane64 *src, M513Plane64 *dst);
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Point on the line (a -> c) offset from a by a weighted spring/length term.
 Vec fn_1_10964(Vec *a, Vec *b, Vec *c, f32 k, f32 w1, f32 w2, f32 len)
 {
@@ -64,6 +65,7 @@ Vec fn_1_10964(Vec *a, Vec *b, Vec *c, f32 k, f32 w1, f32 w2, f32 len)
     return res;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Quaternion rotating direction a onto direction b.
 void fn_1_10AB8(Quaternion *q, Vec *a, Vec *b)
 {
@@ -166,6 +168,7 @@ f64 fn_1_111D8(M513Plane64 *plane, Vec *p)
     return plane->d + fn_1_117A4(&plane->n, p);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Intersection of the segment a-b with a plane given by the two distances.
 void fn_1_11218(Vec *out, Vec *a, Vec *b, f64 d0, f64 d1)
 {
@@ -186,6 +189,7 @@ void fn_1_11218(Vec *out, Vec *a, Vec *b, f64 d0, f64 d1)
     out->z = b->z;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Point-in-triangle test against the plane normal.
 s32 fn_1_11310(Vec *a, Vec *b, Vec *c, Vec *p, M513Vec64 *normal)
 {
@@ -217,6 +221,7 @@ s32 fn_1_11310(Vec *a, Vec *b, Vec *c, Vec *p, M513Vec64 *normal)
     return inside;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Normalise the plane normal (offset left untouched).
 void fn_1_11440(M513Plane64 *src, M513Plane64 *dst)
 {
@@ -250,6 +255,7 @@ f64 fn_1_11524(const M513Vec64 *vec)
     return sqrt(fn_1_116A8(vec));
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_116A8(const M513Vec64 *vec)
 {
     return fn_1_11744(vec, vec);
@@ -268,6 +274,7 @@ f64 fn_1_11744(const M513Vec64 *a, const M513Vec64 *b)
     return (a->x * b->x) + (a->y * b->y) + (a->z * b->z);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 f32 fn_1_11774(const M513Vec64 *a, const M513Vec64 *b)
 {
     return (a->x * b->x) + (a->y * b->y) + (a->z * b->z);

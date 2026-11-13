@@ -27,6 +27,7 @@ void *lbl_1_data_748[6] = { 0, 0, (void *)fn_1_103E4, (void *)fn_1_101E0, (void 
 
 f32 lbl_1_data_6C8[9] = { 0.0f, 250.0f, -500.0f, 0.0f, 20.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Camera *fn_1_FD60(M513Camera *self)
 {
     M513Ptmf tmp;
@@ -66,6 +67,7 @@ void fn_1_FF9C(M513Camera *self)
     fn_1_9A0(&self->cam, 1);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Intro motion state: follow the motion until it ends.
 void fn_1_FFCC(M513Camera *self)
 {
@@ -82,6 +84,7 @@ void fn_1_FFCC(M513Camera *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Follow state: ease towards the destination.
 void fn_1_1008C(M513Camera *self)
 {
@@ -99,6 +102,7 @@ void fn_1_1008C(M513Camera *self)
     Hu3DCameraPosSetV(1, &self->cam.pos, &self->cam.up, &self->cam.target);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Virtual update(): bit 0 starts the intro motion, bit 3 switches to follow.
 void fn_1_101E0(M513Camera *self, s32 bit)
 {
@@ -129,6 +133,7 @@ void fn_1_101E0(M513Camera *self, s32 bit)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_10358(M513Camera *self)
 {
     Vec diff;

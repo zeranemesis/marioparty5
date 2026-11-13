@@ -52,6 +52,7 @@ u32 lbl_1_data_95C[0xF] = {
 };
 void *lbl_1_data_998[5] = { 0, 0, (void *)fn_1_13304, (void *)fn_1_13EA4, (void *)fn_1_22E0 };
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Score *fn_1_13174(M513Score *self, s32 recordTime, u8 multi)
 {
 
@@ -116,6 +117,7 @@ M513Score *fn_1_13304(M513Score *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Create the timer window(s).
 void fn_1_13430(M513Score *self)
 {
@@ -156,6 +158,7 @@ void fn_1_13430(M513Score *self)
     self->created = 1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Same as fn_1_13430 but only when the timers do not exist yet.
 void fn_1_13764(M513Score *self)
 {
@@ -260,6 +263,7 @@ void fn_1_13CDC(M513Score *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_13D7C(M513Score *self)
 {
     s32 i;
@@ -282,6 +286,7 @@ s32 fn_1_13D7C(M513Score *self)
     return done;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_13E34(M513Score *self, s32 idx)
 {
     s32 val;
@@ -294,6 +299,7 @@ s32 fn_1_13E34(M513Score *self, s32 idx)
     return val;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Virtual update(): bit 1 creates the timers, bit 2 shows, bit 3 hides.
 void fn_1_13EA4(M513Score *self, s32 bit)
 {

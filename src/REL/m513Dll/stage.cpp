@@ -14,6 +14,7 @@ char lbl_1_data_770[] = "singleton.h";
 char lbl_1_data_77C[] = "ms_pointer != 0";
 void *lbl_1_data_78C[5] = { 0, 0, (void *)fn_1_10874, (void *)fn_1_1084C, (void *)fn_1_10848 };
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Stage *fn_1_104B0(M513Stage *self)
 {
     GXColor lightColor;
@@ -85,6 +86,7 @@ void fn_1_10848(M513Stage *self)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Virtual update(): clear the flag bit.
 void fn_1_1084C(M513Stage *self, s32 bit)
 {

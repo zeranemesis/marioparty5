@@ -63,6 +63,7 @@ void *lbl_1_data_31C[5] = { 0, 0, (void *)fn_1_79EC, (void *)fn_1_7A80, (void *)
 M513Node *lbl_1_bss_9F8;
 M513ModelPtr *lbl_1_bss_9FC;
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_77A4(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx)
 {
     MtxPtr sp8 = mtx;
@@ -70,6 +71,7 @@ void fn_1_77A4(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx)
     fn_1_7D8C((M513LeafFx *)particle->work, sp8);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513LeafFx *fn_1_77E8(M513LeafFx *self, Vec *pos)
 {
     HU3DMODELID id;
@@ -123,6 +125,7 @@ M513LeafFx *fn_1_79EC(M513LeafFx *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Virtual update(): bit 0 .. clear the flag; delete the effect once it is done.
 void fn_1_7A80(M513LeafFx *self, s32 bit)
 {
@@ -151,6 +154,7 @@ void fn_1_7B00(M513LeafFx *self, HU3DPARTICLEDATA *p)
     M513_LEAF_INIT(self, p);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Particle hook: advance the leaf burst.
 void fn_1_7D8C(M513LeafFx *self, Mtx mtx)
 {
@@ -188,6 +192,7 @@ void fn_1_7D8C(M513LeafFx *self, Mtx mtx)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Leaf *fn_1_7F04(M513Leaf *self, s32 idx, Vec *pos, Vec *rot)
 {
     HU3DMODELID id;
@@ -299,6 +304,7 @@ M513Leaf *fn_1_8310(M513Leaf *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Hide the leaf and its two sub models.
 void fn_1_8394(M513Leaf *self)
 {
@@ -312,11 +318,13 @@ void fn_1_8394(M513Leaf *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_8428(M513Leaf *self, s32 idx)
 {
     Hu3DModelAttrReset(M513LeafSubId(self, idx), 0x40000080);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Place sub model `idx` on its hook object.
 void fn_1_8490(M513Leaf *self, s32 idx)
 {
@@ -339,6 +347,7 @@ void fn_1_8490(M513Leaf *self, s32 idx)
     fn_1_3440(self->sub[idx].p, &rot);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_8578(M513Leaf *self)
 {
     HU3DMODELID id = self->model.id;
@@ -349,6 +358,7 @@ void fn_1_8578(M513Leaf *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Advance the leaf animation by `speed` frames.
 void fn_1_85F4(M513Leaf *self, f32 speed)
 {
@@ -416,6 +426,7 @@ void fn_1_85F4(M513Leaf *self, f32 speed)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_8E24(M513Leaf *self)
 {
     if (M513_PTMF_TEST(&self->hook)) {

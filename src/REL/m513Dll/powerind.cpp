@@ -25,6 +25,7 @@ void *lbl_1_data_3A4[5] = { 0, 0, (void *)fn_1_B110, (void *)fn_1_B23C, (void *)
 M513Ptmf lbl_1_data_3B8 = { 0, -1, (void (*)(void *))fn_1_1220C };
 M513Ptmf lbl_1_data_3C4 = { 0, -1, (void (*)(void *))fn_1_12208 };
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Hook: draw the frame buffer copy.
 void fn_1_AE0C(HU3DMODEL *model, Mtx *mtx)
 {
@@ -35,6 +36,7 @@ void fn_1_AE0C(HU3DMODEL *model, Mtx *mtx)
     fn_1_B458(b, (MtxPtr)sp8);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513IndHook *fn_1_AE58(M513IndHook *self)
 {
     HU3DMODELID hookId;
@@ -111,6 +113,7 @@ M513IndHook *fn_1_B110(M513IndHook *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_B23C(M513IndHook *self, s32 bit)
 {
     self->flags &= ~(1 << bit);
@@ -137,6 +140,7 @@ void fn_1_B338(M513IndHook *self)
     GXCopyTex(self->frameBuf, GX_FALSE);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Texture projection of the frame buffer copy.
 void fn_1_B390(Mtx mtx)
 {
@@ -150,6 +154,7 @@ void fn_1_B390(Mtx mtx)
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX3x4, GX_TG_POS, 0x1E, GX_FALSE, 0x7D);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_B458(M513IndHook *self, Mtx mtx)
 {
     Mtx lightMtx;

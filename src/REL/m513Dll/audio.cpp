@@ -29,6 +29,7 @@ void fn_1_14918(s16 charNo, Point3d *pos);
     outY = 240.0f + (view.y * (240.0f / h));                                                       \
     outZ = 0.0f
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_14348(Point3d *pos, s16 cameraBit, Point3d *out)
 {
     Vec view;
@@ -44,6 +45,7 @@ void fn_1_14348(Point3d *pos, s16 cameraBit, Point3d *out)
     PROJECT(i, out->x, out->y, out->z);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 s32 fn_1_145A8(s32 seId, Point3d *pos)
 {
     Vec view;
@@ -73,6 +75,7 @@ s32 fn_1_145A8(s32 seId, Point3d *pos)
     return se;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_14918(s16 charNo, Point3d *pos)
 {
     Vec view;

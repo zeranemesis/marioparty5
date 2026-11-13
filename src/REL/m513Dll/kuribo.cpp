@@ -61,6 +61,7 @@ M513_RODATA const s32 lbl_1_rodata_3EC[3] = { 0, 2, 3 };
         }                                                                                          \
     }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Kuribo *fn_1_EDE0(M513Kuribo *self, Vec *pos, Vec *rot)
 {
     HU3DMODELID id;
@@ -133,6 +134,7 @@ M513Kuribo *fn_1_F18C(M513Kuribo *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Kuribo *fn_1_F1E4(M513Kuribo *self, s16 flag)
 {
     if (self != 0) {
@@ -152,6 +154,7 @@ M513Kuribo *fn_1_F1E4(M513Kuribo *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_F2AC(M513Kuribo *self, s32 dataNum)
 {
     HU3DMODELID id = self->model.id;
@@ -160,6 +163,7 @@ void fn_1_F2AC(M513Kuribo *self, s32 dataNum)
     fn_1_E908(&self->mot, self->mot.data + self->mot.size, 1, &mot);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_F334(M513Kuribo *self, s32 motion, u8 loop, f32 speed)
 {
     HU3DMODELID id = self->model.id;
@@ -179,6 +183,7 @@ void fn_1_F334(M513Kuribo *self, s32 motion, u8 loop, f32 speed)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // State hook: idle, then wander left / right.
 void fn_1_F3EC(M513Kuribo *self)
 {
@@ -223,6 +228,7 @@ void fn_1_F3EC(M513Kuribo *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // State hook: pick a random motion and hold it for a while.
 void fn_1_F698(M513Kuribo *self)
 {
@@ -269,6 +275,7 @@ void fn_1_F698(M513Kuribo *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // State hook: wait, then play motion 1 once.
 void fn_1_F9F0(M513Kuribo *self)
 {
@@ -286,6 +293,7 @@ void fn_1_F9F0(M513Kuribo *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_FAE4(M513Kuribo *self)
 {
     self->state = 0;
@@ -294,6 +302,7 @@ void fn_1_FAE4(M513Kuribo *self)
     self->hook = lbl_1_data_648;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_FBA8(M513Kuribo *self)
 {
     if (M513_PTMF_TEST(&self->hook)) {

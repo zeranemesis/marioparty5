@@ -175,6 +175,7 @@ static void M513PlayerDelete(M513Player *p)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513GameMaster *fn_1_B570(M513GameMaster *self)
 {
     M513Sets *sets;
@@ -226,6 +227,7 @@ M513SetsPtr *fn_1_B79C(M513SetsPtr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Destroy the four sets and every element in them.
 M513Sets *fn_1_B7F4(M513Sets *self, s16 flag)
 {
@@ -273,6 +275,7 @@ M513Sets *fn_1_B7F4(M513Sets *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Player **fn_1_BAF0(M513Player **self, s16 flag)
 {
     if (self != 0) {
@@ -296,6 +299,7 @@ void fn_1_BB70(void)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Set of kuribos.
 M513Node *fn_1_BB74(M513Node *self, s16 flag)
 {
@@ -324,6 +328,7 @@ M513Node *fn_1_BC34(M513Node *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Set of heihos.
 M513Node *fn_1_BC8C(M513Node *self, s16 flag)
 {
@@ -352,6 +357,7 @@ M513Node *fn_1_BD4C(M513Node *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Set of leaves.
 M513Node *fn_1_BDA4(M513Node *self, s16 flag)
 {
@@ -380,6 +386,7 @@ M513Node *fn_1_BE64(M513Node *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Set of players.
 M513Node *fn_1_BEBC(M513Node *self, s16 flag)
 {
@@ -410,6 +417,7 @@ M513Node *fn_1_C048(M513Node *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Master *fn_1_C0A0(M513Master *self, s16 flag)
 {
     M513GameMaster *gm = (M513GameMaster *)self;
@@ -431,6 +439,7 @@ M513Master *fn_1_C0A0(M513Master *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Master setup: create every object of the game.
 void fn_1_C150(M513GameMaster *self)
 {
@@ -516,6 +525,7 @@ void fn_1_C150(M513GameMaster *self)
     self->winner = -1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Master update: run every element's per-frame hook.
 void fn_1_C43C(M513GameMaster *self)
 {
@@ -599,6 +609,7 @@ void fn_1_C43C(M513GameMaster *self)
     (void)kuribos;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // The game flow (runs on the sub thread).
 void fn_1_C778(M513GameMaster *self)
 {
@@ -681,6 +692,7 @@ void fn_1_C778(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Everyone lost: play the lose voices.
 void fn_1_CA7C(M513GameMaster *self)
 {
@@ -713,6 +725,7 @@ void fn_1_CB44(M513GameMaster *self)
     fn_1_22E4();
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // True when the game is over.
 u8 fn_1_CB88(M513GameMaster *self)
 {
@@ -756,6 +769,7 @@ u8 fn_1_CB88(M513GameMaster *self)
     return 0;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Kuribos relax while somebody is still crying.
 void fn_1_CD44(M513GameMaster *self)
 {
@@ -804,6 +818,7 @@ void fn_1_CD44(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // True when no player is active any more.
 u8 fn_1_CE9C(M513GameMaster *self)
 {
@@ -820,6 +835,7 @@ u8 fn_1_CE9C(M513GameMaster *self)
     return 1;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Settle the scores of the finished game.
 void fn_1_CF4C(M513GameMaster *self)
 {
@@ -846,6 +862,7 @@ void fn_1_CF4C(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Reset the kuribos and store a new record.
 void fn_1_D034(M513GameMaster *self)
 {
@@ -878,6 +895,7 @@ void fn_1_D034(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Give every player the waiting hook.
 void fn_1_D1AC(M513GameMaster *self)
 {
@@ -893,6 +911,7 @@ void fn_1_D1AC(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_D27C(M513GameMaster *self)
 {
     M513Node *it;
@@ -907,6 +926,7 @@ void fn_1_D27C(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Delete all players.
 void fn_1_D34C(M513GameMaster *self)
 {
@@ -924,6 +944,7 @@ void fn_1_D34C(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Delete all heihos.
 void fn_1_D4C8(M513GameMaster *self)
 {
@@ -941,6 +962,7 @@ void fn_1_D4C8(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Delete all kuribos.
 void fn_1_D56C(M513GameMaster *self)
 {
@@ -958,6 +980,7 @@ void fn_1_D56C(M513GameMaster *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Winner / loser poses.
 void fn_1_D610(M513GameMaster *self)
 {
@@ -990,12 +1013,14 @@ void fn_1_D6F4(void)
     lbl_1_bss_A08 = 0xD2;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Thread thunks: this adjusted from the thread subobject to the master.
 void fn_1_D728(M513SubThread *thread)
 {
     fn_1_C778((M513GameMaster *)((char *)thread - offsetof(M513GameMaster, thread)));
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Master *fn_1_D730(M513SubThread *thread, s16 flag)
 {
     return fn_1_C0A0(&((M513GameMaster *)((char *)thread - offsetof(M513GameMaster, thread)))->base, flag);

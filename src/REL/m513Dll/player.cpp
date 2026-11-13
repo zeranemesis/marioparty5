@@ -100,6 +100,7 @@ u8 lbl_1_bss_A44;
 // Hook assignment goes through a temporary copy.
 #define M513_SET_HOOK(self, data)                                                                      {                                                                                                      M513Ptmf hookTmp_ = data;                                                                          (self)->hook = hookTmp_;                                                                       }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Input source of a player: pad for humans, CPU otherwise.
 M513Input *fn_1_11844(s32 playerNo)
 {
@@ -119,6 +120,7 @@ M513Input *fn_1_11844(s32 playerNo)
     return p;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513Player *fn_1_11900(M513Player *self, s32 playerNo, u8 type)
 {
     Vec start[4];
@@ -233,6 +235,7 @@ M513LeafPtr *fn_1_11EB0(M513LeafPtr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M513InputPtr *fn_1_11F08(M513InputPtr *self, s16 flag)
 {
     if (self != 0) {
@@ -248,6 +251,7 @@ M513InputPtr *fn_1_11F08(M513InputPtr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_11F84(M513PowerEff **elem)
 {
     M513PowerEff **sp8 = elem;
@@ -266,6 +270,7 @@ M513Player *fn_1_11FB0(M513Player *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Append the motion `dataNum` of this character to the motion table.
 void fn_1_12008(M513Player *self, u32 dataNum)
 {
@@ -275,6 +280,7 @@ void fn_1_12008(M513Player *self, u32 dataNum)
     fn_1_E908(&self->mot, self->mot.data + self->mot.size, 1, &mot);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_12080(M513Player *self)
 {
     Vec p;
@@ -293,6 +299,7 @@ void fn_1_12080(M513Player *self)
     fn_1_14918(self->charNo, sp);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Switch to motion `motion` (restart when `force`).
 void fn_1_1212C(M513Player *self, s32 motion, u8 force, u8 loop, f32 speed)
 {
@@ -321,6 +328,7 @@ void fn_1_12208(void)
 {
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Reset to the idle motion.
 void fn_1_1220C(M513Player *self)
 {
@@ -336,6 +344,7 @@ void fn_1_1220C(M513Player *self)
     M513_SET_HOOK(self, lbl_1_data_848)
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Motion hook while waiting for the input.
 void fn_1_122F8(M513Player *self)
 {
@@ -444,6 +453,7 @@ void fn_1_122F8(M513Player *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Motion hook after the hit: approach the leaf, then idle (variant for type 1).
 void fn_1_128AC(M513Player *self)
 {
@@ -501,6 +511,7 @@ void fn_1_128AC(M513Player *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_12B20(M513Player *self)
 {
     switch (self->state) {
@@ -557,6 +568,7 @@ void fn_1_12B20(M513Player *self)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Turn towards the camera angle; stop being active when close enough.
 void fn_1_12D94(M513Player *self)
 {
@@ -579,6 +591,7 @@ s32 fn_1_12E88(M513Player *self)
     return self->motion;
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Win / lose pose.
 void fn_1_12E90(M513Player *self, u8 win)
 {
@@ -607,6 +620,7 @@ void fn_1_12E90(M513Player *self, u8 win)
     }
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_12FDC(M513Player *self)
 {
     if (self->type == 1) {
@@ -620,6 +634,7 @@ u8 fn_1_13050(M513Player *self)
     return (u8)((s16)GwPlayerConf[self->playerNo].type != 0);
 }
 
+// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Tell the heiho of this player's slot to start its throw.
 void fn_1_13080(M513Player *self)
 {
