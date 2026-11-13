@@ -1057,7 +1057,7 @@ void fn_1_2BEC(OMOBJ *obj)
             lbl_1_bss_38 = 0.0f;
         }
         if (lbl_1_bss_22E < 0) {
-            lbl_1_bss_22E = GameMesCreate(2, 0, var_r5, lbl_1_bss_38);
+            lbl_1_bss_22E = GameMesCreate(2, 0);
             if (lbl_1_bss_228 < 0) {
                 lbl_1_bss_228 = HuAudSStreamPlay(0x3C);
             }
@@ -1083,7 +1083,7 @@ void fn_1_2BEC(OMOBJ *obj)
         break;
     case 0x3ED:
         if (lbl_1_bss_22E < 0) {
-            lbl_1_bss_22E = GameMesCreate(2, 1, var_r5);
+            lbl_1_bss_22E = GameMesCreate(2, 1);
             HuAudSStreamFadeOut(lbl_1_bss_228, 0x64);
             lbl_80288A28 = lbl_1_bss_230;
         } else if (GameMesStatGet(lbl_1_bss_22E) == 0) {
@@ -1171,17 +1171,25 @@ void fn_1_2BEC(OMOBJ *obj)
             if (lbl_1_bss_108 == 0.0f) {
                 if (lbl_1_bss_1C != 2) {
                     if (lbl_1_bss_1C == 0) {
-                        GwPlayer[fn_1_59BC(0)].mgCoinBonus += 0xA;
-                        GwPlayer[fn_1_59BC(1)].mgCoinBonus += 0xA;
+                        if (!_CheckFlag(0x1000F)) {
+                            GwPlayer[fn_1_59BC(0)].mgCoinBonus += 0xA;
+                        }
+                        if (!_CheckFlag(0x1000F)) {
+                            GwPlayer[fn_1_59BC(1)].mgCoinBonus += 0xA;
+                        }
                     } else {
-                        GwPlayer[fn_1_59BC(2)].mgCoinBonus += 0xA;
-                        GwPlayer[fn_1_59BC(3)].mgCoinBonus += 0xA;
+                        if (!_CheckFlag(0x1000F)) {
+                            GwPlayer[fn_1_59BC(2)].mgCoinBonus += 0xA;
+                        }
+                        if (!_CheckFlag(0x1000F)) {
+                            GwPlayer[fn_1_59BC(3)].mgCoinBonus += 0xA;
+                        }
                     }
                     lbl_1_bss_22E = GameMesCreate(4, 3, fn_1_5960(0), fn_1_5960(1), -1, -1, 0.0f);
                     HuAudJinglePlay(0x79);
                     lbl_1_bss_E0 = lbl_1_bss_2C;
                 } else {
-                    lbl_1_bss_22E = GameMesCreate(2, 2, var_r5, 0.0f);
+                    lbl_1_bss_22E = GameMesCreate(2, 2);
                     HuAudJinglePlay(0x7B);
                 }
             }
@@ -1203,10 +1211,10 @@ void fn_1_2BEC(OMOBJ *obj)
         }
         break;
     default:
-        OSReport(lbl_1_data_424, obj->work[0], var_r5);
+        OSReport(lbl_1_data_424, obj->work[0]);
         break;
     }
-    Hu3DModelPosSet(lbl_1_bss_40, 0.0f, 470.0 * sin(3.141592653589793 * lbl_1_bss_38 / 180.0), 0.0f);
+    Hu3DModelPosSet(lbl_1_bss_40, 0.0f, lbl_1_bss_3C + 470.0 * sin(3.141592653589793 * lbl_1_bss_38 / 180.0), 0.0f);
     fn_1_5680(obj->work[0], obj->work[0]);
     if ((obj->work[0] >= 0x3F1) && (lbl_1_bss_1C != 2) && ((lbl_1_bss_20[0] > 0x31) || (lbl_1_bss_20[1] > 0x31))) {
         if (lbl_1_bss_1C == 0) {
