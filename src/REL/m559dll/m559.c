@@ -1971,7 +1971,7 @@ static void fn_1_54C4(void) {
     var_r31 = 0;
 loop_2:
     if (var_r31 < 0x64) {
-        M559DATA(lbl_1_bss_814[var_r31])->unk40 = 1;
+        ((M559HEAD *) lbl_1_bss_814[var_r31]->data)->field40.i = 1;
         var_r31 += 1;
         goto loop_2;
     }
@@ -1982,7 +1982,7 @@ static void fn_1_5514(void) {
     var_r31 = 0;
 loop_2:
     if (var_r31 < 0x30) {
-        M559DATA(lbl_1_bss_754[var_r31])->unk40 = 1;
+        ((M559HEAD *) lbl_1_bss_754[var_r31]->data)->field40.i = 1;
         var_r31 += 1;
         goto loop_2;
     }
