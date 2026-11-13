@@ -23,7 +23,7 @@ void fn_1_47C4(M510_PITCH_WORK *work, M510_PLAYER_WORK *self)
 
     obj = work2->obj;
     cam = &obj->cam;
-    memset(work, 0, 0x3C);
+    memset(work, 0, sizeof(M510_PITCH_WORK));
     work->owner = self;
 
     modelId = Hu3DModelCreate(HuDataSelHeapReadNum(0x440000, HU_MEMNUM_OVL, HEAP_MODEL));
@@ -54,7 +54,7 @@ void fn_1_49A4(M510_PITCH_WORK *work)
     Hu3DModelKill(work->modelId2);
     Hu3DMotionKill(work->motionId);
     Hu3DModelKill(work->modelId);
-    memset(work, 0, 0x3C);
+    memset(work, 0, sizeof(M510_PITCH_WORK));
 }
 
 void fn_1_49F4(M510_PITCH_WORK *data)

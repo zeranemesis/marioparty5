@@ -259,9 +259,9 @@ void fn_1_634(s32 seNo, s16 pan)
     HuAudFXPanning(seNo, pan);
 }
 
-void fn_1_664(Vec *pos, Vec *heading, float sndDist, float sndSpeed, float startDis)
+void fn_1_664(Vec *pos, Vec *heading, float sndDist, float sndSpeed, float startDis, float frontSurDis, float backSurDis)
 {
-    HuAudFXListnerSetEX(pos, heading, sndDist, sndSpeed, startDis, 0.0f, 0.0f);
+    HuAudFXListnerSetEX(pos, heading, sndDist, sndSpeed, startDis, frontSurDis, backSurDis);
 }
 
 void fn_1_6BC(s16 streamId)
@@ -571,7 +571,7 @@ s32 fn_1_1274(M510_OBJ *obj)
     return fn_1_966C(obj);
 }
 
-void fn_1_129C(M510_OBJ *obj)
+s32 fn_1_129C(M510_OBJ *obj)
 {
     s32 i;
     M510_PLAYER_WORK *player;
@@ -581,6 +581,7 @@ void fn_1_129C(M510_OBJ *obj)
         fn_1_D354(&player->score, 1);
         player->model.padOn = 1;
     }
+    return 1;
 }
 
 s32 fn_1_1308(M510_OBJ *obj)

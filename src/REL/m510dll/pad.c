@@ -20,9 +20,9 @@ void fn_1_81F4(M510_PAD *data)
 
 void fn_1_8234(M510_PAD *data)
 {
-    s8 absX;
+    s32 absX;
     s8 x;
-    s8 absY;
+    s32 absY;
     s8 y;
 
     if (data->ai.type != 0) {
