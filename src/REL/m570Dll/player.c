@@ -80,7 +80,7 @@ static HuVecF StartRotTbl[4] = {
 static HuVecF StartPosTbl[4] = {
     { -300.0f, 0.0f, 50.0f },
     { 220.0f, 0.0f, -100.0f },
-    { 270.0f, 0.0f, 50.0f },
+    { 280.0f, 0.0f, 50.0f },
     { 340.0f, 0.0f, 200.0f }
 };
 
@@ -104,7 +104,7 @@ static HuVecF TurnPosTbl[4] = {
 static u32 ItemModelDataTbl[3] = { 0x7D000B, 0x7D000C, 0x7D000D };
 
 /* d-pad / button mask used to pick a held item */
-static u16 PadMaskTbl[4] = { 0x200, 0x100, 0x400, 0 };
+static u16 PadMaskTbl[4] = { 0x100, 0x200, 0x400, 0 };
 
 /* dust emitter positions along the four walls of the board */
 static HuVecF DustPosTbl[40] = {
@@ -207,7 +207,14 @@ void fn_1_5F24(s32 loop);
 /* Hu3DMotionMaxTimeGet is not declared in hu3d.h: the unit calls it both with a
  * float return (fn_1_58EC reads f1) and with an implicit int return that goes
  * straight into frandmod(). */
+#ifdef TARGET_PC
+/* real return is float; an s32 prototype reads garbage from eax on x64 */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+#define M570_MAXTIME_INT(m) ((u32)Hu3DMotionMaxTimeGet(m))
+#else
 s32 Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+#define M570_MAXTIME_INT(m) Hu3DMotionMaxTimeGet(m)
+#endif
 
 void fn_1_4210(void)
 {
@@ -822,7 +829,7 @@ void fn_1_5A78(void)
         }
         Hu3DMotionSet(modelId, obj->mtnId[1]);
         Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
-        Hu3DMotionTimeSet(modelId, (s32)frandmod(Hu3DMotionMaxTimeGet(modelId)));
+        Hu3DMotionTimeSet(modelId, (s32)frandmod(M570_MAXTIME_INT(modelId)));
         omSetTra(obj, DustPosTbl[i].x, DustPosTbl[i].y, DustPosTbl[i].z);
         if (DustPosTbl[i].x < kMinX) {
             omSetRot(obj, kZero, kSideRot, kZero);
@@ -869,7 +876,7 @@ void fn_1_5E38(void)
         modelId = gDustTbl[i]->obj->mdlId[0];
         Hu3DMotionSet(modelId, gDustTbl[i]->obj->mtnId[0]);
         Hu3DModelAttrSet(modelId, HU3D_MOTATTR_LOOP);
-        Hu3DMotionTimeSet(modelId, (s32)frandmod(Hu3DMotionMaxTimeGet(modelId)));
+        Hu3DMotionTimeSet(modelId, (s32)frandmod(M570_MAXTIME_INT(modelId)));
     }
 }
 

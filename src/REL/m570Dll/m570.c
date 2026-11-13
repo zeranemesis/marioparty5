@@ -198,7 +198,7 @@ static struct { HuVecF pos; HuVecF dir; GXColor color; } gLightParam = {
 static HuVecF gShadowParamA = {0.0f, 2000.0f, 0.0f};
 static HuVecF gShadowParamB = {1.0f, 0.0f, 0.0f};
 static HuVecF gShadowParamC = {0.0f, 0.0f, 0.0f};
-static const f32 gCamTarget[5] = {250.0f, 270.0f, 288.0f, 310.0f, 330.0f};
+static f32 gCamTarget[5] = {244.0f, 266.0f, 288.0f, 310.0f, 332.0f};
 
 static M570CAM gCam0 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {-300.0f, 100.0f, 50.0f}, {-15.0f, 90.0f, 0.0f}, 500.0f};
 static M570CAM gCam1 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {-300.0f, 100.0f, 50.0f}, {-15.0f, 0.0f, 0.0f}, 500.0f};
@@ -208,7 +208,7 @@ static M570CAM gCam4 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 
 static M570CAM gCam5 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 150.0f, 0.0f}, {-15.0f, 0.0f, 0.0f}, 1000.0f};
 static M570CAM gCam6 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 150.0f, 0.0f}, {-15.0f, 0.0f, 0.0f}, 1600.0f};
 
-static const HU3DPARMANPARAM2 gParManParam = {
+static HU3DPARMANPARAM2 gParManParam = {
     30,
     0,
     100.0f,
@@ -221,8 +221,8 @@ static const HU3DPARMANPARAM2 gParManParam = {
     1.0f,
     1,
     -1,
-    {{0x00, 0x00, 0x70, 0xFF}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0xFF, 0xFF, 0, 0}},
-    {{0x00, 0x00, 0x00, 0xFF}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+    {{0xFF, 0x70, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0xFF, 0xFF}},
+    {{0xFF, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}},
     0
 };
 
