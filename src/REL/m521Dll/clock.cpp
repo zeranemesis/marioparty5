@@ -116,6 +116,14 @@ s32 fn_1_0(CClock *self)
     return result;
 }
 
+#ifdef TARGET_PC
+/* the original indexes lbl_1_rodata_10[kind] for kind 2 too, which is the next object lbl_1_rodata_20[0] */
+static const s32 ckGuideId[3][2] = { { 0x4F000A, 0x4F000B }, { 0x4F000C, 0x4F000D }, { 0x4F0005, 0x4F0004 } };
+#else
+#define ckGuideId lbl_1_rodata_10
+#endif
+
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CClock *fn_1_38(CClock *self, s32 kind, const M521Vec *pos)
 {
     CModel *model0;
@@ -144,18 +152,14 @@ CClock *fn_1_38(CClock *self, s32 kind, const M521Vec *pos)
     __construct_array(self->m_hand, (void (*)(void *))fn_1_5A4, (void *)fn_1_54C, sizeof(CClockHand *), 2);
     __construct_array(self->m_model, (void (*)(void *))fn_1_520, (void *)fn_1_4C8, sizeof(CModel *), 2);
 #endif
-#ifdef TARGET_PC
-    if (kind >= 0 && kind <= 1) {
-#else
-    if (kind >= 0 || kind <= 1) {
-#endif
+    if (kind >= 0 || kind <= 1) { /* always true, as in the original: kind 2 uses the row behind the table */
         model0 = (CModel *)fn_1_4A68(sizeof(CModel));
         if (model0 != 0) {
-            model0 = __ct__6CModelFUi(model0, lbl_1_rodata_10[kind][0]);
+            model0 = __ct__6CModelFUi(model0, ckGuideId[kind][0]);
         }
         model1 = (CModel *)fn_1_4A68(sizeof(CModel));
         if (model1 != 0) {
-            model1 = __ct__6CModelFUi(model1, lbl_1_rodata_10[kind][1]);
+            model1 = __ct__6CModelFUi(model1, ckGuideId[kind][1]);
         }
         fn_1_7870(model0, 0x40000002);
         fn_1_7870(model1, 0x40000002);
@@ -253,6 +257,7 @@ void fn_1_5D0(s32 *self)
     *self = 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CClock *fn_1_5DC(CClock *self, s16 flag)
 {
     if (self != 0) {
@@ -261,6 +266,8 @@ CClock *fn_1_5DC(CClock *self, s16 flag)
             s32 i;
             for (i = 1; i >= 0; i--) {
                 fn_1_4C8((CModelSlot *)&self->m_model[i], 0);
+            }
+            for (i = 1; i >= 0; i--) {
                 fn_1_54C((CHandSlot *)&self->m_hand[i], 0);
             }
         }
@@ -275,6 +282,7 @@ CClock *fn_1_5DC(CClock *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_658(CClock *self, M521Vec *out, s32 idx)
 {
     CClockHand *hand;
@@ -287,6 +295,7 @@ void fn_1_658(CClock *self, M521Vec *out, s32 idx)
     out->z = m[2][0];
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6B8(CClock *self, M521Vec *out, s32 idx, f32 along, f32 side)
 {
     f32 (*m)[4];
@@ -320,6 +329,7 @@ void fn_1_7A0(CClock *self)
     fn_1_42B4(self);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_7E8(CClock *self)
 {
     return self->m_phase == 0;
@@ -349,6 +359,7 @@ void fn_1_924(CClock *self)
     self->m_goal[1] = self->m_target[1];
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_938(double a, double b)
 {
     f32 r;
@@ -361,6 +372,7 @@ f32 fn_1_938(double a, double b)
 }
 
 // Advances *ang by delta (wrapped to 0..360); snaps to target and returns 1 when it gets there.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_9A8(f32 *ang, f32 target, f32 delta)
 {
     f32 next;
@@ -390,6 +402,7 @@ u32 fn_1_9A8(f32 *ang, f32 target, f32 delta)
     return reached;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_B88(f32 total)
 {
     f32 v;
@@ -398,6 +411,7 @@ f32 fn_1_B88(f32 total)
     return 59.0f * (v / 720.0f);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_C4C(CClock *self)
 {
     CModel *m1;
@@ -439,6 +453,7 @@ void fn_1_C4C(CClock *self)
     self->m_frame++;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_F20(CClock *self)
 {
     u8 done;
@@ -473,6 +488,7 @@ f32 fn_1_1034(f32 t)
 }
 
 // Tests a point against one hand (a thin diamond of length len and half width halfW in hand space).
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_1090(M521Vec *outNormal, f32 *outPen, const M521Vec *pt, Mtx inv, f32 len, f32 halfW)
 {
     M521Vec local;
@@ -510,6 +526,7 @@ s32 fn_1_1090(M521Vec *outNormal, f32 *outPen, const M521Vec *pt, Mtx inv, f32 l
     return 1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_1288(const M521Vec *a, const M521Vec *b, Mtx inv, f32 len)
 {
     M521Vec la;
@@ -528,6 +545,7 @@ u32 fn_1_1288(const M521Vec *a, const M521Vec *b, Mtx inv, f32 len)
     return cross;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u8 fn_1_1370(CClock *self, s32 idx)
 {
     if (idx < 2) {
@@ -539,6 +557,7 @@ u8 fn_1_1370(CClock *self, s32 idx)
     return 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_139C(CClock *self, s32 idx, f32 delta)
 {
     f32 old;
@@ -603,6 +622,7 @@ s32 fn_1_139C(CClock *self, s32 idx, f32 delta)
 }
 
 // Pushes the point out of both hands.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_1824(CClock *self, M521Vec *pt)
 {
     CClockHand *h0;
@@ -630,6 +650,7 @@ s32 fn_1_1824(CClock *self, M521Vec *pt)
 }
 
 // Which hand (0 / 1) the point is touching, or -1.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_1CA0(CClock *self, const M521Vec *pt, M521Vec *outNormal, f32 *outPen)
 {
     CClockHand *h0;
@@ -649,6 +670,7 @@ s32 fn_1_1CA0(CClock *self, const M521Vec *pt, M521Vec *outNormal, f32 *outPen)
 }
 
 // Which hand (0 / 1) the segment a-b crosses, or -1.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_20B8(CClock *self, const M521Vec *a, const M521Vec *b)
 {
     CClockHand *h0;
@@ -667,6 +689,7 @@ s32 fn_1_20B8(CClock *self, const M521Vec *a, const M521Vec *b)
     return -1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_22BC(CClock *self, s32 arg)
 {
     if (arg == 0) {
@@ -688,6 +711,7 @@ s32 fn_1_22BC(CClock *self, s32 arg)
 }
 
 // Signed angle (degrees) from b to a, wrapped to the 16 bit angle range.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_231C(f32 a, f32 b)
 {
     s32 ia;
@@ -713,6 +737,7 @@ s32 fn_1_2480(CClock *self, s32 idx)
     return fn_1_2658(self, idx, fn_1_2EFC(self, idx));
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_24D0(CClock *self, f32 angle)
 {
     M521Vec v0;
@@ -733,6 +758,7 @@ s32 fn_1_24D0(CClock *self, f32 angle)
     return dot > cos((3.141592653589793 * (f64)(angle * 0.5f)) / 180.0);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_2658(CClock *self, s32 idx, s32 dir)
 {
     M521Vec other;
@@ -768,6 +794,7 @@ s32 fn_1_2658(CClock *self, s32 idx, s32 dir)
     return result;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_2998(CClock *self, f32 deg)
 {
     M521Vec t0;
@@ -810,6 +837,7 @@ s32 fn_1_2998(CClock *self, f32 deg)
     return result;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_2C98(CClock *self, f32 deg)
 {
     M521Vec t0;
@@ -846,6 +874,7 @@ s32 fn_1_2C98(CClock *self, f32 deg)
 }
 
 // Direction (-1, 0, 1) hand idx has to turn to reach its target without crossing the other hand.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_2EFC(CClock *self, s32 idx)
 {
     f32 toTarget;
@@ -884,6 +913,7 @@ s32 fn_1_2EFC(CClock *self, s32 idx)
 }
 
 // Angular distance hand idx still has to travel to its target.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_3268(CClock *self, s32 idx)
 {
     f32 toTarget;
@@ -925,6 +955,7 @@ shortWay:
     return d;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_35B0(CClock *self)
 {
     s32 result;
@@ -959,6 +990,7 @@ void fn_1_42B4(CClock *self)
 }
 
 // Is the point on the side of hand id that the hand is turning away from?
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_42C8(CClock *self, const M521Vec *pt, s32 id)
 {
     Mtx inv;

@@ -125,6 +125,7 @@ M521Ptmf lbl_1_data_700 = M521_PTMF_INIT(fn_1_1763C);
 PL_RODATA const f32 lbl_1_rodata_33C[4] = { -600.0f, -300.0f, 300.0f, 600.0f };
 PL_RODATA const M521Vec lbl_1_rodata_360 = { 0.0f, 0.0f, 0.0f };
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s16 fn_1_15298(M521Sphere *pos)
 {
     M521Vec screen;
@@ -145,6 +146,7 @@ s16 fn_1_15298(M521Sphere *pos)
 }
 
 // Signed angle (degrees) from b to a, wrapped to the 16 bit angle range.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_15338(f32 a, f32 b)
 {
     s32 ia;
@@ -157,6 +159,7 @@ f32 fn_1_15338(f32 a, f32 b)
     return (f32)(0.0054931640625 * (f64)((s32)wrapped - 0x8000));
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_153F0(f32 a, f32 b, f32 limit)
 {
     f32 diff;
@@ -210,6 +213,7 @@ CCtl *fn_1_155B8(s32 charIdx, CPlayer *owner)
     return pad;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CPlayer *fn_1_15664(CPlayer *self, s32 charIdx, s32 slot)
 {
     CCtl *ctl;
@@ -298,6 +302,7 @@ CPlayer *fn_1_15664(CPlayer *self, s32 charIdx, s32 slot)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDeque16 *fn_1_15AF0(CDeque16 *self, s16 flag)
 {
     if (self != 0) {
@@ -311,6 +316,7 @@ CDeque16 *fn_1_15AF0(CDeque16 *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDeque16 *fn_1_15B84(CDeque16 *self, s16 flag)
 {
     if (self != 0) {
@@ -324,6 +330,7 @@ CDeque16 *fn_1_15B84(CDeque16 *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDeque16 *fn_1_15C10(CDeque16 *self, s16 flag)
 {
     if (self != 0) {
@@ -337,6 +344,7 @@ CDeque16 *fn_1_15C10(CDeque16 *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CCtl **fn_1_15C94(CCtl **self, s16 flag)
 {
     CCtl *ctl;
@@ -364,17 +372,20 @@ CListNode *fn_1_15D10(CListNode *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_15D68(CPlayer *self)
 {
     return GwPlayerConf[self->m_padNo].type != 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_15D94(CPlayer *a, CPlayer *b)
 {
     if (fn_1_9B2C(&a->m_pos, &b->m_pos, 0.5f, 1.001f) != 0) {
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_15DF0(CPlayer *self, u32 motId)
 {
     u16 mot;
@@ -383,6 +394,7 @@ void fn_1_15DF0(CPlayer *self, u32 motId)
     fn_1_17A6C(&self->m_mot, self->m_mot.m_data + self->m_mot.m_size, 1, &mot);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_15E68(s32 slot, MtxPtr mtx)
 {
     CModel *model;
@@ -395,6 +407,7 @@ void fn_1_15E68(s32 slot, MtxPtr mtx)
     Hu3DModelObjMtxGet(model->m_id, (char *)lbl_1_data_6F0[slot & 3], mtx);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_15F04(CPlayer *self)
 {
     M521Sphere *pos;
@@ -493,6 +506,7 @@ CClock *fn_1_1650C(CPlayer *self)
     return clock;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_1654C(CPlayer *self, s32 motion, u8 flag)
 {
     s16 modelId;
@@ -521,6 +535,7 @@ void fn_1_1654C(CPlayer *self, s32 motion, u8 flag)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_16648(CPlayer *self)
 {
     s16 modelId;
@@ -537,6 +552,7 @@ void fn_1_16648(CPlayer *self)
     self->m_hook = hook;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_16720(CPlayer *self)
 {
     M521Vec diff;
@@ -570,6 +586,7 @@ void fn_1_16720(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_168C0(CPlayer *self)
 {
     M521Vec prev;
@@ -632,6 +649,7 @@ void fn_1_168C0(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_16BD0(CPlayer *self)
 {
     CClock *clock;
@@ -646,6 +664,7 @@ f32 fn_1_16BD0(CPlayer *self)
     return PSVECMag(&diff);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_16C54(CPlayer *self, u32 state)
 {
     s16 modelId;
@@ -704,6 +723,7 @@ void fn_1_16C54(CPlayer *self, u32 state)
     self->m_i58 = 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_16F98(CPlayer *self)
 {
     CCtlInput *in;
@@ -739,6 +759,7 @@ void fn_1_16F98(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_170F8(CPlayer *self)
 {
     M521Vec normal;
@@ -768,6 +789,7 @@ void fn_1_170F8(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u8 fn_1_17218(CPlayer *self)
 {
     CCtlInput *in;
@@ -798,12 +820,14 @@ u8 fn_1_17218(CPlayer *self)
     return 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_173B8(CPlayer *self)
 {
     if (fn_1_17218(self) == 0) {
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_173EC(CPlayer *self)
 {
     if (self->m_vel.y < 0.0f) {
@@ -811,6 +835,7 @@ void fn_1_173EC(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_1743C(CPlayer *self)
 {
     if ((self->m_pos.y - 30.000002f) <= lbl_1_data_680) {
@@ -818,6 +843,7 @@ void fn_1_1743C(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_174B0(CPlayer *self)
 {
     fn_1_168C0(self);
@@ -835,6 +861,7 @@ void fn_1_174B0(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_17578(CPlayer *self, M521Vec *out)
 {
     f32 rad;
@@ -847,6 +874,7 @@ void fn_1_17578(CPlayer *self, M521Vec *out)
     out->z = c;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_1763C(CPlayer *self)
 {
     CCtl *ctl;
@@ -910,6 +938,7 @@ void fn_1_17794(CPlayer *self)
     self->m_req = 1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_177A0(CPlayer *self)
 {
     u8 expired;
@@ -931,6 +960,7 @@ void fn_1_17840(CPlayer *self)
     self->m_f64 = 0.0f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_17884(CPlayer *self)
 {
     s16 modelId;
@@ -944,6 +974,7 @@ void fn_1_17884(CPlayer *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_17920(CPlayer *self)
 {
     s16 modelId;
@@ -965,6 +996,7 @@ void fn_1_179E8(CPlayer *self)
     self->m_flag51 = 1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u16 *fn_1_179F4(CDeque16 *self, u32 idx)
 {
     if (idx >= self->m_size) {
@@ -975,6 +1007,7 @@ u16 *fn_1_179F4(CDeque16 *self, u32 idx)
 }
 
 // vector<u16>::insert(pos, n, value)
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_17A6C(CDeque16 *self, u16 *pos, u32 n, u16 *val)
 {
     u32 maxSize;
@@ -1054,6 +1087,7 @@ void fn_1_17A6C(CDeque16 *self, u16 *pos, u32 n, u16 *val)
 }
 
 // vector<u16>::reserve
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_17E1C(CDeque16 *self, u32 cap)
 {
     u16 *oldData;

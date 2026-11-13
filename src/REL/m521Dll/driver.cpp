@@ -180,6 +180,7 @@ const M521Ptmf lbl_1_data_4CC = M521_PTMF_INIT(fn_1_15F04);
 const M521Ptmf lbl_1_data_520 = M521_PTMF_INIT(fn_1_17840);
 const M521Ptmf lbl_1_data_52C = M521_PTMF_INIT(fn_1_17920);
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_AF00(CCtl *self)
 {
     self->m_in.m_x = 0.0f;
@@ -213,6 +214,7 @@ CCtl *fn_1_AFE8(CCtl *self, s16 freeIt)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_B040(CDriverAsPad *self, DrvInfo *info)
 {
     s32 pad = self->m_padNo;
@@ -233,6 +235,7 @@ void fn_1_B040(CDriverAsPad *self, DrvInfo *info)
     info->m_btn = (HuPadBtnDown[pad] & 0x100) != 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDriverAsAI *fn_1_B3CC(CDriverAsAI *self, CPlayer *owner)
 {
     CDeque tmp;
@@ -263,6 +266,7 @@ CDriverAsAI *fn_1_B3CC(CDriverAsAI *self, CPlayer *owner)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDeque *fn_1_B4FC(CDeque *self, s16 freeIt)
 {
     if (self != 0) {
@@ -279,6 +283,7 @@ CDeque *fn_1_B4FC(CDeque *self, s16 freeIt)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDeque *fn_1_B590(CDeque *self, s16 freeIt)
 {
     if (self != 0) {
@@ -294,6 +299,7 @@ CDeque *fn_1_B590(CDeque *self, s16 freeIt)
 }
 
 /* Number of frames a CPU of difficulty lv (0..1) waits before reacting. */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_B61C(f32 lv)
 {
     u8 ok = 0;
@@ -314,6 +320,7 @@ s32 fn_1_B61C(f32 lv)
     return (s32)(60.0f * (inv + (b + a) * inv));
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_B768(CDriverAsAI *self, DrvInfo *info)
 {
     CPlayer *owner;
@@ -390,6 +397,7 @@ void fn_1_B768(CDriverAsAI *self, DrvInfo *info)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void proc00__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvInfo *info)
 {
     u8 done;
@@ -412,6 +420,7 @@ void proc00__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvIn
     self->m_owner->m_f64 = (f32)(45.0 * sin(ang)) + self->m_f70;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void proc01__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvInfo *info)
 {
     CPlayer *owner;
@@ -467,6 +476,7 @@ void proc01__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvIn
     info->m_mag = 1.0f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_C060(CDriverAsAI *self)
 {
     CClock *clock;
@@ -507,6 +517,7 @@ u8 fn_1_C164(CDriverAsAI *self)
     return res;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void proc02__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvInfo *info)
 {
     CPlayer *owner;
@@ -558,6 +569,7 @@ void proc02__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvIn
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_C51C(CDriverAsAI *self, DrvInfo *info)
 {
     CPlayer *owner;
@@ -587,6 +599,7 @@ void fn_1_C51C(CDriverAsAI *self, DrvInfo *info)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_C790(CDriverAsAI *self, DrvInfo *info)
 {
     CPlayer *owner;
@@ -607,6 +620,7 @@ void fn_1_C790(CDriverAsAI *self, DrvInfo *info)
     info->m_mag = 1.0f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_C9C8(CDriverAsAI *self, DrvInfo *info)
 {
     CPlayer *owner;
@@ -647,6 +661,7 @@ void proc0e__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvIn
     info->m_mag = 0.8f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void proc0f__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvInfo *info)
 {
     u8 done;
@@ -673,6 +688,7 @@ void proc0f__Q24m52111CDriverAsAIFRQ34m5217CDriver4INFO(CDriverAsAI *self, DrvIn
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_CDDC(CDriverAsAI *self, DrvInfo *info, s32 y, f32 limit)
 {
     CPlayer *owner;
@@ -709,6 +725,7 @@ void fn_1_CDDC(CDriverAsAI *self, DrvInfo *info, s32 y, f32 limit)
     info->m_mag = 1.0f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_D0F0(CDriverAsAI *self, const DrvPtmf *p)
 {
     DrvPtmf pmf;
@@ -728,6 +745,7 @@ void fn_1_D0F0(CDriverAsAI *self, const DrvPtmf *p)
     stored = task->m_pmf;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_D1F8(CDriverAsAI *self, const DrvPtmf *p)
 {
     DrvPtmf pmf;
@@ -739,6 +757,7 @@ void fn_1_D1F8(CDriverAsAI *self, const DrvPtmf *p)
     fn_1_DFE0(&self->m_queue, &task);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_D26C(CDriverAsAI *self)
 {
     CDriverAsAI *obj = self;
@@ -760,6 +779,7 @@ void fn_1_D2AC(void)
 #define DRV_COLOR(r_, g_, b_, a_)                     do {                                                  GXColor c_;                                       c_.r = (r_);                                      c_.g = (g_);                                      c_.b = (b_);                                      c_.a = (a_);                                      GXColor4u8(c_.a, c_.b, c_.g, c_.r);           } while (0)
 
 /* Debug draw of the CPU controller: target, hit normal and stick direction. */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_D2B0(CDriverAsAI *self, Mtx mtx)
 {
     CPlayer *owner;
@@ -816,6 +836,7 @@ void fn_1_D2B0(CDriverAsAI *self, Mtx mtx)
     DRV_COLOR(0xFF, 0x00, 0xFF, 0xC0);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDriverAsAI *fn_1_D9D4(CDriverAsAI *self, s16 freeIt)
 {
     if (self != 0) {
@@ -1086,6 +1107,7 @@ static inline CDequeIt dqBeginConst(const CDeque *d)
     return it;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDequeMap *fn_1_E2A8(CDequeMap *self, s16 freeIt)
 {
     if (self != 0) {
@@ -1099,6 +1121,7 @@ CDequeMap *fn_1_E2A8(CDequeMap *self, s16 freeIt)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDequeMap *fn_1_E31C(CDequeMap *self, s16 freeIt)
 {
     if (self != 0) {
@@ -1113,6 +1136,7 @@ CDequeMap *fn_1_E31C(CDequeMap *self, s16 freeIt)
 }
 
 /* ~deque body: destroy the tasks (trivial), free the blocks. */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_DB3C(CDeque *self)
 {
     CDequeIt last;
@@ -1139,6 +1163,7 @@ void fn_1_DB3C(CDeque *self)
 }
 
 /* pop_back */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_DDEC(CDeque *self)
 {
     DrvTask **slot;
@@ -1181,6 +1206,7 @@ void fn_1_DDEC(CDeque *self)
 }
 
 /* push_back */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_DFE0(CDeque *self, const DrvTask *item)
 {
     u32 added;
@@ -1233,6 +1259,7 @@ void fn_1_DFE0(CDeque *self, const DrvTask *item)
 }
 
 /* deque copy */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CDeque *fn_1_E388(CDeque *self, const CDeque *src)
 {
     DrvTask *blk;
@@ -1299,6 +1326,7 @@ void fn_1_E748(CDequeMap *self)
 }
 
 /* cdeque::push_back */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_E784(CDequeMap *self, DrvTask *const *val)
 {
     const u32 *keep;
@@ -1352,12 +1380,14 @@ void fn_1_E784(CDequeMap *self, DrvTask *const *val)
 }
 
 /* cdeque::reserve */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_EA80(CDequeMap *self, u32 n)
 {
     mapReserve(self, n);
 }
 
 /* cdeque::resize */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_ECA4(CDequeMap *self, u32 n, DrvTask *val)
 {
     DrvTask *v;
@@ -1376,6 +1406,7 @@ void fn_1_ECA4(CDequeMap *self, u32 n, DrvTask *val)
 }
 
 /* deque: append one block of tasks at the back of the map */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u8 fn_1_EF30(CDeque *self, s32 front, CDequeMap *spare, u32 *count, s32 n)
 {
     DrvTask *blk;
@@ -1420,6 +1451,7 @@ u8 fn_1_EF30(CDeque *self, s32 front, CDequeMap *spare, u32 *count, s32 n)
     return grew;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_F59C(CDequeMap *self, DrvTask *const *val)
 {
     CDequeMap *m = self;
@@ -1428,6 +1460,7 @@ void fn_1_F59C(CDequeMap *self, DrvTask *const *val)
 }
 
 /* deque iterator at index idx (const / mutable) */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_F5CC(CDequeIt *out, const CDeque *self, u32 idx)
 {
     CMapIt it;
@@ -1461,6 +1494,7 @@ void fn_1_F5CC(CDequeIt *out, const CDeque *self, u32 idx)
     out->m_pos = idx;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_F724(CDequeIt *out, CDeque *self, u32 idx)
 {
     CMapIt it;
@@ -1495,6 +1529,7 @@ void fn_1_F724(CDequeIt *out, CDeque *self, u32 idx)
 }
 
 /* destroy the tasks of [first, last): they are trivial, only the walk remains */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_F87C(CDeque *self, CDequeIt first, CDequeIt last)
 {
     u32 n;
@@ -1537,6 +1572,7 @@ void fn_1_F87C(CDeque *self, CDequeIt first, CDequeIt last)
 }
 
 /* cdeque::assign(first, last) */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_FBA8(CDequeMap *self, CMapIt first, CMapIt last, const u8 *tag)
 {
     u32 n;
@@ -1576,6 +1612,7 @@ void fn_1_FBA8(CDequeMap *self, CMapIt first, CMapIt last, const u8 *tag)
 }
 
 /* cdeque::swap */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_FF40(CDequeMap *self, CDequeMap *other)
 {
     u32 t0;
@@ -1600,6 +1637,7 @@ void fn_1_FF40(CDequeMap *self, CDequeMap *other)
 }
 
 /* cdeque::erase(first, last) */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_FFB4(CMapIt *out, CDequeMap *self, CMapIt first, CMapIt last)
 {
     CMapIt b;
@@ -1772,6 +1810,7 @@ void fn_1_104A8(CDequeMap *self, CMapIt pos, u32 n, DrvTask *const *val)
 }
 
 /* cdeque::max_size */
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_1147C(CDequeMap *self)
 {
     u32 a = 0x3FFFFFFF;

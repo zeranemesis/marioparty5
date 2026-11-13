@@ -117,6 +117,7 @@ void fn_1_4C3C(const char *cond, const char *file, s32 line)
     OSPanic("assert.cpp", 0x12, buf);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void *fn_1_4A68(u32 n)
 {
     void *p;
@@ -129,6 +130,7 @@ void *fn_1_4A68(u32 n)
     return p;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void *fn_1_4ACC(u32 n)
 {
     void *p;
@@ -181,6 +183,7 @@ void _epilog(void)
 
 
 // Prints through vprintf (the stream argument is ignored by this build).
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 int fn_1_4C9C(void *file, const char *fmt, ...)
 {
     va_list args;
@@ -363,6 +366,7 @@ void fn_1_5448(CCam *cam, u16 camBit)
     Hu3DCameraPosGet(camBit, &cam->pos, &cam->up, &cam->target);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_5488(CCam *cam)
 {
     Quaternion q;
@@ -401,6 +405,7 @@ f32 fn_1_561C(s32 pad)
 }
 
 // Free-fly debug camera driven by the pad.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_5670(CCam *cam, s32 pad)
 {
     u16 btn;
@@ -535,6 +540,7 @@ void fn_1_5D98(CListNode *self, CListNode *list)
 }
 
 // Moves every node of a to the end of b.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_5DC8(CListNode *a, CListNode *b)
 {
     CListNode *first;
@@ -587,6 +593,7 @@ void fn_1_5E50(CListNode *list, CListCmp cmp)
 }
 
 // Merge sort on a singly linked chain (terminated by NULL).
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CListNode *fn_1_5F08(CListCmp cmp, CListNode *list)
 {
     CListNode *half;
@@ -604,6 +611,7 @@ CListNode *fn_1_5F08(CListCmp cmp, CListNode *list)
 }
 
 // Splits the chain in the middle and returns the second half.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CListNode *fn_1_65B0(CListNode *list)
 {
     CListNode *slow;
@@ -670,6 +678,7 @@ static inline CListNode *listFirst(CListNode *list)
     return listBegin(list);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_66B0(s32 bit)
 {
     CListNode *it;
@@ -682,6 +691,7 @@ void fn_1_66B0(s32 bit)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_6748(void)
 {
     CListNode *it;
@@ -697,6 +707,7 @@ s32 fn_1_6748(void)
     return 1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_67D4(void)
 {
     CListNode *it;
@@ -712,6 +723,7 @@ void fn_1_6844(void)
 }
 
 // Deletes every object of the list.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6848(void)
 {
     CObject *obj;
@@ -752,6 +764,7 @@ s32 fn_1_6998(void)
     return lbl_1_bss_24;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CAppBase *fn_1_69A8(CAppBase *self)
 {
     s32 i;
@@ -769,6 +782,7 @@ CAppBase *fn_1_69A8(CAppBase *self)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CAppBase *fn_1_6A78(CAppBase *self, s16 flag)
 {
     if (self != 0) {
@@ -784,6 +798,7 @@ CAppBase *fn_1_6A78(CAppBase *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CAppBase *fn_1_6B34(CAppBase *self, s16 flag)
 {
     CAppBase *app;
@@ -824,6 +839,7 @@ void fn_1_6E68(CAppBase *app);
 void fn_1_6ED8(OMOBJ *obj);
 void fn_1_7680(void);
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6CEC(CAppBase *self, s16 objMax, s32 prio)
 {
     OMOBJMAN *objman;
@@ -834,6 +850,7 @@ void fn_1_6CEC(CAppBase *self, s16 objMax, s32 prio)
     omAddObjEx(objman, 0, 0, 0, -1, fn_1_6DD8);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6D70(CAppBase *self)
 {
     OMOBJMAN *objman;
@@ -843,6 +860,7 @@ void fn_1_6D70(CAppBase *self)
     omAddObjEx(objman, 0, 0, 0, -1, fn_1_6DD8);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6DD8(OMOBJ *obj)
 {
     if (omSysExitReq != 0 && WipeCheckEnd() == 0) {
@@ -854,6 +872,7 @@ void fn_1_6DD8(OMOBJ *obj)
     fn_1_6E68(lbl_1_bss_C);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6E68(CAppBase *app)
 {
     ((void (*)(CAppBase *))app->m_vtbl[4])(app);
@@ -867,6 +886,7 @@ void fn_1_6ED4(void)
 {
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6ED8(OMOBJ *obj)
 {
     CAppBase *app;
@@ -889,6 +909,7 @@ void fn_1_6ED8(OMOBJ *obj)
 }
 
 // Registers a player id in the first free slot.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_6FC4(s32 id)
 {
     s32 *ids;
@@ -907,6 +928,7 @@ void fn_1_6FC4(s32 id)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_7098(s32 id)
 {
     s32 i;
@@ -933,6 +955,7 @@ static inline CAppBase *appInstance()
     return lbl_1_bss_C;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_716C(void)
 {
     CAppBase *app;
@@ -941,6 +964,7 @@ void fn_1_716C(void)
     app->m_mes = GameMesCreate(2, 0);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_7224(void)
 {
     CAppBase *app;
@@ -949,6 +973,7 @@ void fn_1_7224(void)
     app->m_mes = GameMesCreate(2, 1);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_72DC(void)
 {
     CAppBase *app;
@@ -967,6 +992,7 @@ s32 fn_1_72DC(void)
 }
 
 // Shows the winners: the registered players sorted by id.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_73B0(void)
 {
     s32 chars[4];
@@ -1016,6 +1042,7 @@ void fn_1_73B0(void)
     GameMesCreate(4, 3, chars[0], chars[1], chars[2], chars[3]);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_757C(s32 arg)
 {
     CAppBase *app;
@@ -1066,6 +1093,7 @@ CModel *fn_1_7744(CModel *self, HU3DMODELHOOK hook)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CModel *fn_1_7780(CModel *self, s16 charNo, s32 kind)
 {
     s16 model;
@@ -1089,6 +1117,7 @@ CModel *fn_1_7780(CModel *self, s16 charNo, s32 kind)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CModel *fn_1_781C(CModel *self, CModel *other)
 {
     self->m_id = Hu3DModelLink(other->m_id);
@@ -1174,6 +1203,7 @@ CModel *__dt__6CModelFv(CModel *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 HSFOBJECT *fn_1_7BB8(CModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1206,6 +1236,7 @@ void fn_1_7CE4(CModel *self)
     Hu3DModelShadowMapObjReset(self->m_id);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_7D14(CModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1216,6 +1247,7 @@ void fn_1_7D14(CModel *self, char *name)
     *flags = *flags & 0xFFFFFFF7;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_7DC0(CModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1224,6 +1256,7 @@ void fn_1_7DC0(CModel *self, char *name)
     obj->flags |= 0x400;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_7E68(CModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1233,6 +1266,7 @@ void fn_1_7E68(CModel *self, char *name)
 }
 
 // Hides an object of the model (flag plus zero scale).
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_7F10(CModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1244,6 +1278,7 @@ void fn_1_7F10(CModel *self, char *name)
     obj->mesh.base.scale.z = 0.0f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_7FEC(CModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1255,6 +1290,7 @@ void fn_1_7FEC(CModel *self, char *name)
     obj->mesh.base.scale.z = 1.0f;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_80C8(CModel *self, s32 frame)
 {
     Hu3DMotionTimeSet(self->m_id, (f32)frame);
@@ -1311,6 +1347,7 @@ void fn_1_8134(CMt *m, u32 seed)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_81A8(CMt *m, const u32 *key, u32 len)
 {
     u32 i;
@@ -1356,31 +1393,37 @@ void fn_1_81A8(CMt *m, const u32 *key, u32 len)
     m->m_mt[0] = 0x80000000;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_836C(CMt *m)
 {
     return mtNext(m);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_84F8(CMt *m)
 {
     return mtNext(m) >> 1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_8690(CMt *m)
 {
     return 2.3283064e-10f * (f32)mtNext(m);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_8854(CMt *m)
 {
     return 2.3283064e-10f * (f32)mtNext(m);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_8A18(CMt *m)
 {
     return 2.3283064e-10f * (0.5f + (f32)mtNext(m));
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f64 fn_1_8BEC(CMt *m)
 {
     u32 a;
@@ -1391,6 +1434,7 @@ f64 fn_1_8BEC(CMt *m)
     return 1.1102230246251565e-16 * ((67108864.0 * (f64)(a >> 5)) + (f64)(b >> 6));
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_8F64(CMt *m)
 {
     return 1.1920929e-7f * (f32)(mtNext(m) >> 9);
@@ -1398,6 +1442,7 @@ f32 fn_1_8F64(CMt *m)
 
 // Task objects ---------------------------------------------------------------------
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void *fn_1_9134(u32 n)
 {
     void *p;
@@ -1410,6 +1455,7 @@ void *fn_1_9134(u32 n)
     return p;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void *fn_1_91C0(u32 n)
 {
     void *p;
@@ -1445,6 +1491,7 @@ void fn_1_92BC(CTask *task, OMOBJ *obj)
     obj->objFunc = fn_1_92DC;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_92DC(OMOBJ *obj)
 {
     CTask *task;
@@ -1457,6 +1504,7 @@ void fn_1_9328(void)
 {
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_932C(OMOBJ *obj)
 {
     CTask *task;
@@ -1479,6 +1527,7 @@ CTask *fn_1_939C(CTask *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_93FC(OMOBJMAN *objman, OMOBJ *obj)
 {
     OMOBJMAN *man;
@@ -1505,11 +1554,13 @@ void fn_1_9470(u32 seed)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_9548(void)
 {
     return mtNext(&lbl_1_bss_34) >> 1;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 f32 fn_1_9784(void)
 {
     return 1.1920929e-7f * (f32)(mtNext(&lbl_1_bss_34) >> 9);
@@ -1526,6 +1577,7 @@ f32 fn_1_9A30(f32 min, f32 max)
 }
 
 // Sphere overlap test.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 fn_1_9A84(const M521Sphere *a, const M521Sphere *b)
 {
     Vec d;
@@ -1541,6 +1593,7 @@ u32 fn_1_9A84(const M521Sphere *a, const M521Sphere *b)
 }
 
 // Pushes two overlapping spheres apart (f0 = share moved by the first, f1 = stiffness).
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_9B2C(M521Sphere *a, M521Sphere *b, f32 f0, f32 f1)
 {
     Vec d;
@@ -1577,6 +1630,7 @@ u32 fn_1_A3A8(CThread *th);
 s32 fn_1_A448(u32 *p, s32 mode);
 void fn_1_A4BC(u32 *p, u32 words);
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CSubThread *fn_1_9CD0(CSubThread *self, u32 stackSize)
 {
     self->m_vtbl = lbl_1_data_1E4;
@@ -1597,11 +1651,13 @@ CSubThread *fn_1_9D4C(CSubThread *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u8 fn_1_9DB8(CSubThread *self)
 {
     return OSIsThreadTerminated(&self->m_thread.m_th) != 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_9E00(CSubThread *self, s32 arg)
 {
     if (OSIsThreadTerminated(&self->m_thread.m_th) != 0) {
@@ -1615,6 +1671,7 @@ s32 fn_1_9E00(CSubThread *self, s32 arg)
     return self->m_arg;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_9E90(CSubThread *self, s32 arg)
 {
     if (OSGetCurrentThread() == &self->m_thread.m_th) {
@@ -1631,6 +1688,7 @@ s32 fn_1_9E90(CSubThread *self, s32 arg)
     return self->m_arg;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void *fn_1_9F94(void *arg)
 {
     CSubThread *self;
@@ -1641,6 +1699,7 @@ void *fn_1_9F94(void *arg)
     return 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 OSThread *fn_1_9FF0(CThread *th, void *(*entry)(void *), void *arg, u32 size, s32 prio, u16 attr)
 {
     u32 words;
@@ -1653,6 +1712,7 @@ OSThread *fn_1_9FF0(CThread *th, void *(*entry)(void *), void *arg, u32 size, s3
     return &th->m_th;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 OSThread *fn_1_A0D4(CThread *th, void *(*entry)(void *), void *arg, u32 *stack, u32 size, s32 prio, u16 attr)
 {
     th->m_stack = 0;
@@ -1660,6 +1720,7 @@ OSThread *fn_1_A0D4(CThread *th, void *(*entry)(void *), void *arg, u32 *stack, 
     return &th->m_th;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_A150(CThread *th, void *(*entry)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr)
 {
     u8 valid;
@@ -1868,6 +1929,7 @@ void fn_1_A8C0(CTimer *self, u8 r, u8 g, u8 b)
 
 CListNode *fn_1_AA68(CListNode *self, s16 flag);
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_A908(void)
 {
     lbl_1_bss_1C.m_next = &lbl_1_bss_1C;

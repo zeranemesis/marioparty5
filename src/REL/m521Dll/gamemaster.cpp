@@ -205,6 +205,7 @@ u32 m521GameMasterSize(void)
 }
 #endif
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 GameMaster *fn_1_11520(GameMaster *self)
 {
     CListNode *list;
@@ -285,6 +286,7 @@ GameBoard *fn_1_11780(GameBoard *self, s16 flag)
 #pragma dont_inline reset
 
 // Destroys every player of the list (the player destructor is inlined), then the list node.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CListNode *fn_1_117D8(CListNode *self, s16 flag)
 {
     CPlayer *p;
@@ -346,6 +348,7 @@ void fn_1_11950(CDeque16 *self)
 {
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CListNode *fn_1_11954(CListNode *self, s16 flag)
 {
     CPlayer *p;
@@ -420,6 +423,7 @@ GameMaster *fn_1_11B08(GameMaster *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_11BA0(GameMaster *self, s16 flag)
 {
     s32 order[4];
@@ -475,6 +479,7 @@ void fn_1_11BA0(GameMaster *self, s16 flag)
     self->score[1] = 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_11E70(GameMaster *self)
 {
     s32 i;
@@ -518,6 +523,7 @@ void fn_1_11E70(GameMaster *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_1204C(GameMaster *self)
 {
     s32 mask;
@@ -541,6 +547,7 @@ s32 fn_1_1204C(GameMaster *self)
     return 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 s32 fn_1_1214C(GameMaster *self)
 {
     s32 mask;
@@ -576,6 +583,7 @@ s32 fn_1_1214C(GameMaster *self)
     return mask;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_122C4(GameMaster *self, s32 mask)
 {
     s32 i;
@@ -607,6 +615,7 @@ void fn_1_122C4(GameMaster *self, s32 mask)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_12448(GameMaster *self, s32 side)
 {
     if (side == 0) {
@@ -627,6 +636,7 @@ void fn_1_12448(GameMaster *self, s32 side)
     fn_1_179E8(self->player[side][1]);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_12640(GameMaster *self, s32 *unused)
 {
     s32 tries;
@@ -743,6 +753,7 @@ void fn_1_12640(GameMaster *self, s32 *unused)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_12CA8(GameMaster *self)
 {
     s32 fxHandle;
@@ -926,6 +937,7 @@ void fn_1_134A8(GameNode *self, GameNodeCb cb)
 }
 
 // Quick sort on the u32 sort keys, with a pseudo random pivot offset (lbl_1_bss_A80 cycles -4..4).
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_1353C(u32 *first, u32 *last)
 {
     s32 n;
@@ -982,6 +994,7 @@ void fn_1_1353C(u32 *first, u32 *last)
 }
 
 // Orders the three samples so the median ends up in *c.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_137A0(u32 *a, u32 *b, u32 *c)
 {
     u8 aLeC;
@@ -1015,6 +1028,7 @@ void fn_1_137A0(u32 *a, u32 *b, u32 *c)
 }
 
 // Partition on "*x < pivot".
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 *fn_1_13898(u32 *first, u32 *last, SortPivot *cmp)
 {
     u32 *l;
@@ -1096,6 +1110,7 @@ u32 *fn_1_13898(u32 *first, u32 *last, SortPivot *cmp)
 }
 
 // Partition on "*x <= pivot".
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 u32 *fn_1_13BA4(u32 *first, u32 *last, SortPivot *cmp)
 {
     u32 *l;
@@ -1177,6 +1192,7 @@ u32 *fn_1_13BA4(u32 *first, u32 *last, SortPivot *cmp)
 }
 
 // Selection sort for the short ranges.
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_13F6C(u32 *first, u32 *last)
 {
     u32 *i;
@@ -1207,6 +1223,7 @@ void fn_1_13F6C(u32 *first, u32 *last)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_1400C(void)
 {
     lbl_1_bss_A18 = 0x78;
@@ -1218,6 +1235,7 @@ void fn_1_1400C(void)
     __register_global_object(&lbl_1_bss_A40, (void *)fn_1_4C8, lbl_1_bss_A34);
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_140C8(CSubThread *node)
 {
     fn_1_12CA8((GameMaster *)((u8 *)node - offsetof(GameMaster, mapNode)));

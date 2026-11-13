@@ -75,6 +75,7 @@ static CScore *singletonPtr(u8 *subObj)
     return (subObj != 0) ? (CScore *)(subObj - 0x10) : 0;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CScore *fn_1_17F78(CScore *self)
 {
     ANIMDATA *animA;
@@ -128,6 +129,7 @@ CScore *fn_1_17F78(CScore *self)
     return self;
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CScore *fn_1_182D4(CScore *self, s16 freeIt)
 {
     if (self != 0) {
@@ -181,6 +183,7 @@ void fn_1_1845C(ScoreEntry *entry)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_1851C(ScoreEntry *entry)
 {
     s16 i;
@@ -207,6 +210,7 @@ void fn_1_1851C(ScoreEntry *entry)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_186F0(CScore *self)
 {
     s32 i;
@@ -249,6 +253,7 @@ void fn_1_186F0(CScore *self)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 void fn_1_18A10(CScore *self, s32 bit)
 {
     self->m_bitFlags &= ~(1 << bit);
@@ -263,6 +268,7 @@ void fn_1_18A10(CScore *self, s32 bit)
     }
 }
 
+// NONMATCHING: semantics verified equal (opcodes, immediates, data); register allocation/inlining/branch layout differ
 CScore *fn_1_18A4C(CScore *self, s16 freeIt)
 {
     if (self != 0) {
