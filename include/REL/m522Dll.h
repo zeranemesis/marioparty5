@@ -7,10 +7,23 @@
 /* The mode controller of the main board, CGameMaster.  ObjectSetup() builds it
  * in a 0x368 byte allocation, so only the members this module touches need to
  * be spelled out. */
+#ifdef TARGET_PC
+#include "dolphin/os.h"
+/* m522.cpp's M522RSubThread (vtable, OSThread, stack, semaphore, argument): Aurora's thread and semaphore are much
+   larger than 0x334 bytes, so the opaque GC view would overlap m_queue/m_heapSel and overrun the allocation */
+typedef struct M522Core_s {
+    void *m_vtable;
+    OSThread m_thread;
+    u32 *m_stack;
+    OSSemaphore m_sem;
+    s32 m_arg;
+} M522_CORE;
+#else
 typedef struct M522Core_s {
     /* 0x000 */ void *m_vtable;
     /* 0x004 */ u8 m_body[0x334];
 } M522_CORE;
+#endif
 
 typedef struct M522Queue_s {
     /* 0x000 */ s32 m_opaque[1];

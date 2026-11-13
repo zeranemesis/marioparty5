@@ -138,6 +138,9 @@ typedef struct M522RSubThread_s {
     M522RSem sem;
     s32 arg;
 } M522RSubThread;
+#if defined(TARGET_PC) && defined(_M522DLL_H)
+static_assert(sizeof(M522RSubThread) == sizeof(M522_CORE), "M522_CORE must mirror M522RSubThread");
+#endif
 
 // Mersenne Twister state.
 typedef struct M522RRand_s {

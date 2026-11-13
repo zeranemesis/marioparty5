@@ -327,3 +327,7 @@ void fn_1_D120(void)
 }
 #pragma dont_inline reset
 #endif
+
+#ifdef TARGET_PC
+extern "C" unsigned long m522GameMasterSize(void) { return sizeof(M522_GAMEMASTER); }
+#endif

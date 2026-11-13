@@ -63,6 +63,10 @@ void OSPanic(const char* file, int line, const char* msg, ...) {
     XFB_CR(puts, &x, &y);
     va_start(list, msg);
     vsnprintf(strBuf, 0x400U, msg, list);
+#ifdef TARGET_PC
+    /* the console halts here; the port keeps running, so at least say where */
+    OSReport("OSPanic %s:%d: %s\n", file, line, strBuf);
+#endif
     puts = XFB_puts((s8*)strBuf, x, y);
     XFB_CR(puts, &x, &y);
     XFB_WriteBackCache();
