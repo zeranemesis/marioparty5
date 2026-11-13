@@ -581,7 +581,7 @@ static s32 fn_1_1394(M559VEC *pos, M559VEC *target, f32 range) {
     s32 var_r30;
     M559HOOK *temp_r31;
 
-    sp8 = pos->x;
+    sp8 = 0.0f; /* asm: stw r3 (pointer bits) read back as f32 == ~0 on GC */
     spC = 0.0f;
     sp10 = 0.0f;
     sp14 = 0.0f;
@@ -1554,7 +1554,7 @@ static void fn_1_41D4(f32 a, f32 b, f32 c) {
     M559HEAD *temp_r31;
 
     sp8 = a;
-    spC = c;
+    spC = b;
     sp10 = c;
     if ((s32) lbl_1_bss_73C <= 0x63) {
         temp_r30 = omAddObjEx(lbl_1_bss_BB4, 0x65, 1U, 0U, 1, fn_1_4364);
@@ -1719,7 +1719,7 @@ static void fn_1_4910(f32 a, f32 b, f32 c) {
     M559HEAD *temp_r31;
 
     sp8 = a;
-    spC = c;
+    spC = b;
     sp10 = c;
     if ((s32) lbl_1_bss_738 <= 0x2F) {
         temp_r30 = omAddObjEx(lbl_1_bss_BB4, 0x66, 1U, 0U, 2, fn_1_4A9C);
