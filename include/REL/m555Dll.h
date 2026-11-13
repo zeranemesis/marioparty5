@@ -12,7 +12,7 @@ typedef struct M555Player_s {
     s16 charNo;          /* 0x008 */
     s16 joinNo;          /* 0x00A */
     s16 state;           /* 0x00C */
-    s16 pad2;            /* 0x00E */
+    s16 unk0E;           /* 0x00E */
     s16 step;            /* 0x010 */
     s16 subStep;         /* 0x012 */
     s16 stage;           /* 0x014 */
@@ -69,9 +69,7 @@ typedef struct M555Player_s {
 typedef struct M555ModelEntry_s {
     s16 mdlId;           /* 0x00 */
     HuVecF pos;          /* 0x04 */
-    f32 rotX;            /* 0x10 */
-    f32 rotY;            /* 0x14 */
-    f32 rotZ;            /* 0x18 */
+    HuVecF rot;          /* 0x10 */
 } M555_MODELENTRY;
 
 /* One 0x1C-byte model record embedded in the control structure at offset 0.
@@ -103,7 +101,13 @@ typedef struct M555CtrlWin_s {
     s32 alpha;           /* 0x18 */
     s32 pad3;            /* 0x1C */
     s32 flags;           /* 0x20 */
-    s32 pad5[0x0C];      /* 0x24 */
+    s32 pad5[5];         /* 0x24 */
+    s16 on38;            /* 0x38 */
+    s16 on3A;            /* 0x3A */
+    s32 val3C;           /* 0x3C */
+    f32 val40;           /* 0x40 */
+    f32 val44;           /* 0x44 */
+    s32 pad6[3];         /* 0x48 */
 } M555_CTRLWIN;
 
 /* Global state reached through the lbl_1_bss_3030 pointer.  It carries three
@@ -125,13 +129,12 @@ typedef struct M555Ctrl_s {
 typedef struct M555Item_s {
     s16 active;          /* 0x00 */
     s16 type;            /* 0x02 */
-    s16 pad0;            /* 0x04 */
+    s16 cnt;             /* 0x04 */
     s16 kind;            /* 0x06 */
     s16 mdlId;           /* 0x08 */
     s16 slot;            /* 0x0A */
-    s16 angX;            /* 0x0C */
-    s16 angY;            /* 0x10 */
-    s16 pad1;            /* 0x12 */
+    f32 angX;            /* 0x0C */
+    f32 angY;            /* 0x10 */
     f32 fade;            /* 0x14 */
 } M555_ITEM;
 
@@ -237,9 +240,7 @@ typedef struct M555Work_s {
     s16 unk160;          /* 0x160 */
     s16 pad7;            /* 0x162 */
     f32 phaseAngle;      /* 0x164 */
-    f32 pad8;            /* 0x168 */
-    f32 pad9;            /* 0x16C */
-    f32 pad10;           /* 0x170 */
+    HuVecF camPos;       /* 0x168 */
     s16 pad11;           /* 0x174 */
     s16 unk178;          /* 0x178 */
     s16 pad12;           /* 0x17A */
@@ -255,12 +256,30 @@ typedef struct M555Work_s {
     s16 hookIdx[12];     /* 0x1D0 */
 } M555_WORK;
 
+/* 0x148-byte camera block; lbl_1_bss_8 points at it. */
+typedef struct M555CamBlk_s {
+    s32 pad0;            /* 0x00 */
+    HuVecF pos;          /* 0x04 */
+    f32 rotX;            /* 0x10 */
+    f32 rotY;            /* 0x14 */
+    f32 rotZ;            /* 0x18 */
+    HuVecF tgt;          /* 0x1C */
+    f32 pad28[3];        /* 0x28 */
+    f32 zoom;            /* 0x34 */
+    u8 pad38[0x148 - 0x38]; /* 0x38 */
+} M555_CAMBLK;
+
+extern M555_CAMBLK *lbl_1_bss_8;
 extern M555_WORK lbl_1_bss_1894;
 extern M555_CTRL *lbl_1_bss_3030;
 extern M555_PLAYER lbl_1_bss_120C[2];
 extern M555_ITEM lbl_1_bss_214[100];
 extern M555_SPIN lbl_1_bss_11E4;
 extern M555_MARK lbl_1_bss_B88[50];
+extern s16 lbl_1_bss_C[0x104]; /* 0x208 bytes */
+extern s16 lbl_1_bss_B74[10];
+extern M555_HOOK lbl_1_bss_11C8;
+
 
 
 /* ---- function prototypes (owner replaces its own `();` line with the real signature) ---- */
@@ -280,7 +299,7 @@ void fn_1_EDC();
 void fn_1_110C();
 void fn_1_13E4();
 void fn_1_150C();
-void fn_1_1898();
+s32 fn_1_1898(f32 *p, f32 frames, f32 from, f32 to);
 void fn_1_19B8();
 void fn_1_1AD4();
 void fn_1_1B48();
@@ -297,18 +316,18 @@ void fn_1_29E8();
 void fn_1_2A18();
 void fn_1_2A48();
 void fn_1_2AB0();
-void fn_1_2B10();
-void fn_1_2BD8();
-void fn_1_2CB0();
-void fn_1_2D40();
+void fn_1_2B10(s16 id);
+void fn_1_2BD8(s16 a, s16 b, s16 c);
+void fn_1_2CB0(s16 a, s16 b);
+void fn_1_2D40(s16 idx, s16 pitch);
 void fn_1_2DD0();
-void fn_1_2E60();
+void fn_1_2E60(s16 a, s16 b);
 void fn_1_2F28();
 void fn_1_2FF0();
-void fn_1_3010();
-void fn_1_69C4();
-void fn_1_6A0C();
-void fn_1_6A60();
+void fn_1_3010(M555_CTRL *ctrl);
+s32 fn_1_69C4(M555_CTRL *ctrl);
+s16 fn_1_6A0C(void);
+s16 fn_1_6A60(void);
 void fn_1_6AF0();
 void fn_1_6DF0();
 void fn_1_6ECC();
@@ -318,25 +337,25 @@ void fn_1_7364();
 void fn_1_73A4();
 void fn_1_7840();
 void fn_1_78DC();
-void fn_1_7D88();
-void fn_1_8928();
+void fn_1_7D88(s16 player);
+void fn_1_8928(s16 player);
 s32 fn_1_8F4C(s16 arg);
 void fn_1_90C4();
 void fn_1_9B8C();
-void fn_1_A758();
-void fn_1_CFB8();
+void fn_1_A758(void);
+void fn_1_CFB8(void);
 s32 fn_1_FB2C(void);
-void fn_1_FD64();
-void fn_1_103D8();
-void fn_1_10E20();
-void fn_1_119EC();
-void fn_1_11DFC();
-void fn_1_12CAC();
-void fn_1_12E04();
-void fn_1_130D8();
-void fn_1_13430();
-void fn_1_14420();
-void fn_1_152D8();
+s16 fn_1_FD64(void);
+void fn_1_103D8(s16 player);
+s16 fn_1_10E20(void);
+void fn_1_119EC(void);
+void fn_1_11DFC(s16 player);
+void fn_1_12CAC(s16 player);
+void fn_1_12E04(void);
+s32 fn_1_130D8(void);
+s32 fn_1_13430(void);
+void fn_1_14420(void);
+void fn_1_152D8(s16 arg);
 void fn_1_155DC();
 void fn_1_15CF4();
 void fn_1_16104();
