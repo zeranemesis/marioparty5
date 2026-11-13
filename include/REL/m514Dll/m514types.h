@@ -82,6 +82,7 @@ typedef struct M514Obj_s {
     HuVecF rot;
     s32 unk40;
     s32 snapshot;
+    s32 pad48[4]; /* the original allocates and clears 0x58 bytes */
 } M514OBJ;
 
 typedef struct M514ObjMgr_s {

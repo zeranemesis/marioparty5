@@ -41,7 +41,6 @@ typedef struct M514Spark_s {
     f32 x;
     f32 y;
     f32 z;
-    s32 pad24;
 } M514SPARK;
 
 typedef struct M514Sparks_s {
@@ -337,7 +336,7 @@ void fn_1_68EC(HU3DMODEL *modelP, Mtx *mtx)
     GXSetCullMode(GX_CULL_NONE);
     GXSetZMode(GX_TRUE, GX_LESS, GX_FALSE);
     GXSetAlphaCompare(GX_GREATER, 0, GX_AOP_AND, GX_LEQUAL, 0xFF);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_OR);
     GXSetNumChans(1);
     GXSetNumTexGens(1);
     GXSetNumTevStages(1);
@@ -356,7 +355,7 @@ void fn_1_68EC(HU3DMODEL *modelP, Mtx *mtx)
         M514SPARK *sp = &sparks->spark[i];
 
         if (sp->state != 0) {
-            u32 col = *(u32 *)&sp->col;
+            u32 col = M514_COLOR32(&sp->col);
             f32 size = sp->size;
             f32 x = sp->x;
             f32 y = sp->y;
@@ -466,7 +465,7 @@ void fn_1_6ED4(HU3DMODEL *modelP, Mtx *mtx)
 
         if (ring->state >= 2) {
             f32 radius = ring->radius;
-            u32 col = *(u32 *)&ring->col;
+            u32 col = M514_COLOR32(&ring->col);
 
             PSMTXIdentity(m);
             PSMTXTrans(m, ring->pos.x, ring->pos.y, ring->pos.z);

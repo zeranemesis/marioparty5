@@ -620,7 +620,9 @@ void fn_1_37CC(OMOBJ *obj, s32 kind)
     s32 playerNo = p->playerNo;
 
     switch (kind) {
-        default:
+        case 0:
+        case 1:
+        case 2:
             omVibrate(playerNo, 10, 6, 6);
             return;
         case 3:

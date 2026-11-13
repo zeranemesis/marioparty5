@@ -300,7 +300,7 @@ void fn_1_9E4(OMOBJ *obj)
     f32 len;
     s32 update;
 
-    lbl_1_data_8 += 0.4f;
+    lbl_1_data_8 += 0.40000002086162567;
     if (lbl_1_data_8 > 120.0f) {
         lbl_1_data_8 = 120.0f;
     }
@@ -411,7 +411,7 @@ s32 fn_1_1704(s32 grp)
     s32 i;
 
     for (i = 0; i < 4; i++) {
-        if (lbl_1_bss_20[i] < 0) {
+        if (lbl_1_bss_20[i] >= 0) {
             break;
         }
     }

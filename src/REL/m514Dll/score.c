@@ -354,7 +354,7 @@ void fn_1_900C(OMOBJ *obj)
 void fn_1_9258(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
-    s32 hiVal = (u32)w->record / 100;
+    s32 hiVal = w->record / 100;
 
     if (hiVal > 0x3E7) {
         hiVal = 0x3E7;
