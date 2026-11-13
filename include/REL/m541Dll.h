@@ -460,8 +460,18 @@ s32 fn_1_7850(s16 idx);
 /* callees owned by other parts (signatures derived from the asm call sites) */
 s32 fn_1_E0A4(void);
 void fn_1_11B7C(s16 arg0);
-void fn_1_11BF8(s16 arg0);
+s32 fn_1_11BF8(s16 arg0);
 void fn_1_A884(void);
 void fn_1_E930(M541_PLAYERWORK *work);
+
+/* ---- G6 (game.s fn_1_11710..fn_1_12F40) ---- */
+void fn_1_11710(s16 idx);
+s32 fn_1_11DE8(s16 idx);
+s32 fn_1_12008(s16 steps);
+s32 fn_1_12830(void);
+void fn_1_12F40(void);
+void fn_1_14EB0(s16 idx);
+void fn_1_187F8(void);
+void fn_1_194B4(void);
 
 #endif
