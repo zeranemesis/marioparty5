@@ -43,7 +43,7 @@ void fn_1_814C(OMOBJ *obj)
     obj->objFunc = fn_1_815C;
 }
 
-// Remaining difference: extra local copies of the hit pointer and register numbering in the original.
+// NONMATCHING: register numbering and extra hit-pointer copies (mr); logic identical to the asm.
 void fn_1_815C(OMOBJ *obj)
 {
     ACTWORK *work = (ACTWORK *)obj->data;
@@ -98,7 +98,6 @@ s32 fn_1_8314(ACTHIT *a, ACTHIT *b)
     return 0;
 }
 
-// Remaining difference: minor register/operand order.
 s32 fn_1_83FC(ACTHIT *a, ACTHIT *b, f32 offset)
 {
     Vec *ap;
@@ -119,11 +118,11 @@ s32 fn_1_83FC(ACTHIT *a, ACTHIT *b, f32 offset)
             dir = -1;
         }
         sign = (f32)dir;
-        if (fabs(ap->y - bp.y) < (f32)(0.25 * (a->f20 + b->f20))) {
+        if (fabs(ap->y - bp.y) < (0.25 * (a->f20 + b->f20))) {
             ap->x = mid + (sign * a->f24);
             b->pos->x = b->pos->x + ((mid - (sign * b->f24)) - bp.x);
         }
-        if (fabs(ap->x - bp.x) < (f32)(0.5 * (a->f24 + b->f24))) {
+        if (fabs(ap->x - bp.x) < (0.5 * (a->f24 + b->f24))) {
             if (a->vel->y < 0.0f && ap->y > bp.y) {
                 a->f28.i = 1;
                 a->f30.other = b->arg;
@@ -188,7 +187,7 @@ s32 fn_1_87DC(ACTHIT *a, ACTHIT *b, f32 offset)
     return 0;
 }
 
-// Remaining difference: original keeps extra float copies (f23-f28) in registers.
+// NONMATCHING: the original keeps extra float copies (f23-f28) and a different frame; best-hit position and tests verified against the asm.
 s32 fn_1_89EC(Vec *pos, f32 radius)
 {
     ACTWORK *work = (ACTWORK *)lbl_1_bss_50->data;
@@ -198,8 +197,10 @@ s32 fn_1_89EC(Vec *pos, f32 radius)
     f32 bestDist = 100000.0f;
     s32 bestIdx = -1;
     s32 bestId = 0;
-    f32 x = pos->x;
-    f32 y = pos->y;
+    f32 bestX = pos->x;
+    f32 x = bestX;
+    f32 bestY = pos->y;
+    f32 y = bestY;
     f32 dist;
     s32 id;
     s32 i;
@@ -221,18 +222,20 @@ s32 fn_1_89EC(Vec *pos, f32 radius)
             take:
                 bestDist = dist;
                 bestId = id;
+                bestX = pos->x;
+                bestY = pos->y;
                 bestIdx = i + 4;
             }
             pos->x = x;
             pos->y = y;
         }
     }
-    pos->x = pos->x;
-    pos->y = pos->y;
+    pos->x = bestX;
+    pos->y = bestY;
     return bestIdx;
 }
 
-// Remaining difference: original copies the hit pointer into an extra register in the loop.
+// NONMATCHING: the original copies the hit pointer into an extra register in the loop.
 void fn_1_8BF0(Vec *pos, Vec *out)
 {
     ACTHIT *b;
