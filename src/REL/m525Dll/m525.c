@@ -271,15 +271,1182 @@ void fn_1_A0(void)
     }
 }
 
-// NONMATCHING: body not yet decompiled. The per-player swing/runner update is
-// 21212 bytes (0x52DC) of the 50944-byte unit -- 64% of everything still
-// missing -- and the m2c draft is 1418 lines with 23 M2C_ERROR sites. It is
-// also the only caller of sqrtf() and fabs() in the module: our object emits
-// neither symbol today (only sqrtf's _half/_three local statics), while the
-// target has real sqrtf at .text:0xC62C and fabs at .text:0xC6F8. Writing this
-// body is what will bring sqrtf/fabs in.
+/* Per-player update (player 0: the swinger on the pendulum, 1..3: runners). Reads the pad or the CPU AI,
+   moves the object, throws/dodges items and picks the motion. */
 static void fn_1_654(OMOBJ *obj)
 {
+    M525Player *data;
+    M525Player *player[4];
+    float stkX;
+    float stkY;
+    float btnHold;
+    float jump;
+    float throwB;
+    float groundY;
+    s16 mot;
+    s32 row;
+    s32 i;
+    s32 j;
+    s32 k;
+
+    data = obj->data;
+    stkX = 0.0f;
+    stkY = 0.0f;
+    btnHold = 0.0f;
+    jump = 0.0f;
+    throwB = 0.0f;
+    mot = -1;
+    groundY = 0.0f;
+    row = data->no != 0;
+    for (i = 0; i < 4; i++) {
+        player[i] = lbl_1_bss_8C[i]->data;
+    }
+    lbl_1_data_AC[1][8] = (data->no * 60) % 120;
+    if (data->motNo != 2) {
+        data->velZ = 0.0f;
+        data->velX = 0.0f;
+    }
+    data->modeTime++;
+    data->swingTime++;
+    if (data->no == 0) {
+        float fade;
+        float prevSpeed;
+        s32 sgn;
+        s32 sgnNew;
+        s32 sgnOld;
+
+        if (data->unk58 <= 0) {
+            fade = 1.0f;
+        } else {
+            float f;
+
+            if (data->unk58 <= 0x1C2) {
+                f = 1.0f - ((f32)data->unk58 / 450.0f);
+            } else {
+                f = 0.0f;
+            }
+            fade = f;
+        }
+        data->unk60++;
+        prevSpeed = lbl_1_bss_339C.speed;
+        lbl_1_bss_339C.angle = lbl_1_bss_339C.angle + lbl_1_bss_339C.speed;
+        if (lbl_1_bss_339C.angle < 0.0f) {
+            sgn = 1;
+        } else {
+            sgn = -1;
+        }
+        lbl_1_bss_339C.speed = lbl_1_bss_339C.speed + ((f32)(lbl_1_bss_80 >= 0x3EB) * (lbl_1_bss_339C.accel * (f32)sgn));
+        if (lbl_1_bss_339C.speed < 0.0f) {
+            sgnNew = -1;
+        } else {
+            sgnNew = (lbl_1_bss_339C.speed > 0.0f) ? 1 : 0;
+        }
+        if (prevSpeed < 0.0f) {
+            sgnOld = -1;
+        } else {
+            sgnOld = (prevSpeed > 0.0f) ? 1 : 0;
+        }
+        if (sgnOld != sgnNew) {
+            data->swingTime = 0;
+            data->unk60 = 0;
+            data->unk5C = (rand8() % ((data->dif == 2) ? 8 : 4)) == 0;
+            if (data->padNo == -1 && data->mode == 2) {
+                float bestWidth = 10000.0f;
+                float bestNo = 0.0f;
+                float bestTarget = 0.0f;
+                float lo;
+                float hi;
+
+                for (i = 0; i < 3; i++) {
+                    lo = -500.0f;
+                    hi = 500.0f;
+                    for (j = 1; j < 3; j++) {
+                        s32 c;
+                        float v;
+
+                        c = 0;
+                        if ((lbl_1_bss_8C[i + 1]->trans.x > lbl_1_bss_8C[((i + j) % 3) + 1]->trans.x) && (lo < lbl_1_bss_8C[((i + j) % 3) + 1]->trans.x)) {
+                            c = 1;
+                        }
+                        if (c != 0) {
+                            v = lbl_1_bss_8C[((i + j) % 3) + 1]->trans.x;
+                        } else {
+                            v = lo;
+                        }
+                        lo = v;
+                        c = 0;
+                        if ((lbl_1_bss_8C[i + 1]->trans.x < lbl_1_bss_8C[((i + j) % 3) + 1]->trans.x) && (hi > lbl_1_bss_8C[((i + j) % 3) + 1]->trans.x)) {
+                            c = 1;
+                        }
+                        if (c != 0) {
+                            v = lbl_1_bss_8C[((i + j) % 3) + 1]->trans.x;
+                        } else {
+                            v = hi;
+                        }
+                        hi = v;
+                    }
+                    if (((hi - lo) < bestWidth) && (player[i + 1]->down == 0)) {
+                        f64 d;
+                        s32 t;
+
+                        bestWidth = hi - lo;
+                        bestNo = (f32)(i + 1);
+                        d = fabs((f64)(lbl_1_bss_8C[i + 1]->trans.x - lbl_1_bss_8C[((i + 2) % 3) + 1]->trans.x));
+                        if (fabs((f64)(lbl_1_bss_8C[i + 1]->trans.x - lbl_1_bss_8C[((i + 1) % 3) + 1]->trans.x)) < d) {
+                            t = i + 1;
+                        } else {
+                            t = i + 2;
+                        }
+                        bestTarget = (f32)t;
+                    }
+                }
+                data->aiWait = -1;
+                if (data->dif == 4) {
+                    data->aiWait = (rand8() % 12) + 15;
+                }
+                data->aiTarget = (s32)bestNo;
+                data->aiOfs = (s32)((150.0f * ((f32)rand8() / 255.0f)) - 75.0f);
+            }
+        }
+        Hu3DModelRotSet(lbl_1_bss_88->mdlId[2], 0.0f, 0.0f, lbl_1_bss_339C.angle * fade);
+        Hu3DModelRotSet(lbl_1_bss_88->mdlId[3], 0.0f, 0.0f, lbl_1_bss_339C.angle * fade);
+        data->throwTime++;
+        switch (data->mode) {
+        case 1: {
+            s32 c = 1;
+
+            if (data->throwTime != 0 && data->throwTime < 0x1E) {
+                c = 0;
+            }
+            mot = (c != 0) ? 1 : 4;
+            break;
+        }
+        case 2:
+            if (lbl_1_bss_80 == 0x3EB) {
+                if ((lbl_1_bss_0 < 120.0f) && (lbl_1_bss_339C.speed > 0.0f) && (data->throwTime >= 0xB) && (obj->trans.x > 120.0f) && (obj->trans.x < 220.0f)) {
+                    jump = 1.0f;
+                }
+                if ((lbl_1_bss_0 < 120.0f) && (lbl_1_bss_339C.speed > 0.0f) && (data->throwTime >= 0xB) && (obj->trans.x > -180.0f) && (obj->trans.x < -80.0f)) {
+                    jump = 1.0f;
+                }
+            } else if (lbl_1_bss_80 == 0x3ED) {
+                if (data->padNo != -1) {
+                    jump = (f32)((HuPadBtnDown[data->padNo] & 0x100) > 0);
+                    throwB = (f32)((HuPadBtnDown[data->padNo] & 0x200) > 0);
+                } else {
+                    s32 tblA[4] = { 17, 14, 12, 12 };
+                    s32 tblB[4] = { 4, 4, 2, 2 };
+                    s32 dir;
+
+                    if (lbl_1_bss_339C.speed < 0.0f) {
+                        dir = -1;
+                    } else {
+                        dir = 1;
+                    }
+                    if (data->aiWait == -1 && data->dif >= 4) {
+                        data->aiWait = 0;
+                    } else if (data->aiWait == -1) {
+                        float ang = lbl_1_bss_339C.angle;
+                        float spd = lbl_1_bss_339C.speed;
+                        s32 s;
+
+                        for (i = 0; (f32)i < ((f32)((tblA[data->dif] + (tblB[data->dif] / 2)) * 4) * 0.5f); i++) {
+                            ang += spd;
+                            if (ang < 0.0f) {
+                                s = 1;
+                            } else {
+                                s = -1;
+                            }
+                            spd += lbl_1_bss_339C.accel * (f32)s;
+                        }
+                        if (((f32)dir * ((f32)data->aiOfs + lbl_1_bss_8C[data->aiTarget]->trans.x)) < ((f64)dir * (800.0 * sin((M_PI * (f64)ang) / 180.0)))) {
+                            data->aiWait = 0;
+                        }
+                    }
+                    for (i = 0; i < 5; i++) {
+                        if (lbl_1_data_1A4[i] == 1) {
+                            jump = 1.0f;
+                        }
+                        lbl_1_data_1A4[i] -= lbl_1_data_1A4[i] > 0;
+                    }
+                    if (data->aiWait == 0) {
+                        if (data->dif >= 4) {
+                            if ((lbl_1_bss_339C.speed < 0.0f) && (data->itemNo < 5)) {
+                                throwB = 1.0f;
+                                lbl_1_data_1A4[data->itemNo] = ((0x50 - data->unk60) * 2) + (rand8() % 7) + 7;
+                            }
+                        } else if (data->dif >= 2) {
+                            throwB = (f32)data->unk5C;
+                            jump = (f32)((throwB != 0.0f) == 0);
+                        } else {
+                            jump = 1.0f;
+                        }
+                        data->aiWait = tblA[data->dif] + (rand8() % tblB[data->dif]);
+                    }
+                    data->aiWait = data->aiWait - (data->aiWait > 0);
+                }
+            }
+            if ((data->throwState == 0) && ((lbl_1_bss_339C.speed * lbl_1_bss_339C.angle) > 0.0f) && (fabs((f64)lbl_1_bss_339C.speed) < (10.0f * lbl_1_bss_339C.accel)) && (lbl_1_data_FC != 1) && (lbl_1_bss_80 == 0x3EE)) {
+                if ((lbl_1_bss_0 >= 60.0f) && (lbl_1_data_FC == 0)) {
+                    s32 a;
+                    s32 b;
+
+                    data->throwState = 1;
+                    a = 0;
+                    b = 0;
+                    if (lbl_1_bss_80 == 0x3EE) {
+                        if (lbl_1_bss_0 >= 60.0f) {
+                            b = 1;
+                        }
+                    }
+                    if ((b != 0) && (lbl_1_data_FC == 0)) {
+                        a = 1;
+                    }
+                    data->unk48 = (a != 0) ? 1 : 0;
+                    data->startX = obj->trans.x;
+                    data->startY = obj->trans.y - 75.0f;
+                    Hu3DModelHookReset(obj->mdlId[0]);
+                    if (data->itemNo < 5) {
+                        Hu3DModelAttrSet(lbl_1_bss_88->mdlId[data->itemNo + (data->itemBank * 5) + 0x17], 1);
+                    }
+                }
+            }
+            if (data->throwState == -1) {
+                s32 idx = data->itemNo + (data->itemBank * 5) + 0x17;
+
+                if (data->itemNo < 5) {
+                    Hu3DModelAttrReset(lbl_1_bss_88->mdlId[idx], 1);
+                }
+                data->throwState = 0;
+            }
+            if (data->throwState > 0) {
+                float p;
+                s32 sg;
+
+                if (data->throwState <= 0x17) {
+                    p = (f32)data->throwState / 23.0f;
+                } else {
+                    float q;
+
+                    if (data->throwState <= 0x1B) {
+                        q = 1.0f;
+                    } else {
+                        q = 1.0f - ((f32)(data->throwState - 0x1B) / 23.0f);
+                    }
+                    p = q;
+                }
+                if (lbl_1_bss_339C.angle < 0.0f) {
+                    sg = -1;
+                } else {
+                    sg = 1;
+                }
+                obj->trans.x = (f32)(((1.0f - p) * data->startX) + (p * (f32)(sg * ((data->unk48 * 0x4B) + 0x28A))));
+                obj->trans.y = (f32)(125.0 * (1.0 - ((((f64)p - 0.5) * ((f64)p - 0.5)) / 0.25)));
+                obj->trans.y = (f32)(obj->trans.y + ((800.0f * p) + ((1.0f - p) * data->startY)));
+                if (lbl_1_bss_339C.angle < 0.0f) {
+                    sg = -1;
+                } else {
+                    sg = 1;
+                }
+                obj->rot.y = (f32)(((data->throwState <= 0x1B) ? 1 : -1) * (sg * 0x5A));
+                obj->rot.z = 0.0f;
+                mot = (p != 1.0f) ? 2 : 3;
+                data->throwState++;
+                if (data->throwState == 0x32) {
+                    s32 idx = data->itemNo + (data->itemBank * 5) + 0x17;
+
+                    if (data->itemNo < 5) {
+                        Hu3DModelPosSet(lbl_1_bss_88->mdlId[idx], 0.0f, 0.0f, 0.0f);
+                        Hu3DModelScaleSet(lbl_1_bss_88->mdlId[idx], 1.0833334f, 1.0833334f, 1.0833334f);
+                        Hu3DModelHookSet(obj->mdlId[0], CharModelItemHookGet((s16)data->charNo, 2, 0), lbl_1_bss_88->mdlId[idx]);
+                        Hu3DModelAttrSet(lbl_1_bss_88->mdlId[idx], 1);
+                    }
+                }
+                if ((data->throwState == 0x1A) && (data->unk48 != 0) && (lbl_1_bss_80 == 0x3EE)) {
+                    data->mode = 4;
+                    data->modeTime = 0;
+                    data->unk58 = 1;
+                } else if (data->throwState >= 0x32) {
+                    data->throwState = -1;
+                }
+            } else {
+                s32 c;
+
+                data->unk54 = 1;
+                obj->trans.x = (f32)(800.0 * sin((M_PI * (f64)(lbl_1_bss_339C.angle * fade)) / 180.0));
+                obj->trans.y = (f32)((f64)lbl_1_bss_339C.pivotY - (800.0 * cos((M_PI * (f64)(lbl_1_bss_339C.angle * fade)) / 180.0)));
+                if (data->unk54 != 0) {
+                    c = 0;
+                } else {
+                    c = 0xB4;
+                }
+                obj->rot.y = (f32)c;
+                obj->rot.z = (f32)(lbl_1_bss_339C.angle * fade);
+                if ((data->throwTime >= 0xB) && ((jump != 0.0f) || (throwB != 0.0f)) && (data->itemNo < 5)) {
+                    s32 it;
+                    s32 se;
+                    f64 vy;
+                    Mtx mtx;
+
+                    it = data->itemNo + (data->itemBank * 5);
+                    Hu3DModelObjMtxGet(obj->mdlId[0], CharModelItemHookGet((s16)data->charNo, 2, 0), mtx);
+                    data->throwTime = 0;
+                    lbl_1_bss_316C[it].x = mtx[0][3];
+                    lbl_1_bss_316C[it].y = mtx[1][3];
+                    lbl_1_bss_316C[it].x = 0.9375f * obj->trans.x;
+                    lbl_1_bss_316C[it].y = (0.9375f * obj->trans.y) + (lbl_1_bss_339C.pivotY * 0.0625f);
+                    lbl_1_bss_316C[it].velX = 0.0f;
+                    if (jump != 0.0f) {
+                        vy = 0.0;
+                    } else {
+                        vy = 5.860805860805861;
+                    }
+                    lbl_1_bss_316C[it].velY = (f32)vy;
+                    lbl_1_bss_316C[it].time = 1;
+                    lbl_1_bss_316C[it].hit = 0;
+                    Hu3DModelHookReset(obj->mdlId[0]);
+                    data->itemNo = data->itemNo + 1;
+                    data->itemNo = data->itemNo % 5;
+                    data->itemBank = data->itemBank + (data->itemNo == 0);
+                    data->itemBank = data->itemBank % 4;
+                    se = (jump != 0.0f) ? 5 : 4;
+                    if (lbl_1_bss_A4[se].num < 3) {
+                        lbl_1_bss_A4[se].pan[lbl_1_bss_A4[se].num] = (f32)(0.25f * (obj->trans.x / 500.0f));
+                        lbl_1_bss_A4[se].num++;
+                    }
+                }
+                c = 1;
+                if (data->throwTime != 0 && data->throwTime < 0x1E) {
+                    c = 0;
+                }
+                mot = (c != 0) ? 1 : 4;
+                if (data->throwTime == 0x14) {
+                    s32 idx = data->itemNo + (data->itemBank * 5) + 0x17;
+
+                    if (data->itemNo < 5) {
+                        Hu3DModelAttrSet(lbl_1_bss_88->mdlId[idx], 1);
+                        Hu3DModelPosSet(lbl_1_bss_88->mdlId[idx], 0.0f, 0.0f, 0.0f);
+                        Hu3DModelScaleSet(lbl_1_bss_88->mdlId[idx], 1.0833334f, 1.0833334f, 1.0833334f);
+                        Hu3DModelHookSet(obj->mdlId[0], CharModelItemHookGet((s16)data->charNo, 2, 0), lbl_1_bss_88->mdlId[idx]);
+                    }
+                }
+            }
+            break;
+        case 4:
+            data->unk58++;
+            if (data->modeTime >= 3) {
+                obj->rot.y = obj->rot.y * 0.7f;
+                mot = 0;
+            }
+            break;
+        case 6: {
+            s32 s;
+
+            data->unk58++;
+            if (lbl_1_bss_8C[0]->trans.x < 0.0f) {
+                s = -1;
+            } else {
+                s = 1;
+            }
+            obj->rot.y = (f32)((0.3 * (f64)obj->rot.y) + (0.7 * (f64)(16.0f * (f32)s)));
+            if (lbl_1_bss_80 == 0x3EF) {
+                data->nextMotNo = 5;
+            }
+            break;
+        }
+        }
+        for (i = 0; i < 0x14; i++) {
+            s32 idx = i + 0x17;
+
+            Hu3DLLightColorSet(lbl_1_bss_88->mdlId[idx], lbl_1_bss_316C[i].lightId, 0xFF, 0xFF, 0xFF, 0xFF);
+            Hu3DModelAmbSet(lbl_1_bss_88->mdlId[idx], 1.0f, 1.0f, 1.0f);
+            Hu3DModelAttrSet(lbl_1_bss_88->mdlId[idx + 0x14], 1);
+            if (lbl_1_bss_316C[i].time == 0) {
+                if (lbl_1_bss_80 == 0x3EB) {
+                    HU3DMODEL *mdl = &Hu3DData[lbl_1_bss_88->mdlId[idx]];
+
+                    if ((u32)(mdl->attr & 0x8000) != 0) {
+                        Mtx mtx;
+
+                        Hu3DModelObjMtxGet(obj->mdlId[0], CharModelItemHookGet((s16)data->charNo, 2, 0), mtx);
+                        Hu3DModelAttrSet(lbl_1_bss_88->mdlId[idx + 0x14], 1);
+                        Hu3DModelPosSet(lbl_1_bss_88->mdlId[idx + 0x14], mtx[0][3], mtx[1][3], mtx[2][3]);
+                        Hu3DModelScaleSet(lbl_1_bss_88->mdlId[idx + 0x14], 1.0833334f, 1.0833334f, 1.0833334f);
+                    }
+                }
+            } else {
+                lbl_1_bss_316C[i].velY = (f32)((f64)lbl_1_bss_316C[i].velY + -0.1188118811881188);
+                lbl_1_bss_316C[i].x += lbl_1_bss_316C[i].velX;
+                lbl_1_bss_316C[i].y += lbl_1_bss_316C[i].velY;
+                lbl_1_bss_316C[i].time += 1;
+                Hu3DModelAttrReset(lbl_1_bss_88->mdlId[idx], 1);
+                Hu3DModelPosSet(lbl_1_bss_88->mdlId[idx], lbl_1_bss_316C[i].x, lbl_1_bss_316C[i].y, 0.0f);
+                Hu3DModelScaleSet(lbl_1_bss_88->mdlId[idx], 1.0833334f, 1.0833334f, 1.0833334f);
+                if (lbl_1_bss_80 == 0x3EB) {
+                    Hu3DModelAttrReset(lbl_1_bss_88->mdlId[idx + 0x14], 1);
+                    Hu3DModelPosSet(lbl_1_bss_88->mdlId[idx + 0x14], lbl_1_bss_316C[i].x, lbl_1_bss_316C[i].y, 0.0f);
+                    Hu3DModelScaleSet(lbl_1_bss_88->mdlId[idx + 0x14], 1.0833334f, 1.0833334f, 1.0833334f);
+                }
+                if (lbl_1_bss_316C[i].y <= -500.0f) {
+                    lbl_1_bss_316C[i].time = 0;
+                    Hu3DModelAttrSet(lbl_1_bss_88->mdlId[idx], 1);
+                } else if (lbl_1_bss_316C[i].hit != 0) {
+                    if ((lbl_1_bss_316C[i].time % 2) != 0) {
+                        Hu3DModelAttrReset(lbl_1_bss_88->mdlId[idx], 1);
+                    } else {
+                        Hu3DModelAttrSet(lbl_1_bss_88->mdlId[idx], 1);
+                    }
+                }
+                if (lbl_1_bss_80 == 0x3EB) {
+                    float dx;
+                    float dy;
+                    float dist;
+                    float fac;
+                    float amb;
+                    s32 col;
+
+                    dx = lbl_1_bss_316C[i].x - obj->trans.x;
+                    dy = lbl_1_bss_316C[i].y - obj->trans.y;
+                    dist = sqrtf((dx * dx) + (dy * dy));
+                    if (dist < 175.0f) {
+                        fac = 1.0f;
+                    } else {
+                        float f;
+
+                        if (dist < 225.0f) {
+                            f = 1.0f - ((dist - 175.0f) / 50.0f);
+                        } else {
+                            f = 0.0f;
+                        }
+                        fac = f;
+                    }
+                    amb = (f32)(0.44999999999999996 + (0.55 * (f64)fac));
+                    col = (s32)(255.0f * amb);
+                    if (sqrtf((dx * dx) + (dy * dy)) >= 100.0f) {
+                        Hu3DLLightColorSet(lbl_1_bss_88->mdlId[idx], lbl_1_bss_316C[i].lightId, (u8)col, (u8)col, (u8)col, 0xFF);
+                        Hu3DModelAmbSet(lbl_1_bss_88->mdlId[idx], amb, amb, amb);
+                    }
+                }
+            }
+        }
+    } else {
+        switch (data->mode) {
+        case 3:
+            if (obj->trans.y > -3000.0f) {
+                obj->trans.y = obj->trans.y + data->velY;
+                obj->trans.z = obj->trans.z - 4.0f;
+                obj->rot.x = 45.0f;
+                obj->rot.y = 0.0f;
+                data->velY = data->velY + -0.60833335f;
+            }
+            mot = 4;
+            break;
+        case 2:
+            switch (lbl_1_bss_80) {
+            case 0x3EE:
+                break;
+            case 0x3ED:
+                if (data->padNo != -1) {
+                    s32 mask;
+
+                    stkX = (f32)HuPadStkX[data->padNo];
+                    stkY = 0.0f;
+                    btnHold = (f32)((HuPadBtn[data->padNo] & 0x100) > 0);
+                    if (data->motNo == 2) {
+                        mask = 0x140;
+                    } else {
+                        mask = 0x100;
+                    }
+                    jump = (f32)((HuPadBtnDown[data->padNo] & mask) > 0);
+                } else if (data->aiState < 2) {
+                    if (data->aiState >= 0) {
+                        s32 link[30][2] = { { -1, -1 } };
+                        float range[30][2] = { { -442.0f, 442.0f } };
+                        s32 tblA[4] = { 30, 30, 10, 2 };
+                        s32 tblB[4] = { 450, 450, 650, 1500 };
+                        s32 head;
+                        s32 cnt;
+                        s32 cur;
+                        float x1;
+                        float x2;
+
+                        head = 0;
+                        cnt = 1;
+                        for (i = 0; i < 0x16; i++) {
+                            if (i < 0x14) {
+                                float py;
+                                float pv;
+
+                                if ((lbl_1_bss_316C[i].time != 0) && (lbl_1_bss_316C[i].hit == 0) && (lbl_1_bss_316C[i].time >= tblA[data->dif]) && !(lbl_1_bss_316C[i].y > (obj->trans.y + (f32)tblB[data->dif])) && !(lbl_1_bss_316C[i].velY > 0.0f) && (lbl_1_bss_316C[i].y > (obj->trans.y - 10.0f))) {
+                                    x1 = (lbl_1_bss_316C[i].x - 70.0f) - 5.0f;
+                                    x2 = 5.0f + (70.0f + lbl_1_bss_316C[i].x);
+                                    py = lbl_1_bss_316C[i].y;
+                                    pv = lbl_1_bss_316C[i].velY;
+                                    for (k = 0; (f32)k < 60.0f; k++) {
+                                        pv = (f32)((f64)pv + -0.1188118811881188);
+                                        py += pv;
+                                    }
+                                    if ((155.0f + obj->trans.y) >= py) {
+                                        if (lbl_1_bss_316C[i].x < obj->trans.x) {
+                                            x1 = -492.0f;
+                                        } else {
+                                            x2 = 492.0f;
+                                        }
+                                    }
+                                } else {
+                                    continue;
+                                }
+                            } else {
+                                s32 t = (((i + data->no) - 0x14) % 3) + 1;
+
+                                if (player[t]->grounded != 0) {
+                                    if (lbl_1_bss_8C[t]->trans.x < obj->trans.x) {
+                                        x1 = -482.0f;
+                                        x2 = 40.0f + (40.0f + lbl_1_bss_8C[t]->trans.x);
+                                    } else {
+                                        x1 = (lbl_1_bss_8C[t]->trans.x - 40.0f) - 40.0f;
+                                        x2 = 482.0f;
+                                    }
+                                } else {
+                                    continue;
+                                }
+                            }
+                            cur = head;
+                            while (cur != -1) {
+                                if ((range[cur][0] < x1) && (x1 < range[cur][1]) && (range[cur][0] < x2) && (x2 < range[cur][1])) {
+                                    link[cnt][1] = link[cur][1];
+                                    link[cur][1] = cnt;
+                                    link[cnt][0] = cur;
+                                    range[cnt][1] = range[cur][1];
+                                    range[cnt][0] = x2;
+                                    range[cur][1] = x1;
+                                    cnt++;
+                                    break;
+                                }
+                                if ((x1 <= range[cur][0]) && (range[cur][0] <= x2) && (x1 <= range[cur][1]) && (range[cur][1] <= x2)) {
+                                    s32 h;
+
+                                    if (head == cur) {
+                                        h = link[cur][1];
+                                    } else {
+                                        h = head;
+                                    }
+                                    head = h;
+                                    if (link[cur][0] != -1) {
+                                        link[link[cur][0]][1] = link[cur][1];
+                                    }
+                                    if (link[cur][1] != -1) {
+                                        link[link[cur][1]][0] = link[cur][0];
+                                    }
+                                } else if ((range[cur][0] < x1) && (x1 < range[cur][1])) {
+                                    range[cur][1] = x1;
+                                } else if ((range[cur][0] < x2) && (x2 < range[cur][1])) {
+                                    range[cur][0] = x2;
+                                }
+                                cur = link[cur][1];
+                            }
+                        }
+                        cur = head;
+                        data->aiX = 10000.0f;
+                        while (cur != -1) {
+                            f64 d;
+
+                            if ((cur == head) || (d = fabs((f64)(range[cur][0] - obj->trans.x)), (fabs((f64)(data->aiX - obj->trans.x)) > d)) || (d = fabs((f64)(range[cur][1] - obj->trans.x)), (fabs((f64)(data->aiX - obj->trans.x)) > d))) {
+                                float v;
+
+                                d = fabs((f64)(range[cur][1] - obj->trans.x));
+                                if (fabs((f64)(range[cur][0] - obj->trans.x)) < d) {
+                                    v = range[cur][0];
+                                } else {
+                                    v = range[cur][1];
+                                }
+                                data->aiX = v;
+                            }
+                            if ((range[cur][0] <= obj->trans.x) && (obj->trans.x <= range[cur][1])) {
+                                data->aiX = obj->trans.x;
+                                break;
+                            }
+                            cur = link[cur][1];
+                        }
+                        if (data->aiX == 10000.0f) {
+                            data->aiX = obj->trans.x;
+                        }
+                        stkX = (data->aiX - obj->trans.x) / 0.25f;
+                        if (data->dif == 0) {
+                            if ((stkX != 0.0f) && (data->unk98 == 0) && (data->unk94 == 0)) {
+                                if ((rand8() % 2) == 0) {
+                                    data->unk98 = (rand8() % 4) + 0xD;
+                                }
+                                data->unk94 = (rand8() % 25) + 0x28;
+                            }
+                            {
+                                float v;
+
+                                if (data->unk98 != 0) {
+                                    v = -stkX;
+                                } else {
+                                    v = stkX;
+                                }
+                                stkX = v;
+                            }
+                            data->unk94 = data->unk94 - (data->unk94 > 0);
+                            data->unk98 = data->unk98 - (data->unk98 > 0);
+                        }
+                    }
+                }
+                break;
+            }
+            break;
+        case 4: {
+            float t;
+            s32 side;
+            s32 isSide;
+            float r;
+
+            if (data->throwState <= 0x2D) {
+                t = (f32)data->throwState / 45.0f;
+            } else {
+                t = 1.0f;
+            }
+            obj->trans.x = (f32)((200.0f * data->rankOfs * t) + ((1.0f - t) * data->startX));
+            obj->trans.z = (f32)((f64)t * (50.0 + (-1500.0 + (-100.0 * fabs((f64)data->rankOfs)))));
+            obj->trans.y = (f32)(400.0 * (1.0 - ((((f64)t - 0.5) * ((f64)t - 0.5)) / 0.25)));
+            obj->trans.y = (f32)(obj->trans.y + ((400.0f * t) + ((1.0f - t) * data->startY)));
+            if (data->throwState <= 0x37) {
+                r = 180.0f;
+            } else {
+                float q;
+
+                if (data->throwState <= 0x73) {
+                    isSide = 1;
+                    if ((0.5f != data->rankOfs) && (data->rankOfs != 0.0f)) {
+                        isSide = 0;
+                    }
+                    if (isSide != 0) {
+                        side = -1;
+                    } else {
+                        side = 1;
+                    }
+                    q = 180.0f + (180.0f * ((f32)(data->throwState - 0x37) / 60.0f) * (f32)side);
+                } else {
+                    q = 0.0f;
+                }
+                r = q;
+            }
+            obj->rot.y = r;
+            isSide = 1;
+            if ((0.5f != data->rankOfs) && (data->rankOfs != 0.0f)) {
+                isSide = 0;
+            }
+            if (isSide != 0) {
+                k = 0;
+            } else {
+                k = 0x3C;
+            }
+            lbl_1_data_AC[1][9] = k;
+            obj->rot.z = 0.0f;
+            if (data->throwState <= 0x2D) {
+                k = 2;
+            } else {
+                s32 q;
+
+                if (data->throwState <= 0x37) {
+                    q = 3;
+                } else {
+                    s32 q2;
+
+                    if (data->throwState <= 0x6D) {
+                        q2 = 9;
+                    } else {
+                        q2 = 0;
+                    }
+                    q = q2;
+                }
+                k = q;
+            }
+            mot = (s16)k;
+            data->throwState++;
+            if (lbl_1_bss_80 == 0x3EF) {
+                data->mode = 6;
+            }
+            break;
+        }
+        case 6:
+            obj->rot.y = (f32)((f64)obj->rot.y * 0.7);
+            if (lbl_1_bss_80 == 0x3EF) {
+                data->nextMotNo = 5;
+            }
+            break;
+        }
+        if (data->mode == 2) {
+            switch (data->motNo) {
+            case 0:
+            case 1: {
+                float nx;
+                float nz;
+                float len;
+
+                nx = (f32)(0.25 * (f64)stkX);
+                nz = (f32)(0.25 * -stkY);
+                len = sqrtf((nx * nx) + (nz * nz));
+                if (len >= 0.5f) {
+                    if (len < 2.5f) {
+                        data->velX = nx;
+                        data->velZ = data->velZ + nz;
+                    } else {
+                        float ux;
+                        float uz;
+
+                        ux = nx / len;
+                        uz = nz / len;
+                        len = 2.5f;
+                        if (data->motNo != 2) {
+                            data->velX = (f32)(ux * 2.5f);
+                            data->velZ = (f32)(uz * 2.5f);
+                        } else {
+                            data->velX = (f32)((0.875 * (f64)data->velX) + (0.125 * (f64)(ux * 2.5f)));
+                            data->velZ = (f32)((0.875 * (f64)data->velZ) + (0.125 * (f64)(uz * 2.5f)));
+                        }
+                    }
+                    data->speed = len;
+                    mot = 1;
+                } else if (data->motNo != 3) {
+                    mot = 0;
+                }
+                data->velY = 0.0f;
+                if ((lbl_1_bss_80 == 0x3EE) && (lbl_1_data_FC == (1 - (data->no / 2))) && (lbl_1_bss_0 == 70.0f)) {
+                    data->mode = 5;
+                } else if (jump != 0.0f) {
+                    data->grounded = 0;
+                    data->jumpHold = 1;
+                    data->velY = 15.816668f;
+                    mot = 2;
+                }
+                break;
+            }
+            case 3:
+                if (Hu3DMotionTimeGet(obj->mdlId[0]) >= 0.0f) {
+                    mot = 7;
+                    HuAudFXPanning(CharFXPlay((s16)data->charNo, 0x1FF), (s16)(0.5 + (f64)(64.0f + (63.0f * (0.35f * (obj->trans.x / 500.0f))))));
+                }
+                break;
+            case 2: {
+                float nx;
+                float nz;
+                float len;
+
+                nx = (f32)(0.25 * (f64)stkX);
+                nz = (f32)(0.25 * -stkY);
+                len = sqrtf((nx * nx) + (nz * nz));
+                if (len >= 0.5f) {
+                    if (len < 3.7f) {
+                        data->velX = nx;
+                        data->velZ = nz;
+                    } else {
+                        float ux;
+                        float uz;
+
+                        ux = nx / len;
+                        uz = nz / len;
+                        len = 3.7f;
+                        if (data->motNo != 2) {
+                            data->velX = (f32)(ux * 3.7f);
+                            data->velZ = (f32)(uz * 3.7f);
+                        } else {
+                            data->velX = (f32)((0.875 * (f64)data->velX) + (0.125 * (f64)(ux * 3.7f)));
+                            data->velZ = (f32)((0.875 * (f64)data->velZ) + (0.125 * (f64)(uz * 3.7f)));
+                        }
+                    }
+                    data->speed = len;
+                    obj->rot.y = (f32)(180.0 * (atan2((f64)data->velX, (f64)data->velZ) / 3.141592653589793));
+                }
+                if (data->jumpHold != 0) {
+                    if (btnHold != 0.0f) {
+                        s32 n = data->jumpHold + 1;
+
+                        data->jumpHold = n;
+                        if (n > 4) {
+                            data->jumpHold = 0;
+                        } else {
+                            data->velY = data->velY + 2.4333334f;
+                        }
+                    } else {
+                        data->jumpHold = 0;
+                    }
+                }
+                data->velY = data->velY + -1.2166667f;
+                if (data->grounded != 0) {
+                    data->velY = 0.0f;
+                    mot = 3;
+                    if (lbl_1_bss_A4[9].num < 3) {
+                        lbl_1_bss_A4[9].pan[lbl_1_bss_A4[9].num] = (f32)(0.25f * (obj->trans.x / 500.0f));
+                        lbl_1_bss_A4[9].num++;
+                    }
+                }
+                break;
+            }
+            case 5:
+            case 6:
+                obj->rot.y = (f32)(2.4f + (0.8f * obj->rot.y));
+                break;
+            case 7:
+                data->shake = 6;
+                if (Hu3DMotionTimeGet(obj->mdlId[0]) >= 28.0f) {
+                    mot = 0;
+                }
+                break;
+            }
+        }
+        if (data->mode == 2) {
+            s32 turn;
+
+            if (data->velX != 0.0f) {
+                if (data->velX < 0.0f) {
+                    turn = -1;
+                } else {
+                    s32 t2;
+
+                    if (data->velX > 0.0f) {
+                        t2 = 1;
+                    } else {
+                        t2 = 0;
+                    }
+                    turn = t2;
+                }
+                if (data->dir == turn) {
+                    data->turnTime = data->turnTime + 1;
+                } else {
+                    data->prevDir = data->dir;
+                    if (data->velX < 0.0f) {
+                        turn = -1;
+                    } else {
+                        s32 t2;
+
+                        if (data->velX > 0.0f) {
+                            t2 = 1;
+                        } else {
+                            t2 = 0;
+                        }
+                        turn = t2;
+                    }
+                    data->dir = turn;
+                    data->turnTime = 0;
+                }
+            } else {
+                data->turnTime = data->turnTime + 1;
+            }
+            if (data->turnTime < 0xA) {
+                float f = (f32)data->turnTime / 10.0f;
+
+                obj->rot.y = (f32)(((1.0f - f) * (f32)(data->prevDir * 0x5A)) + (90.0f * (f * (f32)data->dir)));
+            } else {
+                obj->trans.x = obj->trans.x + data->velX;
+                obj->rot.y = (f32)(data->dir * 0x5A);
+            }
+            if (data->grounded == 0) {
+                obj->trans.y = obj->trans.y + data->velY;
+            }
+            obj->trans.z = obj->trans.z + data->velZ;
+            {
+                float v;
+
+                if (obj->trans.x < -442.0f) {
+                    v = -442.0f;
+                } else {
+                    float w;
+
+                    if (obj->trans.x > 442.0f) {
+                        w = 442.0f;
+                    } else {
+                        w = obj->trans.x;
+                    }
+                    v = w;
+                }
+                obj->trans.x = v;
+            }
+            for (i = 0; i < 2; i++) {
+                s32 o = ((data->no + i) % 3) + 1;
+                float dx = lbl_1_bss_8C[o]->trans.x - obj->trans.x;
+                float dy = (f32)fabs((f64)(lbl_1_bss_8C[o]->trans.y - obj->trans.y));
+
+                if (player[o]->down == 0) {
+                    float ov;
+
+                    if (dy > 130.0f) {
+                        ov = 0.0f;
+                    } else {
+                        float w;
+
+                        if (dy > 60.0f) {
+                            w = 50.0f * (1.0f - ((dy - 60.0f) / 70.0f));
+                        } else {
+                            w = 50.0f;
+                        }
+                        ov = w;
+                    }
+                    if ((ov != 0.0f) && (fabs((f64)dx) < (50.0f + ov))) {
+                        s32 sg;
+
+                        if (lbl_1_bss_8C[o]->trans.x >= 482.0f) {
+                            sg = -1;
+                        } else {
+                            s32 sg2;
+
+                            if (lbl_1_bss_8C[o]->trans.x <= -482.0f) {
+                                sg2 = 1;
+                            } else {
+                                s32 sg3;
+
+                                if (dx < 0.0f) {
+                                    sg3 = -1;
+                                } else {
+                                    sg3 = 1;
+                                }
+                                sg2 = sg3;
+                            }
+                            sg = sg2;
+                        }
+                        obj->trans.x = lbl_1_bss_8C[o]->trans.x - ((50.0f + ov) * (f32)sg);
+                    }
+                }
+            }
+            if (data->mode != 5) {
+                for (i = 0; i < 2; i++) {
+                    s32 o = (((data->no + i) - 1) % 3) + 1;
+
+                    if (player[o]->down == 0) {
+                        float v;
+
+                        if (lbl_1_bss_8C[o]->trans.x < -442.0f) {
+                            v = -442.0f;
+                        } else {
+                            float w;
+
+                            if (lbl_1_bss_8C[o]->trans.x > 442.0f) {
+                                w = 442.0f;
+                            } else {
+                                w = lbl_1_bss_8C[o]->trans.x;
+                            }
+                            v = w;
+                        }
+                        lbl_1_bss_8C[o]->trans.x = v;
+                    }
+                }
+                for (i = 0; i < 2; i++) {
+                    s32 o = ((data->no + i) % 3) + 1;
+                    float dx = lbl_1_bss_8C[o]->trans.x - obj->trans.x;
+                    float dy = (f32)fabs((f64)(lbl_1_bss_8C[o]->trans.y - obj->trans.y));
+
+                    if (player[o]->down == 0) {
+                        float ov;
+
+                        if (dy > 130.0f) {
+                            ov = 0.0f;
+                        } else {
+                            float w;
+
+                            if (dy > 60.0f) {
+                                w = 50.0f * (1.0f - ((dy - 60.0f) / 70.0f));
+                            } else {
+                                w = 50.0f;
+                            }
+                            ov = w;
+                        }
+                        if ((ov != 0.0f) && (fabs((f64)dx) < (50.0f + ov))) {
+                            s32 sg;
+
+                            if (obj->trans.x >= 482.0f) {
+                                sg = -1;
+                            } else {
+                                s32 sg2;
+
+                                if (obj->trans.x <= -482.0f) {
+                                    sg2 = 1;
+                                } else {
+                                    s32 sg3;
+
+                                    if (dx < 0.0f) {
+                                        sg3 = -1;
+                                    } else {
+                                        sg3 = 1;
+                                    }
+                                    sg2 = sg3;
+                                }
+                                sg = sg2;
+                            }
+                            lbl_1_bss_8C[o]->trans.x = obj->trans.x + ((50.0f + ov) * (f32)sg);
+                        }
+                    }
+                }
+            }
+            for (j = 0; lbl_1_data_108[j] < 500.0f;) {
+                if ((lbl_1_data_108[j] <= obj->trans.x) && (obj->trans.x <= lbl_1_data_108[j + 1])) {
+                    float t = (obj->trans.x - lbl_1_data_108[j]) / (lbl_1_data_108[j + 1] - lbl_1_data_108[j]);
+                    float h = ((1.0f - t) * lbl_1_data_134[j]) + (t * lbl_1_data_134[j + 1]);
+
+                    if (groundY > h) {
+                        groundY = h;
+                    }
+                    break;
+                }
+                j++;
+            }
+            if (obj->trans.y < groundY) {
+                obj->trans.y = groundY;
+                if (data->velY < 0.0f) {
+                    if (data->grounded == 0) {
+                        data->footNo = data->footNo + 1;
+                        data->footNo = data->footNo % 3;
+                    }
+                    data->grounded = 1;
+                }
+            }
+            if ((lbl_1_bss_80 == 0x3EB) && (lbl_1_bss_0 == 125.0f)) {
+                omVibrate((s16)data->playerNo, 0xC, 4, 2);
+            }
+            if (lbl_1_bss_80 == 0x3EB) {
+                if ((lbl_1_bss_0 >= 125.0f) && (lbl_1_bss_0 < 185.0f)) {
+                    mot = 7;
+                }
+            }
+            if ((lbl_1_bss_80 == 0x3EB) && (lbl_1_bss_0 == 125.0f)) {
+                HuAudFXPanning(CharFXPlay((s16)data->charNo, 0x1FF), (s16)(0.5 + (f64)(64.0f + (63.0f * (0.35f * (obj->trans.x / 500.0f))))));
+            }
+            if ((lbl_1_bss_80 == 0x3EB) && (lbl_1_bss_0 < 110.0f)) {
+                mot = 8;
+            }
+            if ((lbl_1_bss_80 == 0x3EA) && (lbl_1_bss_0 > 30.0f)) {
+                mot = 8;
+            }
+            for (i = 0; i < 0x14; i++) {
+                if ((lbl_1_bss_316C[i].time != 0) && (lbl_1_bss_316C[i].hit == 0) && ((obj->trans.x - 70.0f) < lbl_1_bss_316C[i].x) && (lbl_1_bss_316C[i].x < (70.0f + obj->trans.x)) && ((obj->trans.y - 10.0f) < lbl_1_bss_316C[i].y) && (lbl_1_bss_316C[i].y < (155.0f + obj->trans.y))) {
+                    float ang;
+
+                    lbl_1_bss_316C[i].hit = 1;
+                    ang = (f32)(180.0 * (atan2((f64)(lbl_1_bss_316C[i].x - obj->trans.x), (f64)(lbl_1_bss_316C[i].y - (70.0f + obj->trans.y))) / 3.141592653589793));
+                    lbl_1_bss_316C[i].velX = (f32)(9.0 * sin((3.141592653589793 * (f64)ang) / 180.0));
+                    lbl_1_bss_316C[i].velY = (f32)(9.0 * -cos((3.141592653589793 * (f64)ang) / 180.0));
+                    data->down = 1;
+                    data->mode = 3;
+                    data->velY = 10.0f;
+                    omVibrate((s16)data->playerNo, 0xC, 0xC, 0);
+                    if ((lbl_1_bss_80 == 0x3ED) && (player[1]->down != 0) && (player[2]->down != 0) && (player[3]->down != 0)) {
+                        lbl_1_data_FC = 0;
+                    }
+                    if (lbl_1_bss_A4[6].num < 3) {
+                        lbl_1_bss_A4[6].pan[lbl_1_bss_A4[6].num] = (f32)(0.25f * (obj->trans.x / 500.0f));
+                        lbl_1_bss_A4[6].num++;
+                    }
+                    if (lbl_1_bss_A4[7].num < 3) {
+                        lbl_1_bss_A4[7].pan[lbl_1_bss_A4[7].num] = (f32)(0.25f * (obj->trans.x / 500.0f));
+                        lbl_1_bss_A4[7].num++;
+                    }
+                    lbl_1_bss_C = 1;
+                    lbl_1_bss_5C[0] = 0.25f * (obj->trans.x / 500.0f);
+                }
+            }
+        }
+    }
+    if (data->no != 0) {
+        for (i = 0; i < 3; i++) {
+            if ((data->grounded != 0) && (data->down == 0) && (data->mode < 4) && (i == data->footNo)) {
+                float v;
+
+                data->footX[i] = obj->trans.x;
+                data->footY[i] = ((0.6f * (1.0f + data->footY[i])) - 0.1f) - 1.0f;
+                if (data->footY[i] > 0.0f) {
+                    v = 0.0f;
+                } else {
+                    float w;
+
+                    if (data->footY[i] < -1.0f) {
+                        w = -1.0f;
+                    } else {
+                        w = data->footY[i];
+                    }
+                    v = w;
+                }
+                data->footY[i] = v;
+            } else {
+                float v;
+
+                data->footY[i] = 0.1f + (0.4f * data->footY[i]);
+                if (data->footY[i] > 0.0f) {
+                    v = 0.0f;
+                } else {
+                    float w;
+
+                    if (data->footY[i] < -1.0f) {
+                        w = -1.0f;
+                    } else {
+                        w = data->footY[i];
+                    }
+                    v = w;
+                }
+                data->footY[i] = v;
+            }
+        }
+    }
+    if (data->nextMotNo >= 0) {
+        mot = (s16)data->nextMotNo;
+    }
+    if ((lbl_1_bss_80 == 0x3EE) && (lbl_1_bss_0 == 2.0f) && (data->motNo == 0)) {
+        mot = 0;
+        data->motNo = 8;
+    }
+    if ((mot >= 0) && (mot != data->motNo)) {
+        s32 m = (s32)mot;
+        u32 attr;
+
+        if ((m == 0) && ((lbl_1_bss_80 == 0x3EC) || (lbl_1_bss_80 == 0x3ED))) {
+            m = 8;
+        }
+        if (lbl_1_data_84[row][m] != 0) {
+            attr = 0;
+        } else {
+            attr = 0x40000001;
+        }
+        Hu3DMotionShiftSet(obj->mdlId[0], obj->mtnId[m], (f32)lbl_1_data_AC[row][m], (f32)lbl_1_data_98[row][m], attr);
+        data->motNo = mot;
+    }
+    if (data->no == 0) {
+        HU3DMODEL *mdl = &Hu3DData[obj->mdlId[0]];
+        float t;
+        float c;
+        float w;
+
+        t = (f32)data->swingTime / 80.0f;
+        if (t < 0.0f) {
+            c = 0.0f;
+        } else {
+            float u;
+
+            if (t > 1.0f) {
+                u = 1.0f;
+            } else {
+                u = t;
+            }
+            c = u;
+        }
+        if (lbl_1_bss_339C.speed < 0.0f) {
+            w = 1.0f - c;
+        } else {
+            w = c;
+        }
+        if ((s16)mdl->motIdShift == (s16)obj->mtnId[1]) {
+            mdl->motShiftWork.time = w * Hu3DMotionMotionMaxTimeGet(obj->mtnId[1]);
+        }
+        if ((s16)mdl->motId == (s16)obj->mtnId[1]) {
+            mdl->motWork.time = w * Hu3DMotionMotionMaxTimeGet(obj->mtnId[1]);
+        }
+    }
+    obj->rot.y = obj->rot.y * (1.0f - ((f32)data->shake / 6.0f));
+    data->shake = data->shake - (data->shake > 0);
+    if ((lbl_1_bss_80 == 0x3EF) && (lbl_1_data_FC != 1)) {
+        CharModelVoicePanSet((s16)data->charNo, 0x40);
+        return;
+    }
+    CharModelVoicePanSet((s16)data->charNo, (s16)(0.5 + (f64)(64.0f + (63.0f * (0.35f * (obj->trans.x / 500.0f))))));
 }
 
 /* Trapezoid speed profile: rises over a, stays for b, falls over c. Returns the travelled fraction at t. */
