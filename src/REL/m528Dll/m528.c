@@ -25,6 +25,9 @@
 #include "game/pad.h"
 #include "humath.h"
 #include "math.h"
+#ifdef TARGET_PC
+#include <string.h>
+#endif
 
 #ifndef __MWERKS__
 #include "game/audio.h"
@@ -467,12 +470,18 @@ void ObjectSetup(void)
     lbl_1_bss_298 = obj;
     obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M528MAIN), HU_MEMNUM_OVL);
     work = obj->data;
+#ifdef TARGET_PC
+    memset(work, 0, sizeof(M528MAIN)); // PC heap is not zeroed like the GC one
+#endif
     fn_1_16C4(work);
     fn_1_15EC(work);
     fn_1_17B0(work);
     for (i = 0; i < 4; i++) {
         obj = omAddObjEx(lbl_1_bss_29C, 0x64, 1, 8, 0, fn_1_113C);
         obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M528PLAYER), HU_MEMNUM_OVL);
+#ifdef TARGET_PC
+        memset(obj->data, 0, sizeof(M528PLAYER));
+#endif
         obj->work[0] = i;
     }
     fn_1_1538(work);
@@ -493,6 +502,7 @@ void fn_1_1E8(s16 mode, s16 frameNo)
 
 /* Roulette spin-up: the wheel accelerates, slows down and snaps to a sector
  * (22.5 degrees each); then the players start to jump. */
+// NONMATCHING: register allocation and literal pool order (3.0f/100.0f) differ; same logic
 void fn_1_238(s16 mode, s16 frameNo)
 {
     u16 delay[4] = { 2, 13, 25, 39 };
@@ -629,6 +639,7 @@ void fn_1_8E4(s16 mode, s16 frameNo)
     work->fadeFlag = 0;
 }
 
+// NONMATCHING: prologue/epilogue register use differs; same logic
 void fn_1_954(s16 mode, s16 frameNo)
 {
     M528MAIN *work;
@@ -645,6 +656,7 @@ void fn_1_954(s16 mode, s16 frameNo)
     }
 }
 
+// NONMATCHING: register allocation differs; same logic
 void fn_1_9CC(s16 mode, s16 frameNo)
 {
     M528MAIN *work = lbl_1_bss_298->data;
@@ -668,12 +680,13 @@ void fn_1_9CC(s16 mode, s16 frameNo)
 }
 
 /* Result: the winning team sector spawns its effect and the camera waits. */
+// NONMATCHING: register allocation and stack slot order differ; same logic
 void fn_1_B10(s16 mode, s16 frameNo)
 {
-    s32 flags[8] = { 1, 1, 1, 1, 1, 0, 1, 0 };
     void (*emit[8])(M528MAIN *) = {
         fn_1_C314, fn_1_C3DC, fn_1_C530, fn_1_C728, fn_1_C8B4, fn_1_CA34, fn_1_CAEC, fn_1_CC40,
     };
+    s32 flags[8] = { 1, 1, 1, 1, 1, 0, 1, 0 };
     M528MAIN *work;
     M528CamFunc camFunc;
     s32 i;
@@ -753,6 +766,7 @@ void fn_1_B10(s16 mode, s16 frameNo)
     }
 }
 
+// NONMATCHING: register allocation differs; same logic
 void fn_1_ED0(s16 mode, s16 frameNo)
 {
     M528MAIN *work;
@@ -1036,6 +1050,7 @@ void fn_1_1A20(M528CAM *cam)
 }
 
 /* Place the players on their pedals and set the panning of their voices. */
+// NONMATCHING: index arithmetic scheduling differs; same logic
 void fn_1_1CAC(M528MAIN *work)
 {
     s16 pan[4] = { 0x28, 0x38, 0x48, 0x58 };
@@ -1059,6 +1074,7 @@ void fn_1_1CAC(M528MAIN *work)
     }
 }
 
+// NONMATCHING: original switch has an extra empty case 3 branch; same behaviour
 s32 fn_1_1DFC(M528PLAYER *player)
 {
     f32 time;
@@ -1311,6 +1327,7 @@ s32 fn_1_2758(M528PLAYER *player)
 }
 
 /* CPU player: decide whether to press while standing on the pedal. */
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_27AC(M528PLAYER *player)
 {
     s32 pressed = 0;
@@ -1360,6 +1377,7 @@ s32 fn_1_27AC(M528PLAYER *player)
     return pressed;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_2A00(M528PLAYER *player)
 {
     s32 pressed = 0;
@@ -1408,6 +1426,7 @@ s32 fn_1_2A00(M528PLAYER *player)
     return pressed;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s16 fn_1_2C40(s16 strong, s32 dif)
 {
     s32 d;
@@ -1482,6 +1501,7 @@ s16 fn_1_2E3C(M528PLAYER *player)
 /* Per-frame update of one team seesaw: tilt from the pedal impulses, pedal and
  * board positions, and the wheel sector advance.  Returns non-zero when the
  * sector animation reaches its end. */
+// NONMATCHING: register copy differs; same logic
 s32 fn_1_2EC0(M528TEAM *team)
 {
     f32 power;
@@ -1571,6 +1591,7 @@ void fn_1_32D0(M528SLOT *slot)
 }
 
 /* Players land on their pedal: pick the follow-up animation of the hook. */
+// NONMATCHING: register allocation differs; same logic
 void fn_1_3330(M528MAIN *work)
 {
     f32 unused[2] = { 1.0f, -1.0f };
@@ -1665,6 +1686,7 @@ void fn_1_36DC(M528SEG *seg)
 
 /* Turn one wheel sector while its team seesaw is pumped; returns non-zero once
  * the sector has made its full turn. */
+// NONMATCHING: bss_298 load scheduling differs; same logic
 s32 fn_1_3750(M528SEG *seg, f32 power)
 {
     M528MAIN *main;
@@ -2012,6 +2034,7 @@ s32 fn_1_4B04(M528SEG *seg)
 }
 
 /* Winning sector sinks, then bobs. */
+// NONMATCHING: load order differs; same logic
 s32 fn_1_4C84(M528SEG *seg)
 {
     s32 done = 0;
@@ -2107,6 +2130,7 @@ M528NODE *fn_1_4FF4(M528MAIN *work, s32 (*func)(M528NODE *), M528PARTICLE *data)
 }
 
 /* Unlink a node from the active list and push it back onto the free list. */
+// NONMATCHING: original has a dead li r4,0 before blr
 void fn_1_5048(M528MAIN *work, M528NODE *node)
 {
     if (node != 0) {
@@ -2127,6 +2151,7 @@ void fn_1_5048(M528MAIN *work, M528NODE *node)
 }
 
 /* Run every active particle callback; a non-zero result releases the node. */
+// NONMATCHING: register allocation differs; same logic
 void fn_1_50B0(M528MAIN *work)
 {
     M528NODE *node;
@@ -2378,6 +2403,7 @@ M528_PRELOAD(fn_1_6CB4, 0x34, 2)
 
 /* ---- particle callbacks: run through the M528NODE list by fn_1_50B0 ---- */
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_6DF0(M528NODE *node)
 {
     s32 done = 0;
@@ -2450,6 +2476,7 @@ s32 fn_1_6DF0(M528NODE *node)
     return done;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_72E4(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -2512,6 +2539,7 @@ s32 fn_1_72E4(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_7794(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -2543,7 +2571,8 @@ s32 fn_1_7794(M528NODE *node)
             p->rot.x = 0.0f;
             p->rot.y = (f32)frandmod(0xB4);
             p->rot.z = (f32)frandmod(0x1F) - 15.0f;
-            spd = (f32)0xA;
+            ispd = 0xA;
+            spd = (f32)ispd;
             iang = 0;
             ang = (f32)iang;
             p->vel.x = spd * HuSin(ang);
@@ -2575,11 +2604,13 @@ s32 fn_1_7794(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: register allocation and hoisting of 3.0f differ; same logic
 s32 fn_1_7B44(M528NODE *node)
 {
     M528PARTICLE *p;
     M528MAIN *work;
     f32 scale;
+    f32 spd;
     f32 ang;
     s16 mdl;
     s16 mtn;
@@ -2604,6 +2635,7 @@ s32 fn_1_7B44(M528NODE *node)
             Hu3DModelLayerSet(mdl, 2);
             scale = 1.0f - 0.2f * M528_RND();
             Hu3DModelScaleSet(mdl, scale, scale, scale);
+            spd = 3.0f;
             ang = 15.0f * (f32)p->timer;
             p->pos.x = (600.0f * (f32)work->winner + 70.0 * HuSin(ang)) - 300.0;
             p->pos.y = -200.0f;
@@ -2611,7 +2643,7 @@ s32 fn_1_7B44(M528NODE *node)
             p->rot.x = 0.0f;
             p->rot.y = 360.0f * M528_RND();
             p->rot.z = 0.0f;
-            p->vel.x = 3.0f * HuSin(ang);
+            p->vel.x = spd * HuSin(ang);
             p->vel.y = 11.0f;
             p->vel.z = 0.0f;
             p->timer = 0;
@@ -2637,6 +2669,7 @@ s32 fn_1_7B44(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_800C(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -2718,6 +2751,7 @@ s32 fn_1_800C(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_83E4(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -2803,6 +2837,7 @@ s32 fn_1_83E4(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: register allocation differs; same logic
 s32 fn_1_87F4(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -2870,6 +2905,7 @@ s32 fn_1_87F4(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: original switch has extra empty case 3/4 branches and hoists 2.7f; same behaviour
 s32 fn_1_8CD0(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -2928,6 +2964,7 @@ s32 fn_1_8CD0(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: loop increment order differs; same logic
 s32 fn_1_8FFC(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -3027,6 +3064,7 @@ s32 fn_1_8FFC(M528NODE *node)
     return done;
 }
 
+// NONMATCHING: original switch has extra empty case branches; same behaviour
 s32 fn_1_97C8(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -3098,6 +3136,7 @@ s32 fn_1_97C8(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: original switch has extra empty case branches; same behaviour
 s32 fn_1_9D5C(M528NODE *node)
 {
     M528PARTICLE *p;
@@ -3173,6 +3212,7 @@ s32 fn_1_9D5C(M528NODE *node)
     return 0;
 }
 
+// NONMATCHING: extsh/loop increment scheduling differs; same logic
 s32 fn_1_A3A0(M528NODE *node)
 {
     u8 col[3];
@@ -3373,6 +3413,7 @@ s32 fn_1_ABAC(M528NODE *node)
 
 /* Rotate the path points by the wheel angle (around the y axis) and drop them
  * to the wheel plane. */
+// NONMATCHING: register allocation differs; same logic
 void fn_1_B384(M528MAIN *work)
 {
     f32 s;
@@ -3435,6 +3476,7 @@ void fn_1_B528(M528WALKER *walker, s16 delay)
 
 /* Walk the model along the lbl_1_bss_4 path: wait, then alternate between
  * turning on the spot and moving to the next point. */
+// NONMATCHING: register allocation, float spills and bss_4 address hoisting differ; same logic
 void fn_1_B6D4(M528WALKER *w)
 {
     f32 t;
@@ -3618,6 +3660,7 @@ void fn_1_C314(M528MAIN *work)
     }
 }
 
+// NONMATCHING: loop counter init differs (li vs addi); same logic
 void fn_1_C3DC(M528MAIN *work)
 {
     M528NODE *node;
@@ -3661,6 +3704,7 @@ void fn_1_C530(M528MAIN *work)
     }
 }
 
+// NONMATCHING: load/store order inside the loop differs; same logic
 void fn_1_C728(M528MAIN *work)
 {
     s16 order[0x18];
@@ -3689,6 +3733,7 @@ void fn_1_C728(M528MAIN *work)
     }
 }
 
+// NONMATCHING: load/store order inside the loop differs; same logic
 void fn_1_C8B4(M528MAIN *work)
 {
     s16 order[0x18];
@@ -3728,6 +3773,7 @@ void fn_1_CA34(M528MAIN *work)
     }
 }
 
+// NONMATCHING: loop counter init differs (li vs addi); same logic
 void fn_1_CAEC(M528MAIN *work)
 {
     M528NODE *node;
@@ -3746,6 +3792,7 @@ void fn_1_CAEC(M528MAIN *work)
     }
 }
 
+// NONMATCHING: loop counter init differs (li vs addi); same logic
 void fn_1_CC40(M528MAIN *work)
 {
     M528NODE *node;
