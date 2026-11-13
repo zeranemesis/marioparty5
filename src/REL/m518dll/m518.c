@@ -862,6 +862,7 @@ void fn_1_2CFC(void)
 typedef void (*M518_PLAYERFUNC)(M518_PLAYER *player);
 
 M518_PLAYERFUNC lbl_1_data_20[5] = { fn_1_4698, fn_1_4B80, fn_1_83FC, fn_1_8E2C, fn_1_88C8 };
+char lbl_1_data_34[0x2C] = "[ CRUSH DATA ] T:%.2f  A1:%.2f  A2:%.2f\n";
 
 static const s32 lbl_1_rodata_5BC[13][2] = {
     { DATANUM(DATA_m518, 0x14), DATANUM(DATA_m518, 0x22) },
@@ -1237,363 +1238,306 @@ static const HuVecF lbl_1_rodata_718[4] = {
     { 1.0f, 0.0f, 0.0f },
 };
 
+/* abs of a float difference, evaluated the way the original does (difference computed twice, compared to 0.0f) */
+#define M518_FABSD(a, b) (((a) - (b)) < 0.0f ? -((a) - (b)) : ((a) - (b)))
+
 /*
- * The "walking" mode function: advances the block one cell at a time, updating
- * the character models, checking for collisions with the other players and
- * deciding whether the step succeeds. The m2c draft of this function inlines
- * the M518_WAIT pattern at every sleep site, so the loop structure below uses
- * the macro for those and transcribes the rest of the draft directly.
- *
- * Still to map to the target: the field offsets used by the draft
- * (arg0->unkNN) line up with M518_PLAYER, but several of the conditions around
- * the collision branches come from `cror` pairings m2c cannot decode
- * (M2C_ERROR), so those are written as the closest single comparison.
+ * The movement process of a block: every iteration of the outer loop plays one move
+ * (stepMax frames), bouncing back if the block is stopped half way.
  */
 void fn_1_4B80(M518_PLAYER *player)
 {
-    HuVecF sp150;
-    HuVecF sp144;
-    HuVecF sp12C;
-    s32 var_r28;
-    s32 var_r29;
-    s32 var_r27;
-    s32 var_r24;
-    s32 var_r23;
-    s32 var_r25;
-    s32 var_r22;
-    s32 var_r21;
-    s32 var_r20;
-    s32 var_r18;
-    s32 var_r17;
-    s32 var_r30Idx;
-    f32 t;
-    f32 var_f31;
-    f32 var_f27;
-    f32 var_f26;
-    f32 var_f25;
-    f32 var_f24;
-    f32 var_f23;
-    f32 var_f22;
-    f32 var_f21;
-    f32 var_f20;
-    f32 var_f19;
-    f32 var_f18;
-    f32 temp_f29;
-    f32 temp_f30;
-    u16 temp_ret;
-    s32 i;
+    HuVecF rot;
+    HuVecF pos;
+    HuVecF smoke;
+    HuVecF axisRot;
+    M518_CELL cell;
+    M518_CELL ofs;
+    M518_PLAYER *other;
+    M518_PLAYER *hitOther;
+    float t;
+    float prog;
+    float sizeF;
+    float rotSum;
+    float otherRotSum;
+    float hitRotSum;
+    float hitOtherRotSum;
+    float dx;
+    float dy;
+    float dz;
+    u16 value;
+    int step;
+    int blocked;
+    int hit;
+    int i;
+    int j;
+    int k;
 
     player->comDir = 4;
     player->unkC2 = 0;
     player->comWait = 0;
     player->unkB8 = 0;
-    while (TRUE) {
-        var_f31 = 0.0f;
-        player->bounceF = 0;
-        while ((s32) lbl_1_bss_2C != 0) {
-            player->dir = player->comDir;
-            if (player->type == 0 && (s8) player->cell.x != (s8) player->comTarget.x) {
-                player->prevCell.x = player->cell.x;
-                player->prevCell.z = player->cell.z;
-            } else if (player->cell.x != player->comTarget.x || player->cell.z != player->comTarget.z) {
-                player->prevCell.x = player->comTarget.x;
-                player->prevCell.z = player->comTarget.z;
-            }
-            player->cell.x = player->comTarget.x;
-            player->cell.z = player->comTarget.z;
-            sp12C.x = (200.0f * (f32) ((s8) player->cell.x - 6)) + (200.0f * (f32) player->size * 0.5f);
-            sp12C.y = -30.0f + (200.0f * (f32) player->size * 0.5f);
-            sp12C.z = (200.0f * (f32) ((s8) player->cell.z - 6)) + (200.0f * (f32) player->size * 0.5f);
-            for (i = 0; i < 2; i++) {
-                if (player->modelId[i] != -1) {
-                    Hu3DModelPosSet(player->modelId[i], sp12C.x, sp12C.y, sp12C.z);
-                }
-            }
-            player->pos = sp12C;
-            if (player->comF != 0) {
-                fn_1_6D84(player);
+    hitOther = NULL;
+loop_top:
+    cell = fn_1_4674(player);
+    player->bounceF = 0;
+loop_cond:
+    if (lbl_1_bss_2C == 0) {
+        goto done;
+    }
+    cell = fn_1_4674(player);
+    fn_1_3554(player, cell);
+    if (player->comF != 0) {
+        fn_1_6D84(player);
+    } else {
+        fn_1_6CFC(player);
+    }
+    player->dir = 4;
+    if (player->stkX >= 0x14) {
+        player->dir = 1;
+    }
+    if (player->stkX <= -0x14) {
+        player->dir = 0;
+    }
+    if (player->stkY >= 0x14) {
+        player->dir = 2;
+    }
+    if (player->stkY <= -0x14) {
+        player->dir = 3;
+    }
+    if (player->dir == 4) {
+        fn_1_3904(player);
+        M518_WAIT(1);
+        goto loop_cond;
+    }
+    if (player->type == 0) {
+        switch (player->dir) {
+            case 0:
+                smoke.x = 50.0f + (player->pos.x - 200.0f * player->size * 0.5f);
+                smoke.z = player->pos.z;
+                break;
+            case 1:
+                smoke.x = (player->pos.x + 200.0f * player->size * 0.5f) - 50.0f;
+                smoke.z = player->pos.z;
+                break;
+            case 2:
+                smoke.x = player->pos.x;
+                smoke.z = 50.0f + (player->pos.z - 200.0f * player->size * 0.5f);
+                break;
+            case 3:
+                smoke.x = player->pos.x;
+                smoke.z = (player->pos.z + 200.0f * player->size * 0.5f) - 50.0f;
+                break;
+        }
+        smoke.y = 0.0f;
+        CharEffectSmokeCreate(1, (Point3d *)&smoke);
+    }
+    cell = fn_1_4674(player);
+    step = 0;
+step_start:
+    player->prevPos.x = player->pos.x;
+    player->prevPos.y = player->pos.y;
+    player->prevPos.z = player->pos.z;
+    player->prevRot = player->rot;
+    player->moveDir = lbl_1_rodata_6E8[player->dir];
+    player->rotAxis = lbl_1_rodata_718[player->dir];
+    axisRot = player->prevRot;
+    fn_1_4760(&axisRot, &player->rotAxis);
+    while (step < player->stepMax) {
+        if (step == 1 && player->type == 0) {
+            if (player->moveNum % 2 == 0) {
+                fn_1_E7B4(0x6F9, player->pos);
             } else {
-                fn_1_6CFC(player);
+                fn_1_E7B4(0x6FA, player->pos);
             }
-            player->dir = 4;
-            if (player->stkX >= 0x14) {
-                player->dir = 1;
+        }
+        fn_1_9D98(lbl_1_bss_4DC);
+        fn_1_9E70(lbl_1_bss_4DC);
+        for (i = 0; i < 4; i++) {
+            if (lbl_1_bss_4E0[i] != player) {
+                fn_1_3904(lbl_1_bss_4E0[i]);
             }
-            if (player->stkX <= -0x14) {
-                player->dir = 0;
-            }
-            if (player->stkY >= 0x14) {
-                player->dir = 2;
-            }
-            if (player->stkY <= -0x14) {
-                player->dir = 3;
-            }
-            if (player->dir == 4) {
-                fn_1_3904(player);
-                M518_WAIT(1);
-                continue;
-            }
-            if ((s16) player->type == 0) {
-                switch (player->dir) {
+        }
+        player->step = step + 1;
+        prog = (1.0f / player->stepMax) * (step + 1);
+        t = 1.0 - cos(3.141592653589793 * (90.0f * prog) / 180.0);
+        hit = 0;
+        blocked = 0;
+        for (j = 0; j < player->size; j++) {
+            switch (player->dir) {
                 case 0:
-                    sp150.x = 50.0f + (player->pos.x - (200.0f * (f32) player->size * 0.5f));
-                    sp150.y = 0.0f;
-                    sp150.z = player->pos.z;
+                    if (t < 1.0f) {
+                        sizeF = 1.0f + player->size * t;
+                    } else {
+                        sizeF = player->size;
+                    }
+                    ofs.x = player->cell.x - (s32)sizeF;
+                    ofs.z = player->cell.z + j;
                     break;
                 case 1:
-                    sp150.x = (player->pos.x + (200.0f * (f32) player->size * 0.5f)) - 50.0f;
-                    sp150.y = 0.0f;
-                    sp150.z = player->pos.z;
+                    if (t < 1.0f) {
+                        sizeF = player->size + player->size * t;
+                    } else {
+                        sizeF = player->size;
+                    }
+                    ofs.x = player->cell.x + (s32)sizeF;
+                    ofs.z = player->cell.z + j;
                     break;
                 case 2:
-                    sp150.x = player->pos.x;
-                    sp150.y = 0.0f;
-                    sp150.z = 50.0f + (player->pos.z - (200.0f * (f32) player->size * 0.5f));
+                    ofs.x = player->cell.x + j;
+                    if (t < 1.0f) {
+                        sizeF = 1.0f + player->size * t;
+                    } else {
+                        sizeF = player->size;
+                    }
+                    ofs.z = player->cell.z - (s32)sizeF;
                     break;
                 case 3:
-                    sp150.x = player->pos.x;
-                    sp150.y = 0.0f;
-                    sp150.z = (player->pos.z + (200.0f * (f32) player->size * 0.5f)) - 50.0f;
-                    break;
-                }
-                CharEffectSmokeCreate(1, (Point3d *) &sp150.x);
-            }
-            var_r28 = 0;
-            while (var_r28 < (s16) player->stepMax) {
-                f32 dot;
-
-                player->prevPos.x = player->pos.x;
-                player->prevPos.y = player->pos.y;
-                player->prevPos.z = player->pos.z;
-                player->prevRot.x = player->rot.x;
-                player->prevRot.y = player->rot.y;
-                player->prevRot.z = player->rot.z;
-                player->prevScale.x = player->scale.x;
-                player->moveDir.x = lbl_1_rodata_6E8[player->dir].x;
-                player->moveDir.y = 0.0f;
-                player->moveDir.z = lbl_1_rodata_6E8[player->dir].z;
-                player->rotAxis.x = lbl_1_rodata_718[player->dir].x;
-                player->rotAxis.y = lbl_1_rodata_718[player->dir].y;
-                player->rotAxis.z = lbl_1_rodata_718[player->dir].z;
-                sp144.x = player->prevRot.x;
-                sp144.y = player->prevRot.y;
-                sp144.z = player->prevRot.z;
-                var_f31 = 1.0f;
-                fn_1_4760(&sp144, &player->rotAxis);
-                var_f31 = (f32) (1.0 - var_f31);
-                if (var_r28 == 1 && (s16) player->type == 0) {
-                    sp12C = player->pos;
-                    if (((s32) player->moveNum & 1) == 0) {
-                        fn_1_E7B4(0x6F9, sp12C);
+                    ofs.x = player->cell.x + j;
+                    if (t < 1.0f) {
+                        sizeF = player->size + player->size * t;
                     } else {
-                        fn_1_E7B4(0x6FA, sp12C);
+                        sizeF = player->size;
                     }
-                }
-                fn_1_9D98(lbl_1_bss_4DC);
-                fn_1_9E70(lbl_1_bss_4DC);
-                for (var_r24 = 0; var_r24 < 4; var_r24++) {
-                    if ((M518_PLAYER *) lbl_1_bss_4E0[var_r24] != player) {
-                        fn_1_3904(lbl_1_bss_4E0[var_r24]);
-                    }
-                }
-                player->step = (s16) (var_r28 + 1);
-                var_r27 = 0;
-                var_r23 = 0;
-                for (var_r29 = 0; var_r29 < (s16) player->size; var_r29++) {
-                    HuVecF ofs;
-                    M518_CELL cell;
-
-                    cell.x = 0;
-                    cell.z = 0;
-                    ofs.x = 0.0f;
-                    ofs.y = 0.0f;
-                    ofs.z = 0.0f;
-                    switch (player->dir) {
-                    case 0:
-                        if (var_f31 < 1.0f) {
-                            var_f27 = 1.0f + (((f32) (f64) player->size) * var_f31);
-                        } else {
-                            var_f27 = (f32) player->size;
-                        }
-                        ofs.x = (f32) ((s32) player->cell.x - (s32) var_f27);
-                        ofs.z = (f32) ((s32) player->cell.z + var_r29);
-                        break;
-                    case 1:
-                        if (var_f31 < 1.0f) {
-                            var_f26 = ((f32) player->size) + (((f32) player->size) * var_f31);
-                        } else {
-                            var_f26 = (f32) player->size;
-                        }
-                        ofs.x = (f32) ((s32) player->cell.x + (s32) var_f26);
-                        ofs.z = (f32) ((s32) player->cell.z + var_r29);
-                        break;
-                    case 2:
-                        ofs.x = (f32) ((s32) player->cell.x + var_r29);
-                        if (var_f31 < 1.0f) {
-                            var_f25 = 1.0f + (((f32) (f64) player->size) * var_f31);
-                        } else {
-                            var_f25 = (f32) player->size;
-                        }
-                        ofs.z = (f32) ((s32) player->cell.z - (s32) var_f25);
-                        break;
-                    case 3:
-                        ofs.x = (f32) ((s32) player->cell.x + var_r29);
-                        if (var_f31 < 1.0f) {
-                            var_f24 = ((f32) player->size) + (((f32) player->size) * var_f31);
-                        } else {
-                            var_f24 = (f32) player->size;
-                        }
-                        ofs.z = (f32) ((s32) player->cell.z + (s32) var_f24);
-                        break;
-                    }
-                    temp_ret = fn_1_A268(lbl_1_bss_4DC, *(M518_CELL *) &ofs);
-                    if ((s32) (temp_ret & 0x80) != 0) {
-                        var_r27 = 1;
-                    } else if (((s32) (temp_ret & 0x40) != 0) && ((s32) (temp_ret & 0xF) != (s16) player->no)) {
-                        M518_PLAYER *other = lbl_1_bss_4E0[temp_ret & 0xF];
-                        f32 a;
-                        f32 b;
-
-                        var_r30Idx = temp_ret & 0xF;
-                        a = lbl_1_bss_4E0[var_r30Idx]->prevPos.x - lbl_1_bss_4E0[var_r30Idx]->pos.x;
-                        if (a < 0.0f) {
-                            a = -a;
-                        }
-                        b = lbl_1_bss_4E0[var_r30Idx]->prevPos.y - lbl_1_bss_4E0[var_r30Idx]->pos.y;
-                        if (b < 0.0f) {
-                            b = -b;
-                        }
-                        temp_f29 = a + b;
-                        a = lbl_1_bss_4E0[var_r30Idx]->prevPos.z - lbl_1_bss_4E0[var_r30Idx]->pos.z;
-                        if (a < 0.0f) {
-                            a = -a;
-                        }
-                        temp_f29 += a;
-                        a = lbl_1_bss_4E0[var_r30Idx]->prevRot.x - lbl_1_bss_4E0[var_r30Idx]->rot.x;
-                        if (a < 0.0f) {
-                            a = -a;
-                        }
-                        b = lbl_1_bss_4E0[var_r30Idx]->prevRot.y - lbl_1_bss_4E0[var_r30Idx]->rot.y;
-                        if (b < 0.0f) {
-                            b = -b;
-                        }
-                        temp_f30 = a + b;
-                        a = lbl_1_bss_4E0[var_r30Idx]->prevRot.z - lbl_1_bss_4E0[var_r30Idx]->rot.z;
-                        if (a < 0.0f) {
-                            a = -a;
-                        }
-                        temp_f30 += a;
-                        if ((((s16) player->kind == 0) && ((s16) lbl_1_bss_4E0[var_r30Idx]->kind == 1)) || (((s16) player->kind == 1) && ((s16) lbl_1_bss_4E0[var_r30Idx]->kind == 1))) {
-                            if (temp_f30 == 0.0f) {
-                                var_r27 = 1;
-                            } else if (((s32) lbl_1_bss_4E0[var_r30Idx]->dir == (s32) lbl_1_rodata_50[player->dir]) && ((s16) lbl_1_bss_4E0[var_r30Idx]->kind == (s16) player->kind)) {
-                                var_f31 = (f32) ((f64) (temp_f29 + temp_f30));
-                                if (((f32) var_f31 == 62.0f) && (temp_f29 < temp_f30)) {
-                                    var_r27 = 1;
-                                }
-                            } else if (((s32) lbl_1_bss_4E0[var_r30Idx]->dir == (s32) player->dir) && ((s16) lbl_1_bss_4E0[var_r30Idx]->size == (s16) player->size)) {
-                                if (temp_f30 < 6.0f) {
-                                    var_r27 = 1;
-                                }
-                            } else {
-                                var_r27 = 1;
-                            }
-                        } else if (((s16) player->kind == 1) && ((s16) lbl_1_bss_4E0[var_r30Idx]->kind == 0) && ((s16) lbl_1_bss_4E0[var_r30Idx]->mode != 2)) {
-                            var_r23 = 1;
-                        } else if ((s16) lbl_1_bss_4E0[var_r30Idx]->mode == 2) {
-                            var_r27 = 1;
-                        }
-                    }
-                }
-                if (var_r23 != 0 && var_r27 == 0 && (s32) lbl_1_bss_24 == 0) {
-                        if (player->crushF == 0) {
-                        OSReport("[m518] crush hit=%d t=%f a=%f b=%f\n", player->crushF, var_f31, temp_f29, temp_f30);
-                        omVibrate(player->playerNo, 0x28, 0xC, 0);
-                        omVibrate(lbl_1_bss_4E0[var_r30Idx]->playerNo, 0x28, 0xC, 0);
-                        fn_1_83E8(lbl_1_bss_4E0[var_r30Idx], (s16) (player->stepMax - var_r28), 0);
-                        lbl_1_bss_24 = 1;
-                        lbl_1_bss_1C = 1;
-                        lbl_1_bss_20 = 0;
-                        player->crushF = 1;
-                    }
-                }
-                fn_1_9E04(lbl_1_bss_4DC);
-                if (((s16) player->kind == 0) && (var_r28 > 0)) {
-                    var_r27 = 0;
-                }
-                if (var_r27 != 0 && player->crushF == 0) {
+                    ofs.z = player->cell.z + (s32)sizeF;
                     break;
-                }
-                sp144.x = player->prevPos.x + (var_f31 * (200.0f * (player->moveDir.x * (f32) player->size)));
-                sp144.z = player->prevPos.z + (var_f31 * (200.0f * (player->moveDir.z * (f32) player->size)));
-                sp144.y = (f32) ((f64) player->prevPos.y + (0.17319999635219574 * ((f64) (200.0f * (f32) player->size) * sin((3.141592653589793 * (f64) (180.0f * var_f31)) / 180.0))));
-                sp150.x = player->prevRot.x + (player->rotAxis.x * (90.0f * var_f31));
-                sp150.z = player->prevRot.z + (player->rotAxis.z * (90.0f * var_f31));
-                sp150.y = player->prevRot.y + (player->rotAxis.y * (90.0f * var_f31));
-                for (var_r25 = 0; var_r25 < 2; var_r25++) {
-                    if (player->modelId[var_r25] != -1) {
-                        Hu3DModelPosSet(player->modelId[var_r25], sp144.x, sp144.y, sp144.z);
-                        Hu3DData[player->modelId[var_r25]].mtx[0][0] = 0.0f;
-                    }
-                }
-                player->pos = sp144;
-                player->rot = sp150;
-                fn_1_3904(player);
-                M518_WAIT(1);
-                var_r28++;
             }
-            if (var_r28 > 0 && var_r28 < (s16) player->stepMax && (s32) player->bounceF == 0) {
-                player->bounceF = 1;
-                if ((s16) player->type == 1) {
-                    sp12C = player->pos;
-                    fn_1_E7B4(0x6FE, sp12C);
-                }
-                player->rot.x = (f32) (player->prevRot.x + (90.0f * player->rotAxis.x));
-                player->rot.z = (f32) (player->prevRot.z + (90.0f * player->rotAxis.z));
-                player->rot.y = (f32) (player->prevRot.y + (90.0f * player->rotAxis.y));
-                player->dir = lbl_1_rodata_50[player->dir];
-                fn_1_3904(player);
-                for (var_r29 = 0; var_r29 < (s16) player->stepMax; var_r29++) {
-                    if ((f32) (1.0 - cos((3.141592653589793 * (f64) (90.0f * ((1.0f / (f32) player->stepMax) * (f32) (var_r29 + 1)))) / 180.0)) == (1.0f - var_f31)) {
-                        var_r28 = var_r29;
+            value = fn_1_A268(lbl_1_bss_4DC, ofs);
+            if (value & 0x80) {
+                blocked = 1;
+            } else if ((value & 0x40) && (value & 0xF) != player->no) {
+                other = lbl_1_bss_4E0[value & 0xF];
+                dy = M518_FABSD(player->rot.y, player->prevRot.y);
+                dx = M518_FABSD(player->rot.x, player->prevRot.x);
+                dz = M518_FABSD(player->rot.z, player->prevRot.z);
+                rotSum = dz + (dx + dy);
+                dy = M518_FABSD(other->rot.y, other->prevRot.y);
+                dx = M518_FABSD(other->rot.x, other->prevRot.x);
+                dz = M518_FABSD(other->rot.z, other->prevRot.z);
+                otherRotSum = dz + (dx + dy);
+                if ((player->kind == 0 && other->kind == 1) || (player->kind == 1 && other->kind == 1)) {
+                    if (0.0f == otherRotSum) {
+                        blocked = 1;
+                    } else if (other->dir == lbl_1_rodata_50[player->dir] && other->kind == player->kind) {
+                        if (rotSum + otherRotSum >= 62.0f) {
+                            if (rotSum < otherRotSum) {
+                                blocked = 1;
+                            }
+                        }
+                    } else if (other->dir == player->dir && other->size == player->size) {
+                        if (otherRotSum < 6.0f) {
+                            blocked = 1;
+                        }
+                    } else {
+                        blocked = 1;
                     }
+                } else if (player->kind == 1 && other->kind == 0 && other->mode != 2) {
+                    hitRotSum = rotSum;
+                    hitOtherRotSum = otherRotSum;
+                    hitOther = other;
+                    hit = 1;
+                } else if (other->mode == 2) {
+                    blocked = 1;
                 }
-                continue;
             }
-            player->dir = 4;
-            player->crushF = 0;
-            if (var_r28 == 0) {
-                M518_WAIT(1);
-            } else {
-                if ((s16) player->type == 1) {
-                    switch (player->kind) {
-                    case 1:
-                        sp12C = player->pos;
-                        fn_1_E7B4(0x6FC, sp12C);
-                        break;
-                    case 2:
-                        fn_1_E7B4(0x6FB, sp12C);
-                        break;
-                    case 3:
-                        sp12C = player->pos;
-                        fn_1_E7B4(0x6FD, sp12C);
-                        break;
-                    }
-                }
-                player->prevPos = player->pos;
-                for (var_r20 = 0; var_r20 < 2; var_r20++) {
-                    if (player->modelId[var_r20] != -1) {
-                        Hu3DModelPosSet(player->modelId[var_r20], player->prevPos.x, player->prevPos.y, player->prevPos.z);
-                    }
-                }
-                if ((s16) player->type == 1) {
-                    fn_1_E508(player->pos, 200.0f);
-                }
-                M518_WAIT((s32) player->stepWait);
-            }
-            player->moveNum++;
         }
-        player->mode = 0;
+        if (hit != 0 && blocked == 0 && lbl_1_bss_24 == 0 && player->crushF == 0) {
+            other = hitOther;
+            rotSum = hitRotSum;
+            otherRotSum = hitOtherRotSum;
+            if (other->dir == 4
+                || ((other->dir == player->dir || other->dir == lbl_1_rodata_50[player->dir]) && t < 0.5f
+                    && rotSum >= 0.0f && otherRotSum < 45.0f)
+                || (t >= 0.5f && rotSum >= 45.0f && otherRotSum < 45.0f)
+                || ((other->dir != player->dir || other->dir != lbl_1_rodata_50[player->dir]) && t < 0.5f
+                    && rotSum >= 0.0f && otherRotSum > 28.0f && otherRotSum < 62.0f)
+                || (t >= 0.5f && rotSum >= 45.0f && otherRotSum > 28.0f && otherRotSum < 62.0f)) {
+                OSReport(lbl_1_data_34, t, rotSum, otherRotSum);
+                omVibrate(player->playerNo, 0x28, 0xC, 0);
+                omVibrate(other->playerNo, 0x28, 0xC, 0);
+                fn_1_83E8(other, player->stepMax - step, 0);
+                lbl_1_bss_24 = 1;
+                lbl_1_bss_1C = 1;
+                lbl_1_bss_20 = 0;
+                player->crushF = 1;
+            }
+        }
+        fn_1_9E04(lbl_1_bss_4DC);
+        if (player->kind == 0 && step > 0) {
+            blocked = 0;
+        }
+        if (blocked != 0 && player->crushF == 0) {
+            break;
+        }
+        pos.x = player->prevPos.x + t * (200.0f * (player->moveDir.x * player->size));
+        pos.z = player->prevPos.z + t * (200.0f * (player->moveDir.z * player->size));
+        pos.y = player->prevPos.y + 0.17319999635219574 * ((200.0f * player->size) * sin(3.141592653589793 * (180.0f * t) / 180.0));
+        rot.x = player->prevRot.x + player->rotAxis.x * (90.0f * t);
+        rot.z = player->prevRot.z + player->rotAxis.z * (90.0f * t);
+        rot.y = player->prevRot.y + player->rotAxis.y * (90.0f * t);
+        fn_1_3230(player, pos);
+        fn_1_32C8(player, rot);
+        fn_1_3904(player);
+        M518_WAIT(1);
+        step++;
+    }
+    if (step > 0 && step < player->stepMax && player->bounceF == 0) {
+        player->bounceF = 1;
+        if (player->type == 1) {
+            fn_1_E7B4(0x6FE, player->pos);
+        }
+        player->rot.x = player->prevRot.x + 90.0f * player->rotAxis.x;
+        player->rot.z = player->prevRot.z + 90.0f * player->rotAxis.z;
+        player->rot.y = player->prevRot.y + 90.0f * player->rotAxis.y;
+        cell.x += (s32)player->moveDir.x * player->size;
+        cell.z += (s32)player->moveDir.z * player->size;
+        fn_1_3554(player, cell);
+        player->dir = lbl_1_rodata_50[player->dir];
+        fn_1_3904(player);
+        for (k = 0; k < player->stepMax; k++) {
+            prog = (1.0f / player->stepMax) * (k + 1);
+            if (1.0 - cos(3.141592653589793 * (90.0f * prog) / 180.0) >= 1.0f - t) {
+                step = k;
+                goto step_start;
+            }
+        }
+        goto step_start;
+    }
+    player->dir = 4;
+    player->prevPos = player->pos;
+    player->prevRot = player->rot;
+    if (step == 0) {
+        M518_WAIT(1);
+    } else {
+        if (player->type == 1) {
+            switch (player->no) {
+                case 1:
+                    fn_1_E7B4(0x6FC, player->pos);
+                    break;
+                case 2:
+                    fn_1_E7B4(0x6FB, player->pos);
+                    break;
+                case 3:
+                    fn_1_E7B4(0x6FD, player->pos);
+                    break;
+            }
+        }
+        cell.x += (s32)player->moveDir.x * player->size;
+        cell.z += (s32)player->moveDir.z * player->size;
+        fn_1_3554(player, cell);
+        if (player->type == 1) {
+            smoke.x = player->pos.x;
+            smoke.z = player->pos.z;
+            smoke.y = 0.0f;
+            fn_1_E508(smoke, 200.0f);
+        }
+        M518_WAIT(player->stepWait);
+    }
+    player->moveNum++;
+    goto loop_top;
+done:
+    player->mode = 0;
+    while (TRUE) {
         M518_WAIT(1);
     }
 }
