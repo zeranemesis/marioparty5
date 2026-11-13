@@ -126,7 +126,7 @@ OMOBJ *lbl_1_bss_8268;
 /* the four capsule objects torn down by fn_1_BE20 */
 OMOBJ *lbl_1_bss_826C[4];
 /* overlay history slot returned to when quitting */
-s32 lbl_1_data_64;
+s32 lbl_1_data_64 = 1;
 
 /* bone name passed to Hu3DModelObjDraw by fn_1_97AC */
 char lbl_1_data_C1B4[] = "test4-omote";
@@ -175,7 +175,7 @@ f32 lbl_1_bss_28;
 void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_97AC(OMOBJ *obj, Mtx *mtx);
 void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx);
-void fn_1_9F2C(void);
+void fn_1_9F2C(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_A3C4(OMOBJ *obj);
 void fn_1_B31C(OMOBJ *obj);
 void fn_1_B700(OMOBJ *obj);
@@ -222,17 +222,17 @@ typedef struct m535Work_s {
     {
         {0.0f, 0.0f},
         {20.0f, 0.0f},
-        {17.32f, -10.0f},
-        {9.99999f, -17.32f},
-        {-0.000001f, -20.0f},
-        {-10.0f, -17.32f},
-        {-17.32f, -10.0f},
-        {-19.99999f, 0.0f},
-        {-17.32f, 10.0f},
-        {-9.99999f, 17.32f},
-        {0.000001f, 19.99999f},
-        {10.0f, 17.32f},
-        {17.32f, 10.0f},
+        {17.320507f, -10.0f},
+        {9.99999905f, -17.320509f},
+        {-9.99999997e-07f, -20.0f},
+        {-10.0f, -17.320509f},
+        {-17.320507f, -10.0f},
+        {-19.9999981f, 0.0f},
+        {-17.3205051f, 10.0f},
+        {-9.99999809f, 17.320509f},
+        {9.99999997e-07f, 19.9999981f},
+        {10.0f, 17.3205032f},
+        {17.320507f, 10.0f},
         {20.0f, 0.0f},
     },
 };
@@ -282,13 +282,13 @@ static const f32 lbl_1_rodata_B5C = 1.1f;
 static const u32 lbl_1_data_34[4] = {0x008C0000, 0x008700BC, 0x008C0006, 0x008C0031};
 /* spawn position / initial y-rotation, one four-float row per seat */
 static const f32 lbl_1_data_74[4][4] = {
-    {-175.0f, 0.0f, -142.5f, 45.0f},
-    {175.0f, 0.0f, -142.5f, -42.5f},
-    {-142.5f, 0.0f, 0.0f, 90.0f},
+    {-175.0f, 0.0f, -150.0f, 45.0f},
+    {175.0f, 0.0f, -150.0f, -45.0f},
+    {-225.0f, 0.0f, 0.0f, 90.0f},
     {225.0f, 0.0f, 0.0f, -90.0f},
 };
 /* free-camera debug step, nudge size for CenterM / CZoomM */
-static const f64 lbl_1_rodata_10 = 25.0;
+static const f64 lbl_1_rodata_10 = 5.0;
 /* horizontal orbit nudge multiplier */
 static const f64 lbl_1_rodata_18 = 0.03125;
 /* vertical orbit nudge divisor */
@@ -335,6 +335,7 @@ void _epilog(void)
  * from 0 at x=0 to 1 across the first "a" units, then climbs linearly to the
  * point "a+b", then falls back out of the window of width "w". "den" is the
  * normalisation shared by all four segments. */
+// NONMATCHING: load scheduling of the 0.5/1.0 constants; arithmetic equivalent
 f32 fn_1_2D68(f32 x, f32 a, f32 b, f32 w)
 {
     f32 den = w * lbl_1_rodata_218 + (a * lbl_1_rodata_218 + b);
@@ -369,6 +370,7 @@ f32 fn_1_2D68(f32 x, f32 a, f32 b, f32 w)
 /* Draws the overlay's "test4" model bone above the object's own draw pass:
  * the object's callback runs first, then the bone is drawn with a fixed
  * 0/400/0 offset matrix post-multiplied by the caller's matrix. */
+// NONMATCHING: none known (verified equivalent)
 void fn_1_97AC(OMOBJ *obj, Mtx *mtx)
 {
     Mtx boneMtx;
@@ -425,6 +427,7 @@ void fn_1_BE20(OMOBJ *obj)
  * GwPlayerConf row, creates the character model and its four motions, and then
  * parks the position on the object before handing it to the main callback.
  */
+// NONMATCHING: arg0->data load order and CharModelVoicePanSet pan truncation (s16 vs s32 param); logic equivalent
 void fn_1_B31C(OMOBJ *arg0)
 {
     M535WORK *r31 = (M535WORK *) arg0->data;
@@ -448,7 +451,7 @@ void fn_1_B31C(OMOBJ *arg0)
             r27 += 1;
         }
     }
-    r31->unk00 = arg0->work[0x4C / 4];
+    r31->unk00 = arg0->work[0];
     r31->unk04 = sp8[r31->unk00];
     if (r31->unk04 == 4) {
         r31->unk04 = r31->unk00;
@@ -493,41 +496,63 @@ void fn_1_B31C(OMOBJ *arg0)
  * vertex format, and draws the unit quad as two triangles directly into the
  * FIFO.  The colour is a fixed 227/224/220 with full alpha.
  */
-void fn_1_9F2C(void)
+// NONMATCHING: rodata_884 emitted as a literal pool entry; logic equivalent
+void fn_1_9F2C(HU3DMODEL *modelP, Mtx *mtx)
 {
-    Mtx44 sp8;
     Mtx sp38;
-    s32 r31 = 0xE3;
-    s32 r30 = 0xE0;
-    s32 r29 = 0xDC;
+#ifdef TARGET_PC
+    Mtx44 sp8;
+#else
+    Mtx sp8; /* the original hands this 3x4 slot to C_MTXOrtho/GXSetProjection */
+#endif
+    s32 r31;
+    s32 r30;
+    s32 r29;
 
-    C_MTXOrtho(sp8, lbl_1_rodata_13C, lbl_1_rodata_178, lbl_1_rodata_13C, lbl_1_rodata_178, lbl_1_rodata_13C, lbl_1_rodata_884);
-    GXSetProjection(sp8, GX_ORTHOGRAPHIC);
+    C_MTXOrtho((f32 (*)[4]) sp8, lbl_1_rodata_13C, lbl_1_rodata_178, lbl_1_rodata_13C, lbl_1_rodata_178, lbl_1_rodata_13C, lbl_1_rodata_884);
+    GXSetProjection((f32 (*)[4]) sp8, GX_ORTHOGRAPHIC);
     PSMTXIdentity(sp38);
     GXLoadPosMtxImm(sp38, 0);
     GXSetNumTevStages(1);
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXCOORD0, GX_COLOR0A0);
-    GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
     GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_SPEC);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_SET);
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);
-    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_NONE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCCLR, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGB8, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
     GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    r31 = 0xE3;
+    r30 = 0xE0;
+    r29 = 0xDC;
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
 
+#ifdef TARGET_PC
+    GXPosition3f32(lbl_1_rodata_13C, lbl_1_rodata_13C, lbl_1_rodata_13C);
+    GXColor4u8(r31, r30, r29, 0xFF);
+    GXTexCoord2f32(lbl_1_rodata_13C, lbl_1_rodata_13C);
+    GXPosition3f32(lbl_1_rodata_178, lbl_1_rodata_13C, lbl_1_rodata_13C);
+    GXColor4u8(r31, r30, r29, 0xFF);
+    GXTexCoord2f32(lbl_1_rodata_178, lbl_1_rodata_13C);
+    GXPosition3f32(lbl_1_rodata_178, lbl_1_rodata_178, lbl_1_rodata_13C);
+    GXColor4u8(r31, r30, r29, 0xFF);
+    GXTexCoord2f32(lbl_1_rodata_178, lbl_1_rodata_178);
+    GXPosition3f32(lbl_1_rodata_13C, lbl_1_rodata_178, lbl_1_rodata_13C);
+    GXColor4u8(r31, r30, r29, 0xFF);
+    GXTexCoord2f32(lbl_1_rodata_13C, lbl_1_rodata_178);
+#else
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
@@ -564,6 +589,7 @@ void fn_1_9F2C(void)
     *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_178;
+#endif
 }
 /* Overlay state shared across the m535 translation units; these slots are
  * owned elsewhere in the overlay and only referenced here. */
@@ -593,6 +619,7 @@ extern void espDispOff(s16 espId);
  * then spawns the results object, the four capsule objects, the out-view,
  * wipe-in and wipe-out objects and a texture buffer used by the wipe pass.
  */
+// NONMATCHING: omAddObjEx result register copy order; logic equivalent
 void ObjectSetup(void)
 {
     s32 i;
@@ -681,6 +708,7 @@ void ObjectSetup(void)
  * wires up the hook passes, loads the sprite/animation data and finally hands
  * the object over to fn_1_39A8.
  */
+// NONMATCHING: register allocation / constant table pooling; logic equivalent
 void fn_1_A3C4(OMOBJ *obj)
 {
     s32 i;
@@ -728,7 +756,7 @@ void fn_1_A3C4(OMOBJ *obj)
     Hu3DModelPosSet(obj->mdlId[mi], 0.0f, 0.0f, -60.0f);
     Hu3DModelAttrSet(obj->mdlId[mi], 0x40000002);
     Hu3DModelCameraSet(obj->mdlId[mi], 2);
-    Hu3DModelAttrSet(obj->mdlId[mi], 0x40000001);
+    Hu3DModelAttrSet(obj->mdlId[mi], 1);
 
     mi = 5;
     obj->mdlId[mi] = Hu3DModelCreate(HuDataSelHeapReadNum(0x5D0005, 0x10000000, 2));
@@ -750,7 +778,7 @@ void fn_1_A3C4(OMOBJ *obj)
     Hu3DModelLayerSet(obj->mdlId[mi], 5);
     Hu3DModelAttrSet(obj->mdlId[mi], 0x40000002);
     Hu3DModelPosSet(obj->mdlId[mi], 0.0f, 0.0f, -60.0f);
-    Hu3DModelCameraSet(obj->mdlId[mi], 1);
+    Hu3DModelCameraSet(obj->mdlId[mi], 2);
 
     memset(lbl_1_bss_8374, 0, 0xBD0);
     {
@@ -793,7 +821,7 @@ void fn_1_A3C4(OMOBJ *obj)
                 v4 = (idx % 7) * 0x19 - 0x4B;
             }
             else if (idx < 0x21) {
-                v4 = ((idx - 0x15) / 4) * 0x19;
+                v4 = ((idx - 0x15) % 4) * 0x19;
             }
             else {
                 v4 = ((idx - 0x21) % 7) * 0x19 - 0x4B;
@@ -832,7 +860,7 @@ void fn_1_A3C4(OMOBJ *obj)
     Hu3DModelCameraSet(obj->mdlId[mi], 2);
 
     mi = 0xC;
-    obj->mdlId[mi] = Hu3DHookFuncCreate((HU3DMODELHOOK)fn_1_9F2C);
+    obj->mdlId[mi] = Hu3DHookFuncCreate(fn_1_9F2C);
     Hu3DModelLayerSet(obj->mdlId[mi], 2);
     Hu3DModelCameraSet(obj->mdlId[mi], 1);
 
@@ -915,53 +943,50 @@ void fn_1_A3C4(OMOBJ *obj)
  * cameras, the pivot (CenterM), the zoom (CZoomM) and the orbit angles
  * (CRotM), then converts the spherical orbit back to a cartesian eye
  * position.  The pad bit extractions and the double-precision trigonometry
- * are what the target does; the constants are lbl_1_rodata_10 (25, the zoom
+ * are what the target does; the constants are lbl_1_rodata_10 (5, the zoom
  * step), _18 (0.03125, the horizontal nudge), _20 (-32, the vertical nudge
  * divisor), _28/_30 (PI and 180).
  */
+#define M535_DEG(a) ((lbl_1_rodata_28 * (f64) (a)) / lbl_1_rodata_30)
+// NONMATCHING: pad/stick address recomputation and operand scheduling differ; logic equivalent
 void fn_1_A0(void)
 {
-    f32 cx;
-    f32 cy;
-    f32 cz;
     f32 rx;
     f32 ry;
-    f32 rz;
-    f32 dx;
-    f32 dy;
-    f32 dz;
-    f32 sp18;
-    f32 sp1C;
-    f32 sp20;
-    f32 sp24;
-    f32 sp28;
     f32 sp2C;
-    s32 i;
+    f32 sp28;
+    f32 sp24;
+    f32 sp20;
+    f32 sp1C;
+    f32 sp18;
+    f32 sp14;
+    f32 sp10;
+    f32 spC;
+    f32 sp8;
+    s16 i;
 
     for (i = 0; i < 2; i++) {
-        cx = CenterM[i].x + (f32) (lbl_1_rodata_10 * (f64) ((s32) ((HuPadBtn[0] & 2) != 0) - (s32) ((HuPadBtn[0] & 1) != 0)));
-        CenterM[i].x = cx;
-        cy = CenterM[i].y + (f32) (lbl_1_rodata_10 * (f64) ((s32) ((HuPadBtn[0] & 8) != 0) - (s32) ((HuPadBtn[0] & 4) != 0)));
-        CenterM[i].y = cy;
-        cz = CZoomM[i] + (f32) (lbl_1_rodata_10 * (f64) ((s32) ((HuPadBtn[0] & 0x400) != 0) - (s32) ((HuPadBtn[0] & 0x800) != 0)));
-        CZoomM[i] = cz;
-        ry = CRotM[i].y + (f32) ((f64) HuPadSubStkX[0] * lbl_1_rodata_18);
-        CRotM[i].y = ry;
-        rx = CRotM[i].x + (f32) ((f64) HuPadSubStkY[0] / lbl_1_rodata_20);
-        CRotM[i].x = rx;
-        rz = CRotM[i].z;
+        CenterM[i].x = (f32) ((f64) CenterM[i].x + lbl_1_rodata_10 * (f64) ((s32) ((HuPadBtn[0] & 2) != 0) - (s32) ((HuPadBtn[0] & 1) != 0)));
+        CenterM[i].y = (f32) ((f64) CenterM[i].y + lbl_1_rodata_10 * (f64) ((s32) ((HuPadBtn[0] & 8) != 0) - (s32) ((HuPadBtn[0] & 4) != 0)));
+        CZoomM[i] = (f32) ((f64) CZoomM[i] + lbl_1_rodata_10 * (f64) ((s32) ((HuPadBtn[0] & 0x400) != 0) - (s32) ((HuPadBtn[0] & 0x800) != 0)));
+        CRotM[i].y = (f32) ((f64) CRotM[i].y + (f64) HuPadSubStkX[0] * lbl_1_rodata_18);
+        CRotM[i].x = (f32) ((f64) CRotM[i].x + (f64) HuPadSubStkY[0] / lbl_1_rodata_20);
+        rx = CRotM[i].x;
+        ry = CRotM[i].y;
+        sp8 = CRotM[i].z;
 
-        /* spherical orbit back to a cartesian eye position; the target keeps
-         * these in stack slots rather than in a named struct */
-        dx = CenterM[i].x + (cz * (f32) ((f64) sin(((lbl_1_rodata_28 * (f64) ry) / lbl_1_rodata_30)) * (f64) cos(((lbl_1_rodata_28 * (f64) rx) / lbl_1_rodata_30))));
-        dz = CenterM[i].y + (cz * (f32) -((f64) sin(((lbl_1_rodata_28 * (f64) rx) / lbl_1_rodata_30))));
-        dy = CenterM[i].z + (cz * (f32) ((f64) cos(((lbl_1_rodata_28 * (f64) rx) / lbl_1_rodata_30)) * (f64) cos(((lbl_1_rodata_28 * (f64) ry) / lbl_1_rodata_30))));
-        sp24 = dx;
-        sp28 = dz;
-        sp2C = dy;
+        /* spherical orbit back to a cartesian eye position, plus the
+         * direction vector; the target keeps these in stack slots and never
+         * hands them on */
+        sp24 = (f32) ((f64) CenterM[i].x + (f64) CZoomM[i] * (sin(M535_DEG(ry)) * cos(M535_DEG(rx))));
+        sp28 = (f32) ((f64) CenterM[i].y + (f64) CZoomM[i] * -sin(M535_DEG(rx)));
+        sp2C = (f32) ((f64) CenterM[i].z + (f64) CZoomM[i] * (cos(M535_DEG(ry)) * cos(M535_DEG(rx))));
         sp18 = CenterM[i].x;
         sp1C = CenterM[i].y;
         sp20 = CenterM[i].z;
+        spC = (f32) (sin(M535_DEG(ry)) * sin(M535_DEG(rx)));
+        sp10 = (f32) cos(M535_DEG(rx));
+        sp14 = (f32) (cos(M535_DEG(ry)) * sin(M535_DEG(rx)));
     }
 }
 /* the 54 capsule slots laid out back to back, 0x38 bytes each */
@@ -980,6 +1005,7 @@ void fn_1_A0(void)
  * already-placed one" guard, and writes the resulting permutation into
  * lbl_1_bss_81B8.  arg0 is the lane-set index, arg1 the column spread.
  */
+// NONMATCHING: locals init order (original calls rand8 before the table copies) and loop register layout; logic equivalent
 void fn_1_2F2C(s32 arg0, s32 arg1)
 {
     /* per-lane-set remaining counts the target block-copies from rodata */
@@ -1013,7 +1039,6 @@ void fn_1_2F2C(s32 arg0, s32 arg1)
     s32 zr;
     s32 xr2;
     s32 zr2;
-    s32 side;
     s32 tmp;
     /* per-lane-set remaining counts the target block-copies from rodata */
     s32 perm[3][3][12] = {
@@ -1045,8 +1070,6 @@ void fn_1_2F2C(s32 arg0, s32 arg1)
             grid[a][g] = -1;
         }
     }
-
-    pos = rand8() % 3;
 
     for (i = 0; i < 12; i++) {
         for (;;) {
@@ -1138,21 +1161,21 @@ void fn_1_2F2C(s32 arg0, s32 arg1)
         }
     }
 
-    side = arg1 >= 0 ? arg1 : -arg1;
     for (i = 0; i < 0x36; i++) {
         grade = M535_SLOT_S32(i, 0x28);
         M535_SLOT_S32(i, 0x1C + arg0 * 4) = order[grade];
-        a = M535_SLOT_S32(i, 0x30 + side * 4);
+        a = M535_SLOT_S32(i, 0x30 + (arg1 % 2) * 4);
         if (a != -1) {
             Hu3DAnimKill((s16) a);
         }
-        M535_SLOT_S32(i, 0x30 + side * 4) = (s32)(s16) Hu3DAnimCreate(
+        M535_SLOT_S32(i, 0x30 + (arg1 % 2) * 4) = (s32)(s16) Hu3DAnimCreate(
             lbl_1_bss_8210[order[grade]], lbl_1_bss_8268->mdlId[i + 0x15],
-            side == 0 ? lbl_1_data_B4 : lbl_1_data_BF);
+            (arg1 % 2) == 0 ? lbl_1_data_B4 : lbl_1_data_BF);
     }
 }
 
 
+// NONMATCHING: constant load scheduling; logic equivalent
 void fn_1_88F0(void)
 {
     GXColor spC;
@@ -1169,16 +1192,16 @@ void fn_1_88F0(void)
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXCOORD0, GX_COLOR0A0);
-    GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_SPEC);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_NONE);
     GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_RASC);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_RASA);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_SET);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
     GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -1188,6 +1211,12 @@ void fn_1_88F0(void)
     for (i = 0; i < 0x40; i++) {
         cA = (s32) (lbl_1_rodata_890 * cos(lbl_1_rodata_28 * (360.0f * ((f32) i * lbl_1_rodata_770)) / lbl_1_rodata_30) + lbl_1_rodata_888);
         cB = (s32) (lbl_1_rodata_890 * cos(lbl_1_rodata_28 * (2.0f * (360.0f * ((f32) i * lbl_1_rodata_770))) / lbl_1_rodata_30) + lbl_1_rodata_888);
+#ifdef TARGET_PC
+        GXPosition3f32(lbl_1_rodata_13C, (f32) i / lbl_1_rodata_89C, lbl_1_rodata_13C);
+        GXColor4u8(0, (u8) cB, (u8) cA, 0xFF);
+        GXPosition3f32(lbl_1_rodata_8A0, (f32) i / lbl_1_rodata_89C, lbl_1_rodata_13C);
+        GXColor4u8(0, (u8) cB, (u8) cA, 0xFF);
+#else
         *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
         *(f32 *) (uintptr_t) 0xCC008000 = (f32) i / lbl_1_rodata_89C;
         *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
@@ -1202,9 +1231,16 @@ void fn_1_88F0(void)
         *(u8 *) (uintptr_t) 0xCC008000 = (u8) cB;
         *(u8 *) (uintptr_t) 0xCC008000 = (u8) cA;
         *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
+#endif
     }
     /* the strip needs 130 vertices and the loop only produced 128, so the
      * closing row repeats the last colour pair at index 64 */
+#ifdef TARGET_PC
+    GXPosition3f32(lbl_1_rodata_13C, (f32) i / lbl_1_rodata_89C, lbl_1_rodata_13C);
+    GXColor4u8(0, (u8) cB, (u8) cA, 0xFF);
+    GXPosition3f32(lbl_1_rodata_8A0, (f32) i / lbl_1_rodata_89C, lbl_1_rodata_13C);
+    GXColor4u8(0, (u8) cB, (u8) cA, 0xFF);
+#else
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
     *(f32 *) (uintptr_t) 0xCC008000 = (f32) i / lbl_1_rodata_89C;
     *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
@@ -1219,16 +1255,18 @@ void fn_1_88F0(void)
     *(u8 *) (uintptr_t) 0xCC008000 = (u8) cB;
     *(u8 *) (uintptr_t) 0xCC008000 = (u8) cA;
     *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
+#endif
     GXSetCopyFilter(GX_FALSE, RenderMode->sample_pattern, GX_FALSE, RenderMode->vfilter);
     GXSetTexCopySrc(0, 0, 0x40, 0x40);
     GXSetTexCopyDst(0x40, 0x40, GX_CTF_GB8, GX_FALSE);
-    GXSetCopyClear(spC, 0xFFFF);
+    GXSetCopyClear(spC, 0xFFFFFF);
     GXCopyTex(lbl_1_bss_81D0, GX_TRUE);
     DCFlushRange(lbl_1_bss_81D0, lbl_1_bss_81D4);
     GXPixModeSync();
     GXSetCopyFilter(RenderMode->aa, RenderMode->sample_pattern, GX_TRUE, RenderMode->vfilter);
 }
 
+// NONMATCHING: stack-table copy order and constant load scheduling; logic equivalent
 void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx)
 {
     f32 sp24 = lbl_1_rodata_178;
@@ -1254,16 +1292,16 @@ void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx)
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXCOORD0, GX_COLOR0A0);
-    GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_SPEC);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_NONE);
     GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_TEXC, GX_CC_HALF, GX_CC_A0, GX_CC_ZERO);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_TEXC, GX_CC_ONE, GX_CC_A0, GX_CC_ZERO);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_KONST);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_SET);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -1271,7 +1309,7 @@ void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx)
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     sp10.a = (u8) lbl_1_bss_14;
     spC = sp10;
-    GXSetTevColor(GX_TEVREG1, spC);
+    GXSetTevColor(GX_TEVREG0, spC);
     if (lbl_1_bss_8260 >= 0x3EE) {
         espId = lbl_1_bss_24;
     }
@@ -1282,7 +1320,7 @@ void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx)
                  GX_CLAMP, GX_CLAMP, GX_LINEAR);
     GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX1, GX_TEX_ST, GX_F32, 0);
-    GXInitTexObj(&lbl_1_bss_90[1], lbl_1_bss_81D0, 0x40, 0x40, 3, GX_REPEAT, GX_REPEAT, GX_TRUE);
+    GXInitTexObj(&lbl_1_bss_90[1], lbl_1_bss_81D0, 0x40, 0x40, 3, GX_REPEAT, GX_REPEAT, GX_FALSE);
     GXLoadTexObj(&lbl_1_bss_90[1], GX_TEXMAP1);
     GXInitTexObjLOD(&lbl_1_bss_90[1], GX_LINEAR, GX_LINEAR, lbl_1_rodata_13C, lbl_1_rodata_13C,
                     lbl_1_rodata_13C, GX_FALSE, GX_FALSE, GX_ANISO_1);
@@ -1292,10 +1330,10 @@ void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx)
     GXSetNumIndStages(1);
     GXSetIndTexOrder(GX_INDTEXSTAGE0, GX_TEXCOORD1, GX_TEXMAP1);
     GXSetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_1, GX_ITS_1);
-    GXSetIndTexMtx(GX_ITM_1, sp28.m, 0);
-    GXSetTevIndWarp(GX_TEVSTAGE0, GX_INDTEXSTAGE0, GX_TRUE, GX_FALSE, GX_ITM_1);
+    GXSetIndTexMtx(GX_ITM_0, sp28.m, 0);
+    GXSetTevIndWarp(GX_TEVSTAGE0, GX_INDTEXSTAGE0, GX_TRUE, GX_FALSE, GX_ITM_0);
     GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, 0xE);
-    for (i = 0; i < 0xD; i++) {
+    for (i = 0; i < 0xE; i++) {
         f32 px;
         f32 pz;
         f32 tA;
@@ -1304,28 +1342,41 @@ void fn_1_8FD8(HU3DMODEL *modelP, Mtx *mtx)
         j = (i == 0) ? 0 : 0xD - (i - 1);
         pz = ring.v[j].z;
         px = ring.v[j].x;
+#ifdef TARGET_PC
+        GXPosition3f32(px, lbl_1_rodata_13C, pz);
+#else
         *(f32 *) (uintptr_t) 0xCC008000 = px;
         *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
         *(f32 *) (uintptr_t) 0xCC008000 = pz;
+#endif
         tA = lbl_1_rodata_218 + (ring.v[j].z / lbl_1_rodata_194) * lbl_1_rodata_218
             + zScale * (lbl_1_bss_28 * lbl_1_rodata_938 + zBias);
         tB = lbl_1_rodata_218 + (ring.v[j].x / lbl_1_rodata_194) * lbl_1_rodata_218
-            + lbl_1_rodata_93C * zScale * (lbl_1_bss_28 * lbl_1_rodata_938 + zBias);
+            + zScale * (lbl_1_bss_28 * lbl_1_rodata_938 + zBias) * lbl_1_rodata_93C;
+#ifdef TARGET_PC
+        GXTexCoord2f32(tB, tA);
+#else
         *(f32 *) (uintptr_t) 0xCC008000 = tB;
         *(f32 *) (uintptr_t) 0xCC008000 = tA;
+#endif
         /* the second texture set carries the same displacements a quarter of
          * the way back so the two lookups straddle the parallax offset */
         tA = lbl_1_rodata_218 + (ring.v[j].z / lbl_1_rodata_194) * lbl_1_rodata_218
             + zScale * (lbl_1_bss_28 * lbl_1_rodata_938 + zBias);
         tB = lbl_1_rodata_218 + (ring.v[j].x / lbl_1_rodata_194) * lbl_1_rodata_218
-            + lbl_1_rodata_93C * zScale * (lbl_1_bss_28 * lbl_1_rodata_938 + zBias);
+            + zScale * (lbl_1_bss_28 * lbl_1_rodata_938 + zBias) * lbl_1_rodata_93C;
+#ifdef TARGET_PC
+        GXTexCoord2f32(tB, tA);
+#else
         *(f32 *) (uintptr_t) 0xCC008000 = tB;
         *(f32 *) (uintptr_t) 0xCC008000 = tA;
+#endif
     }
     GXSetNumIndStages(0);
     GXSetTevDirect(GX_TEVSTAGE0);
 }
 
+// NONMATCHING: alpha byte extracted once instead of per vertex; logic equivalent
 void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
 {
     Mtx spA8;
@@ -1352,7 +1403,7 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
     f32 az3;
 
     for (camNo = 0; camNo < 0x10; camNo++) {
-        if ((modelP->cameraBit & (u16) (1 << camNo)) != 0) {
+        if ((modelP->cameraBit & (1 << camNo)) != 0) {
             break;
         }
     }
@@ -1365,16 +1416,16 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXCOORD0, GX_COLOR0A0);
-    GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_SPEC);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_CLAMP, GX_AF_NONE);
     GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASA, GX_CC_ZERO);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_KONST);
-    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ONE, GX_LO_SET);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_ONE, GX_BL_ONE, GX_LO_NOOP);
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
@@ -1402,6 +1453,11 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
             az0 = pos.z + sp18.v[0].z * sc;
             ay0 = pos.y + sp18.v[0].y * sc;
             ax0 = pos.x + sp18.v[0].x * sc;
+#ifdef TARGET_PC
+            GXPosition3f32(ax0, ay0, az0);
+            GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+            GXTexCoord2f32(lbl_1_rodata_13C, lbl_1_rodata_13C);
+#else
             *(f32 *) (uintptr_t) 0xCC008000 = ax0;
             *(f32 *) (uintptr_t) 0xCC008000 = ay0;
             *(f32 *) (uintptr_t) 0xCC008000 = az0;
@@ -1411,9 +1467,15 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
             *(u8 *) (uintptr_t) 0xCC008000 = alpha;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
+#endif
             az0 = pos.z + sp18.v[1].z * sc;
             ay0 = pos.y + sp18.v[1].y * sc;
             ax0 = pos.x + sp18.v[1].x * sc;
+#ifdef TARGET_PC
+            GXPosition3f32(ax0, ay0, az0);
+            GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+            GXTexCoord2f32(lbl_1_rodata_178, lbl_1_rodata_13C);
+#else
             *(f32 *) (uintptr_t) 0xCC008000 = ax0;
             *(f32 *) (uintptr_t) 0xCC008000 = ay0;
             *(f32 *) (uintptr_t) 0xCC008000 = az0;
@@ -1423,9 +1485,15 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
             *(u8 *) (uintptr_t) 0xCC008000 = alpha;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_178;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
+#endif
             az0 = pos.z + sp18.v[2].z * sc;
             ay0 = pos.y + sp18.v[2].y * sc;
             ax0 = pos.x + sp18.v[2].x * sc;
+#ifdef TARGET_PC
+            GXPosition3f32(ax0, ay0, az0);
+            GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+            GXTexCoord2f32(lbl_1_rodata_178, lbl_1_rodata_178);
+#else
             *(f32 *) (uintptr_t) 0xCC008000 = ax0;
             *(f32 *) (uintptr_t) 0xCC008000 = ay0;
             *(f32 *) (uintptr_t) 0xCC008000 = az0;
@@ -1435,9 +1503,15 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
             *(u8 *) (uintptr_t) 0xCC008000 = alpha;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_178;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_178;
+#endif
             az0 = pos.z + sp18.v[3].z * sc;
             ay0 = pos.y + sp18.v[3].y * sc;
             ax0 = pos.x + sp18.v[3].x * sc;
+#ifdef TARGET_PC
+            GXPosition3f32(ax0, ay0, az0);
+            GXColor4u8(0xFF, 0xFF, 0xFF, alpha);
+            GXTexCoord2f32(lbl_1_rodata_13C, lbl_1_rodata_178);
+#else
             *(f32 *) (uintptr_t) 0xCC008000 = ax0;
             *(f32 *) (uintptr_t) 0xCC008000 = ay0;
             *(f32 *) (uintptr_t) 0xCC008000 = az0;
@@ -1447,6 +1521,7 @@ void fn_1_9830(HU3DMODEL *modelP, Mtx *mtx)
             *(u8 *) (uintptr_t) 0xCC008000 = alpha;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_13C;
             *(f32 *) (uintptr_t) 0xCC008000 = lbl_1_rodata_178;
+#endif
             GXPixModeSync();
         }
     }
@@ -1470,6 +1545,7 @@ static const M535F20TBL lbl_1_rodata_EC = {
      0.0f, 0.0f, 5.0f, -3.0f, 0.0f, 5.0f, 0.0f, -8.0f, 0.0f, 9.0f}
 };
 
+// NONMATCHING: zero Vec table copied from rodata in the original, scheduling of constant loads; logic equivalent
 void fn_1_69C(OMOBJ *obj)
 {
     M535WORK *work = (M535WORK *) obj->data;
@@ -1539,7 +1615,7 @@ void fn_1_69C(OMOBJ *obj)
 
                     delay = 60.0f * (rateA.v[work->unk14]
                                      + ((rateA.v[work->unk14 + 4] * (f32) rand8()) / 255.0f));
-                    work->unk54.i = (s32) (600.0f - ((f32) (u32) (r24 > 0) * delay));
+                    work->unk54.i = (s32) (600.0f - ((f32) (r24 > 0) * delay));
                     work->unk5C = lbl_1_bss_81B8[rand8() % (3 - lbl_1_bss_1C)];
                     if (lbl_1_bss_8254 >= work->unk54.i) {
                         work->unk64 = 1;
@@ -1570,7 +1646,7 @@ void fn_1_69C(OMOBJ *obj)
                     if (lbl_1_bss_8254 < work->unk54.i) {
                         if (work->unk64 != 2) {
                             work->unk54.i = (s32) ((f32) lbl_1_bss_8254
-                                - ((f32) (u32) (r24 > 0) * (60.0f * (rateC.v[work->unk14]
+                                - ((f32) (r24 > 0) * (60.0f * (rateC.v[work->unk14]
                                     + ((rateC.v[work->unk14 + 4] * (f32) rand8()) / 255.0f)))));
                         }
                         for (j = 0; j < 0x20; j++) {
@@ -1911,6 +1987,7 @@ s32 lbl_1_bss_4170[0x1000];
 
 extern f32 Hu3DMotionMaxTimeGet(HU3DMODELID id);
 
+// NONMATCHING: constant tables built as literals and the original dead i%64,i/64 temporaries omitted; logic equivalent
 void fn_1_39A8(OMOBJ *obj)
 {
     M535WORK *capWork[4];
@@ -2190,10 +2267,11 @@ u8 lbl_1_data_44[4] = {0, 1, 1, 1};
 u8 lbl_1_data_48[4] = {0x14, 0x26, 8, 8};
 s32 lbl_1_data_4C[4];
 s32 lbl_1_data_C15C[4];
-char lbl_1_data_C16C[] = "*** main mode error(%d)!\n";
+char lbl_1_data_C16C[] = "*** main mode error(%d)!!\n";
 
 #define M535_MDL(n) (lbl_1_bss_8268->mdlId[(n)])
 
+// NONMATCHING: constant-load scheduling, hoisted attr constant and double-vs-float 0.5 literal loads; logic equivalent
 void fn_1_53F8(OMOBJ *obj)
 {
     M535WORK *capWork[4];
@@ -2395,12 +2473,12 @@ void fn_1_53F8(OMOBJ *obj)
             lbl_1_data_C15C[k] = 1;
             capWork[k]->unk40 = 1;
             y = capWork[k]->unk44;
-            vy = 14.4f;
-            capWork[k]->unk48 = 14.4f;
+            vy = 14.400001f;
+            capWork[k]->unk48 = 14.400001f;
             capWork[k]->unk4C = 0;
             while (y > 61.0f || vy >= 0.0f) {
                 y += vy;
-                vy -= 0.9f;
+                vy -= 0.90000004f;
                 capWork[k]->unk4C += 1;
             }
             Hu3DModelAttrReset(M535_MDL(k + 0xD), 1);
@@ -2415,7 +2493,7 @@ void fn_1_53F8(OMOBJ *obj)
                 t = (f32) capWork[i]->unk40 / (f32) capWork[i]->unk4C;
                 u = 1.0f - t;
                 if (t <= 1.0f) {
-                    if (t < 0.45f) {
+                    if (t < 0.45) {
                         scl = t / 0.45f;
                     }
                     else {
@@ -2436,7 +2514,7 @@ void fn_1_53F8(OMOBJ *obj)
                         capWork[i]->unk44 = 61.0f;
                         omVibrate((s16) capWork[i]->unk04, 0xC, 6, 6);
                     }
-                    capWork[i]->unk48 -= 0.9f;
+                    capWork[i]->unk48 -= 0.90000004f;
                     nz = (f32) ((f64) ((-68.0f * u) + (t * capWork[i]->unk2C))
                                 - ((f64) scl * (10.0 * sin((3.141592653589793 * (f64) (-600.0f * u)) / 180.0))));
                     Hu3DModelPosSet(M535_MDL(i + 0xD), t * capWork[i]->unk28,
