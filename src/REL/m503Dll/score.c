@@ -147,8 +147,7 @@ void fn_1_D4CC(OMOBJ *obj)
     SCORE_WORK *work = obj->data;
 
     switch (work->state) {
-    case 0:
-    case 2:
+    case 0: /* asm: state >= 2 branches straight to the value update (no second fade-in) */
         if (fn_1_1AE0() != 2) {
             break;
         }
@@ -214,11 +213,12 @@ s32 fn_1_D778(s32 playerNo)
     return work->player[playerNo].score;
 }
 
+/* values from the original object (score.s .data 0x640) */
 const SCORE_POS lbl_1_data_640[GW_PLAYER_MAX] = {
-    { 53.0f, 108.0f },
-    { 143.0f, 108.0f },
-    { 397.0f, 108.0f },
-    { 544.0f, 108.0f },
+    { 55.0f, 59.0f },
+    { 175.0f, 59.0f },
+    { 401.0f, 59.0f },
+    { 521.0f, 59.0f },
 };
 
 const u32 lbl_1_data_660[15] = {
@@ -234,7 +234,7 @@ const u32 lbl_1_data_660[15] = {
 
 const f32 lbl_1_rodata_640 = 3.0f;
 
-const f32 lbl_1_rodata_644 = 0.0f;
+const f32 lbl_1_rodata_644 = -21.0f; /* original: -21 (the character icon sits left of the digits) */
 
 const f32 lbl_1_rodata_648 = 0.0f;
 
