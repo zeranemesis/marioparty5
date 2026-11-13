@@ -8,9 +8,9 @@ float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 // .data:0x0 (absolute 0x110) - 4 x HuVecF
 M510_VECF lbl_1_data_110[4] = {
     { 0.0f, 0.0f, 0.0f },
-    { 0.0f, 0.0f, 300.0f },
-    { 0.0f, 0.0f, 600.0f },
-    { 0.0f, 0.0f, 850.0f },
+    { 300.0f, 0.0f, 0.0f }, /* original .data: the lanes run along x (0x43960000 at +0x0C) */
+    { 600.0f, 0.0f, 0.0f },
+    { 900.0f, 0.0f, 0.0f },
 };
 
 void fn_1_3A64(M510_PLAYER_WORK *work, s16 playerNo, M510_OBJ *obj)
