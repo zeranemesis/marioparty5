@@ -4,73 +4,83 @@
 #include "humath.h"
 #include "game/mg/actman.h"
 
-/* One 0x1C-byte model record reached through stage->model[].  The unit stores
-   the freshly-created Hu3DModel id at 0x00 and the spawn transform just after
-   it, so the id shares the record with a HuVecF pair. */
-typedef struct M551Model_s {
-    s16 mdlId;           /* 0x00 */
-    s16 charNo;          /* 0x02 */
-    f32 posX;            /* 0x04 */
-    f32 posY;            /* 0x08 */
-    f32 posZ;            /* 0x0C */
-    f32 rotX;            /* 0x10 */
-    f32 rotY;            /* 0x14 */
-    f32 rotZ;            /* 0x18 */
-} M551_MODEL;
+/* per-character input slot, 0x1C bytes */
+typedef struct M551CharSlot_s {
+    s16 playerNo;
+    s16 charNo;
+    s16 cpuLevel;
+    s16 padNo;
+    s32 btn;
+    s32 btnDown;
+    s8 stkX;
+    u16 btnRep;
+    s8 stkY;
+    s8 subStkX;
+    s8 subStkY;
+    u8 trigL;
+    u8 trigR;
+    u8 dstk;
+    u8 dstkRep;
+} M551CharSlot;
 
-/* One 0x54-byte per-model work record at stage->work[].  Only the fields the
-   animation and shadow code touches are named. */
-typedef struct M551ModelWork_s {
-    s16 motNo;           /* 0x00 */
-    s16 pad0;            /* 0x02 */
-    f32 speed;           /* 0x04 */
-    f32 pad1;            /* 0x08 */
-    f32 tpLvl;           /* 0x0C */
-    s32 pad2[2];         /* 0x10 */
-    s32 attr;            /* 0x18 */
-    s32 pad3;            /* 0x1C */
-    s32 shadowAttr;      /* 0x20 */
-    s32 pad4;            /* 0x24 */
-    s32 pad5[4];         /* 0x28 */
-    s16 state;           /* 0x38 */
-    s16 timer;           /* 0x3A */
-    s32 pad6;            /* 0x3C */
-    f32 pad7;            /* 0x40 */
-    f32 pad8;            /* 0x44 */
-    s32 pad9[3];         /* 0x48 */
-} M551_MODELWORK;
+/* one entry (0x1C bytes) of the stage model table (lbl_1_bss_16D94) */
+typedef struct M551StageModel_s {
+    s16 id;
+    s16 pad_02;
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 rotX;
+    f32 rotY;
+    f32 rotZ;
+} M551StageModel;
 
-/* Per-player entry of the stage descriptor at offsets 0x04 and 0x20. */
-typedef struct M551StagePlayer_s {
-    s16 playerNo;        /* 0x00 */
-    s16 charNo;          /* 0x02 */
-    s16 hookNo;          /* 0x04 */
-    s16 pad0[0x0B];      /* 0x06 */
-} M551_STAGEPLAYER;
+/* per-character animation slot, 0x54 bytes */
+typedef struct M551StageSlot_s {
+    s16 motion;
+    s16 id;
+    f32 speed;
+    f32 curSpeed;
+    f32 time;
+    f32 curTime;
+    f32 maxTime;
+    u32 attrSet;
+    u32 attrCur;
+    u32 attrReset;
+    s32 endFlag;
+    s16 endReq;
+    s16 endMotion;
+    f32 endTime;
+    u32 endAttrSet;
+    u32 endAttrReset;
+    s16 shiftState;
+    s16 shiftMotion;
+    u32 shiftAttr;
+    f32 shiftStart;
+    f32 shiftEnd;
+    f32 shiftCur;
+    f32 shiftMax;
+    u8 pad_50[4];
+} M551StageSlot;
 
-/* The stage descriptor reached through lbl_1_bss_17A00. */
-typedef struct M551Stage_s {
-    s16 pad0[2];         /* 0x00 */
-    M551_STAGEPLAYER player[2]; /* 0x04, 0x1C stride */
-    s32 pad1[1];         /* 0x3C */
-    f32 camX;            /* 0x40 */
-    f32 camY;            /* 0x44 */
-    f32 camZ;            /* 0x48 */
-    f32 camW;            /* 0x4C */
-    s32 pad2[2];         /* 0x50 */
-    M551_MODEL *model;   /* 0x58 */
-    s32 pad3[6];         /* 0x5C */
-    M551_MODELWORK work[2]; /* 0x74, 0x54 stride */
-    s16 clearNo[2];      /* 0x11C */
-    s16 pad4[0x28];      /* 0x120 */
-    s32 *modelDataNums;  /* 0x170 */
-    s16 pad5[2];         /* 0x174 */
-    s32 flag;            /* 0x178 */
-    s32 pad6[0xCF];      /* 0x17C */
-    HuVecF wall;         /* 0x4B8 */
-    s32 pad7;            /* 0x4C4 */
-    s32 pad8[0x3F8];     /* 0x4C8 */
-} M551_STAGE;
+/* stage state block (lbl_1_bss_176A8, 0x2E8 bytes on GC) */
+typedef struct M551State_s {
+    u8 pad_00[4];
+    M551CharSlot chars[2];
+    u8 pad_3C[0x1C];
+    M551StageModel *models;
+    s32 *motionData[2];
+    u8 pad_64[4];
+    s16 *motionIds[2];
+    u8 pad_70[4];
+    M551StageSlot slots[2];
+    u8 pad_11C[0x54];
+    s32 *dataNums;
+    s16 field_174;
+    u8 pad_176[2];
+    s32 field_178;
+    u8 pad_17C[0x16C];
+} M551State;
 
 /* One 0x30-byte item slot in lbl_1_bss_16844. */
 typedef struct M551Item_s {
@@ -242,6 +252,5 @@ extern s16 lbl_1_bss_176A8[0x174];
 extern M551_ITEMMODEL lbl_1_bss_179A0[0xC];
 extern s32 lbl_1_bss_17998;
 extern s16 lbl_1_bss_1799C;
-extern M551_STAGE *lbl_1_bss_17A00[2];
 
 #endif
