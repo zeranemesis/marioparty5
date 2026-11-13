@@ -398,7 +398,7 @@ s32 fn_1_FB2C(void);
 s16 fn_1_FD64(void);
 void fn_1_103D8(s16 player);
 s16 fn_1_10E20(void);
-void fn_1_119EC(void);
+s16 fn_1_119EC(void);
 void fn_1_11DFC(s16 player);
 void fn_1_12CAC(s16 player);
 void fn_1_12E04(void);
