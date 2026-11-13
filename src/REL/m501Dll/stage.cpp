@@ -92,6 +92,7 @@ void CStage::setAisuMotion()
     }
 }
 
+// NONMATCHING: pi/180 literal is 1 ulp off the original constant
 void CStage::on_update()
 {
     s32 expired = 0;

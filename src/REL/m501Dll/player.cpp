@@ -300,6 +300,7 @@ void CPlayer::UpdateAll()
     }
 }
 
+// NONMATCHING: the original keeps a dead 'timer expired' flag in a register; same behaviour
 void CPlayer::UpdatePlayer(CPlayer *p)
 {
     Vec rot;
@@ -851,6 +852,7 @@ s32 CPlayer::movePlayer(Vec *dir)
     return 1;
 }
 
+// NONMATCHING: original inlines sqrtf (frsqrte) and the Sqr temporaries; same arithmetic
 void CPlayer::GetStickData(char *x, char *y, char min, char max)
 {
     f32 fx = (f32)(s8)*x;
@@ -874,6 +876,7 @@ void CPlayer::GetStickData(char *x, char *y, char min, char max)
     }
 }
 
+// NONMATCHING: the original inlines GetStickData(min 0, max 28) here; same arithmetic
 void CPlayer::getMoveDir(Vec *dir)
 {
     m_moveMag = 0.0f;
@@ -946,6 +949,7 @@ extern "C" s32 fn_1_F588(std::vector<int> *ids, Vec *pos)
 
 extern "C" void fn_1_FBAC(CPlayer *self, std::vector<int> *ids);
 
+// NONMATCHING: vector destructor and NearestAisu inlining/stack layout differ, same logic
 void CPlayer::getComMoveDir(Vec *dir)
 {
     Vec cur;

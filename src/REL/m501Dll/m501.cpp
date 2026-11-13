@@ -824,6 +824,7 @@ void CMinigameCore::ObjUpdate(omObj_s *obj)
     core->update();
 }
 
+// NONMATCHING: the original keeps a dead 'delay expired' flag; same behaviour
 void CMinigameCore::update()
 {
     on_update();

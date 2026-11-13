@@ -258,6 +258,7 @@ void CGameMaster::on_close()
     CGameObject::Close();
 }
 
+// NONMATCHING: the original has no singleton assertion here
 CModel *CGameMaster::GetConeModel()
 {
     if (CMinigameCore::instance != 0) {
@@ -268,6 +269,7 @@ CModel *CGameMaster::GetConeModel()
     return &master->m_cone;
 }
 
+// NONMATCHING: the original has no singleton assertion here
 CModel *CGameMaster::GetAisuModel()
 {
     if (CMinigameCore::instance != 0) {
