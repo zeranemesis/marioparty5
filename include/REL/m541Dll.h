@@ -267,7 +267,7 @@ extern M541_STAGE *lbl_1_bss_3730;
 /* G1: layout of lbl_1_bss_45C (0x21B8 bytes), only the fields fn_1_2AD4 touches are named; others replace pads keeping offsets */
 typedef struct M541G1Work45C_s {
     s16 simTimer;           /* 0x0000, G6 */
-    s16 pad2;               /* 0x0002 */
+    s16 count;              /* 0x0002, frame counter (G2: fn_1_5E48) */
     s16 simState;           /* 0x0004, G6 */
     s16 simCount;           /* 0x0006, G6: number of simulated leaves */
     float simSpeed;         /* 0x0008, G6 */
