@@ -58,12 +58,22 @@ typedef struct M549Char_s {
     s16 s28;        /* 0x28 */
     HuVecF pos;     /* 0x2C */
     HuVecF prevPos; /* 0x38 */
-    f32 f44;        /* 0x44 */
-    f32 f48;
-    f32 f4C;        /* 0x4C */
-    f32 f50;
-    f32 f54;
-    f32 f58;
+    union {
+        HuVecF move;    /* 0x44 */
+        struct {
+            f32 f44;
+            f32 f48;
+            f32 f4C;
+        };
+    };
+    union {
+        HuVecF moveSave; /* 0x50 */
+        struct {
+            f32 f50;
+            f32 f54;
+            f32 f58;
+        };
+    };
     s16 s5C;        /* 0x5C */
     s16 s60;        /* 0x60 */
     s16 s62;        /* 0x62 */

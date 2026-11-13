@@ -174,14 +174,14 @@ s32 fn_1_4EE0(M549State *state)
 
 s32 fn_1_4FFC(void)
 {
-    s16 ret;
+    s32 ret = 0;
     s32 i;
 
     for (i = 0; i < 2; i++) {
         lbl_1_bss_15F4->chars[i].btn = 0;
         lbl_1_bss_15F4->chars[i].btnDown = 0;
     }
-    ret = fn_1_A18C();
+    ret = (s16)fn_1_A18C();
     fn_1_762C(0);
     fn_1_762C(1);
     fn_1_8570();
@@ -193,6 +193,7 @@ s32 fn_1_4FFC(void)
 
 s32 fn_1_50A4(void)
 {
+    s32 ret = 0;
     s32 i;
 
     lbl_1_bss_580.mode = 0;
@@ -209,7 +210,7 @@ s32 fn_1_50A4(void)
     fn_1_98F0();
     fn_1_ADDC();
     fn_1_5CD4();
-    return 0;
+    return ret;
 }
 
 s32 fn_1_5184(void)
@@ -217,9 +218,8 @@ s32 fn_1_5184(void)
     HuVecF pos;
     s16 unused;
     s16 i;
-    s16 playerNo;
+    s32 playerNo;
     s32 ret;
-    s16 j;
 
     ret = 0;
     unused = 0;
@@ -257,26 +257,38 @@ s32 fn_1_5184(void)
             ret = 1;
             break;
     }
-    for (j = 0; j < 2; j++) {
-        if (lbl_1_bss_3B0[j].s28 != 0) {
-            MgPlayerPadSet(lbl_1_bss_0.player[j], 0, 0, 0, 0);
+    for (i = 0; i < 2; i++) {
+        if (lbl_1_bss_3B0[i].s28 != 0) {
+            MgPlayerPadSet(lbl_1_bss_0.player[i], 0, 0, 0, 0);
         }
     }
     MgActorPosGet(lbl_1_bss_0.player[0]->actor, &pos);
-    lbl_1_bss_3B0[0].prevPos = pos;
+    lbl_1_bss_3B0[0].prevPos.x = pos.x;
+    lbl_1_bss_3B0[0].prevPos.y = pos.y;
+    lbl_1_bss_3B0[0].prevPos.z = pos.z;
     MgActorPosGet(lbl_1_bss_0.player[1]->actor, &pos);
-    lbl_1_bss_3B0[1].prevPos = pos;
+    lbl_1_bss_3B0[1].prevPos.x = pos.x;
+    lbl_1_bss_3B0[1].prevPos.y = pos.y;
+    lbl_1_bss_3B0[1].prevPos.z = pos.z;
     MgActorExec();
     MgActorPosGet(lbl_1_bss_0.player[0]->actor, &pos);
-    lbl_1_bss_3B0[0].pos = pos;
+    lbl_1_bss_3B0[0].pos.x = pos.x;
+    lbl_1_bss_3B0[0].pos.y = pos.y;
+    lbl_1_bss_3B0[0].pos.z = pos.z;
     MgActorPosGet(lbl_1_bss_0.player[1]->actor, &pos);
-    lbl_1_bss_3B0[1].pos = pos;
+    lbl_1_bss_3B0[1].pos.x = pos.x;
+    lbl_1_bss_3B0[1].pos.y = pos.y;
+    lbl_1_bss_3B0[1].pos.z = pos.z;
     fn_1_8570();
     fn_1_98F0();
     fn_1_ADDC();
-    pos = lbl_1_bss_3B0[0].pos;
+    pos.x = lbl_1_bss_3B0[0].pos.x;
+    pos.y = lbl_1_bss_3B0[0].pos.y;
+    pos.z = lbl_1_bss_3B0[0].pos.z;
     MgActorPosUpdate(lbl_1_bss_0.player[0]->actor, &pos);
-    pos = lbl_1_bss_3B0[1].pos;
+    pos.x = lbl_1_bss_3B0[1].pos.x;
+    pos.y = lbl_1_bss_3B0[1].pos.y;
+    pos.z = lbl_1_bss_3B0[1].pos.z;
     MgActorPosUpdate(lbl_1_bss_0.player[1]->actor, &pos);
     fn_1_9DBC();
     fn_1_5CD4();
@@ -285,6 +297,8 @@ s32 fn_1_5184(void)
 
 s32 fn_1_569C(void)
 {
+    s32 ret = 0;
+
     lbl_1_bss_580.mode = 0;
     lbl_1_bss_580.s02 = 0;
     lbl_1_bss_580.s04 = 0;
@@ -299,14 +313,14 @@ s32 fn_1_569C(void)
     MgPlayerPadSet(lbl_1_bss_0.player[1], 0, 0, 0, 0);
     MgActorExec();
     fn_1_5CD4();
-    return 0;
+    return ret;
 }
 
 s32 fn_1_5788(void)
 {
-    s16 ret;
+    s32 ret = 0;
 
-    ret = fn_1_A898();
+    ret = (s16)fn_1_A898();
     fn_1_762C(0);
     fn_1_762C(1);
     fn_1_8570();
@@ -318,6 +332,7 @@ s32 fn_1_5788(void)
 s32 fn_1_57D8(void)
 {
     M549StageSlot *slot;
+    s32 ret = 0;
 
     if (lbl_1_bss_15F4->doneFlag == 0) {
         if (lbl_1_bss_580.s24 != 0) {
@@ -354,23 +369,27 @@ s32 fn_1_57D8(void)
     if (lbl_1_bss_580.s24 != 0) {
         CharModelVoicePanSet(lbl_1_bss_15F4->chars[lbl_1_bss_580.s24 & 1].charNo, 64);
     }
-    return 0;
+    return ret;
 }
 
 s32 fn_1_5A00(void)
 {
+    s32 ret = 1;
+
     fn_1_762C(0);
     fn_1_762C(1);
     fn_1_5CD4();
-    return 1;
+    return ret;
 }
 
 s32 fn_1_5A40(void)
 {
+    s32 ret = 1;
+
     fn_1_3B54();
     MgActorKill(lbl_1_bss_0.player[0]->actor);
     MgActorKill(lbl_1_bss_0.player[1]->actor);
-    return 1;
+    return ret;
 }
 
 void fn_1_5A98(void)
@@ -378,6 +397,8 @@ void fn_1_5A98(void)
     HU3DMODEL *model0;
     HU3DMODEL *model1;
     s16 i;
+    s32 pan;
+    f32 panF;
 
     model0 = &Hu3DData[lbl_1_bss_15F4->models[68].id];
     model1 = &Hu3DData[lbl_1_bss_15F4->models[69].id];
@@ -387,8 +408,12 @@ void fn_1_5A98(void)
         Hu3DModelRotSet(lbl_1_bss_15F4->models[i].id, lbl_1_bss_15F4->models[i].rotX,
             lbl_1_bss_15F4->models[i].rotY, lbl_1_bss_15F4->models[i].rotZ);
     }
-    CharModelVoicePanSet(lbl_1_bss_15F4->chars[0].charNo, 64.0f + 0.053333335f * model0->pos.x);
-    CharModelVoicePanSet(lbl_1_bss_15F4->chars[1].charNo, 64.0f + 0.053333335f * model1->pos.x);
+    panF = 0.053333335f * model0->pos.x;
+    pan = 64.0f + panF;
+    CharModelVoicePanSet(lbl_1_bss_15F4->chars[0].charNo, pan);
+    panF = 0.053333335f * model1->pos.x;
+    pan = 64.0f + panF;
+    CharModelVoicePanSet(lbl_1_bss_15F4->chars[1].charNo, pan);
 }
 
 void fn_1_5CD4(void)
@@ -396,6 +421,8 @@ void fn_1_5CD4(void)
     HU3DMODEL *model0;
     HU3DMODEL *model1;
     s16 i;
+    s32 pan;
+    f32 panF;
 
     fontcolor = 0;
     Hu3DModelCameraSet(lbl_1_bss_15F4->models[51].id, 2);
@@ -412,8 +439,12 @@ void fn_1_5CD4(void)
         Hu3DModelRotSet(lbl_1_bss_15F4->models[i].id, lbl_1_bss_15F4->models[i].rotX,
             lbl_1_bss_15F4->models[i].rotY, lbl_1_bss_15F4->models[i].rotZ);
     }
-    CharModelVoicePanSet(lbl_1_bss_15F4->chars[0].charNo, 64.0f + 0.053333335f * model0->pos.x);
-    CharModelVoicePanSet(lbl_1_bss_15F4->chars[1].charNo, 64.0f + 0.053333335f * model1->pos.x);
+    panF = 0.053333335f * model0->pos.x;
+    pan = 64.0f + panF;
+    CharModelVoicePanSet(lbl_1_bss_15F4->chars[0].charNo, pan);
+    panF = 0.053333335f * model1->pos.x;
+    pan = 64.0f + panF;
+    CharModelVoicePanSet(lbl_1_bss_15F4->chars[1].charNo, pan);
     fn_1_97C(0);
     fn_1_97C(1);
     fn_1_1124();
@@ -426,18 +457,26 @@ s16 fn_1_6048(s16 player)
     s16 modelNo;
     s16 lvl;
     s16 pitch;
+    s16 ret;
+    s32 pan;
+    f32 time;
+    f32 panF;
 
     slot = &lbl_1_bss_15F4->slots[player];
+    ret = 0;
     modelNo = player + 3;
     switch (lbl_1_bss_3B0[player].state) {
         case 0:
             if (lbl_1_bss_580.s22 == 0) {
-                if (Hu3DMotionTimeGet(lbl_1_bss_15F4->models[modelNo].id) == 0.0f
+                time = Hu3DMotionTimeGet(lbl_1_bss_15F4->models[modelNo].id);
+                if (time == 0.0f
                     && (lbl_1_bss_15F4->chars[player].btnDown & 0x100) != 0 && lbl_1_bss_3B0[player].s12 == 0) {
                     Hu3DModelAttrReset(lbl_1_bss_15F4->models[modelNo].id, HU3D_MOTATTR_REV);
                     Hu3DMotionTimeSet(lbl_1_bss_15F4->models[modelNo].id, 0.0f);
                     Hu3DMotionSpeedSet(lbl_1_bss_15F4->models[modelNo].id, 0.24166666f);
-                    fn_1_3754(player, 0x7F, 64.0f + 0.026666667f * lbl_1_bss_15F4->models[player + 68].x);
+                    panF = 0.026666667f * lbl_1_bss_15F4->models[player + 68].x;
+                    pan = 64.0f + panF;
+                    fn_1_3754(player, 0x7F, pan);
                     fn_1_38A4(player, -0x1F40);
                     lbl_1_bss_3B0[player].s5C = 1;
                     lbl_1_bss_3B0[player].state++;
@@ -454,8 +493,10 @@ s16 fn_1_6048(s16 player)
                     } else {
                         Hu3DMotionSpeedSet(lbl_1_bss_15F4->models[modelNo].id, 0.24166666f);
                     }
+                    panF = 0.026666667f * lbl_1_bss_3B0[player].pos.x;
+                    pan = 64.0f + panF;
+                    fn_1_3814(player, pan);
                     pitch = lbl_1_bss_3B0[player].s5C * 0x85 - 0x1F40;
-                    fn_1_3814(player, 64.0f + 0.026666667f * lbl_1_bss_3B0[player].pos.x);
                     fn_1_38A4(player, pitch);
                 } else {
                     Hu3DModelAttrSet(lbl_1_bss_15F4->models[modelNo].id, HU3D_MOTATTR_REV);
@@ -480,7 +521,10 @@ s16 fn_1_6048(s16 player)
                             lvl = 2;
                             break;
                     }
-                    fn_1_3754(lvl + 2, 0x7F, 64.0f + 0.026666667f * lbl_1_bss_3B0[player].pos.x);
+                    lvl += 2;
+                    panF = 0.026666667f * lbl_1_bss_3B0[player].pos.x;
+                    pan = 64.0f + panF;
+                    fn_1_3754(lvl, 0x7F, pan);
                     fn_1_39C4(player);
                     lbl_1_bss_3B0[player].s12 = 10;
                     lbl_1_bss_3B0[player].s5C = 0;
@@ -513,14 +557,19 @@ s16 fn_1_6048(s16 player)
             lbl_1_bss_3B0[player].state = 0;
             break;
     }
-    return 0;
+    ret = 0;
+    return ret;
 }
 
 s16 fn_1_67E0(s16 player)
 {
     M549StageSlot *slot;
+    s32 pan;
+    f32 panF;
     f32 speed;
     f32 diff;
+    f32 angle;
+    f32 rotY;
     s16 ret;
     s16 modelNo;
     s16 motion;
@@ -534,7 +583,9 @@ s16 fn_1_67E0(s16 player)
             speed = 2.5f + 2.5f * lbl_1_bss_3B0[player].s68;
             lbl_1_bss_3B0[player].f44 = speed * sin((3.141592653589793 * lbl_1_bss_3B0[player].f64) / 180.0);
             lbl_1_bss_3B0[player].f4C = speed * cos((3.141592653589793 * lbl_1_bss_3B0[player].f64) / 180.0);
-            diff = lbl_1_bss_3B0[player].f64 - lbl_1_bss_0.player[player]->actor->rotY;
+            angle = lbl_1_bss_3B0[player].f64;
+            rotY = lbl_1_bss_0.player[player]->actor->rotY;
+            diff = angle - rotY;
             if (diff >= -90.0f && diff <= 90.0f) {
                 motion = 8;
             } else {
@@ -583,7 +634,9 @@ s16 fn_1_67E0(s16 player)
                     vol = 0x7F;
                     break;
             }
-            fn_1_3754(8, vol, 64.0f + 0.026666667f * lbl_1_bss_3B0[player].pos.x);
+            panF = 0.026666667f * lbl_1_bss_3B0[player].pos.x;
+            pan = 64.0f + panF;
+            fn_1_3754(8, vol, pan);
             lbl_1_bss_3B0[player].s0A = 0;
             lbl_1_bss_3B0[player].state2++;
         case 1:
@@ -597,9 +650,7 @@ s16 fn_1_67E0(s16 player)
             lbl_1_bss_3B0[player].pos.z += lbl_1_bss_3B0[player].f4C;
             MgActorPosUpdate(lbl_1_bss_0.player[player]->actor, &lbl_1_bss_3B0[player].pos);
             if (slot->endFlag != 0) {
-                lbl_1_bss_3B0[player].f50 = lbl_1_bss_3B0[player].f44;
-                lbl_1_bss_3B0[player].f54 = lbl_1_bss_3B0[player].f48;
-                lbl_1_bss_3B0[player].f58 = lbl_1_bss_3B0[player].f4C;
+                lbl_1_bss_3B0[player].moveSave = lbl_1_bss_3B0[player].move;
                 lbl_1_bss_3B0[player].f44 = 0.0f;
                 lbl_1_bss_3B0[player].f4C = 0.0f;
                 slot->motion = 9;
@@ -634,7 +685,9 @@ s16 fn_1_67E0(s16 player)
     }
     if (lbl_1_bss_3B0[player].state == 1) {
         if ((lbl_1_bss_15F4->chars[player].btn & 0x100) != 0) {
-            fn_1_3814(player, 64.0f + 0.026666667f * lbl_1_bss_3B0[player].pos.x);
+            panF = 0.026666667f * lbl_1_bss_3B0[player].pos.x;
+            pan = 64.0f + panF;
+            fn_1_3814(player, pan);
         } else {
             fn_1_39C4(player);
             Hu3DModelAttrSet(lbl_1_bss_15F4->models[modelNo].id, HU3D_MOTATTR_REV);
@@ -654,12 +707,16 @@ s16 fn_1_71B4(s16 player)
     HU3DMODEL *modelP;
     M549StageSlot *slot;
     s16 pan;
+    s16 ret;
+    f32 panF;
 
     modelP = &Hu3DData[lbl_1_bss_15F4->models[player + 68].id];
     slot = &lbl_1_bss_15F4->slots[player];
+    ret = 0;
     switch (lbl_1_bss_3B0[player].state3) {
         case 0:
-            pan = 64.0f + 0.026666667f * lbl_1_bss_3B0[player].pos.x;
+            panF = 0.026666667f * lbl_1_bss_3B0[player].pos.x;
+            pan = 64.0f + panF;
             if (pan > 0x50) {
                 pan = 0x50;
             } else if (pan < 0x30) {
@@ -704,5 +761,5 @@ s16 fn_1_71B4(s16 player)
         case 4:
             break;
     }
-    return 0;
+    return ret;
 }
