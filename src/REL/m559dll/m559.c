@@ -2376,14 +2376,14 @@ loop_2:
     }
 }
 static void fn_1_6AB0(M559VERTS *a, f32 *b, s16 c, f32 range, f32 e) {
-    a->unk0 = (f32) *(b + (c * 8));
-    a->unk4 = (f32) *(b + ((c * 8) + 4));
-    a->unk8 = (f32) (range + *(b + (c * 8)));
-    a->unkC = (f32) *(b + ((c * 8) + 4));
-    a->unk10 = (f32) (range + *(b + (c * 8)));
-    a->unk14 = (f32) (e + *(b + ((c * 8) + 4)));
-    a->unk18 = (f32) *(b + (c * 8));
-    a->unk1C = (f32) (e + *(b + ((c * 8) + 4)));
+    a->unk0 = (f32) b[c * 2];
+    a->unk4 = (f32) b[c * 2 + 1];
+    a->unk8 = (f32) (range + b[c * 2]);
+    a->unkC = (f32) b[c * 2 + 1];
+    a->unk10 = (f32) (range + b[c * 2]);
+    a->unk14 = (f32) (e + b[c * 2 + 1]);
+    a->unk18 = (f32) b[c * 2];
+    a->unk1C = (f32) (e + b[c * 2 + 1]);
 }
 void fn_1_6B54(HU3DMODEL *model, f32 (*mtx)[4]) {
     f32 sp130[12];
