@@ -319,7 +319,7 @@ void M506ObjInit(M506_FLOW_WORK *flow)
 
     flow->mode = 0;
     flow->unk120 = 0.0f;
-    flow->work = 0;
+    flow->p1SubState = 0; /* asm: stb 0x5c (the decomp cleared the work pointer at 0x04) */
     flow->shadowScrollState = 0;
     flow->rocketType = 0;
     flow->gameMesId = -1;
