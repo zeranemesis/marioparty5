@@ -462,7 +462,7 @@ s32 fn_1_E0A4(void);
 void fn_1_11B7C(s16 arg0);
 s32 fn_1_11BF8(s16 arg0);
 void fn_1_A884(void);
-void fn_1_E930(M541_PLAYERWORK *work);
+void fn_1_E930(void);
 
 /* ---- G6 (game.s fn_1_11710..fn_1_12F40) ---- */
 void fn_1_11710(s16 idx);
@@ -473,5 +473,11 @@ void fn_1_12F40(void);
 void fn_1_14EB0(s16 idx);
 void fn_1_187F8(void);
 void fn_1_194B4(void);
+
+/* ---- G5 (game.s fn_1_DDCC..fn_1_E930) ---- */
+s32 fn_1_DDCC(void);
+int fn_1_E900(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b);
+void fn_1_E91C(COLBODY *body, void *user);
+s32 fn_1_A9B8(s16 idx, s16 mode, float a, float b);
 
 #endif
