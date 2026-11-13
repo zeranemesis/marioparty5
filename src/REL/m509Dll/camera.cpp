@@ -52,6 +52,7 @@ static inline void SetPosV(Vec *pos, Vec *up, Vec *target)
     Hu3DCameraPosSetV(1, pos, up, target);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_DEEC(Camera *self)
 {
     Vec up;
@@ -96,6 +97,7 @@ void *fn_1_E114(Camera *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 CamRet fn_1_E1A0(Vec *pos)
 {
     static f64 farDist = 45.0;
@@ -124,6 +126,7 @@ CamRet fn_1_E1A0(Vec *pos)
     return r;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 CamRet fn_1_E4B4(Vec *pos)
 {
     Vec scr;
@@ -143,6 +146,7 @@ CamRet fn_1_E4B4(Vec *pos)
     return r;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_E560(Camera *self)
 {
     Vec *pos = &self->pos;
@@ -157,6 +161,7 @@ void fn_1_E560(Camera *self)
     SetPosV(pos, &self->up, target);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_E6E0(Camera *self)
 {
     M509Ptmf p = lbl_1_data_3408;
@@ -164,6 +169,7 @@ void fn_1_E6E0(Camera *self)
     self->update = p;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_E724(Camera *self)
 {
     f32 t;
@@ -183,6 +189,7 @@ void fn_1_E724(Camera *self)
     self->frame = self->frame + 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_E86C(Camera *self)
 {
     M509Ptmf p;
@@ -195,6 +202,7 @@ void fn_1_E86C(Camera *self)
     SetPosV(&self->pos, &self->up, &self->target);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_E928(Camera *self, s32 bit)
 {
     switch (bit) {
@@ -217,6 +225,7 @@ void fn_1_E928(Camera *self, s32 bit)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_EA00(Camera *self)
 {
 #ifdef TARGET_PC

@@ -153,6 +153,7 @@ XX_RODATA const Vec lbl_1_rodata_400 = { 0.0f, 125.0f, 0.0f };
 #define PLAYER_CALL_STATE(p_) __ptmf_scall()
 #endif
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_EB14(PlayerMgr *self)
 {
     s16 m;
@@ -203,6 +204,7 @@ void fn_1_ED28(void)
 {
 }
 
+// NONMATCHING: the flag clear is nor+and instead of andc and the empty `bit < 5` test compiles to a branchless compare
 void fn_1_ED2C(PlayerMgr *self, s32 bit)
 {
     self->base.flags &= ~(1 << bit);
@@ -233,6 +235,7 @@ void *fn_1_ED54(PlayerMgr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 f32 fn_1_EE38(f32 a, f32 b)
 {
     s32 sa = (s32)(182.04444444444445 * a);
@@ -245,6 +248,7 @@ f32 fn_1_EE38(f32 a, f32 b)
     return 0.0054931640625 * w2;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 f32 fn_1_EEF0(f32 a, f32 b, f32 limit)
 {
     f32 d;
@@ -264,6 +268,7 @@ f32 fn_1_EEF0(f32 a, f32 b, f32 limit)
     return ret;
 }
 
+// NONMATCHING: -1540/-1100 are loaded as negated literals instead of fneg of the positive constants
 void fn_1_F054(Vec *out, s32 idx)
 {
     f32 x = 1540.0f;
@@ -286,6 +291,7 @@ void fn_1_F054(Vec *out, s32 idx)
     out->z = z;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_F0F4(void)
 {
     Player *p;
@@ -313,6 +319,7 @@ void fn_1_F0F4(void)
     }
 }
 
+// NONMATCHING: corner position uses negated literals instead of fneg; frame layout differs; otherwise identical stores
 void *fn_1_F1FC(Player *self, s32 idx)
 {
     M509Ptmf tmp;
@@ -365,6 +372,7 @@ void *fn_1_F1FC(Player *self, s32 idx)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_F568(PlayerVec *vec, s16 flag)
 {
     s16 **pa;
@@ -385,6 +393,7 @@ void *fn_1_F568(PlayerVec *vec, s16 flag)
     return vec;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_F5FC(PlayerVec *vec, s16 flag)
 {
     s16 **pa;
@@ -445,6 +454,7 @@ s16 fn_1_F764(Player *self, s32 dataNum)
     return id;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_F7E0(void)
 {
     PlayerNode *first;
@@ -460,6 +470,7 @@ void fn_1_F7E0(void)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_F864(void)
 {
     Player *p;
@@ -485,6 +496,7 @@ s32 fn_1_F864(void)
     return 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_F924(void)
 {
     Player *p;
@@ -505,6 +517,7 @@ void fn_1_F924(void)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_FA3C(void)
 {
     PlayerNode *first = lbl_1_bss_A4.next;
@@ -519,6 +532,7 @@ void fn_1_FA3C(void)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_FAA0(Player *self)
 {
     Vec target;
@@ -556,6 +570,7 @@ void fn_1_FAA0(Player *self)
     self->speed = 0.0f;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u8 fn_1_FDB0(void)
 {
     Player *p;
@@ -598,6 +613,7 @@ void fn_1_FF30(Player *self)
     fn_1_10608(self, 4, 1);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_FF60(void)
 {
     Player *p;
@@ -617,6 +633,7 @@ void fn_1_FF60(void)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_FFFC(Vec *out)
 {
     Player *p;
@@ -667,6 +684,7 @@ void fn_1_FFFC(Vec *out)
     out->y = h;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_101E4(Player *self)
 {
     Vec rot;
@@ -687,6 +705,7 @@ void fn_1_101E4(Player *self)
     CharModelVoiceVolSet(self->charNo, fn_1_E1A0(&self->pos));
 }
 
+// NONMATCHING: 1.05f * -0.5f is folded to one constant here, the original does fneg + fmuls
 void fn_1_102D4(Player *self)
 {
     Player *other;
@@ -733,6 +752,7 @@ void fn_1_102D4(Player *self)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_10608(Player *self, s32 motion, u8 flag)
 {
     s16 model = self->model;
@@ -752,6 +772,7 @@ void fn_1_10608(Player *self, s32 motion, u8 flag)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_106C8(Player *self, u8 on)
 {
     s16 model = self->model;
@@ -771,6 +792,7 @@ void fn_1_106C8(Player *self, u8 on)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_10774(Player *self)
 {
     M509Ptmf tmp;
@@ -786,6 +808,7 @@ void fn_1_10774(Player *self)
     self->state = tmp;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_10850(Player *self)
 {
     Vec move;
@@ -817,11 +840,13 @@ void fn_1_10850(Player *self)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_10B34(Player *self)
 {
     fn_1_10608(self, 3, 1);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u8 fn_1_10BD4(Player *self, Vec *dir)
 {
     Vec fwd;
@@ -851,6 +876,7 @@ u8 fn_1_10BD4(Player *self, Vec *dir)
     return 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_10F78(Player *self, f32 x, f32 z)
 {
     s32 changed = 0;
@@ -863,6 +889,7 @@ s32 fn_1_10F78(Player *self, f32 x, f32 z)
     return changed;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u8 fn_1_11020(Player *self)
 {
     u8 walls;
@@ -891,6 +918,7 @@ u8 fn_1_11020(Player *self)
     return walls;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u8 fn_1_111C8(f32 x, f32 z)
 {
     f32 fx;
@@ -919,6 +947,7 @@ u8 fn_1_111C8(f32 x, f32 z)
     return ret;
 }
 
+// NONMATCHING: fn_1_10F78/11020/111C8 are inlined differently; same checks in the same order
 void fn_1_11394(Player *self, Vec *out)
 {
     f32 fx;
@@ -1035,6 +1064,7 @@ void fn_1_11D1C(Player *self)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_11EA8(Player *self)
 {
     f32 fx;
@@ -1078,6 +1108,7 @@ void fn_1_11EA8(Player *self)
     fn_1_BD44(lbl_1_bss_34, (u8)self->charNo, self->pos.x, self->pos.z);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_123E4(Player *self, s32 i, s32 j, f32 ox, f32 oz, f32 fx, f32 fz)
 {
     f32 dx;
@@ -1093,6 +1124,7 @@ void fn_1_123E4(Player *self, s32 i, s32 j, f32 ox, f32 oz, f32 fx, f32 fz)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s16 *fn_1_126CC(PlayerVec *vec, u32 idx)
 {
     if (idx >= vec->size) {
@@ -1102,6 +1134,7 @@ s16 *fn_1_126CC(PlayerVec *vec, u32 idx)
     return vec->data + idx;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_12744(PlayerNode *head, void (*fn)(Player *))
 {
     PlayerNode *h = head;
@@ -1111,6 +1144,7 @@ void fn_1_12744(PlayerNode *head, void (*fn)(Player *))
     fn_1_127A4(first2, h, fn);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_127A4(PlayerNode *first, PlayerNode *end, void (*fn)(Player *))
 {
     PlayerNode *node = first;
@@ -1123,6 +1157,7 @@ void fn_1_127A4(PlayerNode *first, PlayerNode *end, void (*fn)(Player *))
     }
 }
 
+// NONMATCHING: vector element copy loads with lha, the original uses lhz (value is only copied)
 void fn_1_12804(PlayerVec *vec, s16 *pos, u32 n, s16 *val)
 {
     s16 *src = val;
@@ -1232,6 +1267,7 @@ void fn_1_12804(PlayerVec *vec, s16 *pos, u32 n, s16 *val)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_12BB4(PlayerVec *vec, u32 n)
 {
     u32 maxSize;
@@ -1269,6 +1305,7 @@ void fn_1_12BB4(PlayerVec *vec, u32 n)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_12CDC(void)
 {
     lbl_1_bss_88 = 0x78;

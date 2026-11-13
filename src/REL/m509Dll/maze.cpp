@@ -97,6 +97,7 @@ extern "C" XX_RODATA const u8 lbl_1_rodata_20A[6] = { 0, 2, 1, 3, 4, 5 };
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT); \
     GXSetLineWidth(6, GX_TO_ZERO)
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_5A7C(Maze *self)
 {
     s32 i;
@@ -191,6 +192,7 @@ void *fn_1_5D8C(Maze *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_5E68(Maze *self, s32 bit)
 {
     self->base.flags &= ~(1 << bit);
@@ -204,6 +206,7 @@ void fn_1_5E68(Maze *self, s32 bit)
     self->sfx = -1;
 }
 
+// NONMATCHING: the phase switch is a compare chain, the original uses a jump table; same cases
 void fn_1_5EDC(Maze *self)
 {
     s32 i;
@@ -320,6 +323,7 @@ void fn_1_63D8(Maze *self)
 
 #define MAZE_W(i_, j_) (self->cell[i_][j_].wall)
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_6524(Maze *self, s32 dir, s32 i, s32 j)
 {
     if (j <= 0) {
@@ -355,6 +359,7 @@ s32 fn_1_6524(Maze *self, s32 dir, s32 i, s32 j)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_666C(Maze *self, s32 dir, s32 i, s32 j)
 {
     if (j >= 10) {
@@ -390,6 +395,7 @@ s32 fn_1_666C(Maze *self, s32 dir, s32 i, s32 j)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_67BC(Maze *self, s32 dir, s32 i, s32 j)
 {
     if (i <= 0) {
@@ -425,6 +431,7 @@ s32 fn_1_67BC(Maze *self, s32 dir, s32 i, s32 j)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_6904(Maze *self, s32 dir, s32 i, s32 j)
 {
     if (i >= 14) {
@@ -461,6 +468,7 @@ s32 fn_1_6904(Maze *self, s32 dir, s32 i, s32 j)
     }
 }
 
+// NONMATCHING: the original inlines the wall tests of fn_1_6524/666C/67BC/6904 (same tests, same order)
 void fn_1_6A58(Maze *self)
 {
     s32 k;
@@ -572,6 +580,7 @@ void fn_1_7244(Maze *self, s32 step)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_73A4(Maze *self, s8 param)
 {
     if (self->busy == 0) {
@@ -581,6 +590,7 @@ void fn_1_73A4(Maze *self, s8 param)
     }
 }
 
+// NONMATCHING: bit masks use clrlwi/andi. instead of rlwinm; same masks on a u8
 void fn_1_73C8(Maze *self, s32 val, s32 i, s32 j)
 {
     if (i < 0 || i >= 15 || j < 0 || j >= 11) {
@@ -593,6 +603,7 @@ void fn_1_73C8(Maze *self, s32 val, s32 i, s32 j)
     self->cell[i][j].fade = 0;
 }
 
+// NONMATCHING: subfic/addi forms instead of li+subf/add, andi./clrlwi masks; same arithmetic
 void fn_1_7484(Maze *self)
 {
     s32 r;
@@ -613,6 +624,7 @@ void fn_1_7484(Maze *self)
     self->busyTimer++;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_785C(HU3DMODEL *model, Mtx *mtx)
 {
     Maze *self;
@@ -624,6 +636,7 @@ void fn_1_785C(HU3DMODEL *model, Mtx *mtx)
     fn_1_AEAC(self2, mtx);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_78AC(HU3DMODEL *model, Mtx *mtx)
 {
     Maze *self;
@@ -635,6 +648,7 @@ void fn_1_78AC(HU3DMODEL *model, Mtx *mtx)
     fn_1_AEF8(self2, mtx);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_78FC(Maze *self, s32 i, s32 j)
 {
     Vec v[5];
@@ -699,6 +713,7 @@ void fn_1_78FC(Maze *self, s32 i, s32 j)
     GXEnd();
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_8094(Maze *self, s32 i, s32 j)
 {
     Vec v[5];
@@ -788,6 +803,7 @@ void fn_1_8828(Maze *self)
     }
 }
 
+// NONMATCHING: the original hoists the 280/170/7 vertex constants into registers
 void fn_1_89C0(Maze *self, s32 i, s32 j)
 {
     f32 x0;
@@ -834,6 +850,7 @@ void fn_1_89C0(Maze *self, s32 i, s32 j)
     GXEnd();
 }
 
+// NONMATCHING: the original hoists the 280/170/7 vertex constants into registers
 void fn_1_8F80(Maze *self, s32 i, s32 j)
 {
     f32 x0;
@@ -904,6 +921,7 @@ void fn_1_9540(Maze *self)
     }
 }
 
+// NONMATCHING: constant loads are scheduled differently around the GXBegin vertex stream
 void fn_1_96E8(Maze *self, u8 r, u8 g, u8 b, u8 a, f32 x, f32 z)
 {
     f32 px[8];
@@ -998,6 +1016,7 @@ void fn_1_96E8(Maze *self, u8 r, u8 g, u8 b, u8 a, f32 x, f32 z)
     GXEnd();
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_A100(Maze *self)
 {
     s32 i;
@@ -1028,6 +1047,7 @@ void fn_1_A100(Maze *self)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_A3C0(Maze *self, u8 type, f32 x, f32 z)
 {
     s32 t;
@@ -1050,6 +1070,7 @@ void fn_1_A3C0(Maze *self, u8 type, f32 x, f32 z)
     GXEnd();
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_A6EC(Maze *self)
 {
     s32 i;
@@ -1070,6 +1091,7 @@ void fn_1_A6EC(Maze *self)
     }
 }
 
+// NONMATCHING: the zero colour components are kept in a register by the original (value 0)
 void fn_1_ABC4(Maze *self, s32 alpha)
 {
     if (alpha > 0) {
@@ -1100,6 +1122,7 @@ void fn_1_AEAC(Maze *self, Mtx *mtx)
     }
 }
 
+// NONMATCHING: the zero colour components are kept in a register by the original (value 0)
 void fn_1_AEF8(Maze *self, Mtx *mtx)
 {
     self->seed = self->seedSaved;
@@ -1113,6 +1136,7 @@ void fn_1_AEF8(Maze *self, Mtx *mtx)
     fn_1_9540(self);
 }
 
+// NONMATCHING: wall bit merge uses clrlwi/andi. instead of rlwinm; same masks on a u8
 void fn_1_B524(Maze *self)
 {
     s32 i;
@@ -1138,6 +1162,7 @@ void fn_1_B524(Maze *self)
     }
 }
 
+// NONMATCHING: wall bit merge uses clrlwi/andi. instead of rlwinm; same masks on a u8
 void fn_1_B6C8(Maze *self)
 {
     s32 i;
@@ -1163,6 +1188,7 @@ void fn_1_B6C8(Maze *self)
     }
 }
 
+// NONMATCHING: wall bit merge uses clrlwi/andi. instead of rlwinm; same masks on a u8
 void fn_1_B86C(Maze *self, u8 *src, s32 flags)
 {
     s32 i;
@@ -1194,6 +1220,7 @@ void fn_1_B86C(Maze *self, u8 *src, s32 flags)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 f32 fn_1_BCAC(Maze *self)
 {
     self->seed = self->seed * 0x41C64E6D + 0x4D2;
@@ -1253,6 +1280,7 @@ u8 fn_1_BEE8(Maze *self, f32 x, f32 z)
     return ret;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_C000(Maze *self, f32 x, f32 z)
 {
     f32 fx;
@@ -1288,6 +1316,7 @@ s32 fn_1_C000(Maze *self, f32 x, f32 z)
     return ret > 0;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_C224(void *unused, s32 idx)
 {
     Maze *maze;

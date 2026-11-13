@@ -115,6 +115,7 @@ void *fn_1_CC04(StartSpr *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_CD08(StartSpr *self)
 {
     s16 j;
@@ -149,6 +150,7 @@ void fn_1_CD08(StartSpr *self)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_CE80(StartSpr *self, s32 bit)
 {
     self->flags &= ~(1 << bit);

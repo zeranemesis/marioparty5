@@ -40,6 +40,7 @@ void *lbl_1_data_33A4[5] = { 0, 0, (void *)fn_1_DC8C, (void *)fn_1_DC64, (void *
 void *lbl_1_data_33B8[6] = { 0, 0, (void *)fn_1_DD18, (void *)fn_1_D950, (void *)fn_1_D004, 0 };
 
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_CED0(Back *self)
 {
     s32 i;
@@ -75,6 +76,7 @@ void fn_1_D004(Back *self)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_D05C(Back *self, BackItem *item)
 {
     f32 px;
@@ -158,6 +160,7 @@ void fn_1_D4B0(Back *self, BackItem *item)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_D5A8(BackItem *item)
 {
     Vec scale;
@@ -180,12 +183,14 @@ void fn_1_D5A8(BackItem *item)
     fn_1_3E1C(item->model, &item->pos);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_D704(Back *self, BackItem *item)
 {
     fn_1_D4B0(self, item);
     fn_1_D5A8(item);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_D950(Back *self, s32 bit)
 {
     self->base.flags &= ~(1 << bit);
@@ -200,6 +205,7 @@ void fn_1_D950(Back *self, s32 bit)
     self->mode = 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_D98C(BackSky *self)
 {
     s16 m;
@@ -226,6 +232,7 @@ void fn_1_DA70(BackSky *self)
     fn_1_DA98(self);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_DA98(BackSky *self)
 {
     Vec rot;
@@ -250,6 +257,7 @@ void fn_1_DA98(BackSky *self)
     fn_1_3E1C(&self->model, &self->pos);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_DC64(BackSky *self, s32 bit)
 {
     self->base.flags &= ~(1 << bit);

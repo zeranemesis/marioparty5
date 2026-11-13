@@ -257,6 +257,7 @@ void fn_1_0(const char *cond, const char *file, s32 line)
     OSPanic(lbl_1_data_1E, 0x12, buf);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 int fn_1_60(void *file, const char *fmt, ...)
 {
     va_list args;
@@ -264,6 +265,7 @@ int fn_1_60(void *file, const char *fmt, ...)
     return vprintf(fmt, args);
 }
 
+// NONMATCHING: assert branch is bne to the call here, the original is beq over a b
 void *fn_1_104(s32 size)
 {
     void *ptr = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
@@ -274,6 +276,7 @@ void *fn_1_104(s32 size)
     return ptr;
 }
 
+// NONMATCHING: assert branch is bne to the call here, the original is beq over a b
 void *fn_1_190(s32 size)
 {
     void *ptr = HuMemDirectMallocNum(HEAP_HEAP, size, 0x10000000);
@@ -298,6 +301,7 @@ void fn_1_254(void *ptr)
     }
 }
 
+// NONMATCHING: assert branch is bne to the call here, the original is beq over a b
 M509Thread *fn_1_28C(M509Thread *self, void *(*func)(void *), void *arg, u32 stackSize, s32 priority, u16 attr)
 {
     u32 words = stackSize >> 2;
@@ -307,6 +311,7 @@ M509Thread *fn_1_28C(M509Thread *self, void *(*func)(void *), void *arg, u32 sta
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 M509Thread *fn_1_370(M509Thread *self, void *(*func)(void *), void *arg, u32 *stack, u32 stackSize, s32 priority, u16 attr)
 {
     self->stack = 0;
@@ -314,6 +319,7 @@ M509Thread *fn_1_370(M509Thread *self, void *(*func)(void *), void *arg, u32 *st
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3EC(M509Thread *self, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 priority, u16 attr)
 {
     bool valid = false;
@@ -328,6 +334,7 @@ void fn_1_3EC(M509Thread *self, void *(*func)(void *), void *arg, u32 *stack, u3
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 M509Thread *fn_1_510(M509Thread *self, s16 flag)
 {
     if (self != 0) {
@@ -350,6 +357,7 @@ M509Thread *fn_1_510(M509Thread *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u32 fn_1_644(M509Thread *self)
 {
     u32 *base = (u32 *)self->th.stackEnd;
@@ -366,6 +374,7 @@ u32 fn_1_644(M509Thread *self)
     return (u32)(p - base) * 4;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_6E4(u32 *stack, s32 mode)
 {
     u32 *end = stack + 8;
@@ -405,6 +414,7 @@ void fn_1_7A4(void)
     OSGetThreadPriority(OSGetCurrentThread());
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_7C8(M509SubThread *self, u32 stackSize)
 {
     s32 priority;
@@ -421,6 +431,7 @@ void *fn_1_7C8(M509SubThread *self, u32 stackSize)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_9E8(M509SubThread *self, s16 flag)
 {
     if (self != 0) {
@@ -435,6 +446,7 @@ void *fn_1_9E8(M509SubThread *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u8 fn_1_BA4(M509SubThread *self)
 {
     OSThread *th = &self->thread.th;
@@ -442,6 +454,7 @@ u8 fn_1_BA4(M509SubThread *self)
     return (u8)terminated;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_BEC(M509SubThread *self, s32 arg)
 {
     int a = arg;
@@ -457,6 +470,7 @@ s32 fn_1_BEC(M509SubThread *self, s32 arg)
     return self->arg;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_CE8(M509SubThread *self, s32 arg)
 {
     M509_ASSERT(OSGetCurrentThread() == &self->thread.th, lbl_1_data_F7, lbl_1_data_E9, 0x47);
@@ -467,6 +481,7 @@ s32 fn_1_CE8(M509SubThread *self, s32 arg)
     return self->arg;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_DEC(void *p)
 {
     M509SubThread *self = (M509SubThread *)p;
@@ -520,6 +535,7 @@ void fn_1_F14(M509Node *node, M509Node *head)
     l->prev = node;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_F44(M509Node *from, M509Node *to)
 {
     bool empty = false;
@@ -562,6 +578,7 @@ void fn_1_FCC(M509Node *head, u8 (*cmp)(M509Node *, M509Node *))
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 M509Node *fn_1_1084(u8 (*cmp)(M509Node *, M509Node *), M509Node *list)
 {
     M509Node *second;
@@ -578,6 +595,7 @@ M509Node *fn_1_1084(u8 (*cmp)(M509Node *, M509Node *), M509Node *list)
     return fn_1_1780(cmp, list, second);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 M509Node *fn_1_172C(M509Node *list)
 {
     M509Node *slow = list;
@@ -599,6 +617,7 @@ M509Node *fn_1_172C(M509Node *list)
     return rest;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 M509Node *fn_1_1780(u8 (*cmp)(M509Node *, M509Node *), M509Node *a, M509Node *b)
 {
     M509Node *head;
@@ -623,6 +642,7 @@ M509Node *fn_1_1780(u8 (*cmp)(M509Node *, M509Node *), M509Node *a, M509Node *b)
     return head;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void CMT19937::setSeed(int seed)
 {
     m_state[0] = seed;
@@ -631,6 +651,7 @@ void CMT19937::setSeed(int seed)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_18A0(CMT19937 *self, u32 *key, u32 keyLen)
 {
     u32 i;
@@ -694,31 +715,37 @@ inline u32 CMT19937::gen()
     return y ^ (y >> 18);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u32 fn_1_1A64(CMT19937 *self)
 {
     return self->gen();
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 u32 CMT19937::irandom()
 {
     return gen() >> 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 f32 fn_1_1D88(CMT19937 *self)
 {
     return 2.3283064e-10f * (f32)self->gen();
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 f32 fn_1_1F4C(CMT19937 *self)
 {
     return 2.3283064e-10f * (f32)self->gen();
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 f32 fn_1_2110(CMT19937 *self)
 {
     return 2.3283064e-10f * (0.5f + (f32)self->gen());
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 double CMT19937::frandom()
 {
     u32 a = gen();
@@ -726,6 +753,7 @@ double CMT19937::frandom()
     return 1.1102230246251565e-16 * ((67108864.0 * (f64)(a >> 5)) + (f64)(b >> 6));
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 double CMT19937::randomMantissa()
 {
     return 1.1920929e-7f * (f32)(gen() >> 9);
@@ -766,6 +794,7 @@ void fn_1_29B4(void **self, OMOBJ *obj)
     obj->objFunc = fn_1_29D4;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_29D4(OMOBJ *obj)
 {
     void **self = (void **)obj->data;
@@ -776,6 +805,7 @@ void fn_1_2A20(void)
 {
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_2A24(OMOBJ *obj)
 {
     void **self = (void **)obj->data;
@@ -796,6 +826,7 @@ void **fn_1_2A94(void **self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_2AF4(HUPROCESS *proc, OMOBJ *obj)
 {
     void **self = (void **)obj->data;
@@ -831,6 +862,7 @@ void *fn_1_2C38(M509Core *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void *fn_1_2CF4(M509Core *self, s16 flag)
 {
     s32 i;
@@ -858,6 +890,7 @@ void *fn_1_2CF4(M509Core *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_2EB4(M509Core *self, s32 prio, s32 stackSize)
 {
     OMOBJMAN *objMan = omInitObjMan(prio, stackSize);
@@ -866,6 +899,7 @@ void fn_1_2EB4(M509Core *self, s32 prio, s32 stackSize)
     omAddObjEx(objMan, 0, 0, 0, -1, fn_1_2FA0);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_2F38(M509Core *self)
 {
     OMOBJMAN *objMan = MgActorObjectSetup();
@@ -873,6 +907,7 @@ void fn_1_2F38(M509Core *self)
     omAddObjEx(objMan, 0, 0, 0, -1, fn_1_2FA0);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_2FA0(OMOBJ *obj)
 {
     if (omSysExitReq != 0 && WipeCheckEnd() == 0) {
@@ -886,6 +921,7 @@ void fn_1_2FA0(OMOBJ *obj)
     fn_1_3030(core2);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3030(M509Core *self)
 {
     ((void (*)(M509Core *))self->vtbl[4])(self);
@@ -902,6 +938,7 @@ void fn_1_309C(void)
 {
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_30A0(OMOBJ *obj)
 {
     M509Core *core = lbl_1_bss_28;
@@ -919,6 +956,7 @@ void fn_1_30A0(OMOBJ *obj)
     omOvlReturnEx(1, 1);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_318C(s32 player)
 {
     s32 i;
@@ -933,6 +971,7 @@ void fn_1_318C(s32 player)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_3260(s32 player)
 {
     s32 i;
@@ -946,6 +985,7 @@ s32 fn_1_3260(s32 player)
     return 0;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3334(void)
 {
     M509_ASSERT(lbl_1_bss_28 != 0, lbl_1_data_157, lbl_1_data_13B, 0x27);
@@ -954,6 +994,7 @@ void fn_1_3334(void)
     core2->gameMes = GameMesCreate(2, 0);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_33EC(void)
 {
     M509_ASSERT(lbl_1_bss_28 != 0, lbl_1_data_157, lbl_1_data_13B, 0x27);
@@ -962,6 +1003,7 @@ void fn_1_33EC(void)
     core2->gameMes = GameMesCreate(2, 1);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_34A4(void)
 {
     M509_ASSERT(lbl_1_bss_28 != 0, lbl_1_data_157, lbl_1_data_13B, 0x27);
@@ -973,6 +1015,7 @@ s32 fn_1_34A4(void)
     return done;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3578(void)
 {
     s32 chars[4];
@@ -1011,6 +1054,7 @@ void fn_1_3578(void)
     GameMesCreate(4, 3, chars[0], chars[1], chars[2], chars[3]);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3744(s32 rec)
 {
     if (_CheckFlag(0x1000F) == 0) {
@@ -1036,6 +1080,7 @@ void fn_1_3874(void)
     omSysExitReq = 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3888(s32 mode)
 {
     M509Obj *obj;
@@ -1047,6 +1092,7 @@ void fn_1_3888(s32 mode)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s32 fn_1_3920(void)
 {
     M509Node *list = &lbl_1_bss_1C;
@@ -1063,6 +1109,7 @@ s32 fn_1_3920(void)
     return 1;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_39AC(void)
 {
     M509Node *list = &lbl_1_bss_1C;
@@ -1079,6 +1126,7 @@ void fn_1_3A1C(void)
 {
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_3A20(void)
 {
     while (!M509IsEmpty(&lbl_1_bss_1C)) {
@@ -1131,6 +1179,7 @@ s16 *fn_1_3C04(s16 *model, void (*hook)(HU3DMODEL *, Mtx *))
     return model;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s16 *fn_1_3C40(s16 *model, s32 charNo, s32 mode)
 {
     s16 type = 0;
@@ -1153,6 +1202,7 @@ s16 *fn_1_3C40(s16 *model, s32 charNo, s32 mode)
     return model;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 s16 *fn_1_3CDC(s16 *model, s16 *src)
 {
     s16 srcId = *src;
@@ -1262,6 +1312,7 @@ void fn_1_41A4(s16 *model)
     Hu3DModelShadowMapObjReset(*model);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_41D4(s16 *model, char *name)
 {
     HSFOBJECT *obj = fn_1_4078(model, name);
@@ -1280,6 +1331,7 @@ void fn_1_4328(s16 *model, char *name)
     obj->flags &= ~0x400;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_43D0(s16 *model, char *name)
 {
     HSFOBJECT *obj = fn_1_4078(model, name);
@@ -1289,6 +1341,7 @@ void fn_1_43D0(s16 *model, char *name)
     obj->mesh.base.scale.z = 0.0f;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_44AC(s16 *model, char *name)
 {
     HSFOBJECT *obj = fn_1_4078(model, name);
@@ -1298,6 +1351,7 @@ void fn_1_44AC(s16 *model, char *name)
     obj->mesh.base.scale.z = 1.0f;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_4588(s16 *model, s32 time)
 {
     Hu3DMotionTimeSet(*model, (f32)time);
@@ -1411,6 +1465,7 @@ void fn_1_4A10(M509Cam *cam, M509CamView *view)
     C_QUATMtx(&view->rot, mtx);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_4A88(M509Cam *cam, M509CamView *a, M509CamView *b, f32 t)
 {
     Mtx mtx;
@@ -1446,6 +1501,7 @@ void fn_1_4B98(M509Cam *cam, Vec *pos)
     PSVECAdd(&cam->target, &delta, &cam->target);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_4C04(M509Cam *cam, Vec *a, Vec *b, f32 t)
 {
     Vec delta;
@@ -1569,6 +1625,7 @@ void fn_1_50F4(MGTIMER **self, u8 r, u8 g, u8 b)
     MgTimerWinColorSet(*self, r, g, b);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_513C(M509Cam *cam)
 {
     Mtx mtx;
@@ -1604,6 +1661,7 @@ f32 fn_1_52D0(s32 pad)
     return 0.016949153f * (f32)HuPadSubStkY[pad];
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_5324(M509Cam *cam, s32 pad)
 {
     Mtx mtx;
@@ -1686,6 +1744,7 @@ void fn_1_5324(M509Cam *cam, s32 pad)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only; semantics verified against the original asm
 void fn_1_5980(void)
 {
     lbl_1_bss_4 = 0x78;
