@@ -1666,23 +1666,19 @@ f32 fn_1_54CC(f32 from, f32 to)
 
 // ---------------------------------------------------------------- shadow / collision helpers
 
-// Distance at which a 5 degree field of view spans `size`; `out` = target - dir * distance.
-f32 fn_1_5520(Vec *out, Vec *dir, Vec *target, f32 size)
+// NONMATCHING: register allocation, result is clrlwi-ed
+// Sphere overlap test: true when the distance between centres is below the radius sum.
+s32 fn_1_5520(M513Sphere *a, M513Sphere *b)
 {
+    Vec d;
+    f32 sum;
     f32 dist;
-    Vec *o1;
-    Vec *o2;
-    Vec *o3;
 
-    dist = size / tan(0.0872664600610733);
-    PSVECScale(dir, out, dist);
-    o1 = out;
-    o2 = o1;
-    o3 = o2;
-    PSVECSubtract(target, o3, o3);
-    return dist;
+    PSVECSubtract(&a->pos, &b->pos, &d);
+    sum = a->radius + b->radius;
+    dist = PSVECMag(&d);
+    return dist < sum;
 }
-
 
 
 // Sphere: centre and radius.

@@ -613,7 +613,7 @@ u32 fn_1_4FE4(void);
 f32 fn_1_5220(void);
 f32 fn_1_5494(f32 scale);
 f32 fn_1_54CC(f32 from, f32 to);
-f32 fn_1_5520(Vec *out, Vec *dir, Vec *target, f32 size);
+s32 fn_1_5520(M513Sphere *a, M513Sphere *b);
 s32 fn_1_55C8(M513Sphere *a, M513Sphere *b, f32 ka, f32 kb);
 s32 fn_1_5748(void);
 M513SubThread *fn_1_576C(M513SubThread *self, u32 stackSize);

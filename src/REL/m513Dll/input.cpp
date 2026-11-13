@@ -73,7 +73,7 @@ void fn_1_6670(M513Input *self, M513InputState *out)
     f64 mag = sqrt((x * x) + (y * y));
     f64 inv;
 
-    if ((f32)mag > 1.0f) {
+    if (mag > 1.0) {
         inv = 1.0 / mag;
         x *= inv;
         y *= inv;
