@@ -119,8 +119,7 @@ void fn_1_9C10(M504WANWAN *self)
     Hu3DMotionKill(self->mot2A);
     Hu3DModelKill(self->mdl30);
     Hu3DModelKill(self->mdl28);
-    /* NONMATCHING: CodeWarrior materialises the 0x4002 attr mask as lis+addi, MWCC folds it into one li. */
-    Hu3DModelAttrSet(self->mdl, 0x4000 + HU3D_ATTR_ZWRITE_OFF);
+    Hu3DModelAttrSet(self->mdl, 0x40000002);
 
     for (i = 0; i < 10; i++) {
         Hu3DMotionKill(self->mtn[i]);
@@ -493,7 +492,7 @@ void fn_1_B1AC(M504WANWAN *self)
         self->pos.y = 0.0f;
         self->step = (u16)(rand8() % 3);
         self->count = 0;
-        Hu3DModelAttrReset(self->mdl, 0x4000 + HU3D_ATTR_DISPOFF);
+        Hu3DModelAttrReset(self->mdl, 0x40000001);
         Hu3DMotionShiftSet(self->mdl, self->mtn[5], 0.0f, 8.0f, 0);
 
         PSVECSubtract(&grp->pos, &self->pos, &v);

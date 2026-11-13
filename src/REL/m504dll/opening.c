@@ -648,9 +648,7 @@ void fn_1_11198(Vec *pos, Vec *vel)
         lbl_1_bss_7870.vec[i] = *(HuVecF *)vel;
         rnd = rand8() % 30;
         Hu3DModelAttrReset(lbl_1_bss_7870.modelId[i], 1);
-        /* NONMATCHING: CodeWarrior materialises the 0x4002 attr mask as lis+addi, MWCC folds
-           it into one li, which also shifts the 3 branch offsets below. 8 spellings probed. */
-        Hu3DModelAttrReset(lbl_1_bss_7870.modelId[i], 0x4000 + HU3D_ATTR_ZWRITE_OFF);
+        Hu3DModelAttrReset(lbl_1_bss_7870.modelId[i], 0x40000002);
         Hu3DModelPosSet(lbl_1_bss_7870.modelId[i], pos->x + 10.0f + (f32)rnd, 0.0f, pos->z);
         Hu3DMotionSpeedSet(lbl_1_bss_7870.modelId[i], 1.0f);
         Hu3DMotionTimeSet(lbl_1_bss_7870.modelId[i], 0.0f);
@@ -671,8 +669,7 @@ void fn_1_11360(Vec *pos, Vec *vel)
         lbl_1_bss_7870.vec[i + 10] = *(HuVecF *)vel;
         rnd = rand8() % 30;
         Hu3DModelAttrReset(lbl_1_bss_7870.modelId[i + 10], 1);
-        /* NONMATCHING: same 0x4002 attr-mask lis+addi vs li difference as fn_1_11198. */
-        Hu3DModelAttrReset(lbl_1_bss_7870.modelId[i + 10], 0x4000 + HU3D_ATTR_ZWRITE_OFF);
+        Hu3DModelAttrReset(lbl_1_bss_7870.modelId[i + 10], 0x40000002);
         Hu3DModelPosSet(lbl_1_bss_7870.modelId[i + 10], pos->x - 10.0f - (f32)rnd, 0.0f, pos->z);
         Hu3DMotionTimeSet(lbl_1_bss_7870.modelId[i + 10], 0.0f);
         Hu3DMotionSpeedSet(lbl_1_bss_7870.modelId[i + 10], 1.0f);
