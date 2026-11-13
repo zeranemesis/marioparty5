@@ -37,9 +37,14 @@
 /* One entry of the model table (stride 0x1C). */
 typedef struct M541Model_s {
     HU3DMODELID modelId; /* 0x00 */
-    float posX;          /* 0x04 */
-    float posY;          /* 0x08 */
-    float posZ;          /* 0x0C */
+    union {
+        HuVecF pos;      /* 0x04 */
+        struct {
+            float posX;  /* 0x04 */
+            float posY;  /* 0x08 */
+            float posZ;  /* 0x0C */
+        };
+    };
     float rotX;          /* 0x10 */
     float rotY;          /* 0x14 */
     float rotZ;          /* 0x18 */
