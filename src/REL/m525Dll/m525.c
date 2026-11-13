@@ -1463,43 +1463,27 @@ static float fn_1_5930(float t, float a, float b, float c)
 
 /* Per-frame minigame logic: rebuilds the ground profile from the feet of the
    runners, drives the scripted camera moves for the current timer state, and
-   spawns/advances the spark (M525Fx) particles. */
-// NONMATCHING: 16.34%. The emitted row count equals the target exactly
-// (1912 = 1912) and the instruction sequence is identical block for block, so
-// the logic is right; what is left is codegen. The target frame is 0x1a0 with
-// _savegpr_26 and the player[4] array at 0x60(r1); ours is 0x190/_savegpr_24
-// with the array at 0x30(r1). The target keeps one more spilled double and two
-// more callee-saved GPRs live than the declarations here account for, and the
-// surviving differences are that frame offset plus r0/r3/r4 temp naming.
+   spawns/advances the confetti (M525Fx) particles. */
 static void fn_1_5AF4(OMOBJ *obj)
 {
     M525Player *player[4];
-    f32 prevZoom;
-    f32 maxX;
     f32 minX;
-    f32 prevHeight;
-    f32 maxHeight;
-    f32 groundY;
-    f64 posY;
-    f64 dist;
-    f64 fall;
-    f64 fade;
-    f32 camRate;
-    f32 camY;
-    f32 camZ;
-    f32 camRot;
-    f32 endY;
-    f32 endRot;
-    f32 blend;
-    f32 zoom;
-    f32 rotX;
-    f32 rotY;
-    f32 rotZ;
+    f32 maxX;
+    f32 prevH;
+    f32 bestH;
+    f32 x;
+    f32 fall;
+    f32 h;
+    f32 t;
+    f32 lin;
     f32 rot;
-    f32 one;
+    f32 endY;
+    f32 blend;
+    f32 inv;
     f32 rate;
     s32 i;
     s32 j;
+    s32 n;
     s32 dir;
     s32 leader;
     M525Fx *fx;
@@ -1508,54 +1492,52 @@ static void fn_1_5AF4(OMOBJ *obj)
         player[i] = lbl_1_bss_8C[i]->data;
     }
     maxX = 0.0f;
-    prevZoom = 0.0f;
     minX = -500.0f;
-    prevHeight = 0.0f;
-    for (i = 0; i < 11; i++) {
-        lbl_1_data_108[i] = -500.0f;
-        lbl_1_data_134[i] = 0.0f;
-    }
+    prevH = 0.0f;
+    n = 0;
+    lbl_1_data_108[0] = -500.0f;
+    lbl_1_data_134[0] = 0.0f;
     while (maxX < 500.0f) {
         maxX = 500.0f;
-        prevZoom = 0.0f;
+        bestH = 0.0f;
         for (j = 0; j < 9; j++) {
-            posY = player[(j / 3) + 1]->footX[j % 3];
-            if (maxX != posY) {
-                dist = fabs(posY);
-                fall = dist / 1000.0;
-                groundY = 33.0f * player[(j / 3) + 1]->footY[j % 3];
-                camRate = (1.0 - ((0.875 * fall) + (0.125 * (fall * fall)))) * groundY;                fade = (posY - maxX) / (minX - maxX);
-                endY = (prevHeight * (1.0f - fade)) + (prevZoom * fade);
-                if (endY > camRate) {
-                    maxX = posY;
-                    prevZoom = camRate;
+            x = player[(j / 3) + 1]->footX[j % 3];
+            if (minX < x) {
+                fall = fabs(x) / 1000.0;
+                h = (f64)(33.0f * player[(j / 3) + 1]->footY[j % 3]) * (1.0 - ((0.875 * (f64)fall) + (0.125 * (f64)(fall * fall))));
+                t = (x - minX) / (maxX - minX);
+                lin = (prevH * (1.0f - t)) + (bestH * t);
+                if (lin > h) {
+                    maxX = x;
+                    bestH = h;
                 }
             }
         }
-        i++;
-        lbl_1_data_108[i] = maxX;
-        lbl_1_data_134[i] = prevZoom;
+        n++;
+        lbl_1_data_108[n] = maxX;
+        lbl_1_data_134[n] = bestH;
         minX = maxX;
-        prevHeight = prevZoom;
+        prevH = bestH;
     }
     for (i = 0; i < 3; i++) {
         if (player[i + 1]->down == 0 && player[i + 1]->mode < 4 && player[i + 1]->grounded != 0) {
-            posY = player[i + 1]->footX[player[i + 1]->footNo];
-            groundY = 33.0f * player[i + 1]->footY[player[i + 1]->footNo];
-            dist = fabs(posY);
-            fall = dist / 1000.0;
-            camRate = (1.0 - ((0.875 * fall) + (0.125 * (fall * fall)))) * groundY;
-            player[i + 1]->velZ = camRate;
+            f32 y;
+
+            x = player[i + 1]->footX[player[i + 1]->footNo];
+            y = 33.0f * player[i + 1]->footY[player[i + 1]->footNo];
+            fall = fabs(x) / 1000.0;
+            y = (f64)y * (1.0 - ((0.875 * (f64)fall) + (0.125 * (f64)(fall * fall))));
+            lbl_1_bss_8C[i + 1]->trans.y = y;
         }
     }
-    if (lbl_1_bss_80 <= 1001) {
+    if (lbl_1_bss_80 <= 0x3E9) {
         for (i = 0; i < 2; i++) {
             CZoomM[i] = 1700.0f;
             CenterM[i].y = 115.0f;
             CRotM[i].x = 5.0f;
         }
     }
-    if (lbl_1_bss_80 == 1003) {
+    if (lbl_1_bss_80 == 0x3EB) {
         for (i = 0; i < 2; i++) {
             rate = 1.0f - 0.96f;
             CZoomM[i] = (2400.0f * rate) + (0.96f * CZoomM[i]);
@@ -1563,7 +1545,7 @@ static void fn_1_5AF4(OMOBJ *obj)
             CRotM[i].x = (18.0f * rate) + (0.96f * CRotM[i].x);
         }
     }
-    if (lbl_1_bss_80 == 1004) {
+    if (lbl_1_bss_80 == 0x3EC) {
         for (i = 0; i < 2; i++) {
             rate = 1.0f - 0.96f;
             CZoomM[i] = (2900.0f * rate) + (0.96f * CZoomM[i]);
@@ -1571,89 +1553,110 @@ static void fn_1_5AF4(OMOBJ *obj)
             CRotM[i].x = 0.96f * CRotM[i].x;
         }
     }
-    if (lbl_1_bss_80 >= 1006 && lbl_1_data_FC == 1 && lbl_1_bss_0 >= 61.0f) {
-        rot = lbl_1_bss_0 - 61.0f;
-        endY = 50.0f;
-        if (rot < 10.0f) {
-            blend = (((1.0f + rot) * 0.5f * rot) / 10.0f) / endY;
-        } else if (rot < 40.0f) {
-            camRot = (5.5f / endY) + ((rot - 10.0f) / endY);
-            blend = camRot;
-        } else {
-            if (rot < 69.0f) {
-                zoom = 1.0f - ((((1.0f + ((70.0f - rot) - 1.0f)) * 0.5f * ((69.0f - rot) - 1.0f)) / 29.0f) / endY);
+    if (lbl_1_bss_80 == 0x3EE && lbl_1_data_FC == 1) {
+        if (lbl_1_bss_0 >= 61.0f) {
+            rot = lbl_1_bss_0 - 61.0f;
+            endY = 50.0f;
+            if (rot < 10.0f) {
+                blend = (((1.0f + rot) * 0.5f * rot) / 10.0f) / endY;
             } else {
-                zoom = 1.0f;
+                f32 b;
+
+                if (rot < 40.0f) {
+                    b = (5.5f / endY) + ((rot - 10.0f) / endY);
+                } else {
+                    f32 z;
+
+                    if (rot < 69.0f) {
+                        z = 1.0f - ((((1.0f + ((70.0f - rot) - 1.0f)) * 0.5f * ((69.0f - rot) - 1.0f)) / 29.0f) / endY);
+                    } else {
+                        z = 1.0f;
+                    }
+                    b = z;
+                }
+                blend = b;
             }
-            camRot = zoom;
-            blend = camRot;
-        }
-        fade = blend;
-        camRate = blend;
-        one = 1.0f - camRate;
-        lbl_1_bss_30 = CZoomM[0];
-        lbl_1_bss_2C = CenterM[0].x;
-        lbl_1_bss_28 = CenterM[0].y;
-        lbl_1_bss_24 = CenterM[0].z;
-        lbl_1_bss_20 = CRotM[0].x;
-        if (lbl_1_bss_0 >= 81.0f) {
-            Hu3DModelShadowDispOff(lbl_1_bss_8C[0]->mdlId[0]);
-            Hu3DModelShadowSet(lbl_1_bss_8C[1]->mdlId[0]);
-            Hu3DModelShadowSet(lbl_1_bss_8C[2]->mdlId[0]);
-            Hu3DModelShadowSet(lbl_1_bss_8C[3]->mdlId[0]);
-            lbl_1_bss_4C.x = 0.0f;
-            lbl_1_bss_4C.y = 2000.0f;
-            lbl_1_bss_4C.z = -1500.0f;
-            lbl_1_bss_40.x = 0.0f;
-            lbl_1_bss_40.y = 0.0f;
-            lbl_1_bss_40.z = -1.0f;
-            lbl_1_bss_34.x = 0.0f;
-            lbl_1_bss_34.y = 0.0f;
-            lbl_1_bss_34.z = -1500.0f;
-            Hu3DShadowMultiPosSet(&lbl_1_bss_4C, &lbl_1_bss_40, &lbl_1_bss_34, -1);
-        }
-        for (i = 0; i < 2; i++) {
-            CZoomM[i] = (1300.0f * camRate) + (lbl_1_bss_30 * one);
-            CenterM[i].x = lbl_1_bss_2C * one;
-            CenterM[i].y = (461.0f * camRate) + (lbl_1_bss_28 * one);
-            CenterM[i].z = (-1500.0f * camRate) + (lbl_1_bss_24 * one);
-            CRotM[i].x = (-4.0f * camRate) + (lbl_1_bss_20 * one);
+            inv = 1.0f - blend;
+            if (lbl_1_bss_0 == 61.0f) {
+                lbl_1_bss_30 = CZoomM[0];
+                lbl_1_bss_2C = CenterM[0].x;
+                lbl_1_bss_28 = CenterM[0].y;
+                lbl_1_bss_24 = CenterM[0].z;
+                lbl_1_bss_20 = CRotM[0].x;
+            }
+            if (lbl_1_bss_0 == 81.0f) {
+                Hu3DModelShadowDispOff(lbl_1_bss_8C[0]->mdlId[0]);
+                Hu3DModelShadowSet(lbl_1_bss_8C[1]->mdlId[0]);
+                Hu3DModelShadowSet(lbl_1_bss_8C[2]->mdlId[0]);
+                Hu3DModelShadowSet(lbl_1_bss_8C[3]->mdlId[0]);
+                lbl_1_bss_4C.x = 0.0f;
+                lbl_1_bss_4C.y = 2000.0f;
+                lbl_1_bss_4C.z = -1500.0f;
+                lbl_1_bss_40.x = 0.0f;
+                lbl_1_bss_40.y = 0.0f;
+                lbl_1_bss_40.z = -1.0f;
+                lbl_1_bss_34.x = 0.0f;
+                lbl_1_bss_34.y = 0.0f;
+                lbl_1_bss_34.z = -1500.0f;
+                Hu3DShadowMultiPosSet(&lbl_1_bss_4C, &lbl_1_bss_40, &lbl_1_bss_34, -1);
+            }
+            for (i = 0; i < 2; i++) {
+                CZoomM[i] = (1300.0f * blend) + (lbl_1_bss_30 * inv);
+                CenterM[i].x = lbl_1_bss_2C * inv;
+                CenterM[i].y = (461.0f * blend) + (lbl_1_bss_28 * inv);
+                CenterM[i].z = (-1500.0f * blend) + (lbl_1_bss_24 * inv);
+                CRotM[i].x = (-4.0f * blend) + (lbl_1_bss_20 * inv);
+            }
         }
     }
-    if (lbl_1_bss_80 == 1007) {
+    if (lbl_1_bss_80 == 0x3EF) {
         if (lbl_1_data_FC == 0) {
-            Hu3DModelPosSet(obj->mdlId[16], player[0]->startX, 100.0f + player[0]->startY, player[0]->unk54);
-            Hu3DModelAttrReset(obj->mdlId[13], 1);
-            Hu3DModelPosSet(obj->mdlId[13], player[0]->startX, 100.0f + player[0]->startY, player[0]->unk54);
+            Hu3DModelPosSet(obj->mdlId[0x40], lbl_1_bss_8C[0]->trans.x, 100.0f + lbl_1_bss_8C[0]->trans.y, lbl_1_bss_8C[0]->trans.z);
+            Hu3DModelAttrReset(obj->mdlId[0x14], 1);
+            Hu3DModelPosSet(obj->mdlId[0x14], lbl_1_bss_8C[0]->trans.x, lbl_1_bss_8C[0]->trans.y, lbl_1_bss_8C[0]->trans.z);
             for (i = 0; i < 2; i++) {
                 rate = 1.0f - 0.96f;
                 CZoomM[i] = (1000.0f * rate) + (0.96f * CZoomM[i]);
-                CenterM[i].x = (0.96f * CenterM[i].x) + (rate * player[0]->startX);
-                CenterM[i].y = (0.96f * CenterM[i].y) + (rate * (100.0f + player[0]->startY));
-                CenterM[i].z = (0.96f * CenterM[i].z) + (rate * player[0]->unk54);
+                CenterM[i].x = (0.96f * CenterM[i].x) + (rate * lbl_1_bss_8C[0]->trans.x);
+                CenterM[i].y = (0.96f * CenterM[i].y) + (rate * (100.0f + lbl_1_bss_8C[0]->trans.y));
+                CenterM[i].z = (0.96f * CenterM[i].z) + (rate * lbl_1_bss_8C[0]->trans.z);
                 CRotM[i].x = (-8.0f * rate) + (0.96f * CRotM[i].x);
-                dir = (player[0]->startX < 0.0f) ? -1 : 1;
-                CRotM[i].y = (0.96f * CRotM[i].y) + (16.0f * rate * dir);
+                if (lbl_1_bss_8C[0]->trans.x < 0.0f) {
+                    dir = -1;
+                } else {
+                    dir = 1;
+                }
+                CRotM[i].y = (0.96f * CRotM[i].y) + (16.0f * rate * (f32)dir);
             }
-            lbl_1_bss_4C.x = player[0]->startX;
-            lbl_1_bss_4C.y = 2000.0f + player[0]->startY;
-            lbl_1_bss_4C.z = player[0]->unk54;
+            lbl_1_bss_4C.x = lbl_1_bss_8C[0]->trans.x;
+            lbl_1_bss_4C.y = 2000.0f + lbl_1_bss_8C[0]->trans.y;
+            lbl_1_bss_4C.z = lbl_1_bss_8C[0]->trans.z;
             lbl_1_bss_40.x = 0.0f;
             lbl_1_bss_40.y = 0.0f;
             lbl_1_bss_40.z = -1.0f;
-            lbl_1_bss_34.x = player[0]->startX;
-            lbl_1_bss_34.y = player[0]->startY;
-            lbl_1_bss_34.z = player[0]->unk54;
+            lbl_1_bss_34.x = lbl_1_bss_8C[0]->trans.x;
+            lbl_1_bss_34.y = lbl_1_bss_8C[0]->trans.y;
+            lbl_1_bss_34.z = lbl_1_bss_8C[0]->trans.z;
             Hu3DShadowMultiPosSet(&lbl_1_bss_4C, &lbl_1_bss_40, &lbl_1_bss_34, -1);
         } else {
-            Hu3DModelPosSet(obj->mdlId[16], 0.0f, 461.0f, -1500.0f);
+            Hu3DModelPosSet(obj->mdlId[0x40], 0.0f, 461.0f, -1500.0f);
             for (i = 0; i < 3; i++) {
-                Hu3DModelAttrReset(obj->mdlId[i + 20], 1);
-                Hu3DModelPosSet(obj->mdlId[i + 20], player[i + 1]->startX, player[i + 1]->startY, player[i + 1]->unk54);
+                Hu3DModelAttrReset(obj->mdlId[i + 0x14], 1);
+                Hu3DModelPosSet(obj->mdlId[i + 0x14], lbl_1_bss_8C[i + 1]->trans.x, lbl_1_bss_8C[i + 1]->trans.y, lbl_1_bss_8C[i + 1]->trans.z);
             }
-            for (i = 0; i < 2; i++) {
+            /* the original loop bound is -2: this camera move never runs */
+            for (i = 0; i < -2; i++) {
                 rate = 1.0f - 0.9f;
-                leader = (player[0]->down == 0) ? 1 : ((player[1]->down == 0) ? 2 : 3);
+                if (player[1]->down == 0) {
+                    leader = 1;
+                } else {
+                    if (player[2]->down == 0) {
+                        j = 2;
+                    } else {
+                        j = 3;
+                    }
+                    leader = j;
+                }
                 CZoomM[i] = (1300.0f * rate) + (0.9f * CZoomM[i]);
                 CenterM[i].x = 0.9f * CenterM[i].x;
                 CenterM[i].y = (461.0f * rate) + (0.9f * CenterM[i].y);
@@ -1662,29 +1665,31 @@ static void fn_1_5AF4(OMOBJ *obj)
             }
         }
     }
-    if (lbl_1_data_FC != -1 && lbl_1_bss_80 >= 1007) {
-        if (lbl_1_data_FC == 1 || (lbl_1_bss_80 == 1007 && lbl_1_bss_0 > 7.0f)) {
-            Hu3DModelAttrReset(lbl_1_bss_88->mdlId[16], 1);
+    if (lbl_1_data_FC != -1 && lbl_1_bss_80 >= 0x3EF) {
+        if (lbl_1_data_FC == 1 || (lbl_1_bss_80 == 0x3EF && lbl_1_bss_0 > 7.0f)) {
+            Hu3DModelAttrReset(lbl_1_bss_88->mdlId[0x40], 1);
         }
-        for (i = 0; i < 256; i++) {
-            if (lbl_1_bss_16C[i].time >= 256) {
+        for (i = 0; i < 0x100; i++) {
+            if (lbl_1_bss_16C[i].time >= 0x100) {
+                f32 r;
+
                 fx = &lbl_1_bss_16C[i];
-                fx->x = 900.0 * ((rand8() / 255.0) - 0.5);
+                r = (f32)rand8() / 255.0f;
+                fx->x = 900.0 * ((f64)r - 0.5);
                 fx->y = 320.0f;
                 fx->z = 0.0f;
-                fx->velX = 400.0 * ((rand8() / 255.0) - 0.5);
-                fx->velY = (-900.0f + (-100.0f * (rand8() / 255.0))) * 0.00390625f;
+                fx->velX = 400.0 * ((f64)((f32)rand8() / 255.0f) - 0.5) * 0.00390625;
+                fx->velY = (-900.0f + (-100.0f * ((f32)rand8() / 255.0f))) * 0.00390625f;
                 fx->velZ = 0.0f;
-                fx->axis.x = 4.0 * ((rand8() / 255.0) - 0.5);
-                fx->axis.y = rand8();
-                fx->axis.z = (rand8() / 255.0) - 0.5;
-                fx->rotSpeed = 0.5 * ((rand8() / 255.0) - 0.5);
-                fx->kind = 1.0f / (45.0f + (30.0f * (rand8() / 255.0)));
+                fx->axis.x = 4.0 * ((f64)((f32)rand8() / 255.0f) - 0.5);
+                fx->axis.y = (f64)((f32)rand8() / 255.0f) - 0.5;
+                fx->axis.z = 0.5 * ((f64)((f32)rand8() / 255.0f) - 0.5);
+                fx->rotSpeed = 1.0f / (45.0f + (30.0f * ((f32)rand8() / 255.0f)));
                 if (fx->axis.x == 0.0f && fx->axis.y == 0.0f && fx->axis.z == 0.0f) {
                     fx->axis.x = 1.0f;
                 }
                 fx->time = 0;
-                fx->kind = (rand8() % 4);
+                fx->kind = rand8() % 4;
             }
             lbl_1_bss_16C[i].x += lbl_1_bss_16C[i].velX;
             lbl_1_bss_16C[i].y += lbl_1_bss_16C[i].velY;
@@ -1693,34 +1698,33 @@ static void fn_1_5AF4(OMOBJ *obj)
         }
     }
     if (lbl_1_bss_C != 0) {
-        if (lbl_1_bss_18[1] > 1 && lbl_1_bss_A4[9].seNo != -1) {
-            HuAudFXStop(lbl_1_bss_A4[9].seNo);
-            lbl_1_bss_A4[9].seNo = -1;
+        if (lbl_1_bss_18[0] > 1 && lbl_1_bss_A4[1].seNo != -1) {
+            HuAudFXStop(lbl_1_bss_A4[1].seNo);
+            lbl_1_bss_A4[1].seNo = -1;
         }
-        if (lbl_1_bss_A4[5].num < 3) {
-            lbl_1_bss_A4[lbl_1_bss_A4[5].num].pan[0] = lbl_1_bss_5C[0];
-            lbl_1_bss_A4[5].num += 1;
+        if (lbl_1_bss_A4[1].num < 3) {
+            lbl_1_bss_A4[1].pan[lbl_1_bss_A4[1].num] = lbl_1_bss_5C[0];
+            lbl_1_bss_A4[1].num += 1;
         }
-        lbl_1_bss_18[1] = 120;
+        lbl_1_bss_18[0] = 0x78;
         lbl_1_bss_C = 0;
     }
-    if (lbl_1_bss_18[1] > 0) {
-        lbl_1_bss_18[1] -= 1;
-    }
-    if (lbl_1_bss_18[1] == 1 && lbl_1_bss_A4[9].seNo != -1) {
-        HuAudFXStop(lbl_1_bss_A4[9].seNo);
-        lbl_1_bss_A4[9].seNo = -1;
+    lbl_1_bss_18[0] -= lbl_1_bss_18[0] > 0;
+    if (lbl_1_bss_18[0] == 1 && lbl_1_bss_A4[1].seNo != -1) {
+        HuAudFXStop(lbl_1_bss_A4[1].seNo);
+        lbl_1_bss_A4[1].seNo = -1;
     }
     lbl_1_bss_4C.x = 0.0f;
-    lbl_1_bss_4C.y = sin(1.5707963267948966);
+    sin(1.5707963267948966);
+    lbl_1_bss_4C.y = 0.0;
     lbl_1_bss_4C.z = 10000.0f;
     lbl_1_bss_40.x = 0.0f;
     lbl_1_bss_40.y = 1.0f;
     lbl_1_bss_40.z = 0.0f;
-    lbl_1_bss_34.x = player[0]->startX;
-    lbl_1_bss_34.y = player[0]->startY;
-    lbl_1_bss_34.z = player[0]->unk54;
-    Hu3DModelPosSet(obj->mdlId[13], player[0]->startX, player[0]->startY, player[0]->unk54);
+    lbl_1_bss_34.x = lbl_1_bss_8C[0]->trans.x;
+    lbl_1_bss_34.y = lbl_1_bss_8C[0]->trans.y;
+    lbl_1_bss_34.z = lbl_1_bss_8C[0]->trans.z;
+    Hu3DModelPosSet(obj->mdlId[13], lbl_1_bss_8C[0]->trans.x, lbl_1_bss_8C[0]->trans.y, lbl_1_bss_8C[0]->trans.z);
 }
 
 static void fn_1_7698(HU3DMODEL *model, Mtx *mtx)
@@ -2051,7 +2055,7 @@ static void fn_1_889C(OMOBJ *obj)
             }
             if (!(lbl_1_bss_0 < 20.0f)) {
                 if (lbl_1_bss_0 < 80.0f) {
-                    Hu3DModelPosSet(lbl_1_bss_88->mdlId[14], 0.45 + (0.55 * ((lbl_1_bss_0 - 20.0f) / 60.0f)), 0.0f, 0.0f);
+                    Hu3DModelPosSet(lbl_1_bss_88->mdlId[14], 0.44999999999999996 + (0.55 * ((lbl_1_bss_0 - 20.0f) / 60.0f)), 0.0f, 0.0f);
                 } else if (lbl_1_bss_0 == 80.0f) {
                     Hu3DModelAttrSet(lbl_1_bss_88->mdlId[14], HU3D_ATTR_DISPOFF);
                 }
