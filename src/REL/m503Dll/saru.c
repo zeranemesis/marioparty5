@@ -1037,8 +1037,8 @@ s32 fn_1_82B4(OMOBJ *obj)
             if (fn_1_53D4(&w->pos, w->targetYaw, 45.0f, 120.0f) != NULL) {
                 w->targetYaw = w->targetYaw + 20.0;
             }
-            vx = 6.6666667f * HuSin(w->targetYaw);
-            vz = 6.6666667f * HuCos(w->targetYaw);
+            vx = 6.666667f * HuSin(w->targetYaw);
+            vz = 6.666667f * HuCos(w->targetYaw);
         }
     } else {
         if (fx < 0.0f) {
