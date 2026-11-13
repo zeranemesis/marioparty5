@@ -38,14 +38,14 @@ u32 lbl_1_data_0[13] = {
 
 u32 lbl_1_data_34[15] = {
     DATANUM(DATA_m571, 8), DATANUM(DATA_m571, 9), DATANUM(DATA_m571, 10), DATANUM(DATA_m571, 13),
-    DATANUM(DATA_m571, 14), DATANUM(DATA_m571, 15), DATANUM(DATA_m571, 16), DATANUM(DATA_m572, 17),
+    DATANUM(DATA_m571, 14), DATANUM(DATA_m571, 15), DATANUM(DATA_m571, 16), DATANUM(DATA_m571, 17),
     DATANUM(DATA_m571, 18), DATANUM(DATA_m571, 19), DATANUM(DATA_m571, 20), DATANUM(DATA_m571, 21),
     DATANUM(DATA_m571, 22), DATANUM(DATA_m571, 11), DATANUM(DATA_m571, 12)
 };
 
 Vec lbl_1_data_70 = { 0.0f, 100.0f, -750.0f };
 
-M571SpawnPt lbl_1_data_7C[4] = { {70.0f, 60.0f}, {255.0f, 60.0f}, {386.0f, 60.0f}, {505.0f, 60.0f} };
+M571SpawnPt lbl_1_data_7C[4] = { {71.0f, 60.0f}, {191.0f, 60.0f}, {385.0f, 60.0f}, {505.0f, 60.0f} };
 
 Vec lbl_1_data_9C[2] = { { -3456.0f, 0.0f, -280.0f }, { 3500.0f, 0.0f, -280.0f } };
 
@@ -69,11 +69,11 @@ u32 lbl_1_data_1A4[5] = {
     DATANUM(DATA_mariomot, 1), DATANUM(DATA_mariomot, 2)
 };
 
-OMCAMERAVIEW lbl_1_data_1B8 = { { 0.0f, 250.0f, -498.0f }, { 4.4f, 0.0f, 0.0f }, 530.0f };
+OMCAMERAVIEW lbl_1_data_1B8 = { { 0.0f, 221.5f, -500.0f }, { 4.4f, 0.0f, 0.0f }, 526.0f };
 
-OMCAMERAVIEW lbl_1_data_1D4 = { { 0.0f, 222.95f, 270.0f }, { -29.4f, 0.9f, 0.0f }, 1750.0f };
+OMCAMERAVIEW lbl_1_data_1D4 = { { 0.0f, 221.9f, 268.8f }, { -27.8f, 0.9f, 0.0f }, 1749.0f };
 
-OMCAMERAVIEW lbl_1_data_1F0 = { { 0.0f, 250.0f, -498.0f }, { 4.4f, 0.0f, 0.0f }, 1200.0f };
+OMCAMERAVIEW lbl_1_data_1F0 = { { 0.0f, 221.5f, -500.0f }, { 4.4f, 0.0f, 0.0f }, 1200.0f };
 
 float lbl_1_data_20C[12] = {
     -475.0f, 50.0f, -470.0f, 475.0f, 50.0f, -470.0f,
@@ -334,7 +334,11 @@ void ObjectSetup(void)
     omCameraViewSet(&lbl_1_data_1B8);
     lbl_1_bss_1C4 = omAddObjEx(lbl_1_bss_680, 0x7FDA, 0, 0, OM_GRP_NONE, omOutView);
 
+#ifdef TARGET_PC
+    lbl_1_bss_358 = Hu3DGLightCreate(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+#else
     lbl_1_bss_358 = ((LightCreate3)Hu3DGLightCreate)(0.0f, 0.0f, 0.0f);
+#endif
     Hu3DGLightPosAimSetV(lbl_1_bss_358, &lbl_1_data_E4, &lbl_1_data_F0);
     Hu3DGLightStaticSet(lbl_1_bss_358, 1);
     Hu3DGLightInfinitytSet(lbl_1_bss_358);
@@ -411,7 +415,7 @@ void fn_1_68C(OMOBJ *obj)
     MGACTOR_PARAM param;
     s32 i;
     s32 j;
-    s16 mdlId[49];
+    s16 mdlId[53];
 
     mdlId[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 0), HU_MEMNUM_OVL, 2));
     mdlId[1] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 1), HU_MEMNUM_OVL, 2));
@@ -478,7 +482,11 @@ void fn_1_68C(OMOBJ *obj)
     }
 
     for (i = 0; i < 4; i++) {
+#ifdef TARGET_PC
+        Hu3DModelShadowSet(mdlId[i + 4]);
+#else
         ((ModelShadowSet2)Hu3DModelShadowSet)(mdlId[i + 4], 1);
+#endif
     }
 
     obj->objFunc = NULL;
@@ -1544,7 +1552,7 @@ void fn_1_3DB8(u16 arg0, s16 arg1)
     M571ListNode *sentinel = (M571ListNode *)&lbl_1_bss_684[0];
     M571ListNode *old;
 
-    node = HuMemDirectMallocNum(0, 0xC, 0x1000);
+    node = HuMemDirectMallocNum(0, sizeof(M571ListNode), 0x1000);
     node->id = arg0;
     node->pad02 = arg1;
 
