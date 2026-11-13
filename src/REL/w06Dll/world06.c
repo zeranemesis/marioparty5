@@ -23,6 +23,11 @@
 
 #include "datanum/w06.h"
 #include "messnum/board_w06.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+float fabsf2(float x);
+#endif
 
 #define MB6EV_CAKEMOVE_1 MASU_FLAG_BITFIELD(0, 2, 1)
 #define MB6EV_CAKEMOVE_2 MASU_FLAG_BITFIELD(0, 2, 2)

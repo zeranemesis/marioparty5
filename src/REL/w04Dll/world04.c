@@ -24,6 +24,11 @@
 #include "game/hsfex.h"
 
 #include <math.h>
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void espPosSet(s16 espId, float posX, float posY);
+#endif
 
 /*
  * w04Dll - "Deep Bloober Sea" board.

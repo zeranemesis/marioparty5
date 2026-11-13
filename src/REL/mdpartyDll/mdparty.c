@@ -9,6 +9,11 @@
 #include "messnum/teamname.h"
 #include "messnum/syshelp.h"
 #include "messnum/mgmode_sys.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void MdRingScaleSet(int no, float scale);
+#endif
 
 
 #define MDPARTY_STAR_NONE 0

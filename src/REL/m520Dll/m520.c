@@ -158,6 +158,16 @@ extern HuVecF CRot;
 extern s32 fontcolor;
 /* fn_1_A0 reads the pad directly; game/pad.h declares the arrays it needs. */
 #include "game/pad.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+/* unprototyped on purpose: this unit calls some of them with extra arguments, like the original */
+float Hu3DMotionMaxTimeGet();
+void *MgActorObjectSetup();
+void *MgPlayerCreate();
+double __frsqrte(double);
+s16 print8(s16 x, s16 y, float scale, char *str, ...);
+#endif
 
 /*
  * Free-camera debug update: reads the pad and nudges the camera pivot

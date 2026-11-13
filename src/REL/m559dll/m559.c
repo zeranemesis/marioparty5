@@ -12,6 +12,12 @@
 #include "game/pad.h"
 #include "game/printfunc.h"
 #include "REL/m559dll.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+double __frsqrte(double);
+#endif
 
 typedef void (*VoidFunc)(void);
 typedef void (*M559HOOKFUNC)(M559HOOKDATA *);

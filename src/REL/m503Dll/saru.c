@@ -8,6 +8,11 @@
 #include "humath.h"
 #include "REL/m503Dll.h"
 #include <string.h>
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+#endif
 
 #ifndef M_PI
 #define M_PI 3.141592653589793

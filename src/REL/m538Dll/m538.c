@@ -18,6 +18,11 @@ void Hu3DCameraPosSet(int cameraBit, f32 posX, f32 posY, f32 posZ, f32 upX, f32 
  * defines it as the no-op the decompiler expects. These functions stay
  * NONMATCHING either way -- the cror is not reproduced. */
 #include "m2c_macros.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+double __frsqrte(double);
+#endif
 
 
 /* fn_1_69C4 only ever touches one s16 field of its argument, at 0x48. */

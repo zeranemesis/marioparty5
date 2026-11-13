@@ -19,6 +19,11 @@
 #include "messnum/board_tutorial.h"
 #include "messnum/boardope.h"
 #include "messnum/board_capmachine.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+BOOL MBMotionShapeTimeSet(MBMODELID modelId, float time);
+#endif
 
 #define CAPMACHINE_MAX 8
 

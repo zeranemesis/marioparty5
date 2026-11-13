@@ -4,6 +4,11 @@
 #include "game/main.h"
 #include "game/mg/timer.h"
 #include "datanum/mgconst.h"
+#ifdef TARGET_PC
+/* the original unit calls the esp* functions without a prototype; on x64 that passes their float arguments as
+   doubles the callee reads as floats (every timer digit landed at 0,0) */
+#include "game/esprite.h"
+#endif
 
 
 const static s16 timeUnitTbl[4] = { 

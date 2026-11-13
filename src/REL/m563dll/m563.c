@@ -18,6 +18,12 @@
 #include "datanum/char.h"
 #include "datanum/charmot.h"
 #include "datanum/mgconst.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+#include "game/mg/score.h"
+#include "game/esprite.h"
+#endif
 
 typedef void (*M563ObjFunc)(OMOBJ *obj);
 

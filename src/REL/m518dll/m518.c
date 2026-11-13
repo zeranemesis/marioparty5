@@ -21,6 +21,11 @@ char lbl_1_data_0[0x20] = "----------------> %d\n";
 #include "datadir_enum.h"
 
 #include "REL/m518dll.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
+#endif
 
 #define M518_GRID_SIZE 12
 

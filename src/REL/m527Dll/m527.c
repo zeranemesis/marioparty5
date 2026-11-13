@@ -197,6 +197,12 @@ void fn_1_D1F0(OMOBJ *obj)
     }
 }
 #include "game/pad.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void espScaleSet(s16 espId, float scaleX, float scaleY);
+void espTPLvlSet(s16 espId, float tpLvl);
+#endif
 /* the two debug camera rigs live in the DOL; m527.c only manipulates them */
 extern OMOBJMAN *lbl_1_bss_A8;
 

@@ -19,6 +19,11 @@
 #include "messnum/board_w05.h"
 
 #include <math.h>
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void MBOpeningViewSet(HuVecF *rot, HuVecF *pos, float zoom);
+#endif
 
 #define MB5EV_MASU_ROCKET MASU_FLAG_BIT_MULTI(0, 2)
 #define MB5EV_MASU_WARP MASU_FLAG_BIT(2)

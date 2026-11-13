@@ -1,4 +1,9 @@
 #include "REL/m564Dll.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+double __frsqrte(double);
+#endif
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];

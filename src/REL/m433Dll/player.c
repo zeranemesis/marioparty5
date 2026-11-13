@@ -5,6 +5,15 @@
 
 #include "game/wipe.h"
 #include "game/gamemes.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void espPosSet(s16 espId, float posX, float posY);
+void espScaleSet(s16 espId, float scaleX, float scaleY);
+void espTPLvlSet(s16 espId, float tpLvl);
+void espZRotSet(s16 espId, float zRot);
+float fabsf2(float x);
+#endif
 
 typedef struct PlayerMotData_s {
     u16 index;

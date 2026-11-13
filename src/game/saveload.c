@@ -16,6 +16,11 @@
 #include "port/endian.h"
 #endif
 #include "game/sprite.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void espPosSet(s16 espId, float posX, float posY);
+#endif
 
 #define SAVE_BOX_COMMON_OFS 0
 #define SAVE_BOX_BOARD_SYSTEM_OFS (sizeof(GWCOMMON))

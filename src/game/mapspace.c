@@ -3,8 +3,12 @@
 #include "game/hu3d.h"
 
 #include "math.h"
-
 #undef HuSetVecF
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+void HuSetVecF(Vec* arg0, f32 arg8, f32 arg9, f32 argA);
+#endif
 
 void MapWallCheck(float *arg0, float *arg1, HSFMAPATTR *arg2);
 BOOL Hitcheck_Triangle_with_Sphere(HuVecF *arg0, HuVecF *arg1, float arg2, HuVecF *arg3);

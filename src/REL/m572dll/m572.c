@@ -14,6 +14,12 @@
 #include "game/mg/seqman.h"
 
 #include "humath.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+double __frsqrte(double);
+void espPosSet(s16 espId, float posX, float posY);
+#endif
 
 typedef union M572Num_u {
     s32 i;

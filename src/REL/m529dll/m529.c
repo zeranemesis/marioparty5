@@ -18,6 +18,11 @@
 
 #ifndef __MWERKS__
 #include "game/audio.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+double __frsqrte(double);
+#endif
 #endif
 
 typedef struct M529Score_s {
