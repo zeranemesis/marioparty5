@@ -40,7 +40,7 @@ M513_RODATA const f32 lbl_1_rodata_220[6] = { 0.1f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f
 // Restart one smoke particle around the smoke object.
 #define M513_SMOKE_INIT(self, p)                                                                   \
     {                                                                                              \
-        u16 col_;                                                                                  \
+        u32 col_;                                                                                  \
         (p)->time = 0;                                                                             \
         (p)->parManId = (frand() & 0xF) + 4;                                                       \
         (p)->pos.x = (self)->pos.x + (50.0f * (0.000030517578f * ((f32)(u16)frand() - 32768.0f))); \
@@ -426,6 +426,8 @@ void fn_1_A07C(M513PowerEff *self)
             self->state++;
             return;
         }
+        case 5:
+            return;
         default:
         move:
             if (self->state > 0) {
