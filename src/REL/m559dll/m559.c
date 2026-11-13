@@ -182,7 +182,7 @@ static s32 fn_1_6454(s32 a, s32 b);
 static s32 fn_1_6490(M559VEC *a, M559VEC *b, f32 range, f32 farg1);
 static s32 fn_1_64F0(HuVecF *a, s32 b, s32 c);
 static s32 fn_1_65B4(HuVecF *a, s32 b, s32 c);
-static void fn_1_6678(M559HOOKDATA *data);
+static void fn_1_6678(HU3DMODEL *model, M559HOOKDATA *data, f32 (*mtx)[4]);
 static void fn_1_69D8(M559VERTS *a, M559VERTS *node);
 static void fn_1_6A54(M559VERTS *a, M559VERTS *node, s16 no, f32 range);
 static void fn_1_6AB0(M559VERTS *a, f32 *b, s16 c, f32 range, f32 e);
@@ -1146,7 +1146,7 @@ loop_2:
     Hu3DModelShadowSet(*obj->mdlId);
     Hu3DModelLayerSet(*obj->mdlId, 4);
     temp_r3 = fn_1_7368(lbl_1_bss_0, 0, 0, 0x200, 0x40, 0x40, 40.0f);
-    *((M559HOOKFUNC *) Hu3DData[temp_r3].hookData) = fn_1_6678;
+    ((M559HOOKDATA *) Hu3DData[temp_r3].hookData)->unk0 = (M559PARTCALLBACK) fn_1_6678;
     ((M559HOOKDATA *) Hu3DData[temp_r3].hookData)->unk6A = 0;
     Hu3DModelLayerSet(temp_r3, 4);
     temp_r31->arg = (s32) temp_r3;
@@ -2288,7 +2288,7 @@ static s32 fn_1_65B4(HuVecF *a, s32 b, s32 c) {
     Hu3D3Dto2D((HuVecF *) a, 1, (HuVecF *) &sp10);
     return (s32) ((f32) b + ((sp10.y / 480.0f) * (f32) (spC - b)));
 }
-static void fn_1_6678(M559HOOKDATA *data) {
+static void fn_1_6678(HU3DMODEL *model, M559HOOKDATA *data, f32 (*mtx)[4]) {
     f32 temp_f30;
     f32 temp_f31;
     f32 var_f29;
@@ -2675,7 +2675,7 @@ static s16 fn_1_7368(ANIMDATA *anim, M559VEC *field8, f32 *fieldC, s16 partCount
     temp_r31->fieldC = spC;
     temp_r31->arg64 = partCount;
     temp_r31->flag6A = 0;
-    temp_r31->state = 0;
+    temp_r31->unk0 = NULL; // 8-byte callback slot on PC
     temp_r31->arg66 = partCount;
     temp_r31->flag6B = 0;
     temp_r31->partIdx = (M559ANIMPART *) HuMemDirectMallocNum(HEAP_MODEL, partCount << 6, temp_r28->mallocNo);
