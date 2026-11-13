@@ -45,7 +45,11 @@ M_PC_C void *fn_1_FA74(void *arg0, s16 arg1);
 
 struct Mgr511StarYaji {
     Mgr511StarYaji *next;
+#ifdef TARGET_PC
+    Mgr511StarYaji *unk4; /* list node prev */
+#else
     u32 unk4;
+#endif
     u8 visible;
     u8 active;
     u16 unkA;
