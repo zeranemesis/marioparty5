@@ -240,7 +240,7 @@ void fn_1_C4E0(void *self)
     HuAudSStreamFadeOut(r19, 0x64);
     fn_1_33EC();
     for (s32 i = 0; i < 0xB4; i++) {
-        fn_1_CE8(&GM(self)->sub, -1);
+        fn_1_CE8(&GM(self)->sub, 0);
     }
     fn_1_3888(4);
     /* the asm tests fn_1_FDB0's result; fn_1_3874 (exit request) comes after the wait below */
