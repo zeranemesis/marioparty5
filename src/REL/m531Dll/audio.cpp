@@ -16,7 +16,7 @@ void fn_1_D378(int seNo, Point3d *pos);
     HU3DCAMERA *cam = &Hu3DCamera[camIdx];                                                         \
     C_MTXLookAt(mtx, &cam->pos, &cam->up, &cam->target);                                           \
     PSMTXMultVec(mtx, pos, &view);                                                                 \
-    w = 1.2 * (view.z * (sin(M_PI * (cam->fov * 0.5f) / 180.0) / cos(M_PI * (cam->fov * 0.5f) / 180.0))); \
+    w = 1.2f * (view.z * (sin(M_PI * (cam->fov * 0.5f) / 180.0) / cos(M_PI * (cam->fov * 0.5f) / 180.0))); \
     h = view.z * (sin(M_PI * (cam->fov * 0.5f) / 180.0) / cos(M_PI * (cam->fov * 0.5f) / 180.0));  \
     outX = 288.0f + (view.x * (288.0f / -w));                                                      \
     outY = 240.0f + (view.y * (240.0f / h));                                                       \

@@ -5,6 +5,9 @@
 // 0xC on the GameCube) and are driven through hand-written vtables.
 #define _MATH_H
 #include "dolphin.h"
+#ifdef TARGET_PC
+#include <stddef.h>
+#endif
 
 extern "C" {
 double sin(double x);
@@ -91,8 +94,15 @@ struct CCleanSide {
     GXTexObj m_texWave; // 0x30 16x32 IA8 distortion pattern
     ANIMDATA *m_anim; // 0x50
     f32 ATTRIBUTE_ALIGN(32) m_height[CLEAN_GRID][CLEAN_GRID]; // 0x60
+#ifdef TARGET_PC
+    // GX texture images must start on a 32-byte boundary; MSVC ignores ATTRIBUTE_ALIGN and the heap block is
+    // not aligned, so reserve room and align the image pointer (CLEAN_MASK / CLEAN_WAVE).
+    u8 m_maskBuf[0x4000 + 32];
+    u8 m_waveBuf[0x400 + 32];
+#else
     u8 m_maskImg[0x4000]; // 0x10060
     u8 m_waveImg[0x400]; // 0x14060
+#endif
     s32 m_total; // 0x14460 cell count
     f32 m_thresh; // 0x14464 height at which a cell counts as dirty
     u8 m_dirty; // 0x14468
@@ -114,6 +124,15 @@ struct CCleanSide {
     s32 m_state; // 0x144B8
     s32 m_frame; // 0x144BC
 };
+
+#ifdef TARGET_PC
+#define CLEAN_ALIGN32(p) ((u8 *)(((size_t)(p) + 31) & ~(size_t)31))
+#define CLEAN_MASK(s) CLEAN_ALIGN32((s)->m_maskBuf)
+#define CLEAN_WAVE(s) CLEAN_ALIGN32((s)->m_waveBuf)
+#else
+#define CLEAN_MASK(s) ((s)->m_maskImg)
+#define CLEAN_WAVE(s) ((s)->m_waveImg)
+#endif
 
 // Owning pointer to a side: the assignment deletes the previous one.
 struct CSidePtr {
@@ -492,7 +511,7 @@ void fn_1_E010(CCleanSide *self)
         }
     }
     self->m_remain = count;
-    GXInitTexObj(&self->m_texMask, self->m_maskImg, 0x80, 0x80, GX_TF_I8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GXInitTexObj(&self->m_texMask, CLEAN_MASK(self), 0x80, 0x80, GX_TF_I8, GX_CLAMP, GX_CLAMP, GX_FALSE);
 }
 
 // Builds the 16x32 IA8 distortion pattern (concentric rings) in tiled 4x4 order.
@@ -511,12 +530,12 @@ void fn_1_E31C(CCleanSide *self)
             fx = ((f32)(x * 2) * 0.0625f) - 1.0f;
             fy = ((f32)(y * 2) * 0.03125f) - 1.0f;
             t = (f32)(9.42477796076938 * (fx * fx + fy * fy));
-            self->m_waveImg[ofs] = F2B(128.0 + 24.0 * sin(t));
-            self->m_waveImg[ofs + 1] = F2B(128.0 + 48.0 * cos(t));
+            CLEAN_WAVE(self)[ofs] = F2B(128.0 + 24.0 * sin(t));
+            CLEAN_WAVE(self)[ofs + 1] = F2B(128.0 + 48.0 * cos(t));
         }
     }
-    DCFlushRange(self->m_waveImg, 0x400);
-    GXInitTexObj(&self->m_texWave, self->m_waveImg, 0x10, 0x20, GX_TF_IA8, GX_REPEAT, GX_REPEAT, GX_FALSE);
+    DCFlushRange(CLEAN_WAVE(self), 0x400);
+    GXInitTexObj(&self->m_texWave, CLEAN_WAVE(self), 0x10, 0x20, GX_TF_IA8, GX_REPEAT, GX_REPEAT, GX_FALSE);
 }
 
 void fn_1_E560(CCleanSide *self)
@@ -566,14 +585,14 @@ static inline void CleanPack(CCleanSide *self)
     s32 x;
 
     if (self->m_state == 4) {
-        out = self->m_maskImg;
+        out = CLEAN_MASK(self);
         sum = 0;
         for (y = 0; y < CLEAN_GRID; y += 4) {
             for (x = 0; x < CLEAN_GRID; x += 8) {
                 sum += CleanPackBlock(&out, &self->m_height[y][x], CLEAN_GRID, (s32)self->m_thresh);
             }
         }
-        DCFlushRangeNoSync(self->m_maskImg, 0x4000);
+        DCFlushRangeNoSync(CLEAN_MASK(self), 0x4000);
         self->m_remain = sum;
     }
 }
@@ -932,8 +951,8 @@ static inline void CleanScroll(CCleanSide *self)
     f32 t;
 
     t = (f32)(6.283185307179586 * (f64)((f32)self->m_frame / 7200.0f));
-    self->m_scrollU = (f32)((f64)self->m_scrollU + 0.0005f * sin(t));
-    self->m_scrollV = (f32)((f64)self->m_scrollV + 0.0005f * cos(t));
+    self->m_scrollU = (f32)((f64)self->m_scrollU + 0.00049999997f * sin(t));
+    self->m_scrollV = (f32)((f64)self->m_scrollV + 0.00049999997f * cos(t));
     if (self->m_scrollU > 1.0f) {
         self->m_scrollU = (f32)(self->m_scrollU - 1.0f);
     } else if (self->m_scrollU < 0.0f) {
