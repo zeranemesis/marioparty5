@@ -133,7 +133,7 @@ typedef s32 M539PtrArg;
 #define M539_HEIHO_ACTOR_OK(p) ((u32)((p) + 0x30) != 0U)
 #endif
 void fn_1_30F4(M539PtrArg ptr, s32 flag);
-void fn_1_50C4(s32 lightId, Point3d *target, s32 *color, f32 *param, f32 a, f32 b);
+void fn_1_50C4(s16 camBit, Vec *dir, Vec *target, f32 width, f32 depth);
 void *fn_1_9DF8(void *self, Point3d *start, s32 count);
 void fn_1_9F6C(void *self);
 
@@ -244,7 +244,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     sp50 = lbl_1_rodata_220[0];
     sp54 = lbl_1_rodata_220[1];
     sp58 = lbl_1_rodata_220[2];
-    fn_1_50C4(0xF, &target, &sp50, (f32 *)&lbl_1_rodata_234, 600.0f, 530.0f);
+    fn_1_50C4(0xF, (Vec *)&target, (Vec *)&sp50, 600.0f, 530.0f);
     Hu3DShadowMultiTPLvlSet(0.5f, 0xF);
     Hu3DShadowMultiColSet(0x20, 0x20, 0x20, 0xF);
     anim = HuSprAnimRead(HuDataSelHeapReadNum(0x61000B, 0x10000000, 2));
@@ -340,13 +340,13 @@ M539ManMap *fn_1_C634(M539ManMap *self, s16 arg)
     if (self != NULL) {
         self->vtable = lbl_1_data_418;
         __destroy_arr(&self->sprLight[0], (void *)fn_1_C408, sizeof(s16 *), 2);
-        if (self->infLight != NULL) {
+        if (&self->infLight != NULL) {
             fn_1_30F4((M539PtrArg)self->infLight, 1);
         }
-        if (self->shadowLight != NULL) {
+        if (&self->shadowLight != NULL) {
             fn_1_30F4((M539PtrArg)self->shadowLight, 1);
         }
-        if (self->shadowLight != NULL) {
+        if (&self->shadowLight != NULL) {
             if (lbl_1_bss_A10 == NULL) {
                 fn_1_1D4(lbl_1_data_3B0, lbl_1_data_3C0, 0x3D);
             }
