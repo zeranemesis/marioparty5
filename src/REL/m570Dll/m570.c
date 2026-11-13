@@ -191,30 +191,22 @@ static MGSEQ_PARAM gSeqParam = {
     fn_1_1034
 };
 
-static const s32 gLightParam[7] = {
-    0, (s32)300.0f, (s32)0.001f, 0, (s32)-300.0f, 0, -1
+/* these were s32 arrays initialised with (s32)300.0f etc., i.e. integers instead of the float bit patterns */
+static struct { HuVecF pos; HuVecF dir; GXColor color; } gLightParam = {
+    {0.0f, 300.0f, 0.001f}, {0.0f, -300.0f, 0.0f}, {0xFF, 0xFF, 0xFF, 0xFF}
 };
-static const s32 gShadowParamA[3] = {0, (s32)2000.0f, 0};
-static const s32 gShadowParamB[3] = {(s32)1.0f, 0, 0};
-static const s32 gShadowParamC[3] = {0, 0, 0};
+static HuVecF gShadowParamA = {0.0f, 2000.0f, 0.0f};
+static HuVecF gShadowParamB = {1.0f, 0.0f, 0.0f};
+static HuVecF gShadowParamC = {0.0f, 0.0f, 0.0f};
 static const f32 gCamTarget[5] = {250.0f, 270.0f, 288.0f, 310.0f, 330.0f};
 
-static const s32 gCam0[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0,
-     (s32)-300.0f, (s32)100.0f, (s32)50.0f, (s32)-15.0f, (s32)90.0f, 0,
-     (s32)500.0f};
-static const s32 gCam1[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0,
-     (s32)-300.0f, (s32)100.0f, (s32)50.0f, (s32)-15.0f, 0, 0, (s32)500.0f};
-static const s32 gCam2[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0,
-     (s32)300.0f, (s32)100.0f, (s32)50.0f, (s32)-15.0f, (s32)-90.0f, 0,
-     (s32)600.0f};
-static const s32 gCam3[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0,
-     (s32)300.0f, (s32)100.0f, (s32)50.0f, (s32)-15.0f, 0, 0, (s32)600.0f};
-static const s32 gCam4[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0, 0,
-     (s32)100.0f, (s32)-300.0f, (s32)-36.0f, 0, 0, (s32)400.0f};
-static const s32 gCam5[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0, 0,
-     (s32)150.0f, 0, (s32)-15.0f, 0, 0, (s32)1000.0f};
-static const s32 gCam6[18] = {1, 1, (s32)40.0f, (s32)20.0f, (s32)8000.0f, 0, 0, 0, 0, (s32)1.0f, 0, 0,
-     (s32)150.0f, 0, (s32)-15.0f, 0, 0, (s32)1250.0f};
+static M570CAM gCam0 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {-300.0f, 100.0f, 50.0f}, {-15.0f, 90.0f, 0.0f}, 500.0f};
+static M570CAM gCam1 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {-300.0f, 100.0f, 50.0f}, {-15.0f, 0.0f, 0.0f}, 500.0f};
+static M570CAM gCam2 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {300.0f, 100.0f, 50.0f}, {-15.0f, -90.0f, 0.0f}, 600.0f};
+static M570CAM gCam3 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {300.0f, 100.0f, 50.0f}, {-15.0f, 0.0f, 0.0f}, 600.0f};
+static M570CAM gCam4 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 100.0f, -300.0f}, {-10.0f, 0.0f, 0.0f}, 400.0f};
+static M570CAM gCam5 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 150.0f, 0.0f}, {-15.0f, 0.0f, 0.0f}, 1000.0f};
+static M570CAM gCam6 = {1, 1, 40.0f, 20.0f, 8000.0f, {0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 150.0f, 0.0f}, {-15.0f, 0.0f, 0.0f}, 1600.0f};
 
 static const HU3DPARMANPARAM2 gParManParam = {
     30,
@@ -360,14 +352,14 @@ void fn_1_120(s16 mode, s16 frame)
     Hu3DModelAttrSet(lbl_1_bss_A0[12], 0x40000002);
     Hu3DModelPosSet(lbl_1_bss_A0[11], kCamYMin, kZero, kCamXMax);
     Hu3DModelPosSet(lbl_1_bss_A0[12], kCamYMax, kZero, kCamXMax);
-    fn_1_1964((M570CAM *)gCam0);
-    *BSS54 = *(M570CAM *)gCam0;
-    lightId = Hu3DGLightCreateV((HuVecF *)&gLightParam[0], (HuVecF *)&gLightParam[3], (GXColor *)&gLightParam[6]);
+    fn_1_1964(&gCam0);
+    *BSS54 = gCam0;
+    lightId = Hu3DGLightCreateV(&gLightParam.pos, &gLightParam.dir, &gLightParam.color);
     Hu3DGLightStaticSet(lightId, 1);
     Hu3DGLightInfinitytSet(lightId);
     Hu3DShadowCreate(BSS54->fov, BSS54->nearZ, BSS54->farZ);
     Hu3DShadowTPLvlSet(kShadowTp);
-    Hu3DShadowPosSet((HuVecF *)gShadowParamA, (HuVecF *)gShadowParamB, (HuVecF *)gShadowParamC);
+    Hu3DShadowPosSet(&gShadowParamA, &gShadowParamB, &gShadowParamC);
     Hu3DModelShadowMapSet(lbl_1_bss_A0[3]);
     fn_1_4210();
     lbl_1_bss_50 = 0;
@@ -390,7 +382,7 @@ void fn_1_520(s16 mode, s16 frame)
     }
     switch (lbl_1_bss_50) {
     case 0:
-        lbl_1_bss_C[0] = MgCameraMoveEntry((M570CAM *)gCam0, (M570CAM *)gCam1, 120.0f);
+        lbl_1_bss_C[0] = MgCameraMoveEntry(&gCam0, &gCam1, 120.0f);
         fn_1_4440(lbl_1_bss_1C0, 3);
         lbl_1_bss_50 = 1;
         lbl_1_bss_44 = HuAudFXPlay(0x39C);
@@ -408,7 +400,7 @@ void fn_1_520(s16 mode, s16 frame)
             WipeCreate(2, 0x81, 60);
         }
         if (lbl_1_bss_8 == 30) {
-            lbl_1_bss_C[0] = MgCameraMoveEntry((M570CAM *)gCam2, (M570CAM *)gCam3, 120.0f);
+            lbl_1_bss_C[0] = MgCameraMoveEntry(&gCam2, &gCam3, 120.0f);
             lbl_1_bss_50 = 3;
             WipeCreate(1, 0x81, 60);
             lbl_1_bss_8 = 0;
@@ -435,7 +427,7 @@ void fn_1_520(s16 mode, s16 frame)
             WipeCreate(2, 0x81, 60);
         }
         if (lbl_1_bss_8 == 30) {
-            fn_1_1A50((M570CAM *)gCam4);
+            fn_1_1A50(&gCam4);
             lbl_1_bss_50 = 5;
             WipeCreate(1, 0x81, 60);
             fn_1_5E38();
@@ -452,7 +444,7 @@ void fn_1_520(s16 mode, s16 frame)
                 Hu3DModelAttrSet(lbl_1_bss_A0[9], 1);
             }
             if (Hu3DMotionEndCheck(lbl_1_bss_A0[10]) != 0) {
-                lbl_1_bss_C[0] = MgCameraMoveEntry((M570CAM *)gCam4, (M570CAM *)gCam5, 30.0f);
+                lbl_1_bss_C[0] = MgCameraMoveEntry(&gCam4, &gCam5, 30.0f);
                 lbl_1_bss_50 = 6;
             }
             lbl_1_bss_8++;
@@ -557,7 +549,7 @@ void fn_1_DEC(s16 mode, s16 frame)
     }
     switch (lbl_1_bss_50) {
     case 13:
-        lbl_1_bss_4 = MgCameraMoveEntry((M570CAM *)gCam5, (M570CAM *)gCam6, 80.0f);
+        lbl_1_bss_4 = MgCameraMoveEntry(&gCam5, &gCam6, 80.0f);
         fn_1_4EF8();
         lbl_1_bss_50 = 14;
         break;

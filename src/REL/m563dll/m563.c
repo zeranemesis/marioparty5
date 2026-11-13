@@ -154,7 +154,11 @@ s32 unk3C;
     s16 unk50;
     s16 unk52[5];
     s32 unk5C;
+#ifdef TARGET_PC
+    MGSCORE *unk60; /* score handle: an s32 truncates the pointer on x64 */
+#else
     s32 unk60;
+#endif
     s32 unk64;
     s32 unk68;
     s32 unk6C;
@@ -436,7 +440,11 @@ lbl_1_bss_3B4[1] = 0;
     for (i = 0; i < 4; i++) {
         obj = omAddObjEx(lbl_1_bss_3B0, 0x64, 0, 0, 0, fn_1_1E7C);
         lbl_1_bss_124[i] = obj;
+#ifdef TARGET_PC
+        obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M563PlayerData), HU_MEMNUM_OVL);
+#else
         obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0xB0, HU_MEMNUM_OVL);
+#endif
         obj->work[0] = i;
     }
     omMakeGroupEx(lbl_1_bss_3B0, 4, 0xA);
