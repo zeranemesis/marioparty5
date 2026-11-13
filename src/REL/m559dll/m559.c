@@ -1905,7 +1905,7 @@ loop_6:
                 var_r31->color[2] = (u8) (s32) ((f32) var_r31->color[2] * 0.9f);
             }
             var_r30 += 1;
-            var_r31 += 0x3C;
+            var_r31 += 1;
             goto loop_6;
         }
         return;
@@ -1931,7 +1931,7 @@ loop_14:
             var_r31->color[2] = (u8) (s32) ((f32) var_r31->color[2] * 0.9f);
         }
         var_r30_2 += 1;
-        var_r31 += 0x3C;
+        var_r31 += 1;
         goto loop_18;
     }
 }
@@ -2342,8 +2342,8 @@ loop_17:
             }
         }
         var_r28 += 1;
-        var_r31 += 0x40;
-        var_r29 += 4;
+        var_r31 += 1;
+        var_r29 += 1;
         goto loop_17;
     }
 }
@@ -2375,8 +2375,8 @@ loop_2:
         var_r4->unk4 = (f32) (var_r3->unk4 * range);
         var_r4->unk8 = (f32) (var_r3->unk8 * range);
         var_r31 += 1;
-        var_r3 += 0xC;
-        var_r4 += 0xC;
+        var_r3 += 1;
+        var_r4 += 1;
         goto loop_2;
     }
 }
