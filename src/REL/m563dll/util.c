@@ -219,7 +219,11 @@ void fn_1_7A70(u16 arg0, s16 arg1)
     M563ListNode *temp_r3;
     M563ListNode *temp_r29;
 
+#ifdef TARGET_PC
+    temp_r3 = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M563ListNode), 0x10000000U);
+#else
     temp_r3 = HuMemDirectMallocNum(HEAP_HEAP, 0xC, 0x10000000U);
+#endif
     temp_r3->id = arg0;
     temp_r3->value = arg1;
     head = &lbl_1_bss_7AC;

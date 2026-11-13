@@ -263,10 +263,10 @@ Vec lbl_1_data_118[2] = {
 
 Vec lbl_1_data_130 = { 0.0f, 300.0f, -895.0f };
 
-u32 lbl_1_data_13C[12] = { DATANUM(DATA_m563, 3), DATANUM(DATA_m563, 4), DATANUM(DATA_m563, 5),
-    DATANUM(DATA_m563, 6), DATANUM(DATA_m563, 7), DATANUM(DATA_m563, 8), DATANUM(DATA_m563, 9),
-    DATANUM(DATA_m563, 10), DATANUM(DATA_m563, 11), DATANUM(DATA_m563, 12), DATANUM(DATA_m563, 13),
-    DATANUM(DATA_m563, 14) };
+u32 lbl_1_data_13C[12] = { DATANUM(DATA_m563, 23), DATANUM(DATA_m563, 24), DATANUM(DATA_m563, 25),
+    DATANUM(DATA_m563, 26), DATANUM(DATA_m563, 27), DATANUM(DATA_m563, 28), DATANUM(DATA_m563, 29),
+    DATANUM(DATA_m563, 30), DATANUM(DATA_m563, 31), DATANUM(DATA_m563, 32), DATANUM(DATA_m563, 33),
+    DATANUM(DATA_m563, 34) };
 
 Point3d lbl_1_data_16C = { -5000.0f, 10000.0f, 0.0f };
 Point3d lbl_1_data_178 = { 0.0f, 0.0f, 0.0f };
@@ -280,8 +280,8 @@ MGSEQ_PARAM lbl_1_data_1AC = { 30, 0, fn_1_2B90, fn_1_2C5C, NULL, fn_1_2EB0, fn_
 
 s32 lbl_1_data_1D4[12] = { 17, 18, 20, 1, 6, 12, 17, 18, 20, 1, 6, 12 };
 
-f32 lbl_1_data_204[4][4] = { { -53.0f, -3.625f, 0.0f, 0.0f }, { 0.0f, -3.625f, 700.0f, 0.0f },
-    { -53.0f, 0.0f, 0.0f, 3.625f }, { 0.0f, 0.0f, 700.0f, 3.625f } };
+f32 lbl_1_data_204[4][4] = { { -700.0f, -550.0f, 0.0f, 0.0f }, { 0.0f, -550.0f, 700.0f, 0.0f },
+    { -700.0f, 0.0f, 0.0f, 550.0f }, { 0.0f, 0.0f, 700.0f, 550.0f } };
 
 Vec lbl_1_data_244[4] = {
     { 900.0f, 2000.0f, 750.0f },
@@ -353,7 +353,11 @@ Point3d lbl_1_bss_38C;
 Point3d lbl_1_bss_398;
 Point3d lbl_1_bss_3A4;
 HUPROCESS *lbl_1_bss_3B0;
+#ifdef TARGET_PC
+M563ListNode lbl_1_bss_3B4; /* list head holds pointers: s32 cells truncate them on x64 */
+#else
 s32 lbl_1_bss_3B4[3];
+#endif
 
 s32 _prolog(void)
 {
@@ -408,8 +412,13 @@ void ObjectSetup(void)
     *lbl_1_bss_11C = obj;
     obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x50, HU_MEMNUM_OVL);
     obj->work[0] = 0;
-lbl_1_bss_3B4[1] = 0;
+#ifdef TARGET_PC
+    lbl_1_bss_3B4.prev = NULL;
+    lbl_1_bss_3B4.next = NULL;
+#else
+    lbl_1_bss_3B4[1] = 0;
     lbl_1_bss_3B4[2] = 0;
+#endif
     for (i = 0; i < 0x1E; i++) {
         lbl_1_bss_134[i] = NULL;
     }
@@ -650,7 +659,7 @@ void fn_1_13F4(s32 arg0, s32 arg1)
 void fn_1_1488(OMOBJ *obj)
 {
     f32 waterMtx[2][3] = { { 0.01f, 0.0f, 0.0f }, { 0.0f, 0.01f, 0.0f } };
-    Vec posMin = { -1.25f, -10.0f, -1.75f };
+    Vec posMin = { -500.0f, -10.0f, -350.0f };
     Vec posMax = { 500.0f, -10.0f, 800.0f };
 
     Hu3DWaterCreate(1, HU3D_WATER_ANIM_NONE, HU3D_WATER_ANIM_NONE, HU3D_WATER_ANIM_NONE, TRUE, &posMin, &posMax);
@@ -819,14 +828,17 @@ void fn_1_1E7C(OMOBJ *obj)
     data->unk88 = 0;
     switch (data->unk6C) {
     case 0:
+        data->unk7C = 50.0f;
         data->unk7C = 800.0f;
         data->unk84 = fn_1_60D4(0x32, 0x3C);
         break;
     case 1:
+        data->unk7C = 250.0f;
         data->unk7C = 800.0f;
         data->unk84 = fn_1_60D4(0x23, 0x2D);
         break;
     case 2:
+        data->unk7C = 550.0f;
         data->unk7C = 800.0f;
         data->unk84 = fn_1_60D4(0xA, 0x19);
         break;
@@ -2103,10 +2115,52 @@ void fn_1_660C(OMOBJ *obj)
 
 void fn_1_66D4(void)
 {
+#ifdef TARGET_PC
+    lbl_1_bss_3B4.prev = NULL;
+    lbl_1_bss_3B4.next = NULL;
+#else
     lbl_1_bss_3B4[1] = 0;
     lbl_1_bss_3B4[2] = 0;
+#endif
 }
 
+#ifdef TARGET_PC
+void fn_1_66F8(u16 arg0, s16 arg1)
+{
+    M563ListNode *node = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M563ListNode), HU_MEMNUM_OVL);
+    M563ListNode *head = &lbl_1_bss_3B4;
+    M563ListNode *prev = head->next;
+
+    node->id = arg0;
+    node->value = arg1;
+    head->next = node;
+    if (prev != NULL) {
+        prev->prev = node;
+    }
+    node->prev = head;
+    node->next = prev;
+}
+
+s16 fn_1_6780(s16 arg0)
+{
+    M563ListNode *node = lbl_1_bss_3B4.next;
+
+    while (node != NULL) {
+        if (arg0 == node->id) {
+            s16 value = node->value;
+            node->prev->next = node->next;
+            if (node->next != NULL) {
+                node->next->prev = node->prev;
+            }
+            HuMemDirectFree(node);
+            return value;
+        }
+        node = node->next;
+    }
+    return -1;
+}
+
+#else
 typedef struct M563ListNode2_s {
     u16 unk0;
     s16 unk2;
@@ -2157,6 +2211,8 @@ s16 fn_1_6780(s16 arg0)
     }
     return -1;
 }
+
+#endif
 
 void fn_1_6824(void)
 {
