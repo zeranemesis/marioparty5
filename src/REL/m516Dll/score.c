@@ -60,9 +60,9 @@ void fn_1_79F8(OMOBJMAN *objman)
 
     obj = omAddObjEx(objman, 0x3C, 0, 0, OM_GRP_NONE, fn_1_7A84);
     lbl_1_bss_48 = obj;
-    data = HuMemDirectMallocNum(HEAP_HEAP, 0x38, HU_MEMNUM_OVL);
+    data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(SCOREDATA), HU_MEMNUM_OVL);
     obj->data = data;
-    memset(data, 0, 0x38);
+    memset(data, 0, sizeof(SCOREDATA));
 }
 
 void fn_1_7A80(void)
