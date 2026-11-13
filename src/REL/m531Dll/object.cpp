@@ -119,8 +119,8 @@ static PotPlace lbl_1_data_230[5] = {
     { { -722.0f, -389.0f, -53.0f }, { 0.0f, 59.4f, 0.0f } },
     { { 687.0f, -406.0f, 145.0f }, { 0.0f, -69.5f, 0.0f } },
     { { -13.0f, -582.0f, 433.0f }, { 0.0f, -120.0f, 0.0f } },
-    { { -711.0f, -582.0f, 405.0f }, { 0.0f, -226.0f, 0.0f } },
-    { { 877.0f, -582.0f, -205.0f }, { 0.0f, -22.4f, 0.0f } },
+    { { -711.0f, -582.0f, 404.0f }, { 0.0f, -226.0f, 0.0f } },
+    { { 877.0f, -582.0f, -206.0f }, { 0.0f, -22.4f, 0.0f } },
 };
 
 static s32 lbl_1_data_2A8[5] = { 1, 0, 0, 0, 1 };
@@ -410,6 +410,14 @@ CObjPot *fn_1_8CD4(CObjPot *self, OMOBJMAN *objMan, s32 idx, s32 modelSel, Vec *
     Hu3DModelAttrSet(model, 0x40000001);
     Hu3DModelPosSet(model, pos->x, pos->y, pos->z);
     Hu3DModelRotSet(model, rot->x, rot->y, rot->z);
+#ifdef TARGET_PC
+    /* the 64-bit HU3DMODEL is larger than the GC one the header pads to: let the engine set the colour */
+    if (flag != 0) {
+        Hu3DModelAmbSet(model, 0.5f, 0.2f, 0.7f);
+    } else {
+        Hu3DModelAmbSet(model, 0.7f, 0.7f, 0.65f);
+    }
+#else
     data = &Hu3DData[model];
     if (flag != 0) {
         data->ambR = 0.5f;
@@ -420,6 +428,7 @@ CObjPot *fn_1_8CD4(CObjPot *self, OMOBJMAN *objMan, s32 idx, s32 modelSel, Vec *
         data->ambG = 0.7f;
         data->ambB = 0.65f;
     }
+#endif
     self->m_hook = Hu3DModelCreate(HuDataSelHeapReadNum(0x590010, 0x10000000, 2));
     Hu3DModelHookSet(self->m_base.m_model, "g003m2-itemhook_R", self->m_hook);
     return self;

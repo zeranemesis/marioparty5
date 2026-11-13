@@ -68,13 +68,13 @@ typedef struct Hu3DModel_s {
     u8 hiliteIdx;
     s8 reflectType;
     s16 layerNo;
-    s32 motId;
-    s32 motIdOvl;
-    s32 motIdShift;
-    s32 motIdShape;
-    s32 motIdCluster[4];
+    HU3DMOTID motId;
+    HU3DMOTID motIdOvl;
+    HU3DMOTID motIdShift;
+    HU3DMOTID motIdShape;
+    HU3DMOTID motIdCluster[4];
     s16 clusterAttr[4];
-    s32 motIdSrc;
+    HU3DMOTID motIdSrc;
     u16 cameraBit;
     s16 linkMdlId;
     u16 lightNum;
@@ -88,7 +88,7 @@ typedef struct Hu3DModel_s {
     float ambB;
     float ambG;
     // Pad to the real HU3DMODEL size; m531 indexes Hu3DData by it.
-    u8 unk78[0x134 - 0x78];
+    u8 unk64[0x134 - 0x64];
 } HU3DMODEL;
 
 OMOBJ *omAddObjEx(OMOBJMAN *objMan, s16 prio, u16 mdlcnt, u16 mtncnt, s16 grpNo, OMOBJFUNC objFunc);
@@ -110,6 +110,7 @@ void Hu3DModelAttrReset(HU3DMODELID modelId, u32 attr);
 void Hu3DModelPosSet(HU3DMODELID modelId, float x, float y, float z);
 void Hu3DModelRotSet(HU3DMODELID modelId, float x, float y, float z);
 void Hu3DModelScaleSet(HU3DMODELID modelId, float x, float y, float z);
+void Hu3DModelAmbSet(HU3DMODELID modelId, float ambR, float ambG, float ambB);
 HU3DMOTID Hu3DMotionCreate(void *data);
 HU3DMOTID Hu3DMotionSet(HU3DMODELID modelId, HU3DMOTID motId);
 void Hu3DMotionKill(HU3DMOTID motId);
