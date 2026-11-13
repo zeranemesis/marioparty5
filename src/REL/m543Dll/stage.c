@@ -60,6 +60,7 @@ void fn_1_FD34(void)
 {
 }
 
+// NONMATCHING: extsb/neg order only
 void fn_1_FD38(void)
 {
     s32 i;
@@ -96,6 +97,7 @@ void fn_1_FD38(void)
     }
 }
 
+// NONMATCHING: rodata pool offset only
 void fn_1_10150(void)
 {
     s16 i;
@@ -117,6 +119,7 @@ void fn_1_10150(void)
     }
 }
 
+// NONMATCHING: ~(a|a) emitted as lwz+nor instead of not
 void fn_1_10304(OMOBJ *obj)
 {
     s16 i;

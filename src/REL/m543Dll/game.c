@@ -124,6 +124,7 @@ f32 lbl_1_data_8FC[25] = {
     593.0f, 312.0f, -1119.0f, -462.0f, 330.0f, -1100.0f, -1000.0f, 40.0f, -2100.0f, -2500.0f, 0.0f, -3900.0f,
 };
 
+// NONMATCHING: posTbl/adjTbl rodata order and constant reload order
 void fn_1_3CEC(M543State *state)
 {
     s32 jointNums[3] = { 0x650010, 0x650011, 0x650012 };
@@ -209,11 +210,11 @@ void fn_1_3CEC(M543State *state)
     HU3DMODELID id;
     MGACTOR_PARAM param;
 
-    memset(&lbl_1_bss_B94, 0, 0x74);
-    memset(lbl_1_bss_8DC, 0, 0x2B8);
+    memset(&lbl_1_bss_B94, 0, sizeof(lbl_1_bss_B94));
+    memset(lbl_1_bss_8DC, 0, sizeof(lbl_1_bss_8DC));
     memset(lbl_1_bss_33C, 0, 0x5A0);
     memset(lbl_1_bss_1C, 0, 0x320);
-    memset(&lbl_1_bss_0, 0, 0x10);
+    memset(&lbl_1_bss_0, 0, sizeof(lbl_1_bss_0));
     lbl_1_bss_15E0 = state;
     for (i = 0; i < 4; i++) {
         lbl_1_bss_B94.fxOn[i] = -1;
@@ -439,6 +440,7 @@ void fn_1_3CEC(M543State *state)
     lbl_1_bss_B94.timer = fn_1_1A8C(0, 30, 0, 292.0f, 64.0f);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_5A6C(M543State *state)
 {
     HU3DMODEL *model0;
@@ -456,6 +458,7 @@ s32 fn_1_5A6C(M543State *state)
     return result;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_5B78(void)
 {
     s16 result = 0;
@@ -465,6 +468,7 @@ s32 fn_1_5B78(void)
     return result;
 }
 
+// NONMATCHING: return value register form
 s32 fn_1_5BB0(void)
 {
     lbl_1_bss_B94.phase = 0;
@@ -475,6 +479,7 @@ s32 fn_1_5BB0(void)
     return 0;
 }
 
+// NONMATCHING: playerNo load hoisted before _CheckFlag
 s32 fn_1_5C20(void)
 {
     M543Vec3 pos;
@@ -578,6 +583,7 @@ s32 fn_1_5C20(void)
     return ret;
 }
 
+// NONMATCHING: return value register form
 s32 fn_1_623C(void)
 {
     lbl_1_bss_B94.phase = 0;
@@ -594,6 +600,7 @@ s32 fn_1_623C(void)
     return 0;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_6314(void)
 {
     s16 result = 0;
@@ -603,6 +610,7 @@ s32 fn_1_6314(void)
     return result;
 }
 
+// NONMATCHING: rodata pool offsets only
 s32 fn_1_634C(void)
 {
     M543StageSlot *slot;
@@ -626,6 +634,7 @@ s32 fn_1_634C(void)
     return result;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_64AC(void)
 {
     s16 result = 1;
@@ -634,6 +643,7 @@ s32 fn_1_64AC(void)
     return result;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_64DC(void)
 {
     s16 result = 1;
@@ -644,6 +654,7 @@ s32 fn_1_64DC(void)
     return result;
 }
 
+// NONMATCHING: float temp kept in f31 in the original
 void fn_1_6534(void)
 {
     s16 i;
@@ -662,6 +673,7 @@ void fn_1_6534(void)
     CharModelVoicePanSet(lbl_1_bss_15E0->chars[1].charNo, 64.0f + 0.042666666f * model1->pos.x);
 }
 
+// NONMATCHING: float temp kept in f31 in the original
 void fn_1_6770(void)
 {
     s16 i;
@@ -683,6 +695,7 @@ void fn_1_6770(void)
     fn_1_14C4();
 }
 
+// NONMATCHING: float temp kept in f31 in the original
 s32 fn_1_69BC(s16 arg0)
 {
     M543StageSlot *slot;
@@ -730,6 +743,7 @@ s32 fn_1_69BC(s16 arg0)
     return ret;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s16 fn_1_6CF0(s16 arg0)
 {
     M543StageSlot *slot;
@@ -800,6 +814,7 @@ s16 fn_1_6CF0(s16 arg0)
     return ret;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_71AC(void)
 {
     s16 i;
@@ -913,6 +928,7 @@ s32 fn_1_7704(s16 arg0)
     return ret;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 void fn_1_7A74(void)
 {
     f32 camStep[4][2] = { { 8.0f, 0.0f }, { -8.0f, 0.0f }, { 0.0f, 8.0f }, { 0.0f, -8.0f } };
@@ -943,6 +959,7 @@ void fn_1_7A74(void)
     }
 }
 
+// NONMATCHING: loop branch polarity / frame layout only
 s16 fn_1_7C18(void)
 {
     s16 tiles[9][7] = {
@@ -1088,6 +1105,7 @@ s16 fn_1_7C18(void)
     return ret;
 }
 
+// NONMATCHING: float temp kept in f31 in the original
 s16 fn_1_86E4(void)
 {
     s16 ret;
@@ -1264,6 +1282,7 @@ s16 fn_1_86E4(void)
     return ret;
 }
 
+// NONMATCHING: empty case 4 in the f_02 switch is not reproduced
 s16 fn_1_91F8(void)
 {
     s16 grp[5][12] = {
@@ -1496,6 +1515,7 @@ void fn_1_A164(void)
     lbl_1_bss_B94.f_22 = 1;
 }
 
+// NONMATCHING: sqrt expanded via sqrt() macro instead of inline sqrtf
 int fn_1_A308(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
 {
     f32 dx;
@@ -1557,6 +1577,7 @@ void fn_1_A69C(MGACTOR *actorP, int param)
     sp8 = actorP->param;
 }
 
+// NONMATCHING: 40+25 and 1+25 folded at compile time (runtime fadds in original), sqrt macro, indexed vs direct addressing
 void fn_1_A6B0(M543Actor *actors)
 {
     f32 push60[2];
@@ -2052,6 +2073,7 @@ void fn_1_A6B0(M543Actor *actors)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 void fn_1_D408(s16 arg0)
 {
     f32 speedTbl[4] = { 7.2f, 8.0f, 9.0f, 10.285714f };
@@ -2081,7 +2103,7 @@ void fn_1_D408(s16 arg0)
         lbl_1_bss_8DC[arg0].f142 = waitTbl[lbl_1_bss_8DC[arg0].f52];
         lbl_1_bss_8DC[arg0].f106[0] = -1;
         lbl_1_bss_8DC[arg0].f106[4] = -1;
-        lbl_1_bss_8DC[arg0].f106[0x1A] = -1;
+        lbl_1_bss_8DC[arg0].f106[0x19] = -1;
         lbl_1_bss_8DC[arg0].f106[0x1D] = -1;
         lbl_1_bss_8DC[arg0].tileHit[0x15] = 1;
         lbl_1_bss_8DC[arg0].tileHit[0x16] = 1;
@@ -2104,12 +2126,13 @@ void fn_1_D408(s16 arg0)
     }
 }
 
+// NONMATCHING: 12-byte pos copy via lfs/stfs instead of lwz/stw
 s32 fn_1_D9E8(s16 arg0)
 {
     s16 dirTbl[4] = { -1, 1, -5, 5 };
     s16 used[4] = { 0, 0, 0, 0 };
     s16 bonus[4] = { 0, 0, 0, 0 };
-    s32 score[4];
+    s16 score[4];
     s16 best;
     s16 sel;
     s16 i;
@@ -2211,6 +2234,7 @@ s32 fn_1_D9E8(s16 arg0)
     return 0;
 }
 
+// NONMATCHING: 12-byte pos copy via lfs/stfs instead of lwz/stw
 s16 fn_1_E144(s16 arg0)
 {
     M543Vec3 pos;
@@ -2246,6 +2270,7 @@ s16 fn_1_E144(s16 arg0)
     return ret;
 }
 
+// NONMATCHING: pos copy via lfs/stfs, frandmod compare unsigned
 s16 fn_1_E340(s16 arg0)
 {
     f32 offs[4][4] = {
@@ -2380,6 +2405,7 @@ s16 fn_1_E340(s16 arg0)
     return ret;
 }
 
+// NONMATCHING: dead (f146==f148) computation not emitted
 s16 fn_1_EF58(s16 arg0)
 {
     s16 ret;

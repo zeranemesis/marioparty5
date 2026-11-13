@@ -369,6 +369,7 @@ void fn_1_14C4(void)
     Hu3DShadowPosSet((HuVecF *)&lbl_1_bss_10->pos, (HuVecF *)&lbl_1_bss_10->up, (HuVecF *)&lbl_1_bss_10->target);
 }
 
+// NONMATCHING: dead fmr copies only
 s32 fn_1_1850(f32 *arg0, f32 steps, f32 start, f32 target)
 {
     f32 delta;
@@ -400,6 +401,7 @@ s32 fn_1_1850(f32 *arg0, f32 steps, f32 start, f32 target)
     return ret;
 }
 
+// NONMATCHING: dead fmr copies only
 s32 fn_1_1970(f32 *arg0, f32 steps, f32 start, f32 target)
 {
     f32 delta;
@@ -456,6 +458,7 @@ void fn_1_1B54(MGTIMER *timer)
     MgTimerKill(timer);
 }
 
+// NONMATCHING: prologue/epilogue register save form only
 s32 fn_1_1B8C(M543State *state, s16 pad, s16 idx)
 {
     M543StageModel *model;
@@ -506,6 +509,7 @@ void fn_1_1EE0(void)
 {
 }
 
+// NONMATCHING: stick reads typed u8 here, s8 in the original (debug-only, never called)
 void fn_1_1EE4(s16 pad)
 {
     s32 btnDown;
@@ -603,6 +607,7 @@ void fn_1_1EE4(s16 pad)
     print8(0x19, 0x30, 1.5f, lbl_1_data_323, CRot.x, CRot.y, CRot.z);
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 void fn_1_239C(void)
 {
     HU3DPARTICLE *particle;
@@ -629,6 +634,7 @@ void fn_1_239C(void)
     }
 }
 
+// NONMATCHING: data_340 address reload order only
 void fn_1_251C(M543Vec3 *arg0)
 {
     M543Vec3 sp;
@@ -651,6 +657,7 @@ void fn_1_251C(M543Vec3 *arg0)
     }
 }
 
+// NONMATCHING: evaluation order of sin vs frandmod only
 void fn_1_2898(M543Vec3 *arg0, s16 mode)
 {
     M543Vec3 sp;
@@ -689,6 +696,7 @@ void fn_1_2898(M543Vec3 *arg0, s16 mode)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s16 fn_1_2F3C(M543PtclWork *arg0, f32 x, f32 y, f32 z, f32 scale)
 {
     HU3DPARTICLEDATA *data;
@@ -733,6 +741,7 @@ s16 fn_1_2F3C(M543PtclWork *arg0, f32 x, f32 y, f32 z, f32 scale)
     return ret;
 }
 
+// NONMATCHING: dead counter kept in a different register
 void fn_1_3110(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 {
     M543PtclWork *work;
@@ -797,6 +806,7 @@ void fn_1_3110(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
     DCStoreRangeNoSync(particleP->data, particleP->maxCnt * sizeof(HU3DPARTICLEDATA));
 }
 
+// NONMATCHING: register allocation (s8 vs u8 color copy)
 void fn_1_3558(s16 arg0)
 {
     s16 i;
@@ -817,6 +827,7 @@ void fn_1_3558(s16 arg0)
     }
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 s32 fn_1_3650(s16 arg0, f32 scale)
 {
     HSFMATERIAL *mat;
@@ -841,6 +852,7 @@ s32 fn_1_3650(s16 arg0, f32 scale)
     return ret;
 }
 
+// NONMATCHING: register allocation / instruction scheduling only
 void fn_1_37C0(s16 arg0)
 {
     s16 i;
