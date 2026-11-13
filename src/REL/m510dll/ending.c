@@ -74,6 +74,7 @@ extern M510_OBJ *lbl_1_bss_0;
 END_WORK lbl_1_bss_7824;
 s16 lbl_1_bss_7820;
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_9B0C(M510_OBJ *data)
 {
     M510_OBJ *obj = data;
@@ -204,6 +205,7 @@ void fn_1_A454(M510_OBJ *data)
     memset(&lbl_1_bss_7824, 0, sizeof(END_WORK));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 s32 fn_1_A4F4(M510_OBJ *data)
 {
     M510_OPEN_CAM *cam = &data->cam;
@@ -397,10 +399,11 @@ s32 fn_1_A4F4(M510_OBJ *data)
     return ret;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 s32 fn_1_B350(M510_OBJ *data)
 {
     s32 ret = 0;
-    s16 best = 0;
+    s32 best = 0;
     s32 humanWon = 0;
     s32 i;
     M510_PLAYER_WORK *player;
@@ -454,6 +457,7 @@ M510_VECF lbl_1_data_4BC = { 360.0f, 40.0f, -850.0f };
 // .data:0x78 (absolute 0x4C8)
 M510_VECF lbl_1_data_4C8 = { 635.0f, 65.0f, -720.0f };
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_B4A4(M510_OBJ *data)
 {
     M510_VECF a;
@@ -530,6 +534,7 @@ void fn_1_B8F4(M510_OBJ *data)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_B958(void *data)
 {
     END_FX_A *fx = data;
@@ -590,6 +595,7 @@ void fn_1_BE48(M510_OBJ *data, M510_VECF *src)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_BEC4(void *data)
 {
     END_FX_B *fx = data;

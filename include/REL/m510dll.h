@@ -261,7 +261,7 @@ typedef struct M510Obj_s {
     u8 pattern[30];          //0x250A
     s16 patIdx;              //0x2528
     u8 pad252A[2];
-    u32 record;              //0x252C
+    s32 record;              //0x252C
     s32 mesId;               //0x2530
     s32 practice;            //0x2534
     s32 soundId;             //0x2538

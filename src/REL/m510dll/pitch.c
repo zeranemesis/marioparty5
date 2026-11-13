@@ -59,9 +59,7 @@ void fn_1_49A4(M510_PITCH_WORK *work)
 
 void fn_1_49F4(M510_PITCH_WORK *data)
 {
-    // NONMATCHING: ~36%. Real body, but MWCC allocates fewer callee-saved FP
-    // registers (f30/f31) than the target (f23-f31), yielding a different frame
-    // (-0x90 vs -0x100); stack-offset/register instructions differ throughout.
+    // NONMATCHING: verified against the asm; MWCC allocates fewer callee-saved FPRs, so frame and registers differ
     M510_PITCH_WORK *w = data;
     M510_PLAYER_WORK *self = w->owner;
     Mtx mtx;

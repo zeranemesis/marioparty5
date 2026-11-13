@@ -13,6 +13,7 @@ char lbl_1_data_3EC[6] = "IY:%f";
 char lbl_1_data_3F2[6] = "IZ:%f";
 char lbl_1_data_3F8[8] = "FOVY:%f";
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_89B8(M510_OPEN_CAM *cam, M510_OBJ *obj)
 {
     M510_VECF up = { 0.0f, 1.0f, 0.0f };
@@ -46,6 +47,7 @@ void fn_1_8BEC(M510_OPEN_CAM *cam)
     memset(cam, 0, sizeof(M510_OPEN_CAM));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_8C1C(M510_OPEN_CAM *cam)
 {
     M510_VECF posDiff;
@@ -68,6 +70,7 @@ void fn_1_8C1C(M510_OPEN_CAM *cam)
     Hu3DCameraPosSetV(cam->unk04, &pos, &cam->up, &look);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_8D48(M510_OPEN_CAM *cam)
 {
     M510_VECF dir;

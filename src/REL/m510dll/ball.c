@@ -101,6 +101,7 @@ void fn_1_5230(M510_BALL_WORK *work)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 M510_BALL *fn_1_52B0(M510_BALL_WORK *work, M510_VECF *pos, s16 type)
 {
     s32 i;
@@ -121,6 +122,7 @@ M510_BALL *fn_1_52B0(M510_BALL_WORK *work, M510_VECF *pos, s16 type)
     return NULL;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_53E0(M510_BALL *ball, s16 index, M510_BALL_WORK *work)
 {
     M510_OPEN_CAM *cam = &work->owner->obj->cam;
@@ -157,6 +159,7 @@ void fn_1_557C(M510_BALL *ball)
     memset(ball, 0, sizeof(M510_BALL));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_55C4(M510_BALL *ball)
 {
     M510_BALL_WORK *work = ball->work;
@@ -291,6 +294,7 @@ void fn_1_55C4(M510_BALL *ball)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_5E40(M510_BALL *ball)
 {
     M510_PITCH_WORK *pitch = &ball->work->owner->pitch;
@@ -350,6 +354,7 @@ void fn_1_5E40(M510_BALL *ball)
     ball->step = 0;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_64B0(M510_BALL *ball, M510_VECF *target)
 {
     M510_PLAYER_WORK *player = ball->work->owner;
@@ -465,6 +470,7 @@ void fn_1_64B0(M510_BALL *ball, M510_VECF *target)
     ball->target = spec;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 s32 fn_1_7038(M510_BALL *ball, M510_VECF *out)
 {
     M510_PLAYER_WORK *player = ball->work->owner;
@@ -568,6 +574,7 @@ s32 fn_1_7038(M510_BALL *ball, M510_VECF *out)
     return 0;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_8060(M510_BALL_WORK *work, M510_BALL *ball, s16 type, s32 on)
 {
     M510_OPEN_CAM *cam = &work->owner->obj->cam;

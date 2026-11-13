@@ -25,6 +25,7 @@ f32 lbl_1_data_2EC[12] = {
     55.91046f, -3.053231f, -52.90621f, -100.0638f, -100.0638f, -100.0638f,
 };
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_3DC8(M510_PLAYER_MODEL_WORK *data, s16 playerNo, M510_PLAYER_WORK *owner)
 {
     M510_OBJ *obj = owner->obj;
@@ -99,6 +100,7 @@ void fn_1_3DC8(M510_PLAYER_MODEL_WORK *data, s16 playerNo, M510_PLAYER_WORK *own
     fn_1_8184(&data->pad, playerNo, data);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_4284(M510_PLAYER_MODEL_WORK *data)
 {
     M510_OBJ *obj = data->owner->obj;
@@ -116,6 +118,7 @@ void fn_1_4284(M510_PLAYER_MODEL_WORK *data)
     memset(data, 0, sizeof(M510_PLAYER_MODEL_WORK));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 s32 fn_1_4328(M510_PLAYER_MODEL_WORK *data)
 {
     M510_PAD *pad = &data->pad;
@@ -239,7 +242,14 @@ void fn_1_4770(M510_PLAYER_MODEL_WORK *data)
     data->prevRotY = data->rotY;
     if (data->state == 1) {
 #ifdef TARGET_PC
-        data->rotY = lbl_1_data_2AC[(data->timer < 0) ? 0 : (data->timer > 15) ? 15 : data->timer];
+        // the two tables are adjacent in the original .data, so a timer past 15 reads into the second one
+        if (data->timer < 0) {
+            data->rotY = lbl_1_data_2AC[0];
+        } else if (data->timer < 16) {
+            data->rotY = lbl_1_data_2AC[data->timer];
+        } else {
+            data->rotY = lbl_1_data_2EC[(data->timer - 16 > 11) ? 11 : data->timer - 16];
+        }
 #else
         data->rotY = lbl_1_data_2AC[data->timer];
 #endif

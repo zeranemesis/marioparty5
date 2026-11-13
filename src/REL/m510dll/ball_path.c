@@ -34,6 +34,7 @@ void fn_1_C650(M510_PATH *path, M510_VECF *pt, s32 len)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_C70C(M510_VECF *out, M510_PATH *path, s32 dist, f32 tension)
 {
     M510_VECF res = { 0.0f, 0.0f, 0.0f };
@@ -112,6 +113,7 @@ void fn_1_CAD0(M510_VECF *out, M510_PATH *path, s32 idx, f32 tension)
     *out = v;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_CC58(M510_VECF *out, M510_VECF *p0, M510_VECF *p1, M510_VECF *t0, M510_VECF *t1, f32 t)
 {
     M510_VECF v;

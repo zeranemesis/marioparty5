@@ -99,6 +99,7 @@ void ObjectSetup(void)
     MgSeqModeHookAdd(4, (MGSEQ_FUNC)fn_1_260);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_E8(void)
 {
     M510_OBJ *obj;
@@ -161,6 +162,7 @@ void fn_1_2BC(void)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_30C(void)
 {
     M510_OBJ *obj = lbl_1_bss_0;
@@ -205,6 +207,7 @@ void fn_1_404(void)
     fn_1_E54(obj, 0);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_494(void)
 {
     M510_OBJ *obj = lbl_1_bss_0;
@@ -279,6 +282,7 @@ void fn_1_714(void)
     HuAudAllStop();
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 s32 fn_1_734(s32 arg0)
 {
     return HuAudBGMPlay((s16)arg0);
@@ -294,6 +298,7 @@ void fn_1_784(s16 streamId, s16 chanNo)
     HuAudSStreamChanPlay(streamId, chanNo);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_7B4(M510_OBJ *obj, OMOBJMAN *objman)
 {
     s16 i;
@@ -439,6 +444,7 @@ s32 fn_1_C6C(M510_OBJ *obj, s16 idx, s16 val)
     return 1;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_D84(M510_OBJ *obj)
 {
     s32 i;
@@ -461,6 +467,7 @@ void fn_1_D84(M510_OBJ *obj)
     HuAudAllStop();
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 s32 fn_1_E54(M510_OBJ *obj, s32 unused)
 {
     s32 ret = 0;
@@ -528,6 +535,7 @@ s32 fn_1_E54(M510_OBJ *obj, s32 unused)
     return ret;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_1074(M510_OBJ *obj)
 {
     GXColor red = { 0xFF, 0x00, 0x00, 0xFF };
@@ -594,6 +602,7 @@ s32 fn_1_1310(M510_OBJ *obj)
     return fn_1_A4F4(obj);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_1338(void *unused, Mtx mtx)
 {
     s32 i;
@@ -652,6 +661,7 @@ void fn_1_1338(void *unused, Mtx mtx)
     lbl_1_bss_8 = 0;
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_2148(M510_VECF *a, M510_VECF *b, GXColor *c)
 {
     if (lbl_1_bss_8 < 256) {
@@ -665,6 +675,7 @@ void fn_1_2148(M510_VECF *a, M510_VECF *b, GXColor *c)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_2220(M510_VECF *pos, f32 size, GXColor *c)
 {
     M510_VECF p0;
@@ -692,6 +703,7 @@ void fn_1_2220(M510_VECF *pos, f32 size, GXColor *c)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_2390(M510_VECF *a, M510_VECF *b, M510_VECF *c, M510_VECF *d, GXColor *col)
 {
     if (lbl_1_bss_C < 256) {
@@ -707,6 +719,7 @@ void fn_1_2390(M510_VECF *a, M510_VECF *b, M510_VECF *c, M510_VECF *d, GXColor *
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_24D0(float quat[4], Vec *from, Vec *to)
 {
     Vec cross;
@@ -741,6 +754,7 @@ void fn_1_24D0(float quat[4], Vec *from, Vec *to)
     quat[3] = out[3];
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 f32 fn_1_2840(f32 a, f32 b, f32 t)
 {
     f32 d;

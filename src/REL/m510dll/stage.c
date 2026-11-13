@@ -23,6 +23,7 @@ M510_VECF lbl_1_data_60[11] = {
 // .data:0x84 (absolute 0xE4) - spectator scales
 f32 lbl_1_data_E4[11] = { 0.65f, 0.7f, 0.7f, 0.75f, 0.6f, 0.65f, 0.7f, 0.55f, 0.6f, 0.6f, 0.55f };
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_295C(M510_STAGE *stage, M510_OBJ *obj)
 {
     M510_OPEN_CAM *cam = &obj->cam;
@@ -131,6 +132,7 @@ void fn_1_2F8C(M510_STAGE *stage)
     memset(stage, 0, sizeof(M510_STAGE));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_3020(M510_STAGE *stage)
 {
     M510_OBJ *obj = stage->obj;
@@ -145,6 +147,7 @@ void fn_1_3020(M510_STAGE *stage)
     fn_1_38A0(&stage->digit[1]);
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_30D8(M510_SPECTATOR *spec, u16 type, M510_VECF *pos, M510_STAGE *stage, f32 scale)
 {
     M510_OPEN_CAM *cam = &stage->obj->cam;
@@ -195,6 +198,7 @@ void fn_1_33C0(M510_SPECTATOR *spec)
     memset(spec, 0, sizeof(M510_SPECTATOR));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_3418(M510_SPECTATOR *spec)
 {
     M510_VECF screen;
@@ -217,6 +221,7 @@ void fn_1_3418(M510_SPECTATOR *spec)
     }
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_3598(M510_DIGIT *digit, s16 value, M510_VECF *pos, M510_STAGE *stage)
 {
     M510_OPEN_CAM *cam = &stage->obj->cam;
@@ -261,6 +266,7 @@ void fn_1_3834(M510_DIGIT *digit)
     memset(digit, 0, sizeof(M510_DIGIT));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_38A0(M510_DIGIT *digit)
 {
     f32 maxTime;

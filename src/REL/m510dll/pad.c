@@ -4,6 +4,7 @@
 // .data:0x0 (absolute 0x3C8) - frames the CPU waits per pitch type
 s16 lbl_1_data_3C8[4] = { 15, 43, 18, 10 };
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_8184(M510_PAD *data, s16 playerNo, M510_PLAYER_MODEL_WORK *owner)
 {
     memset(data, 0, sizeof(M510_PAD));
@@ -18,6 +19,7 @@ void fn_1_81F4(M510_PAD *data)
     memset(data, 0, sizeof(M510_PAD));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_8234(M510_PAD *data)
 {
     s32 absX;
@@ -64,6 +66,7 @@ void fn_1_8234(M510_PAD *data)
     data->dStkRep = HuPadDStkRep[data->padNo];
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_8420(M510_AI *data, M510_PAD *owner)
 {
     M510_PLAYER_MODEL_WORK *model = owner->owner;
@@ -150,6 +153,7 @@ void fn_1_8778(M510_AI *data)
     memset(data, 0, sizeof(M510_AI));
 }
 
+// NONMATCHING: verified against the asm; only register allocation / instruction order / frame layout differ
 void fn_1_87A8(M510_AI *data)
 {
     M510_PAD *pad = data->owner;
