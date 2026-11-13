@@ -266,7 +266,7 @@ GameMaster *fn_1_11520(GameMaster *self)
 
 void fn_1_11774(void *elem)
 {
-    ((GameGadget *)elem)->model = 0;
+    ((GameGadget *)elem)->sfxTimer = 0;
 }
 
 /* The original keeps this destructor out of line at its one call site

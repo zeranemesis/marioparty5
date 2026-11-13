@@ -63,7 +63,7 @@ struct CameraPath {
 };
 
 static const CameraPath s_cameraPath = {
-    395.9320374f, 1367.4566650f, 292.0061035f, -0.3923721f, 0.0f, -0.0f, 0.9198066f
+    395.9320374f, 1367.4566650f, 292.0061035f, -0.39237207f, 0.0f, -0.0f, 0.9198066f
 };
 
 
@@ -180,14 +180,12 @@ void fn_1_14424(CCamera *self, s32 mode)
     self->m_timer = 0;
     switch (mode) {
     case 0:
-        self->m_pathTo = s_cameraPath;
         self->m_hook = s_introPmf;
         self->m_camModelId =
             Hu3DModelCameraCreate(Hu3DMotionCreate(HuDataSelHeapReadNum(0x4F000E, 0x10000000, 2)), 1);
         Hu3DCameraMotionStart(self->m_camModelId, 1);
         break;
     case 1:
-        self->m_pathTo = s_cameraPath;
         self->m_hook = s_idlePmf;
         Hu3DModelKill(self->m_camModelId);
         self->m_bitFlags &= ~(1 << mode);

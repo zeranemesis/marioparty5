@@ -67,7 +67,9 @@ s32 lbl_1_bss_AB0;
 #endif
 
 f32 lbl_1_data_680 = 20.0f;
-M521Ptmf lbl_1_data_684 = M521_PTMF_NULL_INIT;
+void fn_1_16648(CPlayer *self);
+// Initial hook of a player: fn_1_16648 sets the idle motion and installs lbl_1_data_700.
+M521Ptmf lbl_1_data_684 = M521_PTMF_INIT(fn_1_16648);
 const char *lbl_1_data_6F0[4] = { "cyara1", "cyara2", "cyara3", "cyara4" };
 
 s16 fn_1_15298(M521Sphere *pos);

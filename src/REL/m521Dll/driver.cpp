@@ -366,7 +366,7 @@ void fn_1_B768(CDriverAsAI *self, DrvInfo *info)
     PSVECAdd((Vec *)&owner->m_pos, &ahead, &probe);
     self->m_hit = fn_1_1CA0(clock, &probe, &self->m_nrm, &self->m_pen);
     if (self->m_queue.m_cnt == 0) {
-        self->m_cool = fn_1_B61C(info->m_scale);
+        self->m_timer = fn_1_B61C(info->m_scale);
         self->m_f70 = owner->m_f60;
         pmf = lbl_1_data_250;
         fn_1_D1F8(self, &pmf);
