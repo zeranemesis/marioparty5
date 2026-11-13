@@ -40,7 +40,7 @@ void fn_1_3578(void);
 void HuAudJinglePlay(s32 id);
 void fn_1_CE8(void *self, s32 val);
 u32 fn_1_50B4(void *self);
-u8 fn_1_F864(u32 val);
+u8 fn_1_F864(void);
 void fn_1_F0F4(void);
 void *fn_1_3A20(void);
 void HuAudFXPlayVol(s32 id, s32 vol);
@@ -73,7 +73,7 @@ char lbl_1_data_3280[] = "m509::CGameMaster::~CGameMaster()";
 char lbl_1_data_32A2[] = "%s\n";
 char lbl_1_data_32A6[] = "ms_pointer == 0";
 char lbl_1_data_32B6[] = "singleton.h";
-char lbl_1_data_32C2[] = "ms_pointer == 0";
+char lbl_1_data_32C2[] = "ms_pointer != 0";
 
 int printf(const char *fmt, ...);
 
@@ -211,9 +211,9 @@ void fn_1_C4E0(void *self)
     fn_1_3888(2);
     fn_1_4E60(&GM(self)->timer, 0xA8C, 0, 0);
     fn_1_4F58(&GM(self)->timer, 1);
-    while (true) {
+    while (fn_1_C85C(self) == 0) {
         s32 r0 = r25 * 0x3C;
-        if (r26 < r0) {
+        if (r26 >= r0) {
             Vec vec = {0.0f, 0.0f, 0.0f};
             /* The assert is a CALL to the module's shared assert function
              * fn_1_0(msg, file, line), which lives in m509.o and returns.
@@ -231,12 +231,9 @@ void fn_1_C4E0(void *self)
             fn_1_FA3C();
             r23++;
             r25 += 2;
-            r26++;
-        } else {
-            fn_1_CE8(&GM(self)->sub, 0);
-            if (fn_1_C85C(self) == 0) continue;
-            break;
         }
+        r26++;
+        fn_1_CE8(&GM(self)->sub, 0);
     }
     fn_1_504C(&GM(self)->timer);
     fn_1_3888(3);
@@ -287,10 +284,10 @@ s32 fn_1_C85C(void *self)
 {
     s32 ret = 1;
     u32 val = fn_1_50B4(&GM(self)->timer);
-    if ((u8)val != 0) {
-        ret = 0;
-    } else if (fn_1_F864(val) == 0) {
-        ret = 0;
+    if ((u8)val == 0) {
+        if (fn_1_F864() == 0) {
+            ret = 0;
+        }
     }
     return ret;
 }
