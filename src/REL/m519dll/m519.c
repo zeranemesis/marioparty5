@@ -27,12 +27,13 @@ float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 /* This unit calls the random helpers without their prototypes: frand() is
    treated as signed and frandmod() as returning s16, and one call passes a
-   float in f1 where frandmod expects an integer. The native build uses the
-   real prototypes and passes the intended maximum. */
+   float in f1 where frandmod expects an integer, so the original's argument is the
+   stale r3 (the address of a .rodata literal, a huge value). The native build
+   uses the real prototypes and emulates that with a REL-sized constant. */
 #ifdef TARGET_PC
 #include "game/frand.h"
 
-#define M519_FRANDMOD_F(x) ((s16)frandmod((u32)(x)))
+#define M519_FRANDMOD_F(x) ((s32)frandmod(0x80600000u))
 #define M519_FRAND() ((s32)frand())
 #define M519_FRANDMOD(x) ((s16)frandmod(x))
 #else
@@ -40,7 +41,7 @@ extern s32 frand();
 extern s32 frandmod();
 #define M519_FRANDMOD_F(x) frandmod(x)
 #define M519_FRAND() frand()
-#define M519_FRANDMOD(x) frandmod(x)
+#define M519_FRANDMOD(x) ((s16)frandmod(x))
 #endif
 
 typedef struct M519Light_s {
@@ -1675,6 +1676,7 @@ void fn_1_4D40(M519_MECH *mech)
     mech->btnDown = HuPadBtnDown[padNo];
 }
 
+// NONMATCHING: callee-saved register numbering (r24 vs r25), extra fmr copies and stack temp slots; logic and data identical
 void fn_1_4E18(M519_MECH *mech)
 {
     static const int timeTbl[4] = { 180, 170, 150, 160 };
@@ -2041,8 +2043,10 @@ void fn_1_68E4(M519_MECH *mech)
     mech->btnDown = HuPadBtnDown[padNo];
 }
 
+// NONMATCHING: float temp stack slots and extra fmr copies; logic and data identical
 void fn_1_69BC(M519_MECH *mech)
 {
+    static const s16 unusedTbl[4] = { 5, 4, 2, 0 };
     static const int farTbl[4] = { 2000, 2100, 2200, 2300 };
     static const int chargeTbl[4] = { 40, 30, 20, 10 };
     static const int timeTbl[4] = { 180, 170, 150, 160 };
@@ -2783,6 +2787,7 @@ M519_PILOT *fn_1_A204(s16 grp, s16 playerNo)
         M519_DATANUM(104),
         M519_DATANUM(105),
     };
+    static const float unusedTbl[2] = { 180.0f, 100.0f };
     M519_PILOT *pilot;
     int i;
 
