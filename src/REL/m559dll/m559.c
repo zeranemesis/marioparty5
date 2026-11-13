@@ -1061,14 +1061,13 @@ loop_8:
                 sp18 = temp_r31->pos.y;
                 sp1C = temp_r31->pos.z;
                 sp18 = 0.0f;
-                sp8 = temp_r30->unk8;
-                spC = temp_r30->unkC;
-                sp10 = temp_r30->unk30;
+                sp8 = temp_r30->pos.x;
+                spC = temp_r30->pos.y;
+                sp10 = temp_r30->pos.z;
                 spC = 0.0f;
                 PSVECSubtract((Point3d *) &sp14, (Point3d *) &sp8, &sp2C);
                 temp_f1_2 = PSVECMag(&sp2C);
-                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-                if (temp_f1_2 != 99.5f) {
+                if (temp_f1_2 < 99.5f) { /* asm: fcmpo; cror eq,gt,eq; beq skip */
                     PSVECSubtract((Vec *) &temp_r30->pos, (Vec *) &temp_r30->prevPos, &sp2C);
                     temp_f28 = PSVECMag(&sp2C);
                     PSVECSubtract((Point3d *) &sp14, (Point3d *) &sp8, &sp20);
@@ -1080,9 +1079,9 @@ loop_8:
                     temp_r31->pos.z = (f32) (temp_r31->pos.z + (temp_f30 * (temp_f31 * sp20.z)));
                     temp_f30_2 = ((0.6f * temp_f1) + (0.4f * temp_f1)) / (temp_f1 + temp_f28);
                     if ((s32) temp_r30->unk68 == 0) {
-                        temp_r30->unk8 = (f32) (temp_r30->unk8 + (temp_f30_2 * (temp_f31 * - sp20.x)));
-                        temp_r30->unkC = (f32) (temp_r30->unkC + (temp_f30_2 * (temp_f31 * -sp20.y)));
-                        temp_r30->unk30 = (f32) (temp_r30->unk30 + (temp_f30_2 * (temp_f31 * -sp20.z)));
+                        temp_r30->pos.x = (f32) (temp_r30->pos.x + (temp_f30_2 * (temp_f31 * - sp20.x)));
+                        temp_r30->pos.y = (f32) (temp_r30->pos.y + (temp_f30_2 * (temp_f31 * -sp20.y)));
+                        temp_r30->pos.z = (f32) (temp_r30->pos.z + (temp_f30_2 * (temp_f31 * -sp20.z)));
                     }
                     fn_1_29D8(lbl_1_bss_9AC[var_r29]);
                 }
