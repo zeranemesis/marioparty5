@@ -225,6 +225,7 @@ void fn_1_5B0(OMOBJ *obj)
                 obj->objFunc = fn_1_2E80(lbl_1_bss_24, obj);
                 break;
             case 3:
+            case 4:
                 data->lock = 1;
                 data->state = 5;
                 obj->objFunc = fn_1_A38;
