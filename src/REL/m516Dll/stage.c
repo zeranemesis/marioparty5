@@ -131,7 +131,7 @@ void fn_1_495C(void)
 {
 }
 
-// Remaining difference: local register allocation (extra GPR in original frame).
+// NONMATCHING: register allocation (extra GPR in original frame), zero floats stored via li; fields identical.
 void fn_1_4960(OMOBJ *obj)
 {
     MGSTAGEWORK *work = (MGSTAGEWORK *)obj->data;
@@ -219,7 +219,7 @@ void fn_1_4CF8(OMOBJ *obj)
     obj->work[0]++;
 }
 
-// Remaining difference: local table/loop register allocation.
+// NONMATCHING: register allocation and the position copy (lwz/stw in the original, lfs/stfs here); table, shuffle and hit fields verified.
 void fn_1_4DB4(OMOBJ *obj)
 {
     MGSTAGEWORK *work = (MGSTAGEWORK *)obj->data;
@@ -327,7 +327,7 @@ void fn_1_4DB4(OMOBJ *obj)
     }
 }
 
-// Remaining difference: fabs/fmod temporaries use extra FPRs in original.
+// NONMATCHING: fabs/fmod temporaries use extra FPRs; timer-vs-timerMax compare is f32 here, double in the asm (exact for these values).
 void fn_1_51C4(OMOBJ *obj)
 {
     MGSTAGEWORK *work = (MGSTAGEWORK *)obj->data;
@@ -753,7 +753,7 @@ void fn_1_6814(Vec *pos)
     fn_1_78B8(&v, 10.0f);
 }
 
-// Remaining difference: fmul operand order.
+// NONMATCHING: fmul operand order.
 void fn_1_6870(OMOBJ *obj)
 {
     MGSTAGEWORK *work = (MGSTAGEWORK *)obj->data;

@@ -94,9 +94,15 @@ void fn_1_70AC(OMOBJ *obj)
         spr = &hook->sprites[i];
         if (spr->active != 0) {
             spr->size += 5.0;
+#ifdef TARGET_PC
+            /* spr->color is read as a u32 (0xRRGGBBAA): the alpha byte is the low byte only on a big-endian host */
+            alpha = (s32)(spr->color & 0xFF) - 4;
+            spr->color = (spr->color & 0xFFFFFF00) | ((u32)alpha & 0xFF);
+#else
             col = (GXColor *)&spr->color;
             alpha = col->a - 4;
             col->a = alpha;
+#endif
             if (alpha <= 0) {
                 spr->active = 0;
             }
@@ -158,7 +164,7 @@ void fn_1_7164(HU3DMODEL *modelP, Mtx *mtx)
     }
 }
 
-// Remaining difference: placement of the loop index initialisation.
+// NONMATCHING: placement of the loop index initialisation.
 void fn_1_74B0(OMOBJ *obj)
 {
     EFFHOOK2 *hook;
