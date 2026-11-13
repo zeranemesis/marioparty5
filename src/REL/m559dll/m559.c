@@ -2733,22 +2733,19 @@ loop_8:
     temp_r31->partAttr = (u32 *) HuMemDirectMallocNum(HEAP_MODEL, partCount * 8 * 4, temp_r28->mallocNo);
     var_r29 = (M559TEXATTR *) temp_r31->partAttr;
     var_r30_4 = 0;
-loop_11:
-    if (var_r30_4 < partCount) {
-        var_r29->unk0 = 0.0f;
-        var_r29->unk4 = 0.0f;
-        temp_r29 = var_r29 + 1;
-        var_r29->unk8 = 1.0f;
-        temp_r29->unk4 = 0.0f;
-        temp_r29_2 = temp_r29 + 1;
-        temp_r29->unk8 = 1.0f;
-        temp_r29_2->unk4 = 1.0f;
-        temp_r29_3 = temp_r29_2 + 1;
-        temp_r29_2->unk8 = 0.0f;
-        temp_r29_3->unk4 = 1.0f;
-        var_r29 = temp_r29_3 + 1;
+    while (var_r30_4 < partCount) {
+        // 4 (u,v) pairs per part (8 bytes each), i.e. one 0x20 M559TEXATTR
+        f32 *uv = (f32 *) var_r29;
+        uv[0] = 0.0f;
+        uv[1] = 0.0f;
+        uv[2] = 1.0f;
+        uv[3] = 0.0f;
+        uv[4] = 1.0f;
+        uv[5] = 1.0f;
+        uv[6] = 0.0f;
+        uv[7] = 1.0f;
+        var_r29 += 1;
         var_r30_4 += 1;
-        goto loop_11;
     }
     if ((sp10 != 0) || (sp12 != 0)) {
         var_r21 = (s16) anim->bmp->sizeX / sp10;
