@@ -2,58 +2,100 @@
 #include "game/charman.h"
 #include "game/memory.h"
 #include "game/data.h"
+#include "game/init.h"
+#include "game/object.h"
+#include "game/hu3d.h"
+#include "game/printfunc.h"
+#include "game/gamework.h"
+#include "game/flag.h"
+#include "game/audio.h"
+#include "game/wipe.h"
+#include "game/gamemes.h"
+#include "game/mg/actman.h"
+#include "game/mg/colman.h"
+
+/* lbl_1_bss_5C8 is read both as floats and as raw ints by the target */
+typedef union M520State_u {
+    f32 f;
+    s32 i;
+} M520STATE;
+
+void fn_1_5F48(void);
+void fn_1_5F4C(void);
+void fn_1_5F50(void);
+void fn_1_5F54(void);
+void fn_1_5F58(void);
+void fn_1_5F5C(void);
+void fn_1_5F60(s16 mode, s16 frame);
+void fn_1_9CE0(void);
+void fn_1_9E18(void);
+
+/* module state (the REL's own .bss/.data); pointers are real pointers, not 32-bit slots */
+OMOBJMAN *lbl_1_bss_19C;
+OMOBJ *lbl_1_bss_1B4;
+OMOBJ *lbl_1_bss_1B8[4];
+OMOBJ *lbl_1_bss_1C8;
+OMOBJ *lbl_1_bss_1CC;
+MGPLAYER *lbl_1_bss_1A4[4];
+MGPLAYER_MODE_FUNC lbl_1_bss_158;
+MGPLAYER_MODE_FUNC lbl_1_bss_15C;
+s32 lbl_1_bss_0;
+s32 lbl_1_bss_4;
+f32 lbl_1_bss_C;
+s32 lbl_1_bss_10;
+s32 lbl_1_bss_14;
+Mtx lbl_1_bss_18;
+Mtx lbl_1_bss_48;
+Mtx lbl_1_bss_98;
+Mtx lbl_1_bss_A8;
+Mtx lbl_1_bss_B8;
+Mtx lbl_1_bss_E8;
+GXTexObj lbl_1_bss_118[2];
+void *lbl_1_bss_160;
+s32 lbl_1_bss_164;
+void *lbl_1_bss_168;
+s32 lbl_1_bss_16C;
+s32 lbl_1_bss_17C;
+s32 lbl_1_bss_190;
+s16 lbl_1_bss_198;
+s32 lbl_1_bss_1A0;
+s32 lbl_1_bss_1D0[0xA0 / 4];
+s32 lbl_1_bss_270[4];
+s32 lbl_1_bss_280[0x348 / 4];
+M520STATE lbl_1_bss_5C8[0x200 / 4];
+
+s32 lbl_1_data_9C = -1;
+s32 lbl_1_data_A0 = -1;
+u32 lbl_1_data_A4 = 1;
+MGSEQ_PARAM lbl_1_data_A8 = {
+    0x1E, 2, (MGSEQ_FUNC) fn_1_9CE0, (MGSEQ_FUNC) fn_1_5F48, (MGSEQ_FUNC) fn_1_5F4C, (MGSEQ_FUNC) fn_1_5F50,
+    (MGSEQ_FUNC) fn_1_5F54, (MGSEQ_FUNC) fn_1_5F58, (MGSEQ_FUNC) fn_1_5F5C, fn_1_5F60, (MGSEQ_FUNC) fn_1_9E18
+};
+u8 lbl_1_data_D0[13] = { 0x0D, 0x00, 0x17, 0x69, 0x0D, 0x1D, 0x14, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D, 0x0D };
+f32 lbl_1_data_EC[5] = { 32.0f, 32.0f, 32.0f, 32.0f, 60.0f };
+u32 lbl_1_data_100 = 6;
+unsigned int lbl_1_data_138[17] = {
+    0x00870075, 0x008C0001, 0x008C0002, 0x008C0003, 0x008C0004, 0x008C0005, 0x008C0050, 0x008C0008, 0x008C000A,
+    0x008C0009, 0x008C000F, 0x008C0010, 0x008C0012, 0x008C0013, 0x008C0017, 0x008C0018, 0
+};
+
+static const f32 lbl_1_rodata_344[10] = { 480.0f, 530.0f, 530.0f, 480.0f, 480.0f, 530.0f, 550.0f, 440.0f, 480.0f, 480.0f };
+static const f32 lbl_1_rodata_36C[10] = { -40.0f, -34.0f, -27.0f, -40.0f, -38.0f, -27.0f, -40.0f, -40.0f, -30.0f, -40.0f };
+static const f32 lbl_1_rodata_460[12] = { -150.0f, 150.0f, 0.0f, 150.0f, 150.0f, 0.0f, 150.0f, -150.0f, 0.0f, -150.0f, -150.0f, 0.0f };
+static const f32 lbl_1_rodata_49C[6] = { 0.0f, 0.0026666666381061077f, 0.0f, 0.004000000189989805f, 0.0f, 0.0f };
+static const u32 lbl_1_rodata_4D0[5] = { 0x004E000D, 0x004E000E, 0x004E000F, 0x004E0010, 0x004E0011 };
+static const u32 lbl_1_rodata_4F0[4] = { 0, 1, 2, 3 };
 
 extern void (*_dtors[])(void);
 extern void (*_ctors[])(void);
 extern void ObjectSetup(void);
 extern void fn_1_5F90(void);
-extern void *lbl_1_bss_1B8[];
-extern s16 lbl_1_bss_198;
-extern u32 lbl_1_data_A4;
-extern void *lbl_1_bss_158;
-s32 lbl_1_bss_5C8[0x200 / 4];
-s32 lbl_1_bss_1D0[0xA0 / 4];
-extern void *lbl_1_bss_19C;
-extern s32 lbl_1_bss_1A0;
-extern s32 lbl_1_bss_1A4[];
-extern s32 lbl_1_data_A0;
 /* the m2c draft reads these two as saved-register scratch and the matrices it
  * builds for the ortho overlay pass */
-s32 saved_reg_r29;
-s32 saved_reg_r30;
-extern Mtx lbl_1_bss_18;
-extern Mtx lbl_1_bss_48;
-extern u8 RenderMode[];
-extern u8 lbl_1_rodata_460[];
-extern s32 lbl_1_bss_280[];
-extern s32 lbl_1_bss_164;
-extern void *lbl_1_bss_160;
-extern u8 lbl_1_data_EC[];
-extern Mtx lbl_1_bss_B8;
-extern Mtx lbl_1_bss_E8;
-extern s32 lbl_1_bss_4;
-extern GXTexObj lbl_1_bss_118[];
-extern u8 lbl_1_rodata_49C[];
-extern Mtx lbl_1_bss_A8;
-extern Mtx lbl_1_bss_98;
-extern s32 lbl_1_bss_17C;
 SHARED_SYM extern u8 esprite[];
 SHARED_SYM extern u8 espanim[];
-extern u8 lbl_1_rodata_4D0[];
-extern s8 lbl_1_bss_270[];
 extern void fn_1_43BC(OMOBJ *);
-extern s32 lbl_1_bss_0;
-extern s32 lbl_1_bss_14;
-extern u8 lbl_1_rodata_344[];
-extern u8 lbl_1_rodata_36C[];
-extern u8 lbl_1_rodata_4F0[];
-extern s32 lbl_1_bss_1A4[];
-extern s32 lbl_1_bss_15C;
-extern void *lbl_1_data_138;
 extern void fn_1_B70(OMOBJ *);
-extern s32 lbl_1_data_D0;
-extern s32 lbl_1_bss_10;
-extern f32 lbl_1_bss_C;
 
 /*
  * Bakes the 32-step ring texture used by the overlay: sets up an ortho pass,
@@ -67,8 +109,8 @@ void fn_1_7830(HU3DMODEL *modelP, f32 (*mtx)[3][4])
     s32 r30;
     s32 r31;
 
-    r29 = saved_reg_r29;
-    r30 = saved_reg_r30;
+    r29 = 0;
+    r30 = 0;
     if (lbl_1_bss_164 != 0) {
         C_MTXOrtho(lbl_1_bss_18, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
         GXSetProjection(lbl_1_bss_18, GX_ORTHOGRAPHIC);
@@ -128,43 +170,25 @@ void fn_1_7830(HU3DMODEL *modelP, f32 (*mtx)[3][4])
         *(u8 *) (uintptr_t) 0xCC008000 = (u8) r29;
         *(u8 *) (uintptr_t) 0xCC008000 = (u8) r30;
         *(u8 *) (uintptr_t) 0xCC008000 = 0xFF;
-        GXSetCopyFilter(0, (void *) (RenderMode + 0x1A), 0, (void *) (RenderMode + 0x32));
+        GXSetCopyFilter(0, RenderMode->sample_pattern, 0, RenderMode->vfilter);
         GXSetTexCopySrc(0, 0, 0x20, 0x20);
         GXSetTexCopyDst(0x20, 0x20, GX_CTF_GB8, 0);
         GXCopyTex(lbl_1_bss_160, 0);
         DCFlushRange(lbl_1_bss_160, (u32) lbl_1_bss_164);
         GXPixModeSync();
-        GXSetCopyFilter(RenderMode[0x19], (void *) (RenderMode + 0x1A), 1, (void *) (RenderMode + 0x32));
+        GXSetCopyFilter(RenderMode->aa, RenderMode->sample_pattern, 1, RenderMode->vfilter);
         lbl_1_bss_164 = 0;
     }
 }
-extern void *lbl_1_bss_1B4;
-extern void *lbl_1_bss_1C8;
-extern void *lbl_1_bss_1CC;
 extern void fn_1_7ED8(OMOBJ *);
 extern void fn_1_8A98(OMOBJ *);
 extern void fn_1_9860(OMOBJ *);
 extern void *HuAR_ARAMtoMRAMFileRead(unsigned int dataNum, u32 num, HEAPID heap);
-extern s32 lbl_1_bss_190;
-extern s32 lbl_1_bss_16C;
-extern s32 lbl_1_bss_164;
-extern void *lbl_1_bss_168;
-extern void *lbl_1_bss_160;
-extern s32 lbl_1_data_9C;
-extern u32 lbl_1_data_A8[];
-extern f32 CZoom;
-extern HuVecF Center;
-extern HuVecF CRot;
-extern s32 fontcolor;
 /* fn_1_A0 reads the pad directly; game/pad.h declares the arrays it needs. */
 #include "game/pad.h"
+/* not declared in game/hu3d.h on purpose (see there): this unit uses the float return */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 #ifdef TARGET_PC
-/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
-   arguments as double and truncates float/pointer returns */
-/* unprototyped on purpose: this unit calls some of them with extra arguments, like the original */
-float Hu3DMotionMaxTimeGet();
-void *MgActorObjectSetup();
-void *MgPlayerCreate();
 double __frsqrte(double);
 s16 print8(s16 x, s16 y, float scale, char *str, ...);
 #endif
@@ -222,12 +246,6 @@ void fn_1_A0(void)
     sp1C = Center.y;
     sp20 = Center.z;
 }
-extern u16 HuPadBtnDown[];
-extern s32 MgPlayerAttrCheck(void *, s32);
-extern void MgPlayerModeSet(void *, s32);
-extern HU3DMODEL Hu3DData[];
-extern void Hu3DMotionTimeSet(HU3DMOTID motId, f32 time);
-extern u32 lbl_1_data_100;
 static const Vec kLightPos = {0.0f, 5000.0f, 0.0f};
 static const Vec kLightDir = {0.0f, -1.0f, -0.5f};
 static const GXColor kLightCol = {0xFF, 0xFF, 0xFF, 0xFF};
@@ -235,9 +253,9 @@ static const Vec kShadowPos = {0.0f, 10000.0f, 0.0f};
 static const Vec kShadowUp = {0.0f, 1.0f, 0.0f};
 static const Vec kShadowTarget = {0.0f, 0.0f, -0.1f};
 
-void fn_1_5F60(void *unk, s16 arg0)
+void fn_1_5F60(s16 mode, s16 frame)
 {
-    if (arg0 >= 0x3C) {
+    if (frame >= 0x3C) {
         MgSeqModeNext();
     }
 }
@@ -252,7 +270,7 @@ call:
     dtor++;
 
 check:
-    if ((u32) (uintptr_t) *dtor != 0) {
+    if (*dtor != NULL) {
         goto call;
     }
 }
@@ -267,178 +285,167 @@ call:
     ctor++;
 
 check:
-    if ((u32) (uintptr_t) *ctor != 0) {
+    if (*ctor != NULL) {
         goto call;
     }
     ObjectSetup();
     return 0;
 }
 
-void fn_1_B04(void *arg0)
+void fn_1_B04(MGPLAYER *player)
 {
-    if (*(unsigned short *)((unsigned char *)arg0 + 0x10) == 0xC) {
+    if (player->motNo == 0xC) {
         return;
     }
-
-    CharMotionShiftSet(
-        *(short *)((unsigned char *)arg0 + 0x2),
-        *(short *)((unsigned char *)*(void **)((unsigned char *)*(void **)((unsigned char *)arg0 + 0x8) + 0x48) + 0x18),
-        0.0f, 1.0f, 0
-    );
-    *(unsigned short *)((unsigned char *)arg0 + 0x10) = 0xC;
+    CharMotionShiftSet(player->charNo, player->omObj->mtnId[12], 0.0f, 1.0f, 0);
+    player->motNo = 0xC;
 }
 
-void fn_1_A94(void *arg0)
+void fn_1_A94(MGPLAYER *player)
 {
-    if (*(unsigned short *)((unsigned char *)arg0 + 0x10) == 0xB) {
+    if (player->motNo == 0xB) {
         return;
     }
-
-    CharMotionShiftSet(
-        *(short *)((unsigned char *)arg0 + 0x2),
-        *(short *)((unsigned char *)*(void **)((unsigned char *)*(void **)((unsigned char *)arg0 + 0x8) + 0x48) + 0x16),
-        0.0f, 1.0f, 0x40000001
-    );
-    *(unsigned short *)((unsigned char *)arg0 + 0x10) = 0xB;
+    CharMotionShiftSet(player->charNo, player->omObj->mtnId[11], 0.0f, 1.0f, 0x40000001);
+    player->motNo = 0xB;
 }
 
-void fn_1_A08(void *arg0)
+void fn_1_A08(MGPLAYER *player)
 {
-    if (*(unsigned short *)((unsigned char *)arg0 + 0x10) == 0xA) {
-        goto skip_motion;
+    if (player->motNo != 0xA) {
+        CharMotionShiftSet(player->charNo, player->omObj->mtnId[10], 0.0f, 5.0f, 0);
+        player->motNo = 0xA;
     }
-
-    CharMotionShiftSet(
-        *(short *)((unsigned char *)arg0 + 0x2),
-        *(short *)((unsigned char *)*(void **)((unsigned char *)*(void **)((unsigned char *)arg0 + 0x8) + 0x48) + 0x14),
-        0.0f, 5.0f, 0
-    );
-    *(unsigned short *)((unsigned char *)arg0 + 0x10) = 0xA;
-
-skip_motion:
-    *(float *)((unsigned char *)*(void **)((unsigned char *)arg0 + 0x3C) + 0x68) *= 0.7;
+    player->actor->rotY = (f32) (player->actor->rotY * 0.7);
 }
 
 void fn_1_9860(OMOBJ *arg0)
 {
-    *(void (**)(void))((unsigned char *)arg0 + 0x14) = fn_1_5F90;
+    arg0->objFunc = (OMOBJFUNC) fn_1_5F90;
 }
 
 /*
  * Main update: mirrors each Mg actor's position onto its shadow model, runs the
- * per-slot sound effects, then dispatches on the sequence mode. The trailing
- * jump table is lbl_1_data_104 (12 entries, mode 0..0xB); the ordering of the
- * cases below is the table's order, not a switch statement's.
+ * per-slot sound effects, then dispatches on the sequence mode (jump table
+ * jumptable_1_data_104: modes 1, 2, 5, 6 and 7 have code).
  */
+// NONMATCHING: switch lowered differently and register allocation differs
 void fn_1_5F90(void)
 {
-    s32 sp44[8];
-    s32 prevObj[4];
+    s32 *pd[4];
     s32 frame;
-    s32 mode;
     s32 i;
-    s32 j;
+    s32 snd[8];
+    HuVecF pos;
+    s32 plNo;
 
     frame = MgSeqFrameNoGet();
     lbl_1_bss_1A0 = MgSeqModeGet();
     for (i = 0; i < 4; i++) {
-        prevObj[i] = ((s32 *) lbl_1_bss_1B8[i])[0x5C / 4];
+        pd[i] = (s32 *) lbl_1_bss_1B8[i]->data;
     }
     MgActorExec();
     for (i = 0; i < 4; i++) {
-        s32 actor = ((s32 *) (uintptr_t) lbl_1_bss_1A4)[i];
-        HuVecF pos;
-
-        MgActorPosGet(((s32 *) (uintptr_t) actor)[0x3C / 4], &pos);
-        if (i == 0 && ((s32 *) (uintptr_t) prevObj[i])[0x1C / 4] == 3) {
-            continue;
+        MgActorPosGet(lbl_1_bss_1A4[i]->actor, &pos);
+        if (i > 0 && pd[i][0x1C / 4] == 3) {
+            /* fallen player: keep the last mirrored position */
+        } else {
+            lbl_1_bss_1B8[i]->trans.x = pos.x;
+            lbl_1_bss_1B8[i]->trans.y = pos.y;
+            lbl_1_bss_1B8[i]->trans.z = pos.z;
+            lbl_1_bss_1B8[i]->rot.y = lbl_1_bss_1A4[i]->actor->rotY;
         }
-        ((f32 *) lbl_1_bss_1B8[i])[0x18 / 4] = pos.x;
-        ((f32 *) lbl_1_bss_1B8[i])[0x1C / 4] = pos.y;
-        ((f32 *) lbl_1_bss_1B8[i])[0x20 / 4] = pos.z;
-        ((f32 *) lbl_1_bss_1B8[i])[0x28 / 4] = ((f32 *) (uintptr_t) actor)[0x68 / 4];
+        if (i == 0) {
+            if (lbl_1_bss_1A0 == 2 && frame == 6) {
+                Hu3DMotionShiftSet(lbl_1_bss_1B8[0]->mdlId[1], lbl_1_bss_1B8[0]->mtnId[1],
+                                   10.0f + (10.0f * lbl_1_bss_5C8[3].f), 12.0f, 0x40000002);
+            }
+            if (lbl_1_bss_1A0 == 2 && frame <= 0x44) {
+                Hu3DModelPosSet(lbl_1_bss_1B8[0]->mdlId[1], lbl_1_bss_1B8[0]->trans.x, lbl_1_bss_1B8[0]->trans.y,
+                                lbl_1_bss_1B8[0]->trans.z);
+                Hu3DModelAttrReset(lbl_1_bss_1B8[0]->mdlId[1], 1);
+                Hu3DModelAttrSet(lbl_1_bss_1B8[0]->mdlId[0], 1);
+                Hu3DModelAttrSet(lbl_1_bss_1B8[2]->mdlId[0], 1);
+                Hu3DModelAttrSet(lbl_1_bss_1B8[3]->mdlId[0], 1);
+            } else if (lbl_1_bss_1A0 == 2) {
+                Hu3DModelAttrSet(lbl_1_bss_1B8[0]->mdlId[1], 1);
+                Hu3DModelAttrReset(lbl_1_bss_1B8[0]->mdlId[0], 1);
+                Hu3DModelAttrReset(lbl_1_bss_1B8[2]->mdlId[0], 1);
+                Hu3DModelAttrReset(lbl_1_bss_1B8[3]->mdlId[0], 1);
+            }
+        }
     }
     for (i = 0; i < 8; i++) {
-        f32 slot[8];
-
-        slot[0] = 1826.0f;
-        slot[1] = 1827.0f;
-        slot[2] = 1828.0f;
-        slot[3] = 1829.0f;
-        slot[4] = 1830.0f;
-        slot[5] = 1831.0f;
-        slot[6] = 1832.0f;
-        slot[7] = 1833.0f;
-        if (((s32 *) ((u8 *) lbl_1_bss_1D0 + (i * 0x14)))[0] > 3) {
-            ((s32 *) ((u8 *) lbl_1_bss_1D0 + (i * 0x14)))[0] = 3;
+        snd[0] = 0x722;
+        snd[1] = 0x723;
+        snd[2] = 0x724;
+        snd[3] = 0x725;
+        snd[4] = 0x726;
+        snd[5] = 0x727;
+        snd[6] = 0x728;
+        snd[7] = 0x729;
+        if (lbl_1_bss_1D0[i * 5] > 3) {
+            lbl_1_bss_1D0[i * 5] = 3;
         }
-        if (((s32 *) ((u8 *) lbl_1_bss_1D0 + (i * 0x14)))[0] <= 0) {
-            continue;
+        if (lbl_1_bss_1D0[i * 5] > 0) {
+            lbl_1_bss_1D0[i * 5 + 4] = HuAudFXPlay(snd[i]);
+            lbl_1_bss_1D0[i * 5] -= 1;
         }
-        ((s32 *) ((u8 *) lbl_1_bss_1D0 + (i * 0x14)))[0x10 / 4] = HuAudFXPlay((u32) slot[i]);
-        ((s32 *) ((u8 *) lbl_1_bss_1D0 + (i * 0x14)))[0] -= 1;
     }
-    mode = lbl_1_bss_1A0;
-    switch (mode) {
-    case 0:
+    switch (lbl_1_bss_1A0) {
+    case 1:
         if (WipeCheckEnd() == 0) {
             MgSeqModeNext();
         }
         break;
-    case 1:
+    case 2:
         if (frame == 0xA) {
             lbl_1_data_A0 = HuAudSStreamPlay(0x50);
         }
         break;
-    case 2:
-        if (((s32 *) (uintptr_t) prevObj[0])[0x1C / 4] != 3 || ((s32 *) (uintptr_t) prevObj[1])[0x1C / 4] != 3
-            || ((s32 *) (uintptr_t) prevObj[2])[0x1C / 4] != 3) {
-            break;
-        }
-        lbl_1_data_9C = 0;
-        MgSeqModeNext();
-        break;
-    case 3:
-        if (frame != 1) {
-            break;
-        }
-        if (((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x24))[0] != -1) {
-            HuAudFXStop(((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x24))[0]);
-        }
-        if (lbl_1_data_A0 != -1) {
-            HuAudSStreamFadeOut(lbl_1_data_A0, 0x64);
-        }
-        if (((s32 *) (uintptr_t) prevObj[0])[0x1C / 4] == 3 && ((s32 *) (uintptr_t) prevObj[1])[0x1C / 4] == 3
-            && ((s32 *) (uintptr_t) prevObj[2])[0x1C / 4] == 3) {
+    case 5:
+        if (pd[0][0x1C / 4] == 3 && pd[1][0x1C / 4] == 3 && pd[2][0x1C / 4] == 3) {
             lbl_1_data_9C = 0;
-            MgSeqWinnerSet((s16) ((s32 *) (uintptr_t) prevObj[0])[0xC / 4], -1, -1, -1);
+            MgSeqModeNext();
+        }
+        break;
+    case 6:
+        if (frame == 1) {
+            if (lbl_1_bss_1D0[0x24 / 4] != -1) {
+                HuAudFXStop(lbl_1_bss_1D0[0x24 / 4]);
+            }
+            if (lbl_1_data_A0 != -1) {
+                HuAudSStreamFadeOut(lbl_1_data_A0, 0x64);
+            }
+        }
+        if (pd[0][0x1C / 4] == 3 && pd[1][0x1C / 4] == 3 && pd[2][0x1C / 4] == 3) {
+            lbl_1_data_9C = 0;
+            MgSeqWinnerSet((s16) pd[0][0xC / 4], -1, -1, -1);
         } else {
             lbl_1_data_9C = 1;
-            MgSeqWinnerSet((s16) ((s32 *) (uintptr_t) prevObj[0])[0xC / 4], (s16) ((s32 *) (uintptr_t) prevObj[1])[0xC / 4],
-                           (s16) ((s32 *) (uintptr_t) prevObj[2])[0xC / 4], -1);
+            MgSeqWinnerSet((s16) pd[0][0xC / 4], (s16) pd[1][0xC / 4], (s16) pd[2][0xC / 4], -1);
         }
         break;
-    case 4:
-        if (frame != 0xA) {
-            break;
-        }
-        j = lbl_1_data_9C;
-        if (_CheckFlag(0x10F) == 0) {
-            *(s16 *) ((u8 *) &GwPlayer[((s32 *) (uintptr_t) prevObj[j])[4 / 4]] + 0x2C) = 0xA;
-        }
-        if (lbl_1_data_9C == 1) {
-            if (_CheckFlag(0x10F) == 0) {
-                *(s16 *) ((u8 *) &GwPlayer[((s32 *) (uintptr_t) prevObj[1])[4 / 4]] + 0x2C) = 0xA;
+    case 7:
+        if (frame == 0xA) {
+            plNo = pd[lbl_1_data_9C][4 / 4];
+            if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
+                GwPlayer[plNo].mgCoin = 10;
             }
-            if (_CheckFlag(0x10F) == 0) {
-                *(s16 *) ((u8 *) &GwPlayer[((s32 *) (uintptr_t) prevObj[2])[4 / 4]] + 0x2C) = 0xA;
+            if (lbl_1_data_9C == 1) {
+                plNo = pd[1][4 / 4];
+                if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
+                    GwPlayer[plNo].mgCoin = 10;
+                }
+                plNo = pd[2][4 / 4];
+                if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
+                    GwPlayer[plNo].mgCoin = 10;
+                }
             }
         }
         if (frame >= 0x46) {
             MgSeqModeNext();
         }
-        break;
-    default:
         break;
     }
 }
@@ -467,37 +474,38 @@ void fn_1_5F5C(void)
 {
 }
 
-// NONMATCHING: the original allocates four live FPR pairs (f28..f31) plus a
-// different stack layout for r30/r31; the fabs+frsp chain and the awkward
-// stack home for the mode variables cannot be reproduced from this C
-void fn_1_698(void *arg0)
+// NONMATCHING: the original allocates four live FPR pairs (f28..f31) for the fabs+frsp chain
+void fn_1_698(MGPLAYER *player)
 {
-    if (*(u32 *)((u8 *)*(void **)((u8 *)arg0 + 0x3C) + 0x84) & 0x407F) {
-        if (!(u16)MgPlayerAttrCheck(arg0, 1)) {
-            if (HuPadBtnDown[*(s8 *)((u8 *)arg0 + 4)] & 0x100) {
-                if (*(u32 *)((u8 *)arg0 + 0xC) & 0x2) {
-                    MgPlayerModeSet(arg0, 1);
+    HU3DMODEL *mdl;
+
+    if (player->actor->colGroundAttr & 0x407F) {
+        if ((u16) MgPlayerAttrCheck(player, 1) == 0) {
+            if (HuPadBtnDown[player->padNo] & 0x100) {
+                if (player->actionFlag & 0x2) {
+                    MgPlayerModeSet(player, 1);
                 }
             }
         }
     } else {
-        if ((f32)fabs(*(f32 *)((u8 *)*(void **)((u8 *)arg0 + 0x3C) + 0x70)) > 2000.0f) {
-            MgPlayerModeSet(arg0, 2);
+        if ((f32) fabs(player->actor->velY) > 2000.0f) {
+            MgPlayerModeSet(player, 2);
         }
     }
-    if (*(u16 *)((u8 *)arg0 + 0x10) == 0xB) {
-        return;
+    if (player->motNo != 0xB) {
+        if (lbl_1_data_100 == 0) {
+            CharMotionShiftSet(player->charNo, player->omObj->mtnId[11], 10.0f + (10.0f * lbl_1_bss_5C8[3].f), 12.0f, 0x40000002);
+            player->motNo = 0xB;
+        }
+        lbl_1_data_100 = lbl_1_data_100 - (lbl_1_data_100 > 0);
     }
-    if (lbl_1_data_100 == 0) {
-        CharMotionShiftSet(
-            *(s16 *)((u8 *)arg0 + 2),
-            10.0f + 10.0f * *(f32 *)((u8 *)lbl_1_bss_5C8 + 0xC),
-            10.0f + 10.0f * *(f32 *)((u8 *)lbl_1_bss_5C8 + 0xC),
-            12.0f, 0x40000002
-        );
-        *(u16 *)((u8 *)arg0 + 0x10) = 0xB;
-    } else {
-        lbl_1_data_100 -= (lbl_1_data_100 > 0) ? 1 : 0;
+    if (player->motNo == 0xB) {
+        mdl = &Hu3DData[lbl_1_bss_1B8[0]->mdlId[0]];
+        if (mdl->motIdShift != -1) {
+            mdl->motShiftWork.time = 10.0f + (10.0f * lbl_1_bss_5C8[3].f);
+        } else {
+            Hu3DMotionTimeSet(player->actor->mdlId, 10.0f + (10.0f * lbl_1_bss_5C8[3].f));
+        }
     }
 }
 
@@ -522,51 +530,48 @@ f32 fn_1_41F8(f32 a, f32 b, f32 c, f32 d)
     return ret;
 }
 
-// NONMATCHING: original spills each array element to 0x8(r1) via a stack local;
-// no ordering of four locals reproduces the target's register allocation (r31=i,
-// r29=bss_1B8 base, r30=bss_198, r28=temp). The spill to 0x8(r1) is dead code.
-void fn_1_9E18(void *arg0)
+// NONMATCHING: the original spills each player's data pointer to a dead stack slot in the loop
+void fn_1_9E18(void)
 {
     s32 i;
-    s16 bss_198 = lbl_1_bss_198;
-    s32 *bss_1B8 = (s32 *)lbl_1_bss_1B8;
+    void *dead;
 
     MgSeqModeNext();
     for (i = 0; i < 4; i++) {
-        *(s32 *)((unsigned char *)arg0 + 0x8) = bss_1B8[i * 0x17];
+        dead = lbl_1_bss_1B8[i]->data;
     }
-    if ((s32)bss_198 != 0) {
-        GameMesKill(bss_198);
+    if (lbl_1_bss_198 >= 0) {
+        GameMesKill(lbl_1_bss_198);
     }
     GameMesClose();
     HuAudAllStop();
-    omOvlReturnEx((s16)lbl_1_data_A4, 1);
+    omOvlReturnEx((s16) lbl_1_data_A4, 1);
 }
 
-// NONMATCHING: frame size and register allocation differ; original keeps arg0 in r31
-// and half_26 in r30, avoiding stack spills that C cannot avoid
-void fn_1_90C(void *arg0)
+// NONMATCHING: frame size and register allocation differ (arg0 in r31, the old subMode in r30)
+void fn_1_90C(MGPLAYER *player)
 {
-    void (*func)(void) = *(void (**)(void))lbl_1_bss_158;
-    func();
-    if (*(s16 *)((unsigned char *)arg0 + 0x26) != 2) {
+    s16 oldMode;
+
+    oldMode = player->subMode;
+    lbl_1_bss_158(player);
+    if (oldMode != 2) {
         return;
     }
-    if (*(s16 *)((unsigned char *)arg0 + 0x26) != 3) {
+    if (player->subMode != 3) {
         return;
     }
-    if (lbl_1_bss_5C8[0x14/4] != 0) {
+    if (lbl_1_bss_5C8[5].i != 0) {
         return;
     }
-    lbl_1_bss_5C8[0x14/4] = 1;
-    if (lbl_1_bss_5C8[0x18/4] != 0) {
+    lbl_1_bss_5C8[5].i = 1;
+    if (lbl_1_bss_5C8[6].i != 0) {
         return;
     }
-    lbl_1_bss_5C8[0x18/4] = 1;
-    if (lbl_1_bss_1D0[0x64/4] < 3) {
-        s32 idx = (s32)lbl_1_bss_1D0[0x64/4];
-        lbl_1_bss_1D0[0x68/4 + idx] = 0.0f;
-        lbl_1_bss_1D0[0x64/4] = idx + 1;
+    lbl_1_bss_5C8[6].i = 1;
+    if (lbl_1_bss_1D0[0x64 / 4] < 3) {
+        lbl_1_bss_1D0[0x68 / 4 + lbl_1_bss_1D0[0x64 / 4]] = 0;
+        lbl_1_bss_1D0[0x64 / 4] += 1;
     }
 }
 
@@ -576,17 +581,17 @@ void fn_1_9CE0(void)
     s32 i;
 
     obj = omAddObjEx(lbl_1_bss_19C, 0x64, 0x16, 0x2, 0x1, fn_1_7ED8);
-    *(s32 *)lbl_1_bss_1B4 = (s32) (uintptr_t) obj;
+    lbl_1_bss_1B4 = obj;
     for (i = 0; i < 4; i++) {
         obj = omAddObjEx(lbl_1_bss_19C, 0x66, 0x2, 0x3, 0x0, fn_1_8A98);
-        *(s32 *)((s8 *)lbl_1_bss_1B8 + i * 4) = (s32) (uintptr_t) obj;
-        *(s32 *)((s8 *)obj + 0x5C) = (s32) (uintptr_t) HuMemDirectMallocNum(0, 0x54, 0x1000);
-        *(s16 *)((s8 *)obj + 0x4C) = (s16)i;
+        lbl_1_bss_1B8[i] = obj;
+        obj->data = HuMemDirectMallocNum(0, 0x54, HU_MEMNUM_OVL);
+        obj->work[0] = i;
     }
-    obj = omAddObjEx(lbl_1_bss_19C, 0x7FDA, 0x0, 0x0, 0x0, omOutView);
-    *(s32 *)lbl_1_bss_1C8 = (s32) (uintptr_t) obj;
-    obj = omAddObjEx(lbl_1_bss_19C, 0x67, 0x0, 0x0, 0x0, fn_1_9860);
-    *(s32 *)lbl_1_bss_1CC = (s32) (uintptr_t) obj;
+    obj = omAddObjEx(lbl_1_bss_19C, 0x7FDA, 0x0, 0x0, -1, omOutView);
+    lbl_1_bss_1C8 = obj;
+    obj = omAddObjEx(lbl_1_bss_19C, 0x67, 0x0, 0x0, -1, fn_1_9860);
+    lbl_1_bss_1CC = obj;
     MgSeqModeNext();
 }
 
@@ -602,7 +607,7 @@ void ObjectSetup(void)
     GXColor color;
 
     OSReport("******* M520 ObjectSetup *********\n");
-    mgr = (OMOBJMAN *) (uintptr_t) MgActorObjectSetup();
+    mgr = MgActorObjectSetup();
     lbl_1_bss_19C = mgr;
 
     Hu3DCameraCreate(1);
@@ -657,50 +662,7 @@ void ObjectSetup(void)
     lbl_1_bss_164 = GXGetTexBufferSize(32, 32, 3, 0, 0);
     lbl_1_bss_160 = HuMemDirectMallocNum(2, lbl_1_bss_164, HU_MEMNUM_OVL);
 
-    MgSeqCreate((MGSEQ_PARAM *)lbl_1_data_A8);
-}
-
-// NONMATCHING: frame uses _savegpr_27/_restgpr_27 for 5 GPRs; register allocation
-// of loop counters (r27-r31) differs from CodeWarrior; complex control flow
-// with three search loops cannot be expressed in plain C without register shifts
-void fn_1_8918(s16 arg0, u16 arg1)
-{
-    u16 r28;
-    u16 r30;
-    u16 r31;
-    void *r29;
-    s16 r0;
-    u32 val;
-
-    r28 = (u16)(arg1 & 0xFFFF);
-    r30 = (u16)(arg1 >> 16);
-    r31 = 0;
-
-    while (r31 < 0xD) {
-        if (r28 == charDataDirTbl[r31][4]) {
-            break;
-        }
-        r31++;
-    }
-
-    if (r31 == 0xD) {
-        if (r28 == 0) {
-            return;
-        }
-    }
-
-    r30 = r30 & 0xFFFF;
-    r0 = (s16)arg0 * 0x18;
-    val = charDataDirTbl[r0 / 4][4];
-    r30 |= val;
-    r29 = HuAR_ARAMtoMRAMFileRead(r30, 0x1000, 2);
-
-    if (r29 == 0) {
-        HuDataSelHeapReadNum(r30, 0x1000, 2);
-    } else {
-        HuDataReadNumHeapShortForce(r30, 0x1000, 2);
-    }
-    return;
+    MgSeqCreate(&lbl_1_data_A8);
 }
 
 /*
@@ -718,11 +680,11 @@ void fn_1_7014(HU3DMODEL *modelP, f32 (*mtx)[3][4])
     f32 off;
     s32 i;
 
-    ax = *(f32 *) (lbl_1_data_EC + 0) * 0.03125f;
-    ay = *(f32 *) (lbl_1_data_EC + 4) * 0.03125f;
-    az = *(f32 *) (lbl_1_data_EC + 8) * 0.03125f;
-    aw = *(f32 *) (lbl_1_data_EC + 0xC) * 0.03125f;
-    off = (f32) (lbl_1_bss_4 % *(s32 *) (lbl_1_data_EC + 0x10)) / *(f32 *) (lbl_1_data_EC + 0x10);
+    ax = lbl_1_data_EC[0] * 0.03125f;
+    ay = lbl_1_data_EC[1] * 0.03125f;
+    az = lbl_1_data_EC[2] * 0.03125f;
+    aw = lbl_1_data_EC[3] * 0.03125f;
+    off = (f32) (lbl_1_bss_4 % (s32) lbl_1_data_EC[4]) / lbl_1_data_EC[4];
     C_MTXOrtho(lbl_1_bss_B8, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
     GXSetProjection(lbl_1_bss_B8, GX_ORTHOGRAPHIC);
     PSMTXIdentity(lbl_1_bss_E8);
@@ -746,13 +708,13 @@ void fn_1_7014(HU3DMODEL *modelP, f32 (*mtx)[3][4])
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0);
     GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0);
-    GXSetCopyFilter(0, (void *) (RenderMode + 0x1A), 0, (void *) (RenderMode + 0x32));
+    GXSetCopyFilter(0, RenderMode->sample_pattern, 0, RenderMode->vfilter);
     GXSetTexCopySrc(0, 0, 0x280, 0x1E0);
     GXSetTexCopyDst(0x280, 0x1E0, GX_TF_RGBA8, 0);
     GXCopyTex(lbl_1_bss_168, 0);
     DCFlushRange(lbl_1_bss_168, (u32) lbl_1_bss_16C);
     GXPixModeSync();
-    GXSetCopyFilter(RenderMode[0x19], (void *) (RenderMode + 0x1A), 1, (void *) (RenderMode + 0x32));
+    GXSetCopyFilter(RenderMode->aa, RenderMode->sample_pattern, 1, RenderMode->vfilter);
     GXInitTexObj(lbl_1_bss_118, lbl_1_bss_168, 0x280, 0x1E0, 6, GX_CLAMP, GX_CLAMP, 0);
     GXLoadTexObj(lbl_1_bss_118, GX_TEXMAP0);
     GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
@@ -760,10 +722,10 @@ void fn_1_7014(HU3DMODEL *modelP, f32 (*mtx)[3][4])
     GXInitTexObj(&lbl_1_bss_118[1], lbl_1_bss_160, 0x20, 0x20, 3, GX_REPEAT, GX_REPEAT, 0);
     GXLoadTexObj(&lbl_1_bss_118[1], GX_TEXMAP1);
     for (i = 0; i < 6; i++) {
-        sp8[i] = *(f32 *) (lbl_1_rodata_49C + (i * 4));
+        sp8[i] = lbl_1_rodata_49C[i];
     }
-    sp8[2] *= ay;
-    sp8[5] *= ax;
+    sp8[1] *= ay;
+    sp8[3] *= ax;
     GXSetNumTexGens(2);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, 0x3C, 0, 0x7D);
     GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1, GX_COLOR0A0);
@@ -773,34 +735,18 @@ void fn_1_7014(HU3DMODEL *modelP, f32 (*mtx)[3][4])
     GXSetIndTexMtx(GX_ITM_0, (f32 (*)[3]) &sp8[0], 0);
     GXSetTevIndWarp(GX_TEVSTAGE0, GX_INDTEXSTAGE0, 1, 0, GX_ITM_0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f / az;
-    *(f32 *) (uintptr_t) 0xCC008000 = (0.0f / aw) + off;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f / az;
-    *(f32 *) (uintptr_t) 0xCC008000 = (0.0f / aw) + off;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f / az;
-    *(f32 *) (uintptr_t) 0xCC008000 = (12.0f / aw) + off;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 1.0f;
-    *(f32 *) (uintptr_t) 0xCC008000 = 0.0f / az;
-    *(f32 *) (uintptr_t) 0xCC008000 = (12.0f / aw) + off;
+    GXPosition3f32(0.0f, 0.0f, 0.0f);
+    GXTexCoord2f32(0.0f, 0.0f);
+    GXTexCoord2f32(0.0f / aw, (0.0f / az) + off);
+    GXPosition3f32(1.0f, 0.0f, 0.0f);
+    GXTexCoord2f32(1.0f, 0.0f);
+    GXTexCoord2f32(1.0f / aw, (0.0f / az) + off);
+    GXPosition3f32(1.0f, 1.0f, 0.0f);
+    GXTexCoord2f32(1.0f, 1.0f);
+    GXTexCoord2f32(1.0f / aw, (12.0f / az) + off);
+    GXPosition3f32(0.0f, 1.0f, 0.0f);
+    GXTexCoord2f32(0.0f, 1.0f);
+    GXTexCoord2f32(0.0f / aw, (12.0f / az) + off);
     GXSetNumIndStages(0);
     GXSetTevDirect(GX_TEVSTAGE0);
 }
@@ -928,333 +874,377 @@ void fn_1_6640(f32 (*arg1)[4])
  */
 void fn_1_7ED8(OMOBJ *arg0)
 {
-    s32 sp10[4];
-    s32 sp8;
-    u8 sp20[0x18];
+    s16 sp8[3];
+    COL_ATTRPARAM sp20;
+    u32 sp34[5];
     s32 i;
+    s32 idx;
     f32 maxTime;
 
-    for (i = 0; i < 4; i++) {
-        sp10[i] = ((s32 *) (uintptr_t) ((u8 *) lbl_1_bss_1B8 + (i * 4)))[0];
-        sp10[i] = ((s32 *) (uintptr_t) ((s32 *) (uintptr_t) ((u8 *) lbl_1_bss_1B8 + (i * 4)))[0x5C / 4])[0x5C / 4];
-        sp10[i] = ((s32 *) (uintptr_t) ((u8 *) lbl_1_bss_1B8 + (i * 4)))[0x5C / 4];
-    }
-    arg0->mdlId[0] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0000, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0], 1);
-    Hu3DModelShadowMapSet(arg0->mdlId[0]);
-    sp8 = arg0->mdlId[0];
-    arg0->mdlId[0xA] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0005, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelAttrSet(arg0->mdlId[0xA], 1);
-    arg0->mdlId[0x10] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E000C, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelPosSet(arg0->mdlId[0x10], 0.0f, 450.0f, 0.0f);
-    Hu3DModelAttrSet(arg0->mdlId[0x10], 1);
-    MgActorColMapInit(&sp8, 3, 0x80);
-    arg0->mdlId[2] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0001, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[2], 1);
-    Hu3DModelAttrSet(arg0->mdlId[2], 0x40000001);
-    Hu3DMotionSpeedSet(arg0->mdlId[2], 0.25f);
-    arg0->mdlId[4] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0002, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[4], 1);
-    Hu3DModelAttrSet(arg0->mdlId[4], 0x40000001);
-    arg0->mdlId[6] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0003, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[6], 1);
-    Hu3DModelAttrSet(arg0->mdlId[6], 0x40000001);
-    arg0->mdlId[8] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0004, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[8], 1);
-    Hu3DModelAttrSet(arg0->mdlId[8], 0x40000001);
-    arg0->mdlId[0x1C] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0006, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0x1C], 2);
-    Hu3DModelAttrSet(arg0->mdlId[0x1C], 0x40000001);
-    arg0->mdlId[0x1E] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0007, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0x1E], 2);
-    Hu3DModelAttrSet(arg0->mdlId[0x1E], 0x40000001);
-    arg0->mdlId[0x20] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0008, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0x20], 2);
-    Hu3DModelAttrSet(arg0->mdlId[0x20], 0x40000001);
-    arg0->mdlId[0x22] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0009, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0x22], 2);
-    Hu3DModelAttrSet(arg0->mdlId[0x22], 0x40000001);
-    arg0->mdlId[0xE] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E000A, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0xE], 1);
-    Hu3DModelAttrSet(arg0->mdlId[0xE], 0x40000002);
-    Hu3DModelPosSet(arg0->mdlId[0xE], 0.0f, 450.0f, 0.0f);
-    Hu3DModelShadowMapSet(arg0->mdlId[0xE]);
-    arg0->mdlId[0xC] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E000B, HU_MEMNUM_OVL, HEAP_MODEL));
-    Hu3DModelLayerSet(arg0->mdlId[0xC], 1);
-    Hu3DModelAttrSet(arg0->mdlId[0xC], 0x40000001);
-    Hu3DModelPosSet(arg0->mdlId[0xC], 0.0f, 450.0f, 0.0f);
     for (i = 0; i < 5; i++) {
-        u32 dataNum = *(u32 *) (lbl_1_rodata_4D0 + (i * 4));
-        s16 id = Hu3DModelCreate(HuDataSelHeapReadNum(dataNum, HU_MEMNUM_OVL, HEAP_MODEL));
-
-        arg0->mdlId[i + 9] = id;
-        Hu3DModelLayerSet(arg0->mdlId[i + 9], 1);
+        sp34[i] = lbl_1_rodata_4D0[i];
+    }
+    idx = 0;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0000, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelShadowMapSet(arg0->mdlId[idx]);
+    sp8[0] = arg0->mdlId[idx];
+    idx = 5;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0005, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelAttrSet(arg0->mdlId[idx], 1);
+    sp8[1] = arg0->mdlId[idx];
+    idx = 8;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E000C, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelPosSet(arg0->mdlId[idx], 0.0f, 450.0f, 0.0f);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 1);
+    sp8[2] = arg0->mdlId[idx];
+    MgActorColMapInit(sp8, 3, 0x80);
+    idx = 1;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0001, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    Hu3DMotionSpeedSet(arg0->mdlId[idx], 0.25f);
+    idx = 2;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0002, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 3;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0003, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 4;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0004, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 0xE;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0006, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 2);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 0xF;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0007, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 2);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 0x10;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0008, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 2);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 0x11;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E0009, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 2);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    idx = 7;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E000A, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000002);
+    Hu3DModelPosSet(arg0->mdlId[idx], 0.0f, 450.0f, 0.0f);
+    Hu3DModelShadowMapSet(arg0->mdlId[idx]);
+    idx = 6;
+    arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(0x4E000B, HU_MEMNUM_OVL, HEAP_MODEL));
+    Hu3DModelLayerSet(arg0->mdlId[idx], 1);
+    Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
+    Hu3DModelPosSet(arg0->mdlId[idx], 0.0f, 450.0f, 0.0f);
+    for (i = 0; i < 5; i++) {
+        idx = i + 9;
+        arg0->mdlId[idx] = Hu3DModelCreate(HuDataSelHeapReadNum(sp34[i], HU_MEMNUM_OVL, HEAP_MODEL));
+        Hu3DModelLayerSet(arg0->mdlId[idx], 1);
         if (i < 2) {
-            Hu3DModelAttrSet(arg0->mdlId[i + 9], 1);
-            Hu3DMotionTimeSet(arg0->mdlId[i + 9], 540.0f);
+            Hu3DModelAttrSet(arg0->mdlId[idx], 1);
+            Hu3DMotionTimeSet(arg0->mdlId[idx], 540.0f);
         }
         if (i == 2) {
-            Hu3DModelAttrSet(arg0->mdlId[i + 9], 0x40000001);
+            Hu3DModelAttrSet(arg0->mdlId[idx], 0x40000001);
         }
     }
-    arg0->mdlId[0x26] = Hu3DHookFuncCreate((void (*)(HU3DMODEL *, f32 (*)[3][4])) fn_1_6640);
-    Hu3DModelLayerSet(arg0->mdlId[0x26], 4);
-    arg0->mdlId[0x28] = Hu3DHookFuncCreate(fn_1_7014);
-    Hu3DModelLayerSet(arg0->mdlId[0x28], 5);
-    arg0->mdlId[0x2A] = Hu3DHookFuncCreate(fn_1_7830);
-    Hu3DModelLayerSet(arg0->mdlId[0x2A], 0);
-    lbl_1_bss_17C = espEntry(0x4E0012, 0, 0);
+    idx = 0x13;
+    arg0->mdlId[idx] = Hu3DHookFuncCreate((void (*)(HU3DMODEL *, f32 (*)[3][4])) fn_1_6640);
+    Hu3DModelLayerSet(arg0->mdlId[idx], 4);
+    idx = 0x14;
+    arg0->mdlId[idx] = Hu3DHookFuncCreate(fn_1_7014);
+    Hu3DModelLayerSet(arg0->mdlId[idx], 5);
+    idx = 0x15;
+    arg0->mdlId[idx] = Hu3DHookFuncCreate(fn_1_7830);
+    Hu3DModelLayerSet(arg0->mdlId[idx], 0);
+    lbl_1_bss_17C = (s16) espEntry(0x4E0012, 0, 0);
     espDispOff((s16) lbl_1_bss_17C);
     memset(lbl_1_bss_5C8, 0, 0x200);
-    lbl_1_bss_5C8[0] = -50.0f;
-    lbl_1_bss_5C8[4] = 0.0f;
-    lbl_1_bss_5C8[2] = 0.0f;
-    Hu3DModelRotSet(arg0->mdlId[0xC], 0.0f, lbl_1_bss_5C8[2], 0.0f);
-    Hu3DModelRotSet(arg0->mdlId[0x10], 0.0f, lbl_1_bss_5C8[2], 0.0f);
+    ((f32 *) lbl_1_bss_5C8)[0] = -50.0f;
+    lbl_1_bss_5C8[4].i = 0;
+    ((f32 *) lbl_1_bss_5C8)[2] = 0.0f;
+    Hu3DModelRotSet(((OMOBJ *) lbl_1_bss_1B4)->mdlId[6], 0.0f, ((f32 *) lbl_1_bss_5C8)[2], 0.0f);
+    Hu3DModelRotSet(((OMOBJ *) lbl_1_bss_1B4)->mdlId[8], 0.0f, ((f32 *) lbl_1_bss_5C8)[2], 0.0f);
     memset(lbl_1_bss_280, 0, 0x348);
     for (i = 0; i < 2; i++) {
-        ((s32 *) lbl_1_bss_270)[(i * 8) / 4] = 1;
-        maxTime = Hu3DMotionMaxTimeGet(arg0->mdlId[i + 0xE], 0);
-        ((s32 *) lbl_1_bss_270)[(i * 8) / 4 + 1] = (s32) (((f32) rand8() / 255.0f) * maxTime);
-        Hu3DMotionTimeSet(arg0->mdlId[i + 0xE], (f32) ((s32 *) lbl_1_bss_270)[(i * 8) / 4 + 1]);
-        Hu3DMotionTimeSet(arg0->mdlId[i + 0x10], (f32) ((s32 *) lbl_1_bss_270)[(i * 8) / 4 + 1]);
+        lbl_1_bss_270[i * 2] = 1;
+        maxTime = Hu3DMotionMaxTimeGet(arg0->mdlId[i + 0xE]);
+        lbl_1_bss_270[i * 2 + 1] = (s32) (((f32) rand8() / 255.0f) * maxTime);
+        Hu3DMotionTimeSet(arg0->mdlId[i + 0xE], (f32) lbl_1_bss_270[i * 2 + 1]);
+        Hu3DMotionTimeSet(arg0->mdlId[i + 0x10], (f32) lbl_1_bss_270[i * 2 + 1]);
         Hu3DModelAttrSet(arg0->mdlId[i + 0xE], 1);
         Hu3DModelAttrSet(arg0->mdlId[i + 0x10], 1);
     }
-    MgActorColAttrParamGet(sp20, 1);
-    /* the two collisions parameters that follow are zeroed then written back */
-    MgActorColAttrParamSet(sp20, 1);
-    MgActorColAttrParamGet(sp20, 2);
-    MgActorColAttrParamSet(sp20, 2);
-    memset((f32 *) lbl_1_bss_1D0, 0, 0xA0);
+    MgActorColAttrParamGet(&sp20, 1);
+    sp20.yDeviate = 0.0f;
+    MgActorColAttrParamSet(&sp20, 1);
+    MgActorColAttrParamGet(&sp20, 2);
+    sp20.yDeviate = 0.0f;
+    MgActorColAttrParamSet(&sp20, 2);
+    memset(lbl_1_bss_1D0, 0, 0xA0);
     for (i = 0; i < 8; i++) {
-        ((s32 *) ((u8 *) lbl_1_bss_1D0 + (i * 0x14)))[0x10 / 4] = -1;
+        lbl_1_bss_1D0[i * 5 + 4] = -1;
     }
     arg0->objFunc = fn_1_43BC;
 }
 /*
  * Update: drives the camera interpolation across the sequence modes, the
  * two-phase animation cycle, and the 30-slot particle field. lbl_1_bss_5C8 is
- * an f32 state block: [0] is the lift height, [2] the azimuth, [4]/[5]/[6] the
- * frame counters the animation and the particle bursts key off.
+ * a state block: f[0] is the lift height, f[2] the azimuth, i[4] a frame
+ * counter, i[5]/i[6] the cycle counters the animation and particle bursts key off.
  */
+// NONMATCHING: float temporaries and register allocation differ from the original
 void fn_1_43BC(OMOBJ *arg0)
 {
-    s32 sp34[4];
-    u8 sp44[0x18];
-    u8 sp80[0x28];
-    u8 sp58[0x28];
+    static f32 s_lift;
+    s32 *pd[4];
+    COL_ATTRPARAM sp44;
+    f32 sp80[10];
+    f32 sp58[10];
     f32 lift;
-    f32 azim;
     f32 t;
     f32 k;
-    f32 f;
+    f32 kk;
+    f32 mm;
+    f32 ang;
+    f32 tt;
     s32 i;
     s32 j;
     s32 slot;
+    s32 az;
+    s32 cnt;
+    s32 *rec;
+    M520STATE *w = lbl_1_bss_5C8;
 
     for (i = 0; i < 4; i++) {
-        sp34[i] = ((s32 *) (uintptr_t) ((u8 *) lbl_1_bss_1B8 + (i * 4)))[0x5C / 4];
-        sp34[i] = ((s32 *) (uintptr_t) ((s32 *) (uintptr_t) ((u8 *) lbl_1_bss_1B8 + (i * 4)))[0x5C / 4])[0x5C / 4];
-        sp34[i] = *(s32 *) ((u8 *) lbl_1_bss_1B8 + (i * 4));
+        pd[i] = (s32 *) lbl_1_bss_1B8[i]->data;
     }
     lbl_1_bss_1A0 = MgSeqModeGet();
     lbl_1_bss_0 = MgSeqFrameNoGet();
     lbl_1_bss_4 += 1;
     if (lbl_1_bss_164 == 0) {
-        Hu3DModelAttrSet(arg0->mdlId[0x2A], 1);
+        Hu3DModelAttrSet(lbl_1_bss_1B4->mdlId[0x15], 1);
     }
     if ((lbl_1_bss_1A0 == 2 && lbl_1_bss_0 >= 0x82) || lbl_1_bss_1A0 == 3) {
         lbl_1_bss_14 += 1;
-        t = lbl_1_bss_14;
+        t = (f32) lbl_1_bss_14;
         if (t < 16.0f) {
-            k = (((1.0f + t) * 0.5f * t) * 0.0625f) / 48.0f;
+            k = ((((1.0f + t) * 0.5f) * t) * 0.0625f) / 48.0f;
         } else if (t < 48.0f) {
             k = (8.5f / 48.0f) + ((t - 16.0f) / 48.0f);
         } else if (t < 63.0f) {
-            k = 1.0f - (((((1.0f + (63.0f - t)) * 0.5f * (63.0f - t)) / 15.0f) / 48.0f));
+            k = 1.0f - (((((1.0f + ((64.0f - t) - 1.0f)) * 0.5f) * ((63.0f - t) - 1.0f)) / 15.0f) / 48.0f);
         } else {
             k = 1.0f;
         }
-        CZoom = (1425.0f * (1.0f - k)) + (4575.0f * k);
-        Center.y = (505.0f * (1.0f - k)) + (-120.0f * k);
-        CRot.x = (-35.0f * (1.0f - k)) + (-70.0f * k);
+        kk = 1.0f - k;
+        CZoom = (1425.0f * kk) + (4575.0f * k);
+        Center.y = (505.0f * kk) + (-120.0f * k);
+        CRot.x = (-35.0f * kk) + (-70.0f * k);
     }
     if (lbl_1_bss_1A0 == 3 && lbl_1_bss_0 > 0x2F) {
-        f32 n = (f32) (0x3E - lbl_1_bss_0);
+        mm = (f32) (0x3E - lbl_1_bss_0);
+        if (mm >= 0.0f) {
+            s32 sgn = ((s32) mm & 1) ? -1 : 1;
 
-        if (n > 0.0f) {
-            f32 sign = ((s32) n & 1) ? 1.0f : -1.0f;
-            f32 m = n * (sign / 15.0f);
-
-            Center.y = (f32) (-120.0 + ((6.0f * m) * cos(1.2217304763960306)));
-            Center.z = (f32) ((6.0f * m) * -sin(1.2217304763960306));
+            mm = mm * ((f32) sgn / 15.0f);
+            Center.y = (f32) (-120.0 + ((6.0f * mm) * cos(1.2217304763960306)));
+            Center.z = (f32) ((6.0f * mm) * -sin(1.2217304763960306));
         }
     }
     if (lbl_1_bss_1A0 == 8 && lbl_1_data_9C == 0) {
-        f32 e = 1.0f - 0.9f;
+        f32 a = 0.9f;
+        f32 e = 1.0f - a;
 
         for (i = 0; i < 10; i++) {
-            ((f32 *) sp80)[i] = *(f32 *) (lbl_1_rodata_344 + (i * 4));
-            ((f32 *) sp58)[i] = *(f32 *) (lbl_1_rodata_36C + (i * 4));
+            sp80[i] = lbl_1_rodata_344[i];
+            sp58[i] = lbl_1_rodata_36C[i];
         }
-        CZoom = (CZoom * 0.9f) + (900.0f * e);
-        Center.y = (Center.y * 0.9f) + (e * (((f32 *) sp80)[((s32 *) (uintptr_t) sp34[0])[2]] - 140.0f));
-        CRot.x = (CRot.x * 0.9f) + (e * ((f32 *) sp58)[((s32 *) (uintptr_t) sp34[0])[2]]);
+        CZoom = CZoom * a;
+        CZoom = CZoom + (900.0f * e);
+        Center.y = Center.y * a;
+        Center.y = Center.y + (e * (sp80[pd[0][2]] - 140.0f));
+        CRot.x = CRot.x * a;
+        CRot.x = CRot.x + (e * sp58[pd[0][2]]);
     }
     if (lbl_1_bss_1A0 == 8 && lbl_1_data_9C == 1) {
-        f32 e = 1.0f - 0.9f;
+        f32 a = 0.9f;
+        f32 e = 1.0f - a;
 
-        CZoom = (CZoom * 0.9f) + (3825.0f * e);
-        Center.y = (Center.y * 0.9f) + (-95.0f * e);
-        CRot.x = (CRot.x * 0.9f) + (-51.0f * e);
+        CZoom = CZoom * a;
+        CZoom = CZoom + (3825.0f * e);
+        Center.y = Center.y * a;
+        Center.y = Center.y + (-95.0f * e);
+        CRot.x = CRot.x * a;
+        CRot.x = CRot.x + (-51.0f * e);
     }
-    MgActorColAttrParamGet(sp44, 2);
-    MgActorColAttrParamSet(sp44, lbl_1_bss_1A0 == 5 ? 0.6666667f : 0.0f);
-    lbl_1_bss_5C8[4] += 1;
-    if (lbl_1_bss_5C8[6] >= 480.0f && lbl_1_bss_1A0 == 5 && ((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x14))[0] < 3) {
-        ((f32 *) ((u8 *) lbl_1_bss_1D0 + (((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x14))[0] * 0x14)))[0x54 / 4] = 0.0f;
-        ((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x14))[0] += 1;
-    }
-    if (lbl_1_bss_5C8[6] == 2.0f) {
-        HuAudFXStop(((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x18))[0]);
-    }
-    lbl_1_bss_5C8[6] = lbl_1_bss_5C8[6] >= 480.0f ? 0.0f : lbl_1_bss_5C8[6] + 1.0f;
-    lbl_1_bss_5C8[5] = lbl_1_bss_5C8[5] >= 120.0f ? 0.0f : lbl_1_bss_5C8[5] + 1.0f;
-    if (lbl_1_bss_1A0 > 5) {
-        lbl_1_bss_5C8[0] -= 1.5f;
-        if (lbl_1_bss_5C8[0] < -190.0f) {
-            lbl_1_bss_5C8[0] = -190.0f;
-        }
+    MgActorColAttrParamGet(&sp44, 2);
+    if (lbl_1_bss_1A0 == 5) {
+        sp44.yDeviate = 0.6666667f;
     } else {
-        f32 ramp = lbl_1_bss_5C8[5] / 120.0f;
-
-        lbl_1_bss_5C8[0] = ramp;
-        azim = (lbl_1_bss_5C8[5] == lbl_1_bss_5C8[6]) ? -75.0f : -60.0f;
-        lbl_1_bss_5C8[0] = (f32) (-50.0 + ((f64) azim * sin((M_PI * (180.0 * ((0.5 * lbl_1_bss_5C8[0]) + (0.5 * (1.0f - ((1.0f - lbl_1_bss_5C8[0]) * (1.0f - lbl_1_bss_5C8[0]))))))) / 180.0)));
-        f = (lbl_1_bss_5C8[5] == lbl_1_bss_5C8[6]) ? 1.0f : 0.6666667f;
-        if (lbl_1_bss_5C8[6] <= 80.0f) {
-            t = 0.0f;
-        } else if (lbl_1_bss_5C8[6] <= 120.0f) {
-            t = (lbl_1_bss_5C8[6] - 80.0f) / 40.0f;
-        } else if (lbl_1_bss_5C8[6] <= 240.0f) {
-            t = 1.0f;
-        } else if (lbl_1_bss_5C8[6] <= 480.0f) {
-            t = 1.0f - ((lbl_1_bss_5C8[6] - 240.0f) / 240.0f);
+        sp44.yDeviate = 0.0f;
+    }
+    MgActorColAttrParamSet(&sp44, 2);
+    w[4].i += 1;
+    w[6].i = w[6].i + (w[6].i > 0);
+    if (w[6].i >= 0x1E0 && lbl_1_bss_1A0 == 5 && lbl_1_bss_1D0[0x50 / 4] < 3) {
+        lbl_1_bss_1D0[0x54 / 4 + lbl_1_bss_1D0[0x50 / 4]] = 0;
+        lbl_1_bss_1D0[0x50 / 4] += 1;
+    }
+    if (w[6].i == 2 && lbl_1_bss_1D0[0x60 / 4] != -1) {
+        HuAudFXStop(lbl_1_bss_1D0[0x60 / 4]);
+    }
+    w[6].i = (w[6].i >= 0x1E0) ? 0 : w[6].i;
+    w[5].i = w[5].i + (w[5].i > 0);
+    w[5].i = (w[5].i >= 0x78) ? 0 : w[5].i;
+    if (lbl_1_bss_1A0 > 5) {
+        w[0].f = w[0].f - 1.5f;
+        w[0].f = (w[0].f < -190.0f) ? -190.0f : w[0].f;
+        lift = s_lift; /* the original leaves f31 unset on this path: keep the last value */
+    } else {
+        w[0].f = (w[5].i > 0x78) ? 0.0f : ((f32) w[5].i / 120.0f);
+        az = (w[5].i == w[6].i) ? -0x4B : -0x3C;
+        w[0].f = (f32) (-50.0 + ((f64) az * sin((3.141592653589793 * (180.0 * ((0.5 * w[0].f) + (0.5 * (1.0f - ((1.0f - w[0].f) * (1.0f - w[0].f))))))) / 180.0)));
+        kk = (w[5].i == w[6].i) ? 1.0f : 0.6666667f;
+        lift = 135.0f - ((w[0].f - -50.0f) * kk);
+        if (w[6].i <= 0x50) {
+            tt = 0.0f;
+        } else if (w[6].i <= 0x78) {
+            tt = (f32) (w[6].i - 0x50) / 40.0f;
+        } else if (w[6].i <= 0xF0) {
+            tt = 1.0f;
+        } else if (w[6].i <= 0x1E0) {
+            tt = 1.0f - ((f32) (w[6].i - 0xF0) / 240.0f);
         } else {
-            t = 0.0f;
+            tt = 0.0f;
         }
-        lift = 135.0f - ((lbl_1_bss_5C8[0] - -50.0f) * f);
-        lift = (lift + (-90.0f * t)) + 45.0f;
+        lift = lift + (-90.0f * tt);
+        lift = lift + 45.0f;
         if (lift > 180.0f) {
             lift = 180.0f;
         }
-        /* the three overlay models ride the lift */
-        for (i = 0; i < 3; i++) {
-            Hu3DModelAttrSet(((s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14))[i + 0xB], 1);
-            Hu3DModelPosSet(((s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14))[i + 0xB], 0.0f, lift, 0.0f);
-        }
+        s_lift = lift;
     }
-    {
-        s32 mdl = *(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14);
+    Hu3DModelPosSet(lbl_1_bss_1B4->mdlId[6], 0.0f, 500.0f + w[0].f, 0.0f);
+    Hu3DModelPosSet(lbl_1_bss_1B4->mdlId[8], 0.0f, 500.0f + w[0].f, 0.0f);
+    Hu3DModelPosSet(lbl_1_bss_1B4->mdlId[7], 0.0f, 500.0f + w[0].f, 0.0f);
+    for (i = 0; i < 3; i++) {
+        Hu3DModelAttrSet(lbl_1_bss_1B4->mdlId[i + 0xB], 1);
+        Hu3DModelPosSet(lbl_1_bss_1B4->mdlId[i + 0xB], 0.0f, lift, 0.0f);
+    }
+    if (w[6].i == 0) {
+        Hu3DModelAttrReset(lbl_1_bss_1B4->mdlId[0xB], 1);
+    } else if (w[6].i <= 0xB4) {
+        Hu3DMotionTimeSet(lbl_1_bss_1B4->mdlId[0xC], (f32) w[6].i);
+        Hu3DModelAttrReset(lbl_1_bss_1B4->mdlId[0xC], 1);
+    } else if (w[6].i <= 0x1E0) {
+        Hu3DMotionTimeSet(lbl_1_bss_1B4->mdlId[0xB], 0.0f);
+        Hu3DMotionTimeSet(lbl_1_bss_1B4->mdlId[0xD], (f32) (w[6].i - 0xB4));
+        Hu3DModelAttrReset(lbl_1_bss_1B4->mdlId[0xD], 1);
+    }
+    if (w[6].i == 0x1E && lbl_1_bss_1D0[0] < 3) {
+        lbl_1_bss_1D0[1 + lbl_1_bss_1D0[0]] = 0;
+        lbl_1_bss_1D0[0] += 1;
+    }
+    if (w[6].i == 5) {
+        Hu3DModelAttrReset(lbl_1_bss_1B4->mdlId[0xA], 1);
+        Hu3DMotionTimeSet(lbl_1_bss_1B4->mdlId[0xA], 0.0f);
+    }
+    if (w[6].i == 0x55) {
+        Hu3DModelAttrSet(lbl_1_bss_1B4->mdlId[0xA], 1);
+    }
+    if (w[6].i == 0x1E) {
+        Hu3DModelAttrReset(lbl_1_bss_1B4->mdlId[9], 1);
+        Hu3DMotionTimeSet(lbl_1_bss_1B4->mdlId[9], 0.0f);
+    }
+    if (w[6].i == 0xD2) {
+        Hu3DModelAttrSet(lbl_1_bss_1B4->mdlId[9], 1);
+    }
+    if (lbl_1_bss_1A0 > 5) {
+        HU3DMODEL *mdl = &Hu3DData[lbl_1_bss_1B4->mdlId[9]];
 
-        Hu3DModelPosSet(mdl + 0xC, 0.0f, 500.0f + lbl_1_bss_5C8[0], 0.0f);
-        Hu3DModelPosSet(mdl + 0x10, 0.0f, 500.0f + lbl_1_bss_5C8[0], 0.0f);
-        Hu3DModelPosSet(mdl + 0xE, 0.0f, 500.0f + lbl_1_bss_5C8[0], 0.0f);
+        mdl->pos.y = mdl->pos.y - 20.0f;
+        Hu3DModelAttrSet(arg0->mdlId[lbl_1_bss_1B4->mdlId[9]], 0x40000002);
     }
-    if (lbl_1_bss_5C8[6] == 0.0f) {
-        Hu3DModelAttrReset(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x16, 1);
-    } else if (lbl_1_bss_5C8[6] <= 180.0f) {
-        Hu3DMotionTimeSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x18, lbl_1_bss_5C8[6]);
-        Hu3DModelAttrReset(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x18, 1);
-    } else if (lbl_1_bss_5C8[6] <= 480.0f) {
-        Hu3DMotionTimeSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x16, 0.0f);
-        Hu3DMotionTimeSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x1A, lbl_1_bss_5C8[6] - 180.0f);
-        Hu3DModelAttrReset(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x1A, 1);
-    }
-    if (lbl_1_bss_5C8[6] == 30.0f) {
-        if (((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x14))[0] < 3) {
-            ((f32 *) ((u8 *) lbl_1_bss_1D0 + (((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x14))[0] * 0x14)))[0x4 / 4] = 0.0f;
-            ((s32 *) ((u8 *) lbl_1_bss_1D0 + 0x14))[0] += 1;
+    if (lbl_1_bss_1A0 == 3 && lbl_1_bss_0 == 0x2E) {
+        if (lbl_1_bss_1D0[0x14 / 4] < 3) {
+            lbl_1_bss_1D0[0x18 / 4 + lbl_1_bss_1D0[0x14 / 4]] = 0;
+            lbl_1_bss_1D0[0x14 / 4] += 1;
+        }
+        if (lbl_1_bss_1D0[0x78 / 4] < 3) {
+            lbl_1_bss_1D0[0x7C / 4 + lbl_1_bss_1D0[0x78 / 4]] = 0;
+            lbl_1_bss_1D0[0x78 / 4] += 1;
         }
     }
-    if (lbl_1_bss_5C8[6] == 5.0f) {
-        Hu3DModelAttrReset(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x14, 1);
-        Hu3DMotionTimeSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x14, 0.0f);
-    }
-    if (lbl_1_bss_5C8[6] == 0x55) {
-        Hu3DModelAttrSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x14, 1);
-    }
-    if (lbl_1_bss_5C8[6] == 30.0f) {
-        Hu3DModelAttrReset(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x12, 1);
-        Hu3DMotionTimeSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x12, 0.0f);
-    }
-    if (lbl_1_bss_5C8[6] == 210.0f) {
-        Hu3DModelAttrSet(*(s32 *) ((u8 *) lbl_1_bss_1B4 + 0x14) + 0x12, 1);
-    }
-    /* particle bursts: one every 6 frames of the 60-frame cycle, three at a
-     * time, at the azimuth the ring is currently showing */
-    if ((lbl_1_bss_1A0 == 5 || (lbl_1_bss_1A0 == 3 && lbl_1_bss_0 > 0x2D))
-        && ((((s32) lbl_1_bss_5C8[4]) % 60) == 1 || (((s32) lbl_1_bss_5C8[4]) % 60) == 7
-            || (((s32) lbl_1_bss_5C8[4]) % 60) == 11 || (((s32) lbl_1_bss_5C8[4]) % 60) == 17
-            || (((s32) lbl_1_bss_5C8[4]) % 60) == 21 || (((s32) lbl_1_bss_5C8[4]) % 60) == 27)) {
-        for (i = 0; i < 3; i++) {
-            f32 ang = lbl_1_bss_5C8[2] + ((f32) ((i * 0x168) / 3));
-            for (slot = 0; slot < 0x1E; slot++) {
-                if (((s32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[6] != 0) {
-                    continue;
+    if (lbl_1_bss_1A0 == 5 || (lbl_1_bss_1A0 == 3 && lbl_1_bss_0 > 0x2D)) {
+        s32 ph = w[4].i % 32;
+
+        if (ph == 1 || ph == 7 || ph == 0xB || ph == 0x11 || ph == 0x15 || ph == 0x1B) {
+            for (i = 0; i < 3; i++) {
+                ang = w[2].f + (f32) ((i * 0x168) / 3);
+                for (slot = 0; slot < 0x1E; slot++) {
+                    if (lbl_1_bss_280[slot * 7 + 6] == 0) {
+                        break;
+                    }
                 }
-                break;
+                if (slot == 0x1E) {
+                    break;
+                }
+                rec = &lbl_1_bss_280[slot * 7];
+                rec[6] = 1;
+                ((f32 *) rec)[0] = (f32) (175.0 * sin((3.141592653589793 * ang) / 180.0));
+                ((f32 *) rec)[1] = 400.0f + w[0].f;
+                ((f32 *) rec)[2] = (f32) (200.0 * cos((3.141592653589793 * ang) / 180.0));
+                ((f32 *) rec)[3] = (f32) ((575.0 * sin((3.141592653589793 * ang) / 180.0)) * 0.03125);
+                ((f32 *) rec)[4] = -4.285714f;
+                ((f32 *) rec)[5] = (f32) ((575.0 * cos((3.141592653589793 * ang) / 180.0)) * 0.03125);
             }
-            if (slot == 0x1E) {
-                continue;
-            }
-            ((s32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[6] = 1;
-            ((f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[0] = (f32) (175.0 * sin((M_PI * ang) / 180.0));
-            ((f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[1] = 400.0f + lbl_1_bss_5C8[0];
-            ((f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[2] = (f32) (200.0 * cos((M_PI * ang) / 180.0));
-            ((f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[3] = (f32) ((575.0 * sin((M_PI * ang) / 180.0)) * 0.03125);
-            ((f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[4] = -4.285714f;
-            ((f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14)))[5] = (f32) ((575.0 * cos((M_PI * ang) / 180.0)) * 0.03125);
         }
     }
-    for (slot = 0; slot < 0x1E; slot++) {
-        f32 *rec = (f32 *) ((u8 *) lbl_1_bss_280 + (slot * 0x14));
-
-        if (((s32 *) rec)[6] == 0) {
-            continue;
-        }
-        ((s32 *) rec)[6] += 1;
-        rec[0] += rec[3];
-        rec[1] += rec[4];
-        rec[2] += rec[5];
-        if (((s32 *) rec)[6] == 0x21) {
-            ((s32 *) rec)[6] = 0;
+    for (i = 0; i < 0x1E; i++) {
+        rec = &lbl_1_bss_280[i * 7];
+        if (rec[6] != 0) {
+            rec[6] += 1;
+            ((f32 *) rec)[0] = ((f32 *) rec)[0] + ((f32 *) rec)[3];
+            ((f32 *) rec)[1] = ((f32 *) rec)[1] + ((f32 *) rec)[4];
+            ((f32 *) rec)[2] = ((f32 *) rec)[2] + ((f32 *) rec)[5];
+            if (rec[6] == 0x21) {
+                rec[6] = 0;
+            }
         }
     }
     for (i = 0; i < 2; i++) {
-        s32 *rec = (s32 *) ((u8 *) lbl_1_bss_270 + (i * 8));
+        s32 *r = &lbl_1_bss_270[i * 2];
 
-        if (rec[0] == 0) {
-            rec[1] -= 1;
-            if (rec[1] <= 0) {
-                rec[0] = 1;
-                rec[1] = 0;
-                Hu3DMotionTimeSet(arg0->mdlId[i + 0xE], 0.0f);
-                Hu3DModelAttrReset(arg0->mdlId[i + 0xE], 1);
-                Hu3DMotionTimeSet(arg0->mdlId[i + 0x10], 0.0f);
-                Hu3DModelAttrReset(arg0->mdlId[i + 0x10], 1);
-                j = (i == 0) ? 3 : 2;
-                if (((s32 *) ((u8 *) lbl_1_bss_1D0 + (j * 0x14)))[0] < 3) {
-                    ((s32 *) ((u8 *) lbl_1_bss_1D0 + (j * 0x14)))[0] += 1;
-                    ((f32 *) ((u8 *) lbl_1_bss_1D0 + (j * 0x14) + (((s32 *) ((u8 *) lbl_1_bss_1D0 + (j * 0x14)))[0] * 4)))[1] = 0.0f;
-                }
+        if (r[0] == 0) {
+            r[1] -= 1;
+            if (r[1] > 0) {
+                continue;
+            }
+            r[0] = 1;
+            r[1] = 0;
+            Hu3DMotionTimeSet(arg0->mdlId[i + 0xE], 0.0f);
+            Hu3DModelAttrReset(arg0->mdlId[i + 0xE], 1);
+            Hu3DMotionTimeSet(arg0->mdlId[i + 0x10], 0.0f);
+            Hu3DModelAttrReset(arg0->mdlId[i + 0x10], 1);
+            j = (i == 0) ? 3 : 2;
+            cnt = lbl_1_bss_1D0[j * 5];
+            if (cnt < 3) {
+                lbl_1_bss_1D0[j * 5 + 1 + cnt] = 0;
+                lbl_1_bss_1D0[j * 5] += 1;
             }
         } else {
-            rec[1] += 1;
-            if (rec[1] == (s32) Hu3DMotionMaxTimeGet(arg0->mdlId[i + 0xE], 0)) {
-                rec[0] = 0;
-                rec[1] = (s32) (60.0f * ((f32) rand8() / 255.0f));
+            r[1] += 1;
+            if ((f32) r[1] >= Hu3DMotionMaxTimeGet(arg0->mdlId[i + 0xE])) {
+                r[0] = 0;
+                r[1] = (s32) (60.0f * ((f32) rand8() / 255.0f));
                 Hu3DModelAttrSet(arg0->mdlId[i + 0xE], 1);
                 Hu3DModelAttrSet(arg0->mdlId[i + 0x10], 1);
             }
@@ -1287,29 +1277,71 @@ typedef struct M520Player_s {
 } M520PLAYER;
 
 /*
+ * Loads a character data file: looks the directory half of dataNum up in the
+ * charDataDirTbl columns [4] and [5] and reads it through the ARAM cache, the
+ * short-heap path or the plain heap read. fn_1_8A98 carries this inlined.
+ */
+void *fn_1_8918(s16 charNo, u32 dataNum)
+{
+    s16 i;
+    u32 hi;
+    void *res;
+
+    hi = dataNum & 0xFFFF0000;
+    for (i = 0; (s16) i < 0xD; i++) {
+        if (hi == charDataDirTbl[i][4]) {
+            break;
+        }
+    }
+    if ((s16) i == 0xD && hi != 0) {
+        for (i = 0; (s16) i < 0xD; i++) {
+            if (hi == charDataDirTbl[i][5]) {
+                break;
+            }
+        }
+        if ((s16) i != 0xD) {
+            dataNum = (dataNum & 0xFFFF) | charDataDirTbl[charNo][5];
+            res = HuDataReadNumHeapShortForce(dataNum, HU_MEMNUM_OVL, HEAP_MODEL);
+        } else {
+            res = HuDataSelHeapReadNum(dataNum, HU_MEMNUM_OVL, HEAP_MODEL);
+        }
+    } else {
+        dataNum = (dataNum & 0xFFFF) | charDataDirTbl[charNo][4];
+        res = HuAR_ARAMtoMRAMFileRead(dataNum, HU_MEMNUM_OVL, HEAP_MODEL);
+        if (res == NULL) {
+            res = HuDataSelHeapReadNum(dataNum, HU_MEMNUM_OVL, HEAP_MODEL);
+        }
+    }
+    return res;
+}
+
+/*
  * Player Create: resolves the slot to a GwPlayerConf entry (grouping players of
  * the same colour together), creates the Mg actor, loads the character model
- * and its three joint motions, then wires the per-slot callbacks. The ARAM
- * lookups fall back to a heap read when the MRAM path is not resident.
+ * and its joint motions, then wires the per-slot callbacks. The ARAM lookups
+ * fall back to a heap read when the MRAM path is not resident.
  */
+// NONMATCHING: the character-data loads are calls to fn_1_8918 here (inlined in the original); MgActorPosUpdate gets the actor, the original passed the player
 void fn_1_8A98(OMOBJ *arg0)
 {
-    f32 sp5C[4];
-    HuVecF sp88;
-    u8 sp24[0x48];
+    s32 sp5C[4];
+    MGACTOR_PARAM sp88;
+    HuVecF sp50;
+    MGACTOR_COLMAP_POLY sp6C;
     M520PLAYER *pl;
+    MGPLAYER *player;
+    MGACTOR *actor;
     s32 n;
     s32 i;
     s32 j;
-    s32 k;
-    u32 motion;
+    s32 ang;
 
     for (i = 0; i < 4; i++) {
-        sp5C[i] = *(f32 *) (lbl_1_rodata_4F0 + (i * 4));
+        sp5C[i] = lbl_1_rodata_4F0[i];
     }
+    n = 0;
     pl = (M520PLAYER *) arg0->data;
     memset(pl, 0, 0x54);
-    n = 0;
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
             if (i == GwPlayerConf[j].grp) {
@@ -1319,7 +1351,7 @@ void fn_1_8A98(OMOBJ *arg0)
         }
     }
     pl->idx = arg0->work[0];
-    pl->conf = (s32) sp5C[pl->idx];
+    pl->conf = sp5C[pl->idx];
     if (pl->conf == 4) {
         pl->conf = pl->idx;
     }
@@ -1329,69 +1361,65 @@ void fn_1_8A98(OMOBJ *arg0)
     pl->dif = pl->padNo != -1 ? 0 : GwPlayerConf[pl->conf].dif;
     pl->unk1C = 2;
     pl->unk34 = 1.0f;
-    sp88.x = 150.0f;
-    sp88.y = 40.0f;
-    sp88.z = (f32) pl->idx;
-    MgPlayerCreate((s16) pl->conf, &sp88, 4, 1, 0x13, pl->idx == -1 ? lbl_1_data_138 : NULL);
-    arg0->mdlId[0] = (s16) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x3C) + 0x40);
+    sp88.height = 150.0f;
+    sp88.radius = 40.0f;
+    sp88.param = pl->idx;
+    sp88.type = 0;
+    sp88.attr = 0;
+    sp88.correctHookParam = 0;
+    sp88.narrowHook = NULL;
+    sp88.correctHook = NULL;
+    lbl_1_bss_1A4[pl->idx] = MgPlayerCreate((s16) pl->conf, &sp88, 4, 1, 0x13, pl->idx == -1 ? lbl_1_data_138 : NULL);
+    player = lbl_1_bss_1A4[pl->idx];
+    actor = player->actor;
+    arg0->mdlId[0] = (s16) actor->mdlId;
     CharEffectLayerSet(3);
-    {
-        u8 *act = (u8 *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x3C));
-
-        if (pl->idx == 0) {
-            *(f32 *) (act + 0x2C) = 0.0f;
-            *(f32 *) (act + 0x30) = 600.0f;
-            *(f32 *) (act + 0x34) = 0.0f;
-        } else {
-            *(f32 *) (act + 0x2C) = (f32) (0x21C * sin((M_PI * ((pl->idx * 0x78) + 0x3C)) / 180.0));
-            *(f32 *) (act + 0x30) = 400.0f;
-            *(f32 *) (act + 0x34) = (f32) ((0x21C * cos((M_PI * ((pl->idx * 0x78) + 0x3C)) / 180.0)) - 25.0);
-        }
+    if (pl->idx == 0) {
+        actor->pos.x = 0.0f;
+        actor->pos.y = 600.0f;
+        actor->pos.z = 0.0f;
+    } else {
+        ang = (pl->idx * 0x78) + 0x3C;
+        actor->pos.x = (f32) ((0 + 0x21C) * sin((3.141592653589793 * ang) / 180.0));
+        actor->pos.y = 400.0f;
+        actor->pos.z = (f32) (((0 + 0x21C) * cos((3.141592653589793 * ang) / 180.0)) - 25.0);
     }
-    MgPlayerVibrateCreate(lbl_1_bss_1A4[pl->idx], pl->idx * 4);
-    {
-        u8 *act = (u8 *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x3C));
-
-        sp5C[0] = *(f32 *) (act + 0x2C);
-        sp5C[1] = *(f32 *) (act + 0x30);
-        sp5C[2] = *(f32 *) (act + 0x34);
-    }
-    if (MgActorColMapPolyGet((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x2C, sp24, 0xFFFF, (u8 *) sp24 + 0x30) != 0) {
-        f32 h = *(f32 *) ((u8 *) sp24 + 0x34);
-
-        *(f32 *) ((u8 *) sp24 + 0x34) = h + 75.0f;
-        MgActorPosUpdate(lbl_1_bss_1A4[pl->idx], (HuVecF *) ((u8 *) sp24 + 0x30), *(f32 *) ((u8 *) sp24 + 0x34));
-        *(f32 *) ((u8 *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x3C)) + 0x30) = *(f32 *) ((u8 *) sp24 + 0x34);
+    MgPlayerVibrateCreate(player);
+    sp50.x = actor->pos.x;
+    sp50.y = actor->pos.y;
+    sp50.z = actor->pos.z;
+    sp50.y = -500.0f;
+    if (MgActorColMapPolyGet(&actor->pos, &sp50, 0xFFFF, &sp6C) != 0) {
+        sp6C.pos.y = sp6C.pos.y + 75.0f;
+        MgActorPosUpdate(actor, &sp6C.pos);
+        actor->pos.y = sp6C.pos.y;
     }
     Hu3DModelLayerSet(arg0->mdlId[0], 1);
     Hu3DModelShadowSet(arg0->mdlId[0]);
     Hu3DModelAmbSet(arg0->mdlId[0], 1.0f, 0.5f, 0.5f);
     if (pl->idx == 0) {
-        arg0->mdlId[2] = Hu3DModelCreate(HuDataSelHeapReadNum(charDataDirTbl[pl->charNo][0], HU_MEMNUM_OVL, HEAP_MODEL));
-        Hu3DModelLayerSet(arg0->mdlId[2], 1);
-        Hu3DModelShadowSet(arg0->mdlId[2]);
-        Hu3DModelAmbSet(arg0->mdlId[2], 1.0f, 0.5f, 0.5f);
+        arg0->mdlId[1] = Hu3DModelCreate(HuDataSelHeapReadNum(charDataDirTbl[pl->charFull][0], HU_MEMNUM_OVL, HEAP_MODEL));
+        Hu3DModelLayerSet(arg0->mdlId[1], 1);
+        Hu3DModelShadowSet(arg0->mdlId[1]);
+        Hu3DModelAmbSet(arg0->mdlId[1], 1.0f, 0.5f, 0.5f);
     }
-    (*(s32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x68)) = (s32) (uintptr_t) fn_1_A08;
+    player->modeFunc[10] = (MGPLAYER_MODE_FUNC) fn_1_A08;
     if (pl->idx == 0) {
-        /* the leader gets three explicit joint motions; the rest get one */
-        arg0->mtnId[0] = Hu3DJointMotion(arg0->mdlId[2], HuDataSelHeapReadNum(charDataDirTbl[pl->charNo][4] | 0x2F, HU_MEMNUM_OVL, HEAP_MODEL));
-        arg0->mtnId[2] = Hu3DJointMotion(arg0->mdlId[2], HuDataSelHeapReadNum(charDataDirTbl[pl->charNo][4] | 0x75, HU_MEMNUM_OVL, HEAP_MODEL));
-        arg0->mtnId[4] = Hu3DJointMotion(arg0->mdlId[2], HuDataSelHeapReadNum(charDataDirTbl[pl->charNo][4] | 0x75, HU_MEMNUM_OVL, HEAP_MODEL));
-        Hu3DMotionSet(arg0->mdlId[2], arg0->mtnId[0]);
+        arg0->mtnId[0] = Hu3DJointMotion(arg0->mdlId[1], fn_1_8918((s16) pl->charFull, 0x8C002F));
+        arg0->mtnId[1] = Hu3DJointMotion(arg0->mdlId[1], fn_1_8918((s16) pl->charFull, 0x870075));
+        arg0->mtnId[2] = Hu3DJointMotion(arg0->mdlId[1], fn_1_8918((s16) pl->charFull, 0x8C002F));
+        Hu3DMotionSet(arg0->mdlId[1], arg0->mtnId[0]);
     } else {
-        motion = CharMotionCreate((s16) pl->charNo, pl->idx == 0 ? 0x8C002F : 0x8C0006);
-        *(u32 *) ((u8 *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 8)) + 0x48 + 0x14) = motion;
+        player->omObj->mtnId[10] = CharMotionCreate((s16) pl->charFull, 0x8C0006);
     }
-    motion = CharMotionCreate((s16) pl->charNo, pl->idx == 0 ? 0x870075 : 0x8C0015);
-    *(u32 *) ((u8 *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 8)) + 0x48 + 0x16) = motion;
+    player->omObj->mtnId[11] = CharMotionCreate((s16) pl->charFull, pl->idx == 0 ? 0x870075 : 0x8C0015);
     if (pl->idx == 0) {
-        *(u32 *) ((u8 *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 8)) + 0x48 + 0x18) = (u32) (uintptr_t) CharMotionCreate((s16) pl->charNo, 0x8C0031);
-        lbl_1_bss_15C = (*(s32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x40));
-        (*(s32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x40)) = (s32) (uintptr_t) fn_1_698;
-        lbl_1_bss_158 = (void *) (uintptr_t) (*(u32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x54));
-        (*(s32 *) ((u8 *) (uintptr_t) lbl_1_bss_1A4[pl->idx] + 0x54)) = (s32) (uintptr_t) fn_1_90C;
-        ((s32 *) (uintptr_t) lbl_1_bss_1A4[pl->idx])[0x70 / 4] = (s32) (uintptr_t) fn_1_B04;
+        player->omObj->mtnId[12] = CharMotionCreate((s16) pl->charFull, 0x8C0031);
+        lbl_1_bss_15C = player->modeFunc[0];
+        player->modeFunc[0] = (MGPLAYER_MODE_FUNC) fn_1_698;
+        lbl_1_bss_158 = player->modeFunc[5];
+        player->modeFunc[5] = (MGPLAYER_MODE_FUNC) fn_1_90C;
+        player->modeFunc[12] = (MGPLAYER_MODE_FUNC) fn_1_B04;
     }
     arg0->objFunc = fn_1_B70;
 }
@@ -1473,27 +1501,14 @@ static const f32 m520_r1AC[20] = { 104.f, 120.f, 126.f, 155.f, 188.f, 227.f, 266
                                    358.f, 413.f, 462.f, 511.f, 550.f, 601.f, 645.f, 697.f,
                                    750.f, 770.f, 800.f, 800.f };
 
-/* lbl_1_bss_5C8 is read both as floats and as raw ints by the target, so the
- * body uses this view for the counters at [4], [5], [6] and [0x7F]. */
-typedef union M520State_u {
-    f32 f;
-    s32 i;
-} M520STATE;
-
-/* MGPLAYER is an opaque typedef in game/mg/actman.h, so its fields are read by
- * raw offset, as the rest of this file does for other opaque records. */
-/* MGPLAYER/MGACTOR are opaque in game/mg/actman.h; forward-declared here so the
- * accessor calls below can take the pointer type without pulling the header. */
-typedef struct MgPlayer_s MGPLAYER;
-typedef struct MgActor_s MGACTOR;
 #define MP8(p, o) (*(s8 *) ((u8 *) (p) + (o)))
 #define MP16(p, o) (*(s16 *) ((u8 *) (p) + (o)))
 #define MP32(p, o) (*(s32 *) ((u8 *) (p) + (o)))
 #define MPP(p, o) (*(u8 **) ((u8 *) (p) + (o)))
 #define F32(p, o) (*(f32 *) ((u8 *) (p) + (o)))
 #define U32(p, o) (*(u32 *) ((u8 *) (p) + (o)))
-#define M520I(arr, n) (((M520STATE *) (arr))[n].i)
-#define M520F(arr, n) ((arr)[n])
+#define M520I(arr, n) ((arr)[n].i)
+#define M520F(arr, n) ((arr)[n].f)
 
 /*
  * Per-player update. Slot 0 is the human leader and drives the ring: it reads
@@ -1998,67 +2013,3 @@ void fn_1_B70(OMOBJ *arg0)
         F32(MPP(mp, 0x3C), 0x34) = spCC;
     }
 }
-/*
- * Module state. These live in the REL's own .bss: the original m520.c never
- * declared them because the unit was still incomplete, and the port's linker
- * needs them resolved in this object rather than imported from dol.
- */
-void *lbl_1_bss_1B8[4];
-s32 lbl_1_bss_1A0;
-s32 lbl_1_bss_0;
-s32 lbl_1_bss_4;
-s32 lbl_1_bss_10;
-s32 lbl_1_bss_14;
-f32 lbl_1_bss_C;
-s32 lbl_1_bss_164;
-s32 lbl_1_bss_16C;
-s32 lbl_1_bss_17C;
-void *lbl_1_bss_158;
-s32 lbl_1_bss_15C;
-u32 lbl_1_data_A4;
-void *lbl_1_bss_19C;
-void *lbl_1_bss_1B4;
-void *lbl_1_bss_1C8;
-void *lbl_1_bss_1CC;
-
-
-s32 lbl_1_bss_1A4[4];
-s32 lbl_1_data_9C;
-s32 lbl_1_data_A0;
-void *lbl_1_data_138;
-Mtx lbl_1_bss_18;
-Mtx lbl_1_bss_48;
-Mtx lbl_1_bss_B8;
-Mtx lbl_1_bss_E8;
-Mtx lbl_1_bss_A8;
-Mtx lbl_1_bss_98;
-GXTexObj lbl_1_bss_118[2];
-u8 lbl_1_bss_EC[0x20];
-u8 lbl_1_rodata_460[0x28];
-u8 lbl_1_rodata_49C[0x18];
-u8 lbl_1_rodata_4D0[0x14];
-u8 lbl_1_rodata_344[0x28];
-u8 lbl_1_rodata_36C[0x28];
-u8 lbl_1_rodata_4F0[0x10];
-s32 fontcolor;
-u16 HuPadBtnDown[4];
-
-
-/* Module state, defined here rather than imported: the original m520.c never
- * declared them (the unit was incomplete) and the port's linker needs them in
- * this object. Types match the extern declarations above. */
-s16 lbl_1_bss_198;
-u8 RenderMode[0x40];
-s32 lbl_1_bss_280[0x348 / 4];
-void *lbl_1_bss_160;
-u8 lbl_1_data_EC[0x40];
-s8 lbl_1_bss_270[0x20];
-s32 lbl_1_data_D0;
-s32 lbl_1_bss_190;
-void *lbl_1_bss_168;
-u32 lbl_1_data_A8[0x10];
-f32 CZoom;
-HuVecF Center;
-HuVecF CRot;
-HU3DMODEL Hu3DData[0x200];
-u32 lbl_1_data_100;
