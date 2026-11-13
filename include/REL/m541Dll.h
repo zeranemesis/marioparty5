@@ -163,10 +163,10 @@ typedef struct M541PlayerWork_s {
     s16 targetIdx;   /* 0x6E */
     HuVecF targetPosV; /* 0x70 */
     float targetDist; /* 0x7C */
-    s32 padStkX;    /* 0x80 */
-    s32 padStkY;    /* 0x84 */
-    s32 padBtnDown; /* 0x88 */
-    s32 padBtn;     /* 0x8C */
+    s32 padBtn;     /* 0x80 (G2: order fixed per MgPlayerPadSet call in fn_1_5E48) */
+    s32 padBtnDown; /* 0x84 */
+    s32 padStkX;    /* 0x88 */
+    s32 padStkY;    /* 0x8C */
 } M541_PLAYERWORK;
 
 /* Leaf work (lbl_1_bss_20, stride 0x30). */
@@ -179,6 +179,7 @@ typedef struct M541LeafWork_s {
     s16 hidden;    /* 0x10 */
     u8 pad12[2];   /* 0x12 */
     HuVecF vel;    /* 0x14 */
+    HuVecF velSave; /* 0x20, G3: vel saved while the leaf is lifted */
     float angle;   /* 0x2C */
 } M541_LEAFWORK;
 
@@ -213,7 +214,7 @@ typedef struct M541Flow_s {
     float unk1C;   /* 0x1C */
     s16 cpuPlayer; /* 0x20 */
     u8 pad22[2];   /* 0x22 */
-    u32 timer;     /* 0x24 */
+    MGTIMER *timer; /* 0x24 (G2: was u32; holds a pointer) */
     float unk28;   /* 0x28 */
     float moveX;   /* 0x2C */
     u8 pad30[4];   /* 0x30 */
@@ -260,14 +261,38 @@ extern M541_STAGE *lbl_1_bss_3730;
 
 /* G1: layout of lbl_1_bss_45C (0x21B8 bytes), only the fields fn_1_2AD4 touches are named; others replace pads keeping offsets */
 typedef struct M541G1Work45C_s {
-    u8 pad0[0x1C8C];
+    s16 simTimer;           /* 0x0000, G6 */
+    s16 pad2;               /* 0x0002 */
+    s16 simState;           /* 0x0004, G6 */
+    s16 simCount;           /* 0x0006, G6: number of simulated leaves */
+    float simSpeed;         /* 0x0008, G6 */
+    HuVecF simTrail[15][30]; /* 0x000C, G6: per leaf position history */
+    HuVecF simSpawn[60];    /* 0x1524, G6 */
+    s16 simHist[15][30];    /* 0x17F4, G6: per leaf list of trail indices */
+    s16 simSpawnIdx[60];    /* 0x1B78, G6 */
+    s16 simHistCount[15];   /* 0x1BF0, G6 */
+    s16 simSpawnCount;      /* 0x1C0E, G6 */
+    s16 pad1C10;            /* 0x1C10 */
+    s16 simHead[15];        /* 0x1C12, G6 */
+    s16 simTail[15];        /* 0x1C30, G6 */
+    s16 simFlag[15];        /* 0x1C4E, G6 */
+    s16 simHit[15];         /* 0x1C6C, G6 */
+    u8 pad1C8A[2];          /* 0x1C8A */
     HuVecF leafPos[23];     /* 0x1C8C, stride 0xC */
-    u8 pad1DA0[0x29E];
+    HuVecF simVel[15];      /* 0x1DA0, G6 */
+    u8 pad1E54[0x174];      /* 0x1E54 */
+    float simAngle[15];     /* 0x1FC8, G6 */
+    u8 pad2004[8];          /* 0x2004 */
+    s16 simFixed[15];       /* 0x200C, G6 */
+    u8 pad202A[0x14];       /* 0x202A */
     s16 aiMode[10];         /* 0x203E */
     s16 aiTimer[10];        /* 0x2052 */
     u8 pad2066[0x3E];
     HuVecF aiPos[15];       /* 0x20A4, stride 0xC */
-    u8 pad2158[0x60];
+    u8 pad2158[0x24];
+    s16 cnt217C;            /* 0x217C, G3 */
+    s16 cnt217E;            /* 0x217E, G3 */
+    u8 pad2180[0x38];
 } M541_G1WORK45C;
 extern M541_G1WORK45C lbl_1_bss_45C;
 extern M541_LEAFWORK lbl_1_bss_20[15];
@@ -275,7 +300,7 @@ extern M541_BOARD lbl_1_bss_2F0;
 
 /* ---- G1: prototypes ---- */
 void fn_1_2AD4(M541_STAGE *stage);
-s32 fn_1_5C98(void);
+s32 fn_1_5C98(M541_STAGE *stage);
 s32 fn_1_5DA4(void);
 s32 fn_1_5DD8(void);
 
@@ -305,5 +330,133 @@ void fn_1_2894(s16 idx, s16 pan);
 void fn_1_2924(s16 idx);
 void fn_1_29EC(s16 idx);
 void fn_1_2AB4(void);
+
+/* ---- M1: game.c prototypes used by the MGSEQ hooks ---- */
+s32 fn_1_5E48(void);
+s32 fn_1_6728(void);
+s32 fn_1_6BF0(void);
+s32 fn_1_6C38(void);
+s32 fn_1_6E20(void);
+s32 fn_1_6E50(void);
+
+/* ---- M1 (m541.s _prolog..fn_1_1A38, and all m541.s data; defined in part_m1.c) ---- */
+/* camera block, 0x50 bytes (lbl_1_bss_1C points at an array of these) */
+typedef struct M541Cam_s {
+    s32 idx;       /* 0x00 */
+    HuVecF pos;    /* 0x04 */
+    HuVecF rot;    /* 0x10 */
+    HuVecF center; /* 0x1C */
+    HuVecF up;     /* 0x28 */
+    float zoom;    /* 0x34 */
+    float aspect;  /* 0x38 */
+    float vpX;     /* 0x3C */
+    float vpY;     /* 0x40 */
+    float vpW;     /* 0x44 */
+    float vpH;     /* 0x48 */
+    float fov;     /* 0x4C */
+} M541_CAM;
+
+/* initial camera values, 0x34 bytes (lbl_1_data_1F8) */
+typedef struct M541CamInit_s {
+    HuVecF center; /* 0x00 */
+    HuVecF rot;    /* 0x0C */
+    float zoom;    /* 0x18 */
+    float aspect;  /* 0x1C */
+    float vpX;     /* 0x20 */
+    float vpY;     /* 0x24 */
+    float vpW;     /* 0x28 */
+    float vpH;     /* 0x2C */
+    float fov;     /* 0x30 */
+} M541_CAMINIT;
+
+/* light block, 0x3C bytes (lbl_1_bss_18 points at one) */
+typedef struct M541Light_s {
+    s16 id;        /* 0x00 */
+    s16 pad02;     /* 0x02 */
+    HuVecF pos;    /* 0x04 */
+    HuVecF rot;    /* 0x10 */
+    HuVecF target; /* 0x1C */
+    HuVecF dir;    /* 0x28 */
+    float dist;    /* 0x34 */
+    GXColor color; /* 0x38 */
+} M541_LIGHT;
+
+/* shadow block, 0x50 bytes (lbl_1_bss_14 points at one) */
+typedef struct M541Shadow_s {
+    HuVecF pos;    /* 0x00 */
+    HuVecF rot;    /* 0x0C */
+    HuVecF target; /* 0x18 */
+    u8 pad24[0xC]; /* 0x24 */
+    HuVecF up;     /* 0x30 */
+    u8 pad3C[0xC]; /* 0x3C */
+    float dist;    /* 0x48 */
+    float tpLvl;   /* 0x4C */
+} M541_SHADOW;
+
+extern M541_SHADOW *lbl_1_bss_14;
+extern M541_LIGHT *lbl_1_bss_18;
+extern M541_CAM *lbl_1_bss_1C;
+extern M541_LEAFWORK lbl_1_bss_20[15];
+extern M541_BOARD lbl_1_bss_2F0;
+/* G3: lbl_1_bss_45C is declared above with the G1 layout (M541_G1WORK45C); duplicate extern removed */
+extern s16 lbl_1_bss_27C0[2][8];
+extern M541_MODEL lbl_1_bss_27E0[108];
+extern M541_STAGE lbl_1_bss_33B0;
+extern OMOBJMAN *lbl_1_bss_3698;
+
+extern MGSEQ_PARAM lbl_1_data_0;
+extern s32 lbl_1_data_28[13][8];
+extern s32 lbl_1_data_1C8[12];
+extern M541_CAMINIT lbl_1_data_1F8[4];
+extern s16 lbl_1_data_2C8[16];
+extern char lbl_1_data_2E8[0x2E];
+extern char lbl_1_data_316[8];
+extern char lbl_1_data_31E[0x25];
+extern char lbl_1_data_343[0x1D];
+
+int _prolog(void);
+void _epilog(void);
+void ObjectSetup(void);
+void fn_1_2C0(s16 mode, s16 frameNo);
+void fn_1_2F4(s16 mode, s16 frameNo);
+void fn_1_320(s16 mode, s16 frameNo);
+void fn_1_34C(s16 mode, s16 frameNo);
+void fn_1_378(s16 mode, s16 frameNo);
+void fn_1_3A4(s16 mode, s16 frameNo);
+void fn_1_3D0(s16 mode, s16 frameNo);
+void fn_1_3FC(s16 mode, s16 frameNo);
+void fn_1_41C(s16 mode, s16 frameNo);
+void fn_1_448(OMOBJ *obj);
+void fn_1_44C(s16 idx);
+void fn_1_91C(s16 idx);
+void fn_1_E94(void);
+void fn_1_10C4(void);
+void fn_1_139C(void);
+void fn_1_14C4(void);
+s32 fn_1_1850(float *val, float steps, float start, float target);
+MGTIMER *fn_1_1970(s32 type, s32 maxSec, s32 endSec, float x, float y);
+void fn_1_19E4(MGTIMER *timer);
+BOOL fn_1_1A10(MGTIMER *timer);
+void fn_1_1A38(MGTIMER *timer);
+
+
+/* ---- G3 ---- */
+s32 fn_1_7DE8(s16 arg0);
+s32 fn_1_832C(s16 arg0);
+s32 fn_1_92FC(s16 arg0);
+s16 fn_1_B4E0(s16 arg0);
+
+/* ---- G2: game.s fn_1_5E48..fn_1_7850 ---- */
+void MgActorPosGet(MGACTOR *actorP, HuVecF *pos);
+void fn_1_6EA8(void);
+void fn_1_72D8(void);
+void fn_1_758C(void);
+s32 fn_1_7850(s16 idx);
+/* callees owned by other parts (signatures derived from the asm call sites) */
+s32 fn_1_E0A4(void);
+void fn_1_11B7C(s16 arg0);
+void fn_1_11BF8(s16 arg0);
+void fn_1_A884(void);
+void fn_1_E930(M541_PLAYERWORK *work);
 
 #endif
