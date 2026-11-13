@@ -1181,7 +1181,7 @@ void fn_1_32D0(OMOBJ *obj) {
     s32 var_r23;
     M559HOOKDATA *temp_r26;
     M559HOOKDATA *temp_r29;
-    M559HOOK *temp_r31;
+    M559NOD *temp_r31;
     M559CLR *temp_r3;
     M559ANIMPART *var_r21;
     M559ANIMPART *var_r28;
@@ -1204,7 +1204,7 @@ void fn_1_32D0(OMOBJ *obj) {
                 Hu3DModelAttrSet(*obj->mdlId, 0x40000002U);
                 var_r23 = 1;
                 if ((s32) temp_r31->timer == 0x1E) {
-                    lbl_1_bss_8 = HuAudFXPlayPan(0x97B, fn_1_55D8((HuVecF *) &temp_r31->offset));
+                    lbl_1_bss_8 = HuAudFXPlayPan(0x97B, fn_1_55D8((HuVecF *) &temp_r31->pos));
                 }
             } else if ((s32) temp_r31->timer == 0x5A) {
                 Hu3DModelAttrReset(*obj->mdlId, 0x40000002U);
@@ -1215,14 +1215,14 @@ void fn_1_32D0(OMOBJ *obj) {
         }
         break;
     case 3:
-        temp_r31->offset.x = (f32) lbl_1_data_D8.x;
-        temp_r31->offset.y = (f32) lbl_1_data_D8.y;
-        temp_r31->offset.z = (f32) lbl_1_data_D8.z;
-        temp_r31->playerNo = 0;
+        temp_r31->pos.x = (f32) lbl_1_data_D8.x;
+        temp_r31->pos.y = (f32) lbl_1_data_D8.y;
+        temp_r31->pos.z = (f32) lbl_1_data_D8.z;
+        temp_r31->rotY = 0.0f;
         temp_r31->mode = 0;
         break;
     }
-    if ((s32) temp_r31->modelId >= 0) {
+    if ((s32) temp_r31->arg >= 0) {
         if (var_r23 != 0) {
             Hu3DModelObjMtxGet(*obj->mdlId, "g000m0-itemhook_M", mtxHook);
             sp28 = mtxHook[2][0];
@@ -1236,7 +1236,7 @@ void fn_1_32D0(OMOBJ *obj) {
             sp20 += 100.0f;
             PSVECSubtract((Vec *) &sp28, (Vec *) &sp1C, &sp10);
             temp_f31 = (f32) (180.0 * (atan2((f64) sp10.x, (f64) sp10.z) / 3.141592653589793));
-            sp8 = temp_r31->modelId;
+            sp8 = temp_r31->arg;
             spC = lbl_1_data_18[0];
             spD = lbl_1_data_18[1];
             spE = lbl_1_data_18[2];
@@ -1254,14 +1254,14 @@ loop_25:
                     if (var_r25 < (s16) temp_r26->unk64) {
                         if ((s16) var_r28->unk3E >= 0) {
                             var_r25 += 1;
-                            var_r28 += 0x40;
+                            var_r28 += 1;
                             goto loop_25;
                         }
                     }
                     if (var_r25 == (s16) temp_r26->unk64) {
                         var_r21 = NULL;
                     } else {
-                        temp_r3 = temp_r26->unk20 + (var_r25 * 4);
+                        temp_r3 = temp_r26->unk20 + var_r25;
                         temp_r3->unk0 = spC;
                         temp_r3->unk1 = spD;
                         temp_r3->unk2 = spE;
@@ -1294,29 +1294,13 @@ loop_25:
                 }
             }
         }
-        temp_r0_2 = temp_r31->modelId;
-        temp_r24 = &Hu3DData[temp_r31->modelId];
-        temp_r29 = temp_r24->hookData;
-        if (((u8) temp_r29->unk6B != 0) && ((s16) temp_r29->arg66 == 0)) {
-            HuMemDirectFree(temp_r29->unk10);
-            HuMemDirectFree(temp_r29->unk14);
-            HuMemDirectFree(temp_r29->unk10);
-            HuMemDirectFree(temp_r29->unk18);
-            HuMemDirectFree(temp_r29->unk1C);
-            HuMemDirectFree(temp_r29->unk14);
-            HuSprAnimKill(temp_r29->unk4);
-            HuMemDirectFree(temp_r24->hookData);
-            Hu3DModelKill((s16) temp_r0_2);
-            var_r20 = 1;
-        } else {
-            var_r20 = 0;
-        }
+        var_r20 = fn_1_7B6C(temp_r31->arg);
         if (var_r20 != 0) {
-            temp_r31->modelId = -1;
+            temp_r31->arg = -1;
         }
     }
-    omSetTra(obj, temp_r31->offset.x, temp_r31->offset.y, temp_r31->offset.z);
-    omSetRot(obj, temp_r31->field10, temp_r31->playerNo, temp_r31->charNo);
+    omSetTra(obj, temp_r31->pos.x, temp_r31->pos.y, temp_r31->pos.z);
+    omSetRot(obj, temp_r31->field10, temp_r31->rotY, temp_r31->field18);
 }
 static void fn_1_3854(OMOBJ *obj, s16 motion, u32 attr, f32 endTime) {
     u32 spC;
