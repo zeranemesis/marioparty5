@@ -6,7 +6,7 @@ HuVecF lbl_1_data_320 = { -50.0f, 0.0f, 0.0f };
 // .data:0xC (absolute 0x32C)
 HuVecF lbl_1_data_32C = { 0.0f, 75.0f, 0.0f };
 // .data:0x338 (absolute 0x658)
-HuVecF lbl_1_data_338 = { 0.0f, -41.0f, -23.0f };
+HuVecF lbl_1_data_338 = { 0.0f, -50.0f, -15.0f };
 // .data:0x344 (absolute 0x664)
 s16 lbl_1_data_344[] =
 {
@@ -45,7 +45,7 @@ void fn_1_47C4(M510_PITCH_WORK *work, M510_PLAYER_WORK *self)
     Hu3DModelLayerSet(modelId, 0);
     Hu3DModelAttrReset(modelId, 1);
 
-    work->state = 2;
+    work->index = 2;
     work->soundId = -1;
 }
 
@@ -173,16 +173,18 @@ void fn_1_49F4(M510_PITCH_WORK *data)
     }
 
     Hu3DModelPosSet(w->modelId, w->pos.x + lbl_1_data_320.x, w->pos.y + lbl_1_data_320.y, w->pos.z + lbl_1_data_320.z);
-    Hu3DModelRotSet(w->modelId2, w->rot, 0.0f, 0.0f);
+    Hu3DModelPosSet(w->modelId2, w->pos.x + lbl_1_data_32C.x, w->pos.y + lbl_1_data_32C.y, w->pos.z + lbl_1_data_32C.z);
 
     if (w->rot > 180.0f)
     {
         w->rot -= 360.0f;
     }
-    else if (w->rot < -180.0f)
+    else if (w->rot <= -180.0f)
     {
         w->rot += 360.0f;
     }
+
+    Hu3DModelRotSet(w->modelId2, w->rot, 0.0f, 0.0f);
 
     PSMTXRotRad(mtx, 'X', w->rot * 0.017453292f);
     PSMTXMultVec(mtx, &lbl_1_data_338, &vec);

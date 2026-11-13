@@ -89,8 +89,7 @@ typedef struct M510PlayerModelWork_s {
     s16 timer;                      //0x06
     s16 playerNo;                   //0x08
     u8 pad0A[2];                    //0x0A
-    s16 charNo;                     //0x0C
-    u8 pad0E[2];                    //0x0E
+    s32 charNo;                     //0x0C
     s32 grp;                        //0x10
     OMOBJ *obj;                     //0x14
     s16 modelId;                    //0x18
@@ -285,7 +284,7 @@ void fn_1_49F4(M510_PITCH_WORK *work);
 void fn_1_509C(M510_BALL_WORK *data, M510_PLAYER_WORK *owner);
 void fn_1_51B4(M510_BALL_WORK *data);
 void fn_1_5230(M510_BALL_WORK *data);
-void fn_1_52B0(M510_BALL_WORK *data, M510_VECF *pos, s16 type);
+M510_BALL *fn_1_52B0(M510_BALL_WORK *data, M510_VECF *pos, s16 type);
 void fn_1_53E0(M510_BALL *ball, s16 index, M510_BALL_WORK *work);
 void fn_1_557C(M510_BALL *ball);
 void fn_1_55C4(M510_BALL *ball);

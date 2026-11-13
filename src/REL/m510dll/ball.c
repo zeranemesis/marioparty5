@@ -40,6 +40,8 @@ static inline f32 clamp01(f32 x)
 // Wraps an angle in degrees into (-180, 180]; the original is a macro, so the
 // argument is evaluated up to three times.
 #define WRAP180(a) (((f32)(a) > 180.0f) ? ((a) - 360.0f) : (((f32)(a) <= -180.0f) ? ((a) + 360.0f) : (a)))
+// Same wrap on a double: the original keeps the atan2 angle in double until the final store.
+#define WRAP180D(a) (((a) > 180.0) ? ((a) - 360.0) : (((a) <= -180.0) ? ((a) + 360.0) : (a)))
 #define ABSF(x) (((x) >= 0.0f) ? (x) : -(x))
 #define ANGLE_OF(v) (180.0 * (atan2((f64)(v).x, (f64)(v).z) / M_PI_D))
 
@@ -99,7 +101,7 @@ void fn_1_5230(M510_BALL_WORK *work)
     }
 }
 
-void fn_1_52B0(M510_BALL_WORK *work, M510_VECF *pos, s16 type)
+M510_BALL *fn_1_52B0(M510_BALL_WORK *work, M510_VECF *pos, s16 type)
 {
     s32 i;
     M510_BALL *ball;
@@ -113,9 +115,10 @@ void fn_1_52B0(M510_BALL_WORK *work, M510_VECF *pos, s16 type)
             Hu3DModelScaleSet(ball->modelId0, 0.0f, 0.0f, 0.0f);
             Hu3DModelScaleSet(ball->modelId1, 0.0f, 0.0f, 0.0f);
             ball->pos = *pos;
-            return;
+            return ball;
         }
     }
+    return NULL;
 }
 
 void fn_1_53E0(M510_BALL *ball, s16 index, M510_BALL_WORK *work)
@@ -535,14 +538,14 @@ s32 fn_1_7038(M510_BALL *ball, M510_VECF *out)
     if (d.x != 0.0f || d.z != 0.0f) {
         PSVECNormalize(&d, &d);
     }
-    angPos = WRAP180(ANGLE_OF(d));
+    angPos = WRAP180D(ANGLE_OF(d));
 
     PSVECSubtract(&prev, &model->camPos, &d);
     d.y = 0.0f;
     if (d.x != 0.0f || d.z != 0.0f) {
         PSVECNormalize(&d, &d);
     }
-    angPrev = WRAP180(ANGLE_OF(d));
+    angPrev = WRAP180D(ANGLE_OF(d));
 
     rotPrev = model->prevRotY;
     rotCur = model->rotY;
