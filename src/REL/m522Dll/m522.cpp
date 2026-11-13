@@ -635,8 +635,13 @@ M522_HEAPSEL *fn_1_7B00(M522RHandleMan *self, u32 n)
         self->nodes[i].next = &self->nodes[i] + 1;
         self->nodes[i].prev = &self->nodes[i] - 1;
         self->nodes[i].ptr = 0;
+#ifdef TARGET_PC
+        /* big-endian bit field order: index in the high 20 bits, gen in the low 12 */
+        self->nodes[i].u.handle = i << 12;
+#else
         self->nodes[i].u.b.index = i;
         self->nodes[i].u.b.gen = 0;
+#endif
     }
     self->nodes[1].prev = &self->nodes[0];
     self->nodes[n - 1].next = &self->nodes[0];
@@ -676,7 +681,11 @@ u32 fn_1_7D74(M522RHandleMan *self, void *ptr)
     self->used->next->prev = node;
     self->used->next = node;
     node->ptr = ptr;
+#ifdef TARGET_PC
+    node->u.handle = (node->u.handle & ~0xFFFu) | ((node->u.handle + 1) & 0xFFFu);
+#else
     node->u.b.gen += 1;
+#endif
     return node->u.handle;
 }
 
