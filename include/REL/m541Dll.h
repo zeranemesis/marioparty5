@@ -287,7 +287,8 @@ typedef struct M541G1Work45C_s {
     HuVecF simVel[15];      /* 0x1DA0, G6 */
     u8 pad1E54[0x174];      /* 0x1E54 */
     float simAngle[15];     /* 0x1FC8, G6 */
-    u8 pad2004[8];          /* 0x2004 */
+    u8 pad2004[6];          /* 0x2004 */
+    s16 g7Flag200A;         /* 0x200A, G7: read by fn_1_14EB0 */
     s16 simFixed[15];       /* 0x200C, G6 */
     u8 pad202A[0x14];       /* 0x202A */
     s16 aiMode[10];         /* 0x203E */
@@ -470,7 +471,8 @@ s32 fn_1_11DE8(s16 idx);
 s32 fn_1_12008(s16 steps);
 s32 fn_1_12830(void);
 void fn_1_12F40(void);
-void fn_1_14EB0(s16 idx);
+s32 fn_1_14EB0(s16 idx); /* G7: returns 0 (and 0 on early exit) */
+s32 fn_1_14714(s16 idx); /* G7 */
 void fn_1_187F8(void);
 void fn_1_194B4(void);
 

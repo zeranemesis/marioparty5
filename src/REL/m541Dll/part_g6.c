@@ -268,7 +268,7 @@ void fn_1_12F40(void)
             }
             dx = lbl_1_bss_45C.leafPos[j].x - lbl_1_bss_45C.leafPos[i].x;
             dz = lbl_1_bss_45C.leafPos[j].z - lbl_1_bss_45C.leafPos[i].z;
-            dist = sqrtf(dx * dx + dz * dz);
+            dist = sqrt(dx * dx + dz * dz);
             if (dist < radA + radB) {
                 if (dist <= 1.0f) {
                     dist = 1.0f;
@@ -276,7 +276,7 @@ void fn_1_12F40(void)
                 f = (10.0f + (radA + radB)) / dist;
                 lbl_1_bss_45C.leafPos[i].x = lbl_1_bss_45C.leafPos[j].x - dx * f;
                 lbl_1_bss_45C.leafPos[i].z = lbl_1_bss_45C.leafPos[j].z - dz * f;
-                dist = sqrtf(
+                dist = sqrt(
                     (lbl_1_bss_45C.leafPos[j].x - lbl_1_bss_45C.leafPos[i].x) * (lbl_1_bss_45C.leafPos[j].x - lbl_1_bss_45C.leafPos[i].x)
                     + (lbl_1_bss_45C.leafPos[j].z - lbl_1_bss_45C.leafPos[i].z) * (lbl_1_bss_45C.leafPos[j].z - lbl_1_bss_45C.leafPos[i].z));
                 if (dist <= 1.0f) {
@@ -296,8 +296,8 @@ void fn_1_12F40(void)
                 lbl_1_bss_45C.simVel[i].z = a2 * nx + a1 * nz;
                 lbl_1_bss_45C.simVel[j].x = b1 * nx - b2 * nz;
                 lbl_1_bss_45C.simVel[j].z = b2 * nx + b1 * nz;
-                mi = sqrtf(lbl_1_bss_45C.simVel[i].x * lbl_1_bss_45C.simVel[i].x + lbl_1_bss_45C.simVel[i].z * lbl_1_bss_45C.simVel[i].z);
-                mj = sqrtf(lbl_1_bss_45C.simVel[j].x * lbl_1_bss_45C.simVel[j].x + lbl_1_bss_45C.simVel[j].z * lbl_1_bss_45C.simVel[j].z);
+                mi = sqrt(lbl_1_bss_45C.simVel[i].x * lbl_1_bss_45C.simVel[i].x + lbl_1_bss_45C.simVel[i].z * lbl_1_bss_45C.simVel[i].z);
+                mj = sqrt(lbl_1_bss_45C.simVel[j].x * lbl_1_bss_45C.simVel[j].x + lbl_1_bss_45C.simVel[j].z * lbl_1_bss_45C.simVel[j].z);
                 if (mi != 0.0f) {
                     si = lbl_1_bss_45C.simSpeed / mi;
                 } else {
@@ -347,7 +347,7 @@ void fn_1_12F40(void)
             cz = dz * t + lbl_1_data_368[k][1];
             rx = lbl_1_bss_45C.leafPos[i].x - cx;
             rz = lbl_1_bss_45C.leafPos[i].z - cz;
-            dist = sqrtf(rx * rx + rz * rz);
+            dist = sqrt(rx * rx + rz * rz);
             if (dist < radB) {
                 if (dist <= 1.0f) {
                     dist = 1.0f;
