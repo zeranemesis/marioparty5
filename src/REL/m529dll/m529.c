@@ -135,7 +135,7 @@ void fn_1_595C(void);
 s32 fn_1_5960(s32 arg0);
 s32 fn_1_59BC(s32 arg0);
 void fn_1_5A18(void);
-void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1);
+void fn_1_5A84(Vec *arg0, Vec *arg1);
 void fn_1_5F74(void);
 s16 fn_1_6334(s32 arg0);
 void fn_1_63E4(void);
@@ -246,19 +246,19 @@ Vec lbl_1_data_214[4] = {
 u32 lbl_1_data_244[14] = { 0x00570000, 0x00570001, 0x00570003, 0x00570002, 0x00570004, 0x00570005, 0x0057000A,
     0x00570006, 0x00570007, 0x00570008, 0x00570009, 0x0057000E, 0x0057000E, 0x0057000C };
 
-OMCAMERAVIEW lbl_1_data_27C = { { 0.0f, 10.0f, -100.0f }, { 1.0f, 0.0f, 0.0f }, 0.0f };
-Vec lbl_1_data_294 = { -80.0f, 120.0f, -500.0f };
-OMCAMERAVIEW lbl_1_data_2A0 = { { 0.0f, 500.0f, 1760.0f }, { 1.0f, 0.0f, 0.0f }, 0.0f };
+Vec lbl_1_data_27C[2] = { { 0.0f, 10.0f, -100.0f }, { 0.0f, 1.0f, 0.0f } };
+Vec lbl_1_data_294 = { -210.0f, 120.0f, -500.0f };
+Vec lbl_1_data_2A0[2] = { { 0.0f, 500.0f, 1720.0f }, { 0.0f, 1.0f, 0.0f } };
 Vec lbl_1_data_2B8 = { 0.0f, 200.0f, -500.0f };
-OMCAMERAVIEW lbl_1_data_2C4 = { { 2050.0f, 1070.0f, 2318.0f }, { 1.0f, 0.0f, 0.0f }, 0.0f };
+Vec lbl_1_data_2C4[2] = { { 1618.0f, 1121.0f, 2276.0f }, { 0.0f, 1.0f, 0.0f } };
 Vec lbl_1_data_2DC = { -100.0f, 200.0f, 300.0f };
-OMCAMERAVIEW lbl_1_data_2E8 = { { 0.0f, 3610.0f, 4689.0f }, { 1.0f, 0.0f, 0.0f }, 0.0f };
+Vec lbl_1_data_2E8[2] = { { 0.0f, 919.0f, 2529.0f }, { 0.0f, 1.0f, 0.0f } };
 Vec lbl_1_data_300 = { 0.0f, 50.0f, -100.0f };
 
 OMCAMERAVIEW lbl_1_data_30C = { { -150.0f, 120.0f, -500.0f }, { 0.0f, 11.4f, 0.0f }, 465.0f };
-OMCAMERAVIEW lbl_1_data_328 = { { 0.0f, 200.0f, -500.0f }, { -7.7f, 0.0f, 0.0f }, 2240.2f };
+OMCAMERAVIEW lbl_1_data_328 = { { 0.0f, 200.0f, -500.0f }, { -7.7f, -0.0f, 0.0f }, 2240.2f };
 OMCAMERAVIEW lbl_1_data_344 = { { -100.0f, 200.0f, 300.0f }, { -19.4f, 41.0f, 0.0f }, 2775.7f };
-OMCAMERAVIEW lbl_1_data_360 = { { 0.0f, 50.0f, -100.0f }, { -18.3f, 0.0f, 0.0f }, 2768.9f };
+OMCAMERAVIEW lbl_1_data_360 = { { 0.0f, 50.0f, -100.0f }, { -18.3f, -0.0f, 0.0f }, 2768.9f };
 
 Vec lbl_1_data_37C = { 0.0f, 4000.0f, 6000.0f };
 Vec lbl_1_data_388 = { 0.0f, 0.0f, 0.0f };
@@ -1009,9 +1009,9 @@ void fn_1_2BEC(OMOBJ *obj)
         if (lbl_1_bss_108 >= 15.0f) {
             obj->work[0] += 1;
             lbl_1_bss_108 = 0.0f;
-            lbl_1_bss_30C.x = lbl_1_data_2A0.center.x;
-            lbl_1_bss_30C.y = lbl_1_data_2A0.center.y;
-            lbl_1_bss_30C.z = lbl_1_data_2A0.center.z;
+            lbl_1_bss_30C.x = lbl_1_data_2A0[0].x;
+            lbl_1_bss_30C.y = lbl_1_data_2A0[0].y;
+            lbl_1_bss_30C.z = lbl_1_data_2A0[0].z;
             lbl_1_bss_2F4.x = lbl_1_data_2B8.x;
             lbl_1_bss_2F4.y = lbl_1_data_2B8.y;
             lbl_1_bss_2F4.z = lbl_1_data_2B8.z;
@@ -1027,9 +1027,9 @@ void fn_1_2BEC(OMOBJ *obj)
         if (lbl_1_bss_108 >= 60.0f) {
             obj->work[0] += 1;
             lbl_1_bss_108 = 0.0f;
-            lbl_1_bss_30C.x = lbl_1_data_2C4.center.x;
-            lbl_1_bss_30C.y = lbl_1_data_2C4.center.y;
-            lbl_1_bss_30C.z = lbl_1_data_2C4.center.z;
+            lbl_1_bss_30C.x = lbl_1_data_2C4[0].x;
+            lbl_1_bss_30C.y = lbl_1_data_2C4[0].y;
+            lbl_1_bss_30C.z = lbl_1_data_2C4[0].z;
             lbl_1_bss_2F4.x = lbl_1_data_2DC.x;
             lbl_1_bss_2F4.y = lbl_1_data_2DC.y;
             lbl_1_bss_2F4.z = lbl_1_data_2DC.z;
@@ -1097,9 +1097,9 @@ void fn_1_2BEC(OMOBJ *obj)
         if (lbl_1_bss_108 >= 30.0f) {
             obj->work[0] = 0x3EF;
             lbl_1_bss_108 = 0.0f;
-            lbl_1_bss_30C.x = lbl_1_data_2E8.center.x;
-            lbl_1_bss_30C.y = lbl_1_data_2E8.center.y;
-            lbl_1_bss_30C.z = lbl_1_data_2E8.center.z;
+            lbl_1_bss_30C.x = lbl_1_data_2E8[0].x;
+            lbl_1_bss_30C.y = lbl_1_data_2E8[0].y;
+            lbl_1_bss_30C.z = lbl_1_data_2E8[0].z;
             lbl_1_bss_2F4.x = lbl_1_data_300.x;
             lbl_1_bss_2F4.y = lbl_1_data_300.y;
             lbl_1_bss_2F4.z = lbl_1_data_300.z;
@@ -1790,14 +1790,14 @@ s32 fn_1_59BC(s32 arg0)
 
 void fn_1_5A18(void)
 {
-    fn_1_5A84(&lbl_1_data_27C, &lbl_1_data_294);
-    fn_1_5A84(&lbl_1_data_2A0, &lbl_1_data_2B8);
-    fn_1_5A84(&lbl_1_data_2C4, &lbl_1_data_2DC);
-    fn_1_5A84(&lbl_1_data_2E8, &lbl_1_data_300);
+    fn_1_5A84(lbl_1_data_27C, &lbl_1_data_294);
+    fn_1_5A84(lbl_1_data_2A0, &lbl_1_data_2B8);
+    fn_1_5A84(lbl_1_data_2C4, &lbl_1_data_2DC);
+    fn_1_5A84(lbl_1_data_2E8, &lbl_1_data_300);
 }
 
 // NONMATCHING: stack frame and float register allocation differ
-void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1)
+void fn_1_5A84(Vec *arg0, Vec *arg1)
 {
     float sp50;
     float sp3C;
@@ -1826,9 +1826,9 @@ void fn_1_5A84(OMCAMERAVIEW *arg0, Vec *arg1)
     s32 i;
     s32 j;
 
-    temp_f31 = arg0->center.x - arg1->x;
-    temp_f29 = arg0->center.y - arg1->y;
-    temp_f30 = arg0->center.z - arg1->z;
+    temp_f31 = arg0->x - arg1->x;
+    temp_f29 = arg0->y - arg1->y;
+    temp_f30 = arg0->z - arg1->z;
     temp_f19 = arg1->x;
     temp_f18 = arg1->y;
     spC = arg1->z;
