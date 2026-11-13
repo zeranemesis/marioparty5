@@ -19,6 +19,7 @@ extern double acos();
 extern double fmod();
 extern double sqrt();
 extern s32 rand8(void);
+extern float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 extern const Vec lbl_1_rodata_1D0;
 extern const Vec lbl_1_rodata_1DC;
@@ -193,7 +194,7 @@ s32 fn_1_9CAC(M504WANWAN *self)
                     self->f6C = 0.0f;
                     self->timer = 30;
                     Hu3DModelAttrReset(self->mdl, 0x40000001);
-                    Hu3DMotionShiftSet(self->mdl, self->mtn[2], 0.0f, 8.0f, 0);
+                    Hu3DMotionShiftSet(self->mdl, self->mtn[1], 0.0f, 8.0f, 0);
                     if (self->active != 0) {
                         fn_1_5EC(0x2D8);
                     }
@@ -214,7 +215,7 @@ s32 fn_1_9CAC(M504WANWAN *self)
                 self->timer--;
             }
             if (self->timer == 0) {
-                Hu3DMotionShiftSet(self->mdl, self->mtn[3], 0.0f, 8.0f, 0x40000001);
+                Hu3DMotionShiftSet(self->mdl, self->mtn[2], 0.0f, 8.0f, 0x40000001);
                 self->rot.x = 0.0f;
                 self->state = 4;
             }
@@ -353,6 +354,8 @@ s32 fn_1_9CAC(M504WANWAN *self)
             } else {
                 self->rot.y = 0.0f;
             }
+            break;
+        case 10:
             break;
     }
     if (self->state < 8 && self->pos.z > 3550.0f) {
