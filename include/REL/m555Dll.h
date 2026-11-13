@@ -389,7 +389,7 @@ void fn_1_7840(void);
 void fn_1_78DC(void);
 void fn_1_7D88(s16 player);
 void fn_1_8928(s16 player);
-s32 fn_1_8F4C(s16 arg);
+s32 fn_1_8F4C(s16 player);
 void fn_1_90C4(void);
 void fn_1_9B8C(void);
 void fn_1_A758(void);
