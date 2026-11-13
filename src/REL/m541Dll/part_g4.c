@@ -38,32 +38,28 @@ s16 fn_1_A9B8(s16 idx, s16 mode, float x, float z)
     s16 i;
     float radius;
     float ang;
-    float angTmp;
     HuVecF d;
     float dist;
     float rnd;
 
     switch (lbl_1_bss_20[idx].state) {
         case 0:
-            switch (mode) {
-                case 0:
-                    angTmp = 10.0f * frandmod(0x24);
+            if (mode == 0) {
+                    ang = 10.0f * frandmod(0x24);
                     radius = 10.0f * (1.0f + frandmod(8));
                     ang = frandmod(0x168);
                     lbl_1_bss_20[idx].angle = ang;
                     m0->posX = x + radius * cos(G4_PI * ang / 180.0);
                     m0->posY = 0.0f;
                     m0->posZ = z + radius * sin(G4_PI * ang / 180.0);
-                    break;
-                case 1:
+                } else if (mode == 1) {
                     ang = lbl_1_bss_45C.aiPos[idx].x;
                     radius = lbl_1_bss_45C.aiPos[idx].y;
                     lbl_1_bss_20[idx].angle = lbl_1_bss_45C.aiPos[idx].z;
                     m0->posX = x + radius * cos(G4_PI * ang / 180.0);
                     m0->posY = 0.0f;
                     m0->posZ = z + radius * sin(G4_PI * ang / 180.0);
-                    break;
-                case 2:
+                } else if (mode == 2) {
                     ang = frandmod(0x168);
                     lbl_1_bss_20[idx].angle = ang;
                     do {
@@ -86,8 +82,7 @@ s16 fn_1_A9B8(s16 idx, s16 mode, float x, float z)
                             }
                         }
                     } while (done != 0);
-                    break;
-            }
+                }
             m1->pos = m0->pos;
             m2->pos = m0->pos;
             Hu3DModelAttrReset(m0->modelId, 1);
