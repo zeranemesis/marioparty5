@@ -9,10 +9,16 @@ void Hu3DModelAttrSet(HU3DMODELID modelId, s32 a1);
 void Hu3DModelAttrReset(HU3DMODELID modelId, s32 a1);
 s32 rand8(void);
 
-s32 MgTimerCreate(s32 mode);
-void MgTimerParamSet(s32 timerId, s32 param, s32 a2, s32 a3);
-void MgTimerPosSet(s32 timerId, f32 x, f32 y);
-void MgTimerModeOnSet(s32 timerId, s32 mode);
+#ifdef TARGET_PC
+/* the timer handle is an MGTIMER*: an s32 truncates it on x64 */
+typedef void *M547_TIMER;
+#else
+typedef s32 M547_TIMER;
+#endif
+M547_TIMER MgTimerCreate(s32 mode);
+void MgTimerParamSet(M547_TIMER timerId, s32 param, s32 a2, s32 a3);
+void MgTimerPosSet(M547_TIMER timerId, f32 x, f32 y);
+void MgTimerModeOnSet(M547_TIMER timerId, s32 mode);
 
 double cos(double x);
 double sin(double x);
@@ -27,8 +33,8 @@ void omCameraViewMoveSimpleMulti(s32 mode, void *p1, s32 a2);
 s32 HuAudFXPlay(s32 fxNo);
 void HuAudFXPanning(s32 handle, s16 pan);
 s32 HuAudFXPitchSet(s32 handle, s16 pitch);
-s32 MgTimerValueGet(s32 timerId);
-s32 MgTimerDoneCheck(s32 timerId);
+s32 MgTimerValueGet(M547_TIMER timerId);
+s32 MgTimerDoneCheck(M547_TIMER timerId);
 void Hu3DCameraPosGet(s32 camNo, void *pos, void *up, void *target);
 void fn_1_2648(s32 i);
 s32 HuAudBGMPlay(s32 bgmNo);
@@ -205,7 +211,7 @@ s32 lbl_1_bss_6D4[5];
 s32 lbl_1_bss_6C4[4];
 s16 lbl_1_bss_6BC[4];
 f32 lbl_1_bss_6AC[4];
-s32 lbl_1_bss_6A8;
+M547_TIMER lbl_1_bss_6A8;
 s16 lbl_1_bss_6A4[1];
 s32 lbl_1_bss_6A0;
 f32 lbl_1_bss_69C;
