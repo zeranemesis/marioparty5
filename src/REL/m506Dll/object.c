@@ -934,8 +934,14 @@ void M506ScoreCreate(M506_FLOW_WORK *flow)
 {
     int i;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
+#ifdef TARGET_PC
+        /* ScorePos holds the original's big-endian s16 pairs */
+        s16 x = (s16)((ScorePos[i * 0xC] << 8) | ScorePos[i * 0xC + 1]);
+        s16 y = (s16)((ScorePos[i * 0xC + 2] << 8) | ScorePos[i * 0xC + 3]);
+#else
         s16 x = ((const s16 *)ScorePos)[(i * 0xC) / 2];
         s16 y = ((const s16 *)ScorePos)[((i * 0xC) / 2) + 1];
+#endif
         flow->stopFlag[i] = 0;
         flow->scoreArr[i] = MgScoreCreate(0x960032, 0x960036, 0);
         MgScoreMaxDigitSet(flow->scoreArr[i], 3);
