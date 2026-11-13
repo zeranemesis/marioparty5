@@ -26,6 +26,9 @@
 /* Shared declarations for m549.c / game.c / cloud.c / stage.c go below.
  * Rules: add with small Edits, re-read the file first, never delete another agent's entries. */
 
+/* the original takes (f32)sqrt() (libc/math.h double sqrt, 4 Newton steps) of the squared XZ length */
+#define M549_Mag2D(x, z) ((f32)sqrt(HuMag2Point2D(x, z)))
+
 /* ---- game.c shared types (G4 started these; other parts: replace pad_XX with real fields via small Edits) ---- */
 
 /* lbl_1_bss_0, 0xC bytes on GC */
@@ -40,10 +43,11 @@ typedef struct M549Char_s {
     s16 sub;        /* 0x2 */
     u8 pad_04[2];
     s16 s06;        /* 0x6 */
-    u8 pad_08[4];
+    s16 s08;        /* 0x8 */
+    s16 s0A;        /* 0xA */
     s16 state;      /* 0xC */
-    s16 isCom;      /* 0xE */
-    u8 pad_10[2];
+    s16 state2;     /* 0xE (was isCom) */
+    s16 state3;     /* 0x10 */
     s16 s12;        /* 0x12 */
     s16 s14;        /* 0x14 */
     u8 pad_16[2];
@@ -277,6 +281,19 @@ extern s16 lbl_1_data_358[16];
 extern M549PtclWork lbl_1_data_3F0;
 extern s16 lbl_1_data_428[12];
 
+/* game.c part G3 */
+s32 fn_1_A898(void);
+int fn_1_AD78(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b);
+void fn_1_ADC8(MGACTOR *actor, int param);
+void fn_1_ADDC(void);
+void fn_1_BF34(s16 player);
+s32 fn_1_C360(s16 player);
+s32 fn_1_C418(s16 player);
+void fn_1_C64C(s16 player);
+void fn_1_CA38(s16 player, s16 objNo);
+s32 fn_1_CDD8(s16 player);
+void fn_1_FDB0(s16 player); /* part G4 */
+
 extern M549Impact lbl_1_bss_18[10];
 extern M549Ctrl lbl_1_bss_580;
 extern M549Globals lbl_1_bss_0;
@@ -375,11 +392,29 @@ typedef struct M549State_s {
     M549StageSlot slots[2];
     u8 pad_11C[0x54];
     s32 *dataNums;
-    u8 pad_174[0x54];
+    u8 pad_174[4];
+    s32 doneFlag;   /* 0x178 */
+    u8 pad_17C[0x4C];
     M549AnimBlock anim[21];
 } M549State;
 
 extern M549State *lbl_1_bss_1608;
+
+/* game.c part G1 */
+void fn_1_3B74(M549State *state);
+s32 fn_1_4EE0(M549State *state);
+s32 fn_1_4FFC(void);
+s32 fn_1_50A4(void);
+s32 fn_1_5184(void);
+s32 fn_1_569C(void);
+s32 fn_1_5788(void);
+s32 fn_1_57D8(void);
+s32 fn_1_5A00(void);
+s32 fn_1_5A40(void);
+void fn_1_5A98(void);
+void fn_1_5CD4(void);
+void fn_1_115A8(M549State *state); /* cloud.c */
+void MgActorPosGet(MGACTOR *actorP, HuVecF *pos);
 
 /* ---- m549.c functions (owner: part M) ---- */
 void ObjectSetup(void);
