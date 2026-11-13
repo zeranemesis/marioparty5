@@ -1608,6 +1608,7 @@ inline f32 M512SphereRadius(M512Sphere *s)
     return s->radius;
 }
 
+// NONMATCHING: register allocation and frame size only
 // Do the two spheres overlap (centre distance < sum of the radii)?
 s32 fn_1_501C(M512Sphere *a, M512Sphere *b)
 {

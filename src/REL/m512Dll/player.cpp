@@ -1293,6 +1293,7 @@ extern "C" void fn_1_C0C0(Player *self)
 
 // Keeps a player inside the arena (two end caps and the straight sections);
 // returns 1 when it hit a wall.
+// NONMATCHING: -300 constant is a float literal instead of fneg of the double 300; same value
 extern "C" s32 fn_1_C3C8(Player *self)
 {
     f32 z;
