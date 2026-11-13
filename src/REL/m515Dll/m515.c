@@ -2362,6 +2362,7 @@ void fn_1_D30(s16 mode, s16 frameNo)
     }
 }
 
+// NONMATCHING: extra branch placement only; same calls/immediates/offsets
 void fn_1_1B58(s16 mode, s16 frameNo)
 {
     M515_SUB *sub;
@@ -2762,7 +2763,7 @@ void fn_1_2F3C(M515_SUB *sub)
 
 M515_RODATA const HuVecF lbl_1_rodata_FC = { 0.0f, 0.0f, 0.0f };
 M515_RODATA const HuVecF lbl_1_rodata_108 = { 0.0f, 0.0f, 0.0f };
-M515_RODATA const HuVecF lbl_1_rodata_114 = { 0.0f, 0.0f, 180.0f };
+M515_RODATA const HuVecF lbl_1_rodata_114 = { 0.0f, 180.0f, 0.0f };
 M515_RODATA const HuVecF lbl_1_rodata_120 = { 0.0f, 400.0f, 0.0f };
 M515_RODATA const HuVecF lbl_1_rodata_12C = { 0.0f, 800.0f, 0.0f };
 M515_RODATA const HuVecF lbl_1_rodata_138 = { 0.0f, 0.0f, 0.0f };
@@ -2776,6 +2777,7 @@ static inline void M515_PutShape(HU3DMODELID id, HuVecF pos, HuVecF rot, s16 lay
 {
     fn_1_5F2C(id, &pos, &rot, layer, bits);
 }
+// NONMATCHING: inlined Vec-by-value temp copies and register allocation differ; same calls, rodata values, and vector selection per call
 void fn_1_32C4(M515_SUB *sub)
 {
     HuVecF P0 = lbl_1_rodata_FC;
@@ -3329,29 +3331,32 @@ void fn_1_6980(M515_PLY *ply)
 void fn_1_69B8(M515_PLY *ply, M515_SUB *sub)
 {
     s32 i;
+    s32 j;
     f32 sc;
 
     sc = 1.1f;
+    i = 0;
     if (sub->mdl < 0) {
         sub->mdl = Hu3DModelCreateData(lbl_1_data_364[1]);
-        ply->item[0].mdl = sub->mdl;
-        for (i = 0; i < 8; i++) {
-            sub->mot[i] = Hu3DJointMotionData(sub->mdl, lbl_1_data_3A8[i]);
+        ply->item[i].mdl = sub->mdl;
+        for (j = 0; j < 8; j++) {
+            sub->mot[j] = Hu3DJointMotionData(sub->mdl, lbl_1_data_3A8[j]);
         }
         Hu3DMotionSet(sub->mdl, sub->mot[4]);
     } else {
-        ply->item[0].mdl = Hu3DModelLink(sub->mdl);
+        ply->item[i].mdl = Hu3DModelLink(sub->mdl);
     }
-    Hu3DModelAttrSet(ply->item[0].mdl, HU3D_ATTR_DISPOFF);
-    Hu3DModelAttrSet(ply->item[0].mdl, 0x40000002);
-    Hu3DModelLayerSet(ply->item[0].mdl, 3);
-    Hu3DModelPosSet(ply->item[0].mdl, 0.0f, 1.0f, 0.0f);
-    Hu3DModelRotSet(ply->item[0].mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(ply->item[0].mdl, lbl_1_rodata_10[ply->idx]);
-    Hu3DModelScaleSet(ply->item[0].mdl, 1.1f, 1.1f, 1.1f);
-    ply->item[0].f20 = 0;
-    ply->item[0].f28 = 45.0f * (rand8() / 32);
-    for (i = 1; i < 8; i++) {
+    Hu3DModelAttrSet(ply->item[i].mdl, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(ply->item[i].mdl, 0x40000002);
+    Hu3DModelLayerSet(ply->item[i].mdl, 3);
+    Hu3DModelPosSet(ply->item[i].mdl, 0.0f, 1.0f, 0.0f);
+    Hu3DModelRotSet(ply->item[i].mdl, 0.0f, 0.0f, 0.0f);
+    Hu3DModelCameraSet(ply->item[i].mdl, lbl_1_rodata_10[ply->idx]);
+    Hu3DModelScaleSet(ply->item[i].mdl, sc, sc, sc);
+    ply->item[i].f20 = 0;
+    ply->item[i].f28 = 45.0f * (rand8() / 32);
+    i++;
+    for (; i < 8; i++) {
         ply->item[i].mdl = Hu3DModelLink(sub->mdl);
         Hu3DModelAttrSet(ply->item[i].mdl, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrSet(ply->item[i].mdl, 0x40000002);
@@ -3359,24 +3364,26 @@ void fn_1_69B8(M515_PLY *ply, M515_SUB *sub)
         Hu3DModelPosSet(ply->item[i].mdl, 0.0f, 1.0f, 0.0f);
         Hu3DModelRotSet(ply->item[i].mdl, 0.0f, 0.0f, 0.0f);
         Hu3DModelCameraSet(ply->item[i].mdl, lbl_1_rodata_10[ply->idx]);
-        Hu3DModelScaleSet(ply->item[i].mdl, 1.1f, 1.1f, 1.1f);
+        Hu3DModelScaleSet(ply->item[i].mdl, sc, sc, sc);
         ply->item[i].f20 = 0;
         ply->item[i].f28 = 45.0f * (rand8() / 32);
     }
+    i = 0;
     if (sub->mdl2 < 0) {
         sub->mdl2 = Hu3DModelCreateData(lbl_1_data_364[0]);
-        ply->item[0].mdl2 = sub->mdl2;
+        ply->item[i].mdl2 = sub->mdl2;
     } else {
-        ply->item[0].mdl2 = Hu3DModelLink(sub->mdl2);
+        ply->item[i].mdl2 = Hu3DModelLink(sub->mdl2);
     }
-    Hu3DModelAttrSet(ply->item[0].mdl2, HU3D_ATTR_DISPOFF);
-    Hu3DModelAttrSet(ply->item[0].mdl2, 0x40000002);
-    Hu3DModelLayerSet(ply->item[0].mdl2, 2);
-    Hu3DModelPosSet(ply->item[0].mdl2, 0.0f, 0.5f, 0.0f);
-    Hu3DModelRotSet(ply->item[0].mdl2, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(ply->item[0].mdl2, lbl_1_rodata_10[ply->idx]);
-    Hu3DModelScaleSet(ply->item[0].mdl, 1.1f, 1.1f, 1.1f);
-    for (i = 1; i < 8; i++) {
+    Hu3DModelAttrSet(ply->item[i].mdl2, HU3D_ATTR_DISPOFF);
+    Hu3DModelAttrSet(ply->item[i].mdl2, 0x40000002);
+    Hu3DModelLayerSet(ply->item[i].mdl2, 2);
+    Hu3DModelPosSet(ply->item[i].mdl2, 0.0f, 0.5f, 0.0f);
+    Hu3DModelRotSet(ply->item[i].mdl2, 0.0f, 0.0f, 0.0f);
+    Hu3DModelCameraSet(ply->item[i].mdl2, lbl_1_rodata_10[ply->idx]);
+    Hu3DModelScaleSet(ply->item[i].mdl, sc, sc, sc);
+    i++;
+    for (; i < 8; i++) {
         ply->item[i].mdl2 = Hu3DModelLink(sub->mdl2);
         Hu3DModelAttrSet(ply->item[i].mdl2, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrSet(ply->item[i].mdl2, 0x40000002);
@@ -3384,7 +3391,7 @@ void fn_1_69B8(M515_PLY *ply, M515_SUB *sub)
         Hu3DModelPosSet(ply->item[i].mdl2, 0.0f, 0.5f, 0.0f);
         Hu3DModelRotSet(ply->item[i].mdl2, 0.0f, 0.0f, 0.0f);
         Hu3DModelCameraSet(ply->item[i].mdl2, lbl_1_rodata_10[ply->idx]);
-        Hu3DModelScaleSet(ply->item[i].mdl2, 1.1f, 1.1f, 1.1f);
+        Hu3DModelScaleSet(ply->item[i].mdl2, sc, sc, sc);
     }
 }
 
@@ -3558,10 +3565,10 @@ u16 fn_1_7924(M515_PLY *ply)
         ax = sx;
     }
     sum = ax + ay;
-    if (sum > 32.0) {
+    if (sum > 32.0f) {
         if (ang >= -30.0f && ang < 60.0f) {
             ret = 1;
-        } else if (ang >= 60.0f && ang < 150.0f) {
+        } else if (ang >= 60.0 && ang < 150.0f) {
             ret = 2;
         } else if (ang >= -120.0f && ang < -30.0f) {
             ret = 4;
@@ -3578,6 +3585,7 @@ u16 fn_1_7924(M515_PLY *ply)
     return ret;
 }
 
+// NONMATCHING: register allocation of f31 only
 void fn_1_7BE8(M515_ITEM *item, M515_SUB *sub)
 {
     HuVecF p;
@@ -4073,6 +4081,7 @@ void fn_1_9958(M515_ESPPAIR *esp)
     espPosSet(esp->id1, 288.0f, 480.0f * (y / 480.0f));
 }
 
+// NONMATCHING: register allocation and array-index addressing (lha vs addi+lhax) differ; same cases/calls/offsets
 s32 fn_1_9DF8(M515_ENTRY *entry, M515_PLY *ply)
 {
     M515_SUB *sub;
@@ -4408,6 +4417,7 @@ s32 fn_1_9DF8(M515_ENTRY *entry, M515_PLY *ply)
     return ret;
 }
 
+// NONMATCHING: register allocation only
 s32 fn_1_B0B8(M515_ENTRY *entry, M515_PLY *ply)
 {
     M515_SUB *sub;
@@ -4455,6 +4465,7 @@ s32 fn_1_B0B8(M515_ENTRY *entry, M515_PLY *ply)
     return ret;
 }
 
+// NONMATCHING: original switch has an extra empty case (3) compare; register allocation differs
 s32 fn_1_B5D8(M515_ENTRY *entry, M515_PLY *ply)
 {
     M515_SUB *sub;
@@ -4488,6 +4499,7 @@ s32 fn_1_B5D8(M515_ENTRY *entry, M515_PLY *ply)
     return ret;
 }
 
+// NONMATCHING: original switch has an extra empty case (5) compare; register allocation differs
 s32 fn_1_BA64(M515_ENTRY *entry, M515_PLY *ply)
 {
     M515_SUB *sub;
@@ -4662,6 +4674,7 @@ s32 fn_1_C26C(M515_NODE2 *node)
     return 1;
 }
 
+// NONMATCHING: array-index addressing (lha vs addi+lhax) differs
 void fn_1_C2B0(M515_PLY *ply)
 {
     s32 i;
@@ -4940,6 +4953,7 @@ void fn_1_D384(M515_PLY *ply)
     fn_1_6FE8(ply);
 }
 
+// NONMATCHING: fadds operand order
 s32 fn_1_D928(M515_ENTRY *entry, M515_PLY *ply)
 {
     M515_SUB *sub;
@@ -5096,6 +5110,7 @@ u16 fn_1_DD18(M515_PLY *ply)
     return ret;
 }
 
+// NONMATCHING: extra branch placement only
 void fn_1_E274(M515_FX *fx, s16 kind, s16 dif)
 {
     M515_SUB *sub;
