@@ -188,7 +188,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     self->vtable = &lbl_1_data_1FC;
     self->flags = 0;
     fn_1_1330(self, &lbl_1_bss_C);
-    if (lbl_1_bss_A10 == NULL) {
+    if (lbl_1_bss_A10 != NULL) {
         fn_1_1D4(lbl_1_data_3D8, lbl_1_data_3C0, 0x35);
     }
     lbl_1_bss_A10 = self;
