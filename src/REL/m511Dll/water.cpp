@@ -424,8 +424,8 @@ void fn_1_1A530(Mgr511Water *arg0)
 void fn_1_1A8C0(Mgr511Water *arg0, Mtx mtx)
 {
     GXLoadPosMtxImm(mtx, 0);
-    HuSprTexLoad(arg0->anim1, 0, 0, GX_CLAMP, GX_CLAMP, GX_LINEAR);
-    HuSprTexLoad(arg0->anim2, 0, 1, GX_CLAMP, GX_CLAMP, GX_LINEAR);
+    HuSprTexLoad(arg0->anim1, 0, 0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
+    HuSprTexLoad(arg0->anim2, 0, 1, GX_REPEAT, GX_REPEAT, GX_LINEAR);
     GXSetZMode(1, GX_LEQUAL, 0);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
     GXSetZCompLoc(1);
@@ -642,8 +642,8 @@ void fn_1_1BB80(Mgr511WaterRing *arg0)
 void fn_1_1BC84(Mgr511WaterRing *arg0, Mtx mtx)
 {
     GXLoadPosMtxImm(mtx, 0);
-    HuSprTexLoad(arg0->anim1, 0, 0, GX_CLAMP, GX_CLAMP, GX_LINEAR);
-    HuSprTexLoad(arg0->anim2, 0, 1, GX_CLAMP, GX_CLAMP, GX_LINEAR);
+    HuSprTexLoad(arg0->anim1, 0, 0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
+    HuSprTexLoad(arg0->anim2, 0, 1, GX_REPEAT, GX_REPEAT, GX_LINEAR);
     GXSetZMode(1, GX_LEQUAL, 1);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
     GXSetZCompLoc(1);
@@ -823,8 +823,8 @@ void fn_1_1C9EC(Mgr511WaterRipple *arg0, Mtx mtx)
     PSMTXTrans(trans, arg0->pos.x, arg0->pos.y, arg0->pos.z);
     PSMTXConcat(mtx, trans, trans);
     GXLoadPosMtxImm(trans, 0);
-    HuSprTexLoad(arg0->anim1, 0, 0, GX_CLAMP, GX_CLAMP, GX_LINEAR);
-    HuSprTexLoad(arg0->anim2, 0, 1, GX_CLAMP, GX_CLAMP, GX_LINEAR);
+    HuSprTexLoad(arg0->anim1, 0, 0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
+    HuSprTexLoad(arg0->anim2, 0, 1, GX_REPEAT, GX_REPEAT, GX_LINEAR);
     GXSetNumTexGens(2);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C, 0, 0x7D);
     PSMTXTrans(tex, arg0->dir.x, arg0->dir.z, 0.0f);

@@ -151,7 +151,7 @@ static const struct {
     {0.5f, 2.0f},
 };
 
-static const GXColor lbl_1_rodata_4EC = {0xFF, 0xFF, 0xFF, 0xFF};
+static const GXColor lbl_1_rodata_4EC = {0xFF, 0x00, 0x00, 0xFF}; /* asm: ff 00 00 ff */
 
 // NONMATCHING: the vtable pointer differs.
 Mgr511StarYajiMaster *fn_1_E8BC(Mgr511StarYajiMaster *arg0, s32 arg_sp0)
