@@ -229,14 +229,13 @@ void M506FlowEndWatch(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original keeps args in stack slots and a dead work copy
 void M506ObjShadowMapSet(int no, int height)
 {
     M506_WORK *work = M506MainObj->data;
     Hu3DModelShadowMapSet(work->mameMdlId[no][height - 1]);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506ObjShadowMapReset(int no, int from, int to)
 {
     M506_WORK *work = M506MainObj->data;
@@ -247,7 +246,7 @@ void M506ObjShadowMapReset(int no, int from, int to)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register assignment (exitF/flow locals) and flow->m506Work vs flow->work load differ
 void M506MainUpdate(OMOBJ *obj)
 {
     BOOL exitF = M506ExitCheck(obj);
@@ -313,7 +312,7 @@ void M506MainUpdate(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original keeps a dead camera pointer local in the init loop
 void M506ObjInit(M506_FLOW_WORK *flow)
 {
     int i;
@@ -348,7 +347,7 @@ void M506ObjInit(M506_FLOW_WORK *flow)
     flow->unk200 = 0;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; only branch layout/prologue differ (ShadowScrollInit result kept in a dead local)
 BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
 {
     switch (flow->mode) {
@@ -449,7 +448,6 @@ BOOL M506FlowModeStart(M506_FLOW_WORK *flow)
     return FALSE;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506FlowModeStartSetup(M506_FLOW_WORK *flow)
 {
     int i;
@@ -494,7 +492,6 @@ void M506FlowMameSetup(M506_FLOW_WORK *flow)
     Hu3DModelScaleSet(flow->work->mameMdlId[0][0], flow->unk118, flow->unk118, flow->unk118);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 BOOL M506ShadowScrollInit(M506_FLOW_WORK *flow)
 {
     switch (flow->shadowScrollState) {
@@ -526,7 +523,7 @@ BOOL M506ShadowScrollInit(M506_FLOW_WORK *flow)
     return FALSE;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original keeps motion time in a callee-saved fpr
 void M506FlowP1Update(M506_FLOW_WORK *flow)
 {
     OMOBJ *p0 = M506PlayerObj[0];
@@ -558,7 +555,7 @@ void M506FlowP1Update(M506_FLOW_WORK *flow)
     omSetRot(flow->playerObj[0], 0.0f, flow->unk11C, 0.0f);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register assignment and flow->m506Work vs flow->work loads differ
 void M506FlowModeEnd(OMOBJ *obj)
 {
     BOOL exitF = M506ExitCheck(obj);
@@ -806,7 +803,7 @@ void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
     M506StarfighterStart(flow);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original switch on winFlag, reads M506PlayerObj directly
 void M506FlowWinStart(M506_FLOW_WORK *flow)
 {
     int i;
@@ -820,7 +817,7 @@ void M506FlowWinStart(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation / local pan table copy differ
 s32 M506FlowStopCheck(M506_FLOW_WORK *flow)
 {
     static const s16 panTbl[M506_PLAYER_MAX] = { 40, 56, 72, 88 };
@@ -866,7 +863,7 @@ s32 M506FlowStopCheck(M506_FLOW_WORK *flow)
     return 0;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original inlines M506FlowWinStart
 BOOL M506FlowResult(M506_FLOW_WORK *flow)
 {
     int i;
@@ -932,7 +929,7 @@ BOOL M506FlowResult(M506_FLOW_WORK *flow)
     return 0;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; ScorePos accessed as s16 pairs by byte offset in the original
 void M506ScoreCreate(M506_FLOW_WORK *flow)
 {
     int i;
@@ -955,7 +952,6 @@ void M506ScoreCreate(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506ScoreDispUpdate(M506_FLOW_WORK *flow)
 {
     int i;
@@ -979,7 +975,6 @@ void M506ScoreKill(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506MameShadowOff(M506_FLOW_WORK *flow)
 {
     Hu3DModelAttrSet(flow->work->mameShadowMdlId[0], HU3D_ATTR_DISPOFF);
@@ -1009,7 +1004,6 @@ void M506MameShadowScrollOn(M506_FLOW_WORK *flow)
     Hu3DModelAttrReset(flow->work->glowShadowMdlId, HU3D_MOTATTR_PAUSE);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506MameShadowScrollExec(M506_FLOW_WORK *flow)
 {
     flow->shadowScrollY += 0.0033333334f;
@@ -1019,7 +1013,7 @@ void M506MameShadowScrollExec(M506_FLOW_WORK *flow)
     Hu3DTexScrollPosSet(flow->recordScrollY, 0.0f, flow->shadowScrollY, 0.0f);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; pointer-increment loop in the original
 void M506ParticleCreate(M506_FLOW_WORK *flow)
 {
     HU3DPARTICLE *particle;
@@ -1041,7 +1035,7 @@ void M506ParticleCreate(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original converts frandmod() as signed int and uses fewer fprs
 void M506ParticleUpdate(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 {
     HU3DPARTICLEDATA *data = particleP->data;
@@ -1126,7 +1120,7 @@ void M506ParticleUpdate(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; pointer-increment loop in the original
 void M506ParticleStart(M506_FLOW_WORK *flow)
 {
     HU3DPARTICLE *particle = Hu3DData[flow->particleMdlId].hookData;
@@ -1142,7 +1136,7 @@ void M506ParticleKill(M506_FLOW_WORK *flow)
     Hu3DModelKill(flow->particleMdlId);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; table/constant pooling differs
 void M506RocketInit(M506_FLOW_WORK *flow)
 {
     flow->rocket.pos.x = 600.0f;
@@ -1160,7 +1154,7 @@ void M506RocketInit(M506_FLOW_WORK *flow)
     flow->rocket.doneFlag = 0;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 void M506RocketUpdate(void)
 {
     M506_FLOW_WORK *flow = &M506Flow;
@@ -1205,7 +1199,7 @@ void M506RocketUpdate(void)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 BOOL M506RocketModelUpdate(M506_FLOW_WORK *flow)
 {
     HuVecF ofs;
@@ -1225,7 +1219,7 @@ BOOL M506RocketModelUpdate(M506_FLOW_WORK *flow)
     return FALSE;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; rotTbl700 is loaded from the table, constant-folded here
 void M506RocketMove(M506_FLOW_WORK *flow)
 {
     if (flow->rocketType == 0) {
@@ -1239,7 +1233,6 @@ void M506RocketMove(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506StarfighterStart(M506_FLOW_WORK *flow)
 {
     int i;
@@ -1259,7 +1252,6 @@ void M506StarfighterStart(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506StarfighterUpdate(void)
 {
     M506_FLOW_WORK *flow = &M506Flow;
@@ -1329,7 +1321,6 @@ void M506RecordCreate(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506RecordSet(M506_FLOW_WORK *flow)
 {
     if (!_CheckFlag(FLAG_INST_DECA)) {
@@ -1347,7 +1338,6 @@ void M506RecordKill(M506_FLOW_WORK *flow)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506RecordBlink(M506_FLOW_WORK *flow)
 {
     if (!_CheckFlag(FLAG_INST_DECA) && flow->newRecordHeight > flow->recordBase) {
@@ -1389,7 +1379,7 @@ void fn_1_9ECC(void)
 {
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: unused varargs-style debug stub, not verified
 void M506Debug(int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7,
     f64 farg0, f64 farg1, f64 farg2, f64 farg3, f64 farg4, f64 farg5, f64 farg6, f64 farg7)
 {
@@ -1512,7 +1502,7 @@ void M506YCameraProjUpdate(void)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; camera pointers hoisted differently
 void M506YCameraViewUpdate(void)
 {
     f32 t = M506YCamera->splitTime;
@@ -1571,7 +1561,6 @@ void M506YCameraViewUpdate(void)
     cam3->scissorW = 159.0f;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506YCameraSplitCreate(void)
 {
     f32 splitX[3] = { 144.0f, 288.0f, 432.0f };
@@ -1600,7 +1589,6 @@ void fn_1_AAE0(void)
 {
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506YLightInit(void)
 {
     Hu3DLighInit();
@@ -1638,7 +1626,7 @@ void M506YLightClose(void)
     HuMemDirectFree(M506YLight);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; struct copies emitted as word copies
 void M506YLightUpdate(void)
 {
     M506YLight->center = M506YLight->unk10;
@@ -1697,7 +1685,7 @@ static void M506YShadowCalcPos(M506_YSHADOW *sh)
     Hu3DShadowMultiPosSet(&sh->pos, &sh->up, &sh->target, (s16)sh->bit);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; target = center copied as words
 void M506YShadowPosUpdate(void)
 {
     int i;
@@ -1706,7 +1694,7 @@ void M506YShadowPosUpdate(void)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; struct copies emitted as word copies
 void M506YShadowUpdate(void)
 {
     int i;
@@ -1720,7 +1708,7 @@ void M506YShadowUpdate(void)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 void M506YCameraViewSet(s32 camNo, s32 viewNo)
 {
     const M506_YCAMERA_VIEW *view = &YCameraView[viewNo];
@@ -1752,7 +1740,7 @@ void M506YCameraViewSet(s32 camNo, s32 viewNo)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 BOOL M506YCameraViewLerp(s32 camNo, s32 viewNo)
 {
     const M506_YCAMERA_VIEW *view = &YCameraView[viewNo];
@@ -1787,7 +1775,7 @@ BOOL M506YCameraViewLerp(s32 camNo, s32 viewNo)
     return result;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; compare order of the clamp test differs
 s32 M506PointLerp(f32 *val, f32 cur, f32 target, f32 duration)
 {
     if (*val != target) {
@@ -1811,7 +1799,7 @@ void M506MakeRotMtx(Mtx dst, HuVecF *rot)
     PSMTXConcat(dst, mtxY, dst);
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; switch layout and float register for the accumulator differ
 void M506SeedUpdate(void)
 {
     HU3DPARTICLE *particle;

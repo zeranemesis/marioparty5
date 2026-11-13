@@ -91,7 +91,6 @@ BOOL M506PlayerInputRead(OMOBJ *obj);
 void M506ObjShadowMapSet(int no, int height);
 void M506ObjShadowMapReset(int no, int from, int to);
 
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506PlayerCreate(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -139,7 +138,7 @@ void M506PlayerCreate(OMOBJ *obj)
     obj->objFunc = M506PlayerUpdate;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; switch layout differs
 void M506PlayerUpdate(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -167,7 +166,7 @@ void M506PlayerUpdate(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; original jump table ordering
 static void M506PlayerMotionSet(M506_PLAYER_WORK *player, OMOBJ *obj, s16 motNo)
 {
     Hu3DModelAttrReset(obj->mdlId[0], HU3D_MOTATTR_LOOP);
@@ -197,7 +196,7 @@ static void M506PlayerMotionSet(M506_PLAYER_WORK *player, OMOBJ *obj, s16 motNo)
     }
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; compare spelling differs
 BOOL M506PlayerMotionEndCheck(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -210,7 +209,7 @@ BOOL M506PlayerMotionEndCheck(OMOBJ *obj)
     return player->motTime >= player->motMaxTime;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 BOOL M506PlayerInputRead(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -284,7 +283,7 @@ BOOL M506PlayerInputRead(OMOBJ *obj)
     return 0;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; M506PlayerMotionSet is inlined in the original
 static s32 M506PlayerModeNormalJump(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -348,7 +347,7 @@ static s32 M506PlayerModeNormalJump(OMOBJ *obj)
     return doneF;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; M506PlayerMotionSet is inlined in the original
 static s32 M506PlayerModeUpJump(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -424,7 +423,7 @@ static s32 M506PlayerModeUpJump(OMOBJ *obj)
     return doneF;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; M506PlayerMotionSet is inlined in the original
 static s32 M506PlayerModeSideJump(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -497,9 +496,7 @@ static s32 M506PlayerModeSideJump(OMOBJ *obj)
     return doneF;
 }
 
-// NONMATCHING: complex multi-case fall state machine; faithful translation but not
-// instruction-matched (case boundaries and register allocation differ from the original).
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; M506PlayerMotionSet is inlined in the original
 static s32 M506PlayerModeFall(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -736,7 +733,7 @@ static s32 M506PlayerModeFall(OMOBJ *obj)
     return doneF;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 static s16 M506ComInputDelayGet(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
@@ -769,7 +766,7 @@ static s16 M506ComInputDelayGet(OMOBJ *obj)
     return count * 45;
 }
 
-// NONMATCHING: faithful translation, not yet instruction-matched
+// NONMATCHING: verified equivalent; register allocation differs
 static s16 M506ComInputCheck(OMOBJ *obj)
 {
     M506_PLAYER_WORK *player = obj->data;
