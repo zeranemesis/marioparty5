@@ -223,4 +223,22 @@ typedef struct M541Path_s {
     float pad18;   /* 0x18 */
 } M541_PATH;
 
+/* ---- G1: game.s data (defined in part_g1.c) ---- */
+typedef struct M541G1Tri_s {
+    s16 a, b, c;
+} M541_G1TRI;
+
+extern float lbl_1_data_368[8][4];
+extern HuVecF lbl_1_data_3E8[8];
+extern float lbl_1_data_48C[25];
+extern s32 lbl_1_bss_36A0;
+extern M541_G1TRI lbl_1_bss_36A4[23];
+extern M541_STAGE *lbl_1_bss_3730;
+
+/* ---- G1: prototypes ---- */
+void fn_1_2AD4(M541_STAGE *stage);
+s32 fn_1_5C98(void);
+s32 fn_1_5DA4(void);
+s32 fn_1_5DD8(void);
+
 #endif
