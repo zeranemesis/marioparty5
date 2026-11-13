@@ -953,7 +953,7 @@ static void fn_1_4334(void)
     Hu3DShadowMultiPosSet((HuVecF *)&lbl_1_rodata_484[0], (HuVecF *)&lbl_1_rodata_484[1], (HuVecF *)&lbl_1_rodata_484[2], 4);
     WipeColorSet(255, 255, 255);
     WipeCreate(1, 5, 40);
-    while(WipeCheckEnd() & 0xFF000000) {
+    while(WipeCheckEnd()) {
         HuPrcVSleep();
     }
     fn_1_EFE4(lbl_1_bss_3C);
