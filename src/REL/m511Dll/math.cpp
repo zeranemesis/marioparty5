@@ -2,23 +2,23 @@
 
 extern "C" {
 
-// NONMATCHING: MWCC picks clrlwi for the u16 casts where the original used
-// the -0x8000 bias plus xoris sequence, so the GPR moves and savegpr differ.
+// NONMATCHING: GPR moves and savegpr differ. Semantics: asm is subf (first - second), then a signed 16-bit
+// wrap (xoris 0x8000 conversion), so the result is in [-180, 180); the decomp had second - first as u16.
 f32 fn_1_884(f64 arg0, f64 arg1)
 {
     s32 var_r28 = (s32)(182.04444444444445 * arg0);
     s32 var_r27 = (s32)(182.04444444444445 * arg1);
-    u16 var_r26 = var_r27 - var_r28;
+    s16 var_r26 = (s16)(var_r28 - var_r27);
 
     return (f32)(0.0054931640625 * (f64)var_r26);
 }
 
-// NONMATCHING: same u16 conversion difference as fn_1_884.
+// NONMATCHING: same as fn_1_884 (signed (first - second) wrap), then clamped to +-arg2.
 f32 fn_1_93C(f64 arg0, f64 arg1, f32 arg2)
 {
     s32 var_r28 = (s32)(182.04444444444445 * arg0);
     s32 var_r27 = (s32)(182.04444444444445 * arg1);
-    u16 var_r26 = var_r27 - var_r28;
+    s16 var_r26 = (s16)(var_r28 - var_r27);
     f32 var_f29;
     f32 var_f28;
     f32 var_f27;

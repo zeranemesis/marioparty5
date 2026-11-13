@@ -80,7 +80,7 @@ struct Mgr510KibakoMaster {
     void **vtable;
     s32 unkC;
     s16 modelId;
-    u8 pad12[0x10];
+    u8 pad12[2]; /* GC object size 0x14 (the old 0x10 pad overran the doubled PC allocation) */
 };
 
 struct Mgr510KibakoList {

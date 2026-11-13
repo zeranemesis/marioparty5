@@ -57,7 +57,7 @@ extern "C" void fn_1_5EC0(void *self, s32 arg1);
 extern "C" void fn_1_6538(void *self, s32 arg1);
 extern "C" void fn_1_6600(void *self, s32 arg1);
 extern "C" void fn_1_665C(void *self, s32 arg1, s32 arg2, s32 arg3);
-extern "C" void fn_1_66D4(void *self, f32 *arg1, f32 arg2, f32 arg3);
+extern "C" void fn_1_66D4(void *self, f32 x, f32 y); /* asm: x in f1, y in f2 (no pointer argument; with one, a Win64 caller shifts the floats) */
 extern "C" void fn_1_6754(void *self, s32 arg1);
 extern "C" void fn_1_6848(void *self);
 extern "C" bool8 fn_1_68B0(void *self);
@@ -316,7 +316,7 @@ void fn_1_7FE8(CGameMaster *arg0)
     fn_1_F010();
     arg0->unk360 = 0;
     fn_1_665C(&arg0->subB, 0x708, 0, 0);
-    fn_1_66D4(&arg0->subB, (f32 *)lbl_1_rodata_1E0, 292.0f, 416.0f);
+    fn_1_66D4(&arg0->subB, lbl_1_rodata_1E0[0], lbl_1_rodata_1E0[1]);
     loop_14:
     if (fn_1_8304(arg0) == 0) {
         if ((var_r30 == 0) && (arg0->unk360 > 0x3F48)) {

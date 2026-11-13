@@ -17,7 +17,11 @@ extern "C" void __register_global_object(void *obj, void *(*dtor)(void *, s16), 
 extern "C" void fn_1_1D88(void *self);
 extern "C" void fn_1_1D94(void *self, s32 arg1);
 extern "C" void fn_1_1E54(void *self, void **arg1);
+#ifdef TARGET_PC
+extern "C" f32 fn_1_884(f64 arg0, f64 arg1); /* math.cpp's definition: two doubles (the GC asm only has a dead r3 before them) */
+#else
 extern "C" f32 fn_1_884(s32 arg0, f32 arg1, f32 arg2);
+#endif
 extern "C" void fn_1_CF8(char *cond, char *file, s32 line);
 extern "C" void fn_1_DAB8(s32 arg0, f32 *arg1);
 
@@ -369,7 +373,11 @@ void fn_1_F148(Mgr511StarYaji *arg0)
     }
     frame = arg0->frame;
     arg0->frame = frame + 1;
+#ifdef TARGET_PC
+    spin = fn_1_884((f64)arg0->angle, (f64)arg0->speed);
+#else
     spin = fn_1_884(frame, arg0->angle, arg0->speed);
+#endif
     if (spin < 0.0f) {
         spin = -spin;
     }
