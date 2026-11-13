@@ -1130,7 +1130,6 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
             temp_f19 = -arg0->z;
             temp_f20 = -arg0->x;
             if (temp_f19 == 0.0f) {
-                M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                 if (temp_f20 >= 0.0f) {
                     var_f29 = 1.5707964f;
                 } else {
@@ -1171,7 +1170,6 @@ loop_27:
                     sp40 = temp_f0_2;
                     temp_f18 = var_r27->x - arg0->x;
                     if (temp_f0_2 == 0.0f) {
-                        M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                         if (temp_f18 >= 0.0f) {
                             var_f28 = 1.5707964f;
                         } else {
@@ -1192,7 +1190,6 @@ loop_27:
                     sp38 = temp_f0_3;
                     sp3C = arg0->x - var_r27->x;
                     if (temp_f0_3 == 0.0f) {
-                        M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                         if (sp3C >= 0.0f) {
                             var_f27 = 1.5707964f;
                         } else {
@@ -1206,7 +1203,6 @@ loop_27:
                     sp30 = temp_f0_4;
                     sp34 = -arg0->x;
                     if (temp_f0_4 == 0.0f) {
-                        M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                         if (sp34 >= 0.0f) {
                             var_f26 = 1.5707964f;
                         } else {
@@ -1228,7 +1224,6 @@ loop_27:
                     sp28 = temp_f0_5;
                     sp2C = -arg0->x;
                     if (temp_f0_5 == 0.0f) {
-                        M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                         if (sp2C >= 0.0f) {
                             var_f25 = 1.5707964f;
                         } else {
@@ -1297,7 +1292,6 @@ block_76:
                 sp20 = temp_f0_6;
                 sp24 = var_r27->x - arg0->x;
                 if (temp_f0_6 == 0.0f) {
-                    M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                     if (sp24 >= 0.0f) {
                         var_f24 = 1.5707964f;
                     } else {
@@ -1396,7 +1390,6 @@ s32 fn_1_29F8(M538_PLAYER *arg0) {
         temp_f29 = arg0->aiTarget->z - arg0->z;
         if (((temp_f30 * temp_f30) + (temp_f29 * temp_f29)) < (&sp18)[arg0->dif]) {
             if (temp_f29 == 0.0f) {
-                M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                 if (temp_f30 >= 0.0f) {
                     var_f28 = 1.5707964f;
                 } else {
@@ -1491,7 +1484,6 @@ s32 fn_1_2CB8(M538_PLAYER *arg0) {
                     temp_f28 = arg0->aiTarget->z - arg0->z;
                     if (((temp_f27 * temp_f27) + (temp_f28 * temp_f28)) < (&sp28)[arg0->dif]) {
                         if (temp_f28 == 0.0f) {
-                            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                             if (temp_f27 >= 0.0f) {
                                 var_f26 = 1.5707964f;
                             } else {
@@ -1565,7 +1557,6 @@ loop_21:
                     sp1C = var_f19 + var_f20;
                     if (sp1C > 32.0f) {
                         if (temp_f30 == 0.0f) {
-                            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                             if (temp_f29 >= 0.0f) {
                                 var_f25 = 1.5707964f;
                             } else {
@@ -1662,7 +1653,6 @@ s32 fn_1_32C4(M538_PLAYER *arg0) {
                     sp20 = (temp_f27 * temp_f27) + (temp_f28 * temp_f28);
                     if (sp20 < (&sp30)[arg0->dif]) {
                         if (temp_f28 == 0.0f) {
-                            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                             if (temp_f27 >= 0.0f) {
                                 var_f26 = 1.5707964f;
                             } else {
@@ -1736,7 +1726,6 @@ loop_21:
                     sp1C = var_f18 + var_f19;
                     if (sp1C > 32.0f) {
                         if (temp_f30 == 0.0f) {
-                            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                             if (temp_f29 >= 0.0f) {
                                 var_f25 = 1.5707964f;
                             } else {
@@ -1933,7 +1922,6 @@ s32 fn_1_3F60(M538_PLAYER *arg0) {
         temp_f27 = arg0->z;
         temp_f28 = arg0->x;
         if (temp_f27 == 0.0f) {
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
             if (temp_f28 >= 0.0f) {
                 var_f29 = 1.5707964f;
             } else {
@@ -2258,7 +2246,6 @@ loop_50:
                         temp_f27 = temp_r30->x - temp_r31->x;
                         temp_f26 = temp_r30->z - temp_r31->z;
                         if (temp_f26 == 0.0f) {
-                            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                             if (temp_f27 >= 0.0f) {
                                 var_f28 = 1.5707964f;
                             } else {
@@ -2892,7 +2879,6 @@ s32 fn_1_6F24(M538_NODE0 *arg0) {
         temp_f27 = temp_r31->z;
         temp_f28 = temp_r31->x;
         if (temp_f27 == 0.0f) {
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
             if (temp_f28 >= 0.0f) {
                 var_f29 = 1.5707964f;
             } else {
@@ -3205,7 +3191,6 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
         temp_f28 = -arg0->z;
         temp_f29 = -arg0->x;
         if (temp_f28 == 0.0f) {
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
             if (temp_f29 >= 0.0f) {
                 var_f30 = 1.5707964f;
             } else {
@@ -3864,7 +3849,6 @@ s32 fn_1_94DC(M538_NODE *arg0) {
             temp_f26 = arg0->z;
             temp_f27 = arg0->x;
             if (temp_f26 == 0.0f) {
-                M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
                 if (temp_f27 >= 0.0f) {
                     var_f30 = 1.5707964f;
                 } else {
@@ -3874,7 +3858,6 @@ s32 fn_1_94DC(M538_NODE *arg0) {
                 var_f30 = (f32) atan2((f64) temp_f27, (f64) temp_f26);
             }
             temp_f24 = (f32) fabs((f32) ((f64) (180.0f * var_f30) / 3.141592653589793));
-            M2C_ERROR(/* unknown instruction: cror eq, gt, eq */);
             if ((temp_f24 >= 45.0f) && (temp_f24 < 135.0f)) {
                 var_r28 = 2;
             } else {

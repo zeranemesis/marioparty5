@@ -769,8 +769,7 @@ static void fn_1_1B1C(M559HOOK *hook, OMOBJ *obj) {
     }
     hook->unk4C = var_f27;
     if (hook->unk4C > 0.0f) {
-                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-        if (hook->unk4C == 10.0f) {
+        if (hook->unk4C >= 10.0f) {
             hook->unk50 = (f32) (hook->unk50 / hook->unk4C);
             hook->unk58 = (f32) (hook->unk58 / hook->unk4C);
             hook->unk4C = 10.0f;
@@ -790,8 +789,7 @@ static void fn_1_1B1C(M559HOOK *hook, OMOBJ *obj) {
             var_f28 += 360.0f;
         }
         hook->unk44 = var_f28;
-                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-        if (hook->unk4C == 7.0f) {
+        if (hook->unk4C >= 7.0f) {
             var_r30 = 5;
         } else {
             var_r30 = 4;
@@ -2158,8 +2156,7 @@ static s32 fn_1_5B74(HuVecF *pos, f32 range) {
     sp10 = lbl_1_bss_B90.y + (temp_f28 * (lbl_1_bss_B84.y - lbl_1_bss_B90.y));
     sp14 = lbl_1_bss_B90.z + (temp_f28 * (lbl_1_bss_B84.z - lbl_1_bss_B90.z));
     Hu3DCameraPosSetV(1, (Vec *) &sp18, sp8, (Vec *) &spC);
-                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-    if (range == 1.0f) {
+    if (range >= 1.0f) {
         return 1;
     }
     lbl_1_bss_AB4 = 1;
@@ -2207,8 +2204,7 @@ loop_6:
         var_r31 += 1;
         goto loop_6;
     }
-                M2C_ERROR(/* unknown instruction: cror eq, lt, eq */);
-    if (range == 1.0f) {
+    if (range >= 1.0f) {
         return 1;
     }
     lbl_1_bss_AB4 = 1;
