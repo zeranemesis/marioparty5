@@ -29,7 +29,8 @@ typedef struct M555Player_s {
     s16 pad4b[2];        /* 0x038 */
     f32 velX;            /* 0x03C */
     f32 velY;            /* 0x040 */
-    s16 pad5[7];         /* 0x044 */
+    HuVecF prevPos;      /* 0x044 */
+    s16 idleCnt;         /* 0x050 */
     s16 wheel;           /* 0x052 */
     s16 camMode;         /* 0x054 */
     s16 wheelState;      /* 0x056 */
@@ -276,11 +277,60 @@ extern M555_PLAYER lbl_1_bss_120C[2];
 extern M555_ITEM lbl_1_bss_214[100];
 extern M555_SPIN lbl_1_bss_11E4;
 extern M555_MARK lbl_1_bss_B88[50];
-extern s16 lbl_1_bss_C[0x104]; /* 0x208 bytes */
 extern s16 lbl_1_bss_B74[10];
 extern M555_HOOK lbl_1_bss_11C8;
 
 
+
+/* The 0x208-byte backdrop/scenery director at lbl_1_bss_C. */
+typedef struct M555SceneRec_s {
+    s16 active;          /* 0x00 */
+    s16 state;           /* 0x02 */
+    f32 f20;             /* 0x04 */
+    f32 f24;             /* 0x08 */
+} M555_SCENEREC;
+
+typedef struct M555SceneRing_s {
+    s16 on;              /* 0x0 */
+    s16 hit;             /* 0x2 */
+} M555_SCENERING;
+
+typedef struct M555SceneBird_s {
+    s16 on;              /* 0x00 */
+    s16 state;           /* 0x02 */
+    s16 pad4[2];         /* 0x04 */
+    f32 f14C;            /* 0x08 */
+    f32 f150;            /* 0x0C */
+    f32 f154;            /* 0x10 */
+    f32 f158;            /* 0x14 */
+    f32 pad18[6];        /* 0x18 */
+} M555_SCENEBIRD;
+
+typedef struct M555Scene_s {
+    s16 pad0[4];             /* 0x000 */
+    s16 sw3;                 /* 0x008 */
+    s16 timer3;              /* 0x00A */
+    s16 used3[3];            /* 0x00C */
+    s16 used4[4];            /* 0x012 */
+    s16 pad1a;               /* 0x01A */
+    M555_SCENEREC rec[12];   /* 0x01C */
+    u8 padAC[0x60];          /* 0x0AC */
+    s16 sw5;                 /* 0x10C */
+    s16 cnt5;                /* 0x10E */
+    s16 pad110[2];           /* 0x110 */
+    M555_SCENERING ring[4];  /* 0x114 */
+    s16 sw2;                 /* 0x124 */
+    s16 pad126;              /* 0x126 */
+    s16 sw6;                 /* 0x128 */
+    s16 timer6;              /* 0x12A */
+    u8 pad12C[0x10];         /* 0x12C */
+    s16 used6[4];            /* 0x13C */
+    M555_SCENEBIRD bird[4];  /* 0x144 */
+    s16 sw1;                 /* 0x204 */
+    s16 pad206;              /* 0x206 */
+} M555_SCENE;
+
+extern M555_SCENE lbl_1_bss_C;
 
 /* ---- function prototypes (owner replaces its own `();` line with the real signature) ---- */
 void fn_1_308();
@@ -328,15 +378,15 @@ void fn_1_3010(M555_CTRL *ctrl);
 s32 fn_1_69C4(M555_CTRL *ctrl);
 s16 fn_1_6A0C(void);
 s16 fn_1_6A60(void);
-void fn_1_6AF0();
-void fn_1_6DF0();
-void fn_1_6ECC();
-void fn_1_6F3C();
-void fn_1_71B4();
-void fn_1_7364();
-void fn_1_73A4();
-void fn_1_7840();
-void fn_1_78DC();
+s32 fn_1_6AF0(void);
+s16 fn_1_6DF0(void);
+s16 fn_1_6ECC(void);
+s16 fn_1_6F3C(void);
+s32 fn_1_71B4(void);
+s32 fn_1_7364(void);
+void fn_1_73A4(void);
+void fn_1_7840(void);
+void fn_1_78DC(void);
 void fn_1_7D88(s16 player);
 void fn_1_8928(s16 player);
 s32 fn_1_8F4C(s16 arg);
