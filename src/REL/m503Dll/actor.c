@@ -68,8 +68,7 @@ void fn_1_D83C(OMOBJ *obj)
 }
 
 // NONMATCHING: MWCC emits one register fewer than the original (r25 instead of
-// r24) and keeps no copy of each table entry, and it picks clrrwi where the
-// original picks clrlwi for the bit-31 test
+// r24) and keeps no copy of each table entry
 void fn_1_D84C(OMOBJ *obj)
 {
     ACTOR_TBL *tbl;
@@ -86,7 +85,7 @@ void fn_1_D84C(OMOBJ *obj)
         if (a == NULL) {
             continue;
         }
-        if ((a->flags & 0x80000000u) == 0) {
+        if ((a->flags & 1) == 0) {
             continue;
         }
         if (a->state != 0) {
@@ -97,7 +96,7 @@ void fn_1_D84C(OMOBJ *obj)
             if (b == NULL) {
                 continue;
             }
-            if ((b->flags & 0x80000000u) == 0) {
+            if ((b->flags & 1) == 0) {
                 continue;
             }
             if (b->state != 0) {
@@ -110,7 +109,7 @@ void fn_1_D84C(OMOBJ *obj)
             if (b == NULL) {
                 continue;
             }
-            if ((b->flags & 0x80000000u) == 0) {
+            if ((b->flags & 1) == 0) {
                 continue;
             }
             if (b->state == 0) {
@@ -257,7 +256,7 @@ const f32 lbl_1_rodata_668 = 0.0f;
 const f32 lbl_1_rodata_66C = 0.0f;
 const f64 lbl_1_rodata_680 = 0.0;
 const f32 lbl_1_rodata_688 = -1.0f;
-const f64 lbl_1_rodata_690 = 360.0;
+const f64 lbl_1_rodata_690 = 180.0;
 const f64 lbl_1_rodata_698 = M_PI;
 
 
