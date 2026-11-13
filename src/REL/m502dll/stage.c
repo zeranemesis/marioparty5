@@ -73,6 +73,7 @@ void fn_1_21B8(M502STAGE *st, s32 playerNo, M502PLAYER *player)
     Hu3DModelLayerSet(st->water, 4);
 }
 
+// NONMATCHING: register allocation differs; same behaviour
 void fn_1_2704(M502STAGE *st)
 {
     s32 i;
@@ -109,6 +110,7 @@ void fn_1_27AC(void)
     }
 }
 
+// NONMATCHING: stack layout differs; same constants and flow
 void fn_1_2878(HU3DDRAWOBJ *drawObj)
 {
     GXColor col = { 0x40, 0x40, 0x40, 0x18 };
@@ -247,6 +249,7 @@ void fn_1_3380(f32 v)
     lbl_1_bss_5040 = v;
 }
 
+// NONMATCHING: stack layout differs; same constants and flow
 void fn_1_3390(HU3DDRAWOBJ *drawObj)
 {
     GXColor col = { 0x60, 0x60, 0x60, 9 };

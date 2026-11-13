@@ -1,6 +1,7 @@
 #include "REL/m502dll.h"
 
 /* computer player: pick a column for the next block drop */
+// NONMATCHING: switch layout differs and sub++ is shared in the original; same behaviour
 void fn_1_58E0(M502AI *ai)
 {
     M502INPUT *in;

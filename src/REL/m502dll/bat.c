@@ -30,6 +30,7 @@ void fn_1_C4F0(M502BAT *bat)
 }
 
 /* spawn the bats when the first player drops below the ceiling, then update them all */
+// NONMATCHING: stack layout of the Vec locals differs; same behaviour
 void fn_1_C554(M502BAT *bat)
 {
     Vec v;
@@ -112,6 +113,7 @@ void fn_1_CAC8(M502BAT *bat)
     }
 }
 
+// NONMATCHING: stack layout of the Vec locals differs; same behaviour
 void fn_1_CB10(M502BATITEM *it, u16 idx, M502BAT *bat)
 {
     Vec v;
@@ -157,6 +159,7 @@ void fn_1_CE54(M502BATITEM *it)
     memset(it, 0, sizeof(M502BATITEM));
 }
 
+// NONMATCHING: switch(state) layout and stack layout differ; same behaviour
 void fn_1_CEBC(M502BATITEM *it)
 {
     Vec out1;

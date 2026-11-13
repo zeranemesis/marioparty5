@@ -3,7 +3,7 @@
 static Vec lbl_1_data_FE0 = { 0.0f, -100.0f, -150.0f };
 static Vec lbl_1_data_FEC = { 0.0f, 1.0f, 0.0f };
 static Vec lbl_1_data_FF8 = { 0.0f, 1400.0f, -150.5f };
-static Vec lbl_1_data_1004 = { 0.0f, 300.0f, 3400.5f };
+static Vec lbl_1_data_1004 = { 0.0f, 300.0f, 3400.0f };
 static Vec lbl_1_data_1010 = { 0.0f, 1.0f, 0.0f };
 static Vec lbl_1_data_101C = { 0.0f, -70.0f, -150.0f };
 static Vec lbl_1_data_1028 = { 0.0f, 300.0f, 4550.0f };
@@ -57,6 +57,7 @@ void fn_1_9604(M502OPENING *o)
 }
 
 /* intro: drop player 1 in, then fold the split screen into four viewports */
+// NONMATCHING: case 6 is placed before case 7 in the original and the state switch is laid out differently; same behaviour
 s32 fn_1_9644(M502MAIN *m)
 {
     M502PLRSUB *p0;

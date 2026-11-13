@@ -225,6 +225,7 @@ void _epilog(void)
     }
 }
 
+// NONMATCHING: register allocation differs (bss address kept in a callee-saved reg)
 void ObjectSetup(void)
 {
     OMOBJMAN *objman;
@@ -359,6 +360,7 @@ void fn_1_504(M502MAIN *m)
 }
 
 /* the whole game: returns 1 when the module should return to the overlay manager */
+// NONMATCHING: orig does not inline the HuAud wrappers and indexes the players differently; same behaviour
 s32 fn_1_5DC(M502MAIN *m)
 {
     s32 found;
@@ -624,6 +626,7 @@ void fn_1_FD8(M502MAIN *m)
     }
 }
 
+// NONMATCHING: u16 vs s16 temporaries; same values
 void fn_1_1018(M502MAIN *m)
 {
     u16 order[4] = { 0, 0, 0, 0 };
@@ -643,6 +646,7 @@ void fn_1_1018(M502MAIN *m)
 }
 
 /* pad rumble and camera shake once the countdown runs low */
+// NONMATCHING: register allocation and player/plr addressing differ; same behaviour
 void fn_1_1104(M502MAIN *m)
 {
     f32 shake;
@@ -716,6 +720,7 @@ void fn_1_13F0(M502MODELS *models)
     models->anim2 = HuSprAnimDataRead(0x21000C);
 }
 
+// NONMATCHING: null-test spelling differs; same test
 void fn_1_147C(M502MODELS *models)
 {
     if (models->texBuf != NULL) {
@@ -724,6 +729,7 @@ void fn_1_147C(M502MODELS *models)
     }
 }
 
+// NONMATCHING: register allocation differs; same behaviour
 void fn_1_14C0(M502MODELS *models)
 {
     s32 i;
@@ -769,6 +775,7 @@ void fn_1_168C(void)
 {
 }
 
+// NONMATCHING: register allocation differs; same behaviour
 void fn_1_1690(M502PLAYER *p, s32 no, M502MAIN *m)
 {
     memset(p, 0, sizeof(M502PLAYER));
@@ -782,6 +789,7 @@ void fn_1_1690(M502PLAYER *p, s32 no, M502MAIN *m)
     p->timer = NULL;
 }
 
+// NONMATCHING: null-test spelling differs; same test
 void fn_1_1740(M502PLAYER *p)
 {
     if (p->main->versus != 0 && p->timer != NULL) {

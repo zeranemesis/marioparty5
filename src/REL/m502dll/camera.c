@@ -4,6 +4,7 @@ s32 lbl_1_data_B60[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
 
 void fn_1_1990(M502CAMERA *cam, s32 camBit);
 
+// NONMATCHING: orig builds the three Vec literals after the field stores and in a different stack order; same values/offsets
 void fn_1_1830(M502CAMERA *cam, s32 playerNo, struct M502Player_s *player)
 {
     Vec up = { 0.0f, 1.0f, 0.0f };
@@ -106,6 +107,7 @@ void fn_1_1E5C(M502CAMERA *cam, f32 t)
     cam->t = t;
 }
 
+// NONMATCHING: stack layout differs; same interpolation and clamp
 s32 fn_1_1E64(M502CAMERA *cam, Vec *up, f32 time)
 {
     Vec p;

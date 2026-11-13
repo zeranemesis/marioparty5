@@ -91,6 +91,7 @@ void fn_1_6778(M502BLOCK *b)
     memset(b, 0, sizeof(M502BLOCK));
 }
 
+// NONMATCHING: orig reads the pan/sfx value inside each branch and keeps different register/stack layout; same behaviour
 void fn_1_6808(M502BLOCK *b)
 {
     M502PLAYER *player = b->player;
@@ -200,6 +201,7 @@ void fn_1_6808(M502BLOCK *b)
     }
 }
 
+// NONMATCHING: branch layout differs (single return reg); same range test
 s32 fn_1_6CB8(Vec *v)
 {
     s32 result;
@@ -223,6 +225,7 @@ void fn_1_6CFC(s16 lvl, s16 row, s16 col, Vec *out)
     out->z = 0.0f;
 }
 
+// NONMATCHING: orig keeps x/y in f30/f31 and computes the column first; same formulas
 void fn_1_6E1C(Vec *pos, s16 *lvlOut, s16 *rowOut, s16 *colOut)
 {
     Vec p = *pos;
@@ -252,6 +255,7 @@ void fn_1_6E1C(Vec *pos, s16 *lvlOut, s16 *rowOut, s16 *colOut)
     *colOut = (s16)((300.0f + p.x) / 300.0f);
 }
 
+// NONMATCHING: vibration switch is an if chain in the original; same behaviour
 s32 fn_1_70B0(M502BLOCK *b, s16 lvl, s16 row, s16 col, s16 n)
 {
     s32 ret;
@@ -352,7 +356,7 @@ void fn_1_735C(M502BLOCK *b)
 
 void fn_1_7548(M502BLOCK *b, s16 lvl, s16 col, s16 pattern)
 {
-    u16 sel[4] = { 0, 0, 0, 0 };
+    s16 sel[4] = { 0, 0, 0, 0 };
     u8 unused[3] = { 0x40, 0x38, 0x71 };
     u8 cnt[9] = { 1, 2, 3, 1, 2, 4, 1, 2, 4 };
     u8 dead;
@@ -457,6 +461,7 @@ void fn_1_7548(M502BLOCK *b, s16 lvl, s16 col, s16 pattern)
     }
 }
 
+// NONMATCHING: flip is kept in memory in the original; same table lookup and marks
 void fn_1_7BFC(M502BLOCK *b)
 {
     struct {
@@ -508,6 +513,7 @@ void fn_1_7BFC(M502BLOCK *b)
     }
 }
 
+// NONMATCHING: lvl is s32 and the type switch is laid out differently; same values
 void fn_1_7ECC(M502BLOCK *b)
 {
     Vec p;
@@ -575,6 +581,7 @@ void fn_1_8290(M502BLOCK *b)
     }
 }
 
+// NONMATCHING: orig copies the zero Vec after the u16 stores; same values
 void fn_1_8324(M502CELL *c)
 {
     Vec zero = { 0.0f, 0.0f, 0.0f };
@@ -601,6 +608,7 @@ void fn_1_83AC(M502BLOCK *b, s16 kind, s16 lvl, Vec *pos, u16 n)
     }
 }
 
+// NONMATCHING: orig keeps the zero Vec in rodata (struct copy), we build it with float stores; same result
 void fn_1_8438(M502LEVELFX *fx, M502BLOCK *b)
 {
     Vec zero;
@@ -630,6 +638,7 @@ void fn_1_850C(M502LEVELFX *fx)
     memset(fx, 0, sizeof(M502LEVELFX));
 }
 
+// NONMATCHING: switch(state) layout and Vec zero init differ; same behaviour
 void fn_1_8594(M502LEVELFX *fx)
 {
     Vec zeroA;
@@ -666,6 +675,7 @@ void fn_1_8594(M502LEVELFX *fx)
     }
 }
 
+// NONMATCHING: register allocation differs; same tables and compares
 void fn_1_876C(M502LEVELFX *fx, s16 kind, s16 lvl, Vec *pos, u16 n)
 {
     s32 base;
@@ -733,6 +743,7 @@ void fn_1_89B8(HU3DMODEL *model, Mtx *mtx)
     fn_1_89F4(lbl_1_data_EA8[3], model, mtx);
 }
 
+// NONMATCHING: stack layout/null-test form differ; same drawing order and constants
 void fn_1_89F4(M502BLOCK *b, HU3DMODEL *model, Mtx *mtx)
 {
     M502PLAYER *player = b->player;
@@ -840,6 +851,7 @@ void fn_1_8DE4(M502BLOCK *b, f32 *out)
     *out = r;
 }
 
+// NONMATCHING: register allocation and pointer hoisting differ; same loop, calls and constants
 void fn_1_8F04(M502BLOCK *b)
 {
     M502PLAYER *player = b->player;

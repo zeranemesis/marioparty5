@@ -74,6 +74,7 @@ void fn_1_38E0(M502PLRSUB *plr, s32 no, M502PLAYER *player)
     CharMotionUpdateSet((s16)plr->charNo, lbl_1_data_C54[0][3], 0);
 }
 
+// NONMATCHING: null-test spelling differs; same test
 void fn_1_3B88(M502PLRSUB *plr)
 {
     fn_1_6478(&plr->input);
@@ -123,6 +124,7 @@ s32 fn_1_3BF4(M502PLRSUB *plr)
     return ret;
 }
 
+// NONMATCHING: state range test is a binary-search chain in the original; same set of states
 s32 fn_1_3D50(M502PLRSUB *plr)
 {
     M502MAIN *m = plr->player->main;
@@ -225,6 +227,7 @@ s32 fn_1_402C(M502PLRSUB *plr)
     return ret;
 }
 
+// NONMATCHING: data_E90 is reloaded at each use in the original; same arithmetic
 void fn_1_40D8(M502PLRSUB *plr)
 {
     M502MAIN *m = plr->player->main;
@@ -289,6 +292,7 @@ void fn_1_40D8(M502PLRSUB *plr)
     }
 }
 
+// NONMATCHING: register allocation and member loads differ; same behaviour
 void fn_1_44B8(M502PLRSUB *plr)
 {
     OMOBJ *obj = plr->obj;
@@ -350,6 +354,7 @@ void fn_1_46CC(M502PLRSUB *plr)
     }
 }
 
+// NONMATCHING: register allocation and member loads differ; same behaviour
 void fn_1_4874(M502PLRSUB *plr)
 {
     f32 v;
@@ -378,6 +383,7 @@ void fn_1_4874(M502PLRSUB *plr)
     }
 }
 
+// NONMATCHING: register allocation and member loads differ; same behaviour
 void fn_1_4A1C(M502PLRSUB *plr)
 {
     Vec p = { 0.0f, 0.0f, 0.0f };
@@ -453,6 +459,7 @@ void fn_1_4A1C(M502PLRSUB *plr)
     plr->unkC++;
 }
 
+// NONMATCHING: register allocation and member loads differ; same behaviour
 s32 fn_1_4E70(M502PLRSUB *plr)
 {
     s16 lvl;
@@ -562,6 +569,7 @@ s32 fn_1_4E70(M502PLRSUB *plr)
     return ret;
 }
 
+// NONMATCHING: register allocation and Vec copy differ; same behaviour
 void fn_1_5384(M502PLRSUB *plr)
 {
     Vec zero = { 0.0f, 0.0f, 0.0f };
@@ -597,6 +605,7 @@ void fn_1_5384(M502PLRSUB *plr)
     }
 }
 
+// NONMATCHING: orig stores straight into the camera fields; same fields and constants
 void fn_1_5510(M502PLRSUB *plr)
 {
     M502CAMERA *cam = &plr->player->camera;
@@ -648,6 +657,7 @@ void fn_1_5818(M502AI *ai)
     memset(ai, 0, sizeof(M502AI));
 }
 
+// NONMATCHING: switch(step) is an if chain in the original; same behaviour
 void fn_1_5848(M502AI *ai)
 {
     M502INPUT *in = ai->input;
