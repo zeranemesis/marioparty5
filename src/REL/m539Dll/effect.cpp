@@ -187,8 +187,8 @@ void fn_1_CBAC(M539Effect *self, M539Particle *particleP)
         p->vel.y = (f32)cos(0.017453292f * ((360.0f * i) / particleP->maxCnt));
         p->vel.z = 0.0f;
         p->scale = 50.0f;
-        p->pos.x = 100.0f * (0.01f * ((f64)(fn_1_4AE0(&lbl_1_rodata_264) & 0x3F) - 31.0f));
-        p->pos.y = 100.0f * (0.01f * ((f64)(fn_1_4AE0(&lbl_1_rodata_264) & 0x3F) - 31.0f));
+        p->pos.x = 100.0f * (0.01f * ((f32)(fn_1_4AE0(&lbl_1_rodata_264) & 0x3F) - 31.0f));
+        p->pos.y = 100.0f * (0.01f * ((f32)(fn_1_4AE0(&lbl_1_rodata_264) & 0x3F) - 31.0f));
         p->pos.z = 0.0f;
         p->color.a = 0;
         p->time = 0;

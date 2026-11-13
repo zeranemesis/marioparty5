@@ -21,7 +21,7 @@ f32 fn_1_9BDC(f32 a, f32 b)
 {
     s32 ia = (s32)(a * 182.04444444444445);
     s32 ib = (s32)(b * 182.04444444444445);
-    s16 diff = (u16)(ia - ib) - 0x8000;
+    s16 diff = (u16)(ia - ib - 0x8000) - 0x8000;
 
     return 0.0054931640625 * diff;
 }
@@ -34,7 +34,7 @@ inline s32 M539DegToAng(f32 deg)
 
 inline s16 M539AngDiff(s32 a, s32 b)
 {
-    return (u16)(a - b) - 0x8000;
+    return (u16)(a - b - 0x8000) - 0x8000;
 }
 
 inline f32 M539AngToDeg(s16 ang)
