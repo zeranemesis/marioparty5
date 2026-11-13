@@ -36,13 +36,13 @@ typedef struct M555Player_s {
     s16 pad6[2];         /* 0x058 */
     s16 anim;            /* 0x05C */
     s16 anim2;           /* 0x05E */
-    s16 pad7[0x144];     /* 0x060 */
+    HuVecF edgePos[0x24]; /* 0x060 */
+    f32 edgeDist[0x24];  /* 0x210 */
+    s16 edgeKind[0x24];  /* 0x2A0 */
     s16 tallyA;          /* 0x2E8 */
     s16 tallyB;          /* 0x2EA */
     s16 pad7b[1];        /* 0x2EC */
-    f32 speedScale;      /* 0x2F0 */
-    f32 speedScale2;     /* 0x2F4 */
-    s16 pad8[2];         /* 0x2F8 */
+    HuVecF aimPos;       /* 0x2F0 */
     s16 flag0;           /* 0x2FC */
     s16 flag1;           /* 0x2FE */
     s16 pad9[1];         /* 0x300 */
@@ -260,6 +260,7 @@ extern M555_CTRL *lbl_1_bss_3030;
 extern M555_PLAYER lbl_1_bss_120C[2];
 extern M555_ITEM lbl_1_bss_214[100];
 extern M555_SPIN lbl_1_bss_11E4;
+extern M555_MARK lbl_1_bss_B88[50];
 
 
 /* ---- function prototypes (owner replaces its own `();` line with the real signature) ---- */
@@ -342,7 +343,7 @@ void fn_1_16104();
 void fn_1_16958();
 void fn_1_171C8();
 void fn_1_17400();
-void fn_1_176C4();
+void fn_1_176C4(s16 player);
 void fn_1_19C0C();
 void fn_1_1A4B0();
 void fn_1_1A6F4();
