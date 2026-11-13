@@ -191,7 +191,7 @@ typedef struct M571Hook_s {
     s16 hookL; //0x54 left hand model
     s16 hookR; //0x56 right hand model
     s16 hookSwap; //0x58 swapped hand model
-    u8 pad5A[2]; //0x5A
+    u8 pad5A[6]; //0x5A, 0x5C is unused so unk60 lands on 0x60
     s32 unk60; //0x60
     f32 hookRotZ; //0x64
     f32 hookRotZOff; //0x68
@@ -305,7 +305,7 @@ extern Vec lbl_1_bss_65C;
 extern Vec lbl_1_bss_668;
 extern Vec lbl_1_bss_674;
 extern OMOBJMAN *lbl_1_bss_680;
-extern s32 lbl_1_bss_684[3];
+extern M571ListNode lbl_1_bss_684;
 
 /* functions */
 void ObjectSetup(void);
@@ -357,7 +357,7 @@ s32 fn_1_456C(f32 t, Vec *up);
 s32 fn_1_4B18(s32 base, s32 range);
 f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3);
 void fn_1_4A54(s32 fadeSpeed);
-void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out);
+void fn_1_4AC0(s16 modelId, char *arg1, Vec *out);
 s32 fn_1_4B54(Vec *arg0, Vec *arg1, f32 arg2, f32 arg3);
 s32 fn_1_4BB4(HuVecF *pos, s32 t0, s32 t1);
 s32 fn_1_4C78(HuVecF *pos, s32 t0, s32 t1);

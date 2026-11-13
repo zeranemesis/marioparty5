@@ -47,11 +47,11 @@ Vec lbl_1_data_70 = { 0.0f, 100.0f, -750.0f };
 
 M571SpawnPt lbl_1_data_7C[4] = { {71.0f, 60.0f}, {191.0f, 60.0f}, {385.0f, 60.0f}, {505.0f, 60.0f} };
 
-Vec lbl_1_data_9C[2] = { { -3456.0f, 0.0f, -280.0f }, { 3500.0f, 0.0f, -280.0f } };
+Vec lbl_1_data_9C[2] = { { -880.0f, 0.0f, -140.0f }, { 880.0f, 0.0f, -140.0f } };
 
 Vec lbl_1_data_B4[2] = { { 0.0f, 90.0f, 0.0f }, { 0.0f, 270.0f, 0.0f } };
 
-Vec lbl_1_data_CC[2] = { { -47.0f, 0.0f, -280.0f }, { 47.0f, 0.0f, -280.0f } };
+Vec lbl_1_data_CC[2] = { { -700.0f, 0.0f, -140.0f }, { 700.0f, 0.0f, -140.0f } };
 
 Vec lbl_1_data_E4 = { 0.0f, 10000.0f, 10000.0f };
 
@@ -204,8 +204,8 @@ Vec lbl_1_data_D30 = { 0.0f, 1.0f, 0.0f };
 Vec lbl_1_data_D3C = { 0.0f, 0.0f, 0.0f };
 
 MGSEQ_PARAM lbl_1_data_D48 = {
-    0,
     10,
+    0,
     (MGSEQ_FUNC)fn_1_1518,
     (MGSEQ_FUNC)fn_1_1630,
     NULL,
@@ -281,7 +281,7 @@ Vec lbl_1_bss_65C;
 Vec lbl_1_bss_668;
 Vec lbl_1_bss_674;
 OMOBJMAN *lbl_1_bss_680;
-s32 lbl_1_bss_684[3];
+M571ListNode lbl_1_bss_684;
 
 static const f32 m571Zero = 0.0f;
 static const f32 m571Sca = 0.1f;
@@ -415,7 +415,7 @@ void fn_1_68C(OMOBJ *obj)
     MGACTOR_PARAM param;
     s32 i;
     s32 j;
-    s16 mdlId[53];
+    HU3DMODELID *mdlId = obj->mdlId;
 
     mdlId[0] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 0), HU_MEMNUM_OVL, 2));
     mdlId[1] = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m571, 1), HU_MEMNUM_OVL, 2));
@@ -472,7 +472,7 @@ void fn_1_68C(OMOBJ *obj)
     MgActorColCylSet();
 
     Hu3DModelShadowMapSet(mdlId[0]);
-    Hu3DModelAttrSet(mdlId[1], 0x4001);
+    Hu3DModelAttrSet(mdlId[1], 0x40000001);
     CharEffectLayerSet(5);
     Hu3DModelAttrSet(mdlId[2], 1);
     Hu3DModelAttrSet(mdlId[3], 1);
@@ -482,11 +482,7 @@ void fn_1_68C(OMOBJ *obj)
     }
 
     for (i = 0; i < 4; i++) {
-#ifdef TARGET_PC
-        Hu3DModelShadowSet(mdlId[i + 4]);
-#else
-        ((ModelShadowSet2)Hu3DModelShadowSet)(mdlId[i + 4], 1);
-#endif
+        Hu3DModelShadowSet(lbl_1_bss_DC[i]->actor->mdlId);
     }
 
     obj->objFunc = NULL;
@@ -563,7 +559,7 @@ void fn_1_D58(OMOBJ *obj)
         mp = lbl_1_bss_DC[p->unk0.playerNo];
         p->unk10 = mp->actor->colGroundAttr;
         p->unk14 = (s16)mp->actor->colMesh;
-        p->unk16 = (s16)(*(s32 *)&mp->actor->vel.z >> 16);
+        p->unk16 = (s16)mp->mode;
 
         if (p->unk16 != 3) {
             p->unk34 = 0;
@@ -673,7 +669,7 @@ s32 fn_1_1264(Vec *pos, Vec *out)
         dist = dx * dx + dz * dz;
 
         if (dist > 0.0f) {
-            dist = 1.0f / sqrt(dist);
+            dist = sqrtf(dist);
         }
 
         if (best > dist) {
@@ -799,10 +795,11 @@ void fn_1_1760(void)
     if (MgSeqFrameNoGet() > 300) {
         for (i = 0; i < 20; i++) {
             if (lbl_1_bss_368[i] != NULL) {
-                found = 1;
                 break;
             }
         }
+
+        found = 1;
 
         if (found != 0) {
             for (n = 0; n < 4; n++) {
@@ -837,7 +834,7 @@ void fn_1_18B8(void)
 
         do {
             HuPrcVSleep();
-        } while ((WipeCheckEnd() & 0xFFFFFF00) != 0);
+        } while (WipeCheckEnd());
 
         omDelObjEx(lbl_1_bss_680, lbl_1_bss_1C0);
         omCameraViewSet(&lbl_1_data_1F0);
@@ -896,7 +893,7 @@ void fn_1_18B8(void)
 
         do {
             HuPrcVSleep();
-        } while ((WipeCheckEnd() & 0xFFFFFF00) != 0);
+        } while (WipeCheckEnd());
 
         MgSeqModeNext();
     }
@@ -1461,7 +1458,7 @@ void fn_1_3700(OMOBJ *obj)
     s32 i;
 
     spin->playerNo = obj->work[0];
-    spin->charNo = GwPlayerConf[spin->playerNo].padNo;
+    spin->charNo = GwPlayerConf[spin->playerNo].charNo;
     spin->score = lbl_1_bss_428[spin->playerNo];
 
     obj->mdlId[0] = CharModelCreate((s16)spin->charNo, 2);
@@ -1483,7 +1480,7 @@ void fn_1_3700(OMOBJ *obj)
     spin->rot.y = m571Zero;
     spin->rot.z = m571Zero;
 
-    Hu3DModelAttrSet(spin->modelId, 0x40001);
+    Hu3DModelAttrSet(spin->modelId, 0x40000001);
     Hu3DModelShadowSet(spin->modelId);
 
     Hu3D3Dto2D(&spin->pos, 1, &scr);
@@ -1541,15 +1538,15 @@ void fn_1_3944(void)
 // NONMATCHING: register allocation and expression form differ from the target build
 void fn_1_3D94(void)
 {
-    lbl_1_bss_684[1] = 0;
-    lbl_1_bss_684[2] = 0;
+    lbl_1_bss_684.prev = NULL;
+    lbl_1_bss_684.next = NULL;
 }
 
 // NONMATCHING: register allocation differs from the target build
 void fn_1_3DB8(u16 arg0, s16 arg1)
 {
     M571ListNode *node;
-    M571ListNode *sentinel = (M571ListNode *)&lbl_1_bss_684[0];
+    M571ListNode *sentinel = &lbl_1_bss_684;
     M571ListNode *old;
 
     node = HuMemDirectMallocNum(0, sizeof(M571ListNode), 0x1000);
@@ -1572,12 +1569,13 @@ s32 fn_1_3E40(s16 id)
 {
     M571ListNode *node;
 
-    node = (M571ListNode *) (uintptr_t) lbl_1_bss_684[2];
+    node = lbl_1_bss_684.next;
 
     while (node != NULL) {
         if (id == node->id) {
             M571ListNode *prev = node->prev;
             M571ListNode *next = node->next;
+            s32 ret = node->pad02;
 
             prev->next = next;
 
@@ -1586,7 +1584,7 @@ s32 fn_1_3E40(s16 id)
             }
 
             HuMemDirectFree(node);
-            return node->id;
+            return ret;
         }
 
         node = node->next;
@@ -1752,7 +1750,13 @@ f32 fn_1_4950(f32 arg1, f32 arg2, f32 arg3)
         delta -= m571TurnF;
     }
 
-    return (f32)fmod(arg1 + delta * arg3, m571Turn);
+    delta = (f32)fmod(arg1 + delta * arg3, m571Turn);
+
+    if (m571Zero > delta) {
+        delta += m571TurnF;
+    }
+
+    return delta;
 }
 
 // NONMATCHING: local register form differs from the target build
@@ -1770,11 +1774,11 @@ void fn_1_4A54(s32 fadeSpeed)
 }
 
 // NONMATCHING: local index/register form differs from the target build
-void fn_1_4AC0(s16 modelId, s32 arg1, Vec *out)
+void fn_1_4AC0(s16 modelId, char *arg1, Vec *out)
 {
     Mtx mtx;
 
-    Hu3DModelObjMtxGet(modelId, (char *) (uintptr_t) arg1, mtx);
+    Hu3DModelObjMtxGet(modelId, arg1, mtx);
 
     out->x = mtx[0][3];
     out->y = mtx[1][3];
