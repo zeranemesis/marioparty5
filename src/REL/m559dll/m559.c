@@ -378,7 +378,7 @@ static void fn_1_A5C(OMOBJ *obj) {
     M559HOOK *temp_r31;
 
     temp_r31 = obj->data;
-    Hu3D3Dto2D(temp_r31 + 0x28, 1, &sp8);
+    Hu3D3Dto2D((HuVecF *) &temp_r31->pos, 1, (HuVecF *) &sp8);
     CharModelVoicePanSet((s16) temp_r31->charNo, (s16) (32.0f + ((sp8.x / 576.0f) * 64.0f)));
 
 
@@ -1021,7 +1021,7 @@ static void fn_1_2948(OMOBJ *obj, s16 motion, u32 attr, f32 endTime) {
     temp_r31 = obj->data;
     if ((s16) temp_r31->state != motion) {
         temp_r31->state = motion;
-        CharMotionShiftSet((s16) temp_r31->charNo, *(obj->mtnId + (temp_r31->state * 2)), 0.0f, sp8, spC);
+        CharMotionShiftSet((s16) temp_r31->charNo, obj->mtnId[temp_r31->state], 0.0f, sp8, spC);
     }
 }
 static void fn_1_29D4(void) {
@@ -1309,7 +1309,7 @@ static void fn_1_3854(OMOBJ *obj, s16 motion, u32 attr, f32 endTime) {
     temp_r31 = obj->data;
     if ((s32) temp_r31->count != motion) {
         temp_r31->count = motion;
-        Hu3DMotionShiftSet(*obj->mdlId, *(obj->mtnId + (motion * 2)), 0.0f, sp8, spC);
+        Hu3DMotionShiftSet(*obj->mdlId, obj->mtnId[motion], 0.0f, sp8, spC);
         if ((s32) temp_r31->count == 3) {
             HuAudFXPlayPan(0x2C9, fn_1_55D8((HuVecF *) &temp_r31->pos));
         }
