@@ -221,7 +221,7 @@ typedef struct M555Work_s {
     s16 playerNo;        /* 0x02C */
     s16 phase4;          /* 0x02E */
     s16 timer;           /* 0x030 */
-    s16 pad3;            /* 0x032 */
+    s16 hitCnt;          /* 0x032 */
     s16 count;           /* 0x034 */
     s16 resultF;         /* 0x036 */
     s16 resultOn;        /* 0x038 */

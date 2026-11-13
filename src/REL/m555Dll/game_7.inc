@@ -274,3 +274,152 @@ s32 fn_1_13430(void)
     }
     return result;
 }
+
+void fn_1_14420(void)
+{
+    f32 unused = 50.0f;
+    f32 dist = 80.0f;
+    f32 rad = 50.0f;
+    HuVecF *p0 = &lbl_1_bss_3030->mdl[0x21].pos;
+    HuVecF *p1 = &lbl_1_bss_3030->mdl[0x22].pos;
+    HuVecF *c0 = &lbl_1_bss_3030->mdl[0xA9].pos;
+    HuVecF *c1 = &lbl_1_bss_3030->mdl[0xAA].pos;
+    HuVecF d;
+    HuVecF n;
+    HuVecF m;
+    HuVecF *c;
+    HuVecF *q;
+    f32 len;
+    f32 pan;
+    f32 k;
+    f64 s;
+    s16 p;
+    s16 i;
+    s16 j;
+    s16 jj;
+
+    if (lbl_1_bss_1894.itemIdx == 0) {
+        f32 amp = 20.0f;
+
+        d.x = p0->x - p1->x;
+        d.y = p0->y - p1->y;
+        len = sqrt(d.x * d.x + d.y * d.y);
+        n.x = d.x / (0.1f + len);
+        n.y = d.y / (0.1f + len);
+        m.x = 180.0 * (acos(n.x) / M_PI);
+        m.y = 180.0 * (asin(n.y) / M_PI);
+        if (m.y < 0.0f) {
+            m.x = 360.0f - m.x;
+        }
+        if (sin(M_PI * m.x / 180.0) > 0.0) {
+            s = sin(M_PI * m.x / 180.0);
+        } else {
+            s = -1.0 * sin(M_PI * m.x / 180.0);
+        }
+        m.y = s;
+        m.y = dist + m.y * amp;
+        if (len < 2.0f * m.y) {
+            if (len != 0.0f) {
+                k = m.y / len;
+            } else {
+                k = 0.0f;
+            }
+            d.x *= k;
+            d.y *= k;
+            n = *p0;
+            m = *p1;
+            n.x = (p0->x + p1->x) * 0.5f;
+            n.y = (p0->y + p1->y) * 0.5f;
+            p1->x = n.x - d.x;
+            p1->y = n.y - d.y;
+            c1->x = n.x - d.x;
+            c1->y = n.y - d.y;
+            p0->x = n.x + d.x;
+            p0->y = n.y + d.y;
+            c0->x = n.x + d.x;
+            c0->y = n.y + d.y;
+            if (lbl_1_bss_1894.count == 0 && lbl_1_bss_1894.motion <= 4) {
+                pan = 0.05818182f * n.x;
+                fn_1_2BD8(9, 0x7F, 64.0f + pan);
+            }
+            lbl_1_bss_1894.hitCnt++;
+            lbl_1_bss_1894.count = 1;
+        } else {
+            lbl_1_bss_1894.hitCnt = 0;
+            lbl_1_bss_1894.count = 0;
+        }
+        for (p = 0; p < 2; p++) {
+            c = &lbl_1_bss_3030->mdl[p + 0xA9].pos;
+            q = &lbl_1_bss_3030->mdl[p + 0x21].pos;
+            if (lbl_1_bss_120C[p].subStep == 0 && lbl_1_bss_1894.curPlayer == 0) {
+                for (j = 0; j < 0x32; j++) {
+                    i = j + 0x23;
+                    if (lbl_1_bss_B88[j].active != 0 && lbl_1_bss_3030->mdl[i].pos.z >= -121.0f
+                        && lbl_1_bss_3030->mdl[i].pos.z <= 121.0f) {
+                        d.x = lbl_1_bss_3030->mdl[i].pos.x - q->x;
+                        d.y = lbl_1_bss_3030->mdl[i].pos.y - (30.0f + q->y);
+                        len = sqrt(d.x * d.x + d.y * d.y);
+                        if (len < dist + rad) {
+                            if (--lbl_1_bss_120C[p].stage <= 0) {
+                                lbl_1_bss_1894.curPlayer = (p * 2) | (p ^ 1);
+                                fn_1_2E60(p + 6, 0x3E8);
+                            }
+                            if (len == 0.0f) {
+                                n.x = 0.0f;
+                                n.y = 0.0f;
+                            } else {
+                                n.x = d.x / (0.1f + len);
+                                n.y = d.y / (0.1f + len);
+                                m.x = 180.0 * (acos(n.x) / M_PI);
+                                m.y = 180.0 * (asin(n.y) / M_PI);
+                                if (m.y < 0.0f) {
+                                    m.x = 360.0f - m.x;
+                                }
+                                n.x = q->x + dist * cos(M_PI * m.x / 180.0);
+                                n.y = (30.0f + q->y) + dist * sin(M_PI * m.y / 180.0);
+                            }
+                            for (jj = 0; jj < 0x64; jj++) {
+                                if (lbl_1_bss_214[jj].active == 0) {
+                                    lbl_1_bss_214[jj].active = 1;
+                                    lbl_1_bss_214[jj].type = 0;
+                                    lbl_1_bss_214[jj].kind = 6;
+                                    lbl_1_bss_214[jj].slot = p;
+                                    lbl_1_bss_214[jj].angX = m.x;
+                                    lbl_1_bss_214[jj].angY = m.y;
+                                    break;
+                                }
+                            }
+                            pan = 0.05818182f * n.x;
+                            fn_1_2BD8(5, 0x7F, 64.0f + pan);
+                            pan = 0.05818182f * lbl_1_bss_3030->mdl[p + 0xA9].pos.x;
+                            CharFXPlayVolPan(lbl_1_bss_3030->mdl0[p].charNo, 0x1FD, 0x7F, 64.0f + pan);
+                            lbl_1_bss_120C[p].subStep = 1;
+                            break;
+                        } else if (len < 80.0f + (dist + rad)) {
+                            pan = 0.05818182f * lbl_1_bss_3030->mdl[j + 0x23].pos.x;
+                            fn_1_2BD8(4, 0x7F, 64.0f + pan);
+                        }
+                    }
+                }
+            }
+            if (lbl_1_bss_1894.itemIdx2 == 0) {
+                if (q->x > 530.0f) {
+                    c->x = 530.0f;
+                    q->x = 530.0f;
+                }
+                if (q->x < -530.0f) {
+                    c->x = -530.0f;
+                    q->x = -530.0f;
+                }
+                if (30.0f + q->y > 316.0f) {
+                    c->y = 286.0f;
+                    q->y = 286.0f;
+                }
+                if (30.0f + q->y < -316.0f) {
+                    c->y = -346.0f;
+                    q->y = -346.0f;
+                }
+            }
+        }
+    }
+}
