@@ -262,7 +262,7 @@ s32 fn_1_92FC(s16 arg0)
     s16 found;
     s16 i, j, k;
     s16 rnd;
-    float dx, dz, d, ang, angSin;
+    float dx, dz, d;
 
     switch (lbl_1_bss_2F0.mode) {
         case 0:
@@ -316,12 +316,12 @@ s32 fn_1_92FC(s16 arg0)
                         if (range[lbl_1_bss_2F0.count][0] < d && range[lbl_1_bss_2F0.count][1] > d) {
                             lbl_1_bss_2F0.nextLeaf[i] = j;
                             lbl_1_bss_2F0.dist[i - 1] = d;
-                            ang = 180.0 * (acos(dx / (0.1f + d)) / 3.141592653589793);
-                            angSin = 180.0 * (asin(dz / (0.1f + d)) / 3.141592653589793);
-                            if (angSin < 0.0f) {
-                                ang = 360.0f - ang;
+                            dx = 180.0 * (acos(dx / (0.1f + d)) / 3.141592653589793);
+                            dz = 180.0 * (asin(dz / (0.1f + d)) / 3.141592653589793);
+                            if (dz < 0.0f) {
+                                dx = 360.0f - dx;
                             }
-                            lbl_1_bss_2F0.angle[i - 1] = ang;
+                            lbl_1_bss_2F0.angle[i - 1] = dx;
                             break;
                         }
                     }
@@ -345,12 +345,12 @@ s32 fn_1_92FC(s16 arg0)
                         if (range[lbl_1_bss_2F0.count][0] < d && range[lbl_1_bss_2F0.count][1] > d) {
                             lbl_1_bss_2F0.nextLeaf[lbl_1_bss_2F0.count + 1] = j;
                             lbl_1_bss_2F0.dist[lbl_1_bss_2F0.count] = d;
-                            ang = 180.0 * (acos(dx / (0.1f + d)) / 3.141592653589793);
-                            angSin = 180.0 * (asin(dz / (0.1f + d)) / 3.141592653589793);
-                            if (angSin < 0.0f) {
-                                ang = 360.0f - ang;
+                            dx = 180.0 * (acos(dx / (0.1f + d)) / 3.141592653589793);
+                            dz = 180.0 * (asin(dz / (0.1f + d)) / 3.141592653589793);
+                            if (dz < 0.0f) {
+                                dx = 360.0f - dx;
                             }
-                            lbl_1_bss_2F0.angle[lbl_1_bss_2F0.count] = ang;
+                            lbl_1_bss_2F0.angle[lbl_1_bss_2F0.count] = dx;
                             break;
                         }
                     }
@@ -370,11 +370,7 @@ s32 fn_1_92FC(s16 arg0)
             break;
         case 3:
             for (i = 0; i < lbl_1_bss_2F0.count + 2; i++) {
-                M541_MODEL *dst = &lbl_1_bss_3730->model[i + 6];
-                M541_MODEL *src = &lbl_1_bss_3730->model[lbl_1_bss_36A4[lbl_1_bss_2F0.nextLeaf[i]].a];
-                dst->posX = src->posX;
-                dst->posY = src->posY;
-                dst->posZ = src->posZ;
+                *(HuVecF *)&lbl_1_bss_3730->model[i + 6].posX = *(HuVecF *)&(&lbl_1_bss_3730->model[lbl_1_bss_36A4[lbl_1_bss_2F0.nextLeaf[i]].a])->posX;
                 lbl_1_bss_3730->model[i + 6].posZ -= 1.0f;
                 Hu3DModelAttrReset(lbl_1_bss_3730->model[i + 6].modelId, 1);
                 Hu3DModelAttrSet(lbl_1_bss_3730->model[i + 6].modelId, 0x40000001);
@@ -405,11 +401,7 @@ s32 fn_1_92FC(s16 arg0)
             lbl_1_bss_2F0.timer--;
             if (old < 0) {
                 for (i = 0; i < lbl_1_bss_2F0.count + 1; i++) {
-                    M541_MODEL *dst = &lbl_1_bss_3730->model[i + 0x10];
-                    M541_MODEL *src = &lbl_1_bss_3730->model[lbl_1_bss_36A4[lbl_1_bss_2F0.nextLeaf[i]].a];
-                    dst->posX = src->posX;
-                    dst->posY = src->posY;
-                    dst->posZ = src->posZ;
+                *(HuVecF *)&lbl_1_bss_3730->model[i + 0x10].posX = *(HuVecF *)&(&lbl_1_bss_3730->model[lbl_1_bss_36A4[lbl_1_bss_2F0.nextLeaf[i]].a])->posX;
                     lbl_1_bss_3730->model[i + 0x10].posY -= 1.0f;
                     lbl_1_bss_3730->model[i + 0x10].posZ -= 1.0f;
                     Hu3DModelAttrReset(lbl_1_bss_3730->model[i + 0x10].modelId, 1);
