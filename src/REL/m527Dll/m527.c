@@ -33,7 +33,7 @@ extern s32 lbl_1_bss_8;
 extern s32 lbl_1_bss_AC;
 extern s16 lbl_1_bss_A6;
 extern s32 lbl_1_data_164;
-extern OMOBJMAN *lbl_1_bss_B4;
+extern OMOBJ *lbl_1_bss_B4;
 extern f32 lbl_1_bss_84[2];
 extern f32 lbl_1_bss_7C[2];
 extern f32 lbl_1_bss_0;
@@ -83,6 +83,14 @@ typedef struct M527Player_s {
 } M527Player; /* size = 0x6C */
 
 void ObjectSetup(void);
+void fn_1_B8C4(OMOBJ *obj);
+void fn_1_C408(OMOBJ *obj);
+void fn_1_CB68(OMOBJ *obj);
+void fn_1_D198(OMOBJ *obj);
+extern s32 lbl_1_bss_9C;
+extern OMOBJ *lbl_1_bss_C8;
+extern OMOBJ *lbl_1_bss_CC;
+extern OMOBJ *lbl_1_bss_B0;
 
 
 #ifdef TARGET_PC
@@ -96,7 +104,7 @@ void ObjectSetup(void);
     s32 lbl_1_bss_AC;
     s16 lbl_1_bss_A6;
     s32 lbl_1_data_164;
-    OMOBJMAN *lbl_1_bss_B4;
+    OMOBJ *lbl_1_bss_B4;
     OMOBJMAN *lbl_1_bss_A8;
     f32 lbl_1_bss_84[2];
     f32 lbl_1_bss_7C[2];
@@ -117,6 +125,10 @@ void ObjectSetup(void);
     u32 lbl_1_rodata_4F8[12];
     f32 lbl_1_rodata_558;
     s32 lbl_1_bss_D0;
+    s32 lbl_1_bss_9C;
+    OMOBJ *lbl_1_bss_C8;
+    OMOBJ *lbl_1_bss_CC;
+    OMOBJ *lbl_1_bss_B0;
 #endif
 
 void fn_1_A0D0(OMOBJ *obj);
@@ -246,9 +258,9 @@ void ObjectSetup(void)
     HuVecF sp3C;
     HuVecF sp30;
     GXColor sp8;
-    HuVecF sp28;
-    HuVecF sp1C;
-    HuVecF sp10;
+    HuVecF sp24;
+    HuVecF sp18;
+    HuVecF sp0C;
     s32 i;
 
     OSReport("******* M527 ObjectSetup *********\n");
@@ -280,18 +292,36 @@ void ObjectSetup(void)
     sp8.r = 0;
     sp8.g = 0;
     sp8.b = 0;
-    Hu3DGLightInfinitytSet((HU3DLIGHTID) 0);
-    sp28.z = 345.0f;
-    sp28.x = 10000.0f * (f32) sin(1.5707963267948966);
-    sp28.y = 10000.0f * (f32) cos(1.5707963267948966);
-    sp1C.x = 0.0f;
-    sp1C.y = 1.0f;
-    sp1C.z = 0.0f;
-    sp10.x = 346.0f;
-    sp10.y = 0.0f;
-    sp10.z = 0.0f;
-    Hu3DShadowCreate(12.0f, 7000.0f, 12000.0f);
-    Hu3DCameraPosSet(3, sp28.x, sp28.y, sp28.z, sp1C.x, sp1C.y, sp1C.z, sp10.x, sp10.y, sp10.z);
+    sp8.a = 0;
+    lbl_1_bss_9C = Hu3DGLightCreateV(&sp3C, &sp30, &sp8);
+    Hu3DGLightStaticSet(lbl_1_bss_9C, 1);
+    Hu3DGLightInfinitytSet(lbl_1_bss_9C);
+    sp24.x = 345.0f;
+    sp24.y = 10000.0 * sin(1.5707963267948966);
+    sp24.z = 10000.0 * cos(1.5707963267948966);
+    sp18.x = 0.0f;
+    sp18.y = 1.0f;
+    sp18.z = 0.0f;
+    sp0C.x = 346.0f;
+    sp0C.y = 0.0f;
+    sp0C.z = 0.0f;
+    Hu3DShadowMultiCreate(12.0f, 7000.0f, 12000.0f, 3);
+    Hu3DShadowMultiTPLvlSet(0.5f, -1);
+    Hu3DShadowMultiPosSet(&sp24, &sp18, &sp0C, -1);
+    lbl_1_bss_A6 = -1;
+    lbl_1_data_158[0] = -1;
+    lbl_1_bss_B4 = omAddObjEx(lbl_1_bss_A8, 0x65, 0x10, 2, 1, fn_1_B8C4);
+    for (i = 0; i < 4; i++) {
+        OMOBJ *obj = omAddObjEx(lbl_1_bss_A8, 0x64, 0xB, 0xD, 0, fn_1_C408);
+
+        lbl_1_bss_B8[i] = obj;
+        obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x6C, 0x10000000);
+        obj->work[0] = i;
+    }
+    lbl_1_bss_C8 = omAddObjEx(lbl_1_bss_A8, 0x7FDA, 0, 0, -1, omOutViewMulti);
+    lbl_1_bss_C8->work[0] = 2;
+    lbl_1_bss_CC = omAddObjEx(lbl_1_bss_A8, 0x66, 0, 0, -1, fn_1_CB68);
+    lbl_1_bss_B0 = omAddObjEx(lbl_1_bss_A8, 0x67, 1, 0, -1, fn_1_D198);
 }
 /*
  * Create: groups the players by colour (GwPlayerConf[j].grp) into slot order,
