@@ -173,6 +173,40 @@ typedef struct M551State_s {
     u8 pad_17C[0x16C];
 } M551State;
 
+/* one falling paper strip, 0x5C bytes (lbl_1_bss_3C[1000]) */
+typedef struct M551Paper_s {
+    s16 active;          /* 0x00 */
+    s16 state;           /* 0x02 */
+    s16 life;            /* 0x04 */
+    s16 type;            /* 0x06 */
+    s16 moving;          /* 0x08 */
+    s16 pad_0A;          /* 0x0A */
+    HuVecF pos;          /* 0x0C */
+    HuVecF vel;          /* 0x18 */
+    HuVecF rot;          /* 0x24 */
+    HuVecF rotVel;       /* 0x30 */
+    f32 yOfs;            /* 0x3C */
+    f32 tpLvl;           /* 0x40 */
+    HuVecF colA;         /* 0x44 */
+    HuVecF colB;         /* 0x50 */
+} M551Paper;
+
+/* paper-strip emitter, 0xA8 bytes (lbl_1_bss_1679C) */
+typedef struct M551PaperMgr_s {
+    s16 active;          /* 0x00 */
+    s16 pad_02;          /* 0x02 */
+    HuVecF pos;          /* 0x04 */
+    f32 yOfs;            /* 0x10 */
+    s16 interval;        /* 0x14 */
+    s16 burstMax;        /* 0x16 */
+    s16 burstCnt;        /* 0x18 */
+    s16 total;           /* 0x1A */
+    s16 pad_1C[1];       /* 0x1C */
+    s16 mdl[4];          /* 0x1E */
+    char name[4][0x20];  /* 0x26 */
+    s16 hookId;          /* 0xA6 */
+} M551PaperMgr;
+
 /* One 0x30-byte item slot in lbl_1_bss_16844. */
 typedef struct M551Item_s {
     s16 state;           /* 0x00 */
@@ -213,8 +247,8 @@ typedef struct M551PlayerWork_s {
     s16 pad9;            /* 0x03A */
     s16 canDrop;         /* 0x03C */
     s16 pad10;           /* 0x03E */
-    f32 rotY2;           /* 0x040 */
-    s32 pad11;           /* 0x044 */
+    f32 colorScale;      /* 0x040 */
+    u8 *matColors;       /* 0x044 */
     HuVecF pos;          /* 0x048 */
     HuVecF oldPos;       /* 0x054 */
     f32 velX;            /* 0x060 */
@@ -291,13 +325,19 @@ typedef struct M551Flow_s {
     s16 carryIdx;        /* 0x04C */
     s16 pad7;            /* 0x04E */
     s32 objP;            /* 0x050 */
-    s16 itemNo;          /* 0x054 */
-    s16 pad8;            /* 0x056 */
+    s16 pad54;           /* 0x054 */
+    s16 itemNo;          /* 0x056 */
     s32 pad9;            /* 0x058 */
     f32 unk60;           /* 0x05C */
     f32 unk64;           /* 0x060 */
-    f32 pad10[0x0D];     /* 0x064 */
-    s16 pad98[8];        /* 0x098 */
+    f32 pad10[2];        /* 0x064 */
+    s32 bgmStream;       /* 0x06C */
+    s32 jingleStream;    /* 0x070 */
+    s32 pad74;           /* 0x074 */
+    s32 fxId[4];         /* 0x078 */
+    s32 pad88[4];        /* 0x088 */
+    s16 fxOn[4];         /* 0x098 */
+    s16 padA0[4];        /* 0x0A0 */
 } M551_FLOW;
 
 /* One 0x8-byte entry of the 12-slot per-item model index table. */
@@ -319,5 +359,13 @@ typedef struct M551Work_s {
 } M551_WORK;
 
 extern M551_WORK lbl_1_bss_0;
+extern M551_ITEMMODEL lbl_1_bss_179A0[12];
+extern M551_FLOW lbl_1_bss_16CB4;
+extern M551_PLAYERWORK lbl_1_bss_16A84[2];
+extern M551Paper lbl_1_bss_3C[1000];
+extern M551PaperMgr lbl_1_bss_1679C;
+extern M551State *lbl_1_bss_17A00;
+extern M551PtclWork lbl_1_data_4D0;
+extern s16 lbl_1_data_438[16];
 
 #endif
