@@ -339,7 +339,7 @@ void fn_1_668(OMOBJ *obj)
     if (work->mode == 2) {
         if (lbl_1_bss_BC < 1003) {
             if (lbl_1_bss_BC == 1000) {
-                if (lbl_1_bss_0[0] <= 43.0f) {
+                if (lbl_1_bss_0[0] >= 43.0f) {
                     if (lbl_1_bss_0[0] <= 53.0f) {
                         stickX = (PadBiasX[work->no] / 20) * 0xA;
                         stickY = (PadBiasY[work->no] / 20) * 0xA;
@@ -442,10 +442,8 @@ void fn_1_668(OMOBJ *obj)
                         }
                         angle += wrap;
                         step = 1;
-                        if (work->comAngle != 90.0f) {
-                            if (work->comAngle != -90.0f) {
-                                step = 0;
-                            }
+                        if (work->comAngle < 90.0f && work->comAngle > -90.0f) {
+                            step = 0;
                         }
                         if (step != 0) {
                             hold = 0;
@@ -499,7 +497,7 @@ void fn_1_668(OMOBJ *obj)
                             wrap = 0x168;
                         }
                         angle += wrap;
-                        if (fabs(angle - obj->rot.y) == 45.0f) {
+                        if (fabs(angle - obj->rot.y) <= 45.0) {
                             work->comMode = 2;
                             work->comTime = 0;
                             work->comTimeMax = 0;
@@ -545,26 +543,27 @@ void fn_1_668(OMOBJ *obj)
         PSMTXRotRad(mtx, 'y', 0.017453292f * CRotM[1].y);
         PSMTXMultVec(mtx, &vec, &vec);
         len = sqrtf((vec.x * vec.x) + (vec.z * vec.z));
-        if (len < 0.5f) {
-            work->velX = vec.x;
-            work->velZ += vec.z;
+        if (len >= 0.5f) {
+            if (len < 10.0f) {
+                work->velX = vec.x;
+                work->velZ += vec.z;
+            }
+            else {
+                vec.x /= len;
+                vec.z /= len;
+                len = 10.0f;
+                work->velX = vec.x * len;
+                work->velZ = vec.z * len;
+            }
+            work->speed = len;
+            if (work->mode == 2) {
+                obj->rot.y = (f32)(180.0 * (atan2(work->velX, work->velZ) / 3.141592653589793));
+            }
+            if (work->mode == 2) {
+                anim = (work->speed >= 8.0f) ? 2 : 1;
+            }
         }
-        else if (len < 10.0f) {
-            work->velX = (vec.x / len) * 10.0f;
-            work->velZ = (vec.z / len) * 10.0f;
-        }
-        else {
-            work->velX = (vec.x / len) * 10.0f;
-            work->velZ = (vec.z / len) * 10.0f;
-        }
-        work->speed = len;
-        if (work->mode == 2) {
-            obj->rot.y = (f32)(180.0 * (atan2(work->velX, work->velZ) / 3.141592653589793));
-        }
-        if (work->mode == 2) {
-            anim = (work->speed <= 8.0f) ? 2 : 1;
-        }
-        else {
+        else if (work->mode == 2) {
             anim = 0;
         }
     }
@@ -907,7 +906,7 @@ void fn_1_668(OMOBJ *obj)
             Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[(work->no + 9) * 2], 1U);
             Hu3DModelPosSet(lbl_1_bss_C4->mdlId[(work->no + 9) * 2],
                 lbl_1_bss_1810[work->itemNo].pos.x,
-                lbl_1_bss_1810[work->itemNo].pos.x,
+                lbl_1_bss_1810[work->itemNo].pos.y,
                 lbl_1_bss_1810[work->itemNo].pos.z);
             if (padF != 0.0f && lbl_1_bss_1810[work->itemNo].state == 0
                 && lbl_1_bss_1810[work->itemNo].kind != 0 && lbl_1_data_19C[work->itemNo] == 0) {
@@ -999,7 +998,7 @@ void fn_1_668(OMOBJ *obj)
         if (work->modeTime >= 0xB5) {
             anim = 7;
             obj->rot.y *= 0.8f;
-            if (Hu3DMotionOverlayTimeGet(obj->mdlId[0]) == 3.2886717319488525) {
+            if (Hu3DMotionOverlayTimeGet(obj->mdlId[0]) >= 73.9) {
                 Hu3DMotionOverlayTimeSet(obj->mdlId[0], 35.0f);
                 Hu3DModelAttrReset(obj->mdlId[0], 0x40000400U);
             }
