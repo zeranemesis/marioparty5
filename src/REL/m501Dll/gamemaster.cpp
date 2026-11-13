@@ -118,7 +118,7 @@ void CGameMaster::thread_exec()
                         sleepThread(0);
                     }
                 }
-                spawnWait = (s32)(90.0f + (f32)(CRandom::irandom() % 108));
+                spawnWait = (s32)(90.0f + (f32)((s32)CRandom::irandom() % 108));
             }
         }
         sleepThread(0);
