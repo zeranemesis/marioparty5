@@ -1921,7 +1921,8 @@ void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
         if (self->m_size + n <= self->capacity()) {
             end = self->end();
             after = end - pos;
-            if (end - (after - n) <= px && px < end) {
+            /* end - (after - n) is pos + n once the GC's 32-bit wrap cancels out; on 64-bit the unsigned n makes it end - 4 GB */
+            if (pos + n <= px && px < end) {
                 px += n;
             }
             if ((u32)after != 0) {

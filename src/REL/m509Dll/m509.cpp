@@ -993,8 +993,9 @@ void fn_1_3578(void)
     for (i = 1; i < count; i++) {
         s32 j = i;
         while (j >= 1 && winner[j - 1] > winner[j]) {
+            s32 tmp = winner[j - 1]; /* a real swap, as in m501's original code */
             winner[j - 1] = winner[j];
-            winner[j] = winner[j - 1];
+            winner[j] = tmp;
             j--;
         }
     }

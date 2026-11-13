@@ -520,7 +520,8 @@ void __vector_pod<int, allocator<int> >::insert(int *pos, unsigned long n, const
         int *end = this->end();
         int after = end - pos;
         const int *p = &value;
-        if (end - (after - n) <= p && p < end) {
+        /* end - (after - n) is pos + n once the GC's 32-bit wrap cancels out; on 64-bit the unsigned n makes it end - 4 GB */
+        if (pos + n <= p && p < end) {
             p += n;
         }
         if (after != 0) {

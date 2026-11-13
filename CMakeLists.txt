@@ -137,8 +137,11 @@ function(mp5native_game_target target)
         # A pointer stored in a 32-bit integer (or the reverse) works on GameCube
         # and corrupts memory on a 64-bit host: make it an error, not a warning.
         target_compile_options(${target} PRIVATE /we4311 /we4312)
+        # plain char is unsigned on GameCube (PowerPC): message bytes >= 128 ('!', accents, control codes) must
+        # not turn negative
+        target_compile_options(${target} PRIVATE /J)
     else ()
-        target_compile_options(${target} PRIVATE -Werror=pointer-to-int-cast -Werror=int-to-pointer-cast)
+        target_compile_options(${target} PRIVATE -Werror=pointer-to-int-cast -Werror=int-to-pointer-cast -funsigned-char)
     endif ()
 endfunction()
 

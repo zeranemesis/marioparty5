@@ -923,8 +923,9 @@ void CMinigameCore::StartWinnerGameMes()
     for (i = 1; i < count; i++) {
         s32 j = i;
         while (j >= 1 && winner[j - 1] > winner[j]) {
+            s32 tmp = winner[j - 1]; /* asm keeps winner[j - 1] in r24: a real swap */
             winner[j - 1] = winner[j];
-            winner[j] = winner[j - 1];
+            winner[j] = tmp;
             j--;
         }
     }
