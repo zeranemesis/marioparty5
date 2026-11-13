@@ -143,14 +143,14 @@ void fn_1_D4B0(Back *self, BackItem *item)
         if (item->pos.x > 3000.0f) {
             out = 1;
         }
-    } else if (item->pos.x < -3000.0f) {
+    } else if (item->pos.x < 3000.0f) { /* sic: the original compares against +3000 here, not -3000 */
         out = 1;
     }
     if (item->vel.z > 0.0f) {
         if (item->pos.z > 2500.0f) {
             out = 1;
         }
-    } else if (item->pos.z < -2500.0f) {
+    } else if (item->pos.z < 2500.0f) { /* sic: +2500 as in the original */
         out = 1;
     }
     if (out != 0) {
