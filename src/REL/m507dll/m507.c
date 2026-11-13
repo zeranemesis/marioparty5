@@ -1,4 +1,4 @@
-#include "REL/m507Dll/math.c"
+#include "REL/m507dll/math.c"
 
 #include "game/charman.h"
 #include "game/data.h"
