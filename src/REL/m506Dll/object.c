@@ -37,12 +37,11 @@ typedef struct M506Flow_s {
     s32 recordBase;                            //0x040
     s32 newRecordHeight;                       //0x044
     s8 playerHeight[M506_PLAYER_MAX];          //0x048
-    s8 playerNewHeight[M506_PLAYER_MAX];       //0x04C
+    s8 playerMaxHeight[M506_PLAYER_MAX];       //0x04C
     s8 playerRank[M506_PLAYER_MAX];            //0x050
-    s8 playerBest[M506_PLAYER_MAX];            //0x054
+    s8 playerWinner[M506_PLAYER_MAX];          //0x054 (0 = top height, -1 = not)
     s8 playerMotSel[M506_PLAYER_MAX];          //0x058
-    u8 p1SubState;                             //0x05C
-    u8 unk5D[3];                               //0x05D
+    s8 winFlag[M506_PLAYER_MAX];               //0x05C (winFlag[0] doubles as the P1 intro sub-state)
     M506_BOUNCE bounce[M506_PLAYER_MAX];       //0x060
     u8 unkB0[0x20];                            //0x0B0
     s8 stopFlag[M506_PLAYER_MAX];              //0x0D0
@@ -66,8 +65,9 @@ typedef struct M506Flow_s {
     s32 shadowScrollState;                     //0x128
     s32 rocketType;                            //0x12C
     M506_FLYOBJ rocket;                        //0x130
-    s32 unk154;                                //0x154
-    s32 unk158;                                //0x158
+    s32 rocketFlag;                            //0x154
+    s16 unk158;                                //0x158
+    u8 unk15A[2];                              //0x15A
     M506_FLYOBJ starfighter[M506_PLAYER_MAX];  //0x15C
     s16 recordScrollY;                         //0x1EC
     u8 unk1EE[2];                              //0x1EE
@@ -75,7 +75,8 @@ typedef struct M506Flow_s {
     HU3DMODELID particleMdlId;                 //0x1F4
     GAMEMESID gameMesId;                       //0x1F6
     s16 unk1F8[M506_PLAYER_MAX];               //0x1F8
-    s32 unk200;                                //0x200
+    s16 unk200;                                //0x200
+    u8 unk202[2];                              //0x202
     f32 tmpX;                                  //0x204
     f32 tmpY;                                  //0x208
     f32 tmpZ;                                  //0x20C
@@ -281,7 +282,7 @@ void M506MainUpdate(OMOBJ *obj)
     case 1:
         if (!StartFXFlag) {
             StartFXTime += 1.0f;
-            if (StartFXTime == 50.0f) {
+            if (StartFXTime >= 50.0f) {
                 HuAudFXPlay(0x66B);
                 StartFXFlag = 1;
             }
@@ -319,7 +320,7 @@ void M506ObjInit(M506_FLOW_WORK *flow)
 
     flow->mode = 0;
     flow->unk120 = 0.0f;
-    flow->p1SubState = 0; /* asm: stb 0x5c (the decomp cleared the work pointer at 0x04) */
+    flow->winFlag[0] = 0; /* asm: stb 0x5c (the decomp cleared the work pointer at 0x04) */
     flow->shadowScrollState = 0;
     flow->rocketType = 0;
     flow->gameMesId = -1;
@@ -336,7 +337,7 @@ void M506ObjInit(M506_FLOW_WORK *flow)
     }
     M506FlowModeStartSetup(flow);
     M506RocketInit(flow);
-    flow->unk154 = 0;
+    flow->rocketFlag = 0;
     flow->unk158 = 0;
     M506StarfighterStart(flow);
     M506MameShadowOff(flow);
@@ -530,23 +531,23 @@ void M506FlowP1Update(M506_FLOW_WORK *flow)
 {
     OMOBJ *p0 = M506PlayerObj[0];
 
-    switch (flow->p1SubState) {
+    switch (flow->winFlag[0]) {
     case 0:
         if (flow->player[0]->charNo != 8) {
             Hu3DMotionTimeSet(p0->mdlId[0], 0.0f);
             Hu3DMotionSpeedSet(p0->mdlId[0], 1.0f);
             Hu3DMotionShiftSet(p0->mdlId[0], p0->mtnId[6], 0.0f, 4.0f, 0);
         }
-        flow->p1SubState++;
+        flow->winFlag[0]++;
         break;
     case 1:
         if (flow->player[0]->charNo != 8) {
-            if (Hu3DMotionTimeGet(p0->mdlId[0]) == 58.0f) {
+            if (Hu3DMotionTimeGet(p0->mdlId[0]) >= 58.0f) {
                 Hu3DMotionShiftSet(p0->mdlId[0], p0->mtnId[0], 0.0f, 4.0f, HU3D_MOTATTR_LOOP);
-                flow->p1SubState++;
+                flow->winFlag[0]++;
             }
         } else {
-            flow->p1SubState++;
+            flow->winFlag[0]++;
         }
         break;
     }
@@ -614,7 +615,7 @@ void M506FlowModeEnd(OMOBJ *obj)
     case 3:
         M506ModelUpdate(flow->work);
         flow->timer += 1.0f;
-        if (flow->timer == 30.0f) {
+        if (flow->timer >= 30.0f) {
             flow->unk30 = 0;
             flow->timer = 0.0f;
             obj->work[2] = 4;
@@ -635,7 +636,7 @@ void M506FlowModeEnd(OMOBJ *obj)
     case 5:
         M506RecordBlink(flow);
         FlowTime += 1.0f;
-        if (FlowTime == 210.0f) {
+        if (FlowTime >= 210.0f) {
             obj->work[2] = 6;
             return;
         }
@@ -649,7 +650,7 @@ void M506FlowModeEnd(OMOBJ *obj)
             return;
         }
         flow->timer += 1.0f;
-        if (flow->timer == 60.0f) {
+        if (flow->timer >= 60.0f) {
             for (i = 0; i < M506_PLAYER_MAX; i++) {
                 GwPlayer[i].mgScore = flow->playerHeight[i] * 3;
             }
@@ -680,16 +681,14 @@ void M506FlowModeEnd(OMOBJ *obj)
     }
 }
 
-// NONMATCHING: complex per-player initialisation with uncertain field layout for the winner
-// side offset table and camera pos temporaries; behaviourally faithful but not instruction-matched.
-// NONMATCHING: faithful translation, not yet instruction-matched
 void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
 {
-    s8 charNo[M506_PLAYER_MAX];
+    int charNo[M506_PLAYER_MAX];
     s8 best[M506_PLAYER_MAX];
-    static const f32 sideOfs[2] = { -64.5f, 64.5f };
+    f32 sideOfs[2] = { -64.5f, 64.5f };
     s32 bestHeight;
     s32 humanBestHeight;
+    int rankIdx;
     int i, j;
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
@@ -698,7 +697,7 @@ void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
     flow->recordBase = flow->work->recordVal / 3;
     flow->tieCount = 0;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        flow->playerBest[i] = flow->player[i]->height;
+        flow->playerMaxHeight[i] = flow->player[i]->height;
         flow->playerHeight[i] = flow->player[i]->newHeight;
         flow->playerRank[i] = -1;
         best[i] = -1;
@@ -706,39 +705,39 @@ void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
 
     bestHeight = 0;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        if (flow->playerBest[i] > bestHeight) {
-            bestHeight = flow->playerBest[i];
+        if (flow->playerHeight[i] > bestHeight) {
+            bestHeight = flow->playerHeight[i];
             flow->tieCount = 1;
             best[i] = 0;
             for (j = 0; j < i; j++) {
                 best[j] = -1;
             }
-        } else if (flow->playerBest[i] == bestHeight && bestHeight != 0) {
+        } else if (flow->playerHeight[i] == bestHeight && bestHeight != 0) {
             flow->tieCount++;
             best[i] = 0;
         }
     }
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        flow->playerRank[i] = best[i];
+        flow->playerWinner[i] = best[i];
     }
 
     humanBestHeight = 0;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        if (flow->playerBest[i] > humanBestHeight && best[i] == 0 && GwPlayerConf[charNo[i]].type == 0) {
-            humanBestHeight = flow->playerBest[i];
+        if (flow->playerHeight[i] > humanBestHeight && best[i] == 0 && GwPlayerConf[flow->player[i]->no].type == 0) {
+            humanBestHeight = flow->playerHeight[i];
         }
     }
     flow->newRecordHeight = humanBestHeight;
     flow->humanTiedFlag = 0;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        if (best[i] == 0 && GwPlayerConf[charNo[i]].type == 0) {
+        if (best[i] == 0 && GwPlayerConf[flow->player[i]->no].type == 0) {
             flow->humanTiedFlag = 1;
             break;
         }
     }
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        flow->stopFlag[i] = 0;
+        flow->winFlag[i] = 0;
         if (best[i] == -1) {
             flow->playerMotSel[i] = 5;
         } else if (best[i] == 0) {
@@ -746,22 +745,20 @@ void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
         }
     }
 
-    {
-        int rankIdx = 0;
-        for (i = 0; i < M506_PLAYER_MAX; i++) {
-            if (best[i] != -1) {
-                flow->playerRank[rankIdx] = charNo[i];
-                rankIdx++;
-            }
+    rankIdx = 0;
+    for (i = 0; i < M506_PLAYER_MAX; i++) {
+        if (best[i] != -1) {
+            flow->playerRank[rankIdx] = charNo[i];
+            rankIdx++;
         }
     }
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         M506_BOUNCE *b = &flow->bounce[i];
-        if (flow->playerBest[i] < 1) {
+        if (flow->playerHeight[i] < 1) {
             b->targetY = 300.0f;
         } else {
-            b->targetY = 100.0f + (300.0f * flow->playerBest[i]);
+            b->targetY = 100.0f + (300.0f * flow->playerHeight[i]);
         }
         b->state = 0;
         b->vel = 0.0f;
@@ -783,9 +780,20 @@ void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
     M506YCameraProjUpdate();
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        int side = (flow->playerBest[i] == 0) ? 0 : flow->work->mameSide[flow->player[i]->no][flow->playerBest[i] - 1];
-        flow->tmpX = sideOfs[side];
-        flow->tmpY = 300.0f * flow->playerBest[i];
+        f32 offX;
+        f32 offY;
+        if (flow->playerHeight[i] == 0) {
+            offX = sideOfs[0];
+        } else {
+            offX = sideOfs[flow->work->mameSide[i][flow->playerHeight[i] - 1]];
+        }
+        if (flow->playerHeight[i] == 0) {
+            offY = 0.0f;
+        } else {
+            offY = 60.0f;
+        }
+        flow->tmpX = offX;
+        flow->tmpY = (300.0f * flow->playerHeight[i]) + offY;
         flow->tmpZ = 179.5f;
         omSetTra(flow->playerObj[i], flow->tmpX, flow->tmpY, flow->tmpZ);
         omSetRot(flow->playerObj[i], 0.0f, 0.0f, 0.0f);
@@ -793,7 +801,7 @@ void M506FlowModeEndSetup(M506_FLOW_WORK *flow)
 
     M506RocketInit(flow);
     for (i = 0; i < M506_PLAYER_MAX; i++) {
-        Hu3DModelAttrSet(flow->work->starfighterMdlId[i], HU3D_MOTATTR_PAUSE);
+        Hu3DModelAttrSet(flow->work->starfighterMdlId[i], HU3D_ATTR_DISPOFF);
     }
     M506StarfighterStart(flow);
 }
@@ -804,10 +812,10 @@ void M506FlowWinStart(M506_FLOW_WORK *flow)
     int i;
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         OMOBJ *p = flow->playerObj[i];
-        if (flow->stopFlag[i] != 1) {
+        if (flow->winFlag[i] == 0) {
             Hu3DMotionSpeedSet(p->mdlId[0], 1.0f);
             Hu3DMotionShiftSet(p->mdlId[0], p->mtnId[flow->playerMotSel[i]], 0.0f, 4.0f, 0);
-            flow->stopFlag[i]++;
+            flow->winFlag[i]++;
         }
     }
 }
@@ -895,17 +903,17 @@ BOOL M506FlowResult(M506_FLOW_WORK *flow)
         FlowTime += 1.0f;
         flow->gameMesId = -1;
         if (flow->tieCount == 0) {
-            flow->gameMesId = GameMesCreate(GAMEMES_MES_MG, GAMEMES_MG_TYPE_DRAW, FlowTime);
+            flow->gameMesId = GameMesCreate(GAMEMES_MES_MG, GAMEMES_MG_TYPE_DRAW);
             HuAudJinglePlay(0x7B);
             CharLoseVoicePlay(flow->player[0]->charNo, flow->player[1]->charNo, flow->player[2]->charNo, flow->player[3]->charNo);
         } else {
             flow->gameMesId = GameMesCreate(GAMEMES_MES_MG_WINNER, GAMEMES_MG_TYPE_WIN,
-                flow->playerRank[0], flow->playerRank[1], flow->playerRank[2], flow->playerRank[3], FlowTime);
+                flow->playerRank[0], flow->playerRank[1], flow->playerRank[2], flow->playerRank[3]);
             if (flow->humanTiedFlag == 0 || flow->humanTiedFlag == 1) {
                 HuAudJinglePlay(0x79);
             }
             for (i = 0; i < M506_PLAYER_MAX; i++) {
-                if (flow->playerBest[i] == 0 && !_CheckFlag(FLAG_MG_PRACTICE)) {
+                if (flow->playerWinner[i] == 0 && !_CheckFlag(FLAG_MG_PRACTICE)) {
                     GwPlayer[i].mgCoinBonus = 10;
                 }
             }
@@ -1037,7 +1045,8 @@ void M506ParticleCreate(M506_FLOW_WORK *flow)
 void M506ParticleUpdate(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
 {
     HU3DPARTICLEDATA *data = particleP->data;
-    f64 angle = 0.0;
+    f32 radius = 0.0f;
+    f32 angle = 0.0f;
     int i;
 
     for (i = 0; i < particleP->maxCnt; i++) {
@@ -1057,29 +1066,31 @@ void M506ParticleUpdate(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
             {
                 f32 a = (frandmod(0x12C) + 1) / 100.0f;
                 f32 b = (frandmod(0x12C) + 1) / 100.0f;
-                d->pos.x = a - b;
+                d->pos.x = b - a;
             }
             d->pos.y = 10.0f;
             {
                 f32 a = (frandmod(0x12C) + 1) / 100.0f;
                 f32 b = (frandmod(0x12C) + 1) / 100.0f;
-                d->pos.z = a - b;
+                d->pos.z = b - a;
             }
+            radius = 0.25f;
             {
                 f32 a = (frandmod(0x14) + 1) / 100.0f;
                 f32 b = (frandmod(0x14) + 1) / 100.0f;
-                d->vel.x = (f32)(HuCos(angle) + b - a);
+                d->vel.x = (f32)((radius * HuCos(angle)) + b - a);
             }
             {
                 f32 a = (frandmod(0xA) + 1) / 100.0f;
-                d->vel.y = (0.3f + a) - ((frandmod(0xA) + 1) / 100.0f);
+                f32 b = (frandmod(0xA) + 1) / 100.0f;
+                d->vel.y = (0.3f + b) - a;
             }
             {
                 f32 a = (frandmod(0x14) + 1) / 100.0f;
                 f32 b = (frandmod(0x14) + 1) / 100.0f;
-                d->vel.z = (f32)(HuSin(angle) + b - a);
+                d->vel.z = (f32)((radius * HuSin(angle)) + b - a);
             }
-            angle = (f64)(f32)(angle + (360.0f / particleP->maxCnt));
+            angle += 360.0f / particleP->maxCnt;
             d->time++;
             /* fallthrough */
         case 2:
@@ -1088,25 +1099,26 @@ void M506ParticleUpdate(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
                 d->time++;
             }
             break;
-        default:
+        case 3:
+        case 4:
             d->scale += 0.3f;
             d->pos.x += d->vel.x;
             d->pos.y += d->vel.y;
             d->pos.z += d->vel.z;
             if (d->time == 3) {
                 d->accel.x += 0.125f;
-                if (d->accel.x == 1.0f) {
+                if (d->accel.x >= 1.0f) {
                     d->time++;
                     d->accel.x = 1.0f;
                 }
             } else if (d->time == 4) {
                 d->accel.x -= 0.010416667f;
-                if (d->accel.x == 0.0f) {
+                if (d->accel.x <= 0.0f) {
                     d->accel.x = 0.0f;
                 }
             }
             d->color.a = (u8)(64.0f * d->accel.x);
-            if (d->time == 4 && d->accel.x == 0.0f) {
+            if (d->time == 4 && d->accel.x <= 0.0f) {
                 d->time = 0;
             }
             break;
@@ -1156,7 +1168,7 @@ void M506RocketUpdate(void)
 
     if (flow->rocketType == 0 && flow->work->rocketCamBit == 0) {
         for (i = 0; i < M506_PLAYER_MAX; i++) {
-            if (flow->player[i]->height == 30) {
+            if (flow->player[i]->newHeight == 30) {
                 flow->work->rocketCamBit |= M506CameraBit[i];
             }
         }
@@ -1164,15 +1176,15 @@ void M506RocketUpdate(void)
     if (flow->rocket.doneFlag == 0) {
         if (flow->rocketType == 0) {
             for (i = 0; i < M506_PLAYER_MAX; i++) {
-                if (flow->player[i]->height == 0x23) {
+                if (flow->player[i]->newHeight == 0x23) {
                     flow->rocket.doneFlag = 1;
-                    flow->rocket.state = 1;
+                    flow->rocketFlag = 1;
                     break;
                 }
             }
-        } else if (flow->rocketType == 1 && flow->rocket.state == 1) {
+        } else if (flow->rocketType == 1 && flow->rocketFlag == 1) {
             for (i = 0; i < M506_PLAYER_MAX; i++) {
-                if (M506YCamera->camera[i].pos.y == 9900.0f) {
+                if (M506YCamera->camera[i].pos.y >= 9900.0f) {
                     flow->rocket.doneFlag = 1;
                     break;
                 }
@@ -1562,13 +1574,14 @@ void M506YCameraViewUpdate(void)
 // NONMATCHING: faithful translation, not yet instruction-matched
 void M506YCameraSplitCreate(void)
 {
-    static const f32 splitX[3] = { 136.0f, 296.0f, 456.0f };
+    f32 splitX[3] = { 144.0f, 288.0f, 432.0f };
     int i;
 
     for (i = 0; i < 3; i++) {
         M506YCamera->splitSprId[i] = espEntry(0x40001D, 0, 0);
         espDispOff(M506YCamera->splitSprId[i]);
         espPriSet(M506YCamera->splitSprId[i], 0x102);
+        espPosSet(M506YCamera->splitSprId[i], 0.0f, 240.0f);
         espPosSet(M506YCamera->splitSprId[i], splitX[i], 240.0f);
         espScaleSet(M506YCamera->splitSprId[i], 0.6f, 1.0f);
         espAttrSet(M506YCamera->splitSprId[i], 1);
@@ -1670,18 +1683,18 @@ void M506YShadowClose(void)
 
 static void M506YShadowCalcPos(M506_YSHADOW *sh)
 {
-    sh->center = sh->pos;
-    sh->pos.x = sh->center.x + (sh->tpLvl * HuCos(sh->hvr.y) * HuCos(sh->hvr.x));
-    sh->pos.y = sh->center.y + (sh->tpLvl * HuSin(sh->hvr.y));
-    sh->pos.z = sh->center.z + (sh->tpLvl * HuCos(sh->hvr.y) * HuSin(sh->hvr.x));
-    PSVECSubtract((Vec *)&sh->center, (Vec *)&sh->pos, (Vec *)&sh->forward);
+    sh->target = sh->center;
+    sh->pos.x = sh->target.x + (sh->hvr.z * HuCos(sh->hvr.y) * HuCos(sh->hvr.x));
+    sh->pos.y = sh->target.y + (sh->hvr.z * HuSin(sh->hvr.y));
+    sh->pos.z = sh->target.z + (sh->hvr.z * HuCos(sh->hvr.y) * HuSin(sh->hvr.x));
+    PSVECSubtract((Vec *)&sh->target, (Vec *)&sh->pos, (Vec *)&sh->forward);
     PSVECNormalize((Vec *)&sh->forward, (Vec *)&sh->forward);
     PSVECCrossProduct((Vec *)&upVecB, (Vec *)&sh->forward, (Vec *)&sh->upDir);
     PSVECNormalize((Vec *)&sh->upDir, (Vec *)&sh->upDir);
     PSVECCrossProduct((Vec *)&sh->forward, (Vec *)&sh->upDir, (Vec *)&sh->up);
     PSVECNormalize((Vec *)&sh->up, (Vec *)&sh->up);
     Hu3DShadowMultiTPLvlSet(sh->tpLvl, (s16)sh->bit);
-    Hu3DShadowMultiPosSet(&sh->pos, &sh->up, &sh->center, (s16)sh->bit);
+    Hu3DShadowMultiPosSet(&sh->pos, &sh->up, &sh->target, (s16)sh->bit);
 }
 
 // NONMATCHING: faithful translation, not yet instruction-matched
@@ -1700,7 +1713,7 @@ void M506YShadowUpdate(void)
 
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         M506_YSHADOW *sh = &M506YShadow->shadow[i];
-        sh->hvr = M506PlayerObj[i]->trans;
+        sh->center = M506PlayerObj[i]->trans;
     }
     for (i = 0; i < M506_PLAYER_MAX; i++) {
         M506YShadowCalcPos(&M506YShadow->shadow[i]);
