@@ -480,6 +480,6 @@ void fn_1_194B4(void);
 s32 fn_1_DDCC(void);
 int fn_1_E900(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b);
 void fn_1_E91C(COLBODY *body, void *user);
-s32 fn_1_A9B8(s16 idx, s16 mode, float a, float b);
+s16 fn_1_A9B8(s16 idx, s16 mode, float a, float b); /* G4: returns s16 (A884 sign-extends it) */
 
 #endif
