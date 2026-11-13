@@ -452,11 +452,7 @@ void fn_1_60EC(OMOBJ *obj)
                     fn_1_9A04(obj, 0);
                     w->attract = 0;
                     w->state--;
-#ifdef TARGET_PC
-                    w->timer = 480.0 + (f64)(u16)frand();
-#else
-                    w->timer = 480.0 + (f64)frand();
-#endif
+                    w->timer = 480.0 + (f64)(s32)(frand() & 0xFF);
                 }
             }
             break;
