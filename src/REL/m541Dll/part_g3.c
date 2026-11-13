@@ -72,188 +72,181 @@ s32 fn_1_832C(s16 arg0)
     float offZ = -30.0f;
     s32 ret = 0;
     s16 tmp = 0;
-    float dx, dz;
     HuVecF pos;
+    HuVecF vec;
 
-    if ((u16)lbl_1_bss_2614[arg0].motion <= 9) {
-        switch (lbl_1_bss_2614[arg0].motion) {
-            case 0: {
-                s32 y, x;
-                omVibrate(lbl_1_bss_3730->player[arg0].playerNo, 30, 12, 0);
-                y = 111.0f + 0.026956521f * mdl->pos.z;
-                x = 64.0f + 0.055652175f * mdl->pos.x;
-                fn_1_2644(1, 100);
-                fn_1_27C8(3, y, x);
-                work->motNo = 5;
-                work->speed = 1.0f;
-                work->time = 0.0f;
-                work->attrReset = 0;
-                work->attr = 0x40000001;
-                lbl_1_bss_2614[arg0].motion++;
-                break;
-            }
-            case 1:
-                if (work->time > 10.0f) {
-                    Hu3DModelAttrReset(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 1);
-                    Hu3DModelAttrSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0x40000001);
-                    Hu3DMotionTimeSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0.0f);
-                    Hu3DMotionSpeedSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 4.0f);
-                    Hu3DModelObjPosGet(lbl_1_bss_3730->model[arg0 + 0x6A].modelId, lbl_1_bss_2614[arg0].hook, &pos);
-                    lbl_1_bss_3730->model[arg0 + 0x1A].posX = pos.x;
-                    lbl_1_bss_3730->model[arg0 + 0x1A].posY = pos.y;
-                    lbl_1_bss_3730->model[arg0 + 0x1A].posZ = pos.z + offZ;
-                    lbl_1_bss_2614[arg0].tick = 0;
-                    lbl_1_bss_2614[arg0].anim = 0;
-                    lbl_1_bss_2614[arg0].motion++;
-                }
-                break;
-            case 2:
+    switch (lbl_1_bss_2614[arg0].motion) {
+        case 0: {
+            s32 y, x;
+            float fy, fx;
+            omVibrate(lbl_1_bss_3730->player[arg0].playerNo, 30, 12, 0);
+            fy = 0.026956521f * mdl->pos.z;
+            fx = 0.055652175f * mdl->pos.x;
+            y = 111.0f + fy;
+            x = 64.0f + fx;
+            fn_1_2644(1, 100);
+            fn_1_27C8(3, y, x);
+            work->motNo = 5;
+            work->speed = 1.0f;
+            work->time = 0.0f;
+            work->attrReset = 0;
+            work->attr = 0x40000001;
+            lbl_1_bss_2614[arg0].motion++;
+            break;
+        }
+        case 1:
+            if (work->time > 10.0f) {
+                Hu3DModelAttrReset(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 1);
+                Hu3DModelAttrSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0x40000001);
+                Hu3DMotionTimeSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0.0f);
+                Hu3DMotionSpeedSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 4.0f);
                 Hu3DModelObjPosGet(lbl_1_bss_3730->model[arg0 + 0x6A].modelId, lbl_1_bss_2614[arg0].hook, &pos);
                 lbl_1_bss_3730->model[arg0 + 0x1A].posX = pos.x;
                 lbl_1_bss_3730->model[arg0 + 0x1A].posY = pos.y;
                 lbl_1_bss_3730->model[arg0 + 0x1A].posZ = pos.z + offZ;
-                if (lbl_1_bss_2614[arg0].tick++ == 0) {
-                    fn_1_2378(arg0, 0.25f);
-                } else if (lbl_1_bss_2614[arg0].tick > 3) {
-                    if (lbl_1_bss_2614[arg0].tick <= 6) {
-                        fn_1_24E8(arg0);
-                    } else {
-                        lbl_1_bss_2614[arg0].anim = 0;
-                        lbl_1_bss_2614[arg0].tick = 0;
-                    }
-                }
-                if (work->time >= 86.0f) {
+                lbl_1_bss_2614[arg0].tick = 0;
+                lbl_1_bss_2614[arg0].anim = 0;
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 2:
+            Hu3DModelObjPosGet(lbl_1_bss_3730->model[arg0 + 0x6A].modelId, lbl_1_bss_2614[arg0].hook, &pos);
+            lbl_1_bss_3730->model[arg0 + 0x1A].posX = pos.x;
+            lbl_1_bss_3730->model[arg0 + 0x1A].posY = pos.y;
+            lbl_1_bss_3730->model[arg0 + 0x1A].posZ = pos.z + offZ;
+            if (lbl_1_bss_2614[arg0].tick++ == 0) {
+                fn_1_2378(arg0, 0.25f);
+            } else if (lbl_1_bss_2614[arg0].tick > 3) {
+                if (lbl_1_bss_2614[arg0].tick <= 6) {
                     fn_1_24E8(arg0);
-                    fn_1_2378(arg0, 0.25f);
-                    work->shiftMode = 1;
-                    work->shiftMotNo = 2;
-                    work->shiftSpeed = 0.0f;
-                    work->shiftTime = 10.0f;
-                    work->shiftAttr = 0;
-                    work->attr = 0x40000001;
-                    Hu3DModelAttrReset(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0x40000001);
-                    Hu3DModelAttrSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 1);
-                    Hu3DMotionTimeSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0.0f);
-                    Hu3DMotionSpeedSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0.0f);
-                    lbl_1_bss_2614[arg0].motion++;
+                } else {
+                    lbl_1_bss_2614[arg0].anim = 0;
+                    lbl_1_bss_2614[arg0].tick = 0;
                 }
-                break;
-            case 3:
-                if (work->shiftMode == 3) {
-                    tmp = fn_1_B4E0(arg0);
-                    if (tmp == 0) {
-                        work->shiftMode = 1;
-                        work->shiftMotNo = 3;
-                        work->shiftSpeed = 0.0f;
-                        work->shiftTime = 8.0f;
-                        work->shiftAttr = 0x40000001;
-                        work->attr = 0;
-                        lbl_1_bss_2614[arg0].motion = 9;
-                    } else {
-                        dx = lbl_1_bss_2734.moveX - lbl_1_bss_2614[arg0].pos.x;
-                        dz = lbl_1_bss_2734.moveZ - lbl_1_bss_2614[arg0].pos.z;
-                        lbl_1_bss_2734.velX = dx / 20.0f;
-                        lbl_1_bss_2734.velY = 10.0f;
-                        lbl_1_bss_2734.velZ = dz / 20.0f;
-                        lbl_1_bss_2734.angAcc = 1.0f;
-                        dx = lbl_1_bss_2734.goal.x - lbl_1_bss_2734.moveX;
-                        dz = lbl_1_bss_2734.goal.z - lbl_1_bss_2734.moveZ;
-                        lbl_1_bss_2734.angVelX = dx * 0.0625f;
-                        lbl_1_bss_2734.angVelY = 8.0f;
-                        lbl_1_bss_2734.angVelZ = dz * 0.0625f;
-                        lbl_1_bss_2734.angCount = 0;
-                        lbl_1_bss_2614[arg0].motion++;
-                    }
-                }
-                break;
-            case 4:
-                lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.velX;
-                lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.velY;
-                lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.velZ;
-                lbl_1_bss_2734.velY -= lbl_1_bss_2734.angAcc;
-                mdl->pos.x = lbl_1_bss_2614[arg0].pos.x;
-                mdl->pos.y = lbl_1_bss_2614[arg0].pos.y;
-                mdl->pos.z = lbl_1_bss_2614[arg0].pos.z;
-                MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
-                if (++lbl_1_bss_2734.angCount >= 10) {
-                    lbl_1_bss_2734.velY = 0.0f;
-                    lbl_1_bss_2734.angCount = 0;
-                    lbl_1_bss_2614[arg0].motion++;
-                }
-                break;
-            case 5:
-                lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.velX;
-                lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.velY;
-                lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.velZ;
-                lbl_1_bss_2734.velY -= lbl_1_bss_2734.angAcc;
-                mdl->pos.x = lbl_1_bss_2614[arg0].pos.x;
-                mdl->pos.y = lbl_1_bss_2614[arg0].pos.y;
-                mdl->pos.z = lbl_1_bss_2614[arg0].pos.z;
-                MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
-                if (++lbl_1_bss_2734.angCount >= 10) {
-                    work->shiftMode = 1;
-                    work->shiftMotNo = 2;
-                    work->shiftSpeed = 0.0f;
-                    work->shiftTime = 10.0f;
-                    work->shiftAttr = 0;
-                    work->attr = 0x40000001;
-                    lbl_1_bss_2734.angCount = 0;
-                    lbl_1_bss_2614[arg0].motion++;
-                }
-                break;
-            case 6:
-                lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.angVelX;
-                lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.angVelY;
-                lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.angVelZ;
-                lbl_1_bss_2734.angVelY -= lbl_1_bss_2734.angAcc;
-                mdl->pos.x = lbl_1_bss_2614[arg0].pos.x;
-                mdl->pos.y = lbl_1_bss_2614[arg0].pos.y;
-                mdl->pos.z = lbl_1_bss_2614[arg0].pos.z;
-                MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
-                if (++lbl_1_bss_2734.angCount >= 8) {
-                    lbl_1_bss_2734.angVelY = 0.0f;
-                    lbl_1_bss_2734.angCount = 0;
-                    lbl_1_bss_2614[arg0].motion++;
-                }
-                break;
-            case 7:
-                lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.angVelX;
-                lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.angVelY;
-                lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.angVelZ;
-                lbl_1_bss_2734.angVelY -= lbl_1_bss_2734.angAcc;
-                mdl->pos.x = lbl_1_bss_2614[arg0].pos.x;
-                mdl->pos.y = lbl_1_bss_2614[arg0].pos.y;
-                mdl->pos.z = lbl_1_bss_2614[arg0].pos.z;
-                MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
-                if (++lbl_1_bss_2734.angCount >= 8) {
-                    work->shiftMode = 1;
-                    work->shiftMotNo = 2;
-                    work->shiftSpeed = 0.0f;
-                    work->shiftTime = 10.0f;
-                    work->shiftAttr = 0;
-                    work->attr = 0x40000001;
-                    lbl_1_bss_2614[arg0].pos.y = 100.0f;
-                    mdl->pos.y = 100.0f;
-                    lbl_1_bss_2734.angCount = 0;
-                    lbl_1_bss_2614[arg0].motion++;
-                }
-                break;
-            case 8:
-                if (work->shiftMode == 3) {
+            }
+            if (work->time >= 86.0f) {
+                fn_1_24E8(arg0);
+                fn_1_2378(arg0, 0.25f);
+                work->shiftMode = 1;
+                work->shiftMotNo = 2;
+                work->shiftSpeed = 0.0f;
+                work->shiftTime = 10.0f;
+                work->shiftAttr = 0;
+                work->attr = 0x40000001;
+                Hu3DModelAttrReset(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0x40000001);
+                Hu3DModelAttrSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 1);
+                Hu3DMotionTimeSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0.0f);
+                Hu3DMotionSpeedSet(lbl_1_bss_3730->model[arg0 + 0x1A].modelId, 0.0f);
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 3:
+            if (work->shiftMode == 3) {
+                tmp = fn_1_B4E0(arg0);
+                if (tmp == 0) {
                     work->shiftMode = 1;
                     work->shiftMotNo = 3;
                     work->shiftSpeed = 0.0f;
                     work->shiftTime = 8.0f;
                     work->shiftAttr = 0x40000001;
                     work->attr = 0;
+                    lbl_1_bss_2614[arg0].motion = 9;
+                } else {
+                    vec.x = lbl_1_bss_2734.moveX - lbl_1_bss_2614[arg0].pos.x;
+                    vec.z = lbl_1_bss_2734.moveZ - lbl_1_bss_2614[arg0].pos.z;
+                    lbl_1_bss_2734.velX = vec.x / 20.0f;
+                    lbl_1_bss_2734.velY = 10.0f;
+                    lbl_1_bss_2734.velZ = vec.z / 20.0f;
+                    lbl_1_bss_2734.angAcc = 1.0f;
+                    vec.x = lbl_1_bss_2734.goal.x - lbl_1_bss_2734.moveX;
+                    vec.z = lbl_1_bss_2734.goal.z - lbl_1_bss_2734.moveZ;
+                    lbl_1_bss_2734.angVelX = vec.x * 0.0625f;
+                    lbl_1_bss_2734.angVelY = 8.0f;
+                    lbl_1_bss_2734.angVelZ = vec.z * 0.0625f;
+                    lbl_1_bss_2734.angCount = 0;
                     lbl_1_bss_2614[arg0].motion++;
                 }
-                break;
-            case 9:
-                lbl_1_bss_2614[arg0].motion = 0;
-                ret = 1;
-                break;
-        }
+            }
+            break;
+        case 4:
+            lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.velX;
+            lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.velY;
+            lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.velZ;
+            lbl_1_bss_2734.velY -= lbl_1_bss_2734.angAcc;
+            mdl->pos = lbl_1_bss_2614[arg0].pos;
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            if (++lbl_1_bss_2734.angCount >= 10) {
+                lbl_1_bss_2734.velY = 0.0f;
+                lbl_1_bss_2734.angCount = 0;
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 5:
+            lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.velX;
+            lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.velY;
+            lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.velZ;
+            lbl_1_bss_2734.velY -= lbl_1_bss_2734.angAcc;
+            mdl->pos = lbl_1_bss_2614[arg0].pos;
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            if (++lbl_1_bss_2734.angCount >= 10) {
+                work->shiftMode = 1;
+                work->shiftMotNo = 2;
+                work->shiftSpeed = 0.0f;
+                work->shiftTime = 10.0f;
+                work->shiftAttr = 0;
+                work->attr = 0x40000001;
+                lbl_1_bss_2734.angCount = 0;
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 6:
+            lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.angVelX;
+            lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.angVelY;
+            lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.angVelZ;
+            lbl_1_bss_2734.angVelY -= lbl_1_bss_2734.angAcc;
+            mdl->pos = lbl_1_bss_2614[arg0].pos;
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            if (++lbl_1_bss_2734.angCount >= 8) {
+                lbl_1_bss_2734.angVelY = 0.0f;
+                lbl_1_bss_2734.angCount = 0;
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 7:
+            lbl_1_bss_2614[arg0].pos.x += lbl_1_bss_2734.angVelX;
+            lbl_1_bss_2614[arg0].pos.y += lbl_1_bss_2734.angVelY;
+            lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.angVelZ;
+            lbl_1_bss_2734.angVelY -= lbl_1_bss_2734.angAcc;
+            mdl->pos = lbl_1_bss_2614[arg0].pos;
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            if (++lbl_1_bss_2734.angCount >= 8) {
+                work->shiftMode = 1;
+                work->shiftMotNo = 2;
+                work->shiftSpeed = 0.0f;
+                work->shiftTime = 10.0f;
+                work->shiftAttr = 0;
+                work->attr = 0x40000001;
+                lbl_1_bss_2614[arg0].pos.y = 100.0f;
+                mdl->pos.y = 100.0f;
+                lbl_1_bss_2734.angCount = 0;
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 8:
+            if (work->shiftMode == 3) {
+                work->shiftMode = 1;
+                work->shiftMotNo = 3;
+                work->shiftSpeed = 0.0f;
+                work->shiftTime = 8.0f;
+                work->shiftAttr = 0x40000001;
+                work->attr = 0;
+                lbl_1_bss_2614[arg0].motion++;
+            }
+            break;
+        case 9:
+            lbl_1_bss_2614[arg0].motion = 0;
+            ret = 1;
+            break;
     }
     return ret;
 }
