@@ -148,6 +148,7 @@ static const u32 m538_charMotion[0xD][0xB] = {
     { 0x009C007A, 0x009C007C, 0x009C007D, 0x00B0005C, 0x00B0005D, 0x009C007E, 0x00B0002B, 0x00B00001, 0x00B00006, 0x00B00017, 0x00B00000 },
     { 0x009C007A, 0x009C007C, 0x009C007D, 0x00B0005C, 0x00B0005D, 0x009C007E, 0x00B0002B, 0x00B00001, 0x00B00006, 0x00B00017, 0x00B00000 },
     { 0x009C007A, 0x009C007C, 0x009C007D, 0x00B0005C, 0x00B0005D, 0x009C007E, 0x00B0002B, 0x00B00001, 0x00B00006, 0x00B00017, 0x00B00000 },
+    { 0x009C007A, 0x009C007C, 0x009C007D, 0x00B0005C, 0x00B0005D, 0x009C007E, 0x00B0002B, 0x00B00001, 0x00B00006, 0x00B00017, 0x00B00000 },
 };
 static s32 lbl_1_data_264[0x1D] = {
     0x600009,
@@ -233,13 +234,13 @@ static const f32 lbl_1_rodata_168[4] = {0.0, 150.0, 150.0, 0.0};
 static const u16 lbl_1_rodata_190[4] = { 0x1, 0x4, 0x7, 0x0 };
 static M538_ANIMFUNC lbl_1_rodata_1A0[3] = { fn_1_62B4, fn_1_6400, fn_1_6558 };
 /* a four-float table that the original also reads as raw 32-bit words */
-union m538_f4 { struct { s32 a, b, c, d; } w; f32 f[4]; s32 i[4]; };
+union m538_f4 { f32 f[4]; s32 i[4]; struct { s32 a, b, c, d; } w; };
 struct m538_xy { f32 x, y; };
 static const union m538_f4 lbl_1_rodata_1CC = {{-400.0, -200.0, 200.0, 400.0}};
 static const u8 lbl_1_rodata_1EC[24] = {0xD9, 0x99, 0x52, 0xB3, 0xCC, 0x0, 0xE0, 0x99, 0x52, 0xE6, 0x66, 0x33, 0x99, 0x66, 0x99, 0xBF, 0x33, 0x99, 0xFF, 0xB3, 0xCC, 0xE6, 0x7F, 0x99};
 static const u8 lbl_1_rodata_21C[48] = {0xFF, 0xB3, 0x0, 0xE5, 0xFF, 0x66, 0xFF, 0xE5, 0x4D, 0xCC, 0xB3, 0x0, 0xCC, 0x66, 0x33, 0xFF, 0xE5, 0x4D, 0xFF, 0xA6, 0x4D, 0x7F, 0x33, 0x0, 0xB3, 0x4D, 0xB3, 0xE5, 0xB3, 0xE5, 0xCC, 0x7F, 0xE5, 0x7F, 0x33, 0x7F, 0xCC, 0x66, 0x7F, 0xFF, 0xBF, 0xCC, 0xFF, 0x7F, 0x99, 0xA6, 0x4D, 0x7F};
 static const u8 lbl_1_rodata_258[48] = {0xFF, 0xB3, 0x0, 0xE5, 0xFF, 0x66, 0xFF, 0xE5, 0x4D, 0xCC, 0xB3, 0x0, 0xCC, 0x66, 0x33, 0xFF, 0xE5, 0x4D, 0xFF, 0xA6, 0x4D, 0x7F, 0x33, 0x0, 0xB3, 0x4D, 0xB3, 0xE5, 0xB3, 0xE5, 0xCC, 0x7F, 0xE5, 0x7F, 0x33, 0x7F, 0xCC, 0x66, 0x7F, 0xFF, 0xBF, 0xCC, 0xFF, 0x7F, 0x99, 0xA6, 0x4D, 0x7F};
-static const s16 lbl_1_rodata_2A4[4] = { 0x1A, 0x1A, 0x19, 0x1B };
+static const s32 lbl_1_rodata_2A4[4] = { 0x1A, 0x1A, 0x19, 0x1B };
 
 s32 _prolog(void) {
     void (**ctor)(void) = (void (**)(void)) &_ctors;
@@ -526,6 +527,7 @@ void fn_1_614(s16 mode, s16 frameNo) {
     fn_1_6918(&temp_r31->anim[0]);
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_848(s16 mode, s16 frameNo) {
     s16 temp_r0;
     s32 var_r28;
@@ -938,6 +940,7 @@ void fn_1_16BC(M538_CAMWORK *arg0) {
     Hu3DCameraPosSet((s32) lbl_1_rodata_10[0], temp_f31, temp_f30, temp_f29, 0.0f, 1.0f, 0.0f, arg0->x, arg0->y, arg0->z);
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_1958(M538 *arg0) {
     f32 temp_f28;
     f32 temp_f29;
@@ -1024,6 +1027,7 @@ s32 fn_1_1B94(M538_PLAYER *arg0) {
     return var_r30;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_1DC8(M538_PLAYER *arg0) {
     u16 sp66;
     u16 sp64;
@@ -1357,6 +1361,7 @@ s32 fn_1_2988(M538_PLAYER *arg0) {
     return var_r31;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_29F8(M538_PLAYER *arg0) {
     s32 sp24;
     s32 sp20;
@@ -1420,6 +1425,7 @@ loop_15:
     return var_r29;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_2CB8(M538_PLAYER *arg0) {
     s32 sp44;
     s32 sp40;
@@ -1586,6 +1592,7 @@ loop_21:
     return 0;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_32C4(M538_PLAYER *arg0) {
     s32 sp4C;
     s32 sp48;
@@ -1797,6 +1804,7 @@ s32 fn_1_39DC(M538_PLAYER *arg0) {
     return 0;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_3B2C(M538_PLAYER *arg0) {
     M538_NODE *temp_r3;
 
@@ -1900,6 +1908,7 @@ s32 fn_1_3E7C(M538_PLAYER *arg0) {
     return 0;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_3F60(M538_PLAYER *arg0) {
     f32 sp8;
     f32 temp_f24;
@@ -1949,10 +1958,10 @@ s32 fn_1_3F60(M538_PLAYER *arg0) {
         if (fn_1_6D98(temp_r30, (M538_NODE0FUNC) fn_1_6F24, &arg0->fw) != NULL) {
             arg0->fw.x = arg0->hookX;
             arg0->fw.y = arg0->hookY;
-            arg0->fw.z = (s32) arg0->hookZ;
-            arg0->fw.rotX = (s32) arg0->hookRotX;
-            arg0->fw.radius2 = (s32) arg0->hookRotY;
-            arg0->fw.radius3 = (s32) arg0->hookRotZ;
+            arg0->fw.z = arg0->hookZ;
+            arg0->fw.rotX = arg0->hookRotX;
+            arg0->fw.radius2 = arg0->hookRotY;
+            arg0->fw.radius3 = arg0->hookRotZ;
             arg0->fw.model = (s16) arg0->itemModel;
             arg0->fw.state = 0;
         }
@@ -2024,6 +2033,7 @@ s32 fn_1_44AC(M538_DOLLY *arg0) {
     return var_r30;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_4534(M538_PLAYER *arg0) {
     arg0->velX = 0.0f;
     arg0->velY = 0.0f;
@@ -2042,6 +2052,7 @@ void fn_1_4534(M538_PLAYER *arg0) {
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_4714(M538 *arg0) {
     M538_PLAYER *temp_r31;
     f32 var_f31;
@@ -2092,6 +2103,7 @@ loop_16:
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_4968(M538 *arg0) {
     f32 temp_f31;
     s32 var_r29;
@@ -2189,6 +2201,7 @@ loop_18_test:
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_4F74(M538 *arg0) {
     f32 sp38[4];
     f32 sp28[4];
@@ -2330,6 +2343,7 @@ s32 fn_1_55C8(M538_PLAYER *arg0, f32 *arg1, f32 *arg2) {
     }
     return 1;
 }
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_56A4(M538 *arg0) {
     f32 temp_f30;
     f32 temp_f31;
@@ -2548,6 +2562,7 @@ loop_11_t:
     arg0->mode = arg1;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_61F8(M538_ANIM *arg0) {
     M538_ANIMFUNC next[3];
 
@@ -2854,6 +2869,7 @@ void fn_1_6E50(M538 *arg0) {
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_6F24(M538_NODE0 *arg0) {
     f32 sp8;
     M538_FW *temp_r31;
@@ -2928,6 +2944,7 @@ loop_20:
     return var_r30;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_72CC(M538_CAMSWING *arg0) {
     s16 temp_r3;
     s16 temp_r3_2;
@@ -3165,6 +3182,7 @@ s32 fn_1_7F04(M538_PLAYER *arg0) {
     return var_r30;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_7FAC(M538_PLAYER *arg0) {
     Mtx sp20;
     Point3d sp14;
@@ -3206,7 +3224,7 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
         }
         break;
     case 2:
-        CharMotionSet(arg0->charNo, arg0->obj->mtnId[2]);
+        CharMotionSet(arg0->charNo, arg0->obj->mtnId[1]);
         arg0->state = (u32) (arg0->state + 1);
         /* fallthrough */
     case 3:
@@ -3277,7 +3295,7 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
             arg0->fw.model = (s16) arg0->itemModel;
             arg0->fw.state = 0;
         }
-        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[9], 0.0f, 5.0f, 0x40000001U);
+        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[10], 0.0f, 5.0f, 0x40000001U);
         arg0->state = (u32) (arg0->state + 1);
         /* fallthrough */
     case 7:
@@ -3493,6 +3511,7 @@ loop_9:
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_8CD8(M538_NODE *arg0) {
     u8 sp1F;
     u8 sp1E;
@@ -3713,6 +3732,7 @@ cond_5:
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_94DC(M538_NODE *arg0) {
     u8 sp37;
     u8 sp36;
@@ -3899,6 +3919,7 @@ loop_19:
     return var_r26;
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_9C04(M538_NODE *arg0) {
     u8 sp37;
     u8 sp36;
@@ -4229,6 +4250,7 @@ loop_6:
     }
 }
 
+// NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_A8A0(M538_CTRL *arg0) {
     M538_NODE0 *node;
     M538_FW *work;
