@@ -271,6 +271,7 @@ typedef struct M555CamBlk_s {
 } M555_CAMBLK;
 
 extern M555_CAMBLK *lbl_1_bss_8;
+extern f32 lbl_1_data_150[4][13]; /* four 0x34-byte camera presets */
 extern M555_WORK lbl_1_bss_1894;
 extern M555_CTRL *lbl_1_bss_3030;
 extern M555_PLAYER lbl_1_bss_120C[2];
@@ -396,9 +397,9 @@ void fn_1_A758(void);
 void fn_1_CFB8(void);
 s32 fn_1_FB2C(void);
 s16 fn_1_FD64(void);
-void fn_1_103D8(s16 player);
-s16 fn_1_10E20(void);
-s16 fn_1_119EC(void);
+s32 fn_1_103D8(s16 player);
+s32 fn_1_10E20(void);
+s32 fn_1_119EC(void);
 void fn_1_11DFC(s16 player);
 void fn_1_12CAC(s16 player);
 void fn_1_12E04(void);
@@ -409,7 +410,7 @@ void fn_1_152D8(s16 arg);
 void fn_1_155DC();
 void fn_1_15CF4();
 void fn_1_16104();
-void fn_1_16958();
+s16 fn_1_16958(s16 player);
 void fn_1_171C8();
 void fn_1_17400();
 void fn_1_176C4(s16 player);
