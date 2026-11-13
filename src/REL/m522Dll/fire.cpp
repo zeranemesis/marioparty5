@@ -260,6 +260,7 @@ FIRE_RODATA const GXVtxAttrFmtList lbl_1_rodata_138[3] = {
 
 extern "C" {
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_FIRE *fn_1_0(M522_FIRE *self)
 {
     M522_FIREWAVE wave;
@@ -304,6 +305,7 @@ M522_FIRE *fn_1_0(M522_FIRE *self)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_21C(M522_FIRE *self, s16 flag)
 {
     if (self != 0) {
@@ -317,6 +319,7 @@ void *fn_1_21C(M522_FIRE *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_27C(M522_FIRE *self, s16 flag)
 {
     if (self != 0) {
@@ -328,6 +331,7 @@ void *fn_1_27C(M522_FIRE *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_2D4(M522_FIRE *self, s16 flag)
 {
     if (self != 0) {
@@ -343,6 +347,7 @@ void *fn_1_2D4(M522_FIRE *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_360(M522_FIRE *self, s16 flag)
 {
     if (self != 0) {
@@ -380,6 +385,7 @@ void fn_1_474(M522_FIRE *self)
     fn_1_9FE4((M522_MODEL *)self, lbl_1_data_2C);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_4A4(M522_FIRE *self)
 {
     M522_VEC3 rot;
@@ -390,6 +396,7 @@ void fn_1_4A4(M522_FIRE *self)
     self->field4 = self->field4 + self->field8;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_510(M522_FIRE *self)
 {
     M522_FIREWAVE *w;
@@ -419,6 +426,7 @@ f32 fn_1_614(M522_FIREWAVE *w)
 
 extern "C" {
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_628(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
 {
     GXSetNumTexGens(1);
@@ -446,6 +454,7 @@ void fn_1_628(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
     GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_FIREEFF *fn_1_824(M522_FIREEFF *self)
 {
     M522_MODEL *model;
@@ -525,6 +534,7 @@ void *fn_1_A10(M522_FIREEFF *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_AB0(M522_FIREEFF *self, s32 kind)
 {
     M522_SPARK spark;
@@ -573,6 +583,7 @@ void fn_1_C2C(M522_SPARK *dst, const M522_SPARK *src)
     dst->wait = src->wait;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_C50(M522_SPARK *spark)
 {
     u8 expired = 0;
@@ -602,6 +613,7 @@ void fn_1_C50(M522_SPARK *spark)
     }
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_D50(M522_SPARK *spark, f32 *u0, f32 *v0, f32 *u1, f32 *v1)
 {
     s32 rows[2];
@@ -616,6 +628,7 @@ void fn_1_D50(M522_SPARK *spark, f32 *u0, f32 *v0, f32 *u1, f32 *v1)
     *v1 = (f32)(((f64)((spark->frame / 16) + 1) / (f64)*pRows) - (1.0 / (f64)(*pRows << 6)));
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_F84(M522_FIREEFF *self)
 {
     M522_SPARK *spark;
@@ -654,6 +667,7 @@ void fn_1_F84(M522_FIREEFF *self)
     self->anim = self->anim + lbl_1_bss_0;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_10C8(M522_FIREEFF *self, Mtx *camera)
 {
     Mtx inv;
@@ -689,6 +703,7 @@ void fn_1_10C8(M522_FIREEFF *self, Mtx *camera)
     fn_1_12C0(self, 1, *camera, inv, &cursor);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_12C0(M522_FIREEFF *self, s32 kind, Mtx camera, Mtx rot, M522_SPARK **cur)
 {
     Mtx objMtx;
@@ -748,6 +763,7 @@ void fn_1_12C0(M522_FIREEFF *self, s32 kind, Mtx camera, Mtx rot, M522_SPARK **c
     }
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_BURST *fn_1_17E8(M522_BURST *self, M522_VEC3 *pos, s32 count, f32 len, f32 time)
 {
     M522_VEC3 dir;
@@ -837,6 +853,7 @@ void *fn_1_1B38(M522_BURST *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522Trail *fn_1_1BC0(M522Trail *self, M522_VEC3 *pos, M522_VEC3 *vel, f32 len)
 {
     M522_VEC3 *start;
@@ -878,6 +895,7 @@ void *fn_1_1CD8(M522Trail *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 s32 fn_1_1D30(M522Trail *self)
 {
     M522_VEC3 rnd;
@@ -916,6 +934,7 @@ s32 fn_1_1D30(M522Trail *self)
     return self->remain > 0.0f;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_1FE4(M522_BURST *self)
 {
     M522_VEC3 rnd;
@@ -966,6 +985,7 @@ void fn_1_1FE4(M522_BURST *self)
     }
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_232C(M522_BURST *self, Mtx *camera)
 {
     M522Trail *trail;
@@ -1004,6 +1024,7 @@ void fn_1_232C(M522_BURST *self, Mtx *camera)
     GXEnd();
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_24FC(M522Trail *trail)
 {
     M522_VEC3 *a;
@@ -1077,6 +1098,7 @@ void fn_1_3498(void)
 #undef M522_T
 #undef M522_TMP_DTOR
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4014(M522_WAVES *self, s16 flag)
 {
     if (self != 0) {
@@ -1091,6 +1113,7 @@ void *fn_1_4014(M522_WAVES *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_40A0(M522_SPARKS *self, s16 flag)
 {
     if (self != 0) {
@@ -1113,6 +1136,7 @@ void *fn_1_40A0(M522_SPARKS *self, s16 flag)
 #undef M522_VEC
 #undef M522_T
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4188(M522_POINTS *self, s16 flag)
 {
     if (self != 0) {
@@ -1135,6 +1159,7 @@ void *fn_1_4188(M522_POINTS *self, s16 flag)
 #undef M522_VEC
 #undef M522_T
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4304(M522_TRAILS *self, s16 flag)
 {
     if (self != 0) {

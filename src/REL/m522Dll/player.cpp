@@ -454,6 +454,7 @@ char lbl_1_data_780[] = "vector::at index out of range";
 char lbl_1_data_79E[] = "vector::insert length error\n";
 char lbl_1_data_7BB[] = "Memory allocation failure";
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s16 fn_1_F564(M522_VEC3 *pos)
 {
     M522_VEC3 screen;
@@ -473,6 +474,7 @@ s16 fn_1_F564(M522_VEC3 *pos)
     return (s16)result;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F604(void)
 {
     s32 i;
@@ -515,6 +517,7 @@ void fn_1_F6E4(void)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F76C(void)
 {
     M522_NODE *it;
@@ -534,6 +537,7 @@ void fn_1_F76C(void)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F800(void)
 {
     M522_NODE *it;
@@ -553,6 +557,7 @@ void fn_1_F800(void)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F894(void)
 {
     M522_NODE *it;
@@ -572,6 +577,7 @@ void fn_1_F894(void)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F904(void)
 {
     M522_NODE *it;
@@ -670,6 +676,7 @@ M522_PLAYERBASE *fn_1_FAF8(void)
     return 0;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_PLAYERBASE *fn_1_FB6C(M522_PLAYERBASE *self, s32 index)
 {
     s16 pad;
@@ -777,6 +784,7 @@ M522_PLAYERBASE *fn_1_FEA8(M522_PLAYERBASE *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_FF70(M522_PLAYERBASE *self)
 {
     u8 expired = 0;
@@ -809,6 +817,7 @@ void fn_1_FFF8(M522_PLAYERBASE *self, s32 dataNum)
     fn_1_15080(&self->motions, last, 1, &id);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_10070(M522_PLAYERBASE *self, u32 motion, u8 loop)
 {
     u32 attr;
@@ -851,6 +860,7 @@ void fn_1_101CC(M522_PLAYERBASE *self, u8 flag)
     CharModelFxFlagSet(self->charNo, flag);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_10240(M522_PLAYERBASE *self, s32 kind)
 {
     switch (kind) {
@@ -873,6 +883,7 @@ void fn_1_10240(M522_PLAYERBASE *self, s32 kind)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_PLAYER *fn_1_10324(M522_PLAYER *self, s32 index)
 {
     M522_MODEL *a;
@@ -919,6 +930,7 @@ M522_PLAYER *fn_1_10324(M522_PLAYER *self, s32 index)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_PLAYER *fn_1_107E0(M522_PLAYER *self, s16 flag)
 {
     if (self != 0) {
@@ -956,11 +968,13 @@ s32 fn_1_108F8(M522_PLAYER *self)
     return result;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_109A4(M522_PLAYER *self)
 {
     M522_SETSTATE(self, lbl_1_data_608);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_10A00(M522_PLAYER *self)
 {
     self->amp = 0.99 * self->amp + 0.1;
@@ -983,6 +997,7 @@ void fn_1_10A00(M522_PLAYER *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_10DF8(M522_PLAYER *self)
 {
     f32 time;
@@ -1003,6 +1018,7 @@ void fn_1_10DF8(M522_PLAYER *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_1103C(M522_PLAYER *self)
 {
     f32 time;
@@ -1028,6 +1044,7 @@ void fn_1_1103C(M522_PLAYER *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_113BC(M522_PLAYER *self)
 {
     f32 time;
@@ -1039,6 +1056,7 @@ void fn_1_113BC(M522_PLAYER *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_114CC(M522_PLAYER *self)
 {
     if (CharMotionEndCheck(self->charNo) != 0) {
@@ -1054,6 +1072,7 @@ void fn_1_114CC(M522_PLAYER *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_11694(M522_PLAYER *self)
 {
     f64 t;
@@ -1064,6 +1083,7 @@ void fn_1_11694(M522_PLAYER *self)
     self->ofsY = M522MaxD(t, 0.0);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_117EC(M522_PLAYER *self)
 {
     self->vel.y = self->vel.y - 0.27240694f;
@@ -1088,6 +1108,7 @@ void fn_1_119E8(M522_PLAYER *self)
     self->ofsX = self->ofsX + 0.01 * (-30.0f - self->ofsX);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_11A20(M522_PLAYER *self)
 {
     s16 pan;
@@ -1110,6 +1131,7 @@ void fn_1_11A20(M522_PLAYER *self)
     M522_SETSTATE(self, lbl_1_data_680);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_11D60(M522_PLAYER *self)
 {
     if (lbl_1_bss_A54 <= 0) {
@@ -1122,6 +1144,7 @@ void fn_1_11D60(M522_PLAYER *self)
     M522_SETSTATE(self, lbl_1_data_68C);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_11E34(M522_PLAYER *self)
 {
     M522_VEC3 v;
@@ -1163,6 +1186,7 @@ s32 fn_1_12028(M522_PLAYER *self)
     return result;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_12084(M522_PLAYER *self)
 {
     u16 btn;
@@ -1177,6 +1201,7 @@ s32 fn_1_12084(M522_PLAYER *self)
     return 2;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_120DC(M522_PLAYER *self)
 {
     f64 base;
@@ -1219,6 +1244,7 @@ s32 fn_1_120DC(M522_PLAYER *self)
     return 2;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_12368(M522_PLAYER *self)
 {
     self->motions.m_size = 0;
@@ -1235,6 +1261,7 @@ void fn_1_12368(M522_PLAYER *self)
     CharMotionDataClose(self->charNo);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_COM *fn_1_12530(M522_COM *self, s32 index, const M522_VEC3 *spawn)
 {
     s16 mdl;
@@ -1282,6 +1309,7 @@ M522_COM *fn_1_12530(M522_COM *self, s32 index, const M522_VEC3 *spawn)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_COM *fn_1_1289C(M522_COM *self, s16 flag)
 {
     if (self != 0) {
@@ -1295,6 +1323,7 @@ M522_COM *fn_1_1289C(M522_COM *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_12984(void)
 {
     M522_NODE *it;
@@ -1317,6 +1346,7 @@ void fn_1_12A1C(M522_COM *self)
     fn_1_13CE8(self);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_12A44(M522_COM *self)
 {
     self->flying = 0;
@@ -1326,12 +1356,14 @@ void fn_1_12A44(M522_COM *self)
     M522_SETSTATE(self, lbl_1_data_6CC);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_12AE4(M522_COM *self)
 {
     MgPlayerAttrReset(self->mg, 1);
     M522_SETSTATE(self, lbl_1_data_6D8);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_12B68(M522_COM *self)
 {
     M522_VEC3 p;
@@ -1377,6 +1409,7 @@ void fn_1_12B68(M522_COM *self)
     self->steady = steady;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_12EB0(M522_COM *self)
 {
     M522_VEC3 d = lbl_1_rodata_61C;
@@ -1411,6 +1444,7 @@ void fn_1_12EB0(M522_COM *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_130D0(M522_COM *self)
 {
     M522_VEC3 *apos;
@@ -1442,6 +1476,7 @@ void fn_1_133F8(M522_COM *self)
 {
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_133FC(M522_COM *self)
 {
     M522_ANGLE a;
@@ -1458,6 +1493,7 @@ void fn_1_133FC(M522_COM *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_13550(M522_COM *self)
 {
     if (self->out == 0 && lbl_1_bss_A54 > 0) {
@@ -1476,6 +1512,7 @@ void fn_1_13698(M522_COM *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_1370C(M522_COM *self)
 {
     if (lbl_1_bss_A54 > 0) {
@@ -1499,6 +1536,7 @@ void fn_1_137D0(M522_COM *self)
     self->mg->actor->rotY = 0.0f;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_1384C(M522_COM *self)
 {
     M522_VEC3 p;
@@ -1523,6 +1561,7 @@ u8 fn_1_13A10(M522_COM *self)
     return (u8)((*attr & 0x407F) != 0);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_13A48(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
 {
     M522_NODE *it;
@@ -1558,6 +1597,7 @@ s32 fn_1_13A48(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
     return 0;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_13BBC(M522_COM *self)
 {
     self->motions.m_size = 0;
@@ -1571,6 +1611,7 @@ void fn_1_13BBC(M522_COM *self)
     CharMotionDataClose(self->charNo);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_13CE8(M522_COM *self)
 {
     M522_VEC3 p;
@@ -1584,6 +1625,7 @@ void fn_1_13CE8(M522_COM *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_13DCC(M522_COM *self)
 {
 #ifdef TARGET_PC
@@ -1595,6 +1637,7 @@ void fn_1_13DCC(M522_COM *self)
     fn_1_14B20(&self->pad, self->mg);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_13E18(M522_COM *self)
 {
     M522_PLAYER *human;
@@ -1683,6 +1726,7 @@ void fn_1_13E18(M522_COM *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 u8 fn_1_144D4(M522_COM *self, M522_VEC3 *out, f32 radius)
 {
     M522_HANDLES *list;
@@ -1729,6 +1773,7 @@ u8 fn_1_144D4(M522_COM *self, M522_VEC3 *out, f32 radius)
     return any;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_14708(M522_COM *self, M522_VEC3 *target, f32 maxDist)
 {
     M522_VEC3 cur;
@@ -1754,6 +1799,7 @@ s32 fn_1_14708(M522_COM *self, M522_VEC3 *target, f32 maxDist)
     return 0;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_14868(M522_PAD *self)
 {
     self->x = self->x * 0.9;
@@ -1770,6 +1816,7 @@ void fn_1_148B4(M522_PAD *self, u8 down)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_148DC(M522_PAD *self, M522_VEC3 *dir)
 {
     M522_VEC3 d = lbl_1_rodata_6C0;
@@ -1795,6 +1842,7 @@ s32 fn_1_148DC(M522_PAD *self, M522_VEC3 *dir)
     return result;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_14B20(M522_PAD *self, MGPLAYER *player)
 {
     f32 sx;
@@ -1847,6 +1895,7 @@ f32 fn_1_14DF4(M522_ANGLE *self, f32 x)
     return fn_1_15430(self, self->cur, x);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 f32 fn_1_14E30(M522_ANGLE *self, f32 target, f64 rate)
 {
     self->cur = fn_1_14EA4(self, self->cur + rate * fn_1_15430(self, self->cur, target));
@@ -1869,6 +1918,7 @@ f32 fn_1_14F40(M522_ANGLE *self)
     return self->cur;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s16 *fn_1_14F48(M522_U16VEC *self, u32 index)
 {
     if (index >= self->m_size) {
@@ -1886,6 +1936,7 @@ void fn_1_14FC0(M522_NODE *head, void (*func)(M522_PLAYERBASE *))
     fn_1_15020(tmp, end, func);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_15020(M522_NODE *first, M522_NODE *end, void (*func)(M522_PLAYERBASE *))
 {
     M522_NODE *it;
@@ -1897,6 +1948,7 @@ void fn_1_15020(M522_NODE *first, M522_NODE *end, void (*func)(M522_PLAYERBASE *
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
 {
     const s16 *px;
@@ -1978,6 +2030,7 @@ void fn_1_15080(M522_U16VEC *self, s16 *pos, u32 n, s16 *xp)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 f32 fn_1_15430(M522_ANGLE *self, f32 a, f32 b)
 {
     f32 wb;
@@ -2020,6 +2073,7 @@ f32 fn_1_15430(M522_ANGLE *self, f32 a, f32 b)
     return result;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_15648(void)
 {
     lbl_1_bss_A48 = 0x78;

@@ -169,6 +169,7 @@ BUBBLE_RODATA const u8 lbl_1_rodata_300[0x20] = {
 
 extern "C" {
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_BUBBLEMGR *fn_1_4950(M522_BUBBLEMGR *self)
 {
     M522_VEC3 pos;
@@ -202,6 +203,7 @@ M522_BUBBLEMGR *fn_1_4950(M522_BUBBLEMGR *self)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4AC8(void *self, s16 flag)
 {
     M522_HANDLES *vec = (M522_HANDLES *)self;
@@ -217,6 +219,7 @@ void *fn_1_4AC8(void *self, s16 flag)
     return vec;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4B5C(void *self, s16 flag)
 {
     M522_HANDLES *vec = (M522_HANDLES *)self;
@@ -232,6 +235,7 @@ void *fn_1_4B5C(void *self, s16 flag)
     return vec;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4BE8(void *self, s16 flag)
 {
     M522_HANDLES *vec = (M522_HANDLES *)self;
@@ -247,6 +251,7 @@ void *fn_1_4BE8(void *self, s16 flag)
     return vec;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4C6C(M522_BUBBLEMGR *self, s16 flag)
 {
     if (self != 0) {
@@ -262,6 +267,7 @@ void *fn_1_4C6C(M522_BUBBLEMGR *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_4CF8(M522_BUBBLEMGR *self, s16 flag)
 {
     if (self != 0) {
@@ -285,6 +291,7 @@ void *fn_1_4CF8(M522_BUBBLEMGR *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_4E0C(M522_BUBBLEMGR *self)
 {
     M522_BUBBLE *bubble;
@@ -306,6 +313,7 @@ void fn_1_4E0C(M522_BUBBLEMGR *self)
     }
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_HANDLES *fn_1_4EFC(M522_BUBBLEMGR *self)
 {
     s32 *handle;
@@ -333,6 +341,7 @@ M522_VEC3 *fn_1_4F88(M522_BUBBLE *self, M522_VEC3 *out)
     return out;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_BUBBLE *fn_1_4FE4(M522_BUBBLE *self, M522_VEC3 *pos, s32 id)
 {
     MGACTOR_PARAM param;
@@ -379,6 +388,7 @@ M522_BUBBLE *fn_1_4FE4(M522_BUBBLE *self, M522_VEC3 *pos, s32 id)
     return self;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void *fn_1_526C(M522_BUBBLE *self, s16 flag)
 {
     if (self != 0) {
@@ -402,6 +412,7 @@ void fn_1_52FC(M522_BUBBLE *self)
     self->life = (s32)(600.0 * fn_1_BABC());
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_5354(M522_BUBBLE *self)
 {
     f32 fall;
@@ -453,6 +464,7 @@ void fn_1_5354(M522_BUBBLE *self)
     self->frame = self->frame + 1;
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_557C(M522_BUBBLE *self)
 {
     M522_VEC3 pos;
@@ -493,6 +505,7 @@ void fn_1_5748(M522_BUBBLE *self)
     MgActorColAttrSet(self->actor, 4);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_577C(M522_BUBBLE *self)
 {
     M522_VEC3 pos;
@@ -517,6 +530,7 @@ void fn_1_577C(M522_BUBBLE *self)
     Hu3DGLightPosSetV(light, (HuVecF *)&lightPos, (HuVecF *)&camTarget);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_5824(M522_BUBBLE *self)
 {
     M522_VEC3 pos;
@@ -536,6 +550,7 @@ u8 fn_1_58DC(M522_BUBBLE *self)
     return (u8)((self->actor->colGroundAttr & 0x407F) != 0);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_58FC(M522_BUBBLE *self, s32 count)
 {
     M522_VEC3 pos;
@@ -552,6 +567,7 @@ void fn_1_58FC(M522_BUBBLE *self, s32 count)
     }
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_5998(M522_BUBBLE *self, Mtx *camera)
 {
     Mtx *cam;
@@ -564,6 +580,7 @@ void fn_1_5998(M522_BUBBLE *self, Mtx *camera)
     fn_1_5CF8();
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 void fn_1_5A04(M522_BUBBLE *self, Mtx *camera)
 {
     Mtx mtx;
@@ -617,6 +634,7 @@ void fn_1_5CF8(void)
     GXCallDisplayList((void *)lbl_1_rodata_300, 0x20);
 }
 
+// NONMATCHING: template/inline layout and register allocation differ from the original; checked by call targets, constants and field offsets only
 M522_VEC3 *fn_1_5D6C(M522_POSVEC *self, u32 index)
 {
     if (index >= self->m_size) {

@@ -124,6 +124,7 @@ STAGE_RODATA const M522_VEC3 lbl_1_rodata_4B0 = { 0.0f, 0.0f, 0.0f };
 
 extern "C" {
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_STAGE *fn_1_E85C(M522_STAGE *self)
 {
     M522_NODE *node;
@@ -246,6 +247,7 @@ void *fn_1_EBDC(M522_FIREPTR *owner, s16 flag)
     return owner;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_EC34(M522_STAGE *self, s16 flag)
 {
     if (self != 0) {
@@ -261,6 +263,7 @@ void *fn_1_EC34(M522_STAGE *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_ECC0(M522_STAGE *self, s16 flag)
 {
     if (self != 0) {
@@ -311,6 +314,7 @@ void *fn_1_ECC0(M522_STAGE *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_EE24(M522_STAGE *self)
 {
     s16 ids[2];
@@ -335,6 +339,7 @@ void fn_1_EE24(M522_STAGE *self)
     MgActorColMapInit(ids, 2, 8);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_EF38(M522_STAGE *self, M522_VEC3 *player)
 {
     M522_VEC3 pos;
@@ -377,6 +382,7 @@ void fn_1_EF38(M522_STAGE *self, M522_VEC3 *player)
     HuAudFXPlayPan(0x744, pan);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 u8 fn_1_F194(M522_STAGE *self)
 {
     return self->drop <= 0.0f;
@@ -392,11 +398,13 @@ s32 fn_1_F1F8(M522_STAGE *self)
     return self->stageNow;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F200(M522_STAGE *self, s32 bit)
 {
     self->flags = self->flags & ~(1 << bit);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F218(M522_STAGE *self)
 {
     f32 view[9];
@@ -422,6 +430,7 @@ void fn_1_F218(M522_STAGE *self)
     fn_1_F4E0(self);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F34C(M522_STAGE *self)
 {
     char *name;
@@ -456,6 +465,7 @@ void fn_1_F34C(M522_STAGE *self)
     fn_1_9C94(holeCopy, &pos);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_F4E0(M522_STAGE *self)
 {
     M522_VEC3 rot;

@@ -133,6 +133,7 @@ CAMERA_RODATA const M522_VEC3 lbl_1_rodata_3E8[2] = {
 
 extern "C" {
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_CAMERA *fn_1_D1B4(M522_CAMERA *self)
 {
     M522_CAMERA *singleton;
@@ -160,6 +161,7 @@ M522_CAMERA *fn_1_D1B4(M522_CAMERA *self)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_D2F4(M522_CAMERA *self, s16 flag)
 {
     if (self != 0) {
@@ -186,6 +188,7 @@ void *fn_1_D380(M522_NODE *node, s16 flag)
     return node;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_D3D8(M522_CAMERA *self, s16 flag)
 {
     if (self != 0) {
@@ -210,6 +213,7 @@ void *fn_1_D3D8(M522_CAMERA *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_D4A4(M522_CAMERA *self, s32 mode)
 {
     M522_PTMF next;
@@ -242,6 +246,7 @@ void fn_1_D4A4(M522_CAMERA *self, s32 mode)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_D60C(M522_CAMERA *self)
 {
 #ifdef TARGET_PC
@@ -255,6 +260,7 @@ void fn_1_D60C(M522_CAMERA *self)
 #endif
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_D654(M522_CAMERA *self)
 {
     M522_PTMF next;
@@ -288,6 +294,7 @@ void fn_1_D798(M522_CAMERA *self)
     fn_1_723C(&self->view, 1);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_D7F4(M522_CAMERA *self)
 {
     M522_CAMVIEW view;
@@ -315,6 +322,7 @@ void fn_1_D7F4(M522_CAMERA *self)
     self->hook = next;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_D980(M522_CAMERA *self)
 {
     M522_CAMVIEW view;
@@ -347,6 +355,7 @@ void fn_1_D980(M522_CAMERA *self)
     self->hook = next;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_DB5C(M522_CAMERA *self)
 {
     M522_PTMF next;
@@ -364,6 +373,7 @@ void fn_1_DB5C(M522_CAMERA *self)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_DCC0(M522_CAMERA *self)
 {
     s16 motion;
@@ -379,6 +389,7 @@ void fn_1_DD24(M522_CAMERA *self)
     self->camModel = -1;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_DD5C(M522_CAMERA *self)
 {
     M522_CAMVIEW *debugView;

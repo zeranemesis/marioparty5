@@ -26,7 +26,12 @@ typedef struct M522Core_s {
 #endif
 
 typedef struct M522Queue_s {
+#ifdef TARGET_PC
+    /* holds the MGTIMER pointer (M522RTimerObj): a full pointer on PC, not 4 bytes of the next member's room */
+    void *m_opaque[1];
+#else
     /* 0x000 */ s32 m_opaque[1];
+#endif
 } M522_QUEUE;
 
 /* Handle table entry: free/used list links, the object and the handle value

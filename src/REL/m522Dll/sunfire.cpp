@@ -116,6 +116,7 @@ SUNFIRE_RODATA const s32 lbl_1_rodata_420[2] = { 0x500005, 0x500006 };
 
 extern "C" {
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_SPRMGR *fn_1_DEA0(M522_SPRMGR *self, M522_HEAPSEL *handleGrp)
 {
     s32 i;
@@ -140,6 +141,7 @@ M522_SPRMGR *fn_1_DEA0(M522_SPRMGR *self, M522_HEAPSEL *handleGrp)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_DFC0(void *self, s16 flag)
 {
     if (self != 0) {
@@ -155,6 +157,7 @@ void *fn_1_DFC0(void *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E04C(M522_SPRMGR *self, s16 flag)
 {
     if (self != 0) {
@@ -179,6 +182,7 @@ void fn_1_E04C(M522_SPRMGR *self, s16 flag)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E11C(s32 index, s32 texMapId, s32 wrapS, s32 wrapT, s32 filter)
 {
     M522_SPRMGR *mgr;
@@ -195,6 +199,7 @@ void fn_1_E11C(s32 index, s32 texMapId, s32 wrapS, s32 wrapT, s32 filter)
     HuSprTexLoad(self->sprite[index], 0, (s16)texMapId, wrapS, wrapT, filter);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E1D4(M522_SPRMGR *self, s32 bit)
 {
     self->flags = self->flags & ~(1 << bit);
@@ -216,6 +221,7 @@ void fn_1_E270(void)
     fn_1_E65C(&lbl_1_bss_A3C, fn_1_E2A0);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E2A0(M522_EFFECT *node)
 {
     ((void (*)(M522_EFFECT *))node->vtbl[3])(node);
@@ -225,6 +231,7 @@ void fn_1_E2D4(void)
 {
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E2D8(HU3DMODEL *model, Mtx *mtx)
 {
     M522_EFFECT *effect = (M522_EFFECT *)model->hookData;
@@ -240,11 +247,13 @@ void fn_1_E320(void)
     fn_1_E5FC(&lbl_1_bss_A3C, fn_1_E350);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E350(M522_EFFECT *node)
 {
     ((void (*)(M522_EFFECT *))node->vtbl[5])(node);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E384(void)
 {
     u8 empty;
@@ -264,6 +273,7 @@ void fn_1_E384(void)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522_EFFECT *fn_1_E44C(M522_EFFECT *self)
 {
     fn_1_8004(&self->node);
@@ -321,6 +331,7 @@ void fn_1_E5FC(M522_NODE *head, void (*func)(M522_EFFECT *))
     fn_1_E7A4(begin, list, func);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E65C(M522_NODE *head, void (*func)(M522_EFFECT *))
 {
     M522_NODE tmp;
@@ -363,6 +374,7 @@ M522_NODE *fn_1_E74C(M522_NODE *node, s16 flag)
     return node;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_E7A4(M522_NODE *first, M522_NODE *stop, void (*func)(M522_EFFECT *))
 {
     M522_NODE *node = first;

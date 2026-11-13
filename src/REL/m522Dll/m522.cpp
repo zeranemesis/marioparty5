@@ -504,6 +504,7 @@ f32 fn_1_7450(s32 pad)
 }
 
 // Free-fly debug camera driven by pad `pad`.
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_74A4(M522RCam *self, s32 pad)
 {
     Mtx inv, rot, rotB, rotA, m, dump;
@@ -689,6 +690,7 @@ u32 fn_1_7D74(M522RHandleMan *self, void *ptr)
     return node->u.handle;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_7E04(M522RHandleMan *self, int handle)
 {
     u32 h = handle;
@@ -717,6 +719,7 @@ void *fn_1_7E04(M522RHandleMan *self, int handle)
 }
 
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_7EC8(M522RHandleMan *self, int handle)
 {
     u32 h = handle;
@@ -873,6 +876,7 @@ void fn_1_8188(M522RNode *self, M522RCmp cmp)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522RNode *fn_1_8240(M522RCmp cmp, M522RNode *list)
 {
     M522RNode *second;
@@ -939,6 +943,7 @@ M522RNode *fn_1_893C(M522RCmp cmp, M522RNode *a, M522RNode *b)
 
 // ---------------------------------------------------------------- task list
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_89E8(s32 bit)
 {
     M522RTask *t;
@@ -984,6 +989,7 @@ s32 fn_1_8A80(void)
     return 1;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_8B0C(void)
 {
     M522RTask *t;
@@ -1019,6 +1025,7 @@ inline u8 M522RIsEmpty(M522RNode *n)
     return empty;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_8B80(void)
 {
     M522RTask *t;
@@ -1099,6 +1106,7 @@ M522RMaster *fn_1_8DB0(M522RMaster *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522RMaster *fn_1_8E6C(M522RMaster *self, s16 flag)
 {
     M522RMaster *m;
@@ -1129,6 +1137,7 @@ M522RMaster *fn_1_8E6C(M522RMaster *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_9024(M522RMaster *self, s32 objMax, s32 prio)
 {
     OMOBJMAN *om;
@@ -1139,6 +1148,7 @@ void fn_1_9024(M522RMaster *self, s32 objMax, s32 prio)
     omAddObjEx(om, 0, 0, 0, -1, fn_1_9110);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_90A8(M522RMaster *self)
 {
     OMOBJMAN *om;
@@ -1150,6 +1160,7 @@ void fn_1_90A8(M522RMaster *self)
 
 void fn_1_91A0(M522RMaster *self);
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_9110(OMOBJ *obj)
 {
     OMOBJ *self;
@@ -1168,6 +1179,7 @@ void fn_1_9110(OMOBJ *obj)
     fn_1_91A0(cur);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_91A0(M522RMaster *self)
 {
     self->vtbl->update(self);
@@ -1181,6 +1193,7 @@ void fn_1_920C(M522RMaster *self)
 {
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_9210(void)
 {
     M522RMaster *m;
@@ -1213,6 +1226,7 @@ void fn_1_9210(void)
 }
 
 // Register a player in the first free slot.
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_92FC(s32 player)
 {
     M522RMaster *m;
@@ -1231,6 +1245,7 @@ void fn_1_92FC(s32 player)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_93D0(s32 player)
 {
     s32 i;
@@ -1249,6 +1264,7 @@ s32 fn_1_93D0(s32 player)
     return 0;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_94A4(void)
 {
     M522RMaster *m;
@@ -1257,6 +1273,7 @@ void fn_1_94A4(void)
     m->mesId = GameMesCreate(2, 0);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_955C(void)
 {
     M522RMaster *m;
@@ -1265,6 +1282,7 @@ void fn_1_955C(void)
     m->mesId = GameMesCreate(2, 1);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_9614(void)
 {
     M522RMaster *m;
@@ -1279,6 +1297,7 @@ s32 fn_1_9614(void)
 }
 
 // Announce the result: sort the registered players and print their characters.
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_96E8(void)
 {
     M522RMaster *m;
@@ -1330,6 +1349,7 @@ void fn_1_96E8(void)
     GameMesCreate(4, 3, chars[0], chars[1], chars[2], chars[3]);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_98B4(s32 mes)
 {
     M522RMaster *m;
@@ -1405,6 +1425,7 @@ inline s16 M522RModelIdGet(M522RModel *m)
     return m->id;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522RModel *fn_1_9B54(M522RModel *self, M522RModel *parent)
 {
     self->id = Hu3DModelLink(M522RModelIdGet(parent));
@@ -1522,6 +1543,7 @@ void fn_1_A01C(M522RModel *self)
     Hu3DModelShadowMapObjReset(self->id);
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A04C(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1532,6 +1554,7 @@ void fn_1_A04C(M522RModel *self, char *name)
     *flags &= ~8;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A0F8(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1540,6 +1563,7 @@ void fn_1_A0F8(M522RModel *self, char *name)
     obj->flags |= 0x400;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A1A0(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1548,6 +1572,7 @@ void fn_1_A1A0(M522RModel *self, char *name)
     obj->flags &= ~0x400;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A248(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1561,6 +1586,7 @@ void fn_1_A248(M522RModel *self, char *name)
     base->scale.z = 0.0f;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A324(M522RModel *self, char *name)
 {
     HSFOBJECT *obj;
@@ -1574,6 +1600,7 @@ void fn_1_A324(M522RModel *self, char *name)
     base->scale.z = 1.0f;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A400(M522RModel *self, s32 time)
 {
     Hu3DMotionTimeSet(M522RModelIdGet(self), (f32)time);
@@ -1593,6 +1620,7 @@ void fn_1_A46C(M522RRand *r, u32 seed)
     }
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_A4E0(M522RRand *r, u32 *key, u32 len)
 {
     u32 i;
@@ -1736,6 +1764,7 @@ void fn_1_B5F4(M522RFunctor *self, OMOBJ *obj)
     obj->objFunc = fn_1_B614;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_B614(OMOBJ *obj)
 {
     M522RFunctor *self;
@@ -1748,6 +1777,7 @@ void fn_1_B660(M522RFunctor *self, OMOBJ *obj)
 {
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_B664(OMOBJ *obj)
 {
     M522RFunctor *fn;
@@ -1772,6 +1802,7 @@ M522RFunctor *fn_1_B6D4(M522RFunctor *self, s16 flag)
     return self;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_B734(OMOBJMAN *man, OMOBJ *obj)
 {
     M522RFunctor *fn;
@@ -1836,6 +1867,7 @@ s32 fn_1_BDBC(void)
 void *fn_1_C0A4(void *arg);
 M522RThread *fn_1_C100(M522RThread *th, void *(*func)(void *), void *arg, u32 size, s32 prio, u16 attr);
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 M522RSubThread *fn_1_BDE0(M522RSubThread *self, u32 stackSize)
 {
     self->vtbl = &lbl_1_data_370;
@@ -1912,6 +1944,7 @@ s32 fn_1_BFA0(M522RSubThread *self, s32 arg)
     return self->arg;
 }
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void *fn_1_C0A4(void *arg)
 {
     M522RSubThread *self;
@@ -1960,6 +1993,7 @@ M522RThread *fn_1_C1E4(M522RThread *th, void *(*func)(void *), void *arg, u32 *s
 void fn_1_C5CC(u32 *p, u32 words);
 s32 fn_1_C558(u32 *p, s32 mode);
 
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 void fn_1_C260(M522RThread *th, void *(*func)(void *), void *arg, u32 *stack, u32 words, s32 prio, u16 attr)
 {
     u8 ok;
@@ -2027,6 +2061,7 @@ u32 fn_1_C4B8(M522RThread *th)
 }
 
 // Stack guard: mode 0 fills the 32 byte guard, mode 1 checks it.
+// NONMATCHING: register allocation / inline and constant-pool order differ from the original; logic checked equivalent
 s32 fn_1_C558(u32 *p, s32 mode)
 {
     u32 *end;
