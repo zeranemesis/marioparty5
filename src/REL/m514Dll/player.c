@@ -108,6 +108,7 @@ M514COM lbl_1_data_2BC[4] = {
 static OMOBJ *lbl_1_bss_80;
 static OMOBJ *lbl_1_bss_70[4];
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_1D9C(OMOBJMAN *objman)
 {
     s32 i;
@@ -134,6 +135,7 @@ void fn_1_1EC4(OMOBJ *obj)
     obj->objFunc = fn_1_1ED4;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_1ED4(OMOBJ *obj)
 {
     s32 i;
@@ -167,6 +169,7 @@ void fn_1_1ED4(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_20E0(OMOBJ *obj)
 {
     M514PLAYER *p;
@@ -219,6 +222,7 @@ void fn_1_22C8(OMOBJ *obj)
     Center.x = Center.x + 0.1 * (tx - Center.x);
 }
 
+// NONMATCHING: int->float timer compares use fsubs (original fsub, no f32 rounding); logic equal
 void fn_1_2338(OMOBJ *obj)
 {
     M514PLAYER *p = obj->data;
@@ -331,6 +335,7 @@ void fn_1_2338(OMOBJ *obj)
     fn_1_3CF8(obj);
 }
 
+// NONMATCHING: switch lowered to a compare chain (original: 7-entry jump table, cases 4/6 empty); logic equal
 void fn_1_284C(OMOBJ *obj)
 {
     M514PLAYER *p = obj->data;
@@ -390,6 +395,7 @@ void fn_1_284C(OMOBJ *obj)
     fn_1_3CF8(obj);
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_2A88(OMOBJ *obj)
 {
     M514PLAYER *p = obj->data;
@@ -411,6 +417,7 @@ void fn_1_2A88(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_2BC8(OMOBJ *obj, HuVecF *out, s32 side)
 {
     M514PLAYER *p = obj->data;
@@ -428,6 +435,7 @@ void fn_1_2BC8(OMOBJ *obj, HuVecF *out, s32 side)
     out->z = p->pos.z + 100.0 * (0.15 * cos(M514_RAD(ang)));
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_2D10(OMOBJ *obj, s32 side)
 {
     HuVecF pos;
@@ -443,6 +451,7 @@ void fn_1_2E88(OMOBJ *obj)
 {
 }
 
+// NONMATCHING: switch lowered to a compare chain, int->float timer compares use fsubs (original fsub); logic equal
 void fn_1_2E8C(OMOBJ *obj)
 {
     M514PLAYER *p = obj->data;
@@ -614,6 +623,7 @@ void fn_1_2E8C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_37CC(OMOBJ *obj, s32 kind)
 {
     M514PLAYER *p = obj->data;
@@ -634,6 +644,7 @@ void fn_1_37CC(OMOBJ *obj, s32 kind)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 s32 fn_1_387C(OMOBJ *obj, HuVecF *target, s32 useX, f32 targetRot)
 {
     M514PLAYER *p = obj->data;
@@ -700,6 +711,7 @@ void fn_1_3CF8(OMOBJ *obj)
     Hu3DModelRotSet(mdl, 0.0f, p->rotY, 0.0f);
 }
 
+// NONMATCHING: FRAND16() is a plain frand() on the GC build (original masks to 16 bits); logic equal
 void fn_1_3D6C(OMOBJ *obj)
 {
     M514PLAYER *p = obj->data;
@@ -747,6 +759,7 @@ s32 fn_1_3FB8(OMOBJ *obj)
     return 0;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 s32 fn_1_4024(OMOBJ *obj)
 {
     s32 result = 0;
@@ -775,6 +788,7 @@ s32 fn_1_4084(OMOBJ *obj, u32 motIdx)
     return result;
 }
 
+// NONMATCHING: grp compare uses cmpw (original cmplw); logic equal
 s32 fn_1_41C4(s32 grp)
 {
     s32 i;
@@ -788,6 +802,7 @@ s32 fn_1_41C4(s32 grp)
     return 0;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 f32 fn_1_4238(s32 idx)
 {
     M514PLAYER *p;

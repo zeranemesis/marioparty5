@@ -67,6 +67,7 @@ HuVec2f lbl_1_data_53C[4] = {
 
 OMOBJ *lbl_1_bss_220;
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_8268(OMOBJMAN *objman)
 {
     OMOBJ *obj;
@@ -104,6 +105,7 @@ void fn_1_835C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: player element addressing (mulli 36 vs offset form) differs; logic equal
 void fn_1_83A8(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
@@ -165,6 +167,7 @@ void fn_1_83A8(OMOBJ *obj)
     fn_1_8C7C(obj);
 }
 
+// NONMATCHING: player element addressing (mulli 36 vs offset form) differs; logic equal
 void fn_1_879C(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
@@ -251,6 +254,7 @@ void fn_1_8B54(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: player element addressing (mulli 36 vs offset form) differs; logic equal
 void fn_1_8C7C(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
@@ -271,6 +275,7 @@ void fn_1_8C7C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_8D58(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
@@ -305,6 +310,7 @@ void fn_1_8D58(OMOBJ *obj)
     fn_1_9258(obj);
 }
 
+// NONMATCHING: branch layout differs; logic equal
 void fn_1_900C(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
@@ -351,6 +357,7 @@ void fn_1_900C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_9258(OMOBJ *obj)
 {
     M514SCORE *w = obj->data;
@@ -369,6 +376,7 @@ void fn_1_9300(HUSPRGRPID win, s16 pri)
     HuSprPriSet(win, 0, pri);
 }
 
+// NONMATCHING: player element addressing (mulli 36 vs offset form) differs; logic equal
 void fn_1_9334(void)
 {
     M514SCORE *w = lbl_1_bss_220->data;
@@ -429,6 +437,7 @@ void fn_1_9570(s32 idx, f32 val)
     w->player[idx].score = (s32)(3.0f * val);
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 s32 fn_1_95BC(s32 idx)
 {
     M514SCORE *w = lbl_1_bss_220->data;
@@ -452,6 +461,7 @@ f32 fn_1_95F4(s32 idx)
     return ret;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 f32 fn_1_9688(void)
 {
     M514SCORE *w = lbl_1_bss_220->data;
@@ -501,6 +511,7 @@ s32 fn_1_9820(void)
     return 0;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_98F4(void)
 {
     s32 i;

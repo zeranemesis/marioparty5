@@ -101,6 +101,7 @@ void _epilog(void)
     }
 }
 
+// NONMATCHING: original loop stores at constant index 4 (bss_18[0], bss_20[0], bss_10[0]); this initialises all 4 entries, all overwritten before use
 void ObjectSetup(void)
 {
     Mtx mtx;
@@ -150,6 +151,7 @@ void fn_1_3A0(void)
     MgSeqModeNext();
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_448(s16 mode, s16 frameNo)
 {
     if (frameNo == 0) {
@@ -181,6 +183,7 @@ void fn_1_540(s16 mode, s16 frameNo)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_580(void)
 {
     s32 done = 0;
@@ -197,6 +200,7 @@ void fn_1_580(void)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_600(s16 mode, s16 frameNo)
 {
     s32 scores[4];
@@ -249,6 +253,7 @@ void fn_1_7B0(s16 mode, s16 frameNo)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_8A0(s16 mode, s16 frameNo)
 {
     s32 i;
@@ -285,6 +290,7 @@ void fn_1_98C(OMOBJ *obj)
     obj->objFunc = fn_1_9E4;
 }
 
+// NONMATCHING: cos/sin call order and update flag codegen differ; formulas and constants checked
 void fn_1_9E4(OMOBJ *obj)
 {
     M514CAM *cam = obj->data;
@@ -356,6 +362,7 @@ void fn_1_9E4(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_14F4(HuVecF *dir, HuVecF *target, f32 dist)
 {
     HuVecF norm;
@@ -375,6 +382,7 @@ void fn_1_14F4(HuVecF *dir, HuVecF *target, f32 dist)
     Hu3DShadowTPLvlSet(0.4f);
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_163C(void *motData)
 {
     M514CAM *cam = lbl_1_bss_64->data;
@@ -406,6 +414,7 @@ s16 fn_1_16EC(s32 idx)
     return lbl_1_bss_20[idx];
 }
 
+// NONMATCHING: s16 compares use cmpw (original cmplw); loop/branch logic checked, was inverted before
 s32 fn_1_1704(s32 grp)
 {
     s32 i;
@@ -453,6 +462,7 @@ void fn_1_1870(s32 idx)
     lbl_1_bss_8[idx & 3] = 1;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_1890(s32 playerNo)
 {
     lbl_1_bss_60++;
@@ -461,6 +471,7 @@ void fn_1_1890(s32 playerNo)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 s32 fn_1_1904(f32 x)
 {
     s32 pan = (s32)(x * 0.055555556f + 48.0f);
@@ -474,6 +485,7 @@ s32 fn_1_1904(f32 x)
     return pan;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 s32 fn_1_1960(HuVecF *pos)
 {
     HuVecF scr;
@@ -495,6 +507,7 @@ s32 fn_1_19F4(void)
     return (s32)lbl_1_data_8;
 }
 
+// NONMATCHING: s16 conversion of volume/pan differs in codegen; logic equal
 void fn_1_1A18(s32 seId, HuVecF *pos)
 {
     HuVecF scr;
@@ -512,6 +525,7 @@ void fn_1_1A18(s32 seId, HuVecF *pos)
     HuAudFXPlayVolPan(seId, vol, pan);
 }
 
+// NONMATCHING: s16 conversion of pan differs in codegen; logic equal
 void fn_1_1AF4(s32 seId, HuVecF *pos)
 {
     HuVecF scr;
@@ -530,6 +544,7 @@ void fn_1_1AF4(s32 seId, HuVecF *pos)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 f32 fn_1_1BCC(f32 from, f32 to, f32 rate)
 {
     f32 diff;
@@ -549,6 +564,7 @@ f32 fn_1_1BCC(f32 from, f32 to, f32 rate)
     return res;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 f32 fn_1_1CE8(f32 from, f32 to)
 {
     f32 diff = fmod(to - from, 360.0);

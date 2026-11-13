@@ -73,6 +73,7 @@ static s32 lbl_1_bss_108[0x20];
 static s16 lbl_1_bss_C8[0x20];
 static s16 lbl_1_bss_88[0x20];
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_4270(OMOBJMAN *objman)
 {
     OMOBJ *obj;
@@ -116,6 +117,7 @@ void fn_1_435C(void)
     }
 }
 
+// NONMATCHING: table indexing codegen differs (slwi/add scheduling); logic equal
 HU3DMODELID fn_1_43F8(s32 dataNum)
 {
     HU3DMODELID model;
@@ -138,6 +140,7 @@ HU3DMODELID fn_1_43F8(s32 dataNum)
     return -1;
 }
 
+// NONMATCHING: table indexing codegen differs (slwi/add scheduling); logic equal
 HU3DMOTID fn_1_44E4(HU3DMODELID model, s32 dataNum)
 {
     HU3DMOTID mot;
@@ -160,6 +163,7 @@ HU3DMOTID fn_1_44E4(HU3DMODELID model, s32 dataNum)
     return -1;
 }
 
+// NONMATCHING: table indexing codegen differs (slwi/add scheduling); logic equal
 void fn_1_45D4(OMOBJMAN *objman, M514OBJDEF *def)
 {
     OMOBJ *obj;
@@ -210,6 +214,7 @@ void fn_1_48B0(OMOBJ *obj)
     Hu3DModelRotSetV(model, &w->rot);
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_490C(OMOBJ *obj, s32 motNo)
 {
     M514OBJ *w = obj->data;
@@ -245,6 +250,7 @@ s32 fn_1_49E4(OMOBJ *obj)
     return 0;
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_4A4C(OMOBJ *obj)
 {
     M514OBJ *w = obj->data;
@@ -273,6 +279,7 @@ void fn_1_4A4C(OMOBJ *obj)
     obj->objFunc = fn_1_4C40;
 }
 
+// NONMATCHING: int->float timer compares use fsubs (original fsub); logic equal
 void fn_1_4C40(OMOBJ *obj)
 {
     M514OBJMGR *mgr = lbl_1_bss_208->data;

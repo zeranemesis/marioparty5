@@ -112,6 +112,7 @@ OMOBJ *lbl_1_bss_218;
 
 #define M514_HOOKDATA(idx) (Hu3DData[(s16)lbl_1_bss_218->mdlId[idx]].hookData)
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_5B04(OMOBJMAN *objman)
 {
     OMOBJ *obj;
@@ -144,6 +145,7 @@ void fn_1_5BEC(OMOBJ *obj)
     fn_1_77BC(obj);
 }
 
+// NONMATCHING: HuMemDirectMallocNum/memset argument scheduling differs; logic equal
 void fn_1_5C34(OMOBJ *obj)
 {
     HU3DMODELID model;
@@ -157,6 +159,7 @@ void fn_1_5C34(OMOBJ *obj)
     memset(data, 0, sizeof(M514ARC) * 3);
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_5CD4(OMOBJ *obj)
 {
     M514ARC *arc = Hu3DData[(s16)obj->mdlId[0]].hookData;
@@ -184,6 +187,7 @@ void fn_1_5CD4(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: temp colour arrays and int->float conversions differ in codegen; vertex data equal
 void fn_1_5DE4(HU3DMODEL *modelP, Mtx *mtx)
 {
     M514ARC *arc = modelP->hookData;
@@ -277,6 +281,7 @@ void fn_1_5DE4(HU3DMODEL *modelP, Mtx *mtx)
     }
 }
 
+// NONMATCHING: HuMemDirectMallocNum/memset argument scheduling differs; logic equal
 void fn_1_6588(OMOBJ *obj)
 {
     HU3DMODELID model;
@@ -291,6 +296,7 @@ void fn_1_6588(OMOBJ *obj)
     sparks->anim = HuSprAnimRead(HuDataSelHeapReadNum(0x480020, 0x10000000, HEAP_MODEL));
 }
 
+// NONMATCHING: (u8)(s32) cast adds clrlwi and colour byte addressing differs; logic equal
 void fn_1_6644(OMOBJ *obj)
 {
     M514SPARKS *sparks = Hu3DData[(s16)obj->mdlId[1]].hookData;
@@ -377,6 +383,7 @@ void fn_1_68EC(HU3DMODEL *modelP, Mtx *mtx)
     }
 }
 
+// NONMATCHING: HuMemDirectMallocNum/memset argument scheduling differs; logic equal
 void fn_1_6C44(OMOBJ *obj)
 {
     HU3DMODELID model;
@@ -398,6 +405,7 @@ void fn_1_6C44(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: ring colour byte addressing and int->float compare (fsubs vs fsub) differ; logic equal
 void fn_1_6D7C(OMOBJ *obj)
 {
     M514RINGS *rings = Hu3DData[(s16)obj->mdlId[2]].hookData;
@@ -439,6 +447,7 @@ void fn_1_6D7C(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: ring element addressing (mulli 28 + add) differs; logic equal
 void fn_1_6ED4(HU3DMODEL *modelP, Mtx *mtx)
 {
     M514RINGS *rings = modelP->hookData;
@@ -484,6 +493,7 @@ void fn_1_6ED4(HU3DMODEL *modelP, Mtx *mtx)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_7184(OMOBJ *obj)
 {
     HU3DMODELID model;
@@ -507,6 +517,7 @@ void fn_1_7184(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: FRAND16() is a plain frand() on the GC build (original masks to 16 bits); logic equal
 void fn_1_728C(HU3DMODEL *modelP, HU3DPARTICLE *par, Mtx mtx)
 {
     HU3DPARTICLEDATA *data = par->data;
@@ -545,6 +556,7 @@ void fn_1_728C(HU3DMODEL *modelP, HU3DPARTICLE *par, Mtx mtx)
     }
 }
 
+// NONMATCHING: initialisation store order differs; logic equal
 void fn_1_76D0(OMOBJ *obj)
 {
     M514EFF *w = obj->data;
@@ -564,6 +576,7 @@ void fn_1_76D0(OMOBJ *obj)
     HuSprAttrSet(grp, 0, 4);
 }
 
+// NONMATCHING: bank/state switch compare order differs; logic equal
 void fn_1_77BC(OMOBJ *obj)
 {
     M514EFF *w = obj->data;
@@ -613,6 +626,7 @@ void fn_1_77BC(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 s32 fn_1_79F8(HuVecF *pos, f32 size)
 {
     M514ARC *arc = M514_HOOKDATA(0);
@@ -654,6 +668,7 @@ void fn_1_7B14(s32 id)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_7B8C(s32 id)
 {
     M514ARC *arcs = M514_HOOKDATA(0);
@@ -666,6 +681,7 @@ void fn_1_7B8C(s32 id)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_7C10(s32 id, HuVecF *pos)
 {
     M514ARC *arcs = M514_HOOKDATA(0);
@@ -705,6 +721,7 @@ void fn_1_7C10(s32 id, HuVecF *pos)
     }
 }
 
+// NONMATCHING: FRAND16() is a plain frand() on the GC build (original masks to 16 bits); logic equal
 void fn_1_7EBC(HuVecF *pos)
 {
     M514SPARKS *sparks = M514_HOOKDATA(1);
@@ -728,6 +745,7 @@ void fn_1_7EBC(HuVecF *pos)
     }
 }
 
+// NONMATCHING: ring element addressing (mulli 28 + add) differs; logic equal
 void fn_1_80C0(HuVecF *pos, f32 size)
 {
     M514RINGS *rings = M514_HOOKDATA(2);
@@ -747,6 +765,7 @@ void fn_1_80C0(HuVecF *pos, f32 size)
     }
 }
 
+// NONMATCHING: register allocation / stack frame only; logic checked against the asm
 void fn_1_8180(HuVecF *pos)
 {
     HU3DPARTICLE *par = M514_HOOKDATA(3);
