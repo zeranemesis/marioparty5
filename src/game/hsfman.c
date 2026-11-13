@@ -1871,6 +1871,11 @@ static void lightSet(HU3DLIGHT *lightP, s16 lightBit, Mtx cameraMtx, Mtx cameraM
     GXLightObj lightObj;
     HuVecF dir;
     HuVecF pos;
+#ifdef TARGET_PC
+    /* the infinity case never sets the angle attenuation: on GameCube the stack holds a = (1, 0, 0) there
+       (measured in Dolphin), on PC it is garbage close to 0 and the light adds nothing */
+    GXInitLightSpot(&lightObj, 0.0f, GX_SP_OFF);
+#endif
     switch(LIGHT_TYPE_GET(lightP)) {
         case HU3D_LIGHT_TYPE_SPOT:
             GXInitLightAttn(&lightObj, 1, 0, 0, 1, 0, 0);

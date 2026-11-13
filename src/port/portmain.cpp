@@ -565,6 +565,7 @@ extern "C" int port_main(int argc, char* argv[]) {
  * tools-side driver: scratchpad mgtest/run_mg.py.
  */
 extern "C" {
+#include <game/charman.h>
 #include <game/flag.h>
 #include <game/gamework.h>
 #include <game/mgdata.h>
@@ -627,6 +628,11 @@ extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
     }
     tmStarted = true;
     tmSetupPlayers();
+    // as mdmini (Mini-Game mode) does before a game: the players' motions go to ARAM (the Dolphin bench does the same)
+    CharDataClose(-1);
+    for (int i = 0; i < GW_PLAYER_MAX; i++) {
+        CharMotionInit(GwPlayerConf[i].charNo);
+    }
     printf("TESTMG: start mg=%d mgovl=%d bootovl=%d instovl=%d\n", tmMg, mgDataTbl[tmMg].ovl, DLL_bootdll, DLL_instdll);
     fflush(stdout);
     return DLL_instdll;
