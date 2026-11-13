@@ -2683,7 +2683,7 @@ static s16 fn_1_7368(ANIMDATA *anim, M559VEC *field8, f32 *fieldC, s16 partCount
     sp12 = rows;
     temp_r3 = Hu3DHookFuncCreate((HU3DMODELHOOK) fn_1_6B54);
     temp_r28 = &Hu3DData[temp_r3];
-    temp_r28->hookData = HuMemDirectMallocNum(HEAP_MODEL, 0x6C, temp_r28->mallocNo);
+    temp_r28->hookData = HuMemDirectMallocNum(HEAP_MODEL, sizeof(M559HOOKDATA), temp_r28->mallocNo);
     temp_r31 = (M559HOOKDATA *) temp_r28->hookData;
     anim->useNum += 1;
     temp_r31->anim = anim;
