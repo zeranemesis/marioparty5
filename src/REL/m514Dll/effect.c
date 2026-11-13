@@ -79,6 +79,13 @@ void fn_1_5B90(OMOBJ *obj);
 void fn_1_5BEC(OMOBJ *obj);
 void fn_1_5C34(OMOBJ *obj);
 void fn_1_5CD4(OMOBJ *obj);
+#ifdef TARGET_PC
+/* a GXColor read as a u32 is 0xRRGGBBAA only on the big-endian GameCube */
+#define M514_COLOR32(c) ((u32)(c)->r << 24 | (u32)(c)->g << 16 | (u32)(c)->b << 8 | (u32)(c)->a)
+#else
+#define M514_COLOR32(c) (*(u32 *)(c))
+#endif
+
 void fn_1_5DE4(HU3DMODEL *modelP, Mtx *mtx);
 void fn_1_6588(OMOBJ *obj);
 void fn_1_6644(OMOBJ *obj);
@@ -257,13 +264,13 @@ void fn_1_5DE4(HU3DMODEL *modelP, Mtx *mtx)
                         r1 = 0.0f;
                     }
                     GXPosition3f32((f32)((f64)r0 * sin(M514_RAD(a0))), (f32)((f64)yScale * ((f64)r0 * cos(M514_RAD(a0)))), 0.0f);
-                    GXColor1u32(*(u32 *)&colA[k]);
+                    GXColor1u32(M514_COLOR32(&colA[k]));
                     GXPosition3f32((f32)((f64)r0 * sin(M514_RAD(a1))), (f32)((f64)yScale * ((f64)r0 * cos(M514_RAD(a1)))), 0.0f);
-                    GXColor1u32(*(u32 *)&colB[k]);
+                    GXColor1u32(M514_COLOR32(&colB[k]));
                     GXPosition3f32((f32)((f64)r1 * sin(M514_RAD(a1))), (f32)((f64)yScale * ((f64)r1 * cos(M514_RAD(a1)))), 0.0f);
-                    GXColor1u32(*(u32 *)&colB[k + 1]);
+                    GXColor1u32(M514_COLOR32(&colB[k + 1]));
                     GXPosition3f32((f32)((f64)r1 * sin(M514_RAD(a0))), (f32)((f64)yScale * ((f64)r1 * cos(M514_RAD(a0)))), 0.0f);
-                    GXColor1u32(*(u32 *)&colA[k + 1]);
+                    GXColor1u32(M514_COLOR32(&colA[k + 1]));
                 }
                 ang += step;
             }
