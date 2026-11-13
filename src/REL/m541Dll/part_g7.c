@@ -110,7 +110,7 @@ s32 fn_1_14EB0(s16 idx)
     s16 n;
     s16 found;
     s16 cand;
-    s16 near;
+    s16 nearFlag;
     float px, pz;
     float ang, step;
     float p2x, p2z, cosA, sinA;
@@ -160,7 +160,7 @@ s32 fn_1_14EB0(s16 idx)
             }
             for (j = 0; j < G7_HCNT[i] - 1; j++) {
                 found = 0;
-                near = 0;
+                nearFlag = 0;
                 if (i != 15) {
                     f31 = G7_PT(i, j).x;
                     f30 = G7_PT(i, j).z;
@@ -172,11 +172,11 @@ s32 fn_1_14EB0(s16 idx)
                     f22 = sqrt(f29 * f29 + f28 * f28);
                     if (f22 <= lim) {
                         cnt++;
-                        near = 1;
+                        nearFlag = 1;
                     }
                     if (f19 != 0.0f && f18 != 0.0f && f22 > lim) {
                         f22 = G7_ABS(c1 + (a1 * f31 + b1 * f30));
-                        if (lenA != 0.0f) {
+                        if (lenA) {
                             f22 = f22 / lenA;
                         } else {
                             f22 = 0.0f;
@@ -185,7 +185,7 @@ s32 fn_1_14EB0(s16 idx)
                             f22 = sqrt((f31 - px) * (f31 - px) + (f30 - pz) * (f30 - pz));
                             if (f22 < dist[n].x) {
                                 dist[n].x = f22;
-                                if (lenB != 0.0f) {
+                                if (lenB) {
                                     f22 = f22 / lenB;
                                 } else {
                                     f22 = 0.0f;
@@ -208,11 +208,11 @@ s32 fn_1_14EB0(s16 idx)
                     f22 = sqrt(f29 * f29 + f28 * f28);
                     if (f22 <= lim) {
                         cnt++;
-                        near = 1;
+                        nearFlag = 1;
                     }
                     if (f19 != 0.0f && f18 != 0.0f && f22 > lim) {
                         f22 = G7_ABS(c1 + (a1 * f31 + b1 * f30));
-                        if (lenA != 0.0f) {
+                        if (lenA) {
                             f22 = f22 / lenA;
                         } else {
                             f22 = 0.0f;
@@ -221,7 +221,7 @@ s32 fn_1_14EB0(s16 idx)
                             f22 = sqrt((f31 - px) * (f31 - px) + (f30 - pz) * (f30 - pz));
                             if (f22 < dist[n].x) {
                                 dist[n].x = f22;
-                                if (lenB != 0.0f) {
+                                if (lenB) {
                                     f22 = f22 / lenB;
                                 } else {
                                     f22 = 0.0f;
@@ -234,7 +234,7 @@ s32 fn_1_14EB0(s16 idx)
                             }
                         }
                     }
-                    if (near != 0) {
+                    if (nearFlag != 0) {
                         f31 = G7_PT(i, j + 1).x - G7_PT(i, j).x;
                         f30 = G7_PT(i, j + 1).z - G7_PT(i, j).z;
                         f31 = f31 * 0.5f;
@@ -249,7 +249,7 @@ s32 fn_1_14EB0(s16 idx)
                         f22 = sqrt(f29 * f29 + f28 * f28);
                         if (f19 != 0.0f && f18 != 0.0f && f22 > lim) {
                             f22 = G7_ABS(c1 + (a1 * f31 + b1 * f30));
-                            if (lenA != 0.0f) {
+                            if (lenA) {
                                 f22 = f22 / lenA;
                             } else {
                                 f22 = 0.0f;
@@ -259,7 +259,7 @@ s32 fn_1_14EB0(s16 idx)
                                 f22 = f29;
                                 if (f22 < dist[n].x) {
                                     dist[n].x = f22;
-                                    if (lenB != 0.0f) {
+                                    if (lenB) {
                                         f22 = f22 / lenB;
                                     } else {
                                         f22 = 0.0f;
@@ -273,7 +273,7 @@ s32 fn_1_14EB0(s16 idx)
                         }
                     }
                 }
-                if (found != 0 || near != 0) {
+                if (found != 0 || nearFlag != 0) {
                     flg[i] = 1;
                 }
                 if (G7_PT(i, j).x < G7_PT(i, j + 1).x) {
@@ -304,7 +304,7 @@ s32 fn_1_14EB0(s16 idx)
                     c2 = lbl_1_data_3E8[j].z;
                 }
                 prod = sqrt(a1 * a1 + b1 * b1) * sqrt(a2 * a2 + b2 * b2);
-                if (prod != 0.0f) {
+                if (prod) {
                     margin = (a1 * a2 + b1 * b2) / prod;
                 } else {
                     margin = 0.0f;
@@ -401,7 +401,7 @@ s32 fn_1_14EB0(s16 idx)
     lbl_1_bss_2614[idx].chaseMode = seg[j][0];
     px -= lbl_1_bss_2614[idx].targetPosV.x;
     pz -= lbl_1_bss_2614[idx].targetPosV.z;
-    if (lbl_1_bss_2614[idx].targetDist != 0.0f) {
+    if (lbl_1_bss_2614[idx].targetDist) {
         p2x = scl / lbl_1_bss_2614[idx].targetDist;
     } else {
         p2x = 0.0f;
