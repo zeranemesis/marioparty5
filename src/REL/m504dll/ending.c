@@ -8,6 +8,7 @@
 
 extern s32 rand8(void);
 extern double sin();
+extern float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 void PSVECAdd(const Vec *a, const Vec *b, Vec *ab);
 void PSVECScale(const Vec *src, Vec *dst, f32 scale);

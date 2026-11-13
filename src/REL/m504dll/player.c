@@ -408,7 +408,7 @@ f32 fn_1_68E8(f32 cur, f32 from, f32 mul)
     register f32 wrap;
     register f32 res;
 
-    wrap = fmod(from - cur, 360);
+    wrap = fmod(from - cur, 360.0);
     ang = wrap;
     if (ang < 0.0f) {
         ang += 360.0f;
@@ -416,7 +416,7 @@ f32 fn_1_68E8(f32 cur, f32 from, f32 mul)
     if (ang > 180.0f) {
         ang -= 360.0f;
     }
-    res = fmod(cur + mul * ang, 360);
+    res = fmod(cur + mul * ang, 360.0);
     ang = res;
     if (ang < 0.0f) {
         ang += 360.0f;

@@ -524,7 +524,7 @@ s32 fn_1_F34(M504WORK *work)
     if (fn_1_E14C(work) != 0) {
         for (i = 0; i < 4; i++) {
             slot = &work->slot[i];
-            Hu3DModelAttrSet(slot->stage.mdl22, 1);
+            Hu3DModelAttrSet(slot->stage.mdlE, 1);
             Hu3DModelAttrSet(slot->player.mdlC8, 0x400000);
             if (lbl_1_bss_0->unk122C != 0) {
                 slot->timer = MgTimerCreate(2);
