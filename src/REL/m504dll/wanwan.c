@@ -47,6 +47,7 @@ Vec lbl_1_data_4C4[8] = {
 #define WANWAN_HEADING (180.0 * (atan2(dir.x, dir.z) / 3.141592653589793))
 #define WANWAN_HEADING_V (180.0 * (atan2(v.x, v.z) / 3.141592653589793))
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_9680(M504WANWAN *self, M504SLOT *slot)
 {
     s16 *mdlTbl;
@@ -130,6 +131,7 @@ void fn_1_9C10(M504WANWAN *self)
     memset(self, 0, sizeof(M504WANWAN));
 }
 
+// NONMATCHING: extra dead u16 compare of timer>=120 in original; hit test uses a flag here; rest identical
 s32 fn_1_9CAC(M504WANWAN *self)
 {
     M504SLOT *slot;
@@ -392,6 +394,7 @@ s32 fn_1_9CAC(M504WANWAN *self)
     return ret;
 }
 
+// NONMATCHING: sqrt is a libm call (CodeWarrior inlines frsqrte + Newton); rest is register/stack layout
 void fn_1_AB40(Mtx m, Vec *rot)
 {
     f32 s;
@@ -479,6 +482,7 @@ s32 fn_1_AEE0(M504WANWAN *self, f32 *outAng)
     return 0;
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_B1AC(M504WANWAN *self)
 {
     Vec v;
@@ -542,6 +546,7 @@ s32 fn_1_B43C(M504WANWAN *self, Vec *from, f32 range, Vec *dst, s32 flag)
     return 0;
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 s32 fn_1_B52C(M504WANWAN *self, Vec *outPos)
 {
     Vec pts[8];

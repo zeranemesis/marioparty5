@@ -65,6 +65,7 @@ s16 lbl_1_bss_7A08[10];
 f32 lbl_1_bss_7A1C;
 f32 lbl_1_bss_7A20;
 
+// NONMATCHING: switch on winner is an if-chain in the original; same cases
 s32 fn_1_118E8(M504WORK *work)
 {
     M504PLAYER *player;

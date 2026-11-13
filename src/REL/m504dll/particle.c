@@ -58,6 +58,7 @@ void fn_1_D10C(void)
     lbl_1_bss_7840 = NULL;
 }
 
+// NONMATCHING: null-test encoding
 void fn_1_D15C(void)
 {
     s32 i;
@@ -72,6 +73,7 @@ void fn_1_D15C(void)
     lbl_1_bss_7840 = NULL;
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_D1F0(s16 camMask, Vec *pos)
 {
     s32 i;
@@ -90,6 +92,7 @@ void fn_1_D1F0(s16 camMask, Vec *pos)
     }
 }
 
+// NONMATCHING: re-indexes lbl_1_bss_7820 instead of caching the id in a register
 s16 fn_1_D560(s16 camMask, M504PARTMPL *tmpl, f32 x, f32 y, f32 z, f32 life)
 {
     HU3DPARTICLE *par;
@@ -150,6 +153,7 @@ s16 fn_1_D560(s16 camMask, M504PARTMPL *tmpl, f32 x, f32 y, f32 z, f32 life)
     return ret;
 }
 
+// NONMATCHING: null-test encoding
 void fn_1_D804(void)
 {
     ANIMDATA *anim;
@@ -191,6 +195,7 @@ void fn_1_D804(void)
     }
 }
 
+// NONMATCHING: null-test encoding
 void fn_1_DA68(void)
 {
     ANIMDATA *anim;

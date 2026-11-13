@@ -129,6 +129,7 @@ OP_RODATA const Vec lbl_1_rodata_4A0 = { 0.0f, 0.0f, 0.0f };
 OP_RODATA const Vec lbl_1_rodata_4AC = { 0.0f, 0.0f, 0.0f };
 OP_RODATA const Vec lbl_1_rodata_4B8 = { 0.0f, 0.0f, 0.0f };
 
+// NONMATCHING: stack Vec temporaries/dead store of (0,100,200) vec omitted; semantics checked
 s32 fn_1_E14C(M504WORK *work)
 {
     M504PLAYER *player;
@@ -635,6 +636,7 @@ void fn_1_11088(void)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_11198(Vec *pos, Vec *vel)
 {
     s32 i;
@@ -656,6 +658,7 @@ void fn_1_11198(Vec *pos, Vec *vel)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_11360(Vec *pos, Vec *vel)
 {
     s32 i;
@@ -677,6 +680,7 @@ void fn_1_11360(Vec *pos, Vec *vel)
     }
 }
 
+// NONMATCHING: sqrt is a libm call (CodeWarrior inlines frsqrte + Newton); rest is register/stack layout
 void fn_1_11548(Mtx m, Vec *rot)
 {
     f64 y;
@@ -695,10 +699,8 @@ void fn_1_11548(Mtx m, Vec *rot)
         rot->z += 360.0f;
     }
     z = -m[0][2];
-    /* NONMATCHING (2 rows here, 13 in the sqrt block below): CodeWarrior tests "1.0 - z*z" with
-       fcmpo + cror eq,gt,eq + bne; MWCC 1.3.2 lowers the same float truthiness test to
-       fcmpu + beq. Semantics are identical, the encodings are not. */
-    if (1.0 - z * z) {
+    // NONMATCHING: sqrt is a libm call (CodeWarrior inlines frsqrte + Newton steps)
+    if (1.0 - z * z >= 0.0) {
         t = 1.0 - z * z;
     } else {
         t = -(1.0 - z * z);

@@ -47,6 +47,7 @@ u16 fn_1_C3E0(INPUTWORK *work)
     return ret;
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_C4F4(M504CAMERA *cam, s32 slotNo, struct M504Slot_s *slot)
 {
     Vec up;
@@ -101,6 +102,7 @@ void fn_1_C74C(M504CAMERA *cam)
     Hu3DCameraPosSetV(cam->camBit, &pos, &cam->up, &look);
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_C810(M504CAMERA *cam)
 {
     f32 v;
@@ -132,6 +134,7 @@ void fn_1_C810(M504CAMERA *cam)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_C99C(M504CAMERA *cam, s16 type, s32 cnt, f32 amp, f32 decay, f32 speed)
 {
     cam->shakeType = type;
@@ -146,6 +149,7 @@ void fn_1_C9C4(void)
 {
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_C9C8(Vec *dst, Vec *a, Vec *b, f32 t)
 {
     f32 tt;
@@ -204,6 +208,7 @@ void fn_1_CCE4(M504CAMERA *cam, f32 blend)
     cam->blend = blend;
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 s32 fn_1_CCEC(M504CAMERA *cam, Vec *up, f32 duration)
 {
     f32 t;

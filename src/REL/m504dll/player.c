@@ -131,6 +131,7 @@ PL_RODATA const Vec lbl_1_rodata_1A0 = { 0.0f, 0.0f, 0.0f };
 PL_RODATA const Vec lbl_1_rodata_1D0 = { 0.0f, 0.0f, 0.0f };
 PL_RODATA const Vec lbl_1_rodata_1DC = { 0.0f, 0.0f, 0.0f };
 
+// NONMATCHING: charNo is s16 here, s32 in the original (same values)
 void fn_1_5934(M504PLAYER *player, s32 slotNo, M504SLOT *slot)
 {
     OMOBJMAN *proc;
@@ -196,6 +197,7 @@ void fn_1_5934(M504PLAYER *player, s32 slotNo, M504SLOT *slot)
     fn_1_B828(&player->input, slotNo, (PADOWNER *)player);
 }
 
+// NONMATCHING: charNo s16 vs s32; null-test encoding
 void fn_1_5E1C(M504PLAYER *player)
 {
     OMOBJMAN *proc;
@@ -237,6 +239,7 @@ s32 fn_1_5EC8(M504PLAYER *player)
     return 0;
 }
 
+// NONMATCHING: charNo s16 vs s32
 void fn_1_5F58(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -295,6 +298,7 @@ void fn_1_5F58(M504PLAYER *player)
     omSetRot(player->obj, 0.0f, player->angDisp, 0.0f);
 }
 
+// NONMATCHING: sqrt is a libm call (CodeWarrior inlines frsqrte + Newton); rest is register/stack layout
 void fn_1_613C(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -402,6 +406,7 @@ void fn_1_613C(M504PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 f32 fn_1_68E8(f32 cur, f32 from, f32 mul)
 {
     register f32 ang;
@@ -424,6 +429,7 @@ f32 fn_1_68E8(f32 cur, f32 from, f32 mul)
     return ang;
 }
 
+// NONMATCHING: original also computes two unused addresses
 void fn_1_6A04(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -438,6 +444,7 @@ void fn_1_6A04(M504PLAYER *player)
     wanwan->on34 = 1;
 }
 
+// NONMATCHING: sqrt is a libm call (CodeWarrior inlines frsqrte + Newton); rest is register/stack layout
 void fn_1_6AA0(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -566,6 +573,7 @@ void fn_1_6AA0(M504PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_7710(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -714,6 +722,7 @@ void fn_1_7710(M504PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_85AC(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -760,6 +769,7 @@ void fn_1_85AC(M504PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_8A40(M504PLAYER *player)
 {
     M504SLOT *slot;
@@ -941,6 +951,7 @@ void fn_1_91B0(M504PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_9334(M504PLAYER *player)
 {
     M504SLOT *slot;

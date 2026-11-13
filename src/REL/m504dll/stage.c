@@ -139,6 +139,7 @@ s32 fn_1_24F8(M504SLOT *slot)
 
 #define ST_JOINT(dst, mdlId, num) dst = Hu3DJointMotion(mdlId, HuDataSelHeapReadNum(num, 0x10000000, HEAP_MODEL))
 
+// NONMATCHING: Vec copies via float vs int moves; otherwise identical
 void fn_1_255C(M504STAGE *stage, s32 slotNo, M504SLOT *slot)
 {
     s16 *mdlTbl;
@@ -298,6 +299,7 @@ void fn_1_3B9C(M504STAGE *stage)
     memset(stage, 0, sizeof(M504STAGE));
 }
 
+// NONMATCHING: Vec copy order / stack layout
 void fn_1_3D9C(M504STAGE *stage)
 {
     M504WORK *work;
@@ -368,6 +370,7 @@ s32 fn_1_3FCC(Vec *p)
     return 1;
 }
 
+// NONMATCHING: constants (3550.0 etc) kept in float registers by the original; logic identical
 s32 fn_1_4030(M504STAGE *stage, Vec *pos, Vec *out, s32 flag, s16 *wallIdx, s16 *cornerIdx, f32 range)
 {
     Vec unusedA;
@@ -612,6 +615,7 @@ void fn_1_4FA4(M504STAGE *stage)
     fn_1_572C(stage);
 }
 
+// NONMATCHING: switch tree shape
 void fn_1_4FEC(M504STAGE *stage)
 {
     M504SLOT *slot;
@@ -662,6 +666,7 @@ void fn_1_5168(M504STAGE *stage)
     fn_1_51B4(stage, 2);
 }
 
+// NONMATCHING: switch tree shape (original also has a no-op case 4)
 void fn_1_51B4(M504STAGE *stage, u16 i)
 {
     M504SLOT *slot;
@@ -717,6 +722,7 @@ void fn_1_51B4(M504STAGE *stage, u16 i)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_53AC(M504STAGE *stage)
 {
     M504SLOT *slot;
@@ -798,6 +804,7 @@ void fn_1_53AC(M504STAGE *stage)
     }
 }
 
+// NONMATCHING: switch tree shape
 void fn_1_572C(M504STAGE *stage)
 {
     M504SLOT *slot;

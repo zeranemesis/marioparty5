@@ -138,6 +138,7 @@ void ObjectSetup(void)
     MgSeqCreate(&lbl_1_data_0);
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_114(void)
 {
     M504WORK *work;
@@ -150,6 +151,7 @@ void fn_1_114(void)
     MgSeqModeNext();
 }
 
+// NONMATCHING: calls HuAud wrappers fn_1_794/74C inline; otherwise identical
 void fn_1_190(void)
 {
     fn_1_9F0(lbl_1_bss_0);
@@ -191,6 +193,7 @@ void fn_1_298(void)
     }
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_2F0(void)
 {
     M504WORK *work = lbl_1_bss_0;
@@ -205,6 +208,7 @@ void fn_1_2F0(void)
     fn_1_C64(work, 0);
 }
 
+// NONMATCHING: player mode read as s16 not u16; same for values 2/3
 void fn_1_37C(void)
 {
     M504WORK *work = lbl_1_bss_0;
@@ -231,6 +235,7 @@ void fn_1_37C(void)
     fn_1_C64(work, 0);
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_460(void)
 {
     M504WORK *work = lbl_1_bss_0;
@@ -371,6 +376,7 @@ void fn_1_7EC(M504WORK *work, HUPROCESS *proc)
     Hu3DNoSyncSet(1);
 }
 
+// NONMATCHING: fn_1_74C wrapper inlined
 void fn_1_9F0(M504WORK *work)
 {
     u16 i;
@@ -408,6 +414,7 @@ void fn_1_AF0(M504WORK *work)
     memset(mdl, 0, sizeof(work->mdl));
 }
 
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 void fn_1_B38(s16 *mdl)
 {
     s32 i;
@@ -514,6 +521,7 @@ s32 fn_1_C64(M504WORK *work, s32 arg1)
     return ret;
 }
 
+// NONMATCHING: offsets/regs only
 s32 fn_1_F34(M504WORK *work)
 {
     s32 ret;
@@ -549,6 +557,7 @@ s32 fn_1_1080(M504WORK *work)
     return ret;
 }
 
+// NONMATCHING: wrapper calls fn_1_794/fn_1_63C inlined, mode/state s16 vs u16; same behaviour
 s32 fn_1_10C4(M504WORK *work)
 {
     s32 i;

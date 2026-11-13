@@ -151,6 +151,7 @@ void fn_1_BC84(INPUTWORK *work)
 /* Advances the cursor at work->unk6 by one 12-byte node, then measures the
  * stick. Returns 1 once the cursor has caught up with the count stored at the
  * head of `entry`. */
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
 {
     Vec sp24 = {0.0f, 0.0f, 0.0f};
@@ -197,6 +198,7 @@ s32 fn_1_BEF0(INPUTWORK *work, u8 *entry)
 
 /* Latches the "stick released" bit while the pad is in one of the two neutral
  * states. Returns 0 if it latched, 1 otherwise -- fn_1_BC84 advances only on 0. */
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 s32 fn_1_C178(INPUTWORK *work)
 {
     INPUTMAIN *main = work->main;
@@ -212,6 +214,7 @@ s32 fn_1_C178(INPUTWORK *work)
 }
 
 /* Gate on the distance between the node and the pad, per difficulty. */
+// NONMATCHING: register allocation / stack layout only; semantics checked against asm
 s32 fn_1_C1E8(INPUTWORK *work)
 {
     INPUTMAIN *main = work->main;
@@ -242,6 +245,7 @@ s32 fn_1_C1E8(INPUTWORK *work)
 
 /* Picks the node with the fewest uses, ties broken by index, then bumps it. */
 #ifdef TARGET_PC
+// NONMATCHING: PC-safe table layout, locals[12] on PC; otherwise register allocation
 INPUTNODE *fn_1_C2CC(INPUTWORK *work, INPUTNODE *table)
 {
     s32 locals[12];
@@ -274,6 +278,7 @@ INPUTNODE *fn_1_C2CC(INPUTWORK *work, INPUTNODE *table)
     return node;
 }
 #else
+// NONMATCHING: PC-safe table layout, locals[12] on PC; otherwise register allocation
 void **fn_1_C2CC(INPUTWORK *work, void **table)
 {
     INPUTMAIN *main = work->main;
