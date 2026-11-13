@@ -572,6 +572,7 @@ extern "C" {
 }
 
 static int tmMg = -2; // -2: env not read yet, -1: disabled
+static bool tmCom = false; // MP5_TEST_COM=1: four COM players, no scripted input once started (the Dolphin reference bench does the same)
 static bool tmStarted = false;
 static u32 tmFrame = 0;
 static u32 tmRng = 12345;
@@ -589,6 +590,8 @@ static void tmInit() {
     }
     const char* env = getenv("MP5_TEST_MG");
     tmMg = env != nullptr && *env != 0 ? atoi(env) : -1;
+    const char* com = getenv("MP5_TEST_COM");
+    tmCom = com != nullptr && *com == '1';
     tmRng = 12345 + tmMg * 7919;
 }
 
@@ -600,7 +603,7 @@ static void tmSetupPlayers() {
         GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
         GwPlayerConf[i].padNo = GwPlayer[i].padNo = i;
         GwPlayerConf[i].dif = GwPlayer[i].dif = 1;
-        GwPlayerConf[i].type = GwPlayer[i].comF = GW_TYPE_MAN;
+        GwPlayerConf[i].type = GwPlayer[i].comF = tmCom ? GW_TYPE_COM : GW_TYPE_MAN;
         GwPlayerConf[i].grp = GwPlayer[i].grp = grp;
     }
     GwSystem.mgNo = tmMg;
@@ -647,6 +650,9 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             if (i == 0 && (tmFrame / 20) % 2) {
                 st[i].button = PAD_BUTTON_START | PAD_BUTTON_A;
             }
+            continue;
+        }
+        if (tmCom) {
             continue;
         }
         if (tmFrame % 24 == (u32)i * 6) { // new stick/D-pad pose every 24 frames
