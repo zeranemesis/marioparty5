@@ -1,5 +1,5 @@
 #include "game/audio.h"
-char lbl_1_data_0[0x20] = "----------------> %d\n";
+char lbl_1_data_0[0x20] = "------------------------> %d\n";
 
 #include "game/charman.h"
 #include "game/data.h"
@@ -1245,6 +1245,7 @@ static const HuVecF lbl_1_rodata_718[4] = {
  * The movement process of a block: every iteration of the outer loop plays one move
  * (stepMax frames), bouncing back if the block is stopped half way.
  */
+// NONMATCHING: temporaries and struct copies are scheduled differently, float constants loaded in another order, cell offset loop uses other registers
 void fn_1_4B80(M518_PLAYER *player)
 {
     HuVecF rot;
@@ -1739,6 +1740,7 @@ void fn_1_6D84(M518_PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation and the order of a few integer adds differ
 void fn_1_7908(M518_PLAYER *player)
 {
     M518_PLAYER *first;
@@ -1915,6 +1917,7 @@ void fn_1_7908(M518_PLAYER *player)
     }
 }
 
+// NONMATCHING: register allocation of the temporaries and the order of the inlined cell struct copies differ
 void fn_1_6E08(M518_PLAYER *player)
 {
     s8 bound[4];
@@ -2155,6 +2158,7 @@ void fn_1_83E8(M518_PLAYER *player, s16 time, s16 delay)
     player->mode = 2;
 }
 
+// NONMATCHING: stack slots of the Vec temporaries are assigned in a different order
 void fn_1_83FC(M518_PLAYER *player)
 {
     int k;
@@ -2211,6 +2215,7 @@ void fn_1_88B4(M518_PLAYER *player, s16 time, s16 delay)
     player->mode = 4;
 }
 
+// NONMATCHING: the 0.5f constant is loaded later in the original
 void fn_1_88C8(M518_PLAYER *player)
 {
     int flag;
@@ -3736,6 +3741,7 @@ s16 fn_1_E6B8(HuVecF pos)
     return result;
 }
 
+// NONMATCHING: the original keeps some locals in other gprs
 int fn_1_E7B4(int seId, HuVecF pos)
 {
     return HuAudFXPlayVolPan(seId, fn_1_E5BC(pos), fn_1_E6B8(pos));
