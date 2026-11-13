@@ -510,6 +510,7 @@ void fn_1_4CCC(OMOBJ *obj)
     omSetTra(obj, player->pos.x, player->pos.y, player->pos.z);
 }
 
+// NONMATCHING: register allocation and frame size differ (f24 saved extra)
 static void fn_1_4ED4(OMOBJ *obj)
 {
     f32 velMag;
@@ -579,7 +580,7 @@ static void fn_1_54A8(OMOBJ *obj)
             break;
         case 4:
             player->rot.y = fn_1_3368(player->rot.y, 0.0f, 15.0f);
-            if (fabs(player->rot.y) <= 0.0) {
+            if (fabs(player->rot.y) <= 1.0) {
                 player->doneF = 1;
                 player->state = 5;
             }
@@ -627,6 +628,7 @@ void fn_1_59F0(void)
     fn_1_F34(&lbl_1_bss_13C->pos, 0x74E);
 }
 
+// NONMATCHING: float temporaries kept in f30/f31 instead of stack, constant pool order differs
 static void fn_1_5AFC(M523Player *player)
 {
     f32 x;
@@ -1120,6 +1122,7 @@ static void fn_1_7898(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: multiplication operand order and constant load order differ
 void fn_1_7C84(OMOBJ *obj)
 {
     s32 hit[4][4];
@@ -1158,12 +1161,12 @@ void fn_1_7C84(OMOBJ *obj)
                                 f32 dot;
 
                                 dot = PSVECDotProduct(&relVel, &diff);
-                                player->vel.x = player->vel.x + (((f64)-1.8f * (f64)(diff.x * dot) * 0.5));
-                                player->vel.y = player->vel.y + (((f64)-1.8f * (f64)(diff.y * dot) * 0.5));
-                                player->vel.z = player->vel.z + (((f64)-1.8f * (f64)(diff.z * dot) * 0.5));
-                                other->vel.x = other->vel.x + (((f64)1.8f * (f64)(diff.x * dot) * 0.5));
-                                other->vel.y = other->vel.y + (((f64)1.8f * (f64)(diff.y * dot) * 0.5));
-                                other->vel.z = other->vel.z + (((f64)1.8f * (f64)(diff.z * dot) * 0.5));
+                                player->vel.x = player->vel.x + ((-1.800000011920929 * (f64)(diff.x * dot) * 0.5));
+                                player->vel.y = player->vel.y + ((-1.800000011920929 * (f64)(diff.y * dot) * 0.5));
+                                player->vel.z = player->vel.z + ((-1.800000011920929 * (f64)(diff.z * dot) * 0.5));
+                                other->vel.x = other->vel.x + ((1.800000011920929 * (f64)(diff.x * dot) * 0.5));
+                                other->vel.y = other->vel.y + ((1.800000011920929 * (f64)(diff.y * dot) * 0.5));
+                                other->vel.z = other->vel.z + ((1.800000011920929 * (f64)(diff.z * dot) * 0.5));
                             }
                             hit[i][j] = 1;
                             fn_1_7198(lbl_1_bss_140[i]);
@@ -1196,6 +1199,7 @@ void fn_1_7C84(OMOBJ *obj)
     }
 }
 
+// NONMATCHING: return value of inline sqrtf kept in f1 instead of f28, smaller frame
 static f32 fn_1_85A8(M523Player *player)
 {
     s32 chance[4] = { 0, 0, 0x23, 0x19 };
@@ -1342,6 +1346,7 @@ static s16 fn_1_8D14(M523Player *player)
     return result;
 }
 
+// NONMATCHING: switch case block layout differs (same control flow)
 static f32 fn_1_8DF0(M523Player *player)
 {
     Point3d diff;
@@ -1493,6 +1498,7 @@ static void fn_1_9574(void)
 
 void fn_1_98E8(M523Cyl *cyl);
 
+// NONMATCHING: branch layout differs (extra jump), same control flow
 static void fn_1_962C(OMOBJ *obj)
 {
     M523Cyl *cyl;

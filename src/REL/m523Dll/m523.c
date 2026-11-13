@@ -731,7 +731,7 @@ void fn_1_2A34(OMOBJ *obj)
         obj->objFunc = (OMOBJFUNC)fn_1_2AE4;
         WipeCreate(2, 6, 0x3C);
     } else {
-        (*(flow->funcTbl + flow->index))(obj, flow->funcTbl);
+        (*(flow->funcTbl + flow->index))(obj);
     }
 }
 

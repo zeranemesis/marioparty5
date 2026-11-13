@@ -42,7 +42,7 @@ typedef struct M523CamMove_s {
     s32 moveF; // 0x9C
 } M523CamMove;
 
-typedef void (*M523FlowFunc)(OMOBJ *obj, void *flow);
+typedef void (*M523FlowFunc)(OMOBJ *obj);
 
 typedef struct M523Flow_s {
     s32 index; // 0x00
