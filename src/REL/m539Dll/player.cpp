@@ -89,17 +89,24 @@ s32 lbl_1_bss_A48;
 s32 lbl_1_bss_A4C;
 s32 lbl_1_bss_A50;
 
-M539Ptmf lbl_1_data_430 = M539_PTMF_NULL_INIT;
+void fn_1_E308(M539Player *self);
+void fn_1_E394(M539Player *self);
+void fn_1_E554(M539Player *self);
+void fn_1_E6C0(M539Player *self);
+void fn_1_E864(M539Player *self);
+void fn_1_E940(M539Player *self);
+void fn_1_E9EC(M539Player *self);
+M539Ptmf lbl_1_data_430 = M539_PTMF_INIT(fn_1_E308);
 char lbl_1_data_43C[] = "sm_ptr != 0";
 char lbl_1_data_448[] = "a_set.h";
 char lbl_1_data_450[] = "m_mot_id.size() == NUMBEROF_MOTION";
 char lbl_1_data_473[] = "player.cpp";
-M539Ptmf lbl_1_data_480 = M539_PTMF_NULL_INIT;
-M539Ptmf lbl_1_data_48C = M539_PTMF_NULL_INIT;
-M539Ptmf lbl_1_data_498 = M539_PTMF_NULL_INIT;
-M539Ptmf lbl_1_data_4A4 = M539_PTMF_NULL_INIT;
-M539Ptmf lbl_1_data_4B0 = M539_PTMF_NULL_INIT;
-M539Ptmf lbl_1_data_4BC = M539_PTMF_NULL_INIT;
+M539Ptmf lbl_1_data_480 = M539_PTMF_INIT(fn_1_E394);
+M539Ptmf lbl_1_data_48C = M539_PTMF_INIT(fn_1_E554);
+M539Ptmf lbl_1_data_498 = M539_PTMF_INIT(fn_1_E6C0);
+M539Ptmf lbl_1_data_4A4 = M539_PTMF_INIT(fn_1_E864);
+M539Ptmf lbl_1_data_4B0 = M539_PTMF_INIT(fn_1_E940);
+M539Ptmf lbl_1_data_4BC = M539_PTMF_INIT(fn_1_E9EC);
 char lbl_1_data_4C8[] = "vector::at index out of range";
 char lbl_1_data_4E6[] = "vector::insert length error\n";
 char lbl_1_data_503[] = "Memory allocation failure";
@@ -423,7 +430,7 @@ void fn_1_DF6C(M539Player *self)
 
 void fn_1_E008(M539Player *self)
 {
-    f32 v = self->pos.y - 30.0f;
+    f32 v = self->pos.y - 30.000002f;
     if (v <= 0.0f) {
         fn_1_DAF0(self, 3);
         return;
