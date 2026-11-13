@@ -300,7 +300,7 @@ typedef struct M563Pos2D_s {
 M563Pos2D lbl_1_data_2A4[4] = { 64.0f, 60.0f, 168.0f, 60.0f, 408.0f, 60.0f, 512.0f, 60.0f };
 
 char lbl_1_data_2C4[] = "******* M563 ObjectSetup *********\n";
-char lbl_1_data_2E8[] = "itemhook_R";
+char lbl_1_data_2E8[] = "itemhook_r";
 char lbl_1_data_324[] = "%d pdp->SearchWaitMax:%d\n";
 char lbl_1_data_33E[] = "%d POINT:%d\n";
 char lbl_1_data_34B[] = "FLO:%d\n";
@@ -730,23 +730,23 @@ void fn_1_18BC(OMOBJ *obj)
     M563ModelSet *ms = &lbl_1_bss_F8;
     COL_ATTRPARAM colAttr;
     MGACTOR_PARAM actorParam;
-    s16 mdlIds[12];
+    s16 mdlIds[5];
     s16 *mdl = mdlIds;
     s32 i;
 
-    mdl[0] = ms->unk0 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 5), HU_MEMNUM_OVL, HEAP_MODEL));
+    ms->unk0 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 5), HU_MEMNUM_OVL, HEAP_MODEL));
     ms->unk2 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 10), HU_MEMNUM_OVL, HEAP_MODEL));
     Hu3DModelAttrSet(ms->unk2, 0x40000001);
-    mdl[1] = ms->unk4 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 11), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[2] = ms->unk6 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 6), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[3] = ms->unk8 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 7), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[4] = ms->unkA = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 8), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[5] = ms->unkC = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 9), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[6] = ms->unkE = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 15), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[7] = ms->unk10 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 16), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[8] = ms->unk12 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 17), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[9] = ms->unk14 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 18), HU_MEMNUM_OVL, HEAP_MODEL));
-    mdl[10] = ms->unk16 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 19), HU_MEMNUM_OVL, HEAP_MODEL));
+    ms->unk4 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 11), HU_MEMNUM_OVL, HEAP_MODEL));
+    ms->unk6 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 6), HU_MEMNUM_OVL, HEAP_MODEL));
+    ms->unk8 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 7), HU_MEMNUM_OVL, HEAP_MODEL));
+    ms->unkA = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 8), HU_MEMNUM_OVL, HEAP_MODEL));
+    ms->unkC = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 9), HU_MEMNUM_OVL, HEAP_MODEL));
+    mdl[0] = ms->unkE = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 15), HU_MEMNUM_OVL, HEAP_MODEL));
+    mdl[1] = ms->unk10 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 16), HU_MEMNUM_OVL, HEAP_MODEL));
+    mdl[2] = ms->unk12 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 17), HU_MEMNUM_OVL, HEAP_MODEL));
+    mdl[3] = ms->unk14 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 18), HU_MEMNUM_OVL, HEAP_MODEL));
+    mdl[4] = ms->unk16 = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m563, 19), HU_MEMNUM_OVL, HEAP_MODEL));
     Hu3DModelShadowMapSet(ms->unk0);
     Hu3DModelAttrSet(ms->unk0, 0x40000001);
     Hu3DModelAttrSet(ms->unk4, HU3D_ATTR_DISPOFF);
@@ -770,16 +770,18 @@ void fn_1_18BC(OMOBJ *obj)
     actorParam.attr = 0;
     MgActorColMapInit(mdlIds, 5, 9);
 
-    colAttr.type = 2;
-    colAttr.speed = 1.0f;
-    colAttr.yDeviate = 0.7f;
+    colAttr.type = 1;
+    colAttr.speed = 0.7f;
+    colAttr.yDeviate = 1.0f;
     colAttr.maxDot = 1.0f;
+    colAttr.attr = 0;
     MgActorColAttrParamSet(&colAttr, 2);
 
-    colAttr.type = 4;
+    colAttr.type = 1;
     colAttr.speed = 1.0f;
     colAttr.yDeviate = 0.0f;
     colAttr.maxDot = 1.0f;
+    colAttr.attr = 0;
     MgActorColAttrParamSet(&colAttr, 4);
 
     for (i = 0; i < 4; i++) {
@@ -1566,9 +1568,7 @@ f32 fn_1_4868(f32 arg0, f32 arg1)
         mag0 = fabsf(arg0);
         mag1 = fabsf(arg1);
         result = mag1 + (mag0 - (0.003921569f * mag1 * (frand() & 0xFF)));
-    } else if (arg0 > 0.0f && arg1 > 0.0f) {
-        result = arg0 + (arg1 - (0.003921569f * arg0 * (frand() & 0xFF)));
-    } else if (arg0 == 0.0f && arg1 == 0.0f) {
+    } else if (arg0 >= 0.0f && arg1 >= 0.0f) {
         result = arg0 + (arg1 - (0.003921569f * arg0 * (frand() & 0xFF)));
     }
     return result;
@@ -1700,7 +1700,7 @@ void fn_1_5078(OMOBJ *obj)
         v3 = (s32)(48.0f + ((d.x / 576.0f) * 32.0f));
         Hu3D3Dto2D((HuVecF *)data, 1, (HuVecF *)&c);
         v4 = (s32)(96.0f + ((c.y / 480.0f) * 31.0f));
-        HuAudFXPlayVolPan(0x8D1, v3, v4);
+        HuAudFXPlayVolPan(0x8D1, v4, v3);
     }
     Hu3DModelLayerSet(*obj->mdlId, 2);
     omSetTra(obj, *(f32 *)&data[0], *(f32 *)&data[1], *(f32 *)&data[2]);
