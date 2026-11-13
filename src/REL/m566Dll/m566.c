@@ -601,11 +601,6 @@ void fn_1_668(OMOBJ *obj)
             lbl_1_data_19C[work->itemNo] = 0;
         }
         else if (work->modeTime == 0xA) {
-            if (lbl_1_bss_8 < 3) {
-                lbl_1_bss_600[lbl_1_bss_8].pos.x = lbl_1_bss_1810[work->itemNo].pos.x;
-                lbl_1_bss_600[lbl_1_bss_8].pos.z = lbl_1_bss_1810[work->itemNo].pos.z;
-                lbl_1_bss_8++;
-            }
             switch (lbl_1_bss_1810[work->itemNo].kind) {
             case 1:
                 lbl_1_bss_1810[work->itemNo].state = 1;
