@@ -1,8 +1,4 @@
-#include "dolphin.h"
-#include "game/hu3d.h"
-#include "game/sprite.h"
-#include "game/data.h"
-#include "game/memory.h"
+#include "REL/m549Dll.h"
 
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT, s32 filter);
 
@@ -19,17 +15,16 @@ f32 lbl_1_data_510[2][3] = {
 void fn_1_11694(s16 layerNo);
 void fn_1_1172C(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
 
-void fn_1_115A8(void *arg0)
+void fn_1_115A8(M549State *state)
 {
     s32 i;
-    u8 *base = arg0;
 
     Hu3DLayerHookSet(8, fn_1_11694);
     lbl_1_bss_1604 = HuMemDirectMallocNum(2, GXGetTexBufferSize(0x140, 0xF0, 4, 0, 0), 0x10000000);
     lbl_1_bss_1600 = HuSprAnimRead(HuDataSelHeapReadNum(0x6B0019, 0x10000000, 2));
     lbl_1_bss_15FC = HuSprAnimRead(HuDataSelHeapReadNum(0x21000C, 0x10000000, 2));
     for (i = 0; i < 10; i++) {
-        Hu3DModelMatHookSet(*(s16 *)((u8 *)*(void **)(base + 0x58) + (i + 5) * 0x1C), fn_1_1172C);
+        Hu3DModelMatHookSet(state->models[i + 5].id, fn_1_1172C);
     }
 }
 
@@ -51,12 +46,7 @@ void fn_1_1172C(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
     Mtx spC4;
     Mtx spF4;
     Mtx inv;
-    GXColor color;
-
-    color.r = 0x10;
-    color.g = 0x10;
-    color.b = 0x10;
-    color.a = 0x00;
+    GXColor color = { 0x10, 0x10, 0x10, 0x00 };
 
     GXInitTexObj(&texObj, lbl_1_bss_1604, 0x140, 0xF0, 4, 0, 0, 0);
     GXInitTexObjLOD(&texObj, 1, 1, 0.0f, 0.0f, 0.0f, 0, 0, 0);
@@ -68,7 +58,7 @@ void fn_1_1172C(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
 
     C_MTXLightPerspective(sp64, Hu3DCamera[0].fov, 1.3333334f, 0.5f, -0.5f, 0.5f, 0.5f);
     PSMTXInverse(Hu3DCameraMtx, inv);
-    PSMTXConcat(inv, *(Mtx *)((u8 *)drawObj + 0xC), spF4);
+    PSMTXConcat(inv, drawObj->matrix, spF4);
     PSMTXConcat(sp64, Hu3DCameraMtx, sp94);
     PSMTXConcat(sp94, spF4, sp94);
     GXLoadTexMtxImm(sp94, 0x21, GX_MTX3x4);

@@ -11,9 +11,10 @@ s32 rand8(void);
 #define MODEL_MAT_ALPHA(modelId, alpha)                                                    \
     do {                                                                                   \
         HU3DMODEL *mdl_ = &Hu3DData[(modelId)];                                            \
-        HSFMATERIAL *mat_ = mdl_->hsf->material;                                           \
+        HSFDATA *hsf_ = mdl_->hsf;                                                         \
+        HSFMATERIAL *mat_ = hsf_->material;                                                \
         s32 k_;                                                                            \
-        for (k_ = 0; k_ < mdl_->hsf->materialNum; k_++, mat_++) {                          \
+        for (k_ = 0; k_ < hsf_->materialNum; k_++, mat_++) {                          \
             mat_->invAlpha = (alpha);                                                      \
         }                                                                                  \
     } while (0)
@@ -295,7 +296,8 @@ void fn_1_12A60(void)
 void fn_1_12E18(s32 modelId, f32 alpha)
 {
     HU3DMODEL *mdl = &Hu3DData[modelId];
-    HSFMATERIAL *mat = mdl->hsf->material;
+    HSFDATA *hsf = mdl->hsf;
+    HSFMATERIAL *mat = hsf->material;
     s32 i;
 
     for (i = 0; i < mdl->hsf->materialNum; i++, mat++) {
@@ -315,10 +317,16 @@ void fn_1_12E80(void)
 void fn_1_12ED4(void)
 {
     s32 idx[9] = { 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x43 };
-    f32 pos[27] = {
-        -2300.0f, -1000.0f, -3200.0f, 4500.0f, -900.0f, -7700.0f, -4100.0f, -500.0f, -7700.0f,
-        2300.0f, -1000.0f, -2800.0f, 900.0f, -200.0f, -5700.0f, -2400.0f, -1000.0f, -4700.0f,
-        1600.0f, -700.0f, -3900.0f, -1600.0f, -1000.0f, -5800.0f, -100.0f, -1100.0f, -11200.0f
+    HuVecF pos[9] = {
+        { -2300.0f, -1000.0f, -3200.0f },
+        { 4500.0f, -900.0f, -7700.0f },
+        { -4100.0f, -500.0f, -7700.0f },
+        { 2300.0f, -1000.0f, -2800.0f },
+        { 900.0f, -200.0f, -5700.0f },
+        { -2400.0f, -1000.0f, -4700.0f },
+        { 1600.0f, -700.0f, -3900.0f },
+        { -1600.0f, -1000.0f, -5800.0f },
+        { -100.0f, -1100.0f, -11200.0f },
     };
     f32 scale[9] = { 2.0f, 1.5f, 1.5f, 1.0f, 1.0f, 1.2f, 1.8f, 1.5f, 1.5f };
     M549AnimBlock *blk;
@@ -334,9 +342,9 @@ void fn_1_12ED4(void)
             blk->t[0] = 0;
             blk->t[1] = 0;
             blk->t[2] = 0;
-            m->x = pos[i * 3];
-            m->z = pos[i * 3 + 2];
-            m->y = pos[i * 3 + 1];
+            m->x = pos[i].x;
+            m->z = pos[i].z;
+            m->y = pos[i].y;
             blk->f34 = i * 40;
             Hu3DModelAttrReset(m->id, 1);
             Hu3DMotionTimeSet(m->id, 50.0f);
@@ -367,7 +375,7 @@ void fn_1_12ED4(void)
                 break;
             }
         }
-        m->y = pos[i * 3 + 1] + 200.0 * HuSin(blk->f34);
+        m->y = pos[i].y + 200.0 * HuSin(blk->f34);
     }
 }
 
@@ -411,9 +419,9 @@ void fn_1_134AC(void)
 
 void fn_1_134C4(void)
 {
-    s32 idx = 0x33;
+    s32 idx[1] = { 0x33 };
     M549AnimBlock *blk = &lbl_1_bss_1608->anim[13];
-    M549StageModel *m = &lbl_1_bss_1608->models[idx];
+    M549StageModel *m = &lbl_1_bss_1608->models[idx[0]];
 
     if (blk->t[0] >= -1) {
         if (blk->t[0] == -1) {
@@ -595,9 +603,9 @@ void fn_1_1448C(void)
 
 void fn_1_144D8(void)
 {
-    s32 idx = 0x2D;
+    s32 idx[1] = { 0x2D };
     M549AnimBlock *blk = &lbl_1_bss_1608->anim[19];
-    M549StageModel *m = &lbl_1_bss_1608->models[idx];
+    M549StageModel *m = &lbl_1_bss_1608->models[idx[0]];
 
     if (blk->t[0] >= -1) {
         if (blk->t[0] == -1) {
@@ -648,9 +656,9 @@ void fn_1_14720(void)
 
 void fn_1_1476C(void)
 {
-    s32 idx = 0x2E;
+    s32 idx[1] = { 0x2E };
     M549AnimBlock *blk = &lbl_1_bss_1608->anim[20];
-    M549StageModel *m = &lbl_1_bss_1608->models[idx];
+    M549StageModel *m = &lbl_1_bss_1608->models[idx[0]];
 
     if (blk->init >= 0) {
         switch (blk->init) {
