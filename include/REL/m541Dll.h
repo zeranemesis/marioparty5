@@ -258,6 +258,21 @@ extern s32 lbl_1_bss_36A0;
 extern M541_G1TRI lbl_1_bss_36A4[23];
 extern M541_STAGE *lbl_1_bss_3730;
 
+/* G1: layout of lbl_1_bss_45C (0x21B8 bytes), only the fields fn_1_2AD4 touches are named; others replace pads keeping offsets */
+typedef struct M541G1Work45C_s {
+    u8 pad0[0x1C8C];
+    HuVecF leafPos[23];     /* 0x1C8C, stride 0xC */
+    u8 pad1DA0[0x29E];
+    s16 aiMode[10];         /* 0x203E */
+    s16 aiTimer[10];        /* 0x2052 */
+    u8 pad2066[0x3E];
+    HuVecF aiPos[15];       /* 0x20A4, stride 0xC */
+    u8 pad2158[0x60];
+} M541_G1WORK45C;
+extern M541_G1WORK45C lbl_1_bss_45C;
+extern M541_LEAFWORK lbl_1_bss_20[15];
+extern M541_BOARD lbl_1_bss_2F0;
+
 /* ---- G1: prototypes ---- */
 void fn_1_2AD4(M541_STAGE *stage);
 s32 fn_1_5C98(void);
