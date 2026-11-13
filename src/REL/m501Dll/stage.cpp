@@ -14,9 +14,8 @@ void Hu3DModelShadowMapSet(s16 modelId);
 s16 Hu3DMotionShapeIDGet(s16 modelId);
 void Hu3DModelAttrSet(s16 modelId, u32 attr);
 void Hu3DMotionShapeSet(s16 modelId, s16 motId);
-/* these two take the computed time unconverted, so their prototype is double */
-void Hu3DMotionShapeTimeSet(s16 modelId, f64 time);
-void Hu3DMotionShapeStartEndSet(s16 modelId, f64 start, f64 end);
+void Hu3DMotionShapeTimeSet(s16 modelId, f32 time);
+void Hu3DMotionShapeStartEndSet(s16 modelId, f32 start, f32 end);
 void Hu3DCameraMotionOff(s16 modelId);
 void __dl__FPv(void *ptr);
 double cos(f64 x);
@@ -62,8 +61,9 @@ CStage::CStage() :
     Hu3DModelShadowMapSet(m_border.m_id);
     Hu3DModelAttrSet(m_stage.m_id, 0x40000040);
     Hu3DMotionShapeSet(m_stage.m_id, Hu3DMotionShapeIDGet(m_stage.m_id));
-    Hu3DMotionShapeTimeSet(m_stage.m_id, 1 - 0x7FFF8000);
-    Hu3DMotionShapeStartEndSet(m_stage.m_id, 0xF0 - 0x7FFF8000, 1 - 0x7FFF8000);
+    // NONMATCHING: the original converts int locals (1, 240) to float at run time; same values here
+    Hu3DMotionShapeTimeSet(m_stage.m_id, 1.0f);
+    Hu3DMotionShapeStartEndSet(m_stage.m_id, 1.0f, 240.0f);
 
     m_angle = 0.0f;
 }
@@ -103,8 +103,8 @@ void CStage::on_update()
     }
 
     Hu3DMtx *mtx = m_aisu.getMatrix();
-    mtx->m[2][1] = (f32)(0.1 * (100.0 * cos(m_angle)));
-    m_angle += 0.017453292519943295;
+    mtx->m[2][1] = (f32)(0.1f * (100.0 * cos(m_angle)));
+    m_angle += 3.141592653589793 / 180.0;
     if (m_angle > 3.141592653589793) {
         m_angle = (f32)((f64)m_angle - 6.283185307179586);
     }
