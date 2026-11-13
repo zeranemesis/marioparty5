@@ -58,12 +58,12 @@ M_PC_C void *fn_1_197AC(void *arg0, s16 arg1);
 struct Mgr510Kibako {
     Mgr510Kibako *next;
     void *unk4;
-    s32 unk8;
+    u8 unk8; /* asm: stb at +8, modelId at +0xA (u8 here, s16 at GC 0xA) */
     s16 modelId;
     Vec unkC;
     Vec unk18;
     s32 unk24;
-    s32 unk28;
+    u8 unk28;
     s32 unk2C;
     void *unk30;
     void *unk34;
@@ -235,9 +235,10 @@ Mgr510Kibako *fn_1_18EFC(Mgr510Kibako *arg0, Mgr510KibakoVec *arg2, Vec *arg_sp0
     fn_1_1D88(arg0);
     arg0->unk8 = 1;
     fn_1_372C(&arg0->modelId, DATANUM(DATA_m511, 0x20));
-    arg0->unkC.x = arg2->unk0;
-    arg0->unkC.y = arg2->unk4;
-    arg0->unkC.z = arg2->unk8;
+    /* asm: the position is read from the third argument (r5); r4 (the master's model, unused) is not a position */
+    arg0->unkC.x = arg_sp0->x;
+    arg0->unkC.y = arg_sp0->y;
+    arg0->unkC.z = arg_sp0->z;
     arg0->unk24 = 0;
     arg0->unk28 = 0;
     arg0->unk34 = NULL;
@@ -375,7 +376,7 @@ void fn_1_19480(Mgr510Kibako *arg0)
 
 void fn_1_194D0(Mgr510Kibako *arg0)
 {
-    arg0->unkC.x = (f32)((f64)arg0->unkC.x + (0.02 * ((f64)fn_1_1A150(arg0->unk30, &arg0->unkC) - arg0->unkC.x)));
+    arg0->unkC.y = (f32)((f64)arg0->unkC.y + (0.02 * ((f64)fn_1_1A150(arg0->unk30, &arg0->unkC) - arg0->unkC.y))); /* asm: lfs/stfs 0x10 = y */
 }
 
 // NONMATCHING: the fade branch is folded differently.

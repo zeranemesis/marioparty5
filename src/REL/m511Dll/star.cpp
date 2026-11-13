@@ -201,7 +201,7 @@ Mgr511StarMaster *fn_1_D318(Mgr511StarMaster *arg0, s32 arg_sp0)
         Hu3DModelAttrSet(temp_r30, 0x4000);
         Hu3DModelCameraSet(temp_r30, 0xF);
         glow = (void *)__nw__FUl(0x28);
-        if (cluster != NULL) {
+        if (glow != NULL) {
             glow = fn_1_8F38(glow, (Point3d *)&lbl_1_rodata_388[i], i * 0xC);
         }
 #ifdef TARGET_PC
@@ -459,7 +459,7 @@ void fn_1_E268(Mgr511Star *arg0, Mtx mtx)
     PSMTXTrans((f32 (*)[4])sp98, arg0->posX, arg0->posY, arg0->posZ);
     PSMTXScale((f32 (*)[4])sp68, 1.0f, arg0->scale, 1.0f);
     PSMTXConcat((f32 (*)[4])mtx, (f32 (*)[4])sp98, (f32 (*)[4])mtx);
-    PSMTXConcat((f32 (*)[4])sp68, (f32 (*)[4])sp68, (f32 (*)[4])sp68);
+    PSMTXConcat((f32 (*)[4])mtx, (f32 (*)[4])sp68, (f32 (*)[4])sp68); /* asm: model-view mtx * scale (the decomp concatenated sp68 with itself) */
     GXLoadPosMtxImm((f32 (*)[4])sp68, 0);
     HuSprTexLoad((ANIMDATA *)arg0->anim, (s16)0, (s16)0, (GXTexWrapMode)1, (GXTexWrapMode)1, (GXTexFilter)1);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_ONE, GX_LO_NOOP);
