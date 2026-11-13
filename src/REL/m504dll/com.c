@@ -204,7 +204,7 @@ s32 fn_1_C178(INPUTWORK *work)
     s32 ret = 0;
 
     if (ctrl->state == 5 || ctrl->state == 6) {
-        main->btn |= 0x100;
+        main->btnDown |= 0x100; /* asm: offset 0x30, the field fn_1_BC84 clears every frame (btn is 0x2C) */
     } else {
         ret = 1;
     }
