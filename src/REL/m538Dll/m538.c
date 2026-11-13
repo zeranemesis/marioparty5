@@ -26,6 +26,7 @@ double __frsqrte(double);
 
 
 /* fn_1_69C4 only ever touches one s16 field of its argument, at 0x48. */
+struct m538_raw3_s { s32 a; s32 b; s32 c; };
 struct m538_s16_48_s {
     u8 pad[0x48];
     s16 model;
@@ -1110,12 +1111,12 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
         return 0;
     }
     temp_r31 = arg0;
-    temp_r0 = temp_r31->y;
+    temp_r0 = temp_r31->aiState;
     switch (temp_r0) {                              /* irregular */
     case 0:
         arg0->aiTarget = NULL;
         temp_r31->aiFlag = 0;
-        temp_r31->y += 1;
+        temp_r31->aiState += 1;
         /* fallthrough */
     case 1:
         temp_f31 = (arg0->x * arg0->x) + (arg0->z * arg0->z);
@@ -1137,8 +1138,8 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
             }
             arg0->targetRot = (f32) (((f64) (180.0f * var_f29) / 3.141592653589793) + (f64) (20.0f * (((f32) frandmod(0x2711U) / 10000.0f) - 0.5f)));
             temp_r31->aiTimer = 0;
-            temp_r31->z = (s16) (frandmod(0xAU) + 0xA);
-            temp_r31->y = 2;
+            temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
+            temp_r31->aiState = 2;
             var_r26 = 1;
         } else {
             var_f30 = 2250000.0f;
@@ -1178,8 +1179,8 @@ loop_27:
                     }
                     arg0->targetRot = (f32) ((f64) (180.0f * var_f28) / 3.141592653589793);
                     temp_r31->aiTimer = 0;
-                    temp_r31->z = (s16) (frandmod(0xAU) + 0xA);
-                    temp_r31->y = 3;
+                    temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
+                    temp_r31->aiState = 3;
                     var_r26 = 1;
                 } else {
                     arg0->aiTarget = var_r27;
@@ -1213,8 +1214,8 @@ loop_27:
                     }
                     arg0->targetRot = (f32) (((f64) (180.0f * var_f27) / 3.141592653589793) + ((f64) (180.0f * var_f26) / 3.141592653589793));
                     temp_r31->aiTimer = 0;
-                    temp_r31->z = (s16) (frandmod(0xAU) + 0xA);
-                    temp_r31->y = 2;
+                    temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
+                    temp_r31->aiState = 2;
                     var_r26 = 1;
                 }
             } else if (frandmod(0x64U) < (s16) (&sp48)[arg0->dif]) {
@@ -1235,24 +1236,24 @@ loop_27:
                     }
                     arg0->targetRot = (f32) (((f64) (180.0f * var_f25) / 3.141592653589793) + (f64) (20.0f * (((f32) frandmod(0x2711U) / 10000.0f) - 0.5f)));
                     temp_r31->aiTimer = 0;
-                    temp_r31->z = (s16) (frandmod(0xAU) + 0xA);
-                    temp_r31->y = 5;
+                    temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
+                    temp_r31->aiState = 5;
                     var_r26 = 1;
                 } else if (var_r27 != NULL) {
                     temp_r31->aiFlag = 1;
                     arg0->aiTarget = var_r27;
                     temp_r31->aiTimer = 0;
-                    temp_r31->z = (s16) (frandmod(3U) + 3);
-                    temp_r31->y = 3;
+                    temp_r31->aiMaxTimer = (s16) (frandmod(3U) + 3);
+                    temp_r31->aiState = 3;
                 } else {
                     temp_r31->aiTimer = 0;
-                    temp_r31->z = (s16) (frandmod(3U) + 3);
-                    temp_r31->y = 4;
+                    temp_r31->aiMaxTimer = (s16) (frandmod(3U) + 3);
+                    temp_r31->aiState = 4;
                 }
             } else if (frandmod(0x64U) < (s16) (&sp50)[arg0->dif]) {
                 temp_r31->aiTimer = 0;
-                temp_r31->z = (s16) (frandmod(0xAU) + 0xA);
-                temp_r31->y = 4;
+                temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
+                temp_r31->aiState = 4;
             } else {
                 var_r25 = 0;
                 var_r28_2 = 0;
@@ -1304,36 +1305,36 @@ block_76:
                 }
                 arg0->targetRot = (f32) ((f64) (180.0f * var_f24) / 3.141592653589793);
                 temp_r31->aiTimer = 0;
-                temp_r31->z = (s16) (frandmod(0xAU) + 0xA);
-                temp_r31->y = 3;
+                temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
+                temp_r31->aiState = 3;
                 var_r26 = 1;
             }
         }
         break;
     case 2:
         temp_r31->aiTimer += 1;
-        if ((s16) temp_r31->aiTimer == (s16) temp_r31->z) {
-            temp_r31->y = 0;
+        if ((s16) temp_r31->aiTimer == (s16) temp_r31->aiMaxTimer) {
+            temp_r31->aiState = 0;
         }
         var_r26 = 1;
         break;
     case 3:
         temp_r31->aiTimer += 1;
-        if (((s16) temp_r31->aiTimer == (s16) temp_r31->z) || ((s16) temp_r31->aiFlag == 0)) {
-            temp_r31->y = 0;
+        if (((s16) temp_r31->aiTimer == (s16) temp_r31->aiMaxTimer) || ((s16) temp_r31->aiFlag == 0)) {
+            temp_r31->aiState = 0;
         }
         var_r26 = 1;
         break;
     case 4:
         temp_r31->aiTimer += 1;
-        if ((s16) temp_r31->aiTimer == (s16) temp_r31->z) {
-            temp_r31->y = 0;
+        if ((s16) temp_r31->aiTimer == (s16) temp_r31->aiMaxTimer) {
+            temp_r31->aiState = 0;
         }
         break;
     case 5:
         temp_r31->aiTimer += 1;
-        if (((s16) temp_r31->aiTimer == (s16) temp_r31->z) || (((arg0->x * arg0->x) + (arg0->z * arg0->z)) < 40000.0f)) {
-            temp_r31->y = 0;
+        if (((s16) temp_r31->aiTimer == (s16) temp_r31->aiMaxTimer) || (((arg0->x * arg0->x) + (arg0->z * arg0->z)) < 40000.0f)) {
+            temp_r31->aiState = 0;
         }
         var_r26 = 1;
         break;
@@ -1630,7 +1631,7 @@ s32 fn_1_32C4(M538_PLAYER *arg0) {
     switch (temp_r0) {                              /* irregular */
     case 0:
         arg0->flag = 0;
-        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[3], 0.0f, 5.0f, 0x40000001U);
+        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[1], 0.0f, 5.0f, 0x40000001U);
         arg0->state += 1;
         /* fallthrough */
     case 1:
@@ -1752,10 +1753,8 @@ loop_21:
                 if ((temp_f1 == 15.0f) || (temp_f1 == 30.0f)) {
                     temp_r3 = fn_1_8858(arg0->pool1, (M538_NODEFUNC) fn_1_8CD8);
                     if (temp_r3 != NULL) {
-                        temp_r3->rotY = (f32) arg0->x;
-                        temp_r3->rotZ = (s32) arg0->y;
-                        temp_r3->x = (f32) arg0->z;
-                        temp_r3->rotX = 0;
+                        *(struct m538_raw3_s *) &temp_r3->x = *(struct m538_raw3_s *) &arg0->x;
+                        temp_r3->timer = 0;
                     }
                 }
             } else {
@@ -1809,9 +1808,7 @@ s32 fn_1_3B2C(M538_PLAYER *arg0) {
         CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[3], 0.0f, 5.0f, 0U);
         temp_r3 = fn_1_8858(arg0->pool2, (M538_NODEFUNC) fn_1_8F58);
         if (temp_r3 != 0) {
-            temp_r3->rotY = (f32) *(s32 *) &arg0->x;
-            temp_r3->rotZ = (f32) *(s32 *) &arg0->y;
-            temp_r3->x = (f32) *(s32 *) &arg0->z;
+            *(struct m538_raw3_s *) &temp_r3->x = *(struct m538_raw3_s *) &arg0->x;
             temp_r3->timer = 0;
         }
         HuAudFXPlayVolPan(0x7E3, arg0->voiceVol, arg0->voicePan);
@@ -1923,7 +1920,7 @@ s32 fn_1_3F60(M538_PLAYER *arg0) {
     switch (temp_r0) {                              /* irregular */
     case 0:
         fn_1_6C24(arg0);
-        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[7], 0.0f, 5.0f, 0x40000001U);
+        CharMotionShiftSet(arg0->charNo, arg0->obj->mtnId[6], 0.0f, 5.0f, 0x40000001U);
         temp_f27 = arg0->z;
         temp_f28 = arg0->x;
         if (temp_f27 == 0.0f) {
@@ -2899,7 +2896,7 @@ s32 fn_1_6F24(M538_NODE0 *arg0) {
         } else {
             var_f26 = temp_f30;
         }
-        temp_r31->dist = var_f26;
+        temp_r31->radius = var_f26;
         temp_r31->timer = 0;
         temp_r31->state += 1;
         /* fallthrough */
@@ -2910,9 +2907,9 @@ s32 fn_1_6F24(M538_NODE0 *arg0) {
             var_r30 = 1;
         }
         temp_r31->angle = (f32) (temp_r31->angle - 6.1f);
-        temp_r31->dist = (f32) (temp_r31->dist + 4.1f);
-        temp_r31->x = (f32) ((f64) temp_r31->dist * sin((3.141592653589793 * (f64) temp_r31->angle) / 180.0));
-        temp_r31->z = (f32) ((f64) temp_r31->dist * cos((3.141592653589793 * (f64) temp_r31->angle) / 180.0));
+        temp_r31->radius = (f32) (temp_r31->radius + 4.1f);
+        temp_r31->x = (f32) ((f64) temp_r31->radius * sin((3.141592653589793 * (f64) temp_r31->angle) / 180.0));
+        temp_r31->z = (f32) ((f64) temp_r31->radius * cos((3.141592653589793 * (f64) temp_r31->angle) / 180.0));
         temp_r31->radius2 = (f32) (temp_r31->radius2 + 4.0f);
 loop_17:
         if (temp_r31->radius2 > 180.0f) {
@@ -3222,10 +3219,8 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
             if ((temp_f1 == 15.0f) || (temp_f1 == 30.0f)) {
                 temp_r3 = fn_1_8858(arg0->pool1, (M538_NODEFUNC) fn_1_8CD8);
                 if (temp_r3 != NULL) {
-                    temp_r3->rotY = (f32) arg0->x;
-                    temp_r3->rotZ = (s32) arg0->y;
-                    temp_r3->x = (f32) arg0->z;
-                    temp_r3->rotX = 0;
+                    *(struct m538_raw3_s *) &temp_r3->x = *(struct m538_raw3_s *) &arg0->x;
+                    temp_r3->timer = 0;
                 }
             }
         }
@@ -3240,10 +3235,8 @@ s32 fn_1_7FAC(M538_PLAYER *arg0) {
         if ((temp_f1_2 == 15.0f) || (temp_f1_2 == 30.0f)) {
             temp_r3_2 = fn_1_8858(arg0->pool1, (M538_NODEFUNC) fn_1_8CD8);
             if (temp_r3_2 != NULL) {
-                temp_r3_2->rotY = (f32) arg0->x;
-                temp_r3_2->rotZ = (s32) arg0->y;
-                temp_r3_2->x = (f32) arg0->z;
-                temp_r3_2->rotX = 0;
+                *(struct m538_raw3_s *) &temp_r3_2->x = *(struct m538_raw3_s *) &arg0->x;
+                temp_r3_2->timer = 0;
             }
         }
         if ((f32) fabs(arg0->rotY) < 1.0f) {
