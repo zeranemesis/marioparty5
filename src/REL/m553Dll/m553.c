@@ -427,6 +427,7 @@ s32 fn_1_1880(f32 *value, f32 time, f32 from, f32 to)
     } else {
         absB = from - (-1.0f * *value);
     }
+    step = absA;
     if (step <= absB) {
         *value = to;
         ret = 0;
