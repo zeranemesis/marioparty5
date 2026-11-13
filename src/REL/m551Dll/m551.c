@@ -678,3 +678,220 @@ void fn_1_2610(M551Vec3 *arg0)
         fn_1_3B58(&lbl_1_data_4D0, 1, sp.x, sp.y, sp.z, speed);
     }
 }
+
+void fn_1_29DC(M551Vec3 *arg0)
+{
+    M551Vec3 sp;
+    f32 spd;
+    f32 rad;
+    f32 step;
+    s16 num;
+    s16 t;
+    s16 i;
+
+    num = 0x24;
+    step = 360.0f / num;
+    for (i = 0; i < num; i++) {
+        rad = 120.0f + frandmod(20);
+        sp.x = arg0->x + sin(3.141592653589793 * (step * i) / 180.0) * rad;
+        sp.y = 10.0f + arg0->y;
+        rad = 120.0f + frandmod(20);
+        sp.z = arg0->z + cos(3.141592653589793 * (step * i) / 180.0) * rad;
+        spd = 3.0f + frandmod(5);
+        lbl_1_data_4D0.velX = spd * sin(3.141592653589793 * (step * i) / 180.0);
+        lbl_1_data_4D0.velY = frandmod(5);
+        lbl_1_data_4D0.velZ = spd * cos(3.141592653589793 * (step * i) / 180.0);
+        t = -frandmod(6) - 7;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01 * frandmod(20);
+        fn_1_3B58(&lbl_1_data_4D0, 1, sp.x, sp.y, sp.z, 30.0f + frandmod(30));
+    }
+    for (i = 0; i < num; i++) {
+        rad = 80.0f + frandmod(50);
+        sp.x = arg0->x + sin(3.141592653589793 * ((f32)(num >> 1) + step * i) / 180.0) * rad;
+        sp.y = 10.0f + arg0->y;
+        rad = 80.0f + frandmod(50);
+        sp.z = arg0->z + cos(3.141592653589793 * ((f32)(num >> 1) + step * i) / 180.0) * rad;
+        spd = 3.0f + frandmod(5);
+        lbl_1_data_4D0.velX = spd * sin(3.141592653589793 * ((f32)(num >> 1) + step * i) / 180.0);
+        lbl_1_data_4D0.velY = frandmod(5);
+        lbl_1_data_4D0.velZ = spd * cos(3.141592653589793 * ((f32)(num >> 1) + step * i) / 180.0);
+        t = -frandmod(6) - 7;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01 * frandmod(20);
+        fn_1_3B58(&lbl_1_data_4D0, 1, sp.x, sp.y, sp.z, 30.0f + frandmod(30));
+    }
+}
+
+void fn_1_3270(M551Vec3 *arg0)
+{
+    M551Vec3 sp;
+    f32 size;
+    s16 n1;
+    s16 n2;
+    s16 n3;
+    s16 n4;
+    s16 t;
+    s16 i;
+
+    n1 = 0x23;
+    n2 = 0x14;
+    n3 = 10;
+    n4 = 10;
+
+    for (i = 0; i < n1; i++) {
+        sp.x = arg0->x + (frandmod(220) - 110.0f);
+        sp.y = arg0->y + frandmod(200);
+        sp.z = 130.0f + arg0->z;
+        lbl_1_data_4D0.velX = frandmod(4) - 2.0f;
+        lbl_1_data_4D0.velY = 5.0f + frandmod(10);
+        lbl_1_data_4D0.velZ = 0.0f;
+        t = -frandmod(6) - 5;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01f * frandmod(20);
+        size = 40.0f + frandmod(40);
+        fn_1_3B58(&lbl_1_data_4D0, 0, sp.x, sp.y, sp.z, size);
+    }
+    for (i = 0; i < n2; i++) {
+        sp.x = arg0->x + (frandmod(220) - 110.0f);
+        sp.y = 200.0f + arg0->y;
+        sp.z = arg0->z + frandmod(100);
+        lbl_1_data_4D0.velX = frandmod(4) - 2.0f;
+        lbl_1_data_4D0.velY = 5.0f + frandmod(10);
+        lbl_1_data_4D0.velZ = 0.0f;
+        t = -frandmod(6) - 5;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01f * frandmod(20);
+        size = 40.0f + frandmod(40);
+        fn_1_3B58(&lbl_1_data_4D0, 0, sp.x, sp.y, sp.z, size);
+    }
+    for (i = 0; i < n3; i++) {
+        sp.x = 100.0f + arg0->x;
+        sp.y = arg0->y + frandmod(200);
+        sp.z = arg0->z + frandmod(100);
+        lbl_1_data_4D0.velX = frandmod(4) - 2.0f;
+        lbl_1_data_4D0.velY = 5.0f + frandmod(10);
+        lbl_1_data_4D0.velZ = 0.0f;
+        t = -frandmod(6) - 5;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01f * frandmod(20);
+        size = 40.0f + frandmod(40);
+        fn_1_3B58(&lbl_1_data_4D0, 0, sp.x, sp.y, sp.z, size);
+    }
+    for (i = 0; i < n4; i++) {
+        sp.x = arg0->x - 100.0f;
+        sp.y = arg0->y + frandmod(200);
+        sp.z = arg0->z + frandmod(100);
+        lbl_1_data_4D0.velX = frandmod(4) - 2.0f;
+        lbl_1_data_4D0.velY = 5.0f + frandmod(10);
+        lbl_1_data_4D0.velZ = 0.0f;
+        t = -frandmod(6) - 5;
+        lbl_1_data_4D0.alphaStep = t;
+        lbl_1_data_4D0.accelY = 0.01f * frandmod(20);
+        size = 40.0f + frandmod(40);
+        fn_1_3B58(&lbl_1_data_4D0, 0, sp.x, sp.y, sp.z, size);
+    }
+}
+
+s16 fn_1_3B58(M551PtclWork *arg0, s16 which, f32 x, f32 y, f32 z, f32 scale)
+{
+    HU3DPARTICLEDATA *data;
+    HU3DPARTICLE *particle;
+    s16 i;
+    s16 ret;
+    M551PtclWork *work;
+
+    ret = -1;
+    particle = (HU3DPARTICLE *)Hu3DData[lbl_1_bss_1799C[which]].hookData;
+    work = (M551PtclWork *)particle->work;
+    data = particle->data + particle->emitCnt;
+    for (i = particle->emitCnt; i < particle->maxCnt; i++, data++) {
+        if (data->scale == 0.0f) {
+            break;
+        }
+    }
+    if (i >= particle->maxCnt) {
+        data = particle->data;
+        for (i = 0; i < particle->maxCnt; i++, data++) {
+            if (data->scale == 0.0f) {
+                break;
+            }
+        }
+    }
+    if (i != particle->maxCnt) {
+        work[i] = *arg0;
+        data->pos.x = x;
+        data->pos.y = y;
+        data->pos.z = z;
+        data->vel = *(HuVecF *)&arg0->velX;
+        data->color.r = arg0->colStart[0];
+        data->color.g = arg0->colStart[1];
+        data->color.b = arg0->colStart[2];
+        data->color.a = arg0->colStart[3];
+        data->scaleBase = scale;
+        data->scale = scale;
+        data->parManId = -1;
+        particle->emitCnt = i;
+        ret = i;
+    }
+    return ret;
+}
+
+void fn_1_3D38(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx)
+{
+    M551PtclWork *work;
+    HU3DPARTICLEDATA *data;
+    s16 i;
+    s16 v;
+    s16 cnt;
+
+    work = (M551PtclWork *)particleP->work;
+    data = particleP->data;
+    cnt = 0;
+    i = 0;
+    data->time = 0;
+    for (; i < particleP->maxCnt; i++, data++) {
+        if (data->scale > 0.0f) {
+            data->vel.x = data->vel.x * work[i].mulX;
+            data->vel.y = data->vel.y * work[i].mulY;
+            data->vel.z = data->vel.z * work[i].mulZ;
+            PSVECAdd((Vec *)&data->vel, (Vec *)&data->pos, (Vec *)&data->pos);
+            data->vel.y = data->vel.y + work[i].accelY;
+            v = (f32)data->color.r + work[i].colorStep * (f32)(work[i].colEnd[0] - work[i].colStart[0]);
+            if (v < 0) {
+                v = 0;
+            } else if (v > 0xFF) {
+                v = 0xFF;
+            }
+            data->color.r = v;
+            v = (f32)data->color.g + work[i].colorStep * (f32)(work[i].colEnd[1] - work[i].colStart[1]);
+            if (v < 0) {
+                v = 0;
+            } else if (v > 0xFF) {
+                v = 0xFF;
+            }
+            data->color.g = v;
+            v = (f32)data->color.b + work[i].colorStep * (f32)(work[i].colEnd[2] - work[i].colStart[2]);
+            if (v < 0) {
+                v = 0;
+            } else if (v > 0xFF) {
+                v = 0xFF;
+            }
+            data->color.b = v;
+            v = (f32)data->color.a + work[i].alphaStep;
+            if (v < 1) {
+                data->scale = 0.0f;
+            }
+            data->color.a = v;
+            if (0.0f != data->scale) {
+                data->scale = data->scaleBase;
+                data->scaleBase = data->scaleBase + work[i].scaleStep;
+                if (data->scaleBase <= 0.01f) {
+                    data->scale = 0.0f;
+                }
+            }
+            data->time += 1;
+        }
+    }
+    DCStoreRangeNoSync(particleP->data, particleP->maxCnt * sizeof(HU3DPARTICLEDATA));
+}
