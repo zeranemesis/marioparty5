@@ -396,30 +396,49 @@ typedef struct M555Scene_s {
 
 extern M555_SCENE lbl_1_bss_C;
 
+
+/* m555.c data (definitions in m555_data.inc / bss definitions in m555.c) */
+#include "game/mg/seqman.h"
+#include "game/object.h"
+extern MGSEQ_PARAM lbl_1_data_0;
+extern s32 lbl_1_data_28[13][2];
+extern s32 lbl_1_data_90[48];
+extern s16 lbl_1_data_220[16];
+extern char lbl_1_data_240[];
+extern char lbl_1_data_26E[];
+extern char lbl_1_data_276[];
+extern s32 lbl_1_bss_1A7C[2];
+extern M555_MODELENTRY lbl_1_bss_1A84[171];
+extern M555_CTRL lbl_1_bss_2D38;
+extern OMOBJMAN *lbl_1_bss_3020;
+
 /* ---- function prototypes (owner replaces its own `();` line with the real signature) ---- */
-void fn_1_308();
-void fn_1_33C();
-void fn_1_368();
-void fn_1_394();
-void fn_1_3C0();
-void fn_1_3EC();
-void fn_1_418();
-void fn_1_444();
-void fn_1_464();
-void fn_1_490();
-void fn_1_494();
-void fn_1_964();
-void fn_1_EDC();
-void fn_1_110C();
-void fn_1_13E4();
-void fn_1_150C();
+int _prolog(void);
+void _epilog(void);
+void ObjectSetup(void);
+void fn_1_308(s16 mode, s16 frameNo);
+void fn_1_33C(s16 mode, s16 frameNo);
+void fn_1_368(s16 mode, s16 frameNo);
+void fn_1_394(s16 mode, s16 frameNo);
+void fn_1_3C0(s16 mode, s16 frameNo);
+void fn_1_3EC(s16 mode, s16 frameNo);
+void fn_1_418(s16 mode, s16 frameNo);
+void fn_1_444(s16 mode, s16 frameNo);
+void fn_1_464(s16 mode, s16 frameNo);
+void fn_1_490(OMOBJ *obj);
+void fn_1_494(s16 no);
+void fn_1_964(s16 no);
+void fn_1_EDC(void);
+void fn_1_110C(void);
+void fn_1_13E4(void);
+void fn_1_150C(void);
 s32 fn_1_1898(f32 *p, f32 frames, f32 from, f32 to);
-void fn_1_19B8();
-void fn_1_1AD4();
-void fn_1_1B48();
-void fn_1_1B74();
-void fn_1_1B9C();
-void fn_1_1BD4();
+s32 fn_1_19B8(f32 *value, f32 time, f32 from, f32 to);
+MGTIMER *fn_1_1AD4(int type, int maxTime, int endTime, f32 x, f32 y);
+void fn_1_1B48(MGTIMER *timer);
+void fn_1_1B74(MGTIMER *timer);
+void fn_1_1B9C(MGTIMER *timer);
+s32 fn_1_1BD4(M555_CTRL *ctrl, s16 pad, s16 no);
 void fn_1_1FC0(void);
 void fn_1_1FC4(s16 padNo);
 void fn_1_247C(void);
@@ -481,14 +500,14 @@ s32 fn_1_19C0C(s16 player);
 s32 fn_1_1A4B0(s16 player);
 s32 fn_1_1A6F4(s16 player);
 s32 fn_1_1A880(s16 player, s16 flag);
-void fn_1_1A9A4(M555_CTRL *ctrl, M555_MODELENTRY *mdl, s32 *dataList);
+void fn_1_1A9A4(M555_CTRL *ctrl, M555_MODELENTRY *entries, s32 *data);
 void fn_1_1ABF0(s16 value);
 void fn_1_1AC04(s16 idx, s32 *data);
-void fn_1_1AC24(s16 idx, s16 *motion);
+void fn_1_1AC24(s16 idx, s32 *data);
 void fn_1_1AC44(void);
-void fn_1_1AF38(void);
+void fn_1_1AF38(OMOBJ *obj);
 void fn_1_1B2F8(void);
-void fn_1_1B4B0(void);
+void fn_1_1B4B0(OMOBJ *obj);
 void fn_1_1B868();
 void fn_1_1B86C();
 void fn_1_1B870();
