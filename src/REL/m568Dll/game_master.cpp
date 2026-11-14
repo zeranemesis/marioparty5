@@ -54,6 +54,12 @@ void *fn_1_104FC(void *self, s32 idx);
 void fn_1_B320(Camera568 *self, Vec *pos, f32 z);
 
 void *fn_1_618(u32 size);
+// Objects constructed here hold pointers/vtables; x64 layouts are bigger, so the PC build over-allocates.
+#ifdef TARGET_PC
+#define GM_ALLOC(n) ((n) * 4 + 0x40)
+#else
+#define GM_ALLOC(n) (n)
+#endif
 void fn_1_6E0(void *mem);
 void fn_1_4DFC(void *mem);
 void fn_1_370C(void *model, s16 flag);
@@ -562,20 +568,20 @@ void fn_1_8824(M568Master *self, void *objman)
     void *obj;
 
     fn_1_5020(OSGetTick());
-    obj = fn_1_618(0x60);
+    obj = fn_1_618(GM_ALLOC(0x60));
     if (obj != 0) {
         fn_1_D260(obj);
     }
-    obj = fn_1_618(0x8C);
+    obj = fn_1_618(GM_ALLOC(0x8C));
     if (obj != 0) {
         fn_1_9D60((Camera568 *)obj);
     }
-    obj = fn_1_618(0x18);
+    obj = fn_1_618(GM_ALLOC(0x18));
     if (obj != 0) {
         fn_1_B668((EffectMgr *)obj);
     }
     for (i = 0; i < 4; i++) {
-        obj = fn_1_618(0x58);
+        obj = fn_1_618(GM_ALLOC(0x58));
         if (obj != 0) {
             fn_1_104FC(obj, i);
         }

@@ -28,7 +28,7 @@ extern "C" {
 // The input classes (input.cpp) differ in size; the PC build over-allocates
 // because their extra members hold pointers.
 #ifdef TARGET_PC
-#define PLR_ALLOC(n) ((n) * 2)
+#define PLR_ALLOC(n) ((n) * 4 + 0x40)
 #else
 #define PLR_ALLOC(n) (n)
 #endif
@@ -336,7 +336,7 @@ PlrInput *fn_1_103D4(s32 padNo)
         return p;
     }
     if (GwPlayerConf[padNo].type != 0) {
-        p = (PlrInput *)fn_1_618(sizeof(PlrInput));
+        p = (PlrInput *)fn_1_618(PLR_ALLOC(sizeof(PlrInput)));
         if (p != 0) {
             p = fn_1_6428(p);
         }

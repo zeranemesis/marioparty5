@@ -173,12 +173,13 @@ void fn_1_628C(InputObj *self, SceneNode *actor)
     self->vtbl->update(self, &self->out, actor);
 }
 
-void fn_1_62F4(PadInput *self, s32 playerNo)
+PadInput *fn_1_62F4(PadInput *self, s32 playerNo)
 {
     self->vtbl = &lbl_1_data_298;
     self->vtbl = &lbl_1_data_288;
     self->playerNo = playerNo;
     self->padNo = GwPlayerConf[playerNo].padNo;
+    return self;
 }
 
 InputObj *fn_1_632C(InputObj *self, s16 arg)
@@ -202,10 +203,11 @@ void fn_1_6384(PadInput *self, InputOut *out, SceneNode *actor)
     out->b0 = (btn & 0x200) != 0;
 }
 
-void fn_1_6428(InputObj *self)
+InputObj *fn_1_6428(InputObj *self)
 {
     self->vtbl = &lbl_1_data_298;
     self->vtbl = &lbl_1_data_278;
+    return self;
 }
 
 // Is an untriggered effect close ahead of `pos`? If so `out` is its position.
