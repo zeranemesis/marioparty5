@@ -380,13 +380,19 @@ extern GXColor lbl_1_data_9D0;
 
 
 /* ---- koopa.c / koopaboss.c ---- */
-/* The koopa units' views of the battle work object ("host"); only members they
- * touch are named, at the GC offsets of the original. The pointer-bearing
- * sub-objects (Koopa, KoopaBoss) are embedded by type so their sizeof is right. */
-typedef struct KpHost KpHost;
+/* The koopa units work on the battle owner (M562Work, defined in the main block
+ * below) through KpHost; the player object (work->player) through the KpPlayer
+ * overlay, cast from &work->player. */
+struct M562Work;
+typedef struct M562Work KpHost;
+
+/* The battle owner's three EffectLists at 0x286C (fire), 0x287C (koopa hits) and
+ * 0x288C (boss hits) all live in M562Work.pad286C; it must hold 3 * sizeof(EffectList). */
+#define KP_HITA(host) (&((EffectList *)(host)->pad286C)[1])
+#define KP_HITB(host) (&((EffectList *)(host)->pad286C)[2])
 
 typedef struct KpPlayer { /* host + 0x28 */
-    /* 0x00 */ KpHost *host;
+    /* 0x00 */ struct M562Work *host;
     /* 0x04 */ u16 state;
     /* 0x06 */ s16 sub6;
     /* 0x08 */ s16 sub8;
@@ -411,33 +417,6 @@ typedef struct KpPlayer { /* host + 0x28 */
     /* 0x130 */ void *held;
     /* 0x134 */ void *target; /* the bomb slot being carried */
 } KpPlayer;
-
-typedef struct KpCamera { /* host + 0x1BC, 0x258 */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ u32 camBit;
-    /* 0x08 */ u8 pad8[0x9C - 8];
-} KpCamera;
-
-/* one floor tile of the stage table (0x48 bytes on GC) */
-typedef struct KpCell {
-    /* 0x00 */ void *field;
-    /* 0x04 */ u16 state;
-    /* 0x06 */ u8 pad6[0xA];
-    /* 0x10 */ Vec pos;
-    /* 0x1C */ u8 pad1C[0x34 - 0x1C];
-    /* 0x34 */ s32 flag;
-    /* 0x38 */ u8 pad38[0x48 - 0x38];
-} KpCell;
-
-typedef struct KpCells { /* host + 0x227C */
-    /* 0x000 */ u8 pad0[8];
-    /* 0x008 */ KpCell cell[20];
-    /* 0x5A8 */ u8 pad5A8[0x5C8 - 0x5A8];
-    /* 0x5C8 */ s16 quakeTimer;
-    /* 0x5CA */ u8 pad5CA[2];
-    /* 0x5CC */ Vec quakePos;
-    /* 0x5D8 */ u8 pad5D8[4];
-} KpCells;
 
 /* mini mecha-koopa object returned by fn_1_181FC (only its position is read) */
 typedef struct KbMini {
@@ -485,7 +464,7 @@ typedef struct KbBombMgr {
 
 /* the Bowser actor (0xB8 bytes on GC) at host + 0x30C */
 typedef struct Koopa {
-    /* 0x00 */ KpHost *host;
+    /* 0x00 */ struct M562Work *host;
     /* 0x04 */ u16 state;
     /* 0x06 */ u16 sub;
     /* 0x08 */ u16 step;
@@ -517,13 +496,13 @@ typedef struct Koopa {
     /* 0x8C */ Vec target;
     /* 0x98 */ Vec cellPos;
     /* 0xA4 */ Vec jumpFrom;
-    /* 0xB0 */ KpCell *cell;
+    /* 0xB0 */ M562StageTile *cell;
     /* 0xB4 */ f32 prevTime;
 } Koopa;
 
 /* the fire-breathing boss (0x3F8 bytes on GC) at host + 0x3C4 */
 typedef struct KoopaBoss {
-    /* 0x000 */ KpHost *host;
+    /* 0x000 */ struct M562Work *host;
     /* 0x004 */ u16 state;
     /* 0x006 */ u16 sub;
     /* 0x008 */ s16 timer;
@@ -576,38 +555,13 @@ typedef struct KoopaBoss {
     /* 0x3F4 */ s32 sndHandle;
 } KoopaBoss;
 
-struct KpHost {
-    /* 0x000 */ u8 pad0[0xC];
-    /* 0x00C */ u16 phase;
-    /* 0x00E */ u8 padE[0x20 - 0xE];
-    /* 0x020 */ s16 difficulty;
-    /* 0x022 */ s16 flag22;
-    /* 0x024 */ u8 pad24[0x28 - 0x24];
-    /* 0x028 */ KpPlayer player;
-    /* 0x160 */ u8 pad160[0x1BC - 0x160];
-    /* 0x1BC */ KpCamera cam;
-    /* 0x258 */ KpCamera cam2;
-    /* 0x2F4 */ u8 pad2F4[0x30C - 0x2F4];
-    /* 0x30C */ Koopa koopa;
-    /* 0x3C4 */ KoopaBoss boss;
-    /* 0x7BC */ u8 pad7BC[0x88C - 0x7BC];
-    /* 0x88C */ u8 tiles[0x1100];
-    /* 0x198C */ s16 tileCount;
-    /* 0x198E */ u8 pad198E[0x1B90 - 0x198E];
-    /* 0x1B90 */ u8 mini[0x227C - 0x1B90];
-    /* 0x227C */ KpCells cells;
-    /* 0x2854 */ u8 pad2854[0x287C - 0x2854];
-    /* 0x287C */ EffectList hitA;
-    /* 0x288C */ EffectList hitB;
-};
-
-extern void fn_1_B2E0(Koopa *self, KpHost *host);
+extern void fn_1_B2E0(Koopa *self, struct M562Work *host);
 extern void fn_1_B4F8(Koopa *self);
 extern void fn_1_CE10(Koopa *self);
 extern void fn_1_ED90(Koopa *self, Vec *in, Vec *out);
 extern void fn_1_EEC4(EffectEntry *a, EffectEntry *b);
 extern void fn_1_F014(KpPlayer *player, Koopa *koopa);
-extern void fn_1_F784(KoopaBoss *self, KpHost *host);
+extern void fn_1_F784(KoopaBoss *self, struct M562Work *host);
 extern void fn_1_10018(KoopaBoss *self);
 extern Mtx *fn_1_1010C(KoopaBoss *self);
 extern Mtx *fn_1_10160(KoopaBoss *self);
@@ -721,26 +675,13 @@ typedef struct M562MainTriple {
 typedef struct M562MainPlayer { /* 0x28, 0x138 bytes */
     /* 0x00 */ u8 pad0[4];
     /* 0x04 */ s16 mode;
-    /* 0x06 */ u8 pad6[0x88 - 6];
+    /* 0x06 */ u8 pad6[0x18 - 6];
+    /* 0x18 */ s32 charNo;
+    /* 0x1C */ u8 pad1C[0x88 - 0x1C];
     /* 0x88 */ s32 hitFlag;
     /* 0x8C */ s16 life;
     /* 0x8E */ u8 pad8E[0x138 - 0x8E];
 } M562MainPlayer;
-
-typedef struct M562MainCamera { /* 0x1BC, 0x258: 0x9C bytes */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ u16 camMask;
-    /* 0x06 */ u8 pad6[2];
-    /* 0x08 */ s16 modeA;
-    /* 0x0A */ s16 modeB;
-    /* 0x0C */ u8 padC[4];
-    /* 0x10 */ Vec pos;
-    /* 0x1C */ Vec target;
-    /* 0x28 */ u8 pad28[0xC];
-    /* 0x34 */ Vec posGoal;
-    /* 0x40 */ Vec targetGoal;
-    /* 0x4C */ u8 pad4C[0x9C - 0x4C];
-} M562MainCamera;
 
 typedef struct M562MainFireEntry { /* 0x34 bytes */
     /* 0x00 */ u8 pad0[0x20];
@@ -775,43 +716,6 @@ typedef struct M562MainSprite { /* 0x221C, 0x224C: 0x30 bytes */
     /* 0x2E */ u8 pad2E[2];
 } M562MainSprite;
 
-struct M562Work {
-    /* 0x0000 */ OMOBJMAN *manager;
-    /* 0x0004 */ u8 pad4[4];
-    /* 0x0008 */ s32 frame;
-    /* 0x000C */ u16 step;
-    /* 0x000E */ u16 mode;
-    /* 0x0010 */ u16 state;
-    /* 0x0012 */ u16 phase;
-    /* 0x0014 */ s32 timeLeft;
-    /* 0x0018 */ u8 pad18[4];
-    /* 0x001C */ s32 evtTimer;
-    /* 0x0020 */ s16 diff;
-    /* 0x0022 */ s16 winner;
-    /* 0x0024 */ MGTIMER *timer;
-    /* 0x0028 */ M562MainPlayer player;
-    /* 0x0160 */ M562Back back;
-    /* 0x01BC */ M562MainCamera camera[2];
-    /* 0x02F4 */ LIGHT light;
-    /* 0x030C */ Koopa koopa;
-    /* 0x03C4 */ KoopaBoss boss;
-    /* 0x07BC */ M562MainFireRing fireRing;
-    /* 0x088C */ FireMgr fire;
-    /* 0x1B90 */ M562MainMecha mecha;
-    /* 0x221C */ M562MainSprite sprite[2];
-    /* 0x227C */ M562StageField stage;
-    /* 0x2858 */ M562MainTriple triple;
-    /* 0x2864 */ void *fbTex;
-    /* 0x2868 */ ANIMDATA *fbAnim;
-    /* 0x286C */ u8 pad286C[0x289C - 0x286C];
-    /* 0x289C */ s32 bossMode;
-    /* 0x28A0 */ GAMEMESID mesId;
-    /* 0x28A4 */ HUWINID winId;
-    /* 0x28A6 */ u8 pad28A6[2];
-    /* 0x28A8 */ s32 bgmId;
-    /* 0x28AC */ s32 seId;
-    /* 0x28B0 */ s32 seId2;
-};
 
 extern M562Work *lbl_1_bss_0;
 extern OMOBJMAN *lbl_1_bss_4;
@@ -885,19 +789,6 @@ void fn_1_2191C(CAMERA *cam);
 void fn_1_21B68(CAMERA *cam, s16 mode, s32 frames, f32 amp, f32 decay, f32 step);
 void fn_1_21BA8(CAMERA *cam);
 
-/* kill the owner's countdown timer (inlined in the original at several places) */
-static inline void M562TimerKill(M562Work *work)
-{
-    if (work->timer != NULL) {
-        MgTimerKill(work->timer);
-        if (work->timer->stopF == 0) {
-            work->timer->stopF = TRUE;
-            work->timer->mode = MGTIMER_MODE_ON;
-        }
-        work->timer = NULL;
-    }
-}
-
 /* m562.c: thin audio wrappers */
 extern void fn_1_8C4(Vec *pos, Vec *heading, f32 sndDist, f32 sndSpeed);
 extern void fn_1_904(Vec *pos, Vec *heading);
@@ -924,5 +815,57 @@ extern s32 fn_1_280C8(M562Work *work);
 extern s32 fn_1_29DF8(M562Work *work);
 extern void fn_1_16F0(M562Work *work, s16 phase);
 extern void fn_1_4748(M562Back *back, s16 phase, f32 t);
+
+/* ---- m562 / main / back: the owner object (kept last: it embeds the other units' types) ---- */
+struct M562Work {
+    /* 0x0000 */ OMOBJMAN *manager;
+    /* 0x0004 */ u8 pad4[4];
+    /* 0x0008 */ s32 frame;
+    /* 0x000C */ u16 step;
+    /* 0x000E */ u16 mode;
+    /* 0x0010 */ u16 state;
+    /* 0x0012 */ u16 phase;
+    /* 0x0014 */ s32 timeLeft;
+    /* 0x0018 */ u8 pad18[4];
+    /* 0x001C */ s32 evtTimer;
+    /* 0x0020 */ s16 diff;
+    /* 0x0022 */ s16 winner;
+    /* 0x0024 */ MGTIMER *timer;
+    /* 0x0028 */ M562MainPlayer player;
+    /* 0x0160 */ M562Back back;
+    /* 0x01BC */ CAMERA camera[2];
+    /* 0x02F4 */ LIGHT light;
+    /* 0x030C */ Koopa koopa;
+    /* 0x03C4 */ KoopaBoss boss;
+    /* 0x07BC */ M562MainFireRing fireRing;
+    /* 0x088C */ FireMgr fire;
+    /* 0x1B90 */ M562MainMecha mecha;
+    /* 0x221C */ M562MainSprite sprite[2];
+    /* 0x227C */ M562StageField stage;
+    /* 0x2858 */ M562MainTriple triple;
+    /* 0x2864 */ void *fbTex;
+    /* 0x2868 */ ANIMDATA *fbAnim;
+    /* 0x286C */ u8 pad286C[0x289C - 0x286C];
+    /* 0x289C */ s32 bossMode;
+    /* 0x28A0 */ s32 mesId;
+    /* 0x28A4 */ HUWINID winId;
+    /* 0x28A6 */ u8 pad28A6[2];
+    /* 0x28A8 */ s32 bgmId;
+    /* 0x28AC */ s32 seId;
+    /* 0x28B0 */ s32 seId2;
+};
+
+/* kill the owner's countdown timer (inlined in the original at several places) */
+static inline void M562TimerKill(M562Work *work)
+{
+    if (work->timer != NULL) {
+        MgTimerKill(work->timer);
+        if (work->timer->stopF == 0) {
+            work->timer->stopF = TRUE;
+            work->timer->mode = MGTIMER_MODE_ON;
+        }
+        work->timer = NULL;
+    }
+}
 
 #endif

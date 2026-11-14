@@ -1,84 +1,41 @@
-#include "types.h"
+// m562dll/koopa - the Bowser actor of the boss battle: model setup, the
+// per-frame state machine (walk / stomp / charge / jump / fall) and the hit
+// callbacks against the player.
+#include "REL/m562dll.h"
+#include "game/frand.h"
+#include "game/hsfex.h"
+#include "humath.h"
+#include <string.h>
 
-/* library */
-extern void Hu3DModelKill(s16 modelId);
-extern void Hu3DMotionKill(s16 motionId);
-extern void *memset(void *dst, s32 val, u32 len);
-extern s32 HuDataSelHeapReadNum(u32 id, u32 heap, s32 count);
-extern s16 Hu3DModelCreate(void);
-extern void Hu3DModelScaleSet(s16 model, f32 x, f32 y, f32 z);
-extern void Hu3DModelCameraSet(s16 model, u32 cam);
-extern void Hu3DModelLayerSet(s16 model, s32 layer);
-extern void Hu3DModelAttrReset(s16 model, s32 attr);
-extern void Hu3DModelShadowSet(s16 model);
-extern void Hu3DMotionSpeedSet(s16 model, f32 speed);
-extern void Hu3DModelPosSet(s16 model, f32 x, f32 y, f32 z);
-extern void Hu3DModelRotSet(s16 model, f32 x, f32 y, f32 z);
-extern s16 Hu3DJointMotion(s16 model, s32 motion);
-extern void Hu3DMotionSet(s16 model, s16 motion);
-extern void Hu3DModelAttrSet(s16 model, u32 attr);
-extern void Hu3DMotionShiftSet(s16 model, s16 motion, f32 a, f32 b, u32 flags);
+/* returns a float in the original (see the note in game/hu3d.h) */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
-/* sibling module functions */
-extern void fn_1_2CDE8(void *arg0);
-extern void fn_1_2CD6C(void *arg0, u32 arg1);
+#define KP_CAM(host, i) ((CAMERA *)&(host)->camera[i])
+#define KP_PLAYER(host) ((KpPlayer *)&(host)->player)
+#define KP_ABS(x) (((x) >= 0.0f) ? (x) : -(x))
+#define KP_CLAMP(v, lo, hi) (((v) > (hi)) ? (hi) : (((v) < (lo)) ? (lo) : (v)))
+/* heading in degrees of the (x, z) direction, wrapped into (-180, 180] */
+#define KP_HEADING(x, z)                                                      \
+    ((HuAtan((x), (z)) > 180.0)                                               \
+         ? (HuAtan((x), (z)) - 360.0)                                         \
+         : ((HuAtan((x), (z)) <= -180.0) ? (360.0 + HuAtan((x), (z)))         \
+                                         : HuAtan((x), (z))))
 
-typedef struct {
-    f32 x;
-    f32 y;
-    f32 z;
-} Vec3f;
+static void fn_1_B7F0(Koopa *self);
+static void fn_1_BAE8(Koopa *self);
+static void fn_1_BDA4(Koopa *self);
+void fn_1_CE24(Koopa *self);
+s32 fn_1_D404(Koopa *self);
+s32 fn_1_DCC4(Koopa *self);
+s32 fn_1_E558(Koopa *self);
 
-typedef struct {
-    /* 0x0000 */ void *unk0;
-    /* 0x0004 */ u8 pad4[0x1C];
-    /* 0x0020 */ s16 modelId;
-    /* 0x0022 */ s16 motionId[14];
-    /* 0x003E */ u8 pad3E[0x0A];
-    /* 0x0048 */ s16 f48;
-    /* 0x004A */ s16 f4A;
-    /* 0x004C */ u32 f4C;
-    /* 0x0050 */ u8 pad50[4];
-    /* 0x0054 */ Vec3f pos;
-    /* 0x0060 */ u8 pad60[0x54];
-    /* 0x00B4 */ f32 fB4;
-} KoopaObj;
+/* .rodata vectors (offsets of the weapon-swing effect, in Bowser's space) */
+static const Vec lbl_1_rodata_360 = { -80.0f, 0.0f, 50.0f };
+static const Vec lbl_1_rodata_36C = { 80.0f, 0.0f, 50.0f };
+static const Vec lbl_1_rodata_378 = { -80.0f, 0.0f, 30.0f };
+static const Vec lbl_1_rodata_384 = { 80.0f, 0.0f, 30.0f };
 
-typedef struct {
-    /* 0x0000 */ u8 pad0[0x1C0];
-    /* 0x01C0 */ u32 camA;
-    /* 0x01C4 */ u8 pad1C4[0x98];
-    /* 0x025C */ u32 camB;
-} KoopaOwner;
-
-typedef struct {
-    /* 0x00 */ u16 kind;
-    /* 0x02 */ u8 pad2[2];
-    /* 0x04 */ u16 state;
-    /* 0x06 */ s16 f6;
-    /* 0x08 */ s16 f8;
-    /* 0x0A */ s16 fA;
-    /* 0x0C */ u8 padC[4];
-    /* 0x10 */ s16 f10;
-} KoopaNode;
-
-typedef struct {
-    /* 0x00 */ u16 kind;
-    /* 0x02 */ u8 pad2[6];
-    /* 0x08 */ KoopaNode *node;
-} KoopaRef;
-
-typedef struct {
-    /* 0x00 */ u8 pad0[0x10];
-    /* 0x10 */ Vec3f min;
-    /* 0x1C */ u8 pad1C[0x53C];
-} KoopaBound;
-
-typedef struct {
-    /* 0x00 */ u8 pad0[8];
-    /* 0x08 */ KoopaBound b[2];
-} KoopaLimit;
-
+/* .data */
 /* the 14 joint-motion ids this koopa cycles through */
 u32 lbl_1_data_7F8[14] = {
     0x0075002D, 0x0075002E, 0x0075002F, 0x00750030,
@@ -88,125 +45,971 @@ u32 lbl_1_data_7F8[14] = {
 };
 
 /* spawn position handed to Hu3DModelPosSet */
-Vec3f lbl_1_data_830 = { 0.0f, 2000.0f, -1176.0f };
+Vec lbl_1_data_830 = { 0.0f, 2000.0f, -1176.0f };
 
-void fn_1_EEC4(KoopaRef *arg0, KoopaRef *arg1);
-void fn_1_F014(KoopaNode *arg0, KoopaNode *arg1);
+/* position of the first state-0 frame */
+Vec lbl_1_data_83C = { 0.0f, 0.0f, -125.0f };
 
-extern void fn_1_2CE3C(void *arg0, void (*arg1)(KoopaRef *a, KoopaRef *b));
+/* name of the node the fire-ball effect is spawned from */
+char lbl_1_data_86C[0x14] = "g000m0-ns_hed";
 
-void fn_1_B2E0(KoopaObj *arg0, KoopaOwner *arg1) {
-    KoopaOwner *owner = arg1;
-    s16 model;
+/* .bss */
+s16 lbl_1_bss_7820;
+s16 lbl_1_bss_7822;
+
+void fn_1_B2E0(Koopa *self, KpHost *host) {
+    HU3DMODELID model;
     s32 i;
 
-    memset(arg0, 0, 0xB8);
-    arg0->unk0 = arg1;
-    arg0->fB4 = 0.0f;
-    HuDataSelHeapReadNum(0x00750017, 0x10000000, 2);
-    model = Hu3DModelCreate();
-    arg0->modelId = model;
+    memset(self, 0, sizeof(*self));
+    self->host = host;
+    self->prevTime = 0.0f;
+    model = Hu3DModelCreateData(0x750017);
+    self->modelId = model;
     Hu3DModelScaleSet(model, 1.5f, 1.5f, 1.5f);
-    Hu3DModelCameraSet(model, (u16)(owner->camA | owner->camB));
+    Hu3DModelCameraSet(model, (u16)(KP_CAM(host, 0)->camId | KP_CAM(host, 1)->camId));
     Hu3DModelLayerSet(model, 4);
     Hu3DModelAttrReset(model, 1);
     Hu3DModelShadowSet(model);
     Hu3DMotionSpeedSet(model, 1.0f);
-    arg0->pos = lbl_1_data_830;
-    Hu3DModelPosSet(model, arg0->pos.x, arg0->pos.y, arg0->pos.z);
+    self->pos = lbl_1_data_830;
+    Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
     Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
     for (i = 0; i < 14; i++) {
-        arg0->motionId[i] = Hu3DJointMotion(model, HuDataSelHeapReadNum(lbl_1_data_7F8[i], 0x10000000, 2));
+        self->motionId[i] = Hu3DJointMotionData(model, lbl_1_data_7F8[i]);
     }
-    Hu3DMotionSet(model, arg0->motionId[0]);
-    Hu3DModelAttrSet(model, 0x40000001);
-    Hu3DMotionShiftSet(model, arg0->motionId[0], 0.0f, 4.0f, 0x40000001);
-    arg0->f48 = arg0->f4A = 0;
-    arg0->f4C = 1;
-    fn_1_2CD6C((u8 *)owner + 0x287C, 0x24);
-    fn_1_2CE3C((u8 *)owner + 0x287C, fn_1_EEC4);
+    Hu3DMotionSet(model, self->motionId[0]);
+    Hu3DModelAttrSet(model, HU3D_MOTATTR_LOOP);
+    Hu3DMotionShiftSet(model, self->motionId[0], 0.0f, 4.0f, HU3D_MOTATTR_LOOP);
+    self->curMotion = self->reqMotion = 0;
+    self->loopMotion = 1;
+    fn_1_2CD6C(KP_HITA(host), 0x24);
+    fn_1_2CE3C(KP_HITA(host), fn_1_EEC4);
 }
 
-void fn_1_B4F8(KoopaObj *arg0) {
-    void *owner = arg0->unk0;
+void fn_1_B4F8(Koopa *self) {
     s32 i;
 
-    fn_1_2CDE8((u8 *)owner + 0x287C);
+    fn_1_2CDE8(KP_HITA(self->host));
     for (i = 0; i < 14; i++) {
-        Hu3DMotionKill(arg0->motionId[i]);
+        Hu3DMotionKill(self->motionId[i]);
     }
-    Hu3DModelKill(arg0->modelId);
-    memset(arg0, 0, 0xB8);
+    Hu3DModelKill(self->modelId);
+    memset(self, 0, sizeof(*self));
 }
 
-void fn_1_CE10(KoopaObj *arg0) {
-    arg0->f4A = 0;
-    arg0->f4C = 1;
+/* per-frame update (declared with void * in the shared header) */
+void fn_1_B578(void *arg) {
+    Koopa *self = arg;
+    HU3DMODELID model;
+    f32 blend;
+
+    if (self->visibleReq != 0 && self->visible == 0) {
+        Hu3DModelAttrReset(self->modelId, 1);
+        self->visible = 1;
+    } else if (self->visibleReq == 0 && self->visible != 0) {
+        Hu3DModelAttrSet(self->modelId, 1);
+        self->visible = 0;
+    }
+    if (self->visible != 0) {
+        switch (self->state) {
+        case 0:
+            break;
+        case 1:
+            fn_1_B7F0(self);
+            break;
+        case 2:
+            fn_1_BAE8(self);
+            break;
+        case 3:
+            fn_1_BDA4(self);
+            break;
+        }
+        model = self->modelId;
+        if (self->curMotion != self->reqMotion && Hu3DMotionShiftIDGet(model) < 0 && self->shiftHold <= 0) {
+            if (self->curMotion == 10) {
+                blend = 30.0f;
+            } else if (self->reqMotion == 9) {
+                blend = 8.0f;
+            } else if (self->curMotion == 9) {
+                blend = 15.0f;
+            } else {
+                blend = 4.0f;
+            }
+            self->curMotion = self->reqMotion;
+            Hu3DModelAttrReset(model, HU3D_MOTATTR_LOOP);
+            Hu3DMotionShiftSet(model, self->motionId[self->curMotion], 0.0f, blend,
+                               (self->loopMotion != 0) ? HU3D_MOTATTR_LOOP : 0);
+            self->shiftHold = self->pendingDelay;
+            self->pendingDelay = 0;
+            self->prevTime = Hu3DMotionTimeGet(self->modelId);
+        }
+        if (self->shiftHold != 0) {
+            self->shiftHold--;
+        }
+    }
 }
 
-void fn_1_ED90(KoopaObj *arg0, Vec3f *in, Vec3f *out) {
-    void *owner = arg0->unk0;
-    KoopaLimit *lim = (KoopaLimit *)((u8 *)owner + 0x227C);
-    KoopaBound *bnd = &lim->b[0];
-    f32 minX;
-    f32 maxX;
-    f32 minZ;
-    f32 maxZ;
+static void fn_1_B7F0(Koopa *self) {
+    KpHost *host = self->host;
+    KpPlayer *player = KP_PLAYER(host);
+    HU3DMODELID model;
 
-    minX = bnd->min.x;
-    minZ = bnd->min.z;
-    bnd = &lim->b[1];
-    maxX = bnd->min.x;
-    maxZ = bnd->min.z;
+    if (self->active == 0) {
+        model = self->modelId;
+        self->pos = lbl_1_data_830;
+        Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
+        Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
+    }
+    switch (self->sub) {
+    case 10:
+        break;
+    case 0:
+        model = self->modelId;
+        Hu3DModelCameraSet(model, (u16)(KP_CAM(host, 0)->camId | KP_CAM(host, 1)->camId));
+        Hu3DModelAttrReset(model, 1);
+        Hu3DModelShadowReset(model);
+        Hu3DMotionSpeedSet(model, 1.0f);
+        self->pos = lbl_1_data_830;
+        Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
+        Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
+        self->sub = 1;
+        self->timerA = 0;
+        /* fallthrough */
+    case 1:
+        self->reqMotion = 0;
+        self->loopMotion = 1;
+        if (player->state == 4) {
+            self->reqMotion = 2;
+            self->loopMotion = 0;
+            self->sub = 2;
+            self->timerA = 0xA0;
+        } else if (host->fire.count < lbl_1_bss_7822) {
+            self->reqMotion = 9;
+            self->loopMotion = 0;
+            self->sub = 2;
+            self->timerA = 0x14;
+        } else if (host->step > 4 && host->winner == 0) {
+            fn_1_814(0x8C5);
+            self->reqMotion = 10;
+            self->loopMotion = 0;
+            self->sub = 3;
+            self->timerA = 0;
+        }
+        break;
+    case 2:
+        if (self->curMotion == 2 && self->timerA == 0x6E) {
+            fn_1_814(0x8B3);
+        }
+        if (--self->timerA <= 0) {
+            self->sub = 1;
+            self->timerA = 0;
+        }
+        break;
+    case 3: {
+        f32 maxTime = Hu3DMotionMaxTimeGet(self->modelId);
+
+        if (Hu3DMotionTimeGet(self->modelId) >= maxTime) {
+            Hu3DMotionTimeSet(self->modelId, 40.0f);
+        }
+        break;
+    }
+    }
+    lbl_1_bss_7822 = host->fire.count;
+}
+
+static void fn_1_BAE8(Koopa *self) {
+    KpHost *host = self->host;
+    KpPlayer *player = KP_PLAYER(host);
+    HU3DMODELID model;
+
+    if (self->active == 0) {
+        model = self->modelId;
+        self->pos = lbl_1_data_830;
+        Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
+        Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
+    }
+    switch (self->sub) {
+    case 0:
+        model = self->modelId;
+        Hu3DModelCameraSet(model, (u16)(KP_CAM(host, 0)->camId | KP_CAM(host, 1)->camId));
+        Hu3DModelAttrReset(model, 1);
+        Hu3DModelShadowReset(model);
+        Hu3DMotionSpeedSet(model, 1.0f);
+        self->pos = lbl_1_data_830;
+        Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
+        Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
+        self->sub = 1;
+        self->timerA = 0;
+        /* fallthrough */
+    case 1:
+        self->reqMotion = 0;
+        self->loopMotion = 1;
+        if (player->state == 4) {
+            self->reqMotion = 2;
+            self->loopMotion = 0;
+            self->sub = 2;
+            self->timerA = 0xA0;
+        } else if (host->step > 4 && host->winner == 0) {
+            fn_1_814(0x8C5);
+            self->reqMotion = 10;
+            self->loopMotion = 0;
+            self->sub = 3;
+            self->timerA = 0;
+        }
+        break;
+    case 10:
+        break;
+    case 2:
+        if (self->curMotion == 2 && self->timerA == 0x6E) {
+            fn_1_814(0x8B3);
+        }
+        if (--self->timerA <= 0) {
+            self->sub = 1;
+            self->timerA = 0;
+        }
+        break;
+    case 3: {
+        f32 maxTime = Hu3DMotionMaxTimeGet(self->modelId);
+
+        if (Hu3DMotionTimeGet(self->modelId) >= maxTime) {
+            Hu3DMotionTimeSet(self->modelId, 40.0f);
+        }
+        break;
+    }
+    }
+}
+
+static void fn_1_BDA4(Koopa *self) {
+    KpHost *host = self->host;
+    CAMERA *cam = KP_CAM(host, 0);
+    KpPlayer *player = KP_PLAYER(host);
+    HU3DMODELID model;
+    Vec hit;
+    Mtx rotMtx;
+    Vec local;
+    Vec world;
+    f32 t;
+
+    if (self->active == 0) {
+        if (self->sub >= 2 && self->sub < 7) {
+            self->sub = 2;
+            self->timer10 = 1;
+        }
+    } else if (self->sub == 1) {
+        self->timerC = 0xB4;
+        self->sub = 3;
+    }
+    switch (self->sub) {
+    case 0:
+        model = self->modelId;
+        Hu3DModelCameraSet(model, (u16)cam->camId);
+        Hu3DModelAttrReset(model, 1);
+        Hu3DModelShadowSet(model);
+        Hu3DMotionSet(model, self->motionId[0]);
+        Hu3DMotionSpeedSet(model, 1.0f);
+        self->pos = lbl_1_data_83C;
+        Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
+        Hu3DModelRotSet(model, 0.0f, 0.0f, 0.0f);
+        self->curMotion = 0;
+        self->reqMotion = 0;
+        self->loopMotion = 1;
+        switch (host->diff) {
+        case 0:
+            self->speed = 6.0f;
+            break;
+        case 1:
+            self->speed = 5.5f;
+            break;
+        case 2:
+            self->speed = 5.0f;
+            break;
+        default:
+            self->speed = 4.5f;
+            break;
+        }
+        self->baseSpeed = self->speed;
+        self->timerC = 0xB4;
+        self->sub = 3;
+        break;
+    case 2:
+        fn_1_CE10(self);
+        if (self->cell != NULL && self->cell->state > 2) {
+            self->velY = 0.0f;
+            self->timerC = 0;
+            self->sub = 7;
+        }
+        if (--self->timer10 <= 0) {
+            self->sub = 3;
+        }
+        break;
+    case 3:
+        fn_1_CE24(self);
+        if (--self->timerC <= 0) {
+            u32 roll = frand() % 10000;
+
+            if (roll < 0x7D0) {
+                self->timerC = 0;
+                self->sub = 4;
+                self->step = 0;
+                self->timerE = 0;
+            } else if (roll < 0xFA0) {
+                self->timerC = 0;
+                self->sub = 5;
+                self->step = 0;
+                self->timerE = 0;
+            } else {
+                self->timerC = 0;
+                self->sub = 6;
+                self->step = 0;
+                self->timerE = 0;
+            }
+        }
+        break;
+    case 4:
+        if (fn_1_D404(self) != 0) {
+            self->timerC = 0xB4;
+            self->timer10 = 0x3C;
+            self->sub = 2;
+        }
+        break;
+    case 5:
+        if (fn_1_DCC4(self) != 0) {
+            self->timerC = 0xB4;
+            self->timer10 = 0x3C;
+            self->sub = 2;
+        }
+        break;
+    case 6:
+        if (fn_1_E558(self) != 0) {
+            self->timerC = 0xB4;
+            self->timer10 = 0x3C;
+            self->sub = 2;
+            if (self->cell != NULL && self->cell->state > 2) {
+                self->velY = 0.0f;
+                self->timerC = 0;
+                self->sub = 7;
+            }
+        }
+        break;
+    case 7:
+        self->reqMotion = 3;
+        self->loopMotion = 0;
+        if (self->timerC == 0x14) {
+            fn_1_814(0x2CB);
+        }
+        if (self->timerC >= 0x14) {
+            self->velY -= 1.5f;
+            if (self->timerC >= 0x19) {
+                f32 fall = (f32)(self->timerC - 0x19) / 20.0f;
+                f32 scale;
+
+                fall = KP_CLAMP(fall, 0.0f, 1.0f);
+                scale = 0.6f + 0.4f * (1.0f - fall);
+                Hu3DModelScaleSet(self->modelId, 1.5f * scale, 1.5f * scale, 1.5f * scale);
+            }
+        }
+        self->pos.y += self->velY;
+        Hu3DModelPosSet(self->modelId, self->pos.x, self->pos.y, self->pos.z);
+        self->timerC++;
+        if (self->pos.y < -150.0f) {
+            Hu3DModelShadowReset(self->modelId);
+        }
+        if (self->pos.y < -5000.0f) {
+            Hu3DModelAttrSet(self->modelId, 1);
+            self->timerC = 0;
+            self->sub = 8;
+        }
+        break;
+    }
+    if (self->cell != NULL) {
+        if (self->cell->state > 2 && self->sub != 7 && self->sub != 0 && self->sub != 8 && self->sub != 1) {
+            self->velY = 0.0f;
+            self->timerC = 0;
+            self->sub = 7;
+        }
+        if (self->cell->state > 2) {
+            Vec p;
+            f32 minX;
+            f32 maxX;
+            f32 minZ;
+            f32 maxZ;
+
+            p = player->pos;
+            minX = self->cell->pos.x - 175.0f;
+            maxX = 175.0f + self->cell->pos.x;
+            minZ = self->cell->pos.z - 175.0f;
+            maxZ = 175.0f + self->cell->pos.z;
+            if (p.x > minX && p.x < maxX && p.z > minZ && p.z < maxZ) {
+                f32 pushX;
+                f32 pushZ;
+                f32 dMaxX = maxX - p.x;
+                f32 dMinX = minX - p.x;
+                f32 dMaxZ = maxZ - p.z;
+                f32 dMinZ = minZ - p.z;
+
+                if (KP_ABS(dMinX) < KP_ABS(dMaxX)) {
+                    pushX = 0.4f * dMinX;
+                } else {
+                    pushX = 0.4f * dMaxX;
+                }
+                if (KP_ABS(dMinZ) < KP_ABS(dMaxZ)) {
+                    pushZ = 0.4f * dMinZ;
+                } else {
+                    pushZ = 0.4f * dMaxZ;
+                }
+                if (KP_ABS(pushX) < KP_ABS(pushZ)) {
+                    p.x += pushX;
+                } else {
+                    p.z += pushZ;
+                }
+            }
+            player->pos = p;
+        }
+    }
+    model = self->modelId;
+    self->pos.x = KP_CLAMP(self->pos.x, -525.0f, 525.0f);
+    self->pos.z = KP_CLAMP(self->pos.z, -400.0f, 400.0f);
+    Hu3DModelPosSet(model, self->pos.x, self->pos.y, self->pos.z);
+    Hu3DModelRotSet(model, self->rot.x, self->rot.y, self->rot.z);
+    t = Hu3DMotionTimeGet(self->modelId);
+    switch (self->curMotion) {
+    case 12:
+    case 13:
+        if (self->prevTime < 10.0f && t >= 10.0f) {
+            if (lbl_1_bss_7820 == 0) {
+                fn_1_814(0x2C7);
+                lbl_1_bss_7820 = 0xF;
+            }
+            fn_1_21B68(cam, 1, 0x32, 10.0f, 0.75f, 90.0f);
+            MTXRotRad(rotMtx, 'Y', 0.017453292f * self->rotY);
+            local = lbl_1_rodata_360;
+            MTXMultVec(rotMtx, &local, &world);
+            VECAdd(&world, &self->pos, &world);
+            fn_1_2DC08((s16)cam->camId, &world, 1);
+        } else if (self->prevTime < 60.0f && t >= 60.0f) {
+            if (lbl_1_bss_7820 == 0) {
+                fn_1_814(0x2C7);
+                lbl_1_bss_7820 = 0xF;
+            }
+            fn_1_21B68(cam, 1, 0x32, 10.0f, 0.75f, 90.0f);
+            MTXRotRad(rotMtx, 'Y', 0.017453292f * self->rotY);
+            local = lbl_1_rodata_36C;
+            MTXMultVec(rotMtx, &local, &world);
+            VECAdd(&world, &self->pos, &world);
+            fn_1_2DC08((s16)cam->camId, &world, 1);
+        }
+        break;
+    case 8:
+        if (self->prevTime < 1.0f && t >= 1.0f) {
+            if (lbl_1_bss_7820 == 0) {
+                fn_1_814(0x2C8);
+                lbl_1_bss_7820 = 0xA;
+            }
+            fn_1_21B68(cam, 1, 0x32, 10.0f, 0.75f, 90.0f);
+            MTXRotRad(rotMtx, 'Y', 0.017453292f * self->rotY);
+            local = lbl_1_rodata_378;
+            MTXMultVec(rotMtx, &local, &world);
+            VECAdd(&world, &self->pos, &world);
+            fn_1_2DC08((s16)cam->camId, &world, 1);
+        } else if (self->prevTime < 16.0f && t >= 16.0f) {
+            if (lbl_1_bss_7820 == 0) {
+                fn_1_814(0x2C8);
+                lbl_1_bss_7820 = 0xA;
+            }
+            fn_1_21B68(cam, 1, 0x32, 10.0f, 0.75f, 90.0f);
+            MTXRotRad(rotMtx, 'Y', 0.017453292f * self->rotY);
+            local = lbl_1_rodata_384;
+            MTXMultVec(rotMtx, &local, &world);
+            VECAdd(&world, &self->pos, &world);
+            fn_1_2DC08((s16)cam->camId, &world, 1);
+        }
+        break;
+    }
+    self->prevTime = t;
+    if (lbl_1_bss_7820 != 0) {
+        lbl_1_bss_7820--;
+    }
+    hit.x = self->pos.x;
+    hit.y = self->pos.y;
+    hit.z = self->pos.z;
+    hit.y += 200.0f;
+    fn_1_2CE8C(KP_HITA(host), 3, 0, &hit, self, 200.0f);
+    {
+        f32 radius = 0.5f * player->height;
+
+        hit = player->pos;
+        hit.y += radius;
+        fn_1_2CE8C(KP_HITA(host), 0, 0, &hit, player, radius);
+    }
+    fn_1_2CE44(KP_HITA(host));
+    if (self->sub != 6 && self->sub < 7) {
+        if (self->pos.y > 0.0f) {
+            self->velY -= 1.5f;
+            self->pos.y += self->velY;
+            return;
+        }
+        self->velY = 0.0f;
+        self->pos.y = 0.0f;
+    }
+}
+
+void fn_1_CE10(Koopa *self) {
+    self->reqMotion = 0;
+    self->loopMotion = 1;
+}
+
+/* approach the player along the arena floor */
+void fn_1_CE24(Koopa *self) {
+    KpHost *host = self->host;
+    KpPlayer *player = KP_PLAYER(host);
+    Vec goal;
+    Vec dir;
+    f32 ramp;
+    f32 speed;
+    f32 t;
+
+    self->reqMotion = 12;
+    self->loopMotion = 1;
+    ramp = (self->speed - 4.5f) * 0.25f;
+    ramp = KP_CLAMP(ramp, 0.0f, 1.0f);
+    Hu3DMotionSpeedSet(self->modelId, (f32)(1.0 + (f64)ramp));
+    fn_1_ED90(self, &player->pos, &goal);
+    VECSubtract(&goal, &self->pos, &dir);
+    dir.y = 0.0f;
+    if (dir.x != 0.0f || dir.z != 0.0f) {
+        VECNormalize(&dir, &dir);
+    }
+    self->goalRotY = KP_HEADING(dir.x, dir.z);
+    self->rotY = fn_1_36EC(self->goalRotY, self->rotY, 0.98f);
+    speed = self->speed;
+    t = Hu3DMotionTimeGet(self->modelId);
+    if (KP_ABS(t - 15.0f) < 10.0f) {
+        speed *= 0.3f + 0.7f * (KP_ABS(t - 15.0f) / 10.0f);
+    } else if (KP_ABS(t - 65.0f) < 10.0f) {
+        speed *= 0.3f + 0.7f * (KP_ABS(t - 65.0f) / 10.0f);
+    }
+    dir.x = (f32)((f64)speed * HuSin(self->rotY));
+    dir.z = (f32)((f64)speed * HuCos(self->rotY));
+    self->pos.x += dir.x;
+    self->pos.z += dir.z;
+    self->rot.y = self->rotY;
+}
+
+/* spit mini mecha-koopas while chasing the player */
+s32 fn_1_D404(Koopa *self) {
+    KpHost *host = self->host;
+    KpPlayer *player = KP_PLAYER(host);
+    Mtx mtx;
+    Vec spawn;
+    Vec goal;
+    Vec dir;
+    f32 ramp;
+    f32 speed;
+    f32 t;
+    f32 ang;
+    s32 done;
+
+    ramp = (self->speed - 4.5f) * 0.25f;
+    ramp = KP_CLAMP(ramp, 0.0f, 1.0f);
+    Hu3DMotionSpeedSet(self->modelId, (f32)(1.0 + (f64)ramp));
+    done = 0;
+    switch (self->step) {
+    case 0:
+        self->reqMotion = 6;
+        self->loopMotion = 0;
+        self->step++;
+        break;
+    case 1:
+        if (self->curMotion == 6) {
+            f32 maxTime = Hu3DMotionMaxTimeGet(self->modelId);
+
+            if (Hu3DMotionTimeGet(self->modelId) >= maxTime) {
+                self->reqMotion = 13;
+                self->loopMotion = 1;
+                self->timerE = 0xB4;
+                self->step++;
+            }
+        }
+        break;
+    case 2:
+        if (self->timerE % 3 == 0) {
+            Hu3DModelObjMtxGet(self->modelId, lbl_1_data_86C, mtx);
+            Hu3DMtxTransGet(mtx, &spawn);
+            dir.x = mtx[0][0];
+            dir.y = 0.0f;
+            dir.z = mtx[2][0];
+            ang = self->rotY;
+            if (dir.x != 0.0f || dir.z != 0.0f) {
+                VECNormalize(&dir, &dir);
+                ang = KP_HEADING(dir.x, dir.z);
+            }
+            fn_1_181FC((KbMiniMgr *)&host->mecha, &spawn, ang);
+        }
+        if (--self->timerE <= 0) {
+            done = 1;
+        }
+        break;
+    }
+    fn_1_ED90(self, &player->pos, &goal);
+    VECSubtract(&goal, &self->pos, &dir);
+    dir.y = 0.0f;
+    if (dir.x != 0.0f || dir.z != 0.0f) {
+        VECNormalize(&dir, &dir);
+    }
+    self->goalRotY = KP_HEADING(dir.x, dir.z);
+    if (self->step > 1) {
+        speed = self->speed;
+        t = Hu3DMotionTimeGet(self->modelId);
+        if (KP_ABS(t - 15.0f) < 10.0f) {
+            speed *= 0.3f + 0.7f * (KP_ABS(t - 15.0f) / 10.0f);
+        } else if (KP_ABS(t - 65.0f) < 10.0f) {
+            speed *= 0.3f + 0.7f * (KP_ABS(t - 65.0f) / 10.0f);
+        }
+        dir.x = (f32)((f64)speed * HuSin(self->rotY));
+        dir.z = (f32)((f64)speed * HuCos(self->rotY));
+        self->pos.x += dir.x;
+        self->pos.z += dir.z;
+    }
+    self->rotY = fn_1_36EC(self->goalRotY, self->rotY, 0.98f);
+    self->rot.y = self->rotY;
+    return done;
+}
+
+/* charge at the player and slam into the arena wall */
+s32 fn_1_DCC4(Koopa *self) {
+    KpHost *host = self->host;
+    CAMERA *cam = KP_CAM(host, 0);
+    KpPlayer *player = KP_PLAYER(host);
+    Vec dir;
+    Vec fwd;
+    s32 done;
+    s32 hitWall;
+
+    Hu3DMotionSpeedSet(self->modelId, 1.0f);
+    done = 0;
+    switch (self->step) {
+    case 0:
+        fn_1_ED90(self, &player->pos, &self->target);
+        VECSubtract(&self->target, &self->pos, &dir);
+        dir.y = 0.0f;
+        if (dir.x != 0.0f || dir.z != 0.0f) {
+            VECNormalize(&dir, &dir);
+            fwd.x = (f32)HuSin(self->rotY);
+            fwd.y = 0.0f;
+            fwd.z = (f32)HuCos(self->rotY);
+            if (VECDotProduct(&dir, &fwd) > cos(0.05235987755982988)) {
+                self->step = 2;
+            } else {
+                self->step = 1;
+            }
+            self->timerE = 0;
+        } else {
+            done = 1;
+        }
+        break;
+    case 1:
+        VECSubtract(&self->target, &self->pos, &dir);
+        dir.y = 0.0f;
+        if (dir.x != 0.0f || dir.z != 0.0f) {
+            VECNormalize(&dir, &dir);
+            fwd.x = (f32)HuSin(self->rotY);
+            fwd.y = 0.0f;
+            fwd.z = (f32)HuCos(self->rotY);
+            if (VECDotProduct(&dir, &fwd) > cos(0.05235987755982988)) {
+                self->timerE = 0;
+                self->step = 2;
+            } else {
+                self->goalRotY = KP_HEADING(dir.x, dir.z);
+                self->reqMotion = 12;
+                self->loopMotion = 1;
+            }
+        } else {
+            done = 1;
+        }
+        break;
+    case 2:
+        VECSubtract(&self->target, &self->pos, &dir);
+        dir.y = 0.0f;
+        if (dir.x != 0.0f || dir.z != 0.0f) {
+            VECNormalize(&dir, &dir);
+        } else {
+            dir.x = (f32)HuSin(self->rotY);
+            dir.z = (f32)HuCos(self->rotY);
+        }
+        self->dir = dir;
+        self->reqMotion = 8;
+        self->loopMotion = 1;
+        self->timerE = 0;
+        self->step++;
+        break;
+    case 3:
+        self->timerE++;
+        VECNormalize(&self->dir, &dir);
+        self->goalRotY = KP_HEADING(dir.x, dir.z);
+        dir.x = 1.6f * (10.0f * self->dir.x);
+        dir.z = 1.6f * (10.0f * self->dir.z);
+        self->pos.x += dir.x;
+        self->pos.z += dir.z;
+        self->reqMotion = 8;
+        self->loopMotion = 1;
+        break;
+    }
+    self->rotY = fn_1_36EC(self->goalRotY, self->rotY, 0.9f);
+    self->rot.y = self->rotY;
+    hitWall = 0;
+    if (self->pos.z <= -400.0f) {
+        hitWall = 1;
+    } else if (self->pos.z >= 400.0f) {
+        hitWall = 1;
+    }
+    if (self->pos.x <= -525.0f) {
+        hitWall = 1;
+    } else if (self->pos.x >= 525.0f) {
+        hitWall = 1;
+    }
+    if (self->step < 3 || self->timerE < 10) {
+        hitWall = 0;
+    }
+    if (hitWall != 0) {
+        fn_1_21B68(cam, 1, 0x32, 40.0f, 0.95f, 90.0f);
+        omVibrate(player->charIdx, 0x14, 0xC, 0);
+        fn_1_814(0x8A6);
+        done = 1;
+    }
+    return done;
+}
+
+/* leap onto the floor tile under the player */
+s32 fn_1_E558(Koopa *self) {
+    KpHost *host = self->host;
+    CAMERA *cam = KP_CAM(host, 0);
+        KpPlayer *player = KP_PLAYER(host);
+    Vec dir;
+    Vec fwd;
+    s32 done;
+
+    Hu3DMotionSpeedSet(self->modelId, 1.0f);
+    done = 0;
+    switch (self->step) {
+    case 0:
+        self->cell = &host->stage.tile[(s16)((0.99f * (125.0f + (player->pos.x - -500.0f))) / 250.0f) +
+                                  (s16)((0.99f * (125.0f + (player->pos.z - -375.0f))) / 250.0f) * 5];
+        self->cellPos = self->cell->pos;
+        VECSubtract(&self->cellPos, &self->pos, &dir);
+        dir.y = 0.0f;
+        if (dir.x != 0.0f || dir.z != 0.0f) {
+            VECNormalize(&dir, &dir);
+            fwd.x = (f32)HuSin(self->rotY);
+            fwd.y = 0.0f;
+            fwd.z = (f32)HuCos(self->rotY);
+            if (VECDotProduct(&dir, &fwd) > cos(0.08726646259971647)) {
+                self->step = 2;
+            } else {
+                self->step = 1;
+            }
+        } else {
+            done = 1;
+            break;
+        }
+        /* fallthrough */
+    case 1:
+        VECSubtract(&self->cellPos, &self->pos, &dir);
+        dir.y = 0.0f;
+        if (dir.x != 0.0f || dir.z != 0.0f) {
+            VECNormalize(&dir, &dir);
+            fwd.x = (f32)HuSin(self->rotY);
+            fwd.y = 0.0f;
+            fwd.z = (f32)HuCos(self->rotY);
+            if (VECDotProduct(&dir, &fwd) > cos(0.08726646259971647)) {
+                self->step = 2;
+            } else {
+                self->goalRotY = KP_HEADING(dir.x, dir.z);
+                self->reqMotion = 12;
+                self->loopMotion = 1;
+            }
+        } else {
+            done = 1;
+        }
+        break;
+    case 2:
+        self->jumpFrom = self->pos;
+        self->reqMotion = 3;
+        self->loopMotion = 0;
+        self->timerE = 0;
+        self->step++;
+        break;
+    case 3:
+        if (self->timerE >= 0x14 && self->timerE <= 0x3C) {
+            f32 prog = (f32)(self->timerE - 0x14) / 40.0f;
+
+            prog = KP_CLAMP(prog, 0.0f, 1.0f);
+            self->pos.y = 500.0f * (f32)HuSin(180.0f * prog);
+            self->pos.x = self->jumpFrom.x + prog * (self->cellPos.x - self->jumpFrom.x);
+            self->pos.z = self->jumpFrom.z + prog * (self->cellPos.z - self->jumpFrom.z);
+        } else if (self->timerE == 0x3D) {
+            self->cell->flag = 1;
+            host->stage.quakePos = self->cellPos;
+            host->stage.quakeTimer = 1;
+            fn_1_21B68(cam, 1, 0x32, 40.0f, 0.95f, 90.0f);
+            fn_1_2DC08((s16)cam->camId, &self->pos, 0);
+            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            fn_1_814(0x8A7);
+        }
+        self->timerE++;
+        if (self->timerE >= 0x50) {
+            if (host->diff == 0 || host->diff == 1) {
+                self->speed += 0.5f;
+                self->speed = KP_CLAMP(self->speed, 0.0f, 8.5f);
+            }
+            done = 1;
+        }
+        break;
+    }
+    self->rotY = fn_1_36EC(self->goalRotY, self->rotY, 0.9f);
+    self->rot.y = self->rotY;
+    return done;
+}
+
+/* keep a point inside the arena (corner tiles of the stage table) */
+void fn_1_ED90(Koopa *self, Vec *in, Vec *out) {
+    KpHost *host = self->host;
+    f32 minX = host->stage.tile[0].pos.x;
+    f32 minZ = host->stage.tile[0].pos.z;
+    f32 maxX = host->stage.tile[19].pos.x;
+    f32 maxZ = host->stage.tile[19].pos.z;
+
     out->x = (in->x > maxX) ? maxX : ((in->x < minX) ? minX : in->x);
     out->y = in->y;
     out->z = (in->z > maxZ) ? maxZ : ((in->z < minZ) ? minZ : in->z);
 }
 
-void fn_1_EEC4(KoopaRef *arg0, KoopaRef *arg1) {
-    KoopaNode *p;
+/* hit callback between two collision entries */
+void fn_1_EEC4(EffectEntry *a, EffectEntry *b) {
+    KpPlayer *player;
 
-    if (arg0->kind == 0) {
-        if (arg1->kind == 3) {
-            fn_1_F014(arg0->node, arg1->node);
-            return;
+    if (a->type == 0 && b->type == 3) {
+        fn_1_F014(a->user, b->user);
+        return;
+    }
+    if (a->type == 3 && b->type == 0) {
+        fn_1_F014(b->user, a->user);
+        return;
+    }
+    if (a->type == 4 && b->type == 0) {
+        player = b->user;
+        if ((player->state == 1 || player->state == 2) && player->invuln == 0) {
+            player->subA = 0;
+            player->sub6 = 0;
+            player->sub8 = 0;
+            player->state = 4;
+        }
+        return;
+    }
+    if (a->type == 0 && b->type == 4) {
+        player = a->user;
+        if ((player->state == 1 || player->state == 2) && player->invuln == 0) {
+            player->subA = 0;
+            player->sub6 = 0;
+            player->sub8 = 0;
+            player->state = 4;
         }
     }
-    if (arg0->kind == 3) {
-        if (arg1->kind == 0) {
-            fn_1_F014(arg1->node, arg0->node);
-            return;
-        }
-    }
-    if (arg0->kind == 4) {
-        if (arg1->kind == 0) {
-            p = arg1->node;
-            if (p->state == 1) {
-                goto checkF10;
+}
+
+/* push the player out of Bowser and hurt it when he is charging */
+void fn_1_F014(KpPlayer *player, Koopa *koopa) {
+    CAMERA *cam = KP_CAM(player->host, 0);
+    f32 pLow;
+    f32 pHigh;
+    f32 kLow;
+    f32 kHigh;
+
+    pLow = player->pos.y;
+    pHigh = pLow + player->height;
+    kLow = koopa->pos.y;
+    kHigh = 300.0f + kLow;
+    if ((pHigh == kHigh && pLow == kLow) || (pHigh <= kHigh && pHigh >= kLow) ||
+        (pLow <= kHigh && pLow >= kLow) || (kHigh <= pHigh && kHigh >= pLow) ||
+        (kLow <= pHigh && kLow >= pLow)) {
+        Vec d;
+        f32 dist;
+
+        d.x = player->pos.x - koopa->pos.x;
+        d.y = 0.0f;
+        d.z = player->pos.z - koopa->pos.z;
+        dist = VECMag(&d);
+        if (dist < 230.0f) {
+            f32 pMid;
+            f32 kMid;
+            f32 pHalf;
+            f32 kHalf;
+            f32 big;
+            f32 small;
+            f32 gap;
+            f32 weight;
+
+            if (d.x != 0.0f || d.z != 0.0f) {
+                VECNormalize(&d, &d);
+            } else {
+                d.x = 0.0f;
+                d.z = 1.0f;
             }
-            if (p->state != 2) {
-                return;
+            koopa->goalRotY = KP_HEADING(-d.x, -d.z);
+            VECScale(&d, &d, 230.0f - dist);
+            pMid = 0.5f * (pLow + pHigh);
+            kMid = 0.5f * (kLow + kHigh);
+            pHalf = KP_ABS(pMid - pLow);
+            kHalf = KP_ABS(kMid - kLow);
+            big = (pHalf > kHalf) ? pHalf : kHalf;
+            small = (pHalf > kHalf) ? kHalf : pHalf;
+            gap = KP_ABS(pMid - kMid);
+            if (gap < big) {
+                weight = 1.0f;
+            } else {
+                weight = 1.0f - ((gap - big) / small);
             }
-        checkF10:
-            if (p->f10 != 0) {
-                return;
-            }
-            p->fA = 0;
-            p->f6 = 0;
-            p->f8 = 0;
-            p->state = 4;
-            return;
-        }
-    }
-    if (arg0->kind == 0) {
-        if (arg1->kind == 4) {
-            p = arg0->node;
-            if (p->state == 1 || p->state == 2) {
-                if (p->f10 == 0) {
-                    p->fA = 0;
-                    p->f6 = 0;
-                    p->f8 = 0;
-                    p->state = 4;
+            player->pos.x += 0.9f * d.x * weight;
+            player->pos.z += 0.9f * d.z * weight;
+            koopa->pos.x -= 0.1f * d.x * weight;
+            koopa->pos.z -= 0.1f * d.z * weight;
+            if (koopa->sub != 7) {
+                if (koopa->sub == 3) {
+                    koopa->timer10 = 0x78;
+                    koopa->sub = 2;
+                } else if (koopa->sub == 4) {
+                    koopa->timer10 = 0x78;
+                    koopa->sub = 2;
+                } else if (koopa->sub == 6) {
+                    if (koopa->step >= 3 && koopa->timerE >= 0x14) {
+                        if (kLow >= pLow && (player->state == 1 || player->state == 2) && player->invuln == 0) {
+                            player->unk12 = 0x8C;
+                            player->invuln = 0x8C;
+                            player->hp--;
+                            omVibrate(player->charIdx, 0x1E, 4, 2);
+                            CharFXPlay(player->charNo, 0x202);
+                        }
+                        fn_1_21B68(cam, 1, 0x32, 40.0f, 0.95f, 90.0f);
+                        koopa->timerC = 0xB4;
+                        koopa->timer10 = 0x3C;
+                        koopa->sub = 2;
+                    }
+                }
+                if ((player->state == 1 || player->state == 2) && player->invuln == 0) {
+                    if (koopa->sub == 5) {
+                        player->subA = 0;
+                        player->sub6 = 0;
+                        player->sub8 = 0;
+                        player->state = 6;
+                        koopa->timerC = 0xB4;
+                        koopa->timer10 = 0x3C;
+                        koopa->sub = 2;
+                        return;
+                    }
+                    player->subA = 0;
+                    player->sub6 = 0;
+                    player->sub8 = 0;
+                    player->state = 3;
                 }
             }
         }
