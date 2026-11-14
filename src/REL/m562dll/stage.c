@@ -12,7 +12,7 @@ Vec lbl_1_data_108 = { 0.0f, -3300.0f, -26000.0f };
 
 void fn_1_5688(M562StageField *field, M562StageParent *parent)
 {
-    M562StageCam *cam = &parent->cam;
+    CAMERA *cam = &parent->camera[0];
     s32 i;
     s16 x, z;
     s16 mdl;
@@ -31,7 +31,7 @@ void fn_1_5688(M562StageField *field, M562StageParent *parent)
     mdl = Hu3DModelCreateData(DATANUM(DATA_m562, 5));
     field->modelD = mdl;
     Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+    Hu3DModelCameraSet(mdl, (u16) cam->camMask);
     Hu3DModelLayerSet(mdl, 0);
     Hu3DModelShadowMapSet(mdl);
     Hu3DModelPosSet(mdl, 0.0f, 0.0f, 0.0f);
@@ -40,7 +40,7 @@ void fn_1_5688(M562StageField *field, M562StageParent *parent)
     mdl = Hu3DModelCreateData(DATANUM(DATA_m562, 6));
     field->modelE = mdl;
     Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+    Hu3DModelCameraSet(mdl, (u16) cam->camMask);
     Hu3DModelLayerSet(mdl, 0);
     Hu3DModelShadowMapSet(mdl);
     Hu3DModelPosSet(mdl, 0.0f, 0.0f, 0.0f);
@@ -53,7 +53,7 @@ void fn_1_5688(M562StageField *field, M562StageParent *parent)
     mdl = Hu3DModelCreateData(DATANUM(DATA_m562, 7));
     field->modelF = mdl;
     Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+    Hu3DModelCameraSet(mdl, (u16) cam->camMask);
     Hu3DModelLayerSet(mdl, 0);
     Hu3DModelShadowMapSet(mdl);
     Hu3DModelPosSet(mdl, 0.0f, 0.0f, 0.0f);
@@ -63,7 +63,7 @@ void fn_1_5688(M562StageField *field, M562StageParent *parent)
     field->modelG = mdl;
     Hu3DModelPosSet(mdl, 0.0f, 0.0f, 0.0f);
     Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+    Hu3DModelCameraSet(mdl, (u16) cam->camMask);
     Hu3DModelLayerSet(mdl, 0);
     Hu3DModelAttrSet(mdl, 1);
     Hu3DMotionSpeedSet(mdl, 0.4f);
@@ -76,7 +76,7 @@ void fn_1_5688(M562StageField *field, M562StageParent *parent)
     field->modelH = mdl;
     Hu3DModelPosSet(mdl, 0.0f, 0.0f, 0.0f);
     Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+    Hu3DModelCameraSet(mdl, (u16) cam->camMask);
     Hu3DModelLayerSet(mdl, 0);
     Hu3DModelAttrSet(mdl, 1);
     field->motionH = Hu3DJointMotionData(mdl, DATANUM(DATA_m562, 0x29));
@@ -120,14 +120,15 @@ void fn_1_5CAC(M562StageField *field)
 
     switch (field->state) {
         case 0:
-            if (parent->phase != 4) {
-                if (parent->phase == 3) {
+            if (parent->mode != 4) {
+                if (parent->mode == 3) {
                     for (i = 0; i < 20; i++) {
                         M562StageTile *tile = &field->tile[i];
                         fn_1_62E8(tile);
                         if (field->quakeTimer != 0) {
                             f32 t = (f32) field->quakeTimer / 120.0f;
-                            f32 inner = 2000.0f * t;
+                            f32 inner;
+                            f32 mag;
                             f32 d;
                             f32 c;
                             f32 k;
@@ -135,7 +136,9 @@ void fn_1_5CAC(M562StageField *field)
 
                             PSVECSubtract(&tile->pos, &field->quakePos, &diff);
                             diff.z = 0.0f;
-                            d = (PSVECMag(&diff) - inner) / ((400.0f + inner) - inner);
+                            mag = PSVECMag(&diff);
+                            inner = 2000.0f * t;
+                            d = (mag - inner) / ((400.0f + inner) - inner);
                             if (d > 1.0f) {
                                 c = 1.0f;
                             } else {
@@ -177,7 +180,7 @@ void fn_1_5CAC(M562StageField *field)
             }
             break;
         case 1:
-            if (parent->phase != 4) {
+            if (parent->mode != 4) {
                 for (i = 0; i < 20; i++) {
                     Hu3DModelAttrReset(field->tile[i].modelId, 1);
                 }
@@ -206,9 +209,9 @@ void fn_1_5CAC(M562StageField *field)
 
 void fn_1_60F8(M562StageTile *tile, s16 x, s16 z, M562StageField *field)
 {
-    M562StageCam *cam = &field->parent->cam;
+    CAMERA *cam = &field->parent->camera[0];
     s16 mdl;
-    f32 px, py, pz;
+    Vec pos;
 
     memset(tile, 0, sizeof(M562StageTile));
     tile->field = field;
@@ -217,18 +220,16 @@ void fn_1_60F8(M562StageTile *tile, s16 x, s16 z, M562StageField *field)
     mdl = Hu3DModelLink(field->modelA);
     tile->modelId = mdl;
     Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-    Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+    Hu3DModelCameraSet(mdl, (u16) cam->camMask);
     Hu3DModelLayerSet(mdl, 0);
     Hu3DModelAttrReset(mdl, 1);
     Hu3DModelAttrSet(mdl, 0x1000);
     Hu3DModelShadowMapSet(mdl);
-    px = -500.0f + 250.0f * (f32) x;
-    py = 0.0f;
-    pz = -375.0f + 250.0f * (f32) z;
-    Hu3DModelPosSet(mdl, px, py, pz);
-    tile->pos.x = px;
-    tile->pos.y = py;
-    tile->pos.z = pz;
+    pos.x = -500.0f + 250.0f * (f32) x;
+    pos.y = 0.0f;
+    pos.z = -375.0f + 250.0f * (f32) z;
+    Hu3DModelPosSet(mdl, pos.x, pos.y, pos.z);
+    tile->pos = pos;
 }
 
 void fn_1_62A8(M562StageTile *tile)
@@ -242,8 +243,8 @@ void fn_1_62E8(M562StageTile *tile)
 {
     M562StageField *field = tile->field;
     M562StageParent *parent = field->parent;
-    M562StageCam *cam = &parent->cam;
-    M562StageAmb *amb = &parent->amb;
+    CAMERA *cam = &parent->camera[0];
+    lightVec *amb = &parent->light.amb;
     f32 r;
     f32 mag, d, c, k;
     Vec sp8;
@@ -256,9 +257,9 @@ void fn_1_62E8(M562StageTile *tile)
                 Hu3DModelKill(tile->modelId);
                 mdl = Hu3DModelLink(field->modelB);
                 tile->modelId = mdl;
-                Hu3DModelAmbSet(tile->modelId, amb->r, amb->g, amb->b);
+                Hu3DModelAmbSet(tile->modelId, amb->x, amb->y, amb->z);
                 Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-                Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+                Hu3DModelCameraSet(mdl, (u16) cam->camMask);
                 Hu3DModelLayerSet(mdl, 0);
                 Hu3DModelAttrReset(mdl, 1);
                 Hu3DModelAttrSet(mdl, 0x1000);
@@ -278,9 +279,9 @@ void fn_1_62E8(M562StageTile *tile)
                 Hu3DModelKill(tile->modelId);
                 mdl = Hu3DModelLink(field->modelC);
                 tile->modelId = mdl;
-                Hu3DModelAmbSet(tile->modelId, amb->r, amb->g, amb->b);
+                Hu3DModelAmbSet(tile->modelId, amb->x, amb->y, amb->z);
                 Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-                Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+                Hu3DModelCameraSet(mdl, (u16) cam->camMask);
                 Hu3DModelLayerSet(mdl, 0);
                 Hu3DModelAttrReset(mdl, 1);
                 Hu3DModelAttrSet(mdl, 0x1000);
@@ -300,9 +301,9 @@ void fn_1_62E8(M562StageTile *tile)
                 Hu3DModelKill(tile->modelId);
                 mdl = Hu3DModelLink(field->modelA);
                 tile->modelId = mdl;
-                Hu3DModelAmbSet(tile->modelId, amb->r, amb->g, amb->b);
+                Hu3DModelAmbSet(tile->modelId, amb->x, amb->y, amb->z);
                 Hu3DModelRotSet(mdl, 0.0f, 0.0f, 0.0f);
-                Hu3DModelCameraSet(mdl, (u16) cam->cameraBit);
+                Hu3DModelCameraSet(mdl, (u16) cam->camMask);
                 Hu3DModelLayerSet(mdl, 0);
                 Hu3DModelAttrSet(mdl, 0x1000);
                 Hu3DModelShadowMapSet(mdl);

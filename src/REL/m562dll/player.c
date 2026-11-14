@@ -501,9 +501,8 @@ void fn_1_7938(M562Player *p)
 }
 
 /* state 1: walking on the plain stage */
-void fn_1_7D58(void *player)
+void fn_1_7D58(M562Player *p)
 {
-    M562Player *p = (M562Player *) player;
     M562Work *owner = p->owner;
     M562PlayerInput *inp = &p->input;
     f32 mag2;
@@ -1171,9 +1170,8 @@ void fn_1_AD68(M562Player *boss)
 }
 
 /* turn the player towards `dir` at `rate`; returns 1 once facing it */
-s32 fn_1_AD98(void *player, Vec *dir, f32 rate)
+s32 fn_1_AD98(M562Player *p, Vec *dir, f32 rate)
 {
-    M562Player *p = (M562Player *) player;
     Vec fwd;
     Vec want;
     f32 diff;
