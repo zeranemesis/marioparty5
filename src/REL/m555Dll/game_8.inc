@@ -106,8 +106,8 @@ s32 fn_1_155DC(s16 player)
             }
             break;
     }
-    memcpy(&lbl_1_bss_3030->mdl0[player].posX, &P555(player).pad11[0], 4);
-    memcpy(&lbl_1_bss_3030->mdl0[player].posY, &P555(player).pad11[1], 4);
+    memcpy(&lbl_1_bss_3030->mdl0[player].btn, &P555(player).pad11[0], 4);
+    memcpy(&lbl_1_bss_3030->mdl0[player].btnDown, &P555(player).pad11[1], 4);
     lbl_1_bss_3030->mdl0[player].stickX = (s8)P555(player).wheelIdx0;
     lbl_1_bss_3030->mdl0[player].stickY = (s8)P555(player).wheelIdx1;
     return ret;

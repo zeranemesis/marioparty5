@@ -141,8 +141,8 @@ s32 fn_1_10E20(void)
                 cnt++;
             }
         }
-        memcpy(&lbl_1_bss_3030->mdl0[i].posX, &lbl_1_bss_120C[i].pad11[0], 4);
-        memcpy(&lbl_1_bss_3030->mdl0[i].posY, &lbl_1_bss_120C[i].pad11[1], 4);
+        memcpy(&lbl_1_bss_3030->mdl0[i].btn, &lbl_1_bss_120C[i].pad11[0], 4);
+        memcpy(&lbl_1_bss_3030->mdl0[i].btnDown, &lbl_1_bss_120C[i].pad11[1], 4);
         lbl_1_bss_3030->mdl0[i].stickX = lbl_1_bss_120C[i].wheelIdx0;
         lbl_1_bss_3030->mdl0[i].stickY = lbl_1_bss_120C[i].wheelIdx1;
         if (lbl_1_bss_120C[i].joinNo == 0 && lbl_1_bss_3030->mdl[i + 0xA9].pos.x == lbl_1_bss_120C[i].prevPos.x

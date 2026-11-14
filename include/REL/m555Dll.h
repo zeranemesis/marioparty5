@@ -499,7 +499,7 @@ void fn_1_176C4(s16 player);
 s32 fn_1_19C0C(s16 player);
 s32 fn_1_1A4B0(s16 player);
 s32 fn_1_1A6F4(s16 player);
-s32 fn_1_1A880(s16 player, s16 flag);
+s32 fn_1_1A880(s32 player, s16 flag);
 void fn_1_1A9A4(M555_CTRL *ctrl, M555_MODELENTRY *entries, s32 *data);
 void fn_1_1ABF0(s16 value);
 void fn_1_1AC04(s16 idx, s32 *data);
