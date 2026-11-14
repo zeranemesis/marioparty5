@@ -7,23 +7,6 @@ typedef struct SdSys_s {
 
 extern SdSys *sys;
 
-void StageObjCol(s32 objNo);
-void StageBomheiUpdate(s32 objNo);
-
-void StageDokanUpdate(s32 objNo)
-{
-    StageObjCol(objNo);
-}
-
-void StageBomheiBigUpdate(s32 objNo)
-{
-    StageBomheiUpdate(objNo);
-}
-
-void StageHamonSpeedSet(f32 speed)
-{
-    sys->speed = speed;
-}
 #include "stage_b.inc"
 
 #include "stage_c.inc"

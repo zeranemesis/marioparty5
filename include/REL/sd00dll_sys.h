@@ -24,8 +24,8 @@ typedef struct SdStageObjType_s {
     f32 radius;    // 0x10
     f32 height;    // 0x14
     f32 height2;   // 0x18
-    s32 unk1C;     // 0x1C
-    s32 unk20;     // 0x20
+    s32 waitTime;  // 0x1C (bomhei: frames idle before the fuse starts)
+    s32 hideTime;  // 0x20 (bomhei: frames hidden after the blast)
     f32 bounceF;   // 0x24 (0: no push-back while the object is active)
     s32 damage;    // 0x28
 } SdStageObjType; // size 0x2C
