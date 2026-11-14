@@ -459,6 +459,63 @@ s32 fn_1_1B6EC(s32 seId, Point3d *pos);
 void fn_1_1B9B8(s16 charNo, Point3d *pos);
 void fn_1_1BC6C(s32 seNo, Point3d *pos);
 
+/* ---- choro unit (choro.cpp): the choro enemies, their dust effect and the spawn manager ---- */
+
+/* Dust particle effect: task base plus the particle model / its work area. */
+typedef struct M517ChoroFx_s {
+    M517Node link;
+    void **vtbl;
+    u32 flags;
+    s16 modelId;
+    ANIMDATA *anim;
+    HU3DPARTICLE *particle;
+    u8 done;
+} M517ChoroFx; // 0x20 bytes on GC
+
+typedef struct M517ChoroFxPtr_s {
+    M517ChoroFx *p;
+} M517ChoroFxPtr;
+
+/* One choro, a member of the a_set list lbl_1_bss_A1C (0x7C bytes on GC). */
+typedef struct M517Choro_s {
+    M517Node link;
+    s16 mot[3];
+    M517Model model[3];
+    Vec pos;
+    f32 radius;
+    Vec rot;
+    u8 active;
+    u8 hiding;
+    u8 turn;
+    f32 turnAngle;
+    f32 unk38;
+    s32 kind; // -1 decoy, 0 spawned by the manager
+    f32 timer;
+    f32 timer2;
+    f32 wait;
+    f32 wait2;
+    f32 freq;
+    f32 duration;
+    f32 delay;
+    f32 scale;
+    s32 state;
+    s32 dir;
+    u8 motFlag;
+    M517ChoroFx *fx;
+    M517Ptmf hook;
+} M517Choro;
+
+/* Choro spawn manager singleton (0xB4 bytes on GC). */
+typedef struct M517ChoroMgr_s {
+    M517Node link;
+    void **vtbl;
+    u32 flags;
+    M517Ptmf hook;
+    f32 timer;
+    s32 count;
+    Vec spots[12];
+} M517ChoroMgr;
+
 #ifdef __cplusplus
 }
 #endif
