@@ -75,7 +75,7 @@ if (lbl_1_bss_A30 != 0) {
     fn_1_304C(&self->model.field2, 0);
     fn_1_2E08(&self->model.field2, 0x40000001);
 
-    scale = 0.0 / tan((f64) 0.39269908169872414);
+    scale = 816.0 / tan((f64) 0.39269908169872414);
     if (lbl_1_bss_A88[0] == 0) {
         lbl_1_data_360[1] = (f32) scale;
         lbl_1_bss_A88[0] = 1;
