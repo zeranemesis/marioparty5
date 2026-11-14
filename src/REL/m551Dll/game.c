@@ -50,6 +50,7 @@ s16 fn_1_BE48(s16 arg0, s16 arg1);
 s16 fn_1_C680(s16 arg0, s16 arg1);
 s16 fn_1_EA8C(void);
 s16 fn_1_F814(void);
+s16 fn_1_E738(void);
 
 /* unit-owned .bss, declared in reverse address order so the offsets match the original */
 M551State *lbl_1_bss_17A00;
@@ -1703,7 +1704,8 @@ void fn_1_115B0(void)
 
 int fn_1_117B0(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
 {
-    if (b->type < 6) {
+    if (b->type >= 6 || b->type <= 0) {
+        return 0;
     }
     return 0;
 }
@@ -2332,4 +2334,265 @@ s32 fn_1_14FC4(s16 arg0)
         break;
     }
     return 0;
+}
+
+s16 fn_1_F814(void)
+{
+    HU3DMODEL *model_w;
+    HU3DMODEL *model_l;
+    M551StageSlot *slot_w;
+    M551StageSlot *slot_l;
+    HuVecF pos;
+    f32 dx;
+    f32 dz;
+    f32 len;
+    f32 k;
+    f32 ang;
+    f32 amt;
+    s32 chk;
+    s16 ret;
+    s16 busy;
+    s16 w;
+    s16 l;
+    s16 i;
+    s16 d;
+    s16 neg;
+    s16 r18;
+    s16 r19;
+    s16 found;
+
+    model_w = &Hu3DData[MDL((FL.cpuPlayer & 1) + 0x51).id];
+    model_l = &Hu3DData[MDL((FL.cpuPlayer >> 1) + 0x51).id];
+    slot_w = &lbl_1_bss_17A00->slots[FL.cpuPlayer & 1];
+    slot_l = &lbl_1_bss_17A00->slots[(FL.cpuPlayer & 1) ^ 1];
+    ret = 0;
+    busy = 0;
+    w = FL.cpuPlayer & 1;
+    l = (s16)(FL.cpuPlayer >> 1);
+    if ((u32)FL.mode <= 7) {
+        switch (FL.mode) {
+        case 0:
+            for (i = 0; i < 2; i++) {
+                if (lbl_1_bss_0.player[i]->mode != 0) {
+                    busy += 1;
+                }
+                busy += MgPlayerModeAttrCheck(lbl_1_bss_0.player[i], 3);
+                MgPlayerPadSet(lbl_1_bss_0.player[i], 0, 0, 0, 0);
+            }
+            MgActorPosGet(lbl_1_bss_0.player[0]->actor, &pos);
+            PW[0].oldPos.x = pos.x;
+            PW[0].oldPos.y = pos.y;
+            PW[0].oldPos.z = pos.z;
+            MgActorPosGet(lbl_1_bss_0.player[1]->actor, &pos);
+            PW[1].oldPos.x = pos.x;
+            PW[1].oldPos.y = pos.y;
+            PW[1].oldPos.z = pos.z;
+            MgActorExec();
+            MgActorPosGet(lbl_1_bss_0.player[0]->actor, &pos);
+            PW[0].pos.x = pos.x;
+            PW[0].pos.y = pos.y;
+            PW[0].pos.z = pos.z;
+            MgActorPosGet(lbl_1_bss_0.player[1]->actor, &pos);
+            PW[1].pos.x = pos.x;
+            PW[1].pos.y = pos.y;
+            PW[1].pos.z = pos.z;
+            fn_1_153A8();
+            pos.x = PW[0].pos.x;
+            pos.y = PW[0].pos.y;
+            pos.z = PW[0].pos.z;
+            MgActorPosUpdate(lbl_1_bss_0.player[0]->actor, &pos);
+            pos.x = PW[1].pos.x;
+            pos.y = PW[1].pos.y;
+            pos.z = PW[1].pos.z;
+            MgActorPosUpdate(lbl_1_bss_0.player[1]->actor, &pos);
+            for (i = 0; i < 2; i++) {
+                Hu3DModelPosSet(MDL(i + 0x51).id, PW[i].pos.x, PW[i].pos.y, PW[i].pos.z);
+            }
+            if (busy == 0) {
+                if (FL.timer++ >= 0x1E) {
+                    Hu3DModelAttrReset(MDL(81).id, 1);
+                    Hu3DModelAttrReset(MDL(82).id, 1);
+                    FL.timer = 0;
+                    FL.mode++;
+                }
+            }
+            break;
+        case 1:
+            if (FL.cpuPlayer != 0) {
+                PW[w].velX = MDL(lbl_1_bss_179A0[FL.carryIdx].mdl[0]).x - model_w->pos.x;
+                PW[w].velZ = MDL(lbl_1_bss_179A0[FL.carryIdx].mdl[0]).z - model_w->pos.z;
+                len = sqrt(PW[w].velX * PW[w].velX + PW[w].velZ * PW[w].velZ);
+                if (len >= 10.0f) {
+                    k = 4.0f / len;
+                    PW[w].velX *= k;
+                    PW[w].velZ *= k;
+                    ang = 180.0 * (acos(PW[w].velX / 4.1f) / 3.141592653589793);
+                    if ((f32)(180.0 * (asin(PW[w].velZ / 4.1f) / 3.141592653589793)) < 0.0f) {
+                        ang = 360.0f - ang;
+                    }
+                    PW[w].angle = ang;
+                    PW[w].angle = 90.0f + -PW[w].angle;
+                    slot_w->shiftState = 1;
+                    slot_w->shiftMotion = 1;
+                    slot_w->shiftStart = 0.0f;
+                    slot_w->shiftEnd = 4.0f;
+                    slot_w->shiftAttr = 0x40000001;
+                    slot_w->attrReset = 0;
+                } else {
+                    PW[w].velX = 0.0f;
+                    PW[w].velZ = 0.0f;
+                    PW[w].angle = lbl_1_bss_0.player[w]->actor->rotY;
+                }
+                dx = model_l->pos.x - model_w->pos.x;
+                dz = model_l->pos.z - model_w->pos.z;
+                len = sqrt(dx * dx + dz * dz);
+                if (len <= 150.0f || (len <= 350.0f && dz >= 0.0f)) {
+                    PW[l].velX = -model_l->pos.x;
+                    PW[l].velZ = -model_l->pos.z;
+                    len = sqrt(PW[l].velX * PW[l].velX + PW[l].velZ * PW[l].velZ);
+                    if (len != 0.0f) {
+                        k = 7.0f / len;
+                    } else {
+                        k = 0.0f;
+                    }
+                    PW[l].velX *= k;
+                    PW[l].velZ *= k;
+                    ang = 180.0 * (acos(PW[l].velX / 7.1f) / 3.141592653589793);
+                    if ((f32)(180.0 * (asin(PW[l].velZ / 7.1f) / 3.141592653589793)) < 0.0f) {
+                        ang = 360.0f - ang;
+                    }
+                    PW[l].angle = ang;
+                    PW[l].angle = 90.0f + -PW[l].angle;
+                    slot_l->shiftState = 1;
+                    slot_l->shiftMotion = 1;
+                    slot_l->shiftStart = 0.0f;
+                    slot_l->shiftEnd = 4.0f;
+                    slot_l->shiftAttr = 0x40000001;
+                    slot_l->attrReset = 0;
+                    FL.unk58 = 1;
+                }
+                FL.mode++;
+            } else {
+                FL.mode = 5;
+            }
+            break;
+        case 2:
+            model_w->pos.x += PW[w].velX;
+            model_w->pos.z += PW[w].velZ;
+            model_w->rot.y = PW[w].angle;
+            dx = MDL(lbl_1_bss_179A0[FL.carryIdx].mdl[0]).x - model_w->pos.x;
+            dz = MDL(lbl_1_bss_179A0[FL.carryIdx].mdl[0]).z - model_w->pos.z;
+            len = sqrt(dx * dx + dz * dz);
+            if (len < 10.0f) {
+                PW[w].pad12 = model_w->rot.y;
+                d = (s16)model_w->rot.y % 360;
+                if (d != 0) {
+                    if (d < 0) {
+                        d *= -1;
+                        neg = 1;
+                    } else {
+                        neg = 0;
+                    }
+                    if (d > 0xB4) {
+                        d = 0x168 - d;
+                    } else {
+                        d *= -1;
+                    }
+                    if (neg != 0) {
+                        d *= -1;
+                    }
+                }
+                FL.camY = model_w->rot.y + (f32)d;
+                r19 = 0;
+                r18 = 0;
+                if (!(PW[w].velX != 0.0f) && !(PW[w].velZ != 0.0f)) {
+                    r18 = 1;
+                }
+                if (r18 != 0 && (PW[w].pad12 - FL.camY) > 0.0f) {
+                    r19 = 1;
+                }
+                if (r19 != 0) {
+                    amt = PW[w].pad12 - FL.camY;
+                } else {
+                    amt = (-1.0f * (PW[w].pad12 - FL.camY)) >= 4.0f;
+                }
+                if (amt != 0.0f) {
+                    slot_w->shiftState = 1;
+                    slot_w->shiftMotion = 1;
+                    slot_w->shiftStart = 0.0f;
+                    slot_w->shiftEnd = 4.0f;
+                    slot_w->shiftAttr = 0x40000001;
+                    slot_w->attrReset = 0;
+                }
+                FL.mode++;
+            }
+            break;
+        case 3:
+            if (FL.cpuPlayer != 0 && fn_1_1850(&model_w->rot.y, 30.0f, PW[w].pad12, FL.camY) == 0) {
+                slot_w->shiftState = 1;
+                slot_w->shiftMotion = 0;
+                slot_w->shiftStart = 0.0f;
+                slot_w->shiftEnd = 4.0f;
+                slot_w->shiftAttr = 0;
+                slot_w->attrReset = 0x40000001;
+                FL.mode++;
+            }
+            break;
+        case 4:
+            chk = fn_1_1850(&lbl_1_bss_38->center.x, 30.0f, lbl_1_data_368[1].center.x, model_w->pos.x);
+            chk += fn_1_1850(&lbl_1_bss_38->center.y, 30.0f, lbl_1_data_368[1].center.y, 70.0f + model_w->pos.y);
+            chk += fn_1_1850(&lbl_1_bss_38->center.z, 30.0f, lbl_1_data_368[1].center.z, model_w->pos.z);
+            chk += fn_1_1850(&lbl_1_bss_38->rotX, 30.0f, lbl_1_data_368[1].rotX, -18.0f);
+            if ((s16)(chk + fn_1_1850(&lbl_1_bss_38->zoom, 30.0f, lbl_1_data_368[1].zoom, 600.0f)) == 0) {
+                FL.mode = 7;
+            }
+            break;
+        case 5:
+            if (fn_1_E738() != 0) {
+                FL.mode++;
+            }
+            break;
+        case 6:
+            if (FL.unk2C[2]++ > 0x3C) {
+                FL.mode++;
+            }
+            break;
+        case 7:
+            ret = 1;
+            break;
+        }
+    }
+    if (FL.unk58 != 0) {
+        model_l->pos.x += PW[l].velX;
+        model_l->pos.z += PW[l].velZ;
+        model_l->rot.y = PW[l].angle;
+        found = 0;
+        for (i = 0; i < 12; i++) {
+            dx = MDL(lbl_1_bss_179A0[i].mdl[3]).x - model_l->pos.x;
+            dz = MDL(lbl_1_bss_179A0[i].mdl[3]).z - model_l->pos.z;
+            len = sqrt(dx * dx + dz * dz);
+            if (len < 106.0f) {
+                found = 1;
+            }
+        }
+        if (found == 0) {
+            model_l->pos.y -= 10.0f;
+            if (model_l->pos.y <= 100.0f) {
+                model_l->pos.y = 100.0f;
+            }
+        }
+        dx = -model_l->pos.x;
+        dz = -model_l->pos.z;
+        len = sqrt(dx * dx + dz * dz);
+        if (len < 20.0f) {
+            slot_l->shiftState = 1;
+            slot_l->shiftMotion = 0;
+            slot_l->shiftStart = 0.0f;
+            slot_l->shiftEnd = 4.0f;
+            slot_l->shiftAttr = 0;
+            slot_l->attrReset = 0x40000001;
+            FL.unk58 = 0;
+        }
+    }
+    return ret;
 }
