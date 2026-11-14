@@ -481,6 +481,11 @@ void SdImpactUpdate(void);
 void SdBulletUpdate(SdStageMachine *machine);
 void SdBulletDraw(HU3DMODEL *modelP, Mtx *mtx);
 /* proto: stage */
+/* stage part E (stage_e.inc) asm-local, forward-declare in stage.c before MakeTrialStage:
+   static void StageTrialMakeGround(void); static void MakeTrialStageMesh(void);
+   (defined in stage_e.inc; it needs these statics defined earlier in stage.c: u8 *stageTrialMap,
+   u8 *stageTrialMapColType, f32 stageTrialHeight, s32 stageTrialSmooth, stageTrialLavaFloorOnF,
+   stageTrialClearOff, u16 *texturePtr, s16 trialModelId[4]; it defines stageTrialNoise{Dec,X,Y,Num}). */
 s32 SdStageObjHitCheck(Vec *pos, f32 radius);
 s32 SdStageBaseObjHitCheck(Vec *pos, f32 radius);
 s32 SdStageObjHitCheck2(Vec *pos, f32 radius, s32 type);
