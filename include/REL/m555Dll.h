@@ -2,6 +2,8 @@
 #define _M555DLL_H
 
 #include "humath.h"
+#include "game/hu3d.h"
+#include "dolphin/mtx.h"
 
 /* The 0x344-byte per-player record.  Only the fields the code touches are
    named; the rest is padding sized to keep the stride at 0x344. */
@@ -81,34 +83,44 @@ typedef struct M555CtrlModel_s {
     s16 playerNo;        /* 0x04 */
     s16 charNo;          /* 0x06 */
     s16 charSlot;        /* 0x08 */
-    s16 pad0a;           /* 0x0A */
-    f32 posX;            /* 0x0C */
-    f32 posY;            /* 0x10 */
+    s16 padNo;           /* 0x0A */
+    u32 btn;             /* 0x0C */
+    u32 btnDown;         /* 0x10 */
     s8 stickX;           /* 0x14 */
-    s8 pad1[3];          /* 0x15 */
+    s8 pad15;            /* 0x15 */
+    u16 btnRep;          /* 0x16 */
     s8 stickY;           /* 0x18 */
-    s8 pad2[3];          /* 0x19 */
+    s8 subStickX;        /* 0x19 */
+    s8 subStickY;        /* 0x1A */
+    u8 trigL;            /* 0x1B */
 } M555_CTRLMODEL;
 
 /* One 0x54-byte record embedded in the control structure at offset 0x74. */
 typedef struct M555CtrlWin_s {
     s16 on;              /* 0x00 */
-    s16 pad0;            /* 0x02 */
+    s16 prevMot;         /* 0x02 */
     f32 scale;           /* 0x04 */
-    f32 pad1;            /* 0x08 */
+    f32 prevScale;       /* 0x08 */
     f32 value;           /* 0x0C */
     f32 angle;           /* 0x10 */
-    s32 pad2[1];         /* 0x14 */
+    f32 maxTime;         /* 0x14 */
     s32 alpha;           /* 0x18 */
-    s32 pad3;            /* 0x1C */
+    s32 prevAttr;        /* 0x1C */
     s32 flags;           /* 0x20 */
-    s32 pad5[5];         /* 0x24 */
+    s32 endFlag;         /* 0x24 */
+    s16 endAction;       /* 0x28 */
+    s16 endMot;          /* 0x2A */
+    f32 endTime;         /* 0x2C */
+    s32 endAttr;         /* 0x30 */
+    s32 endAttrReset;    /* 0x34 */
     s16 on38;            /* 0x38 */
     s16 on3A;            /* 0x3A */
     s32 val3C;           /* 0x3C */
     f32 val40;           /* 0x40 */
     f32 val44;           /* 0x44 */
-    s32 pad6[3];         /* 0x48 */
+    f32 shiftTime;       /* 0x48 */
+    f32 shiftMax;        /* 0x4C */
+    s32 pad6;            /* 0x50 */
 } M555_CTRLWIN;
 
 /* Global state reached through the lbl_1_bss_3030 pointer.  It carries three
@@ -118,11 +130,13 @@ typedef struct M555Ctrl_s {
     M555_CTRLMODEL mdl0[2];  /* 0x000, 0x1C stride */
     s16 pad0[0x10];          /* 0x038 */
     M555_MODELENTRY *mdl;    /* 0x058 */
-    s16 pad1[0x0C];          /* 0x05C */
+    s32 *charData[3];        /* 0x05C */
+    s16 *motion[3];          /* 0x068 */
     M555_CTRLWIN win[2];     /* 0x074, 0x54 stride */
     s32 pad2[0x15];          /* 0x11C */
     s32 *dataList;           /* 0x170 */
-    s32 pad3;                /* 0x174 */
+    s16 mode174;             /* 0x174 */
+    s16 pad174;              /* 0x176 */
     s32 seqNo;               /* 0x178 */
 } M555_CTRL;
 
@@ -253,7 +267,11 @@ typedef struct M555Work_s {
     u8 fogR;             /* 0x18C */
     u8 fogG;             /* 0x18D */
     u8 fogB;             /* 0x18E */
-    s16 pad13[0x1F];     /* 0x18F */
+    u8 pad18F[5];        /* 0x18F */
+    s32 bgmHandle;       /* 0x194 */
+    s32 jingleHandle;    /* 0x198 */
+    s32 pad19C;          /* 0x19C */
+    s32 fxHandle[12];    /* 0x1A0 */
     s16 hookIdx[12];     /* 0x1D0 */
 } M555_WORK;
 
@@ -277,6 +295,9 @@ extern M555_CTRL *lbl_1_bss_3030;
 extern M555_PLAYER lbl_1_bss_120C[2];
 extern M555_ITEM lbl_1_bss_214[100];
 extern M555_SPIN lbl_1_bss_11E4;
+extern char lbl_1_data_29B[0x1D];
+extern s16 lbl_1_data_2B8[12];
+extern s16 lbl_1_bss_3028;
 extern M555_MARK lbl_1_bss_B88[50];
 extern s16 lbl_1_bss_B74[10];
 extern M555_HOOK lbl_1_bss_11C8;
@@ -357,24 +378,24 @@ void fn_1_1B48();
 void fn_1_1B74();
 void fn_1_1B9C();
 void fn_1_1BD4();
-void fn_1_1FC0();
-void fn_1_1FC4();
-void fn_1_247C();
-void fn_1_25D8();
-void fn_1_2800();
-void fn_1_28F0();
-void fn_1_29E8();
-void fn_1_2A18();
-void fn_1_2A48();
-void fn_1_2AB0();
+void fn_1_1FC0(void);
+void fn_1_1FC4(s16 padNo);
+void fn_1_247C(void);
+void fn_1_25D8(HuVecF *pos);
+s32 fn_1_2800(HuVecF *pos, HuVecF *vel, f32 scale, f32 scaleBase);
+void fn_1_28F0(HU3DMODEL *model, HU3DPARTICLE *p, Mtx mtx);
+void fn_1_29E8(void);
+void fn_1_2A18(void);
+void fn_1_2A48(s16 bgm, s16 speed);
+void fn_1_2AB0(s16 bgm);
 void fn_1_2B10(s16 id);
 void fn_1_2BD8(s16 a, s16 b, s16 c);
 void fn_1_2CB0(s16 a, s16 b);
 void fn_1_2D40(s16 idx, s16 pitch);
-void fn_1_2DD0();
+void fn_1_2DD0(s16 id, s16 vol);
 void fn_1_2E60(s16 a, s16 b);
-void fn_1_2F28();
-void fn_1_2FF0();
+void fn_1_2F28(s16 id);
+void fn_1_2FF0(void);
 void fn_1_3010(M555_CTRL *ctrl);
 s32 fn_1_69C4(M555_CTRL *ctrl);
 s16 fn_1_6A0C(void);
@@ -418,14 +439,14 @@ s32 fn_1_19C0C(s16 player);
 s32 fn_1_1A4B0(s16 player);
 s32 fn_1_1A6F4(s16 player);
 s32 fn_1_1A880(s16 player, s16 flag);
-void fn_1_1A9A4();
+void fn_1_1A9A4(M555_CTRL *ctrl, M555_MODELENTRY *mdl, s32 *dataList);
 void fn_1_1ABF0();
-void fn_1_1AC04();
-void fn_1_1AC24();
-void fn_1_1AC44();
-void fn_1_1AF38();
-void fn_1_1B2F8();
-void fn_1_1B4B0();
+void fn_1_1AC04(s16 idx, s32 *data);
+void fn_1_1AC24(s16 idx, s16 *motion);
+void fn_1_1AC44(void);
+void fn_1_1AF38(void);
+void fn_1_1B2F8(void);
+void fn_1_1B4B0(void);
 void fn_1_1B868();
 void fn_1_1B86C();
 void fn_1_1B870();
