@@ -142,6 +142,8 @@ char lbl_1_data_7D8_str[] = "vector::at index out of range\0vector::insert lengt
 char lbl_1_data_81F[] = "Memory allocation failure";
 char lbl_1_data_839[] = "vector::reserve length error\n";
 
+// three zero doubles that open the unit's .rodata (not referenced by its code)
+M517_RODATA const f64 lbl_1_rodata_588[3] = { 0.0, 0.0, 0.0 };
 M517_RODATA const GXColor lbl_1_rodata_5D8 = { 0xFF, 0xE0, 0x20, 0x00 };
 M517_RODATA const GXColor lbl_1_rodata_610 = { 0xFF, 0xFF, 0xFF, 0x00 };
 M517_RODATA const GXColor lbl_1_rodata_624 = { 0xFF, 0xFF, 0xFF, 0x00 };
@@ -627,9 +629,7 @@ void fn_1_16B68(M517Player *self)
         case 0: {
             Vec old;
 
-            old.x = self->sph.pos.x;
-            old.y = self->sph.pos.y;
-            old.z = self->sph.pos.z;
+            old = self->sph.pos;
             M517_ASSERT(lbl_1_bss_4 != 0, lbl_1_data_720, lbl_1_data_714, 0x27);
             fn_1_157D0((M517PlayerModels *)lbl_1_bss_4, self->slot, &self->sph.pos, &self->rot);
             if (self->cpu != 0) {
@@ -684,12 +684,8 @@ void fn_1_16B68(M517Player *self)
                 Vec b;
                 Vec d;
 
-                a.x = self->sph.pos.x;
-                a.y = self->sph.pos.y;
-                a.z = self->sph.pos.z;
-                b.x = self->sph.pos.x;
-                b.y = self->sph.pos.y;
-                b.z = self->sph.pos.z;
+                a = self->sph.pos;
+                b = self->sph.pos;
                 self->sph.pos.x = self->sph.pos.x + (-self->sph.pos.x / 18.0f);
                 self->sph.pos.z = self->sph.pos.z + ((self->home.z - self->sph.pos.z) / 18.0f);
                 b.y = 0.0f;
@@ -756,6 +752,7 @@ void fn_1_178D0(M517Player *self)
 {
     M517Input *in = self->input;
     Vec stick;
+    Vec copy;
     Vec old;
 
     fn_1_7B74(in);
@@ -763,13 +760,13 @@ void fn_1_178D0(M517Player *self)
     stick.z = in->st.y;
     stick.y = in->st.mag;
     if (self->cpu != 0) {
-        fn_1_19600(self, &stick);
+        copy = stick;
+        fn_1_19600(self, &copy);
         return;
     }
-    old.x = self->sph.pos.x;
-    old.y = self->sph.pos.y;
-    old.z = self->sph.pos.z;
-    fn_1_19B60(self, &stick);
+    old = self->sph.pos;
+    copy = stick;
+    fn_1_19B60(self, &copy);
     PSVECSubtract(&self->sph.pos, &old, &self->delta);
 }
 
@@ -893,9 +890,7 @@ void fn_1_17FCC(M517Player *self, M517Ball *ball)
                 Vec v;
                 f32 mag;
 
-                v.x = ball->delta.x;
-                v.y = ball->delta.y;
-                v.z = ball->delta.z;
+                v = ball->delta;
                 mag = PSVECMag(&v);
                 if (mag < 6.666666666666667) {
                     return;
@@ -913,9 +908,7 @@ void fn_1_17FCC(M517Player *self, M517Ball *ball)
                 GXColor col = lbl_1_rodata_624;
                 M517DustCloud *cloud;
 
-                p.x = self->sph.pos.x;
-                p.y = self->sph.pos.y;
-                p.z = self->sph.pos.z;
+                p = self->sph.pos;
                 p.y = p.y + 100.0f;
                 cloud = (M517DustCloud *)fn_1_1E84(sizeof(M517DustCloud));
                 if (cloud != 0) {
@@ -989,9 +982,7 @@ void fn_1_1877C(M517Player *self)
     s32 mot;
 
     self->sph.pos.y = 0.0f;
-    cur.x = self->sph.pos.x;
-    cur.y = self->sph.pos.y;
-    cur.z = self->sph.pos.z;
+    cur = self->sph.pos;
     PSVECSubtract(&self->goal, &cur, &delta);
     dist = PSVECMag(&delta);
     mot = 0xA;
@@ -1047,9 +1038,7 @@ void fn_1_18EDC(M517Player *self)
     f32 spd;
     f32 ang;
 
-    cur.x = self->sph.pos.x;
-    cur.y = self->sph.pos.y;
-    cur.z = self->sph.pos.z;
+    cur = self->sph.pos;
     cur.y = 0.0f;
     PSVECSubtract(&self->goal, &cur, &delta);
     dist = PSVECMag(&delta);
@@ -1139,14 +1128,10 @@ void fn_1_19AB8(M517Player *self)
     Vec v;
     Vec tmp;
 
-    v.x = self->vel.x;
-    v.y = self->vel.y;
-    v.z = self->vel.z;
+    v = self->vel;
     self->vel.y = (f32)((f64)self->vel.y + 0.27240694444444447);
     v.y = -(0.5f * (v.y + self->vel.y));
-    tmp.x = self->sph.pos.x;
-    tmp.y = self->sph.pos.y;
-    tmp.z = self->sph.pos.z;
+    tmp = self->sph.pos;
     PSVECAdd(&v, &self->sph.pos, &self->sph.pos);
 }
 
