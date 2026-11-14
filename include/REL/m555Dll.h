@@ -412,7 +412,7 @@ extern M555_MODELENTRY lbl_1_bss_1A84[171];
 extern M555_CTRL lbl_1_bss_2D38;
 extern OMOBJMAN *lbl_1_bss_3020;
 
-/* ---- function prototypes (owner replaces its own `();` line with the real signature) ---- */
+/* ---- function prototypes ---- */
 int _prolog(void);
 void _epilog(void);
 void ObjectSetup(void);
@@ -508,12 +508,12 @@ void fn_1_1AC44(void);
 void fn_1_1AF38(OMOBJ *obj);
 void fn_1_1B2F8(void);
 void fn_1_1B4B0(OMOBJ *obj);
-void fn_1_1B868();
-void fn_1_1B86C();
-void fn_1_1B870();
-void fn_1_1B874();
-void fn_1_1B878();
-void fn_1_1B87C();
-void fn_1_1B880();
+void fn_1_1B868(void);
+void fn_1_1B86C(void);
+void fn_1_1B870(void);
+void fn_1_1B874(void);
+void fn_1_1B878(void);
+void fn_1_1B87C(void);
+void fn_1_1B880(void);
 
 #endif
