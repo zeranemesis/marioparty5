@@ -627,7 +627,7 @@ s32 fn_1_D404(Koopa *self) {
                 VECNormalize(&dir, &dir);
                 ang = KP_HEADING(dir.x, dir.z);
             }
-            fn_1_181FC((KbMiniMgr *)&host->mecha, &spawn, ang);
+            fn_1_181FC(&host->mecha, &spawn, ang);
         }
         if (--self->timerE <= 0) {
             done = 1;
