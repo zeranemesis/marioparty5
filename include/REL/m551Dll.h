@@ -369,6 +369,9 @@ typedef struct M551Work_s {
 } M551_WORK;
 
 extern M551_WORK lbl_1_bss_0;
+extern M551Shadow *lbl_1_bss_30;
+extern M551Light *lbl_1_bss_34;
+extern M551Cam *lbl_1_bss_38;
 extern M551_ITEMMODEL lbl_1_bss_179A0[12];
 extern M551_FLOW lbl_1_bss_16CB4;
 extern M551_PLAYERWORK lbl_1_bss_16A84[2];
