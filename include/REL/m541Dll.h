@@ -174,6 +174,13 @@ typedef struct M541PlayerWork_s {
     s32 padStkY;    /* 0x8C */
 } M541_PLAYERWORK;
 
+/* The GC object is 15 entries but the code indexes 23 (overrunning into the next object); the PC build gets real storage. */
+#ifdef TARGET_PC
+#define M541_LEAFCNT 23
+#else
+#define M541_LEAFCNT 15
+#endif
+
 /* Leaf work (lbl_1_bss_20, stride 0x30). */
 typedef struct M541LeafWork_s {
     s16 unk0;      /* 0x00 */
@@ -301,7 +308,7 @@ typedef struct M541G1Work45C_s {
     u8 pad2180[0x38];
 } M541_G1WORK45C;
 extern M541_G1WORK45C lbl_1_bss_45C;
-extern M541_LEAFWORK lbl_1_bss_20[15];
+extern M541_LEAFWORK lbl_1_bss_20[M541_LEAFCNT];
 extern M541_BOARD lbl_1_bss_2F0;
 
 /* ---- G1: prototypes ---- */
@@ -402,7 +409,7 @@ typedef struct M541Shadow_s {
 extern M541_SHADOW *lbl_1_bss_14;
 extern M541_LIGHT *lbl_1_bss_18;
 extern M541_CAM *lbl_1_bss_1C;
-extern M541_LEAFWORK lbl_1_bss_20[15];
+extern M541_LEAFWORK lbl_1_bss_20[M541_LEAFCNT];
 extern M541_BOARD lbl_1_bss_2F0;
 /* G3: lbl_1_bss_45C is declared above with the G1 layout (M541_G1WORK45C); duplicate extern removed */
 extern s16 lbl_1_bss_27C0[2][8];
