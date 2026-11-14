@@ -88,6 +88,7 @@ typedef struct M517MasterVtbl_s {
     void (*setup)(struct M517Master_s *self, OMOBJMAN *objman);
     void (*update)(struct M517Master_s *self);
     void (*finish)(struct M517Master_s *self);
+    void *slot6; // unused trailing vtable word
 } M517MasterVtbl;
 
 typedef struct M517Master_s {

@@ -85,7 +85,6 @@ char lbl_1_data_80[] = "ptr != NULL";
 char lbl_1_data_8C[] = "new.cpp";
 char lbl_1_data_94[] = "\nASSERTION FAILED at %s:%d\n%s";
 char lbl_1_data_B2[] = "assert.cpp";
-char lbl_1_data_3D[] = "{{0x%08x,0x%08x,0x%08x},{0x%08x,0x%08x,0x%08x,0x%08x}},\n";
 char lbl_1_data_BD[] = "handle.cpp";
 char lbl_1_data_C8[] = "n <= MAXCOUNT";
 char lbl_1_data_D6[] = "singleton.h";
@@ -114,7 +113,7 @@ void fn_1_632C(OMOBJ *obj);
 
 M517ThreadVtbl lbl_1_data_224 = { { 0, 0 }, fn_1_6D9C, 0 };
 M517FunctorVtbl lbl_1_data_234 = { { 0, 0 }, fn_1_63EC, fn_1_6378 };
-M517MasterVtbl lbl_1_data_244 = { { 0, 0 }, fn_1_3B84, 0, fn_1_3F24, 0 };
+M517MasterVtbl lbl_1_data_244 = { { 0, 0 }, fn_1_3B84, 0, fn_1_3F24, 0, 0 };
 
 // ---------------------------------------------------------------- bss
 
@@ -420,8 +419,9 @@ M517HandleTbl *fn_1_28A4(M517HandleTbl *self, u32 n)
 M517HandleTbl *fn_1_2AA8(M517HandleTbl *self, s16 flag)
 {
     if (self != 0) {
-        if (self->ents != 0) {
-            HuMemDirectFree(self->ents);
+        void *ents = self->ents;
+        if (ents != 0) {
+            HuMemDirectFree(ents);
         }
         if (flag > 0 && self != 0) {
             HuMemDirectFree(self);
@@ -1967,10 +1967,13 @@ void fn_1_7910(M517TimerObj *self, u8 r, u8 g, u8 b)
 // NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_7958(void)
 {
-    lbl_1_bss_24.next = &lbl_1_bss_24;
-    lbl_1_bss_24.prev = &lbl_1_bss_24;
+    M517Node *node = &lbl_1_bss_24;
+    M517Node *obj;
+    node->next = node;
+    node->prev = node;
+    obj = node;
 #ifdef __MWERKS__
-    __register_global_object(&lbl_1_bss_24, (void *)fn_1_7AB8, lbl_1_bss_18);
+    __register_global_object(obj, (void *)fn_1_7AB8, lbl_1_bss_18);
 #endif
     lbl_1_bss_30 = 0x78;
     lbl_1_bss_34 = 0xD2;
