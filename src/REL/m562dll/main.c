@@ -124,7 +124,7 @@ void fn_1_AC4(M562Work *work, OMOBJMAN *manager)
     Hu3DShadowCreate(45.0f, 20.0f, 50000.0f);
     Hu3DShadowTPLvlSet(0.5f);
     Hu3DShadowSizeSet(0xF0);
-    Hu3DShadowPosSet((HuVecF *)&lbl_1_data_30, (HuVecF *)&lbl_1_data_3C, (HuVecF *)&lbl_1_data_48);
+    Hu3DShadowPosSet(&lbl_1_data_30, &lbl_1_data_3C, &lbl_1_data_48);
     fn_1_13CFC(&work->fire, work);
     work->fire.run = 1;
     fn_1_B2E0(&work->koopa, work);
