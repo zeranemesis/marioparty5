@@ -1151,9 +1151,9 @@ static void MachineExhaustAdd(SdMachine *machine)
     HU3DPARTICLE *par;
     HU3DPARTICLEDATA *base;
     HU3DPARTICLEDATA *p;
-    Vec posTbl[4];
-    Vec dirTbl[4];
-    Vec tmp;
+    HuVecF posTbl[4];
+    HuVecF dirTbl[4];
+    HuVecF tmp;
     GXColor col;
     s32 kind1;
     s32 i;
@@ -1184,11 +1184,11 @@ static void MachineExhaustAdd(SdMachine *machine)
             tmp.y = machine->mtx[1][2];
             tmp.z = machine->mtx[2][2];
             dirTbl[i] = tmp;
-            PSVECScale(&dirTbl[i], &dirTbl[i], -1.0f);
+            PSVECScale((Vec *)&dirTbl[i], (Vec *)&dirTbl[i], -1.0f);
         }
-        posTbl[i] = machine->corner[i].pos;
-        PSMTXMultVec(machine->mtx, &posTbl[i], &posTbl[i]);
-        PSVECAdd(&machine->curPos, &posTbl[i], &posTbl[i]);
+        posTbl[i] = *(HuVecF *)&machine->corner[i].pos;
+        PSMTXMultVec(machine->mtx, (Vec *)&posTbl[i], (Vec *)&posTbl[i]);
+        PSVECAdd(&machine->curPos, (Vec *)&posTbl[i], (Vec *)&posTbl[i]);
     }
     for (i = 0; i < 30; i++) {
         if (kind1 == 0) {
@@ -1219,7 +1219,7 @@ static void MachineExhaustAdd(SdMachine *machine)
             }
             p->time = 1;
             p->parManId = 0;
-            p->vel = *(HuVecF *)&dirTbl[j];
+            p->vel = dirTbl[j];
             if (machine->bodyType == 3) {
                 tmp.x = 0.0f;
                 tmp.y = 0.0f;
@@ -1227,13 +1227,13 @@ static void MachineExhaustAdd(SdMachine *machine)
                 tmp.x = (posTbl[j].x - 5.0f) + (f32)(rand8() % 10);
                 tmp.y = (posTbl[j].y - 5.0f) + (f32)(rand8() % 10);
                 tmp.z = (posTbl[j].z - 5.0f) + (f32)(rand8() % 10);
-                p->pos = *(HuVecF *)&tmp;
+                p->pos = tmp;
                 PSVECScale((Vec *)&p->vel, (Vec *)&p->vel, 10.0f);
                 p->scale = 30.0f + (f32)(rand8() % 40);
                 tmp.x = 0.0f;
                 tmp.y = 5.0f;
                 tmp.z = 0.0f;
-                p->accel = *(HuVecF *)&tmp;
+                p->accel = tmp;
             } else if (kind1 == 0) {
                 tmp.x = 0.0f;
                 tmp.y = 0.0f;
@@ -1241,16 +1241,16 @@ static void MachineExhaustAdd(SdMachine *machine)
                 tmp.x = (posTbl[j].x - 2.0f) + (f32)(rand8() % 5);
                 tmp.y = (posTbl[j].y - 2.0f) + (f32)(rand8() % 5);
                 tmp.z = (posTbl[j].z - 2.0f) + (f32)(rand8() % 5);
-                p->pos = *(HuVecF *)&tmp;
+                p->pos = tmp;
                 p->scale = 30.0f + (f32)(rand8() % 10);
                 tmp.x = 0.0f;
                 tmp.y = 3.0f;
                 tmp.z = 0.0f;
-                p->accel = *(HuVecF *)&tmp;
+                p->accel = tmp;
                 PSVECScale((Vec *)&p->vel, (Vec *)&p->vel, 5.0f);
             } else {
                 tmp = posTbl[j];
-                p->pos = *(HuVecF *)&tmp;
+                p->pos = tmp;
                 if (machine->bodyType == 1 && j >= 2) {
                     p->scale = 60.0f;
                 } else {
@@ -1259,7 +1259,7 @@ static void MachineExhaustAdd(SdMachine *machine)
                 tmp.x = 0.0f;
                 tmp.y = 0.0f;
                 tmp.z = 0.0f;
-                p->accel = *(HuVecF *)&tmp;
+                p->accel = tmp;
                 PSVECScale((Vec *)&p->vel, (Vec *)&p->vel, 0.0f);
             }
             p->color = col;
@@ -1358,9 +1358,9 @@ static void MachineTrackEffAdd(SdMachine *machine)
     HU3DPARTICLE *trackPar3 = (HU3DPARTICLE *)Hu3DData[sys->partMdlId[11]].hookData;
     HU3DPARTICLEDATA *base;
     HU3DPARTICLEDATA *p;
-    Vec dirTbl[2];
-    Vec posTbl[2];
-    Vec tmp;
+    HuVecF dirTbl[2];
+    HuVecF posTbl[2];
+    HuVecF tmp;
     GXColor col;
     f32 spd;
     f32 accelY;
@@ -1385,13 +1385,13 @@ static void MachineTrackEffAdd(SdMachine *machine)
         tmp.y = machine->mtx[1][2];
         tmp.z = machine->mtx[2][2];
         dirTbl[i] = tmp;
-        PSVECScale(&dirTbl[i], &dirTbl[i], -1.0f);
+        PSVECScale((Vec *)&dirTbl[i], (Vec *)&dirTbl[i], -1.0f);
         if (machine->wheelAttr[i + 2] == 1 || machine->wheelAttr[i + 2] == 4) {
             dirTbl[i].y += 0.25f * spd;
         } else if (machine->wheelAttr[i + 2] == 6) {
             dirTbl[i].y += 0.25f * spd;
         }
-        posTbl[i] = machine->wheelPos[i + 2];
+        posTbl[i] = *(HuVecF *)&machine->wheelPos[i + 2];
         posTbl[i].y -= machine->wheelY1;
     }
     for (i = 0; i < 2; i++) {
@@ -1479,11 +1479,11 @@ static void MachineTrackEffAdd(SdMachine *machine)
             }
             p->time = 1;
             p->parManId = machine->wheelAttr[i + 2];
-            p->vel = *(HuVecF *)&dirTbl[i];
+            p->vel = dirTbl[i];
             tmp.x = 0.0f;
             tmp.y = accelY;
             tmp.z = 0.0f;
-            p->accel = *(HuVecF *)&tmp;
+            p->accel = tmp;
             p->color = col;
             p->zRot = zRot;
             if (p->parManId == 6) {
@@ -1494,7 +1494,7 @@ static void MachineTrackEffAdd(SdMachine *machine)
             tmp.x = (posTbl[i].x - 20.0f) + (f32)(rand8() % 40);
             tmp.y = posTbl[i].y + (f32)(rand8() % 20);
             tmp.z = (posTbl[i].z - 20.0f) + (f32)(rand8() % 40);
-            p->pos = *(HuVecF *)&tmp;
+            p->pos = tmp;
             p->scale = (4.0f * spd) + (f32)(rand8() % 20);
             break;
         }
