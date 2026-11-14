@@ -21,7 +21,15 @@ extern "C" {
 }
 #include "REL/m579Dll/m579types.h"
 
+#if !defined(M579_ONLY) || M579_ONLY == 1
 #include "REL/m579Dll/m579_a.inc"
+#endif
+#if !defined(M579_ONLY) || M579_ONLY == 2
 #include "REL/m579Dll/m579_b.inc"
+#endif
+#if !defined(M579_ONLY) || M579_ONLY == 3
 #include "REL/m579Dll/m579_c.inc"
+#endif
+#if !defined(M579_ONLY) || M579_ONLY == 4
 #include "REL/m579Dll/m579_d.inc"
+#endif
