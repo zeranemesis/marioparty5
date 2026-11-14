@@ -102,8 +102,127 @@ extern void fn_1_2EB08(void);
 
 /* ---- evt_opening / evt_fire / evt_fight / evt_fall / evt_winner ---- */
 /* The event scripts work on the battle owner object itself (M562Work, defined
-   in the main block below); this alias names it for the units that predate it. */
+   in the main block below; this alias names it for the units that predate it).
+   The views below are pointer-free overlays of its embedded sub-objects (cast
+   from &work->member), holding only the members the scripts touch at the GC
+   offsets of the original. The backdrop uses M562Back and the stage floor
+   uses M562StageField. */
 typedef struct M562Work M562EvtWork;
+
+typedef struct M562EvtInput {
+    /* 0x00 */ u8 pad0[8];
+    /* 0x08 */ s32 btnA;
+    /* 0x0C */ s32 btnB;
+    /* 0x10 */ s8 stickX;
+    /* 0x11 */ s8 stickY;
+} M562EvtInput;
+
+typedef struct M562EvtPlayer { /* work + 0x28 */
+    /* 0x00 */ u8 pad0[4];
+    /* 0x04 */ s16 unk4;
+    /* 0x06 */ s16 unk6;
+    /* 0x08 */ u8 pad8[0xC];
+    /* 0x14 */ s16 charIdx;
+    /* 0x16 */ u8 pad16[2];
+    /* 0x18 */ s16 charNo;
+    /* 0x1A */ u8 pad1A[0xA];
+    /* 0x24 */ s16 motion;
+    /* 0x26 */ u8 pad26[0x46];
+    /* 0x6C */ M562EvtInput input;
+    /* 0x7E */ u8 pad7E[0x12];
+    /* 0x90 */ f32 rotGoal;
+    /* 0x94 */ f32 rotSpeed;
+    /* 0x98 */ u8 pad98[2];
+    /* 0x9A */ s16 animNo;
+    /* 0x9C */ s16 animLoop;
+    /* 0x9E */ u8 pad9E[2];
+    /* 0xA0 */ Vec pos;
+    /* 0xAC */ u8 padAC[4];
+    /* 0xB0 */ f32 rotY;
+    /* 0xB4 */ u8 padB4[0x10];
+    /* 0xC4 */ f32 velY;
+    /* 0xC8 */ u8 padC8[0x138 - 0xC8];
+} M562EvtPlayer;
+
+typedef struct M562EvtCamera { /* work + 0x1BC, 0x258 */
+    /* 0x00 */ u8 pad0[4];
+    /* 0x04 */ u16 camMask;
+    /* 0x06 */ u8 pad6[4];
+    /* 0x0A */ s16 unkA;
+    /* 0x0C */ s16 unkC;
+    /* 0x0E */ u8 padE[2];
+    /* 0x10 */ Vec pos;
+    /* 0x1C */ Vec target;
+    /* 0x28 */ u8 pad28[0xC];
+    /* 0x34 */ Vec posGoal;
+    /* 0x40 */ Vec targetGoal;
+    /* 0x4C */ u8 pad4C[0x30];
+    /* 0x7C */ f32 posSpeed;
+    /* 0x80 */ f32 targetSpeed;
+    /* 0x84 */ u8 pad84[0x9C - 0x84];
+} M562EvtCamera;
+
+typedef struct M562EvtBoss { /* work + 0x30C, Bowser */
+    /* 0x00 */ u8 pad0[4];
+    /* 0x04 */ s16 unk4;
+    /* 0x06 */ s16 unk6;
+    /* 0x08 */ u8 pad8[0xC];
+    /* 0x14 */ s32 unk14;
+    /* 0x18 */ u8 pad18[4];
+    /* 0x1C */ s32 unk1C;
+    /* 0x20 */ s16 model;
+    /* 0x22 */ s16 motionTbl[0x13];
+    /* 0x48 */ s16 unk48;
+    /* 0x4A */ s16 motionNo;
+    /* 0x4C */ s16 motionLoop;
+    /* 0x4E */ u8 pad4E[2];
+    /* 0x50 */ s16 unk50;
+    /* 0x52 */ s16 unk52;
+    /* 0x54 */ Vec pos;
+    /* 0x60 */ u8 pad60[4];
+    /* 0x64 */ f32 rotCopy;
+    /* 0x68 */ u8 pad68[0x78 - 0x68];
+    /* 0x78 */ f32 speed;
+    /* 0x7C */ u8 pad7C[0xB0 - 0x7C];
+    /* 0xB0 */ struct M562StageTile *curCell;
+    /* 0xB4 */ u8 padB4[4];
+} M562EvtBoss;
+
+typedef struct M562EvtFireEntry {
+    /* 0x00 */ u8 pad0[0x1C];
+    /* 0x1C */ Vec pos;
+    /* 0x28 */ u8 pad28[0x34 - 0x28];
+} M562EvtFireEntry;
+
+typedef struct M562EvtFire { /* work + 0x7BC */
+    /* 0x00 */ u8 pad0[0x10];
+    /* 0x10 */ s32 active;
+    /* 0x14 */ u8 pad14[4];
+    /* 0x18 */ M562EvtFireEntry entry[3];
+    /* 0xB4 */ u8 padB4[0xCC - 0xB4];
+    /* 0xCC */ s32 sndHandle;
+} M562EvtFire;
+
+typedef struct M562EvtTile { /* 0x7C */
+    /* 0x00 */ u8 pad0[0x10];
+    /* 0x10 */ u16 state;
+    /* 0x12 */ u8 pad12[0xA];
+    /* 0x1C */ s16 model;
+    /* 0x1E */ u8 pad1E[0x10];
+    /* 0x2E */ s16 model2;
+    /* 0x30 */ u8 pad30[0x14];
+    /* 0x44 */ f32 x;
+    /* 0x48 */ u8 pad48[4];
+    /* 0x4C */ f32 z;
+    /* 0x50 */ u8 pad50[0x7C - 0x50];
+} M562EvtTile;
+
+typedef struct M562EvtTiles { /* work + 0x88C */
+    /* 0x000 */ u8 pad0[0xC];
+    /* 0x00C */ M562EvtTile tile[0x23];
+    /* 0x1100 */ s16 count;
+    /* 0x1102 */ u8 pad1102[0x1304 - 0x1102];
+} M562EvtTiles;
 
 /* ---- stage.c ---- */
 /* The stage unit's view of the main work (owned by main.c): the fields it
@@ -846,8 +965,7 @@ struct M562Work {
 
 extern M562Work *lbl_1_bss_0;
 extern OMOBJMAN *lbl_1_bss_4;
-extern s32 m562CtrlNo;
-#define lbl_1_data_0 m562CtrlNo
+extern s32 lbl_1_data_0; /* own flag; the game-wide m562CtrlNo is in game/mgdata.h */
 extern s32 lbl_1_data_4;
 
 extern void fn_1_AC4(M562Work *work, OMOBJMAN *manager);
@@ -936,5 +1054,19 @@ extern void fn_1_904(Vec *pos, Vec *heading);
 extern s32 fn_1_994(s16 streamId);
 extern void fn_1_A24(void);
 extern s32 fn_1_A94(s16 streamId, s16 chanNo);
+
+/* ---- evt_opening / evt_fire / evt_fight / evt_fall / evt_winner (entry points and callees owned elsewhere) ---- */
+extern s32 fn_1_2446C(M562Work *work);
+extern s32 fn_1_252B4(M562Work *work);
+extern s32 fn_1_260B8(M562Work *work);
+extern s32 fn_1_27950(M562Work *work);
+extern s32 fn_1_2C118(M562Work *work);
+extern void fn_1_1D9C(M562Work *work);
+extern void fn_1_7D58(void *player, f32 speed);
+extern s32 fn_1_AD98(void *player, Vec *dir, f32 speed, f32 rate);
+extern void fn_1_B578(void *koopa);
+extern void fn_1_864(s32 handle, s32 time);
+extern void fn_1_9F4(s32 handle, s32 time);
+extern void fn_1_A6C(s16 jingle);
 
 #endif
