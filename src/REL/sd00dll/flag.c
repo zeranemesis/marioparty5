@@ -19,14 +19,6 @@
 #define FLAG_MODE_VANISH 11
 #define FLAG_MODE_END 99
 
-typedef struct SdFlagWork_s {
-    HU3DMODELID mdlId; // 0x00
-    Vec pos;           // 0x04
-    s32 pad10;         // 0x10
-    s32 timer[2];      // 0x14 (pickup count per machine)
-    s16 spr[2][3];     // 0x1C (HUD flag markers per machine)
-} SdFlagWork; // size 0x28
-
 static s32 flagRippleTimer;
 static HSFBUFFER *flag2Vtx;
 static HSFBUFFER *flag1Vtx;
@@ -40,8 +32,6 @@ static s32 FlagNextPosGet(Vec *out);
 static s32 FlagPickupCheck(void);
 static void FlagRippleInit(void);
 static void FlagRippleUpdate(void);
-s32 SdFlagPosSet(SdFlagWork *work);
-void SdFlagSprUpdate(SdFlagWork *work);
 
 void SdFlagInit(void)
 {
