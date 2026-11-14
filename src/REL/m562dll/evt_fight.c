@@ -22,12 +22,12 @@ static f32 lbl_1_bss_7958;
    dropped in from above. */
 s32 fn_1_260B8(M562Work *w)
 {
-    M562EvtPlayer *player = (M562EvtPlayer *)&w->player;
+    M562Player *player = &w->player;
     M562Back *back = &w->back;
     CAMERA *camera = (CAMERA *)&w->camera[0];
     Koopa *koopa = (Koopa *)&w->koopa;
     M562StageField *field = &w->stage;
-    M562EvtInput *input = &player->input;
+    M562PlayerInput *input = &player->input;
     s32 done = 0;
     f32 t;
     f32 clamped;
@@ -69,8 +69,8 @@ s32 fn_1_260B8(M562Work *w)
         camera->prevMode = 0;
         camera->speed = 0.04f;
         camera->slerpT = 0.03f;
-        player->animNo = 1;
-        player->animLoop = 1;
+        player->reqMotion = 1;
+        player->loopMotion = 1;
         lbl_1_data_D58 = -1;
         w->state++;
         /* fallthrough */
@@ -93,12 +93,12 @@ s32 fn_1_260B8(M562Work *w)
         diff.y = 0.0f;
         if (PSVECMag(&diff) > 50.0f) {
             PSVECNormalize(&diff, &diff);
-            input->btnA = 0;
-            input->btnB = 0;
-            input->stickX = 0;
-            input->stickY = 0;
-            input->stickX = 56.0f * diff.x;
-            input->stickY = 56.0f * -diff.z;
+            input->btn = 0;
+            input->btnDown = 0;
+            input->stkX = 0;
+            input->stkY = 0;
+            input->stkX = 56.0f * diff.x;
+            input->stkY = 56.0f * -diff.z;
             fn_1_7D58(player);
         }
         if (w->evtTimer++ > 0x78) {
@@ -106,11 +106,11 @@ s32 fn_1_260B8(M562Work *w)
             goal.y = 0.0f;
             goal.z = 375.0f;
             player->pos = goal;
-            player->rotGoal = 180.0f;
-            player->rotSpeed = 180.0f;
-            player->rotY = player->rotGoal;
-            player->animNo = 0x1C;
-            player->animLoop = 0;
+            player->rotY = 180.0f;
+            player->goalRotY = 180.0f;
+            player->rot.y = player->rotY;
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
             w->evtTimer = 0;
             w->state++;
         }
@@ -148,7 +148,7 @@ s32 fn_1_260B8(M562Work *w)
     case 4:
         if (w->evtTimer == 0xA) {
             fn_1_21B68(camera, 1, 0x32, 40.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            omVibrate(player->playerNo, 0x14, 0xC, 0);
             Hu3DMotionSpeedSet(back->model20, 1.0f);
             Hu3DModelAttrReset(back->model20, 1);
             back->bobOn = 0;
@@ -235,7 +235,7 @@ s32 fn_1_260B8(M562Work *w)
             fn_1_814(0x8A7);
             fn_1_21B68(camera, 1, 0x32, 40.0f, 0.95f, 90.0f);
             fn_1_2DC08((s16)camera->camMask, &koopa->pos, 0);
-            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            omVibrate(player->playerNo, 0x14, 0xC, 0);
             cell = &field->tile[7];
             cell->flag = 1;
             field->quakePos = cell->pos;
@@ -282,8 +282,8 @@ s32 fn_1_260B8(M562Work *w)
         if (GwSystem.subGameNo < 2) {
             GwSystem.subGameNo = 2;
         }
-        player->unk6 = 0;
-        player->unk4 = 0;
+        player->sub = 0;
+        player->state = 0;
         w->state = 0;
         done = 1;
         break;
@@ -309,16 +309,16 @@ s32 fn_1_260B8(M562Work *w)
         mag = PSVECMag(&diff);
         if (mag > 5.0f) {
             PSVECNormalize(&diff, &diff);
-            input->btnA = 0;
-            input->btnB = 0;
-            input->stickX = 0;
-            input->stickY = 0;
-            input->stickX = 56.0f * diff.x;
-            input->stickY = 56.0f * -diff.z;
+            input->btn = 0;
+            input->btnDown = 0;
+            input->stkX = 0;
+            input->stkY = 0;
+            input->stkX = 56.0f * diff.x;
+            input->stkY = 56.0f * -diff.z;
             fn_1_7D58(player);
         } else {
-            player->animNo = 0;
-            player->animLoop = 1;
+            player->reqMotion = 0;
+            player->loopMotion = 1;
         }
         w->evtTimer++;
         if (w->evtTimer > 0x78) {
@@ -337,8 +337,8 @@ s32 fn_1_260B8(M562Work *w)
         dir.y = 0.0f;
         dir.z = -1.0f;
         if (fn_1_AD98(player, &dir, 0.9f) != 0) {
-            player->animNo = 0x1C;
-            player->animLoop = 0;
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
             koopa->curMotion = 0xB;
             koopa->reqMotion = 0xB;
             koopa->loopMotion = 0;
@@ -352,7 +352,7 @@ s32 fn_1_260B8(M562Work *w)
     case 12:
         if (w->evtTimer == 0x14) {
             fn_1_21B68(camera, 1, 0x32, 40.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            omVibrate(player->playerNo, 0x14, 0xC, 0);
             Hu3DMotionSpeedSet(back->model20, 1.0f);
             Hu3DModelAttrReset(back->model20, 1);
             back->bobOn = 0;
@@ -433,7 +433,7 @@ s32 fn_1_260B8(M562Work *w)
         if (w->evtTimer == 20) {
             fn_1_21B68(camera, 1, 0x32, 40.0f, 0.95f, 90.0f);
             fn_1_2DC08((s16)camera->camMask, &koopa->pos, 0);
-            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            omVibrate(player->playerNo, 0x14, 0xC, 0);
             cell = &field->tile[7];
             cell->flag = 1;
             field->quakePos = cell->pos;

@@ -31,7 +31,7 @@ static s16 lbl_1_bss_7928[4];
    part are shown on the floor three at a time. */
 s32 fn_1_2446C(M562Work *w)
 {
-    M562EvtPlayer *player = (M562EvtPlayer *)&w->player;
+    M562Player *player = &w->player;
     M562Back *back = &w->back;
     CAMERA *camera = (CAMERA *)&w->camera[0];
     Koopa *koopa = (Koopa *)&w->koopa;
@@ -54,15 +54,15 @@ s32 fn_1_2446C(M562Work *w)
         if (GwSystem.subGameNo >= 0) {
             back->reflectOn = 1;
             back->rippleOn = 0;
-            player->animNo = 0x1C;
-            player->animLoop = 0;
-            player->rotGoal = 180.0f;
-            player->rotSpeed = 180.0f;
-            player->rotY = player->rotGoal;
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
+            player->rotY = 180.0f;
+            player->goalRotY = 180.0f;
+            player->rot.y = player->rotY;
             done = 1;
         } else {
-            player->animNo = 0x1E;
-            player->animLoop = 0;
+            player->reqMotion = 0x1E;
+            player->loopMotion = 0;
             w->sprite[0].active = 0;
             for (i = 0; i < 0x23; i++) {
                 f = &fire->fire[i];
@@ -102,7 +102,7 @@ s32 fn_1_2446C(M562Work *w)
         }
         break;
     case 1:
-        Hu3DMotionTimeSet(player->motion, 0.0f);
+        Hu3DMotionTimeSet(player->modelId, 0.0f);
         if (w->evtTimer++ > 0xB4) {
             w->evtTimer = 0;
             w->state++;
@@ -113,18 +113,18 @@ s32 fn_1_2446C(M562Work *w)
             CharFXPlay(player->charNo, 0x9E);
         }
         if (++w->evtTimer >= 0x1E) {
-            player->animNo = 0x1A;
-            player->animLoop = 0;
+            player->reqMotion = 0x1A;
+            player->loopMotion = 0;
             w->evtTimer = 0;
             w->state++;
         }
         break;
     case 3:
-        Hu3DMotionSpeedSet(player->motion, 3.0f);
+        Hu3DMotionSpeedSet(player->modelId, 3.0f);
         if (++w->evtTimer >= 0x28) {
-            Hu3DMotionSpeedSet(player->motion, 1.0f);
-            player->animNo = 1;
-            player->animLoop = 1;
+            Hu3DMotionSpeedSet(player->modelId, 1.0f);
+            player->reqMotion = 1;
+            player->loopMotion = 1;
             w->evtTimer = 0;
             w->state++;
         }
@@ -134,10 +134,10 @@ s32 fn_1_2446C(M562Work *w)
         dir.y = 0.0f;
         dir.z = -1.0f;
         if (fn_1_AD98(player, &dir, 0.9f) != 0) {
-            player->rotGoal = 180.0f;
-            player->rotSpeed = 180.0f;
-            player->animNo = 0;
-            player->animLoop = 1;
+            player->rotY = 180.0f;
+            player->goalRotY = 180.0f;
+            player->reqMotion = 0;
+            player->loopMotion = 1;
             w->evtTimer = 0;
             w->state++;
         }
@@ -202,8 +202,8 @@ s32 fn_1_2446C(M562Work *w)
             lbl_1_bss_7900 = 0;
             koopa->reqMotion = 0;
             koopa->loopMotion = 1;
-            player->animNo = 0x1A;
-            player->animLoop = 1;
+            player->reqMotion = 0x1A;
+            player->loopMotion = 1;
             camera->prevMode = 0;
             camera->posGoal = lbl_1_data_C30[3];
             camera->tgtGoal = lbl_1_data_C60[3];
@@ -217,7 +217,7 @@ s32 fn_1_2446C(M562Work *w)
         }
         break;
     case 10:
-        Hu3DMotionSpeedSet(player->motion, 3.0f);
+        Hu3DMotionSpeedSet(player->modelId, 3.0f);
         idx = (f32)w->evtTimer / 120.0f * (f32)((fire->count + 2) / 3);
         if (idx > (fire->count + 2) / 3) {
             clampIdx = (fire->count + 2) / 3;
@@ -229,7 +229,7 @@ s32 fn_1_2446C(M562Work *w)
         if (clampIdx != lbl_1_bss_7902 && fire->fire[clampIdx * 3].state != 7) {
             fn_1_814(0x8B7);
             fn_1_21B68(camera, 1, 0x32, 30.0f, 0.55f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
         }
         lbl_1_bss_7902 = clampIdx;
         for (i = 0; i < 3; i++) {
@@ -253,9 +253,9 @@ s32 fn_1_2446C(M562Work *w)
             lbl_1_bss_7910[i] += 6.0f;
         }
         if (++w->evtTimer > 0x78) {
-            Hu3DMotionSpeedSet(player->motion, 1.0f);
-            player->animNo = 0x1C;
-            player->animLoop = 0;
+            Hu3DMotionSpeedSet(player->modelId, 1.0f);
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
             for (i = 0; i < 3; i++) {
                 Hu3DModelAttrSet(lbl_1_bss_7928[i], HU3D_ATTR_DISPOFF);
             }

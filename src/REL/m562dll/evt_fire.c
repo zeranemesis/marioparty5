@@ -22,15 +22,15 @@ static Vec lbl_1_bss_794C;
    and the three fire rings rise up around him. */
 s32 fn_1_252B4(M562Work *w)
 {
-    M562EvtPlayer *player = (M562EvtPlayer *)&w->player;
+    M562Player *player = &w->player;
     M562Back *back = &w->back;
     CAMERA *camera = (CAMERA *)&w->camera[0];
     Koopa *koopa = (Koopa *)&w->koopa;
-    M562EvtFire *ring = (M562EvtFire *)&w->fireRing;
-    M562EvtInput *input = &player->input;
-    M562EvtFireEntry *e0 = &ring->entry[0];
-    M562EvtFireEntry *e1 = &ring->entry[1];
-    M562EvtFireEntry *e2 = &ring->entry[2];
+    FireRingMgr *ring = &w->fireRing;
+    M562PlayerInput *input = &player->input;
+    FireRing *e0 = &ring->ring[0];
+    FireRing *e1 = &ring->ring[1];
+    FireRing *e2 = &ring->ring[2];
     s32 done = 0;
     f32 t;
     f32 mag;
@@ -53,8 +53,8 @@ s32 fn_1_252B4(M562Work *w)
         e2->pos = goal;
         e1->pos = e2->pos;
         e0->pos = e1->pos;
-        player->animNo = 1;
-        player->animLoop = 1;
+        player->reqMotion = 1;
+        player->loopMotion = 1;
         if (GwSystem.subGameNo >= 1) {
             camera->mode = 1;
             camera->posGoal = lbl_1_data_CC8[1];
@@ -94,16 +94,16 @@ s32 fn_1_252B4(M562Work *w)
         mag = PSVECMag(&diff);
         if (mag > 40.0f) {
             PSVECNormalize(&diff, &diff);
-            input->btnA = 0;
-            input->btnB = 0;
-            input->stickX = 0;
-            input->stickY = 0;
-            input->stickX = 56.0f * diff.x;
-            input->stickY = 56.0f * -diff.z;
+            input->btn = 0;
+            input->btnDown = 0;
+            input->stkX = 0;
+            input->stkY = 0;
+            input->stkX = 56.0f * diff.x;
+            input->stkY = 56.0f * -diff.z;
             fn_1_7D58(player);
         } else {
-            player->animNo = 0;
-            player->animLoop = 1;
+            player->reqMotion = 0;
+            player->loopMotion = 1;
         }
         if (w->evtTimer++ > 0x78) {
             if (mag <= 50.0f) {
@@ -111,11 +111,11 @@ s32 fn_1_252B4(M562Work *w)
                 goal.y = 0.0f;
                 goal.z = 0.0f;
                 player->pos = goal;
-                player->animNo = 0;
-                player->animLoop = 1;
-                player->rotGoal = 0.0f;
-                player->rotSpeed = 0.0f;
-                player->rotY = player->rotGoal;
+                player->reqMotion = 0;
+                player->loopMotion = 1;
+                player->rotY = 0.0f;
+                player->goalRotY = 0.0f;
+                player->rot.y = player->rotY;
                 w->evtTimer = 0;
                 w->state++;
             }
@@ -146,8 +146,8 @@ s32 fn_1_252B4(M562Work *w)
             lbl_1_bss_7930 = 0;
             koopa->reqMotion = 0;
             koopa->loopMotion = 1;
-            player->animNo = 0x1A;
-            player->animLoop = 1;
+            player->reqMotion = 0x1A;
+            player->loopMotion = 1;
             camera->prevMode = 0;
             camera->posGoal = lbl_1_data_CC8[1];
             camera->tgtGoal = lbl_1_data_CE0[1];
@@ -161,33 +161,33 @@ s32 fn_1_252B4(M562Work *w)
         }
         break;
     case 4:
-        Hu3DMotionSpeedSet(player->motion, 3.0f);
+        Hu3DMotionSpeedSet(player->modelId, 3.0f);
         y = 40.0f + 1000.0f * (1.0f - (f32)w->evtTimer / 60.0f);
         e2->pos.y = y;
         e1->pos.y = y;
         e0->pos.y = y;
-        if (w->evtTimer == 0x14 && ring->sndHandle < 0) {
-            ring->sndHandle = fn_1_814(0x8A2);
+        if (w->evtTimer == 0x14 && ring->sound < 0) {
+            ring->sound = fn_1_814(0x8A2);
         }
         if (++w->evtTimer > 0x3C) {
             fn_1_21B68(camera, 1, 0x32, 30.0f, 0.55f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
-            Hu3DMotionSpeedSet(player->motion, 1.0f);
+            omVibrate(player->playerNo, 10, 12, 0);
+            Hu3DMotionSpeedSet(player->modelId, 1.0f);
             w->evtTimer = 0;
             w->state++;
         }
         break;
     case 5:
         t = (f32)w->evtTimer / 60.0f;
-        input->stickY = 0;
-        input->stickX = 0;
-        input->btnB = 0;
-        input->btnA = 0;
+        input->stkY = 0;
+        input->stkX = 0;
+        input->btnDown = 0;
+        input->btn = 0;
         if (w->evtTimer >= 10) {
             if (w->evtTimer == 10) {
-                input->btnB = 0x100;
+                input->btnDown = 0x100;
             }
-            input->btnA = 0x100;
+            input->btn = 0x100;
         }
         fn_1_7D58(player);
         e0->pos.x = lbl_1_bss_794C.x * t;
@@ -197,19 +197,19 @@ s32 fn_1_252B4(M562Work *w)
         e2->pos.x = lbl_1_bss_7934.x * t;
         e2->pos.z = lbl_1_bss_7934.z * t;
         if (++w->evtTimer > 0x3C) {
-            input->stickY = 0;
-            input->stickX = 0;
-            input->btnB = 0;
-            input->btnA = 0;
-            player->unk4 = 0;
-            player->unk6 = 0;
+            input->stkY = 0;
+            input->stkX = 0;
+            input->btnDown = 0;
+            input->btn = 0;
+            player->state = 0;
+            player->sub = 0;
             w->evtTimer = 0;
             w->state++;
         }
         break;
     case 6:
-        player->animNo = 0x1C;
-        player->animLoop = 0;
+        player->reqMotion = 0x1C;
+        player->loopMotion = 0;
         if (++w->evtTimer > 0x1E) {
             w->evtTimer = 0;
             w->state++;
@@ -223,8 +223,8 @@ s32 fn_1_252B4(M562Work *w)
         if (GwSystem.subGameNo < 1) {
             GwSystem.subGameNo = 1;
         }
-        player->unk6 = 0;
-        player->unk4 = 0;
+        player->sub = 0;
+        player->state = 0;
         w->state = 0;
         done = 1;
         break;
@@ -250,20 +250,20 @@ s32 fn_1_252B4(M562Work *w)
         mag = PSVECMag(&diff);
         if (mag > 5.0f) {
             PSVECNormalize(&diff, &diff);
-            input->btnA = 0;
-            input->btnB = 0;
-            input->stickX = 0;
-            input->stickY = 0;
-            input->stickX = 56.0f * diff.x;
-            input->stickY = 56.0f * -diff.z;
+            input->btn = 0;
+            input->btnDown = 0;
+            input->stkX = 0;
+            input->stkY = 0;
+            input->stkX = 56.0f * diff.x;
+            input->stkY = 56.0f * -diff.z;
             fn_1_7D58(player);
         } else {
             dir.x = 0.0f;
             dir.y = 0.0f;
             dir.z = 1.0f;
             if (fn_1_AD98(player, &dir, 0.9f) != 0) {
-                player->animNo = 0;
-                player->animLoop = 1;
+                player->reqMotion = 0;
+                player->loopMotion = 1;
             }
         }
         w->evtTimer++;
@@ -273,9 +273,9 @@ s32 fn_1_252B4(M562Work *w)
                 goal.y = 0.0f;
                 goal.z = 0.0f;
                 player->pos = goal;
-                player->rotGoal = 0.0f;
-                player->rotSpeed = 0.0f;
-                player->rotY = player->rotGoal;
+                player->rotY = 0.0f;
+                player->goalRotY = 0.0f;
+                player->rot.y = player->rotY;
                 w->evtTimer = 0;
                 w->state++;
             }
@@ -286,8 +286,8 @@ s32 fn_1_252B4(M562Work *w)
         dir.y = 0.0f;
         dir.z = 1.0f;
         if (fn_1_AD98(player, &dir, 0.9f) != 0) {
-            player->animNo = 0x1A;
-            player->animLoop = 1;
+            player->reqMotion = 0x1A;
+            player->loopMotion = 1;
             ring->active = 1;
             w->evtTimer = 0;
             w->state = 4;

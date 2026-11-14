@@ -14,7 +14,7 @@ static Vec lbl_1_data_F94 = { 0.0f, 0.0f, 0.0f };
    the wipe closes the battle. */
 s32 fn_1_2C118(M562Work *w)
 {
-    M562EvtPlayer *player = (M562EvtPlayer *)&w->player;
+    M562Player *player = &w->player;
     CAMERA *camera = (CAMERA *)&w->camera[0];
     s32 done = 0;
     s32 ok;
@@ -67,8 +67,8 @@ s32 fn_1_2C118(M562Work *w)
         d.y = 0.0f;
         d.z = 1.0f;
         if (fn_1_AD98(player, &d, 0.9f) != 0) {
-            player->animNo = 0;
-            player->animLoop = 1;
+            player->reqMotion = 0;
+            player->loopMotion = 1;
         }
         ok = 1;
         if (w->mode == 3) {
@@ -79,8 +79,8 @@ s32 fn_1_2C118(M562Work *w)
             fn_1_A6C(0x7A);
             if (w->winner == 2) {
                 CharLoseVoicePlay(player->charNo, -1, -1, -1);
-                player->animNo = 0x19;
-                player->animLoop = 0;
+                player->reqMotion = 0x19;
+                player->loopMotion = 0;
                 w->evtTimer = 0;
                 w->state = 0xA;
             } else {
@@ -94,8 +94,8 @@ s32 fn_1_2C118(M562Work *w)
         w->state++;
         break;
     case 4:
-        player->animNo = 0x1D;
-        player->animLoop = 0;
+        player->reqMotion = 0x1D;
+        player->loopMotion = 0;
         if (++w->evtTimer >= 0x78) {
             WipeCreate(2, 0x89, 0x3C);
             fn_1_814(0x8B6);
@@ -104,8 +104,8 @@ s32 fn_1_2C118(M562Work *w)
         }
         break;
     case 10:
-        player->animNo = 0x19;
-        player->animLoop = 0;
+        player->reqMotion = 0x19;
+        player->loopMotion = 0;
         if (++w->evtTimer >= 0xB4) {
             WipeCreate(2, 0x89, 0x3C);
             fn_1_814(0x8B6);
@@ -135,7 +135,7 @@ s32 fn_1_2C118(M562Work *w)
 s32 fn_1_2C648(M562Work *w)
 {
     Koopa *koopa = (Koopa *)&w->koopa;
-    M562EvtPlayer *player = (M562EvtPlayer *)&w->player;
+    M562Player *player = &w->player;
     CAMERA *camera = (CAMERA *)&w->camera[0];
     s32 ret = 1;
     Vec playerPos;

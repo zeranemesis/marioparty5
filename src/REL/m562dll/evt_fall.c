@@ -18,7 +18,7 @@ static s16 lbl_1_bss_798C;
    order), Bowser falls out of view and the wipe ends the scene. */
 s32 fn_1_27950(M562Work *w)
 {
-    M562EvtPlayer *player = (M562EvtPlayer *)&w->player;
+    M562Player *player = &w->player;
     M562Back *back = &w->back;
     CAMERA *camera = (CAMERA *)&w->camera[0];
     Koopa *koopa = (Koopa *)&w->koopa;
@@ -63,10 +63,10 @@ s32 fn_1_27950(M562Work *w)
         camera->prevMode = 0;
         camera->speed = 0.04f;
         camera->slerpT = 0.04f;
-        player->unk4 = 0;
-        player->animNo = 0x1A;
-        player->animLoop = 1;
-        Hu3DMotionSpeedSet(player->motion, 3.0f);
+        player->state = 0;
+        player->reqMotion = 0x1A;
+        player->loopMotion = 1;
+        Hu3DMotionSpeedSet(player->modelId, 3.0f);
         lbl_1_bss_798C = 0;
         w->evtTimer = 0;
         w->state++;
@@ -84,11 +84,11 @@ s32 fn_1_27950(M562Work *w)
             clamped = t;
         }
         Hu3DMotionSpeedSet(back->model40, 0.25 + 2.0 * sin(M_PI * (f64)(180.0f * clamped) / 180.0));
-        Hu3DMotionSpeedSet(player->motion, 3.0f);
+        Hu3DMotionSpeedSet(player->modelId, 3.0f);
         w->evtTimer++;
         if (w->evtTimer % 10 == 0) {
             fn_1_21B68(camera, 1, 0x32, 10.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            omVibrate(player->playerNo, 0x14, 0xC, 0);
         }
         if (w->evtTimer % 5 == 0) {
             if (lbl_1_bss_798C < 20) {
@@ -99,7 +99,7 @@ s32 fn_1_27950(M562Work *w)
                 }
                 lbl_1_bss_798C++;
             } else {
-                Hu3DMotionSpeedSet(player->motion, 1.0f);
+                Hu3DMotionSpeedSet(player->modelId, 1.0f);
                 w->evtTimer = 0;
                 w->state++;
             }
@@ -108,23 +108,23 @@ s32 fn_1_27950(M562Work *w)
     case 2:
         fn_1_814(0x8C3);
         lbl_1_bss_7960->state = 0xA;
-        player->velY = 0.0f;
-        player->unk4 = 0;
-        player->animNo = 0x17;
-        player->animLoop = 0;
-        Hu3DMotionSpeedSet(player->motion, 1.0f);
+        player->vy = 0.0f;
+        player->state = 0;
+        player->reqMotion = 0x17;
+        player->loopMotion = 0;
+        Hu3DMotionSpeedSet(player->modelId, 1.0f);
         w->evtTimer = 0;
         w->state++;
         break;
     case 3:
         w->evtTimer++;
         if (w->evtTimer == 0x1C) {
-            player->animNo = 0;
-            player->animLoop = 0;
+            player->reqMotion = 0;
+            player->loopMotion = 0;
         }
         if (w->evtTimer >= 0x1E) {
-            player->velY -= 1.5f;
-            player->pos.y += player->velY;
+            player->vy -= 1.5f;
+            player->pos.y += player->vy;
             if (player->pos.y < -2000.0f) {
                 w->evtTimer = 0;
                 w->state++;
@@ -136,8 +136,8 @@ s32 fn_1_27950(M562Work *w)
         if (w->evtTimer >= 0x1E) {
             WipeCreate(2, 0, 0x3C);
             WipeColorSet(0, 0, 0);
-            player->unk6 = 0;
-            player->unk4 = 0;
+            player->sub = 0;
+            player->state = 0;
             w->evtTimer = 0;
             w->state++;
         }
