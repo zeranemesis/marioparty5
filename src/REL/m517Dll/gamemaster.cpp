@@ -1,426 +1,579 @@
-// m517Dll gamemaster unit: CGameMaster and its singleton sub-objects.
+// m517Dll gamemaster: the game master. It owns the three sets (players, balls,
+// choros), the timer, the player model holder and the paper textures, creates
+// every object of the game and runs the game flow on its sub thread.
 //
 // Every definition keeps C linkage: the target symbols (fn_1_A168 ...) are
-// unmangled, so a C++-mangled definition would never pair up in objdiff.
-//
-// lbl_1_data_3C0 is one 12-word object holding both vtables; the constructor
-// stores &vtable and &vtable[6] into the base slots at +0x04 and +0x20.
-// lbl_1_data_338/344/350/374/380/38C are the six 12-byte singleton records
-// {ptr, slot, initFn}.  lbl_1_bss_A1C/A20 are the smart-pointer slots that
-// the registering helpers assert must still be NULL.
-
-typedef signed int s32;
-typedef signed short s16;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef float f32;
-
-struct CGameMaster {
-    void *m_f0;        // 0x00 core object
-    void *m_vtbl;      // 0x04
-    char m_f8[0x18];   // 0x08
-    void *m_vtbl2;     // 0x20
-    char m_f24[0x334]; // 0x24
-void *m_f358;      // 0x358
-    void *m_f35C;      // 0x35C
-    void *m_f360;      // 0x360
-    void *m_f364;      // 0x364
-    unsigned char m_f368;
-    unsigned char m_f369;
-    char m_f36A[6];
-};
-
-// {ptr, slot, initFn}: the record each registered singleton keeps.
-struct CSingleton {
-    void *m_ptr;
-    s32 m_slot;
-    void (*m_init)(void);
-};
-
-// Head of the circular sub-object list that fn_1_A748 / fn_1_A860 walk.
-struct CSubHead {
-    struct CSubHead *m_next;   // 0x00
-    struct CSubHead *m_first;  // 0x04
-};
-
-// Declared here rather than through the game headers: those pull in MSL
-// math.h, whose inline std::sqrtf emits constants into .rodata.
+// unmangled.
+#define _MATH_H
+#include "REL/m517Dll.h"
 extern "C" {
-void *fn_1_1E84(u32 size);
-s32 fn_1_2058(const char *msg, const char *tag, s32 id);
-void *fn_1_7558(void *p, s32 mode);
-void fn_1_2DA8(void *p);
-void fn_1_39F8(void *self);
-void fn_1_6D20(void *self, s32 v);
-void fn_1_1F4C(void *self);
-void fn_1_2DB4(void *self, s32 flag);
-void fn_1_10F8(void *self, s32 flag);
-void fn_1_10F88(void *self, s32 flag);
-void fn_1_1415C(void *obj, s32 mode);
-void fn_1_15724(void *obj, s32 mode);
-void fn_1_7620(void *obj, s32 mode);
-void fn_1_B8A8(void *self);
-void fn_1_BA58(void *self);
-void fn_1_10F8(void *self, s32 flag);
-void fn_1_10F88(void *self, s32 flag);
-void fn_1_BA58(void *self);
-void fn_1_BAFC(void *self);
-void fn_1_3920(void);
-void fn_1_111A8(void);
-void fn_1_17614(void);
-void fn_1_16B68(void);
-void fn_1_16918(void);
-void fn_1_13D4(void);
-void fn_1_11850(void);
-unsigned char fn_1_78D0(void *self);
-void fn_1_A488(void *self, s32 mode);
-void fn_1_629C(void *self);
-void fn_1_6D9C(void *self, s32 mode);
-void fn_1_3B84(void *self, s32 mode);
-void fn_1_64C0(void);
-void *fn_1_E3A4(void *self);
-void *fn_1_DC4C(void *self);
-void *fn_1_15DC8(void *self, s32 idx);
-void *fn_1_10634(void *self);
-void *fn_1_124B4(void *self);
-void *fn_1_13F7C(void *self);
-u32 OSGetTick(void);
-CGameMaster *fn_1_AB90(CGameMaster *self, s16 value);
-void fn_1_AC64(CGameMaster *self);
-void fn_1_ADA8(void *self);
-void fn_1_B058(void *self);
-
-// smart-pointer slots owned by other units of this REL
-extern void *lbl_1_bss_0;
-extern void *lbl_1_bss_A08;
-
-extern "C" void fn_1_A168(CGameMaster *self);
-extern "C" CSubHead *fn_1_A748(CSubHead *self, s16 value);
-extern "C" CSubHead *fn_1_A860(CSubHead *self, s16 value);
-extern "C" void fn_1_A978(void *self);
-extern "C" void fn_1_B2CC(CGameMaster *self);
-extern "C" s32 fn_1_B310(CGameMaster *self);
-extern "C" s32 fn_1_B414(void);
-extern "C" void fn_1_B4C4(CGameMaster *self);
-extern "C" void fn_1_B5C0(void);
-extern "C" void fn_1_B660(void);
-extern "C" void fn_1_B730(void *self);
-extern "C" void fn_1_B8A8(void *self);
-void fn_1_BA58(void *self);
-void fn_1_10F8(void *self, s32 flag);
-void fn_1_10F88(void *self, s32 flag);
-extern "C" void fn_1_BAFC(void *self);
-extern "C" void fn_1_BBA0(void *listA, void *listB, void (*fn)(void *, void *));
-extern "C" void fn_1_BC3C(void *listA, void *listB, void (*fn)(void *, void *));
-extern "C" void fn_1_BCD8(void *listA, void (*fn)(void *, void *));
-extern "C" void fn_1_BDA0(void);
-extern "C" void fn_1_BDA8(void);
+#include "game/audio.h"
 }
 
-CSingleton lbl_1_data_338 = {0, -1, fn_1_111A8};
-CSingleton lbl_1_data_344 = {0, -1, fn_1_17614};
-CSingleton lbl_1_data_350 = {0, -1, fn_1_16B68};
-char lbl_1_data_35C[] = "sm_ptr == NULL";
-char lbl_1_data_36B[] = "es_a";
-char lbl_1_data_370[] = "h.t";
-CSingleton lbl_1_data_374 = {0, -1, fn_1_16918};
-CSingleton lbl_1_data_380 = {0, -1, fn_1_13D4};
-CSingleton lbl_1_data_38C = {0, -1, fn_1_11850};
-char lbl_1_data_398[] = "sm_ptr != 0";
-char lbl_1_data_3A4[] = "ms_pointer != 0";
-char lbl_1_data_3B4[] = "singleton.h";
-void *lbl_1_data_3C0[] = {
-    0, 0, fn_1_AB90, fn_1_AC64, fn_1_ADA8, fn_1_B2CC,
-    0, 0, fn_1_BDA8, fn_1_BDA0, fn_1_B058, 0
-};
+#ifdef __MWERKS__
+#define M517_RODATA __declspec(section ".rodata")
+#else
+#define M517_RODATA
+#endif
 
+// Vtable of the master followed by the one of its thread base.
+typedef struct M517GMVtbl_s {
+    M517MasterVtbl master;
+    void *thread[6];
+} M517GMVtbl;
+
+// The paper texture holder lives in papereff.cpp: eight ANIMDATA pointers.
+#define M517_PAPERTEX_SIZE (8 * sizeof(void *))
+
+typedef void (*M517PairFn)(M517Node *, M517Node *);
+
+extern "C" {
+
+// Objects of other units.
+void fn_1_111A8(void *self);
+void fn_1_11850(void *self);
+void fn_1_16918(void *self);
+void fn_1_17614(void *self);
+void fn_1_16B68(void *self);
+M517Player *fn_1_15DC8(M517Player *self, s32 playerNo);
+M517PlayerModels *fn_1_15500(M517PlayerModels *self);
+M517PlayerModels *fn_1_15724(M517PlayerModels *self, s16 flag);
+void fn_1_184E8(M517Player *self, s32 win);
+void fn_1_1593C(M517Player *self);
+void fn_1_1A230(M517Player *a, M517Player *b);
+M517Choro *fn_1_10634(M517Choro *self);
+M517Choro *fn_1_10F88(M517Choro *self, s16 flag);
+M517ChoroMgr *fn_1_124B4(M517ChoroMgr *self);
+void fn_1_121D8(M517Choro *choro, M517Player *player);
+struct M517PaperTex_s *fn_1_13F7C(struct M517PaperTex_s *self);
+struct M517PaperTex_s *fn_1_1415C(struct M517PaperTex_s *self, s16 flag);
+
+// Empty vector hooks.
+void fn_1_A740(void);
+void fn_1_A744(void);
+
+M517SetsPtr *fn_1_A430(M517SetsPtr *self, s16 flag);
+M517Sets *fn_1_A488(M517Sets *self, s16 flag);
+M517Node *fn_1_A748(M517Node *self, s16 flag);
+M517Node *fn_1_A808(M517Node *self, s16 flag);
+M517Node *fn_1_A860(M517Node *self, s16 flag);
+M517Node *fn_1_A920(M517Node *self, s16 flag);
+M517Node *fn_1_A978(M517Node *self, s16 flag);
+M517Node *fn_1_AB38(M517Node *self, s16 flag);
+u8 fn_1_B310(M517GameMaster *self);
+u8 fn_1_B414(M517GameMaster *self);
+void fn_1_B4C4(M517GameMaster *self);
+void fn_1_B5C0(M517GameMaster *self);
+void fn_1_B660(M517GameMaster *self);
+void fn_1_B730(M517GameMaster *self);
+void fn_1_B8A8(M517GameMaster *self);
+void fn_1_BA58(M517GameMaster *self);
+void fn_1_BAFC(M517GameMaster *self);
+void fn_1_BBA0(M517Node *listA, M517Node *listB, M517PairFn fn);
+void fn_1_BC3C(M517Node *listA, M517Node *listB, M517PairFn fn);
+void fn_1_BCD8(M517Node *listA, M517PairFn fn);
+void fn_1_BD6C(void);
+void fn_1_BDA0(M517SubThread *thread);
+M517Master *fn_1_BDA8(M517SubThread *thread, s16 flag);
+
+// Plain pointers: the singletons of the sets (players: input.cpp, balls: effect.cpp).
+extern void *lbl_1_bss_A08;
+extern void *lbl_1_bss_0;
+
+M517Node *lbl_1_bss_A1C;
+M517Camera *lbl_1_bss_A20;
 s32 lbl_1_bss_A10;
 s32 lbl_1_bss_A14;
 s32 lbl_1_bss_A18;
-void *lbl_1_bss_A1C;
-void *lbl_1_bss_A20;
 
-// MWCC inlines a definition into its callers inside this translation unit,
-// which deletes the call the original keeps (an empty callee folds away
-// completely).  Keep every definition out of line.
-#pragma dont_inline on
-extern "C" void fn_1_A168(CGameMaster *self)
+// Each registered singleton keeps the state hook run for it every frame.
+M517Ptmf lbl_1_data_338 = { 0, -1, (void (*)(void *))fn_1_111A8 };
+M517Ptmf lbl_1_data_344 = { 0, -1, (void (*)(void *))fn_1_17614 };
+M517Ptmf lbl_1_data_350 = { 0, -1, (void (*)(void *))fn_1_16B68 };
+char lbl_1_data_35C[] = "sm_ptr == NULL";
+char lbl_1_data_36B[9] = "a_set.h";
+M517Ptmf lbl_1_data_374 = { 0, -1, (void (*)(void *))fn_1_16918 };
+M517Ptmf lbl_1_data_380 = { 0, -1, (void (*)(void *))fn_1_13D4 };
+M517Ptmf lbl_1_data_38C = { 0, -1, (void (*)(void *))fn_1_11850 };
+char lbl_1_data_398[] = "sm_ptr != 0";
+char lbl_1_data_3A4[] = "ms_pointer != 0";
+char lbl_1_data_3B4[] = "singleton.h";
+M517GMVtbl lbl_1_data_3C0 = {
+    { { 0, 0 }, fn_1_AB90, (void (*)(M517Master *, OMOBJMAN *))fn_1_AC64, (void (*)(M517Master *))fn_1_ADA8,
+      (void (*)(M517Master *))fn_1_B2CC },
+    { 0, 0, (void *)fn_1_BDA8, (void *)fn_1_BDA0, (void *)fn_1_B058, 0 },
+};
+
+// The original expands both helpers into every user.
+#ifdef __MWERKS__
+#pragma always_inline on
+#endif
+// True when the list holds no element besides its sentinel.
+static inline u8 M517ListEmpty(M517Node *n)
 {
-    fn_1_39F8(self);
-    fn_1_6D20(&self->m_vtbl2, 0x8000);
-    self->m_vtbl = lbl_1_data_3C0;
-    self->m_vtbl2 = &lbl_1_data_3C0[6];
+    u8 r = 0;
 
-    void *p = fn_1_1E84(0x18);
+    if ((n->next == n) && (n->next == n->prev)) {
+        r = 1;
+    }
+    return r;
+}
+
+// Delete a player the way its destructor does.
+static inline void M517PlayerDelete(M517Player *p)
+{
     if (p != 0) {
-        void *base = p;
-        void *a0 = base;
-        void *t0 = a0;
-
-        fn_1_2DA8(t0);
-        if (lbl_1_bss_A08 != 0) {
-            fn_1_2058(lbl_1_data_35C, lbl_1_data_36B, 0x15);
-        } else {
-            lbl_1_bss_A08 = a0;
+        if (&p->dust != 0) {
+            fn_1_C4F4(p->dust, 1);
         }
+        if (&p->paper != 0) {
+            M517Task *t = p->paper;
 
-        void *a1 = (char *)base + 8;
-        void *t1 = a1;
-
-        fn_1_2DA8(t1);
-        if (lbl_1_bss_0 != 0) {
-            fn_1_2058(lbl_1_data_35C, lbl_1_data_36B, 0x15);
-        } else {
-            lbl_1_bss_0 = a1;
+            if (t != 0) {
+                t->vtbl->dtor(t, 1);
+            }
         }
-
-        void *a2 = (char *)base + 0x10;
-        void *t2 = a2;
-
-        fn_1_2DA8(t2);
-        if (lbl_1_bss_A1C != 0) {
-            fn_1_2058(lbl_1_data_35C, lbl_1_data_36B, 0x15);
-        } else {
-            lbl_1_bss_A1C = a2;
+        if (&p->ball != 0) {
+            fn_1_10F8(p->ball, 1);
         }
+        if (&p->input != 0) {
+            M517Input *in = p->input;
 
-        p = base;
+            if (in != 0) {
+                in->vtbl->dtor(in, 1);
+            }
+        }
+        if (&p->model != 0) {
+            fn_1_4BAC(p->model, 1);
+        }
+        if ((&p->mot != 0) && (&p->mot != 0) && (&p->mot != 0) && (p->mot.data != 0)) {
+            s16 *data;
+
+            fn_1_A744();
+            data = p->mot.data;
+            fn_1_A740();
+            fn_1_1F4C(data);
+        }
+        if (p != 0) {
+            fn_1_2DB4(&p->link, 0);
+        }
+        fn_1_1F4C(p);
     }
-    void *made = p;
-    self->m_f358 = made;
-
-    void *q = fn_1_1E84(0x4);
-    if (q != 0) {
-        q = (void *)fn_1_7558(q, 0);
-    }
-    void *made2 = q;
-    self->m_f35C = made2;
-    self->m_f360 = 0;
-    self->m_f364 = 0;
-    self->m_f368 = 0;
-    self->m_f369 = 0;
 }
 
-extern "C" CGameMaster *fn_1_A328(CGameMaster *self, s16 value)
+#ifdef __MWERKS__
+#pragma always_inline off
+#endif
+M517GameMaster *fn_1_A168(M517GameMaster *self)
 {
+    M517Sets *sets;
+    M517TimerObj *timer;
 
+    fn_1_39F8(&self->base);
+    fn_1_6D20(&self->thread, 0x8000);
+    self->base.vtbl = &lbl_1_data_3C0.master;
+    self->thread.vtbl = (M517ThreadVtbl *)lbl_1_data_3C0.thread;
+    sets = (M517Sets *)fn_1_1E84(sizeof(M517Sets));
+    if (sets != 0) {
+        fn_1_2DA8(&sets->players);
+        M517_ASSERT(lbl_1_bss_A08 == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
+        lbl_1_bss_A08 = &sets->players;
+        fn_1_2DA8(&sets->balls);
+        M517_ASSERT(lbl_1_bss_0 == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
+        lbl_1_bss_0 = &sets->balls;
+        fn_1_2DA8(&sets->choros);
+        M517_ASSERT(lbl_1_bss_A1C == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
+        lbl_1_bss_A1C = &sets->choros;
+    }
+    self->sets.p = sets;
+    timer = (M517TimerObj *)fn_1_1E84(sizeof(M517TimerObj));
+    if (timer != 0) {
+        timer = fn_1_7558(timer, 0);
+    }
+    self->timer.p = timer;
+    self->models.p = 0;
+    self->paper.p = 0;
+    self->win = 0;
+    self->active = 0;
+    return self;
+}
+
+// Owning slot of the paper textures.
+M517PaperTexPtr *fn_1_A328(M517PaperTexPtr *self, s16 flag)
+{
     if (self != 0) {
-        fn_1_1415C(self->m_f0, 1);
-        if (value > 0) {
+        fn_1_1415C(self->p, 1);
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" CGameMaster *fn_1_A380(CGameMaster *self, s16 value)
+// Owning slot of the player models.
+M517PlayerModelsPtr *fn_1_A380(M517PlayerModelsPtr *self, s16 flag)
 {
-
     if (self != 0) {
-        fn_1_15724(self->m_f0, 1);
-        if (value > 0) {
+        fn_1_15724(self->p, 1);
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" CGameMaster *fn_1_A3D8(CGameMaster *self, s16 value)
+// Owning slot of the timer.
+M517TimerPtr *fn_1_A3D8(M517TimerPtr *self, s16 flag)
 {
-
     if (self != 0) {
-        fn_1_7620(self->m_f0, 1);
-        if (value > 0) {
+        fn_1_7620(self->p, 1);
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-#pragma dont_inline on
-extern "C" CGameMaster *fn_1_A430(CGameMaster *self, s16 value)
+// Owning slot of the sets.
+M517SetsPtr *fn_1_A430(M517SetsPtr *self, s16 flag)
 {
-
     if (self != 0) {
-        fn_1_A488(self->m_f0, 1);
-        if (value > 0) {
+        fn_1_A488(self->p, 1);
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
-#pragma dont_inline reset
 
-extern "C" void fn_1_A488(void *self, s32 mode)
-{
-}
-
-extern "C" void fn_1_A740(void)
-{
-}
-
-extern "C" void fn_1_A744(void)
-{
-}
-
-extern "C" CSubHead *fn_1_A748(CSubHead *self, s16 value)
+// Destroy the three sets and every element in them.
+M517Sets *fn_1_A488(M517Sets *self, s16 flag)
 {
     if (self != 0) {
-while ((self->m_next == self && self->m_next == self->m_first) == 0) {
-            CSubHead *first = self->m_first;
-            CSubHead *sub = first;
-            fn_1_10F88(sub, 1);
+        if (&self->choros != 0) {
+            while (!M517ListEmpty(&self->choros)) {
+                fn_1_10F88((M517Choro *)self->choros.prev, 1);
+            }
+            if (&self->choros != 0) {
+                fn_1_2DB4(&self->choros, 0);
+            }
+        }
+        if (&self->balls != 0) {
+            while (!M517ListEmpty(&self->balls)) {
+                fn_1_10F8((M517Ball *)self->balls.prev, 1);
+            }
+            if (&self->balls != 0) {
+                fn_1_2DB4(&self->balls, 0);
+            }
+        }
+        if (&self->players != 0) {
+            while (!M517ListEmpty(&self->players)) {
+                M517Player *p = (M517Player *)self->players.prev;
+
+                M517PlayerDelete(p);
+            }
+            if (&self->players != 0) {
+                fn_1_2DB4(&self->players, 0);
+            }
+        }
+        if (flag > 0) {
+            fn_1_1F4C(self);
+        }
+    }
+    return self;
+}
+
+void fn_1_A740(void)
+{
+}
+
+void fn_1_A744(void)
+{
+}
+
+// Set of choros.
+M517Node *fn_1_A748(M517Node *self, s16 flag)
+{
+    if (self != 0) {
+        while (!M517ListEmpty(self)) {
+            fn_1_10F88((M517Choro *)self->prev, 1);
         }
         if (self != 0) {
             fn_1_2DB4(self, 0);
         }
-        if (value > 0) {
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" CGameMaster *fn_1_A808(CGameMaster *self, s16 value)
+M517Node *fn_1_A808(M517Node *self, s16 flag)
 {
-
     if (self != 0) {
         fn_1_2DB4(self, 0);
-        if (value > 0) {
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" CSubHead *fn_1_A860(CSubHead *self, s16 value)
+// Set of balls.
+M517Node *fn_1_A860(M517Node *self, s16 flag)
 {
     if (self != 0) {
-        while ((self->m_next == self && self->m_next == self->m_first) == 0) {
-            CSubHead *first = self->m_first;
-            CSubHead *sub = first;
-            fn_1_10F8(sub, 1);
+        while (!M517ListEmpty(self)) {
+            fn_1_10F8((M517Ball *)self->prev, 1);
         }
         if (self != 0) {
             fn_1_2DB4(self, 0);
         }
-        if (value > 0) {
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" CGameMaster *fn_1_A920(CGameMaster *self, s16 value)
+M517Node *fn_1_A920(M517Node *self, s16 flag)
 {
-
     if (self != 0) {
         fn_1_2DB4(self, 0);
-        if (value > 0) {
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" void fn_1_A978(void *self)
+// Set of players.
+M517Node *fn_1_A978(M517Node *self, s16 flag)
 {
+    if (self != 0) {
+        while (!M517ListEmpty(self)) {
+            M517Player *p = (M517Player *)self->prev;
+
+            M517PlayerDelete(p);
+        }
+        if (self != 0) {
+            fn_1_2DB4(self, 0);
+        }
+        if (flag > 0) {
+            fn_1_1F4C(self);
+        }
+    }
+    return self;
 }
 
-extern "C" CGameMaster *fn_1_AB38(CGameMaster *self, s16 value)
+M517Node *fn_1_AB38(M517Node *self, s16 flag)
 {
-
     if (self != 0) {
         fn_1_2DB4(self, 0);
-        if (value > 0) {
+        if (flag > 0) {
             fn_1_1F4C(self);
         }
     }
     return self;
 }
 
-extern "C" CGameMaster *fn_1_AB90(CGameMaster *self, s16 value)
+#ifdef __MWERKS__
+#pragma dont_inline on // the original keeps the call to fn_1_A430
+#endif
+M517Master *fn_1_AB90(M517Master *self, s16 flag)
 {
+    M517GameMaster *gm = (M517GameMaster *)self;
+
     if (self != 0) {
-        self->m_vtbl = lbl_1_data_3C0;
-        self->m_vtbl2 = &lbl_1_data_3C0[6];
-        if ((void *)&self->m_f364 != 0) {
-            fn_1_1415C(self->m_f364, 1);
+        gm->base.vtbl = &lbl_1_data_3C0.master;
+        gm->thread.vtbl = (M517ThreadVtbl *)lbl_1_data_3C0.thread;
+        if ((void *)&gm->paper != 0) {
+            fn_1_1415C(gm->paper.p, 1);
         }
-        if ((void *)&self->m_f360 != 0) {
-            fn_1_15724(self->m_f360, 1);
+        if ((void *)&gm->models != 0) {
+            fn_1_15724(gm->models.p, 1);
         }
-        if ((void *)&self->m_f35C != 0) {
-            fn_1_7620(self->m_f35C, 1);
+        if ((void *)&gm->timer != 0) {
+            fn_1_7620(gm->timer.p, 1);
         }
-        fn_1_A430((CGameMaster *)((char *)self + 0x358), -1);
-        fn_1_6D9C(&self->m_vtbl2, 0);
-        fn_1_3B84(self, 0);
-        if (value > 0) {
+        fn_1_A430(&gm->sets, -1);
+        fn_1_6D9C(&gm->thread, 0);
+        fn_1_3B84(&gm->base, 0);
+        if (flag > 0) {
             fn_1_629C(self);
         }
     }
     return self;
 }
 
-extern "C" void fn_1_AC64(CGameMaster *self)
-{
-    OSGetTick();
-    fn_1_64C0();
+#ifdef __MWERKS__
+#pragma dont_inline reset
+#endif
 
-    void *stage = fn_1_1E84(0x24);
+// Master setup: create every object of the game.
+void fn_1_AC64(M517GameMaster *self)
+{
+    M517Stage *stage;
+    M517Camera *camera;
+    M517ChoroMgr *mgr;
+    struct M517PaperTex_s *paper;
+    s32 i;
+
+    fn_1_64C0(OSGetTick());
+    stage = (M517Stage *)fn_1_1E84(sizeof(M517Stage));
     if (stage != 0) {
         stage = fn_1_E3A4(stage);
     }
-
-    void *camera = fn_1_1E84(0x80);
+    camera = (M517Camera *)fn_1_1E84(sizeof(M517Camera));
     if (camera != 0) {
         camera = fn_1_DC4C(camera);
     }
+    for (i = 0; i < 4; i++) {
+        M517Player *p = (M517Player *)fn_1_1E84(sizeof(M517Player));
 
-    for (s32 i = 0; i < 4; i++) {
-        void *item = fn_1_1E84(0xD4);
-        if (item != 0) {
-            item = fn_1_15DC8(item, i);
+        if (p != 0) {
+            p = fn_1_15DC8(p, i);
         }
     }
+    for (i = 0; i < 0xC; i++) {
+        M517Choro *c = (M517Choro *)fn_1_1E84(sizeof(M517Choro));
 
-    for (s32 j = 0; j < 0xC; j++) {
-        void *node = fn_1_1E84(0x7C);
-        if (node != 0) {
-            node = fn_1_10634(node);
+        if (c != 0) {
+            c = fn_1_10634(c);
         }
     }
-
-    void *board = fn_1_1E84(0xB4);
-    if (board != 0) {
-        board = fn_1_124B4(board);
+    mgr = (M517ChoroMgr *)fn_1_1E84(sizeof(M517ChoroMgr));
+    if (mgr != 0) {
+        mgr = fn_1_124B4(mgr);
     }
-
-    void *scene = fn_1_1E84(0x20);
-    if (scene != 0) {
-        scene = fn_1_13F7C(scene);
+    paper = (struct M517PaperTex_s *)fn_1_1E84(M517_PAPERTEX_SIZE);
+    if (paper != 0) {
+        paper = fn_1_13F7C(paper);
     }
-
-    void *built = scene;
-
-    if (self->m_f364 != built) {
-        fn_1_1415C(self->m_f364, 1);
-        self->m_f364 = built;
+    if (self->paper.p != paper) {
+        fn_1_1415C(self->paper.p, 1);
+        self->paper.p = paper;
     }
 }
 
-extern "C" void fn_1_ADA8(void *self)
+// Master update: step the thread, run every element's per-frame hook and the collisions.
+void fn_1_ADA8(M517GameMaster *self)
 {
+    M517Node *players;
+    M517Node *balls;
+    M517Node *choros;
+    M517Node *it;
+    M517Node *end;
+    M517Ptmf hook;
+
+    fn_1_6E50(&self->thread, 0);
+    fn_1_38B0();
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    players = (M517Node *)lbl_1_bss_A08;
+    M517_ASSERT(lbl_1_bss_0 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    balls = (M517Node *)lbl_1_bss_0;
+    M517_ASSERT(lbl_1_bss_A1C != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    choros = lbl_1_bss_A1C;
+    hook = lbl_1_data_374;
+    it = players->next;
+    end = players;
+    while (it != end) {
+        M517_PTMF_CALL(&hook, it);
+        it = it->next;
+    }
+    if (self->active == 1) {
+        fn_1_BCD8(players, (M517PairFn)fn_1_1A230);
+        fn_1_BC3C(balls, players, (M517PairFn)fn_1_1CEC);
+        fn_1_BBA0(choros, players, (M517PairFn)fn_1_121D8);
+    }
+    hook = lbl_1_data_380;
+    it = balls->next;
+    end = balls;
+    while (it != end) {
+        M517_PTMF_CALL(&hook, it);
+        it = it->next;
+    }
+    hook = lbl_1_data_38C;
+    it = choros->next;
+    end = choros;
+    while (it != end) {
+        M517_PTMF_CALL(&hook, it);
+        it = it->next;
+    }
 }
 
-#pragma dont_inline on
-extern "C" void fn_1_B058(void *self)
+// The game flow (runs on the sub thread).
+void fn_1_B058(M517GameMaster *self)
 {
-}
-#pragma dont_inline reset
+    M517Camera *camera;
+    M517PlayerModels *models;
+    s32 bgm;
+    s32 i;
 
-extern "C" void fn_1_B2CC(CGameMaster *self)
+    bgm = HuAudBGMPlay(0x53);
+    fn_1_378C(0);
+    fn_1_46A4();
+    models = (M517PlayerModels *)fn_1_1E84(sizeof(M517PlayerModels));
+    if (models != 0) {
+        models = fn_1_15500(models);
+    }
+    if (self->models.p != models) {
+        fn_1_15724(self->models.p, 1);
+        self->models.p = models;
+    }
+    fn_1_B660(self);
+    while (fn_1_3824() == 0) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+    fn_1_378C(1);
+    fn_1_41BC();
+    while (fn_1_432C() == 0) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+    fn_1_B730(self);
+    if (self->models.p != 0) {
+        fn_1_15724(self->models.p, 1);
+        self->models.p = 0;
+    }
+    self->active = 1;
+    fn_1_378C(2);
+    fn_1_767C(self->timer.p, 0xA8C, 0, 0);
+    fn_1_7774(self->timer.p, 1);
+    while (fn_1_B310(self) == 0) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+    fn_1_B5C0(self);
+    HuAudSStreamFadeOut(bgm, 0x64);
+    if (self->win != 0) {
+        M517_ASSERT(lbl_1_bss_A20 != 0, lbl_1_data_3A4, lbl_1_data_3B4, 0x27);
+        camera = lbl_1_bss_A20;
+        camera->farView = 1;
+    }
+    fn_1_378C(3);
+    fn_1_7868(self->timer.p);
+    fn_1_4274();
+    for (i = 0; i < 0x78; i++) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+    while (fn_1_B414(self) == 0) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+    self->active = 0;
+    fn_1_378C(4);
+    fn_1_B4C4(self);
+    HuAudJinglePlay(0x79);
+    fn_1_4400();
+    while (fn_1_432C() == 0) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+    fn_1_46FC();
+    while (1) {
+        fn_1_6EE0(&self->thread, 0);
+    }
+}
+
+// Master finish: delete every player, ball and choro.
+void fn_1_B2CC(M517GameMaster *self)
 {
     fn_1_B8A8(self);
     fn_1_BA58(self);
@@ -428,387 +581,304 @@ extern "C" void fn_1_B2CC(CGameMaster *self)
     fn_1_3920();
 }
 
-extern "C" s32 fn_1_B310(CGameMaster *self)
+// Round over check: the players that stay safe and the timer decide.
+u8 fn_1_B310(M517GameMaster *self)
 {
-    struct CL {
-        struct CL *m_next;    // 0x00
-        char m_f4[8];
-        unsigned char m_fC;   // 0x0C
-        char m_fD[0x1F];
-        unsigned char m_2C;   // 0x2C
-    };
+    M517Node *set;
+    M517Node *it;
+    M517Node *end;
+    u8 ok;
 
-if (lbl_1_bss_A08 == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    }
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    end = set;
+    ok = 1;
+    while (it != end) {
+        M517Player *p = (M517Player *)it;
 
-    void *smA08 = lbl_1_bss_A08;
-    void *smRoot = smA08;
-    CL *root = (CL *)smRoot;
-    CL *first = root->m_next;
-    CL *entry = first;
-    CL *node = entry;
-    CL *back = root;
-    CL *stop = back;
-    unsigned char ok = 1;
-
-    do {
-        if (node->m_2C == 0) {
-            if (node->m_fC != 1) {
+        if (p->cpu == 0) {
+            if (p->busy != 1) {
                 ok = 0;
             }
         }
-        CL *next = node->m_next;
-        node = next;
-    } while (node != stop);
-
+        it = it->next;
+    }
     if (ok != 0) {
-        self->m_f368 = 1;
+        self->win = 1;
         return 1;
     }
-
-    void *sub = self->m_f35C;
-    if ((unsigned char)fn_1_78D0(sub) != 0) {
-        self->m_f368 = 0;
+    if (fn_1_78D0(self->timer.p) != 0) {
+        self->win = 0;
         return 1;
     }
     return 0;
 }
 
-// Node of the circular list hanging off lbl_1_bss_A08. 0x08 is read as a word
-// by fn_1_B414 and 0x0C as a byte elsewhere, so only one of the two is ever
-// meaningful for a given list.
-struct CSmNode;
-struct CSmRecNode;
-
-struct CSmNode {
-    struct CSmNode *m_next;         // 0x00
-    char m_f4[4];          // 0x04
-    s32 m_word;           // 0x08
-    unsigned char m_fC;   // 0x0C
-    char m_fD[0x1F];      // 0x0D
-    unsigned char m_2C;   // 0x2C
-};
-
-// Same list, but carrying a singleton record inline at +0x10 (fn_1_B660).
-struct CSmRecNode {
-    struct CSmRecNode *m_next;  // 0x00
-    char m_f4[0xC];
-    CSingleton m_rec;           // 0x10
-};
-
-// fn_1_B730 walks the lbl_1_bss_A1C list, whose nodes hold their record at +0x70.
-struct CSmRec70 {
-    struct CSmRec70 *m_next;  // 0x00
-    char m_f4[0x6C];
-    CSingleton m_rec;         // 0x70
-};
-
-// Teardown node reached through the lbl_1_bss_A08 list (fn_1_B8A8).
-struct CNodeD0 {
-    struct CNodeD0 *m_next;   // 0x00
-    char m_f4[0xB0];
-    void *m_b4;               // 0xB4
-    void *m_b8;               // 0xB8
-    void **m_bc;              // 0xBC
-    void *m_c0;               // 0xC0
-    void *m_c4;               // 0xC4
-    void *m_c8;               // 0xC8
-    void *m_cc;               // 0xCC
-    void *m_d0;               // 0xD0
-};
-
-// Two-step indirect call target: obj->m_link->m_fn / obj->m_f0->m_fn.
-struct CInd {
-    void *m_f0;
-    void *m_f4;
-    void *(*m_fn)(void *, s32);
-};
-
-extern "C" void fn_1_1593C(void *self);
-extern "C" void fn_1_184E8(void *self, s32 flag);
-
-extern "C" s32 fn_1_B414(void)
+// True once no player is still in play.
+u8 fn_1_B414(M517GameMaster *self)
 {
-    if (lbl_1_bss_A08 == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    }
+    M517Node *set;
+    M517Node *it;
+    M517Node *end;
 
-    void *smA08 = lbl_1_bss_A08;
-    void *smRoot = smA08;
-    CSmNode *root = (CSmNode *)smRoot;
-    CSmNode *first = root->m_next;
-    CSmNode *entry = first;
-    CSmNode *node = entry;
-    CSmNode *back = root;
-    CSmNode *stop = back;
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    end = set;
+    while (it != end) {
+        M517Player *p = (M517Player *)it;
 
-    do {
-        if (node->m_word > 0) {
+        if (p->state > 0) {
             return 0;
         }
-        CSmNode *next = node->m_next;
-        node = next;
-    } while (node != stop);
+        it = it->next;
+    }
     return 1;
 }
 
-extern "C" void fn_1_B4C4(CGameMaster *self)
+// Tell every player whether the round was won.
+void fn_1_B4C4(M517GameMaster *self)
 {
-    if (lbl_1_bss_A08 == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    }
+    M517Node *set;
+    M517Node *it;
+    M517Node *end;
 
-    void *smA08 = lbl_1_bss_A08;
-    void *smRoot = smA08;
-    CSmNode *root = (CSmNode *)smRoot;
-    CSmNode *first = root->m_next;
-    CSmNode *entry = first;
-    CSmNode *node = entry;
-    CSmNode *back = root;
-    CSmNode *stop = back;
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    end = set;
+    while (it != end) {
+        M517Player *p = (M517Player *)it;
 
-    do {
-        if (self->m_f368 != 0) {
-            if (node->m_2C != 0) {
-                fn_1_184E8(node, 1);
+        if (self->win != 0) {
+            if (p->cpu != 0) {
+                fn_1_184E8(p, 1);
             } else {
-                fn_1_184E8(node, 0);
+                fn_1_184E8(p, 0);
             }
         } else {
-            if (node->m_2C != 0) {
-                fn_1_184E8(node, 0);
+            if (p->cpu != 0) {
+                fn_1_184E8(p, 0);
             } else {
-                fn_1_184E8(node, 1);
+                fn_1_184E8(p, 1);
             }
         }
-        CSmNode *next = node->m_next;
-        node = next;
-    } while (node != stop);
-}
-
-extern "C" void fn_1_B5C0(void)
-{
-    if (lbl_1_bss_A08 == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+        it = it->next;
     }
-
-    void *smA08 = lbl_1_bss_A08;
-    void *smRoot = smA08;
-    CSmNode *root = (CSmNode *)smRoot;
-    CSmNode *first = root->m_next;
-    CSmNode *entry = first;
-    CSmNode *node = entry;
-    CSmNode *back = root;
-    CSmNode *stop = back;
-
-    do {
-        fn_1_1593C(node);
-        CSmNode *next = node->m_next;
-        node = next;
-    } while (node != stop);
 }
 
-extern "C" void fn_1_B660(void)
+void fn_1_B5C0(M517GameMaster *self)
 {
-    if (lbl_1_bss_A08 == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    M517Node *set;
+    M517Node *it;
+    M517Node *end;
+
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    end = set;
+    while (it != end) {
+        fn_1_1593C((M517Player *)it);
+        it = it->next;
     }
-
-    void *smA08 = lbl_1_bss_A08;
-    void *smRoot = smA08;
-    CSmRecNode *root = (CSmRecNode *)smRoot;
-    CSmRecNode *first = root->m_next;
-    CSmRecNode *entry = first;
-    CSmRecNode *node = entry;
-    CSmRecNode *back = root;
-    CSmRecNode *stop = back;
-
-    do {
-        CSingleton rec = lbl_1_data_350;
-        node->m_rec = rec;
-        CSmRecNode *next = node->m_next;
-        node = next;
-    } while (node != stop);
 }
 
-extern "C" void fn_1_B730(void *self)
+// Give every player its waiting hook.
+void fn_1_B660(M517GameMaster *self)
 {
-}
+    M517Node *set;
+    M517Node *it;
+    M517Node *end;
 
-extern "C" void fn_1_B8A8(void *self)
-{
-}
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    end = set;
+    while (it != end) {
+        M517Ptmf tmp = lbl_1_data_350;
 
-extern "C" void fn_1_BA58(void *self)
-{
-    if (lbl_1_bss_0 == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+        ((M517Player *)it)->hook = tmp;
+        it = it->next;
     }
-
-    void *smZero = lbl_1_bss_0;
-    void *smRoot = smZero;
-    CSmNode *root = (CSmNode *)smRoot;
-    CSmNode *first = root->m_next;
-    CSmNode *entry = first;
-    CSmNode *node = entry;
-    CSmNode *back = root;
-    CSmNode *stop = back;
-
-    do {
-        fn_1_10F8(node, 1);
-        CSmNode *next = node->m_next;
-        node = next;
-    } while (node != stop);
 }
 
-extern "C" void fn_1_BAFC(void *self)
+// Give every player its playing hook and every choro its hook.
+void fn_1_B730(M517GameMaster *self)
 {
-    if (lbl_1_bss_A1C == 0) {
-        fn_1_2058(lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    M517Node *set;
+    M517Node *it;
+    M517Node *end;
+
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    end = set;
+    while (it != end) {
+        M517Ptmf tmp = lbl_1_data_344;
+
+        ((M517Player *)it)->hook = tmp;
+        it = it->next;
     }
+    M517_ASSERT(lbl_1_bss_A1C != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = lbl_1_bss_A1C;
+    it = set->next;
+    end = set;
+    while (it != end) {
+        M517Ptmf tmp = lbl_1_data_338;
 
-    void *smA1C = lbl_1_bss_A1C;
-    void *smRoot = smA1C;
-    CSmNode *root = (CSmNode *)smRoot;
-    CSmNode *first = root->m_next;
-    CSmNode *entry = first;
-    CSmNode *node = entry;
-    CSmNode *back = root;
-    CSmNode *stop = back;
-
-    do {
-        fn_1_10F88(node, 1);
-        CSmNode *next = node->m_next;
-        node = next;
-    } while (node != stop);
+        ((M517Choro *)it)->hook = tmp;
+        it = it->next;
+    }
 }
 
-// Walks every entry of the circular list at +0x00 of listA, and for each of
-// them every entry of the circular list at +0x00 of listB, calling fn.
-// NONMATCHING: MWCC homes the incoming list pointers instead of promoting
-// them to r29/r28, eight rows differ; the register assignment is exact.
-extern "C" void fn_1_BBA0(void *listA, void *listB, void (*fn)(void *, void *))
+// Delete all players.
+void fn_1_B8A8(M517GameMaster *self)
 {
-    void *outer, *inner, *rootB, *rootA, *outerStop, *innerStop;
-    void *headA, *outerStart, *outerRoot, *headB, *innerStart, *innerRoot, *nextB, *nextA;
+    M517Node *set;
+    M517Node *it;
 
-    rootA = listA;
-    rootB = listB;
-    headA = *(void **)rootA;
-    outerStart = headA;
-    outer = outerStart;
-    outerRoot = rootA;
-    outerStop = outerRoot;
+    M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_A08;
+    it = set->next;
+    while (it != set) {
+        M517Node *next = it->next; // the original reads it after the delete
 
-    while (outer != outerStop) {
-        headB = *(void **)rootB;
-        innerStart = headB;
-        inner = innerStart;
-        innerRoot = rootB;
-        innerStop = innerRoot;
+        M517PlayerDelete((M517Player *)it);
+        it = next;
+    }
+}
 
-        while (inner != innerStop) {
+// Delete all balls.
+void fn_1_BA58(M517GameMaster *self)
+{
+    M517Node *set;
+    M517Node *it;
+
+    M517_ASSERT(lbl_1_bss_0 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = (M517Node *)lbl_1_bss_0;
+    it = set->next;
+    while (it != set) {
+        M517Node *next = it->next;
+
+        fn_1_10F8((M517Ball *)it, 1);
+        it = next;
+    }
+}
+
+// Delete all choros.
+void fn_1_BAFC(M517GameMaster *self)
+{
+    M517Node *set;
+    M517Node *it;
+
+    M517_ASSERT(lbl_1_bss_A1C != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
+    set = lbl_1_bss_A1C;
+    it = set->next;
+    while (it != set) {
+        M517Node *next = it->next;
+
+        fn_1_10F88((M517Choro *)it, 1);
+        it = next;
+    }
+}
+
+// Call fn for every (element of listA, element of listB) pair.
+void fn_1_BBA0(M517Node *listA, M517Node *listB, M517PairFn fn)
+{
+    M517Node *outer = listA->next;
+    M517Node *outerEnd = listA;
+
+    while (outer != outerEnd) {
+        M517Node *inner = listB->next;
+        M517Node *innerEnd = listB;
+
+        while (inner != innerEnd) {
             fn(outer, inner);
-            nextB = *(void **)inner;
-            inner = nextB;
+            inner = inner->next;
         }
-
-        nextA = *(void **)outer;
-        outer = nextA;
+        outer = outer->next;
     }
 }
 
-// Byte-for-byte twin of fn_1_BBA0.
-// NONMATCHING: MWCC homes the incoming list pointers instead of promoting
-// them to r29/r28, five rows differ.
-extern "C" void fn_1_BC3C(void *listA, void *listB, void (*fn)(void *, void *))
+// Twin of fn_1_BBA0.
+void fn_1_BC3C(M517Node *listA, M517Node *listB, M517PairFn fn)
 {
-    void *outer, *inner, *rootB, *rootA, *outerStop, *innerStop;
-    void *headA, *outerStart, *outerRoot, *headB, *innerStart, *innerRoot, *nextB, *nextA;
+    M517Node *outer = listA->next;
+    M517Node *outerEnd = listA;
 
-    rootA = listA;
-    rootB = listB;
-    headA = *(void **)rootA;
-    outerStart = headA;
-    outer = outerStart;
-    outerRoot = rootA;
-    outerStop = outerRoot;
+    while (outer != outerEnd) {
+        M517Node *inner = listB->next;
+        M517Node *innerEnd = listB;
 
-    while (outer != outerStop) {
-        headB = *(void **)rootB;
-        innerStart = headB;
-        inner = innerStart;
-        innerRoot = rootB;
-        innerStop = innerRoot;
-
-        while (inner != innerStop) {
+        while (inner != innerEnd) {
             fn(outer, inner);
-            nextB = *(void **)inner;
-            inner = nextB;
+            inner = inner->next;
         }
-
-        nextA = *(void **)outer;
-        outer = nextA;
+        outer = outer->next;
     }
 }
 
-// Same as fn_1_BBA0 but the inner list ends at listA itself and the outer list
-// ends at listA->m_second.
-// NONMATCHING: MWCC homes the incoming list pointer instead of promoting it
-// to r28, five rows differ; the register assignment is exact.
-extern "C" void fn_1_BCD8(void *listA, void (*fn)(void *, void *))
+// Call fn for every unordered pair of listA: the inner walk starts after the
+// outer element, the outer one stops before the last element.
+void fn_1_BCD8(M517Node *listA, M517PairFn fn)
 {
-    void *outer, *inner, *innerStop;
-    void *root = listA;
-    void *stop, *headA, *outerStart, *outerRoot, *outerStop, *innerStart, *nextB, *nextA;
+    M517Node *outer = listA->next;
+    M517Node *outerEnd = listA->prev;
 
-    headA = *(void **)root;
-    outerStart = headA;
-    outer = outerStart;
-    outerRoot = root;
-    innerStop = outerRoot;
-    outerStop = *(void **)((char *)innerStop + 4);
-    stop = outerStop;
+    while (outer != outerEnd) {
+        M517Node *inner = outer->next;
 
-    while (outer != stop) {
-        innerStart = *(void **)outer;
-        inner = innerStart;
-
-        while (inner != innerStop) {
+        while (inner != listA) {
             fn(outer, inner);
-            nextB = *(void **)inner;
-            inner = nextB;
+            inner = inner->next;
         }
-
-        nextA = *(void **)outer;
-        outer = nextA;
+        outer = outer->next;
     }
 }
 
-extern "C" void fn_1_BD6C(void)
+void fn_1_BD6C(void)
 {
     lbl_1_bss_A10 = 0x78;
     lbl_1_bss_A14 = 0xD2;
     lbl_1_bss_A18 = 0xD2;
 }
 
-#pragma dont_inline on
-extern "C" void fn_1_BDA0(void)
+// Thread thunks: this adjusted from the thread subobject to the master.
+#ifdef __MWERKS__
+asm void fn_1_BDA0(M517SubThread *thread)
 {
-    __asm {
-        subi r3, r3, 0x20
-        b      fn_1_B058
-    }
+    nofralloc
+    subi r3, r3, 0x20
+    b fn_1_B058
 }
-#pragma dont_inline reset
 
-#pragma dont_inline on
-extern "C" void fn_1_BDA8(void)
+asm M517Master *fn_1_BDA8(M517SubThread *thread, s16 flag)
 {
-    __asm {
-        subi r3, r3, 0x20
-        b      fn_1_AB90
-    }
+    nofralloc
+    subi r3, r3, 0x20
+    b fn_1_AB90
 }
-#pragma dont_inline reset
+#else
+void fn_1_BDA0(M517SubThread *thread)
+{
+    fn_1_B058((M517GameMaster *)((char *)thread - offsetof(M517GameMaster, thread)));
+}
+
+M517Master *fn_1_BDA8(M517SubThread *thread, s16 flag)
+{
+    return fn_1_AB90(&((M517GameMaster *)((char *)thread - offsetof(M517GameMaster, thread)))->base, flag);
+}
+#endif
+
+}
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_BD6C)(void) = fn_1_BD6C;
+#else
+struct PortStaticInit_BD6C {
+    PortStaticInit_BD6C() { fn_1_BD6C(); }
+};
+static PortStaticInit_BD6C lbl_port_init_BD6C;
+#endif
