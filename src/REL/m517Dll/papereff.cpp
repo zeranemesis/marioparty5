@@ -20,47 +20,6 @@ extern "C" {
 double sin(double);
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT,
                   GXTexFilter filter);
-/* Texture holder singleton: per player the paper texture and its second layer. */
-typedef struct M517PaperTex_s {
-    ANIMDATA *a[4];
-    ANIMDATA *b[4];
-} M517PaperTex;
-
-/* Particle emitter task. */
-typedef struct M517PaperPart_s {
-    M517Task task;
-    HU3DMODELID id;
-    ANIMDATA *anim;
-    HU3DPARTICLE *particle;
-    Vec pos;
-    Vec vec;
-} M517PaperPart;
-
-#define M517_PAPER_GRID 9
-
-/* The sheet task. */
-typedef struct M517PaperEff_s {
-    M517Task task;
-    HU3DMODELID hook;
-    ANIMDATA *a;
-    ANIMDATA *b;
-    f32 timer;
-    Vec pos;
-    Vec target;
-    u8 pad38[0xC];
-    Vec vec44;
-    Vec rot;
-    u8 landed;
-    Vec grid[M517_PAPER_GRID][M517_PAPER_GRID];
-    u8 pad42C[0x30];
-    s32 state;
-    f32 w;
-    f32 pad464;
-    f32 h;
-    s32 snd;
-    M517PaperPart *part;
-} M517PaperEff;
-
 #define M517_PAPER_TEX() ((M517PaperTex *)lbl_1_bss_8)
 
 void fn_1_13590(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx);

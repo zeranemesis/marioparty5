@@ -429,11 +429,7 @@ struct M517Kuribo_s;
 struct M517Kuribo_s *fn_1_C994(struct M517Kuribo_s *self, Vec *pos, Vec *rot, s32 type);
 /* Size of the kuribo object (its layout lives in kuribo.cpp): 0x58 on GC; the PC object is larger because of
  * pointers and vtables, so allocate a generous upper bound there. */
-#ifdef TARGET_PC
-#define M517_KURIBO_SIZE 0x100
-#else
-#define M517_KURIBO_SIZE 0x58
-#endif
+#define M517_KURIBO_SIZE sizeof(M517Kuribo)
 
 
 /* ---- camera / stage units (camera.cpp, stage.cpp): the two singleton task objects ---- */
@@ -575,6 +571,108 @@ typedef struct M517Player_s {
 
 /* The ball code reads the head of the player object. */
 typedef M517Player M517PlayerHead;
+
+/* The 0x18 byte dust object owned by a kuribo (its position is at +4). */
+typedef struct M517KuriboDust_s {
+    void *anim;
+    Vec pos;
+} M517KuriboDust;
+
+typedef struct M517Kuribo_s {
+    M517Model model;
+    M517Task task;
+    M517Vec16 mot;
+    M517KuriboDust *dust;
+    s32 motion;
+    s32 timer;
+    s32 type;
+    Vec pos;
+    Vec rot;
+    s32 state;
+    s32 wait;
+    s32 dir;
+    void **vtbl;
+} M517Kuribo;
+
+
+/* ---- shared layouts: paper sheet (papereff.cpp) and the input classes (input.cpp), so player.cpp can sizeof them ---- */
+/* Texture holder singleton: per player the paper texture and its second layer. */
+typedef struct M517PaperTex_s {
+    ANIMDATA *a[4];
+    ANIMDATA *b[4];
+} M517PaperTex;
+
+/* Particle emitter task. */
+typedef struct M517PaperPart_s {
+    M517Task task;
+    HU3DMODELID id;
+    ANIMDATA *anim;
+    HU3DPARTICLE *particle;
+    Vec pos;
+    Vec vec;
+} M517PaperPart;
+
+#define M517_PAPER_GRID 9
+
+/* The sheet task. */
+typedef struct M517PaperEff_s {
+    M517Task task;
+    HU3DMODELID hook;
+    ANIMDATA *a;
+    ANIMDATA *b;
+    f32 timer;
+    Vec pos;
+    Vec target;
+    u8 pad38[0xC];
+    Vec vec44;
+    Vec rot;
+    u8 landed;
+    Vec grid[M517_PAPER_GRID][M517_PAPER_GRID];
+    u8 pad42C[0x30];
+    s32 state;
+    f32 w;
+    f32 pad464;
+    f32 h;
+    s32 snd;
+    M517PaperPart *part;
+} M517PaperEff;
+
+// CPU "chase" brain: one target, smoothed steering.
+typedef struct M517CpuInput_s {
+    M517Input base;
+    Vec a;        // 0x14 own position
+    Vec b;        // 0x20 target position
+    Vec c;        // 0x2C target velocity
+    f32 speed;    // 0x38 target speed
+    s32 playerNo; // 0x3C
+    Vec out;      // 0x40 x, mag (y), z
+    Vec dest;     // 0x4C
+    Vec smooth;   // 0x58
+    f32 timer;    // 0x64
+    u8 flag;      // 0x68
+} M517CpuInput;
+
+// CPU "dodge" brain: three enemies.
+typedef struct M517CpuInput2_s {
+    M517Input base;
+    Vec a;      // 0x14 own position
+    Vec pos[3]; // 0x20 enemy positions
+    Vec vel[3]; // 0x44 enemy velocities
+    f32 f68;    // 0x68 own speed
+    u8 flag[3]; // 0x6C
+    u8 near[3]; // 0x6F
+    f32 timer;  // 0x74
+    s32 target; // 0x78
+    s32 mode;   // 0x7C
+    s32 count;  // 0x80
+} M517CpuInput2;
+
+typedef struct M517PadInput_s {
+    M517Input base;
+    s32 playerNo; // 0x14
+    s32 padNo;    // 0x18
+} M517PadInput;
+
 
 /* The four player models (bss_4 singleton, models 1p..4p of the stage). */
 typedef struct M517PlayerModels_s {

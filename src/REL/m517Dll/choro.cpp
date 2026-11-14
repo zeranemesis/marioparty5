@@ -21,14 +21,7 @@ f32 PSVECMag(const Vec *v);
 
 void fn_1_17614(void);
 void fn_1_16B68(void);
-void fn_1_183C4(void *player, M517Choro *choro);
-
-/* The part of a player object this unit looks at. */
-typedef struct M517ChoroPlayer_s {
-    u8 pad[0x2C];
-    u8 unk2C;
-    Vec pos;
-} M517ChoroPlayer;
+void fn_1_183C4(M517Player *player);
 
 extern M517Node *lbl_1_bss_A1C;
 
@@ -615,16 +608,16 @@ void fn_1_11850(M517Choro *self)
 }
 
 // A player touching a standing choro gets caught by it.
-void fn_1_121D8(M517Choro *self, M517ChoroPlayer *player)
+void fn_1_121D8(M517Choro *self, M517Player *player)
 {
     Vec d;
     f32 reach;
 
-    if (player->unk2C == 0 && self->active != 0) {
-        PSVECSubtract(&self->pos, &player->pos, &d);
+    if (player->cpu == 0 && self->active != 0) {
+        PSVECSubtract(&self->pos, &player->sph.pos, &d);
         reach = 2.0f * self->radius;
         if (PSVECMag(&d) < reach) {
-            fn_1_183C4(player, self);
+            fn_1_183C4(player);
         }
     }
 }

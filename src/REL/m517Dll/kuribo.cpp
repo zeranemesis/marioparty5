@@ -17,28 +17,6 @@ double cos(double);
 void abort(void);
 
 
-/* The 0x18 byte dust object owned by a kuribo (its position is at +4). */
-typedef struct M517KuriboDust_s {
-    void *anim;
-    Vec pos;
-} M517KuriboDust;
-
-typedef struct M517Kuribo_s {
-    M517Model model;
-    M517Task task;
-    M517Vec16 mot;
-    M517KuriboDust *dust;
-    s32 motion;
-    s32 timer;
-    s32 type;
-    Vec pos;
-    Vec rot;
-    s32 state;
-    s32 wait;
-    s32 dir;
-    void **vtbl;
-} M517Kuribo;
-
 #define M517_KURIBO_OF(t) ((M517Kuribo *)((char *)(t) - offsetof(M517Kuribo, task)))
 
 M517Kuribo *fn_1_C994(M517Kuribo *self, Vec *pos, Vec *rot, s32 type);

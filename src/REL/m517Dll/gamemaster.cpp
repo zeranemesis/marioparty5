@@ -27,7 +27,7 @@ typedef struct M517GMVtbl_s {
 } M517GMVtbl;
 
 // The paper texture holder lives in papereff.cpp: eight ANIMDATA pointers.
-#define M517_PAPERTEX_SIZE (8 * sizeof(void *))
+#define M517_PAPERTEX_SIZE sizeof(M517PaperTex)
 
 typedef void (*M517PairFn)(M517Node *, M517Node *);
 

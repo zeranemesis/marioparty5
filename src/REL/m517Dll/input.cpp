@@ -14,61 +14,6 @@ extern "C" {
 }
 #include "math.h"
 
-// Node of the module's player list (circular, lbl_1_bss_A08 is the sentinel);
-// only the fields the CPU brains read.
-struct InpPlayer {
-    InpPlayer *next; // 0x00
-    char pad04[8];
-    u8 flag;         // 0x0C
-    char pad0D[0x0F];
-    s32 playerNo;    // 0x1C
-    char pad20[0x08];
-    s32 kind;        // 0x28 (5 = near)
-    u8 isTarget;     // 0x2C
-    char pad2D[3];
-    Vec pos;         // 0x30
-    char pad3C[0x28];
-    Vec vel;         // 0x64
-    char pad70[0x58];
-    void *body;      // 0xC8 (its +0x7C holds a Vec, see fn_1_12E8 for +0x70)
-};
-
-// CPU "chase" brain: one target, smoothed steering.
-typedef struct M517CpuInput_s {
-    M517Input base;
-    Vec a;        // 0x14 own position
-    Vec b;        // 0x20 target position
-    Vec c;        // 0x2C target velocity
-    f32 speed;    // 0x38 target speed
-    s32 playerNo; // 0x3C
-    Vec out;      // 0x40 x, mag (y), z
-    Vec dest;     // 0x4C
-    Vec smooth;   // 0x58
-    f32 timer;    // 0x64
-    u8 flag;      // 0x68
-} M517CpuInput;
-
-// CPU "dodge" brain: three enemies.
-typedef struct M517CpuInput2_s {
-    M517Input base;
-    Vec a;      // 0x14 own position
-    Vec pos[3]; // 0x20 enemy positions
-    Vec vel[3]; // 0x44 enemy velocities
-    f32 f68;    // 0x68 own speed
-    u8 flag[3]; // 0x6C
-    u8 near[3]; // 0x6F
-    f32 timer;  // 0x74
-    s32 target; // 0x78
-    s32 mode;   // 0x7C
-    s32 count;  // 0x80
-} M517CpuInput2;
-
-typedef struct M517PadInput_s {
-    M517Input base;
-    s32 playerNo; // 0x14
-    s32 padNo;    // 0x18
-} M517PadInput;
-
 extern "C" {
 
 extern void *lbl_1_bss_10;
@@ -446,25 +391,25 @@ u8 fn_1_8EB8(void *self, Vec *a, Vec *b, Vec *c, Vec *d)
 // player list.
 void fn_1_96AC(M517CpuInput *self)
 {
-    InpPlayer *head;
-    InpPlayer *n;
+    M517Node *head;
+    M517Player *n;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_2B0, lbl_1_data_2BC, 0x2E);
-    head = (InpPlayer *)lbl_1_bss_A08;
-    for (n = head->next; n != head; n = n->next) {
-        if (n->isTarget != 0) {
-            self->b.x = n->pos.x;
-            self->b.y = n->pos.y;
-            self->b.z = n->pos.z;
+    head = (M517Node *)lbl_1_bss_A08;
+    for (n = (M517Player *)head->next; (M517Node *)n != head; n = (M517Player *)n->link.next) {
+        if (n->cpu != 0) {
+            self->b.x = n->sph.pos.x;
+            self->b.y = n->sph.pos.y;
+            self->b.z = n->sph.pos.z;
             self->b.y = 0.0f;
-            self->speed = fn_1_12E8((M517Ball *)n->body);
-            if (fn_1_12E8((M517Ball *)n->body) > 0.05f) {
-                self->c = *(Vec *)((char *)n->body + 0x7C);
+            self->speed = fn_1_12E8(n->ball);
+            if (fn_1_12E8(n->ball) > 0.05f) {
+                self->c = n->ball->delta;
             }
         } else if (self->playerNo == n->playerNo) {
-            self->a.x = n->pos.x;
-            self->a.y = n->pos.y;
-            self->a.z = n->pos.z;
+            self->a.x = n->sph.pos.x;
+            self->a.y = n->sph.pos.y;
+            self->a.z = n->sph.pos.z;
             self->a.y = 0.0f;
         }
     }
@@ -578,27 +523,27 @@ void fn_1_9C54(M517CpuInput2 *self)
 // player list.
 void fn_1_9E48(M517CpuInput2 *self)
 {
-    InpPlayer *head;
-    InpPlayer *n;
+    M517Node *head;
+    M517Player *n;
     s32 i = 0;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_2B0, lbl_1_data_2BC, 0x2E);
-    head = (InpPlayer *)lbl_1_bss_A08;
-    for (n = head->next; n != head; n = n->next) {
-        if (n->isTarget != 0) {
-            self->a.x = n->pos.x;
-            self->a.y = n->pos.y;
-            self->a.z = n->pos.z;
+    head = (M517Node *)lbl_1_bss_A08;
+    for (n = (M517Player *)head->next; (M517Node *)n != head; n = (M517Player *)n->link.next) {
+        if (n->cpu != 0) {
+            self->a.x = n->sph.pos.x;
+            self->a.y = n->sph.pos.y;
+            self->a.z = n->sph.pos.z;
             self->a.y = 0.0f;
-            self->f68 = fn_1_12E8((M517Ball *)n->body);
+            self->f68 = fn_1_12E8(n->ball);
         } else {
-            self->pos[i].x = n->pos.x;
-            self->pos[i].y = n->pos.y;
-            self->pos[i].z = n->pos.z;
+            self->pos[i].x = n->sph.pos.x;
+            self->pos[i].y = n->sph.pos.y;
+            self->pos[i].z = n->sph.pos.z;
             self->pos[i].y = 0.0f;
-            self->vel[i] = n->vel;
-            self->flag[i] = n->flag;
-            self->near[i] = (n->kind == 5);
+            self->vel[i] = n->delta;
+            self->flag[i] = n->busy;
+            self->near[i] = (n->motion == 5);
             i++;
         }
     }

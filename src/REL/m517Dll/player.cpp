@@ -22,29 +22,6 @@ extern "C" {
 #define M517_RODATA
 #endif
 
-#ifdef TARGET_PC
-/* TODO(reconcile): the owning units' structs (input classes, paper sheet) are not shared, so their PC
- * size is not available here; no layout grows by more than 2x from GC to PC. */
-#define M517_PL_SIZE(gc) ((gc) * 2)
-#else
-#define M517_PL_SIZE(gc) (gc)
-#endif
-
-/* The part of the paper sheet task (papereff.cpp) this unit reads: it flags that it has landed. */
-typedef struct M517PlPaperView_s {
-    M517Task task;
-    HU3DMODELID hook;
-    ANIMDATA *a;
-    ANIMDATA *b;
-    f32 timer;
-    Vec pos;
-    Vec target;
-    u8 pad38[0xC];
-    Vec vec44;
-    Vec rot;
-    u8 landed;
-} M517PlPaperView;
-
 extern "C" {
 
 void abort(void);
@@ -62,7 +39,7 @@ void fn_1_111A8(void *self);
 void fn_1_1904(M517Ball *self, Vec *from, Vec *to);
 s16 *fn_1_D778(M517Vec16 *v, u32 idx);
 void fn_1_D7F0(M517Vec16 *v, s16 *pos, u32 n, s16 *val);
-M517Task *fn_1_142AC(void *self, Vec *pos, Vec *target, Vec *rot, s32 idx);
+M517PaperEff *fn_1_142AC(M517PaperEff *self, Vec *pos, Vec *target, Vec *rot, s32 idx);
 
 extern M517Node *lbl_1_bss_A08;
 
@@ -349,26 +326,26 @@ M517Input *fn_1_15C6C(s32 playerNo)
 
     if (GwPlayerConf[playerNo].grp == 0) {
         if (GwPlayerConf[playerNo].type != 0) {
-            in = (M517Input *)fn_1_1E84(M517_PL_SIZE(0x84));
+            in = (M517Input *)fn_1_1E84(sizeof(M517CpuInput2));
             if (in != 0) {
                 fn_1_9930(in, GwPlayerConf[playerNo].dif);
             }
             return in;
         }
-        in = (M517Input *)fn_1_1E84(M517_PL_SIZE(0x1C));
+        in = (M517Input *)fn_1_1E84(sizeof(M517PadInput));
         if (in != 0) {
             fn_1_7BD4(in, playerNo);
         }
         return in;
     }
     if (GwPlayerConf[playerNo].type != 0) {
-        in = (M517Input *)fn_1_1E84(M517_PL_SIZE(0x6C));
+        in = (M517Input *)fn_1_1E84(sizeof(M517CpuInput));
         if (in != 0) {
             fn_1_8000(in, playerNo, GwPlayerConf[playerNo].dif);
         }
         return in;
     }
-    in = (M517Input *)fn_1_1E84(M517_PL_SIZE(0x1C));
+    in = (M517Input *)fn_1_1E84(sizeof(M517PadInput));
     if (in != 0) {
         fn_1_7BD4(in, playerNo);
     }
@@ -800,9 +777,9 @@ void fn_1_179B0(M517Player *self)
             }
             self->scale.y = 0.0f;
             self->launch.y = 800.0f;
-            paper = (M517Task *)fn_1_1E84(M517_PL_SIZE(0x474));
+            paper = (M517Task *)fn_1_1E84(sizeof(M517PaperEff));
             if (paper != 0) {
-                paper = fn_1_142AC(paper, &self->sph.pos, &self->launch, &self->rot, self->playerNo);
+                paper = (M517Task *)fn_1_142AC((M517PaperEff *)paper, &self->sph.pos, &self->launch, &self->rot, self->playerNo);
             }
             if (self->paper != paper) {
                 M517Task *old = self->paper;
@@ -820,7 +797,7 @@ void fn_1_179B0(M517Player *self)
         }
         // fall through
         case 2: {
-            u8 landed = ((M517PlPaperView *)self->paper)->landed;
+            u8 landed = ((M517PaperEff *)self->paper)->landed;
 
             if (landed != 1) {
                 break;
