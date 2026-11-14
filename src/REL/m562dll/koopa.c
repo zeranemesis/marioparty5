@@ -10,17 +10,6 @@
 /* returns a float in the original (see the note in game/hu3d.h) */
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
-#define KP_CAM(host, i) ((CAMERA *)&(host)->camera[i])
-#define KP_PLAYER(host) ((KpPlayer *)&(host)->player)
-#define KP_ABS(x) (((x) >= 0.0f) ? (x) : -(x))
-#define KP_CLAMP(v, lo, hi) (((v) > (hi)) ? (hi) : (((v) < (lo)) ? (lo) : (v)))
-/* heading in degrees of the (x, z) direction, wrapped into (-180, 180] */
-#define KP_HEADING(x, z)                                                      \
-    ((HuAtan((x), (z)) > 180.0)                                               \
-         ? (HuAtan((x), (z)) - 360.0)                                         \
-         : ((HuAtan((x), (z)) <= -180.0) ? (360.0 + HuAtan((x), (z)))         \
-                                         : HuAtan((x), (z))))
-
 static void fn_1_B7F0(Koopa *self);
 static void fn_1_BAE8(Koopa *self);
 static void fn_1_BDA4(Koopa *self);
@@ -67,7 +56,7 @@ void fn_1_B2E0(Koopa *self, KpHost *host) {
     model = Hu3DModelCreateData(0x750017);
     self->modelId = model;
     Hu3DModelScaleSet(model, 1.5f, 1.5f, 1.5f);
-    Hu3DModelCameraSet(model, (u16)(KP_CAM(host, 0)->camId | KP_CAM(host, 1)->camId));
+    Hu3DModelCameraSet(model, (u16)(host->camera[0].camMask | host->camera[1].camMask));
     Hu3DModelLayerSet(model, 4);
     Hu3DModelAttrReset(model, 1);
     Hu3DModelShadowSet(model);
@@ -152,7 +141,7 @@ void fn_1_B578(void *arg) {
 
 static void fn_1_B7F0(Koopa *self) {
     KpHost *host = self->host;
-    KpPlayer *player = KP_PLAYER(host);
+    M562Player *player = &host->player;
     HU3DMODELID model;
 
     if (self->active == 0) {
@@ -166,7 +155,7 @@ static void fn_1_B7F0(Koopa *self) {
         break;
     case 0:
         model = self->modelId;
-        Hu3DModelCameraSet(model, (u16)(KP_CAM(host, 0)->camId | KP_CAM(host, 1)->camId));
+        Hu3DModelCameraSet(model, (u16)(host->camera[0].camMask | host->camera[1].camMask));
         Hu3DModelAttrReset(model, 1);
         Hu3DModelShadowReset(model);
         Hu3DMotionSpeedSet(model, 1.0f);
@@ -220,7 +209,7 @@ static void fn_1_B7F0(Koopa *self) {
 
 static void fn_1_BAE8(Koopa *self) {
     KpHost *host = self->host;
-    KpPlayer *player = KP_PLAYER(host);
+    M562Player *player = &host->player;
     HU3DMODELID model;
 
     if (self->active == 0) {
@@ -232,7 +221,7 @@ static void fn_1_BAE8(Koopa *self) {
     switch (self->sub) {
     case 0:
         model = self->modelId;
-        Hu3DModelCameraSet(model, (u16)(KP_CAM(host, 0)->camId | KP_CAM(host, 1)->camId));
+        Hu3DModelCameraSet(model, (u16)(host->camera[0].camMask | host->camera[1].camMask));
         Hu3DModelAttrReset(model, 1);
         Hu3DModelShadowReset(model);
         Hu3DMotionSpeedSet(model, 1.0f);
@@ -282,8 +271,8 @@ static void fn_1_BAE8(Koopa *self) {
 
 static void fn_1_BDA4(Koopa *self) {
     KpHost *host = self->host;
-    CAMERA *cam = KP_CAM(host, 0);
-    KpPlayer *player = KP_PLAYER(host);
+    CAMERA *cam = &host->camera[0];
+    M562Player *player = &host->player;
     HU3DMODELID model;
     Vec hit;
     Mtx rotMtx;
@@ -303,7 +292,7 @@ static void fn_1_BDA4(Koopa *self) {
     switch (self->sub) {
     case 0:
         model = self->modelId;
-        Hu3DModelCameraSet(model, (u16)cam->camId);
+        Hu3DModelCameraSet(model, (u16)cam->camMask);
         Hu3DModelAttrReset(model, 1);
         Hu3DModelShadowSet(model);
         Hu3DMotionSet(model, self->motionId[0]);
@@ -314,19 +303,14 @@ static void fn_1_BDA4(Koopa *self) {
         self->curMotion = 0;
         self->reqMotion = 0;
         self->loopMotion = 1;
-        switch (host->diff) {
-        case 0:
+        if (host->diff == 0) {
             self->speed = 6.0f;
-            break;
-        case 1:
+        } else if (host->diff == 1) {
             self->speed = 5.5f;
-            break;
-        case 2:
+        } else if (host->diff == 2) {
             self->speed = 5.0f;
-            break;
-        default:
+        } else {
             self->speed = 4.5f;
-            break;
         }
         self->baseSpeed = self->speed;
         self->timerC = 0xB4;
@@ -346,7 +330,7 @@ static void fn_1_BDA4(Koopa *self) {
     case 3:
         fn_1_CE24(self);
         if (--self->timerC <= 0) {
-            u32 roll = frand() % 10000;
+            s32 roll = frand() % 10000;
 
             if (roll < 0x7D0) {
                 self->timerC = 0;
@@ -486,7 +470,7 @@ static void fn_1_BDA4(Koopa *self) {
             local = lbl_1_rodata_360;
             MTXMultVec(rotMtx, &local, &world);
             VECAdd(&world, &self->pos, &world);
-            fn_1_2DC08((s16)cam->camId, &world, 1);
+            fn_1_2DC08((s16)cam->camMask, &world, 1);
         } else if (self->prevTime < 60.0f && t >= 60.0f) {
             if (lbl_1_bss_7820 == 0) {
                 fn_1_814(0x2C7);
@@ -497,7 +481,7 @@ static void fn_1_BDA4(Koopa *self) {
             local = lbl_1_rodata_36C;
             MTXMultVec(rotMtx, &local, &world);
             VECAdd(&world, &self->pos, &world);
-            fn_1_2DC08((s16)cam->camId, &world, 1);
+            fn_1_2DC08((s16)cam->camMask, &world, 1);
         }
         break;
     case 8:
@@ -511,7 +495,7 @@ static void fn_1_BDA4(Koopa *self) {
             local = lbl_1_rodata_378;
             MTXMultVec(rotMtx, &local, &world);
             VECAdd(&world, &self->pos, &world);
-            fn_1_2DC08((s16)cam->camId, &world, 1);
+            fn_1_2DC08((s16)cam->camMask, &world, 1);
         } else if (self->prevTime < 16.0f && t >= 16.0f) {
             if (lbl_1_bss_7820 == 0) {
                 fn_1_814(0x2C8);
@@ -522,7 +506,7 @@ static void fn_1_BDA4(Koopa *self) {
             local = lbl_1_rodata_384;
             MTXMultVec(rotMtx, &local, &world);
             VECAdd(&world, &self->pos, &world);
-            fn_1_2DC08((s16)cam->camId, &world, 1);
+            fn_1_2DC08((s16)cam->camMask, &world, 1);
         }
         break;
     }
@@ -562,7 +546,7 @@ void fn_1_CE10(Koopa *self) {
 /* approach the player along the arena floor */
 void fn_1_CE24(Koopa *self) {
     KpHost *host = self->host;
-    KpPlayer *player = KP_PLAYER(host);
+    M562Player *player = &host->player;
     Vec goal;
     Vec dir;
     f32 ramp;
@@ -599,7 +583,7 @@ void fn_1_CE24(Koopa *self) {
 /* spit mini mecha-koopas while chasing the player */
 s32 fn_1_D404(Koopa *self) {
     KpHost *host = self->host;
-    KpPlayer *player = KP_PLAYER(host);
+    M562Player *player = &host->player;
     Mtx mtx;
     Vec spawn;
     Vec goal;
@@ -679,8 +663,8 @@ s32 fn_1_D404(Koopa *self) {
 /* charge at the player and slam into the arena wall */
 s32 fn_1_DCC4(Koopa *self) {
     KpHost *host = self->host;
-    CAMERA *cam = KP_CAM(host, 0);
-    KpPlayer *player = KP_PLAYER(host);
+    CAMERA *cam = &host->camera[0];
+    M562Player *player = &host->player;
     Vec dir;
     Vec fwd;
     s32 done;
@@ -773,7 +757,7 @@ s32 fn_1_DCC4(Koopa *self) {
     }
     if (hitWall != 0) {
         fn_1_21B68(cam, 1, 0x32, 40.0f, 0.95f, 90.0f);
-        omVibrate(player->charIdx, 0x14, 0xC, 0);
+        omVibrate(player->playerNo, 0x14, 0xC, 0);
         fn_1_814(0x8A6);
         done = 1;
     }
@@ -783,8 +767,8 @@ s32 fn_1_DCC4(Koopa *self) {
 /* leap onto the floor tile under the player */
 s32 fn_1_E558(Koopa *self) {
     KpHost *host = self->host;
-    CAMERA *cam = KP_CAM(host, 0);
-        KpPlayer *player = KP_PLAYER(host);
+    CAMERA *cam = &host->camera[0];
+        M562Player *player = &host->player;
     Vec dir;
     Vec fwd;
     s32 done;
@@ -852,8 +836,8 @@ s32 fn_1_E558(Koopa *self) {
             host->stage.quakePos = self->cellPos;
             host->stage.quakeTimer = 1;
             fn_1_21B68(cam, 1, 0x32, 40.0f, 0.95f, 90.0f);
-            fn_1_2DC08((s16)cam->camId, &self->pos, 0);
-            omVibrate(player->charIdx, 0x14, 0xC, 0);
+            fn_1_2DC08((s16)cam->camMask, &self->pos, 0);
+            omVibrate(player->playerNo, 0x14, 0xC, 0);
             fn_1_814(0x8A7);
         }
         self->timerE++;
@@ -886,7 +870,7 @@ void fn_1_ED90(Koopa *self, Vec *in, Vec *out) {
 
 /* hit callback between two collision entries */
 void fn_1_EEC4(EffectEntry *a, EffectEntry *b) {
-    KpPlayer *player;
+    M562Player *player;
 
     if (a->type == 0 && b->type == 3) {
         fn_1_F014(a->user, b->user);
@@ -899,9 +883,9 @@ void fn_1_EEC4(EffectEntry *a, EffectEntry *b) {
     if (a->type == 4 && b->type == 0) {
         player = b->user;
         if ((player->state == 1 || player->state == 2) && player->invuln == 0) {
-            player->subA = 0;
-            player->sub6 = 0;
-            player->sub8 = 0;
+            player->timerA = 0;
+            player->sub = 0;
+            player->subTimer = 0;
             player->state = 4;
         }
         return;
@@ -909,17 +893,17 @@ void fn_1_EEC4(EffectEntry *a, EffectEntry *b) {
     if (a->type == 0 && b->type == 4) {
         player = a->user;
         if ((player->state == 1 || player->state == 2) && player->invuln == 0) {
-            player->subA = 0;
-            player->sub6 = 0;
-            player->sub8 = 0;
+            player->timerA = 0;
+            player->sub = 0;
+            player->subTimer = 0;
             player->state = 4;
         }
     }
 }
 
 /* push the player out of Bowser and hurt it when he is charging */
-void fn_1_F014(KpPlayer *player, Koopa *koopa) {
-    CAMERA *cam = KP_CAM(player->host, 0);
+void fn_1_F014(M562Player *player, Koopa *koopa) {
+    CAMERA *cam = &player->owner->camera[0];
     f32 pLow;
     f32 pHigh;
     f32 kLow;
@@ -983,10 +967,10 @@ void fn_1_F014(KpPlayer *player, Koopa *koopa) {
                 } else if (koopa->sub == 6) {
                     if (koopa->step >= 3 && koopa->timerE >= 0x14) {
                         if (kLow >= pLow && (player->state == 1 || player->state == 2) && player->invuln == 0) {
-                            player->unk12 = 0x8C;
+                            player->scaleTimer = 0x8C;
                             player->invuln = 0x8C;
                             player->hp--;
-                            omVibrate(player->charIdx, 0x1E, 4, 2);
+                            omVibrate(player->playerNo, 0x1E, 4, 2);
                             CharFXPlay(player->charNo, 0x202);
                         }
                         fn_1_21B68(cam, 1, 0x32, 40.0f, 0.95f, 90.0f);
@@ -997,18 +981,18 @@ void fn_1_F014(KpPlayer *player, Koopa *koopa) {
                 }
                 if ((player->state == 1 || player->state == 2) && player->invuln == 0) {
                     if (koopa->sub == 5) {
-                        player->subA = 0;
-                        player->sub6 = 0;
-                        player->sub8 = 0;
+                        player->timerA = 0;
+                        player->sub = 0;
+                        player->subTimer = 0;
                         player->state = 6;
                         koopa->timerC = 0xB4;
                         koopa->timer10 = 0x3C;
                         koopa->sub = 2;
                         return;
                     }
-                    player->subA = 0;
-                    player->sub6 = 0;
-                    player->sub8 = 0;
+                    player->timerA = 0;
+                    player->sub = 0;
+                    player->subTimer = 0;
                     player->state = 3;
                 }
             }

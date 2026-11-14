@@ -329,8 +329,7 @@ extern GXColor lbl_1_data_9D0;
 
 /* ---- koopa.c / koopaboss.c ---- */
 /* The koopa units work on the battle owner (M562Work, defined in the main block
- * below) through KpHost; the player object (work->player) through the KpPlayer
- * overlay, cast from &work->player. */
+ * below) through KpHost, and on the player (work->player) as M562Player. */
 struct M562Work;
 typedef struct M562Work KpHost;
 
@@ -338,45 +337,10 @@ typedef struct M562Work KpHost;
  * 0x288C (boss hits) all live in M562Work.pad286C; it must hold 3 * sizeof(EffectList). */
 #define KP_HITA(host) (&((EffectList *)(host)->pad286C)[1])
 #define KP_HITB(host) (&((EffectList *)(host)->pad286C)[2])
-#define KP_CAM(host, i) ((CAMERA *)&(host)->camera[i])
-#define KP_PLAYER(host) ((KpPlayer *)&(host)->player)
 #define KP_ABS(x) (((x) >= 0.0f) ? (x) : -(x))
 #define KP_CLAMP(v, lo, hi) (((v) > (hi)) ? (hi) : (((v) < (lo)) ? (lo) : (v)))
 /* heading in degrees of the (x, z) direction, wrapped into (-180, 180] */
 #define KP_HEADING(x, z) ((HuAtan((x), (z)) > 180.0) ? (HuAtan((x), (z)) - 360.0) : ((HuAtan((x), (z)) <= -180.0) ? (360.0 + HuAtan((x), (z))) : HuAtan((x), (z))))
-
-typedef struct KpPlayer { /* host + 0x28 */
-    /* 0x00 */ struct M562Work *host;
-    /* 0x04 */ u16 state;
-    /* 0x06 */ s16 sub6;
-    /* 0x08 */ s16 sub8;
-    /* 0x0A */ s16 subA;
-    /* 0x0C */ u8 padC[4];
-    /* 0x10 */ s16 invuln;
-    /* 0x12 */ s16 unk12;
-    /* 0x14 */ s16 charIdx;
-    /* 0x16 */ u8 pad16[2];
-    /* 0x18 */ s32 charNo;
-    /* 0x1C */ u8 pad1C[0x68 - 0x1C];
-    /* 0x68 */ f32 height;
-    /* 0x6C */ u8 pad6C[0x8C - 0x6C];
-    /* 0x8C */ s16 hp;
-    /* 0x8E */ u8 pad8E[2];
-    /* 0x90 */ f32 rotY;
-    /* 0x94 */ u8 pad94[0xA0 - 0x94];
-    /* 0xA0 */ Vec pos;
-    /* 0xAC */ u8 padAC[0xC0 - 0xAC];
-    /* 0xC0 */ f32 speed;
-    /* 0xC4 */ u8 padC4[0x130 - 0xC4];
-    /* 0x130 */ void *held;
-    /* 0x134 */ void *target; /* the bomb slot being carried */
-} KpPlayer;
-
-/* mini mecha-koopa object returned by fn_1_181FC (only its position is read) */
-typedef struct KbMini {
-    /* 0x00 */ u8 pad0[0x20];
-    /* 0x20 */ Vec pos;
-} KbMini;
 
 typedef struct KbMiniMgr KbMiniMgr; /* embedded at host + 0x1B90, owned by mini_mechakoopa */
 
@@ -514,7 +478,7 @@ extern void fn_1_B4F8(Koopa *self);
 extern void fn_1_CE10(Koopa *self);
 extern void fn_1_ED90(Koopa *self, Vec *in, Vec *out);
 extern void fn_1_EEC4(EffectEntry *a, EffectEntry *b);
-extern void fn_1_F014(KpPlayer *player, Koopa *koopa);
+extern void fn_1_F014(struct M562Player *player, Koopa *koopa);
 extern void fn_1_F784(KoopaBoss *self, struct M562Work *host);
 extern void fn_1_10018(KoopaBoss *self);
 extern MtxPtr fn_1_1010C(KoopaBoss *self);
@@ -525,7 +489,7 @@ extern void fn_1_10348(EffectEntry *a, EffectEntry *b);
 extern void fn_1_11054(KoopaBoss *self);
 extern s32 fn_1_934(s32 seNo, Vec *pos);
 extern void fn_1_964(s32 handle, Vec *pos);
-extern KbMini *fn_1_181FC(KbMiniMgr *mgr, Vec *pos, f32 angle);
+extern struct KbMiniEntry *fn_1_181FC(KbMiniMgr *mgr, Vec *pos, f32 angle);
 extern void fn_1_1EE3C(KbBombMgr *mgr, KoopaBoss *boss);
 extern void fn_1_1F138(KbBombMgr *mgr);
 extern void fn_1_1F208(KbBombMgr *mgr);
