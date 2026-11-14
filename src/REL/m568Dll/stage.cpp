@@ -62,8 +62,14 @@ struct StgHit {
 };
 
 // Archive object: slot 8 looks a named block up.
+// The real object (archive.cpp) is 0x50 bytes on GC; its members hold pointers, so the PC build is larger.
 struct StgArchive {
     void **vtbl;
+#ifdef TARGET_PC
+    u8 pad[0x100];
+#else
+    u8 pad[0x4C];
+#endif
 };
 
 // The four model slots owned by fn_1_98D8's object.
@@ -656,7 +662,13 @@ static void fn_1_E584(StgHit *hit, StgTri *tri, Vec *v0, Vec *v1, Vec *v2)
                 hit->out->y = p.y;
                 hit->out->z = p.z;
                 STG_CHECK(0x27);
-                ((Stage568 *)lbl_1_bss_9F0)->plane = plane;
+                {
+                    StgPlane *dst = &((Stage568 *)lbl_1_bss_9F0)->plane;
+                    dst->n.x = plane.n.x;
+                    dst->n.y = plane.n.y;
+                    dst->n.z = plane.n.z;
+                    dst->d = plane.d;
+                }
             }
         }
     }
