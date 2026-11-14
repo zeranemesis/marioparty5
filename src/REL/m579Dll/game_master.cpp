@@ -240,14 +240,14 @@ void fn_1_7914(M579GameMaster *self)
     bgm = HuAudBGMPlay(0x4d);
     HuAudFXPlay(0x95e);
 
-    while (((fn_1_1CE0() >> 8) & 0xff) == 0) {
+    while (((fn_1_1CE0()) & 0xff) == 0) {
         fn_1_5428(GM_THREAD(self), 0);
     }
 
     fn_1_1C48(1);
     fn_1_2704();
 
-    while (((fn_1_2874() >> 8) & 0xff) == 0) {
+    while (((fn_1_2874()) & 0xff) == 0) {
         fn_1_5428(GM_THREAD(self), 0);
     }
 
@@ -256,7 +256,7 @@ void fn_1_7914(M579GameMaster *self)
     fn_1_5CBC(GM_TIMER(self), 1);
     fn_1_5C3C(GM_TIMER(self), lbl_1_rodata_170, lbl_1_rodata_174);
 
-    while (((fn_1_7AB4(self) >> 8) & 0xff) == 0) {
+    while (((fn_1_7AB4(self)) & 0xff) == 0) {
         fn_1_5428(GM_THREAD(self), 0);
     }
 
@@ -273,7 +273,7 @@ void fn_1_7914(M579GameMaster *self)
 
     fn_1_1C48(4);
     result = fn_1_DE88();
-    if (((result >> 8) & 0xff) != 0) {
+    if (((result) & 0xff) != 0) {
         jingle = 0x7b;
     } else {
         jingle = 0x79;
@@ -281,7 +281,7 @@ void fn_1_7914(M579GameMaster *self)
     HuAudJinglePlay((s16) jingle);
     fn_1_2948();
 
-    while (((fn_1_2874() >> 8) & 0xff) == 0) {
+    while (((fn_1_2874()) & 0xff) == 0) {
         fn_1_5428(GM_THREAD(self), 0);
     }
 
