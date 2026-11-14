@@ -415,7 +415,6 @@ M517HandleTbl *fn_1_28A4(M517HandleTbl *self, u32 n)
     return self;
 }
 
-// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 M517HandleTbl *fn_1_2AA8(M517HandleTbl *self, s16 flag)
 {
     if (self != 0) {
@@ -1964,7 +1963,6 @@ void fn_1_7910(M517TimerObj *self, u8 r, u8 g, u8 b)
 
 // ---------------------------------------------------------------- static initialisers
 
-// NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 void fn_1_7958(void)
 {
     M517Node *node = &lbl_1_bss_24;
