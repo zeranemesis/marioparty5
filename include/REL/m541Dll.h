@@ -473,8 +473,9 @@ s32 fn_1_12830(void);
 void fn_1_12F40(void);
 s32 fn_1_14EB0(s16 idx); /* G7: returns 0 (and 0 on early exit) */
 s32 fn_1_14714(s16 idx); /* G7 */
-void fn_1_187F8(void);
+s32 fn_1_187F8(void);
 void fn_1_194B4(void);
+s32 fn_1_19738(s16 idx, float baseX, float baseZ);
 
 /* ---- G5 (game.s fn_1_DDCC..fn_1_E930) ---- */
 s32 fn_1_DDCC(void);
