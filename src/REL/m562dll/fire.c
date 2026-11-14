@@ -137,11 +137,11 @@ void fn_1_14190(FireMgr *mgr) {
 }
 
 void fn_1_14390(EffectEntry *a, EffectEntry *b) {
-    if (a->type == 1 && b->type == 1) {
+    if ((u16)a->type == 1 && (u16)b->type == 1) {
         fn_1_14438((Fire *)a->user, (Fire *)b->user);
-    } else if (a->type == 0 && b->type == 1) {
+    } else if ((u16)a->type == 0 && (u16)b->type == 1) {
         fn_1_14B68((FireBoss *)a->user, (Fire *)b->user);
-    } else if (a->type == 1 && b->type == 0) {
+    } else if ((u16)a->type == 1 && (u16)b->type == 0) {
         fn_1_14B68((FireBoss *)b->user, (Fire *)a->user);
     }
 }
@@ -322,6 +322,10 @@ void fn_1_153A4(FireSlot *slot, FireMgr *mgr) {
 }
 
 void fn_1_154FC(FireSlot *slot) {
+    FireMgr *mgr = slot->mgr;
+    M562Work *owner = mgr->owner;
+    M562Back *back = &owner->back;
+
     memset(slot, 0, sizeof(FireSlot));
 }
 
@@ -415,10 +419,12 @@ void fn_1_15B78(FireSlot *slot) {
     FireBoss *boss = FIRE_BOSS(slot->mgr->owner);
     Vec diff, dir, fwd;
     f32 dot;
+    f32 mag;
 
     if ((boss->state == 1 || boss->state == 2) && boss->f10 == 0) {
         PSVECSubtract(&boss->pos, &slot->pos, &diff);
-        if (PSVECMag(&diff) < 170.0f) {
+        mag = PSVECMag(&diff);
+        if (mag < 170.0f) {
             if (diff.x == 0.0f && diff.z == 0.0f) {
                 diff.z = 1.0f;
             }
@@ -510,14 +516,17 @@ void fn_1_16218(Fire *fire) {
 }
 
 void fn_1_162A0(Fire *fire) {
+    FireMgr *mgr = fire->mgr;
+    M562Work *owner = mgr->owner;
+
     if (fire->state < 6) {
-        if (fire->flame != NULL) {
+        if (fire->flame) {
             fn_1_15390(NULL, fire->flame);
             fire->flame = NULL;
             fire->flameTimer = 0;
             fire->flameStage = 0;
         }
-        if (fire->mgr->owner->step == 4) {
+        if (owner->step == 4) {
             fn_1_814(0x8A1);
         }
         fire->timer = 13;
@@ -546,7 +555,7 @@ void fn_1_16350(Fire *fire) {
                 fire->state = 1;
                 fire->timer = 1;
             }
-            if (fire->flame != NULL) {
+            if (fire->flame) {
                 fn_1_15390(NULL, fire->flame);
                 fire->flame = NULL;
                 fire->flameTimer = 0;
@@ -613,7 +622,7 @@ void fn_1_16350(Fire *fire) {
             break;
         case 5:
             if (fn_1_174C0(fire) != 0 && fire->state < 6) {
-                if (fire->flame != NULL) {
+                if (fire->flame) {
                     fn_1_15390(NULL, fire->flame);
                     fire->flame = NULL;
                     fire->flameTimer = 0;
@@ -661,16 +670,8 @@ void fn_1_16350(Fire *fire) {
                     fire->vy = 0.0f;
                 }
             }
-            if (fire->pos.x > 625.0f) {
-                fire->pos.x = 625.0f;
-            } else if (fire->pos.x < -625.0f) {
-                fire->pos.x = -625.0f;
-            }
-            if (fire->pos.z > 500.0f) {
-                fire->pos.z = 500.0f;
-            } else if (fire->pos.z < -500.0f) {
-                fire->pos.z = -500.0f;
-            }
+            fire->pos.x = (fire->pos.x > 625.0f) ? 625.0f : ((fire->pos.x < -625.0f) ? -625.0f : fire->pos.x);
+            fire->pos.z = (fire->pos.z > 500.0f) ? 500.0f : ((fire->pos.z < -500.0f) ? -500.0f : fire->pos.z);
         }
         Hu3DModelPosSet(model, fire->pos.x, fire->pos.y, fire->pos.z);
         Hu3DModelRotSet(model, fire->rot.x, fire->rot.y, fire->rot.z);
@@ -698,7 +699,7 @@ void fn_1_16AC0(Fire *fire) {
         break;
     case 1:
         slot = fn_1_15308(fire->mgr, fire);
-        if (slot == NULL) {
+        if (!slot) {
             fire->flameTimer = 0;
             fire->flameStage = 0;
             break;
@@ -720,7 +721,7 @@ void fn_1_16AC0(Fire *fire) {
         }
         break;
     case 3:
-        if (fire->flame != NULL) {
+        if (fire->flame) {
             fire->flame->pos = fire->pos;
             fire->flame->angle = fire->angle;
         }
@@ -785,7 +786,7 @@ void fn_1_16D08(Fire *fire) {
 void fn_1_170E0(Fire *fire) {
     Vec dir;
     f32 mag;
-    f64 speed = 7.0;
+    f32 speed = 7.0f;
 
     fire->nextMotion = 2;
     fire->loopMotion = 1;
@@ -809,7 +810,7 @@ void fn_1_170E0(Fire *fire) {
     if (mag < 300.0f) {
         fire->nextMotion = 0;
         fire->loopMotion = 1;
-        speed = 0.0;
+        speed = 0.0f;
     }
     fire->angle = fn_1_36EC(fire->targetAngle, fire->angle, 0.95f);
     dir.x = speed * sin(FIRE_RAD(fire->angle));
@@ -853,9 +854,13 @@ s32 fn_1_174C0(Fire *fire) {
 }
 
 s32 fn_1_1776C(Fire *fire) {
+    FireMgr *mgr = fire->mgr;
+    M562Work *owner = mgr->owner;
+    M562MainPlayer *player = &owner->player;
+
     fire->nextMotion = 0;
     fire->loopMotion = 1;
-    if (fire->flame != NULL) {
+    if (fire->flame) {
         fn_1_15390(NULL, fire->flame);
         fire->flame = NULL;
         fire->flameTimer = 0;
