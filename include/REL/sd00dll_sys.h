@@ -1,5 +1,5 @@
-#ifndef _SD00DLL_STAGE_H
-#define _SD00DLL_STAGE_H
+#ifndef _SD00DLL_SYS_H
+#define _SD00DLL_SYS_H
 
 #include "REL/sd00dll.h"
 
@@ -212,6 +212,20 @@ typedef struct SdSys_s {
 } SdSys;
 
 extern SdSys *sys;
+
+typedef SdStageMachine SdMachine;
+
+/* ===== Cross-unit prototypes: one section per owning unit. Add yours with a
+   small Edit; grep first so nothing is declared twice. ===== */
+/* proto: sd00 */
+/* proto: machine */
+/* proto: com */
+/* proto: gun */
+/* proto: stage */
+/* proto: math */
+/* proto: util */
+/* proto: flag */
+/* proto: rabbit */
 
 extern s32 sdCameraBitTbl[];
 
