@@ -778,3 +778,15 @@ s32 fn_1_ED90(void *sub, Vec *io, Vec *a, Vec *b)
 }
 
 }
+
+#ifdef TARGET_PC
+extern "C" Vec *M568PortSrcGetPos(M568PosOwner *owner)
+{
+    return fn_1_E2FC((Stage568 *)owner);
+}
+
+extern "C" s32 M568PortSrcProject(M568PosOwner *owner, Vec *io, Vec *a, Vec *b)
+{
+    return fn_1_E304((Stage568 *)owner, io, a, b);
+}
+#endif

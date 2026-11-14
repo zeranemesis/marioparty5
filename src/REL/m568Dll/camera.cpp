@@ -177,7 +177,7 @@ void fn_1_A198(Camera568 *self, Vec *pos, Vec *target)
     b.x = 1600.0f;
     b.y = 2000.0f;
     b.z = hi;
-    owner->src.Project(&b, &b, &a);
+    M568_SRC_PROJECT(owner, &b, &b, &a);
     pos->x = 400.0f;
     pos->y = b.y + 100.0f * (lbl_1_data_3B4 * 0.5f);
     pos->z = base - 100.0f * lbl_1_data_3B8;
@@ -208,7 +208,7 @@ void fn_1_A3F8(Camera568 *self, Vec *pos, Vec *target)
     b.x = 1600.0f;
     b.y = 2000.0f;
     b.z = hi;
-    owner->src.Project(&b, &b, &a);
+    M568_SRC_PROJECT(owner, &b, &b, &a);
     pos->x = 1.0f;
     pos->y = b.y + 100.0f * lbl_1_data_3B4;
     pos->z = base;

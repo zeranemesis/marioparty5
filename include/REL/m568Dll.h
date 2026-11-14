@@ -132,6 +132,17 @@ struct GameMaster {
 extern "C" {
 
 extern M568PosOwner *lbl_1_bss_9F0;
+#ifdef TARGET_PC
+/* the owner's virtual slots are a hand-built MWCC vtable (stage.cpp): MSVC's own dispatch would pick the
+   wrong slot, so the port calls the stage's implementations directly */
+extern "C" Vec *M568PortSrcGetPos(M568PosOwner *owner);
+extern "C" s32 M568PortSrcProject(M568PosOwner *owner, Vec *io, Vec *a, Vec *b);
+#define M568_SRC_GETPOS(o) M568PortSrcGetPos(o)
+#define M568_SRC_PROJECT(o, io, a, b) M568PortSrcProject((o), (io), (a), (b))
+#else
+#define M568_SRC_GETPOS(o) (o)->src.GetPos()
+#define M568_SRC_PROJECT(o, io, a, b) (o)->src.Project((io), (a), (b))
+#endif
 extern M568Effect *lbl_1_bss_9F4;
 extern SceneNode *lbl_1_bss_9F8;
 extern EffectMgr *lbl_1_bss_A10;

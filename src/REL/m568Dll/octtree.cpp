@@ -77,7 +77,7 @@ OctEffect *fn_1_F7A0(OctEffect *self, s32 type, Vec *pos)
     }
     owner = lbl_1_bss_9F0;
     fn_1_D690(&self->pos);
-    src = owner->src.GetPos();
+    src = M568_SRC_GETPOS(owner);
     self->cur.x = src->x;
     self->cur.y = src->y;
     self->cur.z = src->z;
