@@ -428,6 +428,37 @@ M517Input *fn_1_A0FC(M517Input *self, s16 flag);
 struct M517Kuribo_s;
 struct M517Kuribo_s *fn_1_C994(struct M517Kuribo_s *self, Vec *pos, Vec *rot, s32 type);
 
+
+/* ---- camera / stage units (camera.cpp, stage.cpp): the two singleton task objects ---- */
+
+/* Camera singleton: task base, camera pose and a state hook. */
+typedef struct M517Camera_s {
+    M517Task task;
+    M517Cam cam;
+    u8 unk34[0x3C];
+    M517Ptmf state;
+    u8 farView; // set by the game master once the game starts
+    s16 motionId;
+} M517Camera;
+
+/* Stage singleton: three models loaded from DATA_m517. */
+typedef struct M517Stage_s {
+    M517Task task;
+    M517Model model[3];
+    Vec offs;
+} M517Stage;
+
+M517Camera *fn_1_DC4C(M517Camera *self);
+M517Camera *fn_1_DDDC(M517Camera *self, s16 flag);
+M517Stage *fn_1_E3A4(M517Stage *self);
+M517Stage *fn_1_E790(M517Stage *self, s16 flag);
+
+/* ---- audio unit (audio.cpp) ---- */
+void fn_1_1B48C(Point3d *pos, s16 cameraBit, Point3d *out);
+s32 fn_1_1B6EC(s32 seId, Point3d *pos);
+void fn_1_1B9B8(s16 charNo, Point3d *pos);
+void fn_1_1BC6C(s32 seNo, Point3d *pos);
+
 #ifdef __cplusplus
 }
 #endif
