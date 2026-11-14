@@ -131,6 +131,8 @@ M537_RODATA const Vec lbl_1_rodata_528[4] = {
     { -250.0f, 1050.0f, 250.0f },
     { 250.0f, 1050.0f, 250.0f },
 };
+// Zeroed point triple the ribbon builder starts from.
+M537_RODATA const Vec lbl_1_rodata_5B8[3] = { { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } };
 M537_RODATA const s32 lbl_1_rodata_57C[5] = { 0x5F000B, 0x5F000C, 0x5F000D, 0x5F000E, 0 };
 
 M537Pt lbl_1_bss_A64;
@@ -630,7 +632,7 @@ void fn_1_111C0(M537Arm *arm, Vec *target)
     dir1 = dir0;
     PSVECScale(dir1, dir1, 30.0f);
     for (i = 0; i < (s32)arm->m_count; i++) {
-        t = (f32)i / (f32)(arm->m_count - 1);
+        t = (f32)i / (f32)(s32)(arm->m_count - 1);
         M537Lerp(&p, &start, target, t);
         pt = M537PtBegin(&arm->m_pts) + i;
         fn_1_110A4(pt, &p);
@@ -717,6 +719,7 @@ void fn_1_11864(M537Arm *arm)
     s32 i0;
     s32 i1;
     s32 i2;
+    s32 k;
     s32 last;
     f32 v0;
     f32 v1;
@@ -756,15 +759,9 @@ void fn_1_11864(M537Arm *arm)
         } else {
             i2 = i + 1;
         }
-        p3[0].x = 0.0f;
-        p3[0].y = 0.0f;
-        p3[0].z = 0.0f;
-        p3[1].x = 0.0f;
-        p3[1].y = 0.0f;
-        p3[1].z = 0.0f;
-        p3[2].x = 0.0f;
-        p3[2].y = 0.0f;
-        p3[2].z = 0.0f;
+        for (k = 0; k < 3; k++) {
+            p3[k] = lbl_1_rodata_5B8[k];
+        }
         p3[0] = arm->m_pts.m_data[i0].m_pos;
         p3[1] = arm->m_pts.m_data[i1].m_pos;
         p3[2] = arm->m_pts.m_data[i2].m_pos;
