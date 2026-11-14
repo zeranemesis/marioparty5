@@ -9,9 +9,6 @@
 
 #include "REL/m562dll.h"
 
-/* the event units' view of the owner object, as their prototypes take it */
-#define EVT(w) ((M562EvtWork *)(w))
-
 typedef void (*M562VoidFunc)(void);
 extern const M562VoidFunc _ctors[];
 extern const M562VoidFunc _dtors[];
@@ -90,7 +87,7 @@ void fn_1_E8(s16 mode, s16 frameNo)
     fn_1_AC4(work, lbl_1_bss_4);
     work->step = 0;
     work->mode = 1;
-    fn_1_16F0(EVT(work), 0);
+    fn_1_16F0(work, 0);
     fn_1_22694(&work->light, 0, 1.0f);
     fn_1_4748(&work->back, 0, 1.0f);
     MgSeqStatBitReset(0x20);
@@ -115,16 +112,16 @@ void fn_1_20C(s16 mode, s16 frameNo)
     if (fn_1_1F54(work) != 0) {
         switch (work->mode) {
         case 1:
-            fn_1_16F0(EVT(work), 0);
+            fn_1_16F0(work, 0);
             break;
         case 2:
-            fn_1_16F0(EVT(work), 1);
+            fn_1_16F0(work, 1);
             break;
         case 3:
-            fn_1_16F0(EVT(work), 2);
+            fn_1_16F0(work, 2);
             break;
         case 4:
-            fn_1_16F0(EVT(work), 3);
+            fn_1_16F0(work, 3);
             break;
         }
         MgSeqModeNext();
@@ -195,7 +192,7 @@ void fn_1_460(s16 mode, s16 frameNo)
         }
         M562TimerKill(work);
         if (work->mode == 4) {
-            fn_1_1D9C(EVT(work));
+            fn_1_1D9C(work);
         }
         lbl_1_data_4 = 1;
         lbl_1_data_0 = 0;
@@ -261,7 +258,7 @@ void fn_1_6DC(s16 mode, s16 frameNo)
             }
             MgSeqModeSet(MGSEQ_MODE_FADEIN);
         }
-    } else if (fn_1_2C118(EVT(work)) != 0) {
+    } else if (fn_1_2C118(work) != 0) {
         MgSeqModeSet(MGSEQ_MODE_CLOSE);
     }
     work->step = 7;

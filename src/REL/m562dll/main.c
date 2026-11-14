@@ -313,9 +313,8 @@ static s32 fn_1_14A4(M562Work *work)
 }
 
 /* phase switch: show/hide the sub-objects for battle part `mode` (0..3) */
-void fn_1_16F0(M562EvtWork *evt, s16 mode)
+void fn_1_16F0(M562Work *work, s16 mode)
 {
-    M562Work *work = (M562Work *)evt;
     M562Back *back = &work->back;
     CAMERA *cam0 = &work->camera[0];
 
@@ -480,9 +479,8 @@ void fn_1_1CB0(M562Work *work, s16 mode, s32 on)
 }
 
 /* end of the battle: put every sub-object into its closing state */
-void fn_1_1D9C(M562EvtWork *evt)
+void fn_1_1D9C(M562Work *work)
 {
-    M562Work *work = (M562Work *)evt;
     KoopaBoss *boss = &work->boss;
     s32 i;
 
@@ -531,27 +529,26 @@ void fn_1_1D9C(M562EvtWork *evt)
 
 s32 fn_1_1F54(M562Work *work)
 {
-    M562EvtWork *evt = (M562EvtWork *)work;
     s32 ret = 1;
 
     switch (work->phase) {
     case 0:
-        ret = fn_1_2446C(evt);
+        ret = fn_1_2446C(work);
         break;
     case 1:
-        ret = fn_1_252B4(evt);
+        ret = fn_1_252B4(work);
         break;
     case 2:
-        ret = fn_1_260B8(evt);
+        ret = fn_1_260B8(work);
         break;
     case 3:
-        ret = fn_1_27950(evt);
+        ret = fn_1_27950(work);
         break;
     case 4:
-        ret = fn_1_280C8(evt);
+        ret = fn_1_280C8(work);
         break;
     case 5:
-        ret = fn_1_29DF8(evt);
+        ret = fn_1_29DF8(work);
         break;
     }
     if (ret != 0) {

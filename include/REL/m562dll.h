@@ -76,84 +76,14 @@ extern void fn_1_2EB08(void);
 /* ---- evt_opening / evt_fire / evt_fight / evt_fall / evt_winner ---- */
 /* The event scripts work on the battle owner object itself (M562Work, defined
    in the main block below; this alias names it for the units that predate it).
-   The views below are pointer-free overlays of its embedded sub-objects (cast
-   from &work->member), holding only the members the scripts touch at the GC
-   offsets of the original. Everything with a real owner type is used through
-   that type instead: CAMERA, M562Back, Koopa, FireMgr, M562StageField. */
+   The scripts use the owner types of the embedded sub-objects (M562Player,
+   CAMERA, M562Back, Koopa, FireRingMgr, FireMgr, M562StageField). */
 typedef struct M562Work M562EvtWork;
 
-typedef struct M562EvtInput {
-    /* 0x00 */ u8 pad0[8];
-    /* 0x08 */ s32 btnA;
-    /* 0x0C */ s32 btnB;
-    /* 0x10 */ s8 stickX;
-    /* 0x11 */ s8 stickY;
-} M562EvtInput;
-
-typedef struct M562EvtPlayer { /* work + 0x28 */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ s16 unk4;
-    /* 0x06 */ s16 unk6;
-    /* 0x08 */ u8 pad8[0xC];
-    /* 0x14 */ s16 charIdx;
-    /* 0x16 */ u8 pad16[2];
-    /* 0x18 */ s16 charNo;
-    /* 0x1A */ u8 pad1A[0xA];
-    /* 0x24 */ s16 motion;
-    /* 0x26 */ u8 pad26[0x46];
-    /* 0x6C */ M562EvtInput input;
-    /* 0x7E */ u8 pad7E[0x12];
-    /* 0x90 */ f32 rotGoal;
-    /* 0x94 */ f32 rotSpeed;
-    /* 0x98 */ u8 pad98[2];
-    /* 0x9A */ s16 animNo;
-    /* 0x9C */ s32 animLoop;
-    /* 0xA0 */ Vec pos;
-    /* 0xAC */ u8 padAC[4];
-    /* 0xB0 */ f32 rotY;
-    /* 0xB4 */ u8 padB4[0x10];
-    /* 0xC4 */ f32 velY;
-    /* 0xC8 */ u8 padC8[0x138 - 0xC8];
-} M562EvtPlayer;
-
-typedef struct M562EvtFireEntry {
-    /* 0x00 */ u8 pad0[0x1C];
-    /* 0x1C */ Vec pos;
-    /* 0x28 */ u8 pad28[0x34 - 0x28];
-} M562EvtFireEntry;
-
-typedef struct M562EvtFire { /* work + 0x7BC */
-    /* 0x00 */ u8 pad0[0x10];
-    /* 0x10 */ s32 active;
-    /* 0x14 */ u8 pad14[4];
-    /* 0x18 */ M562EvtFireEntry entry[3];
-    /* 0xB4 */ u8 padB4[0xCC - 0xB4];
-    /* 0xCC */ s32 sndHandle;
-} M562EvtFire;
-
 /* ---- stage.c ---- */
-/* The stage unit's view of the main work (owned by main.c): the fields it
-   reads, at the original's offsets. */
-typedef struct M562StageCam {
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ u32 cameraBit;
-} M562StageCam;
-
-typedef struct M562StageAmb {
-    /* 0x00 */ u8 pad0[0xC];
-    /* 0x0C */ f32 r;
-    /* 0x10 */ f32 g;
-    /* 0x14 */ f32 b;
-} M562StageAmb;
-
-typedef struct M562StageParent {
-    /* 0x000 */ u8 pad0[0xE];
-    /* 0x00E */ u16 phase;
-    /* 0x010 */ u8 pad10[0x1BC - 0x10];
-    /* 0x1BC */ M562StageCam cam;
-    /* 0x1C4 */ u8 pad1C4[0x2F4 - 0x1C4];
-    /* 0x2F4 */ M562StageAmb amb;
-} M562StageParent;
+/* The stage reads the battle work object that owns it (mode, camera mask, ambient colour). */
+struct M562Work;
+typedef struct M562Work M562StageParent;
 
 struct M562StageField;
 
@@ -677,9 +607,9 @@ extern s32 fn_1_260B8(M562Work *work);
 extern s32 fn_1_27950(M562Work *work);
 extern s32 fn_1_2C118(M562Work *work);
 extern void fn_1_1D9C(M562Work *work);
-extern void fn_1_7D58(void *player);
-extern s32 fn_1_AD98(void *player, Vec *dir, f32 rate);
-extern void fn_1_B578(void *koopa);
+extern void fn_1_7D58(struct M562Player *player);
+extern s32 fn_1_AD98(struct M562Player *player, Vec *dir, f32 rate);
+extern void fn_1_B578(Koopa *koopa);
 extern void fn_1_864(s32 handle, s32 time);
 extern void fn_1_9F4(s32 handle, s32 time);
 extern void fn_1_A6C(s16 jingle);
