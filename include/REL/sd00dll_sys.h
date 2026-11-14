@@ -144,7 +144,7 @@ typedef struct SdStageMachine_s {
     f32 groundY[2];    // 0x2D4
     s32 pad2DC[3];     // 0x2DC
     s32 comPreset;     // 0x2E8 (COM preset index, -1: none; SdMachineConfigSet)
-    s32 pad2EC[9];     // 0x2EC
+    s32 pad2EC[10];    // 0x2EC
     s16 fireMdlId[2];  // 0x314
     s32 fireCnt;       // 0x318
     Vec firePos;       // 0x31C

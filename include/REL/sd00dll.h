@@ -4,11 +4,17 @@
 #include "dolphin.h"
 
 typedef struct SdMachineTire_s {
-    u8 pad00[0x1C];
-    f32 unk1C;
-    f32 unk20;
-    u8 pad24[0x10];
-    s32 unk34;
+    s32 dataNum[4]; // 0x00 (tire model files)
+    s32 stat0;      // 0x10
+    s32 stat1;      // 0x14
+    s32 stat2;      // 0x18
+    f32 unk1C;      // 0x1C (wheel base)
+    f32 unk20;      // 0x20
+    f32 unk24;      // 0x24
+    f32 unk28;      // 0x28 (hook X offset)
+    f32 unk2C;      // 0x2C
+    f32 unk30;      // 0x30 (hook Z offset)
+    s32 unk34;      // 0x34 (low nibble: hook layout 0/1/2)
 } SdMachineTire;
 
 extern SdMachineTire sdMachineTireTbl[];
