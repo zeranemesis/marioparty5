@@ -87,9 +87,8 @@ void fn_1_B4F8(Koopa *self) {
     memset(self, 0, sizeof(*self));
 }
 
-/* per-frame update (declared with void * in the shared header) */
-void fn_1_B578(void *arg) {
-    Koopa *self = arg;
+/* per-frame update */
+void fn_1_B578(Koopa *self) {
     HU3DMODELID model;
     f32 blend;
 
