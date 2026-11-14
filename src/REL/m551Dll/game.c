@@ -67,6 +67,7 @@ void fn_1_5FF4(M551State *state)
     MGACTOR_PARAM param;
     HuVecF origin = { 0.0f, 100.0f, 0.0f };
     HuVecF pos;
+    f32 radius = 480.0f;
     s16 cnt[5] = { 0, 0, 0, 0, 0 };
     s16 maxCnt[5] = { 1, 2, 3, 3, 3 };
     s16 used[12];
@@ -187,9 +188,9 @@ void fn_1_5FF4(M551State *state)
         if (j >= 4) {
             j = 0;
         }
-        pos.x = origin.x + 20.0 * cos(3.141592653589793 * (30.0f * ((i - 6) / 4)) / 180.0);
+        pos.x = origin.x + radius * cos(3.141592653589793 * (30.0f * ((i - 6) / 4)) / 180.0);
         pos.y = 0.1f + origin.y;
-        pos.z = origin.z + 20.0 * sin(3.141592653589793 * (30.0f * ((i - 6) / 4)) / 180.0);
+        pos.z = origin.z + radius * sin(3.141592653589793 * (30.0f * ((i - 6) / 4)) / 180.0);
         MDL(i).id = Hu3DModelCreate(HuDataSelHeapReadNum(state->dataNums[ids[j]], HU_MEMNUM_OVL, HEAP_MODEL));
         Hu3DModelAttrSet(MDL(i).id, 1);
         Hu3DModelCameraSet(MDL(i).id, 1);
