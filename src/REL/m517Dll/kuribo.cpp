@@ -15,9 +15,7 @@ void *memmove(void *dst, const void *src, size_t n);
 double sin(double);
 double cos(double);
 void abort(void);
-void *fn_1_1E84(u32 size);
-void *fn_1_BDF4(void *self);
-void *fn_1_BEDC(void *self, s16 flag);
+
 
 /* The 0x18 byte dust object owned by a kuribo (its position is at +4). */
 typedef struct M517KuriboDust_s {
@@ -119,10 +117,10 @@ M517Kuribo *fn_1_C994(M517Kuribo *self, Vec *pos, Vec *rot, s32 type)
     }
     dust = (M517KuriboDust *)fn_1_1E84(0x18);
     if (dust != 0) {
-        dust = (M517KuriboDust *)fn_1_BDF4(dust);
+        dust = (M517KuriboDust *)fn_1_BDF4((M517DustQuad *)dust);
     }
     if (self->dust != dust) {
-        fn_1_BEDC(self->dust, 1);
+        fn_1_BEDC((M517DustQuad *)self->dust, 1);
         self->dust = dust;
     }
     return self;
@@ -132,7 +130,7 @@ M517Kuribo *fn_1_C994(M517Kuribo *self, Vec *pos, Vec *rot, s32 type)
 void *fn_1_CBF4(void **self, s16 flag)
 {
     if (self != 0) {
-        fn_1_BEDC(*self, 1);
+        fn_1_BEDC((M517DustQuad *)*self, 1);
         if (flag > 0) {
             fn_1_1F4C(self);
         }
@@ -185,7 +183,7 @@ M517Kuribo *fn_1_CDF0(M517Kuribo *self, s16 flag)
     if (self != 0) {
         self->vtbl = lbl_1_data_400;
         self->task.vtbl = (M517TaskVtbl *)(lbl_1_data_400 + 2);
-        fn_1_BEDC(self->dust, 1);
+        fn_1_BEDC((M517DustQuad *)self->dust, 1);
         if (self->mot.data != 0) {
             fn_1_1F4C(self->mot.data);
         }

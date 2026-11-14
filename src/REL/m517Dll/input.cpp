@@ -73,7 +73,7 @@ extern "C" {
 
 extern void *lbl_1_bss_10;
 
-f32 fn_1_12E8(void *body);
+// fn_1_12E8 comes from the shared header (M517Ball view of the body)
 void fn_1_111A8(void *self);
 void fn_1_17614(void *self);
 void fn_1_16B68(void *self);
@@ -457,8 +457,8 @@ void fn_1_96AC(M517CpuInput *self)
             self->b.y = n->pos.y;
             self->b.z = n->pos.z;
             self->b.y = 0.0f;
-            self->speed = fn_1_12E8(n->body);
-            if (fn_1_12E8(n->body) > 0.05f) {
+            self->speed = fn_1_12E8((M517Ball *)n->body);
+            if (fn_1_12E8((M517Ball *)n->body) > 0.05f) {
                 self->c = *(Vec *)((char *)n->body + 0x7C);
             }
         } else if (self->playerNo == n->playerNo) {
@@ -590,7 +590,7 @@ void fn_1_9E48(M517CpuInput2 *self)
             self->a.y = n->pos.y;
             self->a.z = n->pos.z;
             self->a.y = 0.0f;
-            self->f68 = fn_1_12E8(n->body);
+            self->f68 = fn_1_12E8((M517Ball *)n->body);
         } else {
             self->pos[i].x = n->pos.x;
             self->pos[i].y = n->pos.y;
