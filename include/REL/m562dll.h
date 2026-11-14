@@ -200,7 +200,9 @@ typedef struct M562EvtBoss { /* 0x30C */
     /* 0x64 */ f32 rotCopy;
     /* 0x68 */ u8 pad68[0x78 - 0x68];
     /* 0x78 */ f32 speed;
-    /* 0x7C */ u8 pad7C[0xB8 - 0x7C];
+    /* 0x7C */ u8 pad7C[0xB0 - 0x7C];
+    /* 0xB0 */ struct M562EvtCell *curCell;
+    /* 0xB4 */ u8 padB4[4];
 } M562EvtBoss;
 
 typedef struct M562EvtFireEntry {
@@ -385,5 +387,169 @@ void fn_1_5CAC(M562StageField *field);
 void fn_1_60F8(M562StageTile *tile, s16 x, s16 z, M562StageField *field);
 void fn_1_62A8(M562StageTile *tile);
 void fn_1_62E8(M562StageTile *tile);
+
+/* ---- fire.c ---- */
+#include "game/sprite.h"
+
+typedef struct FireMgr_s FireMgr;
+typedef struct Fire_s Fire;
+typedef struct FireSlot_s FireSlot;
+
+/* The boss object embedded in the battle owner at 0x28 (fields fire.c touches). */
+typedef struct FireBoss_s {
+    /* 0x000 */ u8 pad0[4];
+    /* 0x004 */ u16 state;
+    /* 0x006 */ s16 f6;
+    /* 0x008 */ s16 f8;
+    /* 0x00A */ s16 fA;
+    /* 0x00C */ u8 padC[4];
+    /* 0x010 */ s16 f10;
+    /* 0x012 */ u8 pad12[2];
+    /* 0x014 */ s16 player;
+    /* 0x016 */ u8 pad16[0x68 - 0x16];
+    /* 0x068 */ f32 height;
+    /* 0x06C */ u8 pad6C[0x90 - 0x6C];
+    /* 0x090 */ f32 rotY;
+    /* 0x094 */ u8 pad94[0xA0 - 0x94];
+    /* 0x0A0 */ Vec pos;
+    /* 0x0AC */ u8 padAC[0xC4 - 0xAC];
+    /* 0x0C4 */ f32 fC4;
+    /* 0x0C8 */ u8 padC8[0x130 - 0xC8];
+    /* 0x130 */ Fire *held;
+    /* 0x134 */ u8 pad134[4];
+} FireBoss;
+
+typedef struct FireCam_s {
+    /* 0x0 */ u8 pad0[4];
+    /* 0x4 */ u16 cameraBit;
+} FireCam;
+
+/* The battle owner as fire.c / firering.c see it. */
+typedef struct FireOwner_s {
+    /* 0x000 */ u8 pad0[0xC];
+    /* 0x00C */ u16 phase;
+    /* 0x00E */ u8 padE[0x20 - 0xE];
+    /* 0x020 */ s16 difficulty;
+    /* 0x022 */ u8 pad22[0x28 - 0x22];
+    /* 0x028 */ FireBoss boss;
+    /* 0x160 */ u8 pad160[0x1BC - 0x160];
+    /* 0x1BC */ FireCam cam;
+    /* 0x1C0 */ u8 pad1C0[0x286C - 0x1C0];
+    /* 0x286C */ EffectList effects;
+} FireOwner;
+
+#define FIRE_MAX 35
+#define FIRE_SLOT_MAX 6
+#define FIRE_PARTICLE_MAX 12
+
+/* One flame-breath emitter (a particle model plus 12 particle life counters). */
+struct FireSlot_s {
+    /* 0x00 */ FireMgr *mgr;
+    /* 0x04 */ s16 pad4;
+    /* 0x06 */ s16 timer;
+    /* 0x08 */ s32 request;
+    /* 0x0C */ s32 playing;
+    /* 0x10 */ s32 suppress;
+    /* 0x14 */ s32 run;
+    /* 0x18 */ s32 enabled;
+    /* 0x1C */ HU3DMODELID model;
+    /* 0x1E */ s16 pad1E;
+    /* 0x20 */ Vec pos;
+    /* 0x2C */ f32 angle;
+    /* 0x30 */ s16 life[FIRE_PARTICLE_MAX];
+    /* 0x48 */ s32 pad48;
+    /* 0x4C */ Fire *owner;
+    /* 0x50 */ s32 sound;
+};
+
+/* One roaming fire creature. */
+struct Fire_s {
+    /* 0x00 */ FireMgr *mgr;
+    /* 0x04 */ s16 index;
+    /* 0x06 */ s16 pad6;
+    /* 0x08 */ s32 run;
+    /* 0x0C */ s32 shown;
+    /* 0x10 */ u16 state;
+    /* 0x12 */ u16 phase;
+    /* 0x14 */ s16 timer;
+    /* 0x16 */ s16 timer2;
+    /* 0x18 */ u8 pad18[4];
+    /* 0x1C */ HU3DMODELID model;
+    /* 0x1E */ s16 motion[8];
+    /* 0x2E */ HU3DMODELID shadow;
+    /* 0x30 */ s32 aggressive;
+    /* 0x34 */ f32 angle;
+    /* 0x38 */ f32 targetAngle;
+    /* 0x3C */ s16 curMotion;
+    /* 0x3E */ s16 nextMotion;
+    /* 0x40 */ s32 loopMotion;
+    /* 0x44 */ Vec pos;
+    /* 0x50 */ Vec rot;
+    /* 0x5C */ u8 pad5C[8];
+    /* 0x64 */ f32 vy;
+    /* 0x68 */ FireSlot *flame;
+    /* 0x6C */ s16 flameStage;
+    /* 0x6E */ s16 flameTimer;
+    /* 0x70 */ s16 flameWait;
+    /* 0x72 */ s16 savedMotion;
+    /* 0x74 */ HU3DMODELID deathModel;
+    /* 0x76 */ s16 pad76;
+    /* 0x78 */ s32 deathPlaying;
+};
+
+struct FireMgr_s {
+    /* 0x0000 */ FireOwner *owner;
+    /* 0x0004 */ s32 run;
+    /* 0x0008 */ s32 enable;
+    /* 0x000C */ Fire fire[FIRE_MAX];
+    /* 0x1100 */ s16 count;
+    /* 0x1104 */ ANIMDATA *anim;
+    /* 0x1108 */ FireSlot slot[FIRE_SLOT_MAX];
+    /* 0x1300 */ HU3DMODELID deathModel;
+    /* 0x1302 */ s16 deathMotion;
+};
+
+extern s32 fn_1_894(s32 seNo, s32 pan, f32 vol, f32 fade);
+extern f32 fn_1_36EC(f32 target, f32 cur, f32 rate);
+extern void fn_1_AD68(FireBoss *boss);
+
+void fn_1_13CFC(FireMgr *mgr, FireOwner *owner);
+void fn_1_140E4(FireMgr *mgr);
+void fn_1_14190(FireMgr *mgr);
+void fn_1_14390(EffectEntry *a, EffectEntry *b);
+void fn_1_14438(Fire *a, Fire *b);
+void fn_1_14B68(FireBoss *boss, Fire *fire);
+void fn_1_152C8(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx);
+FireSlot *fn_1_15308(FireMgr *mgr, Fire *fire);
+void fn_1_15390(void *unused, FireSlot *slot);
+void fn_1_153A4(FireSlot *slot, FireMgr *mgr);
+void fn_1_154FC(FireSlot *slot);
+void fn_1_15554(FireSlot *slot);
+void fn_1_15B78(FireSlot *slot);
+void fn_1_15D40(Fire *fire, s16 index, FireMgr *mgr);
+void fn_1_16218(Fire *fire);
+void fn_1_162A0(Fire *fire);
+void fn_1_16350(Fire *fire);
+void fn_1_16AC0(Fire *fire);
+void fn_1_16CF4(Fire *fire);
+void fn_1_16D08(Fire *fire);
+void fn_1_170E0(Fire *fire);
+s32 fn_1_174C0(Fire *fire);
+s32 fn_1_1776C(Fire *fire);
+extern u32 lbl_1_data_998[8];
+extern f32 lbl_1_data_9B8[6];
+extern GXColor lbl_1_data_9D0;
+
+/* evt units: callees owned by other units (pointer params stay void *) */
+extern void fn_1_21B68(void *camera, s16 mode, s32 time, f32 amp, f32 decay, f32 freq);
+extern void fn_1_16F0(M562EvtWork *w, s16 phase);
+extern void fn_1_1D9C(M562EvtWork *w);
+extern void fn_1_4748(void *stage, s16 phase, f32 t);
+extern void fn_1_7D58(void *player, f32 speed);
+extern s32 fn_1_AD98(void *player, Vec *dir, f32 speed, f32 rate);
+extern void fn_1_B578(void *boss);
+extern void fn_1_864(s32 handle, s32 time);
+extern void fn_1_9F4(s32 handle, s32 time);
+extern void fn_1_A6C(s16 jingle);
 
 #endif
