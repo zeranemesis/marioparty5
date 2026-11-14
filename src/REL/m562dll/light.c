@@ -1,36 +1,6 @@
 // m562dll/light ' the scene's two lights (ambient fill + a spot) and the
 // per-frame ambient broadcast.
-#include "types.h"
-
-typedef s16 HU3DLIGHTID;
-typedef s16 HU3DLLIGHTID;
-
-#include "game/hu3d.h"
-
-void Hu3DAmbColorSet(f32 r, f32 g, f32 b);
-
-/* Three floats copied as a unit ' the target moves them word by word. */
-typedef struct lightVec_s {
-    f32 x;
-    f32 y;
-    f32 z;
-} lightVec;
-
-/* The stage object the two lights belong to. Only the two offsets light.c
-   reaches for are named here; the rest is opaque. */
-typedef struct LightStage_s {
-    u8 pad[0x2840];
-} LightStage;
-
-/* 0x18 bytes: an owner word, the ambient light id, the spot light id. */
-typedef struct light_s {
-    /* 0x00 */ LightStage *owner;
-    /* 0x04 */ HU3DLIGHTID ambientId;
-    /* 0x06 */ HU3DLIGHTID spotId;
-    /* 0x08 */ s32 spotIsLocal;
-} LIGHT;
-
-void fn_1_23CB8(LightStage *self, const lightVec *col);
+#include "REL/m562dll.h"
 
 /* Blend helper: A at t, B at 1-t, one component a time, exactly the order
    the original evaluates them. */
@@ -71,16 +41,16 @@ static GXColor kSpotCol = {0x60, 0x50, 0x60, 0xFF};
 static HuVecF kPosL = {0.0f, 1500.0f, 0.0f};
 static HuVecF kDirL = {0.0f, -1.0f, 0.02f};
 static GXColor kLCol = {0xFF, 0x80, 0x60, 0x80};
-static GXColor kColOff = {0, 0, 0, 0};
+static GXColor kColOff[2] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
 
 // NONMATCHING: MWCC evaluates Hu3DGLightSpotSet's cutoff argument before the
 // spot-function constant; the original loads f1 first then li r4, 2. The
 // body is otherwise instruction-for-instruction identical.
 // Builds the ambient fill light and the spot light, both made made static.
-void fn_1_2253C(LIGHT *self, s32 arg1)
+void fn_1_2253C(LIGHT *self, LightStage *stage)
 {
-    memset(self, 0, 0x18);
-    self->owner = (LightStage *)arg1;
+    memset(self, 0, sizeof(LIGHT));
+    self->owner = stage;
     Hu3DAmbColorSet(kOne, kOne, kOne);
     self->ambientId = Hu3DGLightCreateV(
         &kPos1,
@@ -109,7 +79,7 @@ void fn_1_22620(LIGHT *self)
         Hu3DGLightKill(self->ambientId);
         self->ambientId = -1;
     }
-    memset(self, 0, 0x18);
+    memset(self, 0, sizeof(LIGHT));
 }
 
 void fn_1_22690(void)
@@ -125,32 +95,28 @@ void fn_1_22690(void)
 void fn_1_22694(LIGHT *self, s16 mode, f32 t)
 {
     LightStage *stage = self->owner;
-    volatile u32 dummy = (u32)stage + 0x160;
-    u8 *wheels = (u8 *)stage + 0x227C;
     lightVec col;
     lightVec pos;
     lightVec dir;
     GXColor lcol;
 
-    (void)dummy;
-
     if (mode == 3) {
         if (self->spotIsLocal == 0) {
             Hu3DGLightKill(self->spotId);
             self->spotId = Hu3DLLightCreateV(
-                *(s16 *)(wheels + 0x5AE),
+                stage->wheelModel[3],
                 &kPosL,
                 &kDirL,
                 &kLCol
             );
             Hu3DLLightSpotSet(
-                *(s16 *)(wheels + 0x5AE),
+                stage->wheelModel[3],
                 self->spotId,
                 GX_SP_COS,
                 kSpotAngle
             );
             Hu3DLLightStaticSet(
-                *(s16 *)(wheels + 0x5AE),
+                stage->wheelModel[3],
                 self->spotId,
                 1
             );
@@ -202,7 +168,7 @@ void fn_1_22694(LIGHT *self, s16 mode, f32 t)
         LERP3(pos, kPos2, kPosL);
         LERP3(dir, kDir2, kDirL);
         Hu3DGLightPosSetV(self->spotId, (HuVecF *)&pos, (HuVecF *)&dir);
-        LERPC(lcol, kSpotCol, kColOff);
+        LERPC(lcol, kSpotCol, kColOff[0]);
         Hu3DGLightColorSet(self->spotId, lcol.r, lcol.g, lcol.b, lcol.a);
         break;
 
@@ -218,39 +184,37 @@ void fn_1_22694(LIGHT *self, s16 mode, f32 t)
     }
 }
 
-// NONMATCHING: the original keeps six precomputed base pointers in r23-r30 built by a
-// flat run of addi off r27; expressing them as derived locals makes MWCC re-spill r3
-// and allocate a different callee-save set (_savegpr_26 vs _savegpr_22).
-// Broadcasts one ambient colour to every model in the scene: the six body
-// models, the two extras, the twenty wheel entries, then the two per-type
-// models, and finally records the colour on the object.
+// Broadcasts one ambient colour to every model in the scene and records it
+// in the light block.
 void fn_1_23CB8(LightStage *self, const lightVec *col)
 {
+    LIGHT *light = (LIGHT *)self->lightBlock;
     s32 i;
-    u8 *base = (u8 *)self;
-    s16 *body = (s16 *)(base + 0x16C);
-    s16 *type = (s16 *)(base + 0x30C);
-    u8 *wheels = base + 0x227C;
 
-    for (i = 0; i < 6; i++) {
-        Hu3DModelAmbSet(body[i], col->x, col->y, col->z);
-    }
-    Hu3DModelAmbSet(*(s16 *)(base + 0x3CC), col->x, col->y, col->z);
-    Hu3DModelAmbSet(*(s16 *)(base + 0x2C), col->x, col->y, col->z);
-    for (i = 0; i < 6; i++) {
-        Hu3DModelAmbSet(*(s16 *)(wheels + 0x5A8 + i * 2), col->x, col->y, col->z);
-    }
-    Hu3DModelAmbSet(*(s16 *)(wheels + 0x5B6), col->x, col->y, col->z);
-    Hu3DModelAmbSet(*(s16 *)(wheels + 0x5C0), col->x, col->y, col->z);
+#define AMB(id) Hu3DModelAmbSet((id), col->x, col->y, col->z)
+    AMB(self->bodyModel[0]);
+    AMB(self->bodyModel[1]);
+    AMB(self->bodyModelC);
+    AMB(self->bodyModelD[0]);
+    AMB(self->bodyModelD[1]);
+    AMB(self->bodyModelE);
+    AMB(self->ambModelB);
+    AMB(self->ambModelA);
+    AMB(self->wheelModel[0]);
+    AMB(self->wheelModel[1]);
+    AMB(self->wheelModel[2]);
+    AMB(self->wheelModel[3]);
+    AMB(self->wheelModel[4]);
+    AMB(self->wheelModelA);
+    AMB(self->wheelModelB);
     for (i = 0; i < 20; i++) {
-        Hu3DModelAmbSet(wheels[i * 0x48 + 0x10], col->x, col->y, col->z);
+        AMB(self->wheel[i].model);
     }
-    if (*(u16 *)(type + 2) == 3) {
-        Hu3DModelAmbSet(type[0x10], col->x, col->y, col->z);
+    if (self->kind == 3) {
+        AMB(self->kindModel);
     } else {
-        Hu3DModelAmbSet(type[0x10], kSpotBlend, kSpotBlend, kSpotBlend);
+        Hu3DModelAmbSet(self->kindModel, kSpotBlend, kSpotBlend, kSpotBlend);
     }
-    *(s32 *)(base + 0x2F4) = *(s32 *)&col->x;
-    *(s32 *)(base + 0x2F8) = *(s32 *)&col->y;
-    *(s32 *)(base + 0x2FC) = *(s32 *)&col->z;
+#undef AMB
+    light->amb = *col;
 }
