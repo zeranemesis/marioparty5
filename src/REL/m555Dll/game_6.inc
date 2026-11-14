@@ -129,7 +129,7 @@ s32 fn_1_10E20(void)
             lbl_1_bss_1894.itemIdx = 0;
             lbl_1_data_33C[i] = 1;
         }
-        memset(&lbl_1_bss_3030->mdl0[i].posX, 0, 0x14);
+        memset(&lbl_1_bss_3030->mdl0[i].btn, 0, 0x14);
         lbl_1_bss_120C[i].pad11[0] = 0;
         lbl_1_bss_120C[i].pad11[1] = 0;
         lbl_1_bss_120C[i].wheelIdx0 = 0;

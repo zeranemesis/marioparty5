@@ -289,6 +289,48 @@ typedef struct M555CamBlk_s {
 } M555_CAMBLK;
 
 extern M555_CAMBLK *lbl_1_bss_8;
+
+/* One 0x50-byte camera record; lbl_1_bss_8 holds an array of them (index = camera no). */
+typedef struct M555Cam_s {
+    s32 no;              /* 0x00 */
+    HuVecF pos;          /* 0x04 */
+    HuVecF rot;          /* 0x10 */
+    HuVecF target;       /* 0x1C */
+    HuVecF up;           /* 0x28 */
+    f32 zoom;            /* 0x34 */
+    f32 aspect;          /* 0x38 */
+    f32 vpX;             /* 0x3C */
+    f32 vpY;             /* 0x40 */
+    f32 vpW;             /* 0x44 */
+    f32 vpH;             /* 0x48 */
+    f32 fov;             /* 0x4C */
+} M555_CAM;
+
+/* 0x3C-byte light block at lbl_1_bss_4. */
+typedef struct M555Light_s {
+    s16 id;              /* 0x00 */
+    HuVecF pos;          /* 0x04 */
+    HuVecF rot;          /* 0x10 */
+    HuVecF target;       /* 0x1C */
+    HuVecF dir;          /* 0x28 */
+    f32 dist;            /* 0x34 */
+    GXColor color;       /* 0x38 */
+} M555_LIGHT;
+
+/* 0x50-byte shadow-camera block at lbl_1_bss_0. */
+typedef struct M555Shadow_s {
+    HuVecF pos;          /* 0x00 */
+    HuVecF rot;          /* 0x0C */
+    HuVecF target;       /* 0x18 */
+    HuVecF dir;          /* 0x24 */
+    HuVecF up;           /* 0x30 */
+    HuVecF unk3C;        /* 0x3C */
+    f32 dist;            /* 0x48 */
+    f32 tpLvl;           /* 0x4C */
+} M555_SHADOW;
+
+extern M555_SHADOW *lbl_1_bss_0;
+extern M555_LIGHT *lbl_1_bss_4;
 extern f32 lbl_1_data_150[4][13]; /* four 0x34-byte camera presets */
 extern M555_WORK lbl_1_bss_1894;
 extern M555_CTRL *lbl_1_bss_3030;
@@ -440,7 +482,7 @@ s32 fn_1_1A4B0(s16 player);
 s32 fn_1_1A6F4(s16 player);
 s32 fn_1_1A880(s16 player, s16 flag);
 void fn_1_1A9A4(M555_CTRL *ctrl, M555_MODELENTRY *mdl, s32 *dataList);
-void fn_1_1ABF0();
+void fn_1_1ABF0(s16 value);
 void fn_1_1AC04(s16 idx, s32 *data);
 void fn_1_1AC24(s16 idx, s16 *motion);
 void fn_1_1AC44(void);

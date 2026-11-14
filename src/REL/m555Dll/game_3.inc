@@ -74,7 +74,7 @@ s32 fn_1_8F4C(s16 player)
 
     if (lbl_1_bss_1894.curPlayer != 0 || lbl_1_bss_1894.curPlayer2 != 0) {
         if (lbl_1_bss_120C[player].unk0E == 0) {
-            memset(&lbl_1_bss_3030->mdl0[player].posX, 0, 0x14);
+            memset(&lbl_1_bss_3030->mdl0[player].btn, 0, 0x14);
         }
     }
     fn_1_7D88(player);

@@ -279,7 +279,7 @@ void fn_1_7D88(s16 player)
     f32 d;
 
     if (lbl_1_bss_120C[player].state != 0 && lbl_1_bss_120C[player].unk0E == 0) {
-        memset(&C->mdl0[player].posX, 0, 0x14);
+        memset(&C->mdl0[player].btn, 0, 0x14);
     }
     if (C->mdl0[player].stickX > 0) {
         lbl_1_bss_120C[player].stickX += 6.0f * ((f32)C->mdl0[player].stickX / 56.0f);
