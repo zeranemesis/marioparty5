@@ -53,6 +53,7 @@ extern s16 lbl_1_bss_1799C[2];
 extern void *lbl_1_bss_17998;
 
 /* unit-owned .bss, declared in reverse address order so the offsets match the original */
+s32 gap_17994;
 OMOBJMAN *lbl_1_bss_17990;
 M551State lbl_1_bss_176A8;
 M551StageModel lbl_1_bss_16D94[83];
@@ -104,13 +105,6 @@ char lbl_1_data_458[0x2E] = "OBJ X:%.1f Y:%.1f Z:%.1f RX%.1f RY%.1f RZ%.1f";
 char lbl_1_data_486[8] = "OBJW %d";
 char lbl_1_data_48E[0x25] = "CAMPOS X:%.1f Y:%.1f Z:%.1f ZOOM%.1f";
 char lbl_1_data_4B3[0x1D] = "CAMROT X:%.1f Y:%.1f Z:%.1f";
-HuVecF lbl_1_data_508[4] = {
-    { 255.0f, 191.25f, 204.0f }, { 255.0f, 255.0f, 153.0f }, { 178.5f, 255.0f, 255.0f }, { 153.0f, 255.0f, 191.25f },
-};
-HuVecF lbl_1_data_538[4] = {
-    { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f },
-};
-s16 lbl_1_data_59C[10] = { 0x861, 0x862, 0x863, 0x864, 0x865, 0x866, 0x867, 0x868, 0, 0 };
 M551PtclWork lbl_1_data_4D0 = {
     0, 0,
     { 0xFF, 0xFF, 0xFF, 0xFF }, { 0x00, 0x00, 0x00, 0xFF },
@@ -118,6 +112,12 @@ M551PtclWork lbl_1_data_4D0 = {
     0.85f, 0.85f, 0.85f,
     0.2f,
     0.0f, 1.0f, -3.0f, 0.02f,
+};
+HuVecF lbl_1_data_508[4] = {
+    { 255.0f, 191.25f, 204.0f }, { 255.0f, 255.0f, 153.0f }, { 178.5f, 255.0f, 255.0f }, { 153.0f, 255.0f, 191.25f },
+};
+HuVecF lbl_1_data_538[4] = {
+    { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f },
 };
 
 int _prolog(void)
@@ -919,7 +919,7 @@ void fn_1_41C8(M551State *state, s16 idx, HuVecF *pos)
     sprintf(lbl_1_bss_1679C.name[0], "%s", "m546-kami01");
     sprintf(lbl_1_bss_1679C.name[1], "%s", "m546-kami02");
     sprintf(lbl_1_bss_1679C.name[2], "%s", "m546-kami03");
-    sprintf(lbl_1_bss_1679C.name[3], "%s", "m546-kami04");
+    sprintf(lbl_1_bss_1679C.name[3], "%s", "m546-kami04\0");
     lbl_1_bss_1679C.pos = *pos;
     lbl_1_bss_1679C.interval = 10;
     lbl_1_bss_1679C.burstMax = 1;
@@ -1178,6 +1178,8 @@ void fn_1_5C8C(s16 isBgm)
     }
     HuAudSStreamStop(stream);
 }
+
+s16 lbl_1_data_59C[10] = { 0x861, 0x862, 0x863, 0x864, 0x865, 0x866, 0x867, 0x868, 0, 0 };
 
 void fn_1_5CEC(s16 arg0)
 {

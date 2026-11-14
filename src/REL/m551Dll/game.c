@@ -53,6 +53,7 @@ s16 fn_1_F814(void);
 s16 fn_1_E738(void);
 
 /* unit-owned .bss, declared in reverse address order so the offsets match the original */
+s32 gap_17A04;
 M551State *lbl_1_bss_17A00;
 M551_ITEMMODEL lbl_1_bss_179A0[12];
 s16 lbl_1_bss_1799C[2];
@@ -1801,6 +1802,8 @@ s32 fn_1_11F4C(s16 arg0)
                     PW[arg0].subState = 0;
                 }
                 break;
+            case 6:
+                break;
             }
         }
         fn_1_14FC4(arg0);
@@ -2810,3 +2813,9 @@ void fn_1_153A8()
         FL.unk2C[0] = 0;
     }
 }
+
+f32 lbl_1_data_684[25] = {
+    0.0f,     0.0f,     0.0f,     0.0f,     913.0f,   0.0f,     -1177.0f, 993.0f,   0.0f,
+    -1038.0f, 550.0f,   1000.0f,  -3250.0f, 593.0f,   312.0f,   -1119.0f, -462.0f,  330.0f,
+    -1100.0f, -1000.0f, 40.0f,    -2100.0f, -2500.0f, 0.0f,     -3900.0f,
+};

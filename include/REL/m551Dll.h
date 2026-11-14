@@ -1,7 +1,6 @@
 #ifndef _M551DLL_H
 #define _M551DLL_H
 
-#include "humath.h"
 #include "game/object.h"
 #include "game/audio.h"
 #include "game/hu3d.h"
