@@ -384,6 +384,50 @@ void fn_1_7910(M517TimerObj *self, u8 r, u8 g, u8 b);
 void fn_1_7958(void);
 void *fn_1_7AB8(M517Node *self, s16 flag);
 
+/* ---- input unit (input.cpp): player input sources (pad reader / two CPU brains) ---- */
+
+typedef struct M517InputState_s {
+    f32 x;
+    f32 y;
+    f32 mag;
+} M517InputState;
+
+struct M517Input_s;
+typedef struct M517InputVtbl_s {
+    void *rtti[2];
+    struct M517Input_s *(*dtor)(struct M517Input_s *self, s16 flag);
+    void (*update)(struct M517Input_s *self, M517InputState *out);
+} M517InputVtbl;
+
+typedef struct M517Input_s {
+    M517InputVtbl *vtbl;
+    M517InputState st;
+    s32 level; // CPU strength (0 for the pad reader)
+} M517Input;
+
+#ifdef TARGET_PC
+typedef M517Input *M517InputCtorRet; /* callers use the result: GC returns self in r3 */
+#else
+typedef void M517InputCtorRet;
+#endif
+
+void fn_1_7B2C(M517Input *self);
+void fn_1_7B74(M517Input *self);
+M517InputCtorRet fn_1_7BD4(M517Input *self, s32 playerNo);
+M517Input *fn_1_7C44(M517Input *self, s16 flag);
+void fn_1_7C9C(M517Input *self, M517InputState *out);
+M517InputCtorRet fn_1_8000(M517Input *self, s32 playerNo, s32 level);
+M517InputCtorRet fn_1_9930(M517Input *self, s32 level);
+M517Input *fn_1_8134(M517Input *self, s16 flag);
+void fn_1_81A0(M517Input *self, M517InputState *out);
+void fn_1_99EC(M517Input *self, M517InputState *out);
+M517Input *fn_1_A090(M517Input *self, s16 flag);
+M517Input *fn_1_A0FC(M517Input *self, s16 flag);
+
+/* ---- kuribo unit (kuribo.cpp) ---- */
+struct M517Kuribo_s;
+struct M517Kuribo_s *fn_1_C994(struct M517Kuribo_s *self, Vec *pos, Vec *rot, s32 type);
+
 #ifdef __cplusplus
 }
 #endif
