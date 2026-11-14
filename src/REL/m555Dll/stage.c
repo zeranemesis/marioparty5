@@ -98,7 +98,7 @@ void fn_1_1AC44(void)
 }
 
 /* Polls each team member's pad into the control record. */
-void fn_1_1AF38(void)
+void fn_1_1AF38(OMOBJ *obj)
 {
     s32 i;
     s8 stk;
@@ -154,7 +154,7 @@ void fn_1_1B2F8(void)
 }
 
 /* Per-frame driver: pushes the motion window state into the Hu3D model. */
-void fn_1_1B4B0(void)
+void fn_1_1B4B0(OMOBJ *obj)
 {
     s16 i;
     s16 id;

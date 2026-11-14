@@ -2,6 +2,7 @@
 #include "game/hu3d.h"
 
 #define IT lbl_1_bss_214[i]
+#undef MDL
 #define MDL(n) lbl_1_bss_3030->mdl[n]
 #define COPY_POS() (MDL(IT.mdlId).pos = MDL(IT.slot + 0x21).pos)
 #define COPY_ROT() (MDL(IT.mdlId).rot = MDL(IT.slot + 0x21).rot)

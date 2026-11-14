@@ -4,6 +4,7 @@
 #include "game/frand.h"
 
 #define P555(p) lbl_1_bss_120C[p]
+#undef M555_ABS
 #define M555_ABS(x) ((x) > 0.0f ? (x) : -1.0f * (x))
 
 /* Pick the per-character camera/AI parameters from the model table. */

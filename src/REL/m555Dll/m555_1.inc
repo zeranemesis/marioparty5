@@ -53,7 +53,7 @@ void ObjectSetup(void)
     fn_1_1AC04(0, lbl_1_data_28[lbl_1_bss_2D38.mdl0[0].charNo]);
     fn_1_1AC04(1, lbl_1_data_28[lbl_1_bss_2D38.mdl0[1].charNo]);
     for (i = 0; i < 2; i++) {
-        fn_1_1AC24(i, &lbl_1_bss_1A7C[i]);
+        fn_1_1AC24(i, lbl_1_bss_1A7C[i]);
     }
     fn_1_1AC44();
     fn_1_1B2F8();

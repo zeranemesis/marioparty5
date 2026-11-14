@@ -3,6 +3,7 @@
 #include "game/frand.h"
 #include "math.h"
 
+#undef MDL
 #define MDL(i) (lbl_1_bss_3030->mdl[(s16)(i)])
 
 /* Per-player pop-up animation: step 0 starts it, step 1 shows the models
