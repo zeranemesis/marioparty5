@@ -549,7 +549,7 @@ void SdImpactStart(s32 snd, Vec *pos, s32 vibrate, f32 vol, f32 range);
 void SdEffectDustCreateData(Vec *pos, void *p1, void *p2, f32 scale);
 void SdEffectFlameUpdate(void *data, s32 count);
 void SdEffectFlameUpdateData(void *data, s32 count);
-void SdRandomPosGet(Vec *pos, s32 a, Vec *b, s32 c, f32 e, f32 f);
+void SdRandomPosGet(Vec *out, s32 mode, Vec *center, Vec *axis, f32 maxR, f32 minR);
 void SdPlayerSoundPlay(SdStageMachine *machine, s32 no);
 s32 SdMachineDamage(SdStageMachine *machine, Vec *pos, s32 damage);
 void SdComMain(SdStageMachine *machine);
