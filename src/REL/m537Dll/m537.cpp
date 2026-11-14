@@ -1984,3 +1984,13 @@ void *fn_1_5DD8(void *obj, s16 freeIt)
 }
 
 }
+
+// The module's static initialiser, hooked into the constructor table.
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_5C78)(void) = fn_1_5C78;
+#else
+struct M537StaticInit {
+    M537StaticInit() { fn_1_5C78(); }
+};
+static M537StaticInit lbl_static_init;
+#endif
