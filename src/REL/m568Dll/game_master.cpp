@@ -830,4 +830,15 @@ GameMaster *fn_1_9898(M568SubThread *self, s16 flag)
     return fn_1_8798((GameMaster *)((char *)self - offsetof(GameMaster, thread)), 0);
 }
 
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_gm)(void) = fn_1_985C;
+#else
+struct PortStaticInit_gm {
+    PortStaticInit_gm() { fn_1_985C(); }
+};
+static PortStaticInit_gm lbl_port_init_gm;
+#endif
+
 }

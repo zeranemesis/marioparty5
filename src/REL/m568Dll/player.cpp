@@ -966,4 +966,15 @@ void fn_1_11F38(void)
     lbl_1_bss_A88 = 0xD2;
 }
 
+
+// static initialiser of this unit (in .ctors on GameCube)
+#ifdef __MWERKS__
+__declspec(section ".ctors") void (*const lbl_ctor_pl)(void) = fn_1_11F38;
+#else
+struct PortStaticInit_pl {
+    PortStaticInit_pl() { fn_1_11F38(); }
+};
+static PortStaticInit_pl lbl_port_init_pl;
+#endif
+
 }
