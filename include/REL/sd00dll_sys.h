@@ -228,18 +228,7 @@ typedef struct SdStageSmoke_s {
     s32 color; // 0x14
 } SdStageSmoke; // size 0x18
 
-/* Hu3DData[sys->smokeMdlId].hookData + smokeSlot * 0x44 */
-typedef struct SdStageParticle_s {
-    s16 type;      // 0x00
-    s16 unk2;
-    s16 cameraBit; // 0x06
-    f32 vel[3];    // 0x08
-    f32 life;      // 0x14
-    Vec pos;       // 0x18
-    s32 unk24;
-    Mtx mtx;       // 0x28
-    GXColor color; // 0x40
-} SdStageParticle; // size 0x44
+/* smoke/dust/flame particles: use HU3DPARTICLE (Hu3DData[...].hookData) / HU3DPARTICLEDATA */
 
 /* ===== gun / bullet (owner: gun part A) ===== */
 struct SdBullet_s;
