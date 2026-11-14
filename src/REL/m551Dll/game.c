@@ -354,8 +354,15 @@ void fn_1_5FF4(M551State *state)
     Hu3DModelShadowSet(lbl_1_bss_0.player[1]->actor->mdlId);
     Hu3DModelShadowDispOn(lbl_1_bss_0.player[1]->actor->mdlId);
     MDL(82).id = lbl_1_bss_0.player[1]->actor->mdlId;
+#ifdef TARGET_PC
+    /* the original indexes the 83-entry model table with the player's Hu3D model id (lha 0x8dc; lhax),
+       reading past the table; shortcut: out of range, set the player model itself, as intended */
+    Hu3DModelLayerSet(MDL(81).id < 83 ? MDL(MDL(81).id).id : MDL(81).id, 2);
+    Hu3DModelLayerSet(MDL(82).id < 83 ? MDL(MDL(82).id).id : MDL(82).id, 2);
+#else
     Hu3DModelLayerSet(MDL(MDL(81).id).id, 2);
     Hu3DModelLayerSet(MDL(MDL(82).id).id, 2);
+#endif
     CharModelStepFxSet(state->chars[0].charNo, 0);
     CharModelStepFxSet(state->chars[1].charNo, 0);
     CharEffectLayerSet(5);
