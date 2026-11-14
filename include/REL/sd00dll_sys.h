@@ -115,7 +115,7 @@ typedef struct SdStageMachine_s {
     Mtx storedMtx;     // 0x108
     Vec basePos;       // 0x138
     Vec storedRot;     // 0x144
-    s32 pad150[3];     // 0x150
+    Vec smoothRot;     // 0x150 (SdStageMachineCol smoothed pitch/yaw/roll)
     f32 unk15C;        // 0x15C
     Vec rotVel;        // 0x160
     s32 launchFlag;    // 0x16C
@@ -406,7 +406,7 @@ typedef struct SdSys_s {
     s32 allDoneF;      // 0xB6C (both machines finished)
     s32 stageClosedF;  // 0xB70
     s32 bgmStream;     // 0xB74
-    HU3DDRAWOBJ *backObj[2][20]; // 0xB78
+    HSFOBJECT *backObj[2][20]; // 0xB78 (Hu3DModelObjPtrGet results; ->mesh.base.rot.y animated)
     SdImpact impact[30];   // 0xC18
     s32 vibrate[2][2];     // 0xFD8 {level, timer}
 
@@ -481,12 +481,23 @@ void SdBulletDraw(HU3DMODEL *modelP, Mtx *mtx);
 /* proto: stage */
 s32 SdStageObjHitCheck2(Vec *pos, f32 radius, s32 type);
 /* proto: math */
+void LightColorSet(s16 modelIdx, s32 lightIdx, u8 r, u8 g, u8 b);
 /* proto: util */
 void SdScreenPosGet(Vec *pos, s16 cameraBit, Vec *out);
 /* proto: flag */
 s32 SdFlagCheck(void);
 void SdFlagPosGet(Vec *pos);
 void SdFlagSprDispOff(void);
+/* flag work block: used by the flag (1 instance) and the rabbit (6 instances) */
+typedef struct SdFlagWork_s {
+    HU3DMODELID mdlId; // 0x00
+    Vec pos;           // 0x04
+    s32 hitF;          // 0x10 (flag: unused; rabbit: caught flag)
+    s32 timer[2];      // 0x14 (pickup/catch count per machine)
+    s16 spr[2][3];     // 0x1C (HUD markers per machine)
+} SdFlagWork; // size 0x28
+s32 SdFlagPosSet(SdFlagWork *work);
+void SdFlagSprUpdate(SdFlagWork *work);
 /* proto: rabbit */
 void SdRabbitPlayerCheck(s32 playerNo);
 void SdRabbitZAxisGet(Vec *zAxis);
@@ -505,7 +516,7 @@ s32 SdStageYOfsWallCheck(Vec *pos, Vec *normal, f32 yOfs);
 f32 SdStageDistCalc(Vec *pos);
 f32 SdStageRadiusCalc(void);
 void SdStageSprPosGet(s32 *type, Vec *radius);
-void SdStageRandomPosGet(Vec *pos, f32 yOfs);
+void SdStageRandomPosGet(Vec *pos, f32 radius);
 f32 SdStageEdgeDistGet(Vec *pos);
 f32 SdStageEdgeDistRadiusGet(Vec *pos, f32 radius);
 s32 SdStageBaseObjHitCheck(Vec *pos, f32 radius);
