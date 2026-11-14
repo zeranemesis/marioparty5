@@ -303,12 +303,12 @@ s32 fn_1_280C8(M562Work *w) {
             omVibrate(player->charIdx, 10, 12, 0);
             pos = koopa->pos;
             pos.y = lbl_1_data_E3C.y;
-            fn_1_2DC08((s16) cam->camId, &pos, 2);
+            fn_1_2DC08((s16) cam->camMask, &pos, 2);
             fn_1_814(0x8C0);
         } else if (w->evtTimer == 0x82) {
             pos = koopa->pos;
             pos.y = lbl_1_data_E3C.y;
-            fn_1_2DC08((s16) cam->camId, &pos, 2);
+            fn_1_2DC08((s16) cam->camMask, &pos, 2);
         } else if (w->evtTimer >= 0x8C) {
             koopa->reqMotion = 0xE;
             koopa->loopMotion = 0;
@@ -346,7 +346,7 @@ s32 fn_1_280C8(M562Work *w) {
         if ((w->evtTimer % 30) == 0) {
             pos = koopa->pos;
             pos.y = lbl_1_data_E3C.y;
-            fn_1_2DC08((s16) cam->camId, &pos, 2);
+            fn_1_2DC08((s16) cam->camMask, &pos, 2);
             omVibrate(player->charIdx, 10, 12, 0);
         }
         if (((w->evtTimer + 15) % 30) == 0) {
@@ -451,7 +451,7 @@ s32 fn_1_280C8(M562Work *w) {
     }
 
     if (w->state < 5) {
-        PSMTXCopy(*fn_1_1010C(koopa), mtx);
+        PSMTXCopy(fn_1_1010C(koopa), mtx);
         Hu3DMtxTransGet(mtx, &pos);
         lbl_1_data_E48 = pos;
         mtx[0][3] = 0.0f;

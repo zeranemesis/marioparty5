@@ -313,7 +313,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     SUNBOMB *owner = self->owner;
     KoopaBoss *link = owner->link;
     KpHost *scene = link->host;
-    KpPlayer *sub = (KpPlayer *)&scene->player;
+    M562Player *sub = (M562Player *)&scene->player;
     CAMERA *cam = &scene->camera[0];
     f32 yOffset;
     s32 pushed;
@@ -361,7 +361,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             Hu3DModelAttrReset(self->model[0], 1);
             Hu3DModelScaleSet(self->model[5], 0.0f, 0.0f, 0.0f);
             Hu3DModelAttrReset(self->model[5], 1);
-            Hu3DMtxTransGet(*fn_1_1010C(link), &sp44);
+            Hu3DMtxTransGet(fn_1_1010C(link), &sp44);
             PSVECAdd(&sp44, &off, &self->pos);
             self->landRequest = 0;
             self->timer = 0;
@@ -370,7 +370,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
         break;
 
     case 2:
-        Hu3DMtxTransGet(*fn_1_1010C(link), &sp44);
+        Hu3DMtxTransGet(fn_1_1010C(link), &sp44);
         PSVECAdd(&sp44, &off, &self->pos);
         t = self->timer / 30.0f;
         t = CLAMP01(t);
@@ -415,7 +415,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             fn_1_934(0x8AB, &self->pos);
             Hu3DModelScaleSet(self->model[5], 1.0f, 1.0f, 1.0f);
             fn_1_21B68(cam, 1, 0x32, 40.0f, 0.6f, 90.0f);
-            omVibrate(sub->charIdx, 10, 12, 0);
+            omVibrate(sub->charNo, 10, 12, 0);
         }
         break;
 
@@ -546,7 +546,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     }
 
     pushed = 0;
-    if (owner->attract != 0 && self != sub->target) {
+    if (owner->attract != 0 && (void *)self != (void *)sub->target) {
         PSVECSubtract(&self->pos, &owner->attractor, &sp50);
         sp50.y = 0.0f;
         dist = PSVECMag(&sp50);
@@ -569,7 +569,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
         }
     }
 
-    if (self != sub->target) {
+    if ((void *)self != (void *)sub->target) {
         if (self->state >= 5) {
             if (self->pos.z < -360.0f) {
                 floorY = 55.0f;
@@ -628,7 +628,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     Hu3DModelPosSet(self->model[4], sp44.x, sp44.y, sp44.z);
     Hu3DModelPosSet(self->model[5], sp44.x, 0.0f, sp44.z);
     Hu3DModelPosSet(self->model[6], sp44.x, 0.0f, sp44.z);
-    if (self->spawned != 0 && self != sub->target && self->state >= 3 && self->state < 9) {
+    if (self->spawned != 0 && (void *)self != (void *)sub->target && self->state >= 3 && self->state < 9) {
         fn_1_2CE8C(KP_HITB(scene), 5, 0, &self->pos, self, 300.0f);
     }
 }

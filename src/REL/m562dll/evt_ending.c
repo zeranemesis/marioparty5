@@ -155,7 +155,7 @@ s32 fn_1_29DF8(M562Work *w) {
         if (w->evtTimer == 0x3C) {
             pos = koopa->pos;
             pos.y = -100.0f;
-            fn_1_2DC08((s16) cam->camId, &pos, 2);
+            fn_1_2DC08((s16) cam->camMask, &pos, 2);
         }
         koopa->pos.z = (f32) ((f64) koopa->pos.z + 80.0 * sin(M_PI * (f64) (200.0f * (360.0f * f)) / 180.0));
         w->evtTimer++;
@@ -238,7 +238,7 @@ s32 fn_1_29DF8(M562Work *w) {
         dir.x = 0.0f;
         dir.y = 0.0f;
         dir.z = 1.0f;
-        if (fn_1_AD98(player, &dir, 0.9f) != 0) {
+        if (fn_1_AD98(&w->player, &dir, 0.9f) != 0) {
             player->animNo = 0x18;
             player->animLoop = 0;
             w->evtTimer = 0;
@@ -277,28 +277,28 @@ s32 fn_1_29DF8(M562Work *w) {
             input->btnA = 0;
             input->stickX = (s8) (56.0f * dir.x);
             input->stickY = (s8) (56.0f * -dir.z);
-            fn_1_7D58(player, -dir.z);
+            fn_1_7D58(&w->player);
         } else {
             dir.x = 0.0f;
             dir.y = 0.0f;
             dir.z = -1.0f;
-            fn_1_AD98(player, &dir, 0.9f);
+            fn_1_AD98(&w->player, &dir, 0.9f);
         }
     }
     if (w->state >= 2) {
         if (lbl_1_bss_79A0 == 0x1FE) {
             v = lbl_1_data_F48;
-            fn_1_2DC08((s16) cam->camId, &v, 2);
+            fn_1_2DC08((s16) cam->camMask, &v, 2);
             v.y = 50.0f;
-            fn_1_2DC08((s16) cam->camId, &v, 2);
+            fn_1_2DC08((s16) cam->camMask, &v, 2);
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
             omVibrate(player->charIdx, 10, 12, 0);
             fn_1_814(0x8C4);
         } else if (lbl_1_bss_79A0 == 0x208) {
             v = lbl_1_data_F58;
-            fn_1_2DC08((s16) cam->camId, &v, 2);
+            fn_1_2DC08((s16) cam->camMask, &v, 2);
             v.y = 50.0f;
-            fn_1_2DC08((s16) cam->camId, &v, 2);
+            fn_1_2DC08((s16) cam->camMask, &v, 2);
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
             omVibrate(player->charIdx, 10, 12, 0);
             fn_1_814(0x8C4);

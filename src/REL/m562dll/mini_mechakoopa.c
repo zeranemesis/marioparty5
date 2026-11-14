@@ -219,7 +219,7 @@ void fn_1_17A28(KbMiniMgr *mgr)
 
 // Starts the first free entry at pos (alternating between the two model
 // variants) and returns it, or NULL when all 34 are in flight.
-KbMini *fn_1_181FC(KbMiniMgr *mgr, Vec *pos, f32 angle)
+KbMiniEntry *fn_1_181FC(KbMiniMgr *mgr, Vec *pos, f32 angle)
 {
     s32 i;
     KbMiniEntry *entry;
@@ -236,7 +236,7 @@ KbMini *fn_1_181FC(KbMiniMgr *mgr, Vec *pos, f32 angle)
         found = entry;
         break;
     }
-    return (KbMini *)found;
+    return (KbMiniEntry *)found;
 }
 
 // Links the two shared models into one entry: hidden, at the origin, on the
