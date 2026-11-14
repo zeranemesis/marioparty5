@@ -7,11 +7,6 @@ extern "C" {
 #include <math.h>
 void C_MTXLookAt(Mtx m, const Point3d *camPos, const Vec *camUp, const Point3d *target);
 void PSMTXMultVec(const Mtx m, const Vec *src, Vec *dst);
-
-void fn_1_1B48C(Point3d *pos, s16 cameraBit, Point3d *out);
-s32 fn_1_1B6EC(s32 seId, Point3d *pos);
-void fn_1_1B9B8(s16 charNo, Point3d *pos);
-void fn_1_1BC6C(s32 seNo, Point3d *pos);
 }
 
 // Projects pos through camera camIdx into screen space.

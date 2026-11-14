@@ -16,9 +16,13 @@ extern "C" {
 #define M517_RODATA
 #endif
 
-// Vtable of the master followed by the one of its thread base.
+// Vtable of the master (six words, one fewer than the base class table) followed by the one of its thread base.
 typedef struct M517GMVtbl_s {
-    M517MasterVtbl master;
+    void *rtti[2];
+    M517Master *(*dtor)(M517Master *self, s16 flag);
+    void (*setup)(M517Master *self, OMOBJMAN *objman);
+    void (*update)(M517Master *self);
+    void (*finish)(M517Master *self);
     void *thread[6];
 } M517GMVtbl;
 
@@ -80,11 +84,11 @@ M517Master *fn_1_BDA8(M517SubThread *thread, s16 flag);
 extern void *lbl_1_bss_A08;
 extern void *lbl_1_bss_0;
 
-M517Node *lbl_1_bss_A1C;
-M517Camera *lbl_1_bss_A20;
 s32 lbl_1_bss_A10;
 s32 lbl_1_bss_A14;
 s32 lbl_1_bss_A18;
+M517Node *lbl_1_bss_A1C;
+M517Camera *lbl_1_bss_A20;
 
 // Each registered singleton keeps the state hook run for it every frame.
 M517Ptmf lbl_1_data_338 = { 0, -1, (void (*)(void *))fn_1_111A8 };
@@ -99,10 +103,17 @@ char lbl_1_data_398[] = "sm_ptr != 0";
 char lbl_1_data_3A4[] = "ms_pointer != 0";
 char lbl_1_data_3B4[] = "singleton.h";
 M517GMVtbl lbl_1_data_3C0 = {
-    { { 0, 0 }, fn_1_AB90, (void (*)(M517Master *, OMOBJMAN *))fn_1_AC64, (void (*)(M517Master *))fn_1_ADA8,
-      (void (*)(M517Master *))fn_1_B2CC },
+    { 0, 0 },
+    fn_1_AB90,
+    (void (*)(M517Master *, OMOBJMAN *))fn_1_AC64,
+    (void (*)(M517Master *))fn_1_ADA8,
+    (void (*)(M517Master *))fn_1_B2CC,
     { 0, 0, (void *)fn_1_BDA8, (void *)fn_1_BDA0, (void *)fn_1_B058, 0 },
 };
+
+// The original copies the set pointer through temporaries before it walks the set.
+#define M517_WALK_BEGIN(glob, it, end)                                                                 M517Node *wg_ = (M517Node *)(glob);                                                                M517Node *wg2_ = wg_;                                                                              M517Node *wset_ = wg2_;                                                                            M517Node *wf_ = wset_->next;                                                                       M517Node *wf2_ = wf_;                                                                              M517Node *wend_ = wset_;                                                                           it = wf2_;                                                                                         end = wend_
+#define M517_WALK_NEXT(it)                                                                             {                                                                                                      M517Node *wn_ = (it)->next;                                                                        (it) = wn_;                                                                                    }
 
 // The original expands both helpers into every user.
 #ifdef __MWERKS__
@@ -171,26 +182,49 @@ M517GameMaster *fn_1_A168(M517GameMaster *self)
 
     fn_1_39F8(&self->base);
     fn_1_6D20(&self->thread, 0x8000);
-    self->base.vtbl = &lbl_1_data_3C0.master;
+    self->base.vtbl = (M517MasterVtbl *)&lbl_1_data_3C0;
     self->thread.vtbl = (M517ThreadVtbl *)lbl_1_data_3C0.thread;
     sets = (M517Sets *)fn_1_1E84(sizeof(M517Sets));
     if (sets != 0) {
-        fn_1_2DA8(&sets->players);
+        M517Sets *base = sets;
+        M517Node *l0 = &base->players;
+        M517Node *n0 = l0;
+
+        fn_1_2DA8(n0);
         M517_ASSERT(lbl_1_bss_A08 == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
-        lbl_1_bss_A08 = &sets->players;
-        fn_1_2DA8(&sets->balls);
-        M517_ASSERT(lbl_1_bss_0 == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
-        lbl_1_bss_0 = &sets->balls;
-        fn_1_2DA8(&sets->choros);
-        M517_ASSERT(lbl_1_bss_A1C == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
-        lbl_1_bss_A1C = &sets->choros;
+        lbl_1_bss_A08 = l0;
+        {
+            M517Node *l1 = &base->balls;
+            M517Node *n1 = l1;
+
+            fn_1_2DA8(n1);
+            M517_ASSERT(lbl_1_bss_0 == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
+            lbl_1_bss_0 = l1;
+        }
+        {
+            M517Node *l2 = &base->choros;
+            M517Node *n2 = l2;
+
+            fn_1_2DA8(n2);
+            M517_ASSERT(lbl_1_bss_A1C == 0, lbl_1_data_35C, lbl_1_data_36B, 0x15);
+            lbl_1_bss_A1C = l2;
+        }
+        sets = base;
     }
-    self->sets.p = sets;
+    {
+        M517Sets *made = sets;
+
+        self->sets.p = made;
+    }
     timer = (M517TimerObj *)fn_1_1E84(sizeof(M517TimerObj));
     if (timer != 0) {
         timer = fn_1_7558(timer, 0);
     }
-    self->timer.p = timer;
+    {
+        M517TimerObj *made = timer;
+
+        self->timer.p = made;
+    }
     self->models.p = 0;
     self->paper.p = 0;
     self->win = 0;
@@ -385,7 +419,7 @@ M517Master *fn_1_AB90(M517Master *self, s16 flag)
     M517GameMaster *gm = (M517GameMaster *)self;
 
     if (self != 0) {
-        gm->base.vtbl = &lbl_1_data_3C0.master;
+        gm->base.vtbl = (M517MasterVtbl *)&lbl_1_data_3C0;
         gm->thread.vtbl = (M517ThreadVtbl *)lbl_1_data_3C0.thread;
         if ((void *)&gm->paper != 0) {
             fn_1_1415C(gm->paper.p, 1);
@@ -584,15 +618,12 @@ void fn_1_B2CC(M517GameMaster *self)
 // Round over check: the players that stay safe and the timer decide.
 u8 fn_1_B310(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
     M517Node *end;
     u8 ok;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    end = set;
+    M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
     ok = 1;
     while (it != end) {
         M517Player *p = (M517Player *)it;
@@ -602,7 +633,7 @@ u8 fn_1_B310(M517GameMaster *self)
                 ok = 0;
             }
         }
-        it = it->next;
+        M517_WALK_NEXT(it);
     }
     if (ok != 0) {
         self->win = 1;
@@ -618,21 +649,18 @@ u8 fn_1_B310(M517GameMaster *self)
 // True once no player is still in play.
 u8 fn_1_B414(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
     M517Node *end;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    end = set;
+    M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
     while (it != end) {
         M517Player *p = (M517Player *)it;
 
         if (p->state > 0) {
             return 0;
         }
-        it = it->next;
+        M517_WALK_NEXT(it);
     }
     return 1;
 }
@@ -640,14 +668,11 @@ u8 fn_1_B414(M517GameMaster *self)
 // Tell every player whether the round was won.
 void fn_1_B4C4(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
     M517Node *end;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    end = set;
+    M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
     while (it != end) {
         M517Player *p = (M517Player *)it;
 
@@ -664,84 +689,77 @@ void fn_1_B4C4(M517GameMaster *self)
                 fn_1_184E8(p, 1);
             }
         }
-        it = it->next;
+        M517_WALK_NEXT(it);
     }
 }
 
 void fn_1_B5C0(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
     M517Node *end;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    end = set;
+    M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
     while (it != end) {
         fn_1_1593C((M517Player *)it);
-        it = it->next;
+        M517_WALK_NEXT(it);
     }
 }
 
 // Give every player its waiting hook.
 void fn_1_B660(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
     M517Node *end;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    end = set;
+    M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
     while (it != end) {
         M517Ptmf tmp = lbl_1_data_350;
 
         ((M517Player *)it)->hook = tmp;
-        it = it->next;
+        M517_WALK_NEXT(it);
     }
 }
 
 // Give every player its playing hook and every choro its hook.
 void fn_1_B730(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
     M517Node *end;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    end = set;
-    while (it != end) {
-        M517Ptmf tmp = lbl_1_data_344;
+    {
+        M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
+        while (it != end) {
+            M517Ptmf tmp = lbl_1_data_344;
 
-        ((M517Player *)it)->hook = tmp;
-        it = it->next;
+            ((M517Player *)it)->hook = tmp;
+            M517_WALK_NEXT(it);
+        }
     }
     M517_ASSERT(lbl_1_bss_A1C != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = lbl_1_bss_A1C;
-    it = set->next;
-    end = set;
-    while (it != end) {
-        M517Ptmf tmp = lbl_1_data_338;
+    {
+        M517_WALK_BEGIN(lbl_1_bss_A1C, it, end);
+        while (it != end) {
+            M517Ptmf tmp = lbl_1_data_338;
 
-        ((M517Choro *)it)->hook = tmp;
-        it = it->next;
+            ((M517Choro *)it)->hook = tmp;
+            M517_WALK_NEXT(it);
+        }
     }
 }
 
 // Delete all players.
 void fn_1_B8A8(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
 
     M517_ASSERT(lbl_1_bss_A08 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_A08;
-    it = set->next;
-    while (it != set) {
+    M517Node *end;
+
+    M517_WALK_BEGIN(lbl_1_bss_A08, it, end);
+    while (it != end) {
         M517Node *next = it->next; // the original reads it after the delete
 
         M517PlayerDelete((M517Player *)it);
@@ -752,13 +770,13 @@ void fn_1_B8A8(M517GameMaster *self)
 // Delete all balls.
 void fn_1_BA58(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
 
     M517_ASSERT(lbl_1_bss_0 != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = (M517Node *)lbl_1_bss_0;
-    it = set->next;
-    while (it != set) {
+    M517Node *end;
+
+    M517_WALK_BEGIN(lbl_1_bss_0, it, end);
+    while (it != end) {
         M517Node *next = it->next;
 
         fn_1_10F8((M517Ball *)it, 1);
@@ -769,13 +787,13 @@ void fn_1_BA58(M517GameMaster *self)
 // Delete all choros.
 void fn_1_BAFC(M517GameMaster *self)
 {
-    M517Node *set;
     M517Node *it;
 
     M517_ASSERT(lbl_1_bss_A1C != 0, lbl_1_data_398, lbl_1_data_36B, 0x2E);
-    set = lbl_1_bss_A1C;
-    it = set->next;
-    while (it != set) {
+    M517Node *end;
+
+    M517_WALK_BEGIN(lbl_1_bss_A1C, it, end);
+    while (it != end) {
         M517Node *next = it->next;
 
         fn_1_10F88((M517Choro *)it, 1);
@@ -786,36 +804,64 @@ void fn_1_BAFC(M517GameMaster *self)
 // Call fn for every (element of listA, element of listB) pair.
 void fn_1_BBA0(M517Node *listA, M517Node *listB, M517PairFn fn)
 {
-    M517Node *outer = listA->next;
-    M517Node *outerEnd = listA;
+    M517Node *first = listA->next;
+    M517Node *first2 = first;
+    M517Node *outer = first2;
+    M517Node *a2 = listA;
+    M517Node *outerEnd = a2;
 
     while (outer != outerEnd) {
-        M517Node *inner = listB->next;
-        M517Node *innerEnd = listB;
+        M517Node *bFirst = listB->next;
+        M517Node *bFirst2 = bFirst;
+        M517Node *inner = bFirst2;
+        M517Node *b2 = listB;
+        M517Node *innerEnd = b2;
 
         while (inner != innerEnd) {
             fn(outer, inner);
-            inner = inner->next;
+            {
+                M517Node *wn = inner->next;
+
+                inner = wn;
+            }
         }
-        outer = outer->next;
+        {
+            M517Node *wn = outer->next;
+
+            outer = wn;
+        }
     }
 }
 
 // Twin of fn_1_BBA0.
 void fn_1_BC3C(M517Node *listA, M517Node *listB, M517PairFn fn)
 {
-    M517Node *outer = listA->next;
-    M517Node *outerEnd = listA;
+    M517Node *first = listA->next;
+    M517Node *first2 = first;
+    M517Node *outer = first2;
+    M517Node *a2 = listA;
+    M517Node *outerEnd = a2;
 
     while (outer != outerEnd) {
-        M517Node *inner = listB->next;
-        M517Node *innerEnd = listB;
+        M517Node *bFirst = listB->next;
+        M517Node *bFirst2 = bFirst;
+        M517Node *inner = bFirst2;
+        M517Node *b2 = listB;
+        M517Node *innerEnd = b2;
 
         while (inner != innerEnd) {
             fn(outer, inner);
-            inner = inner->next;
+            {
+                M517Node *wn = inner->next;
+
+                inner = wn;
+            }
         }
-        outer = outer->next;
+        {
+            M517Node *wn = outer->next;
+
+            outer = wn;
+        }
     }
 }
 
@@ -823,17 +869,31 @@ void fn_1_BC3C(M517Node *listA, M517Node *listB, M517PairFn fn)
 // outer element, the outer one stops before the last element.
 void fn_1_BCD8(M517Node *listA, M517PairFn fn)
 {
-    M517Node *outer = listA->next;
-    M517Node *outerEnd = listA->prev;
+    M517Node *first = listA->next;
+    M517Node *first2 = first;
+    M517Node *outer = first2;
+    M517Node *a2 = listA;
+    M517Node *innerEnd = a2;
+    M517Node *last = innerEnd->prev;
+    M517Node *outerEnd = last;
 
     while (outer != outerEnd) {
-        M517Node *inner = outer->next;
+        M517Node *innerFirst = outer->next;
+        M517Node *inner = innerFirst;
 
-        while (inner != listA) {
+        while (inner != innerEnd) {
             fn(outer, inner);
-            inner = inner->next;
+            {
+                M517Node *wn = inner->next;
+
+                inner = wn;
+            }
         }
-        outer = outer->next;
+        {
+            M517Node *wn = outer->next;
+
+            outer = wn;
+        }
     }
 }
 
