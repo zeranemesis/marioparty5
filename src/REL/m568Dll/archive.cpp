@@ -66,6 +66,7 @@ struct Archive {
     u8 relocated;             // 0x4C
 #ifdef TARGET_PC
     void **relocPtrs;         // resolved relocation targets, one per reloc word
+    u32 swappedMask;          // public blocks already byte-swapped by M568PortArchiveSwap
 #endif
 };
 
@@ -95,6 +96,7 @@ Archive *fn_1_0(Archive *self, s32 dataNum)
     self->relocated = 0;
 #ifdef TARGET_PC
     self->relocPtrs = 0;
+    self->swappedMask = 0;
 #endif
     fn_1_24C(self, self->buf, 0);
     return self;
