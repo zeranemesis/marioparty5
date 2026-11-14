@@ -60,6 +60,7 @@ void *lbl_1_data_3FC[5] = { 0, 0, (void *)fn_1_95AC, (void *)fn_1_96DC, (void *)
 M537_RODATA const f32 lbl_1_rodata_2A8[4] = { 45.0f, -45.0f, 135.0f, -135.0f };
 M537_RODATA const f64 lbl_1_rodata_2B8 = 0.0;
 M537_RODATA const s32 lbl_1_rodata_2C0[3] = { 0x5F000F, 0x5F0010, 0x5F0011 };
+M537_RODATA const f32 lbl_1_rodata_2CC = 499.8f;
 
 M537Stage *fn_1_9290(M537Stage *self)
 {
@@ -241,7 +242,7 @@ void fn_1_97C8(M537Stage *self)
         }
         id = *self->m_part[i].p;
         tmax = Hu3DMotionMaxTimeGet(id);
-        Hu3DMotionSpeedSet(id, tmax / 499.8f);
+        Hu3DMotionSpeedSet(id, tmax / lbl_1_rodata_2CC);
         Hu3DMotionTimeSet(id, tmax - (f32)i);
         fn_1_2E08(self->m_part[i].p, 0x40000001);
     }

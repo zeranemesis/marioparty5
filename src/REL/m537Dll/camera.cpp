@@ -175,9 +175,7 @@ void fn_1_8DE8(M537Camera *self)
 // Starts the camera blend towards the dorrie chosen by the player check.
 void fn_1_8E18(M537Camera *self)
 {
-    Vec v2;
-    Vec v1;
-    Vec v0;
+    M537CamLook look;
     Mtx mtx;
     M537_PTMF tmp;
     s32 idx;
@@ -194,10 +192,10 @@ void fn_1_8E18(M537Camera *self)
         stage = lbl_1_bss_A14;
         dorrie = fn_1_96CC(stage, idx);
         fn_1_6558(dorrie, 0, mtx);
-        PSMTXMultVec(mtx, &lbl_1_rodata_260, &v0);
-        PSMTXMultVec(mtx, &lbl_1_rodata_26C, &v2);
-        PSMTXMultVec(mtx, (Vec *)lbl_1_rodata_278, &v1);
-        fn_1_6F4((M537CamLook *)&v0, &self->m_to);
+        PSMTXMultVec(mtx, &lbl_1_rodata_260, &look.m_pos);
+        PSMTXMultVec(mtx, &lbl_1_rodata_26C, &look.m_target);
+        PSMTXMultVec(mtx, (Vec *)lbl_1_rodata_278, &look.m_up);
+        fn_1_6F4(&look, &self->m_to);
         self->m_timer = 0;
         tmp = lbl_1_data_3A0;
         self->m_hook = tmp;
@@ -213,7 +211,7 @@ void fn_1_8F4C(M537Camera *self)
     fn_1_76C(&self->m_look, &self->m_from, &self->m_to, (f32)(t * t * 0.25));
     fn_1_9A0(&self->m_look, 1);
     self->m_timer++;
-    if ((f32)(f64)self->m_timer > (f32)self->m_duration) {
+    if ((f64)self->m_timer > self->m_duration) {
         tmp = lbl_1_data_3AC;
         self->m_hook = tmp;
     }
