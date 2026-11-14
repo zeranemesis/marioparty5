@@ -13,9 +13,14 @@
 /* objDataTbl entry: 11 words. */
 typedef struct SdStageObjType_s {
     s32 flags;     // 0x00
-    s32 unk4;
-    f32 unk8;      // 0x08
-    s32 unkC;
+    union {
+        Vec offset;    // 0x04 (aim offset from the object pos)
+        struct {
+            s32 unk4;
+            f32 unk8;  // 0x08
+            s32 unkC;
+        };
+    };
     f32 radius;    // 0x10
     f32 height;    // 0x14
     f32 height2;   // 0x18
@@ -140,11 +145,22 @@ typedef struct SdStageMachine_s {
     HSFOBJECT *tireObj[4]; // 0x294
     struct SdStageMachine_s *target; // 0x2A4 (opponent)
     struct SdGun_s *gun; // 0x2A8
-    s32 pad2AC[10];    // 0x2AC
+    s32 comSteerState; // 0x2AC (SdComMain: 0 straight, 1 right, 2 left)
+    s32 comSteerTimer; // 0x2B0
+    s32 comSteerTime;  // 0x2B4
+    f32 comSteerStick; // 0x2B8
+    s32 pad2BC[6];     // 0x2BC
     f32 groundY[2];    // 0x2D4
-    s32 pad2DC[3];     // 0x2DC
+    s32 comStickDir;   // 0x2DC (SdComMain: 0 none, 1 right, 2 left)
+    s32 comTimer;      // 0x2E0 (frames since COM start)
+    s32 comMode;       // 0x2E4 (SdComMain action, 0 = idle)
     s32 comPreset;     // 0x2E8 (COM preset index, -1: none; SdMachineConfigSet)
-    s32 pad2EC[10];    // 0x2EC
+    s32 comLevel;      // 0x2EC (difficulty from comDataTbl)
+    f32 comStickX;     // 0x2F0
+    s32 pad2F4;        // 0x2F4
+    f32 comStickY;     // 0x2F8
+    Vec comObjPos;     // 0x2FC (ComStageObjPosGet result, x == -10000: none)
+    Vec comRandPos;    // 0x308 (SdStageRandomPosGet result, x == -10000: none)
     s16 fireMdlId[2];  // 0x314
     s32 fireCnt;       // 0x318
     Vec firePos;       // 0x31C
@@ -473,6 +489,7 @@ void SdFlagPosGet(Vec *pos);
 void SdFlagSprDispOff(void);
 /* proto: rabbit */
 void SdRabbitPlayerCheck(s32 playerNo);
+void SdRabbitZAxisGet(Vec *zAxis);
 void SdRabbitSprDispOff(void);
 
 extern s32 sdCameraBitTbl[];
@@ -485,12 +502,13 @@ s32 SdStageFloorCheck(Vec *pos, Vec *normal);
 s32 SdStageYOfsFloorCheck(Vec *pos, Vec *normal, f32 yOfs);
 s32 SdStageWallCheck(Vec *pos, Vec *normal);
 s32 SdStageYOfsWallCheck(Vec *pos, Vec *normal, f32 yOfs);
-void SdStageDistCalc(Vec *pos);
+f32 SdStageDistCalc(Vec *pos);
 f32 SdStageRadiusCalc(void);
 void SdStageSprPosGet(s32 *type, Vec *radius);
 void SdStageRandomPosGet(Vec *pos, f32 yOfs);
 f32 SdStageEdgeDistGet(Vec *pos);
 f32 SdStageEdgeDistRadiusGet(Vec *pos, f32 radius);
+s32 SdStageBaseObjHitCheck(Vec *pos, f32 radius);
 void SdStageUpdate(void);
 void SdStageObjCreate(void);
 void SdStageMachineCol(SdStageMachine *machine);
@@ -508,7 +526,7 @@ void SdModelGlowSet(HU3DMODELID mdlId);
 void SdVibrate(s32 playerNo, s32 a, s32 b);
 void SdImpactStart(s32 snd, Vec *pos, s32 vibrate, f32 vol, f32 range);
 void SdEffectDustCreateData(Vec *pos, void *p1, void *p2, f32 scale);
-void SdEffectFlameUpdate(void *data, f32 time);
+void SdEffectFlameUpdate(void *data, s32 count);
 void SdEffectFlameUpdateData(void *data, s32 count);
 void SdRandomPosGet(Vec *pos, s32 a, Vec *b, s32 c, void *d, f32 e, f32 f);
 void SdPlayerSoundPlay(SdStageMachine *machine, s32 no);
