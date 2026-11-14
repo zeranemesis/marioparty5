@@ -482,7 +482,7 @@ s32 fn_1_828C(void)
     fn_1_9360();
     for (i = 0; i < 2; i++) {
         if (PW[i].comOn != 0) {
-            MgPlayerPadSet(lbl_1_bss_0.player[i], PW[i].stkX, PW[i].stkY, PW[i].btnDown, PW[i].btn);
+            MgPlayerPadSet(lbl_1_bss_0.player[i], PW[i].btnDown, PW[i].btn, PW[i].stkY, PW[i].stkX);
         }
         if (PW[i].canDrop != 0) {
             MgPlayerPadSet(lbl_1_bss_0.player[i], 0, 0, 0, 0);
@@ -1674,4 +1674,662 @@ s16 fn_1_EA8C(void)
         }
     }
     return ret;
+}
+
+void fn_1_115B0(void)
+{
+    s16 i;
+
+    for (i = 0; i < 2; i++) {
+        if (lbl_1_bss_0.player[i]->mode == 5) {
+            MgPlayerAttrSet(lbl_1_bss_0.player[i], 4);
+            MgPlayerAttrSet(lbl_1_bss_0.player[i ^ 1], 2);
+            PW[i].pad8 = 1;
+            if (PW[i].itemNo != 0) {
+                PW[i].pad8 = 0;
+            }
+        } else if (lbl_1_bss_0.player[i]->mode == 0) {
+            if (PW[i].itemNo != 0) {
+                PW[i].pad8 = 0;
+            }
+            if (PW[i].pad8 != 0 && PW[i].itemNo == 0) {
+                MgPlayerAttrReset(lbl_1_bss_0.player[i], 4);
+                MgPlayerAttrReset(lbl_1_bss_0.player[i ^ 1], 2);
+                PW[i].pad8 = 0;
+            }
+        }
+    }
+}
+
+int fn_1_117B0(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
+{
+    if (b->type < 6) {
+    }
+    return 0;
+}
+
+void fn_1_117CC(MGACTOR *actor, int param)
+{
+    HU3DMODEL *model;
+    f32 dx;
+    f32 dz;
+    f32 len;
+    s32 pn;
+    u16 mesh;
+
+    pn = actor->param;
+    model = &Hu3DData[MDL(pn + 0x51).id];
+    if (actor->colMesh <= 0xB && model->pos.y > 132.0f
+        && (mesh = actor->colMesh, (((s16)mesh == PW[pn ^ 1].itemIdx) == 0))) {
+        if (lbl_1_bss_0.player[pn]->mode == 5 && lbl_1_bss_0.player[pn]->subMode == 3 && FL.cpuPlayer == 0
+            && FL.pad54 == 0) {
+            dx = MDL(lbl_1_bss_179A0[(s16)mesh].mdl[0]).x - model->pos.x;
+            dz = MDL(lbl_1_bss_179A0[(s16)mesh].mdl[0]).z - model->pos.z;
+            len = sqrt(dx * dx + dz * dz);
+            if (len <= 71.0f) {
+                if (len == PW[pn].unk18) {
+                    fn_1_5D64(0, VOL(MDL(pn + 0x51).z), PAN(MDL(pn + 0x51).x));
+                    lbl_1_bss_16844[(s16)mesh].state = 2;
+                    PW[pn].itemNo = 1;
+                    PW[pn].itemIdx = mesh;
+                    PW[pn].unk18 = -1.0f;
+                }
+                PW[pn].unk18 = len;
+                return;
+            }
+            lbl_1_bss_16844[(s16)mesh].state = 1;
+            return;
+        }
+        if (lbl_1_bss_16844[(s16)mesh].state != 2 && lbl_1_bss_0.player[pn]->mode != 5) {
+            lbl_1_bss_16844[(s16)mesh].state = 1;
+        }
+    }
+}
+
+void fn_1_11D34(s16 arg0)
+{
+    f32 radiusTbl[4] = { 7.2f, 8.0f, 9.0f, 10.285714f };
+    s16 hookTbl[4] = { 0x28, 0x14, 0xF, 0 };
+    s16 hook2Tbl[4] = { 0x5F, 0x55, 0x32, 0 };
+    s16 chaseTbl[4] = { 0x14, 0x23, 0x28, 0x3C };
+
+    if (lbl_1_bss_17A00->chars[arg0].cpuLevel != 0) {
+        PW[arg0].comOn = 1;
+        PW[arg0].carryState = lbl_1_bss_17A00->chars[arg0].cpuLevel - 1;
+        PW[arg0].hookNo = hookTbl[PW[arg0].carryState];
+        PW[arg0].hookNo2 = hook2Tbl[PW[arg0].carryState];
+        PW[arg0].radius = radiusTbl[PW[arg0].carryState];
+        PW[arg0].chaseNo = chaseTbl[PW[arg0].carryState];
+    }
+}
+
+s32 fn_1_11F4C(s16 arg0)
+{
+    PW[arg0].stkX = 0;
+    PW[arg0].stkY = 0;
+    PW[arg0].btnDown = 0;
+    PW[arg0].btn = 0;
+    if (PW[arg0].canDrop == 0) {
+        if ((u32)PW[arg0].subState <= 6) {
+            switch (PW[arg0].subState) {
+            case 0:
+                PW[arg0].subState = fn_1_12178(arg0);
+                break;
+            case 1:
+                if (fn_1_12510(arg0) != 0) {
+                    PW[arg0].subState = 0;
+                }
+                break;
+            case 2:
+                if (fn_1_13384(arg0) != 0) {
+                    PW[arg0].subState = 0;
+                }
+                break;
+            case 3:
+                if (fn_1_13620(arg0) != 0) {
+                    PW[arg0].subState = 0;
+                }
+                break;
+            case 4:
+                if (fn_1_143DC(arg0) != 0) {
+                    PW[arg0].subState = 0;
+                }
+                break;
+            case 5:
+                if (fn_1_14974(arg0) != 0) {
+                    PW[arg0].subState = 0;
+                }
+                break;
+            }
+        }
+        fn_1_14FC4(arg0);
+    }
+    return 0;
+}
+
+s16 fn_1_12178(s16 arg0)
+{
+    s16 ret;
+    s16 i;
+    s16 found;
+
+    ret = 0;
+    switch (PW[arg0].subSub) {
+    case 0:
+        PW[arg0].pad20 = 0;
+        if ((s16)(frandmod(100) + 1) < 0x55) {
+            PW[arg0].subSub = 3;
+        } else {
+            PW[arg0].subSub = frandmod(2) + 1;
+        }
+        break;
+    case 1:
+        ret = 4;
+        PW[arg0].subSub = 0;
+        break;
+    case 2:
+        ret = 5;
+        PW[arg0].subSub = 0;
+        break;
+    case 3:
+        for (i = 0; i < 12; i++) {
+            if (PW[arg0].owner[i] == 0 && PW[arg0 ^ 1].owner[i] != 0 && (s16)(frandmod(100) + 1) > PW[arg0].hookNo2) {
+                PW[arg0].owner[i] = 1;
+            }
+        }
+        PW[arg0].aimSlotPrev = PW[arg0].aimSlot;
+        do {
+            PW[arg0].aimSlot = frandmod(12);
+            found = 0;
+            for (i = 0; i < 12; i++) {
+                if (PW[arg0].owner[i] == 0) {
+                    found = 1;
+                }
+            }
+        } while (found != 0 && PW[arg0].owner[PW[arg0].aimSlot] != 0
+                 && (s16)(frandmod(100) + 1) >= (s32)(PW[arg0].hookNo / PW[arg0].owner[PW[arg0].aimSlot]));
+        PW[arg0].subSub = 0;
+        ret = 1;
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_12510(s16 arg0)
+{
+    f32 dx;
+    f32 dz;
+    f32 len;
+    s16 ret;
+
+    ret = 0;
+    switch (PW[arg0].pad16[2]) {
+    case 0:
+        PW[arg0].aim.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+        PW[arg0].aim.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+        PW[arg0].target.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+        PW[arg0].target.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+        PW[arg0].radius2 = 150.0f;
+        PW[arg0].pad16[2]++;
+        break;
+    case 1:
+        if (PW[arg0].pad35 == 0) {
+            if (PW[arg0].chaseSub == 0 && PW[arg0].pad16[2] == 1) {
+                dx = PW[arg0].pos.x - PW[arg0 ^ 1].pos.x;
+                dz = PW[arg0].pos.z - PW[arg0 ^ 1].pos.z;
+                len = sqrt(dx * dx + dz * dz);
+                if (len < 150.0f) {
+                    if ((s16)(frandmod(100) + 1) < PW[arg0].chaseNo) {
+                        PW[arg0].pad35 = frandmod(2) + 1;
+                    } else if ((s16)(frandmod(100) + 1) < 0x32) {
+                        PW[arg0].chaseSub = 1;
+                    }
+                }
+            }
+            PW[arg0].radius2 = 150.0f;
+            if (fn_1_13384(arg0) != 0) {
+                PW[arg0].pad18 = 0;
+                PW[arg0].chaseSub = 0;
+                PW[arg0].pad16[2]++;
+            } else {
+                if (PW[arg0].pad18++ >= 0x168) {
+                    PW[arg0].chaseSub = 0;
+                }
+            }
+        }
+        if (PW[arg0 ^ 1].carriedBy == PW[arg0].aimSlot && PW[arg0 ^ 1].owner[PW[arg0].aimSlot] != 0) {
+            PW[arg0].pad35 = 0;
+            PW[arg0].pad16[2] = 0;
+            PW[arg0].pad21 = 0;
+            PW[arg0].pushState = 0;
+            PW[arg0].owner[PW[arg0].aimSlot]++;
+            ret = 1;
+        } else {
+            switch (PW[arg0].pad35) {
+            case 1:
+                if (fn_1_143DC(arg0) != 0) {
+                    PW[arg0].aim.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+                    PW[arg0].aim.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+                    PW[arg0].target.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+                    PW[arg0].target.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+                    PW[arg0].pad35 = 0;
+                }
+                break;
+            case 2:
+                if (fn_1_14974(arg0) != 0) {
+                    PW[arg0].aim.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+                    PW[arg0].aim.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+                    PW[arg0].target.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+                    PW[arg0].target.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+                    PW[arg0].pad35 = 0;
+                }
+                break;
+            }
+            if (PW[arg0].pad35 != 0 && lbl_1_bss_16844[PW[arg0 ^ 1].itemIdx].flag != 0) {
+                PW[arg0].pad27 = 0;
+                PW[arg0].pad25 = 0;
+                PW[arg0].aim.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+                PW[arg0].aim.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+                PW[arg0].target.x = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).x;
+                PW[arg0].target.z = MDL(lbl_1_bss_179A0[PW[arg0].aimSlot].mdl[0]).z;
+                PW[arg0].pad35 = 0;
+                PW[arg0].chaseSub = 1;
+            }
+        }
+        break;
+    case 2:
+        if (fn_1_13AA4(arg0) != 0) {
+            PW[arg0].pad16[2]++;
+        }
+        break;
+    case 3:
+        PW[arg0].stkY |= 0x100;
+        PW[arg0].pad16[2]++;
+        break;
+    case 4:
+        if (lbl_1_bss_0.player[arg0]->mode != 5) {
+            PW[arg0].pad16[2] = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_13384(s16 arg0)
+{
+    s16 ret;
+
+    ret = 0;
+    switch (PW[arg0].pushState) {
+    case 0:
+        MgPlayerComStkOn(lbl_1_bss_0.player[arg0]);
+        PW[arg0].pad21 = 1;
+        PW[arg0].pushState++;
+        break;
+    case 1:
+        if (MgPlayerVecChase(lbl_1_bss_0.player[arg0], &PW[arg0].target, PW[arg0].radius, PW[arg0].radius2) != 0) {
+            if (PW[arg0].snapState == 1) {
+                PW[arg0].target = PW[arg0].snap;
+                PW[arg0].radius2 = PW[arg0].pad34;
+                PW[arg0].snapState = 0;
+            } else {
+                PW[arg0].pushState++;
+            }
+        }
+        break;
+    case 2:
+        MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+        PW[arg0].pad21 = 0;
+        PW[arg0].pushState = 0;
+        ret = 1;
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_13620(s16 arg0)
+{
+    HuVecF vec;
+    s16 ret;
+
+    ret = 0;
+    switch (PW[arg0].aimState) {
+    case 0:
+        PSVECSubtract((Vec *)&PW[arg0].aim, (Vec *)&PW[arg0].pos, (Vec *)&vec);
+        vec.x /= 46.0f;
+        vec.z /= 46.0f;
+        vec.x *= 5.6f;
+        vec.z *= 5.6f;
+        if (vec.x > 72.0f) {
+            vec.x = 72.0f;
+        }
+        if (vec.x < -72.0f) {
+            vec.x = -72.0f;
+        }
+        if (vec.z > 72.0f) {
+            vec.z = 72.0f;
+        }
+        if (vec.z < -72.0f) {
+            vec.z = -72.0f;
+        }
+        PW[arg0].pad24[0] = vec.x;
+        PW[arg0].pad24[1] = vec.z;
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        PW[arg0].stkY |= 0x100;
+        PW[arg0].aimTimer = 0;
+        PW[arg0].aimState++;
+        break;
+    case 1:
+        PW[arg0].stkX |= 0x100;
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        if (PW[arg0].aimTimer++ > 0xA) {
+            PW[arg0].aimTimer = 0;
+            PW[arg0].aimState++;
+        }
+        break;
+    case 2:
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        if (lbl_1_bss_0.player[arg0]->mode != 1) {
+            PW[arg0].btnDown = 0;
+            PW[arg0].btn = 0;
+            PW[arg0].aimState = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_13AA4(s16 arg0)
+{
+    HuVecF vec;
+    s16 ret;
+
+    ret = 0;
+    switch (PW[arg0].aimState) {
+    case 0:
+        PSVECSubtract((Vec *)&PW[arg0].aim, (Vec *)&PW[arg0].pos, (Vec *)&vec);
+        vec.x /= 23.0f;
+        vec.z /= 23.0f;
+        vec.x *= 5.6f;
+        vec.z *= 5.6f;
+        if (vec.x > 72.0f) {
+            vec.x = 72.0f;
+        }
+        if (vec.x < -72.0f) {
+            vec.x = -72.0f;
+        }
+        if (vec.z > 72.0f) {
+            vec.z = 72.0f;
+        }
+        if (vec.z < -72.0f) {
+            vec.z = -72.0f;
+        }
+        PW[arg0].pad24[0] = vec.x;
+        PW[arg0].pad24[1] = -vec.z;
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        PW[arg0].stkY |= 0x100;
+        PW[arg0].aimTimer = 0;
+        PW[arg0].aimState++;
+        break;
+    case 1:
+        if (MgPlayerModeAttrCheck(lbl_1_bss_0.player[arg0], 0x10) != 0) {
+            PW[arg0].stkX |= 0x100;
+            PW[arg0].btnDown = PW[arg0].pad24[0];
+            PW[arg0].btn = PW[arg0].pad24[1];
+            if (PW[arg0].aimTimer++ > 0xA) {
+                PW[arg0].aimState++;
+            }
+        } else {
+            PW[arg0].stkY |= 0x100;
+        }
+        break;
+    case 2:
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        if (PW[arg0].aimTimer++ > 0x17) {
+            PW[arg0].btnDown = 0;
+            PW[arg0].btn = 0;
+            PW[arg0].aimState = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_13F68(s16 arg0)
+{
+    HuVecF vec;
+    s16 ret;
+
+    ret = 0;
+    switch (PW[arg0].aimState) {
+    case 0:
+        PSVECSubtract((Vec *)&PW[arg0].aim, (Vec *)&PW[arg0].pos, (Vec *)&vec);
+        vec.x /= 60.0f;
+        vec.z /= 60.0f;
+        vec.x *= 5.6f;
+        vec.z *= 5.6f;
+        if (vec.x > 72.0f) {
+            vec.x = 72.0f;
+        }
+        if (vec.x < -72.0f) {
+            vec.x = -72.0f;
+        }
+        if (vec.z > 72.0f) {
+            vec.z = 72.0f;
+        }
+        if (vec.z < -72.0f) {
+            vec.z = -72.0f;
+        }
+        PW[arg0].pad24[0] = vec.x;
+        PW[arg0].pad24[1] = -vec.z;
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        PW[arg0].stkY |= 0x100;
+        PW[arg0].aimTimer = 0;
+        PW[arg0].aimState++;
+        break;
+    case 1:
+        PW[arg0].stkX |= 0x100;
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        if (PW[arg0].aimTimer++ > 0xA) {
+            PW[arg0].aimState++;
+        }
+        break;
+    case 2:
+        PW[arg0].btnDown = PW[arg0].pad24[0];
+        PW[arg0].btn = PW[arg0].pad24[1];
+        if (PW[arg0].aimTimer++ > 0x14) {
+            PW[arg0].btnDown = 0;
+            PW[arg0].btn = 0;
+            PW[arg0].aimState = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_143DC(s16 arg0)
+{
+    s16 ret;
+    s16 done;
+
+    ret = 0;
+    switch (PW[arg0].pad25) {
+    case 0:
+        PW[arg0].radius2 = 90.0f;
+        PW[arg0].pad26 = 0;
+        PW[arg0].pad25++;
+        break;
+    case 1:
+        if (PW[arg0].snapState == 0) {
+            PW[arg0].target.x = PW[arg0 ^ 1].pos.x;
+            PW[arg0].target.z = PW[arg0 ^ 1].pos.z;
+        }
+        PW[arg0].pad26++;
+        done = 0;
+        switch (PW[arg0].pushState) {
+        case 0:
+            MgPlayerComStkOn(lbl_1_bss_0.player[arg0]);
+            PW[arg0].pad21 = 1;
+            PW[arg0].pushState++;
+            break;
+        case 1:
+            if (MgPlayerVecChase(lbl_1_bss_0.player[arg0], &PW[arg0].target, PW[arg0].radius, PW[arg0].radius2) != 0) {
+                if (PW[arg0].snapState == 1) {
+                    PW[arg0].target = PW[arg0].snap;
+                    PW[arg0].radius2 = PW[arg0].pad34;
+                    PW[arg0].snapState = 0;
+                } else {
+                    PW[arg0].pushState++;
+                }
+            }
+            break;
+        case 2:
+            MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+            PW[arg0].pad21 = 0;
+            PW[arg0].pushState = 0;
+            done = 1;
+            break;
+        }
+        if (done != 0) {
+            PW[arg0].pad33 = 0;
+            PW[arg0].pad25++;
+        } else if (PW[arg0].pad33 >= 0x32 || PW[arg0].pad26 >= 0xB4) {
+            MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+            PW[arg0].pad21 = 0;
+            PW[arg0].pushState = 0;
+            PW[arg0].pad33 = 0;
+            PW[arg0].pad25++;
+        }
+        break;
+    case 2:
+        PW[arg0].stkY |= 0x200;
+        PW[arg0].pad25++;
+        break;
+    case 3:
+        if (lbl_1_bss_0.player[arg0]->mode != 3) {
+            PW[arg0].pad25 = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_14974(s16 arg0)
+{
+    s16 ret;
+    s16 done;
+
+    ret = 0;
+    switch (PW[arg0].pad27) {
+    case 0:
+        PW[arg0].radius2 = 200.0f;
+        PW[arg0].pad28 = 0;
+        PW[arg0].pad27++;
+        break;
+    case 1:
+        if (PW[arg0].snapState == 0) {
+            PW[arg0].target.x = PW[arg0 ^ 1].pos.x;
+            PW[arg0].target.z = PW[arg0 ^ 1].pos.z;
+        }
+        PW[arg0].pad28++;
+        done = 0;
+        switch (PW[arg0].pushState) {
+        case 0:
+            MgPlayerComStkOn(lbl_1_bss_0.player[arg0]);
+            PW[arg0].pad21 = 1;
+            PW[arg0].pushState++;
+            break;
+        case 1:
+            if (MgPlayerVecChase(lbl_1_bss_0.player[arg0], &PW[arg0].target, PW[arg0].radius, PW[arg0].radius2) != 0) {
+                if (PW[arg0].snapState == 1) {
+                    PW[arg0].target = PW[arg0].snap;
+                    PW[arg0].radius2 = PW[arg0].pad34;
+                    PW[arg0].snapState = 0;
+                } else {
+                    PW[arg0].pushState++;
+                }
+            }
+            break;
+        case 2:
+            MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+            PW[arg0].pad21 = 0;
+            PW[arg0].pushState = 0;
+            done = 1;
+            break;
+        }
+        if (done != 0) {
+            PW[arg0].aim.x = PW[arg0 ^ 1].pos.x;
+            PW[arg0].aim.z = PW[arg0 ^ 1].pos.z;
+            PW[arg0].pad27++;
+        } else if (PW[arg0].pad28 >= 0xB4) {
+            MgPlayerComStkOff(lbl_1_bss_0.player[arg0]);
+            PW[arg0].pad21 = 0;
+            PW[arg0].pushState = 0;
+            PW[arg0].aim.x = PW[arg0 ^ 1].pos.x;
+            PW[arg0].aim.z = PW[arg0 ^ 1].pos.z;
+            PW[arg0].pad27++;
+        }
+        break;
+    case 2:
+        if (fn_1_13F68(arg0) != 0) {
+            PW[arg0].pad27++;
+        }
+        break;
+    case 3:
+        PW[arg0].stkY |= 0x200;
+        PW[arg0].pad27++;
+        break;
+    case 4:
+        if (lbl_1_bss_0.player[arg0]->mode != 4) {
+            PW[arg0].pad27 = 0;
+            ret = 1;
+        }
+        break;
+    }
+    return ret;
+}
+
+s32 fn_1_14FC4(s16 arg0)
+{
+    switch (PW[arg0].snapState) {
+    case 0:
+        if (PW[arg0].pad31 != -1 && PW[arg0].pad31 == PW[arg0].pad32 && PW[arg0].pushState == 1
+            && lbl_1_bss_0.player[arg0]->mode != 6 && lbl_1_bss_0.player[arg0]->mode != 7
+            && lbl_1_bss_0.player[arg0]->mode != 8 && lbl_1_bss_0.player[arg0]->mode != 9) {
+            if (PW[arg0].pad33++ > 0x3C) {
+                PW[arg0].snap = PW[arg0].target;
+                PW[arg0].pad34 = PW[arg0].radius2;
+                PW[arg0].target.x = 0.0f;
+                PW[arg0].target.y = PW[arg0].snap.y;
+                PW[arg0].target.z = 0.0f;
+                PW[arg0].radius2 = 300.0f;
+                PW[arg0].pad33 = 0;
+                PW[arg0].snapState++;
+            }
+        } else {
+            PW[arg0].pad33 = 0;
+        }
+        PW[arg0].pad32 = PW[arg0].pad31;
+        PW[arg0].pad31 = -1;
+        break;
+    case 1:
+        PW[arg0].target.x = 0.0f;
+        PW[arg0].target.y = PW[arg0].snap.y;
+        PW[arg0].target.z = 0.0f;
+        PW[arg0].radius2 = 300.0f;
+        break;
+    }
+    return 0;
 }
