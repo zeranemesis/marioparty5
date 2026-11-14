@@ -78,7 +78,7 @@ Mgr510Boat *fn_1_0(Mgr510Boat *arg0)
     arg0->unk8.vtable = lbl_1_data_40;
     arg0->unkC = 0;
     fn_1_1E54(arg0, (void **)lbl_1_bss_2C);
-    if (lbl_1_bss_14 == NULL) {
+    if (lbl_1_bss_14 != NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
 #ifdef TARGET_PC

@@ -91,7 +91,7 @@ Mgr511Effring *fn_1_6B58(Mgr511Effring *arg0, s32 arg_sp0)
     arg0->vtable = &lbl_1_data_40[2];
     arg0->unkC = 0;
     fn_1_1E54(arg0, (void **)lbl_1_bss_2C);
-    if (lbl_1_bss_A10 == NULL) {
+    if (lbl_1_bss_A10 != NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
     lbl_1_bss_A10 = arg0;

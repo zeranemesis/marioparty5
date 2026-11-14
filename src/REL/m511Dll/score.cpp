@@ -146,7 +146,7 @@ Mgr511Score *fn_1_159B4(Mgr511Score *arg0, s32 arg1, u8 arg2)
     arg0->vtable = &lbl_1_data_40[2];
     arg0->unkC = 0;
     fn_1_1E54(arg0, (void **)lbl_1_bss_2C);
-    if (lbl_1_bss_A28 == NULL) {
+    if (lbl_1_bss_A28 != NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
     lbl_1_bss_A28 = (Mgr511ScoreRoot *)arg0;
@@ -294,7 +294,7 @@ Mgr511ScoreRoot *fn_1_16040(Mgr511ScoreRoot *arg0, u8 arg1, s32 arg_sp0)
     arg0->vtable = &lbl_1_data_40[2];
     arg0->unkC = 0;
     fn_1_1E54(arg0, (void **)lbl_1_bss_2C);
-    if (lbl_1_bss_A24 == NULL) {
+    if (lbl_1_bss_A24 != NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
     lbl_1_bss_A24 = (Mgr511Score *)arg0;

@@ -80,7 +80,7 @@ Mgr510Singleton *fn_1_BD18(Mgr510Singleton *arg0)
     arg0->vtable = (void **)lbl_1_data_40;
     arg0->unkC = 0;
     fn_1_1E54(arg0, &lbl_1_bss_2C);
-    if (lbl_1_bss_A38 == NULL) {
+    if (lbl_1_bss_A38 != NULL) {
         fn_1_CF8("ms_pointer == 0", "singleton.h", 0x35);
     }
 #ifdef TARGET_PC
