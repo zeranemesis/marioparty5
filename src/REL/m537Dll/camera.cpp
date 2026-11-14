@@ -1,6 +1,13 @@
 #include "REL/m537Dll.h"
 #include <math.h>
 
+// MWCC passes the pmf in r12, so on PC the (always non-virtual) member is called directly.
+#ifdef TARGET_PC
+#define M537_PTMF_SCALL(obj, pmf) (((void (*)(void *))(pmf)->fn)(obj))
+#else
+#define M537_PTMF_SCALL(obj, pmf) __ptmf_scall(obj)
+#endif
+
 extern "C" {
 
 extern void *lbl_1_data_1FC[];
@@ -149,7 +156,7 @@ void fn_1_8BFC(M537Camera *self, s32 mode)
 void fn_1_8D0C(M537Camera *self)
 {
     if (__ptmf_test(&self->m_hook) != 0) {
-        __ptmf_scall(self);
+        M537_PTMF_SCALL(self, &self->m_hook);
     }
 }
 
