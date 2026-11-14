@@ -218,35 +218,11 @@ typedef struct FireMgr_s FireMgr;
 typedef struct Fire_s Fire;
 typedef struct FireSlot_s FireSlot;
 
-/* The boss object embedded in the battle owner at 0x28 (fields fire.c touches). */
-typedef struct FireBoss_s {
-    /* 0x000 */ u8 pad0[4];
-    /* 0x004 */ u16 state;
-    /* 0x006 */ s16 f6;
-    /* 0x008 */ s16 f8;
-    /* 0x00A */ s16 fA;
-    /* 0x00C */ u8 padC[4];
-    /* 0x010 */ s16 f10;
-    /* 0x012 */ u8 pad12[2];
-    /* 0x014 */ s16 player;
-    /* 0x016 */ u8 pad16[0x68 - 0x16];
-    /* 0x068 */ f32 height;
-    /* 0x06C */ u8 pad6C[0x90 - 0x6C];
-    /* 0x090 */ f32 rotY;
-    /* 0x094 */ u8 pad94[0xA0 - 0x94];
-    /* 0x0A0 */ Vec pos;
-    /* 0x0AC */ u8 padAC[0xC4 - 0xAC];
-    /* 0x0C4 */ f32 fC4;
-    /* 0x0C8 */ u8 padC8[0x130 - 0xC8];
-    /* 0x130 */ Fire *held;
-    /* 0x134 */ void *target;
-} FireBoss;
-
 struct M562Work;
-/* fire.c reaches the boss (M562Work.player) and the effect list (M562Work at 0x286C) through these views */
-#define FIRE_BOSS(owner) ((FireBoss *)&(owner)->player)
+/* fire.c reaches the boss (M562Work.player), the effect list (M562Work at 0x286C) and camera mask through these */
+#define FIRE_BOSS(owner) (&(owner)->player)
 #define FIRE_FX(owner) ((EffectList *)(owner)->pad286C)
-#define FIRE_CAMBIT(owner) ((owner)->camera[0].camMask)
+#define FIRE_CAMBIT(owner) ((u16)(owner)->camera[0].camMask)
 
 #define FIRE_MAX 35
 #define FIRE_SLOT_MAX 6
@@ -321,14 +297,14 @@ struct FireMgr_s {
 
 extern void fn_1_894(s32 seNo, s16 pan); /* HuAudFXPanning wrapper (m562.c) */
 extern f32 fn_1_36EC(f32 target, f32 cur, f32 rate);
-extern void fn_1_AD68(FireBoss *boss);
+extern void fn_1_AD68(struct M562Player *boss);
 
 void fn_1_13CFC(FireMgr *mgr, struct M562Work *owner);
 void fn_1_140E4(FireMgr *mgr);
 void fn_1_14190(FireMgr *mgr);
 void fn_1_14390(EffectEntry *a, EffectEntry *b);
 void fn_1_14438(Fire *a, Fire *b);
-void fn_1_14B68(FireBoss *boss, Fire *fire);
+void fn_1_14B68(struct M562Player *boss, Fire *fire);
 void fn_1_152C8(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx);
 FireSlot *fn_1_15308(FireMgr *mgr, Fire *fire);
 void fn_1_15390(void *unused, FireSlot *slot);
@@ -362,6 +338,12 @@ typedef struct M562Work KpHost;
  * 0x288C (boss hits) all live in M562Work.pad286C; it must hold 3 * sizeof(EffectList). */
 #define KP_HITA(host) (&((EffectList *)(host)->pad286C)[1])
 #define KP_HITB(host) (&((EffectList *)(host)->pad286C)[2])
+#define KP_CAM(host, i) ((CAMERA *)&(host)->camera[i])
+#define KP_PLAYER(host) ((KpPlayer *)&(host)->player)
+#define KP_ABS(x) (((x) >= 0.0f) ? (x) : -(x))
+#define KP_CLAMP(v, lo, hi) (((v) > (hi)) ? (hi) : (((v) < (lo)) ? (lo) : (v)))
+/* heading in degrees of the (x, z) direction, wrapped into (-180, 180] */
+#define KP_HEADING(x, z) ((HuAtan((x), (z)) > 180.0) ? (HuAtan((x), (z)) - 360.0) : ((HuAtan((x), (z)) <= -180.0) ? (360.0 + HuAtan((x), (z))) : HuAtan((x), (z))))
 
 typedef struct KpPlayer { /* host + 0x28 */
     /* 0x00 */ struct M562Work *host;
@@ -535,9 +517,9 @@ extern void fn_1_EEC4(EffectEntry *a, EffectEntry *b);
 extern void fn_1_F014(KpPlayer *player, Koopa *koopa);
 extern void fn_1_F784(KoopaBoss *self, struct M562Work *host);
 extern void fn_1_10018(KoopaBoss *self);
-extern Mtx *fn_1_1010C(KoopaBoss *self);
-extern Mtx *fn_1_10160(KoopaBoss *self);
-extern Mtx *fn_1_101B4(KoopaBoss *self);
+extern MtxPtr fn_1_1010C(KoopaBoss *self);
+extern MtxPtr fn_1_10160(KoopaBoss *self);
+extern MtxPtr fn_1_101B4(KoopaBoss *self);
 extern void fn_1_10208(KoopaBoss *self);
 extern void fn_1_10348(EffectEntry *a, EffectEntry *b);
 extern void fn_1_11054(KoopaBoss *self);

@@ -98,7 +98,7 @@ void fn_1_140E4(FireMgr *mgr) {
 
 void fn_1_14190(FireMgr *mgr) {
     M562Work *owner = mgr->owner;
-    FireBoss *boss = FIRE_BOSS(owner);
+    M562Player *boss = FIRE_BOSS(owner);
     s32 i;
     Vec pos;
     f32 radius;
@@ -140,9 +140,9 @@ void fn_1_14390(EffectEntry *a, EffectEntry *b) {
     if ((u16)a->type == 1 && (u16)b->type == 1) {
         fn_1_14438((Fire *)a->user, (Fire *)b->user);
     } else if ((u16)a->type == 0 && (u16)b->type == 1) {
-        fn_1_14B68((FireBoss *)a->user, (Fire *)b->user);
+        fn_1_14B68((M562Player *)a->user, (Fire *)b->user);
     } else if ((u16)a->type == 1 && (u16)b->type == 0) {
-        fn_1_14B68((FireBoss *)b->user, (Fire *)a->user);
+        fn_1_14B68((M562Player *)b->user, (Fire *)a->user);
     }
 }
 
@@ -200,7 +200,7 @@ void fn_1_14438(Fire *a, Fire *b) {
     }
 }
 
-void fn_1_14B68(FireBoss *boss, Fire *fire) {
+void fn_1_14B68(M562Player *boss, Fire *fire) {
     Vec dir;
     f32 b0, b1, f0, f1;
     f32 mag;
@@ -227,10 +227,10 @@ void fn_1_14B68(FireBoss *boss, Fire *fire) {
             }
             fire->targetAngle = FIRE_WRAP_D(180.0 * (atan2(-dir.x, -dir.z) / 3.141592653589793));
             PSVECScale(&dir, &dir, 110.0f - mag);
-            if (fire->flameStage >= 3 && (boss->state == 1 || boss->state == 2) && boss->f10 == 0) {
-                boss->fA = 0;
-                boss->f6 = 0;
-                boss->f8 = 0;
+            if (fire->flameStage >= 3 && (boss->state == 1 || boss->state == 2) && boss->invuln == 0) {
+                boss->timerA = 0;
+                boss->sub = 0;
+                boss->subTimer = 0;
                 boss->state = 4;
             }
             mid0 = 0.5f * (b0 + b1);
@@ -250,10 +250,10 @@ void fn_1_14B68(FireBoss *boss, Fire *fire) {
             fire->pos.x -= 0.5f * dir.x * w;
             fire->pos.z -= 0.5f * dir.z * w;
             if (b0 > mid1 && mag < 88.0f) {
-                if ((boss->state == 1 || boss->state == 2) && boss->fC4 < 0.0f) {
-                    boss->fC4 = sqrtf(600.0f);
+                if ((boss->state == 1 || boss->state == 2) && boss->vy < 0.0f) {
+                    boss->vy = sqrtf(600.0f);
                     fn_1_AD68(boss);
-                    omVibrate(boss->player, 10, 4, 2);
+                    omVibrate(boss->playerNo, 10, 4, 2);
                 }
                 fn_1_162A0(fire);
             }
@@ -416,12 +416,12 @@ void fn_1_15554(FireSlot *slot) {
 }
 
 void fn_1_15B78(FireSlot *slot) {
-    FireBoss *boss = FIRE_BOSS(slot->mgr->owner);
+    M562Player *boss = FIRE_BOSS(slot->mgr->owner);
     Vec diff, dir, fwd;
     f32 dot;
     f32 mag;
 
-    if ((boss->state == 1 || boss->state == 2) && boss->f10 == 0) {
+    if ((boss->state == 1 || boss->state == 2) && boss->invuln == 0) {
         PSVECSubtract(&boss->pos, &slot->pos, &diff);
         mag = PSVECMag(&diff);
         if (mag < 170.0f) {
@@ -434,9 +434,9 @@ void fn_1_15B78(FireSlot *slot) {
             fwd.z = cos(FIRE_RAD(slot->angle));
             dot = PSVECDotProduct(&dir, &fwd);
             if (dot >= cos(0.5235987755982988)) {
-                boss->fA = 0;
-                boss->f6 = 0;
-                boss->f8 = 0;
+                boss->timerA = 0;
+                boss->sub = 0;
+                boss->subTimer = 0;
                 boss->state = 4;
             }
         }
@@ -536,7 +536,7 @@ void fn_1_162A0(Fire *fire) {
 
 void fn_1_16350(Fire *fire) {
     FireMgr *mgr = fire->mgr;
-    FireBoss *boss = FIRE_BOSS(mgr->owner);
+    M562Player *boss = FIRE_BOSS(mgr->owner);
     HU3DMODELID model;
     f32 maxTime;
 
@@ -856,7 +856,7 @@ s32 fn_1_174C0(Fire *fire) {
 s32 fn_1_1776C(Fire *fire) {
     FireMgr *mgr = fire->mgr;
     M562Work *owner = mgr->owner;
-    M562MainPlayer *player = &owner->player;
+    M562Player *player = &owner->player;
 
     fire->nextMotion = 0;
     fire->loopMotion = 1;
