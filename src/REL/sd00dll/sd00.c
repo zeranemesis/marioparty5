@@ -16,6 +16,9 @@
 #include "game/window.h"
 #include "string.h"
 
+
+/* GC layout (checked): sizeof(SdSys)=0xFF4, SdMachine=0x3F8, SdMachineTrack=0x110, SdCamera=0x88, SdSprWork=0xC0 */
+
 /* ---- functions of other units (exact asm signatures) ---- */
 extern void SdFlagClose(void);
 extern void SdRabbitClose(void);
@@ -1075,9 +1078,10 @@ static void MachineParticleUpdate(SdMachine *machine)
 
 static void MachineExhaustUpdate(SdMachine *machine)
 {
+    HU3DPARTICLE *dustPar = (HU3DPARTICLE *)Hu3DData[sys->dustMdlId].hookData;
+    HU3DPARTICLE *kind1Par = (HU3DPARTICLE *)Hu3DData[sys->partMdlId[10]].hookData;
     HU3DPARTICLE *par;
     HU3DPARTICLEDATA *base;
-    HU3DPARTICLEDATA *p;
     s32 kind1;
     s32 maxLife;
     s32 i;
@@ -1085,11 +1089,11 @@ static void MachineExhaustUpdate(SdMachine *machine)
 
     if (machine->bodyType != 1 && machine->bodyType != 9 && machine->bodyType != 0xA) {
         kind1 = 0;
-        par = (HU3DPARTICLE *)Hu3DData[sys->dustMdlId].hookData;
+        par = dustPar;
         maxLife = 60;
     } else {
         kind1 = 1;
-        par = (HU3DPARTICLE *)Hu3DData[sys->partMdlId[10]].hookData;
+        par = kind1Par;
         maxLife = 30;
     }
     for (i = 0; i < 30; i++) {
@@ -1098,44 +1102,43 @@ static void MachineExhaustUpdate(SdMachine *machine)
         }
         for (j = 0; j < machine->cornerNum; j++) {
             base = &par->data[machine->corner[j].effIdx];
-            p = &base[i];
-            p->pos.x += p->vel.x;
-            p->pos.y += p->vel.y + p->accel.y;
-            p->pos.z += p->vel.z;
-            PSVECScale((Vec *)&p->vel, (Vec *)&p->vel, 0.9f);
+            base[i].pos.x += base[i].vel.x;
+            base[i].pos.y += base[i].vel.y + base[i].accel.y;
+            base[i].pos.z += base[i].vel.z;
+            PSVECScale((Vec *)&base[i].vel, (Vec *)&base[i].vel, 0.9f);
             if (machine->bodyType == 3) {
-                p->accel.y *= 1.02f;
-                p->scale *= 1.04f;
-                if (p->scale > 180.0f) {
-                    p->scale = 180.0f;
+                base[i].accel.y *= 1.02f;
+                base[i].scale *= 1.04f;
+                if (base[i].scale > 180.0f) {
+                    base[i].scale = 180.0f;
                 }
-                p->color.a = (u8)((f32)p->color.a * 0.9f);
+                base[i].color.a = (u8)((f32)base[i].color.a * 0.9f);
             } else {
-                p->accel.y *= 1.01f;
+                base[i].accel.y *= 1.01f;
                 if (machine->bodyType == 1 && j >= 2) {
-                    p->scale *= 1.02f;
+                    base[i].scale *= 1.02f;
                 } else {
-                    p->scale *= 1.01f;
+                    base[i].scale *= 1.01f;
                 }
-                if (p->scale > 128.0f) {
-                    p->scale = 128.0f;
+                if (base[i].scale > 128.0f) {
+                    base[i].scale = 128.0f;
                 }
                 if (kind1 == 0) {
-                    p->color.a = (u8)((f32)p->color.a * 0.95f);
+                    base[i].color.a = (u8)((f32)base[i].color.a * 0.95f);
                 } else {
-                    if (p->parManId <= 8) {
-                        p->color.r = 0xFF - ((s32)((0xFF - particleColorTbl[machine->bodyType].r) * p->parManId) / 8);
-                        p->color.g = 0xFF - ((s32)((0xFF - particleColorTbl[machine->bodyType].g) * p->parManId) / 8);
-                        p->color.b = 0xFF - ((s32)((0xFF - particleColorTbl[machine->bodyType].b) * p->parManId) / 8);
+                    if (base[i].parManId <= 8) {
+                        base[i].color.r = 0xFF - ((s32)((0xFF - particleColorTbl[machine->bodyType].r) * base[i].parManId) / 8);
+                        base[i].color.g = 0xFF - ((s32)((0xFF - particleColorTbl[machine->bodyType].g) * base[i].parManId) / 8);
+                        base[i].color.b = 0xFF - ((s32)((0xFF - particleColorTbl[machine->bodyType].b) * base[i].parManId) / 8);
                     }
-                    p->color.a = (u8)((f32)p->color.a * 0.9f);
+                    base[i].color.a = (u8)((f32)base[i].color.a * 0.9f);
                 }
             }
-            p->parManId++;
-            if (p->parManId >= maxLife) {
-                p->parManId = 0;
-                p->time = 0;
-                p->scale = 0.0f;
+            base[i].parManId++;
+            if (base[i].parManId >= maxLife) {
+                base[i].parManId = 0;
+                base[i].time = 0;
+                base[i].scale = 0.0f;
             }
         }
     }
