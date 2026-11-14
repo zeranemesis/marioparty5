@@ -247,7 +247,7 @@ void fn_1_21700(CAMERA *cam)
     Vec dir;
     Vec vp;
     Vec vt;
-    CAMKOOPA *koopa = &cam->owner->koopa;
+    KpPlayer *koopa = (KpPlayer *)&cam->owner->player;
 
     switch (cam->state) {
     case 0:
@@ -288,7 +288,7 @@ void fn_1_2191C(CAMERA *cam)
     Vec dir;
     Vec vp;
     Vec vt;
-    CAMKOOPA *koopa = &cam->owner->koopa;
+    KpPlayer *koopa = (KpPlayer *)&cam->owner->player;
 
     switch (cam->state) {
     case 0:

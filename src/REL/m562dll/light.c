@@ -2,6 +2,12 @@
 // per-frame ambient broadcast.
 #include "REL/m562dll.h"
 
+/* The player object's model id at +0x24, which the work object does not name. */
+typedef struct {
+    u8 pad00[0x24];
+    s16 model;
+} LightPlayerView;
+
 /* Blend helper: A at t, B at 1-t, one component a time, exactly the order
    the original evaluates them. */
 #define LERP3(dst, A, B)                            \
@@ -104,19 +110,19 @@ void fn_1_22694(LIGHT *self, s16 mode, f32 t)
         if (self->spotIsLocal == 0) {
             Hu3DGLightKill(self->spotId);
             self->spotId = Hu3DLLightCreateV(
-                stage->wheelModel[3],
+                stage->stage.modelD,
                 &kPosL,
                 &kDirL,
                 &kLCol
             );
             Hu3DLLightSpotSet(
-                stage->wheelModel[3],
+                stage->stage.modelD,
                 self->spotId,
                 GX_SP_COS,
                 kSpotAngle
             );
             Hu3DLLightStaticSet(
-                stage->wheelModel[3],
+                stage->stage.modelD,
                 self->spotId,
                 1
             );
@@ -188,32 +194,34 @@ void fn_1_22694(LIGHT *self, s16 mode, f32 t)
 // in the light block.
 void fn_1_23CB8(LightStage *self, const lightVec *col)
 {
-    LIGHT *light = (LIGHT *)self->lightBlock;
+    LIGHT *light = &self->light;
+    M562StageField *field = &self->stage;
+    s16 playerModel = ((LightPlayerView *)&self->player)->model;
     s32 i;
 
 #define AMB(id) Hu3DModelAmbSet((id), col->x, col->y, col->z)
-    AMB(self->bodyModel[0]);
-    AMB(self->bodyModel[1]);
-    AMB(self->bodyModelC);
-    AMB(self->bodyModelD[0]);
-    AMB(self->bodyModelD[1]);
-    AMB(self->bodyModelE);
-    AMB(self->ambModelB);
-    AMB(self->ambModelA);
-    AMB(self->wheelModel[0]);
-    AMB(self->wheelModel[1]);
-    AMB(self->wheelModel[2]);
-    AMB(self->wheelModel[3]);
-    AMB(self->wheelModel[4]);
-    AMB(self->wheelModelA);
-    AMB(self->wheelModelB);
+    AMB(self->back.modelC);
+    AMB(self->back.modelE);
+    AMB(self->back.model10);
+    AMB(self->back.model1A);
+    AMB(self->back.model1C);
+    AMB(self->back.model20);
+    AMB(self->boss.modelId);
+    AMB(playerModel);
+    AMB(field->modelA);
+    AMB(field->modelB);
+    AMB(field->modelC);
+    AMB(field->modelD);
+    AMB(field->modelE);
+    AMB(field->modelG);
+    AMB(field->modelH);
     for (i = 0; i < 20; i++) {
-        AMB(self->wheel[i].model);
+        AMB(field->tile[i].modelId);
     }
-    if (self->kind == 3) {
-        AMB(self->kindModel);
+    if (self->koopa.state == 3) {
+        AMB(self->koopa.modelId);
     } else {
-        Hu3DModelAmbSet(self->kindModel, kSpotBlend, kSpotBlend, kSpotBlend);
+        Hu3DModelAmbSet(self->koopa.modelId, kSpotBlend, kSpotBlend, kSpotBlend);
     }
 #undef AMB
     light->amb = *col;
