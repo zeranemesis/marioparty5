@@ -713,3 +713,8 @@ M579Spray *fn_1_B270(M579Spray *self, s16 flag)
     }
     return self;
 }
+
+#ifdef TARGET_PC
+/* the GC build reaches fn_1_B168 through .ctors, which the host linker does not build: run it at module load */
+static struct PortCtor_fn_1_B168 { PortCtor_fn_1_B168() { fn_1_B168(); } } s_portCtor_fn_1_B168;
+#endif

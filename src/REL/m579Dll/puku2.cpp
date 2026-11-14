@@ -465,3 +465,8 @@ M579Puku *fn_1_75F8(M579Puku *self, s16 flag)
     }
     return self;
 }
+
+#ifdef TARGET_PC
+/* the GC build reaches fn_1_75A0 through .ctors, which the host linker does not build: run it at module load */
+static struct PortCtor_fn_1_75A0 { PortCtor_fn_1_75A0() { fn_1_75A0(); } } s_portCtor_fn_1_75A0;
+#endif

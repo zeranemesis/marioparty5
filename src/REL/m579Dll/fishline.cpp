@@ -909,3 +909,8 @@ M579Node *fn_1_141B0(M579Node *self, s16 flag)
     }
     return self;
 }
+
+#ifdef TARGET_PC
+/* the GC build reaches fn_1_14158 through .ctors, which the host linker does not build: run it at module load */
+static struct PortCtor_fn_1_14158 { PortCtor_fn_1_14158() { fn_1_14158(); } } s_portCtor_fn_1_14158;
+#endif

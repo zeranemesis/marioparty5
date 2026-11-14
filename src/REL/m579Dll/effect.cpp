@@ -357,3 +357,8 @@ M579Splash *fn_1_C67C(M579Splash *self, s16 flag)
     }
     return self;
 }
+
+#ifdef TARGET_PC
+/* the GC build reaches fn_1_C5F4 through .ctors, which the host linker does not build: run it at module load */
+static struct PortCtor_fn_1_C5F4 { PortCtor_fn_1_C5F4() { fn_1_C5F4(); } } s_portCtor_fn_1_C5F4;
+#endif
