@@ -40,7 +40,7 @@ void CharModelVoicePanSet(s16 charNo, s16 pan);
 void CharModelVoiceVolSet(s16 charNo, s16 vol);
 void omVibrate(s16 playerNo, s16 duration, s16 off, s16 on);
 extern void *lbl_1_bss_A08;
-extern void *lbl_1_bss_A2C;
+extern "C" void *lbl_1_bss_A2C;
 
 f32 fn_1_C6D4(f64 a, f64 b);
 f32 fn_1_C78C(f64 a, f64 b, f32 lim);

@@ -6,7 +6,9 @@
 
 extern "C" {
 void *__register_global_object(void *object, void *destructor, void *regmem);
+#ifndef TARGET_PC
 void GXSetVtxAttrFmtv(GXVtxFmt vtxfmt, GXVtxAttrFmtList *list);
+#endif
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 void fn_1_2CDC(s16 *model, HU3DMODELHOOK hook);
 void fn_1_30BC(s16 *model, void *hookData);

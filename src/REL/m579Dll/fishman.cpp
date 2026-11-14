@@ -4,9 +4,11 @@
 #include "REL/m579Dll/m579objs.h"
 
 /* Rope simulation of the fish actor (M579Fish). */
+extern "C" {
 M579FishMgr *lbl_1_bss_A28;
 M579Score *lbl_1_bss_A2C;
 void *lbl_1_bss_A30;
+}
 
 extern "C" {
 void fn_1_7B4C(M579Fish *f);

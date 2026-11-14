@@ -497,7 +497,12 @@ void fn_1_10E9C(Player568 *self)
     M568Tube *tube;
 
     if (__ptmf_test(&self->hook) != 0) {
+#ifdef TARGET_PC
+        /* MWCC passes the pmf in r12; the port calls the stored function itself (see rel_cxxrt.c) */
+        ((void (*)(void *))self->hook.fn)(self);
+#else
         __ptmf_scall(self);
+#endif
     }
     padNo = self->padNo;
     if (GwPlayerConf[padNo].type == 0) {

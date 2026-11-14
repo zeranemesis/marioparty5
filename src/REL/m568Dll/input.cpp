@@ -97,6 +97,7 @@ s32 lbl_1_bss_9FC;
 
 // Intrusive-list iteration helpers (a_set.h); the original inlines each of
 // them, which is where the register-to-register copies come from.
+extern "C++" {
 template <class T>
 inline T *ListEnd(T *head)
 {
@@ -113,6 +114,7 @@ template <class T>
 inline T *ListNext(T *node)
 {
     return (T *)node->link.next;
+}
 }
 
 inline SceneNode *ActorSet()

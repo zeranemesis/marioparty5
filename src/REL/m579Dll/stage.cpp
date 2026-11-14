@@ -19,7 +19,7 @@ void fn_1_B5F0(void *self, void *mtx);
 void fn_1_B620();
 void *fn_1_B98C(M579Stage *self, s16 flag);
 
-extern void *lbl_1_bss_A30;
+extern "C" void *lbl_1_bss_A30;
 extern s32 lbl_1_bss_C;
 extern void *lbl_1_data_1FC[];
 

@@ -14,7 +14,7 @@ s32 fn_1_7CD8(M579Fish *f, Vec *a);
 void fn_1_84EC(M579Fish *f, Vec *a, u8 flag);
 M579Puku *fn_1_62B4(M579Fish *owner, s32 type);
 void fn_1_7324(M579Puku *puku, u8 flag);
-extern M579FishMgr *lbl_1_bss_A28;
+extern "C" M579FishMgr *lbl_1_bss_A28;
 extern u8 lbl_1_bss_C[];
 extern u8 lbl_1_data_1FC[];
 

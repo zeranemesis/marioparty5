@@ -99,10 +99,15 @@ struct M568Thread {
     u32 *stack;
 };
 
+#ifdef TARGET_PC
+/* the GC layout view is smaller than the host OSSemaphore: use the real type */
+typedef OSSemaphore M568Sem;
+#else
 struct M568Sem {
     s32 count;
     OSThreadQueue queue;
 };
+#endif
 
 struct M568SubThread {
     M568ThreadVtbl *vtbl;

@@ -2050,7 +2050,7 @@ Object(Matching, "REL/m510dll/opening.c"),
             # Flip to Equivalent once MB4Ev_Iruka, MB4_Create,
             # MB4_MainObjUpdate, MB4_CapsuleEffHook and
             # MB4_CapsuleBubbleUpdate exist.
-            Object(Equivalent, "REL/w04sDll/world04.c"),
+            Object(NonMatching, "REL/w04sDll/world04.c"),
         },
     ),
     Rel(

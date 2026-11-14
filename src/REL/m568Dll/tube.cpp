@@ -355,7 +355,12 @@ void fn_1_1290C(M568Tube *self)
         }
     }
     if (__ptmf_test(&self->hook) != 0) {
+#ifdef TARGET_PC
+        /* MWCC passes the pmf in r12; the port calls the stored function itself (see rel_cxxrt.c) */
+        ((void (*)(void *))self->hook.fn)(self);
+#else
         __ptmf_scall(self);
+#endif
     }
     gx = self->upGoal.x;
     ux = self->up.x;

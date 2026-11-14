@@ -444,7 +444,12 @@ void fn_1_D9F0(Stage568 *self)
     StgModelSet *old;
 
     if (__ptmf_test(&self->hook) != 0) {
+#ifdef TARGET_PC
+        /* MWCC passes the pmf in r12; the port calls the stored function itself (see rel_cxxrt.c) */
+        ((void (*)(void *))self->hook.fn)(self);
+#else
         __ptmf_scall(self);
+#endif
     }
     self->frame = self->frame + 1;
     if (self->holder.p == 0 && fn_1_DEC0((M568PosOwner *)self) < -9000.0f) {

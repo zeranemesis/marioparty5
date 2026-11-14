@@ -26,7 +26,7 @@ void MgScoreDispOff(MGSCORE *score);
 
 extern void *lbl_1_bss_C;
 extern void *lbl_1_data_1FC;
-extern M579Score *lbl_1_bss_A2C;
+extern "C" M579Score *lbl_1_bss_A2C;
 
 M579Score *fn_1_143D4(M579Score *self, s16 flag);
 void fn_1_147A4(M579Score *self, s32 bit);

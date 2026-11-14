@@ -10,7 +10,7 @@ void *__register_global_object(void *object, void *destructor, void *regmem);
 void fn_1_A680(void *mem, Vec *pos, f32 size);
 extern u8 lbl_1_bss_C[];
 extern u8 lbl_1_data_1FC[];
-extern M579EffMgr *lbl_1_bss_A04;
+extern "C" M579EffMgr *lbl_1_bss_A04;
 }
 
 /* Splash particle effect object. */

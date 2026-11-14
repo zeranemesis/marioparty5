@@ -33,9 +33,11 @@ extern "C" {
 
 extern "C" {
 
+#ifndef TARGET_PC
 void OSInitSemaphore(void *sem, s32 count);
 s32 OSWaitSemaphore(void *sem);
 s32 OSSignalSemaphore(void *sem);
+#endif
 double fabs(double);
 void __register_global_object(void *obj, void *dtor, void *reg);
 void ObjectSetup(void);
@@ -1757,7 +1759,7 @@ u32 fn_1_5F58(M568Thread *th)
     u32 *base;
     u32 *p;
 
-    base = th->thread.stackEnd;
+    base = (u32 *)th->thread.stackEnd;
     if (fn_1_5FF8(base, 1) != 0) {
         OSPanic(lbl_1_data_158, 0x7F, lbl_1_data_1F4);
     }

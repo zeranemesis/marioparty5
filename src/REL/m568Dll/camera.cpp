@@ -312,7 +312,12 @@ void fn_1_B104(Camera568 *self, s32 mode)
 void fn_1_B2CC(Camera568 *self)
 {
     if (__ptmf_test(&self->hook) != 0) {
+#ifdef TARGET_PC
+        /* MWCC passes the pmf in r12; the port calls the stored function itself (see rel_cxxrt.c) */
+        ((void (*)(void *))self->hook.fn)(self);
+#else
         __ptmf_scall(self);
+#endif
     }
     self->frame++;
 }

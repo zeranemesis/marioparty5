@@ -2,7 +2,6 @@
 
 extern "C" {
 
-extern s16 omSysExitReq;
 
 /* Mersenne twister state, object layout of CMT19937 */
 

@@ -10,7 +10,9 @@ extern M579WaterEff *lbl_1_bss_A24;
 extern u8 lbl_1_bss_C[];
 extern u8 lbl_1_data_1FC[];
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
+#ifndef TARGET_PC
 void GXSetVtxAttrFmtv(GXVtxFmt vtxfmt, GXVtxAttrFmtList *list);
+#endif
 void fn_1_2CDC(s16 *model, HU3DMODELHOOK hook);
 void fn_1_30BC(s16 *model, void *hookData);
 
