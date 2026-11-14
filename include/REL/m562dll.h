@@ -20,41 +20,14 @@ typedef struct lightVec_s {
     f32 z;
 } lightVec;
 
-/* The lights' view of the stage object: only the model ids it broadcasts the
-   ambient colour to, at the original's offsets (padding is the rest of the
-   stage, which other units own). The LIGHT block lives inside the stage. */
+/* The lights live inside the battle work object (M562Work); LIGHT sits at
+   offset 0x2F4 of it and the lights reach into its models. */
 typedef struct light_s LIGHT;
-
-typedef struct LightStage_s {
-    /* 0x000 */ u8 pad0[0x4C];
-    /* 0x04C */ s16 ambModelA;
-    /* 0x04E */ u8 pad4E[0x16C - 0x4E];
-    /* 0x16C */ s16 bodyModel[2];
-    /* 0x170 */ s16 bodyModelC;
-    /* 0x172 */ u8 pad172[0x17A - 0x172];
-    /* 0x17A */ s16 bodyModelD[2];
-    /* 0x17E */ u8 pad17E[0x180 - 0x17E];
-    /* 0x180 */ s16 bodyModelE;
-    /* 0x182 */ u8 pad182[0x2F4 - 0x182];
-    /* 0x2F4 */ u8 lightBlock[0x18];
-    /* 0x30C */ u8 pad30C[4];
-    /* 0x310 */ u16 kind;
-    /* 0x312 */ u8 pad312[0x32C - 0x312];
-    /* 0x32C */ s16 kindModel;
-    /* 0x32E */ u8 pad32E[0x3E4 - 0x32E];
-    /* 0x3E4 */ s16 ambModelB;
-    /* 0x3E6 */ u8 pad3E6[0x2284 - 0x3E6];
-    /* 0x2284 */ struct { u8 pad0[8]; s16 model; u8 pad0A[0x3E]; } wheel[20];
-    /* 0x2824 */ s16 wheelModel[5];
-    /* 0x282E */ u8 pad282E[0x2832 - 0x282E];
-    /* 0x2832 */ s16 wheelModelA;
-    /* 0x2834 */ u8 pad2834[0x283C - 0x2834];
-    /* 0x283C */ s16 wheelModelB;
-} LightStage;
+typedef struct M562Work LightStage;
 
 /* 0x18 bytes: an owner word, the ambient light id, the spot light id. */
 struct light_s {
-    /* 0x00 */ LightStage *owner;
+    /* 0x00 */ struct M562Work *owner;
     /* 0x04 */ HU3DLIGHTID ambientId;
     /* 0x06 */ HU3DLIGHTID spotId;
     /* 0x08 */ s32 spotIsLocal;
@@ -671,42 +644,6 @@ typedef struct M562MainTriple {
     /* 0xA */ u8 padA[2];
 } M562MainTriple;
 
-typedef struct M562MainPlayer { /* 0x28, 0x138 bytes */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ s16 mode;
-    /* 0x06 */ u8 pad6[0x18 - 6];
-    /* 0x18 */ s32 charNo;
-    /* 0x1C */ u8 pad1C[0x88 - 0x1C];
-    /* 0x88 */ s32 hitFlag;
-    /* 0x8C */ s16 life;
-    /* 0x8E */ u8 pad8E[0x138 - 0x8E];
-} M562MainPlayer;
-
-typedef struct M562MainFireEntry { /* 0x34 bytes */
-    /* 0x00 */ u8 pad0[0x20];
-    /* 0x20 */ f32 value;
-    /* 0x24 */ u8 pad24[0x34 - 0x24];
-} M562MainFireEntry;
-
-typedef struct M562MainFireRing { /* 0x7BC, 0xD0 bytes */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ u16 state;
-    /* 0x06 */ u8 pad6[2];
-    /* 0x08 */ s16 timer;
-    /* 0x0A */ u8 padA[6];
-    /* 0x10 */ s32 active;
-    /* 0x14 */ s32 moveOn;
-    /* 0x18 */ M562MainFireEntry entry[3];
-    /* 0xB4 */ u8 padB4[0xCC - 0xB4];
-    /* 0xCC */ s32 sndHandle;
-} M562MainFireRing;
-
-typedef struct M562MainMecha { /* 0x1B90, 0x68C bytes */
-    /* 0x000 */ u8 pad0[4];
-    /* 0x004 */ s32 active;
-    /* 0x008 */ u8 pad8[0x68C - 8];
-} M562MainMecha;
-
 typedef struct M562MainSprite { /* 0x221C, 0x224C: 0x30 bytes */
     /* 0x00 */ u8 pad0[4];
     /* 0x04 */ s32 active;
@@ -736,17 +673,9 @@ extern void fn_1_427C(M562Back *back);
 extern void fn_1_508C(s16 layerNo);
 
 /* ---- camera ---- */
-/* Bowser, as far as the camera follows him: his position. */
-typedef struct CAMKOOPA {
-    /* 0x00 */ u8 pad00[0xA0];
-    /* 0xA0 */ Vec pos;
-} CAMKOOPA;
-
-/* The stage object the camera belongs to; Bowser sits at 0x28. */
-typedef struct CAMSTAGE {
-    /* 0x00 */ u8 pad00[0x28];
-    /* 0x28 */ CAMKOOPA koopa;
-} CAMSTAGE;
+/* The battle work object the camera belongs to (it follows the Bowser actor
+   at work->player, read through KpPlayer). */
+typedef struct M562Work CAMSTAGE;
 
 /* 0x9C bytes. */
 typedef struct CAMERA {
@@ -815,57 +744,6 @@ extern s32 fn_1_29DF8(M562Work *work);
 extern void fn_1_16F0(M562Work *work, s16 phase);
 extern void fn_1_4748(M562Back *back, s16 phase, f32 t);
 
-/* ---- m562 / main / back: the owner object (kept last: it embeds the other units' types) ---- */
-struct M562Work {
-    /* 0x0000 */ OMOBJMAN *manager;
-    /* 0x0004 */ u8 pad4[4];
-    /* 0x0008 */ s32 frame;
-    /* 0x000C */ u16 step;
-    /* 0x000E */ u16 mode;
-    /* 0x0010 */ u16 state;
-    /* 0x0012 */ u16 phase;
-    /* 0x0014 */ s32 timeLeft;
-    /* 0x0018 */ u8 pad18[4];
-    /* 0x001C */ s32 evtTimer;
-    /* 0x0020 */ s16 diff;
-    /* 0x0022 */ s16 winner;
-    /* 0x0024 */ MGTIMER *timer;
-    /* 0x0028 */ M562MainPlayer player;
-    /* 0x0160 */ M562Back back;
-    /* 0x01BC */ CAMERA camera[2];
-    /* 0x02F4 */ LIGHT light;
-    /* 0x030C */ Koopa koopa;
-    /* 0x03C4 */ KoopaBoss boss;
-    /* 0x07BC */ M562MainFireRing fireRing;
-    /* 0x088C */ FireMgr fire;
-    /* 0x1B90 */ M562MainMecha mecha;
-    /* 0x221C */ M562MainSprite sprite[2];
-    /* 0x227C */ M562StageField stage;
-    /* 0x2858 */ M562MainTriple triple;
-    /* 0x2864 */ void *fbTex;
-    /* 0x2868 */ ANIMDATA *fbAnim;
-    /* 0x286C */ u8 pad286C[0x289C - 0x286C];
-    /* 0x289C */ s32 bossMode;
-    /* 0x28A0 */ s32 mesId;
-    /* 0x28A4 */ HUWINID winId;
-    /* 0x28A6 */ u8 pad28A6[2];
-    /* 0x28A8 */ s32 bgmId;
-    /* 0x28AC */ s32 seId;
-    /* 0x28B0 */ s32 seId2;
-};
-
-/* kill the owner's countdown timer (inlined in the original at several places) */
-static inline void M562TimerKill(M562Work *work)
-{
-    if (work->timer != NULL) {
-        MgTimerKill(work->timer);
-        if (work->timer->stopF == 0) {
-            work->timer->stopF = TRUE;
-            work->timer->mode = MGTIMER_MODE_ON;
-        }
-        work->timer = NULL;
-    }
-}
 
 /* ---- player.c ---- */
 struct M562Player;
@@ -1070,5 +948,57 @@ extern Vec lbl_1_bss_7848;
 extern Vec lbl_1_bss_7854;
 extern Vec lbl_1_bss_7860;
 extern FireRingPath lbl_1_bss_786C;
+
+/* ---- m562 / main / back: the owner object (kept last: it embeds the other units' types) ---- */
+struct M562Work {
+    /* 0x0000 */ OMOBJMAN *manager;
+    /* 0x0004 */ u8 pad4[4];
+    /* 0x0008 */ s32 frame;
+    /* 0x000C */ u16 step;
+    /* 0x000E */ u16 mode;
+    /* 0x0010 */ u16 state;
+    /* 0x0012 */ u16 phase;
+    /* 0x0014 */ s32 timeLeft;
+    /* 0x0018 */ u8 pad18[4];
+    /* 0x001C */ s32 evtTimer;
+    /* 0x0020 */ s16 diff;
+    /* 0x0022 */ s16 winner;
+    /* 0x0024 */ MGTIMER *timer;
+    /* 0x0028 */ M562Player player;
+    /* 0x0160 */ M562Back back;
+    /* 0x01BC */ CAMERA camera[2];
+    /* 0x02F4 */ LIGHT light;
+    /* 0x030C */ Koopa koopa;
+    /* 0x03C4 */ KoopaBoss boss;
+    /* 0x07BC */ FireRingMgr fireRing;
+    /* 0x088C */ FireMgr fire;
+    /* 0x1B90 */ KbMiniMgr mecha;
+    /* 0x221C */ M562MainSprite sprite[2];
+    /* 0x227C */ M562StageField stage;
+    /* 0x2858 */ M562MainTriple triple;
+    /* 0x2864 */ void *fbTex;
+    /* 0x2868 */ ANIMDATA *fbAnim;
+    /* 0x286C */ u8 pad286C[0x289C - 0x286C];
+    /* 0x289C */ s32 bossMode;
+    /* 0x28A0 */ s32 mesId;
+    /* 0x28A4 */ HUWINID winId;
+    /* 0x28A6 */ u8 pad28A6[2];
+    /* 0x28A8 */ s32 bgmId;
+    /* 0x28AC */ s32 seId;
+    /* 0x28B0 */ s32 seId2;
+};
+
+/* kill the owner's countdown timer (inlined in the original at several places) */
+static inline void M562TimerKill(M562Work *work)
+{
+    if (work->timer != NULL) {
+        MgTimerKill(work->timer);
+        if (work->timer->stopF == 0) {
+            work->timer->stopF = TRUE;
+            work->timer->mode = MGTIMER_MODE_ON;
+        }
+        work->timer = NULL;
+    }
+}
 
 #endif

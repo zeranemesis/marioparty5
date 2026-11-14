@@ -178,7 +178,7 @@ void fn_1_460(s16 mode, s16 frameNo)
     M562Work *work = lbl_1_bss_0;
 
     if (lbl_1_data_0 != 0) {
-        work->player.hitFlag = 0;
+        work->player.inputOn = 0;
         switch (work->mode) {
         case 1:
             fn_1_1CB0(work, 0, 0);
