@@ -120,6 +120,9 @@ s32 fn_1_2548(void);
 M568Model *fn_1_32AC(M568Model *self, s32 dataNum);
 void fn_1_370C(M568Model *self, s32 arg);
 StgArchive *fn_1_0(StgArchive *self, s32 dataNum);
+#ifdef TARGET_PC
+void M568PortArchiveSwap(StgArchive *self, void *block, s32 unit);
+#endif
 void fn_1_A8(StgArchive *self, s32 arg);
 StgHolder *fn_1_98D8(StgHolder *self);
 M568OctEffect *fn_1_F7A0(M568OctEffect *self, s32 type, Vec *pos);
@@ -428,6 +431,22 @@ static void fn_1_D85C(Stage568 *self)
         self->archive = a;
     }
     arc = self->archive;
+#ifdef TARGET_PC
+    // archive blocks are big-endian on disc: swap each once (by element size), before reading
+#define STG_BLOCK(var, T, name, unit) var = (T)STG_LOOKUP(arc, name); M568PortArchiveSwap(arc, var, unit)
+    STG_BLOCK(self->tris, StgTri *, lbl_1_data_490, 2);
+    { void *c = STG_LOOKUP(arc, lbl_1_data_49E); M568PortArchiveSwap(arc, c, 4); self->triCount = *(s32 *)c; }
+    STG_BLOCK(self->verts, Vec *, lbl_1_data_4AC, 4);
+    { void *c = STG_LOOKUP(arc, lbl_1_data_4B8); M568PortArchiveSwap(arc, c, 4); self->vertCount = *(s32 *)c; }
+    STG_BLOCK(self->octTable, StgOctNode *, lbl_1_data_4C4, 4);
+    STG_BLOCK(self->triIdx, u16 *, lbl_1_data_4CD, 2);
+    Hu3DShadowTPLvlSet(0.8f);
+    {
+        void *c = STG_LOOKUP(arc, lbl_1_data_4D9);
+        M568PortArchiveSwap(arc, c, 4);
+        fn_1_FA10(self->octTable, *(s32 *)c);
+    }
+#else
     self->tris = (StgTri *)STG_LOOKUP(arc, lbl_1_data_490);
     self->triCount = *(s32 *)STG_LOOKUP(arc, lbl_1_data_49E);
     self->verts = (Vec *)STG_LOOKUP(arc, lbl_1_data_4AC);
@@ -436,6 +455,7 @@ static void fn_1_D85C(Stage568 *self)
     self->triIdx = (u16 *)STG_LOOKUP(arc, lbl_1_data_4CD);
     Hu3DShadowTPLvlSet(0.8f);
     fn_1_FA10(self->octTable, *(s32 *)STG_LOOKUP(arc, lbl_1_data_4D9));
+#endif
 }
 
 void fn_1_D9F0(Stage568 *self)

@@ -278,4 +278,47 @@ void *fn_1_534(Archive *self, char *name, s32 arg)
     return result;
 }
 
+
+#ifdef TARGET_PC
+// The block data is big-endian on disc. Byte-swap the named-block `block` in place once
+// (unit = 2 or 4 bytes per element). Its size runs to the next block / end of the data block.
+// Relocation words keep their raw value (fn_1_100 reads them through AR32).
+void M568PortArchiveSwap(Archive *self, void *block, s32 unit)
+{
+    u32 start = (u32)((u8 *)block - self->data);
+    u32 end = self->dataSize;
+    s32 idx = -1;
+    u32 i, off;
+
+    for (i = 0; i < self->publicNum; i++) {
+        u32 o = AR32(self->publics[i].dataOff);
+        if (o == start) {
+            idx = (s32)i;
+        } else if (o > start && o < end) {
+            end = o;
+        }
+    }
+    if (idx < 0 || idx >= 32 || (self->swappedMask & (1u << idx))) {
+        return;
+    }
+    self->swappedMask |= 1u << idx;
+    for (off = start; off + unit <= end; off += unit) {
+        if (unit == 4) {
+            u32 *w = (u32 *)(self->data + off);
+            *w = PORT_BE32(*w);
+        } else {
+            u16 *w = (u16 *)(self->data + off);
+            *w = PORT_BE16(*w);
+        }
+    }
+    for (i = 0; i < self->relocNum; i++) {
+        u32 r = AR32((u32)self->relocs[i]);
+        if (r >= start && r + 4 <= end) {
+            u32 *w = (u32 *)(self->data + r);
+            *w = PORT_BE32(*w);
+        }
+    }
+}
+#endif
+
 }
