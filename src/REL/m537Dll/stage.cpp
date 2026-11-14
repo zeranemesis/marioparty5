@@ -27,6 +27,8 @@ static void __destroy_arr(void *block, void *dtor, u32 size, u32 n)
 }
 #endif
 
+#define M537_MDL(self) ((self) != 0 ? &(self)->m_mdl : (s16 *)0)
+
 extern "C" {
 
 extern void *lbl_1_data_1FC[];
@@ -93,10 +95,7 @@ M537Stage *fn_1_9290(M537Stage *self)
     self->m_sky = sky;
     __construct_array(self->m_dorrie, (void *)fn_1_94F4, (void *)fn_1_949C, sizeof(M537DorriePtr), 4);
     __construct_array(self->m_part, (void *)fn_1_9490, (void *)fn_1_5FB0, sizeof(M537ModelPtr), 3);
-    light = (s16 *)self;
-    if (light != 0) {
-        light = (s16 *)((u8 *)light + 0x10);
-    }
+    light = M537_MDL(self);
     id = *light;
     Hu3DModelLightInfoSet(id, 1);
     fn_1_304C(&self->m_mdl, 0);
