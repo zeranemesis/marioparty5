@@ -1627,9 +1627,11 @@ f32 fn_1_4FC8(f32 lo, f32 hi)
 
 // ---- threads
 
+#ifndef TARGET_PC
 void OSInitSemaphore(M537Semaphore *sem, s32 count);
 s32 OSWaitSemaphore(M537Semaphore *sem);
 s32 OSSignalSemaphore(M537Semaphore *sem);
+#endif
 
 M537Thread *fn_1_5360(M537Thread *th, void *(*entry)(void *), void *param, u32 stackSize, s32 priority, u16 attr);
 void fn_1_54C0(M537Thread *th, void *(*entry)(void *), void *param, u32 *stack, u32 words, s32 priority, u16 attr);
@@ -1799,7 +1801,7 @@ u32 fn_1_5718(M537Thread *th)
     u32 *end;
     u32 *p;
 
-    end = th->m_os.stackEnd;
+    end = (u32 *)th->m_os.stackEnd;
     if (fn_1_57B8(end, 1) != 0) {
         OSPanic("thread.cpp", 0x7F, "stack overflow\n");
     }

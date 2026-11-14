@@ -241,10 +241,15 @@ struct M537CamQuat {
     Quaternion m_rot;   /* 0x0C */
 };
 
+#ifdef TARGET_PC
+/* the GC layout view is smaller than the host OSSemaphore: use the real type */
+typedef OSSemaphore M537Semaphore;
+#else
 struct M537Semaphore {
     s32 m_count;
     OSThreadQueue m_queue;
 };
+#endif
 
 // OS thread plus the heap block holding its stack.
 struct M537Thread {
