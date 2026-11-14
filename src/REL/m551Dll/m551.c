@@ -175,61 +175,61 @@ void ObjectSetup(void)
 
 void fn_1_2C0(s16 mode, s16 frameNo)
 {
-    if (fn_1_5A6C(&lbl_1_bss_176A8) != 0) {
+    if (fn_1_805C(&lbl_1_bss_176A8) != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_2F4(void)
 {
-    if (fn_1_5B78() != 0) {
+    if (fn_1_81F4() != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_320(void)
 {
-    if (fn_1_5BB0() != 0) {
+    if (fn_1_822C() != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_34C(void)
 {
-    if (fn_1_5C20() != 0) {
+    if (fn_1_828C() != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_378(s16 mode, s16 frameNo)
 {
-    if (fn_1_623C() != 0) {
+    if (fn_1_89B0() != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_3A4(s16 mode, s16 frameNo)
 {
-    if (fn_1_6314() != 0) {
+    if (fn_1_8CBC() != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_3D0(s16 mode, s16 frameNo)
 {
-    if (fn_1_634C() != 0) {
+    if (fn_1_8D20() != 0) {
         MgSeqModeNext();
     }
 }
 
 void fn_1_3FC(void)
 {
-    fn_1_64AC();
+    fn_1_8FF4();
 }
 
 void fn_1_41C(s16 mode, s16 frameNo)
 {
-    if (fn_1_64DC() != 0) {
+    if (fn_1_9024() != 0) {
         MgSeqModeNext();
     }
 }

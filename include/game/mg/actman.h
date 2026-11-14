@@ -190,6 +190,7 @@ void MgActorExec(void);
 BOOL MgActorColMapPolyGet(HuVecF *pos1, HuVecF *pos2, u32 mask, MGACTOR_COLMAP_POLY *outPoly);
 void MgActorPosUpdate(MGACTOR *actorP, HuVecF *pos);
 void MgActorPosSet(MGACTOR *actorP, HuVecF *pos);
+void MgActorPosGet(MGACTOR *actorP, HuVecF *pos);
 
 void MgPlayerPauseOn(MGPLAYER *playerP);
 void MgPlayerPauseOff(MGPLAYER *playerP, HuVecF *pos);
