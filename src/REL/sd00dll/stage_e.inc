@@ -386,7 +386,7 @@ static void MakeTrialStageMesh(void)
     u16 pix;
     s32 sumB, sumG, sumR;
 
-    tex[0] = texturePtr;
+    tex[0] = (u16 *)texturePtr;
     for (i = 0; i < 4; i++) {
         tex[i + 1] = (u16 *)Hu3DData[trialModelId[i]].hsf->attribute->bitmap->data;
     }

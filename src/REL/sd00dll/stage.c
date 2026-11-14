@@ -28,12 +28,12 @@ typedef struct SdStageWork_s {
 } SdStageWork;
 
 /* ---- functions of the other parts of this unit (all static in the original) ---- */
-static void StageDokanUpdate(s32 objNo);
-static void StageBomheiUpdate(s32 objNo);
-static void StageBomheiBigUpdate(s32 objNo);
-static void StageTogezoUpdate(s32 objNo);
-static void StageKinokoUpdate(s32 objNo);
-static void StageNKinokoUpdate(s32 objNo);
+static void StageDokanUpdate(SdStageObj *obj);
+static void StageBomheiUpdate(SdStageObj *obj);
+static void StageBomheiBigUpdate(SdStageObj *obj);
+static void StageTogezoUpdate(SdStageObj *obj);
+static void StageKinokoUpdate(SdStageObj *obj);
+static void StageNKinokoUpdate(SdStageObj *obj);
 static void StageDataClose(void);
 static void MakeStageLight(void);
 static void StageHamonCreate(void);
@@ -117,7 +117,7 @@ static char **stageShadowObjTbl[8] = { stage1ShadowObj, stage2ShadowObj, stage3S
                                        stage5ShadowObj, stage6ShadowObj, stage7ShadowObj, stage8ShadowObj };
 
 /* (lbl_1_data_1864 = "itemhook_c" is a plain string literal in its user) */
-static void (*objUpdateFuncTbl[6])(s32 objNo) = {
+static void (*objUpdateFuncTbl[6])(SdStageObj *) = {
     StageDokanUpdate, StageBomheiUpdate, StageBomheiBigUpdate, StageTogezoUpdate, StageKinokoUpdate, StageNKinokoUpdate,
 };
 

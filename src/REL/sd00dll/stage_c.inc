@@ -25,20 +25,11 @@ static void StageBomheiBigUpdate(SdStageObj *obj);
 static void MakeStageLight(void);
 static void StageHamonCreate(void);
 static void StageHamonKill(void);
-static void StageHamonLayerHook(void);
+static void StageHamonLayerHook(s16);
 static void StageHamonPosSet(Vec *pos, Vec *dir);
 static void StageHamonColorSet(GXColor *color);
 static void StageHamonSpeedSet(f32 speed);
 static void StageHamonMatHook(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material);
-
-static void (*const objUpdateFuncTbl[])(SdStageObj *obj) = {
-    StageDokanUpdate, StageBomheiUpdate, StageBomheiBigUpdate,
-    StageTogezoUpdate, StageKinokoUpdate, StageNKinokoUpdate,
-};
-
-static Vec shadowCamPos = { 0.0f, 6000.0f, 0.0f };
-static Vec shadowCamUp = { 0.0f, 0.0f, -1.0f };
-static Vec shadowCamTarget = { 0.0f, 0.0f, 0.0f };
 
 void SdStageUpdate(void)
 {
@@ -623,7 +614,7 @@ static void StageHamonKill(void)
     }
 }
 
-static void StageHamonLayerHook(void)
+static void StageHamonLayerHook(s16 unused)
 {
     if (Hu3DCameraBit & 4) {
         GXSetTexCopySrc(0, 0, 640, 480);

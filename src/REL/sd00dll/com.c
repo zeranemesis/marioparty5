@@ -906,10 +906,10 @@ static void ComStageObjPosGet(Vec *out, SdMachine *com)
                 if (obj->type >= 4) {
                     continue;
                 }
-                if (obj->typeP->hitType == 0) {
+                if (obj->typeP->damage == 0) {
                     continue;
                 }
-                if (bestReach < obj->typeP->hitType) {
+                if (bestReach < obj->typeP->damage) {
                     continue;
                 }
                 PSVECSubtract(&com->curPos, &obj->pos, &tmp);
@@ -918,7 +918,7 @@ static void ComStageObjPosGet(Vec *out, SdMachine *com)
                     continue;
                 }
                 bestDist = dist;
-                bestReach = obj->typeP->hitType;
+                bestReach = obj->typeP->damage;
                 best = obj;
             }
         }

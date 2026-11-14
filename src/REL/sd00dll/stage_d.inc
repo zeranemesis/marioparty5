@@ -3,7 +3,6 @@
  *   SdStageColTri *stageColMesh; s32 stageColFloorNum; SdStageData stageDataTbl[9];
  *   SdStageWork stageWork (only .lavaY is read); SdStageSmoke stage07Smoke[20]; s32 auxATbl[8];
  */
-extern s32 MgSeqModeGet(void);
 extern s32 rand8(void);
 
 static void StageObjCol(SdStageObj *obj);

@@ -19,7 +19,7 @@ s32 fn_1_23924(SdStageColTri *tri, Vec *pos);
 static f32 StageLimitYGet(void)
 {
     if (sys->stageNo == 0) {
-        return stageWork[1] - 25.0f;
+        return stageWork.lavaY - 25.0f;
     }
     if (sys->stageNo == 2 || sys->stageNo == 7) {
         return -25.0f;
@@ -241,7 +241,7 @@ void SdStageMachineCol(SdMachine *machine)
             s32 mx, mz;
             u8 colType;
             yOfs = (i < 2) ? machine->wheelY0 : machine->wheelY1;
-            if (machine->wheelPos[i].y - yOfs < stageWork[1] - 25.0f && stageTrialLavaFloorOnF != 0) {
+            if (machine->wheelPos[i].y - yOfs < stageWork.lavaY - 25.0f && stageTrialLavaFloorOnF != 0) {
                 machine->boostType = 5;
                 machine->wheelAttr[i] = 5;
                 continue;
