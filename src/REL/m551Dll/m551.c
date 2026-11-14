@@ -24,15 +24,6 @@ extern const M551VoidFunc _ctors[];
 extern const M551VoidFunc _dtors[];
 
 /* game.c */
-s32 fn_1_805C(M551State *state);
-s32 fn_1_81F4(void);
-s32 fn_1_822C(void);
-s32 fn_1_828C(void);
-s32 fn_1_89B0(void);
-s32 fn_1_8CBC(void);
-s32 fn_1_8D20(void);
-s16 fn_1_8FF4(void);
-s32 fn_1_9024(void);
 
 /* stage.c */
 void fn_1_169F4(M551State *state, M551StageModel *models, s32 *dataNums);
@@ -52,11 +43,8 @@ void fn_1_3D0(s16 mode, s16 frameNo);
 void fn_1_41C(s16 mode, s16 frameNo);
 void fn_1_448(OMOBJ *obj);
 void fn_1_44C(s16 arg0);
-void fn_1_91C(s16 arg0);
 void fn_1_E94(void);
-void fn_1_10C4(void);
 void fn_1_139C(void);
-void fn_1_14C4(void);
 void fn_1_3D38(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx);
 void fn_1_5614(HU3DMODEL *modelP, Mtx mtx);
 s16 fn_1_3B58(M551PtclWork *arg0, s16 which, f32 x, f32 y, f32 z, f32 scale);
@@ -65,14 +53,13 @@ extern s16 lbl_1_bss_1799C[2];
 extern void *lbl_1_bss_17998;
 
 /* unit-owned .bss, declared in reverse address order so the offsets match the original */
-s32 gap_17994;
 OMOBJMAN *lbl_1_bss_17990;
 M551State lbl_1_bss_176A8;
 M551StageModel lbl_1_bss_16D94[83];
 s16 lbl_1_bss_16D5C[2][14];
 M551_FLOW lbl_1_bss_16CB4;
 M551_PLAYERWORK lbl_1_bss_16A84[2];
-u8 lbl_1_bss_16844[0x240];
+M551_ITEM lbl_1_bss_16844[12];
 M551PaperMgr lbl_1_bss_1679C;
 M551Paper lbl_1_bss_3C[1000];
 M551Cam *lbl_1_bss_38;

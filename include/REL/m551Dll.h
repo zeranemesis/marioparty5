@@ -233,14 +233,17 @@ typedef struct M551PlayerWork_s {
     f32 height;          /* 0x00C */
     char *itemHookName;  /* 0x010 */
     s16 carriedBy;       /* 0x014 */
-    s16 pad4[4];         /* 0x016 */
-    s16 pad1C;           /* 0x01E */
+    s16 pad16a;          /* 0x016 */
+    f32 unk18;           /* 0x018 */
+    f32 gravity;         /* 0x01C */
     s16 phase;           /* 0x020 */
     s16 step;            /* 0x022 */
     s16 subPhase;        /* 0x024 */
     s16 timer;           /* 0x026 */
-    s32 state;           /* 0x028 */
-    s16 pad7[4];         /* 0x02C */
+    s16 flag28;          /* 0x028 */
+    s16 pad2A;           /* 0x02A */
+    f32 unk2C;           /* 0x02C */
+    f32 unk30;           /* 0x030 */
     s16 itemNo;          /* 0x034 */
     s16 itemIdx;         /* 0x036 */
     s16 pad8;            /* 0x038 */
@@ -256,7 +259,7 @@ typedef struct M551PlayerWork_s {
     f32 velZ;            /* 0x068 */
     f32 angle;           /* 0x06C */
     f32 pad12;           /* 0x070 */
-    s16 pad13;           /* 0x074 */
+    s16 comOn;           /* 0x074 */
     s16 carryState;      /* 0x076 */
     s16 pad15;           /* 0x078 */
     s16 pad16[3];        /* 0x07A */
@@ -311,33 +314,40 @@ typedef struct M551Flow_s {
     s16 pad0;            /* 0x004 */
     s16 timer;           /* 0x006 */
     f32 camY;            /* 0x008 */
-    s16 pad1[2];         /* 0x00C */
+    s16 pad0C;           /* 0x00C */
+    s16 pad0E;           /* 0x00E */
     s16 unk10;           /* 0x010 */
     s16 unk12;           /* 0x012 */
     s16 unk14;           /* 0x014 */
-    s16 pad2;            /* 0x016 */
+    s16 pad16;           /* 0x016 */
     s16 cpuPlayer;       /* 0x018 */
     s16 winCount[2];     /* 0x01A */
-    s16 pad4[1];         /* 0x01E */
-    s16 pad5[6];         /* 0x020 */
-    s16 pad6[4];         /* 0x02C */
+    s16 pad1E;           /* 0x01E */
+    f32 unk20;           /* 0x020 */
+    s16 pad24[2];        /* 0x024 */
+    s16 unk28;           /* 0x028 */
+    s16 pad2A;           /* 0x02A */
+    s16 unk2C;           /* 0x02C */
+    s16 unk2E;           /* 0x02E */
+    s16 unk30;           /* 0x030 */
+    s16 unk32;           /* 0x032 */
     s16 owner[12];       /* 0x034 */
     s16 carryIdx;        /* 0x04C */
-    s16 pad7;            /* 0x04E */
-    s32 objP;            /* 0x050 */
+    s16 pad4E;           /* 0x04E */
+    MGTIMER *timerObj;   /* 0x050 */
     s16 pad54;           /* 0x054 */
     s16 itemNo;          /* 0x056 */
-    s32 pad9;            /* 0x058 */
-    f32 unk60;           /* 0x05C */
-    f32 unk64;           /* 0x060 */
-    f32 pad10[2];        /* 0x064 */
+    s16 unk58;           /* 0x058 */
+    s16 pad5A;           /* 0x05A */
+    f32 fadeTp;          /* 0x05C */
+    f32 ambScale;        /* 0x060 */
+    f32 ambLevel;        /* 0x064 */
+    f32 pad68;           /* 0x068 */
     s32 bgmStream;       /* 0x06C */
     s32 jingleStream;    /* 0x070 */
     s32 pad74;           /* 0x074 */
-    s32 fxId[4];         /* 0x078 */
-    s32 pad88[4];        /* 0x088 */
-    s16 fxOn[4];         /* 0x098 */
-    s16 padA0[4];        /* 0x0A0 */
+    s32 fxId[8];         /* 0x078 */
+    s16 fxOn[8];         /* 0x098 */
 } M551_FLOW;
 
 /* One 0x8-byte entry of the 12-slot per-item model index table. */
@@ -362,10 +372,56 @@ extern M551_WORK lbl_1_bss_0;
 extern M551_ITEMMODEL lbl_1_bss_179A0[12];
 extern M551_FLOW lbl_1_bss_16CB4;
 extern M551_PLAYERWORK lbl_1_bss_16A84[2];
+extern M551_ITEM lbl_1_bss_16844[12];
 extern M551Paper lbl_1_bss_3C[1000];
 extern M551PaperMgr lbl_1_bss_1679C;
 extern M551State *lbl_1_bss_17A00;
 extern M551PtclWork lbl_1_data_4D0;
 extern s16 lbl_1_data_438[16];
+
+/* m551.c */
+void fn_1_91C(s16 idx);
+void fn_1_10C4(void);
+void fn_1_14C4(void);
+s32 fn_1_1850(f32 *arg0, f32 steps, f32 start, f32 target);
+s32 fn_1_1970(s32 *arg0, s32 steps, s32 start, s32 target);
+MGTIMER *fn_1_1A44(s32 type, s32 maxSec, s32 endSec, f32 x, f32 y);
+void fn_1_1AB8(MGTIMER *timer);
+BOOL fn_1_1AE4(MGTIMER *timer);
+void fn_1_1B0C(MGTIMER *timer);
+void fn_1_2354(void);
+void fn_1_2610(M551Vec3 *pos);
+void fn_1_29DC(M551Vec3 *pos);
+void fn_1_3270(M551Vec3 *pos);
+void fn_1_41C8(M551State *state, s16 idx, HuVecF *pos);
+void fn_1_43CC(void);
+void fn_1_4CB0(void);
+void fn_1_5860(s16 arg0);
+s32 fn_1_5958(s16 arg0, f32 scale);
+void fn_1_5AC8(s16 arg0);
+void fn_1_5BC4(void);
+void fn_1_5BF4(void);
+void fn_1_5C24(s16 isBgm, s16 speed);
+void fn_1_5C8C(s16 isBgm);
+void fn_1_5CEC(s16 arg0);
+void fn_1_5D64(s16 arg0, s16 vol, s16 pan);
+void fn_1_5DEC(s16 arg0, s16 pan);
+void fn_1_5E7C(s16 arg0);
+void fn_1_5F28(s16 arg0);
+void fn_1_5FD4(void);
+
+/* stage.c */
+void fn_1_170B0(void);
+
+/* game.c */
+s32 fn_1_805C(M551State *state);
+s32 fn_1_81F4(void);
+s32 fn_1_822C(void);
+s32 fn_1_828C(void);
+s32 fn_1_89B0(void);
+s32 fn_1_8CBC(void);
+s32 fn_1_8D20(void);
+s16 fn_1_8FF4(void);
+s32 fn_1_9024(void);
 
 #endif
