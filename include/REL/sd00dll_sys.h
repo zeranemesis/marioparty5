@@ -24,10 +24,10 @@ typedef struct SdStageObjType_s {
     f32 radius;    // 0x10
     f32 height;    // 0x14
     f32 height2;   // 0x18
-    s32 damage;    // 0x1C
-    s32 dustTime;  // 0x20
-    f32 dustScale; // 0x24
-    s32 hitType;   // 0x28
+    s32 unk1C;     // 0x1C
+    s32 unk20;     // 0x20
+    f32 bounceF;   // 0x24 (0: no push-back while the object is active)
+    s32 damage;    // 0x28
 } SdStageObjType; // size 0x2C
 
 /* stageColMesh / stageColWall entry. */
@@ -65,7 +65,8 @@ typedef struct SdStageObj_s {
     f32 radius;            // 0x34
     f32 height;            // 0x38
     f32 height2;           // 0x3C
-    s32 pad40[6];          // 0x40
+    Vec basePos;           // 0x40 (spawn pos, StageKinokoUpdate)
+    s32 pad4C[3];          // 0x4C
     s32 hitF;              // 0x58
     s32 dispF;             // 0x5C
     s32 endF;              // 0x60
@@ -219,11 +220,12 @@ typedef struct SdStageTrialCell_s {
 } SdStageTrialCell; // size 0x24
 
 typedef struct SdStageSmoke_s {
-    s32 type;  // 0x00
-    Vec pos;   // 0x04
-    s32 life;  // 0x10
-    u8 color;  // 0x14
-    u8 pad15[3];
+    s32 velY;  // 0x00
+    s32 x;     // 0x04
+    s32 y;     // 0x08
+    s32 z;     // 0x0C
+    s32 scale; // 0x10
+    s32 color; // 0x14
 } SdStageSmoke; // size 0x18
 
 /* Hu3DData[sys->smokeMdlId].hookData + smokeSlot * 0x44 */
@@ -479,7 +481,10 @@ void SdImpactUpdate(void);
 void SdBulletUpdate(SdStageMachine *machine);
 void SdBulletDraw(HU3DMODEL *modelP, Mtx *mtx);
 /* proto: stage */
+s32 SdStageObjHitCheck(Vec *pos, f32 radius);
+s32 SdStageBaseObjHitCheck(Vec *pos, f32 radius);
 s32 SdStageObjHitCheck2(Vec *pos, f32 radius, s32 type);
+s32 SdStageBaseObjHitCheck2(Vec *pos, f32 radius, s32 type);
 /* proto: math */
 void LightColorSet(s16 modelIdx, s32 lightIdx, u8 r, u8 g, u8 b);
 /* proto: util */
@@ -539,7 +544,7 @@ void SdImpactStart(s32 snd, Vec *pos, s32 vibrate, f32 vol, f32 range);
 void SdEffectDustCreateData(Vec *pos, void *p1, void *p2, f32 scale);
 void SdEffectFlameUpdate(void *data, s32 count);
 void SdEffectFlameUpdateData(void *data, s32 count);
-void SdRandomPosGet(Vec *pos, s32 a, Vec *b, s32 c, void *d, f32 e, f32 f);
+void SdRandomPosGet(Vec *pos, s32 a, Vec *b, s32 c, f32 e, f32 f);
 void SdPlayerSoundPlay(SdStageMachine *machine, s32 no);
 s32 SdMachineDamage(SdStageMachine *machine, Vec *pos, s32 damage);
 void SdComMain(SdStageMachine *machine);

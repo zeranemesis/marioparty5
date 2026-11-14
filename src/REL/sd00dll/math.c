@@ -1,9 +1,6 @@
-#include "dolphin.h"
-
-extern void Hu3DMtxRotGet(Mtx src, Vec *dst);
-extern u8 Hu3DData[];
-extern f64 cos(f64 x);
-extern f64 sin(f64 x);
+#include "REL/sd00dll_sys.h"
+#include "game/hsfex.h"
+#include <math.h>
 
 static void MathVecInterpolate2(Vec *dst, Vec *from, Vec *to, Vec *up, f32 t, f32 s);
 
@@ -134,32 +131,26 @@ static void MathVecInterpolate2(Vec *dst, Vec *from, Vec *to, Vec *up, f32 t, f3
 }
 
 void LightColorSet(s16 modelIdx, s32 lightIdx, u8 r, u8 g, u8 b) {
-    u8 *model;
-    u8 *lightSet;
-    u8 *light;
+    HSFMATERIAL *mat;
     s16 count;
     s32 i;
 
     if (modelIdx == -1) {
         return;
     }
-    model = Hu3DData + (s16)modelIdx * 0x134;
-    lightSet = *(u8 **)(model + 0xc4);
-    light = *(u8 **)(lightSet + 0x10);
-    count = *(s16 *)(lightSet + 0x5c);
+    mat = Hu3DData[modelIdx].hsf->material;
+    count = Hu3DData[modelIdx].hsf->materialNum;
 
     if (lightIdx == 0xff) {
         for (i = 0; i < count; i++) {
-            light[0xe] = r;
-            light[0xf] = g;
-            light[0x10] = b;
-            light += 0x3c;
+            mat[i].color[0] = r;
+            mat[i].color[1] = g;
+            mat[i].color[2] = b;
         }
     } else if (count >= lightIdx) {
-        light += lightIdx * 0x3c;
-        light[0xe] = r;
-        light[0xf] = g;
-        light[0x10] = b;
+        mat[lightIdx].color[0] = r;
+        mat[lightIdx].color[1] = g;
+        mat[lightIdx].color[2] = b;
     }
 }
 
