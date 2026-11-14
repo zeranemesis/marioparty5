@@ -105,8 +105,8 @@ extern void fn_1_2EB08(void);
    in the main block below; this alias names it for the units that predate it).
    The views below are pointer-free overlays of its embedded sub-objects (cast
    from &work->member), holding only the members the scripts touch at the GC
-   offsets of the original. The backdrop uses M562Back and the stage floor
-   uses M562StageField. */
+   offsets of the original. Everything with a real owner type is used through
+   that type instead: CAMERA, M562Back, Koopa, FireMgr, M562StageField. */
 typedef struct M562Work M562EvtWork;
 
 typedef struct M562EvtInput {
@@ -144,50 +144,6 @@ typedef struct M562EvtPlayer { /* work + 0x28 */
     /* 0xC8 */ u8 padC8[0x138 - 0xC8];
 } M562EvtPlayer;
 
-typedef struct M562EvtCamera { /* work + 0x1BC, 0x258 */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ u16 camMask;
-    /* 0x06 */ u8 pad6[4];
-    /* 0x0A */ s16 unkA;
-    /* 0x0C */ s16 unkC;
-    /* 0x0E */ u8 padE[2];
-    /* 0x10 */ Vec pos;
-    /* 0x1C */ Vec target;
-    /* 0x28 */ u8 pad28[0xC];
-    /* 0x34 */ Vec posGoal;
-    /* 0x40 */ Vec targetGoal;
-    /* 0x4C */ u8 pad4C[0x30];
-    /* 0x7C */ f32 posSpeed;
-    /* 0x80 */ f32 targetSpeed;
-    /* 0x84 */ u8 pad84[0x9C - 0x84];
-} M562EvtCamera;
-
-typedef struct M562EvtBoss { /* work + 0x30C, Bowser */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ s16 unk4;
-    /* 0x06 */ s16 unk6;
-    /* 0x08 */ u8 pad8[0xC];
-    /* 0x14 */ s32 unk14;
-    /* 0x18 */ u8 pad18[4];
-    /* 0x1C */ s32 unk1C;
-    /* 0x20 */ s16 model;
-    /* 0x22 */ s16 motionTbl[0x13];
-    /* 0x48 */ s16 unk48;
-    /* 0x4A */ s16 motionNo;
-    /* 0x4C */ s16 motionLoop;
-    /* 0x4E */ u8 pad4E[2];
-    /* 0x50 */ s16 unk50;
-    /* 0x52 */ s16 unk52;
-    /* 0x54 */ Vec pos;
-    /* 0x60 */ u8 pad60[4];
-    /* 0x64 */ f32 rotCopy;
-    /* 0x68 */ u8 pad68[0x78 - 0x68];
-    /* 0x78 */ f32 speed;
-    /* 0x7C */ u8 pad7C[0xB0 - 0x7C];
-    /* 0xB0 */ struct M562StageTile *curCell;
-    /* 0xB4 */ u8 padB4[4];
-} M562EvtBoss;
-
 typedef struct M562EvtFireEntry {
     /* 0x00 */ u8 pad0[0x1C];
     /* 0x1C */ Vec pos;
@@ -202,27 +158,6 @@ typedef struct M562EvtFire { /* work + 0x7BC */
     /* 0xB4 */ u8 padB4[0xCC - 0xB4];
     /* 0xCC */ s32 sndHandle;
 } M562EvtFire;
-
-typedef struct M562EvtTile { /* 0x7C */
-    /* 0x00 */ u8 pad0[0x10];
-    /* 0x10 */ u16 state;
-    /* 0x12 */ u8 pad12[0xA];
-    /* 0x1C */ s16 model;
-    /* 0x1E */ u8 pad1E[0x10];
-    /* 0x2E */ s16 model2;
-    /* 0x30 */ u8 pad30[0x14];
-    /* 0x44 */ f32 x;
-    /* 0x48 */ u8 pad48[4];
-    /* 0x4C */ f32 z;
-    /* 0x50 */ u8 pad50[0x7C - 0x50];
-} M562EvtTile;
-
-typedef struct M562EvtTiles { /* work + 0x88C */
-    /* 0x000 */ u8 pad0[0xC];
-    /* 0x00C */ M562EvtTile tile[0x23];
-    /* 0x1100 */ s16 count;
-    /* 0x1102 */ u8 pad1102[0x1304 - 0x1102];
-} M562EvtTiles;
 
 /* ---- stage.c ---- */
 /* The stage unit's view of the main work (owned by main.c): the fields it
@@ -689,10 +624,9 @@ extern void fn_1_1F208(KbBombMgr *mgr);
 extern KbBombSlot *fn_1_1F298(KbBombMgr *mgr, Vec *pos);
 
 /* ---- evt_koopagrow / evt_ending ---- */
-/* The ending scripts' view of the boss-battle work object (same object as
-   M562EvtWork, 0x28B4 bytes on GC): only the members these two scripts touch
-   are named, at the original's offsets; everything else is padding. Sub-objects
-   are embedded and reached by name, never through raw byte offsets. */
+/* Pointer-free overlay of the player object (work + 0x28) holding the members
+   the ending scripts touch at the GC offsets of the original (cast from
+   &work->player). Bowser is KoopaBoss, the cameras are CAMERA. */
 typedef struct M562FinInput {
     /* 0x00 */ u8 pad0[8];
     /* 0x08 */ s32 btnA;
@@ -701,8 +635,8 @@ typedef struct M562FinInput {
     /* 0x11 */ s8 stickY;
 } M562FinInput;
 
-typedef struct M562FinPlayer { /* 0x28 */
-    /* 0x00 */ u8 pad0[4];
+typedef struct M562FinPlayer { /* work + 0x28 */
+    /* 0x00 */ void *host;
     /* 0x04 */ s16 unk4;
     /* 0x06 */ s16 unk6;
     /* 0x08 */ u8 pad8[4];
@@ -725,92 +659,8 @@ typedef struct M562FinPlayer { /* 0x28 */
     /* 0xC8 */ u8 padC8[0x138 - 0xC8];
 } M562FinPlayer;
 
-typedef struct M562FinStage { /* 0x160 */
-    /* 0x00 */ u8 pad0[0x12];
-    /* 0x12 */ s16 model12;
-    /* 0x14 */ s16 model14;
-    /* 0x16 */ u8 pad16[0x24 - 0x16];
-    /* 0x24 */ s32 unk24;
-    /* 0x28 */ s32 unk28;
-    /* 0x2C */ u8 pad2C[0x40 - 0x2C];
-    /* 0x40 */ s16 motion40;
-    /* 0x42 */ u8 pad42[0x5C - 0x42];
-} M562FinStage;
-
-typedef struct M562FinCamera { /* 0x1BC */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ s32 camMask;
-    /* 0x08 */ u8 pad8[2];
-    /* 0x0A */ s16 unkA;
-    /* 0x0C */ s16 unkC;
-    /* 0x0E */ u8 padE[2];
-    /* 0x10 */ Vec pos;
-    /* 0x1C */ Vec target;
-    /* 0x28 */ u8 pad28[0xC];
-    /* 0x34 */ Vec posGoal;
-    /* 0x40 */ Vec targetGoal;
-    /* 0x4C */ u8 pad4C[0x30];
-    /* 0x7C */ f32 posSpeed;
-    /* 0x80 */ f32 targetSpeed;
-    /* 0x84 */ u8 pad84[0x9C - 0x84];
-} M562FinCamera;
-
-typedef struct M562FinKoopa { /* 0x3C4 */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ s16 unk4;
-    /* 0x06 */ u8 pad6[0x1A];
-    /* 0x20 */ s16 model;
-    /* 0x22 */ u8 pad22[0x50 - 0x22];
-    /* 0x50 */ s16 unk50;
-    /* 0x52 */ s16 unk52;
-    /* 0x54 */ s32 unk54;
-    /* 0x58 */ Vec pos;
-    /* 0x64 */ Vec rot;
-    /* 0x70 */ u8 pad70[0x132 - 0x70];
-    /* 0x132 */ s16 model2;
-    /* 0x134 */ u8 pad134[0x3F8 - 0x134];
-} M562FinKoopa;
-
-typedef struct M562FinCells { /* 0x227C */
-    /* 0x000 */ u8 pad0[0x5B0];
-    /* 0x5B0 */ s16 model5B0;
-    /* 0x5B2 */ u8 pad5B2[2];
-    /* 0x5B4 */ s16 model5B4;
-    /* 0x5B6 */ u8 pad5B6[0x5DC - 0x5B6];
-} M562FinCells;
-
-typedef struct M562FinWork {
-    /* 0x0000 */ u8 pad0[0x10];
-    /* 0x0010 */ u16 state;
-    /* 0x0012 */ u8 pad12[0xA];
-    /* 0x001C */ s32 timer;
-    /* 0x0020 */ u8 pad20[8];
-    /* 0x0028 */ M562FinPlayer player;
-    /* 0x0160 */ M562FinStage stage;
-    /* 0x01BC */ M562FinCamera camera;
-    /* 0x0258 */ u8 pad258[0x2F4 - 0x258];
-    /* 0x02F4 */ u8 light[0x18];
-    /* 0x030C */ u8 pad30C[0x3C4 - 0x30C];
-    /* 0x03C4 */ M562FinKoopa koopa;
-    /* 0x07BC */ u8 pad7BC[0x1B94 - 0x7BC];
-    /* 0x1B94 */ s32 unk1B94;
-    /* 0x1B98 */ u8 pad1B98[0x227C - 0x1B98];
-    /* 0x227C */ M562FinCells cells;
-    /* 0x2858 */ u8 pad2858[8];
-    /* 0x2860 */ s16 model2860;
-    /* 0x2862 */ u8 pad2862[0x28A4 - 0x2862];
-    /* 0x28A4 */ s16 winId;
-    /* 0x28A6 */ u8 pad28A6[2];
-    /* 0x28A8 */ s32 sndA;
-    /* 0x28AC */ s32 sndB;
-    /* 0x28B0 */ s32 sndC;
-} M562FinWork;
-
-extern s32 fn_1_280C8(M562EvtWork *w);
 extern s32 fn_1_A44(s16 bgmNo);
 extern void fn_1_9BC(s32 handle, u8 vol, s32 time);
-extern s32 fn_1_29DF8(M562EvtWork *w);
-
 
 /* ---- m562 / main / back ---- */
 #include "game/mg/timer.h"
@@ -1063,10 +913,16 @@ extern s32 fn_1_27950(M562Work *work);
 extern s32 fn_1_2C118(M562Work *work);
 extern void fn_1_1D9C(M562Work *work);
 extern void fn_1_7D58(void *player, f32 speed);
-extern s32 fn_1_AD98(void *player, Vec *dir, f32 speed, f32 rate);
+extern s32 fn_1_AD98(void *player, Vec *dir, f32 rate);
 extern void fn_1_B578(void *koopa);
 extern void fn_1_864(s32 handle, s32 time);
 extern void fn_1_9F4(s32 handle, s32 time);
 extern void fn_1_A6C(s16 jingle);
+
+/* evt_koopagrow / evt_ending entry points */
+extern s32 fn_1_280C8(M562Work *work);
+extern s32 fn_1_29DF8(M562Work *work);
+extern void fn_1_16F0(M562Work *work, s16 phase);
+extern void fn_1_4748(M562Back *back, s16 phase, f32 t);
 
 #endif
