@@ -53,7 +53,7 @@ static f32 growClamp01(f32 v) {
 }
 
 s32 fn_1_280C8(M562Work *w) {
-    M562FinPlayer *player = (M562FinPlayer *) &w->player;
+    M562Player *player = &w->player;
     M562Back *back = &w->back;
     CAMERA *cam = (CAMERA *) &w->camera[0];
     KoopaBoss *koopa = &w->boss;
@@ -96,11 +96,11 @@ s32 fn_1_280C8(M562Work *w) {
             player->pos = lbl_1_data_E30;
             player->pos.y = 0.0f;
             player->pos.z = 500.0f;
-            player->rotGoal = 180.0f;
-            player->rotSpeed = 180.0f;
-            player->rotY = player->rotGoal;
-            player->animNo = 0x1C;
-            player->animLoop = 0;
+            player->rotY = 180.0f;
+            player->goalRotY = 180.0f;
+            player->rot.y = player->rotY;
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
             Hu3DModelAttrSet(cells->modelE, 1);
             Hu3DModelAttrSet(w->triple.model2, 1);
             Hu3DModelAttrSet(cells->modelF, 1);
@@ -128,14 +128,14 @@ s32 fn_1_280C8(M562Work *w) {
         koopa->state = 0;
         Hu3DModelScaleSet(koopa->modelId, 1.5f, 1.5f, 1.5f);
         Hu3DModelAttrReset(w->triple.model2, 1);
-        player->unk4 = 0;
-        player->animNo = 3;
-        player->animLoop = 0;
+        player->state = 0;
+        player->reqMotion = 3;
+        player->loopMotion = 0;
         player->pos = lbl_1_data_E30;
-        player->rotGoal = 180.0f;
-        player->rotSpeed = 180.0f;
-        player->rotY = player->rotGoal;
-        player->velY = 0.0f;
+        player->rotY = 180.0f;
+        player->goalRotY = 180.0f;
+        player->rot.y = player->rotY;
+        player->vy = 0.0f;
         fn_1_22694(&w->light, 3, 1.0f);
         fn_1_4748(back, 3, 1.0f);
         lbl_1_data_E60 = -1;
@@ -143,14 +143,14 @@ s32 fn_1_280C8(M562Work *w) {
         w->state++;
         /* fallthrough */
     case 1:
-        player->velY -= 1.5f;
-        player->pos.y += player->velY;
-        if (player->velY < 0.0f) {
+        player->vy -= 1.5f;
+        player->pos.y += player->vy;
+        if (player->vy < 0.0f) {
             if (player->pos.y <= 0.0f) {
                 player->pos.y = 0.0f;
-                player->velY = 0.0f;
-                player->animNo = 4;
-                player->animLoop = 0;
+                player->vy = 0.0f;
+                player->reqMotion = 4;
+                player->loopMotion = 0;
                 w->evtTimer = 0;
                 w->state++;
             }
@@ -158,8 +158,8 @@ s32 fn_1_280C8(M562Work *w) {
         break;
     case 2:
         if (w->evtTimer == 0xC) {
-            player->animNo = 0x1C;
-            player->animLoop = 0;
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
         }
         w->evtTimer++;
         if (w->evtTimer >= 0x78) {
@@ -243,7 +243,7 @@ s32 fn_1_280C8(M562Work *w) {
         }
         f = (f32) w->evtTimer / 300.0f;
         if ((w->evtTimer % 20) == 0) {
-            omVibrate(player->charIdx, 10, 6, 6);
+            omVibrate(player->playerNo, 10, 6, 6);
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.75f, 90.0f);
         }
         g = (f32) ((f64) (1.5f + 4.0f * f) + 0.04f * sin(M_PI * (f64) (200.0f * (360.0f * f)) / 180.0));
@@ -258,9 +258,9 @@ s32 fn_1_280C8(M562Work *w) {
             fn_1_814(0x8C7);
         }
         if (w->evtTimer == 0x78) {
-            player->unkC = 0;
+            player->active = 0;
         } else if (w->evtTimer == 0x122) {
-            player->unkC = 1;
+            player->active = 1;
         }
         w->evtTimer++;
         if (w->evtTimer == 0x3C) {
@@ -300,7 +300,7 @@ s32 fn_1_280C8(M562Work *w) {
         w->evtTimer++;
         if (w->evtTimer == 0x78) {
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
             pos = koopa->pos;
             pos.y = lbl_1_data_E3C.y;
             fn_1_2DC08((s16) cam->camMask, &pos, 2);
@@ -347,10 +347,10 @@ s32 fn_1_280C8(M562Work *w) {
             pos = koopa->pos;
             pos.y = lbl_1_data_E3C.y;
             fn_1_2DC08((s16) cam->camMask, &pos, 2);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
         }
         if (((w->evtTimer + 15) % 30) == 0) {
-            omVibrate(player->charIdx, 10, 6, 6);
+            omVibrate(player->playerNo, 10, 6, 6);
         }
         switch (w->evtTimer) {
         case 0xA:
@@ -427,8 +427,8 @@ s32 fn_1_280C8(M562Work *w) {
             Hu3DModelAttrSet(cells->modelF, 1);
             koopa->reqMotion = 1;
             koopa->loopMotion = 0;
-            player->unk6 = 0;
-            player->unk4 = 0;
+            player->sub = 0;
+            player->state = 0;
             w->evtTimer = 0;
             w->state++;
         }
@@ -486,18 +486,18 @@ s32 fn_1_280C8(M562Work *w) {
     Hu3DMotionSpeedSet(back->model40, (f32) (0.25f + 2.0f * sin(M_PI * (f64) (90.0f + 90.0f * f) / 180.0)));
     if (w->state >= 6) {
         if (player->pos.z < 500.0f) {
-            player->animNo = 0x1B;
-            player->animLoop = 1;
-            player->rotGoal = fn_1_36EC(0.0f, player->rotGoal, 0.9f);
-            player->rotY = player->rotGoal;
+            player->reqMotion = 0x1B;
+            player->loopMotion = 1;
+            player->rotY = fn_1_36EC(0.0f, player->rotY, 0.9f);
+            player->rot.y = player->rotY;
             player->pos.z += 5.0f;
         } else {
             player->pos.z = 500.0f;
-            player->animNo = 0x1C;
-            player->animLoop = 0;
-            player->rotGoal = 180.0f;
-            player->rotSpeed = 180.0f;
-            player->rotY = player->rotGoal;
+            player->reqMotion = 0x1C;
+            player->loopMotion = 0;
+            player->rotY = 180.0f;
+            player->goalRotY = 180.0f;
+            player->rot.y = player->rotY;
         }
     }
     return 0;

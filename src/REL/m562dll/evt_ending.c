@@ -68,8 +68,8 @@ static void endCamSet(CAMERA *cam, s32 i, f32 speed) {
 }
 
 s32 fn_1_29DF8(M562Work *w) {
-    M562FinPlayer *player = (M562FinPlayer *) &w->player;
-    M562FinInput *input = &player->input;
+    M562Player *player = &w->player;
+    M562PlayerInput *input = &player->input;
     M562Back *back = &w->back;
     CAMERA *cam = (CAMERA *) &w->camera[0];
     KoopaBoss *koopa = &w->boss;
@@ -86,8 +86,8 @@ s32 fn_1_29DF8(M562Work *w) {
     switch (w->state) {
     case 0:
         fn_1_1D9C(w);
-        player->unk6 = 0;
-        player->unk4 = 0;
+        player->sub = 0;
+        player->state = 0;
         Hu3DModelAttrReset(w->stage.modelF, 1);
         cam->mode = 1;
         cam->posGoal = lbl_1_data_EA8[0];
@@ -130,7 +130,7 @@ s32 fn_1_29DF8(M562Work *w) {
         fn_1_4748(back, 4, (f32) w->evtTimer / 180.0f);
         if ((w->evtTimer % 30) == 0) {
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
         }
         w->evtTimer++;
         if (w->evtTimer >= 0xB4) {
@@ -150,7 +150,7 @@ s32 fn_1_29DF8(M562Work *w) {
         f = (f32) w->evtTimer / 300.0f;
         if ((w->evtTimer % 20) == 0) {
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
         }
         if (w->evtTimer == 0x3C) {
             pos = koopa->pos;
@@ -185,16 +185,16 @@ s32 fn_1_29DF8(M562Work *w) {
             if (f < 0.3f) {
                 if ((w->evtTimer % 15) == 0) {
                     fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f * (1.0f - f), 90.0f);
-                    omVibrate(player->charIdx, 10, 12, 0);
+                    omVibrate(player->playerNo, 10, 12, 0);
                 }
             } else if (f < 0.6f) {
                 if ((w->evtTimer % 20) == 0) {
                     fn_1_21B68(cam, 1, 0x32, 10.0f, 0.55f, 90.0f);
-                    omVibrate(player->charIdx, 10, 4, 2);
+                    omVibrate(player->playerNo, 10, 4, 2);
                 }
             } else if ((w->evtTimer % 30) == 0) {
                 fn_1_21B68(cam, 1, 0x32, 10.0f, 0.25f, 90.0f);
-                omVibrate(player->charIdx, 10, 6, 6);
+                omVibrate(player->playerNo, 10, 6, 6);
             }
             pos.x = (f32) (2500.0 * sin(M_PI * (f64) (10.0f * (360.0f * f)) / 180.0) *
                            sin(M_PI * (f64) (180.0f * (1.0f - ((1.0f - f) * (1.0f - f)))) / 180.0));
@@ -238,9 +238,9 @@ s32 fn_1_29DF8(M562Work *w) {
         dir.x = 0.0f;
         dir.y = 0.0f;
         dir.z = 1.0f;
-        if (fn_1_AD98(&w->player, &dir, 0.9f) != 0) {
-            player->animNo = 0x18;
-            player->animLoop = 0;
+        if (fn_1_AD98(player, &dir, 0.9f) != 0) {
+            player->reqMotion = 0x18;
+            player->loopMotion = 0;
             w->evtTimer = 0;
             w->state++;
         }
@@ -257,8 +257,8 @@ s32 fn_1_29DF8(M562Work *w) {
             if (_CheckFlag(FLAG_MG_PRACTICE) == 0) {
                 GwPlayer[0].mgCoinBonus = 10;
             }
-            player->unk4 = 0;
-            player->unk6 = 0;
+            player->state = 0;
+            player->sub = 0;
             w->evtTimer = 0;
             w->state = 0;
             return 1;
@@ -271,18 +271,18 @@ s32 fn_1_29DF8(M562Work *w) {
         dir.y = 0.0f;
         if (PSVECMag(&dir) > 30.0f) {
             PSVECNormalize(&dir, &dir);
-            input->stickY = 0;
-            input->stickX = 0;
-            input->btnB = 0;
-            input->btnA = 0;
-            input->stickX = (s8) (56.0f * dir.x);
-            input->stickY = (s8) (56.0f * -dir.z);
-            fn_1_7D58(&w->player);
+            input->stkY = 0;
+            input->stkX = 0;
+            input->btnDown = 0;
+            input->btn = 0;
+            input->stkX = (s8) (56.0f * dir.x);
+            input->stkY = (s8) (56.0f * -dir.z);
+            fn_1_7D58(player);
         } else {
             dir.x = 0.0f;
             dir.y = 0.0f;
             dir.z = -1.0f;
-            fn_1_AD98(&w->player, &dir, 0.9f);
+            fn_1_AD98(player, &dir, 0.9f);
         }
     }
     if (w->state >= 2) {
@@ -292,7 +292,7 @@ s32 fn_1_29DF8(M562Work *w) {
             v.y = 50.0f;
             fn_1_2DC08((s16) cam->camMask, &v, 2);
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
             fn_1_814(0x8C4);
         } else if (lbl_1_bss_79A0 == 0x208) {
             v = lbl_1_data_F58;
@@ -300,7 +300,7 @@ s32 fn_1_29DF8(M562Work *w) {
             v.y = 50.0f;
             fn_1_2DC08((s16) cam->camMask, &v, 2);
             fn_1_21B68(cam, 1, 0x32, 10.0f, 0.95f, 90.0f);
-            omVibrate(player->charIdx, 10, 12, 0);
+            omVibrate(player->playerNo, 10, 12, 0);
             fn_1_814(0x8C4);
         } else if (lbl_1_bss_79A0 == 0x23A) {
             Hu3DMotionSpeedSet(back->model12, 0.1f);

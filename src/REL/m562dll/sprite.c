@@ -1,25 +1,6 @@
 #define _MATH_H
 
-#include "game/sprite.h"
-
-typedef struct M562SpriteParent_s {
-    s32 unk0;
-    s32 unk4;
-    s32 unk8;
-} M562SpriteParent;
-
-typedef struct M562Sprite_s {
-    M562SpriteParent *parent;
-    s32 show;
-    s32 shown;
-    HUSPRGRPID grpId;
-    HUSPRID baseSprId;
-    ANIMDATA *anim;
-    HUSPRID sprId[10];
-    ANIMDATA *wakuAnim;
-    s16 count;
-    s16 frame;
-} M562Sprite;
+#include "REL/m562dll.h"
 
 static s32 lbl_1_data_BF0[16] = {
     0x960000,
@@ -40,13 +21,13 @@ static s32 lbl_1_data_BF0[16] = {
     0x75006F
 };
 
-void fn_1_23ECC(M562Sprite *sprite, s32 animFile, s16 num, s32 right, s32 parent) {
+void fn_1_23ECC(M562Sprite *sprite, s32 animFile, s16 num, s32 right, M562Work *parent) {
     s32 i;
     HUSPRGRPID grpId;
     HUSPRID sprId;
 
-    memset(sprite, 0, 0x30);
-    sprite->parent = (M562SpriteParent *) parent;
+    memset(sprite, 0, sizeof(M562Sprite));
+    sprite->parent = parent;
     sprite->count = num;
     sprite->frame = sprite->count * 5;
     sprite->show = 0;
@@ -86,11 +67,11 @@ void fn_1_24178(M562Sprite *sprite) {
     }
     HuSprKill(sprite->baseSprId);
     HuSprGrpKill(sprite->grpId);
-    memset(sprite, 0, 0x30);
+    memset(sprite, 0, sizeof(M562Sprite));
 }
 
 void fn_1_241EC(M562Sprite *sprite) {
-    M562SpriteParent *parent;
+    M562Work *parent;
     s32 num;
     s32 i;
 
@@ -125,7 +106,7 @@ void fn_1_241EC(M562Sprite *sprite) {
                 }
             }
         }
-        if ((parent->unk8 % 2) == 0) {
+        if ((parent->frame % 2) == 0) {
             if (sprite->frame < sprite->count * 5) {
                 sprite->frame += 1;
             } else {

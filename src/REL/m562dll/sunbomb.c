@@ -415,7 +415,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             fn_1_934(0x8AB, &self->pos);
             Hu3DModelScaleSet(self->model[5], 1.0f, 1.0f, 1.0f);
             fn_1_21B68(cam, 1, 0x32, 40.0f, 0.6f, 90.0f);
-            omVibrate(sub->charNo, 10, 12, 0);
+            omVibrate(sub->playerNo, 10, 12, 0);
         }
         break;
 

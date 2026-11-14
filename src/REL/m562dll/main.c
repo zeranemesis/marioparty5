@@ -21,9 +21,6 @@
 #include "REL/m562dll.h"
 
 /* sprite (HUD) objects: the sprite unit declares them after this block is read */
-extern void fn_1_23ECC(M562MainSprite *self, s32 kind, s16 life, s32 flag, M562Work *owner);
-extern void fn_1_24178(M562MainSprite *self);
-extern void fn_1_241EC(M562MainSprite *self);
 
 void fn_1_10A4(M562MainTriple *self, M562Work *owner);
 void fn_1_12E0(M562MainTriple *self);
@@ -137,8 +134,8 @@ void fn_1_AC4(M562Work *work, OMOBJMAN *manager)
     work->mecha.active = 0;
     fn_1_23ECC(&work->sprite[0], work->player.charNo, work->player.hp, 0, work);
     fn_1_23ECC(&work->sprite[1], 0xF, work->boss.life, 1, work);
-    work->sprite[0].active = 1;
-    work->sprite[1].active = 0;
+    work->sprite[0].show = 1;
+    work->sprite[1].show = 0;
     HuWinInit(1);
     HuWinMesMaxSizeBetGet(&size, 0x110000, 0x110001);
     work->winId = HuWinExCreate(-10000.0f, 350.0f, (s16)size.x, (s16)size.y, -1);
@@ -242,8 +239,8 @@ s32 fn_1_1330(M562Work *work, s32 arg)
     }
     fn_1_17A28(&work->mecha);
     fn_1_7174(&work->player);
-    work->sprite[0].life = work->player.hp;
-    work->sprite[1].life = work->boss.life;
+    work->sprite[0].count = work->player.hp;
+    work->sprite[1].count = work->boss.life;
     fn_1_241EC(&work->sprite[0]);
     fn_1_241EC(&work->sprite[1]);
     if (work->player.hp <= 0) {
@@ -354,8 +351,8 @@ void fn_1_16F0(M562Work *work, s16 mode)
         work->boss.active = 0;
         cam0->state = 0;
         cam0->mode = 2;
-        work->sprite[0].active = 1;
-        work->sprite[1].active = 0;
+        work->sprite[0].show = 1;
+        work->sprite[1].show = 0;
         Hu3DModelAttrReset(back->modelC, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrReset(back->modelE, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrSet(back->model10, HU3D_ATTR_DISPOFF);
@@ -380,8 +377,8 @@ void fn_1_16F0(M562Work *work, s16 mode)
         work->boss.active = 0;
         cam0->state = 0;
         cam0->mode = 2;
-        work->sprite[0].active = 1;
-        work->sprite[1].active = 0;
+        work->sprite[0].show = 1;
+        work->sprite[1].show = 0;
         M562TimerKill(work);
         Hu3DModelAttrReset(back->modelC, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrReset(back->modelE, HU3D_ATTR_DISPOFF);
@@ -408,8 +405,8 @@ void fn_1_16F0(M562Work *work, s16 mode)
         work->boss.active = 0;
         cam0->state = 0;
         cam0->mode = 2;
-        work->sprite[0].active = 1;
-        work->sprite[1].active = 0;
+        work->sprite[0].show = 1;
+        work->sprite[1].show = 0;
         Hu3DModelAttrReset(back->modelC, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrReset(back->modelE, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrSet(back->model10, HU3D_ATTR_DISPOFF);
@@ -433,8 +430,8 @@ void fn_1_16F0(M562Work *work, s16 mode)
         work->boss.active = 0;
         cam0->state = 0;
         cam0->mode = 3;
-        work->sprite[0].active = 1;
-        work->sprite[1].active = 1;
+        work->sprite[0].show = 1;
+        work->sprite[1].show = 1;
         Hu3DModelAttrSet(back->modelC, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrSet(back->modelE, HU3D_ATTR_DISPOFF);
         Hu3DModelAttrReset(back->model10, HU3D_ATTR_DISPOFF);

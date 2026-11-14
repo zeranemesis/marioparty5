@@ -63,7 +63,7 @@ s32 fn_1_2446C(M562Work *w)
         } else {
             player->reqMotion = 0x1E;
             player->loopMotion = 0;
-            w->sprite[0].active = 0;
+            w->sprite[0].show = 0;
             for (i = 0; i < 0x23; i++) {
                 f = &fire->fire[i];
                 Hu3DModelAttrSet(f->model, HU3D_ATTR_DISPOFF);
@@ -276,7 +276,7 @@ s32 fn_1_2446C(M562Work *w)
                 GwSystem.subGameNo = 0;
             }
             w->evtTimer = 0;
-            w->sprite[0].active = 1;
+            w->sprite[0].show = 1;
             done = 1;
         }
         break;

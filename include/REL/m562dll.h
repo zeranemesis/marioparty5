@@ -6,6 +6,7 @@
 #include "game/data.h"
 #include "game/object.h"
 #include "game/audio.h"
+#include "game/sprite.h"
 #include "game/memory.h"
 
 /* Shared declarations for the m562dll units (Bowser boss battle).
@@ -151,7 +152,7 @@ typedef struct FireSlot_s FireSlot;
 struct M562Work;
 /* fire.c reaches the boss (M562Work.player), the effect list (M562Work at 0x286C) and camera mask through these */
 #define FIRE_BOSS(owner) (&(owner)->player)
-#define FIRE_FX(owner) ((EffectList *)(owner)->pad286C)
+#define FIRE_FX(owner) (&(owner)->fx[0])
 #define FIRE_CAMBIT(owner) ((u16)(owner)->camera[0].camMask)
 
 #define FIRE_MAX 35
@@ -265,8 +266,8 @@ typedef struct M562Work KpHost;
 
 /* The battle owner's three EffectLists at 0x286C (fire), 0x287C (koopa hits) and
  * 0x288C (boss hits) all live in M562Work.pad286C; it must hold 3 * sizeof(EffectList). */
-#define KP_HITA(host) (&((EffectList *)(host)->pad286C)[1])
-#define KP_HITB(host) (&((EffectList *)(host)->pad286C)[2])
+#define KP_HITA(host) (&(host)->fx[1])
+#define KP_HITB(host) (&(host)->fx[2])
 #define KP_ABS(x) (((x) >= 0.0f) ? (x) : -(x))
 #define KP_CLAMP(v, lo, hi) (((v) > (hi)) ? (hi) : (((v) < (lo)) ? (lo) : (v)))
 /* heading in degrees of the (x, z) direction, wrapped into (-180, 180] */
@@ -429,38 +430,6 @@ extern KbBombSlot *fn_1_1F298(KbBombMgr *mgr, Vec *pos);
 /* Pointer-free overlay of the player object (work + 0x28) holding the members
    the ending scripts touch at the GC offsets of the original (cast from
    &work->player). Bowser is KoopaBoss, the cameras are CAMERA. */
-typedef struct M562FinInput {
-    /* 0x00 */ u8 pad0[8];
-    /* 0x08 */ s32 btnA;
-    /* 0x0C */ s32 btnB;
-    /* 0x10 */ s8 stickX;
-    /* 0x11 */ s8 stickY;
-} M562FinInput;
-
-typedef struct M562FinPlayer { /* work + 0x28 */
-    /* 0x00 */ void *host;
-    /* 0x04 */ s16 unk4;
-    /* 0x06 */ s16 unk6;
-    /* 0x08 */ u8 pad8[4];
-    /* 0x0C */ s32 unkC;
-    /* 0x10 */ u8 pad10[4];
-    /* 0x14 */ s16 charIdx;
-    /* 0x16 */ u8 pad16[0x6C - 0x16];
-    /* 0x6C */ M562FinInput input;
-    /* 0x7E */ u8 pad7E[0x90 - 0x7E];
-    /* 0x90 */ f32 rotGoal;
-    /* 0x94 */ f32 rotSpeed;
-    /* 0x98 */ u8 pad98[2];
-    /* 0x9A */ s16 animNo;
-    /* 0x9C */ s32 animLoop;
-    /* 0xA0 */ Vec pos;
-    /* 0xAC */ u8 padAC[4];
-    /* 0xB0 */ f32 rotY;
-    /* 0xB4 */ u8 padB4[0x10];
-    /* 0xC4 */ f32 velY;
-    /* 0xC8 */ u8 padC8[0x138 - 0xC8];
-} M562FinPlayer;
-
 extern s32 fn_1_A44(s16 bgmNo);
 extern void fn_1_9BC(s32 handle, u8 vol, s32 time);
 
@@ -520,13 +489,22 @@ typedef struct M562MainTriple {
     /* 0xA */ u8 padA[2];
 } M562MainTriple;
 
-typedef struct M562MainSprite { /* 0x221C, 0x224C: 0x30 bytes */
-    /* 0x00 */ u8 pad0[4];
-    /* 0x04 */ s32 active;
-    /* 0x08 */ u8 pad8[0x2C - 8];
-    /* 0x2C */ s16 life;
-    /* 0x2E */ u8 pad2E[2];
-} M562MainSprite;
+typedef struct M562Sprite { /* 0x30 bytes on GC; the owner's life bars */
+    struct M562Work *parent;
+    s32 show;
+    s32 shown;
+    HUSPRGRPID grpId;
+    HUSPRID baseSprId;
+    ANIMDATA *anim;
+    HUSPRID sprId[10];
+    ANIMDATA *wakuAnim;
+    s16 count;
+    s16 frame;
+} M562Sprite;
+
+extern void fn_1_23ECC(M562Sprite *sprite, s32 animFile, s16 num, s32 right, struct M562Work *parent);
+extern void fn_1_24178(M562Sprite *sprite);
+extern void fn_1_241EC(M562Sprite *sprite);
 
 
 extern M562Work *lbl_1_bss_0;
@@ -849,12 +827,12 @@ struct M562Work {
     /* 0x07BC */ FireRingMgr fireRing;
     /* 0x088C */ FireMgr fire;
     /* 0x1B90 */ KbMiniMgr mecha;
-    /* 0x221C */ M562MainSprite sprite[2];
+    /* 0x221C */ M562Sprite sprite[2];
     /* 0x227C */ M562StageField stage;
     /* 0x2858 */ M562MainTriple triple;
     /* 0x2864 */ void *fbTex;
     /* 0x2868 */ ANIMDATA *fbAnim;
-    /* 0x286C */ u8 pad286C[0x289C - 0x286C];
+    /* 0x286C */ EffectList fx[3];
     /* 0x289C */ s32 bossMode;
     /* 0x28A0 */ s32 mesId;
     /* 0x28A4 */ HUWINID winId;
