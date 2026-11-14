@@ -24,3 +24,10 @@ void StageHamonSpeedSet(f32 speed)
 {
     sys->speed = speed;
 }
+#include "stage_b.inc"
+
+#include "stage_c.inc"
+
+#include "stage_d.inc"
+
+#include "stage_e.inc"

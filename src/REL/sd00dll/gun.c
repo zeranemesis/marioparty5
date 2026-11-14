@@ -100,3 +100,6 @@ void LaserEffectUpdate(Bullet *bullet)
 
     LaserEffectDataUpdate(target, 0x14);
 }
+#include "gun_b.inc"
+
+#include "gun_c.inc"

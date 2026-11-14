@@ -98,3 +98,6 @@ void MachineRotAngleSet(SdMachine *machine, f32 *angles)
     machine->storedMtx[1] = ((u32 *)machine->mtx)[1];
     machine->storedMtx[2] = ((u32 *)machine->mtx)[2];
 }
+#include "sd00_b.inc"
+
+#include "sd00_c.inc"
