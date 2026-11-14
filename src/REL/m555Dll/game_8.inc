@@ -116,18 +116,19 @@ s32 fn_1_155DC(s16 player)
 /* Walk toward aimPos; returns 1 when both axes are done. */
 s32 fn_1_15CF4(s16 player)
 {
-    f32 dx, dy, adx, ady;
+    f32 d[2];
+    f32 ad[2];
     s32 done = 0;
     s16 n = 0;
 
-    dx = P555(player).aimPos.x - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.x;
-    dy = P555(player).aimPos.y - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.y;
-    adx = M555_ABS(dx);
-    ady = M555_ABS(dy);
+    d[0] = P555(player).aimPos.x - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.x;
+    d[1] = P555(player).aimPos.y - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.y;
+    ad[0] = M555_ABS(d[0]);
+    ad[1] = M555_ABS(d[1]);
     switch (P555(player).tallyA) {
         case 0:
-            if (ady >= 20.0f) {
-                P555(player).wheelIdx1 = (s32)((P555(player).hookX != 0 ? -1.0f : 1.0f) * ((dy > 0.0f ? 1.0f : -1.0f) * P555(player).camX0));
+            if (ad[1] >= 20.0f) {
+                P555(player).wheelIdx1 = (s32)((P555(player).hookX != 0 ? -1.0f : 1.0f) * ((d[1] > 0.0f ? 1.0f : -1.0f) * P555(player).camX0));
             } else {
                 P555(player).tallyA++;
             }
@@ -138,8 +139,8 @@ s32 fn_1_15CF4(s16 player)
     }
     switch (P555(player).tallyB) {
         case 0:
-            if (adx >= 20.0f) {
-                P555(player).wheelIdx0 = (s32)((dx > 0.0f ? 1.0f : -1.0f) * P555(player).camX0);
+            if (ad[0] >= 20.0f) {
+                P555(player).wheelIdx0 = (s32)((d[0] > 0.0f ? 1.0f : -1.0f) * P555(player).camX0);
             } else {
                 P555(player).tallyB++;
             }
@@ -159,18 +160,19 @@ s32 fn_1_15CF4(s16 player)
 /* Walk toward targetPos; returns 1 when finished (or timed out). */
 s32 fn_1_16104(s16 player)
 {
-    f32 dx, dy, adx, ady;
+    f32 d[2];
+    f32 ad[2];
     s32 done = 0;
     s16 n = 0;
 
-    dx = P555(player).targetPos.x - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.x;
-    dy = P555(player).targetPos.y - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.y;
-    adx = M555_ABS(dx);
-    ady = M555_ABS(dy);
+    d[0] = P555(player).targetPos.x - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.x;
+    d[1] = P555(player).targetPos.y - lbl_1_bss_3030->mdl[(s16)(player + 0xA9)].pos.y;
+    ad[0] = M555_ABS(d[0]);
+    ad[1] = M555_ABS(d[1]);
     switch (P555(player).flag0) {
         case 0:
-            if (ady >= 20.0f) {
-                P555(player).wheelIdx1 = (s32)((P555(player).hookX != 0 ? -1.0f : 1.0f) * ((dy > 0.0f ? 1.0f : -1.0f) * P555(player).camX0));
+            if (ad[1] >= 20.0f) {
+                P555(player).wheelIdx1 = (s32)((P555(player).hookX != 0 ? -1.0f : 1.0f) * ((d[1] > 0.0f ? 1.0f : -1.0f) * P555(player).camX0));
             } else {
                 P555(player).flag0++;
             }
@@ -189,8 +191,8 @@ s32 fn_1_16104(s16 player)
     }
     switch (P555(player).flag1) {
         case 0:
-            if (adx >= 20.0f) {
-                P555(player).wheelIdx0 = (s32)((dx > 0.0f ? 1.0f : -1.0f) * P555(player).camX0);
+            if (ad[0] >= 20.0f) {
+                P555(player).wheelIdx0 = (s32)((d[0] > 0.0f ? 1.0f : -1.0f) * P555(player).camX0);
             } else {
                 P555(player).flag1++;
             }
@@ -222,18 +224,19 @@ s32 fn_1_16104(s16 player)
 /* Same walk as fn_1_16104 but toward the model slot player+0x21, with a settle phase. */
 s16 fn_1_16958(s16 player)
 {
-    f32 dx, dy, adx, ady;
+    f32 d[2];
+    f32 ad[2];
     s32 done = 0;
     s16 n = 0;
 
-    dx = P555(player).targetPos.x - lbl_1_bss_3030->mdl[(s16)(player + 0x21)].pos.x;
-    dy = P555(player).targetPos.y - lbl_1_bss_3030->mdl[(s16)(player + 0x21)].pos.y;
-    adx = M555_ABS(dx);
-    ady = M555_ABS(dy);
+    d[0] = P555(player).targetPos.x - lbl_1_bss_3030->mdl[(s16)(player + 0x21)].pos.x;
+    d[1] = P555(player).targetPos.y - lbl_1_bss_3030->mdl[(s16)(player + 0x21)].pos.y;
+    ad[0] = M555_ABS(d[0]);
+    ad[1] = M555_ABS(d[1]);
     switch (P555(player).flag0) {
         case 0:
-            if (ady >= 20.0f) {
-                P555(player).wheelIdx1 = (s32)((P555(player).hookX != 0 ? -1.0f : 1.0f) * ((dy > 0.0f ? 1.0f : -1.0f) * P555(player).camX0));
+            if (ad[1] >= 20.0f) {
+                P555(player).wheelIdx1 = (s32)((P555(player).hookX != 0 ? -1.0f : 1.0f) * ((d[1] > 0.0f ? 1.0f : -1.0f) * P555(player).camX0));
             } else {
                 P555(player).flag0++;
             }
@@ -246,7 +249,7 @@ s16 fn_1_16958(s16 player)
             }
             break;
         case 2:
-            if (ady >= 20.0f) {
+            if (ad[1] >= 20.0f) {
                 P555(player).flag0 = 0;
             } else {
                 n = 1;
@@ -255,8 +258,8 @@ s16 fn_1_16958(s16 player)
     }
     switch (P555(player).flag1) {
         case 0:
-            if (adx >= 20.0f) {
-                P555(player).wheelIdx0 = (s32)((dx > 0.0f ? 1.0f : -1.0f) * P555(player).camX0);
+            if (ad[0] >= 20.0f) {
+                P555(player).wheelIdx0 = (s32)((d[0] > 0.0f ? 1.0f : -1.0f) * P555(player).camX0);
             } else {
                 P555(player).flag1++;
             }
@@ -269,7 +272,7 @@ s16 fn_1_16958(s16 player)
             }
             break;
         case 2:
-            if (adx >= 20.0f) {
+            if (ad[0] >= 20.0f) {
                 P555(player).flag1 = 0;
             } else {
                 n++;
