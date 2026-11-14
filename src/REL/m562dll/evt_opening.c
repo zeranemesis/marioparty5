@@ -77,7 +77,7 @@ s32 fn_1_2446C(M562Work *w)
                 lbl_1_bss_7928[i] = id;
                 Hu3DModelRotSet(id, 0.0f, 0.0f, 0.0f);
                 Hu3DModelScaleSet(id, 15.0f, 15.0f, 15.0f);
-                Hu3DModelCameraSet(id, (u16)camera->camId);
+                Hu3DModelCameraSet(id, (u16)camera->camMask);
                 Hu3DModelLayerSet(id, 4);
                 Hu3DModelAttrSet(id, HU3D_ATTR_DISPOFF);
                 Hu3DMotionSet(id, triple->motion);
