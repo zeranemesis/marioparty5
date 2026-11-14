@@ -1,8 +1,4 @@
-/* the evt block of the shared header declares fn_1_7D58 with a second (float) argument the original
-   function does not take: keep that declaration under another name and define the real one below */
-#define fn_1_7D58 fn_1_7D58_evt_decl
 #include "REL/m562dll.h"
-#undef fn_1_7D58
 #include "game/charman.h"
 #include "game/gamework.h"
 #include "game/hsfex.h"
@@ -15,12 +11,14 @@
 /* Not declared in game/hu3d.h on purpose (see the note there): the float return is used here. */
 extern float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
-void fn_1_7D58(M562Player *p);
-
 /* wrap a degree angle into (-180, 180], re-evaluating the expression in every branch like the original */
 #define PL_WRAP_D(e) (((e) > 180.0) ? ((e) - 360.0) : (((e) <= -180.0) ? (360.0 + (e)) : (e)))
 #define PL_WRAP_F(e) (((e) > 180.0f) ? ((e) - 360.0f) : (((e) <= -180.0f) ? (360.0f + (e)) : (e)))
+#define PL_CLAMP(v, lo, hi) (((v) > (hi)) ? (hi) : (((v) < (lo)) ? (lo) : (v)))
 #define PL_RAD(a) (3.141592653589793 * (a) / 180.0)
+
+/* shift to motion `idx`, then overlay the requested one (looping motions also get the overlay attribute) */
+#define PL_SHIFT_OVERLAY(idx)     do {         u32 attr;         if (p->loopMotion != 0) {             attr = 0x40000001;         } else {             attr = 0;         }         Hu3DMotionShiftSet(model, p->obj->mtnId[idx], 0.0f, 4.0f, attr);         Hu3DMotionOverlaySet(model, p->obj->mtnId[p->curMotion]);         if (p->loopMotion != 0) {             Hu3DModelAttrSet(model, 0x40000200);         }     } while (0)
 
 /* launch fields of a bomb slot; the sunbomb view of the slot keeps them in its padding */
 #define PL_BOMB_F32(slot, off) (*(f32 *)((slot)->pad68 + (off)))
@@ -205,8 +203,6 @@ void fn_1_6B28(M562Player *p, s16 playerNo, M562Work *owner)
     u16 i;
     HU3DMODELID model;
     HU3DMODELID ring;
-    Vec posInit = { 0.0f, 0.0f, 0.0f };
-    Vec rotInit = { 0.0f, 0.0f, 0.0f };
 
     memset(p, 0, sizeof(M562Player));
     p->owner = owner;
@@ -248,8 +244,14 @@ void fn_1_6B28(M562Player *p, s16 playerNo, M562Work *owner)
     } else {
         p->hp = 10;
     }
-    p->pos = posInit;
-    p->rot = rotInit;
+    {
+        Vec posInit = { 0.0f, 0.0f, 0.0f };
+        p->pos = posInit;
+    }
+    {
+        Vec rotInit = { 0.0f, 0.0f, 0.0f };
+        p->rot = rotInit;
+    }
     omSetTra(obj, p->pos.x, p->pos.y, p->pos.z);
     omSetRot(obj, 0.0f, 0.0f, 0.0f);
     Hu3DModelAttrReset(model, 1);
@@ -275,7 +277,7 @@ void fn_1_6FBC(M562Player *p)
     fn_1_B0E0(&p->input);
     Hu3DMotionKill(p->ringMotion);
     Hu3DModelKill(p->ringModel);
-    if (p->obj != NULL) {
+    if (p->obj != 0) {
         CharModelKill((s16) p->charNo);
         omDelObjEx(owner->manager, p->obj);
         p->obj = NULL;
@@ -444,27 +446,11 @@ s32 fn_1_7174(M562Player *p)
         }
     }
     if (owner->mode < 4) {
-        if (p->pos.x > 575.0f) {
-            p->pos.x = 575.0f;
-        } else if (p->pos.x < -575.0f) {
-            p->pos.x = -575.0f;
-        }
-        if (p->pos.z > 450.0f) {
-            p->pos.z = 450.0f;
-        } else if (p->pos.z < -450.0f) {
-            p->pos.z = -450.0f;
-        }
+        p->pos.x = PL_CLAMP(p->pos.x, -575.0f, 575.0f);
+        p->pos.z = PL_CLAMP(p->pos.z, -450.0f, 450.0f);
     } else {
-        if (p->pos.x > 1075.0f) {
-            p->pos.x = 1075.0f;
-        } else if (p->pos.x < -1075.0f) {
-            p->pos.x = -1075.0f;
-        }
-        if (p->pos.z > 550.0f) {
-            p->pos.z = 550.0f;
-        } else if (p->pos.z < -350.0f) {
-            p->pos.z = -350.0f;
-        }
+        p->pos.x = PL_CLAMP(p->pos.x, -1075.0f, 1075.0f);
+        p->pos.z = PL_CLAMP(p->pos.z, -350.0f, 550.0f);
     }
     omSetTra(p->obj, p->pos.x, p->pos.y, p->pos.z);
     omSetRot(p->obj, p->rot.x, p->rot.y, p->rot.z);
@@ -485,24 +471,20 @@ void fn_1_7938(M562Player *p)
         Hu3DModelAttrReset(model, 0x40000200);
         switch (p->reqMotion) {
             case 6:
-                Hu3DMotionShiftSet(model, p->obj->mtnId[0], 0.0f, 4.0f, (p->loopMotion != 0) ? 0x40000001 : 0);
+                PL_SHIFT_OVERLAY(0);
                 break;
             case 7:
-                Hu3DMotionShiftSet(model, p->obj->mtnId[1], 0.0f, 4.0f, (p->loopMotion != 0) ? 0x40000001 : 0);
+                PL_SHIFT_OVERLAY(1);
                 break;
             case 8:
-                Hu3DMotionShiftSet(model, p->obj->mtnId[2], 0.0f, 4.0f, (p->loopMotion != 0) ? 0x40000001 : 0);
+                PL_SHIFT_OVERLAY(2);
                 break;
             case 9:
-                Hu3DMotionShiftSet(model, p->obj->mtnId[3], 0.0f, 4.0f, (p->loopMotion != 0) ? 0x40000001 : 0);
+                PL_SHIFT_OVERLAY(3);
                 break;
             case 10:
-                Hu3DMotionShiftSet(model, p->obj->mtnId[0], 0.0f, 4.0f, (p->loopMotion != 0) ? 0x40000001 : 0);
+                PL_SHIFT_OVERLAY(0);
                 break;
-        }
-        Hu3DMotionOverlaySet(model, p->obj->mtnId[p->curMotion]);
-        if (p->loopMotion != 0) {
-            Hu3DModelAttrSet(model, 0x40000200);
         }
     } else {
         f32 shift;
@@ -519,8 +501,9 @@ void fn_1_7938(M562Player *p)
 }
 
 /* state 1: walking on the plain stage */
-void fn_1_7D58(M562Player *p)
+void fn_1_7D58(void *player)
 {
+    M562Player *p = (M562Player *) player;
     M562Work *owner = p->owner;
     M562PlayerInput *inp = &p->input;
     f32 mag2;
@@ -562,7 +545,7 @@ void fn_1_7D58(M562Player *p)
                 if (owner->mode == 1) {
                     Fire *fire = p->held;
 
-                    if (fire != NULL) {
+                    if (fire != 0) {
                         if (fire->state < 5) {
                             p->timerA = 0;
                             p->sub = 4;
@@ -571,12 +554,12 @@ void fn_1_7D58(M562Player *p)
                             p->held = NULL;
                         }
                     }
-                } else if (owner->mode == 4 && p->target != NULL) {
+                } else if (owner->mode == 4 && p->target != 0) {
                     p->timerA = 0;
                     p->sub = 4;
                     p->goalRotY = p->rotY;
                 }
-                if (p->held == NULL && p->target == NULL) {
+                if (p->held == 0 && p->target == 0) {
                     p->sub = 5;
                 }
             }
@@ -702,10 +685,12 @@ s32 fn_1_8ACC(Vec *pos, Vec *target, f32 rotY)
     Vec dir;
     Vec fwd;
     f32 dot;
+    f32 mag;
 
     PSVECSubtract(target, pos, &diff);
     diff.y = 0.0f;
-    if (PSVECMag(&diff) < 150.0f) {
+    mag = PSVECMag(&diff);
+    if (mag < 150.0f) {
         if (diff.x == 0.0f && diff.z == 0.0f) {
             diff.z = 1.0f;
         }
@@ -731,8 +716,8 @@ void fn_1_8C50(M562Player *p, f32 t)
     Vec delta;
 
     Hu3DMtxTransGet(*fn_1_7044(p), &hand);
-    switch (owner->mode) {
-        case 1:
+    if (owner->mode == 1) {
+        {
             PSVECSubtract(&hand, &fire->pos, &delta);
             PSVECScale(&delta, &delta, t);
             PSVECAdd(&fire->pos, &delta, &fire->pos);
@@ -747,12 +732,11 @@ void fn_1_8C50(M562Player *p, f32 t)
                 p->subTimer = 0;
                 p->state = 4;
             }
-            break;
-        case 4:
-            PSVECSubtract(&hand, &bomb->pos, &delta);
-            PSVECScale(&delta, &delta, t);
-            PSVECAdd(&bomb->pos, &delta, &bomb->pos);
-            break;
+        }
+    } else if (owner->mode == 4) {
+        PSVECSubtract(&hand, &bomb->pos, &delta);
+        PSVECScale(&delta, &delta, t);
+        PSVECAdd(&bomb->pos, &delta, &bomb->pos);
     }
 }
 
@@ -908,20 +892,17 @@ void fn_1_99F4(M562Player *p)
     Vec hand;
 
     Hu3DMtxTransGet(*fn_1_7044(p), &hand);
-    switch (owner->mode) {
-        case 1:
-            if (fire != NULL) {
-                fire->pos = hand;
-                fire->targetAngle = p->rotY;
-                fire->angle = fire->targetAngle;
-                fire->rot.y = fire->angle;
-            }
-            break;
-        case 4:
-            if (bomb != NULL) {
-                bomb->pos = hand;
-            }
-            break;
+    if (owner->mode == 1) {
+        if (fire != 0) {
+            fire->pos = hand;
+            fire->targetAngle = p->rotY;
+            fire->angle = fire->targetAngle;
+            fire->rot.y = fire->angle;
+        }
+    } else if (owner->mode == 4) {
+        if (bomb != 0) {
+            bomb->pos = hand;
+        }
     }
 }
 
@@ -933,12 +914,12 @@ void fn_1_9AEC(M562Player *p)
     KbBombSlot *bomb = p->target;
 
     if (owner->mode == 1) {
-        if (fire != NULL) {
+        if (fire != 0) {
             fire->state = 5;
             fire->phase = 0;
             fire->timer = 0;
         }
-    } else if (owner->mode == 4 && bomb != NULL) {
+    } else if (owner->mode == 4 && bomb != 0) {
         PL_BOMB_F32(bomb, 4) = (f32) (0.8f * (10.0 * sin(PL_RAD(p->rotY))));
         PL_BOMB_F32(bomb, 12) = (f32) (0.8f * (10.0 * cos(PL_RAD(p->rotY))));
         PL_BOMB_F32(bomb, 0) = 20.0f;
@@ -956,7 +937,7 @@ s32 fn_1_9C3C(M562Player *p)
         case 0:
             p->hp--;
             omVibrate(p->playerNo, 0x1E, 4, 2);
-            if (p->held != NULL || p->target != NULL) {
+            if (p->held != 0 || p->target != 0) {
                 fn_1_9AEC(p);
             }
             p->reqMotion = 0xC;
@@ -1012,7 +993,7 @@ s32 fn_1_A02C(M562Player *p)
             p->hp--;
             omVibrate(p->playerNo, 0x1E, 4, 2);
             CharFXPlay((s16) p->charNo, 0x1F9);
-            if (p->held != NULL || p->target != NULL) {
+            if (p->held != 0 || p->target != 0) {
                 fn_1_9AEC(p);
             }
             p->reqMotion = 0xD;
@@ -1068,7 +1049,7 @@ s32 fn_1_A48C(M562Player *p)
         case 0:
             p->hp--;
             omVibrate(p->playerNo, 0x1E, 4, 2);
-            if (p->held != NULL || p->target != NULL) {
+            if (p->held != 0 || p->target != 0) {
                 fn_1_9AEC(p);
             }
             p->rotY = 0.0f;
@@ -1128,7 +1109,7 @@ s32 fn_1_A87C(M562Player *p)
         case 0:
             p->hp--;
             omVibrate(p->playerNo, 0x1E, 4, 2);
-            if (p->held != NULL || p->target != NULL) {
+            if (p->held != 0 || p->target != 0) {
                 fn_1_9AEC(p);
             }
             p->reqMotion = 0xC;
@@ -1178,14 +1159,14 @@ s32 fn_1_A87C(M562Player *p)
 }
 
 /* a hit on the player: skip ahead to the recovery phase if already knocked down */
-void fn_1_AD68(FireBoss *boss)
+void fn_1_AD68(M562Player *boss)
 {
     if (boss->state == 2) {
-        if (boss->f6 < 3) {
-            boss->f6 = 3;
+        if (boss->sub < 3) {
+            boss->sub = 3;
         }
     } else {
-        boss->f6 = 3;
+        boss->sub = 3;
     }
 }
 
@@ -1248,6 +1229,8 @@ void fn_1_B0E0(M562PlayerInput *inp)
 
 void fn_1_B110(M562PlayerInput *inp)
 {
+    s32 absX;
+    s32 absY;
     s8 a;
     s8 b;
 
@@ -1256,11 +1239,11 @@ void fn_1_B110(M562PlayerInput *inp)
     inp->btnRep = HuPadBtnRep[inp->padNo];
     inp->stkX = HuPadStkX[inp->padNo];
     if (inp->stkX >= 0) {
-        a = inp->stkX;
+        absX = inp->stkX;
     } else {
-        a = -inp->stkX;
+        absX = -inp->stkX;
     }
-    if (a < 10) {
+    if (absX < 10) {
         a = 0;
     } else {
         a = inp->stkX;
@@ -1268,11 +1251,11 @@ void fn_1_B110(M562PlayerInput *inp)
     inp->stkX = a;
     inp->stkY = HuPadStkY[inp->padNo];
     if (inp->stkY >= 0) {
-        b = inp->stkY;
+        absY = inp->stkY;
     } else {
-        b = -inp->stkY;
+        absY = -inp->stkY;
     }
-    if (b < 10) {
+    if (absY < 10) {
         b = 0;
     } else {
         b = inp->stkY;
