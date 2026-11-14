@@ -1,4 +1,8 @@
 #include "REL/m541Dll.h"
+#include "string.h"
+
+/* the asm stores the float return (stfs f1); hu3d.h leaves it undeclared on purpose */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 
 /* ---- part_s.c ---- */
 /*
