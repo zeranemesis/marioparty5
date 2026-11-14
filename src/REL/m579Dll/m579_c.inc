@@ -5,10 +5,6 @@ extern "C" {
 extern s16 omSysExitReq;
 
 /* Mersenne twister state, object layout of CMT19937 */
-typedef struct M579Mt {
-    u32 state[624];
-    u32 index;
-} M579Mt;
 
 /* .rodata owned by this part (the others come from part a) */
 extern const u32 lbl_1_rodata_50[2] = { 0, 0x9908B0DF };

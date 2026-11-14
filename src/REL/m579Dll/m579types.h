@@ -141,7 +141,7 @@ void fn_1_1264(void *self);
 void fn_1_1270(void *self, s32 arg);
 void fn_1_1330(void *self, void *list);
 void fn_1_12DC(void *self);
-void fn_1_234(void *a, void *b);
+int fn_1_234(void *, const char *, ...);
 void abort(void);
 s32 fn_1_4AE0(void);
 f32 fn_1_4D1C(void);

@@ -8,6 +8,9 @@ public:
 
 extern "C" {
 void *fn_1_46CC(u32 size);
+#ifdef TARGET_PC
+u32 m579GameMasterSize(void); /* the sub-thread embeds the host OSThread */
+#endif
 void *fn_1_7650(void *self);
 void fn_1_2284(void *self, s32 arg1, s32 arg2);
 
@@ -20,7 +23,11 @@ void ObjectSetup(void)
     void *mem;
     void *master;
 
+#ifdef TARGET_PC
+    mem = fn_1_46CC(m579GameMasterSize());
+#else
     mem = fn_1_46CC(0x360);
+#endif
     if (mem) {
         mem = fn_1_7650(mem);
     }

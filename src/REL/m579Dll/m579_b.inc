@@ -2,14 +2,6 @@
  * List links: offset 0 = node.next, offset 4 = node.prev (the m_prev/m_next of the m501 sources). */
 #include "game/mg/actman.h"
 
-/* CMinigameCore: the vtable pointer sits at +4 in the MWCC layout */
-typedef struct M579MgCore {
-    u32 unk0;
-    void **vtbl;
-    s32 winner[4];
-    s32 gameMes;
-    s32 delay;
-} M579MgCore;
 
 typedef u8 (*M579CmpFunc)(M579Node *, M579Node *);
 
@@ -17,7 +9,7 @@ extern "C" {
 
 void fn_1_1D4(const char *expr, const char *file, s32 line);
 void fn_1_2C18(void);
-void *fn_1_47E4(void *self);
+void fn_1_47E4(void *self);
 
 void *fn_1_1EA8(void *self, s16 flag);
 void *fn_1_20CC(void *self, s16 flag);

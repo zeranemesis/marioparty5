@@ -20,6 +20,13 @@ extern "C" {
 #include "game/mg/timer.h"
 }
 #include "REL/m579Dll/m579types.h"
+#include "REL/m579Dll/m579lib.h"
+
+/* Mersenne twister state, object layout of CMT19937 */
+typedef struct M579Mt {
+    u32 state[624];
+    u32 index;
+} M579Mt;
 
 #if !defined(M579_ONLY) || M579_ONLY == 1
 #include "REL/m579Dll/m579_a.inc"

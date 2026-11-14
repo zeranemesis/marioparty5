@@ -1,13 +1,3 @@
-/* m579 library part d: sequence allocation, COMObj, global RNG, circles, CSubThread/CThread, CTimer, static init */
-#ifdef TARGET_PC
-#include <dolphin/os/OSSemaphore.h> /* the host semaphore is larger than the GC one */
-#else
-struct OSSemaphore {
-    OSThreadQueue queue;
-    s32 count;
-};
-#endif
-
 extern "C" {
 
 #ifndef TARGET_PC
@@ -26,9 +16,9 @@ extern char lbl_1_data_14[];
 extern char lbl_1_data_32[];
 extern M579Node lbl_1_bss_C;
 extern s32 lbl_1_bss_1C;
-void fn_1_36CC(void *mt, u32 seed);
-u32 fn_1_3904(void *mt);
-f64 fn_1_4184(void *mt);
+void fn_1_36CC(M579Mt *mt, s32 seed);
+u32 fn_1_3904(M579Mt *mt);
+f64 fn_1_4184(M579Mt *mt);
 
 /* the inlined assertion handler of the original */
 #define M579D_ASSERT_INL(cond, expr, file, line) \
@@ -40,10 +30,6 @@ f64 fn_1_4184(void *mt);
         OSPanic(lbl_1_data_32, 0x12, assertBuf); \
     }
 
-typedef struct M579DMt {
-    u32 state[624];
-    u32 index;
-} M579DMt;
 
 typedef struct M579DFunctor {
     void **vtbl;
@@ -54,21 +40,6 @@ typedef struct M579DCircle {
     f32 radius;
 } M579DCircle;
 
-typedef struct M579DThread {
-    OSThread thread;
-    u32 *stack;
-} M579DThread;
-
-typedef struct M579DSubThread {
-    void **vtbl;
-    M579DThread th;
-    OSSemaphore sema;
-    s32 arg;
-} M579DSubThread;
-
-typedef struct M579DTimer {
-    MGTIMER *timer;
-} M579DTimer;
 
 typedef void *(*M579DDtorFn)(void *, s16);
 typedef void (*M579DRunFn)(void *, OMOBJ *);
@@ -88,7 +59,7 @@ char lbl_1_data_1BE[6] = "false";
 u8 lbl_1_bss_0[12];
 s32 lbl_1_bss_18;
 s32 lbl_1_bss_20;
-M579DMt lbl_1_bss_24;
+M579Mt lbl_1_bss_24;
 u8 lbl_1_bss_9E8;
 
 void *fn_1_552C(void *arg);

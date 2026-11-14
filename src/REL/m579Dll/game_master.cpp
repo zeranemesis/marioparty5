@@ -1,10 +1,28 @@
+#include <stddef.h>
 #include "dolphin.h"
 #include "game/sprite.h"
 #include "REL/m579Dll/m579objs.h"
+#ifdef TARGET_PC
+#include "game/mg/timer.h"
+#include "REL/m579Dll/m579lib.h"
+#endif
 
 extern "C" {
 typedef void (*VoidFunc)(void);
 
+#ifdef TARGET_PC
+/* the core and sub-thread objects embed pointer/OS types, so they are real members here */
+class M579GameMaster {
+public:
+    M579MgCore core;
+    M579DSubThread thread;
+    M579DTimer timer;
+};
+#define GM_VTBL(s) ((s)->core.vtbl)
+#define GM_THREAD(s) (&(s)->thread)
+#define GM_THREAD_VTBL(s) ((s)->thread.vtbl)
+#define GM_TIMER(s) (&(s)->timer)
+#else
 class M579GameMaster {
 public:
     u32 field_0;
@@ -14,6 +32,11 @@ public:
     u8 field_24[0x334];
     u8 field_358[0x40];
 };
+#define GM_VTBL(s) ((s)->vtable)
+#define GM_THREAD(s) (&(s)->field_20)
+#define GM_THREAD_VTBL(s) ((s)->field_20)
+#define GM_TIMER(s) ((s)->field_358)
+#endif
 
 void *fn_1_0(s32 size);
 
@@ -85,7 +108,11 @@ void fn_1_7AE0(void);
 void fn_1_7AE4(M579GameMaster *self);
 void fn_1_7B08(void);
 void fn_1_7B3C(void *self);
+#ifdef TARGET_PC
+void fn_1_7B44(void *self, s16 flag);
+#else
 void fn_1_7B44(void *self);
+#endif
 
 const f32 lbl_1_rodata_170 = 292.0f;
 const f32 lbl_1_rodata_174 = 416.0f;
@@ -98,20 +125,20 @@ void *lbl_1_data_280[12] = {
 void *fn_1_7650(M579GameMaster *self)
 {
     fn_1_1F40(self);
-    fn_1_5268(&self->field_20, 0x8000);
-    self->vtable = lbl_1_data_280;
-    self->field_20 = &lbl_1_data_280[6];
-    fn_1_5AA0(self->field_358, 0);
+    fn_1_5268(GM_THREAD(self), 0x8000);
+    GM_VTBL(self) = lbl_1_data_280;
+    GM_THREAD_VTBL(self) = &lbl_1_data_280[6];
+    fn_1_5AA0(GM_TIMER(self), 0);
     return self;
 }
 
 void *fn_1_76BC(M579GameMaster *self, s16 flag)
 {
     if (self != 0) {
-        self->vtable = lbl_1_data_280;
-        self->field_20 = &lbl_1_data_280[6];
-        fn_1_5B68(self->field_358, -1);
-        fn_1_52E4(&self->field_20, 0);
+        GM_VTBL(self) = lbl_1_data_280;
+        GM_THREAD_VTBL(self) = &lbl_1_data_280[6];
+        fn_1_5B68(GM_TIMER(self), -1);
+        fn_1_52E4(GM_THREAD(self), 0);
         fn_1_20CC(self, 0);
         if (flag > 0) {
             fn_1_47E4(self);
@@ -192,9 +219,11 @@ void fn_1_7748(void)
     }
 }
 
-void fn_1_78DC(void *self)
+void fn_1_78DC(void *obj)
 {
-    fn_1_5398((void *) ((u8 *) self + 0x20), 0);
+    M579GameMaster *self = (M579GameMaster *)obj;
+
+    fn_1_5398(GM_THREAD(self), 0);
     fn_1_1D6C();
     fn_1_D2C0();
 }
@@ -212,26 +241,26 @@ void fn_1_7914(M579GameMaster *self)
     HuAudFXPlay(0x95e);
 
     while (((fn_1_1CE0() >> 8) & 0xff) == 0) {
-        fn_1_5428(&self->field_20, 0);
+        fn_1_5428(GM_THREAD(self), 0);
     }
 
     fn_1_1C48(1);
     fn_1_2704();
 
     while (((fn_1_2874() >> 8) & 0xff) == 0) {
-        fn_1_5428(&self->field_20, 0);
+        fn_1_5428(GM_THREAD(self), 0);
     }
 
     fn_1_1C48(2);
-    fn_1_5BC4(self->field_358, 0x708, 0, 0);
-    fn_1_5CBC(self->field_358, 1);
-    fn_1_5C3C(self->field_358, lbl_1_rodata_170, lbl_1_rodata_174);
+    fn_1_5BC4(GM_TIMER(self), 0x708, 0, 0);
+    fn_1_5CBC(GM_TIMER(self), 1);
+    fn_1_5C3C(GM_TIMER(self), lbl_1_rodata_170, lbl_1_rodata_174);
 
     while (((fn_1_7AB4(self) >> 8) & 0xff) == 0) {
-        fn_1_5428(&self->field_20, 0);
+        fn_1_5428(GM_THREAD(self), 0);
     }
 
-    fn_1_5DB0(self->field_358);
+    fn_1_5DB0(GM_TIMER(self));
     fn_1_D358();
     fn_1_D594();
     fn_1_1C48(3);
@@ -239,7 +268,7 @@ void fn_1_7914(M579GameMaster *self)
     fn_1_27BC();
 
     for (i = 0; i < 0xb4; i++) {
-        fn_1_5428(&self->field_20, 0);
+        fn_1_5428(GM_THREAD(self), 0);
     }
 
     fn_1_1C48(4);
@@ -253,19 +282,19 @@ void fn_1_7914(M579GameMaster *self)
     fn_1_2948();
 
     while (((fn_1_2874() >> 8) & 0xff) == 0) {
-        fn_1_5428(&self->field_20, 0);
+        fn_1_5428(GM_THREAD(self), 0);
     }
 
     fn_1_2C44();
 
     while (1) {
-        fn_1_5428(&self->field_20, -1);
+        fn_1_5428(GM_THREAD(self), -1);
     }
 }
 
 u32 fn_1_7AB4(M579GameMaster *self)
 {
-    return fn_1_5E18(self->field_358);
+    return fn_1_5E18(GM_TIMER(self));
 }
 
 void fn_1_7AE0(void)
@@ -285,6 +314,19 @@ void fn_1_7B08(void)
     lbl_1_bss_A20 = 0xd2;
 }
 
+#ifdef TARGET_PC
+/* the sub-thread sits inside the master object; these vtable thunks step back to the master */
+void fn_1_7B3C(void *self)
+{
+    fn_1_7914((M579GameMaster *)((u8 *)self - offsetof(M579GameMaster, thread)));
+}
+
+void fn_1_7B44(void *self, s16 flag)
+{
+    fn_1_76BC((M579GameMaster *)((u8 *)self - offsetof(M579GameMaster, thread)), flag);
+}
+#else
+#pragma dont_inline on
 void fn_1_7B3C(void *self)
 {
     __asm {
@@ -300,4 +342,20 @@ void fn_1_7B44(void *self)
         b fn_1_76BC
     }
 }
+#pragma dont_inline reset
+#endif
 }
+
+#ifdef TARGET_PC
+extern "C" u32 m579GameMasterSize(void)
+{
+    return sizeof(M579GameMaster);
+}
+
+// The GC build links fn_1_7B08 through .ctors; PC runs it at load time.
+static struct M579GameMasterInit {
+    M579GameMasterInit() { fn_1_7B08(); }
+} lbl_1_gameMasterInit;
+#else
+__declspec(section ".ctors") static void (*const gameMasterInit)(void) = fn_1_7B08;
+#endif
