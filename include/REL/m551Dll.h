@@ -323,14 +323,9 @@ typedef struct M551Flow_s {
     s16 cpuPlayer;       /* 0x018 */
     s16 winCount[2];     /* 0x01A */
     s16 pad1E;           /* 0x01E */
-    f32 unk20;           /* 0x020 */
-    s16 pad24[2];        /* 0x024 */
-    s16 unk28;           /* 0x028 */
-    s16 pad2A;           /* 0x02A */
-    s16 unk2C;           /* 0x02C */
-    s16 unk2E;           /* 0x02E */
-    s16 unk30;           /* 0x030 */
-    s16 unk32;           /* 0x032 */
+    f32 unk20[2];        /* 0x020 */
+    s16 flag28[2];       /* 0x028 */
+    s16 unk2C[4];        /* 0x02C */
     s16 owner[12];       /* 0x034 */
     s16 carryIdx;        /* 0x04C */
     s16 pad4E;           /* 0x04E */
@@ -369,6 +364,7 @@ typedef struct M551Work_s {
 } M551_WORK;
 
 extern M551_WORK lbl_1_bss_0;
+extern M551CamInit lbl_1_data_368[4];
 extern M551Shadow *lbl_1_bss_30;
 extern M551Light *lbl_1_bss_34;
 extern M551Cam *lbl_1_bss_38;

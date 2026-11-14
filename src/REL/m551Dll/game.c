@@ -38,7 +38,7 @@ s16 fn_1_13F68(s16 arg0);
 s16 fn_1_143DC(s16 arg0);
 s16 fn_1_14974(s16 arg0);
 s32 fn_1_14FC4(s16 arg0);
-void fn_1_153A8(M551_PLAYERWORK *work);
+void fn_1_153A8();
 s32 fn_1_9654(s16 arg0);
 void fn_1_9934(void);
 s16 fn_1_A078(s16 arg0, s16 arg1);
@@ -1359,6 +1359,319 @@ s16 fn_1_C680(s16 arg0, s16 arg1)
             ret = 1;
         }
         break;
+    }
+    return ret;
+}
+
+s32 fn_1_D6A0(s16 arg0)
+{
+    M551StageSlot *slot;
+    f32 sq;
+    f32 len;
+    f32 k;
+    f32 ang;
+    f32 dx;
+    f32 dz;
+    f32 steps;
+    s16 d;
+    s16 neg;
+    s32 ret;
+
+    slot = &lbl_1_bss_17A00->slots[arg0];
+    ret = 0;
+    switch (FL.winCount[arg0]) {
+    case 0:
+        PW[arg0].target.x = -200.0f + 400.0f * arg0;
+        PW[arg0].target.z = 0.0f;
+        PW[arg0].velX = PW[arg0].target.x - PW[arg0].pos.x;
+        PW[arg0].velZ = PW[arg0].target.z - PW[arg0].pos.z;
+        sq = PW[arg0].velX * PW[arg0].velX + PW[arg0].velZ * PW[arg0].velZ;
+        len = sqrt(sq);
+        if (len != 0.0f) {
+            FL.flag28[arg0] = 1;
+            slot->shiftState = 1;
+            slot->shiftMotion = 1;
+            slot->shiftStart = 0.0f;
+            slot->shiftEnd = 4.0f;
+            slot->shiftAttr = 0x40000001;
+            slot->attrReset = 0;
+        }
+        FL.unk2C[1] = 1;
+        FL.winCount[arg0]++;
+        /* fallthrough */
+    case 1:
+        PW[arg0].velX = PW[arg0].target.x - PW[arg0].pos.x;
+        PW[arg0].velZ = PW[arg0].target.z - PW[arg0].pos.z;
+        sq = PW[arg0].velX * PW[arg0].velX + PW[arg0].velZ * PW[arg0].velZ;
+        len = sqrt(sq);
+        if (len != 0.0f) {
+            k = 7.0f / len;
+            PW[arg0].velX *= k;
+            PW[arg0].velZ *= k;
+            if (FL.unk2C[0] >= 0x1E) {
+                if (arg0 == 0) {
+                    PW[arg0].velZ += 3.0f;
+                } else {
+                    PW[arg0].velZ -= 3.0f;
+                }
+                sq = PW[arg0].velX * PW[arg0].velX + PW[arg0].velZ * PW[arg0].velZ;
+                len = sqrt(sq);
+                if (len != 0.0f) {
+                    k = 7.0f / len;
+                } else {
+                    k = 0.0f;
+                }
+                PW[arg0].velX *= k;
+                PW[arg0].velZ *= k;
+            }
+            ang = 180.0 * (acos(PW[arg0].velX / (0.1f + 7.0f)) / 3.141592653589793);
+            if ((f32)(180.0 * (asin(PW[arg0].velZ / (0.1f + 7.0f)) / 3.141592653589793)) < 0.0f) {
+                ang = 360.0f - ang;
+            }
+            PW[arg0].angle = 90.0f + -ang;
+            if (FL.unk2C[0] >= 0xB4 && arg0 == 0) {
+                PW[arg0].velX = 0.0f;
+                PW[arg0].velZ = 0.0f;
+            }
+            PW[arg0].pos.x += PW[arg0].velX;
+            PW[arg0].pos.z += PW[arg0].velZ;
+            lbl_1_bss_0.player[arg0]->actor->rotY = PW[arg0].angle;
+            dx = PW[arg0].target.x - PW[arg0].pos.x;
+            dz = PW[arg0].target.z - PW[arg0].pos.z;
+            len = sqrt(dx * dx + dz * dz);
+        }
+        if (len < (2.0f + 7.0f)) {
+            PW[arg0].angle = lbl_1_bss_0.player[arg0]->actor->rotY;
+            d = (s16)lbl_1_bss_0.player[arg0]->actor->rotY % 360;
+            if (d != 0) {
+                if (d < 0) {
+                    d *= -1;
+                    neg = 1;
+                } else {
+                    neg = 0;
+                }
+                if (d > 0xB4) {
+                    d = 0x168 - d;
+                } else {
+                    d *= -1;
+                }
+                if (neg != 0) {
+                    d *= -1;
+                }
+            }
+            FL.unk20[arg0] = lbl_1_bss_0.player[arg0]->actor->rotY + (f32)d;
+            if (arg0 == 0) {
+                FL.unk2C[1] = 2;
+            }
+            FL.winCount[arg0]++;
+        }
+        break;
+    case 2:
+        steps = 30.0f;
+        if (fn_1_1850(&lbl_1_bss_0.player[arg0]->actor->rotY, steps, PW[arg0].angle, FL.unk20[arg0]) == 0) {
+            if (FL.flag28[arg0] != 0) {
+                slot->shiftState = 1;
+                slot->shiftMotion = 0;
+                slot->shiftStart = 0.0f;
+                slot->shiftEnd = 4.0f;
+                slot->shiftAttr = 0x40000001;
+                slot->attrReset = 0;
+            }
+            FL.winCount[arg0]++;
+        }
+        break;
+    case 3:
+        ret = 1;
+        break;
+    }
+    return ret;
+}
+
+s16 fn_1_E738(void)
+{
+    HuVecF pos;
+    s16 ret;
+    s16 sum;
+    s16 i;
+
+    ret = 0;
+    sum = 0;
+    MgPlayerPadSet(lbl_1_bss_0.player[0], 0, 0, 0, 0);
+    MgPlayerPadSet(lbl_1_bss_0.player[1], 0, 0, 0, 0);
+    fn_1_9934();
+    MgActorPosGet(lbl_1_bss_0.player[0]->actor, &pos);
+    PW[0].oldPos.x = pos.x;
+    PW[0].oldPos.y = pos.y;
+    PW[0].oldPos.z = pos.z;
+    MgActorPosGet(lbl_1_bss_0.player[1]->actor, &pos);
+    PW[1].oldPos.x = pos.x;
+    PW[1].oldPos.y = pos.y;
+    PW[1].oldPos.z = pos.z;
+    MgActorExec();
+    MgActorPosGet(lbl_1_bss_0.player[0]->actor, &pos);
+    PW[0].pos.x = pos.x;
+    PW[0].pos.y = pos.y;
+    PW[0].pos.z = pos.z;
+    MgActorPosGet(lbl_1_bss_0.player[1]->actor, &pos);
+    PW[1].pos.x = pos.x;
+    PW[1].pos.y = pos.y;
+    PW[1].pos.z = pos.z;
+    for (i = 0; i < 2; i++) {
+        sum += fn_1_D6A0(i);
+        if (FL.winCount[i] >= 2) {
+            PW[i].pos = PW[i].oldPos;
+        }
+    }
+    if (sum >= 2) {
+        ret = 1;
+    }
+    fn_1_153A8();
+    pos.x = PW[0].pos.x;
+    pos.y = PW[0].pos.y;
+    pos.z = PW[0].pos.z;
+    MgActorPosUpdate(lbl_1_bss_0.player[0]->actor, &pos);
+    pos.x = PW[1].pos.x;
+    pos.y = PW[1].pos.y;
+    pos.z = PW[1].pos.z;
+    MgActorPosUpdate(lbl_1_bss_0.player[1]->actor, &pos);
+    for (i = 0; i < 2; i++) {
+        Hu3DModelPosSet(MDL(i + 0x51).id, PW[i].pos.x, PW[i].pos.y, PW[i].pos.z);
+    }
+    return ret;
+}
+
+s16 fn_1_EA8C(void)
+{
+    f32 tbl[6][3] = {
+        { 74.0f, 100.0f, 5.0f },
+        { 100.0f, 85.0f, 5.0f },
+        { 85.0f, 100.0f, 5.0f },
+        { 100.0f, 95.0f, 5.0f },
+        { 95.0f, 100.0f, 5.0f },
+        { -1.0f, 0.0f, 0.0f },
+    };
+    f32 steps;
+    s32 chk;
+    s16 ret;
+    s16 i;
+
+    ret = 0;
+    if ((u32)FL.mode <= 8) {
+        switch (FL.mode) {
+        case 0:
+            fn_1_5BF4();
+            FL.mode++;
+            /* fallthrough */
+        case 1:
+            if (FL.timer++ > 0x1E) {
+                for (i = 0; i < 12; i++) {
+                    Hu3DMotionSpeedSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0.0f);
+                    Hu3DMotionTimeSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0.0f);
+                }
+                fn_1_5D64(1, VOL(MDL(43).z), PAN(MDL(43).x));
+                FL.timer = 0;
+                FL.mode++;
+            }
+            break;
+        case 2:
+            if (fn_1_1850(&MDL(43).y, tbl[FL.subMode][2], tbl[FL.subMode][0], tbl[FL.subMode][1]) == 0) {
+                FL.subMode++;
+                if (tbl[FL.subMode][0] < 0.0f) {
+                    FL.subMode = 0;
+                    FL.mode++;
+                }
+            }
+            break;
+        case 3:
+            if (FL.timer++ > 0x1E) {
+                FL.timer = 0;
+                FL.mode++;
+            }
+            break;
+        case 4:
+            steps = 30.0f;
+            chk = fn_1_1850(&lbl_1_bss_38->center.x, steps, lbl_1_data_368[0].center.x, lbl_1_data_368[1].center.x);
+            chk += fn_1_1850(&lbl_1_bss_38->center.y, steps, lbl_1_data_368[0].center.y, lbl_1_data_368[1].center.y);
+            chk += fn_1_1850(&lbl_1_bss_38->center.z, steps, lbl_1_data_368[0].center.z, lbl_1_data_368[1].center.z);
+            chk += fn_1_1850(&lbl_1_bss_38->rotX, steps, lbl_1_data_368[0].rotX, lbl_1_data_368[1].rotX);
+            chk += fn_1_1850(&lbl_1_bss_38->rotY, steps, lbl_1_data_368[0].rotY, lbl_1_data_368[1].rotY);
+            chk += fn_1_1850(&lbl_1_bss_38->zoom, steps, lbl_1_data_368[0].zoom, lbl_1_data_368[1].zoom);
+            if ((s16)chk == 0) {
+                FL.subMode = frandmod(3);
+                if (FL.subMode != 2) {
+                    FL.unk10 = frandmod(12);
+                    FL.unk12 = FL.unk10;
+                } else {
+                    FL.unk10 = FL.owner[0];
+                    FL.unk12 = -1;
+                    FL.unk14 = 0;
+                }
+                Hu3DModelAttrReset(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 1);
+                Hu3DModelAttrReset(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 0x40000001);
+                Hu3DMotionSpeedSet(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 2.0f);
+                Hu3DMotionTimeSet(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 0.0f);
+                fn_1_5D64(2, VOL(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).z), PAN(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).x));
+                FL.unk2C[3] = 1;
+                FL.mode++;
+            }
+            break;
+        case 5:
+            if (FL.timer++ > 5) {
+                if (FL.subMode == 0) {
+                    if (++FL.unk10 > 0xB) {
+                        FL.unk10 = 0;
+                    }
+                } else if (FL.subMode == 1) {
+                    if (--FL.unk10 < 0) {
+                        FL.unk10 = 0xB;
+                    }
+                } else {
+                    FL.unk14++;
+                    if (FL.unk14 < 0xC) {
+                        FL.unk10 = FL.owner[FL.unk14];
+                    } else {
+                        FL.unk10 = 0;
+                        FL.unk12 = 0;
+                    }
+                }
+                Hu3DModelAttrReset(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 1);
+                Hu3DModelAttrReset(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 0x40000001);
+                Hu3DMotionSpeedSet(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 2.0f);
+                Hu3DMotionTimeSet(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).id, 0.0f);
+                fn_1_5D64(2, VOL(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).z), PAN(MDL(lbl_1_bss_179A0[FL.unk10].mdl[2]).x));
+                FL.timer = 0;
+                if (++FL.unk2C[3] >= 0xC) {
+                    FL.mode++;
+                }
+            }
+            break;
+        case 6:
+            if (FL.timer++ > 0x32) {
+                for (i = 0; i < 12; i++) {
+                    Hu3DModelAttrReset(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 1);
+                    Hu3DModelAttrReset(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0x40000001);
+                    Hu3DMotionSpeedSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 2.0f);
+                    Hu3DMotionTimeSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0.0f);
+                }
+                fn_1_5CEC(2);
+                FL.timer = 0;
+                FL.mode++;
+            }
+            break;
+        case 7:
+            if (FL.timer++ > 0x32) {
+                for (i = 0; i < 12; i++) {
+                    Hu3DModelAttrSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0x40000001);
+                    Hu3DMotionSpeedSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0.0f);
+                    Hu3DMotionTimeSet(MDL(lbl_1_bss_179A0[i].mdl[2]).id, 0.0f);
+                }
+                FL.mode++;
+            }
+            break;
+        case 8:
+            ret = 1;
+            break;
+        }
     }
     return ret;
 }
