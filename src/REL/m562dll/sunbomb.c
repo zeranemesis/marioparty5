@@ -213,7 +213,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     SUNBOMB *self = owner;
     KoopaBoss *link = self->link;
     KpHost *scene = link->host;
-    KpCamera *cam = &scene->cam;
+    CAMERA *cam = &scene->camera[0];
     HU3DMODELID m;
 
     memset(slot, 0, sizeof(SUNBOMBSLOT));
@@ -223,7 +223,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[0] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 4);
     Hu3DModelAttrSet(m, 1);
     Hu3DMotionSet(m, self->mot[0]);
@@ -233,7 +233,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[1] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 4);
     Hu3DModelAttrSet(m, 1);
     Hu3DMotionSet(m, self->mot[1]);
@@ -243,7 +243,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[2] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 4);
     Hu3DModelAttrSet(m, 1);
     Hu3DMotionSet(m, self->mot[2]);
@@ -253,7 +253,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[3] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 4);
     Hu3DModelAttrSet(m, 1);
     Hu3DMotionSet(m, self->mot[3]);
@@ -263,7 +263,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[4] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 5);
     Hu3DModelAttrSet(m, 1);
     Hu3DMotionSet(m, self->mot[4]);
@@ -274,7 +274,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[5] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 0);
     Hu3DModelAttrSet(m, 1);
 
@@ -282,7 +282,7 @@ void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
     slot->model[6] = m;
     Hu3DModelRotSet(m, 0.0f, 0.0f, 0.0f);
     Hu3DModelScaleSet(m, 1.0f, 1.0f, 1.0f);
-    Hu3DModelCameraSet(m, cam->camBit);
+    Hu3DModelCameraSet(m, cam->camMask);
     Hu3DModelLayerSet(m, 0);
     Hu3DModelLayerSet(m, 0);
     Hu3DModelAttrSet(m, 1);
@@ -313,8 +313,8 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     SUNBOMB *owner = self->owner;
     KoopaBoss *link = owner->link;
     KpHost *scene = link->host;
-    KpPlayer *sub = &scene->player;
-    KpCamera *cam = &scene->cam;
+    KpPlayer *sub = (KpPlayer *)&scene->player;
+    CAMERA *cam = &scene->camera[0];
     f32 yOffset;
     s32 pushed;
     f32 t;
@@ -414,7 +414,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             self->state = 4;
             fn_1_934(0x8AB, &self->pos);
             Hu3DModelScaleSet(self->model[5], 1.0f, 1.0f, 1.0f);
-            fn_1_21B68((CAMERA *)cam, 1, 0x32, 40.0f, 0.6f, 90.0f);
+            fn_1_21B68(cam, 1, 0x32, 40.0f, 0.6f, 90.0f);
             omVibrate(sub->charIdx, 10, 12, 0);
         }
         break;
@@ -629,6 +629,6 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     Hu3DModelPosSet(self->model[5], sp44.x, 0.0f, sp44.z);
     Hu3DModelPosSet(self->model[6], sp44.x, 0.0f, sp44.z);
     if (self->spawned != 0 && self != sub->target && self->state >= 3 && self->state < 9) {
-        fn_1_2CE8C(&scene->hitB, 5, 0, &self->pos, self, 300.0f);
+        fn_1_2CE8C(KP_HITB(scene), 5, 0, &self->pos, self, 300.0f);
     }
 }

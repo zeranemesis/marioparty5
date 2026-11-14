@@ -134,8 +134,7 @@ typedef struct M562EvtPlayer { /* work + 0x28 */
     /* 0x94 */ f32 rotSpeed;
     /* 0x98 */ u8 pad98[2];
     /* 0x9A */ s16 animNo;
-    /* 0x9C */ s16 animLoop;
-    /* 0x9E */ u8 pad9E[2];
+    /* 0x9C */ s32 animLoop;
     /* 0xA0 */ Vec pos;
     /* 0xAC */ u8 padAC[4];
     /* 0xB0 */ f32 rotY;
@@ -752,7 +751,7 @@ typedef struct CAMSTAGE {
 /* 0x9C bytes. */
 typedef struct CAMERA {
     /* 0x00 */ CAMSTAGE *owner;
-    /* 0x04 */ s32 camId;
+    /* 0x04 */ s32 camMask;
     /* 0x08 */ u16 state;
     /* 0x0A */ u16 mode;
     /* 0x0C */ u16 prevMode;
@@ -777,8 +776,8 @@ typedef struct CAMERA {
     /* 0x98 */ f32 shakePhase;
 } CAMERA;
 
-void fn_1_20CE0(CAMERA *cam, s32 camId, s32 flag, CAMSTAGE *owner);
-void fn_1_20EF4(CAMERA *cam, s32 camId);
+void fn_1_20CE0(CAMERA *cam, s32 camMask, s32 flag, CAMSTAGE *owner);
+void fn_1_20EF4(CAMERA *cam, s32 camMask);
 void fn_1_2102C(CAMERA *cam);
 void fn_1_2105C(CAMERA *cam);
 void fn_1_210F4(CAMERA *cam);
@@ -803,7 +802,7 @@ extern s32 fn_1_260B8(M562Work *work);
 extern s32 fn_1_27950(M562Work *work);
 extern s32 fn_1_2C118(M562Work *work);
 extern void fn_1_1D9C(M562Work *work);
-extern void fn_1_7D58(void *player, f32 speed);
+extern void fn_1_7D58(void *player);
 extern s32 fn_1_AD98(void *player, Vec *dir, f32 rate);
 extern void fn_1_B578(void *koopa);
 extern void fn_1_864(s32 handle, s32 time);
@@ -867,5 +866,209 @@ static inline void M562TimerKill(M562Work *work)
         work->timer = NULL;
     }
 }
+
+/* ---- player.c ---- */
+struct M562Player;
+
+/* pad snapshot of one player (0x1C bytes on GC), owned by its M562Player */
+typedef struct M562PlayerInput {
+    /* 0x00 */ struct M562Player *owner;
+    /* 0x04 */ s32 padNo;
+    /* 0x08 */ u32 btn;
+    /* 0x0C */ u32 btnDown;
+    /* 0x10 */ s8 stkX;
+    /* 0x11 */ s8 stkY;
+    /* 0x12 */ u16 btnRep;
+    /* 0x14 */ s8 subX;
+    /* 0x15 */ s8 subY;
+    /* 0x16 */ u8 trigL;
+    /* 0x17 */ u8 trigR;
+    /* 0x18 */ u8 dstk;
+    /* 0x19 */ u8 dstkRep;
+    /* 0x1A */ u8 pad1A[2];
+} M562PlayerInput;
+
+/* the player character (0x138 bytes on GC), embedded in the work object at 0x28 */
+typedef struct M562Player {
+    /* 0x00 */ M562Work *owner;
+    /* 0x04 */ u16 state;
+    /* 0x06 */ u16 sub;
+    /* 0x08 */ s16 subTimer;
+    /* 0x0A */ s16 timerA;
+    /* 0x0C */ s32 active;
+    /* 0x10 */ s16 invuln;
+    /* 0x12 */ s16 scaleTimer;
+    /* 0x14 */ s16 playerNo;
+    /* 0x16 */ s16 pad16;
+    /* 0x18 */ s32 charNo;
+    /* 0x1C */ s32 grp;
+    /* 0x20 */ OMOBJ *obj;
+    /* 0x24 */ HU3DMODELID modelId;
+    /* 0x26 */ u8 pad26[0x64 - 0x26];
+    /* 0x64 */ HU3DMODELID ringModel;
+    /* 0x66 */ HU3DMOTID ringMotion;
+    /* 0x68 */ f32 height;
+    /* 0x6C */ M562PlayerInput input;
+    /* 0x88 */ s32 inputOn;
+    /* 0x8C */ s16 hp;
+    /* 0x8E */ s16 pad8E;
+    /* 0x90 */ f32 rotY;
+    /* 0x94 */ f32 goalRotY;
+    /* 0x98 */ s16 curMotion;
+    /* 0x9A */ s16 reqMotion;
+    /* 0x9C */ s32 loopMotion;
+    /* 0xA0 */ Vec pos;
+    /* 0xAC */ Vec rot;
+    /* 0xB8 */ Vec *modelPos;
+    /* 0xBC */ Vec *modelRot;
+    /* 0xC0 */ f32 speed;
+    /* 0xC4 */ f32 vy;
+    /* 0xC8 */ Mtx handR;
+    /* 0xF8 */ Mtx handL;
+    /* 0x128 */ s32 handRValid;
+    /* 0x12C */ s32 handLValid;
+    /* 0x130 */ Fire *held;
+    /* 0x134 */ KbBombSlot *target;
+} M562Player;
+
+extern u32 lbl_1_data_190[13][31];
+void fn_1_6B28(M562Player *p, s16 playerNo, M562Work *owner);
+void fn_1_6FBC(M562Player *p);
+Mtx *fn_1_7044(M562Player *p);
+Mtx *fn_1_70A8(M562Player *p);
+void fn_1_710C(M562Player *p);
+s32 fn_1_7174(M562Player *p);
+void fn_1_7938(M562Player *p);
+s32 fn_1_89B0(M562Player *p);
+s32 fn_1_8ACC(Vec *pos, Vec *target, f32 rotY);
+void fn_1_8C50(M562Player *p, f32 t);
+void fn_1_8DF8(M562Player *p);
+void fn_1_99F4(M562Player *p);
+void fn_1_9AEC(M562Player *p);
+s32 fn_1_9C3C(M562Player *p);
+s32 fn_1_A02C(M562Player *p);
+s32 fn_1_A48C(M562Player *p);
+s32 fn_1_A87C(M562Player *p);
+void fn_1_B07C(M562PlayerInput *inp, s32 playerNo, M562Player *owner);
+void fn_1_B0E0(M562PlayerInput *inp);
+void fn_1_B110(M562PlayerInput *inp);
+
+/* ---- mini_mechakoopa ---- */
+/* One mini mecha-koopa (0x30 bytes on GC). */
+typedef struct KbMiniEntry {
+    /* 0x00 */ struct KbMiniMgr *mgr;
+    /* 0x04 */ s16 timer;
+    /* 0x06 */ HU3DMODELID modelA;
+    /* 0x08 */ HU3DMODELID modelB;
+    /* 0x0A */ u8 padA[2];
+    /* 0x0C */ s32 active;
+    /* 0x10 */ f32 angle;
+    /* 0x14 */ Vec origin;
+    /* 0x20 */ Vec pos;
+    /* 0x2C */ s32 flip;
+} KbMiniEntry;
+
+/* The swarm (0x68C bytes on GC), embedded in the work object at 0x1B90. */
+struct KbMiniMgr {
+    /* 0x000 */ M562Work *host;
+    /* 0x004 */ s32 active;
+    /* 0x008 */ s32 started;
+    /* 0x00C */ KbMiniEntry entry[34];
+    /* 0x66C */ HU3DMODELID modelA;
+    /* 0x66E */ HU3DMODELID modelB;
+    /* 0x670 */ HU3DMOTID motionA;
+    /* 0x672 */ HU3DMOTID motionB;
+    /* 0x674 */ s16 count;
+    /* 0x676 */ s16 lightId;
+    /* 0x678 */ f32 headAngle;
+    /* 0x67C */ Vec soundPos;
+    /* 0x688 */ s32 sndId;
+};
+
+void fn_1_177EC(KbMiniMgr *mgr, M562Work *host);
+void fn_1_17984(KbMiniMgr *mgr);
+void fn_1_17A28(KbMiniMgr *mgr);
+
+/* ---- firering.c ---- */
+typedef struct FireRingMgr_s FireRingMgr;
+
+/* one expanding fire ring: a spot light plus two particle models along a circle (0x34 bytes on GC) */
+typedef struct FireRing_s {
+    /* 0x00 */ FireRingMgr *mgr;
+    /* 0x04 */ s16 tick;
+    /* 0x06 */ s16 pad6;
+    /* 0x08 */ s32 enable;
+    /* 0x0C */ s32 active;
+    /* 0x10 */ HU3DMODELID model;
+    /* 0x12 */ HU3DMODELID model2;
+    /* 0x14 */ s16 index;
+    /* 0x16 */ s16 count;
+    /* 0x18 */ s16 fade;
+    /* 0x1A */ s16 pad1A;
+    /* 0x1C */ Vec pos;
+    /* 0x28 */ f32 angle;
+    /* 0x2C */ f32 radius;
+    /* 0x30 */ HU3DLIGHTID light;
+    /* 0x32 */ s16 pad32;
+} FireRing;
+
+/* the ring attack manager (0xD0 bytes on GC) */
+struct FireRingMgr_s {
+    /* 0x00 */ struct M562Work *owner;
+    /* 0x04 */ u16 state;
+    /* 0x06 */ u16 sub;
+    /* 0x08 */ s16 timer;
+    /* 0x0A */ s16 subTimer;
+    /* 0x0C */ s16 patIdx;
+    /* 0x0E */ s16 pad0E;
+    /* 0x10 */ s32 active;
+    /* 0x14 */ s32 moveOn;
+    /* 0x18 */ FireRing ring[3];
+    /* 0xB4 */ s32 padB4;
+    /* 0xB8 */ ANIMDATA *anim;
+    /* 0xBC */ ANIMDATA *anim2;
+    /* 0xC0 */ s16 order[6];
+    /* 0xCC */ s32 sound;
+};
+
+/* polyline the rings travel along (0x94 bytes) */
+typedef struct FireRingPath_s {
+    /* 0x00 */ Vec pt[12];
+    /* 0x90 */ s16 count;
+    /* 0x92 */ s16 pad92;
+} FireRingPath;
+
+void fn_1_18E88(FireRingMgr *mgr, struct M562Work *owner);
+void fn_1_18F5C(FireRingMgr *mgr);
+void fn_1_18FC8(FireRingMgr *mgr);
+void fn_1_19518(FireRingMgr *mgr);
+s32 fn_1_19694(FireRingMgr *mgr, s16 pattern);
+void fn_1_19790(FireRing *ring, s16 index, FireRingMgr *mgr);
+void fn_1_19A3C(FireRing *ring);
+void fn_1_19A98(FireRing *ring);
+void fn_1_1A6E8(HU3DMODEL *model, HU3DPARTICLE *particle, Mtx mtx);
+s32 fn_1_1A728(FireRing *ring);
+s32 fn_1_1A804(FireRingMgr *mgr);
+s32 fn_1_1AC94(FireRingMgr *mgr);
+s32 fn_1_1AFB4(FireRingMgr *mgr);
+s32 fn_1_1B4FC(FireRingMgr *mgr);
+s32 fn_1_1B9D4(FireRingMgr *mgr);
+s32 fn_1_1BD6C(FireRingMgr *mgr);
+s32 fn_1_1C418(FireRingMgr *mgr);
+s32 fn_1_1CCC4(FireRingMgr *mgr);
+s32 fn_1_1D320(FireRingMgr *mgr);
+s32 fn_1_1D9F8(FireRingMgr *mgr);
+void fn_1_1E9C8(FireRingPath *path);
+void fn_1_1E9F8(FireRingPath *path, Vec *p);
+void fn_1_1EA38(Vec *out, FireRingPath *path, f32 t);
+Vec *fn_1_1EBBC(Vec *out, FireRingPath *path, s16 from, s16 to, f32 t);
+extern Vec lbl_1_data_A8C;
+extern Vec lbl_1_data_A98;
+extern GXColor lbl_1_data_AA4;
+extern GXColor lbl_1_data_AA8[2];
+extern Vec lbl_1_bss_7848;
+extern Vec lbl_1_bss_7854;
+extern Vec lbl_1_bss_7860;
+extern FireRingPath lbl_1_bss_786C;
 
 #endif

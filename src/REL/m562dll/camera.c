@@ -35,7 +35,7 @@ static const Vec kModeBTgt = {0.0f, 100.0f, -200.0f};
 
 // Resets the camera, creates the hardware camera and seeds every pose with
 // the stage's starting view; with flag 0 the viewport is blanked.
-void fn_1_20CE0(CAMERA *cam, s32 camId, s32 flag, CAMSTAGE *owner)
+void fn_1_20CE0(CAMERA *cam, s32 camMask, s32 flag, CAMSTAGE *owner)
 {
     Vec up;
     Vec tgt;
@@ -44,10 +44,10 @@ void fn_1_20CE0(CAMERA *cam, s32 camId, s32 flag, CAMSTAGE *owner)
 
     memset(cam, 0, sizeof(CAMERA));
     cam->owner = owner;
-    cam->camId = camId;
+    cam->camMask = camMask;
     cam->prevMode = 0;
     cam->mode = 0;
-    fn_1_20EF4(cam, cam->camId);
+    fn_1_20EF4(cam, cam->camMask);
     up = kUp;
     cam->up = up;
     pos = kZeroA;
@@ -60,20 +60,20 @@ void fn_1_20CE0(CAMERA *cam, s32 camId, s32 flag, CAMSTAGE *owner)
     cam->dir = dir;
     cam->dirGoal = cam->dir;
     if (flag == 0) {
-        Hu3DCameraViewportSet(camId, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+        Hu3DCameraViewportSet(camMask, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     }
     cam->speed = 0.4f;
 }
 
 // Creates the hardware camera and clears the shake offsets.
-void fn_1_20EF4(CAMERA *cam, s32 camId)
+void fn_1_20EF4(CAMERA *cam, s32 camMask)
 {
     Vec zero;
 
-    Hu3DCameraCreate(camId);
-    Hu3DCameraPerspectiveSet(camId, 45.0f, 20.0f, 50000.0f, 1.2f);
-    Hu3DCameraViewportSet(camId, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
-    Hu3DCameraScissorSet(camId, 0, 0, 640, 480);
+    Hu3DCameraCreate(camMask);
+    Hu3DCameraPerspectiveSet(camMask, 45.0f, 20.0f, 50000.0f, 1.2f);
+    Hu3DCameraViewportSet(camMask, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    Hu3DCameraScissorSet(camMask, 0, 0, 640, 480);
     zero = kShakeOff[0];
     cam->shakeTgt = zero;
     cam->shakePos = cam->shakeTgt;
@@ -157,7 +157,7 @@ void fn_1_21280(CAMERA *cam)
     PSVECAdd(&cam->tgt, &tgtStep, &cam->tgt);
     PSVECAdd(&cam->pos, &cam->shakePos, &pos);
     PSVECAdd(&cam->tgt, &cam->shakeTgt, &tgt);
-    Hu3DCameraPosSetV(cam->camId, &pos, &cam->up, &tgt);
+    Hu3DCameraPosSetV(cam->camMask, &pos, &cam->up, &tgt);
 }
 
 /* Builds the camera basis (right, up, forward) of a forward vector into the
@@ -234,7 +234,7 @@ void fn_1_21344(CAMERA *cam)
     }
     PSVECAdd(&cam->pos, &cam->shakePos, &pos);
     PSVECAdd(&cam->tgt, &cam->shakeTgt, &tgt);
-    Hu3DCameraPosSetV(cam->camId, &pos, &cam->up, &tgt);
+    Hu3DCameraPosSetV(cam->camMask, &pos, &cam->up, &tgt);
 }
 
 // Mode 2: the stage's wide shot; the goal z follows Bowser's position.
@@ -270,7 +270,7 @@ void fn_1_21700(CAMERA *cam)
         PSVECAdd(&cam->tgt, &tgtStep, &cam->tgt);
         PSVECAdd(&cam->pos, &cam->shakePos, &pos);
         PSVECAdd(&cam->tgt, &cam->shakeTgt, &tgt);
-        Hu3DCameraPosSetV(cam->camId, &pos, &cam->up, &tgt);
+        Hu3DCameraPosSetV(cam->camMask, &pos, &cam->up, &tgt);
         break;
     }
     PSVECSubtract(&cam->tgt, &cam->pos, &dir);
@@ -313,7 +313,7 @@ void fn_1_2191C(CAMERA *cam)
         PSVECAdd(&cam->tgt, &tgtStep, &cam->tgt);
         PSVECAdd(&cam->pos, &cam->shakePos, &pos);
         PSVECAdd(&cam->tgt, &cam->shakeTgt, &tgt);
-        Hu3DCameraPosSetV(cam->camId, &pos, &cam->up, &tgt);
+        Hu3DCameraPosSetV(cam->camMask, &pos, &cam->up, &tgt);
         break;
     }
     PSVECSubtract(&cam->tgt, &cam->pos, &dir);
@@ -384,7 +384,7 @@ void fn_1_21BA8(CAMERA *cam)
                 fov = 0.0f;
             }
             lbl_1_data_AE0 = fov;
-            Hu3DCameraPerspectiveSet(cam->camId, lbl_1_data_AE0, 20.0f, 50000.0f, 1.2f);
+            Hu3DCameraPerspectiveSet(cam->camMask, lbl_1_data_AE0, 20.0f, 50000.0f, 1.2f);
         } else if ((HuPadBtn[0] & 0x400) != 0) {
             fov = lbl_1_data_AE0 - 0.2f;
             if (fov > 90.0f) {
@@ -393,7 +393,7 @@ void fn_1_21BA8(CAMERA *cam)
                 fov = 0.0f;
             }
             lbl_1_data_AE0 = fov;
-            Hu3DCameraPerspectiveSet(cam->camId, lbl_1_data_AE0, 20.0f, 50000.0f, 1.2f);
+            Hu3DCameraPerspectiveSet(cam->camMask, lbl_1_data_AE0, 20.0f, 50000.0f, 1.2f);
         }
     } else if ((HuPadBtn[0] & 0x4000) == 0 && (HuPadBtn[0] & 0x2000) != 0) {
         PSVECScale(&dir, &dir, 1.0f + (0.02f * -((f32)HuPadSubStkY[0] / 59.0f)));
