@@ -5,6 +5,8 @@
 
 #include "dolphin/mtx.h"
 #include "game/hu3d.h"
+#include "game/object.h"
+#include "game/mg/timer.h"
 #include "game/hsfformat.h"
 #include "humath.h"
 
@@ -66,6 +68,18 @@ typedef struct SdStageObj_s {
     s32 pad68[2];
 } SdStageObj; // size 0x70
 
+/* machine->corner[cornerNum] */
+typedef struct SdMachineCorner_s {
+    s32 effIdx; // 0x00 (particle slot base)
+    Vec pos;    // 0x04 (hook pos relative to machine)
+} SdMachineCorner; // size 0x10
+
+/* machine->track: per-wheel/exhaust effect slots (size 0x110) */
+typedef struct SdMachineTrack_s {
+    s32 effIdx[2][4]; // 0x00 (per wheel [2]: model[2], [9], [10]? slot bases)
+    HU3DPARTICLEDATA *eff[2][30]; // 0x20 (live track particles per wheel)
+} SdMachineTrack; // size 0x110 on GC (use sizeof)
+
 /* sys->machine[2], stride 0x3F8. */
 typedef struct SdStageMachine_s {
     s32 mode;          // 0x00
@@ -73,8 +87,13 @@ typedef struct SdStageMachine_s {
     s32 timer;         // 0x08
     s32 unkC;
     s32 type;          // 0x10
-    s32 pad14[5];      // 0x14
-    Vec pos;           // 0x28
+    s32 pad14;         // 0x14
+    s32 modeTimer;     // 0x18
+    s32 pad1C[3];      // 0x1C
+    union {
+        Vec pos;       // 0x28
+        s32 boostType; // 0x28 (compared with 1/2/5)
+    };
     f32 wheelR[6];     // 0x34
     s32 pad4C[17];     // 0x4C
     s32 hitF;          // 0x90
@@ -82,36 +101,64 @@ typedef struct SdStageMachine_s {
     Mtx mtx;           // 0x98
     Vec curPos;        // 0xC8
     Vec rot;           // 0xD4
-    s32 padE0[2];      // 0xE0
+    f32 speed;         // 0xE0
+    s32 hp;            // 0xE4
     Vec vel;           // 0xE8
-    s32 padF4;         // 0xF4
+    f32 yawVel;        // 0xF4
     Vec force;         // 0xF8
-    s32 pad104[10];    // 0x104
-    Vec wheelPos[4];   // 0x12C
-    Vec rotVel;        // 0x15C
-    Vec pushDir;       // 0x168
-    s32 pad174[5];     // 0x174
-    Vec wheelPrev[4];  // 0x188
-    Vec wheelWorld[4]; // 0x1B8
-    f32 wheelRot;      // 0x1E8
-    Vec wallDir;       // 0x1EC
-    s32 wheelFloor[4]; // 0x1F8
-    s32 wheelType[4];  // 0x208
+    f32 friction;      // 0x104
+    Mtx storedMtx;     // 0x108
+    Vec basePos;       // 0x138
+    Vec storedRot;     // 0x144
+    s32 pad150[3];     // 0x150
+    f32 unk15C;        // 0x15C
+    Vec rotVel;        // 0x160
+    s32 launchFlag;    // 0x16C
+    f32 tireScale[4];  // 0x170
+    Vec tireRot[4];    // 0x180
+    Vec wheelPos[4];   // 0x1B0 (world pos of each wheel contact)
+    s32 wheelOn[4];    // 0x1E0 (wheel touching ground)
+    s32 wheelAttr[4];  // 0x1F0 (surface type under wheel: 0 dirt,1 grass,2 sand,3..6 ...)
+    s32 gunNum;        // 0x200
+    s32 gunBulletNum;  // 0x204
+    s32 cornerNum;     // 0x208
+    s32 gunTimerInit;  // 0x20C
+    s32 unk210;        // 0x210
+    s32 unk214;        // 0x214
     s32 unk218;        // 0x218
     Mtx planeMtx;      // 0x21C
-    f32 slope[3][4];   // 0x24C (0x10 stride)
-    s32 pad27C[4];     // 0x27C
-    f32 unk28C;        // 0x28C
-    s32 pad290[3];     // 0x290
-    f32 unk29C;
-    s32 pad2A0[13];    // 0x2A0
+    union {
+        f32 slope[3][4]; // 0x24C (0x10 stride)
+        Mtx savedMtx;    // 0x24C
+    };
+    f32 dmgOfsA;       // 0x27C
+    f32 dmgOfsB;       // 0x280
+    s32 pad284;        // 0x284
+    s32 turnLv;        // 0x288
+    s32 speedLv;       // 0x28C
+    s32 accelLv;       // 0x290
+    HSFOBJECT *tireObj[4]; // 0x294
+    struct SdStageMachine_s *target; // 0x2A4 (opponent)
+    struct SdGun_s *gun; // 0x2A8
+    s32 pad2AC[10];    // 0x2AC
     f32 groundY[2];    // 0x2D4
-    s32 pad2DC[19];    // 0x2DC
-    Vec contact;       // 0x328
+    s32 pad2DC[3];     // 0x2DC
+    s32 comPreset;     // 0x2E8 (COM preset index, -1: none; SdMachineConfigSet)
+    s32 pad2EC[9];     // 0x2EC
+    s16 fireMdlId[2];  // 0x314
+    s32 fireCnt;       // 0x318
+    Vec firePos;       // 0x31C
+    s32 effType;       // 0x328
+    s32 effTimer;      // 0x32C
+    s32 camSingleF;    // 0x330 (1: machine visible to own camera only)
     s32 contactF;      // 0x334
-    s32 pad338[3];     // 0x338
+    s32 damage;        // 0x338
+    struct SdMachineCorner_s *corner; // 0x33C (cornerNum entries)
+    struct SdMachineTrack_s *track;   // 0x340
     s32 playerNo;      // 0x344
-    s32 pad348[3];     // 0x348
+    s32 padNo;         // 0x348
+    s32 charNo;        // 0x34C
+    s32 cameraNo;      // 0x350
     f32 wheelBase;     // 0x354
     f32 hitRadius;     // 0x358
     f32 hitHeight;     // 0x35C
@@ -120,7 +167,25 @@ typedef struct SdStageMachine_s {
     s32 attr;          // 0x368
     Vec wheelWorld2[4];// 0x36C
     s32 unk39C;        // 0x39C
-    s32 pad3A0[22];    // 0x3A0
+    s16 hookMdlId[4];  // 0x3A0
+    s16 mdlId;         // 0x3A8
+    s16 gunMdlId;      // 0x3AA
+    HU3DMODELID gunMdlId2; // 0x3AC
+    s16 mdl3AE;        // 0x3AE
+    s16 charMdlId;     // 0x3B0
+    s16 charMotId;     // 0x3B2
+    s16 mdl3B4;        // 0x3B4
+    s16 pad3B6;        // 0x3B6
+    s32 kind;          // 0x3B8
+    s32 bodyType;      // 0x3BC
+    s32 engineType;    // 0x3C0
+    s32 bulletType;    // 0x3C4
+    s32 stat[5];       // 0x3C8 (clamped 1..8)
+    s32 engineSeId;    // 0x3DC
+    s32 skidSeId;      // 0x3E0
+    s32 pad3E4[3];     // 0x3E4
+    s32 hitSeId;       // 0x3F0
+    s32 gunSeId;       // 0x3F4
 } SdStageMachine; // size 0x3F8
 
 typedef struct SdStageData_s {
@@ -158,31 +223,153 @@ typedef struct SdStageParticle_s {
     GXColor color; // 0x40
 } SdStageParticle; // size 0x44
 
+/* ===== gun / bullet (owner: gun part A) ===== */
+struct SdBullet_s;
+struct SdStageMachine_s;
+/* machine->gun[i] (stride 0x44 on GC) */
+typedef struct SdGun_s {
+    s32 timer;                 // 0x00
+    Mtx mtx;                   // 0x04
+    struct SdBullet_s *lastBullet; // 0x34
+    struct SdBullet_s *bullet; // 0x38 (array, machine gunBulletNum entries)
+    GXColor color;             // 0x3C
+    s32 pad40;                 // 0x40
+} SdGun;
+
+/* sdBulletParam[bulletType], stride 0x54 */
+typedef struct SdBulletParam_s {
+    s32 unk0;      // 0x00 (==2: homing)
+    s32 unk4;
+    s32 unk8;      // 0x08
+    f32 range;     // 0x0C
+    f32 unk10;
+    f32 unk14;     // 0x14
+    f32 unk18;
+    f32 unk1C;     // 0x1C
+    f32 unk20;     // 0x20
+    s32 partNum[12]; // 0x24 particles per sys->partMdlId bank
+} SdBulletParam;
+
+typedef struct SdBullet_s {
+    s32 mode;       // 0x00
+    s32 unk4;       // 0x04
+    s32 pad08[3];
+    s32 unk14;      // 0x14
+    s32 unk18;      // 0x18
+    s32 pad1C[3];
+    s16 mdlId;      // 0x28
+    s16 mdlId2;     // 0x2A
+    s16 mdlId3;     // 0x2C
+    s16 mdlId4;     // 0x2E
+    s16 mdlId5;     // 0x30
+    s16 pad32;
+    s32 partIdx[12]; // 0x34 particle slot base per sys->partMdlId bank
+                     // ([5] = BulletExplodeUpdate effect idx, [10] = LaserEffectUpdate effect idx)
+    f32 unk64;      // 0x64
+    SdBulletParam *param; // 0x68
+    Mtx mtx;        // 0x6C
+    f32 pad9C[12];  // 0x9C
+    Vec pos;        // 0xCC
+    Vec prevPos;    // 0xD8
+    Vec rot;        // 0xE4
+    s32 padF0[3];
+    f32 unkFC;      // 0xFC
+    s32 pad100;
+    Vec startPos;   // 0x104
+    Vec pos110;     // 0x110
+    f32 speed;      // 0x11C
+    f32 unk120;     // 0x120
+    f32 unk124;     // 0x124
+    struct SdStageMachine_s *machine; // 0x128
+    SdGun *gun;     // 0x12C
+    s32 pad130[4];
+} SdBullet; // 0x140 on GC
+
+/* sys->camera[2], stride 0x88. */
+typedef struct SdCamera_s {
+    s32 bit;           // 0x00 camera bit (sdCameraBitTbl)
+    s32 active;        // 0x04 follow-camera flag
+    Vec goalPos;       // 0x08
+    Vec goalTarget;    // 0x14
+    Vec pos;           // 0x20
+    Vec target;        // 0x2C
+    Vec up;            // 0x38
+    f32 follow;        // 0x44 lerp factor to goal
+    f32 viewTime;      // 0x48 view-lerp progress 0..1
+    Vec beginPos;      // 0x4C
+    Vec beginTarget;   // 0x58
+    Vec endPos;        // 0x64
+    Vec endTarget;     // 0x70
+    s32 offsetOn;      // 0x7C
+    f32 offsetDist;    // 0x80
+    f32 shake;         // 0x84
+} SdCamera; // size 0x88
+
+/* sys->spr (0xAA0, size 0xC0 on GC): HUD sprites */
+typedef struct SdSprWork_s {
+    s32 timer;             // 0x00
+    s16 hpIcon[2][8];      // 0x04 (per playerNo: damage pips)
+    s16 mapSpr;            // 0x24
+    s16 playerSpr[2];      // 0x26 (minimap marker per playerNo)
+    s16 pad2A[9];          // 0x2A
+    s16 *bulletSpr[2];     // 0x3C (per playerNo: gunNum*gunBulletNum markers)
+    s16 pad44;
+    s16 zoomSpr[2][3];     // 0x46 (big marker, per playerNo)
+    s16 zoomHpIcon[2][8][3]; // 0x52
+    s16 centerSpr;         // 0xB2
+    s16 flagSpr;           // 0xB4
+    s16 rabbitSpr;         // 0xB6
+    s32 hideF;             // 0xB8
+    s32 winnerNo;          // 0xBC (sys+0xB5C: winner machine no, -1 none)
+} SdSprWork; // size 0xC0
+
+/* sys->impact[30] (0xC18, stride 0x20) */
+typedef struct SdImpact_s {
+    s16 active;    // 0x00
+    s16 timer;     // 0x02
+    s32 snd[2];    // 0x04 (per camera)
+    s16 delay[2];  // 0x0C
+    s16 pan[2];    // 0x10
+    s16 vol[2];    // 0x14
+    s32 vibrate;   // 0x18
+    s32 pad1C;
+} SdImpact; // size 0x20
+
 typedef struct SdSys_s {
-    s32 pad00[0x48 / 4];   // 0x00
+    OMOBJMAN *objman;      // 0x00
+    OMOBJ *cameraObj;      // 0x04
+    s32 seqStep;           // 0x08 (state inside a Seq* mode)
+    s32 seqStepA;          // 0x0C (SdSeqInit: stageNo temp; FadeIn: ready sprite step)
+    s32 seqStepB;          // 0x10 (FadeIn: HP bar step)
+    s32 seqStepC;          // 0x14 (FadeIn: split screen step)
+    s32 unk18;             // 0x18
+    s32 seqTimer;          // 0x1C (frame counter of current mode)
+    s32 seqTimerA;         // 0x20
+    s32 seqTimerB;         // 0x24
+    s32 seqTimerC;         // 0x28
+    s32 unk2C;             // 0x2C
+    MGTIMER *timer;        // 0x30
+    s32 timeSec;           // 0x34 (seconds elapsed)
+    s32 noTimerF;          // 0x38
+    s32 stageType;         // 0x3C
+    s32 padNo[2];          // 0x40
     s32 gameType;          // 0x48
-    s32 pad4C[(0x120 - 0x4C) / 4];
-    s32 unk120;            // 0x120
-    s32 pad124[3];
-    s32 unk130;            // 0x130
-    s32 pad134[10];
+    SdCamera camera[2];    // 0x4C
     HU3DLIGHTID lightId;   // 0x15C
     HU3DMODELID stageMdlId;// 0x15E
     HU3DMODELID backMdlId[2]; // 0x160, 0x162
     HU3DMODELID hamonMdlId[2];// 0x164, 0x166
     HU3DMODELID shadowMdlId;// 0x168
-    s16 pad16A[(0x19C - 0x16A) / 2];
-    HU3DMODELID smokeMdlId; // 0x19C
-    s32 unk1A0;
-    HU3DMODELID dustMdlId;  // 0x1A2
-    HU3DMODELID flameMdlId; // 0x1A4
-    s32 pad1A8[(0x1E4 - 0x1A8) / 4];
+    s16 pad16A;             // 0x16A
+    ANIMDATA *partAnim[12]; // 0x16C (particle anim banks; [3],[5] = machine fire)
+    HU3DMODELID partMdlId[12]; // 0x19C (smoke=[0], dust=[3], flame=[4])
+    s32 partCnt[12];        // 0x1B4 (particles allocated per bank)
     HU3DMODELID kinokoMdlId; // 0x1E4
-    s16 pad1E6;
+    HU3DMODELID kinokoMdlId2; // 0x1E6
     HU3DMODELID togezoMdlId; // 0x1E8
-    s16 pad1EA;
+    HU3DMODELID togezoMdlId2; // 0x1EA
     HU3DMODELID baseShadowMdlId; // 0x1EC
-    s16 pad1EE;
+    HU3DMODELID bulletHookMdlId; // 0x1EE (SdBulletDraw hook model)
     s32 stageNo;   // 0x1F0
     s32 pad1F4[(0x244 - 0x1F4) / 4];
 
@@ -195,16 +382,17 @@ typedef struct SdSys_s {
     f32 hamonSpeed;   // 0xA80
     Vec hamonPos[2];  // 0xA84
     GXColor hamonColor; // 0xA9C
-    s32 padAA0[(0xB60 - 0xAA0) / 4];
+    SdSprWork spr;         // 0xAA0 (cameraSprId = spr.centerSpr, 0xB52)
 
     s32 objCreateF;    // 0xB60
     SdStageObj *obj;   // 0xB64
-    s32 unkB68;
-    s32 unkB6C;
-    s32 unkB70;
-    s32 unkB74;
+    s32 timeUpF;       // 0xB68
+    s32 allDoneF;      // 0xB6C (both machines finished)
+    s32 stageClosedF;  // 0xB70
+    s32 bgmStream;     // 0xB74
     HU3DDRAWOBJ *backObj[2][20]; // 0xB78
-    s32 padC18[(0xFE8 - 0xC18) / 4];
+    SdImpact impact[30];   // 0xC18
+    s32 vibrate[2][2];     // 0xFD8 {level, timer}
 
     s32 smokeSlot;    // 0xFE8
     s32 frameCount;   // 0xFEC
@@ -213,19 +401,79 @@ typedef struct SdSys_s {
 
 extern SdSys *sys;
 
+/* aliases for fields that turned out to be array elements */
+#define smokeMdlId partMdlId[0]
+#define dustMdlId partMdlId[3]
+#define flameMdlId partMdlId[4]
+#define cameraSprId spr.centerSpr
+
 typedef SdStageMachine SdMachine;
 
 /* ===== Cross-unit prototypes: one section per owning unit. Add yours with a
    small Edit; grep first so nothing is declared twice. ===== */
 /* proto: sd00 */
+/* sd00 part C */
+void MachineDispSet(SdMachine *machine, s32 disp);
+void MachineScaleSet(SdMachine *machine, Vec *scale);
+void MachineCameraBitSet(SdMachine *machine, u16 cameraBit);
+void MachineCameraInit(SdMachine *machine, s32 mode);
+void MachineVelocityApply(SdMachine *machine, Vec *eye, Vec *look);
+void MachineViewUpdate(s32 cameraNo, s32 flip, Vec *from, Vec *to, Vec *out, f32 t);
+void MachinePosSet(SdMachine *machine, Vec *pos);
+void MachinePosInit(SdMachine *machine);
+void MachineRotSet(SdMachine *machine, Vec *rot);
+void MachineRotApply(SdMachine *machine, Vec *rot);
+void MachineRotAngleSet(SdMachine *machine, Vec *rot);
+void MachineRotAngleApply(SdMachine *machine, Vec *rot);
+void SdCharInit(SdMachine *machine1, SdMachine *machine2);
+void SdCameraCreate(void);
+void SdCameraSplitSet(f32 split);
+void SdCameraUpdate(void);
+void SdSinLerp(Vec *out, Vec *a, Vec *b, f32 t);
+void CameraSetViewPos(s32 cameraNo, Vec *pos, Vec *up, Vec *target);
+void SdCameraViewSet(s32 cameraNo, Vec *pos, Vec *up, Vec *target, f32 follow);
+void SdCameraViewBeginSet(s32 cameraNo, Vec *pos, Vec *up, Vec *target);
+void SdCameraViewEndSet(s32 cameraNo, Vec *pos, Vec *up, Vec *target);
+void SdCameraViewSpeedSet(s32 cameraNo, f32 time);
+s32 SdCameraViewUpdate(s32 cameraNo, Vec *up, f32 duration);
+void SdVibrateUpdate(void);
 /* proto: machine */
+void SdMachineParamSet(SdMachine *machine, s32 tireType, s32 bodyType, s32 engineType, s32 gunType);
+void SdMachineCreate(SdMachine *machine);
+void SdMachineKill(SdMachine *machine);
+void SdMachineDestroy(SdMachine *machine);
+void SdMachineConfigSet(s32 playerNo);
+void SdMachineEffectCreate(void);
+void SdSprCreate(void);
+void SdHpSprCreate(void);
+void SdSprKill(void);
+void SdHpSprKill(void);
+void SdSprScissorUpdate(s16 sprId, s32 cameraNo);
+void SdSprUpdate(void);
+void SdSprHideAll(void);
+void SdMachineFxStart(SdMachine *machine);
+void SdMachineFxStop(SdMachine *machine);
+void SdMachineFxUpdate(SdMachine *machine);
+void SdMachineFxGunPlay(struct SdBullet_s *bullet);
+void SdMachineFxImpactPlay(struct SdBullet_s *bullet);
+void SdImpactSoundStart(s32 snd, Vec *pos, f32 vol);
+void SdImpactUpdate(void);
 /* proto: com */
 /* proto: gun */
+void SdBulletUpdate(SdStageMachine *machine);
+void SdBulletDraw(HU3DMODEL *modelP, Mtx *mtx);
 /* proto: stage */
+s32 SdStageObjHitCheck2(Vec *pos, f32 radius, s32 type);
 /* proto: math */
 /* proto: util */
+void SdScreenPosGet(Vec *pos, s16 cameraBit, Vec *out);
 /* proto: flag */
+s32 SdFlagCheck(void);
+void SdFlagPosGet(Vec *pos);
+void SdFlagSprDispOff(void);
 /* proto: rabbit */
+void SdRabbitPlayerCheck(s32 playerNo);
+void SdRabbitSprDispOff(void);
 
 extern s32 sdCameraBitTbl[];
 
@@ -258,15 +506,20 @@ void SdMachineParticleCreate(void);
 void SdMachineParticleKill(void);
 void SdModelGlowSet(HU3DMODELID mdlId);
 void SdVibrate(s32 playerNo, s32 a, s32 b);
-void SdImpactStart(s32 snd, Vec *pos, s32 no, void *arg, f32 a, f32 b);
+void SdImpactStart(s32 snd, Vec *pos, s32 vibrate, f32 vol, f32 range);
 void SdEffectDustCreateData(Vec *pos, void *p1, void *p2, f32 scale);
 void SdEffectFlameUpdate(void *data, f32 time);
 void SdEffectFlameUpdateData(void *data, s32 count);
 void SdRandomPosGet(Vec *pos, s32 a, Vec *b, s32 c, void *d, f32 e, f32 f);
 void SdPlayerSoundPlay(SdStageMachine *machine, s32 no);
-s32 SdMachineDamage(SdStageMachine *machine, Vec *pos, s32 a, f32 b);
+s32 SdMachineDamage(SdStageMachine *machine, Vec *pos, s32 damage);
+void SdComMain(SdStageMachine *machine);
+void SdGunUpdate(SdStageMachine *machine);
+void MachineScaleSet(SdStageMachine *machine, Vec *scale);
 
-f32 MathLerp(f32 a, f32 b, f32 t);
+f32 MathLerp(s32 mode, f32 t);
+void MathVecInterpolate(Vec *dst, Vec *a, Vec *b, f32 t, f32 s);
+void MathMtxRotSet(Vec *rot, Vec *out, Mtx *mtx);
 void MathMtxRotGet(Mtx mtx, Vec *rot);
 void MathPlaneRotMtxGet(Vec *v1, Vec *v2, f32 f, Mtx mtx);
 
