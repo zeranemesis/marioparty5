@@ -427,6 +427,8 @@ M517Input *fn_1_A0FC(M517Input *self, s16 flag);
 /* ---- kuribo unit (kuribo.cpp) ---- */
 struct M517Kuribo_s;
 struct M517Kuribo_s *fn_1_C994(struct M517Kuribo_s *self, Vec *pos, Vec *rot, s32 type);
+/* TODO(reconcile): GC size of the kuribo object, replace by sizeof once its layout is shared. */
+#define M517_KURIBO_SIZE 0x58
 
 
 /* ---- camera / stage units (camera.cpp, stage.cpp): the two singleton task objects ---- */
@@ -515,6 +517,133 @@ typedef struct M517ChoroMgr_s {
     s32 count;
     Vec spots[12];
 } M517ChoroMgr;
+
+/* ---- effect / dusteff / dustcloud units (effect.cpp, dusteff.cpp, dustcloud.cpp) ---- */
+
+/* Singleton / container pointers defined by effect.cpp (set by the owning object's constructor):
+ * bss_0 = a_set container, bss_4 = player manager, bss_8 / bss_C / bss_10 = other ms_pointer singletons. */
+extern void *lbl_1_bss_0;
+extern void *lbl_1_bss_4;
+extern void *lbl_1_bss_8;
+extern void *lbl_1_bss_C;
+extern void *lbl_1_bss_10;
+
+void *fn_1_1E84(s32 size);
+void fn_1_1E80(M517Task *self);
+
+/* ---- player unit (player.cpp): the minigame player, a node of the a_set list lbl_1_bss_A08 ---- */
+struct M517Ball_s;
+struct M517DustFan_s;
+typedef struct M517Player_s {
+    M517Node link;
+    s32 state;       // 0x08 1 once the player is out of the round, 0 while it plays
+    u8 busy;         // 0x0C knocked away by the ball
+    M517Ptmf hook;   // 0x10 state hook
+    s32 playerNo;
+    s32 slot;        // 0 for the solo player, 1..3 for the team members
+    s32 charNo;
+    s32 motion;
+    u8 cpu;          // 0x2C set for the solo player (grp 0) -- the name is the one effect.cpp uses
+    M517Sphere sph;  // 0x30 position + radius
+    Vec rot;
+    Vec scale;
+    Vec vel;
+    Vec delta;       // movement of the last frame
+    Vec launch;      // 0x70 where the knocked-away player flies to
+    s32 subState;
+    s32 phase;
+    f32 t;
+    Vec goal;        // 0x88
+    Vec home;        // 0x94
+    u8 fxDone;
+    f32 t2;
+    s32 wait;
+    u8 flagAC;
+    s32 reached;
+    M517Vec16 mot;   // motion table
+    M517Model *model;
+    M517Input *input;
+    struct M517Ball_s *ball;    // only the solo player owns one
+    M517Task *paper;
+    struct M517DustFan_s *dust; // only the solo player owns one
+} M517Player;
+
+/* The ball code reads the head of the player object. */
+typedef M517Player M517PlayerHead;
+
+/* The four player models (bss_4 singleton, models 1p..4p of the stage). */
+typedef struct M517PlayerModels_s {
+    M517Model *m[4];
+} M517PlayerModels;
+
+/* Spark particle task owned by a ball; its 'vtbl' lives in effect.cpp. */
+struct M517Spark_s;
+
+/* The ball the players push around: node, orientation, hit sphere, velocity and its spark trail. */
+typedef struct M517Ball_s {
+    M517Node link;          // 0x00
+    Quaternion rot;         // 0x08
+    Mtx mtx;                // 0x18
+    M517Ptmf hook;          // 0x48
+    M517Sphere sph;         // 0x54 position + radius
+    Vec prev;               // 0x64
+    Vec vel;                // 0x70
+    Vec delta;              // 0x7C
+    Vec v88;                // 0x88
+    Vec v94;                // 0x94
+    Vec accel;              // 0xA0
+    s32 arg;                // 0xAC
+    u8 hit;                 // 0xB0
+    s32 snd;                // 0xB4
+    M517Model model;        // 0xB8
+    struct M517Spark_s *spark; // 0xBC
+} M517Ball;
+
+M517Ball *fn_1_B58(M517Ball *self, s32 arg);
+M517Ball *fn_1_10F8(M517Ball *self, s16 flag);
+void fn_1_11A8(M517Ball *self, Vec *pos);
+f32 fn_1_12E8(M517Ball *self);
+void fn_1_1360(M517Ball *self, Quaternion *dst);
+void fn_1_1384(M517Ball *self, Vec *accel);
+void fn_1_13A0(M517Ball *self);
+void fn_1_13D4(M517Ball *self);
+void fn_1_164C(M517Ball *self, f32 limit);
+void fn_1_1C78(M517Ball *self, M517Ball *other);
+void fn_1_1CEC(M517Ball *self, M517PlayerHead *other);
+
+/* Defined in player.cpp, misc.cpp: */
+void fn_1_17FCC(M517PlayerHead *player, M517Ball *ball);
+void fn_1_ED24(Quaternion *out, Vec *from, Vec *to);
+
+/* Ground blobs under characters (dusteff.cpp). */
+typedef struct M517DustQuad_s {
+    ANIMDATA *anim;
+    Vec pos;
+    HU3DMODELID model;
+    u8 col[4];
+} M517DustQuad;
+
+typedef struct M517DustFan_s {
+    ANIMDATA *anim;
+    Vec pos;
+    HU3DMODELID model;
+} M517DustFan;
+
+M517DustQuad *fn_1_BDF4(M517DustQuad *self);
+M517DustQuad *fn_1_BEDC(M517DustQuad *self, s16 flag);
+M517DustFan *fn_1_C42C(M517DustFan *self);
+M517DustFan *fn_1_C4F4(M517DustFan *self, s16 flag);
+
+/* Dust puff particle tasks (dustcloud.cpp); they delete themselves once every particle has faded. */
+typedef struct M517DustCloud_s {
+    M517Task task;
+    HU3DMODELID modelId;     // 0x10
+    ANIMDATA *anim;          // 0x14
+    HU3DPARTICLE *particle;  // 0x18
+} M517DustCloud;
+
+M517DustCloud *fn_1_1A518(M517DustCloud *self, Vec *pos, GXColor *col, s32 num);
+M517DustCloud *fn_1_1ACD4(M517DustCloud *self, Vec *pos);
 
 #ifdef __cplusplus
 }
