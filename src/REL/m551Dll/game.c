@@ -1705,7 +1705,6 @@ void fn_1_115B0(void)
 int fn_1_117B0(COL_NARROW_PARAM *a, COL_NARROW_PARAM *b)
 {
     if (b->type >= 6 || b->type <= 0) {
-        return 0;
     }
     return 0;
 }
@@ -2595,4 +2594,219 @@ s16 fn_1_F814(void)
         }
     }
     return ret;
+}
+
+#define FIND_EDGES(cnt)                                          \
+    cnt = 0;                                                     \
+    for (i = 0; i < 8; i++) {                                    \
+        sign[i] = 1.0f;                                          \
+        if ((u32)i <= 7) {                                       \
+            switch (i) {                                         \
+            case 0:                                              \
+                if ((-px + pz) < -784.0f) {                      \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 1:                                              \
+                if (px > 554.0f) {                               \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 2:                                              \
+                if ((px + pz) > 784.0f) {                        \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 3:                                              \
+                if (pz > 554.0f) {                               \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 4:                                              \
+                if ((-px + pz) > 784.0f) {                       \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 5:                                              \
+                if (px < -554.0f) {                              \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 6:                                              \
+                if ((px + pz) < -784.0f) {                       \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            case 7:                                              \
+                if (pz < -554.0f) {                              \
+                    sign[i] = -1.0f;                             \
+                    list[cnt] = i;                               \
+                    cnt += 1;                                    \
+                }                                                \
+                break;                                           \
+            }                                                    \
+        }                                                        \
+    }
+
+void fn_1_153A8()
+{
+    f32 seg[8][4] = {
+        { 230.0f, -554.0f, 554.0f, -230.0f },
+        { 554.0f, -230.0f, 554.0f, 230.0f },
+        { 554.0f, 230.0f, 230.0f, 554.0f },
+        { 230.0f, 554.0f, -230.0f, 554.0f },
+        { -230.0f, 554.0f, -554.0f, 230.0f },
+        { -554.0f, 230.0f, -554.0f, -230.0f },
+        { -554.0f, -230.0f, -230.0f, -554.0f },
+        { -230.0f, -554.0f, 230.0f, -554.0f },
+    };
+    f32 sign[8];
+    s16 list[8];
+    HU3DMODEL *modelA;
+    HU3DMODEL *modelB;
+    f32 radius;
+    f32 yOff;
+    f32 dx;
+    f32 dz;
+    f32 len;
+    f32 k;
+    f32 px;
+    f32 pz;
+    f32 ax;
+    f32 az;
+    f32 den;
+    f32 num;
+    f32 t;
+    f32 cx;
+    f32 cz;
+    f32 vx;
+    f32 vz;
+    s16 cnt;
+    s16 cnt2;
+    s16 hit;
+    s16 p;
+    s16 i;
+    s16 j;
+
+    radius = 67.0f;
+    yOff = 32.0f;
+    for (p = 0; p < 2; p++) {
+        hit = 0;
+        for (i = 0; i < 12; i++) {
+            dx = MDL(lbl_1_bss_179A0[i].mdl[3]).x - PW[p].pos.x;
+            dz = MDL(lbl_1_bss_179A0[i].mdl[3]).z - PW[p].pos.z;
+            len = sqrt(dx * dx + dz * dz);
+            if (len < (45.0f + radius)) {
+                if (i == PW[p ^ 1].carriedBy || (yOff + MDL(lbl_1_bss_179A0[i].mdl[3]).y) > PW[p].pos.y) {
+                    if (len != 0.0f) {
+                        k = (45.0f + radius) / len;
+                    } else {
+                        k = 0.0f;
+                    }
+                    PW[p].pos.x = MDL(lbl_1_bss_179A0[i].mdl[3]).x - (dx * k);
+                    PW[p].pos.z = MDL(lbl_1_bss_179A0[i].mdl[3]).z - (dz * k);
+                    PW[p].pad31 = i;
+                } else {
+                    hit += 1;
+                    PW[p].carriedBy = i;
+                }
+            }
+            if (hit == 0) {
+                PW[p].carriedBy = -1;
+            }
+        }
+        px = PW[p].pos.x;
+        pz = PW[p].pos.z;
+        FIND_EDGES(cnt)
+        for (j = 0; j < cnt; j++) {
+            ax = seg[list[j]][0] - seg[list[j]][2];
+            az = seg[list[j]][1] - seg[list[j]][3];
+            den = ax * ax + az * az;
+            num = -1.0f * (ax * (seg[list[j]][0] - PW[p].pos.x) + az * (seg[list[j]][1] - PW[p].pos.z));
+            if (den != 0.0f) {
+                t = num / den;
+            } else {
+                t = 0.0f;
+            }
+            cx = ax * t + seg[list[j]][0];
+            cz = az * t + seg[list[j]][1];
+            dx = PW[p].pos.x - cx;
+            dz = PW[p].pos.z - cz;
+            len = sqrt(dx * dx + dz * dz);
+            if (len != 0.0f) {
+                k = 45.0f / len;
+            } else {
+                k = 0.0f;
+            }
+            px = dx * k * sign[list[j]];
+            pz = dz * k * sign[list[j]];
+            PW[p].pos.x = cx + px;
+            PW[p].pos.z = cz + pz;
+        }
+        FIND_EDGES(cnt2)
+        for (j = 0; j < 8; j++) {
+            ax = seg[j][0] - seg[j][2];
+            az = seg[j][1] - seg[j][3];
+            den = ax * ax + az * az;
+            num = -1.0f * (ax * (seg[j][0] - PW[p].pos.x) + az * (seg[j][1] - PW[p].pos.z));
+            if (den != 0.0f) {
+                t = num / den;
+            } else {
+                t = 0.0f;
+            }
+            cx = ax * t + seg[j][0];
+            cz = az * t + seg[j][1];
+            vx = PW[p].pos.x - cx;
+            vz = PW[p].pos.z - cz;
+            len = sqrt(vx * vx + vz * vz);
+            if (len < 45.0f) {
+                if (len != 0.0f) {
+                    k = 45.0f / len;
+                } else {
+                    k = 0.0f;
+                }
+                PW[p].pos.x = cx + (vx * k * sign[j]);
+                PW[p].pos.z = cz + (vz * k * sign[j]);
+            }
+        }
+    }
+    if (FL.unk2C[1] != 0) {
+        modelA = &Hu3DData[MDL(81).id];
+        modelB = &Hu3DData[MDL(82).id];
+        dx = modelB->pos.x - modelA->pos.x;
+        dz = modelB->pos.z - modelA->pos.z;
+        len = sqrt(dx * dx + dz * dz);
+        if (len < 75.0f) {
+            if (len <= 1.0f) {
+                len = 1.0f;
+            }
+            k = 70.0f / len;
+            vx = dx * k;
+            vz = dz * k;
+            if (FL.unk2C[1] == 1) {
+                modelA->pos.x = modelB->pos.x - vx;
+                modelA->pos.z = modelB->pos.z - vz;
+            } else {
+                modelB->pos.x = modelA->pos.x + vx;
+                modelB->pos.z = modelA->pos.z + vz;
+            }
+            FL.unk2C[0]++;
+            return;
+        }
+        FL.unk2C[0] = 0;
+    }
 }
