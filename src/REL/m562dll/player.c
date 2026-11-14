@@ -21,7 +21,6 @@ extern float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 #define PL_SHIFT_OVERLAY(idx)     do {         u32 attr;         if (p->loopMotion != 0) {             attr = 0x40000001;         } else {             attr = 0;         }         Hu3DMotionShiftSet(model, p->obj->mtnId[idx], 0.0f, 4.0f, attr);         Hu3DMotionOverlaySet(model, p->obj->mtnId[p->curMotion]);         if (p->loopMotion != 0) {             Hu3DModelAttrSet(model, 0x40000200);         }     } while (0)
 
 /* launch fields of a bomb slot; the sunbomb view of the slot keeps them in its padding */
-#define PL_BOMB_F32(slot, off) (*(f32 *)((slot)->pad68 + (off)))
 
 /* motion table: the 30 motions of every character (DATANUM), then the character's own model entry */
 u32 lbl_1_data_190[13][31] = {
@@ -919,9 +918,9 @@ void fn_1_9AEC(M562Player *p)
             fire->timer = 0;
         }
     } else if (owner->mode == 4 && bomb != 0) {
-        PL_BOMB_F32(bomb, 4) = (f32) (0.8f * (10.0 * sin(PL_RAD(p->rotY))));
-        PL_BOMB_F32(bomb, 12) = (f32) (0.8f * (10.0 * cos(PL_RAD(p->rotY))));
-        PL_BOMB_F32(bomb, 0) = 20.0f;
+        bomb->fallVelX = (f32) (0.8f * (10.0 * sin(PL_RAD(p->rotY))));
+        bomb->fallVelZ = (f32) (0.8f * (10.0 * cos(PL_RAD(p->rotY))));
+        bomb->fallAcc = 20.0f;
     }
     p->held = NULL;
     p->target = NULL;

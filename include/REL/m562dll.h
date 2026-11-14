@@ -293,19 +293,26 @@ typedef struct KbBombSlot {
     /* 0x18 */ s32 mode;
     /* 0x1C */ f32 radius;
     /* 0x20 */ s32 flag;
-    /* 0x24 */ u8 pad24[0x38 - 0x24];
+    /* 0x24 */ HU3DMODELID model[7];
+    /* 0x32 */ u8 pad32[2];
+    /* 0x34 */ f32 scale;
     /* 0x38 */ Vec pos;
     /* 0x44 */ Vec vel;
-    /* 0x50 */ u8 pad50[0x5C - 0x50];
+    /* 0x50 */ Vec startPos;
     /* 0x5C */ Vec spawn;
-    /* 0x68 */ u8 pad68[0x78 - 0x68];
+    /* 0x68 */ f32 fallAcc;
+    /* 0x6C */ f32 fallVelX;
+    /* 0x70 */ f32 pad70;
+    /* 0x74 */ f32 fallVelZ;
 } KbBombSlot;
 
 typedef struct KbBombMgr {
     /* 0x000 */ struct KoopaBoss *boss;
     /* 0x004 */ KbBombSlot slot[5];
     /* 0x25C */ s16 count;
-    /* 0x25E */ u8 pad25E[0x294 - 0x25E];
+    /* 0x25E */ HU3DMODELID mdl[7];
+    /* 0x26C */ HU3DMOTID mot[5];
+    /* 0x276 */ u8 pad276[0x294 - 0x276];
     /* 0x294 */ s32 attract;
     /* 0x298 */ Vec attractPos;
     /* 0x2A4 */ f32 attractRange;

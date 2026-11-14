@@ -7,47 +7,8 @@
 #include "datadir_enum.h"
 #include "game/hsfex.h"
 
-typedef struct sunbombSlot_s SUNBOMBSLOT;
-typedef struct sunbomb_s SUNBOMB;
-
-/* One bomb: owner, life-cycle state, frame counter, the seven linked models
-   (bomb, flash, ring, smoke, glow, shadow, ground mark), pose and fall state. */
-struct sunbombSlot_s {
-    /* 0x00 */ SUNBOMB *owner;
-    /* 0x04 */ u16 state;
-    /* 0x08 */ s16 timer;
-    /* 0x0C */ s16 variant;
-    /* 0x10 */ s32 spawned;
-    /* 0x14 */ u8 pad14[4];
-    /* 0x18 */ s32 landRequest;
-    /* 0x1C */ f32 range;
-    /* 0x20 */ s32 pushed;
-    /* 0x24 */ HU3DMODELID model[7];
-    /* 0x32 */ u8 pad32[2];
-    /* 0x34 */ f32 scale;
-    /* 0x38 */ Vec pos;
-    /* 0x44 */ Vec vel;
-    /* 0x50 */ Vec startPos;
-    /* 0x5C */ Vec target;
-    /* 0x68 */ f32 fallAcc;
-    /* 0x6C */ f32 fallVelX;
-    /* 0x70 */ f32 pad70;
-    /* 0x74 */ f32 fallVelZ;
-};
-
-/* Private full view of the bomb manager (KbBombMgr in the header, which is
-   embedded in the boss): same layout, every field named. */
-struct sunbomb_s {
-    /* 0x000 */ KoopaBoss *link;
-    /* 0x004 */ SUNBOMBSLOT slots[5];
-    /* 0x25C */ s16 active;
-    /* 0x25E */ HU3DMODELID mdl[7];
-    /* 0x26C */ HU3DMOTID mot[5];
-    /* 0x276 */ u8 pad276[0x294 - 0x276];
-    /* 0x294 */ s32 attract;
-    /* 0x298 */ Vec attractor;
-    /* 0x2A4 */ f32 attractRange;
-};
+typedef KbBombSlot SUNBOMBSLOT;
+typedef KbBombMgr SUNBOMB;
 
 /* The two vectors the original keeps in .rodata and copies onto the stack. */
 void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner);
@@ -69,7 +30,7 @@ void fn_1_1EE3C(KbBombMgr *mgr, KoopaBoss *link)
     HU3DMODELID mdl;
 
     memset(self, 0, sizeof(SUNBOMB));
-    self->link = link;
+    self->boss = link;
 
     mdl = Hu3DModelCreate(HuDataSelHeapReadNum(DATANUM(DATA_m562, 0x1B), HU_MEMNUM_OVL, HEAP_MODEL));
     self->mdl[0] = mdl;
@@ -130,7 +91,7 @@ void fn_1_1EE3C(KbBombMgr *mgr, KoopaBoss *link)
     Hu3DModelAttrSet(mdl, 1);
 
     for (i = 0; i < 5; i++) {
-        slot = &self->slots[i];
+        slot = &self->slot[i];
         fn_1_1F324(slot, self);
     }
 }
@@ -156,7 +117,7 @@ void fn_1_1F138(KbBombMgr *mgr)
     Hu3DMotionKill(self->mot[0]);
     Hu3DModelKill(self->mdl[0]);
     for (i = 0; i < 5; i++) {
-        slot = &self->slots[i];
+        slot = &self->slot[i];
         fn_1_1F818(slot);
     }
     memset(self, 0, sizeof(SUNBOMB));
@@ -172,10 +133,10 @@ void fn_1_1F208(KbBombMgr *mgr)
     KoopaBoss *tag;
     SUNBOMBSLOT *slot;
 
-    tag = self->link;
+    tag = self->boss;
     tmp = kZeroUnitY;
     for (i = 0; i < 5; i++) {
-        slot = &self->slots[i];
+        slot = &self->slot[i];
         fn_1_1F870(slot);
     }
     self->attract = 0;
@@ -192,13 +153,13 @@ KbBombSlot *fn_1_1F298(KbBombMgr *mgr, Vec *pos)
 
     found = 0;
     for (i = 0; i < 5; i++) {
-        slot = &self->slots[i];
-        if (slot->spawned != 0) {
+        slot = &self->slot[i];
+        if (slot->active != 0) {
             continue;
         }
-        slot->target = *pos;
-        slot->spawned = 1;
-        self->active++;
+        slot->spawn = *pos;
+        slot->active = 1;
+        self->count++;
         found = slot;
         break;
     }
@@ -211,13 +172,13 @@ KbBombSlot *fn_1_1F298(KbBombMgr *mgr, Vec *pos)
 void fn_1_1F324(SUNBOMBSLOT *slot, SUNBOMB *owner)
 {
     SUNBOMB *self = owner;
-    KoopaBoss *link = self->link;
+    KoopaBoss *link = self->boss;
     KpHost *scene = link->host;
     CAMERA *cam = &scene->camera[0];
     HU3DMODELID m;
 
     memset(slot, 0, sizeof(SUNBOMBSLOT));
-    slot->owner = owner;
+    slot->mgr = owner;
 
     m = Hu3DModelLink(self->mdl[0]);
     slot->model[0] = m;
@@ -310,8 +271,8 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     Vec sp44;
     Vec off1;
     Vec off;
-    SUNBOMB *owner = self->owner;
-    KoopaBoss *link = owner->link;
+    SUNBOMB *owner = self->mgr;
+    KoopaBoss *link = owner->boss;
     KpHost *scene = link->host;
     M562Player *sub = (M562Player *)&scene->player;
     CAMERA *cam = &scene->camera[0];
@@ -327,7 +288,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     off1 = kSpawnOffset;
     off = off1;
 
-    if (self->spawned == 0 && self->state > 1) {
+    if (self->active == 0 && self->state > 1) {
         Hu3DModelAttrSet(self->model[0], 1);
         Hu3DModelAttrSet(self->model[1], 1);
         Hu3DModelAttrSet(self->model[2], 1);
@@ -341,7 +302,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     yOffset = 0.0f;
     switch (self->state) {
     case 0:
-        self->variant = 0;
+        self->phase = 0;
         Hu3DModelAttrSet(self->model[0], 1);
         Hu3DModelAttrSet(self->model[1], 1);
         Hu3DModelAttrSet(self->model[2], 1);
@@ -349,13 +310,13 @@ void fn_1_1F870(SUNBOMBSLOT *self)
         Hu3DModelAttrSet(self->model[4], 1);
         Hu3DModelAttrSet(self->model[5], 1);
         Hu3DModelAttrSet(self->model[6], 1);
-        self->landRequest = 0;
-        self->range = 120.0f;
-        self->pushed = 0;
+        self->mode = 0;
+        self->radius = 120.0f;
+        self->flag = 0;
         self->state = 1;
         /* fallthrough */
     case 1:
-        if (self->spawned != 0) {
+        if (self->active != 0) {
             self->scale = 0.0f;
             Hu3DModelScaleSet(self->model[0], 0.0f, 0.0f, 0.0f);
             Hu3DModelAttrReset(self->model[0], 1);
@@ -363,8 +324,8 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             Hu3DModelAttrReset(self->model[5], 1);
             Hu3DMtxTransGet(fn_1_1010C(link), &sp44);
             PSVECAdd(&sp44, &off, &self->pos);
-            self->landRequest = 0;
-            self->timer = 0;
+            self->mode = 0;
+            self->unk8 = 0;
             self->state = 2;
         }
         break;
@@ -372,45 +333,45 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     case 2:
         Hu3DMtxTransGet(fn_1_1010C(link), &sp44);
         PSVECAdd(&sp44, &off, &self->pos);
-        t = self->timer / 30.0f;
+        t = self->unk8 / 30.0f;
         t = CLAMP01(t);
         s = 2.0f * t;
         self->scale = s;
         Hu3DModelScaleSet(self->model[0], s, s, s);
         s = s * 1.5f;
         Hu3DModelScaleSet(self->model[5], s, s, s);
-        self->timer++;
-        if (self->landRequest != 0) {
-            self->landRequest = 0;
+        self->unk8++;
+        if (self->mode != 0) {
+            self->mode = 0;
             self->startPos.x = self->pos.x;
             self->startPos.y = self->pos.y;
             self->startPos.z = self->pos.z;
-            self->timer = 0;
+            self->unk8 = 0;
             self->state = 3;
         }
         break;
 
     case 3:
-        t = self->timer / 40.0f;
+        t = self->unk8 / 40.0f;
         if (t < 0.4f) {
             s = HuSin(90.0f * (t / 0.4f));
             self->pos.y = self->startPos.y + 250.0f * s;
         } else {
             s = HuSin(90.0f + 90.0f * ((t - 0.4f) / 0.6f));
-            self->pos.y = self->target.y + s * (250.0f + (self->startPos.y - self->target.y));
+            self->pos.y = self->spawn.y + s * (250.0f + (self->startPos.y - self->spawn.y));
         }
-        self->pos.x = self->startPos.x + t * (self->target.x - self->startPos.x);
-        self->pos.z = self->startPos.z + t * (self->target.z - self->startPos.z);
-        self->timer++;
-        if (self->timer >= 40) {
-            self->pos.x = self->target.x;
-            self->pos.y = self->target.y;
-            self->pos.z = self->target.z;
+        self->pos.x = self->startPos.x + t * (self->spawn.x - self->startPos.x);
+        self->pos.z = self->startPos.z + t * (self->spawn.z - self->startPos.z);
+        self->unk8++;
+        if (self->unk8 >= 40) {
+            self->pos.x = self->spawn.x;
+            self->pos.y = self->spawn.y;
+            self->pos.z = self->spawn.z;
             self->pos.y = 0.0f;
             Hu3DMotionTimeSet(self->model[1], 0.0f);
             Hu3DMotionSpeedSet(self->model[1], 0.5f);
             Hu3DModelAttrReset(self->model[1], 1);
-            self->timer = 0;
+            self->unk8 = 0;
             self->state = 4;
             fn_1_934(0x8AB, &self->pos);
             Hu3DModelScaleSet(self->model[5], 1.0f, 1.0f, 1.0f);
@@ -421,55 +382,55 @@ void fn_1_1F870(SUNBOMBSLOT *self)
 
     case 4:
         Hu3DMotionTimeSet(self->model[2], 0.0f);
-        if (self->timer < 10) {
-            t = self->timer / 10.0f;
+        if (self->unk8 < 10) {
+            t = self->unk8 / 10.0f;
             t = CLAMP01(t);
             s = 2.0f * (0.3f + 0.7f * (1.0f - t));
             self->scale = s;
             Hu3DModelScaleSet(self->model[0], s, s, s);
-        } else if (self->timer == 10) {
+        } else if (self->unk8 == 10) {
             Hu3DModelAttrSet(self->model[0], 1);
         }
-        self->range = 100.0f + 100.0f * (self->timer / 60.0f);
-        self->timer++;
-        if (self->timer == 10) {
+        self->radius = 100.0f + 100.0f * (self->unk8 / 60.0f);
+        self->unk8++;
+        if (self->unk8 == 10) {
             Hu3DModelScaleSet(self->model[2], 1.0f, 1.0f, 1.0f);
             Hu3DMotionTimeSet(self->model[2], 0.0f);
             Hu3DModelAttrReset(self->model[2], 1);
-        } else if (self->timer > 10 && self->timer < 40) {
-            t = (self->timer - 10) / 30.0f;
+        } else if (self->unk8 > 10 && self->unk8 < 40) {
+            t = (self->unk8 - 10) / 30.0f;
             t = CLAMP01(t);
             yOffset = 300.0 * HuSin(180.0f * t);
-        } else if (self->timer >= 60) {
-            self->variant = 1;
+        } else if (self->unk8 >= 60) {
+            self->phase = 1;
             Hu3DModelAttrSet(self->model[0], 1);
             Hu3DModelAttrSet(self->model[1], 1);
-            self->timer = 0;
+            self->unk8 = 0;
             self->state = 5;
-            self->range = 40.0f;
+            self->radius = 40.0f;
         }
         break;
 
     case 6:
-        if (self->timer == 0) {
+        if (self->unk8 == 0) {
             fn_1_934(0x8AE, &self->pos);
         }
-        self->variant = 2;
-        s = 2.5 * HuSin(180.0f * (self->timer / 40.0f));
+        self->phase = 2;
+        s = 2.5 * HuSin(180.0f * (self->unk8 / 40.0f));
         Hu3DModelScaleSet(self->model[4], s, s, s);
         Hu3DModelAttrReset(self->model[4], 1);
-        if (self->timer == 20) {
+        if (self->unk8 == 20) {
             Hu3DModelAttrSet(self->model[2], 1);
             Hu3DModelAttrReset(self->model[3], 1);
             Hu3DModelScaleSet(self->model[3], 1.5f, 1.5f, 1.5f);
             Hu3DModelScaleSet(self->model[6], 2.0f, 2.0f, 2.0f);
             Hu3DModelAttrReset(self->model[6], 1);
         }
-        self->timer++;
-        if (self->timer >= 40) {
+        self->unk8++;
+        if (self->unk8 >= 40) {
             Hu3DModelAttrSet(self->model[5], 1);
             Hu3DModelAttrSet(self->model[4], 1);
-            self->timer = 0;
+            self->unk8 = 0;
             self->state = 7;
         }
         break;
@@ -482,14 +443,14 @@ void fn_1_1F870(SUNBOMBSLOT *self)
         break;
 
     case 8:
-        t = self->timer / 10.0f;
+        t = self->unk8 / 10.0f;
         t = CLAMP01(t);
         s = self->scale * (1.0f - t);
         Hu3DModelScaleSet(self->model[0], s, s, s);
         s = s * 1.5f;
         Hu3DModelScaleSet(self->model[5], s, s, s);
-        self->timer++;
-        if (self->timer >= 10) {
+        self->unk8++;
+        if (self->unk8 >= 10) {
             Hu3DModelAttrSet(self->model[0], 1);
             Hu3DModelAttrSet(self->model[1], 1);
             Hu3DModelAttrSet(self->model[2], 1);
@@ -497,16 +458,16 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             Hu3DModelAttrSet(self->model[3], 1);
             Hu3DModelAttrSet(self->model[6], 1);
             Hu3DModelAttrSet(self->model[4], 1);
-            self->timer = 0;
+            self->unk8 = 0;
             self->state = 10;
         }
         break;
 
     case 9:
-        switch (self->variant) {
+        switch (self->phase) {
         case 0:
         case 1:
-            if (self->timer & 1) {
+            if (self->unk8 & 1) {
                 Hu3DModelAttrSet(self->model[2], 1);
                 Hu3DModelAttrSet(self->model[5], 1);
             } else {
@@ -515,7 +476,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             }
             break;
         case 2:
-            if (self->timer & 1) {
+            if (self->unk8 & 1) {
                 Hu3DModelAttrSet(self->model[3], 1);
                 Hu3DModelAttrSet(self->model[6], 1);
             } else {
@@ -524,8 +485,8 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             }
             break;
         }
-        self->timer++;
-        if (self->timer >= 60) {
+        self->unk8++;
+        if (self->unk8 >= 60) {
             Hu3DModelAttrSet(self->model[0], 1);
             Hu3DModelAttrSet(self->model[1], 1);
             Hu3DModelAttrSet(self->model[2], 1);
@@ -533,21 +494,21 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             Hu3DModelAttrSet(self->model[3], 1);
             Hu3DModelAttrSet(self->model[6], 1);
             Hu3DModelAttrSet(self->model[4], 1);
-            self->timer = 0;
+            self->unk8 = 0;
             self->state = 10;
         }
         break;
 
     case 10:
-        self->timer = 0;
-        self->spawned = 0;
-        owner->active--;
+        self->unk8 = 0;
+        self->active = 0;
+        owner->count--;
         break;
     }
 
     pushed = 0;
-    if (owner->attract != 0 && (void *)self != (void *)sub->target) {
-        PSVECSubtract(&self->pos, &owner->attractor, &sp50);
+    if (owner->attract != 0 && self != sub->target) {
+        PSVECSubtract(&self->pos, &owner->attractPos, &sp50);
         sp50.y = 0.0f;
         dist = PSVECMag(&sp50);
         if (dist < owner->attractRange && dist > owner->attractRange - 100.0f) {
@@ -558,18 +519,18 @@ void fn_1_1F870(SUNBOMBSLOT *self)
             }
             PSVECScale(&sp50, &sp50, owner->attractRange - dist);
             PSVECAdd(&self->pos, &sp50, &sp44);
-            if (sp44.z < owner->attractor.z) {
-                sp44.z += 0.1f * (owner->attractor.z - sp44.z);
+            if (sp44.z < owner->attractPos.z) {
+                sp44.z += 0.1f * (owner->attractPos.z - sp44.z);
             }
             self->pos.x = sp44.x;
             self->pos.y = sp44.y;
             self->pos.z = sp44.z;
-            self->pushed = 1;
+            self->flag = 1;
             pushed = 1;
         }
     }
 
-    if ((void *)self != (void *)sub->target) {
+    if (self != sub->target) {
         if (self->state >= 5) {
             if (self->pos.z < -360.0f) {
                 floorY = 55.0f;
@@ -610,7 +571,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
                 if (dyAbs < dzAbs) {
                     self->pos.y = 55.0f;
                     if (self->state <= 7) {
-                        self->timer = 0;
+                        self->unk8 = 0;
                         self->state = 9;
                     }
                 } else {
@@ -628,7 +589,7 @@ void fn_1_1F870(SUNBOMBSLOT *self)
     Hu3DModelPosSet(self->model[4], sp44.x, sp44.y, sp44.z);
     Hu3DModelPosSet(self->model[5], sp44.x, 0.0f, sp44.z);
     Hu3DModelPosSet(self->model[6], sp44.x, 0.0f, sp44.z);
-    if (self->spawned != 0 && (void *)self != (void *)sub->target && self->state >= 3 && self->state < 9) {
+    if (self->active != 0 && self != sub->target && self->state >= 3 && self->state < 9) {
         fn_1_2CE8C(KP_HITB(scene), 5, 0, &self->pos, self, 300.0f);
     }
 }
