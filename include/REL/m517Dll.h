@@ -427,8 +427,13 @@ M517Input *fn_1_A0FC(M517Input *self, s16 flag);
 /* ---- kuribo unit (kuribo.cpp) ---- */
 struct M517Kuribo_s;
 struct M517Kuribo_s *fn_1_C994(struct M517Kuribo_s *self, Vec *pos, Vec *rot, s32 type);
-/* TODO(reconcile): GC size of the kuribo object, replace by sizeof once its layout is shared. */
+/* Size of the kuribo object (its layout lives in kuribo.cpp): 0x58 on GC; the PC object is larger because of
+ * pointers and vtables, so allocate a generous upper bound there. */
+#ifdef TARGET_PC
+#define M517_KURIBO_SIZE 0x100
+#else
 #define M517_KURIBO_SIZE 0x58
+#endif
 
 
 /* ---- camera / stage units (camera.cpp, stage.cpp): the two singleton task objects ---- */
@@ -644,6 +649,52 @@ typedef struct M517DustCloud_s {
 
 M517DustCloud *fn_1_1A518(M517DustCloud *self, Vec *pos, GXColor *col, s32 num);
 M517DustCloud *fn_1_1ACD4(M517DustCloud *self, Vec *pos);
+
+
+/* ---- gamemaster unit (gamemaster.cpp): the game master and the three sets its singletons point into ---- */
+
+/* The three intrusive sets: players (lbl_1_bss_A08), balls (lbl_1_bss_0) and choros (lbl_1_bss_A1C). */
+typedef struct M517Sets_s {
+    M517Node players;
+    M517Node balls;
+    M517Node choros;
+} M517Sets;
+
+/* Owning slots of the game master (the original's smart pointers). */
+typedef struct M517SetsPtr_s {
+    M517Sets *p;
+} M517SetsPtr;
+
+typedef struct M517TimerPtr_s {
+    M517TimerObj *p;
+} M517TimerPtr;
+
+typedef struct M517PlayerModelsPtr_s {
+    M517PlayerModels *p;
+} M517PlayerModelsPtr;
+
+struct M517PaperTex_s;
+typedef struct M517PaperTexPtr_s {
+    struct M517PaperTex_s *p;
+} M517PaperTexPtr;
+
+typedef struct M517GameMaster_s {
+    M517Master base;
+    M517SubThread thread;
+    M517SetsPtr sets;
+    M517TimerPtr timer;
+    M517PlayerModelsPtr models;
+    M517PaperTexPtr paper;
+    u8 win;    // all players safe at the end of the round
+    u8 active; // 1 while the round is running
+} M517GameMaster;
+
+M517GameMaster *fn_1_A168(M517GameMaster *self);
+M517Master *fn_1_AB90(M517Master *self, s16 flag);
+void fn_1_AC64(M517GameMaster *self);
+void fn_1_ADA8(M517GameMaster *self);
+void fn_1_B058(M517GameMaster *self);
+void fn_1_B2CC(M517GameMaster *self);
 
 #ifdef __cplusplus
 }
