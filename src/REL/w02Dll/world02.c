@@ -4697,6 +4697,31 @@ s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0) {
  * MB2_CoinEffUpdate - NOT sizeof(MBEFFECTDATA)=0x5C). mb2_CoinEffObj->data
  * is the separate, small {modelId s32; count s32; ANIMDATA *anim;} header
  * (offsets confirmed by MB2_CoinEffNumGet/BlendModeSet: ->data+0x4 = count). */
+/* Particle model hook data (GC layout, size 0x54). Pointer members are real
+ * pointers so the struct stays valid with 8-byte pointers on PC. */
+typedef struct MB2ParticleHdr_s {
+    s16 unk0;       /* 0x00 */
+    s16 unk2;       /* 0x02 */
+    u8 pad4[0x1C];  /* 0x04 */
+    u8 blend;       /* 0x20 */
+    u8 flag21;      /* 0x21 */
+    u8 attr;        /* 0x22 */
+    u8 flag23;      /* 0x23 */
+    u8 pad24[2];    /* 0x24 */
+    s16 count;      /* 0x26 */
+    u32 cnt28;      /* 0x28 */
+    u8 pad2C[4];    /* 0x2C */
+    u32 lim30;      /* 0x30 */
+    u32 dlSize;     /* 0x34 */
+    ANIMDATA *anim; /* 0x38 */
+    u8 *particles;  /* 0x3C */
+    u8 *vtxPos;     /* 0x40 */
+    u8 *vtxUv;      /* 0x44 */
+    void *dl;       /* 0x48 */
+    void *hook;     /* 0x4C */
+    void *linked;   /* 0x50 */
+} MB2_PARTICLEHDR; /* size 0x54 on GC */
+
 typedef struct MB2CoinEffData_s {
     s32 modelId; /* 0x00 */
     s32 count;   /* 0x04 */
@@ -4708,7 +4733,7 @@ void MB2_CoinEffInit(void) {
     MB2_COINEFF_DATA *dat;
     ANIMDATA *anim;
     s16 modelId;
-    void *hdr;
+    MB2_PARTICLEHDR *hdr;
 
     obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_CoinEffUpdate);
     mb2_CoinEffObj = obj;
@@ -4721,14 +4746,14 @@ void MB2_CoinEffInit(void) {
     dat->modelId = modelId;
     Hu3DModelLayerSet(modelId, 3);
     dat->count = 0;
-    hdr = Hu3DData[modelId].hookData;
-    *(u8 *) ((u8 *) hdr + 0x20) = 1;
-    *(u8 *) ((u8 *) hdr + 0x22) = 2;
+    hdr = (MB2_PARTICLEHDR *) Hu3DData[modelId].hookData;
+    hdr->blend = 1;
+    hdr->attr = 2;
 }
 
 void MB2_CoinEffUpdate(OMOBJ *obj) {
     MB2_COINEFF_DATA *dat;
-    void *hdr;
+    MB2_PARTICLEHDR *hdr;
     u8 *p;
     s32 i;
 
@@ -4747,10 +4772,10 @@ void MB2_CoinEffUpdate(OMOBJ *obj) {
         return;
     }
     Hu3DModelAttrReset((s16) dat->modelId, 1U);
-    hdr = Hu3DData[dat->modelId].hookData;
-    p = *(u8 **) ((u8 *) hdr + 0x3C);
-    *(u8 *) ((u8 *) hdr + 0x23) = 0;
-    for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
+    hdr = (MB2_PARTICLEHDR *) Hu3DData[dat->modelId].hookData;
+    p = hdr->particles;
+    hdr->flag23 = 0;
+    for (i = 0; i < hdr->count; i++, p += 0x58) {
         if (*(f32 *) (p + 0x34) > 0.0f) {
             *(f32 *) (p + 0x44) += *(f32 *) (p + 0x8);
             *(f32 *) (p + 0x48) += *(f32 *) (p + 0xC);
@@ -4782,11 +4807,11 @@ s32 MB2_CoinEffNumGet(void) {
 }
 
 void MB2_CoinEffBlendModeSet(u8 arg0) {
-    void *hdr;
+    MB2_PARTICLEHDR *hdr;
 
     if (mb2_CoinEffObj != NULL) {
-        hdr = Hu3DData[((MB2_COINEFF_DATA *) mb2_CoinEffObj->data)->modelId].hookData;
-        *(u8 *) ((u8 *) hdr + 0x20) = arg0;
+        hdr = (MB2_PARTICLEHDR *) Hu3DData[((MB2_COINEFF_DATA *) mb2_CoinEffObj->data)->modelId].hookData;
+        hdr->blend = arg0;
     }
 }
 
@@ -4799,7 +4824,7 @@ void MB2_CoinEffBlendModeSet(u8 arg0) {
  * +0x50..0x53 RGBA color. */
 s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 farg2) {
     MB2_COINEFF_DATA *dat;
-    void *hdr;
+    MB2_PARTICLEHDR *hdr;
     u8 *p;
     s32 i;
 
@@ -4807,14 +4832,14 @@ s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 
         return -1;
     }
     dat = (MB2_COINEFF_DATA *) mb2_CoinEffObj->data;
-    hdr = Hu3DData[dat->modelId].hookData;
-    p = *(u8 **) ((u8 *) hdr + 0x3C);
-    for (i = 0; i < *(s16 *) ((u8 *) hdr + 0x26); i++, p += 0x58) {
+    hdr = (MB2_PARTICLEHDR *) Hu3DData[dat->modelId].hookData;
+    p = hdr->particles;
+    for (i = 0; i < hdr->count; i++, p += 0x58) {
         if (*(f32 *) (p + 0x34) == 0.0f) {
             break;
         }
     }
-    if (i >= *(s16 *) ((u8 *) hdr + 0x26)) {
+    if (i >= hdr->count) {
         return -1;
     }
     *(s16 *) (p + 0x2) = 0;
@@ -5099,7 +5124,7 @@ void MB2_SplashEffCreateRandX(f32 *arg0, u8 *arg1, s32 arg2, f32 farg0) {
 s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     HU3DMODEL *newModel;
     s16 newModelId;
-    u8 *hdr;
+    MB2_PARTICLEHDR *hdr;
     u8 *particles;
     u8 *arrA;
     u8 *arrB;
@@ -5110,22 +5135,22 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
     newModelId = Hu3DHookFuncCreate(ParticleDraw);
     Hu3DModelCameraSet(newModelId, 1U);
     newModel = &Hu3DData[newModelId];
-    hdr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 0x54, newModel->mallocNo);
+    hdr = (MB2_PARTICLEHDR *) HuMemDirectMallocNum(HEAP_MODEL, sizeof(MB2_PARTICLEHDR), newModel->mallocNo);
     newModel->hookData = hdr;
-    *(ANIMDATA **) (hdr + 0x38) = arg0;
-    *(s16 *) (hdr + 0x26) = arg1;
-    *(u8 *) (hdr + 0x20) = 0;
-    *(u8 *) (hdr + 0x22) = 0;
-    *(s32 *) (hdr + 0x4C) = 0;
-    *(s32 *) (hdr + 0x50) = 0;
-    *(s32 *) (hdr + 0x28) = 0;
-    *(u8 *) (hdr + 0x21) = 0;
-    *(u8 *) (hdr + 0x23) = 0;
-    *(s32 *) (hdr + 0x30) = 0;
-    *(s16 *) (hdr + 0x2) = 0;
-    *(s16 *) (hdr + 0x0) = 0;
+    hdr->anim = arg0;
+    hdr->count = arg1;
+    hdr->blend = 0;
+    hdr->attr = 0;
+    hdr->hook = 0;
+    hdr->linked = 0;
+    hdr->cnt28 = 0;
+    hdr->flag21 = 0;
+    hdr->flag23 = 0;
+    hdr->lim30 = 0;
+    hdr->unk2 = 0;
+    hdr->unk0 = 0;
     particles = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 0x58, newModel->mallocNo);
-    *(void **) (hdr + 0x3C) = particles;
+    hdr->particles = particles;
     memset(particles, 0, arg1 * 0x58);
     for (i = 0; i < arg1; i++, particles += 0x58) {
         *(f32 *) (particles + 0x34) = 0.0f;
@@ -5144,14 +5169,14 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
         *(s32 *) (particles + 0x54) = 0;
     }
     arrA = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 0xC * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x40) = arrA;
+    hdr->vtxPos = arrA;
     for (i = 0; i < arg1 * 4; i++, arrA += 0xC) {
         *(f32 *) (arrA + 0x8) = 0.0f;
         *(f32 *) (arrA + 0x4) = 0.0f;
         *(f32 *) (arrA + 0x0) = 0.0f;
     }
     arrB = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 8 * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x44) = arrB;
+    hdr->vtxUv = arrB;
     for (i = 0; i < arg1; i++, arrB += 0x20) {
         *(f32 *) (arrB + 0x0) = 0.0f;
         *(f32 *) (arrB + 0x4) = 0.0f;
@@ -5180,10 +5205,10 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
         GXColor1x16((u16) i);
         GXTexCoord1x16((u16) ((i * 4) + 3));
     }
-    *(u32 *) (hdr + 0x34) = GXEndDisplayList();
-    *(void **) (hdr + 0x48) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (hdr + 0x34), newModel->mallocNo);
-    memcpy(*(void **) (hdr + 0x48), dispListTmp, *(u32 *) (hdr + 0x34));
-    DCFlushRange(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
+    hdr->dlSize = GXEndDisplayList();
+    hdr->dl = HuMemDirectMallocNum(HEAP_MODEL, (s32) hdr->dlSize, newModel->mallocNo);
+    memcpy(hdr->dl, dispListTmp, hdr->dlSize);
+    DCFlushRange(hdr->dl, hdr->dlSize);
     HuMemDirectFree(dispListTmp);
     return newModelId;
 }
@@ -5198,10 +5223,10 @@ s16 MB2_ParticleCreate(ANIMDATA *arg0, s16 arg1) {
  * +0x48 display-list buffer (shared with source), +0x4C/0x50 zeroed. */
 s16 MB2_ParticleCopy(s16 arg0) {
     HU3DMODEL *srcModel;
-    u8 *srcHdr;
+    MB2_PARTICLEHDR *srcHdr;
     HU3DMODEL *newModel;
     s16 newModelId;
-    u8 *hdr;
+    MB2_PARTICLEHDR *hdr;
     s16 count;
     u8 *particles;
     u8 *arrA;
@@ -5209,26 +5234,26 @@ s16 MB2_ParticleCopy(s16 arg0) {
     s32 i;
 
     srcModel = &Hu3DData[arg0];
-    srcHdr = (u8 *) srcModel->hookData;
+    srcHdr = (MB2_PARTICLEHDR *) srcModel->hookData;
     newModelId = Hu3DHookFuncCreate(srcModel->hookFunc);
     Hu3DModelCameraSet(newModelId, 1U);
     newModel = &Hu3DData[newModelId];
-    hdr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 0x54, newModel->mallocNo);
+    hdr = (MB2_PARTICLEHDR *) HuMemDirectMallocNum(HEAP_MODEL, sizeof(MB2_PARTICLEHDR), newModel->mallocNo);
     newModel->hookData = hdr;
-    *(void **) (hdr + 0x38) = *(void **) (srcHdr + 0x38);
-    *(s16 *) (hdr + 0x26) = *(s16 *) (srcHdr + 0x26);
-    count = *(s16 *) (hdr + 0x26);
-    *(u8 *) (hdr + 0x20) = 0;
-    *(u8 *) (hdr + 0x22) = *(u8 *) (srcHdr + 0x22);
-    *(s32 *) (hdr + 0x4C) = 0;
-    *(s32 *) (hdr + 0x50) = 0;
-    *(s32 *) (hdr + 0x28) = 0;
-    *(u8 *) (hdr + 0x21) = 0;
-    *(s32 *) (hdr + 0x30) = 0;
-    *(s16 *) (hdr + 0x2) = 0;
-    *(s16 *) (hdr + 0x0) = 0;
+    hdr->anim = srcHdr->anim;
+    hdr->count = srcHdr->count;
+    count = hdr->count;
+    hdr->blend = 0;
+    hdr->attr = srcHdr->attr;
+    hdr->hook = 0;
+    hdr->linked = 0;
+    hdr->cnt28 = 0;
+    hdr->flag21 = 0;
+    hdr->lim30 = 0;
+    hdr->unk2 = 0;
+    hdr->unk0 = 0;
     particles = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, count * 0x58, newModel->mallocNo);
-    *(void **) (hdr + 0x3C) = particles;
+    hdr->particles = particles;
     for (i = 0; i < count; i++, particles += 0x58) {
         *(f32 *) (particles + 0x34) = 0.0f;
         *(f32 *) (particles + 0x40) = 0.0f;
@@ -5246,14 +5271,14 @@ s16 MB2_ParticleCopy(s16 arg0) {
         *(s32 *) (particles + 0x54) = 0;
     }
     arrA = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, count * 0xC * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x40) = arrA;
+    hdr->vtxPos = arrA;
     for (i = 0; i < count * 4; i++, arrA += 0xC) {
         *(f32 *) (arrA + 0x8) = 0.0f;
         *(f32 *) (arrA + 0x4) = 0.0f;
         *(f32 *) (arrA + 0x0) = 0.0f;
     }
     arrB = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, count * 8 * 4, newModel->mallocNo);
-    *(void **) (hdr + 0x44) = arrB;
+    hdr->vtxUv = arrB;
     for (i = 0; i < count; i++) {
         *(f32 *) (arrB + 0x0) = 0.0f;
         *(f32 *) (arrB + 0x4) = 0.0f;
@@ -5265,8 +5290,8 @@ s16 MB2_ParticleCopy(s16 arg0) {
         *(f32 *) (arrB + 0x1C) = 1.0f;
         arrB += 0x20;
     }
-    *(s32 *) (hdr + 0x34) = *(s32 *) (srcHdr + 0x34);
-    *(void **) (hdr + 0x48) = *(void **) (srcHdr + 0x48);
+    hdr->dlSize = srcHdr->dlSize;
+    hdr->dl = srcHdr->dl;
     return newModelId;
 }
 
@@ -5280,12 +5305,12 @@ s16 MB2_ParticleCopy(s16 arg0) {
  * +0x44 per-vertex UV output array (stride 8, 4 per particle), +0x48
  * display-list buffer, +0x4C optional per-model draw hook. */
 void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
-    u8 *hdr;
+    MB2_PARTICLEHDR *hdr;
     s16 count;
 
-    hdr = (u8 *) modelP->hookData;
+    hdr = (MB2_PARTICLEHDR *) modelP->hookData;
     if (shadowModelDrawF == 0) {
-        HU3DMODEL *linked = (HU3DMODEL *) *(void **) (hdr + 0x50);
+        HU3DMODEL *linked = (HU3DMODEL *) hdr->linked;
         if ((linked != NULL) && (linked != modelP)) {
             ParticleDraw(linked, mtx);
         }
@@ -5298,14 +5323,14 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
             GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ONE, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO);
             GXSetZMode(0U, GX_LEQUAL, 0U);
         } else {
-            ANIMDATA *srcAnim = *(ANIMDATA **) (hdr + 0x38);
+            ANIMDATA *srcAnim = hdr->anim;
             s32 fmt = srcAnim->bmp->dataFmt & 0xF;
             if ((fmt == 7) || (fmt == 8)) {
                 GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ONE, GX_CC_RASC, GX_CC_ZERO);
             } else {
                 GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_RASC, GX_CC_ZERO);
             }
-            if ((*(u8 *) (hdr + 0x22) & 1) != 0) {
+            if ((hdr->attr & 1) != 0) {
                 GXSetZMode(0U, GX_LEQUAL, 0U);
             } else if ((modelP->attr & 2) != 0) {
                 GXSetZMode(1U, GX_LEQUAL, 1U);
@@ -5318,10 +5343,10 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
         GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, 1U, GX_TEVPREV);
         GXSetNumChans(1U);
         GXSetChanCtrl(GX_COLOR0A0, 0U, GX_SRC_REG, GX_SRC_VTX, 0U, GX_DF_CLAMP, GX_AF_NONE);
-        HuSprTexLoad(*(ANIMDATA **) (hdr + 0x38), 0, 0, 1, 1, 1);
+        HuSprTexLoad(hdr->anim, 0, 0, 1, 1, 1);
         GXSetAlphaCompare(GX_GEQUAL, 1U, GX_AOP_AND, GX_GEQUAL, 1U);
         GXSetZCompLoc(0U);
-        switch (*(u8 *) (hdr + 0x20)) {
+        switch (hdr->blend) {
         case 0:
             GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
             break;
@@ -5343,14 +5368,14 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
                 PSMTXIdentity(invMtx);
             }
             PSMTXReorder(invMtx, (f32 (*)[3]) rotMtx);
-            hook = *(void (**)(HU3DMODEL *, void *, f32 (*)[3][4])) (hdr + 0x4C);
+            hook = (void (*)(HU3DMODEL *, void *, f32 (*)[3][4])) hdr->hook;
             if (hook != NULL) {
                 hook(modelP, hdr, mtx);
             }
-            particle = *(u8 **) (hdr + 0x3C);
-            outPos = *(u8 **) (hdr + 0x40);
-            count = *(s16 *) (hdr + 0x26);
-            if ((*(u8 *) (hdr + 0x22) & 4) != 0) {
+            particle = hdr->particles;
+            outPos = hdr->vtxPos;
+            count = hdr->count;
+            if ((hdr->attr & 4) != 0) {
                 Point3d corner[4];
                 s32 c;
 
@@ -5365,7 +5390,7 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
                     for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
                         if (*(f32 *) (particle + 0x34) == 0.0f) {
                             memset(outPos, 0, 0x30);
-                        } else if ((*(u8 *) (hdr + 0x22) & 8) != 0) {
+                        } else if ((hdr->attr & 8) != 0) {
                             Point3d scaled[4], world[4];
                             s32 c;
                             for (c = 0; c < 4; c++) {
@@ -5404,7 +5429,7 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
                 for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
                     if (*(f32 *) (particle + 0x34) == 0.0f) {
                         memset(outPos, 0, 0x30);
-                    } else if ((*(u8 *) (hdr + 0x22) & 8) != 0) {
+                    } else if ((hdr->attr & 8) != 0) {
                         Point3d scaled[4], world[4];
                         s32 c;
                         for (c = 0; c < 4; c++) {
@@ -5439,9 +5464,9 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
                 }
             }
 
-            particle = *(u8 **) (hdr + 0x3C);
-            outUv = *(u8 **) (hdr + 0x44);
-            if ((*(u8 *) (hdr + 0x22) & 2) == 0) {
+            particle = hdr->particles;
+            outUv = hdr->vtxUv;
+            if ((hdr->attr & 2) == 0) {
                 s32 i, c;
                 for (i = 0; i < count; i++, particle += 0x58) {
                     for (c = 0; c < 4; c++, outUv += 8) {
@@ -5457,30 +5482,30 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
                 }
             }
         }
-        DCFlushRangeNoSync(*(void **) (hdr + 0x40), count * 0xC * 4);
-        DCFlushRangeNoSync(*(void **) (hdr + 0x44), count * 8 * 4);
-        DCFlushRangeNoSync(*(void **) (hdr + 0x3C), count * 0x58);
+        DCFlushRangeNoSync(hdr->vtxPos, count * 0xC * 4);
+        DCFlushRangeNoSync(hdr->vtxUv, count * 8 * 4);
+        DCFlushRangeNoSync(hdr->particles, count * 0x58);
         PPCSync();
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSETARRAY(GX_VA_POS, *(void **) (hdr + 0x40), count * 0xC * 4U, 0xCU, TRUE);
+        GXSETARRAY(GX_VA_POS, hdr->vtxPos, count * 0xC * 4U, 0xCU, TRUE);
         GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-        GXSETARRAY(GX_VA_CLR0, *(u8 **) (hdr + 0x3C) + 0x50, count * 0x58U, 0x58U, TRUE);
+        GXSETARRAY(GX_VA_CLR0, hdr->particles + 0x50, count * 0x58U, 0x58U, TRUE);
         GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-        GXSETARRAY(GX_VA_TEX0, *(void **) (hdr + 0x44), count * 8U * 4U, 8U, TRUE);
-        GXCallDisplayList(*(void **) (hdr + 0x48), *(u32 *) (hdr + 0x34));
+        GXSETARRAY(GX_VA_TEX0, hdr->vtxUv, count * 8U * 4U, 8U, TRUE);
+        GXCallDisplayList(hdr->dl, hdr->dlSize);
         if (shadowModelDrawF == 0) {
-            if ((*(u8 *) (hdr + 0x21) & 2) == 0) {
-                *(u32 *) (hdr + 0x28) = *(u32 *) (hdr + 0x28) + 1;
+            if ((hdr->flag21 & 2) == 0) {
+                hdr->cnt28 = hdr->cnt28 + 1;
             }
-            if ((*(u32 *) (hdr + 0x30) != 0) && (*(u32 *) (hdr + 0x30) <= *(u32 *) (hdr + 0x28))) {
-                if ((*(u8 *) (hdr + 0x21) & 1) != 0) {
-                    *(u32 *) (hdr + 0x28) = 0;
+            if ((hdr->lim30 != 0) && (hdr->lim30 <= hdr->cnt28)) {
+                if ((hdr->flag21 & 1) != 0) {
+                    hdr->cnt28 = 0;
                 }
-                *(u32 *) (hdr + 0x28) = *(u32 *) (hdr + 0x30);
+                hdr->cnt28 = hdr->lim30;
             }
         }
     }
