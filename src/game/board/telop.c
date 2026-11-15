@@ -8,6 +8,7 @@
 #include "game/esprite.h"
 #include "game/wipe.h"
 #include "game/gxarray.h"
+#include "port/widescreen.h"
 
 typedef struct TelopObjWork_s {
     unsigned killF : 1;
@@ -264,7 +265,8 @@ static void TelopDraw(HU3DMODEL *modelP, Mtx *mtx)
     float time;
     float scale;
     
-    MTXOrtho(proj, 0, 480, 0, 640, 0, 100);
+    /* a centred banner: widened ortho keeps it centred and unstretched */
+    MTXOrtho(proj, 0, 480, HU_WIDE_L(640), HU_WIDE_R(640), 0, 100);
     GXSetProjection(proj, GX_ORTHOGRAPHIC);
     GXSetViewport(0, 0, 640, 480, 0, 1);
     GXSetScissor(0, 0, 640, 480);

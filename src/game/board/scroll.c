@@ -1,4 +1,5 @@
 #include "game/board/scroll.h"
+#include "port/widescreen.h"
 #include "game/board/model.h"
 #include "game/board/pause.h"
 #include "game/board/audio.h"
@@ -962,7 +963,8 @@ static void MasuDraw(HU3DMODEL *modelP, Mtx *mtx)
     float pathLen;
     
     
-    MTXOrtho(proj, 0, 480, 0, 576, 0, 100);
+    /* marks over the board: CameraProject places them in 4:3 terms, the widened ortho puts them back over the Hor+ picture */
+    MTXOrtho(proj, 0, 480, HU_WIDE_L(576), HU_WIDE_R(576), 0, 100);
     GXSetProjection(proj, GX_ORTHOGRAPHIC);
     HuSprTexLoad(masuAnim, 0, GX_TEXMAP0, GX_CLAMP, GX_CLAMP, GX_LINEAR);
     HuSprTexLoad(pathAnim, 0, GX_TEXMAP1, GX_CLAMP, GX_REPEAT, GX_LINEAR);
