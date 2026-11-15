@@ -992,6 +992,8 @@ void fn_1_2BEC(OMOBJ *obj)
     M529Player *sp1C[4];
     s32 i;
     u32 var_r5;
+    s16 msgA;
+    s16 msgB;
 
     for (i = 0; i < 4; i++) {
         sp1C[i] = lbl_1_bss_11C[i]->data;
@@ -1172,6 +1174,8 @@ void fn_1_2BEC(OMOBJ *obj)
             if (lbl_1_bss_108 == 0.0f) {
                 if (lbl_1_bss_1C != 2) {
                     if (lbl_1_bss_1C == 0) {
+                        msgA = fn_1_5960(0);
+                        msgB = fn_1_5960(1);
                         if (!_CheckFlag(0x1000F)) {
                             GwPlayer[fn_1_59BC(0)].mgCoinBonus += 0xA;
                         }
@@ -1179,6 +1183,8 @@ void fn_1_2BEC(OMOBJ *obj)
                             GwPlayer[fn_1_59BC(1)].mgCoinBonus += 0xA;
                         }
                     } else {
+                        msgA = fn_1_5960(2);
+                        msgB = fn_1_5960(3);
                         if (!_CheckFlag(0x1000F)) {
                             GwPlayer[fn_1_59BC(2)].mgCoinBonus += 0xA;
                         }
@@ -1186,7 +1192,7 @@ void fn_1_2BEC(OMOBJ *obj)
                             GwPlayer[fn_1_59BC(3)].mgCoinBonus += 0xA;
                         }
                     }
-                    lbl_1_bss_22E = GameMesCreate(4, 3, fn_1_5960(0), fn_1_5960(1), -1, -1);
+                    lbl_1_bss_22E = GameMesCreate(4, 3, msgA, msgB, -1, -1);
                     HuAudJinglePlay(0x79);
                     lbl_1_bss_E0 = lbl_1_bss_2C;
                 } else {
