@@ -52,7 +52,7 @@ CFrame lbl_1_bss_A14(210);
 CFrame lbl_1_bss_A18(210);
 CFrame lbl_1_bss_A1C(300);
 CFrame lbl_1_bss_A20(60);
-void *lbl_1_bss_A24;
+extern void *lbl_1_bss_A24; /* defined in man_referee.cpp */
 void *lbl_1_bss_A28;
 void *lbl_1_bss_A2C; /* camera singleton (camera.cpp) */
 

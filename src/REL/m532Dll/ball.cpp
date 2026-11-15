@@ -49,7 +49,9 @@ static void __destroy_arr(void *block, void *dtor, u32 size, u32 n)
 extern "C" {
 
 double acos(double x);
+#ifndef TARGET_PC
 void GXSetVtxAttrFmtv(GXVtxFmt fmt, GXVtxAttrFmtList *list);
+#endif
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT, s32 filter);
 
 // helpers of m532.cpp / unk.cpp / player.cpp / man_map.cpp

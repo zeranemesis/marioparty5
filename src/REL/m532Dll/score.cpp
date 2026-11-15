@@ -35,7 +35,9 @@ void fn_1_1D1C(const char *expr, const char *file, s32 line);
 void fn_1_32B0(M532ScoreNode *node);
 void fn_1_32BC(M532ScoreNode *node, s32 flag);
 void fn_1_337C(M532ScoreNode *node, M532ScoreNode *list);
+#ifndef TARGET_PC
 void GXSetVtxAttrFmtv(GXVtxFmt fmt, GXVtxAttrFmtList *list);
+#endif
 void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, s32 wrapS, s32 wrapT, s32 filter);
 #ifdef __MWERKS__
 void *__construct_array(void *ptr, void *ctor, void *dtor, u32 size, u32 n);

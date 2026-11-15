@@ -22,7 +22,11 @@ void ObjectSetup(void)
     void *mem;
     void *master;
 
+#ifdef TARGET_PC /* pointer-bearing struct: twice the GameCube size */
+    mem = fn_1_668C(0x368 * 2);
+#else
     mem = fn_1_668C(0x368);
+#endif
     if (mem) {
         mem = fn_1_8A2C(mem);
     }

@@ -53,6 +53,7 @@ typedef struct M532SubThread_s {
     OSThread thread;
     u32 *stack;
     M532Sem sem;
+    s32 arg; // 0x354 on GameCube (written by fn_1_7324)
 } M532SubThread;
 
 typedef struct M532TimerObj_s {
