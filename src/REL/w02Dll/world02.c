@@ -1160,7 +1160,7 @@ loop_8:
                     var_r29_2 = 0;
                 } else {
                     temp_f31 = 0.6f + (0.4f * ((f32) GwPlayer[arg1].dif / 3.0f));
-                    if ((0.007874016f * (f32) (frand() & 0x7F)) == temp_f31) {
+                    if ((0.007874016f * (f32) (frand() & 0x7F)) <= temp_f31) {
                         var_r29_2 = 0;
                     } else {
                         var_r29_2 = 1;
@@ -3589,21 +3589,21 @@ f32 MB2_AngleDiff(f32 farg0, f32 farg1) {
 
     var_f1 = farg0;
     var_f2 = farg1;
-    if (var_f1 == 360.0f) {
+    if (var_f1 >= 360.0f) {
         var_f1 -= 360.0f;
     } else if (var_f1 < 0.0f) {
         var_f1 += 360.0f;
     }
-    if (var_f2 == 360.0f) {
+    if (var_f2 >= 360.0f) {
         var_f2 -= 360.0f;
     } else if (var_f2 < 0.0f) {
         var_f2 += 360.0f;
     }
     var_f31 = var_f1 - var_f2;
-    if (var_f31 == -180.0f) {
+    if (var_f31 <= -180.0f) {
         var_f31 += 360.0f;
     } else {
-        if (var_f31 == 180.0f) {
+        if (var_f31 >= 180.0f) {
             var_f31 -= 360.0f;
         }
     }
@@ -3619,37 +3619,37 @@ f32 MB2_AngleLerp(f32 farg0, f32 farg1, f32 farg2) {
 
     var_f28 = farg0;
     var_f29 = farg1;
-    if (var_f28 == (f32) 360.0) {
+    if (var_f28 >= 360.0) {
         var_f28 = (f32) ((f64) var_f28 - 360.0);
-    } else if (var_f28 < (f32) 0.0) {
+    } else if (var_f28 < 0.0) {
         var_f28 = (f32) ((f64) var_f28 + 360.0);
     }
-    if (var_f29 == (f32) 360.0) {
+    if (var_f29 >= 360.0) {
         var_f29 = (f32) ((f64) var_f29 - 360.0);
-    } else if (var_f29 < (f32) 0.0) {
+    } else if (var_f29 < 0.0) {
         var_f29 = (f32) ((f64) var_f29 + 360.0);
     }
     var_f30 = (f32) (360.0 + (f64) (var_f28 - var_f29));
-    if (fabs(var_f30) == (f32) 360.0) {
+    if (fabs(var_f30) >= 360.0) {
         var_f30 = (f32) fmod((f64) var_f30, 360.0);
     }
-    if (var_f30 < (f32) 180.0) {
-        if (var_f30 == farg2) {
+    if (var_f30 < 180.0) {
+        if (var_f30 <= farg2) {
             var_f31_2 = var_f30;
         } else {
             var_f31_2 = farg2;
         }
     } else {
-        if ((f32) (360.0 - (f64) var_f30) == farg2) {
+        if ((f32) (360.0 - (f64) var_f30) <= farg2) {
             var_f31_2 = (f32) -(360.0 - (f64) var_f30);
         } else {
             var_f31_2 = -farg2;
         }
     }
     var_f31 = var_f31_2 + var_f29;
-    if (var_f31 == (f32) 360.0) {
+    if (var_f31 >= 360.0) {
         var_f31 = (f32) ((f64) var_f31 - 360.0);
-    } else if (var_f31 < (f32) 0.0) {
+    } else if (var_f31 < 0.0) {
         var_f31 = (f32) ((f64) var_f31 + 360.0);
     }
     return var_f31;
@@ -3674,58 +3674,58 @@ f32 fn_1_BF54(f32 farg0, f32 farg1, f32 farg2) {
     sp10 = farg2;
     var_f26 = spC;
     var_f27 = sp10;
-    if (var_f27 == 360.0f) {
+    if (var_f27 >= 360.0f) {
         var_f27 -= 360.0f;
     } else if (var_f27 < 0.0f) {
         var_f27 += 360.0f;
     }
-    if (var_f26 == 360.0f) {
+    if (var_f26 >= 360.0f) {
         var_f26 -= 360.0f;
     } else if (var_f26 < 0.0f) {
         var_f26 += 360.0f;
     }
     var_f28 = var_f27 - var_f26;
-    if (var_f28 == -180.0f) {
+    if (var_f28 <= -180.0f) {
         var_f28 += 360.0f;
     } else {
-        if (var_f28 == 180.0f) {
+        if (var_f28 >= 180.0f) {
             var_f28 -= 360.0f;
         }
     }
     temp_f24 = (f32) fabs(var_f28 * sp8);
     var_f29 = spC;
     var_f25 = sp10;
-    if (var_f25 == (f32) 360.0) {
+    if (var_f25 >= 360.0) {
         var_f25 = (f32) ((f64) var_f25 - 360.0);
-    } else if (var_f25 < (f32) 0.0) {
+    } else if (var_f25 < 0.0) {
         var_f25 = (f32) ((f64) var_f25 + 360.0);
     }
-    if (var_f29 == (f32) 360.0) {
+    if (var_f29 >= 360.0) {
         var_f29 = (f32) ((f64) var_f29 - 360.0);
-    } else if (var_f29 < (f32) 0.0) {
+    } else if (var_f29 < 0.0) {
         var_f29 = (f32) ((f64) var_f29 + 360.0);
     }
     var_f30 = (f32) (360.0 + (f64) (var_f25 - var_f29));
-    if (fabs(var_f30) == (f32) 360.0) {
+    if (fabs(var_f30) >= 360.0) {
         var_f30 = (f32) fmod((f64) var_f30, 360.0);
     }
-    if (var_f30 < (f32) 180.0) {
-        if (var_f30 == temp_f24) {
+    if (var_f30 < 180.0) {
+        if (var_f30 <= temp_f24) {
             var_f31_2 = var_f30;
         } else {
             var_f31_2 = temp_f24;
         }
     } else {
-        if ((f32) (360.0 - (f64) var_f30) == temp_f24) {
+        if ((f32) (360.0 - (f64) var_f30) <= temp_f24) {
             var_f31_2 = (f32) -(360.0 - (f64) var_f30);
         } else {
             var_f31_2 = -temp_f24;
         }
     }
     var_f31 = var_f31_2 + var_f29;
-    if (var_f31 == (f32) 360.0) {
+    if (var_f31 >= 360.0) {
         var_f31 = (f32) ((f64) var_f31 - 360.0);
-    } else if (var_f31 < (f32) 0.0) {
+    } else if (var_f31 < 0.0) {
         var_f31 = (f32) ((f64) var_f31 + 360.0);
     }
     return var_f31;
