@@ -615,7 +615,11 @@ void ObjectSetup(void)
     if (sys->ring == 0) {
         OSReport("sys->ring = NULL...\n");
     }
+    #ifdef TARGET_PC
+    sys->fuki = HuMemDirectMallocNum(HEAP_HEAP, sizeof(SYSFUKI) * 4, HU_MEMNUM_OVL); /* SYSFUKI holds a pointer */
+#else
     sys->fuki = HuMemDirectMallocNum(HEAP_HEAP, 0x80, HU_MEMNUM_OVL);
+#endif
     if (sys->fuki == 0) {
         OSReport("sys->fuki = NULL...\n");
     }
@@ -3351,7 +3355,7 @@ void fn_1_8F18(NEL_SYS *sys, MDFLOWENT *tbl)
                 HuSprAttrReset(grp, i, 4);
                 HuSprPosSet(grp, i, -100.0f, -100.0f);
             }
-            grp = sprite->grpId[6];
+            grp = sprite->grpId[7];
             HuSprGrpPosSet(grp, 0.0f, 0.0f);
             for (i = 0; i < 8; i++) {
                 HuSprAttrReset(grp, i, 4);
@@ -3442,7 +3446,7 @@ void fn_1_8F18(NEL_SYS *sys, MDFLOWENT *tbl)
                 return;
             }
             if ((HuPadBtnDown[0] & 0x200) != 0) {
-                grp = sprite->grpId[6];
+                grp = sprite->grpId[7];
                 for (i = 0; i < 8; i++) {
                     HuSprPosSet(grp, i, -100.0f, -100.0f);
                 }
