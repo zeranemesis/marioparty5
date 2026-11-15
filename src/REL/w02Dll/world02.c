@@ -5371,7 +5371,8 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
             break;
         }
         {
-            Mtx invMtx, rotMtx;
+            Mtx invMtx, rotMtx, concat;
+            Point3d corner[4];
             void (*hook)(HU3DMODEL *, void *, f32 (*)[3][4]);
             u8 *particle;
             u8 *outPos;
@@ -5389,89 +5390,51 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
             outPos = hdr->vtxPos;
             count = hdr->count;
             if ((hdr->attr & 4) != 0) {
-                Point3d corner[4];
-                s32 c;
-
                 PSMTXIdentity(invMtx);
                 PSMTXIdentity(rotMtx);
-                for (c = 0; c < 4; c++) {
-                    corner[c] = mb2_ParticleVtxTbl[c];
-                }
-
-                {
-                    s32 i;
-                    for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
-                        if (*(f32 *) (particle + 0x34) == 0.0f) {
-                            memset(outPos, 0, 0x30);
-                        } else if ((hdr->attr & 8) != 0) {
-                            Point3d scaled[4], world[4];
-                            s32 c;
-                            for (c = 0; c < 4; c++) {
-                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                            }
-                            mtxRot(invMtx, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
-                            PSMTXMultVecArray(invMtx, scaled, world, 4U);
-                            for (c = 0; c < 4; c++) {
-                                PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                            }
-                        } else if (*(f32 *) (particle + 0x40) == 0.0f) {
-                            Point3d scaled[4];
-                            s32 c;
-                            for (c = 0; c < 4; c++) {
-                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                                PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                            }
-                        } else {
-                            Point3d scaled[4], world[4];
-                            Mtx rotZ, concat;
-                            s32 c;
-                            for (c = 0; c < 4; c++) {
-                                PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                            }
-                            PSMTXRotRad(rotZ, 'Z', *(f32 *) (particle + 0x40));
-                            PSMTXConcat(rotMtx, rotZ, concat);
-                            PSMTXMultVecArray(concat, scaled, world, 4U);
-                            for (c = 0; c < 4; c++) {
-                                PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
-                            }
-                        }
-                    }
-                }
+                corner[0] = mb2_ParticleVtxTbl[0];
+                corner[1] = mb2_ParticleVtxTbl[1];
+                corner[2] = mb2_ParticleVtxTbl[2];
+                corner[3] = mb2_ParticleVtxTbl[3];
             } else {
+                PSMTXROMultVecArray((f32 (*)[3]) rotMtx, mb2_ParticleVtxTbl, corner, 4U);
+            }
+            {
                 s32 i;
-                for (i = 0; i < count; i++, particle += 0x58, outPos += 0x30) {
+                for (i = 0; i < count; i++, particle += 0x58) {
                     if (*(f32 *) (particle + 0x34) == 0.0f) {
                         memset(outPos, 0, 0x30);
+                        outPos += 0x30;
                     } else if ((hdr->attr & 8) != 0) {
                         Point3d scaled[4], world[4];
                         s32 c;
                         for (c = 0; c < 4; c++) {
                             PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
                         }
-                        mtxRot(invMtx, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
-                        PSMTXMultVecArray(invMtx, scaled, world, 4U);
-                        for (c = 0; c < 4; c++) {
-                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                        mtxRot(concat, *(f32 *) (particle + 0x38), *(f32 *) (particle + 0x3C), *(f32 *) (particle + 0x40));
+                        PSMTXMultVecArray(concat, scaled, world, 4U);
+                        for (c = 0; c < 4; c++, outPos += 0xC) {
+                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) outPos);
                         }
                     } else if (*(f32 *) (particle + 0x40) == 0.0f) {
                         Point3d scaled[4];
                         s32 c;
-                        for (c = 0; c < 4; c++) {
-                            PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
-                            PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                        for (c = 0; c < 4; c++, outPos += 0xC) {
+                            PSVECScale(&corner[c], &scaled[c], *(f32 *) (particle + 0x34));
+                            PSVECAdd(&scaled[c], (Point3d *) (particle + 0x44), (Point3d *) outPos);
                         }
                     } else {
                         Point3d scaled[4], world[4];
-                        Mtx rotZ, concat;
+                        Mtx rotZ;
                         s32 c;
                         for (c = 0; c < 4; c++) {
                             PSVECScale(&mb2_ParticleVtxTbl[c], &scaled[c], *(f32 *) (particle + 0x34));
                         }
                         PSMTXRotRad(rotZ, 'Z', *(f32 *) (particle + 0x40));
-                        PSMTXConcat(rotMtx, rotZ, concat);
+                        PSMTXConcat(invMtx, rotZ, concat);
                         PSMTXMultVecArray(concat, scaled, world, 4U);
-                        for (c = 0; c < 4; c++) {
-                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) (outPos + c * 0xC));
+                        for (c = 0; c < 4; c++, outPos += 0xC) {
+                            PSVECAdd(&world[c], (Point3d *) (particle + 0x44), (Point3d *) outPos);
                         }
                     }
                 }
