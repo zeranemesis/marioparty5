@@ -27,6 +27,11 @@
 #include "datanum/capsule.h"
 
 #include <math.h>
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype (implicit int is wrong for pointers on x64) */
+#include <string.h>
+#include "game/board/pause.h"
+#endif
 
 /*
  * w04sDll - Story Mode variant of the "Deep Bloober Sea" board (w04Dll).
