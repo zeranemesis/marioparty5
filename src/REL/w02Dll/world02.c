@@ -75,8 +75,8 @@ struct _struct_mb2_ParticleUvTbl_0x8 {
 
 s32 HuSprTexLoad(void *, s32, s32, s32, s32, s32);              /* extern */
 void PSMTXRotRad(Mtx m, char axis, f32 rad);        /* extern */
-s8 MBPadStkXGet(s8, s32);                           /* extern */
-s8 MBPadStkYGet(s8, GWPLAYER *, GWPLAYER *);        /* extern */
+s8 MBPadStkXGet(int padNo);                         /* extern */
+s8 MBPadStkYGet(int padNo);                         /* extern */
 s32 MBScrollExec(s32);                                /* extern */
 s32 MB2_MasuLinkGet(s16 arg0, s16 *arg1, s32 arg2, s32 arg3);
 HSFOBJECT *objCall(HU3DMODEL *arg0, char *arg1, HSFOBJECT *arg2);
@@ -491,8 +491,8 @@ static s8 lbl_1_data_DCC[5] = "k_f2";
 static s8 lbl_1_data_DD1[5] = "k_f1";
 static s8 lbl_1_data_DD6[5] = "k_f4";
 static char *mb2ev_WindGuru2HookTbl[5] = { "hazure", "k_f3", "k_f2", "k_f1", "k_f4" };
-static Point3d mb2ev_DynamoPos;
-static Point3d mb2ev_BiriQCapsulePos;
+static Point3d mb2ev_DynamoPos = { 0.0f, 300.0f, 2150.0f };
+static Point3d mb2ev_BiriQCapsulePos = { 0.0f, 250.0f, 1650.0f };
 static s8 lbl_1_data_E08[7] = "dynamo";
 static s8 lbl_1_data_E0F[7] = "suimon";
 static s8 lbl_1_data_E16[5] = "hs_a";
@@ -516,12 +516,12 @@ static char *mb2ev_RainObjTbl[0xA] = {
     "hs_h",
     "hs_i" /* not null-terminated */,
 };
-static s8 mb2ev_RainNoTbl[0xA];
+static s8 mb2ev_RainNoTbl[0xA] = { -1, 1, 2, 3, -1, -1, -1, -1, -1, -1 };
 static s32 mb2ev_RainSwimLenTbl[0xA] = { 0, 0xF0, 0x3C, 0xB4, 0, 0x5A, 0, 0, 0, 0 };
 static Point3d mb2ev_RainSwimMidPos = { -3570.0f, 1190.0f, -625.0f };
 static Point3d mb2ev_RainSwimRightPos = { -2450.0f, 1210.0f, 500.0f };
 static f32 mb2ev_RainSwimLeftPos[3] = { -3200.0f, 1620.0f, -250.0f };
-static f32 mb2ev_RainSwimDefPos = 0.0f;
+static Point3d mb2ev_RainSwimDefPos = { 0.0f, 0.0f, 0.0f };
 static struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC mb2ev_Zen2RainbowVtxTbl[3] = {
     {
         &mb2ev_Zen2Rainbow1VtxTbl,
@@ -540,8 +540,8 @@ static struct _struct_mb2ev_Zen2RainbowVtxTbl_0xC mb2ev_Zen2RainbowVtxTbl[3] = {
     },
 };
 static struct _struct_mb2ev_Zen2RainbowVtxNumTbl_0xC mb2ev_Zen2RainbowVtxNumTbl[3] = { { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 }, { 0x14, 0x14, 0x14 } };
-static s32 mb2ev_Zen2DestTbl[3][3];
-static Point3d mb2ev_Zen2CoinBasePos;
+static s32 mb2ev_Zen2DestTbl[3][3] = { { 0, 1, 2 }, { 1, 2, 0 }, { 2, 0, 1 } };
+static Point3d mb2ev_Zen2CoinBasePos = { 0.0f, 3917.0f, -2497.0f };
 static s8 lbl_1_data_F48[7] = "sisof1";
 static s32 mb2ev_TimerGameMesId = -1;
 static s32 mb2ev_CoinEffColTbl[7] = {
@@ -2754,14 +2754,13 @@ void MB2Ev_Zen2(s32 arg0) {
     if (GwPlayer[arg0].comF == 0) {
         s32 btn;
         do {
-            f32 x, y;
+            s32 x, y;
             HuPrcVSleep();
-            x = MBPadStkXGet((s8) (u8) GwPlayer[arg0].padNo, arg0);
-            y = MBPadStkYGet((s8) (u8) GwPlayer[arg0].padNo, &GwPlayer[arg0], GwPlayer);
+            x = MBPadStkXGet((s8) (u8) GwPlayer[arg0].padNo);
+            y = MBPadStkYGet((s8) (u8) GwPlayer[arg0].padNo);
             btn = (s32) HuPadBtnDown[(s8) (u8) GwPlayer[arg0].padNo];
             if ((fabs((f64) x) > 8.0) || (fabs((f64) y) > 8.0)) {
-                f32 ang = (f32) (atan2((f64) x, (f64) -y) / 3.141592653589793);
-                f32 angDeg = (f32) (180.0 * (f64) ang);
+                f32 angDeg = (f32) (180.0 * (atan2((f64) x, (f64) -y) / 3.141592653589793));
                 if (fabs(angDeg) < 45.0) {
                     dir = 1;
                 } else if (angDeg >= 45.0f) {
