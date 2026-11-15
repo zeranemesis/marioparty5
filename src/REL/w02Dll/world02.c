@@ -588,9 +588,7 @@ typedef struct MB2CoinSlot_s {
     f32 rot[3];    /* 0x24 */
     f32 scale[3];  /* 0x30 */
     f32 srcPos[3]; /* 0x3C, saved starting position */
-    s32 unk48;
-    s32 unk4C;
-    s32 unk50;
+    f32 dstPos[3]; /* 0x48 */
     f32 playerPos[4][3]; /* 0x54, one Point3d per player */
 } MB2_COIN_SLOT; /* size 0x84 */
 
@@ -4510,9 +4508,9 @@ void MB2_CoinUpdate(OMOBJ *obj) {
             p.z = slot->srcPos[2];
             {
                 Point3d dst, delta;
-                dst.x = (f32) slot->unk48;
-                dst.y = (f32) slot->unk4C;
-                dst.z = (f32) slot->unk50;
+                dst.x = slot->dstPos[0];
+                dst.y = slot->dstPos[1];
+                dst.z = slot->dstPos[2];
                 PSVECSubtract(&dst, &p, &delta);
                 PSVECScale(&delta, &delta, t);
                 PSVECAdd(&delta, &p, &delta);
@@ -4529,9 +4527,9 @@ void MB2_CoinUpdate(OMOBJ *obj) {
             break;
         }
         case 1:
-            slot->pos[0] = (f32) slot->unk48;
-            slot->pos[1] = (f32) slot->unk4C;
-            slot->pos[2] = (f32) slot->unk50;
+            slot->pos[0] = slot->dstPos[0];
+            slot->pos[1] = slot->dstPos[1];
+            slot->pos[2] = slot->dstPos[2];
             slot->rot[1] = slot->rot[1] + 10.0f;
             break;
         }
@@ -4548,12 +4546,10 @@ void MB2_CoinUpdate(OMOBJ *obj) {
                 prevPos.y = slot->playerPos[p][1];
                 prevPos.z = slot->playerPos[p][2];
                 PSVECSubtract((Point3d *) slot->pos, &pos, &delta);
-                if (slot->pos[1] == prevPos.y) {
-                    if (slot->pos[1] == (pos.y + mb2_CoinMaxDist.y)) {
+                if (pos.y >= prevPos.y) {
+                    if ((slot->pos[1] >= prevPos.y) && (slot->pos[1] <= (pos.y + mb2_CoinMaxDist.y))) {
                         collect = 1;
-                    }
-                } else if (slot->pos[1] == (prevPos.y + mb2_CoinMaxDist.y)) {
-                    if (slot->pos[1] == pos.y) {
+                    } else if ((slot->pos[1] <= (prevPos.y + mb2_CoinMaxDist.y)) && (slot->pos[1] >= pos.y)) {
                         collect = 1;
                     }
                 }
@@ -4671,9 +4667,9 @@ s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0) {
         slot->srcPos[2] = arg0[2];
     }
     if (arg1 != NULL) {
-        slot->unk48 = (s32) arg1[0];
-        slot->unk4C = (s32) arg1[1];
-        slot->unk50 = (s32) arg1[2];
+        slot->dstPos[0] = arg1[0];
+        slot->dstPos[1] = arg1[1];
+        slot->dstPos[2] = arg1[2];
     }
     slot->pos[0] = slot->srcPos[0];
     slot->pos[1] = slot->srcPos[1];
