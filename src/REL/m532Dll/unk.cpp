@@ -19,6 +19,10 @@ void fn_1_1AFC(void);
 // Task base vtable (ball.cpp).
 extern M532TaskVtbl lbl_1_data_B4;
 
+// Constants used by player.cpp (misplaced in this unit's .rodata range).
+extern const Vec lbl_1_rodata_3B0 = { 90.0f, 116.0f, 300.0f };
+extern const Vec lbl_1_rodata_3BC = { 320.0f, 0.0f, 455.0f };
+
 char lbl_1_data_650[] = "ms_pointer == 0";
 char lbl_1_data_660[] = "singleton.h";
 char lbl_1_data_66C[] = "ms_pointer != 0";
@@ -31,10 +35,10 @@ void fn_1_E810(M532Task *self);
 void fn_1_E898(HU3DMODEL *model, Mtx *mtx);
 
 M532UnkObjVtbl lbl_1_data_67C = { { 0, 0 },
-                                  fn_1_EAF0,
-                                  fn_1_E894,
-                                  (void (*)(M532UnkObj *, Mtx *))fn_1_1AF8,
-                                  (void (*)(M532UnkObj *))fn_1_1AFC };
+                                  (void *(*)(void *, s16))fn_1_EAF0,
+                                  (void (*)(void *))fn_1_E894,
+                                  (void (*)(void *, f32 (*)[4]))fn_1_1AF8,
+                                  (void (*)(void *))fn_1_1AFC };
 M532TaskVtbl lbl_1_data_694 = { { 0, 0 }, fn_1_E6C4, fn_1_E794, fn_1_E810 };
 
 // ms_pointer of the singleton (lives in m532.cpp's .bss range in the original).
@@ -141,7 +145,7 @@ void fn_1_E898(HU3DMODEL *model, Mtx *mtx)
 {
     M532UnkObj *obj = (M532UnkObj *)model->hookData;
 
-    obj->vtbl->draw(obj, mtx);
+    obj->vtbl->draw(obj, *mtx);
 }
 
 void fn_1_EBB8(M532Node *list, void (*func)(M532Node *));
@@ -154,7 +158,7 @@ void fn_1_E8DC(void)
 
 void fn_1_E90C(M532UnkObj *obj)
 {
-    obj->vtbl->unused(obj);
+    obj->vtbl->slot3(obj);
 }
 
 // Destroy every unk object, last one first.
@@ -180,12 +184,12 @@ void fn_1_E940(void)
 
 M532UnkObj *fn_1_EA08(M532UnkObj *self)
 {
-    fn_1_32B0(&self->link);
-    fn_1_4C9C(&self->model, fn_1_E898);
+    fn_1_32B0(&self->node);
+    fn_1_4C9C(&self->hook, fn_1_E898);
     self->vtbl = &lbl_1_data_67C;
     self->handle = fn_1_3020(lbl_1_bss_A7C, self);
-    fn_1_337C(&self->link, &lbl_1_bss_A74);
-    fn_1_507C(&self->model, self);
+    fn_1_337C(&self->node, &lbl_1_bss_A74);
+    fn_1_507C(&self->hook, self);
     return self;
 }
 
@@ -205,9 +209,9 @@ M532UnkObj *fn_1_EAF0(M532UnkObj *self, s16 flag)
     if (self != 0) {
         self->vtbl = &lbl_1_data_67C;
         fn_1_30B0(lbl_1_bss_A7C, self->handle);
-        fn_1_50B4(&self->model, 0);
+        fn_1_50B4(&self->hook, 0);
         if (self != 0) {
-            fn_1_32BC(&self->link, 0);
+            fn_1_32BC(&self->node, 0);
         }
         if (flag > 0) {
             fn_1_1C10(self);
@@ -216,14 +220,14 @@ M532UnkObj *fn_1_EAF0(M532UnkObj *self, s16 flag)
     return self;
 }
 
-s32 fn_1_EB7C(M532UnkObj *self)
+void *fn_1_EB7C(M532UnkObj *self)
 {
-    return self->handle;
+    return (void *)(uintptr_t)(u32)self->handle;
 }
 
-void *fn_1_EB84(s32 handle)
+void *fn_1_EB84(void *handle)
 {
-    return fn_1_3174(lbl_1_bss_A7C, handle);
+    return fn_1_3174(lbl_1_bss_A7C, (s32)(uintptr_t)handle);
 }
 
 void fn_1_ED60(M532Node *node, M532Node *end, void (*func)(M532Node *));

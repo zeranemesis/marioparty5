@@ -34,22 +34,8 @@ typedef struct M532ManMap_s {
     M532MapFog fog; // 0x38
 } M532ManMap;
 
-// Camera demo object: only the fields the three man_map.cpp methods touch.
-typedef struct M532CamCtl_s {
-    u8 pad0[0x10];
-    Vec pos; // 0x10
-    Vec target; // 0x1C
-    Vec up; // 0x28
-    u8 pad34[0x40 - 0x34];
-    s16 camMdl; // 0x40
-    u8 pad42[0x80 - 0x42];
-    u8 freeCam; // 0x80
-    u8 hold; // 0x81
-    u8 pad82[2];
-    Vec pos2; // 0x84
-    Vec target2; // 0x90
-    Vec up2; // 0x9C
-} M532CamCtl;
+// Camera demo object: M532CamCtl is the camera singleton (camera.h).
+#include "REL/m532Dll/camera.h"
 
 extern "C" {
 void fn_1_9B9C(M532CamCtl *self);

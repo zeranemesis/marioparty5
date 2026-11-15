@@ -28,7 +28,7 @@ void fn_1_1AFC(void);
 
 M532RumbleWarn *fn_1_8298(M532RumbleWarn *self, s16 flag);
 void fn_1_830C(M532RumbleWarn *self);
-void fn_1_8528(M532RumbleWarn *self, Mtx *mtx);
+void fn_1_8528(M532RumbleWarn *self, f32 (*mtx)[4]);
 s32 fn_1_8380(M532RumbleWarn *self);
 s32 fn_1_8418(M532RumbleWarn *self);
 s32 fn_1_8480(M532RumbleWarn *self);
@@ -38,10 +38,10 @@ M532Ptmf lbl_1_data_2E0 = M532_PTMF_INIT(fn_1_84D8);
 M532Ptmf lbl_1_data_2EC = M532_PTMF_INIT(fn_1_8418);
 M532Ptmf lbl_1_data_2F8 = M532_PTMF_INIT(fn_1_8480);
 M532UnkObjVtbl lbl_1_data_304 = { { 0, 0 },
-                                  (M532UnkObj * (*)(M532UnkObj *, s16)) fn_1_8298,
-                                  (void (*)(M532UnkObj *))fn_1_830C,
-                                  (void (*)(M532UnkObj *, Mtx *))fn_1_8528,
-                                  (void (*)(M532UnkObj *))fn_1_1AFC };
+                                  (void *(*)(void *, s16))fn_1_8298,
+                                  (void (*)(void *))fn_1_830C,
+                                  (void (*)(void *, f32 (*)[4]))fn_1_8528,
+                                  (void (*)(void *))fn_1_1AFC };
 
 s32 lbl_1_bss_A08;
 s32 lbl_1_bss_A0C;
@@ -71,7 +71,7 @@ M532RumbleWarn *fn_1_8130(M532RumbleWarn *self, Vec *pos)
     self->scale = 0.0f;
     self->alpha = 1.0f;
     self->timer = 0;
-    fn_1_500C(&self->base.model, 6);
+    fn_1_500C(&self->base.hook, 6);
     HuSprAnimLock(self->anim0);
     HuSprAnimLock(self->anim1);
     return self;
@@ -95,7 +95,7 @@ M532RumbleWarn *fn_1_8298(M532RumbleWarn *self, s16 flag)
 void fn_1_830C(M532RumbleWarn *self)
 {
     if (M532PtmfCall(self, &self->state) == 0 && self != 0) {
-        self->base.vtbl->dtor(&self->base, 1);
+        self->base.vtbl->dtor(self, 1);
     }
 }
 
@@ -140,7 +140,7 @@ s32 fn_1_84D8(M532RumbleWarn *self)
 }
 
 // Draw hook: a camera facing quad textured with anim0 (colour) and anim1 (alpha mask).
-void fn_1_8528(M532RumbleWarn *self, Mtx *mtx)
+void fn_1_8528(M532RumbleWarn *self, f32 (*mtx)[4])
 {
     Mtx work;
     Mtx inv;
@@ -151,13 +151,13 @@ void fn_1_8528(M532RumbleWarn *self, Mtx *mtx)
     f32 y0;
     f32 y1;
 
-    PSMTXInverse(*mtx, inv);
+    PSMTXInverse(mtx, inv);
     inv[0][3] = 0.0f;
     inv[1][3] = 0.0f;
     inv[2][3] = 0.0f;
     PSMTXScale(work, self->scale, self->scale, self->scale);
     PSMTXTransApply(work, work, self->pos.x, self->pos.y, self->pos.z);
-    PSMTXConcat(*mtx, work, work);
+    PSMTXConcat(mtx, work, work);
     PSMTXConcat(work, inv, work);
     GXLoadPosMtxImm(work, GX_PNMTX0);
     GXSetNumChans(0);

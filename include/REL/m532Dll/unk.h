@@ -16,28 +16,14 @@ typedef struct M532Unk_s {
     M532HandleMan *handleMan;
 } M532Unk;
 
-// One object of the list. Its vtable is at +0xC (after the node and the model).
-struct M532UnkObj_s;
-typedef struct M532UnkObjVtbl_s {
-    void *rtti[2];
-    struct M532UnkObj_s *(*dtor)(struct M532UnkObj_s *self, s16 flag);
-    void (*update)(struct M532UnkObj_s *self);
-    void (*draw)(struct M532UnkObj_s *self, Mtx *mtx);
-    void (*unused)(struct M532UnkObj_s *self);
-} M532UnkObjVtbl;
-
-typedef struct M532UnkObj_s {
-    M532Node link;
-    M532Model model;
-    M532UnkObjVtbl *vtbl;
-    s32 handle;
-} M532UnkObj;
+// M532UnkObj / M532UnkObjVtbl: see obj.h.
 
 M532Unk *fn_1_E54C(M532Unk *self, M532HandleMan *handleMan);
 M532UnkObj *fn_1_EA08(M532UnkObj *self);
 M532UnkObj *fn_1_EAF0(M532UnkObj *self, s16 flag);
-s32 fn_1_EB7C(M532UnkObj *self);
-void *fn_1_EB84(s32 handle);
+// Handles travel as pointer-sized values (they are 32-bit table handles).
+void *fn_1_EB7C(M532UnkObj *self);
+void *fn_1_EB84(void *handle);
 
 #ifdef __cplusplus
 }

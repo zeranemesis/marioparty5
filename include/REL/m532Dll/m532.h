@@ -10,42 +10,7 @@ extern "C" {
 #include "dolphin/types.h"
 #include "dolphin/mtx.h"
 #include "game/hu3d.h"
-
-// Pointer-to-member-function slot. The GameCube build keeps the MWCC layout
-// (this-delta, vtable index, function address); on PC the slot is just the
-// function pointer, called directly with the object.
-#ifdef TARGET_PC
-typedef struct M532Ptmf_s {
-    s32 (*fn)(void *self);
-} M532Ptmf;
-#define M532_PTMF_INIT(f) { (s32 (*)(void *))(f) }
-#define M532_PTMF_NULL_INIT { 0 }
-#define M532_PTMF_NULL M532PtmfNull
-static const M532Ptmf M532PtmfNull = { 0 };
-#define M532PtmfTest(p) ((p)->fn != 0)
-#define M532PtmfCall(obj, p) ((p)->fn(obj))
-#else
-typedef struct M532Ptmf_s {
-    s32 delta;
-    s32 vidx;
-    void *fn;
-} M532Ptmf;
-#define M532_PTMF_INIT(f) { 0, -1, (void *)(f) }
-#define M532_PTMF_NULL_INIT { 0, -1, 0 }
-#define M532_PTMF_NULL __ptmf_null
-extern M532Ptmf __ptmf_null;
-s32 __ptmf_test(M532Ptmf *p);
-u8 __ptmf_scall(void *obj, M532Ptmf *p);
-#define M532PtmfTest(p) __ptmf_test(p)
-#define M532PtmfCall(obj, p) __ptmf_scall((obj), (p))
-#endif
-
-// Intrusive doubly linked list node (also the base of every registered task).
-typedef struct M532Node_s {
-    struct M532Node_s *next;
-    struct M532Node_s *prev;
-} M532Node;
-
+#include "REL/m532Dll/obj.h"
 
 // Camera pose: eye position, up vector, look-at target.
 typedef struct M532Cam_s {
@@ -61,26 +26,8 @@ typedef struct M532Pose_s {
 } M532Pose;
 
 
-// Task registered on the module-wide list; its vtable lives at +8.
-struct M532Task_s;
-typedef struct M532TaskVtbl_s {
-    void *rtti[2];
-    struct M532Task_s *(*dtor)(struct M532Task_s *self, s16 flag);
-    void (*onFlag)(struct M532Task_s *self, s32 bit);
-    void (*update)(struct M532Task_s *self);
-} M532TaskVtbl;
-
-typedef struct M532Task_s {
-    M532Node link;
-    M532TaskVtbl *vtbl;
-    u32 flags;
-} M532Task;
 
 
-// A wrapper that owns a Hu3D model / MgTimer handle.
-typedef struct M532Model_s {
-    s16 id;
-} M532Model;
 
 
 void fn_1_1C10(void *ptr);
