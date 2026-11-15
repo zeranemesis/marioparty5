@@ -215,6 +215,7 @@ void *fn_1_D048(M532Score *self, s32 idx)
     return self;
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D0DC(M532Score *self)
 {
     f32 val;
@@ -231,6 +232,7 @@ void fn_1_D0DC(M532Score *self)
     }
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D178(void)
 {
     if (lbl_1_bss_A28 == NULL) {
@@ -239,6 +241,7 @@ void fn_1_D178(void)
     fn_1_D1EC(lbl_1_bss_A28);
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D1EC(M532Score *self)
 {
     if (self->ready != 0) {
@@ -249,6 +252,7 @@ void fn_1_D1EC(M532Score *self)
 }
 
 // Set up GX for flat textured 2D quads.
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D238(void)
 {
     Mtx m;
@@ -312,6 +316,7 @@ void fn_1_D444(M532ScoreQuad *quad, f32 alpha)
     quad->alpha = a;
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D4B0(M532ScoreQuad *quad)
 {
     GXColor col;
@@ -350,6 +355,7 @@ void fn_1_D4B0(M532ScoreQuad *quad)
     }
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D71C(M532ScoreBox *box, u8 r, u8 g, u8 b, f32 x, f32 y)
 {
     s32 i;
@@ -375,6 +381,7 @@ void fn_1_D71C(M532ScoreBox *box, u8 r, u8 g, u8 b, f32 x, f32 y)
     box->maxCount = 0;
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_D924(M532ScoreBox *box, ANIMDATA *small, ANIMDATA *big)
 {
     s32 i;
@@ -389,6 +396,7 @@ void fn_1_D924(M532ScoreBox *box, ANIMDATA *small, ANIMDATA *big)
     }
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_DAA4(M532ScoreBox *box, f32 alpha)
 {
     f32 a;
@@ -419,6 +427,7 @@ s32 fn_1_DB9C(M532ScoreBox *box)
     return box->count;
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_DBA4(M532ScoreBox *box)
 {
     s32 i;
@@ -434,6 +443,7 @@ void fn_1_DBA4(M532ScoreBox *box)
     }
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_DC78(M532ScoreBox *box)
 {
     f32 val;
@@ -456,6 +466,7 @@ void fn_1_DC78(M532ScoreBox *box)
     }
 }
 
+// NONMATCHING: stack spills / inlining / register allocation differ
 void fn_1_DDDC(M532ScoreBox *box)
 {
     s32 i;
