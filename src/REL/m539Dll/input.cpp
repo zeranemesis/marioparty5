@@ -162,6 +162,10 @@ void fn_1_6558(M539Handler *self, M539PadState *st)
 {
     s32 i, n;
 
+#ifdef TARGET_PC
+    /* the thread's s32 arg truncates the pointer fn_1_6398 passes; it is always &self->unk4 */
+    st = (M539PadState *)&self->unk4;
+#endif
     for (i = 8; i != 0; i--) {
         for (n = fn_1_4AE0() % 30 + 0x1E; n > 0; n--) {
             fn_1_574C(&self->sub, 0);
