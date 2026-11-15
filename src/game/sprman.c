@@ -33,6 +33,35 @@ SHARED_SYM HUSPRITE HuSprData[HUSPR_MAX];
 SHARED_SYM HUSPRGRP HuSprGrpData[HUSPR_GRP_MAX];
 static HUSPRORDER HuSprOrder[HUSPR_ORDER_MAX];
 
+#ifdef TARGET_PC
+/* GC writes through a HUSPR_NONE / out of range id land in harmless memory before HuSprData; on PC they hit HuSprGrpData */
+static HUSPRITE HuSprScratch;
+static HUSPRGRP HuSprGrpScratch;
+static HUSPRITE *SprPtr(s32 id)
+{
+    return (id >= 0 && id < HUSPR_MAX) ? &HuSprData[id] : (HuSprScratch.data = NULL, HuSprScratch.bg = NULL, &HuSprScratch);
+}
+static HUSPRGRP *GrpPtr(s32 id)
+{
+    return (id >= 0 && id < HUSPR_GRP_MAX) ? &HuSprGrpData[id] : (HuSprGrpScratch.sprNum = 0, &HuSprGrpScratch);
+}
+static HUSPRITE *SprMember(s32 grpId, s32 memberNo)
+{
+    HUSPRGRP *gp = GrpPtr(grpId);
+    if(gp->sprNum <= 0 || memberNo < 0 || memberNo >= gp->sprNum) {
+        return &HuSprScratch;
+    }
+    return SprPtr(gp->sprId[memberNo]);
+}
+#define SPRP(id) SprPtr(id)
+#define GRPP(id) GrpPtr(id)
+#define SPRMEM(g, m) SprMember(g, m)
+#else
+#define SPRP(id) (&HuSprData[id])
+#define GRPP(id) (&HuSprGrpData[id])
+#define SPRMEM(g, m) (&HuSprData[HuSprGrpData[g].sprId[m]])
+#endif
+
 static s16 HuSprOrderNum;
 static s16 HuSprOrderNo;
 static BOOL HuSprPauseF;
@@ -590,7 +619,7 @@ HUSPRGRPID HuSprGrpCreate(s16 sprNum)
 HUSPRGRPID HuSprGrpCopy(HUSPRGRPID grpId)
 {
     HUSPRGRP *newGp;
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     HUSPRGRPID newGrpId = HuSprGrpCreate(gp->sprNum);
     s16 i;
     if(newGrpId == HUSPR_GRP_NONE) {
@@ -617,8 +646,8 @@ HUSPRGRPID HuSprGrpCopy(HUSPRGRPID grpId)
 
 void HuSprGrpMemberSet(HUSPRGRPID grpId, s16 memberNo, HUSPRID sprId)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
-    HUSPRITE *sp = &HuSprData[sprId];
+    HUSPRGRP *gp = GRPP(grpId);
+    HUSPRITE *sp = SPRP(sprId);
     if(gp->sprNum == 0 || gp->sprNum <= memberNo || gp->sprId[memberNo] != HUSPR_NONE) {
         return;
     }
@@ -627,7 +656,7 @@ void HuSprGrpMemberSet(HUSPRGRPID grpId, s16 memberNo, HUSPRID sprId)
 
 void HuSprGrpMemberKill(HUSPRGRPID grpId, s16 memberNo)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     if(gp->sprNum == 0 || gp->sprNum <= memberNo || gp->sprId[memberNo] == HUSPR_NONE) {
         return;
     }
@@ -637,7 +666,7 @@ void HuSprGrpMemberKill(HUSPRGRPID grpId, s16 memberNo)
 
 void HuSprGrpKill(HUSPRGRPID grpId)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     for(i=0; i<gp->sprNum; i++) {
         if(gp->sprId[i] != HUSPR_NONE) {
@@ -650,7 +679,7 @@ void HuSprGrpKill(HUSPRGRPID grpId)
 
 void HuSprKill(HUSPRID sprId)
 {
-    HUSPRITE *sp = &HuSprData[sprId];
+    HUSPRITE *sp = SPRP(sprId);
     if(!sp->data) {
         return;
     }
@@ -685,7 +714,7 @@ void HuSprAnimKill(ANIMDATA *anim)
 
 void HuSprAttrSet(HUSPRGRPID grpId, s16 memberNo, s32 attr)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     HUSPRITE *sp;
     if(gp->sprNum == 0 || gp->sprNum <= memberNo || gp->sprId[memberNo] == HUSPR_NONE) {
         return;
@@ -697,7 +726,7 @@ void HuSprAttrSet(HUSPRGRPID grpId, s16 memberNo, s32 attr)
 
 void HuSprAttrReset(HUSPRGRPID grpId, s16 memberNo, s32 attr)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     HUSPRITE *sp;
     if(gp->sprNum == 0 || gp->sprNum <= memberNo || gp->sprId[memberNo] == HUSPR_NONE) {
         return;
@@ -709,7 +738,7 @@ void HuSprAttrReset(HUSPRGRPID grpId, s16 memberNo, s32 attr)
 
 u16 HuSprAttrGet(HUSPRGRPID grpId, s16 memberNo)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     HUSPRITE *sp;
     if(gp->sprNum == 0 || gp->sprNum <= memberNo || gp->sprId[memberNo] == HUSPR_NONE) {
 #ifdef TARGET_PC
@@ -724,7 +753,7 @@ u16 HuSprAttrGet(HUSPRGRPID grpId, s16 memberNo)
 
 void HuSprPosSet(HUSPRGRPID grpId, s16 memberNo, float posX, float posY)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->pos.x = posX;
     sp->pos.y = posY;
     sp->dirty |= SPRITE_DIRTY_XFORM;
@@ -732,14 +761,14 @@ void HuSprPosSet(HUSPRGRPID grpId, s16 memberNo, float posX, float posY)
 
 void HuSprZRotSet(HUSPRGRPID grpId, s16 memberNo, float zRot)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->zRot = zRot;
     sp->dirty |= SPRITE_DIRTY_XFORM;
 }
 
 void HuSprScaleSet(HUSPRGRPID grpId, s16 memberNo, float scaleX, float scaleY)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->scale.x = scaleX;
     sp->scale.y = scaleY;
     sp->dirty |= SPRITE_DIRTY_XFORM;
@@ -747,14 +776,14 @@ void HuSprScaleSet(HUSPRGRPID grpId, s16 memberNo, float scaleX, float scaleY)
 
 void HuSprTPLvlSet(HUSPRGRPID grpId, s16 memberNo, float tpLvl)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->a = tpLvl*255;
     sp->dirty |= SPRITE_DIRTY_COLOR;
 }
 
 void HuSprColorSet(HUSPRGRPID grpId, s16 memberNo, u8 r, u8 g, u8 b)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->r = r;
     sp->g = g;
     sp->b = b;
@@ -763,13 +792,17 @@ void HuSprColorSet(HUSPRGRPID grpId, s16 memberNo, u8 r, u8 g, u8 b)
 
 void HuSprSpeedSet(HUSPRGRPID grpId, s16 memberNo, float speed)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
+#ifdef TARGET_PC
+    SPRMEM(grpId, memberNo)->speed = speed;
+#else
     HuSprData[gp->sprId[memberNo]].speed = speed;
+#endif
 }
 
 void HuSprBankSet(HUSPRGRPID grpId, s16 memberNo, s16 bank)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     ANIMDATA *anim = sp->data;
     ANIMBANK *bank_ptr = &anim->bank[sp->bank];
     ANIMFRAME *frame_ptr = &bank_ptr->frame[sp->animNo];
@@ -786,7 +819,7 @@ void HuSprBankSet(HUSPRGRPID grpId, s16 memberNo, s16 bank)
 
 void HuSprAnimNoSet(HUSPRGRPID grpId, s16 memberNo, s16 animNo)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     ANIMDATA *anim = sp->data;
     ANIMBANK *bank_ptr = &anim->bank[sp->bank];
     if(bank_ptr->timeNum <= animNo) {
@@ -799,14 +832,14 @@ void HuSprAnimNoSet(HUSPRGRPID grpId, s16 memberNo, s16 animNo)
 
 void HuSprAnimNoSetPause(HUSPRGRPID grpId, s16 memberNo, s16 animNo)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     HuSprAnimNoSet(grpId, memberNo, animNo);
     sp->attr |= HUSPR_ATTR_NOANIM;
 }
 
 void HuSprGrpPosSet(HUSPRGRPID grpId, float posX, float posY)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     gp->pos.x = posX;
     gp->pos.y = posY;
@@ -819,7 +852,7 @@ void HuSprGrpPosSet(HUSPRGRPID grpId, float posX, float posY)
 
 void HuSprGrpCenterSet(HUSPRGRPID grpId, float centerX, float centerY)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     gp->center.x = centerX;
     gp->center.y = centerY;
@@ -832,7 +865,7 @@ void HuSprGrpCenterSet(HUSPRGRPID grpId, float centerX, float centerY)
 
 void HuSprGrpZRotSet(HUSPRGRPID grpId, float zRot)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     gp->zRot = zRot;
     for(i=0; i<gp->sprNum; i++) {
@@ -844,7 +877,7 @@ void HuSprGrpZRotSet(HUSPRGRPID grpId, float zRot)
 
 void HuSprGrpScaleSet(HUSPRGRPID grpId, float scaleX, float scaleY)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     gp->scale.x = scaleX;
     gp->scale.y = scaleY;
@@ -857,7 +890,7 @@ void HuSprGrpScaleSet(HUSPRGRPID grpId, float scaleX, float scaleY)
 
 void HuSprGrpTPLvlSet(HUSPRGRPID grpId, float tpLvl)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     for(i=0; i<gp->sprNum; i++) {
         if(gp->sprId[i] != HUSPR_NONE) {
@@ -869,7 +902,7 @@ void HuSprGrpTPLvlSet(HUSPRGRPID grpId, float tpLvl)
 
 void HuSprGrpDrawNoSet(HUSPRGRPID grpId, s32 drawNo)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     for(i=0; i<gp->sprNum; i++) {
         if(gp->sprId[i] != HUSPR_NONE) {
@@ -880,19 +913,19 @@ void HuSprGrpDrawNoSet(HUSPRGRPID grpId, s32 drawNo)
 
 void HuSprDrawNoSet(HUSPRGRPID grpId, s16 memberNo, s32 drawNo)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->drawNo = drawNo;
 }
 
 void HuSprPriSet(HUSPRGRPID grpId, s16 memberNo, s16 prio)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->prio = prio;
 }
 
 void HuSprGrpScissorSet(HUSPRGRPID grpId, s16 x, s16 y, s16 w, s16 h)
 {
-    HUSPRGRP *gp = &HuSprGrpData[grpId];
+    HUSPRGRP *gp = GRPP(grpId);
     s16 i;
     for(i=0; i<gp->sprNum; i++) {
         if(gp->sprId[i] != HUSPR_NONE) {
@@ -903,7 +936,7 @@ void HuSprGrpScissorSet(HUSPRGRPID grpId, s16 x, s16 y, s16 w, s16 h)
 
 void HuSprScissorSet(HUSPRGRPID grpId, s16 memberNo, s16 x, s16 y, s16 w, s16 h)
 {
-    HUSPRITE *sp = &HuSprData[HuSprGrpData[grpId].sprId[memberNo]];
+    HUSPRITE *sp = SPRMEM(grpId, memberNo);
     sp->scissorX = x;
     sp->scissorY = y;
     sp->scissorW = w;
@@ -977,13 +1010,19 @@ ANIMDATA *HuSprAnimMake(s16 sizeX, s16 sizeY, s16 dataFmt)
 
 void HuSprBGSet(HUSPRGRPID grpId, s16 memberNo, ANIMDATA *bg, s16 bgBank)
 {
+#ifdef TARGET_PC
+    HUSPRGRP *gp = GRPP(grpId);
+    HUSPRID sprite = (gp->sprNum > 0 && memberNo >= 0 && memberNo < gp->sprNum) ? gp->sprId[memberNo] : HUSPR_NONE;
+    HuSprSprBGSet(sprite, bg, bgBank);
+#else
     HUSPRID sprite = HuSprGrpData[grpId].sprId[memberNo];
     HuSprSprBGSet(sprite, bg, bgBank);
+#endif
 }
 
 void HuSprSprBGSet(HUSPRID sprite, ANIMDATA *bg, s16 bgBank)
 {
-    HUSPRITE *sp = &HuSprData[sprite];
+    HUSPRITE *sp = SPRP(sprite);
     sp->bg = bg;
     sp->bgBank = bgBank;
     sp->wrapT = sp->wrapS = GX_REPEAT;
