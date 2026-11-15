@@ -815,9 +815,8 @@ static void ResultBonusExec(s16 type)
             for (i = 0; i < cnt; i++) {
                 t = j / 30.0;
                 Hu3DModelAttrReset(PlayerStarMdlId[i], 1);
-                s = HuCos(90.0f * t);
-                Hu3DModelPosSet(PlayerStarMdlId[i], pos[idx[i]].x, 70.0 + (100.0 + (pos[idx[i]].y + 170.0 * s)), pos[idx[i]].z);
-                Hu3DParManPosSet(StarEffAnimP[i], pos[idx[i]].x, 70.0 + (100.0 + (pos[idx[i]].y + 170.0 * s)), pos[idx[i]].z - 20.0f);
+                Hu3DModelPosSet(PlayerStarMdlId[i], pos[idx[i]].x, 70.0 + (100.0 + (pos[idx[i]].y + 170.0 * HuCos(90.0f * t))), pos[idx[i]].z);
+                Hu3DParManPosSet(StarEffAnimP[i], pos[idx[i]].x, 70.0 + (100.0 + (pos[idx[i]].y + 170.0 * HuCos(90.0f * t))), pos[idx[i]].z - 20.0f);
                 Hu3DModelRotSet(PlayerStarMdlId[i], 0.0f, 360.0f * t, 0.0f);
                 t = 1.2 * HuCos(90.0f * t);
                 Hu3DModelScaleSet(PlayerStarMdlId[i], t, t, t);
@@ -1923,7 +1922,7 @@ static void BonusFadeEffHook(HU3DMODEL *modelP, HU3DPARTICLE *particleP, Mtx mtx
                                 r = (pix >> 8) & 0xF8;
                                 g = (pix >> 3) & 0xFC;
                                 b = (pix * 8) & 0xF8;
-                                if (!((f32)(0.114 * b + (0.299 * r + 0.587 * g)) < 65.0f)) {
+                                if (!(0.114 * b + (0.299 * r + 0.587 * g) < 65.0)) {
                                     sumR += r;
                                     sumG += g;
                                     sumB += b;
@@ -2068,7 +2067,7 @@ static void BGFilter(s16 layerNo)
     color.a = 160.0 * (BGFadeTime / 30.0);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_U16, 0);
     GXSetNumTexGens(0);
     GXSetNumTevStages(1);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);

@@ -1008,7 +1008,7 @@ static void StatBackDraw(s16 layerNo)
     HuSprTexLoad(BackAnimP, 0, 0, GX_REPEAT, GX_REPEAT, GX_LINEAR);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_U16, 0);
     GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     GXSetNumTexGens(1);
@@ -1238,17 +1238,10 @@ static s32 StatLinePosGet(StatLinePt *p, StatLinePt *dir, StatLinePt *b, StatLin
 // frsqrte rsqrt, and none of the 11 C spellings tried drops that guard.
 static void StatLineNorm(StatLinePt *src, StatLinePt *dst)
 {
-    f64 e;
-    f32 len, s, d;
+    f32 len, s;
 
     len = src->x * src->x + src->y * src->y;
-    if (len > 0.0f) {
-        e = 1.0 / sqrt(len);
-        d = len * e;
-    } else {
-        d = len;
-    }
-    s = d;
+    s = sqrtf(len);
     dst->x = src->x / s;
     dst->y = src->y / s;
 }
