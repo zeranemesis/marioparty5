@@ -63,6 +63,16 @@ static void UnlinkProcess(HUPROCESS **root, HUPROCESS *process) {
     }
 }
 
+#ifdef TARGET_PC
+/* on GC a returning process function re-enters itself (LR still holds func after gclongjmp) */
+static void ProcessEntry(void)
+{
+    while(1) {
+        processcur->func();
+    }
+}
+#endif
+
 HUPROCESS *HuPrcCreate(void (*func)(void), u16 prio, u32 stackSize, s32 heapSize)
 {
     HUPROCESS *process;
@@ -92,7 +102,8 @@ HUPROCESS *HuPrcCreate(void (*func)(void), u16 prio, u32 stackSize, s32 heapSize
     process->prio = prio;
     process->sleep = 0;
 #ifdef TARGET_PC
-    process->thread = co_create(stackSize * 8 < 0x10000 ? 0x10000 : stackSize * 8, func);
+    process->thread = co_create(stackSize * 8 < 0x10000 ? 0x10000 : stackSize * 8, ProcessEntry);
+    process->func = func;
 #else
     process->spBase = ((u32)HuMemMemoryAlloc(heap, stackSize, FAKE_RETADDR))+stackSize-8;
     gcsetjmp(&process->jump);

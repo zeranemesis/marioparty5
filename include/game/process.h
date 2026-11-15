@@ -40,6 +40,7 @@ struct Process_s {
     s32 sleep;
 #ifdef TARGET_PC
     cothread_t thread;
+    void (*func)(void);
 #else
     u32 spBase;
     jmp_buf jump;
