@@ -295,7 +295,7 @@ static void RankObjRotExec(void) {
     for (;;) {
         HuPrcSleep((s32)(s16)(frandmod(60) + 120));
         for (i = 0; i < 5; i++) {
-            spd[i] = (f32)(frandmod(10) + 10);
+            spd[i] = (f32)((s32)frandmod(10) + 10);
         }
         for (t = 1; t <= 20; t++) {
             for (i = 0; i < 5; i++) {
