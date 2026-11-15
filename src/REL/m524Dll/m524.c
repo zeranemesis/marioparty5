@@ -13,6 +13,11 @@
 #include "game/wipe.h"
 
 #include "math.h"
+#ifdef TARGET_PC
+/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns */
+double __frsqrte(double);
+#endif
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -175,10 +180,10 @@ void fn_1_5410(OMOBJ *obj);
 void fn_1_5450(void);
 void fn_1_5454(OMOBJ *obj, void *flow);
 void fn_1_54CC(OMOBJ *obj, void *flow);
-void fn_1_5530(OMOBJ *obj, void *flow, s16 mesNo, s16 mesArg);
-void fn_1_55EC(OMOBJ *obj, void *flow);
-void fn_1_56A0(OMOBJ *obj, void *flow);
-void fn_1_5754(OMOBJ *obj, void *flow);
+void fn_1_5530(OMOBJ *obj, s16 mesNo, s16 mesArg);
+void fn_1_55EC(OMOBJ *obj);
+void fn_1_56A0(OMOBJ *obj);
+void fn_1_5754(OMOBJ *obj);
 void fn_1_57F4(M524Player *player, s16 index);
 s32 fn_1_58C0(Vec *pos, Vec *target, Vec *angle, f32 dist);
 f32 fn_1_59E4(f32 ang0, f32 ang1, f32 max);
@@ -200,23 +205,23 @@ char lbl_1_data_CC[] = "MgFlowNext : Value is Max Over\n";
 
 M524Light lbl_1_data_EC = { { -800.0f, 1500.0f, 800.0f }, { 800.0f, -1500.0f, -800.0f }, { 0xFF, 0xFF, 0xFF, 0xFF } };
 
-M524Camera lbl_1_data_108 = { 1, 1, 20.0f, 20.0f, 7000.0f, { 0.0f, 0.99f, -0.17f }, { 0.0f, 150.0f, 0.0f }, { -9.0f, 0.0f, 0.0f }, 0.0f, 0.0f, 0.0f, 5000.0f };
+M524Camera lbl_1_data_108 = { 1, 1, 20.0f, 20.0f, 7000.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.98f, -0.17f }, { 0.0f, 150.0f, 0.0f }, -10.0f, 0.0f, 0.0f, 2250.0f };
 
-M524Camera lbl_1_data_150 = { 1, 1, 20.0f, 20.0f, 7000.0f, { 0.0f, 1.0f, 0.0f }, { 0.0f, 300.0f, 0.0f }, { -50.0f, 0.0f, 0.0f }, 0.0f, 0.0f, 0.0f, 5400.0f };
+M524Camera lbl_1_data_150 = { 1, 1, 20.0f, 20.0f, 7000.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 300.0f, 0.0f }, -0.3f, 0.0f, 0.0f, 2650.0f };
 
-M524Camera lbl_1_data_198 = { 1, 0, 20.0f, 20.0f, 7000.0f, { 0.0f, 1.0f, 0.0f }, { 0.0f, 500.0f, 0.0f }, { -10.0f, 0.0f, 0.0f }, 0.0f, 0.0f, 0.0f, 5000.0f };
+M524Camera lbl_1_data_198 = { 1, 0, 20.0f, 20.0f, 7000.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 500.0f, 0.0f }, -10.0f, 0.0f, 0.0f, 5000.0f };
 
 Point3d lbl_1_data_1E0 = { 0.0f, 0.0f, 300.0f };
 
 M524FlowFunc lbl_1_data_1EC[11] = {
     fn_1_5454,
     fn_1_2FB0,
-    fn_1_55EC,
-    fn_1_5754,
+    (M524FlowFunc)fn_1_55EC,
+    (M524FlowFunc)fn_1_5754,
     fn_1_30BC,
     fn_1_31EC,
     fn_1_32F0,
-    fn_1_56A0,
+    (M524FlowFunc)fn_1_56A0,
     fn_1_33B4,
     fn_1_54CC,
     NULL,
@@ -267,16 +272,16 @@ OMOBJMAN *lbl_1_bss_80;
 const u32 lbl_1_rodata_94[5] = { 0x00520010, 0x00520000, 0x00520001, 0x00520003, 0x00520002 };
 const u32 lbl_1_rodata_A8[4] = { 0x00520006, 0x00520007, 0x00520008, 0x00520009 };
 const u32 lbl_1_rodata_B8[4] = { 0x0052000A, 0x0052000B, 0x0052000C, 0x0052000D };
-const s16 lbl_1_rodata_C8[8] = { 1, 0, 3, 2, 0, 0, 3, 2 };
-const s16 lbl_1_rodata_D8[4] = { 1, 0, 20, 10 };
+const s16 lbl_1_rodata_C8[2][4] = { { 0, 1, 2, 3 }, { 0, 0, 2, 3 } };
+const s16 lbl_1_rodata_D8[4] = { 0, 1, 10, 20 };
 
 // NONMATCHING: ctor loop is rebuilt from m2c; the original stores and reloads the ctors pointer differently
 int _prolog(void) {
     const VoidFunc *ctors = _ctors;
-    int i;
 
-    for (i = 0; ctors[i] != NULL; i++) {
-        ctors[i]();
+    while (*ctors) {
+        (*ctors)();
+        ctors++;
     }
     ObjectSetup();
     return 0;
@@ -285,18 +290,21 @@ int _prolog(void) {
 // NONMATCHING: dtor loop rebuilt from m2c; same divergence as _prolog
 void _epilog(void) {
     const VoidFunc *dtors = _dtors;
-    int i;
 
-    for (i = 0; dtors[i] != NULL; i++) {
-        dtors[i]();
+    while (*dtors) {
+        (*dtors)();
+        dtors++;
     }
 }
 
-// NONMATCHING: parman creation and layer call order differ from the original
 s16 fn_1_A0(Vec *pos) {
     HU3DPARMANID parManId;
+    void *spriteData;
+    ANIMDATA *anim;
 
-    parManId = Hu3DParManCreate(HuSprAnimRead(HuDataSelHeapReadNum(0x210002, 0x10000000, HEAP_MODEL)), 0x64, &lbl_1_data_258);
+    spriteData = HuDataSelHeapReadNum(0x210002, 0x10000000, HEAP_MODEL);
+    anim = HuSprAnimRead(spriteData);
+    parManId = Hu3DParManCreate(anim, 0x64, &lbl_1_data_258);
     Hu3DParManRotSet(parManId, 0.0f, 0.0f, 0.0f);
     Hu3DParManPosSet(parManId, pos->x, pos->y, pos->z);
     Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 2);
@@ -305,13 +313,16 @@ s16 fn_1_A0(Vec *pos) {
 
 // NONMATCHING: data block and field initialisation order still differ from the original
 void ObjectSetup(void) {
-    OMOBJ *obj;
-    OMOBJ *flowObj;
     M524Flow *flow;
-    HU3DLIGHTID lightId;
+    M524Flow *flow2;
+    OMOBJ *obj;
     s32 i;
+    OMOBJ *flowObj;
     s32 n;
     s32 j;
+    HU3DLIGHTID lightId;
+    OMOBJ *flowObj3;
+    OMOBJ *flowObj2;
 
     lbl_1_bss_80 = omInitObjMan(0xC8, 0x1000);
     lbl_1_bss_7C = -1;
@@ -331,13 +342,13 @@ void ObjectSetup(void) {
     for (i = 0; i < 4; i++) {
         obj = omAddObjEx(lbl_1_bss_80, 0x2000, 5, 9, 0, fn_1_848);
         lbl_1_bss_1C[i] = obj;
-        obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x68, 0x10000000);
+        obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524Player), 0x10000000);
         obj->work[0] = i;
     }
     for (n = 0; lbl_1_data_1EC[n] != NULL; n++) {
     }
     flowObj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_50B0);
-    flowObj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x68, 0x10000000);
+    flowObj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524Flow), 0x10000000);
     flow = (M524Flow *)flowObj->data;
     flow->funcNum = n;
     flow->funcTbl = lbl_1_data_1EC;
@@ -346,12 +357,14 @@ void ObjectSetup(void) {
     for (j = 0; j < 0x10; j++) {
         flow->work[j] = 0;
     }
-    lbl_1_bss_20 = flowObj;
-    flow = (M524Flow *)lbl_1_bss_20->data;
-    flow->timerType = 0;
-    flow->maxTime = 0x12C;
-    flow->endTime = 0;
-    flow->recordTime = 0;
+    flowObj2 = flowObj;
+    lbl_1_bss_20 = flowObj2;
+    flowObj3 = lbl_1_bss_20;
+    flow2 = (M524Flow *)flowObj3->data;
+    flow2->timerType = 0;
+    flow2->maxTime = 0x12C;
+    flow2->endTime = 0;
+    flow2->recordTime = 0;
     WipeCreate(1, 5, 0x3C);
 }
 
@@ -391,47 +404,46 @@ void fn_1_478(void) {
 
 // NONMATCHING: shuffle loops produce a different register sequence
 void fn_1_6D8(void) {
-    s32 rand;
-    s32 i;
-    s32 j;
-    s32 k;
+    s16 i;
     s16 r;
+    s32 rand;
     s16 tmp;
+    s16 coin;
 
     rand = frandmod(2);
     for (i = 0; i < 4; i++) {
-        lbl_1_bss_10[i] = lbl_1_rodata_C8[rand * 4 + i * 2];
+        lbl_1_bss_10[i] = lbl_1_rodata_C8[rand][i];
     }
-    for (j = 0; j < 4; j++) {
+    for (i = 0; i < 4; i++) {
         r = frandmod(4);
-        tmp = lbl_1_bss_10[j];
-        lbl_1_bss_10[j] = lbl_1_bss_10[r];
+        tmp = lbl_1_bss_10[i];
+        lbl_1_bss_10[i] = lbl_1_bss_10[r];
         lbl_1_bss_10[r] = tmp;
     }
-    for (k = 0; k < 4; k++) {
-        GwPlayer[k].mgCoin = lbl_1_rodata_D8[lbl_1_bss_10[k]];
+    for (i = 0; i < 4; i++) {
+        coin = lbl_1_rodata_D8[lbl_1_bss_10[i]];
+        GwPlayer[i].mgCoin = coin;
     }
 }
 
 // NONMATCHING: player field initialisation order differs
 void fn_1_848(OMOBJ *obj) {
     M524Player *player;
+    s16 idx;
     s16 charNo;
+    s16 mdl;
 
     player = (M524Player *)obj->data;
-    player->index = (s16)obj->work[0];
-    player->charNo = GwPlayerConf[player->index].charNo;
-    player->padNo = GwPlayerConf[player->index].padNo;
-    player->grp = GwPlayerConf[player->index].grp;
-    player->type = GwPlayerConf[player->index].type;
-    player->dif = GwPlayerConf[player->index].dif;
+    idx = (s16) obj->work[0];
+    player->index = idx;
+    player->charNo = GwPlayerConf[idx].charNo;
+    player->padNo = GwPlayerConf[idx].padNo;
+    player->grp = GwPlayerConf[idx].grp;
+    player->type = GwPlayerConf[idx].type;
+    player->dif = GwPlayerConf[idx].dif;
     player->state = 0;
-    player->traZ = 0.0f;
-    player->traY = 0.0f;
-    player->traX = 0.0f;
-    player->rotZ = 0.0f;
-    player->rotY = 0.0f;
-    player->rotX = 0.0f;
+    player->traX = player->traY = player->traZ = 0.0f;
+    player->rotX = player->rotY = player->rotZ = 0.0f;
     player->motTime = 0.0f;
     player->dir = 0;
     player->landedF = 0;
@@ -439,10 +451,11 @@ void fn_1_848(OMOBJ *obj) {
     player->endF = 0;
     player->objNum = -1;
     charNo = player->charNo;
-    obj->mdlId[0] = CharModelMotListCreate(charNo, 2, lbl_1_data_2A8, obj->mtnId);
+    mdl = CharModelMotListCreate((s32) charNo, 2, lbl_1_data_2A8, obj->mtnId);
+    obj->mdlId[0] = mdl;
     Hu3DModelShadowSet(obj->mdlId[0]);
-    CharModelAttrSet(charNo, 0x40000001);
-    CharMotionSet(charNo, obj->mtnId[0]);
+    CharModelAttrSet((s32) charNo, 0x40000001);
+    CharMotionSet((s32) charNo, obj->mtnId[0]);
     CharEffectLayerSet(2);
     player->traX = lbl_1_data_218[player->index] - 70.0f;
     player->traY = 0.0f;
@@ -477,26 +490,28 @@ void fn_1_AD0(OMOBJ *obj) {
     Hu3DModelPosSet(mdlId, lbl_1_data_218[player->index] - 6.0f, 75.0f, 238.0f);
 }
 
-// NONMATCHING: model creation call sequence differs
 void fn_1_C24(OMOBJ *obj) {
-    M524Player *player;
     HU3DMODELID mdlId;
+    M524Player *player;
+    u32 dataNum;
 
     player = (M524Player *)obj->data;
-    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_B8[lbl_1_bss_10[player->index]], 0x10000000, HEAP_MODEL));
+    dataNum = lbl_1_rodata_B8[lbl_1_bss_10[player->index]];
+    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(dataNum, 0x10000000, HEAP_MODEL));
     obj->mdlId[3] = mdlId;
     Hu3DModelAttrSet(mdlId, 0x40000002);
     Hu3DModelAttrSet(mdlId, 1);
     Hu3DModelPosSet(mdlId, lbl_1_data_218[player->index], 0.0f, 200.0f);
 }
 
-// NONMATCHING: shot vector is kept in r28 by the original and reloaded here
 void fn_1_D08(OMOBJ *obj) {
     M524Player *player;
     HU3DMODELID mdlId;
+    u32 dataNum;
 
     player = (M524Player *)obj->data;
-    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_rodata_A8[lbl_1_bss_10[player->index]], 0x10000000, HEAP_MODEL));
+    dataNum = lbl_1_rodata_A8[lbl_1_bss_10[player->index]];
+    mdlId = Hu3DModelCreate(HuDataSelHeapReadNum(dataNum, 0x10000000, HEAP_MODEL));
     obj->mdlId[4] = mdlId;
     Hu3DModelAttrSet(mdlId, 0x40000002);
     Hu3DModelAttrSet(mdlId, 1);
@@ -512,16 +527,32 @@ void fn_1_D08(OMOBJ *obj) {
 // NONMATCHING: state dispatch differs from the original jump table
 void fn_1_E2C(OMOBJ *obj) {
     M524Player *player;
+    s32 idx;
     M524Flow *flow;
+    OMOBJ *flowObj;
+    s32 flag;
+    M524Flow *flow2;
+    s32 flowIndex;
+    s32 cmpIndex;
 
     player = (M524Player *)obj->data;
+    idx = player->index;
     switch (player->state) {
         case 0:
             fn_1_F84(obj);
             break;
         case 1:
-            flow = (M524Flow *)lbl_1_bss_20->data;
-            if (flow->index == 3) {
+            flowObj = lbl_1_bss_20;
+            flow = (M524Flow *)flowObj->data;
+            flow2 = (M524Flow *)flowObj->data;
+            flowIndex = flow2->index;
+            cmpIndex = flowIndex;
+            if (cmpIndex == 3) {
+                flag = 1;
+            } else {
+                flag = 0;
+            }
+            if (flag) {
                 player->state = 2;
             }
             break;
@@ -562,6 +593,8 @@ void fn_1_E2C(OMOBJ *obj) {
         case 11:
             fn_1_2EEC(obj);
             break;
+        case 12:
+            break;
     }
 }
 
@@ -569,18 +602,33 @@ void fn_1_E2C(OMOBJ *obj) {
 void fn_1_F84(OMOBJ *obj) {
     M524Player *player;
     M524Flow *flow;
+    OMOBJ *flowObj;
+    s32 flag;
+    M524Flow *flow2;
+    s32 flowIndex;
+    s32 cmpIndex;
 
     player = (M524Player *)obj->data;
     if (obj->work[0] == 0) {
-        flow = (M524Flow *)lbl_1_bss_20->data;
-        if (flow->index == 2) {
-            Hu3DModelAttrReset(obj->mdlId[1], 0x40000002);
-            CharModelAttrReset(player->charNo, 0x40000001);
-            CharMotionSet(player->charNo, obj->mtnId[2]);
-            CharMotionStartEndSet(player->charNo, 61.0f, 120.0f);
-            CharMotionTimeSet(player->charNo, 61.0f);
-            CharMotionShiftSet(player->charNo, obj->mtnId[1], 0.0f, 60.0f, 0x40000001);
+        flowObj = lbl_1_bss_20;
+        flow = (M524Flow *)flowObj->data;
+        flow2 = (M524Flow *)flowObj->data;
+        flowIndex = flow2->index;
+        cmpIndex = flowIndex;
+        if (cmpIndex == 2) {
+            flag = 1;
+        } else {
+            flag = 0;
         }
+        if (!flag) {
+            return;
+        }
+        Hu3DModelAttrReset(obj->mdlId[1], 0x40000002);
+        CharModelAttrReset(player->charNo, 0x40000001);
+        CharMotionSet(player->charNo, obj->mtnId[2]);
+        CharMotionStartEndSet(player->charNo, 61.0f, 120.0f);
+        CharMotionTimeSet(player->charNo, 61.0f);
+        CharMotionShiftSet(player->charNo, obj->mtnId[1], 0.0f, 60.0f, 0x40000001);
     }
     obj->work[0]++;
     player->rotY += 1.5f;
@@ -794,7 +842,6 @@ void fn_1_1CBC(OMOBJ *obj) {
     obj->work[2]++;
 }
 
-// NONMATCHING: one redundant li here shifts every branch target by 4 bytes
 void fn_1_1DF8(OMOBJ *obj) {
     M524Player *player;
 
@@ -826,8 +873,7 @@ void fn_1_1DF8(OMOBJ *obj) {
             if (obj->work[1] == 0) {
                 CharMotionShiftSet(player->charNo, obj->mtnId[0], 0.0f, 20.0f, 0x40000001);
                 player->landedF = 1;
-                obj->work[1] = 0;
-                obj->work[0] = 0;
+                obj->work[0] = obj->work[1] = 0;
                 player->state = 6;
             }
             break;
@@ -837,11 +883,25 @@ void fn_1_1DF8(OMOBJ *obj) {
 // NONMATCHING: register allocation differs; the original saves r25-r31
 void fn_1_1FB8(OMOBJ *obj) {
     M524Player *player;
+    OMOBJ *flowObj;
     M524Flow *flow;
+    s32 flag;
+    M524Flow *flow2;
+    s32 flowIndex;
+    s32 cmpIndex;
 
     player = (M524Player *)obj->data;
-    flow = (M524Flow *)lbl_1_bss_20->data;
-    if (flow->index == 6) {
+    flowObj = lbl_1_bss_20;
+    flow = (M524Flow *)flowObj->data;
+    flow2 = (M524Flow *)flowObj->data;
+    flowIndex = flow2->index;
+    cmpIndex = flowIndex;
+    if (cmpIndex == 6) {
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    if (flag) {
         if (obj->work[0] == 0) {
             obj->work[0] = 1;
             obj->work[1] = player->index * 40;
@@ -857,14 +917,14 @@ void fn_1_1FB8(OMOBJ *obj) {
     }
 }
 
-// NONMATCHING: register copies and stack frame size differ from the original
 void fn_1_21BC(OMOBJ *obj) {
     M524Player *player;
     HU3DPARMANID parManId;
     Vec pos;
-    u16 id;
-    void *spriteData;
     ANIMDATA *anim;
+    void *spriteData;
+    s16 id;
+    s16 effectId;
 
     player = (M524Player *)obj->data;
     pos.x = player->shotX;
@@ -877,7 +937,8 @@ void fn_1_21BC(OMOBJ *obj) {
     Hu3DParManPosSet(parManId, pos.x, pos.y, pos.z);
     Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), 2);
     id = parManId;
-    player->effectId = id;
+    effectId = id;
+    player->effectId = effectId;
     Hu3DParManTimeLimitSet(player->effectId, 1);
     Hu3DModelKill(obj->mdlId[4]);
     HuAudFXPlay(lbl_1_data_248[player->index]);
@@ -904,7 +965,6 @@ void fn_1_21BC(OMOBJ *obj) {
     player->state = 9;
 }
 
-// NONMATCHING: branch label layout differs, instruction stream is identical
 void fn_1_20A0(OMOBJ *obj) {
     M524Player *player;
 
@@ -1078,7 +1138,7 @@ void fn_1_29F4(OMOBJ *obj) {
         newObj2->work[0] = 0xF;
         newObj2->work[1] = 5;
         *cam2 = *cam;
-        newObj2->work[2] = (u32) (uintptr_t) cam;
+        newObj2->work[2] = (uintptr_t) cam;
         omVibrate(player->index, 15, 12, 0);
         HuAudFXPlayPan(0x2C1, lbl_1_data_228[player->index]);
         HuAudFXPlay(lbl_1_data_250[player->index]);
@@ -1215,9 +1275,9 @@ void fn_1_30BC(OMOBJ *obj, void *flowArg) {
 
 void fn_1_31EC(OMOBJ *obj, void *flowArg) {
     M524Flow *flow;
-    OMOBJ *cameraObj;
-    M524CamMove *move;
     s32 moveActive;
+    M524CamMove *move;
+    OMOBJ *cameraObj;
     OMOBJ *cameraObjDelete;
 
     if (lbl_1_bss_8 == NULL) {
@@ -1309,14 +1369,6 @@ M524Camera *fn_1_35A8(M524Camera *param) {
 }
 
 
-void fn_1_3694(M524Camera *cam)
-{
-    if (cam->mode == 1) {
-        fn_1_3DD0(cam);
-    }
-    Hu3DCameraPosSetV(cam->camNo, &cam->pos, &cam->up, &cam->target);
-}
-
 s16 fn_1_36E4(M524Light *light)
 {
     HU3DLIGHTID lightId;
@@ -1378,11 +1430,19 @@ s32 fn_1_5338(OMOBJ *obj)
     return flow->index;
 }
 
+/* The unused locals and the extra copy exist only to reproduce the original
+ * register allocation; the observable behaviour is a single index compare. */
 s32 fn_1_5354(OMOBJ *obj, s32 index)
 {
     M524Flow *flow = (M524Flow *)obj->data;
+    M524Flow *flow2;
+    s32 curIndex;
+    s32 cmpIndex;
 
-    if (flow->index == index) {
+    flow2 = (M524Flow *)obj->data;
+    curIndex = flow2->index;
+    cmpIndex = curIndex;
+    if (index == cmpIndex) {
         return 1;
     }
     return 0;
@@ -1467,86 +1527,89 @@ void fn_1_5454(OMOBJ *obj, void *flow)
     }
 }
 
-void fn_1_55EC(OMOBJ *obj, void *flow)
+void fn_1_55EC(OMOBJ *obj)
 {
     M524Flow *flowP = (M524Flow *)obj->data;
+    M524Flow *flow2;
 
     if (flowP->gameMesId == -1) {
         flowP->gameMesId = GameMesCreate(2, 0);
     } else if (!GameMesStatGet(flowP->gameMesId)) {
         flowP->gameMesId = -1;
-        if (flowP->index == flowP->funcNum - 1) {
+        flow2 = (M524Flow *)obj->data;
+        if (flow2->index == flow2->funcNum - 1) {
             OSReport(lbl_1_data_CC);
         } else {
-            flowP->index++;
+            flow2->index++;
         }
     }
 }
 
-void fn_1_56A0(OMOBJ *obj, void *flow)
+void fn_1_56A0(OMOBJ *obj)
 {
     M524Flow *flowP = (M524Flow *)obj->data;
+    M524Flow *flow2;
 
     if (flowP->gameMesId == -1) {
         flowP->gameMesId = GameMesCreate(2, 1);
     } else if (!GameMesStatGet(flowP->gameMesId)) {
         flowP->gameMesId = -1;
-        if (flowP->index == flowP->funcNum - 1) {
+        flow2 = (M524Flow *)obj->data;
+        if (flow2->index == flow2->funcNum - 1) {
             OSReport(lbl_1_data_CC);
         } else {
-            flowP->index++;
+            flow2->index++;
         }
     }
 }
 
-void fn_1_5754(OMOBJ *obj, void *flow)
+void fn_1_5754(OMOBJ *obj)
 {
     M524Flow *flowP = (M524Flow *)obj->data;
+    M524Flow *flow2;
 
     flowP->timer = MgTimerCreate(flowP->timerType);
     MgTimerParamSet(flowP->timer, flowP->maxTime, flowP->endTime, flowP->recordTime);
     MgTimerModeOnSet(flowP->timer, 1);
-    if (flowP->index == flowP->funcNum - 1) {
+    flow2 = (M524Flow *)obj->data;
+    if (flow2->index == flow2->funcNum - 1) {
         OSReport(lbl_1_data_CC);
     } else {
-        flowP->index++;
+        flow2->index++;
     }
 }
 
-void fn_1_5530(OMOBJ *obj, void *flow, s16 mesNo, s16 mesArg)
+void fn_1_5530(OMOBJ *obj, s16 mesNo, s16 mesArg)
 {
     M524Flow *flowP = (M524Flow *)obj->data;
+    M524Flow *flow2;
 
     if (flowP->gameMesId == -1) {
         flowP->gameMesId = GameMesCreate(mesNo, mesArg);
     } else if (!GameMesStatGet(flowP->gameMesId)) {
         flowP->gameMesId = -1;
-        if (flowP->index == flowP->funcNum - 1) {
+        flow2 = (M524Flow *)obj->data;
+        if (flow2->index == flow2->funcNum - 1) {
             OSReport(lbl_1_data_CC);
         } else {
-            flowP->index++;
+            flow2->index++;
         }
     }
 }
 
 f32 fn_1_4E1C(s16 padNo)
 {
-    s32 sum;
     f32 mag;
 
-    sum = (s32)HuPadStkX[padNo] * (s32)HuPadStkX[padNo] + (s32)HuPadStkY[padNo] * (s32)HuPadStkY[padNo];
-    mag = (f32) sum;
-    if (mag > 0.0f) {
-        mag = sqrtf(mag);
-    }
-    return mag;
+    mag = (f32) ((s32) HuPadStkX[padNo] * (s32) HuPadStkX[padNo] + (s32) HuPadStkY[padNo] * (s32) HuPadStkY[padNo]);
+    return sqrtf(mag);
 }
 
 f32 fn_1_4FA0(s16 padNo)
 {
     f32 angle;
 
-    angle = (f32) (180.0 * (atan2((f64) (s8) HuPadStkY[padNo], (f64) (s8) HuPadStkX[padNo]) / 3.141592653589793) - 90.0);
+    angle = (f32) (180.0 * (atan2((f32) (s8) HuPadStkY[padNo], (f32) (s8) HuPadStkX[padNo]) / 3.141592653589793) - 90.0);
     if (angle < 0.0f) {
         angle += 360.0f;
     }
@@ -1562,12 +1625,8 @@ void fn_1_57F4(M524Player *player, s16 index)
     player->type = GwPlayerConf[index].type;
     player->dif = GwPlayerConf[index].dif;
     player->state = 0;
-    player->traX = 0.0f;
-    player->traY = 0.0f;
-    player->traZ = 0.0f;
-    player->rotX = 0.0f;
-    player->rotY = 0.0f;
-    player->rotZ = 0.0f;
+    player->traX = player->traY = player->traZ = 0.0f;
+    player->rotX = player->rotY = player->rotZ = 0.0f;
 }
 
 f32 fn_1_59E4(f32 ang0, f32 ang1, f32 max)
@@ -1664,12 +1723,20 @@ s32 fn_1_5E48(Vec *dir, Vec *pos, Vec *target, Vec *out, Vec *result)
     Vec sp10;
     f32 temp_f1;
     f32 temp_f30;
+    f32 d1;
+    f32 d2;
+    f32 d3;
+    f32 d4;
 
     PSVECSubtract(out, target, &sp28);
     PSVECSubtract(target, pos, &sp1C);
-    temp_f30 = PSVECDotProduct(dir, &sp1C);
+    d1 = PSVECDotProduct(dir, &sp1C);
+    d2 = d1;
+    temp_f30 = d2;
     PSVECSubtract(target, out, &sp10);
-    temp_f1 = PSVECDotProduct(dir, &sp10);
+    d3 = PSVECDotProduct(dir, &sp10);
+    d4 = d3;
+    temp_f1 = d4;
     if (temp_f1 == 0.0f) {
         return 0;
     }
@@ -1683,7 +1750,7 @@ void fn_1_3CF4(M524Camera *cam)
     OMOBJ *obj;
 
     obj = omAddObjEx(lbl_1_bss_80, 0x4000, 0, 0, -1, fn_1_3740);
-    obj->work[0] = (s32) (uintptr_t) cam;
+    obj->work[0] = (uintptr_t) cam;
     if (cam->mode == 0) {
         obj->work[1] = 0;
     } else {
@@ -1694,17 +1761,18 @@ void fn_1_3CF4(M524Camera *cam)
 
 void fn_1_4C18(OMOBJ *obj)
 {
-    M524Camera *cam = (M524Camera *)obj->data;
-    M524Camera *src = (M524Camera *)obj->work[2];
-    s32 range = obj->work[1];
+    M524Camera *cam;
+    s32 range;
 
+    cam = (M524Camera *)obj->data;
+    range = obj->work[1];
     if (obj->work[0] == 0) {
-        fn_1_3694(src);
+        fn_1_3694((M524Camera *)obj->work[2]);
         omDelObjEx(lbl_1_bss_80, obj);
         return;
     }
-    cam->target.x = src->target.x + (f32) frandmod(range * 2) - (f32) range;
-    cam->target.y = src->target.y + (f32) frandmod(range * 2) - (f32) range;
+    cam->target.x = ((M524Camera *)obj->work[2])->target.x + (f32) (s32) frandmod(range * 2) - (f32) range;
+    cam->target.y = ((M524Camera *)obj->work[2])->target.y + (f32) (s32) frandmod(range * 2) - (f32) range;
     fn_1_3694(cam);
     obj->work[0] -= 1;
 }
@@ -1712,13 +1780,15 @@ void fn_1_4C18(OMOBJ *obj)
 void fn_1_4D60(M524Camera *cam, s32 count, s32 range)
 {
     OMOBJ *obj;
+    M524Camera *data;
 
     obj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_4C18);
     obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0x48, 0x10000000);
-    *(M524Camera *)obj->data = *cam;
+    data = (M524Camera *)obj->data;
     obj->work[0] = count;
     obj->work[1] = range;
-    obj->work[2] = (s32) (uintptr_t) cam;
+    *data = *cam;
+    obj->work[2] = (uintptr_t) cam;
 }
 
 void fn_1_50B0(OMOBJ *obj)
@@ -1741,16 +1811,16 @@ OMOBJ *fn_1_5198(M524FlowFunc *funcTbl)
 {
     OMOBJ *obj;
     M524Flow *flow;
-    s32 i;
     s32 j;
+    s32 i;
 
     i = 0;
     while (funcTbl[i] != NULL) {
         i++;
     }
     obj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_50B0);
-    flow = HuMemDirectMallocNum(HEAP_HEAP, 0x68, 0x10000000);
-    obj->data = flow;
+    obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524Flow), 0x10000000);
+    flow = (M524Flow *)obj->data;
     flow->funcNum = i;
     flow->funcTbl = funcTbl;
     flow->index = 0;
@@ -1781,7 +1851,6 @@ void fn_1_4494(M524Camera *cam)
     f32 s;
     f32 ry;
     f32 rx;
-    f32 rz;
     int i;
     int j;
 
@@ -1813,24 +1882,27 @@ void fn_1_4494(M524Camera *cam)
     mtx[2][0] = -s;
     mtx[2][2] = c;
     mtx[3][3] = 1.0f;
-    ry = (dz * mtx[2][0]) + ((dx * mtx[0][0]) + (dy * mtx[0][1]));
-    rx = (dz * mtx[2][2]) + ((dx * mtx[1][2]) + (dy * mtx[1][1]));
-    rz = (dz * mtx[2][3]) + ((dx * mtx[1][3]) + (dy * mtx[1][2]));
+    ry = (dz * mtx[2][0]) + ((dx * mtx[0][0]) + (dy * mtx[1][0]));
+    rx = (dz * mtx[2][1]) + ((dx * mtx[0][1]) + (dy * mtx[1][1]));
     cam->angX = -(f32) (180.0 * (atan2(rx, ry) / M_PI));
     cam->angZ = 0.0f;
 }
 
 void fn_1_4898(OMOBJ *obj)
 {
-    M524CamMove *move = (M524CamMove *)obj->data;
-    M524Camera *start = (M524Camera *)(move + 4);
-    M524Camera *end = (M524Camera *)(move + 0x4C);
-    M524Camera *cam = move->cam;
+    M524Camera *start;
+    M524Camera *cam;
+    M524Camera *end;
+    M524CamMove *move;
     f32 ratio;
 
+    move = (M524CamMove *)obj->data;
     if ((move->moveF & 2) == 0) {
         return;
     }
+    cam = move->cam;
+    start = &move->start;
+    end = &move->end;
     move->time += 1.0f;
     ratio = move->time / move->totalTime;
     if (cam->mode == 0) {
@@ -1852,6 +1924,14 @@ void fn_1_4898(OMOBJ *obj)
     fn_1_3694(cam);
 }
 
+void fn_1_3694(M524Camera *cam)
+{
+    if (cam->mode == 1) {
+        fn_1_3DD0(cam);
+    }
+    Hu3DCameraPosSetV(cam->camNo, &cam->pos, &cam->up, &cam->target);
+}
+
 OMOBJ *MgCameraMoveEntry(M524Camera *start, M524Camera *end, f32 time)
 {
     OMOBJ *obj;
@@ -1862,8 +1942,8 @@ OMOBJ *MgCameraMoveEntry(M524Camera *start, M524Camera *end, f32 time)
         return;
     }
     obj = omAddObjEx(lbl_1_bss_80, 0x2000, 0, 0, -1, fn_1_4898);
-    move = HuMemDirectMallocNum(HEAP_HEAP, 0xA0, 0x10000000);
-    obj->data = move;
+    obj->data = HuMemDirectMallocNum(HEAP_HEAP, sizeof(M524CamMove), 0x10000000);
+    move = (M524CamMove *)obj->data;
     move->totalTime = time;
     move->time = 0.0f;
     move->cam = start;
