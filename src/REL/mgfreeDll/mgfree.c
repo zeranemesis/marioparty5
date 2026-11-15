@@ -91,8 +91,8 @@ static MgFreeMode *lbl_1_bss_4;
 static MgFreeWork *lbl_1_bss_0;
 
 static HuVecF lbl_1_data_0[2] = {
-    { 1000.0f, -900.0f, 0.0f },
-    { 3000.0f, -900.0f, 0.0f },
+    { 0.0f, 970.0f, -900.0f },
+    { 0.0f, 3000.0f, -900.0f },
 };
 
 static MgFreeModelData lbl_1_data_18[13] = {
@@ -958,7 +958,7 @@ void fn_1_2C40(void)
             pos.z = lbl_1_data_15C.z + (rz * sin(rad));
             Hu3DModelPosSetV(entry->model, &pos);
             scale = entry->scale * (1.0f - t);
-            if (scale < 0.00001f) {
+            if (scale < 0.00001) {
                 scale = 0.00001f;
             }
             Hu3DModelScaleSet(entry->model, scale, scale, scale);
