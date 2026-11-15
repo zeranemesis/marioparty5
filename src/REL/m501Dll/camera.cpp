@@ -2,7 +2,6 @@
 #include "datanum/m501.h"
 #include "game/hu3d.h"
 #include "game/data.h"
-#include "port/widescreen.h"
 
 extern "C" {
 void __dl__FPv(void *ptr);
@@ -27,8 +26,6 @@ CCameraObj::CCameraObj()
     Hu3DCameraCreate(1);
     Hu3DCameraPerspectiveSet(1, 20.0f, 100.0f, 50000.0f, 1.2f);
     Hu3DCameraViewportSet(1, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
-    /* the intro and play cameras both see past the stage's 4:3 edges: pillarbox the scene */
-    HU_WIDE_PILLARBOX(1, TRUE);
 }
 
 /* out-of-line destructor of the singleton base, with the delete flag */

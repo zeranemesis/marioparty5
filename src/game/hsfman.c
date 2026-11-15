@@ -1195,7 +1195,26 @@ HU3DCAMERA defCamera = {
 };
 
 #ifdef TARGET_PC
+#include "game/object.h"
+
 static u16 Hu3DCameraPillarboxBit; /* Hu3DCameraPillarboxSet */
+
+/* Mini-games whose stage ends at the 4:3 edge (void, black or unfinished geometry
+ * beyond it in 16:9, checked with MP5_TEST_MG captures): their cameras are pillarboxed */
+static const OMOVL Hu3DPillarboxOvlTbl[] = {
+    DLL_m501dll, /* mg 0: intro fly-by and play camera */
+    DLL_m505dll, /* mg 4 */
+    DLL_m510dll, /* mg 9 */
+    DLL_m515dll, /* mg 14: split screen */
+    DLL_m521dll, /* mg 20 */
+    DLL_m530dll, /* mg 29: backdrop box corners */
+    DLL_m531dll, /* mg 30 */
+    DLL_m534dll, /* mg 33 */
+    DLL_m552dll, /* mg 51: the board ends in black at the 4:3 edge */
+    DLL_m562dll, /* mg 61 */
+    DLL_m565dll, /* mg 64: backdrop ends, black corners */
+    DLL_m574dll, /* mg 73: the pinball board ends in black */
+};
 #endif
 
 void Hu3DCameraCreate(int cameraBit)
@@ -1209,6 +1228,11 @@ void Hu3DCameraCreate(int cameraBit)
     Hu3DCameraExistF |= cameraBit;
 #ifdef TARGET_PC
     Hu3DCameraPillarboxBit &= ~cameraBit;
+    for(i=0; i<(s16)(sizeof(Hu3DPillarboxOvlTbl)/sizeof(Hu3DPillarboxOvlTbl[0])); i++) {
+        if(omcurovl == Hu3DPillarboxOvlTbl[i]) {
+            Hu3DCameraPillarboxBit |= cameraBit;
+        }
+    }
 #endif
     for(i=0, bit=1; i<HU3D_CAM_MAX; i++, bit <<= 1) {
         if(cameraBit & bit) {
@@ -1219,9 +1243,9 @@ void Hu3DCameraCreate(int cameraBit)
 }
 
 #ifdef TARGET_PC
-/* A camera whose scene ends at the 4:3 edge (void beyond it) is cut back to the 4:3
- * picture in the middle of the window. Its projection stays widened, so the middle is
- * exactly the 4:3 picture and 3D<->2D conversions need no change. Reset by Hu3DCameraCreate. */
+/* A camera whose scene ends at the 4:3 edge (void beyond it) shows the 4:3 picture in
+ * the middle of the window. For a full-screen camera that is the middle of the widened
+ * picture at the same scale, so 3D<->2D conversions need no change. Reset by Hu3DCameraCreate. */
 void Hu3DCameraPillarboxSet(int cameraBit, int onF)
 {
     if(onF) {
@@ -1231,25 +1255,35 @@ void Hu3DCameraPillarboxSet(int cameraBit, int onF)
     }
 }
 
-static void Hu3DCameraPillarboxScissor(s16 cameraNo)
+/* a pillarboxed camera is in use: the HUD keeps to the 4:3 frame with it */
+int Hu3DCameraPillarboxActive(void)
 {
+    s16 i;
+    for(i=0; i<HU3D_CAM_MAX; i++) {
+        if((Hu3DCameraPillarboxBit & (1 << i)) && -1 != Hu3DCamera[i].fov) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static void Hu3DCameraPillarboxApply(s16 cameraNo)
+{
+    /* the camera keeps its 4:3 projection, its viewport squeezed into the middle 4:3 of
+     * the window (split-screen views keep their arrangement inside that frame) */
     HU3DCAMERA *cameraP = &Hu3DCamera[cameraNo];
     float f = HuWideFactor();
-    float x0 = (HU_FB_WIDTH/2)-((HU_FB_WIDTH/2)/f);
-    float x1 = (HU_FB_WIDTH/2)+((HU_FB_WIDTH/2)/f);
+    float c = HU_FB_WIDTH*0.5f;
+    float x0;
+    Mtx44 proj;
     if(!(Hu3DCameraPillarboxBit & (1 << cameraNo)) || f == 1.0f) {
         return;
     }
-    if(x0 < cameraP->scissorX) {
-        x0 = cameraP->scissorX;
-    }
-    if(x1 > cameraP->scissorX+cameraP->scissorW) {
-        x1 = cameraP->scissorX+cameraP->scissorW;
-    }
-    if(x1 <= x0) {
-        x1 = x0+1.0f;
-    }
-    GXSetScissor((u32)x0, cameraP->scissorY, (u32)(x1-x0+0.5f), cameraP->scissorH);
+    MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
+    GXSetProjection(proj, GX_PERSPECTIVE);
+    GXSetViewport(c+((cameraP->viewportX-c)/f), cameraP->viewportY, cameraP->viewportW/f, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);
+    x0 = c+((cameraP->scissorX-c)/f);
+    GXSetScissor((u32)(x0+0.5f), cameraP->scissorY, (u32)((cameraP->scissorW/f)+0.5f), cameraP->scissorH);
 }
 #endif
 
@@ -1371,6 +1405,9 @@ void Hu3DCameraKill(int cameraBit)
 {
     s16 i;
     s16 bit;
+#ifdef TARGET_PC
+    Hu3DCameraPillarboxBit &= ~cameraBit;
+#endif
     for(i=0, bit=1; i<HU3D_CAM_MAX; i++, bit <<= 1) {
         if(cameraBit & bit) {
             HU3DCAMERA *cameraP = &Hu3DCamera[i];
@@ -1405,7 +1442,7 @@ void Hu3DCameraSet(s32 cameraNo, Mtx modelView)
     }
     GXSetScissor(cameraP->scissorX, cameraP->scissorY, cameraP->scissorW, cameraP->scissorH);
 #ifdef TARGET_PC
-    Hu3DCameraPillarboxScissor(cameraNo);
+    Hu3DCameraPillarboxApply(cameraNo);
 #endif
     MTXLookAt(modelView, &cameraP->pos, &cameraP->up, &cameraP->target);
 }
@@ -2523,7 +2560,7 @@ void Hu3DZClear(void)
     GXSetViewport(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);
     GXSetScissor(cameraP->scissorX, cameraP->scissorY, cameraP->scissorW, cameraP->scissorH);
 #ifdef TARGET_PC
-    Hu3DCameraPillarboxScissor(Hu3DCameraNo);
+    Hu3DCameraPillarboxApply(Hu3DCameraNo);
 #endif
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);

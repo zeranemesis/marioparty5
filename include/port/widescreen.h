@@ -29,6 +29,11 @@ float HuWidePictureX(float hudX, float hudY);
 /* per-scene fallback (hsfman.c): the cameras in cameraBit show only the 4:3 picture,
  * pillarboxed, for a scene whose geometry ends at the 4:3 edge; reset by Hu3DCameraCreate */
 void Hu3DCameraPillarboxSet(int cameraBit, int onF);
+/* a pillarboxed camera exists: the HUD uses the centred layout and 2D is clipped to 4:3 */
+int Hu3DCameraPillarboxActive(void);
+/* a sprite (or esprite) set over a 3D object stays put: the HUD layout doesn't move it */
+void HuSprWideFixSet(int sprId);
+void espWideFixSet(int espId);
 
 #ifdef __cplusplus
 }
@@ -41,6 +46,7 @@ void Hu3DCameraPillarboxSet(int cameraBit, int onF);
 #define HU_WIDE_HUD_X(x) HuWideHudX(x)
 #define HU_WIDE_PICTURE_X(x, y) HuWidePictureX(x, y)
 #define HU_WIDE_PILLARBOX(cameraBit, onF) Hu3DCameraPillarboxSet(cameraBit, onF)
+#define HU_WIDE_FIX_ESP(espId) espWideFixSet(espId)
 #else
 #define HU_WIDE(aspect) (aspect)
 #define HU_WIDE_L(w) 0
@@ -48,6 +54,7 @@ void Hu3DCameraPillarboxSet(int cameraBit, int onF);
 #define HU_WIDE_HUD_X(x) (x)
 #define HU_WIDE_PICTURE_X(x, y) (x)
 #define HU_WIDE_PILLARBOX(cameraBit, onF)
+#define HU_WIDE_FIX_ESP(espId)
 #endif
 
 #endif

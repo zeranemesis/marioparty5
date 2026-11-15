@@ -64,6 +64,12 @@ float hud_x(float pictureX, float c, float s)
     return true;
 }();
 
+// the HUD keeps to the 4:3 frame: by setting, or with a pillarboxed scene
+bool hud_centered()
+{
+    return mp5native::getSettings().video.hudCentered.getValue() || Hu3DCameraPillarboxActive();
+}
+
 } // namespace
 
 extern "C" float HuWideFactor(void)
@@ -88,7 +94,7 @@ extern "C" float HuWideFactor(void)
 extern "C" float HuWideHudShift(float hudX)
 {
     const float s = HuWideFactor();
-    if (s == 1.0f || mp5native::getSettings().video.hudCentered.getValue()) {
+    if (s == 1.0f || hud_centered()) {
         return 0.0f;
     }
     return placed_x(hudX, HU_DISP_CENTERX, s) - hudX;
@@ -100,7 +106,7 @@ extern "C" float HuWideHudX(float pictureX)
     if (s == 1.0f) {
         return pictureX;
     }
-    if (mp5native::getSettings().video.hudCentered.getValue()) {
+    if (hud_centered()) {
         return HU_DISP_CENTERX + (pictureX - HU_DISP_CENTERX) * s;
     }
     return hud_x(pictureX, HU_DISP_CENTERX, s);
@@ -114,7 +120,7 @@ extern "C" float HuWidePictureX(float hudX, float hudY)
     if (s == 1.0f) {
         return hudX;
     }
-    if (mp5native::getSettings().video.hudCentered.getValue()) {
+    if (hud_centered()) {
         return HU_DISP_CENTERX + (hudX - HU_DISP_CENTERX) / s;
     }
     // where this frame's sprite layout put that HUD point

@@ -50,7 +50,8 @@ BOOL HuSprWidescreenBackdrop(ANIMPAT *pat, float scaleX, float scaleY)
             }
         }
     }
-    return pat->layerNum > 0 && HuWideFactor() != 1.0f
+    /* with a pillarboxed scene the backdrop stays in the 4:3 frame with it */
+    return pat->layerNum > 0 && HuWideFactor() != 1.0f && !Hu3DCameraPillarboxActive()
         && (hi[0]-lo[0])*fabsf(scaleX) >= HU_DISP_WIDTH && (hi[1]-lo[1])*fabsf(scaleY) >= HU_DISP_HEIGHT*0.75f;
 }
 
@@ -61,6 +62,9 @@ static void HuSprWideScissor(HUSPRITE *sp, float shift, BOOL clip)
     float f = HuWideFactor();
     float x0, x1;
     float lo = 0.0f, hi = HU_FB_WIDTH;
+    if(Hu3DCameraPillarboxActive()) {
+        clip = TRUE; /* nothing 2D over the pillarbox bars */
+    }
     if(f == 1.0f || (!clip && sp->scissorX == 0 && sp->scissorW >= HU_FB_WIDTH)) {
         GXSetScissor(sp->scissorX, sp->scissorY, sp->scissorW, sp->scissorH);
         return;
