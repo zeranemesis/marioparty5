@@ -31,6 +31,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <chrono>
+#include <thread>
+
 extern "C" int game_main();
 
 using namespace std::string_literals;
@@ -377,7 +380,15 @@ extern "C" void Mp5InstallCrashReport(void);
 
 extern "C" int port_main(int argc, char* argv[]) {
     Mp5InstallCrashReport();
-    setvbuf(stdout, nullptr, _IONBF, 0); // unbuffered so logs survive a kill/crash
+    // Buffered, flushed every 200 ms and by the crash report: a log line per write cost a system call each, and the
+    // game's OSReport floods (heap dumps, free errors) stalled frames for up to a second. A kill loses <= 200 ms.
+    setvbuf(stdout, nullptr, _IOFBF, 1 << 16);
+    std::thread([] {
+        for (;;) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            fflush(stdout);
+        }
+    }).detach();
     // On iOS, when connected to an external monitor, SDLUIKitSceneDelegate scene:willConnectToSession:
     // can call our main function again. Explicitly guard against this reinitialization.
     if (mainCalled) {

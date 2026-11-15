@@ -15,8 +15,7 @@ void OSReport(const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
-    vprintf(msg, args);
-    fflush(stdout);
+    vprintf(msg, args); // stdout is buffered and flushed on a timer (portmain.cpp)
     va_end(args);
 }
 
