@@ -46,6 +46,7 @@ static OMCAMERAVIEW lbl_1_data_2188 = { { 0.0f, 70.0f, 0.0f }, { -30.0f, 0.0f, 0
 static u32 lbl_1_data_21A4[4] = { 0x190022, 0x190024, 0x190023, 0x190025 };
 
 /* Desk main menu: look at the shop / start a duel. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 void fn_1_256B4(void)
 {
     s16 choice;
@@ -90,6 +91,7 @@ void fn_1_256B4(void)
 }
 
 /* Sets up a duel against a random machine on a random stage. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_258C8(void)
 {
     s16 list[16];
@@ -143,6 +145,7 @@ static void fn_1_258C8(void)
 }
 
 /* The parts shop: browse the four categories, buy with sdPoint. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_25B58(void)
 {
     s16 i;
@@ -323,6 +326,7 @@ static void fn_1_264C0(void)
 }
 
 /* Creates the shop windows, sprites, preview camera and the spin process. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_266A4(void)
 {
     s16 win;
@@ -447,6 +451,7 @@ static void fn_1_26F0C(void)
     }
 }
 
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_27004(s16 no)
 {
     sprintf(lbl_1_bss_19C8, "%03d", GwCommon.sdPoint[no]);
@@ -455,6 +460,7 @@ static void fn_1_27004(s16 no)
 }
 
 /* "owned / total" counter for a category. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_2709C(s16 winId, s16 picNo)
 {
     s16 count;
@@ -475,6 +481,7 @@ static void fn_1_2709C(s16 winId, s16 picNo)
 }
 
 /* Fills the five visible list rows starting at part `top` of category `cat`. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_271EC(s16 cat, s16 top)
 {
     SDMACHINE_PART *part;
@@ -551,6 +558,7 @@ static void fn_1_27730(f32 x, f32 y)
 }
 
 /* (Re)builds the preview model for part `no` of category `cat`. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_279F8(s16 cat, s16 no)
 {
     SDMACHINE_PART *part;
@@ -607,6 +615,7 @@ static void fn_1_279F8(s16 cat, s16 no)
 }
 
 /* Buy part `no` of category `cat` (confirmation window, point deduction, unlock). */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_27D80(s16 cat, s16 no)
 {
     SDMACHINE_PART *part;
@@ -643,6 +652,7 @@ static void fn_1_27D80(s16 cat, s16 no)
 }
 
 /* Announces newly earned points / newly unlocked parts. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_28104(void)
 {
     char buf[8];

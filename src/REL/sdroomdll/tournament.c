@@ -198,6 +198,7 @@ void fn_1_1C25C(void)
 }
 
 /* Tournament bracket screen. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 void fn_1_1C260(void)
 {
     s16 pair[4];
@@ -381,6 +382,7 @@ void fn_1_1C260(void)
 }
 
 /* Creates the bracket windows, sprites, trophy and the 3D backdrop. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1D1B4(void)
 {
     HuVecF src;
@@ -547,6 +549,7 @@ static void fn_1_1E090(s16 layerNo)
 }
 
 /* Spins the trophy. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1E0EC(void)
 {
     f32 rot = 0.0f;
@@ -559,6 +562,7 @@ static void fn_1_1E0EC(void)
 }
 
 /* Pulses the two marker sprites of the current match until told to stop. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1E154(void)
 {
     HUPROCESS *self;
@@ -596,6 +600,7 @@ static void fn_1_1E154(void)
 }
 
 /* Sways the backdrop camera. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1E2E0(void)
 {
     f32 baseX;
@@ -632,6 +637,7 @@ static void fn_1_1E2E0(void)
 }
 
 /* Finds the next match. Returns the round (0..2) and fills out[] with the two entrants, or -1. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static s16 fn_1_1E51C(s16 *out)
 {
     s16 i;
@@ -677,6 +683,7 @@ static s16 fn_1_1E51C(s16 *out)
 }
 
 /* Reveals the winner line sprites reached by the entrants; returns the last one that was hidden. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static s16 fn_1_1E6A8(void)
 {
     s16 ret;
@@ -710,6 +717,7 @@ static s16 fn_1_1E6A8(void)
 }
 
 /* Animates the result of a match: line fades in, loser drops, winner climbs the bracket. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1E880(s16 winner, s16 loser, s16 spr)
 {
     f32 t;
@@ -787,6 +795,7 @@ static void fn_1_1E880(s16 winner, s16 loser, s16 spr)
 }
 
 /* Builds the 8 entrants: the player in slot 0, opponents drawn from the per-difficulty pools. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1F21C(void)
 {
     s16 tmp[6];
@@ -893,6 +902,7 @@ static void fn_1_1F78C(s16 *arr, s16 count)
 }
 
 /* Strength class of an entrant machine: 3 pool A, 2 pool B, 1 other, 0 none. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static s16 fn_1_1F82C(s16 id)
 {
     s16 *a;
@@ -919,6 +929,7 @@ static s16 fn_1_1F82C(s16 id)
 }
 
 /* Final: trophy animation, record the win and the unlock flags. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1F960(s16 winner)
 {
     HU3DMODEL *trophy;
@@ -1000,6 +1011,7 @@ static void fn_1_1F960(s16 winner)
 }
 
 /* Decides a match between two CPU entrants by their strength classes. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static s16 fn_1_20038(s16 *pair)
 {
     s16 stat[2];
@@ -1036,6 +1048,7 @@ static s16 fn_1_20038(s16 *pair)
 }
 
 /* Entrant viewer: left/right moves the cursor, A shows the machine info. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_20300(void)
 {
     HUPROCESS *pulse;

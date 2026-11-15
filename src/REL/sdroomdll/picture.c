@@ -147,6 +147,7 @@ void fn_1_19324(void)
 }
 
 /* Entry from the room menu: show the photo wall. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 void fn_1_193C0(void)
 {
     Vec pos;
@@ -211,6 +212,7 @@ void fn_1_193C0(void)
 }
 
 /* Creates the photo models, capture textures, windows and cursor. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_19928(void)
 {
     s16 i;
@@ -313,6 +315,7 @@ static void fn_1_19FC0(void)
 }
 
 /* Renders every stored photo into its small capture texture. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1A17C(void)
 {
     GWSDPICTURE *pic;
@@ -352,6 +355,7 @@ static void fn_1_1A17C(void)
 }
 
 /* Sets up the big capture of photo `no`. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1A528(s16 no)
 {
     GWSDPICTURE *pic;
@@ -398,6 +402,7 @@ static void fn_1_1A850(s16 layerNo)
 }
 
 /* Photo wall browser: move the cursor over the photos, A to inspect, B to leave. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1A958(void)
 {
     OMCAMERAVIEW view = { { 0.0f, 0.0f, 0.0f }, { 0.0f, 240.0f, 0.0f }, 160.0f };
@@ -534,6 +539,7 @@ static void fn_1_1A958(void)
 }
 
 /* No photos stored yet. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1B640(void)
 {
     lbl_1_bss_AD0 = HuWinCreate(-10000.0f, 275.0f, 0x220, 0x1A, 0);
@@ -550,6 +556,7 @@ static void fn_1_1B640(void)
 }
 
 /* Photo viewer: orbit/zoom the camera around the shown photo, X to delete it. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1B72C(s16 no)
 {
     HuVec2f size;
@@ -639,6 +646,7 @@ static void fn_1_1B72C(s16 no)
 }
 
 /* Deletes photo `no`: fades, blanks its capture texture and marks the slot empty. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1BCD4(s16 no)
 {
     u16 *p;
@@ -702,6 +710,7 @@ static void fn_1_1BDF8(f32 alpha)
 }
 
 /* Drops photo slots whose number is 0xFFFF (deleted) and packs the list. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1C13C(void)
 {
     s16 i;

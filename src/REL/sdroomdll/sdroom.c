@@ -74,6 +74,7 @@ void _epilog(void)
     }
 }
 
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 void ObjectSetup(void)
 {
     OSReport("******* SDR ObjectSetup *********\n");
@@ -120,6 +121,7 @@ void ObjectSetup(void)
 }
 
 /* Main garage-room process: stat update after a duel, then the room menu. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_49C(void)
 {
     OMCAMERAVIEW view;
@@ -466,6 +468,7 @@ static void fn_1_17B0(void)
 }
 
 /* Loads the room models and creates the message windows. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_18FC(void)
 {
     s16 mdl;
@@ -605,6 +608,7 @@ static void DebugCamMove(int cam, int pad, f32 minZoom)
     }
 }
 
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_1F40(OMOBJ *obj)
 {
     if (lbl_1_bss_4 != 0) {
@@ -614,6 +618,7 @@ static void fn_1_1F40(OMOBJ *obj)
 }
 
 /* Same camera update as omOutViewMulti, for the 6 cameras. */
+// NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
 static void fn_1_35E8(void)
 {
     Vec pos;
