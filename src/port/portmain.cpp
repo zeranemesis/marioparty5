@@ -372,7 +372,10 @@ static constexpr PADDefaultMapping defaultPadMapping = {
     },
 };
 
+extern "C" void Mp5InstallCrashReport(void);
+
 extern "C" int port_main(int argc, char* argv[]) {
+    Mp5InstallCrashReport();
     setvbuf(stdout, nullptr, _IONBF, 0); // unbuffered so logs survive a kill/crash
     // On iOS, when connected to an external monitor, SDLUIKitSceneDelegate scene:willConnectToSession:
     // can call our main function again. Explicitly guard against this reinitialization.

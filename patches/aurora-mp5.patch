@@ -143,6 +143,20 @@ index c196cf6..b48153f 100644
  // TODO GXGetYScaleFactor
  // TODO GXGetNumXfbLines
  // TODO GXClearBoundingBox
+diff --git a/lib/dolphin/gx/GXLighting.cpp b/lib/dolphin/gx/GXLighting.cpp
+index 254d87c..a71489f 100644
+--- a/lib/dolphin/gx/GXLighting.cpp
++++ b/lib/dolphin/gx/GXLighting.cpp
+@@ -279,7 +279,8 @@ void GXSetChanCtrl(GXChannelID id, bool lightingEnabled, GXColorSrc ambSrc, GXCo
+   SET_REG_FIELD(0, reg, 1, 1, lightingEnabled);
+   SET_REG_FIELD(0, reg, 4, 2, lightState & 0xF); // lights 0-3
+   SET_REG_FIELD(0, reg, 1, 6, ambSrc);
+-  SET_REG_FIELD(0, reg, 2, 7, (attnFn == GX_AF_NONE) ? 0 : diffFn);
++  // the SDK only drops the diffuse function for specular channels; GX_AF_NONE keeps N.L (mp5: unshaded hilite materials)
++  SET_REG_FIELD(0, reg, 2, 7, (attnFn == GX_AF_SPEC) ? 0 : diffFn);
+   SET_REG_FIELD(0, reg, 1, 9, (attnFn != GX_AF_SPEC));   // attn enable
+   SET_REG_FIELD(0, reg, 1, 10, (attnFn != GX_AF_NONE));  // attn select
+   SET_REG_FIELD(0, reg, 4, 11, (lightState >> 4) & 0xF); // lights 4-7
 diff --git a/lib/gfx/clear.cpp b/lib/gfx/clear.cpp
 index d0b4c78..801f229 100644
 --- a/lib/gfx/clear.cpp
