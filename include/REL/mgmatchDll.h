@@ -111,7 +111,7 @@ typedef struct M505Flow_s {
     s32 camPathNum;        //0xC38
     s32 itemAnimState;     //0xC3C
     ANIMDATA *mgAnim[MGMATCH_MG_MAX]; //0xC40
-    s32 parManId[8];      //0xC94 (32-bit slots, only the low half is used)
+    s32 parManId[4];      //0xC94 (32-bit slots, only the low half is used)
     s16 wheelAngle[4];     //0xCA4
     s16 parManMaxTime;     //0xCAC
     M505_PARMAN parMan[MGMATCH_PARMAN_MAX]; //0xCB0
@@ -128,7 +128,6 @@ typedef struct M505Flow_s {
     s16 glightId;          //0xE24
     s16 camMotionNo;       //0xE26
     f32 camMoveRate;       //0xE28
-    s16 padE2A;            //0xE2A
     s16 timerType;         //0xE2C
 } M505_FLOW;               //0xE2E
 

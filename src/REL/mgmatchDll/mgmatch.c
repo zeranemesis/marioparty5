@@ -375,8 +375,6 @@ void fn_1_294(s32 arg0, s32 arg1)
     }
 }
 
-static const char lbl_1_data_4B8[] = "Load Time:%d\n";
-
 void fn_1_2E8(void)
 {
     u32 start;
@@ -389,7 +387,8 @@ void fn_1_2E8(void)
         HuPrcVSleep();
     }
     lbl_1_bss_0->loadState = 1;
-    OSReport(lbl_1_data_4B8, OSTicksToMilliseconds(OSGetTick() - start));
+    OSReport("Load Time:%d\n", OSTicksToMilliseconds(OSGetTick() - start));
+    OSReport("Finished!\n");
     HuPrcEnd();
     while (1) {
         HuPrcVSleep();

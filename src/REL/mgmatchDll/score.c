@@ -985,7 +985,7 @@ void fn_1_15460(s16 layer)
             lbl_1_bss_E38[i].x = (f32)(s16)((s32)(1.1111111111111112 * (f64)xy[0]) & 0xFFFE);
             lbl_1_bss_E38[i].y = (f32)(s16)((s32)xy[1] & 0xFFFE);
             Hu3DFbCopyExec((s16)(s32)(lbl_1_bss_E38[i].x - 40.0f), (s16)(s32)(lbl_1_bss_E38[i].y - 40.0f), 0x50, 0x50,
-                GX_TF_RGB565, 0, lbl_1_bss_E74.anim[i]->bmp->data);
+                GX_TF_RGB5A3, 0, lbl_1_bss_E74.anim[i]->bmp->data);
         }
         Hu3DZClear();
     }
@@ -1045,7 +1045,7 @@ void fn_1_15BC8(void)
     if (lbl_1_bss_E74.init != 0) {
         HuSprGrpPosSet(lbl_1_bss_E74.grp[0], lbl_1_data_C1C[0], lbl_1_data_C1C[1]);
         HuSprGrpPosSet(lbl_1_bss_E74.grp[1], lbl_1_data_C2C[0], lbl_1_data_C2C[1]);
-        HuSprGrpPosSet(lbl_1_bss_E74.grp[2], lbl_1_data_C3C[0], lbl_1_data_C3C[1]);
+        HuSprGrpPosSet(lbl_1_bss_E74.grp[2], lbl_1_data_C3C[2], lbl_1_data_C3C[1]);
     }
 }
 
