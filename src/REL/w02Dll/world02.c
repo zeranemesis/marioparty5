@@ -3437,13 +3437,37 @@ loop_9:
 }
 
 s16 MB2_RainbowMasuNoEndGet(s32 arg0) {
-    /* NONMATCHING: placeholder - m2c mismodeled this function's flat
-     * per-slot struct (ANIMDATA* / void* typed loop pointers used with
-     * raw ->unkXX offsets), producing dozens of type errors. Needs a
-     * proper struct reconstructed from
-     * build/GP5E01_00/w02Dll/asm/REL/w02Dll/world02.s (same technique as
-     * MB3DEBRIS/MB7W_* in w03Dll/w07Dll) before it can be ported for real. */
-    return 0;
+    s16 links[16];
+    MASU *masu;
+    s32 type;
+    s32 i;
+    s32 n;
+
+    masu = MBMasuGet(0, arg0);
+    type = masu->flag & 0xF;
+    if (type == 2 || type == 4 || type == 6 || type == 8) {
+        return -1;
+    }
+    if ((masu->flag & 0xF) != 0) {
+        masu = MBMasuGet(0, arg0);
+        for (i = 0; i < masu->linkNum; i++) {
+            if (MBMasuFlagGet(0, masu->linkTbl[i]) & 0x4000) {
+                break;
+            }
+        }
+        if (i < masu->linkNum) {
+            n = MB2_MasuLinkGet(masu->linkTbl[i], links, 1, 1);
+            for (i = 0; i < n; i++) {
+                if (arg0 != links[i]) {
+                    break;
+                }
+            }
+            if (i < n) {
+                return links[i];
+            }
+        }
+    }
+    return -1;
 }
 
 s32 MB2_PathCheck(s32 arg0) {
