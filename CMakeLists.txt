@@ -125,6 +125,19 @@ elseif (MSVC)
     add_compile_options(/bigobj)
 endif ()
 
+# Decompiled game code (dol and RELs): optimised outside Debug builds; MP5_GAME_OPT=/Od puts back the unoptimised
+# build (bisecting a suspected optimiser-sensitive bug). /fp stays the default /fp:precise: same float results.
+set(MP5_GAME_OPT "$<IF:$<CONFIG:Debug>,/Od,/O2>" CACHE STRING "MSVC optimisation flag for the decompiled game code")
+if (MSVC)
+    # RelWithDebInfo defaults to /Ob1 (only functions marked inline) and incremental linking (a jump thunk per call)
+    foreach (lang C CXX)
+        string(REPLACE "/Ob1" "/Ob2" CMAKE_${lang}_FLAGS_RELWITHDEBINFO "${CMAKE_${lang}_FLAGS_RELWITHDEBINFO}")
+    endforeach ()
+    foreach (kind EXE SHARED)
+        string(REPLACE "/INCREMENTAL" "/INCREMENTAL:NO /OPT:REF" CMAKE_${kind}_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_${kind}_LINKER_FLAGS_RELWITHDEBINFO}")
+    endforeach ()
+endif ()
+
 # Settings shared by dol and every REL module
 function(mp5native_game_target target)
     target_include_directories(${target} PRIVATE include src extern extern/aurora/include extern/aurora/include/dolphin ${CMAKE_BINARY_DIR})
@@ -205,7 +218,7 @@ if (MSVC)
     target_compile_options(dol PRIVATE "/wd4113") # function pointer parameter list mismatch
     # target_compile_options(dol PRIVATE "/Zi")
     #    target_compile_options(dol PRIVATE "/Ob0")
-    target_compile_options(dol PRIVATE "/Od")
+    target_compile_options(dol PRIVATE ${MP5_GAME_OPT})
     if(NOT USE_ASAN AND RUNTIME_SANITIZE)
         target_compile_options(dol PRIVATE "/GS")
         target_compile_options(dol PRIVATE "/RTC1")  # incompatible with asan
@@ -285,7 +298,7 @@ foreach (dir ${REL_TARGETS})
                 target_compile_options(${dir} PRIVATE "/wd4068") # unknown pragma
                 # target_compile_options(${dir} PRIVATE "/Zi")
                 #                target_compile_options(${dir} PRIVATE "/Ob0")
-                target_compile_options(${dir} PRIVATE "/Od")
+                target_compile_options(${dir} PRIVATE ${MP5_GAME_OPT})
                 if(NOT USE_ASAN AND RUNTIME_SANITIZE)
                     target_compile_options(${dir} PRIVATE "/GS")
                     target_compile_options(${dir} PRIVATE "/RTC1")  # incompatible with asan
