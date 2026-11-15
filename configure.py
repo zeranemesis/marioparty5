@@ -895,12 +895,12 @@ config.libs = [
     Rel(
         "carddll",
         objects={
-            Object(NonMatching, "REL/carddll/cardmain.c"),
-            Object(NonMatching, "REL/carddll/card.c"),
-            Object(NonMatching, "REL/carddll/player.c"),
-            Object(NonMatching, "REL/carddll/camera.c"),
+            Object(Equivalent, "REL/carddll/cardmain.c"),
+            Object(Equivalent, "REL/carddll/card.c"),
+            Object(Equivalent, "REL/carddll/player.c"),
+            Object(Equivalent, "REL/carddll/camera.c"),
             Object(Equivalent, "REL/carddll/dice.c"),
-            Object(NonMatching, "REL/carddll/status.c"),
+            Object(Equivalent, "REL/carddll/status.c"),
         },
     ),
     Rel(

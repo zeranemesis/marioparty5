@@ -31,12 +31,12 @@ static f32 lbl_1_bss_1248[10];
 static s32 lbl_1_bss_1270[10]; /* [0] = counter */
 s32 lbl_1_bss_1298[4];         /* [0] = main state, [1] = sub state */
 
-#define CUR_PLAYER(work) (&(work)->players[(work)->order[(work)->curPlayer]])
+#define CUR_PLAYER(work) (&(work)->pl[(work)->order[(work)->curPlayer]])
 #define CELL_FLAGS(p) (lbl_1_bss_8C4[(p)->row][(p)->col])
 
 /* Dice block at the player's cell: roulette that picks a result. */
 // NONMATCHING: the original keeps each Vec copy in its own stack temp (larger frame, _savegpr_17)
-s32 fn_1_325F4(CardWork *work) {
+s32 fn_1_325F4(CardGame *work) {
     Vec pos;
     Vec dir;
     Vec scr;
@@ -102,10 +102,10 @@ s32 fn_1_325F4(CardWork *work) {
         tmp = pos;
         fn_1_3F3D8(lbl_1_bss_11F0, lbl_1_bss_11F4, &tmp);
         Hu3D3Dto2D(&pos, 1, &scr);
-        if (lbl_1_bss_20 == 0) {
+        if (lbl_1_bss_20[0] == 0) {
             if (scr.y >= 0.0f) {
                 fn_1_8D04(0x3FE, lbl_1_bss_478[p->row][p->col], 1);
-                lbl_1_bss_20 = 1;
+                lbl_1_bss_20[0] = 1;
             }
         }
         if (lbl_1_bss_1220[0] == 0x32) {
@@ -121,7 +121,7 @@ s32 fn_1_325F4(CardWork *work) {
         if (fn_1_3F714(lbl_1_bss_11F0, 0) != 0) {
             fn_1_3F278(lbl_1_bss_11F0, lbl_1_bss_11F4);
             lbl_1_bss_1298[0]++;
-            lbl_1_bss_20 = 0;
+            lbl_1_bss_20[0] = 0;
         }
         break;
     case 2:
@@ -136,7 +136,7 @@ s32 fn_1_325F4(CardWork *work) {
 
 /* Bonus roulette of the acting player: picks one of the four results and plays it. */
 // NONMATCHING: the original switch compiles to an if chain; stack temp for dicePos copy differs
-s32 fn_1_32D70(CardWork *work) {
+s32 fn_1_32D70(CardGame *work) {
     Vec dicePos = { 288.0f, 240.0f, 1500.0f };
     s32 ret = 0;
     s32 kind;
@@ -145,36 +145,36 @@ s32 fn_1_32D70(CardWork *work) {
 
     switch (lbl_1_bss_1298[0]) {
     case 0:
-        lbl_1_bss_12A8[2] = GwPlayerConf[work->order[work->curPlayer]].charNo;
+        *(s32 *)(lbl_1_bss_12A8 + 8) = GwPlayerConf[work->order[work->curPlayer]].charNo;
         fn_1_4FBC8(work, 0x36);
         fn_1_36B10(0);
-        if (p->unk34[2] != -1) {
+        if ((&p->f34)[2] != -1) {
             kind = frandmod(3);
         } else {
             kind = frandmod(4);
         }
         switch (kind) {
         case 0:
-            p->flags |= 0x800;
+            p->f50 |= 0x800;
             break;
         case 1:
-            p->flags |= 0x1000;
+            p->f50 |= 0x1000;
             break;
         case 2:
-            p->flags |= 0x2000;
+            p->f50 |= 0x2000;
             break;
         default:
-            p->flags |= 0x4000;
+            p->f50 |= 0x4000;
             break;
         }
         lbl_1_bss_1298[0]++;
         break;
     case 1:
-        if (p->flags & 0x800) {
+        if (p->f50 & 0x800) {
             kind = 0;
-        } else if (p->flags & 0x1000) {
+        } else if (p->f50 & 0x1000) {
             kind = 2;
-        } else if (p->flags & 0x2000) {
+        } else if (p->f50 & 0x2000) {
             kind = 3;
         } else {
             kind = 1;
@@ -202,30 +202,30 @@ s32 fn_1_32D70(CardWork *work) {
         }
         break;
     case 2:
-        if (p->flags & 0x800) {
+        if (p->f50 & 0x800) {
             if (fn_1_337C8(work) != 0) {
                 lbl_1_bss_1298[0]++;
             }
-        } else if (p->flags & 0x1000) {
+        } else if (p->f50 & 0x1000) {
             if (fn_1_33C94(work) != 0) {
                 lbl_1_bss_1298[0]++;
             }
-        } else if (p->flags & 0x2000) {
+        } else if (p->f50 & 0x2000) {
             if (fn_1_34DA4(work) != 0) {
-                p->flags &= ~0x2000;
+                p->f50 &= ~0x2000;
                 lbl_1_bss_1298[0]++;
             }
-        } else if ((p->flags & 0x4000) && fn_1_34E24(work) != 0) {
-            p->flags &= ~0x4000;
+        } else if ((p->f50 & 0x4000) && fn_1_34E24(work) != 0) {
+            p->f50 &= ~0x4000;
             lbl_1_bss_1298[0]++;
         }
         break;
     case 3:
         lbl_1_bss_1298[0] = 0;
         ret = 1;
-        work->state = 200;
+        work->f188 = 200;
         for (i = 0; i < 4; i++) {
-            work->players[i].flags |= 0x8000;
+            work->pl[i].f50 |= 0x8000;
         }
         break;
     case 10:
@@ -264,9 +264,9 @@ s32 fn_1_33234(s32 kind) {
         if (lbl_1_bss_1248[0] < 0.0f) {
             lbl_1_bss_1248[0] = 0.0f;
         }
-        if (lbl_1_bss_20 == 0 && lbl_1_bss_1248[0] == 0.0f) {
+        if (lbl_1_bss_20[0] == 0 && lbl_1_bss_1248[0] == 0.0f) {
             HuAudFXPlay(0x42B);
-            lbl_1_bss_20 = 1;
+            lbl_1_bss_20[0] = 1;
         }
         espScaleSet(lbl_1_bss_11E8, 1.0f + lbl_1_bss_1248[0], 1.0f + lbl_1_bss_1248[0]);
         lbl_1_bss_1248[1] += 0.015f;
@@ -277,7 +277,7 @@ s32 fn_1_33234(s32 kind) {
         if (lbl_1_bss_1248[0] == 0.0f && lbl_1_bss_1248[1] == 1.0f) {
             lbl_1_bss_1270[0] = 0x1E;
             lbl_1_bss_1298[1]++;
-            lbl_1_bss_20 = 0;
+            lbl_1_bss_20[0] = 0;
         }
         break;
     case 2:
@@ -317,7 +317,7 @@ s32 fn_1_33234(s32 kind) {
 
 /* Result 0: a big block falls on the board. */
 // NONMATCHING: the original copies the 1.2 scale Vec from rodata with integer loads
-s32 fn_1_337C8(CardWork *work) {
+s32 fn_1_337C8(CardGame *work) {
     Vec pos;
     Vec dir;
     Vec tmp;
@@ -382,7 +382,7 @@ s32 fn_1_337C8(CardWork *work) {
 
 /* Result 1: other players' blocks rise, a counter banner slides in. */
 // NONMATCHING: operand order of the player index scaling in the model loop
-s32 fn_1_33C94(CardWork *work) {
+s32 fn_1_33C94(CardGame *work) {
     Vec pos;
     s32 ret = 0;
     s32 i;
@@ -394,8 +394,8 @@ s32 fn_1_33C94(CardWork *work) {
     case 0:
         fn_1_351C4(work->order[work->curPlayer]);
         if (fn_1_393C4(work) != 0) {
-            work->unk1BC = work->unk184;
-            work->unk184 = 0;
+            work->f1B0[3] = work->f184;
+            work->f184 = 0;
             lbl_1_bss_C48[0] = 0;
             lbl_1_bss_C48[1] = 0;
             lbl_1_bss_1298[1]++;
@@ -410,7 +410,7 @@ s32 fn_1_33C94(CardWork *work) {
         lbl_1_bss_11E4 = espEntry(lbl_1_data_2B4[0x68 / 4], 0, 0);
         espDrawNoSet(lbl_1_bss_11E4, 0);
         espPriSet(lbl_1_bss_11E4, 0xE0);
-        espBankSet(lbl_1_bss_11E4, (s16)(work->unk1BC - 1));
+        espBankSet(lbl_1_bss_11E4, (s16)(work->f1B0[3] - 1));
         lbl_1_bss_11E0 = espEntry(lbl_1_data_2B4[0x8C / 4], 0, 0);
         espDrawNoSet(lbl_1_bss_11E0, 0);
         espPriSet(lbl_1_bss_11E0, 0xF0);
@@ -420,23 +420,23 @@ s32 fn_1_33C94(CardWork *work) {
         espScaleSet(lbl_1_bss_11E4, lbl_1_bss_1248[0], 1.0f);
         for (i = 0; i < 4; i++) {
             if (i != work->order[work->curPlayer]) {
-                work->players[i].modelId = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_B0[0x1D8 / 4], HU_MEMNUM_OVL, HEAP_MODEL));
-                Hu3DModelCameraSet(work->players[i].modelId, 1);
-                Hu3DModelLayerSet(work->players[i].modelId, 2);
-                row = work->players[i].row;
-                col = work->players[i].col;
-                if (work->players[i].unk0 == 1) {
+                work->pl[i].f58 = Hu3DModelCreate(HuDataSelHeapReadNum(lbl_1_data_B0[0x1D8 / 4], HU_MEMNUM_OVL, HEAP_MODEL));
+                Hu3DModelCameraSet(work->pl[i].f58, 1);
+                Hu3DModelLayerSet(work->pl[i].f58, 2);
+                row = work->pl[i].row;
+                col = work->pl[i].col;
+                if (work->pl[i].f00 == 1) {
                     row--;
-                } else if (work->players[i].unk0 == 2) {
+                } else if (work->pl[i].f00 == 2) {
                     row++;
-                } else if (work->players[i].unk0 == 3) {
+                } else if (work->pl[i].f00 == 3) {
                     col--;
-                } else if (work->players[i].unk0 == 4) {
+                } else if (work->pl[i].f00 == 4) {
                     col++;
                 }
-                fn_1_9C74(&pos, row, col, work->players[i].unk20, work->players[i].unk24);
-                Hu3DModelPosSet(work->players[i].modelId, -50.0f + pos.x, pos.y, pos.z);
-                Hu3DModelScaleSet(work->players[i].modelId, 1.0f, 0.0f, 1.0f);
+                fn_1_9C74(&pos, row, col, work->pl[i].f20, work->pl[i].f24);
+                Hu3DModelPosSet(work->pl[i].f58, -50.0f + pos.x, pos.y, pos.z);
+                Hu3DModelScaleSet(work->pl[i].f58, 1.0f, 0.0f, 1.0f);
             }
         }
         lbl_1_bss_5E = 0;
@@ -449,7 +449,7 @@ s32 fn_1_33C94(CardWork *work) {
         if (lbl_1_bss_1270[0] < 0) {
             lbl_1_bss_1270[0] = 0;
         }
-        if (work->unk1BC != 1) {
+        if (work->f1B0[3] != 1) {
             id = lbl_1_bss_11E6;
         } else {
             id = lbl_1_bss_11E0;
@@ -460,8 +460,8 @@ s32 fn_1_33C94(CardWork *work) {
             lbl_1_bss_1248[1] = 1.0f;
         }
         for (i = 0; i < 4; i++) {
-            if (i != work->order[work->curPlayer] && !(work->players[i].flags & 0x200)) {
-                Hu3DModelScaleSet(work->players[i].modelId, 1.0f, lbl_1_bss_1248[1], 1.0f);
+            if (i != work->order[work->curPlayer] && !(work->pl[i].f50 & 0x200)) {
+                Hu3DModelScaleSet(work->pl[i].f58, 1.0f, lbl_1_bss_1248[1], 1.0f);
             }
         }
         if (lbl_1_bss_1270[0] == 0) {
@@ -493,7 +493,7 @@ s32 fn_1_33C94(CardWork *work) {
             lbl_1_bss_1298[1] = 0;
             ret = 1;
         }
-        if (work->unk1BC != 1) {
+        if (work->f1B0[3] != 1) {
             id = lbl_1_bss_11E6;
         } else {
             id = lbl_1_bss_11E0;
@@ -507,7 +507,7 @@ s32 fn_1_33C94(CardWork *work) {
 
 /* Result 1, second part: count the counter down, one step per call. */
 // NONMATCHING: register allocation (_savegpr_24 vs _savegpr_26)
-s32 fn_1_345B4(CardWork *work) {
+s32 fn_1_345B4(CardGame *work) {
     s32 ret = 0;
     s32 i;
     s16 id;
@@ -515,17 +515,17 @@ s32 fn_1_345B4(CardWork *work) {
 
     switch (lbl_1_bss_1298[1]) {
     case 0:
-        work->unk1BC--;
-        if (work->unk1BC > 0) {
+        work->f1B0[3]--;
+        if (work->f1B0[3] > 0) {
             lbl_1_bss_1270[0] = 200;
-            if (work->unk1BC != 1) {
+            if (work->f1B0[3] != 1) {
                 id = lbl_1_bss_11E6;
             } else {
                 id = lbl_1_bss_11E0;
             }
             espPosSet(id, 210.0f, 79.0f - (f32)lbl_1_bss_1270[0]);
             espPosSet(lbl_1_bss_11E4, 102.0f, 79.0f);
-            espBankSet(lbl_1_bss_11E4, (s16)(work->unk1BC - 1));
+            espBankSet(lbl_1_bss_11E4, (s16)(work->f1B0[3] - 1));
             lbl_1_bss_1248[0] = 0.0f;
             espScaleSet(lbl_1_bss_11E4, lbl_1_bss_1248[0], 1.0f);
             lbl_1_bss_1298[1]++;
@@ -541,7 +541,7 @@ s32 fn_1_345B4(CardWork *work) {
         if (lbl_1_bss_1270[0] < 0) {
             lbl_1_bss_1270[0] = 0;
         }
-        if (work->unk1BC != 1) {
+        if (work->f1B0[3] != 1) {
             id = lbl_1_bss_11E6;
         } else {
             id = lbl_1_bss_11E0;
@@ -574,7 +574,7 @@ s32 fn_1_345B4(CardWork *work) {
             lbl_1_bss_1298[1] = 0;
             ret = -1;
         }
-        if (work->unk1BC != 1) {
+        if (work->f1B0[3] != 1) {
             id = lbl_1_bss_11E6;
         } else {
             id = lbl_1_bss_11E0;
@@ -590,19 +590,19 @@ s32 fn_1_345B4(CardWork *work) {
             lbl_1_bss_1248[0] = 0.0f;
         }
         for (i = 0; i < 4; i++) {
-            if (i != work->order[work->curPlayer] && !(work->players[i].flags & 0x200)) {
-                Hu3DModelScaleSet(work->players[i].modelId, 1.0f, lbl_1_bss_1248[0], 1.0f);
+            if (i != work->order[work->curPlayer] && !(work->pl[i].f50 & 0x200)) {
+                Hu3DModelScaleSet(work->pl[i].f58, 1.0f, lbl_1_bss_1248[0], 1.0f);
             }
         }
         if (lbl_1_bss_5E == 0) {
-            p->flags &= ~0x1000;
+            p->f50 &= ~0x1000;
             espKill(lbl_1_bss_11E6);
             espKill(lbl_1_bss_11E4);
             espKill(lbl_1_bss_11E0);
             for (i = 0; i < 4; i++) {
                 if (i != work->order[work->curPlayer]) {
-                    Hu3DModelKill(work->players[i].modelId);
-                    work->players[i].modelId = -1;
+                    Hu3DModelKill(work->pl[i].f58);
+                    work->pl[i].f58 = -1;
                 }
             }
             lbl_1_bss_1298[1] = 0;
@@ -615,24 +615,24 @@ s32 fn_1_345B4(CardWork *work) {
 
 /* Cleanup of result 1 when the mode is aborted. */
 // NONMATCHING: register allocation, array index computed with add/lwz instead of lwzx
-void fn_1_34CC8(CardWork *work) {
+void fn_1_34CC8(CardGame *work) {
     s32 i;
 
-    if (CUR_PLAYER(work)->flags & 0x1000) {
+    if (CUR_PLAYER(work)->f50 & 0x1000) {
         espKill(lbl_1_bss_11E6);
         espKill(lbl_1_bss_11E4);
         espKill(lbl_1_bss_11E0);
         for (i = 0; i < 4; i++) {
             if (i != work->order[work->curPlayer]) {
-                Hu3DModelKill(work->players[i].modelId);
-                work->players[i].modelId = -1;
+                Hu3DModelKill(work->pl[i].f58);
+                work->pl[i].f58 = -1;
             }
         }
     }
 }
 
 /* Result 2: wait for the (COM) button press. */
-s32 fn_1_34DA4(CardWork *work) {
+s32 fn_1_34DA4(CardGame *work) {
     s32 ret = 0;
 
     fn_1_351C4(work->order[work->curPlayer]);
@@ -646,7 +646,7 @@ s32 fn_1_34DA4(CardWork *work) {
 
 /* Result 3: a hidden item is revealed on a 3D camera. */
 // NONMATCHING: the original selects the position table at each use instead of once
-s32 fn_1_34E24(CardWork *work) {
+s32 fn_1_34E24(CardGame *work) {
     Vec scale = { 0.35f, 0.35f, 0.35f };
     Vec scr;
     Vec pos3d;
@@ -660,11 +660,11 @@ s32 fn_1_34E24(CardWork *work) {
     CardPlayer *p = CUR_PLAYER(work);
 
     cnt = 0;
-    if (p->unk34[0] != -1) {
+    if ((&p->f34)[0] != -1) {
         cnt = 1;
-        if (p->unk34[1] != -1) {
+        if ((&p->f34)[1] != -1) {
             cnt = 2;
-            if (p->unk34[2] != -1) {
+            if ((&p->f34)[2] != -1) {
                 cnt = 3;
             }
         }
@@ -698,7 +698,7 @@ s32 fn_1_34E24(CardWork *work) {
         lbl_1_bss_1270[0]++;
         if (lbl_1_bss_1270[0] == 12) {
             r = frandmod(100);
-            p->unk34[cnt] = (r < 50) ? 0 : (r < 80) ? 1 : 2;
+            (&p->f34)[cnt] = (r < 50) ? 0 : (r < 80) ? 1 : 2;
             fn_1_2FFAC(work);
             lbl_1_bss_1270[0] = 0;
             lbl_1_bss_1298[1]++;
@@ -734,7 +734,7 @@ void fn_1_351C4(s32 playerNo) {
 
 /* Picks a random free cell (preferring cells next to a 0x400 cell) and puts a block there. */
 // NONMATCHING: return structure of the final branch, register allocation
-void fn_1_352D0(CardWork *work) {
+void fn_1_352D0(CardGame *work) {
     s32 list[30];
     s32 total;
     s32 pick;
@@ -745,17 +745,17 @@ void fn_1_352D0(CardWork *work) {
     s32 adj;
     Vec pos;
 
-    if (work->unk1D0 > 2) {
+    if (work->cnt1D0 > 2) {
         return;
     }
     total = 0;
-    for (i = 0; i < work->gridSize; i++) {
-        for (j = 0; j < work->gridSize; j++) {
+    for (i = 0; i < work->boardSize; i++) {
+        for (j = 0; j < work->boardSize; j++) {
             if (!(lbl_1_bss_8C4[i][j] & 0x10) && !(lbl_1_bss_8C4[i][j] & 0xF00)
-                && (work->players[0].unk8 != i || work->players[0].unkC != j)
-                && (work->players[1].unk8 != i || work->players[1].unkC != j)
-                && (work->players[2].unk8 != i || work->players[2].unkC != j)
-                && (work->players[3].unk8 != i || work->players[3].unkC != j)) {
+                && (work->pl[0].f08 != i || work->pl[0].f0C != j)
+                && (work->pl[1].f08 != i || work->pl[1].f0C != j)
+                && (work->pl[2].f08 != i || work->pl[2].f0C != j)
+                && (work->pl[3].f08 != i || work->pl[3].f0C != j)) {
                 adj = 0;
                 if (i == 0) {
                     if (lbl_1_bss_8C4[i + 1][j] & 0x400) {
@@ -764,7 +764,7 @@ void fn_1_352D0(CardWork *work) {
                 } else if (lbl_1_bss_8C4[i - 1][j] & 0x400) {
                     adj = 1;
                 }
-                if (i == work->gridSize - 1) {
+                if (i == work->boardSize - 1) {
                     if (lbl_1_bss_8C4[i - 1][j] & 0x400) {
                         adj = 1;
                     }
@@ -778,7 +778,7 @@ void fn_1_352D0(CardWork *work) {
                 } else if (lbl_1_bss_8C4[i][j - 1] & 0x400) {
                     adj = 1;
                 }
-                if (j == work->gridSize - 1) {
+                if (j == work->boardSize - 1) {
                     if (lbl_1_bss_8C4[i][j - 1] & 0x400) {
                         adj = 1;
                     }
@@ -794,7 +794,7 @@ void fn_1_352D0(CardWork *work) {
         }
     }
     if (total == 0) {
-        work->unk1D4 = -1;
+        work->f1D4 = -1;
         return;
     }
     pick = frandmod(total);
@@ -802,13 +802,13 @@ void fn_1_352D0(CardWork *work) {
         pick = list[frandmod(cnt)];
     }
     idx = 0;
-    for (i = 0; i < work->gridSize; i++) {
-        for (j = 0; j < work->gridSize; j++) {
+    for (i = 0; i < work->boardSize; i++) {
+        for (j = 0; j < work->boardSize; j++) {
             if (!(lbl_1_bss_8C4[i][j] & 0x10) && !(lbl_1_bss_8C4[i][j] & 0xF00)
-                && (work->players[0].unk8 != i || work->players[0].unkC != j)
-                && (work->players[1].unk8 != i || work->players[1].unkC != j)
-                && (work->players[2].unk8 != i || work->players[2].unkC != j)
-                && (work->players[3].unk8 != i || work->players[3].unkC != j)) {
+                && (work->pl[0].f08 != i || work->pl[0].f0C != j)
+                && (work->pl[1].f08 != i || work->pl[1].f0C != j)
+                && (work->pl[2].f08 != i || work->pl[2].f0C != j)
+                && (work->pl[3].f08 != i || work->pl[3].f0C != j)) {
                 if (pick == idx) {
                     lbl_1_bss_8C4[i][j] |= 0x800;
                     Hu3DModelShadowMapObjReset(lbl_1_bss_478[i][j]);
@@ -820,8 +820,8 @@ void fn_1_352D0(CardWork *work) {
                     Hu3DModelRotSet(lbl_1_bss_478[i][j], 0.0f, 0.0f, 180.0f);
                     Hu3DModelLayerSet(lbl_1_bss_478[i][j], 2);
                     Hu3DModelShadowMapSet(lbl_1_bss_478[i][j]);
-                    work->unk1D4 = 1;
-                    j = work->gridSize;
+                    work->f1D4 = 1;
+                    j = work->boardSize;
                     i = j;
                 } else {
                     idx++;
@@ -833,15 +833,15 @@ void fn_1_352D0(CardWork *work) {
 
 /* Result banner (turn counter, e.g. "3/10") sliding in and out of the corner. */
 // NONMATCHING: sprite id loads are scheduled before the float constant loads
-void fn_1_358F8(CardWork *work) {
+void fn_1_358F8(CardGame *work) {
     Vec dicePos = { 485.0f, 405.0f, 1000.0f };
     f32 x;
     f32 y;
 
     switch (lbl_1_bss_11DC) {
     case 0:
-        if (work->state == 0xCA || work->state == 0xCC || work->state == 0xCD) {
-            lbl_1_bss_11D8 = work->state;
+        if (work->f188 == 0xCA || work->f188 == 0xCC || work->f188 == 0xCD) {
+            lbl_1_bss_11D8 = work->f188;
             lbl_1_bss_11DC++;
         }
         return;
@@ -856,14 +856,14 @@ void fn_1_358F8(CardWork *work) {
         lbl_1_bss_11C0[1] = espEntry(lbl_1_data_2B4[0x1C / 4], 0, 0);
         espDrawNoSet(lbl_1_bss_11C0[1], 0x40);
         espPriSet(lbl_1_bss_11C0[1], 0x1E0);
-        if (work->gridSize == 10) {
-            espBankSet(lbl_1_bss_11C0[1], (s16)(work->unk1D0 / 10 + 3));
+        if (work->boardSize == 10) {
+            espBankSet(lbl_1_bss_11C0[1], (s16)(work->cnt1D0 / 10 + 3));
             x = 484.0f;
-            if (work->unk1D0 / 10 == 0) {
+            if (work->cnt1D0 / 10 == 0) {
                 espDispOff(lbl_1_bss_11C0[1]);
             }
         } else {
-            espBankSet(lbl_1_bss_11C0[1], (s16)(work->unk1D0 + 3));
+            espBankSet(lbl_1_bss_11C0[1], (s16)(work->cnt1D0 + 3));
             x = 492.0f;
         }
         espPosSet(lbl_1_bss_11C0[1], x, 336.0f + lbl_1_bss_11CC[0]);
@@ -871,9 +871,9 @@ void fn_1_358F8(CardWork *work) {
         lbl_1_bss_11C0[2] = espEntry(lbl_1_data_2B4[0x1C / 4], 0, 0);
         espDrawNoSet(lbl_1_bss_11C0[2], 0x40);
         espPriSet(lbl_1_bss_11C0[2], 0x1E0);
-        if (work->gridSize == 10) {
-            espBankSet(lbl_1_bss_11C0[2], (s16)(work->unk1D0 % 10 + 3));
-            if (work->unk1D0 / 10 == 0) {
+        if (work->boardSize == 10) {
+            espBankSet(lbl_1_bss_11C0[2], (s16)(work->cnt1D0 % 10 + 3));
+            if (work->cnt1D0 / 10 == 0) {
                 x = 492.0f;
                 y = 336.0f;
             } else {
@@ -881,13 +881,13 @@ void fn_1_358F8(CardWork *work) {
                 y = 336.0f;
             }
         } else {
-            espBankSet(lbl_1_bss_11C0[2], (s16)(work->gridSize + 3));
+            espBankSet(lbl_1_bss_11C0[2], (s16)(work->boardSize + 3));
             x = 516.0f;
             y = 362.0f;
         }
         espPosSet(lbl_1_bss_11C0[2], x, y + lbl_1_bss_11CC[0]);
         espTPLvlSet(lbl_1_bss_11C0[2], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
+        if (work->boardSize == 10) {
             lbl_1_bss_11C0[3] = espEntry(lbl_1_data_2B4[0x1C / 4], 0, 0);
             espDrawNoSet(lbl_1_bss_11C0[3], 0x40);
             espBankSet(lbl_1_bss_11C0[3], 4);
@@ -920,15 +920,15 @@ void fn_1_358F8(CardWork *work) {
             lbl_1_bss_11CC[1] = 1.0f;
         }
         espTPLvlSet(lbl_1_bss_11C0[0], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
+        if (work->boardSize == 10) {
             x = 484.0f;
         } else {
             x = 492.0f;
         }
         espPosSet(lbl_1_bss_11C0[1], x, 336.0f + lbl_1_bss_11CC[0]);
         espTPLvlSet(lbl_1_bss_11C0[1], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
-            if (work->unk1D0 / 10 == 0) {
+        if (work->boardSize == 10) {
+            if (work->cnt1D0 / 10 == 0) {
                 x = 492.0f;
                 y = 336.0f;
             } else {
@@ -941,7 +941,7 @@ void fn_1_358F8(CardWork *work) {
         }
         espPosSet(lbl_1_bss_11C0[2], x, y + lbl_1_bss_11CC[0]);
         espTPLvlSet(lbl_1_bss_11C0[2], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
+        if (work->boardSize == 10) {
             espPosSet(lbl_1_bss_11C0[3], 512.0f, 362.0f + lbl_1_bss_11CC[0]);
             espTPLvlSet(lbl_1_bss_11C0[3], lbl_1_bss_11CC[1]);
             espPosSet(lbl_1_bss_11C0[4], 528.0f, 362.0f + lbl_1_bss_11CC[0]);
@@ -956,7 +956,7 @@ void fn_1_358F8(CardWork *work) {
         }
         break;
     case 3:
-        if (work->state != lbl_1_bss_11D8) {
+        if (work->f188 != lbl_1_bss_11D8) {
             lbl_1_bss_11DC++;
             return;
         }
@@ -972,15 +972,15 @@ void fn_1_358F8(CardWork *work) {
             lbl_1_bss_11CC[1] = 0.0f;
         }
         espTPLvlSet(lbl_1_bss_11C0[0], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
+        if (work->boardSize == 10) {
             x = 484.0f;
         } else {
             x = 492.0f;
         }
         espPosSet(lbl_1_bss_11C0[1], x, 336.0f + lbl_1_bss_11CC[0]);
         espTPLvlSet(lbl_1_bss_11C0[1], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
-            if (work->unk1D0 / 10 == 0) {
+        if (work->boardSize == 10) {
+            if (work->cnt1D0 / 10 == 0) {
                 x = 492.0f;
                 y = 336.0f;
             } else {
@@ -993,7 +993,7 @@ void fn_1_358F8(CardWork *work) {
         }
         espPosSet(lbl_1_bss_11C0[2], x, y + lbl_1_bss_11CC[0]);
         espTPLvlSet(lbl_1_bss_11C0[2], lbl_1_bss_11CC[1]);
-        if (work->gridSize == 10) {
+        if (work->boardSize == 10) {
             espPosSet(lbl_1_bss_11C0[3], 512.0f, 362.0f + lbl_1_bss_11CC[0]);
             espTPLvlSet(lbl_1_bss_11C0[3], lbl_1_bss_11CC[1]);
             espPosSet(lbl_1_bss_11C0[4], 528.0f, 362.0f + lbl_1_bss_11CC[0]);
@@ -1006,7 +1006,7 @@ void fn_1_358F8(CardWork *work) {
             espKill(lbl_1_bss_11C0[0]);
             espKill(lbl_1_bss_11C0[1]);
             espKill(lbl_1_bss_11C0[2]);
-            if (work->gridSize == 10) {
+            if (work->boardSize == 10) {
                 espKill(lbl_1_bss_11C0[3]);
                 espKill(lbl_1_bss_11C0[4]);
             }
@@ -1017,12 +1017,12 @@ void fn_1_358F8(CardWork *work) {
     }
 }
 
-void fn_1_3678C(CardWork *work) {
+void fn_1_3678C(CardGame *work) {
     if (lbl_1_bss_11DC == 3) {
         espKill(lbl_1_bss_11C0[0]);
         espKill(lbl_1_bss_11C0[1]);
         espKill(lbl_1_bss_11C0[2]);
-        if (work->gridSize == 10) {
+        if (work->boardSize == 10) {
             espKill(lbl_1_bss_11C0[3]);
             espKill(lbl_1_bss_11C0[4]);
         }
