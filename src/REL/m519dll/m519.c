@@ -1711,7 +1711,12 @@ void fn_1_4E18(M519_MECH *mech)
     circle.y = mech->pos.z;
     circle.z = mech->radius;
     targetIdx = mech->comTargetNo;
+#ifdef TARGET_PC
+    // comTargetNo is uninitialised heap until mode 1 sets it; the original's out-of-range read is dead in mode 0 but faults on PC
+    target = (targetIdx >= 0 && targetIdx < 4) ? lbl_1_bss_F8[targetIdx] : NULL;
+#else
     target = lbl_1_bss_F8[targetIdx];
+#endif
     switch (mech->comMode) {
         case 0:
             if (!mech->comTargetF) {
