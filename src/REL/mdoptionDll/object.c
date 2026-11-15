@@ -58,6 +58,7 @@ void MdObjDebugFontMain(OMOBJ *obj)
         "nop",
         "camera",
         "light",
+        "shadow",
         "model"
     };
     MdDebugFontUpdate(debugFont);

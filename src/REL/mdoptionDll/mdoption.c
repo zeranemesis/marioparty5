@@ -1648,7 +1648,7 @@ s32 fn_1_4A88(s32 mode)
     cosV = cos(3.141592653589793 * (360.0f * sys->camT[0]) / 180.0);
     sinV = sin(3.141592653589793 * (360.0f * sys->camT[0]) / 180.0);
     {
-        HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+        HuVecF pos2D = { 0.0f, 0.0f, 1280.0f };
 
         pos2D.x = 288.0f - 232.0f * sys->camT[0] * cosV;
         pos2D.y = (230.0f - 100.0f * sys->camT[1]) + 170.0f * sys->camT[0] + 232.0f * sys->camT[0] * sinV;
@@ -1758,7 +1758,7 @@ s32 fn_1_5320(s32 mode)
                 *focusP = *model->posP[sys->sub + 24];
         } else if(mode == 60) {
                 {
-                    HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+                    HuVecF pos2D = { 0.0f, 0.0f, 1500.0f };
 
                     pos2D.x = 64.0f + 96.0f * (float)(sys->sub % 5);
                     pos2D.y = 128.0f + 126.0f * (float)(sys->sub / 5);
@@ -1768,7 +1768,7 @@ s32 fn_1_5320(s32 mode)
                 *focusP = out;
         } else if(mode == 61) {
                 {
-                    HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+                    HuVecF pos2D = { 0.0f, 0.0f, 1500.0f };
 
                     pos2D.x = 108.0f + 96.0f * (float)(sys->sel % 4) + 48.0f * (float)(sys->sel / 4);
                     pos2D.y = 144.0f + 126.0f * (float)(sys->sel / 4);
@@ -1790,7 +1790,7 @@ s32 fn_1_5320(s32 mode)
         }
     } else {
         if(mode == 10) {
-            HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+            HuVecF pos2D = { 0.0f, 0.0f, 1500.0f };
 
             pos2D.x = 64.0f + 96.0f * (float)(sys->sub % 5);
             pos2D.y = 128.0f + 126.0f * (float)(sys->sub / 5);
@@ -1798,7 +1798,7 @@ s32 fn_1_5320(s32 mode)
             Hu3D2Dto3D(&in, camWork->camera[0].bit, &out);
             *focusP = out;
         } else if(mode == 11) {
-            HuVecF pos2D = { 0.0f, 0.0f, 0.0f };
+            HuVecF pos2D = { 0.0f, 0.0f, 1500.0f };
 
             pos2D.x = 108.0f + 96.0f * (float)(sys->sel % 4) + 48.0f * (float)(sys->sel / 4);
             pos2D.y = 144.0f + 126.0f * (float)(sys->sel / 4);
