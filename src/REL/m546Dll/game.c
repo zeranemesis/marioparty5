@@ -1217,7 +1217,7 @@ void fn_1_AE14(s16 arg0)
         return;
     case 2:
         if (lbl_1_bss_15288->chars[arg0].cpuLevel != 0) {
-            if (frandmod(0x64) <= lbl_1_bss_14B60[arg0].prob6A && lbl_1_bss_14B60[arg0].cnt68 > 0) {
+            if ((s16)frandmod(0x64) <= lbl_1_bss_14B60[arg0].prob6A && lbl_1_bss_14B60[arg0].cnt68 > 0) {
                 if (arg0 == 0) {
                     if (lbl_1_bss_14B60[arg0].col == 0) {
                         if (frandmod(2) != 0) {
