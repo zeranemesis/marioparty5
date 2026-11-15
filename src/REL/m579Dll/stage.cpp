@@ -137,7 +137,7 @@ void fn_1_B620(void)
 s32 i;
     s32 idx;
     f32 ang;
-    f64 rad;
+    f32 rad;
 
     idx = 0;
     i = 0;
@@ -146,12 +146,12 @@ s32 i;
         if (ang > 180.0f) {
             ang -= 360.0f;
         }
-        rad = 3.141592653589793 * ang / 180.0;
+        rad = (f32)(3.141592653589793 * ang / 180.0);
         stagePosX[idx] = 100.0 * (8.5 * cos(rad));
-        stagePosZ[idx] = 100.0 * (8.5 * sin(ang));
+        stagePosZ[idx] = 100.0 * (8.5 * sin(rad));
         idx++;
-        stagePosX[idx] = 100.0 * (4.5 * cos(ang));
-        stagePosZ[idx] = 100.0 * (4.5 * sin(ang));
+        stagePosX[idx] = 100.0 * (4.5 * cos(rad));
+        stagePosZ[idx] = 100.0 * (4.5 * sin(rad));
         idx++;
         i++;
     }
