@@ -99,7 +99,16 @@ BOOL Hu3DMotionKill(HU3DMOTID motId)
         return FALSE;
     }
     if(motP->modelId == HU3D_MODELID_NONE) {
+#ifdef TARGET_PC
+        /* the PC loader allocates the model in many blocks that all carry the HSFDATA address as memory number */
+        {
+            u32 mallocNo = (u32)(uintptr_t)motP->hsf;
+            HuMemDirectFree(motP->hsf);
+            HuMemDirectFreeNum(HEAP_MODEL, mallocNo);
+        }
+#else
         HuMemDirectFree(motP->hsf);
+#endif
     } else {
         Hu3DData[motP->modelId].motIdSrc = HU3D_MOTID_NONE;
     }
