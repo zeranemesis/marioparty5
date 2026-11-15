@@ -9,8 +9,8 @@ void *lbl_1_bss_300;
 
 M561EffectParam lbl_1_data_5A0 = {
     0,
-    { 0x00, 0x00, 0x00, 0x80 },
-    { 0x00, 0x00, 0x00, 0x00 },
+    { 0xA0, 0xA0, 0xA0, 0xFF },
+    { 0x00, 0x00, 0x00, 0xFF },
     { 0.0f, 2.0f, 1.0f },
     { 0.95f, 0.99f, 0.95f },
     0.0f,
@@ -241,7 +241,7 @@ s16 fn_1_8F5C(s16 arg0, M561EffectParam *arg1, f32 arg2, f32 arg3, f32 arg4, f32
         model = &Hu3DData[id];
         parm = (HU3DPARTICLE *)model->hookData;
         slots = (M561EffectSlot *)parm->work;
-        dataP = (M561Cell *)&((M561ParticleData *)parm->data)[parm->emitCnt];
+        dataP = &((M561Cell *)parm->data)[parm->emitCnt];
         idx = parm->emitCnt;
 
         while ((dataP->inUse != 0.0f) && (idx < parm->maxCnt)) {

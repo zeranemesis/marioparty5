@@ -39,6 +39,7 @@ typedef struct M561ParticleData_s {
     /* 0x34 */ f32 posX;
     /* 0x38 */ f32 posY;
     /* 0x3C */ f32 posZ;
+    /* 0x40 */ u8 colorRGBA[4];
 } M561ParticleData;
 
 typedef struct M561Hu3DParm_s M561Hu3DParm;

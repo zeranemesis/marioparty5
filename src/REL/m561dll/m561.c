@@ -2016,6 +2016,7 @@ void fn_1_71B8(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4])
     f32 a;
     f32 s;
     f32 big;
+    f32 sz;
     s16 i;
     s16 k;
 
@@ -2057,7 +2058,7 @@ void fn_1_71B8(HU3DMODEL *modelP, HU3DPARTICLE *particleP, f32 mtx[3][4])
                     s = 1.5f;
                 }
                 part->scale = 1.5 + (3.0 * sin((3.141592653589793 * (10.0f + (100.0f * s))) / 180.0));
-                part->unk28 = 40.0f * part->scale;
+                sz = 40.0f * part->scale;
                 for (k = 0; k < 4; k++) {
                     players[k] = PLAYER(lbl_1_bss_C8[k]);
                 }
