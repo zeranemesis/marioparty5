@@ -139,7 +139,7 @@ void ObjectSetup(void)
     omGameSysInit(sys->objman);
     SdCameraCreate();
     sys->cameraObj = omAddObjEx(sys->objman, 0, 0, 0, -1, (OMOBJFUNC)SdCameraUpdate);
-    sys->baseShadowMdlId = -1;
+    sys->bulletHookMdlId = -1;
     sys->lightId = -1;
     sys->fxId = -1;
     sys->bgmStream = -1;
@@ -709,10 +709,10 @@ static void SdSeqPreWinner(s16 mode, s16 frameNo)
                 } else {
                     Hu3DShadowBuf[winner].camTarget.x = x;
                     Hu3DShadowBuf[winner].camTarget.y = y2 - 1000.0f;
-                    Hu3DShadowBuf[winner].camTarget.z = 1000.0f;
+                    Hu3DShadowBuf[winner].camTarget.z = 0.0f;
                     Hu3DShadowBuf[winner].camPos.x = x;
                     Hu3DShadowBuf[winner].camPos.y = 1000.0f + y2;
-                    Hu3DShadowBuf[winner].camPos.z = -1000.0f;
+                    Hu3DShadowBuf[winner].camPos.z = 0.0f;
                 }
                 Hu3DShadowMultiTPLvlSet(0.35f, 3);
                 Hu3DShadowBuf[winner].camTarget.z += z;
@@ -1435,6 +1435,8 @@ static void MachineTrackEffAdd(SdMachine *machine)
             col.g = 0xFF;
             col.b = 0xFF;
             col.a = 0xFF;
+            /* the original rolls the angle a second time (first roll discarded) */
+            zRot = 0.017453292f * (4.0f * (f32)(rand8() % 90));
             accelY = -1.0f;
         } else if (attr == 1 || attr == 2) {
             base = &trackPar2->data[track->effIdx[i][2]];
