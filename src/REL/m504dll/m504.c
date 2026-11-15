@@ -605,7 +605,7 @@ s32 fn_1_10C4(M504WORK *work)
     return 0;
 }
 
-void fn_1_12A8(Mtx mtx)
+void fn_1_12A8(HU3DMODEL *modelP, Mtx mtx)
 {
     s32 i;
 
