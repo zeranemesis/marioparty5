@@ -149,13 +149,13 @@ static MDMINI_EFFECT *ParticleDotCreate(ANIMDATA *animP, s16 layer, s16 cameraBi
         1.0f,
         2,
         {
-            { 0xFF, 0x20, 0x00, 0x00 },
+            { 0xFF, 0xFF, 0xFF, 0x20 },
             { 0x00, 0x00, 0x00, 0x00 },
             { 0x00, 0x00, 0x00, 0x00 },
-            { 0x40, 0x20, 0x00, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
         },
         {
-            { 0x20, 0x00, 0x00, 0x00 },
+            { 0x40, 0x20, 0x20, 0x00 },
             { 0x00, 0x00, 0x00, 0x00 },
             { 0x00, 0x00, 0x00, 0x00 },
             { 0x00, 0x00, 0x00, 0x00 },
@@ -221,16 +221,16 @@ static MDMINI_EFFECT *ParticleGlowCreate(ANIMDATA *animP, s16 layer, s16 cameraB
         0.95f,
         3,
         {
-            { 0xFF, 0xFF, 0xFF, 0xFF },
-            { 0x40, 0xFF, 0x00, 0x00 },
+            { 0x80, 0xC0, 0xFF, 0xFF },
+            { 0xFF, 0xFF, 0x40, 0xFF },
+            { 0xFF, 0x60, 0x80, 0xFF },
             { 0x00, 0x00, 0x00, 0x00 },
-            { 0x00, 0x00, 0xFF, 0x80 },
         },
         {
-            { 0x80, 0xFF, 0x00, 0x00 },
-            { 0x00, 0x00, 0x80, 0xC0 },
-            { 0xFF, 0x00, 0xFF, 0x40 },
-            { 0x20, 0x00, 0x80, 0x10 },
+            { 0x80, 0xC0, 0xFF, 0x00 },
+            { 0xFF, 0x40, 0x20, 0x00 },
+            { 0x80, 0x10, 0x10, 0x00 },
+            { 0x00, 0x00, 0x00, 0x00 },
         }
     };
     HU3DPARMANID parManId;
@@ -746,9 +746,9 @@ void fn_1_C4C(void)
                 pos3D[0].x = 0;
                 pos3D[0].y = -65;
                 pos3D[0].z = 1300;
-                pos2D[1].x = 54;
-                pos2D[1].y = 312;
-                pos2D[1].z = 1200;
+                pos2D[1].x = 64;
+                pos2D[1].y = 300;
+                pos2D[1].z = 1000;
                 Hu3D2Dto3D(&pos2D[1], camera->camera[MDCAMERA_FG].bit, &pos3D[1]);
                 star->mode = MDMINI_STAR_MOVE_LEFT;
                 break;
@@ -785,9 +785,9 @@ void fn_1_C4C(void)
                 pos3D[0].x = 0;
                 pos3D[0].y = -65;
                 pos3D[0].z = 1300;
-                pos2D[1].x = 54;
-                pos2D[1].y = 312;
-                pos2D[1].z = 1200;
+                pos2D[1].x = 64;
+                pos2D[1].y = 300;
+                pos2D[1].z = 1000;
                 Hu3D2Dto3D(&pos2D[1], camera->camera[MDCAMERA_FG].bit, &pos3D[1]);
                 star->mode = MDMINI_STAR_CENTER;
                 break;
@@ -3191,6 +3191,7 @@ BOOL fn_1_B668(int param)
                     Hu3DModelDispOn(model->mdlId[i+MDMODEL_CAP_COM_1P]);
                 }
             }
+            fn_1_17008(MDMINI_AUD_SE_MENU_MOVE);
         } else if(param != 1 && (param == 2 || param == 3)) {
             for(i=0; i<4; i++) {
                 if(playerType[i][0] != playerType[i][1]) {
@@ -3248,13 +3249,12 @@ BOOL fn_1_B668(int param)
             }
         }
         if(sys->maxPlayerNum > 1) {
-            sys->cursorMode = MDMINI_CURSOR_PLAYERSEL;
-            MdProcCall(MDMINI_PROC_CURSOR, sys->cursorDir+2);
+            MdProcCall(MDMINI_PROC_CURSOR, param);
         }
     }
     for(i=0; i<4; i++) {
-        fn_1_15CF8(i+MDMODEL_CAP_MAN_1P, MDCAMERA_MAIN);
-        fn_1_15CF8(i+MDMODEL_CAP_COM_1P, MDCAMERA_MAIN);
+        fn_1_15CF8(i+MDMODEL_CAP_MAN_1P, MDCAMERA_FG);
+        fn_1_15CF8(i+MDMODEL_CAP_COM_1P, MDCAMERA_FG);
     }
     if(sys->procTime >= 1) {
         if(param != 0) {
