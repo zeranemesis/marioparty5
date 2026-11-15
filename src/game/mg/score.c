@@ -316,13 +316,19 @@ static void ScoreDispUpdate(MGSCORE *score)
                 HuSprDispOff(score->grpId, i);
             }
         }
-        HuSprPosSet(score->grpId, SCORE_UNIT_SPRNO, (score->unitOfs.x + (score->maxDigit * score->digitW)) - score->unitOfs.y, 0.0f);
-        HuSprColorSet(score->grpId, SCORE_UNIT_SPRNO, score->r, score->g, score->b);
-        HuSprScaleSet(score->grpId, SCORE_UNIT_SPRNO, score->digitScale.x, score->digitScale.y);
-        if (score->dispF) {
-            HuSprDispOn(score->grpId, SCORE_UNIT_SPRNO);
-        } else {
-            HuSprDispOff(score->grpId, SCORE_UNIT_SPRNO);
+#ifdef TARGET_PC
+        /* no unit sprite (unitFile -1): GC writes HuSprData[-1], a different neighbour on PC */
+        if (HuSprGrpData[score->grpId].sprId[SCORE_UNIT_SPRNO] != HUSPR_NONE)
+#endif
+        {
+            HuSprPosSet(score->grpId, SCORE_UNIT_SPRNO, (score->unitOfs.x + (score->maxDigit * score->digitW)) - score->unitOfs.y, 0.0f);
+            HuSprColorSet(score->grpId, SCORE_UNIT_SPRNO, score->r, score->g, score->b);
+            HuSprScaleSet(score->grpId, SCORE_UNIT_SPRNO, score->digitScale.x, score->digitScale.y);
+            if (score->dispF) {
+                HuSprDispOn(score->grpId, SCORE_UNIT_SPRNO);
+            } else {
+                HuSprDispOff(score->grpId, SCORE_UNIT_SPRNO);
+            }
         }
         HuSprGrpPosSet(score->grpId, score->pos.x, score->pos.y);
         HuSprGrpZRotSet(score->grpId, score->zRot);
