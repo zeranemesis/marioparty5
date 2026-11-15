@@ -7,6 +7,7 @@
 
 #ifdef TARGET_PC
 #include "port/endian.h"
+#include "musyx/hardware.h"
 #endif
 
 static MSM_SYS sys;
@@ -272,18 +273,28 @@ static s32 msmSysGroupInit(DVDFileInfo *file)
 
 void msmSysIrqDisable(void)
 {
+#ifdef TARGET_PC
+    // no interrupts on PC: take the lock MusyX holds while its audio thread renders (msmSysServer and the stream
+    // refill callbacks run under it); recursive, so nested disable/enable pairs stay balanced
+    hwDisableIrq();
+#else
     if (sys.irqDepth++ == 0) {
         sys.irqState = OSDisableInterrupts();
     }
+#endif
 }
 
 void msmSysIrqEnable(void)
 {
+#ifdef TARGET_PC
+    hwEnableIrq();
+#else
     if (sys.irqDepth != 0) {
         if (--sys.irqDepth == 0) {
             OSRestoreInterrupts(sys.irqState);
         }
     }
+#endif
 }
 
 static BOOL msmSysCheckBaseGroupNo(s32 grpId)

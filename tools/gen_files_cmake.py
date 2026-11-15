@@ -39,6 +39,11 @@ PC_REPLACED_UNITS = {
     # converts each record instead.
     "game/hsfload.c",
 }
+# NonMatching DOL units the port compiles anyway: the decompilation is complete and checked against the
+# original, only the byte-for-byte match is missing (register allocation)
+PC_FORCED_UNITS = {
+    "msm/msmstream.c",
+}
 # port sources that are not part of the dol library
 PORT_EXCLUDED = {
     "src/port/entry.cpp",  # main() of the executable target
@@ -94,9 +99,9 @@ def main() -> int:
     game, rels = parse_configure()
     game_files = [
         f"src/{p}" for s, p in game
-        if s in PORTABLE and (root / "src" / p).exists() and p not in PC_REPLACED_UNITS
+        if (s in PORTABLE or p in PC_FORCED_UNITS) and (root / "src" / p).exists() and p not in PC_REPLACED_UNITS
     ]
-    skipped_game = [p for s, p in game if s not in PORTABLE]
+    skipped_game = [p for s, p in game if s not in PORTABLE and p not in PC_FORCED_UNITS]
 
     rel_files = []
     skipped_modules = []
