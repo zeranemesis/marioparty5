@@ -57,7 +57,11 @@ extern void *lbl_1_data_40[6];
 s32 lbl_1_bss_0[3];
 Mgr510BoatList lbl_1_bss_C;
 Mgr510Boat *lbl_1_bss_14;
+#ifdef TARGET_PC
+void *lbl_1_bss_18; /* Mgr511Stage * singleton (stage.cpp); s32 overflowed into lbl_1_bss_1C on 64-bit */
+#else
 s32 lbl_1_bss_18;
+#endif
 void *lbl_1_bss_1C;
 
 static const s32 lbl_1_rodata_10[4] = {
