@@ -1533,7 +1533,7 @@ loop_44:
         HuPrcVSleep(var_f1);
         var_f1 = MBMotionTimeGet((s16) MB2W_S32((4) * 4));
         if (var_f1 < var_f31) {
-            if (var_f1 == temp_f27) {
+            if (var_f1 >= temp_f27) {
                 goto loop_44;
             }
         }
@@ -1746,7 +1746,7 @@ void MB2Ev_Thunder(s32 arg0) {
         HuPrcVSleep();
     }
     MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
-    for (var_r30_2 = 0; (f32) var_r30_2 < 24.0f; var_r30_2++) {
+    for (var_r30_2 = 0; (f32) var_r30_2 <= 24.0f; var_r30_2++) {
         temp_f31 = (f32) var_r30_2 / 24.0f;
         PSVECSubtract((Point3d *) &sp74, &sp80, &sp68);
         PSVECScale(&sp68, &sp68, temp_f31);
@@ -1796,7 +1796,7 @@ void MB2Ev_Thunder(s32 arg0) {
         }
         if ((var_r26 == -1) && (var_f30 > 0.0f)) {
             var_r26 = HuAudFXPlay(0x5CB);
-        } else if ((var_r26 != -1) && (var_f30 == 0.0f)) {
+        } else if ((var_r26 != -1) && (var_f30 <= 0.0f)) {
             HuAudFXStop(var_r26);
             var_r26 = -1;
         } else if (var_r26 != -1) {
@@ -1823,7 +1823,7 @@ void MB2Ev_Thunder(s32 arg0) {
             }
         }
         if (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) == -1) {
-            if (var_f31 == 0.0f) {
+            if (var_f31 <= 0.0f) {
                 if (var_r24 != 1) {
                     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 24.0f, 0x40000001U);
                     var_r24 = 1;
@@ -1856,10 +1856,9 @@ void MB2Ev_Thunder(s32 arg0) {
         }
         MBMotionTimeSet((s16) MB2W_S32(0xE * 4), var_f30 * MBMotionMaxTimeGet((s16) MB2W_S32(0xE * 4)));
         HuPrcVSleep();
-        if (var_f30 != 1.0f) {
-            continue;
+        if (var_f30 >= 1.0f) {
+            break;
         }
-        break;
     }
     MBTopWinKill();
     mb2ev_TimerObj = 0;
@@ -1912,7 +1911,7 @@ void MB2Ev_Thunder(s32 arg0) {
             MBModelAttrSet(temp_r3_8, 0x40000001U);
             MBModelLayerSet(temp_r3_8, 2U);
             HuAudFXPlay(0x364);
-            for (var_r29 = 0; (f32) var_r29 < 60.0f; var_r29++) {
+            for (var_r29 = 0; (f32) var_r29 <= 60.0f; var_r29++) {
                 temp_f31_2 = (f32) var_r29 / 60.0f;
                 temp_f29 = (f32) sin((3.141592653589793 * (f64) (90.0f * temp_f31_2)) / 180.0);
                 MB2_BezierCalcV(&sp38, (f32 *) &sp2C, &sp20, &sp68, temp_f31_2);
@@ -1920,7 +1919,7 @@ void MB2Ev_Thunder(s32 arg0) {
                 MBModelScaleSet(temp_r3_8, temp_f29, temp_f29, temp_f29);
                 HuPrcVSleep();
             }
-            for (var_r29_2 = 0; (f32) var_r29_2 < 120.0f; var_r29_2++) {
+            for (var_r29_2 = 0; (f32) var_r29_2 <= 120.0f; var_r29_2++) {
                 sp68.y = (f32) ((f64) sp20.y + (0.20000000298023224 * (100.0 * sin((3.141592653589793 * (f64) (720.0f * ((f32) var_r29_2 / 120.0f))) / 180.0))));
                 MBModelPosSetV(temp_r3_8, &sp68);
                 HuPrcVSleep();
@@ -1930,7 +1929,7 @@ void MB2Ev_Thunder(s32 arg0) {
             sp40 = sp20.z;
             sp20.y -= 150.0f;
             HuAudFXPlay(0x31C);
-            for (var_r29_3 = 0; (f32) var_r29_3 < 60.0f; var_r29_3++) {
+            for (var_r29_3 = 0; (f32) var_r29_3 <= 60.0f; var_r29_3++) {
                 temp_f31_3 = (f32) var_r29_3 / 60.0f;
                 temp_f29_2 = (f32) cos((3.141592653589793 * (f64) (90.0f * temp_f31_3)) / 180.0);
                 PSVECSubtract(&sp20, (Point3d *) &sp38, &sp68);
@@ -1998,7 +1997,7 @@ void MB2Ev_Thunder(s32 arg0) {
     MBMotionTimeSet((s16) MB2W_S32(0xC * 4), 0.0f);
     MBGuideEnd(temp_r3_3);
     MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
-    for (var_r30_6 = 0; (f32) var_r30_6 < 24.0f; var_r30_6++) {
+    for (var_r30_6 = 0; (f32) var_r30_6 <= 24.0f; var_r30_6++) {
         temp_f31_4 = (f32) var_r30_6 / 24.0f;
         PSVECSubtract(&sp80, (Point3d *) &sp74, &sp68);
         PSVECScale(&sp68, &sp68, temp_f31_4);
