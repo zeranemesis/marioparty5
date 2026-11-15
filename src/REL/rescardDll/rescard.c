@@ -98,7 +98,7 @@ static RESCARD_EFFECT *ParticleDotCreate(ANIMDATA *animP, s16 layer, s16 cameraB
     effectP->parManId[1] = parManId;
     Hu3DParManAttrSet(parManId, HU3D_PARMAN_ATTR_RANDANGLE|HU3D_PARMAN_ATTR_SCALEJITTER|HU3D_PARMAN_ATTR_RANDSCALE70|HU3D_PARMAN_ATTR_RANDSPEED90|HU3D_PARMAN_ATTR_TIMEUP);
     Hu3DParticleBlendModeSet(Hu3DParManModelIDGet(parManId), HU3D_PARTICLE_BLEND_ADDCOL);
-    Hu3DParManRotSet(parManId, frandmod(40)+70, 0, frandmod(80)-40);
+    Hu3DParManRotSet(parManId, (s32)frandmod(40)+70, 0, (s32)frandmod(80)-40);
     Hu3DModelLayerSet(Hu3DParManModelIDGet(parManId), layer);
     Hu3DModelCameraSet(Hu3DParManModelIDGet(parManId), cameraBit);
     parManId = Hu3DParManCreate(animP, 100, &param3);
@@ -1098,7 +1098,7 @@ void ResCardScoreUpdate(void)
                 flashPos->y = lbl_1_bss_35C[i].y;
                 flashPos->z = lbl_1_bss_35C[i].z;
                 cardRot->x = 90;
-                cardRot->y = frandmod(360)-180;
+                cardRot->y = (s32)frandmod(360)-180;
                 cardRot->z = 0;
                 flashRot->x = 0;
                 flashRot->y = 0;
@@ -1159,14 +1159,14 @@ void ResCardScoreUpdate(void)
                         HuSprBankSet(grpId[i], 0, 10);
                     }
                     if(num >= 10) {
-                        HuSprBankSet(grpId[i], 1, (player->starNum-player->ztarNum)/10);
+                        HuSprBankSet(grpId[i], 1, num/10);
                     } else if(num <= -10) {
                         HuSprBankSet(grpId[i], 1, (num*-1)/10);
                     }
                     if(num == 0) {
                         HuSprBankSet(grpId[i], 2, 0);
                     } else if(num > 0) {
-                        HuSprBankSet(grpId[i], 2, (player->starNum-player->ztarNum)%10);
+                        HuSprBankSet(grpId[i], 2, num%10);
                     } else if(num < 0) {
                         HuSprBankSet(grpId[i], 2, (num*-1)%10);
                     }
@@ -1412,7 +1412,7 @@ s32 ResCardDrawStkDirGet(void)
                 score->draw.wait %= 2;
             } else {
                 score->draw.wait++;
-                score->draw.wait %= 4;
+                score->draw.wait %= 8;
             }
             if(score->draw.wait == 0) {
                 dir = 4;
@@ -1907,9 +1907,9 @@ void ResCardSpotCreate(void)
         pin->oscT = 0;
         pin->oscOut = 0;
         pin->radius = 0;
-        pin->radiusPhase = frandmod(360);
+        pin->radiusPhase = (s32)frandmod(360);
         pin->angle = 0;
-        pin->anglePhase = frandmod(360);
+        pin->anglePhase = (s32)frandmod(360);
     }
     ResCardSpotScaleCalc();
 }
@@ -2213,7 +2213,7 @@ void ResCardPinUpdate(void)
                         scale->x = orbit->scale;
                         scale->y = orbit->scale;
                         scale->z = orbit->scale;
-                        Hu3DMotionTimeSet(model->mdlId[MDMODEL_WIN_STAR], frandmod(60));
+                        Hu3DMotionTimeSet(model->mdlId[MDMODEL_WIN_STAR], (s32)frandmod(60));
                         Hu3DModelAttrReset(model->mdlId[orbit->mdl], HU3D_ATTR_DISPOFF);
                     }
                 }
@@ -2255,11 +2255,11 @@ void ResCardPinUpdate(void)
 void ResCardPinMotStart(s32 playerNo)
 {
     MDMODEL_WORK *model = sys->model;
-    u32 motSel;
-    u32 speedAdd;
+    s32 motSel;
+    s32 speedAdd;
 
-    motSel = frandmod(2);
-    speedAdd = (frandmod(49)+1)/100;
+    motSel = (s32)frandmod(2);
+    speedAdd = ((s32)frandmod(49)+1)/100;
     Hu3DMotionSet(model->mdlId[MDMODEL_PIN+playerNo], model->motId[(motSel*4)+playerNo+6]);
     Hu3DModelAttrReset(model->mdlId[MDMODEL_PIN+playerNo], HU3D_MOTATTR_LOOP);
     Hu3DModelAttrReset(model->mdlId[MDMODEL_PIN+playerNo], HU3D_MOTATTR_PAUSE);

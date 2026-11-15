@@ -342,8 +342,8 @@ void MdLightCreate(MDLIGHT_WORK *lightWork)
     lightWork->lightSel = 0;
     light = &lightWork->light[0];
     light->type = MDLIGHT_TYPE_G_DIRECT;
-    light->hvr.x = 90;
-    light->hvr.y = 20;
+    light->hvr.x = 45;
+    light->hvr.y = -45;
     light->hvr.z = 1000;
     light->center.x = 0;
     light->center.y = 0;
