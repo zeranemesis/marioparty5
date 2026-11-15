@@ -1349,7 +1349,7 @@ void fn_1_48B4(void)
         HuSprAnimLock(anim);
         lbl_1_bss_16818->thpAnim[i] = anim;
     }
-    for (i = MGTOUR_MDL_MAX; i--;) {
+    for (i = MGTOUR_MDL_MAX - 1; i--;) {
         Hu3DCameraMotionOff(lbl_1_bss_16818->mdl[i]);
     }
     lbl_1_bss_16818->seId = HuAudFXPlay(0x39F);
@@ -2373,7 +2373,8 @@ void fn_1_9094(void)
         CharMotionShiftSet(player->charNo, player->motId[2], 0.0f, 5.0f, 0);
         player->state = 2;
     }
-    HuAudSStreamPlay(GameMesCreate(4, 3, player->charNo, -1, -1, -1));
+    GameMesCreate(4, 3, player->charNo, -1, -1, -1);
+    HuAudSStreamPlay(0x81);
     timer = 225;
     while (timer--) {
         HuPrcVSleep();
