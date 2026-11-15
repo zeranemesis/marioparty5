@@ -672,9 +672,8 @@ void fn_1_2898(M543Vec3 *arg0, s16 mode)
             lbl_1_data_340.velY = frandmod(2);
             lbl_1_data_340.velZ = frandmod(10) - 5.0f;
 #ifdef TARGET_PC
-            /* (f32)(u32)-n - 6.0f is ~4.29e9: fctiwz saturates to s16 -1 on GC, UB (0) on x64 */
-            frandmod(6);
-            t = -1;
+            /* (f32)(u32)-n - 6.0f is ~4.29e9 for n > 0: fctiwz saturates to s16 -1 on GC, UB on x64; n == 0 gives -6 */
+            t = (frandmod(6) == 0) ? -6 : -1;
 #else
             t = (f32)-frandmod(6) - 6.0f;
 #endif
@@ -693,9 +692,8 @@ void fn_1_2898(M543Vec3 *arg0, s16 mode)
         lbl_1_data_340.velY = frandmod(2);
         lbl_1_data_340.velZ = speed * sin(3.141592653589793 * (7.5f * i) / 180.0);
 #ifdef TARGET_PC
-        /* (f32)(u32)-n - 6.0f is ~4.29e9: fctiwz saturates to s16 -1 on GC, UB (0) on x64 */
-        frandmod(6);
-        t = -1;
+        /* (f32)(u32)-n - 6.0f is ~4.29e9 for n > 0: fctiwz saturates to s16 -1 on GC, UB on x64; n == 0 gives -6 */
+        t = (frandmod(6) == 0) ? -6 : -1;
 #else
         t = (f32)-frandmod(6) - 6.0f;
 #endif
