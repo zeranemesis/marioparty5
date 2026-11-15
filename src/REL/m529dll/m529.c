@@ -416,7 +416,6 @@ void fn_1_5E0(OMOBJ *obj)
 {
     s32 i;
     M529Player *temp_r31 = obj->data;
-    M529Player *var_r29;
     float temp_f0;
     float temp_f0_2;
     float temp_f0_3;
@@ -474,9 +473,9 @@ temp_r31->unkB4 = 0.0f;
         break;
     }
     for (i = 0; i < 4; i++) {
-        var_r29 = lbl_1_bss_11C[i]->data;
         if ((i != temp_r31->unk14) && (temp_r31->unk20 == GwPlayerConf[i].grp)) {
             temp_r31->unk1C = i;
+            break;
         }
     }
     temp_r31->unkB8 = GwPlayerConf[temp_r31->unk14].dif;
@@ -836,11 +835,11 @@ void fn_1_187C(OMOBJ *obj)
             CharModelAttrReset(temp_r31->unk28, 1);
         }
         if (temp_r31->unk0 == 0xBB8) {
-            if (Hu3DMotionEndCheck(lbl_1_bss_EC[0xB])) {
+            if (Hu3DMotionEndCheck(0xB)) {
                 Hu3DMotionSpeedSet(lbl_1_bss_EC[0xB], 0.0f);
                 Hu3DMotionTimeSet(lbl_1_bss_EC[0xB], 0.0f);
             }
-        } else if (Hu3DMotionEndCheck(lbl_1_bss_EC[0xC])) {
+        } else if (Hu3DMotionEndCheck(0xC)) {
             Hu3DMotionSpeedSet(lbl_1_bss_EC[0xC], 0.0f);
             Hu3DMotionTimeSet(lbl_1_bss_EC[0xC], 0.0f);
         }
@@ -1154,7 +1153,7 @@ void fn_1_2BEC(OMOBJ *obj)
     case 0x3F0:
         if (lbl_1_bss_22E < 0) {
             lbl_1_bss_DC = 1;
-            lbl_1_bss_22E = GameMesCreate(0xE, lbl_1_bss_18, &lbl_1_bss_18);
+            lbl_1_bss_22E = GameMesCreate(0xE, lbl_1_bss_18);
             if (!_CheckFlag(0x1000F)) {
                 HuAudJinglePlay(0x86);
             }
@@ -1187,7 +1186,7 @@ void fn_1_2BEC(OMOBJ *obj)
                             GwPlayer[fn_1_59BC(3)].mgCoinBonus += 0xA;
                         }
                     }
-                    lbl_1_bss_22E = GameMesCreate(4, 3, fn_1_5960(0), fn_1_5960(1), -1, -1, 0.0f);
+                    lbl_1_bss_22E = GameMesCreate(4, 3, fn_1_5960(0), fn_1_5960(1), -1, -1);
                     HuAudJinglePlay(0x79);
                     lbl_1_bss_E0 = lbl_1_bss_2C;
                 } else {
@@ -1809,11 +1808,6 @@ void fn_1_5A18(void)
 // NONMATCHING: stack frame and float register allocation differ
 void fn_1_5A84(Vec *arg0, Vec *arg1)
 {
-    float sp50;
-    float sp3C;
-    float sp34;
-    float sp28;
-    float sp1C;
     float sp14[16];
     float sp10;
     float spC;
@@ -1860,16 +1854,16 @@ void fn_1_5A84(Vec *arg0, Vec *arg1)
         }
     }
     temp_f0 = cos(3.141592653589793 * -temp_f27 / 180.0);
-    sp3C = temp_f0;
+    sp14[10] = temp_f0;
     sp14[0] = temp_f0;
     temp_f0_2 = -sin(3.141592653589793 * -temp_f27 / 180.0);
-    sp34 = temp_f0_2;
-    sp1C = sin(3.141592653589793 * -temp_f27 / 180.0);
-    sp50 = 1.0f;
-    sp28 = 1.0f;
-    sp10 = temp_f30 * sp3C + (temp_f31 * sp34 + temp_f29 * sp14[0]);
-    temp_ret = atan2(temp_f30 * sp1C + (temp_f31 * sp50 + temp_f29 * sp28),
-        temp_f30 * temp_f0_2 + (temp_f31 * temp_f0 + temp_f29 * sp14[0]));
+    sp14[8] = temp_f0_2;
+    sp14[2] = sin(3.141592653589793 * -temp_f27 / 180.0);
+    sp14[15] = 1.0f;
+    sp14[5] = 1.0f;
+    sp10 = temp_f30 * sp14[11] + (temp_f31 * sp14[3] + temp_f29 * sp14[7]);
+    temp_ret = atan2(temp_f30 * sp14[9] + (temp_f31 * sp14[1] + temp_f29 * sp14[5]),
+        temp_f30 * sp14[8] + (temp_f31 * sp14[0] + temp_f29 * sp14[4]));
     temp_f1 = temp_ret / 3.141592653589793;
     OSReport(lbl_1_data_46C);
     OSReport(lbl_1_data_489, temp_f19, temp_f18, spC);
@@ -1896,9 +1890,9 @@ void fn_1_5F74(void)
     CRot.y -= 5.0f * (HuPadSubStkX[1] / 59.0f);
     printWin(0x10, 0x28, 0x180, 0x24, &sp8);
     fontcolor = 0xE;
-    print8(0x10, 0x28, 1.5f, "Center X:%.02f Y:%.02f Z:%.02f", &Center, Center.x, Center.y, Center.z);
-    print8(0x10, 0x34, 1.5f, "CRot X:%.02f Y:%.02f Z:%.02f", &CRot, CRot.x, CRot.y, CRot.z);
-    print8(0x10, 0x40, 1.5f, "CZoom:%.02f", &CZoom, CZoom);
+    print8(0x10, 0x28, 1.5f, "Center X:%.02f Y:%.02f Z:%.02f", Center.x, Center.y, Center.z);
+    print8(0x10, 0x34, 1.5f, "CRot X:%.02f Y:%.02f Z:%.02f", CRot.x, CRot.y, CRot.z);
+    print8(0x10, 0x40, 1.5f, "CZoom:%.02f", CZoom);
     if (*HuPadBtnDown & 0x400) {
         omCameraViewSet(&lbl_1_data_30C);
     }
