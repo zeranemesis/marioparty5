@@ -79,23 +79,23 @@ typedef struct MB3RollRockPlayer_s {
 /* MB3Ev_Asiba / MB3_AsibaPlayerUpdate / MB3_AsibaPlayerEffCreate view */
 typedef struct MB3AsibaPlayer_s {
     s32 active;          /* 0x00, gate */
-    s32 areaNo;          /* 0x04, index into mb3ev_AsibaPosTbl/mb3ev_AsibaOfsTbl */
-    u8 pad8[0x8];        /* 0x08, unused by this view */
+    s32 areaNo;          /* 0x04, segment index into mb3ev_AsibaPosTbl */
+    u8 pad8[4];          /* 0x08, unused by this view */
+    s32 dirNo;           /* 0x0C, index into mb3ev_AsibaOfsTbl/mb3ev_AsibaYureTimeTbl */
     s32 state;           /* 0x10 */
     s32 masuId;          /* 0x14 */
-    u8 pad18[0x4];       /* 0x18, unused by this view */
+    s32 yureCount;       /* 0x18, shake countdown */
     f32 timer;           /* 0x1C */
     f32 gravity;         /* 0x20, precomputed sink/jump gravity term */
     u8 pad24[4];         /* 0x24, unused */
     s16 motionShiftId;   /* 0x28 */
     s16 motionRiseId;    /* 0x2A */
+    u8 pad2C[4];         /* 0x2C, unused */
     s32 taki;            /* 0x30, taki (waterfall) splash-model index for this player */
-    HuVecF pos;           /* 0x34 */
-    f32 tiltAngle;        /* 0x40, X tilt used for the sink/rise lean */
-    f32 yawAngle;          /* 0x44 */
-    HuVecF vel;             /* 0x4C */
-    f32 sinkDepth;           /* 0x50 */
-    f32 wobble;              /* 0x54 */
+    HuVecF pos;          /* 0x34 */
+    HuVecF rot;          /* 0x40 */
+    HuVecF vel;          /* 0x4C */
+    u8 pad58[0xC];       /* 0x58, unused by this view */
 } MB3ASIBA_PLAYER; /* size 0x64 */
 
 /* MB3Ev_Turuhasi view - only element [0] of the array is used (single
@@ -105,8 +105,7 @@ typedef struct MB3TuruhasiPlayer_s {
     s16 motionA;          /* 0x28, MBPlayerMotionCreate() digging motion */
     s16 motionB;          /* 0x2A, MBPlayerMotionCreate() swing motion */
     u8 pad2C[4];          /* 0x2C, unused */
-    s16 effModelId;       /* 0x30, sparkle effect model id (see MB3_TuruhasiEffCreate) */
-    u8 pad32[2];           /* 0x32, unused */
+    s32 effModelId;       /* 0x30, sparkle effect model id (see MB3_TuruhasiEffCreate) */
     HuVecF pos;            /* 0x34, saved MBPlayerPosGet() */
     HuVecF rot;             /* 0x40, saved MBPlayerRotGet() */
     u8 pad4C[0x18];         /* 0x4C, unused by this view */
@@ -178,14 +177,14 @@ static void MB3Ev_Asiba(s32 playerNo);
 /* ------------------------------- data ---------------------------------- */
 
 static const HuVecF mb3ev_AsibaPosTbl[8] = {
-    { 3443.403f, -1884.013f, 0.0f },
-    { 3300.175f, -969.244f, 0.0f },
-    { 3142.127f, -829.8f, 0.0f },
-    { 1363.629f, -754.184f, 0.0f },
-    { 1344.007f, -325.654f, 0.0f },
-    { 1235.695f, -239.724f, 0.0f },
-    { 1.0f, -154.724f, 0.0f },
-    { 1.0f, 345.276f, 0.0f },
+    { 0.0f, 3443.403f, -1884.013f },
+    { 0.0f, 3300.175f, -969.244f },
+    { 0.0f, 3142.127f, -829.8f },
+    { 0.0f, 1363.629f, -754.184f },
+    { 0.0f, 1344.007f, -325.654f },
+    { 0.0f, 1235.695f, -239.724f },
+    { 0.0f, 1.0f, -154.724f },
+    { 0.0f, 1.0f, 345.276f },
 };
 
 static u32 mb3_ObjFileTbl[MB3_OBJ_MAX] = {
@@ -211,12 +210,27 @@ static const f32 mb3ev_TuruhasiRadiusTbl[4] = { 180.0f, 90.0f, 270.0f, 0.0f };
 
 /* per-area offset applied to the quicksand target position, one entry per
  * mb3ev_AsibaPosTbl segment. */
-static const HuVecF mb3ev_AsibaOfsTbl[4];
+static const HuVecF mb3ev_AsibaOfsTbl[4] = {
+    { 40.0f, 0.0f, 60.000004f },
+    { -120.000008f, 0.0f, 0.0f },
+    { 120.000008f, 0.0f, -60.000004f },
+    { -40.0f, 0.0f, -120.000008f },
+};
 
 static const s32 mb3ev_AsibaYureTimeTbl[4] = { 0x30, 0x33, 0x36, 0x39 };
 
 static OMOBJ *mb3_MainObj;
 static s32 mb3_Work[0x146];
+
+/* mb3_Work[0xD..0x10] hold ANIMDATA pointers on GC; they do not fit an s32 on PC. */
+#ifdef TARGET_PC
+static ANIMDATA *mb3_AnimTbl[4];
+#define MB3_ANIM(n) (mb3_AnimTbl[(n) - 0xD])
+#define MB3_ANIM_SET(n, v) (mb3_AnimTbl[(n) - 0xD] = (v))
+#else
+#define MB3_ANIM(n) ((ANIMDATA *) (uintptr_t) mb3_Work[n])
+#define MB3_ANIM_SET(n, v) (mb3_Work[n] = (s32) (uintptr_t) (v))
+#endif
 static s16 mb3_MainMdlId;
 
 /* Raw byte-offset accessors into mb3_Work's header region (object/model ids,
@@ -235,10 +249,10 @@ static s16 mb3_MainMdlId;
 
 /* MB3_Create camera constants (extracted from the original REL's .rodata,
  * m2c could not infer these as it has no context for anonymous data). */
-static const HuVecF mb3_OpeningPos = { 3300.175048828125f, -969.2440185546875f, 0.0f };
-static const HuVecF mb3_OpeningRot = { 3142.126953125f, -829.7999877929688f, 0.0f };
-static const HuVecF mb3_MapViewPos = { 1363.6290283203125f, -754.1840209960938f, 0.0f };
-static const HuVecF mb3_MapViewRot = { 1344.0069580078125f, -325.65399169921875f, 0.0f };
+static const HuVecF mb3_OpeningPos = { 0.0f, 0.0f, -4500.0f };
+static const HuVecF mb3_OpeningRot = { -33.0f, 0.0f, 0.0f };
+static const HuVecF mb3_MapViewPos = { -250.0f, 0.0f, -1700.0f };
+static const HuVecF mb3_MapViewRot = { -78.0f, 0.0f, 0.0f };
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -432,6 +446,7 @@ static void MB3_Splash2EffHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
         if (p->time == 0) {
             p->time++;
             p->rot.z = 360.0f * MBEffRandF();
+            (void) MBEffRandF(); /* orig draws (and discards) a random here */
             p->color.b = 0xFF;
             p->color.g = 0xFF;
             p->color.r = 0xFF;
@@ -636,9 +651,7 @@ static void MB3_ObjectCreate(void) {
             chosen = linkMasuP->linkTbl[i2];
             if (MBMasuGet(0, (s32) chosen)->linkNum != 0) {
                 chosen = 0xFFFF;
-                continue;
             }
-            break;
         }
         if ((s16) chosen < 0) {
             chosen = (u16) startMasuId;
@@ -670,34 +683,34 @@ static void MB3_ObjectCreate(void) {
         }
     }
 
-    mb3_Work[0xD] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0011, 0x10000000));
-    mb3_Work[0xE] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0012, 0x10000000));
-    mb3_Work[0xF] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0014, 0x10000000));
-    mb3_Work[0x10] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0015, 0x10000000));
+    MB3_ANIM_SET(0xD, HuSprAnimRead(HuDataReadNum(0xCF0011, 0x10000000)));
+    MB3_ANIM_SET(0xE, HuSprAnimRead(HuDataReadNum(0xCF0012, 0x10000000)));
+    MB3_ANIM_SET(0xF, HuSprAnimRead(HuDataReadNum(0xCF0014, 0x10000000)));
+    MB3_ANIM_SET(0x10, HuSprAnimRead(HuDataReadNum(0xCF0015, 0x10000000)));
 
     for (i = 0; i < 4; i++) {
-        s16 id = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xD], 0x40);
+        s16 id = (s16) MBEffCreate(MB3_ANIM(0xD), 0x40);
         MB3W_S16(0x44 + i * 2) = id;
         MBEffHookSet(id, MB3_TakiEffHook);
         Hu3DModelLayerSet(id, 3);
     }
     for (i = 0; i < 3; i++) {
-        s16 id1 = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xE], 0xC0);
+        s16 id1 = (s16) MBEffCreate(MB3_ANIM(0xE), 0xC0);
         s16 id2;
         MB3W_S16(0x4C + i * 2) = id1;
         MBEffHookSet(id1, MB3_Splash1EffHook);
         Hu3DModelLayerSet(id1, 2);
         Hu3DModelPosSetV(id1, (HuVecF *) &mb3ev_TakiEffPosTbl[i]);
 
-        id2 = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xE], 0x30);
+        id2 = (s16) MBEffCreate(MB3_ANIM(0xE), 0x30);
         MB3W_S16(0x52 + i * 2) = id2;
         MBEffHookSet(id2, MB3_Splash2EffHook);
         Hu3DModelLayerSet(id2, 2);
         Hu3DModelPosSet(id2, mb3ev_TakiEffPosTbl[i].x, mb3ev_TakiEffPosTbl[i].y, 50.0f + mb3ev_TakiEffPosTbl[i].z);
         MBAudFXEmiterSet(0x5DC, (Vec *) &mb3ev_TakiEffPosTbl[i]);
     }
-    MB3W_S16(0x58) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xF], 1);
-    MB3W_S16(0x5A) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0x10], 1);
+    MB3W_S16(0x58) = (s16) MBEffCreate(MB3_ANIM(0xF), 1);
+    MB3W_S16(0x5A) = (s16) MBEffCreate(MB3_ANIM(0x10), 1);
 }
 
 static void MB3_Kill(void) {
@@ -763,10 +776,10 @@ static void MB3_MainObjUpdate(OMOBJ *obj) {
     (void) MBCameraGet();
 
     /* the four taki (waterfall) splash pairs each carry a countdown at
-     * mb3_Work word 0x1E + i*6 in the original (part of the packed model-id
+     * mb3_Work word 0x1E + i in the original (part of the packed model-id
      * region described in MB3_ObjectCreate). */
     for (i = 0; i < 4; i++) {
-        s32 *cnt = &mb3_Work[0x1E + i * 6];
+        s32 *cnt = &mb3_Work[0x1E + i];
         if (*cnt != 0) {
             *cnt -= 1;
         }
@@ -814,15 +827,16 @@ static void MB3_ImpactEffUpdate(s16 modelId, s32 frame) {
     Point3d pos;
     f32 scale;
 
-    ofs.x = 120.0f;
+    ofs.x = 0.0f;
     ofs.y = 0.0f;
-    ofs.z = -60.0f;
+    ofs.z = -500.0f;
     MTXInverse(Hu3DCameraMtx, camInv);
     MTXMultVec(camInv, &ofs, &pos);
     camInv[0][3] = 0.0f;
     camInv[1][3] = 0.0f;
     camInv[2][3] = 0.0f;
-    scale = ((1.0f + (5.0f * ((f32) frame / 30.0f))) + (0.5f * (f32) sin((3.141592653589793 * (f64) (16.0f * (360.0f * ((f32) frame / 30.0f)))) / 180.0))) * 0.4f;
+    scale = (1.0f + (5.0f * ((f32) frame / 30.0f))) + (0.5 * sin((3.141592653589793 * (f64) (16.0f * (360.0f * ((f32) frame / 30.0f)))) / 180.0));
+    scale *= 0.4f;
     MBModelPosSetV(modelId, &pos);
     MBModelMtxSet(modelId, &camInv);
     MBModelScaleSet(modelId, scale, scale, scale);
@@ -902,41 +916,44 @@ static void MB3_CoinEffUpdate(void) {
  * up to one new particle into the first free slot it finds. */
 static void MB3_ImpactEffPosSet(Point3d *pos, f32 pitch, f32 yaw) {
     MBEFFECT *eff = (MBEFFECT *) Hu3DData[MB3W_S16(0x5C)].hookData;
-    Mtx pitchMtx, yawMtx, mtx;
-    Point3d ofs;
+    Mtx pitchMtx, yawMtx;
+    Point3d dir, tmp;
     s32 i;
+    u32 budget = 32;
 
     MTXRotRad(pitchMtx, 'X', 0.017453292f * pitch);
     MTXRotRad(yawMtx, 'Y', 0.017453292f * yaw);
     MTXConcat(pitchMtx, yawMtx, pitchMtx);
-    MTXTransApply(pitchMtx, mtx, pos->x, pos->y, pos->z);
+    MTXTransApply(pitchMtx, pitchMtx, pos->x, pos->y, pos->z);
 
     for (i = 0; i < eff->num; i++) {
         MBEFFECTDATA *p = &eff->data[i];
-        f32 ang, spd;
+        f32 ang, spd, rnd;
 
         if (p->time != 0) {
             continue;
         }
-        p->time = (s16) (18.0f + (0.2f * (60.0f * MBEffRandF())));
-        p->color.r = (u8) (150.0f + (100.0f * MBEffRandF()));
-        p->color.g = 0xFF;
-        p->color.b = 0xFF;
-        p->color.a = (u8) (150.0f + (100.0f * MBEffRandF()));
-        p->scale = 20.0f + (40.0f * MBEffRandF());
-
+        p->time = (s16) (60.0f * (0.7f + (0.5f * MBEffRandF())));
         ang = 360.0f * MBEffSRandF();
-        spd = 20.0f;
-        ofs.x = spd * (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
-        ofs.y = 0.0f;
-        ofs.z = spd * (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
-        MTXMultVec(mtx, &ofs, &p->pos);
-
+        dir.x = (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
+        dir.y = (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
+        dir.z = 0.5f;
+        VECScale(&dir, &tmp, 20.0f);
+        MTXMultVec(pitchMtx, &tmp, &p->pos);
         spd = 13.333333f + (1.6666666f * (7.0f * MBEffRandF()));
-        ofs.x = spd * (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
-        ofs.z = spd * (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
-        MTXMultVecSR(mtx, &ofs, &p->vel);
-        break;
+        VECScale(&dir, &tmp, spd);
+        MTXMultVecSR(pitchMtx, &tmp, &p->vel);
+        p->rot.z = 360.0f * MBEffRandF();
+        p->scale = 20.0f + (20.0f * MBEffRandF());
+        p->color.a = (u8) (100.0f + (80.0f * MBEffRandF()));
+        rnd = MBEffRandF();
+        p->color.r = (u8) (150.0f + (70.0f * rnd));
+        p->color.g = (u8) (144.0f + (70.0f * rnd));
+        p->color.b = (u8) (140.0f + (70.0f * rnd));
+        budget--;
+        if (budget < 1) {
+            break;
+        }
     }
 }
 
@@ -949,8 +966,10 @@ static void MB3_RollRockPathUpdate(void) {
     f32 rockYaw;
     s32 rockLinked;
     s32 masuId = mb3_Work[0xA];
+    MASU *rockMasuP;
     MASU *masuP;
     f32 remaining = 450.0f;
+    f32 segLen;
     s32 p;
 
     rockPos.x = MB3W_F32(0x64);
@@ -958,29 +977,25 @@ static void MB3_RollRockPathUpdate(void) {
     rockPos.z = MB3W_F32(0x6C);
 
     for (;;) {
-        masuP = MBMasuGet(0, masuId);
-        VECSubtract(&masuP->pos, &rockPos, &approach);
+        rockMasuP = MBMasuGet(0, masuId);
+        VECSubtract(&rockMasuP->pos, &rockPos, &approach);
         approach.y = 0.0001f;
-        {
-            f32 segLen = VECMag(&approach);
-            remaining -= segLen;
-            if (remaining <= 0.0f) {
-                dir = approach;
-                VECScale(&dir, &dir, (remaining + segLen) / segLen);
-                break;
-            }
-            rockPos = masuP->pos;
-            masuId = (s32) masuP->linkTbl[0];
+        segLen = VECMag(&approach);
+        remaining -= segLen;
+        if (remaining <= 0.0f) {
+            remaining += segLen;
+            break;
         }
+        rockPos = rockMasuP->pos;
+        masuId = (s32) rockMasuP->linkTbl[0];
     }
-    rockYaw = (f32) (180.0 * (atan2((f64) dir.x, (f64) dir.z) / 3.141592653589793));
-    VECAdd(&rockPos, &dir, &rockPos);
-    VECNormalize(&dir, &rockVel);
-    rockLinked = (masuP->flag & 0x40) == 0;
-
-    MB3W_F32(0x64) = rockPos.x;
-    MB3W_F32(0x68) = rockPos.y;
-    MB3W_F32(0x6C) = rockPos.z;
+    rockYaw = (f32) (180.0 * (atan2((f64) approach.x, (f64) approach.z) / 3.141592653589793));
+    VECSubtract(&rockMasuP->pos, &rockPos, &dir);
+    VECScale(&dir, &approach, remaining / segLen);
+    VECAdd(&rockPos, &approach, &rockPos);
+    VECNormalize(&dir, &dir);
+    rockVel = dir;
+    rockLinked = (rockMasuP->flag & 0x40) == 0;
 
     for (p = 0; p < 4; p++) {
         MB3ROLLROCK_PLAYER *e = &MB3_PLAYERSCR[p].rollRock;
@@ -996,29 +1011,27 @@ static void MB3_RollRockPathUpdate(void) {
             MBPlayerRotGet(p, &e->rot);
             e->orderNo = -1;
             e->state++;
-            /* the original falls through to case 1 in the same tick */
+            break;
         case 1:
             MBAngleMoveTo(&e->rot.y, 0.0f, 0.1f);
             VECSubtract(&rockPos, &masuP->pos, &approach);
             approach.y = 0.01f;
-            if (VECMag(&approach) <= 600.0f) {
-                e->orderNo = mb3_Work[0x1C]++;
-                MBPlayerMotionNoShiftSet(p, 9, 0.0f, 0.0f, 0U);
-                e->timer = 36.0f;
-                e->state++;
-            } else {
+            if (VECMag(&approach) > 600.0f) {
                 break;
             }
+            e->orderNo = mb3_Work[0x1C]++;
+            MBPlayerMotionNoShiftSet(p, 9, 0.0f, 0.0f, 0U);
+            e->timer = 36.0f;
+            e->state++;
             /* fallthrough */
         case 2:
-            MBAngleMoveTo(&e->rot.y, (f32) (180.0 * (atan2((f64) (rockPos.x - e->pos.x), (f64) (rockPos.z - e->pos.z)) / 3.141592653589793)), 0.1f);
+            MBAngleMoveTo(&e->rot.y, (f32) (180.0 * (atan2((f64) (MB3W_F32(0x64) - e->pos.x), (f64) (MB3W_F32(0x6C) - e->pos.z)) / 3.141592653589793)), 0.1f);
             e->timer -= 1.0f;
-            if (e->timer <= 0.0f) {
-                MBPlayerMotionNoShiftSet(p, 3, 0.0f, 8.0f, 0x40000001U);
-                e->state++;
-            } else {
+            if (e->timer > 0.0f) {
                 break;
             }
+            MBPlayerMotionNoShiftSet(p, 3, 0.0f, 8.0f, 0x40000001U);
+            e->state++;
             /* fallthrough */
         case 3:
             VECScale(&rockVel, &approach, 14.166666f);
@@ -1035,27 +1048,27 @@ static void MB3_RollRockPathUpdate(void) {
             VECAdd(&approach, &e->pos, &e->pos);
             MBAngleMoveTo(&e->rot.y, rockYaw, 0.15f);
             if (rockLinked) {
-                VECAdd(&masuP->pos, &ridePos, &approach);
+                VECAdd(&rockMasuP->pos, &ridePos, &approach);
                 VECSubtract(&approach, &e->pos, &approach);
                 approach.x /= 0.8f;
                 approach.z /= 0.8f;
-                approach.y = (approach.y / 0.8f) - (0.5f * 0.8f * -2450.0f);
+                approach.y = (approach.y / 0.8f) - ((0.5f * 0.8f) * -2450.0f);
                 VECScale(&approach, &e->vel, 0.016666668f);
                 e->timer = 60.0f * 0.8f;
                 e->gravity = 0.016666668f * (0.016666668f * -2450.0f);
                 e->targetAngle = rockYaw;
                 MBPlayerMotionNoShiftSet(p, 4, 0.0f, 8.0f, 0U);
                 e->shookOnce = 0;
-                e->masuId = (s32) masuP->linkTbl[0];
+                e->masuId = (s32) rockMasuP->linkTbl[0];
                 e->state++;
             }
             break;
         case 4:
             e->vel.y += e->gravity;
             VECAdd(&e->pos, &e->vel, &e->pos);
-            if (e->shookOnce == 0 && e->timer == 5.0f) {
+            if (e->shookOnce == 0 && e->timer <= 5.0f) {
                 MBPlayerMotionNoShiftSet(p, 5, 0.0f, 0.0f, 0U);
-                e->shookOnce = 1;
+                e->shookOnce++;
             }
             MBAngleMoveTo(&e->rot.y, e->targetAngle, 0.15f);
             e->timer -= 1.0f;
@@ -1079,9 +1092,9 @@ static void MB3_RollRockPathUpdate(void) {
         case -1:
             GwPlayer[p].masuId = (s16) e->masuId;
             MBPlayerPosReset(p);
-            e->vel.x = 0.0f;
-            e->vel.y = 0.0f;
-            e->vel.z = 0.0f;
+            e->rot.z = 0.0f;
+            e->rot.y = 0.0f;
+            e->rot.x = 0.0f;
             MBPlayerMotionNoShiftSet(p, 1, 0.0f, 0.0f, 0x40000001U);
             break;
         }
@@ -1097,10 +1110,11 @@ static void MB3_RollRockPathUpdate(void) {
 static void MB3_RollRockEffUpdate(f32 *pos) {
     MBEFFECT *eff = (MBEFFECT *) Hu3DData[MB3W_S16(0x5C)].hookData;
     s32 i;
+    s32 budget = 1;
 
     for (i = 0; i < eff->num; i++) {
         MBEFFECTDATA *p = &eff->data[i];
-        f32 ang, spd;
+        f32 ang, spd, sinv, cosv;
 
         if (p->time != 0) {
             continue;
@@ -1115,14 +1129,20 @@ static void MB3_RollRockEffUpdate(f32 *pos) {
         p->pos.y = pos[1] - 150.0f;
         p->pos.z = pos[2] + (100.0f * (0.2f * MBEffSRandF()));
         ang = 360.0f * MBEffRandF();
+        sinv = (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
+        cosv = (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
         spd = 13.333333f + (1.6666666f * (5.0f * MBEffRandF()));
-        p->vel.x = spd * (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
-        p->vel.z = spd * (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
+        p->vel.x = (sinv * spd) + (1.6666666f * MBEffSRandF());
+        p->vel.z = (cosv * spd) + (1.6666666f * MBEffSRandF());
         p->vel.y = 3.3333333f + (1.6666666f * (2.0f * MBEffRandF()));
         p->parManId = (s16) (18.0f + (0.2f * (60.0f * MBEffRandF())));
         p->color.a = (u8) (150.0f + (100.0f * MBEffRandF()));
         p->scale = 20.0f + (40.0f * MBEffRandF());
-        break;
+        p->animBank = (s16) (3.0f * MBEffRandF());
+        budget--;
+        if (budget <= 0) {
+            break;
+        }
     }
 }
 
@@ -1133,19 +1153,21 @@ static void MB3_RollRockDustCreate(f32 *pos) {
 
     for (i = 0; i < eff->num; i++) {
         MBEFFECTDATA *p = &eff->data[i];
-        f32 ang, spd, r;
+        f32 ang, spd, r, sinv, cosv;
 
         if (p->time != 0) {
             continue;
         }
         p->time = (s16) (60.0f * (0.7f + (0.5f * MBEffRandF())));
         ang = 360.0f * MBEffSRandF();
+        sinv = (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
+        cosv = (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
         p->pos.x = pos[0] + (100.0f * MBEffSRandF());
         p->pos.y = pos[1] - 120.00001f;
         p->pos.z = pos[2] + (100.0f * MBEffSRandF());
         spd = 1.6666666f * (10.0f * MBEffRandF());
-        p->vel.x = spd * (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
-        p->vel.z = spd * (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
+        p->vel.x = sinv * spd;
+        p->vel.z = cosv * spd;
         p->vel.y = spd * (0.1f + (0.2f * MBEffRandF()));
         p->rot.z = 360.0f * MBEffRandF();
         p->scale = 90.0f + (100.0f * MBEffRandF());
@@ -1168,7 +1190,7 @@ static void MB3_TuruhasiEffCreate(MB3_PLAYER_SCRATCH *entry) {
 
     for (i = 0; i < eff->num && budget > 0; i++) {
         MBEFFECTDATA *p = &eff->data[i];
-        f32 ang, spd;
+        f32 ang, spd, sinv, cosv;
 
         if (p->time != 0) {
             continue;
@@ -1190,6 +1212,7 @@ static void MB3_TuruhasiEffCreate(MB3_PLAYER_SCRATCH *entry) {
         p->parManId = (s16) (30.0f + (0.3f * (60.0f * MBEffRandF())));
         p->color.a = (u8) (128.0f + (100.0f * MBEffRandF()));
         p->scale = 5.0f + (40.0f * MBEffRandF());
+        p->animBank = (s16) (3.0f * MBEffRandF());
         budget--;
     }
 }
@@ -1209,49 +1232,59 @@ static void MB3_AsibaPlayerUpdate(void) {
         }
         switch (e->state) {
         case 0: {
-            Point3d savedRot;
+            MASU *masuP;
             MBPlayerPosGet(p, &e->pos);
-            MBPlayerRotGet(p, &savedRot);
+            MBPlayerRotGet(p, &e->rot);
             e->motionShiftId = (s16) MBPlayerMotionCreate(p, 0x8C003F);
             e->motionRiseId = (s16) MBPlayerMotionCreate(p, 0x8C001D);
             e->taki = MB3W_S16(0x44 + p * 2);
-            VECSubtract(&e->pos, &MBMasuGet(0, e->masuId)->pos, &target);
+            masuP = MBMasuGet(0, e->masuId);
+            VECSubtract(&e->pos, &masuP->pos, &target);
             target.y = 0.1f;
             if (VECMag(&target) < 30.000002f) {
-                e->areaNo = 1;
-            } else if (target.z == 0.0f) {
-                e->areaNo = (target.x < 0.0f) ? 1 : 0;
+                e->dirNo = 1;
+            } else if (target.z >= 0.0f) {
+                e->dirNo = 0;
+                if (target.x < 0.0f) {
+                    e->dirNo = 1;
+                }
             } else {
-                e->areaNo = (target.x < 0.0f) ? 3 : 2;
+                e->dirNo = 2;
+                if (target.x < 0.0f) {
+                    e->dirNo = 3;
+                }
             }
-            VECSubtract(&e->pos, &MBMasuGet(0, e->masuId)->pos, &e->vel);
-            e->timer = (f32) mb3ev_AsibaYureTimeTbl[e->areaNo];
+            masuP = MBMasuGet(0, e->masuId);
+            VECSubtract(&e->pos, &masuP->pos, &e->vel);
+            e->yureCount = mb3ev_AsibaYureTimeTbl[e->dirNo];
             e->state++;
             break;
         }
         case 1: {
             MASU *masuP = MBMasuGet(0, e->masuId);
             MTXMultVec(masuP->matrix, &e->vel, &e->pos);
-            e->timer -= 1.0f;
-            if (e->timer == 0.0f) {
-                VECAdd(&masuP->pos, (Point3d *) &mb3ev_AsibaOfsTbl[e->areaNo], &target);
+            e->yureCount--;
+            if (e->yureCount == 0) {
+                f32 t = 0.6f;
+                f32 g = -1960.0f;
+                VECAdd(&masuP->pos, (Point3d *) &mb3ev_AsibaOfsTbl[e->dirNo], &target);
                 target.y = MB3_AsibaMinYGet(e->areaNo, &target);
                 VECSubtract(&target, &e->pos, &target);
-                target.x /= 0.6f;
-                target.z /= 0.6f;
-                target.y = (target.y / 0.6f) - (0.5f * 0.6f * -1960.0f);
+                target.x /= t;
+                target.z /= t;
+                target.y = (target.y / t) - ((0.5f * t) * g);
                 VECScale(&target, &e->vel, 0.016666668f);
-                e->timer = 60.0f * 0.6f;
-                e->gravity = 0.016666668f * (0.016666668f * -1960.0f);
+                e->timer = 60.0f * t;
+                e->gravity = 0.016666668f * (0.016666668f * g);
                 MBPlayerMotionNoShiftSet(p, e->motionShiftId, 0.0f, 8.0f, 0U);
                 e->state++;
             }
             break;
         }
         case 2:
-            e->sinkDepth += e->gravity;
+            e->vel.y += e->gravity;
             VECAdd(&e->pos, &e->vel, &e->pos);
-            if (!((70.0f + e->tiltAngle) > MB3_AsibaMinYGet(e->areaNo, &e->pos))) {
+            if (!((70.0f + e->pos.y) > MB3_AsibaMinYGet(e->areaNo, &e->pos))) {
                 MBPlayerMotionNoShiftSet(p, e->motionRiseId, 0.0f, 8.0f, 0x40000001U);
                 MB3_AsibaPlayerEffCreate((MB3_PLAYER_SCRATCH *) e, 0);
                 MBAudFXPlay(0x5DD);
@@ -1261,24 +1294,28 @@ static void MB3_AsibaPlayerUpdate(void) {
         case 3:
             e->vel.x *= 0.5f;
             e->vel.z *= 0.5f;
-            e->sinkDepth += -2.0f * e->gravity;
-            if (e->sinkDepth < 0.0f) {
-                e->sinkDepth *= 0.6f;
+            e->vel.y += -2.0f * e->gravity;
+            if (e->vel.y < 0.0f) {
+                e->vel.y *= 0.6f;
             }
-            e->vel.y *= 0.95f;
+            e->rot.x *= 0.95f;
             VECAdd(&e->pos, &e->vel, &e->pos);
-            if (!(e->sinkDepth < 0.0f) && !(e->tiltAngle < MB3_AsibaMinYGet(e->areaNo, &e->pos))) {
+            if (!(e->vel.y < 0.0f) && !(e->pos.y < MB3_AsibaMinYGet(e->areaNo, &e->pos))) {
                 e->vel.x = 0.0f;
-                e->sinkDepth = 0.0f;
-                e->state = (e->areaNo >= 6) ? 7 : e->state + 1;
+                e->vel.y = 0.0f;
+                if (e->areaNo >= 6) {
+                    e->state = 7;
+                } else {
+                    e->state++;
+                }
             }
             break;
         case 4:
             e->vel.z += 0.2f * (6.6666665f - e->vel.z);
             VECAdd(&e->pos, &e->vel, &e->pos);
-            e->tiltAngle = MB3_AsibaMinYGet(e->areaNo, &e->pos);
-            e->yawAngle += 3.0000002f;
-            e->vel.x *= 0.95f;
+            e->pos.y = MB3_AsibaMinYGet(e->areaNo, &e->pos);
+            e->rot.y += 3.0000002f;
+            e->rot.x *= 0.95f;
             MB3_AsibaPlayerEffCreate((MB3_PLAYER_SCRATCH *) e, 1);
             if (!(e->pos.z < mb3ev_AsibaPosTbl[e->areaNo + 1].z)) {
                 MBPlayerMotionNoShiftSet(p, e->motionShiftId, 0.0f, 16.0f, 0U);
@@ -1287,21 +1324,21 @@ static void MB3_AsibaPlayerUpdate(void) {
             break;
         case 5:
             e->vel.z *= 0.95f;
-            e->sinkDepth += e->gravity;
+            e->vel.y += e->gravity;
             VECAdd(&e->pos, &e->vel, &e->pos);
-            e->yawAngle += 3.0000002f;
-            e->vel.x -= 1.0f;
-            if (!(e->tiltAngle > mb3ev_AsibaPosTbl[e->areaNo + 2].y)) {
+            e->rot.y += 3.0000002f;
+            e->rot.x -= 1.0f;
+            if (!(e->pos.y > mb3ev_AsibaPosTbl[e->areaNo + 2].y)) {
                 e->state++;
             }
             break;
         case 6:
             e->vel.z *= 0.95f;
-            e->sinkDepth += e->gravity;
+            e->vel.y += e->gravity;
             VECAdd(&e->pos, &e->vel, &e->pos);
-            e->yawAngle += 3.0000002f;
-            e->vel.x += 1.5000001f;
-            if (!((70.0f + e->tiltAngle) > MB3_AsibaMinYGet(e->areaNo + 3, &e->pos))) {
+            e->rot.y += 3.0000002f;
+            e->rot.x += 1.5000001f;
+            if (!((70.0f + e->pos.y) > MB3_AsibaMinYGet(e->areaNo + 3, &e->pos))) {
                 MBPlayerMotionNoShiftSet(p, e->motionRiseId, 0.0f, 8.0f, 0x40000001U);
                 e->state = 2;
                 e->areaNo += 3;
@@ -1312,17 +1349,17 @@ static void MB3_AsibaPlayerUpdate(void) {
         case 7:
             e->vel.z += 0.2f * (1.6666666f - e->vel.z);
             VECAdd(&e->pos, &e->vel, &e->pos);
-            e->tiltAngle = MB3_AsibaMinYGet(e->areaNo, &e->pos);
-            e->vel.x *= 0.95f;
+            e->pos.y = MB3_AsibaMinYGet(e->areaNo, &e->pos);
+            e->rot.x *= 0.95f;
             e->active = 2;
             break;
         case -1:
             MBPlayerMotionNoShiftSet(p, 1, 0.0f, 0.0f, 0x40000001U);
             MBPlayerMotionKill(p, e->motionShiftId);
             MBPlayerMotionKill(p, e->motionRiseId);
-            e->vel.y = 0.0f;
-            e->yawAngle = 0.0f;
-            e->vel.x = 0.0f;
+            e->rot.z = 0.0f;
+            e->rot.y = 0.0f;
+            e->rot.x = 0.0f;
             break;
         }
         if (e->state >= 0) {
@@ -1330,8 +1367,8 @@ static void MB3_AsibaPlayerUpdate(void) {
         }
         {
             Mtx yawMtx, tiltMtx;
-            MTXRotRad(yawMtx, 'Y', 0.017453292f * e->yawAngle);
-            MTXRotRad(tiltMtx, 'X', 0.017453292f * e->vel.x);
+            MTXRotRad(yawMtx, 'Y', 0.017453292f * e->rot.y);
+            MTXRotRad(tiltMtx, 'X', 0.017453292f * e->rot.x);
             MTXConcat(tiltMtx, yawMtx, yawMtx);
             Hu3DMtxRotGet(yawMtx, &outRot);
             MBPlayerRotSetV(p, &outRot);
@@ -1364,30 +1401,38 @@ static void MB3_AsibaPlayerEffCreate(MB3_PLAYER_SCRATCH *entry, s32 kind) {
         p->color.b = (u8) (205.0f + (43.0f * r));
 
         if (kind == 0) {
-            f32 ang = 360.0f * MBEffRandF();
-            f32 dist = 50.0f + (100.0f * (0.3f * MBEffRandF()));
+            f32 ang, dist;
             p->vel.x = 0.0f;
             p->vel.z = 0.0f;
             p->vel.y = 6.6666665f + (1.6666666f * (4.0f * MBEffRandF()));
             p->parManId = (s16) (36.0f + (0.3f * (60.0f * MBEffRandF())));
-            p->pos.x = e->pos.x + (dist * (f32) sin((3.141592653589793 * (f64) ang) / 180.0));
-            p->pos.z = e->pos.z + (dist * (f32) cos((3.141592653589793 * (f64) ang) / 180.0));
-            p->pos.y = MB3_AsibaMinYGet(e->areaNo, &p->pos) - (100.0f * MBEffRandF());
+            ang = 360.0f * MBEffRandF();
+            dist = 50.0f + (100.0f * (0.3f * MBEffRandF()));
+            p->pos.x = e->pos.x + (dist * sin((3.141592653589793 * (f64) ang) / 180.0));
+            p->pos.z = e->pos.z + (dist * cos((3.141592653589793 * (f64) ang) / 180.0));
+            p->pos.y = e->pos.y;
+            p->pos.y = MB3_AsibaMinYGet(e->areaNo, &p->pos);
+            p->pos.y -= 100.0f * MBEffRandF();
             p->color.a = (u8) (180.0f + (70.0f * MBEffRandF()));
             p->scale = 40.0f + (50.0f * MBEffRandF());
-        } else {
-            f32 ang2 = 180.0f + (45.0f * MBEffSRandF());
+        } else if (kind == 1) {
+            f32 ang2;
             p->vel.x = 1.6666666f * (0.3f * MBEffSRandF());
             p->vel.z = 1.6666666f * (2.0f * MBEffRandF());
             p->vel.y = 3.3333333f + (1.6666666f * (2.0f * MBEffRandF()));
             p->parManId = 0x12;
-            p->pos.x = e->pos.x + (100.0f * (0.8f * (f32) sin((3.141592653589793 * (f64) ang2) / 180.0)));
-            p->pos.z = 30.000002f + (e->pos.z + (100.0f * (0.3f * (f32) cos((3.141592653589793 * (f64) ang2) / 180.0))));
+            ang2 = 180.0f + (45.0f * MBEffSRandF());
+            p->pos.x = e->pos.x + (sin((3.141592653589793 * (f64) ang2) / 180.0) * 0.8f * 100.0);
+            p->pos.z = e->pos.z + (cos((3.141592653589793 * (f64) ang2) / 180.0) * 0.3f * 100.0) + 30.000002f;
+            p->pos.y = e->pos.y;
             p->pos.y = MB3_AsibaMinYGet(e->areaNo, &p->pos);
             p->color.a = (u8) (180.0f + (70.0f * MBEffRandF()));
             p->scale = 20.0f + (40.0f * MBEffRandF());
         }
         budget--;
+        if (budget <= 0) {
+            break;
+        }
     }
 }
 
@@ -1431,7 +1476,7 @@ static int MB3Ev_MasuWalkPost(int playerNo) {
 /* KubiBone: the "bone platform" wobbles and spits ten debris chunks up in
  * a cone around the masu when a player walks past it. idx selects which of
  * the four cone-angle presets (mb3ev_KubiBoneAngleTbl) and which debris
- * "burst" the platform this is: mb3_Work[idx].unk78 (word 0x1E+idx*6, same
+ * "burst" the platform this is: mb3_Work[idx].unk78 (word 0x1E+idx, same
  * countdown region MB3_MainObjUpdate ticks down) gates re-triggering. */
 static void MB3Ev_KubiBone(MASU *masuP, s32 idx) {
     Point3d basePos;
@@ -1440,10 +1485,10 @@ static void MB3Ev_KubiBone(MASU *masuP, s32 idx) {
     s32 i;
     MB3DEBRIS *d;
 
-    if (mb3_Work[0x1E + idx * 6] != 0) {
+    if (mb3_Work[0x1E + idx] != 0) {
         return;
     }
-    mb3_Work[0x1E + idx * 6] = 0xB4;
+    mb3_Work[0x1E + idx] = 0xB4;
     basePos = masuP->pos;
     basePos.y += 300.0f;
     coneAngle = mb3ev_KubiBoneAngleTbl[idx];
@@ -1460,8 +1505,8 @@ static void MB3Ev_KubiBone(MASU *masuP, s32 idx) {
         d->count = 0xB4;
         angle = coneAngle + (20.0f * MBEffSRandF());
         speed = 6.6666665f + (1.6666666f * (3.0f * MBEffRandF()));
-        d->vel.x = speed * (f32) sin((3.141592653589793 * (f64) angle) / 180.0);
-        d->vel.z = speed * (f32) cos((3.141592653589793 * (f64) angle) / 180.0);
+        d->vel.x = speed * sin((3.141592653589793 * (f64) angle) / 180.0);
+        d->vel.z = speed * cos((3.141592653589793 * (f64) angle) / 180.0);
         d->vel.y = (1.6666666f * (-2.0f * MBEffRandF())) - 1.6666666f;
         MTXRotRad(coneMtx, 'Y', 0.017453292f * angle);
         MTXRotRad(wobbleMtx, 'Z', 0.017453292f * (45.0f * MBEffSRandF()));
@@ -1513,7 +1558,7 @@ static void MB3Ev_YYHou(s32 playerNo) {
     MBModelLayerSet(fireball, 6U);
     MBModelDispSet(fireball, FALSE);
 
-    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0x10], 0x20);
+    MB3W_S16(0x5C) = (s16) MBEffCreate(MB3_ANIM(0x10), 0x20);
     MBEffAttrSet(MB3W_S16(0x5C), 8U);
     MBEffHookSet(MB3W_S16(0x5C), MB3_ImpactEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x5C), 3);
@@ -1558,7 +1603,6 @@ static void MB3Ev_YYHou(s32 playerNo) {
     MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 0.0f, 0x40000001U);
     MBPlayerPosGet(playerNo, &pos);
     MBPlayerWinLoseVoicePlay(playerNo, 1, 0x1F9);
-    scale = 0.0f;
     dir.x = (f32) (sin(3.6651914291880923) * cos(1.0471975511965976));
     dir.y = (f32) sin(1.0471975511965976);
     dir.z = (f32) (cos(3.6651914291880923) * cos(1.0471975511965976));
@@ -1604,7 +1648,7 @@ static void MB3Ev_YYHou(s32 playerNo) {
     }
     WipeColorSet(0, 0, 0);
     WipeCreate(2, 0x81, 1);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     MBEffKill(MB3W_S16(0x5C));
@@ -1614,7 +1658,7 @@ static void MB3Ev_YYHou(s32 playerNo) {
     MBCameraFocusMasuSet(targetMasu);
     MBCameraSkipSet(0);
     WipeCreate(1, 0x81, 0x1E);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
 
@@ -1671,7 +1715,7 @@ static void MB3Ev_YYHou(s32 playerNo) {
     }
     WipeColorSet(0, 0, 0);
     WipeCreate(2, 0x81, 1);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     for (i = 0; i < 4; i++) {
@@ -1682,7 +1726,7 @@ static void MB3Ev_YYHou(s32 playerNo) {
     MBMotionSpeedSet(mainMdl, 0.0f);
     MBMotionTimeSet(mainMdl, 0.0f);
     WipeCreate(1, 0x81, 0x1E);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     MBModelKill(fireball);
@@ -1753,15 +1797,15 @@ static void MB3Ev_RollRock(s32 playerNo) {
     MBMotionTimeSet(rockModel, 0.0f);
     WipeColorSet(0, 0, 0);
     WipeCreate(2, 0x81, 1);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     savedZoom = MBCameraZoomGet();
-    MB3W_S16(0x5C) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xF], 0x20);
+    MB3W_S16(0x5C) = (s16) MBEffCreate(MB3_ANIM(0xF), 0x20);
     MBEffAttrSet(MB3W_S16(0x5C), 8U);
     MBEffHookSet(MB3W_S16(0x5C), MB3_TuruhasiEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x5C), 3);
-    MB3W_S16(0x5E) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0x10], 0x40);
+    MB3W_S16(0x5E) = (s16) MBEffCreate(MB3_ANIM(0x10), 0x40);
     MBEffAttrSet(MB3W_S16(0x5E), 8U);
     MBEffHookSet(MB3W_S16(0x5E), MB3_RollRockEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x5E), 3);
@@ -1773,7 +1817,7 @@ static void MB3Ev_RollRock(s32 playerNo) {
     MBStarDispSetAll(FALSE);
     WipeCreate(1, 0x81, 0x1E);
     MBCameraQuakeSet(0x3C, 50.0f);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         MBCameraPosTargetSetV(&rockPos);
         HuPrcVSleep();
     }
@@ -1856,7 +1900,7 @@ static void MB3Ev_RollRock(s32 playerNo) {
     }
     WipeColorSet(0, 0, 0);
     WipeCreate(2, 0x81, 1);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     MBStarDispSetAll(TRUE);
@@ -1879,7 +1923,7 @@ static void MB3Ev_RollRock(s32 playerNo) {
     }
     MBCameraSkipSet(0);
     WipeCreate(1, 0x81, 0x1E);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     for (i = 0; i < 0x3C; i++) {
@@ -1935,7 +1979,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
 
     WipeColorSet(0, 0, 0);
     WipeCreate(2, 0x81, 1);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     for (i = 0; i < 4; i++) {
@@ -1954,7 +1998,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
         MBCameraZoomSet(2000.0f);
         MBCameraSkipSet(0);
         WipeCreate(1, 0x81, 0x1E);
-        while (!WipeCheckEnd()) {
+        while (WipeCheckEnd()) {
             HuPrcVSleep();
         }
 
@@ -1989,7 +2033,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 MBCoinAddDispExec(playerNo, -5, TRUE);
                 WipeColorSet(0, 0, 0);
                 WipeCreate(2, 0x81, 1);
-                while (!WipeCheckEnd()) {
+                while (WipeCheckEnd()) {
                     HuPrcVSleep();
                 }
                 for (i = 0; i < 4; i++) {
@@ -2017,7 +2061,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 MBModelDispSet((s16) mb3_Work[8], TRUE);
                 charHook = GwPlayer[playerNo].charNo;
                 MBModelHookSet(MBPlayerModelGet(playerNo), CharModelItemHookGet(charHook, 2, 0), (s16) mb3_Work[8]);
-                turu0->turuhasi.effModelId = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[0xF], 0x40);
+                turu0->turuhasi.effModelId = (s16) MBEffCreate(MB3_ANIM(0xF), 0x40);
                 MBEffAttrSet(turu0->turuhasi.effModelId, 8U);
                 MBEffHookSet(turu0->turuhasi.effModelId, MB3_TuruhasiEffHook);
                 Hu3DModelLayerSet(turu0->turuhasi.effModelId, 3);
@@ -2030,7 +2074,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 MBCameraRotSet(camRot.x, -20.0f, camRot.z);
                 MBCameraSkipSet(0);
                 WipeCreate(1, 0x81, 0x1E);
-                while (!WipeCheckEnd()) {
+                while (WipeCheckEnd()) {
                     HuPrcVSleep();
                 }
                 MBMotionSpeedSet(hutaMdl, 1.0f);
@@ -2040,8 +2084,8 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                     MBModelPosSet(hutaMdl, pos.x, pos.y + (100.0f * (1.0f - (t * t))), pos.z);
                     HuPrcVSleep();
                 }
+                MBMotionNoSet(hutaMdl, (s32) MB3W_S16(0x62), 0x40000001U);
                 winCoinId = GameMesCreate(1, 5, -1, -1);
-                MBMotionNoSet(hutaMdl, (s32) turu0->turuhasi.motionB, 0x40000001U);
                 GameMesDispSet(winCoinId, 1, 5);
                 MBWinCreate(2, 0x2F0001U, 0x13);
                 MBTopWinWait();
@@ -2051,7 +2095,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 MBPlayerMotionSpeedSet(playerNo, 0.0f);
 
                 for (i = 0; i < 0x168; i++) {
-                    u16 keys = HuPadBtnDown[(u8) GwPlayer[playerNo].padNo];
+                    u16 keys = HuPadBtnDown[GwPlayer[playerNo].padNo];
                     if (GwPlayer[playerNo].comF && (i & 3) == 0 && MBEffRandF() < 0.6f) {
                         keys |= 0x100;
                     }
@@ -2085,7 +2129,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                         releasing = 1;
                     }
                     if (rhythmDown == 0) {
-                        if (MBPlayerMotionTimeGet(playerNo) == 5.0f) {
+                        if (MBPlayerMotionTimeGet(playerNo) >= 5.0f) {
                             rhythmDown = 1;
                             MBAudFXPlay(0x5E1);
                             MB3_TuruhasiEffCreate(turu0);
@@ -2124,7 +2168,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 }
                 WipeColorSet(0, 0, 0);
                 WipeCreate(2, 0x81, 1);
-                while (!WipeCheckEnd()) {
+                while (WipeCheckEnd()) {
                     HuPrcVSleep();
                 }
                 MBCameraRotSetV(&camRot);
@@ -2146,7 +2190,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
                 }
                 WipeColorSet(0, 0, 0);
                 WipeCreate(2, 0x81, 1);
-                while (!WipeCheckEnd()) {
+                while (WipeCheckEnd()) {
                     HuPrcVSleep();
                 }
             }
@@ -2163,7 +2207,7 @@ static void MB3Ev_Turuhasi(s32 playerNo) {
         MBCameraZoomSet(savedZoom);
         MBCameraSkipSet(0);
         WipeCreate(1, 0x81, 0x1E);
-        while (!WipeCheckEnd()) {
+        while (WipeCheckEnd()) {
             HuPrcVSleep();
         }
     }
@@ -2233,7 +2277,7 @@ static void MB3Ev_Asiba(s32 playerNo) {
     }
     WipeColorSet(0, 0, 0);
     WipeCreate(2, 0x81, 1);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     {
@@ -2258,7 +2302,7 @@ static void MB3Ev_Asiba(s32 playerNo) {
     MBCameraSkipSet(0);
     MBCameraFocusMasuSet(masuId);
     WipeCreate(1, 0x81, 0x1E);
-    while (!WipeCheckEnd()) {
+    while (WipeCheckEnd()) {
         HuPrcVSleep();
     }
     for (i = 0; i < 0x3C; i++) {
