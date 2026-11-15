@@ -1,6 +1,10 @@
 #include "dolphin.h"
 
 static u32 frand_seed;
+#ifdef TARGET_PC
+/* test bench (portmain.cpp): MP5_TEST_SEED fixes the seed, the heartbeat logs it */
+u32 *Mp5Test_FrandSeed(void) { return &frand_seed; }
+#endif
 
 s64 OSGetTime(void);
 

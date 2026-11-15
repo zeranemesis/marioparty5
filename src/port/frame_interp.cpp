@@ -35,6 +35,7 @@ void Hu3DInterpCopyClearSet(void); // hsfman.c
 #include "aurora/lib/window.hpp"
 
 SHARED_SYM BOOL HuInterpDrawF = FALSE;
+extern "C" void Mp5Test_ProfStart(void); // prof_sampler.cpp
 
 namespace {
 
@@ -122,6 +123,8 @@ u32 sStatFrames = 0, sStatTicks = 0, sStatInterp = 0;
 u32 sStatPar = 0; // particles drawn lerped
 double sTLogic = 0, sTDraw = 0, sTPresent = 0, sTWait = 0, sMark = 0;
 double sTPar = 0; // particle lerp + restore (part of draw)
+double sLastFrame = 0.0;
+std::vector<float> sFrameMs; // frame-to-frame times of the stats window
 
 double now_s()
 {
@@ -533,6 +536,16 @@ void wait_until(double t)
     }
 }
 
+// test bench: one frame started at t
+void frame_stat(double t)
+{
+    sStatFrames++;
+    if (sTestFps >= 0 && sLastFrame != 0.0) {
+        sFrameMs.push_back((float)((t - sLastFrame) * 1e3));
+    }
+    sLastFrame = t;
+}
+
 void stats(double t)
 {
     if (sTestFps < 0) {
@@ -545,11 +558,15 @@ void stats(double t)
     const double dt = t - sStatTime;
     if (dt >= 2.0) {
         const double n = std::max<u32>(sStatFrames, 1);
+        std::sort(sFrameMs.begin(), sFrameMs.end());
+        const float p99 = sFrameMs.empty() ? 0.0f : sFrameMs[sFrameMs.size() * 99 / 100];
+        const float worst = sFrameMs.empty() ? 0.0f : sFrameMs.back();
         std::printf("HFR: render %.2f fps, logic %.2f Hz, interpolated %.2f fps, target %d, refresh %.1f, hfr %d"
-                    " | ms/frame logic %.2f draw %.2f present %.2f wait %.2f | particles lerped %.0f/frame in %.3f ms\n",
+                    " | ms/frame logic %.2f draw %.2f present %.2f wait %.2f | frame p99 %.2f max %.2f | particles lerped %.0f/frame in %.3f ms\n",
             sStatFrames / dt, sStatTicks / dt, sStatInterp / dt, target_fps(), sRefresh, (int)sHfr, sTLogic * 1e3 / n,
-            sTDraw * 1e3 / n, sTPresent * 1e3 / n, sTWait * 1e3 / n, sStatPar / (double)std::max<u32>(sStatInterp, 1),
-            sTPar * 1e3 / std::max<u32>(sStatInterp, 1));
+            sTDraw * 1e3 / n, sTPresent * 1e3 / n, sTWait * 1e3 / n, p99, worst,
+            sStatPar / (double)std::max<u32>(sStatInterp, 1), sTPar * 1e3 / std::max<u32>(sStatInterp, 1));
+        sFrameMs.clear();
         sTLogic = sTDraw = sTPresent = sTWait = sTPar = 0;
         sStatPar = 0;
         std::fflush(stdout);
@@ -663,6 +680,7 @@ extern "C" int HuInterpFrameBegin(void)
         sTestFps = env && *env ? std::atoi(env) : -1;
         const char *uncap = std::getenv("MP5_TEST_FPS_UNCAPPED");
         sTestUncapped = uncap && *uncap == '1';
+        Mp5Test_ProfStart();
     }
     const bool hfr = target_fps() > 60;
     const double t = now_s();
@@ -675,7 +693,7 @@ extern "C" int HuInterpFrameBegin(void)
     }
     if (!sHfr) {
         sTicksThisFrame = 1;
-        sStatFrames++;
+        frame_stat(t);
         sMark = t;
         return 1;
     }
@@ -694,7 +712,7 @@ extern "C" int HuInterpFrameBegin(void)
     }
     sTicksThisFrame = ticks;
     sTickNo = 0;
-    sStatFrames++;
+    frame_stat(t);
     sMark = now_s();
     return ticks;
 }

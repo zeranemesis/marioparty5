@@ -735,8 +735,27 @@ extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
     return DLL_instdll;
 }
 
+extern "C" u32* Mp5Test_FrandSeed(void);
+extern "C" {
+#include <game/main.h>
+}
+
 extern "C" void Mp5Test_PadHook(PADStatus* st) {
     tmInit();
+    // MP5_TEST_SEED=<n>: the game's RNG starts from n (else from the clock), so two runs can be compared;
+    // "TESTSEED:" lines every 600 ticks show where it is
+    static int seedState = 0;
+    if (seedState == 0) {
+        const char* seed = getenv("MP5_TEST_SEED");
+        seedState = seed != nullptr && *seed != 0 ? 1 : -1;
+        if (seedState > 0) {
+            *Mp5Test_FrandSeed() = (u32)strtoul(seed, nullptr, 0);
+        }
+    }
+    if (seedState > 0 && GlobalCounter % 600 == 0) {
+        printf("TESTSEED: tick %u seed %08x\n", GlobalCounter, *Mp5Test_FrandSeed());
+        fflush(stdout);
+    }
     if (tmMg < 0) {
         // board test: press START/A on the title until the board starts, then leave the pads to the COM players
         static u32 tbFrame = 0;
