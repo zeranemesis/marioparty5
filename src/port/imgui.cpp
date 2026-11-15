@@ -195,7 +195,9 @@ class Limiter
     {
         const auto sleepTime = duration_t{targetFrameTime} - TimeSince(m_oldTime);
         m_overhead = std::accumulate(m_overheadTimes.begin(), m_overheadTimes.end(), duration_t{}) /
-                     m_overheadTimes.size();
+                     // signed: a duration over a size_t divides as unsigned, and one slightly negative oversleep
+                     // (clock rounding) made the overhead huge, so the limiter stopped sleeping (the game ran unthrottled)
+                     static_cast<long long>(m_overheadTimes.size());
         if (sleepTime > m_overhead)
         {
             return sleepTime - m_overhead;
