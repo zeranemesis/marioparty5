@@ -120,7 +120,6 @@ typedef struct M553StWork_s {
     s32 endFlag;
     u8 pad17C[0x4C];
     M553STFX fx[21];
-    u8 pad7BC[0x44];
 } M553STWORK;
 
 

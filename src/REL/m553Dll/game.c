@@ -531,7 +531,7 @@ s32 fn_1_6964(void)
             ctl->time = 0.0f;
             ctl->attr = 0;
             ctl->attrReset = 0x40000001;
-        } else if (lbl_1_bss_48C[0].active != 0 || lbl_1_bss_48C[1].active != 0) {
+        } else if (lbl_1_bss_48C[0].itemCnt != 0 || lbl_1_bss_48C[1].itemCnt != 0) {
             ctl = &W->motCtl[0];
             ctl->motNo = 4;
             ctl->speed = 1.0f;
@@ -740,7 +740,7 @@ void fn_1_7368(void)
 
 s16 fn_1_80B8(s16 arg0)
 {
-    u16 tbl[2] = { 300, 600 };
+    s16 tbl[2] = { 300, 600 };
     s16 ret = 0;
     s16 i;
     s16 idx;
@@ -1492,9 +1492,9 @@ void fn_1_C650(s16 no)
 {
     f32 spd[4] = { 6.0f, 6.5454545f, 8.0f, 10.285714f };
     f32 rad[4] = { 6.5454545f, 7.2f, 9.0f, 12.0f };
-    u16 wait[4] = { 14, 11, 8, 6 };
-    u16 skill[4] = { 2, 35, 40, 50 };
-    u16 rate[4] = { 1, 5, 10, 100 };
+    s16 wait[4] = { 14, 11, 8, 6 };
+    s16 skill[4] = { 2, 35, 40, 50 };
+    s16 rate[4] = { 1, 5, 10, 100 };
 
     if (W->player[no].dif != 0) {
         lbl_1_bss_48C[no].comOn = 1;

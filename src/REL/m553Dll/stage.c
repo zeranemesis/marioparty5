@@ -617,7 +617,7 @@ void fn_1_F7D8(void)
 void fn_1_10270(void)
 {
     lbl_1_bss_1F00->fx[19].t[0] = -1;
-    Hu3DModelAttrSet(lbl_1_bss_1F00->model[0x7C].id, 1);
+    Hu3DModelAttrSet(lbl_1_bss_1F00->model[0x6F].id, 1);
 }
 
 void fn_1_102BC(void)
@@ -625,31 +625,31 @@ void fn_1_102BC(void)
     s32 unused = 0x6F;
     M553STFX *fx = &lbl_1_bss_1F00->fx[19];
     M553STMODEL *model = lbl_1_bss_1F00->model;
-    M553STMODEL *m = &model[0x7C];
+    M553STMODEL *m = &model[0x6F];
 
     if (fx->t[0] >= -1) {
         if (fx->t[0] == -1) {
-            Hu3DModelAttrSet(model[0x7C].id, 1);
+            Hu3DModelAttrSet(model[0x6F].id, 1);
             fx->t[0]--;
         }
         if (lbl_1_bss_1F00->fx[19].active == 0) {
             if (fx->t[0]++ > 0x320) {
                 lbl_1_bss_1F00->fx[19].active = 1;
                 fx->t[0] = 0;
-                Hu3DModelAttrReset(model[0x7C].id, 1);
-                Hu3DMotionTimeSet(model[0x7C].id, 50.0f);
-                Hu3DMotionSpeedSet(model[0x7C].id, 0.5f);
-                Hu3DModelScaleSet(model[0x7C].id, 2.0f, 2.0f, 2.0f);
+                Hu3DModelAttrReset(model[0x6F].id, 1);
+                Hu3DMotionTimeSet(model[0x6F].id, 50.0f);
+                Hu3DMotionSpeedSet(model[0x6F].id, 0.5f);
+                Hu3DModelScaleSet(model[0x6F].id, 2.0f, 2.0f, 2.0f);
                 m->pos.x = -2000.0f;
                 m->pos.z = 2500.0f;
                 m->pos.y = 300.0f;
-                Hu3DModelPosSetV(model[0x7C].id, &m->pos);
+                Hu3DModelPosSetV(model[0x6F].id, &m->pos);
             }
         }
         if (lbl_1_bss_1F00->fx[19].active == 1) {
             fx->t[0] = fx->t[0] + 1;
             if (fx->t[0] >= 0x63) {
-                Hu3DMotionTimeSet(model[0x7C].id, 51.0f);
+                Hu3DMotionTimeSet(model[0x6F].id, 51.0f);
                 fx->t[0] = 0;
             }
             m->pos.x = m->pos.x + 5.0f;
@@ -670,7 +670,7 @@ void fn_1_102BC(void)
 
 void fn_1_10504(void)
 {
-    Hu3DModelAttrSet(lbl_1_bss_1F00->model[0x7D].id, 1);
+    Hu3DModelAttrSet(lbl_1_bss_1F00->model[0x70].id, 1);
     lbl_1_bss_1F00->fx[20].active = -1;
 }
 

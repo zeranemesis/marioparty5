@@ -330,15 +330,12 @@ void fn_1_47C(s16 no)
 
 void fn_1_94C(s16 no)
 {
-    f32 unused;
-
     lbl_1_bss_14[no].pos.x = lbl_1_bss_14[no].target.x + (lbl_1_bss_14[no].zoom * (cos((3.141592653589793 * lbl_1_bss_14[no].rot.x) / 180.0) * sin((3.141592653589793 * lbl_1_bss_14[no].rot.y) / 180.0)));
     lbl_1_bss_14[no].pos.y = lbl_1_bss_14[no].target.y + (lbl_1_bss_14[no].zoom * -sin((3.141592653589793 * lbl_1_bss_14[no].rot.x) / 180.0));
     lbl_1_bss_14[no].pos.z = lbl_1_bss_14[no].target.z + (lbl_1_bss_14[no].zoom * (cos((3.141592653589793 * lbl_1_bss_14[no].rot.x) / 180.0) * cos((3.141592653589793 * lbl_1_bss_14[no].rot.y) / 180.0)));
     lbl_1_bss_14[no].up.x = sin((3.141592653589793 * lbl_1_bss_14[no].rot.x) / 180.0) * sin((3.141592653589793 * lbl_1_bss_14[no].rot.y) / 180.0);
     lbl_1_bss_14[no].up.y = cos((3.141592653589793 * lbl_1_bss_14[no].rot.x) / 180.0);
     lbl_1_bss_14[no].up.z = sin((3.141592653589793 * lbl_1_bss_14[no].rot.x) / 180.0) * cos((3.141592653589793 * lbl_1_bss_14[no].rot.y) / 180.0);
-    unused = lbl_1_bss_14[no].target.z;
     Hu3DCameraPosSet(lbl_1_data_260[no], lbl_1_bss_14[no].pos.x, lbl_1_bss_14[no].pos.y, lbl_1_bss_14[no].pos.z, lbl_1_bss_14[no].up.x, lbl_1_bss_14[no].up.y, lbl_1_bss_14[no].up.z, lbl_1_bss_14[no].target.x, lbl_1_bss_14[no].target.y, lbl_1_bss_14[no].target.z);
 }
 
