@@ -734,7 +734,7 @@ void MB2_Create(void) {
     MB2W_S32((0x1B) * 4) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCD001D, 0x10000000));
     MB2W_S32((0x1C) * 4) = 0;
     MB2W_S32((0x1D) * 4) = (s32)(uintptr_t)-1U;
-    MB2W_S32((0x25) * 4) = 1.0f;
+    MB2W_F32((0x25) * 4) = 1.0f;
     MB2W_S32((0x26) * 4) = (s32)(uintptr_t)1U;
     MB2W_S32((0x27) * 4) = (s32)(uintptr_t)1U;
     MB2W_S32((0x28) * 4) = (s32)(uintptr_t)1U;
@@ -744,7 +744,7 @@ void MB2_Create(void) {
     MB2W_S32((0x2E) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
     MB2W_S32((0x2F) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
     MB2W_S32((0x30) * 4) = (s32)(uintptr_t) (s32) (360.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-    MB2W_S32((0x2B) * 4) = 0.0f;
+    MB2W_F32((0x2B) * 4) = 0.0f;
     mb2_SaveWorkP = GwSystem.mbSaveWork;
     if (_CheckFlag(0x10001U) == 0) {
         *mb2_SaveWorkP = (frand() & 0x7FFF) % 3;
@@ -857,16 +857,16 @@ loop_5:
         if ((s32) MB2W_S32((0x26) * 4) != 0) {
             if (MB2W_F32((0x25) * 4) < 1.0f) {
                 temp_f1 = MB2W_F32((0x25) * 4) + 0.03f;
-                MB2W_S32((0x25) * 4) = temp_f1;
+                MB2W_F32((0x25) * 4) = temp_f1;
                 if (temp_f1 > 1.0f) {
-                    MB2W_S32((0x25) * 4) = 1.0f;
+                    MB2W_F32((0x25) * 4) = 1.0f;
                 }
             }
         } else if (MB2W_F32((0x25) * 4) > 0.0f) {
             temp_f1_2 = MB2W_F32((0x25) * 4) - 0.03f;
-            MB2W_S32((0x25) * 4) = temp_f1_2;
+            MB2W_F32((0x25) * 4) = temp_f1_2;
             if (temp_f1_2 < 0.0f) {
-                MB2W_S32((0x25) * 4) = 0.0f;
+                MB2W_F32((0x25) * 4) = 0.0f;
             }
         }
         temp_r0 = (s8) (255.0f * MB2W_F32((0x25) * 4));
@@ -922,7 +922,7 @@ loop_31:
         if (MB2W_F32((0x2B) * 4) > 10.0f) {
             MBMotionTimeGet((s16) MB2W_S32((3) * 4));
         }
-        MB2W_S32((0x2B) * 4) = MBMotionTimeGet((s16) MB2W_S32((3) * 4));
+        MB2W_F32((0x2B) * 4) = MBMotionTimeGet((s16) MB2W_S32((3) * 4));
     }
     if ((MBMotionSpeedGet((s16) MB2W_S32((0x11) * 4)) > 0.0f) && (MBMotionEndCheck((s16) MB2W_S32((0x11) * 4)) != 0)) {
         MBMotionSpeedSet((s16) MB2W_S32((0x11) * 4), 0.0f);
