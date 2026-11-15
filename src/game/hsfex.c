@@ -1,4 +1,5 @@
 #include "game/hsfex.h"
+#include "port/widescreen.h"
 #include "game/hu3d.h"
 #include "game/disp.h"
 
@@ -669,8 +670,8 @@ void Hu3D2Dto3D(HuVecF *src, s16 cameraBit, HuVecF *dst)
     cameraP = &Hu3DCamera[i];
     tanFov = HuSin(cameraP->fov/2)/HuCos(cameraP->fov/2);
     height = tanFov * src->z * 2.0f;
-    width = height * HU_DISP_ASPECT;
-    posX = src->x / HU_DISP_WIDTH;
+    width = height * HU_WIDE(HU_DISP_ASPECT);
+    posX = HU_WIDE_PICTURE_X(src->x) / HU_DISP_WIDTH;
     posY = src->y / HU_DISP_HEIGHT;
     dst->x = (posX-0.5)*width;
     dst->y = -(posY-0.5)*height;
@@ -697,9 +698,9 @@ void Hu3D3Dto2D(HuVecF *src, s16 cameraBit, HuVecF *dst)
     cameraP = &Hu3DCamera[i];
     MTXLookAt(lookAt, &cameraP->pos, &cameraP->up, &cameraP->target);
     MTXMultVec(lookAt, src, &pos);
-    width = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z * HU_DISP_ASPECT;
+    width = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z * HU_WIDE(HU_DISP_ASPECT);
     height = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z;
-    dst->x = DISP_HALF_W + pos.x * (DISP_HALF_W / -width);
+    dst->x = HU_WIDE_HUD_X(DISP_HALF_W + pos.x * (DISP_HALF_W / -width));
     dst->y = DISP_HALF_H + pos.y * (DISP_HALF_H / height);
     dst->z = 0.0f;
 }

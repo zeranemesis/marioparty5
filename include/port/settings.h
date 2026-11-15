@@ -56,6 +56,8 @@ struct UserSettings {
         ConfigVar<bool> enableFullscreen;
         ConfigVar<bool> enableVsync;
         ConfigVar<bool> lockAspectRatio;
+        ConfigVar<bool> widescreen;
+        ConfigVar<bool> hudCentered;
         ConfigVar<bool> enableFpsOverlay;
         ConfigVar<int> fpsOverlayCorner;
     } video;

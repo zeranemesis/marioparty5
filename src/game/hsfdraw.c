@@ -1,5 +1,6 @@
 #include "version.h"
 #include "game/hu3d.h"
+#include "port/widescreen.h"
 
 #include "game/hsfload.h"
 #include "game/sprite.h"
@@ -390,7 +391,7 @@ BOOL ObjCullCheck(HSFDATA *hsf, HSFOBJECT *objPtr, Mtx mtx)
         fov = cameraP->fov;
         far = cameraP->far;
         near = cameraP->near;
-        aspect = cameraP->aspect;
+        aspect = HU_WIDE(cameraP->aspect);
     } else {
         fov = Hu3DShadow->fov;
         far = Hu3DShadow->far;

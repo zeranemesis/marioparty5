@@ -2,6 +2,7 @@
 #include "port/endian.h"
 #endif
 #include "game/board/main.h"
+#include "port/widescreen.h"
 #include "game/board/player.h"
 #include "game/board/masu.h"
 #include "game/board/camera.h"
@@ -444,7 +445,7 @@ static void MasuDraw(HU3DMODEL *modelP, Mtx *mtx)
     cameraP = MBCameraGet();
     MBCameraPosGet(&pos);
     MBCameraPosTargetGet(&target);
-    MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
+    MTXPerspective(proj, cameraP->fov, HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
     GXSetProjection(proj, GX_PERSPECTIVE);
     MTXLookAt(lookAt, &pos, &cameraP->up, &target);
     GXSetViewport(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);

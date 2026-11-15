@@ -4,6 +4,7 @@
 #include "port/endian.h"
 #endif
 #include "game/window.h"
+#include "port/widescreen.h"
 #include "game/gamework.h"
 #include "game/process.h"
 #include "game/data.h"
@@ -523,7 +524,7 @@ static void MesDispFunc(HUSPRITE *sprP)
     if(winP->charEntryNum) {
         sprGrpP = &HuSprGrpData[winP->grpId];
         GXInvalidateTexAll();
-        C_MTXOrtho(proj, 0.0f, HU_DISP_HEIGHT, 0.0f, HU_DISP_WIDTH, 0.0f, 10.0f);
+        C_MTXOrtho(proj, 0.0f, HU_DISP_HEIGHT, HU_WIDE_L(HU_DISP_WIDTH), HU_WIDE_R(HU_DISP_WIDTH), 0.0f, 10.0f);
         GXSetProjection(proj, GX_ORTHOGRAPHIC);
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
@@ -550,6 +551,12 @@ static void MesDispFunc(HUSPRITE *sprP)
         MTXConcat(modelview, scale, modelview);
         mtxTransCat(modelview, sprP->pos.x, sprP->pos.y, 0.0f);
         MTXConcat(*sprP->groupMtx, modelview, modelview);
+#ifdef TARGET_PC
+        {
+            extern float HuSprDispWideShift;
+            modelview[0][3] += HuSprDispWideShift;
+        }
+#endif
         GXLoadPosMtxImm(modelview, 0);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
         HuSprTexLoad(fontAnim, 0, 0, GX_CLAMP, GX_CLAMP, GX_LINEAR);

@@ -2,6 +2,7 @@
 #include "game/init.h"
 #include "game/hu3d.h"
 #include "game/disp.h"
+#include "port/widescreen.h"
 #include "dolphin/mtx.h"
 #include "dolphin/gx.h"
 #include "dolphin/vi.h"
@@ -23,6 +24,60 @@ void mtxTransCat(Mtx matrix, float x, float y, float z);
 
 static void HuSprLayerHook(s16 layer);
 
+#ifdef TARGET_PC
+#include <math.h>
+
+extern float HuSprWideShift[HUSPR_MAX];
+extern float HuSprWideStretch[HUSPR_MAX][3];
+extern float HuSprDispWideShift;
+
+/* After the Mario Party 4 port "Party Board" (github.com/zeranemesis/Marioparty4,
+ * src/game/sprput.c): whether a sprite covers the original picture (what its layers
+ * draw, not the pattern, which can hold a smaller panel). Three quarters of the
+ * height: some backdrops leave room for borders. */
+BOOL HuSprWidescreenBackdrop(ANIMPAT *pat, float scaleX, float scaleY)
+{
+    s16 lo[2] = {0x7FFF, 0x7FFF}, hi[2] = {-0x7FFF, -0x7FFF};
+    s16 i, j;
+    for(i=0; i<pat->layerNum; i++) {
+        for(j=0; j<8; j++) {
+            if(pat->layer[i].vtx[j] < lo[j & 1]) {
+                lo[j & 1] = pat->layer[i].vtx[j];
+            }
+            if(pat->layer[i].vtx[j] > hi[j & 1]) {
+                hi[j & 1] = pat->layer[i].vtx[j];
+            }
+        }
+    }
+    return pat->layerNum > 0 && HuWideFactor() != 1.0f
+        && (hi[0]-lo[0])*fabsf(scaleX) >= HU_DISP_WIDTH && (hi[1]-lo[1])*fabsf(scaleY) >= HU_DISP_HEIGHT*0.75f;
+}
+
+/* A scissor set in 640-wide framebuffer pixels for the 4:3 layout, moved to where
+ * the widened ortho and the sprite's HUD shift put it */
+static void HuSprWideScissor(HUSPRITE *sp, float shift)
+{
+    float f = HuWideFactor();
+    float x0, x1;
+    if(f == 1.0f || (sp->scissorX == 0 && sp->scissorW >= HU_FB_WIDTH)) {
+        GXSetScissor(sp->scissorX, sp->scissorY, sp->scissorW, sp->scissorH);
+        return;
+    }
+    x0 = (HU_FB_WIDTH/2)+((sp->scissorX+(shift*(HU_FB_WIDTH/HU_DISP_WIDTH))-(HU_FB_WIDTH/2))/f);
+    x1 = x0+(sp->scissorW/f);
+    if(x0 < 0.0f) {
+        x0 = 0.0f;
+    }
+    if(x1 > HU_FB_WIDTH) {
+        x1 = HU_FB_WIDTH;
+    }
+    if(x1 <= x0) {
+        x1 = x0+1.0f;
+    }
+    GXSetScissor((u32)x0, sp->scissorY, (u32)(x1-x0+0.5f), sp->scissorH);
+}
+#endif
+
 void HuSprDispInit(void)
 {
     Mtx44 proj;
@@ -32,7 +87,7 @@ void HuSprDispInit(void)
     }
     bmpCCIdx = 0;
     GXInvalidateTexAll();
-    MTXOrtho(proj, 0, HU_DISP_HEIGHT, 0, HU_DISP_WIDTH, 0, 10);
+    MTXOrtho(proj, 0, HU_DISP_HEIGHT, HU_WIDE_L(HU_DISP_WIDTH), HU_WIDE_R(HU_DISP_WIDTH), 0, 10);
     GXSetProjection(proj, GX_ORTHOGRAPHIC);
     if(RenderMode->field_rendering) {
         GXSetViewportJitter(0, 0, HU_FB_WIDTH, HU_FB_HEIGHT, 0, 1, VIGetNextField());
@@ -59,10 +114,18 @@ void HuSprDisp(HUSPRITE *sp)
     Mtx modelview, rot;
     s16 chanSum;
     
+#ifdef TARGET_PC
+    s16 sprId = (s16)(sp - HuSprData);
+    HuSprWideScissor(sp, HuSprWideShift[sprId]);
+#else
     GXSetScissor(sp->scissorX, sp->scissorY, sp->scissorW, sp->scissorH);
+#endif
     if(sp->attr & HUSPR_ATTR_FUNC) {
         if(sp->func) {
             HUSPRFUNC func = sp->func;
+#ifdef TARGET_PC
+            HuSprDispWideShift = HuSprWideShift[sprId];
+#endif
             func(sp);
             HuSprDispInit();
         }
@@ -121,6 +184,23 @@ void HuSprDisp(HUSPRITE *sp)
         }
         mtxTransCat(modelview, sp->pos.x, sp->pos.y, 0);
         MTXConcat(*sp->groupMtx, modelview, modelview);
+#ifdef TARGET_PC
+        /* a backdrop as big as the original picture fills the widened one */
+        if(HuSprWidescreenBackdrop(pat, modelview[0][0], modelview[1][1])) {
+            for(i=0; i<3; i++) {
+                modelview[0][i] *= HuWideFactor();
+            }
+            modelview[0][3] = HU_DISP_CENTERX+((modelview[0][3]-HU_DISP_CENTERX)*HuWideFactor());
+        }
+        if(HuSprWideStretch[sprId][0] != 1.0f) {
+            for(i=0; i<3; i++) {
+                modelview[0][i] *= HuSprWideStretch[sprId][0];
+            }
+            modelview[0][3] = HuSprWideStretch[sprId][2]
+                + (modelview[0][3] - HuSprWideStretch[sprId][1]) * HuSprWideStretch[sprId][0];
+        }
+        modelview[0][3] += HuSprWideShift[sprId];
+#endif
         GXLoadPosMtxImm(modelview, GX_PNMTX0);
         for(i=pat->layerNum-1; i>=0; i--) {
             float pos[4][2];

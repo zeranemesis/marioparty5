@@ -390,6 +390,13 @@ extern "C" int port_main(int argc, char* argv[]) {
     Mp5Native_ConfigPath = calculate_config_path();
 
     mp5native::config::LoadFromUserPreferences();
+    // test bench: MP5_TEST_ASPECT=lock|stretch|wide overrides the aspect settings for this run, unsaved
+    if (const char* aspect = getenv("MP5_TEST_ASPECT")) {
+        auto& video = mp5native::getSettings().video;
+        video.lockAspectRatio.setOverrideValue(strcmp(aspect, "lock") == 0);
+        video.widescreen.setOverrideValue(strcmp(aspect, "wide") == 0);
+        video.hudCentered.setOverrideValue(getenv("MP5_TEST_HUD_CENTERED") != nullptr);
+    }
     EnsureInitialPipelineCache(Mp5Native_ConfigPath);
     // TODO: How to handle this?
     //PADSetDefaultMapping(&defaultPadMapping, PAD_TYPE_STANDARD);

@@ -1,5 +1,6 @@
 #include "version.h"
 #include "game/board/main.h"
+#include "port/widescreen.h"
 #include "game/board/capsule.h"
 #include "game/board/status.h"
 #include "game/board/camera.h"
@@ -725,9 +726,9 @@ void MB3Dto2D(HuVecF *src, HuVecF *dst)
     MTXLookAt(lookAt, &cameraP->pos, &cameraP->up, &cameraP->target);
     MTXMultVec(lookAt, src, &pos);
     tanFov = HuSin(cameraP->fov*0.5f)/HuCos(cameraP->fov*0.5f);
-    width = HU_DISP_ASPECT*(tanFov*pos.z);
+    width = HU_WIDE(HU_DISP_ASPECT)*(tanFov*pos.z);
     height = tanFov*pos.z;
-    dst->x = HU_DISP_CENTERX+(pos.x*(HU_DISP_CENTERX/(-width)));
+    dst->x = HU_WIDE_HUD_X(HU_DISP_CENTERX+(pos.x*(HU_DISP_CENTERX/(-width))));
     dst->y = HU_DISP_CENTERY+(pos.y*(HU_DISP_CENTERY/height));
     dst->z = -pos.z;
 }
@@ -737,8 +738,8 @@ void MB2Dto3D(HuVecF *src, HuVecF *dst)
     MBCAMERA *cameraP = MBCameraGet();
     float tanFov = HuSin(cameraP->fov*0.5f)/HuCos(cameraP->fov*0.5f);
     float height = 2.0f*(tanFov*src->z);
-    float width = HU_DISP_ASPECT*height;
-    float normX = src->x/HU_DISP_WIDTH;
+    float width = HU_WIDE(HU_DISP_ASPECT)*height;
+    float normX = HU_WIDE_PICTURE_X(src->x)/HU_DISP_WIDTH;
     float normY = src->y/HU_DISP_HEIGHT;
     Mtx lookAt;
     

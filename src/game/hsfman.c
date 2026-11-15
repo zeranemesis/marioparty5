@@ -1,6 +1,7 @@
 #include "version.h"
 #include "string.h"
 #include "game/init.h"
+#include "port/widescreen.h"
 #include "game/disp.h"
 
 #include "game/hu3d.h"
@@ -1315,7 +1316,7 @@ void Hu3DCameraSet(s32 cameraNo, Mtx modelView)
 {
     Mtx44 proj;
     HU3DCAMERA *cameraP = &Hu3DCamera[cameraNo];
-    MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
+    MTXPerspective(proj, cameraP->fov, HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
     GXSetProjection(proj, GX_PERSPECTIVE);
     if(RenderMode->field_rendering) {
         GXSetViewportJitter(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar, VIGetNextField());
@@ -2421,7 +2422,7 @@ void Hu3DZClear(void)
     Vec up;
     float z;
     
-    MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
+    MTXPerspective(proj, cameraP->fov, HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
     GXSetProjection(proj, GX_PERSPECTIVE);
     GXSetViewport(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);
     GXSetScissor(cameraP->scissorX, cameraP->scissorY, cameraP->scissorW, cameraP->scissorH);
@@ -2448,7 +2449,7 @@ void Hu3DZClear(void)
     GXLoadPosMtxImm(modelview, GX_PNMTX0);
     z = cameraP->far-1;
     pos.x = pos.y = z*HuTan(cameraP->fov/2);
-    pos.x *= HU_DISP_ASPECT;
+    pos.x *= HU_WIDE(HU_DISP_ASPECT);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-pos.x, -pos.y, -z);
     GXPosition3f32(pos.x, -pos.y, -z);

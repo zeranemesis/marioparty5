@@ -427,6 +427,36 @@ SettingsWindow::SettingsWindow(bool prelaunch)
                 .helpText = "Lock the game's aspect ratio to the original.",
                 .onChange = [](bool value) { AuroraSetViewportPolicy(value ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH); },
             });
+        config_bool_select(leftPane, rightPane, getSettings().video.widescreen,
+            {
+                .key = "Widescreen",
+                .helpText = "Widen the 3D view to the window's aspect ratio and keep the HUD unstretched. Ignored while the 4:3 lock is on.",
+            });
+        leftPane.register_control(leftPane.add_select_button({
+                                      .key = "HUD Layout",
+                                      .getValue =
+                                          [] {
+                                              return Rml::String { getSettings().video.hudCentered.getValue() ? "Centered" : "Adaptive" };
+                                          },
+                                      .isModified =
+                                          [] {
+                                              const auto &v = getSettings().video.hudCentered;
+                                              return v.getValue() != v.getDefaultValue();
+                                          },
+                                  }),
+            rightPane, [](Pane &pane) {
+                for (bool centered : { false, true }) {
+                    pane.add_button({
+                                        .text = centered ? "Centered" : "Adaptive",
+                                        .isSelected = [centered] { return getSettings().video.hudCentered.getValue() == centered; },
+                                    })
+                        .on_pressed([centered] {
+                            getSettings().video.hudCentered.setValue(centered);
+                            config::Save();
+                        });
+                }
+                pane.add_rml("<br/>Widescreen only. Adaptive moves HUD elements near the sides of the 4:3 image to the window edges; Centered keeps the whole HUD in the middle 4:3 area.");
+            });
         config_bool_select(leftPane, rightPane, getSettings().game.pauseOnFocusLost,
             {
                 .key = "Pause on Focus Lost",
