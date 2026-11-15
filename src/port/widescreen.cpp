@@ -11,6 +11,7 @@
 #include <cmath>
 
 #include <dolphin/gx/GXAurora.h>
+#include "aurora/lib/window.hpp"
 
 namespace {
 
@@ -69,14 +70,16 @@ extern "C" float HuWideFactor(void)
 {
     const auto &video = mp5native::getSettings().video;
     if (video.lockAspectRatio.getValue()) {
+        AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
         return 1.0f;
     }
-    u32 w = 0, h = 0;
-    AuroraGetRenderSize(&w, &h); // the window's aspect under both FIT and STRETCH
     if (!video.widescreen.getValue()) {
         AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
         return 1.0f;
     }
+    // the window itself: FIT makes the content framebuffer 4:3
+    const AuroraWindowSize size = aurora::window::get_window_size();
+    const u32 w = size.native_fb_width, h = size.native_fb_height;
     // narrower than 4:3 is letterboxed rather than cut off
     AuroraSetViewportPolicy((u64)w * 3 < (u64)h * 4 ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH);
     return aspect_scale((float)w, (float)h);

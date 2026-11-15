@@ -14,6 +14,7 @@
 #include "game/thpmain.h"
 
 #include "datanum/title.h"
+#include "port/widescreen.h"
 
 /* Hu3DMotionMaxTimeGet is not declared in game/hu3d.h (the original m518.c saw
  * an implicit int return); this unit uses the float return, so declare it here. */
@@ -471,6 +472,10 @@ void BootTitleCreate(void)
     Hu3DModelLayerSet(mdlId, 1);
     titleMdlId[2] = mdlId = Hu3DModelCreateData(TITLE_HSF_back);
     Hu3DModelDispOff(mdlId);
+#ifdef TARGET_PC
+    /* widescreen: the backdrop is a plane sized for 4:3, widen it to the window */
+    Hu3DModelScaleSet(mdlId, HU_WIDE(1.0f), 1.0f, 1.0f);
+#endif
     Hu3DModelAttrSet(mdlId, HU3D_MOTATTR_LOOP);
     titleMdlId[3] = mdlId = Hu3DModelCreateData(TITLE_HSF_movie);
     Hu3DModelDispOff(mdlId);
