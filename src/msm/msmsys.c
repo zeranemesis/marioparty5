@@ -21,8 +21,23 @@ static void msmSysServer(void)
             msmStreamPeriodicProc();
         }
     }
+#ifndef TARGET_PC
     sys.oldAIDCallback();
+#endif
 }
+
+#ifdef TARGET_PC
+#include "musyx/pc.h"
+
+// The AI DMA interrupt does not exist on PC: MusyX's audio thread renders 5 ms cycles, so run the
+// server once per cycle (it chained in front of MusyX's own AI callback on GC, same cadence).
+// shortcut: msm game-thread calls are not locked against this thread (GC relied on the IRQ being atomic), add a lock if races show up
+static void msmSysPCCycle(s16 *output, size_t frames, u32 rate, u32 channels)
+{
+    (void)output; (void)frames; (void)rate; (void)channels;
+    msmSysServer();
+}
+#endif
 
 static s32 msmSysSetAuxParam(s32 auxA, s32 auxB)
 {
@@ -917,7 +932,11 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
     if (sndInit(sys.info->voices, sys.info->music, sys.info->sfx, 1, result, sys.info->aramSize) != 0) {
         return MSM_ERR_INITFAIL;
     }
+#ifdef TARGET_PC
+    sndPCSetOutputCallback(msmSysPCCycle);
+#else
     sys.oldAIDCallback = AIRegisterDMACallback(msmSysServer);
+#endif
     sys.timer = 1;
     result = msmStreamAmemAlloc();
     if (result < 0) {
@@ -941,5 +960,11 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
     }
     msmSysSetOutputMode((OSGetSoundMode() == OS_SOUND_MODE_MONO) ? SND_OUTPUTMODE_MONO : SND_OUTPUTMODE_STEREO);
     sndVolume(127, 0, 255);
+#ifdef TARGET_PC
+    // sndInit never opens a device on PC; without this thread the synth never ticks (voices pile up, SE -33)
+    if (!sndPCStartAudio()) {
+        OSReport("msmSysInit: no audio device, running silent\n");
+    }
+#endif
     return 0;
 }
