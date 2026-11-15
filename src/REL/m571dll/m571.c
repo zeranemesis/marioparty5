@@ -822,11 +822,11 @@ void fn_1_1898(OMOBJ *obj)
 // NONMATCHING: wipe/reset sequence ordering is a draft reconstruction
 void fn_1_18B8(void)
 {
-    M571Player *p;
-    M571Player *q;
+    M571Hook *p;
+    M571Hook *q;
     s32 i;
 
-    p = (M571Player *)lbl_1_bss_478[0]->data;
+    p = (M571Hook *)lbl_1_bss_478[0]->data;
 
     if (MgSeqFrameNoGet() == 30) {
         WipeCreate(2, 6, 30);
@@ -858,23 +858,23 @@ void fn_1_18B8(void)
 
         fn_1_3520();
 
-        p->unk30 = 0;
+        p->state = 0;
 
-        q = (M571Player *)lbl_1_bss_478[0]->data;
+        q = (M571Hook *)lbl_1_bss_478[0]->data;
 
-        Hu3DMotionSpeedSet(q->unk0.modelId, 1.0f);
+        Hu3DMotionSpeedSet(q->modelId, 1.0f);
 
-        if (q->unk2C != 0) {
-            q->unk2C = 0;
-            Hu3DMotionShiftSet(q->unk0.modelId, lbl_1_bss_44C[0], 0.0f, 0.0f, 0x40000001);
+        if (q->motionNo != 0) {
+            q->motionNo = 0;
+            Hu3DMotionShiftSet(q->modelId, lbl_1_bss_44C[0], 0.0f, 0.0f, 0x40000001);
         }
 
-        Hu3DModelAttrReset(p->unk0.modelId, 1);
+        Hu3DModelAttrReset(p->modelId, 1);
 
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_11A);
         Hu3DModelHookObjReset(p->hookL, lbl_1_data_124);
-        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_100);
-        Hu3DModelHookObjReset(p->unk0.modelId, lbl_1_data_10D);
+        Hu3DModelHookObjReset(p->modelId, lbl_1_data_100);
+        Hu3DModelHookObjReset(p->modelId, lbl_1_data_10D);
 
         Hu3DModelAttrSet(p->hookL, 1);
         Hu3DModelAttrSet(p->hookSwap, 1);
@@ -882,12 +882,12 @@ void fn_1_18B8(void)
 
         HuPrcVSleep();
 
-        p->unk4 = lbl_1_data_70.x;
-        p->unk8 = lbl_1_data_70.y;
-        p->unkC = lbl_1_data_70.z;
-        p->unk24 = 0.0f;
-        p->unk18.z = 0.0f;
-        p->unk18.y = 0.0f;
+        p->posX = lbl_1_data_70.x;
+        p->posY = lbl_1_data_70.y;
+        p->posZ = lbl_1_data_70.z;
+        p->rotZ = 0.0f;
+        p->rotY = 0.0f;
+        p->rotX = 0.0f;
 
         WipeCreate(1, 5, 30);
 
@@ -926,10 +926,10 @@ void fn_1_1BA0(void)
                 }
             }
 
-            score = (s16)(q->unk30 + (s16)GwPlayer[q->unk24].mgScore);
+            score = (s16)(q->unk30 + (s16)GwPlayer[q->unk24].mgCoinBonus);
 
             if (!_CheckFlag(0x1000F)) {
-                GwPlayer[q->unk24].mgScore = score;
+                GwPlayer[q->unk24].mgCoinBonus = score;
             }
         }
     }
