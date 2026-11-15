@@ -1130,7 +1130,7 @@ void fn_1_31A8(void)
                         }
                         mgPauseExitF = FALSE;
                         sys->ovlCallMode = MD_OVLCALL_RETURN;
-                        sys->nextDll = (OMOVL)0x5E;
+                        sys->nextDll = DLL_mdomakedll;
                         sys->skipWipeF = TRUE;
                         sys->exitF = TRUE;
                         break;
@@ -1152,7 +1152,7 @@ void fn_1_31A8(void)
                 MdProcWait(MDBEACH_PROC_GAME_INIT, 1);
                 MdProcCall(MDBEACH_PROC_RESET, 0);
                 sys->subMode = 0;
-                sys->flowMode = MDBEACH_FLOW_ORDER_SEL;
+                sys->flowMode = MDBEACH_FLOW_GAME_SEL;
             }
             break;
     }
@@ -1382,7 +1382,7 @@ void fn_1_4138(void)
             MdProcWait(MDBEACH_PROC_ORDER_SEL, 0);
             MdProcCall(MDBEACH_PROC_RESET, 0);
             sys->subMode = 0;
-            sys->flowMode = MDBEACH_FLOW_VS_GAME;
+            sys->flowMode = MDBEACH_FLOW_ORDER_SEL;
             break;
     }
 }
@@ -1401,7 +1401,7 @@ void fn_1_4138(void)
 #define MD_PAD_B 0x200
 
 #define MD_WIN_OPEN_MAIN(mess) do { \
-    MdMessWinOpen(mess, 0, 0, 1, 0, 0, 0x1D0, 0x40, 56.0f, 376.0f, 1.0f); \
+    MdMessWinOpen(mess, 0, 0, 1, 0, 0, 56.0f, 376.0f, 0x1D0, 0x40, 1.0f); \
     MdMessWinPad1Set(mess, 0); \
     while(!MdMessWinCheck(mess, 0)) { \
         HuPrcVSleep(); \
@@ -2079,7 +2079,7 @@ void fn_1_79EC(void)
                         HuPrcVSleep();
                     }
                     omOvlHisChg(0, sys->ovlHis->ovl, sys->selMode + 2, sys->ovlHis->stat);
-                    sys->ovlCallMode = MD_OVLCALL_GOTO;
+                    sys->ovlCallMode = MD_OVLCALL_CALL;
                     sys->nextDll = MdBeachNextDll[sys->selMode];
                     sys->skipWipeF = TRUE;
                     sys->exitF = TRUE;
@@ -2247,7 +2247,7 @@ BOOL fn_1_9D58(int param)
 {
     MDSPRITE_WORK *sprite = sys->sprite;
     MDCAMERA_WORK *camera = sys->camera;
-    HUSPRGRPID grpId = sprite->grpId[MDSPR_GRP_CURSOR_LR];
+    HUSPRGRPID grpId = sprite->grpId[MDSPR_GRP_CURSOR_UDLR];
     float scaleInit;
     HuVec2f *posP, *scaleP;
     HuVecF pos3D, pos2D;
@@ -3476,7 +3476,7 @@ BOOL fn_1_EC34(int param)
                 switch (anim->mode) {
                     case 0:
                         if (--anim->timer < 0) {
-                            Hu3DMotionShiftSet(model->mdlId[mdl], model->motId[sys->chrNo[i] * 3 + 5], 0.0f, 2.0f, 0);
+                            Hu3DMotionShiftSet(model->mdlId[mdl], model->motId[sys->chrNo[i] * 3 + 5], 0.0f, 4.0f, 0);
                             anim->mode++;
                         }
                         break;
