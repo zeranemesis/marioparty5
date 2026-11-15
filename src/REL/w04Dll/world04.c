@@ -188,6 +188,16 @@ typedef struct MB4CoinEffMgr_s {
     u8 pad26[0x16];       /* 0x26 */
     MB4PARTICLE *particles; /* 0x3C */
 } MB4COINEFFMGR;
+#ifdef TARGET_PC
+/* hookData is really an MBEFFECT (pointer-bearing: its data array sits at 0x40 on x64, not 0x3C) */
+#define MB4EFF_PARTS(m) ((MB4PARTICLE *) ((MBEFFECT *) (m))->data)
+#define MB4EFF_NUM(m) (((MBEFFECT *) (m))->num)
+#define MB4_COINEFFDATA_SIZE sizeof(MB4COINEFFDATA)
+#else
+#define MB4EFF_PARTS(m) ((m)->particles)
+#define MB4EFF_NUM(m) ((m)->count)
+#define MB4_COINEFFDATA_SIZE 0xC
+#endif
 
 /* mb4_CoinEffObj->data (0xC bytes). */
 typedef struct MB4CoinEffObjData_s {
@@ -218,7 +228,7 @@ typedef struct MB4SakanaSpecies_s {
 typedef struct MB4SakanaFish_s {
     s32 modelId;      /* 0x00 */
     s32 particleIdx;  /* 0x04 */
-    f32 rand1;        /* 0x08 */
+    s32 frameCnt;     /* 0x08, starts at frand(), +1 per frame (gates the per-4/2-frame work) */
     s32 bobAngle;     /* 0x0C, degrees; read back via an explicit int-to-
                        * float conversion in MB4_SakanaDraw's body-bob step */
     s32 unk10;        /* 0x10 */
@@ -1184,10 +1194,10 @@ void MB4_BubbleEffInit(void) {
     Hu3DModelLayerSet(*obj->mdlId, 3);
     hdr = &Hu3DData[*obj->mdlId];
     mgr = (MB4COINEFFMGR *) hdr->hookData;
-    p = mgr->particles;
+    p = MB4EFF_PARTS(mgr);
     mgr->blendMode = 1;
     i = 0;
-    while (i < mgr->count) {
+    while (i < MB4EFF_NUM(mgr)) {
         p->timer = 0.0f;
         i++;
         p++;
@@ -1202,7 +1212,7 @@ void MB4_BubbleEffUpdate(OMOBJ *obj) {
 
     hdr = &Hu3DData[*obj->mdlId];
     mgr = (MB4COINEFFMGR *) hdr->hookData;
-    p = mgr->particles;
+    p = MB4EFF_PARTS(mgr);
 
     if (MBKillCheck() || mb4_BubbleEffObj == NULL) {
         MBEffKill(*obj->mdlId);
@@ -1213,7 +1223,7 @@ void MB4_BubbleEffUpdate(OMOBJ *obj) {
         return;
     }
 i = 0;
-    for (; i < mgr->count; i++, p++) {
+    for (; i < MB4EFF_NUM(mgr); i++, p++) {
         if (p->timer > 0.0f) {
             p->active++;
             if (p->active > 0x168) {
@@ -1245,7 +1255,7 @@ s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale, f32 unused
     }
     base = &Hu3DData[*mb4_BubbleEffObj->mdlId];
     mgr = (MB4COINEFFMGR *) base->hookData;
-    p = mgr->particles;
+    p = MB4EFF_PARTS(mgr);
     i = 0;
     for (;;) {
         if (p->timer <= 0.0f) {
@@ -1253,11 +1263,11 @@ s32 MB4_BubbleEffCreate(Point3d *pos, s32 lifeFrames, f32 speedScale, f32 unused
         }
         i++;
         p++;
-        if (i >= mgr->count) {
+        if (i >= MB4EFF_NUM(mgr)) {
             break;
         }
     }
-    if (i >= mgr->count) {
+    if (i >= MB4EFF_NUM(mgr)) {
         return -1;
     }
     if (speedScale <= 0.0f) {
@@ -1443,7 +1453,7 @@ void MB4_CoinUpdate(OMOBJ *obj) {
             coinP->posY = diff.y;
             coinP->posZ = diff.z;
             coinP->rotY += 10.0f;
-            if (t == 1.0f) {
+            if (t >= 1.0f) {
                 coinP->phase += 1;
                 coinP->flightTimer = 0;
             }
@@ -1628,13 +1638,13 @@ s32 MB4_CoinEffCreate(Point3d *pos, Point3d *vel, f32 timer, f32 sizeParam, f32 
     obj = mb4_CoinEffObj;
     ed = (MB4COINEFFDATA *) obj->data;
     mgr = (MB4COINEFFMGR *) Hu3DData[ed->hu3dModelIdx].hookData;
-    p = mgr->particles;
-    for (i = 0; i < mgr->count; i++, p++) {
+    p = MB4EFF_PARTS(mgr);
+    for (i = 0; i < MB4EFF_NUM(mgr); i++, p++) {
         if (!(p->timer > 0.0f)) {
             break;
         }
     }
-    if (i >= mgr->count) {
+    if (i >= MB4EFF_NUM(mgr)) {
         return -1;
     }
 
@@ -1671,8 +1681,8 @@ void MB4_CoinEffInit(void) {
     ANIMDATA *anim;
 
     obj = mb4_CoinEffObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB4_CoinEffUpdate);
-    ed = (MB4COINEFFDATA *) (obj->data = HuMemDirectMallocNum(HEAP_HEAP, 0xC, 0x10000000U));
-    memset(ed, 0, 0xCU);
+    ed = (MB4COINEFFDATA *) (obj->data = HuMemDirectMallocNum(HEAP_HEAP, MB4_COINEFFDATA_SIZE, 0x10000000U));
+    memset(ed, 0, MB4_COINEFFDATA_SIZE);
     anim = HuSprAnimRead(HuDataReadNum(0xB0042, 0x10000000));
     ed->anim = anim;
     ed->hu3dModelIdx = MBEffCreate(anim, 0x100);
@@ -1711,9 +1721,9 @@ void MB4_CoinEffUpdate(OMOBJ *obj) {
     Hu3DModelAttrReset((s16) ed->hu3dModelIdx, 1U);
     base = &Hu3DData[ed->hu3dModelIdx];
     mgr = (MB4COINEFFMGR *) base->hookData;
-    p = mgr->particles;
+    p = MB4EFF_PARTS(mgr);
     i = 0;
-    for (; i < mgr->count; i++, p++) {
+    for (; i < MB4EFF_NUM(mgr); i++, p++) {
         if (!(p->timer > 0.0f)) {
             continue;
         }
@@ -1737,36 +1747,33 @@ void MB4_CoinEffUpdate(OMOBJ *obj) {
  * Hu3DData[id]+0x120 holds a pointer to the per-part array (stride 0x5C,
  * 92 bytes) written by MB4_SakanaInit - not yet named as a struct since
  * that function (2988 bytes) hasn't been decompiled yet. */
+
+#ifdef TARGET_PC
+#define MB4_SAKANA_PART(partIdx) ((u8 *) ((MBEFFECT *) Hu3DData[MB4W_S32(0x7F74)].hookData)->data + ((partIdx) * 0x5C))
+#else
+#define MB4_SAKANA_PART(partIdx) (*(u8 **) (*(u8 **) ((u8 *) &Hu3DData[MB4W_S32(0x7F74)] + 0x120) + 0x3c) + ((partIdx) * 0x5C))
+#endif
+
 static u8 *MB4_SakanaPartBase(s32 partIdx) {
-    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
-    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
-    return *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
+    return MB4_SAKANA_PART(partIdx);
 }
 
 /* NONMATCHING: register allocation for the part-base pointer differs
  * across all three of these (~40-70% match). */
 void MB4_SakanaLenSet(s32 partIdx, f32 lenRatio) {
-    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
-    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
-    u8 *part = *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
+    u8 *part = MB4_SAKANA_PART(partIdx);
     *(f32 *) (part + 0x2C) = lenRatio * 100.0f;
 }
 
 void MB4_SakanaOffsetSet(s32 partIdx, f32 offX, f32 offY, f32 offZ) {
-    u8 *part;
-    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
-    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
-    part = *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
+    u8 *part = MB4_SAKANA_PART(partIdx);
     *(f32 *) (part + 0x30) = offX;
     *(f32 *) (part + 0x34) = offY - 90.0f;
     *(f32 *) (part + 0x38) = offZ;
 }
 
 void MB4_SakanaPosSet(s32 partIdx, f32 x, f32 y, f32 z) {
-    u8 *part;
-    u8 *mdlBase = (u8 *) &Hu3DData[MB4W_S32(0x7F74)];
-    u8 *arrayBase = *(u8 **) (mdlBase + 0x120);
-    part = *(u8 **) (arrayBase + 0x3c) + (partIdx * 0x5C);
+    u8 *part = MB4_SAKANA_PART(partIdx);
     *(f32 *) (part + 0x3C) = x;
     *(f32 *) (part + 0x40) = y;
     *(f32 *) (part + 0x44) = z;
@@ -1820,15 +1827,15 @@ s32 MB4_SakanaCreate(s16 type) {
         return -1;
     }
     mgr = (MB4COINEFFMGR *) Hu3DData[MB4W_S32(0x7F74)].hookData;
-    p = mgr->particles;
-    for (i = 0; i < mgr->count; i++) {
+    p = MB4EFF_PARTS(mgr);
+    for (i = 0; i < MB4EFF_NUM(mgr); i++) {
         if ((p->sakanaFlags >> 7) & 1) {
             p++;
             continue;
         }
         break;
     }
-    if (i >= mgr->count) {
+    if (i >= MB4EFF_NUM(mgr)) {
         return -1;
     }
     p->sakanaFlags |= 0x80;
@@ -1865,8 +1872,8 @@ void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3) {
     MB4W_S32(0x7F74) = MBEffCreate(HuSprAnimRead(HuDataReadNum(0xD10035, 0x10000000)), 0x80);
     Hu3DModelLayerSet((s16) MB4W_S32(0x7F74), 1);
     mgr = (MB4COINEFFMGR *) Hu3DData[MB4W_S32(0x7F74)].hookData;
-    p = mgr->particles;
-    for (i = 0; i < mgr->count; i++) {
+    p = MB4EFF_PARTS(mgr);
+    for (i = 0; i < MB4EFF_NUM(mgr); i++) {
         p->sakanaFlags &= ~0x80;
         p++;
     }
@@ -1906,7 +1913,7 @@ void MB4_SakanaInit(s32 unused0, s32 unused1, s32 unused2, f32 unused3) {
                 MBModelLayerSet((s16) fish->modelId, 2U);
                 fish->particleIdx = -1;
             }
-            fish->rand1 = (f32) frand();
+            fish->frameCnt = (s32) frand();
             fish->bobAngle = (s32) frand();
             fish->unk10 = 0;
             fish->unk14 = 0;
@@ -1993,7 +2000,9 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
     MB4SAKANAFISH *fish;
     Point3d screenPos;
     Point3d diff;
-    f32 bobOfs;
+    f32 bobOfs = 0.0f; /* orig keeps this stack slot across fish (only the pathAltFlag == 0 path writes it) */
+    f32 mag;
+    Point3d areaDiff;
     f32 horizDistSq, horizDist;
     f32 speedMul;
     f32 wobble;
@@ -2008,11 +2017,11 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
         species = &mb4ev_SakanaTbl[s];
         fish = (MB4SAKANAFISH *) ((u8 *) mb4_Work + 0x174 + (s * 0x900));
         for (f = 0; f < species->count; f++) {
-            fish->unk10 += 1;
+            fish->frameCnt += 1;
             speedMul = fish->speed;
-            bobOfs = 0.0f;
+            mag = 0.0f;
 
-            if ((fish->unk10 & 3) == 0) {
+            if ((fish->frameCnt & 3) == 0) {
                 Hu3D3Dto2D(&fish->posB, 1, &screenPos);
                 if ((screenPos.x < 0.0f || screenPos.x > 640.0f) && (screenPos.y < 0.0f || screenPos.y > 480.0f)) {
                     onScreen = FALSE;
@@ -2030,12 +2039,13 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                 if (fish->pathAltFlag == 0) {
                     fish->unk10 -= 1;
                     if (fish->unk10 <= 0) {
-                        f32 mag = PSVECMag(&diff);
+                        mag = PSVECMag(&diff);
+                        PSVECSubtract(&fish->speciesPos, &fish->posB, &areaDiff);
                         fish->timer24 -= 1;
-                        if (mag >= fish->speed || fish->timer24 <= 0 ||
-                            fabsf(diff.x) > fish->speciesRange.x ||
-                            fabsf(diff.y) > fish->speciesRange.y ||
-                            fabsf(diff.z) > fish->speciesRange.z) {
+                        if (mag <= fish->speed || fish->timer24 <= 0 ||
+                            fabsf(areaDiff.x) > fish->speciesRange.x ||
+                            fabsf(areaDiff.y) > fish->speciesRange.y ||
+                            fabsf(areaDiff.z) > fish->speciesRange.z) {
                             fish->posA.x = fish->speciesPos.x + (fish->speciesRange.x * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                             fish->posA.y = fish->speciesPos.y + (fish->speciesRange.y * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                             fish->posA.z = fish->speciesPos.z + (fish->speciesRange.z * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
@@ -2058,7 +2068,7 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                     if (fish->timer20 <= 0) {
                         if ((fish->timer1C & 3) == 0 && mb4_BubbleEffObj != NULL) {
                             MB4COINEFFMGR *mgr = (MB4COINEFFMGR *) Hu3DData[*mb4_BubbleEffObj->mdlId].hookData;
-                            MB4PARTICLE *bp = mgr->particles;
+                            MB4PARTICLE *bp = MB4EFF_PARTS(mgr);
                             s32 bi;
                             Point3d bubblePos;
                             f32 bubbleScale;
@@ -2067,14 +2077,14 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                             bubbleScale = fish->scale * (0.5f + (0.007874016f * (f32) (frand() & 0x7F)));
                             PSVECScale(&fish->dir, &bubblePos, 50.0f * fish->scale);
                             PSVECAdd(&fish->posB, &bubblePos, &bubblePos);
-                            for (bi = 0; bi < mgr->count; bi++) {
-                                if (bp->timer == 0.0f) {
+                            for (bi = 0; bi < MB4EFF_NUM(mgr); bi++) {
+                                if (bp->timer <= 0.0f) {
                                     break;
                                 }
                                 bp++;
                             }
-                            if (bi < mgr->count) {
-                                if (bubbleScale == 0.0f) {
+                            if (bi < MB4EFF_NUM(mgr)) {
+                                if (bubbleScale <= 0.0f) {
                                     bubbleScale = 1.0f;
                                 }
                                 bp->posX = bubblePos.x;
@@ -2105,12 +2115,12 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                     fish->prevYaw = (f32) (180.0 * (atan2((f64) diff.x, (f64) diff.z) / 3.141592653589793));
                 } else {
                     PSVECSubtract(&fish->posA, &fish->posB, &diff);
-                    if ((fish->unk10 & 1) == 0) {
+                    if ((fish->frameCnt & 1) == 0) {
                         fish->unk10 -= 1;
                         if (fish->unk10 <= 0) {
-                            f32 mag = PSVECMag(&diff);
+                            mag = PSVECMag(&diff);
                             fish->timer24 -= 1;
-                            if (mag == fish->speed || fish->timer24 <= 0) {
+                            if (mag <= fish->speed || fish->timer24 <= 0) {
                                 fish->posA.x = fish->speciesPos.x + (fish->speciesRange.x * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                                 fish->posA.y = fish->speciesPos.y + (fish->speciesRange.y * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
                                 fish->posA.z = fish->speciesPos.z + (fish->speciesRange.z * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
@@ -2119,7 +2129,7 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                             }
                         }
                     }
-                    if ((fish->unk10 & 3) == 0) {
+                    if ((fish->frameCnt & 3) == 0) {
                         horizDistSq = (diff.x * diff.x) + (diff.z * diff.z);
                         horizDist = (horizDistSq > 0.0f) ? MB4_FastSqrt(horizDistSq) : horizDistSq;
                         fish->prevPitch = (f32) (180.0 * (atan2((f64) diff.y, (f64) horizDist) / 3.141592653589793));
@@ -2136,7 +2146,7 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                 fish->dir.x = (f32) ((f64) wobble * sin((3.141592653589793 * (f64) fish->yaw) / 180.0));
                 fish->dir.z = (f32) ((f64) wobble * cos((3.141592653589793 * (f64) fish->yaw) / 180.0));
 
-                if (PSVECMag(&diff) > 1000.0f) {
+                if (mag > 1000.0f) {
                     speedMul *= 2.0f;
                 }
 
@@ -2242,7 +2252,9 @@ void MB4Ev_IrukaBubbleCreate(s32 playerNo, Point3d *ofs, f32 unused0, f32 unused
     s32 duration;
 
     Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), "ske_head", headMtx);
-    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    pos.x = mb4ev_IrukaBubbleOfsTbl[charNo].z;
+    pos.y = mb4ev_IrukaBubbleOfsTbl[charNo].y;
+    pos.z = mb4ev_IrukaBubbleOfsTbl[charNo].x;
     PSMTXMultVec(headMtx, &pos, &pos);
     PSVECAdd(&pos, ofs, &pos);
     duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
@@ -2259,7 +2271,9 @@ void MB4Ev_PlayerBubbleCreate(s32 playerNo) {
     s32 duration;
 
     Hu3DModelObjMtxGet(MBModelIdGet(MBPlayerModelGet(playerNo)), "ske_head", headMtx);
-    pos = mb4ev_IrukaBubbleOfsTbl[charNo];
+    pos.x = mb4ev_IrukaBubbleOfsTbl[charNo].z;
+    pos.y = mb4ev_IrukaBubbleOfsTbl[charNo].y;
+    pos.z = mb4ev_IrukaBubbleOfsTbl[charNo].x;
     PSMTXMultVec(headMtx, &pos, &pos);
     PSVECAdd(&pos, &lbl_1_data_10CC, &pos);
     duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
@@ -2433,8 +2447,6 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
             mb4_Work[0x28] = 1;
             return;
         }
-        /* fall through */
-    case 7:
         return;
     case -99:
         mb4_Work[0x2F] = 0;
@@ -2564,9 +2576,12 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
             duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
             MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
             return;
-        default:
+        case 1:
+        case 2:
             mb4_Work[0x26] = -1;
             mb4_Work[0x27] = -1;
+            break;
+        default:
             break;
         }
         break;
@@ -3035,14 +3050,19 @@ void MB4_HermiteCalc(f32 *w0, f32 *w1, f32 *w2, f32 *w3, f32 t) {
 #pragma dont_inline on
 static f32 MB4_PathTimeGet(f32 tMax, Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused) {
     f32 h = tMax / 16.0f;
+    f32 h2 = h + h;
     f32 sum = fn_1_DC9C(pPrev, p1, pNext, 0.0f) + fn_1_DC9C(pPrev, p1, pNext, tMax);
+    f32 t;
     s32 i;
 
-    for (i = 1; i < 16; i += 2) {
-        sum += 4.0f * fn_1_DC9C(pPrev, p1, pNext, (f32) i * h);
+    /* the original accumulates t += 2h per step instead of computing i * h */
+    t = 0.0f + h;
+    for (i = 1; i < 16; i += 2, t += h2) {
+        sum += 4.0f * fn_1_DC9C(pPrev, p1, pNext, t);
     }
-    for (i = 2; i < 16; i += 2) {
-        sum += 2.0f * fn_1_DC9C(pPrev, p1, pNext, (f32) i * h);
+    t = 0.0f + h2;
+    for (i = 2; i < 16; i += 2, t += h2) {
+        sum += 2.0f * fn_1_DC9C(pPrev, p1, pNext, t);
     }
     return (h / 3.0f) * sum;
 }
@@ -3227,11 +3247,10 @@ void MB4Ev_Blow(s32 playerNo) {
 
         MBPlayerMotionNoShiftSet(playerNo, walkMotNo, 0.0f, 8.0f, 0U);
         do {
-            HuPrcVSleep();
-        } while (!MBPlayerMotionEndCheck(playerNo));
-        while (Hu3DMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
-            HuPrcVSleep();
-        }
+            do {
+                HuPrcVSleep();
+            } while (!MBPlayerMotionEndCheck(playerNo));
+        } while (Hu3DMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1);
 
         MBCameraQuakeSet(0x3C, 50.0f);
         se1 = HuAudFXPlay(0x5EB);
@@ -3407,7 +3426,7 @@ void MB4Ev_Blow(s32 playerNo) {
             dropY -= 1.6333334f;
             MBPlayerPosSetV(playerNo, &playerPos);
             MBPlayerRotSetV(playerNo, &rot);
-        } while (playerPos.y <= landPos.y || dropY != 0.0f);
+        } while (playerPos.y > landPos.y || dropY >= 0.0f);
 
         MBPlayerPosSetV(playerNo, &landPos);
         MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
@@ -3500,7 +3519,7 @@ void MB4Ev_Kaisoo(s32 playerNo) {
         }
     }
     shareOtherPlayer = (i < 4);
-    if (shareOtherPlayer) {
+    if (!shareOtherPlayer) {
         MBPlayerMotionNoShiftSet(playerNo, 3, 0.0f, 8.0f, 0x40000001U);
         for (i = 0; i <= 30; i++) {
             t = (f32) i / 30.0f;
@@ -3602,10 +3621,13 @@ void MB4Ev_Kaisoo(s32 playerNo) {
                     f32 r = 0.007874016f * (f32) (frand() & 0x7F);
                     if (r < 0.33f) {
                         stickX = 0;
-                    } else if (r < 0.5f) {
-                        stickX = -0x10;
                     } else {
-                        stickX = 0x10;
+                        r = 0.007874016f * (f32) (frand() & 0x7F);
+                        if (r < 0.5f) {
+                            stickX = -0x10;
+                        } else {
+                            stickX = 0x10;
+                        }
                     }
                     decided += 1;
                     holdOff = (s32) (60.0f + (0.5f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
@@ -3638,7 +3660,7 @@ void MB4Ev_Kaisoo(s32 playerNo) {
 
     if ((s32) ((frand() & 0x7FFF) % 5) < 3) {
         capsuleModel = mb4ev_Puku2CapsuleTbl[(frand() & 0x7FFF) % 9];
-        if (((*(u8 *) &GwSystem >> 6) & 1) != 0 && capsuleModel == 0x24) {
+        if (GwSystem.teamF != 0 && capsuleModel == 0x24) {
             capsuleModel = 1;
         }
         catchModel = MBModelCreate(MBCapsuleMdlGet(capsuleModel), NULL, FALSE);
@@ -3782,11 +3804,10 @@ void MB4Ev_Kaisoo(s32 playerNo) {
         MBPlayerMotionNoShiftSet(playerNo, 0xD, 0.0f, 8.0f, 0U);
     }
     do {
-        HuPrcVSleep();
-    } while (!MBPlayerMotionEndCheck(playerNo));
-    while (Hu3DMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1) {
-        HuPrcVSleep();
-    }
+        do {
+            HuPrcVSleep();
+        } while (!MBPlayerMotionEndCheck(playerNo));
+    } while (MBMotionShiftIDGet(MBPlayerModelGet(playerNo)) != -1);
 
     if (catchScale == (s32) mb4_Work[0xC]) {
         MBWinCreate(2, 0x300007U, -1);
@@ -3801,7 +3822,7 @@ void MB4Ev_Kaisoo(s32 playerNo) {
     MBTopWinWait();
     MBTopWinKill();
 
-    if (catchScale == catchModel && gotCapsule && capsuleModel == 0x24) {
+    if (catchScale == catchModel && capsuleModel == 0x24) {
         MB3MiracleGetExec(playerNo);
     }
 
@@ -3816,7 +3837,7 @@ void MB4Ev_Kaisoo(s32 playerNo) {
             break;
         }
     }
-    if (i < 4) {
+    if (i >= 4) {
         MBPlayerMotionNoShiftSet(playerNo, 3, 0.0f, 8.0f, 0x40000001U);
         for (i = 0; i <= 30; i++) {
             t = (f32) i / 30.0f;
@@ -3905,7 +3926,7 @@ void MB4Ev_Iruka(s32 arg0) {
     dismountMotNo = MBPlayerMotionCreate(arg0, 0x8C002B);
 
     for (targetMasuId = 1; targetMasuId <= MBMasuNumGet(MASU_LAYER_DEFAULT); targetMasuId++) {
-        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, targetMasuId) & MASU_FLAG_RAISECHANCE) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, targetMasuId) & MASU_FLAG_BIT(5)) {
             break;
         }
     }
@@ -4052,7 +4073,7 @@ void MB4Ev_Iruka(s32 arg0) {
                 PSVECAdd(&playerStartPos, &segDir, &segDir);
                 MBPlayerPosSetV(arg0, &segDir);
                 MBPlayerRotSet(arg0, 0.0f, 360.0f * -t, 0.0f);
-                if (t == 1.0f) {
+                if (t >= 1.0f) {
                     splashSeId = HuAudFXPlay(0x5EA);
                     MBPlayerPosFixEvent(arg0, targetMasuId, 0);
                     MBPlayerMotionNoShiftSet(arg0, jumpInMotNo, 0.0f, 8.0f, 0x40000001U);
@@ -4081,7 +4102,7 @@ void MB4Ev_Iruka(s32 arg0) {
                 PSVECAdd(&playerStartPos, &segDir, &segDir);
                 MBPlayerPosSetV(arg0, &segDir);
                 MBPlayerRotSet(arg0, 360.0f * t, 0.0f, 0.0f);
-                if (t == 1.0f) {
+                if (t >= 1.0f) {
                     if (splashSeId != -1) {
                         HuAudFXStop(splashSeId);
                     }
@@ -4365,7 +4386,7 @@ void MB4Ev_Kihon(s32 arg0) {
             PSVECAdd(&mb4ev_MasuKihonPosTbl[0], &coinPos, &coinPos);
             coinPos.y += (f32) i * 0.0f + 100.0f;
             coinPos.z += 400.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
-            MB4_CoinCreate(&coinPos, &coinPos, -1, 400.0f, 0.0f);
+            MB4_CoinCreate(&coinPos, &coinPos, -1, 0.0f, 0.0f);
         }
         MBWinCreate(2, 0x300001U, 2);
         MBTopWinWait();
@@ -4408,13 +4429,13 @@ void MB4Ev_Kihon(s32 arg0) {
         MBCameraMotionWait();
 
         MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
-        chasePos = ridePos2;
-        chasePos.y += 30.000002f;
+        /* the original raises ridePos2 itself (the ride path below starts from the raised point) */
+        ridePos2.y += 30.000002f;
         for (i = 0; i <= 30; i++) {
             t = (f32) i / 30.0f;
-            coinPos.x = playerPos.x + (t * (chasePos.x - playerPos.x));
-            coinPos.y = (f32) ((f64) (playerPos.y + (t * (chasePos.y - playerPos.y))) + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-            coinPos.z = playerPos.z + (t * (chasePos.z - playerPos.z));
+            coinPos.x = playerPos.x + (t * (ridePos2.x - playerPos.x));
+            coinPos.y = (f32) ((f64) (playerPos.y + (t * (ridePos2.y - playerPos.y))) + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            coinPos.z = playerPos.z + (t * (ridePos2.z - playerPos.z));
             MBPlayerPosSetV(arg0, &coinPos);
             HuPrcVSleep();
         }
@@ -4449,7 +4470,7 @@ void MB4Ev_Kihon(s32 arg0) {
             f32 stickY = (f32) MBPadStkYGet(GwPlayer[arg0].padNo);
 
             steerVel *= 0.98f;
-            if (frac >= 0.9f) {
+            if (frac <= 0.9f) {
                 if (!GwPlayer[arg0].comF) {
                     if (stickY > 8.0f) {
                         steerVel += 0.00015f * stickY;
@@ -4458,9 +4479,9 @@ void MB4Ev_Kihon(s32 arg0) {
                     }
                 } else if (MB4_CoinNearGet(&chasePos, &coinNearPos, 200.0f * (f32) (GwPlayer[arg0].dif + 2)) != -1 &&
                            fabsf(chasePos.z - coinNearPos.z) > (20.0f * (f32) (5 - GwPlayer[arg0].dif))) {
-                    if (chasePos.z < coinNearPos.z) {
+                    if (coinNearPos.z < chasePos.z) {
                         steerVel += 0.0018000001f;
-                    } else if (chasePos.z > coinNearPos.z) {
+                    } else if (coinNearPos.z > chasePos.z) {
                         steerVel -= 0.0018000001f;
                     }
                 }
