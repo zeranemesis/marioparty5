@@ -44,6 +44,11 @@ PC_REPLACED_UNITS = {
 PC_FORCED_UNITS = {
     "msm/msmstream.c",
 }
+# REL modules whose units are listed Equivalent and all exist on disk but are still partial
+# shortcut: sdroomdll files are WIP stubs (about 80 functions missing); drop it from this set once complete
+PC_INCOMPLETE_MODULES = {
+    "sdroomdll",
+}
 # port sources that are not part of the dol library
 PORT_EXCLUDED = {
     "src/port/entry.cpp",  # main() of the executable target
@@ -107,7 +112,7 @@ def main() -> int:
     skipped_modules = []
     for module in sorted(rels, key=str.lower):
         units = rels[module]
-        if all(s in PORTABLE for s, _ in units) and all((root / "src" / p).exists() for _, p in units):
+        if module not in PC_INCOMPLETE_MODULES and all(s in PORTABLE for s, _ in units) and all((root / "src" / p).exists() for _, p in units):
             rel_files += [f"src/{p}" for _, p in units]
         else:
             skipped_modules.append(module)
