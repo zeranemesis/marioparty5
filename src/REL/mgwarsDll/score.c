@@ -44,9 +44,9 @@ static MGWARSSCOREENTRY mgWarsScoreEntry[4];
 static MGWARSSCOREOBJ mgWarsScoreObj[4];
 
 static MGWARSSCOREPOS mgWarsScorePos[4] = {
-    { 100.0f, 130.0f, -350.0f, 130.0f },
+    { 100.0f, 130.0f, -220.0f, 130.0f },
     { 480.0f, 130.0f, 800.0f, 130.0f },
-    { 100.0f, 255.0f, -350.0f, 255.0f },
+    { 100.0f, 255.0f, -220.0f, 255.0f },
     { 480.0f, 255.0f, 800.0f, 255.0f },
 };
 
@@ -148,7 +148,7 @@ s16 grp;
                 i = 4;
                 while (i != 0) {
                     i--;
-                    x1 = mgWarsScorePos[i].x + (ratio * (mgWarsScorePos[i].padX - mgWarsScorePos[i].x));
+                    x0 = mgWarsScorePos[i].padX + (ratio * (mgWarsScorePos[i].x - mgWarsScorePos[i].padX));
                     y0 = mgWarsScorePos[i].padY + (ratio * (mgWarsScorePos[i].y - mgWarsScorePos[i].padY));
                     HuSprGrpPosSet(mgWarsScoreEntry[i].grpId, x0, y0);
                     switch (i) {
@@ -179,8 +179,8 @@ s16 grp;
                 i = 4;
                 while (i != 0) {
                     i--;
-                    x0 = mgWarsScorePos[i].padX + (ratio * (mgWarsScorePos[i].x - mgWarsScorePos[i].padX));
-                    y0 = mgWarsScorePos[i].padY + (ratio * (mgWarsScorePos[i].y - mgWarsScorePos[i].padY));
+                    x0 = mgWarsScorePos[i].x + (ratio * (mgWarsScorePos[i].padX - mgWarsScorePos[i].x));
+                    y0 = mgWarsScorePos[i].y + (ratio * (mgWarsScorePos[i].padY - mgWarsScorePos[i].y));
                     HuSprGrpPosSet(mgWarsScoreEntry[i].grpId, x0, y0);
                     switch (i) {
                     case 0:
