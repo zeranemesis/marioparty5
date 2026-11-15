@@ -1,4 +1,5 @@
 #include "dolphin/types.h"
+#include "port/widescreen.h"
 
 typedef s16 HU3DMODELID;
 typedef s16 HU3DMOTID;
@@ -132,6 +133,8 @@ CCamera *fn_1_1416C(CCamera *self)
     Hu3DCameraCreate(1);
     Hu3DCameraPerspectiveSet(1, 26.0f, 100.0f, 2500.0f, 1.2f);
     Hu3DCameraViewportSet(1, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
+    /* the intro and play cameras both see past the stage's 4:3 edges: pillarbox the scene */
+    HU_WIDE_PILLARBOX(1, TRUE);
     return self;
 }
 

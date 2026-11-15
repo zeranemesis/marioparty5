@@ -1194,6 +1194,10 @@ HU3DCAMERA defCamera = {
     0.0f, 1.0f
 };
 
+#ifdef TARGET_PC
+static u16 Hu3DCameraPillarboxBit; /* Hu3DCameraPillarboxSet */
+#endif
+
 void Hu3DCameraCreate(int cameraBit)
 {
     s16 i;
@@ -1203,6 +1207,9 @@ void Hu3DCameraCreate(int cameraBit)
     defCamera.scissorW = RenderMode->fbWidth;
     defCamera.scissorH = RenderMode->efbHeight;
     Hu3DCameraExistF |= cameraBit;
+#ifdef TARGET_PC
+    Hu3DCameraPillarboxBit &= ~cameraBit;
+#endif
     for(i=0, bit=1; i<HU3D_CAM_MAX; i++, bit <<= 1) {
         if(cameraBit & bit) {
             HU3DCAMERA *cameraP = &Hu3DCamera[i];
@@ -1210,6 +1217,41 @@ void Hu3DCameraCreate(int cameraBit)
         }
     }
 }
+
+#ifdef TARGET_PC
+/* A camera whose scene ends at the 4:3 edge (void beyond it) is cut back to the 4:3
+ * picture in the middle of the window. Its projection stays widened, so the middle is
+ * exactly the 4:3 picture and 3D<->2D conversions need no change. Reset by Hu3DCameraCreate. */
+void Hu3DCameraPillarboxSet(int cameraBit, int onF)
+{
+    if(onF) {
+        Hu3DCameraPillarboxBit |= cameraBit;
+    } else {
+        Hu3DCameraPillarboxBit &= ~cameraBit;
+    }
+}
+
+static void Hu3DCameraPillarboxScissor(s16 cameraNo)
+{
+    HU3DCAMERA *cameraP = &Hu3DCamera[cameraNo];
+    float f = HuWideFactor();
+    float x0 = (HU_FB_WIDTH/2)-((HU_FB_WIDTH/2)/f);
+    float x1 = (HU_FB_WIDTH/2)+((HU_FB_WIDTH/2)/f);
+    if(!(Hu3DCameraPillarboxBit & (1 << cameraNo)) || f == 1.0f) {
+        return;
+    }
+    if(x0 < cameraP->scissorX) {
+        x0 = cameraP->scissorX;
+    }
+    if(x1 > cameraP->scissorX+cameraP->scissorW) {
+        x1 = cameraP->scissorX+cameraP->scissorW;
+    }
+    if(x1 <= x0) {
+        x1 = x0+1.0f;
+    }
+    GXSetScissor((u32)x0, cameraP->scissorY, (u32)(x1-x0+0.5f), cameraP->scissorH);
+}
+#endif
 
 void Hu3DCameraPerspectiveSet(int cameraBit, float fov, float near, float far, float aspect)
 {
@@ -1362,6 +1404,9 @@ void Hu3DCameraSet(s32 cameraNo, Mtx modelView)
         GXSetViewport(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);
     }
     GXSetScissor(cameraP->scissorX, cameraP->scissorY, cameraP->scissorW, cameraP->scissorH);
+#ifdef TARGET_PC
+    Hu3DCameraPillarboxScissor(cameraNo);
+#endif
     MTXLookAt(modelView, &cameraP->pos, &cameraP->up, &cameraP->target);
 }
 
@@ -2477,6 +2522,9 @@ void Hu3DZClear(void)
     GXSetProjection(proj, GX_PERSPECTIVE);
     GXSetViewport(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);
     GXSetScissor(cameraP->scissorX, cameraP->scissorY, cameraP->scissorW, cameraP->scissorH);
+#ifdef TARGET_PC
+    Hu3DCameraPillarboxScissor(Hu3DCameraNo);
+#endif
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);

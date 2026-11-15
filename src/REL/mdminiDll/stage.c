@@ -1,5 +1,6 @@
 #include "REL/mdminiDll.h"
 #include "datadir_enum.h"
+#include "port/widescreen.h"
 
 static void FontBGFilter(HU3DMODEL *modelP, Mtx *mtx);
 static void LayerPostHook(s16 layerNo);
@@ -365,7 +366,8 @@ void MdModelCreate(MDMODEL_WORK *model, MDCAMERA_WORK *camera)
     Hu3DModelCameraSet(model->mdlId[MDMODEL_STAGE], camera->camera[MDCAMERA_MAIN].bit);
     Hu3DModelPosSet(model->mdlId[MDMODEL_STAGE], 0, 0, 0);
     Hu3DModelRotSet(model->mdlId[MDMODEL_STAGE], 0, 0, 0);
-    Hu3DModelScaleSet(model->mdlId[MDMODEL_STAGE], 1, 1, 1);
+    /* the tunnel backdrop ends at the 4:3 edges: widen it to the window */
+    Hu3DModelScaleSet(model->mdlId[MDMODEL_STAGE], HU_WIDE(1), 1, 1);
     Hu3DModelAttrSet(model->mdlId[MDMODEL_STAGE], HU3D_MOTATTR_LOOP);
     Hu3DModelAttrReset(model->mdlId[MDMODEL_STAGE], HU3D_MOTATTR_PAUSE);
     Hu3DMotionSpeedSet(model->mdlId[MDMODEL_STAGE], 1.0f);

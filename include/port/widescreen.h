@@ -26,6 +26,9 @@ float HuWideHudShift(float hudX);
 /* HUD x over picture x (0..576 across the widened 3D picture), and back for HUD point (x, y) */
 float HuWideHudX(float pictureX);
 float HuWidePictureX(float hudX, float hudY);
+/* per-scene fallback (hsfman.c): the cameras in cameraBit show only the 4:3 picture,
+ * pillarboxed, for a scene whose geometry ends at the 4:3 edge; reset by Hu3DCameraCreate */
+void Hu3DCameraPillarboxSet(int cameraBit, int onF);
 
 #ifdef __cplusplus
 }
@@ -37,12 +40,14 @@ float HuWidePictureX(float hudX, float hudY);
 #define HU_WIDE_R(w) ((w) * 0.5f * (1.0f + HuWideFactor()))
 #define HU_WIDE_HUD_X(x) HuWideHudX(x)
 #define HU_WIDE_PICTURE_X(x, y) HuWidePictureX(x, y)
+#define HU_WIDE_PILLARBOX(cameraBit, onF) Hu3DCameraPillarboxSet(cameraBit, onF)
 #else
 #define HU_WIDE(aspect) (aspect)
 #define HU_WIDE_L(w) 0
 #define HU_WIDE_R(w) (w)
 #define HU_WIDE_HUD_X(x) (x)
 #define HU_WIDE_PICTURE_X(x, y) (x)
+#define HU_WIDE_PILLARBOX(cameraBit, onF)
 #endif
 
 #endif
