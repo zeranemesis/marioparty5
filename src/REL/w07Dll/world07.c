@@ -60,6 +60,19 @@ static s32 mb7_Work[0xCE];
 #define MB7W_S32(off) (*(s32 *) ((off) + (u8 *) mb7_Work))
 #define MB7W_F32(off) (*(f32 *) ((off) + (u8 *) mb7_Work))
 
+/* Pointer-bearing slots of mb7_Work (words 0x23/0x24 = effect anim data, word 0xCD = red-masu
+ * countdown table). They are 32-bit words on GC; on PC they are real pointers and cannot live
+ * in the s32 scratch buffer. */
+#ifdef TARGET_PC
+static ANIMDATA *mb7_AnimP[2];
+static u8 *mb7_RedTimerP;
+#define MB7_ANIM(n) (mb7_AnimP[(n)])
+#define MB7_REDTIMER mb7_RedTimerP
+#else
+#define MB7_ANIM(n) (*(ANIMDATA **) &mb7_Work[0x23 + (n)])
+#define MB7_REDTIMER (*(u8 **) &mb7_Work[0xCD])
+#endif
+
 static OMOBJ *mb7_MainObj;
 static u8 *mb7_SaveWorkP;
 static s16 mb7_MainMdlId;
@@ -126,8 +139,8 @@ static s32 mb7ev_KoopaMotFileTbl[9] = {
  * m2c could not infer these as it has no context for anonymous data). */
 static const HuVecF mb7_OpeningPos = { 0.0f, -1000.0f, -4500.0f };
 static const HuVecF mb7_OpeningRot = { -33.0f, 0.0f, 0.0f };
-static const HuVecF mb7_MapViewPos = { 0.0f, -2500.0f, -78.0f };
-static const HuVecF mb7_MapViewRot = { 0.0f, 0.0f, 0.0f };
+static const HuVecF mb7_MapViewPos = { 0.0f, 0.0f, -2500.0f };
+static const HuVecF mb7_MapViewRot = { -78.0f, 0.0f, 0.0f };
 
 /* forward declarations - definitions land in later commits as each
  * function is decompiled, in increasing order of risk (boilerplate ->
@@ -425,10 +438,10 @@ static void MB7_ObjectCreate(void) {
             MBMotionSpeedSet((s16) modelId, 1.0f);
         }
     }
-    MB7W_S32(0x8C) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xD70013, 0x10000000));
-    MB7W_S32(0x90) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xD70014, 0x10000000));
-    MB7W_S16(0x94) = (s16) MBEffCreate((void *)(uintptr_t) MB7W_S32(0x8C), 1);
-    MB7W_S16(0x96) = (s16) MBEffCreate((void *)(uintptr_t) MB7W_S32(0x90), 1);
+    MB7_ANIM(0) = HuSprAnimRead(HuDataReadNum(0xD70013, 0x10000000));
+    MB7_ANIM(1) = HuSprAnimRead(HuDataReadNum(0xD70014, 0x10000000));
+    MB7W_S16(0x94) = (s16) MBEffCreate(MB7_ANIM(0), 1);
+    MB7W_S16(0x96) = (s16) MBEffCreate(MB7_ANIM(1), 1);
 }
 
 /* NONMATCHING: mb7_Work byte-offset address add operand order differs
@@ -819,7 +832,7 @@ static void MB7_EffDustHook(HU3DMODEL *modelP, MBEFFECT *effP, Mtx matrix) {
  * Hu3DData[].hookData the same way w03Dll reads it back as MBEFFECT*. */
 /* NONMATCHING: register allocation order differs (50.00% match) */
 static s16 MB7Ev_KoopaCubeDustCreate(Point3d *pos, s32 mode) {
-    s16 modelId = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x40);
+    s16 modelId = MBEffCreate(MB7_ANIM(1), 0x40);
     MBEffHookSet(modelId, MB7Ev_KoopaCubeDustEffHook);
     Hu3DModelLayerSet(modelId, 2);
     Hu3DModelPosSetV(modelId, pos);
@@ -901,8 +914,8 @@ static void MB7Ev_MasuRedInit(void) {
     s32 playerIdx;
 
     mb7_Work[0xCC] = MBMasuNumGet(0) + 1;
-    mb7_Work[0xCD] = (s32) (uintptr_t) HuMemDirectMallocNum(HEAP_HEAP, mb7_Work[0xCC], 0x10000000U);
-    memset((void *) (uintptr_t) mb7_Work[0xCD], 0, mb7_Work[0xCC]);
+    MB7_REDTIMER = (u8 *) HuMemDirectMallocNum(HEAP_HEAP, mb7_Work[0xCC], 0x10000000U);
+    memset(MB7_REDTIMER, 0, mb7_Work[0xCC]);
 
     for (playerIdx = 0; playerIdx < 2; playerIdx++) {
         if (mb7_SaveWorkP[playerIdx] != 0) {
@@ -913,7 +926,7 @@ static void MB7Ev_MasuRedInit(void) {
             for (; masuId < mb7_Work[0xCC]; masuId++) {
                 masuP = MBMasuGet(0, masuId);
                 if (masuP->type == 4 && (masuP->flag & 0x8000)) {
-                    s32 side = (masuP->pos.x == 0.0f) ? 0 : 1;
+                    s32 side = (masuP->pos.x >= 0.0f) ? 0 : 1;
                     if (playerIdx == side) {
                         break;
                     }
@@ -935,7 +948,7 @@ static void MB7Ev_MasuRedInit(void) {
                     masuP = linkMasuP;
                     if (masuP->type == 1) {
                         MBMasuTypeSet(0, (s32) linkMasuId, 2);
-                        ((u8 *) (uintptr_t) mb7_Work[0xCD])[linkMasuId] = countdown;
+                        MB7_REDTIMER[linkMasuId] = countdown;
                     }
                 } while (!(masuP->flag & 0x8000));
             }
@@ -944,17 +957,17 @@ static void MB7Ev_MasuRedInit(void) {
 }
 
 static void MB7Ev_MasuRedClose(void) {
-    if ((u32) mb7_Work[0xCD] != 0U) {
-        HuMemDirectFree((void *) (uintptr_t) mb7_Work[0xCD]);
+    if (MB7_REDTIMER != NULL) {
+        HuMemDirectFree(MB7_REDTIMER);
     }
-    mb7_Work[0xCD] = 0;
+    MB7_REDTIMER = NULL;
     mb7_Work[0xCC] = 0;
     MBPreTurnHookSet(NULL);
 }
 
 static void MB7Ev_MasuRedSet(s32 masuId) {
-    if ((u8 *) (uintptr_t) mb7_Work[0xCD] != NULL) {
-        ((u8 *) (uintptr_t) mb7_Work[0xCD])[masuId] = 2;
+    if (MB7_REDTIMER != NULL) {
+        MB7_REDTIMER[masuId] = 2;
     }
 }
 
@@ -975,10 +988,10 @@ static void MB7Ev_RedResetHook(void) {
     s32 i;
     u8 *redTimer;
 
-    if ((u32) mb7_Work[0xCD] == 0U) {
+    if (MB7_REDTIMER == NULL) {
         return;
     }
-    redTimer = (u8 *) (uintptr_t) mb7_Work[0xCD];
+    redTimer = MB7_REDTIMER;
     anyExpired = 0;
     for (playerIdx = 0; playerIdx < 2; playerIdx++) {
         if (mb7_SaveWorkP[playerIdx] != 0) {
@@ -1039,9 +1052,9 @@ static f32 MB7_FastSqrt(f32 x) {
 #else
     f64 guess = __frsqrte((f64) x);
 #endif
-    guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
-    guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
-    guess = 0.5 * guess * (3.0 - ((f64) x * guess * guess));
+    guess = 0.5 * guess * (3.0 - ((f64) x * (guess * guess)));
+    guess = 0.5 * guess * (3.0 - ((f64) x * (guess * guess)));
+    guess = 0.5 * guess * (3.0 - ((f64) x * (guess * guess)));
     return (f32) ((f64) x * guess);
 }
 
@@ -1571,8 +1584,8 @@ static void MB7Ev_KoopaWalkCoinLose(void) {
 static void MB7Ev_KoopaWalkDustCreate(s32 dispF) {
     u8 *base = (u8 *) mb7_Work + 0xA0;
 
-    Hu3DModelPosSetV(*(s16 *) (base + 0x68), (Point3d *) (base + 0x78));
-    *(s16 *) Hu3DData[*(s16 *) (base + 0x68)].hookData = (s16) (dispF + 1);
+    Hu3DModelPosSetV(*(s32 *) (base + 0x68), (Point3d *) (base + 0x78));
+    *(s16 *) Hu3DData[*(s32 *) (base + 0x68)].hookData = (s16) (dispF + 1);
 }
 
 /* Asiba (scaffold platform prop, mb7_Work[7] - one of the 11 "front"
@@ -1697,7 +1710,7 @@ static void MB7Ev_KoopaWalk(s32 playerNo) {
     MB7Ev_KoopaMotionCreate(6);
     MB7Ev_KoopaMotionCreate(7);
     MB7Ev_KoopaDataClose();
-    *(s32 *) (base + 0x68) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x80);
+    *(s32 *) (base + 0x68) = MBEffCreate(MB7_ANIM(1), 0x80);
     MBEffHookSet((s16) *(s32 *) (base + 0x68), MB7_EffDustHook);
     Hu3DModelLayerSet((s16) *(s32 *) (base + 0x68), 2);
     *(s32 *) (base + 0x10) = -1;
@@ -1834,7 +1847,7 @@ static void MB7Ev_DokanPlayerSet(s32 playerNo, s32 masuId, s32 goingIn) {
     } else {
         MBAudFXPlay(0x619);
     }
-    for (i = 0; (f32) i < shrinkTime; i++) {
+    for (i = 0; (f32) i <= shrinkTime; i++) {
         f32 t = (f32) i * (1.0f / shrinkTime);
         f32 scale;
 
@@ -1894,7 +1907,7 @@ static void MB7Ev_Dokan(s32 playerNo) {
     MB7Ev_KoopaMotionCreate(3);
     MB7Ev_KoopaMotionCreate(2);
     MB7Ev_KoopaDataClose();
-    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x80);
+    *(s32 *) (koopaBase + 0x68) = MBEffCreate(MB7_ANIM(1), 0x80);
     MBEffHookSet((s16) *(s32 *) (koopaBase + 0x68), MB7_EffDustHook);
     Hu3DModelLayerSet((s16) *(s32 *) (koopaBase + 0x68), 2);
     MBMasuGet(0, targetMasuId);
@@ -1918,9 +1931,9 @@ static void MB7Ev_Dokan(s32 playerNo) {
     MB7Ev_KoopaMotionNoSet(2, 0);
     MBMotionTimeSet((s16) *(s32 *) (koopaBase + 0x34), 100.0f);
     *(f32 *) (koopaBase + 0x7C) += 1000.0f;
-    MB7W_F32(0x94) = 0.0f;
+    *(f32 *) (koopaBase + 0x94) = 0.0f;
     while (guruPos.y < *(f32 *) (koopaBase + 0x7C)) {
-        MB7W_F32(0x94) += -0.5444445f;
+        *(f32 *) (koopaBase + 0x94) += -0.5444445f;
         PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
         if (guruPos.y > *(f32 *) (koopaBase + 0x7C)) {
             *(f32 *) (koopaBase + 0x7C) = guruPos.y;
@@ -1963,7 +1976,7 @@ static void MB7Ev_Dokan(s32 playerNo) {
     MBTopWinWait();
     MBTopWinKill();
     MB7Ev_KoopaMotionShiftSet(2, 0);
-    MB7W_F32(0x94) = 16.666666f;
+    *(f32 *) (koopaBase + 0x94) = 16.666666f;
     for (i = 0; i < 0x64; i++) {
         if (i == 0x41) {
             MBCameraQuakeSet(0x12, 50.0f);
@@ -1972,7 +1985,7 @@ static void MB7Ev_Dokan(s32 playerNo) {
             MBAudFXPlay(0x2CC);
         }
         if (i > 0x46) {
-            MB7W_F32(0x94) += -0.27222225f;
+            *(f32 *) (koopaBase + 0x94) += -0.27222225f;
             PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
             MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x78));
         }
@@ -2012,7 +2025,7 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     MB7Ev_KoopaMotionCreate(5);
     MB7Ev_KoopaMotionCreate(2);
     MB7Ev_KoopaDataClose();
-    *(s32 *) (koopaBase + 0x68) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x24], 0x80);
+    *(s32 *) (koopaBase + 0x68) = MBEffCreate(MB7_ANIM(1), 0x80);
     MBEffHookSet((s16) *(s32 *) (koopaBase + 0x68), MB7_EffDustHook);
     Hu3DModelLayerSet((s16) *(s32 *) (koopaBase + 0x68), 2);
     Hu3DModelObjPosGet(MBModelIdGet(mb7_MainMdlId), "kupa_dream_all-guru_pos", &guruPos);
@@ -2029,9 +2042,9 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     MB7Ev_KoopaMotionNoSet(2, 0);
     MBMotionTimeSet((s16) *(s32 *) (koopaBase + 0x34), 100.0f);
     *(f32 *) (koopaBase + 0x7C) += 1000.0f;
-    MB7W_F32(0x94) = 0.0f;
+    *(f32 *) (koopaBase + 0x94) = 0.0f;
     while (guruPos.y < *(f32 *) (koopaBase + 0x7C)) {
-        MB7W_F32(0x94) += -0.5444445f;
+        *(f32 *) (koopaBase + 0x94) += -0.5444445f;
         PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
         if (guruPos.y > *(f32 *) (koopaBase + 0x7C)) {
             *(f32 *) (koopaBase + 0x7C) = guruPos.y;
@@ -2074,7 +2087,7 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     MBTopWinWait();
     MBTopWinKill();
     MB7Ev_KoopaMotionShiftSet(2, 0);
-    MB7W_F32(0x94) = 16.666666f;
+    *(f32 *) (koopaBase + 0x94) = 16.666666f;
     for (i = 0; i < 0x64; i++) {
         if (i == 0x41) {
             MBCameraQuakeSet(0x12, 50.0f);
@@ -2083,7 +2096,7 @@ static void MB7Ev_DokanIn(s32 playerNo) {
             MBAudFXPlay(0x2CC);
         }
         if (i > 0x46) {
-            MB7W_F32(0x94) += -0.27222225f;
+            *(f32 *) (koopaBase + 0x94) += -0.27222225f;
             PSVECAdd((Point3d *) (koopaBase + 0x78), (Point3d *) (koopaBase + 0x90), (Point3d *) (koopaBase + 0x78));
             MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (koopaBase + 0x78));
         }
@@ -2098,14 +2111,14 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     {
         MASU *startMasuP = MBMasuGet(0, (s32) startMasuId);
         f32 startY = startMasuP->pos.y;
-        f32 pipeY = *(f32 *) (koopaBase + 0x7C);
+        f32 pipeY = *(f32 *) (playerEntry + 0x30);
 
         MBAudFXPlay(0x619);
-        for (i = 0; i < 45; i++) {
+        for (i = 0; (f32) i <= 45.0f; i++) {
             f32 t = 1.0f - ((f32) i * (1.0f / 45.0f));
             f32 scale = t * t;
 
-            *(f32 *) (koopaBase + 0x7C) = startY + (t * (pipeY - startY));
+            *(f32 *) (playerEntry + 0x30) = startY + (t * (pipeY - startY));
             MBPlayerPosSetV(playerNo, (Point3d *) (playerEntry + 0x2C));
             MBPlayerScaleSet(playerNo, scale, scale, scale);
             HuPrcVSleep();
@@ -2129,14 +2142,14 @@ static void MB7Ev_DokanIn(s32 playerNo) {
     {
         MASU *targetMasuP = MBMasuGet(0, targetMasuId);
         f32 startY = targetMasuP->pos.y;
-        f32 pipeY = *(f32 *) (koopaBase + 0x7C);
+        f32 pipeY = *(f32 *) (playerEntry + 0x30);
 
         MBModelDispSet(MBPlayerModelGet(playerNo), TRUE);
-        for (i = 0; i < 30; i++) {
+        for (i = 0; (f32) i <= 30.0f; i++) {
             f32 t = (f32) i * (1.0f / 30.0f);
             f32 scale = t * t;
 
-            *(f32 *) (koopaBase + 0x7C) = startY + (t * (pipeY - startY));
+            *(f32 *) (playerEntry + 0x30) = startY + (t * (pipeY - startY));
             MBPlayerPosSetV(playerNo, (Point3d *) (playerEntry + 0x2C));
             MBPlayerScaleSet(playerNo, scale, scale, scale);
             HuPrcVSleep();
@@ -2315,19 +2328,19 @@ static void MB7Ev_Hou(s32 playerNo) {
     MBTopWinWait();
     MBTopWinKill();
     MB7Ev_KoopaMotionShiftSet(8, 0);
-    *(s32 *) (fireBase + 0x30) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x100);
+    *(s32 *) (fireBase + 0x30) = MBEffCreate(MB7_ANIM(0), 0x100);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x30), MB7Ev_KoopaFire1Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x30), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x30), 0.0f, 0.0f, 0.0f);
-    *(s32 *) (fireBase + 0x34) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x40);
+    *(s32 *) (fireBase + 0x34) = MBEffCreate(MB7_ANIM(0), 0x40);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x34), MB7Ev_KoopaFire2Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x34), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x34), 0.0f, 0.05f, 0.05f);
-    *(s32 *) (fireBase + 0x38) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x40);
+    *(s32 *) (fireBase + 0x38) = MBEffCreate(MB7_ANIM(0), 0x40);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x38), MB7Ev_KoopaFire3Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x38), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x38), 0.0f, -0.05f, -0.05f);
-    *(s32 *) (fireBase + 0x3C) = MBEffCreate((ANIMDATA *)(uintptr_t) mb7_Work[0x23], 0x40);
+    *(s32 *) (fireBase + 0x3C) = MBEffCreate(MB7_ANIM(0), 0x40);
     MBEffHookSet((s16) *(s32 *) (fireBase + 0x3C), MB7Ev_KoopaFire4Hook);
     Hu3DModelLayerSet((s16) *(s32 *) (fireBase + 0x3C), 2);
     Hu3DModelPosSet((s16) *(s32 *) (fireBase + 0x3C), 0.0f, 0.0f, -0.05f);
@@ -2378,7 +2391,7 @@ static void MB7Ev_Hou(s32 playerNo) {
                 *(f32 *) (fireBase + 0x10) = 115.0f;
                 *(f32 *) (fireBase + 0x14) = 0.0f;
                 *(s32 *) (fireBase + 0x1C) = 0;
-                HuAudFXStop(seId);
+                MBAudFXStop(seId);
                 *(s32 *) (fireBase + 0x0) += 1;
                 seId = HuAudFXEmiterPlay(0x61D, &kupaPos);
             }
@@ -2412,8 +2425,8 @@ static void MB7Ev_Hou(s32 playerNo) {
         Hu3DModelObjPosGet(MBModelIdGet(dreamMdlId), "kupa_dream_all-fire_pos", (Point3d *) (fireBase + 0x40));
         *(Point3d *) (fireBase + 0x64) = kupaPos;
         *(f32 *) (koopaBase + 0x28) *= 0.93f;
-        kupaPos.x += ((-50.0f * *(f32 *) (koopaBase + 0x28)) - 50.0f) * (f32) sin((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0);
-        kupaPos.z += ((-50.0f * *(f32 *) (koopaBase + 0x28)) - 50.0f) * (f32) cos((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0);
+        kupaPos.x = (f32) ((f64) kupaPos.x + ((f64) ((-50.0f * *(f32 *) (koopaBase + 0x28)) - 50.0f) * sin((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0)));
+        kupaPos.z = (f32) ((f64) kupaPos.z + ((f64) ((-50.0f * *(f32 *) (koopaBase + 0x28)) - 50.0f) * cos((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0)));
         MBModelPosSetV((s16) *(s32 *) (koopaBase + 0x34), &kupaPos);
         MBModelRotSetV((s16) *(s32 *) (koopaBase + 0x34), (Point3d *) (fireBase + 0x4C));
 
@@ -2425,8 +2438,8 @@ static void MB7Ev_Hou(s32 playerNo) {
             MBModelRotSetV((s16) mb7_Work[9], (Point3d *) (fireBase + 0x4C));
             MBModelScaleSet((s16) mb7_Work[9], *(f32 *) (fireBase + 0x18), *(f32 *) (fireBase + 0x18), *(f32 *) (fireBase + 0x18));
         }
-        firePos.x = 250.0f * (*(f32 *) (fireBase + 0x18) * (f32) sin((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0));
-        firePos.z = 250.0f * (*(f32 *) (fireBase + 0x18) * (f32) cos((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0));
+        firePos.x = (f32) (250.0 * ((f64) *(f32 *) (fireBase + 0x18) * sin((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0)));
+        firePos.z = (f32) (250.0 * ((f64) *(f32 *) (fireBase + 0x18) * cos((3.141592653589793 * (f64) *(f32 *) (fireBase + 0x50)) / 180.0)));
         firePos.y = *(f32 *) (fireBase + 0x44);
         MB7Ev_HouPlayerUpdate();
 
@@ -2629,9 +2642,10 @@ static void MB7Ev_KoopaWalkUpdate(void) {
             *(f32 *) (koopaBase + 0x24) = 0.0f;
             *(s32 *) (koopaBase + 0x20) += 1;
         } else {
-            f32 t = 0.06666667f * *(f32 *) (koopaBase + 0x24);
+            f32 t;
 
             *(f32 *) (koopaBase + 0x24) += 1.0f;
+            t = 0.06666667f * *(f32 *) (koopaBase + 0x24);
             if (t > 1.0f) {
                 t = 1.0f;
             }
@@ -2727,9 +2741,10 @@ static void MB7Ev_KoopaWalkUpdate(void) {
                 *(s32 *) (koopaBase + 0x20) += 1;
             }
         } else if (*(s32 *) (koopaBase + 0x20) == 2) {
-            f32 t = 0.06666667f * *(f32 *) (koopaBase + 0x24);
+            f32 t;
 
             *(f32 *) (koopaBase + 0x24) += 1.0f;
+            t = 0.06666667f * *(f32 *) (koopaBase + 0x24);
             if (t > 1.0f) {
                 t = 1.0f;
             }
@@ -2763,6 +2778,35 @@ static void MB7Ev_KoopaWalkUpdate(void) {
             landedFlag = 1;
         }
         break;
+    case 11:
+        if (*(s32 *) (koopaBase + 0x20) == 0) {
+            MB7Ev_KoopaMotionShiftSet(1, 1);
+            MBMotionSpeedSet(koopaMdlId, 2.0f);
+            *(f32 *) (koopaBase + 0x30) = 0.0f;
+            *(f32 *) (koopaBase + 0x24) = 0.0f;
+            *(s32 *) (koopaBase + 0x20) += 1;
+        } else if (*(s32 *) (koopaBase + 0x20) == 1) {
+            f32 t;
+
+            *(f32 *) (koopaBase + 0x24) += 1.0f;
+            t = 0.1f * *(f32 *) (koopaBase + 0x24);
+            if (t > 1.0f) {
+                t = 1.0f;
+            }
+            MBAngleMoveTo((f32 *) (koopaBase + 0x88), *(f32 *) (koopaBase + 0x30), 0.15f * t);
+            if (fabs(MB7_AngleDiff(MB7W_F32(0x128), *(f32 *) (koopaBase + 0x30))) < 5.0f) {
+                MBAudFXPlay(0x2C9);
+                MB7Ev_KoopaMotionShiftSet(3, 0);
+                *(s32 *) (koopaBase + 0x20) += 1;
+            }
+        } else if (*(s32 *) (koopaBase + 0x20) == 2) {
+            if (MB7Ev_KoopaMotionCheck() != 0) {
+                MB7Ev_KoopaMotionShiftSet(0, 1);
+                *(s32 *) (koopaBase + 0x20) = 0;
+                *(s32 *) (koopaBase + 0xC) += 1;
+            }
+        }
+        break;
     case 12:
         if (*(s32 *) (koopaBase + 0x20) == 0) {
             s32 side = 0;
@@ -2779,9 +2823,10 @@ static void MB7Ev_KoopaWalkUpdate(void) {
             *(f32 *) (koopaBase + 0x24) = 0.0f;
             *(s32 *) (koopaBase + 0x20) += 1;
         } else if (*(s32 *) (koopaBase + 0x20) == 1) {
-            f32 t = 0.033333335f * *(f32 *) (koopaBase + 0x24);
+            f32 t;
 
             *(f32 *) (koopaBase + 0x24) += 1.0f;
+            t = 0.033333335f * *(f32 *) (koopaBase + 0x24);
             if (t > 1.0f) {
                 t = 1.0f;
             }
@@ -3107,7 +3152,7 @@ static void MB7Ev_KoopaCube(s32 playerNo) {
 
             for (i = 0; i < 0x3C; i++) {
                 if (i == 0x1E) {
-                    HuAudFXStop(seId);
+                    MBAudFXStop(seId);
                 }
                 HuPrcVSleep();
             }
