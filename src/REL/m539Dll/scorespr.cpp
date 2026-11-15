@@ -79,7 +79,7 @@ void fn_1_F5C4(M539ScoreSpr *self);
 void fn_1_F744(M539ScoreSpr *self);
 void fn_1_F914(M539ScoreList *list, void (*fn)(void *));
 M539ScoreSpr *fn_1_FA04(M539ScoreSpr *self, s16 arg);
-M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 arg);
+M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 arg);
 
 // NONMATCHING: register allocation only.
 M539ScoreMgr *fn_1_EFF4(M539ScoreMgr *self)
@@ -154,7 +154,7 @@ void fn_1_F238(void)
 }
 
 // NONMATCHING: register allocation only.
-M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 kind, s32 arg)
+M539ScoreSpr *fn_1_F258(M539ScoreSpr *self, Vec *pos, s32 value, s32 arg)
 {
     s32 v = value;
     M539Ptmf *hook;
