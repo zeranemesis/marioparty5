@@ -5573,10 +5573,24 @@ void MB2_YajiDispSet(s32 arg0) {
  * 0x18 more per-vtx arrays (draw-side), +0x1C..0x1F RGBA (alpha at +0x1F),
  * +0x20 display list, +0x24 display list size. Confirmed by
  * MB2_RainbowObjAlphaSet/VtxTopGet's simple, unambiguous field usage. */
+/* Rainbow arc slot (GC layout, size 0x28); pointer members are real pointers. */
+typedef struct MB2RainbowSlot_s {
+    s32 activeF;   /* 0x00 */
+    s32 vtxCount;  /* 0x04 */
+    u8 *ctrl;      /* 0x08 */
+    u8 *angle;     /* 0x0C */
+    u8 *posArr;    /* 0x10 */
+    u8 *uvArr;     /* 0x14 */
+    u8 *colArr;    /* 0x18 */
+    u8 tint[4];    /* 0x1C */
+    void *dl;      /* 0x20 */
+    u32 dlSize;    /* 0x24 */
+} MB2_RAINBOWSLOT;
+
 typedef struct MB2RainbowObjData_s {
     s32 modelId;   /* 0x00 */
     ANIMDATA *srcAnim; /* 0x04 */
-    u8 *slots;     /* 0x08, 8 entries, stride 0x28 */
+    MB2_RAINBOWSLOT *slots; /* 0x08, 8 entries */
 } MB2_RAINBOWOBJ_DATA; /* size 0xC */
 
 void MB2_RainbowObjInit(void) {
@@ -5584,7 +5598,7 @@ void MB2_RainbowObjInit(void) {
     HU3DMODEL *modelP;
     MB2_RAINBOWOBJ_DATA *dat;
     s16 modelId;
-    u8 *slots;
+    MB2_RAINBOWSLOT *slots;
     s32 i;
 
     obj = omAddObjEx(mbObjMan, -0x8000, 0, 0, -1, MB2_RainbowObjUpdate);
@@ -5601,11 +5615,11 @@ void MB2_RainbowObjInit(void) {
     modelP->pos.z = -100000.0f;
     modelP->hookData = dat;
     dat->srcAnim = (ANIMDATA *)(uintptr_t) MB2W_S32(0x1B * 4);
-    slots = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, 8 * 0x28, modelP->mallocNo);
+    slots = (MB2_RAINBOWSLOT *) HuMemDirectMallocNum(HEAP_MODEL, 8 * sizeof(MB2_RAINBOWSLOT), modelP->mallocNo);
     dat->slots = slots;
-    memset(slots, 0, 8 * 0x28);
-    for (i = 0; i < 8; i++, slots += 0x28) {
-        *(s32 *) slots = 0;
+    memset(slots, 0, 8 * sizeof(MB2_RAINBOWSLOT));
+    for (i = 0; i < 8; i++, slots++) {
+        slots->activeF = 0;
     }
 }
 
@@ -5652,7 +5666,7 @@ void MB2_RainbowObjClose(void) {
  * trig/sqrt scalar math, not further logic bugs. */
 s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     MB2_RAINBOWOBJ_DATA *dat;
-    u8 *slot;
+    MB2_RAINBOWSLOT *slot;
     s32 slotNo;
     Point3d *path;
     u8 *ctrl;
@@ -5671,18 +5685,18 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     }
     dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
     slot = dat->slots;
-    for (slotNo = 0; slotNo < 8; slotNo++, slot = dat->slots + slotNo * 0x28) {
-        if (*(s32 *) slot == 0) {
+    for (slotNo = 0; slotNo < 8; slotNo++, slot = dat->slots + slotNo) {
+        if (slot->activeF == 0) {
             break;
         }
     }
     if (slotNo >= 8) {
         return -1;
     }
-    *(s32 *) slot = 1;
+    slot->activeF = 1;
 
     ctrl = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, arg1 * 3 * 0xC, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x8) = ctrl;
+    slot->ctrl = ctrl;
     memset(ctrl, 0, arg1 * 3 * 0xC);
     for (i = 0; i < arg1 - 1; i++) {
         Point3d *p0 = (i > 0) ? &path[i - 1] : &path[i];
@@ -5697,11 +5711,11 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     }
 
     vtxCount = (arg1 - 1) * 3;
-    *(s32 *) (slot + 0x4) = vtxCount;
+    slot->vtxCount = vtxCount;
     angle = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, vtxCount * 0xC, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0xC) = angle;
+    slot->angle = angle;
     memset(angle, 0, vtxCount * 0xC);
-    ctrl = *(u8 **) (slot + 0x8);
+    ctrl = slot->ctrl;
     for (i = 0; i < vtxCount; i++) {
         Point3d delta = { 0.0f, 0.0f, 0.0f };
         f32 distSq, dist;
@@ -5723,19 +5737,19 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
         *(f32 *) (angle + i * 0xC + 0x8) = 0.0f;
     }
 
-    *(u8 *) (slot + 0x1F) = 0xFF;
-    *(u8 *) (slot + 0x1E) = 0xFF;
-    *(u8 *) (slot + 0x1D) = 0xFF;
-    *(u8 *) (slot + 0x1C) = 0xFF;
+    slot->tint[3] = 0xFF;
+    slot->tint[2] = 0xFF;
+    slot->tint[1] = 0xFF;
+    slot->tint[0] = 0xFF;
 
     posArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, vtxCount * 0xC * 2, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x10) = posArr;
+    slot->posArr = posArr;
     memset(posArr, 0, vtxCount * 0xC);
     uvArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, (arg1 - 1) * 0x18 * 2, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x14) = uvArr;
+    slot->uvArr = uvArr;
     memset(uvArr, 0, (arg1 - 1) * 0x18);
     colArr = (u8 *) HuMemDirectMallocNum(HEAP_MODEL, (arg1 - 1) * 0xC * 2, Hu3DData[dat->modelId].mallocNo);
-    *(void **) (slot + 0x18) = colArr;
+    slot->colArr = colArr;
     memset(colArr, 0, (arg1 - 1) * 0xC);
 
     for (i = 0; i < vtxCount; i++) {
@@ -5782,9 +5796,9 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
         *(u8 *) (botCol + 3) = (u8) fade;
     }
 
-    DCFlushRange(*(void **) (slot + 0x10), vtxCount * 0xC * 2);
-    DCFlushRange(*(void **) (slot + 0x14), (arg1 - 1) * 0x18 * 2);
-    DCFlushRange(*(void **) (slot + 0x18), (arg1 - 1) * 0xC * 2);
+    DCFlushRange(slot->posArr, vtxCount * 0xC * 2);
+    DCFlushRange(slot->uvArr, (arg1 - 1) * 0x18 * 2);
+    DCFlushRange(slot->colArr, (arg1 - 1) * 0xC * 2);
     dispListTmp = HuMemDirectMallocNum(HEAP_MODEL, 0x10000, Hu3DData[dat->modelId].mallocNo);
     DCFlushRange(dispListTmp, 0x10000U);
     GXBeginDisplayList(dispListTmp, 0x10000U);
@@ -5812,10 +5826,10 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
      * winding branch really does interleave 1,0,1,0,1,0 across the 2
      * vertices' 3 attributes in the original asm - not a simple per-vertex
      * repeat. Verified against the raw *fifo writes before this port. */
-    *(u32 *) (slot + 0x24) = GXEndDisplayList();
-    *(void **) (slot + 0x20) = HuMemDirectMallocNum(HEAP_MODEL, (s32) *(u32 *) (slot + 0x24), Hu3DData[dat->modelId].mallocNo);
-    memcpy(*(void **) (slot + 0x20), dispListTmp, *(u32 *) (slot + 0x24));
-    DCFlushRange(*(void **) (slot + 0x20), *(u32 *) (slot + 0x24));
+    slot->dlSize = GXEndDisplayList();
+    slot->dl = HuMemDirectMallocNum(HEAP_MODEL, (s32) slot->dlSize, Hu3DData[dat->modelId].mallocNo);
+    memcpy(slot->dl, dispListTmp, slot->dlSize);
+    DCFlushRange(slot->dl, slot->dlSize);
     HuMemDirectFree(dispListTmp);
     return slotNo;
 }
@@ -5823,21 +5837,21 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
 void MB2_RainbowObjAlphaSet(s32 arg0, s8 arg1) {
     if (mb2_RainbowObj != NULL) {
         MB2_RAINBOWOBJ_DATA *dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
-        *(s8 *) (dat->slots + (arg0 * 0x28) + 0x1F) = arg1;
+        dat->slots[arg0].tint[3] = arg1;
     }
 }
 
 s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1) {
     s32 ret;
     MB2_RAINBOWOBJ_DATA *dat;
-    u8 *slot;
+    MB2_RAINBOWSLOT *slot;
 
     ret = arg0;
     if (mb2_RainbowObj != NULL) {
         dat = (MB2_RAINBOWOBJ_DATA *) mb2_RainbowObj->data;
-        slot = dat->slots + (arg0 * 0x28);
-        *arg1 = *(void **) (slot + 0x8);
-        ret = *(s32 *) (slot + 0x4);
+        slot = dat->slots + arg0;
+        *arg1 = slot->ctrl;
+        ret = slot->vtxCount;
     }
     return ret;
 }
@@ -5849,7 +5863,7 @@ s32 MB2_RainbowObjVtxTopGet(s32 arg0, void **arg1) {
  * GX_TEVREG2, +0x20 display-list buffer, +0x24 display-list size. */
 void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
     MB2_RAINBOWOBJ_DATA *dat;
-    u8 *slot;
+    MB2_RAINBOWSLOT *slot;
     s32 i;
 
     if (mb2_RainbowObj == NULL) {
@@ -5878,29 +5892,29 @@ void RainbowObjDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
     GXSetCullMode(GX_CULL_NONE);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
     slot = dat->slots;
-    for (i = 0; i < 8; i++, slot += 0x28) {
+    for (i = 0; i < 8; i++, slot++) {
         GXColor tint;
-        if (*(s32 *) slot == 0) {
+        if (slot->activeF == 0) {
             continue;
         }
         {
-            s32 slotVtxCount = *(s32 *) (slot + 0x4);
+            s32 slotVtxCount = slot->vtxCount;
             GXClearVtxDesc();
             GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
             GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_TEX_ST, GX_RGBA6, 0U);
-            GXSETARRAY(GX_VA_POS, *(void **) (slot + 0x10), slotVtxCount * 0xC * 2, 0xCU, TRUE);
+            GXSETARRAY(GX_VA_POS, slot->posArr, slotVtxCount * 0xC * 2, 0xCU, TRUE);
             GXSetVtxDesc(GX_VA_CLR0, GX_INDEX16);
             GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_TEX_ST, GX_RGBA8, 0U);
-            GXSETARRAY(GX_VA_CLR0, *(void **) (slot + 0x18), slotVtxCount * 4U * 2, 4U, TRUE);
+            GXSETARRAY(GX_VA_CLR0, slot->colArr, slotVtxCount * 4U * 2, 4U, TRUE);
             GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
             GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_RGBA6, 0U);
-            GXSETARRAY(GX_VA_TEX0, *(void **) (slot + 0x14), slotVtxCount * 8U * 2, 8U, TRUE);
+            GXSETARRAY(GX_VA_TEX0, slot->uvArr, slotVtxCount * 8U * 2, 8U, TRUE);
         }
-        tint.r = *(u8 *) (slot + 0x1C);
-        tint.g = *(u8 *) (slot + 0x1D);
-        tint.b = *(u8 *) (slot + 0x1E);
-        tint.a = *(u8 *) (slot + 0x1F);
+        tint.r = slot->tint[0];
+        tint.g = slot->tint[1];
+        tint.b = slot->tint[2];
+        tint.a = slot->tint[3];
         GXSetTevColor(GX_TEVREG2, tint);
-        GXCallDisplayList(*(void **) (slot + 0x20), *(u32 *) (slot + 0x24));
+        GXCallDisplayList(slot->dl, slot->dlSize);
     }
 }
