@@ -315,8 +315,10 @@ void fn_1_C534(M579Node *list, void (*fn)(M579Splash *))
     l = list;
     n = l->next;
     while (n != l) {
+        M579Node *nx = n->next;
+
         fn((M579Splash *) n);
-        n = n->next;
+        n = nx;
     }
 }
 
@@ -326,8 +328,10 @@ void fn_1_C594(M579Node *first, M579Node *list, void (*fn)(M579Splash *))
 
     n = first;
     while (n != list) {
+        M579Node *nx = n->next;
+
         fn((M579Splash *) n);
-        n = n->next;
+        n = nx;
     }
 }
 

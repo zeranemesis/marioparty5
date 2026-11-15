@@ -589,8 +589,10 @@ void fn_1_AEA0(M579Node *list, void (*fn)(M579Spray *))
     first = l->next;
     n = first;
     while (n != l) {
+        M579Node *nx = n->next;
+
         fn((M579Spray *) n);
-        n = n->next;
+        n = nx;
     }
 }
 
@@ -604,8 +606,10 @@ void fn_1_AF00(M579Node *list, void (*fn)(M579Spray *))
     first = l->next;
     n = first;
     while (n != l) {
+        M579Node *nx = n->next;
+
         fn((M579Spray *) n);
-        n = n->next;
+        n = nx;
     }
 }
 
@@ -630,9 +634,11 @@ void fn_1_AF60(M579Node *list, void (*fn)(M579Ripple *))
             if (empty2 != 0) {
                 break;
             }
-            fn_1_12DC(tmp.next);
-            fn_1_1330(tmp.next, list);
-            fn((M579Ripple *) tmp.next);
+            M579Node *node = tmp.next;
+
+            fn_1_12DC(node);
+            fn_1_1330(node, list);
+            fn((M579Ripple *) node);
         }
         fn_1_1270(&tmp, 0);
     }
@@ -655,8 +661,10 @@ void fn_1_B0A8(M579Node *first, M579Node *list, void (*fn)(M579Spray *))
 
     n = first;
     while (n != list) {
+        M579Node *nx = n->next;
+
         fn((M579Spray *) n);
-        n = n->next;
+        n = nx;
     }
 }
 
@@ -666,8 +674,10 @@ void fn_1_B108(M579Node *first, M579Node *list, void (*fn)(M579Spray *))
 
     n = first;
     while (n != list) {
+        M579Node *nx = n->next;
+
         fn((M579Spray *) n);
-        n = n->next;
+        n = nx;
     }
 }
 
