@@ -106,7 +106,7 @@ typedef struct MB4_Work_s {
     int mdl3C; //0x3C
     int puku2MdlId; //0x40
     int puku2ShellMdlId; //0x44
-    int sango6MdlId; //0x48
+    int irukaMdlId; //0x48
     int mdl4C; //0x4C
     int mdl50; //0x50
     int coinShadowMdlId; //0x54
@@ -143,6 +143,11 @@ static void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32
 static void MB4Ev_PlayerBubbleCreate(int playerNo);
 static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3);
 static void MB4_CapsuleBubbleUpdate(void);
+float MB4_AngleDiff(float a, float b);
+float MB4_AngleLerp(float a, float b, float step);
+float fn_1_6E74(float t, float a, float b);
+void MB4_HermiteCalcV(float t, HuVecF *p0, HuVecF *p1, HuVecF *p2, HuVecF *p3, HuVecF *out);
+float MB4_PathNextTimeGet(float t, HuVecF *a, HuVecF *b, HuVecF *c, HuVecF *d);
 void MB4_ModelStub(HU3DMODEL *a, HU3DMODEL *b, HU3DMODEL *c, HU3DMODEL *d);
 f32 MB4_PathTimeGet(f32 time, Point3d *p0, Point3d *p1, Point3d *p2, Point3d *p3);
 
@@ -651,6 +656,286 @@ void ObjectSetup(void)
     MBObjectSetup(3, MB4_Create, MB4_Kill);
 }
 
+// NONMATCHING: complete and faithful (model/table order, hooks, RNG order verified against the asm); the original keeps the model ids in s16 locals and passes the stale sub-model list like here, residual is register allocation and the dead MB4_ModelStub arguments
+static void MB4_Create(void)
+{
+    MBMODELID modelId;
+    int i;
+    MB4_BUBBLE_TIMER *bubbleP;
+    /* one scratch sub-model list, reused by every MBModelCreate below (the original also passes it, stale, to
+       the models created after the three that fill it) */
+    int subList[4];
+    int boardNo;
+
+    boardNo = GwSystem.boardNo;
+    HuAudSndGrpSetSet(17);
+    MBMasuCreate(DATANUM(DATA_w04s, 0));
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 1), NULL, FALSE);
+    mb4_Work.mapMdlId = modelId;
+    MBModelAttrSet(modelId, 0x40000001);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], &Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 19), NULL, FALSE);
+    mb4_Work.mapMdlId2 = modelId;
+    MBModelAttrSet(modelId, 0x40000001);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData, Hu3DData);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 16), NULL, FALSE);
+    mb4_Work.mdl10 = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 20), NULL, FALSE);
+    mb4_Work.mdl14 = modelId;
+    MBModelAttrSet(modelId, 0x40000001);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData, Hu3DData);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 21), NULL, FALSE);
+    mb4_Work.pukuMdlId = modelId;
+    MBMotionTimeSet(modelId, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBModelAttrSet(modelId, 0x40000002);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData, Hu3DData);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 22), NULL, FALSE);
+    mb4_Work.pukuOpenMdlId = modelId;
+    MBMotionTimeSet(modelId, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBModelAttrSet(modelId, 0x40000002);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData, Hu3DData);
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 23), NULL, FALSE);
+    mb4_Work.mdl20 = modelId;
+    MBMotionTimeSet(modelId, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBModelAttrSet(modelId, 0x40000002);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData, Hu3DData);
+
+    for (i = 0; i < 1; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 7), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_RBokPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_RBokRotYTbl[i], 0.0f);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 24), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_YaziPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, mb4ev_YaziRotTbl[i], 0.0f);
+    }
+    for (i = 0; i < 1; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 24), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_YaziExtPosTbl[i]);
+        MBModelRotSet(modelId, 0.0f, 180.0f + mb4ev_YaziExtRotTbl[i], 0.0f);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 4), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_HasigoPosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_HasigoRotTbl[i]);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 30), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango1PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango1RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango1ScaleTbl[i], mb4ev_Sango1ScaleTbl[i], mb4ev_Sango1ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 31), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango2PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango2RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango2ScaleTbl[i], mb4ev_Sango2ScaleTbl[i], mb4ev_Sango2ScaleTbl[i]);
+        if (i != 0) {
+            MBModelLayerSet(modelId, 1);
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 32), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango3PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango3RotTbl[i]);
+        MBModelScaleSetV(modelId, &mb4ev_Sango3ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 33), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango4PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango4RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango4ScaleTbl[i], mb4ev_Sango4ScaleTbl[i], mb4ev_Sango4ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 34), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Sango5PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Sango5RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Sango5ScaleTbl[i], mb4ev_Sango5ScaleTbl[i], mb4ev_Sango5ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 34), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_LeftSango5PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_LeftSango5RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_LeftSango5ScaleTbl[i], mb4ev_LeftSango5ScaleTbl[i], mb4ev_LeftSango5ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 35), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Hitode1PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Hitode1RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Hitode1ScaleTbl[i], mb4ev_Hitode1ScaleTbl[i], mb4ev_Hitode1ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 3; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 36), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_Hitode2PosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_Hitode2RotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_Hitode2ScaleTbl[i], mb4ev_Hitode2ScaleTbl[i], mb4ev_Hitode2ScaleTbl[i]);
+        MBModelLayerSet(modelId, 1);
+    }
+    for (i = 0; i < 2; i++) {
+        modelId = MBModelCreate(DATANUM(DATA_w04s, 37), NULL, TRUE);
+        MBModelPosSetV(modelId, &mb4ev_KaisooPosTbl[i]);
+        MBModelRotSetV(modelId, &mb4ev_KaisooRotTbl[i]);
+        MBModelScaleSet(modelId, mb4ev_KaisooScaleTbl[i], mb4ev_KaisooScaleTbl[i], mb4ev_KaisooScaleTbl[i]);
+        MBModelAttrSet(modelId, 0x40000001);
+        MBModelLayerSet(modelId, 1);
+    }
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 9), NULL, FALSE);
+    mb4_Work.kaiMdlId[0] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_KaiPosTbl[0]);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBMotionTimeSet(modelId, 0.0f);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 10), NULL, FALSE);
+    mb4_Work.kaiMdlId[1] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_KaiPosTbl[1]);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBMotionTimeSet(modelId, 0.0f);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 11), NULL, FALSE);
+    mb4_Work.kaiMdlId[2] = modelId;
+    MBModelPosSetV(modelId, &mb4ev_KaiPosTbl[2]);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBMotionSpeedSet(modelId, 0.0f);
+    MBMotionTimeSet(modelId, 0.0f);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 12), NULL, FALSE);
+    mb4_Work.mdl30 = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 13), NULL, FALSE);
+    mb4_Work.mdl34 = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 14), NULL, FALSE);
+    mb4_Work.mdl38 = modelId;
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 18), NULL, FALSE);
+    mb4_Work.mdl3C = modelId;
+    MBModelLayerSet(modelId, 1);
+
+    subList[0] = DATANUM(DATA_w04s, 40);
+    subList[1] = DATANUM(DATA_w04s, 41);
+    subList[2] = -1;
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 39), subList, FALSE);
+    mb4_Work.puku2MdlId = modelId;
+    MBModelPosSetV(modelId, &mb4ev_Puku2Pos);
+    MBModelRotSet(modelId, 0.0f, -45.0f, 0.0f);
+    MBModelScaleSet(modelId, 2.0f, 2.0f, 2.0f);
+    MBMotionNoSet(modelId, 1, 0x40000001);
+
+    subList[0] = DATANUM(DATA_w04s, 43);
+    subList[1] = DATANUM(DATA_w04s, 44);
+    subList[2] = DATANUM(DATA_w04s, 45);
+    subList[3] = -1;
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 42), subList, FALSE);
+    mb4_Work.puku2ShellMdlId = modelId;
+    MBMotionNoSet(modelId, 1, 0x40000001);
+    Hu3DModelClusterAttrSet(MBModelIdGet(modelId), 0, 0xC0000001);
+    MBModelAttrSet(modelId, 0x40000002);
+    MBModelDispSet(modelId, FALSE);
+
+    subList[0] = DATANUM(DATA_w04s, 47);
+    subList[1] = -1;
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 46), subList, FALSE);
+    mb4_Work.irukaMdlId = modelId;
+    MBModelAttrSet(modelId, 0x40000002);
+    MBModelDispSet(modelId, FALSE);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 15), subList, FALSE);
+    mb4_Work.mdl4C = modelId;
+    MBModelDispSet(modelId, FALSE);
+    MBModelLayerSet(modelId, 2);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 38), subList, FALSE);
+    mb4_Work.mdl50 = modelId;
+    MBModelDispSet(modelId, FALSE);
+    MBModelLayerSet(modelId, 1);
+    MB4_ModelStub(&Hu3DData[MBModelIdGet(modelId)], Hu3DData, Hu3DData, Hu3DData);
+
+    modelId = MBModelCreate(DATANUM(DATA_w04s, 17), subList, FALSE);
+    mb4_Work.coinShadowMdlId = modelId;
+    MBModelDispSet(modelId, FALSE);
+    MBModelLayerSet(modelId, 1);
+
+    MB4_BubbleEffInit();
+    bubbleP = &mb4_Work.playerBubble[0];
+    for (i = 0; i < 4; i++) {
+        bubbleP->timer = (s32)(10.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+        bubbleP->count = (s32)(5.0f + (10.0f * (0.007874016f * (frand() & 0x7F))));
+        bubbleP->tick = frand();
+        bubbleP++;
+    }
+
+    mb4_Work.capsuleBubble.timer = 0;
+    mb4_Work.capsuleBubble.tick = frand();
+    mb4_Work.capsuleBubble.capsuleNo = -1;
+    mb4_Work.capsuleBubble.mdlId = -1;
+    mb4_Work.capsuleBubbleFlag = 0;
+    mb4_Work.capsuleBubble.endF = 0;
+    mb4_Work.capsuleBubble2.timer = 0;
+    mb4_Work.capsuleBubble2.tick = frand();
+    mb4_Work.capsuleBubble2.capsuleNo = -1;
+    mb4_Work.capsuleBubble2.mdlId = -1;
+    mb4_Work.capsuleBubble2.endF = 0;
+
+    bubbleP = &mb4_Work.emitBubble[0];
+    for (i = 0; i < 13; i++) {
+        bubbleP->timer = (s32)(12.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+        bubbleP->count = (s32)(5.0f + (10.0f * (0.007874016f * (frand() & 0x7F))));
+        bubbleP->tick = frand();
+        bubbleP++;
+    }
+
+    bubbleP = &mb4_Work.puku2Bubble;
+    bubbleP->timer = (s32)(12.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+    bubbleP->count = 0;
+    bubbleP->tick = 0;
+
+    bubbleP = &mb4_Work.irukaBubble;
+    bubbleP->timer = (s32)(12.0f * (60.0f * (0.007874016f * (frand() & 0x7F))));
+    bubbleP->count = 0;
+    bubbleP->tick = 0;
+
+    MB4_SakanaInit();
+    MBCapsuleEffHookSet(MB4_CapsuleEffHook);
+    MBScrollInit(DATANUM(DATA_w04s, 48), 20000.0f, 0.0f);
+    MBLightHookSet(MB4_LightSet, MB4_LightReset);
+    MBCapsuleColCreate(DATANUM(DATA_w04s, 49));
+    MBBranchFlagSet(0);
+    MBMasuPathCheckHookSet(MB4_MasuPathCheck);
+    HuDataDirClose(DATANUM(DATA_w04s, 0));
+    MBMasuWalkPreHookSet(MB4Ev_MasuWalkPre);
+    MBMasuWalkPostHookSet(MB4Ev_MasuWalkPost);
+    MBMasuHatenaHookSet((MASUPLAYERHOOK)MB4Ev_MasuHatena);
+    mb4_MainObj = MBAddObj(32768, 0, 0, MB4_MainObjUpdate);
+    MBOpeningViewSet(&openingRot, &openingOfs, openingZoom);
+    MBMapViewCameraSet(&mapViewRot, &mapViewPos, mapViewZoom);
+}
+
 static void MB4_Kill(void)
 {
     if(mb4_MainObj != NULL) {
@@ -660,6 +945,133 @@ static void MB4_Kill(void)
     MB4_CoinEffClose();
     MB4_BubbleEffClose();
     MB4_SakanaClose();
+}
+
+// NONMATCHING: complete and faithful; the original copies the bubble positions through stack temporaries and uses fewer saved registers
+static void MB4_MainObjUpdate(OMOBJ *obj)
+{
+    Point3d pos;
+    Point3d scale;
+    MB4_BUBBLE_TIMER *bubbleP;
+    s32 playerNo;
+    s32 i;
+    s32 timer;
+    f32 bx, by, bz;
+
+    if (MBKillCheck() || mb4_MainObj == NULL) {
+        omDelObjEx(mbObjMan, obj);
+        mb4_MainObj = NULL;
+        return;
+    }
+
+    bubbleP = &mb4_Work.playerBubble[0];
+    for (playerNo = 0; playerNo < 4; playerNo++) {
+#ifdef TARGET_PC
+        MBPlayerPosGet(playerNo, &pos); // GC reads stale stack here (first pass uninitialised)
+#endif
+        /* the original tests .y twice (not .z), on the previous iteration's pos */
+        if ((pos.x != 0.0f || pos.y != 0.0f || pos.y != 0.0f) &&
+            MBPlayerMotionNoGet(playerNo) != 0xA &&
+            MBPlayerMotionNoGet(playerNo) != 6 &&
+            MBModelDispGet(MBPlayerModelGet(playerNo)) != 0) {
+            bubbleP->tick += 1;
+            timer = bubbleP->timer - 1;
+            bubbleP->timer = timer;
+            if (timer <= 0 && MBPlayerAliveCheck(playerNo)) {
+                MBPlayerPosGet(playerNo, &pos);
+                MBPlayerScaleGet(playerNo, &scale);
+                if ((bubbleP->tick & 3) == 0) {
+                    s32 burst = bubbleP->count - 1;
+                    bubbleP->count = burst;
+                    if (burst > 0) {
+                        MB4Ev_PlayerBubbleCreate(playerNo);
+                    } else {
+                        bubbleP->timer = (s32) (300.0f + (5.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                        bubbleP->count = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                    }
+                }
+            }
+        }
+        bubbleP++;
+    }
+
+    MB4_CapsuleBubbleUpdate();
+
+    bubbleP = &mb4_Work.emitBubble[0];
+    for (i = 0; i < 0xD; i++) {
+        bubbleP->tick += 1;
+        timer = bubbleP->timer - 1;
+        bubbleP->timer = timer;
+        if (timer <= 0 && (bubbleP->tick & 7) == 0) {
+            s32 burst = bubbleP->count - 1;
+            bubbleP->count = burst;
+            if (burst > 0) {
+                s32 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&mb4ev_BubbleEmitPosTbl[i], 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            } else {
+                bubbleP->timer = (s32) (300.0f + (5.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                bubbleP->count = (s32) (5.0f + (10.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            }
+        }
+        bubbleP++;
+    }
+
+    if (mb4_Work.puku2Bubble.count > 0) {
+        s32 duration;
+        Point3d puffPos;
+        mb4_Work.puku2Bubble.tick += 1;
+        timer = mb4_Work.puku2Bubble.timer - 1;
+        mb4_Work.puku2Bubble.timer = timer;
+        if (timer <= 0 && (mb4_Work.puku2Bubble.tick & 1) == 0) {
+            s32 burst = mb4_Work.puku2Bubble.count - 1;
+            mb4_Work.puku2Bubble.count = burst;
+            if (burst > 0) {
+                bx = mb4ev_Puku2BubblePos.x;
+                by = mb4ev_Puku2BubblePos.y;
+                bz = mb4ev_Puku2BubblePos.z;
+                bx -= 0.5f * (100.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                by += 0.5f * (100.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+                bz -= 0.25f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                puffPos.x = bx;
+                puffPos.y = by;
+                puffPos.z = bz;
+                MB4_BubbleEffCreate(&puffPos, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+        }
+    }
+
+    if (mb4_Work.irukaBubble.count > 0) {
+        s32 duration;
+        Point3d puffPos;
+        mb4_Work.irukaBubble.tick += 1;
+        timer = mb4_Work.irukaBubble.timer - 1;
+        mb4_Work.irukaBubble.timer = timer;
+        if (timer <= 0 && (mb4_Work.irukaBubble.tick & 1) == 0) {
+            s32 burst = mb4_Work.irukaBubble.count - 1;
+            mb4_Work.irukaBubble.count = burst;
+            if (burst > 0) {
+                bx = mb4ev_IrukaStartBubblePos.x;
+                by = mb4ev_IrukaStartBubblePos.y;
+                bz = mb4ev_IrukaStartBubblePos.z;
+                bx -= 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                by += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                bz -= 0.2f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                puffPos.x = bx;
+                puffPos.y = by;
+                puffPos.z = bz;
+                MB4_BubbleEffCreate(&puffPos, 1.5f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+        }
+    }
+
+    if (MBModelDispGet((s16) mb4_Work.pukuOpenMdlId) && MBMotionEndCheck((s16) mb4_Work.pukuOpenMdlId)) {
+        HuAudFXEmiterPlay(0x5F0, &mb4ev_Puku2BubblePos);
+        MBModelAttrSet((s16) mb4_Work.pukuMdlId, 0x40000002U);
+        MBModelAttrSet((s16) mb4_Work.pukuOpenMdlId, 0x40000002U);
+        MBModelDispSet((s16) mb4_Work.pukuOpenMdlId, FALSE);
+    }
 }
 
 static void MB4_LightSet(void)
@@ -786,6 +1198,7 @@ static void MB4_CoinDispUpdate(int playerNo, int coinNum, int threshold)
     }
 }
 
+#pragma dont_inline on /* the original calls it (it is defined after MB4Ev_Iruka) */
 /* NONMATCHING: functionally complete and faithful. The residual is a single
  * allocator-decided r29/r30 swap (playerNo vs duration); every source
  * reformulation tried reproduced it, so it is Equivalent, not Matching.
@@ -812,6 +1225,7 @@ static void MB4Ev_IrukaBubbleCreate(int playerNo, Point3d *ofs, f32 unused0, f32
     duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (frand() & 0x7F)))));
     MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (frand() & 0x7F)))), duration);
 }
+#pragma dont_inline reset
 
 /* Same as MB4Ev_IrukaBubbleCreate but with a fixed (0,0,0) offset - used
  * for the generic "player at rest" head bubble rather than the dolphin
@@ -833,9 +1247,739 @@ static void MB4Ev_PlayerBubbleCreate(int playerNo) {
     MB4_BubbleEffCreate(&pos, mb4ev_IrukaTPLvlScaleTbl[charNo] * (0.3f + (0.7f * (0.007874016f * (frand() & 0x7F)))), duration);
 }
 
+// NONMATCHING: complete and faithful (path pick, phases, rotations, RNG order verified against the asm); residual is register allocation (the original keeps rotations in float registers)
+/* Story-mode dolphin ride: the masu type picks one of the two 100-point paths (and the masu flag the player
+ * is dropped off at). The player jumps onto the dolphin, rides it along the Hermite path with bubbles, and is
+ * thrown off at the destination masu. */
+static void MB4Ev_Iruka(int playerNo)
+{
+    s16 masuId;
+    MASU *masuP;
+    Point3d pos;
+    Point3d playerStartPos;
+    Point3d targetMasuPos;
+    Point3d segStart, segEnd;
+    Point3d segDir;
+    Point3d lastRot, prevRot, curRot, nextRot, rideRot;
+    Point3d ridePos;
+    Point3d headOfs;
+    Point3d bubbleOfs;
+    Mtx rideMtx;
+    Point3d *pathP;
+    s32 pathNum;
+    s32 pathIdx;
+    u32 targetFlag;
+    s32 walkMotNo, jumpInMotNo, dismountMotNo;
+    s32 targetMasuId;
+    s32 iPrev, iCur, iNext, iNextNext;
+    s32 phase, phaseTimer;
+    s32 flipFlag;
+    s32 splashSeId;
+    s32 i, j, k;
+    s32 stepCount;
+    f32 t;
+    f64 angleDiff;
+    f32 horizDistSq, horizDist;
+
+    masuId = GwPlayer[playerNo].masuId;
+    masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
+    MBPlayerPosGet(playerNo, &pos);
+    playerStartPos = pos;
+    if (MBMasuFlagGet(MASU_LAYER_DEFAULT, masuId) & 0x1) {
+        pathP = mb4ev_Iruka1Path;
+        pathNum = 100;
+        targetFlag = 0x2;
+        pathIdx = 0;
+    } else {
+        pathP = mb4ev_Iruka2Path;
+        pathNum = 100;
+        targetFlag = 0x8;
+        pathIdx = 1;
+    }
+    walkMotNo = MBPlayerMotionCreate(playerNo, 0x8C003F);
+    jumpInMotNo = MBPlayerMotionCreate(playerNo, 0x8C0062);
+    dismountMotNo = MBPlayerMotionCreate(playerNo, 0x8C002B);
+
+    for (targetMasuId = 1; targetMasuId <= MBMasuNumGet(MASU_LAYER_DEFAULT); targetMasuId++) {
+        if (MBMasuFlagGet(MASU_LAYER_DEFAULT, targetMasuId) & targetFlag) {
+            break;
+        }
+    }
+    if (targetMasuId > MBMasuNumGet(MASU_LAYER_DEFAULT)) {
+        targetMasuId = masuId;
+    }
+    MBMasuPosGet(MASU_LAYER_DEFAULT, targetMasuId, &targetMasuPos);
+
+    MBModelAttrReset((MBMODELID)mb4_Work.irukaMdlId, 0x40000002);
+    MBModelPosSetV((MBMODELID)mb4_Work.irukaMdlId, pathP);
+    MBMotionNoSet((MBMODELID)mb4_Work.irukaMdlId, 1, 0x40000001);
+    MBModelDispSet((MBMODELID)mb4_Work.irukaMdlId, TRUE);
+    MBCameraModelViewSet(MBPlayerModelGet(playerNo), NULL, NULL, 2000.0f, -1.0f, 0x3F);
+    MBCameraMotionWait();
+
+    PSVECSubtract(&pathP[1], &pathP[0], &segDir);
+    horizDistSq = (segDir.x * segDir.x) + (segDir.z * segDir.z);
+    horizDist = sqrtf(horizDistSq);
+    rideRot.x = (180.0 * (atan2(horizDist, segDir.y) / 3.141592653589793)) - 90.0;
+    rideRot.y = 180.0 * (atan2(segDir.x, segDir.z) / 3.141592653589793);
+    rideRot.z = 0.0f;
+    curRot = rideRot;
+    lastRot = curRot;
+
+    flipFlag = 0;
+    phase = 0;
+    splashSeId = -1;
+    for (i = 0; i < pathNum - 1; i++) {
+        segStart = pathP[i];
+        segEnd = pathP[i + 1];
+        iPrev = i - 1;
+        iCur = i;
+        iNext = i + 1;
+        iNextNext = i + 2;
+        if (iPrev < 0) {
+            iPrev = i;
+        }
+        if (iNext > pathNum - 1) {
+            iNext = pathNum - 1;
+        }
+        if (iNextNext > pathNum - 1) {
+            iNextNext = pathNum - 1;
+        }
+        if (i != 0) {
+            prevRot = curRot;
+        } else {
+            prevRot = rideRot;
+        }
+
+        PSVECSubtract(&segEnd, &segStart, &segDir);
+        curRot.y = 180.0 * (atan2(segDir.x, segDir.z) / 3.141592653589793);
+        horizDistSq = (segDir.x * segDir.x) + (segDir.z * segDir.z);
+        horizDist = sqrtf(horizDistSq);
+        curRot.x = (180.0 * (atan2(horizDist, segDir.y) / 3.141592653589793)) - 90.0;
+        curRot.z = 0.0f;
+
+        if (flipFlag) {
+            curRot.y += 180.0f;
+            if (curRot.y > 180.0f) {
+                curRot.y -= 360.0f;
+            }
+            if (curRot.x == 0.0f) {
+                curRot.x = 180.0f;
+            } else if (curRot.x > 0.0f) {
+                curRot.x = 180.0f - curRot.x;
+            } else {
+                curRot.x = -180.0f - curRot.x;
+            }
+        }
+
+        angleDiff = fabs(MB4_AngleDiff(lastRot.y, curRot.y));
+        if (angleDiff > 90.0) {
+            flipFlag ^= 1;
+            if (flipFlag) {
+                curRot.y += 180.0f;
+                if (curRot.y > 180.0f) {
+                    curRot.y -= 360.0f;
+                }
+                if (curRot.x == 0.0f) {
+                    curRot.x = 180.0f;
+                } else if (curRot.x > 0.0f) {
+                    curRot.x = 180.0f - curRot.x;
+                } else {
+                    curRot.x = -180.0f - curRot.x;
+                }
+            } else {
+                PSVECSubtract(&segEnd, &segStart, &segDir);
+                curRot.y = 180.0 * (atan2(segDir.x, segDir.z) / 3.141592653589793);
+                horizDistSq = (segDir.x * segDir.x) + (segDir.z * segDir.z);
+                horizDist = sqrtf(horizDistSq);
+                curRot.x = (180.0 * (atan2(horizDist, segDir.y) / 3.141592653589793)) - 90.0;
+                curRot.z = 0.0f;
+            }
+        }
+
+        PSVECSubtract(&segEnd, &segStart, &segDir);
+        stepCount = MB4_PathNextTimeGet(1.0f, &pathP[iPrev], &pathP[iCur], &pathP[iNext], &pathP[iNextNext]) / 30.000002f;
+        for (j = 1; j <= stepCount; j++) {
+            t = (f32)j / (f32)stepCount;
+            MB4_HermiteCalcV(t, &pathP[iPrev], &pathP[iCur], &pathP[iNext], &pathP[iNextNext], &ridePos);
+            nextRot.x = fn_1_6E74(t, prevRot.x, curRot.x);
+            nextRot.y = fn_1_6E74(t, prevRot.y, curRot.y);
+            nextRot.z = 0.0f;
+            rideRot.x = MB4_AngleLerp(nextRot.x, rideRot.x, 2.5f);
+            rideRot.y = MB4_AngleLerp(nextRot.y, rideRot.y, 2.5f);
+            rideRot.z = MB4_AngleLerp(nextRot.z, rideRot.z, 2.5f);
+
+            MBModelPosSetV((MBMODELID)mb4_Work.irukaMdlId, &ridePos);
+            MBModelRotSetV((MBMODELID)mb4_Work.irukaMdlId, &rideRot);
+            PSMTXIdentity(rideMtx);
+            mtxRotCat(rideMtx, rideRot.x, rideRot.y, rideRot.z);
+            headOfs.x = 0.0f;
+            headOfs.y = 30.000002f;
+            headOfs.z = 10.0f;
+            PSMTXMultVec(rideMtx, &headOfs, &headOfs);
+            PSVECAdd(&headOfs, &ridePos, &headOfs);
+
+            switch (phase) {
+                case 0:
+                    if (i >= mb4ev_IrukaRotYPathNo[pathIdx]) {
+                        HuAudFXPlay(0x5F1);
+                        MBPlayerMotionNoShiftSet(playerNo, walkMotNo, 0.0f, 8.0f, 0);
+                        MBPlayerPosFixEvent(playerNo, targetMasuId, FALSE);
+                        MBPlayerPosGet(playerNo, &pos);
+                        playerStartPos = pos;
+                        phase++;
+                        phaseTimer = 0;
+                    }
+                    break;
+                case 1:
+                    phaseTimer++;
+                    t = (f32)phaseTimer / 24.0f;
+                    PSVECSubtract(&headOfs, &playerStartPos, &segDir);
+                    PSVECScale(&segDir, &segDir, t);
+                    segDir.y += 200.0 * sin((3.141592653589793 * (180.0f * t)) / 180.0);
+                    PSVECAdd(&playerStartPos, &segDir, &segDir);
+                    MBPlayerPosSetV(playerNo, &segDir);
+                    MBPlayerRotSet(playerNo, 0.0f, 360.0f * -t, 0.0f);
+                    if (t >= 1.0f) {
+                        splashSeId = HuAudFXPlay(0x5EA);
+                        MBPlayerMotionNoShiftSet(playerNo, jumpInMotNo, 0.0f, 8.0f, 0x40000001);
+                        MBPlayerPosSetV(playerNo, &headOfs);
+                        phase++;
+                        phaseTimer = 0;
+                    }
+                    break;
+                case 2:
+                    MBPlayerPosSetV(playerNo, &headOfs);
+                    MBPlayerRotSetV(playerNo, &rideRot);
+                    if (i >= pathNum - mb4ev_IrukaRotXPathNo[pathIdx]) {
+                        MBCameraModelViewSet(MBPlayerModelGet(playerNo), NULL, NULL, 2000.0f, -1.0f, 0xA);
+                        MBPlayerMotionNoShiftSet(playerNo, dismountMotNo, 0.0f, 8.0f, 0);
+                        MBPlayerPosGet(playerNo, &pos);
+                        playerStartPos = pos;
+                        phase++;
+                        phaseTimer = 0;
+                    }
+                    break;
+                case 3:
+                    phaseTimer++;
+                    t = (f32)phaseTimer / 30.0f;
+                    PSVECSubtract(&targetMasuPos, &playerStartPos, &segDir);
+                    PSVECScale(&segDir, &segDir, t);
+                    segDir.y += 200.0 * sin((3.141592653589793 * (180.0f * t)) / 180.0);
+                    PSVECAdd(&playerStartPos, &segDir, &segDir);
+                    MBPlayerPosSetV(playerNo, &segDir);
+                    MBPlayerRotSet(playerNo, 360.0f * t, 0.0f, 0.0f);
+                    if (t >= 1.0f) {
+                        if (splashSeId != -1) {
+                            HuAudFXStop(splashSeId);
+                        }
+                        splashSeId = -1;
+                        MBPlayerMotionNoShiftSet(playerNo, 6, 0.0f, 8.0f, 0x40000001);
+                        MBPlayerPosSetV(playerNo, &targetMasuPos);
+                        phase++;
+                        phaseTimer = 0;
+                    }
+                    break;
+                case 4:
+                    break;
+            }
+
+            if (phase >= 1 && phase <= 3) {
+                for (k = 0; k < 3; k++) {
+                    bubbleOfs.x = 50.0f * ((0.007874016f * (frand() & 0x7F)) - 0.5f);
+                    bubbleOfs.y = 50.0f * ((0.007874016f * (frand() & 0x7F)) - 0.5f);
+                    bubbleOfs.z = 50.0f * ((0.007874016f * (frand() & 0x7F)) - 0.5f);
+                    MB4Ev_IrukaBubbleCreate(playerNo, &bubbleOfs, 0.0f, 0.0f);
+                }
+            }
+            HuPrcVSleep();
+        }
+        lastRot = curRot;
+    }
+
+    MBCameraMotionWait();
+    MBPlayerPosSetV(playerNo, &targetMasuPos);
+    MBPlayerRotSet(playerNo, 0.0f, 0.0f, 0.0f);
+    GwPlayer[playerNo].masuId = targetMasuId;
+    HuPrcSleep(0x3C);
+    MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0x40000001);
+    MBModelAttrSet((MBMODELID)mb4_Work.irukaMdlId, 0x40000002);
+    MBModelDispSet((MBMODELID)mb4_Work.irukaMdlId, FALSE);
+    HuPrcSleep(0x3C);
+    if (walkMotNo != -1) {
+        MBPlayerMotionKill(playerNo, walkMotNo);
+    }
+    if (jumpInMotNo != -1) {
+        MBPlayerMotionKill(playerNo, jumpInMotNo);
+    }
+    if (dismountMotNo != -1) {
+        MBPlayerMotionKill(playerNo, dismountMotNo);
+    }
+}
+
 static int MB4_MasuPathCheck(s16 id, u32 flag, s16 *linkTbl, BOOL endF)
 {
     return -1;
+}
+
+// NONMATCHING: complete and faithful; the type 1..2 reset branch is laid out differently and one more saved register is used
+static void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL flag2, BOOL flag3) {
+    Point3d pos;
+    Mtx mtx;
+    Point3d rot;
+    Point3d ofs;
+    s32 i, duration;
+    f32 angle;
+
+    switch (capsuleNo) {
+    case 38:
+    case 34:
+        mb4_Work.capsuleBubble.endF = 0;
+        if (type < 3) {
+            if (type >= 1) {
+                mb4_Work.capsuleBubble.capsuleNo = -1;
+                mb4_Work.capsuleBubble.mdlId = -1;
+            }
+        } else if (type < 5) {
+            mb4_Work.capsuleBubble.timer = (s32) (8.0f + (5.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            mb4_Work.capsuleBubble.tick = (s32) frand();
+            mb4_Work.capsuleBubble.no = 0;
+            mb4_Work.capsuleBubble.capsuleNo = 0x22;
+            mb4_Work.capsuleBubble.mdlId = mdlId;
+            mb4_Work.capsuleBubbleFlag = flag1;
+        }
+        if (type == 4) {
+            mb4_Work.capsuleBubble.endF = 1;
+            return;
+        }
+        return;
+    case -99:
+        mb4_Work.capsuleBubble2.endF = 0;
+        if (type < 3) {
+            if (type >= 1) {
+                mb4_Work.capsuleBubble2.capsuleNo = -1;
+                mb4_Work.capsuleBubble2.mdlId = -1;
+            }
+        } else if (type < 5) {
+            mb4_Work.capsuleBubble2.timer = (s32) (8.0f + (5.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            mb4_Work.capsuleBubble2.tick = (s32) frand();
+            mb4_Work.capsuleBubble2.no = 0;
+            mb4_Work.capsuleBubble2.capsuleNo = -0x63;
+            mb4_Work.capsuleBubble2.mdlId = mdlId;
+        }
+        if (type == 4) {
+            mb4_Work.capsuleBubble2.endF = 1;
+            return;
+        }
+        break;
+    case 14:
+        switch (type) {
+        case 5:
+            for (i = 0; i < 2; i++) {
+                MBModelPosGet((s16) mdlId, &pos);
+                MBModelRotGet((s16) mdlId, &rot);
+                mtxRot(mtx, -rot.x, rot.y, rot.z);
+                ofs.x = 0.0f;
+                ofs.y = 0.0f;
+                ofs.z = -100.0f;
+                PSMTXMultVec(mtx, &ofs, &ofs);
+                PSVECAdd(&pos, &ofs, &pos);
+                pos.x += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                pos.y += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                pos.z += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+            return;
+        case 6:
+            for (i = 0; i < 0x20; i++) {
+                MBModelPosGet((s16) mdlId, &pos);
+                pos.x += 1.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                pos.y += 1.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                pos.z += 0.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+            return;
+        }
+        break;
+    case 22:
+        switch (type) {
+        case 7:
+            for (i = 0; i < 0x10; i++) {
+                MBModelPosGet((s16) mdlId, &pos);
+                pos.x += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                pos.z += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+            return;
+        case 6:
+            Hu3DModelObjMtxGet(MBModelIdGet((s16) mdlId), "itemhook_C", mtx);
+            ofs.x = mtx[0][3];
+            ofs.y = mtx[1][3];
+            ofs.z = mtx[2][3];
+            for (i = 0; i < 0x20; i++) {
+                MBModelPosGet((s16) mdlId, &pos);
+                pos.x = ofs.x + (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                pos.y = ofs.y + (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                pos.z = ofs.z + (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+            return;
+        }
+        break;
+    case 16:
+        switch (type) {
+        case 8:
+            for (i = 0; i < 2; i++) {
+                MBModelPosGet((s16) mdlId, &pos);
+                pos.x += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                pos.z += 100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+            return;
+        case 6:
+            for (i = 0; i < 0x40; i++) {
+                MBModelPosGet((s16) mdlId, &pos);
+                pos.x += 2.0f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                pos.y += 2.0f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                pos.z += 0.5f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            }
+            return;
+        }
+        break;
+    default:
+        switch (type) {
+        case 3:
+            mb4_Work.capsuleBubble.timer = (s32) (12.0f + (4.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+            mb4_Work.capsuleBubble.tick = (s32) frand();
+            mb4_Work.capsuleBubble.capsuleNo = capsuleNo;
+            mb4_Work.capsuleBubble.mdlId = mdlId;
+            mb4_Work.capsuleBubbleFlag = flag1;
+            return;
+        case 8:
+            if (capsuleNo == 0x19) {
+                MBModelPosGet((s16) mdlId, &pos);
+                angle = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+                pos.x = (f32) ((f64) pos.x + (0.4000000059604645 * (100.0 * sin((3.141592653589793 * (f64) angle) / 180.0))));
+                pos.z = (f32) ((f64) pos.z + (0.4000000059604645 * (100.0 * cos((3.141592653589793 * (f64) angle) / 180.0))));
+                pos.y += 0.2f * (100.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f));
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+                return;
+            }
+            MBModelPosGet((s16) mdlId, &pos);
+            angle = 360.0f * (0.007874016f * (f32) (frand() & 0x7F));
+            pos.x = (f32) ((f64) pos.x + (0.6000000238418579 * (100.0 * sin((3.141592653589793 * (f64) angle) / 180.0))));
+            pos.z = (f32) ((f64) pos.z + (0.6000000238418579 * (100.0 * cos((3.141592653589793 * (f64) angle) / 180.0))));
+            pos.y -= 0.2f * (100.0f * (0.007874016f * (f32) (frand() & 0x7F)));
+            duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+            MB4_BubbleEffCreate(&pos, 0.75f * (0.8f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+            return;
+        case 1:
+        case 2:
+            mb4_Work.capsuleBubble.capsuleNo = -1;
+            mb4_Work.capsuleBubble.mdlId = -1;
+            break;
+        default:
+            break;
+        }
+        break;
+    }
+}
+
+/* Shared "burst a bubble at a model bone" step of the MB4_CapsuleBubbleUpdate cases: transform `ofs` by the
+ * named bone's world matrix on the slot-1 model and spawn a bubble there. A macro (not a function) because the
+ * original evaluates the lifetime frand() before the speed-scale one, i.e. before the argument expression. */
+#define MB4_CAPSULE_BUBBLE_BURST(bone, scaleExpr) \
+    do { \
+        Mtx burstMtx; \
+        Point3d burstPos; \
+        s32 burstDuration; \
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work.capsuleBubble.mdlId), bone, burstMtx); \
+        PSMTXMultVec(burstMtx, &ofs, &burstPos); \
+        burstDuration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))))); \
+        MB4_BubbleEffCreate(&burstPos, scaleExpr, burstDuration); \
+    } while (0)
+
+/* Two independent per-frame bubble trails: capsuleBubble2 (the second "held item" trail from
+ * MB4_CapsuleEffHook's -99 case, head-bubble bursts every 4th tick while its count runs), and capsuleBubble
+ * (the first slot, dispatched by capsule/effect kind in capsuleNo to burst bubbles at a specific model bone,
+ * with a different bone/offset/speed per kind; offsets and bone names are the original per-case data). */
+// NONMATCHING: complete and faithful; the original loads the per-case offset vectors from .data tables and re-fetches the nostril matrix per flag variant, ours builds the vectors inline
+static void MB4_CapsuleBubbleUpdate(void) {
+    Mtx headMtx, mtx;
+    Point3d ofs, pos;
+    s32 duration;
+
+    if (mb4_Work.capsuleBubble2.capsuleNo != -1 && mb4_Work.capsuleBubble2.mdlId != -1) {
+        if (!MBModelDispGet((s16) mb4_Work.capsuleBubble2.mdlId)) {
+            mb4_Work.capsuleBubble2.capsuleNo = -1;
+            mb4_Work.capsuleBubble2.mdlId = -1;
+            mb4_Work.capsuleBubble2.timer = 0;
+        }
+        if (mb4_Work.capsuleBubble2.timer > 0) {
+            mb4_Work.capsuleBubble2.tick += 1;
+            mb4_Work.capsuleBubble2.no -= 1;
+            if (mb4_Work.capsuleBubble2.no <= 0 && (mb4_Work.capsuleBubble2.tick & 3) == 0) {
+                ofs.x = 65.0f;
+                ofs.y = -20.0f;
+                ofs.z = 0.0f;
+                Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work.capsuleBubble2.mdlId), "ske_head", headMtx);
+                PSMTXMultVec(headMtx, &ofs, &pos);
+                duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                MB4_BubbleEffCreate(&pos, 1.2f * (0.3f + (0.7f * (0.007874016f * (f32) (frand() & 0x7F)))), duration);
+                mb4_Work.capsuleBubble2.timer -= 1;
+                if (mb4_Work.capsuleBubble2.timer <= 0) {
+                    if (mb4_Work.capsuleBubble2.endF != 0) {
+                        mb4_Work.capsuleBubble2.timer = (s32) (8.0f + (5.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                        mb4_Work.capsuleBubble2.tick = (s32) frand();
+                        mb4_Work.capsuleBubble2.no = (s32) (180.0f + (3.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                    } else {
+                        mb4_Work.capsuleBubble2.mdlId = -1;
+                    }
+                }
+            }
+        }
+    }
+
+    if (mb4_Work.capsuleBubble.capsuleNo == -1 || mb4_Work.capsuleBubble.mdlId == -1) {
+        return;
+    }
+
+    switch (mb4_Work.capsuleBubble.capsuleNo) {
+    case 4:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 350.0f;
+                ofs.z = 350.0f;
+                MB4_CAPSULE_BUBBLE_BURST("jyan", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                }
+            }
+        }
+        return;
+    case 6:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 10.0f;
+                ofs.z = 30.0000019f;
+                MB4_CAPSULE_BUBBLE_BURST("nose", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 10:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 0.0f;
+                ofs.z = 30.0000019f;
+                MB4_CAPSULE_BUBBLE_BURST("head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 13:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 40.0f;
+                MB4_CAPSULE_BUBBLE_BURST("noko_head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 15:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 40.0f;
+                MB4_CAPSULE_BUBBLE_BURST("body", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 17:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 40.0f;
+                MB4_CAPSULE_BUBBLE_BURST("noko_head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 20:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 50.0f;
+                MB4_CAPSULE_BUBBLE_BURST("neck", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 23:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 10.0f;
+                ofs.z = 60.0000038f;
+                MB4_CAPSULE_BUBBLE_BURST("neck", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 24:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 50.0f;
+                MB4_CAPSULE_BUBBLE_BURST("neck", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 25:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 20.0f;
+                ofs.z = 50.0f;
+                MB4_CAPSULE_BUBBLE_BURST("j_uekuti", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 31:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 0.0f;
+                ofs.y = 10.0f;
+                ofs.z = 50.0f;
+                MB4_CAPSULE_BUBBLE_BURST("head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 37:
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            if ((mb4_Work.capsuleBubble.tick & 3) == 0) {
+                ofs.x = 70.0f;
+                ofs.y = 40.0f;
+                ofs.z = 0.0f;
+                MB4_CAPSULE_BUBBLE_BURST("ske_head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    mb4_Work.capsuleBubble.mdlId = -1;
+                    return;
+                }
+            }
+        }
+        break;
+    case 34:
+        /* Two-point burst (nostrils), one bubble per entry of the offset table picked by capsuleBubbleFlag
+         * (both tables hold the same values in this board). The table is read z, y, x. */
+        if (mb4_Work.capsuleBubble.timer > 0) {
+            mb4_Work.capsuleBubble.tick += 1;
+            mb4_Work.capsuleBubble.no -= 1;
+            if (mb4_Work.capsuleBubble.no <= 0 && (mb4_Work.capsuleBubble.tick & 3) == 0) {
+                static const f32 nostrilOfsTbl[2][2][3] = {
+                    { { -9.0f, 30.0000019f, 65.0f }, { 9.0f, 30.0000019f, 65.0f } },
+                    { { -9.0f, 30.0000019f, 65.0f }, { 9.0f, 30.0000019f, 65.0f } },
+                };
+                s32 variant = (mb4_Work.capsuleBubbleFlag != 0) ? 1 : 0;
+                s32 j;
+                Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work.capsuleBubble.mdlId), "ns_hed", mtx);
+                for (j = 0; j < 2; j++) {
+                    pos.z = nostrilOfsTbl[variant][j][0];
+                    pos.y = nostrilOfsTbl[variant][j][1];
+                    pos.x = nostrilOfsTbl[variant][j][2];
+                    PSMTXMultVec(mtx, &pos, &pos);
+                    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                    MB4_BubbleEffCreate(&pos, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), duration);
+                }
+                mb4_Work.capsuleBubble.timer -= 1;
+                if (mb4_Work.capsuleBubble.timer <= 0) {
+                    if (mb4_Work.capsuleBubble.endF != 0) {
+                        mb4_Work.capsuleBubble.timer = (s32) (8.0f + (5.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                        mb4_Work.capsuleBubble.tick = (s32) frand();
+                        mb4_Work.capsuleBubble.no = (s32) (180.0f + (3.0f * (60.0f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                    } else {
+                        mb4_Work.capsuleBubble.mdlId = -1;
+                    }
+                }
+            }
+        }
+        break;
+    }
 }
 
 float MB4_AngleDiff(float a, float b)

@@ -2044,13 +2044,12 @@ Object(Matching, "REL/m510dll/opening.c"),
     Rel(
         "w04sDll",
         objects={
-            # World04 is faithful and largely matched (SakanaInit, the two
-            # bubble creators, CoinDispUpdate) but 5 functions are still
-            # absent from world04.c, so the port cannot compile it yet.
-            # Flip to Equivalent once MB4Ev_Iruka, MB4_Create,
-            # MB4_MainObjUpdate, MB4_CapsuleEffHook and
-            # MB4_CapsuleBubbleUpdate exist.
-            Object(NonMatching, "REL/w04sDll/world04.c"),
+            # World04 is complete: every function is written and checked
+            # against the asm (MB4_Create, MB4_MainObjUpdate, MB4Ev_Iruka,
+            # MB4_CapsuleEffHook and MB4_CapsuleBubbleUpdate are not
+            # byte-identical, see their NONMATCHING comments), so the port
+            # builds it as Equivalent.
+            Object(Equivalent, "REL/w04sDll/world04.c"),
         },
     ),
     Rel(
