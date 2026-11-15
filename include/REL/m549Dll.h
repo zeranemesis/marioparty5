@@ -75,6 +75,7 @@ typedef struct M549Char_s {
         };
     };
     s16 s5C;        /* 0x5C */
+    s16 s5E;
     s16 s60;        /* 0x60 */
     s16 s62;        /* 0x62 */
     f32 f64;        /* 0x64 */
