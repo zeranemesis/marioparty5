@@ -4880,6 +4880,7 @@ s32 MB2_CoinEffCreate(f32 *arg0, f32 *arg1, u8 *arg2, f32 farg0, f32 farg1, f32 
 
 s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
     Point3d *pos;
+    f32 srcPos[3];
     f32 vel[3];
     u8 col[4];
     f32 t;
@@ -4889,6 +4890,9 @@ s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2,
     if (mb2_CoinEffObj == NULL) {
         return -1;
     }
+    srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos[2] = pos->z + farg4;
     switch (arg1) {
     case 1:
         spd = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
@@ -4908,13 +4912,7 @@ s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2,
     col[1] = (u8) (192.0f + (63.0f * t));
     col[2] = (u8) (192.0f + (63.0f * t));
     col[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
-    {
-        f32 srcPos[3];
-        srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[2] = pos->z + farg4;
-        return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
-    }
+    return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
 }
 
 /* NONMATCHING: verified - low fuzzy% (9.95%) is register-allocation noise
@@ -4927,6 +4925,7 @@ s32 MB2_CoinEffCreateRand(void *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2,
  * no offset mismatch. */
 s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg2, f32 farg3, f32 farg4) {
     Point3d *pos;
+    f32 srcPos[3];
     f32 vel[3];
     u8 *col;
     u32 r;
@@ -4936,6 +4935,9 @@ s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg
     if (mb2_CoinEffObj == NULL) {
         return -1;
     }
+    srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+    srcPos[2] = pos->z + farg4;
     switch (arg1) {
     case 1:
         vel[1] = -1.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
@@ -4950,15 +4952,9 @@ s32 MB2_CoinEffCreateColRand(f32 *arg0, s32 arg1, f32 farg0, f32 farg1, f32 farg
     vel[0] = 0.0f;
     vel[2] = 0.0f;
     r = frand() & 0x7FFF;
-    idx = r - ((((r - (r / 7)) >> 1) + (r / 7)) >> 2) * 7;
+    idx = r % 7;
     col = (u8 *) &mb2ev_CoinEffColTbl[idx];
-    {
-        f32 srcPos[3];
-        srcPos[0] = pos->x + (farg2 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[1] = pos->y + (farg3 * (-0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-        srcPos[2] = pos->z + farg4;
-        return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
-    }
+    return MB2_CoinEffCreate(srcPos, vel, col, farg0, farg1, 0.0f);
 }
 
 void MB2_SplashEffInit(void) {
