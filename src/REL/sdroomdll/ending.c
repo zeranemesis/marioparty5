@@ -7,6 +7,9 @@
 #include "game/memory.h"
 #include "game/mgdata.h"
 #include "stdio.h"
+
+/* not declared in game/hu3d.h (see there): returns float */
+float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 #include "dolphin/gx/GXEnum.h"
 
 /* camera views (centre, rotation, zoom) */

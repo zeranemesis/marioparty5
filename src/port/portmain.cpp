@@ -674,7 +674,27 @@ static OMOVL tbBoardHook(OMOVL ovl) {
     return dll[tbBoard];
 }
 
+// MP5_TEST_OVL=<overlay id> [MP5_TEST_DIR=<data dir id>]: the title's jump to the file select goes straight to that
+// overlay (e.g. DLL_sdroomdll with DATA_sdroom), after reading the data dir the way the mode select does.
+static bool tbOvlDone = false;
+static OMOVL tbOvlHook(OMOVL ovl) {
+    bool& done = tbOvlDone;
+    const char* env = getenv("MP5_TEST_OVL");
+    if (env == nullptr || *env == 0 || done || ovl != DLL_fileseldll) {
+        return ovl;
+    }
+    done = true;
+    if (const char* dir = getenv("MP5_TEST_DIR")) {
+        HuDataDirRead(atoi(dir));
+    }
+    printf("TESTOVL: start ovl=%d
+", atoi(env));
+    fflush(stdout);
+    return (OMOVL)atoi(env);
+}
+
 extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
+    ovl = tbOvlHook(ovl);
     ovl = tbBoardHook(ovl);
     tmInit();
     if (tmMg < 0) {
@@ -714,7 +734,7 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             }
             tbFrame = 100000;
         }
-        if (tbBoard >= 0 && !tbStarted) {
+        if ((tbBoard >= 0 && !tbStarted) || (getenv("MP5_TEST_OVL") != nullptr && !tbOvlDone)) {
             memset(st, 0, sizeof(PADStatus) * 4);
             if ((++tbFrame / 20) % 2) {
                 st[0].button = PAD_BUTTON_START | PAD_BUTTON_A;

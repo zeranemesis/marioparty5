@@ -1,4 +1,6 @@
 #include "REL/sdroomdll/sdroom.h"
+#include "REL/sdroomdll/tournament.h"
+#include "game/hsfex.h"
 #include "game/sprite.h"
 #include "game/window.h"
 #include "game/mgdata.h"
@@ -9,7 +11,6 @@
 #include "string.h"
 #include "stdint.h"
 
-extern s16 winPrio;
 extern void Hu3DLayerHookReset(s16 layerNo);
 extern void HuSprTexLoad(ANIMDATA *anim, s16 bmpNo, s16 texMapId, GXTexWrapMode wrapS, GXTexWrapMode wrapT, GXTexFilter filter);
 
@@ -308,7 +309,7 @@ block_17:
     }
     HuAudJinglePlay(0x7E);
     HuWinExOpen(lbl_1_bss_606);
-    HuWinInsertMesSet(lbl_1_bss_606, MESSNUM_PTR(lbl_1_bss_67C[arg0].unk0), 0);
+    HuWinInsertMesSet(lbl_1_bss_606, MESSNUM_PTR(lbl_1_bss_67C[arg0].name), 0);
     HuWinMesSet(lbl_1_bss_606, 0x19001EU);
     var_r30_2 = 0;
     goto loop_20;
@@ -850,7 +851,7 @@ block_64:
     lbl_1_bss_6D4[2] = (s16) temp_r28->partNo[2];
     lbl_1_bss_6D4[3] = (s16) temp_r28->partNo[3];
     lbl_1_bss_6D4[4] = (s16) temp_r28->charNo;
-    strcpy((char *)sp8.unk0, temp_r28->name);
+    strcpy(sp8.name, temp_r28->name);
     sp8.partNo[0] = -1;
     temp_r3 = HuPrcChildCreate(fn_1_88BC, 0x3E8U, 0x1000U, 0, HuPrcCurrentGet());
     temp_r3->property = &sp8;
@@ -1218,7 +1219,7 @@ loop_70:
                 fn_1_A55C();
                 omCameraViewSetMulti(8, &lbl_1_data_10E8);
 loop_72:
-                if (NameEnterMain(&lbl_1_bss_67C[arg0], (s16) (1 << arg0)) != 0) {
+                if (NameEnterMain(lbl_1_bss_67C[arg0].name, (s16) (1 << arg0)) != 0) {
                     fn_1_AFCC(&lbl_1_bss_67C[arg0], 0U);
                     HuWinExOpen(lbl_1_bss_570);
                     HuWinMesSet(lbl_1_bss_570, 0x19001DU);
@@ -1261,7 +1262,7 @@ loop_82:
                     goto block_95;
                 }
             } else {
-                strcpy((char *)lbl_1_bss_67C[arg0].unk0, GwSdCommon.machine[arg0].name);
+                strcpy(lbl_1_bss_67C[arg0].name, GwSdCommon.machine[arg0].name);
                 var_r31_10 = 1;
 loop_86:
                 if (var_r31_10 <= 0xA) {
@@ -1332,7 +1333,7 @@ loop_108:
             goto loop_108;
         }
         temp_r29_2->charNo = 0x40;
-        strcpy(temp_r29_2->name, (char *)lbl_1_bss_67C[arg0].unk0);
+        strcpy(temp_r29_2->name, lbl_1_bss_67C[arg0].name);
         fn_1_44E4(&lbl_1_bss_67C[arg0], lbl_1_bss_6D4[0], lbl_1_bss_6D4[1], lbl_1_bss_6D4[3], lbl_1_bss_6D4[4]);
         fn_1_4638(&lbl_1_bss_67C[arg0], 4);
         temp_f30 = (f32) (1450.0 * -cos((3.141592653589793 * (f64) ((arg0 * 0x3C) + 0x3C)) / 180.0));
@@ -1535,7 +1536,7 @@ loop_10:
         if ((s32) (var_r31_2 + arg1) >= (s16) lbl_1_bss_6FE) {
             HuWinHomeClear(lbl_1_bss_736[var_r31_2]);
         } else {
-            HuWinMesSet(lbl_1_bss_736[var_r31_2], temp_r30[lbl_1_bss_6DE[var_r31_2 + arg1]].file[0]);
+            HuWinMesSet(lbl_1_bss_736[var_r31_2], temp_r30[lbl_1_bss_6DE[var_r31_2 + arg1]].nameMes);
         }
         var_r31_2 += 1;
         goto loop_10;
@@ -1571,7 +1572,7 @@ block_24:
             goto loop_25;
         }
     }
-    HuWinMesSet(lbl_1_bss_728[6], SdMachinePartTbl[arg0][var_r31_3].file[1]);
+    HuWinMesSet(lbl_1_bss_728[6], SdMachinePartTbl[arg0][var_r31_3].descMes);
 }
 
 void fn_1_AC08(float farg0, float farg1) {
@@ -1657,7 +1658,7 @@ void fn_1_AFCC(SDMACHINE_DISP *arg0, u32 arg1) {
     HuWinPriSet(temp_r3_2, 0x28);
     HuWinAttrSet(temp_r3_2, 0x800U);
     HuWinBGTPLvlSet(temp_r3_2, 0.0f);
-    HuWinMesSet(temp_r3_2, MESSNUM_PTR(arg0->unk0));
+    HuWinMesSet(temp_r3_2, MESSNUM_PTR(arg0->name));
     temp_r3_3 = HuWinCreate(280.0f, 230.0f, 0x118, 0x78, 0);
     lbl_1_bss_5F6[2] = temp_r3_3;
     HuWinMesSpeedSet(temp_r3_3, 0);

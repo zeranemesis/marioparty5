@@ -9,7 +9,6 @@
 #include "humath.h"
 #include <stdio.h>
 
-extern s16 winPrio;
 
 static void fn_1_258C8(void);
 static void fn_1_25B58(void);
@@ -509,7 +508,7 @@ static void fn_1_271EC(s16 cat, s16 top)
                 HuWinMesPalSet(lbl_1_bss_19EA[i], 7, 0xC0, 0x20, 0x20);
                 HuWinMesPalSet(lbl_1_bss_19D6[i], 7, 0xC0, 0x20, 0x20);
             }
-            HuWinMesSet(lbl_1_bss_19EA[i], part->file[0]);
+            HuWinMesSet(lbl_1_bss_19EA[i], part->nameMes);
             sprintf(lbl_1_bss_1990[i], "%02d", part->cost);
             HuWinMesSet(lbl_1_bss_19D6[i], MESSNUM_PTR(lbl_1_bss_1990[i]));
         }
@@ -536,7 +535,7 @@ static void fn_1_271EC(s16 cat, s16 top)
         HuWinHomeClear(lbl_1_bss_19FE[6]);
         return;
     }
-    HuWinMesSet(lbl_1_bss_19FE[6], SdMachinePartTbl[cat][lbl_1_bss_1980].file[1]);
+    HuWinMesSet(lbl_1_bss_19FE[6], SdMachinePartTbl[cat][lbl_1_bss_1980].descMes);
 }
 
 /* Moves the shop windows and sprites to (x, y). */
@@ -579,10 +578,10 @@ static void fn_1_279F8(s16 cat, s16 no)
     if (fn_1_414C(cat, no) == 1) {
         return;
     }
-    if (HuARDirCheck(part->file[2]) != 0) {
-        data = HuAR_ARAMtoMRAMFileRead(part->file[2], HU_MEMNUM_OVL, HEAP_MODEL);
+    if (HuARDirCheck(part->modelFile) != 0) {
+        data = HuAR_ARAMtoMRAMFileRead(part->modelFile, HU_MEMNUM_OVL, HEAP_MODEL);
     } else {
-        data = HuDataSelHeapReadNum(part->file[2], HU_MEMNUM_OVL, HEAP_MODEL);
+        data = HuDataSelHeapReadNum(part->modelFile, HU_MEMNUM_OVL, HEAP_MODEL);
     }
     mdl = Hu3DModelCreate(data);
     lbl_1_bss_19CE[0] = mdl;
@@ -627,7 +626,7 @@ static void fn_1_27D80(s16 cat, s16 no)
     win = &winData[lbl_1_bss_570];
     win->choiceEndSe = -1;
     win->padMask = 1;
-    HuWinInsertMesSet(lbl_1_bss_570, part->file[0], 0);
+    HuWinInsertMesSet(lbl_1_bss_570, part->nameMes, 0);
     HuWinMesSet(lbl_1_bss_570, 0x190008);
     HuWinMesWait(lbl_1_bss_570);
     choice = HuWinChoiceGet(lbl_1_bss_570, -1);

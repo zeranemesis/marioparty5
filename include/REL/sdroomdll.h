@@ -12,9 +12,11 @@
 #include "datadir_enum.h"
 #include <math.h>
 
-/* machine part table entry: 3 model files, price and 3 flag bytes */
+/* machine part table entry: message numbers (0x1A00xx) of name and description, model file, price and 3 flag bytes */
 typedef struct SdMachinePart_s {
-    unsigned int file[3]; //0x00
+    unsigned int nameMes; //0x00
+    unsigned int descMes; //0x04
+    unsigned int modelFile; //0x08
     u8 cost; //0x0C
     s8 unkD; //0x0D
     s8 unkE; //0x0E
@@ -49,7 +51,7 @@ typedef struct SdMachineTail_s {
 
 /* partNo[0..3] = head, body, tail, item (-1 = none) */
 typedef struct SdMachineDisp_s {
-    u8 unk0[0x12];
+    char name[0x12]; //0x00 machine name
     s16 partNo[4]; //0x12
     s16 headMdl; //0x1A
     s16 bodyMdl[4]; //0x1C
@@ -88,6 +90,11 @@ void fn_1_4D0C(s16 layerNo);
 void fn_1_4E14(void);
 u16 fn_1_4F24(u16 padMask);
 u16 fn_1_4FD0(u16 padMask);
+
+/* filename.c: name entry */
+void NameEnterInit(void);
+s32 NameEnterMain(char *nameOut, s16 pad);
+s32 NameEnterClose(s16 winId);
 u16 fn_1_507C(u16 padMask);
 u16 fn_1_5118(u16 padMask);
 void fn_1_51C4(int headNo, s16 *mdlId);

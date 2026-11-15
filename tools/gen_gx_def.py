@@ -22,7 +22,7 @@ def lib_symbols(path):
 
 
 # the few other aurora entry points RELs call (anything broader makes dol pull in aurora objects that shadow src/port)
-EXTRA = {"OSGetTick", "OSGetTime", "OSTicksToCalendarTime", "AuroraGXSetCopyReadback", "AuroraGXCopyReadbackSync"}
+EXTRA = {"OSGetTick", "OSGetTime", "CARDGetSerialNo", "OSTicksToCalendarTime", "AuroraGXSetCopyReadback", "AuroraGXCopyReadbackSync"}
 names = set()
 for lib in sys.argv[2:]:
     names |= {s for s in lib_symbols(lib) if re.fullmatch(r"(__)?GX[A-Za-z0-9_]*", s) or s in EXTRA}

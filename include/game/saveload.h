@@ -97,6 +97,8 @@ void SLSaveStoryExec(void);
 void SLSaveStaffExec(void);
 void SLSaveModeExec(s16 sdModeF);
 s32 SLSaveSdBExec(void);
+void SLSaveSdExec(void);
+s32 SLFileClose(void);
 
 #ifdef __cplusplus
 }

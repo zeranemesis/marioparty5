@@ -29,7 +29,6 @@ extern void fn_1_193C0(void);
 extern void fn_1_1C25C(void);
 extern void fn_1_1C260(void);
 extern void fn_1_256B4(void);
-extern void NameEnterInit(void);
 
 static void fn_1_154C(void);
 static void fn_1_17B0(void);

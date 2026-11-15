@@ -180,6 +180,7 @@ typedef struct Win_s {
 } HUWIN;
 
 SHARED_SYM extern HUWIN winData[HUWIN_MAX];
+SHARED_SYM extern s16 winPrio;
 SHARED_SYM extern void *messDataPtr;
 
 void HuWindowInit(void);
