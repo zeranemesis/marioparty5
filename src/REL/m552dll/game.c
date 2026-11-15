@@ -1456,7 +1456,7 @@ s32 fn_1_7574(s32 arg0)
     default:
         return 0;
     case 1:
-        plr->z -= 50.0f;
+        plr->piece.z -= 50.0f;
         t = plr->timer;
         plr->timer = t + 1;
         if (t >= 0xA) {
