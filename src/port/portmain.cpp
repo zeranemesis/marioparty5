@@ -614,7 +614,58 @@ static void tmSetupPlayers() {
     _ClearFlag(FLAG_MGINST_ON); // skip the instruction screens
 }
 
+// MP5_TEST_BOARD=n (0..6 = w01..w07): the title's jump to the file select goes straight into board n
+// with 4 COM players, 10 turns, all mini-game packs, set up the way mdparty does before a party.
+extern "C" {
+#include <game/board/main.h>
+#include <game/data.h>
+#include <game/armem.h>
+#include "datadir_enum.h"
+}
+static int tbBoard = -2; // -2: env not read yet
+static bool tbStarted = false;
+
+static OMOVL tbBoardHook(OMOVL ovl) {
+    static const OMOVL dll[7] = {DLL_w01dll, DLL_w02dll, DLL_w03dll, DLL_w04dll, DLL_w05dll, DLL_w06dll, DLL_w07dll};
+    if (tbBoard == -2) {
+        const char* env = getenv("MP5_TEST_BOARD");
+        tbBoard = env != nullptr && *env != 0 ? atoi(env) : -1;
+    }
+    if (tbBoard < 0 || tbBoard > 6 || tbStarted || ovl != DLL_fileseldll) {
+        return ovl;
+    }
+    tbStarted = true;
+    for (int i = 0; i < GW_PLAYER_MAX; i++) {
+        GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
+        GwPlayerConf[i].padNo = GwPlayer[i].padNo = i;
+        GwPlayerConf[i].dif = GwPlayer[i].dif = 1;
+        GwPlayerConf[i].type = GwPlayer[i].comF = GW_TYPE_COM;
+        GwPlayerConf[i].grp = GwPlayer[i].grp = 0;
+        GwPlayer[i].handicap = 0;
+    }
+    MBPartySaveInit(tbBoard);
+    MBPlayerSaveInit(FALSE, TRUE, GW_MGPACK_ALL, 10, 0, 0, 0, 0);
+    GwCommon.partyMgPack = GwSystem.mgPack;
+    _SetFlag(FLAG_BOARD_STAR_RESET);
+    // what mdparty's load process does before the board: common board data to ARAM, char motions, board dir
+    static const int dir[7] = {DATA_w01, DATA_w02, DATA_w03, DATA_w04, DATA_w05, DATA_w06, DATA_w07};
+    CharDataClose(-1);
+    HuDataDirRead(DATA_board);
+    HuAR_MRAMtoARAM(DATA_board);
+    while (HuARDMACheck()) {
+    }
+    HuDataDirClose(DATA_board);
+    for (int i = 0; i < GW_PLAYER_MAX; i++) {
+        CharMotionInit(GwPlayerConf[i].charNo);
+    }
+    HuDataDirRead(dir[tbBoard]);
+    printf("TESTBOARD: start board=%d ovl=%d\n", tbBoard, dll[tbBoard]);
+    fflush(stdout);
+    return dll[tbBoard];
+}
+
 extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
+    ovl = tbBoardHook(ovl);
     tmInit();
     if (tmMg < 0) {
         return ovl;
@@ -641,6 +692,24 @@ extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
 extern "C" void Mp5Test_PadHook(PADStatus* st) {
     tmInit();
     if (tmMg < 0) {
+        // board test: press START/A on the title until the board starts, then leave the pads to the COM players
+        static u32 tbFrame = 0;
+        if (tbBoard == -2) {
+            tbBoardHook((OMOVL)-1); // reads MP5_TEST_BOARD only
+        }
+        // boot blanks GwPlayerConf[].charNo right after its (redirected) omOvlCall, before the board loads: put them back
+        if (tbBoard >= 0 && tbStarted && tbFrame < 100000 && GwPlayerConf[0].charNo == CHARNO_NONE) {
+            for (int i = 0; i < GW_PLAYER_MAX; i++) {
+                GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
+            }
+            tbFrame = 100000;
+        }
+        if (tbBoard >= 0 && !tbStarted) {
+            memset(st, 0, sizeof(PADStatus) * 4);
+            if ((++tbFrame / 20) % 2) {
+                st[0].button = PAD_BUTTON_START | PAD_BUTTON_A;
+            }
+        }
         return;
     }
     tmFrame++;
