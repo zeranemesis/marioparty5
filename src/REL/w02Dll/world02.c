@@ -2106,8 +2106,14 @@ void MB2Ev_Rain(s32 arg0) {
         hu3dModel = &Hu3DData[MBModelIdGet(mdlId)];
         RS_PTR(rs, 0x0) = MB2_ModelObjPtrGet((HU3DMODEL *) hu3dModel, mb2ev_RainObjTbl[i]);
         if (RS_PTR(rs, 0x0) != NULL) {
+#ifdef TARGET_PC
+            /* GC snapshots the first 0x64 bytes of the HSFOBJECT; its layout differs with
+             * 8-byte pointers, so save just base+curr transforms at the same rs offsets. */
+            memcpy(rs + 0x20, &((HSFOBJECT *) RS_PTR(rs, 0x0))->mesh.base, 2 * sizeof(HSFTRANSFORM));
+#else
             u8 *src = (u8 *) RS_PTR(rs, 0x0) - 4;
             memcpy(rs + 4, src + 4, 0x64);
+#endif
             RS_S32(rs, 0x78) = -1;
             if (mb2ev_RainNoTbl[i] > 0) {
                 s32 m;
@@ -2388,7 +2394,7 @@ void MB2Ev_Rain(s32 arg0) {
                     } else {
                         RS_F32(rs, 0xB4) = RS_F32(rs, 0xB4) - RS_F32(rs, 0x70);
                     }
-                    objP->mesh.base.rot.y = RS_F32(rs, 0x2C) + RS_F32(rs, 0xB4);
+                    objP->mesh.base.rot.y = RS_F32(rs, 0x30) + RS_F32(rs, 0xB4);
                 }
                 if (RS_S32(rs, 0x78) != -1) {
                     Mtx mtx;
@@ -2535,8 +2541,14 @@ void MB2Ev_Rain(s32 arg0) {
 
     /* Restore every rain-spot's original transform snapshot. */
     for (i = 0, rs = rainSpot; i < 0xA; i++, rs = RSp(rainSpot, i)) {
+#ifdef TARGET_PC
+        if (RS_PTR(rs, 0x0) != NULL) {
+            memcpy(&((HSFOBJECT *) RS_PTR(rs, 0x0))->mesh.base, rs + 0x20, 2 * sizeof(HSFTRANSFORM));
+        }
+#else
         u8 *dst = (u8 *) RS_PTR(rs, 0x0) - 4;
         memcpy(dst + 4, rs + 4, 0x64);
+#endif
     }
     for (j = 0; j < branchMasuCount; j++) {
         MBMasuMtxSet(*(s32 *) (branchMasu + j * 0x10), NULL);
