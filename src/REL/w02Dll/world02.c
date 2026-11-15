@@ -121,7 +121,7 @@ void MB2_CoinInit(void);
 void MB2_CoinUpdate(OMOBJ *obj);
 void MB2_CoinClose(void);
 s32 MB2_CoinNumGet(void);
-s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0);
+s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0);
 void MB2_CoinEffInit(void);
 void MB2_CoinEffUpdate(OMOBJ *obj);
 void MB2_CoinEffClose(void);
@@ -2835,7 +2835,7 @@ void MB2Ev_Zen2(s32 arg0) {
             p.x = *(f32 *) (v + 0);
             p.y = *(f32 *) (v + 4) + 50.0f;
             p.z = *(f32 *) (v + 8);
-            MB2_CoinCreate(&p.x, &p.x, 1, 0.0f, 0.0f);
+            MB2_CoinCreate(&p.x, &p.x, 1, 0.0f);
         }
     }
 
@@ -2959,92 +2959,70 @@ void MB2Ev_Zen2(s32 arg0) {
     MB2_CoinEffClose();
 }
 
-/* Shared "spring stretch" helper used throughout MB2Ev_Zen4's bungee-jump
- * minigame: result = 150 + 75*(sqrt(1 + 8*(k/150)) - 1), computed with the
- * same __frsqrte fast-inverse-sqrt Newton iteration used everywhere else
- * in this module (MB2Ev_Rain/MB2_RainbowObjCreate/MB2Ev_Zen2). The
- * original inlines this same expression at every call site (m2c shows it
- * duplicated verbatim, with only the numerator - 25000 normally, 4000 for
- * the manual quick-drop input - changing), so factoring it out here is a
- * source-level simplification, not a functional change. */
-static f32 mb2ev_Zen4SpringLen(f32 k) {
-    f32 x = 1.0f + (8.0f * (k / 150.0f));
-    f32 root;
-    if (x > 0.0f) {
-        f64 e0 = __frsqrte(x);
-        f64 e1 = 0.5 * e0 * (3.0 - ((f64) x * (e0 * e0)));
-        f64 e2 = 0.5 * e1 * (3.0 - ((f64) x * (e1 * e1)));
-        root = (f32) ((f64) x * (0.5 * e2 * (3.0 - ((f64) x * (e2 * e2)))));
+/* "Spring stretch" used by MB2Ev_Zen4's bungee-jump charge meter:
+ * step + step*((sqrt(1 + 8*(k/step)) - 1) * 0.5), sqrt via the same __frsqrte
+ * Newton iteration used across this module. Inlined at every call site in the
+ * original, with step held in a variable (guarded by step != 0). */
+static inline f32 mb2ev_Zen4SpringLen(f32 k, f32 step) {
+    f32 res;
+    if (step != 0.0f) {
+        res = step + (step * ((-1.0f + sqrtf(1.0f + (8.0f * (k / step)))) * 0.5f));
     } else {
-        root = x;
+        res = 0.0f;
     }
-    return 150.0f + (150.0f * ((-1.0f + root) * 0.5f));
+    return res;
 }
 
-/* NONMATCHING: complete, asm-read translation of the bungee-jump minigame.
- * "cror eq,lt,eq"/"eq,gt,eq" folds read as <=/>= (established pattern);
- * "(bitwise fXX) Y" reinterpret-cast artifacts on scratch scalars are
- * dropped (they come from m2c losing track of a register's type across an
- * unrelated HuPrcVSleep(f32) argument that the original never actually
- * uses meaningfully - same false-dependency shape already seen and
- * resolved in MB2_MainObjUpdate/ParticleDraw). */
+#define ZEN4_SYNC()                                                                             \
+    do {                                                                                        \
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);              \
+        MBPlayerPosSet(arg0, mtx[0][3], mtx[1][3], mtx[2][3]);                                  \
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);              \
+        MBModelPosSet((s16) MB2W_S32(0x18 * 4), mtx[0][3], mtx[1][3], mtx[2][3]);               \
+    } while (0)
+
 void MB2Ev_Zen4(s32 arg0) {
     MASU *masuP;
-    Point3d startPos, tmp, vec, rot;
+    Mtx mtx;
+    Point3d startPos, origin, target, tmp, vel;
     s32 shiftMotion, fallMotion;
-    s32 i;
-    s32 prevCoin;
-    s32 timerObj;
-    f32 chargeLen;
-    f32 releaseFrac;
-    s32 quickDropF;
-    s32 jumpedF;
-    s32 settleFrames;
-    Point3d vel;
-    f32 vy;
+    s32 i, climb, prevCoin, released, settleFrames, breakOut, jumpedF;
+    OMOBJ *timerObj;
+    f32 chargeLen, releaseFrac, dist, chargeFrac, height, dy, vy, t, maxT, step;
 
+    jumpedF = 0;
+    step = 150.0f;
     masuP = MBMasuGet(0, (s32) (s16) GwPlayer[arg0].masuId);
     MB2_CoinInit();
     MB2_CoinEffInit();
     MBPlayerPosGet(arg0, &startPos);
+    origin = startPos;
+    Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
+    target.x = mtx[0][3];
+    target.y = mtx[1][3];
+    target.z = mtx[2][3];
     shiftMotion = MBPlayerMotionCreate(arg0, 0x8C0008);
     fallMotion = MBPlayerMotionCreate(arg0, 0x8C0009);
-    {
-        Mtx mtx;
-        Point3d target;
-        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-        target.x = mtx[0][3];
-        target.y = mtx[1][3];
-        target.z = mtx[2][3];
-        PSVECSubtract(&target, &startPos, &vec);
-        MBPlayerRotateStart(arg0, (s16) (180.0 * (atan2((f64) vec.x, (f64) vec.z) / 3.141592653589793)), 0xF);
-        while (MBPlayerRotateCheck(arg0) == 0) {
-            HuPrcVSleep();
-        }
-        MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
-        for (i = 0; (f32) i < 24.0f; i++) {
-            f32 t = (f32) i / 24.0f;
-            Point3d p;
-            PSVECSubtract(&target, &startPos, &p);
-            PSVECScale(&p, &p, t);
-            PSVECAdd(&startPos, &p, &p);
-            p.y = (f32) ((f64) p.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-            MBPlayerPosSetV(arg0, &p);
-            HuPrcVSleep();
-        }
+    PSVECSubtract(&target, &origin, &tmp);
+    MBPlayerRotateStart(arg0, (s16) (180.0 * (atan2((f64) tmp.x, (f64) tmp.z) / 3.141592653589793)), 0xF);
+    while (MBPlayerRotateCheck(arg0) == 0) {
+        HuPrcVSleep();
+    }
+    MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
+    for (i = 0; (f32) i <= 24.0f; i++) {
+        t = (f32) i / 24.0f;
+        PSVECSubtract(&target, &origin, &tmp);
+        PSVECScale(&tmp, &tmp, t);
+        PSVECAdd(&origin, &tmp, &tmp);
+        tmp.y = (f32) ((f64) tmp.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+        MBPlayerPosSetV(arg0, &tmp);
+        HuPrcVSleep();
     }
     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
     for (i = 0; (f32) i < 12.0f; i++) {
-        Mtx mtx;
-        f32 maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
-        Point3d p1, p2;
+        maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
         MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), (f32) (0.33000001311302185 * sin((3.141592653589793 * (f64) (180.0f * ((f32) i / 12.0f))) / 180.0) * (f64) maxT));
-        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-        p1.x = mtx[0][3]; p1.y = mtx[1][3]; p1.z = mtx[2][3];
-        MBPlayerPosSet(arg0, p1.x, p1.y, p1.z);
-        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);
-        p2.x = mtx[0][3]; p2.y = mtx[1][3]; p2.z = mtx[2][3];
-        MBModelPosSet((s16) MB2W_S32(0x18 * 4), p2.x, p2.y, p2.z);
+        ZEN4_SYNC();
         HuPrcVSleep();
     }
 
@@ -3054,15 +3032,12 @@ void MB2Ev_Zen4(s32 arg0) {
     MBCameraModelViewSet(MBPlayerModelGet(arg0), NULL, &tmp, 3000.0f, -1.0f, 0x15);
     MBCameraMotionWait();
 
-    /* Spawn a stack of 20 coins climbing above the platform, spaced with
-     * increasing gaps (a visual reward ladder for the charge meter). */
     for (i = 0; i < 0x14; i++) {
         Point3d pos;
-        f32 h = 100.0f * (f32) i;
-        pos.x = startPos.x;
-        pos.y = (800.0f + startPos.y) + (1.5f * h);
-        pos.z = startPos.z;
-        MB2_CoinCreate(&pos.x, &pos.x, 1, h, 800.0f + startPos.y);
+        pos.x = target.x;
+        pos.y = (800.0f + target.y) + (1.5f * (100.0f * (f32) i));
+        pos.z = target.z;
+        MB2_CoinCreate(&pos.x, &pos.x, 1, 0.0f);
     }
 
     prevCoin = MBPlayerCoinGet(arg0);
@@ -3071,20 +3046,27 @@ void MB2Ev_Zen4(s32 arg0) {
     MBTopWinKill();
     MBWinCreateHelp(0x2E000FU);
 
-    /* Charge meter: spring "length" climbs by up to 10 discrete steps of
-     * 150 units (the coin stack), each attenuated by mb2ev_Zen4SpringLen.
-     * Used purely to get the final chargeLen the meter would settle at,
-     * matching the do/while sp29 loop in the original. */
-    chargeLen = mb2ev_Zen4SpringLen(25000.0f);
-
-    MB2W_S32(0x1C * 4) = 0; /* placeholder: real slot use TBD, unused by this event */
-    timerObj = 0xE10;
+    /* Pre-simulate a full charge to get the peak height (chargeLen) the meter maps onto. */
+    height = 0.0f;
+    dy = 0.0f;
+    dist = mb2ev_Zen4SpringLen(25000.0f, step);
+    i = 0;
+    do {
+        if (i < 0xA) {
+            dist = mb2ev_Zen4SpringLen(25000.0f, step) - ((f32) i * step);
+        }
+        dist -= step;
+        vy = dist / 100.0f;
+        dy += vy;
+        height += dy;
+        chargeLen = height;
+        i += 1;
+        dy = 0.0f;
+    } while (dist >= 0.0f);
+    timerObj = omAddObjEx(mbObjMan, -0x8000, 0U, 0U, -1, MB2_TimerObjUpdate);
     mb2ev_TimerObj = 0xE10;
     mb2ev_TimerValue = 0x12C;
 
-    releaseFrac = 0.0f;
-    jumpedF = 0;
-    quickDropF = 0;
     for (;;) {
         if (GwPlayer[arg0].comF != 0) {
             HuPrcSleep((s32) (60.0f * (0.007874016f * (f32) (frand() & 0x7F))));
@@ -3103,129 +3085,105 @@ void MB2Ev_Zen4(s32 arg0) {
         vel.x = 0.0f;
         vel.y = 0.0f;
         vel.z = 0.0f;
-        {
-            s32 climb;
-            f32 dist;
-            f32 chargeFrac;
-            s32 released;
-            s32 breakOut;
-
-            chargeFrac = (0.15f * (f32) GwPlayer[arg0].dif) + (0.35f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
-            settleFrames = (s32) (10.0f * chargeFrac);
-
-            climb = 0;
-            released = 0;
+        climb = 0;
+        released = 0;
+        dist = mb2ev_Zen4SpringLen(25000.0f, step);
+        chargeFrac = (0.15f * (f32) GwPlayer[arg0].dif) + (0.35f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+        settleFrames = (s32) ((f32) i * chargeFrac);
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
+        do {
+            HuPrcVSleep();
             breakOut = 0;
-            for (;;) {
-                HuPrcVSleep();
-                if ((climb < 0xA) && ((s32) mb2ev_TimerObj > 0) && (released == 0)) {
-                    dist = mb2ev_Zen4SpringLen(25000.0f) - ((f32) climb * 150.0f);
-                    if ((GwPlayer[arg0].comF == 0) && ((s32) (HuPadBtn[(s8) (u8) GwPlayer[arg0].padNo] & 0x100) == 0)) {
-                        dist = mb2ev_Zen4SpringLen(4000.0f);
-                        released = 1;
-                    }
-                } else {
-                    /* dist keeps its last value */
-                }
-                dist -= 150.0f;
-                vy = dist / 100.0f;
-                vel.y = vy;
-                PSVECAdd(&startPos, &vel, &startPos);
-                MBPlayerPosSetV(arg0, &startPos);
-                climb += 1;
-                if (GwPlayer[arg0].comF != 0) {
-                    settleFrames -= 1;
-                    if (settleFrames <= 0) {
-                        breakOut = 1;
-                    }
-                } else if (((HuPadBtnDown[(s8) (u8) GwPlayer[arg0].padNo] & 0x140) != 0) && ((s32) mb2ev_TimerObj > 0)) {
-                    breakOut = 1;
-                }
-                if ((startPos.y > tmp.y) && (breakOut != 0)) {
-                    MBTopWinKill();
-                    releaseFrac = (startPos.y - tmp.y) / chargeLen;
-                    if (releaseFrac > 1.0f) {
-                        releaseFrac = 1.0f;
-                    } else if (releaseFrac < 0.0f) {
-                        releaseFrac = 0.0f;
-                    }
-                    jumpedF = 1;
-                    climb = 0x14;
-                    break;
-                }
-                if (startPos.y <= tmp.y) {
-                    break;
+            if ((climb < 0xA) && ((s32) mb2ev_TimerObj > 0) && (released == 0)) {
+                dist = mb2ev_Zen4SpringLen(25000.0f, step) - ((f32) climb * step);
+                if ((GwPlayer[arg0].comF == 0) && ((s32) (HuPadBtn[(s8) (u8) GwPlayer[arg0].padNo] & 0x100) == 0)) {
+                    dist = mb2ev_Zen4SpringLen(4000.0f, step);
+                    released = 1;
                 }
             }
-        }
+            dist -= step;
+            vel.y += dist / 100.0f;
+            PSVECAdd(&startPos, &vel, &startPos);
+            MBPlayerPosSetV(arg0, &startPos);
+            climb += 1;
+            if (GwPlayer[arg0].comF != 0) {
+                settleFrames -= 1;
+                if (settleFrames <= 0) {
+                    breakOut = 1;
+                }
+            } else if (((HuPadBtnDown[(s8) (u8) GwPlayer[arg0].padNo] & 0x140) != 0) && ((s32) mb2ev_TimerObj > 0)) {
+                breakOut = 1;
+            }
+            if ((startPos.y > mtx[1][3]) && (breakOut != 0)) {
+                MBPlayerMotionNoShiftSet(arg0, shiftMotion, 0.0f, 8.0f, 0U);
+                MBTopWinKill();
+                releaseFrac = (startPos.y - mtx[1][3]) / chargeLen;
+                if (releaseFrac > 1.0f) {
+                    releaseFrac = 1.0f;
+                } else if (releaseFrac < 0.0f) {
+                    releaseFrac = 0.0f;
+                }
+                jumpedF = 1;
+                climb = 0x14;
+            } else {
+                vel.z = 0.0f;
+                vel.y = 0.0f;
+                vel.x = 0.0f;
+            }
+        } while (!jumpedF && (startPos.y > mtx[1][3]));
         if (jumpedF == 0) {
-            Mtx mtx;
-            Point3d p;
             MBPlayerMotionNoShiftSet(arg0, 5, 0.0f, 8.0f, 0U);
             for (i = 0; (f32) i < 12.0f; i++) {
-                f32 maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
+                maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
                 MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), (f32) (0.33000001311302185 * sin((3.141592653589793 * (f64) (180.0f * ((f32) i / 12.0f))) / 180.0) * (f64) maxT));
-                Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-                p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-                MBPlayerPosSet(arg0, p.x, p.y, p.z);
-                Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);
-                p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-                MBModelPosSet((s16) MB2W_S32(0x18 * 4), p.x, p.y, p.z);
+                ZEN4_SYNC();
                 HuPrcVSleep();
             }
             do {
                 HuPrcVSleep();
             } while ((MBPlayerMotionEndCheck(arg0) == 0) || (MBMotionShiftIDGet(MBPlayerModelGet(arg0)) != -1));
             MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
-            continue;
         }
-        break;
+        if (jumpedF != 0) {
+            break;
+        }
     }
 
     mb2ev_TimerObj = 0;
     MBTopWinKill();
-    if (releaseFrac != 0.01f) {
-        Mtx mtx;
-        Point3d p;
-        f32 depth;
-
-        while (settleFrames > 0) {
+    if (!(releaseFrac <= 0.01f)) {
+        /* Let the charge frames drain, then drop to the platform floor. */
+        do {
             HuPrcVSleep();
-            settleFrames -= 1;
-        }
+            climb -= 1;
+        } while (climb > 0);
         Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-        depth = 150.0f;
+        dist = step;
         vel.x = 0.0f;
         vel.y = 0.0f;
         vel.z = 0.0f;
         do {
             HuPrcVSleep();
-            depth -= 150.0f;
-            vy = depth / 100.0f;
-            vel.y = vy;
+            dist -= step;
+            vy = dist / 100.0f;
+            vel.y += vy;
             PSVECAdd(&startPos, &vel, &startPos);
             MBPlayerPosSetV(arg0, &startPos);
-            vel.x = 0.0f;
-            vel.y = 0.0f;
             vel.z = 0.0f;
-        } while (startPos.y > tmp.y);
-        startPos.y = tmp.y;
+            vel.y = 0.0f;
+            vel.x = 0.0f;
+        } while (startPos.y > mtx[1][3]);
+        startPos.y = mtx[1][3];
         MBPlayerPosSetV(arg0, &startPos);
-        MBPlayerMotionNoShiftSet(arg0, fallMotion, 0.0f, 8.0f, 0U);
+        MBPlayerMotionNoShiftSet(arg0, shiftMotion, 0.0f, 8.0f, 0U);
 
         settleFrames = (s32) (30.0f * (0.6f - (0.5f * releaseFrac)));
         if (settleFrames < 5) {
             settleFrames = 5;
         }
         for (i = 0; i <= settleFrames; i++) {
-            f32 maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
-            MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), ((f32) i / (f32) settleFrames) * maxT);
-            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-            p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-            MBPlayerPosSet(arg0, p.x, p.y, p.z);
-            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);
-            p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-            MBModelPosSet((s16) MB2W_S32(0x18 * 4), p.x, p.y, p.z);
+            MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), ((f32) i / (f32) settleFrames) * MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4)));
+            ZEN4_SYNC();
             HuPrcVSleep();
         }
         Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);
@@ -3239,19 +3197,13 @@ void MB2Ev_Zen4(s32 arg0) {
             PSVECAdd(&startPos, &vel, &startPos);
             MBModelPosSetV((s16) MB2W_S32(0x18 * 4), &startPos);
             vel.y -= 3.266667f;
-        } while (startPos.y > tmp.y);
-        MBModelPosSet((s16) MB2W_S32(0x18 * 4), p.x, p.y, p.z);
+        } while (startPos.y > mtx[1][3]);
+        MBModelPosSet((s16) MB2W_S32(0x18 * 4), mtx[0][3], mtx[1][3], mtx[2][3]);
         MB2W_S32(0x27 * 4) = 1;
         HuAudFXPlay(0x5D5);
         for (i = 0; i <= settleFrames; i++) {
-            f32 maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
-            MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), (1.0f - ((f32) i / (f32) settleFrames)) * maxT);
-            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-            p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-            MBPlayerPosSet(arg0, p.x, p.y, p.z);
-            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);
-            p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-            MBModelPosSet((s16) MB2W_S32(0x18 * 4), p.x, p.y, p.z);
+            MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), (1.0f - ((f32) i / (f32) settleFrames)) * MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4)));
+            ZEN4_SYNC();
             HuPrcVSleep();
         }
         HuAudFXPlay(0x5CE);
@@ -3266,35 +3218,29 @@ void MB2Ev_Zen4(s32 arg0) {
             PSVECAdd(&startPos, &vel, &startPos);
             MBPlayerPosSetV(arg0, &startPos);
             vel.y -= 3.266667f;
-        } while (startPos.y > tmp.y);
-        startPos.y = tmp.y;
+        } while (startPos.y > mtx[1][3]);
+        startPos.y = mtx[1][3];
         MBPlayerPosSetV(arg0, &startPos);
         MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0U);
         for (i = 0; (f32) i < 12.0f; i++) {
-            f32 maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
+            maxT = MBMotionMaxTimeGet((s16) MB2W_S32(0x19 * 4));
             MBMotionTimeSet((s16) MB2W_S32(0x19 * 4), (f32) (0.33000001311302185 * sin((3.141592653589793 * (f64) (180.0f * ((f32) i / 12.0f))) / 180.0) * (f64) maxT));
-            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof1", mtx);
-            p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-            MBPlayerPosSet(arg0, p.x, p.y, p.z);
-            Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32(0x19 * 4)), "sisof2", mtx);
-            p.x = mtx[0][3]; p.y = mtx[1][3]; p.z = mtx[2][3];
-            MBModelPosSet((s16) MB2W_S32(0x18 * 4), p.x, p.y, p.z);
+            ZEN4_SYNC();
             HuPrcVSleep();
         }
     }
 
     HuPrcSleep(0x3C);
     MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
-    for (i = 0; (f32) i < 24.0f; i++) {
-        f32 t = (f32) i / 24.0f;
-        Point3d p;
-        PSVECSubtract(&tmp, &startPos, &p);
-        PSVECScale(&p, &p, t);
-        PSVECAdd(&startPos, &p, &p);
-        p.y = (f32) ((f64) p.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-        MBPlayerPosSetV(arg0, &p);
-        PSVECSubtract(&tmp, &startPos, &p);
-        MBPlayerRotSet(arg0, 0.0f, (f32) (180.0 * (atan2((f64) p.x, (f64) p.z) / 3.141592653589793)), 0.0f);
+    for (i = 0; (f32) i <= 24.0f; i++) {
+        t = (f32) i / 24.0f;
+        PSVECSubtract(&origin, &target, &tmp);
+        PSVECScale(&tmp, &tmp, t);
+        PSVECAdd(&target, &tmp, &tmp);
+        tmp.y = (f32) ((f64) tmp.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+        MBPlayerPosSetV(arg0, &tmp);
+        PSVECSubtract(&origin, &target, &tmp);
+        MBPlayerRotSet(arg0, 0.0f, (f32) (180.0 * (atan2((f64) tmp.x, (f64) tmp.z) / 3.141592653589793)), 0.0f);
         HuPrcVSleep();
     }
     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
@@ -4698,7 +4644,7 @@ s32 MB2_CoinNumGet(void) {
     return num;
 }
 
-s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0, f32 arg_sp0) {
+s32 MB2_CoinCreate(f32 *arg0, f32 *arg1, s32 arg2, f32 farg0) {
     MB2_COIN_SLOT *slot;
     s32 i;
 
