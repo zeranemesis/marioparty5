@@ -1,9 +1,6 @@
 #include "REL/m565dll.h"
-#ifdef TARGET_PC
-/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
-   arguments as double and truncates float/pointer returns */
+/* not declared in hu3d.h (see m518): the original unit calls it with the float return */
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
-#endif
 
 s32 lbl_1_bss_7810;
 
@@ -155,7 +152,7 @@ s32 fn_1_2B20(M565Sys *sys)
                 stage->pick1 = NULL;
                 stage->pick2 = NULL;
             } else if (stage->pick1 != NULL) {
-                big = (frand() % 10000) / 5.0f < 50.0f / (0.0f + (game->timer / 60));
+                big = (f32)(frand() % 10000) / 10000.0f < 5.0f / (50.0f + (f32)(game->timer / 60));
                 if (sys->puku.cntBig >= 2) {
                     big = 0;
                 }

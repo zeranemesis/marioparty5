@@ -457,24 +457,14 @@ static s32 fn_1_B600(M565Com *com)
                 if (com->timer <= 0) {
                     done = 1;
                 }
-                switch (com->level) {
-                    case 3:
-                        if (player->nearDist > 150.0f) {
-                            done = 1;
-                        } else {
-                            switch (com->level) {
-                                case 2:
-                                    if (player->nearDist > 200.0f) {
-                                        done = 1;
-                                    } else if (com->level == 1 && player->nearDist > 300.0f) {
-                                        done = 1;
-                                    } else if (com->level == 0 && player->nearDist > 400.0f) {
-                                        done = 1;
-                                    }
-                                    break;
-                            }
-                        }
-                        break;
+                if (com->level == 3 && player->nearDist > 150.0f) {
+                    done = 1;
+                } else if (com->level == 2 && player->nearDist > 200.0f) {
+                    done = 1;
+                } else if (com->level == 1 && player->nearDist > 300.0f) {
+                    done = 1;
+                } else if (com->level == 0 && player->nearDist > 400.0f) {
+                    done = 1;
                 }
             }
             if (player->near != NULL) {
@@ -589,6 +579,17 @@ static void fn_1_BD0C(M565Com *com)
     }
 }
 
+#define M565_SWAP(i, j) \
+    do { \
+        M565Tile *tp = lbl_1_bss_7844[i]; \
+        s16 ts; \
+        lbl_1_bss_7844[i] = lbl_1_bss_7844[j]; \
+        lbl_1_bss_7844[j] = tp; \
+        ts = lbl_1_bss_7832[i]; \
+        lbl_1_bss_7832[i] = lbl_1_bss_7832[j]; \
+        lbl_1_bss_7832[j] = ts; \
+    } while (0)
+
 static void fn_1_BE54(M565Com *com, s16 *count, M565Tile **out)
 {
     M565Tile *a;
@@ -604,21 +605,12 @@ static void fn_1_BE54(M565Com *com, s16 *count, M565Tile **out)
             a = lbl_1_bss_7844[i];
             b = lbl_1_bss_7844[j];
             if (a->state != 0x64 && b->state == 0x64) {
-                lbl_1_bss_7844[i] = lbl_1_bss_7844[j];
-                lbl_1_bss_7844[j] = lbl_1_bss_7844[i];
-                lbl_1_bss_7832[i] = lbl_1_bss_7832[j];
-                lbl_1_bss_7832[j] = lbl_1_bss_7832[i];
+                M565_SWAP(i, j);
             } else if (a->state == b->state) {
                 if (a->neighbors < b->neighbors) {
-                    lbl_1_bss_7844[i] = lbl_1_bss_7844[j];
-                    lbl_1_bss_7844[j] = lbl_1_bss_7844[i];
-                    lbl_1_bss_7832[i] = lbl_1_bss_7832[j];
-                    lbl_1_bss_7832[j] = lbl_1_bss_7832[i];
+                    M565_SWAP(i, j);
                 } else if (a->neighbors == b->neighbors && lbl_1_bss_7832[i] > lbl_1_bss_7832[j]) {
-                    lbl_1_bss_7844[i] = lbl_1_bss_7844[j];
-                    lbl_1_bss_7844[j] = lbl_1_bss_7844[i];
-                    lbl_1_bss_7832[i] = lbl_1_bss_7832[j];
-                    lbl_1_bss_7832[j] = lbl_1_bss_7832[i];
+                    M565_SWAP(i, j);
                 }
             }
         }

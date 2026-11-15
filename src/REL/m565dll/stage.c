@@ -1,9 +1,6 @@
 #include "REL/m565dll.h"
-#ifdef TARGET_PC
-/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
-   arguments as double and truncates float/pointer returns */
+/* not declared in hu3d.h (see m518): the original unit calls it with the float return */
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
-#endif
 
 typedef struct M565TileInit_s {
     u16 state;
@@ -302,7 +299,7 @@ void fn_1_4BCC(M565Stage *stage)
                         seNo = fn_1_C18(0x8DB);
                         fn_1_CC8(seNo, vol);
                         fn_1_C98(seNo, pan);
-                        stage->sndWait = 1;
+                        stage->sndWait = 10;
                     }
                 } else if (tile->timer <= 60) {
                     if (((lbl_1_bss_0->frame / 3) & 1) != 0) {
