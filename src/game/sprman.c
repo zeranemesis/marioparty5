@@ -75,6 +75,15 @@ float HuSprWideShift[HUSPR_MAX];
 float HuSprWideStretch[HUSPR_MAX][3];
 float HuSprDispWideShift;
 BOOL HuSprWideClip[HUSPR_MAX];
+/* sprites set over a 3D object: the layout leaves them where the 4:3 code put them */
+static BOOL HuSprWideFixed[HUSPR_MAX];
+
+void HuSprWideFixSet(int sprId)
+{
+    if(sprId > 0 && sprId < HUSPR_MAX) {
+        HuSprWideFixed[sprId] = TRUE;
+    }
+}
 
 BOOL HuSprWidescreenBackdrop(ANIMPAT *pat, float scaleX, float scaleY);
 
@@ -153,6 +162,9 @@ static void HuSprWidescreenLayout(void)
     for(i=0, gp=HuSprGrpData; i<HUSPR_GRP_MAX; i++, gp++) {
         for(j=0; j<gp->sprNum && n<HUSPR_MAX; j++) {
             if(gp->sprId[j] == -1) {
+                continue;
+            }
+            if(HuSprWideFixed[gp->sprId[j]]) {
                 continue;
             }
             sp = &HuSprData[gp->sprId[j]];
@@ -575,6 +587,9 @@ HUSPRID HuSprCreate(ANIMDATA *anim, s16 prio, s16 bank)
     sp->scissorX = sp->scissorY = 0;
     sp->scissorW = 640;
     sp->scissorH = 480;
+#ifdef TARGET_PC
+    HuSprWideFixed[i] = FALSE;
+#endif
     if(anim) {
         HuSprAnimLock(anim);
     }

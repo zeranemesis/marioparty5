@@ -640,6 +640,7 @@ static void tmSetupPlayers() {
 // with 4 COM players, 10 turns, all mini-game packs, set up the way mdparty does before a party.
 extern "C" {
 #include <game/board/main.h>
+#include <game/board/pause.h>
 #include <game/data.h>
 #include <game/armem.h>
 #include "datadir_enum.h"
@@ -661,7 +662,8 @@ static OMOVL tbBoardHook(OMOVL ovl) {
         GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
         GwPlayerConf[i].padNo = GwPlayer[i].padNo = i;
         GwPlayerConf[i].dif = GwPlayer[i].dif = 1;
-        GwPlayerConf[i].type = GwPlayer[i].comF = GW_TYPE_COM;
+        // MP5_TEST_BOARD_PAUSE: player 0 is human so START can open the pause menu
+        GwPlayerConf[i].type = GwPlayer[i].comF = (i == 0 && getenv("MP5_TEST_BOARD_PAUSE") != nullptr) ? GW_TYPE_MAN : GW_TYPE_COM;
         GwPlayerConf[i].grp = GwPlayer[i].grp = 0;
         GwPlayer[i].handicap = 0;
     }
@@ -750,6 +752,31 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             memset(st, 0, sizeof(PADStatus) * 4);
             if ((++tbFrame / 20) % 2) {
                 st[0].button = PAD_BUTTON_START | PAD_BUTTON_A;
+            }
+        }
+        // MP5_TEST_BOARD_PAUSE=n: pad 0 plugged in and tapping A (messages, dice) until n frames into the board,
+        // then tapping START until the pause menu opens, then A once into Change Settings
+        if (tbBoard >= 0 && tbStarted && getenv("MP5_TEST_BOARD_PAUSE") != nullptr) {
+            static u32 bpFrame = 0;
+            static bool bpOpened = false;
+            const u32 at = (u32)atoi(getenv("MP5_TEST_BOARD_PAUSE"));
+            st[0].err = PAD_ERR_NONE;
+            static u32 bpOpenFrame = 0;
+            if (!bpOpened && MBPauseProcCheck()) {
+                bpOpened = true;
+                bpOpenFrame = bpFrame;
+            }
+            // then A once: Change Settings (the option capsules)
+            if (bpOpened && bpFrame >= bpOpenFrame + 120 && bpFrame < bpOpenFrame + 123) {
+                st[0].button |= PAD_BUTTON_A;
+            }
+            if (++bpFrame < at) {
+                if (bpFrame % 40 < 3) {
+                    st[0].button |= PAD_BUTTON_A;
+                }
+            } else if (!bpOpened) {
+                // keep advancing messages while trying START (the menu won't open over a message)
+                st[0].button |= bpFrame % 60 < 3 ? PAD_BUTTON_START : bpFrame % 60 >= 30 && bpFrame % 60 < 33 ? PAD_BUTTON_A : 0;
             }
         }
         // MP5_TEST_OVL: once in the overlay, random D-pad/A/B/X/Y/L/R presses on all pads (never START) and a heartbeat

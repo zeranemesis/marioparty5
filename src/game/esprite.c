@@ -123,6 +123,18 @@ void espAttrReset(s16 espId, u16 attr)
     HuSprAttrReset(gid, esprite[espId].memberNo, attr);
 }
 
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+
+void espWideFixSet(int espId)
+{
+    if(espId < 0) {
+        return;
+    }
+    HuSprWideFixSet(HuSprGrpData[gid].sprId[esprite[espId].memberNo]);
+}
+#endif
+
 void espPosSet(s16 espId, float posX, float posY)
 {
     HuSprPosSet(gid, esprite[espId].memberNo, posX, posY);

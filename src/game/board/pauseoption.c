@@ -18,6 +18,7 @@
 #include "game/esprite.h"
 
 #include "game/sprite.h"
+#include "port/widescreen.h"
 #include "game/hu3d.h"
 #include "game/flag.h"
 
@@ -451,10 +452,12 @@ static void PauseOptionInit(void)
                 opt->sprNum++;
                 if(j == 0) {
                     opt->sprId[j] = sprId = espEntry(optionSprFileTbl[i][j], 100, opt->value);
+                    HU_WIDE_FIX_ESP(sprId); /* labels sit on the 3D capsules */
                     espAttrSet(sprId, HUSPR_ATTR_LINEAR);
                     espPosSet(sprId, opt->posSpr.x, opt->posSpr.y+50);
                 } else if(GWPartyFGet() == FALSE){
                     opt->sprId[j] = sprId = espEntry(optionSprFileTbl[i][j], 200, 0);
+                    HU_WIDE_FIX_ESP(sprId);
                     espAttrSet(sprId, HUSPR_ATTR_LINEAR);
                     espPosSet(sprId, opt->posSpr.x, opt->posSpr.y);
                     espTPLvlSet(sprId, 0.67f);
@@ -968,12 +971,14 @@ static void PausePadInit(void)
         PauseOptionModelInit(id, &padopt->pos, padopt->mdlScale);
         MBModelScaleSet(padopt->mdlId[0], padopt->mdlScale, padopt->mdlScale, 0.1f);
         padopt->sprId[0] = id = espEntry(BPAUSE_ANM_playerNum, 100, padopt->padNo);
+        HU_WIDE_FIX_ESP(id);
         espAttrSet(id, HUSPR_ATTR_LINEAR);
         espPosSet(id, padopt->posSpr.x, padopt->posSpr.y-35);
         if(padopt->dif < PADOPT_DIF_MAN) {
             espBankSet(id, 4);
         }
         padopt->sprId[1] = id = espEntry(BPAUSE_ANM_comDif, 100, 0);
+        HU_WIDE_FIX_ESP(id);
         espAttrSet(id, HUSPR_ATTR_LINEAR);
         espPosSet(id, padopt->posSpr.x, padopt->posSpr.y-35);
         espDispOff(id);
@@ -1281,10 +1286,12 @@ static void PauseCursorCreate(void)
         int sprId;
         cursor->tplvl[i] = 0;
         cursor->sprId[i] = sprId = espEntry(BPAUSE_ANM_cursor, 90, i);
+        HU_WIDE_FIX_ESP(sprId); /* the cursor frames the capsules */
         espAttrSet(sprId, HUSPR_ATTR_LINEAR);
         espPosSet(sprId, cursor->pos.x, cursor->pos.y);
         espDispOff(sprId);
         cursor->glowSprId[i] = sprId = espEntry(BPAUSE_ANM_cursorGlow, 89, i);
+        HU_WIDE_FIX_ESP(sprId);
         espAttrSet(sprId, HUSPR_ATTR_LINEAR|HUSPR_ATTR_ADDCOL);
         espPosSet(sprId, cursor->pos.x, cursor->pos.y);
         espDispOff(sprId);
