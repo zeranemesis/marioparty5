@@ -1412,7 +1412,8 @@ void MB4_CoinUpdate(OMOBJ *obj) {
     f32 t;
     Point3d target, base, cur, diff, playerPos;
     f32 distSq, dist;
-    f32 burstAngle, spinAngle, spinCos, speedScale;
+    f32 burstAngle, spinAngle, speedScale, sizeParam;
+    f64 spinCos;
     Point3d burstPos, burstVel;
     u8 color[4];
     f32 alpha;
@@ -1510,9 +1511,9 @@ void MB4_CoinUpdate(OMOBJ *obj) {
                 burstPos.z = coinP->posZ;
                 speedScale = 2.5f * (1.0f + (0.007874016f * (f32) (frand() & 0x7F)));
                 burstAngle = 45.0f - (90.0f * (0.007874016f * (f32) (frand() & 0x7F)));
-                spinCos = (f32) cos((3.141592653589793 * (f64) burstAngle) / 180.0);
+                spinCos = cos((3.141592653589793 * (f64) burstAngle) / 180.0);
                 burstVel.x = (f32) ((f64) speedScale * (sin((3.141592653589793 * (f64) spinAngle) / 180.0) * spinCos));
-                spinCos = (f32) cos((3.141592653589793 * (f64) burstAngle) / 180.0);
+                spinCos = cos((3.141592653589793 * (f64) burstAngle) / 180.0);
                 burstVel.y = (f32) ((f64) speedScale * (cos((3.141592653589793 * (f64) spinAngle) / 180.0) * spinCos));
                 burstVel.z = (f32) ((f64) speedScale * sin((3.141592653589793 * (f64) burstAngle) / 180.0));
                 alpha = 0.007874016f * (f32) (frand() & 0x7F);
@@ -1520,10 +1521,11 @@ void MB4_CoinUpdate(OMOBJ *obj) {
                 color[1] = (u8) (192.0f + (63.0f * alpha));
                 color[2] = (u8) (64.0f + (63.0f * alpha));
                 color[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+                /* the original evaluates the size argument (and its frand) before the lifetime one */
+                sizeParam = 0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F))));
                 MB4_CoinEffCreate(&burstPos, &burstVel,
                     100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
-                    0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))),
-                    0.0f, color);
+                    sizeParam, 0.0f, color);
             }
         }
     }
@@ -2068,41 +2070,46 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                     }
                     fish->timer20 -= 1;
                     if (fish->timer20 <= 0) {
-                        if ((fish->timer1C & 3) == 0 && mb4_BubbleEffObj != NULL) {
-                            MB4COINEFFMGR *mgr = (MB4COINEFFMGR *) Hu3DData[*mb4_BubbleEffObj->mdlId].hookData;
-                            MB4PARTICLE *bp = MB4EFF_PARTS(mgr);
+                        if ((fish->timer1C & 3) == 0) {
+                            MB4COINEFFMGR *mgr;
+                            MB4PARTICLE *bp;
                             s32 bi;
                             Point3d bubblePos;
                             f32 bubbleScale;
                             s32 duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
 
+                            /* the original draws both frand() values even when the bubble effect is gone */
                             bubbleScale = fish->scale * (0.5f + (0.007874016f * (f32) (frand() & 0x7F)));
                             PSVECScale(&fish->dir, &bubblePos, 50.0f * fish->scale);
                             PSVECAdd(&fish->posB, &bubblePos, &bubblePos);
-                            for (bi = 0; bi < MB4EFF_NUM(mgr); bi++) {
-                                if (bp->timer <= 0.0f) {
-                                    break;
+                            if (mb4_BubbleEffObj != NULL) {
+                                mgr = (MB4COINEFFMGR *) Hu3DData[*mb4_BubbleEffObj->mdlId].hookData;
+                                bp = MB4EFF_PARTS(mgr);
+                                for (bi = 0; bi < MB4EFF_NUM(mgr); bi++) {
+                                    if (bp->timer <= 0.0f) {
+                                        break;
+                                    }
+                                    bp++;
                                 }
-                                bp++;
-                            }
-                            if (bi < MB4EFF_NUM(mgr)) {
-                                if (bubbleScale <= 0.0f) {
-                                    bubbleScale = 1.0f;
+                                if (bi < MB4EFF_NUM(mgr)) {
+                                    if (bubbleScale <= 0.0f) {
+                                        bubbleScale = 1.0f;
+                                    }
+                                    bp->posX = bubblePos.x;
+                                    bp->posY = bubblePos.y;
+                                    bp->posZ = bubblePos.z;
+                                    bp->velX = 0.5f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+                                    bp->velZ = 1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
+                                    bp->velY = 2.0f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
+                                    bp->speed = 1.0f;
+                                    bp->one = 1.0f / (f32) duration;
+                                    bp->active = (s16) (frand() % 360);
+                                    bp->timer = 20.0f * bubbleScale;
+                                    bp->color[3] = 0xFF;
+                                    bp->color[2] = 0xFF;
+                                    bp->color[1] = 0xFF;
+                                    bp->color[0] = 0xFF;
                                 }
-                                bp->posX = bubblePos.x;
-                                bp->posY = bubblePos.y;
-                                bp->posZ = bubblePos.z;
-                                bp->velX = 0.5f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
-                                bp->velZ = 1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)));
-                                bp->velY = 2.0f * (1.5f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))));
-                                bp->speed = 1.0f;
-                                bp->one = 1.0f / (f32) duration;
-                                bp->active = (s16) (frand() % 360);
-                                bp->timer = 20.0f * bubbleScale;
-                                bp->color[3] = 0xFF;
-                                bp->color[2] = 0xFF;
-                                bp->color[1] = 0xFF;
-                                bp->color[0] = 0xFF;
                             }
                         }
                         fish->timer1C -= 1;
@@ -2156,7 +2163,7 @@ void MB4_SakanaDraw(HU3DMODEL *modelP, Mtx *mtx) {
                 if (fish->bobAngle > 0x168) {
                     fish->bobAngle -= 0x168;
                 }
-                PSVECScale(&fish->dir, &move, speedMul * (0.5f + (f32) fabs(0.5 * sin((3.141592653589793 * (f64) fish->bobAngle) / 180.0))));
+                PSVECScale(&fish->dir, &move, speedMul * (0.5 + fabs(0.5 * sin((3.141592653589793 * (f64) fish->bobAngle) / 180.0))));
                 PSVECAdd(&fish->posB, &move, &fish->posB);
 
                 if (fish->modelId != -1) {
@@ -4244,6 +4251,8 @@ void MB4Ev_Kihon(s32 arg0) {
     Point3d chaseRot;
     Point3d chasePos;
     Point3d coinNearPos;
+    Point3d lean;
+    Point3d playerRidePos;
     s32 phaseAngle;
     s16 linkTbl[MASU_LINK_MAX];
     s16 linkNum;
@@ -4472,6 +4481,13 @@ void MB4Ev_Kihon(s32 arg0) {
         rideRot.z = 0.0f;
         rideRot.y = (f32) (180.0 * (atan2((f64) coinStep.x, (f64) coinStep.z) / 3.141592653589793));
         chaseRot = rideRot;
+        /* lean is added on top of the ride heading; the COM coin search keeps the last hit across frames */
+        lean.x = 0.0f;
+        lean.y = 0.0f;
+        lean.z = 0.0f;
+        coinNearPos.x = 0.0f;
+        coinNearPos.y = 0.0f;
+        coinNearPos.z = 0.0f;
         phaseAngle = 0;
         steps = (s32) (PSVECMag(&coinStep) / 5.0f);
 
@@ -4488,7 +4504,7 @@ void MB4Ev_Kihon(s32 arg0) {
                     } else if (stickY < 8.0f) {
                         steerVel += 0.00015f * stickY;
                     }
-                } else if (MB4_CoinNearGet(&chasePos, &coinNearPos, 200.0f * (f32) (GwPlayer[arg0].dif + 2)) != -1 &&
+                } else if (MB4_CoinNearGet(&chasePos, &coinNearPos, 200.0f * (f32) (GwPlayer[arg0].dif + 2)) != 0 &&
                            fabsf(chasePos.z - coinNearPos.z) > (20.0f * (f32) (5 - GwPlayer[arg0].dif))) {
                     if (coinNearPos.z < chasePos.z) {
                         steerVel += 0.0018000001f;
@@ -4522,22 +4538,24 @@ void MB4Ev_Kihon(s32 arg0) {
 
             if (frac < 0.9f) {
                 if (raiseSide == 0) {
-                    rideRot.y = MB4_AngleLerp(1000.0f * steerVel, rideRot.y, 0.5f);
+                    lean.y = MB4_AngleLerp(1000.0f * steerVel, lean.y, 0.5f);
                 } else {
-                    rideRot.y = MB4_AngleLerp(-(1000.0f * steerVel), rideRot.y, 0.5f);
+                    lean.y = MB4_AngleLerp(-(1000.0f * steerVel), lean.y, 0.5f);
                 }
             } else {
-                rideRot.y = MB4_AngleLerp(0.0f, rideRot.y, 0.5f);
+                lean.y = MB4_AngleLerp(0.0f, lean.y, 0.5f);
             }
-            chaseRot.x = rideRot.x + 0.0f;
-            chaseRot.y = rideRot.y;
-            chaseRot.z = rideRot.z + 0.0f;
+            chaseRot.x = rideRot.x + lean.x;
+            chaseRot.y = rideRot.y + lean.y;
+            chaseRot.z = rideRot.z + lean.z;
 
             MBModelPosSetV((s16) mb4_Work[0x11], &chasePos);
             MBModelRotSetV((s16) mb4_Work[0x11], &chaseRot);
             MBModelPosSet((s16) mb4_Work[0x15], chasePos.x, -200.0f, chasePos.z);
             MBModelRotSetV((s16) mb4_Work[0x15], &chaseRot);
-            MBPlayerPosSetV(arg0, &chasePos);
+            playerRidePos = chasePos;
+            playerRidePos.y += 30.0f;
+            MBPlayerPosSetV(arg0, &playerRidePos);
             MBPlayerRotSetV(arg0, &chaseRot);
             HuPrcVSleep();
         }
