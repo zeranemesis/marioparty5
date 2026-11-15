@@ -1006,12 +1006,8 @@ void fn_1_20A8(M572ObjData *arg0) {
 void fn_1_214C(OMOBJ *arg0) {
     Point3d sp2C;
     Point3d sp20;
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
-    f32 sp8;
+    Point3d sp14;
+    Point3d sp8;
     f32 temp_f1;
     f32 temp_f1_2;
     f32 temp_f29;
@@ -1036,20 +1032,20 @@ loop_15:
                     if (((s32) temp_r31->unk14.i == 1) && ((s32) temp_r30->unk14.i == 0)) {
 
                     }
-                    sp14 = temp_r31->unk34.f;
-                    sp18 = temp_r31->unk38.f;
-                    sp1C = temp_r31->unk3C.f;
-                    sp1C = 0.0f;
-                    sp8 = temp_r30->unk34.f;
-                    spC = temp_r30->unk38.f;
-                    sp10 = temp_r30->unk3C.f;
-                    sp10 = 0.0f;
-                    PSVECSubtract((Point3d *) &sp14, (Point3d *) &sp8, &sp2C);
+                    sp14.x = temp_r31->unk34.f;
+                    sp14.y = temp_r31->unk38.f;
+                    sp14.z = temp_r31->unk3C.f;
+                    sp14.z = 0.0f;
+                    sp8.x = temp_r30->unk34.f;
+                    sp8.y = temp_r30->unk38.f;
+                    sp8.z = temp_r30->unk3C.f;
+                    sp8.z = 0.0f;
+                    PSVECSubtract(&sp14, &sp8, &sp2C);
                     temp_f1_2 = PSVECMag(&sp2C);
                     if (temp_f1_2 < 159.2f) {
                         PSVECSubtract((Point3d *)((u8 *)temp_r30 + 0x34), (Point3d *)((u8 *)temp_r30 + 0x40), &sp2C);
                         temp_f29 = PSVECMag(&sp2C);
-                        PSVECSubtract((Point3d *) &sp14, (Point3d *) &sp8, &sp20);
+                        PSVECSubtract(&sp14, &sp8, &sp20);
                         if ((sp20.x != 0.0f) || (sp20.y != 0.0f) || (sp20.z != 0.0f)) {
                             PSVECNormalize(&sp20, &sp20);
                             temp_f30 = 160.0f - temp_f1_2;
@@ -1956,21 +1952,18 @@ void fn_1_45E0(void) {
 }
 
 void fn_1_463C(void) {
-    s8 spB;
-    s8 spA;
-    s8 sp9;
-    s8 sp8;
+    GXColor sp8;
 
-    sp8 = 0;
-    sp9 = 0;
-    spA = 0x90;
-    spB = 0xC0;
+    sp8.r = 0;
+    sp8.g = 0;
+    sp8.b = 0x90;
+    sp8.a = 0xC0;
     CZoom += (f32) (*HuPadTrigL / 5);
     CZoom -= (f32) (*HuPadTrigR / 5);
     Center.y -= 2.0f * ((f32) (s8) (u8) HuPadSubStkY[0] / 59.0f);
     CRot.x += 5.0f * ((f32) (s8) (u8) HuPadSubStkY[1] / 59.0f);
     CRot.y -= 5.0f * ((f32) (s8) (u8) HuPadSubStkX[1] / 59.0f);
-    printWin(0x10, 0x28, 0x180, 0x24, (GXColor *) &sp8);
+    printWin(0x10, 0x28, 0x180, 0x24, &sp8);
     fontcolor = 0xE;
     print8(0x10, 0x28, 1.5f, "Center X:%.02f Y:%.02f Z:%.02f", &Center, Center.x, Center.y, Center.z);
     print8(0x10, 0x34, 1.5f, "CRot X:%.02f Y:%.02f Z:%.02f", &CRot, CRot.x, CRot.y, CRot.z);
@@ -1981,15 +1974,12 @@ void fn_1_463C(void) {
 }
 
 void fn_1_498C(void) {
-    s8 spB;
-    s8 spA;
-    s8 sp9;
-    s8 sp8;
+    GXColor sp8;
 
-    sp8 = 0;
-    sp9 = 0;
-    spA = 0x90;
-    spB = 0xC0;
+    sp8.r = 0;
+    sp8.g = 0;
+    sp8.b = 0x90;
+    sp8.a = 0xC0;
     if ((f32) (s8) (u8) HuPadSubStkY[0] > 29.5f) {
         Center.y += 3.5833333f;
         if (Center.y > 2500.0f) {
@@ -2123,12 +2113,8 @@ void fn_1_5120(Point3d *arg0, Point3d *arg1, Point3d *arg2) {
 }
 
 s32 fn_1_51AC(Point3d *arg0, f32 farg0) {
-    f32 sp20;
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
+    Point3d sp18;
+    Point3d spC;
     Point3d *sp8;
     f32 temp_f28;
     f32 temp_f29;
@@ -2144,19 +2130,19 @@ s32 fn_1_51AC(Point3d *arg0, f32 farg0) {
     }
     temp_f26 = sin((3.141592653589793 * (f64) (90.0f * var_f31)) / 180.0);
     temp_f29 = (f32) (sin((3.141592653589793 * (f64) (90.0f * var_f31)) / 180.0) * temp_f26);
-    sp18 = lbl_1_bss_6C8.x + (temp_f29 * (lbl_1_bss_6BC.x - lbl_1_bss_6C8.x));
-    sp1C = lbl_1_bss_6C8.y + (temp_f29 * (lbl_1_bss_6BC.y - lbl_1_bss_6C8.y));
-    sp20 = lbl_1_bss_6C8.z + (temp_f29 * (lbl_1_bss_6BC.z - lbl_1_bss_6C8.z));
+    sp18.x = lbl_1_bss_6C8.x + (temp_f29 * (lbl_1_bss_6BC.x - lbl_1_bss_6C8.x));
+    sp18.y = lbl_1_bss_6C8.y + (temp_f29 * (lbl_1_bss_6BC.y - lbl_1_bss_6C8.y));
+    sp18.z = lbl_1_bss_6C8.z + (temp_f29 * (lbl_1_bss_6BC.z - lbl_1_bss_6C8.z));
     var_f30 = farg0;
     if (var_f30 > 1.0f) {
         var_f30 = 1.0f;
     }
     temp_f26_2 = sin((3.141592653589793 * (f64) (90.0f * var_f30)) / 180.0);
     temp_f28 = (f32) (sin((3.141592653589793 * (f64) (90.0f * var_f30)) / 180.0) * temp_f26_2);
-    spC = lbl_1_bss_6B0.x + (temp_f28 * (lbl_1_bss_6A4.x - lbl_1_bss_6B0.x));
-    sp10 = lbl_1_bss_6B0.y + (temp_f28 * (lbl_1_bss_6A4.y - lbl_1_bss_6B0.y));
-    sp14 = lbl_1_bss_6B0.z + (temp_f28 * (lbl_1_bss_6A4.z - lbl_1_bss_6B0.z));
-    Hu3DCameraPosSetV(1, (Point3d *) &sp18, sp8, (Point3d *) &spC);
+    spC.x = lbl_1_bss_6B0.x + (temp_f28 * (lbl_1_bss_6A4.x - lbl_1_bss_6B0.x));
+    spC.y = lbl_1_bss_6B0.y + (temp_f28 * (lbl_1_bss_6A4.y - lbl_1_bss_6B0.y));
+    spC.z = lbl_1_bss_6B0.z + (temp_f28 * (lbl_1_bss_6A4.z - lbl_1_bss_6B0.z));
+    Hu3DCameraPosSetV(1, &sp18, sp8, &spC);
     if (1.0f <= farg0) {
         lbl_1_bss_5D4 = 1;
         return 0;
@@ -2165,12 +2151,8 @@ s32 fn_1_51AC(Point3d *arg0, f32 farg0) {
 }
 
 s32 fn_1_54E0(Point3d *arg0, f32 farg0) {
-    f32 sp20;
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
+    Point3d sp18;
+    Point3d spC;
     Point3d *sp8;
     f32 temp_f28;
     f32 temp_f29;
@@ -2190,19 +2172,19 @@ loop_6:
         }
         temp_f26 = sin((3.141592653589793 * (f64) (90.0f * var_f31)) / 180.0);
         temp_f29 = (f32) (sin((3.141592653589793 * (f64) (90.0f * var_f31)) / 180.0) * temp_f26);
-        sp18 = lbl_1_bss_674[var_r31].unk0 + (temp_f29 * (lbl_1_bss_644[var_r31].unk0 - lbl_1_bss_674[var_r31].unk0));
-        sp1C = lbl_1_bss_674[var_r31].unk4 + (temp_f29 * (lbl_1_bss_644[var_r31].unk4 - lbl_1_bss_674[var_r31].unk4));
-        sp20 = lbl_1_bss_674[var_r31].unk8 + (temp_f29 * (lbl_1_bss_644[var_r31].unk8 - lbl_1_bss_674[var_r31].unk8));
+        sp18.x = lbl_1_bss_674[var_r31].unk0 + (temp_f29 * (lbl_1_bss_644[var_r31].unk0 - lbl_1_bss_674[var_r31].unk0));
+        sp18.y = lbl_1_bss_674[var_r31].unk4 + (temp_f29 * (lbl_1_bss_644[var_r31].unk4 - lbl_1_bss_674[var_r31].unk4));
+        sp18.z = lbl_1_bss_674[var_r31].unk8 + (temp_f29 * (lbl_1_bss_644[var_r31].unk8 - lbl_1_bss_674[var_r31].unk8));
         var_f30 = farg0;
         if (var_f30 > 1.0f) {
             var_f30 = 1.0f;
         }
         temp_f26_2 = sin((3.141592653589793 * (f64) (90.0f * var_f30)) / 180.0);
         temp_f28 = (f32) (sin((3.141592653589793 * (f64) (90.0f * var_f30)) / 180.0) * temp_f26_2);
-        spC = lbl_1_bss_614[var_r31].unk0 + (temp_f28 * (lbl_1_bss_5E4[var_r31].unk0 - lbl_1_bss_614[var_r31].unk0));
-        sp10 = lbl_1_bss_614[var_r31].unk4 + (temp_f28 * (lbl_1_bss_5E4[var_r31].unk4 - lbl_1_bss_614[var_r31].unk4));
-        sp14 = lbl_1_bss_614[var_r31].unk8 + (temp_f28 * (lbl_1_bss_5E4[var_r31].unk8 - lbl_1_bss_614[var_r31].unk8));
-        Hu3DCameraPosSetV(1 << var_r31, (Point3d *) &sp18, sp8, (Point3d *) &spC);
+        spC.x = lbl_1_bss_614[var_r31].unk0 + (temp_f28 * (lbl_1_bss_5E4[var_r31].unk0 - lbl_1_bss_614[var_r31].unk0));
+        spC.y = lbl_1_bss_614[var_r31].unk4 + (temp_f28 * (lbl_1_bss_5E4[var_r31].unk4 - lbl_1_bss_614[var_r31].unk4));
+        spC.z = lbl_1_bss_614[var_r31].unk8 + (temp_f28 * (lbl_1_bss_5E4[var_r31].unk8 - lbl_1_bss_614[var_r31].unk8));
+        Hu3DCameraPosSetV(1 << var_r31, &sp18, sp8, &spC);
         var_r31 += 1;
         goto loop_6;
     }

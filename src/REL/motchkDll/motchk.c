@@ -134,15 +134,9 @@ void ObjectSetup(void) {
 void MotChkMain(void) {
     HU3DMODELID modelId;
     s16 unused;
-    f32 sp28;
-    f32 sp24;
-    f32 sp20;
-    f32 sp1C;
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
-    f32 sp8;
+    HuVecF sp20;
+    HuVecF sp14;
+    HuVecF sp8;
 
     WipeCreate(1, 0, 0x14);
     while (WipeCheckEnd()) {
@@ -155,16 +149,16 @@ void MotChkMain(void) {
     HuDataDirClose(0xBA0000);
     Hu3DShadowCreate(30.0f, 20.0f, 2000.0f);
 
-    sp20 = 200.0f;
-    sp24 = 1000.0f;
-    sp28 = 200.0f;
-    spC = 1.0f;
-    sp10 = 0.0f;
-    sp8 = 0.0f;
-    sp1C = 0.0f;
-    sp18 = 0.0f;
-    sp14 = 0.0f;
-    Hu3DShadowPosSet((HuVecF *) &sp20, (HuVecF *) &sp8, (HuVecF *) &sp14);
+    sp20.x = 200.0f;
+    sp20.y = 1000.0f;
+    sp20.z = 200.0f;
+    sp8.y = 1.0f;
+    sp8.z = 0.0f;
+    sp8.x = 0.0f;
+    sp14.z = 0.0f;
+    sp14.y = 0.0f;
+    sp14.x = 0.0f;
+    Hu3DShadowPosSet(&sp20, &sp8, &sp14);
     Hu3DShadowTPLvlSet(0.6f);
 
     motNo = 0;

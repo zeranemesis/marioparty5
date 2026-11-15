@@ -176,9 +176,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     Vec pos;
     Vec target;
     s32 color[4];
-    s32 sp50;
-    s32 sp54;
-    s32 sp58;
+    s32 sp50[3];
     void *anim;
     s16 *p;
     s16 *q;
@@ -241,10 +239,10 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
         fn_1_1D4(lbl_1_data_40A, lbl_1_data_3F3, 0x44);
     }
     Hu3DGLightParamGet(*self->infLight, &pos, &target, color);
-    sp50 = lbl_1_rodata_220[0];
-    sp54 = lbl_1_rodata_220[1];
-    sp58 = lbl_1_rodata_220[2];
-    fn_1_50C4(0xF, (Vec *)&target, (Vec *)&sp50, 600.0f, 530.0f);
+    sp50[0] = lbl_1_rodata_220[0];
+    sp50[1] = lbl_1_rodata_220[1];
+    sp50[2] = lbl_1_rodata_220[2];
+    fn_1_50C4(0xF, (Vec *)&target, (Vec *)sp50, 600.0f, 530.0f);
     Hu3DShadowMultiTPLvlSet(0.5f, 0xF);
     Hu3DShadowMultiColSet(0x20, 0x20, 0x20, 0xF);
     anim = HuSprAnimRead(HuDataSelHeapReadNum(0x61000B, 0x10000000, 2));

@@ -175,9 +175,7 @@ void fn_1_18CEC(Mgr510KibakoMaster *arg0)
 void fn_1_18CEC(s32 arg0)
 #endif
 {
-    f32 sp14;
-    f32 sp10;
-    f32 spC;
+    Vec spC;
 #ifdef TARGET_PC
     Mgr510KibakoMaster *sp8;
 #else
@@ -191,25 +189,25 @@ void fn_1_18CEC(s32 arg0)
     s32 var_r31;
 
     sp8 = arg0;
-    sp14 = 0.0f;
+    spC.z = 0.0f;
     for (var_r31 = 1; var_r31 < 4; var_r31++) {
         for (var_r30 = 0; var_r30 < var_r31; var_r30++) {
             temp_f1 = 3.141592653589793 * ((360.0f * fn_1_57B4()) - 180.0f);
             temp_f31 = (f32)(temp_f1 / 180.0);
-            fn_1_DAB8(var_r31, &spC, temp_f1);
-            spC = (f32)((f64)spC + (300.0 * ((f64)(var_r30 + 2) * cos((f64)temp_f31))));
-            sp10 = 0.0f;
+            fn_1_DAB8(var_r31, &spC.x, temp_f1);
+            spC.x = (f32)((f64)spC.x + (300.0 * ((f64)(var_r30 + 2) * cos((f64)temp_f31))));
+            spC.y = 0.0f;
             temp_f1_2 = 300.0 * ((f64)(var_r30 + 2) * sin((f64)temp_f31));
-            sp14 = (f32)((f64)sp14 + temp_f1_2);
+            spC.z = (f32)((f64)spC.z + temp_f1_2);
             temp_r3 = (Mgr510Kibako *)__nw__FUl(0x38);
             if (temp_r3 != NULL) {
 #ifdef TARGET_PC
-                fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)&((Mgr510KibakoMaster *)sp8)->modelId, (Vec *)&spC); /* GC +0x10 */
+                fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)&((Mgr510KibakoMaster *)sp8)->modelId, &spC); /* GC +0x10 */
 #else
-                fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)(sp8 + 0x10), (Vec *)&spC);
+                fn_1_18EFC(temp_r3, (Mgr510KibakoVec *)(sp8 + 0x10), &spC);
 #endif
             }
-            printf("%d:% f\n", var_r30 + (var_r31 * 5), spC, sp14);
+            printf("%d:% f\n", var_r30 + (var_r31 * 5), spC.x, spC.z);
         }
     }
 }

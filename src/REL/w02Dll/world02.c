@@ -799,9 +799,7 @@ void MB2_Kill(void) {
 }
 
 void MB2_MainObjUpdate(OMOBJ *obj) {
-    f32 sp2C;
-    f32 sp28;
-    f32 sp24;
+    Point3d sp24;
     f32 sp20;
     f32 sp1C;
     f32 sp18;
@@ -811,10 +809,7 @@ void MB2_MainObjUpdate(OMOBJ *obj) {
     s8 sp11;
     s8 sp10;
     f32 spC;
-    u8 spB;
-    u8 spA;
-    u8 sp9;
-    u8 sp8;
+    u8 sp8[4];
     u8 *temp_r4;
     s32 temp_r3_2;
     f32 temp_f1;
@@ -893,9 +888,9 @@ loop_5:
 loop_31:
         if (var_r31_2 < 3) {
             temp_f31 = 0.5f - (0.007874016f * (f32) (frand() & 0x7F));
-            sp24 = (f32) (-2925.0 + (1.5 * (100.0 * ((f64) temp_f31 * sin(-0.7853981633974483)))));
-            sp28 = 1210.0f + (0.25f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
-            sp2C = (f32) (-25.0 + (1.5 * (100.0 * ((f64) temp_f31 * cos(-0.7853981633974483)))));
+            sp24.x = (f32) (-2925.0 + (1.5 * (100.0 * ((f64) temp_f31 * sin(-0.7853981633974483)))));
+            sp24.y = 1210.0f + (0.25f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+            sp24.z = (f32) (-25.0 + (1.5 * (100.0 * ((f64) temp_f31 * cos(-0.7853981633974483)))));
             sp20 = 0.0f;
             sp1C = 0.0f;
             sp18 = 0.0f;
@@ -916,11 +911,11 @@ loop_31:
                 } else {
                     var_r29 = 1;
                 }
-                sp8 = (u8) sp10;
-                sp9 = (u8) sp11;
-                spA = (u8) sp12;
-                spB = (u8) sp13;
-                MB2_SplashEffCreateRandX(&sp24, &sp8, var_r29, 1.0f);
+                sp8[0] = (u8) sp10;
+                sp8[1] = (u8) sp11;
+                sp8[2] = (u8) sp12;
+                sp8[3] = (u8) sp13;
+                MB2_SplashEffCreateRandX(&sp24.x, sp8, var_r29, 1.0f);
             }
             var_r31_2 += 1;
             goto loop_31;
@@ -1068,9 +1063,7 @@ loop_7:
 
 s32 MB2Ev_Rainbow(s32 arg0, s32 arg1) {
     Point3d sp5C;
-    f32 sp58;
-    f32 sp54;
-    f32 sp50;
+    Point3d sp50;
     Point3d sp44;
     Point3d sp38;
     f32 sp34;
@@ -1240,19 +1233,19 @@ loop_50:
         MBPlayerMotionNoShiftSet(arg1, 3, 0.0f, 8.0f, 0x40000001U);
         if ((s32) mb2ev_RainbowDirTbl[arg0] > 0) {
             MBPlayerPosGet(arg1, &sp5C);
-            sp50 = temp_r27->x;
-            sp54 = temp_r27->y;
-            sp58 = temp_r27->z;
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            sp50.x = temp_r27->x;
+            sp50.y = temp_r27->y;
+            sp50.z = temp_r27->z;
+            PSVECSubtract(&sp50, &sp5C, &sp44);
             temp_r28 = (s32) (PSVECMag(&sp44) / 20.0f);
             var_r30_3 = 0;
 loop_54:
             if (var_r30_3 < temp_r28) {
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 PSVECScale(&sp44, &sp44, (f32) var_r30_3 / (f32) temp_r28);
                 PSVECAdd(&sp5C, &sp44, &sp44);
                 MBPlayerPosSetV(arg1, &sp44);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 MBPlayerRotGet(arg1, &sp38);
                 sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
                 MBPlayerRotSetV(arg1, &sp38);
@@ -1260,26 +1253,26 @@ loop_54:
                 var_r30_3 += 1;
                 goto loop_54;
             }
-            MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+            MBPlayerPosSetV(arg1, &sp50);
             var_r30_4 = 0;
 loop_60:
             if (var_r30_4 < (s32) (mb2ev_RainbowVtxNumTbl[temp_r25] - 1)) {
                 sp18 = var_r30_4;
                 MBPlayerPosGet(arg1, &sp5C);
                 temp_r4 = temp_r27 + (var_r30_4 + 1);
-                sp50 = temp_r4->x;
-                sp54 = temp_r4->y;
-                sp58 = temp_r4->z;
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                sp50.x = temp_r4->x;
+                sp50.y = temp_r4->y;
+                sp50.z = temp_r4->z;
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 temp_r28_2 = (s32) (PSVECMag(&sp44) / 20.0f);
                 MBPlayerRotGet(arg1, &sp38);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 temp_f29 = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
                 var_r26 = 0;
 loop_58:
                 if (var_r26 < temp_r28_2) {
                     temp_f31_2 = (f32) var_r26 / (f32) temp_r28_2;
-                    PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                    PSVECSubtract(&sp50, &sp5C, &sp44);
                     PSVECScale(&sp44, &sp44, temp_f31_2);
                     PSVECAdd(&sp5C, &sp44, &sp44);
                     MBPlayerPosSetV(arg1, &sp44);
@@ -1296,7 +1289,7 @@ loop_58:
                     var_r26 += 1;
                     goto loop_58;
                 }
-                MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+                MBPlayerPosSetV(arg1, &sp50);
                 MBPlayerRotSet(arg1, 0.0f, temp_f29, 0.0f);
                 var_r30_4 += 1;
                 goto loop_60;
@@ -1304,19 +1297,19 @@ loop_58:
         } else {
             MBPlayerPosGet(arg1, &sp5C);
             temp_r4_2 = temp_r27 + (mb2ev_RainbowVtxNumTbl[temp_r25] - 1);
-            sp50 = temp_r4_2->x;
-            sp54 = temp_r4_2->y;
-            sp58 = temp_r4_2->z;
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            sp50.x = temp_r4_2->x;
+            sp50.y = temp_r4_2->y;
+            sp50.z = temp_r4_2->z;
+            PSVECSubtract(&sp50, &sp5C, &sp44);
             temp_r28_3 = (s32) (PSVECMag(&sp44) / 20.0f);
             var_r30_5 = 0;
 loop_64:
             if (var_r30_5 < temp_r28_3) {
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 PSVECScale(&sp44, &sp44, (f32) var_r30_5 / (f32) temp_r28_3);
                 PSVECAdd(&sp5C, &sp44, &sp44);
                 MBPlayerPosSetV(arg1, &sp44);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 MBPlayerRotGet(arg1, &sp38);
                 sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
                 MBPlayerRotSetV(arg1, &sp38);
@@ -1324,26 +1317,26 @@ loop_64:
                 var_r30_5 += 1;
                 goto loop_64;
             }
-            MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+            MBPlayerPosSetV(arg1, &sp50);
             var_r30_6 = mb2ev_RainbowVtxNumTbl[temp_r25] - 1;
 loop_70:
             if (var_r30_6 > 0) {
                 sp18 = var_r30_6;
                 MBPlayerPosGet(arg1, &sp5C);
                 temp_r3_3 = temp_r27 + (var_r30_6 - 1);
-                sp50 = temp_r3_3->x;
-                sp54 = temp_r3_3->y;
-                sp58 = temp_r3_3->z;
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                sp50.x = temp_r3_3->x;
+                sp50.y = temp_r3_3->y;
+                sp50.z = temp_r3_3->z;
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 temp_r28_4 = (s32) (PSVECMag(&sp44) / 20.0f);
                 MBPlayerRotGet(arg1, &sp38);
-                PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                PSVECSubtract(&sp50, &sp5C, &sp44);
                 temp_f29_2 = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
                 var_r26_2 = 0;
 loop_68:
                 if (var_r26_2 < temp_r28_4) {
                     temp_f31_3 = (f32) var_r26_2 / (f32) temp_r28_4;
-                    PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+                    PSVECSubtract(&sp50, &sp5C, &sp44);
                     PSVECScale(&sp44, &sp44, temp_f31_3);
                     PSVECAdd(&sp5C, &sp44, &sp44);
                     MBPlayerPosSetV(arg1, &sp44);
@@ -1360,24 +1353,24 @@ loop_68:
                     var_r26_2 += 1;
                     goto loop_68;
                 }
-                MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+                MBPlayerPosSetV(arg1, &sp50);
                 MBPlayerRotSet(arg1, 0.0f, temp_f29_2, 0.0f);
                 var_r30_6 -= 1;
                 goto loop_70;
             }
         }
         MBPlayerPosGet(arg1, &sp5C);
-        MBMasuPosGet(0, (s32) temp_r3, (Point3d *) &sp50);
-        PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+        MBMasuPosGet(0, (s32) temp_r3, &sp50);
+        PSVECSubtract(&sp50, &sp5C, &sp44);
         temp_r28_5 = (s32) (PSVECMag(&sp44) / 20.0f);
         var_r30_7 = 0;
 loop_73:
         if (var_r30_7 < temp_r28_5) {
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            PSVECSubtract(&sp50, &sp5C, &sp44);
             PSVECScale(&sp44, &sp44, (f32) var_r30_7 / (f32) temp_r28_5);
             PSVECAdd(&sp5C, &sp44, &sp44);
             MBPlayerPosSetV(arg1, &sp44);
-            PSVECSubtract((Point3d *) &sp50, &sp5C, &sp44);
+            PSVECSubtract(&sp50, &sp5C, &sp44);
             MBPlayerRotGet(arg1, &sp38);
             sp38.y = (f32) (180.0 * (atan2((f64) sp44.x, (f64) sp44.z) / 3.141592653589793));
             MBPlayerRotSetV(arg1, &sp38);
@@ -1385,7 +1378,7 @@ loop_73:
             var_r30_7 += 1;
             goto loop_73;
         }
-        MBPlayerPosSetV(arg1, (Point3d *) &sp50);
+        MBPlayerPosSetV(arg1, &sp50);
         MBPlayerMotionNoShiftSet(arg1, 1, 0.0f, 8.0f, 0x40000001U);
         GwPlayer[arg1].masuId = temp_r3;
         var_r30_8 = 0;
@@ -1407,9 +1400,7 @@ loop_76:
 
 void MB2Ev_WindGuru2(s32 arg0, s32 arg1) {
     Point3d sp2C;
-    f32 sp28;
-    f32 sp24;
-    f32 sp20;
+    Point3d sp20;
     Point3d sp14;
     Point3d sp8;
     f32 sp38[4][3];
@@ -1556,16 +1547,16 @@ loop_50:
         if ((f32) var_r30_2 < 24.0f) {
             temp_f30 = (f32) var_r30_2 / 24.0f;
             Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((4) * 4)), mb2ev_WindGuru2HookTbl[var_r29_2], (f32 (*)[4]) &sp38[0]);
-            sp20 = sp38[3][0];
-            sp24 = sp38[3][1];
-            sp28 = sp38[3][2];
-            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            sp20.x = sp38[3][0];
+            sp20.y = sp38[3][1];
+            sp20.z = sp38[3][2];
+            PSVECSubtract(&sp20, &sp2C, &sp14);
             PSVECScale(&sp14, &sp14, temp_f30);
             PSVECAdd(&sp2C, &sp14, &sp14);
             sp14.y = (f32) ((f64) sp14.y + (300.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f30)) / 180.0)));
             MBPlayerPosSetV(arg1, &sp14);
             MBPlayerRotGet(arg1, &sp8);
-            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            PSVECSubtract(&sp20, &sp2C, &sp14);
             sp8.y = (f32) (180.0 * (atan2((f64) sp14.x, (f64) sp14.z) / 3.141592653589793));
             MBPlayerRotSetV(arg1, &sp8);
             HuPrcVSleep();
@@ -1580,10 +1571,10 @@ loop_50:
 loop_53:
         if (var_f31_2 < temp_f25) {
             Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((4) * 4)), mb2ev_WindGuru2HookTbl[var_r29_2], (f32 (*)[4]) &sp38[0]);
-            sp20 = sp38[3][0];
-            sp24 = sp38[3][1];
-            sp28 = sp38[3][2];
-            MBPlayerPosSetV(arg1, (Point3d *) &sp20);
+            sp20.x = sp38[3][0];
+            sp20.y = sp38[3][1];
+            sp20.z = sp38[3][2];
+            MBPlayerPosSetV(arg1, &sp20);
             HuPrcVSleep();
             var_f31_2 += temp_f1;
             goto loop_53;
@@ -1591,19 +1582,19 @@ loop_53:
         temp_r3 = MB2_WindGuru2MasuNoGet(temp_r27, temp_r20);
         MBPlayerPosFixEvent(arg1, temp_r3, 0);
         MBPlayerPosGet(arg1, &sp2C);
-        MBMasuPosGet(0, temp_r3, (Point3d *) &sp20);
+        MBMasuPosGet(0, temp_r3, &sp20);
         MBPlayerMotionNoShiftSet(arg1, 4, 0.0f, 8.0f, 0U);
         var_r30_3 = 0;
 loop_56:
         if ((f32) var_r30_3 < 24.0f) {
             temp_f30_2 = (f32) var_r30_3 / 24.0f;
-            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            PSVECSubtract(&sp20, &sp2C, &sp14);
             PSVECScale(&sp14, &sp14, temp_f30_2);
             PSVECAdd(&sp2C, &sp14, &sp14);
             sp14.y = (f32) ((f64) sp14.y + (300.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f30_2)) / 180.0)));
             MBPlayerPosSetV(arg1, &sp14);
             MBPlayerRotGet(arg1, &sp8);
-            PSVECSubtract((Point3d *) &sp20, &sp2C, &sp14);
+            PSVECSubtract(&sp20, &sp2C, &sp14);
             sp8.y = (f32) (180.0 * (atan2((f64) sp14.x, (f64) sp14.z) / 3.141592653589793));
             MBPlayerRotSetV(arg1, &sp8);
             HuPrcVSleep();
@@ -1627,20 +1618,12 @@ loop_56:
  *    relevant field (almost always .x, since it is the first word). */
 void MB2Ev_Thunder(s32 arg0) {
     Point3d sp80;
-    f32 sp7C;
-    f32 sp78;
-    f32 sp74;
+    Point3d sp74;
     Point3d sp68;
     f32 sp64;
-    f32 sp58;
-    f32 sp54;
-    f32 sp50;
-    f32 sp4C;
-    f32 sp48;
-    f32 sp44;
-    f32 sp40;
-    f32 sp3C;
-    f32 sp38;
+    Point3d sp50;
+    Point3d sp44;
+    Point3d sp38;
     Point3d sp2C;
     Point3d sp20;
     HU3DMODEL *sp1C;
@@ -1707,12 +1690,12 @@ void MB2Ev_Thunder(s32 arg0) {
     }
     MBDataAsyncWait(MBDataDirReadAsync(0x240000));
     MBPlayerPosGet(arg0, &sp80);
-    sp44 = sp80.x;
-    sp48 = sp80.y;
-    sp4C = sp80.z;
-    sp4C -= 400.0f;
-    sp48 += 200.0f;
-    temp_r3_3 = MBGuideCreateFlag(2, (Point3d *) &sp44, 0, 1, 1, 0);
+    sp44.x = sp80.x;
+    sp44.y = sp80.y;
+    sp44.z = sp80.z;
+    sp44.z -= 400.0f;
+    sp44.y += 200.0f;
+    temp_r3_3 = MBGuideCreateFlag(2, &sp44, 0, 1, 1, 0);
     MBModelLayerSet(temp_r3_3, 2U);
     HuDataDirClose(0x240000);
     temp_r16 = MBPlayerCapsuleMaxGet();
@@ -1739,24 +1722,24 @@ void MB2Ev_Thunder(s32 arg0) {
         return;
     }
     MBPlayerPosGet(arg0, &sp80);
-    sp74 = mb2ev_DynamoPos.x;
-    sp78 = mb2ev_DynamoPos.y;
-    sp7C = mb2ev_DynamoPos.z;
+    sp74.x = mb2ev_DynamoPos.x;
+    sp74.y = mb2ev_DynamoPos.y;
+    sp74.z = mb2ev_DynamoPos.z;
     MB2W_S32(0x26 * 4) = 0;
-    sp50 = temp_r3_2->pos.x;
-    sp54 = temp_r3_2->pos.y - 30.0f;
-    sp58 = sp64;
-    MBCameraModelViewSet(MBPlayerModelGet(arg0), (Point3d *) &sp50, NULL, 3000.0f, -1.0f, 0x2A);
+    sp50.x = temp_r3_2->pos.x;
+    sp50.y = temp_r3_2->pos.y - 30.0f;
+    sp50.z = sp64;
+    MBCameraModelViewSet(MBPlayerModelGet(arg0), &sp50, NULL, 3000.0f, -1.0f, 0x2A);
     MBCameraMotionWait();
     for (var_r30 = 0; (f32) var_r30 < 60.0f; var_r30++) {
-        sp48 = (f32) ((f64) (200.0f + sp80.y) + (3.0 * (100.0 * sin((3.141592653589793 * (f64) (90.0f * ((f32) var_r30 / 60.0f))) / 180.0))));
-        MBGuideMdlPosSetV(temp_r3_3, (Point3d *) &sp44);
+        sp44.y = (f32) ((f64) (200.0f + sp80.y) + (3.0 * (100.0 * sin((3.141592653589793 * (f64) (90.0f * ((f32) var_r30 / 60.0f))) / 180.0))));
+        MBGuideMdlPosSetV(temp_r3_3, &sp44);
         HuPrcVSleep();
     }
     MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
     for (var_r30_2 = 0; (f32) var_r30_2 <= 24.0f; var_r30_2++) {
         temp_f31 = (f32) var_r30_2 / 24.0f;
-        PSVECSubtract((Point3d *) &sp74, &sp80, &sp68);
+        PSVECSubtract(&sp74, &sp80, &sp68);
         PSVECScale(&sp68, &sp68, temp_f31);
         PSVECAdd(&sp80, &sp68, &sp68);
         sp68.y = (f32) ((f64) sp68.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f31)) / 180.0)));
@@ -1900,12 +1883,12 @@ void MB2Ev_Thunder(s32 arg0) {
         for (var_r30_3 = 0; var_r30_3 < var_r22; var_r30_3++) {
             MBPlayerPosGet(arg0, &sp20);
             sp20.y += 250.0f;
-            sp38 = mb2ev_BiriQCapsulePos.x;
-            sp3C = mb2ev_BiriQCapsulePos.y;
-            sp40 = mb2ev_BiriQCapsulePos.z;
-            PSVECSubtract(&sp20, (Point3d *) &sp38, &sp2C);
+            sp38.x = mb2ev_BiriQCapsulePos.x;
+            sp38.y = mb2ev_BiriQCapsulePos.y;
+            sp38.z = mb2ev_BiriQCapsulePos.z;
+            PSVECSubtract(&sp20, &sp38, &sp2C);
             PSVECScale(&sp2C, &sp2C, 1.2f);
-            PSVECAdd(&sp2C, (Point3d *) &sp38, &sp2C);
+            PSVECAdd(&sp2C, &sp38, &sp2C);
             if ((u32) (frand() & 1) != 0) {
                 sp2C.x = sp2C.x + 200.0f;
             } else {
@@ -1922,7 +1905,7 @@ void MB2Ev_Thunder(s32 arg0) {
             for (var_r29 = 0; (f32) var_r29 <= 60.0f; var_r29++) {
                 temp_f31_2 = (f32) var_r29 / 60.0f;
                 temp_f29 = (f32) sin((3.141592653589793 * (f64) (90.0f * temp_f31_2)) / 180.0);
-                MB2_BezierCalcV(&sp38, (f32 *) &sp2C, &sp20, &sp68, temp_f31_2);
+                MB2_BezierCalcV(&sp38.x, (f32 *) &sp2C, &sp20, &sp68, temp_f31_2);
                 MBModelPosSetV(temp_r3_8, &sp68);
                 MBModelScaleSet(temp_r3_8, temp_f29, temp_f29, temp_f29);
                 HuPrcVSleep();
@@ -1932,17 +1915,17 @@ void MB2Ev_Thunder(s32 arg0) {
                 MBModelPosSetV(temp_r3_8, &sp68);
                 HuPrcVSleep();
             }
-            sp38 = sp20.x;
-            sp3C = sp20.y;
-            sp40 = sp20.z;
+            sp38.x = sp20.x;
+            sp38.y = sp20.y;
+            sp38.z = sp20.z;
             sp20.y -= 150.0f;
             HuAudFXPlay(0x31C);
             for (var_r29_3 = 0; (f32) var_r29_3 <= 60.0f; var_r29_3++) {
                 temp_f31_3 = (f32) var_r29_3 / 60.0f;
                 temp_f29_2 = (f32) cos((3.141592653589793 * (f64) (90.0f * temp_f31_3)) / 180.0);
-                PSVECSubtract(&sp20, (Point3d *) &sp38, &sp68);
+                PSVECSubtract(&sp20, &sp38, &sp68);
                 PSVECScale(&sp68, &sp68, temp_f31_3);
-                PSVECAdd(&sp68, (Point3d *) &sp38, &sp68);
+                PSVECAdd(&sp68, &sp38, &sp68);
                 temp_f28 = sin((3.141592653589793 * (f64) (180.0f * temp_f31_3)) / 180.0);
                 sp68.x = (f32) ((f64) sp68.x + (200.0 * (sin((3.141592653589793 * (f64) (720.0f * temp_f31_3)) / 180.0) * temp_f28)));
                 temp_f28_2 = sin((3.141592653589793 * (f64) (180.0f * temp_f31_3)) / 180.0);
@@ -2007,9 +1990,9 @@ void MB2Ev_Thunder(s32 arg0) {
     MBPlayerMotionNoShiftSet(arg0, 4, 0.0f, 8.0f, 0U);
     for (var_r30_6 = 0; (f32) var_r30_6 <= 24.0f; var_r30_6++) {
         temp_f31_4 = (f32) var_r30_6 / 24.0f;
-        PSVECSubtract(&sp80, (Point3d *) &sp74, &sp68);
+        PSVECSubtract(&sp80, &sp74, &sp68);
         PSVECScale(&sp68, &sp68, temp_f31_4);
-        PSVECAdd((Point3d *) &sp74, &sp68, &sp68);
+        PSVECAdd(&sp74, &sp68, &sp68);
         sp68.y = (f32) ((f64) sp68.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * temp_f31_4)) / 180.0)));
         MBPlayerPosSetV(arg0, &sp68);
         MBPlayerRotSet(arg0, 0.0f, 0.0f, 0.0f);
@@ -2017,10 +2000,10 @@ void MB2Ev_Thunder(s32 arg0) {
     }
     MBPlayerMotionNoShiftSet(arg0, 1, 0.0f, 8.0f, 0x40000001U);
     MB2W_S32(0x26 * 4) = 1;
-    sp50 = temp_r3_2->pos.x;
-    sp54 = temp_r3_2->pos.y;
-    sp58 = sp64;
-    MBCameraModelViewSet(MBPlayerModelGet(arg0), (Point3d *) &sp50, NULL, 3000.0f, -1.0f, 0x2A);
+    sp50.x = temp_r3_2->pos.x;
+    sp50.y = temp_r3_2->pos.y;
+    sp50.z = sp64;
+    MBCameraModelViewSet(MBPlayerModelGet(arg0), &sp50, NULL, 3000.0f, -1.0f, 0x2A);
     MBCameraMotionWait();
     MB2_CoinClose();
     MB2_CoinEffClose();
@@ -3328,17 +3311,12 @@ void MB2_DentyuObjFlash(OMOBJ *obj) {
 }
 
 void MB2_WaterSplashUpdate(OMOBJ *obj) {
-    f32 sp18;
-    f32 sp14;
-    f32 sp10;
+    Point3d sp10;
     s8 spF;
     s8 spE;
     s8 spD;
     s8 spC;
-    u8 spB;
-    u8 spA;
-    u8 sp9;
-    u8 sp8;
+    u8 sp8[4];
     f32 temp_f31;
     s32 var_r30;
     u32 temp_r0;
@@ -3348,9 +3326,9 @@ void MB2_WaterSplashUpdate(OMOBJ *obj) {
     if ((temp_r0 == 0) || (MBKillCheck() != 0)) {
         omDelObjEx(mbObjMan, obj);
     }
-    sp10 = obj->trans.x + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
-    sp18 = obj->trans.z + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
-    sp14 = obj->trans.y + (0.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+    sp10.x = obj->trans.x + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+    sp10.z = obj->trans.z + (1.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
+    sp10.y = obj->trans.y + (0.5f * (100.0f * (0.5f - (0.007874016f * (f32) (frand() & 0x7F)))));
     temp_f31 = 32.0f * (0.007874016f * (f32) (frand() & 0x7F));
     spC = (s8) (200.0f + temp_f31);
     spD = (s8) (200.0f + temp_f31);
@@ -3361,11 +3339,11 @@ void MB2_WaterSplashUpdate(OMOBJ *obj) {
     } else {
         var_r30 = 0;
     }
-    sp8 = (u8) spC;
-    sp9 = (u8) spD;
-    spA = (u8) spE;
-    spB = (u8) spF;
-    MB2_SplashEffCreateRandX(&sp10, &sp8, var_r30, 1.0f);
+    sp8[0] = (u8) spC;
+    sp8[1] = (u8) spD;
+    sp8[2] = (u8) spE;
+    sp8[3] = (u8) spF;
+    MB2_SplashEffCreateRandX(&sp10.x, sp8, var_r30, 1.0f);
 }
 
 s16 MB2_WindGuru2MasuNoGet(s32 arg0, s32 arg1) {

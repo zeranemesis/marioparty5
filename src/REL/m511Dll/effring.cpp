@@ -173,9 +173,7 @@ void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx)
     Point3d spVec;
     f32 identMat[4][4];
     f32 scale;
-    f32 sp10;
-    f32 sp14;
-    f32 sp18;
+    Point3d sp10;
     s32 i;
     s32 j;
     f32 temp_f30;
@@ -220,19 +218,19 @@ void fn_1_6EDC(Mgr511Effring *arg0, Mtx mtx)
             spVec.x = arg0->unk20;
             spVec.y = arg0->unk24;
             spVec.z = arg0->unk28;
-            sp10 = 0.0f;
-            sp14 = 0.0f;
-            sp18 = 0.0f;
+            sp10.x = 0.0f;
+            sp10.y = 0.0f;
+            sp10.z = 0.0f;
             fn_1_7A44(&spVec.y, arg0, mtx);
             for (i = 1; i < 4; i++) {
                 HuSprTexLoad(arg0->anim[i], (s16)0, (s16)lbl_1_rodata_E8[i], (GXTexWrapMode)1, (GXTexWrapMode)1, (GXTexFilter)1);
             }
             for (j = 1; j < 8; j++) {
                 scale = 240.0f * lbl_1_rodata_F8[j].scale;
-                sp10 = sp64.x * scale;
-                sp14 = sp64.y * scale;
-                sp18 = -100.0f;
-                fn_1_7654(arg0, (Point3d *)&sp10, lbl_1_rodata_F8[j].color, lbl_1_rodata_F8[j].rate, temp_f31, lbl_1_rodata_F8[j].size);
+                sp10.x = sp64.x * scale;
+                sp10.y = sp64.y * scale;
+                sp10.z = -100.0f;
+                fn_1_7654(arg0, &sp10, lbl_1_rodata_F8[j].color, lbl_1_rodata_F8[j].rate, temp_f31, lbl_1_rodata_F8[j].size);
                 scale = lbl_1_rodata_F8[j].size;
             }
             if (!(temp_f31 < 0.8f)) {

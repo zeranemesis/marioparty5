@@ -312,9 +312,7 @@ void fn_1_DB04(Mgr511StarMaster *arg0)
 {
     Mgr511StarMaster *self = arg0;
     Point3d sp14;
-    f32 sp8;
-    f32 spC;
-    f32 sp10;
+    Point3d sp8;
     f32 var_f30;
     f32 var_f31;
     s16 temp_r29;
@@ -349,10 +347,10 @@ void fn_1_DB04(Mgr511StarMaster *arg0)
         Hu3DModelPosSetV(temp_r29, &sp14);
         Hu3DModelRotSet(temp_r29, 0.0f, self->spin, 0.0f);
         fn_1_E220(self->star[i]);
-        sp8 = 0.0f;
-        spC = self->spin;
-        sp10 = 0.0f;
-        fn_1_9700(self->glow[i], &sp14, (Point3d *)&sp8);
+        sp8.x = 0.0f;
+        sp8.y = self->spin;
+        sp8.z = 0.0f;
+        fn_1_9700(self->glow[i], &sp14, &sp8);
     }
     self->tick = self->tick + 1;
     self->spin = (f32)(self->spin + 2.0f);
