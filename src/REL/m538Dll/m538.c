@@ -228,7 +228,7 @@ static const u16 lbl_1_rodata_C0[4] = {0x14, 0x32, 0x3C, 0x50};
 static const u16 lbl_1_rodata_C8[4] = {0x3C, 0x28, 0xA, 0x0};
 static const u16 lbl_1_rodata_D0[4] = {0x0, 0x0, 0x1E, 0x32};
 static const f32 lbl_1_rodata_EC[4] = {26244.0, 24964.0, 23716.0, 22500.0};
-static const f32 lbl_1_rodata_FC[4] = {7.006492321624085e-44, 9.80908925027372e-44, 1.2611686178923354e-43, 1.401298464324817e-43};
+static const s32 lbl_1_rodata_FC[4] = {0x32, 0x46, 0x5A, 0x64};
 static const f32 lbl_1_rodata_158[4] = {-100.0, -100.0, 100.0, 100.0};
 static const f32 lbl_1_rodata_168[4] = {0.0, 150.0, 150.0, 0.0};
 static const u16 lbl_1_rodata_190[4] = { 0x1, 0x4, 0x7, 0x0 };
@@ -1029,22 +1029,6 @@ s32 fn_1_1B94(M538_PLAYER *arg0) {
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_1DC8(M538_PLAYER *arg0) {
-    u16 sp66;
-    u16 sp64;
-    u16 sp62;
-    u16 sp60;
-    u16 sp5E;
-    u16 sp5C;
-    u16 sp5A;
-    u16 sp58;
-    u16 sp56;
-    u16 sp54;
-    u16 sp52;
-    u16 sp50;
-    u16 sp4E;
-    u16 sp4C;
-    u16 sp4A;
-    u16 sp48;
     f32 sp44;
     f32 sp40;
     f32 sp3C;
@@ -1094,22 +1078,6 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
     M538_PLAYER *var_r27;
 
     var_r26 = 0;
-    sp60 = lbl_1_rodata_B8[0];
-    sp62 = lbl_1_rodata_B8[0];
-    sp64 = lbl_1_rodata_B8[1];
-    sp66 = lbl_1_rodata_B8[1];
-    sp58 = lbl_1_rodata_C0[0];
-    sp5A = lbl_1_rodata_C0[0];
-    sp5C = lbl_1_rodata_C0[1];
-    sp5E = lbl_1_rodata_C0[1];
-    sp50 = lbl_1_rodata_C8[0];
-    sp52 = lbl_1_rodata_C8[0];
-    sp54 = lbl_1_rodata_C8[1];
-    sp56 = lbl_1_rodata_C8[1];
-    sp48 = lbl_1_rodata_D0[0];
-    sp4A = lbl_1_rodata_D0[0];
-    sp4C = lbl_1_rodata_D0[1];
-    sp4E = lbl_1_rodata_D0[1];
     temp_r29 = lbl_1_bss_C->data;
     if ((s16) temp_r29->activeF == 0) {
         return 0;
@@ -1126,7 +1094,7 @@ s32 fn_1_1DC8(M538_PLAYER *arg0) {
         temp_f31 = (arg0->x * arg0->x) + (arg0->z * arg0->z);
         temp_f0 = (temp_r29->lightRadius - 200.0f) * (temp_r29->lightRadius - 200.0f);
         sp44 = temp_f0;
-        if ((temp_f31 > temp_f0) && (frandmod(0x64U) < (s16) (&sp60)[arg0->dif])) {
+        if ((temp_f31 > temp_f0) && (frandmod(0x64U) < (s16) lbl_1_rodata_B8[arg0->dif])) {
             temp_f19 = -arg0->z;
             temp_f20 = -arg0->x;
             if (temp_f19 == 0.0f) {
@@ -1163,7 +1131,7 @@ loop_27:
                 goto loop_27;
             }
             if ((var_f30 < 160000.0f) && (var_r27 != NULL)) {
-                if (frandmod(0x64U) < (s16) (&sp58)[arg0->dif]) {
+                if (frandmod(0x64U) < (s16) lbl_1_rodata_C0[arg0->dif]) {
                     temp_r31->aiFlag = 1;
                     arg0->aiTarget = var_r27;
                     temp_f0_2 = var_r27->z - arg0->z;
@@ -1218,7 +1186,7 @@ loop_27:
                     temp_r31->aiState = 2;
                     var_r26 = 1;
                 }
-            } else if (frandmod(0x64U) < (s16) (&sp48)[arg0->dif]) {
+            } else if (frandmod(0x64U) < (s16) lbl_1_rodata_D0[arg0->dif]) {
                 if (temp_f31 > 40000.0f) {
                     temp_f0_5 = -arg0->z;
                     sp28 = temp_f0_5;
@@ -1249,7 +1217,7 @@ loop_27:
                     temp_r31->aiMaxTimer = (s16) (frandmod(3U) + 3);
                     temp_r31->aiState = 4;
                 }
-            } else if (frandmod(0x64U) < (s16) (&sp50)[arg0->dif]) {
+            } else if (frandmod(0x64U) < (s16) lbl_1_rodata_C8[arg0->dif]) {
                 temp_r31->aiTimer = 0;
                 temp_r31->aiMaxTimer = (s16) (frandmod(0xAU) + 0xA);
                 temp_r31->aiState = 4;
@@ -1373,14 +1341,6 @@ s32 fn_1_29F8(M538_PLAYER *arg0) {
     M538_PLAYER *temp_r31;
 
     var_r29 = 0;
-    sp18 = lbl_1_rodata_EC[0];
-    sp1C = lbl_1_rodata_EC[1];
-    sp20 = lbl_1_rodata_EC[2];
-    sp24 = lbl_1_rodata_EC[3];
-    sp8 = lbl_1_rodata_FC[0];
-    spC = lbl_1_rodata_FC[1];
-    sp10 = lbl_1_rodata_FC[2];
-    sp14 = lbl_1_rodata_FC[3];
     if ((s16) ((M538 *) lbl_1_bss_C->data)->activeF == 0) {
         return 0;
     }
@@ -1388,7 +1348,7 @@ s32 fn_1_29F8(M538_PLAYER *arg0) {
     if (((s16) temp_r31->aiFlag != 0) && (arg0->aiTarget != NULL)) {
         temp_f30 = arg0->aiTarget->x - arg0->x;
         temp_f29 = arg0->aiTarget->z - arg0->z;
-        if (((temp_f30 * temp_f30) + (temp_f29 * temp_f29)) < (&sp18)[arg0->dif]) {
+        if (((temp_f30 * temp_f30) + (temp_f29 * temp_f29)) < lbl_1_rodata_EC[arg0->dif]) {
             if (temp_f29 == 0.0f) {
                 if (temp_f30 >= 0.0f) {
                     var_f28 = 1.5707964f;
@@ -1409,7 +1369,7 @@ loop_15:
                 var_f31 += 360.0f;
                 goto loop_15;
             }
-            if (((f32) fabs(var_f31) < 90.0f) && (frandmod(0x64U) < (s32) (&sp8)[arg0->dif])) {
+            if (((f32) fabs(var_f31) < 90.0f) && (frandmod(0x64U) < lbl_1_rodata_FC[arg0->dif])) {
                 temp_r31->aiFlag = 0;
                 var_r29 = 1;
             }
@@ -1420,14 +1380,6 @@ loop_15:
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_2CB8(M538_PLAYER *arg0) {
-    s32 sp44;
-    s32 sp40;
-    s32 sp3C;
-    s32 sp38;
-    s32 sp34;
-    s32 sp30;
-    s32 sp2C;
-    f32 sp28;
     f64 sp20;
     f32 sp1C;
     f32 sp18;
@@ -1467,14 +1419,6 @@ s32 fn_1_2CB8(M538_PLAYER *arg0) {
     case 1:
         if ((s16) arg0->type != 0) {
             var_r26 = 0;
-            sp28 = lbl_1_rodata_EC[0];
-            sp2C = lbl_1_rodata_EC[1];
-            sp30 = lbl_1_rodata_EC[2];
-            sp34 = lbl_1_rodata_EC[3];
-            sp38 = lbl_1_rodata_FC[0];
-            sp3C = lbl_1_rodata_FC[1];
-            sp40 = lbl_1_rodata_FC[2];
-            sp44 = lbl_1_rodata_FC[3];
             if ((s16) ((M538 *) lbl_1_bss_C->data)->activeF == 0) {
                 var_r28 = 0;
             } else {
@@ -1482,7 +1426,7 @@ s32 fn_1_2CB8(M538_PLAYER *arg0) {
                 if (((s16) temp_r30->aiFlag != 0) && (arg0->aiTarget != NULL)) {
                     temp_f27 = arg0->aiTarget->x - arg0->x;
                     temp_f28 = arg0->aiTarget->z - arg0->z;
-                    if (((temp_f27 * temp_f27) + (temp_f28 * temp_f28)) < (&sp28)[arg0->dif]) {
+                    if (((temp_f27 * temp_f27) + (temp_f28 * temp_f28)) < lbl_1_rodata_EC[arg0->dif]) {
                         if (temp_f28 == 0.0f) {
                             if (temp_f27 >= 0.0f) {
                                 var_f26 = 1.5707964f;
@@ -1510,7 +1454,7 @@ loop_21:
                         temp_f0_2 = (f32) temp_f0;
                         sp10 = temp_f0_2;
                         spC = temp_f0_2;
-                        if ((spC < 90.0f) && (frandmod(0x64U) < (s32) (&sp38)[arg0->dif])) {
+                        if ((spC < 90.0f) && (frandmod(0x64U) < lbl_1_rodata_FC[arg0->dif])) {
                             temp_r30->aiFlag = 0;
                             var_r26 = 1;
                         }
@@ -1585,14 +1529,6 @@ loop_21:
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_32C4(M538_PLAYER *arg0) {
-    s32 sp4C;
-    s32 sp48;
-    s32 sp44;
-    s32 sp40;
-    s32 sp3C;
-    s32 sp38;
-    s32 sp34;
-    f32 sp30;
     f64 sp28;
     f32 sp20;
     f32 sp1C;
@@ -1635,14 +1571,6 @@ s32 fn_1_32C4(M538_PLAYER *arg0) {
     case 1:
         if ((s16) arg0->type != 0) {
             var_r25 = 0;
-            sp30 = lbl_1_rodata_EC[0];
-            sp34 = lbl_1_rodata_EC[1];
-            sp38 = lbl_1_rodata_EC[2];
-            sp3C = lbl_1_rodata_EC[3];
-            sp40 = lbl_1_rodata_FC[0];
-            sp44 = lbl_1_rodata_FC[1];
-            sp48 = lbl_1_rodata_FC[2];
-            sp4C = lbl_1_rodata_FC[3];
             if ((s16) ((M538 *) lbl_1_bss_C->data)->activeF == 0) {
                 var_r27 = 0;
             } else {
@@ -1651,7 +1579,7 @@ s32 fn_1_32C4(M538_PLAYER *arg0) {
                     temp_f27 = arg0->aiTarget->x - arg0->x;
                     temp_f28 = arg0->aiTarget->z - arg0->z;
                     sp20 = (temp_f27 * temp_f27) + (temp_f28 * temp_f28);
-                    if (sp20 < (&sp30)[arg0->dif]) {
+                    if (sp20 < lbl_1_rodata_EC[arg0->dif]) {
                         if (temp_f28 == 0.0f) {
                             if (temp_f27 >= 0.0f) {
                                 var_f26 = 1.5707964f;
@@ -1679,7 +1607,7 @@ loop_21:
                         temp_f0_2 = (f32) temp_f0;
                         sp10 = temp_f0_2;
                         spC = temp_f0_2;
-                        if ((spC < 90.0f) && (frandmod(0x64U) < (s32) (&sp40)[arg0->dif])) {
+                        if ((spC < 90.0f) && (frandmod(0x64U) < lbl_1_rodata_FC[arg0->dif])) {
                             temp_r30->aiFlag = 0;
                             var_r25 = 1;
                         }
@@ -2191,8 +2119,6 @@ loop_18_test:
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 void fn_1_4F74(M538 *arg0) {
-    f32 sp38[4];
-    f32 sp28[4];
     f32 temp_f24;
     f32 temp_f25;
     f32 temp_f26;
@@ -2230,8 +2156,8 @@ loop_7:
             var_r29 = 0;
 loop_10:
             if (var_r29 < 4) {
-                sp18[var_r29] = temp_r30->x + ((temp_f24 * sp38[var_r29]) + (temp_f25 * sp28[var_r29]));
-                sp8[var_r29] = temp_r30->z + ((temp_f25 * -sp38[var_r29]) + (temp_f24 * sp28[var_r29]));
+                sp18[var_r29] = temp_r30->x + ((temp_f24 * lbl_1_rodata_158[var_r29]) + (temp_f25 * lbl_1_rodata_168[var_r29]));
+                sp8[var_r29] = temp_r30->z + ((temp_f25 * -lbl_1_rodata_158[var_r29]) + (temp_f24 * lbl_1_rodata_168[var_r29]));
                 var_r29 += 1;
                 goto loop_10;
             }
@@ -3498,30 +3424,6 @@ loop_9:
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_8CD8(M538_NODE *arg0) {
-    u8 sp1F;
-    u8 sp1E;
-    u8 sp1D;
-    u8 sp1C;
-    u8 sp1B;
-    u8 sp1A;
-    u8 sp19;
-    u8 sp18;
-    u8 sp17;
-    u8 sp16;
-    u8 sp15;
-    u8 sp14;
-    u8 sp13;
-    u8 sp12;
-    u8 sp11;
-    u8 sp10;
-    u8 spF;
-    u8 spE;
-    u8 spD;
-    u8 spC;
-    u8 spB;
-    u8 spA;
-    u8 sp9;
-    u8 sp8;
     HSFMATERIAL *temp_r31;
     HSFMATERIAL *temp_r31_2;
     HSFMATERIAL *temp_r31_3;
@@ -3532,30 +3434,6 @@ s32 fn_1_8CD8(M538_NODE *arg0) {
     s32 var_r28;
 
     var_r28 = 0;
-    sp8 = lbl_1_rodata_1EC[0];
-    sp9 = lbl_1_rodata_1EC[0];
-    spA = lbl_1_rodata_1EC[0];
-    spB = lbl_1_rodata_1EC[0];
-    spC = lbl_1_rodata_1EC[1];
-    spD = lbl_1_rodata_1EC[1];
-    spE = lbl_1_rodata_1EC[1];
-    spF = lbl_1_rodata_1EC[1];
-    sp10 = lbl_1_rodata_1EC[2];
-    sp11 = lbl_1_rodata_1EC[2];
-    sp12 = lbl_1_rodata_1EC[2];
-    sp13 = lbl_1_rodata_1EC[2];
-    sp14 = lbl_1_rodata_1EC[3];
-    sp15 = lbl_1_rodata_1EC[3];
-    sp16 = lbl_1_rodata_1EC[3];
-    sp17 = lbl_1_rodata_1EC[3];
-    sp18 = lbl_1_rodata_1EC[4];
-    sp19 = lbl_1_rodata_1EC[4];
-    sp1A = lbl_1_rodata_1EC[4];
-    sp1B = lbl_1_rodata_1EC[4];
-    sp1C = lbl_1_rodata_1EC[5];
-    sp1D = lbl_1_rodata_1EC[5];
-    sp1E = lbl_1_rodata_1EC[5];
-    sp1F = lbl_1_rodata_1EC[5];
     temp_r0 = arg0->timer;
     switch (temp_r0) {                              /* irregular */
     case 0:
@@ -3566,18 +3444,18 @@ s32 fn_1_8CD8(M538_NODE *arg0) {
         temp_r0_2 = arg0->model;
         temp_r31 = Hu3DData[temp_r0_2].hsf->material;
         temp_r29 = fn_1_91D8((f32 *) &arg0->x, temp_r0_2 * 0x134) * 2;
-        temp_r31->color[0] = *(&sp8 + (temp_r29 * 3));
-        temp_r31->color[1] = *(&sp8 + ((temp_r29 * 3) + 1));
-        temp_r31->color[2] = *(&sp8 + ((temp_r29 * 3) + 2));
+        temp_r31->color[0] = lbl_1_rodata_1EC[(temp_r29 * 3)];
+        temp_r31->color[1] = lbl_1_rodata_1EC[((temp_r29 * 3) + 1)];
+        temp_r31->color[2] = lbl_1_rodata_1EC[((temp_r29 * 3) + 2)];
         temp_r31_2 = temp_r31 + 1;
-        temp_r31_2->color[0] = *(&sp8 + (temp_r29 * 3));
-        temp_r31_2->color[1] = *(&sp8 + ((temp_r29 * 3) + 1));
-        temp_r31_2->color[2] = *(&sp8 + ((temp_r29 * 3) + 2));
+        temp_r31_2->color[0] = lbl_1_rodata_1EC[(temp_r29 * 3)];
+        temp_r31_2->color[1] = lbl_1_rodata_1EC[((temp_r29 * 3) + 1)];
+        temp_r31_2->color[2] = lbl_1_rodata_1EC[((temp_r29 * 3) + 2)];
         temp_r31_3 = temp_r31_2 + 1;
         temp_r29_2 = temp_r29 + 1;
-        temp_r31_3->color[0] = *(&sp8 + (temp_r29_2 * 3));
-        temp_r31_3->color[1] = *(&sp8 + ((temp_r29_2 * 3) + 1));
-        temp_r31_3->color[2] = *(&sp8 + ((temp_r29_2 * 3) + 2));
+        temp_r31_3->color[0] = lbl_1_rodata_1EC[(temp_r29_2 * 3)];
+        temp_r31_3->color[1] = lbl_1_rodata_1EC[((temp_r29_2 * 3) + 1)];
+        temp_r31_3->color[2] = lbl_1_rodata_1EC[((temp_r29_2 * 3) + 2)];
         arg0->timer += 1;
         /* fallthrough */
     case 1:
@@ -3719,54 +3597,6 @@ cond_5:
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_94DC(M538_NODE *arg0) {
-    u8 sp37;
-    u8 sp36;
-    u8 sp35;
-    u8 sp34;
-    u8 sp33;
-    u8 sp32;
-    u8 sp31;
-    u8 sp30;
-    u8 sp2F;
-    u8 sp2E;
-    u8 sp2D;
-    u8 sp2C;
-    u8 sp2B;
-    u8 sp2A;
-    u8 sp29;
-    u8 sp28;
-    u8 sp27;
-    u8 sp26;
-    u8 sp25;
-    u8 sp24;
-    u8 sp23;
-    u8 sp22;
-    u8 sp21;
-    u8 sp20;
-    u8 sp1F;
-    u8 sp1E;
-    u8 sp1D;
-    u8 sp1C;
-    u8 sp1B;
-    u8 sp1A;
-    u8 sp19;
-    u8 sp18;
-    u8 sp17;
-    u8 sp16;
-    u8 sp15;
-    u8 sp14;
-    u8 sp13;
-    u8 sp12;
-    u8 sp11;
-    u8 sp10;
-    u8 spF;
-    u8 spE;
-    u8 spD;
-    u8 spC;
-    u8 spB;
-    u8 spA;
-    u8 sp9;
-    u8 sp8;
     HSFMATERIAL *var_r30;
     f32 temp_f24;
     f32 temp_f26;
@@ -3781,54 +3611,6 @@ s32 fn_1_94DC(M538_NODE *arg0) {
     s32 var_r29;
 
     var_r26 = 0;
-    sp8 = lbl_1_rodata_21C[0];
-    sp9 = lbl_1_rodata_21C[0];
-    spA = lbl_1_rodata_21C[0];
-    spB = lbl_1_rodata_21C[0];
-    spC = lbl_1_rodata_21C[1];
-    spD = lbl_1_rodata_21C[1];
-    spE = lbl_1_rodata_21C[1];
-    spF = lbl_1_rodata_21C[1];
-    sp10 = lbl_1_rodata_21C[2];
-    sp11 = lbl_1_rodata_21C[2];
-    sp12 = lbl_1_rodata_21C[2];
-    sp13 = lbl_1_rodata_21C[2];
-    sp14 = lbl_1_rodata_21C[3];
-    sp15 = lbl_1_rodata_21C[3];
-    sp16 = lbl_1_rodata_21C[3];
-    sp17 = lbl_1_rodata_21C[3];
-    sp18 = lbl_1_rodata_21C[4];
-    sp19 = lbl_1_rodata_21C[4];
-    sp1A = lbl_1_rodata_21C[4];
-    sp1B = lbl_1_rodata_21C[4];
-    sp1C = lbl_1_rodata_21C[5];
-    sp1D = lbl_1_rodata_21C[5];
-    sp1E = lbl_1_rodata_21C[5];
-    sp1F = lbl_1_rodata_21C[5];
-    sp20 = lbl_1_rodata_21C[6];
-    sp21 = lbl_1_rodata_21C[6];
-    sp22 = lbl_1_rodata_21C[6];
-    sp23 = lbl_1_rodata_21C[6];
-    sp24 = lbl_1_rodata_21C[7];
-    sp25 = lbl_1_rodata_21C[7];
-    sp26 = lbl_1_rodata_21C[7];
-    sp27 = lbl_1_rodata_21C[7];
-    sp28 = lbl_1_rodata_21C[8];
-    sp29 = lbl_1_rodata_21C[8];
-    sp2A = lbl_1_rodata_21C[8];
-    sp2B = lbl_1_rodata_21C[8];
-    sp2C = lbl_1_rodata_21C[9];
-    sp2D = lbl_1_rodata_21C[9];
-    sp2E = lbl_1_rodata_21C[9];
-    sp2F = lbl_1_rodata_21C[9];
-    sp30 = lbl_1_rodata_21C[10];
-    sp31 = lbl_1_rodata_21C[10];
-    sp32 = lbl_1_rodata_21C[10];
-    sp33 = lbl_1_rodata_21C[10];
-    sp34 = lbl_1_rodata_21C[11];
-    sp35 = lbl_1_rodata_21C[11];
-    sp36 = lbl_1_rodata_21C[11];
-    sp37 = lbl_1_rodata_21C[11];
     temp_r0 = arg0->timer;
     switch (temp_r0) {                              /* irregular */
     case 0:
@@ -3870,9 +3652,9 @@ s32 fn_1_94DC(M538_NODE *arg0) {
         var_r27 = 0;
 loop_19:
         if (var_r27 < 4) {
-            var_r30->color[0] = *(&sp8 + (var_r29 * 3));
-            var_r30->color[1] = *(&sp8 + ((var_r29 * 3) + 1));
-            var_r30->color[2] = *(&sp8 + ((var_r29 * 3) + 2));
+            var_r30->color[0] = lbl_1_rodata_21C[(var_r29 * 3)];
+            var_r30->color[1] = lbl_1_rodata_21C[((var_r29 * 3) + 1)];
+            var_r30->color[2] = lbl_1_rodata_21C[((var_r29 * 3) + 2)];
             var_r27 += 1;
             var_r30 += 1;
             var_r29 += 1;
@@ -3904,54 +3686,6 @@ loop_19:
 
 // NONMATCHING: register allocation/struct-copy/branch layout differs; calls, offsets, constants verified equal
 s32 fn_1_9C04(M538_NODE *arg0) {
-    u8 sp37;
-    u8 sp36;
-    u8 sp35;
-    u8 sp34;
-    u8 sp33;
-    u8 sp32;
-    u8 sp31;
-    u8 sp30;
-    u8 sp2F;
-    u8 sp2E;
-    u8 sp2D;
-    u8 sp2C;
-    u8 sp2B;
-    u8 sp2A;
-    u8 sp29;
-    u8 sp28;
-    u8 sp27;
-    u8 sp26;
-    u8 sp25;
-    u8 sp24;
-    u8 sp23;
-    u8 sp22;
-    u8 sp21;
-    u8 sp20;
-    u8 sp1F;
-    u8 sp1E;
-    u8 sp1D;
-    u8 sp1C;
-    u8 sp1B;
-    u8 sp1A;
-    u8 sp19;
-    u8 sp18;
-    u8 sp17;
-    u8 sp16;
-    u8 sp15;
-    u8 sp14;
-    u8 sp13;
-    u8 sp12;
-    u8 sp11;
-    u8 sp10;
-    u8 spF;
-    u8 spE;
-    u8 spD;
-    u8 spC;
-    u8 spB;
-    u8 spA;
-    u8 sp9;
-    u8 sp8;
     HSFMATERIAL *var_r30;
     f32 temp_f30;
     f32 temp_f31;
@@ -3963,54 +3697,6 @@ s32 fn_1_9C04(M538_NODE *arg0) {
     M538 *temp_r28;
 
     var_r26 = 0;
-    sp8 = lbl_1_rodata_258[0];
-    sp9 = lbl_1_rodata_258[0];
-    spA = lbl_1_rodata_258[0];
-    spB = lbl_1_rodata_258[0];
-    spC = lbl_1_rodata_258[1];
-    spD = lbl_1_rodata_258[1];
-    spE = lbl_1_rodata_258[1];
-    spF = lbl_1_rodata_258[1];
-    sp10 = lbl_1_rodata_258[2];
-    sp11 = lbl_1_rodata_258[2];
-    sp12 = lbl_1_rodata_258[2];
-    sp13 = lbl_1_rodata_258[2];
-    sp14 = lbl_1_rodata_258[3];
-    sp15 = lbl_1_rodata_258[3];
-    sp16 = lbl_1_rodata_258[3];
-    sp17 = lbl_1_rodata_258[3];
-    sp18 = lbl_1_rodata_258[4];
-    sp19 = lbl_1_rodata_258[4];
-    sp1A = lbl_1_rodata_258[4];
-    sp1B = lbl_1_rodata_258[4];
-    sp1C = lbl_1_rodata_258[5];
-    sp1D = lbl_1_rodata_258[5];
-    sp1E = lbl_1_rodata_258[5];
-    sp1F = lbl_1_rodata_258[5];
-    sp20 = lbl_1_rodata_258[6];
-    sp21 = lbl_1_rodata_258[6];
-    sp22 = lbl_1_rodata_258[6];
-    sp23 = lbl_1_rodata_258[6];
-    sp24 = lbl_1_rodata_258[7];
-    sp25 = lbl_1_rodata_258[7];
-    sp26 = lbl_1_rodata_258[7];
-    sp27 = lbl_1_rodata_258[7];
-    sp28 = lbl_1_rodata_258[8];
-    sp29 = lbl_1_rodata_258[8];
-    sp2A = lbl_1_rodata_258[8];
-    sp2B = lbl_1_rodata_258[8];
-    sp2C = lbl_1_rodata_258[9];
-    sp2D = lbl_1_rodata_258[9];
-    sp2E = lbl_1_rodata_258[9];
-    sp2F = lbl_1_rodata_258[9];
-    sp30 = lbl_1_rodata_258[10];
-    sp31 = lbl_1_rodata_258[10];
-    sp32 = lbl_1_rodata_258[10];
-    sp33 = lbl_1_rodata_258[10];
-    sp34 = lbl_1_rodata_258[11];
-    sp35 = lbl_1_rodata_258[11];
-    sp36 = lbl_1_rodata_258[11];
-    sp37 = lbl_1_rodata_258[11];
     temp_r28 = lbl_1_bss_C->data;
     temp_r0 = arg0->timer;
     switch (temp_r0) {                              /* irregular */
@@ -4038,9 +3724,9 @@ s32 fn_1_9C04(M538_NODE *arg0) {
         var_r27 = 0;
 loop_11:
         if (var_r27 < 4) {
-            var_r30->color[0] = *(&sp8 + (var_r29 * 3));
-            var_r30->color[1] = *(&sp8 + ((var_r29 * 3) + 1));
-            var_r30->color[2] = *(&sp8 + ((var_r29 * 3) + 2));
+            var_r30->color[0] = lbl_1_rodata_258[(var_r29 * 3)];
+            var_r30->color[1] = lbl_1_rodata_258[((var_r29 * 3) + 1)];
+            var_r30->color[2] = lbl_1_rodata_258[((var_r29 * 3) + 2)];
             var_r27 += 1;
             var_r30 += 1;
             var_r29 += 1;
