@@ -62,6 +62,7 @@ struct UserSettings {
         ConfigVar<int> fpsOverlayCorner;
         ConfigVar<int> frameRate; // 60 = original, 120/144/240/360, 0 = display refresh rate
         ConfigVar<bool> frameInterpolation;
+        ConfigVar<int> display; // monitor the window opens on: -1 = system default, else 0-based index
     } video;
 
     struct {

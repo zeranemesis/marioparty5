@@ -11,6 +11,7 @@
 #include "graphics_tuner.hpp"
 #include "menu_bar.hpp"
 #include "number_button.hpp"
+#include "port/display_select.h"
 #include "pane.hpp"
 #include "prelaunch.hpp"
 #include "ui.hpp"
@@ -420,6 +421,33 @@ SettingsWindow::SettingsWindow(bool prelaunch)
                 .key = "Enable VSync",
                 .helpText = "Synchronizes the frame rate to your monitor's refresh rate.",
                 .onChange = [](bool value) { aurora_enable_vsync(value); },
+            });
+        leftPane.register_control(leftPane.add_select_button({
+                                      .key = "Display",
+                                      .getValue =
+                                          [] {
+                                              const int d = getSettings().video.display.getValue();
+                                              return d < 0 ? Rml::String { "Default" } : Rml::String { display::name(d) };
+                                          },
+                                      .isModified =
+                                          [] {
+                                              const auto &v = getSettings().video.display;
+                                              return v.getValue() != v.getDefaultValue();
+                                          },
+                                  }),
+            rightPane, [](Pane &pane) {
+                for (int d = -1; d < display::count(); d++) {
+                    pane.add_button({
+                                        .text = d < 0 ? Rml::String { "Default" } : Rml::String { display::name(d) },
+                                        .isSelected = [d] { return getSettings().video.display.getValue() == d; },
+                                    })
+                        .on_pressed([d] {
+                            getSettings().video.display.setValue(d);
+                            config::Save();
+                            display::move_window(d);
+                        });
+                }
+                pane.add_rml("<br/>Monitor the game window opens on. The frame rate cap follows this monitor's refresh rate.");
             });
         leftPane.register_control(leftPane.add_select_button({
                                       .key = "Frame Rate",

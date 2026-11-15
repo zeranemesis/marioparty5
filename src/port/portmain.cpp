@@ -11,6 +11,7 @@
 #include "ui/preset.hpp"
 
 #include <SDL3/SDL_filesystem.h>
+#include "port/display_select.h"
 #include <aurora/aurora.h>
 #include <aurora/event.h>
 #include <dolphin/gx/GXAurora.h>
@@ -420,6 +421,9 @@ extern "C" int port_main(int argc, char* argv[]) {
         config.windowPosY = -1;
         config.windowWidth = HU_FB_WIDTH * 2;
         config.windowHeight = HU_FB_HEIGHT * 2;
+        // open on the monitor chosen in Video > Display (the window's monitor also sets the high frame rate cap)
+        mp5native::display::start_pos(mp5native::getSettings().video.display.getValue(), config.windowWidth,
+                                      config.windowHeight, &config.windowPosX, &config.windowPosY);
         config.desiredBackend = ResolveDesiredBackend();
         config.logCallback = &aurora_log_callback;
         config.mem1Size = 64 * 1024 * 1024;

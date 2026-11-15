@@ -14,6 +14,7 @@ UserSettings g_userSettings = {
         .fpsOverlayCorner {"game.fpsOverlayCorner", 0},
         .frameRate {"video.frameRate", 60},
         .frameInterpolation {"video.frameInterpolation", true},
+        .display {"video.display", -1},
     },
 
     .audio = {
@@ -92,6 +93,7 @@ void registerSettings() {
     Register(g_userSettings.video.fpsOverlayCorner);
     Register(g_userSettings.video.frameRate);
     Register(g_userSettings.video.frameInterpolation);
+    Register(g_userSettings.video.display);
 
     // Audio
     Register(g_userSettings.audio.masterVolume);
