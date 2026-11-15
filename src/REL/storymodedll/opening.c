@@ -253,7 +253,7 @@ void fn_1_13E8(void)
             lbl_1_bss_18C[0] = Hu3DData[lbl_1_bss_114].pos;
             lbl_1_bss_18C[0].y += 170.0f;
             lbl_1_bss_18C[1] = lbl_1_bss_18C[0];
-            lbl_1_bss_18C[1].z += 480.0f;
+            lbl_1_bss_18C[0].z += 480.0f;
             up = lbl_1_rodata_B0;
             upP = &up;
             lbl_1_bss_18C[2] = *upP;
