@@ -2599,7 +2599,7 @@ void MB2Ev_Zen2(s32 arg0) {
     s32 rainbowIdx;
     s32 prevCoin;
     s32 shiftMotion;
-    s32 upMasu, downMasu, hatenaMasu;
+    s32 destMasu[3]; /* [0] up, [1] down, [2] hatena: indexed by mb2ev_Zen2DestTbl */
     Point3d startPos, tmp, rot;
     s32 rainbowId[3];
     s32 i, j;
@@ -2637,7 +2637,7 @@ void MB2Ev_Zen2(s32 arg0) {
             break;
         }
     }
-    upMasu = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
+    destMasu[0] = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
 
     for (i = 1; i < MBMasuNumGet(0); i++) {
         MASU *m = MBMasuGet(0, i);
@@ -2645,7 +2645,7 @@ void MB2Ev_Zen2(s32 arg0) {
             break;
         }
     }
-    downMasu = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
+    destMasu[1] = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
 
     for (i = 1; i < MBMasuNumGet(0); i++) {
         MASU *m = MBMasuGet(0, i);
@@ -2653,7 +2653,7 @@ void MB2Ev_Zen2(s32 arg0) {
             break;
         }
     }
-    hatenaMasu = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
+    destMasu[2] = (i >= MBMasuNumGet(0)) ? (s32) masuId : i;
 
     MBPlayerPosGet(arg0, &startPos);
     tmp = startPos;
@@ -2795,7 +2795,7 @@ void MB2Ev_Zen2(s32 arg0) {
 
     topArr = NULL;
     topCount = MB2_RainbowObjVtxTopGet(rainbowId[dir], &topArr);
-    destMasuId = (&upMasu)[mb2ev_Zen2DestTbl[rainbowIdx][dir]];
+    destMasuId = destMasu[mb2ev_Zen2DestTbl[rainbowIdx][dir]];
     MBPlayerPosFixEvent(arg0, destMasuId, 1);
 
     path = (u8 *) HuMemDirectMallocNum(HEAP_HEAP, topCount * ZP_STRIDE, 0x10000000U);
