@@ -1,4 +1,4 @@
-#include "REL/sdroomdll.h"
+#include "REL/sdroomdll/sdroom.h"
 #include "game/sprite.h"
 #include "game/window.h"
 #include "game/mgdata.h"
@@ -104,18 +104,19 @@ static s16 lbl_1_data_139C[21][9] = {
     { -6, -6, -5, -1, 0, 0, 0, 0, 0 }
 };
 
-s16 lbl_1_bss_568;
+s16 lbl_1_bss_568[2];
 s16 lbl_1_bss_56C;
 s16 lbl_1_bss_56E;
-s16 lbl_1_bss_570[10];
+s16 lbl_1_bss_570;
+s16 lbl_1_bss_572[9]; /* unused gap */
 s16 lbl_1_bss_584[3];
 s16 lbl_1_bss_58A;
 s16 lbl_1_bss_58C[16];
-u8 lbl_1_bss_5AC[0xC];
-float SdMachineFadeAlpha; /* SdMachineFadeAlpha */
+OMOBJMAN *lbl_1_bss_5AC;
+float SdMachineFadeAlpha; /* lbl_1_bss_5B8 */
 s16 SdMachinePadBtn[4]; /* lbl_1_bss_5BC */
 s16 SdMachineFadeLayer; /* lbl_1_bss_5C4 */
-s16 SdMachineFadeCount; /* SdMachineFadeCount */
+s16 SdMachineFadeCount; /* lbl_1_bss_5C6 */
 s16 SdMachineMask[4]; /* lbl_1_bss_5C8 */
 static s16 lbl_1_bss_5D0[3];
 static s16 lbl_1_bss_5D6[3];
@@ -221,7 +222,7 @@ void fn_1_5854(s16 arg0) {
     sdWorkInt[7] = (s32) arg0;
     fn_1_6264();
     winData[lbl_1_bss_606].padMask = (u8) (1 << arg0);
-    winData[lbl_1_bss_570[0]].padMask = (u8) (1 << arg0);
+    winData[lbl_1_bss_570].padMask = (u8) (1 << arg0);
     Hu3DModelAttrSet(lbl_1_bss_58C[(arg0 ^ 1) + 3], 1U);
     temp_f0 = (f32) (1000.0 * -sin((3.141592653589793 * (f64) ((arg0 * 0x3C) + 0x3C)) / 180.0));
     sp8.x = temp_f0;
@@ -327,7 +328,7 @@ block_22:
     }
     HuWinExClose(lbl_1_bss_606);
 block_24:
-    winData[lbl_1_bss_570[0]].padMask = 7;
+    winData[lbl_1_bss_570].padMask = 7;
     var_r30_3 = 1;
     goto loop_26;
 block_25:
@@ -1219,11 +1220,11 @@ loop_70:
 loop_72:
                 if (NameEnterMain(&lbl_1_bss_67C[arg0], (s16) (1 << arg0)) != 0) {
                     fn_1_AFCC(&lbl_1_bss_67C[arg0], 0U);
-                    HuWinExOpen(*lbl_1_bss_570);
-                    HuWinMesSet(*lbl_1_bss_570, 0x19001DU);
-                    HuWinMesWait(*lbl_1_bss_570);
-                    temp_r23 = HuWinChoiceGet(*lbl_1_bss_570, -1);
-                    HuWinExClose(*lbl_1_bss_570);
+                    HuWinExOpen(lbl_1_bss_570);
+                    HuWinMesSet(lbl_1_bss_570, 0x19001DU);
+                    HuWinMesWait(lbl_1_bss_570);
+                    temp_r23 = HuWinChoiceGet(lbl_1_bss_570, -1);
+                    HuWinExClose(lbl_1_bss_570);
                     fn_1_B8E8(&lbl_1_bss_67C[arg0]);
                     if (temp_r23 == 0) {
                         var_r25 = 0;
@@ -1273,11 +1274,11 @@ loop_86:
                 fn_1_A55C();
                 omCameraViewSetMulti(8, &lbl_1_data_10E8);
                 fn_1_AFCC(&lbl_1_bss_67C[arg0], 0U);
-                HuWinExOpen(*lbl_1_bss_570);
-                HuWinMesSet(*lbl_1_bss_570, 0x19001DU);
-                HuWinMesWait(*lbl_1_bss_570);
-                temp_r23_2 = HuWinChoiceGet(*lbl_1_bss_570, -1);
-                HuWinExClose(*lbl_1_bss_570);
+                HuWinExOpen(lbl_1_bss_570);
+                HuWinMesSet(lbl_1_bss_570, 0x19001DU);
+                HuWinMesWait(lbl_1_bss_570);
+                temp_r23_2 = HuWinChoiceGet(lbl_1_bss_570, -1);
+                HuWinExClose(lbl_1_bss_570);
                 fn_1_B8E8(&lbl_1_bss_67C[arg0]);
                 if (temp_r23_2 == 0) {
                     var_r25 = 0;

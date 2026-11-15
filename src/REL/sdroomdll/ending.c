@@ -1,4 +1,6 @@
-#include "REL/sdroomdll.h"
+#include "REL/sdroomdll/sdroom.h"
+#include "REL/sdroomdll/picture.h"
+#include "REL/sdroomdll/tournament.h"
 #include "game/window.h"
 #include "game/sprite.h"
 #include "game/frand.h"
@@ -154,10 +156,6 @@ s16 lbl_1_bss_194E[5];
 s16 lbl_1_bss_1958[3];
 s16 lbl_1_bss_195E[17];
 
-/* from tournament.c / garage.c / picture.c */
-extern s32 lbl_1_data_1DAC[12];
-extern s16 lbl_1_bss_568[2];
-extern void fn_1_1C13C(void);
 
 static void fn_1_21E04(void);
 static void fn_1_22EE8(s32 on);

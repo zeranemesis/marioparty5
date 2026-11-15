@@ -117,6 +117,9 @@ static s16 lbl_1_data_1D76[5] = { 0x25, 0x27, 0x28, 0x29, 0x2A };
 
 static OMCAMERAVIEW lbl_1_data_1D80 = { { 0.0f, 140.0f, -40.0f }, { -23.0f, -69.0f, 0.0f }, 6856.0f };
 
+/* character no (0x20..0x2B) -> name message */
+s32 lbl_1_data_1DAC[12] = { 0x190060, 0x190061, 1, 0, 2, 4, 8, 3, 6, 5, 7, 9 };
+
 /* slot of entrant p once it reached the given round */
 static int TnmSlot(int p, int stage)
 {

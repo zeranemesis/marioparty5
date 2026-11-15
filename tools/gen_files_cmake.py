@@ -45,10 +45,7 @@ PC_FORCED_UNITS = {
     "msm/msmstream.c",
 }
 # REL modules whose units are listed Equivalent and all exist on disk but are still partial
-# shortcut: sdroomdll files are WIP stubs (about 80 functions missing); drop it from this set once complete
-PC_INCOMPLETE_MODULES = {
-    "sdroomdll",
-}
+PC_INCOMPLETE_MODULES = set()
 # port sources that are not part of the dol library
 PORT_EXCLUDED = {
     "src/port/entry.cpp",  # main() of the executable target

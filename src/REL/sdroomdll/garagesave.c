@@ -1,4 +1,5 @@
 #include "REL/sdroomdll/garagesave.h"
+#include "REL/sdroomdll/sdroom.h"
 #include "game/card.h"
 #include "game/saveload.h"
 #include "game/window.h"
@@ -27,8 +28,6 @@ static u8 lbl_1_bss_940[0x38];
 static s16 lbl_1_bss_978[20];
 
 /* from garage.c */
-extern s16 lbl_1_bss_58A;
-extern s16 lbl_1_bss_58C[0x10];
 extern void fn_1_7298(void);
 extern void fn_1_7320(void);
 

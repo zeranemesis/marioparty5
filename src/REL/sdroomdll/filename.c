@@ -9,21 +9,135 @@
 
 s32 frandmod(s32 n);
 
-/* The buffer the player typed into, and the pool of preset names (stride 0x11
- * = 17 bytes, so eight chars plus a terminator). */
-extern char nameMes[];
-extern char nameDefault[];
+#include "REL/sdroomdll/sdroom.h"
+#include "string.h"
 
-/* One keyboard-key entry: an ARAM file number, 0 terminating the table.
- * Stored as pairs: an end marker followed by the ARAM file number. */
-extern u32 keyboardTbl[];
-extern s16 nameGrpId;
-extern s16 nameKeyboardNum;
-extern u16 lbl_1_bss_A88;
-extern s16 lbl_1_bss_56E;
-extern s16 lbl_1_bss_570;
-extern u16 nameMesTemp[];
-extern s16 nameCharNo;
+typedef struct NameKeyboard_s {
+    s16 x;
+    s16 y;
+    u16 val;
+} NAMEKEYBOARD;
+
+static NAMEKEYBOARD keyboardMain[] = {
+    { 65, 80, 'A' },
+    { 95, 80, 'B' },
+    { 125, 80, 'C' },
+    { 155, 80, 'D' },
+    { 185, 80, 'E' },
+    { 215, 80, 'F' },
+    { 245, 80, 'G' },
+    { 275, 80, 'H' },
+    { 305, 80, 'I' },
+    { 335, 80, 'J' },
+    { 365, 80, 'K' },
+    { 395, 80, 'L' },
+    { 425, 80, 'M' },
+    { 455, 80, 'N' },
+    { 65, 110, 'O' },
+    { 95, 110, 'P' },
+    { 125, 110, 'Q' },
+    { 155, 110, 'R' },
+    { 185, 110, 'S' },
+    { 215, 110, 'T' },
+    { 245, 110, 'U' },
+    { 275, 110, 'V' },
+    { 305, 110, 'W' },
+    { 335, 110, 'X' },
+    { 365, 110, 'Y' },
+    { 395, 110, 'Z' },
+    { 425, 110, ' ' },
+    { 455, 110, ' ' },
+    { 65, 140, 'a' },
+    { 95, 140, 'b' },
+    { 125, 140, 'c' },
+    { 155, 140, 'd' },
+    { 185, 140, 'e' },
+    { 215, 140, 'f' },
+    { 245, 140, 'g' },
+    { 275, 140, 'h' },
+    { 305, 140, 'i' },
+    { 335, 140, 'j' },
+    { 365, 140, 'k' },
+    { 395, 140, 'l' },
+    { 425, 140, 'm' },
+    { 455, 140, 'n' },
+    { 65, 170, 'o' },
+    { 95, 170, 'p' },
+    { 125, 170, 'q' },
+    { 155, 170, 'r' },
+    { 185, 170, 's' },
+    { 215, 170, 't' },
+    { 245, 170, 'u' },
+    { 275, 170, 'v' },
+    { 305, 170, 'w' },
+    { 335, 170, 'x' },
+    { 365, 170, 'y' },
+    { 395, 170, 'z' },
+    { 425, 170, 194 },
+    { 455, 170, 195 },
+    { 81, 246, 0x100 },
+    { 141, 246, 0x200 },
+    { 277, 244, 0x400 },
+    { 407, 243, 0x500 },
+    { 0, 0, 0 },
+};
+
+static NAMEKEYBOARD keyboardNumSpc[] = {
+    { 125, 80, '1' },
+    { 155, 80, '2' },
+    { 185, 80, '3' },
+    { 215, 80, '4' },
+    { 245, 80, '5' },
+    { 275, 80, '6' },
+    { 305, 80, '7' },
+    { 335, 80, '8' },
+    { 365, 80, '9' },
+    { 395, 80, '0' },
+    { 425, 80, 134 },
+    { 125, 110, '[' },
+    { 155, 110, '\\' },
+    { 185, 110, '~' },
+    { 215, 110, 127 },
+    { 245, 110, '<' },
+    { 275, 110, '=' },
+    { 305, 110, '_' },
+    { 335, 110, ']' },
+    { 365, 110, '^' },
+    { 395, 110, 130 },
+    { 425, 110, 133 },
+    { 125, 140, 0xE00|3 },
+    { 155, 140, 0xE00|4 },
+    { 185, 140, 0xE00|5 },
+    { 215, 140, 0xE00|6 },
+    { 245, 140, 0xE00|9 },
+    { 275, 140, 0xE00|7 },
+    { 305, 140, 0xE00|1 },
+    { 335, 140, 0xE00|11 },
+    { 365, 140, ';' },
+    { 395, 140, ':' },
+    { 425, 140, '}' },
+    { 81, 246, 0x100 },
+    { 141, 246, 0x200 },
+    { 277, 244, 0x400 },
+    { 407, 243, 0x500 },
+    { 0, 0, 0 },
+};
+
+/* pairs of (key table, ARAM file number of its sprite); a null table ends the list */
+static NAMEKEYBOARD *keyboardTbl[3 * 2] = {
+    keyboardMain,
+    (NAMEKEYBOARD *)(uintptr_t)0xBE0019,
+    keyboardNumSpc,
+    (NAMEKEYBOARD *)(uintptr_t)0xBE001A,
+};
+
+static char nameMes[50];
+static s16 nameCharNo;
+static u16 nameMesTemp[22];
+static char nameDefault[8][17];
+static u16 lbl_1_bss_A88;
+static s16 nameKeyboardNum;
+static s16 nameGrpId;
 
 /* Held-directions (bit0 Left, bit1 Right, bit2 Down, bit3 Up). */
 extern u16 fn_1_507C(u16 pad);
@@ -32,12 +146,6 @@ extern u16 fn_1_4FD0(u16 pad);
 
 s32 NameEnterClose(s16 winId);
 
-/* One on-screen key: an x/y grid position and the character code it types. */
-typedef struct NameKeyboard_s {
-    s16 x;
-    s16 y;
-    u16 val;
-} NAMEKEYBOARD;
 
 static const f32 kGrpX = 288.0f;
 static const f32 kGrpY = 186.0f;
@@ -69,7 +177,7 @@ void NameEnterInit(void)
     HuSprAttrSet(grp, 1, 4);
 
     for (nameKeyboardNum = 0; keyboardTbl[nameKeyboardNum * 2] != 0; nameKeyboardNum++) {
-        anim = HuSprAnimRead(HuDataSelHeapReadNum(keyboardTbl[nameKeyboardNum * 2 + 1], 0x10000000, 2));
+        anim = HuSprAnimRead(HuDataSelHeapReadNum((u32)(uintptr_t)keyboardTbl[nameKeyboardNum * 2 + 1], 0x10000000, 2));
         spr = HuSprCreate(anim, 0x32, 0);
         HuSprGrpMemberSet(grp, nameKeyboardNum + 2, spr);
         HuSprAttrSet(grp, nameKeyboardNum + 2, 4);
@@ -80,7 +188,7 @@ void NameEnterInit(void)
     lbl_1_bss_A88 = 0;
     for (name = 0; name < 8; name++) {
         for (c = 0; c < 0x11; c++) {
-            *(nameDefault + name * 0x11 + c) = '\0';
+            nameDefault[name][c] = '\0';
         }
     }
 
@@ -89,7 +197,7 @@ void NameEnterInit(void)
 
         for (c = 0; *mes != '\0'; c++, mes++) {
             if (*mes >= '0') {
-                *(nameDefault + name * 0x11 + c) = *mes;
+                nameDefault[name][c] = *mes;
             }
         }
     }
@@ -128,7 +236,7 @@ s32 NameEnterMain(char *nameOut, s16 pad)
     nameMes[0] = 0;
     HuSprDispOn(nameGrpId, keyboardNo + 2);
     HuSprDispOn(nameGrpId, cursorIdx);
-    keyboard = (NAMEKEYBOARD *)(uintptr_t)keyboardTbl[keyboardNo * 2];
+    keyboard = keyboardTbl[keyboardNo * 2];
     HuSprPosSet(nameGrpId, cursorIdx, keyboard[keyNo].x - 260, keyboard[keyNo].y - 131);
     for (i = 1; i <= 10; i++) {
         scale = 1.0 - sin(M_PI * (90.0 * (i / 10.0)) / 180.0);
@@ -228,7 +336,7 @@ s32 NameEnterMain(char *nameOut, s16 pad)
                     }
                 }
                 nameMes[tempIdx] = 0;
-                HuWinMesSet(nameWinId, (u32)nameMes);
+                HuWinMesSet(nameWinId, MESSNUM_PTR(nameMes));
                 if (nameCharNo >= 8) {
                     for (keyNo = 0; keyboard[keyNo].val && keyboard[keyNo].val != 0x500; keyNo++)
                         ;
@@ -280,7 +388,7 @@ s32 NameEnterMain(char *nameOut, s16 pad)
                 }
             }
             nameMes[tempIdx] = 0;
-            HuWinMesSet(nameWinId, (u32)nameMes);
+            HuWinMesSet(nameWinId, MESSNUM_PTR(nameMes));
         } else if (fn_1_4FD0(pad) & 0x20) {
             keyboardNo--;
             if (keyboardNo < 0) {
@@ -307,7 +415,7 @@ s32 NameEnterMain(char *nameOut, s16 pad)
         if (keyboardNo != prevKeyboard) {
             tempIdx = keyboard[keyNo].val;
             HuSprDispOff(nameGrpId, prevKeyboard + 2);
-            keyboard = (NAMEKEYBOARD *)(uintptr_t)keyboardTbl[keyboardNo * 2];
+            keyboard = keyboardTbl[keyboardNo * 2];
             HuSprDispOn(nameGrpId, keyboardNo + 2);
             for (keyNo = 0; keyboard[keyNo].val; keyNo++) {
                 if (tempIdx == keyboard[keyNo].val) {
@@ -358,8 +466,8 @@ s32 NameEnterClose(s16 winId)
     }
 
     if (count == 0) {
-        strcpy(nameMes, &nameDefault[frandmod(8) * 0x11]);
-        HuWinMesSet(winId, (u32)nameMes);
+        strcpy(nameMes, nameDefault[frandmod(8)]);
+        HuWinMesSet(winId, MESSNUM_PTR(nameMes));
         return (s16)strlen(nameMes);
     }
     return 0;

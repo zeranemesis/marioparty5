@@ -23,7 +23,6 @@ static void fn_1_1B640(void);
 static void fn_1_1B72C(s16 no);
 static void fn_1_1BCD4(s16 no);
 static void fn_1_1BDF8(f32 alpha);
-static void fn_1_1C13C(void);
 
 /* One photo slot: preview model, its texture, and the capture buffer. */
 typedef struct PicSlot_s {
@@ -711,7 +710,7 @@ static void fn_1_1BDF8(f32 alpha)
 
 /* Drops photo slots whose number is 0xFFFF (deleted) and packs the list. */
 // NONMATCHING: restructured from the decompiled flow; same behaviour, different codegen
-static void fn_1_1C13C(void)
+void fn_1_1C13C(void)
 {
     s16 i;
     s16 j;
