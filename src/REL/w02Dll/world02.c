@@ -606,6 +606,14 @@ static u8 mb2_Work[0xC4];
 #define MB2W_U32(off) (*(u32 *) (mb2_Work + (off)))
 #define MB2W_F32(off) (*(f32 *) (mb2_Work + (off)))
 #define MB2W_U8(off)  (*(u8 *) (mb2_Work + (off)))
+#ifdef TARGET_PC
+/* slots 0x1B (ANIMDATA *) and 0x1C (path buffer) hold pointers: 4 bytes on GC, so keep them
+ * out of the s32 work array on PC where they would be truncated. */
+static void *mb2_WorkPtrTbl[0xC4 / 4];
+#define MB2W_PTR(off) (mb2_WorkPtrTbl[(off) / 4])
+#else
+#define MB2W_PTR(off) (*(void **) (mb2_Work + (off)))
+#endif
 
 int _prolog(void) {
     const VoidFunc* ctors = _ctors;
@@ -731,8 +739,8 @@ void MB2_Create(void) {
     MBMotionSpeedSet(temp_r3_18, 0.0f);
     MB2W_S32((0x1A) * 4) = (s32)(uintptr_t) MBModelCreate(0xCD0019, NULL, 0);
     MBCapsuleColCreate(0xCD001C);
-    MB2W_S32((0x1B) * 4) = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCD001D, 0x10000000));
-    MB2W_S32((0x1C) * 4) = 0;
+    MB2W_PTR(0x1B * 4) = HuSprAnimRead(HuDataReadNum(0xCD001D, 0x10000000));
+    MB2W_PTR(0x1C * 4) = NULL;
     MB2W_S32((0x1D) * 4) = (s32)(uintptr_t)-1U;
     MB2W_F32((0x25) * 4) = 1.0f;
     MB2W_S32((0x26) * 4) = (s32)(uintptr_t)1U;
@@ -775,14 +783,14 @@ void MB2_Create(void) {
 
 void MB2_Kill(void) {
     mb2_MainObj = NULL;
-    if ((u32) MB2W_S32((0x1B) * 4) != 0) {
-        HuSprAnimKill((ANIMDATA *)(uintptr_t) MB2W_S32((0x1B) * 4));
+    if (MB2W_PTR(0x1B * 4) != NULL) {
+        HuSprAnimKill((ANIMDATA *) MB2W_PTR(0x1B * 4));
     }
-    MB2W_S32((0x1B) * 4) = 0;
-    if ((u32) MB2W_S32((0x1C) * 4) != 0) {
-        HuMemDirectFree((void *)(uintptr_t) MB2W_S32((0x1C) * 4));
+    MB2W_PTR(0x1B * 4) = NULL;
+    if (MB2W_PTR(0x1C * 4) != NULL) {
+        HuMemDirectFree(MB2W_PTR(0x1C * 4));
     }
-    MB2W_S32((0x1C) * 4) = 0;
+    MB2W_PTR(0x1C * 4) = NULL;
     MB2_CoinClose();
     MB2_CoinEffClose();
     MB2_YajiClose();
@@ -2791,11 +2799,11 @@ void MB2Ev_Zen2(s32 arg0) {
     MBPlayerPosFixEvent(arg0, destMasuId, 1);
 
     path = (u8 *) HuMemDirectMallocNum(HEAP_HEAP, topCount * ZP_STRIDE, 0x10000000U);
-    MB2W_S32(0x1C * 4) = (s32) (uintptr_t) path;
+    MB2W_PTR(0x1C * 4) = path;
     memset(path, 0, topCount * ZP_STRIDE);
     pathSegCount = topCount - 1;
     totalLen = 0.0f;
-    for (i = 0; i < pathSegCount; i++, path = ZPp(MB2W_S32(0x1C * 4), i)) {
+    for (i = 0; i < pathSegCount; i++, path = ZPp(MB2W_PTR(0x1C * 4), i)) {
         Point3d delta;
         f32 distSq, mag;
         u8 *a = (u8 *) topArr + i * 0xC;
@@ -2828,7 +2836,7 @@ void MB2Ev_Zen2(s32 arg0) {
             *(f32 *) (path + 0x30) = *(f32 *) (path + 0x24);
             *(f32 *) (path + 0x34) = *(f32 *) (path + 0x28);
         } else {
-            u8 *prev = ZPp(MB2W_S32(0x1C * 4), i - 1);
+            u8 *prev = ZPp(MB2W_PTR(0x1C * 4), i - 1);
             *(f32 *) (path + 0x2C) = *(f32 *) (prev + 0x20);
             *(f32 *) (path + 0x30) = *(f32 *) (prev + 0x24);
             *(f32 *) (path + 0x34) = *(f32 *) (prev + 0x28);
@@ -2884,7 +2892,7 @@ void MB2Ev_Zen2(s32 arg0) {
                 speed += 0.1f;
             }
             dist2 += speed;
-            seg = (u8 *)(uintptr_t) MB2W_S32(0x1C * 4);
+            seg = (u8 *) MB2W_PTR(0x1C * 4);
             segIdx = 0;
             while ((segIdx < pathSegCount - 1) &&
                    !(dist2 < (*(f32 *) (ZPp(seg, segIdx) + 0x0) + *(f32 *) (ZPp(seg, segIdx) + 0x4)))) {
@@ -2957,10 +2965,10 @@ void MB2Ev_Zen2(s32 arg0) {
     if (shiftMotion != -1) {
         MBPlayerMotionKill(arg0, shiftMotion);
     }
-    if (MB2W_S32(0x1C * 4) != 0) {
-        HuMemDirectFree((void *) (uintptr_t) MB2W_S32(0x1C * 4));
+    if (MB2W_PTR(0x1C * 4) != NULL) {
+        HuMemDirectFree(MB2W_PTR(0x1C * 4));
     }
-    MB2W_S32(0x1C * 4) = 0;
+    MB2W_PTR(0x1C * 4) = NULL;
     MB2_RainbowObjClose();
     MB2_YajiClose();
     MB2_CoinClose();
@@ -5614,7 +5622,7 @@ void MB2_RainbowObjInit(void) {
     modelP->pos.y = -100000.0f;
     modelP->pos.z = -100000.0f;
     modelP->hookData = dat;
-    dat->srcAnim = (ANIMDATA *)(uintptr_t) MB2W_S32(0x1B * 4);
+    dat->srcAnim = (ANIMDATA *) MB2W_PTR(0x1B * 4);
     slots = (MB2_RAINBOWSLOT *) HuMemDirectMallocNum(HEAP_MODEL, 8 * sizeof(MB2_RAINBOWSLOT), modelP->mallocNo);
     dat->slots = slots;
     memset(slots, 0, 8 * sizeof(MB2_RAINBOWSLOT));
