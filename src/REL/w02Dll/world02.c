@@ -596,8 +596,8 @@ typedef struct MB2CoinSlot_s {
 typedef struct MB2SplashEffData_s {
     s32 modelId[2]; /* 0x00 */
     s32 count[2];   /* 0x08 */
-    u8 pad10[4];
-} MB2_SPLASHEFF_DATA; /* size 0x14 */
+    ANIMDATA *anim; /* 0x10 */
+} MB2_SPLASHEFF_DATA; /* size 0x14 on GC */
 
 static u8 mb2_Work[0xC4];
 #define MB2W_S16(off) (*(s16 *) (mb2_Work + (off)))
@@ -4977,6 +4977,7 @@ void MB2_SplashEffInit(void) {
     obj->data = dat;
     memset(dat, 0, sizeof(MB2_SPLASHEFF_DATA));
     anim = HuSprAnimRead(HuDataReadNum(0xCD001E, 0x10000000));
+    dat->anim = anim;
     for (i = 0; i < 2; i++) {
         modelId = MBEffCreate(anim, 0x100);
         dat->modelId[i] = modelId;
@@ -5025,11 +5026,11 @@ void MB2_SplashEffUpdate(OMOBJ *obj) {
                 p->pos.x += p->vel.x;
                 p->pos.y += p->vel.y;
                 p->pos.z += p->vel.z;
-                p->rot.z -= p->scaleBase;
+                p->vel.y -= p->accel.y;
                 t = (f32) p->time / (f32) p->parManId;
                 p->time--;
                 p->color.a = (u8) (p->accel.z * t);
-                if (t == 0.0f) {
+                if (t <= 0.0f) {
                     p->dispF = 0;
                     dat->count[i]--;
                 }
