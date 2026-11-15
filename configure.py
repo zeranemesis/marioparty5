@@ -1035,7 +1035,7 @@ config.libs = [
     Rel(
         "m508Dll",
         objects={
-            Object(NonMatching, "REL/m508Dll/m508.c"),
+            Object(Equivalent, "REL/m508Dll/m508.c"),
             Object(Equivalent, "REL/m508Dll/object.c"),
         },
     ),
