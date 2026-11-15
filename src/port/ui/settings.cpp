@@ -421,6 +421,39 @@ SettingsWindow::SettingsWindow(bool prelaunch)
                 .helpText = "Synchronizes the frame rate to your monitor's refresh rate.",
                 .onChange = [](bool value) { aurora_enable_vsync(value); },
             });
+        leftPane.register_control(leftPane.add_select_button({
+                                      .key = "Frame Rate",
+                                      .getValue =
+                                          [] {
+                                              const int fps = getSettings().video.frameRate.getValue();
+                                              return fps == 60 ? Rml::String { "60 (Original)" } : fps <= 0 ? Rml::String { "Display" } : std::to_string(fps);
+                                          },
+                                      .isModified =
+                                          [] {
+                                              const auto &v = getSettings().video.frameRate;
+                                              return v.getValue() != v.getDefaultValue();
+                                          },
+                                  }),
+            rightPane, [](Pane &pane) {
+                for (int fps : { 60, 120, 144, 240, 360, 0 }) {
+                    pane.add_button({
+                                        .text = fps == 60 ? Rml::String { "60 (Original)" } : fps == 0 ? Rml::String { "Display" } : std::to_string(fps),
+                                        .isSelected = [fps] { return getSettings().video.frameRate.getValue() == fps; },
+                                    })
+                        .on_pressed([fps] {
+                            getSettings().video.frameRate.setValue(fps);
+                            config::Save();
+                        });
+                }
+                pane.add_rml("<br/>The game still runs at 60 ticks per second; frames in between are interpolated. "
+                             "Limited to the display's refresh rate. Display follows the refresh rate.");
+            });
+        config_bool_select(leftPane, rightPane, getSettings().video.frameInterpolation,
+            {
+                .key = "Frame Interpolation",
+                .helpText = "Draw the frames between the game's 60 ticks per second with interpolated cameras, models and HUD. "
+                            "Off keeps the original 60 fps whatever the frame rate setting.",
+            });
         config_bool_select(leftPane, rightPane, getSettings().video.lockAspectRatio,
             {
                 .key = "Lock 4:3 Aspect Ratio",

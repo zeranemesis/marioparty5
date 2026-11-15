@@ -848,6 +848,10 @@ SHARED_SYM extern s16 Hu3DCameraNo;
 SHARED_SYM extern s16 Hu3DCameraBit;
 SHARED_SYM extern u32 Hu3DMallocNo;
 SHARED_SYM extern s16 Hu3DPauseF;
+#ifdef TARGET_PC
+/* set while the native port draws an interpolated frame (src/port/frame_interp.cpp): draw hooks must not advance state then */
+SHARED_SYM extern BOOL HuInterpDrawF;
+#endif
 SHARED_SYM extern u16 Hu3DCameraExistF;
 SHARED_SYM extern HU3DMODELID Hu3DReflectModelId;
 SHARED_SYM extern ANIMDATA *Hu3DReflectModelAnim;

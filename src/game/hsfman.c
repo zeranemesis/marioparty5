@@ -32,6 +32,7 @@ float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 #ifdef TARGET_PC
 #include "port/dolassets.h"
 #include "port/spranim.h"
+#include "port/frame_interp.h"
 #else
 #include "refMapData0.inc"
 #include "refMapData1.inc"
@@ -169,6 +170,19 @@ void Hu3DPreProc(void)
     GXSetAlphaUpdate(GX_TRUE);
 }
 
+#ifdef TARGET_PC
+/* the copy clear colour Hu3DPreProc sets, for the EFB clear before an interpolated frame */
+void Hu3DInterpCopyClearSet(void)
+{
+    GXColor shadowClear = { 0, 0, 0, 255 };
+    if(shadowNum && Hu3DShadowF) {
+        GXSetCopyClear(shadowClear, GX_MAX_Z24);
+    } else {
+        GXSetCopyClear(BGColor, GX_MAX_Z24);
+    }
+}
+#endif
+
 static void Hu3DShadowExec(BOOL bgColorF);
 static void Hu3DReflectModelExec(void);
 
@@ -274,9 +288,15 @@ void Hu3DExec(void)
                         continue;
                     }
                     if(modelP->attr & HU3D_ATTR_CAMERA) {
+#ifdef TARGET_PC
+                        if(!HuInterpDrawF)
+#endif
                         Hu3DCameraMotionExec(i);
                         continue;
                     }
+#ifdef TARGET_PC
+                    if(!HuInterpDrawF)
+#endif
                     if((modelP->attr & HU3D_ATTR_CAMERA_UPDATE) == HU3D_ATTR_CAMERA_UPDATE && modelP->motId != HU3D_MOTID_NONE) {
                         Hu3DMotionExec(i, modelP->motId, modelP->motWork.time, FALSE);
                     }
@@ -292,6 +312,11 @@ void Hu3DExec(void)
                     if(((modelP->attr & HU3D_ATTR_MOT_EXEC) == 0 && (modelP->attr & HU3D_ATTR_MOT_SLOW) == 0) ||
                         ((modelP->attr & HU3D_ATTR_MOT_SLOW) != 0 && (modelP->tick & 1) != 0)) {
                         vtxInvalidateF = FALSE;
+#ifdef TARGET_PC
+                        if(HuInterpDrawF) {
+                            vtxInvalidateF = HuInterpPoseSet(i);
+                        } else {
+#endif
                         modelP->motAttr &= ~HU3D_MOTATTR;
                         if(modelP->motId != HU3D_MOTID_NONE) {
                             Hu3DMotionExec(i, modelP->motId, modelP->motWork.time, FALSE);
@@ -314,6 +339,9 @@ void Hu3DExec(void)
                             }
                             vtxInvalidateF = TRUE;
                         }
+#ifdef TARGET_PC
+                        }
+#endif
                         if ((modelP->attr & (HU3D_ATTR_ENVELOPE_OFF|HU3D_ATTR_HOOKFUNC)) == 0 || (modelP->attr & HU3D_ATTR_MOTION_MODEL)) {
                             vtxInvalidateF = TRUE;
                             InitVtxParm(modelP->hsf);
@@ -348,6 +376,9 @@ void Hu3DExec(void)
                         PSMTXConcat(final, modelP->mtx, final);
                         Hu3DDraw(modelP, final, &modelP->scale);
                     }
+#ifdef TARGET_PC
+                    if(!HuInterpDrawF)
+#endif
                     modelP->tick++;
                     layerMdlNum++;
                     if(layerMdlNum >= layerNum[layer]) {
@@ -370,6 +401,13 @@ void Hu3DExec(void)
     }
     HuSprDispInit();
     HuSprExec(HUSPR_DRAWNO_FRONT);
+#ifdef TARGET_PC
+    /* an interpolated frame only draws: motion, sprite and texture animation advance on logic ticks */
+    if(HuInterpDrawF) {
+        HuPerfEnd(HUPERF_USR1);
+        return;
+    }
+#endif
     for(modelP=&Hu3DData[0], i=0; i<HU3D_MODEL_MAX; i++, modelP++) {
         if(!modelP->hsf) {
             continue;
@@ -2096,6 +2134,11 @@ static void Hu3DShadowExec(BOOL bgColorF)
                 BOOL vtxInvalidateF;
                 if(modelP->attr & HU3D_ATTR_MOTION_OFF) {
                     vtxInvalidateF = FALSE;
+#ifdef TARGET_PC
+                    if(HuInterpDrawF) {
+                        vtxInvalidateF = HuInterpPoseSet(i);
+                    } else {
+#endif
                     if(modelP->motId != HU3D_MOTID_NONE) {
                         Hu3DMotionExec(i, modelP->motId, modelP->motWork.time, FALSE);
                     }
@@ -2116,6 +2159,9 @@ static void Hu3DShadowExec(BOOL bgColorF)
                             Hu3DMotionExec(i, modelP->motIdShape, modelP->motShapeWork.time, TRUE);
                         }
                     }
+#ifdef TARGET_PC
+                    }
+#endif
                     if ((modelP->attr & (HU3D_ATTR_ENVELOPE_OFF|HU3D_ATTR_HOOKFUNC)) == 0 || (modelP->attr & HU3D_ATTR_MOTION_MODEL)) {
                         vtxInvalidateF = TRUE;
                         InitVtxParm(modelP->hsf);
@@ -2215,6 +2261,11 @@ static void Hu3DReflectModelExec(void)
     if((modelP->attr & HU3D_ATTR_DISPOFF) || (modelP->attr & HU3D_ATTR_HOOK)) {
         return;
     }
+#ifdef TARGET_PC
+    if(HuInterpDrawF) {
+        HuInterpPoseSet(Hu3DReflectModelId);
+    } else
+#endif
     if(modelP->motId != HU3D_MOTID_NONE) {
         Hu3DMotionExec(Hu3DReflectModelId, modelP->motId, modelP->motWork.time, FALSE);
     }

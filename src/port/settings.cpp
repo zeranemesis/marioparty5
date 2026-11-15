@@ -12,6 +12,8 @@ UserSettings g_userSettings = {
         .hudCentered {"video.hudCentered", false},
         .enableFpsOverlay {"game.enableFpsOverlay", false},
         .fpsOverlayCorner {"game.fpsOverlayCorner", 0},
+        .frameRate {"video.frameRate", 60},
+        .frameInterpolation {"video.frameInterpolation", true},
     },
 
     .audio = {
@@ -88,6 +90,8 @@ void registerSettings() {
     Register(g_userSettings.video.hudCentered);
     Register(g_userSettings.video.enableFpsOverlay);
     Register(g_userSettings.video.fpsOverlayCorner);
+    Register(g_userSettings.video.frameRate);
+    Register(g_userSettings.video.frameInterpolation);
 
     // Audio
     Register(g_userSettings.audio.masterVolume);

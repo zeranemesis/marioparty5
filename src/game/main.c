@@ -17,6 +17,7 @@
 #include <aurora/aurora.h>
 #include <aurora/event.h>
 
+#include "port/frame_interp.h"
 #include "port/imgui.h"
 #include "port/main.h"
 #include "port/ui.h"
@@ -83,6 +84,7 @@ void main(void)
     SLSaveFlagSet(FALSE);
 #ifdef TARGET_PC
     while(Mp5Native_IsRunning) {
+        s32 ticks;
         /* the window's events decide whether the game keeps running */
         const AuroraEvent *event = aurora_update();
         while(event != NULL && event->type != AURORA_NONE) {
@@ -98,9 +100,15 @@ void main(void)
         if(!Mp5Native_IsRunning) {
             break;
         }
+        /* logic ticks due in this frame: 1 at the original 60 fps; 0 or more at a high frame rate */
+        ticks = HuInterpFrameBegin();
+        if(ticks < 0) {
+            continue;
+        }
         if(!aurora_begin_frame()) {
             continue;
         }
+        for(; ticks > 0; ticks--) {
 #else
     while(1) {
 #endif
@@ -131,9 +139,12 @@ void main(void)
         HuPerfEnd(2);
         GlobalCounter++;
 #ifdef TARGET_PC
+        HuInterpTickEnd();
+        }
+        HuInterpDraw();
         ui_update();
         aurora_end_frame();
-        frame_limiter();
+        HuInterpFrameEnd();
 #endif
     }
 #ifdef TARGET_PC

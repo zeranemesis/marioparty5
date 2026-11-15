@@ -60,6 +60,8 @@ struct UserSettings {
         ConfigVar<bool> hudCentered;
         ConfigVar<bool> enableFpsOverlay;
         ConfigVar<int> fpsOverlayCorner;
+        ConfigVar<int> frameRate; // 60 = original, 120/144/240/360, 0 = display refresh rate
+        ConfigVar<bool> frameInterpolation;
     } video;
 
     struct {

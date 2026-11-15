@@ -397,6 +397,14 @@ extern "C" int port_main(int argc, char* argv[]) {
         video.widescreen.setOverrideValue(strcmp(aspect, "wide") == 0);
         video.hudCentered.setOverrideValue(getenv("MP5_TEST_HUD_CENTERED") != nullptr);
     }
+    // test bench: MP5_TEST_FPS=<cap> runs the high frame rate path (src/port/frame_interp.cpp) with vsync off, unsaved
+    if (getenv("MP5_TEST_FPS") != nullptr) {
+        mp5native::getSettings().video.enableVsync.setOverrideValue(false);
+    }
+    // test bench: MP5_TEST_BACKEND=vulkan|d3d12|... picks the graphics backend for this run, unsaved
+    if (const char* backend = getenv("MP5_TEST_BACKEND")) {
+        mp5native::getSettings().backend.graphicsBackend.setOverrideValue(std::string(backend));
+    }
     EnsureInitialPipelineCache(Mp5Native_ConfigPath);
     // TODO: How to handle this?
     //PADSetDefaultMapping(&defaultPadMapping, PAD_TYPE_STANDARD);
