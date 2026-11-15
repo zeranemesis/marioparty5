@@ -1,5 +1,8 @@
 #include "game/memory.h"
 #include "dolphin/os.h"
+#ifdef TARGET_PC
+#include <stdlib.h>
+#endif
 
 #define DATA_GET_BLOCK(ptr) ((MEMORY_BLOCK *)(((char *)(ptr))-32))
 #define BLOCK_GET_DATA(block) (((char *)(block))+32)
@@ -21,9 +24,43 @@ struct MemoryBlock_s {
 static void *HuMemMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr);
 static void *HuMemTailMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr);
 
+#ifdef TARGET_PC
+/* First-fit scans walk every block from the heap start, so loading a model (hundreds of allocations in a heap of
+ * thousands of blocks) stalled frames for tens of ms. Each heap remembers where its leading run of allocated blocks
+ * ends; a scan starting there finds the same block. Allocations never free a block before that point, so the hint
+ * stays right until the next free or heap init anywhere (HuMemFreeGen), which drops every hint. */
+#define HUMEM_HINT_NUM 32
+static struct {
+    void *heap;
+    MEMORY_BLOCK *hint;
+    u32 gen;
+} HuMemHint[HUMEM_HINT_NUM];
+static u32 HuMemFreeGen = 1;
+
+static MEMORY_BLOCK *HuMemHintGet(void *heap)
+{
+    u32 i = ((uintptr_t)heap >> 5) % HUMEM_HINT_NUM;
+    if(HuMemHint[i].heap == heap && HuMemHint[i].gen == HuMemFreeGen) {
+        return HuMemHint[i].hint;
+    }
+    return heap;
+}
+
+static void HuMemHintSet(void *heap, MEMORY_BLOCK *hint)
+{
+    u32 i = ((uintptr_t)heap >> 5) % HUMEM_HINT_NUM;
+    HuMemHint[i].heap = heap;
+    HuMemHint[i].hint = hint;
+    HuMemHint[i].gen = HuMemFreeGen;
+}
+#endif
+
 void *HuMemHeapInit(void *heap, s32 size)
 {
     MEMORY_BLOCK *block = heap;
+#ifdef TARGET_PC
+    HuMemFreeGen++;
+#endif
     block->size = size;
     block->magic = 205;
     block->flag = 0;
@@ -48,7 +85,39 @@ static void *HuMemMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)
 {
     s32 blockSize = MEM_ALLOC_SIZE(size);
     MEMORY_BLOCK *block = heap;
+#ifdef TARGET_PC
+    MEMORY_BLOCK *firstFree = NULL;
+    MEMORY_BLOCK *ref = NULL;
+    static int check = -1;
+    if(check < 0) {
+        check = getenv("MP5_TEST_HEAPCHECK") != NULL; /* test bench: full scan too, report any other pick */
+    }
+    if(check) {
+        for(ref = heap; ref->flag || ref->size < blockSize; ) {
+            ref = ref->next;
+            if(ref == heap) {
+                ref = NULL;
+                break;
+            }
+        }
+    }
+    block = HuMemHintGet(heap);
+    if(check && (ref ? ref : heap) != block && ref != NULL) {
+        MEMORY_BLOCK *b = block;
+        while(b != ref && b->next != heap) {
+            b = b->next;
+        }
+        if(b != ref) {
+            OSReport("HEAPCHECK: hint %p past first fit %p\n", block, ref);
+        }
+    }
+#endif
     do {
+#ifdef TARGET_PC
+        if(!block->flag && block->size < blockSize && !firstFree) {
+            firstFree = block;
+        }
+#endif
         if(!block->flag && block->size >= blockSize) {
             if(block->size-blockSize > 32u) {
                 MEMORY_BLOCK *new_block = (MEMORY_BLOCK *)(((uintptr_t)block)+blockSize);
@@ -66,6 +135,9 @@ static void *HuMemMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)
             block->magic = 165;
             block->num = num;
             block->retAddr = retAddr;
+#ifdef TARGET_PC
+            HuMemHintSet(heap, firstFree ? firstFree : block->next);
+#endif
             return BLOCK_GET_DATA(block);
         }
         block = block->next;
@@ -147,6 +219,9 @@ void HuMemMemoryFree(void *ptr, u32 retAddr)
         OSReport("HuMem>memory free error. %08x( call %08x)\n", ptr, retAddr);
         return;
     }
+#ifdef TARGET_PC
+    HuMemFreeGen++;
+#endif
     if(block->prev < block && !block->prev->flag) {
         block->flag  = 0;
         block->magic = 205;

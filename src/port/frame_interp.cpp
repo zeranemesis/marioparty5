@@ -35,7 +35,8 @@ void Hu3DInterpCopyClearSet(void); // hsfman.c
 #include "aurora/lib/window.hpp"
 
 SHARED_SYM BOOL HuInterpDrawF = FALSE;
-extern "C" void Mp5Test_ProfStart(void); // prof_sampler.cpp
+extern "C" void Mp5Test_ProfStart(void);                 // prof_sampler.cpp
+extern "C" void Mp5Test_ProfFrame(double t0, double t1); // prof_sampler.cpp
 
 namespace {
 
@@ -542,6 +543,7 @@ void frame_stat(double t)
     sStatFrames++;
     if (sTestFps >= 0 && sLastFrame != 0.0) {
         sFrameMs.push_back((float)((t - sLastFrame) * 1e3));
+        Mp5Test_ProfFrame(sLastFrame, t);
     }
     sLastFrame = t;
 }

@@ -1,6 +1,8 @@
 // test bench: MP5_TEST_PROF=<seconds> samples every thread of the process each ~1 ms (suspend, copy the stack,
 // resume, unwind the copy) and prints "PROF:" lines every <seconds>: per busy thread, the top functions by self
 // and by inclusive samples, symbols from each module's PDB. Windows only; unset, nothing runs.
+// MP5_TEST_PROF_HITCH=<ms> samples the main thread only and prints "HITCH:" lines, the call stacks seen during
+// each frame longer than <ms> (frame_interp.cpp reports them).
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -13,6 +15,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -48,6 +51,16 @@ std::vector<std::wstring> sModules;
 std::map<DWORD, ThreadStat> sThreads;
 std::unordered_map<HMODULE, int> sModCache; // emptied each thread scan: a REL dll may unload and another load there
 DWORD sMainTid = 0;
+std::mutex sLock; // sModules, the hitch ring; never held while a thread is suspended
+double sHitchMs = 0.0;
+constexpr int kHitchDepth = 12;
+struct HitchSample {
+    LONGLONG t;
+    int n;
+    Loc chain[kHitchDepth];
+};
+std::vector<HitchSample> sRing(8192);
+size_t sRingPos = 0;
 
 int module_of(DWORD64 addr, DWORD *rva)
 {
@@ -220,6 +233,9 @@ void sampler(double period)
             }
         }
         for (auto &[tid, h] : handles) {
+            if (sHitchMs > 0.0 && tid != sMainTid) {
+                continue;
+            }
             if (SuspendThread(h) == (DWORD)-1) {
                 continue;
             }
@@ -238,7 +254,12 @@ void sampler(double period)
                 } tbi{};
                 if (NtQueryInformationThread(h, (THREADINFOCLASS)0, &tbi, sizeof(tbi), nullptr) == 0) {
                     tib = (NT_TIB *)tbi.TebBaseAddress;
-                    const DWORD64 top = (DWORD64)tib->StackBase;
+                    DWORD64 top = (DWORD64)tib->StackBase;
+                    if (ctx.Rsp >= top || ctx.Rsp < (DWORD64)tib->StackLimit) {
+                        // a libco coroutine (a game thread) runs on its own stack: copy to the end of its region
+                        MEMORY_BASIC_INFORMATION mbi{};
+                        top = VirtualQuery((void *)ctx.Rsp, &mbi, sizeof(mbi)) ? (DWORD64)mbi.BaseAddress + mbi.RegionSize : 0;
+                    }
                     if (ctx.Rsp < top) {
                         copied = (size_t)std::min<DWORD64>(top - ctx.Rsp, kStackCopy);
                         std::memcpy(stack.data(), (void *)ctx.Rsp, copied);
@@ -246,9 +267,12 @@ void sampler(double period)
                 }
             }
             ResumeThread(h);
+            LARGE_INTEGER sampleTime;
+            QueryPerformanceCounter(&sampleTime);
             if (ctx.Rip == 0) {
                 continue;
             }
+            std::lock_guard lock(sLock);
             ThreadStat &ts = sThreads[tid];
             ts.samples++;
             // unwind on the copy: rsp (and a frame register inside the copied range) relocated into it
@@ -262,7 +286,7 @@ void sampler(double period)
             reloc(ctx.Rbp);
             Loc seen[kMaxDepth];
             int depth = 0;
-            Loc chain[8];
+            Loc chain[kHitchDepth];
             int chainLen = 0;
             for (int d = 0; d < kMaxDepth && ctx.Rip; d++) {
                 DWORD64 imageBase = 0;
@@ -274,7 +298,7 @@ void sampler(double period)
                 if (d == 0) {
                     ts.self[l]++;
                 }
-                if (chainLen < 8) {
+                if (chainLen < kHitchDepth) {
                     chain[chainLen++] = l;
                 }
                 if (std::find(seen, seen + depth, l) == seen + depth) {
@@ -299,12 +323,18 @@ void sampler(double period)
             for (int i = 0; i < depth; i++) {
                 ts.incl[seen[i]]++;
             }
-            if (chainLen > 0) {
-                ts.stacks[std::string((const char *)chain, chainLen * sizeof(Loc))]++;
+            if (sHitchMs > 0.0) {
+                HitchSample &hs = sRing[sRingPos++ % sRing.size()];
+                hs.t = sampleTime.QuadPart;
+                hs.n = chainLen;
+                std::copy(chain, chain + chainLen, hs.chain);
+            } else if (chainLen > 0) {
+                ts.stacks[std::string((const char *)chain, std::min(chainLen, 8) * sizeof(Loc))]++;
             }
         }
         const ULONGLONG t = GetTickCount64();
-        if ((t - lastDump) / 1000.0 >= period) {
+        if (sHitchMs == 0.0 && (t - lastDump) / 1000.0 >= period) {
+            std::lock_guard lock(sLock);
             lastDump = t;
             dump((t - start) / 1000.0);
         }
@@ -318,14 +348,51 @@ extern "C" void Mp5Test_ProfStart(void)
 {
     static bool started = false;
     const char *env = std::getenv("MP5_TEST_PROF");
-    if (started || !env || !*env) {
+    const char *hitch = std::getenv("MP5_TEST_PROF_HITCH");
+    if (started || ((!env || !*env) && (!hitch || !*hitch))) {
         return;
     }
     started = true;
     sMainTid = GetCurrentThreadId();
-    const double period = std::max(1.0, std::atof(env));
+    sHitchMs = hitch && *hitch ? std::max(1.0, std::atof(hitch)) : 0.0;
+    const double period = env && *env ? std::max(1.0, std::atof(env)) : 1e9;
     std::thread(sampler, period).detach();
+}
+
+// a frame from t0 to t1 (seconds of the performance counter) was long: print what the main thread did meanwhile
+extern "C" void Mp5Test_ProfFrame(double t0, double t1)
+{
+    if (sHitchMs <= 0.0 || (t1 - t0) * 1e3 < sHitchMs) {
+        return;
+    }
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    const LONGLONG a = (LONGLONG)(t0 * freq.QuadPart), b = (LONGLONG)(t1 * freq.QuadPart);
+    std::lock_guard lock(sLock);
+    std::map<std::string, unsigned> stacks;
+    unsigned total = 0;
+    for (const HitchSample &hs : sRing) {
+        if (hs.t >= a && hs.t <= b && hs.n > 0) {
+            stacks[std::string((const char *)hs.chain, hs.n * sizeof(Loc))]++;
+            total++;
+        }
+    }
+    std::vector<std::pair<unsigned, const std::string *>> st;
+    for (auto &[k, n] : stacks) {
+        st.push_back({n, &k});
+    }
+    std::sort(st.begin(), st.end(), [](auto &x, auto &y) { return x.first > y.first; });
+    std::printf("HITCH: frame %.1f ms, %u samples\n", (t1 - t0) * 1e3, total);
+    for (size_t i = 0; i < st.size() && i < 6; i++) {
+        std::printf("HITCH:   %3u", st[i].first);
+        const Loc *c = (const Loc *)st[i].second->data();
+        for (size_t k = 0; k < st[i].second->size() / sizeof(Loc); k++) {
+            std::printf(" < %s", symbol(c[k]).c_str());
+        }
+        std::printf("\n");
+    }
 }
 #else
 extern "C" void Mp5Test_ProfStart(void) {}
+extern "C" void Mp5Test_ProfFrame(double, double) {}
 #endif
