@@ -471,8 +471,8 @@ s32 fn_1_FA78(void)
     s32 r = 0;
     M532Player *p1 = M532_FIRST(lbl_1_bss_AB4);
 
-    if (!M532PtmfIs(&M532_FIRST(lbl_1_bss_AA0)->state, lbl_1_data_6F4)
-        && !M532PtmfIs(&p1->state, lbl_1_data_700)) {
+    if (M532PtmfIs(&M532_FIRST(lbl_1_bss_AA0)->state, lbl_1_data_6F4)
+        && M532PtmfIs(&p1->state, lbl_1_data_700)) {
         r = 1;
     }
     return r;
