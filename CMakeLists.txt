@@ -194,6 +194,12 @@ if (MSVC)
     target_sources(dol PRIVATE ${CMAKE_BINARY_DIR}/gx_exports.def)
 endif ()
 target_link_libraries(dol PRIVATE aurora::core aurora::card aurora::dvd aurora::gx aurora::mtx aurora::os aurora::si aurora::vi aurora::pad musyx absl::flat_hash_map nlohmann_json::nlohmann_json fmt::fmt rmlui_debugger)
+if (MSVC)
+    # whole-program optimisation of Aurora's GX/graphics code (per-draw command processing); dol links it with
+    # /LTCG (its own objects stay plain: WINDOWS_EXPORT_ALL_SYMBOLS cannot read /GL objects)
+    set_property(TARGET aurora_gx PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
+    set_property(TARGET aurora_gx PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+endif ()
 # TODO it doesn't work on Linux yet
 if (WIN32)
     if(USE_ASAN)
