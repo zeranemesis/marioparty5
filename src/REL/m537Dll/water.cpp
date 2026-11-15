@@ -843,7 +843,7 @@ void fn_1_153D4(M537Water *self)
     GXInitTexObjLOD(&self->tex1, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
 }
 
-void fn_1_154C8(Mtx mtx)
+void fn_1_154C8(HU3DMODEL *modelP, Mtx mtx)
 {
     Mtx m;
     Mtx r;
