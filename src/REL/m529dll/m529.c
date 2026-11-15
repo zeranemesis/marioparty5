@@ -593,7 +593,7 @@ s32 temp_r30;
                     temp_r31->unk34 = 0;
                     temp_r31->unk34 = HuPadBtnDown[temp_r31->unk2C];
                 }
-                if ((temp_r31->unk34 & 0x40) && !(temp_r31->unk34 & 0x20) && (temp_r31->unk34 != 0)) {
+                if (!((temp_r31->unk34 & 0x40) && (temp_r31->unk34 & 0x20)) && (temp_r31->unk34 != 0)) {
                     if (temp_r31->unk34 & 0x40) {
                         if ((temp_r31->unk7C == 1) || (temp_r31->unk7C == -1)) {
                             temp_r31->unk74 = lbl_1_bss_E8 - temp_r31->unk78;
