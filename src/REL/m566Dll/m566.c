@@ -353,7 +353,7 @@ void fn_1_668(OMOBJ *obj)
                 /* Camera look-at follows the player during the intro. */
                 if (lbl_1_bss_0[0] < 110.0f) {
                     work->unk58 = (f32)(180.0 * (atan2(lbl_1_bss_1600[lbl_1_bss_1810->no].pos.y - 50.0f,
-                        -lbl_1_bss_C8[0]->trans.z) / 3.141592653589793));
+                        -lbl_1_bss_C8[0]->trans.x) / 3.141592653589793));
                 }
                 else {
                     work->unk58 = (f32)(0.9f * work->unk58);
@@ -627,7 +627,7 @@ void fn_1_668(OMOBJ *obj)
             if (lbl_1_bss_1810[work->itemNo].kind == 2) {
                 for (i = 0; i < 4; i++) {
                     if (lbl_1_data_124[i] != 0) {
-                        continue;
+                        break;
                     }
                 }
                 if (i < 4) {
@@ -991,7 +991,7 @@ void fn_1_668(OMOBJ *obj)
             }
         }
         if (work->modeTime == 0xB5) {
-            Hu3DMotionOverlaySet(obj->mdlId[0], obj->mtnId[4]);
+            Hu3DMotionOverlaySet(obj->mdlId[0], obj->mtnId[8]);
             Hu3DMotionOverlayTimeSet(obj->mdlId[0], 0.0f);
             Hu3DModelAttrReset(obj->mdlId[0], 0x40000400U);
         }
@@ -1085,6 +1085,8 @@ void fn_1_48F8(OMOBJ *obj)
     s32 owner;
     s32 count;
     s32 step;
+    f32 fstep;
+    f32 fbase;
     s32 wrap;
     s32 base;
     s32 off;
@@ -1477,11 +1479,11 @@ void fn_1_48F8(OMOBJ *obj)
                 dy = lbl_1_bss_1600[i].unk20 - lbl_1_bss_1600[i].pos.y;
                 dz = (lbl_1_bss_1600[i].unk24 + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z) - lbl_1_bss_1600[i].pos.z;
                 len = sqrtf((dz * dz) + ((dx * dx) + (dy * dy)));
-                step = (len > 1.0f) ? ((len - 1.0f) * 0.125f) : len;
-                if (step > 0.0f) {
-                    lbl_1_bss_1600[i].pos.x += step * (dx / len);
-                    lbl_1_bss_1600[i].pos.y += step * (dy / len);
-                    lbl_1_bss_1600[i].pos.z += step * (dz / len);
+                fstep = (len > 1.0f) ? ((len - 1.0f) * 0.125f) : len;
+                if (fstep > 0.0f) {
+                    lbl_1_bss_1600[i].pos.x += fstep * (dx / len);
+                    lbl_1_bss_1600[i].pos.y += fstep * (dy / len);
+                    lbl_1_bss_1600[i].pos.z += fstep * (dz / len);
                 }
                 Hu3DModelPosSet(obj->mdlId[i + 0x3A], lbl_1_bss_1600[i].pos.x, lbl_1_bss_1600[i].pos.y, lbl_1_bss_1600[i].pos.z);
                 if ((dx != 0.0f) || (dz != 0.0f)) {
@@ -1495,16 +1497,16 @@ void fn_1_48F8(OMOBJ *obj)
                     dy = 40.0f + lbl_1_bss_C8[lbl_1_data_138[0]]->trans.y;
                     dz = lbl_1_bss_C8[lbl_1_data_138[0]]->trans.z;
                     dx = lbl_1_bss_1600[i].pos.x - t;
-                    base = (lbl_1_bss_1600[i].pos.y - dy) * 0.5f;
+                    fbase = (lbl_1_bss_1600[i].pos.y - dy) * 0.5f;
                     len = (lbl_1_bss_1600[i].pos.z - dz) / 1.5f;
-                    scale = sqrtf((len * len) + ((dx * dx) + (base * base)));
+                    scale = sqrtf((len * len) + ((dx * dx) + (fbase * fbase)));
                     if (scale < 90.0f) {
                         if ((dx == 0.0f) && (len == 0.0f)) {
                             dx = (f32)(((rand8() % 2) * 2) - 1);
                             len = 0.0f;
                         }
                         lbl_1_bss_1600[i].pos.x = t + (90.0f * (dx / scale));
-                        lbl_1_bss_1600[i].pos.y = dy + (2.0f * (90.0f * (base / scale)));
+                        lbl_1_bss_1600[i].pos.y = dy + (2.0f * (90.0f * (fbase / scale)));
                         lbl_1_bss_1600[i].pos.z = dz + (1.5f * (90.0f * (len / scale)));
                     }
                 }
@@ -1516,23 +1518,23 @@ void fn_1_48F8(OMOBJ *obj)
                 dy = (scale * lbl_1_bss_1600[i].unk20) - lbl_1_bss_1600[i].pos.y;
                 dz = (lbl_1_bss_1600[i].unk24 + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z) - lbl_1_bss_1600[i].pos.z;
                 len = sqrtf((dz * dz) + ((dx * dx) + (dy * dy)));
-                step = (len > 32.0f) ? 4.0f : (len * 0.125f);
-                if (step > 0.0f) {
-                    lbl_1_bss_1600[i].pos.x += step * (dx / len);
-                    lbl_1_bss_1600[i].pos.y += step * (dy / len);
-                    lbl_1_bss_1600[i].pos.z += step * (dz / len);
+                fstep = (len > 32.0f) ? 4.0f : (len * 0.125f);
+                if (fstep > 0.0f) {
+                    lbl_1_bss_1600[i].pos.x += fstep * (dx / len);
+                    lbl_1_bss_1600[i].pos.y += fstep * (dy / len);
+                    lbl_1_bss_1600[i].pos.z += fstep * (dz / len);
                 }
                 if (players[lbl_1_data_138[0]]->modeTime < 0xAF) {
-                    base = 0.0f;
+                    fbase = 0.0f;
                 }
                 else if (players[lbl_1_data_138[0]]->modeTime < 0xD7) {
-                    base = 6.0f * ((f32)(players[lbl_1_data_138[0]]->modeTime - 0xAF) / 40.0f)
+                    fbase = 6.0f * ((f32)(players[lbl_1_data_138[0]]->modeTime - 0xAF) / 40.0f)
                         * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
                 }
                 else {
-                    base = 6.0f * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
+                    fbase = 6.0f * ((f32)players[lbl_1_data_138[0]]->score / 3.0f);
                 }
-                lbl_1_bss_1600[i].pos.y += base;
+                lbl_1_bss_1600[i].pos.y += fbase;
                 if (players[lbl_1_data_138[0]]->modeTime < 0xAF) {
                     scale = 0.0f;
                 }
@@ -1557,36 +1559,33 @@ void fn_1_48F8(OMOBJ *obj)
                original, so each pass re-copies them out of .rodata. */
             s32 charOffY[10] = { -10, 0, 30, -50, -10, -35, 60, -70, -55, -120 };
             s32 charOffZ[10] = { 0, 0, 0, -15, -35, 0, -20, -5, 0, -30 };
+            f32 tgtX, tgtY, tgtZ, adjY, adjZ;
 
             n = (lbl_1_bss_1600[i].owner * 4) + castCount[lbl_1_bss_1600[i].owner] + 0xD;
             lbl_1_bss_C++;
             lbl_1_bss_C = lbl_1_bss_C % 4;
-            dx = lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.x;
-            t = 0.0f;
+            tgtX = lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.x;
+            adjY = 0.0f;
             if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 6) {
-                t = 1.0f;
+                adjY = 1.0f;
             }
-            dy = 80.0f + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
-                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t;
-            m = 0.0f;
+            tgtY = 80.0f + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
+                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - adjY;
+            adjZ = 0.0f;
             if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 7) {
-                m = 1.0f;
+                adjZ = 1.0f;
             }
-            dz = (lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f)
-                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m;
-            t = lbl_1_bss_1600[i].pos.x - dx;
-            dy = lbl_1_bss_1600[i].pos.y - dy;
-            dz = lbl_1_bss_1600[i].pos.z - dz;
-            Hu3DModelPosSet(lbl_1_bss_C4->mdlId[n], dx, 80.0f
-                + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
-                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - t,
-                lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f
-                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - m);
+            tgtZ = (lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f)
+                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - adjZ;
+            dx = lbl_1_bss_1600[i].pos.x - tgtX;
+            dy = lbl_1_bss_1600[i].pos.y - tgtY;
+            dz = lbl_1_bss_1600[i].pos.z - tgtZ;
+            Hu3DModelPosSet(lbl_1_bss_C4->mdlId[n], tgtX, tgtY, tgtZ);
             Hu3DModelRotSet(lbl_1_bss_C4->mdlId[n],
-                (f32)(180.0 * (atan2(dy, sqrtf((t * t) + (dz * dz))) / 3.141592653589793)),
-                (f32)(180.0 + (180.0 * (atan2(t, dz) / 3.141592653589793))), 0.0f);
+                (f32)(180.0 * (atan2(dy, sqrtf((dx * dx) + (dz * dz))) / 3.141592653589793)),
+                (f32)(180.0 + (180.0 * (atan2(dx, dz) / 3.141592653589793))), 0.0f);
             Hu3DModelScaleSet(lbl_1_bss_C4->mdlId[n], 1.0f, 1.0f,
-                sqrtf((dz * dz) + ((t * t) + (dy * dy))) / 150.0f);
+                sqrtf((dz * dz) + ((dx * dx) + (dy * dy))) / 150.0f);
             Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[n], 1);
             castCount[lbl_1_bss_1600[i].owner]++;
         }
