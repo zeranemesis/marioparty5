@@ -272,17 +272,17 @@ static void SdSeqFadeIn(s16 mode, s16 frameNo)
                 to = sys->machine[i].curPos;
                 MachineViewUpdate(i, i, &from, &eye, &to, t);
             }
-            if (t == 1.0f) {
+            if (t >= 1.0f) {
                 sys->camera[1].active = 1;
                 sys->camera[0].active = 1;
             }
-            if ((f32)sys->seqTimer == 60.0f && sys->seqStepA == 0) {
+            if ((f32)sys->seqTimer >= 60.0f && sys->seqStepA == 0) {
                 sys->seqStepA = 1;
             }
-            if ((f32)sys->seqTimer == 108.0f && sys->seqStepB == 0 && sys->gameType == 0) {
+            if ((f32)sys->seqTimer >= 108.0f && sys->seqStepB == 0 && sys->gameType == 0) {
                 sys->seqStepB = 1;
             }
-            if ((f32)sys->seqTimer == 138.0f && sys->seqStepC == 0) {
+            if ((f32)sys->seqTimer >= 138.0f && sys->seqStepC == 0) {
                 sys->seqStepC = 1;
             }
             if ((f32)sys->seqTimer > 234.0f) {
