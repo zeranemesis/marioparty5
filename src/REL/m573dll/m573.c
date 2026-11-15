@@ -147,8 +147,8 @@ static Vec lbl_1_data_E4 = { 0.0f, 10000.0f, 10000.0f };
 static Vec lbl_1_data_F0 = { 0.0f, 0.0f, 0.0f };
 static u8 lbl_1_data_FC[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 static s32 lbl_1_data_1A4[7] = { 0x8C0000, 0x8C0006, 0x8C0031, 0x8C0001, 0x8C0002, 0x8C0069, 0x8C0018 };
-static OMCAMERAVIEW lbl_1_data_1C0 = { { 0.0f, 221.5f, -500.0f }, { 4.4f, 0.0f, 0.0f }, 520.0f };
-static OMCAMERAVIEW lbl_1_data_1DC = { { 0.0f, 183.4f, 86.1f }, { -52.3f, 0.0f, 0.0f }, 2220.0f };
+static OMCAMERAVIEW lbl_1_data_1C0 = { { 0.0f, 221.5f, -500.0f }, { 4.4f, 0.0f, 0.0f }, 526.0f };
+static OMCAMERAVIEW lbl_1_data_1DC = { { 0.0f, 183.4f, 86.1f }, { -52.3f, 0.0f, 0.0f }, 2223.0f };
 static OMCAMERAVIEW lbl_1_data_1F8 = { { 0.0f, 221.5f, -500.0f }, { 4.4f, 0.0f, 0.0f }, 1200.0f };
 static Vec lbl_1_data_214[4] = {
     { -75.0f, 0.0f, -75.0f }, { 75.0f, 0.0f, -75.0f }, { -75.0f, 0.0f, 75.0f }, { 75.0f, 0.0f, 75.0f },
