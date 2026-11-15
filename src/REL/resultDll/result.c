@@ -314,7 +314,7 @@ void ObjectSetup(void)
     s16 light;
     s32 partyF;
 
-    OSReport("*******  RESULT ObjectSetup *********\n");
+    OSReport("******* RESULT ObjectSetup *********\n");
     objman = omInitObjMan(50, 0x2000);
     Result_MgNo = GwSystem.mgNo;
     for(i=0; i<4; i++) {

@@ -476,12 +476,16 @@ void Result_BattleStart(void)
             }
         }
         if (endF != 0) {
-            tpLvl += 0.03f;
-            if (tpLvl >= 1.0f) {
-                espTPLvlSet(StageSprId[0], 1.0f);
-                break;
+            while (1) {
+                tpLvl += 0.03f;
+                if (tpLvl >= 1.0f) {
+                    espTPLvlSet(StageSprId[0], 1.0f);
+                    break;
+                }
+                espTPLvlSet(StageSprId[0], tpLvl);
+                HuPrcVSleep();
             }
-            espTPLvlSet(StageSprId[0], tpLvl);
+            break;
         }
         HuPrcVSleep();
     }
