@@ -739,7 +739,7 @@ void MB2Dto3D(HuVecF *src, HuVecF *dst)
     float tanFov = HuSin(cameraP->fov*0.5f)/HuCos(cameraP->fov*0.5f);
     float height = 2.0f*(tanFov*src->z);
     float width = HU_WIDE(HU_DISP_ASPECT)*height;
-    float normX = HU_WIDE_PICTURE_X(src->x)/HU_DISP_WIDTH;
+    float normX = HU_WIDE_PICTURE_X(src->x, src->y)/HU_DISP_WIDTH;
     float normY = src->y/HU_DISP_HEIGHT;
     Mtx lookAt;
     

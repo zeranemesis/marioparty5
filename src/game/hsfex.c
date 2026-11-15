@@ -671,7 +671,7 @@ void Hu3D2Dto3D(HuVecF *src, s16 cameraBit, HuVecF *dst)
     tanFov = HuSin(cameraP->fov/2)/HuCos(cameraP->fov/2);
     height = tanFov * src->z * 2.0f;
     width = height * HU_WIDE(HU_DISP_ASPECT);
-    posX = HU_WIDE_PICTURE_X(src->x) / HU_DISP_WIDTH;
+    posX = HU_WIDE_PICTURE_X(src->x, src->y) / HU_DISP_WIDTH;
     posY = src->y / HU_DISP_HEIGHT;
     dst->x = (posX-0.5)*width;
     dst->y = -(posY-0.5)*height;

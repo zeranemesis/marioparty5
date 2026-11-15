@@ -106,7 +106,9 @@ extern "C" float HuWideHudX(float pictureX)
     return hud_x(pictureX, HU_DISP_CENTERX, s);
 }
 
-extern "C" float HuWidePictureX(float hudX)
+extern "C" float HuSprWidePointShift(float x, float y); // sprman.c
+
+extern "C" float HuWidePictureX(float hudX, float hudY)
 {
     const float s = HuWideFactor();
     if (s == 1.0f) {
@@ -115,5 +117,6 @@ extern "C" float HuWidePictureX(float hudX)
     if (mp5native::getSettings().video.hudCentered.getValue()) {
         return HU_DISP_CENTERX + (hudX - HU_DISP_CENTERX) / s;
     }
-    return picture_x(hudX, HU_DISP_CENTERX, s);
+    // where this frame's sprite layout put that HUD point
+    return HU_DISP_CENTERX + (hudX + HuSprWidePointShift(hudX, hudY) - HU_DISP_CENTERX) / s;
 }

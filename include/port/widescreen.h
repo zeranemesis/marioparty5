@@ -23,9 +23,9 @@ extern "C" {
 float HuWideFactor(void);
 /* how far HUD x (0..576) moves towards the window edges */
 float HuWideHudShift(float hudX);
-/* HUD x over picture x (0..576 across the widened 3D picture), and back */
+/* HUD x over picture x (0..576 across the widened 3D picture), and back for HUD point (x, y) */
 float HuWideHudX(float pictureX);
-float HuWidePictureX(float hudX);
+float HuWidePictureX(float hudX, float hudY);
 
 #ifdef __cplusplus
 }
@@ -36,13 +36,13 @@ float HuWidePictureX(float hudX);
 #define HU_WIDE_L(w) ((w) * 0.5f * (1.0f - HuWideFactor()))
 #define HU_WIDE_R(w) ((w) * 0.5f * (1.0f + HuWideFactor()))
 #define HU_WIDE_HUD_X(x) HuWideHudX(x)
-#define HU_WIDE_PICTURE_X(x) HuWidePictureX(x)
+#define HU_WIDE_PICTURE_X(x, y) HuWidePictureX(x, y)
 #else
 #define HU_WIDE(aspect) (aspect)
 #define HU_WIDE_L(w) 0
 #define HU_WIDE_R(w) (w)
 #define HU_WIDE_HUD_X(x) (x)
-#define HU_WIDE_PICTURE_X(x) (x)
+#define HU_WIDE_PICTURE_X(x, y) (x)
 #endif
 
 #endif

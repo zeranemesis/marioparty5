@@ -45,6 +45,7 @@ static void HuSprOrderEntry(HUSPRGRPID grpId, HUSPRID sprId);
 float HuSprWideShift[HUSPR_MAX];
 float HuSprWideStretch[HUSPR_MAX][3];
 float HuSprDispWideShift;
+BOOL HuSprWideClip[HUSPR_MAX];
 
 BOOL HuSprWidescreenBackdrop(ANIMPAT *pat, float scaleX, float scaleY);
 
@@ -56,6 +57,7 @@ typedef struct {
     s16 prio;
     s16 root;
     BOOL frame;
+    BOOL visible;
 } WideBox;
 
 static s16 WideRoot(WideBox *boxes, s16 i)
@@ -96,9 +98,11 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
  * panel reaches the corner; a lone sprite follows its position (which Hu3D3Dto2D may
  * have set over a 3D point). Hidden sprites count: an invisible window frame ties its
  * text to the icons in it. */
+static WideBox boxes[HUSPR_MAX];
+static s16 boxNum;
+
 static void HuSprWidescreenLayout(void)
 {
-    static WideBox boxes[HUSPR_MAX];
     static float lo[HUSPR_MAX], hi[HUSPR_MAX];
     static s16 count[HUSPR_MAX];
     float left, right;
@@ -111,7 +115,9 @@ static void HuSprWidescreenLayout(void)
     for(i=0; i<HUSPR_MAX; i++) {
         HuSprWideShift[i] = 0.0f;
         HuSprWideStretch[i][0] = 1.0f;
+        HuSprWideClip[i] = FALSE;
     }
+    boxNum = 0;
     if(HuWideHudShift(0.0f) == 0.0f) {
         return;
     }
@@ -153,6 +159,7 @@ static void HuSprWidescreenLayout(void)
             boxes[n].group = i;
             boxes[n].prio = sp->prio;
             boxes[n].frame = sp->bg != NULL;
+            boxes[n].visible = !(sp->attr & HUSPR_ATTR_DISPOFF) && sp->a > 0.0f;
             boxes[n].root = n;
             n++;
         }
@@ -186,6 +193,10 @@ static void HuSprWidescreenLayout(void)
         if(lo[i] < HU_DISP_CENTERX && hi[i] > HU_DISP_CENTERX) {
             x = HU_DISP_CENTERX;
             count[i] = -1;
+        } else if(lo[i] < 0.0f) {
+            x = lo[i]; /* runs off the left of 4:3: keep its place against the edge */
+        } else if(hi[i] > HU_DISP_WIDTH) {
+            x = hi[i];
         } else if(count[i] == 1) {
             x = boxes[i].x;
         } else if(hi[i] < HU_DISP_CENTERX) {
@@ -197,6 +208,39 @@ static void HuSprWidescreenLayout(void)
         }
         lo[i] = HuWideHudShift(x);
     }
+    /* The 4:3 frame is the authored composition: a piece moving out that lies under
+     * a piece staying in the middle and drawn over it (a message window over a player
+     * panel) stays where it was, so it stays hidden as in 4:3; so does one set beside a
+     * window staying in the middle (the speaker next to a message) */
+    for(i=0; i<n; i++) {
+        hi[i] = lo[i];
+    }
+    for(i=0; i<n; i++) {
+        s16 r = WideRoot(boxes, i);
+        s16 k;
+        if(hi[r] == 0.0f || lo[r] == 0.0f) {
+            continue;
+        }
+        for(k=0; k<n; k++) {
+            s16 rk = WideRoot(boxes, k);
+            float margin;
+            if(rk == r || hi[rk] != 0.0f || !boxes[k].visible || boxes[k].x1 <= boxes[k].x0) {
+                continue;
+            }
+            if(boxes[k].frame) {
+                margin = 32.0f;
+            } else if(boxes[k].prio < boxes[i].prio) {
+                margin = 0.0f;
+            } else {
+                continue;
+            }
+            if(boxes[i].x0 < boxes[k].x1+margin && boxes[k].x0-margin < boxes[i].x1
+                && boxes[i].y0 < boxes[k].y1 && boxes[k].y0 < boxes[i].y1) {
+                lo[r] = 0.0f;
+                break;
+            }
+        }
+    }
     /* a piece across the middle stays, but what of it ran off a side of the
      * 4:3 picture (a title bar) is lengthened to run off the new side */
     left = HuWideHudShift(0.0f);
@@ -204,15 +248,43 @@ static void HuSprWidescreenLayout(void)
     for(i=0; i<n; i++) {
         j = WideRoot(boxes, i);
         HuSprWideShift[boxes[i].sprite] = lo[j];
-        if(count[j] == -1 && boxes[i].x1 > boxes[i].x0
+        if(count[j] == -1 && boxes[i].x1-boxes[i].x0 >= HU_DISP_CENTERX*0.5f
+            && boxes[i].x1 > 0.0f && boxes[i].x0 < HU_DISP_WIDTH
             && (boxes[i].x0 <= 0.5f || boxes[i].x1 >= HU_DISP_WIDTH - 0.5f)) {
             x = boxes[i].x0 + (boxes[i].x0 <= 0.5f ? left : 0.0f);
             HuSprWideStretch[boxes[i].sprite][0] = (boxes[i].x1 + (boxes[i].x1 >= HU_DISP_WIDTH - 0.5f ? right : 0.0f) - x)
                 / (boxes[i].x1 - boxes[i].x0);
             HuSprWideStretch[boxes[i].sprite][1] = boxes[i].x0;
             HuSprWideStretch[boxes[i].sprite][2] = x;
+        } else if(lo[j] == 0.0f && (boxes[i].x0 < -0.5f || boxes[i].x1 > HU_DISP_WIDTH + 0.5f)) {
+            /* a piece left in place that 4:3 cuts at its edge (sliding in, parked):
+             * cut it at the same place */
+            HuSprWideClip[boxes[i].sprite] = TRUE;
         }
     }
+    boxNum = n;
+}
+
+/* How far this frame's layout moved HUD point (x, y): a 3D model placed at a HUD
+ * point (Hu3D2Dto3D) goes with the sprites it sits in, stays beside a message
+ * window left in the middle (the board's host), and otherwise follows HuWideHudShift */
+float HuSprWidePointShift(float x, float y)
+{
+    s16 i;
+    for(i=0; i<boxNum; i++) {
+        if(boxes[i].visible && boxes[i].x1 > boxes[i].x0 && boxes[i].sprite >= 0
+            && x >= boxes[i].x0 && x <= boxes[i].x1 && y >= boxes[i].y0 && y <= boxes[i].y1) {
+            return HuSprWideShift[boxes[i].sprite];
+        }
+    }
+    for(i=0; i<boxNum; i++) {
+        if(boxes[i].visible && boxes[i].frame && HuSprWideShift[boxes[i].sprite] == 0.0f
+            && x >= boxes[i].x0-96.0f && x <= boxes[i].x1+96.0f
+            && y >= boxes[i].y0-32.0f && y <= boxes[i].y1+32.0f) {
+            return 0.0f;
+        }
+    }
+    return HuWideHudShift(x);
 }
 #endif
 

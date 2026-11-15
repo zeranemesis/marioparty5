@@ -30,6 +30,7 @@ static void HuSprLayerHook(s16 layer);
 extern float HuSprWideShift[HUSPR_MAX];
 extern float HuSprWideStretch[HUSPR_MAX][3];
 extern float HuSprDispWideShift;
+extern BOOL HuSprWideClip[HUSPR_MAX];
 
 /* After the Mario Party 4 port "Party Board" (github.com/zeranemesis/Marioparty4,
  * src/game/sprput.c): whether a sprite covers the original picture (what its layers
@@ -55,21 +56,27 @@ BOOL HuSprWidescreenBackdrop(ANIMPAT *pat, float scaleX, float scaleY)
 
 /* A scissor set in 640-wide framebuffer pixels for the 4:3 layout, moved to where
  * the widened ortho and the sprite's HUD shift put it */
-static void HuSprWideScissor(HUSPRITE *sp, float shift)
+static void HuSprWideScissor(HUSPRITE *sp, float shift, BOOL clip)
 {
     float f = HuWideFactor();
     float x0, x1;
-    if(f == 1.0f || (sp->scissorX == 0 && sp->scissorW >= HU_FB_WIDTH)) {
+    float lo = 0.0f, hi = HU_FB_WIDTH;
+    if(f == 1.0f || (!clip && sp->scissorX == 0 && sp->scissorW >= HU_FB_WIDTH)) {
         GXSetScissor(sp->scissorX, sp->scissorY, sp->scissorW, sp->scissorH);
         return;
     }
+    if(clip) {
+        /* only what the 4:3 picture showed */
+        lo = (HU_FB_WIDTH/2)-((HU_FB_WIDTH/2)/f);
+        hi = (HU_FB_WIDTH/2)+((HU_FB_WIDTH/2)/f);
+    }
     x0 = (HU_FB_WIDTH/2)+((sp->scissorX+(shift*(HU_FB_WIDTH/HU_DISP_WIDTH))-(HU_FB_WIDTH/2))/f);
     x1 = x0+(sp->scissorW/f);
-    if(x0 < 0.0f) {
-        x0 = 0.0f;
+    if(x0 < lo) {
+        x0 = lo;
     }
-    if(x1 > HU_FB_WIDTH) {
-        x1 = HU_FB_WIDTH;
+    if(x1 > hi) {
+        x1 = hi;
     }
     if(x1 <= x0) {
         x1 = x0+1.0f;
@@ -116,7 +123,7 @@ void HuSprDisp(HUSPRITE *sp)
     
 #ifdef TARGET_PC
     s16 sprId = (s16)(sp - HuSprData);
-    HuSprWideScissor(sp, HuSprWideShift[sprId]);
+    HuSprWideScissor(sp, HuSprWideShift[sprId], HuSprWideClip[sprId]);
 #else
     GXSetScissor(sp->scissorX, sp->scissorY, sp->scissorW, sp->scissorH);
 #endif
