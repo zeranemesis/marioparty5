@@ -862,6 +862,7 @@ loop_66:
         goto block_65;
     }
     HuAudFXPlay(3);
+    HuPrcKill(temp_r3);
     fn_1_B8E8(&sp8);
     fn_1_4724(&sp8);
     HuWinExOpen(lbl_1_bss_606);
@@ -1101,9 +1102,9 @@ block_96:
             HuWinPosSet(lbl_1_bss_728[2], 16.0f, 354.0f);
         }
         temp_r0 = HuPadTrigL[arg0];
-        CZoomM[3] += (f32) ((s32) ((temp_r0 >> 0x1FU) + temp_r0) >> 1);
+        CZoomM[3] += (f32) (temp_r0 / 2);
         temp_r5 = HuPadTrigR[arg0];
-        CZoomM[3] -= (f32) ((s32) ((temp_r5 >> 0x1FU) + temp_r5) >> 1);
+        CZoomM[3] -= (f32) (temp_r5 / 2);
         if (CZoomM[3] < 3000.0f) {
             CZoomM[3] = 3000.0f;
         }
@@ -1840,8 +1841,16 @@ void fn_1_BAA0(HUSPRITE *arg0)
     }
 }
 
-void fn_1_C360(s16 arg0, s16 arg1) {
+/* No effect; the original keeps a frame with dead locals, hence the self-assignments. */
+void fn_1_C360(s16 arg0, s16 arg1)
+{
+    s32 scratch0;
+    s32 scratch1;
+    f64 scratch2;
 
+    scratch0 = scratch0;
+    scratch1 = scratch1;
+    scratch2 = scratch2;
 }
 
 /* sum the five stat points (out[0..4]) of a head/body/tail/item combination */
@@ -3251,54 +3260,12 @@ block_262:
         goto block_264;
     }
     temp_r5 = &GwSdBattle.machine[var_r31_25];
-    temp_r5->charNo = GwSdCommon.machine[temp_r30].charNo;
-    temp_r5->name[0] = GwSdCommon.machine[temp_r30].name[0];
-    temp_r5->name[1] = GwSdCommon.machine[temp_r30].name[1];
-    temp_r5->name[2] = GwSdCommon.machine[temp_r30].name[2];
-    temp_r5->name[3] = GwSdCommon.machine[temp_r30].name[3];
-    temp_r5->name[4] = GwSdCommon.machine[temp_r30].name[4];
-    temp_r5->name[5] = GwSdCommon.machine[temp_r30].name[5];
-    temp_r5->name[6] = GwSdCommon.machine[temp_r30].name[6];
-    temp_r5->name[7] = GwSdCommon.machine[temp_r30].name[7];
-    temp_r5->name[8] = GwSdCommon.machine[temp_r30].name[8];
-    temp_r5->name[9] = GwSdCommon.machine[temp_r30].name[9];
-    temp_r5->name[0xA] = GwSdCommon.machine[temp_r30].name[0xA];
-    temp_r5->name[0xB] = GwSdCommon.machine[temp_r30].name[0xB];
-    temp_r5->name[0xC] = GwSdCommon.machine[temp_r30].name[0xC];
-    temp_r5->name[0xD] = GwSdCommon.machine[temp_r30].name[0xD];
-    temp_r5->name[0xE] = GwSdCommon.machine[temp_r30].name[0xE];
-    temp_r5->name[0xF] = GwSdCommon.machine[temp_r30].name[0xF];
-    temp_r5->name[0x10] = GwSdCommon.machine[temp_r30].name[0x10];
-    temp_r5->partNo[0] = GwSdCommon.machine[temp_r30].partNo[0];
-    temp_r5->partNo[1] = GwSdCommon.machine[temp_r30].partNo[1];
-    temp_r5->partNo[2] = GwSdCommon.machine[temp_r30].partNo[2];
-    temp_r5->partNo[3] = GwSdCommon.machine[temp_r30].partNo[3];
+    *temp_r5 = GwSdCommon.machine[temp_r30];
     goto block_265;
 block_264:
     temp_r6_2 = &GwSdBackup[GwSdBackupNo];
     temp_r5_2 = &GwSdBattle.machine[var_r31_25];
-    temp_r5_2->charNo = temp_r6_2->machine.charNo;
-    temp_r5_2->name[0] = temp_r6_2->machine.name[0];
-    temp_r5_2->name[1] = temp_r6_2->machine.name[1];
-    temp_r5_2->name[2] = temp_r6_2->machine.name[2];
-    temp_r5_2->name[3] = temp_r6_2->machine.name[3];
-    temp_r5_2->name[4] = temp_r6_2->machine.name[4];
-    temp_r5_2->name[5] = temp_r6_2->machine.name[5];
-    temp_r5_2->name[6] = temp_r6_2->machine.name[6];
-    temp_r5_2->name[7] = temp_r6_2->machine.name[7];
-    temp_r5_2->name[8] = temp_r6_2->machine.name[8];
-    temp_r5_2->name[9] = temp_r6_2->machine.name[9];
-    temp_r5_2->name[0xA] = temp_r6_2->machine.name[0xA];
-    temp_r5_2->name[0xB] = temp_r6_2->machine.name[0xB];
-    temp_r5_2->name[0xC] = temp_r6_2->machine.name[0xC];
-    temp_r5_2->name[0xD] = temp_r6_2->machine.name[0xD];
-    temp_r5_2->name[0xE] = temp_r6_2->machine.name[0xE];
-    temp_r5_2->name[0xF] = temp_r6_2->machine.name[0xF];
-    temp_r5_2->name[0x10] = temp_r6_2->machine.name[0x10];
-    temp_r5_2->partNo[0] = temp_r6_2->machine.partNo[0];
-    temp_r5_2->partNo[1] = temp_r6_2->machine.partNo[1];
-    temp_r5_2->partNo[2] = temp_r6_2->machine.partNo[2];
-    temp_r5_2->partNo[3] = temp_r6_2->machine.partNo[3];
+    *temp_r5_2 = temp_r6_2->machine;
 block_265:
     GwSdBattle.padNo[var_r31_25] = (s8) temp_r30;
     GwPlayerConf[var_r31_25].padNo = temp_r30;
@@ -3459,10 +3426,10 @@ void fn_1_113F8(s16 arg0) {
     s16 var_r31_6;
     s16 var_r31_7;
     s16 var_r31_8;
-    u32 temp_r0;
-    u32 temp_r0_2;
-    u32 temp_r3_2;
-    u32 temp_r5;
+    s32 temp_r0;
+    s32 temp_r0_2;
+    s32 temp_r3_2;
+    s32 temp_r5;
 
     sdWorkInt[7] = (s32) arg0;
     if ((s32) omovlevtno != 3) {
@@ -3487,7 +3454,7 @@ loop_3:
 loop_10:
     if (var_r31 < var_r25) {
         temp_r0 = var_r25 * 0x64;
-        HuSprPosSet(lbl_1_bss_718, (s16) (var_r31 + 6), (288.0f - (f32) (((s32) ((temp_r0 >> 0x1FU) + temp_r0) >> 1) - 0x32)) + (f32) (var_r31 * 0x64), 270.0f);
+        HuSprPosSet(lbl_1_bss_718, (s16) (var_r31 + 6), (288.0f - (f32) ((temp_r0 / 2) - 0x32)) + (f32) (var_r31 * 0x64), 270.0f);
         var_r31 += 1;
         goto loop_10;
     }
@@ -3524,7 +3491,7 @@ loop_44:
             if (var_r31_3 < var_r25) {
                 if (var_r29 == var_r31_3) {
                     temp_r0_2 = var_r25 * 0x64;
-                    temp_f30 = (288.0f - (f32) (((s32) ((temp_r0_2 >> 0x1FU) + temp_r0_2) >> 1) - 0x32)) + (f32) (var_r31_3 * 0x64);
+                    temp_f30 = (288.0f - (f32) ((temp_r0_2 / 2) - 0x32)) + (f32) (var_r31_3 * 0x64);
                     HuSprPosSet(lbl_1_bss_718, (s16) (var_r31_3 + 6), temp_f30 + ((288.0f - temp_f30) * temp_f31_2), 270.0f + (-68.0f * temp_f31_2));
                 } else {
                     HuSprScaleSet(lbl_1_bss_718, (s16) (var_r31_3 + 6), (f32) (0.8 * (1.0 - (f64) temp_f31_2)), (f32) (0.8 * (1.0 - (f64) temp_f31_2)));
@@ -3551,7 +3518,7 @@ loop_44:
 loop_58:
         if (var_r31_4 < var_r26) {
             temp_r5 = var_r26 * 0x64;
-            HuSprPosSet(lbl_1_bss_718, (s16) (var_r31_4 + 0x14), (288.0f - (f32) (((s32) ((temp_r5 >> 0x1FU) + temp_r5) >> 1) - 0x32)) + (f32) (var_r31_4 * 0x64), 270.0f);
+            HuSprPosSet(lbl_1_bss_718, (s16) (var_r31_4 + 0x14), (288.0f - (f32) ((temp_r5 / 2) - 0x32)) + (f32) (var_r31_4 * 0x64), 270.0f);
             var_r31_4 += 1;
             goto loop_58;
         }
@@ -3589,7 +3556,7 @@ loop_104:
                 if (var_r31_6 < var_r26) {
                     if (var_r29_2 == var_r31_6) {
                         temp_r3_2 = var_r26 * 0x64;
-                        temp_f30_2 = (288.0f - (f32) (((s32) ((temp_r3_2 >> 0x1FU) + temp_r3_2) >> 1) - 0x32)) + (f32) (var_r31_6 * 0x64);
+                        temp_f30_2 = (288.0f - (f32) ((temp_r3_2 / 2) - 0x32)) + (f32) (var_r31_6 * 0x64);
                         HuSprPosSet(lbl_1_bss_718, (s16) (var_r31_6 + 0x14), temp_f30_2 + ((288.0f - temp_f30_2) * temp_f31_4), 270.0f + (-2.0f * temp_f31_4));
                     } else {
                         HuSprScaleSet(lbl_1_bss_718, (s16) (var_r31_6 + 0x14), (f32) (0.8 * (1.0 - (f64) temp_f31_4)), (f32) (0.8 * (1.0 - (f64) temp_f31_4)));
@@ -3626,50 +3593,8 @@ loop_111:
             GwSdBattle.stageType1 = -1;
             GwSdBattle.stageType2 = 1;
             GwPlayerConf[1].dif = 1;
-            GwSdBattle.machine[0].charNo = GwSdCommon.machine[arg0].charNo;
-            GwSdBattle.machine[0].name[0] = GwSdCommon.machine[arg0].name[0];
-            GwSdBattle.machine[0].name[1] = GwSdCommon.machine[arg0].name[1];
-            GwSdBattle.machine[0].name[2] = GwSdCommon.machine[arg0].name[2];
-            GwSdBattle.machine[0].name[3] = GwSdCommon.machine[arg0].name[3];
-            GwSdBattle.machine[0].name[4] = GwSdCommon.machine[arg0].name[4];
-            GwSdBattle.machine[0].name[5] = GwSdCommon.machine[arg0].name[5];
-            GwSdBattle.machine[0].name[6] = GwSdCommon.machine[arg0].name[6];
-            GwSdBattle.machine[0].name[7] = GwSdCommon.machine[arg0].name[7];
-            GwSdBattle.machine[0].name[8] = GwSdCommon.machine[arg0].name[8];
-            GwSdBattle.machine[0].name[9] = GwSdCommon.machine[arg0].name[9];
-            GwSdBattle.machine[0].name[0xA] = GwSdCommon.machine[arg0].name[0xA];
-            GwSdBattle.machine[0].name[0xB] = GwSdCommon.machine[arg0].name[0xB];
-            GwSdBattle.machine[0].name[0xC] = GwSdCommon.machine[arg0].name[0xC];
-            GwSdBattle.machine[0].name[0xD] = GwSdCommon.machine[arg0].name[0xD];
-            GwSdBattle.machine[0].name[0xE] = GwSdCommon.machine[arg0].name[0xE];
-            GwSdBattle.machine[0].name[0xF] = GwSdCommon.machine[arg0].name[0xF];
-            GwSdBattle.machine[0].name[0x10] = GwSdCommon.machine[arg0].name[0x10];
-            GwSdBattle.machine[0].partNo[0] = GwSdCommon.machine[arg0].partNo[0];
-            GwSdBattle.machine[0].partNo[1] = GwSdCommon.machine[arg0].partNo[1];
-            GwSdBattle.machine[0].partNo[2] = GwSdCommon.machine[arg0].partNo[2];
-            GwSdBattle.machine[0].partNo[3] = GwSdCommon.machine[arg0].partNo[3];
-            GwSdBattle.machine[1].charNo = GwSdCommon.machine[arg0].charNo;
-            GwSdBattle.machine[1].name[0] = GwSdCommon.machine[arg0].name[0];
-            GwSdBattle.machine[1].name[1] = GwSdCommon.machine[arg0].name[1];
-            GwSdBattle.machine[1].name[2] = GwSdCommon.machine[arg0].name[2];
-            GwSdBattle.machine[1].name[3] = GwSdCommon.machine[arg0].name[3];
-            GwSdBattle.machine[1].name[4] = GwSdCommon.machine[arg0].name[4];
-            GwSdBattle.machine[1].name[5] = GwSdCommon.machine[arg0].name[5];
-            GwSdBattle.machine[1].name[6] = GwSdCommon.machine[arg0].name[6];
-            GwSdBattle.machine[1].name[7] = GwSdCommon.machine[arg0].name[7];
-            GwSdBattle.machine[1].name[8] = GwSdCommon.machine[arg0].name[8];
-            GwSdBattle.machine[1].name[9] = GwSdCommon.machine[arg0].name[9];
-            GwSdBattle.machine[1].name[0xA] = GwSdCommon.machine[arg0].name[0xA];
-            GwSdBattle.machine[1].name[0xB] = GwSdCommon.machine[arg0].name[0xB];
-            GwSdBattle.machine[1].name[0xC] = GwSdCommon.machine[arg0].name[0xC];
-            GwSdBattle.machine[1].name[0xD] = GwSdCommon.machine[arg0].name[0xD];
-            GwSdBattle.machine[1].name[0xE] = GwSdCommon.machine[arg0].name[0xE];
-            GwSdBattle.machine[1].name[0xF] = GwSdCommon.machine[arg0].name[0xF];
-            GwSdBattle.machine[1].name[0x10] = GwSdCommon.machine[arg0].name[0x10];
-            GwSdBattle.machine[1].partNo[0] = GwSdCommon.machine[arg0].partNo[0];
-            GwSdBattle.machine[1].partNo[1] = GwSdCommon.machine[arg0].partNo[1];
-            GwSdBattle.machine[1].partNo[2] = GwSdCommon.machine[arg0].partNo[2];
-            GwSdBattle.machine[1].partNo[3] = GwSdCommon.machine[arg0].partNo[3];
+            GwSdBattle.machine[0] = GwSdCommon.machine[arg0];
+            GwSdBattle.machine[1] = GwSdCommon.machine[arg0];
             GwSdBattle.padNo[0] = (s8) arg0;
             GwPlayerConf->padNo = arg0;
             GwSdBattle.padNo[1] = 3;
