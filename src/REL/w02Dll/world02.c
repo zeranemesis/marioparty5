@@ -2186,9 +2186,9 @@ void MB2Ev_Rain(s32 arg0) {
             RP_S32(sp, 0x14) = (masuId == (s16) GwPlayer[i].masuId) ? 0 : 1;
             MBPlayerPosGet(i, (Point3d *) (sp + 0x1C));
             MBPlayerRotGet(i, (Point3d *) (sp + 0x28));
-            RS_S32(sp, 0x40) = (s32) RP_F32(sp, 0x1C);
-            RS_S32(sp, 0x44) = (s32) RP_F32(sp, 0x20);
-            RS_S32(sp, 0x48) = (s32) RP_F32(sp, 0x24);
+            RP_F32(sp, 0x40) = RP_F32(sp, 0x1C);
+            RP_F32(sp, 0x44) = RP_F32(sp, 0x20);
+            RP_F32(sp, 0x48) = RP_F32(sp, 0x24);
             PSVECSubtract(&mb2ev_RainSwimMidPos, (Point3d *) (sp + 0x1C), &vec);
             {
                 f32 distSq = (vec.x * vec.x) + (vec.z * vec.z);
