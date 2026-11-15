@@ -1,3 +1,4 @@
+// NONMATCHING: unit is logically complete but not byte-identical (inlined vector/destructor code simplified, register allocation differs); see per-function diffs
 // m532Dll "ball": the four ball models (singleton lbl_1_bss_C), the ball that sits on the
 // rotating ring (M532BallA) and the ball that is thrown and falls (M532BallB).
 #define _MATH_H

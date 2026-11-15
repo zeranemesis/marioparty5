@@ -1,3 +1,4 @@
+// NONMATCHING: unit is logically complete but not byte-identical (inlined vector/destructor code simplified, register allocation differs); see per-function diffs
 // m532Dll "player": the two-a-side team players. Each player sits on one of
 // two intrusive lists (lbl_1_bss_AA0 / lbl_1_bss_AB4), owns a character model,
 // a waypoint vector, a wrapping heading and a pointer-to-member state machine

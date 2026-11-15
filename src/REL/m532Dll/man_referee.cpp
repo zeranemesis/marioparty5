@@ -1,3 +1,4 @@
+// NONMATCHING: unit is logically complete but not byte-identical (inlined vector/destructor code simplified, register allocation differs); see per-function diffs
 #include "REL/m532Dll/man_referee.h"
 
 /*
