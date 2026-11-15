@@ -39,6 +39,9 @@ typedef struct M539Particle_s {
     s16 animNo;
     f32 animSpeed;
     f32 animTime;
+    u8 blendMode;
+    u8 attr;
+    s16 unk_2E;
     s16 maxCnt;
     u32 count;
     u32 prevCounter;
@@ -61,15 +64,12 @@ void *PortHu3DModelHookData(int modelId);
 #endif
 
 typedef struct M539Effect_s {
-    void *vtable;
-    s16 unk4;
+    void *next; /* list node (fn_1_1264) */
+    void *prev;
     s16 modelId;
     void *anim;
     M539Particle *particle;
     u8 flag;
-    u8 unk_15[7];
-    s32 unk_18;
-    s32 unk_1C;
 } M539Effect;
 
 void *HuDataSelHeapReadNum(u32 dataNum, u32 num, s32 heap);
@@ -92,15 +92,11 @@ void DCStoreRangeNoSync(void *start, u32 size);
 void fn_1_1264(M539Effect *self);
 void fn_1_1270(M539Effect *self, s32 arg);
 
-s32 fn_1_4AE0(const f32 *arg);
-f32 fn_1_4FC8(const f32 *arg, f32 min, f32 max);
+s32 fn_1_4AE0(void);
+f32 fn_1_4FC8(f32 min, f32 max);
 
 void fn_1_CE40(M539Effect *self, M539Particle *particleP);
 void fn_1_CBAC(M539Effect *self, M539Particle *particleP);
-
-// The two literals the unit takes the address of, for the random helpers.
-static const f32 lbl_1_rodata_258 = 0.0f;
-static const f32 lbl_1_rodata_264 = 50.0f;
 
 // NONMATCHING: register allocation only.
 void fn_1_C8DC(void *modelP, void *particleP, void *mtx)
@@ -187,13 +183,13 @@ void fn_1_CBAC(M539Effect *self, M539Particle *particleP)
         p->vel.y = (f32)cos(0.017453292f * ((360.0f * i) / particleP->maxCnt));
         p->vel.z = 0.0f;
         p->scale = 50.0f;
-        p->pos.x = 100.0f * (0.01f * ((f32)(fn_1_4AE0(&lbl_1_rodata_264) & 0x3F) - 31.0f));
-        p->pos.y = 100.0f * (0.01f * ((f32)(fn_1_4AE0(&lbl_1_rodata_264) & 0x3F) - 31.0f));
+        p->pos.x = 100.0f * (0.01f * ((f32)(fn_1_4AE0() & 0x3F) - 31.0f));
+        p->pos.y = 100.0f * (0.01f * ((f32)(fn_1_4AE0() & 0x3F) - 31.0f));
         p->pos.z = 0.0f;
         p->color.a = 0;
         p->time = 0;
-        p->parManId = (fn_1_4AE0(&lbl_1_rodata_264) & 0xF) + 0xF;
-        p->zRot = 0.017453292f * fn_1_4FC8(&lbl_1_rodata_258, 0.0f, 360.0f);
+        p->parManId = (fn_1_4AE0() & 0xF) + 0xF;
+        p->zRot = 0.017453292f * fn_1_4FC8(0.0f, 360.0f);
     }
 }
 

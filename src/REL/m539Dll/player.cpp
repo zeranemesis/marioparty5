@@ -403,16 +403,24 @@ void fn_1_DAF0(M539Player *self, s32 state)
 void fn_1_DEDC(M539Player *self)
 {
     M539PlayerSub *sub;
+#ifndef TARGET_PC
     u8 *q;
+#endif
 
     self->vel.x = 0.0f;
     self->vel.y = 0.0f;
     self->vel.z = 0.0f;
     sub = self->sub;
+#ifdef TARGET_PC /* flag8 is not at byte 8 once the vtable pointer is 8 bytes wide */
+    if (sub->flag8 != 0) {
+        fn_1_DAF0(self, 1);
+    }
+#else
     q = (u8 *)sub + 4;
     if (q[4] != 0) {
         fn_1_DAF0(self, 1);
     }
+#endif
 }
 
 void fn_1_DF6C(M539Player *self)

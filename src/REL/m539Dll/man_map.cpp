@@ -208,7 +208,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
     if (Hu3DModelLightInfoSet(*self->infLight, 1) <= 0) {
         fn_1_1D4(lbl_1_data_3E8, lbl_1_data_3F3, 0x2A);
     }
-    p = (s16 *)fn_1_0(0x3C);
+    p = (s16 *)fn_1_0(M539_ALLOC_SIZE(0x3C));
     if (p != NULL) {
         p = (s16 *)fn_1_9DF8(p, (Point3d *)lbl_1_rodata_1C0, 4);
     }
@@ -222,7 +222,7 @@ M539ManMap *fn_1_BF70(M539ManMap *self, s32 arg)
         }
         self->sprLight[0] = p;
     }
-    q = (s16 *)fn_1_0(0x3C);
+    q = (s16 *)fn_1_0(M539_ALLOC_SIZE(0x3C));
     if (q != NULL) {
         q = (s16 *)fn_1_9DF8(q, (Point3d *)lbl_1_rodata_1F0, 4);
     }
