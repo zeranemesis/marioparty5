@@ -142,7 +142,7 @@ void fn_1_B338(M513IndHook *self)
 
 // NONMATCHING: verified equivalent, MWCC register allocation / scheduling / inlining differs
 // Texture projection of the frame buffer copy.
-void fn_1_B390(Mtx mtx)
+void fn_1_B390(HU3DMODEL *modelP, Mtx mtx)
 {
     Mtx lightMtx;
     Mtx texMtx;
