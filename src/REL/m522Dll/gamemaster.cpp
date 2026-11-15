@@ -62,7 +62,7 @@ void fn_1_99E4(void);
 void fn_1_94A4(void);
 void fn_1_955C(void);
 void fn_1_96E8(void);
-void fn_1_B7A8(void);
+void fn_1_B7A8(u32 seed);
 void fn_1_F604(void);
 void fn_1_F6E4(void);
 void fn_1_F76C(void);
@@ -142,8 +142,7 @@ void fn_1_CCFC(M522_GAMEMASTER *self)
     M522_UNK48 *unk48;
     M522_UNKAC *unkAC;
 
-    OSGetTick();
-    fn_1_B7A8();
+    fn_1_B7A8(OSGetTick());
     msg = (M522_MSG *)fn_1_689C(0x1C);
     if (msg) {
         msg = fn_1_DEA0(msg, &self->m_heapSel);
