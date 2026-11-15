@@ -56,7 +56,12 @@ struct M580StageAnimObj_s {
     /* 0x14 */ M580_STAGE *stage;
     /* 0x18 */ s32 unk18;
     /* 0x1C */ s32 unk1C;
+#ifdef TARGET_PC
+    /* stage.c hands this to the collision code as an M580_BODY, which is larger on x64 */
+    u8 pad20[0x80];
+#else
     /* 0x20 */ u8 pad20[0x20];
+#endif
 };
 
 struct M580StageAnim_s {
