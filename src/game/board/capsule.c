@@ -2332,6 +2332,11 @@ static void CapsuleThrowEffDraw(HU3DMODEL *modelP, Mtx *mtx)
         120000,
         120000
     };
+#ifdef TARGET_PC
+    if(HuInterpDrawF) {
+        return;
+    }
+#endif
     if(work->stopF) {
         return;
     }

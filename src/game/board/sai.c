@@ -1421,6 +1421,9 @@ static void SaiObjEffPuffDraw(HU3DMODEL *modelP, Mtx *mtx)
         GXLoadPosMtxImm(modelview, GX_PNMTX0);
         GXCallDisplayList(work->dlBuf, work->dlSize);
     }
+#ifdef TARGET_PC
+    if(!HuInterpDrawF)
+#endif
     if(!MBPauseFlagCheck()) {
         if(++work->puffTime >= 45u) {
             modelP->attr |= HU3D_ATTR_DISPOFF;
@@ -1494,6 +1497,9 @@ static void SaiObjEffTriDraw(HU3DMODEL *modelP, Mtx *mtx)
         GXTexCoord2f32(0, 1);
         GXEnd();
     }
+#ifdef TARGET_PC
+    if(!HuInterpDrawF)
+#endif
     if(!MBPauseFlagCheck()) {
         if(++work->triTime >= 16) {
             modelP->attr |= HU3D_ATTR_DISPOFF;

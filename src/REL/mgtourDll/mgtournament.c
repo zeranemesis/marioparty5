@@ -436,6 +436,11 @@ void fn_1_DE4(s16 layerNo)
         GXTexCoord2f32(5.0f + lbl_1_bss_16818->scrollX, 5.0f + lbl_1_bss_16818->scrollY);
         GXPosition2s16(0, 480);
         GXTexCoord2f32(lbl_1_bss_16818->scrollX, 5.0f + lbl_1_bss_16818->scrollY);
+#ifdef TARGET_PC
+        if(HuInterpDrawF) {
+            return;
+        }
+#endif
         lbl_1_bss_16818->scrollX += 0.005;
         if (lbl_1_bss_16818->scrollX >= 1.0) {
             lbl_1_bss_16818->scrollX = 0.0f;

@@ -1874,6 +1874,9 @@ void fn_1_5288(HU3DMODEL *model, Mtx *mtxP)
         tmp[11] = 0.0f;
         PSMTXReorder((f32(*)[4])tmp, ro);
 
+#ifdef TARGET_PC
+        if(!HuInterpDrawF)
+#endif
         if (omPauseChk() == 0 && parm->hook != NULL) {
             parm->hook(model, parm, mtx);
         }

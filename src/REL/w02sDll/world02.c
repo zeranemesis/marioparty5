@@ -2314,6 +2314,9 @@ void ParticleDraw(HU3DMODEL *modelP, Mtx *mtx)
             PSMTXIdentity(mtxInv);
         }
         PSMTXReorder(mtxInv, basePosMtx);
+#ifdef TARGET_PC
+        if(!HuInterpDrawF)
+#endif
         if(effP->hook) {
             hook = effP->hook;
             hook(modelP, effP, mtx);
@@ -2413,6 +2416,9 @@ void ParticleDraw(HU3DMODEL *modelP, Mtx *mtx)
         GXSETARRAY(GX_VA_TEX0, effP->st, effP->num*sizeof(HuVec2f)*4, sizeof(HuVec2f), TRUE);
         GXCallDisplayList(effP->dl, effP->dlSize);
         if(shadowModelDrawF == FALSE) {
+#ifdef TARGET_PC
+            if(!HuInterpDrawF)
+#endif
             if(!(effP->attr & MB2_PARTICLE_ATTR_COUNTER_UPDATE)) {
                 effP->count++;
             }

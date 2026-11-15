@@ -386,6 +386,9 @@ void fn_1_51C4(HU3DDRAWOBJ *drawObj, HSFMATERIAL *material)
         PSMTXConcat(catMtx, reflMtx, catMtx);
         GXLoadTexMtxImm(catMtx, GX_TEXMTX0, GX_MTX3x4);
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
+#ifdef TARGET_PC
+        if(!HuInterpDrawF)
+#endif
         if (lbl_1_bss_0->back.reflectOn != 0) {
             lbl_1_bss_7810 += 0.05f;
         }

@@ -128,6 +128,9 @@ void fn_1_2878(HU3DDRAWOBJ *drawObj)
     cam = &Hu3DCamera[Hu3DCameraNo];
     st = &lbl_1_data_0->player[Hu3DCameraNo - 4].stage;
     paused = omUPauseFlag + omPauseChk();
+#ifdef TARGET_PC
+    if(!HuInterpDrawF)
+#endif
     if (paused == 0) {
         st->scroll += st->rate;
     }
@@ -263,6 +266,9 @@ void fn_1_3390(HU3DDRAWOBJ *drawObj)
     Mtx scaleMtx;
 
     paused = omUPauseFlag + omPauseChk();
+#ifdef TARGET_PC
+    if(!HuInterpDrawF)
+#endif
     if (paused == 0) {
         lbl_1_bss_503C += lbl_1_bss_5040;
     }

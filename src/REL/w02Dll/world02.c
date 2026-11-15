@@ -5360,6 +5360,9 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
             }
             PSMTXReorder(invMtx, (f32 (*)[3]) rotMtx);
             hook = (void (*)(HU3DMODEL *, void *, f32 (*)[3][4])) hdr->hook;
+#ifdef TARGET_PC
+            if(!HuInterpDrawF)
+#endif
             if (hook != NULL) {
                 hook(modelP, hdr, mtx);
             }
@@ -5451,6 +5454,9 @@ void ParticleDraw(HU3DMODEL *modelP, f32 (*mtx)[3][4]) {
         GXSETARRAY(GX_VA_TEX0, hdr->vtxUv, count * 8U * 4U, 8U, TRUE);
         GXCallDisplayList(hdr->dl, hdr->dlSize);
         if (shadowModelDrawF == 0) {
+#ifdef TARGET_PC
+            if(!HuInterpDrawF)
+#endif
             if ((hdr->flag21 & 2) == 0) {
                 hdr->cnt28 = hdr->cnt28 + 1;
             }
