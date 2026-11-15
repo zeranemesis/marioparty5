@@ -77,6 +77,16 @@ static s32 mb3ev_TakiEmitterNo[3] = { -1, -1, -1 };
 
 static OMOBJ *mb3_MainObj;
 static s32 mb3_Work[0x72];
+
+/* mb3_Work[2..5] hold ANIMDATA pointers on GC; they do not fit an s32 on PC. */
+#ifdef TARGET_PC
+static ANIMDATA *mb3_AnimTbl[4];
+#define MB3_ANIM(n) (mb3_AnimTbl[(n) - 2])
+#define MB3_ANIM_SET(n, v) (mb3_AnimTbl[(n) - 2] = (v))
+#else
+#define MB3_ANIM(n) ((ANIMDATA *) (uintptr_t) mb3_Work[n])
+#define MB3_ANIM_SET(n, v) (mb3_Work[n] = (s32) (uintptr_t) (v))
+#endif
 static s16 mb3_MainMdlId;
 static u8 mb3_BlueMasuNoTbl[0xFF];
 
@@ -380,28 +390,28 @@ static void MB3_ObjectCreate(void) {
     MBModelAttrSet((s16) mb3_Work[0], HU3D_MOTATTR_LOOP);
     MBMotionSpeedSet((s16) mb3_Work[0], 1.0f);
 
-    mb3_Work[2] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0011, 0x10000000));
-    mb3_Work[3] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0012, 0x10000000));
-    mb3_Work[4] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0014, 0x10000000));
-    mb3_Work[5] = (s32)(uintptr_t) HuSprAnimRead(HuDataReadNum(0xCF0015, 0x10000000));
+    MB3_ANIM_SET(2, HuSprAnimRead(HuDataReadNum(0xCF0011, 0x10000000)));
+    MB3_ANIM_SET(3, HuSprAnimRead(HuDataReadNum(0xCF0012, 0x10000000)));
+    MB3_ANIM_SET(4, HuSprAnimRead(HuDataReadNum(0xCF0014, 0x10000000)));
+    MB3_ANIM_SET(5, HuSprAnimRead(HuDataReadNum(0xCF0015, 0x10000000)));
 
     for (i = 0; i < 3; i++) {
-        s16 id1 = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[3], 0xC0);
+        s16 id1 = (s16) MBEffCreate(MB3_ANIM(3), 0xC0);
         s16 id2;
         MB3W_S16(0x20 + i * 2) = id1;
         MBEffHookSet(id1, MB3_Splash1EffHook);
         Hu3DModelLayerSet(id1, 2);
         Hu3DModelPosSetV(id1, (HuVecF *) &mb3ev_TakiEffPosTbl[i]);
 
-        id2 = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[3], 0x30);
+        id2 = (s16) MBEffCreate(MB3_ANIM(3), 0x30);
         MB3W_S16(0x26 + i * 2) = id2;
         MBEffHookSet(id2, MB3_Splash2EffHook);
         Hu3DModelLayerSet(id2, 2);
         Hu3DModelPosSet(id2, mb3ev_TakiEffPosTbl[i].x, mb3ev_TakiEffPosTbl[i].y, 50.0f + mb3ev_TakiEffPosTbl[i].z);
         mb3ev_TakiEmitterNo[i] = MBAudFXEmiterSet(0x5DC, (Vec *) &mb3ev_TakiEffPosTbl[i]);
     }
-    MB3W_S16(0x2C) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[4], 1);
-    MB3W_S16(0x2E) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[5], 1);
+    MB3W_S16(0x2C) = (s16) MBEffCreate(MB3_ANIM(4), 1);
+    MB3W_S16(0x2E) = (s16) MBEffCreate(MB3_ANIM(5), 1);
 }
 
 static void MB3_Kill(void) {
@@ -453,7 +463,7 @@ static void MB3_MainObjUpdate(OMOBJ *obj) {
 }
 
 static void MB3_ImpactEffUpdate(s16 modelId, s32 frame) {
-    Point3d ofs = { 120.0f, 0.0f, -60.0f };
+    Point3d ofs = { 0.0f, 0.0f, -500.0f };
     Mtx camInv;
     Point3d pos;
     f32 scale;
@@ -463,7 +473,8 @@ static void MB3_ImpactEffUpdate(s16 modelId, s32 frame) {
     camInv[0][3] = 0.0f;
     camInv[1][3] = 0.0f;
     camInv[2][3] = 0.0f;
-    scale = ((1.0f + (5.0f * ((f32) frame / 30.0f))) + (0.5f * (f32) sin((3.141592653589793 * (f64) (16.0f * (360.0f * ((f32) frame / 30.0f)))) / 180.0))) * 0.4f;
+    scale = (1.0f + (5.0f * ((f32) frame / 30.0f))) + (0.5 * sin((3.141592653589793 * (f64) (16.0f * (360.0f * ((f32) frame / 30.0f)))) / 180.0));
+    scale *= 0.4f;
     MBModelPosSetV(modelId, &pos);
     MBModelMtxSet(modelId, &camInv);
     MBModelScaleSet(modelId, scale, scale, scale);
@@ -473,44 +484,42 @@ static void MB3_ImpactEffUpdate(s16 modelId, s32 frame) {
  * fired from a cone whose axis is set by (pitch, yaw). */
 static void MB3_ImpactEffPosSet(Point3d *pos, f32 pitch, f32 yaw) {
     MBEFFECT *eff = (MBEFFECT *) Hu3DData[MB3W_S16(0x30)].hookData;
-    Mtx pitchMtx, yawMtx, mtx;
-    Point3d ofs;
+    Mtx pitchMtx, yawMtx;
+    Point3d dir, tmp;
     s32 i;
-    s32 budget;
+    u32 budget = 32;
 
     MTXRotRad(pitchMtx, 'X', 0.017453292f * pitch);
     MTXRotRad(yawMtx, 'Y', 0.017453292f * yaw);
     MTXConcat(pitchMtx, yawMtx, pitchMtx);
-    MTXTransApply(pitchMtx, mtx, pos->x, pos->y, pos->z);
+    MTXTransApply(pitchMtx, pitchMtx, pos->x, pos->y, pos->z);
 
-    budget = 0x20;
     for (i = 0; i < eff->num; i++) {
         MBEFFECTDATA *p = &eff->data[i];
-        f32 ang, spd;
+        f32 ang, spd, rnd;
 
         if (p->time != 0) {
             continue;
         }
-        p->time = (s16) (18.0f + (0.2f * (60.0f * MBEffRandF())));
-        p->color.r = (u8) (150.0f + (100.0f * MBEffRandF()));
-        p->color.g = 0xFF;
-        p->color.b = 0xFF;
-        p->color.a = (u8) (150.0f + (100.0f * MBEffRandF()));
-        p->scale = 20.0f + (40.0f * MBEffRandF());
-
+        p->time = (s16) (60.0f * (0.7f + (0.5f * MBEffRandF())));
         ang = 360.0f * MBEffSRandF();
-        spd = 20.0f;
-        ofs.x = spd * (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
-        ofs.y = 0.0f;
-        ofs.z = spd * (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
-        MTXMultVec(mtx, &ofs, &p->pos);
-
+        dir.x = (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
+        dir.y = (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
+        dir.z = 0.5f;
+        VECScale(&dir, &tmp, 20.0f);
+        MTXMultVec(pitchMtx, &tmp, &p->pos);
         spd = 13.333333f + (1.6666666f * (7.0f * MBEffRandF()));
-        ofs.x = spd * (f32) sin((3.141592653589793 * (f64) ang) / 180.0);
-        ofs.z = spd * (f32) cos((3.141592653589793 * (f64) ang) / 180.0);
-        MTXMultVecSR(mtx, &ofs, &p->vel);
-
-        if (--budget < 1) {
+        VECScale(&dir, &tmp, spd);
+        MTXMultVecSR(pitchMtx, &tmp, &p->vel);
+        p->rot.z = 360.0f * MBEffRandF();
+        p->scale = 20.0f + (20.0f * MBEffRandF());
+        p->color.a = (u8) (100.0f + (80.0f * MBEffRandF()));
+        rnd = MBEffRandF();
+        p->color.r = (u8) (150.0f + (70.0f * rnd));
+        p->color.g = (u8) (144.0f + (70.0f * rnd));
+        p->color.b = (u8) (140.0f + (70.0f * rnd));
+        budget--;
+        if (budget < 1) {
             break;
         }
     }
@@ -567,7 +576,7 @@ static void MB3Ev_HatenaYYHou(s32 playerNo) {
     riderFlag[2] = -1;
     riderFlag[3] = -1;
 
-    MB3W_S16(0x30) = (s16) MBEffCreate((ANIMDATA *)(uintptr_t) mb3_Work[5], 0x20);
+    MB3W_S16(0x30) = (s16) MBEffCreate(MB3_ANIM(5), 0x20);
     MBEffAttrSet(MB3W_S16(0x30), 8U);
     MBEffHookSet(MB3W_S16(0x30), MB3_ImpactEffHook);
     Hu3DModelLayerSet(MB3W_S16(0x30), 3);
@@ -642,7 +651,6 @@ static void MB3Ev_HatenaYYHou(s32 playerNo) {
     VECScale(&launchDir, &launchDir, 33.333332f);
     MBCameraQuakeSet(0x12, 500.0f);
 
-    scale = 1.0f;
     for (i = 0; (f32) i < 30.0f; i++) {
         Point3d rotOut;
         f32 spinAngle = 18.0f * (f32) (i + 1);
@@ -689,7 +697,7 @@ static void MB3Ev_HatenaYYHou(s32 playerNo) {
 
         WipeColorSet(0, 0, 0);
         WipeCreate(2, 0x81, 1);
-        while (!WipeCheckEnd()) {
+        while (WipeCheckEnd()) {
             HuPrcVSleep();
         }
 
@@ -704,7 +712,7 @@ static void MB3Ev_HatenaYYHou(s32 playerNo) {
         MBCameraSkipSet(0);
 
         WipeCreate(1, 0x81, 0x1E);
-        while (!WipeCheckEnd()) {
+        while (WipeCheckEnd()) {
             HuPrcVSleep();
         }
         MBModelDispSet(MBPlayerModelGet(playerNo), TRUE);
@@ -767,7 +775,7 @@ static void MB3Ev_HatenaYYHou(s32 playerNo) {
 
         WipeColorSet(0, 0, 0);
         WipeCreate(2, 0x81, 1);
-        while (!WipeCheckEnd()) {
+        while (WipeCheckEnd()) {
             HuPrcVSleep();
         }
 
@@ -780,7 +788,7 @@ static void MB3Ev_HatenaYYHou(s32 playerNo) {
         MBMotionSpeedSet((s16) mb3_Work[1], 0.0f);
         MBMotionTimeSet((s16) mb3_Work[1], 0.0f);
         WipeCreate(1, 0x81, 0x1E);
-        while (!WipeCheckEnd()) {
+        while (WipeCheckEnd()) {
             HuPrcVSleep();
         }
     }
