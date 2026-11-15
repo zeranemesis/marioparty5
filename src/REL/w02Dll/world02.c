@@ -3280,7 +3280,7 @@ void MB2_TimerObjUpdate(OMOBJ *obj) {
         goto block_13;
     }
     if ((s32) mb2ev_TimerObj == (s32) mb2ev_TimerValue) {
-        mb2ev_TimerGameMesId = (s32) GameMesCreate(1, (mb2ev_TimerObj + 0x3A) / 60, -1, -1, (f32) temp_ret);
+        mb2ev_TimerGameMesId = (s32) GameMesCreate(1, (mb2ev_TimerObj + 0x3A) / 60, -1, -1);
         goto block_13;
     }
     if ((s32) mb2ev_TimerObj < (s32) mb2ev_TimerValue) {
@@ -4191,8 +4191,8 @@ f32 MB2_BezierCalc(f64 farg0, f32 farg1, f32 farg2, f32 farg3) {
 }
 
 void MB2_BezierCalcV(f32 *arg0, f32 *arg1, Point3d *arg2, Point3d *arg3, f64 farg0) {
-    Point3d *var_r5;
-    Point3d *var_r6;
+    f32 *var_r5;
+    f32 *var_r6;
     f32 *var_r3;
     f32 *var_r4;
     f32 temp_f27;
@@ -4203,22 +4203,18 @@ void MB2_BezierCalcV(f32 *arg0, f32 *arg1, Point3d *arg2, Point3d *arg3, f64 far
 
     var_r3 = arg0;
     var_r4 = arg1;
-    var_r5 = arg2;
-    var_r6 = arg3;
-    var_r31 = 0;
-loop_2:
-    if (var_r31 < 3) {
-        temp_f27 = var_r5->x;
-        var_r5 += 4;
+    var_r5 = (f32 *) arg2;
+    var_r6 = (f32 *) arg3;
+    for (var_r31 = 0; var_r31 < 3; var_r31++) {
+        temp_f27 = *var_r5;
+        var_r5 += 1;
         temp_f28 = *var_r4;
-        var_r4 += 4;
+        var_r4 += 1;
         temp_f29 = *var_r3;
-        var_r3 += 4;
+        var_r3 += 1;
         temp_f31 = (f32) (1.0 - farg0);
-        var_r6->x = (f32) ((f64) (temp_f27 * ((f32) farg0 * (f32) farg0)) + ((f64) (temp_f29 * (temp_f31 * temp_f31)) + (2.0 * (f64) (temp_f28 * (temp_f31 * (f32) farg0)))));
-        var_r6 += 4;
-        var_r31 += 1;
-        goto loop_2;
+        *var_r6 = (f32) ((f64) (temp_f27 * ((f32) farg0 * (f32) farg0)) + ((f64) (temp_f29 * (temp_f31 * temp_f31)) + (2.0 * (f64) (temp_f28 * (temp_f31 * (f32) farg0)))));
+        var_r6 += 1;
     }
 }
 
