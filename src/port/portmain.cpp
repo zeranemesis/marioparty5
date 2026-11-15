@@ -727,7 +727,8 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             tbBoardHook((OMOVL)-1); // reads MP5_TEST_BOARD only
         }
         // boot blanks GwPlayerConf[].charNo right after its (redirected) omOvlCall, before the board loads: put them back
-        if (tbBoard >= 0 && tbStarted && tbFrame < 100000 && GwPlayerConf[0].charNo == CHARNO_NONE) {
+        // same for MP5_TEST_OVL: sub-modes such as mgfree expect the characters the parent menu picked
+        if (((tbBoard >= 0 && tbStarted) || tbOvlDone) && tbFrame < 100000 && GwPlayerConf[0].charNo == CHARNO_NONE) {
             for (int i = 0; i < GW_PLAYER_MAX; i++) {
                 GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
             }
