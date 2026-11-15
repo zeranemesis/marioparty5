@@ -174,11 +174,19 @@ void DispZClear(void) {
     GXLoadPosMtxImm(modelview, GX_PNMTX0);
     x = (10000.0f * -sin(cameraP->fov * 0.5f)) * 1.2f;
     y = 10000.0f * -sin(cameraP->fov * 0.5f) * (1.0f / 1.2f);
+#ifdef TARGET_PC
+    // shortcut: this quad only clears Z; with colour writes on, Aurora draws it opaque black over the 3D scene
+    GXSetColorUpdate(GX_FALSE);
+#endif
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-x, -y, -10000.0f);
     GXPosition3f32(x, -y, -10000.0f);
     GXPosition3f32(x, y, -10000.0f);
     GXPosition3f32(-x, y, -10000.0f);
+#ifdef TARGET_PC
+    GXEnd();
+    GXSetColorUpdate(GX_TRUE);
+#endif
 }
 
 // NONMATCHING: register allocation differs

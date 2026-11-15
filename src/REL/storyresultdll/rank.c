@@ -67,7 +67,7 @@ void SRankCreate(void) {
     s16 i;
     s16 boardModelId;
     s16 modelId;
-    u8 charNo;
+    s8 charNo;
     s16 lastNo = SRankWork.storyNo - 1;
 
     BackAnim = HuSprAnimRead(HuDataSelHeapReadNum(0xC20001, HU_MEMNUM_OVL, HEAP_MODEL));
@@ -158,7 +158,7 @@ void SRankCreate(void) {
             a.x = RankPosTbl[i - 1].x;
             a.y = RankPosTbl[i - 1].y;
             a.z = RankPosTbl[i - 1].z;
-            VECSubtract((Vec *)&RankPosTbl[i], (Vec *)&a, (Vec *)&a);
+            VECSubtract((Vec *)&a, (Vec *)&RankPosTbl[i], (Vec *)&a);
             ang = (s16)(180.0 * (atan2(a.x, a.y) / 3.141592653589793));
             a.x = RankPosTbl[i - 1].x;
             a.y = RankPosTbl[i - 1].y;
@@ -185,7 +185,7 @@ void SRankCreate(void) {
     Hu3DModelLayerSet(Hu3DParManModelIDGet(RankParmanId), 3);
     Hu3DModelCameraSet(Hu3DParManModelIDGet(RankParmanId), HU3D_CAM2);
     Hu3D2Dto3D((HuVecF *)&RankPosTbl[5], HU3D_CAM2, &pos3D);
-    Hu3DModelPosSetV(Hu3DParManModelIDGet(RankParmanId), &pos3D);
+    Hu3DModelPosSetV(modelId, &pos3D);
     Hu3DParManPosSet(RankParmanId, pos3D.x, pos3D.y, pos3D.z);
     HuSprExecLayerCameraSet(0x40, HU3D_CAM2, 1);
 }
@@ -223,7 +223,7 @@ void SRankExec(void) {
     } else {
         HuAudFXPlay(0x57E);
     }
-    Hu3DModelCameraSet(rankMdlId, HU3D_CAM2);
+    Hu3DModelCameraSet(rankMdlId, HU3D_CAM1 | HU3D_CAM2);
 
     for (i = 1; i <= 60; i++) {
         CapsuleGlowTPLvl = (f32)cos((3.141592653589793 * (90.0 * ((f64)i / 60.0))) / 180.0);
