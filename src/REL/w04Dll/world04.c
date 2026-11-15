@@ -711,8 +711,10 @@ void MB4_Create(void) {
     int puku2ShellSub[4];
     int sango6Sub[2];
     f32 sakanaPhase;
+    s32 boardNo;
 
-    HuAudSndGrpSetSet(GwSystem.boardNo);
+    boardNo = GwSystem.boardNo; /* dead: the original always selects sound group 17 */
+    HuAudSndGrpSetSet(17);
     MBMasuCreate(0xD10000);
 
     modelId = MBModelCreate(0xD10001, NULL, FALSE);
@@ -2588,19 +2590,19 @@ void MB4_CapsuleEffHook(int capsuleNo, int type, int mdlId, BOOL flag1, BOOL fla
     }
 }
 
-/* Shared "burst a bubble at a model bone" step used by most
- * MB4_CapsuleBubbleUpdate cases below: transform `ofs` by the named bone's
- * world matrix on mb4_Work[0x27]'s model, and spawn a bubble there. */
-static void MB4_CapsuleBubbleBurst(char *bone, Point3d ofs, f32 speedScale) {
-    Mtx mtx;
-    Point3d pos;
-    s32 duration;
-
-    Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x27]), bone, mtx);
-    PSMTXMultVec(mtx, &ofs, &pos);
-    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
-    MB4_BubbleEffCreate(&pos, duration, speedScale, 0.0f);
-}
+/* Shared "burst a bubble at a model bone" step of the MB4_CapsuleBubbleUpdate cases: transform `ofs` by the
+ * named bone's world matrix on mb4_Work[0x27]'s model and spawn a bubble there. A macro, not a function: the
+ * original evaluates the lifetime frand() before the speed-scale one, i.e. before the argument expression. */
+#define MB4_CAPSULE_BUBBLE_BURST(bone, scaleExpr) \
+    do { \
+        Mtx burstMtx; \
+        Point3d burstPos; \
+        s32 burstDuration; \
+        Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x27]), bone, burstMtx); \
+        PSMTXMultVec(burstMtx, &ofs, &burstPos); \
+        burstDuration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F))))); \
+        MB4_BubbleEffCreate(&burstPos, burstDuration, scaleExpr, 0.0f); \
+    } while (0)
 
 /* NONMATCHING: complete and faithful, not attempted for instruction-level
  * match. Two independent per-frame timers: mb4_Work[0x2A..0x2F] (the
@@ -2658,7 +2660,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 350.0f;
                 ofs.z = 350.0f;
-                MB4_CapsuleBubbleBurst("jyan", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("jyan", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2673,7 +2675,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 10.0f;
                 ofs.z = 30.0000019f;
-                MB4_CapsuleBubbleBurst("nose", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("nose", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2689,7 +2691,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 0.0f;
                 ofs.z = 30.0000019f;
-                MB4_CapsuleBubbleBurst("head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2705,7 +2707,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 20.0f;
                 ofs.z = 40.0f;
-                MB4_CapsuleBubbleBurst("noko_head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("noko_head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2721,7 +2723,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 20.0f;
                 ofs.z = 40.0f;
-                MB4_CapsuleBubbleBurst("body", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("body", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2737,7 +2739,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 20.0f;
                 ofs.z = 40.0f;
-                MB4_CapsuleBubbleBurst("noko_head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("noko_head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2753,7 +2755,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 20.0f;
                 ofs.z = 50.0f;
-                MB4_CapsuleBubbleBurst("neck", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("neck", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2769,7 +2771,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 10.0f;
                 ofs.z = 60.0000038f;
-                MB4_CapsuleBubbleBurst("neck", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("neck", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2785,7 +2787,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 20.0f;
                 ofs.z = 50.0f;
-                MB4_CapsuleBubbleBurst("neck", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("neck", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2801,7 +2803,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 20.0f;
                 ofs.z = 50.0f;
-                MB4_CapsuleBubbleBurst("j_uekuti", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("j_uekuti", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2817,7 +2819,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 0.0f;
                 ofs.y = 10.0f;
                 ofs.z = 50.0f;
-                MB4_CapsuleBubbleBurst("head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2833,7 +2835,7 @@ void MB4_CapsuleBubbleUpdate(void) {
                 ofs.x = 70.0f;
                 ofs.y = 40.0f;
                 ofs.z = 0.0f;
-                MB4_CapsuleBubbleBurst("ske_head", ofs, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+                MB4_CAPSULE_BUBBLE_BURST("ske_head", 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     mb4_Work[0x27] = -1;
@@ -2843,21 +2845,27 @@ void MB4_CapsuleBubbleUpdate(void) {
         }
         break;
     case 34:
-        /* Two-point burst (e.g. nostrils); the original's per-variant
-         * (mb4_Work[0x29]) offset tables are byte-identical, so only one
-         * is needed here. */
+        /* Two-point burst (nostrils), one bubble per entry of the offset table picked by mb4_Work[0x29]
+         * (both tables hold the same values here). The table is read z, y, x. */
         if (mb4_Work[0x24] > 0) {
+            mb4_Work[0x25] += 1;
             mb4_Work[0x23] -= 1;
-            if (mb4_Work[0x23] <= 0 && (mb4_Work[0x25] += 1, (mb4_Work[0x25] & 3) == 0)) {
-                Point3d p0, p1;
-                p0.x = 65.0f;
-                p0.y = 30.0000019f;
-                p0.z = -9.0f;
-                p1.x = 65.0f;
-                p1.y = 30.0000019f;
-                p1.z = 9.0f;
-                MB4_CapsuleBubbleBurst("ns_hed", p0, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
-                MB4_CapsuleBubbleBurst("ns_hed", p1, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))));
+            if (mb4_Work[0x23] <= 0 && (mb4_Work[0x25] & 3) == 0) {
+                static const f32 nostrilOfsTbl[2][2][3] = {
+                    { { -9.0f, 30.0000019f, 65.0f }, { 9.0f, 30.0000019f, 65.0f } },
+                    { { -9.0f, 30.0000019f, 65.0f }, { 9.0f, 30.0000019f, 65.0f } },
+                };
+                s32 variant = (mb4_Work[0x29] != 0) ? 1 : 0;
+                s32 j;
+                Hu3DModelObjMtxGet(MBModelIdGet((s16) mb4_Work[0x27]), "ns_hed", headMtx);
+                for (j = 0; j < 2; j++) {
+                    pos.z = nostrilOfsTbl[variant][j][0];
+                    pos.y = nostrilOfsTbl[variant][j][1];
+                    pos.x = nostrilOfsTbl[variant][j][2];
+                    PSMTXMultVec(headMtx, &pos, &pos);
+                    duration = (s32) (120.0f * (1.0f + (0.2f * (0.007874016f * (f32) (frand() & 0x7F)))));
+                    MB4_BubbleEffCreate(&pos, duration, 0.75f * (0.5f + (0.007874016f * (f32) (frand() & 0x7F))), 0.0f);
+                }
                 mb4_Work[0x24] -= 1;
                 if (mb4_Work[0x24] <= 0) {
                     if (mb4_Work[0x28] != 0) {
@@ -3047,7 +3055,6 @@ void MB4_HermiteCalc(f32 *w0, f32 *w1, f32 *w2, f32 *w3, f32 t) {
  * - same formula reused for every sample in the original too) integrating
  * curve speed over [0, tMax] to get an arc-length-parameterized time; the
  * unused 4th Point3d argument matches the original's dead r6 parameter. */
-#pragma dont_inline on
 static f32 MB4_PathTimeGet(f32 tMax, Point3d *pPrev, Point3d *p1, Point3d *pNext, Point3d *unused) {
     f32 h = tMax / 16.0f;
     f32 h2 = h + h;
