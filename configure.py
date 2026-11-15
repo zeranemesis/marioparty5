@@ -899,7 +899,7 @@ config.libs = [
             Object(NonMatching, "REL/carddll/card.c"),
             Object(NonMatching, "REL/carddll/player.c"),
             Object(NonMatching, "REL/carddll/camera.c"),
-            Object(NonMatching, "REL/carddll/dice.c"),
+            Object(Equivalent, "REL/carddll/dice.c"),
             Object(NonMatching, "REL/carddll/status.c"),
         },
     ),
