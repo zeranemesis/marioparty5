@@ -3161,6 +3161,7 @@ void MB4Ev_Blow(s32 playerNo) {
     s16 masuId = GwPlayer[playerNo].masuId;
     MASU *masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
     Point3d playerPos;
+    Point3d curPos;
     Point3d targetPos;
     Point3d camOfs;
     s16 nextMasuId;
@@ -3230,10 +3231,11 @@ void MB4Ev_Blow(s32 playerNo) {
         MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
         for (i = 0; i <= 30; i++) {
             t = (f32) i / 30.0f;
-            playerPos.x = playerPos.x + (t * (targetPos.x - playerPos.x));
-            playerPos.z = playerPos.z + (t * (targetPos.z - playerPos.z));
-            playerPos.y = (f32) ((f64) (playerPos.y + (t * (targetPos.y - playerPos.y))) + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-            MBPlayerPosSetV(playerNo, &playerPos);
+            curPos.x = playerPos.x + (t * (targetPos.x - playerPos.x));
+            curPos.y = playerPos.y + (t * (targetPos.y - playerPos.y));
+            curPos.z = playerPos.z + (t * (targetPos.z - playerPos.z));
+            curPos.y = (f32) ((f64) curPos.y + (200.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &curPos);
             HuPrcVSleep();
         }
 
@@ -3464,6 +3466,7 @@ void MB4Ev_Kaisoo(s32 playerNo) {
     s16 masuId = GwPlayer[playerNo].masuId;
     MASU *masuP = MBMasuGet(MASU_LAYER_DEFAULT, masuId);
     Point3d playerPos;
+    Point3d curPos; /* the original animates a copy; playerPos stays the dive start */
     MBCAMERA *cam;
     Point3d camRot;
     f32 camZoom;
@@ -3489,7 +3492,8 @@ void MB4Ev_Kaisoo(s32 playerNo) {
     s32 gotCapsule;
     s32 coinDispId;
 
-    MBPlayerPosGet(playerNo, &playerPos);
+    MBPlayerPosGet(playerNo, &curPos);
+    playerPos = curPos;
     MBPlayerMotionNoShiftSet(playerNo, 1, 0.0f, 8.0f, 0U);
 
     cam = MBCameraGet();
@@ -3523,9 +3527,9 @@ void MB4Ev_Kaisoo(s32 playerNo) {
         MBPlayerMotionNoShiftSet(playerNo, 3, 0.0f, 8.0f, 0x40000001U);
         for (i = 0; i <= 30; i++) {
             t = (f32) i / 30.0f;
-            playerPos.x = (f32) ((f64) playerPos.x + (200.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
-            playerPos.z = (f32) ((f64) playerPos.z - (200.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
-            MBPlayerPosSetV(playerNo, &playerPos);
+            curPos.x = (f32) ((f64) playerPos.x + (200.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            curPos.z = (f32) ((f64) playerPos.z - (200.0 * sin((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &curPos);
             MBPlayerRotSet(playerNo, 0.0f, 135.0f, 0.0f);
             HuPrcVSleep();
         }
@@ -3533,10 +3537,10 @@ void MB4Ev_Kaisoo(s32 playerNo) {
         MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
         for (i = 0; i <= 27; i++) {
             t = (f32) i / 27.0f;
-            playerPos.x = playerPos.x + (200.0f * t);
-            playerPos.z = playerPos.z - (200.0f * t);
-            playerPos.y = (f32) ((f64) playerPos.y + (250.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-            MBPlayerPosSetV(playerNo, &playerPos);
+            curPos.x = playerPos.x + (200.0f * t);
+            curPos.z = playerPos.z - (200.0f * t);
+            curPos.y = (f32) ((f64) playerPos.y + (250.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &curPos);
             MBPlayerRotSet(playerNo, 0.0f, 135.0f, 0.0f);
             HuPrcVSleep();
         }
@@ -3755,15 +3759,15 @@ void MB4Ev_Kaisoo(s32 playerNo) {
             MBModelPosSetV(catchScale, &catchPos);
             HuPrcVSleep();
         }
-        PSVECSubtract(&catchPos, &playerPos, &toPlayer);
+        PSVECSubtract(&catchPos, &curPos, &toPlayer);
         toPlayer.y = 0.0f;
         horizDist = PSVECMag(&toPlayer);
         horizAngle = (f32) (180.0 * (atan2((f64) toPlayer.x, (f64) toPlayer.z) / 3.141592653589793));
         HuAudFXPlay(0x31C);
         for (i = 0; i <= 120; i++) {
             t = (f32) i / 120.0f;
-            catchPos.x = (f32) ((f64) playerPos.x + ((f64) (horizDist * (1.0f - t)) * sin((3.141592653589793 * (f64) ((720.0f * t) + horizAngle)) / 180.0)));
-            catchPos.z = (f32) ((f64) playerPos.z + ((f64) (horizDist * (1.0f - t)) * cos((3.141592653589793 * (f64) ((720.0f * t) + horizAngle)) / 180.0)));
+            catchPos.x = (f32) ((f64) curPos.x + ((f64) (horizDist * (1.0f - t)) * sin((3.141592653589793 * (f64) ((720.0f * t) + horizAngle)) / 180.0)));
+            catchPos.z = (f32) ((f64) curPos.z + ((f64) (horizDist * (1.0f - t)) * cos((3.141592653589793 * (f64) ((720.0f * t) + horizAngle)) / 180.0)));
             catchPos.y = ((150.0f * (1.0f - t)) + mb4ev_KaiPosTbl[kelpIdx].y) - (50.0f * t);
             MBModelPosSetV(catchScale, &catchPos);
             MBModelScaleSet(catchScale, 1.0f - t, 1.0f - t, 1.0f - t);
@@ -3841,9 +3845,9 @@ void MB4Ev_Kaisoo(s32 playerNo) {
         MBPlayerMotionNoShiftSet(playerNo, 3, 0.0f, 8.0f, 0x40000001U);
         for (i = 0; i <= 30; i++) {
             t = (f32) i / 30.0f;
-            playerPos.x = (f32) ((f64) playerPos.x + (200.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
-            playerPos.z = (f32) ((f64) playerPos.z - (200.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
-            MBPlayerPosSetV(playerNo, &playerPos);
+            curPos.x = (f32) ((f64) playerPos.x + (200.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            curPos.z = (f32) ((f64) playerPos.z - (200.0 * cos((3.141592653589793 * (f64) (90.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &curPos);
             MBPlayerRotSet(playerNo, 0.0f, -45.0f, 0.0f);
             HuPrcVSleep();
         }
@@ -3851,10 +3855,10 @@ void MB4Ev_Kaisoo(s32 playerNo) {
         MBPlayerMotionNoShiftSet(playerNo, 4, 0.0f, 8.0f, 0U);
         for (i = 0; i <= 27; i++) {
             t = (f32) i / 27.0f;
-            playerPos.x = playerPos.x + (200.0f * (1.0f - t));
-            playerPos.z = playerPos.z - (200.0f * (1.0f - t));
-            playerPos.y = (f32) ((f64) playerPos.y + (250.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
-            MBPlayerPosSetV(playerNo, &playerPos);
+            curPos.x = playerPos.x + (200.0f * (1.0f - t));
+            curPos.z = playerPos.z - (200.0f * (1.0f - t));
+            curPos.y = (f32) ((f64) playerPos.y + (250.0 * sin((3.141592653589793 * (f64) (180.0f * t)) / 180.0)));
+            MBPlayerPosSetV(playerNo, &curPos);
             MBPlayerRotSet(playerNo, 0.0f, -45.0f, 0.0f);
             HuPrcVSleep();
         }
@@ -3909,7 +3913,7 @@ void MB4Ev_Iruka(s32 arg0) {
     s32 phaseTimer;
     s32 flipFlag;
     s32 splashSeId;
-    s32 i, j;
+    s32 i, j, k;
     s32 stepCount;
     f32 t;
     Point3d ridePos;
@@ -4119,7 +4123,7 @@ void MB4Ev_Iruka(s32 arg0) {
                 Point3d bubbleOfs;
                 f32 bubbleZ;
 
-                for (j = 0; j < 3; j++) {
+                for (k = 0; k < 3; k++) {
                     bubbleOfs.x = 50.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                     bubbleOfs.y = 50.0f * ((0.007874016f * (f32) (frand() & 0x7F)) - 0.5f);
                     bubbleZ = (0.007874016f * (f32) (frand() & 0x7F)) - 0.5f;
