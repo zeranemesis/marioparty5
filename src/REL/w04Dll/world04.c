@@ -25,9 +25,14 @@
 
 #include <math.h>
 #ifdef TARGET_PC
-/* the original unit calls these without a prototype: on x64 an implicit declaration passes float
-   arguments as double and truncates float/pointer returns */
-void espPosSet(s16 espId, float posX, float posY);
+/* the original unit calls these without prototypes; on x64 an implicit declaration passes float
+   arguments as double and truncates float/pointer returns, so declare them properly */
+#include <string.h>
+#include "game/esprite.h"
+#include "game/board/guide.h"
+#include "game/board/pad.h"
+#include "game/board/pause.h"
+#include "game/board/status.h"
 #endif
 
 /*
