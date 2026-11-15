@@ -5676,6 +5676,7 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     u8 *uvArr;
     u8 *colArr;
     void *dispListTmp;
+    Point3d delta;
     s32 i;
     
 
@@ -5716,8 +5717,10 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
     slot->angle = angle;
     memset(angle, 0, vtxCount * 0xC);
     ctrl = slot->ctrl;
+    delta.x = 0.0f; /* orig keeps the previous delta for the last vertex (no reset per iteration) */
+    delta.y = 0.0f;
+    delta.z = 0.0f;
     for (i = 0; i < vtxCount; i++) {
-        Point3d delta = { 0.0f, 0.0f, 0.0f };
         f32 distSq, dist;
 
         if (i < vtxCount - 1) {
@@ -5754,12 +5757,13 @@ s32 MB2_RainbowObjCreate(void *arg0, s32 arg1, s32 arg2) {
 
     for (i = 0; i < vtxCount; i++) {
         Point3d center;
-        u8 *topPos = posArr + i * 0xC;
-        u8 *topUv = uvArr + i * 8;
-        u8 *topCol = colArr + i * 4;
-        u8 *botPos = topPos + (vtxCount * 0xC);
-        u8 *botUv = topUv + ((arg1 - 1) * 0x18);
-        u8 *botCol = colArr + (arg1 - 1) * 0xC + i * 4;
+        /* top/bottom edge vertices are interleaved: index i*2 = top, i*2+1 = bottom */
+        u8 *topPos = posArr + i * 0x18;
+        u8 *topUv = uvArr + i * 0x10;
+        u8 *topCol = colArr + i * 8;
+        u8 *botPos = topPos + 0xC;
+        u8 *botUv = topUv + 8;
+        u8 *botCol = topCol + 4;
         f32 yaw = *(f32 *) (angle + i * 0xC + 0x4);
         f32 fade;
 
