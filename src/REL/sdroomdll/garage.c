@@ -1850,9 +1850,11 @@ void fn_1_C360(s16 arg0, s16 arg1)
     s32 scratch1;
     f64 scratch2;
 
+#ifndef TARGET_PC
     scratch0 = scratch0;
     scratch1 = scratch1;
     scratch2 = scratch2;
+#endif
 }
 
 /* sum the five stat points (out[0..4]) of a head/body/tail/item combination */

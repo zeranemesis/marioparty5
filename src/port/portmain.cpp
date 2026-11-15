@@ -687,8 +687,7 @@ static OMOVL tbOvlHook(OMOVL ovl) {
     if (const char* dir = getenv("MP5_TEST_DIR")) {
         HuDataDirRead(atoi(dir));
     }
-    printf("TESTOVL: start ovl=%d
-", atoi(env));
+    printf("TESTOVL: start ovl=%d\n", atoi(env));
     fflush(stdout);
     return (OMOVL)atoi(env);
 }
@@ -738,6 +737,28 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             memset(st, 0, sizeof(PADStatus) * 4);
             if ((++tbFrame / 20) % 2) {
                 st[0].button = PAD_BUTTON_START | PAD_BUTTON_A;
+            }
+        }
+        // MP5_TEST_OVL: once in the overlay, random D-pad/A/B/X/Y/L/R presses on all pads (never START) and a heartbeat
+        if (tbOvlDone && getenv("MP5_TEST_OVL") != nullptr) {
+            static u32 ovFrame = 0;
+            if (++ovFrame % 120 == 0) {
+                printf("TESTOVL: frame %u\n", ovFrame);
+                fflush(stdout);
+            }
+            for (int i = 0; i < 4; i++) {
+                u32 r = tmRand();
+                memset(&st[i], 0, sizeof(st[i]));
+                if ((ovFrame / 15) % 2 == 0) {
+                    st[i].button = (u16)((r & 0x300) ? 0 : (1 << ((r >> 4) & 3)));
+                } else {
+                    if (!(r & 0x30)) st[i].button |= PAD_BUTTON_A;
+                    if (getenv("MP5_TEST_B") != nullptr && !(r & 0xC0)) st[i].button |= PAD_BUTTON_B; // B backs out of the menus, off by default
+                    if (!((r >> 8) & 0x7)) st[i].button |= PAD_BUTTON_X;
+                    if (!((r >> 11) & 0x7)) st[i].button |= PAD_BUTTON_Y;
+                    if (!((r >> 14) & 0xF)) st[i].button |= PAD_TRIGGER_L;
+                    if (!((r >> 18) & 0xF)) st[i].button |= PAD_TRIGGER_R;
+                }
             }
         }
         return;
