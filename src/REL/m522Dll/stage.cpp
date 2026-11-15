@@ -33,7 +33,8 @@ typedef struct M522Stage_s {
     /* 0x1C */ M522_MODEL *modelC;
     /* 0x20 */ M522_MODELPTR holes[2];
     /* 0x28 */ void *owner;
-    /* 0x2C */ s32 field2C;
+    /* 0x2C */ s16 field2C;
+    /* 0x2E */ s16 pad2E;
     /* 0x30 */ s32 sound;
     /* 0x34 */ s32 stageMax;
     /* 0x38 */ s32 stageNow;
