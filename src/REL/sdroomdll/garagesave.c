@@ -54,6 +54,7 @@ static s32 fn_1_17900(s16 slot);
 #define PI_D 3.141592653589793
 #define MESS_SD(n) (0x190000 | (n))
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 void fn_1_13B1C(void)
 {
     f32 z;
@@ -224,6 +225,7 @@ finish:
     fn_1_14A60();
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_147CC(void)
 {
     s16 grp;
@@ -250,6 +252,7 @@ static void fn_1_147CC(void)
     omCameraViewSetMulti(8, &lbl_1_data_1534);
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_14A60(void)
 {
     Hu3DModelAttrReset(lbl_1_bss_58C[1], 1);
@@ -264,6 +267,7 @@ static void fn_1_14A60(void)
 
 /* collects the machines of the other save boxes / the second card into GwSdBackup.
    returns -2 (same card as slot 0), or a bitmask: 1 = slot 0 scanned, 2 = slot 1 scanned */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s16 fn_1_14B04(void)
 {
     u64 serial;
@@ -324,6 +328,7 @@ static s16 fn_1_14B04(void)
 }
 
 /* machine picker: left/right browse GwSdBackup, A selects, B cancels */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_15060(void)
 {
     SDMACHINE_DISP disp;
@@ -435,6 +440,7 @@ static void fn_1_15060(void)
     fn_1_4E14();
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_158E0(void)
 {
     s16 win;
@@ -474,6 +480,7 @@ static void fn_1_158E0(void)
     Hu3DCameraScissorSet(8, 0x25, 0x22, 0x137, 0x11A);
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_15BD0(GWSDMACHINE *machine, SDMACHINE_DISP *disp)
 {
     f32 t;
@@ -505,6 +512,7 @@ static void fn_1_15BD0(GWSDMACHINE *machine, SDMACHINE_DISP *disp)
     }
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_15E00(SDMACHINE_DISP *disp)
 {
     f32 t;
@@ -525,6 +533,7 @@ static void fn_1_15E00(SDMACHINE_DISP *disp)
     HuWinKill(lbl_1_bss_754[0]);
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static void fn_1_15F58(s16 no)
 {
     s16 win = lbl_1_bss_754[4];
@@ -552,6 +561,7 @@ void fn_1_16064(void)
 }
 
 /* memory card error message; returns the yes/no choice for the questions (-1 otherwise) */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 s16 fn_1_160A4(s16 errNo)
 {
     s16 win;
@@ -650,6 +660,7 @@ s16 fn_1_160A4(s16 errNo)
 }
 
 /* format a card after the user agreed; returns the HuCardFormat result (0 when the card was removed) */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s16 fn_1_1645C(s16 slot)
 {
     s16 ret;
@@ -681,6 +692,7 @@ static s16 fn_1_1645C(s16 slot)
     }
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_165BC(s16 slot)
 {
     s32 ret;
@@ -722,6 +734,7 @@ static s32 fn_1_165BC(s16 slot)
     }
 }
 
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_1682C(u8 slot)
 {
     s32 ret;
@@ -778,6 +791,7 @@ s32 fn_1_16B20(void)
 }
 
 /* reads and verifies the save file of a card; offers repair/rewrite when boxes are damaged */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_16B58(u8 slot)
 {
     OSTime time;
@@ -891,6 +905,7 @@ fail:
 
 /* writes the (repaired) save buffer back to the card, creating the file when it does not exist.
    returns 1 on success */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_171C4(u8 slot)
 {
     s16 win;
@@ -968,6 +983,7 @@ static s32 fn_1_171C4(u8 slot)
 }
 
 /* creates the save file (header "ERASE" + current save buffer) */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_17568(s16 slot)
 {
     u32 freeBytes;
@@ -1042,6 +1058,7 @@ static s32 fn_1_17568(s16 slot)
 }
 
 /* rewrites the save data of an existing file */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_17800(s16 slot)
 {
     s32 ret;
@@ -1062,6 +1079,7 @@ static s32 fn_1_17800(s16 slot)
 }
 
 /* 1 when the card still has the serial number recorded in SLSerialNo (or none was recorded) */
+// NONMATCHING: register allocation / control flow differ (logic reconstructed from asm)
 static s32 fn_1_17900(s16 slot)
 {
     u64 serial;
