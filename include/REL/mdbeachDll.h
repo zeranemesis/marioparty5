@@ -29,6 +29,36 @@
 #define MDMESS_WIN_SPEAKER 0
 #define MDMESS_WIN_NOSPEAKER 1
 #define MDMESS_LIST_END -1
+#define MDMESS_WIN_LIST_END -1
+
+enum {
+    MDCAMERA_FOCUS_TARGET, //0
+    MDCAMERA_FOCUS_POS, //1
+    MDCAMERA_FOCUS_MAX //2
+};
+
+enum {
+    MDLIGHT_TYPE_NOP, //0
+    MDLIGHT_TYPE_G_DIRECT, //1
+    MDLIGHT_TYPE_L_DIRECT, //2
+    MDLIGHT_TYPE_G_POINT, //3
+    MDLIGHT_TYPE_L_POINT, //4
+    MDLIGHT_TYPE_G_SPOT, //5
+    MDLIGHT_TYPE_L_SPOT, //6
+    MDLIGHT_TYPE_MAX
+};
+
+typedef struct MdCameraRect_s {
+    float x;
+    float y;
+    float w;
+    float h;
+} MDCAMERA_RECT;
+
+typedef struct MdCameraParam_s {
+    HuVecF hvr;
+    HuVecF center;
+} MDCAMERA_PARAM;
 
 #define MDMATH_CURVE_SAMPLE_MAX 8
 
@@ -40,6 +70,20 @@
         HuPrcVSleep(); \
     } \
 } while(0)
+
+enum {
+    MDMATH_CURVE_STD_BOUNCE, //0
+    MDMATH_CURVE_STD_LINE, //1
+    MDMATH_CURVE_STD_MAX //2
+};
+
+enum {
+    MD_DEBUGFONT_CTRL_NOP, //0
+    MD_DEBUGFONT_CTRL_CAMERA, //1
+    MD_DEBUGFONT_CTRL_LIGHT, //2
+    MD_DEBUGFONT_CTRL_MODEL, //3
+    MD_DEBUGFONT_CTRL_MAX //4
+};
 
 enum {
     MDBEACH_FLOW_INIT, //0
