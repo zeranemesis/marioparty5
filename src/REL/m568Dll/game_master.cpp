@@ -17,16 +17,8 @@ struct GmPoly {
     void **vtbl;
 };
 
-// Element of the lbl_1_bss_A0C list: owns a model, an actor and a buffer.
-struct GroupNode {
-    M568Link link;  // 0x00
-    GmPoly *obj;    // 0x08
-    u8 pad0C[0x38];
-    u8 sub44[8];    // 0x44 empty-bodied sub-object (fn_1_837C / fn_1_8380)
-    void *buf;      // 0x4C
-    void *model;    // 0x50 model deleted with flag 1
-    void *actor;    // 0x54 actor deleted with fn_1_123DC
-};
+// Element of the lbl_1_bss_A0C list is a Player568 (header).
+#define GroupNode Player568
 
 // Pointer-to-member record, as MWCC lays it out for __ptmf_scall.
 struct PTMF {
@@ -350,22 +342,22 @@ M568Set *fn_1_80E8(M568Set *self, s16 flag)
                 }
                 g = (GroupNode *)self->groups.prev;
                 if (g != 0) {
-                    if (&g->actor != 0) {
-                        fn_1_123DC(g->actor, 1);
+                    if (&g->tube != 0) {
+                        fn_1_123DC(g->tube, 1);
                     }
                     if (&g->model != 0) {
                         fn_1_370C(g->model, 1);
                     }
-                    if (&g->sub44 != 0 && &g->sub44 != 0 && &g->sub44 != 0 && g->buf != 0) {
+                    if ((u8 *)&g->motions != 0 && (u8 *)&g->motions != 0 && (u8 *)&g->motions != 0 && g->motions.data != 0) {
                         void *buf;
 
-                        fn_1_8380(&g->sub44);
-                        buf = g->buf;
-                        fn_1_837C(&g->sub44);
+                        fn_1_8380((u8 *)&g->motions);
+                        buf = g->motions.data;
+                        fn_1_837C((u8 *)&g->motions);
                         fn_1_6E0(buf);
                     }
-                    if (&g->obj != 0) {
-                        GmPoly *obj = g->obj;
+                    if (&g->input != 0) {
+                        GmPoly *obj = (GmPoly *)g->input;
 
                         if (obj != 0) {
                             ((void (*)(GmPoly *, s32))obj->vtbl[2])(obj, 1);
@@ -495,19 +487,19 @@ M568Link *fn_1_85CC(M568Link *self, s16 flag)
             }
             g = (GroupNode *)self->prev;
             if (g != 0) {
-                if (&g->actor != 0) {
-                    fn_1_123DC(g->actor, 1);
+                if (&g->tube != 0) {
+                    fn_1_123DC(g->tube, 1);
                 }
                 if (&g->model != 0) {
                     fn_1_370C(g->model, 1);
                 }
-                if (&g->sub44 != 0 && &g->sub44 != 0 && &g->sub44 != 0 && g->buf != 0) {
-                    fn_1_8380(&g->sub44);
-                    fn_1_837C(&g->sub44);
-                    fn_1_6E0(g->buf);
+                if ((u8 *)&g->motions != 0 && (u8 *)&g->motions != 0 && (u8 *)&g->motions != 0 && g->motions.data != 0) {
+                    fn_1_8380((u8 *)&g->motions);
+                    fn_1_837C((u8 *)&g->motions);
+                    fn_1_6E0(g->motions.data);
                 }
-                if (&g->obj != 0) {
-                    GmPoly *obj = g->obj;
+                if (&g->input != 0) {
+                    GmPoly *obj = (GmPoly *)g->input;
 
                     if (obj != 0) {
                         ((void (*)(GmPoly *, s32))obj->vtbl[2])(obj, 1);

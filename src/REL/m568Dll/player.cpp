@@ -33,40 +33,6 @@ extern "C" {
 #define PLR_ALLOC(n) (n)
 #endif
 
-// Input source base (input.cpp); slot 8 of its vtable is the deleting destructor.
-struct PlrInput {
-    void **vtbl;  // 0x00
-    u8 f4;        // 0x04
-    u8 f5;        // 0x05
-    f32 f8;       // 0x08 stick x
-    f32 fC;       // 0x0C
-};
-
-// vector<s32>: capacity first (MSL-style layout of this build).
-struct PlrVec {
-    u32 cap;    // 0x00
-    u32 size;   // 0x04
-    s32 *data;  // 0x08
-};
-
-struct Player568 {
-    M568Link node;     // 0x00
-    PlrInput *input;   // 0x08
-    M568Ptmf hook;     // 0x0C
-    s32 padNo;         // 0x18
-    s32 charNo;        // 0x1C
-    s32 motion;        // 0x20
-    f32 spin;          // 0x24
-    u8 first;          // 0x28
-    Vec pos;           // 0x2C
-    f32 f38;           // 0x38
-    s32 f3C;           // 0x3C
-    u8 f40;            // 0x40
-    PlrVec motions;    // 0x44
-    M568Model *model;  // 0x50
-    M568Tube *tube;    // 0x54
-};
-
 extern "C" {
 
 s32 __ptmf_test(void *ptmf);

@@ -49,22 +49,7 @@ struct M568Effect {
     s32 seId;          // 0x2C
 };
 
-// Element of the lbl_1_bss_9F8 list (the actors the pad/AI inputs drive); only
-// the fields the units touch are named, the gaps hold data this module never
-// reads.
-struct SceneNode {
-    M568Link link;     // 0x00
-    u8 inactive;       // 0x08
-    u8 pad09[3];
-    s32 slot;          // 0x0C
-    u8 pad10[0x64];
-    Vec pos;           // 0x74
-    f32 radius;        // 0x80 (pos/radius form a sphere)
-    u8 pad84[0xC];
-    Vec vel;           // 0x90
-    u8 pad9C[0x1C];
-    u8 dead;           // 0xB8
-};
+struct SceneNode;
 
 struct EffectMgr;
 
@@ -186,6 +171,45 @@ struct M568Tube {
     M568Model model;  // 0xD4
 };
 
+// Element of the lbl_1_bss_9F8 list (the actors the pad/AI inputs drive); only
+// the fields the units touch are named, the gaps hold data this module never
+// reads.
+#ifdef TARGET_PC
+// The actors are the tubes: the PC build has wider links/records, so mirror M568Tube exactly.
+struct SceneNode {
+    M568Link link;
+    u8 inactive;      // M568Tube::ghost
+    s32 slot;         // M568Tube::index
+    Vec up;
+    Vec upGoal;
+    Quaternion quat;
+    Mtx mtx;
+    M568Ptmf hook;
+    Vec pos;
+    f32 radius;
+    Vec prev;
+    Vec vel;
+    Vec accel;
+    Vec force;
+    f32 mass;
+    u8 dead;          // M568Tube::down
+};
+#else
+struct SceneNode {
+    M568Link link;     // 0x00
+    u8 inactive;       // 0x08
+    u8 pad09[3];
+    s32 slot;          // 0x0C
+    u8 pad10[0x64];
+    Vec pos;           // 0x74
+    f32 radius;        // 0x80 (pos/radius form a sphere)
+    u8 pad84[0xC];
+    Vec vel;           // 0x90
+    u8 pad9C[0x1C];
+    u8 dead;           // 0xB8
+};
+#endif
+
 // Octree effect object (octtree.cpp); the tube reads its position and flag.
 struct M568OctEffect {
     M568Link link;     // 0x00
@@ -195,6 +219,41 @@ struct M568OctEffect {
     Vec cur;           // 0x1C
     u8 played;         // 0x28
     s32 seId;          // 0x2C
+};
+
+// Per-player controller object (player.cpp); game_master destroys it through the group list.
+// Input source base (input.cpp); slot 8 of its vtable is the deleting destructor.
+struct PlrInput {
+    void **vtbl;  // 0x00
+    u8 f4;        // 0x04
+    u8 f5;        // 0x05
+    f32 f8;       // 0x08 stick x
+    f32 fC;       // 0x0C
+};
+
+// vector<s32>: capacity first (MSL-style layout of this build).
+struct PlrVec {
+    u32 cap;    // 0x00
+    u32 size;   // 0x04
+    s32 *data;  // 0x08
+};
+
+struct Player568 {
+    M568Link node;     // 0x00
+    PlrInput *input;   // 0x08
+    M568Ptmf hook;     // 0x0C
+    s32 padNo;         // 0x18
+    s32 charNo;        // 0x1C
+    s32 motion;        // 0x20
+    f32 spin;          // 0x24
+    u8 first;          // 0x28
+    Vec pos;           // 0x2C
+    f32 f38;           // 0x38
+    s32 f3C;           // 0x3C
+    u8 f40;            // 0x40
+    PlrVec motions;    // 0x44
+    M568Model *model;  // 0x50
+    M568Tube *tube;    // 0x54
 };
 
 #endif
