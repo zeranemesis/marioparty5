@@ -1215,7 +1215,7 @@ static u16 Hu3DCameraPillarboxBit; /* Hu3DCameraPillarboxSet */
 /* Mini-games whose stage ends at the 4:3 edge (void, black or unfinished geometry
  * beyond it in 16:9, checked with MP5_TEST_MG captures): their cameras are pillarboxed */
 static const OMOVL Hu3DPillarboxOvlTbl[] = {
-    (OMOVL)-1, /* none for now: every such scene continues its set instead (Hu3DWideDecorTbl) */
+    DLL_m505dll, /* mg 4: no 16:9 decor looked right (streaks and cut ice on the right) */
 };
 
 /* Mini-games whose set is continued past the 4:3 edge instead (Hu3DWideDecorDraw): drawn
@@ -1239,7 +1239,6 @@ typedef struct {
 
 static const HU3DWIDEDECOR Hu3DWideDecorTbl[] = {
     { DLL_m501dll, HU3D_WIDEDECOR_MIRROR, "bg", { 255, 255, 255, 255 }, 2548.5f, 0.0f, 2221.3f }, /* mg 0: sweets sky */
-    { DLL_m505dll, HU3D_WIDEDECOR_PLANE, "m505t_kaitei2", { 255, 255, 255, 255 }, 0.0f, -2500.0f, 0.0f, 20000.0f, 1250.0f }, /* mg 4: the sea bottom past the water box */
     { DLL_m510dll, HU3D_WIDEDECOR_PLANE, "m510grand01", { 255, 255, 255, 255 }, 380.0f, -1.0f, 1300.0f, 8000.0f, 670.0f }, /* mg 9: the tiled floor */
     { DLL_m521dll, HU3D_WIDEDECOR_PLANE, "yuka01", { 205, 205, 205, 255 }, 0.0f, -135.0f, -400.0f, 6000.0f, 900.0f }, /* mg 20: wooden table under the clock deck */
     { DLL_m530dll, HU3D_WIDEDECOR_SCALE, "bg", { 255, 255, 255, 255 }, -1996.0f, -2127.0f, -3000.0f, 1.8f }, /* mg 29: the sky disc, again behind itself at 1.8x */
@@ -1392,6 +1391,26 @@ static void Hu3DWideDecorFaceDraw(HSFOBJECT *objP, HSFFACE *faceP)
     HuVec2f *st = objP->mesh.st->data;
     HSFFACEINDEX *idx;
     u32 i;
+    u32 num = ((faceP->type & HSF_FACE_MASK) == HSF_FACE_QUAD) ? 4 : 3;
+    /* every index inside the mesh's arrays, or the face is skipped (a GXBegin with fewer
+     * vertices than announced is an invalid draw) */
+    for(i=0; i<num; i++) {
+        idx = &faceP->index[i];
+        if(idx->vertex < 0 || idx->vertex >= objP->mesh.vertex->count || idx->st < 0 || idx->st >= objP->mesh.st->count) {
+            return;
+        }
+    }
+    if((faceP->type & HSF_FACE_MASK) == HSF_FACE_TRISTRIP) {
+        if(!faceP->strip.data || faceP->strip.count > 0xFFFF) {
+            return;
+        }
+        for(i=0; i<faceP->strip.count; i++) {
+            idx = &faceP->strip.data[i];
+            if(idx->vertex < 0 || idx->vertex >= objP->mesh.vertex->count || idx->st < 0 || idx->st >= objP->mesh.st->count) {
+                return;
+            }
+        }
+    }
     switch(faceP->type & HSF_FACE_MASK) {
         case HSF_FACE_TRI:
         case HSF_FACE_QUAD:
@@ -1458,7 +1477,16 @@ static void Hu3DWideDecorPartDraw(const HU3DWIDEDECOR *decor)
             }
         }
     }
-    if(i >= HU3D_MODEL_MAX) {
+    if(i >= HU3D_MODEL_MAX || !attr.bitmap || !attr.bitmap->data || attr.bitmap->sizeX <= 0 || attr.bitmap->sizeY <= 0) {
+        return;
+    }
+    /* nothing degenerate reaches the GPU */
+    if(decor->kind == HU3D_WIDEDECOR_PLANE || decor->kind == HU3D_WIDEDECOR_WALL) {
+        if(!(decor->size > 0.0f) || !(decor->tile > 0.0f)) {
+            return;
+        }
+    } else if(!objP->mesh.vertex || !objP->mesh.vertex->data || objP->mesh.vertex->count < 3 || !objP->mesh.face || !objP->mesh.face->data
+        || objP->mesh.face->count <= 0 || !objP->mesh.st->data || objP->mesh.st->count <= 0) {
         return;
     }
     GXSetChanMatColor(GX_COLOR0A0, decor->color);
@@ -1542,6 +1570,10 @@ static void Hu3DWideDecorPartDraw(const HU3DWIDEDECOR *decor)
             PSVECSubtract(&b, &a, &ab);
             PSVECSubtract(&c, &a, &ac);
             PSVECCrossProduct(&ab, &ac, &n);
+            /* the axis point on the end edge's line: no mirror plane */
+            if(!(PSVECDotProduct(&n, &n) > 1e-6f)) {
+                continue;
+            }
             PSVECNormalize(&n, &n);
             /* p - 2((p-a).n)n */
             d = 2.0f*PSVECDotProduct(&a, &n);
@@ -1590,7 +1622,7 @@ static void Hu3DWideDecorDraw(s16 cameraNo)
     }
     Hu3DCameraSet(cameraNo, Hu3DCameraMtx);
     if(FogData.fogType == GX_FOG_NONE) {
-        GXSetFog(GX_FOG_NONE, 0, 0, 0, 0, Hu3DWideDecor->color);
+        GXSetFog(GX_FOG_NONE, 0, 1, cameraP->near, cameraP->far, Hu3DWideDecor->color);
     }
     GXSetCullMode(GX_CULL_NONE);
     GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
