@@ -926,7 +926,7 @@ void fn_1_3A1C(OMOBJ *p) {
                                 break;
                         }
                         if (j != 0 && stop != 0) {
-                            sym = fn_1_4330(cell->f38[j]);
+                            sym = fn_1_4330(cell->f38[0]);
                             while (1) {
                                 if (idx >= 0x14) {
                                     idx = 0;
@@ -943,7 +943,7 @@ void fn_1_3A1C(OMOBJ *p) {
                             cell->v00 = n + 1;
                             cell->v04 = 0;
                             if (fn_1_918() <= 1) {
-                                sym = fn_1_4330(cell->f38[j]);
+                                sym = fn_1_4330(cell->f38[0]);
                                 while (1) {
                                     if (idx >= 0x14) {
                                         idx = 0;
