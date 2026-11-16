@@ -185,6 +185,9 @@ void Hu3DInterpCopyClearSet(void)
 
 static void Hu3DShadowExec(BOOL bgColorF);
 static void Hu3DReflectModelExec(void);
+#ifdef TARGET_PC
+static void Hu3DPillarboxBarDraw(void);
+#endif
 
 #define HU3D_ATTR_CAMERA_UPDATE (HU3D_ATTR_CAMERA_MOTON|HU3D_ATTR_DISPOFF)
 #define HU3D_ATTR_NOUPDATE_ALL (HU3D_ATTR_REFLECT_MODEL|HU3D_ATTR_MOTION_OFF|HU3D_ATTR_DISPOFF)
@@ -248,6 +251,9 @@ void Hu3DExec(void)
             GXSetDrawDone();
         }
     }
+#ifdef TARGET_PC
+    Hu3DPillarboxBarDraw();
+#endif
     for(cameraP = &Hu3DCamera[0], Hu3DCameraNo=0; Hu3DCameraNo<HU3D_CAM_MAX; Hu3DCameraNo++, cameraP++) {
         if(cameraP->fov == -1) {
             continue;
@@ -1284,6 +1290,58 @@ static void Hu3DCameraPillarboxApply(s16 cameraNo)
     GXSetViewport(c+((cameraP->viewportX-c)/f), cameraP->viewportY, cameraP->viewportW/f, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar);
     x0 = c+((cameraP->scissorX-c)/f);
     GXSetScissor((u32)(x0+0.5f), cameraP->scissorY, (u32)((cameraP->scissorW/f)+0.5f), cameraP->scissorH);
+}
+
+/* the window beyond a pillarboxed 4:3 frame is black, whatever the scene's clear colour
+ * (nothing 3D or 2D is drawn there afterwards: scissored to the 4:3 frame) */
+static void Hu3DPillarboxBarDraw(void)
+{
+    GXColor black = { 0, 0, 0, 255 };
+    Mtx44 proj;
+    Mtx modelview;
+    float f = HuWideFactor();
+    float w;
+    if(f == 1.0f || !Hu3DCameraPillarboxActive()) {
+        return;
+    }
+    w = (HU_FB_WIDTH/2)-((HU_FB_WIDTH/2)/f);
+    MTXOrtho(proj, 0, HU_FB_HEIGHT, 0, HU_FB_WIDTH, 0, 10);
+    GXSetProjection(proj, GX_ORTHOGRAPHIC);
+    MTXIdentity(modelview);
+    GXLoadPosMtxImm(modelview, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+    GXSetViewport(0, 0, HU_FB_WIDTH, HU_FB_HEIGHT, 0, 1);
+    GXSetScissor(0, 0, HU_FB_WIDTH, HU_FB_HEIGHT);
+    GXSetFog(GX_FOG_NONE, 0, 0, 0, 0, black);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE, GX_AF_SPEC);
+    GXSetNumTexGens(0);
+    GXSetNumIndStages(0);
+    GXSetNumTevStages(1);
+    GXSetTevDirect(GX_TEVSTAGE0);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
+    GXSetTevColor(GX_TEVREG0, black);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_F32, 0);
+    GXBegin(GX_QUADS, GX_VTXFMT0, 8);
+    GXPosition2f32(0, 0);
+    GXPosition2f32(w, 0);
+    GXPosition2f32(w, HU_FB_HEIGHT);
+    GXPosition2f32(0, HU_FB_HEIGHT);
+    GXPosition2f32(HU_FB_WIDTH-w, 0);
+    GXPosition2f32(HU_FB_WIDTH, 0);
+    GXPosition2f32(HU_FB_WIDTH, HU_FB_HEIGHT);
+    GXPosition2f32(HU_FB_WIDTH-w, HU_FB_HEIGHT);
+    GXEnd();
 }
 #endif
 
