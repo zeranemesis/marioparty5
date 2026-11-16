@@ -416,11 +416,13 @@ public:
         if (CGameMaster::stageInstance != 0) {
             __assert_fail("ms_pointer == 0", "singleton.h", 0x35);
         } else {
+#ifndef TARGET_PC /* on PC the CStage constructor publishes itself: the GC 0x10 offset is wrong with 64-bit pointers */
             char *ms_ptr = (char *)this;
             if (ms_ptr != 0) {
                 ms_ptr -= M501_MEMBER_OFFSET;
             }
             CGameMaster::stageInstance = (CStage *)ms_ptr;
+#endif
         }
     }
 

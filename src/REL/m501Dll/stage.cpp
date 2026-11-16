@@ -38,6 +38,9 @@ CStage::CStage() :
     Vec up;
     Vec pos;
 
+#ifdef TARGET_PC
+    CGameMaster::stageInstance = this;
+#endif
     m_timer = 0;
 
     Hu3DLighInit();
