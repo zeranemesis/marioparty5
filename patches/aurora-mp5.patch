@@ -157,6 +157,49 @@ index 254d87c..a71489f 100644
    SET_REG_FIELD(0, reg, 1, 9, (attnFn != GX_AF_SPEC));   // attn enable
    SET_REG_FIELD(0, reg, 1, 10, (attnFn != GX_AF_NONE));  // attn select
    SET_REG_FIELD(0, reg, 4, 11, (lightState >> 4) & 0xF); // lights 4-7
+diff --git a/lib/dolphin/os/OSTime.cpp b/lib/dolphin/os/OSTime.cpp
+index 6207f80..03edbff 100644
+--- a/lib/dolphin/os/OSTime.cpp
++++ b/lib/dolphin/os/OSTime.cpp
+@@ -1,4 +1,5 @@
+ #include <chrono>
++#include <climits>
+ #include <ctime>
+ 
+ #include "internal.hpp"
+@@ -69,17 +70,24 @@ OSTime OSGetTime() {
+ 
+     // Apply local timezone offset
+     std::time_t wallClock = chrono::system_clock::to_time_t(currentTime);
+-    std::tm localTm{};
+-    std::tm gmTm{};
++    // MP5: localtime, gmtime and two mktime calls cost ~20 us; the offset only moves on a time zone transition, and
++    // those fall on a whole minute, so it is recomputed once per wall-clock minute (per thread)
++    thread_local s64 offsetMinute = INT64_MIN;
++    thread_local s64 utcOffsetSec = 0;
++    if (const s64 minute = static_cast<s64>(wallClock) / 60; minute != offsetMinute) {
++        std::tm localTm{};
++        std::tm gmTm{};
+ #if defined(_WIN32)
+-    localtime_s(&localTm, &wallClock);
+-    gmtime_s(&gmTm, &wallClock);
++        localtime_s(&localTm, &wallClock);
++        gmtime_s(&gmTm, &wallClock);
+ #else
+-    localtime_r(&wallClock, &localTm);
+-    gmtime_r(&wallClock, &gmTm);
++        localtime_r(&wallClock, &localTm);
++        gmtime_r(&wallClock, &gmTm);
+ #endif
+-    // Compute UTC offset in seconds
+-    s64 utcOffsetSec = static_cast<s64>(mktime(&localTm)) - static_cast<s64>(mktime(&gmTm));
++        // Compute UTC offset in seconds
++        utcOffsetSec = static_cast<s64>(mktime(&localTm)) - static_cast<s64>(mktime(&gmTm));
++        offsetMinute = minute;
++    }
+ 
+     s64 secondsSinceGcnEpoch = (totalMicros / 1000000LL) - gcnEpochUnix + utcOffsetSec;
+     s64 remainderMicros = totalMicros % 1000000LL;
 diff --git a/lib/gfx/clear.cpp b/lib/gfx/clear.cpp
 index d0b4c78..801f229 100644
 --- a/lib/gfx/clear.cpp
@@ -201,7 +244,7 @@ index 2f87117..42af931 100644
  
  constexpr uint32_t ClearPipelineConfigVersion = 2;
 diff --git a/lib/gfx/common.cpp b/lib/gfx/common.cpp
-index eff0c65..e3685fc 100644
+index eff0c65..2960daf 100644
 --- a/lib/gfx/common.cpp
 +++ b/lib/gfx/common.cpp
 @@ -1,6 +1,7 @@
@@ -317,8 +360,20 @@ index eff0c65..e3685fc 100644
  
  void gpu_synchronize() { render_worker::synchronize(); }
  
+@@ -1520,6 +1561,11 @@ std::pair<ByteBuffer, Range> map_uniform(size_t length) {
+   const auto range = map(current_frame_packet().uniforms, length, g_cachedLimits.minUniformBufferOffsetAlignment);
+   return {ByteBuffer{current_frame_packet().uniforms.data() + range.offset, range.size}, range};
+ }
++ByteBuffer& uniform_buffer_for_append() {
++  auto& target = current_frame_packet().uniforms;
++  map(target, 0, g_cachedLimits.minUniformBufferOffsetAlignment);
++  return target;
++}
+ std::pair<ByteBuffer, Range> map_storage(size_t length) {
+   const auto range = map(current_frame_packet().storage, length, g_cachedLimits.minStorageBufferOffsetAlignment);
+   return {ByteBuffer{current_frame_packet().storage.data() + range.offset, range.size}, range};
 diff --git a/lib/gfx/common.hpp b/lib/gfx/common.hpp
-index db245d0..7d94073 100644
+index db245d0..038f9a2 100644
 --- a/lib/gfx/common.hpp
 +++ b/lib/gfx/common.hpp
 @@ -107,6 +107,14 @@ public:
@@ -361,6 +416,15 @@ index db245d0..7d94073 100644
  
  struct ColorPassDescriptor {
    const char* label = nullptr;
+@@ -301,6 +313,8 @@ Range push_texture_data(const uint8_t* data, size_t length, uint32_t bytesPerRow
+ std::pair<ByteBuffer, Range> map_verts(size_t length);
+ std::pair<ByteBuffer, Range> map_indices(size_t length);
+ std::pair<ByteBuffer, Range> map_uniform(size_t length);
++// MP5: the frame's uniform buffer, aligned for a new range starting at its size(); append to it directly
++ByteBuffer& uniform_buffer_for_append();
+ std::pair<ByteBuffer, Range> map_storage(size_t length);
+ 
+ template <typename State>
 diff --git a/lib/gfx/copy_readback.cpp b/lib/gfx/copy_readback.cpp
 new file mode 100644
 index 0000000..eba53b6
@@ -659,11 +723,33 @@ index 013afc0..ee1ade2 100644
        .dimension = wgpu::TextureDimension::e2D,
        .size = size,
        .format = wgpuFormat,
+diff --git a/lib/gfx/texture.hpp b/lib/gfx/texture.hpp
+index ac7c91c..3f4e4c6 100644
+--- a/lib/gfx/texture.hpp
++++ b/lib/gfx/texture.hpp
+@@ -128,6 +128,9 @@ namespace aurora::gfx {
+ struct TextureBind {
+   TextureHandle ref;
+   GXTexObj_ texObj;
++  // MP5: sampler_ref(get_descriptor()) memo (a bind keeps its texObj and ref), with the anisotropy it was made for
++  WGPUSampler sampler = nullptr;
++  u16 samplerAniso = 0;
+ 
+   TextureBind() noexcept = default;
+   TextureBind(const GXTexObj_& obj, TextureHandle handle) noexcept : ref(std::move(handle)), texObj(obj) {}
 diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
-index 9748556..8e7ea71 100644
+index 9748556..2e58e53 100644
 --- a/lib/gx/command_processor.cpp
 +++ b/lib/gx/command_processor.cpp
-@@ -18,74 +18,69 @@
+@@ -1,6 +1,7 @@
+ #include "command_processor.hpp"
+ 
+ #include "../gfx/common.hpp"
++#include "../gfx/pipeline_cache.hpp"
+ #include "dolphin/gx/GXAurora.h"
+ #include "gx.hpp"
+ #include "gx_fmt.hpp"
+@@ -18,74 +19,69 @@
  namespace aurora::gx::fifo {
  static Module Log("aurora::gx::fifo");
  
@@ -671,17 +757,6 @@ index 9748556..8e7ea71 100644
  static u16 prepare_idx_buffer(ByteBuffer& buf, GXPrimitive prim, u16 vtxStart, u16 vtxCount) {
 -  u16 numIndices = 0;
 +  u32 numIndices = 0;
-+  if (prim == GX_QUADS) {
-+    numIndices = (vtxCount + 3) / 4 * 6;
-+  } else if (prim == GX_TRIANGLES) {
-+    numIndices = vtxCount;
-+  } else if (prim == GX_TRIANGLEFAN || prim == GX_TRIANGLESTRIP) {
-+    numIndices = vtxCount < 3 ? vtxCount : (u32(vtxCount) - 3) * 3 + 3;
-+  } else if (prim == GX_LINES || prim == GX_LINESTRIP || prim == GX_POINTS) {
-+    numIndices = 6;
-+  } else
-+    UNLIKELY FATAL("unsupported primitive type {}", static_cast<u32>(prim));
-+  u16* out = reinterpret_cast<u16*>(buf.append_uninit(numIndices * sizeof(u16)));
    if (prim == GX_QUADS) {
 -    buf.reserve_extra((vtxCount / 4) * 6 * sizeof(u16));
 -
@@ -700,6 +775,17 @@ index 9748556..8e7ea71 100644
 -      buf.append(idx3);
 -      buf.append(idx0);
 -      numIndices += 3;
++    numIndices = (vtxCount + 3) / 4 * 6;
++  } else if (prim == GX_TRIANGLES) {
++    numIndices = vtxCount;
++  } else if (prim == GX_TRIANGLEFAN || prim == GX_TRIANGLESTRIP) {
++    numIndices = vtxCount < 3 ? vtxCount : (u32(vtxCount) - 3) * 3 + 3;
++  } else if (prim == GX_LINES || prim == GX_LINESTRIP || prim == GX_POINTS) {
++    numIndices = 6;
++  } else
++    UNLIKELY FATAL("unsupported primitive type {}", static_cast<u32>(prim));
++  u16* out = reinterpret_cast<u16*>(buf.append_uninit(numIndices * sizeof(u16)));
++  if (prim == GX_QUADS) {
 +    for (u32 v = 0; v < vtxCount; v += 4) {
 +      const u16 idx0 = vtxStart + v;
 +      out[0] = idx0;
@@ -781,7 +867,7 @@ index 9748556..8e7ea71 100644
  }
  
  // GX FIFO opcodes - use CP_ prefix to avoid clashing with GXCommandList.h macros
-@@ -372,8 +367,13 @@ static void handle_xf(const u8* data, u32& pos, u32 size, bool bigEndian);
+@@ -372,8 +368,13 @@ static void handle_xf(const u8* data, u32& pos, u32 size, bool bigEndian);
  static void handle_draw(u8 cmd, const u8* data, u32& pos, u32 size, bool bigEndian);
  static void handle_aurora(const u8* data, u32& pos, u32 size, bool bigEndian);
  
@@ -795,6 +881,35 @@ index 9748556..8e7ea71 100644
    u32 pos = 0;
  
    while (pos < size) {
+@@ -1642,12 +1643,25 @@ static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, g
+     }
+   }
+ 
+-  PipelineConfig config{};
++  static PipelineConfig config{}; // MP5: reused, populate_pipeline_config rewrites all of it
+   populate_pipeline_config(config, prim, fmt);
+-  const auto info = build_shader_info(config.shaderConfig);
++  // MP5: draws in a row mostly share their pipeline state. The shader info only depends on the config, and a built
++  // pipeline stays built, so an unchanged config within a frame reuses both without hashing it again.
++  static PipelineConfig s_lastConfig;
++  static ShaderInfo s_lastInfo;
++  static gfx::PipelineRef s_lastPipeline = 0;
++  static u32 s_lastFrame = UINT32_MAX;
++  if (s_lastFrame != gfx::current_frame() || memcmp(&config, &s_lastConfig, sizeof(config)) != 0) {
++    s_lastInfo = build_shader_info(config.shaderConfig);
++    s_lastPipeline = gfx::pipeline_ref(config);
++    // only a built pipeline is memoized: a pending one goes through pipeline_ref again (which records its use)
++    s_lastFrame = gfx::pipeline_exists(s_lastPipeline) ? gfx::current_frame() : UINT32_MAX;
++    s_lastConfig = config;
++  }
++  const ShaderInfo& info = s_lastInfo;
++  const auto pipeline = s_lastPipeline;
+   resolve_sampled_textures(info);
+   const auto bindGroups = build_bind_groups(info);
+-  const auto pipeline = gfx::pipeline_ref(config);
+ 
+   uint32_t instanceCount = 1;
+   if (prim == GX_LINES) {
 diff --git a/lib/gx/command_processor.hpp b/lib/gx/command_processor.hpp
 index 93feba1..4e3ffca 100644
 --- a/lib/gx/command_processor.hpp
@@ -808,7 +923,7 @@ index 93feba1..4e3ffca 100644
 +
  } // namespace aurora::gx::fifo
 diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
-index 9ca9036..82ecedd 100644
+index 9ca9036..5504c7e 100644
 --- a/lib/gx/gx.cpp
 +++ b/lib/gx/gx.cpp
 @@ -1,5 +1,8 @@
@@ -951,6 +1066,128 @@ index 9ca9036..82ecedd 100644
    if (!obj.no_cache() && !tlut.no_cache()) {
      store_cached_texture(obj, handle, tlut.tlutObjId, tlut.tlutDataVersion);
    }
+@@ -834,13 +907,21 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+     config.shaderConfig.lineMode = 0;
+   }
+   config.shaderConfig.tevSwapTable = g_gxState.tevSwapTable;
++  // MP5: the caller reuses one config: entries past the new counts that the previous draw used are reset to what a
++  // fresh config holds (past the previous counts they still are)
+   for (u8 i = 0; i < g_gxState.numTevStages; ++i) {
+     config.shaderConfig.tevStages[i] = g_gxState.tevStages[i];
+   }
++  for (u32 i = g_gxState.numTevStages; i < config.shaderConfig.tevStageCount; ++i) {
++    config.shaderConfig.tevStages[i] = {};
++  }
+   config.shaderConfig.tevStageCount = g_gxState.numTevStages;
+   for (u8 i = 0; i < g_gxState.numIndStages; ++i) {
+     config.shaderConfig.indStages[i] = g_gxState.indStages[i];
+   }
++  for (u32 i = g_gxState.numIndStages; i < config.shaderConfig.numIndStages; ++i) {
++    config.shaderConfig.indStages[i] = {};
++  }
+   config.shaderConfig.numIndStages = g_gxState.numIndStages;
+   for (u8 i = 0; i < MaxColorChannels; ++i) {
+     const auto& cc = g_gxState.colorChannelConfig[i];
+@@ -856,29 +937,31 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+   for (u8 i = 0; i < g_gxState.numTexGens; ++i) {
+     config.shaderConfig.tcgs[i] = g_gxState.tcgs[i];
+   }
+-  if (g_gxState.alphaCompare) {
+-    config.shaderConfig.alphaCompare = g_gxState.alphaCompare;
++  for (u8 i = g_gxState.numTexGens; i < MaxTexCoord; ++i) {
++    if (config.shaderConfig.tcgs[i] != TcgConfig{}) {
++      config.shaderConfig.tcgs[i] = {};
++    }
+   }
++  config.shaderConfig.alphaCompare = g_gxState.alphaCompare ? g_gxState.alphaCompare : AlphaCompare{};
+   const auto cullMode = config.shaderConfig.lineMode == 0 ? g_gxState.cullMode : GX_CULL_NONE;
+   const auto [polygonOffset, polygonOffsetScale] = polygon_offset_for_cull_mode(cullMode);
+-  config = {
+-      .msaaSamples = gfx::get_sample_count(),
+-      .shaderConfig = config.shaderConfig,
+-      .depthFunc = g_gxState.depthFunc,
+-      .cullMode = cullMode,
+-      .blendMode = g_gxState.blendMode,
+-      .blendFacSrc = g_gxState.blendFacSrc,
+-      .blendFacDst = g_gxState.blendFacDst,
+-      .blendOp = g_gxState.blendOp,
+-      .dstAlpha = g_gxState.dstAlpha,
+-      .polygonOffsetBits = std::bit_cast<uint32_t>(polygonOffset),
+-      .polygonOffsetScaleBits = std::bit_cast<uint32_t>(polygonOffsetScale),
+-      .polygonOffsetClampBits = std::bit_cast<uint32_t>(g_gxState.clamp),
+-      .depthCompare = g_gxState.depthCompare,
+-      .depthUpdate = g_gxState.depthUpdate,
+-      .alphaUpdate = g_gxState.alphaUpdate,
+-      .colorUpdate = g_gxState.colorUpdate,
+-  };
++  // MP5: field by field, not a whole new aggregate (which copied the shader config twice per draw)
++  config.version = GXPipelineConfigVersion;
++  config.msaaSamples = gfx::get_sample_count();
++  config.depthFunc = g_gxState.depthFunc;
++  config.cullMode = cullMode;
++  config.blendMode = g_gxState.blendMode;
++  config.blendFacSrc = g_gxState.blendFacSrc;
++  config.blendFacDst = g_gxState.blendFacDst;
++  config.blendOp = g_gxState.blendOp;
++  config.dstAlpha = g_gxState.dstAlpha;
++  config.polygonOffsetBits = std::bit_cast<uint32_t>(polygonOffset);
++  config.polygonOffsetScaleBits = std::bit_cast<uint32_t>(polygonOffsetScale);
++  config.polygonOffsetClampBits = std::bit_cast<uint32_t>(g_gxState.clamp);
++  config.depthCompare = g_gxState.depthCompare;
++  config.depthUpdate = g_gxState.depthUpdate;
++  config.alphaUpdate = g_gxState.alphaUpdate;
++  config.colorUpdate = g_gxState.colorUpdate;
+ }
+ 
+ GXBindGroups build_bind_groups(const ShaderInfo& info) noexcept {
+@@ -892,27 +975,44 @@ GXBindGroups build_bind_groups(const ShaderInfo& info) noexcept {
+   // Using C WGPU types instead of C++ wrappers to avoid destructor overhead
+   std::array<WGPUBindGroupEntry, MaxTextures * 2> textureEntries{};
+   for (u32 i = 0; i < MaxTextures; ++i) {
+-    const auto& tex = g_gxState.textures[i];
++    auto& tex = g_gxState.textures[i];
+     WGPUBindGroupEntry& textureEntry = textureEntries[i * 2];
+     WGPUBindGroupEntry& samplerEntry = textureEntries[i * 2 + 1];
+     textureEntry.binding = i * 2;
+     samplerEntry.binding = i * 2 + 1;
+     if (tex && (info.sampledTextures[i] || info.sampledIndTextures[i])) {
+       textureEntry.textureView = tex.ref->sampleTextureView.Get();
+-      samplerEntry.sampler = gfx::sampler_ref(tex.get_descriptor()).Get();
++      if (tex.sampler == nullptr || tex.samplerAniso != g_graphicsConfig.textureAnisotropy) {
++        // the sampler cache keeps every sampler until shutdown, so the raw handle stays valid
++        tex.sampler = gfx::sampler_ref(tex.get_descriptor()).Get();
++        tex.samplerAniso = g_graphicsConfig.textureAnisotropy;
++      }
++      samplerEntry.sampler = tex.sampler;
+     } else {
+       textureEntry.textureView = sEmptyTextureView.Get();
+       samplerEntry.sampler = sEmptySampler.Get();
+     }
+   }
++  // MP5: draws in a row mostly bind the same textures; within a frame the same entries give the same bind group,
++  // already marked used this frame, so the descriptor hash and the cache lookup are skipped
++  static std::array<WGPUBindGroupEntry, MaxTextures * 2> s_lastEntries{};
++  static gfx::BindGroupRef s_lastBindGroup = 0;
++  static u32 s_lastFrame = UINT32_MAX;
++  if (s_lastFrame == gfx::current_frame() &&
++      memcmp(s_lastEntries.data(), textureEntries.data(), sizeof(textureEntries)) == 0) {
++    return {.textureBindGroup = s_lastBindGroup};
++  }
+   const WGPUBindGroupDescriptor textureBindGroupDescriptor{
+       .label = {"GX Texture Bind Group", WGPU_STRLEN},
+       .layout = sTextureBindGroupLayout.Get(),
+       .entryCount = textureEntries.size(),
+       .entries = textureEntries.data(),
+   };
++  s_lastBindGroup = gfx::bind_group_ref(textureBindGroupDescriptor);
++  s_lastEntries = textureEntries;
++  s_lastFrame = gfx::current_frame();
+   return {
+-      .textureBindGroup = gfx::bind_group_ref(textureBindGroupDescriptor),
++      .textureBindGroup = s_lastBindGroup,
+   };
+ }
+ 
 diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
 index 3671ed5..a150317 100644
 --- a/lib/gx/shader.cpp
@@ -965,6 +1202,40 @@ index 3671ed5..a150317 100644
      } else
        UNLIKELY FATAL("unhandled tcg src {}", underlying(tcg.src));
      if (tcg.type == GX_TG_MTX2x4 || tcg.type == GX_TG_MTX3x4) {
+diff --git a/lib/gx/shader_info.cpp b/lib/gx/shader_info.cpp
+index bb9ddec..9861a97 100644
+--- a/lib/gx/shader_info.cpp
++++ b/lib/gx/shader_info.cpp
+@@ -371,9 +371,9 @@ static u32 line_texcoord_mask() noexcept {
+ gfx::Range build_uniform(const ShaderInfo& info, u32 vtxStart, const BindGroupRanges& ranges) noexcept {
+   ZoneScoped;
+ 
+-  static ByteBuffer buf;
+-  buf.clear();
+-  buf.reserve_extra(info.uniformSize);
++  // MP5: written straight into the frame's uniform buffer instead of a scratch buffer copied there afterwards
++  auto& buf = gfx::uniform_buffer_for_append();
++  const auto begin = static_cast<uint32_t>(buf.size());
+ 
+   buf.append(vtxStart);
+   buf.append(g_gxState.currentPnMtx);
+@@ -381,7 +381,7 @@ gfx::Range build_uniform(const ShaderInfo& info, u32 vtxStart, const BindGroupRa
+   buf.append<f32>(g_gxState.renderViewport.height);
+   buf.append<f32>(g_gxState.logicalViewport.width);
+   buf.append<f32>(g_gxState.logicalViewport.height);
+-  buf.append_zeroes(8); // pad
++  buf.append<u64>(0); // pad (append_zeroes does not clear a mapped buffer)
+   for (const auto& vaRange : ranges.vaRanges) {
+     buf.append<u32>(vaRange.offset);
+   }
+@@ -482,6 +482,6 @@ gfx::Range build_uniform(const ShaderInfo& info, u32 vtxStart, const BindGroupRa
+     buf.append(texture_size_bias(tex));
+   }
+   g_gxState.stateDirty = false;
+-  return gfx::push_uniform(buf.data(), buf.size());
++  return {begin, static_cast<uint32_t>(buf.size()) - begin};
+ }
+ } // namespace aurora::gx
 diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
 index a969465..6e4215e 100644
 --- a/lib/webgpu/gpu.cpp
