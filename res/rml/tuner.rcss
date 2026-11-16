@@ -8,7 +8,7 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
-    font-family: "Inter";
+    font-family: "Fredoka";
     font-size: 20dp;
     color: #FFFFFF;
     display: flex;
@@ -24,7 +24,8 @@ body {
     flex-direction: column;
     justify-content: flex-end;
     align-items: stretch;
-    decorator: vertical-gradient(#00000000 #151610F2);
+    padding: 0 32dp;
+    decorator: vertical-gradient(#1A083800 #1A0838A0);
     filter: opacity(0);
     transition: filter 0.2s linear-in-out;
 }
@@ -41,7 +42,14 @@ body {
     display: flex;
     flex-direction: column;
     gap: 24dp;
-    padding: 48dp 64dp;
+    padding: 32dp 48dp;
+    /* MP5 purple message window, kept compact so the game preview stays visible */
+    margin-bottom: 32dp;
+    border: 4dp #FFF3D0;
+    border-radius: 30dp;
+    box-shadow: #1A0838 0 0 0 4dp, rgba(0, 0, 0, 50%) 0 8dp 24dp 0dp;
+    background-color: #361769;
+    decorator: image(../ui-stars-tile.png repeat), linear-gradient(180deg, rgba(91, 47, 176, 94%) 0%, rgba(54, 23, 105, 94%) 55%, rgba(36, 16, 74, 96%) 100%);
 }
 
 @media (max-height: 800dp) {
@@ -51,7 +59,8 @@ body {
 
     .tuner {
         gap: 16dp;
-        padding: 32dp 48dp;
+        padding: 20dp 32dp;
+        margin-bottom: 12dp;
     }
 }
 
@@ -69,15 +78,21 @@ body {
     min-width: 0;
 }
 
+#title {
+    font-weight: bold;
+    color: #FFFFFF;
+    font-effect: outline(2dp #4A1C00);
+}
+
 .description {
-    font-size: 14dp;
+    font-size: 15dp;
     line-height: 22dp;
-    color: rgba(255, 255, 255, 50%);
+    color: rgba(241, 234, 255, 80%);
 }
 
 .divider {
     margin: 1dp 0;
-    border-top: 1dp rgba(217, 217, 217, 50%);
+    border-top: 3dp rgba(216, 205, 245, 30%);
 }
 
 .footer {
@@ -94,7 +109,7 @@ footer-button {
     border: 0;
     padding: 0;
     background-color: transparent;
-    font-family: "Inter";
+    font-family: "Fredoka";
     font-weight: bold;
     font-size: 16dp;
     line-height: 24dp;
@@ -102,6 +117,11 @@ footer-button {
     color: #FFFFFF;
     opacity: 1;
     cursor: pointer;
+}
+
+footer-button:hover,
+footer-button:focus-visible {
+    color: #FFD23F;
 }
 
 footer-button.return {
@@ -121,7 +141,7 @@ footer-button.reset {
     min-width: 246dp;
     padding: 0;
     background-color: transparent;
-    font-family: "Inter";
+    font-family: "Fredoka";
     font-weight: bold;
 }
 
@@ -130,13 +150,15 @@ footer-button.reset {
     min-width: 166dp;
     text-align: center;
     white-space: nowrap;
-    opacity: 0.9;
+    color: #FFE066;
+    font-effect: outline(2dp #4A1C00);
 }
 
 .stepped-carousel-arrow {
-    width: 24dp;
-    height: 24dp;
-    min-width: 24dp;
+    width: 32dp;
+    height: 32dp;
+    min-width: 32dp;
+    font-size: 30dp;
     padding: 0;
     border: 0;
     background-color: transparent;
@@ -144,4 +166,5 @@ footer-button.reset {
     cursor: pointer;
     font-family: "Material Symbols Rounded";
     font-weight: normal;
+    color: #FFD23F;
 }

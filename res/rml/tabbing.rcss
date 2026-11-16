@@ -1,5 +1,6 @@
 tab-bar {
     display: flex;
+    align-items: center;
     position: relative;
     min-width: 0;
     overflow: auto hidden;
@@ -16,31 +17,42 @@ tab-bar scrollbarhorizontal sliderbar {
     height: 0;
 }
 
+/* Pill tabs. Unselected: soft lavender; selected: MP5 orange title banner; focus: yellow glow. */
 tab-bar tab {
     flex: 0 0 auto;
-    padding: 0 24dp;
-    line-height: 64dp;
+    margin: 0 4dp;
+    padding: 0 20dp;
+    line-height: 38dp;
     white-space: nowrap;
-    decorator: vertical-gradient(#00b4fa00 #00b4fa00);
-    transition: decorator 0.1s linear-in-out, opacity 0.1s linear-in-out;
+    border-radius: 22dp;
+    border: 3dp rgba(216, 205, 245, 25%);
+    background-color: rgba(255, 255, 255, 6%);
+    color: rgba(241, 234, 255, 70%);
+    transform: scale(1);
+    transition: transform 0.22s back-out, color 0.1s linear-in-out;
     cursor: pointer;
 }
 
 tab-bar tab:selected {
-    opacity: 1;
-    border-bottom: 4dp #00b4fa;
-    font-effect: glow(0dp 4dp 0dp 4dp black);
+    color: #FFFFFF;
+    border-color: #8A3F08;
+    decorator: linear-gradient(180deg, #FFEDB5 0%, #F6BD5C 55%, #E48A2A 100%);
+    font-effect: outline(2dp #8A3F08);
 }
 
 tab-bar tab:focus-visible,
 tab-bar tab:hover {
-    opacity: 1;
-    font-effect: glow(0dp 4dp 0dp 4dp black);
-    decorator: vertical-gradient(#00b4fa00 #00b4fa26);
+    color: #4A1C00;
+    border-color: #FFFFFF;
+    decorator: linear-gradient(180deg, #FFF8B0 0%, #FFD23A 55%, #FFA51E 100%);
+    box-shadow: rgba(255, 200, 40, 60%) 0 0 12dp 2dp;
+    font-effect: none;
+    transform: scale(1.06);
 }
 
 tab-bar tab:active {
-    decorator: vertical-gradient(#00b4fa10 #00b4fa40);
+    decorator: linear-gradient(180deg, #FFD23A 0%, #FF9D14 100%);
+    transform: scale(0.97);
 }
 
 tab-bar[closable] tab-end-spacer {
@@ -50,32 +62,34 @@ tab-bar[closable] tab-end-spacer {
     pointer-events: none;
 }
 
+/* Round red "B" style close button with a cream rim */
 tab-bar[closable] close {
     display: block;
     position: fixed;
-    top: 8dp;
-    right: 8dp;
+    top: 12dp;
+    right: 12dp;
     z-index: 1;
-    width: 48dp;
-    height: 48dp;
+    width: 44dp;
+    height: 44dp;
     font-family: "Material Symbols Rounded";
     font-weight: normal;
-    font-size: 20dp;
-    color: rgba(224, 219, 200, 70%);
-    backdrop-filter: blur(2dp);
-    border-radius: 6dp;
-    decorator: text("&#xe5cd;" center center);
-    transition: color background-color 0.12s linear-in-out;
+    font-size: 24dp;
+    color: #FFFFFF;
+    border: 3dp #FFF3D0;
+    border-radius: 22dp;
+    decorator: text("&#xe5cd;" center center), linear-gradient(180deg, #FF8A7A 0%, #E8323A 60%, #B81828 100%);
+    transform: scale(1);
+    transition: transform 0.22s back-out;
     cursor: pointer;
 }
 
 tab-bar[closable] close:hover,
 tab-bar[closable] close:focus-visible {
-    color: #fff;
-    background-color: rgba(194, 164, 45, 24%);
+    border-color: #FFFFFF;
+    box-shadow: rgba(255, 200, 40, 70%) 0 0 12dp 3dp;
+    transform: scale(1.1);
 }
 
 tab-bar[closable] close:active {
-    color: #fff;
-    background-color: rgba(194, 164, 45, 40%);
+    transform: scale(0.95);
 }

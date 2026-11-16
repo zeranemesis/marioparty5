@@ -52,10 +52,13 @@ bool initialize() noexcept
         return false;
     }
 
-    load_font("Inter-Regular.ttf");
+    // Fallback too: Fredoka lacks arrows and other symbols the menus use (e.g. the tuner's "<- Return").
+    load_font("Inter-Regular.ttf", true);
     load_font("Inter-Bold.ttf");
     load_font("AlegreyaSC-Regular.ttf");
     load_font("AlegreyaSC-Bold.ttf");
+    // Variable font: RmlUi registers each named instance (Light..Bold) as its own weight.
+    load_font("Fredoka-Variable.ttf");
     load_font("MaterialSymbolsRounded-Regular.ttf");
     load_font("NotoMono-Regular.ttf", true);
 

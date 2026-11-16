@@ -1,3 +1,10 @@
+/*
+ * Mario Party 5 look: purple message-window panels with a thick cream rim,
+ * orange title-banner pills, yellow focus with a star cursor, chunky rounded type (Fredoka).
+ * Palette: deep purple #24104a / #361769 / #5b2fb0, cream #fff3d0, banner #ffe9a8 > #f6bd5c > #e48a2a,
+ * banner rim #8a3f08, highlight #fff59a > #ffc21e > #ff9d14, text on highlight #4a1c00.
+ */
+
 *, *:before, *:after {
     box-sizing: border-box;
 }
@@ -7,11 +14,14 @@ body {
     width: 100%;
     height: 100%;
     padding: 64dp;
-    font-family: "Inter";
-    font-weight: normal;
+    font-family: "Fredoka";
+    font-weight: 500;
     font-style: normal;
     font-size: 12dp;
-    color: #E0DBC8;
+    color: #FFF8E6;
+    /* dimmed backdrop with a faint star pattern */
+    background-color: rgba(14, 4, 34, 55%);
+    decorator: image(../ui-stars-tile.png repeat);
 }
 
 window {
@@ -23,16 +33,17 @@ window {
     max-width: 1088dp;
     max-height: 768dp;
     margin: auto;
-    border-radius: 14dp;
+    border-radius: 30dp;
     overflow: hidden;
-    border: 2dp #009dda;
+    border: 4dp #FFF3D0;
     backdrop-filter: blur(5dp);
-    box-shadow: 0 0 25dp 5dp;
-    background-color: rgba(37, 59, 156, 90%);
+    box-shadow: #1A0838 0 0 0 4dp, rgba(0, 0, 0, 55%) 0 12dp 32dp 0dp;
+    background-color: #2E1460;
+    decorator: image(../ui-stars-tile.png repeat), linear-gradient(180deg, rgba(104, 58, 196, 94%) 0%, rgba(54, 23, 105, 94%) 45%, rgba(36, 16, 74, 96%) 100%);
     filter: opacity(0);
-    transform: scale(0.9);
+    transform: scale(0.8);
     transform-origin: center;
-    transition: filter transform 0.2s cubic-in-out;
+    transition: filter 0.18s cubic-out, transform 0.38s back-out;
 }
 
 window.small {
@@ -54,22 +65,19 @@ window[open] {
         padding: 16dp;
     }
     window {
-        box-shadow: none;
+        box-shadow: #1A0838 0 0 0 3dp;
     }
 }
 
 window tab-bar {
-    flex: 0 0 64dp;
-    height: 64dp;
-    background-color: rgba(217, 217, 217, 10%);
-    font-family: "Inter";
+    flex: 0 0 68dp;
+    height: 68dp;
+    padding: 0 10dp;
+    background-color: rgba(20, 6, 48, 55%);
+    font-family: "Fredoka";
     font-weight: bold;
-    font-size: 14dp;
-    border-bottom: 2dp #009dda;
-}
-
-window tab-bar tab {
-    opacity: 0.25;
+    font-size: 17dp;
+    border-bottom: 4dp #FFF3D0;
 }
 
 window content {
@@ -94,7 +102,7 @@ window content pane {
 }
 
 window content pane:not(:last-of-type) {
-    border-right: 1dp #009dda;
+    border-right: 3dp rgba(216, 205, 245, 22%);
 }
 
 window content pane > * {
@@ -103,6 +111,7 @@ window content pane > * {
 
 window content pane:last-of-type > div {
     line-height: 1.625;
+    color: #F1EAFF;
 }
 
 window content pane > spacer {
@@ -114,8 +123,8 @@ window content pane > spacer {
 }
 
 scrollbarvertical {
-    width: 8dp;
-    margin: 4dp 4dp 4dp 0;
+    width: 10dp;
+    margin: 6dp 6dp 6dp 0;
 }
 
 scrollbarvertical sliderarrowdec,
@@ -125,20 +134,22 @@ scrollbarvertical sliderarrowinc {
 }
 
 scrollbarvertical slidertrack {
-    width: 8dp;
+    width: 10dp;
+    border-radius: 5dp;
+    background-color: rgba(255, 255, 255, 8%);
 }
 
 scrollbarvertical sliderbar {
-    width: 8dp;
+    width: 10dp;
     min-height: 24dp;
-    background-color: rgba(224, 219, 200, 45%);
-    border-radius: 2dp;
+    border-radius: 5dp;
+    background-color: rgba(255, 210, 63, 70%);
     transition: background-color 0.2s cubic-in-out;
 }
 
 scrollbarvertical sliderbar:hover,
 scrollbarvertical sliderbar:active {
-    background-color: rgba(194, 164, 45, 80%);
+    background-color: #FFD23F;
 }
 
 scrollbarhorizontal {
@@ -157,46 +168,79 @@ scrollbarhorizontal sliderbar {
     height: 0;
 }
 
+/* Orange title-banner pill, like MP5's "Party Mode" / "Options Mode" headers */
 .section-heading {
-    font-family: "Inter";
+    align-self: flex-start;
+    padding: 1dp 18dp 3dp 18dp;
+    border-radius: 16dp;
+    border: 3dp #8A3F08;
+    decorator: linear-gradient(180deg, #FFEDB5 0%, #F6BD5C 55%, #E48A2A 100%);
+    font-family: "Fredoka";
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 18dp;
-    opacity: 0.25;
+    font-size: 16dp;
+    color: #FFFFFF;
+    font-effect: outline(2dp #8A3F08);
 }
 
 .section-heading:not(:first-of-type) {
-    padding-top: 12dp;
+    margin-top: 12dp;
 }
 
-button {
-    text-align: center;
-    background-color: rgba(17, 16, 10, 20%);
-    opacity: 0.9;
-    padding: 8dp 16dp;
-    border-radius: 14dp;
-    box-shadow: rgba(146, 135, 91, 25%) 0 0 0 1dp;
+/* Pill buttons. The left padding leaves room for the star cursor shown on focus. */
+button,
+select-button {
+    background-color: rgba(255, 255, 255, 9%);
+    border: 3dp rgba(216, 205, 245, 30%);
+    border-radius: 22dp;
     font-size: 16dp;
-    transition: background-color 0.1s linear-in-out, opacity 0.1s linear-in-out;
+    transform: scale(1);
+    transition: transform 0.22s back-out, background-color 0.1s linear-in-out;
     cursor: pointer;
     focus: auto;
 }
 
+button {
+    text-align: center;
+    padding: 7dp 40dp;
+}
+
+select-button {
+    display: flex;
+    align-items: center;
+    gap: 8dp;
+    padding: 7dp 18dp 7dp 40dp;
+}
+
 button:not(:disabled):hover,
-button:not(:disabled):focus-visible {
-    background-color: rgba(0, 157, 218, 20%);
-    box-shadow: #00b4fa 0 0 0 2dp;
+button:not(:disabled):focus-visible,
+select-button:not(:disabled):hover,
+select-button:not(:disabled):focus-visible {
+    color: #4A1C00;
+    border-color: #FFFFFF;
+    decorator: image(../ui-cursor.png contain 6px center), linear-gradient(180deg, #FFF8B0 0%, #FFD23A 55%, #FFA51E 100%);
+    box-shadow: rgba(255, 200, 40, 60%) 0 0 14dp 2dp;
+    transform: scale(1.03);
 }
 
-button:not(:disabled):selected {
-    opacity: 1;
-    background-color: rgba(0, 157, 218, 40%);
+button:not(:disabled):selected,
+select-button:not(:disabled):selected {
+    border-color: #FFC94A;
+    background-color: rgba(255, 170, 40, 30%);
 }
 
-button:not(:disabled):active {
-    opacity: 1;
-    background-color: rgba(0, 157, 218, 40%);
-    box-shadow: #00b4fa 0 0 0 2dp;
+button:not(:disabled):active,
+select-button:not(:disabled):active {
+    color: #4A1C00;
+    border-color: #FFFFFF;
+    decorator: image(../ui-cursor.png contain 6px center), linear-gradient(180deg, #FFD23A 0%, #FF9D14 100%);
+    transform: scale(0.98);
+}
+
+button:disabled,
+select-button:disabled {
+    opacity: 0.4;
+    cursor: default;
 }
 
 button.modal-btn {
@@ -204,46 +248,10 @@ button.modal-btn {
     text-align: center;
 }
 
-select-button {
-    display: flex;
-    align-items: center;
-    gap: 8dp;
-    background-color: rgba(17, 16, 10, 20%);
-    opacity: 0.9;
-    padding: 8dp 16dp;
-    border-radius: 14dp;
-    box-shadow: rgba(146, 135, 91, 25%) 0 0 0 1dp;
-    transition: background-color 0.1s linear-in-out, opacity 0.1s linear-in-out;
-    cursor: pointer;
-    focus: auto;
-}
-
-select-button:not(:disabled):hover,
-select-button:not(:disabled):focus-visible {
-    background-color: rgba(0, 157, 218, 20%);
-    box-shadow: #00b4fa 0 0 0 2dp;
-}
-
-select-button:not(:disabled):selected {
-    opacity: 1;
-    background-color: rgba(0, 157, 218, 40%);
-}
-
-select-button:not(:disabled):active {
-    opacity: 1;
-    background-color: rgba(0, 157, 218, 40%);
-    box-shadow: #00b4fa 0 0 0 2dp;
-}
-
-select-button:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
 select-button key {
-    font-family: "Inter";
-    font-weight: bold;
-    font-size: 14dp;
+    font-family: "Fredoka";
+    font-weight: 600;
+    font-size: 15dp;
     text-transform: uppercase;
     flex: 0 1 auto;
 }
@@ -252,6 +260,13 @@ select-button value {
     flex: 1 1 auto;
     text-align: right;
     font-size: 16dp;
+    color: #FFE066;
+}
+
+select-button:not(:disabled):hover value,
+select-button:not(:disabled):focus-visible value,
+select-button:not(:disabled):active value {
+    color: #8A2E00;
 }
 
 select-button value.modified {
@@ -295,13 +310,13 @@ icon.question-mark {
 .achievement-total {
     position: absolute;
     top: 0;
-    right: 64dp;
-    height: 64dp;
-    line-height: 64dp;
-    font-family: "Inter";
+    right: 68dp;
+    height: 68dp;
+    line-height: 68dp;
+    font-family: "Fredoka";
     font-weight: bold;
-    font-size: 13dp;
-    color: rgba(224, 219, 200, 55%);
+    font-size: 15dp;
+    color: #FFE066;
     pointer-events: none;
 }
 
@@ -310,7 +325,7 @@ icon.question-mark {
     align-items: flex-start;
     gap: 10dp;
     padding: 12dp 0;
-    border-bottom: 1dp rgba(146, 135, 91, 30%);
+    border-bottom: 2dp rgba(216, 205, 245, 18%);
 }
 
 .achievement-info {
@@ -330,7 +345,7 @@ icon.question-mark {
 }
 
 .achievement-name.unlocked {
-    color: #ffa826;
+    color: #FFD23F;
 }
 
 .achievement-badge {
@@ -339,18 +354,18 @@ icon.question-mark {
 }
 
 .achievement-badge.unlocked {
-    color: #44cc55;
+    color: #7BE36A;
     opacity: 1;
 }
 
 .achievement-badge.locked {
-    color: #cc4444;
+    color: #FF7A7A;
     opacity: 1;
 }
 
 .achievement-desc {
     display: block;
-    color: rgba(224, 219, 200, 55%);
+    color: rgba(241, 234, 255, 70%);
     font-size: 16dp;
     margin: 4dp 0 0 0;
 }
@@ -358,34 +373,34 @@ icon.question-mark {
 .achievement-progress {
     display: block;
     font-size: 13dp;
-    color: rgba(224, 219, 200, 45%);
+    color: rgba(241, 234, 255, 60%);
 }
 
 progress {
     display: block;
     width: 100%;
-    height: 6dp;
-    border-radius: 3dp;
-    background-color: rgba(255, 255, 255, 10%);
+    height: 8dp;
+    border-radius: 4dp;
+    background-color: rgba(255, 255, 255, 12%);
     margin: 6dp 0 2dp 0;
 }
 
 progress.progress-done fill {
-    background-color: #44aa22;
-    border-radius: 3dp;
+    background-color: #5FD35A;
+    border-radius: 4dp;
 }
 
 progress.progress-ongoing fill {
-    background-color: #2255bb;
-    border-radius: 3dp;
+    background-color: #FFB52E;
+    border-radius: 4dp;
 }
 
 button.achievement-clear {
     flex: 0 0 auto;
     align-self: center;
     font-size: 14dp;
-    padding: 2dp 8dp;
-    opacity: 0.45;
+    padding: 2dp 12dp 2dp 30dp;
+    opacity: 0.6;
 }
 
 .preset-grid {
@@ -422,7 +437,8 @@ button.achievement-clear {
 }
 
 window.modal.danger {
-    border: 2dp #852221;
+    border-color: #FF8A8A;
+    box-shadow: #5A0C14 0 0 0 4dp, rgba(0, 0, 0, 55%) 0 12dp 32dp 0dp;
 }
 
 .modal-header {
@@ -436,23 +452,24 @@ window.modal.danger {
 }
 
 .modal-header icon {
-    font-size: 24dp;
-    color: #009dda;
+    font-size: 26dp;
+    color: #FFD23F;
 }
 
 .modal-title {
     display: block;
-    font-family: "Inter";
+    font-family: "Fredoka";
     font-weight: bold;
     text-transform: uppercase;
-    font-size: 14dp;
-    color: #009dda;
+    font-size: 19dp;
+    color: #FFD23F;
+    font-effect: outline(2dp #4A1C00);
     flex: 1 1 auto;
 }
 
 window.modal.danger .modal-title,
 window.modal.danger .modal-header icon {
-    color: #B3261E;
+    color: #FF7A7A;
 }
 
 .modal-body {
@@ -462,12 +479,12 @@ window.modal.danger .modal-header icon {
     min-width: 0;
     font-size: 16dp;
     color: #FFFFFF;
-    font-weight: normal;
+    font-weight: 500;
 }
 
 .modal-body span.tip {
     font-size: 14dp;
-    color: #009dda;
+    color: #FFE066;
 }
 
 .verification-progress {
@@ -484,14 +501,14 @@ window.modal.danger .modal-header icon {
 }
 
 progress.verification-progress-bar {
-    height: 8dp;
+    height: 10dp;
     margin: 2dp 0 0 0;
 }
 
 .verification-detail {
     display: block;
     font-size: 14dp;
-    color: rgba(224, 219, 200, 65%);
+    color: rgba(241, 234, 255, 70%);
 }
 
 .modal-actions {

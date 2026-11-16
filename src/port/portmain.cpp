@@ -398,6 +398,9 @@ extern "C" int port_main(int argc, char* argv[]) {
         video.widescreen.setOverrideValue(strcmp(aspect, "wide") == 0);
         video.hudCentered.setOverrideValue(getenv("MP5_TEST_HUD_CENTERED") != nullptr);
     }
+    if (getenv("MP5_TEST_PRELAUNCH") != nullptr) { // test bench: show the prelaunch screen for this run, unsaved
+        mp5native::getSettings().backend.skipPreLaunchUI.setOverrideValue(false);
+    }
     // test bench: MP5_TEST_FPS=<cap> runs the high frame rate path (src/port/frame_interp.cpp) with vsync off, unsaved
     if (getenv("MP5_TEST_FPS") != nullptr) {
         mp5native::getSettings().video.enableVsync.setOverrideValue(false);

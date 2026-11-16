@@ -5,8 +5,8 @@
 body {
     width: 100%;
     height: 100%;
-    font-family: "Alegreya SC";
-    font-weight: normal;
+    font-family: "Fredoka";
+    font-weight: 500;
     font-size: 20dp;
     color: #FFFFFF;
     filter: opacity(0);
@@ -19,11 +19,11 @@ body {
     width: 100%;
     height: 100%;
     /* The color gradient from the Figma bands really badly. A fully black gradient does as well, but not as badly. */
-    decorator: horizontal-gradient(#000000FF #00000000);
+    decorator: horizontal-gradient(#1A0838FF #1A083800);
 }
 
 body.mirrored .gradient {
-    decorator: horizontal-gradient(#00000000 #000000FF);
+    decorator: horizontal-gradient(#1A083800 #1A0838FF);
 }
 
 .background {
@@ -120,14 +120,17 @@ hero img {
 
 #menu-list button {
     width: 428dp;
-    height: 54dp;
-    padding: 8dp 16dp;
-    border-radius: 8dp;
+    height: 58dp;
+    padding: 6dp 20dp 6dp 64dp;
+    border-radius: 29dp;
+    border: 3dp #FFF3D000;
     text-align: left;
     text-transform: uppercase;
     font-size: 32dp;
-    font-weight: normal;
+    font-weight: bold;
+    font-effect: outline(2dp #1A0838);
     cursor: pointer;
+    transform: scale(1);
     /* Define a fully transparent gradient as the default state, otherwise a white flash occurs */
     decorator: horizontal-gradient(#00000000 #00000000);
 }
@@ -139,13 +142,17 @@ hero img {
 }
 
 #menu-list button.anim-done {
-    transition: decorator color opacity 0.1s linear-in-out;
+    transition: color opacity 0.1s linear-in-out, transform 0.22s back-out;
 }
 
 #menu-list button:hover,
 #menu-list button:focus-visible {
-    color: black;
-    decorator: horizontal-gradient(#009ddaFF #009dda00);
+    color: #4A1C00;
+    border-color: #FFFFFF;
+    font-effect: none;
+    box-shadow: rgba(255, 200, 40, 60%) 0 0 16dp 3dp;
+    decorator: image(../ui-cursor.png contain 10px center), linear-gradient(180deg, #FFF8B0 0%, #FFD23A 55%, #FFA51E 100%);
+    transform: scale(1.04);
 }
 
 body.mirrored #menu-list {
@@ -156,9 +163,13 @@ body.mirrored #menu-list button {
     text-align: right;
 }
 
+body.mirrored #menu-list button {
+    padding: 6dp 64dp 6dp 20dp;
+}
+
 body.mirrored #menu-list button:hover,
 body.mirrored #menu-list button:focus-visible {
-    decorator: horizontal-gradient(#009dda00 #009ddaFF);
+    decorator: image(../ui-cursor.png contain right center), linear-gradient(180deg, #FFF8B0 0%, #FFD23A 55%, #FFA51E 100%);
 }
 
 disc-info {
@@ -170,7 +181,7 @@ disc-info {
     flex-direction: column;
     gap: 12dp;
     font-size: 24dp;
-    font-effect: glow(0dp 4dp 0dp 4dp black);
+    font-effect: outline(2dp #1A0838);
     text-align: left;
 }
 
@@ -190,7 +201,7 @@ version-info {
     gap: 12dp;
     text-align: right;
     font-size: 24dp;
-    font-effect: glow(0dp 4dp 0dp 4dp black);
+    font-effect: outline(2dp #1A0838);
     text-align: right;
 }
 
@@ -227,7 +238,7 @@ body.mirrored version-info {
 }
 
 #disc-status[status=pending] {
-    color: #009dda;
+    color: #FFD23F;
 }
 
 #disc-status icon {
@@ -364,11 +375,11 @@ body.animate-in .intro-item {
 /* Mobile layout */
 @media (max-height: 640dp) {
     .gradient {
-        decorator: horizontal-gradient(#00000000 #000000FF);
+        decorator: horizontal-gradient(#1A083800 #1A0838FF);
     }
 
     body.mirrored .gradient {
-        decorator: horizontal-gradient(#000000FF #00000000);
+        decorator: horizontal-gradient(#1A0838FF #1A083800);
     }
 
     menu {
@@ -417,9 +428,13 @@ body.animate-in .intro-item {
         text-align: right;
     }
 
+    #menu-list button {
+        padding: 6dp 64dp 6dp 20dp;
+    }
+
     #menu-list button:hover,
     #menu-list button:focus-visible {
-        decorator: horizontal-gradient(#009dda00 #009ddaFF);
+        decorator: image(../ui-cursor.png contain right center), linear-gradient(180deg, #FFF8B0 0%, #FFD23A 55%, #FFA51E 100%);
     }
 
     body.mirrored #menu-list {
@@ -430,9 +445,13 @@ body.animate-in .intro-item {
         text-align: left;
     }
 
+    body.mirrored #menu-list button {
+        padding: 6dp 20dp 6dp 64dp;
+    }
+
     body.mirrored #menu-list button:hover,
     body.mirrored #menu-list button:focus-visible {
-        decorator: horizontal-gradient(#009ddaFF #009dda00);
+        decorator: image(../ui-cursor.png contain 10px center), linear-gradient(180deg, #FFF8B0 0%, #FFD23A 55%, #FFA51E 100%);
     }
 
     .eyebrow {
