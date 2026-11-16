@@ -14,6 +14,7 @@
 #include "port/display_select.h"
 #include <aurora/aurora.h>
 #include <aurora/event.h>
+#include <aurora/gfx.h>
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/os.h>
 #include <dolphin/pad.h>
@@ -63,8 +64,12 @@ static void LanguageInit() {
     selectedLanguage = static_cast<u8>(mp5native::getSettings().game.language.getValue());
 }
 
-bool launchUILoop() {
-    while (Mp5Native_IsRunning && !Mp5Native_IsGameLaunched) {
+bool Mp5Native_ShaderWarmup = false;
+
+// waitShaders: run until every queued shader pipeline is built instead of until the game launches
+bool launchUILoop(bool waitShaders = false) {
+    while (Mp5Native_IsRunning &&
+           (waitShaders ? aurora_get_stats()->queuedPipelines > 0 : !Mp5Native_IsGameLaunched)) {
         const AuroraEvent* event = aurora_update();
         while (event != nullptr && event->type != AURORA_NONE) {
             switch (event->type) {
@@ -304,47 +309,6 @@ static std::filesystem::path calculate_config_path() {
     return reinterpret_cast<const char8_t*>(result);
 }
 
-static void EnsureInitialPipelineCache(const std::filesystem::path& configDir) {
-    if (configDir.empty()) {
-        return;
-    }
-
-    const std::filesystem::path pipelineCachePath = configDir / "pipeline_cache.db";
-    if (std::filesystem::exists(pipelineCachePath)) {
-        return;
-    }
-
-    const char* basePath = SDL_GetBasePath();
-    if (basePath == nullptr) {
-        Mp5NativeMainLog.error("Unable to resolve base path while seeding pipeline cache: {}", SDL_GetError());
-        return;
-    }
-
-    const std::filesystem::path initialPipelineCachePath =
-        std::filesystem::path(basePath) / "initial_pipeline_cache.db";
-    if (!std::filesystem::exists(initialPipelineCachePath)) {
-        Mp5NativeMainLog.error("No bundled initial pipeline cache found at '{}'", initialPipelineCachePath.string());
-        return;
-    }
-
-    std::error_code ec;
-    std::filesystem::create_directories(configDir, ec);
-    if (ec) {
-        Mp5NativeMainLog.error("Failed to create config directory '{}' for pipeline cache: {}",
-                     configDir.string(), ec.message());
-        return;
-    }
-
-    std::filesystem::copy_file(initialPipelineCachePath, pipelineCachePath, std::filesystem::copy_options::none, ec);
-    if (ec) {
-        Mp5NativeMainLog.error("Failed to seed pipeline cache from '{}' to '{}': {}",
-                     initialPipelineCachePath.string(), pipelineCachePath.string(), ec.message());
-        return;
-    }
-
-    Mp5NativeMainLog.info("Seeded pipeline cache from '{}'", initialPipelineCachePath.string());
-}
-
 static constexpr PADDefaultMapping defaultPadMapping = {
     .buttons = {
         {SDL_GAMEPAD_BUTTON_SOUTH, PAD_BUTTON_A},
@@ -420,7 +384,6 @@ extern "C" int port_main(int argc, char* argv[]) {
     if (const char* backend = getenv("MP5_TEST_BACKEND")) {
         mp5native::getSettings().backend.graphicsBackend.setOverrideValue(std::string(backend));
     }
-    EnsureInitialPipelineCache(Mp5Native_ConfigPath);
     // TODO: How to handle this?
     //PADSetDefaultMapping(&defaultPadMapping, PAD_TYPE_STANDARD);
 
@@ -446,6 +409,8 @@ extern "C" int port_main(int argc, char* argv[]) {
         config.pauseOnFocusLost = mp5native::getSettings().game.pauseOnFocusLost;
         // config.imGuiInitCallback = &aurora_imgui_init_callback;
         config.allowTextureDumps = false;
+        // test bench: MP5_TEST_CACHE_DIR=<dir> keeps parallel runs from sharing (and locking) one pipeline cache
+        config.cachePath = getenv("MP5_TEST_CACHE_DIR");
         auroraInfo = aurora_initialize(argc, argv, &config);
     }
 
@@ -519,11 +484,24 @@ extern "C" int port_main(int argc, char* argv[]) {
         mp5native::config::Save();
     }
 
+    bool keepRunning = true;
     if (!mp5native::getSettings().backend.skipPreLaunchUI) {
         mp5native::ui::push_document(std::make_unique<mp5native::ui::Prelaunch>(), true);
 
         // pre game launch ui main loop
-        if (!launchUILoop()) {
+        keepRunning = launchUILoop();
+    }
+    // A draw whose shader is still compiling is skipped, which the original never does: build every shader the
+    // pipeline cache knows (seeded from the bundled initial_pipeline_cache.db) before the game draws anything.
+    Mp5Native_ShaderWarmup = true;
+    const auto warmupStart = std::chrono::steady_clock::now();
+    keepRunning = keepRunning && launchUILoop(true);
+    Mp5Native_ShaderWarmup = false;
+    Mp5NativeMainLog.info("Shaders ready ({} built) after {} ms", aurora_get_stats()->createdPipelines,
+                          std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::steady_clock::now() - warmupStart).count());
+    {
+        if (!keepRunning) {
             fflush(stdout);
             fflush(stderr);
 #ifdef MP5_NATIVE_DISCORD

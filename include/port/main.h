@@ -9,6 +9,7 @@ extern bool Mp5Native_IsRunning;
 extern bool Mp5Native_IsShuttingDown;
 extern bool Mp5Native_IsGameLaunched;
 extern bool Mp5Native_RestartRequested;
+extern bool Mp5Native_ShaderWarmup; // boot is waiting for the cached shaders to build
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || \
   (defined(TARGET_OS_TV) && TARGET_OS_TV)

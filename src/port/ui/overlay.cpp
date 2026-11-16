@@ -4,6 +4,9 @@
 
 #include "aurora/lib/logging.hpp"
 #include "port/achievements.h"
+#include <filesystem>
+#include "port/main.h"
+#include <aurora/gfx.h>
 #include "magic_enum.hpp"
 #include "window.hpp"
 
@@ -339,6 +342,26 @@ void Overlay::update()
             mCurrentToast->SetAttribute("open", "");
             mCurrentToast->SetPseudoClass("opened", true);
         }
+    }
+
+    // boot-time shader build (portmain: launchUILoop(true)), progress = built / (built + still queued)
+    if (Mp5Native_ShaderWarmup) {
+        const AuroraStats *stats = aurora_get_stats();
+        const u32 total = stats->createdPipelines + stats->queuedPipelines;
+        if (mShaderToast == nullptr) {
+            mShaderToast = create_toast(mDocument, Toast { "", "Compiling shaders", "0 / 0", {} });
+            mShaderToast->SetAttribute("open", "");
+            mShaderToast->SetPseudoClass("opened", true);
+        }
+        if (auto *text = mShaderToast->QuerySelector("message span")) {
+            text->SetInnerRML(fmt::format("{} / {}", stats->createdPipelines, total));
+        }
+        if (auto *progress = mShaderToast->QuerySelector("progress")) {
+            progress->SetAttribute("value", total > 0 ? float(stats->createdPipelines) / float(total) : 1.f);
+        }
+    }
+    else if (mShaderToast != nullptr) {
+        remove_element(mShaderToast);
     }
 }
 

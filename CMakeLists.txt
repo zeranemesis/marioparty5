@@ -335,6 +335,10 @@ if (NOT APPLE)
             COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_SOURCE_DIR}/res"
             "$<TARGET_FILE_DIR:mp5native>/res"
+            # shaders every scene uses, built at boot (aurora merges it into the user's pipeline cache)
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_SOURCE_DIR}/dist/initial_pipeline_cache.db"
+            "$<TARGET_FILE_DIR:mp5native>/initial_pipeline_cache.db"
             COMMENT "Copying resources"
     )
 endif ()
@@ -440,6 +444,7 @@ aurora_install_runtime_dlls(mp5native ${CMAKE_INSTALL_PREFIX})
 
 if (NOT APPLE)
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/res DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(FILES ${CMAKE_SOURCE_DIR}/dist/initial_pipeline_cache.db DESTINATION ${CMAKE_INSTALL_PREFIX})
 endif ()
 
 # TODO uncomment
