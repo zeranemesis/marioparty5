@@ -626,7 +626,7 @@ void fn_1_668(OMOBJ *obj)
             }
             if (lbl_1_bss_1810[work->itemNo].kind == 2) {
                 for (i = 0; i < 4; i++) {
-                    if (lbl_1_data_124[i] != 0) {
+                    if (lbl_1_data_124[i] == 0) {
                         break;
                     }
                 }
@@ -1559,24 +1559,25 @@ void fn_1_48F8(OMOBJ *obj)
                original, so each pass re-copies them out of .rodata. */
             s32 charOffY[10] = { -10, 0, 30, -50, -10, -35, 60, -70, -55, -120 };
             s32 charOffZ[10] = { 0, 0, 0, -15, -35, 0, -20, -5, 0, -30 };
-            f32 tgtX, tgtY, tgtZ, adjY, adjZ;
+            f32 tgtX, tgtY, tgtZ;
+            s32 adjY, adjZ;
 
             n = (lbl_1_bss_1600[i].owner * 4) + castCount[lbl_1_bss_1600[i].owner] + 0xD;
             lbl_1_bss_C++;
             lbl_1_bss_C = lbl_1_bss_C % 4;
             tgtX = lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.x;
-            adjY = 0.0f;
+            adjY = 0;
             if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 6) {
-                adjY = 1.0f;
+                adjY = 90;
             }
             tgtY = 80.0f + lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.y
-                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - adjY;
-            adjZ = 0.0f;
+                + (f32)charOffY[players[lbl_1_bss_1600[i].owner]->charNoClamp] - (f32)adjY;
+            adjZ = 0;
             if (lbl_1_bss_BC >= 1005 && players[lbl_1_bss_1600[i].owner]->charNoClamp == 7) {
-                adjZ = 1.0f;
+                adjZ = 25;
             }
             tgtZ = (lbl_1_bss_C8[lbl_1_bss_1600[i].owner]->trans.z - 30.0f)
-                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - adjZ;
+                + (f32)charOffZ[players[lbl_1_bss_1600[i].owner]->charNoClamp] - (f32)adjZ;
             dx = lbl_1_bss_1600[i].pos.x - tgtX;
             dy = lbl_1_bss_1600[i].pos.y - tgtY;
             dz = lbl_1_bss_1600[i].pos.z - tgtZ;
