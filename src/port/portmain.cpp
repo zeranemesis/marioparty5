@@ -731,7 +731,8 @@ extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
     if (tmStarted && ovl == (OMOVL)mgDataTbl[tmMg].ovl) {
         tmSetupPlayers();
     }
-    if (tmStarted || ovl != DLL_fileseldll) {
+    // every title -> file select call goes to the mini-game again, so it loops like the Dolphin bench (gecko.py)
+    if (ovl != DLL_fileseldll) {
         return ovl;
     }
     tmStarted = true;
@@ -852,7 +853,7 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
     static s8 stk[4][4];
     for (int i = 0; i < 4; i++) {
         memset(&st[i], 0, sizeof(st[i]));
-        if (!tmStarted) {
+        if (!tmStarted || omcurovl == DLL_bootdll) { // back on the title after the mini-game: start it again
             if (i == 0 && (tmFrame / 20) % 2) {
                 st[i].button = PAD_BUTTON_START | PAD_BUTTON_A;
             }
