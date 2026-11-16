@@ -745,6 +745,10 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
         if (((tbBoard >= 0 && tbStarted) || tbOvlDone) && tbFrame < 100000 && GwPlayerConf[0].charNo == CHARNO_NONE) {
             for (int i = 0; i < GW_PLAYER_MAX; i++) {
                 GwPlayerConf[i].charNo = GwPlayer[i].charNo = i;
+                if (i != 0 && getenv("MP5_TEST_COM") != nullptr) { // players 1-3 COM; pad 0 stays the random human (all-COM messages never advance)
+                    GwPlayerConf[i].type = GwPlayer[i].comF = GW_TYPE_COM;
+                    GwPlayerConf[i].dif = GwPlayer[i].dif = 1;
+                }
             }
             tbFrame = 100000;
         }
@@ -789,6 +793,9 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             for (int i = 0; i < 4; i++) {
                 u32 r = tmRand();
                 memset(&st[i], 0, sizeof(st[i]));
+                if (i != 0 && getenv("MP5_TEST_COM") != nullptr) {
+                    continue;
+                }
                 if ((ovFrame / 15) % 2 == 0) {
                     st[i].button = (u16)((r & 0x300) ? 0 : (1 << ((r >> 4) & 3)));
                 } else {

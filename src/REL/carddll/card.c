@@ -1861,7 +1861,7 @@ void fn_1_E17C(CardGame *game) {
 
 // NONMATCHING: register allocation / instruction scheduling differs from the original
 s32 fn_1_EB38(s32 row, s32 col) {
-    char sp14[4][15] = { "S3_c_ura_item", "S3_c_ura_event", "S3_c_ura_star", "S3_c_ura_r" };
+    char sp14[4][15] = { "S3_c_ura_item", "S3_c_ura_event", "c_ura_star", "S3_c_ura_r" };
     s32 sp10;
     s32 spC;
     s32 sp8;
