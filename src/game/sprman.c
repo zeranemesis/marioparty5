@@ -75,8 +75,9 @@ float HuSprWideShift[HUSPR_MAX];
 float HuSprWideStretch[HUSPR_MAX][3];
 float HuSprDispWideShift;
 BOOL HuSprWideClip[HUSPR_MAX];
-/* sprites set over a 3D object: the layout leaves them where the 4:3 code put them */
-static BOOL HuSprWideFixed[HUSPR_MAX];
+/* sprites set over a 3D object or drawn as a shape: the layout leaves them where the
+ * 4:3 code put them and as they were (never stretched as a backdrop) */
+BOOL HuSprWideFixed[HUSPR_MAX];
 
 void HuSprWideFixSet(int sprId)
 {

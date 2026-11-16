@@ -4,6 +4,7 @@
 #include "game/wipe.h"
 #include "game/saveload.h"
 #include "game/pad.h"
+#include "port/widescreen.h"
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -231,6 +232,9 @@ void FileselInit(void)
     circleInGrpId = grpId;
     anim = HuSprAnimDataRead(FILESEL_ANM_circleIn);
     sprId = HuSprCreate(anim, 10, 0);
+#ifdef TARGET_PC
+    HuSprWideFixSet(sprId); /* the opening iris keeps its 4:3 shape: not a backdrop to stretch */
+#endif
     HuSprGrpMemberSet(grpId, 0, sprId);
     HuSprDrawNoSet(grpId, 0, 0);
     HuSprGrpPosSet(grpId, 288, 240);
@@ -955,7 +959,14 @@ void FileselWipeDraw(HU3DMODEL *modelP, Mtx *mtx)
     Mtx44 proj;
     Mtx modelview;
     float angle, minAngle;
+#ifdef TARGET_PC
+    /* the clock keeps its 4:3 proportions on the widened ortho; its arms reach the window corners */
+#define FILESEL_WIPE_R (600*HuWideFactor())
+    MTXOrtho(proj, 0, 480, HU_WIDE_L(640), HU_WIDE_R(640), 0, 10);
+#else
+#define FILESEL_WIPE_R 600
     MTXOrtho(proj, 0, 480, 0, 640, 0, 10);
+#endif
     GXSetProjection(proj, GX_ORTHOGRAPHIC);
     MTXIdentity(modelview);
     GXLoadPosMtxImm(modelview, GX_PNMTX0);
@@ -987,18 +998,18 @@ void FileselWipeDraw(HU3DMODEL *modelP, Mtx *mtx)
     minAngle = (1-HuCos((wipeTime/60.0)*90))*180;
     angle = (minAngle > 90) ? 90 : minAngle;
     GXPosition2f32(320, 240);
-    GXPosition2f32((600*HuSin(angle))+320, (600*-HuCos(angle))+240);
-    GXPosition2f32(320, -360);
+    GXPosition2f32((FILESEL_WIPE_R*HuSin(angle))+320, (FILESEL_WIPE_R*-HuCos(angle))+240);
+    GXPosition2f32(320, 240-FILESEL_WIPE_R);
     GXPosition2f32(320, 240);
-    GXPosition2f32((600*-HuSin(angle))+320, (600*-HuCos(angle))+240);
-    GXPosition2f32(320, -360);
+    GXPosition2f32((FILESEL_WIPE_R*-HuSin(angle))+320, (FILESEL_WIPE_R*-HuCos(angle))+240);
+    GXPosition2f32(320, 240-FILESEL_WIPE_R);
     angle = (minAngle < 90) ? 0 : (minAngle-90);
     GXPosition2f32(320, 240);
-    GXPosition2f32(920, 240);
-    GXPosition2f32((600*HuCos(angle))+320, (600*HuSin(angle))+240);
+    GXPosition2f32(320+FILESEL_WIPE_R, 240);
+    GXPosition2f32((FILESEL_WIPE_R*HuCos(angle))+320, (FILESEL_WIPE_R*HuSin(angle))+240);
     GXPosition2f32(320, 240);
-    GXPosition2f32(-280, 240);
-    GXPosition2f32((600*-HuCos(angle))+320, (600*HuSin(angle))+240);
+    GXPosition2f32(320-FILESEL_WIPE_R, 240);
+    GXPosition2f32((FILESEL_WIPE_R*-HuCos(angle))+320, (FILESEL_WIPE_R*HuSin(angle))+240);
     GXEnd();
     wipeTime++;
     if(wipeTime > 60.0) {

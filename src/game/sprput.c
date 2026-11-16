@@ -31,6 +31,7 @@ extern float HuSprWideShift[HUSPR_MAX];
 extern float HuSprWideStretch[HUSPR_MAX][3];
 extern float HuSprDispWideShift;
 extern BOOL HuSprWideClip[HUSPR_MAX];
+extern BOOL HuSprWideFixed[HUSPR_MAX];
 
 /* After the Mario Party 4 port "Party Board" (github.com/zeranemesis/Marioparty4,
  * src/game/sprput.c): whether a sprite covers the original picture (what its layers
@@ -197,7 +198,7 @@ void HuSprDisp(HUSPRITE *sp)
         MTXConcat(*sp->groupMtx, modelview, modelview);
 #ifdef TARGET_PC
         /* a backdrop as big as the original picture fills the widened one */
-        if(HuSprWidescreenBackdrop(pat, modelview[0][0], modelview[1][1])) {
+        if(!HuSprWideFixed[sprId] && HuSprWidescreenBackdrop(pat, modelview[0][0], modelview[1][1])) {
             for(i=0; i<3; i++) {
                 modelview[0][i] *= HuWideFactor();
             }

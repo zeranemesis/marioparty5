@@ -6,6 +6,19 @@
 #include "game/sprite.h"
 #include "game/disp.h"
 #include "datanum/win.h"
+#include "port/widescreen.h"
+
+#ifdef TARGET_PC
+/* WipeImage on a widened ortho: the shape keeps its 4:3 proportions and its solid border
+ * (x' = 3x - 640) reaches past the window edge up to 48:9 */
+#define WIPE_IMAGE_L (-HU_FB_WIDTH/4)
+#define WIPE_IMAGE_R (HU_FB_WIDTH+(HU_FB_WIDTH/4))
+#define WIPE_IMAGE_POS GX_S16
+#else
+#define WIPE_IMAGE_L 0
+#define WIPE_IMAGE_R HU_FB_WIDTH
+#define WIPE_IMAGE_POS GX_U16
+#endif
 
 typedef BOOL (*FADEFUNC)(void);
 
@@ -489,6 +502,13 @@ static BOOL WipeImage(int dataNum)
     color = wipeData.color;
     color.a = 255.0f*time;
     WipeGXInit();
+#ifdef TARGET_PC
+    {
+        Mtx44 proj;
+        MTXOrtho(proj, 0, HU_FB_HEIGHT, HU_WIDE_L(HU_FB_WIDTH), HU_WIDE_R(HU_FB_WIDTH), 0, 10);
+        GXSetProjection(proj, GX_ORTHOGRAPHIC);
+    }
+#endif
     MTXTrans(modelview, -HU_FB_WIDTH, -HU_FB_HEIGHT, 0);
     mtxScaleCat(modelview, 3.0f, 3.0f, 3.0f);
     GXLoadPosMtxImm(modelview, GX_PNMTX0);
@@ -519,7 +539,7 @@ static BOOL WipeImage(int dataNum)
     GXEnd();
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_U16, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, WIPE_IMAGE_POS, 0);
     GXSetNumTexGens(0);
     GXSetNumTevStages(1);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
@@ -529,21 +549,21 @@ static BOOL WipeImage(int dataNum)
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_A0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXBegin(GX_QUADS, GX_VTXFMT0, 16);
-    GXPosition2u16(0, 0);
-    GXPosition2u16(HU_FB_WIDTH, 0);
-    GXPosition2u16(HU_FB_WIDTH, time*(HU_FB_HEIGHT/2));
-    GXPosition2u16(0, time*(HU_FB_HEIGHT/2));
-    GXPosition2u16(0, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
-    GXPosition2u16(HU_FB_WIDTH, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
-    GXPosition2u16(HU_FB_WIDTH, HU_FB_HEIGHT);
-    GXPosition2u16(0, HU_FB_HEIGHT);
-    GXPosition2u16(0, time*(HU_FB_HEIGHT/2));
+    GXPosition2u16(WIPE_IMAGE_L, 0);
+    GXPosition2u16(WIPE_IMAGE_R, 0);
+    GXPosition2u16(WIPE_IMAGE_R, time*(HU_FB_HEIGHT/2));
+    GXPosition2u16(WIPE_IMAGE_L, time*(HU_FB_HEIGHT/2));
+    GXPosition2u16(WIPE_IMAGE_L, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
+    GXPosition2u16(WIPE_IMAGE_R, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
+    GXPosition2u16(WIPE_IMAGE_R, HU_FB_HEIGHT);
+    GXPosition2u16(WIPE_IMAGE_L, HU_FB_HEIGHT);
+    GXPosition2u16(WIPE_IMAGE_L, time*(HU_FB_HEIGHT/2));
     GXPosition2u16(time*(HU_FB_WIDTH/2), time*(HU_FB_HEIGHT/2));
     GXPosition2u16(time*(HU_FB_WIDTH/2), HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
-    GXPosition2u16(0, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
+    GXPosition2u16(WIPE_IMAGE_L, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
     GXPosition2u16(HU_FB_WIDTH-(time*(HU_FB_WIDTH/2)), time*(HU_FB_HEIGHT/2));
-    GXPosition2u16(HU_FB_WIDTH, time*(HU_FB_HEIGHT/2));
-    GXPosition2u16(HU_FB_WIDTH, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
+    GXPosition2u16(WIPE_IMAGE_R, time*(HU_FB_HEIGHT/2));
+    GXPosition2u16(WIPE_IMAGE_R, HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
     GXPosition2u16(HU_FB_WIDTH-(time*(HU_FB_WIDTH/2)), HU_FB_HEIGHT-(time*(HU_FB_HEIGHT/2)));
     GXEnd();
     if(wipeData.maxTime <= wipeData.time) {
