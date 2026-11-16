@@ -3,7 +3,8 @@
 // What is interpolated between the last two logic ticks: cameras (pos/target/up/fov),
 // shadow cameras, model root pos/rot/scale and extra matrix, model skeleton poses
 // (the per-object transforms the motion evaluation wrote), sprite and sprite group
-// pos/rot/scale/alpha. Everything else (particles, lights, texture animation,
+// pos/rot/scale/alpha, Hu3DParticleCreate particles (pos/scale/zRot/colour per slot, whatever
+// hook moves them). Everything else (lights, texture animation,
 // shape/cluster deformation, anything a hook draws from its own data) shows the
 // latest tick. Rotations are Euler degrees: lerped the short way round.
 
@@ -42,6 +43,16 @@ constexpr int kMaxTicksPerFrame = 4;  // a longer stall is dropped, not caught u
 constexpr float kModelJump = 300.0f;  // world units per tick: further is a teleport
 constexpr float kAngleJump = 90.0f;   // degrees per tick: further is a snap
 constexpr float kSpriteJump = 80.0f;  // HUD pixels per tick
+constexpr float kParJump = 150.0f;    // particle world units per tick: further is a respawn
+constexpr float kPi = 3.14159265f;
+
+// the per-particle fields particleFunc draws from (HU3DPARTICLEDATA is 68 bytes, this 28)
+struct ParSnap {
+    HuVecF pos;
+    float scale, zRot;
+    GXColor color;
+    s16 time;
+};
 
 struct ModelSnap {
     const void *id; // hsf, or the hook function of a hook model
@@ -54,6 +65,9 @@ struct ModelSnap {
     bool posed;     // has a pose below
     bool poseMoved; // pose differs from the previous tick's
     std::vector<HSFTRANSFORM> pose;
+    HU3DPARTICLEDATA *parData; // Hu3DParticleCreate model: its particle array, else null
+    s32 parCnt;
+    std::vector<ParSnap> par; // grows only: no allocation once warm
 };
 
 struct SprSnap {
@@ -105,7 +119,9 @@ int sTestFps = -2;
 bool sTestUncapped = false;
 double sStatTime = 0.0;
 u32 sStatFrames = 0, sStatTicks = 0, sStatInterp = 0;
+u32 sStatPar = 0; // particles drawn lerped
 double sTLogic = 0, sTDraw = 0, sTPresent = 0, sTWait = 0, sMark = 0;
+double sTPar = 0; // particle lerp + restore (part of draw)
 
 double now_s()
 {
@@ -196,6 +212,26 @@ void snapshot()
         std::memcpy(s.mtx, m.mtx, sizeof(Mtx));
         s.objects = nullptr;
         s.objectNum = 0;
+        s.parData = nullptr;
+        s.parCnt = 0;
+        // Hu3DParticleCreate model: what its particle hook left in the array is what the tick drew
+        if ((m.attr & (HU3D_ATTR_HOOKFUNC | HU3D_ATTR_PARTICLE)) == (HU3D_ATTR_HOOKFUNC | HU3D_ATTR_PARTICLE) && m.hookData) {
+            const HU3DPARTICLE *pp = (const HU3DPARTICLE *)m.hookData;
+            if (pp->data && pp->maxCnt > 0) {
+                s.parData = pp->data;
+                s.parCnt = pp->maxCnt;
+                s.par.resize(s.parCnt);
+                for (int j = 0; j < s.parCnt; j++) {
+                    const HU3DPARTICLEDATA &d = pp->data[j];
+                    ParSnap &ps = s.par[j];
+                    ps.pos = d.pos;
+                    ps.scale = d.scale;
+                    ps.zRot = d.zRot;
+                    ps.color = d.color;
+                    ps.time = d.time;
+                }
+            }
+        }
         // a hook model's hsf is its hook function (Hu3DHookFuncCreate: mallocNo = id + 10000), whatever its attr says now
         if ((m.attr & HU3D_ATTR_HOOKFUNC) || m.mallocNo == (u32)i + 10000) {
             continue;
@@ -266,6 +302,73 @@ HU3DCAMERA sCamSave[HU3D_CAM_MAX];
 HU3DSHADOW sShadowSave[HU3D_CAM_MAX];
 HUSPRITE sSprSave[HUSPR_MAX];
 HUSPRGRP sGrpSave[HUSPR_GRP_MAX];
+bool sParWritten[HU3D_MODEL_MAX];
+
+// alive in both ticks, slot not reused (age did not go back), no jump
+bool par_lerpable(const ParSnap &a, const ParSnap &b)
+{
+    return b.scale != 0.0f && a.scale != 0.0f && b.time >= a.time && dist3(a.pos, b.pos) <= kParJump;
+}
+
+float lerp_rad(float a, float b, float t)
+{
+    float d = std::fmod(b - a, 2.0f * kPi);
+    if (d > kPi) {
+        d -= 2.0f * kPi;
+    } else if (d < -kPi) {
+        d += 2.0f * kPi;
+    }
+    return std::fabs(d) > kPi * 0.5f ? b : a + d * t;
+}
+
+// writes the lerped particles into the live array (particleFunc draws from it); restore() puts the tick's back.
+// A particle snaps (keeps the tick's values) when it was not alive last tick, its slot was reused
+// (age went back) or it moved further than a particle plausibly flies in a tick.
+void particles_lerp(int i, const ModelSnap &pa, const ModelSnap &pb, float t)
+{
+    if (!pb.parData || pa.parData != pb.parData || pa.parCnt != pb.parCnt) {
+        return;
+    }
+    const double t0 = now_s();
+    HU3DPARTICLEDATA *d = pb.parData;
+    for (int j = 0; j < pb.parCnt; j++) {
+        const ParSnap &a = pa.par[j], &b = pb.par[j];
+        if (!par_lerpable(a, b)) {
+            continue;
+        }
+        const float dx = b.pos.x - a.pos.x, dy = b.pos.y - a.pos.y, dz = b.pos.z - a.pos.z;
+        HU3DPARTICLEDATA &p = d[j];
+        p.pos.x = a.pos.x + dx * t;
+        p.pos.y = a.pos.y + dy * t;
+        p.pos.z = a.pos.z + dz * t;
+        p.scale = a.scale + (b.scale - a.scale) * t;
+        // 0 means "no rotation" to particleFunc: keep it exact
+        p.zRot = (a.zRot == 0.0f || b.zRot == 0.0f) ? b.zRot : lerp_rad(a.zRot, b.zRot, t);
+        p.color.r = (u8)(a.color.r + (b.color.r - a.color.r) * t);
+        p.color.g = (u8)(a.color.g + (b.color.g - a.color.g) * t);
+        p.color.b = (u8)(a.color.b + (b.color.b - a.color.b) * t);
+        p.color.a = (u8)(a.color.a + (b.color.a - a.color.a) * t);
+        sStatPar++;
+    }
+    sParWritten[i] = true;
+    sTPar += now_s() - t0;
+}
+
+void particles_restore(int i)
+{
+    const double t0 = now_s();
+    sParWritten[i] = false;
+    const ModelSnap &s = cur().model[i];
+    for (int j = 0; j < s.parCnt; j++) {
+        const ParSnap &b = s.par[j];
+        HU3DPARTICLEDATA &p = s.parData[j];
+        p.pos = b.pos;
+        p.scale = b.scale;
+        p.zRot = b.zRot;
+        p.color = b.color;
+    }
+    sTPar += now_s() - t0;
+}
 
 void apply_lerp(float t)
 {
@@ -286,6 +389,9 @@ void apply_lerp(float t)
         m.attr &= ~(HU3D_ATTR_MOT_EXEC | HU3D_ATTR_NOPAUSE);
         const ModelSnap &pa = a.model[i];
         const ModelSnap &pb = b.model[i];
+        if (sLerpOk && !(m.attr & HU3D_ATTR_DISPOFF) && same_model(pa, pb)) {
+            particles_lerp(i, pa, pb, t);
+        }
         if (!sLerpOk || !same_model(pa, pb) || dist3(pa.pos, pb.pos) > kModelJump) {
             continue;
         }
@@ -360,6 +466,9 @@ void restore()
             for (int j = 0; j < s.objectNum; j++) {
                 s.objects[j].mesh.curr = s.pose[j];
             }
+        }
+        if (sParWritten[i]) {
+            particles_restore(i);
         }
         if (!m.hsf) {
             continue;
@@ -437,10 +546,12 @@ void stats(double t)
     if (dt >= 2.0) {
         const double n = std::max<u32>(sStatFrames, 1);
         std::printf("HFR: render %.2f fps, logic %.2f Hz, interpolated %.2f fps, target %d, refresh %.1f, hfr %d"
-                    " | ms/frame logic %.2f draw %.2f present %.2f wait %.2f\n",
+                    " | ms/frame logic %.2f draw %.2f present %.2f wait %.2f | particles lerped %.0f/frame in %.3f ms\n",
             sStatFrames / dt, sStatTicks / dt, sStatInterp / dt, target_fps(), sRefresh, (int)sHfr, sTLogic * 1e3 / n,
-            sTDraw * 1e3 / n, sTPresent * 1e3 / n, sTWait * 1e3 / n);
-        sTLogic = sTDraw = sTPresent = sTWait = 0;
+            sTDraw * 1e3 / n, sTPresent * 1e3 / n, sTWait * 1e3 / n, sStatPar / (double)std::max<u32>(sStatInterp, 1),
+            sTPar * 1e3 / std::max<u32>(sStatInterp, 1));
+        sTLogic = sTDraw = sTPresent = sTWait = sTPar = 0;
+        sStatPar = 0;
         std::fflush(stdout);
         sStatTime = t;
         sStatFrames = sStatTicks = sStatInterp = 0;
@@ -476,6 +587,43 @@ void trace()
     const HuVecF &c = Hu3DCamera[0].pos, &p = Hu3DData[model].pos;
     std::printf("HFRT: %.6f %u %.4f cam %.4f %.4f %.4f mdl%d %.4f %.4f %.4f rot %.3f\n", now_s(), cur().counter, sAlpha, c.x, c.y, c.z,
         model, p.x, p.y, p.z, Hu3DData[model].rot.y);
+}
+
+// test bench: MP5_TEST_FPS_TRACE also logs 1200 frames of one lerped particle (re-picked when it dies or snaps):
+// time, tick, alpha, model, slot, position as drawn, then at the tick
+void trace_par()
+{
+    static int start = -2, model = -1, slot = -1, left = 1200;
+    if (start == -2) {
+        const char *env = std::getenv("MP5_TEST_FPS_TRACE");
+        start = env && *env ? std::atoi(env) : -1;
+    }
+    if (start < 0 || left <= 0 || (int)cur().counter < start) {
+        return;
+    }
+    auto ok = [](int i, int j) {
+        const ModelSnap &a = prev().model[i], &b = cur().model[i];
+        return sParWritten[i] && j < b.parCnt && a.parData == b.parData && par_lerpable(a.par[j], b.par[j]);
+    };
+    if (model < 0 || !ok(model, slot)) {
+        model = -1;
+        for (int i = 0; i < HU3D_MODEL_MAX && model < 0; i++) {
+            for (int j = 0; j < cur().model[i].parCnt; j++) {
+                if (ok(i, j) && dist3(prev().model[i].par[j].pos, cur().model[i].par[j].pos) > 0.5f) {
+                    model = i;
+                    slot = j;
+                    break;
+                }
+            }
+        }
+        if (model < 0) {
+            return;
+        }
+    }
+    left--;
+    const HuVecF &p = cur().model[model].parData[slot].pos, &b = cur().model[model].par[slot].pos;
+    std::printf("HFRP: %.6f %u %.4f %d %d %.4f %.4f %.4f tick %.4f %.4f %.4f\n", now_s(), cur().counter, sAlpha, model, slot, p.x, p.y,
+        p.z, b.x, b.y, b.z);
 }
 
 } // namespace
@@ -582,6 +730,7 @@ extern "C" void HuInterpDraw(void)
 
     apply_lerp(sAlpha);
     trace();
+    trace_par();
     // hooks see the counter the tick drew with (particle updates are once per counter) and a pause
     GlobalCounter = cur().counter - 1;
     Hu3DPauseF = TRUE;
