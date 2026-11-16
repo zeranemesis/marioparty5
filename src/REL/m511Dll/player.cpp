@@ -1295,6 +1295,7 @@ void fn_1_13794(Mgr511Player *p)
     f64 mag;
     f32 k;
     f32 drag;
+    f32 lead;
 
     if ((s8)lbl_1_bss_AE8 == 0) {
         lbl_1_bss_AE0 = 60.0;
@@ -1309,6 +1310,10 @@ void fn_1_13794(Mgr511Player *p)
     v.z = (f32)mag;
     PSMTXRotRad(rot, 'y', 0.017453292f * p->angle);
     PSMTXMultVec(rot, &v, &out);
+    /* asm: the velocity is blended with the heading-aligned one (out) before out is overwritten by the thrust */
+    vx = 0.01 * ((99.0 * vx) + (f64)out.x);
+    vy = 0.01 * ((99.0 * vy) + (f64)out.y);
+    vz = 0.01 * ((99.0 * vz) + (f64)out.z);
     k = 1.0f;
     if (p->padNo < 0) {
         k = lbl_1_rodata_778[p->dif];
@@ -1319,22 +1324,23 @@ void fn_1_13794(Mgr511Player *p)
     v.x = 0.0f;
     v.y = 0.0f;
     v.z = (f32)((f64)k * (0.002 * (f64)p->boost * (f64)(1.0f + (0.1f * (f32)p->rank))));
+    lead = (f32)((f64)p->angle + (0.05 * (f64)p->turn));
     if (p->angle > 180.0f) {
         p->angle = p->angle - 360.0f;
     }
     if (p->angle < -180.0f) {
         p->angle = p->angle + 360.0f;
     }
-    PSMTXRotRad(rot, 'y', 0.017453292f * (f32)((f64)p->angle + (0.05 * (f64)p->turn)));
+    PSMTXRotRad(rot, 'y', 0.017453292f * lead);
     PSMTXMultVec(rot, &v, &out);
     if ((s8)lbl_1_bss_AF8 == 0) {
         lbl_1_bss_AF0 = 3000.0 / lbl_1_bss_AE0;
         lbl_1_bss_AF8 = 1;
     }
     drag = 1.0f;
-    v.x = (f32)((0.01 * ((99.0 * vx) + (f64)out.x)) + (lbl_1_bss_AF0 * (f64)out.x));
-    v.y = (f32)((0.01 * ((99.0 * vy) + (f64)out.y)) + (lbl_1_bss_AF0 * (f64)out.y));
-    v.z = (f32)((0.01 * ((99.0 * vz) + (f64)out.z)) + (lbl_1_bss_AF0 * (f64)out.z));
+    v.x = (f32)(vx + (lbl_1_bss_AF0 * (f64)out.x));
+    v.y = (f32)(vy + (lbl_1_bss_AF0 * (f64)out.y));
+    v.z = (f32)(vz + (lbl_1_bss_AF0 * (f64)out.z));
     PSMTXInverse(rot, inv);
     PSMTXMultVec(inv, &v, &out);
     if (p->hit != 0) {
