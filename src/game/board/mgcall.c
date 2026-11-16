@@ -145,8 +145,13 @@ static void MgCallMain(void)
     HuVecF pos;
     HuVecF explodePos2D;
     HuVecF explodePos3D;
+#ifdef TARGET_PC
+    /* MBStatusPosGet also writes z: on a HuVec2f it overran into the next local (cameraP at /O2) */
+    HuVecF statusPos;
+#else
     HuVec2f statusPos;
-    
+#endif
+
     MGCALL_WORK *workP = &work;
     int i;
     int no;
