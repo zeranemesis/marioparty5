@@ -201,7 +201,7 @@ index 2f87117..42af931 100644
  
  constexpr uint32_t ClearPipelineConfigVersion = 2;
 diff --git a/lib/gfx/common.cpp b/lib/gfx/common.cpp
-index eff0c65..3f0b314 100644
+index eff0c65..e3685fc 100644
 --- a/lib/gfx/common.cpp
 +++ b/lib/gfx/common.cpp
 @@ -1,6 +1,7 @@
@@ -288,7 +288,18 @@ index eff0c65..3f0b314 100644
      // If we're only clearing color _or_ alpha, perform a clear draw
      push_draw_command(clear::DrawData{
          .pipeline = pipeline_ref(clear::PipelineConfig{
-@@ -1350,10 +1381,16 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
+@@ -787,6 +818,10 @@ void push_draw_command(rmlui::DrawData data) {
+ 
+ template <>
+ PipelineRef pipeline_ref(const gx::PipelineConfig& config) {
++  // MP5: a built pipeline is found without first copying the config into a heap-allocated callback (once per draw)
++  if (const PipelineRef hash = xxh3_hash(config, static_cast<HashType>(ShaderType::GX)); pipeline_exists(hash)) {
++    return hash;
++  }
+   return find_pipeline(ShaderType::GX, config, [=] { return create_pipeline(config); });
+ }
+ 
+@@ -1350,10 +1385,16 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
        };
        cmd.CopyTextureToTexture(&src, &dst, &size);
      }
@@ -307,10 +318,25 @@ index eff0c65..3f0b314 100644
  void gpu_synchronize() { render_worker::synchronize(); }
  
 diff --git a/lib/gfx/common.hpp b/lib/gfx/common.hpp
-index db245d0..182d37d 100644
+index db245d0..7d94073 100644
 --- a/lib/gfx/common.hpp
 +++ b/lib/gfx/common.hpp
-@@ -173,8 +173,8 @@ private:
+@@ -107,6 +107,14 @@ public:
+     append(&obj, sizeof(T));
+   }
+ 
++  // MP5: grows by size bytes left for the caller to fill; returns where they start
++  uint8_t* append_uninit(size_t size) {
++    resize(m_length + size, false);
++    uint8_t* out = m_data + m_length;
++    m_length += size;
++    return out;
++  }
++
+   void append_zeroes(size_t size) {
+     resize(m_length + size, true);
+     m_length += size;
+@@ -173,8 +181,8 @@ private:
  namespace aurora::gfx {
  inline constexpr bool UseTextureBuffer = true;
  inline constexpr uint64_t UniformBufferSize = 25165824;  // 24mb
@@ -321,7 +347,7 @@ index db245d0..182d37d 100644
  inline constexpr uint64_t StorageBufferSize = 8388608;   // 8mb
  inline constexpr uint64_t TextureUploadSize = 25165824;  // 24mb
  
-@@ -234,8 +234,12 @@ uint32_t current_frame() noexcept;
+@@ -234,8 +242,12 @@ uint32_t current_frame() noexcept;
  void render_pass(const wgpu::RenderPassEncoder& pass, uint32_t idx);
  void after_submit() noexcept;
  void gpu_synchronize();
@@ -589,6 +615,36 @@ index 0000000..0de56ac
 +// main thread: waits for the latest readback of dest and writes it there; false if none or it failed
 +bool sync(void* dest) noexcept;
 +} // namespace aurora::gfx::copy_readback
+diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
+index 04a4310..e6fe794 100644
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -1087,6 +1087,13 @@ void end_pipeline_frame() {
+   }
+ }
+ 
++bool pipeline_exists(PipelineRef ref) {
++  std::lock_guard guard{g_pipelineMutex};
++  const auto it = g_pipelines.find(ref);
++  // one loaded from the disk cache with a later first use goes through find_pipeline, which records this frame
++  return it != g_pipelines.end() && it->second.firstFrameUsed <= current_frame();
++}
++
+ bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
+   std::lock_guard guard{g_pipelineMutex};
+   const auto it = g_pipelines.find(ref);
+diff --git a/lib/gfx/pipeline_cache.hpp b/lib/gfx/pipeline_cache.hpp
+index 2e87f4c..a56e6a6 100644
+--- a/lib/gfx/pipeline_cache.hpp
++++ b/lib/gfx/pipeline_cache.hpp
+@@ -29,5 +29,7 @@ template <typename Config>
+ PipelineRef find_pipeline(ShaderType type, const Config& config, NewPipelineCallback&& cb);
+ 
+ bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline);
++// MP5: already built and first used no later than this frame (the ref of a config is its hash, as in find_pipeline)
++bool pipeline_exists(PipelineRef ref);
+ 
+ } // namespace aurora::gfx
 diff --git a/lib/gfx/texture.cpp b/lib/gfx/texture.cpp
 index 013afc0..ee1ade2 100644
 --- a/lib/gfx/texture.cpp
@@ -603,11 +659,168 @@ index 013afc0..ee1ade2 100644
        .dimension = wgpu::TextureDimension::e2D,
        .size = size,
        .format = wgpuFormat,
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+index 9748556..8e7ea71 100644
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -18,74 +18,69 @@
+ namespace aurora::gx::fifo {
+ static Module Log("aurora::gx::fifo");
+ 
++// MP5: indices written straight into the reserved space (one size check per draw, not per index)
+ static u16 prepare_idx_buffer(ByteBuffer& buf, GXPrimitive prim, u16 vtxStart, u16 vtxCount) {
+-  u16 numIndices = 0;
++  u32 numIndices = 0;
++  if (prim == GX_QUADS) {
++    numIndices = (vtxCount + 3) / 4 * 6;
++  } else if (prim == GX_TRIANGLES) {
++    numIndices = vtxCount;
++  } else if (prim == GX_TRIANGLEFAN || prim == GX_TRIANGLESTRIP) {
++    numIndices = vtxCount < 3 ? vtxCount : (u32(vtxCount) - 3) * 3 + 3;
++  } else if (prim == GX_LINES || prim == GX_LINESTRIP || prim == GX_POINTS) {
++    numIndices = 6;
++  } else
++    UNLIKELY FATAL("unsupported primitive type {}", static_cast<u32>(prim));
++  u16* out = reinterpret_cast<u16*>(buf.append_uninit(numIndices * sizeof(u16)));
+   if (prim == GX_QUADS) {
+-    buf.reserve_extra((vtxCount / 4) * 6 * sizeof(u16));
+-
+-    for (u16 v = 0; v < vtxCount; v += 4) {
+-      u16 idx0 = vtxStart + v;
+-      u16 idx1 = vtxStart + v + 1;
+-      u16 idx2 = vtxStart + v + 2;
+-      u16 idx3 = vtxStart + v + 3;
+-
+-      buf.append(idx0);
+-      buf.append(idx1);
+-      buf.append(idx2);
+-      numIndices += 3;
+-
+-      buf.append(idx2);
+-      buf.append(idx3);
+-      buf.append(idx0);
+-      numIndices += 3;
++    for (u32 v = 0; v < vtxCount; v += 4) {
++      const u16 idx0 = vtxStart + v;
++      out[0] = idx0;
++      out[1] = idx0 + 1;
++      out[2] = idx0 + 2;
++      out[3] = idx0 + 2;
++      out[4] = idx0 + 3;
++      out[5] = idx0;
++      out += 6;
+     }
+   } else if (prim == GX_TRIANGLES) {
+-    buf.reserve_extra(vtxCount * sizeof(u16));
+-    for (u16 v = 0; v < vtxCount; ++v) {
+-      const u16 idx = vtxStart + v;
+-      buf.append(idx);
+-      ++numIndices;
++    for (u32 v = 0; v < vtxCount; ++v) {
++      out[v] = vtxStart + v;
+     }
+   } else if (prim == GX_TRIANGLEFAN) {
+-    buf.reserve_extra(((u32(vtxCount) - 3) * 3 + 3) * sizeof(u16));
+-    for (u16 v = 0; v < vtxCount; ++v) {
++    for (u32 v = 0; v < vtxCount; ++v) {
+       const u16 idx = vtxStart + v;
+       if (v < 3) {
+-        buf.append(idx);
+-        ++numIndices;
++        *out++ = idx;
+         continue;
+       }
+-      buf.append(std::array{vtxStart, static_cast<u16>(idx - 1), idx});
+-      numIndices += 3;
++      out[0] = vtxStart;
++      out[1] = idx - 1;
++      out[2] = idx;
++      out += 3;
+     }
+   } else if (prim == GX_TRIANGLESTRIP) {
+-    buf.reserve_extra(((static_cast<u32>(vtxCount) - 3) * 3 + 3) * sizeof(u16));
+-    for (u16 v = 0; v < vtxCount; ++v) {
++    for (u32 v = 0; v < vtxCount; ++v) {
+       const u16 idx = vtxStart + v;
+       if (v < 3) {
+-        buf.append(idx);
+-        ++numIndices;
++        *out++ = idx;
+         continue;
+       }
+       if ((v & 1) == 0) {
+-        buf.append(std::array{static_cast<u16>(idx - 2), static_cast<u16>(idx - 1), idx});
++        out[0] = idx - 2;
++        out[1] = idx - 1;
+       } else {
+-        buf.append(std::array{static_cast<u16>(idx - 1), static_cast<u16>(idx - 2), idx});
++        out[0] = idx - 1;
++        out[1] = idx - 2;
+       }
+-      numIndices += 3;
++      out[2] = idx;
++      out += 3;
+     }
+-  } else if (prim == GX_LINES || prim == GX_LINESTRIP || prim == GX_POINTS) {
+-    buf.reserve_extra(6 * sizeof(u16));
+-    buf.append<u16>(0);
+-    buf.append<u16>(1);
+-    buf.append<u16>(3);
+-    buf.append<u16>(3);
+-    buf.append<u16>(2);
+-    buf.append<u16>(0);
+-    numIndices = 6;
+-  } else
+-    UNLIKELY FATAL("unsupported primitive type {}", static_cast<u32>(prim));
+-  return numIndices;
++  } else {
++    static constexpr u16 kQuad[6] = {0, 1, 3, 3, 2, 0};
++    std::memcpy(out, kQuad, sizeof(kQuad));
++  }
++  return static_cast<u16>(numIndices);
+ }
+ 
+ // GX FIFO opcodes - use CP_ prefix to avoid clashing with GXCommandList.h macros
+@@ -372,8 +367,13 @@ static void handle_xf(const u8* data, u32& pos, u32 size, bool bigEndian);
+ static void handle_draw(u8 cmd, const u8* data, u32& pos, u32 size, bool bigEndian);
+ static void handle_aurora(const u8* data, u32& pos, u32 size, bool bigEndian);
+ 
++u32 g_processEpoch = 0;
++
+ void process(const u8* data, u32 size, bool bigEndian) {
+   ZoneScoped;
++  if (++g_processEpoch == 0) {
++    g_processEpoch = 1; // 0 never matches a memo entry
++  }
+   u32 pos = 0;
+ 
+   while (pos < size) {
+diff --git a/lib/gx/command_processor.hpp b/lib/gx/command_processor.hpp
+index 93feba1..4e3ffca 100644
+--- a/lib/gx/command_processor.hpp
++++ b/lib/gx/command_processor.hpp
+@@ -7,4 +7,7 @@ namespace aurora::gx::fifo {
+ // Process a buffer of GX FIFO commands
+ void process(const uint8_t* data, uint32_t size, bool bigEndian);
+ 
++// MP5: moves on with every process() call; no game code runs while one call lasts (memos key on it)
++extern uint32_t g_processEpoch;
++
+ } // namespace aurora::gx::fifo
 diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
-index 9ca9036..ea3bc20 100644
+index 9ca9036..82ecedd 100644
 --- a/lib/gx/gx.cpp
 +++ b/lib/gx/gx.cpp
-@@ -84,7 +84,28 @@ absl::flat_hash_map<u32, CachedTextureEntry> s_textureObjectCaches;
+@@ -1,5 +1,8 @@
+ #include "gx.hpp"
+ 
++#include "command_processor.hpp"
++#include <tuple>
++
+ #include "pipeline.hpp"
+ #include "../dolphin/vi/vi_internal.hpp"
+ #include "../webgpu/gpu.hpp"
+@@ -84,7 +87,42 @@ absl::flat_hash_map<u32, CachedTextureEntry> s_textureObjectCaches;
  absl::flat_hash_map<u32, TlutObjectCache> s_tlutObjectCaches;
  std::atomic_bool s_staticTextureCacheClearPending = false;
  
@@ -623,8 +836,22 @@ index 9ca9036..ea3bc20 100644
 +  }
 +  const u32 mips = obj.mip_count();
 +  const u32 size = GXGetTexBufferSize(obj.width(), obj.height(), obj.format(), mips > 1, mips);
-+  u64 key = XXH3_64bits_withSeed(obj.data, size,
-+                                 (u64{obj.width()} << 40) | (u64{obj.height()} << 16) | (u64{mips} << 8) | obj.format());
++  const u64 seed = (u64{obj.width()} << 40) | (u64{obj.height()} << 16) | (u64{mips} << 8) | obj.format();
++  // MP5: a frame binds the same texture many times; while one command list is processed no game code runs, so its
++  // bytes cannot change and the hash is reused (fifo::g_processEpoch moves on with each list)
++  struct Memo {
++    u32 epoch;
++    u64 hash;
++  };
++  static absl::flat_hash_map<std::tuple<const void*, u32, u64>, Memo> s_memo;
++  if (s_memo.size() > 8192) {
++    s_memo.clear();
++  }
++  Memo& memo = s_memo[{obj.data, size, seed}];
++  if (memo.epoch != fifo::g_processEpoch || fifo::g_processEpoch == 0) {
++    memo = {fifo::g_processEpoch, XXH3_64bits_withSeed(obj.data, size, seed)};
++  }
++  u64 key = memo.hash;
 +  if (tlut != nullptr) {
 +    key = XXH3_64bits_withSeed(tlut->data, size_t{tlut->numEntries} * 2, key ^ (static_cast<u64>(tlut->format) + 1));
 +  }
@@ -636,7 +863,7 @@ index 9ca9036..ea3bc20 100644
    s_textureObjectCaches.clear();
    for (auto& [_, cache] : s_tlutObjectCaches) {
      cache.staticTextureUsers.clear();
-@@ -118,6 +139,12 @@ void store_cached_texture(const GXTexObj_& obj, gfx::TextureHandle handle, u32 t
+@@ -118,6 +156,12 @@ void store_cached_texture(const GXTexObj_& obj, gfx::TextureHandle handle, u32 t
      return;
    }
  
@@ -649,7 +876,7 @@ index 9ca9036..ea3bc20 100644
    auto& entry = s_textureObjectCaches[obj.texObjId];
    if (entry.tlutObjId != tlutObjId) {
      clear_texture_dependency(obj.texObjId, entry.tlutObjId);
-@@ -163,7 +190,11 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+@@ -163,7 +207,11 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
      do_clear_static_texture_cache();
    }
  
@@ -662,7 +889,7 @@ index 9ca9036..ea3bc20 100644
      if (const auto it = s_textureObjectCaches.find(obj.texObjId); it != s_textureObjectCaches.end()) {
        const auto& entry = it->second;
        if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.tlutObjId == 0) {
-@@ -172,6 +203,12 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+@@ -172,6 +220,12 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
      }
    }
  
@@ -675,7 +902,7 @@ index 9ca9036..ea3bc20 100644
    gfx::TextureHandle handle;
    if (const auto replacement = gfx::texture_replacement::find_replacement(obj); replacement.has_value()) {
      handle = *replacement;
-@@ -185,6 +222,12 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+@@ -185,6 +239,12 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
      handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
                                          {static_cast<const uint8_t*>(obj.data), UINT32_MAX}, false, nameStr);
    }
@@ -688,7 +915,7 @@ index 9ca9036..ea3bc20 100644
    if (!obj.no_cache()) {
      store_cached_texture(obj, handle);
    }
-@@ -197,7 +240,8 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+@@ -197,7 +257,8 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
      do_clear_static_texture_cache();
    }
  
@@ -698,7 +925,7 @@ index 9ca9036..ea3bc20 100644
      if (const auto it = s_textureObjectCaches.find(obj.texObjId); it != s_textureObjectCaches.end()) {
        const auto& entry = it->second;
        if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.tlutObjId == tlut.tlutObjId &&
-@@ -207,6 +251,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+@@ -207,6 +268,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
      }
    }
  
@@ -711,7 +938,7 @@ index 9ca9036..ea3bc20 100644
    gfx::TextureHandle handle;
    if (const auto replacement = gfx::texture_replacement::find_replacement(obj); replacement.has_value()) {
      handle = *replacement;
-@@ -222,6 +272,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+@@ -222,6 +289,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
                                     {converted.data.data(), converted.data.size()}, false, "GX Static Palette Texture");
      handle->hasArbitraryMips = converted.hasArbitraryMips;
    }
