@@ -965,3 +965,30 @@ index 3671ed5..a150317 100644
      } else
        UNLIKELY FATAL("unhandled tcg src {}", underlying(tcg.src));
      if (tcg.type == GX_TG_MTX2x4 || tcg.type == GX_TG_MTX3x4) {
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index a969465..6e4215e 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -814,7 +814,11 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+     for (size_t i = 0; i < supportedFeatures.featureCount; ++i) {
+       const auto feature = supportedFeatures.features[i];
+       if (feature == wgpu::FeatureName::TextureCompressionBC || feature == wgpu::FeatureName::TextureCompressionASTC ||
+-          feature == wgpu::FeatureName::TextureComponentSwizzle) {
++          feature == wgpu::FeatureName::TextureComponentSwizzle ||
++          // MP5: the game thread creates textures and bind groups while the render worker encodes and submits;
++          // without this Dawn's device is not thread-safe (D3D12 crashed in Submit, or lost the device closing
++          // the pending command list).
++          feature == wgpu::FeatureName::ImplicitDeviceSynchronization) {
+         if (feature == wgpu::FeatureName::TextureCompressionBC) {
+           g_bcTexturesSupported = true;
+         } else if (feature == wgpu::FeatureName::TextureCompressionASTC) {
+@@ -896,6 +900,9 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+     if (!g_device) {
+       return false;
+     }
++    if (!g_device.HasFeature(wgpu::FeatureName::ImplicitDeviceSynchronization)) {
++      Log.warn("ImplicitDeviceSynchronization unavailable: the render worker races device calls");
++    }
+     g_device.SetLoggingCallback([](wgpu::LoggingType type, wgpu::StringView message) {
+       AuroraLogLevel level = LOG_FATAL;
+       switch (type) {
