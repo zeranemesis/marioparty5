@@ -2026,6 +2026,14 @@ static void LoadTexture(HU3DMODEL *modelP, HSFBITMAP *bmpPtr, HSFATTRIBUTE *attr
     GXLoadTexObj(&texObj, texId);
 }
 
+#ifdef TARGET_PC
+/* the set's own texture on the widescreen decor (hsfman.c Hu3DWideDecorDraw) */
+void Hu3DWideDecorTexLoad(HU3DMODEL *modelP, HSFATTRIBUTE *attrP)
+{
+    LoadTexture(modelP, attrP->bitmap, attrP, GX_TEXMAP0);
+}
+#endif
+
 static void objNull(HU3DMODEL *modelP, HSFOBJECT *objPtr)
 {
     HSFTRANSFORM *transformP;

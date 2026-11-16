@@ -1,4 +1,7 @@
 #include "version.h"
+#ifdef TARGET_PC
+#include <math.h>
+#endif
 #include "string.h"
 #include "game/init.h"
 #include "port/widescreen.h"
@@ -187,6 +190,7 @@ static void Hu3DShadowExec(BOOL bgColorF);
 static void Hu3DReflectModelExec(void);
 #ifdef TARGET_PC
 static void Hu3DPillarboxBarDraw(void);
+static void Hu3DWideDecorDraw(s16 cameraNo);
 #endif
 
 #define HU3D_ATTR_CAMERA_UPDATE (HU3D_ATTR_CAMERA_MOTON|HU3D_ATTR_DISPOFF)
@@ -278,6 +282,9 @@ void Hu3DExec(void)
         if(FogData.fogType != GX_FOG_NONE) {
             GXSetFog(FogData.fogType, FogData.fogStart, FogData.fogEnd, cameraP->near, cameraP->far, FogData.fogColor);
         }
+#ifdef TARGET_PC
+        Hu3DWideDecorDraw(Hu3DCameraNo);
+#endif
         for(layer=0; layer<HU3D_LAYER_MAX; layer++) {
             if(layerHook[layer]) {
                 Hu3DCameraSet(Hu3DCameraNo, Hu3DCameraMtx);
@@ -1208,19 +1215,40 @@ static u16 Hu3DCameraPillarboxBit; /* Hu3DCameraPillarboxSet */
 /* Mini-games whose stage ends at the 4:3 edge (void, black or unfinished geometry
  * beyond it in 16:9, checked with MP5_TEST_MG captures): their cameras are pillarboxed */
 static const OMOVL Hu3DPillarboxOvlTbl[] = {
-    DLL_m501dll, /* mg 0: intro fly-by and play camera */
-    DLL_m505dll, /* mg 4 */
-    DLL_m510dll, /* mg 9 */
+    DLL_m505dll, /* mg 4: the penguins slide in from off-camera on the right */
     DLL_m515dll, /* mg 14: split screen */
-    DLL_m521dll, /* mg 20 */
     DLL_m530dll, /* mg 29: backdrop box corners */
-    DLL_m531dll, /* mg 30 */
-    DLL_m534dll, /* mg 33 */
+    DLL_m531dll, /* mg 30: cloud layers far below the garage, no floor past the 4:3 edge */
     DLL_m552dll, /* mg 51: the board ends in black at the 4:3 edge */
-    DLL_m562dll, /* mg 61 */
-    DLL_m565dll, /* mg 64: backdrop ends, black corners */
+    DLL_m562dll, /* mg 61: the arena edges and black past them */
+    DLL_m565dll, /* mg 64: backdrop ends, black corners; birds fly in from the sides */
     DLL_m574dll, /* mg 73: the pinball board ends in black */
 };
+
+/* Mini-games whose set is continued past the 4:3 edge instead (Hu3DWideDecorDraw): drawn
+ * first, without depth, so the scene covers it wherever it has something; it only fills
+ * the void. */
+#define HU3D_WIDEDECOR_PLANE 0  /* a level floor tiled with one of the set's textures */
+#define HU3D_WIDEDECOR_MIRROR 1 /* a backdrop arc mirrored past both its ends (seamless); a flat
+                                * panel is an arc whose axis is far in front of it */
+typedef struct {
+    OMOVL ovl;
+    s16 kind;
+    char *name;     /* PLANE: the bitmap tiled over it, MIRROR: the backdrop mesh */
+    GXColor color;  /* the scene's lighting on it: texture x colour */
+    float x, y, z;  /* PLANE: centre, MIRROR: a point on the backdrop's vertical axis */
+    float size;     /* PLANE: half width */
+    float tile;     /* PLANE: world units per texture width */
+} HU3DWIDEDECOR;
+
+static const HU3DWIDEDECOR Hu3DWideDecorTbl[] = {
+    { DLL_m501dll, HU3D_WIDEDECOR_MIRROR, "bg", { 255, 255, 255, 255 }, 2548.5f, 0.0f, 2221.3f }, /* mg 0: sweets sky */
+    { DLL_m521dll, HU3D_WIDEDECOR_PLANE, "yuka01", { 205, 205, 205, 255 }, 0.0f, -135.0f, -400.0f, 6000.0f, 900.0f }, /* mg 20: wooden table under the clock deck */
+    { DLL_m510dll, HU3D_WIDEDECOR_PLANE, "m510grand01", { 255, 255, 255, 255 }, 380.0f, -1.0f, 1300.0f, 8000.0f, 670.0f }, /* mg 9: the tiled floor */
+    { DLL_m534dll, HU3D_WIDEDECOR_MIRROR, "grid1", { 216, 216, 216, 255 }, 0.0f, 0.0f, 1000000.0f }, /* mg 33: flat sky panel, mirrored past its sides */
+};
+static const HU3DWIDEDECOR *Hu3DWideDecor;
+static u16 Hu3DWideDecorBit;
 #endif
 
 void Hu3DCameraCreate(int cameraBit)
@@ -1237,6 +1265,13 @@ void Hu3DCameraCreate(int cameraBit)
     for(i=0; i<(s16)(sizeof(Hu3DPillarboxOvlTbl)/sizeof(Hu3DPillarboxOvlTbl[0])); i++) {
         if(omcurovl == Hu3DPillarboxOvlTbl[i]) {
             Hu3DCameraPillarboxBit |= cameraBit;
+        }
+    }
+    Hu3DWideDecorBit &= ~cameraBit;
+    for(i=0; i<(s16)(sizeof(Hu3DWideDecorTbl)/sizeof(Hu3DWideDecorTbl[0])); i++) {
+        if(omcurovl == Hu3DWideDecorTbl[i].ovl) {
+            Hu3DWideDecor = &Hu3DWideDecorTbl[i];
+            Hu3DWideDecorBit |= cameraBit;
         }
     }
 #endif
@@ -1342,6 +1377,179 @@ static void Hu3DPillarboxBarDraw(void)
     GXPosition2f32(HU_FB_WIDTH, HU_FB_HEIGHT);
     GXPosition2f32(HU_FB_WIDTH-w, HU_FB_HEIGHT);
     GXEnd();
+}
+
+void Hu3DWideDecorTexLoad(HU3DMODEL *modelP, HSFATTRIBUTE *attrP);
+
+/* one face of a mesh, in its own vertex order (hsfdraw.c MakeDisplayList) */
+static void Hu3DWideDecorFaceDraw(HSFOBJECT *objP, HSFFACE *faceP)
+{
+    static const s16 triOrder[] = { 0, 2, 1 };
+    static const s16 quadOrder[] = { 0, 2, 3, 1 };
+    HuVecF *vtx = objP->mesh.vertex->data;
+    HuVec2f *st = objP->mesh.st->data;
+    HSFFACEINDEX *idx;
+    u32 i;
+    switch(faceP->type & HSF_FACE_MASK) {
+        case HSF_FACE_TRI:
+        case HSF_FACE_QUAD:
+            GXBegin(((faceP->type & HSF_FACE_MASK) == HSF_FACE_TRI) ? GX_TRIANGLES : GX_QUADS, GX_VTXFMT0, ((faceP->type & HSF_FACE_MASK) == HSF_FACE_TRI) ? 3 : 4);
+            for(i=0; i<(((faceP->type & HSF_FACE_MASK) == HSF_FACE_TRI) ? 3u : 4u); i++) {
+                idx = &faceP->index[((faceP->type & HSF_FACE_MASK) == HSF_FACE_TRI) ? triOrder[i] : quadOrder[i]];
+                GXPosition3f32(vtx[idx->vertex].x, vtx[idx->vertex].y, vtx[idx->vertex].z);
+                GXTexCoord2f32(st[idx->st].x, st[idx->st].y);
+            }
+            GXEnd();
+            break;
+        case HSF_FACE_TRISTRIP:
+            GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT0, faceP->strip.count+3);
+            for(i=0; i<3; i++) {
+                idx = &faceP->index[triOrder[i]];
+                GXPosition3f32(vtx[idx->vertex].x, vtx[idx->vertex].y, vtx[idx->vertex].z);
+                GXTexCoord2f32(st[idx->st].x, st[idx->st].y);
+            }
+            for(i=0; i<faceP->strip.count; i++) {
+                idx = &faceP->strip.data[i];
+                GXPosition3f32(vtx[idx->vertex].x, vtx[idx->vertex].y, vtx[idx->vertex].z);
+                GXTexCoord2f32(st[idx->st].x, st[idx->st].y);
+            }
+            GXEnd();
+            break;
+    }
+}
+
+/* the camera's decor (Hu3DWideDecorTbl), before its scene: textured with the set's own
+ * bitmap, never depth tested or written, so any scene pixel covers it */
+static void Hu3DWideDecorDraw(s16 cameraNo)
+{
+    const HU3DWIDEDECOR *decor = Hu3DWideDecor;
+    HU3DMODEL *modelP;
+    HSFATTRIBUTE attr;
+    HSFOBJECT *objP = NULL;
+    Mtx mtx, mv;
+    s16 i, j;
+    if(!(Hu3DWideDecorBit & (1 << cameraNo)) || HuWideFactor() == 1.0f) {
+        return;
+    }
+    /* the set's model, still loaded (none: no decor) */
+    for(modelP=&Hu3DData[0], i=0; i<HU3D_MODEL_MAX; i++, modelP++) {
+        if(!modelP->hsf || (modelP->attr & HU3D_ATTR_HOOKFUNC)) {
+            continue;
+        }
+        if(decor->kind == HU3D_WIDEDECOR_PLANE) {
+            for(j=0; j<modelP->hsf->attributeNum; j++) {
+                if(modelP->hsf->attribute[j].bitmap && !strcmp(modelP->hsf->attribute[j].bitmap->name, decor->name)) {
+                    break;
+                }
+            }
+            if(j < modelP->hsf->attributeNum) {
+                attr = modelP->hsf->attribute[j];
+                break;
+            }
+        } else {
+            for(j=0; j<modelP->hsf->objectNum; j++) {
+                objP = &modelP->hsf->object[j];
+                if(objP->type == HSF_OBJ_MESH && objP->mesh.st && !strcmp(objP->name, decor->name)) {
+                    break;
+                }
+            }
+            if(j < modelP->hsf->objectNum) {
+                HSFMATERIAL *matP = &modelP->hsf->material[((HSFFACE *)objP->mesh.face->data)->mat & 0xFFF];
+                attr = modelP->hsf->attribute[matP->attr[0]];
+                break;
+            }
+        }
+    }
+    if(i >= HU3D_MODEL_MAX) {
+        return;
+    }
+    Hu3DCameraSet(cameraNo, Hu3DCameraMtx);
+    if(FogData.fogType == GX_FOG_NONE) {
+        GXSetFog(GX_FOG_NONE, 0, 0, 0, 0, decor->color);
+    }
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE, GX_AF_NONE);
+    GXSetChanMatColor(GX_COLOR0A0, decor->color);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+    GXSetNumIndStages(0);
+    GXSetNumTevStages(1);
+    GXSetTevDirect(GX_TEVSTAGE0);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXSetCurrentMtx(GX_PNMTX0);
+    if(decor->kind == HU3D_WIDEDECOR_PLANE) {
+        /* square texels: the bitmap's height covers tile*sizeY/sizeX */
+        float s = decor->size/decor->tile;
+        float t = s*attr.bitmap->sizeX/attr.bitmap->sizeY;
+        attr.wrapS = attr.wrapT = TRUE;
+        Hu3DWideDecorTexLoad(modelP, &attr);
+        GXLoadPosMtxImm(Hu3DCameraMtx, GX_PNMTX0);
+        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+        GXPosition3f32(decor->x-decor->size, decor->y, decor->z-decor->size);
+        GXTexCoord2f32(-s, -t);
+        GXPosition3f32(decor->x+decor->size, decor->y, decor->z-decor->size);
+        GXTexCoord2f32(s, -t);
+        GXPosition3f32(decor->x+decor->size, decor->y, decor->z+decor->size);
+        GXTexCoord2f32(s, t);
+        GXPosition3f32(decor->x-decor->size, decor->y, decor->z+decor->size);
+        GXTexCoord2f32(-s, t);
+        GXEnd();
+    } else {
+        /* mirrored about the vertical planes through the axis and each end of the arc */
+        /* shortcut: ends found by atan2f angle, so an arc across the axis's -x side (+-180 deg)
+         * gets the wrong ends; unwrap the angles if such a backdrop is ever added */
+        HuVecF *vtx = objP->mesh.vertex->data;
+        HuVecF w;
+        float a, aMin = 1e9f, aMax = -1e9f, nx, nz, d;
+        float ends[2][2];
+        s32 v;
+        Hu3DWideDecorTexLoad(modelP, &attr);
+        Hu3DModelObjMtxGet(i, objP->name, mtx);
+        for(v=0; v<objP->mesh.vertex->count; v++) {
+            MTXMultVec(mtx, &vtx[v], &w);
+            a = atan2f(w.z-decor->z, w.x-decor->x);
+            if(a < aMin) {
+                aMin = a;
+                ends[0][0] = w.x-decor->x;
+                ends[0][1] = w.z-decor->z;
+            }
+            if(a > aMax) {
+                aMax = a;
+                ends[1][0] = w.x-decor->x;
+                ends[1][1] = w.z-decor->z;
+            }
+        }
+        for(j=0; j<2; j++) {
+            Mtx refl;
+            d = sqrtf(ends[j][0]*ends[j][0]+ends[j][1]*ends[j][1]);
+            nx = -ends[j][1]/d;
+            nz = ends[j][0]/d;
+            /* p - 2((p-axis).n)n */
+            MTXIdentity(refl);
+            refl[0][0] = 1.0f-(2.0f*nx*nx);
+            refl[0][2] = -2.0f*nx*nz;
+            refl[2][0] = -2.0f*nx*nz;
+            refl[2][2] = 1.0f-(2.0f*nz*nz);
+            refl[0][3] = 2.0f*((decor->x*nx)+(decor->z*nz))*nx;
+            refl[2][3] = 2.0f*((decor->x*nx)+(decor->z*nz))*nz;
+            MTXConcat(refl, mtx, mv);
+            MTXConcat(Hu3DCameraMtx, mv, mv);
+            GXLoadPosMtxImm(mv, GX_PNMTX0);
+            for(v=0; v<objP->mesh.face->count; v++) {
+                Hu3DWideDecorFaceDraw(objP, &((HSFFACE *)objP->mesh.face->data)[v]);
+            }
+        }
+    }
 }
 #endif
 
