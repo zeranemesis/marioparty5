@@ -58,6 +58,8 @@ void ToueiDispInit(HU3DMODELID *mdlId)
         Hu3DModelObjPosGet(PResPlayerModelId[i], ToueiCenterObj[PResCharNo[i]], &pos3D);
         pos3D.y += ToueiCenterOfsY[PResCharNo[i]];
         Hu3D3Dto2D(&pos3D, HU3D_CAM0, &pos2D);
+        /* the copy reads the 3D picture: undo the HUD shift Hu3D3Dto2D applies in widescreen */
+        pos2D.x = HU_WIDE_PICTURE_X(pos2D.x, pos2D.y);
         posX = pos2D.x*(640.0/576.0);
         posY = pos2D.y;
         posX &= 0xFFFE;
