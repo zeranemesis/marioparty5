@@ -21,6 +21,7 @@
 #include "port/imgui.h"
 #include "port/main.h"
 #include "port/retroachievements.h"
+#include "port/dvd_timing.h"
 void Mp5Native_ThpLogicalTick(void);
 #include "port/ui.h"
 
@@ -125,6 +126,9 @@ void main(void)
         Hu3DPreProc();
         HuPadRead();
         pfClsScr();
+#ifdef TARGET_PC
+        Mp5Native_DvdTimingPump(); /* background disc reads that end this tick (GameCube loading speed) */
+#endif
         HuPrcCall(1);
         GameMesExec();
         HuPerfBegin(1);

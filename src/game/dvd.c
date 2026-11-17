@@ -1,4 +1,7 @@
 #include "game/dvd.h"
+#ifdef TARGET_PC
+#include "port/dvd_timing.h"
+#endif
 #include "game/data.h"
 
 #include "dolphin/dvd.h"
@@ -81,6 +84,12 @@ static void *HuDvdDataReadWait(DVDFileInfo *file, int mode, int param, BOOL asyn
             }
             CallBackStatus = 0;
             DVDReadAsyncPrio(file, ((u8 *)buf)+readOfs, OSRoundUp32B(readSize), readOfs, HuDVDReadAsyncCallBack, 2);
+#ifdef TARGET_PC
+            /* the console's CPU spins below until the drive is done: the whole game waits */
+            if(Mp5Native_DvdTimingOn()) {
+                Mp5Native_DvdTimingSleepUntil(Mp5Native_DvdTimingRead(file->startAddr+readOfs, OSRoundUp32B(readSize)));
+            }
+#endif
             if(!async) {
                 while(CallBackStatus == 0) {
                     HuDvdErrorWatch();

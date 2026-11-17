@@ -95,6 +95,7 @@ struct UserSettings {
         ConfigVar<int> shadowResolutionMultiplier;
         ConfigVar<int> msaaSamples;        // 1 = off (original); read at start-up
         ConfigVar<int> textureAnisotropy;  // 1 = off (original) .. 16; read at start-up
+        ConfigVar<int> loadingSpeed;       // 0 = fast (the disc image is read at once), 1 = GameCube drive timing
 
         // Audio
 

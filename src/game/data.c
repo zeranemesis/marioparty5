@@ -1,4 +1,7 @@
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/dvd_timing.h"
+#endif
 #include "game/data.h"
 #include "game/dvd.h"
 
@@ -206,6 +209,13 @@ HUDATASTAT *HuDataDirSet(void *dirP, int dataNum)
     }
 }
 
+#ifdef TARGET_PC
+static void HuDataDirReadAsyncDone(void *arg)
+{
+    ((HUDATASTAT *)arg)->status = 0;
+}
+#endif
+
 void HuDataDirReadAsyncCallBack(s32 result, DVDFileInfo* fileInfo)
 {
     HUDATASTAT *readStat;
@@ -224,6 +234,16 @@ void HuDataDirReadAsyncCallBack(s32 result, DVDFileInfo* fileInfo)
         readStat->status = 0;
         return;
     }
+#ifdef TARGET_PC
+    /* the block just read keeps the drive busy: the background read ends when the drive would have */
+    if(Mp5Native_DvdTimingOn()) {
+        u32 blockSize = readStat->readLen-readStat->readOfs;
+        if(blockSize > HU_DVD_BLOCKSIZE) {
+            blockSize = HU_DVD_BLOCKSIZE;
+        }
+        readStat->doneAt = Mp5Native_DvdTimingRead(fileInfo->startAddr+readStat->readOfs, OSRoundUp32B(blockSize));
+    }
+#endif
     readStat->readOfs += HU_DVD_BLOCKSIZE;
     if(readStat->readLen > readStat->readOfs) {
         u32 readSize = readStat->readLen-readStat->readOfs;
@@ -232,7 +252,15 @@ void HuDataDirReadAsyncCallBack(s32 result, DVDFileInfo* fileInfo)
         }
         DVDReadAsyncPrio(fileInfo, ((u8 *)readStat->dirP)+readStat->readOfs, OSRoundUp32B(readSize), readStat->readOfs, HuDataDirReadAsyncCallBack, 3);
     } else {
+#ifdef TARGET_PC
+        if(Mp5Native_DvdTimingOn()) {
+            Mp5Native_DvdTimingDefer(readStat->doneAt, HuDataDirReadAsyncDone, readStat);
+        } else {
+            readStat->status = 0;
+        }
+#else
         readStat->status = 0;
+#endif
         DVDClose(&readStat->dvdFile);
     }
 }
@@ -240,7 +268,13 @@ void HuDataDirReadAsyncCallBack(s32 result, DVDFileInfo* fileInfo)
 void HuDataDirCancel(s16 statId)
 {
     s32 ret = DVDCancel(&ReadDataStat[statId].dvdFile.cb);
+#ifdef TARGET_PC
+    while(ReadDataStat[statId].status) {
+        Mp5Native_DvdTimingPump(); /* completes a background read held for the drive's time */
+    }
+#else
     while(ReadDataStat[statId].status);
+#endif
     HuDataDirClose(ReadDataStat[statId].dirId << 16);
 }
 
@@ -321,6 +355,9 @@ s32 HuDataDirReadNumAsync(int dataNum, s32 num)
 
 BOOL HuDataGetAsyncStat(s32 statId)
 {
+#ifdef TARGET_PC
+    Mp5Native_DvdTimingPump();
+#endif
     if(statId == STAT_ID_ARAM) {
         return HuARDMACheck() == 0;
     } else {
@@ -585,7 +622,13 @@ void HuDataDirClose(int dataNum)
     readStat = &ReadDataStat[i];
     if(readStat->status == 1) {
         DVDCancel(&ReadDataStat[i].dvdFile.cb);
+#ifdef TARGET_PC
+        while(ReadDataStat[i].status) {
+            Mp5Native_DvdTimingPump(); /* completes a background read held for the drive's time */
+        }
+#else
         while(ReadDataStat[i].status);
+#endif
     }
     readStat->dirId = HU_DATANUM_NONE;
     HuDvdDataClose(readStat->dirP);
@@ -625,6 +668,19 @@ static s32 HuDataDVDdirDirectRead(DVDFileInfo *fileInfo, void *dest, s32 len, s3
 	if(result != 1) {
 		OSPanic("data.c", 967, "HuDataDVDdirDirectRead: File Read Error");
 	}
+#ifdef TARGET_PC
+	/* the loop below waits for the drive: frame by frame with shortAccessSleep, else the whole game */
+	if(Mp5Native_DvdTimingOn()) {
+		double doneAt = Mp5Native_DvdTimingRead(fileInfo->startAddr+offset, len);
+		while(Mp5Native_DvdTimingNow() < doneAt) {
+			if(shortAccessSleep) {
+				HuPrcVSleep();
+			} else {
+				Mp5Native_DvdTimingSleepUntil(doneAt);
+			}
+		}
+	}
+#endif
 	while(DVDGetCommandBlockStatus(&fileInfo->cb)) {
 		if(shortAccessSleep) {
 			HuPrcVSleep();

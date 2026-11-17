@@ -727,6 +727,34 @@ SettingsWindow::SettingsWindow(bool prelaunch)
         auto &leftPane = add_child<Pane>(content, Pane::Type::Controlled);
         auto &rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
 
+        leftPane.register_control(leftPane.add_select_button({
+                                      .key = "Loading Speed",
+                                      .getValue =
+                                          [] {
+                                              return getSettings().game.loadingSpeed.getValue() == 1 ? Rml::String { "GameCube" }
+                                                                                                    : Rml::String { "Fast" };
+                                          },
+                                      .isModified =
+                                          [] {
+                                              const auto &v = getSettings().game.loadingSpeed;
+                                              return v.getValue() != v.getDefaultValue();
+                                          },
+                                  }),
+            rightPane, [](Pane &pane) {
+                for (int speed : { 0, 1 }) {
+                    pane.add_button({
+                                        .text = speed == 1 ? Rml::String { "GameCube" } : Rml::String { "Fast" },
+                                        .isSelected = [speed] { return getSettings().game.loadingSpeed.getValue() == speed; },
+                                    })
+                        .on_pressed([speed] {
+                            getSettings().game.loadingSpeed.setValue(speed);
+                            config::Save();
+                        });
+                }
+                pane.add_rml("<br/>Fast reads the disc image at once. GameCube makes every load take the time the "
+                             "console's disc drive took, so screens follow each other at the original pace.");
+            });
+
         auto addOption = [&](const Rml::String &key, ConfigVar<bool> &value, const Rml::String &helpText) {
             config_bool_select(leftPane, rightPane, value,
                 {

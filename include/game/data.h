@@ -33,6 +33,9 @@ typedef struct HuDataStat_s {
     s32 num;
     u32 status;
     DVDFileInfo dvdFile;
+#ifdef TARGET_PC
+    double doneAt; /* GameCube loading speed: when the drive finishes this read (src/port/dvd_timing.cpp) */
+#endif
 } HUDATASTAT;
 
 void HuDataInit(void);

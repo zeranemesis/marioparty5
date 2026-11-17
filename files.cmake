@@ -109,6 +109,7 @@ set(PORT_FILES
         src/port/crash_win.cpp
         src/port/display_select.cpp
         src/port/dolassets.cpp
+        src/port/dvd_timing.cpp
         src/port/file_select.cpp
         src/port/file_select.hpp
         src/port/frame_interp.cpp

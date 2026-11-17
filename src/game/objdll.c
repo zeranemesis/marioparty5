@@ -1,4 +1,7 @@
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/dvd_timing.h"
+#endif
 #include "game/objdll.h"
 #include "game/dvd.h"
 #include "game/memory.h"
@@ -121,6 +124,14 @@ OMDLLINFO *omDLLLink(OMDLLINFO **dllInfoP, s16 dllno, s16 prologF)
 	dll->module = NULL;
 	dll->bss = NULL;
 	dll->ret = FALSE;
+	{
+		/* the console reads the module's .rel from the disc before linking it (a blocking read) */
+		DVDFileInfo relFile;
+		if(Mp5Native_DvdTimingOn() && DVDOpen(dllFile->name, &relFile)) {
+			Mp5Native_DvdTimingSleepUntil(Mp5Native_DvdTimingRead(relFile.startAddr, relFile.length));
+			DVDClose(&relFile);
+		}
+	}
 	dll->handle = PortRelOpen(dllFile->name);
 	if(prologF == TRUE) {
 		PortRelFunc objectSetup = PortRelSymbol(dll->handle, "ObjectSetup");
