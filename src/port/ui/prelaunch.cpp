@@ -970,4 +970,17 @@ bool Prelaunch::handle_nav_command(Rml::Event &event, NavCommand cmd)
     return false;
 }
 
+void poll_update_notice() noexcept
+{
+    static bool shown = false;
+    if (!shown && update_check().available.load(std::memory_order_acquire)) {
+        shown = true;
+        push_toast({
+            .title = fmt::format("Update {} available", update_check().tag),
+            .content = "Download it from the GitHub releases page (zeranemesis/marioparty5)",
+            .duration = std::chrono::seconds(8),
+        });
+    }
+}
+
 } // namespace mp5native::ui

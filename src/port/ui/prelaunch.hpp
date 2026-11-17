@@ -64,5 +64,7 @@ void refresh_configured_disc_state() noexcept;
 void open_iso_picker() noexcept;
 bool is_restart_pending() noexcept;
 void try_push_verification_modal(Document &host);
+// once per run: a toast when GitHub has a release newer than this build (the start screen is skipped with a disc set)
+void poll_update_notice() noexcept;
 
 } // namespace mp5native::ui

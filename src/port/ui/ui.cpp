@@ -237,6 +237,7 @@ void update() noexcept
     }
 
     input::update_input();
+    poll_update_notice();
     const auto update_documents = [](auto &documents) {
         const std::size_t count = documents.size();
         for (std::size_t i = 0; i < count && i < documents.size(); ++i) {
