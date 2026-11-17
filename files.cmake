@@ -141,7 +141,7 @@ set(PORT_FILES
         src/port/settings.cpp
         src/port/spranim_pc.c
         src/port/stubs.c
-        src/port/thp_stub.c
+        src/port/thp_player.cpp
         src/port/ui/achievements.cpp
         src/port/ui/achievements.hpp
         src/port/ui/bool_button.cpp

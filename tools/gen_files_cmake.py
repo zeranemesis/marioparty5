@@ -30,7 +30,7 @@ PORTABLE = {"Matching", "Equivalent"}
 PC_REPLACED_UNITS = {
     "game/jmp.c",  # setjmp/longjmp in PowerPC assembly; processes use libco on PC
     # THP movies need the DSP and the AI audio DMA, which Aurora does not
-    # provide; src/port/thp_stub.c skips them (see its comment).
+    # provide; src/port/thp_player.cpp decodes them on the CPU instead.
     "game/thpmain.c",
     "game/THPSimple.c",
     "game/THPDraw.c",

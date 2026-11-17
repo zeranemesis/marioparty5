@@ -48,6 +48,28 @@ index 41191b4..3e53f45 100644
  #endif
  
  u32 dspHRTFOn = FALSE;
+diff --git a/src/musyx/runtime/hw_pc.c b/src/musyx/runtime/hw_pc.c
+index 65abcc5..92e8839 100644
+--- a/src/musyx/runtime/hw_pc.c
++++ b/src/musyx/runtime/hw_pc.c
+@@ -74,6 +74,9 @@ static s32 filterState[SYNTH_MAX_VOICES];
+ 
+ #define SURROUND_DOWNMIX_GAIN 23170
+ 
++/* The PC THP player mixes movie audio into this buffer, on the same clock as the game's sound. */
++extern void HuTHPPCM16Mix(s16 *destination, u32 frames, u32 channels);
++
+ static inline s16 clamp16(s32 v) {
+   if (v > 32767)
+     return 32767;
+@@ -679,6 +682,7 @@ void salCtrlDsp(s16 *dest) {
+         frame[rear + 1] = clamp16(right);
+       }
+     }
++    HuTHPPCM16Mix(dest, cycleFrames, channels);
+   }
+ }
+ 
 diff --git a/src/musyx/runtime/hw_pc_samples.c b/src/musyx/runtime/hw_pc_samples.c
 index f280381..b78235a 100644
 --- a/src/musyx/runtime/hw_pc_samples.c

@@ -21,6 +21,7 @@
 #include "port/imgui.h"
 #include "port/main.h"
 #include "port/retroachievements.h"
+void Mp5Native_ThpLogicalTick(void);
 #include "port/ui.h"
 
 bool Mp5Native_IsRunning = true;
@@ -143,6 +144,7 @@ void main(void)
         HuInterpTickEnd();
         /* the console evaluated achievements once per logic tick, whatever the display rate */
         Mp5Native_RAGameTick();
+        Mp5Native_ThpLogicalTick();
         }
         Mp5Native_RAFramePump();
         HuInterpDraw();

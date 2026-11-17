@@ -194,6 +194,11 @@ if (MSVC)
     target_sources(dol PRIVATE ${CMAKE_BINARY_DIR}/gx_exports.def)
 endif ()
 target_link_libraries(dol PRIVATE aurora::core aurora::card aurora::dvd aurora::gx aurora::mtx aurora::os aurora::si aurora::vi aurora::pad musyx absl::flat_hash_map nlohmann_json::nlohmann_json fmt::fmt rmlui_debugger)
+# The pinned Tracy dependency provides stb_image, used by the THP movie player for its JPEG frames.
+FetchContent_GetProperties(tracy)
+if (tracy_SOURCE_DIR)
+    target_include_directories(dol PRIVATE ${tracy_SOURCE_DIR}/profiler/src)
+endif ()
 include(cmake/rcheevos.cmake)
 target_link_libraries(dol PRIVATE rcheevos)
 # HTTPS for RetroAchievements, through each platform's own networking stack
