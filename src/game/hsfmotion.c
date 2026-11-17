@@ -103,6 +103,7 @@ BOOL Hu3DMotionKill(HU3DMOTID motId)
         /* the PC loader allocates the model in many blocks that all carry the HSFDATA address as memory number */
         {
             u32 mallocNo = (u32)(uintptr_t)motP->hsf;
+            HuMemDirectFree(motP->hsf->file); /* GC's hsf is the file itself */
             HuMemDirectFree(motP->hsf);
             HuMemDirectFreeNum(HEAP_MODEL, mallocNo);
         }

@@ -1643,6 +1643,9 @@ BOOL MBCapsuleThrowCheck(void)
 int MBCapsuleColCreate(int dataNum)
 {
     int mdlId;
+#ifdef TARGET_PC
+    mdlId = MB_MODEL_NONE; /* returned unset for dataNum -1 (every caller ignores it then) */
+#endif
     if(dataNum != -1) {
         mdlId = MBModelCreate(dataNum, NULL, FALSE);
         MBModelDispSet(mdlId, FALSE);

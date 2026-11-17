@@ -877,6 +877,15 @@ void MBMasuCornerPosGet(int id, int cornerNo, HuVecF *pos)
             linkAngle += 360;
         }
         cornerIdx = (s16)((linkAngle+22.5f)/45);
+#ifdef TARGET_PC
+        if(cornerIdx == CORNER_MAX) {
+            /* 337.5..360 degrees: GC's cornerNum[8] is linkTbl[0..1] read as a big-endian int (+1 to linkTbl[1]) */
+            if((u16)++linkTbl[1] == 0) {
+                linkTbl[0]++;
+            }
+            continue;
+        }
+#endif
         cornerNum[cornerIdx]++;
     }
     for(i=0; i<CORNER_MAX; i++) {

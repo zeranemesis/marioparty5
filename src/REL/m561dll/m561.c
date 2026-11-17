@@ -1132,6 +1132,9 @@ void fn_1_38EC(OMOBJ *obj)
     rightHand.y = 0.0f;
     rightHand.z = 70.0f;
     g = GAME(obj);
+#ifdef TARGET_PC
+    t = g->prevTime; // the timeout paths store t unset into prevTime (a stale register on GC): keep prevTime
+#endif
     switch (g->state) {
         case 0:
             Hu3DMotionSpeedSet(*obj->mdlId, 0.8f);

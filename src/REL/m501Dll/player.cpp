@@ -965,9 +965,7 @@ void CPlayer::getComMoveDir(Vec *dir)
         m_comAisu = NearestAisu(&handles, &cur);
         f32 k = 0.25f + 0.75f * (1.0f - m_speed);
         m_comTimer = (s32)(k * (60.0f * CRandom::frandom(1.5f, 2.0f)));
-        if (handles.m_data != 0) {
-            __dl__FPv(handles.m_data);
-        }
+        // ~vector (the original's inlined destructor) frees handles.m_data: freeing it here as well freed it twice
     }
     if (m_comTimer > 0) {
         s32 t = m_comTimer - 1;

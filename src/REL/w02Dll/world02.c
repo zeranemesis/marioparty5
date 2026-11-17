@@ -881,7 +881,8 @@ loop_5:
     }
     if ((s32) MB2W_S32((0x27) * 4) != 0) {
         Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((0x19) * 4)), "sisof2", (f32 (*)[4]) &sp30[0]);
-        MBModelPosSet((s16) MB2W_S32((0x18) * 4), sp30[3][0], sp30[3][1], sp30[3][2]);
+        /* the object matrix's translation column, as the original reads it (+0xC/+0x1C/+0x2C) */
+        MBModelPosSet((s16) MB2W_S32((0x18) * 4), ((f32 (*)[4]) sp30)[0][3], ((f32 (*)[4]) sp30)[1][3], ((f32 (*)[4]) sp30)[2][3]);
     }
     if ((s32) MB2W_S32((0x28) * 4) != 0) {
         var_r31_2 = 0;
@@ -1547,9 +1548,9 @@ loop_50:
         if ((f32) var_r30_2 < 24.0f) {
             temp_f30 = (f32) var_r30_2 / 24.0f;
             Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((4) * 4)), mb2ev_WindGuru2HookTbl[var_r29_2], (f32 (*)[4]) &sp38[0]);
-            sp20.x = sp38[3][0];
-            sp20.y = sp38[3][1];
-            sp20.z = sp38[3][2];
+            sp20.x = ((f32 (*)[4]) sp38)[0][3]; /* translation column, as the original reads it */
+            sp20.y = ((f32 (*)[4]) sp38)[1][3];
+            sp20.z = ((f32 (*)[4]) sp38)[2][3];
             PSVECSubtract(&sp20, &sp2C, &sp14);
             PSVECScale(&sp14, &sp14, temp_f30);
             PSVECAdd(&sp2C, &sp14, &sp14);
@@ -1571,9 +1572,9 @@ loop_50:
 loop_53:
         if (var_f31_2 < temp_f25) {
             Hu3DModelObjMtxGet(MBModelIdGet((s16) MB2W_S32((4) * 4)), mb2ev_WindGuru2HookTbl[var_r29_2], (f32 (*)[4]) &sp38[0]);
-            sp20.x = sp38[3][0];
-            sp20.y = sp38[3][1];
-            sp20.z = sp38[3][2];
+            sp20.x = ((f32 (*)[4]) sp38)[0][3]; /* translation column, as the original reads it */
+            sp20.y = ((f32 (*)[4]) sp38)[1][3];
+            sp20.z = ((f32 (*)[4]) sp38)[2][3];
             MBPlayerPosSetV(arg1, &sp20);
             HuPrcVSleep();
             var_f31_2 += temp_f1;
@@ -2119,10 +2120,13 @@ void MB2Ev_Rain(s32 arg0) {
             }
             RS_S32(rs, 0x7C) = 0;
             RS_S32(rs, 0x80) = 0;
-            Hu3DModelObjMtxGet(MBModelIdGet(mdlId), mb2ev_RainObjTbl[i], (f32 (*)[4]) &tmp);
-            RS_F32(rs, 0x8C) = tmp.x;
-            RS_F32(rs, 0x90) = tmp.y;
-            RS_F32(rs, 0x94) = tmp.z;
+            {
+                Mtx objMtx; /* a full Mtx: writing it into the Point3d tmp overran the stack */
+                Hu3DModelObjMtxGet(MBModelIdGet(mdlId), mb2ev_RainObjTbl[i], objMtx);
+                RS_F32(rs, 0x8C) = objMtx[0][3];
+                RS_F32(rs, 0x90) = objMtx[1][3];
+                RS_F32(rs, 0x94) = objMtx[2][3];
+            }
             RS_F32(rs, 0xB8) = 0.0f;
             RS_F32(rs, 0xB4) = 0.0f;
             RS_F32(rs, 0xB0) = 0.0f;

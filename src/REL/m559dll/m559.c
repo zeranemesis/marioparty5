@@ -2379,6 +2379,20 @@ void fn_1_6B54(HU3DMODEL *model, f32 (*mtx)[4]) {
     f32 sp13C;
     f32 sp138;
     f32 sp134;
+#ifdef TARGET_PC
+    // the original's sp70.., sp40..sp64 and sp10..sp34 are 4-Vec arrays (PSMTX*MultVecArray(.., 4) and the scale
+    // loops walk them); as separate locals the 4-Vec writes overran the stack
+    Point3d sp70a[4], sp40a[4], sp10a[4];
+#define sp70 sp70a[0]
+#define sp40 sp40a[0]
+#define sp4C sp40a[1]
+#define sp58 sp40a[2]
+#define sp64 sp40a[3]
+#define sp10 sp10a[0]
+#define sp1C sp10a[1]
+#define sp28 sp10a[2]
+#define sp34 sp10a[3]
+#else
     Point3d sp70;
     Point3d sp64;
     Point3d sp58;
@@ -2388,6 +2402,7 @@ void fn_1_6B54(HU3DMODEL *model, f32 (*mtx)[4]) {
     Point3d sp28;
     Point3d sp1C;
     Point3d sp10;
+#endif
     M559PARTCALLBACK spC;
     s16 sp8;
     Point3d *temp_r30_4;
@@ -2588,6 +2603,17 @@ loop_34:
         GXCallDisplayList(temp_r31->unk24, temp_r31->unk58);
     }
 }
+#ifdef TARGET_PC
+#undef sp70
+#undef sp40
+#undef sp4C
+#undef sp58
+#undef sp64
+#undef sp10
+#undef sp1C
+#undef sp28
+#undef sp34
+#endif
 static void fn_1_729C(M559VEC *a, s16 b, s16 c, f32 d, f32 e) {
     s16 var_r31;
     M559VERTS *var_r3;

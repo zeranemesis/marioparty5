@@ -273,6 +273,9 @@ static BOOL BranchExec(int playerNo, s16 *masuId, BOOL debugF)
     padNo = GwPlayer[playerNo].padNo;
     while(1) {
         u16 btnDown;
+#ifdef TARGET_PC
+        btnDown = 0; // read unset while a COM/tutorial choice counts down; GC keeps the register's 0 from the choice
+#endif
         if(_CheckFlag(FLAG_BOARD_TUTORIAL)) {
             if(choiceTime < 0) {
                 choiceAuto = MBTutorialExec(TUTORIAL_INST_PATH_CHOICE);

@@ -40,7 +40,12 @@ typedef struct M526Stage_s {
     s16 cameraBit;
     int side;
     HuVecF pos;
+#ifdef TARGET_PC
+    // the game uses cloudPos[2..3]: on GC they land in the allocation's padding, on PC past the block
+    HuVecF cloudPos[4];
+#else
     HuVecF cloudPos[2];
+#endif
 } M526_STAGE;
 
 typedef struct M526CameraView_s {

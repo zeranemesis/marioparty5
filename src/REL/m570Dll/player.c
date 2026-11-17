@@ -160,6 +160,13 @@ static const u32 DustMotDataTbl[2] = { 0x7D0015, 0x7D0016 };
 
 static const f32 kBlendLong = 75.0f;
 static const f32 kZero = 0.0f;
+// The original reaches the "shiftStart = kZero" block on both paths (a no-op ne +4 into it, see the
+// NONMATCHING notes); as written the motNo == 5 path reads shiftStart uninitialized, so PC always takes it.
+#ifdef TARGET_PC
+#define M570_SHIFT_ZERO(c) ((void)(c), 1)
+#else
+#define M570_SHIFT_ZERO(c) (c)
+#endif
 static const f32 kStep = 5.0f;
 static const f32 kTen = 10.0f;
 static const f32 kArrive = 0.1f;
@@ -310,7 +317,7 @@ if (fn_1_3B40(&player->tra, &player->goal, &angle, kStep) != 0) {
                     f32 shiftStart;
 
                     robj = player->obj;
-                    if (player->motNo != 5) {
+                    if (M570_SHIFT_ZERO(player->motNo != 5)) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_IDLE], shiftStart,
@@ -339,7 +346,7 @@ player->rot.y = fn_1_3C64(player->rot.y, kZero, kTen);
                     f32 shiftStart;
 
                     robj = player->obj;
-                    if (player->motNo != 5) {
+                    if (M570_SHIFT_ZERO(player->motNo != 5)) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_IDLE], shiftStart,
@@ -413,7 +420,7 @@ if (player->timer == 0) {
                     f32 shiftStart;
 
                     robj = player->obj;
-                    if (player->motNo != 5) {
+                    if (M570_SHIFT_ZERO(player->motNo != 5)) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_APPROACH], shiftStart,
@@ -511,7 +518,7 @@ void fn_1_4DC4(void)
             OMOBJ *robj;
 
             robj = player->obj;
-            if (player->motNo != 5) {
+            if (M570_SHIFT_ZERO(player->motNo != 5)) {
                 shiftStart = kZero;
             }
             CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_READY], shiftStart,
@@ -542,7 +549,7 @@ void fn_1_4EF8(void)
             if (player->motNo != M570_MOT_SURPRISE) {
                 OMOBJ *robj;
 robj = player->obj;
-                if (player->motNo != 5) {
+                if (M570_SHIFT_ZERO(player->motNo != 5)) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_SURPRISE], shiftStart,
@@ -575,7 +582,7 @@ lbl_1_bss_1C4[i]->state = M570_MOT_SURPRISE;
             player = lbl_1_bss_1C4[i];
             if (player->motNo != M570_MOT_HOLD) {
                 robj = player->obj;
-                if (player->motNo != 5) {
+                if (M570_SHIFT_ZERO(player->motNo != 5)) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_HOLD], shiftStart,
@@ -610,7 +617,7 @@ player->gotItem = 1;
                 player->state = M570_MOT_HOLD;
                 if (player->motNo != M570_MOT_DUST) {
                     robj = player->obj;
-                    if (player->motNo != 5) {
+                    if (M570_SHIFT_ZERO(player->motNo != 5)) {
                         shiftStart = kZero;
                     }
                     CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_DUST], shiftStart,
@@ -647,7 +654,7 @@ void fn_1_5354(void)
                 f32 shiftStart;
 
                 robj = player->obj;
-                if (player->motNo != 5) {
+                if (M570_SHIFT_ZERO(player->motNo != 5)) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(player->charNo, robj->mtnId[M570_MOT_RETREAT], shiftStart,
@@ -665,7 +672,7 @@ void fn_1_5354(void)
                 f32 shiftStart;
 
                 cobj = cpu->obj;
-                if (cpu->motNo != 5) {
+                if (M570_SHIFT_ZERO(cpu->motNo != 5)) {
                     shiftStart = kZero;
                 }
                 CharMotionShiftSet(cpu->charNo, cobj->mtnId[M570_MOT_TURN], shiftStart,

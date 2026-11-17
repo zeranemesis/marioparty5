@@ -520,6 +520,9 @@ typedef struct HsfData_s {
     s16 mapAttrNum;
     s16 motionNum;
     s16 matrixNum;
+#ifdef TARGET_PC
+    void *file; /* the file buffer the model was read from: GC builds the model in it, so freeing hsf frees it */
+#endif
 } HSFDATA;
 
 #ifdef __cplusplus

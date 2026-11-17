@@ -1244,6 +1244,7 @@ HSFDATA *LoadHSF(void *data)
     MatrixLoad();
 
     model = sModel;
+    model->file = data; /* bitmaps, palettes, st and colors still point into it */
     InitEnvelope(model);
     sModel = NULL;
     sObjects = NULL;

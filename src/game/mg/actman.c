@@ -1665,6 +1665,10 @@ void MgActorExec(void)
     HuVecF gravityForce; //sp+0x54
     HuVecF normForce; //sp+0x48
     
+#ifdef TARGET_PC
+    // a MOVEOFF player reads stickVec unset: on GC the stack slot keeps the previous player's vector (0 at start)
+    stickVec.x = stickVec.y = stickVec.z = 0;
+#endif
     if(!ColMapInitCheck()) {
         return;
     }

@@ -776,6 +776,9 @@ void Hu3DModelKill(HU3DMODELID modelId)
         modelP->hsf = NULL;
         return;
     }
+#ifdef TARGET_PC
+    HuMemDirectFree(modelP->hsf->file); /* on GC the hsf below is the file: free both, or every reload leaks it */
+#endif
     HuMemDirectFree(modelP->hsf);
     HuMemDirectFreeNum(HEAP_MODEL, modelP->mallocNo);
     for(i=0; i<modelP->lightNum; i++) {

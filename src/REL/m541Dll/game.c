@@ -2030,7 +2030,7 @@ void fn_1_E930(void)
                 t = 0.0f;
             }
             cx = dx * t + lbl_1_data_368[j][0];
-            cz = dz * scale + lbl_1_data_368[j][1];
+            cz = dz * t + lbl_1_data_368[j][1];
             dx = MDL(i).posX - cx;
             dz = MDL(i).posZ - cz;
             dist = sqrt(dx * dx + dz * dz);
@@ -2136,7 +2136,7 @@ void fn_1_E930(void)
                 t = 0.0f;
             }
             cx = dx * t + lbl_1_data_368[j][0];
-            cz = dz * scale + lbl_1_data_368[j][1];
+            cz = dz * t + lbl_1_data_368[j][1];
             dx = lbl_1_bss_2614[i].pos.x - cx;
             dz = lbl_1_bss_2614[i].pos.z - cz;
             dist = sqrt(dx * dx + dz * dz);
