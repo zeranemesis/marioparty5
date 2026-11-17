@@ -99,15 +99,19 @@ set(GAME_FILES
         src/msm/msmfio.c
         src/msm/msmmus.c
         src/msm/msmse.c
+        src/msm/msmstream.c
 )
 
 set(PORT_FILES
         src/port/OS.c
         src/port/achievements.cpp
         src/port/config.cpp
+        src/port/crash_win.cpp
+        src/port/display_select.cpp
         src/port/dolassets.cpp
         src/port/file_select.cpp
         src/port/file_select.hpp
+        src/port/frame_interp.cpp
         src/port/gx_render_modes.c
         src/port/hsfload_pc.c
         src/port/imgui.cpp
@@ -116,9 +120,19 @@ set(PORT_FILES
         src/port/iso_validate.cpp
         src/port/iso_validate.hpp
         src/port/messnum.c
-        src/port/msmstream_stub.c
+        src/port/osthread_pc.c
         src/port/portmain.cpp
+        src/port/prof_sampler.cpp
+        src/port/rel_cxxheap/delete.cpp
+        src/port/rel_cxxheap/delete_array.cpp
+        src/port/rel_cxxheap/delete_array_sized.cpp
+        src/port/rel_cxxheap/delete_sized.cpp
+        src/port/rel_cxxheap/new.cpp
+        src/port/rel_cxxheap/new_array.cpp
+        src/port/rel_cxxnew.cpp
+        src/port/rel_cxxrt.c
         src/port/rel_loader.c
+        src/port/rel_vi.c
         src/port/sdk_stubs.c
         src/port/settings.cpp
         src/port/spranim_pc.c
@@ -171,15 +185,26 @@ set(PORT_FILES
         src/port/ui/window.cpp
         src/port/ui/window.hpp
         src/port/version.cpp
+        src/port/widescreen.cpp
 )
 
 set(REL_FILES
         src/REL/actmanDLL/actman.c
         src/REL/bootDll/boot.c
+        src/REL/carddll/cardmain.c
+        src/REL/carddll/card.c
+        src/REL/carddll/player.c
+        src/REL/carddll/camera.c
+        src/REL/carddll/dice.c
+        src/REL/carddll/status.c
         src/REL/decathlonDll/mgtournament.c
         src/REL/decathlonDll/score.c
         src/REL/decathlonDll/mess.c
         src/REL/e3bootdll/e3boot.c
+        src/REL/e3setupdll/e3setup.c
+        src/REL/e3setupdll/mgname.c
+        src/REL/e3setupdll/toueidisp.c
+        src/REL/e3setupdll/stage.c
         src/REL/fileseldll/filesel.c
         src/REL/fileseldll/saveload.c
         src/REL/fileseldll/filename.c
@@ -191,51 +216,513 @@ set(REL_FILES
         src/REL/m433Dll/m433.c
         src/REL/m433Dll/stage.c
         src/REL/m433Dll/player.c
+        src/REL/m501Dll/m501.cpp
+        src/REL/m501Dll/asiato.cpp
+        src/REL/m501Dll/gamemaster.cpp
+        src/REL/m501Dll/aisu.cpp
+        src/REL/m501Dll/joint.cpp
+        src/REL/m501Dll/objectsetup.cpp
+        src/REL/m501Dll/camera.cpp
+        src/REL/m501Dll/particle.cpp
+        src/REL/m501Dll/stage.cpp
+        src/REL/m501Dll/player.cpp
+        src/REL/m501Dll/random.cpp
+        src/REL/m502dll/m502.c
+        src/REL/m502dll/camera.c
+        src/REL/m502dll/stage.c
+        src/REL/m502dll/player.c
+        src/REL/m502dll/input.c
+        src/REL/m502dll/block.c
+        src/REL/m502dll/opening.c
+        src/REL/m502dll/ending.c
+        src/REL/m502dll/bat.c
+        src/REL/m503Dll/m503.c
+        src/REL/m503Dll/opening.c
+        src/REL/m503Dll/player.c
+        src/REL/m503Dll/saru.c
+        src/REL/m503Dll/stage.c
+        src/REL/m503Dll/particle.c
+        src/REL/m503Dll/score.c
+        src/REL/m503Dll/actor.c
+        src/REL/m504dll/m504.c
+        src/REL/m504dll/stage.c
+        src/REL/m504dll/player.c
+        src/REL/m504dll/wanwan.c
+        src/REL/m504dll/input.c
+        src/REL/m504dll/com.c
+        src/REL/m504dll/camera.c
+        src/REL/m504dll/light.c
+        src/REL/m504dll/particle.c
+        src/REL/m504dll/opening.c
+        src/REL/m504dll/ending.c
         src/REL/m505Dll/m505.c
         src/REL/m506Dll/m506.c
         src/REL/m506Dll/object.c
         src/REL/m506Dll/player.c
         src/REL/m507dll/m507.c
         src/REL/m507dll/effect.c
+        src/REL/m508Dll/m508.c
+        src/REL/m508Dll/object.c
+        src/REL/m509Dll/m509.cpp
+        src/REL/m509Dll/mazedata.cpp
+        src/REL/m509Dll/maze.cpp
+        src/REL/m509Dll/gamemaster.cpp
+        src/REL/m509Dll/startspr.cpp
+        src/REL/m509Dll/back.cpp
+        src/REL/m509Dll/objectsetup.cpp
+        src/REL/m509Dll/camera.cpp
+        src/REL/m509Dll/player.cpp
+        src/REL/m509Dll/random.cpp
+        src/REL/m510dll/m510.c
+        src/REL/m510dll/stage.c
+        src/REL/m510dll/player.c
+        src/REL/m510dll/playermodel.c
+        src/REL/m510dll/pitch.c
+        src/REL/m510dll/ball.c
+        src/REL/m510dll/pad.c
+        src/REL/m510dll/camera.c
+        src/REL/m510dll/light.c
+        src/REL/m510dll/opening.c
+        src/REL/m510dll/ending.c
+        src/REL/m510dll/ball_path.c
+        src/REL/m510dll/score.c
+        src/REL/m511Dll/boat.cpp
+        src/REL/m511Dll/math.cpp
+        src/REL/m511Dll/m511.cpp
+        src/REL/m511Dll/effring.cpp
+        src/REL/m511Dll/gamemaster.cpp
+        src/REL/m511Dll/particle.cpp
+        src/REL/m511Dll/objectsetup.cpp
+        src/REL/m511Dll/camera.c
+        src/REL/m511Dll/boatshadow.cpp
+        src/REL/m511Dll/stage.cpp
+        src/REL/m511Dll/star.cpp
+        src/REL/m511Dll/staryaji.cpp
+        src/REL/m511Dll/player.cpp
+        src/REL/m511Dll/score.cpp
+        src/REL/m511Dll/boatsplash.cpp
+        src/REL/m511Dll/kibako.cpp
+        src/REL/m511Dll/water.cpp
+        src/REL/m512Dll/m512.cpp
+        src/REL/m512Dll/gamemaster.cpp
+        src/REL/m512Dll/objectsetup.cpp
+        src/REL/m512Dll/camera.cpp
+        src/REL/m512Dll/dust.cpp
+        src/REL/m512Dll/stage.cpp
+        src/REL/m512Dll/player.cpp
+        src/REL/m512Dll/score.cpp
+        src/REL/m512Dll/zako.cpp
+        src/REL/m512Dll/heiho.cpp
+        src/REL/m513Dll/m513.cpp
+        src/REL/m513Dll/input.cpp
+        src/REL/m513Dll/taimatsu.cpp
+        src/REL/m513Dll/leaf.cpp
+        src/REL/m513Dll/powereff.cpp
+        src/REL/m513Dll/powerind.cpp
+        src/REL/m513Dll/gamemaster.cpp
+        src/REL/m513Dll/heiho.cpp
+        src/REL/m513Dll/kuribo.cpp
+        src/REL/m513Dll/objectsetup.cpp
+        src/REL/m513Dll/camera.cpp
+        src/REL/m513Dll/stage.cpp
+        src/REL/m513Dll/misc.cpp
+        src/REL/m513Dll/player.cpp
+        src/REL/m513Dll/score.cpp
+        src/REL/m513Dll/audio.cpp
+        src/REL/m514Dll/m514.c
+        src/REL/m514Dll/player.c
+        src/REL/m514Dll/object.c
+        src/REL/m514Dll/stage.c
+        src/REL/m514Dll/effect.c
+        src/REL/m514Dll/score.c
+        src/REL/m515Dll/m515.c
+        src/REL/m516Dll/m516.c
+        src/REL/m516Dll/camera.c
+        src/REL/m516Dll/player.c
+        src/REL/m516Dll/stage.c
+        src/REL/m516Dll/effect.c
+        src/REL/m516Dll/score.c
+        src/REL/m516Dll/actor.c
+        src/REL/m517Dll/effect.cpp
+        src/REL/m517Dll/m517.cpp
+        src/REL/m517Dll/input.cpp
+        src/REL/m517Dll/gamemaster.cpp
+        src/REL/m517Dll/dusteff.cpp
+        src/REL/m517Dll/kuribo.cpp
+        src/REL/m517Dll/objectsetup.cpp
+        src/REL/m517Dll/stage.cpp
+        src/REL/m517Dll/misc.cpp
+        src/REL/m517Dll/choro.cpp
+        src/REL/m517Dll/papereff.cpp
+        src/REL/m517Dll/player.cpp
+        src/REL/m517Dll/camera.cpp
+        src/REL/m517Dll/dustcloud.cpp
+        src/REL/m517Dll/audio.cpp
         src/REL/m518dll/m518.c
         src/REL/m519dll/m519.c
         src/REL/m520Dll/m520.c
+        src/REL/m521Dll/clock.cpp
+        src/REL/m521Dll/clockhand.cpp
+        src/REL/m521Dll/m521.cpp
+        src/REL/m521Dll/debugline.cpp
+        src/REL/m521Dll/driver.cpp
+        src/REL/m521Dll/gamemaster.cpp
+        src/REL/m521Dll/objectsetup.cpp
+        src/REL/m521Dll/camera.cpp
+        src/REL/m521Dll/stage.cpp
+        src/REL/m521Dll/player.cpp
+        src/REL/m521Dll/score.cpp
+        src/REL/m522Dll/fire.cpp
+        src/REL/m522Dll/bubble.cpp
+        src/REL/m522Dll/m522.cpp
+        src/REL/m522Dll/gamemaster.cpp
+        src/REL/m522Dll/objectsetup.cpp
+        src/REL/m522Dll/camera.cpp
+        src/REL/m522Dll/sunfire.cpp
+        src/REL/m522Dll/stage.cpp
+        src/REL/m522Dll/player.cpp
+        src/REL/m523Dll/m523.c
+        src/REL/m523Dll/player.c
         src/REL/m524Dll/m524.c
         src/REL/m525Dll/m525.c
         src/REL/m526Dll/m526.c
         src/REL/m526Dll/math.c
         src/REL/m527Dll/m527.c
+        src/REL/m528Dll/m528.c
         src/REL/m529dll/m529.c
+        src/REL/m530Dll/m530.c
+        src/REL/m530Dll/kinomi.c
+        src/REL/m530Dll/player.c
+        src/REL/m530Dll/effect.c
+        src/REL/m531Dll/m531.cpp
+        src/REL/m531Dll/effect.cpp
+        src/REL/m531Dll/scorebase.cpp
+        src/REL/m531Dll/flow.cpp
+        src/REL/m531Dll/polish.cpp
+        src/REL/m531Dll/score.cpp
+        src/REL/m531Dll/object.cpp
+        src/REL/m531Dll/player.cpp
+        src/REL/m531Dll/objectsetup.cpp
+        src/REL/m531Dll/gamemaster.cpp
+        src/REL/m531Dll/stage.cpp
+        src/REL/m531Dll/playerbase.cpp
+        src/REL/m531Dll/audio.cpp
+        src/REL/m531Dll/cleaneff.cpp
+        src/REL/m532Dll/ball.cpp
+        src/REL/m532Dll/m532.cpp
+        src/REL/m532Dll/rumble_warn.cpp
+        src/REL/m532Dll/game_master.cpp
+        src/REL/m532Dll/object_setup.cpp
+        src/REL/m532Dll/camera.cpp
+        src/REL/m532Dll/man_map.cpp
+        src/REL/m532Dll/man_referee.cpp
+        src/REL/m532Dll/score.cpp
+        src/REL/m532Dll/unk.cpp
+        src/REL/m532Dll/player.cpp
+        src/REL/m533dll/m533.c
+        src/REL/m533dll/pillar.c
+        src/REL/m534Dll/m534.c
+        src/REL/m534Dll/camera.c
+        src/REL/m534Dll/player.c
+        src/REL/m534Dll/stage.c
+        src/REL/m534Dll/effect.c
+        src/REL/m534Dll/score.c
+        src/REL/m535Dll/m535.c
+        src/REL/m536Dll/m536.cpp
+        src/REL/m536Dll/game_master.cpp
+        src/REL/m536Dll/object_setup.cpp
+        src/REL/m536Dll/camera.cpp
+        src/REL/m536Dll/killereff.cpp
+        src/REL/m536Dll/stage.cpp
+        src/REL/m536Dll/player.cpp
+        src/REL/m536Dll/score.cpp
+        src/REL/m536Dll/killer.cpp
+        src/REL/m536Dll/gun.cpp
+        src/REL/m537Dll/m537.cpp
+        src/REL/m537Dll/dorrie.cpp
+        src/REL/m537Dll/effect.cpp
+        src/REL/m537Dll/game_master.cpp
+        src/REL/m537Dll/object_setup.cpp
+        src/REL/m537Dll/camera.cpp
+        src/REL/m537Dll/stage.cpp
+        src/REL/m537Dll/player.cpp
+        src/REL/m537Dll/center_obj.cpp
+        src/REL/m537Dll/water.cpp
         src/REL/m538Dll/m538.c
+        src/REL/m539Dll/m539.cpp
+        src/REL/m539Dll/input.cpp
+        src/REL/m539Dll/drum.cpp
+        src/REL/m539Dll/game_master.cpp
+        src/REL/m539Dll/heiho.cpp
+        src/REL/m539Dll/object_setup.cpp
+        src/REL/m539Dll/camera.cpp
+        src/REL/m539Dll/man_map.cpp
+        src/REL/m539Dll/effect.cpp
+        src/REL/m539Dll/player.cpp
+        src/REL/m539Dll/scorespr.cpp
+        src/REL/m539Dll/score.cpp
+        src/REL/m540Dll/m540.c
+        src/REL/m541Dll/m541.c
+        src/REL/m541Dll/game.c
+        src/REL/m541Dll/stage.c
+        src/REL/m542dll/m542.c
+        src/REL/m542dll/game.c
+        src/REL/m542dll/stage.c
+        src/REL/m543Dll/m543.c
+        src/REL/m543Dll/game.c
+        src/REL/m543Dll/stage.c
+        src/REL/m544Dll/m544.c
+        src/REL/m544Dll/game.c
+        src/REL/m544Dll/stage.c
+        src/REL/m545Dll/m545.c
+        src/REL/m545Dll/game.c
+        src/REL/m545Dll/stage.c
+        src/REL/m546Dll/m546.c
+        src/REL/m546Dll/game.c
+        src/REL/m546Dll/stage.c
+        src/REL/m547dll/m547.c
+        src/REL/m547dll/game.c
+        src/REL/m547dll/stage.c
+        src/REL/m548dll/m548.c
+        src/REL/m548dll/game.c
+        src/REL/m548dll/stage.c
+        src/REL/m549Dll/m549.c
+        src/REL/m549Dll/game.c
+        src/REL/m549Dll/cloud.c
+        src/REL/m549Dll/stage.c
+        src/REL/m550dll/m550.c
+        src/REL/m550dll/game.c
+        src/REL/m550dll/stage.c
+        src/REL/m551Dll/m551.c
+        src/REL/m551Dll/game.c
+        src/REL/m551Dll/stage.c
+        src/REL/m552dll/m552.c
+        src/REL/m552dll/game.c
+        src/REL/m552dll/cube.c
+        src/REL/m552dll/com.c
+        src/REL/m552dll/stage.c
+        src/REL/m553Dll/m553.c
+        src/REL/m553Dll/game.c
+        src/REL/m553Dll/stage.c
+        src/REL/m554dll/m554.c
+        src/REL/m554dll/game.c
+        src/REL/m554dll/stage.c
+        src/REL/m555Dll/m555.c
+        src/REL/m555Dll/game.c
+        src/REL/m555Dll/stage.c
         src/REL/m559dll/m559.c
+        src/REL/m560dll/m560.c
+        src/REL/m560dll/effect.c
+        src/REL/m561dll/m561.c
+        src/REL/m561dll/effect.c
+        src/REL/m562dll/m562.c
+        src/REL/m562dll/main.c
+        src/REL/m562dll/back.c
+        src/REL/m562dll/stage.c
+        src/REL/m562dll/player.c
+        src/REL/m562dll/koopa.c
+        src/REL/m562dll/koopaboss.c
+        src/REL/m562dll/fire.c
+        src/REL/m562dll/mini_mechakoopa.c
+        src/REL/m562dll/firering.c
+        src/REL/m562dll/sunbomb.c
+        src/REL/m562dll/camera.c
+        src/REL/m562dll/light.c
+        src/REL/m562dll/sprite.c
+        src/REL/m562dll/evt_opening.c
+        src/REL/m562dll/evt_fire.c
+        src/REL/m562dll/evt_fight.c
+        src/REL/m562dll/evt_fall.c
+        src/REL/m562dll/evt_koopagrow.c
+        src/REL/m562dll/evt_ending.c
+        src/REL/m562dll/evt_winner.c
+        src/REL/m562dll/effect.c
         src/REL/m563dll/m563.c
         src/REL/m563dll/util.c
+        src/REL/m564Dll/m564.c
+        src/REL/m564Dll/player.c
+        src/REL/m564Dll/bomb.c
+        src/REL/m564Dll/com.c
+        src/REL/m565dll/m565.c
+        src/REL/m565dll/main.c
+        src/REL/m565dll/object.c
+        src/REL/m565dll/back.c
+        src/REL/m565dll/stage.c
+        src/REL/m565dll/player.c
+        src/REL/m565dll/puku2.c
+        src/REL/m565dll/com.c
+        src/REL/m565dll/opening.c
+        src/REL/m565dll/ending.c
+        src/REL/m565dll/light.c
         src/REL/m566Dll/m566.c
+        src/REL/m567Dll/m567.c
+        src/REL/m568Dll/archive.cpp
+        src/REL/m568Dll/m568.cpp
+        src/REL/m568Dll/input.cpp
+        src/REL/m568Dll/game_master.cpp
+        src/REL/m568Dll/heiho.cpp
+        src/REL/m568Dll/object_setup.cpp
+        src/REL/m568Dll/camera.cpp
+        src/REL/m568Dll/effect.cpp
+        src/REL/m568Dll/stage.cpp
+        src/REL/m568Dll/math.cpp
+        src/REL/m568Dll/octtree.cpp
+        src/REL/m568Dll/player.cpp
+        src/REL/m568Dll/tube.cpp
+        src/REL/m569Dll/m569.c
+        src/REL/m569Dll/player.c
+        src/REL/m569Dll/kuribo.c
+        src/REL/m569Dll/block.c
+        src/REL/m569Dll/score.c
+        src/REL/m570Dll/m570.c
+        src/REL/m570Dll/player.c
         src/REL/m571dll/m571.c
         src/REL/m572dll/m572.c
+        src/REL/m573dll/m573.c
+        src/REL/m574Dll/m574.c
+        src/REL/m574Dll/player.c
+        src/REL/m574Dll/stage.c
+        src/REL/m574Dll/ball.c
+        src/REL/m574Dll/score.c
+        src/REL/m574Dll/collide.c
+        src/REL/m575dll/m575.c
+        src/REL/m575dll/score.c
+        src/REL/m575dll/stage.c
+        src/REL/m575dll/ten.c
+        src/REL/m575dll/player.c
+        src/REL/m575dll/com.c
+        src/REL/m575dll/camera.c
+        src/REL/m575dll/light.c
+        src/REL/m575dll/tuboeff.c
+        src/REL/m575dll/tubo.c
+        src/REL/m575dll/coin.c
+        src/REL/m575dll/jugem.c
+        src/REL/m575dll/opening.c
+        src/REL/m575dll/effect.c
+        src/REL/m576Dll/m576.c
+        src/REL/m576Dll/stage.c
+        src/REL/m576Dll/score.c
+        src/REL/m577Dll/m577.c
+        src/REL/m577Dll/stagedata.c
+        src/REL/m577Dll/effect.c
+        src/REL/m579Dll/m579.cpp
+        src/REL/m579Dll/puku2.cpp
+        src/REL/m579Dll/game_master.cpp
+        src/REL/m579Dll/fishman.cpp
+        src/REL/m579Dll/object_setup.cpp
+        src/REL/m579Dll/camera.cpp
+        src/REL/m579Dll/water.cpp
+        src/REL/m579Dll/stage.cpp
+        src/REL/m579Dll/effect.cpp
+        src/REL/m579Dll/player.cpp
+        src/REL/m579Dll/fishline.cpp
+        src/REL/m579Dll/score.cpp
+        src/REL/m579Dll/watereff.cpp
+        src/REL/m579Dll/zako.cpp
+        src/REL/m580Dll/m580.c
+        src/REL/m580Dll/player.c
+        src/REL/m580Dll/stage.c
+        src/REL/m580Dll/stick.c
+        src/REL/m580Dll/puck.c
+        src/REL/m580Dll/effect.c
+        src/REL/m580Dll/score.c
+        src/REL/m580Dll/reflect.c
+        src/REL/mdbeachDll/mdbeach.c
+        src/REL/mdbeachDll/object.c
+        src/REL/mdbeachDll/stage.c
+        src/REL/mdcardDll/mdcard.c
+        src/REL/mdcardDll/object.c
+        src/REL/mdcardDll/stage.c
+        src/REL/mdminiDll/mdmini.c
+        src/REL/mdminiDll/object.c
+        src/REL/mdminiDll/stage.c
+        src/REL/mdomakeDll/mdomake.c
+        src/REL/mdomakeDll/object.c
+        src/REL/mdomakeDll/stage.c
+        src/REL/mdoptionDll/mdoption.c
+        src/REL/mdoptionDll/object.c
+        src/REL/mdoptionDll/stage.c
+        src/REL/mdoptionDll/record.c
         src/REL/mdpartyDll/mdparty.c
         src/REL/mdpartyDll/object.c
         src/REL/mdpartyDll/stage.c
         src/REL/mdselDll/mdsel.c
         src/REL/mdselDll/object.c
         src/REL/mdselDll/stage.c
+        src/REL/mdstoryDll/mdstory.c
+        src/REL/mdstoryDll/object.c
+        src/REL/mdstoryDll/stage.c
         src/REL/meschkDll/meschk.c
+        src/REL/mgfreeDll/mgfree.c
+        src/REL/mgfreeDll/decide.c
+        src/REL/mgmatchDll/mgmatch.c
+        src/REL/mgmatchDll/score.c
+        src/REL/mgmatchDll/mess.c
+        src/REL/mgtourDll/mgtournament.c
+        src/REL/mgtourDll/score.c
+        src/REL/mgtourDll/mess.c
+        src/REL/mgwarsDll/mgwars.c
+        src/REL/mgwarsDll/score.c
+        src/REL/mgwarsDll/mess.c
         src/REL/motchkDll/motchk.c
+        src/REL/partyresultdll/partyresult.c
+        src/REL/partyresultdll/result.c
+        src/REL/partyresultdll/stat.c
+        src/REL/partyresultdll/toueidisp.c
+        src/REL/partyresultdll/util.c
+        src/REL/rescardDll/rescard.c
+        src/REL/rescardDll/object.c
+        src/REL/rescardDll/stage.c
+        src/REL/resultDll/result.c
+        src/REL/resultDll/stage.c
+        src/REL/resultDll/toueidisp.c
+        src/REL/resultDll/stagemodel.c
+        src/REL/resultDll/battle.c
+        src/REL/resultDll/team.c
         src/REL/safDll/safanim.c
         src/REL/safDll/saf.c
         src/REL/safDll/safmotion.c
+        src/REL/sd00dll/sd00.c
+        src/REL/sd00dll/machine.c
+        src/REL/sd00dll/hook.c
+        src/REL/sd00dll/com.c
+        src/REL/sd00dll/gun.c
+        src/REL/sd00dll/stage.c
+        src/REL/sd00dll/math.c
+        src/REL/sd00dll/util.c
+        src/REL/sd00dll/flag.c
+        src/REL/sd00dll/rabbit.c
+        src/REL/sdroomdll/sdroom.c
+        src/REL/sdroomdll/machine.c
+        src/REL/sdroomdll/garage.c
+        src/REL/sdroomdll/garagesave.c
+        src/REL/sdroomdll/filename.c
+        src/REL/sdroomdll/picture.c
+        src/REL/sdroomdll/tournament.c
+        src/REL/sdroomdll/ending.c
+        src/REL/sdroomdll/desk.c
         src/REL/selmenuDll/selmenu.c
         src/REL/sequencedll/sequence.c
         src/REL/staffDll/staff.c
+        src/REL/storymodedll/storymode.c
+        src/REL/storymodedll/opening.c
         src/REL/storyresultdll/storyresult.c
         src/REL/storyresultdll/rank.c
         src/REL/storyresultdll/effect.c
+        src/REL/systemDll/nel.c
+        src/REL/systemDll/object.c
+        src/REL/systemDll/camera.c
+        src/REL/systemDll/stage.c
+        src/REL/systemDll/math.c
+        src/REL/systemDll/window.c
         src/REL/w01Dll/world01.c
         src/REL/w01sDll/world01.c
         src/REL/w02Dll/world02.c
+        src/REL/w02sDll/world02.c
         src/REL/w03Dll/world03.c
         src/REL/w03sDll/world03.c
         src/REL/w04Dll/world04.c
+        src/REL/w04sDll/world04.c
         src/REL/w05Dll/world05.c
         src/REL/w05sDll/world05.c
         src/REL/w06Dll/world06.c
@@ -247,85 +734,4 @@ set(REL_FILES
 )
 
 # DOL units not built natively yet (NonMatching):
-#   msm/msmstream.c
 # REL modules not built yet (a unit is NonMatching or missing):
-#   carddll
-#   e3setupdll
-#   m501Dll
-#   m502dll
-#   m503Dll
-#   m504dll
-#   m508Dll
-#   m509Dll
-#   m510dll
-#   m511Dll
-#   m512Dll
-#   m513Dll
-#   m514Dll
-#   m515Dll
-#   m516Dll
-#   m517Dll
-#   m521Dll
-#   m522Dll
-#   m523Dll
-#   m528Dll
-#   m530Dll
-#   m531Dll
-#   m532Dll
-#   m533dll
-#   m534Dll
-#   m535Dll
-#   m536Dll
-#   m537Dll
-#   m539Dll
-#   m540Dll
-#   m541Dll
-#   m542dll
-#   m543Dll
-#   m544Dll
-#   m545Dll
-#   m546Dll
-#   m547dll
-#   m548dll
-#   m549Dll
-#   m550dll
-#   m551Dll
-#   m552dll
-#   m553Dll
-#   m554dll
-#   m555Dll
-#   m560dll
-#   m561dll
-#   m562dll
-#   m564Dll
-#   m565dll
-#   m567Dll
-#   m568Dll
-#   m569Dll
-#   m570Dll
-#   m573dll
-#   m574Dll
-#   m575dll
-#   m576Dll
-#   m577Dll
-#   m579Dll
-#   m580Dll
-#   mdbeachDll
-#   mdcardDll
-#   mdminiDll
-#   mdomakeDll
-#   mdoptionDll
-#   mdstoryDll
-#   mgfreeDll
-#   mgmatchDll
-#   mgtourDll
-#   mgwarsDll
-#   partyresultdll
-#   rescardDll
-#   resultDll
-#   sd00dll
-#   sdroomdll
-#   storymodedll
-#   systemDll
-#   w02sDll
-#   w04sDll
