@@ -20,6 +20,7 @@
 #include "port/frame_interp.h"
 #include "port/imgui.h"
 #include "port/main.h"
+#include "port/retroachievements.h"
 #include "port/ui.h"
 
 bool Mp5Native_IsRunning = true;
@@ -140,7 +141,10 @@ void main(void)
         GlobalCounter++;
 #ifdef TARGET_PC
         HuInterpTickEnd();
+        /* the console evaluated achievements once per logic tick, whatever the display rate */
+        Mp5Native_RAGameTick();
         }
+        Mp5Native_RAFramePump();
         HuInterpDraw();
         ui_update();
         aurora_end_frame();

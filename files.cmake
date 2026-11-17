@@ -114,6 +114,7 @@ set(PORT_FILES
         src/port/frame_interp.cpp
         src/port/gx_render_modes.c
         src/port/hsfload_pc.c
+        src/port/http.cpp
         src/port/imgui.cpp
         src/port/imgui/ImGuiEngine.hpp
         src/port/io.cpp
@@ -133,6 +134,9 @@ set(PORT_FILES
         src/port/rel_cxxrt.c
         src/port/rel_loader.c
         src/port/rel_vi.c
+        src/port/retroachievements.cpp
+        src/port/retroachievements_badges.cpp
+        src/port/retroachievements_memory.cpp
         src/port/sdk_stubs.c
         src/port/settings.cpp
         src/port/spranim_pc.c

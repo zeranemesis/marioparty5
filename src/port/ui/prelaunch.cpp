@@ -110,7 +110,7 @@ namespace {
         static std::once_flag started;
         std::call_once(started, [] {
             const long current = parse_version(MP5_NATIVE_WC_DESCRIBE);
-            if (current < 0) {
+            if (current < 0 || !getSettings().backend.checkForUpdates) {
                 return;
             }
             std::thread([current] {

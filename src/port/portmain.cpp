@@ -1,6 +1,7 @@
 // Credits: TwilitRealm
 
 #include "imgui/ImGuiEngine.hpp"
+#include "port/retroachievements.h"
 #include "iso_validate.hpp"
 #include "ui/ui.hpp"
 
@@ -536,6 +537,8 @@ extern "C" int port_main(int argc, char* argv[]) {
 
     mp5native::version::init();
     LanguageInit();
+    // After the disc is known: the achievement set is chosen by its hash.
+    Mp5Native_RAInit();
 
     // OSInit();
 
@@ -557,6 +560,7 @@ extern "C" int port_main(int argc, char* argv[]) {
 
     // Notifies all CVs and causes threads to exit
     OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
+    Mp5Native_RAShutdown();
 
 #ifdef MP5_NATIVE_DISCORD
     mp5native::discord::shutdown();
