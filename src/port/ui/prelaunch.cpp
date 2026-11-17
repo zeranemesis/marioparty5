@@ -24,8 +24,19 @@
 #include <atomic>
 #include <exception>
 #include <filesystem>
+#include <cstdio>
+#include <mutex>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <thread>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
+#endif
 
 extern "C" {
 #include <game/card.h>
@@ -35,6 +46,90 @@ extern "C" {
 namespace mp5native::ui {
 namespace {
     aurora::Module PrelaunchLog { "mp5native::ui::prelaunch" };
+
+    // "v1.2.3" or "v1.2.3-4-dirty" -> 1002003; -1 for builds without a release tag (no check)
+    long parse_version(const char *s) noexcept
+    {
+        int a, b, c;
+        return std::sscanf(s, "v%d.%d.%d", &a, &b, &c) == 3 ? a * 1000000L + b * 1000L + c : -1;
+    }
+
+    std::string fetch_latest_release()
+    {
+        std::string body;
+#if defined(_WIN32)
+        HINTERNET session = WinHttpOpen(L"mp5native", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
+            WINHTTP_NO_PROXY_BYPASS, 0);
+        HINTERNET connect = session ? WinHttpConnect(session, L"api.github.com", INTERNET_DEFAULT_HTTPS_PORT, 0) : nullptr;
+        HINTERNET request = connect ? WinHttpOpenRequest(connect, L"GET", L"/repos/zeranemesis/marioparty5/releases/latest",
+            nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE) : nullptr;
+        DWORD status = 0, statusSize = sizeof(status);
+        if (request && WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0)
+            && WinHttpReceiveResponse(request, nullptr)
+            && WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,
+                &status, &statusSize, WINHTTP_NO_HEADER_INDEX)
+            && status == 200) {
+            char buf[4096];
+            DWORD read = 0;
+            while (WinHttpReadData(request, buf, sizeof(buf), &read) && read > 0) {
+                body.append(buf, read);
+            }
+        }
+        for (HINTERNET h : { request, connect, session }) {
+            if (h) {
+                WinHttpCloseHandle(h);
+            }
+        }
+#elif !defined(__ANDROID__)
+        // shortcut: relies on the system curl (macOS, desktop Linux); link libcurl if a platform lacks it
+        if (FILE *pipe = popen("curl -fsSL --max-time 10 -A mp5native "
+                               "https://api.github.com/repos/zeranemesis/marioparty5/releases/latest", "r")) {
+            char buf[4096];
+            size_t n;
+            while ((n = fread(buf, 1, sizeof(buf), pipe)) > 0) {
+                body.append(buf, n);
+            }
+            if (pclose(pipe) != 0) {
+                body.clear();
+            }
+        }
+#endif
+        return body;
+    }
+
+    // Asks GitHub once per run for the latest release; the prelaunch screen offers it when it is newer than this build.
+    struct UpdateCheck {
+        std::atomic_bool available = false;
+        std::string tag; // written before available is set
+        std::string url;
+    };
+
+    UpdateCheck &update_check()
+    {
+        static UpdateCheck check;
+        static std::once_flag started;
+        std::call_once(started, [] {
+            const long current = parse_version(MP5_NATIVE_WC_DESCRIBE);
+            if (current < 0) {
+                return;
+            }
+            std::thread([current] {
+                try {
+                    const auto json = nlohmann::json::parse(fetch_latest_release());
+                    const std::string tag = json.value("tag_name", "");
+                    if (parse_version(tag.c_str()) > current) {
+                        check.tag = tag;
+                        check.url = json.value("html_url", "");
+                        check.available.store(true, std::memory_order_release);
+                    }
+                }
+                catch (const std::exception &e) {
+                    PrelaunchLog.info("Update check skipped: {}", e.what());
+                }
+            }).detach();
+        });
+        return check;
+    }
 
     const Rml::String kDocumentSource = R"RML(
 <rml>
@@ -61,6 +156,10 @@ namespace {
         </disc-info>
         <version-info class="intro-item delay-5">
             <div class="version">Version <span id="version-text"></span></div>
+            <div id="update-status" class="update">
+                <span id="update-message" />
+                <button id="update-download"><span id="update-download-label">Download</span><icon /></button>
+            </div>
         </version-info>
     </content>
 </body>
@@ -662,6 +761,15 @@ Prelaunch::Prelaunch()
     mDiscStatus = mDocument->GetElementById("disc-status");
     mDiscDetail = mDocument->GetElementById("disc-version");
     mVersion = mDocument->GetElementById("version-text");
+    mUpdateStatus = mDocument->GetElementById("update-status");
+    mUpdateMessage = mDocument->GetElementById("update-message");
+    mUpdateDownload = mDocument->GetElementById("update-download");
+    listen(mUpdateDownload, Rml::EventId::Click, [](Rml::Event &) {
+        if (update_check().available.load(std::memory_order_acquire)) {
+            SDL_OpenURL(update_check().url.c_str());
+        }
+    });
+    update_check();
 
     listen(mDocument, Rml::EventId::Transitionend, [this](Rml::Event &event) {
         auto *target = event.GetTargetElement();
@@ -806,6 +914,11 @@ void Prelaunch::update()
             versionStr = versionStr.substr(1);
         }
         mVersion->SetInnerRML(escape(versionStr));
+    }
+    if (mUpdateStatus != nullptr && !mUpdateStatus->HasAttribute("state")
+        && update_check().available.load(std::memory_order_acquire)) {
+        mUpdateMessage->SetInnerRML(escape(fmt::format("Update {} available", update_check().tag)));
+        mUpdateStatus->SetAttribute("state", "available");
     }
 
     Document::update();

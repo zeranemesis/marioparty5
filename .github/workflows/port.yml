@@ -5,6 +5,8 @@ name: Port
 
 on:
   push:
+    branches: ['**']
+    tags: ['v*']   # a version tag also publishes a GitHub release (job "release")
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -26,6 +28,8 @@ jobs:
         run: |
           git -C extern/musyx apply --check ../../patches/musyx-mp5.patch
           git -C extern/musyx apply ../../patches/musyx-mp5.patch
+          git -C extern/aurora apply --check ../../patches/aurora-mp5.patch
+          git -C extern/aurora apply ../../patches/aurora-mp5.patch
 
       - name: Enable Visual Studio environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -57,6 +61,7 @@ jobs:
           path: |
             build/install/*.exe
             build/install/*.dll
+            build/install/*.db
             build/install/res/
 
   linux:
@@ -72,6 +77,8 @@ jobs:
         run: |
           git -C extern/musyx apply --check ../../patches/musyx-mp5.patch
           git -C extern/musyx apply ../../patches/musyx-mp5.patch
+          git -C extern/aurora apply --check ../../patches/aurora-mp5.patch
+          git -C extern/aurora apply ../../patches/aurora-mp5.patch
 
       - name: Install dependencies
         run: |
@@ -114,6 +121,8 @@ jobs:
         run: |
           git -C extern/musyx apply --check ../../patches/musyx-mp5.patch
           git -C extern/musyx apply ../../patches/musyx-mp5.patch
+          git -C extern/aurora apply --check ../../patches/aurora-mp5.patch
+          git -C extern/aurora apply ../../patches/aurora-mp5.patch
 
       - name: Install dependencies
         run: brew install cmake ninja
@@ -127,11 +136,15 @@ jobs:
       - name: Build
         run: cmake --build --preset x-macos-ci-arm64
 
+      # artifacts drop the executable bit: zip the bundle here
+      - name: Zip the app bundle
+        run: ditto -c -k --keepParent build/install/Mp5Native.app build/Mp5Native-macos.zip
+
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: mp5native-macos-arm64
-          path: build/install/Mp5Native.app
+          path: build/Mp5Native-macos.zip
 
   android:
     name: Android (arm64-v8a)
@@ -148,6 +161,8 @@ jobs:
         run: |
           git -C extern/musyx apply --check ../../patches/musyx-mp5.patch
           git -C extern/musyx apply ../../patches/musyx-mp5.patch
+          git -C extern/aurora apply --check ../../patches/aurora-mp5.patch
+          git -C extern/aurora apply ../../patches/aurora-mp5.patch
 
       - name: Install dependencies
         run: |
@@ -192,3 +207,38 @@ jobs:
         with:
           name: mp5native-android-arm64
           path: platforms/android/app/build/outputs/apk/release/*.apk
+
+  release:
+    name: Release
+    # a v* tag publishes what built; Windows is required, the other platforms join when they succeed
+    if: startsWith(github.ref, 'refs/tags/v') && !cancelled() && needs.windows.result == 'success'
+    needs: [windows, linux, macos, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Package
+        working-directory: artifacts
+        run: |
+          chmod +x mp5native-linux-x86_64/*.AppImage 2>/dev/null || true
+          for d in */; do
+            n=${d%/}
+            if ls "$n"/*.zip >/dev/null 2>&1; then
+              mv "$n"/*.zip "$n-$GITHUB_REF_NAME.zip"
+            else
+              (cd "$n" && zip -qry "../$n-$GITHUB_REF_NAME.zip" .)
+            fi
+          done
+          ls -la *.zip
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip
+          generate_release_notes: true
+          body: |
+            Native PC port of Mario Party 5. No game data is included: the port asks for your own disc image (GameCube, USA or EUR) at first launch.
+            The game tells you on its start screen when a newer release is available.
