@@ -168,8 +168,8 @@ void ObjectSetup(void)
     MgSeqCreate(&lbl_1_data_0);
     MgSeqModeDelaySet(3, 1);
     MgSeqModeDelaySet(2, 1);
-    MgSeqModeDelaySet(2, 0x230);
-    MgSeqModeDelaySet(7, 0x258);
+    MgSeqModeDelaySet(2, 450);
+    MgSeqModeDelaySet(7, 6000);
     MgSeqModeDelaySet(9, 0x3C);
 }
 

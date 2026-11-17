@@ -541,7 +541,7 @@ void fn_1_10F14(M539Game *self)
     y = block->mesh.base.pos.y;
     z = block->mesh.base.pos.z;
     scale = fn_1_C7C8(&self->digitFade);
-    PSMTXRotRad(rot, 'z', -0.2617994f);
+    PSMTXRotRad(rot, 'Y', -0.2617994f);
     PSMTXTrans(mtx, -x, -y, -z);
     PSMTXScaleApply(mtx, mtx, scale, scale, scale);
     PSMTXConcat(mtx, rot, mtx);

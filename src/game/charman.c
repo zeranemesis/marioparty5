@@ -3440,6 +3440,9 @@ static void PlayWinLoseVoice(void)
     s16 i;
     s16 motNo;
     
+#ifdef TARGET_PC
+    motNo = -1; // GC: motNo is a stale register when the motion is not loaded, and no case (no voice) is taken
+#endif
     if(workP->modelId == HU3D_MODELID_NONE) {
         HuMemDirectFree(winLose);
         HuPrcEnd();

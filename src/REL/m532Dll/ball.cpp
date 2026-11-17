@@ -469,7 +469,7 @@ void fn_1_EF0(M532BallA *self, f32 (*mtx)[4])
     GXSetZCompLoc(GX_TRUE);
     GXSetZMode(GX_TRUE, GX_LESS, GX_TRUE);
     GXSetAlphaCompare(GX_ALWAYS, 0xFF, GX_AOP_OR, GX_ALWAYS, 0xFF);
-    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_COPY);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
     GXClearVtxDesc();
     GXSetVtxDescv(lbl_1_rodata_80);
     GXSetVtxAttrFmtv(GX_VTXFMT0, lbl_1_rodata_98);

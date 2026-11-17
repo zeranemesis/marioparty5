@@ -124,7 +124,7 @@ void fn_1_F080(Vec *out, Quaternion *q, u32 axisCode)
             z = 1.0 + (-2.0 * (((f64)qx * (f64)qx) + ((f64)qy * (f64)qy)));
             break;
         default:
-            M517_ASSERT(!"Invalid Axis", lbl_1_data_555, lbl_1_data_565, 0x50);
+            M517_ASSERT(!"Invalid Axis", lbl_1_data_555, lbl_1_data_565, 0x51);
             return;
     }
     if ((u8)neg != 0) {
