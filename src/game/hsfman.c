@@ -1214,6 +1214,7 @@ HU3DCAMERA defCamera = {
 #include "game/object.h"
 
 static u16 Hu3DCameraPillarboxBit; /* Hu3DCameraPillarboxSet */
+static u16 Hu3DCameraNoWideBit; /* Hu3DCameraNoWideSet */
 
 /* Mini-games whose stage ends at the 4:3 edge (void, black or unfinished geometry
  * beyond it in 16:9, checked with MP5_TEST_MG captures): their cameras are pillarboxed */
@@ -1264,6 +1265,7 @@ void Hu3DCameraCreate(int cameraBit)
     defCamera.scissorH = RenderMode->efbHeight;
     Hu3DCameraExistF |= cameraBit;
 #ifdef TARGET_PC
+    Hu3DCameraNoWideBit &= ~cameraBit;
     Hu3DCameraPillarboxBit &= ~cameraBit;
     for(i=0; i<(s16)(sizeof(Hu3DPillarboxOvlTbl)/sizeof(Hu3DPillarboxOvlTbl[0])); i++) {
         if(omcurovl == Hu3DPillarboxOvlTbl[i]) {
@@ -1298,6 +1300,23 @@ void Hu3DCameraPillarboxSet(int cameraBit, int onF)
     } else {
         Hu3DCameraPillarboxBit &= ~cameraBit;
     }
+}
+
+/* The camera keeps the original 4:3 projection over the whole picture (stretched in widescreen), for a
+ * camera whose image is only read back, never shown: the touei portraits copy 64x64 squares of it at the
+ * console's positions. Reset by Hu3DCameraCreate and Hu3DCameraKill. */
+void Hu3DCameraNoWideSet(int cameraBit, int onF)
+{
+    if(onF) {
+        Hu3DCameraNoWideBit |= cameraBit;
+    } else {
+        Hu3DCameraNoWideBit &= ~cameraBit;
+    }
+}
+
+int Hu3DCameraNoWideCheck(int cameraNo)
+{
+    return (Hu3DCameraNoWideBit >> cameraNo) & 1;
 }
 
 /* a pillarboxed camera is in use: the HUD keeps to the 4:3 frame with it */
@@ -1773,6 +1792,7 @@ void Hu3DCameraKill(int cameraBit)
     s16 bit;
 #ifdef TARGET_PC
     Hu3DCameraPillarboxBit &= ~cameraBit;
+    Hu3DCameraNoWideBit &= ~cameraBit;
 #endif
     for(i=0, bit=1; i<HU3D_CAM_MAX; i++, bit <<= 1) {
         if(cameraBit & bit) {
@@ -1799,7 +1819,11 @@ void Hu3DCameraSet(s32 cameraNo, Mtx modelView)
 {
     Mtx44 proj;
     HU3DCAMERA *cameraP = &Hu3DCamera[cameraNo];
-    MTXPerspective(proj, cameraP->fov, HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
+#ifdef TARGET_PC
+    MTXPerspective(proj, cameraP->fov, Hu3DCameraNoWideCheck(cameraNo) ? cameraP->aspect : HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
+#else
+    MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
+#endif
     GXSetProjection(proj, GX_PERSPECTIVE);
     if(RenderMode->field_rendering) {
         GXSetViewportJitter(cameraP->viewportX, cameraP->viewportY, cameraP->viewportW, cameraP->viewportH, cameraP->viewportNear, cameraP->viewportFar, VIGetNextField());

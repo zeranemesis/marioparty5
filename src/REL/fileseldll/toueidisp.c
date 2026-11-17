@@ -58,6 +58,11 @@ void ToueiDispInit(void)
     HuVecF pos3D;
     HuVecF pos2D;
     s16 posX, posY;
+#ifdef TARGET_PC
+    /* camera 0 only draws the characters these portraits are copied from: keep the console projection,
+     * so each 64x64 copy holds the character as the GameCube drew it, in widescreen too */
+    Hu3DCameraNoWideSet(HU3D_CAM0, TRUE);
+#endif
     for(i=0; i<8; i++) {
         ToueiFbCopyBuf[i] = HuMemDirectMallocNum(HEAP_MODEL, GXGetTexBufferSize(TOUEI_FB_W, TOUEI_FB_H, GX_TF_RGB565, GX_FALSE, 0), HU_MEMNUM_OVL);
         if(i != 7) {
@@ -67,10 +72,6 @@ void ToueiDispInit(void)
             pos3D = Hu3DData[charToueiMdlId[i]].pos;
         }
         Hu3D3Dto2D(&pos3D, HU3D_CAM0, &pos2D);
-#ifdef TARGET_PC
-        /* the copy reads the 3D picture: undo the HUD shift Hu3D3Dto2D applies in widescreen */
-        pos2D.x = HU_WIDE_PICTURE_X(pos2D.x, pos2D.y);
-#endif
         posX = pos2D.x*(640.0/576.0);
         posY = pos2D.y;
         posX &= 0xFFFE;

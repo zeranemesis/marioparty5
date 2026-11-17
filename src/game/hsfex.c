@@ -698,6 +698,17 @@ void Hu3D3Dto2D(HuVecF *src, s16 cameraBit, HuVecF *dst)
     cameraP = &Hu3DCamera[i];
     MTXLookAt(lookAt, &cameraP->pos, &cameraP->up, &cameraP->target);
     MTXMultVec(lookAt, src, &pos);
+#ifdef TARGET_PC
+    if(Hu3DCameraNoWideCheck(i)) {
+        /* a camera drawn with the original projection: the console's coordinates */
+        width = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z * HU_DISP_ASPECT;
+        height = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z;
+        dst->x = DISP_HALF_W + pos.x * (DISP_HALF_W / -width);
+        dst->y = DISP_HALF_H + pos.y * (DISP_HALF_H / height);
+        dst->z = 0.0f;
+        return;
+    }
+#endif
     width = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z * HU_WIDE(HU_DISP_ASPECT);
     height = (HuSin(cameraP->fov/2) / HuCos(cameraP->fov/2)) * pos.z;
     dst->x = HU_WIDE_HUD_X(DISP_HALF_W + pos.x * (DISP_HALF_W / -width));

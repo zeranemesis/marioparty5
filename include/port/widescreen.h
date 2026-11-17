@@ -31,6 +31,9 @@ float HuWidePictureX(float hudX, float hudY);
 void Hu3DCameraPillarboxSet(int cameraBit, int onF);
 /* a pillarboxed camera exists: the HUD uses the centred layout and 2D is clipped to 4:3 */
 int Hu3DCameraPillarboxActive(void);
+/* hsfman.c: the cameras in cameraBit keep the 4:3 projection (an image only read back by copies) */
+void Hu3DCameraNoWideSet(int cameraBit, int onF);
+int Hu3DCameraNoWideCheck(int cameraNo);
 /* a sprite (or esprite) set over a 3D object, or drawn as a shape, stays put: the HUD
  * layout doesn't move it and it is never stretched as a backdrop */
 void HuSprWideFixSet(int sprId);
