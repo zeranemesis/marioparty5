@@ -991,7 +991,7 @@ s32 fn_1_832C(s16 arg0)
             lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.velZ;
             lbl_1_bss_2734.velY -= lbl_1_bss_2734.angAcc;
             mdl->pos = lbl_1_bss_2614[arg0].pos;
-            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0]->actor, &lbl_1_bss_2614[arg0].pos);
             if (++lbl_1_bss_2734.angCount >= 10) {
                 lbl_1_bss_2734.velY = 0.0f;
                 lbl_1_bss_2734.angCount = 0;
@@ -1004,7 +1004,7 @@ s32 fn_1_832C(s16 arg0)
             lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.velZ;
             lbl_1_bss_2734.velY -= lbl_1_bss_2734.angAcc;
             mdl->pos = lbl_1_bss_2614[arg0].pos;
-            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0]->actor, &lbl_1_bss_2614[arg0].pos);
             if (++lbl_1_bss_2734.angCount >= 10) {
                 work->shiftMode = 1;
                 work->shiftMotNo = 2;
@@ -1022,7 +1022,7 @@ s32 fn_1_832C(s16 arg0)
             lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.angVelZ;
             lbl_1_bss_2734.angVelY -= lbl_1_bss_2734.angAcc;
             mdl->pos = lbl_1_bss_2614[arg0].pos;
-            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0]->actor, &lbl_1_bss_2614[arg0].pos);
             if (++lbl_1_bss_2734.angCount >= 8) {
                 lbl_1_bss_2734.angVelY = 0.0f;
                 lbl_1_bss_2734.angCount = 0;
@@ -1035,7 +1035,7 @@ s32 fn_1_832C(s16 arg0)
             lbl_1_bss_2614[arg0].pos.z += lbl_1_bss_2734.angVelZ;
             lbl_1_bss_2734.angVelY -= lbl_1_bss_2734.angAcc;
             mdl->pos = lbl_1_bss_2614[arg0].pos;
-            MgActorPosUpdate(lbl_1_bss_0.player[arg0 + 1]->actor, &lbl_1_bss_2614[arg0].pos);
+            MgActorPosUpdate(lbl_1_bss_0.player[arg0]->actor, &lbl_1_bss_2614[arg0].pos);
             if (++lbl_1_bss_2734.angCount >= 8) {
                 work->shiftMode = 1;
                 work->shiftMotNo = 2;
