@@ -1,4 +1,7 @@
 #include "REL/resultDll.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+#endif
 
 #define TOUEI_FB_W 60
 #define TOUEI_FB_H 60

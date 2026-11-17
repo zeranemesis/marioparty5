@@ -37,6 +37,8 @@
 #include <thread>
 
 extern "C" int game_main();
+extern "C" void sndQuit(void);
+extern "C" bool sndIsInstalled(void);
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -560,6 +562,11 @@ extern "C" int port_main(int argc, char* argv[]) {
 
     // Notifies all CVs and causes threads to exit
     OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
+    // OSResetSystem is a stub here: stop MusyX so its audio thread is joined before Aurora shuts SDL down
+    // (it read the destroyed SDL stream on exit)
+    if (sndIsInstalled()) {
+        sndQuit();
+    }
     Mp5Native_RAShutdown();
 
 #ifdef MP5_NATIVE_DISCORD

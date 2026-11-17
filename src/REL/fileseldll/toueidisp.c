@@ -1,4 +1,7 @@
 #include "REL/fileseldll.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+#endif
 
 #define TOUEI_FB_W 64
 #define TOUEI_FB_H 64
