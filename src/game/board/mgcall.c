@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include <stdlib.h>
+#endif
 #include "game/board/mgcall.h"
 #include "game/board/status.h"
 #include "game/board/guide.h"
@@ -1618,6 +1621,12 @@ void MBMgCallVsExec(void)
 
 static void MgCallNext(int type, int no)
 {
+#ifdef TARGET_PC
+    /* MP5_TEST_BOARD_MG=<mgDataTbl index>: test bench, the board's 4-player mini-games are that one */
+    if(type == MG_TYPE_4P && getenv("MP5_TEST_BOARD_MG") != NULL) {
+        no = atoi(getenv("MP5_TEST_BOARD_MG"));
+    }
+#endif
     int id = no+GW_MGNO_BASE;
     int statId;
     unsigned int instDir;

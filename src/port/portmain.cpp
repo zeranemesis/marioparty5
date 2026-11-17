@@ -768,7 +768,9 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             }
             tbFrame = 100000;
         }
-        if ((tbBoard >= 0 && !tbStarted) || (getenv("MP5_TEST_OVL") != nullptr && !tbOvlDone)) {
+        // MP5_TEST_PADALL=1: keep tapping START+A in every overlay (menus walk themselves), like the Dolphin bench's pad code
+        if ((tbBoard >= 0 && !tbStarted) || (getenv("MP5_TEST_OVL") != nullptr && !tbOvlDone) ||
+            getenv("MP5_TEST_PADALL") != nullptr) {
             memset(st, 0, sizeof(PADStatus) * 4);
             if ((++tbFrame / 20) % 2) {
                 st[0].button = PAD_BUTTON_START | PAD_BUTTON_A;
