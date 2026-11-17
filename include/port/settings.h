@@ -93,6 +93,8 @@ struct UserSettings {
         // Graphics
         ConfigVar<int> internalResolutionScale;
         ConfigVar<int> shadowResolutionMultiplier;
+        ConfigVar<int> msaaSamples;        // 1 = off (original); read at start-up
+        ConfigVar<int> textureAnisotropy;  // 1 = off (original) .. 16; read at start-up
 
         // Audio
 

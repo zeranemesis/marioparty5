@@ -19,6 +19,8 @@
 #include "port/retroachievements.h"
 
 #include <algorithm>
+#include <fmt/format.h>
+#include <vector>
 #include <aurora/aurora.h>
 #include <game/disp.h>
 #include <gx/GXAurora.h>
@@ -599,6 +601,39 @@ SettingsWindow::SettingsWindow(bool prelaunch)
                 .defaultValue = 1,
             },
             mPrelaunch);
+
+        leftPane.add_section("Image Quality");
+        const auto int_choice = [&](ConfigVar<int> &var, const char *key, std::vector<int> values, const char *off,
+                                    const char *help) {
+            leftPane.register_control(leftPane.add_select_button({
+                                          .key = key,
+                                          .getValue =
+                                              [&var, off] {
+                                                  const int v = var.getValue();
+                                                  return v <= 1 ? Rml::String { off } : fmt::format("{}x", v);
+                                              },
+                                          .isModified = [&var] { return var.getValue() != var.getDefaultValue(); },
+                                      }),
+                rightPane, [&var, values, off, help](Pane &pane) {
+                    for (int v : values) {
+                        pane.add_button({
+                                            .text = v <= 1 ? Rml::String { off } : fmt::format("{}x", v),
+                                            .isSelected = [&var, v] { return var.getValue() == v; },
+                                        })
+                            .on_pressed([&var, v] {
+                                var.setValue(v);
+                                config::Save();
+                            });
+                    }
+                    pane.add_rml(help);
+                });
+        };
+        int_choice(getSettings().game.msaaSamples, "Anti-Aliasing (MSAA)", { 1, 2, 4, 8 }, "Off (Original)",
+            "<br/>Smooths the jagged edges of 3D models. Costs graphics card time; leave it off on a modest computer. "
+            "Takes effect the next time the game starts.");
+        int_choice(getSettings().game.textureAnisotropy, "Texture Filtering", { 1, 2, 4, 8, 16 }, "Off (Original)",
+            "<br/>Keeps textures sharp on surfaces seen at an angle, such as the board floor. Lower it on a modest "
+            "graphics card. Takes effect the next time the game starts.");
 
         // leftPane.add_section("Post-Processing");
 

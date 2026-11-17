@@ -235,7 +235,21 @@ class Limiter
             static_cast<LONGLONG>(static_cast<double>(duration.count()) * m_countPerNs);
         LARGE_INTEGER count;
         QueryPerformanceCounter(&count);
-        if (ms > 10)
+        // A high-resolution waitable timer (Windows 10 1803+) wakes within about 0.5 ms: sleep up to the last
+        // millisecond and spin only that, instead of spinning the last 10 ms of every frame on a whole core
+        // (most of the main thread's CPU time, which a small laptop needs for the game, audio and rendering).
+        static HANDLE timer = CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+        constexpr long long kSpinNs = 1000000;
+        if (timer != nullptr && duration.count() > kSpinNs)
+        {
+            LARGE_INTEGER due;
+            due.QuadPart = -((duration.count() - kSpinNs) / 100); // relative, in 100 ns units
+            if (SetWaitableTimerEx(timer, &due, 0, nullptr, nullptr, nullptr, 0))
+            {
+                WaitForSingleObject(timer, INFINITE);
+            }
+        }
+        else if (timer == nullptr && ms > 10)
         {
             // Adjust for Sleep overhead
             ::Sleep(ms - 10);

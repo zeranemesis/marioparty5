@@ -11,6 +11,7 @@
 #include "ui/prelaunch.hpp"
 #include "ui/preset.hpp"
 
+#include <algorithm>
 #include <SDL3/SDL_filesystem.h>
 #include "port/display_select.h"
 #include <aurora/aurora.h>
@@ -396,6 +397,8 @@ extern "C" int port_main(int argc, char* argv[]) {
         config.appName = "MP5 Native";
         config.userPath = reinterpret_cast<const char*>(configPathString.c_str());
         config.vsync = mp5native::getSettings().video.enableVsync;
+        config.msaa = static_cast<uint32_t>(std::clamp(mp5native::getSettings().game.msaaSamples.getValue(), 1, 8));
+        config.maxTextureAnisotropy = static_cast<uint16_t>(std::clamp(mp5native::getSettings().game.textureAnisotropy.getValue(), 1, 16));
         config.startFullscreen = mp5native::getSettings().video.enableFullscreen;
         config.windowPosX = -1;
         config.windowPosY = -1;

@@ -33,6 +33,20 @@ namespace {
         s.game.shadowResolutionMultiplier.setValue(4);
     }
 
+    // modest computers (integrated graphics, older laptops): the console's resolution and no extra GPU work
+    void applyPresetPerformance()
+    {
+        auto &s = getSettings();
+        s.game.enableAchievementToasts.setValue(true);
+        s.game.enableControllerToasts.setValue(true);
+        s.game.internalResolutionScale.setValue(1);
+        s.game.shadowResolutionMultiplier.setValue(1);
+        s.game.msaaSamples.setValue(1);
+        s.game.textureAnisotropy.setValue(1);
+        s.video.frameRate.setValue(60);
+        s.video.frameInterpolation.setValue(false);
+    }
+
 } // namespace
 
 PresetWindow::PresetWindow()
@@ -70,6 +84,9 @@ PresetWindow::PresetWindow()
         { "MP5 Native",
             "Quality of life tweaks, our recommended way to play!",
             applyPresetMp5Native },
+        { "Performance",
+            "For modest computers: the GameCube's resolution and no extra effects.",
+            applyPresetPerformance },
     };
 
     for (const auto &preset : kPresets) {
