@@ -66,8 +66,10 @@ void ToueiDispInit(void)
         Hu3DModelObjPosGet(lbl_1_bss_EE[i], ToueiCenterObj[i], &pos3D);
         pos3D.y += ToueiCenterOfsY[i];
         Hu3D3Dto2D(&pos3D, HU3D_CAM0, &pos2D);
+#ifdef TARGET_PC
         /* the copy reads the 3D picture: undo the HUD shift Hu3D3Dto2D applies in widescreen */
         pos2D.x = HU_WIDE_PICTURE_X(pos2D.x, pos2D.y);
+#endif
         posX = pos2D.x*(640.0/576.0);
         posY = pos2D.y;
         posX &= 0xFFFE;
