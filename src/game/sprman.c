@@ -301,6 +301,10 @@ static void HuSprWidescreenLayout(void)
             if(hi[r] == 0.0f || lo[r] == 0.0f || hidden[r]) {
                 continue;
             }
+            /* a sprite not drawn (an unused digit of a counter) is covered by nothing */
+            if(!boxes[i].visible || boxes[i].x1 <= boxes[i].x0) {
+                continue;
+            }
             for(k=0; k<n; k++) {
                 s16 rk = WideRoot(boxes, k);
                 float margin;
