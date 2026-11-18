@@ -714,8 +714,10 @@ static OMOVL tbOvlHook(OMOVL ovl) {
 }
 
 // test bench: MP5_TEST_AUDIODUMP=<file> writes the mixed output as raw s16 PCM (rate/channels printed once),
-// for comparing the sound with Dolphin's audio dump. Armed at each overlay call: the sound init clears it.
+// for comparing the sound with Dolphin's audio dump. The output callback is msm's server (msmsys.c), which
+// frees the finished sound effects: the dump takes it over after msmSysInit set it, and chains to it.
 extern "C" volatile uint64_t Mp5Test_AudioFrames = 0; // frames written so far (audio.c's voice trace)
+extern "C" void msmSysPCCycle(int16_t* output, size_t frames, uint32_t rate, uint32_t channels);
 static void tbAudioDumpArm() {
     static const char* path = getenv("MP5_TEST_AUDIODUMP");
     static FILE* file = path != nullptr ? fopen(path, "wb") : nullptr;
@@ -723,6 +725,7 @@ static void tbAudioDumpArm() {
         return;
     }
     sndPCSetOutputCallback([](int16_t* output, size_t frames, uint32_t rate, uint32_t channels) {
+        msmSysPCCycle(output, frames, rate, channels);
         static bool told = false;
         if (!told) {
             printf("AUDIODUMP: rate %u channels %u\n", (unsigned)rate, (unsigned)channels);

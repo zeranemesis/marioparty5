@@ -325,6 +325,17 @@ s32 msmStreamStop(int streamNo, s32 speed) {
 int msmStreamPlay(int streamId, MSM_STREAMPARAM* streamParam) {
     MSM_STREAM_PACK* pack;
     s32 result;
+#ifdef TARGET_PC
+    {
+        static int noMusic = -1; /* test bench: MP5_TEST_NOMUSIC, see msmMusPlay */
+        if (noMusic < 0) {
+            noMusic = getenv("MP5_TEST_NOMUSIC") != NULL;
+        }
+        if (noMusic) {
+            return MSM_ERR_PLAYFAIL;
+        }
+    }
+#endif
 
     if (streamId < 0 || streamId >= StreamInfo.header.streamMax) {
         return MSM_ERR_INVALIDID;

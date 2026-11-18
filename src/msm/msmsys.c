@@ -33,7 +33,8 @@ static void msmSysServer(void)
 // The AI DMA interrupt does not exist on PC: MusyX's audio thread renders 5 ms cycles, so run the
 // server once per cycle (it chained in front of MusyX's own AI callback on GC, same cadence).
 // shortcut: msm game-thread calls are not locked against this thread (GC relied on the IRQ being atomic), add a lock if races show up
-static void msmSysPCCycle(s16 *output, size_t frames, u32 rate, u32 channels)
+/* not static: the test bench's audio dump (portmain.cpp) takes the output callback over and chains to this */
+void msmSysPCCycle(s16 *output, size_t frames, u32 rate, u32 channels)
 {
     (void)output; (void)frames; (void)rate; (void)channels;
     msmSysServer();

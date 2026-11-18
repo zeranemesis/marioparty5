@@ -307,6 +307,19 @@ int msmMusPlay(int musId, MSM_MUSPARAM *musParam)
     MSM_MUS *musData;
     MUS_PLAYER *player;
     DVDFileInfo file;
+#ifdef TARGET_PC
+    {
+        /* test bench: MP5_TEST_NOMUSIC leaves only the sound effects and voices (the Dolphin bench patches
+         * this function's entry the same way), so the two can be compared without the music */
+        static int noMusic = -1;
+        if(noMusic < 0) {
+            noMusic = getenv("MP5_TEST_NOMUSIC") != NULL;
+        }
+        if(noMusic) {
+            return MSM_ERR_PLAYFAIL;
+        }
+    }
+#endif
 
     if (musId < 0 || musId >= mus.musMax) {
         return MSM_ERR_INVALIDID;
