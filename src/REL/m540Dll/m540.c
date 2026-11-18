@@ -3753,7 +3753,7 @@ static M540_OBJ *fn_1_E5F8(void)
     Hu3DMotionShiftSet(obj->modelId, obj->motId[0], 0.0f, 0.0f, HU3D_MOTATTR_LOOP);
     mdlId[0] = Hu3DModelCreateData(DATANUM(DATA_m540, 0x73));
     Hu3DModelShadowSet(mdlId[0]);
-    Hu3DModelHookSet(obj->modelId, "itemhook_A", mdlId[0]);
+    Hu3DModelHookSet(obj->modelId, "itemhook_sao", mdlId[0]); /* lbl_1_data_124 in the asm; the decomp had "itemhook_A" */
     return obj;
 }
 

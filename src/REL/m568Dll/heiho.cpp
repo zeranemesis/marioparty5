@@ -164,10 +164,11 @@ HeihoModels *fn_1_98D8(HeihoModels *self)
     id_5b = id_5a;
     Hu3DModelHookSet(id_5b, lbl_1_data_36B, id_4b);
 
-    p7 = self->m_mdl3;
+    /* as the asm: m_mdl0 (0x00) hooked on m_mdl3 (0x0C)'s ski-itemhook-h, the decomp had the two swapped */
+    p7 = self->m_mdl0;
     id_6a = MODEL_ID(p7);
     id_6b = id_6a;
-    p8 = self->m_mdl0;
+    p8 = self->m_mdl3;
     id_7a = MODEL_ID(p8);
     id_7b = id_7a;
     Hu3DModelHookSet(id_7b, lbl_1_data_376, id_6b);
