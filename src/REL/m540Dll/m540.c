@@ -941,7 +941,7 @@ static void fn_1_4334(void)
     for(i=0; i<3; i++) {
         view = &cam->view[i];
         view->pos.x = view->center.x + view->zoom*(sin(3.141592653589793*view->rot.y/180.0)*cos(3.141592653589793*view->rot.x/180.0));
-        view->pos.y = view->center.y - view->zoom*sin(3.141592653589793*view->rot.y/180.0);
+        view->pos.y = view->center.y - view->zoom*sin(3.141592653589793*view->rot.x/180.0); /* asm: the pitch (rot.x, 0x24), the decomp had rot.y */
         view->pos.z = view->center.z + view->zoom*(cos(3.141592653589793*view->rot.y/180.0)*cos(3.141592653589793*view->rot.x/180.0));
         view->up.x = sin(3.141592653589793*view->rot.y/180.0)*sin(3.141592653589793*view->rot.x/180.0);
         view->up.y = cos(3.141592653589793*view->rot.x/180.0);
@@ -3853,7 +3853,7 @@ static void fn_1_EFF0(void)
         for(i=0; i<3; i++) {
             view = &cam->view[i];
             view->pos.x = view->center.x + view->zoom*(sin(3.141592653589793*view->rot.y/180.0)*cos(3.141592653589793*view->rot.x/180.0));
-            view->pos.y = view->center.y - view->zoom*sin(3.141592653589793*view->rot.y/180.0);
+            view->pos.y = view->center.y - view->zoom*sin(3.141592653589793*view->rot.x/180.0); /* asm: the pitch (rot.x, 0x24), the decomp had rot.y */
             view->pos.z = view->center.z + view->zoom*(cos(3.141592653589793*view->rot.y/180.0)*cos(3.141592653589793*view->rot.x/180.0));
             view->up.x = sin(3.141592653589793*view->rot.y/180.0)*sin(3.141592653589793*view->rot.x/180.0);
             view->up.y = cos(3.141592653589793*view->rot.x/180.0);
