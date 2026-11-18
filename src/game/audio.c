@@ -8,6 +8,11 @@
 #include "game/memory.h"
 #include "game/gamework.h"
 #include "game/charman.h"
+#ifdef TARGET_PC
+#include "game/main.h"
+#include <stdio.h>
+#include <stdlib.h>
+#endif
 
 #define HUMSMHEAP_SIZE 0xBFC00
 
@@ -881,6 +886,19 @@ int CharVoiceSeTable[CHARNO_MAX] = {
 s32 CharFXPlayVolPan(s16 charNo, s16 seId, s16 vol, s16 pan)
 {
     MSM_SEPARAM param;
+#ifdef TARGET_PC
+    {
+        /* test bench: the twin of the Dolphin reference bench's Gecko trace at this function's entry */
+        static int trace = -1;
+        if(trace < 0) {
+            trace = getenv("MP5_TEST_VOICETRACE") != NULL;
+        }
+        if(trace) {
+            extern volatile u64 Mp5Test_AudioFrames;
+            printf("VOICE c=%d se=0x%x t=%u a=%llu\n", charNo, seId, (unsigned)GlobalCounter, (unsigned long long)Mp5Test_AudioFrames);
+        }
+    }
+#endif
     if(omSysExitReq || WipeCheck()) {
         return 0;
     }

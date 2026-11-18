@@ -40,6 +40,7 @@
 extern "C" int game_main();
 extern "C" void sndQuit(void);
 extern "C" bool sndIsInstalled(void);
+extern "C" void sndPCSetOutputCallback(void (*callback)(int16_t* output, size_t frames, uint32_t rate, uint32_t channels)); // musyx/pc.h
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -712,7 +713,29 @@ static OMOVL tbOvlHook(OMOVL ovl) {
     return (OMOVL)atoi(env);
 }
 
+// test bench: MP5_TEST_AUDIODUMP=<file> writes the mixed output as raw s16 PCM (rate/channels printed once),
+// for comparing the sound with Dolphin's audio dump. Armed at each overlay call: the sound init clears it.
+extern "C" volatile uint64_t Mp5Test_AudioFrames = 0; // frames written so far (audio.c's voice trace)
+static void tbAudioDumpArm() {
+    static const char* path = getenv("MP5_TEST_AUDIODUMP");
+    static FILE* file = path != nullptr ? fopen(path, "wb") : nullptr;
+    if (file == nullptr) {
+        return;
+    }
+    sndPCSetOutputCallback([](int16_t* output, size_t frames, uint32_t rate, uint32_t channels) {
+        static bool told = false;
+        if (!told) {
+            printf("AUDIODUMP: rate %u channels %u\n", (unsigned)rate, (unsigned)channels);
+            fflush(stdout);
+            told = true;
+        }
+        fwrite(output, sizeof(int16_t) * channels, frames, file);
+        Mp5Test_AudioFrames += frames;
+    });
+}
+
 extern "C" OMOVL Mp5Test_OvlCallHook(OMOVL ovl) {
+    tbAudioDumpArm();
     ovl = tbOvlHook(ovl);
     ovl = tbBoardHook(ovl);
     tmInit();
@@ -745,6 +768,7 @@ extern "C" {
 }
 
 extern "C" void Mp5Test_PadHook(PADStatus* st) {
+    tbAudioDumpArm(); // every frame: a sound re-init (an overlay's) clears the output callback
     tmInit();
     // MP5_TEST_SEED=<n>: the game's RNG starts from n (else from the clock), so two runs can be compared;
     // "TESTSEED:" lines every 600 ticks show where it is
@@ -784,6 +808,17 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
             memset(st, 0, sizeof(PADStatus) * 4);
             if ((++tbFrame / 20) % 2) {
                 st[0].button = PAD_BUTTON_START | PAD_BUTTON_A;
+            }
+            // MP5_TEST_PADALL=2: the Dolphin bench's MASH (voiceref.py): a real Party game, pad 0 taps A (START only
+            // on the title, so the board's pause menu stays shut), pads 1-3 unplugged so those players are COM
+            const char* padAll = getenv("MP5_TEST_PADALL");
+            if (padAll != nullptr && atoi(padAll) == 2) {
+                if (omcurovl != DLL_bootdll) {
+                    st[0].button &= ~PAD_BUTTON_START;
+                }
+                for (int i = 1; i < 4; i++) {
+                    st[i].err = PAD_ERR_NO_CONTROLLER;
+                }
             }
         }
         // MP5_TEST_BOARD_PAUSE=n: pad 0 plugged in and tapping A (messages, dice) until n frames into the board,
