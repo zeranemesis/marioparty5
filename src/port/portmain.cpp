@@ -306,6 +306,10 @@ static std::filesystem::path calculate_config_path() {
 #endif
 #endif
 
+    // test bench: MP5_TEST_CONFIG_DIR=<dir> keeps the config and the memory card of a test run apart from the player's
+    if (const char* dir = getenv("MP5_TEST_CONFIG_DIR")) {
+        return std::filesystem::path(reinterpret_cast<const char8_t*>(dir)) / "";
+    }
     const auto result = SDL_GetPrefPath("zeranemesis", "MP5 Native");
     if (!result) {
         Mp5NativeMainLog.error("Unable to get PrefPath: {}", SDL_GetError());
