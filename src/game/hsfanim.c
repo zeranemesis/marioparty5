@@ -1463,6 +1463,20 @@ void Hu3DWaterWaveCreate(HuVecF *pos, float radius, float radiusMax)
     }
 }
 
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+/* The water samples the framebuffer copies at each point's screen position. The scene was drawn with the
+ * widened projection (or, pillarboxed, the 4:3 one in a viewport narrowed by the same factor): either way the
+ * screen x is that of the widened aspect, which the 4:3 texgen put HuWideFactor() times too far out. */
+static float WaterScreenAspect(HU3DCAMERA *cameraP)
+{
+    return Hu3DCameraNoWideCheck(Hu3DCameraNo) ? cameraP->aspect : HU_WIDE(cameraP->aspect);
+}
+#define WATER_SCREEN_ASPECT(cameraP) WaterScreenAspect(cameraP)
+#else
+#define WATER_SCREEN_ASPECT(cameraP) ((cameraP)->aspect)
+#endif
+
 static void CopyWaterFb(s16 layerNo)
 {
     HU3DWATER *waterP = &Hu3DWaterData;
@@ -1505,7 +1519,7 @@ static void WaterLayerHook(s16 layerNo)
     Hu3DTexLoad(waterP->fbWater, waterP->fbWaterW, waterP->fbWaterH, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, TRUE, GX_TEXMAP0);
     GXSetNumTexGens(1);
     GXSetNumTevStages(1);
-    MTXLightPerspective(proj, cameraP->fov, cameraP->aspect, 0.5f, -0.5f, 0.5f, 0.5f);
+    MTXLightPerspective(proj, cameraP->fov, WATER_SCREEN_ASPECT(cameraP), 0.5f, -0.5f, 0.5f, 0.5f);
     MTXConcat(proj, Hu3DCameraMtx, texMtx);
     GXLoadTexMtxImm(texMtx, GX_TEXMTX1, GX_MTX3x4);
     GXSetTexCoordGen(GX_TEXMAP0, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX1);
@@ -1538,7 +1552,7 @@ static void WaterLayerHook(s16 layerNo)
         HuSprTexLoad(waterP->animSurface, 0, GX_TEXMAP3, GX_REPEAT, GX_REPEAT, GX_LINEAR);
     }
     tevStage = 0;
-    MTXLightPerspective(proj, cameraP->fov, cameraP->aspect, 0.5f, -0.5f, 0.5f, 0.5f);
+    MTXLightPerspective(proj, cameraP->fov, WATER_SCREEN_ASPECT(cameraP), 0.5f, -0.5f, 0.5f, 0.5f);
     MTXConcat(proj, Hu3DCameraMtx, texMtx);
     GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX3x4);
     GXSetTexCoordGen(tevStage, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX0);
@@ -1689,7 +1703,7 @@ static void DrawWave(HU3DWATER *waterP, s16 waveNo)
         HuSprTexLoad(waterP->animSky, 0, GX_TEXMAP2, GX_REPEAT, GX_REPEAT, GX_LINEAR);
     }
     tevStage = 0;
-    MTXLightPerspective(proj, cameraP->fov, cameraP->aspect, 0.5f, -0.5f, 0.5f, 0.5f);
+    MTXLightPerspective(proj, cameraP->fov, WATER_SCREEN_ASPECT(cameraP), 0.5f, -0.5f, 0.5f, 0.5f);
     MTXConcat(proj, Hu3DCameraMtx, texMtx);
     GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX3x4);
     GXSetTexCoordGen(tevStage, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX0);

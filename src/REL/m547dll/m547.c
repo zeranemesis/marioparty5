@@ -9,6 +9,17 @@
 #include "game/mg/seqman.h"
 #include "game/mg/score.h"
 
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+/* the inset (camera 2) viewport is in framebuffer pixels, stretched across the whole window: a HUD x
+ * (0..576) over it moves out from the centre by the widescreen factor, and so does a width */
+#define M547_WX(x) (288.0f + ((x) - 288.0f) * HuWideFactor())
+#define M547_WS(s) ((s) * HuWideFactor())
+#else
+#define M547_WX(x) (x)
+#define M547_WS(s) (s)
+#endif
+
 s32 rand8(void);
 
 typedef void (*M547VoidFunc)(void);
@@ -578,15 +589,15 @@ void fn_1_162C(void)
     if (lbl_1_bss_2 == 0) {
         f31 = f30 = f29 = f28 = 0.0f;
     }
-    espPosSet(lbl_1_bss_470[0], 0.9f * (480.0f + 0.5f * f31), 346.0f);
-    espPosSet(lbl_1_bss_470[1], 0.9f * (480.0f - 0.5f * f31), 346.0f);
-    espPosSet(lbl_1_bss_470[2], 432.0f, 346.0f + 0.5f * f30);
-    espPosSet(lbl_1_bss_470[3], 432.0f, 346.0f - 0.5f * f30);
+    espPosSet(lbl_1_bss_470[0], M547_WX(0.9f * (480.0f + 0.5f * f31)), 346.0f);
+    espPosSet(lbl_1_bss_470[1], M547_WX(0.9f * (480.0f - 0.5f * f31)), 346.0f);
+    espPosSet(lbl_1_bss_470[2], M547_WX(432.0f), 346.0f + 0.5f * f30);
+    espPosSet(lbl_1_bss_470[3], M547_WX(432.0f), 346.0f - 0.5f * f30);
     for (j = 0; j < 4; j++) {
         if (j < 2) {
             espScaleSet(lbl_1_bss_470[j], 1.0f, f30 / 480.0f);
         } else {
-            espScaleSet(lbl_1_bss_470[j], f31 / 640.0f, 1.0f);
+            espScaleSet(lbl_1_bss_470[j], M547_WS(f31 / 640.0f), 1.0f);
         }
     }
     if (lbl_1_bss_2 % 2 != 0) {
@@ -594,8 +605,8 @@ void fn_1_162C(void)
     } else {
         sp = 4;
     }
-    espPosSet(lbl_1_bss_470[sp], 432.0f, 346.0f);
-    espScaleSet(lbl_1_bss_470[sp], f29, f28);
+    espPosSet(lbl_1_bss_470[sp], M547_WX(432.0f), 346.0f);
+    espScaleSet(lbl_1_bss_470[sp], M547_WS(f29), f28);
     espScaleSet(lbl_1_bss_470[sp ^ 1], 0.0f, 0.0f);
     if (lbl_1_bss_2 >= 30 && lbl_1_bss_2 <= 90) {
         f31 = 1.0f - (f32)(lbl_1_bss_2 - 30) / 60.0f;
@@ -625,10 +636,10 @@ void fn_1_1BA8(void)
     y = 256 - ((t << 8) / 60);
     Hu3DCameraScissorSet(2, x, y, w, h);
     Hu3DCameraViewportSet(2, x, y, w, h, 0.0f, 1.0f);
-    espPosSet(lbl_1_bss_470[0], 0.9f * (f32)(x + w), (f32)(y + (h >> 1)));
-    espPosSet(lbl_1_bss_470[1], 0.9f * (f32)x, (f32)(y + (h >> 1)));
-    espPosSet(lbl_1_bss_470[2], 0.9f * (f32)(x + (w >> 1)), (f32)(y + h));
-    espPosSet(lbl_1_bss_470[3], 0.9f * (f32)(x + (w >> 1)), (f32)y);
+    espPosSet(lbl_1_bss_470[0], M547_WX(0.9f * (f32)(x + w)), (f32)(y + (h >> 1)));
+    espPosSet(lbl_1_bss_470[1], M547_WX(0.9f * (f32)x), (f32)(y + (h >> 1)));
+    espPosSet(lbl_1_bss_470[2], M547_WX(0.9f * (f32)(x + (w >> 1))), (f32)(y + h));
+    espPosSet(lbl_1_bss_470[3], M547_WX(0.9f * (f32)(x + (w >> 1))), (f32)y);
     lbl_1_data_280[0] = (t * (120 - lbl_1_data_2A4[1] * 240)) / 60;
     lbl_1_data_298[0] = (t * (120 - lbl_1_data_2A4[1] * 240)) / 60;
     lbl_1_data_280[1] = 200.0f + (((M547.pos[lbl_1_data_2A4[0]].y - 100.0f) * (f32)t) / 60.0f);
@@ -638,7 +649,7 @@ void fn_1_1BA8(void)
         if (j < 2) {
             espScaleSet(lbl_1_bss_470[j], 1.0f, (f32)h / 480.0f);
         } else {
-            espScaleSet(lbl_1_bss_470[j], (f32)w / 640.0f, 1.0f);
+            espScaleSet(lbl_1_bss_470[j], M547_WS((f32)w / 640.0f), 1.0f);
         }
     }
 }
@@ -933,6 +944,12 @@ void fn_1_376C(void)
         espAttrSet(lbl_1_bss_470[i + 4], 1);
         espDispOn(lbl_1_bss_470[i + 4]);
     }
+#ifdef TARGET_PC
+    /* the inset's frame and screen follow camera 2's viewport (M547_WX), not the HUD layout */
+    for (i = 0; i < 6; i++) {
+        HU_WIDE_FIX_ESP(lbl_1_bss_470[i]);
+    }
+#endif
     lbl_1_bss_470[6] = espEntry(0x69001D, 0xF, 0);
     espDispOff(lbl_1_bss_470[6]);
     espDrawNoSet(lbl_1_bss_470[6], 0);
