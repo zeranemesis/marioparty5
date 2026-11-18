@@ -3,6 +3,10 @@
 #include "msm/msmmem.h"
 
 #include "string.h"
+#ifdef TARGET_PC
+#include <stdio.h>
+#include <stdlib.h>
+#endif
 
 #ifdef TARGET_PC
 #include "port/endian.h"
@@ -558,6 +562,20 @@ int msmSePlay(int seId, MSM_SEPARAM *param)
     s32 i;
     s32 emiFlag;
 
+#ifdef TARGET_PC
+    {
+        /* test bench: MP5_TEST_SETRACE prints every sound effect started, the twin of the Dolphin bench's Gecko
+         * trace at this function's entry */
+        static int trace = -1;
+        if (trace < 0) {
+            trace = getenv("MP5_TEST_SETRACE") != NULL;
+        }
+        if (trace) {
+            extern u32 GlobalCounter;
+            printf("SE 0x%x t=%u\n", seId, (unsigned)GlobalCounter);
+        }
+    }
+#endif
     if (seId < 0 || seId >= se.seMax) {
         return MSM_ERR_INVALIDID;
     }

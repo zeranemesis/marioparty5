@@ -297,7 +297,9 @@ s32 fn_1_8F60(M532GM *self)
         }
         fn_1_B6CC(M532_GET(lbl_1_bss_A24), temp);
         fn_1_CF2C(M532_GET(lbl_1_bss_A28));
-        while (fn_1_FA78() == 0 && fn_1_B670(M532_GET(lbl_1_bss_A24)) == 0) {
+        /* as the asm: wait until the players are back in place AND the referee is done (the winner first puts
+         * the sphere on the stand); the decomp moved on as soon as either was */
+        while (fn_1_FA78() == 0 || fn_1_B670(M532_GET(lbl_1_bss_A24)) == 0) {
             fn_1_74E4(&self->thread, 0);
         }
         for (i = 0; i < 0x3C; i++) {
