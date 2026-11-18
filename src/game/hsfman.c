@@ -1242,6 +1242,8 @@ typedef struct {
 } HU3DWIDEDECOR;
 
 static const HU3DWIDEDECOR Hu3DWideDecorTbl[] = {
+    { DLL_mgfreedll, HU3D_WIDEDECOR_PLANE, "sea", { 255, 255, 255, 255 }, 0.0f, 0.0f, 0.0f, 16000.0f, 2050.0f }, /* mini-game free play: the sea, a wider plane at its height (y 0), drawn first */
+    { DLL_mgfreedll, HU3D_WIDEDECOR_MIRROR, "grid24", { 255, 255, 255, 255 }, 0.0f, 0.0f, 1000000.0f }, /* then the flat sky panel mirrored past its sides, over what of the sea passed the horizon */
     { DLL_m501dll, HU3D_WIDEDECOR_MIRROR, "bg", { 255, 255, 255, 255 }, 2548.5f, 0.0f, 2221.3f }, /* mg 0: sweets sky */
     { DLL_m531dll, HU3D_WIDEDECOR_PLANE, "rgba8jimen", { 200, 200, 200, 255 }, 0.0f, -300.0f, 0.0f, 8000.0f, 600.0f }, /* mg 30: the yard floor under the buses */
     { DLL_m576dll, HU3D_WIDEDECOR_SCALE, "m576_m0", { 255, 255, 255, 255 }, 0.0f, 0.0f, 0.0f, 1.6f }, /* mg 75: the crystal cave again behind itself */
