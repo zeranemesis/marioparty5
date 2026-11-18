@@ -111,8 +111,9 @@ static s16 WideRoot(WideBox *boxes, s16 i)
 }
 
 /* Sprites of a group that touch belong together; across groups only when one
- * lies on the other, drawn over it (a label on its bar), never with a window or what
- * belongs to it (the speaker's portrait over a player panel). */
+ * lies on the other, drawn over it (a label on its bar, a counter in its frame). A
+ * window or what belongs to it never joins what lies under it (the speaker's portrait
+ * over a player panel). */
 static BOOL WideJoined(WideBox *a, WideBox *b)
 {
     float w = (a->x1 < b->x1 ? a->x1 : b->x1) - (a->x0 > b->x0 ? a->x0 : b->x0);
@@ -125,8 +126,18 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
     if(a->group == b->group) {
         return TRUE;
     }
-    if(a->window || b->window) {
+    if(a->window && b->window) {
         return FALSE;
+    }
+    if(a->window || b->window) {
+        /* only the other piece inside the window and drawn over it */
+        if(a->window) {
+            WideBox *swap = a;
+            a = b;
+            b = swap;
+            areaA = areaB;
+        }
+        return areaA > 0.0f && a->prio <= b->prio && w*h >= 0.75f*areaA;
     }
     if(areaA > areaB) {
         WideBox *swap = a;
@@ -180,15 +191,21 @@ static void HuSprWidescreenLayout(void)
             y = gp->mtx[1][0]*sp->pos.x + gp->mtx[1][1]*sp->pos.y + gp->mtx[1][3];
             boxes[n].x = boxes[n].x0 = boxes[n].x1 = x;
             boxes[n].y0 = boxes[n].y1 = y;
-            if(!(sp->attr & HUSPR_ATTR_FUNC) && sp->data) {
-                pat = &sp->data->pat[sp->data->bank[sp->bank].frame[sp->animNo].pat];
+            if((!(sp->attr & HUSPR_ATTR_FUNC) && sp->data) || sp->bg) {
+                pat = sp->data && !(sp->attr & HUSPR_ATTR_FUNC) ? &sp->data->pat[sp->data->bank[sp->bank].frame[sp->animNo].pat] : NULL;
                 /* a backdrop is stretched in place (HuSprDisp), never moved */
-                if(HuSprWidescreenBackdrop(pat, gp->mtx[0][0]*sp->scale.x, gp->mtx[1][1]*sp->scale.y)) {
+                if(pat && HuSprWidescreenBackdrop(pat, gp->mtx[0][0]*sp->scale.x, gp->mtx[1][1]*sp->scale.y)) {
                     continue;
                 }
                 w = fabsf(gp->mtx[0][0]*sp->scale.x);
                 h = fabsf(gp->mtx[1][1]*sp->scale.y);
-                if(sp->bg) {
+                if(sp->bg && (sp->attr & HUSPR_ATTR_FUNC)) {
+                    /* the mini-game score window (gamemes.c DrawScoreWin): half its background, centred */
+                    w *= sp->bg->bmp->sizeX*16*0.5f;
+                    h *= sp->bg->bmp->sizeY*16*0.5f;
+                    boxes[n].x0 = x - w*0.5f;
+                    boxes[n].y0 = y - h*0.5f;
+                } else if(sp->bg) {
                     /* a window frame: drawn the size of its background, centred */
                     bmp = &sp->bg->bmp[sp->bg->pat[sp->bg->bank[sp->bgBank].frame->pat].layer->bmpNo];
                     w *= bmp->sizeX*16;

@@ -1293,6 +1293,12 @@ static void DrawScoreWin(HUSPRITE *sp)
     MTXScale(modelview, sp->scale.x, sp->scale.y, 1.0f);
     mtxTransCat(modelview, sp->pos.x, sp->pos.y, 0);
     MTXConcat(*sp->groupMtx, modelview, modelview);
+#ifdef TARGET_PC
+    {
+        extern float HuSprDispWideShift; // the widescreen HUD layout moves the frame with its counter
+        modelview[0][3] += HuSprDispWideShift;
+    }
+#endif
     GXLoadPosMtxImm(modelview, GX_PNMTX0);
     HuSprTexLoad(scoreWinMaskAnim, 0, GX_TEXMAP0, GX_CLAMP, GX_CLAMP, GX_NEAR);
     HuSprTexLoad(sp->bg, 0, GX_TEXMAP1, GX_CLAMP, GX_CLAMP, GX_NEAR);
