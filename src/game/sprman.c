@@ -764,6 +764,14 @@ void HuSprKill(HUSPRID sprId)
 
 void HuSprAnimKill(ANIMDATA *anim)
 {
+#ifdef TARGET_PC
+    /* a stale animation (the board's capsule glow effect, killed after its memory was freed and reused):
+     * the console reads RAM there and HuMemDirectFree reports the bad block; here it may not be readable */
+    if(!HuMemBlockValid(anim)) {
+        OSReport("HuMem>memory free error. %p( call 00000000)\n", (void *)anim);
+        return;
+    }
+#endif
     if(--anim->useNum <= 0) {
 #ifdef TARGET_PC
         /* its file may be read again after this */

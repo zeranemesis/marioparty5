@@ -193,6 +193,21 @@ u32 HuMemNumGet(void *ptr)
 {
     return ptr ? DATA_GET_BLOCK(ptr)->num : 0;
 }
+
+/* ptr is an allocated block of one of the heaps (malloc.c): on the console every stale pointer still reads
+ * from RAM and HuMemMemoryFree reports it; here one may point outside the game's memory altogether */
+BOOL HuMemBlockValid(void *ptr)
+{
+    s32 i;
+    u8 *p = ptr;
+    for(i=0; i<HEAP_MAX; i++) {
+        u8 *heap = HuMemHeapPtrGet((HEAPID)i);
+        if(heap != NULL && p >= heap + sizeof(MEMORY_BLOCK) && p < heap + HuMemHeapSizeGet((HEAPID)i)) {
+            return DATA_GET_BLOCK(ptr)->magic == 165 && DATA_GET_BLOCK(ptr)->flag;
+        }
+    }
+    return FALSE;
+}
 #endif
 
 void HuMemMemoryFreeNum(void *heap, u32 num, u32 retAddr)

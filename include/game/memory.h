@@ -47,6 +47,7 @@ s32 HuMemMemorySizeGet(void *heap);
 s32 HuMemMemoryAllocSizeGet(s32 size);
 #ifdef TARGET_PC
 u32 HuMemNumGet(void *ptr);
+BOOL HuMemBlockValid(void *ptr);
 #endif
 void HuMemHeapDump(void *heap, s16 status);
 
