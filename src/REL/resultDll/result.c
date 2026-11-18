@@ -1139,7 +1139,14 @@ void Result_SetupPlayer(void)
     }
 }
 
+#ifdef TARGET_PC
+/* indexed by GwSystem.boardNo (0..6) but three entries long: boards 3-6 read what follows in the REL's .data,
+ * the "\n" and "----..." strings, so invalid dir numbers that HuData rejects (Data Number Error, nothing read).
+ * The PC layout differs: those same words, so every board behaves as on the console */
+static s32 MBDataDir[7] = { 0xCB0000, 0xCD0000, 0xCF0000, 0x0A002D2D, 0x2D2D2D2D, 0x2D2D2D2D, 0x2D2D2D2D };
+#else
 static s32 MBDataDir[3] = { 0xCB0000, 0xCD0000, 0xCF0000 };
+#endif
 
 void Result_BgRead(void)
 {
