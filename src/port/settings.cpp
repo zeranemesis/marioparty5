@@ -52,7 +52,8 @@ UserSettings g_userSettings = {
         .allowBackgroundInput {"game.allowBackgroundInput", true},
 
         // Cheats
-        .infiniteHearts {"game.infiniteHearts", false},
+        .infiniteCoins {"game.infiniteCoins", false},
+        .enableCheatCodes {"game.enableCheatCodes", false},
         .unlockAllMinigames {"game.unlockAllMinigames", false},
         .unlockBowsersGnarlyParty {"game.unlockBowsersGnarlyParty", false},
 
@@ -128,7 +129,8 @@ void registerSettings() {
     Register(g_userSettings.game.enableTurboKeybind);
     Register(g_userSettings.game.speedrunMode);
     Register(g_userSettings.game.recordingMode);
-    Register(g_userSettings.game.infiniteHearts);
+    Register(g_userSettings.game.infiniteCoins);
+    Register(g_userSettings.game.enableCheatCodes);
     Register(g_userSettings.game.unlockAllMinigames);
     Register(g_userSettings.game.unlockBowsersGnarlyParty);
     Register(g_userSettings.game.allowBackgroundInput);

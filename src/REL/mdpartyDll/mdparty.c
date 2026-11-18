@@ -2101,7 +2101,7 @@ void MdPartyFlowMapSel(void)
     playerSpr = &sys->playerSpr[0];
     chr = &sys->chr[0];
     mapMax = 7;
-    if(GwCommon.w07Unlock == TRUE) {
+    if(GW_W07_UNLOCK == TRUE) {
         mapMax = 7;
     } else {
         mapMax = 6;
@@ -4283,7 +4283,7 @@ BOOL MdPartyProcMap(int param)
     mapMax = 7;
     camera = sys->camera;
     model = sys->model;
-    if(GwCommon.w07Unlock == TRUE) {
+    if(GW_W07_UNLOCK == TRUE) {
         mapMax = 7;
     } else {
         mapMax = 6;

@@ -3,6 +3,9 @@
 #include "game/flag.h"
 #include "game/charman.h"
 #include "game/saveload.h"
+#ifdef TARGET_PC
+#include "port/settings.h"
+#endif
 
 SHARED_SYM GWCARDCOMMON GwCardCommon;
 SHARED_SYM GWSDBATTLE GwSdBattle;
@@ -249,6 +252,12 @@ BOOL GWMgUnlockGet(s32 mgNo)
 {
     s32 word;
     s32 bit;
+#ifdef TARGET_PC
+    /* Settings > Cheats: read as unlocked, the save itself is left as it is */
+    if(mp5native_settings_unlock_all_minigames()) {
+        return TRUE;
+    }
+#endif
     mgNo -= GW_MGNO_BASE;
     word = mgNo >> 5;
     bit = mgNo % 32;

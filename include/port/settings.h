@@ -103,7 +103,8 @@ struct UserSettings {
         ConfigVar<bool> allowBackgroundInput;
 
         // Cheats
-        ConfigVar<bool> infiniteHearts;
+        ConfigVar<bool> infiniteCoins;
+        ConfigVar<bool> enableCheatCodes;
         ConfigVar<bool> unlockAllMinigames;
         ConfigVar<bool> unlockBowsersGnarlyParty;
 

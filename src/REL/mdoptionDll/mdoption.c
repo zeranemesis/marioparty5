@@ -1274,7 +1274,7 @@ void fn_1_2D20(void)
                 MdOptionTrigSprSet(ret - 4);
                 MdMessWinHomeClear(mess, 0);
                 if(sys->sel < 7) {
-                    if(sys->sel == 6 && !GwCommon.w07Unlock) {
+                    if(sys->sel == 6 && !GW_W07_UNLOCK) {
                         MdMessWinInsertMesSet(mess, 0, 0x1F0026, 0x1F0051);
                     } else {
                         MdMessWinInsertMesSet(mess, 0, 0x1F0026, sys->sel + 0x1F001D);

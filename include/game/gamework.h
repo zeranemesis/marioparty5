@@ -482,6 +482,13 @@ s32 GWCharPlayNumGet(s32 charNo, s32 boardNo);
 void GWCharPlayNumSet(s32 charNo, s32 boardNo, s32 value);
 BOOL GWMgUnlockGet(s32 mgNo);
 void GWMgUnlockSet(s32 mgNo);
+#ifdef TARGET_PC
+/* Settings > Cheats "Unlock Bowser's Gnarly Party": read as unlocked, the save is left as it is */
+int mp5native_settings_unlock_bowsers_gnarly_party_c(void);
+#define GW_W07_UNLOCK (GwCommon.w07Unlock || mp5native_settings_unlock_bowsers_gnarly_party_c())
+#else
+#define GW_W07_UNLOCK (GwCommon.w07Unlock)
+#endif
 BOOL GWMgCustomGet(s32 mgNo);
 void GWMgCustomSet(s32 mgNo);
 void GWMgCustomReset(s32 mgNo);

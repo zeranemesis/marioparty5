@@ -17,6 +17,7 @@
 #include "string_button.hpp"
 #include "ui.hpp"
 #include "port/retroachievements.h"
+#include "port/cheats.h"
 
 #include <algorithm>
 #include <fmt/format.h>
@@ -180,7 +181,8 @@ namespace {
     // TODO PC
     void reset_for_speedrun_mode()
     {
-        getSettings().game.infiniteHearts.setValue(false);
+        getSettings().game.infiniteCoins.setValue(false);
+        getSettings().game.enableCheatCodes.setValue(false);
 
         getSettings().game.enableTurboKeybind.setValue(false);
     }
@@ -804,10 +806,23 @@ SettingsWindow::SettingsWindow(bool prelaunch)
         addCheat("Unlock Bowser's Gnarly Party", getSettings().game.unlockBowsersGnarlyParty,
             "Treat Bowser's Gnarly Party as unlocked when the game checks board availability.");
 
-        // leftPane.add_section("Resources");
-        // addCheat("Infinite Hearts", getSettings().game.infiniteHearts, "Keeps your health full.");
+        leftPane.add_section("Party");
+        addCheat("Infinite Coins", getSettings().game.infiniteCoins,
+            "Human players keep 999 coins on the board (COM players are left alone).");
 
-        // leftPane.add_section("Abilities");
+        leftPane.add_section("Cheat Codes");
+        addCheat("Enable Cheat Codes", getSettings().game.enableCheatCodes,
+            "Run the codes of cheats.txt in the data folder: Gecko or unencrypted Action Replay codes for "
+            "Mario Party 5 (USA). $Name turns a code on, -$Name off. Only codes writing whole player or "
+            "game fields (coins, stars, capsules, turns) can work; the others are reported and skipped.");
+        leftPane.register_control(leftPane.add_button("Reload Codes").on_pressed([] { mp5native::cheats::reload(); }),
+            rightPane, [](Pane &pane) {
+                pane.add_text("Read cheats.txt again after editing it. " + Rml::String { mp5native::cheats::status() });
+            });
+#if MP5_NATIVE_CAN_OPEN_DATA_FOLDER
+        leftPane.register_control(leftPane.add_button("Open Data Folder").on_pressed([] { mp5native::OpenDataFolder(); }),
+            rightPane, [](Pane &pane) { pane.add_text("cheats.txt is created here the first time codes are enabled."); });
+#endif
     });
 
     add_tab("RetroAchievements", [this](Rml::Element *content) {

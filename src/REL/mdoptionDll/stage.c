@@ -587,7 +587,7 @@ void MdOptionBoardRecordUpdate(MDSPRITE_WORK *sprite, int board)
     MdMessWinPosSet(mess, 2, -155.0f * scale0->x + pos0->x, -147.0f * scale0->y + pos0->y);
     MdMessWinScaleSet(mess, 3, scale0->x, scale0->y);
     MdMessWinPosSet(mess, 3, -288.0f * scale0->x + pos0->x, -112.0f * scale0->y + pos0->y);
-    if (board == 6 && GwCommon.w07Unlock == 0) {
+    if (board == 6 && GW_W07_UNLOCK == 0) {
         MdMessWinMesSet(mess, 2, MDOPT_MES(0x51));
     } else {
         MdMessWinMesSet(mess, 2, MDOPT_MES(0x1D) + board);
