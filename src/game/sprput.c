@@ -31,6 +31,7 @@ extern float HuSprWideShift[HUSPR_MAX];
 extern float HuSprWideStretch[HUSPR_MAX][3];
 extern float HuSprDispWideShift;
 extern BOOL HuSprWideClip[HUSPR_MAX];
+extern BOOL HuSprWideHidden[HUSPR_MAX];
 extern BOOL HuSprWideFixed[HUSPR_MAX];
 
 /* After the Mario Party 4 port "Party Board" (github.com/zeranemesis/Marioparty4,
@@ -128,6 +129,9 @@ void HuSprDisp(HUSPRITE *sp)
     
 #ifdef TARGET_PC
     s16 sprId = (s16)(sp - HuSprData);
+    if(HuSprWideHidden[sprId]) {
+        return;
+    }
     HuSprWideScissor(sp, HuSprWideShift[sprId], HuSprWideClip[sprId]);
 #else
     GXSetScissor(sp->scissorX, sp->scissorY, sp->scissorW, sp->scissorH);

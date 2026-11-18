@@ -75,6 +75,8 @@ float HuSprWideShift[HUSPR_MAX];
 float HuSprWideStretch[HUSPR_MAX][3];
 float HuSprDispWideShift;
 BOOL HuSprWideClip[HUSPR_MAX];
+/* moved out to the window edge but covered there in 4:3 (a player panel under a message): not drawn */
+BOOL HuSprWideHidden[HUSPR_MAX];
 /* sprites set over a 3D object or drawn as a shape: the layout leaves them where the
  * 4:3 code put them and as they were (never stretched as a backdrop) */
 BOOL HuSprWideFixed[HUSPR_MAX];
@@ -97,6 +99,7 @@ typedef struct {
     s16 root;
     BOOL frame;
     BOOL visible;
+    BOOL window; /* its group holds a window frame */
 } WideBox;
 
 static s16 WideRoot(WideBox *boxes, s16 i)
@@ -108,7 +111,8 @@ static s16 WideRoot(WideBox *boxes, s16 i)
 }
 
 /* Sprites of a group that touch belong together; across groups only when one
- * lies on the other, drawn over it (a label on its bar), never with a window frame. */
+ * lies on the other, drawn over it (a label on its bar), never with a window or what
+ * belongs to it (the speaker's portrait over a player panel). */
 static BOOL WideJoined(WideBox *a, WideBox *b)
 {
     float w = (a->x1 < b->x1 ? a->x1 : b->x1) - (a->x0 > b->x0 ? a->x0 : b->x0);
@@ -121,7 +125,7 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
     if(a->group == b->group) {
         return TRUE;
     }
-    if(a->frame || b->frame) {
+    if(a->window || b->window) {
         return FALSE;
     }
     if(areaA > areaB) {
@@ -130,7 +134,8 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
         b = swap;
         areaA = areaB;
     }
-    return a->prio <= b->prio && w*h >= 0.75f*areaA;
+    /* an empty box (a text line not drawn yet) covers nothing: it must not weld a panel to a window */
+    return areaA > 0.0f && a->prio <= b->prio && w*h >= 0.75f*areaA;
 }
 
 /* Pieces across the middle stay; one to a side follows its outer edge, so a corner
@@ -144,6 +149,7 @@ static void HuSprWidescreenLayout(void)
 {
     static float lo[HUSPR_MAX], hi[HUSPR_MAX];
     static s16 count[HUSPR_MAX];
+    static BOOL hidden[HUSPR_MAX];
     float left, right;
     HUSPRGRP *gp;
     HUSPRITE *sp;
@@ -155,6 +161,7 @@ static void HuSprWidescreenLayout(void)
         HuSprWideShift[i] = 0.0f;
         HuSprWideStretch[i][0] = 1.0f;
         HuSprWideClip[i] = FALSE;
+        HuSprWideHidden[i] = FALSE;
     }
     boxNum = 0;
     if(HuWideHudShift(0.0f) == 0.0f) {
@@ -207,6 +214,15 @@ static void HuSprWidescreenLayout(void)
         }
     }
     for(i=0; i<n; i++) {
+        boxes[i].window = FALSE;
+        for(j=0; j<n; j++) {
+            if(boxes[j].frame && boxes[j].group == boxes[i].group) {
+                boxes[i].window = TRUE;
+                break;
+            }
+        }
+    }
+    for(i=0; i<n; i++) {
         for(j=i+1; j<n; j++) {
             if(WideJoined(&boxes[i], &boxes[j])) {
                 boxes[WideRoot(boxes, i)].root = WideRoot(boxes, j);
@@ -256,30 +272,44 @@ static void HuSprWidescreenLayout(void)
      * window staying in the middle (the speaker next to a message) */
     for(i=0; i<n; i++) {
         hi[i] = lo[i];
+        hidden[i] = FALSE;
     }
-    for(i=0; i<n; i++) {
-        s16 r = WideRoot(boxes, i);
-        s16 k;
-        if(hi[r] == 0.0f || lo[r] == 0.0f) {
-            continue;
-        }
-        for(k=0; k<n; k++) {
-            s16 rk = WideRoot(boxes, k);
-            float margin;
-            if(rk == r || hi[rk] != 0.0f || !boxes[k].visible || boxes[k].x1 <= boxes[k].x0) {
+    /* pass 0: a piece drawn over by one staying in the middle (a message window over a player
+     * panel) keeps its corner but is not drawn while covered, rather than jumping back to the
+     * middle; pass 1: one beside a window staying in the middle stays with it */
+    for(j=0; j<2; j++) {
+        for(i=0; i<n; i++) {
+            s16 r = WideRoot(boxes, i);
+            s16 k;
+            if(hi[r] == 0.0f || lo[r] == 0.0f || hidden[r]) {
                 continue;
             }
-            if(boxes[k].frame) {
-                margin = 32.0f;
-            } else if(boxes[k].prio < boxes[i].prio) {
-                margin = 0.0f;
-            } else {
-                continue;
-            }
-            if(boxes[i].x0 < boxes[k].x1+margin && boxes[k].x0-margin < boxes[i].x1
-                && boxes[i].y0 < boxes[k].y1 && boxes[k].y0 < boxes[i].y1) {
-                lo[r] = 0.0f;
-                break;
+            for(k=0; k<n; k++) {
+                s16 rk = WideRoot(boxes, k);
+                float margin;
+                if(rk == r || hi[rk] != 0.0f || !boxes[k].visible || boxes[k].x1 <= boxes[k].x0) {
+                    continue;
+                }
+                if(j == 0) {
+                    /* HuSprOrderEntry: lower prio is drawn later, and so is a later entry of the same prio */
+                    if(boxes[k].prio > boxes[i].prio || (boxes[k].prio == boxes[i].prio && k < i)) {
+                        continue;
+                    }
+                    margin = 0.0f;
+                } else if(boxes[k].frame) {
+                    margin = 32.0f;
+                } else {
+                    continue;
+                }
+                if(boxes[i].x0 < boxes[k].x1+margin && boxes[k].x0-margin < boxes[i].x1
+                    && boxes[i].y0 < boxes[k].y1 && boxes[k].y0 < boxes[i].y1) {
+                    if(j == 0) {
+                        hidden[r] = TRUE;
+                    } else {
+                        lo[r] = 0.0f;
+                    }
+                    break;
+                }
             }
         }
     }
@@ -290,6 +320,7 @@ static void HuSprWidescreenLayout(void)
     for(i=0; i<n; i++) {
         j = WideRoot(boxes, i);
         HuSprWideShift[boxes[i].sprite] = lo[j];
+        HuSprWideHidden[boxes[i].sprite] = hidden[j];
         if(count[j] == -1 && boxes[i].x1-boxes[i].x0 >= HU_DISP_CENTERX*0.5f
             && boxes[i].x1 > 0.0f && boxes[i].x0 < HU_DISP_WIDTH
             && (boxes[i].x0 <= 0.5f || boxes[i].x1 >= HU_DISP_WIDTH - 0.5f)) {
@@ -316,7 +347,8 @@ float HuSprWidePointShift(float x, float y)
     for(i=0; i<boxNum; i++) {
         if(boxes[i].visible && boxes[i].x1 > boxes[i].x0 && boxes[i].sprite >= 0
             && x >= boxes[i].x0 && x <= boxes[i].x1 && y >= boxes[i].y0 && y <= boxes[i].y1) {
-            return HuSprWideShift[boxes[i].sprite];
+            /* a model in a hidden panel stays under the window, as in 4:3 */
+            return HuSprWideHidden[boxes[i].sprite] ? 0.0f : HuSprWideShift[boxes[i].sprite];
         }
     }
     for(i=0; i<boxNum; i++) {
