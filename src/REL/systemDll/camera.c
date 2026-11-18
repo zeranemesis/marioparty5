@@ -1,4 +1,7 @@
 #include "REL/systemDll/sysmd.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+#endif
 
 typedef struct SysCameraRect_s {
     float x;
@@ -35,6 +38,13 @@ void MdCameraCreate(SYSCAMERA_WORK *work)
         camera = &work->camera[i];
         camera->bit = type[i];
         Hu3DCameraCreate(camera->bit);
+#ifdef TARGET_PC
+        /* this camera draws the characters only to be copied into the portrait bubbles (MdTexBufObjPosSet
+         * reads them at 4:3 pixel positions): it keeps the console's 4:3 projection */
+        if(i == 1) {
+            Hu3DCameraNoWideSet(camera->bit, TRUE);
+        }
+#endif
         camera->pos.x = 0;
         camera->pos.y = 0;
         camera->pos.z = 0;

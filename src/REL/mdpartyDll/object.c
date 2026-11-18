@@ -1,4 +1,7 @@
 #include "REL/mdpartyDll.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+#endif
 #include "stdarg.h"
 #include "string.h"
 
@@ -159,6 +162,13 @@ void MdCameraCreate(MDCAMERA_WORK *cameraWork)
         camera->bit = type[i].bit;
         camera->focusType = type[i].focusType;
         Hu3DCameraCreate(camera->bit);
+#ifdef TARGET_PC
+        /* this camera draws the characters only to be copied into the portrait bubbles (MdTexBufObjPosSet
+         * reads them at 4:3 pixel positions): it keeps the console's 4:3 projection */
+        if(i == MDCAMERA_BG) {
+            Hu3DCameraNoWideSet(camera->bit, TRUE);
+        }
+#endif
         camera->pos.x = 0;
         camera->pos.y = 0;
         camera->pos.z = 0;

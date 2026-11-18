@@ -860,6 +860,20 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
                 printf("TESTOVL: frame %u\n", ovFrame);
                 fflush(stdout);
             }
+            // MP5_TEST_OVL_STEP=<frames>: instead of random presses, pad 0 taps DOWN once every <frames> frames
+            // (a menu entry stays selected long enough for what it shows, e.g. the free-play mini-game preview)
+            // MP5_TEST_OVL_KEYS=<letters>: the presses to cycle through instead of DOWN (D U L R d-pad, P = R trigger, A)
+            if (const char* step = getenv("MP5_TEST_OVL_STEP")) {
+                const u32 n = (u32)atoi(step);
+                const char* keys = getenv("MP5_TEST_OVL_KEYS");
+                memset(st, 0, sizeof(PADStatus) * 4);
+                if (n != 0 && ovFrame % n < 4 && ovFrame > n) {
+                    const char k = (keys != nullptr && *keys) ? keys[(ovFrame / n - 1) % strlen(keys)] : 'D';
+                    st[0].button = k == 'U' ? PAD_BUTTON_UP : k == 'L' ? PAD_BUTTON_LEFT : k == 'R' ? PAD_BUTTON_RIGHT
+                                 : k == 'P' ? PAD_TRIGGER_R : k == 'A' ? PAD_BUTTON_A : PAD_BUTTON_DOWN;
+                }
+                return;
+            }
             for (int i = 0; i < 4; i++) {
                 u32 r = tmRand();
                 memset(&st[i], 0, sizeof(st[i]));

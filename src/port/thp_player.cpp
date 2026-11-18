@@ -132,6 +132,7 @@ public:
     bool open(const char* path, bool loop, float volume) {
         DVDFileInfo file{};
         if (!DVDOpen(path, &file) || file.length < kThpHeaderSize) {
+            OSReport("THP> cannot open %s\n", path);
             if (file.cb.addr != nullptr) {
                 DVDClose(&file);
             }
@@ -139,12 +140,14 @@ public:
         }
         bytes.resize(file.length);
         if (DVDReadPrio(&file, bytes.data(), static_cast<s32>(bytes.size()), 0, 2) < 0) {
+            OSReport("THP> cannot read %s\n", path);
             DVDClose(&file);
             bytes.clear();
             return false;
         }
         DVDClose(&file);
         if (!parse()) {
+            OSReport("THP> unsupported movie %s\n", path);
             bytes.clear();
             return false;
         }
