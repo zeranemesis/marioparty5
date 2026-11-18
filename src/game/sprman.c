@@ -100,6 +100,7 @@ typedef struct {
     BOOL frame;
     BOOL visible;
     BOOL window; /* its group holds a window frame */
+    BOOL message; /* a message window frame (HuWin: a background, not a function sprite) */
 } WideBox;
 
 static s16 WideRoot(WideBox *boxes, s16 i)
@@ -225,6 +226,7 @@ static void HuSprWidescreenLayout(void)
             boxes[n].group = i;
             boxes[n].prio = sp->prio;
             boxes[n].frame = sp->bg != NULL;
+            boxes[n].message = sp->bg != NULL && !(sp->attr & HUSPR_ATTR_FUNC);
             boxes[n].visible = !(sp->attr & HUSPR_ATTR_DISPOFF) && sp->a > 0.0f;
             boxes[n].root = n;
             n++;
@@ -261,11 +263,20 @@ static void HuSprWidescreenLayout(void)
             hi[j] = boxes[i].x1;
         }
     }
+    /* a message window keeps its 4:3 place, also while it slides in or out (the instruction screen's
+     * page turn): moved out as a side piece, it ran off the right of the window */
+    for(i=0; i<n; i++) {
+        if(boxes[i].message) {
+            count[WideRoot(boxes, i)] = -2;
+        }
+    }
     for(i=0; i<n; i++) {
         if(boxes[i].root != i) {
             continue;
         }
-        if(lo[i] < HU_DISP_CENTERX && hi[i] > HU_DISP_CENTERX) {
+        if(count[i] == -2) {
+            x = HU_DISP_CENTERX;
+        } else if(lo[i] < HU_DISP_CENTERX && hi[i] > HU_DISP_CENTERX) {
             x = HU_DISP_CENTERX;
             count[i] = -1;
         } else if(lo[i] < 0.0f) {

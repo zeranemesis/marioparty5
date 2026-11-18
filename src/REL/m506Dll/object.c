@@ -4,6 +4,9 @@
 #include "game/frand.h"
 #include "game/charman.h"
 #include "dolphin/mtx.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+#endif
 
 #define M506_ANM_cloud_num M506_ANM_cloud
 
@@ -1580,6 +1583,12 @@ void M506YCameraSplitCreate(void)
         espPosSet(M506YCamera->splitSprId[i], splitX[i], 240.0f);
         espScaleSet(M506YCamera->splitSprId[i], 0.6f, 1.0f);
         espAttrSet(M506YCamera->splitSprId[i], 1);
+#ifdef TARGET_PC
+        /* the dividers sit on the borders of the four views, which stretch with the window (viewports in
+         * framebuffer pixels): placed the same way, not moved by the HUD layout */
+        HU_WIDE_FIX_ESP(M506YCamera->splitSprId[i]);
+        espPosSet(M506YCamera->splitSprId[i], 288.0f + (splitX[i] - 288.0f) * HuWideFactor(), 240.0f);
+#endif
     }
 }
 

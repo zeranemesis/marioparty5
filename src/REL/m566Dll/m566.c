@@ -822,7 +822,7 @@ void fn_1_668(OMOBJ *obj)
     }
 
     work->nearItem = 0;
-    Hu3DModelAttrSet(lbl_1_bss_C4->mdlId[(work->no + 9) * 2], 1U);
+    Hu3DModelAttrSet(lbl_1_bss_C4->mdlId[work->no + 9], 1U);
     if (lbl_1_bss_BC >= 1000 && work->mode <= 2) {
         /* The item icon above the player blinks while it is still free. */
         nearNo = -1;
@@ -903,8 +903,8 @@ void fn_1_668(OMOBJ *obj)
             work->itemTime++;
             lbl_1_bss_1810[work->itemNo].wobble += (lbl_1_bss_1810[work->itemNo].wobble == 0) ? 8 : 0;
             lbl_1_bss_1810[work->itemNo].unk24 = 1;
-            Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[(work->no + 9) * 2], 1U);
-            Hu3DModelPosSet(lbl_1_bss_C4->mdlId[(work->no + 9) * 2],
+            Hu3DModelAttrReset(lbl_1_bss_C4->mdlId[work->no + 9], 1U);
+            Hu3DModelPosSet(lbl_1_bss_C4->mdlId[work->no + 9],
                 lbl_1_bss_1810[work->itemNo].pos.x,
                 lbl_1_bss_1810[work->itemNo].pos.y,
                 lbl_1_bss_1810[work->itemNo].pos.z);
