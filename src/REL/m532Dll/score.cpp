@@ -25,6 +25,9 @@ extern "C" {
 extern void *lbl_1_data_B4[];
 extern M532ScoreNode lbl_1_bss_24;
 extern M532Score *lbl_1_bss_A28;
+#ifdef TARGET_PC
+float HuSprWidePointShift(float x, float y); /* sprman.c: the widescreen HUD layout's shift at a HUD point */
+#endif
 extern M532ScoreConst lbl_1_bss_A58;
 extern M532ScoreConst lbl_1_bss_A5C;
 extern M532ScoreConst lbl_1_bss_A60;
@@ -335,6 +338,15 @@ void fn_1_D4B0(M532ScoreQuad *quad)
         h = quad->scale * quad->halfH;
         x0 = quad->x - w;
         x1 = quad->x + w;
+#ifdef TARGET_PC
+        {
+            /* drawn at absolute HUD positions: the stars go with the team bar they sit in, which the
+             * widescreen HUD layout moves to the corner */
+            const f32 shift = HuSprWidePointShift(quad->x, quad->y);
+            x0 += shift;
+            x1 += shift;
+        }
+#endif
         y0 = quad->y - h;
         y1 = quad->y + h;
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);

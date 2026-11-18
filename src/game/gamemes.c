@@ -11,6 +11,9 @@
 #include "game/flag.h"
 #include "game/wipe.h"
 #include "game/pad.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+#endif
 #include "messnum/mginst.h"
 #include "datanum/mgconst.h"
 
@@ -686,6 +689,12 @@ int GameMesStrCreate(GAMEMES *mes, char *str, s16 flag)
         HUSPRID sprid = HuSprCreate(charAnimTbl[i], 5, 0);
         HuSprGrpMemberSet(gid, i, sprid);
         HuSprPosSet(gid, i, charX[i]-x, 0);
+#ifdef TARGET_PC
+        /* START! / FINISH! / ... WON letters are animated around the middle of the 4:3 picture: the widescreen
+         * HUD layout would move them as side pieces or not depending on where each one is that frame (the word
+         * jumped and split) */
+        HuSprWideFixSet(sprid);
+#endif
     }
     mes->charNum = charNum;
     HuMemDirectFree(charAnimTbl);
