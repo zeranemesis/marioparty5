@@ -2488,6 +2488,12 @@ void fn_1_FADC(OMOBJ *obj)
     float ofsX;
     s32 posNo;
 
+#ifdef TARGET_PC
+    /* the sea ends just past the 4:3 view: wider so 16:9 shows sea, not the dark sea floor beyond it
+     * (off screen in 4:3, so nothing changes there) */
+    waterMin.x -= 2500.0f;
+    waterMax.x += 2500.0f;
+#endif
     Hu3DWaterCreate(1, HU3D_WATER_ANIM_NONE, HU3D_WATER_ANIM_NONE, HU3D_WATER_ANIM_NONE, FALSE, &waterMin, &waterMax);
     Hu3DWaterCameraSet(HU3D_CAM1);
     Hu3DWaterTexScaleSet(2.4f, 0.9f, 1.0f);
