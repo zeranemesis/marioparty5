@@ -325,6 +325,13 @@ static void HuSprWidescreenLayout(void)
                 if(boxes[i].x0 < boxes[k].x1+margin && boxes[k].x0-margin < boxes[i].x1
                     && boxes[i].y0 < boxes[k].y1 && boxes[k].y0 < boxes[i].y1) {
                     if(j == 0) {
+                        /* hidden only when mostly under it (a player panel under a message window): a piece the
+                         * window only clips at its edge (the instruction screen's PRACTICE/START bubbles) stays */
+                        float ow = (boxes[i].x1 < boxes[k].x1 ? boxes[i].x1 : boxes[k].x1) - (boxes[i].x0 > boxes[k].x0 ? boxes[i].x0 : boxes[k].x0);
+                        float oh = (boxes[i].y1 < boxes[k].y1 ? boxes[i].y1 : boxes[k].y1) - (boxes[i].y0 > boxes[k].y0 ? boxes[i].y0 : boxes[k].y0);
+                        if(ow*oh < 0.5f*(boxes[i].x1-boxes[i].x0)*(boxes[i].y1-boxes[i].y0)) {
+                            continue;
+                        }
                         hidden[r] = TRUE;
                     } else {
                         lo[r] = 0.0f;

@@ -644,7 +644,11 @@ static void tmSetupPlayers() {
     GwSystem.mgInstF = 1;
     GwSystem.subGameNo = 0;
     _SetFlag(FLAG_INST_MGMODE);
-    _ClearFlag(FLAG_MGINST_ON); // skip the instruction screens
+    if (getenv("MP5_TEST_INST") == nullptr) {
+        _ClearFlag(FLAG_MGINST_ON); // skip the instruction screens
+    } else {
+        _SetFlag(FLAG_MGINST_ON); // MP5_TEST_INST: keep them (see the pad hook)
+    }
 }
 
 // MP5_TEST_BOARD=n (0..6 = w01..w07): the title's jump to the file select goes straight into board n
@@ -906,6 +910,16 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
         if (!tmStarted || omcurovl == DLL_bootdll) { // back on the title after the mini-game: start it again
             if (i == 0 && (tmFrame / 20) % 2) {
                 st[i].button = PAD_BUTTON_START | PAD_BUTTON_A;
+            }
+            continue;
+        }
+        // MP5_TEST_INST=<frames>: on the instruction screen pad 0 taps the R trigger (next page) every <frames>
+        // frames and nothing else, so the screen stays up and its pages can be captured
+        if (const char* inst = getenv("MP5_TEST_INST"); inst != nullptr && omcurovl == DLL_instdll) {
+            const u32 n = (u32)atoi(inst);
+            if (i == 0 && n != 0 && tmFrame % n < 4) {
+                st[i].button = PAD_TRIGGER_R;
+                st[i].triggerRight = 255;
             }
             continue;
         }
