@@ -13,6 +13,8 @@
  * Append-only: each unit adds its own exported types/functions/data in a block
  * headed by a comment with the unit name. Never reformat other blocks. */
 
+struct M562Player; /* used in prototypes before its definition: give it file scope */
+
 /* ---- light ---- */
 /* Three floats copied as a unit ' the target moves them word by word. */
 typedef struct lightVec_s {

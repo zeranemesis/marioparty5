@@ -14,8 +14,16 @@ extern "C" void *PortRelNewArray(size_t size) { return ::operator new[](size); }
 extern "C" void PortRelDelete(void *ptr) { ::operator delete(ptr); }
 extern "C" void PortRelDeleteArray(void *ptr) { ::operator delete[](ptr); }
 
+#ifdef _MSC_VER
 #pragma comment(linker, "/alternatename:__nw__FUl=PortRelNew")
 #pragma comment(linker, "/alternatename:__nwa__FUl=PortRelNewArray")
 #pragma comment(linker, "/alternatename:__dl__FPv=PortRelDelete")
 #pragma comment(linker, "/alternatename:__dla__FPv=PortRelDeleteArray")
+#else
+/* weak definitions are the GCC/clang equivalent of /alternatename defaults */
+extern "C" __attribute__((weak)) void *__nw__FUl(size_t size) { return PortRelNew(size); }
+extern "C" __attribute__((weak)) void *__nwa__FUl(size_t size) { return PortRelNewArray(size); }
+extern "C" __attribute__((weak)) void __dl__FPv(void *ptr) { PortRelDelete(ptr); }
+extern "C" __attribute__((weak)) void __dla__FPv(void *ptr) { PortRelDeleteArray(ptr); }
+#endif
 #endif

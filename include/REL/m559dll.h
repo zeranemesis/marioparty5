@@ -376,7 +376,5 @@ typedef struct M559Verts_s {
 } M559VERTS; // size = 0x30
 
 void fn_1_694(OMOBJ *obj);
-void fn_1_A5C(OMOBJ *obj);
-void fn_1_F48(OMOBJ *obj);
 
 #endif

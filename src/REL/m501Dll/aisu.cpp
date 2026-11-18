@@ -29,6 +29,14 @@ void __dt__9CLinkNodeFv(void *self, s32 flag);
 void *fn_1_729C(void *self, s16 flag);
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+/* the explicit specializations defined below must be declared before their first use (clang/GCC) */
+namespace std {
+template <> void __vector_pod<int, allocator<int> >::insert(int *pos, unsigned long n, const int &value);
+template <> void __vector_pod<HuVec2f_s, allocator<HuVec2f_s> >::insert(HuVec2f_s *pos, unsigned long n, const HuVec2f_s &value);
+}
+#endif
+
 namespace m501 {
 
 extern "C" void __ct__9CLinkNodeFR9CLinkNode(CLinkNode *self);

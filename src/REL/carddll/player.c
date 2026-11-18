@@ -1011,7 +1011,6 @@ void fn_1_30B00(CardGame *arg0, s32 arg1)
 
 /* ---- additional globals / externs (batch 1) ---- */
 f32 lbl_1_bss_F14[10];
-s16 lbl_1_bss_112E;
 extern s16 fn_1_36A60(void);
 extern void fn_1_36A70(Vec *pos);
 extern void fn_1_36B78(void);

@@ -77,6 +77,7 @@ static void fn_1_29D4(void);
 static void fn_1_2948(OMOBJ *obj, s16 motion, u32 attr, f32 endTime);
 static void fn_1_3854(OMOBJ *obj, s16 motion, u32 attr, f32 endTime);
 static void fn_1_5038(OMOBJ *obj);
+static void fn_1_A5C(OMOBJ *obj);
 static void fn_1_F48(OMOBJ *obj);
 static void fn_1_1070(OMOBJ *obj);
 static void fn_1_29D8(OMOBJ *obj);

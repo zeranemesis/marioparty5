@@ -44,7 +44,6 @@ typedef struct M522Stage_s {
 } M522_STAGE;
 
 extern "C" {
-extern void *lbl_1_bss_18;
 extern void *lbl_1_bss_1C;
 extern M522_CAMERA *lbl_1_bss_A1C;
 extern M522_NODE lbl_1_bss_2C;

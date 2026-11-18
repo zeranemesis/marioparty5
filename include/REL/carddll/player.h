@@ -6,7 +6,6 @@
 /* Globals defined in carddll/player.c (bss at 0xBE8..0x1168). */
 extern f32 lbl_1_bss_F14[10];
 extern s32 lbl_1_bss_F3C[10];
-extern s16 lbl_1_bss_112E;
 
 /* Functions of carddll/player.c not listed in carddll.h. */
 s32 fn_1_FCD4(CardGame *game);

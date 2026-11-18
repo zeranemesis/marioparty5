@@ -46,8 +46,6 @@ void DebugCamUpdate(OMOBJ *obj);
 
 void SRankCreate(void);
 void SRankExec(void);
-void RankObjRotExec(void);
-void RankBackDraw(s16 layerNo);
 
 void ToueiDispInit(void);
 void DispZClear(void);

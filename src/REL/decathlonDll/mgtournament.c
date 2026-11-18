@@ -789,7 +789,7 @@ void DecaWinMusicStart(void)
     HuPrcChildCreate(DecaWinMusicPlay, 100, 4096, 0, HuPrcCurrentGet());
 }
 
-void ObjectSetup(vod)
+void ObjectSetup(void)
 {
     _SetFlag(FLAG_MGINST_ON);
     HuPrcChildCreate(DecaMain, 200, 12288, 0, HuPrcCurrentGet());

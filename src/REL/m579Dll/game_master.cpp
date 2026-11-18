@@ -118,8 +118,8 @@ const f32 lbl_1_rodata_170 = 292.0f;
 const f32 lbl_1_rodata_174 = 416.0f;
 
 void *lbl_1_data_280[12] = {
-    0, 0, fn_1_76BC, fn_1_7748, fn_1_78DC, fn_1_7AE4,
-    0, 0, fn_1_7B44, fn_1_7B3C, fn_1_7AE0, fn_1_7914
+    0, 0, (void *)fn_1_76BC, (void *)fn_1_7748, (void *)fn_1_78DC, (void *)fn_1_7AE4,
+    0, 0, (void *)fn_1_7B44, (void *)fn_1_7B3C, (void *)fn_1_7AE0, (void *)fn_1_7914
 };
 
 void *fn_1_7650(M579GameMaster *self)

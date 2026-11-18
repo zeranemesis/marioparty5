@@ -43,7 +43,6 @@ s32 HuDataReadChk(int dataNum);
 HUDATASTAT *HuDataGetStatus(void *dirP);
 void *HuDataGetDirPtr(int dirNum);
 HUDATASTAT *HuDataDirRead(int dirNum);
-HUDATASTAT *HuDataDirReadNum(int dirNum, s32 num);
 HUDATASTAT *HuDataDirSet(void *dirP, int dataNum);
 void HuDataDirReadAsyncCallBack(s32 result, DVDFileInfo* fileInfo);
 s32 HuDataDirReadAsync(int dataNum);

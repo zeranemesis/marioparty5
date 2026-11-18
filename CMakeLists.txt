@@ -155,6 +155,15 @@ function(mp5native_game_target target)
         target_compile_options(${target} PRIVATE /J)
     else ()
         target_compile_options(${target} PRIVATE -Werror=pointer-to-int-cast -Werror=int-to-pointer-cast -funsigned-char)
+        # the decomp C was written for MWCC/MSVC: undeclared calls, implicit int and valueless returns are only
+        # warnings there, errors by default on clang and GCC 14. int<->pointer conversions stay errors (64-bit).
+        target_compile_options(${target} PRIVATE -Wno-format-security
+            $<$<COMPILE_LANGUAGE:C>:-Wno-error=implicit-function-declaration -Wno-error=implicit-int
+                -Wno-error=return-mismatch -Wno-error=return-type -Wno-error=incompatible-function-pointer-types>
+            $<$<COMPILE_LANGUAGE:CXX>:-Wno-register>)
+        if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+            target_compile_options(${target} PRIVATE -Wno-unknown-warning-option -ferror-limit=0)
+        endif ()
     endif ()
 endfunction()
 
@@ -168,6 +177,9 @@ add_subdirectory(extern/musyx EXCLUDE_FROM_ALL)
 target_compile_definitions(musyx PUBLIC MUSY_VERSION_MAJOR=2 MUSY_VERSION_MINOR=0 MUSY_VERSION_PATCH=1)
 if (MSVC)
     target_compile_definitions(musyx PRIVATE _USE_MATH_DEFINES)
+else ()
+    # upstream decomp C (an undeclared voiceAllocatePeek call, valueless returns) is an error by default on clang and GCC 14
+    target_compile_options(musyx PRIVATE $<$<COMPILE_LANGUAGE:C>:-Wno-error=implicit-function-declaration -Wno-error=return-mismatch -Wno-error=return-type>)
 endif ()
 
 include(extern/aurora/cmake/AuroraCopyRuntimeDLLs.cmake)

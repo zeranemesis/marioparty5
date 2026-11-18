@@ -35,7 +35,7 @@ char lbl_1_data_36C[16] = { 'm','s','_','p','o','i','n','t','e','r',' ','=','=',
 char lbl_1_data_37C[12] = "singleton.h";
 char lbl_1_data_388[11] = "feeld_born";
 char lbl_1_data_393[17] = "ms_pointer != 0";
-void *lbl_1_data_3A4[5] = { 0, 0, fn_1_B98C, fn_1_B578, fn_1_B574 };
+void *lbl_1_data_3A4[5] = { 0, 0, (void *)fn_1_B98C, (void *)fn_1_B578, (void *)fn_1_B574 };
 
 const f32 lbl_1_rodata_388[3] = { 0.0f, 0.0f, 1.0f };
 const f32 lbl_1_rodata_394[3] = { 0.0f, 0.0f, 4.296875f };

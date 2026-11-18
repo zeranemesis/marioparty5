@@ -33,6 +33,14 @@ void __dt__9CLinkNodeFv(void *self, s32 flag);
 void Hu3D3Dto2D(Vec *src, s16 camBit, Vec *dst);
 }
 
+#if defined(__clang__) || defined(__GNUC__)
+/* the explicit specializations defined below must be declared before their first use (clang/GCC) */
+namespace std {
+template <> int *__vector_pod<int, allocator<int> >::at(unsigned long idx);
+template <> void __vector_pod<int, allocator<int> >::reserve(unsigned long n);
+}
+#endif
+
 namespace std {
 template <>
 vector<int, allocator<int> >::~vector()

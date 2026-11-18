@@ -143,7 +143,7 @@ typedef struct M522Fire_s {
     /* 0x004 */ f32 field4;
     /* 0x008 */ f32 field8;
     /* 0x00C */ GXTexObj texObj;
-#ifdef TARGET_PC
+#ifdef _MSC_VER
     /* 0x040 */ __declspec(align(32)) u8 tex[0x800];
 #else
     /* 0x040 */ u8 tex[0x800] __attribute__((aligned(32)));

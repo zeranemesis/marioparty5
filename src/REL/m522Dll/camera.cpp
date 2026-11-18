@@ -48,7 +48,6 @@ typedef struct M522Camera_s {
 
 extern "C" {
 extern M522_CAMERA *lbl_1_bss_A1C;
-extern void *lbl_1_bss_18;
 extern M522_NODE lbl_1_bss_2C;
 extern M522_VTFN lbl_1_data_3A8[];
 

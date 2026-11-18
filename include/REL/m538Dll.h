@@ -251,6 +251,5 @@ struct M538_s {
 
 #define M538_SIZE sizeof(M538)
 
-extern OMOBJ *lbl_1_bss_C;
 
 #endif

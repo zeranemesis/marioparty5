@@ -14,10 +14,14 @@ if [[ -z "$ANDROID_NDK_VER" ]] && [[ -d "$ANDROID_HOME_DIR/ndk" ]]; then
 fi
 
 if [[ -n "$ANDROID_NDK_VER" ]]; then
-  TOOLCHAIN_BIN="$ANDROID_HOME_DIR/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/linux-x86_64/bin"
-  if [[ -x "$TOOLCHAIN_BIN/llvm-strip" ]]; then
-    STRIP_TOOL="$TOOLCHAIN_BIN/llvm-strip"
-  fi
+  for host in linux-x86_64 darwin-x86_64 windows-x86_64; do
+    TOOLCHAIN_BIN="$ANDROID_HOME_DIR/ndk/$ANDROID_NDK_VER/toolchains/llvm/prebuilt/$host/bin"
+    for tool in "$TOOLCHAIN_BIN/llvm-strip" "$TOOLCHAIN_BIN/llvm-strip.exe"; do
+      if [[ -z "$STRIP_TOOL" ]] && [[ -x "$tool" ]]; then
+        STRIP_TOOL="$tool"
+      fi
+    done
+  done
 fi
 
 copy_libs() {

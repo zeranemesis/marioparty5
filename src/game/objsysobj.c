@@ -265,7 +265,7 @@ s16 omCameraViewMoveMulti(u32 camera, OMCAMERAVIEW *cameraView, s32 time, s16 mo
                 HuPrcKill(viewWork->process);
             }
             process = HuPrcChildCreate(CameraMoveProc, 100, 4096, 0, HuPrcCurrentGet());
-            process->property = (void *)i;
+            process->property = (void *)(size_t)i;
             viewWork->process = process;
             viewWork->no = i;
             if(camera == OM_CAMERA_SINGLE) {
@@ -322,7 +322,7 @@ BOOL omCameraViewCheck(u32 cameraBit)
 static void CameraMoveProc(void)
 {
     HUPROCESS *process = HuPrcCurrentGet();
-    s16 no = (s16)process->property;
+    s16 no = (s16)(size_t)process->property;
     CAMERAVIEWWORK *viewWork = &cameraViewWork[no];
     u32 i;
     float angle;
