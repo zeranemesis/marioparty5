@@ -35,6 +35,26 @@ Comme le netplay de Dolphin, chaque machine exécute **tout le jeu**. Seules les
 | Vidéos THP, qui suivent l'horloge audio | Elles suivent le compteur d'images (le mode était déjà prévu dans `thp_player.cpp`) |
 | Lectures disque « vitesse GameCube » (horloge temps réel) | Forcées en mode instantané |
 | Pause à la perte du focus, turbo | Forcés désactivés |
+| Horloge du jeu (`OSGetTick`/`OSGetTime`), qui sert à amorcer des générateurs de mini-jeux (m537) et à minuter des attentes | Tout le code du jeu est compilé avec `OSGetTick=Mp5Net_OSGetTick` : en session, l'heure de l'hôte au départ plus 1/60 s par image (plus 10 µs par lecture, pour que les attentes dans une même image se terminent) |
+| Format de la fenêtre : le facteur écran large sert au tri des objets visibles (`ObjCullCheck`), et un modèle tiré d'un côté seulement exécute son hook de dessin | Réglages d'aspect de l'hôte imposés, et taille de sa fenêtre figée pour toute la session |
+| Hooks d'effets de capsule rejoués dans chaque passe d'ombres, donc plus souvent à 144 i/s (images interpolées) qu'à 60 | Pas de mise à jour de l'effet pendant une passe d'ombres interpolée |
+
+### PC ↔ Android
+
+Le PC (MSVC, x64) et Android (clang, arm64) ne calculent pas tout de la même façon. Corrigé :
+
+| Différence | Correction |
+|---|---|
+| Disposition des structures à champs de bits (`GwCommon`, `GwPlayer`) : elle diffère, alors que les sauvegardes en sont des copies brutes | Android compile le jeu avec `-mms-bitfields`, la disposition MSVC |
+| `sin`/`cos`/`atan2`… de la libm, qui diffèrent sur le dernier bit | `src/port/detmath.c` (algorithmes fdlibm, seulement `+ − × ÷` et `sqrt`, 1 ulp) inclus de force dans le jeu et dans la bibliothèque mathématique d'aurora |
+| Contraction en FMA par clang | `-ffp-contract=off` sur Android |
+| Ordre d'évaluation des arguments : MSVC de droite à gauche, clang de gauche à droite. 58 instructions tirent plusieurs nombres aléatoires d'un coup (`f(RandF(), RandF())`) | Sur PC, tirages de gauche à droite dans des temporaires (`tools/netplay_rngorder.py`) |
+| Lectures hors limites d'un tableau, qui renvoient ce qui suit en mémoire (m506 : `MotSpeedTbl[10]`) | La valeur que lisait la GameCube (la table suivante) |
+
+Outils de diagnostic, à mettre sur toutes les machines :
+- `MP5_NET_DEEP=1` : vérification à chaque image, positions, rotations et animations de chaque modèle comprises. Le rapport nomme le hook de dessin de chaque modèle ;
+- `MP5_NET_DUMPAT=<image>` : écrit MEM1 et les tas du jeu ; `tools/netplay_memdiff.py` compare deux machines, pointeurs neutralisés ;
+- `MP5_NET_TRACEMDL=<modèle>` : journalise qui modifie les attributs d'un modèle (fonction appelante).
 
 ## Utilisation
 
