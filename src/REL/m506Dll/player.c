@@ -56,7 +56,13 @@ static s32 (*const PlayerModeTbl[4])(OMOBJ *) = {
     M506PlayerModeFall
 };
 
+#ifdef TARGET_PC
+/* M506PlayerMotionSet reads MotSpeedTbl[10] (motNo 10): on GameCube that is the next .data entry, MotShiftTbl[0]
+   = 0.0f; past the end the PC and the phone read different bytes (a netplay desync) */
+static const f32 MotSpeedTbl[11] = { 1.0f, 0.75f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f };
+#else
 static const f32 MotSpeedTbl[10] = { 1.0f, 0.75f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+#endif
 
 typedef struct M506MotShift_s {
     f32 motIdx;
