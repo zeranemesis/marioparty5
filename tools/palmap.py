@@ -169,6 +169,24 @@ def main():
         lines.append("static const PalDataMap PalDataMaps[] = {")
         lines += ['    {"data/%s.bin", PalMap_%s, %d},' % (d, d, len(m)) for d, m, _, _ in tables]
         lines.append("};")
+        # per-language copies of an archive with the same layout (mdmini_fr...): the PAL game swaps the whole
+        # archive for its language. Order: HUWIN_LANG_GERMANY, FRANCE, ITALY, SPAIN.
+        lines.append("static const char *const PalLangArchives[][5] = {")
+        for n in pal_dirs:
+            if re.search(r"_(fr|ge|it|sp|en|FR|GE|IT|SP)$", n):
+                continue
+            stem = n
+            if n + "_en" in pal_dirs:  # capsule: the English copy is capsule_en, the base keeps shared files
+                stem = n + "_en"
+            count = len(entries(pal("data/%s.bin" % stem)))
+            vs = []
+            for suf in ("ge", "fr", "it", "sp"):
+                v = [c for c in pal_dirs if c.lower() == (n + "_" + suf).lower()]
+                vs.append(v[0] if v and len(entries(pal("data/%s.bin" % v[0]))) == count else None)
+            if any(vs):
+                lines.append("    {%s},  /* %d entries */" % (", ".join(['"data/%s.bin"' % stem] + [
+                    '"data/%s.bin"' % v if v else "NULL" for v in vs]), count))
+        lines.append("};")
         open(emit, "w", newline="").write("".join(l + chr(10) for l in lines))
 
 if __name__ == "__main__":

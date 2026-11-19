@@ -46,3 +46,17 @@ static const PalDataMap PalDataMaps[] = {
     {"data/storyresult.bin", PalMap_storyresult, 25},
     {"data/title.bin", PalMap_title, 14},
 };
+static const char *const PalLangArchives[][5] = {
+    {"data/board.bin", "data/board_ge.bin", "data/board_fr.bin", "data/board_it.bin", "data/board_sp.bin"},  /* 151 entries */
+    {"data/bpause.bin", "data/bpause_ge.bin", "data/bpause_fr.bin", "data/bpause_it.bin", "data/bpause_sp.bin"},  /* 44 entries */
+    {"data/capsule_en.bin", "data/capsule_ge.bin", "data/capsule_fr.bin", "data/capsule_it.bin", "data/capsule_sp.bin"},  /* 8 entries */
+    {"data/card.bin", "data/card_GE.bin", "data/card_FR.bin", "data/card_IT.bin", "data/card_SP.bin"},  /* 223 entries */
+    {"data/mdbeach.bin", "data/mdbeach_ge.bin", "data/mdbeach_fr.bin", "data/mdbeach_it.bin", "data/mdbeach_sp.bin"},  /* 92 entries */
+    {"data/mdcard.bin", "data/mdcard_ge.bin", "data/mdcard_fr.bin", "data/mdcard_it.bin", "data/mdcard_sp.bin"},  /* 42 entries */
+    {"data/mdmini.bin", "data/mdmini_ge.bin", "data/mdmini_fr.bin", "data/mdmini_it.bin", "data/mdmini_sp.bin"},  /* 62 entries */
+    {"data/mdomake.bin", "data/mdomake_ge.bin", "data/mdomake_fr.bin", "data/mdomake_it.bin", "data/mdomake_sp.bin"},  /* 17 entries */
+    {"data/mdparty.bin", "data/mdparty_ge.bin", "data/mdparty_fr.bin", "data/mdparty_it.bin", "data/mdparty_sp.bin"},  /* 81 entries */
+    {"data/mdsel.bin", "data/mdsel_ge.bin", "data/mdsel_fr.bin", "data/mdsel_it.bin", "data/mdsel_sp.bin"},  /* 34 entries */
+    {"data/mdstory.bin", "data/mdstory_ge.bin", "data/mdstory_fr.bin", "data/mdstory_it.bin", "data/mdstory_sp.bin"},  /* 53 entries */
+    {"data/w20.bin", "data/w20_ge.bin", "data/w20_fr.bin", "data/w20_it.bin", "data/w20_sp.bin"},  /* 101 entries */
+};

@@ -11,6 +11,7 @@
 #ifdef TARGET_PC
 #include "port/endian.h"
 #include "port/port_version.h"
+#include "game/gamework.h"
 #include <string.h>
 #endif
 
@@ -35,7 +36,13 @@ static DATADIRSTAT DataDirStat[] = {
     #include "datadir_table.h"
     { NULL, -1 },
 #ifdef TARGET_PC
-    /* room for the PAL-only archives HuDataPalInit appends after the US ones */
+    /* room for the PAL-only and per-language archives HuDataPalInit appends after the US ones */
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
     { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
     { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
 #endif
@@ -62,6 +69,8 @@ typedef struct PalDataMap_s {
 static BOOL PalActive;
 static const PalDataMap *PalDirMap[PAL_DIR_MAX];
 static s16 PalArchiveDir[PAL_ARCHIVE_MAX];
+/* per dir: its copy for HUWIN_LANG_GERMANY..SPAIN (PalLangArchives), -1 when the archive is not localized */
+static s16 PalLangDir[PAL_DIR_MAX][4];
 
 static s32 HuDataPalFindDir(const char *name, s32 dirMax)
 {
@@ -74,6 +83,25 @@ static s32 HuDataPalFindDir(const char *name, s32 dirMax)
     return -1;
 }
 
+/* the dir of an archive, appended to DataDirStat when the US table does not have it */
+static s32 HuDataPalAddDir(const char *name, s32 *dirMax)
+{
+    s32 dir = HuDataPalFindDir(name, *dirMax);
+    if(dir >= 0) {
+        return dir;
+    }
+    if(*dirMax >= PAL_DIR_MAX - 1) {
+        OSPanic("data.c", __LINE__, "too many PAL archives\n");
+    }
+    dir = (*dirMax)++;
+    DataDirStat[dir].name = (char *)name;
+    if((DataDirStat[dir].entryNum = DVDConvertPathToEntrynum(DataDirStat[dir].name)) == -1) {
+        OSReport("data.c: Data File Error(%s)\n", DataDirStat[dir].name);
+        OSPanic("data.c", __LINE__, "\n");
+    }
+    return dir;
+}
+
 /* dirMax: US archives in DataDirStat; returns the new count with the PAL-only archives appended */
 static s32 HuDataPalInit(s32 dirMax)
 {
@@ -83,19 +111,19 @@ static s32 HuDataPalInit(s32 dirMax)
         return dirMax;
     }
     for(i=0; i<PAL_ARCHIVE_MAX; i++) {
-        dir = HuDataPalFindDir(PalArchives[i], dirMax);
-        if(dir < 0) {
-            if(dirMax >= PAL_DIR_MAX - 1) {
-                OSPanic("data.c", __LINE__, "too many PAL archives\n");
-            }
-            dir = dirMax++;
-            DataDirStat[dir].name = (char *)PalArchives[i];
-            if((DataDirStat[dir].entryNum = DVDConvertPathToEntrynum(DataDirStat[dir].name)) == -1) {
-                OSReport("data.c: Data File Error(%s)\n", DataDirStat[dir].name);
-                OSPanic("data.c", __LINE__, "\n");
+        PalArchiveDir[i] = (s16)HuDataPalAddDir(PalArchives[i], &dirMax);
+    }
+    for(i=0; i<PAL_DIR_MAX; i++) {
+        PalLangDir[i][0] = PalLangDir[i][1] = PalLangDir[i][2] = PalLangDir[i][3] = -1;
+    }
+    for(i=0; i<(s32)(sizeof(PalLangArchives) / sizeof(PalLangArchives[0])); i++) {
+        s32 lang;
+        dir = HuDataPalAddDir(PalLangArchives[i][0], &dirMax);
+        for(lang=0; lang<4; lang++) {
+            if(PalLangArchives[i][lang+1]) {
+                PalLangDir[dir][lang] = (s16)HuDataPalAddDir(PalLangArchives[i][lang+1], &dirMax);
             }
         }
-        PalArchiveDir[i] = (s16)dir;
     }
     for(i=0; i<(s32)(sizeof(PalDataMaps) / sizeof(PalDataMaps[0])); i++) {
         dir = HuDataPalFindDir(PalDataMaps[i].name, dirMax);
@@ -123,8 +151,22 @@ static int HuDataPalRemap(int dataNum)
     return (PalArchiveDir[map->map[entry].archive] << 16) | map->map[entry].entry;
 }
 #define PAL_REMAP(dataNum) ((dataNum) = HuDataPalRemap(dataNum))
+
+/* the archive a data number reads from: GP5P01 swaps a localized archive for its copy in the game's language,
+ * for every access to it (read, lookup, close), so the English and localized copies are never both loaded */
+static s32 HuDataPalDirId(int dataNum)
+{
+    s32 dir = (dataNum >> 16) & 0xFFFF;
+    s32 lang = GWLanguageGet() - HUWIN_LANG_GERMANY;
+    if(PalActive && dir < PAL_DIR_MAX && lang >= 0 && lang < 4 && PalLangDir[dir][lang] >= 0) {
+        return PalLangDir[dir][lang];
+    }
+    return dir;
+}
+#define DATA_DIRID(dataNum) HuDataPalDirId(dataNum)
 #else
 #define PAL_REMAP(dataNum) ((void)0)
+#define DATA_DIRID(dataNum) ((dataNum) >> 16)
 #endif
 
 SHARED_SYM u32 DirDataSize;
@@ -173,7 +215,11 @@ static s32 HuDataReadStatusGet(void)
 s32 HuDataReadChk(int dirNum)
 {
     s32 i;
+#ifdef TARGET_PC
+    dirNum = DATA_DIRID(dirNum);
+#else
     dirNum >>= 16;
+#endif
     for(i=0; i<DATA_MAX_READSTAT; i++) {
         if(ReadDataStat[i].dirId == dirNum && ReadDataStat[i].status != 1) {
             break;
@@ -213,7 +259,7 @@ HUDATASTAT *HuDataDirRead(int dataNum)
     HUDATASTAT *readStat;
     s32 statId;
     s32 dirId;
-    dirId  = dataNum >> 16;
+    dirId  = DATA_DIRID(dataNum);
     if(DataDirMax <= dirId) {
         OSReport("data.c: Data Number Error(%d)\n", dataNum);
         return NULL;
@@ -249,7 +295,7 @@ static HUDATASTAT *HuDataDirReadNum(int dataNum, s32 num)
     HUDATASTAT *readStat;
     s32 statId;
     s32 dirId;
-    dirId  = dataNum >> 16;
+    dirId  = DATA_DIRID(dataNum);
     if(DataDirMax <= dirId) {
         OSReport("data.c: Data Number Error(%d)\n", dataNum);
         return NULL;
@@ -392,7 +438,7 @@ s32 HuDataDirReadAsync(int dataNum)
     HUDATASTAT *readStat;
     s32 statId;
     s32 dirId;
-    dirId  = dataNum >> 16;
+    dirId  = DATA_DIRID(dataNum);
     if(DataDirMax <= dirId) {
         OSReport("data.c: Data Number Error(%d)\n", dataNum);
         return HU_DATA_STAT_NONE;
@@ -425,7 +471,7 @@ s32 HuDataDirReadNumAsync(int dataNum, s32 num)
     HUDATASTAT *readStat;
     s32 statId;
     s32 dirId;
-    dirId  = dataNum >> 16;
+    dirId  = DATA_DIRID(dataNum);
     if(DataDirMax <= dirId) {
         OSReport("data.c: Data Number Error(%d)\n", dataNum);
         return HU_DATA_STAT_NONE;
@@ -608,7 +654,7 @@ static void **HuDataReadMultiSub(int *dataNum, BOOL use_num, s32 num)
     s32 i, count, numFiles;
     u32 dirId;
     for(i=0, count=0; dataNum[i] != HU_DATANUM_NONE; i++) {
-        dirId = dataNum[i] >> 16;
+        dirId = DATA_DIRID(dataNum[i]);
         if(DataDirMax <= dirId) {
             OSReport("data.c: Data Number Error(%d)\n", dataNum[i]);
             return NULL;
@@ -624,7 +670,7 @@ static void **HuDataReadMultiSub(int *dataNum, BOOL use_num, s32 num)
     }
     pathTbl = HuMemDirectMalloc(HEAP_HEAP, (count+1)*sizeof(char *));
     for(i=0, count=0; dataNum[i] != HU_DATANUM_NONE; i++) {
-        dirId = dataNum[i] >> 16;
+        dirId = DATA_DIRID(dataNum[i]);
         if(HuDataReadChk(dataNum[i]) < 0) {
             s32 j;
             for(j=0; dirIds[j] != HU_DATANUM_NONE; j++) {
@@ -709,7 +755,7 @@ void HuDataDirClose(int dataNum)
 {
     HUDATASTAT *readStat;
     s32 i;
-    s32 dirId = dataNum >> 16;
+    s32 dirId = DATA_DIRID(dataNum);
     for(i=0; i<DATA_MAX_READSTAT; i++) {
         if(ReadDataStat[i].dirId == dirId) {
             break;
@@ -748,7 +794,7 @@ void HuDataDirCloseNum(s32 num)
 
 static s32 HuDataDVDdirDirectOpen(int dataNum, DVDFileInfo *fileInfo)
 {
-	s32 dir = dataNum >> 16;
+	s32 dir = DATA_DIRID(dataNum);
 	if(dir >= (s32)DataDirMax) {
 		OSReport("data.c: Data Number Error(0x%08x)\n", dataNum);
 		return 0;
