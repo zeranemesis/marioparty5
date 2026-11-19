@@ -107,6 +107,11 @@ s32 fn_1_3D68(OMOBJ *obj)
 
     player = (M569PLAYER *)obj->data;
     pos = player->pos;
+#ifdef TARGET_PC
+    /* fn_1_3378 leaves the angle alone once the goal is reached, and the original then turned toward whatever
+       was on the stack (a different value on a PC and a phone: a netplay desync): keep the current heading */
+    ang.y = player->rot.y;
+#endif
     ok = fn_1_3378(&pos, &player->goal, &ang, 10.0f);
     for (i = 0; i < 4; i++) {
         other = (M569PLAYER *)lbl_1_bss_F8[i]->data;
