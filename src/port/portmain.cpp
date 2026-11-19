@@ -363,6 +363,32 @@ static constexpr PADDefaultMapping defaultPadMapping = {
 
 extern "C" void Mp5InstallCrashReport(void);
 
+#ifdef __ANDROID__
+#include <jni.h>
+#include <SDL3/SDL_system.h>
+// Asks Android for a display refresh matching the game's frame rate (Mp5NativeActivity.setPreferredRefreshRate):
+// the Thor's 120 Hz panel otherwise refreshes twice per 60 fps frame. 0 (the display's own rate) asks for nothing.
+static void AndroidPreferRefreshRate(float hz) {
+    auto* env = static_cast<JNIEnv*>(SDL_GetAndroidJNIEnv());
+    jobject activity = env != nullptr ? static_cast<jobject>(SDL_GetAndroidActivity()) : nullptr;
+    if (activity == nullptr) {
+        return;
+    }
+    jclass cls = env->GetObjectClass(activity);
+    jmethodID method = cls != nullptr ? env->GetMethodID(cls, "setPreferredRefreshRate", "(F)V") : nullptr;
+    if (method != nullptr) {
+        env->CallVoidMethod(activity, method, static_cast<jfloat>(hz));
+    }
+    if (env->ExceptionCheck()) {
+        env->ExceptionClear();
+    }
+    if (cls != nullptr) {
+        env->DeleteLocalRef(cls);
+    }
+    env->DeleteLocalRef(activity);
+}
+#endif
+
 extern "C" int port_main(int argc, char* argv[]) {
     Mp5InstallCrashReport();
 #ifdef __ANDROID__
@@ -581,6 +607,11 @@ extern "C" int port_main(int argc, char* argv[]) {
     }
     mp5native::version::init();
     LanguageInit();
+#ifdef __ANDROID__
+    if (getenv("MP5_TEST_NO_REFRESH_PREF") == nullptr) { // test bench: compare with the panel left at its own rate
+        AndroidPreferRefreshRate(static_cast<float>(mp5native::getSettings().video.frameRate.getValue()));
+    }
+#endif
     // After the disc is known: the achievement set is chosen by its hash.
     Mp5Native_RAInit();
 
@@ -712,7 +743,10 @@ static OMOVL tbBoardHook(OMOVL ovl) {
         GwPlayerConf[i].padNo = GwPlayer[i].padNo = i;
         GwPlayerConf[i].dif = GwPlayer[i].dif = 1;
         // MP5_TEST_BOARD_PAUSE: player 0 is human so START can open the pause menu
-        GwPlayerConf[i].type = GwPlayer[i].comF = (i == 0 && getenv("MP5_TEST_BOARD_PAUSE") != nullptr) ? GW_TYPE_MAN : GW_TYPE_COM;
+        // MP5_TEST_BOARD_HUMANS=n: players 0..n-1 human (netplay: one per machine, see MP5_TEST_NETMASH)
+        const int humans = getenv("MP5_TEST_BOARD_HUMANS") ? atoi(getenv("MP5_TEST_BOARD_HUMANS"))
+                                                            : getenv("MP5_TEST_BOARD_PAUSE") != nullptr ? 1 : 0;
+        GwPlayerConf[i].type = GwPlayer[i].comF = i < humans ? GW_TYPE_MAN : GW_TYPE_COM;
         GwPlayerConf[i].grp = GwPlayer[i].grp = 0;
         GwPlayer[i].handicap = 0;
     }
@@ -864,6 +898,15 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
                 for (int i = 1; i < 4; i++) {
                     st[i].err = PAD_ERR_NO_CONTROLLER;
                 }
+            }
+        }
+        // MP5_TEST_NETMASH=1: in the board party, pad 0 taps A (messages, dice, mini-games) and START on the
+        // instruction screen, which waits for it; in netplay each machine's pad 0 is its own player
+        if (tbBoard >= 0 && tbStarted && getenv("MP5_TEST_NETMASH") != nullptr) {
+            static u32 nmFrame = 0;
+            st[0].err = PAD_ERR_NONE;
+            if (++nmFrame % 40 < 3) {
+                st[0].button |= omcurovl == DLL_instdll ? PAD_BUTTON_START : PAD_BUTTON_A;
             }
         }
         // MP5_TEST_BOARD_PAUSE=n: pad 0 plugged in and tapping A (messages, dice) until n frames into the board,

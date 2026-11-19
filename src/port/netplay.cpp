@@ -17,8 +17,19 @@
 //
 // shortcut: no mid-game join, no reconnection: a dropped peer ends the session, the game goes on locally.
 #include "port/netplay.h"
+#include <dolphin/os.h>
+// CMake renames the game's clock reads to the functions below; this file defines them and needs the real ones
+#undef OSGetTick
+#undef OSGetTime
+extern "C" {
+OSTick OSGetTick(void);
+OSTime OSGetTime(void);
+OSTime Mp5Net_OSGetTime(void);
+OSTick Mp5Net_OSGetTick(void);
+}
 
 #include "port/settings.h"
+#include "port/ui.h"
 #include "iso_validate.hpp"
 #include "mp5native_version.h"
 
@@ -84,7 +95,7 @@ std::filesystem::path Mp5Native_ConfigPath; // set by portmain.cpp (Mp5Net_SetCo
 
 aurora::Module Log("mp5native::netplay");
 
-constexpr u32 kProto = 1;
+constexpr u32 kProto = 2;
 constexpr u16 kDefaultPort = 51525;
 constexpr u32 kHashEvery = 60;
 constexpr u64 kTimeoutMs = 10000;
@@ -117,6 +128,7 @@ bool sAudioOn;
 SDL_AudioStream* sAudio; // null without a device: the synth still runs, the game waits on it
 u64 sAudioFrames;        // game frames rendered
 
+OSTime sBaseTime, sLastTime; // session clock (Mp5Net_OSGetTime)
 FILE* sLogFile;      // <config>/netplay_<role>.log, one per machine: compare them side by side
 u64 sWaitMs, sWaitMax; // time spent waiting for the network since the last report
 
@@ -277,7 +289,13 @@ u32 crc32(const std::vector<u8>& data) {
 }
 
 void reportDesync(u32 frame) {
+    static bool reported = false; // the first one is what matters: everything after it differs anyway
+    if (reported) {
+        return;
+    }
+    reported = true;
     note(true, "DESYNC at frame {}: the machines no longer run the same game", frame);
+    ui_push_toast("controller", "Online play: desync", "The machines no longer run the same game. See netplay_*.log.", 8000);
     fflush(stdout);
     fflush(stderr);
     auto it = sStates.find(frame);
@@ -413,6 +431,7 @@ struct StartInfo {
     u32 seed;
     u8 delay, firstPort, nPorts, portMask;
     u8 language, quickTransform, infiniteCoins, cheatCodes, unlockMg, unlockBowser, speedrun, recording;
+    s64 baseTime; // the host's clock at the start: the game's clock in the session starts there
 };
 
 // Settings that change what the game does (not how it looks or sounds) follow the host.
@@ -431,6 +450,8 @@ void applySettings(const StartInfo& si) {
     g.pauseOnFocusLost.setOverrideValue(false);
     g.enableTurboKeybind.setOverrideValue(false);
     *Mp5Test_FrandSeed() = si.seed;
+    sBaseTime = si.baseTime;
+    sLastTime = 0;
 }
 
 // The host's memory cards (GCI folders <config>/<region>/Card A|B), so every machine boots on the same save.
@@ -744,6 +765,7 @@ bool Mp5Net_Start() {
     si.unlockBowser = g.unlockBowsersGnarlyParty.getValue();
     si.speedrun = g.speedrunMode.getValue();
     si.recording = g.recordingMode.getValue();
+    si.baseTime = OSGetTime();
     Writer cards;
     packCards(cards);
     for (Peer& p : sPeers) {
@@ -904,6 +926,19 @@ bool Mp5Net_Boot() {
     return true;
 }
 
+// The game reads the clock to seed mini-game generators (m537: OSGetTick), time menus and wait for sounds
+// (HuAudSndGrpSetSet: up to 500 ms). In a session that clock is the host's time at the start plus 1/60 s per
+// frame, plus 10 us per read so that a loop waiting on it within one frame still ends: the same on every machine.
+extern "C" OSTime Mp5Net_OSGetTime(void) {
+    if (!sActive) {
+        return OSGetTime();
+    }
+    sLastTime = std::max(sBaseTime + (OSTime)sFrame * (OS_TIMER_CLOCK / 60), sLastTime + OS_TIMER_CLOCK / 100000);
+    return sLastTime;
+}
+
+extern "C" OSTick Mp5Net_OSGetTick(void) { return (OSTick)Mp5Net_OSGetTime(); }
+
 extern "C" int Mp5Net_Active(void) { return sActive; }
 
 extern "C" void Mp5Net_PadHook(PADStatus* status) {
@@ -923,6 +958,7 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
         w.bytes(status, sizeof(PADStatus) * sMyPorts);
         if (!sendMsg(sPeers[0], MsgInput, w.b)) {
             note(true, "lost the host at frame {}, playing on locally", frame);
+            ui_push_toast("controller", "Online play ended", "The host left: the game goes on here alone.", 8000);
             closeAll();
             return;
         }
@@ -968,6 +1004,7 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
             }
             if (!pump(2) || SDL_GetTicks() - start > kTimeoutMs) {
                 note(true, "no pads from a peer for {} s at frame {}: session over, playing on locally", kTimeoutMs / 1000, frame);
+                ui_push_toast("controller", "Online play ended", "A player stopped answering: the game goes on here alone.", 8000);
                 closeAll();
                 return;
             }

@@ -144,6 +144,8 @@ function(mp5native_game_target target)
     # SDK headers Aurora does not provide (THP file format...) come from the
     # decompilation, after Aurora's, so Aurora always wins when both exist
     target_include_directories(${target} AFTER PRIVATE libs/dolphin/include)
+    # online play: the game's clock reads go through netplay.cpp, which gives every machine the same time in a session
+    target_compile_definitions(${target} PRIVATE OSGetTick=Mp5Net_OSGetTick OSGetTime=Mp5Net_OSGetTime)
     target_compile_definitions(${target} PRIVATE TARGET_PC NON_MATCHING OPTIMIZED_TEXTURE_LOADING BYTESWAPPING VERSION=${VERSION})
     if (MSVC)
         target_compile_definitions(${target} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)

@@ -64,6 +64,11 @@ MP5_TEST_CONFIG_DIR=A MP5_TEST_CACHE_DIR=A/cache MP5_NET_HOST=51525 mp5native.ex
 MP5_TEST_CONFIG_DIR=B MP5_TEST_CACHE_DIR=B/cache MP5_NET_JOIN=127.0.0.1:51525 mp5native.exe
 ```
 
+Banc de test d'une partie complète : `MP5_TEST_BOARD=0 MP5_TEST_BOARD_HUMANS=2 MP5_TEST_NETMASH=1` sur les deux
+instances. Le joueur 1 est l'hôte et le joueur 2 le client : chacun tape A, et START sur l'écran d'instructions.
+Chaque machine écrit son journal `netplay_host.log` ou `netplay_client.log` (dossier de config), avec l'image, le
+CRC, les graines, l'overlay et l'attente réseau toutes les 600 images.
+
 ## Internet
 
 - **Connexion directe** (implémentée) : l'hôte redirige son port TCP (51525) sur sa box, et les clients entrent son
