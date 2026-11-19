@@ -1,6 +1,13 @@
 // m502dll/ending: the epilogue/ending sequence: pad rumble cues and the
 // crowd/applause gate that plays them.
 #include "REL/m502dll.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+/* back to the right edge of the stretched views (see opening.c) */
+#define M502_DIVIDER_X(x) (288.0f + ((x) - 288.0f) * HuWideFactor())
+#else
+#define M502_DIVIDER_X(x) (x)
+#endif
 
 float Hu3DMotionMaxTimeGet(HU3DMODELID modelId);
 void fn_1_C1EC(M502MAIN *m, f32 amt);
@@ -86,9 +93,9 @@ s32 fn_1_A914(M502MAIN *m)
                 Hu3DModelAttrSet(blk[3]->cell[lvl][idx].unk1C, 1);
             }
         }
-        espPosSet(op->esp[0], 576.0f, 240.0f);
-        espPosSet(op->esp[1], 576.0f, 240.0f);
-        espPosSet(op->esp[2], 576.0f, 240.0f);
+        espPosSet(op->esp[0], M502_DIVIDER_X(576.0f), 240.0f);
+        espPosSet(op->esp[1], M502_DIVIDER_X(576.0f), 240.0f);
+        espPosSet(op->esp[2], M502_DIVIDER_X(576.0f), 240.0f);
         Hu3DCameraViewportSet(1, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
         Hu3DCameraPerspectiveSet(1, 20.0f, 20.0f, 30000.0f, 1.2f);
         Hu3DCameraScissorSet(1, 0, 0, 640, 480);

@@ -121,11 +121,16 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
     float h = (a->y1 < b->y1 ? a->y1 : b->y1) - (a->y0 > b->y0 ? a->y0 : b->y0);
     float areaA = (a->x1 - a->x0)*(a->y1 - a->y0);
     float areaB = (b->x1 - b->x0)*(b->y1 - b->y0);
+    if(a->group == b->group) {
+        /* a group's sprites on one row a little apart are one piece too (the digits of a coin count): apart,
+         * each followed its own position and the number spread out */
+        float gap = (a->y1 - a->y0 < b->y1 - b->y0 ? a->y1 - a->y0 : b->y1 - b->y0) * 0.5f;
+        if(h >= 0.0f && w >= -gap) {
+            return TRUE;
+        }
+    }
     if(w < 0.0f || h < 0.0f) {
         return FALSE;
-    }
-    if(a->group == b->group) {
-        return TRUE;
     }
     if(a->window && b->window) {
         return FALSE;
@@ -329,6 +334,13 @@ static void HuSprWidescreenLayout(void)
                     }
                     margin = 0.0f;
                 } else if(boxes[k].frame) {
+                    /* a piece the window is drawn over (a player panel it only partly covers, so not hidden in
+                     * pass 0) is not "beside" it: it keeps its corner instead of jumping back to 4:3 */
+                    if((boxes[k].prio < boxes[i].prio || (boxes[k].prio == boxes[i].prio && k > i))
+                        && boxes[i].x0 < boxes[k].x1 && boxes[k].x0 < boxes[i].x1
+                        && boxes[i].y0 < boxes[k].y1 && boxes[k].y0 < boxes[i].y1) {
+                        continue;
+                    }
                     margin = 32.0f;
                 } else {
                     continue;

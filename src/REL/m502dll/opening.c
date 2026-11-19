@@ -1,4 +1,12 @@
 #include "REL/m502dll.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+/* the dividers sit on the borders of the sliding views, whose viewports stretch with the window: placed the same
+ * way (as m506's), not moved by the HUD layout */
+#define M502_DIVIDER_X(x) (288.0f + ((x) - 288.0f) * HuWideFactor())
+#else
+#define M502_DIVIDER_X(x) (x)
+#endif
 
 static Vec lbl_1_data_FE0 = { 0.0f, -100.0f, -150.0f };
 static Vec lbl_1_data_FEC = { 0.0f, 1.0f, 0.0f };
@@ -29,16 +37,25 @@ void fn_1_9468(M502OPENING *o, M502MAIN *m)
     espDrawNoSet(o->esp[0], 0);
     espPosSet(o->esp[0], 576.0f, 240.0f);
     espAttrSet(o->esp[0], 1);
+#ifdef TARGET_PC
+    HU_WIDE_FIX_ESP(o->esp[0]);
+#endif
     o->esp[1] = espEntry(0x3C0090, 12, 0);
     espDispOff(o->esp[1]);
     espDrawNoSet(o->esp[1], 0);
     espPosSet(o->esp[1], 576.0f, 240.0f);
     espAttrSet(o->esp[1], 1);
+#ifdef TARGET_PC
+    HU_WIDE_FIX_ESP(o->esp[1]);
+#endif
     o->esp[2] = espEntry(0x3C0090, 12, 0);
     espDispOff(o->esp[2]);
     espDrawNoSet(o->esp[2], 0);
     espPosSet(o->esp[2], 576.0f, 240.0f);
     espAttrSet(o->esp[2], 1);
+#ifdef TARGET_PC
+    HU_WIDE_FIX_ESP(o->esp[2]);
+#endif
 }
 
 void fn_1_95B4(M502OPENING *o)
@@ -236,7 +253,7 @@ s32 fn_1_9644(M502MAIN *m)
         if (f < 0.25f + 0.25f * (f32)j) {
             f = 0.25f + 0.25f * (f32)j;
         }
-        espPosSet(m->opening.esp[j], 576.0f * f, 240.0f);
+        espPosSet(m->opening.esp[j], M502_DIVIDER_X(576.0f * f), 240.0f);
         fn_1_1E00(&m->player[0].camera, &lbl_1_data_1028, &lbl_1_data_1010, &lbl_1_data_101C);
         fn_1_1E00(&m->player[1].camera, &lbl_1_data_1028, &lbl_1_data_1010, &lbl_1_data_101C);
         fn_1_1E00(&m->player[2].camera, &lbl_1_data_1028, &lbl_1_data_1010, &lbl_1_data_101C);
