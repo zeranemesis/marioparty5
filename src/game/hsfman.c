@@ -1220,6 +1220,7 @@ static u16 Hu3DCameraNoWideBit; /* Hu3DCameraNoWideSet */
  * beyond it in 16:9, checked with MP5_TEST_MG captures): their cameras are pillarboxed */
 static const OMOVL Hu3DPillarboxOvlTbl[] = {
     DLL_m503dll, /* mg 2: the trees around the net end at the 4:3 edge, white sky and cut trunks past it */
+    DLL_m516dll, /* mg 15: the castle backdrop and its cliffs end at the 4:3 edge, black past them */
 };
 
 /* Mini-games whose set is continued past the 4:3 edge instead (Hu3DWideDecorDraw): drawn
