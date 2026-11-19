@@ -175,11 +175,20 @@ if (ANDROID AND ANDROID_ABI STREQUAL "arm64-v8a")
     add_compile_options(-march=armv8.2-a+fp16+dotprod)
     # calls inside each library bind to it directly instead of through its PLT (~3.6%), as in a Windows DLL
     add_link_options(-Wl,-Bsymbolic-functions)
+    # no fused multiply-add: clang contracts a*b+c by default where MSVC does not, so floats came out differently
+    # from the Windows build (a PC <-> Android netplay session would desync on them)
+    add_compile_options(-ffp-contract=off)
     # -O3 and ThinLTO across the game, Aurora and the RELs, as /GL + /LTCG do on Windows
     if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_compile_options(-O3 -flto=thin)
         add_link_options(-flto=thin -O3)
     endif ()
+endif ()
+# profiling builds: frame pointers everywhere, so simpleperf --call-graph fp walks every stack, the game's libco
+# coroutine stacks included (DWARF unwinding stops at them)
+option(MP5_PROFILE_FRAME_POINTERS "Keep frame pointers for call-graph profiling" OFF)
+if (MP5_PROFILE_FRAME_POINTERS AND NOT MSVC)
+    add_compile_options(-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer)
 endif ()
 
 add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)

@@ -61,6 +61,18 @@ index 2770b44..be4f8cd 100644
  #ifdef __cplusplus
  }
  #endif
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index dc5ae5b..c1988b6 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -200,6 +200,7 @@ const AuroraEvent* update() noexcept {
+ 
+ bool begin_frame() noexcept {
+   ZoneScoped;
++  window::invalidate_window_size(); // MP5: one SDL size query per frame
+ #ifdef AURORA_ENABLE_GX
+   {
+     window::SurfaceLock surfaceLock;
 diff --git a/lib/card/CardGciFolder.cpp b/lib/card/CardGciFolder.cpp
 index ec4f379..5a860ef 100644
 --- a/lib/card/CardGciFolder.cpp
@@ -244,7 +256,7 @@ index 2f87117..42af931 100644
  
  constexpr uint32_t ClearPipelineConfigVersion = 2;
 diff --git a/lib/gfx/common.cpp b/lib/gfx/common.cpp
-index eff0c65..2960daf 100644
+index eff0c65..cdaa116 100644
 --- a/lib/gfx/common.cpp
 +++ b/lib/gfx/common.cpp
 @@ -1,6 +1,7 @@
@@ -263,7 +275,38 @@ index eff0c65..2960daf 100644
    ClipRect resolveRect;
    Range resolveUniformRange;
    Vec4<float> clearColorValue{0.f, 0.f, 0.f, 0.f};
-@@ -561,10 +563,12 @@ PipelineRef pipeline_ref(const clear::PipelineConfig& config) {
+@@ -226,6 +228,21 @@ struct FramePacket {
+ static std::array<FramePacket, FrameSlotCount> g_framePackets;
+ static FramePacket* g_recordingFrame = nullptr;
+ static size_t g_recordingFrameSlot = 0;
++
++// MP5: command lists of finished frames, recycled with their capacity (game thread only, see begin_frame)
++static std::vector<CommandList> g_commandListPool;
++
++static CommandList take_command_list(size_t reserve) {
++  CommandList list;
++  if (!g_commandListPool.empty()) {
++    list = std::move(g_commandListPool.back());
++    g_commandListPool.pop_back();
++  }
++  if (list.capacity() < reserve) {
++    list.reserve(reserve);
++  }
++  return list;
++}
+ static uint64_t g_nextFrameId = 1;
+ static render_worker::FrameSlotPool g_frameSlots{FrameSlotCount};
+ static render_worker::FrameSlotPool g_stagingSlots{StagingBufferCount};
+@@ -472,7 +489,7 @@ void begin_color_pass(const ColorPassDescriptor& desc) {
+       .hasStencil = desc.hasStencil,
+       .observable = desc.observable,
+   };
+-  pass.commands.reserve(128);
++  pass.commands = take_command_list(128);
+   frame.renderPasses.emplace_back(std::move(pass));
+   g_currentRenderPass = static_cast<uint32_t>(frame.renderPasses.size() - 1);
+ 
+@@ -561,10 +578,12 @@ PipelineRef pipeline_ref(const clear::PipelineConfig& config) {
  }
  
  void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool clearAlpha, bool clearDepth,
@@ -277,7 +320,7 @@ index eff0c65..2960daf 100644
    prevPass.resolveRect = rect;
    prevPass.resolveFormat = resolveFormat;
    // Push UV transform uniform for tex_copy_conv (crop region in UV space)
-@@ -581,6 +585,9 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
+@@ -581,6 +600,9 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
  
    // Populate new render pass from previous
    const auto msaaSamples = prevPass.msaaSamples;
@@ -287,7 +330,7 @@ index eff0c65..2960daf 100644
    RenderPass newPass{
        .colorView = prevPass.colorView,
        .resolveView = prevPass.resolveView,
-@@ -592,8 +599,9 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
+@@ -592,16 +614,40 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
        .msaaSamples = msaaSamples,
        .clearColorValue = clearColorValue,
        .clearDepthValue = clearDepthValue,
@@ -299,7 +342,8 @@ index eff0c65..2960daf 100644
        .hasDepth = prevPass.hasDepth,
        .hasStencil = prevPass.hasStencil,
    };
-@@ -601,7 +609,30 @@ void resolve_pass(TextureHandle texture, ClipRect rect, bool clearColor, bool cl
+-  newPass.commands.reserve(2048);
++  newPass.commands = take_command_list(2048);
    current_render_passes().emplace_back(std::move(newPass));
    ++g_currentRenderPass;
  
@@ -331,7 +375,7 @@ index eff0c65..2960daf 100644
      // If we're only clearing color _or_ alpha, perform a clear draw
      push_draw_command(clear::DrawData{
          .pipeline = pipeline_ref(clear::PipelineConfig{
-@@ -787,6 +818,10 @@ void push_draw_command(rmlui::DrawData data) {
+@@ -787,6 +833,10 @@ void push_draw_command(rmlui::DrawData data) {
  
  template <>
  PipelineRef pipeline_ref(const gx::PipelineConfig& config) {
@@ -342,7 +386,30 @@ index eff0c65..2960daf 100644
    return find_pipeline(ShaderType::GX, config, [=] { return create_pipeline(config); });
  }
  
-@@ -1350,10 +1385,16 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
+@@ -1040,6 +1090,14 @@ bool begin_frame() {
+   }
+ 
+   auto& frame = g_framePackets[frameSlot];
++  // MP5: keep the finished frame's command lists (emptied, capacity kept) for this frame's passes: rebuilding them
++  // from empty every frame cost a malloc and a full copy per growth step (most of the game thread's allocations)
++  for (auto& oldPass : frame.renderPasses) {
++    if (oldPass.commands.capacity() != 0 && g_commandListPool.size() < 64) {
++      oldPass.commands.clear();
++      g_commandListPool.push_back(std::move(oldPass.commands));
++    }
++  }
+   frame = {};
+   frame.frameId = g_nextFrameId++;
+   frame.frameIndex = g_frameIndex;
+@@ -1070,6 +1128,7 @@ bool begin_frame() {
+ 
+   current_render_passes().emplace_back();
+   auto& pass = current_render_passes()[0];
++  pass.commands = take_command_list(2048);
+   set_efb_targets(pass);
+   pass.clearColorValue = gx::g_gxState.clearColor;
+   pass.clearDepthValue = gx::clear_depth_value();
+@@ -1350,10 +1409,16 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
        };
        cmd.CopyTextureToTexture(&src, &dst, &size);
      }
@@ -360,7 +427,7 @@ index eff0c65..2960daf 100644
  
  void gpu_synchronize() { render_worker::synchronize(); }
  
-@@ -1520,6 +1561,11 @@ std::pair<ByteBuffer, Range> map_uniform(size_t length) {
+@@ -1520,6 +1585,11 @@ std::pair<ByteBuffer, Range> map_uniform(size_t length) {
    const auto range = map(current_frame_packet().uniforms, length, g_cachedLimits.minUniformBufferOffsetAlignment);
    return {ByteBuffer{current_frame_packet().uniforms.data() + range.offset, range.size}, range};
  }
@@ -1263,3 +1330,82 @@ index a969465..6e4215e 100644
      g_device.SetLoggingCallback([](wgpu::LoggingType type, wgpu::StringView message) {
        AuroraLogLevel level = LOG_FATAL;
        switch (type) {
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 0d1a5c2..c5bd256 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -28,6 +28,7 @@ extern "C" void Android_UnlockActivityMutex(void);
+ 
+ #include <algorithm>
+ #include <atomic>
++#include <mutex>
+ #include <vector>
+ 
+ #include "rmlui.hpp"
+@@ -145,6 +146,7 @@ void sync_paused() {
+ }
+ 
+ void process_event(SDL_Event& event) {
++  invalidate_window_size();
+ #ifdef AURORA_ENABLE_GX
+   imgui::process_event(event);
+ #endif
+@@ -393,7 +395,29 @@ void shutdown() {
+   SDL_Quit();
+ }
+ 
++// MP5: SDL_GetWindowSizeInPixels and SDL_GetWindowDisplayScale look up (and allocate) window properties on every
++// call, and the size was asked several times a frame (frame start, safe area, RmlUi): cached until invalidated
++static std::mutex g_windowSizeMutex;
++static bool g_windowSizeValid = false;
++static AuroraWindowSize g_windowSizeCached;
++
++static AuroraWindowSize compute_window_size();
++
++void invalidate_window_size() noexcept {
++  std::lock_guard lock{g_windowSizeMutex};
++  g_windowSizeValid = false;
++}
++
+ AuroraWindowSize get_window_size() {
++  std::lock_guard lock{g_windowSizeMutex};
++  if (!g_windowSizeValid) {
++    g_windowSizeCached = compute_window_size();
++    g_windowSizeValid = true;
++  }
++  return g_windowSizeCached;
++}
++
++static AuroraWindowSize compute_window_size() {
+   int width = 0;
+   int height = 0;
+   int native_fb_w = 0;
+@@ -522,6 +546,7 @@ void set_frame_buffer_scale(float scale) {
+     return;
+   }
+   g_frameBufferScale = scale;
++  invalidate_window_size();
+   request_frame_buffer_resize();
+ }
+ 
+@@ -531,6 +556,7 @@ void set_frame_buffer_aspect_fit(bool fit) {
+   }
+ 
+   g_frameBufferAspectFit = fit;
++  invalidate_window_size();
+   request_frame_buffer_resize();
+ }
+ 
+diff --git a/lib/window.hpp b/lib/window.hpp
+index 51257ea..0dda835 100644
+--- a/lib/window.hpp
++++ b/lib/window.hpp
+@@ -35,6 +35,8 @@ bool create_renderer();
+ void destroy_window();
+ void show_window();
+ AuroraWindowSize get_window_size();
++// MP5: drop the cached size (each frame, window events, scale settings)
++void invalidate_window_size() noexcept;
+ const AuroraEvent* poll_events();
+ SDL_Window* get_sdl_window();
+ SDL_Renderer* get_sdl_renderer();
