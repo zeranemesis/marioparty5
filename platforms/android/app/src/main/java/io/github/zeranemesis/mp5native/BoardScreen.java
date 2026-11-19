@@ -20,8 +20,7 @@ import android.view.View;
 
 /**
  * Second screen (the AYN Thor's bottom display): the board seen from above, rendered live by the game's engine
- * (src/port/board_screen.cpp), with the players as tokens, their stars and coins, and a Settings button. Styled
- * like MP5 Native's own menus (purple panels, gold accents).
+ * (src/port/board_screen.cpp), with the players as pawns in their color and a Settings button.
  */
 public class BoardScreen extends Presentation {
     // Layout of the native snapshot, see board_screen.cpp.
@@ -97,7 +96,6 @@ public class BoardScreen extends Presentation {
                 dst.set(0, 0, w, h);
                 canvas.drawBitmap(view, null, dst, bitmapPaint);
                 drawTokens(canvas, w, h);
-                drawScores(canvas, w, h);
             } else {
                 paint.setShader(new LinearGradient(0, 0, 0, h, PURPLE_TOP, PURPLE_BOTTOM, Shader.TileMode.CLAMP));
                 canvas.drawRect(0, 0, w, h, paint);
@@ -126,64 +124,12 @@ public class BoardScreen extends Presentation {
                 paint.clearShadowLayer();
                 paint.setColor(playerColor(o));
                 canvas.drawCircle(x, y, r, paint);
-                paint.setColor(Color.WHITE);
-                paint.setTextAlign(Paint.Align.CENTER);
-                paint.setTextSize(r * 1.1f);
-                paint.setShadowLayer(2f, 0, 1f, Color.argb(200, 0, 0, 0));
-                canvas.drawText(String.valueOf(p + 1), x, y + r * 0.38f, paint);
-                paint.clearShadowLayer();
+                drawPawn(canvas, x, y, r * 0.75f);
             }
         }
 
         private int playerColor(int o) {
             return Color.rgb((int) info[o + 2], (int) info[o + 3], (int) info[o + 4]);
-        }
-
-        private void drawScores(Canvas canvas, int w, int h) {
-            final float pad = h * 0.02f, cardW = (w - pad * 5) / 4f, cardH = h * 0.11f;
-            final int turn = (int) info[4];
-            for (int p = 0; p < PLAYERS; p++) {
-                int o = HEADER + p * PLAYER;
-                float left = pad + p * (cardW + pad), top = pad;
-                rect.set(left, top, left + cardW, top + cardH);
-                paint.setStyle(Paint.Style.FILL);
-                paint.setShader(new LinearGradient(0, top, 0, top + cardH, PURPLE_TOP, PURPLE_BOTTOM,
-                                                   Shader.TileMode.CLAMP));
-                canvas.drawRoundRect(rect, cardH * 0.3f, cardH * 0.3f, paint);
-                paint.setShader(null);
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(cardH * 0.05f);
-                paint.setColor(p == turn ? GOLD : CREAM);
-                canvas.drawRoundRect(rect, cardH * 0.3f, cardH * 0.3f, paint);
-
-                paint.setStyle(Paint.Style.FILL);
-                float cy = top + cardH / 2f, dot = cardH * 0.28f;
-                paint.setColor(playerColor(o));
-                canvas.drawCircle(left + cardH * 0.45f, cy, dot, paint);
-                paint.setColor(Color.WHITE);
-                paint.setTextAlign(Paint.Align.CENTER);
-                paint.setTextSize(dot * 1.1f);
-                canvas.drawText(String.valueOf(p + 1), left + cardH * 0.45f, cy + dot * 0.38f, paint);
-
-                float tx = left + cardH * 0.95f;
-                drawStar(canvas, tx, cy - cardH * 0.17f, cardH * 0.13f);
-                drawCoin(canvas, tx, cy + cardH * 0.2f, cardH * 0.1f);
-                paint.setColor(CREAM);
-                paint.setTextAlign(Paint.Align.LEFT);
-                paint.setTextSize(cardH * 0.28f);
-                canvas.drawText(String.valueOf((int) info[o + 6]), tx + cardH * 0.2f, cy - cardH * 0.07f, paint);
-                canvas.drawText(String.valueOf((int) info[o + 5]), tx + cardH * 0.2f, cy + cardH * 0.3f, paint);
-            }
-            // turn counter
-            String turnText = "TURN " + (int) info[2] + " / " + (int) info[3];
-            paint.setTextSize(h * 0.04f);
-            paint.setTextAlign(Paint.Align.LEFT);
-            float tw = paint.measureText(turnText);
-            rect.set(pad, h - pad - h * 0.08f, pad * 3 + tw, h - pad);
-            paint.setColor(Color.argb(200, 40, 20, 90));
-            canvas.drawRoundRect(rect, rect.height() / 2, rect.height() / 2, paint);
-            paint.setColor(GOLD);
-            canvas.drawText(turnText, pad * 2, rect.centerY() + h * 0.014f, paint);
         }
 
         private void drawButton(Canvas canvas, int w, int h) {
@@ -202,26 +148,20 @@ public class BoardScreen extends Presentation {
             canvas.drawText("SETTINGS", button.centerX(), button.centerY() + bh * 0.16f, paint);
         }
 
-        private void drawStar(Canvas canvas, float cx, float cy, float r) {
+        // a plain pawn silhouette (head, neck, base) in white on the player's color
+        private void drawPawn(Canvas canvas, float cx, float cy, float r) {
+            paint.setColor(Color.WHITE);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(cx, cy - r * 0.45f, r * 0.32f, paint);
             path.reset();
-            for (int i = 0; i < 10; i++) {
-                double a = -Math.PI / 2 + i * Math.PI / 5;
-                float rr = i % 2 == 0 ? r : r * 0.45f;
-                float x = cx + (float) Math.cos(a) * rr, y = cy + (float) Math.sin(a) * rr;
-                if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
-            }
+            path.moveTo(cx - r * 0.18f, cy - r * 0.2f);
+            path.lineTo(cx + r * 0.18f, cy - r * 0.2f);
+            path.lineTo(cx + r * 0.42f, cy + r * 0.45f);
+            path.lineTo(cx - r * 0.42f, cy + r * 0.45f);
             path.close();
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(GOLD);
             canvas.drawPath(path, paint);
-        }
-
-        private void drawCoin(Canvas canvas, float cx, float cy, float r) {
-            paint.setStyle(Paint.Style.FILL);
-            paint.setColor(Color.rgb(240, 170, 20));
-            canvas.drawCircle(cx, cy, r, paint);
-            paint.setColor(GOLD);
-            canvas.drawCircle(cx, cy, r * 0.7f, paint);
+            rect.set(cx - r * 0.6f, cy + r * 0.4f, cx + r * 0.6f, cy + r * 0.68f);
+            canvas.drawRoundRect(rect, r * 0.12f, r * 0.12f, paint);
         }
 
         @Override
