@@ -126,6 +126,7 @@ set(PORT_FILES
         src/port/iso_validate.hpp
         src/port/messnum.c
         src/port/netplay.cpp
+        src/port/netplay_probe.c
         src/port/osthread_pc.c
         src/port/portmain.cpp
         src/port/prof_sampler.cpp

@@ -34,6 +34,7 @@ OSTick Mp5Net_OSGetTick(void);
 #include "mp5native_version.h"
 
 #include <aurora/lib/logging.hpp>
+#include "aurora/lib/window.hpp"
 #include <musyx/pc.h>
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_init.h>
@@ -85,6 +86,8 @@ constexpr int kSendFlags = MSG_NOSIGNAL; // a peer gone must not kill the game w
 extern "C" {
 #include <game/gamework.h>
 u32* Mp5Test_FrandSeed(void);
+int Mp5Net_ProbeModels(void* out, int max); // netplay_probe.c
+int Mp5Net_ProbeRecordSize(void);
 extern s32 rnd_seed;
 extern int omcurovl; // object.c (OMOVL); game/object.h is not C++-clean
 void CARDSetBasePath(const char* path, s32 chan);
@@ -96,9 +99,10 @@ std::filesystem::path Mp5Native_ConfigPath; // set by portmain.cpp (Mp5Net_SetCo
 
 aurora::Module Log("mp5native::netplay");
 
-constexpr u32 kProto = 2;
+constexpr u32 kProto = 3;
 constexpr u16 kDefaultPort = 51525;
 constexpr u32 kHashEvery = 60;
+bool sDeep; // MP5_NET_DEEP=1 on every machine: hash every frame, models included (finds where a desync starts)
 constexpr u64 kTimeoutMs = 10000;
 const char kBuild[] = MP5_NATIVE_WC_DESCRIBE " " MP5_NATIVE_PLATFORM_NAME " " MP5_NATIVE_ARCH;
 
@@ -130,6 +134,7 @@ SDL_AudioStream* sAudio; // null without a device: the synth still runs, the gam
 u64 sAudioFrames;        // game frames rendered
 
 OSTime sBaseTime, sLastTime; // session clock (Mp5Net_OSGetTime)
+u32 sAspectW, sAspectH;      // session picture shape (Mp5Net_SessionAspect)
 FILE* sLogFile;      // <config>/netplay_<role>.log, one per machine: compare them side by side
 u64 sWaitMs, sWaitMax; // time spent waiting for the network since the last report
 
@@ -275,6 +280,13 @@ std::vector<u8> captureState() {
     w.put(GwPlayerConf);
     w.put(*Mp5Test_FrandSeed());
     w.put(rnd_seed); // rand8 (main.c), the game's second generator
+    if (sDeep) { // every live model's transform and motion time (netplay_probe.c)
+        const int recSize = Mp5Net_ProbeRecordSize();
+        std::vector<u8> models((size_t)recSize * 512);
+        const int n = Mp5Net_ProbeModels(models.data(), 512);
+        w.put(n);
+        w.bytes(models.data(), (size_t)n * recSize);
+    }
     return w.b;
 }
 
@@ -433,6 +445,8 @@ struct StartInfo {
     u8 delay, firstPort, nPorts, portMask;
     u8 language, quickTransform, infiniteCoins, cheatCodes, unlockMg, unlockBowser, speedrun, recording;
     s64 baseTime; // the host's clock at the start: the game's clock in the session starts there
+    u8 lockAspect, widescreen; // the host's picture settings: the game culls and lays out by them
+    u32 aspectW, aspectH;      // the host's window, frozen for the session
 };
 
 // Settings that change what the game does (not how it looks or sounds) follow the host.
@@ -453,6 +467,11 @@ void applySettings(const StartInfo& si) {
     *Mp5Test_FrandSeed() = si.seed;
     sBaseTime = si.baseTime;
     sLastTime = 0;
+    auto& v = mp5native::getSettings().video;
+    v.lockAspectRatio.setOverrideValue(si.lockAspect);
+    v.widescreen.setOverrideValue(si.widescreen);
+    sAspectW = si.aspectW;
+    sAspectH = si.aspectH;
 }
 
 // The host's memory cards (GCI folders <config>/<region>/Card A|B), so every machine boots on the same save.
@@ -779,6 +798,13 @@ bool Mp5Net_Start() {
     si.speedrun = g.speedrunMode.getValue();
     si.recording = g.recordingMode.getValue();
     // test bench: with MP5_TEST_SEED the whole session replays identically, clock included
+    si.lockAspect = mp5native::getSettings().video.lockAspectRatio.getValue();
+    si.widescreen = mp5native::getSettings().video.widescreen.getValue();
+    {
+        const AuroraWindowSize size = aurora::window::get_window_size();
+        si.aspectW = std::max(size.native_fb_width, 1u);
+        si.aspectH = std::max(size.native_fb_height, 1u);
+    }
     si.baseTime = getenv("MP5_TEST_SEED") ? (OSTime)si.seed * OS_TIMER_CLOCK : OSGetTime();
     Writer cards;
     packCards(cards);
@@ -928,6 +954,7 @@ bool Mp5Net_Boot() {
     }
     sActive = true;
     sFrame = 0;
+    sDeep = envInt("MP5_NET_DEEP", 0) != 0;
     // a session is debugged by comparing the machines' logs side by side: nothing may stay in a buffer
     setvbuf(stdout, nullptr, _IONBF, 0);
     setvbuf(stderr, nullptr, _IONBF, 0);
@@ -956,6 +983,15 @@ extern "C" OSTick Mp5Net_OSGetTick(void) { return (OSTick)Mp5Net_OSGetTime(); }
 
 extern "C" int Mp5Net_Active(void) { return sActive; }
 
+extern "C" int Mp5Net_SessionAspect(u32* width, u32* height) {
+    if (!sActive || sAspectW == 0) {
+        return 0;
+    }
+    *width = sAspectW;
+    *height = sAspectH;
+    return 1;
+}
+
 extern "C" void Mp5Net_PadHook(PADStatus* status) {
     if (!sActive) {
         return;
@@ -979,7 +1015,7 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
         }
     }
 
-    if (frame % kHashEvery == 0) {
+    if (frame % (sDeep ? 1 : kHashEvery) == 0) {
         auto state = captureState();
         const u32 crc = crc32(state);
         sStates[frame] = std::move(state);
@@ -988,12 +1024,12 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
                  *Mp5Test_FrandSeed(), (int)omcurovl, sWaitMs, sWaitMax);
             sWaitMs = sWaitMax = 0;
         }
-        while (sStates.size() > 16) {
+        while (sStates.size() > (sDeep ? 240u : 16u)) {
             sStates.erase(sStates.begin());
         }
         if (sHost) {
             sHostHash[frame] = crc;
-            while (sHostHash.size() > 64) {
+            while (sHostHash.size() > (sDeep ? 240u : 64u)) {
                 sHostHash.erase(sHostHash.begin());
             }
             checkHashes();

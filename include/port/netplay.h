@@ -29,6 +29,8 @@ int Mp5Net_Active(void);
 void Mp5Net_PadHook(PADStatus* status);
 // In a session, msmSysInit calls this instead of starting MusyX's audio thread.
 void Mp5Net_AudioStart(void);
+// In a session: the host's window size, frozen at the start (widescreen.cpp); 0 outside one.
+int Mp5Net_SessionAspect(u32* width, u32* height);
 // The game's OSGetTick / OSGetTime (renamed by CMake): the real clock, or the session's in netplay.
 
 #ifdef __cplusplus
