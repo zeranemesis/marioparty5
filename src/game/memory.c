@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include <string.h>
+#endif
 #include "game/memory.h"
 #include "dolphin/os.h"
 #ifdef TARGET_PC
@@ -137,6 +140,12 @@ static void *HuMemMemoryAlloc2(void *heap, s32 size, u32 num, u32 retAddr)
             block->retAddr = retAddr;
 #ifdef TARGET_PC
             HuMemHintSet(heap, firstFree ? firstFree : block->next);
+            /* fresh memory reads as zero: on GameCube a field the game forgets to set reads the heap's previous
+               (deterministic) contents, on PC that depends on each platform's struct sizes, a netplay desync */
+            memset(BLOCK_GET_DATA(block), 0, size);
+#endif
+#ifdef TARGET_PC
+            memset(BLOCK_GET_DATA(block), 0, size); /* see HuMemMemoryAlloc2 */
 #endif
             return BLOCK_GET_DATA(block);
         }

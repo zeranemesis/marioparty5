@@ -4,6 +4,14 @@ static u32 frand_seed;
 #ifdef TARGET_PC
 /* test bench (portmain.cpp): MP5_TEST_SEED fixes the seed, the heartbeat logs it */
 u32 *Mp5Test_FrandSeed(void) { return &frand_seed; }
+/* netplay diagnostics (MP5_NET_TRACERNG, netplay.cpp): every draw with its caller, to diff two machines */
+void Mp5Net_TraceRng(u32 value, const void *caller);
+#ifdef _MSC_VER
+#include <intrin.h>
+#define FRAND_CALLER() _ReturnAddress()
+#else
+#define FRAND_CALLER() __builtin_return_address(0)
+#endif
 #endif
 
 s64 OSGetTime(void);
@@ -26,7 +34,13 @@ static inline u32 frandom(void)
 }
 
 u32 frand(void) {
+#ifdef TARGET_PC
+    frand_seed = frandom();
+    Mp5Net_TraceRng(frand_seed, FRAND_CALLER());
+    return frand_seed;
+#else
     return frand_seed = frandom();
+#endif
 }
 
 f32 frandf(void) {
@@ -40,6 +54,9 @@ f32 frandf(void) {
 u32 frandmod(u32 arg0) {
     u32 ret;
     frand_seed = frandom();
+#ifdef TARGET_PC
+    Mp5Net_TraceRng(frand_seed, FRAND_CALLER());
+#endif
 #ifdef TARGET_PC
     if(arg0 == 0) {
         return 0; // PPC divwu by zero doesn't trap; x86 does

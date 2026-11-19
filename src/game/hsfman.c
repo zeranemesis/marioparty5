@@ -871,9 +871,22 @@ void Hu3DModelAllKill(void)
     Hu3DReflectModelId = HU3D_MODELID_NONE;
 }
 
+#ifdef TARGET_PC
+void Mp5Net_TracePos(int modelId, float x, float y, float z, const void *caller);
+#ifdef _MSC_VER
+#include <intrin.h>
+#define HU3D_POS_CALLER() _ReturnAddress()
+#else
+#define HU3D_POS_CALLER() __builtin_return_address(0)
+#endif
+#endif
+
 void Hu3DModelPosSet(HU3DMODELID modelId, float posX, float posY, float posZ)
 {
     HU3DMODEL *modelP = &Hu3DData[modelId];
+#ifdef TARGET_PC
+    Mp5Net_TracePos(modelId, posX, posY, posZ, HU3D_POS_CALLER());
+#endif
     modelP->pos.x = posX;
     modelP->pos.y = posY;
     modelP->pos.z = posZ;
@@ -882,6 +895,9 @@ void Hu3DModelPosSet(HU3DMODELID modelId, float posX, float posY, float posZ)
 void Hu3DModelPosSetV(HU3DMODELID modelId, HuVecF *pos)
 {
     HU3DMODEL *modelP = &Hu3DData[modelId];
+#ifdef TARGET_PC
+    Mp5Net_TracePos(modelId, pos->x, pos->y, pos->z, HU3D_POS_CALLER());
+#endif
     modelP->pos = *pos;
 }
 

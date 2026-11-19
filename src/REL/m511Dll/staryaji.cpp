@@ -234,6 +234,11 @@ Mgr511StarYaji *fn_1_EB7C(Mgr511StarYaji *arg0, s32 arg1, s32 arg2, s32 arg_sp0)
     arg0->angle = 0.0f;
     arg0->size = 0.0f;
     arg0->frame = 0;
+#ifdef TARGET_PC
+    /* read by fn_1_F148 before the first node sets it: the original read heap garbage, different on a PC
+       and a phone (a netplay desync) */
+    arg0->speed = 0.0f;
+#endif
     arg0->playerNo = arg1;
     arg0->unk34 = arg2;
     fn_1_1E54(arg0, (void **)&lbl_1_bss_A9C);

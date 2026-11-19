@@ -1002,11 +1002,45 @@ extern "C" int Mp5Net_Active(void) { return sActive; }
 
 // test bench: MP5_NET_TRACEMDL=<model> [MP5_NET_TRACEFROM=<frame>] logs every attribute change of that model with
 // its caller (module+offset, symbolize per platform): which code shows or hides it differently on two machines
+// test bench: MP5_NET_TRACERNG=<from>-<to> logs every frand/frandmod draw in that frame window with its caller
+// (module+offset): two machines' logs, symbolized, show the first draw that differs
+extern "C" void Mp5Net_TraceRng(u32 value, const void* caller) {
+    static int from = -2, to = -1;
+    if (from == -2) {
+        const char* env = getenv("MP5_NET_TRACERNG");
+        from = -1;
+        if (env != nullptr) {
+            sscanf(env, "%d-%d", &from, &to);
+        }
+    }
+    if (!sActive || from < 0 || sFrame < (u32)from || sFrame > (u32)to) {
+        return;
+    }
+    char name[256];
+    Mp5Net_AddrName(caller, name, sizeof(name));
+    note(false, "rng {:08x} by {}", value, name);
+}
+
 extern "C" int Mp5Net_TraceOn(int modelId) {
     static const int model = envInt("MP5_NET_TRACEMDL", -1);
     static const int from = envInt("MP5_NET_TRACEFROM", 0);
     return sActive && modelId == model && sFrame >= (u32)from;
 }
+
+// MP5_NET_TRACEMDL also logs the model's position changes (hex floats) with their caller
+extern "C" void Mp5Net_TracePos(int modelId, float x, float y, float z, const void* caller) {
+    if (!Mp5Net_TraceOn(modelId)) {
+        return;
+    }
+    u32 b[3];
+    std::memcpy(&b[0], &x, 4);
+    std::memcpy(&b[1], &y, 4);
+    std::memcpy(&b[2], &z, 4);
+    char name[256];
+    Mp5Net_AddrName(caller, name, sizeof(name));
+    note(false, "model {} pos {:08x} {:08x} {:08x} ({} {} {}) by {}", modelId, b[0], b[1], b[2], x, y, z, name);
+}
+
 
 extern "C" void Mp5Net_TraceLog(const char* fmt, ...) {
     char line[256];
