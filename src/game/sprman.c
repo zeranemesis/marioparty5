@@ -125,7 +125,11 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
         /* a group's sprites on one row a little apart are one piece too (the digits of a coin count): apart,
          * each followed its own position and the number spread out */
         float gap = (a->y1 - a->y0 < b->y1 - b->y0 ? a->y1 - a->y0 : b->y1 - b->y0) * 0.5f;
-        if(h >= 0.0f && w >= -gap) {
+        /* at least a digit's spacing: "+3" shrinking away (each sprite around its own centre) stays together */
+        if(gap < 24.0f) {
+            gap = 24.0f;
+        }
+        if(h >= -gap && w >= -gap) {
             return TRUE;
         }
     }
@@ -142,8 +146,16 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
             a = b;
             b = swap;
             areaA = areaB;
+            areaB = (b->x1 - b->x0)*(b->y1 - b->y0);
         }
-        return areaA > 0.0f && a->prio <= b->prio && w*h >= 0.75f*areaA;
+        if(areaA > 0.0f && a->prio <= b->prio && w*h >= 0.75f*areaA) {
+            return TRUE;
+        }
+        /* or a small window all inside the piece (a file's name label in its box: its frame is hidden, its
+         * text drawn by the window whatever the frame's priority): it goes with the box instead of keeping
+         * its 4:3 place. Only a box shown: a hidden full-screen sprite (the name entry's keyboard waiting
+         * off) would weld every label, and so every box, into one piece kept in the middle */
+        return a->visible && areaB > 0.0f && w*h >= 0.9f*areaB && areaB < 0.5f*areaA;
     }
     if(areaA > areaB) {
         WideBox *swap = a;
@@ -165,6 +177,9 @@ static s16 boxNum;
  * while a window scales or fades in and out (and just after), the board's host must not jump to the side */
 static float wideAnchor[4];
 static s16 wideAnchorHold;
+/* per sprite group: frames it still stays in its 4:3 place beside a message window (pass 1), so a window
+ * sliding away and back (the instruction screen's page turn) does not throw it to the side meanwhile */
+static u8 wideBesideHold[HUSPR_GRP_MAX];
 
 static void HuSprWidescreenLayout(void)
 {
@@ -188,6 +203,11 @@ static void HuSprWidescreenLayout(void)
     boxNum = 0;
     if(wideAnchorHold > 0) {
         wideAnchorHold--;
+    }
+    for(i=0; i<HUSPR_GRP_MAX; i++) {
+        if(wideBesideHold[i] > 0) {
+            wideBesideHold[i]--;
+        }
     }
     if(HuWideHudShift(0.0f) == 0.0f) {
         return;
@@ -284,8 +304,10 @@ static void HuSprWidescreenLayout(void)
     /* a message window keeps its 4:3 place, also while it slides in or out (the instruction screen's
      * page turn): moved out as a side piece, it ran off the right of the window */
     for(i=0; i<n; i++) {
-        if(boxes[i].message) {
-            count[WideRoot(boxes, i)] = -2;
+        j = WideRoot(boxes, i);
+        /* only a window that is its piece (a label window inside a box goes with the box) */
+        if(boxes[i].message && boxes[i].x1 - boxes[i].x0 >= 0.9f*(hi[j] - lo[j])) {
+            count[j] = -2;
         }
     }
     for(i=0; i<n; i++) {
@@ -371,9 +393,18 @@ static void HuSprWidescreenLayout(void)
                         hidden[r] = TRUE;
                     } else {
                         lo[r] = 0.0f;
+                        wideBesideHold[boxes[i].group] = 30;
                     }
                     break;
                 }
+            }
+        }
+    }
+    /* a piece held beside a window a moment ago stays held while a window is still up (sliding, paging) */
+    if(anchor[0] < anchor[2]) {
+        for(i=0; i<n; i++) {
+            if(wideBesideHold[boxes[i].group] > 0 && !hidden[WideRoot(boxes, i)]) {
+                lo[WideRoot(boxes, i)] = 0.0f;
             }
         }
     }
