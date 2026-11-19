@@ -28,6 +28,7 @@ float Mp5_atanf(float x);
 float Mp5_atan2f(float y, float x);
 float Mp5_asinf(float x);
 float Mp5_acosf(float x);
+float Mp5_fmaf(float a, float b, float c);
 
 #ifdef __cplusplus
 }
@@ -35,7 +36,7 @@ float Mp5_acosf(float x);
 namespace std {
 using ::Mp5_sin; using ::Mp5_cos; using ::Mp5_tan; using ::Mp5_atan; using ::Mp5_atan2; using ::Mp5_asin; using ::Mp5_acos;
 using ::Mp5_sinf; using ::Mp5_cosf; using ::Mp5_tanf; using ::Mp5_atanf; using ::Mp5_atan2f; using ::Mp5_asinf;
-using ::Mp5_acosf;
+using ::Mp5_acosf; using ::Mp5_fmaf;
 }
 #endif
 
@@ -55,6 +56,8 @@ using ::Mp5_acosf;
 #define atan2f(...) Mp5_atan2f(__VA_ARGS__)
 #define asinf(...) Mp5_asinf(__VA_ARGS__)
 #define acosf(...) Mp5_acosf(__VA_ARGS__)
+/* ppc_rsqrte (PSVECMag/PSVECNormalize) ends with fmaf: fused in hardware on arm64, emulated by the MSVC CRT */
+#define fmaf(...) Mp5_fmaf(__VA_ARGS__)
 #endif
 
 #endif

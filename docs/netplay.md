@@ -112,6 +112,28 @@ CRC, les graines, l'overlay et l'attente réseau toutes les 600 images.
   - le synthé MusyX sur son propre thread ;
   - la graine des mini-jeux tirée de `OSGetTick` (m537), d'où l'horloge commune `Mp5Net_OSGetTime`.
 
+### Balayage des mini-jeux PC ↔ Thor
+
+Chaque mini-jeu a tourné 2 min en netplay (`MP5_TEST_MG`, quatre joueurs, deux par machine) avec la vérification
+`MP5_NET_DEEP` à chaque image. Le script est dans le carnet de session.
+
+- **73 sur 76** sont synchronisés, dont m506, m512, m536, m537 et m569, corrigés en route.
+- **Désync restante** :
+  - m511 (image 1 324) et m564 (image 1 354) : écarts sur le dernier bit de flottants, cause pas encore trouvée ;
+  - m571 (image 979) : le PC crée un système de particules d'effet de personnage que la Thor ne crée pas.
+- **Plantages de portage**, sans lien avec le netplay :
+  - m508 et m522 plantent sur Android : lecture hors limites d'une table d'animation, et pointeur de fonction invalide ;
+  - m547 plante sur les deux plateformes : décalages GameCube écrits en dur dans `game.c`.
+
+Corrections de portée générale apportées par ce balayage :
+- la graine passée par le registre `r3` après `OSGetTick()` (m511, m512, m536, m579) ;
+- la mémoire `HuMem` neuve remise à zéro sur PC (champs jamais initialisés) ;
+- un `fmaf` déterministe (`ppc_rsqrte`) ;
+- le scanner d'ordre des tirages, qui couvre aussi les générateurs propres à chaque mini-jeu.
+
+Outils supplémentaires : `MP5_NET_TRACERNG=<de>-<à>` (chaque tirage avec la fonction appelante) et
+`MP5_NET_TRACEMDL` (attributs et positions d'un modèle).
+
 ## Limites actuelles
 
 - **Sauvegarde non testée en netplay.** Le banc `MP5_TEST_BOARD` désactive la sauvegarde, donc l'écriture sur la

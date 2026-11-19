@@ -193,3 +193,7 @@ float Mp5_atanf(float x) { return (float)Mp5_atan(x); }
 float Mp5_atan2f(float y, float x) { return (float)Mp5_atan2(y, x); }
 float Mp5_asinf(float x) { return (float)Mp5_asin(x); }
 float Mp5_acosf(float x) { return (float)Mp5_acos(x); }
+
+/* a*b is exact in double (24 + 24 bits < 53), so this rounds twice (to double, then to float) where a fused fmaf
+   rounds once: a rare last-bit difference from the hardware, the same on every platform */
+float Mp5_fmaf(float a, float b, float c) { return (float)((double)a * (double)b + (double)c); }
