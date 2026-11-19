@@ -56,6 +56,7 @@ static DATADIRSTAT DataDirStat[] = {
 typedef struct PalDataEntry_s {
     s16 archive; /* PalArchives index, -1: keep the US entry */
     s16 entry;
+    s16 lang[4]; /* its copy for HUWIN_LANG_GERMANY..SPAIN, -1: not localized */
 } PalDataEntry;
 typedef struct PalDataMap_s {
     const char *name;
@@ -148,7 +149,14 @@ static int HuDataPalRemap(int dataNum)
     if(entry >= map->count || map->map[entry].archive < 0) {
         return dataNum;
     }
-    return (PalArchiveDir[map->map[entry].archive] << 16) | map->map[entry].entry;
+    {
+        const PalDataEntry *e = &map->map[entry];
+        s32 lang = GWLanguageGet() - HUWIN_LANG_GERMANY;
+        if(lang >= 0 && lang < 4 && e->lang[lang] >= 0) {
+            return (PalArchiveDir[e->archive] << 16) | e->lang[lang];
+        }
+        return (PalArchiveDir[e->archive] << 16) | e->entry;
+    }
 }
 #define PAL_REMAP(dataNum) ((dataNum) = HuDataPalRemap(dataNum))
 
