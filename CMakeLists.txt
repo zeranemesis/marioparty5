@@ -137,6 +137,14 @@ if (MSVC)
         string(REPLACE "/INCREMENTAL" "/INCREMENTAL:NO /OPT:REF" CMAKE_${kind}_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_${kind}_LINKER_FLAGS_RELWITHDEBINFO}")
     endforeach ()
 endif ()
+function(mp5native_detmath target)
+    if (MSVC)
+        target_compile_options(${target} PRIVATE "/FI${CMAKE_SOURCE_DIR}/include/port/detmath.h")
+    else ()
+        target_compile_options(${target} PRIVATE -include "${CMAKE_SOURCE_DIR}/include/port/detmath.h")
+    endif ()
+endfunction()
+
 
 # Settings shared by dol and every REL module
 function(mp5native_game_target target)
@@ -145,6 +153,9 @@ function(mp5native_game_target target)
     # decompilation, after Aurora's, so Aurora always wins when both exist
     target_include_directories(${target} AFTER PRIVATE libs/dolphin/include)
     target_compile_definitions(${target} PRIVATE TARGET_PC NON_MATCHING OPTIMIZED_TEXTURE_LOADING BYTESWAPPING VERSION=${VERSION})
+    target_compile_definitions(${target} PRIVATE OSGetTick=Mp5Net_OSGetTick OSGetTime=Mp5Net_OSGetTime)
+    # deterministic sin/cos/atan2... (include/port/detmath.h): the C libraries differ in the last bit between platforms
+    mp5native_detmath(${target})
     # online play: the game's clock reads go through netplay.cpp, which gives every machine the same time in a session
     if (ANDROID)
         # bit-fields laid out as MSVC does on Windows: the game copies its structs raw into saves and netplay hashes
@@ -195,6 +206,8 @@ option(MP5_PROFILE_FRAME_POINTERS "Keep frame pointers for call-graph profiling"
 if (MP5_PROFILE_FRAME_POINTERS AND NOT MSVC)
     add_compile_options(-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer)
 endif ()
+# Aurora's MTXRot*/quaternions call sinf/cosf/acosf: the same deterministic versions as the game's
+mp5native_detmath(aurora_mtx)
 
 add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
 add_subdirectory(extern/musyx EXCLUDE_FROM_ALL)

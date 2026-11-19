@@ -109,6 +109,7 @@ set(PORT_FILES
         src/port/cheats.cpp
         src/port/config.cpp
         src/port/crash_win.cpp
+        src/port/detmath.c
         src/port/display_select.cpp
         src/port/dolassets.cpp
         src/port/dvd_timing.cpp
