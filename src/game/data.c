@@ -111,6 +111,9 @@ static int HuDataPalRemap(int dataNum)
     s32 dir = (dataNum >> 16) & 0xFFFF;
     s32 entry = dataNum & 0xFFFF;
     const PalDataMap *map;
+    if(dataNum != HU_DATANUM_NONE && (entry & DATA_PAL_NATIVE)) {
+        return dataNum & ~DATA_PAL_NATIVE;
+    }
     if(!PalActive || dataNum == HU_DATANUM_NONE || dir >= PAL_DIR_MAX || !(map = PalDirMap[dir])) {
         return dataNum;
     }

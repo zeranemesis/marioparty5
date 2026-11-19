@@ -4,6 +4,9 @@
 #include "port/endian.h"
 #endif
 #include "game/window.h"
+#ifdef TARGET_PC
+#include "port/port_version.h"
+#endif
 #include "port/widescreen.h"
 #include "game/gamework.h"
 #include "game/process.h"
@@ -177,6 +180,34 @@ static char *mesDataTbl[] = {
     "mess/messdata.bin",
     "mess/board.dat",
 };
+
+#ifdef TARGET_PC
+/* GP5P01's table (its main.dol), indexed by HUWIN_LANG_* * 2 + dataNo */
+static char *mesDataTblPal[] = {
+    "mess/messdata.bin", "mess/board.dat",
+    "mess/messdata_eng.bin", "mess/board.dat",
+    "mess/messdata_ger.bin", "mess/board_ger.dat",
+    "mess/messdata_fra.bin", "mess/board_fra.dat",
+    "mess/messdata_ita.bin", "mess/board_ita.dat",
+    "mess/messdata_spa.bin", "mess/board_spa.dat",
+};
+
+/* US message numbers -> the PAL message files' layout (tools/palmes.py) */
+#include "../port/pal_mesmap.inc"
+
+static u32 HuWinPalMesNum(u32 messNum)
+{
+    u32 dir = messNum >> 16;
+    u32 num = messNum & 0xFFFF;
+    if(!mp5native_version_is_pal() || dir >= sizeof(PalMesGroup) / sizeof(PalMesGroup[0])) {
+        return messNum;
+    }
+    if(PalMesMaps[dir] && num < (u32)PalMesMapCount[dir] && PalMesMaps[dir][num] >= 0) {
+        num = PalMesMaps[dir][num];
+    }
+    return ((u32)PalMesGroup[dir] << 16) | num;
+}
+#endif
 
 static int speakerSeIdTbl[21] = {};
 
@@ -431,6 +462,9 @@ char *HuWinMesPtrGet(u32 messNum)
         OSReport("Error: Not Read Mess Data.");
         return NULL;
     }
+#ifdef TARGET_PC
+    messNum = HuWinPalMesNum(messNum);
+#endif
     if(newMessDataF) {
         return HuWinMesDataPtrGet(messDataPtr, messNum);
     } else {
@@ -451,8 +485,12 @@ u32 HuWinMesMaxDirGet(void)
 
 u32 HuWinMesMaxNumGet(u32 dirNum)
 {
-    u32 dir = dirNum >> 16;
+    u32 dir;
     u32 *messData = messDataPtr;
+#ifdef TARGET_PC
+    dirNum = HuWinPalMesNum(dirNum);
+#endif
+    dir = dirNum >> 16;
 #ifdef TARGET_PC
     if(dir >= PORT_BE32(*messData)) {
         OSReport("Error: Message Dir Over\n");
@@ -1398,6 +1436,11 @@ void HuWinMesRead(void)
     if(messDataPtr) {
         HuMemDirectFree(messDataPtr);
     }
+#ifdef TARGET_PC
+    if(mp5native_version_is_pal() && LanguageNo <= HUWIN_LANG_SPAIN) {
+        path = mesDataTblPal[LanguageNo*2 + dataNo];
+    } else
+#endif
     if(LanguageNo == HUWIN_LANG_JAPAN) {
         path = mesDataTbl[dataNo];
     } else {

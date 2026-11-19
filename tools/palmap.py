@@ -10,6 +10,7 @@ PAL disc this finds, for every US entry, the PAL entry holding the same thing:
     python tools/palmap.py ISO               # report coverage
     python tools/palmap.py ISO --emit FILE   # write the C table (src/port/pal_datamap.inc)
 """
+import difflib
 import os
 import re
 import struct
@@ -63,7 +64,12 @@ def entries(b):
 def code_pairs(us_dirs, pal_dirs):
     """(us dir name, us idx) -> (pal dir name, pal idx) from data numbers loaded at matching places"""
     pairs = {}
-    pat = re.compile(r"lis\s+(r\d+),(-?\d+)\s*\|\s*(?:addi|ori)\s+\1,\1,(-?\d+)")
+    lisaddi = re.compile(r"lis\s+(r\d+),(-?\d+)\s*\|\s*(?:addi|ori)\s+\1,\1,(-?\d+)$")
+
+    def num(m, dirs):
+        v = (((int(m.group(2)) & 0xFFFF) << 16) + int(m.group(3))) & 0xFFFFFFFF
+        d, i = v >> 16, v & 0xFFFF
+        return (dirs[d], i) if d < len(dirs) and i < 0x400 else None
     import palfn
     for name, ut, uf, pt, pf, funcs, base in paldiff.modules(set()):
         um, pm = paldiff.mask_words(ut, uf), paldiff.mask_words(pt, pf)
@@ -75,24 +81,21 @@ def code_pairs(us_dirs, pal_dirs):
             if hit >= 0:
                 shift = hit - a
                 continue
-            us_l = palfn.disasm(ut[a:a + size], 0)
-            pal_l = palfn.disasm(pt[a + shift:a + shift + size + 0x100], 0)[:len(us_l) + 0x40]
-
-            def nums(lines, dirs):
-                joined = " | ".join(x.split("#")[0].strip() for x in lines)
-                out = []
-                for m in pat.finditer(joined):
-                    hi, lo = int(m.group(2)) & 0xFFFF, int(m.group(3))
-                    v = ((hi << 16) + lo) & 0xFFFFFFFF
-                    d, i = v >> 16, v & 0xFFFF
-                    if d < len(dirs) and i < 0x400:
-                        out.append((dirs[d], i))
-                return out
-            un, pn = nums(us_l, us_dirs), nums(pal_l, pal_dirs)
-            if len(un) == len(pn):
-                for u, p in zip(un, pn):
-                    if u != p and (p[0] == u[0] or p[0].lower().startswith(u[0].lower() + "_")):
-                        pairs.setdefault(u, p)
+            us_l = [x.split("#")[0].strip() for x in palfn.disasm(ut[a:a + size], 0)]
+            pal_l = [x.split("#")[0].strip() for x in palfn.disasm(pt[a + shift:a + shift + size + 0x100], 0)][:len(us_l) + 0x40]
+            norm = lambda l: [re.sub(r"-?\d+", "#", x) for x in l]
+            for tag, i1, i2, j1, j2 in difflib.SequenceMatcher(None, norm(us_l), norm(pal_l), autojunk=False).get_opcodes():
+                if tag not in ("equal", "replace") or i2 - i1 != j2 - j1:
+                    continue
+                for k in range(i2 - i1 - 1):
+                    u0, u1, p0, p1 = us_l[i1 + k], us_l[i1 + k + 1], pal_l[j1 + k], pal_l[j1 + k + 1]
+                    mu, mp = lisaddi.match(u0 + " | " + u1), lisaddi.match(p0 + " | " + p1)
+                    if not (mu and mp):
+                        continue
+                    u = num(mu, us_dirs)
+                    v = num(mp, pal_dirs)
+                    if u and v and u != v and (v[0] == u[0] or v[0].lower().startswith(u[0].lower() + "_")):
+                        pairs.setdefault(u, v)
     return pairs
 
 

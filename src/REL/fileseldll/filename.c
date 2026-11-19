@@ -1,4 +1,7 @@
 #include "REL/fileseldll.h"
+#ifdef TARGET_PC
+#include "port/port_version.h"
+#endif
 #include "game/audio.h"
 #include "game/pad.h"
 
@@ -118,12 +121,65 @@ static NAMEKEYBOARD keyboardNumSpc[] = {
     { 0, 0, 0 },
 };
 
+#ifdef TARGET_PC
+/* room for GP5P01's three keyboards and the NULL that ends the list */
+static NAMEKEYBOARD *keyboardTbl[4*2] = {
+#else
 static NAMEKEYBOARD *keyboardTbl[3*2] = {
+#endif
     keyboardMain,
     (NAMEKEYBOARD *)FILESEL_ANM_keyboardMain,
     keyboardNumSpc,
     (NAMEKEYBOARD *)FILESEL_ANM_keyboardNumSpc,
 };
+
+#ifdef TARGET_PC
+/* GP5P01's name entry (its fileseldll .data): a third keyboard of accented letters, a fifth button (0x300)
+ * that opens it, and per-language keyboard pictures in filesel.bin (5 consecutive entries: English,
+ * German, French, Italian, Spanish) */
+static NAMEKEYBOARD keyboardMainPal[] = {
+    { 65, 80, 0x41 }, { 95, 80, 0x42 }, { 125, 80, 0x43 }, { 155, 80, 0x44 }, { 185, 80, 0x45 },
+    { 215, 80, 0x46 }, { 245, 80, 0x47 }, { 275, 80, 0x48 }, { 305, 80, 0x49 }, { 335, 80, 0x4A },
+    { 365, 80, 0x4B }, { 395, 80, 0x4C }, { 425, 80, 0x4D }, { 455, 80, 0x4E }, { 65, 110, 0x4F },
+    { 95, 110, 0x50 }, { 125, 110, 0x51 }, { 155, 110, 0x52 }, { 185, 110, 0x53 }, { 215, 110, 0x54 },
+    { 245, 110, 0x55 }, { 275, 110, 0x56 }, { 305, 110, 0x57 }, { 335, 110, 0x58 }, { 365, 110, 0x59 },
+    { 395, 110, 0x5A }, { 425, 110, 0x10 }, { 455, 110, 0x10 }, { 65, 140, 0x61 }, { 95, 140, 0x62 },
+    { 125, 140, 0x63 }, { 155, 140, 0x64 }, { 185, 140, 0x65 }, { 215, 140, 0x66 }, { 245, 140, 0x67 },
+    { 275, 140, 0x68 }, { 305, 140, 0x69 }, { 335, 140, 0x6A }, { 365, 140, 0x6B }, { 395, 140, 0x6C },
+    { 425, 140, 0x6D }, { 455, 140, 0x6E }, { 65, 170, 0x6F }, { 95, 170, 0x70 }, { 125, 170, 0x71 },
+    { 155, 170, 0x72 }, { 185, 170, 0x73 }, { 215, 170, 0x74 }, { 245, 170, 0x75 }, { 275, 170, 0x76 },
+    { 305, 170, 0x77 }, { 335, 170, 0x78 }, { 365, 170, 0x79 }, { 395, 170, 0x7A }, { 425, 170, 0xC2 },
+    { 455, 170, 0xC3 }, { 41, 246, 0x100 }, { 101, 246, 0x200 }, { 159, 246, 0x300 }, { 293, 244, 0x400 },
+    { 433, 243, 0x500 }, { 0, 0, 0x0 },
+};
+static NAMEKEYBOARD keyboardAccentPal[] = {
+    { 65, 80, 0x95 }, { 95, 80, 0x96 }, { 125, 80, 0x91 }, { 155, 80, 0xAA }, { 185, 80, 0x97 },
+    { 215, 80, 0x98 }, { 245, 80, 0x99 }, { 275, 80, 0x9A }, { 305, 80, 0x9F }, { 335, 80, 0x9B },
+    { 365, 80, 0x9C }, { 395, 80, 0x92 }, { 425, 80, 0x9D }, { 455, 80, 0x9E }, { 65, 110, 0x93 },
+    { 95, 110, 0x94 }, { 125, 110, 0xE7 }, { 155, 110, 0xC6 }, { 185, 110, 0xC7 }, { 215, 110, 0x10 },
+    { 245, 110, 0x10 }, { 275, 110, 0x10 }, { 305, 110, 0x10 }, { 335, 110, 0x10 }, { 365, 110, 0x10 },
+    { 395, 110, 0x10 }, { 425, 110, 0x10 }, { 455, 110, 0x10 }, { 65, 140, 0xD1 }, { 95, 140, 0xE0 },
+    { 125, 140, 0xD2 }, { 155, 140, 0xD3 }, { 185, 140, 0xD4 }, { 215, 140, 0xD5 }, { 245, 140, 0xD6 },
+    { 275, 140, 0xD7 }, { 305, 140, 0xD8 }, { 335, 140, 0xE1 }, { 365, 140, 0xE2 }, { 395, 140, 0xD9 },
+    { 425, 140, 0xDA }, { 455, 140, 0xE6 }, { 65, 170, 0xE3 }, { 95, 170, 0xE4 }, { 125, 170, 0xDB },
+    { 155, 170, 0xDC }, { 185, 170, 0xDD }, { 215, 170, 0xE5 }, { 245, 170, 0xDE }, { 275, 170, 0xDF },
+    { 305, 170, 0xE8 }, { 335, 170, 0x10 }, { 365, 170, 0x10 }, { 395, 170, 0x10 }, { 425, 170, 0x10 },
+    { 455, 170, 0x10 }, { 41, 246, 0x100 }, { 101, 246, 0x200 }, { 159, 246, 0x300 }, { 293, 244, 0x400 },
+    { 433, 243, 0x500 }, { 0, 0, 0x0 },
+};
+static NAMEKEYBOARD keyboardNumSpcPal[] = {
+    { 125, 80, 0x31 }, { 155, 80, 0x32 }, { 185, 80, 0x33 }, { 215, 80, 0x34 }, { 245, 80, 0x35 },
+    { 275, 80, 0x36 }, { 305, 80, 0x37 }, { 335, 80, 0x38 }, { 365, 80, 0x39 }, { 395, 80, 0x30 },
+    { 425, 80, 0x86 }, { 125, 110, 0x5B }, { 155, 110, 0x5C }, { 185, 110, 0x7E }, { 215, 110, 0x7F },
+    { 245, 110, 0x3C }, { 275, 110, 0x3D }, { 305, 110, 0x5F }, { 335, 110, 0x5D }, { 365, 110, 0x5E },
+    { 395, 110, 0x82 }, { 425, 110, 0x85 }, { 125, 140, 0xE03 }, { 155, 140, 0xE04 }, { 185, 140, 0xE05 },
+    { 215, 140, 0xE06 }, { 245, 140, 0xE09 }, { 275, 140, 0xE07 }, { 305, 140, 0xE01 }, { 335, 140, 0xE0B },
+    { 365, 140, 0x3B }, { 395, 140, 0x3A }, { 425, 140, 0x7D }, { 41, 246, 0x100 }, { 101, 246, 0x200 },
+    { 159, 246, 0x300 }, { 293, 244, 0x400 }, { 433, 243, 0x500 }, { 0, 0, 0x0 },
+};
+static const s16 keyboardPalEntry[3] = { 2, 7, 12 };
+static NAMEKEYBOARD *const keyboardPal[3] = { keyboardMainPal, keyboardAccentPal, keyboardNumSpcPal };
+#endif
 
 static HUSPRGRPID nameGrpId;
 static s16 nameKeyboardNum;
@@ -153,6 +209,16 @@ void NameEnterInit(void)
     HuSprGrpMemberSet(grpId, 1, sprId);
     HuSprColorSet(grpId, 1, 255, 255, 0);
     HuSprDispOff(grpId, 1);
+#ifdef TARGET_PC
+    if(mp5native_version_is_pal()) {
+        for(i=0; i<3; i++) {
+            keyboardTbl[i*2] = keyboardPal[i];
+            keyboardTbl[(i*2)+1] = (NAMEKEYBOARD *)(uintptr_t)DATA_PAL_NUM(FILESEL_ANM_keyboardMain,
+                keyboardPalEntry[i]+GWLanguageGet()-HUWIN_LANG_ENGLISH);
+        }
+        keyboardTbl[6] = keyboardTbl[7] = NULL;
+    }
+#endif
     for(nameKeyboardNum = 0; keyboardTbl[nameKeyboardNum*2]; nameKeyboardNum++) {
         animP = HuSprAnimDataRead((unsigned int)(uintptr_t)keyboardTbl[(nameKeyboardNum*2)+1]);
         sprId = HuSprCreate(animP, 50, 0);

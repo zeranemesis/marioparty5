@@ -167,7 +167,7 @@ s32 FileBoxInit(HUWINID srcWinId)
                 } else {
                     fileselBox[i].validF = FALSE;
                 }
-                GWLanguageSet(HUWIN_LANG_ENGLISH);
+                GWLanguageSet(GW_LANGUAGE_DEFAULT);
             }
             if(invalidF || slotStat[0] || slotStat[1] || slotStat[2]) {
                 HuWinExOpen(winId);

@@ -426,6 +426,22 @@ static inline s32 GWLanguageGet(void)
     return GwCommon.languageNo;
 }
 
+#ifdef TARGET_PC
+/* The language a fresh game starts in: GP5P01 takes the console's (the port's language setting, OSGetLanguage),
+ * GP5E01's OSGetLanguage is always English. */
+static inline s32 GWLanguageDefault(void)
+{
+    static const u8 osToHuWin[] = {
+        HUWIN_LANG_ENGLISH, HUWIN_LANG_GERMANY, HUWIN_LANG_FRANCE, HUWIN_LANG_SPAIN, HUWIN_LANG_ITALY
+    };
+    u32 os = OSGetLanguage();
+    return os < sizeof(osToHuWin) ? osToHuWin[os] : HUWIN_LANG_ENGLISH;
+}
+#define GW_LANGUAGE_DEFAULT GWLanguageDefault()
+#else
+#define GW_LANGUAGE_DEFAULT HUWIN_LANG_ENGLISH
+#endif
+
 static inline s32 GWRumbleFGet(void)
 {
     return GwCommon.rumbleF;

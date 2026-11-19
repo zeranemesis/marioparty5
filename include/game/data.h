@@ -15,6 +15,12 @@
 #define HU_DECODE_TYPE_ZLIB 7
 
 #define HU_DATANUM_NONE -1
+#ifdef TARGET_PC
+/* entry flag: this data number already indexes the PAL disc's archive (code ported from GP5P01), skip the
+ * US -> PAL entry map */
+#define DATA_PAL_NATIVE 0x8000
+#define DATA_PAL_NUM(usNum, palEntry) (((usNum) & 0xFFFF0000) | DATA_PAL_NATIVE | (palEntry))
+#endif
 #define HU_DATA_STAT_NONE -1
 
 #include "dolphin/types.h"

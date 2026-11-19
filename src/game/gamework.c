@@ -43,7 +43,7 @@ void GWInit(void)
             conf->type = GW_TYPE_COM;
         }
     }
-    GWLanguageSet(1);
+    GWLanguageSet(GW_LANGUAGE_DEFAULT);
     GWRumbleFSet(TRUE);
     GWMgInstFSet(TRUE);
     GWMgComFSet(TRUE);
@@ -73,7 +73,7 @@ void GWCommonInit(void)
     memset(commonP, 0, sizeof(GWCOMMON));
     commonP->magic[0] = 0;
     commonP->unk4 = 0;
-    commonP->languageNo = 1;
+    commonP->languageNo = GW_LANGUAGE_DEFAULT;
     commonP->soundOutputMode = 1;
     commonP->rumbleF = TRUE;
     commonP->totalStar = 0;
