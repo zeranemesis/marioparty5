@@ -164,9 +164,10 @@ static int HuDataPalRemap(int dataNum)
  * for every access to it (read, lookup, close), so the English and localized copies are never both loaded */
 static s32 HuDataPalDirId(int dataNum)
 {
-    s32 dir = (dataNum >> 16) & 0xFFFF;
+    /* the game's own arithmetic shift: HU_DATANUM_NONE (-1) stays -1, the dirId of a free ReadDataStat slot */
+    s32 dir = dataNum >> 16;
     s32 lang = GWLanguageGet() - HUWIN_LANG_GERMANY;
-    if(PalActive && dir < PAL_DIR_MAX && lang >= 0 && lang < 4 && PalLangDir[dir][lang] >= 0) {
+    if(PalActive && dir >= 0 && dir < PAL_DIR_MAX && lang >= 0 && lang < 4 && PalLangDir[dir][lang] >= 0) {
         return PalLangDir[dir][lang];
     }
     return dir;
