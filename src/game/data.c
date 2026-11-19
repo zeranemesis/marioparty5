@@ -10,6 +10,8 @@
 #include "dolphin/dvd.h"
 #ifdef TARGET_PC
 #include "port/endian.h"
+#include "port/port_version.h"
+#include <string.h>
 #endif
 
 #define STAT_ID_ARAM 0x10000
@@ -31,10 +33,96 @@ typedef struct DataDirStat_s {
 
 static DATADIRSTAT DataDirStat[] = {
     #include "datadir_table.h"
-    { NULL, -1 }
+    { NULL, -1 },
+#ifdef TARGET_PC
+    /* room for the PAL-only archives HuDataPalInit appends after the US ones */
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+    { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 }, { NULL, -1 },
+#endif
 };
 
 #undef DATADIR
+
+#ifdef TARGET_PC
+/* GP5P01: the port runs the US code, whose data numbers index the US archive layouts. Several archives were
+ * reordered on the PAL disc; HuDataPalRemap turns a US data number into the PAL entry holding the same file. */
+typedef struct PalDataEntry_s {
+    s16 archive; /* PalArchives index, -1: keep the US entry */
+    s16 entry;
+} PalDataEntry;
+typedef struct PalDataMap_s {
+    const char *name;
+    const PalDataEntry *map;
+    s32 count;
+} PalDataMap;
+#include "../port/pal_datamap.inc"
+
+#define PAL_DIR_MAX ((s32)(sizeof(DataDirStat) / sizeof(DataDirStat[0])))
+#define PAL_ARCHIVE_MAX ((s32)(sizeof(PalArchives) / sizeof(PalArchives[0])))
+static BOOL PalActive;
+static const PalDataMap *PalDirMap[PAL_DIR_MAX];
+static s16 PalArchiveDir[PAL_ARCHIVE_MAX];
+
+static s32 HuDataPalFindDir(const char *name, s32 dirMax)
+{
+    s32 i;
+    for(i=0; i<dirMax; i++) {
+        if(strcmp(DataDirStat[i].name, name) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/* dirMax: US archives in DataDirStat; returns the new count with the PAL-only archives appended */
+static s32 HuDataPalInit(s32 dirMax)
+{
+    s32 i, dir;
+    PalActive = mp5native_version_is_pal();
+    if(!PalActive) {
+        return dirMax;
+    }
+    for(i=0; i<PAL_ARCHIVE_MAX; i++) {
+        dir = HuDataPalFindDir(PalArchives[i], dirMax);
+        if(dir < 0) {
+            if(dirMax >= PAL_DIR_MAX - 1) {
+                OSPanic("data.c", __LINE__, "too many PAL archives\n");
+            }
+            dir = dirMax++;
+            DataDirStat[dir].name = (char *)PalArchives[i];
+            if((DataDirStat[dir].entryNum = DVDConvertPathToEntrynum(DataDirStat[dir].name)) == -1) {
+                OSReport("data.c: Data File Error(%s)\n", DataDirStat[dir].name);
+                OSPanic("data.c", __LINE__, "\n");
+            }
+        }
+        PalArchiveDir[i] = (s16)dir;
+    }
+    for(i=0; i<(s32)(sizeof(PalDataMaps) / sizeof(PalDataMaps[0])); i++) {
+        dir = HuDataPalFindDir(PalDataMaps[i].name, dirMax);
+        if(dir >= 0) {
+            PalDirMap[dir] = &PalDataMaps[i];
+        }
+    }
+    return dirMax;
+}
+
+static int HuDataPalRemap(int dataNum)
+{
+    s32 dir = (dataNum >> 16) & 0xFFFF;
+    s32 entry = dataNum & 0xFFFF;
+    const PalDataMap *map;
+    if(!PalActive || dataNum == HU_DATANUM_NONE || dir >= PAL_DIR_MAX || !(map = PalDirMap[dir])) {
+        return dataNum;
+    }
+    if(entry >= map->count || map->map[entry].archive < 0) {
+        return dataNum;
+    }
+    return (PalArchiveDir[map->map[entry].archive] << 16) | map->map[entry].entry;
+}
+#define PAL_REMAP(dataNum) ((dataNum) = HuDataPalRemap(dataNum))
+#else
+#define PAL_REMAP(dataNum) ((void)0)
+#endif
 
 SHARED_SYM u32 DirDataSize;
 static u32 DataDirMax;
@@ -54,6 +142,9 @@ void HuDataInit(void)
         i++;
         dirStat++;
     }
+#ifdef TARGET_PC
+    i = HuDataPalInit(i);
+#endif
     DataDirMax = i;
     for(i=0, readStat = ReadDataStat; i<DATA_MAX_READSTAT; i++, readStat++) {
         readStat->dirId = HU_DATANUM_NONE;
@@ -389,6 +480,7 @@ void *HuDataRead(int dataNum)
     HUDATASTAT *readStat;
     s32 statId;
     void *buf;
+    PAL_REMAP(dataNum);
     if(!HuDataDirRead(dataNum)) {
         return NULL;
     }
@@ -409,6 +501,7 @@ void *HuDataReadNum(int dataNum, s32 num)
     HUDATASTAT *readStat;
     s32 statId;
     void *buf;
+    PAL_REMAP(dataNum);
     if(!HuDataDirReadNum(dataNum, num)) {
         return NULL;
     }
@@ -429,6 +522,7 @@ void *HuDataSelHeapRead(int dataNum, HEAPID heap)
     HUDATASTAT *readStat;
     s32 statId;
     void *buf;
+    PAL_REMAP(dataNum);
     if(!HuDataDirRead(dataNum)) {
         return NULL;
     }
@@ -465,6 +559,7 @@ void *HuDataSelHeapReadNum(int dataNum, s32 num, HEAPID heap)
     HUDATASTAT *readStat;
     s32 statId;
     void *buf;
+    PAL_REMAP(dataNum);
     if(!HuDataDirReadNum(dataNum, num)) {
         return NULL;
     }
@@ -577,6 +672,7 @@ s32 HuDataGetSize(int dataNum)
 {
     HUDATASTAT *readStat;
     s32 statId;
+    PAL_REMAP(dataNum);
     if((statId = HuDataReadChk(dataNum)) == HU_DATA_STAT_NONE) {
         return -1;
     }
@@ -759,6 +855,7 @@ void *HuDataReadNumHeapShortForce(int dataNum, s32 num, HEAPID heap)
 	s32 dvdLen;
 	s32 fileNumMax;
 
+    PAL_REMAP(dataNum);
 	if(!HuDataDVDdirDirectOpen(dataNum, &fileInfo)) {
 		return NULL;
 	}

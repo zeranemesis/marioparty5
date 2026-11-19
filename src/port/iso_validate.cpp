@@ -96,8 +96,8 @@ struct KnownDisc {
 const auto KNOWN_DISCS = std::to_array<KnownDisc>({
     // shortcut: no XXH128 of a clean GP5E01 rev 0 dump yet, so the prelaunch hash check reports a mismatch; add it here once measured.
     {"GP5E01", Platform::GameCube, Region::NorthAmerica, std::vector<std::string_view>{}},
-    // the decompilation only matches GP5E01 (see version.cpp)
-    {"GP5P01", Platform::GameCube, Region::Europe},
+    // GP5P01 runs the US code on the PAL data: archives reordered on the PAL disc go through data.c's PAL map
+    {"GP5P01", Platform::GameCube, Region::Europe, std::vector<std::string_view>{}},
 });
 
 constexpr const KnownDisc* find_disc(std::string_view id) {

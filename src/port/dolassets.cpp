@@ -8,6 +8,8 @@ extern "C" {
 }
 #include "port/dolassets.h"
 
+extern "C" BOOL mp5native_version_is_pal(void); // port/version.cpp
+
 namespace {
 
 struct Blob {
@@ -40,6 +42,33 @@ constexpr Blob kDolBlobs[DOL_INCLUDE_COUNT] = {
     /* nodisc_en      */ { 0x801C549C, 0x1384 },
     /* retryerror_en  */ { 0x801C6820, 0x1384 },
     /* wrongdisc_en   */ { 0x801C7BA4, 0x1384 },
+};
+
+// The same blobs in GP5P01's main.dol (byte-identical, found by tools/paldiff.py's DOL reader)
+constexpr Blob kDolBlobsPal[DOL_INCLUDE_COUNT] = {
+    /* ank8x8_4b      */ { 0x801AE520, 0x2000 },
+    /* Ascii8x8_1bpp  */ { 0x801BC55F, 0x0800 },
+
+    /* refMapData0    */ { 0x801B0D00, 0x1240 },
+    /* refMapData1    */ { 0x801B1F40, 0x1100 },
+    /* refMapData2    */ { 0x801B3040, 0x2080 },
+    /* refMapData3    */ { 0x801B50C0, 0x2080 },
+    /* refMapData4    */ { 0x801B7140, 0x2080 },
+
+    /* toonMapData    */ { 0x801B91C0, 0x0880 },
+    /* toonMapData2   */ { 0x801B9A40, 0x1080 },
+
+    /* hiliteData     */ { 0x801BAAC0, 0x0480 },
+    /* hiliteData2    */ { 0x801BAF40, 0x0480 },
+    /* hiliteData3    */ { 0x801BB3C0, 0x0480 },
+    /* hiliteData4    */ { 0x801BB840, 0x0480 },
+
+    /* coveropen_en   */ { 0x801C30A0, 0x1384 },
+    /* fatalerror_en  */ { 0x801C4424, 0x1384 },
+    /* loading_en     */ { 0x801C57A8, 0x1384 },
+    /* nodisc_en      */ { 0x801C6B2C, 0x1384 },
+    /* retryerror_en  */ { 0x801C7EB0, 0x1384 },
+    /* wrongdisc_en   */ { 0x801C9234, 0x1384 },
 };
 
 struct RelBlob {
@@ -109,7 +138,7 @@ void *GetDolIncludeData(int index)
     if (index < 0 || index >= DOL_INCLUDE_COUNT) {
         return nullptr;
     }
-    const Blob &blob = kDolBlobs[index];
+    const Blob &blob = mp5native_version_is_pal() ? kDolBlobsPal[index] : kDolBlobs[index];
     // Casting away const is deliberate: the game patches some of these in
     // place (sprite banks turn offsets into pointers), as it did in RAM.
     auto *data = const_cast<uint8_t *>(dol_pointer(blob.address, blob.size));
