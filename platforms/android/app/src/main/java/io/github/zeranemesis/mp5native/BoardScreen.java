@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -20,7 +19,7 @@ import android.view.View;
 
 /**
  * Second screen (the AYN Thor's bottom display): the board seen from above, rendered live by the game's engine
- * (src/port/board_screen.cpp), with the players as pawns in their color and a Settings button.
+ * (src/port/board_screen.cpp), and a Settings button.
  */
 public class BoardScreen extends Presentation {
     // Layout of the native snapshot, see board_screen.cpp.
@@ -61,14 +60,13 @@ public class BoardScreen extends Presentation {
 
     private static final class BoardView extends View {
         private static final int PURPLE_TOP = Color.rgb(104, 64, 196), PURPLE_BOTTOM = Color.rgb(58, 30, 128);
-        private static final int GOLD = Color.rgb(255, 204, 51), CREAM = Color.rgb(255, 244, 214);
+        private static final int GOLD = Color.rgb(255, 204, 51);
 
         private final float[] info = new float[HEADER + PLAYERS * PLAYER];
         private final int[] pixels = new int[W * H];
         private final Bitmap view = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888);
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint bitmapPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
-        private final Path path = new Path();
         private final RectF rect = new RectF();
         private final RectF button = new RectF();
         private final Rect dst = new Rect();
@@ -95,7 +93,6 @@ public class BoardScreen extends Presentation {
             if (onBoard && hasView) {
                 dst.set(0, 0, w, h);
                 canvas.drawBitmap(view, null, dst, bitmapPaint);
-                drawTokens(canvas, w, h);
             } else {
                 paint.setShader(new LinearGradient(0, 0, 0, h, PURPLE_TOP, PURPLE_BOTTOM, Shader.TileMode.CLAMP));
                 canvas.drawRect(0, 0, w, h, paint);
@@ -106,30 +103,6 @@ public class BoardScreen extends Presentation {
                 canvas.drawText("MP5 NATIVE", w / 2f, h * 0.42f, paint);
             }
             drawButton(canvas, w, h);
-        }
-
-        private void drawTokens(Canvas canvas, int w, int h) {
-            final int turn = (int) info[4];
-            final float r = h * 0.035f;
-            for (int k = 0; k <= PLAYERS; k++) { // the player whose turn it is last, on top
-                int p = k < PLAYERS ? k : turn;
-                if (p < 0 || p >= PLAYERS || (k < PLAYERS && p == turn)) continue;
-                int o = HEADER + p * PLAYER;
-                if (info[o] < 0) continue;
-                float x = info[o] * w, y = info[o + 1] * h;
-                paint.setShadowLayer(r * 0.3f, 0, r * 0.15f, Color.argb(160, 0, 0, 0));
-                paint.setStyle(Paint.Style.FILL);
-                paint.setColor(p == turn ? GOLD : CREAM);
-                canvas.drawCircle(x, y, r * 1.2f, paint);
-                paint.clearShadowLayer();
-                paint.setColor(playerColor(o));
-                canvas.drawCircle(x, y, r, paint);
-                drawPawn(canvas, x, y, r * 0.75f);
-            }
-        }
-
-        private int playerColor(int o) {
-            return Color.rgb((int) info[o + 2], (int) info[o + 3], (int) info[o + 4]);
         }
 
         private void drawButton(Canvas canvas, int w, int h) {
@@ -146,22 +119,6 @@ public class BoardScreen extends Presentation {
             paint.setTextAlign(Paint.Align.CENTER);
             paint.setTextSize(bh * 0.45f);
             canvas.drawText("SETTINGS", button.centerX(), button.centerY() + bh * 0.16f, paint);
-        }
-
-        // a plain pawn silhouette (head, neck, base) in white on the player's color
-        private void drawPawn(Canvas canvas, float cx, float cy, float r) {
-            paint.setColor(Color.WHITE);
-            paint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(cx, cy - r * 0.45f, r * 0.32f, paint);
-            path.reset();
-            path.moveTo(cx - r * 0.18f, cy - r * 0.2f);
-            path.lineTo(cx + r * 0.18f, cy - r * 0.2f);
-            path.lineTo(cx + r * 0.42f, cy + r * 0.45f);
-            path.lineTo(cx - r * 0.42f, cy + r * 0.45f);
-            path.close();
-            canvas.drawPath(path, paint);
-            rect.set(cx - r * 0.6f, cy + r * 0.4f, cx + r * 0.6f, cy + r * 0.68f);
-            canvas.drawRoundRect(rect, r * 0.12f, r * 0.12f, paint);
         }
 
         @Override
