@@ -186,6 +186,7 @@ static void HuSprWidescreenLayout(void)
     static float lo[HUSPR_MAX], hi[HUSPR_MAX];
     static s16 count[HUSPR_MAX];
     static BOOL hidden[HUSPR_MAX];
+    static float bigArea[HUSPR_MAX];
     float left, right;
     HUSPRGRP *gp;
     HUSPRITE *sp;
@@ -341,6 +342,16 @@ static void HuSprWidescreenLayout(void)
     for(i=0; i<n; i++) {
         hi[i] = lo[i];
         hidden[i] = FALSE;
+        bigArea[i] = 0.0f;
+    }
+    /* each piece's main box (a player panel's background): what "mostly covered" is measured against, not one of
+     * its small sprites (a rank icon wholly under the VS hid the whole panel) */
+    for(i=0; i<n; i++) {
+        float area = (boxes[i].x1-boxes[i].x0)*(boxes[i].y1-boxes[i].y0);
+        j = WideRoot(boxes, i);
+        if(boxes[i].visible && area > bigArea[j]) {
+            bigArea[j] = area;
+        }
     }
     /* pass 0: a piece drawn over by one staying in the middle (a message window over a player
      * panel) keeps its corner but is not drawn while covered, rather than jumping back to the
@@ -387,7 +398,7 @@ static void HuSprWidescreenLayout(void)
                          * window only clips at its edge (the instruction screen's PRACTICE/START bubbles) stays */
                         float ow = (boxes[i].x1 < boxes[k].x1 ? boxes[i].x1 : boxes[k].x1) - (boxes[i].x0 > boxes[k].x0 ? boxes[i].x0 : boxes[k].x0);
                         float oh = (boxes[i].y1 < boxes[k].y1 ? boxes[i].y1 : boxes[k].y1) - (boxes[i].y0 > boxes[k].y0 ? boxes[i].y0 : boxes[k].y0);
-                        if(ow*oh < 0.5f*(boxes[i].x1-boxes[i].x0)*(boxes[i].y1-boxes[i].y0)) {
+                        if(ow*oh < 0.5f*bigArea[r]) {
                             continue;
                         }
                         hidden[r] = TRUE;

@@ -1,5 +1,6 @@
 #ifdef TARGET_PC
 #include <stdlib.h>
+#include <stdio.h>
 #endif
 #include "game/board/mgcall.h"
 #include "game/board/status.h"
@@ -120,6 +121,11 @@ static void MgCallKill(void);
 
 void MBMgCallExec(void)
 {
+#ifdef TARGET_PC
+    /* test bench anchor: the VS screen follows (flushed: the log is a file the bench waits on) */
+    printf("MBMgCallExec: mini-game call\n");
+    fflush(stdout);
+#endif
     MgCallProc = MBPrcCreate(MgCallMain, 8198, 24576);
     MBPrcDestructorSet(MgCallProc, MgCallKill);
     while(MgCallProc) {
