@@ -11,6 +11,8 @@
     <uses-feature android:name="android.hardware.type.pc" android:required="false" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- online play (src/port/netplay.cpp) -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"

@@ -123,6 +123,7 @@ set(PORT_FILES
         src/port/iso_validate.cpp
         src/port/iso_validate.hpp
         src/port/messnum.c
+        src/port/netplay.cpp
         src/port/osthread_pc.c
         src/port/portmain.cpp
         src/port/prof_sampler.cpp
@@ -168,6 +169,8 @@ set(PORT_FILES
         src/port/ui/modal.cpp
         src/port/ui/modal.hpp
         src/port/ui/nav_types.hpp
+        src/port/ui/netplay.cpp
+        src/port/ui/netplay.hpp
         src/port/ui/number_button.cpp
         src/port/ui/number_button.hpp
         src/port/ui/overlay.cpp

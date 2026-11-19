@@ -85,7 +85,13 @@ UserSettings g_userSettings = {
         .enabled {"retroAchievements.enabled", true},
         .username {"retroAchievements.username", ""},
         .token {"retroAchievements.token", ""},
-    }
+    },
+    .netplay = {
+        .mode {"netplay.mode", 0},
+        .address {"netplay.address", ""},
+        .port {"netplay.port", 51525},
+        .delay {"netplay.delay", 2},
+    },
 };
 
 UserSettings& getSettings() {
@@ -150,6 +156,10 @@ void registerSettings() {
     Register(g_userSettings.retroAchievements.enabled);
     Register(g_userSettings.retroAchievements.username);
     Register(g_userSettings.retroAchievements.token);
+    Register(g_userSettings.netplay.mode);
+    Register(g_userSettings.netplay.address);
+    Register(g_userSettings.netplay.port);
+    Register(g_userSettings.netplay.delay);
 }
 
 }

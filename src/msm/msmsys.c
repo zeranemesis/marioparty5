@@ -29,6 +29,7 @@ static void msmSysServer(void)
 
 #ifdef TARGET_PC
 #include "musyx/pc.h"
+#include "port/netplay.h"
 
 // The AI DMA interrupt does not exist on PC: MusyX's audio thread renders 5 ms cycles, so run the
 // server once per cycle (it chained in front of MusyX's own AI callback on GC, same cadence).
@@ -974,7 +975,10 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
     sndVolume(127, 0, 255);
 #ifdef TARGET_PC
     // sndInit never opens a device on PC; without this thread the synth never ticks (voices pile up, SE -33)
-    if (!sndPCStartAudio()) {
+    // netplay: the synth advances with the game's frames instead (netplay.cpp), so every machine hears the same
+    if (Mp5Net_Active()) {
+        Mp5Net_AudioStart();
+    } else if (!sndPCStartAudio()) {
         OSReport("msmSysInit: no audio device, running silent\n");
     }
 #endif

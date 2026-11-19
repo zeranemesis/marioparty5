@@ -10,6 +10,7 @@
 #include "../file_select.hpp"
 #include "graphics_tuner.hpp"
 #include "menu_bar.hpp"
+#include "netplay.hpp"
 #include "number_button.hpp"
 #include "port/display_select.h"
 #include "pane.hpp"
@@ -874,6 +875,12 @@ SettingsWindow::SettingsWindow(bool prelaunch)
             rightPane, [](Pane &pane) { pane.add_text("Log in with the username and password above."); });
         leftPane.register_control(leftPane.add_button("Log Out").on_pressed([] { ra::logout(); }),
             rightPane, [](Pane &pane) { pane.add_text("Forget the saved session on this computer."); });
+    });
+
+    add_tab("Online Play", [this](Rml::Element *content) {
+        auto &leftPane = add_child<Pane>(content, Pane::Type::Controlled);
+        auto &rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+        build_netplay_settings(leftPane, rightPane);
     });
 
     add_tab("Interface", [this](Rml::Element *content) {

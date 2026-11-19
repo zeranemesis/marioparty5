@@ -11,6 +11,7 @@
 #include "mp5native_version.h"
 #include "ui/menu_bar.hpp"
 #include "ui/overlay.hpp"
+#include "ui/netplay.hpp"
 #include "ui/prelaunch.hpp"
 #include "ui/preset.hpp"
 
@@ -28,6 +29,7 @@
 #include <port/config.hpp>
 #include <port/dolassets.h>
 #include <port/main.h>
+#include <port/netplay.h>
 #include <port/settings.h>
 #include <port/port_version.h>
 
@@ -75,9 +77,11 @@ static void LanguageInit() {
 bool Mp5Native_ShaderWarmup = false;
 
 // waitShaders: run until every queued shader pipeline is built instead of until the game launches
-bool launchUILoop(bool waitShaders = false) {
-    while (Mp5Native_IsRunning &&
-           (waitShaders ? aurora_get_stats()->queuedPipelines > 0 : !Mp5Native_IsGameLaunched)) {
+// keepGoing: run while it returns true instead (the online play lobby)
+bool launchUILoop(bool waitShaders = false, bool (*keepGoing)() = nullptr) {
+    while (Mp5Native_IsRunning && (keepGoing != nullptr ? keepGoing()
+                                   : waitShaders ? aurora_get_stats()->queuedPipelines > 0
+                                                 : !Mp5Native_IsGameLaunched)) {
         const AuroraEvent* event = aurora_update();
         while (event != nullptr && event->type != AURORA_NONE) {
             switch (event->type) {
@@ -361,6 +365,15 @@ extern "C" void Mp5InstallCrashReport(void);
 
 extern "C" int port_main(int argc, char* argv[]) {
     Mp5InstallCrashReport();
+#ifdef __ANDROID__
+    // An app has no environment of its own: the test bench passes MP5_TEST_*=value as launch arguments
+    // (adb shell am start ... --es mp5native_args "MP5_TEST_BOARD=0 MP5_TEST_COM=1")
+    for (int i = 1; i < argc; ++i) {
+        if (const char* eq = strchr(argv[i], '='); eq != nullptr && strncmp(argv[i], "MP5_TEST_", 9) == 0) {
+            setenv(std::string(argv[i], eq - argv[i]).c_str(), eq + 1, 1);
+        }
+    }
+#endif
     // Buffered, flushed every 200 ms and by the crash report: a log line per write cost a system call each, and the
     // game's OSReport floods (heap dumps, free errors) stalled frames for up to a second. A kill loses <= 200 ms.
     setvbuf(stdout, nullptr, _IOFBF, 1 << 16);
@@ -381,6 +394,7 @@ extern "C" int port_main(int argc, char* argv[]) {
     mp5native::config::FinishRegistration();
 
     Mp5Native_ConfigPath = calculate_config_path();
+    Mp5Net_SetConfigPath(reinterpret_cast<const char*>(Mp5Native_ConfigPath.u8string().c_str()));
 
     mp5native::config::LoadFromUserPreferences();
     // test bench: MP5_TEST_ASPECT=lock|stretch|wide overrides the aspect settings for this run, unsaved
@@ -510,6 +524,12 @@ extern "C" int port_main(int argc, char* argv[]) {
         // pre game launch ui main loop
         keepRunning = launchUILoop();
     }
+    // Online Play: the lobby runs before the game boots, so that every machine starts it from the same state
+    if (keepRunning && mp5native::getSettings().netplay.mode.getValue() != 0 && getenv("MP5_NET_HOST") == nullptr &&
+        getenv("MP5_NET_JOIN") == nullptr) {
+        mp5native::ui::push_document(std::make_unique<mp5native::ui::NetplayLobby>());
+        keepRunning = launchUILoop(false, [] { return mp5native::ui::netplay_lobby_open(); });
+    }
     // A draw whose shader is still compiling is skipped, which the original never does: build every shader the
     // pipeline cache knows (seeded from the bundled initial_pipeline_cache.db) before the game draws anything.
     Mp5Native_ShaderWarmup = true;
@@ -553,6 +573,12 @@ extern "C" int port_main(int argc, char* argv[]) {
         mp5native::ui::push_document(std::make_unique<mp5native::ui::PresetWindow>());
     }
 
+    // netplay (MP5_NET_HOST / MP5_NET_JOIN): the lobby, then the host's seed, settings and cards, before anything reads them
+    if (!Mp5Net_Boot()) {
+        Mp5NativeMainLog.error("Netplay session failed, quitting");
+        aurora_shutdown();
+        return 1;
+    }
     mp5native::version::init();
     LanguageInit();
     // After the disc is known: the achievement set is chosen by its hash.

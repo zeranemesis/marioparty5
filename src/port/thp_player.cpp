@@ -1,3 +1,4 @@
+#include "port/netplay.h"
 #include <algorithm>
 #include <atomic>
 #include <climits>
@@ -29,8 +30,8 @@ HUPROCESS *THPProc;
 }
 static HUPROCESS s_thpProcMarker;
 
-// MP5 has no online play: the movie always follows its own audio clock.
-static bool Mp5Native_NetplayEnabled() { return false; }
+// Online play (netplay.cpp): the movie follows the game's frames, the same on every machine.
+static bool Mp5Native_NetplayEnabled() { return Mp5Net_Active() != 0; }
 static void Mp5Native_NetplayTrace(const char *) {}
 
 namespace {

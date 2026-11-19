@@ -139,6 +139,14 @@ struct UserSettings {
         ConfigVar<std::string> username;
         ConfigVar<std::string> token;
     } retroAchievements;
+
+    struct {
+        // Online play (src/port/netplay.cpp): at start-up, 0 = off, 1 = host a game, 2 = join one
+        ConfigVar<int> mode;
+        ConfigVar<std::string> address; // host to join, "ip[:port]"
+        ConfigVar<int> port;            // port to host on
+        ConfigVar<int> delay;           // input delay in frames
+    } netplay;
 };
 
 UserSettings& getSettings();
