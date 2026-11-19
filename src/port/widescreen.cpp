@@ -4,6 +4,7 @@
 
 #include "port/widescreen.h"
 #include "port/settings.h"
+#include "port/netplay.h"
 #include "game/disp.h"
 
 #include <algorithm>
@@ -103,7 +104,13 @@ static float HuWideFactorCompute(void)
     }
     // the window itself: FIT makes the content framebuffer 4:3
     const AuroraWindowSize size = aurora::window::get_window_size();
-    const u32 w = size.native_fb_width, h = size.native_fb_height;
+    u32 w = size.native_fb_width, h = size.native_fb_height;
+    // online play: culling and HUD placement follow this factor, so every machine uses the host's window shape,
+    // frozen for the session (a different window is stretched to it)
+    if (Mp5Net_SessionAspect(&w, &h)) {
+        AuroraSetViewportPolicy(AURORA_VIEWPORT_STRETCH);
+        return aspect_scale((float)w, (float)h);
+    }
     // narrower than 4:3 is letterboxed rather than cut off
     AuroraSetViewportPolicy((u64)w * 3 < (u64)h * 4 ? AURORA_VIEWPORT_FIT : AURORA_VIEWPORT_STRETCH);
     return aspect_scale((float)w, (float)h);
