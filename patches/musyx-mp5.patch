@@ -12,7 +12,7 @@ index 1c7a95a..861d1be 100644
      /* GC static PCM16 is BE on disk; stream PCM16 remains native order. */
      u8 *source = copy;
 diff --git a/src/musyx/runtime/hw_aramdma.c b/src/musyx/runtime/hw_aramdma.c
-index 127d35a..41ad844 100644
+index 127d35a..26d9ea4 100644
 --- a/src/musyx/runtime/hw_aramdma.c
 +++ b/src/musyx/runtime/hw_aramdma.c
 @@ -450,11 +450,18 @@ void aramExit(void) {
@@ -35,6 +35,17 @@ index 127d35a..41ad844 100644
    if (length > SIZE_MAX - sizeof(PCSampleAllocation) || length > UINT32_MAX)
      return NULL;
    PCSampleAllocation* result = salMalloc(sizeof(*result) + length);
+@@ -489,8 +496,9 @@ void* aramStoreData(void* source, unsigned long length) {
+   pcSamples = result;
+   return result->data;
+ }
+-void aramRemoveData(void* data, unsigned long length) {
++void aramRemoveData(void* data, unsigned long length, ARAMInfo* ai) {
+   (void)length;
++  (void)ai;
+   PCSampleAllocation** link = &pcSamples;
+   while (*link) {
+     if ((*link)->data == data) {
 diff --git a/src/musyx/runtime/hw_dspctrl.c b/src/musyx/runtime/hw_dspctrl.c
 index 41191b4..3e53f45 100644
 --- a/src/musyx/runtime/hw_dspctrl.c
@@ -49,10 +60,21 @@ index 41191b4..3e53f45 100644
  
  u32 dspHRTFOn = FALSE;
 diff --git a/src/musyx/runtime/hw_pc.c b/src/musyx/runtime/hw_pc.c
-index 65abcc5..92e8839 100644
+index 65abcc5..367ceaf 100644
 --- a/src/musyx/runtime/hw_pc.c
 +++ b/src/musyx/runtime/hw_pc.c
-@@ -74,6 +74,9 @@ static s32 filterState[SYNTH_MAX_VOICES];
+@@ -52,7 +52,9 @@ static void resetStudioHistory(u8 studio) {
+ typedef struct VoiceResamplerState {
+   MusyPCMReader reader;
+   u32 phase;
+-  s16 history[POLYPHASE_TAPS];
++  /* each sample stored twice (i and i + POLYPHASE_TAPS): the filter reads its taps as one contiguous run, which the
++   * compiler vectorises, instead of wrapping the ring index per tap */
++  s16 history[POLYPHASE_TAPS * 2];
+   u32 historyIndex;
+   u8 tail;
+   s16 itdHistory[128];
+@@ -74,6 +76,9 @@ static s32 filterState[SYNTH_MAX_VOICES];
  
  #define SURROUND_DOWNMIX_GAIN 23170
  
@@ -62,7 +84,30 @@ index 65abcc5..92e8839 100644
  static inline s16 clamp16(s32 v) {
    if (v > 32767)
      return 32767;
-@@ -679,6 +682,7 @@ void salCtrlDsp(s16 *dest) {
+@@ -213,7 +218,8 @@ static int resampleVoice(DSPvoice *voice, u32 voiceIdx, s32 *out, int numSamples
+         state->reader.useInitialPS = true;
+       }
+       s16 sample = salPCReadSample(&state->reader, &voice->smp_info, voice->streamLoopPS);
+-      state->history[state->historyIndex++ & (POLYPHASE_TAPS - 1)] = sample;
++      state->history[state->historyIndex & (POLYPHASE_TAPS - 1)] = sample;
++      state->history[(state->historyIndex++ & (POLYPHASE_TAPS - 1)) + POLYPHASE_TAPS] = sample;
+       if (state->reader.ended && state->tail < POLYPHASE_TAPS)
+         ++state->tail;
+       state->phase -= 65536;
+@@ -226,10 +232,10 @@ static int resampleVoice(DSPvoice *voice, u32 voiceIdx, s32 *out, int numSamples
+       out[i] = older + (s32)((s64)(newer - older) * state->phase / 65536);
+     } else {
+       const s32 *coefficients = polyphaseTable[band - 1][state->phase >> 9];
++      const s16 *taps = &state->history[state->historyIndex & (POLYPHASE_TAPS - 1)];
+       s64 result = 0;
+       for (u32 tap = 0; tap < POLYPHASE_TAPS; ++tap)
+-        result += (s64)state->history[(state->historyIndex + tap) & (POLYPHASE_TAPS - 1)] *
+-                  coefficients[tap];
++        result += (s64)taps[tap] * coefficients[tap];
+       out[i] = clamp16((s32)(result >> 23));
+     }
+   }
+@@ -679,6 +685,7 @@ void salCtrlDsp(s16 *dest) {
          frame[rear + 1] = clamp16(right);
        }
      }
@@ -106,6 +151,28 @@ index f280381..b78235a 100644
      entry->addr = NULL;
    }
    return true;
+diff --git a/src/musyx/runtime/hw_pc_sdl.c b/src/musyx/runtime/hw_pc_sdl.c
+index 2ba930d..e710c63 100644
+--- a/src/musyx/runtime/hw_pc_sdl.c
++++ b/src/musyx/runtime/hw_pc_sdl.c
+@@ -21,8 +21,15 @@ static int audioThread(void *unused) {
+     int queued = SDL_GetAudioStreamQueued(stream);
+     if (queued < 0)
+       break;
+-    if (SDL_GetAtomicInt(&paused) || queued >= bytes * 8) {
+-      SDL_Delay(1);
++    if (SDL_GetAtomicInt(&paused)) {
++      SDL_Delay(5);
++      continue;
++    }
++    if (queued >= bytes * 8) {
++      /* Sleep until about 30 ms are left (a batch is 5 ms) rather than polling every millisecond: a thousand
++       * wake-ups a second kept the cores out of their deep idle states. */
++      Uint32 ms = (Uint32)((queued - bytes * 6) * 5 / bytes);
++      SDL_Delay(ms < 1 ? 1 : ms > 20 ? 20 : ms);
+       continue;
+     }
+     hwIRQEnterCritical();
 diff --git a/src/musyx/runtime/s_data.c b/src/musyx/runtime/s_data.c
 index 847c51c..c6e9479 100644
 --- a/src/musyx/runtime/s_data.c
