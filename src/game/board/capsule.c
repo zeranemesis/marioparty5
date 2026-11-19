@@ -6473,7 +6473,13 @@ static void CapsuleEffDraw(HU3DMODEL *modelP, Mtx *mtx)
     ROMtx basePosMtx;
     
     effP = modelP->hookData;
+#ifdef TARGET_PC
+    /* an interpolated frame (high frame rate) redraws the shadows between ticks: the effect's hook must not
+       advance again there, or how far it gets depends on the display rate (netplay desync) */
+    if(effP->prevCounter != GlobalCounter || (shadowModelDrawF && !HuInterpDrawF)) {
+#else
     if(effP->prevCounter != GlobalCounter || shadowModelDrawF) {
+#endif
         if(effP->hookMdlP && effP->hookMdlP != modelP){
             CapsuleEffDraw(effP->hookMdlP, mtx);
         }

@@ -88,6 +88,7 @@ extern "C" {
 u32* Mp5Test_FrandSeed(void);
 int Mp5Net_ProbeModels(void* out, int max); // netplay_probe.c
 int Mp5Net_ProbeRecordSize(void);
+void Mp5Net_ProbeHookName(int index, char* buf, int size);
 extern s32 rnd_seed;
 extern int omcurovl; // object.c (OMOVL); game/object.h is not C++-clean
 void CARDSetBasePath(const char* path, s32 chan);
@@ -316,6 +317,16 @@ void reportDesync(u32 frame) {
         const auto path = Mp5Native_ConfigPath / fmt::format("netplay_desync_{}_{}.bin", frame, sHost ? "host" : "client");
         std::ofstream(path, std::ios::binary).write((const char*)it->second.data(), it->second.size());
         note(true, "state of frame {} dumped to {}", frame, path.string());
+        if (sDeep) { // which code each hook model draws with, to name a model that differs
+            std::ofstream txt(Mp5Native_ConfigPath / fmt::format("netplay_desync_{}_{}_hooks.txt", frame, sHost ? "host" : "client"));
+            for (int i = 0; i < 512; i++) {
+                char name[256];
+                Mp5Net_ProbeHookName(i, name, sizeof(name));
+                if (name[0] != 0) {
+                    txt << i << ' ' << name << '\n';
+                }
+            }
+        }
     }
 }
 

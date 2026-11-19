@@ -48,3 +48,45 @@ int Mp5Net_ProbeRecordSize(void)
 {
     return (int)sizeof(PROBEREC);
 }
+
+/* For a desync report: "module+offset" of a hook model's draw function (symbolize with addr2line / the PDB). */
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#endif
+#include <stdio.h>
+#include <string.h>
+
+void Mp5Net_ProbeHookName(int index, char *buf, int size)
+{
+    const void *fn = (const void *)Hu3DData[index].hookFunc;
+    buf[0] = 0;
+    if (!(Hu3DData[index].attr & HU3D_ATTR_HOOKFUNC) || fn == NULL) {
+        return;
+    }
+#ifdef _WIN32
+    {
+        HMODULE mod = NULL;
+        char name[MAX_PATH] = "?";
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               (LPCSTR)fn, &mod)) {
+            GetModuleFileNameA(mod, name, sizeof(name));
+        }
+        snprintf(buf, size, "%s+0x%llx", strrchr(name, '\\') ? strrchr(name, '\\') + 1 : name,
+                 (unsigned long long)((const char *)fn - (const char *)mod));
+    }
+#else
+    {
+        Dl_info info;
+        if (dladdr(fn, &info) && info.dli_fname != NULL) {
+            const char *base = strrchr(info.dli_fname, '/');
+            snprintf(buf, size, "%s+0x%llx %s", base ? base + 1 : info.dli_fname,
+                     (unsigned long long)((const char *)fn - (const char *)info.dli_fbase),
+                     info.dli_sname ? info.dli_sname : "");
+        }
+    }
+#endif
+}
