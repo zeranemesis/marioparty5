@@ -161,6 +161,10 @@ static BOOL WideJoined(WideBox *a, WideBox *b)
  * text to the icons in it. */
 static WideBox boxes[HUSPR_MAX];
 static s16 boxNum;
+/* where the message windows sit at full size, and for how many more frames a 3D model beside them stays put:
+ * while a window scales or fades in and out (and just after), the board's host must not jump to the side */
+static float wideAnchor[4];
+static s16 wideAnchorHold;
 
 static void HuSprWidescreenLayout(void)
 {
@@ -173,6 +177,7 @@ static void HuSprWidescreenLayout(void)
     ANIMPAT *pat;
     ANIMBMP *bmp;
     float x, y, w, h;
+    float anchor[4] = { 1e9f, 1e9f, -1e9f, -1e9f };
     s16 i, j, n = 0;
     for(i=0; i<HUSPR_MAX; i++) {
         HuSprWideShift[i] = 0.0f;
@@ -181,6 +186,9 @@ static void HuSprWidescreenLayout(void)
         HuSprWideHidden[i] = FALSE;
     }
     boxNum = 0;
+    if(wideAnchorHold > 0) {
+        wideAnchorHold--;
+    }
     if(HuWideHudShift(0.0f) == 0.0f) {
         return;
     }
@@ -214,6 +222,11 @@ static void HuSprWidescreenLayout(void)
                 } else if(sp->bg) {
                     /* a window frame: drawn the size of its background, centred */
                     bmp = &sp->bg->bmp[sp->bg->pat[sp->bg->bank[sp->bgBank].frame->pat].layer->bmpNo];
+                    /* its full size, whatever its open/close animation scales or fades it to */
+                    if(anchor[0] > x - bmp->sizeX*8) anchor[0] = x - bmp->sizeX*8;
+                    if(anchor[1] > y - bmp->sizeY*8) anchor[1] = y - bmp->sizeY*8;
+                    if(anchor[2] < x + bmp->sizeX*8) anchor[2] = x + bmp->sizeX*8;
+                    if(anchor[3] < y + bmp->sizeY*8) anchor[3] = y + bmp->sizeY*8;
                     w *= bmp->sizeX*16;
                     h *= bmp->sizeY*16;
                     boxes[n].x0 = x - w*0.5f;
@@ -386,6 +399,12 @@ static void HuSprWidescreenLayout(void)
             HuSprWideClip[boxes[i].sprite] = TRUE;
         }
     }
+    if(anchor[0] < anchor[2]) {
+        for(i=0; i<4; i++) {
+            wideAnchor[i] = anchor[i];
+        }
+        wideAnchorHold = 20;
+    }
     boxNum = n;
 }
 
@@ -408,6 +427,11 @@ float HuSprWidePointShift(float x, float y)
             && y >= boxes[i].y0-32.0f && y <= boxes[i].y1+32.0f) {
             return 0.0f;
         }
+    }
+    /* the same beside a message window opening, closing, or just closed (wideAnchor: its full size) */
+    if(wideAnchorHold > 0 && x >= wideAnchor[0]-96.0f && x <= wideAnchor[2]+96.0f
+        && y >= wideAnchor[1]-32.0f && y <= wideAnchor[3]+32.0f) {
+        return 0.0f;
     }
     return HuWideHudShift(x);
 }
