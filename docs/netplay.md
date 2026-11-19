@@ -80,7 +80,24 @@ CRC, les graines, l'overlay et l'attente réseau toutes les 600 images.
 - **Relais** (non implémenté) : en dernier recours, un serveur de type TURN relaie les paquets. La topologie en
   étoile s'y prête, puisque seul l'hôte doit être joignable : un relais peut jouer le rôle de son port public.
 
+## Tests réalisés (PC, deux instances sur la même machine)
+
+- **Partie complète** (plateau 1, 10 tours, 10 mini-jeux, retour au titre) : 102 000 images, aucune désync, CRC
+  identiques à chaque contrôle. Mario est sur l'hôte et Luigi sur le client, tous deux humains, ce qui fait
+  passer les entrées dans les deux sens ; les deux autres joueurs sont des ordinateurs.
+- **Parties partielles** : plus de 110 000 images sans désync, sur d'autres tirages de mini-jeux.
+- **Lobby par l'interface** : un client lancé avant l'hôte se connecte tout seul, *Start Game* démarre les deux
+  jeux, et la carte de l'hôte est chargée chez le client.
+- **Désyncs trouvées et corrigées** :
+  - le synthé MusyX sur son propre thread ;
+  - la graine des mini-jeux tirée de `OSGetTick` (m537), d'où l'horloge commune `Mp5Net_OSGetTime`.
+
 ## Limites actuelles
+
+- **Sauvegarde non testée en netplay.** Le banc `MP5_TEST_BOARD` désactive la sauvegarde, donc l'écriture sur la
+  carte en fin de partie n'a pas été exercée.
+- **Un plantage du client vu une fois**, à la sortie du mini-jeu m547 (image 66 947, avant la refonte de l'horloge).
+  Il n'a pas été reproduit, et le rapport de crash élargi (`CRASH:` dans le log) l'attrapera s'il revient.
 
 - **Lockstep à délai, pas encore de rollback.** Si la latence aller-retour dépasse le délai, le jeu attend le
   réseau et saccade. Le rollback est le jalon suivant, voir plus bas.
