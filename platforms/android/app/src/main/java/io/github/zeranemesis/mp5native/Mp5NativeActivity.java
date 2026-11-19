@@ -74,6 +74,17 @@ public class Mp5NativeActivity extends SDLActivity {
         hideSystemBars();
     }
 
+    // The display refresh the game wants (its frame rate setting, 0: no preference). A 120 Hz panel showing a
+    // 60 fps game refreshes twice per frame for nothing; asking for 60 Hz saves the display and the compositor.
+    public void setPreferredRefreshRate(final float hz) {
+        runOnUiThread(() -> {
+            Window window = getWindow();
+            android.view.WindowManager.LayoutParams params = window.getAttributes();
+            params.preferredRefreshRate = hz;
+            window.setAttributes(params);
+        });
+    }
+
     @Override
     protected void onResume() {
         super.onResume();

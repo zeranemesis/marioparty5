@@ -144,9 +144,9 @@ function(mp5native_game_target target)
     # SDK headers Aurora does not provide (THP file format...) come from the
     # decompilation, after Aurora's, so Aurora always wins when both exist
     target_include_directories(${target} AFTER PRIVATE libs/dolphin/include)
+    target_compile_definitions(${target} PRIVATE TARGET_PC NON_MATCHING OPTIMIZED_TEXTURE_LOADING BYTESWAPPING VERSION=${VERSION})
     # online play: the game's clock reads go through netplay.cpp, which gives every machine the same time in a session
     target_compile_definitions(${target} PRIVATE OSGetTick=Mp5Net_OSGetTick OSGetTime=Mp5Net_OSGetTime)
-    target_compile_definitions(${target} PRIVATE TARGET_PC NON_MATCHING OPTIMIZED_TEXTURE_LOADING BYTESWAPPING VERSION=${VERSION})
     if (MSVC)
         target_compile_definitions(${target} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
         # A pointer stored in a 32-bit integer (or the reverse) works on GameCube
@@ -168,6 +168,19 @@ function(mp5native_game_target target)
         endif ()
     endif ()
 endfunction()
+
+if (ANDROID AND ANDROID_ABI STREQUAL "arm64-v8a")
+    # ARMv8.2 (every arm64 SoC since 2018): atomics become single LSE instructions instead of calls to libc's
+    # out-of-line helpers (~4% of the Thor's samples), and fp16/dot product are available to the vectoriser
+    add_compile_options(-march=armv8.2-a+fp16+dotprod)
+    # calls inside each library bind to it directly instead of through its PLT (~3.6%), as in a Windows DLL
+    add_link_options(-Wl,-Bsymbolic-functions)
+    # -O3 and ThinLTO across the game, Aurora and the RELs, as /GL + /LTCG do on Windows
+    if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_compile_options(-O3 -flto=thin)
+        add_link_options(-flto=thin -O3)
+    endif ()
+endif ()
 
 add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
 add_subdirectory(extern/musyx EXCLUDE_FROM_ALL)

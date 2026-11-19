@@ -72,7 +72,25 @@ bool hud_centered()
 
 } // namespace
 
+extern "C" u32 GlobalCounter; // game/main.c: frames since boot
+
+static float HuWideFactorCompute(void);
+
+// Computed once per game frame: ObjCullCheck asks for it for every object, and the window size is an SDL property
+// lookup (hash table, read-write lock) each time: 2-3% of the Thor's CPU. Before the game loop runs (counter 0) it
+// follows the window live.
 extern "C" float HuWideFactor(void)
+{
+    static u32 cachedFrame = 0;
+    static float cached = 1.0f;
+    if (GlobalCounter == 0 || GlobalCounter != cachedFrame) {
+        cached = HuWideFactorCompute();
+        cachedFrame = GlobalCounter;
+    }
+    return cached;
+}
+
+static float HuWideFactorCompute(void)
 {
     const auto &video = mp5native::getSettings().video;
     if (video.lockAspectRatio.getValue()) {

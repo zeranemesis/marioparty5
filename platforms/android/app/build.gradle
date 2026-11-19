@@ -9,6 +9,9 @@ def syncMp5NativeAssets = tasks.register('syncMp5NativeAssets', Sync) {
         into 'res'
         exclude '**/.DS_Store'
     }
+    // the pipeline list every shader is built from at boot (Aurora opens ./initial_pipeline_cache.db): without it
+    // each new effect compiled its pipeline the first time it was drawn, a hitch
+    from(new File(mp5nativeRepoDir, 'dist/initial_pipeline_cache.db'))
     into mp5nativeGeneratedAssetsDir
 }
 
