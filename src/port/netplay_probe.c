@@ -60,13 +60,9 @@ int Mp5Net_ProbeRecordSize(void)
 #include <stdio.h>
 #include <string.h>
 
-void Mp5Net_ProbeHookName(int index, char *buf, int size)
+void Mp5Net_AddrName(const void *fn, char *buf, int size)
 {
-    const void *fn = (const void *)Hu3DData[index].hookFunc;
     buf[0] = 0;
-    if (!(Hu3DData[index].attr & HU3D_ATTR_HOOKFUNC) || fn == NULL) {
-        return;
-    }
 #ifdef _WIN32
     {
         HMODULE mod = NULL;
@@ -89,4 +85,12 @@ void Mp5Net_ProbeHookName(int index, char *buf, int size)
         }
     }
 #endif
+}
+
+void Mp5Net_ProbeHookName(int index, char *buf, int size)
+{
+    buf[0] = 0;
+    if ((Hu3DData[index].attr & HU3D_ATTR_HOOKFUNC) && Hu3DData[index].hookFunc != NULL) {
+        Mp5Net_AddrName((const void *)Hu3DData[index].hookFunc, buf, size);
+    }
 }

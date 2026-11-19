@@ -1574,7 +1574,14 @@ static void CapsuleUseExec(void)
         color.g = (intensity*63)+192;
         color.b = (intensity*63)+192;
         color.a = (MBCapsuleEffRandF()*63)+192;
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            GlowEffAdd(coinDispPos, effectVel, ((rng0*0.1f)+0.3f)*100, (rng1+1.0f)*0.016666668f, 0, 0, color);
+        }
+#else
         GlowEffAdd(coinDispPos, effectVel, ((MBCapsuleEffRandF()*0.1f)+0.3f)*100, (MBCapsuleEffRandF()+1.0f)*0.016666668f, 0, 0, color);
+#endif
     }
     for(i=0; i<30.0f; i++) {
         intensity = i/30.0f;
@@ -1873,7 +1880,14 @@ static void CapsuleThrowProcExec(void)
         vel.x = vel.y = vel.z = 0;
         color = colTbl[MBCapsuleColorNoGet(work->capsuleNo)];
         color.a = (MBCapsuleEffRandF()*63)+192;
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            GlowEffAdd(pos, vel, ((rng0*0.025f)+0.1f)*100, (rng1+1)*0.016666668f, 0, 0.025f, color);
+        }
+#else
         GlowEffAdd(pos, vel, ((MBCapsuleEffRandF()*0.025f)+0.1f)*100, (MBCapsuleEffRandF()+1)*0.016666668f, 0, 0.025f, color);
+#endif
         HuPrcVSleep();
     } while(work->time < work->maxTime);
     if(seNo != MSM_SENO_NONE) {
@@ -2579,7 +2593,14 @@ static void CapsuleThrowAutoExec(void)
         glowVel.x = glowVel.y = glowVel.z = 0;
         color = colTbl[MBCapsuleColorNoGet(work->capsuleNo)];
         color.a = (MBCapsuleEffRandF()*63)+192;
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            GlowEffAdd(glowPos, glowVel, ((rng0*0.025f)+0.1f)*100, (rng1+1)*0.016666668f, 0, 0.025f, color);
+        }
+#else
         GlowEffAdd(glowPos, glowVel, ((MBCapsuleEffRandF()*0.025f)+0.1f)*100, (MBCapsuleEffRandF()+1)*0.016666668f, 0, 0.025f, color);
+#endif
         HuPrcVSleep();
     } while(work->time < work->maxTime);
     if(seNo != MSM_SENO_NONE){
@@ -4952,7 +4973,14 @@ static void ExplodeEffAddAll(HuVecF pos)
         effColor.g = 192+(32*dist);
         effColor.b = 192+(32*dist);
         effColor.a = (MBCapsuleEffRandF()*63)+192;
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            ExplodeEffAdd(effPos, effVel, ((rng0*0.5f)+1)*100, 0.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, effColor);
+        }
+#else
         ExplodeEffAdd(effPos, effVel, ((MBCapsuleEffRandF()*0.5f)+1)*100, 0.5f, ((MBCapsuleEffRandF()*0.5f)+0.5f)*100, (MBCapsuleEffRandF()*0.66f)+0.33f, effColor);
+#endif
     }
 }
 
@@ -5536,7 +5564,14 @@ static void DomeEffExec(OMOBJ *obj)
     }
     effDataP = effP->data;
     if(effP->mode >= 2 && effP->mode <= 4 && effP->segNum < 16) {
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            RayEffAdd(effP->segNum*22, (rng0*20)+30, ((rng1*0.25f)+0.3f)*300, 50);
+        }
+#else
         RayEffAdd(effP->segNum*22, (MBCapsuleEffRandF()*20)+30, ((MBCapsuleEffRandF()*0.25f)+0.3f)*300, 50);
+#endif
         RayEffMdlUpdate(obj->trans.x, obj->trans.y, obj->trans.z);
         effP->segNum++;
     }

@@ -1513,10 +1513,17 @@ static void MB3Ev_KubiBone(MASU *masuP, s32 idx) {
         MTXConcat(wobbleMtx, coneMtx, coneMtx);
         Hu3DMtxRotGet(coneMtx, &rot);
         MBModelDispSet(d->modelId, TRUE);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBEffSRandF(); float rng1 = MBEffRandF(); float rng2 = MBEffSRandF();
+            MBModelPosSet(d->modelId, basePos.x + (30.0f * rng0), basePos.y - (30.0f * rng1), basePos.z + (30.0f * rng2));
+        }
+#else
         MBModelPosSet(d->modelId,
             basePos.x + (30.0f * MBEffSRandF()),
             basePos.y - (30.0f * MBEffRandF()),
             basePos.z + (30.0f * MBEffSRandF()));
+#endif
         MBModelRotSetV(d->modelId, &rot);
         MBMotionTimeSet(d->modelId, 6.0f * MBEffRandF());
         d->seId1 = -1;

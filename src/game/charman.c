@@ -3351,7 +3351,14 @@ void CharEffectCryCreate(s16 cameraBit, HuVecF *pos, HuVecF *offset, float scale
     randX = frandmod(180)-90;
     randZ = frandmod(180)-90;
     VECNormalize(offset, &dir);
+#ifdef TARGET_PC
+    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+        u32 rng0 = frandmod(90); u32 rng1 = frandmod(90);
+        mtxRot(rotMtx, rng0-45, rng1-45, 0);
+    }
+#else
     mtxRot(rotMtx, frandmod(90)-45, frandmod(90)-45, 0);
+#endif
     MTXMultVec(rotMtx, &dir, &dir);
     VECNormalize(&dir, &dir);
     cryEffParam.vel.x = 15*dir.x;

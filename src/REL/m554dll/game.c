@@ -781,18 +781,53 @@ void fn_1_5A5C(void)
 s32 fn_1_5AB0(void)
 {
     if (lbl_1_bss_B1C.round <= 0xf) {
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            return rng0 % 5 * 8 + 0x28 + rng1 % 10;
+        }
+#else
         return rand8() % 5 * 8 + 0x28 + rand8() % 10;
+#endif
     }
     if (lbl_1_bss_B1C.round <= 0x14) {
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            return rng0 % 5 * 7 + 0x23 + rng1 % 9;
+        }
+#else
         return rand8() % 5 * 7 + 0x23 + rand8() % 9;
+#endif
     }
     if (lbl_1_bss_B1C.round <= 0x19) {
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            return rng0 % 5 * 6 + 0x1e + rng1 % 8;
+        }
+#else
         return rand8() % 5 * 6 + 0x1e + rand8() % 8;
+#endif
     }
     if (lbl_1_bss_B1C.round <= 0x1e) {
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            return rng0 % 5 * 5 + 0x19 + rng1 % 7;
+        }
+#else
         return rand8() % 5 * 5 + 0x19 + rand8() % 7;
+#endif
     }
+#ifdef TARGET_PC
+    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+        int rng0 = rand8(); int rng1 = rand8();
+        return rng0 % 5 * 4 + 0x14 + rng1 % 6;
+    }
+#else
     return rand8() % 5 * 4 + 0x14 + rand8() % 6;
+#endif
 }
 
 void fn_1_5CCC(s32 arg0)

@@ -44,6 +44,8 @@ OSTick Mp5Net_OSGetTick(void);
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cstdarg>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -89,10 +91,14 @@ u32* Mp5Test_FrandSeed(void);
 int Mp5Net_ProbeModels(void* out, int max); // netplay_probe.c
 int Mp5Net_ProbeRecordSize(void);
 void Mp5Net_ProbeHookName(int index, char* buf, int size);
+void Mp5Net_AddrName(const void* fn, char* buf, int size);
+void* HuMemHeapGet(int heap, u32* size); // malloc.c
 extern s32 rnd_seed;
 extern int omcurovl; // object.c (OMOVL); game/object.h is not C++-clean
 void CARDSetBasePath(const char* path, s32 chan);
 }
+
+extern void* MEM1End; // aurora/lib/dolphin/os (C++); MEM1 starts at OSBaseAddress (dolphin/os.h)
 
 namespace {
 
@@ -994,6 +1000,34 @@ extern "C" OSTick Mp5Net_OSGetTick(void) { return (OSTick)Mp5Net_OSGetTime(); }
 
 extern "C" int Mp5Net_Active(void) { return sActive; }
 
+// test bench: MP5_NET_TRACEMDL=<model> [MP5_NET_TRACEFROM=<frame>] logs every attribute change of that model with
+// its caller (module+offset, symbolize per platform): which code shows or hides it differently on two machines
+extern "C" int Mp5Net_TraceOn(int modelId) {
+    static const int model = envInt("MP5_NET_TRACEMDL", -1);
+    static const int from = envInt("MP5_NET_TRACEFROM", 0);
+    return sActive && modelId == model && sFrame >= (u32)from;
+}
+
+extern "C" void Mp5Net_TraceLog(const char* fmt, ...) {
+    char line[256];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(line, sizeof(line), fmt, args);
+    va_end(args);
+    note(false, "{}", line);
+}
+
+extern "C" void Mp5Net_TraceAttr(int modelId, u32 attr, int set, const void* caller) {
+    static const int model = envInt("MP5_NET_TRACEMDL", -1);
+    static const int from = envInt("MP5_NET_TRACEFROM", 0);
+    if (!sActive || modelId != model || sFrame < (u32)from) {
+        return;
+    }
+    char name[256];
+    Mp5Net_AddrName(caller, name, sizeof(name));
+    note(false, "model {} attr {} {:#x} by {}", modelId, set ? "set" : "reset", attr, name);
+}
+
 extern "C" int Mp5Net_SessionAspect(u32* width, u32* height) {
     if (!sActive || sAspectW == 0) {
         return 0;
@@ -1026,6 +1060,22 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
         }
     }
 
+    // test bench: MP5_NET_DUMPAT=<frame> writes the whole of MEM1 at that frame on every machine (a session with
+    // MP5_TEST_SEED replays identically): compared with tools/netplay_memdiff.py, it shows which data part first
+    if (static const int dumpAt = envInt("MP5_NET_DUMPAT", -1); dumpAt >= 0 && frame == (u32)dumpAt) {
+        const char* lo = (const char*)OSBaseAddress;
+        const auto path = Mp5Native_ConfigPath / fmt::format("netplay_mem1_{}_{}_{:x}.bin", frame, sHost ? "host" : "client", (uintptr_t)lo);
+        std::ofstream(path, std::ios::binary).write(lo, (const char*)MEM1End - lo);
+        // the game's heaps (HuMem) are host allocations on PC, not part of MEM1
+        for (int heap = 0; heap < 5; heap++) {
+            u32 size = 0;
+            const char* base = (const char*)HuMemHeapGet(heap, &size);
+            const auto hp = Mp5Native_ConfigPath /
+                            fmt::format("netplay_heap{}_{}_{}_{:x}.bin", heap, frame, sHost ? "host" : "client", (uintptr_t)base);
+            std::ofstream(hp, std::ios::binary).write(base, size);
+        }
+        note(false, "MEM1 and heaps of frame {} written to {}", frame, Mp5Native_ConfigPath.string());
+    }
     if (frame % (sDeep ? 1 : kHashEvery) == 0) {
         auto state = captureState();
         const u32 crc = crc32(state);

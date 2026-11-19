@@ -110,8 +110,22 @@ void fn_1_2AD0(void)
         lbl_1_bss_1954.mode = 0;
         MgSeqModeNext();
         fn_1_3178();
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            lbl_1_bss_1954.wait[0] = (rng0 % 3) * 30 + (rng1 % 60) + 60;
+        }
+#else
         lbl_1_bss_1954.wait[0] = (rand8() % 3) * 30 + (rand8() % 60) + 60;
+#endif
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            lbl_1_bss_1954.wait[1] = (rng0 % 3) * 30 + (rng1 % 60) + 60;
+        }
+#else
         lbl_1_bss_1954.wait[1] = (rand8() % 3) * 30 + (rand8() % 60) + 60;
+#endif
     }
 }
 

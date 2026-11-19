@@ -2696,8 +2696,15 @@ void MB2Ev_Zen2(s32 arg0) {
         Point3d pos;
         pos = mb2ev_Zen2CoinBasePos;
         pos.y += 100.0f;
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            u32 rng0 = frand(); u32 rng1 = frand();
+            MB2_CoinEffCreateColRand(&pos.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (rng1 & 0x7F)))), 150.0f, 100.0f, 0.0f);
+        }
+#else
         MB2_CoinEffCreateColRand(&pos.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
             0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+#endif
     }
 
     MBMasuPlayerLightSet(arg0, 0);
@@ -2707,8 +2714,15 @@ void MB2Ev_Zen2(s32 arg0) {
     do {
         if ((frand() & 1) == 0) {
             Point3d pos = mb2ev_Zen2CoinBasePos;
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                u32 rng0 = frand(); u32 rng1 = frand();
+                MB2_CoinEffCreateColRand(&pos.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (rng1 & 0x7F)))), 150.0f, 50.0f, 0.0f);
+            }
+#else
             MB2_CoinEffCreateColRand(&pos.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
                 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 50.0f, 0.0f);
+#endif
         }
         for (j = 0; j < 6; j++) {
             void *vtxTop;
@@ -2719,8 +2733,15 @@ void MB2Ev_Zen2(s32 arg0) {
                 p.x = *(f32 *) (v + 0);
                 p.y = *(f32 *) (v + 4);
                 p.z = *(f32 *) (v + 8);
+#ifdef TARGET_PC
+                { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                    u32 rng0 = frand(); u32 rng1 = frand();
+                    MB2_CoinEffCreateColRand(&p.x, 2, 100.0f * (0.1f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (rng1 & 0x7F)))), 150.0f, 50.0f, 0.0f);
+                }
+#else
                 MB2_CoinEffCreateColRand(&p.x, 2, 100.0f * (0.1f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
                     0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 50.0f, 0.0f);
+#endif
             }
         }
         HuPrcVSleep();
@@ -2900,8 +2921,15 @@ void MB2Ev_Zen2(s32 arg0) {
                 rotv.z = 0.0f;
                 MBPlayerPosSetV(arg0, &p);
                 MBPlayerRotSetV(arg0, &rotv);
+#ifdef TARGET_PC
+                { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                    u32 rng0 = frand(); u32 rng1 = frand();
+                    MB2_CoinEffCreateColRand(&p.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (rng1 & 0x7F)))), 150.0f, 100.0f, 0.0f);
+                }
+#else
                 MB2_CoinEffCreateColRand(&p.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
                     0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+#endif
                 HuPrcVSleep();
             }
         } while (dist2 < totalLen);
@@ -4605,9 +4633,16 @@ void MB2_CoinUpdate(OMOBJ *obj) {
                 col[1] = (u8) (192.0f + (63.0f * t));
                 col[2] = (u8) (64.0f + (63.0f * t));
                 col[3] = (u8) (192.0f + (63.0f * (0.007874016f * (f32) (frand() & 0x7F))));
+#ifdef TARGET_PC
+                { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                    u32 rng0 = frand(); u32 rng1 = frand();
+                    MB2_CoinEffCreate(&pos.x, &vel.x, col, 100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (rng1 & 0x7F)))), 0.0f);
+                }
+#else
                 MB2_CoinEffCreate(&pos.x, &vel.x, col,
                     100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
                     0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
+#endif
             }
             return;
         }

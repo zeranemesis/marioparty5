@@ -1791,12 +1791,19 @@ void MBCapsuleKinokoExec(void)
         color.g = 192+(power*63);
         color.b = 192+(power*63);
         color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(0, effectPos, vel, ((rng0*0.5f)+1.0f)*100, 2.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(0, effectPos, vel,
             ((MBCapsuleEffRandF()*0.5f)+1.0f)*100,
             2.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
     for(i=0; i<30.0f; i++) {
         t = i/30.0f;
@@ -1909,12 +1916,19 @@ void MBCapsuleSKinokoExec(void)
         color.g = 192+(power*63);
         color.b = 192+(power*63);
         color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(0, effectPos, vel, ((rng0*0.5f)+1.0f)*100, 2.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(0, effectPos, vel,
             ((MBCapsuleEffRandF()*0.5f)+1.0f)*100,
             2.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
     for(i=0; i<30.0f; i++) {
         t = i/30.0f;
@@ -2028,12 +2042,19 @@ void MBCapsuleNKinokoExec(void)
         color.g = 64+(power*32);
         color.b = 127+(power*32);
         color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(0, effectPos, vel, ((rng0*0.5f)+1.0f)*100, 2.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(0, effectPos, vel,
             ((MBCapsuleEffRandF()*0.5f)+1.0f)*100,
             2.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
     for(i=0; i<30.0f; i++) {
         t = i/30.0f;
@@ -2724,7 +2745,14 @@ void MBCapsuleBobleExec(void)
             color.g = 32+(power*32);
             color.b = 32+(power*32);
             color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                MBCapsuleExplodeEffAdd(0, effPos, effVel, ((rng0*0.5f)+1)*100, 2.5f, (rng1*0.66f)+0.33f, color);
+            }
+#else
             MBCapsuleExplodeEffAdd(0, effPos, effVel, ((MBCapsuleEffRandF()*0.5f)+1)*100, 2.5f, (MBCapsuleEffRandF()*0.66f)+0.33f, color);
+#endif
             HuPrcVSleep();
         }
         if(bounceHeight > 0) {
@@ -2787,7 +2815,14 @@ void MBCapsuleBobleExec(void)
             color.g = 32+(power*32);
             color.b = 32+(power*32);
             color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                MBCapsuleExplodeEffAdd(0, effPos, effVel, ((rng0*0.5f)+1)*100, 2.5f, (rng1*0.66f)+0.33f, color);
+            }
+#else
             MBCapsuleExplodeEffAdd(0, effPos, effVel, ((MBCapsuleEffRandF()*0.5f)+1)*100, 2.5f, (MBCapsuleEffRandF()*0.66f)+0.33f, color);
+#endif
             HuPrcVSleep();
         }
     }
@@ -3060,12 +3095,19 @@ void MBCapsuleHanachanExec(void)
             effColor.g = 192+(power*63);
             effColor.b = 192+(power*63);
             effColor.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+                MBCapsuleExplodeEffLineAdd(0, tempVec, explodeVel, ((rng0*0.5f)+1.0f)*100, 2.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, effColor);
+            }
+#else
             MBCapsuleExplodeEffLineAdd(0, tempVec, explodeVel, 
                 ((MBCapsuleEffRandF()*0.5f)+1.0f)*100,
                 2.5f,
                 ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
                 (MBCapsuleEffRandF()*0.66f)+0.33f,
                 effColor);
+#endif
         }
         MBModelDispSet(mdlId, FALSE);
         while(1){
@@ -3124,7 +3166,14 @@ void MBCapsuleHanachanExec(void)
         ringScaleVel.y = (MBCapsuleEffRandF()*0.5)+1.5;
         ringScaleVel.z = (MBCapsuleEffRandF()*0.5)+2;
         effColor = kinokoGlowColorTbl[MBCapsuleEffRand(7)];
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            MBCapsuleHanachanRingAdd(&tempVec, &ringScaleVel, ((rng0*0.2f)+0.3f)*60, -1, ((rng1*0.2f)+0.3f)*60, effColor);
+        }
+#else
         MBCapsuleHanachanRingAdd(&tempVec, &ringScaleVel, ((MBCapsuleEffRandF()*0.2f)+0.3f)*60, -1, ((MBCapsuleEffRandF()*0.2f)+0.3f)*60, effColor);
+#endif
         HuPrcVSleep();
     }
     for(i=0; i<30.0f; i++) {
@@ -3170,12 +3219,19 @@ void MBCapsuleHanachanExec(void)
         glowVel.z = 0;
         t = MBCapsuleEffRandF();
         effColor = kinokoGlowColorTbl[MBCapsuleEffRand(7)];
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            MBCapsuleGlowEffAdd(tempVec, glowVel, ((rng0*0.1f)+0.3f)*100, (rng1+1)*0.016666668f, 0, 0, effColor);
+        }
+#else
         MBCapsuleGlowEffAdd(tempVec, glowVel, 
             ((MBCapsuleEffRandF()*0.1f)+0.3f)*100,
             (MBCapsuleEffRandF()+1)*0.016666668f,
             0,
             0,
             effColor);
+#endif
     }
     if(seNo2 != MSM_SENO_NONE) {
         HuAudFXStop(seNo2);
@@ -3699,7 +3755,14 @@ void MBCapsuleCoinBlockExec(void)
         color.g = 192+(63*power);
         color.b = 192+(63*power);
         color.a = 192+(63*MBCapsuleEffRandF());
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+            MBCapsuleGlowEffAdd(effPos, glowVel, ((rng0*0.1f)+0.3f)*100, (rng1+1.0f)*0.016666668f, 0, 0, color);
+        }
+#else
         MBCapsuleGlowEffAdd(effPos, glowVel, ((MBCapsuleEffRandF()*0.1f)+0.3f)*100, (MBCapsuleEffRandF()+1.0f)*0.016666668f, 0, 0, color);
+#endif
     }
     if(!capsuleFlags.saiHiddenF) {
         MBWinCreate(MBWIN_TYPE_TALKEVENT, MESS_CAPSULE_EX02_COIN_BLOCK_START, HUWIN_SPEAKER_NONE);
@@ -4323,12 +4386,19 @@ static void CapsuleKillerMain(void)
         color.g = 32+(power*32);
         color.b = 32+(power*32);
         color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(capsulePlayer, effPos, effVel, ((rng0*0.5f)+1.0f)*100, 2.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(capsulePlayer, effPos, effVel, 
             ((MBCapsuleEffRandF()*0.5f)+1.0f)*100,
             2.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
     for(i=0; i<30.0f; i++) {
         t = i/30.0f;
@@ -4682,12 +4752,19 @@ void MBCapsuleKillerMoveExec(int playerNo, BOOL flag)
             color.g = (32+(t*32));
             color.b = (32+(t*32));
             color.a = (192+(MBCapsuleEffRandF()*63));
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+                MBCapsuleExplodeEffLineAdd(playerNo, dir, vel, ((rng0*0.5f)+1.0f)*100, 2.5f, ((rng1*0.25f)+0.25f)*100, (rng2*0.66f)+0.33f, color);
+            }
+#else
             MBCapsuleExplodeEffLineAdd(playerNo, dir, vel, 
                 ((MBCapsuleEffRandF()*0.5f)+1.0f)*100,
                 2.5f,
                 ((MBCapsuleEffRandF()*0.25f)+0.25f)*100,
                 (MBCapsuleEffRandF()*0.66f)+0.33f,
                 color);
+#endif
             MBCapsuleEffHookCall(5, mdlId, FALSE, FALSE, FALSE);
             VECSubtract(&masuPosNext, &mdlPos, &dir);
             prevPos = mdlPos;
@@ -5836,12 +5913,19 @@ static void KamekkuObjExec(OMOBJ *obj)
             vel.z = 0;
             t = MBCapsuleEffRandF();
             color = kinokoGlowColorTbl[MBCapsuleEffRand(7)];
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                MBCapsuleGlowEffAdd(pos, vel, ((rng0*0.1f)+0.3f)*100, (rng1+1.0f)*0.016666668f, 0, 0, color);
+            }
+#else
             MBCapsuleGlowEffAdd(pos, vel, 
                 ((MBCapsuleEffRandF()*0.1f)+0.3f)*100,
                 (MBCapsuleEffRandF()+1.0f)*0.016666668f,
                 0,
                 0,
                 color);
+#endif
         }
         work->effectF = TRUE;
         work->mode = 4;
@@ -6133,11 +6217,18 @@ void MBCapsulePakkunExec(void)
             color.g = 192+(t*63);
             color.b = 192+(t*63);
             color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                MBCapsuleExplodeEffAdd(0, tempVec, effVel, (rng0+2)*100, 0, (rng1*0.2f)+0.33f, color);
+            }
+#else
             MBCapsuleExplodeEffAdd(0, tempVec, effVel,
                 (MBCapsuleEffRandF()+2)*100,
                 0,
                 (MBCapsuleEffRandF()*0.2f)+0.33f,
                 color);
+#endif
         }
         HuPrcVSleep();
     }
@@ -6186,11 +6277,18 @@ void MBCapsulePakkunExec(void)
             color.g = 192+(t*63);
             color.b = 192+(t*63);
             color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+            { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                MBCapsuleExplodeEffAdd(0, tempVec, effVel, (rng0+2)*100, 0, (rng1*0.2f)+0.33f, color);
+            }
+#else
             MBCapsuleExplodeEffAdd(0, tempVec, effVel,
                 (MBCapsuleEffRandF()+2)*100,
                 0,
                 (MBCapsuleEffRandF()*0.2f)+0.33f,
                 color);
+#endif
         }
         HuPrcVSleep();
     }
@@ -11316,12 +11414,19 @@ static void KoopaMasuExec(int mdlId, BOOL partyF)
                     color.g = 255;
                     color.b = 0;
                     color.a = 255;
+#ifdef TARGET_PC
+                    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                        float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                        MBCapsuleGlowEffAdd(otherMdlPos, vel, ((rng0*0.3f)+0.3f)*100, (rng1+1.0f)*0.016666668f, 0, 0, color);
+                    }
+#else
                     MBCapsuleGlowEffAdd(otherMdlPos, vel, 
                         ((MBCapsuleEffRandF()*0.3f)+0.3f)*100,
                         (MBCapsuleEffRandF()+1.0f)*0.016666668f,
                         0,
                         0,
                         color);
+#endif
                 }
                 i = MBCapsuleModelCreate(CAPSULE_HSF_dkeff, NULL, FALSE, 0, FALSE);
                 MBModelPosSetV(i, &otherMdlPos);
@@ -15273,12 +15378,19 @@ void MBCapsuleExplodeEffCircleAdd(int no, HuVecF pos, float radius, float scale,
     color.g = 64+(intensity*32);
     color.b = 64+(intensity*32);
     color.a = 64+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+        float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+        MBCapsuleExplodeEffLineAdd(no, effPos, effVel, ((rng0*0.5f)+1)*100, 2.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.2f)+0.33f, color);
+    }
+#else
     MBCapsuleExplodeEffLineAdd(no, effPos, effVel,
         ((MBCapsuleEffRandF()*0.5f)+1)*100,
         2.5f,
         ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
         (MBCapsuleEffRandF()*0.2f)+0.33f,
         color);
+#endif
 }
 
 void MBCapsuleDustCloudAdd(int no, HuVecF pos)
@@ -15306,12 +15418,19 @@ void MBCapsuleDustCloudAdd(int no, HuVecF pos)
         color.g = 32+(t*32);
         color.b = 32+(t*32);
         color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(no, effPos, effVel, ((rng0*0.5f)+1)*100, 0.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(no, effPos, effVel,
             ((MBCapsuleEffRandF()*0.5f)+1)*100,
             0.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
 }
 
@@ -15340,12 +15459,19 @@ void MBCapsuleDustExplodeAdd(int no, HuVecF pos)
         color.g = 192+(t*32);
         color.b = 192+(t*32);
         color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(no, effPos, effVel, ((rng0*0.5f)+1)*100, 0.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(no, effPos, effVel,
             ((MBCapsuleEffRandF()*0.5f)+1)*100,
             0.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
 }
 
@@ -15374,12 +15500,19 @@ void MBCapsuleDustHeavyAdd(int no, HuVecF pos)
         color.g = 192+(t*63);
         color.b = 192+(t*63);
         color.a = 64+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF(); float rng2 = MBCapsuleEffRandF();
+            MBCapsuleExplodeEffLineAdd(no, effPos, effVel, ((rng0*0.5f)+1)*100, 0.5f, ((rng1*0.5f)+0.5f)*100, (rng2*0.66f)+0.33f, color);
+        }
+#else
         MBCapsuleExplodeEffLineAdd(no, effPos, effVel,
             ((MBCapsuleEffRandF()*0.5f)+1)*100,
             0.5f,
             ((MBCapsuleEffRandF()*0.5f)+0.5f)*100,
             (MBCapsuleEffRandF()*0.66f)+0.33f,
             color);
+#endif
     }
     MBCameraQuakeSet(30, 50);
 }
@@ -16774,12 +16907,19 @@ void MBCapsuleCoinEffExec(OMOBJ *obj)
                         color.g = 192+(63*power);
                         color.b = 64+(63*power);
                         color.a = 192+(63*MBCapsuleEffRandF());
+#ifdef TARGET_PC
+                        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                            MBCapsuleGlowEffAdd(pos, vel, ((rng0*0.1f)+0.3f)*100, ((rng1*0.5f)+1.0f)*0.016666668f, 0, 0, color);
+                        }
+#else
                         MBCapsuleGlowEffAdd(pos, vel,
                             ((MBCapsuleEffRandF()*0.1f)+0.3f)*100,
                             ((MBCapsuleEffRandF()*0.5f)+1.0f)*0.016666668f,
                             0,
                             0,
                             color);
+#endif
                     }
                     break;
                 
@@ -16797,12 +16937,19 @@ void MBCapsuleCoinEffExec(OMOBJ *obj)
                         color.g = 192+(63*power);
                         color.b = 64+(63*power);
                         color.a = 192+(63*MBCapsuleEffRandF());
+#ifdef TARGET_PC
+                        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                            MBCapsuleGlowEffAdd(pos, vel, ((rng0*0.1f)+0.3f)*100, ((rng1*0.5f)+1.0f)*0.016666668f, 0, 0, color);
+                        }
+#else
                         MBCapsuleGlowEffAdd(pos, vel,
                             ((MBCapsuleEffRandF()*0.1f)+0.3f)*100,
                             ((MBCapsuleEffRandF()*0.5f)+1.0f)*0.016666668f,
                             0,
                             0,
                             color);
+#endif
                     }
                     break;
                 
@@ -17072,7 +17219,14 @@ int MBCapsuleCoinTradeAdd(BOOL downF, int playerNo, int coinNum)
         posEnd.z = 1000;
         posEnd.x += (0.5f-MBCapsuleEffRandF())*25;
     }
+#ifdef TARGET_PC
+    /* netplay: C leaves the argument order open, MSVC and clang differ: draw left to right */
+    float tradeRng0 = MBCapsuleEffRandF();
+    float tradeRng1 = MBCapsuleEffRandF();
+    if(AddCoinTrade(playerNo, coinNum, -75+((tradeRng0*0.35f)+1), 30*((tradeRng1*0.3f)+1), &posStart, &posEnd) != -1) {
+#else
     if(AddCoinTrade(playerNo, coinNum, -75+((MBCapsuleEffRandF()*0.35f)+1), 30*((MBCapsuleEffRandF()*0.3f)+1), &posStart, &posEnd) != -1) {
+#endif
         return coinNum;
     } else {
         return 0;
@@ -17239,7 +17393,14 @@ int MBCapsuleStarTradeAdd(BOOL downF, int playerNo, int starNum)
         posEnd.z = 1000;
         posEnd.x += (0.5f-MBCapsuleEffRandF())*25;
     }
+#ifdef TARGET_PC
+    /* netplay: C leaves the argument order open, MSVC and clang differ: draw left to right */
+    float tradeRng0 = MBCapsuleEffRandF();
+    float tradeRng1 = MBCapsuleEffRandF();
+    if(AddStarTrade(playerNo, starNum, -75+((tradeRng0*0.35f)+1), 30*((tradeRng1*0.3f)+1), &posStart, &posEnd) != -1) {
+#else
     if(AddStarTrade(playerNo, starNum, -75+((MBCapsuleEffRandF()*0.35f)+1), 30*((MBCapsuleEffRandF()*0.3f)+1), &posStart, &posEnd) != -1) {
+#endif
         return starNum;
     } else {
         return 0;
@@ -17701,11 +17862,18 @@ void MBCapsuleSaiHiddenExec(OMOBJ *obj)
                         effVel.z = 0;
                         t = MBCapsuleEffRandF();
                         color = kinokoGlowColorTbl[MBCapsuleEffRand(7)];
+#ifdef TARGET_PC
+                        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                            float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                            MBCapsuleGlowEffAdd(effPos, effVel, ((rng0*0.1f)+0.3f)*100, (rng1+1)*0.016666668f, 0, 0, color);
+                        }
+#else
                         MBCapsuleGlowEffAdd(effPos, effVel, ((MBCapsuleEffRandF()*0.1f)+0.3f)*100,
                             (MBCapsuleEffRandF()+1)*0.016666668f,
                             0,
                             0,
                             color);
+#endif
                     }
                 }
             }

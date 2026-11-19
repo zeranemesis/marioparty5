@@ -113,7 +113,14 @@ void SafAnimMain(void) {
         } else {
             ballMdlId[i] = Hu3DModelLink(ballMdlId[0]);
         }
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            u32 rng0 = frandmod(400); u32 rng1 = frandmod(100); u32 rng2 = frandmod(400);
+            Hu3DModelPosSet(ballMdlId[i], (f32) (rng0 - 200), (f32) (rng1 + 200), (f32) (rng2 - 200));
+        }
+#else
         Hu3DModelPosSet(ballMdlId[i], (f32) (frandmod(400) - 200), (f32) (frandmod(100) + 200), (f32) (frandmod(400) - 200));
+#endif
         Hu3DModelScaleSet(ballMdlId[i], 0.2f, 0.2f, 0.2f);
         Hu3DModelMatHookSet(ballMdlId[i], SafBallMatHook);
         Hu3DModelLayerSet(ballMdlId[i], 2);

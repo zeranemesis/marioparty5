@@ -2256,11 +2256,18 @@ void MB1_TrainCoinUpdate(OMOBJ *obj)
                     color.g = 192+(intensity*63);
                     color.b = 64+(intensity*63);
                     color.a = 192+(MBCapsuleEffRandF()*63);
+#ifdef TARGET_PC
+                    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                        float rng0 = MBCapsuleEffRandF(); float rng1 = MBCapsuleEffRandF();
+                        MB1_CoinEffCreate(effectPos, effectVel, ((rng0*0.1f)+0.5f)*100, (rng1+1.0f)*(1.0f/60.0f), 0, color);
+                    }
+#else
                     MB1_CoinEffCreate(effectPos, effectVel,
                         ((MBCapsuleEffRandF()*0.1f)+0.5f)*100,
                         (MBCapsuleEffRandF()+1.0f)*(1.0f/60.0f),
                         0,
                         color);
+#endif
                 }
                 break;
             }

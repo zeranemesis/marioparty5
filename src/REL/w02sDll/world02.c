@@ -716,7 +716,14 @@ s32 MB2Ev_Rainbow(s32 arg0, s32 arg1) {
                     MBPlayerRotSet(arg1, 0.0f, sp2C.y, 0.0f);
                     MBPlayerPosGet(arg1, &sp38);
                     sp20 = sp38;
+#ifdef TARGET_PC
+                    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                        u32 rng0 = frand(); u32 rng1 = frand();
+                        MB2_CoinEffCreateColRand(&sp20.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (rng1 & 0x7F)))), 150.0f, 100.0f, 0.0f);
+                    }
+#else
                     MB2_CoinEffCreateColRand(&sp20.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+#endif
                     HuPrcVSleep();
                 }
                 MBPlayerPosSetV(arg1, &sp44);
@@ -758,7 +765,14 @@ s32 MB2Ev_Rainbow(s32 arg0, s32 arg1) {
                     MBPlayerRotSet(arg1, 0.0f, sp2C.y, 0.0f);
                     MBPlayerPosGet(arg1, &sp38);
                     sp20 = sp38;
+#ifdef TARGET_PC
+                    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                        u32 rng0 = frand(); u32 rng1 = frand();
+                        MB2_CoinEffCreateColRand(&sp20.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (rng1 & 0x7F)))), 150.0f, 100.0f, 0.0f);
+                    }
+#else
                     MB2_CoinEffCreateColRand(&sp20.x, 2, 100.0f * (0.2f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.016666668f * (0.5f + (0.3f * (0.007874016f * (f32) (frand() & 0x7F)))), 150.0f, 100.0f, 0.0f);
+#endif
                     HuPrcVSleep();
                 }
                 MBPlayerPosSetV(arg1, &sp44);
@@ -1582,9 +1596,16 @@ void MB2_CoinExec(OMOBJ *obj) {
                     col2 = col;
                     vel2 = vel;
                     pos2 = pos;
+#ifdef TARGET_PC
+                    { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+                        u32 rng0 = frand(); u32 rng1 = frand();
+                        MB2_CoinEffCreate(&pos2.x, &vel2.x, col2.c, 100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (rng0 & 0x7F)))), 0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (rng1 & 0x7F)))), 0.0f);
+                    }
+#else
                     MB2_CoinEffCreate(&pos2.x, &vel2.x, col2.c,
                         100.0f * (0.3f + (0.1f * (0.007874016f * (f32) (frand() & 0x7F)))),
                         0.016666668f * (1.0f + (0.5f * (0.007874016f * (f32) (frand() & 0x7F)))), 0.0f);
+#endif
                 }
                 return;
             }

@@ -913,9 +913,23 @@ void Hu3DModelScaleSetV(HU3DMODELID modelId, HuVecF *scale)
     modelP->scale = *scale;
 }
 
+#ifdef TARGET_PC
+/* netplay diagnostics (MP5_NET_TRACEMDL, netplay.cpp): who changes a model's attributes */
+void Mp5Net_TraceAttr(int modelId, u32 attr, int set, const void *caller);
+#ifdef _MSC_VER
+#include <intrin.h>
+#define HU3D_CALLER() _ReturnAddress()
+#else
+#define HU3D_CALLER() __builtin_return_address(0)
+#endif
+#endif
+
 void Hu3DModelAttrSet(HU3DMODELID modelId, u32 attr)
 {
     HU3DMODEL *modelP = &Hu3DData[modelId];
+#ifdef TARGET_PC
+    Mp5Net_TraceAttr(modelId, attr, 1, HU3D_CALLER());
+#endif
     if(attr & HU3D_MOTATTR) {
         modelP->motAttr |= attr & ~HU3D_MOTATTR;
         modelP->attr |= HU3D_ATTR_MOTION_MODEL;
@@ -927,6 +941,9 @@ void Hu3DModelAttrSet(HU3DMODELID modelId, u32 attr)
 void Hu3DModelAttrReset(HU3DMODELID modelId, u32 attr)
 {
     HU3DMODEL *modelP = &Hu3DData[modelId];
+#ifdef TARGET_PC
+    Mp5Net_TraceAttr(modelId, attr, 0, HU3D_CALLER());
+#endif
     if(attr & HU3D_MOTATTR) {
         modelP->motAttr &= ~attr;
     } else {

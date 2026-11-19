@@ -36,6 +36,14 @@ void HuMemInitAll(void)
     HeapSizeTbl[4] = free_size;
 }
 
+#ifdef TARGET_PC
+/* netplay diagnostics (src/port/netplay.cpp): the heaps are host allocations, not part of MEM1 */
+void *HuMemHeapGet(int heap, u32 *size)
+{
+    *size = HeapSizeTbl[heap];
+    return HeapTbl[heap];
+}
+#endif
 void *HuMemInit(void *ptr, s32 size)
 {
     return HuMemHeapInit(ptr, size);

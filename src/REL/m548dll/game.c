@@ -198,7 +198,14 @@ void fn_1_2894(void)
 void fn_1_2908(void)
 {
     if (lbl_1_bss_5DC[0] == 0) {
+#ifdef TARGET_PC
+        { /* netplay: C leaves the evaluation order open, MSVC and clang differ: draw left to right */
+            int rng0 = rand8(); int rng1 = rand8();
+            lbl_1_bss_5DC[2] = rng0 % 4 * 30 + 30 + rng1 % 30;
+        }
+#else
         lbl_1_bss_5DC[2] = rand8() % 4 * 30 + 30 + rand8() % 30;
+#endif
         lbl_1_bss_5DC[0]++;
         return;
     }
