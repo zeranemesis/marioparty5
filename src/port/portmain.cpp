@@ -390,7 +390,7 @@ extern "C" int port_main(int argc, char* argv[]) {
     // An app has no environment of its own: the test bench passes MP5_TEST_*=value as launch arguments
     // (adb shell am start ... --es mp5native_args "MP5_TEST_BOARD=0 MP5_TEST_COM=1")
     for (int i = 1; i < argc; ++i) {
-        if (const char* eq = strchr(argv[i], '='); eq != nullptr && strncmp(argv[i], "MP5_TEST_", 9) == 0) {
+        if (const char* eq = strchr(argv[i], '='); eq != nullptr && (strncmp(argv[i], "MP5_TEST_", 9) == 0 || strncmp(argv[i], "MP5_NET_", 8) == 0)) {
             setenv(std::string(argv[i], eq - argv[i]).c_str(), eq + 1, 1);
         }
     }

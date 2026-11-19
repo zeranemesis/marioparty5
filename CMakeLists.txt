@@ -146,6 +146,11 @@ function(mp5native_game_target target)
     target_include_directories(${target} AFTER PRIVATE libs/dolphin/include)
     target_compile_definitions(${target} PRIVATE TARGET_PC NON_MATCHING OPTIMIZED_TEXTURE_LOADING BYTESWAPPING VERSION=${VERSION})
     # online play: the game's clock reads go through netplay.cpp, which gives every machine the same time in a session
+    if (ANDROID)
+        # bit-fields laid out as MSVC does on Windows: the game copies its structs raw into saves and netplay hashes
+        # them, so a save (or a host's memory card) must read the same on the PC and on the phone
+        target_compile_options(${target} PRIVATE -mms-bitfields)
+    endif ()
     target_compile_definitions(${target} PRIVATE OSGetTick=Mp5Net_OSGetTick OSGetTime=Mp5Net_OSGetTime)
     if (MSVC)
         target_compile_definitions(${target} PRIVATE _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)

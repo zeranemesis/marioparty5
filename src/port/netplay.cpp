@@ -50,6 +50,7 @@ OSTick Mp5Net_OSGetTick(void);
 #include <fstream>
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #ifdef _WIN32
@@ -560,8 +561,11 @@ void admit(Peer peer, const std::vector<u8>& payload) {
     const u8 nLocal = r.get<u8>();
     const int port = nextFreePort();
     std::string reason;
-    if (!r.ok || proto != kProto || strcmp(build, kBuild) != 0) {
-        reason = fmt::format("different build (host: {})", kBuild);
+    // same game version (git describe); the platform may differ: PC and Android play together, their float
+    // results must match (no FP contraction anywhere), and a mismatch shows up as a desync in the logs
+    const std::string_view peerBuild(build), ourBuild(kBuild);
+    if (!r.ok || proto != kProto || peerBuild.substr(0, peerBuild.find(' ')) != ourBuild.substr(0, ourBuild.find(' '))) {
+        reason = fmt::format("different game version (host: {})", kBuild);
     } else if ((peerPal != 0) != sPal) {
         reason = "different disc region";
     } else if (nLocal < 1 || port + nLocal > 4) {
@@ -572,6 +576,9 @@ void admit(Peer peer, const std::vector<u8>& payload) {
         sendMsg(peer, MsgReject, std::vector<u8>(reason.begin(), reason.end()));
         closesocket(peer.s);
         return;
+    }
+    if (strcmp(build, kBuild) != 0) {
+        note(false, "player {} runs another platform: {} (host: {})", sPeers.size() + 1, build, kBuild);
     }
     peer.firstPort = port;
     peer.nPorts = nLocal;
