@@ -485,12 +485,12 @@ u32 HuWinMesMaxDirGet(void)
 
 u32 HuWinMesMaxNumGet(u32 dirNum)
 {
-    u32 dir;
-    u32 *messData = messDataPtr;
 #ifdef TARGET_PC
-    dirNum = HuWinPalMesNum(dirNum);
+    u32 dir = HuWinPalMesNum(dirNum) >> 16;
+#else
+    u32 dir = dirNum >> 16;
 #endif
-    dir = dirNum >> 16;
+    u32 *messData = messDataPtr;
 #ifdef TARGET_PC
     if(dir >= PORT_BE32(*messData)) {
         OSReport("Error: Message Dir Over\n");
