@@ -20,6 +20,7 @@ typedef struct PadRumble_s {
 
 #ifdef TARGET_PC
 void Mp5Test_PadHook(PADStatus *status);
+void Mp5BoardScreen_Hook(void);
 void Mp5Net_PadHook(PADStatus *status);
 #endif
 static void PadReadVSync(u32 retraceCount);
@@ -119,6 +120,7 @@ static void PadReadVSync(u32 retraceCount)
 #ifdef TARGET_PC
         Mp5Test_PadHook(status); /* MP5_TEST_MG: scripted pads, see portmain.cpp */
         Mp5Net_PadHook(status); /* netplay: the pads every machine agreed on, see netplay.cpp */
+        Mp5BoardScreen_Hook(); /* second-screen board map, see board_screen.cpp */
 #endif
         chan = 0;
         if(GlobalCounterOld == GlobalCounter) {

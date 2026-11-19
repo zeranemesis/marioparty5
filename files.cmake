@@ -105,6 +105,7 @@ set(GAME_FILES
 set(PORT_FILES
         src/port/OS.c
         src/port/achievements.cpp
+        src/port/board_screen.cpp
         src/port/cheats.cpp
         src/port/config.cpp
         src/port/crash_win.cpp

@@ -196,6 +196,20 @@ static void Hu3DWideDecorDraw(s16 cameraNo);
 #define HU3D_ATTR_CAMERA_UPDATE (HU3D_ATTR_CAMERA_MOTON|HU3D_ATTR_DISPOFF)
 #define HU3D_ATTR_NOUPDATE_ALL (HU3D_ATTR_REFLECT_MODEL|HU3D_ATTR_MOTION_OFF|HU3D_ATTR_DISPOFF)
 
+#ifdef TARGET_PC
+/* second-screen board view (port/board_screen.cpp): the camera loop runs once more for camera 0, from above the
+   board into an offscreen target; it only draws, nothing advances */
+static BOOL Hu3DOverheadF;
+BOOL Mp5BoardScreen_OverheadBegin(HU3DCAMERA *cameraP);
+void Mp5BoardScreen_OverheadEnd(void);
+BOOL Mp5BoardScreen_ModelHidden(s16 modelId);
+
+BOOL Hu3DOverheadCheck(void)
+{
+    return Hu3DOverheadF;
+}
+#endif
+
 void Hu3DExec(void)
 {
     GXColor clearColor = {};
@@ -257,11 +271,19 @@ void Hu3DExec(void)
     }
 #ifdef TARGET_PC
     Hu3DPillarboxBarDraw();
+    HU3DCAMERA overheadSave;
+    Hu3DOverheadF = FALSE;
+overheadPass:
 #endif
     for(cameraP = &Hu3DCamera[0], Hu3DCameraNo=0; Hu3DCameraNo<HU3D_CAM_MAX; Hu3DCameraNo++, cameraP++) {
         if(cameraP->fov == -1) {
             continue;
         }
+#ifdef TARGET_PC
+        if(Hu3DOverheadF && Hu3DCameraNo != 0) {
+            continue;
+        }
+#endif
         GXInvalidateVtxCache();
         cameraBit = (1 << Hu3DCameraNo);
         Hu3DCameraBit = cameraBit;
@@ -275,7 +297,11 @@ void Hu3DExec(void)
                 MTXLookAt(projP->lookAtMtx, &projP->camPos, &projP->camUp, &projP->camTarget);
             }
         }
+#ifdef TARGET_PC
+        if(Hu3DCameraNo == 0 && !Hu3DOverheadF) {
+#else
         if(Hu3DCameraNo == 0) {
+#endif
             HuSprDispInit();
             HuSprExec(HUSPR_DRAWNO_BACK);
         }
@@ -283,10 +309,15 @@ void Hu3DExec(void)
             GXSetFog(FogData.fogType, FogData.fogStart, FogData.fogEnd, cameraP->near, cameraP->far, FogData.fogColor);
         }
 #ifdef TARGET_PC
-        Hu3DWideDecorDraw(Hu3DCameraNo);
+        if(!Hu3DOverheadF) Hu3DWideDecorDraw(Hu3DCameraNo);
 #endif
         for(layer=0; layer<HU3D_LAYER_MAX; layer++) {
+#ifdef TARGET_PC
+            /* the overhead view leaves out layer hooks: screen-space HUD and highlights of the main view */
+            if(layerHook[layer] && !Hu3DOverheadF) {
+#else
             if(layerHook[layer]) {
+#endif
                 Hu3DCameraSet(Hu3DCameraNo, Hu3DCameraMtx);
                 MTXInvXpose(Hu3DCameraMtx, Hu3DCameraMtxXPose);
                 hookFunc = layerHook[layer];
@@ -302,13 +333,13 @@ void Hu3DExec(void)
                     }
                     if(modelP->attr & HU3D_ATTR_CAMERA) {
 #ifdef TARGET_PC
-                        if(!HuInterpDrawF)
+                        if(!HuInterpDrawF && !Hu3DOverheadF)
 #endif
                         Hu3DCameraMotionExec(i);
                         continue;
                     }
 #ifdef TARGET_PC
-                    if(!HuInterpDrawF)
+                    if(!HuInterpDrawF && !Hu3DOverheadF)
 #endif
                     if((modelP->attr & HU3D_ATTR_CAMERA_UPDATE) == HU3D_ATTR_CAMERA_UPDATE && modelP->motId != HU3D_MOTID_NONE) {
                         Hu3DMotionExec(i, modelP->motId, modelP->motWork.time, FALSE);
@@ -322,6 +353,11 @@ void Hu3DExec(void)
                     if(modelP->layerNo != layer) {
                         continue;
                     }
+#ifdef TARGET_PC
+                    if(Hu3DOverheadF && Mp5BoardScreen_ModelHidden(i)) {
+                        continue;
+                    }
+#endif
                     if(((modelP->attr & HU3D_ATTR_MOT_EXEC) == 0 && (modelP->attr & HU3D_ATTR_MOT_SLOW) == 0) ||
                         ((modelP->attr & HU3D_ATTR_MOT_SLOW) != 0 && (modelP->tick & 1) != 0)) {
                         vtxInvalidateF = FALSE;
@@ -390,7 +426,7 @@ void Hu3DExec(void)
                         Hu3DDraw(modelP, final, &modelP->scale);
                     }
 #ifdef TARGET_PC
-                    if(!HuInterpDrawF)
+                    if(!HuInterpDrawF && !Hu3DOverheadF)
 #endif
                     modelP->tick++;
                     layerMdlNum++;
@@ -400,7 +436,11 @@ void Hu3DExec(void)
                 }
                 Hu3DDrawPost();
             }
+#ifdef TARGET_PC
+            if(layerHook[layer+HU3D_LAYER_HOOK_POST] && !Hu3DOverheadF) {
+#else
             if(layerHook[layer+HU3D_LAYER_HOOK_POST]) {
+#endif
                 Hu3DCameraSet(Hu3DCameraNo, Hu3DCameraMtx);
                 MTXInvXpose(Hu3DCameraMtx, Hu3DCameraMtxXPose);
                 hookFunc = layerHook[layer+HU3D_LAYER_HOOK_POST];
@@ -412,6 +452,19 @@ void Hu3DExec(void)
             GXSetDrawDone();
         }
     }
+#ifdef TARGET_PC
+    if(Hu3DOverheadF) {
+        Mp5BoardScreen_OverheadEnd();
+        Hu3DCamera[0] = overheadSave;
+        Hu3DOverheadF = FALSE;
+    } else if(!HuInterpDrawF && Hu3DCamera[0].fov != -1) {
+        overheadSave = Hu3DCamera[0];
+        if(Mp5BoardScreen_OverheadBegin(&Hu3DCamera[0])) {
+            Hu3DOverheadF = TRUE;
+            goto overheadPass;
+        }
+    }
+#endif
     HuSprDispInit();
     HuSprExec(HUSPR_DRAWNO_FRONT);
 #ifdef TARGET_PC
@@ -1827,7 +1880,7 @@ void Hu3DCameraSet(s32 cameraNo, Mtx modelView)
     Mtx44 proj;
     HU3DCAMERA *cameraP = &Hu3DCamera[cameraNo];
 #ifdef TARGET_PC
-    MTXPerspective(proj, cameraP->fov, Hu3DCameraNoWideCheck(cameraNo) ? cameraP->aspect : HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
+    MTXPerspective(proj, cameraP->fov, Hu3DOverheadF || Hu3DCameraNoWideCheck(cameraNo) ? cameraP->aspect : HU_WIDE(cameraP->aspect), cameraP->near, cameraP->far);
 #else
     MTXPerspective(proj, cameraP->fov, cameraP->aspect, cameraP->near, cameraP->far);
 #endif
@@ -1839,7 +1892,7 @@ void Hu3DCameraSet(s32 cameraNo, Mtx modelView)
     }
     GXSetScissor(cameraP->scissorX, cameraP->scissorY, cameraP->scissorW, cameraP->scissorH);
 #ifdef TARGET_PC
-    Hu3DCameraPillarboxApply(cameraNo);
+    if(!Hu3DOverheadF) Hu3DCameraPillarboxApply(cameraNo);
 #endif
     MTXLookAt(modelView, &cameraP->pos, &cameraP->up, &cameraP->target);
 }

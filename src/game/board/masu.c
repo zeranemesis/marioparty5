@@ -64,6 +64,9 @@ static const GXColor masuColor = { 255, 255, 255, 255 };
 static void MasuLightHiliteHook(s16 layerNo);
 static void MasuDraw(HU3DMODEL *modelP, Mtx *mtx);
 static void MakeMasuDisplayList(void);
+#ifdef TARGET_PC
+BOOL Hu3DOverheadCheck(void); /* hsfman.c: second-screen board view pass */
+#endif
 
 void MBMasuCreate(int dataNum)
 {
@@ -442,6 +445,17 @@ static void MasuDraw(HU3DMODEL *modelP, Mtx *mtx)
     if(masuDispF == FALSE) {
         return;
     }
+#ifdef TARGET_PC
+    /* second-screen board view: Hu3DExec's overhead camera instead of the board camera */
+    if(Hu3DOverheadCheck()) {
+        int dispCnt = masuDispCnt;
+        Hu3DCameraSet(0, lookAt);
+        MasuGXInit();
+        MasuDrawMain(lookAt);
+        masuDispCnt = dispCnt;
+        return;
+    }
+#endif
     cameraP = MBCameraGet();
     MBCameraPosGet(&pos);
     MBCameraPosTargetGet(&target);
@@ -485,7 +499,11 @@ static void MasuDrawMain(Mtx lookAt)
             continue;
         }
         MBMasuPosGet(MASU_LAYER_DEFAULT, (masuP-&masuData[MASU_LAYER_DEFAULT][0])+1, &pos);
+#ifdef TARGET_PC
+        if(!Hu3DOverheadCheck() && MBCameraCullCheck(&pos, 200) == FALSE) {
+#else
         if(MBCameraCullCheck(&pos, 200) == FALSE) {
+#endif
             continue;
         }
         patNo = patNoTbl[masuP->type];
@@ -750,6 +768,14 @@ static void MasuRedMain(int playerNo)
     MasuCoinMain(playerNo, -3);
 }
 
+
+#ifdef TARGET_PC
+/* second-screen board view: the spaces' draw model, safe to draw twice (port/board_screen.cpp) */
+HU3DMODELID MBMasuDrawModelGet(void)
+{
+    return masuDrawMdl;
+}
+#endif
 
 int MBMasuNumGet(int layer)
 {

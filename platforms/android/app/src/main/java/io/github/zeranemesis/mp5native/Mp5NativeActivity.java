@@ -85,10 +85,32 @@ public class Mp5NativeActivity extends SDLActivity {
         });
     }
 
+    // Dual-screen devices (AYN Thor): live board map and a Settings button on the second display
+    private BoardScreen boardScreen;
+
     @Override
     protected void onResume() {
         super.onResume();
         hideSystemBars();
+        android.view.Display display = BoardScreen.findDisplay(this);
+        if (display != null && boardScreen == null) {
+            try {
+                boardScreen = new BoardScreen(this, display);
+                boardScreen.show();
+            } catch (android.view.WindowManager.InvalidDisplayException e) {
+                Log.w(TAG, "Second screen unavailable", e);
+                boardScreen = null;
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (boardScreen != null) {
+            boardScreen.dismiss();
+            boardScreen = null;
+        }
+        super.onPause();
     }
 
     @Override
