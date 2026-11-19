@@ -891,13 +891,16 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
                 }
             }
         }
-        // MP5_TEST_NETMASH=1: in the board party, pad 0 taps A (messages, dice, mini-games) and START on the
+        // MP5_TEST_NETMASH=1: in the board party, pad 0 taps A, A, A, A, B (messages, dice, mini-games) and START on the
         // instruction screen, which waits for it; in netplay each machine's pad 0 is its own player
         if (tbBoard >= 0 && tbStarted && getenv("MP5_TEST_NETMASH") != nullptr) {
             static u32 nmFrame = 0;
             st[0].err = PAD_ERR_NONE;
             if (++nmFrame % 40 < 3) {
-                st[0].button |= omcurovl == DLL_instdll ? PAD_BUTTON_START : PAD_BUTTON_A;
+                // every 5th press B (odd: a too-costly capsule takes 2 presses, select + dismiss): leaves a capsule menu ("Dice Block") when the chosen capsule costs too much
+                st[0].button |= omcurovl == DLL_instdll ? PAD_BUTTON_START
+                                : (nmFrame / 40) % 5 == 4      ? PAD_BUTTON_B
+                                                               : PAD_BUTTON_A;
             }
         }
         // MP5_TEST_BOARD_PAUSE=n: pad 0 plugged in and tapping A (messages, dice) until n frames into the board,

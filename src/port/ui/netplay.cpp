@@ -107,6 +107,7 @@ NetplayLobby::NetplayLobby()
     add_tab("Online Play", [this](Rml::Element *content) {
         auto &leftPane = add_child<Pane>(content, Pane::Type::Controlled);
         auto &rightPane = add_child<Pane>(content, Pane::Type::Uncontrolled);
+        mButtons = &leftPane;
         mStatus = leftPane.add_text("");
         if (getSettings().netplay.mode.getValue() == 1) {
             mStart = &leftPane.add_button("Start Game").on_pressed([] { Mp5Net_Start(); });
@@ -132,6 +133,12 @@ NetplayLobby::~NetplayLobby()
     }
 }
 
+// straight on the buttons, not the tab bar: one press of A starts the game
+bool NetplayLobby::focus()
+{
+    return (mButtons != nullptr && mButtons->focus()) || Window::focus();
+}
+
 void NetplayLobby::connect()
 {
     const auto &np = getSettings().netplay;
@@ -147,6 +154,12 @@ void NetplayLobby::update()
     if (Mp5Net_Poll() == NetLobby::Started && sLobbyOpen) {
         sLobbyOpen = false; // the game boots now, on every machine
         hide(true);
+    }
+    // joining before the host listens: try again every 2 s (not after the host refused us)
+    if (getSettings().netplay.mode.getValue() == 2 && Mp5Net_Poll() == NetLobby::Failed &&
+        Mp5Net_Status().rfind("The host refused", 0) != 0 && clock::now() >= mRetryAt) {
+        mRetryAt = clock::now() + std::chrono::seconds(2);
+        connect();
     }
     if (mStatus != nullptr) {
         mStatus->SetInnerRML(escape(Mp5Net_Status()));

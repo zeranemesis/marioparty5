@@ -14,11 +14,14 @@ public:
     NetplayLobby();
     ~NetplayLobby() override;
     void update() override;
+    bool focus() override;
 
 private:
     void connect();
+    Pane *mButtons = nullptr;
     Rml::Element *mStatus = nullptr;
     Button *mStart = nullptr;
+    clock::time_point mRetryAt {};
 };
 
 // portmain.cpp runs the UI until the lobby is gone (game started together, or offline).

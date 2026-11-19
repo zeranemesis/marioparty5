@@ -206,7 +206,7 @@ bool sendMsg(Peer& peer, u8 type, const std::vector<u8>& payload) {
 
 // Reads what arrived; false when the connection is gone.
 bool recvSome(Peer& peer) {
-    u8 buf[16384];
+    static u8 buf[16384]; // not on the stack: this can run on a game process's small coroutine stack
     for (;;) {
         const int r = recv(peer.s, (char*)buf, sizeof(buf), 0);
         if (r > 0) {
@@ -715,15 +715,21 @@ bool Mp5Net_Join(const std::string& address) {
     }
     Peer peer;
     peer.s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    // shortcut: a blocking connect (a few seconds at worst on a wrong address), acceptable in a lobby
-    const bool connected = connect(peer.s, res->ai_addr, (int)res->ai_addrlen) == 0;
+    // non-blocking with a 3 s limit: an unreachable address must not freeze the lobby for the OS's ~20 s
+    setNonBlocking(peer.s);
+    bool connected = connect(peer.s, res->ai_addr, (int)res->ai_addrlen) == 0;
     freeaddrinfo(res);
+    if (!connected && wouldBlock(sockErr()) && waitSocket(peer.s, true, 3000)) {
+        int err = 0;
+        socklen_t len = sizeof(err);
+        getsockopt(peer.s, SOL_SOCKET, SO_ERROR, (char*)&err, &len);
+        connected = err == 0;
+    }
     if (!connected) {
         closesocket(peer.s);
-        fail(fmt::format("Cannot connect to {} (error {})", address, sockErr()));
+        fail(fmt::format("Cannot connect to {}", address));
         return false;
     }
-    setNonBlocking(peer.s);
     Writer hello;
     hello.put(kProto);
     char build[95] = {};
@@ -765,7 +771,8 @@ bool Mp5Net_Start() {
     si.unlockBowser = g.unlockBowsersGnarlyParty.getValue();
     si.speedrun = g.speedrunMode.getValue();
     si.recording = g.recordingMode.getValue();
-    si.baseTime = OSGetTime();
+    // test bench: with MP5_TEST_SEED the whole session replays identically, clock included
+    si.baseTime = getenv("MP5_TEST_SEED") ? (OSTime)si.seed * OS_TIMER_CLOCK : OSGetTime();
     Writer cards;
     packCards(cards);
     for (Peer& p : sPeers) {
@@ -923,6 +930,7 @@ bool Mp5Net_Boot() {
     note(false, "session started ({}): pad port(s) {}..{} are this machine's, {} player(s), delay {} frame(s), build {}",
          sHost ? "host" : "client", sMyFirstPort + 1, sMyFirstPort + sMyPorts, std::popcount(sPortMask), sDelay, kBuild);
     Log.info("netplay log: {}", logPath.string());
+    note(false, "seed {:08x}, session clock starts at {} (replay this session: MP5_TEST_SEED=0x{:08x})", *Mp5Test_FrandSeed(), sBaseTime, *Mp5Test_FrandSeed());
     return true;
 }
 
