@@ -74,14 +74,9 @@ static void LanguageInit() {
     selectedLanguage = static_cast<u8>(mp5native::getSettings().game.language.getValue());
 }
 
-bool Mp5Native_ShaderWarmup = false;
-
-// waitShaders: run until every queued shader pipeline is built instead of until the game launches
 // keepGoing: run while it returns true instead (the online play lobby)
-bool launchUILoop(bool waitShaders = false, bool (*keepGoing)() = nullptr) {
-    while (Mp5Native_IsRunning && (keepGoing != nullptr ? keepGoing()
-                                   : waitShaders ? aurora_get_stats()->queuedPipelines > 0
-                                                 : !Mp5Native_IsGameLaunched)) {
+bool launchUILoop(bool (*keepGoing)() = nullptr) {
+    while (Mp5Native_IsRunning && (keepGoing != nullptr ? keepGoing() : !Mp5Native_IsGameLaunched)) {
         const AuroraEvent* event = aurora_update();
         while (event != nullptr && event->type != AURORA_NONE) {
             switch (event->type) {
@@ -554,17 +549,13 @@ extern "C" int port_main(int argc, char* argv[]) {
     if (keepRunning && mp5native::getSettings().netplay.mode.getValue() != 0 && getenv("MP5_NET_HOST") == nullptr &&
         getenv("MP5_NET_JOIN") == nullptr) {
         mp5native::ui::push_document(std::make_unique<mp5native::ui::NetplayLobby>());
-        keepRunning = launchUILoop(false, [] { return mp5native::ui::netplay_lobby_open(); });
+        keepRunning = launchUILoop([] { return mp5native::ui::netplay_lobby_open(); });
     }
-    // A draw whose shader is still compiling is skipped, which the original never does: build every shader the
-    // pipeline cache knows (seeded from the bundled initial_pipeline_cache.db) before the game draws anything.
-    Mp5Native_ShaderWarmup = true;
-    const auto warmupStart = std::chrono::steady_clock::now();
-    keepRunning = keepRunning && launchUILoop(true);
-    Mp5Native_ShaderWarmup = false;
-    Mp5NativeMainLog.info("Shaders ready ({} built) after {} ms", aurora_get_stats()->createdPipelines,
-                          std::chrono::duration_cast<std::chrono::milliseconds>(
-                              std::chrono::steady_clock::now() - warmupStart).count());
+    // The shaders the pipeline cache knows (seeded from the bundled initial_pipeline_cache.db) build in the
+    // background while the game boots: a draw whose shader is still compiling waits for it (Aurora get_pipeline),
+    // so nothing is skipped, as on the original.
+    Mp5NativeMainLog.info("Shaders ready ({} built, {} building in the background)",
+                          aurora_get_stats()->createdPipelines, aurora_get_stats()->queuedPipelines);
     {
         if (!keepRunning) {
             fflush(stdout);

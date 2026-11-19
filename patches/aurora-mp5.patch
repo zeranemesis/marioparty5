@@ -256,7 +256,7 @@ index 2f87117..42af931 100644
  
  constexpr uint32_t ClearPipelineConfigVersion = 2;
 diff --git a/lib/gfx/common.cpp b/lib/gfx/common.cpp
-index eff0c65..cdaa116 100644
+index eff0c65..b7fe451 100644
 --- a/lib/gfx/common.cpp
 +++ b/lib/gfx/common.cpp
 @@ -1,6 +1,7 @@
@@ -409,7 +409,7 @@ index eff0c65..cdaa116 100644
    set_efb_targets(pass);
    pass.clearColorValue = gx::g_gxState.clearColor;
    pass.clearDepthValue = gx::clear_depth_value();
-@@ -1350,10 +1409,16 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
+@@ -1350,16 +1409,23 @@ static void render(wgpu::CommandEncoder& cmd, FramePacket& frame, RenderPass& pa
        };
        cmd.CopyTextureToTexture(&src, &dst, &size);
      }
@@ -427,7 +427,22 @@ index eff0c65..cdaa116 100644
  
  void gpu_synchronize() { render_worker::synchronize(); }
  
-@@ -1520,6 +1585,11 @@ std::pair<ByteBuffer, Range> map_uniform(size_t length) {
+ static void render_pass(const wgpu::RenderPassEncoder& pass, FramePacket& frame, const RenderPass& passInfo) {
+   ZoneScoped;
+   g_currentPipeline = UINTPTR_MAX;
++  gx::reset_bound_groups();
+ #ifdef AURORA_GFX_DEBUG_GROUPS
+   std::vector<std::string> lastDebugGroupStack;
+ #endif
+@@ -1415,6 +1481,7 @@ static void render_pass(const wgpu::RenderPassEncoder& pass, FramePacket& frame,
+ #ifdef AURORA_ENABLE_RMLUI
+       case ShaderType::Rml:
+         rmlui::render(draw.rml, pass);
++        gx::reset_bound_groups();
+         break;
+ #endif
+       }
+@@ -1520,6 +1587,11 @@ std::pair<ByteBuffer, Range> map_uniform(size_t length) {
    const auto range = map(current_frame_packet().uniforms, length, g_cachedLimits.minUniformBufferOffsetAlignment);
    return {ByteBuffer{current_frame_packet().uniforms.data() + range.offset, range.size}, range};
  }
@@ -747,23 +762,60 @@ index 0000000..0de56ac
 +bool sync(void* dest) noexcept;
 +} // namespace aurora::gfx::copy_readback
 diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
-index 04a4310..e6fe794 100644
+index 04a4310..76ffafd 100644
 --- a/lib/gfx/pipeline_cache.cpp
 +++ b/lib/gfx/pipeline_cache.cpp
-@@ -1087,6 +1087,13 @@ void end_pipeline_frame() {
+@@ -68,6 +68,8 @@ constexpr size_t BuildPipelinesPerFrame = 1;
+ static std::thread g_pipelineThread;
+ static std::atomic_bool g_pipelineThreadEnd = false;
+ static std::condition_variable g_pipelineCv;
++// MP5: signalled whenever the worker stores a pipeline, for get_pipeline waiting on one
++static std::condition_variable g_pipelineDoneCv;
+ static absl::flat_hash_map<PipelineRef, CachedPipeline> g_pipelines;
+ static std::deque<PendingPipeline> g_priorityPipelines;
+ static std::deque<PendingPipeline> g_backgroundPipelines;
+@@ -898,6 +900,7 @@ static void pipeline_worker() {
+       g_pendingPipelines.erase(pending.hash);
+       hasMore = !g_priorityPipelines.empty() || !g_backgroundPipelines.empty();
+     }
++    g_pipelineDoneCv.notify_all();
+     if (!g_hasPipelineThread) {
+       ++g_pipelinesPerFrame;
+     }
+@@ -1054,6 +1057,7 @@ void shutdown_pipeline_cache() {
+   if (g_hasPipelineThread) {
+     g_pipelineThreadEnd = true;
+     g_pipelineCv.notify_all();
++    g_pipelineDoneCv.notify_all();
+     g_pipelineThread.join();
+   }
+   g_hasPipelineThread = false;
+@@ -1087,9 +1091,24 @@ void end_pipeline_frame() {
    }
  }
  
+-bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
 +bool pipeline_exists(PipelineRef ref) {
-+  std::lock_guard guard{g_pipelineMutex};
-+  const auto it = g_pipelines.find(ref);
+   std::lock_guard guard{g_pipelineMutex};
+   const auto it = g_pipelines.find(ref);
 +  // one loaded from the disk cache with a later first use goes through find_pipeline, which records this frame
 +  return it != g_pipelines.end() && it->second.firstFrameUsed <= current_frame();
 +}
 +
- bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
-   std::lock_guard guard{g_pipelineMutex};
-   const auto it = g_pipelines.find(ref);
++bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
++  std::unique_lock guard{g_pipelineMutex};
++  auto it = g_pipelines.find(ref);
++  // MP5: the original never skips a draw, so wait for a pipeline still compiling (moved to the front of the
++  // queue) instead of dropping it for this frame; this lets the game boot while the cache builds behind it
++  if (it == g_pipelines.end() && g_hasPipelineThread && g_pendingPipelines.contains(ref)) {
++    touch_pending_pipeline(ref, true);
++    g_pipelineCv.notify_one();
++    g_pipelineDoneCv.wait(guard, [&] { return !g_pendingPipelines.contains(ref) || g_pipelineThreadEnd; });
++    it = g_pipelines.find(ref);
++  }
+   if (it == g_pipelines.end()) {
+     return false;
+   }
 diff --git a/lib/gfx/pipeline_cache.hpp b/lib/gfx/pipeline_cache.hpp
 index 2e87f4c..a56e6a6 100644
 --- a/lib/gfx/pipeline_cache.hpp
@@ -1255,6 +1307,56 @@ index 9ca9036..5504c7e 100644
    };
  }
  
+diff --git a/lib/gx/pipeline.cpp b/lib/gx/pipeline.cpp
+index a5088fd..5fecf96 100644
+--- a/lib/gx/pipeline.cpp
++++ b/lib/gx/pipeline.cpp
+@@ -14,15 +14,29 @@ wgpu::RenderPipeline create_pipeline(const PipelineConfig& config) {
+   return build_pipeline(config, {}, shader, "GX Pipeline");
+ }
+ 
++static u32 s_boundUniformOffset = UINT32_MAX;
++static gfx::BindGroupRef s_boundTextureGroup = 0;
++
++void reset_bound_groups() {
++  s_boundUniformOffset = UINT32_MAX;
++  s_boundTextureGroup = 0;
++}
++
+ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
+   if (!gfx::bind_pipeline(data.pipeline, pass)) {
+     return;
+   }
+ 
+-  const std::array offsets{data.uniformRange.offset};
+-  pass.SetBindGroup(1, gfx::g_uniformBindGroup, offsets.size(), offsets.data());
+-  if (data.bindGroups.textureBindGroup) {
++  // MP5: consecutive draws mostly share their uniform offset and textures; Dawn validates and tracks every
++  // SetBindGroup, so only send the ones that changed
++  if (data.uniformRange.offset != s_boundUniformOffset) {
++    const std::array offsets{data.uniformRange.offset};
++    pass.SetBindGroup(1, gfx::g_uniformBindGroup, offsets.size(), offsets.data());
++    s_boundUniformOffset = data.uniformRange.offset;
++  }
++  if (data.bindGroups.textureBindGroup && data.bindGroups.textureBindGroup != s_boundTextureGroup) {
+     pass.SetBindGroup(2, gfx::find_bind_group(data.bindGroups.textureBindGroup));
++    s_boundTextureGroup = data.bindGroups.textureBindGroup;
+   }
+   pass.SetIndexBuffer(gfx::g_indexBuffer, wgpu::IndexFormat::Uint16, data.idxRange.offset, data.idxRange.size);
+   if (data.dstAlpha != UINT32_MAX) {
+diff --git a/lib/gx/pipeline.hpp b/lib/gx/pipeline.hpp
+index 474c85c..cb5f4fd 100644
+--- a/lib/gx/pipeline.hpp
++++ b/lib/gx/pipeline.hpp
+@@ -36,6 +36,8 @@ static_assert(std::has_unique_object_representations_v<PipelineConfig>);
+ 
+ wgpu::RenderPipeline create_pipeline([[maybe_unused]] const PipelineConfig& config);
+ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass);
++// forget which bind groups gx::render left bound (new pass, or another pipeline rebound them)
++void reset_bound_groups();
+ 
+ void queue_surface(const u8* dlStart, uint32_t dlSize, bool bigEndian) noexcept;
+ } // namespace aurora::gx
 diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
 index 3671ed5..a150317 100644
 --- a/lib/gx/shader.cpp

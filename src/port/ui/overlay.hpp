@@ -21,7 +21,6 @@ protected:
 
     Rml::Element *mFpsCounter = nullptr;
     Rml::Element *mCurrentToast = nullptr;
-    Rml::Element *mShaderToast = nullptr;
     Rml::Element *mControllerWarning = nullptr;
     Rml::Element *mMenuNotification = nullptr;
     clock::time_point mCurrentToastStartTime;
