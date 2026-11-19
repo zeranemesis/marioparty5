@@ -77,7 +77,11 @@ u8 fn_1_2874(void);
 void fn_1_2BEC(void);
 void fn_1_2C44(void);
 void fn_1_47E4(M536GameMaster *self);
+#ifdef TARGET_PC
+void fn_1_4A08(u32 seed);
+#else
 void fn_1_4A08(void);
+#endif
 void fn_1_5268(void *self, u32 flag);
 void fn_1_52E4(void *self, s32 flag);
 void fn_1_5398(void *self, s32 flag);
@@ -170,8 +174,14 @@ void fn_1_6184(void)
     void *player;
     void *gun;
 
+#ifdef TARGET_PC
+    /* GameCube: OSGetTick's result stays in r3 and becomes fn_1_4A08's seed; C has to pass it (else each
+       platform seeds the mini-game's generator with whatever its register holds: a netplay desync) */
+    fn_1_4A08(OSGetTick());
+#else
     OSGetTick();
     fn_1_4A08();
+#endif
 
     cloud = fn_1_0(0x10);
     if (cloud) {

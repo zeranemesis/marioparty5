@@ -49,7 +49,11 @@ extern "C" void fn_1_35AC(s32 arg0);
 extern "C" void fn_1_3684(void);
 extern "C" void fn_1_36DC(void);
 extern "C" void fn_1_527C(void *self);
+#ifdef TARGET_PC
+extern "C" void fn_1_54A0(u32 seed);
+#else
 extern "C" void fn_1_54A0(void);
+#endif
 extern "C" void fn_1_5D00(void *self, s32 arg1);
 extern "C" void fn_1_5D7C(void *self, s32 arg1);
 extern "C" void fn_1_5E30(void *self, s32 arg1);
@@ -217,8 +221,14 @@ void on_setup__Q24m51111CGameMasterFP9Process_s(CGameMaster *arg0, void *arg_sp0
     void *temp_r3_9;
     void *var_r23;
 
+#ifdef TARGET_PC
+    /* GameCube: OSGetTick's result stays in r3 and becomes fn_1_54A0's seed; C has to pass it (else each
+       platform seeds the mini-game's generator with whatever its register holds: a netplay desync) */
+    fn_1_54A0(OSGetTick());
+#else
     OSGetTick();
     fn_1_54A0();
+#endif
     printf("%s\n", "m511::CGameMaster::on_setup(Process_s *)");
     temp_r3 = __nw__FUl(0x24);
     if (temp_r3 != 0) {

@@ -76,7 +76,11 @@ void fn_1_2B14(s32 rec);
 void fn_1_2BEC(void);
 void fn_1_2C44(void);
 void fn_1_47E4(void *self);
+#ifdef TARGET_PC
+void fn_1_4A08(u32 seed);
+#else
 void fn_1_4A08(void);
+#endif
 
 void fn_1_5268(void *self, u32 mode);
 void fn_1_52E4(void *self, s32 mode);
@@ -239,8 +243,14 @@ s32 i;
     void *g;
     void *h;
 
+#ifdef TARGET_PC
+    /* GameCube: OSGetTick's result stays in r3 and becomes fn_1_4A08's seed; C has to pass it (else each
+       platform seeds the mini-game's generator with whatever its register holds: a netplay desync) */
+    fn_1_4A08(OSGetTick());
+#else
     OSGetTick();
     fn_1_4A08();
+#endif
     Hu3DBGColorSet(0x1D, 0x80, 0xFD);
 
     a = __nw__FUl(0x20);

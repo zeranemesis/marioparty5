@@ -66,7 +66,11 @@ void fn_1_2948(void);
 void fn_1_2BEC(void);
 void fn_1_2C44(void);
 void *fn_1_47E4(void *self);
+#ifdef TARGET_PC
+void fn_1_4A08(u32 seed);
+#else
 void fn_1_4A08(void);
+#endif
 void fn_1_5268(void *self, s32 value);
 void fn_1_52E4(void *self, s32 value);
 void fn_1_5398(void *self, s32 value);
@@ -161,8 +165,14 @@ void fn_1_7748(void)
     void *p9;
     void *p10;
 
+#ifdef TARGET_PC
+    /* GameCube: OSGetTick's result stays in r3 and becomes fn_1_4A08's seed; C has to pass it (else each
+       platform seeds the mini-game's generator with whatever its register holds: a netplay desync) */
+    fn_1_4A08(OSGetTick());
+#else
     OSGetTick();
     fn_1_4A08();
+#endif
 
     p1 = fn_1_0(sizeof(M579WaterMgr));
     if (p1 != 0) {
