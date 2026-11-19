@@ -90,6 +90,9 @@ BOOL MBVecMagCheck(HuVecF *a, HuVecF *b, float dist);
 void MBMtxLookAtCalc(Mtx dest, HuVecF *eye, HuVecF *up, HuVecF *target);
 void MB3Dto2D(HuVecF *src, HuVecF *dst);
 void MB2Dto3D(HuVecF *src, HuVecF *dst);
+#ifdef TARGET_PC
+float MB3DRayDepth(HuVecF *src, float depth, HuVecF *dst);
+#endif
 float MBBezierCalc(float a, float b, float c, float t);
 void MBBezierCalcV(HuVecF *a, HuVecF *b, HuVecF *c, HuVecF *dst, float t);
 void MBBezierCalcVList(HuVecF *src, HuVecF *dst, float t);

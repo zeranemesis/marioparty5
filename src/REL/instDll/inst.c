@@ -1,4 +1,13 @@
 #include "REL/instDll.h"
+#ifdef TARGET_PC
+#include "port/widescreen.h"
+/* the help bubble hangs over the guide star (a 3D model): kept out of the HUD layout and set where the star is in
+ * the picture, it no longer jumps when the instruction windows slide (beside them it was held at its 4:3 place,
+ * away from them it moved as a side piece) */
+#define INST_HELP_X(hudX) ((hudX) + HuWideHudShift(hudX))
+#else
+#define INST_HELP_X(hudX) (hudX)
+#endif
 
 typedef void (*VoidFunc)(void);
 extern const VoidFunc _ctors[];
@@ -567,11 +576,14 @@ void InstCreate(void)
     }
     HuSprGrpMemberSet(grpId, 0, sprId);
     HuSprAttrSet(grpId, 0, HUSPR_ATTR_LINEAR);
+#ifdef TARGET_PC
+    HuSprWideFixSet(sprId);
+#endif
     modelP = &Hu3DData[StageMdlId[STAGE_MODEL_GUIDE]];
     pos3D = modelP->pos;
     pos3D.y += 70;
     Hu3D3Dto2D(&pos3D, HU3D_CAM1, &pos2D);
-    HuSprGrpPosSet(grpId, pos2D.x, pos2D.y);
+    HuSprGrpPosSet(grpId, INST_HELP_X(pos2D.x), pos2D.y);
     MgNameBarGrpId = grpId = HuSprGrpCreate(1);
     sprId = HuSprCreate(HuSprAnimDataRead(INST_ANM_mgname_bar), 100, 0);
     HuSprGrpMemberSet(grpId, 0, sprId);
@@ -668,7 +680,7 @@ void InstHelpMain(void)
         pos3D = modelP->pos;
         pos3D.y += 70;
         Hu3D3Dto2D(&pos3D, HU3D_CAM1, &pos2D);
-        HuSprGrpPosSet(InstHelpGrpId, pos2D.x, pos2D.y);
+        HuSprGrpPosSet(InstHelpGrpId, INST_HELP_X(pos2D.x), pos2D.y);
         HuSprGrpScaleSet(InstHelpGrpId, (t*HuSin(angle*2)*0.05)+1, (t*HuSin(angle*2)*0.05)+1);
         angle += 2;
         if(angle > 720) {

@@ -323,10 +323,15 @@ float MBCapsuleSelModelUpdate(HuVecF *posStart, HuVecF *posEnd, MBMODELID modelI
     
     pos3D.x = posStart->x+(weight*(posEnd->x-posStart->x));
     pos3D.z = posStart->z+(weight*(posEnd->z-posStart->z));
+#ifdef TARGET_PC
+    z = MB3DRayDepth(&pos3D, 1000, &pos3D);
+    (void)pos2D;
+#else
     MB3Dto2D(&pos3D, &pos2D);
     z = pos2D.z;
     pos2D.z = 1000;
     MB2Dto3D(&pos2D, &pos3D);
+#endif
     scale = (1000/z)*weight;
     MBModelPosSetV(modelId, &pos3D);
     MBModelScaleSet(modelId, scale, scale, scale);

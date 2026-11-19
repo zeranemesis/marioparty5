@@ -750,6 +750,24 @@ void MB2Dto3D(HuVecF *src, HuVecF *dst)
     MTXMultVec(lookAt, dst, dst);
 }
 
+#ifdef TARGET_PC
+/* src moved along the camera ray to view depth depth: the same screen point, which MB3Dto2D then MB2Dto3D at that
+ * depth give on the console. Done in 3D: in widescreen MB2Dto3D maps its HUD point through the sprite layout,
+ * which moved each of a "+3"'s digits its own way. Returns src's own view depth. */
+float MB3DRayDepth(HuVecF *src, float depth, HuVecF *dst)
+{
+    MBCAMERA *cameraP = MBCameraGet();
+    HuVecF pos2D;
+    float k;
+    MB3Dto2D(src, &pos2D);
+    k = depth/pos2D.z;
+    dst->x = cameraP->pos.x+((src->x-cameraP->pos.x)*k);
+    dst->y = cameraP->pos.y+((src->y-cameraP->pos.y)*k);
+    dst->z = cameraP->pos.z+((src->z-cameraP->pos.z)*k);
+    return pos2D.z;
+}
+#endif
+
 float MBBezierCalc(float a, float b, float c, float t)
 {
     float invTime = 1-t;

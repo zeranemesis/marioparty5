@@ -473,8 +473,9 @@ void BootTitleCreate(void)
     titleMdlId[2] = mdlId = Hu3DModelCreateData(TITLE_HSF_back);
     Hu3DModelDispOff(mdlId);
 #ifdef TARGET_PC
-    /* widescreen: the backdrop is a plane sized for 4:3, widen it to the window */
-    Hu3DModelScaleSet(mdlId, HU_WIDE(1.0f), 1.0f, 1.0f);
+    /* widescreen: the backdrop (the starry tunnel and its rays) is sized for 4:3: widened to the window, and
+     * 1.25x so its 17-sided rim leaves the corners; rays and tunnel grow together */
+    Hu3DModelScaleSet(mdlId, HU_WIDE(1.0f)*1.25f, 1.25f, 1.0f);
 #endif
     Hu3DModelAttrSet(mdlId, HU3D_MOTATTR_LOOP);
     titleMdlId[3] = mdlId = Hu3DModelCreateData(TITLE_HSF_movie);

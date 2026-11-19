@@ -456,10 +456,15 @@ static void CoinDispModelUpdate(OMOBJ *obj)
         HuVecF pos, pos2D;
         float scale;
         float z;
+#ifdef TARGET_PC
+        z = MB3DRayDepth(&model->pos, 800, &pos);
+        (void)pos2D;
+#else
         MB3Dto2D(&model->pos, &pos2D);
         z = pos2D.z;
         pos2D.z = 800;
         MB2Dto3D(&pos2D, &pos);
+#endif
         scale = 800/z;
         MBModelPosSetV(obj->mdlId[i], &pos);
         MBModelScaleSet(obj->mdlId[i], model->scale.x*scale, model->scale.y*scale, model->scale.z*scale);

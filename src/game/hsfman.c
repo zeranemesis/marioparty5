@@ -1246,7 +1246,6 @@ static const HU3DWIDEDECOR Hu3DWideDecorTbl[] = {
     { DLL_mgfreedll, HU3D_WIDEDECOR_MIRROR, "grid24", { 255, 255, 255, 255 }, 0.0f, 0.0f, 1000000.0f }, /* then the flat sky panel mirrored past its sides, over what of the sea passed the horizon */
     { DLL_m501dll, HU3D_WIDEDECOR_MIRROR, "bg", { 255, 255, 255, 255 }, 2548.5f, 0.0f, 2221.3f }, /* mg 0: sweets sky */
     { DLL_m531dll, HU3D_WIDEDECOR_PLANE, "rgba8jimen", { 200, 200, 200, 255 }, 0.0f, -300.0f, 0.0f, 8000.0f, 600.0f }, /* mg 30: the yard floor under the buses */
-    { DLL_bootdll, HU3D_WIDEDECOR_SCALE, "cyl17", { 255, 255, 255, 255 }, 0.0f, 0.0f, 0.0f, 1.8f }, /* the title's starry tunnel, again behind itself: no black corners past its 17-sided rim */
     { DLL_m576dll, HU3D_WIDEDECOR_SCALE, "m576_m0", { 255, 255, 255, 255 }, 0.0f, 0.0f, 0.0f, 1.6f }, /* mg 75: the crystal cave again behind itself */
     { DLL_m505dll, HU3D_WIDEDECOR_PLANE, "m505t_kaitei2", { 255, 255, 255, 255 }, 690.0f, -2000.0f, 0.0f, 8000.0f, 1000.0f }, /* mg 4: the sea floor under the floe */
     { DLL_m510dll, HU3D_WIDEDECOR_PLANE, "m510grand01", { 255, 255, 255, 255 }, 380.0f, -1.0f, 1300.0f, 8000.0f, 670.0f }, /* mg 9: the tiled floor */
