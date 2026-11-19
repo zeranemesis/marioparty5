@@ -2,6 +2,9 @@
 
 #include "imgui/ImGuiEngine.hpp"
 #include "port/retroachievements.h"
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
 #include "iso_validate.hpp"
 #include "ui/ui.hpp"
 
@@ -133,6 +136,11 @@ void aurora_log_callback(AuroraLogLevel level, const char* module, const char *m
             break;
     }
     fprintf(out, "[%s | %s] %s\n", levelStr, module, message);
+#ifdef __ANDROID__
+    /* stdout/stderr go nowhere on Android: mirror every line to logcat (tag MP5) */
+    __android_log_print(level >= LOG_ERROR ? ANDROID_LOG_ERROR : level == LOG_WARNING ? ANDROID_LOG_WARN : ANDROID_LOG_INFO,
+                        "MP5", "[%s] %s", module, message);
+#endif
     if (level == LOG_FATAL) {
         fflush(out);
         abort();
