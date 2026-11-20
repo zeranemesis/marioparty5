@@ -53,8 +53,9 @@ void build_netplay_settings(Pane &leftPane, Pane &rightPane)
                               }),
         rightPane, [](Pane &pane) {
             pane.add_text("To join: the host's IP address, with its port after a colon if it is not the default "
-                          "(for example 192.168.1.20 or 203.0.113.5:51525). Over the Internet the host must "
-                          "forward its port (TCP) on its router.");
+                          "(for example 192.168.1.20 or 203.0.113.5:51525). Over the Internet the host's game "
+                          "opens its port on the router by itself (UPnP) and shows its public address in the lobby; "
+                          "if the router does not allow it, the host forwards its port (TCP) by hand.");
         });
     leftPane.register_control(leftPane.add_child<NumberButton>(NumberButton::Props {
                                   .key = "Port",
@@ -81,8 +82,31 @@ void build_netplay_settings(Pane &leftPane, Pane &rightPane)
                                   .suffix = " frames",
                               }),
         rightPane, [](Pane &pane) {
-            pane.add_text("To host: how late every press reaches the game. More delay hides more network lag: "
-                          "2 suits a local network, 4 to 6 the Internet. Too little and the game stutters.");
+            pane.add_text("To host: how late every press reaches the game. With rollback, 1 or 2 is enough even "
+                          "over the Internet; without it, more delay hides more network lag (2 on a local network, 4 to "
+                          "6 over the Internet) and too little makes the game stutter.");
+        });
+    leftPane.register_control(leftPane.add_select_button({
+                                  .key = "Network Lag",
+                                  .getValue = [] {
+                                      return Rml::String { getSettings().netplay.rollback.getValue() ? "Rollback" : "Wait for Every Player" };
+                                  },
+                                  .isModified = [] { return !getSettings().netplay.rollback.getValue(); },
+                              }),
+        rightPane, [](Pane &pane) {
+            for (const bool rollback : {true, false}) {
+                pane.add_button({
+                                    .text = rollback ? "Rollback" : "Wait for Every Player",
+                                    .isSelected = [rollback] { return getSettings().netplay.rollback.getValue() == rollback; },
+                                })
+                    .on_pressed([rollback] {
+                        getSettings().netplay.rollback.setValue(rollback);
+                        config::Save();
+                    });
+            }
+            pane.add_rml("<br/>To host. Rollback: the game goes on when another player's presses are late, guessing "
+                         "them, and quietly corrects itself when they arrive (smooth, as in modern fighting games). "
+                         "Wait for every player: each frame waits for everyone's presses (simple, stutters with lag).");
         });
     leftPane.register_control(leftPane.add_button("Find a Game on the Local Network").on_pressed([] {
         const std::string found = Mp5Net_FindLan();

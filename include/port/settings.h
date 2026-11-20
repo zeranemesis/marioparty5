@@ -146,6 +146,7 @@ struct UserSettings {
         ConfigVar<std::string> address; // host to join, "ip[:port]"
         ConfigVar<int> port;            // port to host on
         ConfigVar<int> delay;           // input delay in frames
+        ConfigVar<bool> rollback;       // the host's choice: predict and roll back (true) or wait for every player
     } netplay;
 };
 

@@ -897,7 +897,7 @@ bool Mp5Net_Start() {
     si.unlockBowser = g.unlockBowsersGnarlyParty.getValue();
     si.speedrun = g.speedrunMode.getValue();
     si.recording = g.recordingMode.getValue();
-    si.rollback = (u8)(envInt("MP5_NET_ROLLBACK", 1) != 0);
+    si.rollback = (u8)(envInt("MP5_NET_ROLLBACK", mp5native::getSettings().netplay.rollback.getValue() ? 1 : 0) != 0);
     // test bench: with MP5_TEST_SEED the whole session replays identically, clock included
     si.lockAspect = mp5native::getSettings().video.lockAspectRatio.getValue();
     si.widescreen = mp5native::getSettings().video.widescreen.getValue();

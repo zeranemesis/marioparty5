@@ -65,6 +65,7 @@ Le lobby se règle dans **Paramètres > Online Play**, navigable à la manette :
 - *Find a Game on the Local Network* : remplit l'adresse grâce à un broadcast UDP sur le port 51526.
 - *Port* : le port TCP de l'hôte (51525 par défaut).
 - *Input Delay* : le délai d'entrée de l'hôte, en images.
+- *Network Lag* : *Rollback* (par défaut) ou *Wait for Every Player* (lockstep), au choix de l'hôte.
 
 Au démarrage suivant, un écran de lobby s'ouvre avant le boot. L'hôte voit les joueurs arriver et appuie sur
 *Start Game*. Les clients bootent en même temps que lui. *Play Offline* démarre seul.
@@ -91,8 +92,12 @@ CRC, les graines, l'overlay et l'attente réseau toutes les 600 images.
 
 ## Internet
 
-- **Connexion directe** (implémentée) : l'hôte redirige son port TCP (51525) sur sa box, et les clients entrent son
-  IP publique.
+- **UPnP** (implémenté) : en hébergeant, le jeu demande à la box de rediriger son port TCP vers lui (découverte
+  SSDP, `AddPortMapping` sur WANIPConnection ou WANPPPConnection), lit l'adresse publique et l'affiche dans le
+  salon (« Friends on the Internet join <ip>:<port> »). Le port est refermé en quittant le salon ou le jeu.
+  `MP5_NET_UPNP=0` le désactive (`src/port/upnp.cpp`).
+- **Connexion directe** (implémentée) : si la box refuse l'UPnP, l'hôte redirige son port TCP (51525) à la main, et
+  les clients entrent son IP publique. Un VPN de jeu (Tailscale, ZeroTier…) évite toute redirection.
 - **NAT traversal** (non implémenté) : il faudrait passer les entrées en UDP (prévu pour le rollback, voir
   ci-dessous), puis ajouter un petit serveur de rendez-vous. Ce serveur donne à chaque pair l'adresse publique de
   l'autre, observée façon STUN, et les deux pairs s'envoient des paquets en même temps (UDP hole punching). Ça marche
@@ -141,8 +146,8 @@ Outils supplémentaires : `MP5_NET_TRACERNG=<de>-<à>` (chaque tirage avec la fo
 - **Un plantage du client vu une fois**, à la sortie du mini-jeu m547 (image 66 947, avant la refonte de l'horloge).
   Il n'a pas été reproduit, et le rapport de crash élargi (`CRASH:` dans le log) l'attrapera s'il revient.
 
-- **Lockstep à délai, pas encore de rollback.** Si la latence aller-retour dépasse le délai, le jeu attend le
-  réseau et saccade. Le rollback est le jalon suivant, voir plus bas.
+- **Lockstep** (mode *Wait for Every Player*) : si la latence aller-retour dépasse le délai, le jeu attend le réseau
+  et saccade. Le rollback, par défaut, évite ce cas (voir plus bas).
 - **TCP pour tout.** C'est simple et fiable, mais un paquet perdu bloque les suivants (head-of-line blocking). Sur
   Internet, ça se paie par des à-coups.
 - **Pas de reconnexion ni d'arrivée en cours de partie.** Un pair perdu pendant 10 s termine la session, et chaque
@@ -160,21 +165,82 @@ Outils supplémentaires : `MP5_NET_TRACERNG=<de>-<à>` (chaque tirage avec la fo
 - **Cartes mémoire.** Seul le mode dossier GCI d'aurora est transmis, c'est le seul utilisé aujourd'hui. Les
   sauvegardes faites pendant la partie vont dans la copie `netplay/` des clients.
 
-## Jalon suivant : rollback
+## Rollback
 
-Le lockstep reste la base et sert de repli. Le rollback s'ajoute par-dessus :
+Par défaut, une session est en rollback. Le choix appartient à l'hôte : *Network Lag* dans **Paramètres > Online
+Play**, ou `MP5_NET_ROLLBACK=0/1` pour les tests. `Wait for Every Player` garde le lockstep décrit plus haut.
 
-1. **Instantanés.** L'état du jeu natif comprend :
-   - MEM1, un bloc contigu à adresse fixe, où vivent les tas du jeu ;
-   - les `.data/.bss` de `dol` et des DLL d'overlay chargées ;
-   - les piles des coroutines libco (`process.c`, `osthread_pc.c`), à allouer dans un pool suivi au lieu de
-     `malloc` ;
-   - les globales de MusyX, qui font partie de `dol` ;
-   - l'état DVD et les globales du port qui influent sur la logique.
+### Principe
 
-   On garde un anneau de 8 à 10 instantanés, en ne copiant que les zones utilisées des tas.
-2. **Prédiction.** Une entrée distante manquante est prédite (on répète la dernière). Quand la vraie entrée arrive
-   et diffère, on restaure l'image fautive et on re-simule jusqu'à l'image courante, sans rendu ni sortie audio.
-3. **Barrières.** On ne revient jamais en arrière à travers un chargement ou déchargement de DLL d'overlay, une
-   lecture DVD ou un accès carte. À ces points, on attend les entrées confirmées (lockstep), le temps d'un fondu.
-4. **UDP.** Chaque paquet porte les N dernières images non acquittées (redondance), sans renvoi.
+- **Envoi immédiat.** Chaque machine envoie ses manettes de l'image *f* pour l'image *f + délai* (`MsgInputR`) ;
+  l'hôte relaie aux autres clients celles qu'il reçoit.
+- **Prédiction.** Une image dont les manettes distantes ne sont pas arrivées tourne avec leur dernière valeur
+  connue. Une machine peut avoir jusqu'à 8 images d'avance sur la dernière image complète (`kMaxAhead`) ; au-delà,
+  elle attend comme en lockstep.
+- **Correction.** Si les vraies manettes d'une image déjà jouée diffèrent de la prédiction, `rollback.cpp` restaure
+  le tick qui a produit cette image et rejoue les ticks jusqu'au présent. Ces ticks rejoués ne dessinent rien
+  (`AuroraGXSetDiscard` dans `extern/aurora`) et ne sortent aucun son ; le synthé avance quand même.
+- **Barrières.** Le code d'un overlay chargé ne se défait pas. Avant un chargement (`omOvlLoadPending`), la
+  machine attend que toutes les manettes jouées soient confirmées. L'image produite par le tick du chargement attend
+  aussi les vraies manettes (`Mp5Rb_TickRestorable`).
+- **Désyncs.** Le CRC d'une image n'est comparé qu'une fois confirmées toutes les manettes qui l'ont précédée.
+
+### Ce qu'un instantané contient
+
+L'état du jeu est restauré octet pour octet, à la même adresse :
+
+- les variables du jeu : un en-tête forcé (`include/port/gamestate.h`) les place dans les sections `mp5gd`/`mp5gb`
+  de `dol` et de chaque REL (`gamestate_sections.cpp`). Il couvre aussi MusyX (`musyx_gamestate.h`, qui envoie
+  ses `malloc` dans le tas du son), le banc de test, le cache des animations de sprites, les threads OS émulés
+  (`osthread_pc.c`) et la fermeture différée des DLL (`rel_loader.c`). Les variables propres au portage (objets de
+  l'hôte, conteneurs C++) n'y sont pas ;
+- les tas HuMem, le tas des piles des coroutines (`HuPrcStackAlloc`) et le tas du son (`msmPCSndHeapGet`), tous à
+  adresse fixe ;
+- l'ARAM d'Aurora ;
+- l'état de session de `netplay.cpp` : image, horloge, compte des images audio.
+
+Le reste de l'hôte est rendu compatible : les fichiers du disque (`DVDOpen`/`DVDClose` passent par
+`rollback.cpp`, et une fermeture attend qu'aucun instantané plus ancien ne puisse revenir), l'interpolation
+d'images (invalidée à chaque restauration) et la file GX (vidée avant de changer de mode).
+
+### Coût
+
+Les zones suivies sont protégées en écriture (`VirtualProtect` + gestionnaire vectoriel sous Windows,
+`mprotect` + `SIGSEGV` sous Android). La première écriture dans une page en garde l'ancien contenu dans le journal
+du tick ; la page redevient alors modifiable (`rollback_pages.cpp`). Les piles des coroutines ne sont pas protégées,
+car l'exception se traite sur la pile fautive ; leur partie vivante est copiée à chaque tick.
+
+- 200 à 500 pages écrites par tick ;
+- environ 0,25 ms pour l'instantané d'un tick (contre 16 ms pour une copie complète de 317 Mo) ;
+- environ 1 ms pour revenir 8 ticks en arrière ;
+- 12 ticks gardés, avec une réserve de 32 768 pages (128 Mo).
+
+### Outils
+
+- `MP5_RB_SYNCTEST=<n>`, dans une session solo (`MP5_NET_HOST=… MP5_NET_CLIENTS=0 MP5_NET_LOCAL=4`) : toutes les
+  *n* images, on revient en arrière, on rejoue, et on compare tout l'état octet par octet. Le rapport donne le nom
+  des variables (dbghelp).
+- `MP5_RB_EACH=<tick>` compare après chaque tick, processus et objet ; `MP5_RB_DIFFAT=<tick>:<point>` liste les
+  variables qui diffèrent à un point donné.
+- `MP5_RB_FAST` mesure les coûts sans comparer.
+
+### Résultats (PC ↔ PC, deux instances, délai d'entrée 0)
+
+- **Partie complète** : plateau 1, 25 min, synchronisée jusqu'à l'image 89 400, 4 142 corrections.
+- **Mini-jeux** : les 76 tournent 110 s chacun, synchronisés, avec des milliers de corrections chacun. m508 plantait en
+  session : sa boucle de séquence lisait au-delà de sa table, ce qui sur GameCube tombe sur des flottants qui
+  l'arrêtent. Le PC lit désormais les mêmes valeurs.
+
+### Limites
+
+- **m505** relit l'image affichée dans sa logique (`AuroraGXCopyReadbackSync`). Les ticks rejoués n'affichant rien,
+  il peut diverger après une correction.
+- **Fichiers externes.** Une lecture faite par le système directement dans une page protégée (par exemple
+  `ReadFile` vers un tampon du jeu) échouerait au lieu de déclencher l'exception. Aucune n'a été vue pendant les
+  parties, mais les sauvegardes sur la carte en session n'ont pas été testées.
+- **PC ↔ Android en rollback** pas encore testé : la protection par `SIGSEGV` n'a jamais tourné sur la Thor.
+
+### Suite
+
+UDP : chaque paquet porterait les N dernières images non acquittées (redondance), sans renvoi, pour éviter les
+à-coups du TCP sur une connexion qui perd des paquets.

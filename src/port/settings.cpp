@@ -91,6 +91,7 @@ UserSettings g_userSettings = {
         .address {"netplay.address", ""},
         .port {"netplay.port", 51525},
         .delay {"netplay.delay", 2},
+        .rollback {"netplay.rollback", true},
     },
 };
 
@@ -160,6 +161,7 @@ void registerSettings() {
     Register(g_userSettings.netplay.address);
     Register(g_userSettings.netplay.port);
     Register(g_userSettings.netplay.delay);
+    Register(g_userSettings.netplay.rollback);
 }
 
 }
