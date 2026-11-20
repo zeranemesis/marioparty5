@@ -18,6 +18,7 @@
 // shortcut: no mid-game join, no reconnection: a dropped peer ends the session, the game goes on locally.
 #include "port/netplay.h"
 #include "port/rollback.h"
+#include "upnp.hpp"
 #ifdef _MSC_VER
 #include <intrin.h>
 #define MP5_RETURN_ADDRESS() _ReturnAddress()
@@ -809,6 +810,13 @@ bool Mp5Net_Host(u16 port, int delay) {
     sLobby = NetLobby::Hosting;
     Log.info("hosting on port {}", port);
     hostStatus();
+    // over the Internet a friend reaches this machine through the router: ask it to forward the port (UPnP), as long
+    // as we host (MP5_NET_UPNP=0: never)
+    if (envInt("MP5_NET_UPNP", 1) != 0) {
+        static const bool atExit = std::atexit([] { mp5upnp::close(); }) == 0;
+        (void)atExit;
+        mp5upnp::open(port);
+    }
     return true;
 }
 
@@ -941,11 +949,22 @@ void Mp5Net_Leave() {
         }
     }
     closeAll();
+    mp5upnp::close();
     sLobby = NetLobby::Off;
     sStatus.clear();
 }
 
-const std::string& Mp5Net_Status() { return sStatus; }
+const std::string& Mp5Net_Status() {
+    // the host's line, then what the router said (its public address for friends on the Internet)
+    static std::string line;
+    line = sStatus;
+    if (sHost && sLobby == NetLobby::Hosting) {
+        if (const std::string upnp = mp5upnp::status(); !upnp.empty()) {
+            line += ". " + upnp;
+        }
+    }
+    return line;
+}
 
 int Mp5Net_Players() { return (int)sPeers.size(); }
 

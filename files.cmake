@@ -200,6 +200,8 @@ set(PORT_FILES
         src/port/ui/ui.hpp
         src/port/ui/window.cpp
         src/port/ui/window.hpp
+        src/port/upnp.cpp
+        src/port/upnp.hpp
         src/port/version.cpp
         src/port/widescreen.cpp
 )
