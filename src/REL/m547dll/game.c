@@ -138,11 +138,21 @@ typedef struct M547Slot_s {
 /* M547GameState is defined in the parent object (lbl_1_bss_488 is undefined here) */
 typedef struct M547GameState_s {
     void *objman;
+#ifdef TARGET_PC
+    /* M547State.chars (m547.c): the GameCube offsets below assume a 4-byte objman pointer; on a 64-bit host the
+       padding put every field of this header in the wrong place (charNo read from objman's upper half) */
+    struct {
+        s16 playerNo;
+        s16 charNo;
+        u8 pad_04[0x18];
+    } chars[2];
+#else
     u8 pad_04[2];
     s16 fxId0;
     u8 pad_08[0x1A];
     s16 fxId1;
     u8 pad_24[0x18];
+#endif
     M547ModelEntry *models;
     u32 *motionData[2];
     M547Motion *motion[2];
@@ -634,10 +644,18 @@ void fn_1_5DC4(void)
                     if (lbl_1_bss_488.counters[i + 1] <= 0) {
                         lbl_1_bss_488.fieldAC -= (i + 1);
                     lbl_1_data_2A4[0] = i;
+#ifdef TARGET_PC
+                    /* chars[i].charNo: the GameCube byte offset (+i*0x1C+6) lands elsewhere with an 8-byte objman */
+                    Hu3DTexScrollPosSet(*(s16 *)((u8 *)&lbl_1_bss_480 + 2),
+                                        ((M547Vec2 *)lbl_1_data_2BC)[lbl_1_bss_488.chars[i].charNo].x,
+                                        ((M547Vec2 *)lbl_1_data_2BC)[lbl_1_bss_488.chars[i].charNo].y,
+                                        0.0f);
+#else
                     Hu3DTexScrollPosSet(*(s16 *)((u8 *)&lbl_1_bss_480 + 2),
                                         ((M547Vec2 *)lbl_1_data_2BC)[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6)].x,
                                         ((M547Vec2 *)lbl_1_data_2BC)[*(s16 *)((u8 *)&lbl_1_bss_488 + i * 0x1c + 6)].y,
                                         0.0f);
+#endif
                     lbl_1_bss_488.fieldA8 = 1;
                     lbl_1_bss_488.counterA4++;
                     ((s32 *)&lbl_1_bss_24)[3] = 1;
@@ -904,12 +922,24 @@ void fn_1_7A08(void)
     lbl_1_bss_2++;
     lbl_1_bss_488.counters[0]++;
     if (lbl_1_bss_488.counterA4 == 0 && lbl_1_bss_488.counters[0] > 30) {
+#ifdef TARGET_PC
+        lbl_1_bss_6A4[0] = GameMesCreate(4, 3, lbl_1_bss_488.chars[lbl_1_data_2A4[0]].charNo, -1, -1, -1);
+#else
         lbl_1_bss_6A4[0] = GameMesCreate(4, 3, ((M547IdxEntry *)&lbl_1_bss_488)[lbl_1_data_2A4[0]].b, -1, -1, -1);
+#endif
         HuAudJinglePlay(0x79);
+#ifdef TARGET_PC
+        CharFXPlay(lbl_1_bss_488.chars[lbl_1_data_2A4[0]].charNo, 0x1fa);
+#else
         CharFXPlay(((M547IdxEntry *)&lbl_1_bss_488)[lbl_1_data_2A4[0]].b, 0x1fa);
+#endif
         lbl_1_bss_488.counterA4 = 1;
         lbl_1_bss_488.counters[0] = 0;
+#ifdef TARGET_PC
+        idx = lbl_1_bss_488.chars[lbl_1_data_2A4[0]].playerNo;
+#else
         idx = ((M547IdxEntry *)&lbl_1_bss_488)[lbl_1_data_2A4[0]].a;
+#endif
         if (_CheckFlag(0x1000F) == 0) {
 #ifdef TARGET_PC
             GwPlayer[idx].mgCoinBonus = 10;
@@ -942,8 +972,13 @@ void fn_1_7DAC(void)
         HuAudJinglePlay(123);
         lbl_1_bss_488.counterA4++;
         lbl_1_bss_488.counters[0] = 0;
+#ifdef TARGET_PC
+        CharFXPlayPan(lbl_1_bss_488.chars[0].charNo, 0x200, 0x30);
+        CharFXPlayPan(lbl_1_bss_488.chars[1].charNo, 0x200, 0x50);
+#else
         CharFXPlayPan(lbl_1_bss_488.fxId0, 0x200, 0x30);
         CharFXPlayPan(lbl_1_bss_488.fxId1, 0x200, 0x50);
+#endif
     } else {
         if ((GameMesStatGet(lbl_1_bss_6A4[0]) & 0xFF) == 0) {
             if (lbl_1_bss_488.counters[0] >= 210) {
