@@ -338,7 +338,18 @@ void fn_1_9878(CPlayer *self)
 // NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9BF4(CPlayer *self)
 {
+#ifdef TARGET_PC
+    /* netplay rollback: clang keeps a function-local static's guard outside the game's sections, so after a
+       rollback s_flow came back unset while the guard said done; a flag of our own goes back with it */
+    static m531::CFlow *s_flow;
+    static BOOL s_flowSet;
+    if (!s_flowSet) {
+        s_flow = self->m_flow;
+        s_flowSet = TRUE;
+    }
+#else
     static m531::CFlow *s_flow = self->m_flow;
+#endif
 
     self->m_base.m_rot.y = StageGetAngle(FlowGetStage(s_flow));
     fn_1_C808(&self->m_base);
@@ -398,7 +409,18 @@ void fn_1_9EF4(CPlayer *self)
 // NONMATCHING: register allocation and instruction order differ; logic verified against the asm
 void fn_1_9F1C(CPlayer *self)
 {
+#ifdef TARGET_PC
+    /* netplay rollback: clang keeps a function-local static's guard outside the game's sections, so after a
+       rollback s_flow came back unset while the guard said done; a flag of our own goes back with it */
+    static m531::CFlow *s_flow;
+    static BOOL s_flowSet;
+    if (!s_flowSet) {
+        s_flow = self->m_flow;
+        s_flowSet = TRUE;
+    }
+#else
     static m531::CFlow *s_flow = self->m_flow;
+#endif
     s16 dif;
 
     dif = self->m_base.m_dif;
@@ -417,7 +439,18 @@ void fn_1_9FFC(CPlayer *self)
     u8 flag;
     u8 side;
     s32 team;
+#ifdef TARGET_PC
+    /* netplay rollback: clang keeps a function-local static's guard outside the game's sections, so after a
+       rollback s_flow came back unset while the guard said done; a flag of our own goes back with it */
+    static m531::CFlow *s_flow;
+    static BOOL s_flowSet;
+    if (!s_flowSet) {
+        s_flow = self->m_flow;
+        s_flowSet = TRUE;
+    }
+#else
     static m531::CFlow *s_flow = self->m_flow;
+#endif
     Vec *cell;
 
     if (!(self->m_unk118 < self->m_unkF0)) {
@@ -476,7 +509,18 @@ void fn_1_A2C8(CPlayer *self, s32 exCol, s32 exRow)
     u8 flag;
     u8 side;
     s32 team;
+#ifdef TARGET_PC
+    /* netplay rollback: clang keeps a function-local static's guard outside the game's sections, so after a
+       rollback s_flow came back unset while the guard said done; a flag of our own goes back with it */
+    static m531::CFlow *s_flow;
+    static BOOL s_flowSet;
+    if (!s_flowSet) {
+        s_flow = self->m_flow;
+        s_flowSet = TRUE;
+    }
+#else
     static m531::CFlow *s_flow = self->m_flow;
+#endif
     Vec *cell;
 
     cell = &self->m_cell;
@@ -728,7 +772,18 @@ void fn_1_B0BC(CPlayer *self)
     s32 team;
     s32 i;
     CPlayer *other;
+#ifdef TARGET_PC
+    /* netplay rollback: clang keeps a function-local static's guard outside the game's sections, so after a
+       rollback s_flow came back unset while the guard said done; a flag of our own goes back with it */
+    static m531::CFlow *s_flow;
+    static BOOL s_flowSet;
+    if (!s_flowSet) {
+        s_flow = self->m_flow;
+        s_flowSet = TRUE;
+    }
+#else
     static m531::CFlow *s_flow = self->m_flow;
+#endif
     Vec *pos;
 
     pos = &self->m_base.m_pos;
