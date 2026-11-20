@@ -148,8 +148,8 @@ Outils supplémentaires : `MP5_NET_TRACERNG=<de>-<à>` (chaque tirage avec la fo
 
 - **Lockstep** (mode *Wait for Every Player*) : si la latence aller-retour dépasse le délai, le jeu attend le réseau
   et saccade. Le rollback, par défaut, évite ce cas (voir plus bas).
-- **TCP pour tout.** C'est simple et fiable, mais un paquet perdu bloque les suivants (head-of-line blocking). Sur
-  Internet, ça se paie par des à-coups.
+- **TCP en lockstep.** En mode *Wait for Every Player*, tout passe en TCP : un paquet perdu bloque les suivants
+  (head-of-line blocking). Le rollback envoie les manettes aussi en UDP (voir plus bas).
 - **Pas de reconnexion ni d'arrivée en cours de partie.** Un pair perdu pendant 10 s termine la session, et chaque
   machine continue seule.
 - **Même plateforme seulement.** Le build doit être identique (le hash du build est vérifié). PC↔Thor n'est pas
@@ -240,7 +240,20 @@ car l'exception se traite sur la pile fautive ; leur partie vivante est copiée 
   parties, mais les sauvegardes sur la carte en session n'ont pas été testées.
 - **PC ↔ Android en rollback** pas encore testé : la protection par `SIGSEGV` n'a jamais tourné sur la Thor.
 
-### Suite
+### UDP
 
-UDP : chaque paquet porterait les N dernières images non acquittées (redondance), sans renvoi, pour éviter les
-à-coups du TCP sur une connexion qui perd des paquets.
+En rollback, les manettes partent aussi en UDP, sur le même numéro de port que l'hôte (UPnP ouvre TCP et UDP).
+Chaque datagramme porte les 8 dernières images d'un groupe de ports : un paquet perdu est couvert par le suivant,
+alors qu'en TCP un octet perdu retient tous les suivants le temps d'être renvoyé. Le TCP garde le salon, le départ,
+les CRC et les désyncs, et reçoit toujours une copie des manettes : rien ne manque jamais.
+
+- Le client envoie à l'adresse de l'hôte. L'hôte apprend l'adresse UDP d'un client à son premier datagramme valide,
+  qui porte le jeton aléatoire de la session (`StartInfo.token`) ; c'est aussi ce qui permet de passer le NAT du
+  client sans rien ouvrir de son côté.
+- Avec trois machines ou plus, l'hôte relaie les manettes des autres clients dans le même datagramme.
+- Bancs de test : `MP5_NET_UDPONLY=1` coupe la copie TCP des manettes, `MP5_NET_UDPLOSS=<pourcent>` jette une
+  partie des datagrammes envoyés.
+
+Résultats (PC ↔ PC, 90 s, délai 0) : synchronisés dans les trois cas. En normal, 4 800 datagrammes dans chaque
+sens. En UDP seul, les manettes passent entièrement par l'UDP. En UDP seul avec 30 % de pertes, la redondance de
+8 images couvre les trous : plus de corrections, aucune désync.

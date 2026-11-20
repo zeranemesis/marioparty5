@@ -114,7 +114,7 @@ std::filesystem::path Mp5Native_ConfigPath; // set by portmain.cpp (Mp5Net_SetCo
 
 aurora::Module Log("mp5native::netplay");
 
-constexpr u32 kProto = 4;
+constexpr u32 kProto = 5;
 constexpr u16 kDefaultPort = 51525;
 constexpr u32 kHashEvery = 60;
 bool sDeep; // MP5_NET_DEEP=1 on every machine: hash every frame, models included (finds where a desync starts)
@@ -127,6 +127,8 @@ struct Peer {
     sock_t s = INVALID_SOCKET;
     std::vector<u8> rx;
     int firstPort = 0, nPorts = 0;
+    sockaddr_in udp{}; // rollback: where its UDP datagrams come from and go to
+    bool udpKnown = false;
 };
 
 struct Slot {
@@ -152,6 +154,9 @@ std::array<u32, 4> sKnownTo{};                     // per port: every frame belo
 u32 sMispredict = UINT32_MAX;                      // the first frame that ran on wrong pads
 std::map<u32, u32> sOwnHash;                       // state hashes waiting for their frames to be confirmed
 u64 sRollbacks, sRollbackFrames;                   // statistics for the log
+sock_t sUdp = INVALID_SOCKET;                      // rollback: pads over UDP too (udpSend/udpDrain)
+u32 sToken;                                        // the session's: a datagram without it is not ours
+u64 sUdpIn, sUdpOut;
 std::map<u32, u32> sHostHash;            // host: its own hashes
 std::multimap<u32, u32> sPendingHash;    // host: client hashes not yet compared
 std::map<u32, std::vector<u8>> sStates;  // the last few hashed states, dumped on a desync
@@ -287,6 +292,10 @@ void closeAll() {
         closesocket(p.s);
     }
     sPeers.clear();
+    if (sUdp != INVALID_SOCKET) {
+        closesocket(sUdp);
+        sUdp = INVALID_SOCKET;
+    }
     sActive = false;
     if (sAudioOn) { // back to MusyX's own audio thread
         sAudioOn = false;
@@ -501,11 +510,140 @@ void drain(Peer& peer) {
     }
 }
 
+// --- UDP (rollback sessions) ---------------------------------------------------------------------------------
+// Pads also go over UDP, each datagram carrying the last kUdpWindow frames of a port group: a lost datagram is made
+// up by the next one, where TCP would hold every later byte until it resent the lost one (the pads still go over TCP
+// too, so nothing is ever missing). The host learns a client's UDP address from its first valid datagram (the token
+// of the session proves it); the client sends to the host's address and TCP port number.
+constexpr u32 kUdpMagic = 0x5535504Du; // "MP5U"
+constexpr u32 kUdpWindow = 8;
+
+void udpOpen(u16 port) {
+    sUdp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sUdp == INVALID_SOCKET) {
+        return;
+    }
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    if (bind(sUdp, (sockaddr*)&addr, sizeof(addr)) != 0) {
+        closesocket(sUdp);
+        sUdp = INVALID_SOCKET;
+        return;
+    }
+    setNonBlocking(sUdp);
+}
+
+// one port group's newest frames into the datagram
+void udpPutGroup(Writer& w, int first, int n, u32 newest) {
+    const u32 from = newest + 1 >= (u32)sDelay + kUdpWindow ? newest + 1 - kUdpWindow : (u32)sDelay;
+    if (newest < from || n <= 0) {
+        return;
+    }
+    w.put((u8)first);
+    w.put((u8)n);
+    w.put(from);
+    w.put((u8)(newest - from + 1));
+    for (u32 f = from; f <= newest; f++) {
+        auto it = sFrames.find(f);
+        for (int i = 0; i < n; i++) {
+            const PADStatus pad =
+                it != sFrames.end() && (it->second.have & (1 << (first + i))) ? it->second.pad[first + i] : PADStatus{};
+            w.bytes(&pad, sizeof(pad));
+        }
+    }
+}
+
+void udpSend(u32 ownNewest) {
+    // test bench: MP5_NET_UDPLOSS=<percent> drops this share of the datagrams sent
+    static const int lossPct = getenv("MP5_NET_UDPLOSS") != nullptr ? atoi(getenv("MP5_NET_UDPLOSS")) : 0;
+    static u32 lossSeq = 0;
+    if (sUdp == INVALID_SOCKET) {
+        return;
+    }
+    for (Peer& p : sPeers) {
+        if (!p.udpKnown) {
+            continue;
+        }
+        Writer w;
+        w.put(kUdpMagic);
+        w.put(sToken);
+        udpPutGroup(w, sMyFirstPort, sMyPorts, ownNewest);
+        if (sHost) { // the other clients' pads, for a session of three machines or more
+            for (const Peer& q : sPeers) {
+                if (&q != &p && sKnownTo[q.firstPort] > (u32)sDelay) {
+                    udpPutGroup(w, q.firstPort, q.nPorts, sKnownTo[q.firstPort] - 1);
+                }
+            }
+        }
+        if (lossPct > 0 && (int)((++lossSeq * 2654435761u) % 100) < lossPct) {
+            continue;
+        }
+        sendto(sUdp, (const char*)w.b.data(), (int)w.b.size(), 0, (const sockaddr*)&p.udp, sizeof(p.udp));
+        sUdpOut++;
+    }
+}
+
+void udpDrain() {
+    if (sUdp == INVALID_SOCKET) {
+        return;
+    }
+    u8 buf[2048];
+    for (;;) {
+        sockaddr_in from{};
+        socklen_t len = sizeof(from);
+        const int n = recvfrom(sUdp, (char*)buf, sizeof(buf), 0, (sockaddr*)&from, &len);
+        if (n <= 0) {
+            return;
+        }
+        Reader r{buf, (size_t)n};
+        const u32 magic = r.get<u32>();
+        const u32 token = r.get<u32>();
+        if (!r.ok || magic != kUdpMagic || token != sToken) {
+            continue;
+        }
+        if (!sHost && (sPeers.empty() || from.sin_addr.s_addr != sPeers[0].udp.sin_addr.s_addr ||
+                       from.sin_port != sPeers[0].udp.sin_port)) {
+            continue; // a client only listens to its host
+        }
+        sUdpIn++;
+        while (r.ok && r.n > 0) {
+            const u8 first = r.get<u8>();
+            const u8 nPorts = r.get<u8>();
+            const u32 frame0 = r.get<u32>();
+            const u8 count = r.get<u8>();
+            if (!r.ok || nPorts == 0 || first + nPorts > 4 || count > 32) {
+                break;
+            }
+            if (sHost) { // a client speaks only for its own ports; its address is where it sends from
+                auto it = std::find_if(sPeers.begin(), sPeers.end(),
+                                       [&](const Peer& p) { return p.firstPort == first && p.nPorts == nPorts; });
+                if (it == sPeers.end()) {
+                    break;
+                }
+                if (!it->udpKnown) {
+                    it->udp = from;
+                    it->udpKnown = true;
+                    note(false, "UDP from the player on port(s) {}..{}", first + 1, first + nPorts);
+                }
+            }
+            for (u8 k = 0; k < count && r.ok; k++) {
+                PADStatus pads[4];
+                r.read(pads, sizeof(PADStatus) * nPorts);
+                if (r.ok && frame0 + k + 600 >= sFrame) {
+                    confirm(frame0 + k, first, nPorts, pads);
+                }
+            }
+        }
+    }
+}
+
 // Reads from every peer for up to ms; false when one of them is gone.
 bool pump(int ms) {
     for (Peer& p : sPeers) { // what the lobby already received (a frame right behind the start message)
         drain(p);
     }
+    udpDrain();
     fd_set set;
     FD_ZERO(&set);
     sock_t maxS = 0;
@@ -513,10 +651,15 @@ bool pump(int ms) {
         FD_SET(p.s, &set);
         maxS = std::max(maxS, p.s);
     }
+    if (sUdp != INVALID_SOCKET) {
+        FD_SET(sUdp, &set);
+        maxS = std::max(maxS, sUdp);
+    }
     timeval tv{0, ms * 1000};
     if (select((int)maxS + 1, &set, nullptr, nullptr, &tv) <= 0) {
         return true;
     }
+    udpDrain();
     for (Peer& p : sPeers) {
         if (FD_ISSET(p.s, &set)) {
             if (!recvSome(p)) {
@@ -538,6 +681,7 @@ struct StartInfo {
     u8 lockAspect, widescreen; // the host's picture settings: the game culls and lays out by them
     u32 aspectW, aspectH;      // the host's window, frozen for the session
     u8 rollback;               // predict the other players' pads and correct with rollback instead of waiting for them
+    u32 token;                 // the session's UDP datagrams carry it
 };
 
 // Settings that change what the game does (not how it looks or sounds) follow the host.
@@ -776,6 +920,16 @@ void pollClient() {
     sMyPorts = si.nPorts;
     sPortMask = si.portMask;
     sRollback = si.rollback != 0;
+    sToken = si.token;
+    if (sRollback) { // pads go to the host's address, on its port number, over UDP too
+        sockaddr_in hostAddr{};
+        socklen_t len = sizeof(hostAddr);
+        if (getpeername(sPeers[0].s, (sockaddr*)&hostAddr, &len) == 0) {
+            udpOpen(0);
+            sPeers[0].udp = hostAddr;
+            sPeers[0].udpKnown = sUdp != INVALID_SOCKET;
+        }
+    }
     applySettings(si);
     sLobby = NetLobby::Started;
 }
@@ -898,6 +1052,7 @@ bool Mp5Net_Start() {
     si.speedrun = g.speedrunMode.getValue();
     si.recording = g.recordingMode.getValue();
     si.rollback = (u8)(envInt("MP5_NET_ROLLBACK", mp5native::getSettings().netplay.rollback.getValue() ? 1 : 0) != 0);
+    si.token = (u32)SDL_GetPerformanceCounter() ^ (u32)time(nullptr) * 2654435761u;
     // test bench: with MP5_TEST_SEED the whole session replays identically, clock included
     si.lockAspect = mp5native::getSettings().video.lockAspectRatio.getValue();
     si.widescreen = mp5native::getSettings().video.widescreen.getValue();
@@ -932,6 +1087,10 @@ bool Mp5Net_Start() {
     }
     sPortMask = si.portMask;
     sRollback = si.rollback != 0;
+    sToken = si.token;
+    if (sRollback) {
+        udpOpen(sHostPort); // the clients send to the host's port number (UDP), opened on the router too
+    }
     applySettings(si);
     sLobby = NetLobby::Started;
     return true;
@@ -1219,7 +1378,12 @@ void padHookRollback(PADStatus* status) {
         w.put((u8)sMyPorts);
         w.bytes(status, sizeof(PADStatus) * sMyPorts); // this machine's controllers, as its ports in the session
         confirm(frame + sDelay, sMyFirstPort, sMyPorts, status);
+        // test bench: MP5_NET_UDPONLY=1 sends the pads over UDP alone (proves the UDP path carries the session)
+        static const bool udpOnly = getenv("MP5_NET_UDPONLY") != nullptr;
         for (Peer& p : sPeers) {
+            if (udpOnly && p.udpKnown) {
+                continue;
+            }
             if (!sendMsg(p, MsgInputR, w.b)) {
                 note(true, "lost a player at frame {}, playing on locally", frame);
                 ui_push_toast("controller", "Online play ended", "A player left: the game goes on here alone.", 8000);
@@ -1227,6 +1391,7 @@ void padHookRollback(PADStatus* status) {
                 return;
             }
         }
+        udpSend(frame + sDelay);
         // run ahead on predictions, but not too far: then wait as lockstep does
         const u64 start = SDL_GetTicks();
         u64 lastPump = start;
@@ -1274,8 +1439,10 @@ void padHookRollback(PADStatus* status) {
             sStates.erase(sStates.begin());
         }
         if (frame % 600 == 0 && !resim) {
-            note(false, "crc {:08x} frand {:08x} overlay {:3} | waited {} ms (longest {} ms), {} rollback(s) of {} frame(s)",
-                 sOwnHash[frame], *Mp5Test_FrandSeed(), (int)omcurovl, sWaitMs, sWaitMax, sRollbacks, sRollbackFrames);
+            note(false, "crc {:08x} frand {:08x} overlay {:3} | waited {} ms (longest {} ms), {} rollback(s) of {} frame(s), "
+                        "UDP {} in / {} out",
+                 sOwnHash[frame], *Mp5Test_FrandSeed(), (int)omcurovl, sWaitMs, sWaitMax, sRollbacks, sRollbackFrames,
+                 sUdpIn, sUdpOut);
             sWaitMs = sWaitMax = 0;
         }
     }

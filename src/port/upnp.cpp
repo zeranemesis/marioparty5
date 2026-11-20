@@ -269,16 +269,16 @@ std::string soap(const std::string& action, const std::string& args, int* status
     return http(sControlUrl, "POST", headers, body, status);
 }
 
-bool addMapping(u16 port) {
+bool addMapping(u16 port, const char* proto) {
     // a lease of 0 is permanent (removed when the session ends); some routers only take a limited one
     for (const char* lease : {"0", "7200"}) {
         int status = 0;
         soap("AddPortMapping",
-             fmt::format("<NewRemoteHost></NewRemoteHost><NewExternalPort>{0}</NewExternalPort><NewProtocol>TCP</NewProtocol>"
+             fmt::format("<NewRemoteHost></NewRemoteHost><NewExternalPort>{0}</NewExternalPort><NewProtocol>{3}</NewProtocol>"
                          "<NewInternalPort>{0}</NewInternalPort><NewInternalClient>{1}</NewInternalClient>"
                          "<NewEnabled>1</NewEnabled><NewPortMappingDescription>MP5 Native online play"
                          "</NewPortMappingDescription><NewLeaseDuration>{2}</NewLeaseDuration>",
-                         port, sLocalIp, lease),
+                         port, sLocalIp, lease, proto),
              &status);
         if (status == 200) {
             return true;
@@ -298,10 +298,12 @@ void run(u16 port) {
         setStatus(fmt::format("The router does not offer port mapping (UPnP): forward TCP port {} by hand", port));
         return;
     }
-    if (!addMapping(port)) {
+    // TCP for the lobby and the session, UDP for the pads of a rollback session
+    if (!addMapping(port, "TCP")) {
         setStatus(fmt::format("The router refused to open port {} (UPnP may be off in its settings)", port));
         return;
     }
+    addMapping(port, "UDP"); // without it the pads still arrive over TCP
     {
         std::lock_guard g(sLock);
         sMapped = port;
@@ -342,11 +344,13 @@ void close() {
         sStatus.clear();
     }
     if (port != 0) {
-        int status = 0;
-        soap("DeletePortMapping",
-             fmt::format("<NewRemoteHost></NewRemoteHost><NewExternalPort>{}</NewExternalPort><NewProtocol>TCP</NewProtocol>",
-                         port),
-             &status);
+        for (const char* proto : {"TCP", "UDP"}) {
+            int status = 0;
+            soap("DeletePortMapping",
+                 fmt::format("<NewRemoteHost></NewRemoteHost><NewExternalPort>{}</NewExternalPort><NewProtocol>{}</NewProtocol>",
+                             port, proto),
+                 &status);
+        }
     }
 }
 
