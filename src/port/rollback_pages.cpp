@@ -18,6 +18,9 @@
 #include <signal.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
 #endif
 
 namespace mp5rb {
@@ -61,13 +64,18 @@ void protect(u8* p, size_t n, bool writable) {
 #endif
 }
 
-// the page holding addr, if it is tracked and still protected
+// an address without its top byte: Android tags heap pointers there (0xb4...), and a fault reports the address
+// untagged (on x86-64 user addresses have it clear anyway)
+uintptr_t untag(const void* p) { return (uintptr_t)p & 0x00FFFFFFFFFFFFFFull; }
+
+// the page holding addr, if it is tracked
 bool locate(const void* addr, Range** range, size_t* index) {
-    const u8* a = (const u8*)addr;
+    const uintptr_t a = untag(addr);
     for (Range& r : sRanges) {
-        if (a >= r.base && a < r.base + r.size) {
+        const uintptr_t base = untag(r.base);
+        if (a >= base && a < base + r.size) {
             *range = &r;
-            *index = (size_t)(a - r.base) / sPage;
+            *index = (size_t)(a - base) / sPage;
             return true;
         }
     }
@@ -121,6 +129,15 @@ void onSegv(int sig, siginfo_t* info, void* ctx) {
     if (onWrite(info->si_addr)) {
         return;
     }
+#ifdef __ANDROID__
+    { // a fault that is not a first write to a tracked page: say what the tracker knew, for the crash report
+        Range* r = nullptr;
+        size_t i = 0;
+        const bool tracked = locate(info->si_addr, &r, &i);
+        __android_log_print(ANDROID_LOG_ERROR, "MP5", "rollback pages: fault at %p, active %d, tracked %d, page writable %d, %zu ranges",
+                            info->si_addr, (int)sActive, (int)tracked, tracked ? (int)r->writable[i] : -1, sRanges.size());
+    }
+#endif
     if (sPrev.sa_flags & SA_SIGINFO) {
         if (sPrev.sa_sigaction != nullptr) {
             sPrev.sa_sigaction(sig, info, ctx);

@@ -274,6 +274,9 @@ void ensureTracked() {
     }
     mp5rb::track(rs);
     sTrackedGen = sModuleGen;
+    for (const auto& r : regions()) { // once per module change: where a stray fault on a protected page comes from
+        Mp5Net_TraceLog("rollback: tracking %s %p..%p", r.what.c_str(), (void*)r.p, (void*)(r.p + r.n));
+    }
     sLights.clear();
 }
 
