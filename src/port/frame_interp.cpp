@@ -675,6 +675,14 @@ extern "C" BOOL HuInterpPoseSet(s16 modelId)
     return TRUE;
 }
 
+// netplay rollback restored an earlier tick: the snapshots point at models that may no longer exist (and drawing writes
+// through those pointers), so interpolation starts over from the next ticks
+extern "C" void HuInterpInvalidate(void)
+{
+    sFrame[0].valid = sFrame[1].valid = false;
+    sLerpOk = false;
+}
+
 extern "C" int HuInterpFrameBegin(void)
 {
     if (sTestFps == -2) {

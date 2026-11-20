@@ -25,6 +25,11 @@
 
 #include "../../extern/libco/libco.h"
 
+/* netplay rollback: the coroutines live in the game's stack heap (process.c), and this file's variables in the game's
+   sections (CMakeLists.txt), so a restored tick finds the threads where they were */
+void *HuPrcStackAlloc(u32 size);
+void HuPrcStackFree(void *ptr);
+
 #define PORT_THREAD_MAX 64
 #define MAIN_PRIORITY 16
 
@@ -169,7 +174,7 @@ static void SwitchTo(OSThread *next)
     co_switch(target);
     /* back on prev's coroutine: free a coroutine that exited while we were away */
     if (sDeadCo != NULL && sDeadCo != co_active()) {
-        co_delete(sDeadCo);
+        HuPrcStackFree(sDeadCo);
         sDeadCo = NULL;
     }
 }
@@ -253,10 +258,10 @@ BOOL OSCreateThread(OSThread *thread, void *(*func)(void *), void *param, void *
     /* host frames are much larger than PowerPC ones, and the game's stack is not used */
     coSize = stackSize * 8 < 0x40000 ? 0x40000 : stackSize * 8;
     if (pt->co != NULL) {
-        co_delete(pt->co);
+        HuPrcStackFree(pt->co);
     }
     pt->thread = thread;
-    pt->co = co_create(coSize, Trampoline);
+    pt->co = co_derive(HuPrcStackAlloc(coSize), coSize, Trampoline);
     pt->func = func;
     pt->param = param;
     pt->readySeq = ++sReadySeq;
@@ -375,7 +380,7 @@ void OSCancelThread(OSThread *thread)
     }
     if (pt != NULL) {
         if (pt->co != NULL) {
-            co_delete(pt->co);
+            HuPrcStackFree(pt->co);
         }
         pt->co = NULL;
         if (thread->state == 0) {
@@ -524,4 +529,16 @@ void PortThreadRetrace(void)
     sMainThread.state = OS_THREAD_STATE_WAITING;
     Reschedule();
     sMainRetrace = FALSE;
+}
+
+/* netplay rollback diagnostics: the live threads' coroutines (their stacks' dead part is not compared) */
+int PortThreadStackList(void **handles, int max)
+{
+    int i, n = 0;
+    for (i = 0; i < PORT_THREAD_MAX && n < max; i++) {
+        if (sThreads[i].co != NULL) {
+            handles[n++] = sThreads[i].co;
+        }
+    }
+    return n;
 }

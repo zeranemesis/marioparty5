@@ -36,6 +36,8 @@ void HuInterpTickEnd(void);
 void HuInterpDraw(void);
 /* after the frame is presented: frame pacing */
 void HuInterpFrameEnd(void);
+/* netplay rollback: the game's memory went back to an earlier tick */
+void HuInterpInvalidate(void);
 
 #ifdef __cplusplus
 }

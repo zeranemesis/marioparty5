@@ -15,12 +15,49 @@
  */
 static cothread_t processthread;
 static s32 threadret;
+/* netplay rollback saves the game's memory, so the coroutine stacks live in a game heap of their own (a fixed
+ * address for the whole run) instead of libco's malloc */
+static void *StackHeap;
+static u32 StackHeapSize = 0x3000000;
+
+void *HuPrcStackHeapGet(u32 *size)
+{
+    *size = StackHeapSize;
+    return StackHeap;
+}
+
+/* a coroutine's memory: the processes' and the emulated OS threads' (port/osthread_pc.c) */
+void *HuPrcStackAlloc(u32 size)
+{
+    if(StackHeap == NULL) {
+        StackHeap = HuMemHeapInit(OSAlloc(StackHeapSize), StackHeapSize);
+    }
+    return HuMemMemoryAlloc(StackHeap, size, FAKE_RETADDR);
+}
+
+void HuPrcStackFree(void *ptr)
+{
+    HuMemMemoryFree(ptr, FAKE_RETADDR);
+}
 #else
 static jmp_buf processjmpbuf;
 #endif
 static HUPROCESS *processtop;
 static HUPROCESS *processcur;
 static u16 processcnt;
+#ifdef TARGET_PC
+void Mp5Rb_ProcProbe(void *func);
+/* the live processes' coroutines (netplay rollback ignores their stacks' dead part) */
+int HuPrcStackList(void **handles, int max)
+{
+    HUPROCESS *process;
+    int n = 0;
+    for(process = processtop; process != NULL && n < max; process = process->next) {
+        handles[n++] = process->thread;
+    }
+    return n;
+}
+#endif
 SHARED_SYM u32 procfunc;
 
 void HuPrcInit(void)
@@ -102,7 +139,10 @@ HUPROCESS *HuPrcCreate(void (*func)(void), u16 prio, u32 stackSize, s32 heapSize
     process->prio = prio;
     process->sleep = 0;
 #ifdef TARGET_PC
-    process->thread = co_create(stackSize * 8 < 0x10000 ? 0x10000 : stackSize * 8, ProcessEntry);
+    {
+        u32 coSize = stackSize * 8 < 0x10000 ? 0x10000 : stackSize * 8;
+        process->thread = co_derive(HuPrcStackAlloc(coSize), coSize, ProcessEntry);
+    }
     process->func = func;
 #else
     process->spBase = ((u32)HuMemMemoryAlloc(heap, stackSize, FAKE_RETADDR))+stackSize-8;
@@ -287,7 +327,7 @@ void HuPrcCall(s32 tick)
             {
                 /* the process header lives in the heap being freed */
                 HUPROCESS *next = processcur->next;
-                co_delete(processcur->thread);
+                HuPrcStackFree(processcur->thread);
                 HuMemDirectFree(processcur->heap);
                 processcur = next;
                 break;
@@ -353,6 +393,7 @@ void HuPrcCall(s32 tick)
 #ifdef TARGET_PC
                 co_switch(process->thread);
                 ret = threadret;
+                Mp5Rb_ProcProbe((void *)process->func); /* netplay rollback diagnostics (MP5_RB_EACH) */
                 continue;
 #else
                 gclongjmp(&process->jump, 1);

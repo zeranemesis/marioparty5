@@ -116,6 +116,7 @@ set(PORT_FILES
         src/port/file_select.cpp
         src/port/file_select.hpp
         src/port/frame_interp.cpp
+        src/port/gamestate_sections.cpp
         src/port/gx_render_modes.c
         src/port/hsfload_pc.c
         src/port/http.cpp
@@ -143,6 +144,9 @@ set(PORT_FILES
         src/port/retroachievements.cpp
         src/port/retroachievements_badges.cpp
         src/port/retroachievements_memory.cpp
+        src/port/rollback.cpp
+        src/port/rollback_pages.cpp
+        src/port/rollback_pages.hpp
         src/port/sdk_stubs.c
         src/port/settings.cpp
         src/port/spranim_pc.c

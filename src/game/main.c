@@ -20,6 +20,7 @@
 #include "port/frame_interp.h"
 #include "port/imgui.h"
 #include "port/main.h"
+#include "port/rollback.h"
 #include "port/retroachievements.h"
 #include "port/cheats.h"
 #include "port/dvd_timing.h"
@@ -112,7 +113,9 @@ void main(void)
         if(!aurora_begin_frame()) {
             continue;
         }
+        ticks += Mp5Rb_FrameBegin(); /* netplay rollback: an earlier tick restored, the ticks since run again */
         for(; ticks > 0; ticks--) {
+            ticks += Mp5Rb_TickBegin(); /* netplay rollback: snapshots, and the ticks to run again after a misprediction */
 #else
     while(1) {
 #endif
@@ -126,21 +129,39 @@ void main(void)
         HuPerfBegin(0);
         Hu3DPreProc();
         HuPadRead();
+#ifdef TARGET_PC
+        Mp5Rb_Probe(1);
+#endif
         pfClsScr();
 #ifdef TARGET_PC
         Mp5Native_DvdTimingPump(); /* background disc reads that end this tick (GameCube loading speed) */
 #endif
         HuPrcCall(1);
+#ifdef TARGET_PC
+        Mp5Rb_Probe(2);
+#endif
         GameMesExec();
+#ifdef TARGET_PC
+        Mp5Rb_Probe(3);
+#endif
         HuPerfBegin(1);
         Hu3DExec();
+#ifdef TARGET_PC
+        Mp5Rb_Probe(4);
+#endif
         HuDvdErrorWatch();
         WipeExecAlways();
         HuPerfEnd(0);
         pfDrawFonts();
         HuPerfEnd(1);
         msmMusFdoutEnd();
+#ifdef TARGET_PC
+        Mp5Rb_Probe(5);
+#endif
         HuSysDoneRender(retrace);
+#ifdef TARGET_PC
+        Mp5Rb_Probe(6);
+#endif
         frand();
         rand8();
         HuPerfEnd(2);

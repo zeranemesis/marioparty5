@@ -155,6 +155,8 @@ function(mp5native_game_target target)
     target_compile_definitions(${target} PRIVATE TARGET_PC NON_MATCHING OPTIMIZED_TEXTURE_LOADING BYTESWAPPING VERSION=${VERSION})
     # online play: the game's clock reads go through netplay.cpp, which gives every machine the same time in a session
     target_compile_definitions(${target} PRIVATE OSGetTick=Mp5Net_OSGetTick OSGetTime=Mp5Net_OSGetTime)
+    # netplay rollback: disc files hold host objects, closed only once no rollback can bring them back (rollback.cpp)
+    target_compile_definitions(${target} PRIVATE DVDOpen=Mp5Rb_DVDOpen DVDFastOpen=Mp5Rb_DVDFastOpen DVDClose=Mp5Rb_DVDClose DVDReadAsyncPrio=Mp5Rb_DVDReadAsyncPrio)
     # deterministic sin/cos/atan2... (include/port/detmath.h): the C libraries differ in the last bit between platforms
     mp5native_detmath(${target})
     if (ANDROID)
@@ -216,6 +218,14 @@ add_subdirectory(extern/musyx EXCLUDE_FROM_ALL)
 # compiles src/msm against 2.0.1 struct layouts, so declaring anything else
 # here would silently desynchronise those layouts from the port.
 target_compile_definitions(musyx PUBLIC MUSY_VERSION_MAJOR=2 MUSY_VERSION_MINOR=0 MUSY_VERSION_PATCH=1)
+# online play: the synth times its voices with the clock (salGetStartDelay): the session's, as the game's
+target_compile_definitions(musyx PRIVATE OSGetTick=Mp5Net_OSGetTick OSGetTime=Mp5Net_OSGetTime)
+# netplay rollback saves the synth with the game: MusyX's variables and memory are the game's (include/port/musyx_gamestate.h)
+if (MSVC)
+    target_compile_options(musyx PRIVATE "/FI${CMAKE_SOURCE_DIR}/include/port/musyx_gamestate.h")
+else ()
+    target_compile_options(musyx PRIVATE -include "${CMAKE_SOURCE_DIR}/include/port/musyx_gamestate.h")
+endif ()
 if (MSVC)
     target_compile_definitions(musyx PRIVATE _USE_MATH_DEFINES)
 else ()
@@ -231,7 +241,20 @@ include(files.cmake)
 source_group("Game" FILES ${GAME_FILES})
 source_group("Port" FILES ${PORT_FILES})
 
+# netplay rollback (src/port/rollback.cpp) saves the game's variables, never the port's: the game's sources put
+# theirs in sections of their own (include/port/gamestate.h)
+function(mp5native_gamestate)
+    if (MSVC)
+        set_property(SOURCE ${ARGN} APPEND PROPERTY COMPILE_OPTIONS "/FI${CMAKE_SOURCE_DIR}/include/port/gamestate.h")
+    else ()
+        set_property(SOURCE ${ARGN} APPEND PROPERTY COMPILE_OPTIONS -include "${CMAKE_SOURCE_DIR}/include/port/gamestate.h")
+    endif ()
+endfunction()
+
 add_library(dol SHARED ${GAME_FILES} ${PORT_FILES} extern/libco/libco.c)
+mp5native_gamestate(${GAME_FILES})
+# port code whose state belongs to the game's (a cache keyed by game heap blocks)
+mp5native_gamestate(src/port/spranim_pc.c src/port/osthread_pc.c src/port/rel_loader.c)
 set_target_properties(dol PROPERTIES C_VISIBILITY_PRESET default CXX_VISIBILITY_PRESET default)
 mp5native_game_target(dol)
 target_compile_definitions(dol PRIVATE TARGET_DOL)
@@ -354,7 +377,8 @@ foreach (dir ${REL_TARGETS})
             # every REL module needs its own copy of these (see each file's comment):
             # empty _ctors/_dtors, and the progressive-scan render modes Aurora
             # declares but does not define
-            add_library(${dir} SHARED ${REL_SOURCE_FILES} src/port/rel_ctors.c src/port/gx_render_modes.c src/port/rel_vi.c src/port/rel_cxxrt.c src/port/rel_cxxnew.cpp)
+            add_library(${dir} SHARED ${REL_SOURCE_FILES} src/port/rel_ctors.c src/port/gx_render_modes.c src/port/rel_vi.c src/port/rel_cxxrt.c src/port/rel_cxxnew.cpp src/port/gamestate_sections.cpp)
+            mp5native_gamestate(${REL_SOURCE_FILES})
             list(APPEND BINARY_TARGETS ${dir})
             if (USE_ASAN)
                 set_source_files_properties(${REL_SOURCE_FILES} PROPERTIES COMPILE_OPTIONS "-fsanitize=address")

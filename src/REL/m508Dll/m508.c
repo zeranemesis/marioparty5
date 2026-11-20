@@ -1,4 +1,7 @@
 #include "REL/m508Dll.h"
+#ifdef TARGET_PC
+#include <string.h>
+#endif
 
 typedef void (*M508VoidFunc)(void);
 extern const M508VoidFunc _ctors[];
@@ -673,8 +676,27 @@ void fn_1_20A8(M508_OBJ *self)
             wait--;
         } else {
             while (1) {
+#ifdef TARGET_PC
+                /* step is not reset when the sequence changes: after a switch to the short last sequence it runs past
+                   the table, into lbl_1_rodata_3F0 which follows it on GameCube (id 0.0f = 0, then a wait of 1.0f =
+                   0x3F800000 frames: the sequencer stops there). The same words here, not whatever follows on PC. */
+                if (work->seq * 10 + step >= 6 * 10) {
+                    u32 k = (u32)(work->seq * 10 + step - 6 * 10) * 2;
+                    const f32 *after = &lbl_1_rodata_3F0[0][0];
+                    if (k + 1 >= sizeof(lbl_1_rodata_3F0) / sizeof(f32)) {
+                        k = 0; /* unreachable: the first words already wait 0x3F800000 frames */
+                    }
+                    memcpy(&id, &after[k], sizeof(id));
+                    memcpy(&wait, &after[k + 1], sizeof(wait));
+                } else { /* within the table, a step past a sequence's end reads on into the next one, as on GameCube */
+                    const s32(*flat)[2] = &lbl_1_rodata_210[0][0];
+                    id = flat[work->seq * 10 + step][0];
+                    wait = flat[work->seq * 10 + step][1];
+                }
+#else
                 id = lbl_1_rodata_210[work->seq][step][0];
                 wait = lbl_1_rodata_210[work->seq][step][1];
+#endif
                 if (id == 0xFF) {
                     step = 0;
                     continue;

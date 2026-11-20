@@ -53,6 +53,9 @@ int Mp5Net_ProbeRecordSize(void)
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <dbghelp.h>
+#include <stdint.h>
+#pragma comment(lib, "dbghelp.lib")
 #else
 #define _GNU_SOURCE
 #include <dlfcn.h>
@@ -73,6 +76,25 @@ void Mp5Net_AddrName(const void *fn, char *buf, int size)
         }
         snprintf(buf, size, "%s+0x%llx", strrchr(name, '\\') ? strrchr(name, '\\') + 1 : name,
                  (unsigned long long)((const char *)fn - (const char *)mod));
+        {
+            /* the symbol too (statics included: the PDB knows them), for rollback's synctest reports */
+            static int symInit;
+            char symBuf[sizeof(SYMBOL_INFO) + 256];
+            SYMBOL_INFO *sym = (SYMBOL_INFO *)symBuf;
+            DWORD64 disp = 0;
+            if (!symInit) {
+                symInit = SymInitialize(GetCurrentProcess(), NULL, TRUE) ? 1 : -1;
+            }
+            sym->SizeOfStruct = sizeof(SYMBOL_INFO);
+            sym->MaxNameLen = 255;
+            if (symInit > 0 && !SymFromAddr(GetCurrentProcess(), (DWORD64)(uintptr_t)fn, &disp, sym)) {
+                SymRefreshModuleList(GetCurrentProcess()); /* an overlay loaded since */
+            }
+            if (symInit > 0 && SymFromAddr(GetCurrentProcess(), (DWORD64)(uintptr_t)fn, &disp, sym)) {
+                size_t len = strlen(buf);
+                snprintf(buf + len, size - len, " %s+0x%llx", sym->Name, (unsigned long long)disp);
+            }
+        }
     }
 #else
     {

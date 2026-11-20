@@ -122,6 +122,12 @@ static void omWatchOverlayProc(void)
 }
 
 #ifdef TARGET_PC
+/* netplay rollback: an overlay's code is about to be loaded (omWatchOverlayProc), which no rollback can undo */
+int omOvlLoadPending(void)
+{
+    return omcurovl == DLL_NONE && omnextovl >= 0;
+}
+
 OMOVL Mp5Test_OvlCallHook(OMOVL ovl); /* MP5_TEST_MG, see portmain.cpp */
 #endif
 
@@ -212,6 +218,9 @@ OMOVLHIS *omOvlHisGet(s32 hisOfs)
 }
 
 static void omMain(void);
+#ifdef TARGET_PC
+void Mp5Rb_ProcProbe(void *func);
+#endif
 
 static void omDestroyObjMan(void);
 
@@ -530,6 +539,9 @@ static void omMain(void)
             if((obj->stat & (OM_STAT_DELETED|OM_STAT_DISABLED)) == 0) {
                 if(obj->objFunc != NULL && (obj->stat & (0x40|0x8|OM_STAT_PAUSED)) == 0) {
                     obj->objFunc(obj);
+#ifdef TARGET_PC
+                    Mp5Rb_ProcProbe((void *)obj->objFunc); /* netplay rollback diagnostics (MP5_RB_EACH) */
+#endif
                 }
                 if(omcurovl == DLL_NONE || objWork->objLast == OM_OBJ_NONE) {
                     break;

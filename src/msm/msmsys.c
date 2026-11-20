@@ -40,6 +40,33 @@ void msmSysPCCycle(s16 *output, size_t frames, u32 rate, u32 channels)
     (void)output; (void)frames; (void)rate; (void)channels;
     msmSysServer();
 }
+
+/* MusyX's own memory (voices, decoded groups and samples: ARAM on GC) is a game heap of its own on PC, at a fixed
+   address for the whole run: netplay rollback saves and restores the synth with the game */
+#include "game/memory.h"
+#define PC_SND_HEAP_SIZE 0x6000000
+static void *PCSndHeap;
+
+void *msmPCSndMalloc(size_t size)
+{
+    if (PCSndHeap == NULL) {
+        PCSndHeap = HuMemHeapInit(OSAlloc(PC_SND_HEAP_SIZE), PC_SND_HEAP_SIZE);
+    }
+    return HuMemMemoryAlloc(PCSndHeap, (s32)size, 0xA5A5A5A5);
+}
+
+void msmPCSndFree(void *ptr)
+{
+    if (ptr != NULL) {
+        HuMemMemoryFree(ptr, 0xA5A5A5A5);
+    }
+}
+
+void *msmPCSndHeapGet(u32 *size)
+{
+    *size = PC_SND_HEAP_SIZE;
+    return PCSndHeap;
+}
 #endif
 
 static s32 msmSysSetAuxParam(s32 auxA, s32 auxB)
@@ -937,8 +964,10 @@ s32 msmSysInit(MSM_INIT *init, MSM_ARAM *aram)
     AIInit(NULL);
     result = (sys.info->surroundF == 2) ? SND_FLAGS_DEFAULT_STUDIO_DPL2 : SND_FLAGS_DEFAULT;
 #ifdef TARGET_PC
-    // MusyX PC copies decoded groups and samples into host memory (ARAM on GC), too big for the MSM heap: leave it on malloc
-    (void)sndHooks;
+    // MusyX PC copies decoded groups and samples into host memory (ARAM on GC), too big for the MSM heap: a heap of its own
+    sndHooks.malloc = msmPCSndMalloc;
+    sndHooks.free = msmPCSndFree;
+    sndSetHooks(&sndHooks);
 #else
     sndSetHooks(&sndHooks);
 #endif

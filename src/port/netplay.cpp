@@ -17,6 +17,13 @@
 //
 // shortcut: no mid-game join, no reconnection: a dropped peer ends the session, the game goes on locally.
 #include "port/netplay.h"
+#include "port/rollback.h"
+#ifdef _MSC_VER
+#include <intrin.h>
+#define MP5_RETURN_ADDRESS() _ReturnAddress()
+#else
+#define MP5_RETURN_ADDRESS() __builtin_return_address(0)
+#endif
 #include <dolphin/os.h>
 // CMake renames the game's clock reads to the functions below; this file defines them and needs the real ones
 #undef OSGetTick
@@ -106,14 +113,14 @@ std::filesystem::path Mp5Native_ConfigPath; // set by portmain.cpp (Mp5Net_SetCo
 
 aurora::Module Log("mp5native::netplay");
 
-constexpr u32 kProto = 3;
+constexpr u32 kProto = 4;
 constexpr u16 kDefaultPort = 51525;
 constexpr u32 kHashEvery = 60;
 bool sDeep; // MP5_NET_DEEP=1 on every machine: hash every frame, models included (finds where a desync starts)
 constexpr u64 kTimeoutMs = 10000;
 const char kBuild[] = MP5_NATIVE_WC_DESCRIBE " " MP5_NATIVE_PLATFORM_NAME " " MP5_NATIVE_ARCH;
 
-enum : u8 { MsgHello = 1, MsgStart, MsgReject, MsgInput, MsgFrame, MsgHash, MsgDesync };
+enum : u8 { MsgHello = 1, MsgStart, MsgReject, MsgInput, MsgFrame, MsgHash, MsgDesync, MsgInputR };
 
 struct Peer {
     sock_t s = INVALID_SOCKET;
@@ -133,6 +140,17 @@ int sMyFirstPort, sMyPorts;
 u8 sPortMask;
 u32 sFrame, sNextBroadcast;
 std::map<u32, Slot> sFrames;
+
+// --- rollback sessions (sRollback): a frame whose remote pads have not arrived runs on predicted pads (the port's
+// last known ones); when the real pads differ, rollback.cpp restores the tick before and runs the ticks again
+bool sRollback;
+constexpr u32 kMaxAhead = 8;                       // frames a machine may run on predictions before it waits
+std::map<u32, std::array<PADStatus, 4>> sUsed;     // the pads each frame ran with
+std::array<PADStatus, 4> sLastKnown{};             // per port: its latest confirmed pads (the prediction)
+std::array<u32, 4> sKnownTo{};                     // per port: every frame below this one is confirmed
+u32 sMispredict = UINT32_MAX;                      // the first frame that ran on wrong pads
+std::map<u32, u32> sOwnHash;                       // state hashes waiting for their frames to be confirmed
+u64 sRollbacks, sRollbackFrames;                   // statistics for the log
 std::map<u32, u32> sHostHash;            // host: its own hashes
 std::multimap<u32, u32> sPendingHash;    // host: client hashes not yet compared
 std::map<u32, std::vector<u8>> sStates;  // the last few hashed states, dumped on a desync
@@ -368,6 +386,37 @@ void storePart(u32 frame, int firstPort, int n, const PADStatus* pads) {
     }
 }
 
+// rollback: pads of a frame are known for sure; a frame that already ran on other pads must run again
+void confirm(u32 frame, int firstPort, int n, const PADStatus* pads) {
+    storePart(frame, firstPort, n, pads);
+    auto used = sUsed.find(frame);
+    for (int i = 0; i < n; i++) {
+        const int port = firstPort + i;
+        if (used != sUsed.end() && memcmp(&used->second[port], &pads[i], sizeof(PADStatus)) != 0) {
+            sMispredict = std::min(sMispredict, frame);
+        }
+        for (;;) {
+            auto it = sFrames.find(sKnownTo[port]);
+            if (it == sFrames.end() || !(it->second.have & (1 << port))) {
+                break;
+            }
+            sLastKnown[port] = it->second.pad[port];
+            sKnownTo[port]++;
+        }
+    }
+}
+
+// rollback: every frame below this one has all its pads
+u32 minKnown() {
+    u32 known = UINT32_MAX;
+    for (int port = 0; port < 4; port++) {
+        if (sPortMask & (1 << port)) {
+            known = std::min(known, sKnownTo[port]);
+        }
+    }
+    return known;
+}
+
 // Host: sends every frame that just became complete, in order.
 void broadcastComplete() {
     for (;;) {
@@ -387,6 +436,29 @@ void broadcastComplete() {
 
 void handle(Peer& peer, u8 type, const std::vector<u8>& payload) {
     Reader r{payload.data(), payload.size()};
+    if (type == MsgInputR && sRollback) {
+        const u32 frame = r.get<u32>();
+        const u8 first = r.get<u8>();
+        const u8 n = r.get<u8>();
+        PADStatus pads[4];
+        // a client only sets its own ports
+        if (n > 4 || first + n > 4 || (sHost && (first != peer.firstPort || n != peer.nPorts)) || frame + 600 < sFrame) {
+            return;
+        }
+        r.read(pads, sizeof(PADStatus) * n);
+        if (!r.ok) {
+            return;
+        }
+        confirm(frame, first, n, pads);
+        if (sHost) { // the other clients need them too
+            for (Peer& p : sPeers) {
+                if (&p != &peer) {
+                    sendMsg(p, MsgInputR, payload);
+                }
+            }
+        }
+        return;
+    }
     if (type == MsgInput && sHost) {
         const u32 frame = r.get<u32>();
         PADStatus pads[4];
@@ -464,6 +536,7 @@ struct StartInfo {
     s64 baseTime; // the host's clock at the start: the game's clock in the session starts there
     u8 lockAspect, widescreen; // the host's picture settings: the game culls and lays out by them
     u32 aspectW, aspectH;      // the host's window, frozen for the session
+    u8 rollback;               // predict the other players' pads and correct with rollback instead of waiting for them
 };
 
 // Settings that change what the game does (not how it looks or sounds) follow the host.
@@ -701,6 +774,7 @@ void pollClient() {
     sMyFirstPort = si.firstPort;
     sMyPorts = si.nPorts;
     sPortMask = si.portMask;
+    sRollback = si.rollback != 0;
     applySettings(si);
     sLobby = NetLobby::Started;
 }
@@ -798,7 +872,8 @@ NetLobby Mp5Net_Poll() {
 }
 
 bool Mp5Net_Start() {
-    if (sLobby != NetLobby::Hosting || sPeers.empty()) {
+    // test bench: MP5_NET_CLIENTS=0 starts a session alone (rollback synctest, MP5_RB_SYNCTEST)
+    if (sLobby != NetLobby::Hosting || (sPeers.empty() && envInt("MP5_NET_CLIENTS", 1) != 0)) {
         return false;
     }
     const auto& g = mp5native::getSettings().game;
@@ -814,6 +889,7 @@ bool Mp5Net_Start() {
     si.unlockBowser = g.unlockBowsersGnarlyParty.getValue();
     si.speedrun = g.speedrunMode.getValue();
     si.recording = g.recordingMode.getValue();
+    si.rollback = (u8)(envInt("MP5_NET_ROLLBACK", 1) != 0);
     // test bench: with MP5_TEST_SEED the whole session replays identically, clock included
     si.lockAspect = mp5native::getSettings().video.lockAspectRatio.getValue();
     si.widescreen = mp5native::getSettings().video.widescreen.getValue();
@@ -847,6 +923,7 @@ bool Mp5Net_Start() {
         }
     }
     sPortMask = si.portMask;
+    sRollback = si.rollback != 0;
     applySettings(si);
     sLobby = NetLobby::Started;
     return true;
@@ -918,6 +995,9 @@ void audioFrame() {
     if (!sndPCRender(buf.data(), frames)) {
         return;
     }
+    if (Mp5Rb_Resimulating()) { // the synth runs again with the game; its sound was already heard
+        return;
+    }
     // shortcut: the game's 60 Hz and the sound card drift apart; past 100 ms queued, drop audio (state is unaffected)
     const int bytes = (int)(buf.size() * sizeof(s16));
     if (sAudio != nullptr && SDL_GetAudioStreamQueued(sAudio) < (int)(info.mixRate / 10 * info.channels * sizeof(s16))) {
@@ -976,6 +1056,7 @@ bool Mp5Net_Boot() {
     setvbuf(stdout, nullptr, _IONBF, 0);
     setvbuf(stderr, nullptr, _IONBF, 0);
     sNextBroadcast = sDelay;
+    sKnownTo.fill((u32)sDelay); // the first frames are neutral for everyone
     const auto logPath = Mp5Native_ConfigPath / (sHost ? "netplay_host.log" : "netplay_client.log");
     sLogFile = fopen(logPath.string().c_str(), "w");
     note(false, "session started ({}): pad port(s) {}..{} are this machine's, {} player(s), delay {} frame(s), build {}",
@@ -993,6 +1074,20 @@ extern "C" OSTime Mp5Net_OSGetTime(void) {
         return OSGetTime();
     }
     sLastTime = std::max(sBaseTime + (OSTime)sFrame * (OS_TIMER_CLOCK / 60), sLastTime + OS_TIMER_CLOCK / 100000);
+    // test bench: MP5_NET_TRACETIME=<from>-<to> logs every read of the session clock with its caller
+    if (static int from = -2, to = -1; from != -1) {
+        if (from == -2) {
+            from = -1;
+            if (const char* env = getenv("MP5_NET_TRACETIME"); env != nullptr) {
+                sscanf(env, "%d-%d", &from, &to);
+            }
+        }
+        if (from >= 0 && sFrame >= (u32)from && sFrame <= (u32)to) {
+            char name[256];
+            Mp5Net_AddrName(MP5_RETURN_ADDRESS(), name, sizeof(name));
+            note(false, "time {} by {}", sLastTime, name);
+        }
+    }
     return sLastTime;
 }
 
@@ -1071,12 +1166,158 @@ extern "C" int Mp5Net_SessionAspect(u32* width, u32* height) {
     return 1;
 }
 
+namespace {
+
+// rollback: hashes of frames whose earlier pads are all confirmed go out (a frame run on predictions waits)
+void flushHashes() {
+    const u32 known = minKnown();
+    for (auto it = sOwnHash.begin(); it != sOwnHash.end() && it->first <= known && it->first <= sMispredict;) {
+        if (sHost) {
+            sHostHash[it->first] = it->second;
+            while (sHostHash.size() > (sDeep ? 240u : 64u)) {
+                sHostHash.erase(sHostHash.begin());
+            }
+            checkHashes();
+        } else {
+            Writer w;
+            w.put(it->first);
+            w.put(it->second);
+            sendMsg(sPeers[0], MsgHash, w.b);
+        }
+        it = sOwnHash.erase(it);
+    }
+}
+
+void padHookRollback(PADStatus* status) {
+    const bool resim = Mp5Rb_Resimulating() != 0;
+    const u32 frame = sFrame++;
+    audioFrame();
+    if (!resim) {
+        // this machine's pads now are the game's pads delay frames later; everyone gets them at once
+        Writer w;
+        w.put(frame + sDelay);
+        w.put((u8)sMyFirstPort);
+        w.put((u8)sMyPorts);
+        w.bytes(status, sizeof(PADStatus) * sMyPorts); // this machine's controllers, as its ports in the session
+        confirm(frame + sDelay, sMyFirstPort, sMyPorts, status);
+        for (Peer& p : sPeers) {
+            if (!sendMsg(p, MsgInputR, w.b)) {
+                note(true, "lost a player at frame {}, playing on locally", frame);
+                ui_push_toast("controller", "Online play ended", "A player left: the game goes on here alone.", 8000);
+                closeAll();
+                return;
+            }
+        }
+        // run ahead on predictions, but not too far: then wait as lockstep does
+        const u64 start = SDL_GetTicks();
+        u64 lastPump = start;
+        bool ok = pump(0);
+        // a frame made by a tick that loaded a module cannot be made again: it waits for the real pads
+        const u32 ahead = Mp5Rb_TickRestorable() ? kMaxAhead : 0;
+        while (ok && frame >= minKnown() + ahead) {
+            if (!(ok = pump(2)) || SDL_GetTicks() - start > kTimeoutMs) {
+                ok = false;
+                break;
+            }
+            if (SDL_GetTicks() - lastPump > 16) {
+                SDL_PumpEvents();
+                lastPump = SDL_GetTicks();
+            }
+        }
+        if (!ok) {
+            note(true, "no pads from a peer at frame {}: session over, playing on locally", frame);
+            ui_push_toast("controller", "Online play ended", "A player stopped answering: the game goes on here alone.", 8000);
+            closeAll();
+            return;
+        }
+        const u64 waited = SDL_GetTicks() - start;
+        sWaitMs += waited;
+        sWaitMax = std::max(sWaitMax, waited);
+    }
+
+    std::array<PADStatus, 4> pads{};
+    if (frame >= (u32)sDelay) {
+        auto it = sFrames.find(frame);
+        for (int port = 0; port < 4; port++) {
+            if (!(sPortMask & (1 << port))) {
+                continue;
+            }
+            pads[port] = it != sFrames.end() && (it->second.have & (1 << port)) ? it->second.pad[port] : sLastKnown[port];
+        }
+    }
+    sUsed[frame] = pads;
+
+    if (frame % (sDeep ? 1 : kHashEvery) == 0) {
+        auto state = captureState();
+        sOwnHash[frame] = crc32(state);
+        sStates[frame] = std::move(state);
+        while (sStates.size() > (sDeep ? 240u : 16u)) {
+            sStates.erase(sStates.begin());
+        }
+        if (frame % 600 == 0 && !resim) {
+            note(false, "crc {:08x} frand {:08x} overlay {:3} | waited {} ms (longest {} ms), {} rollback(s) of {} frame(s)",
+                 sOwnHash[frame], *Mp5Test_FrandSeed(), (int)omcurovl, sWaitMs, sWaitMax, sRollbacks, sRollbackFrames);
+            sWaitMs = sWaitMax = 0;
+        }
+    }
+    if (!resim) {
+        flushHashes();
+        const u32 keep = std::min(minKnown(), frame) > 256 ? std::min(minKnown(), frame) - 256 : 0;
+        sUsed.erase(sUsed.begin(), sUsed.lower_bound(keep));
+        sFrames.erase(sFrames.begin(), sFrames.lower_bound(keep));
+    }
+    for (int i = 0; i < 4; i++) {
+        status[i] = pads[i];
+        if (!(sPortMask & (1 << i))) {
+            status[i].err = PAD_ERR_NO_CONTROLLER;
+        }
+    }
+}
+
+} // namespace
+
+extern "C" int Mp5Net_RollbackActive(void) { return sActive && sRollback; }
+
+extern "C" int Mp5Net_TakeMisprediction(u32* frame) {
+    if (sMispredict == UINT32_MAX) {
+        return 0;
+    }
+    *frame = sMispredict;
+    sMispredict = UINT32_MAX;
+    return 1;
+}
+
+extern "C" void Mp5Net_RollbackDone(u32 frames) {
+    sRollbacks++;
+    sRollbackFrames += frames;
+}
+
+// rollback: before what cannot be undone (an overlay's code being loaded), every pad used so far must be confirmed
+extern "C" void Mp5Net_WaitConfirmed(void) {
+    const u64 start = SDL_GetTicks();
+    while (sActive && minKnown() < sFrame) {
+        if (!pump(2) || SDL_GetTicks() - start > kTimeoutMs) {
+            note(true, "no pads from a peer at frame {}: session over, playing on locally", sFrame);
+            closeAll();
+            return;
+        }
+        SDL_PumpEvents();
+    }
+}
+
 extern "C" void Mp5Net_PadHook(PADStatus* status) {
     if (!sActive) {
         return;
     }
+    if (sRollback) {
+        padHookRollback(status);
+        return;
+    }
     const u32 frame = sFrame++;
     audioFrame();
+    if (Mp5Rb_PadReplay(frame, status)) { // rollback: a tick run again, with the pads it had
+        return;
+    }
     // this machine's pads now are the game's pads delay frames later
     if (sHost) {
         storePart(frame + sDelay, sMyFirstPort, sMyPorts, status);
@@ -1170,4 +1411,17 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
             status[i].err = PAD_ERR_NO_CONTROLLER;
         }
     }
+    Mp5Rb_PadRecord(frame, status);
+}
+
+extern "C" void Mp5Net_TickSave(Mp5NetTickState* state) {
+    state->frame = sFrame;
+    state->lastTime = sLastTime;
+    state->audioFrames = sAudioFrames;
+}
+
+extern "C" void Mp5Net_TickLoad(const Mp5NetTickState* state) {
+    sFrame = state->frame;
+    sLastTime = state->lastTime;
+    sAudioFrames = state->audioFrames;
 }

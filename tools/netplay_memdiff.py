@@ -52,7 +52,8 @@ def main():
             la, lb = locate(a, va), locate(b, vb)
             if la is not None and lb is not None and la[0] == lb[0]:
                 return True  # into the same region: absolute alignments differ between hosts, so offsets may too
-            return la is None and lb is None and is_host_ptr(va) and is_host_ptr(vb)
+            # both pointer-shaped (into a region or the host heap/code): a pointer, whatever it points to
+            return (la is not None or is_host_ptr(va)) and (lb is not None or is_host_ptr(vb))
         diffs = []
         for off in range(0, size - 3, 4):
             if da[off:off + 4] == db[off:off + 4]:

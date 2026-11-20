@@ -661,6 +661,14 @@ extern "C" {
 #include <game/object.h>
 }
 
+// netplay rollback: the bench's counters run with the game (a replayed tick must see the counters it saw), so
+// they live in the game's sections (include/port/gamestate.h)
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma data_seg("mp5gd")
+#pragma bss_seg("mp5gb")
+#elif defined(__clang__)
+#pragma clang section data = "mp5gd" bss = "mp5gb"
+#endif
 static int tmMg = -2; // -2: env not read yet, -1: disabled
 static bool tmCom = false; // MP5_TEST_COM=1: four COM players, no scripted input once started (the Dolphin reference bench does the same)
 static bool tmStarted = false;
@@ -686,7 +694,9 @@ static void tmInit() {
 }
 
 static void tmSetupPlayers() {
-    static const s16 grpTbl[][4] = {{0, 0, 0, 0}, {0, 1, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 1, 3, 3}};
+    // as the mini-game mode sets them (mdmini.c): 4-player games give each player its own group, which some games
+    // read as team*2+slot (m530: the same group put two players on one spot)
+    static const s16 grpTbl[][4] = {{0, 1, 2, 3}, {0, 1, 1, 1}, {0, 0, 1, 1}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 1, 3, 3}};
     int type = mgDataTbl[tmMg].type;
     for (int i = 0; i < GW_PLAYER_MAX; i++) {
         s16 grp = type < 7 ? grpTbl[type][i] : 0;
@@ -1020,3 +1030,9 @@ extern "C" void Mp5Test_PadHook(PADStatus* st) {
         st[i].triggerRight = (b & PAD_TRIGGER_R) ? 255 : 0;
     }
 }
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma data_seg()
+#pragma bss_seg()
+#elif defined(__clang__)
+#pragma clang section data = "" bss = ""
+#endif
