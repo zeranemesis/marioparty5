@@ -118,7 +118,9 @@ constexpr u32 kProto = 5;
 constexpr u16 kDefaultPort = 51525;
 constexpr u32 kHashEvery = 60;
 bool sDeep; // MP5_NET_DEEP=1 on every machine: hash every frame, models included (finds where a desync starts)
-constexpr u64 kTimeoutMs = 10000;
+// a peer that stops sending for this long ends the session (one that leaves closes its TCP connection at once). Long:
+// a phone can spend 10 s and more loading a mini-game's module and data, sending nothing meanwhile
+constexpr u64 kTimeoutMs = 45000;
 const char kBuild[] = MP5_NATIVE_WC_DESCRIBE " " MP5_NATIVE_PLATFORM_NAME " " MP5_NATIVE_ARCH;
 
 enum : u8 { MsgHello = 1, MsgStart, MsgReject, MsgInput, MsgFrame, MsgHash, MsgDesync, MsgInputR };
@@ -154,6 +156,7 @@ std::array<u32, 4> sKnownTo{};                     // per port: every frame belo
 u32 sMispredict = UINT32_MAX;                      // the first frame that ran on wrong pads
 std::map<u32, u32> sOwnHash;                       // state hashes waiting for their frames to be confirmed
 u64 sRollbacks, sRollbackFrames;                   // statistics for the log
+u32 sSentTo;                                       // rollback: the first frame whose pads this machine has not sent yet
 sock_t sUdp = INVALID_SOCKET;                      // rollback: pads over UDP too (udpSend/udpDrain)
 u32 sToken;                                        // the session's: a datagram without it is not ours
 u64 sUdpIn, sUdpOut;
@@ -1235,6 +1238,7 @@ bool Mp5Net_Boot() {
     setvbuf(stderr, nullptr, _IONBF, 0);
     sNextBroadcast = sDelay;
     sKnownTo.fill((u32)sDelay); // the first frames are neutral for everyone
+    sSentTo = (u32)sDelay;
     const auto logPath = Mp5Native_ConfigPath / (sHost ? "netplay_host.log" : "netplay_client.log");
     sLogFile = fopen(logPath.string().c_str(), "w");
     note(false, "session started ({}): pad port(s) {}..{} are this machine's, {} player(s), delay {} frame(s), build {}",
@@ -1370,7 +1374,10 @@ void padHookRollback(PADStatus* status) {
     const bool resim = Mp5Rb_Resimulating() != 0;
     const u32 frame = sFrame++;
     audioFrame();
-    if (!resim) {
+    // a tick run again can make more frames than it first did (the game changed its frame pacing, HuSysVWaitSet,
+    // after a corrected press): a frame never sent is sent now, or the other machines would wait for it forever
+    if (!resim || frame + sDelay >= sSentTo) {
+        sSentTo = std::max(sSentTo, frame + sDelay + 1);
         // this machine's pads now are the game's pads delay frames later; everyone gets them at once
         Writer w;
         w.put(frame + sDelay);
@@ -1392,6 +1399,8 @@ void padHookRollback(PADStatus* status) {
             }
         }
         udpSend(frame + sDelay);
+    }
+    if (!resim) {
         // run ahead on predictions, but not too far: then wait as lockstep does
         const u64 start = SDL_GetTicks();
         u64 lastPump = start;
@@ -1409,7 +1418,7 @@ void padHookRollback(PADStatus* status) {
             }
         }
         if (!ok) {
-            note(true, "no pads from a peer at frame {}: session over, playing on locally", frame);
+            note(true, "no pads from a peer at frame {} (known to {}): session over, playing on locally", frame, minKnown());
             ui_push_toast("controller", "Online play ended", "A player stopped answering: the game goes on here alone.", 8000);
             closeAll();
             return;
@@ -1483,7 +1492,8 @@ extern "C" void Mp5Net_WaitConfirmed(void) {
     const u64 start = SDL_GetTicks();
     while (sActive && minKnown() < sFrame) {
         if (!pump(2) || SDL_GetTicks() - start > kTimeoutMs) {
-            note(true, "no pads from a peer at frame {}: session over, playing on locally", sFrame);
+            note(true, "no pads from a peer before an overlay load at frame {} (known to {}): session over, playing on locally",
+                 sFrame, minKnown());
             closeAll();
             return;
         }

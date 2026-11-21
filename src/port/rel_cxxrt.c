@@ -25,8 +25,11 @@ void *__register_global_object(void *object, void *destructor, void *regmem)
  * virtual pmfs are not supported. */
 #ifndef TARGET_DOL
 typedef struct PortPtmf {
-    long thisDelta;
-    long vtblOffset;
+    /* 32-bit, as MWCC lays them out and as the decomp's structs declare them: `long` is 8 bytes on Android
+       (LP64) and moved func to offset 16, so __ptmf_test read the next field and every pmf looked null there
+       (m568's sleds never started) */
+    int thisDelta;
+    int vtblOffset;
     void *func;
 } PortPtmf;
 

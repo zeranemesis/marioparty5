@@ -174,6 +174,10 @@ function(mp5native_game_target target)
         target_compile_options(${target} PRIVATE /J)
     else ()
         target_compile_options(${target} PRIVATE -Werror=pointer-to-int-cast -Werror=int-to-pointer-cast -funsigned-char)
+        # the decompiled code reaches the same memory through different struct types (m522: list nodes as M522_NODE
+        # and M522RNode); MWCC and MSVC never assumed they could not alias, clang does at -O3 with LTO and kept a stale
+        # field (m522 walked its list head as an effect and crashed on Android)
+        target_compile_options(${target} PRIVATE -fno-strict-aliasing)
         # the decomp C was written for MWCC/MSVC: undeclared calls, implicit int and valueless returns are only
         # warnings there, errors by default on clang and GCC 14. int<->pointer conversions stay errors (64-bit).
         target_compile_options(${target} PRIVATE -Wno-format-security
