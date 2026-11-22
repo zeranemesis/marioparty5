@@ -350,7 +350,7 @@ void fn_1_668(OMOBJ *obj)
                 padF = 1.0f;
             }
             if (lbl_1_bss_BC == 1002) {
-                /* Camera look-at follows the player during the intro. */
+                /* Intro: the players look up at the Shy Guy, then lower their heads. */
                 if (lbl_1_bss_0[0] < 110.0f) {
                     work->unk58 = (f32)(180.0 * (atan2(lbl_1_bss_1600[lbl_1_bss_1810->no].pos.y - 50.0f,
                         -lbl_1_bss_C8[0]->trans.x) / 3.141592653589793));
@@ -359,14 +359,18 @@ void fn_1_668(OMOBJ *obj)
                     work->unk58 = (f32)(0.9f * work->unk58);
                 }
                 work->unk58 = (work->unk58 < 0.0f) ? 0.0f : ((work->unk58 > 60.0f) ? 60.0f : work->unk58);
-                if (LookTbl[work->charNoClamp] != 0) {
-                    work->unk58 = (f32)(180.0f - (45.0f * (work->unk58 / 60.0f)));
+                /* unk58 keeps the raw look-up angle (0..60, decaying to 0 after frame 110); the head angle made from
+                 * it is only passed on (a stack temporary in the original), else the head stays raised all game */
+                {
+                    f64 headRot;
+                    if (LookTbl[work->charNoClamp] != 0) {
+                        headRot = 180.0f - (45.0f * (work->unk58 / 60.0f));
+                    }
+                    else {
+                        headRot = 90.0 - ((f32)(45.0f * (work->unk58 / 60.0f)) * ((work->charNoClamp != 2) ? 1.0 : 0.35));
+                    }
+                    Hu3DMotionForceSet(obj->mdlId[0], lbl_1_data_210, 0x200U, (f32)headRot);
                 }
-                else {
-                    f = (work->charNoClamp != 2) ? 1.0 : 0.35;
-                    work->unk58 = (f32)(90.0 - ((f32)(45.0f * (work->unk58 / 60.0f)) * f));
-                }
-                Hu3DMotionForceSet(obj->mdlId[0], lbl_1_data_210, 0x200U, work->unk58);
             }
             if (lbl_1_bss_BC == 1003 && work->unk58 != 0.0f) {
                 work->unk58 = 0.0f;
