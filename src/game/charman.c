@@ -3022,6 +3022,14 @@ static s8 npcSeTimeTbl4[8] = {
 
 static u16 npcSeTbl5[4] = {};
 
+#ifdef TARGET_PC
+/* CHAR_NPC_NONE (CharNpcDustVoiceOffSet) reads dustFlags[-15]: on GC the low half of a 32-byte-aligned hookDustProc
+ * pointer, so bit 0x10 is never set; here it would read whatever the host put there (a netplay desync in m509) */
+#define NPC_DUST_OFF(npcNo) ((npcNo) >= 0 && (npcNo) < CHAR_NPC_MAX && (dustFlags[npcNo] & 0x10))
+#else
+#define NPC_DUST_OFF(npcNo) (dustFlags[npcNo] & 0x10)
+#endif
+
 static void UpdateNpcDust(void)
 {
     NPCDUSTWORK *work = HuPrcCurrentGet()->property;
@@ -3043,7 +3051,7 @@ static void UpdateNpcDust(void)
         switch(work->type) {
             case 0:
                 if((time & 0xF) == 0) {
-                    if(!(dustFlags[npcNo] & 0x10)) {
+                    if(!NPC_DUST_OFF(npcNo)) {
                         dustEffParam.vel.x = -HuSin(modelP->rot.y)*2;
                         dustEffParam.vel.y = 1+(0.1*frandmod(10));
                         dustEffParam.vel.z = -HuCos(modelP->rot.y)*2;
@@ -3065,7 +3073,7 @@ static void UpdateNpcDust(void)
             
             case 1:
                 if((time & 0x3) == 0) {
-                    if(!(dustFlags[npcNo] & 0x10)) {
+                    if(!NPC_DUST_OFF(npcNo)) {
                         dustEffParam.vel.x = -HuSin(modelP->rot.y)*4;
                         dustEffParam.vel.y = 2+(0.1*frandmod(10));
                         dustEffParam.vel.z = -HuCos(modelP->rot.y)*4;
@@ -3090,7 +3098,7 @@ static void UpdateNpcDust(void)
                     continue;
                 }
                 if((time & 0x1F) == 0) {
-                    if(!(dustFlags[npcNo] & 0x10)) {
+                    if(!NPC_DUST_OFF(npcNo)) {
                         dustEffParam.vel.x = -HuSin(modelP->rot.y)*2;
                         dustEffParam.vel.y = 1+(0.1*frandmod(10));
                         dustEffParam.vel.z = -HuCos(modelP->rot.y)*2;
@@ -3113,7 +3121,7 @@ static void UpdateNpcDust(void)
                     continue;
                 }
                 if((time & 0x3) == 0) {
-                    if(!(dustFlags[npcNo] & 0x10)) {
+                    if(!NPC_DUST_OFF(npcNo)) {
                         dustEffParam.vel.x = -HuSin(modelP->rot.y)*2;
                         dustEffParam.vel.y = 1+(0.1*frandmod(10));
                         dustEffParam.vel.z = -HuCos(modelP->rot.y)*2;
@@ -3136,7 +3144,7 @@ static void UpdateNpcDust(void)
                     continue;
                 }
                 if((time & 0x7) == 0) {
-                    if(!(dustFlags[npcNo] & 0x10)) {
+                    if(!NPC_DUST_OFF(npcNo)) {
                         dustEffParam.vel.x = -HuSin(modelP->rot.y)*2;
                         dustEffParam.vel.y = 1+(0.1*frandmod(10));
                         dustEffParam.vel.z = -HuCos(modelP->rot.y)*2;
@@ -3158,7 +3166,7 @@ static void UpdateNpcDust(void)
                 if(time != 0) {
                     continue;
                 }
-                if(!(dustFlags[npcNo] & 0x10)) {
+                if(!NPC_DUST_OFF(npcNo)) {
                     for(i=0; i<8; i++){ 
                         npcHitEffParam.vel.x = 10*HuSin(45.0f*i)*modelP->scale.x;
                         npcHitEffParam.vel.y = 0;
