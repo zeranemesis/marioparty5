@@ -679,8 +679,17 @@ void HuAudDllSndGrpSet(u16 ovl)
 
 #define SNDGRP_TIMEOUT 500
 
+#ifdef TARGET_PC
+int Mp5Net_Active(void);
+/* online play: the synth runs on the game thread between ticks, so no sound can end inside this loop, and how long it
+ * spins (every turn reads the session clock, moving it on) depended on each machine's synth: the clocks drifted apart
+ * and seeded a mini-game's RNG differently (m509's maze) */
+#define SNDGRP_PLAYING() (!Mp5Net_Active() && (msmMusGetNumPlay(TRUE) != 0 || msmSeGetNumPlay(TRUE) != 0))
+#else
+#define SNDGRP_PLAYING() (msmMusGetNumPlay(TRUE) != 0 || msmSeGetNumPlay(TRUE) != 0)
+#endif
 #define SNDGRP_WAIT(tickStart) \
-    while((msmMusGetNumPlay(TRUE) != 0 || msmSeGetNumPlay(TRUE) != 0) && OSTicksToMilliseconds(OSGetTick()-(tickStart)) < SNDGRP_TIMEOUT)
+    while(SNDGRP_PLAYING() && OSTicksToMilliseconds(OSGetTick()-(tickStart)) < SNDGRP_TIMEOUT)
 
 void HuAudSndGrpSetSet(s16 grpSet)
 {
