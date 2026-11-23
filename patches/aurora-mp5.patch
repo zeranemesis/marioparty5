@@ -10,6 +10,18 @@ index e81b621..f984f83 100644
          lib/gfx/pipeline_cache.cpp
          lib/gfx/render_worker.cpp
          lib/gfx/dds_io.cpp
+diff --git a/include/aurora/aurora.h b/include/aurora/aurora.h
+index 9d22cc6..30d04ca 100644
+--- a/include/aurora/aurora.h
++++ b/include/aurora/aurora.h
+@@ -87,6 +87,7 @@ typedef struct {
+   AuroraBackend desiredBackend;
+   uint32_t msaa;
+   uint16_t maxTextureAnisotropy;
++  uint8_t textureUpscale; // MP5: 0 = off, 2 or 4: game textures enlarged with Scale2x when loaded
+   bool vsync;
+   bool startFullscreen;
+   bool allowJoystickBackgroundEvents;
 diff --git a/include/dolphin/gx/GXFrameBuffer.h b/include/dolphin/gx/GXFrameBuffer.h
 index 3aab676..f368ed5 100644
 --- a/include/dolphin/gx/GXFrameBuffer.h
@@ -848,10 +860,167 @@ index 2e87f4c..a56e6a6 100644
  
  } // namespace aurora::gfx
 diff --git a/lib/gfx/texture.cpp b/lib/gfx/texture.cpp
-index 013afc0..ee1ade2 100644
+index 013afc0..65de7f4 100644
 --- a/lib/gfx/texture.cpp
 +++ b/lib/gfx/texture.cpp
-@@ -158,7 +158,8 @@ TextureHandle new_render_texture(uint32_t width, uint32_t height, u32 gxFormat,
+@@ -9,7 +9,9 @@
+ 
+ #include <algorithm>
+ #include <cstdint>
++#include <cstdlib>
+ #include <memory>
++#include <vector>
+ #include <utility>
+ 
+ #include <fmt/format.h>
+@@ -53,28 +55,8 @@ bool setup_swizzle(wgpu::TextureComponentSwizzleDescriptor& swizzle, u32 format)
+ }
+ } // namespace
+ 
+-TextureHandle new_static_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 format, ArrayRef<uint8_t> data,
+-                                    bool tlut, const char* label) noexcept {
+-  ZoneScoped;
+-
+-  auto handle = new_dynamic_texture_2d(width, height, mips, format, label);
+-  auto& ref = *handle;
+-
+-  ConvertedTexture converted;
+-  if (ref.gxFormat != InvalidTextureFormat) {
+-    if (tlut) {
+-      CHECK(ref.size.height == 1, "new_static_texture_2d[{}]: expected tlut height 1, got {}", label, ref.size.height);
+-      CHECK(ref.mipCount == 1, "new_static_texture_2d[{}]: expected tlut mipCount 1, got {}", label, ref.mipCount);
+-      converted = convert_tlut(ref.gxFormat, ref.size.width, data);
+-    } else {
+-      converted = convert_texture(ref.gxFormat, ref.size.width, ref.size.height, ref.mipCount, data);
+-    }
+-    if (!converted.data.empty()) {
+-      data = converted.data;
+-      ref.hasArbitraryMips = converted.hasArbitraryMips;
+-    }
+-  }
+-
++namespace {
++void upload_mips(TextureRef& ref, uint32_t mips, ArrayRef<uint8_t> data, const char* label) {
+   uint32_t offset = 0;
+   for (uint32_t mip = 0; mip < mips; ++mip) {
+     const wgpu::Extent3D mipSize{
+@@ -109,6 +91,115 @@ TextureHandle new_static_texture_2d(uint32_t width, uint32_t height, uint32_t mi
+   if (data.size() != UINT32_MAX && offset < data.size()) {
+     Log.warn("new_static_texture_2d[{}]: texture used {} bytes, but given {} bytes", label, offset, data.size());
+   }
++}
++} // namespace
++
++TextureHandle new_static_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 format, ArrayRef<uint8_t> data,
++                                    bool tlut, const char* label) noexcept {
++  ZoneScoped;
++
++  auto handle = new_dynamic_texture_2d(width, height, mips, format, label);
++  auto& ref = *handle;
++
++  ConvertedTexture converted;
++  if (ref.gxFormat != InvalidTextureFormat) {
++    if (tlut) {
++      CHECK(ref.size.height == 1, "new_static_texture_2d[{}]: expected tlut height 1, got {}", label, ref.size.height);
++      CHECK(ref.mipCount == 1, "new_static_texture_2d[{}]: expected tlut mipCount 1, got {}", label, ref.mipCount);
++      converted = convert_tlut(ref.gxFormat, ref.size.width, data);
++    } else {
++      converted = convert_texture(ref.gxFormat, ref.size.width, ref.size.height, ref.mipCount, data);
++    }
++    if (!converted.data.empty()) {
++      data = converted.data;
++      ref.hasArbitraryMips = converted.hasArbitraryMips;
++    }
++  }
++
++  upload_mips(ref, mips, data, label);
++  return handle;
++}
++
++namespace {
++// MP5: Scale2x (AdvMAME2x) with a colour tolerance, so it also finds the edges of non pixel-art textures: each texel
++// becomes 2x2, its corners taking the colour of two matching neighbours across a diagonal edge, else interpolated.
++bool similar(const u8* a, const u8* b, uint32_t bpp) {
++  for (uint32_t c = 0; c < bpp; ++c) {
++    if (std::abs(int{a[c]} - int{b[c]}) > 24) {
++      return false;
++    }
++  }
++  return true;
++}
++
++std::vector<u8> scale2x(const u8* src, uint32_t w, uint32_t h, uint32_t bpp) {
++  std::vector<u8> dst(size_t{w} * h * 4 * bpp);
++  const auto at = [&](int x, int y) {
++    x = std::clamp(x, 0, int(w) - 1), y = std::clamp(y, 0, int(h) - 1);
++    return src + (size_t(y) * w + x) * bpp;
++  };
++  for (int y = 0; y < int(h); ++y) {
++    for (int x = 0; x < int(w); ++x) {
++      const u8 *e = at(x, y), *b = at(x, y - 1), *d = at(x - 1, y), *f = at(x + 1, y), *hh = at(x, y + 1);
++      // corners: top-left (b,d), top-right (b,f), bottom-left (hh,d), bottom-right (hh,f)
++      const u8* pairs[4][2] = {{b, d}, {b, f}, {hh, d}, {hh, f}};
++      const u8* opposite[4][2] = {{f, hh}, {d, hh}, {f, b}, {d, b}};
++      const u8* diagonal[4] = {at(x - 1, y - 1), at(x + 1, y - 1), at(x - 1, y + 1), at(x + 1, y + 1)};
++      for (int i = 0; i < 4; ++i) {
++        u8* out = dst.data() + ((size_t(y) * 2 + (i >> 1)) * w * 2 + size_t(x) * 2 + (i & 1)) * bpp;
++        const u8 *p = pairs[i][0], *q = pairs[i][1], *g = diagonal[i];
++        const bool edge = similar(p, q, bpp) && !similar(p, opposite[i][0], bpp) && !similar(q, opposite[i][1], bpp);
++        for (uint32_t c = 0; c < bpp; ++c) {
++          // off an edge: the bilinear sample at this quarter texel, so smooth areas look as they did
++          out[c] = edge ? u8((p[c] + q[c] + 1) / 2) : u8((9 * e[c] + 3 * (p[c] + q[c]) + g[c] + 8) / 16);
++        }
++      }
++    }
++  }
++  return dst;
++}
++
++} // namespace
++
++TextureHandle new_upscaled_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 format,
++                                      ArrayRef<uint8_t> data, const char* label) noexcept {
++  const uint32_t factor = g_config.textureUpscale;
++  if (factor != 2 && factor != 4) {
++    return {};
++  }
++  const uint32_t levels = factor == 4 ? 2 : 1; // extra mip levels above the original chain
++  if (width * factor > 2048 || height * factor > 2048) {
++    return {};
++  }
++  uint32_t bpp = 0;
++  switch (to_wgpu(format)) {
++  case wgpu::TextureFormat::R8Unorm: bpp = 1; break;
++  case wgpu::TextureFormat::RG8Unorm: bpp = 2; break;
++  case wgpu::TextureFormat::RGBA8Unorm: bpp = 4; break;
++  default: return {}; // block-compressed, depth, ...
++  }
++  ZoneScoped;
++  ConvertedTexture converted = convert_texture(format, width, height, mips, data);
++  if (converted.hasArbitraryMips) {
++    return {}; // the LOD bias of mips that differ from their base assumes the original size
++  }
++  const u8* base = converted.data.empty() ? data.data() : converted.data.data();
++  size_t originalBytes = 0;
++  for (uint32_t mip = 0; mip < mips; ++mip) {
++    originalBytes += size_t{std::max(width >> mip, 1u)} * std::max(height >> mip, 1u) * bpp;
++  }
++  // the scaled levels on top, then the game's own chain unchanged: minified, the texture samples as before
++  std::vector<u8> x2 = scale2x(base, width, height, bpp);
++  std::vector<u8> chain;
++  if (levels == 2) {
++    chain = scale2x(x2.data(), width * 2, height * 2, bpp);
++  }
++  chain.insert(chain.end(), x2.begin(), x2.end());
++  chain.insert(chain.end(), base, base + originalBytes);
++
++  auto handle = new_dynamic_texture_2d(width * factor, height * factor, mips + levels, format, label);
++  handle->upscaleLevels = levels;
++  upload_mips(*handle, mips + levels, {chain.data(), chain.size()}, label);
+   return handle;
+ }
+ 
+@@ -158,7 +249,8 @@ TextureHandle new_render_texture(uint32_t width, uint32_t height, u32 gxFormat,
    };
    const wgpu::TextureDescriptor textureDescriptor{
        .label = label,
@@ -862,10 +1031,28 @@ index 013afc0..ee1ade2 100644
        .size = size,
        .format = wgpuFormat,
 diff --git a/lib/gfx/texture.hpp b/lib/gfx/texture.hpp
-index ac7c91c..3f4e4c6 100644
+index ac7c91c..bf64208 100644
 --- a/lib/gfx/texture.hpp
 +++ b/lib/gfx/texture.hpp
-@@ -128,6 +128,9 @@ namespace aurora::gfx {
+@@ -43,6 +43,7 @@ struct TextureRef {
+   u32 gxFormat;
+   bool hasArbitraryMips = false;
+   bool isReplacement = false;
++  uint32_t upscaleLevels = 0; // MP5: scaled mip levels added above the game's own (new_upscaled_texture_2d)
+ 
+   TextureRef(wgpu::Texture texture, wgpu::TextureView sampleTextureView, wgpu::TextureView attachmentTextureView,
+              wgpu::Extent3D size, wgpu::TextureFormat format, uint32_t mipCount, u32 gxFormat)
+@@ -59,6 +60,9 @@ TextureHandle new_static_texture_2d(uint32_t width, uint32_t height, uint32_t mi
+                                     ArrayRef<uint8_t> data, bool tlut, const char* label) noexcept;
+ TextureHandle new_dynamic_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 gxFormat,
+                                      const char* label) noexcept;
++// MP5: the texture enlarged 2x or 4x (AuroraConfig::textureUpscale), or null when off or not applicable
++TextureHandle new_upscaled_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 gxFormat,
++                                      ArrayRef<uint8_t> data, const char* label) noexcept;
+ TextureHandle new_render_texture(uint32_t width, uint32_t height, u32 gxFormat, const char* label) noexcept;
+ TextureHandle new_conv_texture(uint32_t width, uint32_t height, u32 gxFormat, const char* label) noexcept;
+ void write_texture(TextureRef& ref, ArrayRef<uint8_t> data) noexcept;
+@@ -128,6 +132,9 @@ namespace aurora::gfx {
  struct TextureBind {
    TextureHandle ref;
    GXTexObj_ texObj;
@@ -1078,7 +1265,7 @@ index 93feba1..e8e2b27 100644
 +
  } // namespace aurora::gx::fifo
 diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
-index 9ca9036..2aabdf0 100644
+index 9ca9036..d631a25 100644
 --- a/lib/gx/gx.cpp
 +++ b/lib/gx/gx.cpp
 @@ -1,5 +1,8 @@
@@ -1172,20 +1359,28 @@ index 9ca9036..2aabdf0 100644
    gfx::TextureHandle handle;
    if (const auto replacement = gfx::texture_replacement::find_replacement(obj); replacement.has_value()) {
      handle = *replacement;
-@@ -185,6 +239,12 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
-     handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
-                                         {static_cast<const uint8_t*>(obj.data), UINT32_MAX}, false, nameStr);
-   }
+@@ -182,8 +236,18 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+ #else
+     const auto nameStr = "GX Static Texture";
+ #endif
+-    handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
+-                                        {static_cast<const uint8_t*>(obj.data), UINT32_MAX}, false, nameStr);
++    handle = gfx::new_upscaled_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
++                                          {static_cast<const uint8_t*>(obj.data), UINT32_MAX}, nameStr);
++    if (!handle) {
++      handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
++                                          {static_cast<const uint8_t*>(obj.data), UINT32_MAX}, false, nameStr);
++    }
++  }
 +  if (contentKey.has_value()) {
 +    if (s_contentTextures.size() > 2048) {
 +      s_contentTextures.clear();
 +    }
 +    s_contentTextures[*contentKey] = handle;
-+  }
+   }
    if (!obj.no_cache()) {
      store_cached_texture(obj, handle);
-   }
-@@ -197,7 +257,8 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+@@ -197,7 +261,8 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
      do_clear_static_texture_cache();
    }
  
@@ -1195,7 +1390,7 @@ index 9ca9036..2aabdf0 100644
      if (const auto it = s_textureObjectCaches.find(obj.texObjId); it != s_textureObjectCaches.end()) {
        const auto& entry = it->second;
        if (entry.handle && entry.texDataVersion == obj.texDataVersion && entry.tlutObjId == tlut.tlutObjId &&
-@@ -207,6 +268,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+@@ -207,6 +272,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
      }
    }
  
@@ -1208,20 +1403,34 @@ index 9ca9036..2aabdf0 100644
    gfx::TextureHandle handle;
    if (const auto replacement = gfx::texture_replacement::find_replacement(obj); replacement.has_value()) {
      handle = *replacement;
-@@ -222,6 +289,12 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
-                                    {converted.data.data(), converted.data.size()}, false, "GX Static Palette Texture");
-     handle->hasArbitraryMips = converted.hasArbitraryMips;
-   }
+@@ -217,10 +288,22 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+     if (converted.data.empty()) {
+       return {};
+     }
+-    handle =
+-        gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
+-                                   {converted.data.data(), converted.data.size()}, false, "GX Static Palette Texture");
+-    handle->hasArbitraryMips = converted.hasArbitraryMips;
++    if (!converted.hasArbitraryMips) {
++      handle = gfx::new_upscaled_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
++                                            {converted.data.data(), converted.data.size()}, "GX Static Palette Texture");
++    }
++    if (!handle) {
++      handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
++                                          {converted.data.data(), converted.data.size()}, false,
++                                          "GX Static Palette Texture");
++      handle->hasArbitraryMips = converted.hasArbitraryMips;
++    }
++  }
 +  if (contentKey.has_value()) {
 +    if (s_contentTextures.size() > 2048) {
 +      s_contentTextures.clear();
 +    }
 +    s_contentTextures[*contentKey] = handle;
-+  }
+   }
    if (!obj.no_cache() && !tlut.no_cache()) {
      store_cached_texture(obj, handle, tlut.tlutObjId, tlut.tlutDataVersion);
-   }
-@@ -834,13 +907,21 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+@@ -834,13 +917,21 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
      config.shaderConfig.lineMode = 0;
    }
    config.shaderConfig.tevSwapTable = g_gxState.tevSwapTable;
@@ -1243,7 +1452,7 @@ index 9ca9036..2aabdf0 100644
    config.shaderConfig.numIndStages = g_gxState.numIndStages;
    for (u8 i = 0; i < MaxColorChannels; ++i) {
      const auto& cc = g_gxState.colorChannelConfig[i];
-@@ -856,29 +937,31 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+@@ -856,29 +947,31 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
    for (u8 i = 0; i < g_gxState.numTexGens; ++i) {
      config.shaderConfig.tcgs[i] = g_gxState.tcgs[i];
    }
@@ -1295,7 +1504,7 @@ index 9ca9036..2aabdf0 100644
  }
  
  GXBindGroups build_bind_groups(const ShaderInfo& info) noexcept {
-@@ -892,27 +975,44 @@ GXBindGroups build_bind_groups(const ShaderInfo& info) noexcept {
+@@ -892,27 +985,44 @@ GXBindGroups build_bind_groups(const ShaderInfo& info) noexcept {
    // Using C WGPU types instead of C++ wrappers to avoid destructor overhead
    std::array<WGPUBindGroupEntry, MaxTextures * 2> textureEntries{};
    for (u32 i = 0; i < MaxTextures; ++i) {
@@ -1343,7 +1552,7 @@ index 9ca9036..2aabdf0 100644
    };
  }
  
-@@ -1041,17 +1141,11 @@ static std::pair<wgpu::FilterMode, wgpu::MipmapFilterMode> wgpu_filter_mode(GXTe
+@@ -1041,17 +1151,11 @@ static std::pair<wgpu::FilterMode, wgpu::MipmapFilterMode> wgpu_filter_mode(GXTe
    }
  }
  
@@ -1365,6 +1574,25 @@ index 9ca9036..2aabdf0 100644
  }
  
  wgpu::SamplerDescriptor aurora::gfx::TextureBind::get_descriptor() const noexcept {
+@@ -1071,6 +1175,18 @@ wgpu::SamplerDescriptor aurora::gfx::TextureBind::get_descriptor() const noexcep
+     minLod = 0.f;
+     maxLod = 0.f;
+   }
++  if (ref && ref->upscaleLevels != 0) {
++    // MP5: the scaled levels sit above the game's chain; magnified, level 0 is sampled, minified, the original levels
++    const float levels = static_cast<float>(ref->upscaleLevels);
++    if (!mipsEnabled) {
++      mipFilter = wgpu::MipmapFilterMode::Nearest;
++      minLod = 0.f;
++      maxLod = levels;
++    } else {
++      minLod = minLod > 0.f ? minLod + levels : 0.f;
++      maxLod += levels;
++    }
++  }
+   if ((ref && ref->hasArbitraryMips) || !mipsEnabled) {
+     maxAnisotropy = 1;
+   } else if (maxAnisotropy > 1) {
 diff --git a/lib/gx/pipeline.cpp b/lib/gx/pipeline.cpp
 index a5088fd..5fecf96 100644
 --- a/lib/gx/pipeline.cpp
@@ -1569,3 +1797,18 @@ index 51257ea..0dda835 100644
  const AuroraEvent* poll_events();
  SDL_Window* get_sdl_window();
  SDL_Renderer* get_sdl_renderer();
+diff --git a/tests/gx_test_stubs.cpp b/tests/gx_test_stubs.cpp
+index 9908075..80294d3 100644
+--- a/tests/gx_test_stubs.cpp
++++ b/tests/gx_test_stubs.cpp
+@@ -166,6 +166,10 @@ TextureHandle new_static_texture_2d(uint32_t width, uint32_t height, uint32_t mi
+                                     ArrayRef<uint8_t> data, bool tlut, const char* label) noexcept {
+   return {};
+ }
++TextureHandle new_upscaled_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 gxFormat,
++                                      ArrayRef<uint8_t> data, const char* label) noexcept {
++  return {};
++}
+ TextureHandle new_dynamic_texture_2d(uint32_t width, uint32_t height, uint32_t mips, u32 gxFormat,
+                                      const char* label) noexcept {
+   return {};

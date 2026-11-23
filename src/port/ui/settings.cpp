@@ -637,6 +637,10 @@ SettingsWindow::SettingsWindow(bool prelaunch)
         int_choice(getSettings().game.textureAnisotropy, "Texture Filtering", { 1, 2, 4, 8, 16 }, "Off (Original)",
             "<br/>Keeps textures sharp on surfaces seen at an angle, such as the board floor. Lower it on a modest "
             "graphics card. Takes effect the next time the game starts.");
+        int_choice(getSettings().game.textureUpscale, "Texture Upscaling", { 1, 2, 4 }, "Off (Original)",
+            "<br/>Enlarges the game's textures 2x or 4x with an edge-smoothing filter (Scale2x) as they load, so "
+            "edges stay smooth up close. Colours are unchanged. Uses more memory and loading time; videos are "
+            "included at 2x. Takes effect the next time the game starts.");
 
         // leftPane.add_section("Post-Processing");
 

@@ -44,6 +44,7 @@ UserSettings g_userSettings = {
         .shadowResolutionMultiplier {"game.shadowResolutionMultiplier", 1},
         .msaaSamples {"game.msaaSamples", 1},
         .textureAnisotropy {"game.textureAnisotropy", 16},
+        .textureUpscale {"game.textureUpscale", 1},
         .loadingSpeed {"game.loadingSpeed", 0},
 
         // Audio
@@ -130,6 +131,7 @@ void registerSettings() {
     Register(g_userSettings.game.shadowResolutionMultiplier);
     Register(g_userSettings.game.msaaSamples);
     Register(g_userSettings.game.textureAnisotropy);
+    Register(g_userSettings.game.textureUpscale);
     Register(g_userSettings.game.loadingSpeed);
     Register(g_userSettings.game.enableAchievementToasts);
     Register(g_userSettings.game.enableControllerToasts);

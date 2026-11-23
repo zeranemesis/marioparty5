@@ -448,6 +448,7 @@ extern "C" int port_main(int argc, char* argv[]) {
         config.vsync = mp5native::getSettings().video.enableVsync;
         config.msaa = static_cast<uint32_t>(std::clamp(mp5native::getSettings().game.msaaSamples.getValue(), 1, 8));
         config.maxTextureAnisotropy = static_cast<uint16_t>(std::clamp(mp5native::getSettings().game.textureAnisotropy.getValue(), 1, 16));
+        config.textureUpscale = static_cast<uint8_t>(mp5native::getSettings().game.textureUpscale.getValue() == 4 ? 4 : mp5native::getSettings().game.textureUpscale.getValue() == 2 ? 2 : 0);
         config.startFullscreen = mp5native::getSettings().video.enableFullscreen;
         config.windowPosX = -1;
         config.windowPosY = -1;

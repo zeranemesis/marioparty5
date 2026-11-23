@@ -43,6 +43,7 @@ namespace {
         s.game.shadowResolutionMultiplier.setValue(1);
         s.game.msaaSamples.setValue(1);
         s.game.textureAnisotropy.setValue(1);
+        s.game.textureUpscale.setValue(1);
         s.video.frameRate.setValue(60);
         s.video.frameInterpolation.setValue(false);
     }
