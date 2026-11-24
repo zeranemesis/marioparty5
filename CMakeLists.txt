@@ -110,7 +110,6 @@ option(RUNTIME_SANITIZE "Runtime (stack) sanitization" OFF)
 set(USE_ASAN OFF CACHE BOOL "Disable ASan" FORCE)
 set(AURORA_ENABLE_DVD ON)
 set(AURORA_ENABLE_RMLUI ON CACHE BOOL "Enable RmlUi UI support" FORCE)
-set(RUNTIME_SANITIZE OFF)
 set(SKIP_HU_ALLOC OFF CACHE BOOL "Skip the built in allocator" FORCE)
 
 # Set build type to RelWithDebInfo if not specified

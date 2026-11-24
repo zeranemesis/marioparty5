@@ -7,10 +7,10 @@ the subset of objects with compiled source or per-function comparison scores.
 
 | Measure | Whole-game basis | Verified result |
 |---|---|---|
-| Matched code | 2,852,708 / 9,481,492 bytes | 30.09% |
+| Matched code | 2,856,044 / 9,481,492 bytes | 30.12% |
 | Code linked from source | 1,983,280 / 9,481,492 bytes | 20.92% |
 | Complete units | 351 / 881 | 351 |
-| Matched functions | 7,882 / 21,157 | 7,882 |
+| Matched functions | 7,895 / 21,157 | 7,895 |
 
 The DOL has 85.59% matched code; REL modules have 17.70%. These are separate
 subsets, not competing whole-game percentages. The full reconstruction passes
