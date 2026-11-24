@@ -45,6 +45,7 @@ void Mp5Net_WaitConfirmed(void);
 /* rollback.cpp: ticks are running again (no drawing, no sound out, no pads sent) */
 int Mp5Rb_Resimulating(void);
 int Mp5Rb_TickRestorable(void);
+void Mp5Rb_DumpRegions(const char *dir, u32 frame, const char *tag); /* test bench: MP5_RB_DUMPAT */
 void Mp5Net_TickLoad(const Mp5NetTickState *state);
 
 #ifdef __cplusplus

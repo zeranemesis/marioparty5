@@ -111,6 +111,8 @@ bool sPoseWritten[HU3D_MODEL_MAX];
 bool sHfr = false;
 double sNextTick = 0.0;
 double sNextFrame = 0.0;
+double sPaceDelay = 0.0; // netplay time sync: how much longer the next ticks still have to wait (HuInterpPaceDelay)
+double sLastBegin = 0.0; // when the previous frame began (HuInterpFrameBegin)
 int sTicksThisFrame = 0;
 int sTickNo = 0;
 float sRefresh = 0.0f;
@@ -683,6 +685,11 @@ extern "C" void HuInterpInvalidate(void)
     sLerpOk = false;
 }
 
+extern "C" void HuInterpPaceDelay(double seconds)
+{
+    sPaceDelay += seconds;
+}
+
 extern "C" int HuInterpFrameBegin(void)
 {
     if (sTestFps == -2) {
@@ -701,11 +708,26 @@ extern "C" int HuInterpFrameBegin(void)
         sFrame[0].valid = sFrame[1].valid = false;
         sLerpOk = false;
     }
+    const double frameTime = sLastBegin > 0.0 ? std::min(t - sLastBegin, kTick) : kTick;
+    sLastBegin = t;
     if (!sHfr) {
+        if (sPaceDelay >= kTick * 0.999) {
+            // one tick per frame (and vsync): a tick held back is a frame shown once more; a few ms added to the frame
+            // would be taken back by the limiter (it measures from the end of its own sleep)
+            sPaceDelay -= kTick;
+            wait_until(t + kTick);
+            return -1;
+        }
         sTicksThisFrame = 1;
         frame_stat(t);
         sMark = t;
         return 1;
+    }
+    if (sPaceDelay > 0.0) { // the ticks come later; the frames in between interpolate as usual
+        // a quarter of a frame at most: the logic keeps 3/4 of its speed meanwhile, whatever the refresh rate
+        const double step = std::min(sPaceDelay, frameTime / 4);
+        sNextTick += step;
+        sPaceDelay -= step;
     }
     int ticks = 0;
     while (t >= sNextTick && ticks < kMaxTicksPerFrame) {

@@ -18,6 +18,7 @@
 // shortcut: no mid-game join, no reconnection: a dropped peer ends the session, the game goes on locally.
 #include "port/netplay.h"
 #include "port/rollback.h"
+#include "port/frame_interp.h"
 #include "upnp.hpp"
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -114,7 +115,7 @@ std::filesystem::path Mp5Native_ConfigPath; // set by portmain.cpp (Mp5Net_SetCo
 
 aurora::Module Log("mp5native::netplay");
 
-constexpr u32 kProto = 5;
+constexpr u32 kProto = 6;
 constexpr u16 kDefaultPort = 51525;
 constexpr u32 kHashEvery = 60;
 bool sDeep; // MP5_NET_DEEP=1 on every machine: hash every frame, models included (finds where a desync starts)
@@ -131,6 +132,9 @@ struct Peer {
     int firstPort = 0, nPorts = 0;
     sockaddr_in udp{}; // rollback: where its UDP datagrams come from and go to
     bool udpKnown = false;
+    s8 remoteAdv = 0;                    // rollback time sync: how many frames ahead of this machine it sees itself
+    bool advKnown = false;               // remoteAdv came (over UDP): without it there is nothing to sync with
+    float advLocal = 0, advRemote = 0;   // averages of ours (advanceOver) and its
 };
 
 struct Slot {
@@ -160,6 +164,9 @@ u32 sSentTo;                                       // rollback: the first frame 
 sock_t sUdp = INVALID_SOCKET;                      // rollback: pads over UDP too (udpSend/udpDrain)
 u32 sToken;                                        // the session's: a datagram without it is not ours
 u64 sUdpIn, sUdpOut;
+u32 sSyncHoldUntil;                                // rollback time sync: no new hold before this frame
+u32 sSyncFrames;                                   // statistics: frames held back since the last report
+u32 sVerifiedTo;                                   // verifyConfirmed: frames below this one were checked
 std::map<u32, u32> sHostHash;            // host: its own hashes
 std::multimap<u32, u32> sPendingHash;    // host: client hashes not yet compared
 std::map<u32, std::vector<u8>> sStates;  // the last few hashed states, dumped on a desync
@@ -430,6 +437,46 @@ u32 minKnown() {
     return known;
 }
 
+// rollback time sync: how many frames this machine runs ahead of a peer, as seen here (the peer's newest pads were
+// made sDelay frames before the frame they are for). Host: that client's ports; client: port 0, always the host's
+// (the pads the host relays from other clients are a hop older: the latency would no longer cancel out)
+int advanceOver(const Peer& peer) {
+    u32 known = UINT32_MAX;
+    for (int port = 0; port < 4; port++) {
+        const bool theirs = sHost ? port >= peer.firstPort && port < peer.firstPort + peer.nPorts : port == 0;
+        if ((sPortMask & (1 << port)) && theirs) {
+            known = std::min(known, sKnownTo[port]);
+        }
+    }
+    return known == UINT32_MAX ? 0 : std::clamp((int)sFrame - ((int)known - sDelay), -127, 127);
+}
+
+// rollback: a machine running ahead of another mispredicts that one's pads nearly every frame (a rollback, and a
+// correction seen on screen, each time). Like GGPO: each machine tells the other how far ahead it sees itself; the
+// latency is in both figures and cancels out of half their difference, which is how far ahead this machine really is.
+// The one ahead holds its next ticks back by that much.
+void timeSync(u32 frame) {
+    static const bool off = getenv("MP5_NET_NOSYNC") != nullptr; // test bench: no time sync
+    if (off) {
+        return;
+    }
+    float ahead = 0;
+    for (Peer& p : sPeers) {
+        if (!p.advKnown) {
+            continue;
+        }
+        p.advLocal += (advanceOver(p) - p.advLocal) / 32.0f;
+        p.advRemote += (p.remoteAdv - p.advRemote) / 32.0f;
+        ahead = std::max(ahead, (p.advLocal - p.advRemote) / 2);
+    }
+    if (ahead >= 1.0f && frame >= sSyncHoldUntil) {
+        const int frames = std::min((int)ahead, 4);
+        HuInterpPaceDelay(frames / 60.0);
+        sSyncFrames += frames;
+        sSyncHoldUntil = frame + 90; // the hold takes a few frames, and the averages a while to see it
+    }
+}
+
 // Host: sends every frame that just became complete, in order.
 void broadcastComplete() {
     for (;;) {
@@ -571,6 +618,7 @@ void udpSend(u32 ownNewest) {
         Writer w;
         w.put(kUdpMagic);
         w.put(sToken);
+        w.put((s8)advanceOver(p)); // time sync (timeSync)
         udpPutGroup(w, sMyFirstPort, sMyPorts, ownNewest);
         if (sHost) { // the other clients' pads, for a session of three machines or more
             for (const Peer& q : sPeers) {
@@ -602,12 +650,17 @@ void udpDrain() {
         Reader r{buf, (size_t)n};
         const u32 magic = r.get<u32>();
         const u32 token = r.get<u32>();
+        const s8 adv = r.get<s8>();
         if (!r.ok || magic != kUdpMagic || token != sToken) {
             continue;
         }
         if (!sHost && (sPeers.empty() || from.sin_addr.s_addr != sPeers[0].udp.sin_addr.s_addr ||
                        from.sin_port != sPeers[0].udp.sin_port)) {
             continue; // a client only listens to its host
+        }
+        if (!sHost) {
+            sPeers[0].remoteAdv = adv;
+            sPeers[0].advKnown = true;
         }
         sUdpIn++;
         while (r.ok && r.n > 0) {
@@ -624,6 +677,8 @@ void udpDrain() {
                 if (it == sPeers.end()) {
                     break;
                 }
+                it->remoteAdv = adv;
+                it->advKnown = true;
                 if (!it->udpKnown) {
                     it->udp = from;
                     it->udpKnown = true;
@@ -1239,6 +1294,8 @@ bool Mp5Net_Boot() {
     sNextBroadcast = sDelay;
     sKnownTo.fill((u32)sDelay); // the first frames are neutral for everyone
     sSentTo = (u32)sDelay;
+    sSyncHoldUntil = 0;
+    sVerifiedTo = (u32)sDelay;
     const auto logPath = Mp5Native_ConfigPath / (sHost ? "netplay_host.log" : "netplay_client.log");
     sLogFile = fopen(logPath.string().c_str(), "w");
     note(false, "session started ({}): pad port(s) {}..{} are this machine's, {} player(s), delay {} frame(s), build {}",
@@ -1370,6 +1427,38 @@ void flushHashes() {
     }
 }
 
+// rollback: a frame confirmed for every port, with no misprediction pending, has run for the last time; the pads it ran
+// with must be the real ones, or a misprediction was never corrected (the machines then differ from that frame on)
+void verifyConfirmed() {
+    const u32 upTo = std::min({minKnown(), sMispredict, sFrame}); // sFrame: a frame confirmed early has not run yet
+    for (; sVerifiedTo < upTo; sVerifiedTo++) {
+        auto used = sUsed.find(sVerifiedTo);
+        auto real = sFrames.find(sVerifiedTo);
+        if (used == sUsed.end() || real == sFrames.end()) {
+            continue;
+        }
+        // test bench: MP5_NET_TRACEPADS=<from>-<to> logs the pads each frame finally ran with (compare two machines)
+        static int padFrom = -2, padTo = -1;
+        if (padFrom == -2) {
+            padFrom = -1;
+            if (const char* env = getenv("MP5_NET_TRACEPADS"); env != nullptr) {
+                sscanf(env, "%d-%d", &padFrom, &padTo);
+            }
+        }
+        if (padFrom >= 0 && sVerifiedTo >= (u32)padFrom && sVerifiedTo <= (u32)padTo) {
+            const auto& p = used->second;
+            note(false, "pads {}: {:04x} {} {} | {:04x} {} {} | {:04x} {} {} | {:04x} {} {}", sVerifiedTo, p[0].button,
+                 p[0].stickX, p[0].stickY, p[1].button, p[1].stickX, p[1].stickY, p[2].button, p[2].stickX, p[2].stickY,
+                 p[3].button, p[3].stickX, p[3].stickY);
+        }
+        for (int port = 0; port < 4; port++) {
+            if ((sPortMask & (1 << port)) && memcmp(&used->second[port], &real->second.pad[port], sizeof(PADStatus)) != 0) {
+                note(true, "frame {} kept predicted pads on port {}: a misprediction was never corrected", sVerifiedTo, port + 1);
+            }
+        }
+    }
+}
+
 void padHookRollback(PADStatus* status) {
     const bool resim = Mp5Rb_Resimulating() != 0;
     const u32 frame = sFrame++;
@@ -1426,6 +1515,7 @@ void padHookRollback(PADStatus* status) {
         const u64 waited = SDL_GetTicks() - start;
         sWaitMs += waited;
         sWaitMax = std::max(sWaitMax, waited);
+        timeSync(frame);
     }
 
     std::array<PADStatus, 4> pads{};
@@ -1439,6 +1529,11 @@ void padHookRollback(PADStatus* status) {
         }
     }
     sUsed[frame] = pads;
+    // test bench: MP5_RB_DUMPAT=<frame> writes the tracked memory each time that frame runs (the last run is what the
+    // session kept); compared with a lockstep run of the same session, it shows what a rollback left wrong
+    if (static const int dumpAt = envInt("MP5_RB_DUMPAT", -1); dumpAt >= 0 && frame == (u32)dumpAt) {
+        Mp5Rb_DumpRegions(Mp5Native_ConfigPath.string().c_str(), frame, "rb");
+    }
 
     if (frame % (sDeep ? 1 : kHashEvery) == 0) {
         auto state = captureState();
@@ -1449,14 +1544,16 @@ void padHookRollback(PADStatus* status) {
         }
         if (frame % 600 == 0 && !resim) {
             note(false, "crc {:08x} frand {:08x} overlay {:3} | waited {} ms (longest {} ms), {} rollback(s) of {} frame(s), "
-                        "UDP {} in / {} out",
+                        "UDP {} in / {} out | ahead {:.1f} frame(s), held back {} frame(s)",
                  sOwnHash[frame], *Mp5Test_FrandSeed(), (int)omcurovl, sWaitMs, sWaitMax, sRollbacks, sRollbackFrames,
-                 sUdpIn, sUdpOut);
+                 sUdpIn, sUdpOut, sPeers.empty() ? 0.0f : (sPeers[0].advLocal - sPeers[0].advRemote) / 2, sSyncFrames);
             sWaitMs = sWaitMax = 0;
+            sSyncFrames = 0;
         }
     }
     if (!resim) {
         flushHashes();
+        verifyConfirmed();
         const u32 keep = std::min(minKnown(), frame) > 256 ? std::min(minKnown(), frame) - 256 : 0;
         sUsed.erase(sUsed.begin(), sUsed.lower_bound(keep));
         sFrames.erase(sFrames.begin(), sFrames.lower_bound(keep));
@@ -1547,6 +1644,9 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
         }
         note(false, "MEM1 and heaps of frame {} written to {}", frame, Mp5Native_ConfigPath.string());
     }
+    if (static const int rbDumpAt = envInt("MP5_RB_DUMPAT", -1); rbDumpAt >= 0 && frame == (u32)rbDumpAt) {
+        Mp5Rb_DumpRegions(Mp5Native_ConfigPath.string().c_str(), frame, "ls"); // the lockstep side of MP5_RB_DUMPAT
+    }
     if (frame % (sDeep ? 1 : kHashEvery) == 0) {
         auto state = captureState();
         const u32 crc = crc32(state);
@@ -1611,6 +1711,7 @@ extern "C" void Mp5Net_PadHook(PADStatus* status) {
 }
 
 extern "C" void Mp5Net_TickSave(Mp5NetTickState* state) {
+    *state = {}; // its padding too: the synctest compares the whole struct
     state->frame = sFrame;
     state->lastTime = sLastTime;
     state->audioFrames = sAudioFrames;

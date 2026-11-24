@@ -38,6 +38,8 @@ void HuInterpDraw(void);
 void HuInterpFrameEnd(void);
 /* netplay rollback: the game's memory went back to an earlier tick */
 void HuInterpInvalidate(void);
+/* netplay time sync: hold the next logic ticks back by this long in all (spread over a few frames) */
+void HuInterpPaceDelay(double seconds);
 
 #ifdef __cplusplus
 }

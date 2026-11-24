@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <map>
@@ -32,6 +33,7 @@ void* msmPCSndHeapGet(u32* size);         // msmsys.c
 int HuPrcStackList(void** handles, int max); // process.c
 int PortThreadStackList(void** handles, int max); // osthread_pc.c
 void Mp5Net_TraceLog(const char* fmt, ...);
+int Mp5Net_Active(void);                    // netplay.cpp
 void HuInterpInvalidate(void);              // frame_interp.cpp
 void* salAiGetDest(void);                  // MusyX: its output buffer
 void AuroraGXSetDiscard(GXBool discard);   // Aurora: drop draws while ticks run again
@@ -538,6 +540,23 @@ int netTick() {
 
 extern "C" int Mp5Rb_Resimulating(void) { return sResimTarget != kOpen || sReplaying; }
 
+// test bench (netplay.cpp, MP5_RB_DUMPAT): every tracked region but ARAM (and the sound heap unless MP5_RB_DUMPSOUND), a file each, to compare two runs of one
+// build (a rollback session against a lockstep one): rb_<region>_<frame>_<tag>_<base>.bin
+extern "C" void Mp5Rb_DumpRegions(const char* dir, u32 frame, const char* tag) {
+    for (const Region& r : regions()) {
+        if (r.what == "aram" || (r.what == "sound" && getenv("MP5_RB_DUMPSOUND") == nullptr)) {
+            continue;
+        }
+        std::string name = r.what;
+        std::replace_if(name.begin(), name.end(), [](char c) { return c == ':' || c == '.' || c == '_'; }, '-');
+        const std::string path = fmt::format("{}/rb_{}_{}_{}_{:x}.bin", dir, name, frame, tag, (uintptr_t)r.p);
+        if (FILE* f = fopen(path.c_str(), "wb")) {
+            fwrite(r.p, 1, r.n, f);
+            fclose(f);
+        }
+    }
+}
+
 // the tick running now can be restored (no module came or went since its snapshot): its pads may be predicted
 extern "C" int Mp5Rb_TickRestorable(void) {
     auto it = sLights.find(sTick - 1);
@@ -747,9 +766,10 @@ std::vector<u64> hashRegions() {
 } // namespace
 
 extern "C" void Mp5Rb_Probe(int point) {
-    // test bench: MP5_RB_ZERODEAD=1 blanks the coroutine stacks' dead part before the processes run (a local read before
-    // it is written then sees zeros in every run, whatever host code ran there before)
-    if (static const bool zero = getenv("MP5_RB_ZERODEAD") != nullptr; zero && point == 1) {
+    // The coroutine stacks' dead part is blanked before the processes run, so a local read before it is written sees zeros
+    // in every run, whatever host code ran there before. Online play always does it: such a read in the game code (m509's
+    // processes, among others) differed from run to run and between compilers, a desync. MP5_RB_ZERODEAD=1 does it alone
+    if (static const bool zero = getenv("MP5_RB_ZERODEAD") != nullptr; (zero || Mp5Net_Active()) && point == 1) {
         for (const auto& r : regions()) {
             if (r.what == "stacks") {
                 void* handles[512];
